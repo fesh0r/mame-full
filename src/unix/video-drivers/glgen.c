@@ -77,11 +77,6 @@ int totalcolors;
 unsigned char gl_alpha_value;
 static int frame;
 
-/*
-static GLint gl_white[] = { 1, 1, 1, 1};
-static GLint gl_black[] = { 0, 0, 0, 0};
-*/
-
 /* The squares that are tiled to make up the game screen polygon */
 
 struct TexSquare
@@ -96,10 +91,6 @@ struct TexSquare
 
 static struct TexSquare *texgrid;
 
-/* max texsize is fetched ..
-	static int texsize=256;
-*/
-
 static int texnumx;
 static int texnumy;
 static GLfloat texpercx;
@@ -113,6 +104,15 @@ static GLfloat xinc, yinc;
 static GLint memory_x_len;
 static GLint memory_x_start_offset;
 static int bytes_per_pixel;
+
+/**
+ * VERY IMPORTANT: osd_alloc_bitmap must allocate also a "safety area" 16 pixels 
+ * wide all
+ * around the bitmap. This is required because, for performance reasons, some graphic
+ * routines don't clip at boundaries of the bitmap.
+ */
+#define BITMAP_SAFETY			16
+static unsigned char *colorBlittedMemory;
 
 GLfloat cscrx1, cscry1, cscrz1, cscrx2, cscry2, cscrz2,
   cscrx3, cscry3, cscrz3, cscrx4, cscry4, cscrz4;
@@ -141,7 +141,7 @@ int useGLEXT78; /* paletted texture */
 int useColorIndex; 
 int isGL12;
 
-int use_blitter = 0;
+int useColorBlitter = 0;
 
 static int do_snapshot;
 static int do_xgl_resize=0;
@@ -189,6 +189,7 @@ void gl_bootstrap_resources()
   memory_x_len=0;;
   memory_x_start_offset=0;;
   bytes_per_pixel=0;
+  colorBlittedMemory=NULL;
   
   cscrx1=0; cscry1=0; cscrz1=0; cscrx2=0; cscry2=0; cscrz2=0;
   cscrx3=0; cscry3=0; cscrz3=0; cscrx4=0; cscry4=0; cscrz4=0;
@@ -212,7 +213,7 @@ void gl_bootstrap_resources()
   isGL12=GL_TRUE;
   useColorIndex = GL_FALSE; 
   use_mod_ctable = 1;
-  use_blitter = 0;
+  useColorBlitter = 0;
 
   do_snapshot=0;
   do_xgl_resize=0;
@@ -261,9 +262,10 @@ void gl_reset_resources()
   vscrnheight=0;
   xinc=0; yinc=0;
   
-  memory_x_len=0;;
-  memory_x_start_offset=0;;
+  memory_x_len=0;
+  memory_x_start_offset=0;
   bytes_per_pixel=0;
+  colorBlittedMemory=NULL;
   
   cscrx1=0; cscry1=0; cscrz1=0; cscrx2=0; cscry2=0; cscrz2=0;
   cscrx3=0; cscry3=0; cscrz3=0; cscrx4=0; cscry4=0; cscrz4=0;
@@ -499,39 +501,58 @@ void gl_set_alphablending (int new_value)
 /* ---------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
+static int blit_notified = 0;
+
 void gl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
-#define SRC_PIXEL  unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST texgrid->texture
-#define DEST_WIDTH memory_x_len
    if(current_palette->lookup)
    {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
+   	if(!blit_notified) printf("GLINFO: 16bpp palette lookup bitblit\n");
+	#define SRC_PIXEL  unsigned short
+	#define DEST_PIXEL unsigned short
+	#define DEST texgrid->texture
+	#define DEST_WIDTH memory_x_len
+	#define INDIRECT current_palette->lookup
+	#include "blit.h"
+	#undef INDIRECT
+	#undef DEST
+	#undef DEST_WIDTH
+	#undef SRC_PIXEL
+	#undef DEST_PIXEL
+   } else {
+   	if(!blit_notified) printf("GLINFO: no 16bpp bitblit needed\n");
+	/**
+	 * nothing must be done here ;-)
+	 */
    }
-   else
-   {
-#include "blit.h"
-   }
-#undef DEST
-#undef DEST_WIDTH
-#undef SRC_PIXEL
-#undef DEST_PIXEL
+   blit_notified = 1;
 }
 
 void gl_update_32_to_32bpp(struct mame_bitmap *bitmap)
 {
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned int
-#define DEST texgrid->texture
-#define DEST_WIDTH memory_x_len
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
+
+   if(current_palette->lookup)
+   {
+   	if(!blit_notified) printf("GLINFO: 32bpp palette lookup bitblit\n");
+	#define SRC_PIXEL  unsigned int
+	#define DEST_PIXEL unsigned int
+	#define DEST texgrid->texture
+	#define DEST_WIDTH memory_x_len
+	#define INDIRECT current_palette->lookup
+	#include "blit.h"
+	#undef INDIRECT
+	#undef DEST
+	#undef DEST_WIDTH
+	#undef SRC_PIXEL
+	#undef DEST_PIXEL
+   } else {
+   	if(!blit_notified) printf("GLINFO: no 32bpp bitblit needed\n");
+	/**
+	 * nothing must be done here ;-)
+	 */
+   }
+   blit_notified = 1;
+
 }
 
 int sysdep_display_16bpp_capable (void)
@@ -641,8 +662,7 @@ void InitVScreen (int depth)
           fflush(NULL);
 
   } else {
-  	  if(depth==16 && options.color_depth != 15 && useColorIndex)
-		  use_blitter = 1;
+	  useColorBlitter = useColorIndex;
 
 	  useColorIndex = 0;
 
@@ -664,7 +684,7 @@ void InitVScreen (int depth)
 			  exit(1);
 		case 15:
 		case 16:
-			  if(!use_blitter)
+			  if(!useColorBlitter)
 			  {
 			    /* ARGB1555 */
 			    display_palette_info.red_mask   = 0x00007C00;
@@ -692,7 +712,7 @@ void InitVScreen (int depth)
 			  display_palette_info.blue_mask  = 0x0000FF00;
 			  gl_bitmap_format = GL_RGB;         
 			  gl_bitmap_type   = GL_UNSIGNED_BYTE;
-					  break;
+			  break;
 		case 32:
 			 /**
 			  * skip the D of DRGB 
@@ -701,7 +721,10 @@ void InitVScreen (int depth)
 			  display_palette_info.blue_mask   = 0x00FF0000;
 			  display_palette_info.green_mask  = 0x0000FF00;
 			  display_palette_info.red_mask    = 0x000000FF;
-			  gl_bitmap_format = GL_RGBA;
+			  if(!useColorBlitter)
+				  gl_bitmap_format = GL_BGRA;
+			  else
+				  gl_bitmap_format = GL_RGBA;
 			  /*                                 A B G R */
 			  gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
 			  break;
@@ -713,8 +736,8 @@ void InitVScreen (int depth)
 		display_palette_info.red_mask, display_palette_info.green_mask, 
 		display_palette_info.blue_mask);
   }
-  if(use_blitter) {
-  	printf("GLINFO: *** Using memcopy blitter mode (last resort ?!) ***\n");
+  if(useColorBlitter) {
+	printf("GLINFO: Using bit blit to map color indices !!\n");
 	heightscale =1; widthscale=1; use_scanlines=0;
   }
 }
@@ -726,6 +749,9 @@ void CloseVScreen (void)
   #ifndef NDEBUG
     printf("GLINFO: CloseVScreen (gl_is_initialized=%d)\n", gl_is_initialized);
   #endif
+
+  if(colorBlittedMemory!=NULL)
+  	free(colorBlittedMemory);
 
   if (gl_is_initialized == 0)
     return;
@@ -861,16 +887,11 @@ void InitTextures ()
   int x=0, y=0, raw_line_len=0;
   GLint format=0;
   GLenum err;
-  unsigned char *line_1=0, *line_2=0, *mem_start=0;
+  unsigned char *line_1, *line_2=0;
   struct TexSquare *tsq=0;
 
   if (glContext == 0)
     return;
-
-  /* JAU: find some n,m for 
-	(w=2**n)>=text_width, (h=2**m)>=text_height */
-  /* we try to use the bitmap for OpenGL 
-     textures directly .. no copies */
 
   text_width  = visual_width;
   text_height = visual_height;
@@ -986,8 +1007,6 @@ void InitTextures ()
   line_1 = (unsigned char *) Machine->scrbitmap->line[visual.min_y];
   line_2 = (unsigned char *) Machine->scrbitmap->line[visual.min_y + 1];
 
-  mem_start = (unsigned char *) Machine->scrbitmap->base;
-
   raw_line_len = line_2 - line_1;
 
   memory_x_len = raw_line_len / bytes_per_pixel;
@@ -995,6 +1014,14 @@ void InitTextures ()
   fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
 		 (int) texnumx, (int) text_width, (int) texnumy,
 		 (int) text_height);
+
+  if(useColorBlitter)
+  {
+    colorBlittedMemory = malloc( (text_width+2*BITMAP_SAFETY)*texnumx*
+                                 (text_height+2*BITMAP_SAFETY)*texnumy*
+				 bytes_per_pixel);
+    line_1 = colorBlittedMemory;
+  }
 
   for (y = 0; y < texnumy; y++)
   {
@@ -1037,9 +1064,15 @@ void InitTextures ()
       #ifndef NDEBUG
       if (x == 0 && y == 0)
       {
-	fprintf (stderr, "bitmap (w=%d / h=%d / d=%d)\n",
-		 Machine->scrbitmap->width, Machine->scrbitmap->height,
-		 Machine->scrbitmap->depth);
+	fprintf(stderr, "bitmap: w=%d, h=%d, d=%d,\n\trowpixels=%d, rowbytes=%d\n",
+		Machine->scrbitmap->width,  Machine->scrbitmap->height, 
+		Machine->scrbitmap->depth,
+		Machine->scrbitmap->rowpixels, Machine->scrbitmap->rowbytes);
+
+	fprintf(stderr, "bmsize=%d, mysize=%d,\n\twidthscale=%d, heightscale=%d, use_scanlines=%d\n",
+		Machine->scrbitmap->width*Machine->scrbitmap->height*bytes_per_pixel,
+                text_width*texnumx*text_height*texnumy*bytes_per_pixel,
+		heightscale, widthscale, use_scanlines);
 
 	fprintf (stderr, "visual (min_x=%d / min_y=%d)\n",
 		 visual.min_x, visual.min_y);
@@ -1059,11 +1092,9 @@ void InitTextures ()
 		 texpercx, texpercy);
 
 	fprintf (stderr,
-		 "row_len=%d, x_ofs=%d, bytes_per_pixel=%d, 1st pix. ofs=%d\n",
+		 "row_len=%d, x_ofs=%d, bytes_per_pixel=%d\n",
 		 (int) memory_x_len, (int) memory_x_start_offset,
-		 (int) bytes_per_pixel,
-		 (int) ((mem_start - (line_1 + memory_x_start_offset)) *
-			bytes_per_pixel));
+		 (int) bytes_per_pixel);
 
 	fflush(stderr);
       }
@@ -1428,7 +1459,7 @@ drawTextureDisplay (int useCabinet, int updateTexture)
     if (!useGLEXT78 && useColorIndex)
     	disp__glPixelTransferi (GL_MAP_COLOR, GL_TRUE);
 
-    if( use_blitter )
+    if( useColorBlitter )
     {
 	if(bytes_per_pixel==2)
 		gl_update_16_to_16bpp (Machine->scrbitmap);

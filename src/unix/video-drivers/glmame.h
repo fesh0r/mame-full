@@ -91,7 +91,7 @@ extern int dopersist;
 extern int useGLEXT78; /* paletted texture */
 extern int useColorIndex; 
 extern int isGL12;
-extern int use_blitter;
+extern int useColorBlitter;
 
 extern char *cabname; /* 512 bytes reserved ... */
 extern int cabspecified;

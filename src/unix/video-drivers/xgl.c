@@ -76,7 +76,7 @@ char * libGLUName=0;
 static char *gl_res = NULL;
 
 static const char * xgl_version_str = 
-	"\nGLmame v0.88, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.90, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -92,7 +92,7 @@ struct rc_option display_opts[] = {
    { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
      "0",		0,			0,		NULL,
      "Force the max width and height of one texture segment (default: autosize)" },
-   { "glforceblitmode", "glblit",		rc_bool,	&use_blitter,
+   { "glforceblitmode", "glblit",		rc_bool,	&useColorBlitter,
      "0",		0,			0,		NULL,
      "Force blitter for true color modes 15/32bpp (default: true)" },
    { "glext78",	        "glext",		rc_bool,	&useGLEXT78,

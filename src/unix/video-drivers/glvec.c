@@ -22,8 +22,6 @@
 
 #include "osinline.h"
 
-extern void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
-
 extern GLfloat cscrx1,cscry1,cscrz1,cscrx2,cscry2,cscrz2,
   cscrx3,cscry3,cscrz3,cscrx4,cscry4,cscrz4;
 extern GLfloat cscrwdx,cscrwdy,cscrwdz;
@@ -252,6 +250,8 @@ static void vector_begin_list(void)
  * needs to call this.
  */
 
+#define LIMIT8(x) (((x) < 0xff)? (x) : 0xff)
+
 void vector_add_point (int x, int y, int color, int intensity)
 {
   unsigned char r1,g1,b1;
@@ -275,7 +275,10 @@ void vector_add_point (int x, int y, int color, int intensity)
 	inbegin=1;
   }
 
-  osd_get_pen(Machine->pens[color],&r1,&g1,&b1);
+  b1 = LIMIT8( (color & 0xff) ) ;
+  g1 = LIMIT8( ((color >> 8) & 0xff) ) ;
+  r1 = LIMIT8( (color >> 16) );
+
   if(use_mod_ctable)
   {
 	  gamma_correction = osd_get_gamma();
