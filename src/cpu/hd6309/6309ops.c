@@ -1014,27 +1014,27 @@ INLINE void tfmpp( void )
 			default: /* F  */ done = TRUE; break;
 		}
 		
-		switch(tb&15) {
-			case  0: WM(D++, srcValue); break;
-			case  1: WM(X++, srcValue); break;
-			case  2: WM(Y++, srcValue); break;
-			case  3: WM(U++, srcValue); break;
-			case  4: WM(S++, srcValue); break;
-			case  5: /* PC */ done = TRUE; break;
-			case  6: /* W  */ done = TRUE; break;
-			case  7: /* V  */ done = TRUE; break;
-			case  8: /* A  */ done = TRUE; break;
-			case  9: /* B  */ done = TRUE; break;
-			case 10: /* CC */ done = TRUE; break;
-			case 11: /* DP */ done = TRUE; break;
-			case 12: /* 0  */ done = TRUE; break;
-			case 13: /* 0  */ done = TRUE; break;
-			case 14: /* E  */ done = TRUE; break;
-			default: /* F  */ done = TRUE; break;
-		}
-		
 		if ( !done )
 		{
+			switch(tb&15) {
+				case  0: WM(D++, srcValue); break;
+				case  1: WM(X++, srcValue); break;
+				case  2: WM(Y++, srcValue); break;
+				case  3: WM(U++, srcValue); break;
+				case  4: WM(S++, srcValue); break;
+				case  5: /* PC */ done = TRUE; break;
+				case  6: /* W  */ done = TRUE; break;
+				case  7: /* V  */ done = TRUE; break;
+				case  8: /* A  */ done = TRUE; break;
+				case  9: /* B  */ done = TRUE; break;
+				case 10: /* CC */ done = TRUE; break;
+				case 11: /* DP */ done = TRUE; break;
+				case 12: /* 0  */ done = TRUE; break;
+				case 13: /* 0  */ done = TRUE; break;
+				case 14: /* E  */ done = TRUE; break;
+				default: /* F  */ done = TRUE; break;
+			}
+		
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1071,27 +1071,27 @@ INLINE void tfmmm( void )
 			default: /* F  */ done = TRUE; break;
 		}
 		
-		switch(tb&15) {
-			case  0: WM(D--, srcValue); break;
-			case  1: WM(X--, srcValue); break;
-			case  2: WM(Y--, srcValue); break;
-			case  3: WM(U--, srcValue); break;
-			case  4: WM(S--, srcValue); break;
-			case  5: /* PC */ done = TRUE; break;
-			case  6: /* W  */ done = TRUE; break;
-			case  7: /* V  */ done = TRUE; break;
-			case  8: /* A  */ done = TRUE; break;
-			case  9: /* B  */ done = TRUE; break;
-			case 10: /* CC */ done = TRUE; break;
-			case 11: /* DP */ done = TRUE; break;
-			case 12: /* 0  */ done = TRUE; break;
-			case 13: /* 0  */ done = TRUE; break;
-			case 14: /* E  */ done = TRUE; break;
-			default: /* F  */ done = TRUE; break;
-		}
-		
 		if ( !done )
 		{
+			switch(tb&15) {
+				case  0: WM(D--, srcValue); break;
+				case  1: WM(X--, srcValue); break;
+				case  2: WM(Y--, srcValue); break;
+				case  3: WM(U--, srcValue); break;
+				case  4: WM(S--, srcValue); break;
+				case  5: /* PC */ done = TRUE; break;
+				case  6: /* W  */ done = TRUE; break;
+				case  7: /* V  */ done = TRUE; break;
+				case  8: /* A  */ done = TRUE; break;
+				case  9: /* B  */ done = TRUE; break;
+				case 10: /* CC */ done = TRUE; break;
+				case 11: /* DP */ done = TRUE; break;
+				case 12: /* 0  */ done = TRUE; break;
+				case 13: /* 0  */ done = TRUE; break;
+				case 14: /* E  */ done = TRUE; break;
+				default: /* F  */ done = TRUE; break;
+			}
+		
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1128,27 +1128,27 @@ INLINE void tfmpc( void )
 			default: /* F  */ done = TRUE; break;
 		}
 		
-		switch(tb&15) {
-			case  0: WM(D, srcValue); break;
-			case  1: WM(X, srcValue); break;
-			case  2: WM(Y, srcValue); break;
-			case  3: WM(U, srcValue); break;
-			case  4: WM(S, srcValue); break;
-			case  5: /* PC */ done = TRUE; break;
-			case  6: /* W  */ done = TRUE; break;
-			case  7: /* V  */ done = TRUE; break;
-			case  8: /* A  */ done = TRUE; break;
-			case  9: /* B  */ done = TRUE; break;
-			case 10: /* CC */ done = TRUE; break;
-			case 11: /* DP */ done = TRUE; break;
-			case 12: /* 0  */ done = TRUE; break;
-			case 13: /* 0  */ done = TRUE; break;
-			case 14: /* E  */ done = TRUE; break;
-			default: /* F  */ done = TRUE; break;
-		}
-		
 		if ( !done )
 		{
+			switch(tb&15) {
+				case  0: WM(D, srcValue); break;
+				case  1: WM(X, srcValue); break;
+				case  2: WM(Y, srcValue); break;
+				case  3: WM(U, srcValue); break;
+				case  4: WM(S, srcValue); break;
+				case  5: /* PC */ done = TRUE; break;
+				case  6: /* W  */ done = TRUE; break;
+				case  7: /* V  */ done = TRUE; break;
+				case  8: /* A  */ done = TRUE; break;
+				case  9: /* B  */ done = TRUE; break;
+				case 10: /* CC */ done = TRUE; break;
+				case 11: /* DP */ done = TRUE; break;
+				case 12: /* 0  */ done = TRUE; break;
+				case 13: /* 0  */ done = TRUE; break;
+				case 14: /* E  */ done = TRUE; break;
+				default: /* F  */ done = TRUE; break;
+			}
+		
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1185,27 +1185,27 @@ INLINE void tfmcp( void )
 			default: /* F  */ done = TRUE; break;
 		}
 		
-		switch(tb&15) {
-			case  0: WM(D++, srcValue); break;
-			case  1: WM(X++, srcValue); break;
-			case  2: WM(Y++, srcValue); break;
-			case  3: WM(U++, srcValue); break;
-			case  4: WM(S++, srcValue); break;
-			case  5: /* PC */ done = TRUE; break;
-			case  6: /* W  */ done = TRUE; break;
-			case  7: /* V  */ done = TRUE; break;
-			case  8: /* A  */ done = TRUE; break;
-			case  9: /* B  */ done = TRUE; break;
-			case 10: /* CC */ done = TRUE; break;
-			case 11: /* DP */ done = TRUE; break;
-			case 12: /* 0  */ done = TRUE; break;
-			case 13: /* 0  */ done = TRUE; break;
-			case 14: /* E  */ done = TRUE; break;
-			default: /* F  */ done = TRUE; break;
-		}
-		
 		if ( !done )
 		{
+			switch(tb&15) {
+				case  0: WM(D++, srcValue); break;
+				case  1: WM(X++, srcValue); break;
+				case  2: WM(Y++, srcValue); break;
+				case  3: WM(U++, srcValue); break;
+				case  4: WM(S++, srcValue); break;
+				case  5: /* PC */ done = TRUE; break;
+				case  6: /* W  */ done = TRUE; break;
+				case  7: /* V  */ done = TRUE; break;
+				case  8: /* A  */ done = TRUE; break;
+				case  9: /* B  */ done = TRUE; break;
+				case 10: /* CC */ done = TRUE; break;
+				case 11: /* DP */ done = TRUE; break;
+				case 12: /* 0  */ done = TRUE; break;
+				case 13: /* 0  */ done = TRUE; break;
+				case 14: /* E  */ done = TRUE; break;
+				default: /* F  */ done = TRUE; break;
+			}
+
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -2887,6 +2887,7 @@ INLINE void lda_di( void )
 INLINE void ldmd_di( void )
 {
 	DIRBYTE(MD);
+	UpdateState();
 }
 
 /* $97 STA direct -**0- */
