@@ -183,6 +183,9 @@ static MACHINE_DRIVER_START( odyssey2 )
 
 	MDRV_VIDEO_START( odyssey2 )
 	MDRV_VIDEO_UPDATE( odyssey2 )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, odyssey2_sound_interface)
 MACHINE_DRIVER_END
 
 ROM_START (odyssey2)

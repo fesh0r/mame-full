@@ -625,6 +625,7 @@ $(OBJ)/pmd85.a:   \
 $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/machine/odyssey2.o \
 	  $(OBJ)/mess/vidhrdw/odyssey2.o \
+	  $(OBJ)/mess/sndhrdw/odyssey2.o \
 	  $(OBJ)/mess/systems/odyssey2.o
 
 $(OBJ)/teamconc.a: \

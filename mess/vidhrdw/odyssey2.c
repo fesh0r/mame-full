@@ -154,6 +154,7 @@ union {
 static UINT8 collision;
 static int line;
 static double line_time;
+static UINT32 o2_snd_shift[2];
 
 /***************************************************************************
 
@@ -162,12 +163,15 @@ static double line_time;
 ***************************************************************************/
 VIDEO_START( odyssey2 )
 {
-    odyssey2_vh_hpos = 0;
+	o2_snd_shift[0] = Machine->sample_rate / 983;
+	o2_snd_shift[1] = Machine->sample_rate / 3933;
+
+	odyssey2_vh_hpos = 0;
 	odyssey2_display = (UINT8 *) auto_malloc(8 * 8 * 256);
 	if( !odyssey2_display )
 		return 1;
 	memset(odyssey2_display, 0, 8 * 8 * 256);
-    return 0;
+	return 0;
 }
 
 /***************************************************************************
@@ -206,7 +210,11 @@ extern READ_HANDLER ( odyssey2_video_r )
 
 extern WRITE_HANDLER ( odyssey2_video_w )
 {
-    o2_vdc.reg[offset]=data;
+	/* Update the sound */
+	if( offset >= 0xa7 && offset <= 0xaa )
+		stream_update( odyssey2_sh_channel, 0 );
+
+	o2_vdc.reg[offset]=data;
 }
 
 extern READ_HANDLER ( odyssey2_t1_r )
@@ -421,4 +429,48 @@ VIDEO_UPDATE( odyssey2 )
     return;
 }
 
+void odyssey2_sh_update( int param, INT16 *buffer, int length )
+{
+	static UINT32 signal;
+	static UINT16 count = 0;
+	int ii;
 
+	/* Generate the signal */
+	signal = o2_vdc.s.shift3 | (o2_vdc.s.shift2 << 8) | (o2_vdc.s.shift1 << 16);
+
+	if( o2_vdc.s.sound & 0x80 )	/* Sound is enabled */
+	{
+		for( ii = 0; ii < length; ii++, buffer++ )
+		{
+			*buffer = 0;
+			*buffer = signal & 0x1;
+			if( ++count >= o2_snd_shift[(o2_vdc.s.sound & 0x20) >> 4] )
+			{
+				count = 0;
+				signal >>= 1;
+				/* Loop sound */
+				if( o2_vdc.s.sound & 0x40 )
+				{
+					signal |= *buffer << 23;
+				}
+			}
+
+			/* Throw an interrupt if enabled */
+			if( o2_vdc.s.control & 0x4 )
+			{
+				cpu_set_irq_line(0, 1, HOLD_LINE); /* Is this right? */
+			}
+
+			/* Adjust volume */
+			*buffer *= o2_vdc.s.sound & 0xf;
+			/* Pump the volume up */
+			*buffer <<= 10;
+		}
+	}
+	else
+	{
+		/* Sound disabled, so clear the buffer */
+		for( ii = 0; ii < length; ii++, buffer++ )
+			*buffer = 0;
+	}
+}

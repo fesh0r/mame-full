@@ -21,8 +21,11 @@ extern INTERRUPT_GEN( odyssey2_line );
 extern READ_HANDLER ( odyssey2_video_r );
 extern WRITE_HANDLER ( odyssey2_video_w );
 
-
-
+/* sndhrdw/odyssey2.c */
+extern int odyssey2_sh_channel;
+extern struct CustomSound_interface odyssey2_sound_interface;
+extern int odyssey2_sh_start(const struct MachineSound* driver);
+extern void odyssey2_sh_update( int param, INT16 *buffer, int length );
 
 /* i/o ports */
 extern READ_HANDLER ( odyssey2_bus_r );
