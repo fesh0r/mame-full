@@ -1130,7 +1130,7 @@ void overlay_remap(void)
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
 		osd_get_pen (i, &r, &g, &b);
-		artwork_overlay->brightness[Machine->pens[i]]=(222*r+707*g+71*b)/1000;
+		artwork_overlay->brightness[i]=(222*r+707*g+71*b)/1000;
 	}
 
 	/* Erase vector bitmap same way as in vector.c */
