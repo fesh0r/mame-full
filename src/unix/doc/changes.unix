@@ -16,6 +16,13 @@ Release 0.56.1
 	  the Playstation gamepad.  (Bill Adams)
 	- Added support for SDL under BeOS.  Sound is not currently supported,
 	  however.  (Jack Burton)
+	- Fixed a bug that prevented romalizer from working.  (Shyouzou
+	  Sugitani)
+	- The xgl target should work much better.  (Sven Goethel)
+	- The -hotrod/-hr and -hotrodse/-hrse should actually work now.
+	- Fixed a bunch of warnings that occurred when linking with GNU binutils
+	  using -warn-common.
+	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
 
 Release 0.55.2
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
