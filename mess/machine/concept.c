@@ -8,10 +8,11 @@
 #include "vidhrdw/generic.h"
 #include "includes/concept.h"
 #include "machine/6522via.h"
-#include "machine/mm58274c.h"	/* hopefully, the mm58274 is compatible with mm58174 (I haven't checked) */
+#include "machine/mm58274c.h"	/* mm58274 seems to be compatible with mm58174 */
 //#include "includes/6551.h"
 #include "includes/wd179x.h"
 #include "cpu/m68000/m68k.h"
+#include "devices/basicdsk.h"
 
 /* interrupt priority encoder */
 static UINT8 pending_interrupts;
@@ -23,7 +24,7 @@ enum
 	SR0INT_level,		/* serial port 0 acia */
 	TIMINT_level,		/* via */
 	KEYINT_level,		/* keyboard acia */
-	MIINT_level			/* reserved */
+	NMIINT_level			/* reserved */
 };
 
 /* Clock interface */
@@ -56,6 +57,17 @@ static struct via6522_interface concept_via6522_intf =
 	NULL,
 };
 
+/* keyboard interface */
+enum
+{
+	KeyQueueSize = 32,
+	MaxKeyMessageLen = 1
+};
+static UINT8 KeyQueue[KeyQueueSize];
+static int KeyQueueHead;
+static int KeyQueueLen;
+static UINT32 KeyStateSave[/*4*/3];
+
 /* Expansion slots */
 
 struct
@@ -69,6 +81,35 @@ struct
 static void concept_fdc_init(int slot);
 
 
+DEVICE_LOAD( corvus_floppy )
+{
+	int id = image_index_in_device(image);
+
+
+	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
+	{
+#if 1
+		/* SSSD 8" */
+		basicdsk_set_geometry(image, 77, 1, 26, 128, 1, 0, 0);
+#elif 0
+		/* DSSD 8" (according to ROMs) */
+		basicdsk_set_geometry(image, 77, 1, 26, 256, 1, 0, 0);
+#elif 0
+		/* Apple II DSDD 5"1/4 (according to ROMs) */
+		basicdsk_set_geometry(image, 35, 2, 16, 256, 1, 0, 0);
+#elif 0
+		/* actual formats found */
+		basicdsk_set_geometry(image, 80, 2, 16, 256, 1, 0, 0);
+#else
+		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, 0);
+#endif
+
+		return INIT_PASS;
+	}
+
+	return INIT_FAIL;
+}
+
 MACHINE_INIT(concept)
 {
 	cpu_setbank(1, memory_region(REGION_CPU1) + rom0_base);
@@ -78,11 +119,16 @@ MACHINE_INIT(concept)
 
 	/* configure via */
 	via_config(0, & concept_via6522_intf);
+	via_set_clock(0, 1022750);		/* 16.364 MHZ / 16 */
 	via_reset();
 
 	/* initialize clock interface */
 	clock_enable = 0/*1*/;
-	mm58274c_init(0);
+	mm58274c_init(0, 0);
+
+	/* clear keyboard interface state */
+	KeyQueueHead = KeyQueueLen = 0;
+	memset(KeyStateSave, 0, sizeof(KeyStateSave));
 
 	/* initialize expansion slots */
 	memset(expansion_slots, 0, sizeof(expansion_slots));
@@ -141,6 +187,56 @@ static void concept_set_interrupt(int level, int state)
 	else
 		/* clear all interrupts */
 		cpu_set_irq_line_and_vector(0, M68K_IRQ_1, CLEAR_LINE, M68K_INT_ACK_AUTOVECTOR);
+}
+
+INLINE void post_in_KeyQueue(int keycode)
+{
+	KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
+	KeyQueueLen++;
+}
+
+static void poll_keyboard(void)
+{
+	UINT32 keystate;
+	UINT32 key_transitions;
+	int i, j;
+	int keycode;
+
+
+	for (i=0; (i</*4*/3) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); i++)
+	{
+		keystate = readinputport(input_port_keyboard_concept + i*2)
+					| (readinputport(input_port_keyboard_concept + i*2 + 1) << 16);
+		key_transitions = keystate ^ KeyStateSave[i];
+		if (key_transitions)
+		{
+			for (j=0; (j<32) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); j++)
+			{
+				if ((key_transitions >> j) & 1)
+				{
+					keycode = (i << 5) | j;
+
+					if (((keystate >> j) & 1))
+					{
+						/* key is pressed */
+						KeyStateSave[i] |= (1 << j);
+						keycode |= 0x80;
+					}
+					else
+						/* key is released */
+						KeyStateSave[i] &= ~ (1 << j);
+
+					post_in_KeyQueue(keycode);
+					concept_set_interrupt(KEYINT_level, 1);
+				}
+			}
+		}
+	}
+}
+
+INTERRUPT_GEN( concept_interrupt )
+{
+	poll_keyboard();
 }
 
 /*
@@ -214,18 +310,17 @@ READ16_HANDLER(concept_io_r)
 		{
 		case 1:
 			/* IO1 registers */
-			break;
-
 		case 2:
 			/* IO2 registers */
-			break;
-
 		case 3:
 			/* IO3 registers */
-			break;
-
 		case 4:
 			/* IO4 registers */
+			{
+				int slot = ((offset >> 4) & 7) - 1;
+				if (expansion_slots[slot].reg_read)
+					return expansion_slots[slot].reg_read(offset & 0xf);
+			}
 			break;
 
 		default:
@@ -236,18 +331,17 @@ READ16_HANDLER(concept_io_r)
 
 	case 1:
 		/* IO1 ROM */
-		break;
-
 	case 2:
 		/* IO2 ROM */
-		break;
-
 	case 3:
 		/* IO3 ROM */
-		break;
-
 	case 4:
 		/* IO4 ROM */
+		{
+			int slot = ((offset >> 8) & 7) - 1;
+			if (expansion_slots[slot].rom_read)
+				return expansion_slots[slot].rom_read(offset & 0xff);
+		}
 		break;
 
 	case 5:
@@ -266,11 +360,38 @@ READ16_HANDLER(concept_io_r)
 		{
 		case 0:
 			/* NKBP keyboard */
+			switch (offset & 0xf)
+			{
+				int reply;
+
+			case 0:
+				/* data */
+				reply = 0;
+
+				if (KeyQueueLen)
+				{
+					reply = KeyQueue[KeyQueueHead];
+					KeyQueueHead = (KeyQueueHead + 1) % KeyQueueSize;
+					KeyQueueLen--;
+				}
+
+				if (!KeyQueueLen)
+					concept_set_interrupt(KEYINT_level, 0);
+
+				return reply;
+
+			case 1:
+				/* always tell transmit is empty */
+				reply = KeyQueueLen ? 0x98 : 0x10;
+				break;
+			}
+			break;
 		case 1:
 			/* NSR0 data comm port 0 */
 		case 2:
 			/* NSR1 data comm port 1 */
-			/*return acia_6551_r((offset >> 4) & 7, offset & 0x3);*/
+			if ((offset & 0xf) == 1)
+				return 0x10;
 			break;
 
 		case 3:
@@ -316,18 +437,17 @@ WRITE16_HANDLER(concept_io_w)
 		{
 		case 1:
 			/* IO1 registers */
-			break;
-
 		case 2:
 			/* IO2 registers */
-			break;
-
 		case 3:
 			/* IO3 registers */
-			break;
-
 		case 4:
 			/* IO4 registers */
+			{
+				int slot = ((offset >> 4) & 7) - 1;
+				if (expansion_slots[slot].reg_write)
+					expansion_slots[slot].reg_write(offset & 0xf, data);
+			}
 			break;
 
 		default:
@@ -338,18 +458,17 @@ WRITE16_HANDLER(concept_io_w)
 
 	case 1:
 		/* IO1 ROM */
-		break;
-
 	case 2:
 		/* IO2 ROM */
-		break;
-
 	case 3:
 		/* IO3 ROM */
-		break;
-
 	case 4:
 		/* IO4 ROM */
+		{
+			int slot = ((offset >> 8) & 7) - 1;
+			if (expansion_slots[slot].rom_write)
+				expansion_slots[slot].rom_write(offset & 0xff, data);
+		}
 		break;
 
 	case 5:
