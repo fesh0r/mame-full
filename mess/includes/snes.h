@@ -44,12 +44,12 @@
 #define W12SEL			0x2123
 #define W34SEL			0x2124
 #define WOBJSEL			0x2125
-#define WH0				0x2126
-#define WH1				0x2127
-#define WH2				0x2128
-#define WH3				0x2129
-#define WBGLOG			0x212A
-#define WOBJLOG			0x212B
+#define WH0				0x2126	/* pppppppp = p: Left position of window 1 */
+#define WH1				0x2127	/* pppppppp = p: Right position of window 1 */
+#define WH2				0x2128	/* pppppppp = p: Left position of window 2 */
+#define WH3				0x2129	/* pppppppp = p: Right position of window 2 */
+#define WBGLOG			0x212A	/* aabbccdd = a: BG4 params | b: BG3 params | c: BG2 params | d: BG1 params */
+#define WOBJLOG			0x212B	/* ----ccoo = c: Colour window params | o: Object window params */
 #define TM				0x212C
 #define TS				0x212D
 #define TMW				0x212E
@@ -283,9 +283,9 @@
 #define DSP_MVOLR		0x1C
 #define DSP_EVOLL		0x2C
 #define DSP_EVOLR		0x3C
-#define DSP_KON			0x4C
-#define DSP_KOF			0x5C
-#define DSP_FLG			0x6C
+#define DSP_KON			0x4C	/* 01234567 = Key on for voices 0-7 */
+#define DSP_KOF			0x5C	/* 01234567 = Key off for voices 0-7 */
+#define DSP_FLG			0x6C	/* rme--n-- = r:Soft reset | m:Mute | e:External memory through echo | n:Clock of noise generator */
 #define DSP_ENDX		0x7C
 #define DSP_EFB			0x0D
 #define DSP_PMON		0x2D
@@ -293,7 +293,7 @@
 #define DSP_EOV			0x4D
 #define DSP_DIR			0x5D
 #define DSP_ESA			0x6D
-#define DSP_EDL			0x7D
+#define DSP_EDL			0x7D	/* ----dddd = d: echo delay */
 #define DSP_FIR_C0		0x0F
 #define DSP_FIR_C1		0x1F
 #define DSP_FIR_C2		0x2F
@@ -304,17 +304,18 @@
 #define DSP_FIR_C7		0x7F
 
 extern MACHINE_INIT( snes );
+extern MACHINE_INIT( snespal );
 extern MACHINE_STOP( snes );
-extern VIDEO_UPDATE( snes );
 
 extern READ_HANDLER( snes_r_bank1 );
 extern READ_HANDLER( snes_r_bank2 );
 extern READ_HANDLER( snes_r_bank3 );
 extern READ_HANDLER( snes_r_bank4 );
+extern READ_HANDLER( snes_r_io );
+extern READ_HANDLER( snes_r_sram );
 extern WRITE_HANDLER( snes_w_bank1 );
 extern WRITE_HANDLER( snes_w_bank2 );
 extern WRITE_HANDLER( snes_w_bank4 );
-extern READ_HANDLER( snes_r_io );
 extern WRITE_HANDLER( snes_w_io );
 extern int snes_load_rom(int id, void *fp, int open_mode);
 extern void snes_scanline_interrupt(void);
@@ -323,25 +324,27 @@ extern void snes_hdma_init(void);
 extern void snes_hdma(void);
 extern void snes_refresh_scanline( UINT16 curline );
 
-/* Video related */
-extern UINT8  *snes_vram;		/* Video RAM (Should be 16-bit, but it's easier this way) */
-extern UINT16 *snes_cgram;		/* Colour RAM */
-extern UINT16 *snes_oam;		/* Object Attribute Memory */
-extern UINT8  *snes_ram;		/* Main memory */
-extern UINT16 bg_hoffset[4];	/* Background horizontal scroll offsets */
-extern UINT16 bg_voffset[4];	/* Background vertical scroll offsets */
-extern UINT16 mode7_data[6];	/* Data for mode7 matrix calculation */
-extern UINT8  ppu_obj_size[2];	/* Objects sizes */
+/* (PPU) Video related */
+extern UINT8  *snes_vram;			/* Video RAM (Should be 16-bit, but it's easier this way) */
+extern UINT16 *snes_cgram;			/* Colour RAM */
+extern UINT16 *snes_oam;			/* Object Attribute Memory */
+extern UINT8  *snes_ram;			/* Main memory */
+extern UINT16 bg_hoffset[4];		/* Background horizontal scroll offsets */
+extern UINT16 bg_voffset[4];		/* Background vertical scroll offsets */
+extern UINT16 mode7_data[6];		/* Data for mode7 matrix calculation */
+extern UINT8  ppu_obj_size[2];		/* Objects sizes */
+extern UINT8  ppu_update_palette;	/* Palette needs updating */
+extern VIDEO_UPDATE( snes );
 
-/* Sound related */
+/* (APU) Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */
-extern UINT8 spc_port_in[4];
-extern UINT8 spc_port_out[4];
-extern READ_HANDLER ( spc_r_io );
-extern WRITE_HANDLER ( spc_w_io );
+extern UINT8 spc_port_in[4];	/* SPC input port */
+extern UINT8 spc_port_out[4];	/* SPC output port */
+extern READ_HANDLER( spc_r_io );
+extern WRITE_HANDLER( spc_w_io );
 extern int snes_sh_start( const struct MachineSound *driver );
 extern void snes_sh_update( int param, INT16 **buffer, int length );
-/* Just until we get sound working */
+/* Fake APU functions for when sound is disabled */
 extern void snes_fakeapu_w_port( UINT8 port, UINT8 data );
 extern UINT8 snes_fakeapu_r_port( UINT8 port );
 
