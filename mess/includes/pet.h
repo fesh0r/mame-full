@@ -17,9 +17,9 @@
 #endif
 
 /* call to init videodriver */
-extern void pet_vh_init ();
-extern void pet80_vh_init ();
-extern void superpet_vh_init ();
+extern void pet_vh_init (void);
+extern void pet80_vh_init (void);
+extern void superpet_vh_init (void);
 void pet_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 void pet40_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 void pet80_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
