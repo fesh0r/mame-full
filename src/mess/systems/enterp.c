@@ -662,7 +662,7 @@ static const struct IODevice io_ep128[] = {
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
-                "dsk\0",                           /* file extensions */
+		"dsk\0",            /* file extensions */
 		NULL,               /* private */
 		NULL,				/* id */
 		enterprise_floppy_init,/* init */
@@ -672,7 +672,8 @@ static const struct IODevice io_ep128[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
-		NULL,				/* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */

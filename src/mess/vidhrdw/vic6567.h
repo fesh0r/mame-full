@@ -1,6 +1,9 @@
 #ifndef __VIC6567_H_
 #define __VIC6567_H_
 
+
+#include "praster.h"
+
 /*
  * if you need this chip in another mame/mess emulation than let it me know
  * I will split this from the c64 driver
@@ -19,9 +22,11 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 						  int (*dma_read_color) (int), void (*irq) (int),
 						  void (*param_port_changed)(int));
 
+extern void vic2_set_rastering(int onoff);
+
 #define VIC6567_VRETRACERATE 60
 #define VIC6569_VRETRACERATE 50
-#define VIC2_VRETRACERATE (vic2_pal?VIC6569_VRETRACERATE:VIC6567_VRETRACERATE)
+#define VIC2_VRETRACERATE (vic2.pal?VIC6569_VRETRACERATE:VIC6567_VRETRACERATE)
 #define VIC2_HRETRACERATE 15625
 
 /* to be inserted in MachineDriver-Structure */
@@ -39,13 +44,13 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 /* + sprite + */
 /* but system clock 1 megahertz */
 /* cpu driven with one (visible screen area) */
-#define VIC2_CLOCK ((vic2_pal?VIC6569_CLOCK:VIC6567_CLOCK))
+#define VIC2_CLOCK ((vic2.pal?VIC6569_CLOCK:VIC6567_CLOCK))
 
 /* pal 50 Hz vertical screen refresh, screen consists of 312 lines
  * ntsc 60 Hz vertical screen refresh, screen consists of 262 lines */
 #define VIC6567_LINES 261
 #define VIC6569_LINES 312
-#define VIC2_LINES (vic2_pal?VIC6569_LINES:VIC6567_LINES)
+#define VIC2_LINES (vic2.pal?VIC6569_LINES:VIC6567_LINES)
 
 extern int vic2_vh_start (void);
 extern void vic2_vh_stop (void);
@@ -73,9 +78,11 @@ int vic3_p5_r(void);
 /* to be called each vertical retrace */
 extern int vic2_frame_interrupt (void);
 
+extern void (*vic2_display_state)(PRASTER *this); /* calls machine after rastering frame*/
+
 /* private area */
 
-extern UINT8 vic2[];
-extern bool vic2_pal;
+//extern UINT8 vic2[];
+//extern bool vic2_pal;
 
 #endif

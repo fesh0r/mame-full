@@ -9,15 +9,14 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* from mess/systems/jupiter.c */
+/* from mess/systems/nascom1.c */
 extern struct GfxLayout nascom1_charlayout;
 
 int	nascom1_vh_start (void)
 {
 
-	if( generic_bitmapped_vh_start() )
+	if( generic_vh_start() )
 		return 1;
-	memset (videoram, videoram_size, 0);
     return 0;
 }
 

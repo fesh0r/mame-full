@@ -111,7 +111,7 @@ memory map :
 #include "vidhrdw/generic.h"
 #include "mess/machine/tms9901.h"
 #include "mess/vidhrdw/tms9928a.h"
-//#include "tms9900.h"
+#include "cpu/tms9900/tms9900.h"
 
 static int ROM_paged;
 
@@ -188,7 +188,7 @@ static unsigned short ti99_2_colortable[] =
 #define TI99_2_PALETTE_SIZE sizeof(ti99_2_palette)/3
 #define TI99_2_COLORTABLE_SIZE sizeof(ti99_2_colortable)/2
 
-static void ti99_2_init_palette(unsigned char *palette, unsigned short *colortable)
+static void ti99_2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	memcpy(palette, & ti99_2_palette, sizeof(ti99_2_palette));
 	memcpy(colortable, & ti99_2_colortable, sizeof(ti99_2_colortable));
@@ -260,23 +260,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct MemoryReadAddress ti99_2_readmem[] =
 {
-	{ 0x0000, 0x3fff, MRA_ROM },          /*system ROM*/
+	{ 0x0000, 0x3fff, MRA_ROM },            /*system ROM*/
 	{ 0x4000, 0x5fff, /*MRA_ROM*/MRA_BANK1 },   /*system ROM, banked on 32kb ROMs protos*/
-	{ 0x6000, 0xdfff, MRA_NOP },          /*free for expansion*/
-	{ 0xe000, 0xefff, MRA_RAM },          /*system RAM*/
-	{ 0xf000, 0xffff, MRA_NOP },          /*processor RAM or free*/
+	{ 0x6000, 0xdfff, MRA_NOP },            /*free for expansion*/
+	{ 0xe000, 0xefff, MRA_RAM },            /*system RAM*/
+	{ 0xf000, 0xffff, MRA_NOP },            /*processor RAM or free*/
 	{ -1 }    /* end of table */
 };
 
 static struct MemoryWriteAddress ti99_2_writemem[] =
 {
-	{ 0x0000, 0x3fff, MWA_ROM },          /*system ROM*/
-	{ 0x4000, 0x5fff, /*MWA_ROM*/MWA_BANK1 },          /*system ROM, banked on 32kb ROMs protos*/
-	{ 0x6000, 0xdfff, MWA_NOP },          /*free for expansion*/
-	{ 0xe000, 0xebff, MWA_RAM },          /*system RAM*/
-	{ 0xec00, 0xeeff, ti99_2_video_w, & videoram },  /*system RAM : used for video*/
-	{ 0xef00, 0xefff, MWA_RAM },          /*system RAM*/
-	{ 0xf000, 0xffff, MWA_NOP },          /*processor RAM or free*/
+	{ 0x0000, 0x3fff, MWA_ROM },            /*system ROM*/
+	{ 0x4000, 0x5fff, /*MWA_ROM*/MWA_BANK1 },       /*system ROM, banked on 32kb ROMs protos*/
+	{ 0x6000, 0xdfff, MWA_NOP },            /*free for expansion*/
+	{ 0xe000, 0xebff, MWA_RAM },            /*system RAM*/
+	{ 0xec00, 0xeeff, ti99_2_video_w, & videoram }, /*system RAM : used for video*/
+	{ 0xef00, 0xefff, MWA_RAM },            /*system RAM*/
+	{ 0xf000, 0xffff, MWA_NOP },            /*processor RAM or free*/
 	{ -1 }    /* end of table */
 };
 
@@ -343,12 +343,12 @@ static struct IOWritePort ti99_2_writeport[] =
 };
 
 /* read keys in the current row */
-int ti99_2_read_kbd(int offset)
+static int ti99_2_read_kbd(int offset)
 {
 	return readinputport(KeyRow);
 }
 
-int ti99_2_read_misc_cru(int offset)
+static int ti99_2_read_misc_cru(int offset)
 {
 	return 0;
 }
@@ -425,17 +425,24 @@ INPUT_PORTS_START(ti99_2)
 		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 
 	PORT_START    /* col 6 */
-		PORT_BITX(0xFF, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+		PORT_BITX(0xFF, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
 	PORT_START    /* col 7 */
-		PORT_BITX(0xFF, IP_ACTIVE_LOW, IPT_UNUSED, "unused", IP_KEY_NONE, IP_JOY_NONE)
+		PORT_BITX(0xFF, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
 INPUT_PORTS_END
 
 
 static struct tms9995reset_param ti99_2_processor_config =
 {
-	1   /* enable automatic wait state generation */
+#if 0
+	REGION_CPU1,/* region for processor RAM */
+	0xf000,     /* offset : this area is unused in our region, and matches the processor address */
+	0xf0fc,		/* offset for the LOAD vector */
+	NULL,       /* no IDLE callback */
+	1,          /* use fast IDLE */
+#endif
+	1           /* enable automatic wait state generation */
 };
 
 static struct MachineDriver machine_driver_ti99_2 =

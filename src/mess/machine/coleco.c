@@ -21,9 +21,10 @@ static int JoyMode=0;
 //static unsigned char *ROM;
 
 
-int coleco_id_rom (const char *name, const char *gamename)
+int coleco_id_rom (int id)
 {
 	FILE *romfile;
+	const char *gamename = device_filename(IO_CARTSLOT,id);
 	unsigned char magic[2];
 	int retval;
 
@@ -38,7 +39,7 @@ int coleco_id_rom (const char *name, const char *gamename)
 	if (strlen(gamename)==0)
 		return 1;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 		return 0;
 
 	retval = 0;
@@ -53,9 +54,10 @@ int coleco_id_rom (const char *name, const char *gamename)
 	return retval;
 }
 
-int coleco_load_rom (int id, char *rom_name)
+int coleco_load_rom (int id)
 {
     FILE *cartfile;
+	const char *rom_name = device_filename(IO_CARTSLOT,id);
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -73,15 +75,11 @@ int coleco_load_rom (int id, char *rom_name)
 	{
 		if (errorlog) fprintf(errorlog,"Coleco - warning: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	else if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		/* try the parent directory */
-		if(!(cartfile = osd_fopen (Machine->gamedrv->clone_of->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
-		{
-			if (errorlog)
-				fprintf(errorlog,"Coleco - Unable to locate cartridge: %s\n",rom_name);
-			return 1;
-		}
+		if (errorlog)
+			fprintf(errorlog,"Coleco - Unable to locate cartridge: %s\n",rom_name);
+		return 1;
 	}
 
 

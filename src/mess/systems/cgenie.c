@@ -32,10 +32,10 @@ NMI
 
 extern UINT8 *cgenie_fontram;
 
-extern int cgenie_cassette_init(int id, const char *name);
-extern int cgenie_floppy_init(int id, const char *name);
-extern int cgenie_rom_load(int id, const char *name);
-extern int cgenie_rom_id(const char *name, const char * gamename);
+extern int cgenie_cassette_init(int id);
+extern int cgenie_floppy_init(int id);
+extern int cgenie_rom_load(int id);
+extern int cgenie_rom_id(int id);
 
 extern int cgenie_vh_start(void);
 extern void cgenie_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
@@ -281,16 +281,16 @@ INPUT_PORTS_START( cgenie )
 		PORT_BITX(0x80, 0x00, IPT_KEYBOARD, "7.7: (ALTGR)",KEYCODE_RALT,        IP_JOY_NONE )
 
 	PORT_START /* IN9 */
-	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_X | IPF_PLAYER1,	40, 0, 15, 0x00, 0xcf )
+	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_X | IPF_PLAYER1,	40, 0, 0x00, 0xcf )
 
 	PORT_START /* IN10 */
-	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1,  40, 0, 15, 0x00, 0xcf )
+	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER1,  40, 0, 0x00, 0xcf )
 
 	PORT_START /* IN11 */
-	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_X | IPF_PLAYER2,	40, 0, 15, 0x00, 0xcf )
+	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_X | IPF_PLAYER2,	40, 0, 0x00, 0xcf )
 
 	PORT_START /* IN12 */
-	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2,  40, 0, 15, 0x00, 0xcf )
+	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2,  40, 0, 0x00, 0xcf )
 
 	/* Joystick Keypad */
 	/* keypads were organized a 3 x 4 matrix and it looked     */
@@ -550,6 +550,7 @@ static const struct IODevice io_cgenie[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
@@ -568,6 +569,7 @@ static const struct IODevice io_cgenie[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
@@ -586,6 +588,7 @@ static const struct IODevice io_cgenie[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

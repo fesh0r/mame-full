@@ -144,9 +144,9 @@ void kaypro_stop_machine(void)
 	cpm_exit();
 }
 
-int kaypro_floppy_init(int id, const char *name)
+int kaypro_floppy_init(int id)
 {
-	return cpm_floppy_init(id,name);
+	return cpm_floppy_init(id);
 }
 
 /******************************************************

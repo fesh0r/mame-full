@@ -1,10 +1,14 @@
 /***************************************************************************
+	commodore c64 home computer
 
-
+    peter.trauner@jk.uni-linz.ac.at
+    documentation
+     www.funet.fi
 ***************************************************************************/
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
+#include "cpu/z80/z80.h"
 
 #define VERBOSE_DBG 1
 #include "cbm.h"
@@ -13,6 +17,7 @@
 #include "vc1541.h"
 #include "vc20tape.h"
 #include "mess/vidhrdw/vic6567.h"
+#include "mess/vidhrdw/vdc8563.h"
 #include "mess/sndhrdw/sid6581.h"
 
 #include "c128.h"
@@ -114,8 +119,12 @@ int c64_cia0_port_b_r (int offset)
 		if (!vic2e_k2_r ())
 			value &= c128_keyline[2];
 	}
-	if (c65&&!vic2e_k0_r ())
-		value&=c65_keyline;
+	if (c65) {
+		if (!(c65_6511_port&2))
+			value&=c65_keyline[0];
+		if (!(c65_6511_port&4))
+			value&=c65_keyline[1];
+	}
 
 	return value;
 }
@@ -137,7 +146,15 @@ static void c64_irq (int level)
 	if (level != old_level)
 	{
 		DBG_LOG (3, "mos6510", (errorlog, "irq %s\n", level ? "start" : "end"));
-		cpu_set_irq_line (0, M6510_INT_IRQ, level);
+		if (c128) {
+			if (0&&(cpu_getactivecpu()==0)) {
+				cpu_set_irq_line (0, Z80_IRQ_INT, level);
+			} else {
+				cpu_set_irq_line (1, M6510_INT_IRQ, level);
+			}			
+		} else {
+			cpu_set_irq_line (0, M6510_INT_IRQ, level);
+		}
 		old_level = level;
 	}
 }
@@ -669,6 +686,7 @@ static void c64_common_driver_init (void)
 		vic6567_init (0, c64_pal, c64_dma_read, c64_dma_read_color,
 					  c64_vic_interrupt);
 	}
+	raster1.display_state=c64_state;
 }
 
 void c64_driver_init (void)
@@ -696,7 +714,7 @@ void ultimax_driver_init (void)
 void c64gs_driver_init (void)
 {
 	c64_tape_on = 0;
-	c64_cia1_on = 1;
+    c64_cia1_on = 1;
 	c64_common_driver_init ();
 }
 
@@ -753,7 +771,7 @@ void c64_shutdown_machine (void)
 {
 }
 
-int c64_rom_id (const char *name, const char *machinename)
+int c64_rom_id (int id)
 {
 	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */
 	/* jumped to offset 0 (0x8000) */
@@ -762,11 +780,12 @@ int c64_rom_id (const char *name, const char *machinename)
 	{0xc3, 0xc2, 0xcd, 0x38, 0x30}, buffer[sizeof (magic)];
 	FILE *romfile;
 	char *cp;
+	const char *name=device_filename(IO_CARTSLOT,id);
 
 	if (errorlog)
 		fprintf (errorlog, "c64_rom_id %s\n", name);
 	retval = 0;
-	if (!(romfile = osd_fopen (machinename, name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog)
 			fprintf (errorlog, "rom %s not found\n", name);
@@ -933,17 +952,46 @@ int c64_frame_interrupt (void)
 {
 	static int quickload = 0;
 	static int nmilevel = 0;
+	static int monitor=0;
 	int value, value2;
 
 	if (nmilevel != KEY_RESTORE)
 	{
-		cpu_set_nmi_line (0, KEY_RESTORE);
+		if (c128) {
+			if (cpu_getactivecpu()==0) { /* z80 */
+				cpu_set_nmi_line (0, KEY_RESTORE);
+			} else {
+				cpu_set_nmi_line (1, KEY_RESTORE);
+			}
+		} else {
+			cpu_set_nmi_line (0, KEY_RESTORE);
+		}
 		nmilevel = KEY_RESTORE;
 	}
 
 	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, c64_memory);
+		cbm_quick_open (0, 0, c64_memory);
 	quickload = QUICKLOAD;
+
+	if (c128) {
+		if (MONITOR_TV!=monitor) {
+			if (MONITOR_TV) {
+				vic2_set_rastering(0);
+				vdc8563_set_rastering(1);
+#if 0
+				osd_set_display(656,216,0);
+#endif
+			} else {
+				vic2_set_rastering(1);
+				vdc8563_set_rastering(0);
+#if 0
+				osd_set_display(336,216,0);
+#endif
+			}
+			vdc8563_update();
+			monitor=MONITOR_TV;
+		}
+	}
 
 	value = 0xff;
 	if (c128) {
@@ -1001,14 +1049,12 @@ int c64_frame_interrupt (void)
 		value &= ~0x20;
 	if (KEY_Z)
 		value &= ~0x10;
-	if (KEY_4)
-		value &= ~8;
+	if (KEY_4) value &= ~8;
 	if (KEY_A)
 		value &= ~4;
 	if (KEY_W)
 		value &= ~2;
-	if (KEY_3)
-		value &= ~1;
+	if (KEY_3) value &= ~1;
 	c64_keyline[1] = value;
 
 	value = 0xff;
@@ -1020,14 +1066,12 @@ int c64_frame_interrupt (void)
 		value &= ~0x20;
 	if (KEY_C)
 		value &= ~0x10;
-	if (KEY_6)
-		value &= ~8;
+	if (KEY_6) value &= ~8;
 	if (KEY_D)
 		value &= ~4;
 	if (KEY_R)
 		value &= ~2;
-	if (KEY_5)
-		value &= ~1;
+	if (KEY_5) value &= ~1;
 	c64_keyline[2] = value;
 
 	value = 0xff;
@@ -1039,14 +1083,12 @@ int c64_frame_interrupt (void)
 		value &= ~0x20;
 	if (KEY_B)
 		value &= ~0x10;
-	if (KEY_8)
-		value &= ~8;
+	if (KEY_8) value &= ~8;
 	if (KEY_G)
 		value &= ~4;
 	if (KEY_Y)
 		value &= ~2;
-	if (KEY_7)
-		value &= ~1;
+	if (KEY_7) value &= ~1;
 	c64_keyline[3] = value;
 
 	value = 0xff;
@@ -1119,29 +1161,26 @@ int c64_frame_interrupt (void)
 	if (c65) {
 		if (C65_KEY_STOP)
 			value &= ~0x80;
+		if (C65_KEY_SPACE)
+			value &= ~0x10;
+		if (C65_KEY_CTRL)
+			value &= ~4;
 	} else {
 		if (KEY_STOP)
 			value &= ~0x80;
+		if (KEY_SPACE)
+			value &= ~0x10;
+		if (KEY_CTRL)
+			value &= ~4;
 	}
 	if (KEY_Q)
 		value &= ~0x40;
 	if (KEY_CBM)
 		value &= ~0x20;
-	if (c65) {
-		if (C65_KEY_SPACE)
-			value &= ~0x10;
-	} else {
-		if (KEY_SPACE)
-			value &= ~0x10;
-	}
-	if (KEY_2)
-		value &= ~8;
-	if (KEY_CTRL)
-		value &= ~4;
+	if (KEY_2) value &= ~8;
 	if (KEY_ARROW_LEFT)
 		value &= ~2;
-	if (KEY_1)
-		value &= ~1;
+	if (KEY_1) value &= ~1;
 	c64_keyline[7] = value;
 
 	value = 0xff;
@@ -1229,20 +1268,12 @@ int c64_frame_interrupt (void)
 			value &= ~4;
 		if (KEY_NUMPLUS)
 			value &= ~2;
-		if (KEY_NOSCRL)
+		if (KEY_ESCAPE)
 			value &= ~1;
 		c128_keyline[1] = value;
 		
-#if 0
-		/* not sure about these */
-		if (KEY_ESCAPE) ;
-		if (KEY_ALT) ;
-		if (KEY_LINEFEED) ;
-		if (KEY_NOSCRL) ;
-#endif
-
 		value = 0xff;
-		if (KEY_ESCAPE)
+		if (KEY_NOSCRL)
 			value &= ~0x80;
 		if (KEY_RIGHT)
 			value &= ~0x40;
@@ -1266,20 +1297,25 @@ int c64_frame_interrupt (void)
 		if (C65_KEY_ESCAPE)
 			value &= ~0x80;
 		if (C65_KEY_F13)
-			value &= ~0x40;
+			value &= ~0x40; //?
 		if (C65_KEY_F11)
-			value &= ~0x20;
+			value &= ~0x20; //?
 		if (C65_KEY_F9)
-			value &= ~0x10;
+			value &= ~0x10; //?
 		if (C65_KEY_HELP)
 			value &= ~8;
-		if (C65_KEY_ALT)
+		if (C65_KEY_ALT) //? non blocking
 			value &= ~4;
 		if (C65_KEY_TAB)
 			value &= ~2;
-		if (C65_KEY_NOSCRL)
+		if (C65_KEY_NOSCRL) //?
 			value &= ~1;
-		c65_keyline = value;
+		c65_keyline[0] = value;
+		value = 0xff;
+		if (C65_KEY_DIN) value &= ~0x80; //?
+		//if (KEY_5) value &= ~0x8; // left
+		//if (KEY_6) value &= ~0x4; // down
+		c65_keyline[1] = value;
 	}
 
 	vic2_frame_interrupt ();
@@ -1294,23 +1330,37 @@ int c64_frame_interrupt (void)
 	return ignore_interrupt ();
 }
 
-/*only for debugging */
-void c64_status (char *text, int size)
+void c64_state(PRASTER *this)
 {
-	text[0] = 0;
-	if (c128)
-	{
-		c128_status (text, size);
-		return;
-	}
-	if (c65) 
-	{
-		c65_status (text, size);
-		return;
-	}
+	int y;
+	char text[70];
+	
+	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+	
 #if VERBOSE_DBG
+#if 0
+	cia6526_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+
 	snprintf (text, size, "c64 vic:%.4x m6510:%d exrom:%d game:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
+	praster_draw_text (this, text, &y);
 #endif
+	vdc8563_status(text, sizeof(text));
+	praster_draw_text (this, text, &y);
+#endif
+	
+	vc20_tape_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+#ifdef VC1541
+	vc1541_drive_status (text, sizeof (text));
+#else
+	cbm_drive_0_status (text, sizeof (text));
+#endif
+	praster_draw_text (this, text, &y);
+	
+	cbm_drive_1_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
 }
+

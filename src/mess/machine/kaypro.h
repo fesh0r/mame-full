@@ -10,7 +10,7 @@
 
 #include "mess/machine/cpm_bios.h"
 
-extern int kaypro_floppy_init(int id, const char *name);
+extern int kaypro_floppy_init(int id);
 extern void init_kaypro(void);
 extern void kaypro_init_machine(void);
 extern void kaypro_stop_machine(void);

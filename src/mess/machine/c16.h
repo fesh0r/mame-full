@@ -154,8 +154,8 @@ extern void c16_init_machine (void);
 extern void c16_shutdown_machine (void);
 extern int c16_frame_interrupt (void);
 
-extern int c16_rom_init (int id, const char *name);
-extern int c16_rom_load (int id, const char *name);
-extern int c16_rom_id (const char *name, const char *gamename);
+extern int c16_rom_init (int id);
+extern int c16_rom_load (int id);
+extern int c16_rom_id (int id);
 
 #endif

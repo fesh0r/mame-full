@@ -84,9 +84,9 @@ extern int vic6560_dma_read_color (int offset);
 /* VIC reads bits 0 till 7 */
 extern int vic6560_dma_read (int offset);
 
-extern int vc20_rom_init (int id, const char *name);
-extern int vc20_rom_load (int id, const char *name);
-extern int vc20_rom_id (const char *name, const char *gamename);
+extern int vc20_rom_init (int id);
+extern int vc20_rom_load (int id);
+extern int vc20_rom_id (int id);
 
 extern void vc20_driver_init (void);
 extern void vic20_driver_init (void);
@@ -98,3 +98,4 @@ extern void vc20_shutdown_machine (void);
 extern int vc20_frame_interrupt (void);
 
 #endif
+

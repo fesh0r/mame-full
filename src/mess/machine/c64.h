@@ -1,16 +1,24 @@
+/***************************************************************************
+	commodore c64 home computer
+
+    peter.trauner@jk.uni-linz.ac.at
+    documentation
+     www.funet.fi
+***************************************************************************/
 #ifndef __C64_H_
 #define __C64_H_
 
 #include "driver.h"
 
 #include "cia6526.h"
+#include "mess/vidhrdw/praster.h"
 
 #define C64_DIPS \
-	PORT_START \
-	PORT_BIT( 0x800, IP_ACTIVE_HIGH, IPT_BUTTON1) \
-	PORT_BIT( 0x400, IP_ACTIVE_HIGH, IPT_BUTTON2) \
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )\
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )\
+     PORT_START \
+     PORT_BIT( 0x800, IP_ACTIVE_HIGH, IPT_BUTTON1) \
+     PORT_BIT( 0x400, IP_ACTIVE_HIGH, IPT_BUTTON2) \
+     PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )\
+     PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )\
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY ) \
 	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )\
 	PORT_BITX( 8, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_PLAYER2, \
@@ -34,33 +42,33 @@
 	PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON1, \
 		   "Paddle 1 Button", KEYCODE_LCONTROL, 0)\
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_LEFT,KEYCODE_RIGHT,\
+		     30,20,0,255,KEYCODE_LEFT,KEYCODE_RIGHT,\
 		     JOYCODE_1_LEFT,JOYCODE_1_RIGHT)\
 	PORT_START \
 	PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON2, \
 		   "Paddle 2 Button", KEYCODE_LALT, 0)\
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_PLAYER2|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_DOWN,KEYCODE_UP,0,0)\
+		     30,20,0,255,KEYCODE_DOWN,KEYCODE_UP,0,0)\
 	PORT_START \
 	PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON3, \
 		   "Paddle 3 Button", KEYCODE_INSERT, 0)\
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_PLAYER3|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_HOME,KEYCODE_PGUP,0,0)\
+		     30,20,0,255,KEYCODE_HOME,KEYCODE_PGUP,0,0)\
      PORT_START \
 	PORT_BITX( 0x100, IP_ACTIVE_HIGH, IPT_BUTTON4, \
 		   "Paddle 4 Button", KEYCODE_DEL, 0)\
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_PLAYER4|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_END,KEYCODE_PGDN,\
+		     30,20,0,255,KEYCODE_END,KEYCODE_PGDN,\
 		     JOYCODE_1_UP,JOYCODE_1_DOWN)\
 	PORT_START \
 	PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPT_BUTTON2, \
 		   "Lightpen Signal", KEYCODE_LCONTROL, 0)\
      PORT_ANALOGX(0x1ff,0,IPT_PADDLE|IPF_PLAYER1,\
-		  30,2,0,0,320-1,KEYCODE_LEFT,KEYCODE_RIGHT,\
+		  30,2,0,320-1,KEYCODE_LEFT,KEYCODE_RIGHT,\
 		  JOYCODE_1_LEFT,JOYCODE_1_RIGHT)\
      PORT_START \
      PORT_ANALOGX(0xff,0,IPT_PADDLE|IPF_PLAYER2,\
-		  30,2,0,0,200-1,KEYCODE_UP,KEYCODE_DOWN,\
+		  30,2,0,200-1,KEYCODE_UP,KEYCODE_DOWN,\
 		  JOYCODE_1_UP,JOYCODE_1_DOWN)\
 	PORT_START \
 	PORT_DIPNAME ( 0xe000, 0x2000, "Gameport A")\
@@ -236,10 +244,9 @@ extern int c64_frame_interrupt (void);
 
 void c64_rom_load(void);
 void c64_rom_recognition (void);
-extern int c64_rom_id (const char *name, const char *gamename);
+extern int c64_rom_id (int id);
 
-/*only for debugging */
-extern void c64_status (char *text, int size);
+void c64_state(PRASTER *this);
 
 /* private area */
 

@@ -7,7 +7,10 @@ typedef struct {
 	unsigned short INTENA; /* Interrupt Enable */
 	unsigned short INTREQ; /* Interrupt Request */
 	unsigned short BPLCON0; /* Bitplane Control 0 */
+	unsigned short BPLCON1; /* Bitplane Control 1 */
+	unsigned short BPLCON2; /* Bitplane Control 2 */
 	unsigned long  BPLPTR[MAX_PLANES]; /* Bitplane pointer */
+	unsigned short BPLxDAT[MAX_PLANES]; /* Bitplane data */
 	unsigned short COPLCH[2]; /* Copper Location Hi */
 	unsigned short COPLCL[2]; /* Copper Location Lo */
 	unsigned short COPCON; /* Copper Control */
@@ -21,8 +24,7 @@ typedef struct {
 	unsigned short BLTSIZE; /* Blitter Start and Size */
 	signed short   BLTxMOD[4]; /* Blitter Modulo's */
 	unsigned short BLTxDAT[3]; /* Blitter Data Register's */
-	unsigned short SPRxPTH[8]; /* Sprite pointer Hi */
-	unsigned short SPRxPTL[8]; /* Sprite pointer Lo */
+	unsigned long  SPRxPT[8]; /* Sprite pointers */
 	unsigned short POTGO; /* Potentiometers start */
 	unsigned short POTGOR; /* Potentiometers read */
 	unsigned short DSKSYNC; /* Disk sync word */
@@ -78,6 +80,6 @@ typedef struct {
 /* prototypes */
 extern void copper_setpc( unsigned long pc );
 extern void amiga_custom_w( int offs, int data );
+extern void amiga_reload_sprite_info( int spritenum );
 
 #endif /* __AMIGA_H__ */
-

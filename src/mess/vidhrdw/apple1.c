@@ -14,23 +14,20 @@ extern	struct	GfxLayout	apple1_charlayout;
 static	int	dsp_pntr;
 
 int	apple1_vh_start (void)
-
 {
+	dsp_pntr = 0;
+	if (!(videoram = malloc (videoram_size = 40 * 24)))
+		return (1);;
+	if (generic_vh_start ())
+		return (1);
 
-dsp_pntr = 0;
-if (!(videoram = malloc (videoram_size = 40 * 24))) return (1);
-memset (videoram, 0, videoram_size);
-if (generic_bitmapped_vh_start ()) return (1);
-
-return (0);
-
+	return (0);
 }
 
 void	apple1_vh_stop (void)
 
 {
 
-if (videoram) free (videoram);
 generic_vh_stop ();
 
 }

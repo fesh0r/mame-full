@@ -1,22 +1,21 @@
 /***************************************************************************
 TRS80 memory map
 
-CPU #1:
-0000-2fff ROM                     R   D0-D7
-3000-37ff ROM on Model III        R   D0-D7
-          unused on Model I
-37e0-37e3 floppy motor            W   D0-D3
-          or floppy head select   W   D3
-37e4-37eb printer / RS232??       R/W D0-D7
-37ec-37ef FDC WD179x              R/W D0-D7
-37ec      command                 W   D0-D7
-37ec      status                  R   D0-D7
-37ed      track                   R/W D0-D7
-37ee      sector                  R/W D0-D7
-37ef      data                    R/W D0-D7
-3800-38ff keyboard matrix         R   D0-D7
+0000-2fff ROM					  R   D0-D7
+3000-37ff ROM on Model III		  R   D0-D7
+		  unused on Model I
+37e0-37e3 floppy motor			  W   D0-D3
+		  or floppy head select   W   D3
+37e4-37eb printer / RS232?? 	  R/W D0-D7
+37ec-37ef FDC WD179x			  R/W D0-D7
+37ec	  command				  W   D0-D7
+37ec	  status				  R   D0-D7
+37ed	  track 				  R/W D0-D7
+37ee	  sector				  R/W D0-D7
+37ef	  data					  R/W D0-D7
+3800-38ff keyboard matrix		  R   D0-D7
 3900-3bff unused - kbd mirrored
-3c00-3fff video RAM               R/W D0-D5,D7 (or D0-D7)
+3c00-3fff video RAM 			  R/W D0-D5,D7 (or D0-D7)
 4000-ffff RAM
 
 Interrupts:
@@ -27,14 +26,14 @@ NMI
 #include "driver.h"
 #include "mess/systems/trs80.h"
 
-#define FW  TRS80_FONT_W
-#define FH  TRS80_FONT_H
+#define FW	TRS80_FONT_W
+#define FH	TRS80_FONT_H
 
-extern int trs80_cassette_init(int id, const char *name);
-extern int trs80_floppy_init(int id, const char *name);
+extern int trs80_cassette_init(int id);
+extern int trs80_floppy_init(int id);
 extern void trs80_floppy_exit(int id);
-extern int trs80_rom_load(int id, const char *name);
-extern int trs80_rom_id(const char *name, const char *gamename);
+extern int trs80_rom_load(int id);
+extern int trs80_rom_id(int id);
 
 extern int trs80_vh_start(void);
 extern void trs80_vh_stop(void);
@@ -90,7 +89,7 @@ static struct MemoryReadAddress readmem_model1[] =
 	{ 0x3900, 0x3bff, MRA_NOP },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_model1[] =
@@ -108,7 +107,7 @@ static struct MemoryWriteAddress writemem_model1[] =
 	{ 0x3800, 0x3bff, MWA_NOP },
 	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_model1[] =
@@ -131,7 +130,7 @@ static struct MemoryReadAddress readmem_model3[] =
 	{ 0x3800, 0x38ff, trs80_keyboard_r },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_RAM },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_model3[] =
@@ -140,7 +139,7 @@ static struct MemoryWriteAddress writemem_model3[] =
 	{ 0x3800, 0x38ff, MWA_NOP },
 	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport_model3[] =
@@ -167,9 +166,9 @@ static struct IOWritePort writeport_model3[] =
 };
 
 /**************************************************************************
-   w/o SHIFT                             with SHIFT
-   +-------------------------------+     +-------------------------------+
-   | 0   1   2   3   4   5   6   7 |     | 0   1   2   3   4   5   6   7 |
+   w/o SHIFT							 with SHIFT
+   +-------------------------------+	 +-------------------------------+
+   | 0	 1	 2	 3	 4	 5	 6	 7 |	 | 0   1   2   3   4   5   6   7 |
 +--+---+---+---+---+---+---+---+---+  +--+---+---+---+---+---+---+---+---+
 |0 | @ | A | B | C | D | E | F | G |  |0 | ` | a | b | c | d | e | f | g |
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
@@ -177,7 +176,7 @@ static struct IOWritePort writeport_model3[] =
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
 |2 | P | Q | R | S | T | U | V | W |  |2 | p | q | r | s | t | u | v | w |
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
-|3 | X | Y | Z | [ | \ | ] | ^ | _ |  |3 | x | y | z | { | | | } | ~ |   |
+|3 | X | Y | Z | [ | \ | ] | ^ | _ |  |3 | x | y | z | { | | | } | ~ |	 |
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
 |4 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |  |4 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
@@ -188,28 +187,25 @@ static struct IOWritePort writeport_model3[] =
 |7 |SHF|ALT|PUP|PDN|INS|DEL|CTL|END|  |7 |SHF|ALT|PUP|PDN|INS|DEL|CTL|END|
 +--+---+---+---+---+---+---+---+---+  +--+---+---+---+---+---+---+---+---+
 NB: row 7 contains some originally unused bits
-    only the shift bit was there in the TRS80
+	only the shift bit was there in the TRS80
 ***************************************************************************/
 
 INPUT_PORTS_START( trs80 )
 	PORT_START /* IN0 */
-	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives",   IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video RAM",            KEYCODE_F1,  IP_JOY_NONE )
-	PORT_DIPSETTING(    0x40, "7 bit" )
-	PORT_DIPSETTING(    0x00, "8 bit" )
-	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual Tape",         KEYCODE_F2,  IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BITX(	  0x10, 0x00, IPT_KEYBOARD | IPF_RESETCPU,	   "Reset",                KEYCODE_F3,  IP_JOY_NONE )
-	PORT_BITX(	  0x08, 0x00, IPT_KEYBOARD, 				   "NMI",                  KEYCODE_F4,  IP_JOY_NONE )
-	PORT_BITX(	  0x04, 0x00, IPT_KEYBOARD, 				   DEF_STR( Unused ),               KEYCODE_F5,  IP_JOY_NONE )
-	PORT_BITX(	  0x03, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Colors",               KEYCODE_F6,  IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, "green/black" )
-	PORT_DIPSETTING(    0x01, "black/green" )
-	PORT_DIPSETTING(    0x02, "white/black" )
-	PORT_DIPSETTING(    0x03, "black/white" )
+	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE,	"Floppy Disc Drives",   IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE,	"Video RAM",            KEYCODE_F1,  IP_JOY_NONE )
+	PORT_DIPSETTING(	0x40, "7 bit" )
+	PORT_DIPSETTING(	0x00, "8 bit" )
+	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE,	"Virtual Tape",         KEYCODE_F2,  IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_BITX(	  0x10, 0x00, IPT_KEYBOARD | IPF_RESETCPU,		"Reset",                KEYCODE_F3,  IP_JOY_NONE )
+	PORT_BITX(	  0x08, 0x00, IPT_KEYBOARD, 					"NMI",                  KEYCODE_F4,  IP_JOY_NONE )
+	PORT_BITX(	  0x04, 0x00, IPT_KEYBOARD, 					"Tape start",           KEYCODE_F5,  IP_JOY_NONE )
+	PORT_BITX(	  0x02, 0x00, IPT_KEYBOARD, 					"Tape stop",            KEYCODE_F6,  IP_JOY_NONE )
+	PORT_BITX(	  0x01, 0x00, IPT_KEYBOARD, 					"Tape rewind",          KEYCODE_F7,  IP_JOY_NONE )
 
 	PORT_START /* KEY ROW 0 */
 	PORT_BITX(0x01, 0x00, IPT_UNKNOWN, "0.0: @   ",   KEYCODE_ASTERISK,    IP_JOY_NONE )
@@ -298,29 +294,29 @@ INPUT_PORTS_END
 static struct GfxLayout trs80_charlayout_normal_width =
 {
 	FW,FH,					/* 6 x 12 characters */
-	256,                    /* 256 characters */
-	1,                      /* 1 bits per pixel */
-	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	256,					/* 256 characters */
+	1,						/* 1 bits per pixel */
+	{ 0 },					/* no bitplanes; 1 bit per pixel */
 	/* x offsets */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	/* y offsets */
 	{  0*8, 1*8, 2*8, 3*8, 4*8, 5*8,
 	   6*8, 7*8, 8*8, 9*8,10*8,11*8 },
-	8*FH           /* every char takes FH bytes */
+	8*FH		   /* every char takes FH bytes */
 };
 
 static struct GfxLayout trs80_charlayout_double_width =
 {
 	FW*2,FH,	   /* FW*2 x FH*3 characters */
-	256,           /* 256 characters */
-	1,             /* 1 bits per pixel */
-	{ 0 },         /* no bitplanes; 1 bit per pixel */
+	256,		   /* 256 characters */
+	1,			   /* 1 bits per pixel */
+	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	/* x offsets double width: use each bit twice */
 	{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7},
 	/* y offsets */
 	{  0*8, 1*8, 2*8, 3*8, 4*8, 5*8,
-       6*8, 7*8, 8*8, 9*8,10*8,11*8 },
-    8*FH           /* every char takes FH bytes */
+	   6*8, 7*8, 8*8, 9*8,10*8,11*8 },
+	8*FH		   /* every char takes FH bytes */
 };
 
 static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
@@ -339,10 +335,7 @@ static unsigned char palette[] =
 
 static unsigned short colortable[] =
 {
-	0,1,	/* green on black */
-	1,0,	/* black on green */
-	0,2,	/* white on black */
-	2,0 	/* black on white */
+	0,1 	/* green on black */
 };
 
 
@@ -354,12 +347,16 @@ static void trs80_init_palette(unsigned char *sys_palette, unsigned short *sys_c
 	memcpy(sys_colortable,colortable,sizeof(colortable));
 }
 
+static INT16 speaker_levels[3] = {0.0*32767,0.46*32767,0.85*32767};
 
-static struct DACinterface trs80_DAC_interface =
+static struct Speaker_interface speaker_interface =
 {
-    1,			/* number of DACs */
-	{ 100 } 	/* volume */
+	1,					/* one speaker */
+	{ 100 },			/* mixing levels */
+	{ 3 },				/* optional: number of different levels */
+	{ speaker_levels }	/* optional: level lookup table */
 };
+
 
 static struct MachineDriver machine_driver_model1 =
 {
@@ -374,7 +371,7 @@ static struct MachineDriver machine_driver_model1 =
 			trs80_timer_interrupt,40
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
 	1,
 	trs80_init_machine,
 	trs80_shutdown_machine,
@@ -383,13 +380,13 @@ static struct MachineDriver machine_driver_model1 =
 	64*FW,									/* screen width */
 	16*FH,									/* screen height */
 	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
-	trs80_gfxdecodeinfo,                    /* graphics decode info */
+	trs80_gfxdecodeinfo,					/* graphics decode info */
 	sizeof(palette)/sizeof(palette[0])/3,
 	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
-	trs80_init_palette,                     /* init palette */
+	trs80_init_palette, 					/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
-    0,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
 	trs80_vh_start,
 	trs80_vh_stop,
 	trs80_vh_screenrefresh,
@@ -398,8 +395,8 @@ static struct MachineDriver machine_driver_model1 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&trs80_DAC_interface
+			SOUND_SPEAKER,
+			&speaker_interface
 		}
 	}
 };
@@ -410,14 +407,14 @@ static struct MachineDriver machine_driver_model3 =
 	{
 		{
 			CPU_Z80,
-			1796000,        /* 1.796 Mhz */
+			1796000,		/* 1.796 Mhz */
 			readmem_model3,writemem_model3,
 			readport_model3,writeport_model3,
 			trs80_frame_interrupt,2,
 			trs80_timer_interrupt,40
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
 	1,
 	trs80_init_machine,
 	trs80_shutdown_machine,
@@ -425,13 +422,13 @@ static struct MachineDriver machine_driver_model3 =
 	/* video hardware */
 	64*FW,									/* screen width */
 	16*FH,									/* screen height */
-    { 0*FW,64*FW-1,0*FH,16*FH-1},           /* visible_area */
-    trs80_gfxdecodeinfo,                    /* graphics decode info */
+	{ 0*FW,64*FW-1,0*FH,16*FH-1},			/* visible_area */
+	trs80_gfxdecodeinfo,					/* graphics decode info */
 	sizeof(palette)/sizeof(palette[0])/3,
 	sizeof(colortable)/sizeof(colortable[0]),/* colors used for the characters */
-    trs80_init_palette,                     /* convert color prom */
+	trs80_init_palette, 					/* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	trs80_vh_start,
 	trs80_vh_stop,
@@ -441,9 +438,9 @@ static struct MachineDriver machine_driver_model3 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&trs80_DAC_interface
-		}
+			SOUND_SPEAKER,
+            &speaker_interface
+        }
 	}
 };
 
@@ -486,63 +483,67 @@ static const struct IODevice io_trs80[] = {
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"rom\0",            /* file extensions */
-        NULL,               /* private */
+		NULL,				/* private */
 		NULL,				/* id */
 		trs80_rom_load, 	/* init */
 		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
         NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    {
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{
 		IO_CASSETTE,		/* type */
 		1,					/* count */
 		"cas\0cmd\0",       /* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
+		NULL,				/* private */
+		NULL,				/* id */
 		trs80_cassette_init,/* init */
 		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
         NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
+		NULL,				/* private */
+		NULL,				/* id */
 		trs80_floppy_init,	/* init */
 		trs80_floppy_exit,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
         NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{ IO_END }
 };
 
 #define io_sys80 io_trs80
 #define io_trs80m3 io_trs80
 
-/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
 COMP ( 1978, trs80,    0,		 model1,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model I (Level II Basic)" )
 COMP ( 1980, sys80,    trs80,	 model1,   trs80,	 trs80,    "EACA Computers Ltd.",  "System-80" )
 COMPX( 19??, trs80m3,  trs80,	 model3,   trs80,	 trs80,    "Tandy Radio Shack",  "TRS-80 Model III", GAME_NOT_WORKING )
+

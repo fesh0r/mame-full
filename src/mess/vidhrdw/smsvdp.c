@@ -250,7 +250,7 @@ void sms_vdp_ctrl_w(int offset, int data)
             vram_ptr = (int)((data << 8) | latch) & 0x3FFF;
             mode = MODE_VRAM;
 
-            if(!(data & 0x40))
+            if(!(data & 0xC0))
             {
                 buffer = vram[vram_ptr];
                 vram_ptr = (vram_ptr + 1) & 0x3FFF;

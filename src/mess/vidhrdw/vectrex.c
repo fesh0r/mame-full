@@ -254,7 +254,7 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 	nextfree +=16;
 
 	/* try to load an overlay for game.bin named game.png */
-	if (device_count(dev->type))
+	if (device_filename(dev->type,0))
 	{
 		sprintf(overlay_name,"%s", device_filename(dev->type,0));
 		sprintf(strchr(overlay_name,'.'),".png");

@@ -16,7 +16,7 @@
 **********************************************************************/
 
 /*
-  1999-Dec-22 PeT 
+  1999-Dec-22 PeT
    vc20 random number generation only partly working
    (reads (uninitialized) timer 1 and timer 2 counter)
    timer init, reset, read changed
@@ -31,21 +31,21 @@
 struct via6522
 {
 	const struct via6522_interface *intf;
-  
+
 	UINT8 in_a;
 	UINT8 in_ca1;
 	UINT8 in_ca2;
 	UINT8 out_a;
 	UINT8 out_ca2;
 	UINT8 ddr_a;
-  
+
 	UINT8 in_b;
 	UINT8 in_cb1;
 	UINT8 in_cb2;
 	UINT8 out_b;
 	UINT8 out_cb2;
 	UINT8 ddr_b;
-  
+
 	UINT8 t1cl;
 	UINT8 t1ch;
 	UINT8 t1ll;
@@ -60,7 +60,7 @@ struct via6522
 	UINT8 acr;
 	UINT8 ier;
 	UINT8 ifr;
-  
+
 	void *t1;
 	double time1;
 	void *t2;
@@ -199,7 +199,7 @@ void via_reset(void)
 static void via_set_int (struct via6522 *v, int data)
 {
 	v->ifr |= data;
-  
+
 	if (v->ier & v->ifr)
     {
 		v->ifr |= INT_ANY;
@@ -210,7 +210,7 @@ static void via_set_int (struct via6522 *v, int data)
 static void via_clear_int (struct via6522 *v, int data)
 {
 	v->ifr = (v->ifr & ~data) & 0x7f;
-  
+
 	if (v->ifr & v->ier)
 		v->ifr |= INT_ANY;
 	else
@@ -221,8 +221,8 @@ static void via_clear_int (struct via6522 *v, int data)
 static void via_t1_timeout (int which)
 {
 	struct via6522 *v = via + which;
-  
-  
+
+
 	if (T1_CONTINUOUS (v->acr))
     {
 		if (T1_SET_PB7(v->acr))
@@ -238,7 +238,7 @@ static void via_t1_timeout (int which)
     }
 	if (v->intf->out_b_func && v->ddr_b)
 		v->intf->out_b_func(0, v->out_b & v->ddr_b);
-  
+
 	if (!(v->ifr & INT_T1))
 		via_set_int (v, INT_T1);
 }
@@ -246,15 +246,15 @@ static void via_t1_timeout (int which)
 static void via_t2_timeout (int which)
 {
 	struct via6522 *v = via + which;
-  
+
 	if (v->intf->t2_callback)
 		v->intf->t2_callback(timer_timeelapsed(v->t2));
-  
+
 	v->t2 = 0;
 	v->time2=timer_get_time();
-  
+
 	if (!(v->ifr & INT_T2))
-		via_set_int (v, INT_T2);  
+		via_set_int (v, INT_T2);
 }
 
 /******************* CPU interface for VIA read *******************/
@@ -263,22 +263,25 @@ int via_read(int which, int offset)
 {
 	struct via6522 *v = via + which;
 	int val = 0;
-  
+
 	offset &= 0xf;
-  
+
 	switch (offset)
     {
     case VIA_PB:
 		/* update the input */
 		if (PB_LATCH_ENABLE(v->acr) == 0)
 			if (v->intf->in_b_func) v->in_b = v->intf->in_b_func(0);
-      
+
 		CLR_PB_INT(v);
-      
-		/* combine input and output values */
-		val = (v->out_b & v->ddr_b) + (v->in_b & ~v->ddr_b);
+
+		/* combine input and output values, hold DDRB bit 7 high if T1_SET_PB7 */
+		if (T1_SET_PB7(v->acr))
+			val = (v->out_b & (v->ddr_b | 0x80)) | (v->in_b & ~(v->ddr_b | 0x80));
+		else
+			val = (v->out_b & v->ddr_b) + (v->in_b & ~v->ddr_b);
 		break;
-      
+
     case VIA_PA:
 		/* If CA2 is configured as output and in pulse or handshake mode,
 		   CA2 is set now */
@@ -287,30 +290,30 @@ int via_read(int which, int offset)
 			/* call the CA2 output function */
 			if (v->out_ca2)
 				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
-	  
+
 			/* set CA2 */
 			v->out_ca2 = 0;
 		}
-      
+
 		CLR_PA_INT(v);
-      
+
     case VIA_PANH:
 		/* update the input */
 		if (PA_LATCH_ENABLE(v->acr) == 0)
 			if (v->intf->in_a_func) v->in_a = v->intf->in_a_func(0);
-      
+
 		/* combine input and output values */
 		val = (v->out_a & v->ddr_a) + (v->in_a & ~v->ddr_a);
 		break;
-      
+
     case VIA_DDRB:
 		val = v->ddr_b;
 		break;
-      
+
     case VIA_DDRA:
 		val = v->ddr_a;
 		break;
-      
+
     case VIA_T1CL:
 		via_clear_int (v, INT_T1);
 		if (v->t1)
@@ -331,11 +334,11 @@ int via_read(int which, int offset)
 			}
 		}
 		break;
-      
+
     case VIA_T1CH:
 		if (v->t1)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t1)) >> 8;
-		else 
+		else
 		{
 			if ( T1_CONTINUOUS(v->acr) )
 			{
@@ -351,15 +354,15 @@ int via_read(int which, int offset)
 			}
 		}
 		break;
-      
+
     case VIA_T1LL:
 		val = v->t1ll;
 		break;
-      
+
     case VIA_T1LH:
 		val = v->t1lh;
 		break;
-      
+
     case VIA_T2CL:
 		via_clear_int (v, INT_T2);
 		if (v->t2)
@@ -378,7 +381,7 @@ int via_read(int which, int offset)
 			}
 		}
 		break;
-      
+
     case VIA_T2CH:
 		if (v->t2)
 			val = V_TIME_TO_CYCLES(timer_timeleft(v->t2)) >> 8;
@@ -396,23 +399,23 @@ int via_read(int which, int offset)
 			}
 		}
 		break;
-      
+
     case VIA_SR:
 		val = v->sr;
 		break;
-      
+
     case VIA_PCR:
 		val = v->pcr;
 		break;
-      
+
     case VIA_ACR:
 		val = v->acr;
 		break;
-      
+
     case VIA_IER:
 		val = v->ier | 0x80;
 		break;
-      
+
     case VIA_IFR:
 		val = v->ifr;
 		break;
@@ -426,7 +429,7 @@ int via_read(int which, int offset)
 void via_write(int which, int offset, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	switch (offset)
     {
     case VIA_PB:
@@ -434,12 +437,12 @@ void via_write(int which, int offset, int data)
 			v->out_b = (v->out_b & 0x80) | (data  & 0x7f);
 		else
 			v->out_b = data;
-      
+
 		if (v->intf->out_b_func && v->ddr_b)
 			v->intf->out_b_func(0, v->out_b & v->ddr_b);
-      
+
 		CLR_PB_INT(v);
-      
+
 		/* If CB2 is configured as output and in pulse or handshake mode,
 		   CB2 is set now */
 		if (CB2_AUTO_HS(v->pcr))
@@ -447,12 +450,12 @@ void via_write(int which, int offset, int data)
 			/* call the CB2 output function */
 			if (v->out_cb2)
 				if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 0);
-	  
+
 			/* set CB2 */
 			v->out_cb2 = 0;
 		}
 		break;
-      
+
     case VIA_PA:
 		/* If CA2 is configured as output and in pulse or handshake mode,
 		   CA2 is set now */
@@ -461,42 +464,54 @@ void via_write(int which, int offset, int data)
 			/* call the CA2 output function */
 			if (v->out_ca2)
 				if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 0);
-	  
+
 			/* set CA2 */
 			v->out_ca2 = 0;
 		}
-      
+
 		CLR_PA_INT(v);
-      
+
     case VIA_PANH:
 		v->out_a = data;
 		if (v->intf->out_a_func && v->ddr_a)
 			v->intf->out_a_func(0, v->out_a & v->ddr_a);
 		break;
-      
+
     case VIA_DDRB:
-		v->ddr_b = data;
+    	/* EHC 03/04/2000 - If data direction changed, present output on the lines */
+    	if ( data != v->ddr_b ) {
+			v->ddr_b = data;
+			
+			if (v->intf->out_b_func && v->ddr_b)
+				v->intf->out_b_func(0, v->out_b & v->ddr_b);
+		}
 		break;
-      
+
     case VIA_DDRA:
-		v->ddr_a = data;
+    	/* EHC 03/04/2000 - If data direction changed, present output on the lines */
+    	if ( data != v->ddr_a ) {
+			v->ddr_a = data;
+			
+			if (v->intf->out_a_func && v->ddr_a)
+				v->intf->out_a_func(0, v->out_a & v->ddr_a);
+		}
 		break;
-      
+
     case VIA_T1CL:
     case VIA_T1LL:
 		v->t1ll = data;
 		break;
-      
+
     case VIA_T1LH:
 		v->t1lh = data;
 		break;
-      
+
     case VIA_T1CH:
 		v->t1ch = v->t1lh = data;
 		v->t1cl = v->t1ll;
-      
+
 		via_clear_int (v, INT_T1);
-      
+
 		if (T1_SET_PB7(v->acr))
 		{
 			v->out_b &= 0x7f;
@@ -508,17 +523,17 @@ void via_write(int which, int offset, int data)
 		else
 			v->t1 = timer_set (V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, via_t1_timeout);
 		break;
-      
+
     case VIA_T2CL:
 		v->t2ll = data;
 		break;
-      
+
     case VIA_T2CH:
 		v->t2ch = v->t2lh = data;
 		v->t2cl = v->t2ll;
-      
+
 		via_clear_int (v, INT_T2);
-      
+
 		if (!T2_COUNT_PB6(v->acr))
 		{
 			if (v->t2)
@@ -536,23 +551,23 @@ void via_write(int which, int offset, int data)
 			v->time2=timer_get_time();
 		}
 		break;
-      
+
     case VIA_SR:
 		v->sr = data;
 		if (v->intf->out_shift_func && SO_O2_CONTROL(v->acr))
 			v->intf->out_shift_func(data);
 		break;
-      
+
     case VIA_PCR:
 		v->pcr = data;
-      
+
 		if (CA2_FIX_OUTPUT(data) && CA2_OUTPUT_LEVEL(data) ^ v->out_ca2)
 		{
 			v->out_ca2 = CA2_OUTPUT_LEVEL(data);
 			if (v->intf->out_ca2_func)
 				v->intf->out_ca2_func(0, v->out_ca2);
 		}
-      
+
 		if (CB2_FIX_OUTPUT(data) && CB2_OUTPUT_LEVEL(data) ^ v->out_cb2)
 		{
 			v->out_cb2 = CB2_OUTPUT_LEVEL(data);
@@ -560,7 +575,7 @@ void via_write(int which, int offset, int data)
 				v->intf->out_cb2_func(0, v->out_cb2);
 		}
 		break;
-      
+
     case VIA_ACR:
 		v->acr = data;
 		if (T1_SET_PB7(v->acr))
@@ -569,7 +584,7 @@ void via_write(int which, int offset, int data)
 				v->out_b &= ~0x80;
 			else
 				v->out_b |= 0x80;
-	  
+
 			if (v->intf->out_b_func && v->ddr_b)
 				v->intf->out_b_func(0, v->out_b & v->ddr_b);
 		}
@@ -581,13 +596,13 @@ void via_write(int which, int offset, int data)
 				v->t1 = timer_set (V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, via_t1_timeout);
 		}
 		break;
-      
+
     case VIA_IER:
 		if (data & 0x80) v->ier |= data & 0x7f;
 		else v->ier &= ~(data & 0x7f);
 		via_clear_int (v, 0);
 		break;
-      
+
     case VIA_IFR:
 		via_clear_int (v, data);
 		break;
@@ -609,10 +624,10 @@ void via_set_input_a(int which, int data)
 void via_set_input_ca1(int which, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	/* limit the data to 0 or 1 */
 	data = data ? 1 : 0;
-  
+
 	/* handle the active transition */
 	if (data != v->in_ca1)
     {
@@ -621,7 +636,7 @@ void via_set_input_ca1(int which, int data)
 			if (PA_LATCH_ENABLE(v->acr))
 				if (v->intf->in_a_func) v->in_a = v->intf->in_a_func(0);
 			via_set_int (v, INT_CA1);
-	  
+
 			/* CA2 is configured as output and in pulse or handshake mode,
 			   CA2 is cleared now */
 			if (CA2_AUTO_HS(v->pcr))
@@ -629,7 +644,7 @@ void via_set_input_ca1(int which, int data)
 				/* call the CA2 output function */
 				if (!v->out_ca2)
 					if (v->intf->out_ca2_func) v->intf->out_ca2_func(0, 1);
-	      
+
 				/* clear CA2 */
 				v->out_ca2 = 1;
 			}
@@ -643,10 +658,10 @@ void via_set_input_ca1(int which, int data)
 void via_set_input_ca2(int which, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	/* limit the data to 0 or 1 */
 	data = data ? 1 : 0;
-  
+
 	/* CA2 is in input mode */
 	if (CA2_INPUT(v->pcr))
     {
@@ -663,8 +678,8 @@ void via_set_input_ca2(int which, int data)
 			v->in_ca2 = data;
 		}
     }
-  
-  
+
+
 }
 
 
@@ -674,7 +689,7 @@ void via_set_input_ca2(int which, int data)
 void via_set_input_b(int which, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	/* set the input, what could be easier? */
 	v->in_b = data;
 }
@@ -686,10 +701,10 @@ void via_set_input_b(int which, int data)
 void via_set_input_cb1(int which, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	/* limit the data to 0 or 1 */
 	data = data ? 1 : 0;
-  
+
 	/* handle the active transition */
 	if (data != v->in_cb1)
     {
@@ -698,7 +713,7 @@ void via_set_input_cb1(int which, int data)
 			if (PB_LATCH_ENABLE(v->acr))
 				if (v->intf->in_b_func) v->in_b = v->intf->in_b_func(0);
 			via_set_int (v, INT_CB1);
-	  
+
 			/* CB2 is configured as output and in pulse or handshake mode,
 			   CB2 is cleared now */
 			if (CB2_AUTO_HS(v->pcr))
@@ -706,7 +721,7 @@ void via_set_input_cb1(int which, int data)
 				/* call the CB2 output function */
 				if (!v->out_cb2)
 					if (v->intf->out_cb2_func) v->intf->out_cb2_func(0, 1);
-	      
+
 				/* clear CB2 */
 				v->out_cb2 = 1;
 			}
@@ -720,10 +735,10 @@ void via_set_input_cb1(int which, int data)
 void via_set_input_cb2(int which, int data)
 {
 	struct via6522 *v = via + which;
-  
+
 	/* limit the data to 0 or 1 */
 	data = data ? 1 : 0;
-  
+
 	/* CB2 is in input mode */
 	if (CB2_INPUT(v->pcr))
     {

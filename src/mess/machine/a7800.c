@@ -60,9 +60,10 @@ void a7800_stop_machine(void) {
 100..127 "ACTUAL CART DATA STARTS HERE" - 28 bytes
 */
 
-int a7800_id_rom (const char *name, const char *gamename)
+int a7800_id_rom (int id)
 {
 	FILE *romfile;
+	const char *gamename = device_filename(IO_CARTSLOT,id);
     unsigned char header[128];
     char tag[] = "ATARI7800";
 
@@ -70,7 +71,7 @@ int a7800_id_rom (const char *name, const char *gamename)
 	/* If no file was specified, don't bother */
     if (strlen(gamename)==0) return 1;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
     osd_fread(romfile,header,128);
 	osd_fclose (romfile);
 
@@ -79,8 +80,9 @@ int a7800_id_rom (const char *name, const char *gamename)
 }
 
 
-int a7800_load_rom (int id, const char *rom_name)
+int a7800_load_rom (int id)
 {
+	const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *cartfile;
 	long len,start;
     unsigned char header[128];
@@ -105,7 +107,7 @@ int a7800_load_rom (int id, const char *rom_name)
     {
         if (errorlog) fprintf(errorlog,"A7800 - warning: no cartridge specified!\n");
 	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	else if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog) fprintf(errorlog,"A7800 - Unable to locate cartridge: %s\n",rom_name);
 		return 1;

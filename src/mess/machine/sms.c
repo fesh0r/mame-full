@@ -1,94 +1,221 @@
+
 #include <stdio.h>
 #include "driver.h"
+#include "mess/machine/sms.h"
 
-#define SMS_ROM_MAXSIZE     (256 * 16384 + 512)
+unsigned char sms_page_count;
+unsigned char sms_fm_detect;
+unsigned char sms_version;
 
-unsigned char *sms_user_ram;
-unsigned int JoyState;
-unsigned char sms_country;
-static unsigned char *sms_banked_rom;
-static unsigned char sms_rom_mask;
-static unsigned char sms_battery;
-
-static unsigned char *ROM;
-
-int sms_load_rom(int id, char *rom_name)
+void sms_fm_detect_w(int offset, int data)
 {
-    FILE *fp;
-	int size;
+    sms_fm_detect = (data & 1);
+}
 
-	if(rom_name==NULL){
-		printf("Cartridge Name Required!\n");
-		return INIT_FAILED;
-	}
+int sms_fm_detect_r(int offset)
+{
+    return ( readinputport(3) & 1 ? sms_fm_detect : 0x00 );
+}
 
-	if(strlen(rom_name) == 0) return 1;
-	fp = osd_fopen(Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0);
-    if(!fp)
+void sms_version_w(int offset, int data)
+{
+    sms_version = (data & 0xA0);
+}
+
+int sms_version_r(int offset)
+{
+    unsigned char temp;
+
+    /* Move bits 7,5 of port 3F into bits 7, 6 */
+    temp = (sms_version & 0x80) | (sms_version & 0x20) << 1;
+
+    /* Inverse version detect value for Japanese machines */
+    if(readinputport(3) & 2) temp ^= 0xC0;
+
+    /* Merge version data with input port #2 data */
+    temp = (temp & 0xC0) | (readinputport(1) & 0x3F);
+
+    return (temp);
+}
+
+void sms_mapper_w(int offset, int data)
+{
+    unsigned char *RAM = memory_region(REGION_CPU1);
+
+    offset &= 3;
+    data %= sms_page_count;
+
+    RAM[0xDFFC + offset] = data;
+    RAM[0xFFFC + offset] = data;
+
+    switch(offset)
     {
-		printf("Cartridge Name Required!\n");
-		return INIT_FAILED;
-	}
-	if( new_memory_region(REGION_CPU1,0x10000) )
-		return 1;
-	ROM = memory_region(REGION_CPU1);
-	if( new_memory_region(REGION_CPU2,SMS_ROM_MAXSIZE) )
-		return 1;
-	sms_banked_rom = memory_region(REGION_CPU2);
-    size = osd_fread(fp, sms_banked_rom, SMS_ROM_MAXSIZE);
+        case 0: /* Control */
+            break;
 
-    if(!size)
+        case 1: /* Select 16k ROM bank for 0000-3FFF */
+            memcpy(&RAM[0x0000], &RAM[0x10000 + (data * 0x4000)], 0x3C00);
+            break;
+
+        case 2: /* Select 16k ROM bank for 4000-7FFF */
+            memcpy(&RAM[0x4000], &RAM[0x10000 + (data * 0x4000)], 0x4000);
+            break;
+
+        case 3: /* Select 16k ROM bank for 8000-BFFF */
+            memcpy(&RAM[0x8000], &RAM[0x10000 + (data * 0x4000)], 0x4000);
+            break;
+    }
+}
+
+void sms_cartram_w(int offset, int data)
+{
+}
+
+void sms_ram_w(int offset, int data)
+{
+    unsigned char *RAM = memory_region(REGION_CPU1);
+    RAM[0xC000 + (offset & 0x1FFF)] = data;
+    RAM[0xE000 + (offset & 0x1FFF)] = data;
+}
+
+void gg_sio_w(int offset, int data)
+{
+    if(errorlog) fprintf(errorlog, "*** write %02X to SIO register #%d\n", data, offset);
+
+    switch(offset & 7)
     {
-        free(sms_banked_rom);
-        return 1;
+        case 0x00: /* Parallel Data */
+            break;
+
+        case 0x01: /* Data Direction/ NMI Enable */
+            break;
+
+        case 0x02: /* Serial Output */
+            break;
+
+        case 0x03: /* Serial Input */
+            break;
+
+        case 0x04: /* Serial Control / Status */
+            break;
+    }
+}
+
+int gg_sio_r(int offset)
+{
+    if(errorlog) fprintf(errorlog, "*** read SIO register #%d\n", offset);
+
+    switch(offset & 7)
+    {
+        case 0x00: /* Parallel Data */
+            break;
+
+        case 0x01: /* Data Direction/ NMI Enable */
+            break;
+
+        case 0x02: /* Serial Output */
+            break;
+
+        case 0x03: /* Serial Input */
+            break;
+
+        case 0x04: /* Serial Control / Status */
+            break;
     }
 
-    /* handle 512-byte header if present */
-    if((size/512) & 1)
-    {
-        size -= 512;
-        osd_fseek(fp, 0, SEEK_SET);
-        osd_fread(fp, sms_banked_rom, size);
-    }
+    return (0x00);
+}
 
-    sms_banked_rom = realloc(sms_banked_rom, size); /* shrink memory */
-    osd_fclose(fp);
+void gg_psg_w(int offset, int data)
+{
+    /* D7 = Noise Left */
+    /* D6 = Tone3 Left */
+    /* D5 = Tone2 Left */
+    /* D4 = Tone1 Left */
 
-    sms_rom_mask = (size >> 14)-1;
-    sms_country = 0;
-
-	return 0;
+    /* D3 = Noise Right */
+    /* D2 = Tone3 Right */
+    /* D1 = Tone2 Right */
+    /* D0 = Tone1 Right */
 }
 
 
+/****************************************************************************/
 
+int sms_load_rom(int id)
+{
+    int size, ret;
+    FILE *handle;
+    unsigned char *RAM;
+
+    /* Ensure filename was specified */
+    if(device_filename(IO_CARTSLOT,id) == NULL)
+    {
+        printf("Cartridge Name Required!\n");
+        return (INIT_FAILED);
+	}
+
+    /* Ensure filename was specified */
+    handle = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+    if(handle == NULL)
+    {
+		printf("Cartridge Name Required!\n");
+        return (INIT_FAILED);
+	}
+
+    /* Get file size */
+    size = osd_fsize(handle);
+
+    /* Check for 512-byte header */
+    if((size / 512) & 1)
+    {
+        osd_fseek(handle, 512, SEEK_SET);
+        size -= 512;
+    }
+
+    /* Allocate memory */
+    ret = new_memory_region(REGION_CPU1, size);
+
+    /* Oops.. couldn't do it */
+    if(ret)
+    {
+        printf("Error allocating %d bytes.\n", size);
+        return INIT_FAILED;
+    }
+
+    /* Get base of CPU1 memory region */
+    RAM = memory_region(REGION_CPU1);
+
+    /* Load ROM banks */
+    size = osd_fread(handle, &RAM[0x10000], size);
+
+    /* Close file */
+    osd_fclose(handle);
+
+    /* Get 16K page count */
+    sms_page_count = (size / 0x4000);
+
+    /* Load up first 32K of image */
+    memcpy(&RAM[0x0000], &RAM[0x10000], 0x4000);
+    memcpy(&RAM[0x4000], &RAM[0x14000], 0x4000);
+    memcpy(&RAM[0x8000], &RAM[0x10000], 0x4000);
+
+    return (INIT_OK);
+}
 
 void sms_init_machine (void)
 {
-	/* Set the default country setting to Auto */
-	sms_country = 0; /* TODO: move this to a fake dipswitch */
-	sms_battery = 0;
-
-	sms_user_ram[0x0000] = sms_user_ram[0x1ffc] = 0x00;
-
-	sms_user_ram[0x1ffd] = 0;
-	sms_user_ram[0x1ffe] = 1;
-	sms_user_ram[0x1fff] = 2 & sms_rom_mask;
-	cpu_setbank (1, &sms_banked_rom[0x4000 * sms_user_ram[0x1ffd]]);
-	cpu_setbank (2, &sms_banked_rom[0x4000 * sms_user_ram[0x1ffe]]);
-	cpu_setbank (3, &sms_banked_rom[0x4000 * sms_user_ram[0x1fff]]);
-
-	JoyState=0xFFFF;
+    sms_fm_detect = 0;
 }
 
-int sms_id_rom (const char *name, const char *gamename)
+int sms_id_rom (int id)
 {
 	FILE *romfile;
 	char magic[9];
 	unsigned char extra;
 	int retval;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 0;
 
@@ -125,14 +252,14 @@ int sms_id_rom (const char *name, const char *gamename)
 	return retval;
 }
 
-int gamegear_id_rom (const char *name, const char *gamename)
+int gamegear_id_rom (int id)
 {
 	FILE *romfile;
 	char magic[9];
 	unsigned char extra;
 	int retval;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 0;
 
@@ -167,62 +294,6 @@ int gamegear_id_rom (const char *name, const char *gamename)
 	osd_fclose (romfile);
 
 	return retval;
-}
-
-int sms_ram_r (int offset)
-{
-	return (sms_user_ram[offset]);
-}
-
-void sms_ram_w (int offset, int data)
-{
-    sms_user_ram[offset] = data;
-}
-
-
-/* todo: stick cart ram handling back in and fix it */
-void sms_mapper_w(int offset, int data)
-{
-    /* bank reg. writes go to RAM as well */
-    sms_user_ram[0x1FFC + (offset & 3)] = data;
-
-    switch(offset & 3)
-    {
-        case 0x00:  /* bank config */
-             break;
-        case 0x01:  /* page for bank #1 */
-        case 0x02:  /* page for bank #2 */
-        case 0x03:  /* page for bank #3 */
-             data &= sms_rom_mask;
-             cpu_setbank ((offset & 0x03), &sms_banked_rom[data<<14]);
-             break;
-    }
-}
-
-
-int sms_country_r (int offset)
-{
-	return (((JoyState>>6)&0x80) | (sms_country>1? 0x00:0x40));
-}
-
-void sms_country_w(int offset, int data)
-{
-
-	switch (data & 0x0f)
-	{
-		case 5: /* Set localization */
-			JoyState &= 0x3fff;
-
-			if (sms_country > 1)
-				data = ~data;
-
-			JoyState |= (data & 0x80) << 8;
-			JoyState |= (data & 0x20) << 9;
-			break;
-		default:
-			JoyState |= 0xc000;
-			break;
-	}
 }
 
 

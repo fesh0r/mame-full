@@ -30,8 +30,8 @@ extern void coleco_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 extern unsigned char *coleco_ram;
 extern unsigned char *coleco_cartridge_rom;
 
-extern int coleco_id_rom (const char *name, const char *gamename);
-extern int coleco_load_rom (int id, const char *rom_name);
+extern int coleco_id_rom (int id);
+extern int coleco_load_rom (int id);
 extern int coleco_ram_r(int offset);
 extern void coleco_ram_w(int offset, int data);
 extern int coleco_paddle_r(int offset);
@@ -190,7 +190,7 @@ static struct MachineDriver machine_driver_coleco =
 	TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
 	tms9928A_init_palette,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	coleco_vh_start,
 	coleco_vh_stop,
@@ -243,7 +243,8 @@ static const struct IODevice io_coleco[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
-		NULL,				/* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */

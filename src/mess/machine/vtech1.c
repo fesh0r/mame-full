@@ -22,7 +22,6 @@
 	- Davide Moretti for the detailed description of the colors.
 
     TODO:
-		Add loading .vz images from WAV files.
 		Printer and RS232 support.
 
 ****************************************************************************/
@@ -30,7 +29,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -43,17 +42,21 @@ extern int vtech1_frame_time;
 
 int vtech1_latch = -1;
 
-static const char *cassette_name = NULL;
-
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
+
+static int vtech1_snapshot_size = 0;
+static int vtech1_snapshot_count = 0;
+static UINT8 *vtech1_snapshot_data = NULL;
 
 static void *vtech1_fdc_file[2] = {NULL, NULL};
 static UINT8 vtech1_track_x2[2] = {80, 80};
 static UINT8 vtech1_fdc_wrprot[2] = {0x80, 0x80};
 static UINT8 vtech1_fdc_status = 0;
 static UINT8 vtech1_fdc_data[TRKSIZE_FM];
+
 static int vtech1_data;
+
 static int vtech1_fdc_edge = 0;
 static int vtech1_fdc_bits = 8;
 static int vtech1_drive = -1;
@@ -72,76 +75,9 @@ void init_vtech1(void)
         gfx[0x0c00+i] = i;
 }
 
-static int opbaseoverride(int PC)
-{
-	/* Did we hit the first timer interrupt? */
-	if( PC == 0x0038 )
-	{
-		UINT8 *RAM = memory_region(REGION_CPU1);
-		const char magic_basic[] = "VZF0";
-		const char magic_mcode[] = "  \000\000";
-		char name[17+1] = "";
-		UINT16 start=0, end=0, addr, size;
-		UINT8 type = 0;
-		char buff[4];
-		void *file;
-
-		if( cassette_name && cassette_name[0] )
-		{
-			file = osd_fopen(Machine->gamedrv->name, cassette_name, OSD_FILETYPE_IMAGE_RW, 0);
-			if( file )
-			{
-
-				osd_fread(file, buff, sizeof(buff));
-				if( memcmp(buff, magic_basic, sizeof(buff)) == 0 ||
-					memcmp(buff, magic_mcode, sizeof(buff)) == 0 )
-				{
-					osd_fread(file, &name, 17);
-					osd_fread(file, &type, 1);
-					osd_fread_lsbfirst(file, &addr, 2);
-					name[17] = '\0';
-					LOG((errorlog, "cassette load: %s ($%02X) addr $%04X\n", name, type, addr));
-					start = addr;
-					size = osd_fread(file, &RAM[addr], 0xffff - addr);
-					osd_fclose(file);
-					addr += size;
-					if( type == 0xf0 ) /* Basic image? */
-						end = addr - 2;
-					else
-					if( type == 0xf1 ) /* mcode image? */
-						end = addr;
-				}
-				else
-				{
-                    LOG((errorlog, "cassette load: magic not found\n"));
-				}
-			}
-			if( type == 0xf0 )
-			{
-				RAM[0x78a4] = start & 0xff;
-				RAM[0x78a5] = start >> 8;
-				RAM[0x78f9] = end & 0xff;
-				RAM[0x78fa] = end >> 8;
-				RAM[0x78fb] = end & 0xff;
-				RAM[0x78fc] = end >> 8;
-				RAM[0x78fd] = end & 0xff;
-				RAM[0x78fe] = end >> 8;
-			}
-			else
-			if( type == 0xf1 )
-			{
-				/* set USR() address */
-				RAM[0x788e] = start & 0xff;
-				RAM[0x788f] = start >> 8;
-			}
-		}
-		cpu_setOPbaseoverride(0, NULL);
-	}
-	return PC;
-}
-
 static void common_init_machine(void)
 {
+
 	/* install DOS ROM ? */
     if( readinputport(0) & 0x40 )
     {
@@ -157,9 +93,6 @@ static void common_init_machine(void)
 			osd_fclose(dos);
         }
     }
-
-    /* setup opbaseoverride handler to detect when to load a cassette image */
-	cpu_setOPbaseoverride(0, opbaseoverride);
 }
 
 void laser110_init_machine(void)
@@ -218,48 +151,276 @@ void vtech1_shutdown_machine(void)
 	}
 }
 
-int vtech1_cassette_id(const char *name, const char *gamename)
+/***************************************************************************
+ * CASSETTE HANDLING
+ ***************************************************************************/
+
+int vtech1_cassette_id(int id)
 {
-    const char magic_basic[] = "VZF0";
-    const char magic_mcode[] = "  \000\000";
-    char buff[4];
+	UINT8 buff[256];
     void *file;
 
-    file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
+		int i;
+
         osd_fread(file, buff, sizeof(buff));
-        if( memcmp(buff, magic_basic, sizeof(buff)) == 0 )
+
+        for( i = 0; i < 128; i++ )
+			if( buff[i] != 0x80 )
+				return 1;
+		for( i = 128; i < 128+5; i++ )
+			if( buff[i] != 0xfe )
+				return 1;
+		for( i = 128+5+1; i < 128+5+1+17; i++ )
+		{
+			if( buff[i] == 0x00 )
+				break;
+		}
+		if( i == 128+5+1+17 )
+			return 1;
+        if( buff[128+5] == 0xf0 )
         {
-			LOG((errorlog, "vtech1_cassette_id: BASIC magic '%s' found\n", magic_basic));
+			LOG((errorlog, "vtech1_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
             return 0;
         }
-        if( memcmp(buff, magic_mcode, sizeof(buff)) == 0 )
+		if( buff[128+5] == 0xf1 )
         {
-			LOG((errorlog, "vtech1_cassette_id: MCODE magic '%s' found\n", magic_mcode));
+			LOG((errorlog, "vtech1_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
             return 0;
         }
     }
     return 1;
 }
 
-int vtech1_cassette_init(int id, const char *name)
+#define LO	-32768
+#define HI	+32767
+
+#define BITSAMPLES	6
+#define BYTESAMPLES 8*BITSAMPLES
+#define SILENCE 8000
+
+static INT16 *fill_wave_byte(INT16 *buffer, int byte)
 {
-    cassette_name = name;
-    return 0;
+	int i;
+
+    for( i = 7; i >= 0; i-- )
+	{
+		*buffer++ = HI; 	/* initial cycle */
+		*buffer++ = LO;
+		if( (byte >> i) & 1 )
+		{
+			*buffer++ = HI; /* two more cycles */
+            *buffer++ = LO;
+			*buffer++ = HI;
+            *buffer++ = LO;
+        }
+		else
+		{
+			*buffer++ = HI; /* one slow cycle */
+			*buffer++ = HI;
+			*buffer++ = LO;
+			*buffer++ = LO;
+        }
+	}
+    return buffer;
+}
+
+static int fill_wave(INT16 *buffer, int length, UINT8 *code)
+{
+	static int nullbyte;
+
+    if( code == CODE_HEADER )
+    {
+		int i;
+
+        if( length < SILENCE )
+			return -1;
+		for( i = 0; i < SILENCE; i++ )
+			*buffer++ = 0;
+
+		nullbyte = 0;
+
+        return SILENCE;
+    }
+
+	if( code == CODE_TRAILER )
+    {
+		int i;
+
+        /* silence at the end */
+		for( i = 0; i < length; i++ )
+			*buffer++ = 0;
+        return length;
+    }
+
+    if( length < BYTESAMPLES )
+		return -1;
+
+	buffer = fill_wave_byte(buffer, *code);
+
+    if( !nullbyte && *code == 0 )
+	{
+		int i;
+		for( i = 0; i < 2*BITSAMPLES; i++ )
+			*buffer++ = LO;
+        nullbyte = 1;
+		return BYTESAMPLES + 2 * BITSAMPLES;
+	}
+
+    return BYTESAMPLES;
+}
+
+int vtech1_cassette_init(int id)
+{
+	void *file;
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( file )
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		wa.header_samples = SILENCE;
+		wa.trailer_samples = SILENCE;
+		wa.chunk_size = 1;
+		wa.chunk_samples = BYTESAMPLES;
+		if( device_open(IO_CASSETTE,id,0,&wa) )
+			return INIT_FAILED;
+		return INIT_OK;
+    }
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	if( file )
+    {
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		if( device_open(IO_CASSETTE,id,1,&wa) )
+			return INIT_FAILED;
+        return INIT_OK;
+    }
+    return INIT_FAILED;
 }
 
 void vtech1_cassette_exit(int id)
 {
-	cassette_name = NULL;
+	device_close(IO_CASSETTE,id);
 }
 
-int vtech1_floppy_id(const char *name, const char *gamename)
+/***************************************************************************
+ * SNAPSHOT HANDLING
+ ***************************************************************************/
+
+static void vtech1_snapshot_copy(void)
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	if( memcmp(&RAM[0x7000+3*32], "READY", 5) == 0 &&
+		--vtech1_snapshot_count == 0 )
+	{
+		UINT16 start, end;
+
+        start = vtech1_snapshot_data[22] + 256 * vtech1_snapshot_data[23];
+		/* skip loading address */
+		end = start + vtech1_snapshot_size - 24;
+        if( vtech1_snapshot_data[21] == 0xf0 )
+		{
+			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+            sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
+			vtech1_frame_time = Machine->drv->frames_per_second;
+			LOG((errorlog,"VTECH1 BASIC snapshot %04x-%04x\n", start, end));
+            /* patch BASIC variables */
+			RAM[0x78a4] = start % 256;
+			RAM[0x78a5] = start / 256;
+			RAM[0x78f9] = end % 256;
+			RAM[0x78fa] = end / 256;
+			RAM[0x78fb] = end % 256;
+			RAM[0x78fc] = end / 256;
+			RAM[0x78fd] = end % 256;
+			RAM[0x78fe] = end / 256;
+        }
+		else
+		{
+			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
+			sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
+			vtech1_frame_time = Machine->drv->frames_per_second;
+			LOG((errorlog,"VTECH1 MCODE snapshot %04x-%04x\n", start, end));
+            /* set USR() address */
+			RAM[0x788e] = start % 256;
+			RAM[0x788f] = start / 256;
+        }
+		free(vtech1_snapshot_data);
+		vtech1_snapshot_data = NULL;
+		vtech1_snapshot_size = 0;
+	}
+}
+
+int vtech1_snapshot_id(int id)
+{
+	UINT8 buff[256];
+    void *file;
+
+	LOG((errorlog, "VTECH snapshot_id\n"));
+    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    if( file )
+    {
+        osd_fread(file, buff, sizeof(buff));
+		osd_fclose(file);
+		if( memcmp(buff, "  \0\0", 4) == 0 && buff[21] == 0xf1 )
+        {
+			LOG((errorlog, "vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4));
+            return 0;
+        }
+		if( memcmp(buff, "VZF0", 4) == 0 && buff[21] == 0xf0 )
+        {
+			LOG((errorlog, "vtech1_snapshot_id: BASIC magic found %s\n", buff+4));
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int vtech1_snapshot_init(int id)
+{
+	void *file;
+
+	LOG((errorlog, "VTECH snapshot_init\n"));
+    file = image_fopen(IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+    if( file )
+	{
+		vtech1_snapshot_size = osd_fsize(file);
+		vtech1_snapshot_data = malloc(vtech1_snapshot_size);
+        if( vtech1_snapshot_data )
+		{
+			osd_fread(file, vtech1_snapshot_data, vtech1_snapshot_size);
+			osd_fclose(file);
+			/* 1/2 second delay after the READY message */
+			vtech1_snapshot_count = Machine->drv->frames_per_second / 2;
+            return INIT_OK;
+		}
+		osd_fclose(file);
+	}
+	return INIT_FAILED;
+}
+
+void vtech1_snapshot_exit(int id)
+{
+	LOG((errorlog, "VTECH snapshot_exit\n"));
+    if( vtech1_snapshot_data )
+		free(vtech1_snapshot_data);
+	vtech1_snapshot_data = NULL;
+	vtech1_snapshot_size = 0;
+}
+
+int vtech1_floppy_id(int id)
 {
     void *file;
     UINT8 buff[32];
 
-    file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -270,27 +431,24 @@ int vtech1_floppy_id(const char *name, const char *gamename)
     return 0;
 }
 
-int vtech1_floppy_init(int id, const char *name)
+int vtech1_floppy_init(int id)
 {
-	if( name && name[0] )
+	/* first try to open existing image RW */
+	vtech1_fdc_wrprot[id] = 0x00;
+	vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	/* failed? */
+	if( !vtech1_fdc_file[id] )
 	{
-		/* first try to open existing image RW */
+		/* try to open existing image RO */
+		vtech1_fdc_wrprot[id] = 0x80;
+		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	}
+	/* failed? */
+	if( !vtech1_fdc_file[id] )
+	{
+		/* create new image RW */
 		vtech1_fdc_wrprot[id] = 0x00;
-		vtech1_fdc_file[id] = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-		/* failed? */
-		if( !vtech1_fdc_file[id] )
-		{
-			/* try to open existing image RO */
-			vtech1_fdc_wrprot[id] = 0x80;
-			vtech1_fdc_file[id] = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-		}
-		/* failed? */
-		if( !vtech1_fdc_file[id] )
-		{
-			/* create new image RW */
-			vtech1_fdc_wrprot[id] = 0x00;
-			vtech1_fdc_file[id] = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
-		}
+		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 	}
 	if( vtech1_fdc_file[id] )
 		return 0;
@@ -504,7 +662,8 @@ int vtech1_joystick_r(int offset)
 
 int vtech1_keyboard_r(int offset)
 {
-    int data = 0xff;
+	static int cassette_bit = 0;
+	int level, data = 0xff;
 
     if( !(offset & 0x01) )
     {
@@ -558,7 +717,14 @@ int vtech1_keyboard_r(int offset)
     if( cpu_getscanline() >= 16*12 )
         data &= ~0x80;
 
-    /* cassette input would be bit 5 (0x40) */
+	/* cassette input is bit 5 (0x40) */
+	level = device_input(IO_CASSETTE,0);
+	if( level < -511 )
+		cassette_bit = 0x00;
+	if( level > +511 )
+		cassette_bit = 0x40;
+
+	data &= ~cassette_bit;
 
     return data;
 }
@@ -575,32 +741,35 @@ int vtech1_keyboard_r(int offset)
  ************************************************/
 void vtech1_latch_w(int offset, int data)
 {
-    int dac = 0;
+    LOG((errorlog, "vtech1_latch_w $%02X\n", data));
+	/* cassette data bits toggle? */
+    if( (vtech1_latch ^ data ) & 0x06 )
+    {
+		static int amp[4] = {32767,16383,-16384,-32768};
+        wave_output(0, amp[(data >> 1) & 3]);
+    }
 
-	LOG((errorlog, "vtech1_latch_w $%02X\n", data));
-    /* dirty all if the mode or the background color are toggled */
+    /* speaker data bits toggle? */
+    if( (vtech1_latch ^ data ) & 0x41 )
+		speaker_level_w(0, (data & 1) | ((data>>5) & 2));
+
+    /* mode or the background color are toggle? */
 	if( (vtech1_latch ^ data) & 0x18 )
 	{
 		extern int bitmap_dirty;
         bitmap_dirty = 1;
 		if( (vtech1_latch ^ data) & 0x10 )
-			LOG((errorlog, "vtech1_latch_w: change background %d", (data>>4)&1));
+			LOG((errorlog, "vtech1_latch_w: change background %d\n", (data>>4)&1));
 		if( (vtech1_latch ^ data) & 0x08 )
-			LOG((errorlog, "vtech1_latch_w: change mode to %s", (data&0x08)?"gfx":"text"));
+			LOG((errorlog, "vtech1_latch_w: change mode to %s\n", (data&0x08)?"gfx":"text"));
     }
-	vtech1_latch = data;
 
-	/* cassette output bits */
-	dac = (vtech1_latch & 0x06) * 8;
-
-	/* speaker B push */
-	if( vtech1_latch & 0x20 )
-        dac += 48;
-	/* speaker B pull */
-	if( vtech1_latch & 0x01 )
-        dac -= 48;
-
-    DAC_signed_data_w(0, dac);
+    vtech1_latch = data;
 }
 
-
+int vtech1_interrupt(void)
+{
+	if( vtech1_snapshot_size > 0 )
+		vtech1_snapshot_copy();
+	return interrupt();
+}

@@ -11,9 +11,13 @@ ernesto@imagina.com
 #include "driver.h"
 #include "mess/systems/amiga.h"
 
-#define EMULATE_INDEX_PULSE 1
+#define LOG_CUSTOM				0
+#define LOG_CIA					0
+#define OLD_INTERRUPT_SYSTEM	0
 
-#define LOG_CUSTOM 0
+/* from vidhrdw */
+extern void copper_setpc( unsigned long pc );
+extern void copper_enable( void );
 
 /***************************************************************************
 
@@ -26,9 +30,7 @@ void amiga_custom_w( int offs, int data );
 
 custom_regs_def custom_regs;
 
-/* from vidhrdw */
-void amiga_update_line( int line, int start_h, int end_h, custom_regs_def *regs );
-
+#if OLD_INTERRUPT_SYSTEM
 static int get_int_level( void ) {
 
 	int ints = custom_regs.INTENA & custom_regs.INTREQ;
@@ -38,22 +40,22 @@ static int get_int_level( void ) {
 		/* Level 7 = NMI Can only be triggered from outside the hardware */
 
 		if ( ints & 0x2000 )
-			return 6;
+			return m68_level6_irq();
 
 		if ( ints & 0x1800 )
-			return 5;
+			return m68_level5_irq();
 
 		if ( ints & 0x0780 )
-			return 4;
+			return m68_level4_irq();
 
 		if ( ints & 0x0070 )
-			return 3;
+			return m68_level3_irq();
 
 		if ( ints & 0x0008 )
-			return 2;
+			return m68_level2_irq();
 
 		if ( ints & 0x0007 )
-			return 1;
+			return m68_level1_irq();
 	}
 
 	return 0;
@@ -66,6 +68,52 @@ static void trigger_int( void ) {
 	if ( level )
 		cpu_cause_interrupt( 0, level );
 }
+
+#else
+
+static int translate_ints( void ) {
+
+	int ints = custom_regs.INTENA & custom_regs.INTREQ;
+	int ret = 0;
+
+	if ( custom_regs.INTENA & 0x4000 ) { /* Master interrupt switch */
+
+		/* Level 7 = NMI Can only be triggered from outside the hardware */
+
+		if ( ints & 0x2000 )
+			ret |= ( 1 << 5 );
+
+		if ( ints & 0x1800 )
+			ret |= ( 1 << 4 );
+
+		if ( ints & 0x0780 )
+			ret |= ( 1 << 3 );
+
+		if ( ints & 0x0070 )
+			ret |= ( 1 << 2 );
+
+		if ( ints & 0x0008 )
+			ret |= ( 1 << 1 );
+
+		if ( ints & 0x0007 )
+			ret |= ( 1 << 0 );
+	}
+
+	return ret;
+}
+
+static void check_ints( void ) {
+
+	int ints = translate_ints(), i;
+
+	for ( i = 0; i < 7; i++ ) {
+		if ( ( ints >> i ) & 1 )
+			cpu_set_irq_line( 0, i + 1, ASSERT_LINE );
+		else
+			cpu_set_irq_line( 0, i + 1, CLEAR_LINE );
+	}
+}
+#endif
 
 /***************************************************************************
 
@@ -234,7 +282,7 @@ static int (*blit_func_line[8])( unsigned short dataA, unsigned short dataB, uns
 
 static void blitter_proc( int param ) {
 	/* Now we do the real blitting */
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *RAM = memory_region( REGION_CPU1 );
 	int	blt_total = 0;
 
 	custom_regs.DMACON |= 0x2000; /* Blit Zero, we modify it later */
@@ -364,8 +412,8 @@ static void blitter_proc( int param ) {
 		custom_regs.BLTxPTH[3] = ( ptr[3] >> 16 ) & 0x1f;
 		custom_regs.BLTxPTL[3] = ptr[3] & 0xffff;
 
-		custom_regs.BLTxDAT[0] = dataA;
-		custom_regs.BLTxDAT[1] = dataB;
+//		custom_regs.BLTxDAT[0] = dataA;
+//		custom_regs.BLTxDAT[1] = dataB;
 
 	} else { /* Blit mode */
 		if ( custom_regs.BLTCON0 & 0x0f00 ) {
@@ -574,55 +622,59 @@ static void blitter_setup( void ) {
 
 /* required prototype */
 static void cia_issue_index( void );
+static void setup_fdc_buffer( int drive );
 
 typedef struct {
 	int motor_on;
-	int sel;
 	int side;
 	int dir;
-	int step;
-	int ready;
-	int track0;
 	int wprot;
 	int disk_changed;
 	void *f;
 	int cyl;
 	unsigned char mfm[544*2*11];
+	int	cached;
 	void *rev_timer;
-	void *spin_timer;
 	int pos;
 } fdc_def;
 
 static fdc_def fdc_status[4];
+/* signals */
+static int fdc_sel = 0x0f;
+static int fdc_dir = 0;
+static int fdc_side = 1;
+static int fdc_step = 1;
+static int fdc_rdy = 1;
 
-int amiga_fdc_init( int id, const char *floppy_name ) {
+int amiga_fdc_init( int id ) {
 
 	fdc_status[id].motor_on = 0;
-	fdc_status[id].sel = 0;
 	fdc_status[id].side = 0;
 	fdc_status[id].dir = 0;
-	fdc_status[id].step = 0;
-	fdc_status[id].ready = 0;
-	fdc_status[id].track0 = 1;
 	fdc_status[id].wprot = 1;
 	fdc_status[id].cyl = 0;
 	fdc_status[id].rev_timer = 0;
-	fdc_status[id].spin_timer = 0;
+	fdc_status[id].cached = -1;
 	fdc_status[id].pos = 0;
 
 	memset( fdc_status[id].mfm, 0xaa, 544*2*11 );
 
 	fdc_status[id].disk_changed = 1;
-	if ( floppy_name[0] ) {
-		fdc_status[id].f = osd_fopen(Machine->gamedrv->name,floppy_name,OSD_FILETYPE_IMAGE_RW,0);
-		if ( fdc_status[id].f == NULL ) {
-			if ( errorlog )
-				fprintf( errorlog, "Could not open image %s\n", floppy_name );
-			return 1;
-		}
-		fdc_status[id].disk_changed = 0;
+	fdc_status[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE_RW,0);
+	if ( fdc_status[id].f == NULL ) {
+		if ( errorlog )
+			fprintf( errorlog, "Could not open image %s\n", device_filename(IO_FLOPPY,id) );
+		return INIT_FAILED;
 	}
-	return 0;
+	fdc_status[id].disk_changed = 0;
+
+	fdc_sel = 0x0f;
+	fdc_dir = 0;
+	fdc_side = 1;
+	fdc_step = 1;
+	fdc_rdy = 1;
+
+	return INIT_OK;
 }
 
 static int fdc_get_curpos( int drive ) {
@@ -655,15 +707,17 @@ static unsigned short fdc_get_byte( void ) {
 	ret |= ( custom_regs.DSKLEN >> 1 ) & 0x2000;
 
 	for ( i = 0; i < 4; i++ ) {
-		if ( fdc_status[i].sel )
+		if ( !( fdc_sel & ( 1 << i ) ) )
 			drive = i;
 	}
 
 	if ( drive == -1 )
 		return ret;
 
-	if ( fdc_status[drive].disk_changed || fdc_status[drive].ready == 0 )
+	if ( fdc_status[drive].disk_changed )
 		return ret;
+
+	setup_fdc_buffer( drive );
 
 	pos = fdc_get_curpos( drive );
 
@@ -683,17 +737,10 @@ static unsigned short fdc_get_byte( void ) {
 
 static void fdc_dma_proc( int drive ) {
 
-	if ( ( custom_regs.DSKLEN & 0x8000 ) == 0 )
+	if ( fdc_status[drive].disk_changed )
 		return;
 
-	if ( ( custom_regs.DMACON & 0x0210 ) == 0 )
-		return;
-
-	if ( fdc_status[drive].disk_changed || fdc_status[drive].ready == 0 )
-		return;
-
-	if ( fdc_status[drive].sel == 0 )
-		return;
+	setup_fdc_buffer( drive );
 
 	if ( custom_regs.DSKLEN & 0x4000 ) {
 		if ( errorlog )
@@ -704,12 +751,17 @@ static void fdc_dma_proc( int drive ) {
 		int len = custom_regs.DSKLEN & 0x3fff;
 
 		while ( len-- ) {
-			*RAM++ = fdc_status[drive].mfm[cur_pos++];
-			if ( cur_pos == ( 544 * 2 * 11 ) )
-				cur_pos = 0;
-			*RAM++ = fdc_status[drive].mfm[cur_pos++];
-			if ( cur_pos == ( 544 * 2 * 11 ) )
-				cur_pos = 0;
+			int dat = ( fdc_status[drive].mfm[cur_pos++] ) << 8;
+
+			cur_pos %= ( 544 * 2 * 11 );
+
+			dat |= fdc_status[drive].mfm[cur_pos++];
+
+			cur_pos %= ( 544 * 2 * 11 );
+
+			WRITE_WORD( RAM, dat );
+
+			RAM += 2;
 		}
 	}
 
@@ -720,11 +772,15 @@ static void fdc_setup_dma( void ) {
 	int i, cur_pos, drive = -1;
 	int time = 0;
 
+	if ( ( custom_regs.DSKLEN & 0x8000 ) == 0 )
+		return;
+
+	if ( ( custom_regs.DMACON & 0x0210 ) == 0 )
+		return;
+
 	for ( i = 0; i < 4; i++ ) {
-		if ( fdc_status[i].sel ) {
+		if ( !( fdc_sel & ( 1 << i ) ) )
 			drive = i;
-			break;
-		}
 	}
 
 	if ( drive == -1 ) {
@@ -733,9 +789,10 @@ static void fdc_setup_dma( void ) {
 		return;
 	}
 
-	if ( fdc_status[drive].disk_changed || fdc_status[drive].ready == 0 ) {
+	if ( fdc_status[drive].disk_changed )
 		return;
-	}
+
+	setup_fdc_buffer( drive );
 
 	fdc_status[drive].pos = cur_pos = fdc_get_curpos( drive );
 
@@ -778,14 +835,10 @@ static void fdc_setup_dma( void ) {
 
 static void setup_fdc_buffer( int drive ) {
 	int sector, offset, len;
-	unsigned char temp_cyl[512*11];
+	static unsigned char temp_cyl[512*11];
 
 	/* no disk in drive */
 	if ( fdc_status[drive].disk_changed )
-		return;
-
-	/* drive is not ready */
-	if ( fdc_status[drive].ready == 0 )
 		return;
 
 	if ( fdc_status[drive].f == NULL ) {
@@ -795,7 +848,10 @@ static void setup_fdc_buffer( int drive ) {
 
 	len = 512*11;
 
-	offset = ( fdc_status[drive].cyl << 1 ) | fdc_status[drive].side;
+	offset = ( fdc_status[drive].cyl << 1 ) | fdc_side;
+
+	if ( fdc_status[drive].cached == offset )
+		return;
 
 	if ( osd_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
 		if ( errorlog )
@@ -810,7 +866,7 @@ static void setup_fdc_buffer( int drive ) {
 	for ( sector = 0; sector < 11; sector++ ) {
 		unsigned char secbuf[544];
 	    int i;
-	    unsigned short *mfmbuf = ( unsigned short * )( &fdc_status[drive].mfm[544*2*sector] );
+	    unsigned char *mfmbuf = ( &fdc_status[drive].mfm[544*2*sector] );
 		unsigned long deven,dodd;
 		unsigned long hck = 0,dck = 0;
 
@@ -826,49 +882,89 @@ static void setup_fdc_buffer( int drive ) {
 
 	    memcpy( &secbuf[32], &temp_cyl[sector*512], 512 );
 
-	    mfmbuf[0] = mfmbuf[1] = 0xaaaa;
-	    mfmbuf[2] = mfmbuf[3] = 0x4489;
+		mfmbuf[0*2] = 0xaa;
+		mfmbuf[0*2+1] = 0xaa;
+		mfmbuf[1*2] = 0xaa;
+		mfmbuf[1*2+1] = 0xaa;
+		mfmbuf[2*2] = 0x44;
+		mfmbuf[2*2+1] = 0x89;
+		mfmbuf[3*2] = 0x44;
+		mfmbuf[3*2+1] = 0x89;
 
 	    deven = ( ( secbuf[4] << 24) | ( secbuf[5] << 16 ) | ( secbuf[6] << 8 ) | ( secbuf[7] ) );
 	    dodd = deven >> 1;
 	    deven &= 0x55555555; dodd &= 0x55555555;
 
-	    mfmbuf[4] = dodd >> 16;
-	    mfmbuf[5] = dodd;
-	    mfmbuf[6] = deven>> 16;
-	    mfmbuf[7] = deven;
+		mfmbuf[4*2] = ( ( dodd >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[4*2+1] = ( ( dodd >> 16 ) ) & 0xff;
+		mfmbuf[5*2] = ( dodd >> 8 ) & 0xff;
+		mfmbuf[5*2+1] = dodd & 0xff;
+		mfmbuf[6*2] = ( ( deven >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[6*2+1] = ( ( deven >> 16 ) ) & 0xff;
+		mfmbuf[7*2] = ( deven >> 8 ) & 0xff;
+		mfmbuf[7*2+1] = deven & 0xff;
 
-	    for ( i = 8; i < 48; i++ )
-			mfmbuf[i] = 0;
+		for ( i = 8; i < 48; i++ )
+			mfmbuf[i*2] = mfmbuf[i*2+1] = 0xaa;
+
 	    for (i = 0; i < 512; i += 4) {
 			deven = ((secbuf[i+32] << 24) | (secbuf[i+33] << 16)
 				 | (secbuf[i+34] << 8) | (secbuf[i+35]));
 			dodd = deven >> 1;
 			deven &= 0x55555555; dodd &= 0x55555555;
-			mfmbuf[(i>>1) + 32] = dodd >> 16;
-			mfmbuf[(i>>1) + 33] = dodd;
-			mfmbuf[(i>>1) + 256 + 32] = deven >> 16;
-			mfmbuf[(i>>1) + 256 + 33] = deven;
+
+			mfmbuf[i + ( 32 * 2 )] = ( ( dodd >> 16 ) >> 8 ) & 0xff;
+			mfmbuf[i + ( 32 * 2 ) + 1] = ( dodd >> 16 ) & 0xff;
+			mfmbuf[i + ( 33 * 2 )] = ( dodd >> 8 ) & 0xff;
+			mfmbuf[i + ( 33 * 2 ) + 1] = dodd & 0xff;
+
+			mfmbuf[i + ( ( 256 + 32 ) * 2 )] = ( ( deven >> 16 ) >> 8 ) & 0xff;
+			mfmbuf[i + ( ( 256 + 32 ) * 2 ) + 1] = ( deven >> 16 ) & 0xff;
+			mfmbuf[i + ( ( 256 + 33 ) * 2 )] = ( deven >> 8 ) & 0xff;
+			mfmbuf[i + ( ( 256 + 33 ) * 2 ) + 1] = deven & 0xff;
 	    }
 
 	    for(i = 4; i < 24; i += 2)
-			hck ^= (mfmbuf[i] << 16) | mfmbuf[i+1];
+			hck ^= ( ( mfmbuf[i*2] << 24) | ( mfmbuf[i*2+1] << 16 ) ) | ( ( mfmbuf[i*2+2] << 8 ) | mfmbuf[i*2+3] );
 
 	    deven = dodd = hck; dodd >>= 1;
-	    mfmbuf[24] = dodd >> 16; mfmbuf[25] = dodd;
-	    mfmbuf[26] = deven >> 16; mfmbuf[27] = deven;
+
+		mfmbuf[24*2] = ( ( dodd >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[24*2+1] = ( ( dodd >> 16 ) ) & 0xff;
+		mfmbuf[25*2] = ( dodd >> 8 ) & 0xff;
+		mfmbuf[25*2+1] = dodd & 0xff;
+		mfmbuf[26*2] = ( ( deven >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[26*2+1] = ( ( deven >> 16 ) ) & 0xff;
+		mfmbuf[27*2] = ( deven >> 8 ) & 0xff;
+		mfmbuf[27*2+1] = deven & 0xff;
 
 	    for(i = 32; i < 544; i += 2)
-			dck ^= (mfmbuf[i] << 16) | mfmbuf[i+1];
+			dck ^= ( ( mfmbuf[i*2] << 24) | ( mfmbuf[i*2+1] << 16 ) ) | ( ( mfmbuf[i*2+2] << 8 ) | mfmbuf[i*2+3] );
 
 	    deven = dodd = dck; dodd >>= 1;
-	    mfmbuf[28] = dodd >> 16; mfmbuf[29] = dodd;
-	    mfmbuf[30] = deven >> 16; mfmbuf[31] = deven;
+
+		mfmbuf[28*2] = ( ( dodd >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[28*2+1] = ( ( dodd >> 16 ) ) & 0xff;
+		mfmbuf[29*2] = ( dodd >> 8 ) & 0xff;
+		mfmbuf[29*2+1] = dodd & 0xff;
+		mfmbuf[30*2] = ( ( deven >> 16 ) >> 8 ) & 0xff;
+		mfmbuf[30*2+1] = ( ( deven >> 16 ) ) & 0xff;
+		mfmbuf[31*2] = ( deven >> 8 ) & 0xff;
+		mfmbuf[31*2+1] = deven & 0xff;
 	}
+
+	fdc_status[drive].cached = offset;
 }
 
 static void fdc_rev_proc( int drive ) {
+	int time;
+
 	cia_issue_index();
+
+	time = ( custom_regs.ADKCON & 0x100 ) ? 2 : 4;
+	time *= ( 544 * 2 * 11 );
+	time *= 8;
+	fdc_status[drive].rev_timer = timer_set( TIME_IN_USEC( time ) , drive, fdc_rev_proc );
 }
 
 static void start_rev_timer( int drive ) {
@@ -884,7 +980,7 @@ static void start_rev_timer( int drive ) {
 	time *= ( 544 * 2 * 11 );
 	time *= 8;
 
-	fdc_status[drive].rev_timer = timer_pulse( TIME_IN_USEC( time ) , drive, fdc_rev_proc );
+	fdc_status[drive].rev_timer = timer_set( TIME_IN_USEC( time ) , drive, fdc_rev_proc );
 }
 
 static void stop_rev_timer( int drive ) {
@@ -904,137 +1000,92 @@ static void fdc_setup_leds( int drive ) {
 		osd_led_w( 1, fdc_status[drive].motor_on ); /* update internal drive led */
 
 	if ( drive == 1 )
-		osd_led_w( 2, fdc_status[drive].motor_on ); /* update internal drive led */
+		osd_led_w( 2, fdc_status[drive].motor_on ); /* update external drive led */
 }
 
-static void spin_proc( int drive ) {
-	fdc_status[drive].spin_timer = 0;
+static void fdc_stepdrive( int drive ) {
+	if ( fdc_dir ) {
+		if ( fdc_status[drive].cyl )
+			fdc_status[drive].cyl--;
+	} else {
+		if ( fdc_status[drive].cyl < 79 )
+			fdc_status[drive].cyl++;
+	}
+}
 
-	/* if theres no disk in the drive, the drive cannot go to ready state */
-	if ( fdc_status[drive].disk_changed ) {
-		fdc_setup_leds( drive );
-		return;
+static void fdc_motor( int drive, int off ) {
+	int on = !off;
+
+	if ( ( fdc_status[drive].motor_on == 0 ) && on ) {
+		fdc_status[drive].pos = 0;
+
+		start_rev_timer( drive );
+
+	} else {
+		if ( fdc_status[drive].motor_on && off )
+			stop_rev_timer( drive );
 	}
 
-	fdc_status[drive].ready = 1;
-
-	setup_fdc_buffer( drive );
-	start_rev_timer( drive );
+	fdc_status[drive].motor_on = on;
 }
 
 static void fdc_control_w( int data ) {
-	int i;
-	int change;
-	static int fdc_last_control;
+	int step_pulse;
+	int drive;
 
-	change = fdc_last_control ^ data;
+	if ( fdc_sel != ( ( data >> 3 ) & 15 ) )
+		fdc_rdy = 0;
 
-	fdc_last_control = data;
+	fdc_sel = ( data >> 3 ) & 15;
+    fdc_side = 1 - ( ( data >> 2 ) & 1 );
+	fdc_dir = ( data >> 1 ) & 1;
 
-	if ( change & 0x78 ) { /* selection change */
-		if ( change & 0x40 )
-			fdc_status[3].sel = ( data & 0x40 ) == 0;
+	step_pulse = data & 1;
 
-		if ( change & 0x20 )
-			fdc_status[2].sel = ( data & 0x20 ) == 0;
+    if ( fdc_step != step_pulse ) {
+		fdc_step = step_pulse;
 
-		if ( change & 0x10 )
-			fdc_status[1].sel = ( data & 0x10 ) == 0;
-
-		if ( change & 0x08 )
-			fdc_status[0].sel = ( data & 0x08 ) == 0;
-
-		/* if selection changed, make sure we recheck current state of motor, side and dir */
-		change |= 0x86;
-	}
-
-	for( i = 0; i < 4; i++ ) {
-		/* process drives that are selected */
-		if ( fdc_status[i].sel ) {
-
-			if ( change & 0x80 ) { /* drive motor change */
-				fdc_status[i].motor_on = ( data & 0x80 ) == 0;
-
-				fdc_setup_leds( i );
-
-				if ( fdc_status[i].motor_on ) { /* on? */
-					if ( fdc_status[i].ready == 0 ) { /* Was it off? */
-						if ( fdc_status[i].spin_timer )
-							timer_remove( fdc_status[i].spin_timer );
-						fdc_status[i].spin_timer = timer_set( TIME_IN_MSEC( 250 ), i, spin_proc ); /* 250ms to spin up */
-					}
-				} else { /* or off? */
-					if ( fdc_status[i].spin_timer ) {
-						timer_remove( fdc_status[i].spin_timer );
-						fdc_status[i].spin_timer = 0;
-					}
-
-					if ( fdc_status[i].ready == 1 ) { /* Was it on? */
-						fdc_status[i].ready = 0; /* Shut it down immediately */
-						stop_rev_timer( i );
-					}
-				}
-			}
-
-			if ( change & 0x04 ) { /* side change */
-				fdc_status[i].side = ( data & 0x04 ) == 0;
-					setup_fdc_buffer( i );
-			}
-
-			if ( change & 0x02 ) { /* dir change */
-				fdc_status[i].dir = ( data & 0x02 ) != 0;
-			}
-
-			if ( change & 0x01 ) { /* step pulse */
-				fdc_status[i].step = ( data & 0x01 ) == 0;
-
-				if ( fdc_status[i].step ) { /* Step pulse */
-					if ( fdc_status[i].dir ) { /* move inward */
-						fdc_status[i].cyl--;
-						if ( fdc_status[i].cyl < 0 ) {
-							if ( errorlog )
-								fprintf( errorlog, "FDC: going for track < 0!\n" );
-							fdc_status[i].cyl = 0;
-						}
-						setup_fdc_buffer( i );
-					} else { /* move outward */
-						fdc_status[i].cyl++;
-						if ( fdc_status[i].cyl > 79 ) {
-							if ( errorlog )
-								fprintf( errorlog, "FDC: going for track > 79!\n" );
-							fdc_status[i].cyl = 79;
-						}
-						setup_fdc_buffer( i );
-					}
-
-					fdc_status[i].track0 = ( fdc_status[i].cyl == 0 );
-				}
+    	if ( fdc_step == 0 ) {
+		    for ( drive = 0; drive < 4; drive++ ) {
+				if ( !( fdc_sel & ( 1 << drive ) ) )
+				    fdc_stepdrive( drive );
 			}
 		}
 	}
+
+	for ( drive = 0; drive < 4; drive++ ) {
+		if ( !( fdc_sel & ( 1 << drive ) ) ) {
+			fdc_motor( drive, ( data >> 7 ) & 1 );
+			fdc_setup_leds( drive );
+		}
+    }
 }
 
 static int fdc_status_r( void ) {
-	int i, drive, ret;
+	int drive, ret = 0x3c;
 
-	drive = -1;
+	for ( drive = 0; drive < 4; drive++ ) {
+		if ( !( fdc_sel & ( 1 << drive ) ) ) {
+			if ( fdc_status[drive].motor_on ) {
+				if ( fdc_rdy )
+					ret &= ~0x20;
+				fdc_rdy = 1;
+			} else {
+				/* if we got a floppy image, then return we're on */
+				if ( fdc_status[drive].disk_changed == 0 )
+					ret &= ~0x20;
+			}
 
-	for ( i = 0; i < 4; i++ ) {
-		if ( fdc_status[i].sel ) {
-			drive = i;
-			break;
+			if ( fdc_status[drive].cyl == 0 )
+				ret &= ~0x10;
+
+			if ( fdc_status[drive].wprot )
+				ret &= ~0x08;
+
+			if ( fdc_status[drive].disk_changed )
+				ret &= ~0x04;
 		}
 	}
-
-	if ( drive == -1 ) /* No drive selected! */
-		return 0x3c;
-
-	ret = fdc_status[drive].ready << 5;
-	ret |= fdc_status[drive].track0 << 4;
-	ret |= fdc_status[drive].wprot << 3;
-	ret |= fdc_status[drive].disk_changed << 2;
-	ret ^= 0xff;
-	ret &= 0x3c;
 
 	return ret;
 }
@@ -1047,6 +1098,7 @@ static int fdc_status_r( void ) {
 
 /* required prototype */
 static void cia_fire_timer( int cia, int timer );
+static void *cia_hblank_timer = 0;
 
 typedef struct {
 	unsigned char 	ddra;
@@ -1178,10 +1230,10 @@ static void cia_fire_timer( int cia, int timer ) {
 
 	if ( timer == 0 ) {
 		if ( cia_8520[cia].timerA == 0 )
-			cia_8520[cia].timerA = timer_set( cia_8520[cia].timerA_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
+			cia_8520[cia].timerA = timer_set( ( double )cia_8520[cia].timerA_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
 	} else {
 		if ( cia_8520[cia].timerB == 0 )
-			cia_8520[cia].timerB = timer_set( cia_8520[cia].timerB_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
+			cia_8520[cia].timerB = timer_set( ( double )cia_8520[cia].timerB_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, cia_timer_proc );
 	}
 }
 
@@ -1198,17 +1250,23 @@ static void cia_vblank_update( void ) {
 	}
 }
 
-/* Update TOD on CIA B */
-static void cia_hblank_update( void ) {
+/* Update TOD on CIA B (each hblank) */
+static void cia_hblank_update( int param ) {
 	if ( cia_8520[1].tod_running ) {
-		cia_8520[1].tod++;
-		if ( cia_8520[1].tod == cia_8520[1].alarm ) {
-			cia_8520[1].ics |= 0x84;
-			if ( cia_8520[1].icr & 0x04 ) {
-				amiga_custom_w( 0x009c, 0xa000 );
+		int i;
+
+		for ( i = 0; i < Machine->drv->screen_height; i++ ) {
+			cia_8520[1].tod++;
+			if ( cia_8520[1].tod == cia_8520[1].alarm ) {
+				cia_8520[1].ics |= 0x84;
+				if ( cia_8520[1].icr & 0x04 ) {
+					amiga_custom_w( 0x009c, 0xa000 );
+				}
 			}
 		}
 	}
+
+	cia_hblank_timer = timer_set( cpu_getscanlineperiod(), 0, cia_hblank_update );
 }
 
 /* Issue a index pulse when a disk revolution completes */
@@ -1220,15 +1278,11 @@ static void cia_issue_index( void ) {
 }
 
 static int cia_0_portA_r( void ) {
-	int ret = fdc_status_r() | 0xc0;
+	int ret = readinputport( 0 ) & 0xc0;
 
-	if ( osd_is_key_pressed( KEYCODE_Z ) )
-		ret &= ~0x40;
+	ret |= fdc_status_r();
 
-	if ( osd_is_key_pressed( KEYCODE_X ) )
-		ret &= ~0x80;
-
-	return ret; /* I should add the mouse button 1 and 0 later on */
+	return ret; /* Gameport 1 and 0 buttons */
 }
 
 static int cia_0_portB_r( void ) {
@@ -1238,7 +1292,8 @@ static int cia_0_portB_r( void ) {
 }
 
 static void cia_0_portA_w( int data ) {
-	osd_led_w( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led */
+	/* bit 1 = overlay (data & 1 ) */
+	osd_led_w( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
 }
 
 static void cia_0_portB_w( int data ) {
@@ -1247,11 +1302,11 @@ static void cia_0_portB_w( int data ) {
 }
 
 static int cia_1_portA_r( void ) {
-	return 0;
+	return 0x00;
 }
 
 static int cia_1_portB_r( void ) {
-	return 0;
+	return 0x00;
 }
 
 static void cia_1_portA_w( int data ) {
@@ -1391,7 +1446,7 @@ int amiga_cia_r( int offs ) {
 		break;
 	}
 
-#if 0
+#if LOG_CIA
 	if ( errorlog )
 		fprintf( errorlog, "PC = %06x - Read from CIA %01x\n", cpu_getpc(), cia_sel );
 #endif
@@ -1533,11 +1588,12 @@ void amiga_cia_w( int offs, int data ) {
 		break;
 	}
 
-#if 0
+#if LOG_CIA
 	if ( errorlog )
 		fprintf( errorlog, "PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_getpc(), cia_sel, data );
 #endif
 }
+
 
 /***************************************************************************
 
@@ -1545,32 +1601,14 @@ void amiga_cia_w( int offs, int data ) {
 
 ***************************************************************************/
 
-#if EMULATE_INDEX_PULSE
-
-static void *custom_hblank_counter = 0;
-
-static void custom_hsync_proc( int param ) {
-
-	/* Update CIA B */
-	cia_hblank_update();
-}
-#endif
-
 static void amiga_custom_init( void ) {
-
-#if EMULATE_INDEX_PULSE
-	custom_hblank_counter = 0;
-
-	if ( custom_hblank_counter )
-		timer_remove( custom_hblank_counter );
-
-
-	/* cpu_getscanlineperiod() just wont cut it here, it triggers up to 301 lines */
-	custom_hblank_counter = timer_pulse( ( TIME_IN_HZ( 60 ) / Machine->drv->screen_height ), 0, custom_hsync_proc );
-#endif
+	custom_regs.DDFSTRT = 0x18;
+	custom_regs.DDFSTOP = 0xd8;
 }
 
 int amiga_custom_r( int offs ) {
+
+	offs &= 0xfff;
 
 	switch ( offs ) {
 		case 0x0002: /* DMACON */
@@ -1592,14 +1630,65 @@ int amiga_custom_r( int offs ) {
 			}
 		break;
 
+		case 0x000a: /* JOY0DAT */
+			if ( readinputport( 0 ) & 0x20 ) {
+				int input = ( readinputport( 1 ) >> 4 );
+				int	top,bot,lft,rgt;
+
+				top = ( input >> 3 ) & 1;
+				bot = ( input >> 2 ) & 1;
+				lft = ( input >> 1 ) & 1;
+				rgt = input & 1;
+
+				if ( lft ) top ^= 1;
+				if ( rgt ) bot ^= 1;
+
+				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+			} else {
+				int input = ( readinputport( 2 ) & 0xff );
+
+				input |= ( readinputport( 3 ) & 0xff ) << 8;
+
+				return input;
+			}
+		break;
+
+		case 0x000c: /* JOY1DAT */
+			if ( readinputport( 0 ) & 0x10 ) {
+				int input = ( readinputport( 1 ) & 0x0f );
+				int	top,bot,lft,rgt;
+
+				top = ( input >> 3 ) & 1;
+				bot = ( input >> 2 ) & 1;
+				lft = ( input >> 1 ) & 1;
+				rgt = input & 1;
+
+				if ( lft ) top ^= 1;
+				if ( rgt ) bot ^= 1;
+
+				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+			} else {
+				int input = ( readinputport( 4 ) & 0xff );
+
+				input |= ( readinputport( 5 ) & 0xff ) << 8;
+
+				return input;
+			}
+		break;
+
 		case 0x0010: /* ADKCONR */
 			return custom_regs.ADKCON;
 		break;
 
+		case 0x0012: /* POT0DAT */
+		case 0x0014: /* POT0DAT */
+			return 0;
+		break;
+
 		case 0x0016: /* POTGOR */
 			custom_regs.POTGOR = custom_regs.POTGO & 0xaa00;
-			custom_regs.POTGOR |= 0x0400; /* Right mouse button up */
-			custom_regs.POTGOR |= 0x0100; /* Middle mouse button up */
+			custom_regs.POTGOR |= ( readinputport( 0 ) & 1 ) << 10;
+			custom_regs.POTGOR |= ( readinputport( 0 ) & 2 ) << 13;
 			return custom_regs.POTGOR;
 		break;
 
@@ -1615,12 +1704,23 @@ int amiga_custom_r( int offs ) {
 		case 0x001e: /* INTREQ */
 			return custom_regs.INTREQ;
 		break;
+
+		case 0x0088: /* COPJMPA */
+			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
+		break;
+
+		case 0x008a: /* COPJMPB */
+			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
+		break;
+
+		default:
+#if LOG_CUSTOM
+			if ( errorlog )
+				fprintf( errorlog, "PC = %06x - Read from Custom %04x\n", cpu_getpc(), offs );
+#endif
+		break;
 	}
 
-#if LOG_CUSTOM
-	if ( errorlog )
-		fprintf( errorlog, "PC = %06x - Read from Custom %04x\n", cpu_getpc(), offs );
-#endif
 	return 0;
 }
 
@@ -1632,15 +1732,15 @@ int amiga_custom_r( int offs ) {
 
 void amiga_custom_w( int offs, int data ) {
 
+	offs &= 0xfff;
+
 	switch ( offs ) {
 		case 0x0020: /* DSKPTH */
 			custom_regs.DSKPTH = data;
-			return;
 		break;
 
 		case 0x0022: /* DSKPTL */
 			custom_regs.DSKPTL = data;
-			return;
 		break;
 
 		case 0x0024: /* DSKLEN */
@@ -1649,68 +1749,113 @@ void amiga_custom_w( int offs, int data ) {
 					fdc_setup_dma();
 			}
 			custom_regs.DSKLEN = data;
-			return;
 		break;
 
 		case 0x002e: /* COPCON */
 			custom_regs.COPCON = data & 2;
-			return;
 		break;
 
 		case 0x0034: /* POTGO */
 			custom_regs.POTGO = data;
-			return;
 		break;
 
 		case 0x0040: /* BLTCON0 */
 			custom_regs.BLTCON0 = data;
-			return;
 		break;
 
 		case 0x0042: /* BLTCON1 */
 			custom_regs.BLTCON1 = data;
-			return;
 		break;
 
 		case 0x0044: /* BLTAFWM */
 			custom_regs.BLTAFWM = data;
-			return;
 		break;
 
 		case 0x0046: /* BLTALWM */
 			custom_regs.BLTALWM = data;
-			return;
+		break;
+
+		case 0x0048: /* BLTCPTH */
+		case 0x004a: /* BLTCPTL */
+		case 0x004c: /* BLTBPTH */
+		case 0x004e: /* BLTBPTL */
+		case 0x0050: /* BLTAPTH */
+		case 0x0052: /* BLTAPTL */
+		case 0x0054: /* BLTDPTH */
+		case 0x0056: /* BLTDPTL */
+			{
+				int lo = ( offs & 2 );
+				int loc = ( offs - 0x48 ) >> 2;
+				int order[4] = { 2, 1, 0, 3 };
+
+				if ( lo )
+					custom_regs.BLTxPTL[order[loc]] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
+				else
+					custom_regs.BLTxPTH[order[loc]] = ( data & 0x1f );
+			}
 		break;
 
 		case 0x0058: /* BLTSIZE */
 			custom_regs.BLTSIZE = data;
 			blitter_setup();
-			return;
+		break;
+
+		case 0x0060: /* BLTCMOD */
+		case 0x0062: /* BLTBMOD */
+		case 0x0064: /* BLTAMOD */
+		case 0x0066: /* BLTDMOD */
+			{
+				int loc = ( offs >> 1 ) & 3;
+				int order[4] = { 2, 1, 0, 3 };
+
+				custom_regs.BLTxMOD[order[loc]] = ( signed short )( data & ~1 ); /* strip off lsb */
+			}
+		break;
+
+		case 0x0070: /* BLTCDAT */
+		case 0x0072: /* BLTBDAT */
+		case 0x0074: /* BLTADAT */
+			{
+				int loc = ( offs >> 1 ) & 3;
+				int order[3] = { 2, 1, 0 };
+
+				custom_regs.BLTxDAT[order[loc]] = data;
+			}
 		break;
 
 		case 0x007e: /* DSKSYNC */
 			custom_regs.DSKSYNC = data;
-			return;
+		break;
+
+		case 0x0080: /* COP1LCH */
+		case 0x0082: /* COP1LCL */
+		case 0x0084: /* COP2LCH */
+		case 0x0086: /* COP1LCL */
+			{
+				int lo = ( offs & 2 );
+				int loc = ( offs >> 2 ) & 1;
+
+				if ( lo )
+					custom_regs.COPLCL[loc] = ( data & ~1 ); /* should be word aligned, we make sure it is */
+				else
+					custom_regs.COPLCH[loc] = ( data & 0x1f );
+			}
 		break;
 
 		case 0x0088: /* COPJMPA */
 			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
-			return;
 		break;
 
 		case 0x008a: /* COPJMPB */
 			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
-			return;
 		break;
 
 		case 0x008e: /* DIWSTRT */
 			custom_regs.DIWSTRT = data;
-			return;
 		break;
 
 		case 0x0090: /* DIWSTOP */
 			custom_regs.DIWSTOP = data;
-			return;
 		break;
 
 		case 0x0092: /* DDFSTRT */
@@ -1718,7 +1863,6 @@ void amiga_custom_w( int offs, int data ) {
 			/* impose hardware limits ( HRM, page 75 ) */
 			if ( custom_regs.DDFSTRT < 0x18 )
 				custom_regs.DDFSTRT = 0x18;
-			return;
 		break;
 
 		case 0x0094: /* DDFSTOP */
@@ -1726,31 +1870,61 @@ void amiga_custom_w( int offs, int data ) {
 			/* impose hardware limits ( HRM, page 75 ) */
 			if ( custom_regs.DDFSTOP > 0xd8 )
 				custom_regs.DDFSTOP = 0xd8;
-			return;
 		break;
 
 		case 0x0096: /* DMACON */
 			SETCLR( custom_regs.DMACON, data )
-			return;
+			copper_enable();
 		break;
 
 		case 0x009a: /* INTENA */
 			SETCLR( custom_regs.INTENA, data )
+#if OLD_INTERRUPT_SYSTEM
 			if ( data & 0x8000 )
 				trigger_int();
-			return;
+#else
+			check_ints();
+#endif
 		break;
 
 		case 0x009c: /* INTREQ */
 			SETCLR( custom_regs.INTREQ, data )
+#if OLD_INTERRUPT_SYSTEM
 			if ( data & 0x8000 )
 				trigger_int();
-			return;
+#else
+			check_ints();
+#endif
 		break;
 
 		case 0x009e: /* ADKCON */
 			SETCLR( custom_regs.ADKCON, data )
-			return;
+		break;
+
+		case 0x00e0: /* BPL1PTH */
+		case 0x00e2: /* BPL1PTL */
+		case 0x00e4: /* BPL2PTH */
+		case 0x00e6: /* BPL2PTL */
+		case 0x00e8: /* BPL3PTH */
+		case 0x00ea: /* BPL3PTL */
+		case 0x00ec: /* BPL4PTH */
+		case 0x00ee: /* BPL4PTL */
+		case 0x00f0: /* BPL5PTH */
+		case 0x00f2: /* BPL5PTL */
+		case 0x00f4: /* BPL6PTH */
+		case 0x00f6: /* BPL6PTL */
+			{
+				int lo = ( offs & 2 );
+				int plane = ( offs >> 2 ) & 0x07;
+
+				if ( lo ) {
+					custom_regs.BPLPTR[plane] &= 0x001f0000;
+					custom_regs.BPLPTR[plane] |= ( data & 0xfffe );
+				} else {
+					custom_regs.BPLPTR[plane] &= 0x0000ffff;
+					custom_regs.BPLPTR[plane] |= ( data & 0x1f ) << 16;
+				}
+			}
 		break;
 
 		case 0x0100: /* BPLCON0 */
@@ -1762,99 +1936,110 @@ void amiga_custom_w( int offs, int data ) {
 					printf( "This game is doing funky planes stuff. (planes > 6)\n" );
 				custom_regs.BPLCON0 &= ~BPLCON0_BPU0;
 			}
+		break;
 
-			return;
+		case 0x0102: /* BPLCON1 */
+			custom_regs.BPLCON1 = data & 0xff;
+		break;
+
+		case 0x0104: /* BPLCON2 */
+			custom_regs.BPLCON2 = data & 0x7f;
 		break;
 
 		case 0x0108: /* BPL1MOD */
 			custom_regs.BPL1MOD = data;
-			return;
 		break;
 
 		case 0x010a: /* BPL2MOD */
 			custom_regs.BPL2MOD = data;
-			return;
 		break;
 
-		default:
-			if ( offs >= 0x48 && offs <= 0x56 ) { /* set Blitter pointer */
-				int lo = ( offs & 2 );
-				int loc = ( offs - 0x48 ) >> 2;
-				int order[4] = { 2, 1, 0, 3 };
+		case 0x0110: /* BPL1DAT */
+		case 0x0112: /* BPL2DAT */
+		case 0x0114: /* BPL3DAT */
+		case 0x0116: /* BPL4DAT */
+		case 0x0118: /* BPL5DAT */
+		case 0x011a: /* BPL6DAT */
+			/* in our current implementation of the screen update, we ignore this */
+		break;
 
-				if ( lo )
-					custom_regs.BLTxPTL[order[loc]] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
-				else
-					custom_regs.BLTxPTH[order[loc]] = ( data & 0x1f );
-				return;
-			}
-
-			if ( offs >= 0x60 && offs <= 0x66 ) { /* set Blitter modulo */
-				int loc = ( offs >> 1 ) & 3;
-				int order[4] = { 2, 1, 0, 3 };
-
-				custom_regs.BLTxMOD[order[loc]] = ( signed short )data;
-				custom_regs.BLTxMOD[order[loc]] &= ~1; /* strip off lsb */
-				return;
-			}
-
-			if ( offs >= 0x70 && offs <= 0x74 ) { /* set Blitter data */
-				int loc = ( offs >> 1 ) & 3;
-				int order[3] = { 2, 1, 0 };
-
-				custom_regs.BLTxDAT[order[loc]] = data;
-				return;
-			}
-
-			if ( offs >= 0x80 && offs <= 0x86 ) { /* set Copper pointer */
-				int lo = ( offs & 2 );
-				int loc = ( offs >> 2 ) & 1;
-
-				if ( lo )
-					custom_regs.COPLCL[loc] = ( data & 0xfffe ); /* should be word aligned, we make sure it is */
-				else
-					custom_regs.COPLCH[loc] = ( data & 0x1f );
-				return;
-			}
-
-			if ( offs >= 0xe0 && offs <= 0xf6 ) { /* set Bitplane pointer */
-				int lo = ( offs & 2 );
-				int plane = ( offs >> 2 ) & 0x07;
-
-				if ( lo ) {
-					custom_regs.BPLPTR[plane] &= 0x001f0000;
-					custom_regs.BPLPTR[plane] |= ( data & 0xfffe );
-				} else {
-					custom_regs.BPLPTR[plane] &= 0x0000ffff;
-					custom_regs.BPLPTR[plane] |= ( data & 0x1f ) << 16;
-				}
-				return;
-			}
-
-			if ( offs >= 0x120 && offs <= 0x13e ) { /* set sprite plane pointer */
+		case 0x0120: /* SPR0PTH */
+		case 0x0122: /* SPR0PTL */
+		case 0x0124: /* SPR1PTH */
+		case 0x0126: /* SPR1PTL */
+		case 0x0128: /* SPR2PTH */
+		case 0x012a: /* SPR2PTL */
+		case 0x012c: /* SPR3PTH */
+		case 0x012e: /* SPR3PTL */
+		case 0x0130: /* SPR4PTH */
+		case 0x0132: /* SPR4PTL */
+		case 0x0134: /* SPR5PTH */
+		case 0x0136: /* SPR5PTL */
+		case 0x0138: /* SPR6PTH */
+		case 0x013a: /* SPR6PTL */
+		case 0x013c: /* SPR7PTH */
+		case 0x013e: /* SPR7PTL */
+			{
 				int lo = ( offs & 2 );
 				int num = ( offs >> 2 ) & 0x07;
 
-				if ( lo )
-					custom_regs.SPRxPTL[num] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
-				else
-					custom_regs.SPRxPTH[num] = ( data & 0x1f );
-				return;
+				if ( lo ) {
+					custom_regs.SPRxPT[num] &= 0x001f0000;
+					custom_regs.SPRxPT[num] |= ( data & 0xfffe );
+					amiga_reload_sprite_info( num );
+				} else {
+					custom_regs.SPRxPT[num] &= 0x0000ffff;
+					custom_regs.SPRxPT[num] |= ( data & 0x1f ) << 16;
+				}
 			}
+		break;
 
-			if ( offs >= 0x180 && offs <= 0x1be ) { /* set color */
+		case 0x180: /* COLOR00 */
+		case 0x182: /* COLOR01 */
+		case 0x184: /* COLOR02 */
+		case 0x186: /* COLOR03 */
+		case 0x188: /* COLOR04 */
+		case 0x18a: /* COLOR05 */
+		case 0x18c: /* COLOR06 */
+		case 0x18e: /* COLOR07 */
+		case 0x190: /* COLOR08 */
+		case 0x192: /* COLOR09 */
+		case 0x194: /* COLOR10 */
+		case 0x196: /* COLOR11 */
+		case 0x198: /* COLOR12 */
+		case 0x19a: /* COLOR13 */
+		case 0x19c: /* COLOR14 */
+		case 0x19e: /* COLOR15 */
+		case 0x1a0: /* COLOR16 */
+		case 0x1a2: /* COLOR17 */
+		case 0x1a4: /* COLOR18 */
+		case 0x1a6: /* COLOR19 */
+		case 0x1a8: /* COLOR20 */
+		case 0x1aa: /* COLOR21 */
+		case 0x1ac: /* COLOR22 */
+		case 0x1ae: /* COLOR23 */
+		case 0x1b0: /* COLOR24 */
+		case 0x1b2: /* COLOR25 */
+		case 0x1b4: /* COLOR26 */
+		case 0x1b6: /* COLOR27 */
+		case 0x1b8: /* COLOR28 */
+		case 0x1ba: /* COLOR29 */
+		case 0x1bc: /* COLOR30 */
+		case 0x1be: /* COLOR31 */
+			{
 				int color = ( offs - 0x180 ) >> 1;
 
 				custom_regs.COLOR[color] = data;
-				return;
 			}
 		break;
-	}
 
+		default:
 #if LOG_CUSTOM
-	if ( errorlog )
-		fprintf( errorlog, "PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getpc(), offs, data );
+		if ( errorlog )
+			fprintf( errorlog, "PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getpc(), offs, data );
 #endif
+		break;
+	}
 }
 
 /***************************************************************************
@@ -1864,9 +2049,11 @@ void amiga_custom_w( int offs, int data ) {
 ***************************************************************************/
 
 int amiga_vblank_irq( void ) {
-
 	/* Update TOD on CIA A */
 	cia_vblank_update();
+
+	if ( cia_hblank_timer == 0 )
+		cia_hblank_timer = timer_set( cpu_getscanlineperiod(), 0, cia_hblank_update );
 
 	amiga_custom_w( 0x009c, 0x8020 );
 
@@ -1880,17 +2067,17 @@ int amiga_vblank_irq( void ) {
 ***************************************************************************/
 
 void amiga_init_machine( void ) {
-	/* Fake our reset pointer */
-	/* This is done with a hardware overlay from the 8520 CIA A in the real hardware */
-
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	memcpy( &RAM[0x000004], &RAM[0xf80004], 4 );
 
 	/* Initialize the CIA's */
 	cia_init();
 
 	/* Initialize the Custom chips */
 	amiga_custom_init();
-}
 
+	/* setup the ROM bank */
+	cpu_setbank( 2, &memory_region( REGION_CPU1 )[0x100000] );
+
+	/* Fake our reset pointer */
+	/* This is done with a hardware overlay from the 8520 CIA A in the real hardware */
+	memcpy( memory_region( REGION_CPU1 ), &memory_region( REGION_CPU1 )[0x180000], 8 );
+}

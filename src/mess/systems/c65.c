@@ -42,10 +42,12 @@ c65 prototype
  
 state
 -----
-only booting, other features should work when
-major memory management problems solved
+only booting
+major memory management problems
 
 rasterline based video system
+ quick modified vic6567/c64 video chip
+ no support for enhanced features, only 80 column mode
  no cpu holding
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
@@ -69,7 +71,7 @@ serial bus
  no printer or other devices
 expansion modules 
  none (did there any exist)
-expansion modules c64 )(adapter needed)
+expansion modules c64 (adapter needed)
  ultimax rom cartridges
  rom cartridges (exrom)
  no other rom cartridges (bankswitching logic in it, switching exrom, game)
@@ -161,7 +163,8 @@ static struct MemoryReadAddress c65_readmem[] =
 	{0x8000, 0x9fff, MRA_BANK4},
 	{0xa000, 0xbfff, MRA_BANK5},
 	{0xc000, 0xcfff, MRA_BANK6},
-	{0xd000, 0xdfff, MRA_BANK7},
+	{0xd000, 0xdbff, MRA_BANK7},
+	{0xdc00, 0xdfff, MRA_BANK10},
 	{0xe000, 0xffff, MRA_BANK8},	   /* ram or kernel rom or external romh */
 	{0x10000, 0x1ffff, MRA_RAM},	   /* basic at 0xa000 */
 	{0x20000, 0x3ffff, MRA_ROM},	   /* kernal at 0xe000 */
@@ -215,12 +218,12 @@ static struct MemoryWriteAddress c65_writemem[] =
      PORT_DIPNAME (0x300, 0x0, "Memory Expansion")\
 	 PORT_DIPSETTING (0, "None")\
 	 PORT_DIPSETTING (0x300, "512 KByte")\
-     PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")\
-	 PORT_DIPSETTING (0, "Automatic")\
-	 PORT_DIPSETTING (4, "Ultimax (GAME)")\
-	 PORT_DIPSETTING (8, "C64 (EXROM)")\
-	 PORT_DIPSETTING (0x10, "CBM Supergames")\
-	 PORT_DIPSETTING (0x14, "Ocean Robocop2")\
+	 /*PORT_DIPNAME (0x1c, 0x00, "Cartridge Type")*/\
+	 /*PORT_DIPSETTING (0, "Automatic")*/\
+	 /*PORT_DIPSETTING (4, "Ultimax (GAME)")*/\
+	 /*PORT_DIPSETTING (8, "C64 (EXROM)")*/\
+	 /*PORT_DIPSETTING (0x10, "CBM Supergames")*/\
+	 /*PORT_DIPSETTING (0x14, "Ocean Robocop2")*/\
 	 PORT_DIPNAME (0x02, 0x02, "Serial Bus/Device 8")\
 	 PORT_DIPSETTING (0, "None")\
 	 PORT_DIPSETTING (2, "VC1541 Floppy Drive")\
@@ -328,20 +331,20 @@ INPUT_PORTS_START (c65ger)
 	 C64_DIPS
      C65_DIPS
 	 PORT_START
-     DIPS_HELPER (0x8000, "Arrow-Left", KEYCODE_TILDE)
-	 DIPS_HELPER (0x4000, "1 !   BLK   ORNG", KEYCODE_1)
-	 DIPS_HELPER (0x2000, "2 \"   WHT   BRN", KEYCODE_2)
-	 DIPS_HELPER (0x1000, "3 #   RED   L RED", KEYCODE_3)
-	 DIPS_HELPER (0x0800, "4 $   CYN   D GREY", KEYCODE_4)
-	 DIPS_HELPER (0x0400, "5 %   PUR   GREY", KEYCODE_5)
-	 DIPS_HELPER (0x0200, "6 &   GRN   L GRN", KEYCODE_6)
-	 DIPS_HELPER (0x0100, "7 '   BLU   L BLU", KEYCODE_7)
-	 DIPS_HELPER (0x0080, "8 (   YEL   L GREY", KEYCODE_8)
-	 DIPS_HELPER (0x0040, "9 )   RVS-ON", KEYCODE_9)
-	 DIPS_HELPER (0x0020, "0     RVS-OFF", KEYCODE_0)
-	 DIPS_HELPER (0x0010, "+", KEYCODE_PLUS_PAD)
-	 DIPS_HELPER (0x0008, "-", KEYCODE_MINUS_PAD)
-	 DIPS_HELPER (0x0004, "Pound", KEYCODE_MINUS)
+     DIPS_HELPER (0x8000, "_                    < >", KEYCODE_TILDE)
+	 DIPS_HELPER (0x4000, "1 !  BLK   ORNG", KEYCODE_1)
+	 DIPS_HELPER (0x2000, "2 \"  WHT   BRN", KEYCODE_2)
+	 DIPS_HELPER (0x1000, "3 #  RED   L RED       Paragraph", KEYCODE_3)
+	 DIPS_HELPER (0x0800, "4 $  CYN   D GREY", KEYCODE_4)
+	 DIPS_HELPER (0x0400, "5 %  PUR   GREY", KEYCODE_5)
+	 DIPS_HELPER (0x0200, "6 &  GRN   L GRN", KEYCODE_6)
+	 DIPS_HELPER (0x0100, "7 '  BLU   L BLU	      /", KEYCODE_7)
+	 DIPS_HELPER (0x0080, "8 (  YEL   L GREY", KEYCODE_8)
+	 DIPS_HELPER (0x0040, "9 )  RVS-ON", KEYCODE_9)
+	 DIPS_HELPER (0x0020, "0    RVS-OFF           =", KEYCODE_0)
+	 DIPS_HELPER (0x0010, "+                    Sharp-S ?", KEYCODE_PLUS_PAD)
+	 DIPS_HELPER (0x0008, "-                    '  `",KEYCODE_MINUS_PAD)
+	 DIPS_HELPER (0x0004, "\\                    [ Arrow-Up", KEYCODE_MINUS)
 	 DIPS_HELPER (0x0002, "HOME CLR", KEYCODE_EQUALS)
 	 DIPS_HELPER (0x0001, "DEL INST", KEYCODE_BACKSPACE)
 	 PORT_START
@@ -351,14 +354,14 @@ INPUT_PORTS_START (c65ger)
 	 DIPS_HELPER (0x1000, "E", KEYCODE_E)
 	 DIPS_HELPER (0x0800, "R", KEYCODE_R)
 	 DIPS_HELPER (0x0400, "T", KEYCODE_T)
-	 DIPS_HELPER (0x0200, "Y", KEYCODE_Y)
+	 DIPS_HELPER (0x0200, "Y                    Z", KEYCODE_Y)
 	 DIPS_HELPER (0x0100, "U", KEYCODE_U)
 	 DIPS_HELPER (0x0080, "I", KEYCODE_I)
 	 DIPS_HELPER (0x0040, "O", KEYCODE_O)
 	 DIPS_HELPER (0x0020, "P", KEYCODE_P)
-	 DIPS_HELPER (0x0010, "At", KEYCODE_OPENBRACE)
-	 DIPS_HELPER (0x0008, "*", KEYCODE_ASTERISK)
-	 DIPS_HELPER (0x0004, "Arrow-Up Pi", KEYCODE_CLOSEBRACE)
+	 DIPS_HELPER (0x0010, "Paragraph Arrow-Up   Diaresis-U",KEYCODE_OPENBRACE)
+	 DIPS_HELPER (0x0008, "* `                  + *",KEYCODE_ASTERISK)
+	 DIPS_HELPER (0x0004, "Sum Pi               ] \\",KEYCODE_CLOSEBRACE)
 	 DIPS_HELPER (0x0002, "RESTORE", KEYCODE_PRTSCR)
 	 DIPS_HELPER (0x0001, "CTRL", KEYCODE_RCONTROL)
 	 PORT_START
@@ -374,23 +377,26 @@ INPUT_PORTS_START (c65ger)
 	 DIPS_HELPER (0x0100, "J", KEYCODE_J)
 	 DIPS_HELPER (0x0080, "K", KEYCODE_K)
 	 DIPS_HELPER (0x0040, "L", KEYCODE_L)
-	 DIPS_HELPER (0x0020, ": [", KEYCODE_COLON)
-	 DIPS_HELPER (0x0010, "; ]", KEYCODE_QUOTE)
-	 DIPS_HELPER (0x0008, "=", KEYCODE_BACKSLASH)
+	 DIPS_HELPER (0x0020, ": [                  Diaresis-O",
+				  KEYCODE_COLON)
+	 DIPS_HELPER (0x0010, "; ]                  Diaresis-A",
+				  KEYCODE_QUOTE)
+	 DIPS_HELPER (0x0008, "=                    # '",
+				  KEYCODE_BACKSLASH)
 	 DIPS_HELPER (0x0004, "RETURN", KEYCODE_ENTER)
 	 DIPS_HELPER (0x0002, "CBM", KEYCODE_RALT)
 	 DIPS_HELPER (0x0001, "Left-Shift", KEYCODE_LSHIFT)
 	 PORT_START
-     DIPS_HELPER (0x8000, "Z", KEYCODE_Z)
+     DIPS_HELPER (0x8000, "Z                    Y", KEYCODE_Z)
 	 DIPS_HELPER (0x4000, "X", KEYCODE_X)
 	 DIPS_HELPER (0x2000, "C", KEYCODE_C)
 	 DIPS_HELPER (0x1000, "V", KEYCODE_V)
 	 DIPS_HELPER (0x0800, "B", KEYCODE_B)
 	 DIPS_HELPER (0x0400, "N", KEYCODE_N)
 	 DIPS_HELPER (0x0200, "M", KEYCODE_M)
-	 DIPS_HELPER (0x0100, ", <", KEYCODE_COMMA)
-	 DIPS_HELPER (0x0080, ". >", KEYCODE_STOP)
-	 DIPS_HELPER (0x0040, "/ ?", KEYCODE_SLASH)
+	 DIPS_HELPER (0x0100, ", <                    ;", KEYCODE_COMMA)
+	 DIPS_HELPER (0x0080, ". >                    :", KEYCODE_STOP)
+	 DIPS_HELPER (0x0040, "/ ?                  - _", KEYCODE_SLASH)
 	 DIPS_HELPER (0x0020, "Right-Shift", KEYCODE_RSHIFT)
 	 DIPS_HELPER (0x0010, "(Right-Shift Cursor-Down)CRSR-UP",
 				  KEYCODE_8_PAD)
@@ -426,26 +432,25 @@ static void c65_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 
 #if 0
 	 ROM_LOAD ("910111.bin", 0x20000, 0x20000, 0xc5d8d32e)
-	 ROM_LOAD ("911001.bin", 0x20000, 0x20000, 0x0888b50f)
-	 /* REBOOTING */
 	 ROM_LOAD ("910523.bin", 0x20000, 0x20000, 0xe8235dd4)
-	 /* hangs */
 	 ROM_LOAD ("910626.bin", 0x20000, 0x20000, 0x12527742)
 	 ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
+	 /* loading demo disk??? */
+	 ROM_LOAD ("911001.bin", 0x20000, 0x20000, 0x0888b50f)
 	 /* german */
 	 ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
 #endif
 
 ROM_START (c65)
-	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("910111.bin", 0x20000, 0x20000, 0xc5d8d32e)
+	 ROM_REGION (0x100000, REGION_CPU1)
+	 ROM_LOAD ("910828.bin", 0x20000, 0x20000, 0x3ee40b06)
 #ifdef VC1541
 	 VC1541_ROM (REGION_CPU2)
 #endif
 ROM_END
 
 ROM_START (c65ger)
-	 ROM_REGION (0x40000, REGION_CPU1)
+	 ROM_REGION (0x100000, REGION_CPU1)
 	 ROM_LOAD ("910429.bin", 0x20000, 0x20000, 0xb025805c)
 #ifdef VC1541
 	 VC1541_ROM (REGION_CPU2)
@@ -457,12 +462,8 @@ static struct MachineDriver machine_driver_c65 =
   /* basic machine hardware */
 	{
 		{
-#ifdef HAS_M65CE02
 			CPU_M65CE02,
-#else
-			CPU_M65C02,
-#endif
-			VIC6567_CLOCK,
+			3500000, /* or VIC6567_CLOCK, */
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
@@ -470,7 +471,7 @@ static struct MachineDriver machine_driver_c65 =
 			(void*)c65_map
 		},
 #ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
+		VC1541_CPU
 #endif
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -486,7 +487,11 @@ static struct MachineDriver machine_driver_c65 =
 	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
+#ifdef PET_TEST_CODE
 	VIDEO_TYPE_RASTER,
+#else
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+#endif
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,
@@ -505,12 +510,8 @@ static struct MachineDriver machine_driver_c65pal =
   /* basic machine hardware */
 	{
 		{
-#ifdef HAS_M65CE02
 			CPU_M65CE02,
-#else
-			CPU_M65C02,
-#endif
-			VIC6569_CLOCK,
+			3500000, /* or VIC6569_CLOCK,*/
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
@@ -518,7 +519,7 @@ static struct MachineDriver machine_driver_c65pal =
 			(void*)c65_map
 		},
 #ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
+		VC1541_CPU
 #endif
 	},
 	VIC6569_VRETRACERATE,
@@ -535,7 +536,11 @@ static struct MachineDriver machine_driver_c65pal =
 	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
+#ifdef PET_TEST_CODE
 	VIDEO_TYPE_RASTER,
+#else
+	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER,
+#endif
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,
@@ -551,9 +556,11 @@ static struct MachineDriver machine_driver_c65pal =
 
 static const struct IODevice io_c65[] =
 {
+#ifdef PET_TEST_CODE
 	IODEVICE_CBM_QUICK,
 	IODEVICE_CBM_ROM(c64_rom_id),
 	IODEVICE_CBM_DRIVE,
+#endif
 	{IO_END}
 };
 
@@ -562,7 +569,11 @@ static const struct IODevice io_c65[] =
 
 #define io_c65ger io_c65
 
-/*	   YEAR  NAME	 PARENT MACHINE INPUT	INIT COMPANY   FULLNAME */
-COMPX( n/a,  c65,	 0, 	c65,	c65,	c65, "Commodore Business Machines Co.", "Commodore C65 Prototype (C64DX) (NTSC)", GAME_NOT_WORKING | GAME_NO_SOUND)
-COMPX( n/a,  c65ger, c65,	c65pal, c65ger, c65, "Commodore Business Machines Co.", "Commodore C65 Prototype German (C64DX) (PAL)", GAME_NOT_WORKING | GAME_NO_SOUND)
-
+/*    	YEAR	NAME    PARENT	MACHINE	INPUT	INIT 	COMPANY   							FULLNAME */
+#ifdef PET_TEST_CODE
+COMP (	199?,	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype (C64DX) (NTSC)")
+COMP (	199?,	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype German (C64DX) (PAL)")
+#else
+COMPX (	199?, 	c65,	0,		c65,	c65,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype (C64DX) (NTSC)", 		GAME_NOT_WORKING | GAME_NO_SOUND)
+COMPX (	199?, 	c65ger,	c65,	c65pal,	c65ger,	c65,	"Commodore Business Machines Co.",	"Commodore C65 Prototype German (C64DX) (PAL)",	GAME_NOT_WORKING | GAME_NO_SOUND)
+#endif

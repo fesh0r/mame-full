@@ -1,6 +1,10 @@
 /***************************************************************************
+    commodore c128 home computer
 
-
+	peter.trauner@jk.uni-linz.ac.at
+    documentation:
+ 	 iDOC (http://www.softwolves.pp.se/idoc)
+           Christian Janoff  mepk@c64.org
 ***************************************************************************/
 #include <ctype.h>
 #include "driver.h"
@@ -15,6 +19,7 @@
 #include "mess/vidhrdw/vic6567.h"
 #include "mess/vidhrdw/vdc8563.h"
 #include "mess/sndhrdw/sid6581.h"
+#include "mess/vidhrdw/praster.h"
 
 #include "c128.h"
 
@@ -26,6 +31,15 @@
  mame has different memory subsystems for each cpu
 */
 
+
+/* m8502 port 
+ in c128 mode
+ bit 0 color
+ bit 1 lores
+ bit 2 hires
+ 3 textmode
+ 5 graphics (turned on ram at 0x1000 for video chip
+*/
 
 /* computer is a c128 */
 int c128 = 0;
@@ -67,59 +81,67 @@ void c128_mmu8722_port_w (int offset, int data);
 int c128_mmu8722_port_r (int offset);
 void c128_write_d000 (int offset, int value)
 {
-	if (!c128_write_io)
-	{
+	if (!c128_write_io) {
 		if (offset + 0xd000 >= c128_ram_top)
 			c64_memory[0xd000 + offset] = value;
 		else
 			c128_ram[0xd000 + offset] = value;
+	} else {
+		switch ((offset&0xf00)>>8) {
+		case 0:case 1: case 2: case 3:
+			vic2_port_w (offset & 0x3ff, value);
+			break;
+		case 4:
+			sid6581_0_port_w (offset & 0x3f, value);
+			break;
+		case 5:
+			c128_mmu8722_port_w (offset & 0xff, value);
+			break;
+		case 6:case 7:
+			vdc8563_port_w (offset & 0xff, value);
+			break;
+		case 8: case 9: case 0xa: case 0xb:
+			c64_colorram[offset & 0x3ff] = value | 0xf0;
+			break;
+		case 0xc:
+			cia6526_0_port_w (offset & 0xff, value);
+			break;
+		case 0xd:
+			cia6526_1_port_w (offset & 0xff, value);
+			break;
+		case 0xf:
+			c128_dma8726_port_w(offset&0xff,value);
+			break;
+		case 0xe:
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			break;
+		}
 	}
-	else if (offset < 0x400)
-		vic2_port_w (offset & 0x3ff, value);
-	else if ((offset < 0x500)&&!c64mode)
-		sid6581_0_port_w (offset & 0x3f, value);
-	else if ((offset < 0x600)&&!c64mode)
-		c128_mmu8722_port_w (offset & 0xff, value);
-	else if ((offset < 0x700) && !c64mode)
-		vdc8563_port_w (offset & 0xff, value);
-	else if (offset < 0x800)
-	{
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-	}
-	else if (offset < 0xc00)
-		c64_colorram[offset & 0x3ff] = value | 0xf0;
-	else if (offset < 0xd00)
-		cia6526_0_port_w (offset & 0xff, value);
-	else if (offset < 0xe00)
-		cia6526_1_port_w (offset & 0xff, value);
-	else if (offset<0xf00) c128_dma8726_port_w(offset&0xff,value);
-	else
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
 }
 
 static int c128_read_io (int offset)
 {
-	if (offset < 0x400)
+	switch ((offset&0xf00)>>8) {
+	case 0:case 1: case 2: case 3:
 		return vic2_port_r (offset & 0x3ff);
-	else if (offset < 0x500)
+	case 4:
 		return sid6581_0_port_r (offset & 0xff);
-	else if ( (offset < 0x600)&&!c64mode)
+	case 5:
 		return c128_mmu8722_port_r (offset & 0xff);
-	else if ((offset < 0x700) && !c64mode)
+	case 6:case 7:
 		return vdc8563_port_r (offset & 0xff);
-	else if (offset < 0x800)
-	{
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
-	}
-	else if (offset < 0xc00)
+	case 8: case 9: case 0xa: case 0xb:
 		return c64_colorram[offset & 0x3ff];
-	else if (offset < 0xd00)
+	case 0xc:
 		return cia6526_0_port_r (offset & 0xff);
-	else if (offset < 0xe00)
+	case 0xd:
 		return cia6526_1_port_r (offset & 0xff);
-	else if (offset<0xf00) return c128_dma8726_port_r(offset&0xff);
-	DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
-	return 0xff;
+	case 0xf:
+		return c128_dma8726_port_r(offset&0xff);
+	case 0xe:default:
+		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		return 0xff;
+	}
 }
 
 void c128_bankswitch_64 (void)
@@ -206,29 +228,25 @@ void c128_bankswitch_64 (void)
 	old = data;
 }
 
-void c128_z80_bankswitch (void)
-{
-	cpu_setbank (10, c128_z80);
-}
-
-
 UINT8 c128_mmu[0x0b];
 static int c128_mmu_helper[4] =
 {0x400, 0x1000, 0x2000, 0x4000};
+static int mmu_cpu=0;
+static int mmu_page0, mmu_page1;
 
-#define MMU_PAGE0 ((((c128_mmu[10]&0xf)<<8)|c128_mmu[9])<<8)
-#define MMU_PAGE1 ((((c128_mmu[8]&0xf)<<8)|c128_mmu[7])<<8)
+#define MMU_PAGE1 ((((c128_mmu[10]&0xf)<<8)|c128_mmu[9])<<8)
+#define MMU_PAGE0 ((((c128_mmu[8]&0xf)<<8)|c128_mmu[7])<<8)
 #define MMU_VIC_ADDR ((c128_mmu[6]&0xc0)<<10)
 #define MMU_RAM_RCR_ADDR ((c128_mmu[6]&0x30)<<14)
 #define MMU_SIZE (c128_mmu_helper[c128_mmu[6]&3])
 #define MMU_BOTTOM (c128_mmu[6]&4)
 #define MMU_TOP (c128_mmu[6]&8)
 #define MMU_CPU8502 (c128_mmu[5]&1)	   /* else z80 */
+/* fastio output (c128_mmu[5]&8) else input */
 #define MMU_GAME_IN (c128_mmu[5]&0x10)
 #define MMU_EXROM_IN (c128_mmu[5]&0x20)
 #define MMU_64MODE (c128_mmu[5]&0x40)
 #define MMU_40_IN (c128_mmu[5]&0x80)
-#define MMU_RAM_ADDR (MMU_RAM_RCR_ADDR|MMU_RAM_CR_ADDR)
 
 #define MMU_RAM_CR_ADDR ((c128_mmu[0]&0xc0)<<10)
 #define MMU_RAM_LO (c128_mmu[0]&2)	   /* else rom at 0x4000 */
@@ -243,72 +261,66 @@ static int c128_mmu_helper[4] =
 #define MMU_INTERNAL_ROM_HI ((c128_mmu[0]&0x30)==0x10)
 #define MMU_RAM_HI ((c128_mmu[0]&0x30)==0x30)
 
-static void c128_bankswitch (void);
-#ifdef C128_Z80
-static void c128_timer_callback(int arg)
-{
-	DBG_LOG (1, "timer aktiv", 
-			 (errorlog, "active %d\n",cpu_getactivecpu()) );
-	c128_bankswitch();
-}
-#endif
-static void c128_bankswitch (void)
-{
-#ifdef C128_Z80
-	static int oldcpu = -1;
+#define MMU_RAM_ADDR (MMU_RAM_RCR_ADDR|MMU_RAM_CR_ADDR)
 
-	if (!MMU_CPU8502)
-	{
-		if (oldcpu != MMU_CPU8502)
-		{
-			DBG_LOG (1, "Z80 aktiv", 
-					 (errorlog, "active %d\n",cpu_getactivecpu()) );
-			cpu_set_reset_line (1, 1);
-			
-			cpu_set_halt_line (0, 0);
-			DBG_LOG (1, "Z80 aktiv", 
-					 (errorlog, "active %d\n",cpu_getactivecpu()) );
-			oldcpu = MMU_CPU8502;
-#if 0
-			timer_set(TIME_NOW, 0, c128_timer_callback);
-			return;
+/* typical z80 configuration 
+   0x3f 0x3f 0x7f 0x3e 0x7e 0xb0 0x0b 0x00 0x00 0x01 0x00 */
+ static void c128_bankswitch_z80 (void)
+ {
+	 c128_ram = c64_memory + MMU_RAM_ADDR;
+	 c128_va1617 = MMU_VIC_ADDR;
+#if 1
+	 cpu_setbank (10, c128_z80);
+	 cpu_setbank (11, c128_ram+0x1000);
+	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
+		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) 
+		 c128_ram=NULL;
 #else
-			memorycontextswap(0);
-			c128_bankswitch();
-			if (cpu_getactivecpu()!=0) {
-				memorycontextswap(cpu_getactivecpu());
-			}
-			return;
-#endif
-		}
-		c128_z80_bankswitch ();
-	}
-	if ((oldcpu != MMU_CPU8502))
-	{
-		DBG_LOG (1, "M8502 aktiv", 
-				 (errorlog, "active %d\n",cpu_getactivecpu()) );
-		cpu_set_halt_line (0, 1);
-		cpu_set_reset_line (1, 0);
-		DBG_LOG (1, "M8502 aktiv", 
-				 (errorlog, "active %d\n",cpu_getactivecpu()) );
-		oldcpu = MMU_CPU8502;
+	 if (MMU_BOTTOM)
+		 c128_ram_bottom = MMU_SIZE;
+	 else
+		 c128_ram_bottom = 0;
 
-#if 0
-		timer_set(TIME_NOW, 0, c128_timer_callback);
-		return;
-#else
-			memorycontextswap(1);
-			c128_bankswitch();
-			if (cpu_getactivecpu()!=1) {
-				memorycontextswap(cpu_getactivecpu());
-			}
-			return;
+	 if (MMU_RAM_ADDR==0) { /* this is used in z80 mode for rom on/off switching !*/
+		 cpu_setbank (10, c128_z80);
+		 cpu_setbank (11, c128_z80+0x400);
+	 } else {
+		 cpu_setbank (10, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
+		 cpu_setbank (11, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+	 }
+	 cpu_setbank (1, (c128_ram_bottom > 0 ? c64_memory : c128_ram));
+	 cpu_setbank (2, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+	 
+	 cpu_setbank (3, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
+	 cpu_setbank (4, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
+	 cpu_setbank (5, c128_ram + 0x4000);
+		
+	 if (MMU_TOP)
+		 c128_ram_top = 0x10000 - MMU_SIZE;
+	 else
+		 c128_ram_top = 0x10000;
+
+	 if (c128_ram_top > 0xc000) { cpu_setbank (6, c128_ram + 0xc000); }
+	 else { cpu_setbank (6, c64_memory + 0xc000); }
+	 if (c128_ram_top > 0xe000) { cpu_setbank (7, c128_ram + 0xe000); }
+	 else { cpu_setbank (7, c64_memory + 0xd000); }
+	 if (c128_ram_top > 0xf000) { cpu_setbank (8, c128_ram + 0xf000); }
+	 else { cpu_setbank (8, c64_memory + 0xe000); }
+	 if (c128_ram_top > 0xff05) { cpu_setbank (9, c128_ram + 0xff05); }
+	 else { cpu_setbank (9, c64_memory + 0xff05); }
+
+	 if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
+		  ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) 
+		 c128_ram=NULL;
 #endif
-	}
-#endif
+ }
+
+ static void c128_bankswitch_128 (void)
+ {
 	c64mode = MMU_64MODE;
 	if (c64mode)
 	{
+		/* mmu works also in c64 mode, but this can wait */
 		c128_ram = c64_memory;
 		c128_va1617 = 0;
 		c128_ram_bottom = 0;
@@ -332,122 +344,172 @@ static void c128_bankswitch (void)
 	{
 		c128_ram = c64_memory + MMU_RAM_ADDR;
 		c128_va1617 = MMU_VIC_ADDR;
+		cpu_setbank (1, c64_memory + mmu_page0);
+		cpu_setbank (2, c64_memory + mmu_page1);
 		if (MMU_BOTTOM)
-		{
-			c128_ram_bottom = MMU_SIZE;
-		}
+			{
+				c128_ram_bottom = MMU_SIZE;
+			}
 		else
 			c128_ram_bottom = 0;
-		cpu_setbank (3, (c128_ram_bottom >= 0x200 ? c64_memory : c128_ram) + 0x200);
-		cpu_setbank (4, (c128_ram_bottom >= 0x400 ? c64_memory : c128_ram) + 0x400);
-		cpu_setbank (5, (c128_ram_bottom >= 0x1000 ? c64_memory : c128_ram) + 0x1000);
-		cpu_setbank (6, (c128_ram_bottom >= 0x2000 ? c64_memory : c128_ram) + 0x2000);
-
+		cpu_setbank (3, (c128_ram_bottom > 0x200 ? c64_memory : c128_ram) + 0x200);
+		cpu_setbank (4, (c128_ram_bottom > 0x400 ? c64_memory : c128_ram) + 0x400);
+		cpu_setbank (5, (c128_ram_bottom > 0x1000 ? c64_memory : c128_ram) + 0x1000);
+		cpu_setbank (6, (c128_ram_bottom > 0x2000 ? c64_memory : c128_ram) + 0x2000);
+		
 		if (MMU_RAM_LO)
-		{
-			cpu_setbank (7, c128_ram + 0x4000);
-		}
+			{
+				cpu_setbank (7, c128_ram + 0x4000);
+			}
 		else
-		{
-			cpu_setbank (7, c128_basic);
-		}
-
+			{
+				cpu_setbank (7, c128_basic);
+			}
+		
 		if (MMU_RAM_MID)
-		{
-			cpu_setbank (8, c128_ram + 0x8000);
-			cpu_setbank (9, c128_ram + 0xa000);
-		}
+			{
+				cpu_setbank (8, c128_ram + 0x8000);
+				cpu_setbank (9, c128_ram + 0xa000);
+			}
 		else if (MMU_ROM_MID)
-		{
-			cpu_setbank (8, c128_basic + 0x4000);
-			cpu_setbank (9, c128_basic + 0x6000);
-		}
+			{
+				cpu_setbank (8, c128_basic + 0x4000);
+				cpu_setbank (9, c128_basic + 0x6000);
+			}
 		else if (MMU_INTERNAL_ROM_MID)
-		{
-			cpu_setbank (8, c128_internal_function);
-			cpu_setbank (9, c128_internal_function + 0x2000);
-		}
+			{
+				cpu_setbank (8, c128_internal_function);
+				cpu_setbank (9, c128_internal_function + 0x2000);
+			}
 		else
-		{
-			cpu_setbank (8, c128_external_function);
-			cpu_setbank (9, c128_external_function + 0x2000);
-		}
-
+			{
+				cpu_setbank (8, c128_external_function);
+				cpu_setbank (9, c128_external_function + 0x2000);
+			}
+		
 		if (MMU_TOP)
-		{
-			c128_ram_top = 0x10000 - MMU_SIZE;
-		}
+			{
+				c128_ram_top = 0x10000 - MMU_SIZE;
+			}
 		else
 			c128_ram_top = 0x10000;
-		cpu_setbankhandler_r (15, c128_mmu8722_port_r);
-		if (MMU_RAM_HI)
-		{
-			if (c128_ram_top > 0xc000)
-			{
-				cpu_setbank (12, c128_ram + 0xc000);
-			}
-			else
-			{
-				cpu_setbank (12, c64_memory + 0xc000);
-			}
-			cpu_setbankhandler_r (13, MRA_BANK13);
-			if (c128_ram_top > 0xd000)
-			{
-				cpu_setbank (13, c128_ram + 0xd000);
-			}
-			else
-			{
-				cpu_setbank (13, c64_memory + 0xd000);
-			}
-			if (c128_ram_top > 0xe000)
-			{
-				cpu_setbank (14, c128_ram + 0xe000);
-			}
-			else
-			{
-				cpu_setbank (14, c64_memory + 0xe000);
-			}
-			if (c128_ram_top > 0xff05)
-			{
-				cpu_setbank (16, c128_ram + 0xff05);
-			}
-			else
-			{
-				cpu_setbank (16, c64_memory + 0xff05);
-			}
-		}
-		else
-		{
-			if (MMU_IO_ON)
+
+		cpu_setbankhandler_r (15, c128_mmu8722_ff00_r);
+
+		if (MMU_IO_ON)
 			{
 				cpu_setbankhandler_r (13, c128_read_io);
 				c128_write_io = 1;
 			}
-			else
+		else
 			{
 				c128_write_io = 0;
 				cpu_setbankhandler_r (13, MRA_BANK13);
-				cpu_setbank (13, c64_chargen);
 			}
-			if (MMU_ROM_HI)
+
+		if (MMU_RAM_HI)
+			{
+				if (c128_ram_top > 0xc000)
+					{
+						cpu_setbank (12, c128_ram + 0xc000);
+					}
+				else
+					{
+						cpu_setbank (12, c64_memory + 0xc000);
+					}
+				if (!MMU_IO_ON) {
+					if (c128_ram_top > 0xd000)
+						{
+							cpu_setbank (13, c128_ram + 0xd000);
+						}
+					else
+						{
+							cpu_setbank (13, c64_memory + 0xd000);
+						}
+				}
+				if (c128_ram_top > 0xe000)
+					{
+						cpu_setbank (14, c128_ram + 0xe000);
+					}
+				else
+					{
+						cpu_setbank (14, c64_memory + 0xe000);
+					}
+				if (c128_ram_top > 0xff05)
+					{
+						cpu_setbank (16, c128_ram + 0xff05);
+					}
+				else
+					{
+						cpu_setbank (16, c64_memory + 0xff05);
+					}
+			}
+		else if (MMU_ROM_HI)
 			{
 				cpu_setbank (12, c128_editor);
+				if (!MMU_IO_ON) {
+					cpu_setbank (13, c128_chargen);
+				}
 				cpu_setbank (14, c128_kernal);
 				cpu_setbank (16, c128_kernal + 0x1f05);
 			}
-			else if (MMU_INTERNAL_ROM_HI)
+		else if (MMU_INTERNAL_ROM_HI)
 			{
 				cpu_setbank (12, c128_internal_function);
+				if (!MMU_IO_ON) {
+					cpu_setbank (13, c128_internal_function + 0x1000);
+				}
 				cpu_setbank (14, c128_internal_function + 0x2000);
 				cpu_setbank (16, c128_internal_function + 0x3f05);
 			}
-			else					   /*if (MMU_EXTERNAL_ROM_HI) */
+		else					   /*if (MMU_EXTERNAL_ROM_HI) */
 			{
 				cpu_setbank (12, c128_external_function);
+				if (!MMU_IO_ON) {
+					cpu_setbank (13, c128_external_function + 0x1000);
+				}
 				cpu_setbank (14, c128_external_function + 0x2000);
 				cpu_setbank (16, c128_external_function + 0x3f05);
 			}
-		}
+		if ( ((C128_MAIN_MEMORY==RAM256KB)&&(MMU_RAM_ADDR>=0x40000)) 
+			 ||((C128_MAIN_MEMORY==RAM128KB)&&(MMU_RAM_ADDR>=0x20000)) ) c128_ram=NULL;
+	}
+	 
+ }
+
+
+static void c128_bankswitch (void)
+{
+	if (mmu_cpu != MMU_CPU8502) {
+		if (!MMU_CPU8502)
+			{
+				{
+					DBG_LOG (1, "switching to z80", 
+							 (errorlog, "active %d\n",cpu_getactivecpu()) );
+					memorycontextswap(0);
+					c128_bankswitch_z80();
+					memorycontextswap(1);
+					cpu_set_halt_line (0, 0);
+					cpu_set_halt_line (1, 1);
+				}
+			} 
+		else 
+			{
+				DBG_LOG (1, "switching to m6502", 
+						 (errorlog, "active %d\n",cpu_getactivecpu()) );
+				memorycontextswap(1);
+				c128_bankswitch_128();
+				memorycontextswap(0);
+				cpu_set_halt_line (1, 0);
+				cpu_set_halt_line (0, 1);
+			}
+		mmu_cpu = MMU_CPU8502;
+		return;
+	}
+	if (!MMU_CPU8502) {
+		c128_bankswitch_z80();
+	} else {
+		c128_bankswitch_128();
 	}
 }
 
@@ -473,8 +535,11 @@ void c128_mmu8722_reset (void)
 #else
 	memset (c128_mmu, 0, sizeof (c128_mmu));
 #endif
-	c128_mmu[10] = 1;
 	c128_mmu[5] |= 0x38;
+	c128_mmu[10] = 1;
+	mmu_cpu=0;
+    mmu_page0=0;
+    mmu_page1=0x0100;
 	c128_bankswitch ();
 }
 
@@ -499,11 +564,12 @@ void c128_mmu8722_port_w (int offset, int data)
 		break;
 	case 7:
 		c128_mmu[offset] = data;
-		cpu_setbank (1, c64_memory + MMU_PAGE0);
+		mmu_page0=MMU_PAGE0;
 		break;
 	case 9:
 		c128_mmu[offset] = data;
-		cpu_setbank (2, c64_memory + MMU_PAGE1);
+		mmu_page1=MMU_PAGE1;
+		c128_bankswitch ();
 		break;
 	case 0xb:
 		break;
@@ -530,21 +596,25 @@ int c128_mmu8722_port_r (int offset)
 			data &= ~0x10;
 		if (!c64_exrom)
 			data &= ~0x20;
-		return data;
+		if (KEY_4080)
+			data &= ~0x80;
+		break;
 	case 0xb:
 		/* hinybble number of 64 kb memory blocks */
-		if (C128_MAIN_MEMORY==RAM256KB) return 0x4f;
-		if (C128_MAIN_MEMORY==RAM1MB) return 0xf;
-		return 0xf;
+		if (C128_MAIN_MEMORY==RAM256KB) data=0x4f;
+		else if (C128_MAIN_MEMORY==RAM1MB) data=0xf;
+		else data=0x2f;
+		break;
 	case 0xc:
 	case 0xd:
 	case 0xe:
 	case 0xf:
-		return 0xff;
+		data=0xff;
 		break;
 	default:
-		return c128_mmu[offset];
+		data=c128_mmu[offset];
 	}
+	return data;
 }
 
 void c128_mmu8722_ff00_w (int offset, int data)
@@ -559,7 +629,11 @@ void c128_mmu8722_ff00_w (int offset, int data)
 	case 2:
 	case 3:
 	case 4:
-		c128_mmu[0] = c128_mmu[offset];
+#if 1
+		c128_mmu[0]= c128_mmu[offset];
+#else
+		c128_mmu[0]|= c128_mmu[offset];
+#endif
 		c128_bankswitch ();
 		break;
 	}
@@ -570,26 +644,41 @@ int c128_mmu8722_ff00_r (int offset)
 	return c128_mmu[offset];
 }
 
+void c128_write_0000 (int offset, int value)
+{
+	if (c128_ram!=NULL)
+		c128_ram[0x0000 + offset] = value;
+}
+
+void c128_write_1000 (int offset, int value)
+{
+	if (c128_ram!=NULL)
+		c128_ram[0x1000 + offset] = value;
+}
+
 void c128_write_4000 (int offset, int value)
 {
-	c128_ram[0x4000 + offset] = value;
+	if (c128_ram!=NULL)
+		c128_ram[0x4000 + offset] = value;
 }
 
 void c128_write_8000 (int offset, int value)
 {
-	c128_ram[0x8000 + offset] = value;
+	if (c128_ram!=NULL)
+		c128_ram[0x8000 + offset] = value;
 }
 
 void c128_write_a000 (int offset, int value)
 {
-	c128_ram[0xa000 + offset] = value;
+	if (c128_ram!=NULL)
+		c128_ram[0xa000 + offset] = value;
 }
 
 void c128_write_e000 (int offset, int value)
 {
 	if (offset + 0xe000 >= c128_ram_top)
 		c64_memory[0xe000 + offset] = value;
-	else
+	else if (c128_ram!=NULL)
 		c128_ram[0xe000 + offset] = value;
 }
 
@@ -597,15 +686,15 @@ void c128_write_ff00 (int offset, int value)
 {
 	if (!c64mode)
 		c128_mmu8722_ff00_w (offset, value);
-	else
+	else if (c128_ram!=NULL)
 		c64_memory[0xff00 + offset] = value;
 }
 
 void c128_write_ff05 (int offset, int value)
 {
-	if (offset + 0xe000 >= c128_ram_top)
+	if (offset + 0xff05 >= c128_ram_top)
 		c64_memory[0xff05 + offset] = value;
-	else
+	else if (c128_ram!=NULL)
 		c128_ram[0xff05 + offset] = value;
 }
 
@@ -616,6 +705,7 @@ void c128_write_ff05 (int offset, int value)
  */
 static int c128_dma_read (int offset)
 {
+	/* main memory configuration to include */
 	if (c64mode)
 	{
 		if (!c64_game && c64_exrom)
@@ -628,7 +718,8 @@ static int c128_dma_read (int offset)
 			return c64_chargen[offset & 0xfff];
 		return c64_vicaddr[offset];
 	}
-	if (((c128_vicaddr - c64_memory + offset) & 0x7000) == 0x1000)
+	if ( ((c64_port6510&7)!=5)
+		 && (((c128_vicaddr - c64_memory + offset) & 0x7000) == 0x1000) )
 		return c128_chargen[offset & 0xfff];
 	return c128_vicaddr[offset];
 }
@@ -640,12 +731,10 @@ static int c128_dma_read_color (int offset)
 
 static void c128_common_driver_init (void)
 {
-	/*    memset(c128_memory, 0, 0xfd00); */
+	memset(c64_memory, 0xff, 0x100000);
 	c128 = 1;
 	vc20_tape_open (c64_tape_read);
 
-
-	//c128_kernal[0x5c1] = c128_kernal[0x5c2] = 0x90;
 	cbm_drive_open ();
 
 	cbm_drive_attach_fs (0);
@@ -660,21 +749,40 @@ static void c128_common_driver_init (void)
 	cia6526_config (0, &c64_cia0);
 	c64_cia1.todin50hz = c64_pal;
 	cia6526_config (1, &c64_cia1);
-	vic6567_init (1, c64_pal, c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
-
-			cpu_set_halt_line (1, 1);
-			cpu_set_halt_line (0, 0);
 }
 
 void c128_driver_init (void)
 {
 	c128_common_driver_init ();
+	vic6567_init (1, c64_pal, 
+				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
+	vic2_set_rastering(0);
+	vdc8563_init(c128_vdcram, 0);
+	vdc8563_set_rastering(1);
+	raster2.display_state=c128_state;
 }
 
 void c128pal_driver_init (void)
 {
 	c64_pal = 1;
 	c128_common_driver_init ();
+	vic6567_init (1, c64_pal, 
+				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
+	vic2_set_rastering(1);
+	vdc8563_init(c128_vdcram, 0);
+	vdc8563_set_rastering(0);
+	raster2.display_state=c128_state;
+}
+
+void c128pal2_driver_init (void)
+{
+	c128_common_driver_init ();
+	vic6567_init (1, c64_pal, 
+				  c128_dma_read, c128_dma_read_color, c64_vic_interrupt);
+	vic2_set_rastering(0);
+	vdc8563_init(c128_vdcram, 0);
+	vdc8563_set_rastering(1);
+	raster2.display_state=c128_state;
 }
 
 void c128_driver_shutdown (void)
@@ -685,6 +793,7 @@ void c128_driver_shutdown (void)
 
 void c128_init_machine (void)
 {
+	if (errorlog) fprintf(errorlog, "reset\n");
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;
 
@@ -697,20 +806,72 @@ void c128_init_machine (void)
 	c64mode = 1;
 #endif
 	c128_mmu8722_reset ();
-	c128_bankswitch ();
+	cpu_set_halt_line (0, 0);
+	cpu_set_halt_line (1, 1);
 }
 
 void c128_shutdown_machine (void)
 {
 }
 
-/*only for debugging */
-void c128_status (char *text, int size)
+int c128_vh_start (void)
 {
-	text[0] = 0;
+	return vdc8563_vh_start()|vic2_vh_start();
+}
+
+void c128_vh_stop (void)
+{
+	vdc8563_vh_stop();
+	vic2_vh_stop();
+}
+
+void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	vdc8563_vh_screenrefresh(bitmap, full_refresh);
+	vic2_vh_screenrefresh(bitmap,full_refresh);
+}
+
+int c128_raster_irq (void)
+{
+	return vdc8563_raster_irq()|vic2_raster_irq();
+}
+
+void c128_state(PRASTER *this)
+{
+	int y;
+	char text[70];
+	
+	y = Machine->gamedrv->drv->visible_area.max_y + 1 - Machine->uifont->height;
+	
 #if VERBOSE_DBG
+#if 0
+	cia6526_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+
+#if 1
 	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
 			  c128_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
+#else
+	snprintf (text, size, "size:%.4x %s %s %.6x %s %.6x %.6x",
+			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
+			  MMU_PAGE0, MMU_PAGE1);
 #endif
+	praster_draw_text (this, text, &y);
+#endif
+	vdc8563_status(text, sizeof(text));
+	praster_draw_text (this, text, &y);
+#endif
+	
+	vc20_tape_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+#ifdef VC1541
+	vc1541_drive_status (this, sizeof (text));
+#else
+	cbm_drive_0_status (text, sizeof (text));
+#endif
+	praster_draw_text (this, text, &y);
+	
+	cbm_drive_1_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
 }

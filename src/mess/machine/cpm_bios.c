@@ -357,9 +357,9 @@ void cpm_jumptable(void)
 	RAM[BIOS_EXEC + 2] = 0xc9;			/* RET */
 }
 
-int cpm_floppy_init(int id, const char *name)
+int cpm_floppy_init(int id)
 {
-	fn[id] = name;
+	fn[id] = device_filename(IO_FLOPPY,id);
 	return 0;
 }
 
@@ -527,16 +527,16 @@ int cpm_init(int n, const char *ids[])
 			else
 			{
 				mode[d] = 1;
-				fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+				fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				if( !fp[d] )
 				{
 					mode[d] = 0;
-					fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 				}
 				if( !fp[d] )
 				{
 					mode[d] = 1;
-					fp[d] = osd_fopen(Machine->gamedrv->name, fn[d], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+					fp[d] = image_fopen(IO_FLOPPY, d, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
 				}
 				if( !fp[d] )
 				{

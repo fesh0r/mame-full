@@ -1,9 +1,6 @@
 #ifndef MESS_H
 #define MESS_H
 
-#define ORIENTATION_DEFAULT ROT0 /* hack till we change to the driver macro */
-
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -11,7 +8,17 @@
 #define FALSE 0
 #endif
 
+/* Win32 defines this for vararg functions */
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
+
+int DECL_SPEC mess_printf(char *fmt, ...);
+
 void showmessinfo(void);
+int displayimageinfo(int selected);
+int filemanager(int selected);
+int tapecontrol(int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
@@ -22,9 +29,11 @@ void showmessinfo(void);
 /* driver.h - end */
 
 
+/* The wrapper for osd_fopen() */
+void *image_fopen(int type, int id, int filetype, int read_or_write);
 
 /* IODevice Initialisation return values.  Use these to determine if */
-/* The emulation can continue if IODevice initialisation fails */
+/* the emulation can continue if IODevice initialisation fails */
 enum { INIT_OK, INIT_FAILED, INIT_UNKNOWN };
 
 
@@ -54,16 +63,14 @@ typedef struct
  *	open existing file or create new file in read/write mode.
  *	used for floppy/harddisk images. if a file doesn't exist,
  *	it shall be created. Used to 'format' new floppy or harddisk
- *	images from within the emulation. a driver might use this
- *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ, failed.
+ *	images from within the emulation. A driver might use this
+ *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ modes, failed.
  */
 enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
 
 
 /* mess.c functions [for external use] */
 int parse_image_types(char *arg);
-
-
 
 /******************************************************************************
  *	floppy disc controller direct access
@@ -116,11 +123,9 @@ unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt
 unsigned char osd_fdc_put_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff, unsigned char ddam);
 unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff);
 
-#ifdef MESS /* just to be safe ;-) */
 #ifdef MAX_KEYS
  #undef MAX_KEYS
  #define MAX_KEYS	128 /* for MESS but already done in INPUT.C*/
-#endif
 #endif
 
 /******************************************************************************
@@ -130,20 +135,21 @@ unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsign
  * in the GameDriver struct and replaces it by only one pointer.
  *	type				type of device (from above enum)
  *	count				maximum number of instances
- *	file_extensions;	supported file extensions
- *	_private;			to be used by the peripheral driver code
+ *	file_extensions 	supported file extensions
+ *	_private			to be used by the peripheral driver code
  *	id					identify file
  *	init				initialize device
  *	exit				shutdown device
  *	info				get info for device instance
  *	open				open device (with specific args)
  *	close				close device
- *	status				get device status
+ *	status				(set a device status and) get the previous status
  *	seek				seek to file position
- *	input				input character
- *	output				output character
- *	input_chunk 		input chunk of data
- *	output_chunk		output chunk of data
+ *	tell				tell current file position
+ *	input				input character or code
+ *	output				output character or code
+ *	input_chunk 		input chunk of data (eg. sector or track)
+ *	output_chunk		output chunk of data (eg. sector or track)
  ******************************************************************************/
 
 enum {
@@ -163,47 +169,61 @@ struct IODevice {
 	int count;
 	const char *file_extensions;
 	void *_private;
-	int (*id)(const char *filename, const char *gamename);
-	int (*init)(int id, const char *filename);
+	int (*id)(int id);
+	int (*init)(int id);
 	void (*exit)(int id);
 	const void *(*info)(int id, int whatinfo);
-	int (*open)(int id, void *args);
+	int (*open)(int id, int mode, void *args);
 	void (*close)(int id);
-	int (*status)(int id);
-	int (*seek)(int id, int offset, int whence);
+	int (*status)(int id, int newstatus);
+    int (*seek)(int id, int offset, int whence);
+    int (*tell)(int id);
 	int (*input)(int id);
 	void (*output)(int id, int data);
-	int (*input_chunk)(int id, void *dst, int size);
-	int (*output_chunk)(int id, void *src, int size);
+	int (*input_chunk)(int id, void *dst, int chunks);
+	int (*output_chunk)(int id, void *src, int chunks);
 };
 
 /* these are called from mame.c run_game() */
 
-/* retrieve the filenames from options.image_files */
 extern int get_filenames(void);
-
-/* initialize devices, ie. let the driver open/check the image files */
 extern int init_devices(const void *game);
-
-/* shutdown devices */
 extern void exit_devices(void);
 
-/* Return the number of installed filenames for a device of type 'type'. */
+/* access mess.c internal fields for a device type (instance id) */
+
 extern int device_count(int type);
-
-/* Return the name for a device of type 'type'. */
 extern const char *device_typename(int type);
-
-/* Return the id'th filename for a device of type 'type',
-   NULL if not enough image names of that type are available. */
+extern const char *device_typename_id(int type, int id);
 extern const char *device_filename(int type, int id);
+extern unsigned int device_length(int type, int id);
+extern unsigned int device_crc(int type, int id);
+extern const char *device_longname(int type, int id);
+extern const char *device_manufacturer(int type, int id);
+extern const char *device_year(int type, int id);
+extern const char *device_playable(int type, int id);
+extern const char *device_extrainfo(int type, int id);
+
+extern const char *device_file_extension(int type, int extnum);
+extern int device_filename_change(int type, int id, const char *name);
+
+/* access functions from the struct IODevice arrays of a driver */
+
+extern const void *device_info(int type, int id);
+extern int device_open(int type, int id, int mode, void *args);
+extern void device_close(int type, int id);
+extern int device_seek(int type, int id, int offset, int whence);
+extern int device_tell(int type, int id);
+extern int device_status(int type, int id, int newstatus);
+extern int device_input(int type, int id);
+extern void device_output(int type, int id, int data);
+extern int device_input_chunk(int type, int id, void *dst, int chunks);
+extern void device_output_chunk(int type, int id, void *src, int chunks);
 
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
  * It allows us to use an empty PARENT field in the macros.
  */
 extern struct GameDriver driver_0;
-
-
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME

@@ -79,8 +79,9 @@
 extern void init_kim1(void);
 extern void kim1_init_machine(void);
 
-extern int kim1_rom_load (int id, const char *name);
-extern int kim1_rom_id (const char *name, const char *gamename);
+extern int kim1_cassette_id(int id);
+extern int kim1_cassette_init(int id);
+extern void kim1_cassette_exit(int id);
 
 extern int kim1_interrupt(void);
 
@@ -267,18 +268,19 @@ ROM_END
 
 static const struct IODevice io_kim1[] = {
     {
-        IO_CARTSLOT,        /* type */
+		IO_CASSETTE,		/* type */
         1,                  /* count */
 		"kim\0",            /* file extensions */
         NULL,               /* private */
-		kim1_rom_id,		/* id */
-		kim1_rom_load,		/* init */
-		NULL,				/* exit */
+		kim1_cassette_id,	/* id */
+		kim1_cassette_init, /* init */
+		kim1_cassette_exit, /* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

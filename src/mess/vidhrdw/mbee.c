@@ -44,32 +44,35 @@ static int framecnt = 0;
 static int update_all = 0;
 static int m6545_color_bank = 0;
 static int m6545_video_bank = 0;
-static int mbee_colorram_bank = 0;
+static int mbee_pcg_color_latch = 0;
 
-UINT8 *mbee_fontram;
+char mbee_frame_message[128+1];
+int mbee_frame_counter;
 
 extern int bitmap_dirty;
+
+UINT8 *pcgram;
 
 /* from mess/systems/microbee.c */
 extern struct GfxLayout mbee_charlayout;
 
 
-void mbee_colorram_bank_w(int offs, int data)
+void mbee_pcg_color_latch_w(int offs, int data)
 {
-	if( errorlog ) fprintf(errorlog, "mbee colorram_bank_w $%02X\n", data);
-	mbee_colorram_bank = data;
+	if( errorlog ) fprintf(errorlog, "mbee pcg_color_latch_w $%02X\n", data);
+	mbee_pcg_color_latch = data;
 }
 
-int mbee_colorram_bank_r(int offs)
+int mbee_pcg_color_latch_r(int offs)
 {
-	int data = mbee_colorram_bank;
-    if( errorlog ) fprintf(errorlog, "mbee colorram_bank_r $%02X\n", data);
+	int data = mbee_pcg_color_latch;
+	if( errorlog ) fprintf(errorlog, "mbee pcg_color_latch_r $%02X\n", data);
 	return data;
 }
 
 void mbee_videoram_w(int offs, int data)
 {
-	if( videoram[offs] != data )
+    if( videoram[offs] != data )
 	{
 		if( errorlog ) fprintf(errorlog, "mbee videoram [$%04X] <- $%02X\n",offs,data);
 		videoram[offs] = data;
@@ -82,28 +85,29 @@ int mbee_videoram_r(int offs)
 	int data;
 	if( m6545_video_bank & 0x01 )
 	{
-		data = mbee_fontram[offs];
-        if( errorlog ) fprintf(errorlog, "mbee videoram [$%04X] -> $%02X\n",offs,data);
+		data = pcgram[offs];
+		if( errorlog ) fprintf(errorlog, "mbee pcgram [$%04X] -> $%02X\n",offs,data);
 	}
 	else
 	{
 		data = videoram[offs];
+		if( errorlog ) fprintf(errorlog, "mbee videoram [$%04X] -> $%02X\n",offs,data);
     }
     return data;
 }
 
-void mbee_colorram_w(int offs, int data)
+void mbee_pcg_color_w(int offs, int data)
 {
-	if( m6545_video_bank & 0x01 )
+	if( (m6545_video_bank & 0x01) || (mbee_pcg_color_latch & 0x40) == 0 )
 	{
-		if( mbee_fontram[offs] != data )
+		if( pcgram[0x0800+offs] != data )
         {
             int chr = 0x80 + offs / 16;
 
-            if( errorlog ) fprintf(errorlog, "mbee fontram  [$%04X] <- $%02X\n",offs,data);
-			mbee_fontram[0x800 + offs] = data;
+            if( errorlog ) fprintf(errorlog, "mbee pcgram  [$%04X] <- $%02X\n",offs,data);
+            pcgram[0x0800+offs] = data;
             /* decode character graphics again */
-			decodechar(Machine->gfx[0], chr, mbee_fontram, &mbee_charlayout);
+            decodechar(Machine->gfx[0], chr, pcgram, &mbee_charlayout);
 
             /* mark all visible characters with that code dirty */
             for( offs = 0; offs < videoram_size; offs++ )
@@ -117,21 +121,21 @@ void mbee_colorram_w(int offs, int data)
 	{
 		if( colorram[offs] != data )
         {
-            if( errorlog ) fprintf(errorlog, "mbee colorram [$%04X] <- $%02X\n",offs,data);
+            if( errorlog ) fprintf(errorlog, "colorram [$%04X] <- $%02X\n",offs,data);
             colorram[offs] = data;
             dirtybuffer[offs] = 1;
         }
-    }
+	}
 }
 
-int mbee_colorram_r(int offs)
+int mbee_pcg_color_r(int offs)
 {
 	int data;
 
-    if( mbee_colorram_bank & 0x40 )
+	if( mbee_pcg_color_latch & 0x40 )
         data = colorram[offs];
 	else
-		data = mbee_fontram[0x800 + offs];
+		data = pcgram[0x0800+offs];
     return data;
 }
 
@@ -490,11 +494,11 @@ void m6545_data_w(int offs, int data)
 
 int mbee_vh_start(void)
 {
-	mbee_fontram = memory_region(REGION_GFX1);
-
     if( generic_bitmapped_vh_start() )
 		return 1;
-
+	pcgram = memory_region(REGION_CPU1)+0xf000;
+	videoram = memory_region(REGION_GFX1)+0x0000;
+	colorram = memory_region(REGION_GFX1)+0x0800;
     memset(dirtybuffer, 1, videoram_size);
 
     return 0;
@@ -509,7 +513,22 @@ void mbee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs, cursor;
 
-	if( palette_recalc() )
+	if( mbee_frame_counter > 0 )
+	{
+		if( --mbee_frame_counter == 0 )
+			full_refresh = 1;
+		else
+		{
+			/* I know this is ugly, but it happens only once
+			 * after a new message is sprintf()ed into the string :)
+			 */
+            while( strlen(mbee_frame_message) < 128 )
+				strcat(mbee_frame_message, " ");
+			ui_text(mbee_frame_message, 0, Machine->uiheight - 10);
+		}
+    }
+
+    if( palette_recalc() )
 		full_refresh = 1;
 
     if( full_refresh )

@@ -12,7 +12,7 @@
 #include "cpu/z80/z80.h"
 #include "mess/systems/trs80.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	if( errorlog ) fprintf x
@@ -78,11 +78,13 @@ static void tape_put_close(void);
 #define FW TRS80_FONT_W
 #define FH TRS80_FONT_H
 
+
 void init_trs80(void)
 {
 	UINT8 *FNT = memory_region(REGION_GFX1);
     int i, y;
-	for( i = 0x000; i < 0x080; i++ )
+
+    for( i = 0x000; i < 0x080; i++ )
     {
 		/* copy eight lines from the character generator */
         for (y = 0; y < 8; y++)
@@ -126,80 +128,84 @@ static int opbaseoverride(int PC)
 				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buffer\n");
 				return 1;
 			}
-			cmd = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			if( !cmd )
+				cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
 			{
 				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", tape_name);
-                return 1;
 			}
-			size = osd_fread(cmd, buff, 65536);
-			s = buff;
-			while( size > 3 )
+			else
 			{
-				data = *s++;
-				switch( data )
+				size = osd_fread(cmd, buff, 65536);
+				s = buff;
+				while( size > 3 )
 				{
-				case 0x01:		   /* CMD file header */
-				case 0x07:		   /* another type of CMD file header */
-				case 0x3c:		   /* CAS file header */
-					block_len = *s++;
-					/* on CMD files size zero means size 256 */
-					if( block_len == 0 )
-						block_len += 256;
-					block_ofs = *s++;
-					block_ofs += 256 * *s++;
-					if( data != 0x3c )
+					data = *s++;
+					switch( data )
 					{
-						block_len -= 2;
+					case 0x01:		   /* CMD file header */
+					case 0x07:		   /* another type of CMD file header */
+						case 0x3c:		   /* CAS file header */
+						block_len = *s++;
+						/* on CMD files size zero means size 256 */
 						if( block_len == 0 )
-							block_len = 256;
-					}
-					size -= 4;
-					LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
-					while( block_len && size )
-					{
-						cpu_writemem16(block_ofs, *s);
-						s++;
-						block_ofs++;
-						block_len--;
+							block_len += 256;
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+							if( data != 0x3c )
+						{
+							block_len -= 2;
+							if( block_len == 0 )
+								block_len = 256;
+						}
+						size -= 4;
+						LOG((errorlog, "trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+						while( block_len && size )
+							{
+							cpu_writemem16(block_ofs, *s);
+							s++;
+							block_ofs++;
+							block_len--;
+							size--;
+						}
+						if( data == 0x3c )
+							s++;
+						break;
+						case 0x02:
+						block_len = *s++;
+						size -= 1;
+					case 0x78:
+						entry = *s++;
+							entry += 256 * *s++;
+						LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
+						size -= 3;
+						if( size <= 3 )
+							LOG((errorlog,"starting program at $%04X\n", block_ofs));
+						break;
+					default:
 						size--;
 					}
-					if( data == 0x3c )
-						s++;
-					break;
-				case 0x02:
-					block_len = *s++;
-					size -= 1;
-				case 0x78:
-					entry = *s++;
-					entry += 256 * *s++;
-					LOG((errorlog, "trs80_cmd_load entry ($%02X) at $%04X\n", data, entry));
-					size -= 3;
-					if( size <= 3 )
-						LOG((errorlog,"starting program at $%04X\n", block_ofs));
-					break;
-				default:
-					size--;
 				}
+				osd_fclose(cmd);
+				cpu_set_pc(entry);
 			}
 			free(buff);
-			osd_fclose(cmd);
-			cpu_set_pc(entry);
 		}
         cpu_setOPbaseoverride(0,NULL);
     }
 	return PC;
 }
 
-int trs80_cassette_init(int id, const char *name)
+int trs80_cassette_init(int id)
 {
-	tape_name = name;
+	tape_name = device_filename(IO_CASSETTE,id);
 	return 0;
 }
 
-int trs80_floppy_init(int id, const char *name)
+int trs80_floppy_init(int id)
 {
-	floppy_name[id] = name;
+	floppy_name[id] = device_filename(IO_FLOPPY,id);
 	return 0;
 }
 
@@ -231,9 +237,10 @@ void trs80_shutdown_machine(void)
 	wd179x_stop_drive();
 }
 
-int trs80_rom_load(int id, const char *name)
+int trs80_rom_load(int id)
 {
-	if( name[0] )
+	const char *name = device_filename(IO_CARTSLOT,id);
+	if( name && name[0] )
 	{
 		/* copy rom name to cassette name (same loader) */
 		tape_name = name;
@@ -446,14 +453,14 @@ void trs80_port_ff_w(int offset, int data)
 			switch( data & 0x03 )
 			{
 			case 0: /* 0.46 volts */
-				DAC_data_w(0, (int)(0.46*255));
+				speaker_level_w(0,1);
 				break;
 			case 1:
 			case 3: /* 0.00 volts */
-				DAC_data_w(0, (int)(0.00*255));
+				speaker_level_w(0,0);
 				break;
 			case 2: /* 0.85 volts */
-				DAC_data_w(0, (int)(0.85*255));
+				speaker_level_w(0,2);
 				break;
 			}
 		}

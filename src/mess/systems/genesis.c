@@ -393,7 +393,8 @@ static const struct IODevice io_genesis[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
-		NULL,				/* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */

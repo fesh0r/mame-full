@@ -633,46 +633,47 @@ void kim1_init_machine(void)
 	m6530[1].timer = timer_pulse(TIME_IN_HZ(256 * m6530[1].clock / 256 / 256), 1, m6530_timer_cb);
 }
 
-int kim1_rom_load(int id, const char *name)
+int kim1_cassette_init(int id)
 {
 	const char magic[] = "KIM1";
 	char buff[4];
 	void *file;
 
-	if (name && name[0])
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
+	if (file)
 	{
-		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
-		if (file)
+		UINT16 addr, size;
+		UINT8 ident, *RAM = memory_region(REGION_CPU1);
+
+		osd_fread(file, buff, sizeof (buff));
+		if (memcmp(buff, magic, sizeof (buff)))
 		{
-			UINT16 addr, size;
-			UINT8 ident, *RAM = memory_region(REGION_CPU1);
-
-			osd_fread(file, buff, sizeof (buff));
-			if (memcmp(buff, magic, sizeof (buff)))
-			{
-				LOG((errorlog, "kim1_rom_load: magic '%s' not found\n", magic));
-				return 1;
-			}
-			osd_fread_lsbfirst(file, &addr, 2);
-			osd_fread_lsbfirst(file, &size, 2);
-			osd_fread(file, &ident, 1);
-			LOG((errorlog, "kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident));
-			while (size-- > 0)
-				osd_fread(file, &RAM[addr++], 1);
-			osd_fclose(file);
+			LOG((errorlog, "kim1_rom_load: magic '%s' not found\n", magic));
+			return INIT_FAILED;
 		}
+		osd_fread_lsbfirst(file, &addr, 2);
+		osd_fread_lsbfirst(file, &size, 2);
+		osd_fread(file, &ident, 1);
+		LOG((errorlog, "kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident));
+		while (size-- > 0)
+			osd_fread(file, &RAM[addr++], 1);
+		osd_fclose(file);
 	}
-
-	return 0;
+	return INIT_OK;
 }
 
-int kim1_rom_id(const char *name, const char *gamename)
+void kim1_cassette_exit(int id)
+{
+	/* nothing yet */
+}
+
+int kim1_cassette_id(int id)
 {
 	const char magic[] = "KIM1";
 	char buff[4];
 	void *file;
 
-	file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, 0);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
 	if (file)
 	{
 		osd_fread(file, buff, sizeof (buff));

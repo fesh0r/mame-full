@@ -40,8 +40,8 @@
 
 extern unsigned char *astrocade_videoram;
 
-int astrocade_load_rom(int id, const char *name);
-int astrocade_id_rom(const char *name, const char *gamename);
+int astrocade_load_rom(int id);
+int astrocade_id_rom(int id);
 
 void astrocade_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
 int  astrocade_intercept_r(int offset);
@@ -190,10 +190,10 @@ INPUT_PORTS_START( astrocde )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* IN8 */	/* Player 1 Knob */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE , 25, 0, 0, 255, KEYCODE_X, KEYCODE_Z, 0,0,4 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE , 25, 0, 255, KEYCODE_X, KEYCODE_Z, 0,0,4 )
 
 	PORT_START /* IN9 */	/* Player 2 Knob */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE , 25, 0, 0, 255, KEYCODE_N, KEYCODE_M, 0,0,4 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE , 25, 0, 255, KEYCODE_N, KEYCODE_M, 0,0,4 )
 
 	PORT_START /* IN10 */	/* Player 3 Knob */
 
@@ -269,7 +269,8 @@ static const struct IODevice io_astrocde[] = {
 		NULL,               /* close */
 		NULL,               /* status */
 		NULL,               /* seek */
-		NULL,               /* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
 		NULL                /* output_chunk */

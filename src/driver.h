@@ -69,6 +69,9 @@ enum
 #if (HAS_M65CE02)
 	CPU_M65CE02,
 #endif
+#if (HAS_M6509)
+    CPU_M6509,
+#endif
 #if (HAS_M6510)
 	CPU_M6510,
 #endif

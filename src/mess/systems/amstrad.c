@@ -1,6 +1,6 @@
 /******************************************************************************
 
-    amstrad.c
+	amstrad.c
 	system driver
 
 	Kevin Thacker [MESS driver]
@@ -13,7 +13,7 @@
 #include "mess/machine/amstrad.h"
 #include "mess/vidhrdw/amstrad.h"
 #include "mess/machine/nec765.h"
-
+#include "mess/machine/dsk.h"
 
 /* On the Amstrad, any part of the 64k memory can be access by the video
 hardware (GA and CRTC - the CRTC specifies the memory address to access,
@@ -33,8 +33,8 @@ From measurement, there are 64 NOPs per line, with 312 lines per screen.
 This gives a total of 19968 NOPs per frame. */
 
 /* number of us cycles per frame (measured) */
-#define AMSTRAD_US_PER_FRAME    19968
-#define AMSTRAD_FPS             50
+#define AMSTRAD_US_PER_FRAME	19968
+#define AMSTRAD_FPS 			50
 #define AMSTRAD_T_STATES_PER_US 4
 
 /* These are the measured visible screen dimensions in CRTC characters.
@@ -111,9 +111,19 @@ int amstrad_ppi_porta_r(int chip)
 
 
 /* ppi port b read */
+/* Bit 7 = Cassette tape input */
+/* Bit 0 = VSYNC from CRTC */
+
 int amstrad_ppi_portb_r(int chip)
 {
-        return ((ppi_port_inputs[1] & 0x0fe) | crtc_vsync_output);
+	int cassette_data;
+
+	cassette_data = 0x0;
+
+	if (device_input(IO_CASSETTE,0) > 255)
+		cassette_data |=0x080;
+
+	return ((ppi_port_inputs[1] & 0x07e) | crtc_vsync_output | cassette_data);
 }
 
 void amstrad_ppi_porta_w(int chip, int Data)
@@ -123,11 +133,28 @@ void amstrad_ppi_porta_w(int chip, int Data)
 	update_psg();
 }
 
+/*-----------------27/02/00 10:34-------------------
+ bit 7,6 = PSG operation
+ bit 5 = cassette write bit
+--------------------------------------------------*/
+/* bit 4 = Cassette motor control */
+/* bit 3-0 =  Specify keyboard line */
+
 void amstrad_ppi_portc_w(int chip, int Data)
 {
 	ppi_port_outputs[2] = Data;
 
+	/* cassette motor control */
+	device_status(IO_CASSETTE, 0, ((Data>>4) & 0x01));
+
+	/*-----------------27/02/00 10:35-------------------
+	 cassette write data
+	--------------------------------------------------*/
+	device_output(IO_CASSETTE, 0, (Data & (1<<5)) ? -32768 : 32767);
+
+	/* psg operation */
 	amstrad_psg_operation = (Data >> 6) & 0x03;
+	/* keyboard line */
 	amstrad_keyboard_line = (Data & 0x0f);
 
 	update_psg();
@@ -144,18 +171,12 @@ static ppi8255_interface amstrad_ppi8255_interface =
 	amstrad_ppi_portc_w
 };
 
-extern void amstrad_seek_callback(int, int);
-extern void amstrad_get_id_callback(int, nec765_id *, int, int);
-extern void amstrad_get_sector_ptr_callback(int, int, int, char **);
-extern int amstrad_get_sectors_per_track(int, int);
-
-
 static nec765_interface amstrad_nec765_interface =
 {
-	amstrad_seek_callback,
-	amstrad_get_sectors_per_track,
-	amstrad_get_id_callback,
-	amstrad_get_sector_ptr_callback,
+	dsk_seek_callback,
+	dsk_get_sectors_per_track,
+	dsk_get_id_callback,
+	dsk_get_sector_ptr_callback,
 };
 
 /* pointers to current ram configuration selected for banks */
@@ -184,13 +205,13 @@ unsigned short amstrad_colour_table[32] =
 
 static int RamConfigurations[8 * 4] =
 {
-	0, 1, 2, 3,						   /* config 0 */
-	0, 1, 2, 7,						   /* config 1 */
-	4, 5, 6, 7,						   /* config 2 */
-	0, 3, 2, 7,						   /* config 3 */
-	0, 4, 2, 3,						   /* config 4 */
-	0, 5, 2, 3,						   /* config 5 */
-	0, 6, 2, 3,						   /* config 6 */
+	0, 1, 2, 3, 					   /* config 0 */
+	0, 1, 2, 7, 					   /* config 1 */
+	4, 5, 6, 7, 					   /* config 2 */
+	0, 3, 2, 7, 					   /* config 3 */
+	0, 4, 2, 3, 					   /* config 4 */
+	0, 5, 2, 3, 					   /* config 5 */
+	0, 6, 2, 3, 					   /* config 6 */
 	0, 7, 2, 3						   /* config 7 */
 };
 
@@ -295,7 +316,7 @@ void AmstradCPC_GA_Write(int Data)
 	{
 	case 0:
 		{
-			/* pen  selection */
+			/* pen	selection */
 			AmstradCPC_GA_PenSelected = Data;
 		}
 		return;
@@ -505,7 +526,7 @@ void AmstradCPC_WritePortHandler(int Offset, int Data)
 			case 0:
 				{
 					/* fdc motor on */
-//                  FDD_SetMotor(Data);
+//					FDD_SetMotor(Data);
 				}
 				break;
 
@@ -593,7 +614,7 @@ int amstrad_interrupt(void)
 
 
 
-//        timer_set(amstrad_time_to_int, 0, amstrad_timer_callback);
+//		  timer_set(amstrad_time_to_int, 0, amstrad_timer_callback);
 
 
 void amstrad_common_init(void)
@@ -625,42 +646,42 @@ void amstrad_common_init(void)
 
 void amstrad_init_machine(void)
 {
-        amstrad_common_init();
+	amstrad_common_init();
 
-        amstrad_setup_machine();
+	amstrad_setup_machine();
 
-        /* bits 1,2,3 are connected to links on the PCB, these
-        define the machine name.
+	/* bits 1,2,3 are connected to links on the PCB, these
+	define the machine name.
 
-        000 = Isp
-        001 = Triumph
-        010 = Saisho
-        011 = Solavox
-        100 = Awa
-        101 = Schneider
-        110 = Orion
-        111 = Amstrad
+	000 = Isp
+	001 = Triumph
+	010 = Saisho
+	011 = Solavox
+	100 = Awa
+	101 = Schneider
+	110 = Orion
+	111 = Amstrad
 
-        bit 4 is connected to a link on the PCB used to define screen
-        refresh rate. 1 = 50Hz, 0 = 60Hz */
+	bit 4 is connected to a link on the PCB used to define screen
+	refresh rate. 1 = 50Hz, 0 = 60Hz */
 
-        ppi_port_inputs[1] = readinputport(10) & 0x01e;
+	ppi_port_inputs[1] = readinputport(10) & 0x01e;
 
 }
 
-void    kccomp_init_machine(void)
+void kccomp_init_machine(void)
 {
-        amstrad_common_init();
+	amstrad_common_init();
 
-        amstrad_setup_machine();
+	amstrad_setup_machine();
 
-        /* bit 1 = /TEST. When 0, KC compact will enter data transfer
-        sequence, where another system using the expansion port signals
-        DATA2,DATA1, /STROBE and DATA7 can transfer 256 bytes of program.
-        When the program has been transfered, it will be executed. This
-        is not supported in the driver */
-        /* bit 3,4 are tied to +5V, bit 2 is tied to 0V */
-        ppi_port_inputs[1] = (1<<4) | (1<<3) | 2;
+	/* bit 1 = /TEST. When 0, KC compact will enter data transfer
+	sequence, where another system using the expansion port signals
+	DATA2,DATA1, /STROBE and DATA7 can transfer 256 bytes of program.
+	When the program has been transfered, it will be executed. This
+	is not supported in the driver */
+	/* bit 3,4 are tied to +5V, bit 2 is tied to 0V */
+	ppi_port_inputs[1] = (1<<4) | (1<<3) | 2;
 }
 
 
@@ -723,7 +744,6 @@ static void amstrad_init_palette(unsigned char *sys_palette, unsigned short *sys
 	memcpy(sys_colortable, amstrad_colour_table, sizeof (amstrad_colour_table));
 }
 
-
 /* Memory is banked in 16k blocks. The ROM can
 be paged into bank 0 and bank 3. */
 static struct MemoryReadAddress readmem_amstrad[] =
@@ -755,7 +775,7 @@ static struct GfxLayout amstrad_mode1_gfxlayout =
 	8, 1,							   /* 16 pixels wide, 1 pixel tall */
 	256,							   /* number of graphics patterns */
 	2,								   /* 2 bits per pixel */
-	{0, 4},							   /* bitplanes offset */
+	{0, 4}, 						   /* bitplanes offset */
 	{0, 0, 1, 1, 2, 2, 3, 3},		   /* x offsets to pixels */
 	{0, 0, 0, 0, 0, 0, 0, 0},		   /* y offsets to lines */
 	1								   /* number of bytes per char */
@@ -805,121 +825,121 @@ static struct AY8910interface amstrad_ay_interface =
 };
 
 #define KEYBOARD_PORTS \
-        /* keyboard row 0 */ \
-        PORT_START \
-        PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Up", KEYCODE_UP, IP_JOY_NONE) \
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Right", KEYCODE_RIGHT, IP_JOY_NONE) \
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Down", KEYCODE_DOWN, IP_JOY_NONE) \
-        PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F9", KEYCODE_9_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F6", KEYCODE_6_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F3", KEYCODE_3_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Small Enter", KEYCODE_ENTER_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F.", KEYCODE_DEL_PAD, IP_JOY_NONE) \
+	/* keyboard row 0 */ \
+	PORT_START \
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Up", KEYCODE_UP, IP_JOY_NONE) \
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Right", KEYCODE_RIGHT, IP_JOY_NONE) \
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Down", KEYCODE_DOWN, IP_JOY_NONE) \
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "F9", KEYCODE_9_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F6", KEYCODE_6_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F3", KEYCODE_3_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "Small Enter", KEYCODE_ENTER_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F.", KEYCODE_DEL_PAD, IP_JOY_NONE) \
 \
-    /* keyboard line 1 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Left", KEYCODE_LEFT, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "Copy", KEYCODE_LALT, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "F7", KEYCODE_7_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "F8", KEYCODE_8_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F5", KEYCODE_5_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F1", KEYCODE_1_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "F2", KEYCODE_2_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F0", KEYCODE_0_PAD, IP_JOY_NONE) \
+	/* keyboard line 1 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "Cursor Left", KEYCODE_LEFT, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "Copy", KEYCODE_LALT, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "F7", KEYCODE_7_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "F8", KEYCODE_8_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F5", KEYCODE_5_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F1", KEYCODE_1_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "F2", KEYCODE_2_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "F0", KEYCODE_0_PAD, IP_JOY_NONE) \
 \
-        /* keyboard row 2 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "CLR", KEYCODE_DEL, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "[", KEYCODE_CLOSEBRACE, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "]", KEYCODE_TILDE, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F4", KEYCODE_4_PAD, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "SLASH", IP_KEY_NONE, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_LCONTROL, IP_JOY_NONE) \
+	/* keyboard row 2 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "CLR", KEYCODE_DEL, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "[", KEYCODE_CLOSEBRACE, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "]", KEYCODE_TILDE, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "F4", KEYCODE_4_PAD, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "SLASH", IP_KEY_NONE, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL", KEYCODE_LCONTROL, IP_JOY_NONE) \
 \
-        /* keyboard row 3 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "^", KEYCODE_EQUALS, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "=", KEYCODE_MINUS, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "[", KEYCODE_OPENBRACE, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, ":", KEYCODE_QUOTE, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "/", KEYCODE_SLASH, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE) \
+	/* keyboard row 3 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "^", KEYCODE_EQUALS, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "=", KEYCODE_MINUS, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "[", KEYCODE_OPENBRACE, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, ";", KEYCODE_COLON, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, ":", KEYCODE_QUOTE, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "/", KEYCODE_SLASH, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE) \
 \
-        /* keyboard line 4 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE) \
+	/* keyboard line 4 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "0", KEYCODE_0, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "9", KEYCODE_9, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE) \
 \
-        /* keyboard line 5 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE) \
+	/* keyboard line 5 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "8", KEYCODE_8, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "7", KEYCODE_7, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE) \
 \
-        /* keyboard line 6 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "6/JOYSTICK 1 UP", KEYCODE_6, IPT_JOYSTICK_UP) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "5/JOYSTICK 1 DOWN", KEYCODE_5, IPT_JOYSTICK_DOWN) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "R/JOYSTICK 1 LEFT", KEYCODE_R, IPT_JOYSTICK_LEFT) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "T/JOYSTICK 1 RIGHT", KEYCODE_T, IPT_JOYSTICK_RIGHT) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "G/JOYSTICK 1 FIRE 1", KEYCODE_G, IPT_BUTTON1) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F/JOYSTICK 1 FIRE 2", KEYCODE_F, IPT_BUTTON2) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "B/JOYSTICK 1 FIRE 3", KEYCODE_B, IPT_BUTTON3) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE) \
+	/* keyboard line 6 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "6/JOYSTICK 1 UP", KEYCODE_6, JOYCODE_2_UP) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "5/JOYSTICK 1 DOWN", KEYCODE_5, JOYCODE_2_DOWN) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "R/JOYSTICK 1 LEFT", KEYCODE_R, JOYCODE_2_LEFT) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "T/JOYSTICK 1 RIGHT", KEYCODE_T, JOYCODE_2_RIGHT) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "G/JOYSTICK 1 FIRE 1", KEYCODE_G, JOYCODE_2_BUTTON1) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "F/JOYSTICK 1 FIRE 2", KEYCODE_F, JOYCODE_2_BUTTON2) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "B/JOYSTICK 1 FIRE 3", KEYCODE_B, JOYCODE_2_BUTTON3) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE) \
 \
-        /* keyboard line 7 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE) \
+	/* keyboard line 7 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "4", KEYCODE_4, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE) \
 \
-        /* keyboard line 8 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "ESC", KEYCODE_ESC, IP_JOY_NONE) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK", KEYCODE_CAPSLOCK, IP_JOY_NONE) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE) \
+	/* keyboard line 8 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "1", KEYCODE_1, IP_JOY_NONE) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "2", KEYCODE_2, IP_JOY_NONE) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "ESC", KEYCODE_ESC, IP_JOY_NONE) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "CAPS LOCK", KEYCODE_CAPSLOCK, IP_JOY_NONE) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE) \
 \
-        /* keyboard line 9 */ \
-        PORT_START \
-        PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, IPT_JOYSTICK_UP) \
-        PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 DOWN", IP_KEY_NONE, IPT_JOYSTICK_DOWN) \
-        PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 LEFT", IP_KEY_NONE, IPT_JOYSTICK_LEFT) \
-        PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 RIGHT", IP_KEY_NONE, IPT_JOYSTICK_RIGHT) \
-        PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 1", IP_KEY_NONE, IPT_BUTTON1) \
-        PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 2", IP_KEY_NONE, IPT_BUTTON2) \
-        PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 3", IP_KEY_NONE, IPT_BUTTON3) \
-        PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE) \
+	/* keyboard line 9 */ \
+	PORT_START \
+	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, JOYCODE_1_UP) \
+	PORT_BITX(0x002, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 DOWN", IP_KEY_NONE, JOYCODE_1_DOWN) \
+	PORT_BITX(0x004, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 LEFT", IP_KEY_NONE, JOYCODE_1_LEFT) \
+	PORT_BITX(0x008, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 RIGHT", IP_KEY_NONE, JOYCODE_1_RIGHT) \
+	PORT_BITX(0x010, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 1", IP_KEY_NONE, JOYCODE_1_BUTTON1) \
+	PORT_BITX(0x020, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 2", IP_KEY_NONE, JOYCODE_1_BUTTON2) \
+	PORT_BITX(0x040, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 FIRE 3", IP_KEY_NONE, JOYCODE_1_BUTTON3) \
+	PORT_BITX(0x080, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE) \
 
 
 
 INPUT_PORTS_START(amstrad)
 
-        KEYBOARD_PORTS
+	KEYBOARD_PORTS
 
 	/* the following are defined as dipswitches, but are in fact solder links on the
 	 * curcuit board. The links are open or closed when the PCB is made, and are set depending on which country
@@ -942,8 +962,13 @@ INPUT_PORTS_START(amstrad)
 INPUT_PORTS_END
 
 INPUT_PORTS_START(kccomp)
-        KEYBOARD_PORTS
+		KEYBOARD_PORTS
 INPUT_PORTS_END
+
+static struct Wave_interface wave_interface = {
+	1,		/* 1 cassette recorder */
+	{ 50 }	/* mixing levels in percent */
+};
 
 /* actual clock to CPU is 4Mhz, but it is slowed by memory
 accessess. A HALT is used every 4 CPU clock cycles. This gives
@@ -951,23 +976,23 @@ an effective speed of 3.8Mhz. */
 
 static struct MachineDriver machine_driver_amstrad =
 {
-		/* basic machine hardware */
+	/* basic machine hardware */
 	{
-			/* MachineCPU */
+		/* MachineCPU */
 		{
 			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-                        (AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS),                                   /* clock: See Note Above */
+			(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS), 								  /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
 			readport_amstrad,		   /* IOReadPort */
 			writeport_amstrad,		   /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
-									    * Interrupt */
+										* Interrupt */
 			0 /*1 */ ,				   /* vblanks per frame */
 			amstrad_timer_interrupt, 300,	/* every scanline */
 		},
 	},
-	50,								   /* frames per second */
+	50, 							   /* frames per second */
 	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
 	amstrad_init_machine,			   /* init machine */
@@ -976,11 +1001,10 @@ static struct MachineDriver machine_driver_amstrad =
 	AMSTRAD_SCREEN_WIDTH,			   /* screen width */
 	AMSTRAD_SCREEN_HEIGHT,			   /* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo,              *//* graphics
-									    * decode info */
-	32,								   /* total colours
-									    */
-	32,								   /* color table len */
+	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
+										* decode info */
+	32, 							   /* total colours */
+	32, 							   /* color table len */
 	amstrad_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER,				   /* video attributes */
@@ -995,46 +1019,49 @@ static struct MachineDriver machine_driver_amstrad =
 	0,								   /* sh stop */
 	0,								   /* sh update */
 	{
-			/* MachineSound */
+		/* MachineSound */
 		{
 			SOUND_AY8910,
 			&amstrad_ay_interface
+		},
+		{
+			SOUND_WAVE,
+			&wave_interface
 		}
 	}
 };
 
 static struct MachineDriver machine_driver_kccomp =
 {
-		/* basic machine hardware */
+	/* basic machine hardware */
 	{
-			/* MachineCPU */
+		/* MachineCPU */
 		{
 			CPU_Z80 | CPU_16BIT_PORT,  /* type */
-                        (AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS),                                   /* clock: See Note Above */
+			(AMSTRAD_US_PER_FRAME*AMSTRAD_T_STATES_PER_US*AMSTRAD_FPS), 								  /* clock: See Note Above */
 			readmem_amstrad,		   /* MemoryReadAddress */
 			writemem_amstrad,		   /* MemoryWriteAddress */
 			readport_amstrad,		   /* IOReadPort */
 			writeport_amstrad,		   /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
-									    * Interrupt */
+										* Interrupt */
 			0 /*1 */ ,				   /* vblanks per frame */
 			amstrad_timer_interrupt, 300,	/* every scanline */
 		},
 	},
-	50,								   /* frames per second */
+	50, 							   /* frames per second */
 	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
 	1,								   /* cpu slices per frame */
-        kccomp_init_machine,                      /* init machine */
+	kccomp_init_machine,			   /* init machine */
 	amstrad_shutdown_machine,
 	/* video hardware */
 	AMSTRAD_SCREEN_WIDTH,			   /* screen width */
 	AMSTRAD_SCREEN_HEIGHT,			   /* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo,              *//* graphics
-									    * decode info */
-	32,								   /* total colours
-									    */
-	32,								   /* color table len */
+	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
+										* decode info */
+	32, 							   /* total colours */
+	32, 							   /* color table len */
 	amstrad_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER,				   /* video attributes */
@@ -1043,16 +1070,20 @@ static struct MachineDriver machine_driver_kccomp =
 	amstrad_vh_stop,
 	amstrad_vh_screenrefresh,
 
-		/* sound hardware */
+	/* sound hardware */
 	0,								   /* sh init */
 	0,								   /* sh start */
 	0,								   /* sh stop */
 	0,								   /* sh update */
 	{
-			/* MachineSound */
+		/* MachineSound */
 		{
 			SOUND_AY8910,
 			&amstrad_ay_interface
+		},
+		{
+			SOUND_WAVE,
+			&wave_interface
 		}
 	}
 };
@@ -1085,7 +1116,7 @@ ROM_START(cpc464)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
-        ROM_LOAD("cpc464.rom", 0x10000, 0x8000, 0x040852f25)
+	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, 0x040852f25)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* fake region - required by graphics decode structure */
@@ -1096,7 +1127,7 @@ ROM_START(cpc664)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1)
 	/* load the os to offset 0x01000 from memory base */
-        ROM_LOAD("cpc664.rom", 0x10000, 0x8000, 0x09AB5A036)
+	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, 0x09AB5A036)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
 
 	/* fake region - required by graphics decode structure */
@@ -1118,7 +1149,7 @@ static const struct IODevice io_cpc6128[] =
 	{
 		IO_CARTSLOT,				/* type */
 		1,							/* count */
-		"sna\0",					/* file extensions */
+		"sna\0",                    /* file extensions */
 		NULL,						/* private */
 		amstrad_snapshot_id,		/* id */
 		amstrad_snapshot_load,		/* init */
@@ -1128,7 +1159,8 @@ static const struct IODevice io_cpc6128[] =
 		NULL,						/* close */
 		NULL,						/* status */
 		NULL,						/* seek */
-		NULL,						/* input */
+		NULL,						/* tell */
+        NULL,                       /* input */
 		NULL,						/* output */
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
@@ -1136,21 +1168,24 @@ static const struct IODevice io_cpc6128[] =
 	{
 		IO_FLOPPY,					/* type */
 		2,							/* count */
-		"dsk\0",					/* file extensions */
+		"dsk\0",                    /* file extensions */
 		NULL,						/* private */
-		amstrad_floppy_id,			/* id */
-		amstrad_floppy_load,		/* init */
-		amstrad_floppy_exit,		/* exit */
+		dsk_floppy_id,			/* id */
+		dsk_floppy_load,		/* init */
+		dsk_floppy_exit,		/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
 		NULL,						/* status */
-		NULL,						/* seek */
-		NULL,						/* input */
+        NULL,                       /* seek */
+		NULL,						/* tell */
+        NULL,                       /* input */
 		NULL,						/* output */
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
 	},
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit),
+
 	{IO_END}
 };
 

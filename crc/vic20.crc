@@ -1,4 +1,4 @@
-# only used when started with 1 image (in mess36b9.1)
+
 # problem with file formats
 # prg are images, but startet with 2 bytes for its load address
 # so gives other crc then binary file

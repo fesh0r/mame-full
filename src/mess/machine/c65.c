@@ -1,6 +1,8 @@
 /***************************************************************************
-
-									    
+	commodore c65 home computer
+	peter.trauner@jk.uni-linz.ac.at
+    documention
+     www.funet.fi				    
  ***************************************************************************/
 
 #include <ctype.h>
@@ -17,11 +19,13 @@
 
 #include "c65.h"
 
-unsigned char c65_keyline = 0xff;
+unsigned char c65_keyline[2] = { 0xff, 0xff };
 int c65=0;
-static int c64mode=0, c65_dosmode=1, c65_write_io;
+UINT8 c65_6511_port=0xff;
 
-//UINT8 *c65_memory;
+static int c64mode=0, c65_dosmode=1, 
+	c65_monitormode=0, c65_write_io, c65_write_io_dc00;
+
 UINT8 *c65_basic;
 UINT8 *c65_kernal;
 UINT8 *c65_chargen;
@@ -44,6 +48,10 @@ UINT8 *c65_graphics;
    6,7,8 dest
    9 subcommand
    10 mod
+
+   seldom copy (overlapping) from 0x402002 to 0x402008
+   (making place for new line in basic area)
+   for whats this bit 0x400000, or is this really the address?
 */
 static void c65_dma_port_w(int offset, int value)
 {
@@ -134,91 +142,174 @@ static void c65_dma_port_w(int offset, int value)
 
 static int c65_dma_port_r(int offset)
 {
+	/* offset 3 bit 7 in progress ? */
 	DBG_LOG (1, "dma chip read", (errorlog, "%.3x\n", offset));
-    return 0xff;
+    return 0x7f;
+}
+
+static void c65_6511_port_w(int offset, int value)
+{
+	if (offset==7) {
+		c65_6511_port=value;
+	}
+	DBG_LOG (2, "r6511 write", (errorlog, "%.2x %.2x\n", offset, value));
+}
+
+static int c65_6511_port_r(int offset)
+{
+	DBG_LOG (2, "r6511 read", (errorlog, "%.2x\n", offset));
+	return 0xff;
+}
+
+static void wd1770_port_w(int offset, int value)
+{
+	DBG_LOG (1, "wd1770 write", (errorlog, "%.2x %.2x\n", offset, value));
+}
+
+static int wd1770_port_r(int offset)
+{
+	DBG_LOG (1, "wd1770 read", (errorlog, "%.2x\n", offset));
+	return 0;
 }
 
 void c65_write_d000 (int offset, int value)
 {
-	if (!c65_write_io)
+	if (!c65_write_io) {
 		c64_memory[0xd000 + offset] = value;
-	else if (offset < 0x80)
-		vic2_port_w (offset & 0x7f, value);
-	else if (offset<0xa0) {
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-		/*wd1770_port_w(offset&0x1f,value); */
-	} else if (offset<0x100) { 
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-		/*ram expansion crtl optional */
-	} else if (offset<0x400) {
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-		/*ramdac ((offset&0x3ff)-0x100); */
-	} else if (offset < 0x440/*maybe 0x20!?*/) sid6581_0_port_w (offset & 0x3f, value);
-	else if (offset<0x480) sid6581_1_port_w(offset&0x3f, value);
-	else if (offset < 0x600)
-	{
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-	} else if (offset<0x700) {
-		DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-		/*uart6511_port_w(offset&0xff,value); */
+	} else {
+		switch(offset&0xf00) {
+		case 0x000:
+			if (offset < 0x80)
+				vic2_port_w (offset & 0x7f, value);
+			else if (offset < 0xa0) {
+				wd1770_port_w(offset&0x1f,value);
+			} else {
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+				/*ram expansion crtl optional */
+			}
+			break;
+		case 0x100:case 0x200: case 0x300:
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			/*ramdac ((offset&0x3ff)-0x100); */
+			break;
+		case 0x400:
+			if (offset<0x440) /* maybe 0x20 */
+				sid6581_0_port_w (offset & 0x3f, value);
+			else if (offset<0x480)
+				sid6581_1_port_w(offset&0x3f, value);
+			else 
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			break;
+		case 0x500:
+			DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			break;
+		case 0x600:
+			c65_6511_port_w(offset&0xff,value);
+			break;
+		case 0x700:
+			c65_dma_port_w(offset&0xff, value);
+			break;
+		case 0x800:case 0x900:case 0xa00:case 0xb00:
+			c64_colorram[offset & 0x3ff] = value/* | 0xf0*/;
+		case 0xc00:
+			if (!c65_write_io_dc00)
+				c64_memory[0xd000 + offset] = value;
+			else 
+				cia6526_0_port_w (offset & 0xff, value);
+			break;
+		case 0xd00:
+			if (!c65_write_io_dc00)
+				c64_memory[0xd000 + offset] = value;
+			else 
+				cia6526_1_port_w (offset & 0xff, value);
+			break;
+		case 0xe00:
+		case 0xf00:
+			if (!c65_write_io_dc00)
+				c64_memory[0xd000 + offset] = value;
+			else 
+				DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
+			break;
+		}
 	}
-	else if (offset<0x800) c65_dma_port_w(offset&0xff, value);
-	else if (offset < 0xc00)
-		c64_colorram[offset & 0x3ff] = value | 0xf0;
-	else if (offset < 0xd00)
-		cia6526_0_port_w (offset & 0xff, value);
-	else if (offset < 0xe00)
-		cia6526_1_port_w (offset & 0xff, value);
-	else
-		c64_memory[0x1d000+offset]=value;
-#if 0
-	DBG_LOG (1, "io write", (errorlog, "%.3x %.2x\n", offset, value));
-#endif
 }
 
 static int c65_read_io (int offset)
 {
-	if (offset < 0x80)
-		return vic2_port_r (offset & 0x7f);
-	else if (offset<0xa0) {
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
-		/*return wd1770_port_r(offset&0x1f); */
-	} else if (offset<0x100) {
-		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
-		/*return; ram expansion crtl optional */
-	} else if (offset<0x400) {
+	switch(offset&0xf00) {
+	case 0x000:
+		if (offset < 0x80)
+			return vic2_port_r (offset & 0x7f);
+		if (offset < 0xa0) {
+			return wd1770_port_r(offset&0x1f);
+		} else {
+			DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+			/*return; ram expansion crtl optional */
+		}
+		break;
+	case 0x100:case 0x200: case 0x300:
 		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
 	    /*return ramdac ((offset&0x3ff)-0x100); */
-	} else if (offset < 0x440) return sid6581_0_port_r (offset & 0x3f);
-	else if (offset<0x480) return sid6581_1_port_r(offset&0x3f);
-	else if (offset < 0x600)
-	{
+		break;
+	case 0x400:
+		if (offset<0x440)
+			return sid6581_0_port_r (offset & 0x3f);
+		if (offset<0x480)
+			return sid6581_1_port_r(offset&0x3f);
 		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
-		return 0xff;
-	} else if (offset<0x700) {
-		DBG_LOG (2, "io read", (errorlog, "%.3x\n", offset));
-		/*return uart6511_port_r([offset&0xff); */
-	} else if (offset<0x800) return c65_dma_port_r(offset&0xff);
-	else if (offset < 0xc00)
+		break;
+	case 0x500:
+		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+		break;
+	case 0x600:
+		return c65_6511_port_r(offset&0xff);
+	case 0x700:
+		return c65_dma_port_r(offset&0xff);
+	case 0x800:case 0x900:case 0xa00:case 0xb00:
 		return c64_colorram[offset & 0x3ff];
-	else if (offset < 0xd00)
-		return cia6526_0_port_r (offset & 0xff);
-	else if (offset < 0xe00)
-		return cia6526_1_port_r (offset & 0xff);
-	return c64_memory[0x1d000+offset];
-#if 0
-	DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset));
+	}
 	return 0xff;
-#endif
+}
+
+static int c65_read_io_dc00(int offset)
+{
+	switch(offset&0x300) {
+	case 0x000:
+		return cia6526_0_port_r (offset & 0xff);
+	case 0x100:
+		return cia6526_1_port_r (offset & 0xff);
+	case 0x200:
+	case 0x300:
+		DBG_LOG (1, "io read", (errorlog, "%.3x\n", offset+0xc00));
+		break;
+	}
+	return 0xff;
 }
 
 static void c65_bankswitch_interface(int value)
 {
-	if (value) {
-		cpu_setbank (6, c65_interface);
-	} else {
-		cpu_setbank (6, c64_memory + 0xc000);
+	if (value&0x01) { 
+		c65_write_io_dc00=0;
+		cpu_setbankhandler_r (10, MRA_RAM);
+		cpu_setbank (10, c64_memory+0xdc00); 
+	} else { 
+		c65_write_io_dc00=1;
+		cpu_setbankhandler_r (10, c65_read_io_dc00);
 	}
+#if 0
+	if (value&0x08) { cpu_setbank (6, c65_interface); } 
+	else { cpu_setbank (4, c64_memory + 0x8000); }
+	if (value&0x10) { cpu_setbank (6, c65_interface); } 
+	else { cpu_setbank (5, c64_memory + 0xa000); }
+#endif
+	if (value&0x20) { cpu_setbank (6, c65_interface); } 
+	else { cpu_setbank (6, c64_memory + 0xc000); }
+#if 0
+	if (value&0x40) { cpu_setbank (6, c65_interface); } 
+	else { cpu_setbank (6, c64_memory + 0x9000); }
+	if (value&0x80) { cpu_setbank (6, c65_interface); } 
+	else { cpu_setbank (8, c64_memory + 0xe000); }
+#endif
 }
 /* 
  8 Megabyte entire system space
@@ -237,33 +328,21 @@ static void c65_bankswitch_interface(int value)
 */
 void c65_bankswitch (void)
 {
+	DBG_LOG (1, "bankswitch", (errorlog, "%.2x\n", c64_port6510));	
 	if (!c64mode) {
-		cpu_setbankhandler_r(9, c64_m6510_port_r);
-		cpu_setbankhandler_w(9, c64_m6510_port_w);
-		if (!c65_dosmode) {
-			/* c65 basic */
-			cpu_setbank (1, c64_memory+2);
-			cpu_setbank (2, c65_basic);
-			cpu_setbank (3, c65_basic + 0x4000);
-			cpu_setbank (4, c65_graphics);
-			cpu_setbank (5, c65_graphics+0x2000);
-			//cpu_setbank (6, c65_interface);
-			cpu_setbankhandler_r (7, c65_read_io);
-			c65_write_io = 1;
-			cpu_setbank (8, c65_kernal);
-		} else {
+		if (c65_dosmode) {
             /* ram in cpu port position!*/
 			/* c65 dos */
 			/* 0000 - 1fff 10000 11fff
 			   2000 - 7fff dont care!?
 			   8000 - bfff dos
 			   d000 - dbff io
-			   dc00 - dfff ram !? (test as mapped to 11c00)
+			   dc00 - dfff colorram
 			   e000 - ffff kernel ?
 			*/
-		cpu_setbankhandler_r(9, MRA_BANK9);
-		cpu_setbankhandler_w(9, MWA_BANK9);
-		cpu_setbank (9, c64_memory);
+			cpu_setbankhandler_r(9, MRA_BANK9);
+			cpu_setbankhandler_w(9, MWA_BANK9);
+			cpu_setbank (9, c64_memory);
 			cpu_setbank (1, c64_memory+ 0x10002);
 			cpu_setbank (2, c64_memory + 0x2000); /* dont care */
 			cpu_setbank (3, c64_memory + 0x6000); /* dont care */
@@ -273,19 +352,33 @@ void c65_bankswitch (void)
 			cpu_setbankhandler_r (7, c65_read_io);
 			c65_write_io = 1;
 			cpu_setbank (8, c65_kernal);
+		} else {
+			cpu_setbankhandler_r(9, c64_m6510_port_r);
+			cpu_setbankhandler_w(9, c64_m6510_port_w);
+			if (c65_monitormode) {
+				/* c65 monitor */
+				cpu_setbank (1, c64_memory+2);
+				cpu_setbank (2, c64_memory + 0x2000);
+				cpu_setbank (3, c65_monitor);
+				cpu_setbank (4, c64_memory + 0x8000); /* dont care */
+				cpu_setbank (5, c64_basic); /* dont care*/
+				//cpu_setbank (6, c65_interface);
+				cpu_setbankhandler_r (7, c65_read_io);
+				c65_write_io = 1;
+				cpu_setbank (8, c65_kernal);
+			} else {
+				/* c65 basic */
+				cpu_setbank (1, c64_memory+2);
+				cpu_setbank (2, c65_basic);
+				cpu_setbank (3, c65_basic + 0x4000);
+				cpu_setbank (4, c65_graphics);
+				cpu_setbank (5, c65_graphics+0x2000);
+				//cpu_setbank (6, c65_interface);
+				cpu_setbankhandler_r (7, c65_read_io);
+				c65_write_io = 1;
+				cpu_setbank (8, c65_kernal);
+			}
 		}
-#if 0
-		/* c65 monitor */
-		cpu_setbank (1, c64_memory+2);
-		cpu_setbank (2, c64_memory + 0x2000);
-		cpu_setbank (3, c65_monitor);
-		cpu_setbank (4, c64_memory + 0x8000); /* dont care */
-		cpu_setbank (5, c64_basic); /* dont care*/
-		//cpu_setbank (6, c65_interface);
-		cpu_setbankhandler_r (7, c65_read_io);
-		c65_write_io = 1;
-		cpu_setbank (8, c65_kernal);
-#endif
 	} else {
 		static int old = -1, data, loram, hiram, charen;
 		
@@ -372,11 +465,13 @@ void c65_map(int a, int x, int y, int z)
 	test.b.h3=a;test.b.h2=x;test.b.h=y;test.b.l=z;
 
 	if (test.d==0x00000000) {
-		c64mode=1;c65_dosmode=0;
+		c64mode=1;c65_dosmode=0;c65_monitormode=0;
 	} else if (test.d==0x00118031) {
-		c64mode=0;c65_dosmode=1;
+		c64mode=0;c65_dosmode=1;c65_monitormode=0;
+	} else if (test.d==0xa0820083) {
+		c64mode=0;c65_dosmode=0;c65_monitormode=1;
 	} else {
-		c64mode=0;c65_dosmode=0;
+		c64mode=0;c65_dosmode=0;c65_monitormode=0;
 	}
 	c65_bankswitch();
 	if (errorlog)
@@ -433,7 +528,7 @@ static int c65_dma_read (int offset)
 		if (offset < 0x1000)
 			return c64_vicaddr[offset & 0x3fff];
 		if (offset < 0x2000)
-			return c64_chargen[offset & 0xfff];
+			return c65_chargen[offset & 0xfff];
 		return c64_vicaddr[offset & 0x3fff];
 	}
 	return c64_vicaddr[offset & 0x3fff];
@@ -456,7 +551,7 @@ static void c65_common_driver_init (void)
 	cbm_drive_attach_fs (1);
 
 #ifdef VC1541
-	vc1541_driver_init ();
+	vc1541_driver_init (1);
 #endif
 
 	sid6581_0_init (c64_paddle_read);
@@ -466,6 +561,7 @@ static void c65_common_driver_init (void)
 	cia6526_config (1, &c64_cia1);
 	vic4567_init (c64_pal, c65_dma_read, c65_dma_read_color, 
 				  c64_vic_interrupt, c65_bankswitch_interface);
+	raster1.display_state=c65_state;
 }
 
 void c65_driver_init (void)
@@ -519,7 +615,7 @@ void c65_status (char *text, int size)
 			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode, c65_dosmode);
 #endif
 	snprintf (text, size, 
-			  "c65 %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
+			  "c65 %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
 			  c64_keyline[0],
 			  c64_keyline[1],
 			  c64_keyline[2],
@@ -530,6 +626,39 @@ void c65_status (char *text, int size)
 			  c64_keyline[7],
 			  c64_keyline[8],
 			  c64_keyline[9],
-			  c65_keyline);
+			  c65_keyline[0],c65_keyline[1]);
+#endif
+}
+
+void c65_state (PRASTER *this)
+{
+#if VERBOSE_DBG
+	int y;
+	char text[70];
+	
+	y = Machine->gamedrv->drv->visible_area.max_y + 1 
+		- Machine->uifont->height;
+	
+#if 0
+	cia6526_status (text, sizeof (text));
+	praster_draw_text (this, text, &y);
+
+	snprintf (text, size, "c65 vic:%.4x m6510:%d c64:%d dos:%d",
+			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode, c65_dosmode);
+#endif
+	snprintf (text, sizeof(text), 
+			  "c65 %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x %.2x",
+			  c64_keyline[0],
+			  c64_keyline[1],
+			  c64_keyline[2],
+			  c64_keyline[3],
+			  c64_keyline[4],
+			  c64_keyline[5],
+			  c64_keyline[6],
+			  c64_keyline[7],
+			  c64_keyline[8],
+			  c64_keyline[9],
+			  c65_keyline[0],c65_keyline[1]);
+	praster_draw_text (this, text, &y);
 #endif
 }

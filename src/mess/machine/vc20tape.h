@@ -18,6 +18,7 @@ extern struct DACinterface vc20tape_sound_interface;
    NULL,               /* close */\
    NULL,               /* status */\
    NULL,               /* seek */\
+   NULL,			   /* tell */\
    NULL,               /* input */\
    NULL,               /* output */\
    NULL,               /* input_chunk */\
@@ -30,7 +31,7 @@ extern void c16_tape_open (void);
 extern void vc20_tape_close (void);
 
 /* call this with the name of the tape image */
-int vc20_tape_attach_image (int id, const char *name);
+int vc20_tape_attach_image (int id);
 void vc20_tape_detach_image (int id);
 
 /* must be high active keys */

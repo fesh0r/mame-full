@@ -25,13 +25,13 @@ rom/ram selection
 //#include "mess/systems/i8255.h"
 #include "machine/8255ppi.h"
 #include "mess/machine/nec765.h"
+#include "mess/machine/dsk.h"
 
 void AmstradCPC_GA_Write(int);
 void AmstradCPC_SetUpperRom(int);
 void Amstrad_RethinkMemory(void);
 void Amstrad_Init(void);
 void amstrad_handle_snapshot(unsigned char *);
-void amstrad_disk_image_init(int id, unsigned char *pDiskImage);
 
 
 /* hd6845s functions */
@@ -42,23 +42,9 @@ void hd6845s_register_w(int data);
 int hd6845s_getreg(int);
 
 static unsigned char *snapshot = NULL;
-static unsigned char *amstrad_floppy[2] = {NULL, NULL};
 
 extern unsigned char *Amstrad_Memory;
 static int snapshot_loaded;
-
-typedef struct
-{
-	unsigned char *data;
-	unsigned long track_offsets[84*2];
-	unsigned long sector_offsets[20];
-	int current_track;
-} amstrad_drive;
-
-
-static amstrad_drive drives[2];
-
-int amstrad_disk_image_type;
 
 /* used to setup computer if a snapshot was specified */
 int amstrad_opbaseoverride(int pc)
@@ -68,8 +54,15 @@ int amstrad_opbaseoverride(int pc)
 
 	if (snapshot_loaded)
 	{
-        /* its a snapshot file - setup hardware state */
-        amstrad_handle_snapshot(snapshot);
+		/* its a snapshot file - setup hardware state */
+		amstrad_handle_snapshot(snapshot);
+
+		/* free memory */
+		free(snapshot);
+		snapshot = 0;
+
+		snapshot_loaded = 0;
+
 	}
 
 	return (cpu_get_pc() & 0x0ffff);
@@ -101,6 +94,47 @@ void amstrad_shutdown_machine(void)
 
 	Amstrad_Memory = NULL;
 }
+
+
+int amstrad_cassette_init(int id)
+{
+	void *file;
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+
+		if (device_open(IO_CASSETTE, id, 0, &wa))
+			return INIT_FAILED;
+
+		return INIT_OK;
+	}
+
+	/* HJB 02/18: no file, create a new file instead */
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+		/* open in write mode */
+        if (device_open(IO_CASSETTE, id, 1, &wa))
+            return INIT_FAILED;
+		return INIT_OK;
+    }
+
+	return INIT_FAILED;
+}
+
+void amstrad_cassette_exit(int id)
+{
+	device_close(IO_CASSETTE, id);
+}
+
 
 /* load CPCEMU style snapshots */
 void amstrad_handle_snapshot(unsigned char *pSnapshot)
@@ -243,14 +277,11 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 }
 
 /* load image */
-int amstrad_load(const char *name, unsigned char **ptr)
+int amstrad_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-    if (name == NULL)
-		return 0;
-
-    file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -270,7 +301,7 @@ int amstrad_load(const char *name, unsigned char **ptr)
 				/* read whole file */
 				osd_fread(file, data, datasize);
 
-                                *ptr = data;
+				*ptr = data;
 
 				/* close file */
 				osd_fclose(file);
@@ -285,15 +316,15 @@ int amstrad_load(const char *name, unsigned char **ptr)
 		}
 	}
 
-    return 0;
+	return 0;
 }
 
 /* load snapshot */
-int amstrad_snapshot_load(int id, const char *name)
+int amstrad_snapshot_load(int id)
 {
 	snapshot_loaded = 0;
 
-	if (amstrad_load(name,&snapshot))
+	if (amstrad_load(IO_SNAPSHOT,id,&snapshot))
 	{
 		snapshot_loaded = 1;
 		return INIT_OK;
@@ -303,7 +334,7 @@ int amstrad_snapshot_load(int id, const char *name)
 }
 
 /* check if a snapshot file is valid to load */
-int amstrad_snapshot_id(const char *name, const char *gamename)
+int amstrad_snapshot_id(int id)
 {
 	int valid;
 	unsigned char *snapshot_data;
@@ -311,7 +342,7 @@ int amstrad_snapshot_id(const char *name, const char *gamename)
 	valid = 0;
 
 	/* load snapshot */
-	if (amstrad_load(gamename, &snapshot_data))
+	if (amstrad_load(IO_SNAPSHOT, id, &snapshot_data))
 	{
 		/* snapshot loaded, check it is valid */
 
@@ -323,7 +354,7 @@ int amstrad_snapshot_id(const char *name, const char *gamename)
 		/* free the file */
 		free(snapshot_data);
 	}
-       
+
 	return valid;
 
 }
@@ -332,360 +363,7 @@ void amstrad_snapshot_exit(int id)
 {
 	if (snapshot!=NULL)
 		free(snapshot);
-}
 
-/* load floppy */
-int amstrad_floppy_load(int id, const char *name)
-{
-	/* NULL image is ok I guess? */
-    if (name == NULL)
-		return INIT_OK;
+	snapshot_loaded = 0;
 
-    /* load disk image */
-	if (amstrad_load(name,&amstrad_floppy[id]))
-	{
-		amstrad_disk_image_init(id,amstrad_floppy[0]);
-
-		return INIT_OK;
-	}
-
-	return INIT_FAILED;
-}
-
-int amstrad_floppy_id(const char *name, const char *gamename)
-{
-	int valid;
-	unsigned char *diskimage_data;
-
-	valid = 0;
-
-	/* load disk image */
-	if (amstrad_load(gamename, &diskimage_data))
-	{
-		/* disk image loaded */
-
-		if (
-			/* standard disk image? */
-			(memcmp(diskimage_data, "MV - CPC", 8)==0) ||
-			/* extended disk image? */
-			(memcmp(diskimage_data, "EXTENDED", 8)==0)
-			)
-		{
-			valid = 1;
-
-		}
-
-		/* free the file */
-		free(diskimage_data);
-	}
-
-	return valid;
-}
-
-void amstrad_floppy_exit(int id)
-{
-	if (amstrad_floppy[id]!=NULL)
-		free(amstrad_floppy[id]);
-	amstrad_floppy[id] = NULL;
-}
-
-/* disk image and extended disk image support code */
-/* supports up to 84 tracks and 2 sides */
-
-#define AMSTRAD_MAX_TRACKS 84
-#define AMSTRAD_MAX_SIDES   2
-
-
-
-void amstrad_dsk_init_track_offsets(int id)
-{
-	int track_offset;
-	int i;
-	int track_size;
-	int tracks, sides;
-	int skip, length,offs;
-	unsigned char *file_loaded = amstrad_floppy[id];
-
-
-	/* get size of each track from main header. Size of each
-	track includes a 0x0100 byte header, and the actual sector data for
-	all sectors on the track */
-	track_size = file_loaded[0x032] | (file_loaded[0x033]<<8);
-
-	/* main header is 0x0100 in size */
-	track_offset = 0x0100;
-
-	sides = file_loaded[0x031];
-	tracks = file_loaded[0x030];
-
-
-	/* single sided? */
-	if (sides==1)
-	{
-		skip = 2;
-		length = tracks;
-	}
-	else
-	{
-		skip = 1;
-		length = tracks*sides;
-	}
-
-	offs = 0;
-	for (i=0; i<length; i++)
-	{
-		drives[id].track_offsets[offs] = track_offset;
-		track_offset+=track_size;
-		offs+=skip;
-	}
-
-}
-
-void amstrad_dsk_init_sector_offsets(int id, int track,int side)
-{
-	int track_offset;
-
-	/* get offset to track header in image */
-	track_offset = drives[id].track_offsets[(track<<1) + side];
-
-	if (track_offset!=0)
-	{
-		int spt;
-		int sector_offset;
-		int sector_size;
-		int i;
-
-		unsigned char *track_header;
-
-		track_header= &amstrad_floppy[id][track_offset];
-
-		/* sectors per track as specified in nec765 format command */
-		/* sectors on this track */
-		spt = track_header[0x015];
-
-		sector_size = (1<<(track_header[0x014]+7));
-
-		/* track header is 0x0100 bytes in size */
-		sector_offset = 0x0100;
-
-		for (i=0; i<spt; i++)
-		{
-			drives[id].sector_offsets[i] = sector_offset;
-			sector_offset+=sector_size;
-		}
-	}
-}
-
-void     amstrad_extended_dsk_init_track_offsets(int id)
-{
-	int track_offset;
-	int i;
-	int track_size;
-	int tracks, sides;
-	int offs, skip, length;
-	unsigned char *file_loaded = amstrad_floppy[id];
-         
-	sides = file_loaded[0x031];
-	tracks = file_loaded[0x030];
-
-	if (sides==1)
-	{
-		skip = 2;
-		length = tracks;
-	}
-	else
-	{
-		skip = 1;
-		length = tracks*sides;
-	}
-
-	/* main header is 0x0100 in size */
-	track_offset = 0x0100;
-	offs = 0;
-	for (i=0; i<length; i++)
-	{
-		int track_size_high_byte;
-
-		/* track size is specified as a byte, and is multiplied
-		by 256 to get size in bytes. If 0, track doesn't exist and
-		is unformatted, otherwise it exists. Track size includes 0x0100
-		header */
-		track_size_high_byte = file_loaded[0x034 + i];
-
-		if (track_size_high_byte != 0)
-		{
-			/* formatted track */
-			track_size = track_size_high_byte<<8;
-
-			drives[id].track_offsets[offs] = track_offset;
-			track_offset+=track_size;
-		}
-
-		offs+=skip;
-	}
-}
-
-
-void amstrad_extended_dsk_init_sector_offsets(int id, int track,int side)
-{
-	int track_offset;
-
-	/* get offset to track header in image */
-	track_offset = drives[id].track_offsets[(track<<1) + side];
-
-	if (track_offset!=0)
-	{
-		int spt;
-		int sector_offset;
-		int sector_size;
-		int i;
-		unsigned char *id_info;
-		unsigned char *track_header;
-
-		track_header= &amstrad_floppy[id][track_offset];
-
-		/* sectors per track as specified in nec765 format command */
-		/* sectors on this track */
-		spt = track_header[0x015];
-
-		id_info = track_header + 0x018;
-
-		/* track header is 0x0100 bytes in size */
-		sector_offset = 0x0100;
-
-		for (i=0; i<spt; i++)
-		{
-			sector_size = id_info[6] + (id_info[7]<<8);
-
-			drives[id].sector_offsets[i] = sector_offset;
-			sector_offset+=sector_size;
-		}
-	}
-}
-
-
-
-void amstrad_disk_image_init(int id, unsigned char *pDiskImage)
-{
-	memset(&drives[id].track_offsets[0], 0, AMSTRAD_MAX_TRACKS*AMSTRAD_MAX_SIDES*sizeof(unsigned long));
-	memset(&drives[id].sector_offsets[0], 0, 20*sizeof(unsigned long));
-
-	if (memcmp(pDiskImage,"MV - CPC",8)==0)
-	{
-		amstrad_disk_image_type = 0;
-
-		/* standard disk image */
-		amstrad_dsk_init_track_offsets(id);
-
-		nec765_setup_drive_status(id);
-	}
-	else
-	if (memcmp(pDiskImage,"EXTENDED",8)==0)
-	{
-		amstrad_disk_image_type = 1;
-
-		/* extended disk image */
-		amstrad_extended_dsk_init_track_offsets(id);
-
-		nec765_setup_drive_status(id);
-	}
-}
-
-
-void amstrad_seek_callback(int drive, int physical_track)
-{
-	drives[drive & 0x01].current_track = physical_track;
-}
-
-static int get_track_offset(int drive, int side)
-{
-	return drives[drive & 0x01].track_offsets[(drives[drive & 0x01].current_track<<1) + side];
-}        
-
-static unsigned char *get_floppy_data(int drive)
-{
-	return amstrad_floppy[drive & 0x01];
-}
-
-void    amstrad_get_id_callback(int drive, nec765_id *id, int id_index, int side)
-{
-	int id_offset;
-	int track_offset;
-	unsigned char *track_header;
-
-
-	/* get offset to track header in image */
-	track_offset = get_track_offset(drive, side);
-
-	/* track exists? */
-	if (track_offset==0)
-		return;
-
-	/* yes */
-	track_header = get_floppy_data(drive) + track_offset;
-
-	id_offset = 0x018 + (id_index<<3);
-
-	id->C = track_header[id_offset + 0];
-	id->H = track_header[id_offset + 1];
-	id->R = track_header[id_offset + 2];
-	id->N = track_header[id_offset + 3];
-}
-
-
-void amstrad_get_sector_ptr_callback(int drive, int sector_index, int side, char **ptr)
-{
-	int track_offset;
-	int sector_offset;
-	int track;
-
-	track = drives[(drive & 0x01)].current_track;
-
-	/* offset to track header in image */
-	track_offset = get_track_offset(drive, side);
-
-	*ptr = 0;
-
-	/* track exists? */
-	if (track_offset==0)
-		return;
-
-
-	/* setup sector offsets */
-	switch (amstrad_disk_image_type)
-	{
-	case 0:
-		amstrad_dsk_init_sector_offsets(drive & 0x01,track, side);
-		break;
-
-
-	case 1:
-		amstrad_extended_dsk_init_sector_offsets(drive & 0x01, track, side);
-		break;
-
-	default:
-		break;
-	}
-
-	sector_offset = drives[(drive & 0x01)].sector_offsets[sector_index];
-
-	*ptr = (char *)(get_floppy_data(drive) + track_offset + sector_offset);
-}
-
-int    amstrad_get_sectors_per_track(int drive, int side)
-{
-	int track_offset;
-	unsigned char *track_header;
-
-	/* get offset to track header in image */
-	track_offset = get_track_offset(drive, side);
-
-	/* track exists? */
-	if (track_offset==0)
-		return 0;
-
-	/* yes, get sectors per track */
-	track_header = get_floppy_data(drive) + track_offset;
-
-	return track_header[0x015];
 }

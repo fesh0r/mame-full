@@ -116,8 +116,8 @@ extern int a2600_TIA_r(int offset);
 extern void a2600_TIA_w(int offset, int data);
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
-extern int  a2600_id_rom (const char *name, const char *gamename);
-extern int	a2600_load_rom(int id, const char *rom_name);
+extern int	a2600_id_rom (int id);
+extern int	a2600_load_rom(int id);
 extern int  a2600_ROM_r (int offset);
 
 
@@ -433,6 +433,7 @@ static const struct IODevice io_a2600[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
+		NULL,				/* tell */
 		NULL,				/* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */

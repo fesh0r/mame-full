@@ -80,15 +80,15 @@ void apple2_slot6_stop (void)
 	free (a2_drives[1].data);
 }
 
-int apple2_floppy_init(int id, const char *name)
+int apple2_floppy_init(int id)
 {
-	void *f;
+    void *f;
 	int t, s;
 	int pos;
 	int volume;
 	int i;
 
-	if (name == NULL)
+	if (device_filename(IO_FLOPPY,id) == NULL)
 		return INIT_OK;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
@@ -103,7 +103,7 @@ int apple2_floppy_init(int id, const char *name)
 	a2_drives[id].bytepos = 0;
 	a2_drives[id].trackpos = 0;
 
-	f = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (f==NULL)
 	{
 		if (errorlog) fprintf(errorlog,"Couldn't open image.\n");

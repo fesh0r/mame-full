@@ -1,70 +1,67 @@
 # Nintendo Gameboy Cartridge CRC List
 # Compiled by Chris Henry
 # Note: This list is provided as a record of known dumps for this system.  
-#       These checksums have not been validated and cannot be assumed correct.  
-#       They are provided here as a database to help the emulation of this system.  
+# These checksums have not been validated and cannot be assumed correct.  
+# They are provided here as a database to help the emulation of this system.  
 # Send corrections and submissions to: battlepriest@hotmail.com
 
-# crc    = Game Name                 Version,                  Manufacturer, Year,       Emulation Status
+# crc = Game Name/Version | Manufacturer | Year | Emulation Status
 
 [gameboy]
-d9334ddf = !Sqrxz!                   (Ver. 1.1; Unlicensed)    Icarus Productions, 1998
-3d0bac10 = A Boy and His Blob:       Fushingina Bulobi (Jpn.), Jaleco/Imagineering, 1990
-7ff546df = Ace Striker               (Japan),                  Jaleco, 1994
-64f4fa44 = Adventure Island          (USA),                    Hudson Soft, 1991
-f1071e08 = Adventure Island 2:       Bikkuri Nekketou (Japan), Hudson Soft, 1992
-c0049d77 = Afterburst                (Japan),                  NCS, 1990
-60128aa8 = Amida                     (Japan),                  Coconuts, 1990
-ff24ed7d = Ant Soldiers              (Unlicensed),             ?, 1993
-8259ac54 = Asteroids/Missile Command (USA; Version 43779),     Accolade, 1995
-8bc985b5 = Asteroids/Missile Command (USA; Version 43907),     Accolade, 1995
-
-
-#[not_working]
-cafe0d2b = 3 Punyosoumaban Club      (Japan),                  ????????????, ????,       NOT PLAYABLE
- e0216e6 = 4 in 1 Funpack            (USA),                    ????????????, ????,       NOT PLAYABLE
-c170a732 = The Addams Family         (USA),                    Ocean, 1991,              NOT PLAYABLE
-7e054a88 = Addams Family: Pugsley's  Scavenger Hunt (USA),     ????????????, ????,       NOT PLAYABLE
-783066cf = Adventure Island 2        (USA),                    Hudson Soft, 1993,        NOT PLAYABLE
-176d2eeb = Adventures of Lolo        (USA),                    Hal Loboratory, 1995,     NOT PLAYABLE
-5d461374 = The Adventures of         Star Saver (USA),         ????????????, ????,       NOT PLAYABLE
-dfa3b28a = Aerostar                  (Japan),                  ????????????, ????,       NOT PLAYABLE
-f6fd275e = Aerostar                  (USA),                    ????????????, ????,       NOT PLAYABLE
-898609b4 = Akazukin Cha Cha          (SGB; Japan),             ????????????, ????,       NOT PLAYABLE
-283c58b7 = Aladdin                   (USA),                    ????????????, ????,       NOT PLAYABLE
-1089098f = Alfred Chicken            (SGB; Japan),             ????????????, ????,       NOT PLAYABLE
-3b2b904a = Alfred Chicken            (USA),                    ????????????, ????,       NOT PLAYABLE
-effb960b = Alien 3                   (USA; Ver. 54867),        LJN, 1992,                NOT PLAYABLE
-8362d3de = Alien 3                   (USA; Ver. 54995),        LJN, 1992,                NOT PLAYABLE
-583c0e4e = Alien Olympics 2044 AD    (USA; Ver. 29973),        Ocean, 19??,              NOT PLAYABLE
-1b7c8697 = Alien Olympics 2044 AD    (USA; Ver. 30101),        Ocean, 19??,              NOT PLAYABLE
-e884682b = Alien Vs. Predator: Last   of His Clan (Japan),     Activision, 1993,         NOT PLAYABLE
-4bbcf652 = Alien Vs. Predator: Last   of His Clan (USA),       Activision, 1993,         NOT PLAYABLE
-d229ac62 = Amazing Tater             (USA),                    Atlus, 1991,              NOT PLAYABLE
-3be275cd = America Oudan Ultra Quiz  (Japan),                  ????????????, ????,       NOT PLAYABLE
-c2eec22f = Animal Breeder            (SGB; Japan),             J-Wing, 19??,             NOT PLAYABLE
-8d573f37 = Animal Breeder 2          (SGB; Japan),             J-Wing, 19??,             NOT PLAYABLE
-7b23e05c = Animaniacs                (SGB; USA; Ver. 53304),   Konami, 1995,             NOT PLAYABLE
-1a6684bb = Animaniacs                (SGB; USA; Ver. 53432),   Konami, 1995,             NOT PLAYABLE
-4a486435 = Another Bible             (SGB; Japan),             Atlus, 1995,              NOT PLAYABLE
-1db65649 = Aretha                    (Japan),                  Yanoman, 1990,            NOT PLAYABLE
- 86e4fc5 = Aretha 2                  (Japan),                  Yanoman, 1991,            NOT PLAYABLE
-430d3d6b = Aretha 3                  (Japan; Ver. 54515),      Yanoman, 1992,            NOT PLAYABLE
-877cc25c = Aretha 3                  (Japan; Ver. 54771),      Yanoman, 1992,            NOT PLAYABLE
-1ad8528f = ASCII Wars                (Ver. 1.1.; Japan),       ????????????, ????,       NOT PLAYABLE
-7aba98d2 = Ash Demo                  (Unlicensed),             ????????????, ????,       NOT PLAYABLE
-caae6b11 = Asmik World 2             (Japan),                  ????????????, ????,       NOT PLAYABLE
- 97ffe2c = Asterix                   (USA; Ver. 53206),        Infogrames, 1993,         NOT PLAYABLE
-19f29b16 = Asterix                   (USA; Ver. 53334),        Infogrames, 1993,         NOT PLAYABLE
-2c27ec70 = Super Mario Land          (Ver. 1.1; Japan),        Nintendo, 1988,           NOT PLAYABLE
-46df91ad = Tetris                    (Ver. 1.1; Japan),        Nintendo, 1989,           NOT PLAYABLE
+d9334ddf = !Sqrxz! (Ver. 1.1; Unlicensed) | 1998 | Icarus Productions
+cafe0d2b = 3 Punyosoumaban Club (Japan)  | | |  NOT PLAYABLE
+0e0216e6 = 4 in 1 Funpack (USA)  | | |  NOT PLAYABLE
+3d0bac10 = A Boy and His Blob: Fushingina Bulobi (Jpn.) | 1990 | Jaleco/Imagineering
+7ff546df = Ace Striker (Japan) | 1994 | Jaleco
+c170a732 = The Addams Family (USA) | 1991 | Ocean | NOT PLAYABLE
+7e054a88 = Addams Family: Pugsley's Scavenger Hunt (USA)  | | |  NOT PLAYABLE
+64f4fa44 = Adventure Island (USA) | 1991 | Hudson Soft
+f1071e08 = Adventure Island 2: Bikkuri Nekketou (Japan) | 1992 | Hudson Soft
+783066cf = Adventure Island 2 (USA) | 1993 | Hudson Soft | NOT PLAYABLE
+176d2eeb = Adventures of Lolo (USA) | 1995 | Hal Loboratory | NOT PLAYABLE
+5d461374 = The Adventures of Star Saver (USA)  | | |  NOT PLAYABLE
+dfa3b28a = Aerostar (Japan)  | | |  NOT PLAYABLE
+f6fd275e = Aerostar (USA)  | | |  NOT PLAYABLE
+c0049d77 = Afterburst (Japan) | 1990 | NCS
+898609b4 = Akazukin Cha Cha (SGB; Japan)  | | |  NOT PLAYABLE
+283c58b7 = Aladdin (USA)  | | |  NOT PLAYABLE
+1089098f = Alfred Chicken(SGB; Japan) | | |  NOT PLAYABLE
+3b2b904a = Alfred Chicken(USA)  | | |  NOT PLAYABLE
+effb960b = Alien 3 (USA; Ver. 54867) | 1992 | LJN | NOT PLAYABLE
+8362d3de = Alien 3 (USA; Ver. 54995) | 1992 | LJN | NOT PLAYABLE
+583c0e4e = Alien Olympics 2044 AD (USA; Ver. 29973) | 19?? | Ocean | NOT PLAYABLE
+1b7c8697 = Alien Olympics 2044 AD (USA; Ver. 30101) | 19?? | Ocean | NOT PLAYABLE
+e884682b = Alien Vs. Predator: Last of His Clan (Japan) | 1993 | Activision | NOT PLAYABLE
+4bbcf652 = Alien Vs. Predator: Last of His Clan (USA) | 1993 | Activision | NOT PLAYABLE
+d229ac62 = Amazing Tater (USA) | 1991 | Atlus | NOT PLAYABLE
+3be275cd = America Oudan Ultra Quiz (Japan)  | | |  NOT PLAYABLE
+60128aa8 = Amida (Japan) | 1990 | Coconuts
+c2eec22f = Animal Breeder (SGB; Japan) | 19?? | J-Wing | NOT PLAYABLE
+8d573f37 = Animal Breeder 2 (SGB; Japan) | 19?? | J-Wing | NOT PLAYABLE
+7b23e05c = Animaniacs (SGB; USA; Ver. 53304) | 1995 | Konami | NOT PLAYABLE
+1a6684bb = Animaniacs (SGB; USA; Ver. 53432) | 1995 | Konami | NOT PLAYABLE
+4a486435 = Another Bible (SGB; Japan) | 1995 | Atlus | NOT PLAYABLE
+ff24ed7d = Ant Soldiers (Unlicensed) | 1993 | Unknown
+1db65649 = Aretha (Japan) | 1990 | Yanoman | NOT PLAYABLE
+086e4fc5 = Aretha 2 (Japan) | 1991 | Yanoman | NOT PLAYABLE
+430d3d6b = Aretha 3 (Japan; Ver. 54515) | 1992 | Yanoman | NOT PLAYABLE
+877cc25c = Aretha 3 (Japan; Ver. 54771) | 1992 | Yanoman | NOT PLAYABLE
+1ad8528f = ASCII Wars (Ver. 1.1.; Japan)  | | |  NOT PLAYABLE
+7aba98d2 = Ash Demo (Unlicensed)  | | |  NOT PLAYABLE
+caae6b11 = Asmik World 2 (Japan)  | | |  NOT PLAYABLE
+097ffe2c = Asterix (USA; Ver. 53206) | 1993 | Infogrames | NOT PLAYABLE
+19f29b16 = Asterix (USA; Ver. 53334) | 1993 | Infogrames | NOT PLAYABLE
+8259ac54 = Asteroids/Missile Command (USA; Version 43779) | 1995 | Accolade
+8bc985b5 = Asteroids/Missile Command (USA; Version 43907) | 1995 | Accolade
+2c27ec70 = Super Mario Land (Ver. 1.1; Japan) | 1988 | Nintendo | NOT PLAYABLE
+46df91ad = Tetris  (Ver. 1.1; Japan) | 1989 | Nintendo | NOT PLAYABLE
 
 
 #[known_bad_dumps]
-75004583 = 55 Game                   Hong Kong Pirate Cart,    ????????????, ????,       BAD DUMP?
-e6a136db = Ace Striker               (Japan),                  ????????????, ????,       BAD DUMP
-cac3ae13 = Ace Striker               (Japan),                  ????????????, ????,       BAD DUMP
-38762263 = The Adventures of         Star Saver (USA),         ????????????, ????,       BAD DUMP
-dfd9efd6 = Aerostar                  (Japan),                  ????????????, ????,       BAD DUMP
-fc2556a0 = Aretha                    (Japan),                  Yanoman, 1990,            DOUBLE LENGTH/NOT WORKING
+75004583 = 55 Game Hong Kong Pirate Cart  | | |  BAD DUMP?
+e6a136db = Ace Striker (Japan)  | | |  BAD DUMP
+cac3ae13 = Ace Striker (Japan)  | | |  BAD DUMP
+38762263 = The Adventures of Star Saver (USA)  | | |  BAD DUMP
+dfd9efd6 = Aerostar (Japan)  | | |  BAD DUMP
+fc2556a0 = Aretha (Japan) | 1990 | Yanoman | DOUBLE LENGTH/NOT WORKING
 

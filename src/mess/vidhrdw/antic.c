@@ -11,6 +11,14 @@
 #include "mess/machine/atari.h"
 #include "mess/vidhrdw/atari.h"
 
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x)	if( errorlog ) fprintf x
+#else
+#define LOG(x)	/* x */
+#endif
+
 ANTIC antic;
 
 /**************************************************************
@@ -52,57 +60,57 @@ int MRA_ANTIC(int offset)
 
 	switch (offset & 15)
     {
-        case  0: /* nothing */
-			data = antic.r.antic00;
-			break;
-        case  1: /* nothing */
-			data = antic.r.antic01;
-			break;
-        case  2: /* nothing */
-			data = antic.r.antic02;
-			break;
-        case  3: /* nothing */
-			data = antic.r.antic03;
-			break;
-        case  4: /* nothing */
-			data = antic.r.antic04;
-			break;
-        case  5: /* nothing */
-			data = antic.r.antic05;
-			break;
-        case  6: /* nothing */
-			data = antic.r.antic06;
-			break;
-        case  7: /* nothing */
-			data = antic.r.antic07;
-			break;
-        case  8: /* nothing */
-			data = antic.r.antic08;
-			break;
-        case  9: /* nothing */
-			data = antic.r.antic09;
-			break;
-		case 10: /* WSYNC read */
-			timer_holdcpu_trigger(0,TRIGGER_HSYNC);
-			antic.w.wsync = 1;
-			data = antic.r.antic0a;
-			break;
-        case 11: /* vert counter (scanline / 2) */
-			data = antic.r.vcount = antic.scanline >> 1;
-			break;
-        case 12: /* light pen horz pos */
-			data = antic.r.penh;
-			break;
-        case 13: /* light pen vert pos */
-			data = antic.r.penv;
-			break;
-        case 14: /* NMI enable */
-			data = antic.r.antic0e;
-			break;
-        case 15: /* NMI status */
-			data = antic.r.nmist;
-			break;
-    }
+	case  0: /* nothing */
+		data = antic.r.antic00;
+		break;
+	case  1: /* nothing */
+		data = antic.r.antic01;
+		break;
+	case  2: /* nothing */
+		data = antic.r.antic02;
+		break;
+	case  3: /* nothing */
+		data = antic.r.antic03;
+		break;
+	case  4: /* nothing */
+		data = antic.r.antic04;
+		break;
+	case  5: /* nothing */
+		data = antic.r.antic05;
+		break;
+	case  6: /* nothing */
+		data = antic.r.antic06;
+		break;
+	case  7: /* nothing */
+		data = antic.r.antic07;
+		break;
+	case  8: /* nothing */
+		data = antic.r.antic08;
+		break;
+	case  9: /* nothing */
+		data = antic.r.antic09;
+		break;
+	case 10: /* WSYNC read */
+		timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+		antic.w.wsync = 1;
+		data = antic.r.antic0a;
+		break;
+	case 11: /* vert counter (scanline / 2) */
+		data = antic.r.vcount = antic.scanline >> 1;
+		break;
+	case 12: /* light pen horz pos */
+		data = antic.r.penh;
+		break;
+	case 13: /* light pen vert pos */
+		data = antic.r.penv;
+		break;
+	case 14: /* NMI enable */
+		data = antic.r.antic0e;
+		break;
+	case 15: /* NMI status */
+		data = antic.r.nmist;
+		break;
+	}
 	return data;
 }
 
@@ -114,76 +122,120 @@ int MRA_ANTIC(int offset)
 
 void MWA_ANTIC(int offset, int data)
 {
-    switch (offset & 15)
-    {
-        case  0:
-			antic.w.dmactl = data;
-			switch (data & 3)
-			{
-				case 0: antic.pfwidth =  0; break;
-				case 1: antic.pfwidth = 32; break;
-				case 2: antic.pfwidth = 40; break;
-				case 3: antic.pfwidth = 48; break;
-			}
+	switch (offset & 15)
+	{
+	case  0:
+		if( data == antic.w.dmactl )
+			break;
+		LOG((errorlog,"ANTIC 00 write DMACTL $%02X\n", data));
+		antic.w.dmactl = data;
+		switch (data & 3)
+		{
+			case 0: antic.pfwidth =  0; break;
+			case 1: antic.pfwidth = 32; break;
+			case 2: antic.pfwidth = 40; break;
+			case 3: antic.pfwidth = 48; break;
+		}
+		break;
+	case  1:
+		if( data == antic.w.chactl )
+			break;
+		LOG((errorlog,"ANTIC 01 write CHACTL $%02X\n", data));
+        antic.w.chactl = data;
+		antic.chand = (data & 1) ? 0x00 : 0xff;
+		antic.chxor = (data & 2) ? 0xff : 0x00;
+		break;
+	case  2:
+		if( data == antic.w.dlistl )
+			break;
+		LOG((errorlog,"ANTIC 02 write DLISTL $%02X\n", data));
+        antic.w.dlistl = data;
+		data = (antic.w.dlisth << 8) + antic.w.dlistl;
+		antic.dpage = data & DPAGE;
+		antic.doffs = data & DOFFS;
+		break;
+	case  3:
+		if( data == antic.w.dlisth )
+			break;
+		LOG((errorlog,"ANTIC 03 write DLISTH $%02X\n", data));
+        antic.w.dlisth = data;
+		data = (antic.w.dlisth << 8) + antic.w.dlistl;
+		antic.dpage = data & DPAGE;
+		antic.doffs = data & DOFFS;
+		break;
+	case  4:
+		if( data == antic.w.hscrol )
+			break;
+		LOG((errorlog,"ANTIC 04 write HSCROL $%02X\n", data));
+        antic.w.hscrol = data & 15;
+		break;
+	case  5:
+		if( data == antic.w.vscrol )
+			break;
+		LOG((errorlog,"ANTIC 05 write VSCROL $%02X\n", data));
+        antic.w.vscrol = data & 15;
+		break;
+	case  6:
+		if( data == antic.w.pmbasl )
+			break;
+		LOG((errorlog,"ANTIC 06 write PMBASL $%02X\n", data));
+        /* antic.w.pmbasl = data; */
+		break;
+	case  7:
+		if( data == antic.w.pmbash )
+			break;
+		LOG((errorlog,"ANTIC 07 write PMBASH $%02X\n", data));
+        antic.w.pmbash = data;
+		antic.pmbase_s = (data & 0xfc) << 8;
+		antic.pmbase_d = (data & 0xf8) << 8;
+		break;
+	case  8:
+		if( data == antic.w.chbasl )
+			break;
+		LOG((errorlog,"ANTIC 08 write CHBASL $%02X\n", data));
+        /* antic.w.chbasl = data; */
+		break;
+	case  9:
+		if( data == antic.w.chbash )
+			break;
+		LOG((errorlog,"ANTIC 09 write CHBASH $%02X\n", data));
+        antic.w.chbash = data;
+		break;
+	case 10: /* WSYNC write */
+		LOG((errorlog,"ANTIC 0A write WSYNC  $%02X\n", data));
+		timer_holdcpu_trigger(0,TRIGGER_HSYNC);
+		antic.w.wsync = 1;
+		break;
+	case 11:
+		if( data == antic.w.antic0b )
             break;
-        case  1:
-			antic.w.chactl = data;
-			antic.chand = (data & 1) ? 0x00 : 0xff;
-			antic.chxor = (data & 2) ? 0xff : 0x00;
+		LOG((errorlog,"ANTIC 0B write ?????? $%02X\n", data));
+        antic.w.antic0b = data;
+		break;
+	case 12:
+		if( data == antic.w.antic0c )
             break;
-        case  2:
-			antic.w.dlistl = data;
-			data = (antic.w.dlisth << 8) + antic.w.dlistl;
-			antic.dpage = data & DPAGE;
-			antic.doffs = data & DOFFS;
+		LOG((errorlog,"ANTIC 0C write ?????? $%02X\n", data));
+        antic.w.antic0c = data;
+		break;
+	case 13:
+		if( data == antic.w.antic0d )
             break;
-        case  3:
-			antic.w.dlisth = data;
-			data = (antic.w.dlisth << 8) + antic.w.dlistl;
-			antic.dpage = data & DPAGE;
-			antic.doffs = data & DOFFS;
+		LOG((errorlog,"ANTIC 0D write ?????? $%02X\n", data));
+        antic.w.antic0d = data;
+		break;
+	case 14:
+		if( data == antic.w.nmien )
             break;
-        case  4:
-			antic.w.hscrol = data & 15;
-            break;
-        case  5:
-			antic.w.vscrol = data & 15;
-            break;
-        case  6:
-//			antic.w.pmbasl = data;
-            break;
-        case  7:
-			antic.w.pmbash = data;
-			antic.pmbase_s = (data & 0xfc) << 8;
-			antic.pmbase_d = (data & 0xf8) << 8;
-            break;
-        case  8:
-//			antic.w.chbasl = data;
-            break;
-        case  9:
-			antic.w.chbash = data;
-            break;
-		case 10: /* WSYNC write */
-			timer_holdcpu_trigger(0,TRIGGER_HSYNC);
-			antic.w.wsync = 1;
-            break;
-        case 11:
-			antic.w.antic0b = data;
-            break;
-        case 12:
-			antic.w.antic0c = data;
-            break;
-        case 13:
-			antic.w.antic0d = data;
-            break;
-        case 14:
-			antic.w.nmien  = data;
-            break;
-        case 15:
-			antic.r.nmist = 0x1f;
-			antic.w.nmires = data;
-            break;
-    }
+		LOG((errorlog,"ANTIC 0E write NMIEN  $%02X\n", data));
+        antic.w.nmien  = data;
+		break;
+	case 15:
+		LOG((errorlog,"ANTIC 0F write NMIRES $%02X\n", data));
+        antic.r.nmist = 0x1f;
+		antic.w.nmires = data;
+		break;
+	}
 }
 
 /*************  ANTIC mode 00: *********************************
@@ -191,7 +243,7 @@ void MWA_ANTIC(int offset, int data)
  ***************************************************************/
 void antic_mode_0_xx(VIDEO *video)
 {
-    PREPARE();
+	PREPARE();
 	memset(dst, PBK, HWIDTH*4);
 	POST();
 }
@@ -305,7 +357,7 @@ void antic_mode_5_48(VIDEO *video)
 void antic_mode_6_32(VIDEO *video)
 {
 	PREPARE_TXT67(16,0);
-    REP16(MODE6);
+	REP16(MODE6);
 	POST_TXT(16);
 }
 void antic_mode_6_40(VIDEO *video)

@@ -4,8 +4,8 @@ extern unsigned char genesis_sharedram[];
 extern unsigned char * genesis_soundram;
 
 void genesis_init_machine (void);
-int genesis_load_rom (int id, const char *rom_name);
-int genesis_id_rom (const char *name, const char *gamename);
+int genesis_load_rom (int id);
+int genesis_id_rom (int id);
 
 int genesis_interrupt (void);
 void genesis_io_w (int offset, int data);

@@ -9,9 +9,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+/* DJR 8/2/00 - Added support for FLASH 1 */
+
 unsigned char *spectrum_characterram;
 unsigned char *spectrum_colorram;
 unsigned char *charsdirty;
+static int frame_number;    /* Used for handling FLASH 1 */
+static int flash_invert;
 
 
 extern unsigned char *spectrum_plus3_screen_location;
@@ -21,6 +25,8 @@ extern unsigned char *spectrum_plus3_screen_location;
 ***************************************************************************/
 int spectrum_vh_start(void) {
 
+        frame_number = 0;
+        flash_invert = 0;
 	spectrum_characterram = malloc(0x1800);
 	if (!spectrum_characterram) {
 		return 1;
@@ -71,6 +77,24 @@ int spectrum_colorram_r(int offset) {
 	return(spectrum_colorram[offset]);
 }
 
+/* return the color to be used inverting FLASHing colors if necessary */
+INLINE unsigned char get_display_color (unsigned char color, int invert) {
+        if (invert && (color & 0x80))
+                return (color & 0xc0) + ((color & 0x38) >> 3) + ((color & 0x07) << 3);
+        else
+                return color;
+}
+
+/* Code to change the FLASH status every 25 frames. Note this must be
+   independent of frame skip etc. */
+void spectrum_eof_callback(void) {
+        frame_number++;
+        if (frame_number >= 25) {
+                frame_number = 0;
+                flash_invert = !flash_invert;
+        }
+}
+
 
 /***************************************************************************
   Draw the game screen in the given osd_bitmap.
@@ -79,9 +103,23 @@ int spectrum_colorram_r(int offset) {
 ***************************************************************************/
 void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 	int count;
+        static int last_invert = 0;
 
         if (full_refresh)
+        {
 		memset(charsdirty,1,0x300);
+                last_invert = flash_invert;
+        }
+        else
+        {
+                /* Update all flashing characters when necessary */
+                if (last_invert != flash_invert) {
+                        for (count=0;count<0x300;count++)
+                                if (spectrum_colorram[count] & 0x80)
+                                        charsdirty[count] = 1;
+                        last_invert = flash_invert;
+                }
+        }
 
 	for (count=0;count<32*8;count++) {
 		if (charsdirty[count]) {
@@ -106,7 +144,8 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 		unsigned char color;
 
 		if (charsdirty[count]) {
-			color=spectrum_colorram[count];
+                        color=get_display_color(spectrum_colorram[count],
+                                                flash_invert);
 			drawgfx(bitmap,Machine->gfx[0],
 				count,
 				color,
@@ -117,7 +156,8 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 		}
 
 		if (charsdirty[count+256]) {
-			color=spectrum_colorram[count+0x100];
+                        color=get_display_color(spectrum_colorram[count+0x100],
+                                                flash_invert);
 			drawgfx(bitmap,Machine->gfx[1],
 				count,
 				color,
@@ -128,7 +168,8 @@ void spectrum_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) {
 		}
 
 		if (charsdirty[count+512]) {
-			color=spectrum_colorram[count+0x200];
+                        color=get_display_color(spectrum_colorram[count+0x200],
+                                                flash_invert);
 			drawgfx(bitmap,Machine->gfx[2],
 				count,
 				color,
@@ -176,7 +217,8 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 		int sy=count/32;
 		unsigned char color;
 
-                color=spectrum_plus3_colorram[count];
+                color=get_display_color(spectrum_plus3_colorram[count],
+                                        flash_invert);
                 drawgfx(bitmap,Machine->gfx[0],
 				count,
 				color,
@@ -184,7 +226,8 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				sx*8,sy*8,
 				0,TRANSPARENCY_NONE,0);
 
-                color=spectrum_plus3_colorram[count+0x100];
+                color=get_display_color(spectrum_plus3_colorram[count+0x100],
+                                        flash_invert);
                 drawgfx(bitmap,Machine->gfx[1],
 				count,
 				color,
@@ -192,7 +235,8 @@ void spectrum_plus3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				sx*8,(sy+8)*8,
 				0,TRANSPARENCY_NONE,0);
 
-                color=spectrum_plus3_colorram[count+0x200];
+                color=get_display_color(spectrum_plus3_colorram[count+0x200],
+                                        flash_invert);
                 drawgfx(bitmap,Machine->gfx[2],
 				count,
 				color,

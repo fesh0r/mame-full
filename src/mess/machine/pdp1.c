@@ -21,15 +21,16 @@
 static unsigned char *ROM;
 
 int pdp1_iot(int *io, int md);
-int pdp1_load_rom (int id, const char *name);
-int pdp1_id_rom (const char *name, const char *gamename);
+int pdp1_load_rom (int id);
+int pdp1_id_rom (int id);
 void pdp1_plot(int x, int y);
 
 int *pdp1_memory;
 
-int pdp1_load_rom (int id, const char *name)
+int pdp1_load_rom (int id)
 {
-	void *romfile;
+	const char *name = device_filename(IO_CARTSLOT,id);
+    void *romfile;
 	int i;
 
 	/* The spacewar! is mandatory for now. */
@@ -39,13 +40,13 @@ int pdp1_load_rom (int id, const char *name)
 		return 1;
 	}
 
-	if (strlen(name)==0)
+	if (!name || strlen(name)==0)
 	{
 		if (errorlog)
 			fprintf(errorlog,"PDP1: no file specified (doesn't matter, not used anyway)!\n");
 	}
 	else
-	/* if (!(cartfile = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_ROM_CART, 0))) */
+	/* if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_ROM_CART, 0))) */
 	{
 		if (errorlog)
 			fprintf(errorlog,"PDP1: file specified, but ignored");
@@ -87,7 +88,7 @@ int pdp1_load_rom (int id, const char *name)
 	return 0;
 }
 
-int pdp1_id_rom (const char *name, const char *gamename)
+int pdp1_id_rom (int id)
 {
 	/* This driver doesn't ID images yet */
 	return 0;

@@ -20,7 +20,7 @@
 #define TIM_INT 2
 #define SIO_INT 3
 #define EXT_INT 4
- 
+
 extern UINT8 *gb_ram;
 
 #define JOYPAD  gb_ram[0xFF00] /* Joystick: 1.1.P15.P14.P13.P12.P11.P10      */
@@ -63,8 +63,8 @@ extern void gb_ram_bank_select(int offset, int data);
 extern void gb_w_io (int offset, int data);
 extern int gb_r_divreg (int offset);
 extern int gb_r_timer_cnt (int offset);
-extern int gb_load_rom (int id, const char *rom_name);
-extern int gb_id_rom (const char *name, const char *gamename);
+extern int gb_load_rom (int id);
+extern int gb_id_rom (int id);
 extern int gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode2(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);

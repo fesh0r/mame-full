@@ -17,8 +17,8 @@
 
 extern unsigned char *pce_user_ram; /* scratch RAM at F8 */
 extern unsigned char *pce_save_ram; /* battery backed RAM at F7 */
-extern int pce_load_rom(int id, const char *name);
-extern int pce_id_rom (const char *name, const char *gamename);
+extern int pce_load_rom(int id);
+extern int pce_id_rom (int id);
 extern void pce_init_machine(void);
 extern void pce_stop_machine(void);
 extern void pce_joystick_w(int offset, int data);
@@ -251,7 +251,8 @@ static const struct IODevice io_pce[] = {
 		NULL,               /* close */
 		NULL,               /* status */
 		NULL,               /* seek */
-		NULL,               /* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
 		NULL                /* output_chunk */

@@ -113,18 +113,17 @@ int cbm_drive_attach_fs (int id)
 	return 0;
 }
 
-static int d64_open (CBM_Drive * drive, const char *imagename)
+static int d64_open (CBM_Drive * drive)
 {
 	FILE *in;
 	int size;
 
 	memset (&(drive->d.d64), 0, sizeof (drive->d.d64));
 
-	if (!(in = osd_fopen (Machine->gamedrv->name, imagename,
-						  OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(in = image_fopen (IO_FLOPPY, drive->drive, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog)
-			fprintf (errorlog, " image %s not found\n", imagename);
+			fprintf (errorlog, " image %s not found\n", device_filename(IO_FLOPPY,drive->drive));
 		return 1;
 	}
 	size = osd_fsize (in);
@@ -142,27 +141,26 @@ static int d64_open (CBM_Drive * drive, const char *imagename)
 	osd_fclose (in);
 
 	if (errorlog)
-		fprintf (errorlog, "floppy image %s loaded\n", imagename);
+		fprintf (errorlog, "floppy image %s loaded\n", device_filename(IO_FLOPPY,drive->drive));
 
 	drive->drive = D64_IMAGE;
-	drive->d.d64.imagename = imagename;
+	drive->d.d64.imagename = device_filename(IO_FLOPPY,drive->drive);
 	return 0;
 }
 
 /* open an d64 image */
-int cbm_drive_attach_image (int id, const char *imagename)
+int cbm_drive_attach_image (int id)
 {
-	CBM_Drive *drive = cbm_drive + id;
-
 #if 1
-	if (imagename==NULL)
+	if (device_filename(IO_FLOPPY,id)==NULL)
 		return cbm_drive_attach_fs (id);
 #else
+    CBM_Drive *drive = cbm_drive + id;
 	if (drive->drive == FILESYSTEM) {
 
 	}
 #endif
-	return d64_open (cbm_drive + id, imagename);
+	return d64_open (cbm_drive + id);
 }
 
 

@@ -86,16 +86,16 @@ extern void laser500_init_machine(void);
 extern void laser700_init_machine(void);
 extern void laser_shutdown_machine(void);
 
-extern int laser_rom_id(const char *name, const char * gamename);
-extern int laser_rom_init(int id, const char *name);
+extern int laser_rom_id(int id);
+extern int laser_rom_init(int id);
 extern void laser_rom_exit(int id);
 
-extern int laser_floppy_id(const char *name, const char * gamename);
-extern int laser_floppy_init(int id, const char *name);
+extern int laser_floppy_id(int id);
+extern int laser_floppy_init(int id);
 extern void laser_floppy_exit(int id);
 
-extern int laser_cassette_id(const char *name, const char * gamename);
-extern int laser_cassette_init(int id, const char *name);
+extern int laser_cassette_id(int id);
+extern int laser_cassette_init(int id);
 extern void laser_cassette_exit(int id);
 
 extern int laser_fdc_r(int offset);
@@ -235,6 +235,12 @@ INPUT_PORTS_START( laser350 )
 	PORT_START /* IN11 KEY ROW D */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED ) /* not on the Laser350 */
 
+	PORT_START /* IN12 Tape control */
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape start",         KEYCODE_SLASH_PAD, IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape stop",          KEYCODE_ASTERISK,  IP_JOY_NONE )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape rewind",        KEYCODE_MINUS_PAD, IP_JOY_NONE )
+	PORT_BIT (0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( laser500 )
@@ -357,6 +363,12 @@ INPUT_PORTS_START( laser500 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "æ",           KEYCODE_ASTERISK,   IP_JOY_NONE )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL",         KEYCODE_DEL,        IP_JOY_NONE )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "INS",         KEYCODE_INSERT,     IP_JOY_NONE )
+
+	PORT_START /* IN12 Tape control */
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape start",         KEYCODE_SLASH_PAD, IP_JOY_NONE )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape stop",          KEYCODE_ASTERISK,  IP_JOY_NONE )
+    PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape rewind",        KEYCODE_MINUS_PAD, IP_JOY_NONE )
+	PORT_BIT (0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 INPUT_PORTS_END
 
@@ -499,11 +511,29 @@ static void init_palette(unsigned char *sys_palette, unsigned short *sys_colorta
 		sys_colortable[2*256+i] = i;
 }
 
-static struct DACinterface dac_interface =
+static struct Speaker_interface speaker_interface =
 {
-	1,		/* number of DACs */
-	{ 100 } /* volume */
+	1,		/* number of speakers */
+	{ 75 }	/* volume */
 };
+
+static struct Wave_interface wave_interface = {
+	1,
+	{ 50 }
+};
+
+static int vtech2_interrupt(void)
+{
+	int tape_control = readinputport(12);
+	if( tape_control & 0x80 )
+		device_status(IO_CASSETTE, 0, 1);
+	if( tape_control & 0x40 )
+		device_status(IO_CASSETTE, 0, 0);
+	if( tape_control & 0x20 )
+		device_seek(IO_CASSETTE, 0, 0, SEEK_SET);
+
+    return interrupt();
+}
 
 static struct MachineDriver machine_driver_laser350 =
 {
@@ -513,7 +543,7 @@ static struct MachineDriver machine_driver_laser350 =
 			CPU_Z80,
 			3694700, /* 3.694700 Mhz */
             readmem,writemem,readport,writeport,
-			interrupt,1
+			vtech2_interrupt,1
 		},
 	},
 	50, 0,									/* frames per second, vblank duration */
@@ -540,10 +570,14 @@ static struct MachineDriver machine_driver_laser350 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
+			SOUND_SPEAKER,
+			&speaker_interface
+		},
+		{
+			SOUND_WAVE,
+			&wave_interface
 		}
-	}
+    }
 };
 
 static struct MachineDriver machine_driver_laser500 =
@@ -554,7 +588,7 @@ static struct MachineDriver machine_driver_laser500 =
 			CPU_Z80,
 			3694700, /* 3.694700 Mhz */
             readmem,writemem,readport,writeport,
-			interrupt,1
+			vtech2_interrupt,1
 		},
 	},
 	50, 0,									/* frames per second, vblank duration */
@@ -581,10 +615,14 @@ static struct MachineDriver machine_driver_laser500 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+			SOUND_SPEAKER,
+			&speaker_interface
+        },
+		{
+			SOUND_WAVE,
+			&wave_interface
+        }
+    }
 };
 
 static struct MachineDriver machine_driver_laser700 =
@@ -622,10 +660,14 @@ static struct MachineDriver machine_driver_laser700 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+			SOUND_SPEAKER,
+			&speaker_interface
+        },
+		{
+			SOUND_WAVE,
+			&wave_interface
+        }
+    }
 };
 
 ROM_START(laser350)
@@ -677,29 +719,13 @@ static const struct IODevice io_laser[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",            /* file extensions */
-        NULL,               /* private */
-		laser_cassette_id,	/* id */
-		laser_cassette_init,/* init */
-		laser_cassette_exit,/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1,"wav\0cas\0",laser_cassette_id,laser_cassette_init,laser_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
@@ -713,6 +739,7 @@ static const struct IODevice io_laser[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

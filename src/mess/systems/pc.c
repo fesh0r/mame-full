@@ -444,10 +444,10 @@ INPUT_PORTS_START( pcmda )
 	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
 
 	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
 
 	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -619,10 +619,10 @@ INPUT_PORTS_START( pccga )
 	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
 
 	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
 
 	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -785,10 +785,10 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL,        IP_JOY_NONE ) /* Keypad .  (Del)             53  D3 */
 
 	PORT_START /* IN10 mouse X */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_X,30,2,0,640-1,KEYCODE_LEFT,KEYCODE_RIGHT,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
 
 	PORT_START /* IN11 mouse Y */
-	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
+	PORT_ANALOGX(0xfff,0,IPT_TRACKBALL_Y,30,2,0,480-1,KEYCODE_UP,KEYCODE_DOWN,JOYCODE_1_UP,JOYCODE_1_DOWN)
 
 INPUT_PORTS_END
 
@@ -1081,7 +1081,7 @@ static struct MachineDriver machine_driver_pcmda =
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
     0,
     pc_mda_init_machine,
-    pc_shutdown_machine,
+	0,
 
     /* video hardware */
     80*9,                                       /* screen width */
@@ -1132,7 +1132,7 @@ static struct MachineDriver machine_driver_pccga =
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	0,
 	pc_cga_init_machine,
-    pc_shutdown_machine,
+	0,
 
     /* video hardware */
     80*8,                                       /* screen width */
@@ -1183,7 +1183,7 @@ static struct MachineDriver machine_driver_tandy1t =
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	0,
 	pc_t1t_init_machine,
-    pc_shutdown_machine,
+	0,
 
     /* video hardware */
 	80*8,										/* screen width */
@@ -1204,7 +1204,7 @@ static struct MachineDriver machine_driver_tandy1t =
 	0,0,0,0,
 	{
 		{ SOUND_CUSTOM, &pc_sound_interface }, // is this available on a Tandy ?
-        	{ SOUND_SN76496, &t1t_sound_interface },
+		{ SOUND_SN76496, &t1t_sound_interface },
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
@@ -1253,12 +1253,13 @@ static const struct IODevice io_pc[] = {
         NULL,               /* private */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
-		NULL,				/* exit */
+		pc_floppy_exit, 	/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
@@ -1271,12 +1272,13 @@ static const struct IODevice io_pc[] = {
         NULL,               /* private */
         NULL,               /* id */
 		pc_harddisk_init,	/* init */
-		NULL,				/* exit */
+		pc_harddisk_exit,	/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

@@ -30,6 +30,9 @@
 #if (HAS_M65CE02)
 #include "cpu/m6502/m65ce02.h"
 #endif
+#if (HAS_M6509)
+#include "cpu/m6502/m6509.h"
+#endif
 #if (HAS_H6280)
 #include "cpu/h6280/h6280.h"
 #endif
@@ -329,77 +332,8 @@ struct cpu_interface cpuintf[] =
 #if (HAS_M65CE02)
 	CPU0(M65CE02,  m65ce02,  1,  0,1.00,M65CE02_INT_NONE,  M65CE02_INT_IRQ,M65CE02_INT_NMI,16,	  0,16,LE,1, 3,16	),
 #endif
-#if (HAS_M65SC02)
-    {
-		CPU_M65SC02,
-		m65sc02_reset,
-		m65sc02_exit,
-		m65sc02_execute,
-		NULL,
-		m65sc02_get_context,
-		m65sc02_set_context,
-		m65sc02_get_pc,
-		m65sc02_set_pc,
-		m65sc02_get_sp,
-		m65sc02_set_sp,
-		m65sc02_get_reg,
-		m65sc02_set_reg,
-		m65sc02_set_nmi_line,
-		m65sc02_set_irq_line,
-		m65sc02_set_irq_callback,
-		NULL,
-		m65sc02_state_save,
-		m65sc02_state_load,
-		m65sc02_info,
-		m65sc02_dasm,
-		1,0,
-		&m65sc02_ICount,
-		1.0,
-		M65SC02_INT_NONE,
-		M65SC02_INT_IRQ,
-		M65SC02_INT_NMI,
-		cpu_readmem16,
-		cpu_writemem16,
-		cpu_setOPbase16,
-		0,16,CPU_IS_LE,1,3,
-		ABITS1_16,ABITS2_16,ABITS_MIN_16
-    },
-#endif
-#if (HAS_M65CE02)
-    {
-		CPU_M65CE02,
-		m65ce02_reset,
-		m65ce02_exit,
-		m65ce02_execute,
-		NULL,
-		m65ce02_get_context,
-		m65ce02_set_context,
-		m65ce02_get_pc,
-		m65ce02_set_pc,
-		m65ce02_get_sp,
-		m65ce02_set_sp,
-		m65ce02_get_reg,
-		m65ce02_set_reg,
-		m65ce02_set_nmi_line,
-		m65ce02_set_irq_line,
-		m65ce02_set_irq_callback,
-		NULL,
-		m65ce02_state_save,
-		m65ce02_state_load,
-		m65ce02_info,
-		m65ce02_dasm,
-		1,0,
-		&m65ce02_ICount,
-		1.0,
-		M65CE02_INT_NONE,
-		M65CE02_INT_IRQ,
-		M65CE02_INT_NMI,
-		cpu_readmem16,
-		cpu_writemem16,
-		cpu_setOPbase16,
-		0,16,CPU_IS_LE,1,3,
-		ABITS1_16,ABITS2_16,ABITS_MIN_16
-    },
+#if (HAS_M6509)
+	CPU0(M6509,    m6509,	 1,  0,1.00,M6509_INT_NONE,    M6509_INT_IRQ,  M6509_INT_NMI,  20,	  0,20,LE,1, 3,20	),
 #endif
 #if (HAS_M6510)
 	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  16,	  0,16,LE,1, 3,16	),
@@ -1670,6 +1604,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_M65CE02)
 			case CPU_M65CE02:			irq_line = 0; LOG((errorlog,"M65CE02 IRQ\n")); break;
+#endif
+#if (HAS_M6509)
+			case CPU_M6509: 			irq_line = 0; LOG((errorlog,"M6509 IRQ\n")); break;
 #endif
 #if (HAS_M6510)
 			case CPU_M6510: 			irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;

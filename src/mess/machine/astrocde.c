@@ -23,31 +23,22 @@ static int screen_interrupt_mode;
 static int lightpen_interrupts_enabled;
 static int lightpen_interrupt_mode;
 
-int astrocade_load_rom(int id, const char *name)
+int astrocade_load_rom(int id)
 {
-	void *file;
+    void *file;
 	int size = 0;
 
-	if (name == NULL)
-	{
-		if (errorlog) fprintf(errorlog, "%s no Cartridge #%d specified\n", Machine->gamedrv->name, id);
-		return INIT_UNKNOWN;
-	}
-
     /* load a cartidge  */
-	if (strlen(name))
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	if (file)
 	{
-		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
-		if (file)
-		{
-			size = osd_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);
-			osd_fclose(file);
-        }
+		size = osd_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);
+		osd_fclose(file);
 	}
 	return 0;
 }
 
-int astrocade_id_rom(const char *name, const char *gamename)
+int astrocade_id_rom(int id)
 {
 	/* driver doesn't support ID'ing of images */
 	return 0;

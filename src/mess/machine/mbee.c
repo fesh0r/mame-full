@@ -10,6 +10,7 @@
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
 #include "mess/machine/wd179x.h"
+#include "mess/machine/mbee.h"
 
 #define VERBOSE 1
 
@@ -19,7 +20,6 @@
 #define LOG(x)	/* x */
 #endif
 
-static const char *cassette_name = NULL;
 static const char *floppy_name[4] = {NULL,NULL,NULL,NULL};
 static void *fdc_file[4] = {NULL,NULL};
 static UINT8 fdc_drv = 0;
@@ -58,32 +58,36 @@ void mbee_shutdown_machine(void)
 	}
 }
 
+/* PIO B data bits
+ * 0	cassette data (input)
+ * 1	cassette data (output)
+ * 2	rs232 clock or DTR line
+ * 3	rs232 CTS line (0: clear to send)
+ * 4	rs232 input (0: mark)
+ * 5	rs232 output (1: mark)
+ * 6	speaker
+ * 7	network interrupt
+ */
 int mbee_pio_r(int offset)
 {
-	return z80pio_0_r(offset);
+    int data = z80pio_0_r(offset);
+	if( offset != 2 )
+		return data;
+
+    data |= 0x01;
+	if( device_input(IO_CASSETTE,0) > 255 )
+		data &= ~0x01;
+
+    return data;
 }
 
 void mbee_pio_w(int offset, int data)
 {
-	z80pio_0_w(offset,data);
-	/* PIO B data bits
-	 * 0	cassette data (input)
-	 * 1	cassette data (output)
-	 * 2	rs232 clock or DTR line
-	 * 3	rs232 CTS line (0: clear to send)
-	 * 4	rs232 input (0: mark)
-	 * 5	rs232 output (1: mark)
-	 * 6	speaker
-	 * 7	network interrupt
-	 */
+    z80pio_0_w(offset,data);
 	if( offset == 2 )
 	{
-		int dac = 0;
-		if( data & 0x02 )
-			dac |= 0x7f;
-		if( data & 0x40 )
-			dac |= 0x80;
-		DAC_data_w(0, dac);
+		device_output(IO_CASSETTE,0,(data & 0x02) ? -32768 : 32767);
+		speaker_level_w(0, (data >> 6) & 1);
 	}
 }
 
@@ -129,48 +133,90 @@ void mbee_fdc_motor_w(int offset, int data)
 	fdc_file[fdc_drv] = wd179x_select_drive(fdc_drv, fdc_head, mbee_fdc_callback, floppy_name[fdc_drv]);
 }
 
-int mbee_cassette_init(int id, const char *name)
+int mbee_interrupt(void)
 {
-	cassette_name = name;
-	return 0;
+	int tape = readinputport(9);
+
+	if( tape & 1 )
+		device_status(IO_CASSETTE,0,1);
+	if( tape & 2 )
+		device_status(IO_CASSETTE,0,0);
+	if( tape & 4 )
+		device_seek(IO_CASSETTE,0,0,SEEK_SET);
+
+    /* once per frame, pulse the PIO B bit 7 */
+    if( errorlog ) fprintf(errorlog, "mbee interrupt\n");
+	z80pio_p_w(0, 1, 0x80);
+    z80pio_p_w(0, 1, 0x00);
+    return ignore_interrupt();
 }
 
-int mbee_floppy_init(int id, const char *name)
+int mbee_cassette_init(int id)
 {
-	floppy_name[id] = name;
-	return 0;
-}
+	void *file;
 
-int mbee_rom_load(int id, const char *name)
-{
-    void *file;
-
-	if( name && name[0] )
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( file )
 	{
-		file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-		if( file )
-		{
-			int size = osd_fsize(file);
-			UINT8 *mem = malloc(size);
-			if( mem )
-			{
-				if( osd_fread(file, mem, size) == size )
-				{
-					memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
-				}
-				free(mem);
-			}
-			osd_fclose(file);
-		}
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		if( device_open(IO_CASSETTE,id,0,&wa) )
+			return INIT_FAILED;
+        return INIT_OK;
 	}
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	if( file )
+    {
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 11025;
+		if( device_open(IO_CASSETTE,id,1,&wa) )
+            return INIT_FAILED;
+		return INIT_OK;
+    }
+	return INIT_FAILED;
+}
+
+void mbee_cassette_exit(int id)
+{
+	device_close(IO_CASSETTE,id);
+}
+
+int mbee_floppy_init(int id)
+{
+	floppy_name[id] = device_filename(IO_FLOPPY,id);
 	return 0;
 }
 
-int mbee_rom_id(const char *name, const char *gamename)
+int mbee_rom_load(int id)
 {
     void *file;
 
-    file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( file )
+	{
+		int size = osd_fsize(file);
+		UINT8 *mem = malloc(size);
+		if( mem )
+		{
+			if( osd_fread(file, mem, size) == size )
+			{
+				memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
+			}
+			free(mem);
+		}
+		osd_fclose(file);
+	}
+	return INIT_OK;
+}
+
+int mbee_rom_id(int id)
+{
+    void *file;
+
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
 		osd_fclose(file);

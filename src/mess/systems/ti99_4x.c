@@ -320,12 +320,12 @@ static unsigned char TMS9928A_palette[] =
 Color           Y	R-Y	B-Y	R	G	B
 0 Transparent
 1 Black         0.00	0.47	0.47	0.00	0.00	0.00
-2 Medium green  0.53	0.07	0.20	0.13	0.53	0.26
-3 Light green   0.67	0.17	0.27	0.37	0.67	0.47
-4 Dark blue     0.40	0.40	1.00	0.33	0.40	0.93
-5 Light blue    0.53	0.43	0.93	0.49	0.53	0.99
-6 Dark red      0.47	0.83	0.30	0.89	0.47	0.30
-7 Cyan          0.73	0.00	0.70	0.26	0.73	0.96
+2 Medium green  0.53	0.07	0.20	0.13?	0.53	0.13?
+3 Light green   0.67	0.17	0.27	0.37?	0.67	0.37?
+4 Dark blue     0.40	0.40	1.00	0.33?	0.40	
+5 Light blue    0.53	0.43	0.93	0.49?	0.43
+6 Dark red      0.47	0.83	0.30	
+7 Cyan          0.73	0.00	0.70	
 8 Medium red    0.53	0.93	0.27
 9 Light red     0.67	0.93	0.27
 A Dark yellow   0.73	0.57	0.07
@@ -333,7 +333,7 @@ B Light yellow  0.80	0.57	0.17
 C Dark green    0.47	0.13	0.23
 D Magenta       0.53	0.73	0.67
 E Gray          0.80	0.47	0.47
-F White         1.00	0.47	0.47
+F White         1.00	0.47	0.47	1.00	1.00	1.00
 */
 static unsigned short TMS9928A_colortable[] =
 {
@@ -370,16 +370,22 @@ static struct SN76496interface tms9919interface =
 {
 	1,				/* one sound chip */
 	{ 3579545 },	/* clock speed. connected to the TMS9918A CPUCLK pin... */
-	{ 10000 }		/* Volume.  I don't know the best value. */
+	{ 75 }			/* Volume.  I don't know the best value. */
 };
+
+/*static void tms5220_ready_callback(int state)
+{
+	cpu_set_halt_line(0, state ? CLEAR_LINE : ASSERT_LINE);
+}*/
 
 static struct TMS5220interface tms5220interface =
 {
 	640000L,		/* 640kHz -> 8kHz output */
-	10000,			/* Volume.  I don't know the best value. */
+	50,				/* Volume.  I don't know the best value. */
 	NULL,			/* no IRQ callback */
 	//REGION_SOUND1,	/* memory region where the speech ROM is.  -1 means no speech ROM */
-	//0				/* memory size of speech rom (0 -> take memory region length) */
+	//0,				/* memory size of speech rom (0 -> take memory region length) */
+	//tms5220_ready_callback
 };
 
 /*
@@ -391,12 +397,18 @@ static struct DACinterface aux_sound_intf =
 {
 	2,				/* total number of DACs */
 	{
-		10000,		/* volume for tape output */
-		10000		/* volume for audio gate*/
+		20,			/* volume for tape output */
+		20			/* volume for audio gate*/
 	}
 };
 
-
+static struct Wave_interface tape_input_intf =
+{
+	1,
+	{
+		20
+	}
+};
 
 
 
@@ -432,7 +444,7 @@ static struct MachineDriver machine_driver_ti99_4_60hz =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	ti99_vh_start,
+	ti99_4_vh_start,
 	TMS9928A_stop,
 	TMS9928A_refresh,
 
@@ -451,8 +463,15 @@ static struct MachineDriver machine_driver_ti99_4_60hz =
 		{
 			SOUND_DAC,
 			&aux_sound_intf
+		},
+		{
+			SOUND_WAVE,
+			&tape_input_intf
 		}
-	}
+	},
+
+	/* NVRAM handler */	
+	NULL
 };
 
 static struct MachineDriver machine_driver_ti99_4_50hz =
@@ -484,7 +503,7 @@ static struct MachineDriver machine_driver_ti99_4_50hz =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	ti99_vh_start,
+	ti99_4_vh_start,
 	TMS9928A_stop,
 	TMS9928A_refresh,
 
@@ -540,7 +559,7 @@ static struct MachineDriver machine_driver_ti99_4a_60hz =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	ti99_vh_start,
+	ti99_4a_vh_start,
 	TMS9928A_stop,
 	TMS9928A_refresh,
 
@@ -592,7 +611,7 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-	ti99_vh_start,
+	ti99_4a_vh_start,
 	TMS9928A_stop,
 	TMS9928A_refresh,
 
@@ -709,11 +728,13 @@ static const struct IODevice io_ti99_4[] =
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
+		NULL,				/* tell */
 		NULL,				/* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */
 	},
+    IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,ti99_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		3,					/* count */
@@ -727,6 +748,7 @@ static const struct IODevice io_ti99_4[] =
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
+		NULL,				/* tell */
 		NULL,				/* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */

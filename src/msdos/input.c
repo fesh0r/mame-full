@@ -192,7 +192,7 @@ static struct JoystickInfo joylist[MAX_JOY] =
 	{ 0, 0, 0 }	/* end of table */
 };
 
-static char joynames[MAX_JOY_NAME_LEN+1][MAX_JOY];	/* will be used to store names for the above */
+static char joynames[MAX_JOY][MAX_JOY_NAME_LEN+1];	/* will be used to store names for the above */
 
 
 static int joyequiv[][2] =

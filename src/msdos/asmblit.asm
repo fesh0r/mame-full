@@ -21,7 +21,7 @@ halfbright16_mask:	dd 0x7bef7bef		; mask for halfbright (4-5-4)
 [SECTION .text]
 
 ; Here comes the generic template for blitting
-; Note that the function names which are used by C are 
+; Note that the function names which are used by C are
 ; created on the fly by macro expansion. Cool feature.
 
 
@@ -134,7 +134,7 @@ align 16								; align the loop
 		punpcklwd mm6, mm7
 
 		punpckldq mm0, mm2				; add dwords to quadwords
-		punpckldq mm4, mm6			
+		punpckldq mm4, mm6
 	%elif (MX == 2)
 		punpckldq mm0, mm1
 		punpckldq mm2, mm3
@@ -143,7 +143,7 @@ align 16								; align the loop
 	%endif
 %endif ; (PALETTIZED == 1)
 
-	
+
 %if (PALETTIZED == 0)					; stretch pixel non-palettized
 
 	movq mm0, [esi+0] 					; always read 16 bytes at once
@@ -253,7 +253,7 @@ align 16								; align the loop
 
 	mov eax, [ebp+src_offset]			; next src row
 	add [ebp+src], eax
-	
+
 	mov eax, [ebp+dst_offset]			; next dst row
 	imul eax, MY
 	add [ebp+dst], eax

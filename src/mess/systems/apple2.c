@@ -14,10 +14,10 @@ extern int	apple2_vh_start(void);
 extern void apple2_vh_stop(void);
 extern void apple2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
-extern unsigned char *apple2_lores_text1_ram;
-extern unsigned char *apple2_lores_text2_ram;
-extern unsigned char *apple2_hires1_ram;
-extern unsigned char *apple2_hires2_ram;
+extern UINT8 *apple2_lores_text1_ram;
+extern UINT8 *apple2_lores_text2_ram;
+extern UINT8 *apple2_hires1_ram;
+extern UINT8 *apple2_hires2_ram;
 
 extern void apple2_lores_text1_w(int offset, int data);
 extern void apple2_lores_text2_w(int offset, int data);
@@ -25,21 +25,21 @@ extern void apple2_hires1_w(int offset, int data);
 extern void apple2_hires2_w(int offset, int data);
 
 /* machine/apple2.c */
-extern unsigned char *apple2_slot_rom;
-extern unsigned char *apple2_slot1;
-extern unsigned char *apple2_slot2;
-extern unsigned char *apple2_slot3;
-extern unsigned char *apple2_slot4;
-extern unsigned char *apple2_slot5;
-extern unsigned char *apple2_slot6;
-extern unsigned char *apple2_slot7;
+extern UINT8 *apple2_slot_rom;
+extern UINT8 *apple2_slot1;
+extern UINT8 *apple2_slot2;
+extern UINT8 *apple2_slot3;
+extern UINT8 *apple2_slot4;
+extern UINT8 *apple2_slot5;
+extern UINT8 *apple2_slot6;
+extern UINT8 *apple2_slot7;
 
-extern int	apple2_floppy_init(int id, const char *name);
+extern int	apple2_floppy_init(int id);
 
 extern int  apple2_id_rom(const char *name, const char * gamename);
 
-extern int	apple2e_load_rom(int id, const char *name);
-extern int	apple2ee_load_rom(int id, const char *name);
+extern int	apple2e_load_rom(int id);
+extern int	apple2ee_load_rom(int id);
 
 extern void apple2e_init_machine(void);
 
@@ -117,13 +117,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_r },
 	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
 	{ 0xc400, 0xc4ff, apple2_slot4_r },
-//  { 0xc100, 0xc7ff, MRA_BANK3, &apple2_slot_rom },
-//	{ 0xc100, 0xc1ff, apple2_slot1_r, &apple2_slot1 },
-//	{ 0xc200, 0xc2ff, apple2_slot2_r, &apple2_slot2 },
-//	{ 0xc300, 0xc3ff, apple2_slot3_r, &apple2_slot3 },
-//	{ 0xc500, 0xc5ff, apple2_slot5_r, &apple2_slot5 },
-//	{ 0xc600, 0xc6ff, apple2_slot6_r, &apple2_slot6 },
-//	{ 0xc700, 0xc7ff, apple2_slot7_r, &apple2_slot7 },
+	{ 0xc100, 0xc7ff, MRA_BANK3 },
+//	{ 0xc100, 0xc1ff, apple2_slot1_r },
+//	{ 0xc200, 0xc2ff, apple2_slot2_r },
+//	{ 0xc300, 0xc3ff, apple2_slot3_r },
+//	{ 0xc500, 0xc5ff, apple2_slot5_r },
+//	{ 0xc600, 0xc6ff, apple2_slot6_r },
+//	{ 0xc700, 0xc7ff, apple2_slot7_r },
 	{ 0xc800, 0xcffe, MRA_BANK6 },
 //	{ 0xcfff, 0xcfff, apple2_slotrom_disable },
 	{ 0xd000, 0xdfff, MRA_BANK1 },
@@ -158,13 +158,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_w },
 	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_w },
 	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_w },
-	{ 0xc100, 0xc1ff, apple2_slot1_w },
-	{ 0xc200, 0xc2ff, apple2_slot2_w },
-	{ 0xc300, 0xc3ff, apple2_slot3_w },
+	{ 0xc100, 0xc1ff, apple2_slot1_w, &apple2_slot1 },
+	{ 0xc200, 0xc2ff, apple2_slot2_w, &apple2_slot2 },
+	{ 0xc300, 0xc3ff, apple2_slot3_w, &apple2_slot3 },
 	{ 0xc400, 0xc4ff, apple2_slot4_w, &apple2_slot4 },
-	{ 0xc500, 0xc5ff, apple2_slot5_w },
-	{ 0xc600, 0xc6ff, apple2_slot6_w },
-	{ 0xc700, 0xc7ff, apple2_slot7_w },
+	{ 0xc500, 0xc5ff, apple2_slot5_w, &apple2_slot5 },
+	{ 0xc600, 0xc6ff, apple2_slot6_w, &apple2_slot6 },
+	{ 0xc700, 0xc7ff, apple2_slot7_w, &apple2_slot7 },
+	{ 0xc100, 0xc7ff, MWA_BANK3, &apple2_slot_rom }, /* Just here to initialize the pointer */
 	{ 0xd000, 0xdfff, MWA_BANK1 },
 	{ 0xe000, 0xffff, MWA_BANK2 },
 	{ -1 }	/* end of table */
@@ -179,11 +180,83 @@ INPUT_PORTS_START( apple2 )
 	PORT_BIT ( 0xBF, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
 
-	PORT_START /* Special keys */
-	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_DEFAULT )
-//	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1, "Open Apple", KEYCODE_ALT, IP_JOY_DEFAULT )
-//	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2, "Closed Apple", KEYCODE_ALTGR, IP_JOY_DEFAULT )
-	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3, "Button 3", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_START /* KEYS #1 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Backsp ", KEYCODE_BACKSPACE,   IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left   ", KEYCODE_LEFT,        IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tab    ", KEYCODE_TAB,         IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Down   ", KEYCODE_DOWN,        IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Up     ", KEYCODE_UP,          IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Enter  ", KEYCODE_ENTER,       IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Right  ", KEYCODE_RIGHT,       IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Escape ", KEYCODE_ESC,         IP_JOY_NONE )
+
+	PORT_START /* KEYS #2 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Space  ", KEYCODE_SPACE,       IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "'      ", KEYCODE_QUOTE,       IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, ",      ", KEYCODE_COMMA,       IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "-      ", KEYCODE_MINUS,       IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".      ", KEYCODE_STOP,        IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ ?    ", KEYCODE_SLASH,       IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0      ", KEYCODE_0,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1      ", KEYCODE_1,           IP_JOY_NONE )
+
+	PORT_START /* KEYS #3 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2      ", KEYCODE_2,           IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3      ", KEYCODE_3,           IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4      ", KEYCODE_4,           IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5      ", KEYCODE_5,           IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6      ", KEYCODE_6,           IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7      ", KEYCODE_7,           IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8      ", KEYCODE_8,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9      ", KEYCODE_9,           IP_JOY_NONE )
+
+	PORT_START /* KEYS #4 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, ":      ", KEYCODE_COLON,       IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "=      ", KEYCODE_EQUALS,      IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "[ {    ", KEYCODE_OPENBRACE,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "\\ |    ", KEYCODE_BACKSLASH,   IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "] }    ", KEYCODE_CLOSEBRACE,  IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "^ ~    ", KEYCODE_TILDE,       IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "a A    ", KEYCODE_A,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "b B    ", KEYCODE_B,           IP_JOY_NONE )
+
+	PORT_START /* KEYS #5 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "c C    ", KEYCODE_C,           IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "d D    ", KEYCODE_D,           IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "e E    ", KEYCODE_E,           IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "f F    ", KEYCODE_F,           IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "g G    ", KEYCODE_G,           IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "h H    ", KEYCODE_H,           IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "i I    ", KEYCODE_I,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "j J    ", KEYCODE_J,           IP_JOY_NONE )
+
+	PORT_START /* KEYS #6 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "k K    ", KEYCODE_K,           IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "l L    ", KEYCODE_L,           IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "m M    ", KEYCODE_M,           IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "n N    ", KEYCODE_N,           IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "o O    ", KEYCODE_O,           IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "p P    ", KEYCODE_P,           IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "q Q    ", KEYCODE_Q,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "r R    ", KEYCODE_R,           IP_JOY_NONE )
+
+	PORT_START /* KEYS #7 */
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "s S    ", KEYCODE_S,           IP_JOY_NONE )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "t T    ", KEYCODE_T,           IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "u U    ", KEYCODE_U,           IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "v V    ", KEYCODE_V,           IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "w W    ", KEYCODE_W,           IP_JOY_NONE )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "x X    ", KEYCODE_X,           IP_JOY_NONE )
+	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "y Y    ", KEYCODE_Y,           IP_JOY_NONE )
+	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "z Z    ", KEYCODE_Z,           IP_JOY_NONE )
+
+    PORT_START /* Special keys */
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_DEFAULT )
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left Shift",            KEYCODE_LSHIFT,   IP_JOY_NONE )
+	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Right Shift",           KEYCODE_RSHIFT,   IP_JOY_NONE )
+	PORT_BITX( 0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Left Control",          KEYCODE_LCONTROL, IP_JOY_NONE )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3,  "Button 3",              IP_KEY_DEFAULT,   IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Reset",                 KEYCODE_F3,       IP_JOY_NONE )
 
 INPUT_PORTS_END
 
@@ -448,7 +521,7 @@ ROM_START(apple2e)
 	ROM_LOAD ( "a2e.cd", 0x20000, 0x2000, 0xe248835e )
 	ROM_LOAD ( "a2e.ef", 0x22000, 0x2000, 0xfc3d59d8 )
 	/* 0x700 for individual slot ROMs */
-	//ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 
 	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2e.vid", 0x0000, 0x1000, 0x816a86f1 )
@@ -460,7 +533,7 @@ ROM_START(apple2ee)
 	ROM_LOAD ( "a2ee.ef", 0x22000, 0x2000, 0x95e10034 )
 	/* 0x4000 for bankswitched RAM */
 	/* 0x700 for individual slot ROMs */
-	//ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 
 	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD ( "a2ee.vid", 0x0000, 0x1000, 0x2651014d)
@@ -471,7 +544,7 @@ ROM_START(apple2ep)
 	ROM_LOAD ("a2ept.cf", 0x20000, 0x4000, 0x02b648c8)
 	/* 0x4000 for bankswitched RAM */
 	/* 0x700 for individual slot ROMs */
-	//ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
+	ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 
 	ROM_REGION(0x2000,REGION_GFX1)
 	ROM_LOAD("a2ept.vid", 0x0000, 0x1000, 0x2651014d)
@@ -501,29 +574,12 @@ ROM_START(apple2cp)
     ROM_LOAD("a2cplus.vid", 0x0000, 0x1000, 0x2651014d)
 ROM_END
 
-static const struct IODevice io_apple2c[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"???\0",				/* file extensions */
-        NULL,               /* private */
-		apple2_id_rom,		/* id */
-		apple2e_load_rom,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+static const struct IODevice io_apple2[] =
+{
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
-		"???\0",				/* file extensions */
+		"dsk\0",            /* file extensions */
         NULL,               /* private */
         NULL,               /* id */
 		apple2_floppy_init, /* init */
@@ -541,55 +597,18 @@ static const struct IODevice io_apple2c[] = {
     { IO_END }
 };
 
-static const struct IODevice io_apple2e[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"???\0",				/* file extensions */
-        NULL,               /* private */
-		apple2_id_rom,		/* id */
-		apple2ee_load_rom,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-	{
-		IO_FLOPPY,			/* type */
-		2,					/* count */
-		"???\0",				/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		apple2_floppy_init, /* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
-};
-#define io_apple2c0 io_apple2e
-#define io_apple2cp io_apple2e
-#define io_apple2ee io_apple2e
-#define io_apple2ep io_apple2e
+#define io_apple2c	io_apple2
+#define io_apple2c0 io_apple2
+#define io_apple2cp io_apple2
+#define io_apple2e	io_apple2
+#define io_apple2ee io_apple2
+#define io_apple2ep io_apple2
 
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY			  FULLNAME */
-COMPX( 1982, apple2e,  0,		 standard, apple2,	 0, 	   "Apple Computers", "Apple IIe", GAME_NOT_WORKING )
-COMPX( 19??, apple2ee, apple2e,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIe (enhanced)", GAME_NOT_WORKING  )
-COMPX( 19??, apple2ep, apple2e,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIe (Platinum)", GAME_NOT_WORKING  )
-COMP ( 1984, apple2c,  0,		 enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc" )
-COMP ( 19??, apple2c0, apple2c,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc (3.5 ROM)" )
-COMP ( 19??, apple2cp, apple2c,  enhanced, apple2,	 0, 	   "Apple Computers", "Apple IIc Plus" )
+/*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY            FULLNAME */
+COMP ( 1983, apple2e,  0,		 standard, apple2,	 0, 	   "Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  enhanced, apple2,	 0, 	   "Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  enhanced, apple2,	 0, 	   "Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,		 enhanced, apple2,	 0, 	   "Apple Computer", "Apple //c" )
+COMP ( 1986, apple2c0, apple2c,  enhanced, apple2,	 0, 	   "Apple Computer", "Apple //c (3.5 ROM)" )
+COMP ( 1988, apple2cp, apple2c,  enhanced, apple2,	 0, 	   "Apple Computer", "Apple //c Plus" )
 

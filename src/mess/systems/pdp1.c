@@ -100,8 +100,8 @@ binary form plus a makro assembler for PDP1 programs.
  */
 
 /* From machine/pdp1.c */
-int pdp1_load_rom (int id, const char *name);
-int pdp1_id_rom (const char *name, const char *gamename);
+int pdp1_load_rom (int id);
+int pdp1_id_rom (int id);
 void pdp1_init_machine(void);
 int pdp1_read_mem(int offset);
 void pdp1_write_mem(int offset, int data);
@@ -240,7 +240,8 @@ static const struct IODevice io_pdp1[] = {
 		NULL,               /* close */
 		NULL,               /* status */
 		NULL,               /* seek */
-		NULL,               /* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
 		NULL                /* output_chunk */

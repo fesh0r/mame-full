@@ -93,9 +93,13 @@ static struct RIOTinterface a2600_riot = {
 };
 
 
-/* local */
-unsigned char *a2600_cartridge_rom;
+/* bitmap */
+struct osd_bitmap *stella_bitmap;
 
+/* local */
+static unsigned char *a2600_cartridge_rom;
+
+static int stella_scanline;
 
 static int a2600_riot_a_r(int chip)
 {
@@ -185,32 +189,31 @@ void a2600_TIA_w(int offset, int data)
 	{
 
 		case VSYNC:
-			if (data == 0x02)
-			{
-				if (errorlog && TIA_VERBOSE)
-					fprintf(errorlog,"TIA_w - VSYNC Start\n");
-			}
-			else if (data == 0x00)
+			if ( !(data & 0x00) )
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - VSYNC Stop\n");
+			}
+			else if (data & 0x02)
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - VSYNC Start\n");
 			}
 			else /* not allowed */
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - VSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
+            break;
 
 
-
-			break;
 		case VBLANK:     	/* offset 0x01, bits 7,6 and 1 used */
-			if (data == 0x00)
+			if ( !(data & 0x00) )
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - VBLANK Stop\n");
 			}
-			else if (data == 0x02)
+			else if (data & 0x02)
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - VBLANK Start\n");
@@ -221,8 +224,10 @@ void a2600_TIA_w(int offset, int data)
 					fprintf(errorlog,"TIA_w - VBLANK Write Error! offset $%02x & data $%02x\n", offset, data);
 			}
 		    break;
+
+
 		case WSYNC:     	/* offset 0x02 */
-			if (data == 0x00)
+			if ( !(data & 0x00) )
 			{
 				if (errorlog && TIA_VERBOSE)
 					fprintf(errorlog,"TIA_w - WSYNC \n");
@@ -236,8 +241,206 @@ void a2600_TIA_w(int offset, int data)
 
 
 
+		case RSYNC:     	/* offset 0x03 */
+			if ( !(data & 0x00) )
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - RSYNC \n");
+			}
+			else
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - RSYNC Write Error! offset $%02x & data $%02x\n", offset, data);
+			}
+            break;
 
 
+
+		case NUSIZ0:     	/* offset 0x04 */
+			if ( !(data >>4 & 0x00) ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = 1 clock \n");
+			}
+			else if ( data >>4 & 0x01 ) /* check D5 and D4*/
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = 2 clocks \n");
+			}
+			else if ( data >>4 & 0x02 ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = 4 clocks \n");
+			}
+			else if ( data >>4 & 0x03 ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = 8 clocks \n");
+			}
+			if ( !(data <<4 & 0x00) ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = One Copy \n");
+			}
+			else if ( data <<4 & 0x01 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Close \n");
+			}
+			else if ( data <<4 & 0x02 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Med \n");
+			}
+			else if ( data <<4 & 0x03 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Three Copies, Close \n");
+			}
+			else if ( data <<4 & 0x04 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Two Copies, Wide \n");
+			}
+			else if ( data <<4 & 0x05 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Double Sized Player \n");
+			}
+			else if ( data <<4 & 0x06 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Three Copies Medium \n");
+			}
+			else if ( data <<4 & 0x07 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ0 = Quad Sized Player \n");
+			}
+			else
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - Write Error, NUSIZ0 offset $%02x & data $%02x\n", offset, data);
+			}
+            break;
+
+
+		case NUSIZ1:     	/* offset 0x05 */
+			if ( !(data >>4 & 0x00) ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = 1 clock \n");
+			}
+			else if ( data >>4 & 0x01 ) /* check D5 and D4*/
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = 2 clocks \n");
+			}
+			else if ( data >>4 & 0x02 ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = 4 clocks \n");
+			}
+			else if ( data >>4 & 0x03 ) /* check D5 and D4 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = 8 clocks \n");
+			}
+			if ( !(data <<4 & 0x00) ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = One Copy \n");
+			}
+			else if ( data <<4 & 0x01 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Close \n");
+			}
+			else if ( data <<4 & 0x02 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Med \n");
+			}
+			else if ( data <<4 & 0x03 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Three Copies, Close \n");
+			}
+			else if ( data <<4 & 0x04 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Two Copies, Wide \n");
+			}
+			else if ( data <<4 & 0x05 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Double Sized Player \n");
+			}
+			else if ( data <<4 & 0x06 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Three Copies Medium \n");
+			}
+			else if ( data <<4 & 0x07 ) /* check D2, D1, D0 */
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - NUSIZ1 = Quad Sized Player \n");
+			}
+			else
+			{
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - Write Error, NUSIZ1 offset $%02x & data $%02x\n", offset, data);
+			}
+            break;
+
+
+		case COLUP0:     	/* offset 0x06 */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - COLUP0 Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
+
+		case COLUP1:     	/* offset 0x07 */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - COLUP1 Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
+
+
+
+		case COLUPF:     	/* offset 0x08 */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - COLUPF Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
+
+
+		case COLUBK:     	/* offset 0x09 */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - COLUBK Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
+
+
+		case CTRLPF:     	/* offset 0x0A */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
+
+
+
+		case REFP0:     	/* offset 0x0B */
+
+				if (errorlog && TIA_VERBOSE)
+					fprintf(errorlog,"TIA_w - CTRLPF Write offset $%02x & data $%02x\n", offset, data);
+
+            break;
 
 		case 0x15: /* audio control */
 		case 0x16: /* audio control */
@@ -251,7 +454,7 @@ void a2600_TIA_w(int offset, int data)
 			break;
 		default:
 			if (errorlog && TIA_VERBOSE)
-				fprintf(errorlog,"TIA_w - UNKNOWN - offset %x & data %x\n", offset, data);
+				fprintf(errorlog,"TIA_w - UNKNOWN - offset %02x & data %02x\n", offset, data);
 		/* all others */
 		ROM[offset] = data;
 	}
@@ -261,6 +464,9 @@ void a2600_init_machine(void)
 {
 	/* start RIOT interface */
 	riot_init(&a2600_riot);
+
+	/* set the scanline to 0 */
+	stella_scanline=0;
 }
 
 
@@ -270,7 +476,7 @@ void a2600_stop_machine(void)
 }
 
 
-int a2600_id_rom (const char *name, const char *gamename)
+int a2600_id_rom (int id)
 {
 	return 0;		/* no id possible */
 
@@ -279,8 +485,9 @@ int a2600_id_rom (const char *name, const char *gamename)
 
 
 
-int a2600_load_rom (int id, const char *rom_name)
+int a2600_load_rom (int id)
 {
+	const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -292,11 +499,7 @@ int a2600_load_rom (int id, const char *rom_name)
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (strlen(rom_name)==0)
-    {
-        if (errorlog) fprintf(errorlog,"A2600 - warning: no cartridge specified!\n");
-	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog) fprintf(errorlog,"A2600 - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
@@ -320,6 +523,49 @@ int a2600_load_rom (int id, const char *rom_name)
     }
 
 	return 0;
+}
+
+
+
+
+
+
+/* Video functions for the a2600 */
+/* Since all software drivern, have here */
+
+//#include "vidhrdw/generic.h"
+
+
+
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+int a2600_vh_start(void)
+{	if ((stella_bitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+    return 0;
+}
+
+void a2600_vh_stop(void)
+{
+	free(stella_bitmap);
+
+}
+
+
+/***************************************************************************
+
+  Refresh the video screen
+
+***************************************************************************/
+/* This routine is called at the start of vblank to refresh the screen */
+void a2600_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+    copybitmap(bitmap,stella_bitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 
 

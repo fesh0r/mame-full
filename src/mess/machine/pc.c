@@ -41,9 +41,6 @@ static UINT8 m_queue[256];
 static UINT8 m_head = 0, m_tail = 0, mb = 0;
 static void *mouse_timer = NULL;
 
-static const char *floppy_name[2] = {NULL,};
-static const char *harddisk_name[4] = {NULL,};
-
 static void pc_mouse_scan(int n);
 static void pc_mouse_poll(int n);
 
@@ -56,22 +53,10 @@ void init_pc(void)
 		gfx[i] = i;
 }
 
-int pc_floppy_init(int id, const char *name)
-{
-	floppy_name[id] = name;
-	return 0;
-}
-
-int pc_harddisk_init(int id, const char *name)
-{
-	harddisk_name[id] = name;
-    return 0;
-}
-
-static void pc_common_init_machine(void)
+int pc_floppy_init(int id)
 {
 	static int common_length_spt_heads[][3] = {
-	{ 8*1*40*512,  8, 1},	/* 5 1/4 inch double density single sided */
+    { 8*1*40*512,  8, 1},   /* 5 1/4 inch double density single sided */
     { 8*2*40*512,  8, 2},   /* 5 1/4 inch double density */
     { 9*1*40*512,  9, 1},   /* 5 1/4 inch double density single sided */
     { 9*2*40*512,  9, 2},   /* 5 1/4 inch double density */
@@ -79,70 +64,70 @@ static void pc_common_init_machine(void)
     { 9*2*80*512,  9, 2},   /* 3 1/2 inch double density */
     {15*2*80*512, 15, 2},   /* 5 1/4 inch high density (or japanese 3 1/2 inch high density) */
     {18*2*80*512, 18, 2},   /* 3 1/2 inch high density */
-	{36*2*80*512, 36, 2}};	/* 3 1/2 inch enhanced density */
+    {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
+	int i;
 
-	int i, j;
-
-	for( i = 0; i < 2; i++ )
+    pc_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	/* find the sectors/track and bytes/sector values in the boot sector */
+	if( pc_fdc_file[id] )
 	{
-		/* no floppy name given for that drive ? */
-		if( !floppy_name[i] )
-			continue;
-		pc_fdc_file[i] = osd_fopen(Machine->gamedrv->name, floppy_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-		/* find the sectors/track and bytes/sector values in the boot sector */
-		if( !pc_fdc_file[i] && Machine->gamedrv->clone_of )
-			pc_fdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, floppy_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-		if( pc_fdc_file[i] )
-		{
-			int length;
+		int length;
 
-			/* tracks pre sector recognition with image size
-			   works only 512 byte sectors! and 40 or 80 tracks*/
-			pc_fdc_scl[i]=2;
-			pc_fdc_heads[i]=2;
-			length=osd_fsize(pc_fdc_file[i]);
-			for( j = sizeof(common_length_spt_heads)/sizeof(common_length_spt_heads[0]); j >= 0; --j )
+		/* tracks pre sector recognition with image size
+		   works only 512 byte sectors! and 40 or 80 tracks*/
+		pc_fdc_scl[id]=2;
+		pc_fdc_heads[id]=2;
+		length=osd_fsize(pc_fdc_file[id]);
+		for( i = sizeof(common_length_spt_heads)/sizeof(common_length_spt_heads[0]); i >= 0; --i )
+		{
+			if( length == common_length_spt_heads[i][0] )
 			{
-				if( length == common_length_spt_heads[j][0] )
-                {
-					pc_fdc_spt[i] = common_length_spt_heads[j][1];
-					pc_fdc_heads[i] = common_length_spt_heads[j][2];
-					break;
-				}
-			}
-			if( j < 0 )
-			{
-				/*
-				 * get info from boot sector.
-				 * not correct on all disks
-				 */
-				osd_fseek(pc_fdc_file[i], 0x0c, SEEK_SET);
-				osd_fread(pc_fdc_file[i], &pc_fdc_scl[i], 1);
-				osd_fseek(pc_fdc_file[i], 0x018, SEEK_SET);
-				osd_fread(pc_fdc_file[i], &pc_fdc_spt[i], 1);
-				osd_fseek(pc_fdc_file[i], 0x01a, SEEK_SET);
-				osd_fread(pc_fdc_file[i], &pc_fdc_heads[i], 1);
+				pc_fdc_spt[id] = common_length_spt_heads[i][1];
+				pc_fdc_heads[id] = common_length_spt_heads[i][2];
+				break;
 			}
 		}
-    }
+		if( i < 0 )
+		{
+			/*
+			 * get info from boot sector.
+			 * not correct on all disks
+			 */
+			osd_fseek(pc_fdc_file[id], 0x0c, SEEK_SET);
+			osd_fread(pc_fdc_file[id], &pc_fdc_scl[id], 1);
+			osd_fseek(pc_fdc_file[id], 0x018, SEEK_SET);
+			osd_fread(pc_fdc_file[id], &pc_fdc_spt[id], 1);
+			osd_fseek(pc_fdc_file[id], 0x01a, SEEK_SET);
+			osd_fread(pc_fdc_file[id], &pc_fdc_heads[id], 1);
+		}
+	}
+	return INIT_OK;
+}
 
-	for( i = 0; i < 4; i++ )
-	{
-		/* no hard disk name given for that drive ? */
-		if( !harddisk_name[i] )
-			continue;
-		pc_hdc_file[i] = osd_fopen(Machine->gamedrv->name, harddisk_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-		if( !pc_hdc_file[i] && Machine->gamedrv->clone_of )
-			pc_hdc_file[i] = osd_fopen(Machine->gamedrv->clone_of->name, harddisk_name[i], OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
-    }
+void pc_floppy_exit(int id)
+{
+	if( pc_fdc_file[id] )
+		osd_fclose(pc_fdc_file[id]);
+	pc_fdc_file[id] = NULL;
+}
 
+int pc_harddisk_init(int id)
+{
+	pc_hdc_file[id] = image_fopen(IO_HARDDISK, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	return INIT_OK;
+}
+
+void pc_harddisk_exit(int id)
+{
+	if( pc_hdc_file[id] )
+		osd_fclose(pc_hdc_file[id]);
+    pc_hdc_file[id] = NULL;
 }
 
 void pc_mda_init_machine(void)
 {
 	int i;
 
-	pc_common_init_machine();
 	pc_blink_textcolors = pc_cga_blink_textcolors;
 
     /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
@@ -159,30 +144,12 @@ void pc_mda_init_machine(void)
 
 void pc_cga_init_machine(void)
 {
-	pc_common_init_machine();
 	pc_blink_textcolors = pc_cga_blink_textcolors;
 }
 
 void pc_t1t_init_machine(void)
 {
-	pc_common_init_machine();
 	pc_blink_textcolors = pc_t1t_blink_textcolors;
-}
-
-void pc_shutdown_machine(void)
-{
-	int i;
-
-	for (i = 0; i < 2; i++)
-	{
-		if (pc_fdc_file[i]) osd_fclose(pc_fdc_file[i]);
-		pc_fdc_file[i] = 0;
-    }
-	for (i = 0; i < 4; i++)
-	{
-		if (pc_hdc_file[i]) osd_fclose(pc_hdc_file[i]);
-		pc_hdc_file[i] = 0;
-    }
 }
 
 /*************************************
@@ -1293,7 +1260,7 @@ int pc_FDC_r(int offset)
  *************************************************************************/
 void pc_HDC_w(int chip, int offset, int data)
 {
-	if( !(input_port_3_r(0) & (0x08>>chip)) || !harddisk_name[chip] )
+	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
 		return;
 	switch( offset )
 	{
@@ -1309,8 +1276,7 @@ void pc_HDC2_w(int offset, int data) { pc_HDC_w(1, offset, data); }
 int pc_HDC_r(int chip, int offset)
 {
 	int data = 0xff;
-	if( !(input_port_3_r(0) & (0x08>>chip)) ||
-		!harddisk_name[chip][0] )
+	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
 		return data;
 	switch( offset )
 	{

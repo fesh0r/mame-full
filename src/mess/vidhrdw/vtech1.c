@@ -26,9 +26,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-/* from mame.c */
-extern int bitmap_dirty;
-
 /* from machine/vz.c */
 extern int vtech1_latch;
 
@@ -39,8 +36,13 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
     int offs;
 
-	if( palette_recalc() )
-		full_refresh = 1;
+	if( vtech1_frame_time > 0 )
+    {
+		ui_text(vtech1_frame_message, 1, Machine->drv->visible_area.max_y - 9);
+        /* if the message timed out, clear it on the next frame */
+        if( --vtech1_frame_time == 0 )
+			full_refresh = 1;
+    }
 
     if( full_refresh )
 	{
@@ -97,12 +99,5 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
             }
         }
     }
-	if( vtech1_frame_time > 0 )
-	{
-		ui_text(vtech1_frame_message, 2, Machine->drv->visible_area.max_y - 9);
-		/* if the message timed out, clear it on the next frame */
-		if( --vtech1_frame_time == 0 )
-			bitmap_dirty = 1;
-	}
 }
 

@@ -12,21 +12,27 @@ void tms9928A_init_palette(unsigned char *palette, unsigned short *colortable,co
 #define TMS9928A_PALETTE_SIZE           16
 #define TMS9928A_COLORTABLE_SIZE        32
 
+/*
+** The different models
+*/
+
+#define TMS99x8A	(1)
+#define TMS99x8		(2)
 
 typedef struct {
-    // TMS9928A internal settings
+    /* TMS9928A internal settings */
     UINT8 ReadAhead,Regs[8],StatusReg,oldStatusReg;
     int Addr,FirstByte,INT,BackColour,Change,mode;
     int colour,pattern,nametbl,spriteattribute,spritepattern;
     int colourmask,patternmask;
     void (*INTCallback)(int);
-    // memory
+    /* memory */
     UINT8 *vMem, *dBackMem;
     struct osd_bitmap *tmpbmp;
-    int vramsize;
-    // emulation settings
-    int LimitSprites; // max 4 sprites on a row, like original TMS9918A
-    // dirty tables
+    int vramsize, model;
+    /* emulation settings */
+    int LimitSprites; /* max 4 sprites on a row, like original TMS9918A */
+    /* dirty tables */
     char anyDirtyColour, anyDirtyName, anyDirtyPattern;
     char *DirtyColour, *DirtyName, *DirtyPattern;
 } TMS9928A;
@@ -35,7 +41,7 @@ typedef struct {
 /*
 ** The init, reset and shutdown functions
 */
-int TMS9928A_start (unsigned int vramsize);
+int TMS9928A_start (int model, unsigned int vram);
 void TMS9928A_reset (void);
 void TMS9928A_stop (void);
 

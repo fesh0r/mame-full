@@ -17,7 +17,7 @@ int jupiter_charram_size;
 
 int jupiter_vh_start (void)
 {
-	if( generic_bitmapped_vh_start() )
+	if( generic_vh_start() )
 		return 1;
     return 0;
 }

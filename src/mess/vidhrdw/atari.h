@@ -20,7 +20,7 @@
 #define CYCLES_HSYNC	104 	/* where does the HSYNC position of a scanline start */
 
 #define VBL_END 		8		/* vblank ends in this scanline */
-#define VDATA_START 	12		/* video display begins in this scanline */
+#define VDATA_START 	11		/* video display begins in this scanline */
 #define VDATA_END		244 	/* video display ends in this scanline */
 #define VBL_START		248 	/* vblank starts in this scanline */
 
@@ -29,8 +29,8 @@
 #define TOTAL_LINES_50HZ 312
 
 /* frame rates */
-#define FRAME_RATE_50HZ 50.32304
-#define FRAME_RATE_60HZ 59.92333
+#define FRAME_RATE_50HZ (double)1789790/114/TOTAL_LINES_50HZ
+#define FRAME_RATE_60HZ (double)1789790/114/TOTAL_LINES_60HZ
 
 #define HWIDTH			48		/* total characters per line */
 #define HCHARS			44		/* visible characters per line */
@@ -40,7 +40,7 @@
 #define MIN_X			((HWIDTH-42)/2)*8
 #define MAX_X			MIN_X+42*8-1
 #define MIN_Y			VDATA_START
-#define MAX_Y			VDATA_END-1
+#define MAX_Y			VDATA_END-8-1
 
 #define PMOFFSET		32		/* # of pixels to adjust p/m hpos */
 
@@ -223,10 +223,12 @@ typedef struct {
 	UINT8	sizep1; 	/* d009 size player 1 */
 	UINT8	sizep2; 	/* d00a size player 2 */
 	UINT8	sizep3; 	/* d00b size player 3 */
-	UINT8	grafp0; 	/* d00d graphics data for player 0 */
-	UINT8	grafp1; 	/* d00e graphics data for player 1 */
-	UINT8	grafp2; 	/* d00f graphics data for player 2 */
-	UINT8	grafp3; 	/* d010 graphics data for player 3 */
+    UINT8   sizem;      /* d00c size missiles */
+	UINT8	grafp0[2];	/* d00d graphics data for player 0 */
+	UINT8	grafp1[2];	/* d00e graphics data for player 1 */
+	UINT8	grafp2[2];	/* d00f graphics data for player 2 */
+	UINT8	grafp3[2];	/* d010 graphics data for player 3 */
+	UINT8	grafm[2];	/* d011 graphics data for missiles */
 	UINT8	colpm0; 	/* d012 color for player/missile 0 */
 	UINT8	colpm1; 	/* d013 color for player/missile 1 */
 	UINT8	colpm2; 	/* d014 color for player/missile 2 */
@@ -235,8 +237,6 @@ typedef struct {
 	UINT8	colpf1; 	/* d017 playfield color 1 */
 	UINT8	colpf2; 	/* d018 playfield color 2 */
 	UINT8	colpf3; 	/* d019 playfield color 3 */
-	UINT8	sizem;		/* d00c size missiles */
-	UINT8	grafm;		/* d011 graphics data for missiles */
 	UINT8	colbk;		/* d01a background playfield */
 	UINT8	prior;		/* d01b priority select */
 	UINT8	vdelay; 	/* d01c delay until vertical retrace */
@@ -246,22 +246,10 @@ typedef struct {
 }	GTIA_W;  /* writing registers */
 
 typedef struct GTIA_H {
-	UINT8	hposp0; 	/* optimized horz position player 0 */
-	UINT8	hposp1; 	/* optimized horz position player 1 */
-	UINT8	hposp2; 	/* optimized horz position player 2 */
-	UINT8	hposp3; 	/* optimized horz position player 3 */
-	UINT8	sizep0; 	/* optimized size player 0 */
-	UINT8	sizep1; 	/* optimized size player 1 */
-	UINT8	sizep2; 	/* optimized size player 2 */
-	UINT8	sizep3; 	/* optimized size player 3 */
 	UINT8	grafp0; 	/* optimized graphics data player 0 */
 	UINT8	grafp1; 	/* optimized graphics data player 1 */
 	UINT8	grafp2; 	/* optimized graphics data player 2 */
 	UINT8	grafp3; 	/* optimized graphics data player 3 */
-	UINT8	hposm0; 	/* optimized horz position missile 0 */
-	UINT8	hposm1; 	/* optimized horz position missile 1 */
-	UINT8	hposm2; 	/* optimized horz position missile 2 */
-	UINT8	hposm3; 	/* optimized horz position missile 3 */
 	UINT8	grafm0; 	/* optimized graphics data missile 0 */
 	UINT8	grafm1; 	/* optimized graphics data missile 1 */
 	UINT8	grafm2; 	/* optimized graphics data missile 2 */
@@ -331,30 +319,30 @@ typedef struct {
 
 /* per scanline buffer for video data (and optimization variables) */
 typedef struct {
-    int     cmd;                /* antic command for this scanline */
+    UINT32  cmd;                /* antic command for this scanline */
     UINT16  data[HWIDTH];       /* graphics data buffer (text through chargen) */
 }   VIDEO;
 
 typedef struct {
 	UINT32	cmd;				/* currently executed display list command */
-	UINT32	scanline;			/* current scan line */
-	INT32	modelines;			/* number of lines for current ANTIC mode */
-	UINT32	pfwidth;			/* playfield width */
+	UINT32	steal_cycles;		/* steal how many cpu cycles for this line ? */
 	UINT32	vscrol_old; 		/* old vscrol value */
 	UINT32	hscrol_old; 		/* old hscrol value */
-    UINT32  steal_cycles;       /* steal how many cpu cycles for this line ? */
+	INT32	modelines;			/* number of lines for current ANTIC mode */
+	UINT32	chbase; 			/* character mode source base */
+	UINT32	chand;				/* character and mask (chactl) */
+	UINT32	chxor;				/* character xor mask (chactl) */
+    UINT32  scanline;           /* current scan line */
+	UINT32	pfwidth;			/* playfield width */
 	UINT32	dpage;				/* display list address page */
 	UINT32	doffs;				/* display list offset into page */
 	UINT32	vpage;				/* video data source page */
 	UINT32	voffs;				/* video data offset into page */
 	UINT32	pmbase_s;			/* p/m graphics single line source base */
 	UINT32	pmbase_d;			/* p/m graphics double line source base */
-	UINT32	chbase; 			/* character mode source base */
-	UINT32	chand;				/* character and mask (chactl) */
-	UINT32	chxor;				/* character xor mask (chactl) */
 	ANTIC_R r;					/* ANTIC read registers */
 	ANTIC_W w;					/* ANTIC write registers */
-    UINT8   cclock[256];        /* color clock buffer filled by ANTIC */
+	UINT8	cclock[256+32]; 	/* color clock buffer filled by ANTIC */
 	UINT8	pmbits[256+32]; 	/* player missile buffer filled by GTIA */
 	UINT16	color_lookup[256];	/* color lookup table */
 	UINT8   *prio_table[64]; 	/* player/missile priority tables */
@@ -725,4 +713,6 @@ void gtia_mode_3_40(VIDEO *video);
 void gtia_mode_3_48(VIDEO *video);
 void gtia_render(VIDEO *video);
 
+extern char atari_frame_message[64+1];
+extern int atari_frame_counter;
 

@@ -807,9 +807,10 @@ static void Write_PPU (int data)
 
 extern struct GfxLayout nes_charlayout;
 
-int nes_load_rom (int id, const char *rom_name)
+int nes_load_rom (int id)
 {
-	FILE *romfile;
+	const char *rom_name = device_filename(IO_CARTSLOT,id);
+    FILE *romfile;
 	char magic[4];
 	char skank[8];
 	int local_options;
@@ -826,9 +827,9 @@ int nes_load_rom (int id, const char *rom_name)
 	}
 
 	if(errorlog) fprintf (errorlog,"Beginning nes_load_rom\n");
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		if(errorlog) fprintf (errorlog,"osd_fopen failed in nes_load_rom.\n");
+		if(errorlog) fprintf (errorlog,"image_fopen failed in nes_load_rom.\n");
 			return 1;
 	}
 	if(errorlog) fprintf (errorlog,"Finished osd_Fopen for ROM\n");
@@ -994,13 +995,13 @@ bad:
 	return 1;
 }
 
-int nes_id_rom (const char *name, const char *gamename)
+int nes_id_rom (int id)
 {
-	FILE *romfile;
+    FILE *romfile;
 	unsigned char magic[4];
 	int retval;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 1;
 	/* Verify the file is in iNES format */

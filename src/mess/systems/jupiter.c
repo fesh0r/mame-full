@@ -29,15 +29,14 @@ Ports:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-/* #include "mess/sndhrdw/buzzer.h" */
 
 /* prototypes */
 
 extern void jupiter_init_machine (void);
 extern void jupiter_stop_machine (void);
 
-extern int jupiter_load_ace(int id, const char *name);
-extern int jupiter_load_tap(int id, const char *name);
+extern int jupiter_load_ace(int id);
+extern int jupiter_load_tap(int id);
 
 extern int jupiter_vh_start (void);
 extern void jupiter_vh_stop (void);
@@ -45,8 +44,6 @@ extern void jupiter_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refres
 extern void jupiter_vh_charram_w (int offset, int data);
 extern unsigned char *jupiter_charram;
 extern int jupiter_charram_size;
-
-extern int jupiter_sh_state;
 
 /* functions */
 
@@ -86,20 +83,14 @@ int jupiter_port_bffe_r (int offset)
 }
 
 int jupiter_port_7ffe_r (int offset)
-
 {
-
-jupiter_sh_state = 0;
-return (readinputport (7));
-
+	speaker_level_w(0,0);
+	return (readinputport (7));
 }
 
 void jupiter_port_fe_w (int offset, int data)
-
 {
-
-jupiter_sh_state = 1;
-
+	speaker_level_w(0,1);
 }
 
 /* port i/o functions */
@@ -252,9 +243,12 @@ INPUT_PORTS_END
 
 /* Sound output */
 
-static	struct	DACinterface jupiter_sh_interface = {
-	1,
-	{ 100 }
+static struct Speaker_interface speaker_interface =
+{
+	1,			/* one speaker */
+	{ 100 },	/* mixing levels */
+	{ 0 },		/* optional: number of different levels */
+	{ NULL }	/* optional: level lookup table */
 };
 
 /* machine definition */
@@ -293,8 +287,11 @@ static	struct MachineDriver machine_driver_jupiter =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_DAC, &jupiter_sh_interface },
-	}
+		{
+			SOUND_SPEAKER,
+			&speaker_interface
+        }
+    }
 };
 
 ROM_START (jupiter)
@@ -316,6 +313,7 @@ static const struct IODevice io_jupiter[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
@@ -334,6 +332,7 @@ static const struct IODevice io_jupiter[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

@@ -32,8 +32,8 @@ extern void advision_vh_init_palette(unsigned char *game_palette, unsigned short
 
 /* machine/advision.c */
 extern void advision_init_machine(void);
-extern int advision_id_rom (const char *name, const char *gamename);
-extern int advision_load_rom (int id, const char *rom_name);
+extern int advision_id_rom (int id);
+extern int advision_load_rom (int id);
 extern int advision_MAINRAM_r(int offset);
 extern void advision_MAINRAM_w(int offset, int data);
 extern void advision_putp1(int offset, int data);
@@ -142,7 +142,8 @@ static const struct IODevice io_advision[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
-		NULL,				/* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */

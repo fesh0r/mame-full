@@ -14,7 +14,7 @@ void nascom1_init_machine(void)
 {
 
 	if (errorlog)
-		fprintf(errorlog, "jupiter_init\r\n");
+		fprintf(errorlog, "nascom1_init\r\n");
 
 }
 

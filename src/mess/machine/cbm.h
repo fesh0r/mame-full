@@ -38,14 +38,16 @@ void *cbm_memset16 (void *dest, int value, size_t size);
 
 /* debugging level here for all on or off */
 #if 1
-#ifdef VERBOSE_DBG
-#undef VERBOSE_DBG
-#endif
-#if 1
-#define VERBOSE_DBG 0
+# ifdef VERBOSE_DBG
+#  undef VERBOSE_DBG
+# endif
+# if 1
+#  define VERBOSE_DBG 0
+# else
+#  define VERBOSE_DBG 1
+# endif
 #else
-#define VERBOSE_DBG 1
-#endif
+# define PET_TEST_CODE
 #endif
 
 #if VERBOSE_DBG
@@ -64,14 +66,57 @@ typedef int bool;
 #endif
 
 void cbm_quick_exit (int id);
-int cbm_quick_init (int id, const char *name);
-int cbm_quick_open (int id, void *arg);
+int cbm_quick_init (int id);
+int cbm_quick_open (int id, int mode, void *arg);
+int cbm_pet_quick_open (int id, int mode, void *arg);
+/* pet with basic 1 */
+int cbm_pet1_quick_open (int id, int mode, void *arg);
+
+#define IODEVICE_CBM_PET_QUICK \
+{\
+   IO_HARDDISK,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbm_pet_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
+
+#define IODEVICE_CBM_PET1_QUICK \
+{\
+   IO_HARDDISK,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
+   NULL,               /* private */\
+   NULL,               /* id */\
+   cbm_quick_init,     /* init */\
+   cbm_quick_exit,     /* exit */\
+   NULL,               /* info */\
+   cbm_pet1_quick_open,     /* open */\
+   NULL,               /* close */\
+   NULL,               /* status */\
+   NULL,               /* seek */\
+   NULL,               /* input */\
+   NULL,               /* output */\
+   NULL,               /* input_chunk */\
+   NULL                /* output_chunk */\
+}
 
 #define IODEVICE_CBM_QUICK \
 {\
-   IO_HARDDISK, 	   /* type */\
-   1,				   /* count */\
-   "p00\0prg\0",       /* file extensions */\
+   IO_HARDDISK,          /* type */\
+   1,                                      /* count */\
+   "p00\0prg\0",            /*file extensions */\
    NULL,               /* private */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
@@ -89,7 +134,7 @@ int cbm_quick_open (int id, void *arg);
 
 /* use to functions to parse, load the rom images into memory
    and then use the cbm_rom var */
-int cbm_rom_init(int id, const char *name);
+int cbm_rom_init(int id);
 void cbm_rom_exit(int id);
 
 typedef struct {
@@ -106,7 +151,7 @@ extern CBM_ROM cbm_rom[0x20];
 {\
    IO_CARTSLOT,        /* type */\
    2,                  /* in reality 1 *//* count */\
-   "crt\0",            /* file extensions */\
+   "crt\0",            /*file extensions */\
    NULL,               /* private */\
    idfunc,             /* id */\
    cbm_rom_init,       /* init */\
@@ -123,6 +168,8 @@ extern CBM_ROM cbm_rom[0x20];
 }
 
 /* prg file format
+ * sfx file format
+ * sda file format
  * 0 lsb 16bit address
  * 2 chip data */
 

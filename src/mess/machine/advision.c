@@ -30,16 +30,17 @@ void advision_init_machine(void) {
     advision_videoenable = 0;
 }
 
-int advision_id_rom (const char *name, const char *gamename)
+int advision_id_rom (int id)
 {
     return 0;
 }
 
 
-int advision_load_rom (int id, const char *rom_name)
+int advision_load_rom (int id)
 {
+    const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *cartfile;
-	
+
 	if(rom_name==NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
@@ -48,19 +49,14 @@ int advision_load_rom (int id, const char *rom_name)
 
     ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
-    if (strlen(rom_name)==0)
-	{      
-		if (errorlog) fprintf(errorlog,"Advision - warning: no cartridge specified!\n");
-		return 1;
-	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog) fprintf(errorlog,"Advision - Unable to locate cartridge: %s\n",rom_name);
 		return 1;
 	}
 	osd_fread (cartfile, &ROM[0x0000], 4096);
     osd_fclose (cartfile);
-	
+
 	return 0;
 }
 
@@ -71,20 +67,20 @@ int advision_MAINRAM_r(int offset) {
     int d;
 
     d = advision_ram[advision_rambank + offset];
-	
+
 	/* the video hardware interprets reads as writes */
     if (!advision_videoenable) advision_vh_write(d);
     return d;
 }
 
 void advision_MAINRAM_w(int offset, int data) {
-    advision_ram[advision_rambank + offset] = data; 
+    advision_ram[advision_rambank + offset] = data;
 }
 
 /***** 8048 Ports ************************/
 
 void advision_putp1(int offset, int data) {
-      
+
 	  ROM = memory_region(REGION_CPU1);
       if (data & 0x04) {
         cpu_setbank(1,&ROM[0x0000]);
@@ -105,7 +101,7 @@ void advision_putp2(int offset, int data) {
             if (errorlog) fprintf(errorlog,"HPOS OVERFLOW\n");
         }
       }
-      advision_videoenable = data & 0x10;      
+      advision_videoenable = data & 0x10;
 	  advision_videobank = (data & 0xE0) >> 5;
 }
 

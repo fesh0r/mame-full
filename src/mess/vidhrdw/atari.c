@@ -18,8 +18,17 @@
 
 #define VERBOSE 0
 
+#if VERBOSE
+#define LOG(x)	if( errorlog ) fprintf x
+#else
+#define LOG(x)	/* x */
+#endif
+
+char atari_frame_message[64+1];
+int atari_frame_counter;
+
 /* flag for displaying television artifacts in ANTIC mode F (15) */
-static int color_artifacts = 0;
+static int tv_artifacts = 0;
 
 /*************************************************************************
  * The priority tables tell which playfield, player or missile colors
@@ -711,9 +720,7 @@ int atari_vh_start(void)
 {
 	int i;
 
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "atari antic_vh_start\n");
-#endif
+	LOG((errorlog, "atari antic_vh_start\n"));
     memset(&antic, 0, sizeof(antic));
 	memset(&gtia, 0, sizeof(gtia));
 
@@ -753,9 +760,7 @@ int atari_vh_start(void)
 	for( i = 0; i < 256; i ++ )
         antic.color_lookup[i] = (Machine->pens[0] << 8) + Machine->pens[0];
 
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "atari cclk_init\n");
-#endif
+	LOG((errorlog, "atari cclk_init\n"));
     cclk_init();
 
 	for( i = 0; i < 64; i++ )
@@ -769,9 +774,7 @@ int atari_vh_start(void)
 		}
     }
 
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "atari prio_init\n");
-#endif
+	LOG((errorlog, "atari prio_init\n"));
     prio_init();
 
 	for( i = 0; i < Machine->drv->screen_height; i++ )
@@ -828,10 +831,17 @@ void atari_vh_stop(void)
  ************************************************************************/
 void atari_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if( color_artifacts != (readinputport(0) & 0x40) )
+	if( tv_artifacts != (readinputport(0) & 0x40) )
 	{
-		color_artifacts = readinputport(0) & 0x40;
+		tv_artifacts = readinputport(0) & 0x40;
 		full_refresh = 1;
+	}
+	if( atari_frame_counter > 0 )
+	{
+		if( --atari_frame_counter == 0 )
+			full_refresh = 1;
+		else
+			ui_text(atari_frame_message, 0, Machine->uiheight - 10);
 	}
     if( full_refresh )
 		fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->drv->visible_area);
@@ -1004,25 +1014,24 @@ static void antic_linerefresh(void)
         gtia.h.hitclr_frames++;
     }
 
-    if( antic.scanline < VDATA_START || antic.scanline >= VDATA_END )
+	if( antic.scanline < MIN_Y || antic.scanline > MAX_Y )
         return;
 
-    y = antic.scanline - VDATA_START;
+	y = antic.scanline - MIN_Y;
 	src = &antic.cclock[PMOFFSET - antic.hscrol_old + 12];
 	dst = (UINT32 *)&Machine->scrbitmap->line[y][12];
 
-	if( color_artifacts )
+	if( tv_artifacts )
 	{
-		if( (antic.cmd & 0x0f) == 2 ||
-			(antic.cmd & 0x0f) == 3 )
+		if( (antic.cmd & 0x0f) == 2 || (antic.cmd & 0x0f) == 3 )
 		{
-			artifacts_txt(src, (UINT8*)dst, HCHARS);
+			artifacts_txt(src, (UINT8*)(dst + 3), HCHARS);
 			return;
 		}
 		else
 		if( (antic.cmd & 0x0f) == 15 )
 		{
-			artifacts_gfx(src, (UINT8*)dst, HCHARS);
+			artifacts_gfx(src, (UINT8*)(dst + 3), HCHARS);
 			return;
 		}
 	}
@@ -1047,24 +1056,30 @@ static void antic_linerefresh(void)
 #if VERBOSE
 static int cycle(void)
 {
-	return cycles_currently_ran();
+	return cpu_gethorzbeampos() * CYCLES_PER_LINE / Machine->drv->screen_width;
 }
 #endif
 
-static void after(int cycles, void (*function)(int))
+static void after(int cycles, void (*function)(int), const char *funcname)
 {
-	double duration = cpu_getscanlineperiod() * cycles / CYCLES_PER_LINE;
-#if VERBOSE
-	if (errorlog) fprintf(errorlog, "ANTIC #%3d after %3d (%5.1f us)\n",
-		antic.scanline, cycles, duration * 1.0e6);
-#endif
+    double duration = cpu_getscanlineperiod() * cycles / CYCLES_PER_LINE;
+    (void)funcname;
+	LOG((errorlog, "           after %3d (%5.1f us) %s\n", cycles, duration * 1.0e6, funcname));
 	timer_set(duration, 0, function);
 }
 
 static void antic_issue_dli(int param)
 {
-	antic.r.nmist |= DLI_NMI;
-    cpu_set_nmi_line(0, PULSE_LINE);
+	if( antic.w.nmien & DLI_NMI )
+	{
+		LOG((errorlog, "           @cycle #%3d issue DLI\n", cycle()));
+		antic.r.nmist |= DLI_NMI;
+		cpu_set_nmi_line(0, PULSE_LINE);
+	}
+	else
+	{
+		LOG((errorlog, "           @cycle #%3d DLI not enabled\n", cycle()));
+    }
 }
 
 
@@ -1116,73 +1131,136 @@ static  renderer_function renderer[2][19][5] = {
 	}
 };
 
-INLINE void LMS(int new_cmd)
+/*****************************************************************************
+ *
+ *	Antic Line Done
+ *
+ *****************************************************************************/
+void antic_line_done(int param)
 {
-	/**************************************************************
-	 * If the LMS bit (load memory scan) of the current display
-	 * list command is set, load the video source address from the
-	 * following two bytes and split it up into video page/offset.
-	 * Steal two more cycles from the CPU for fetching the address.
-	 **************************************************************/
-	if( new_cmd & ANTIC_LMS )
-	{
-		int addr;
-        addr = RDANTIC();
-		antic.doffs = ++antic.doffs & DOFFS;
-		addr += 256 * RDANTIC();
-		antic.doffs = ++antic.doffs & DOFFS;
-		antic.vpage = addr & VPAGE;
-		antic.voffs = addr & VOFFS;
-#if VERBOSE
-		if (errorlog) fprintf(errorlog, "ANTIC #%3d LMS $%04x\n", antic.scanline, addr);
-#endif
-		/* steal two more clock cycles from the cpu */
-		antic.steal_cycles += 2;
-	}
-}
+	if( antic.w.wsync )
+    {
+		LOG((errorlog, "           @cycle #%3d release WSYNC\n", cycle()));
+        /* release the CPU if it was actually waiting for HSYNC */
+        cpu_trigger(TRIGGER_HSYNC);
+        /* and turn off the 'wait for hsync' flag */
+        antic.w.wsync = 0;
+    }
+	LOG((errorlog, "           @cycle #%3d release CPU\n", cycle()));
+    /* release the CPU (held for emulating cycles stolen by ANTIC DMA) */
+	cpu_trigger(TRIGGER_STEAL);
 
-void atari_line_done(int param)
-{
-	/* release the CPU (held for emulating cycles stolen by ANTIC DMA) */
-    cpu_trigger(TRIGGER_STEAL);
-
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
 }
 
 /*****************************************************************************
  *
- *	Atari Steal Cycles
+ *	Antic Steal Cycles
  *  This is called once per scanline by a interrupt issued in the
  *  atari_scanline_render function. Set a new timer for the HSYNC
  *  position and release the CPU; but hold it again immediately until
  *  TRIGGER_HSYNC if WSYNC (D01A) was accessed
  *
  *****************************************************************************/
-void atari_steal_cycles(int param)
+void antic_steal_cycles(int param)
 {
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d steal_cycles\n", antic.scanline, cycle());
-#endif
-
-    if( antic.w.wsync )
-    {
-#if VERBOSE
-        if (errorlog) fprintf(errorlog, "ANTIC #%3d wsync release @ cycle #%d\n", antic.scanline, cycle());
-#endif
-        /* release the CPU if it was actually waiting for HSYNC */
-        cpu_trigger(TRIGGER_HSYNC);
-        /* and turn off the 'wait for hsync' flag */
-        antic.w.wsync = 0;
-    }
-	/* hold the CPU for the stolen cycles */
-	cpu_spinuntil_trigger(TRIGGER_STEAL);
-
-    /* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh();
-	after(antic.steal_cycles, atari_line_done);
+	LOG((errorlog, "           @cycle #%3d steal %d cycles\n", cycle(), antic.steal_cycles));
+	after(antic.steal_cycles, antic_line_done, "antic_line_done");
     antic.steal_cycles = 0;
-
+    cpu_spinuntil_trigger(TRIGGER_STEAL);
 }
 
+
+/*****************************************************************************
+ *
+ *	Antic Scan Line Render
+ *	Render the scanline to the scrbitmap buffer.
+ *  Also transport player/missile data to the grafp and grafm registers
+ *  of the GTIA if enabled (DMA_PLAYER or DMA_MISSILE)
+ *
+ *****************************************************************************/
+void antic_scanline_render(int param)
+{
+	VIDEO *video = antic.video[antic.scanline];
+	LOG((errorlog, "           @cycle #%3d render mode $%X lines to go #%d\n", cycle(), (antic.cmd & 0x0f), antic.modelines));
+
+    (*antic_renderer)(video);
+
+    /* if player/missile graphics is enabled */
+    if( antic.scanline < 256 && (antic.w.dmactl & (DMA_PLAYER|DMA_MISSILE)) )
+    {
+        /* new player/missile graphics data for every scanline ? */
+        if( antic.w.dmactl & DMA_PM_DBLLINE )
+        {
+            /* transport missile data to GTIA ? */
+            if( antic.w.dmactl & DMA_MISSILE )
+            {
+                antic.steal_cycles += 1;
+                MWA_GTIA(0x11, RDPMGFXD(3*256));
+            }
+            /* transport player data to GTIA ? */
+            if( antic.w.dmactl & DMA_PLAYER )
+            {
+                antic.steal_cycles += 4;
+                MWA_GTIA(0x0d, RDPMGFXD(4*256));
+                MWA_GTIA(0x0e, RDPMGFXD(5*256));
+                MWA_GTIA(0x0f, RDPMGFXD(6*256));
+                MWA_GTIA(0x10, RDPMGFXD(7*256));
+            }
+        }
+        else
+        {
+            /* transport missile data to GTIA ? */
+            if( antic.w.dmactl & DMA_MISSILE )
+            {
+				if( (antic.scanline & 1) == 0 ) 	 /* even line ? */
+					antic.steal_cycles += 1;
+                MWA_GTIA(0x11, RDPMGFXS(3*128));
+            }
+            /* transport player data to GTIA ? */
+            if( antic.w.dmactl & DMA_PLAYER )
+            {
+				if( (antic.scanline & 1) == 0 ) 	 /* even line ? */
+					antic.steal_cycles += 4;
+                MWA_GTIA(0x0d, RDPMGFXS(4*128));
+                MWA_GTIA(0x0e, RDPMGFXS(5*128));
+                MWA_GTIA(0x0f, RDPMGFXS(6*128));
+                MWA_GTIA(0x10, RDPMGFXS(7*128));
+            }
+        }
+    }
+
+    gtia_render(video);
+
+    antic.steal_cycles += CYCLES_REFRESH;
+	LOG((errorlog, "           run CPU for %d cycles\n", CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles));
+	after(CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles, antic_steal_cycles, "antic_steal_cycles");
+}
+
+
+
+INLINE void LMS(int new_cmd)
+{
+    /**************************************************************
+     * If the LMS bit (load memory scan) of the current display
+     * list command is set, load the video source address from the
+     * following two bytes and split it up into video page/offset.
+     * Steal two more cycles from the CPU for fetching the address.
+     **************************************************************/
+    if( new_cmd & ANTIC_LMS )
+    {
+		int addr = RDANTIC();
+        antic.doffs = ++antic.doffs & DOFFS;
+        addr += 256 * RDANTIC();
+        antic.doffs = ++antic.doffs & DOFFS;
+        antic.vpage = addr & VPAGE;
+        antic.voffs = addr & VOFFS;
+		LOG((errorlog, "           LMS $%04x\n", addr));
+        /* steal two more clock cycles from the cpu */
+        antic.steal_cycles += 2;
+    }
+}
 
 /*****************************************************************************
  *
@@ -1192,20 +1270,17 @@ void atari_steal_cycles(int param)
  *	the VBL range (VBL_START - TOTAL_LINES or 0 - VBL_END)
  *	check if all mode lines of the previous ANTIC command were done and
  *	if so, read a new command and set up the renderer function
- *	Also transport player/missile data to the grafp and grafm registers
- *	of the GTIA if enabled (DMA_PLAYER or DMA_MISSILE)
  *
  *****************************************************************************/
 static void antic_scanline_dma(int param)
 {
-    VIDEO *video = antic.video[antic.scanline];
-
+	LOG((errorlog, "           @cycle #%3d DMA fetch\n", cycle()));
+	if (antic.scanline == VBL_END)
+		antic.r.nmist &= ~VBL_NMI;
     if( antic.w.dmactl & DMA_ANTIC )
 	{
 		if( antic.scanline >= VBL_END && antic.scanline < VBL_START )
 		{
-			if (antic.scanline == VBL_END)
-				antic.r.nmist &= ~VBL_NMI;
 			if( antic.modelines <= 0 )
 			{
 				int h = 0, w = antic.w.dmactl & 3;
@@ -1216,9 +1291,7 @@ static void antic_scanline_dma(int param)
 				antic.doffs = ++antic.doffs & DOFFS;
 				/* steal at one clock cycle from the CPU for fetching the command */
                 antic.steal_cycles += 1;
-#if VERBOSE
-				if (errorlog) fprintf(errorlog, "ANTIC #%3d CMD $%02x\n", antic.scanline, new_cmd);
-#endif
+				LOG((errorlog, "           ANTIC CMD $%02x\n", new_cmd));
 				/* command 1 .. 15 ? */
 				if (new_cmd & ANTIC_MODE)
 				{
@@ -1254,242 +1327,160 @@ static void antic_scanline_dma(int param)
 
 				switch( new_cmd & ANTIC_MODE )
 				{
-					case 0:
-						/* generate 1 .. 8 empty lines */
-						antic.modelines = ((new_cmd >> 4) & 7) + 1;
-						/* did the last ANTIC command have vertical scroll enabled ? */
-						if( antic.cmd & ANTIC_VSCR )
-						{
-							/* yes, generate vscrol_old additional empty lines */
-							antic.modelines += antic.vscrol_old;
-						}
-						/* leave only bit 7 (DLI) set in ANTIC command */
-						new_cmd &= ANTIC_DLI;
-						break;
-					case 1:
-						/* ANTIC "jump" with DLI: issue interrupt immediately */
-						if( new_cmd & ANTIC_DLI )
-						{
-							/* remove the DLI bit */
-							new_cmd &= ~ANTIC_DLI;
-							/* display list interrupt enabled ? */
-							if( antic.w.nmien & DLI_NMI )
-							{
-#if VERBOSE
-								if (errorlog) fprintf(errorlog, "ANTIC #%3d DLI NMI\n", antic.scanline);
-#endif
-								antic.r.nmist |= DLI_NMI;
-								after(CYCLES_DLI_NMI, antic_issue_dli);
-							}
-						}
-						/* load memory scan bit set ? */
-						if( new_cmd & ANTIC_LMS )
-						{
-							/* produce empty scanlines until vblank start */
-							antic.modelines = VBL_START + 1 - antic.scanline;
-							if( antic.modelines < 0 )
-								antic.modelines = Machine->drv->screen_height - antic.scanline;
-#if VERBOSE
-							if (errorlog) fprintf(errorlog, "ANTIC #%3d JVB ", antic.scanline);
-#endif
-						}
-						else
-						{
-							/* produce a single empty scanline */
-							antic.modelines = 1;
-#if VERBOSE
-							if (errorlog) fprintf(errorlog, "ANTIC #%3d JMP ", antic.scanline);
-#endif
-						}
-						/* fetch new display list and video address */
-						{
-							int addr = RDANTIC();
-							antic.doffs = ++antic.doffs & DOFFS;
-							addr += 256 * RDANTIC();
-							antic.dpage = addr & DPAGE;
-							antic.doffs = addr & DOFFS;
-						}
-#if VERBOSE
-						if (errorlog) fprintf(errorlog, "$%04x\n", antic.dpage + antic.doffs);
-#endif
-						break;
-					case  2:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfc) << 8;
-						antic.modelines = 8 - (vscrol_subtract & 7);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-							antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  3:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfc) << 8;
-						antic.modelines = 10 - (vscrol_subtract & 9);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-                            antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  4:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfc) << 8;
-						antic.modelines = 8 - (vscrol_subtract & 7);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-                            antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  5:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfc) << 8;
-						antic.modelines = 16 - (vscrol_subtract & 15);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-                            antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  6:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfe) << 8;
-						antic.modelines = 8 - (vscrol_subtract & 7);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-                            antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  7:
-						LMS(new_cmd);
-						antic.chbase = (antic.w.chbash & 0xfe) << 8;
-						antic.modelines = 16 - (vscrol_subtract & 15);
-						if( antic.w.chactl & 4 )	/* decrement chbasl? */
-                            antic.w.chbasl = antic.modelines - 1;
-						break;
-					case  8:
-						LMS(new_cmd);
-						antic.modelines = 8 - (vscrol_subtract & 7);
-						break;
-					case  9:
-						LMS(new_cmd);
-						antic.modelines = 4 - (vscrol_subtract & 3);
-						break;
-					case 10:
-						LMS(new_cmd);
-						antic.modelines = 4 - (vscrol_subtract & 3);
-						break;
-					case 11:
-						LMS(new_cmd);
-						antic.modelines = 2 - (vscrol_subtract & 1);
-						break;
-					case 12:
-						LMS(new_cmd);
+				case 0x00:
+					/* generate 1 .. 8 empty lines */
+					antic.modelines = ((new_cmd >> 4) & 7) + 1;
+					/* did the last ANTIC command have vertical scroll enabled ? */
+					if( antic.cmd & ANTIC_VSCR )
+					{
+						/* yes, generate vscrol_old additional empty lines */
+						antic.modelines += antic.vscrol_old;
+					}
+					/* leave only bit 7 (DLI) set in ANTIC command */
+					new_cmd &= ANTIC_DLI;
+					break;
+				case 0x01:
+					/* ANTIC "jump" with DLI: issue interrupt immediately */
+					if( new_cmd & ANTIC_DLI )
+					{
+						/* remove the DLI bit */
+						new_cmd &= ~ANTIC_DLI;
+						after(CYCLES_DLI_NMI, antic_issue_dli, "antic_issue_dli");
+					}
+					/* load memory scan bit set ? */
+					if( new_cmd & ANTIC_LMS )
+					{
+						int addr = RDANTIC();
+                        antic.doffs = ++antic.doffs & DOFFS;
+                        addr += 256 * RDANTIC();
+                        antic.dpage = addr & DPAGE;
+                        antic.doffs = addr & DOFFS;
+                        /* produce empty scanlines until vblank start */
+						antic.modelines = VBL_START + 1 - antic.scanline;
+						if( antic.modelines < 0 )
+							antic.modelines = Machine->drv->screen_height - antic.scanline;
+						LOG((errorlog, "           JVB $%04x\n", antic.dpage|antic.doffs));
+					}
+					else
+					{
+						int addr = RDANTIC();
+                        antic.doffs = ++antic.doffs & DOFFS;
+                        addr += 256 * RDANTIC();
+                        antic.dpage = addr & DPAGE;
+                        antic.doffs = addr & DOFFS;
+                        /* produce a single empty scanline */
 						antic.modelines = 1;
-						break;
-					case 13:
-						LMS(new_cmd);
-						antic.modelines = 2 - (vscrol_subtract & 1);
-						break;
-					case 14:
-						LMS(new_cmd);
-						antic.modelines = 1;
-						break;
-					case 15:
-						LMS(new_cmd);
-						/* bits 6+7 of the priority select register determine */
-						/* if newer GTIA or plain graphics modes are used */
-						switch (gtia.w.prior >> 6)
-						{
-							case 0: break;
-							case 1: antic_renderer = renderer[h][16][w];  break;
-							case 2: antic_renderer = renderer[h][17][w];  break;
-							case 3: antic_renderer = renderer[h][18][w];  break;
-						}
-						antic.modelines = 1;
-						break;
+						LOG((errorlog, "           JMP $%04x\n", antic.dpage|antic.doffs));
+					}
+					break;
+				case 0x02:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfc) << 8;
+					antic.modelines = 8 - (vscrol_subtract & 7);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x03:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfc) << 8;
+					antic.modelines = 10 - (vscrol_subtract & 9);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x04:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfc) << 8;
+					antic.modelines = 8 - (vscrol_subtract & 7);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x05:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfc) << 8;
+					antic.modelines = 16 - (vscrol_subtract & 15);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x06:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfe) << 8;
+					antic.modelines = 8 - (vscrol_subtract & 7);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x07:
+					LMS(new_cmd);
+					antic.chbase = (antic.w.chbash & 0xfe) << 8;
+					antic.modelines = 16 - (vscrol_subtract & 15);
+					if( antic.w.chactl & 4 )	/* decrement chbasl? */
+						antic.w.chbasl = antic.modelines - 1;
+					break;
+				case 0x08:
+					LMS(new_cmd);
+					antic.modelines = 8 - (vscrol_subtract & 7);
+					break;
+				case 0x09:
+					LMS(new_cmd);
+					antic.modelines = 4 - (vscrol_subtract & 3);
+					break;
+				case 0x0a:
+					LMS(new_cmd);
+					antic.modelines = 4 - (vscrol_subtract & 3);
+					break;
+				case 0x0b:
+					LMS(new_cmd);
+					antic.modelines = 2 - (vscrol_subtract & 1);
+					break;
+				case 0x0c:
+					LMS(new_cmd);
+					antic.modelines = 1;
+                    break;
+				case 0x0d:
+					LMS(new_cmd);
+					antic.modelines = 2 - (vscrol_subtract & 1);
+					break;
+				case 0x0e:
+					LMS(new_cmd);
+					antic.modelines = 1;
+                    break;
+				case 0x0f:
+					LMS(new_cmd);
+					/* bits 6+7 of the priority select register determine */
+					/* if newer GTIA or plain graphics modes are used */
+					switch (gtia.w.prior >> 6)
+					{
+						case 0: break;
+						case 1: antic_renderer = renderer[h][16][w];  break;
+						case 2: antic_renderer = renderer[h][17][w];  break;
+						case 3: antic_renderer = renderer[h][18][w];  break;
+					}
+					antic.modelines = 1;
+                    break;
 				}
 				/* set new (current) antic command */
 				antic.cmd = new_cmd;
-			}
-		}
+            }
+        }
 		else
 		{
-#if VERBOSE
-			if (errorlog) fprintf(errorlog, "ANTIC #%3d out of visible range\n", antic.scanline);
-#endif
+			LOG((errorlog, "           out of visible range\n"));
 			antic.cmd = 0x00;
 			antic_renderer = antic_mode_0_xx;
         }
 	}
 	else
 	{
-#if VERBOSE
-		if (errorlog) fprintf(errorlog, "ANTIC #%3d DMA is off\n", antic.scanline);
-#endif
+		LOG((errorlog, "           DMA is off\n"));
         antic.cmd = 0x00;
 		antic_renderer = antic_mode_0_xx;
 	}
 
-    /* if player/missile graphics is enabled */
-	if( antic.scanline < 256 && (antic.w.dmactl & (DMA_PLAYER|DMA_MISSILE)) )
-	{
-		/* new player/missile graphics data for every scanline ? */
-		if( antic.w.dmactl & DMA_PM_DBLLINE )
-		{
-			/* transport missile data to GTIA ? */
-			if( antic.w.dmactl & DMA_MISSILE )
-			{
-				antic.steal_cycles += 1;
-				MWA_GTIA(0x11, RDPMGFXD(3*256));
-			}
-            /* transport player data to GTIA ? */
-			if( antic.w.dmactl & DMA_PLAYER )
-            {
-				antic.steal_cycles += 4;
-                MWA_GTIA(0x0d, RDPMGFXD(4*256));
-				MWA_GTIA(0x0e, RDPMGFXD(5*256));
-				MWA_GTIA(0x0f, RDPMGFXD(6*256));
-				MWA_GTIA(0x10, RDPMGFXD(7*256));
-            }
-        }
-		else
-        /* new player/missile graphics data only every other scanline */
-		if( (antic.scanline & 1) == 0 ) 	 /* even line ? */
-		{
-            /* transport missile data to GTIA ? */
-			if( antic.w.dmactl & DMA_MISSILE )
-			{
-				antic.steal_cycles += 1;
-                MWA_GTIA(0x11, RDPMGFXS(3*128));
-			}
-            /* transport player data to GTIA ? */
-			if( antic.w.dmactl & DMA_PLAYER )
-			{
-				antic.steal_cycles += 4;
-                MWA_GTIA(0x0d, RDPMGFXS(4*128));
-				MWA_GTIA(0x0e, RDPMGFXS(5*128));
-				MWA_GTIA(0x0f, RDPMGFXS(6*128));
-				MWA_GTIA(0x10, RDPMGFXS(7*128));
-			}
-        }
-	}
+	antic.r.nmist &= ~DLI_NMI;
+	if( antic.modelines == 1 && (antic.cmd & antic.w.nmien & DLI_NMI) )
+		after(CYCLES_DLI_NMI, antic_issue_dli, "antic_issue_dli");
 
-    antic.r.nmist &= ~DLI_NMI;
-    if( antic.modelines == 1 )
-    {
-        /* display list interrupt requested and enabled? */
-        if( (antic.cmd & ANTIC_DLI) != 0 && (antic.w.nmien & DLI_NMI) != 0 )
-        {
-#if VERBOSE
-            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause DLI NMI @ cycle #%d\n", antic.scanline, cycle());
-#endif
-            after(CYCLES_DLI_NMI, antic_issue_dli);
-        }
-    }
-
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d render\n", antic.scanline, cycle());
-#endif
-
-    (*antic_renderer)(video);
-    gtia_render(video);
-
-    antic.steal_cycles += CYCLES_REFRESH;
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d steal %d cycles \n", antic.scanline, antic.steal_cycles);
-#endif
-	after(CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles, atari_steal_cycles);
+	after(CYCLES_HSTART, antic_scanline_render, "antic_scanline_render");
 }
-
 
 /*****************************************************************************
  *
@@ -1501,14 +1492,12 @@ static void antic_scanline_dma(int param)
  *****************************************************************************/
 int  a400_interrupt(void)
 {
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
-#endif
+	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
-		after(CYCLES_HSTART, antic_scanline_dma);
-		return ignore_interrupt();
+		antic_scanline_dma(0);
+        return ignore_interrupt();
     }
 
     if( antic.scanline == VBL_START )
@@ -1530,9 +1519,7 @@ int  a400_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-#if VERBOSE
-            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause VBL NMI\n", antic.scanline);
-#endif
+			LOG((errorlog, "           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1553,14 +1540,12 @@ int  a400_interrupt(void)
  *****************************************************************************/
 int  a800_interrupt(void)
 {
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
-#endif
+	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
-        after(CYCLES_HSTART, antic_scanline_dma);
-		return ignore_interrupt();
+		antic_scanline_dma(0);
+        return ignore_interrupt();
     }
 
     if( antic.scanline == VBL_START )
@@ -1582,9 +1567,7 @@ int  a800_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-#if VERBOSE
-            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause VBL NMI\n", antic.scanline);
-#endif
+			LOG((errorlog, "           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1605,14 +1588,12 @@ int  a800_interrupt(void)
  *****************************************************************************/
 int  a800xl_interrupt(void)
 {
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
-#endif
+	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
-        after(CYCLES_HSTART, antic_scanline_dma);
-		return ignore_interrupt();
+		antic_scanline_dma(0);
+        return ignore_interrupt();
     }
 
     if( antic.scanline == VBL_START )
@@ -1634,9 +1615,7 @@ int  a800xl_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-#if VERBOSE
-            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause VBL NMI\n", antic.scanline);
-#endif
+			LOG((errorlog, "           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1657,14 +1636,12 @@ int  a800xl_interrupt(void)
  *****************************************************************************/
 int  a5200_interrupt(void)
 {
-#if VERBOSE
-    if (errorlog) fprintf(errorlog, "ANTIC #%3d @cycle #%d interrupt\n", antic.scanline, cycle());
-#endif
+	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
-        after(CYCLES_HSTART, antic_scanline_dma);
-		return ignore_interrupt();
+		antic_scanline_dma(0);
+        return ignore_interrupt();
     }
 
     if( antic.scanline == VBL_START )
@@ -1686,9 +1663,7 @@ int  a5200_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-#if VERBOSE
-            if (errorlog) fprintf(errorlog, "ANTIC #%3d cause VBL NMI\n", antic.scanline);
-#endif
+			LOG((errorlog, "           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);

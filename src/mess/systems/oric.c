@@ -7,7 +7,7 @@
 
 void oric_init_machine (void);
 void oric_shutdown_machine (void);
-int oric_load_rom (int id, const char *name);
+int oric_load_rom (int id);
 int oric_interrupt(void);
 int oric_IO_r (int offset);
 void oric_IO_w (int offset, int data);
@@ -255,6 +255,7 @@ static const struct IODevice io_oric1[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */
@@ -277,6 +278,7 @@ static const struct IODevice io_orica[] = {
         NULL,               /* close */
         NULL,               /* status */
         NULL,               /* seek */
+		NULL,				/* tell */
         NULL,               /* input */
         NULL,               /* output */
         NULL,               /* input_chunk */

@@ -32,7 +32,7 @@ extern void pc8300_init_machine(void);
 extern void pow3000_init_machine(void);
 extern void zx_shutdown_machine(void);
 
-extern int zx_cassette_init(int id, const char *name);
+extern int zx_cassette_init(int id);
 extern void zx_cassette_exit(int id);
 
 extern int zx_io_r(int offs);
@@ -755,22 +755,23 @@ ROM_END
 static const struct IODevice io_zx80[] =
 {
 	{
-		IO_CASSETTE,				   /* type */
-		1,							   /* count */
-		"80\0o\0",					   /* file extensions */
-		NULL,						   /* private */
-		NULL,						   /* id */
-		zx_cassette_init,			   /* init */
-		zx_cassette_exit,			   /* exit */
-		NULL,						   /* info */
-		NULL,						   /* open */
-		NULL,						   /* close */
-		NULL,						   /* status */
-		NULL,						   /* seek */
-		NULL,						   /* input */
-		NULL,						   /* output */
-		NULL,						   /* input_chunk */
-		NULL						   /* output_chunk */
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"80\0o\0",          /* file extensions */
+		NULL,				/* private */
+		NULL,				/* id */
+		zx_cassette_init,	/* init */
+		zx_cassette_exit,	/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
 	},
 	{IO_END}
 };
@@ -778,22 +779,23 @@ static const struct IODevice io_zx80[] =
 static const struct IODevice io_zx81[] =
 {
 	{
-		IO_CASSETTE,				   /* type */
-		1,							   /* count */
-		"81\0p\0",					   /* file extensions */
-		NULL,						   /* private */
-		NULL,						   /* id */
-		zx_cassette_init,			   /* init */
-		zx_cassette_exit,			   /* exit */
-		NULL,						   /* info */
-		NULL,						   /* open */
-		NULL,						   /* close */
-		NULL,						   /* status */
-		NULL,						   /* seek */
-		NULL,						   /* input */
-		NULL,						   /* output */
-		NULL,						   /* input_chunk */
-		NULL						   /* output_chunk */
+		IO_CASSETTE,		/* type */
+		1,					/* count */
+		"81\0p\0",          /* file extensions */
+		NULL,				/* private */
+		NULL,				/* id */
+		zx_cassette_init,	/* init */
+		zx_cassette_exit,	/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* tell */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
 	},
 	{IO_END}
 };

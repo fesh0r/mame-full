@@ -19,8 +19,8 @@
 #include "cpu/m6502/m6502.h"
 
 /* machine/nes.c */
-int nes_load_rom (int id, const char *rom_name);
-int nes_id_rom (const char *name, const char *gamename);
+int nes_load_rom (int id);
+int nes_id_rom (int id);
 void nes_init_machine (void);
 int nes_interrupt (void);
 int nes_ppu_r (int offset);
@@ -351,7 +351,7 @@ static struct MachineDriver machine_driver_nes =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6502,
+			CPU_N2A03,
 			1789000,	/* 1.79 Mhz */
 			readmem,writemem,0,0,
 			nes_interrupt,SCANLINES_PER_FRAME /* one for each scanline - ugh */
@@ -403,7 +403,8 @@ static const struct IODevice io_nes[] = {
 		NULL,               /* close */
 		NULL,               /* status */
 		NULL,               /* seek */
-		NULL,               /* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,               /* output */
 		NULL,               /* input_chunk */
 		NULL                /* output_chunk */

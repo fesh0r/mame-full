@@ -308,7 +308,8 @@ static const struct IODevice io_kaypro[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
-		NULL,				/* input */
+		NULL,				/* tell */
+        NULL,               /* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */

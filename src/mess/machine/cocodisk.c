@@ -463,14 +463,15 @@ static void init(void)
 }
 #endif
 
-int coco_floppy_init(int id, const char *name)
+int coco_floppy_init(int id)
 {
-	if(name==NULL)
+	const char *name = device_filename(IO_FLOPPY,id);
+    if(name==NULL)
 		return INIT_OK;
 	if(errorlog) fprintf(errorlog,"coco_floppy_init - name is %s\n", name);
-	dc_floppies[id].fd = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	dc_floppies[id].fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 	if(!dc_floppies[id].fd)
-		dc_floppies[id].fd = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		dc_floppies[id].fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     dc_floppies[id].track = 0;
 	return dc_floppies[id].fd ? INIT_OK : INIT_FAILED;
 }

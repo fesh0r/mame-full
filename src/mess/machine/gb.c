@@ -292,9 +292,9 @@ int gb_r_timer_cnt (int offset)
 	return (gb_timer_count >> gb_timer_shift);
 }
 
-int gb_load_rom (int id, const char *rom_name)
+int gb_load_rom (int id)
 {
-
+	const char *rom_name = device_filename(IO_CARTSLOT,id);
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	static char *CartTypes[] =
 	{
@@ -413,9 +413,9 @@ int gb_load_rom (int id, const char *rom_name)
 	memset (ROM, 0, 0x10000);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
-		if(errorlog) fprintf(errorlog,"osd_fopen failed in gb_load_rom.\n");
+		if(errorlog) fprintf(errorlog,"image_fopen failed in gb_load_rom.\n");
 		return 1;
 	}
 
@@ -430,9 +430,9 @@ int gb_load_rom (int id, const char *rom_name)
 	osd_fclose (F);
 
 	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!(F = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
+	if (!(F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ)))
 	{
-		if(errorlog) fprintf(errorlog,"osd_fopen failed in gb_load_rom.\n");
+		if(errorlog) fprintf(errorlog,"image_fopen failed in gb_load_rom.\n");
         return 1;
 	}
 
@@ -597,7 +597,7 @@ int gb_load_rom (int id, const char *rom_name)
 	return 0;
 }
 
-int gb_id_rom (const char *name, const char *gamename)
+int gb_id_rom (int id)
 {
 	return 1;
 }

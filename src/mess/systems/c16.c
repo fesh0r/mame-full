@@ -466,18 +466,21 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 }
 
 #if 0
+/* cbm version in kernel at 0xff80 (offset 0x3f80)
+   0x80 means pal version */
+
      /* 318006-01 */
-	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
 
 	 /* 318004-05 pal */
-	 ROM_LOAD("kernel5p.c0",   0x14000, 0x4000, 0x71c07bd4)
-	 /* unknown revision, maybe dump of pal c16 */
-	 ROM_LOAD ("kernelp.c0",   0x14000, 0x4000, 0x77bab934)
+	 ROM_LOAD("kernel5p.c0",    0x14000, 0x4000, 0x71c07bd4)
+	 /* 318004-03 pal */
+	 ROM_LOAD ("kernel3p.c0", 0x14000, 0x4000, 0x77bab934)
 
 	 /* 318005-05 */
-	 ROM_LOAD ("kernel5.c0",   0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("kernel5.c0", 0x14000, 0x4000, 0x70295038)
 	 /* 318005-04 */
-	 ROM_LOAD ("kernel4.c0",   0x14000, 0x4000, 0x799a633d)
+	 ROM_LOAD ("kernel4.c0", 0x14000, 0x4000, 0x799a633d)
 
 	 /* 317053-01 */
 	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
@@ -488,13 +491,13 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 		io area different ! */
 	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0xaab61387)
 	 /* same but lo and hi in one rom */
-	 ROM_LOAD ("3plus1.rom",   0x18000, 0x8000, 0x7d464449)
+	 ROM_LOAD ("3plus1.rom", 0x18000, 0x8000, 0x7d464449)
 #endif
 
 ROM_START (c16)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
-	 ROM_LOAD ("kernel5p.c0",  0x14000, 0x4000, 0x71c07bd4)
+	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD("kernel5p.c0",    0x14000, 0x4000, 0x71c07bd4)
 #ifdef VC1541
 	 VC1541_ROM (REGION_CPU2)
 #endif
@@ -502,8 +505,8 @@ ROM_END
 
 ROM_START (plus4)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
-	 ROM_LOAD ("kernel5.c0",   0x14000, 0x4000, 0x70295038)
+	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("kernel5.c0", 0x14000, 0x4000, 0x70295038)
 	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
 	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
 #ifdef VC1541
@@ -513,12 +516,12 @@ ROM_END
 
 ROM_START (c364)
 	 ROM_REGION (0x40000, REGION_CPU1)
-	 ROM_LOAD ("basic.80",     0x10000, 0x4000, 0x74eaae87)
+	 ROM_LOAD ("basic.80", 0x10000, 0x4000, 0x74eaae87)
 	 ROM_LOAD ("kern364p.bin", 0x14000, 0x4000, 0x84fd4f7a)
 	 ROM_LOAD ("3plus1lo.rom", 0x18000, 0x4000, 0x4fd1d8cb)
 	 ROM_LOAD ("3plus1hi.rom", 0x1c000, 0x4000, 0x109de2fc)
-	 /* at address 0x18000 or 0x20000 not so good */
-	 ROM_LOAD ("spk3cc4.bin",  0x28000, 0x4000, 0x5227c2ee)
+	 /* at address 0x20000 not so good */
+	 ROM_LOAD ("spk3cc4.bin", 0x28000, 0x4000, 0x5227c2ee)
 #ifdef VC1541
 	 VC1541_ROM (REGION_CPU2)
 #endif
@@ -688,7 +691,8 @@ static const struct IODevice io_c16[] =
 #define init_plus4 plus4_driver_init
 #define init_c364 plus4_driver_init
 
-/*	   YEAR  NAME	 PARENT MACHINE INPUT  INIT   COMPANY	FULLNAME */
-COMPX( 1984, c16,	 0, 	c16,	c16,   c16,   "Commodore Business Machines Co.", "Commodore C16/C116/C232/C264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-COMPX( 1984, plus4,  c16,	plus4,	plus4, plus4, "Commodore Business Machines Co.", "Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-COMPX( 198?, c364,	 c16,	c364,	plus4, plus4, "Commodore Business Machines Co.", "Commodore 364 (Prototype)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
+/*	   YEAR  NAME	PARENT	MACHINE INPUT	INIT	COMPANY 						   FULLNAME */
+COMPX (1984, c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.", "Commodore C16/C116/C232/C264 (PAL)",    GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (1984, plus4, c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.", "Commodore +4 (NTSC)",                   GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX (198?, c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.", "Commodore 364 (Prototype)",             GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+

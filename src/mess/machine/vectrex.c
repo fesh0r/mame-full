@@ -47,9 +47,10 @@ static double imager_wheel_time = 0;
 /*********************************************************************
   ROM load and id functions
  *********************************************************************/
-int vectrex_load_rom (int id, const char *name)
+int vectrex_load_rom (int id)
 {
-	FILE *cartfile = 0;
+	const char *name = device_filename(IO_CARTSLOT,id);
+    FILE *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
 	 * in Minestorm where the exec-rom attempts to access a vector list here.
@@ -57,17 +58,7 @@ int vectrex_load_rom (int id, const char *name)
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
-	/* If no cartridge is given, the built in game is started (minestorm) */
-	if (strlen(name)==0)
-	{
-		if (errorlog) fprintf(errorlog,"Vectrex: no cartridge specified!\n");
-	}
-	else if (!(cartfile = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0)))
-	{
-		if (errorlog) fprintf(errorlog,"Vectrex - Unable to locate cartridge: %s\n",name);
-		return 1;
-	}
-
+	cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (cartfile)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);
@@ -76,28 +67,32 @@ int vectrex_load_rom (int id, const char *name)
 
 	vectrex_imager_angles = unknown_game_angles;
 
-	/* A bit ugly but somehow we need to know which 3D game is running */
-	/* A better way would be to do this by CRC */
-	if (!strcmp(name,"narrow.bin"))
-		vectrex_imager_angles = narrow_escape_angles;
-	if (!strcmp(name,"crazy.bin"))
-		vectrex_imager_angles = crazy_coaster_angles;
-	if (!strcmp(name,"mine3.bin"))
-		vectrex_imager_angles = minestorm_3d_angles;
+	if (name)
+	{
+		/* A bit ugly but somehow we need to know which 3D game is running */
+		/* A better way would be to do this by CRC */
+		if (!strcmp(name,"narrow.bin"))
+			vectrex_imager_angles = narrow_escape_angles;
+		if (!strcmp(name,"crazy.bin"))
+			vectrex_imager_angles = crazy_coaster_angles;
+		if (!strcmp(name,"mine3.bin"))
+			vectrex_imager_angles = minestorm_3d_angles;
+	}
 
-	return 0;
+	return INIT_OK;
 }
 
-int vectrex_id_rom (const char *name, const char *gamename)
+int vectrex_id_rom (int id)
 {
-	void *romfile;
+	const char *gamename = device_filename(IO_CARTSLOT,id);
+    void *romfile;
 	char magic[5];
 
 	/* If no file was specified, don't bother */
-	if (strlen(gamename)==0)
+	if (!gamename || strlen(gamename)==0)
 		return 1;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 		return 0;
 
 	/* Verify the file is accepted by the Vectrex bios */

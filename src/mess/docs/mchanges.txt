@@ -8,19 +8,20 @@ MESS misc info
 2.  DEBUG = 1 (optional)
 3.  NEOFREE = 1
 4.  uncomment all the required CPU cores (use all is ok) see below
-5.  COREOBJS firstline is obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
+5.  COREOBJS first 2 lines are:
+COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
+	 obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
 6.  DRVLIBS replace with MESS ones
 7.  MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o
 8.  version....  after $(TINYFLAGS) -DMESS
-9.  next #(TINYFLAGS) -DMESS
-10. all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
-11. add dat2html definition after romcmp.exe:
+9.  all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
+10. add dat2html definition after romcmp.exe:
         dat2html.exe: obj/mess/dat2html.o 
 	$(LD) $(LDFLAGS) $^ -lz -o $@
-12. replace archive definitions
-13. add MAKE MESSDIR to the bottom of MAKETREE
-14. add messdir:
-15. add del dat2html.exe to make clean
+11. replace archive definitions
+12. add MAKE MESSDIR to the bottom of MAKETREE
+13. add messdir:
+14. add del dat2html.exe to make clean
 
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
@@ -35,6 +36,11 @@ CPUS+=H6280@
 CPUS+=I86@
 CPUS+=I8039@
 CPUS+=I8048@
+CPUS+=M6800@
+CPUS+=M6803@
+CPUS+=M6808@
+CPUS+=HD63701@
+CPUS+=NSC8105@
 CPUS+=M6809@
 CPUS+=M68000@
 CPUS+=TMS9900@
@@ -45,9 +51,11 @@ CPUS+=PDP1@
 SOUNDS+=CUSTOM@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
+SOUNDS+=YM2151_ALT@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
 SOUNDS+=YM2612@
+SOUNDS+=YM2413@
 SOUNDS+=YM3812@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
@@ -55,6 +63,10 @@ SOUNDS+=TIA@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=TMS5220@
+SOUNDS+=OKIM6295@
+SOUNDS+=QSOUND@
+SOUNDS+=SPEAKER@
+SOUNDS+=WAVE@
 
 remove debug and 2600, update mess.txt list and dir_list ;-)
 

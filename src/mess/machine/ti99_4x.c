@@ -37,6 +37,9 @@ New (000125) :
 New (000204) :
 	* separated tms9901 code from ti99/4a code further
 	* created drivers for 50hz versions of ti99/4x
+New (000305) :
+	* updated for new MESS devices interfaces
+	* added tape support (??? Does not work on me...)
 */
 
 #include "driver.h"
@@ -79,7 +82,8 @@ The simple way :
 
 	Communication with GROM is done with 4 memory-mapped registers.  You can read or write
 	a 16-bit address pointer, and read data from GROMs.  One register allows to write data, too,
-	which would support some GRAMs, but AFAIK TI never built such GRAMs.
+	which would support some GRAMs, but AFAIK TI never built such GRAMs (although docs from TI
+	do refer to this possibility).
 
 	Since address are 16-bit long, you can have up to 8 ROMs.  So, on TI99/4a, a cartidge may
 	include up to 5 GROMs.  (Actually, there is a way you can use more GROMs - see below...)
@@ -92,7 +96,7 @@ Some details :
 	Original TI-built GROM are 6kb long, but take 8kb in address space.  The extra 2kb can be
 	read, and follow the following formula :
 	GROM[0x1800+offset] = GROM[0x0800+offset] | GROM[0x1000+offset]
-	(sounds like address decoding is incomplete - we are lucky we don't burn any silicone...)
+	(sounds like address decoding is incomplete - we are lucky we don't burn any silicon...)
 
 	Needless to say, some hackers simulated 8kb GRAMs and GROMs with normal RAM/PROM chips and
 	glue logic.
@@ -105,7 +109,9 @@ GPL ports :
 
 	Note however, that, AFAIK, the console GROMs on TI99/4a do not decode the page number, so they
 	occupy the first 24kb of EVERY port, and only 40kb of address space are really available (which
-	actually makes 30kb with 6kb GROMs).
+	actually makes 30kb with 6kb GROMs).  (However, some hackers found that the systems GROM
+	drivers did not burn when another chip imposed another value on the data bus, so you could
+	override the system GROMs and use custom code instead...)
 
 	The question is : which pieces of hardware do use this ?  I can only make guesses :
 	* p-code card (-> UCSD Pascal system) contains 8 GROMs, so it must use two ports.
@@ -118,8 +124,8 @@ GPL ports :
 	Implementation :
 
 	Port address decoding is rarely done, so most times all GPL ports n just map to
-	port 0.  To emulate this, we the GPL_lookup_table : we fill it with 0s when no decoding is done,
-	with 0,1,2,... 15 when complete decoding is done, etc.
+	port 0.  To emulate this, we use the GPL_lookup_table : we fill it with 0s when no decoding
+	is done, with 0,1,2,... 15 when complete decoding is done, etc.
 
 	Limits :
 
@@ -150,7 +156,7 @@ In short :
 	* 0x1600-0x16FE unassigned
 	* 0x1700-0x17FE hex-bus (prototypes)
 	* 0x1800-0x18FE thermal printer (early peripheral)
-	* 0x1900-0x19FE EPROM programmer ???
+	* 0x1900-0x19FE TI99/7 Mezzanine board (prototypes) - or EPROM programmer ???
 	* 0x1A00-0x1AFE unassigned
 	* 0x1B00-0x1BFE TI GPL debugger card
 	* 0x1C00-0x1CFE Video Controller Card ???
@@ -187,9 +193,9 @@ static unsigned char *current_page_ptr;
 
 static const char *floppy_name[3] /*= {NULL, NULL, NULL}*/;
 
-int ti99_floppy_init(int id, const char *name)
+int ti99_floppy_init(int id)
 {
-	floppy_name[id] = name;
+	floppy_name[id] = device_filename(IO_FLOPPY,id);
 	return INIT_OK;
 }
 
@@ -198,24 +204,64 @@ int ti99_floppy_init(int id, const char *name)
 	floppy_name[id] = NULL;
 }*/
 
+int ti99_cassette_init(int id)
+{
+	void *file;
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+
+		if (device_open(IO_CASSETTE, id, 0, &wa))
+			return INIT_FAILED;
+
+		return INIT_OK;
+	}
+
+	/* HJB 02/18: no file, create a new file instead */
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+		/* open in write mode */
+        if (device_open(IO_CASSETTE, id, 1, &wa))
+            return INIT_FAILED;
+		return INIT_OK;
+    }
+
+	return INIT_FAILED;
+}
+
+void ti99_cassette_exit(int id)
+{
+	device_close(IO_CASSETTE,id);
+}
+
 /*
 	Load ROM.  All files are in raw binary format.
 	1st ROM : GROM (up to 40kb)
 	2nd ROM : CPU ROM (8kb)
 	3rd ROM : CPU ROM, 2nd page (8kb)
 */
-int ti99_load_rom(int id, const char *name)
+int ti99_load_rom(int id)
 {
-	void *cartfile;
+	const char *name = device_filename(IO_CARTSLOT,id);
+    void *cartfile = NULL;
+
+	int slot_empty = ! (name && name[0]);
 
 	/* ti99_cart_mem is not initialized yet, so we initialize a local equivalent */
 	ti99_cart_mem = memory_region(REGION_CPU1)+0x6000;
 
-	cartidge_paged = FALSE;
+	/*current_page_ptr = ti99_cart_mem;*/
 
-	current_page_ptr = ti99_cart_mem;
-
-	if (name && name[0])
+	if (! slot_empty)
 	{
 		cartfile = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
 		if (cartfile == NULL)
@@ -224,25 +270,77 @@ int ti99_load_rom(int id, const char *name)
 				fprintf(errorlog, "TI99 - Unable to locate cartridge: %s\n", name);
 			return INIT_FAILED;
 		}
-		switch (id)
+	}
+
+#if 0
+	{
+		/* Trick - we identify file types according to their extension */
+		/* Original idea by Norberto Bensa */
+		char *ch, *ch2;
+
+		ch = strrchr(name, '.');
+		ch2 = ch -1;
+
+		if (ch)
 		{
-		case 0:
+			if (/*(! stricmp(ch2, "g.bin")) ||*/ (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
+			{
+				/* grom */
+				id = 0;
+			}
+			else if (/*(! stricmp(ch2, "c.bin")) ||*/ (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
+			{
+				/* rom first page */
+				id = 1;
+			}
+			else if (/*(! stricmp(ch2, "d.bin")) ||*/ (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
+			{
+				/* rom second page */
+				id = 2;
+			}
+		}
+	}
+#endif
+
+	switch (id)
+	{
+	case 0:
+		if (slot_empty)
+			memset(memory_region(REGION_USER1) + 0x6000, 0, 0xA000);
+		else
 			osd_fread(cartfile, memory_region(REGION_USER1) + 0x6000, 0xA000);
 
-			break;
-		case 1:
-			osd_fread_msbfirst(cartfile, ti99_cart_mem, 0x2000);
-			break;
-		case 2:
+		break;
+
+	case 1:
+		cartidge_pages[0] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x10000;
+
+		if (slot_empty)
+			memset(cartidge_pages[0], 0, 0x2000);
+		else
+			osd_fread_msbfirst(cartfile, cartidge_pages[0], 0x2000);
+
+		/* set first page as current page */
+		current_page_number = 0;
+		current_page_ptr = cartidge_pages[current_page_number];
+		/*memcpy(ti99_cart_mem, cartidge_pages[0], 0x2000);*/
+
+		break;
+
+	case 2:
+		cartidge_pages[1] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x12000;
+		if (slot_empty)
+			cartidge_paged = FALSE;
+		else
+		{
 			cartidge_paged = TRUE;
-			cartidge_pages[0] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x10000;
-			cartidge_pages[1] = /*malloc(0x2000)*/memory_region(REGION_CPU1)+0x12000;
-			current_page_number = 0;
-			memcpy(cartidge_pages[0], ti99_cart_mem, 0x2000);	/* save first page */
-			current_page_ptr = cartidge_pages[current_page_number];
 			osd_fread_msbfirst(cartfile, cartidge_pages[1], 0x2000);
-			break;
 		}
+		break;
+	}
+
+	if (! slot_empty)
+	{
 		osd_fclose(cartfile);
 	}
 
@@ -353,7 +451,7 @@ void ti99_stop_machine(void)
 
 	Actually, TI ROM header starts with a >AA.  Unfortunately, header-less ROMs do exist.
 */
-int ti99_id_rom(const char *name, const char *gamename)
+int ti99_id_rom(int id)
 {
 	return 1;
 }
@@ -361,9 +459,14 @@ int ti99_id_rom(const char *name, const char *gamename)
 /*
 	video initialization.
 */
-int ti99_vh_start(void)
+int ti99_4_vh_start(void)
 {
-	return TMS9928A_start(0x4000);		/* 16 kb of video RAM */
+	return TMS9928A_start(TMS99x8, 0x4000);		/* tms9918/28/29 with 16 kb of video RAM */
+}
+
+int ti99_4a_vh_start(void)
+{
+	return TMS9928A_start(TMS99x8A, 0x4000);	/* tms9918a/28a/29a with 16 kb of video RAM */
 }
 
 /*
@@ -456,7 +559,7 @@ void ti99_ww_cartmem(int offset, int data)
 	tms9900_ICount -= 4;
 
 	if (cartidge_paged)
-	{										/* if cartidge is paged */
+	{	/* if cartidge is paged */
 		int new_page = (offset >> 1) & 1;	/* new page number */
 
 		if (current_page_number != new_page)
@@ -538,11 +641,11 @@ int ti99_rw_rvdp(int offset)
 	tms9900_ICount -= 4;
 
 	if (offset & 2)
-	{									/* read VDP status */
+	{	/* read VDP status */
 		return (TMS9928A_register_r() << 8);
 	}
 	else
-	{									/* read VDP RAM */
+	{	/* read VDP RAM */
 		return (TMS9928A_vram_r() << 8);
 	}
 }
@@ -555,11 +658,11 @@ void ti99_ww_wvdp(int offset, int data)
 	tms9900_ICount -= 4;
 
 	if (offset & 2)
-	{									/* write VDP adress */
+	{	/* write VDP adress */
 		TMS9928A_register_w((data >> 8) & 0xff);
 	}
 	else
-	{									/* write VDP data */
+	{	/* write VDP data */
 		TMS9928A_vram_w((data >> 8) & 0xff);
 	}
 }
@@ -597,7 +700,7 @@ int ti99_rw_rgpl(int offset)
 /*int page = (offset & 0x3C) >> 2; *//* GROM/GRAM can be paged */
 
 	if (offset & 2)
-	{									/* read GPL adress */
+	{	/* read GPL adress */
 		int value;
 
 		/* increment gpl_addr (GPL wraps in 8k segments!) : */
@@ -607,7 +710,7 @@ int ti99_rw_rgpl(int offset)
 		/* to get full GPL address, we make two byte reads! */
 	}
 	else
-	{									/* read GPL data */
+	{	/* read GPL data */
 		int value = GPL_data[gpl_addr /*+ ((long) page << 16) */ ];	/* retreive byte */
 
 		/* increment gpl_addr (GPL wraps in 8k segments!) : */
@@ -628,11 +731,11 @@ void ti99_ww_wgpl(int offset, int data)
 /*int page = (offset & 0x3C) >> 2; *//* GROM/GRAM can be paged */
 
 	if (offset & 2)
-	{									/* write GPL adress */
+	{	/* write GPL adress */
 		gpl_addr = ((gpl_addr & 0xFF) << 8) | (data & 0xFF);
 	}
 	else
-	{									/* write GPL byte */
+	{	/* write GPL byte */
 #if 0
 		/* Disabled because we don't know whether we have RAM or ROM. */
 		/* GRAMs are quite uncommon, anyway. */
@@ -807,8 +910,10 @@ static int ti99_R9901_3(int offset)
 {
 	/*only important bit : bit 27 : tape input */
 
+	return device_input(IO_CASSETTE, 0) > 0 ? 8 : 0;
+
 	/*return 8; */
-	return 0;
+	/*return 0;*/
 }
 
 
@@ -857,22 +962,19 @@ static void ti99_AlphaW(int offset, int data)
 }
 
 /*
-	command CS1 tape unit motor - not emulated
+	command CS1 tape unit motor
 */
 static void ti99_CS1_motor(int offset, int data)
 {
-
-
+	/*device_status(IO_CASSETTE, 0, data);*/
 }
 
 /*
-	command CS2 tape unit motor - not emulated
+	command CS2 tape unit motor
 */
 static void ti99_CS2_motor(int offset, int data)
 {
-
-
-
+	/*device_status(IO_CASSETTE, 1, ! data);*/
 }
 
 /*
@@ -898,6 +1000,8 @@ static void ti99_audio_gate(int offset, int data)
 */
 static void ti99_CS_output(int offset, int data)
 {
+	device_output(IO_CASSETTE, 0, data);
+
 	if (data)
 		DAC_data_w(0, 0xFF);
 	else

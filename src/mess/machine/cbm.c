@@ -33,21 +33,22 @@ static struct
 }
 quick;
 
-int cbm_quick_init (int id, const char *name)
+int cbm_quick_init (int id)
 {
 	FILE *fp;
 	int read;
 	char *cp;
+	const char *name=device_filename(IO_HARDDISK, id);
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (name==NULL) return 1;
+	if (name==NULL) return INIT_OK;
 
 	quick.name = name;
 
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen (IO_HARDDISK, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
-		return 1;
+		return INIT_FAILED;
 
 	quick.length = osd_fsize (fp);
 
@@ -74,12 +75,12 @@ int cbm_quick_init (int id, const char *name)
 	if (quick.addr == 0)
 	{
 		osd_fclose (fp);
-		return 1;
+		return INIT_FAILED;
 	}
 	if ((quick.data = malloc (quick.length)) == NULL)
 	{
 		osd_fclose (fp);
-		return 1;
+		return INIT_FAILED;
 	}
 	read = osd_fread (fp, quick.data, quick.length);
 	osd_fclose (fp);
@@ -92,7 +93,7 @@ void cbm_quick_exit (int id)
 		free (quick.data);
 }
 
-int cbm_quick_open (int id, void *arg)
+int cbm_quick_open (int id, int mode, void *arg)
 {
 	int addr;
 	UINT8 *memory = arg;
@@ -104,6 +105,44 @@ int cbm_quick_open (int id, void *arg)
 	memcpy (memory + quick.addr, quick.data, quick.length);
 	memory[0x31] = memory[0x2f] = memory[0x2d] = addr & 0xff;
 	memory[0x32] = memory[0x30] = memory[0x2e] = addr >> 8;
+	if (errorlog)
+		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
+}
+
+int cbm_pet_quick_open (int id, int mode, void *arg)
+{
+	int addr;
+	UINT8 *memory = arg;
+
+	if (quick.data == NULL)
+		return 1;
+	addr = quick.addr + quick.length;
+
+	memcpy (memory + quick.addr, quick.data, quick.length);
+	memory[0x2e] = memory[0x2c] = memory[0x2a] = addr & 0xff;
+	memory[0x2f] = memory[0x2d] = memory[0x2b] = addr >> 8;
+	if (errorlog)
+		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
+				 quick.name, quick.addr, quick.length);
+
+	return 0;
+}
+
+int cbm_pet1_quick_open (int id, int mode, void *arg)
+{
+	int addr;
+	UINT8 *memory = arg;
+
+	if (quick.data == NULL)
+		return 1;
+	addr = quick.addr + quick.length;
+
+	memcpy (memory + quick.addr, quick.data, quick.length);
+	memory[0x80] = memory[0x7e] = memory[0x7c] = addr & 0xff;
+	memory[0x81] = memory[0x7f] = memory[0x7d] = addr >> 8;
 	if (errorlog)
 		fprintf (errorlog, "quick loading %s at %.4x size:%.4x\n",
 				 quick.name, quick.addr, quick.length);
@@ -128,33 +167,34 @@ static const struct IODevice *cbm_rom_find_device(void)
 {
 	int i;
 	for (i=0; (Machine->gamedrv->dev[i].count)
-			 &&(Machine->gamedrv->dev[i].type!=IO_CARTSLOT);
+			 &&(Machine->gamedrv->dev[i].type!=IO_CARTSLOT); 
 		 i++) ;
 	return Machine->gamedrv->dev[i].count!=0?Machine->gamedrv->dev+i:NULL;
 }
 
-int cbm_rom_init(int id, const char *name)
+int cbm_rom_init(int id)
 {
 	FILE *fp;
 	int i;
 	int size, j, read;
 	char *cp;
 	unsigned int addr, adr = 0;
+	const char *name=device_filename(IO_CARTSLOT,id);
 
-	if (name==NULL) return 1;
+	if (name==NULL) return INIT_OK;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)
 		;
-	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return 1;
+	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAILED;
 
-	if (!cbm_rom_find_device()->id(name, Machine->gamedrv->name)) return 1;
+	if (!cbm_rom_find_device()->id(id)) return INIT_FAILED;
 
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		if (errorlog)
 			fprintf (errorlog, "%s file not found\n", name);
-		return 1;
+		return INIT_FAILED;
 	}
 
 	size = osd_fsize (fp);
@@ -174,14 +214,14 @@ int cbm_rom_init(int id, const char *name)
 						 name, in, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);
-				return 1;
+				return INIT_FAILED;
 			}
 			cbm_rom[i].addr=in;
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
 			osd_fclose (fp);
 			if (read != size)
-				return 1;
+				return INIT_FAILED;
 		}
 		else if (stricmp (cp, ".crt") == 0)
 		{
@@ -214,7 +254,7 @@ int cbm_rom_init(int id, const char *name)
 
 				if (!(cbm_rom[i].chip=malloc(size)) ) {
 					osd_fclose(fp);
-					return 1;
+					return INIT_FAILED;
 				}
 				cbm_rom[i].addr=adr;
 				cbm_rom[i].size=in;
@@ -223,7 +263,7 @@ int cbm_rom_init(int id, const char *name)
 				if (read != in)
 				{
 					osd_fclose (fp);
-					return 1;
+					return INIT_FAILED;
 				}
 				j += 16 + in;
 			}
@@ -265,7 +305,7 @@ int cbm_rom_init(int id, const char *name)
 						 name, adr, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);
-				return 1;
+				return INIT_FAILED;
 			}
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=size;
@@ -274,9 +314,9 @@ int cbm_rom_init(int id, const char *name)
 			addr += size;
 			osd_fclose (fp);
 			if (read != size)
-				return 1;
+				return INIT_FAILED;
 		}
 	}
-	return 0;
+	return INIT_OK;
 }
 

@@ -8,12 +8,6 @@
 **
 ** http://www.msxnet.org/tech/tms9918a.txt
 **
-** Not emulated:
-**  - The screen image is rendered in `one go'. Modifications during
-**    screen build up are not shown.
-**  - 4kB VRAM emulation not checked.
-**  - Unknown if colours are correct (?).
-**
 ** By Sean Young 1999 (sean@msxnet.org).
 ** Based on code by Mike Balfour. Features added:
 ** - read-ahead
@@ -25,6 +19,18 @@
 ** - vertical coordinate corrected -- was one to high (255 => 0, 0 => 1)
 ** - errors in interrupt emulation
 ** - back drop correctly emulated.
+**
+** 19 feb 2000, Sean:
+** - now uses plot_pixel (..), so -ror works properly
+** - fixed bug in tms.patternmask
+**
+** Todo:
+** - The screen image is rendered in `one go'. Modifications during
+**   screen build up are not shown.
+** - Correctly emulate 4,8,16 kb VRAM if needed.
+** - uses plot_pixel (...) in TMS_sprites (...), which is rended in
+**   in a back buffer created with malloc (). Hmm..
+** - Colours are incorrect.
 */
 
 #include "driver.h"
@@ -100,8 +106,8 @@ static void (*ModeHandlers[])(struct osd_bitmap*) = {
 #define IMAGE_SIZE (256*192)        /* size of rendered image        */
 
 #define TMS_SPRITES_ENABLED ((tms.Regs[1] & 0x50) == 0x40)
-#define TMS_MODE ( (tms.Regs[0] & 2) | ((tms.Regs[1] & 0x10)>>4) | \
-                 ((tms.Regs[1] & 8)>>1))
+#define TMS_MODE ( (tms.model == TMS99x8A ? (tms.Regs[0] & 2) : 0) | \
+	((tms.Regs[1] & 0x10)>>4) | ((tms.Regs[1] & 8)>>1))
 
 static TMS9928A tms;
 
@@ -135,10 +141,12 @@ void TMS9928A_reset () {
     _TMS9928A_set_dirty (1);
 }
 
-int TMS9928A_start (unsigned int vram) {
+int TMS9928A_start (int model, unsigned int vram) {
     /* 4 or 16 kB vram please */
-    if (! ((vram == 0x1000) || (vram == 0x4000)) )
+    if (! ((vram == 0x1000) || (vram == 0x4000) || (vram == 0x2000)) )
         return 1;
+
+    tms.model = model;
 
     /* Video RAM */
     tms.vramsize = vram;
@@ -314,7 +322,8 @@ static void _TMS9928A_change_register (int reg, UINT8 val) {
                 tms.colour = ((tms.Regs[3] & 0x80) * 64) & (tms.vramsize - 1);
                 tms.colourmask = (tms.Regs[3] & 0x7f) * 8 | 7;
                 tms.pattern = ((tms.Regs[4] & 4) * 2048) & (tms.vramsize - 1);
-                tms.patternmask = (tms.Regs[4] & 3) * 256 | 255;
+                tms.patternmask = (tms.Regs[4] & 3) * 256 | 
+		    (tms.colourmask & 255);
             } else {
                 tms.colour = (tms.Regs[3] * 64) & (tms.vramsize - 1);
                 tms.pattern = (tms.Regs[4] * 2048) & (tms.vramsize - 1);
@@ -471,8 +480,8 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
     if (tms.anyDirtyColour) {
 	/* colours at sides must be reset */
 	for (y=0;y<192;y++) {
-	    for (x=0;x<8;x++) bmp->line[y][x] = bg;
-	    for (x=248;x<256;x++) bmp->line[y][x] = bg;
+	    for (x=0;x<8;x++) plot_pixel (bmp, x, y, bg);
+	    for (x=248;x<256;x++) plot_pixel (bmp, x, y, bg);
 	}
     }
 
@@ -487,7 +496,8 @@ static void _TMS9928A_mode1 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-                    bmp->line[y*8+yy][8+x*6+xx] = (pattern & 0x80) ? fg : bg;
+		    plot_pixel (bmp, 8+x*6+xx, y*8+yy, 
+			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -509,8 +519,8 @@ static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
     if (tms.anyDirtyColour) {
 	/* colours at sides must be reset */
 	for (y=0;y<192;y++) {
-	    for (x=0;x<8;x++) bmp->line[y][x] = bg;
-	    for (x=248;x<256;x++) bmp->line[y][x] = bg;
+	    for (x=0;x<8;x++) plot_pixel (bmp, x, y, bg);
+	    for (x=248;x<256;x++) plot_pixel (bmp, x, y, bg);
 	}
     }
 
@@ -525,7 +535,8 @@ static void _TMS9928A_mode12 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern = *patternptr++;
                 for (xx=0;xx<6;xx++) {
-                    bmp->line[y*8+yy][8+x*6+xx] = (pattern & 0x80) ? fg : bg;
+		    plot_pixel (bmp, 8+x*6+xx, y*8+yy, 
+                        (pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -552,7 +563,8 @@ static void _TMS9928A_mode0 (struct osd_bitmap *bmp) {
             for (yy=0;yy<8;yy++) {
                 pattern=*patternptr++;
                 for (xx=0;xx<8;xx++) {
-                    bmp->line[y*8+yy][x*8+xx] = (pattern & 0x80) ? fg : bg;
+		    plot_pixel (bmp, x*8+xx, y*8+yy, 
+			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -586,7 +598,8 @@ static void _TMS9928A_mode2 (struct osd_bitmap *bmp) {
                 fg = Machine->pens[colour / 16];
                 bg = Machine->pens[colour & 15];
                 for (xx=0;xx<8;xx++) {
-                    bmp->line[y*8+yy][x*8+xx] = (pattern & 0x80) ? fg : bg;
+		    plot_pixel (bmp, x*8+xx, y*8+yy, 
+			(pattern & 0x80) ? fg : bg);
                     pattern *= 2;
                 }
             }
@@ -614,14 +627,14 @@ static void _TMS9928A_mode3 (struct osd_bitmap *bmp) {
                 fg = Machine->pens[(*patternptr / 16)];
                 bg = Machine->pens[((*patternptr++) & 15)];
                 for (yyy=0;yyy<4;yyy++) {
-                    bmp->line[y*8+yy*4+yyy][x*8+0] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+1] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+2] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+3] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+4] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+5] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+6] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+7] = bg;
+		    plot_pixel (bmp, x*8+0, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+1, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+2, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+3, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+4, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+5, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+6, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+7, y*8+yy*4+yyy, bg);
                 }
             }
         }
@@ -649,14 +662,14 @@ static void _TMS9928A_mode23 (struct osd_bitmap *bmp) {
                 fg = Machine->pens[(*patternptr / 16)];
                 bg = Machine->pens[((*patternptr++) & 15)];
                 for (yyy=0;yyy<4;yyy++) {
-                    bmp->line[y*8+yy*4+yyy][x*8+0] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+1] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+2] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+3] = fg;
-                    bmp->line[y*8+yy*4+yyy][x*8+4] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+5] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+6] = bg;
-                    bmp->line[y*8+yy*4+yyy][x*8+7] = bg;
+		    plot_pixel (bmp, x*8+0, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+1, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+2, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+3, y*8+yy*4+yyy, fg);
+		    plot_pixel (bmp, x*8+4, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+5, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+6, y*8+yy*4+yyy, bg);
+		    plot_pixel (bmp, x*8+7, y*8+yy*4+yyy, bg);
                 }
             }
         }
@@ -676,12 +689,12 @@ static void _TMS9928A_modebogus (struct osd_bitmap *bmp) {
 
     for (y=0;y<192;y++) {
         xx=0;
-        n=8; while (n--) bmp->line[y][xx++] = bg;
+        n=8; while (n--) plot_pixel (bmp, xx++, y, bg);
         for (x=0;x<40;x++) {
-            n=4; while (n--) bmp->line[y][xx++] = fg;
-            n=2; while (n--) bmp->line[y][xx++] = bg;
+            n=4; while (n--) plot_pixel (bmp, xx++, y, fg);
+            n=2; while (n--) plot_pixel (bmp, xx++, y, bg);
         }
-        n=8; while (n--) bmp->line[y][xx++] = bg;
+        n=8; while (n--) plot_pixel (bmp, xx++, y, bg);
     }
 
     _TMS9928A_set_dirty (0);
@@ -752,8 +765,8 @@ static void _TMS9928A_sprites (struct osd_bitmap *bmp) {
                                 tms.StatusReg |= 0x20;
                             } else {
                                 tms.dBackMem[yy*256+xx] = 0xff;
-                                if (c && bmp) bmp->line[yy][xx] =
-				    Machine->pens[c];
+                                if (c && bmp) plot_pixel (bmp, xx, yy,
+				    Machine->pens[c]);
                             }
                         }
                     }
@@ -787,8 +800,8 @@ static void _TMS9928A_sprites (struct osd_bitmap *bmp) {
                                         tms.StatusReg |= 0x20;
                                     } else {
                                         tms.dBackMem[yy*256+xx] = 0xff;
-                                        if (c && bmp) bmp->line[yy][xx] =
-                                            Machine->pens[c];
+                                        if (c && bmp) plot_pixel (bmp, xx, yy,
+                                            Machine->pens[c]);
                                     }
                                 }
                                 if (((xx+1) >=0) && ((xx+1) < 256)) {
@@ -796,8 +809,8 @@ static void _TMS9928A_sprites (struct osd_bitmap *bmp) {
                                         tms.StatusReg |= 0x20;
                                     } else {
                                         tms.dBackMem[yy*256+xx+1] = 0xff;
-                                        if (c && bmp) bmp->line[yy][xx+1] =
-                                            Machine->pens[c];
+                                        if (c && bmp) plot_pixel (bmp, xx+1, yy,
+                                            Machine->pens[c]);
                                     }
                                 }
                             }

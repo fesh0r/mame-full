@@ -43,7 +43,7 @@ void genesis_init_machine (void)
 }
 
 
-int genesis_load_rom (int id, const char *rom_name)
+int genesis_load_rom (int id)
 {
 	FILE *romfile;
 	unsigned char *tmpROMnew, *tmpROM;
@@ -56,7 +56,7 @@ int genesis_load_rom (int id, const char *rom_name)
 if (errorlog) fprintf (errorlog, "ROM load/init regions\n");
 
 
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		printf("Genesis Requires Cartridge!\n");
 		return INIT_FAILED;
@@ -160,13 +160,13 @@ bad:
 	osd_fclose (romfile);
 	return 1;
 }
-int genesis_id_rom (const char *name, const char *gamename)
+int genesis_id_rom (int id)
 {
 	FILE *romfile;
 	unsigned char temp[0x110];
 	int retval = 0;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	osd_fread (romfile, temp, 0x110);
 

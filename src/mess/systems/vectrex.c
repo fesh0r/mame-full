@@ -16,8 +16,8 @@ Bruce Tomlin (hardware info)
 extern unsigned char *vectrex_ram;
 extern int vectrex_ram_r (int offset);
 extern void vectrex_ram_w (int offset, int data);
-extern int vectrex_load_rom (int id, const char *rom_name);
-extern int vectrex_id_rom (const char *name, const char *gamename);
+extern int vectrex_load_rom (int id);
+extern int vectrex_id_rom (int id);
 
 /* From vidhrdw/vectrex.c */
 extern int vectrex_start(void);
@@ -186,7 +186,7 @@ static const struct IODevice io_vectrex[] = {
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
-		"bin\0",            /* file extensions */
+		"bin\0gam\0",       /* file extensions */
 		NULL,				/* private */
 		vectrex_id_rom, 	/* id */
 		vectrex_load_rom,	/* init */
@@ -196,6 +196,7 @@ static const struct IODevice io_vectrex[] = {
 		NULL,				/* close */
 		NULL,				/* status */
 		NULL,				/* seek */
+		NULL,				/* tell */
 		NULL,				/* input */
 		NULL,				/* output */
 		NULL,				/* input_chunk */

@@ -7,20 +7,18 @@
 
 [C64]
 # normal modules
-87c243fd = Attack of the Mutant Camels, Jeff Minter, 1983
-69f5cc2d = C.C.S. Monitor, Par Sundel, 1996
-5178fb21 = Gorf, Commodore, 1983, PLAYER VANISHES STAGE 1
-d7827f16 = Kickman, Commodore, 1982, SPRITE COLLISION ISSUES
-225f9de2 = Jack Attack, Commodore, 1983
-c69054e8 = Jungle Hunt, Atari, 1983, Switch Joystick Ports (NumLock) to Play
-6500fe32 = Lazarian, Commodore, 1983
-ab8e8507 = Moon Patrol, ?, 198?, NOT PLAYABLE/GRAPHICS INCORRECT
+87c243fd = Attack of the Mutant Camels|Jeff Minter|1983
+69f5cc2d = C.C.S. Monitor|Par Sundel|1996
+5178fb21 = Gorf|Commodore|1983|PLAYER VANISHES STAGE 1
+d7827f16 = Kickman|Commodore|1982|SPRITE COLLISION ISSUES
+225f9de2 = Jack Attack|Commodore|1983
+c69054e8 = Jungle Hunt|Atari|1983|Switch Joystick Ports (NumLock) to Play
+6500fe32 = Lazarian|Commodore|1983|
+ab8e8507 = Moon Patrol|?????|198?|NOT PLAYABLE/GRAPHICS INCORRECT
 71701c5b = defiersc.crt tool
 666ae711 = paintbru.crt tool
 
 # special modules
-557752ef =  kcspowec.crt special hardware at 0xdfxx
-671a2b58 =  robocop2.crt special hardware at 0xde00
-2eb7d286 =  supergam.crt special hardware at 0xdf00
-
-
+557752ef =  kcspowec.crt|????|????|special hardware at 0xdfxx
+671a2b58 =  robocop2.crt|????|????|special hardware at 0xde00
+2eb7d286 =  supergam.crt|????|????|special hardware at 0xdf00

@@ -28,16 +28,16 @@ extern int  AY3600_keydata_strobe_r(void);
 extern void apple2_slot6_init(void);
 
 /* local */
-unsigned char *apple2_slot_rom;
-unsigned char *apple2_slot1;
-unsigned char *apple2_slot2;
-unsigned char *apple2_slot3;
-unsigned char *apple2_slot4;
-unsigned char *apple2_slot5;
-unsigned char *apple2_slot6;
-unsigned char *apple2_slot7;
+UINT8 *apple2_slot_rom;
+UINT8 *apple2_slot1;
+UINT8 *apple2_slot2;
+UINT8 *apple2_slot3;
+UINT8 *apple2_slot4;
+UINT8 *apple2_slot5;
+UINT8 *apple2_slot6;
+UINT8 *apple2_slot7;
 
-unsigned char *apple2_rom;
+UINT8 *apple2_rom;
 
 APPLE2_STRUCT a2;
 
@@ -87,13 +87,13 @@ void apple2e_init_machine(void)
 /***************************************************************************
   apple2_id_rom
 ***************************************************************************/
-int apple2_id_rom (const char *name, const char *gamename)
+int apple2_id_rom (int id)
 {
 	FILE *romfile;
-	unsigned char magic[4];
+	UINT8 magic[4];
 	int retval;
 
-	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
 
 	retval = 0;
 	/* Verify the file is in Apple II format */
@@ -108,7 +108,7 @@ int apple2_id_rom (const char *name, const char *gamename)
 /***************************************************************************
   apple2e_load_rom
 ***************************************************************************/
-int apple2e_load_rom (int id, const char *rom_name)
+int apple2e_load_rom (int id)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
@@ -119,7 +119,7 @@ int apple2e_load_rom (int id, const char *rom_name)
 /***************************************************************************
   apple2ee_load_rom
 ***************************************************************************/
-int apple2ee_load_rom (int id, const char *rom_name)
+int apple2ee_load_rom (int id)
 {
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
@@ -451,7 +451,6 @@ void apple2_c02x_w(int offset, int data)
 ***************************************************************************/
 int apple2_c03x_r(int offset)
 {
-#if 0
 	switch (offset)
 	{
 		case 0x00:
@@ -492,7 +491,7 @@ int apple2_c03x_r(int offset)
 		case 0x0F:
 			break;
 	}
-#endif
+
 	if (a2_speaker_state==0xFF)
 		a2_speaker_state=0;
 	else
@@ -507,7 +506,6 @@ int apple2_c03x_r(int offset)
 ***************************************************************************/
 void apple2_c03x_w(int offset, int data)
 {
-#if 0
 	switch (offset)
 	{
 		case 0x00:
@@ -553,7 +551,6 @@ void apple2_c03x_w(int offset, int data)
 		case 0x0F:
 			break;
 	}
-#endif
 	if (a2_speaker_state==0xFF)
 		a2_speaker_state=0;
 	else

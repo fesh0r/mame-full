@@ -158,11 +158,11 @@ void zx_shutdown_machine(void)
 {
 }
 
-int zx_cassette_init(int id, const char *name)
+int zx_cassette_init(int id)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)
 	{
 		tape_size = osd_fsize(file);

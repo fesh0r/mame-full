@@ -42,9 +42,9 @@ void enterprise_shutdown_machine(void)
 	Enterprise_RAM = NULL;
 }
 
-int enterprise_floppy_init(int id, const char *name)
+int enterprise_floppy_init(int id)
 {
-    ep128_floppy_name[id] = name;
+	ep128_floppy_name[id] = device_filename(IO_FLOPPY,id);
 
     return 0;
 }

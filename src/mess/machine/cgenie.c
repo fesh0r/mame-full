@@ -151,87 +151,90 @@ static int opbaseoverride(int PC)
 				if( errorlog ) fprintf(errorlog, "failed to allocate 64K buff\n");
 				return PC;
 			}
-			cmd = osd_fopen(Machine->gamedrv->name, cassette_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
-			{
-				free(buff);
+				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+			if( !cmd )
+            {
 				if( errorlog ) fprintf(errorlog, "failed to open '%s'\n", cassette_name);
-                return PC;
             }
-			size = osd_fread(cmd, buff, 65536);
-			s = buff;
-			if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
+			else
 			{
-				s = memchr(s, 26, size);
-				if( s )
+				size = osd_fread(cmd, buff, 65536);
+				s = buff;
+				if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
 				{
-					*s++ = '\n';
-					*s++ = '\0';
-					LOG((errorlog,"%s",s));
-				}
-				size -= s - buff;
-			}
-			if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
-			{
-				LOG((errorlog,"image name: [%-6.6s]\n",s+1));
-				s += 8;
-				size -= 8;
-				while( size > 3 )
-				{
-					data = *s++;
-					switch( data )
+					s = memchr(s, 26, size);
+					if( s )
 					{
-					case 0x01:		   /* CMD file header */
-					case 0x07:		   /* another type of CMD file header */
-					case 0x3c:		   /* CAS file header */
-						block_len = *s++;
-						/* on CMD files size zero means size 256 */
-						if( block_len == 0 )
-							block_len = 256;
-						block_ofs = *s++;
-						block_ofs += 256 * *s++;
-						if( data != 0x3c )
+						*s++ = '\n';
+						*s++ = '\0';
+						LOG((errorlog,"%s",s));
+					}
+					size -= s - buff;
+				}
+				if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
+					{
+					LOG((errorlog,"image name: [%-6.6s]\n",s+1));
+					s += 8;
+					size -= 8;
+					while( size > 3 )
+					{
+						data = *s++;
+						switch( data )
 						{
-							block_len -= 2;
+						case 0x01:		   /* CMD file header */
+						case 0x07:		   /* another type of CMD file header */
+						case 0x3c:		   /* CAS file header */
+							block_len = *s++;
+							/* on CMD files size zero means size 256 */
 							if( block_len == 0 )
 								block_len = 256;
-						}
-						size -= 4;
-						LOG((errorlog, "cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
-						while( block_len && size )
-						{
-							cpu_writemem16(block_ofs, *s);
-							s++;
-							block_ofs++;
-							block_len--;
+							block_ofs = *s++;
+							block_ofs += 256 * *s++;
+							if( data != 0x3c )
+							{
+								block_len -= 2;
+								if( block_len == 0 )
+									block_len = 256;
+							}
+							size -= 4;
+							LOG((errorlog, "cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
+							while( block_len && size )
+							{
+								cpu_writemem16(block_ofs, *s);
+								s++;
+								block_ofs++;
+								block_len--;
+								size--;
+							}
+							if( data == 0x3c )
+								s++;
+							break;
+						case 0x02:
+							block_len = *s++;
+							size -= 1;
+						case 0x78:
+							block_ofs = *s++;
+							block_ofs += 256 * *s++;
+							if( !entry )
+								entry = block_ofs;
+							LOG((errorlog, "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry));
+							size -= 3;
+							if( size <= 3 )
+							{
+								LOG((errorlog,"starting program at $%04X\n", block_ofs));
+							}
+							break;
+						default:
 							size--;
 						}
-						if( data == 0x3c )
-							s++;
-						break;
-					case 0x02:
-						block_len = *s++;
-						size -= 1;
-					case 0x78:
-						block_ofs = *s++;
-						block_ofs += 256 * *s++;
-						if( !entry )
-							entry = block_ofs;
-						LOG((errorlog, "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry));
-						size -= 3;
-						if( size <= 3 )
-						{
-							LOG((errorlog,"starting program at $%04X\n", block_ofs));
-						}
-						break;
-					default:
-						size--;
 					}
 				}
+				osd_fclose(cmd);
+				cpu_set_pc(entry);
 			}
 			free(buff);
-			osd_fclose(cmd);
-			cpu_set_pc(entry);
 		}
         cpu_setOPbaseoverride(0,NULL);
     }
@@ -363,19 +366,19 @@ void cgenie_stop_machine(void)
 	tape_put_close();
 }
 
-int cgenie_cassette_init(int id, const char *name)
+int cgenie_cassette_init(int id)
 {
-	cassette_name = name;
+	cassette_name = device_filename(IO_CASSETTE,id);
 	return 0;
 }
 
-int cgenie_floppy_init(int id, const char *name)
+int cgenie_floppy_init(int id)
 {
-	floppy_name[id] = name;
+	floppy_name[id] = device_filename(IO_FLOPPY,id);
 	return 0;
 }
 
-int cgenie_rom_load(int id, const char *name)
+int cgenie_rom_load(int id)
 {
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -401,7 +404,7 @@ int cgenie_rom_load(int id, const char *name)
 	return result;
 }
 
-int cgenie_rom_id(const char *name, const char *gamename)
+int cgenie_rom_id(int id)
 {
 	/* This driver cannot ID ROMs */
 	return 0;

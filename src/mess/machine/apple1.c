@@ -164,7 +164,7 @@ int apple1_rom_load(void)
 
 }
 
-int apple1_rom_id(const char *name, const char *gamename)
+int apple1_rom_id(int id)
 {
 
 	return (1);

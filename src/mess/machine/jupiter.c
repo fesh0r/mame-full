@@ -11,11 +11,8 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 
-int		jupiter_sh_state;
-void	jupiter_sh_update (int);
-
-int jupiter_load_ace(int id, const char *name);
-int jupiter_load_tap(int id, const char *name);
+int jupiter_load_ace(int id);
+int jupiter_load_tap(int id);
 
 #define	JUPITER_NONE	0
 #define	JUPITER_ACE	1
@@ -93,8 +90,6 @@ void jupiter_init_machine(void)
 	if (errorlog)
 		fprintf(errorlog, "jupiter_init\r\n");
 
-	timer_pulse (1.0 / Machine->sample_rate, 0, jupiter_sh_update);
-
 	if (jupiter_data)
 	{
 		cpu_setOPbaseoverride(0, jupiter_opbaseoverride);
@@ -113,15 +108,6 @@ void jupiter_stop_machine(void)
 
 }
 
-void	jupiter_sh_update (int param)
-
-{
-
-if (errorlog) fprintf (errorlog, "jupiter_sh_state: %d.\n", jupiter_sh_state);
-DAC_data_w (0, jupiter_sh_state * 127);
-
-}
-
 /* Load in .ace files. These are memory images of 0x2000 to 0x7fff
    and compressed as follows:
 
@@ -131,7 +117,7 @@ DAC_data_w (0, jupiter_sh_state * 127);
    <byt>		: <byt>
 */
 
-int jupiter_load_ace(int id, const char *name)
+int jupiter_load_ace(int id)
 {
 
 	void *file;
@@ -140,13 +126,13 @@ int jupiter_load_ace(int id, const char *name)
 
 	done = 0;
 	jupiter_index = 0;
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, 0);
 	if (file)
 	{
 		if ((jupiter_data = malloc(0x6000)))
 		{
 			if (errorlog)
-				fprintf(errorlog, "Loading file %s.\r\n", name);
+				fprintf(errorlog, "Loading file %s.\r\n", device_filename(IO_CARTSLOT,id));
 			while (!done && (jupiter_index < 0x6001))
 			{
 				osd_fread(file, &jupiter_byte, 1);
@@ -201,7 +187,7 @@ int jupiter_load_ace(int id, const char *name)
 
 }
 
-int jupiter_load_tap(int id, const char *name)
+int jupiter_load_tap(int id)
 {
 
 	void *file;
@@ -209,13 +195,13 @@ int jupiter_load_tap(int id, const char *name)
 	int loop;
 	UINT16 hdr_len;
 
-	if (errorlog)
-		fprintf(errorlog, "Loading file %s.\r\n", name);
-
-	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, 0);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
 	if (file)
 	{
-		osd_fread(file, &inpbyt, 1);
+		if (errorlog)
+			fprintf(errorlog, "Loading file %s.\r\n", device_filename(IO_CASSETTE,id));
+
+        osd_fread(file, &inpbyt, 1);
 		hdr_len = inpbyt;
 		osd_fread(file, &inpbyt, 1);
 		hdr_len += (inpbyt * 256);

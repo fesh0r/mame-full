@@ -276,7 +276,7 @@ ROM_START(nascom1)
 	ROM_REGION(0x10000, REGION_CPU1)
 	ROM_LOAD("nascom1.rom", 0x0000, 0x0800, 0x00000000)
 	ROM_REGION(0x0500, REGION_GFX1)
-	ROM_LOAD("nascom1.chr", 0x0000, 0x0500, 0xac4d33b0)
+	ROM_LOAD("nascom1.chr", 0x0000, 0x0500, 0x00000000)
 ROM_END
 
 static	const	struct	IODevice	io_nascom1[] =

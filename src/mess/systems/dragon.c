@@ -3,12 +3,19 @@
  Mathis Rosenhauer
  Nate Woods
 
+ TODO
+ Implement missing SAM registers
+	Page		($FFD4-$FFD5)
+	CPU Rate	($FFD6-$FFD8) (currently we double the speed on both sides)
+	Memory Size	($FFDA-$FFDD) (we never limit the memory size)
+
  ******************************************************************************/
 #include "driver.h"
 #include "machine/6821pia.h"
+#include "mess/vidhrdw/m6847.h"
 
 /* from machine/cocodisk.c */
-extern int coco_floppy_init(int id, const char *name);
+extern int coco_floppy_init(int id);
 extern void coco_floppy_exit(int id);
 extern int coco_floppy_r(int offset);
 extern void coco_floppy_w(int offset, int data);
@@ -21,29 +28,28 @@ extern void dragon64_init_machine(void);
 extern void coco_init_machine(void);
 extern void coco3_init_machine(void);
 extern void dragon_stop_machine(void);
-extern int coco_cassette_init(int id, const char *name);
-extern int dragon32_rom_load(int id, const char *name);
-extern int dragon64_rom_load(int id, const char *name);
-extern int coco3_rom_load(int id, const char *name);
+extern int coco_cassette_init(int id);
+extern int coco3_cassette_init(int id);
+extern void coco_cassette_exit(int id);
+extern int dragon32_rom_load(int id);
+extern int dragon64_rom_load(int id);
+extern int coco3_rom_load(int id);
 
 extern int dragon_mapped_irq_r(int offset);
 extern int coco3_mapped_irq_r(int offset);
-extern void dragon64_enable_64k_w(int offset, int data);
-extern void coco3_enable_64k_w(int offset, int data);
+extern void dragon64_sam_himemmap(int offset, int data);
+extern void coco3_sam_himemmap(int offset, int data);
 extern int coco3_mmu_r(int offset);
 extern void coco3_mmu_w(int offset, int data);
 extern int coco3_gime_r(int offset);
 extern void coco3_gime_w(int offset, int data);
-extern void dragon_speedctrl_w(int offset, int data);
+extern void dragon_sam_speedctrl(int offset, int data);
+extern void dragon_sam_page_mode(int offset, int data);
+extern void dragon_sam_memory_size(int offset, int data);
 
-/* from vidhrdw/dragon.c */
-extern UINT8 *coco_ram;
 extern int dragon_vh_start(void);
-extern int coco_vh_start(void);
 extern int coco3_vh_start(void);
-extern void dragon_vh_stop(void);
 extern void coco3_vh_stop(void);
-extern void dragon_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern void dragon_sam_display_offset(int offset, int data);
 extern void dragon_sam_vdg_mode(int offset, int data);
@@ -67,7 +73,7 @@ static struct MemoryReadAddress dragon32_readmem[] =
 
 static struct MemoryWriteAddress dragon32_writemem[] =
 {
-	{ 0x0000, 0x7fff, coco_ram_w, &coco_ram },
+	{ 0x0000, 0x7fff, coco_ram_w },
 	{ 0x8000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xfeff, MWA_ROM }, /* cart area */
 	{ 0xff00, 0xff1f, pia_0_w },
@@ -75,7 +81,9 @@ static struct MemoryWriteAddress dragon32_writemem[] =
 	{ 0xff40, 0xff5f, dragon_floppy_w },
 	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd6, 0xffd9, dragon_speedctrl_w },
+	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
+	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
+	{ 0xffda, 0xffdd, dragon_sam_memory_size },
 	{ -1 }	/* end of table */
 };
 
@@ -92,15 +100,17 @@ static struct MemoryReadAddress d64_readmem[] =
 
 static struct MemoryWriteAddress d64_writemem[] =
 {
-	{ 0x0000, 0x7fff, coco_ram_w, &coco_ram },
+	{ 0x0000, 0x7fff, coco_ram_w},
 	{ 0x8000, 0xfeff, MWA_BANK1 },
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_floppy_w },
 	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd6, 0xffd9, dragon_speedctrl_w },
-	{ 0xffde, 0xffdf, dragon64_enable_64k_w },
+	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
+	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
+	{ 0xffda, 0xffdd, dragon_sam_memory_size },
+	{ 0xffde, 0xffdf, dragon64_sam_himemmap },
 	{ -1 }	/* end of table */
 };
 
@@ -125,6 +135,11 @@ static struct MemoryReadAddress coco3_readmem[] =
 	{ -1 }	/* end of table */
 };
 
+/* Note that the CoCo 3 doesn't use the SAM VDG mode registers
+ *
+ * Also, there might be other SAM registers that are ignored in the CoCo 3;
+ * I am not sure which ones are...
+ */
 static struct MemoryWriteAddress coco3_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_BANK1 },
@@ -142,34 +157,13 @@ static struct MemoryWriteAddress coco3_writemem[] =
 	{ 0xff98, 0xff9f, coco3_gimevh_w },
 	{ 0xffa0, 0xffaf, coco3_mmu_w },
 	{ 0xffb0, 0xffbf, coco3_palette_w },
-	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd6, 0xffd9, dragon_speedctrl_w },
-	{ 0xffde, 0xffdf, coco3_enable_64k_w },
+	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
+	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
+	{ 0xffda, 0xffdd, dragon_sam_memory_size },
+	{ 0xffde, 0xffdf, coco3_sam_himemmap },
 	{ -1 }	/* end of table */
 };
-
-static unsigned char palette[] = {
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0xff,0x00, /* YELLOW */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x00,0x00, /* RED */
-	0xff,0xff,0xff, /* BUFF */
-	0x00,0xff,0xff, /* CYAN */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xff,0x80,0x00, /* ORANGE */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/RED */
-	0x00,0x80,0x00, /* ARTIFACT GREEN/BLUE */
-	0xff,0x80,0x00, /* ARTIFACT BUFF/RED */
-	0x00,0x80,0xff, /* ARTIFACT BUFF/BLUE */
-};
-
-/* Initialise the palette */
-static void init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
-{
-	memcpy(sys_palette,palette,sizeof(palette));
-}
 
 /* Dragon keyboard
 
@@ -251,9 +245,9 @@ INPUT_PORTS_START( dragon32 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X|IPF_CENTER, 100, 10, 0, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X, 100, 10, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y|IPF_CENTER, 100, 10, 0, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 
 	PORT_START /* 9 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
@@ -346,9 +340,9 @@ INPUT_PORTS_START( coco )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X|IPF_CENTER, 100, 10, 0, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X, 100, 10, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y|IPF_CENTER, 100, 10, 0, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y, 100, 10, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 
 	PORT_START /* 9 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
@@ -438,17 +432,20 @@ INPUT_PORTS_START( coco3 )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "CLEAR", KEYCODE_HOME, IP_JOY_NONE)
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "BREAK", KEYCODE_END, IP_JOY_NONE)
-	PORT_BITX(0x78, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "ALT",   KEYCODE_LALT, IP_JOY_NONE)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "CTRL",  KEYCODE_LCONTROL, IP_JOY_NONE)
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "F1",    KEYCODE_F1, IP_JOY_NONE)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "F2",    KEYCODE_F2, IP_JOY_NONE)
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X|IPF_CENTER, 100, 10, 0, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X, 100, 10, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y|IPF_CENTER, 100, 10, 0, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y, 100, 10, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 
 	PORT_START /* 9 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "right button", KEYCODE_RALT, IP_JOY_DEFAULT)
-	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "left button", KEYCODE_LALT, IP_JOY_DEFAULT)
+	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "left button", KEYCODE_RCONTROL, IP_JOY_DEFAULT)
 
 	PORT_START /* 10 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
@@ -491,15 +488,15 @@ static struct MachineDriver machine_driver_dragon32 =
 	16*12,									/* screen height (pixels doubled) */
 	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
 	0,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	M6847_TOTAL_COLORS,
 	0,
-	init_palette,								/* initialise palette */
+	m6847_vh_init_palette,						/* initialise palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	dragon_vh_start,
-	dragon_vh_stop,
-	dragon_vh_screenrefresh,
+	m6847_vh_stop,
+	m6847_vh_update,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -524,7 +521,7 @@ static struct MachineDriver machine_driver_coco =
 			0, 0,
 		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,		 /* frames per second, vblank duration */
+	60, 0,		 /* frames per second, vblank duration */
 	0,
 	coco_init_machine,
 	dragon_stop_machine,
@@ -534,15 +531,15 @@ static struct MachineDriver machine_driver_coco =
 	16*12,									/* screen height (pixels doubled) */
 	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
 	0,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	M6847_TOTAL_COLORS,
 	0,
-	init_palette,								/* initialise palette */
+	m6847_vh_init_palette,						/* initialise palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
-	coco_vh_start,
-	dragon_vh_stop,
-	dragon_vh_screenrefresh,
+	dragon_vh_start,
+	m6847_vh_stop,
+	m6847_vh_update,
 
 	/* sound hardware */
 	0, 0, 0, 0,
@@ -615,28 +612,20 @@ ROM_END
 
 ROM_START(coco3)
      ROM_REGION(0x90000,REGION_CPU1)
-     //ROM_LOAD("coco3.rom", 0x80000, 0x7f00, BADCRC(0xdfce21e5))
-	 ROM_LOAD("coco3.rom", 0x80000, 0x7f00, 0x00000000)
+	 ROM_LOAD("coco3.rom", 0x80000, 0x7e00, 0x31aec822)
      ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x7eaa44e3)
 ROM_END
-/*
-ROM_START(cp400)
-     ROM_REGION(0x18000,REGION_CPU1)
-     ROM_LOAD("cp400.rom",  0x10000, 0x60fe, 0xea9acb1e)
-ROM_END
-*/
+
 ROM_START(cp400)
      ROM_REGION(0x18000,REGION_CPU1)
      ROM_LOAD("cp400bas.rom",  0x10000, 0x4000, 0x878396a5)
      ROM_LOAD("cp400dsk.rom",  0x14000, 0x2000, 0xe9ad60a0)
 ROM_END
 
-
-
 static const struct IODevice io_coco[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		2,					/* count */
+		IO_SNAPSHOT,		/* type */
+		1,					/* count */
 		"pak\0", 		    /* file extensions */
         NULL,               /* private */
 		NULL,				/* id */
@@ -652,24 +641,7 @@ static const struct IODevice io_coco[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",			/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		coco_cassette_init, /* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
@@ -693,8 +665,8 @@ static const struct IODevice io_coco[] = {
 
 static const struct IODevice io_dragon32[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		2,					/* count */
+		IO_SNAPSHOT,		/* type */
+		1,					/* count */
 		"pak\0",		    /* file extensions */
         NULL,               /* private */
 		NULL,				/* id */
@@ -710,24 +682,7 @@ static const struct IODevice io_dragon32[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",			/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		coco_cassette_init, /* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
@@ -751,8 +706,8 @@ static const struct IODevice io_dragon32[] = {
 
 static const struct IODevice io_cp400[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		2,					/* count */
+		IO_SNAPSHOT,		/* type */
+		1,					/* count */
 		"pak\0",		    /* file extensions */
         NULL,               /* private */
 		NULL,				/* id */
@@ -768,24 +723,7 @@ static const struct IODevice io_cp400[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",			/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		coco_cassette_init, /* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
@@ -809,8 +747,8 @@ static const struct IODevice io_cp400[] = {
 
 static const struct IODevice io_coco3[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		2,					/* count */
+		IO_SNAPSHOT,		/* type */
+		1,					/* count */
 		"pak\0",		    /* file extensions */
         NULL,               /* private */
 		NULL,				/* id */
@@ -826,24 +764,7 @@ static const struct IODevice io_coco3[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",			/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		coco_cassette_init, /* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
@@ -870,4 +791,3 @@ COMP( 1982, coco,	  0,		coco,	  coco, 	0,		  "Tandy Radio Shack",  "Color Comput
 COMP( 1986, coco3,	  coco, 	coco3,	  coco3, 	0,		  "Tandy Radio Shack",  "Color Computer 3" )
 COMP( 1982, dragon32, coco, 	dragon32, dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP( 1984, cp400,	  coco, 	coco,	  coco, 	0,		  "Prologica",          "Prologica CP400" )
-

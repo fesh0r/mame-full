@@ -17,7 +17,7 @@ vc20  commodore vc20  (pal version)
 ------------------------------------
 
 vic20 ntsc-version
- when screen is two wide right or low, 
+ when screen is two wide right or low,
   or screen doesn't fitt in visible area
   or gameplay is too fast
  try the pal version
@@ -109,16 +109,16 @@ use LOAD"",1,1 for loading programs to their special address
 
 several programs rely on more features
 (loading other file types, writing, ...)
- 
-Discs 
------ 
-only file load from drive 8 and 9 implemented 
+
+Discs
+-----
+only file load from drive 8 and 9 implemented
  loads file from rom directory (*.prg,*.p00)(must NOT be specified on commandline)
  or file from d64 image (here also directory command LOAD"$",8 supported)
-LOAD"filename",8 
-or LOAD"filename",8,1 (for loading machine language programs at their address) 
-for loading 
-type RUN or the appropriate SYS call to start them 
+LOAD"filename",8
+or LOAD"filename",8,1 (for loading machine language programs at their address)
+for loading
+type RUN or the appropriate SYS call to start them
 
 several programs rely on more features
 (loading other file types, writing, ...)
@@ -230,10 +230,10 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )\
 	PORT_START \
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_HOME,KEYCODE_PGUP,0,0)\
+		     30,20,0,255,KEYCODE_HOME,KEYCODE_PGUP,0,0)\
 	PORT_START \
 	PORT_ANALOGX(0xff,128,IPT_PADDLE|IPF_PLAYER2|IPF_REVERSE,\
-		     30,20,0,0,255,KEYCODE_END,KEYCODE_PGDN,0,0)\
+		     30,20,0,255,KEYCODE_END,KEYCODE_PGDN,0,0)\
 	PORT_START \
 	DIPS_HELPER( 0x80, "DEL INST",          KEYCODE_BACKSPACE)\
 	DIPS_HELPER( 0x40, "Pound",             KEYCODE_MINUS)\
@@ -371,26 +371,26 @@ INPUT_PORTS_START (vic20)
 	 DIPS_BOTH
      PORT_START							   /* in 16 lightpen X */
      PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-				   30, 2, 0, 0, (VIC6560_MAME_XSIZE - 1),
+				   30, 2, 0, (VIC6560_MAME_XSIZE - 1),
 				   KEYCODE_LEFT, KEYCODE_RIGHT,
 				   JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	 PORT_START							   /* in 17 lightpen Y */
      PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER4,
-				   30, 2, 0, 0, (VIC6560_MAME_YSIZE - 1),
+				   30, 2, 0, (VIC6560_MAME_YSIZE - 1),
 				   KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
-	 
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START (vc20)
 	 DIPS_BOTH
      PORT_START							   /* in 16 lightpen X */
      PORT_ANALOGX (0xff, 0, IPT_PADDLE | IPF_PLAYER3,
-				   30, 2, 0, 0, (VIC6561_MAME_XSIZE - 1),
+				   30, 2, 0, (VIC6561_MAME_XSIZE - 1),
 				   KEYCODE_LEFT, KEYCODE_RIGHT,
 				   JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	 PORT_START							   /* in 17 lightpen Y */
      PORT_ANALOGX (0x1ff, 0, IPT_PADDLE | IPF_PLAYER4,
-				   30, 2, 0, 0, (VIC6561_MAME_YSIZE - 1),
+				   30, 2, 0, (VIC6561_MAME_YSIZE - 1),
 				   KEYCODE_UP, KEYCODE_DOWN,
 				   JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
@@ -408,7 +408,7 @@ static void vc20_init_palette (unsigned char *sys_palette,
 #if 0
      /* 901460-03 */
 	 ROM_LOAD ("chargen.80", 0x8000, 0x1000, 0x83e032a6)
-	 /* 901486-01 */ 
+	 /* 901486-01 */
 	 ROM_LOAD ("basic.80", 0xc000, 0x2000, 0xdb4c43c1)
 	 /* 901486-06 ntsc */
 	 ROM_LOAD ("kernal6.c0", 0xe000, 0x2000, 0xe5e7c174)
@@ -417,7 +417,7 @@ static void vc20_init_palette (unsigned char *sys_palette,
 
 	 /* patched pal system for swedish/finish keyboard and chars */
 	 ROM_LOAD ("char.80", 0x8000, 0x1000, 0xd808551d)
-	 ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0xb2a60662)	 
+	 ROM_LOAD ("kernal7p.c0", 0xe000, 0x2000, 0xb2a60662)
 #endif
 
 ROM_START (vic20)
@@ -426,7 +426,7 @@ ROM_START (vic20)
 	 ROM_LOAD ("basic.c0", 0xc000, 0x2000, 0xdb4c43c1)
 	 ROM_LOAD ("kernal6.e0", 0xe000, 0x2000, 0xe5e7c174)
 #ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
+	 VC1540_ROM (REGION_CPU2)
 #endif
 ROM_END
 
@@ -436,7 +436,7 @@ ROM_START (vc20)
 	 ROM_LOAD ("basic.c0", 0xc000, 0x2000, 0xdb4c43c1)
 	 ROM_LOAD ("kernal7p.e0", 0xe000, 0x2000, 0x4be07cb4)
 #ifdef VC1541
-	 VC1541_ROM (REGION_CPU2)
+	 VC1540_ROM (REGION_CPU2)
 #endif
 ROM_END
 
@@ -453,11 +453,11 @@ static struct MachineDriver machine_driver_vic20 =
 			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
 		},
 #ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
+		VC1540_CPU,
 #endif
 	},
 	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
+	100,
 	vc20_init_machine,
 	vc20_shutdown_machine,
 
@@ -497,11 +497,11 @@ static struct MachineDriver machine_driver_vc20 =
 			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
 		},
 #ifdef VC1541
-		VC1541_CPU (REGION_CPU2)
+		VC1540_CPU,
 #endif
 	},
 	VIC6561_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
+	100,
 	vc20_init_machine,
 	vc20_shutdown_machine,
 
@@ -544,7 +544,8 @@ static const struct IODevice io_vc20[] =
 		NULL,						   /* close */
 		NULL,						   /* status */
 		NULL,						   /* seek */
-		NULL,						   /* input */
+		NULL,				/* tell */
+        NULL,                          /* input */
 		NULL,						   /* output */
 		NULL,						   /* input_chunk */
 		NULL						   /* output_chunk */
@@ -558,6 +559,11 @@ static const struct IODevice io_vc20[] =
 #define init_vic20  vic20_driver_init
 #define io_vic20    io_vc20
 
-/*	   YEAR  NAME	 PARENT MACHINE INPUT  INIT   COMPANY	FULLNAME */
-COMPX( 1981, vic20,  0, 	vic20,	vic20, vic20, "Commodore Business Machines Co.", "Commodore VIC20 (NTSC)", GAME_IMPERFECT_SOUND )
-COMPX( 1981, vc20,	 vic20, vc20,	vc20,  vc20,  "Commodore Business Machines Co.", "Commodore VC20 (PAL)", GAME_IMPERFECT_SOUND )
+#ifdef PET_TEST_CODE
+/*	   YEAR  NAME	 PARENT  MACHINE INPUT	 INIT	 COMPANY							 FULLNAME */
+COMP (1981, vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.",  "Commodore VIC20 (NTSC)")
+COMP (1981, vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.",  "Commodore VC20 (PAL)")
+#else
+COMPX(1981, vic20,	0,		vic20,	vic20,	vic20,	"Commodore Business Machines Co.", "Commodore VIC20 (NTSC)",GAME_IMPERFECT_SOUND)
+COMPX(1981, vc20,	vic20,	vc20,	vc20,	vc20,	"Commodore Business Machines Co.", "Commodore VC20 (PAL)",  GAME_IMPERFECT_SOUND)
+#endif

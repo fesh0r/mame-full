@@ -1,3 +1,146 @@
+0.36 Release Candidate 1
+
+Note: .inp record/playback does still not work currently.
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+Atari800xl (not working) [Juergen Buchmueller]
+Philips P2000t/m [Paul Daniels]
+Tandy MC-10 [Nate Woods]
+Uk101, SuperBoard (Note: have SHIFT pressed when typing)
+  [Paul Daniels]	
+MSX Japanese and Korean  [Sean Young]  
+Commodore 65  [Peter Trauner]
+Commodore 128 [Peter Trauner]
+Commodore PET2000/CBM2000 [Peter Trauner]
+Commodore CBM3000 [Peter Trauner]
+Commodore CBM4000 [Peter Trauner]
+Commodore CBM8000 [Peter Trauner]
+MacIntosh Plus    [Nate Woods, Ernesto Corvi]
+CPS Changer - Street Fighter Zero [MAME team]
+Commodore B series [Peter Trauner]
+
+
+System Driver Changes:
+----------------------
+- Apple2 driver keyboard fix 	 [Juergen Buchmueller]
+
+- Small bug in the 6522 emulator fixed. [Gordon Jefferyes]
+
+- Ti99 series update. [Raphael Nabet]
+
+- ColecoVision Video refresh fixed. [Sean Young]
+
+- Improved SMS/GG driver. New features include Fixed bankswitching/RAM 
+  problem, YM2413 support and enable switch, console territory switch, 
+  remaining input ports mapped (Player 2, etc.), and split up I/O port map 
+  for SMS and GG. Compatability has been improved significantly, however, 
+  games that use on-cart RAM will not work properly. [Charles MacDonald]
+
+- MSX system update which includes FM-PAC emulation, SRAM ( uses the YM2413
+  emulation), Added support for the device_extrainfo (...) call for the 
+  cartridge mapper type, R-Type and Gall force cartridge mapper emulation, 
+  and support for Konami's Synthesizer DAC [Sean Young]
+
+- Amiga driver fixes! Notes: You will have to redefine some of the 
+  button(s) to your mouse buttons when using the mouse (You cant bind 
+  them directly from the driver).  You can select to have either mouse 
+  or joystick attached to the ports through the dipswitches.  The 
+  Amiga detects external drives by querying them. Right now, only 
+  drives are added to the the system which have an image in them. There 
+  is still no keyboard emulation.   This version supports many more 
+  gfx modes, sprites, input modes, etc and compatibility with many 
+  software has increased.  Rewrote large portions of the floppy controller.  
+  More games should load properly now.  Moved things around using banks, 
+  wHich decreased the overall memory requeriments for the driver from 16 
+  megs to 2 megs.  Removed the extra 'chip' and 'extended' ram from the 
+  default configuration. The current memory setup should be the same as a 
+  stock A500.[Ernesto Corvi]
+
+- Huge update to the a800 family drivers.  Be sure to check the new key mappings 
+  using the on screen display (TAB key).  [Juergen Buchmueller]
+ 
+- a5200 keypad problems (finally) solved. only player #1 keypad supported.
+  analog joystick still sort of sluggish, but useable in many games.  Be sure 
+  to check the new key mappings using the on screen display (TAB key)
+  [Juergen Buchmueller]
+
+- a7800 palette modified [Juergen Buchmueller, Julian Eggebrecht]
+
+- COCO: Added support for true lower case in lores text modes, and special 
+  characters in hires text modes for the CoCo 3 and added a "blur 
+  correction" mode for artifact colors in an attempt to make artifact 
+  colors be displayed more accurately.  Fixed a few CoCo III related bugs; most 
+  notably with PAK loading.  The CoCo driver will now recognize .PAK files that 
+  contain snapshot information (meaning that most .PAK files on the net will now 
+  work).  In addition, .PAK files are now loaded as IO_SNAPSHOT, rather than 
+  IO_CARTSLOT. Implemented the previously unimplemented graphics modes 
+  (G1C/G1R/G2C/G2R), enabled the fancy semigraphic modes; on the CoCo one could 
+  change the VDG as one mode but tell the SAM (synchronous address multiplexer) 
+  to feed data to the VDG as if a different video mode was done.  This created the 
+  semigraphic modes that were used in games like Protector.  Plot_pixel() is now used 
+  instead of assuming 8-bit bitmaps.  [Nate Woods]
+
+- Amstrad fixes include disk image handling, and loading (disk image handling 
+  is now shared between Amstrad and Spectrum drivers, and loading/saving from WAV).
+  [David Robertson, Kev Thacker]
+
+- Spectrum changes include disk Image support for +3, loading/saving from WAV, 
+  Spectrum+/Spectrum 128 keyboard mappings, Improved I/O decoding (Kempston active 
+  on all ports xx1f), support for .TAP tape files (use the normal LOAD"" when 
+  emulation starts. In Normal Speccy mode press "J" then SHIFT+P ), and Full key 
+  descriptions, and 128k .z80 images not loaded.  Also includes "Issue 2" and 
+  "Issue 3" emulation. [David Robertson, Kev Thacker]
+
+- VZ family of drivers update includes IO_CASSETTE now handles wav/cas files, and 
+  IO_SNAPSHOT added to quick-load the VZEm files (*.vz)	  [Juergen Buchmueller]
+
+
+
+Other Changes:
+--------------
+- Image CRC matching returns! [Alot of people]
+
+- Important inclusions for this release:
+  *wave sound interface and IODevice handler
+  *speaker sound driver (replaces the buzzer code)
+  *preliminary file manager
+  *mess_printf() which checks for gui_host
+  Check the UI (TAB) for handling options for most of the above.
+
+- Added support to automagically append or replace extensions for files 
+  opened with image_fopen(), which means, if opening a given filename 
+  fails (also from the optional clone_of parent driver), the code replaces 
+  or appends the next available extension and tries again.   Therefore, there 
+  is no need to actually supply the file extension to the command line.
+  [Juergen Buchmueller]
+
+- Generic M6847 code  [Nate Woods]
+
+- correct coco3 system BIOS support 
+  [Tadd Underhill, Juergen Buchmueller, Nate Woods]
+
+- The core is based on MAME 0.36RC1. This incorporates all 
+  features of the update to this core.  [MAME team] 
+  (also Allegro 3.9.31 400x300 and config file bugfixes used)
+
+- 6509 Core [Peter Trauner, Juergen Buchmueller]
+
+- Extensive CRC updates.
+  [Sean Young, Chris Henry, Gerardo Jorrin, Peter Trauner]
+  SysInfo.dat documentation update 
+  [Thierry Schimbi, Chris Henry, Kev Thacker, Raphael Nabet]
+  Thanks to http://www.computingmuseum.com for heaps if info.
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+
+
+
+--------------------------------------------------------------------
+
 0.36b16
 
 Note: .inp record/playback does still not work currently.

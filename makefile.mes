@@ -24,11 +24,8 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_coleco
-TINY_OBJS =     obj/mess/vidhrdw/tms9928a.o \
-                obj/mess/machine/coleco.o   \
-                obj/mess/vidhrdw/coleco.o   \
-                obj/mess/systems/coleco.o
+TINY_NAME = driver_labyrunr
+TINY_OBJS = obj/drivers/labyrunr.o obj/vidhrdw/labyrunr.o obj/vidhrdw/konamiic.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -47,9 +44,7 @@ CPUS+=M68000@
 SOUNDS+=YM2610@
 else
 # uncomment the following lines to include a CPU core
-#CPUS+=GENSYNC@
 CPUS+=Z80@
-#CPUS+=Z80_VM@
 CPUS+=Z80GB@
 #CPUS+=8080@
 #CPUS+=8085A@
@@ -57,6 +52,7 @@ CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M65SC02@
 CPUS+=M65CE02@
+CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=N2A03@
 CPUS+=H6280@
@@ -68,13 +64,13 @@ CPUS+=I86@
 CPUS+=I8039@
 CPUS+=I8048@
 #CPUS+=N7751@
-#CPUS+=M6800@
+CPUS+=M6800@
 #CPUS+=M6801@
 #CPUS+=M6802@
-#CPUS+=M6803@
-#CPUS+=M6808@
-#CPUS+=HD63701@
-#CPUS+=NSC8105@
+CPUS+=M6803@
+CPUS+=M6808@
+CPUS+=HD63701@
+CPUS+=NSC8105@
 #CPUS+=M6805@
 #CPUS+=M68705@
 #CPUS+=HD63705@
@@ -107,17 +103,19 @@ SOUNDS+=CUSTOM@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
 #SOUNDS+=YM2203@
+# enable only one of the following two
 #SOUNDS+=YM2151@
-#SOUNDS+=YM2151_ALT@
+SOUNDS+=YM2151_ALT@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
 #SOUNDS+=YM2610B@
 SOUNDS+=YM2612@
 #SOUNDS+=YM3438@
-#SOUNDS+=YM2413@
+SOUNDS+=YM2413@
 SOUNDS+=YM3812@
 #SOUNDS+=YM3526@
 #SOUNDS+=Y8950@
+#SOUNDS+=SN76477@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 SOUNDS+=TIA@
@@ -127,7 +125,7 @@ SOUNDS+=ASTROCADE@
 SOUNDS+=TMS5220@
 #SOUNDS+=VLM5030@
 #SOUNDS+=ADPCM@
-#SOUNDS+=OKIM6295@
+SOUNDS+=OKIM6295@
 #SOUNDS+=MSM5205@
 #SOUNDS+=UPD7759@
 #SOUNDS+=HC55516@
@@ -139,7 +137,9 @@ SOUNDS+=TMS5220@
 #SOUNDS+=RF5C68@
 #SOUNDS+=CEM3394@
 #SOUNDS+=C140@
-#SOUNDS+=QSOUND@
+SOUNDS+=QSOUND@
+SOUNDS+=SPEAKER@
+SOUNDS+=WAVE@
 endif
 
 
@@ -170,24 +170,10 @@ CPUOBJS =
 DBGOBJS =
 ASMDEFS =
 
-CPU=$(strip $(findstring GENSYNC@,$(CPUS)))
-ifneq ($(CPU),)
-CPUDEFS += -DHAS_GENSYNC=1
-CPUOBJS += obj/cpu/gensync/gensync.o
-DBGOBJS += obj/cpu/gensync/gensyncd.o
-endif
-
 CPU=$(strip $(findstring Z80@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_Z80=1
 CPUOBJS += obj/cpu/z80/z80.o
-DBGOBJS += obj/cpu/z80/z80dasm.o
-endif
-
-CPU=$(strip $(findstring Z80_VM@,$(CPUS)))
-ifneq ($(CPU),)
-CPUDEFS += -DHAS_Z80_VM=1
-CPUOBJS += obj/cpu/z80/z80_vm.o
 DBGOBJS += obj/cpu/z80/z80dasm.o
 endif
 
@@ -237,6 +223,13 @@ CPU=$(strip $(findstring M65CE02@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_M65CE02=1
 CPUOBJS += obj/cpu/m6502/m65ce02.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M6509@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6509=1
+CPUOBJS += obj/cpu/m6502/m6509.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
@@ -659,6 +652,12 @@ SOUNDDEFS += -DHAS_Y8950=1
 SOUNDOBJS += obj/sound/3812intf.o obj/sound/fmopl.o obj/sound/ymdeltat.o
 endif
 
+SOUND=$(strip $(findstring SN76477@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SN76477=1
+SOUNDOBJS += obj/sound/sn76477.o
+endif
+
 SOUND=$(strip $(findstring SN76496@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_SN76496=1
@@ -791,6 +790,18 @@ SOUNDDEFS += -DHAS_QSOUND=1
 SOUNDOBJS += obj/sound/qsound.o
 endif
 
+SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SPEAKER=1
+SOUNDOBJS += obj/sound/speaker.o
+endif
+
+SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_WAVE=1
+SOUNDOBJS += obj/sound/wave.o
+endif
+
 
 
 ifdef DEBUG
@@ -835,12 +846,14 @@ endif
 LIBS   = -lalleg -laudio -lz \
 
 COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
+         obj/mess/config.o obj/mess/filemngr.o obj/mess/tapectrl.o \
+         obj/mess/machine/6522via.o  obj/mess/machine/nec765.o   \
          obj/drawgfx.o obj/common.o obj/usrintrf.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
          obj/audit.o obj/info.o obj/png.o obj/artwork.o \
          obj/tilemap.o obj/sprite.o obj/gfxobj.o \
-         obj/state.o obj/datafile.o \
+         obj/state.o obj/datafile.o obj/hiscore.o \
          $(sort $(CPUOBJS)) \
          obj/sndintrf.o \
          obj/sound/streams.o obj/sound/mixer.o \
@@ -855,7 +868,8 @@ COREOBJS = obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
          obj/profiler.o \
          $(sort $(DBGOBJS)) \
 
-DRVLIBS = obj/coleco.a   \
+DRVLIBS = obj/advision.a  \
+	  obj/coleco.a	 \
           obj/sega.a     \
           obj/atari.a    \
           obj/gce.a      \
@@ -869,9 +883,11 @@ DRVLIBS = obj/coleco.a   \
           obj/sinclair.a \
           obj/apple1.a   \
           obj/apple2.a   \
+          obj/mac.a      \
           obj/ti99.a     \
           obj/bally.a    \
           obj/pc.a       \
+	  obj/p2000.a	 \
           obj/amstrad.a  \
           obj/nec.a      \
           obj/ep128.a    \
@@ -881,16 +897,17 @@ DRVLIBS = obj/coleco.a   \
           obj/vtech.a    \
           obj/jupiter.a  \
           obj/mbee.a     \
-          obj/advision.a  \
-          obj/nascom1.a
-
+          obj/nascom1.a  \
+          obj/bbc.a      \
+          obj/cpschngr.a \
+          #obj/motorola.a  \
 
 NEOLIBS = obj/neogeo.a \
 
 MSDOSOBJS = obj/msdos/msdos.o obj/msdos/video.o obj/msdos/blit.o obj/msdos/asmblit.o \
          obj/msdos/vector.o obj/msdos/gen15khz.o obj/msdos/ati15khz.o \
          obj/msdos/sound.o obj/msdos/input.o obj/msdos/fileio.o \
-         obj/msdos/config.o obj/msdos/fronthlp.o \
+         obj/msdos/ticker.o obj/msdos/config.o obj/msdos/fronthlp.o \
 
 MSDOSOBJS += obj/mess/msdos.o obj/msdos/nec765.o 
 
@@ -912,7 +929,7 @@ else
 	endif
 endif
 
-all: $(EMULATOR_EXE) romcmp.exe dat2html.exe
+all: $(EMULATOR_EXE) romcmp.exe	dat2html.exe
 
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
@@ -985,12 +1002,10 @@ obj/atari.a:    \
                 obj/mess/machine/a7800.o    \
                 obj/mess/systems/a7800.o    \
                 obj/mess/machine/riot.o     \
-                obj/mess/vidhrdw/a2600.o    \
                 obj/mess/machine/a2600.o    \
                 obj/mess/systems/a2600.o    
 
 obj/gce.a:      \
-                obj/mess/machine/6522via.o  \
                 obj/mess/vidhrdw/vectrex.o  \
                 obj/mess/machine/vectrex.o  \
                 obj/mess/systems/vectrex.o  
@@ -1008,6 +1023,13 @@ obj/cbm.a:      \
                 obj/mess/vidhrdw/amiga.o    \
                 obj/mess/machine/amiga.o    \
                 obj/mess/systems/amiga.o    \
+                obj/mess/vidhrdw/crtc6845.o \
+                obj/mess/machine/tpi6525.o  \
+                obj/mess/vidhrdw/pet.o      \
+                obj/mess/systems/pet.o      \
+                obj/mess/machine/pet.o      \
+                obj/mess/systems/cbmb.o     \
+                obj/mess/machine/cbmb.o     \
 		obj/mess/vidhrdw/vic6560.o  \
 		obj/mess/sndhrdw/vic6560.o  \
 		obj/mess/machine/6522via.o  \
@@ -1031,11 +1053,15 @@ obj/cbm.a:      \
 		obj/mess/machine/c65.o      \
 		obj/mess/systems/c128.o     \
 		obj/mess/vidhrdw/vdc8563.o  \
+		obj/mess/vidhrdw/praster.o  \
 		obj/mess/machine/c128.o     \
 
 
 obj/dragon.a:   \
                 obj/mess/machine/cocodisk.o \
+                obj/mess/vidhrdw/m6847.o    \
+                obj/mess/machine/mc10.o     \
+                obj/mess/systems/mc10.o     \
                 obj/mess/vidhrdw/dragon.o   \
                 obj/mess/machine/dragon.o   \
                 obj/mess/systems/dragon.o   
@@ -1063,9 +1089,9 @@ obj/kaypro.a:   \
                 obj/mess/vidhrdw/kaypro.o   \
                 obj/mess/machine/kaypro.o   \
                 obj/mess/systems/kaypro.o   \
-               #obj/mess/machine/cpm_disk.o \      this is screwed ;-)
 
 obj/sinclair.a: \
+                obj/mess/machine/dsk.o      \
                 obj/mess/vidhrdw/spectrum.o \
                 obj/mess/machine/spectrum.o \
                 obj/mess/systems/spectrum.o \
@@ -1088,11 +1114,19 @@ obj/apple2.a:   \
                 obj/mess/machine/apple2.o   \
                 obj/mess/systems/apple2.o   \
 
+obj/mac.a: \
+                obj/mess/sndhrdw/mac.o      \
+                obj/mess/vidhrdw/mac.o      \
+                obj/mess/machine/mac.o      \
+                obj/mess/systems/mac.o      \
+
 obj/ti99.a:     \
                 obj/mess/machine/tms9901.o  \
                 obj/mess/machine/ti99_4x.o  \
                 obj/mess/systems/ti99_4x.o  \
                 #obj/mess/systems/ti99_2.o   \
+                #obj/mess/systems/ti990_4.o  \
+
 
 obj/bally.a:    \
                 obj/sound/astrocde.o        \
@@ -1111,12 +1145,21 @@ obj/pc.a:       \
                 obj/mess/machine/pc_ide.o   \
                 obj/mess/systems/pc.o       
 
+obj/p2000.a:	\
+		obj/mess/vidhrdw/saa5050.o   \
+		obj/mess/vidhrdw/p2000m.o    \
+		obj/mess/systems/p2000t.o    \
+		obj/mess/machine/p2000t.o    \
+		obj/mess/vidhrdw/uk101.o     \
+		obj/mess/machine/uk101.o     \
+		obj/mess/systems/uk101.o     
+
 obj/amstrad.a:  \
+                obj/mess/machine/dsk.o      \
                 obj/machine/8255ppi.o       \
                 obj/mess/vidhrdw/hd6845s.o  \
                 obj/mess/vidhrdw/amstrad.o  \
                 obj/mess/vidhrdw/kc.o       \
-		obj/mess/machine/nec765.o   \
                 obj/mess/machine/amstrad.o  \
                 obj/mess/machine/kc.o       \
 		obj/mess/systems/amstrad.o  
@@ -1137,7 +1180,6 @@ obj/ep128.a :   \
 
 obj/ascii.a :   \
                 obj/mess/sndhrdw/scc.o      \
-                obj/mess/vidhrdw/msx.o      \
                 obj/mess/machine/msx.o      \
                 obj/mess/systems/msx.o      
 
@@ -1182,10 +1224,27 @@ obj/advision.a: \
                 obj/mess/systems/advision.o 
 
 
-obj/nascom1.a: \
+obj/nascom1.a:  \
 		obj/mess/vidhrdw/nascom1.o  \
 		obj/mess/machine/nascom1.o  \
                 obj/mess/systems/nascom1.o
+
+
+obj/bbc.a:      \
+		obj/mess/vidhrdw/bbc.o      \
+		obj/mess/machine/bbc.o      \
+                obj/mess/systems/bbc.o
+
+obj/cpschngr.a: \
+                obj/machine/eeprom.o        \
+                obj/vidhrdw/cps1.o          \
+                obj/mess/systems/cpschngr.o \
+
+obj/motorola.a: \
+		obj/mess/vidhrdw/mekd2.o    \
+		obj/mess/machine/mekd2.o    \
+                obj/mess/systems/mekd2.o
+
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h
@@ -1205,11 +1264,9 @@ obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.c tms9900.h 9900stat.h
 obj/cpu/t11/t11.o: t11.c t11.h t11ops.c t11table.c
-obj/cpu/m68000/m68kcpu.o: m68kops.c m68kmake.c m68k_in.c
+obj/cpu/m68000/m68kcpu.o: obj/cpu/m68000/m68kops.c m68kmake.c m68k_in.c
 obj/cpu/ccpu/ccpu.o: ccpu.c ccpu.h ccputabl.c
 obj/cpu/konami/konami.o: konami.c konami.h konamops.c konamtbl.c
-obj/cpu/gensync/gensync.o: gensync.c gensync.h
-
 
 makedir:
 	@echo make makedir is no longer necessary, just type make
@@ -1217,7 +1274,6 @@ makedir:
 maketree:
 	md obj
 	md obj\cpu
-	md obj\cpu\gensync
 	md obj\cpu\z80
 	md obj\cpu\z80gb
 	md obj\cpu\m6502
@@ -1256,7 +1312,6 @@ clean:
 
 cleandebug:
 	del obj\*.o
-	del obj\cpu\gensync\*.o
 	del obj\cpu\z80\*.o
 	del obj\cpu\z80\*.oa
 	del obj\cpu\z80\*.asm
@@ -1297,6 +1352,7 @@ cleantiny:
 	del obj\usrintrf.o
 	del obj\cheat.o
 	del obj\vidhrdw\konamiic.o
+	del obj\msdos\input.o
 
 
 messdir:
@@ -1305,6 +1361,5 @@ messdir:
 	md obj\mess\systems
 	md obj\mess\vidhrdw
 	md obj\mess\sndhrdw
-
 
 

@@ -25,7 +25,7 @@ static const char *romnames[2] =
 
 /*
  * tia6523
- * 
+ *
  * connector to floppy c1551 (delivered with c1551 as c16 expansion)
  * port a for data read/write
  * port b
@@ -308,7 +308,7 @@ void c16_switch_to_rom (int offset, int data)
  * 0  1  plus4 low
  * 1  0  c1 low
  * 1  1  c2 low
- * 
+ *
  * a2 a3
  * 0  0  kernal
  * 0  1  plus4 hi
@@ -454,7 +454,7 @@ int c16_fd1x_r (int offset)
   cleared by hardware reset, not changed by programmed reset
   7: 2 stop bits (0 1 stop bit)
   6,5: data word length
-   00 8 bits 
+   00 8 bits
    01 7
    10 6
    11 5
@@ -471,14 +471,14 @@ int c16_fd1x_r (int offset)
    0110 300
    0111 600
    1000 1200
-   1001 
+   1001
    1010 2400
    1011 3600
    1100 4800
    1101 7200
    1110 9600
    1111 19200
- control register 
+ control register
   */
 void c16_6551_port_w (int offset, int data)
 {
@@ -748,7 +748,7 @@ void c16_init_machine (void)
 
 	for (i = 0; (romnames[i] != 0) && (i < sizeof (romnames) / sizeof (romnames[0]));
 		 i++)
-		c16_rom_load (i, romnames[i]);
+		c16_rom_load (i);
 
 }
 
@@ -756,25 +756,26 @@ void c16_shutdown_machine (void)
 {
 }
 
-int c16_rom_init (int id, const char *name)
+int c16_rom_init (int id)
 {
-	romnames[id] = name;
-	return (name==NULL) || !c16_rom_id(name, Machine->gamedrv->name);
+    romnames[id] = device_filename(IO_CARTSLOT,id);
+	return (romnames[id]==NULL) || !c16_rom_id(id);
 }
 
 
-int c16_rom_load (int id, const char *name)
+int c16_rom_load (int id)
 {
-	UINT8 *mem = memory_region (REGION_CPU1);
+	const char *name = device_filename(IO_CARTSLOT,id);
+    UINT8 *mem = memory_region (REGION_CPU1);
 	FILE *fp;
 	int size, read;
 	char *cp;
 	static unsigned int addr = 0;
 
 	if (name==NULL) return 1;
-	if (!c16_rom_id (name,Machine->gamedrv->name))
+	if (!c16_rom_id (id))
 		return 1;
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		if (errorlog)
@@ -812,20 +813,20 @@ int c16_rom_load (int id, const char *name)
 	return 0;
 }
 
-int c16_rom_id (const char *name, const char *machinename)
+int c16_rom_id (int id)
 {
-	/* magic lowrom at offset 7: $43 $42 $4d */
+    /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
 	int retval = 0;
-	char magic[] =
-	{0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
+	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
+	const char *name = device_filename(IO_CARTSLOT,id);
 	FILE *romfile;
 	char *cp;
 
 	if (errorlog)
 		fprintf (errorlog, "c16_rom_id %s\n", name);
 	retval = 0;
-	if (!(romfile = osd_fopen (machinename, name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog)
 			fprintf (errorlog, "rom %s not found\n", name);
@@ -864,7 +865,7 @@ int c16_frame_interrupt (void)
 	int value;
 
 	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, c16_memory);
+		cbm_quick_open (0, 0, c16_memory);
 	quickload = QUICKLOAD;
 
 	value = 0xff;
@@ -1064,7 +1065,7 @@ int c16_frame_interrupt (void)
 		else
 			keyline[9] = value;
 	}
-		
+
 	ted7360_frame_interrupt ();
 
 	vc20_tape_config (DATASSETTE, DATASSETTE_TONE);

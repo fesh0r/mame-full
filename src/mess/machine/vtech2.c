@@ -235,7 +235,8 @@ void laser_bank_select_w(int offs, int data)
  ************************************************/
 static int mra_bank(int bank, int offs)
 {
-    int data = 0xff;
+	static int level_old = 0, cassette_bit = 0;
+    int level, data = 0xff;
 
     /* Laser 500/700 only: keyboard rows A through D */
 	if( (offs & 0x00ff) == 0x00ff )
@@ -294,10 +295,17 @@ static int mra_bank(int bank, int offs)
 		if( !(offs & 0x80) )
 			data &= readinputport( 7);
 	}
-	/* what's bit 7 good for? tape input maybe? */
-//  data &= ~0x80;
 
-//	LOG((errorlog,"bank #%d keyboard_r [$%04X] $%02X\n", bank, offs, data));
+    /* what's bit 7 good for? tape input maybe? */
+	level = device_input(IO_CASSETTE, 0);
+	if( level < level_old - 511 )
+		cassette_bit = 0x00;
+	if( level > level_old + 511 )
+		cassette_bit = 0x80;
+	level_old = level;
+
+	data &= ~cassette_bit;
+    // LOG((errorlog,"bank #%d keyboard_r [$%04X] $%02X\n", bank, offs, data));
 
     return data;
 }
@@ -325,12 +333,17 @@ static void mwa_bank(int bank, int offs, int data)
     case  2:    /* memory mapped output */
         if (data != laser_latch)
         {
+            LOG((errorlog,"bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data));
             /* Toggle between graphics and text modes? */
             if ((data ^ laser_latch) & 0x08)
                 bitmap_dirty = 1;
+			if ((data ^ laser_latch) & 0x01)
+				speaker_level_w(0, data & 1);
+#if 0
+            if ((data ^ laser_latch) & 0x06)
+				device_output(IO_CASSETTE, 0, data & 6);
+#endif
             laser_latch = data;
-            LOG((errorlog,"bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data));
-            DAC_data_w(0, (data & 1) ? 255 : 0);
         }
         break;
     case 12:    /* ext. ROM #1 */
@@ -350,21 +363,18 @@ static void mwa_bank(int bank, int offs, int data)
     }
 }
 
-int laser_rom_id(const char *name, const char *gamename)
+int laser_rom_id(int id)
 {
 	/* Hmmm.. if I only had a single ROM to identify it ;) */
 	return 1;
 }
 
-int laser_rom_init(int id, const char *name)
+int laser_rom_init(int id)
 {
 	int size = 0;
     void *file;
 
-	if( name == NULL )
-		return INIT_OK;
-
-    file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
 		size = osd_fread(file, &mem[0x30000], 0x10000);
@@ -391,53 +401,176 @@ void laser_rom_exit(int id)
 	memset(&mem[0x30000], 0xff, 0x10000);
 }
 
-int laser_cassette_id(const char *name, const char *gamename)
+int laser_cassette_id(int id)
 {
-	const char magic[] = "  \000\000";
-    char buff[4];
+	UINT8 buff[256];
     void *file;
 
-    file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
+		int i;
+
         osd_fread(file, buff, sizeof(buff));
-		if( memcmp(buff, magic, sizeof(buff)) == 0 )
+
+        for( i = 0; i < 128; i++ )
+			if( buff[i] != 0x80 )
+				return 1;
+		for( i = 128; i < 128+5; i++ )
+			if( buff[i] != 0xfe )
+				return 1;
+		for( i = 128+5+1; i < 128+5+1+17; i++ )
+		{
+			if( buff[i] == 0x00 )
+				break;
+		}
+		if( i == 128+5+1+17 )
+			return 1;
+        if( buff[128+5] == 0xf0 )
         {
-			LOG((errorlog, "laser_cassette_id: magic %02X%02X%02X%02X found\n", magic[0],magic[1],magic[2],magic[3]));
-            return 1;
+			LOG((errorlog, "vtech2_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+            return 0;
+        }
+		if( buff[128+5] == 0xf1 )
+        {
+			LOG((errorlog, "vtech2_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1));
+            return 0;
         }
     }
-    return 0;
+    return 1;
 }
 
-int laser_cassette_init(int id, const char *name)
+#define LO	-20000
+#define HI	+20000
+
+#define BITSAMPLES	18
+#define BYTESAMPLES 8*BITSAMPLES
+#define SILENCE 8000
+
+static INT16 bit0[BITSAMPLES] =
 {
-	const char magic[] = "  \000\000";
-    char buff[4];
-    void *file;
+	/* short cycle, long cycles */
+	HI,HI,HI,LO,LO,LO,
+	HI,HI,HI,HI,HI,HI,
+	LO,LO,LO,LO,LO,LO
+};
 
-	if( name == NULL )
-		return INIT_OK;
+static INT16 bit1[BITSAMPLES] =
+{
+	/* three short cycle */
+	HI,HI,HI,LO,LO,LO,
+	HI,HI,HI,LO,LO,LO,
+	HI,HI,HI,LO,LO,LO
+};
 
-    file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-    if( file )
-    {
-        osd_fread(file, buff, sizeof(buff));
-		if( memcmp(buff, magic, sizeof(buff)) == 0 )
-        {
-			int size = osd_fsize(file);
-			LOG((errorlog, "laser_cassette_id: magic %02X%02X%02X%02X found\n", magic[0],magic[1],magic[2],magic[3]));
-			cassette_image = (UINT8 *) malloc(size);
-			if( cassette_image )
-			{
-				osd_fseek(file, 0, SEEK_SET);
-				osd_fread(file, cassette_image, size);
-				osd_fclose(file);
-				return 0;
-			}
-        }
+
+static INT16 *fill_wave_bit(INT16 *buffer, int bit)
+{
+	int i;
+	if( bit )
+	{
+		for( i = 0; i < BITSAMPLES; i++ )
+			*buffer++ = bit1[i];
     }
-	return 1;
+	else
+	{
+		for( i = 0; i < BITSAMPLES; i++ )
+			*buffer++ = bit0[i];
+    }
+	return buffer;
+}
+
+
+static INT16 *fill_wave_byte(INT16 *buffer, int byte)
+{
+	buffer = fill_wave_bit(buffer, (byte >> 7) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 6) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 5) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 4) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 3) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 2) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 1) & 1);
+	buffer = fill_wave_bit(buffer, (byte >> 0) & 1);
+    return buffer;
+}
+
+static int fill_wave(INT16 *buffer, int length, UINT8 *code)
+{
+	static int nullbyte;
+
+    if( code == CODE_HEADER )
+    {
+		int i;
+
+        if( length < SILENCE )
+			return -1;
+		for( i = 0; i < SILENCE; i++ )
+			*buffer++ = 0;
+
+		nullbyte = 0;
+
+        return SILENCE;
+    }
+
+	if( code == CODE_TRAILER )
+    {
+		int i;
+
+        /* silence at the end */
+		for( i = 0; i < length; i++ )
+			*buffer++ = 0;
+        return length;
+    }
+
+    if( length < BYTESAMPLES )
+		return -1;
+
+	buffer = fill_wave_byte(buffer, *code);
+
+    if( !nullbyte && *code == 0 )
+	{
+		int i;
+		for( i = 0; i < 2*BITSAMPLES; i++ )
+			*buffer++ = LO;
+        nullbyte = 1;
+		return BYTESAMPLES + 2 * BITSAMPLES;
+	}
+
+    return BYTESAMPLES;
+}
+
+int laser_cassette_init(int id)
+{
+	void *file;
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if( file )
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		wa.header_samples = SILENCE;
+		wa.trailer_samples = SILENCE;
+		wa.chunk_size = 1;
+		wa.chunk_samples = BYTESAMPLES;
+		if( device_open(IO_CASSETTE,id,0,&wa) )
+			return INIT_FAILED;
+		return INIT_OK;
+    }
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
+	if( file )
+    {
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		if( device_open(IO_CASSETTE,id,1,&wa) )
+			return INIT_FAILED;
+        return INIT_OK;
+    }
+    return INIT_FAILED;
 }
 
 void laser_cassette_exit(int id)
@@ -447,12 +580,12 @@ void laser_cassette_exit(int id)
 	cassette_image = NULL;
 }
 
-int laser_floppy_id(const char *name, const char *gamename)
+int laser_floppy_id(int id)
 {
 	void *file;
 	UINT8 buff[32];
 
-    file = osd_fopen(gamename, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
     {
         osd_fread(file, buff, sizeof(buff));
@@ -463,9 +596,9 @@ int laser_floppy_id(const char *name, const char *gamename)
 	return 0;
 }
 
-int laser_floppy_init(int id, const char *name)
+int laser_floppy_init(int id)
 {
-    floppy_name[id] = name;
+	floppy_name[id] = device_filename(IO_FLOPPY,id);
 	return INIT_OK;
 }
 

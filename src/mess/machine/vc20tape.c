@@ -1124,9 +1124,10 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-int vc20_tape_attach_image (int id, const char *name)
+int vc20_tape_attach_image (int id)
 {
-	char *cp;
+	const char *name = device_filename(IO_CASSETTE,id);
+    char *cp;
 
 	tape.type = 0;
 	tape.on = 0;
@@ -1179,7 +1180,7 @@ void vc20_tape_close (void)
 		break;
 	}
 	/* HJB reset so vc20_tape_close() can be called multiple times!? */
-    tape.type = 0;  
+    tape.type = 0;
 }
 
 static void vc20_state (void)

@@ -8,17 +8,18 @@ void cbm_drive_close (void);
 #define IODEVICE_CBM_DRIVE \
 {\
    IO_FLOPPY,          /* type */\
-   2,                                      /* count */\
+   2,				   /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
    NULL,               /* private */\
    NULL,               /* id */\
    cbm_drive_attach_image,        /* init */\
-   NULL,                           /* exit */\
+   NULL,			   /* exit */\
    NULL,               /* info */\
    NULL,               /* open */\
    NULL,               /* close */\
    NULL,               /* status */\
    NULL,               /* seek */\
+   NULL,			   /* tell */\
    NULL,               /* input */\
    NULL,               /* output */\
    NULL,               /* input_chunk */\
@@ -31,7 +32,7 @@ void cbm_drive_0_config (int interface);
 void cbm_drive_1_config (int interface);
 
 /* open an d64 image */
-int cbm_drive_attach_image (int id, const char *imagename);
+int cbm_drive_attach_image (int id);
 
 /* load *.prg files directy from filesystem (rom directory) */
 int cbm_drive_attach_fs (int id);

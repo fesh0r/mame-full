@@ -1,5 +1,5 @@
 /***************************************************************************
-  
+
   WD179X.c
 
   Functions to emulate a WD179x floppy disc controller
@@ -183,15 +183,15 @@ WD179X *w = wd[drive];
 						drv, w->image_name);
 #endif
 			w->mode = 1;
-			w->image_file = osd_fopen(Machine->gamedrv->name, w->image_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+			w->image_file = image_fopen(IO_FLOPPY, drive, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 			if( !w->image_file )
 			{
 				w->mode = 0;
-				w->image_file = osd_fopen(Machine->gamedrv->name, w->image_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+				w->image_file = image_fopen(IO_FLOPPY, drive, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 				if( !w->image_file )
 				{
 					w->mode = 1;
-					w->image_file = osd_fopen(Machine->gamedrv->name, w->image_name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+					w->image_file = image_fopen(IO_FLOPPY, drive, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 				}
             }
 		}
@@ -331,8 +331,8 @@ WD179X *w = wd[drive];
 
                 if (N==0)
                 {
-                        N = (w->sector_length);      
-        
+                        N = (w->sector_length);
+
                         while ((N & 0x080000000)==0)
                         {
                                 N = N<<1;

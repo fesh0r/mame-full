@@ -81,10 +81,10 @@
 #define FDC_FORCE_INT   0xd0    /* force interrupt */
 
 typedef struct {
-        UINT8    track;
-        UINT8    sector;
-        UINT8    status;
-}       SECMAP;
+	UINT8	 track;
+	UINT8	 sector;
+	UINT8	 status;
+}	SECMAP;
 
 typedef struct {
 	void   (* callback)(int event);   /* callback for IRQ status */
@@ -93,7 +93,7 @@ typedef struct {
 	UINT8	heads;					/* maximum # of heads */
 	UINT8	density;				/* FM/MFM, single / double density */
 	UINT16	offset; 				/* track 0 offset */
-        UINT8   first_sector_id;                /* id of first sector */
+	UINT8	first_sector_id;		/* id of first sector */
 	UINT8	sec_per_track;			/* sectors per track */
 	UINT16	sector_length;			/* sector length (byte) */
 

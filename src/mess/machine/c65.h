@@ -9,6 +9,7 @@
 #define C65_512KB (0x100)
 
 #define C65_KEY_TAB (input_port_10_r(0)&0x8000)
+#define C65_KEY_CTRL (input_port_10_r(0)&1)
 
 #define C65_KEY_RIGHT_SHIFT ((input_port_12_r(0)&0x20)\
 			 ||C65_KEY_CURSOR_UP||C65_KEY_CURSOR_LEFT)
@@ -59,8 +60,10 @@ extern void c65_shutdown_machine (void);
 
 /*only for debugging */
 extern void c65_status (char *text, int size);
+void c65_state (PRASTER *this);
 
-extern UINT8 c65_keyline;
+extern UINT8 c65_keyline[2];
 extern int c65;
+extern UINT8 c65_6511_port;
 
 #endif

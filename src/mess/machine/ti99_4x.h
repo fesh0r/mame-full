@@ -17,13 +17,17 @@ extern unsigned char *ti99_DSR_mem;
 void ti99_init_machine(void);
 void ti99_stop_machine(void);
 
-int ti99_floppy_init(int id, const char *name);
+int ti99_floppy_init(int id);
 
-int ti99_load_rom(int id, const char *name);
+int ti99_cassette_init(int id);
+void ti99_cassette_exit(int id);
+
+int ti99_load_rom(int id);
 void ti99_rom_cleanup(int id);
-int ti99_id_rom(const char *name, const char *gamename);
+int ti99_id_rom(int id);
 
-int ti99_vh_start(void);
+int ti99_4_vh_start(void);
+int ti99_4a_vh_start(void);
 int ti99_vblank_interrupt(void);
 
 int ti99_rw_null8bits(int offset);

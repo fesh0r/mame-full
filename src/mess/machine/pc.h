@@ -122,8 +122,10 @@ extern UINT8 pc_port[0x400];
 
 /* from machine/pc.c */
 extern int	pc_framecnt;
-extern int	pc_floppy_init(int id, const char *name);
-extern int	pc_harddisk_init(int id, const char *name);
+extern int	pc_floppy_init(int id);
+extern void pc_floppy_exit(int id);
+extern int	pc_harddisk_init(int id);
+extern void pc_harddisk_exit(int id);
 
 extern void init_pc(void);
 extern void pc_mda_init_machine(void);

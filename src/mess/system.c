@@ -112,49 +112,84 @@ const struct GameDriver *drivers[] =
 
 
 
-
-
-
   /****************COMPUTERS****************************************************/
 
       /* APPLE */
-      DRIVER( apple1 )      /* APPLE                                          */
-      DRIVER( apple2c )     /* APPLE                                          */
-      DRIVER( apple2c0 )    /* APPLE                                          */
-      DRIVER( apple2cp )    /* APPLE                                          */
-      DRIVER( apple2e )     /* APPLE                                          */
-      DRIVER( apple2ee )    /* APPLE                                          */
-      DRIVER( apple2ep )    /* plus? - 1979                                   */
+	  DRIVER( apple1 )		/* Apple 1										  */
+	  DRIVER( apple2c ) 	/* Apple //c									  */
+	  DRIVER( apple2c0 )	/* Apple //c (3.5 ROM)							  */
+	  DRIVER( apple2cp )	/* Apple //c+									  */
+	  DRIVER( apple2e ) 	/* Apple //e									  */
+	  DRIVER( apple2ee )	/* Apple //e Enhanced							  */
+	  DRIVER( apple2ep )	/* Apple //e Platinum							  */
+      DRIVER( macplus )	    /* Apple MacIntosh Plus      					  */
+
+				/*
+				CPU Model             Month               Year
+				-------------         -----               ----
+
+				Apple I               July                1976
+				Apple II              April               1977
+				Apple II Plus         June                1979
+				Apple III             May                 1980
+				Apple IIe             January             1983
+				Apple III Plus        December            1983
+				Apple IIe Enhanced    March               1985
+				Apple IIc             April               1984
+				Apple IIc ROM 0       ?                   1985
+				Apple IIc ROM 3       September           1986
+				Apple IIgs            September           1986
+				Apple IIe Platinum    January             1987
+				Apple IIgs ROM 01     September           1987
+				Apple IIc ROM 4       ?                   198?
+				Apple IIc Plus        September           1988
+				Apple IIgs ROM 3      August              1989
+				*/
+
+
 
       /* ATARI */
       DRIVER( a400 )        /* Atari 400                                      */
       DRIVER( a400pal )     /* Atari 400 PAL                                  */
       DRIVER( a800 )        /* Atari 800                                      */
       DRIVER( a800pal )     /* Atari 800 PAL                                  */
-  TESTDRIVER( a800xl )      /* Atari 800 XL                                   */
+	  DRIVER( a800xl )		/* Atari 800 XL 								  */
 
       /* COMMODORE */
-
       DRIVER( c16 )         /* Commodore 16                                   */
       DRIVER( plus4 )       /* Commodore +4                                   */
 	  DRIVER( c364 )		/* Commodore 364 - Prototype					  */
 
       DRIVER( c64 )         /* Commodore 64 - NTSC                            */
       DRIVER( c64pal )      /* Commodore 64 - PAL                             */
-	  DRIVER( c64gs )		/* Commodore 64 Game System 					  */
+      DRIVER( c64gs )       /* Commodore 64 - NTSC                            */
+	  DRIVER( cbm4064 ) 	/* Commodore CBM4064							  */
 	  DRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
       DRIVER( max )         /* Ulitimax                                       */
-  TESTDRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
-  TESTDRIVER( c65ger ) 		/*                               				  */
-  TESTDRIVER( c128 ) 		/*                  							  */
-  TESTDRIVER( c128ger ) 	/*                           					  */
+      DRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
+      DRIVER( c65ger )		/* Commodore 65 - PAL (german)					  */
+	  DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
+	  DRIVER( c128ger ) 	/* Commodore 128 - PAL (german) 				  */
+	  DRIVER( c128fra ) 	/* Commodore 128 - PAL (french) 				  */
       DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
       DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
 
+      DRIVER( pet )
+	  DRIVER( cbm30 )
+	  DRIVER( cbm30b )
+	  DRIVER( cbm40 )
+	  DRIVER( cbm40b )
+	  DRIVER( cbm80 )
+	  DRIVER( cbm80ger )
+	  DRIVER( cbm80swe )
+
+      DRIVER( cbm710 )
+      DRIVER( cbm720 )
+      DRIVER( cbm610 )
+      DRIVER( cbm620 )
+      DRIVER( cbm500 )
+
       DRIVER( amiga )       /* Commodore Amiga                                */
-
-
-
 
       /* AMSTRAD */
       DRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
@@ -165,82 +200,93 @@ const struct GameDriver *drivers[] =
 
       /* VEB MIKROELEKTRONIK */
       DRIVER( kccomp )      /* KC compact                                     */
-      DRIVER( kc85_4 )      /*                                                */
+	  DRIVER( kc85_4 )		/* KC 85/4										  */
 
 	  /* CANTAB */
-      DRIVER( jupiter )     /*                                                */
+	  DRIVER( jupiter ) 	/* Jupiter Ace									  */
 
-      /* Intelligent Software */
+	  /* INTELLIGENT SOFTWARE */
       DRIVER( ep128 )       /* Enterprise 128 k                               */
 
-      /* Non Linear Systems */
-      DRIVER( kaypro )      /*   KAYPRO                                       */
+	  /* NON LINEAR SYSTEMS */
+	  DRIVER( kaypro )		/* Kaypro 2X									  */
 
-	  /* Microbee Systems */
-	  DRIVER( mbee )		/*	 Microbee									  */
-	  DRIVER( mbee56k ) 	/*	 Microbee 56K (CP/M)						  */
+	  /* MICROBEE SYSTEMS */
+	  DRIVER( mbee )		/* Microbee 									  */
+	  DRIVER( mbee56k ) 	/* Microbee 56K (CP/M)							  */
 
-      /* Tandy */
+	  /* TANDY */
       DRIVER( coco )        /* Color Computer                                 */
 	  DRIVER( coco3 )       /* Color Computer 3                               */
       DRIVER( cp400 )       /* Prologica CP400                                */
       DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
-	  DRIVER( sys80 )		/* System 80 - EACA Computers Ltd.				  */
+	  DRIVER( mc10 )		/* MC-10										  */
   TESTDRIVER( trs80m3 )     /* TRS-80 Model III - Radio Shack/Tandy           */
 
-      /* Dragon Data Ltd */
+	  /* DRAGON DATA LTD */
       DRIVER( dragon32 )    /* Dragon32                                       */
 
 	  /* EACA */
-      DRIVER( cgenie )      /* Color Genie                                    */
+	  DRIVER( cgenie )		/* Colour Genie 								  */
+	  DRIVER( sys80 )		/* System 80									  */
 
-      /* VideoTech */
-      DRIVER( laser110 )
-      DRIVER( laser210 )
-      DRIVER( laser200 )
-	  DRIVER( vz200 )       /* laser210?                                      */
-	  DRIVER( fellow )
-      DRIVER( tx8000 )
-      DRIVER( laser310 )
-      DRIVER( vz300 )
-      DRIVER( laser350 )    /* Video Tech Laser 350                           */
-      DRIVER( laser500 )    /* Video Tech Laser 500                           */
-      DRIVER( laser700 )    /* Video Tech Laser 700                           */
+	  /* VIDEO TECHNOLOGY */
+	  DRIVER( laser110 )	/* Laser 110									  */
+	  DRIVER( laser200 )	/* Laser 200									  */
+	  DRIVER( laser210 )	/* Laser 210 (indentical to Laser 200 ?)		  */
+	  DRIVER( vz200 )		/* Dick Smith Electronics / Sanyo VZ200 		  */
+	  DRIVER( fellow )		/* Salora Fellow (Finland)						  */
+	  DRIVER( tx8000 )		/* Texet TX-8000 (U.K.) 						  */
+	  DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
+	  DRIVER( vz300 )		/* Dick Smith Electronics / Sanyo VZ300 		  */
+	  DRIVER( laser350 )	/* Laser 350									  */
+	  DRIVER( laser500 )	/* Laser 500									  */
+	  DRIVER( laser700 )	/* Laser 700									  */
 
       /* Tangerine */
-	  DRIVER( oric1 )       /* ORIC 1                                         */
-	  DRIVER( orica )       /* ORIC Atmos                                     */
+      DRIVER( oric1 )       /* Oric 1                                         */
+	  DRIVER( orica )		/* Oric Atmos									  */
 
       /* Texas Instruments */
-  TESTDRIVER( ti99_2_24 )   /* Texas Instruments TI/99 2                      */
-  TESTDRIVER( ti99_2_32 )   /* Texas Instruments TI/99 2                      */
-      DRIVER( ti99_4 )      /* Texas Instruments TI/99                        */
-      DRIVER( ti99_4e )     /* Texas Instruments TI/99                        */
-      DRIVER( ti99_4a )     /* Texas Instruments TI/99                        */
-      DRIVER( ti99_4ae )    /* Texas Instruments TI/99                        */
-
+  TESTDRIVER( ti99_2_24 )	/* Texas Instruments TI 99/2					  */
+  TESTDRIVER( ti99_2_32 )	/* Texas Instruments TI 99/2					  */
+	  DRIVER( ti99_4 )		/* Texas Instruments TI 99/4					  */
+	  DRIVER( ti99_4e ) 	/* Texas Instruments TI 99/4E					  */
+	  DRIVER( ti99_4a ) 	/* Texas Instruments TI 99/4A					  */
+	  DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE					  */
 
       /* IBM & Clones */
   TESTDRIVER( pc )          /* IBM PC  - parent Driver, so no need            */
-      DRIVER( pcmda )
-      DRIVER( pccga )
-      DRIVER( tandy1t )     /* Tandy                                          */
+	  DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
+	  DRIVER( pccga )		/* IBM PC/XT with CGA							  */
+	  DRIVER( tandy1t ) 	/* Tandy 1000TX (similiar to PCJr)				  */
 
-	  /* Sinclair */
-	  DRIVER( zx80 )		/*												  */
-	  DRIVER( zx81 )		/*												  */
-	  DRIVER( ts1000 )		/*												  */
-	  DRIVER( aszmic )		/*												  */
-      DRIVER( pc8300 )
-	  DRIVER( pow3000 )
+	  DRIVER( p2000t )		/* Philips - P2000T 							  */
+	  DRIVER( p2000m )		/*                  							  */
+	  DRIVER( uk101 )		/*                  							  */
+	  DRIVER( superbrd )    /*                  							  */
 
-      DRIVER( spectrum )    /* Sinclair 48k                                   */
+      /* Sinclair */
+	  DRIVER( zx80 )		/* Sinclair ZX-80								  */
+	  DRIVER( zx81 )		/* Sinclair ZX-81								  */
+	  DRIVER( ts1000 )		/* Timex Sinclair 1000							  */
+	  DRIVER( aszmic )		/* ASZMIC ZX-81 ROM swap						  */
+	  DRIVER( pc8300 )		/* Your Computer - PC8300						  */
+	  DRIVER( pow3000 ) 	/* Creon Enterprises - Power 3000				  */
+
+	  DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 					  */
       DRIVER( specpls3 )    /* Spectrum Plus 3                                */
 
-	  /* Other */
+	  /* ASCII & Microsoft */
       DRIVER( msx )         /* MSX                                            */
-      DRIVER( nascom1 )     /*                                                */
+      DRIVER( msxj )        /* MSX Jap                                        */
+      DRIVER( msxkr )       /* MSX Korean                                     */
 
+      /* Nascom */
+	  DRIVER( nascom1 ) 	/* Nascom 1 									  */
+
+
+  TESTDRIVER( mekd2 ) 	    /* Motorola 									  */
 
 
   /****************OTHERS******************************************************/
@@ -248,6 +294,10 @@ const struct GameDriver *drivers[] =
       DRIVER( kim1 )        /* Commodore (MOS) KIM-1 1975                     */
       DRIVER( pdp1 ) 	    /* DEC PDP1 for SPACEWAR! - 1962                  */
 
+      DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
+
+
+  TESTDRIVER( bbc  )        /* BBC Micro                                      */
 
 
 
@@ -255,7 +305,7 @@ const struct GameDriver *drivers[] =
     //DRIVER( arcadia )     /* Arcadia 2001                                   */
     //DRIVER( atarist )     /* Atari ST                                       */
 
-    //DRIVER( bbcmicro )    /* BBC Micro                                      */
+
 
     //DRIVER( channelf )    /* Fairchild Channel F VES - 1976                 */
     //DRIVER( coco2 )       /* Color Computer 2                               */
@@ -269,7 +319,6 @@ const struct GameDriver *drivers[] =
 
     //DRIVER( odyssey )     /* Magnavox Odyssey - analogue (1972)             */
     //DRIVER( odyssey2 )    /* Magnavox Odyssey² - 1978-1983                  */
-
 
 
     //DRIVER( trs80_m2 )    /* TRS-80 Model II -                              */

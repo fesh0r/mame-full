@@ -355,9 +355,10 @@ void vc20_shutdown_machine (void)
 {
 }
 
-int vc20_rom_load (int id, const char *name)
+int vc20_rom_load (int id)
 {
-	UINT8 *mem = memory_region (REGION_CPU1);
+	const char *name = device_filename(IO_CARTSLOT,id);
+    UINT8 *mem = memory_region (REGION_CPU1);
 	FILE *fp;
 	int size, read;
 	char *cp;
@@ -367,9 +368,9 @@ int vc20_rom_load (int id, const char *name)
 
 	if (name==NULL) return 1;
 
-	if (!vc20_rom_id (name, Machine->gamedrv->name))
+	if (!vc20_rom_id (id))
 		return 1;
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		if (errorlog)
@@ -435,9 +436,10 @@ int vc20_rom_load (int id, const char *name)
 	return 0;
 }
 
-int vc20_rom_id (const char *name, const char *machinename)
+int vc20_rom_id (int id)
 {
-	FILE *romfile;
+	const char *name = device_filename(IO_CARTSLOT,id);
+    FILE *romfile;
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
 	unsigned char buffer[sizeof (magic)];
@@ -446,7 +448,7 @@ int vc20_rom_id (const char *name, const char *machinename)
 
 	if (errorlog)
 		fprintf (errorlog, "vc20_rom_id %s\n", name);
-	if (!(romfile = osd_fopen (machinename, name, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		if (errorlog)
 			fprintf (errorlog, "rom %s not found\n", name);
@@ -490,7 +492,7 @@ int vc20_frame_interrupt (void)
 	static int quickload = 0;
 
 	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, vc20_memory);
+		cbm_quick_open (0, 0, vc20_memory);
 	quickload = QUICKLOAD;
 
 	via_0_ca1_w (0, vc20_via0_read_ca1 (0));

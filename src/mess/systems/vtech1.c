@@ -89,13 +89,17 @@ extern void laser210_init_machine(void);
 extern void laser310_init_machine(void);
 extern void vtech1_shutdown_machine(void);
 
-extern int vtech1_floppy_id(const char *name, const char * gamename);
-extern int vtech1_floppy_init(int id, const char *name);
-extern void vtech1_floppy_exit(int id);
-
-extern int vtech1_cassette_id(const char *name, const char * gamename);
-extern int vtech1_cassette_init(int id, const char *name);
+extern int vtech1_cassette_id(int id);
+extern int vtech1_cassette_init(int id);
 extern void vtech1_cassette_exit(int id);
+
+extern int vtech1_snapshot_id(int id);
+extern int vtech1_snapshot_init(int id);
+extern void vtech1_snapshot_exit(int id);
+
+extern int vtech1_floppy_id(int id);
+extern int vtech1_floppy_init(int id);
+extern void vtech1_floppy_exit(int id);
 
 extern int vtech1_fdc_r(int offset);
 extern void vtech1_fdc_w(int offset, int data);
@@ -103,6 +107,8 @@ extern void vtech1_fdc_w(int offset, int data);
 extern int vtech1_joystick_r(int offset);
 extern int vtech1_keyboard_r(int offset);
 extern void vtech1_latch_w(int offset, int data);
+
+extern int vtech1_interrupt(void);
 
 /* from vidhrdw/vz.c */
 extern int	vtech1_vh_start(void);
@@ -208,10 +214,10 @@ INPUT_PORTS_START( vtech1 )
 	PORT_DIPNAME( 0x40, 0x40, "DOS extension")
 	PORT_DIPSETTING(	0x00, DEF_STR( No ))
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ))
-	PORT_BIT(	  0x3e, 0x0f, IPT_UNUSED )
-    PORT_BITX(    0x01, 0x00, IPT_KEYBOARD | IPF_RESETCPU, "Reset", KEYCODE_F3, IP_JOY_NONE )
+	PORT_BITX(0x20, 0x00, IPT_KEYBOARD | IPF_RESETCPU, "Reset",         KEYCODE_F3, IP_JOY_NONE )
+	PORT_BIT( 0x1f, 0x1f, IPT_UNUSED )
 
-	PORT_START /* IN1 KEY ROW 0 */
+    PORT_START /* IN1 KEY ROW 0 */
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "R       RETURN  LEFT$",   KEYCODE_R,          IP_JOY_NONE )
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Q       FOR     CHR$",    KEYCODE_Q,          IP_JOY_NONE )
@@ -416,12 +422,18 @@ static void init_palette_color(unsigned char *sys_palette, unsigned short *sys_c
 	memcpy(sys_colortable,colortable,sizeof(colortable));
 }
 
+static INT16 speaker_levels[] = {-32768,0,32767,0};
 
+static struct Speaker_interface speaker_interface = {
+	1,
+	{ 75 },
+	{ 4 },
+	{ speaker_levels }
+};
 
-static struct DACinterface dac_interface =
-{
-    1,			/* number of DACs */
-	{ 50 }	   /* volume */
+static struct Wave_interface wave_interface = {
+	1,
+	{ 25 }
 };
 
 static struct MachineDriver machine_driver_laser110 =
@@ -433,7 +445,7 @@ static struct MachineDriver machine_driver_laser110 =
 			3579500,	/* 3.57950 Mhz */
 			readmem_laser110,writemem_laser110,
 			readport,writeport,
-			interrupt,1
+			vtech1_interrupt,1
 		},
 	},
 	50, 0,	/* frames per second, vblank duration */
@@ -460,10 +472,14 @@ static struct MachineDriver machine_driver_laser110 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+			SOUND_SPEAKER,
+			&speaker_interface
+		},
+		{
+			SOUND_WAVE,
+			&wave_interface
+        }
+    }
 };
 
 static struct MachineDriver machine_driver_laser210 =
@@ -475,7 +491,7 @@ static struct MachineDriver machine_driver_laser210 =
 			3579500,	/* 3.57950 Mhz */
 			readmem_laser210,writemem_laser210,
 			readport,writeport,
-			interrupt,1
+			vtech1_interrupt,1
 		},
 	},
 	50, 0,	/* frames per second, vblank duration */
@@ -502,10 +518,14 @@ static struct MachineDriver machine_driver_laser210 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+			SOUND_SPEAKER,
+			&speaker_interface
+        },
+		{
+			SOUND_WAVE,
+			&wave_interface
+        }
+    }
 };
 
 static struct MachineDriver machine_driver_laser310 =
@@ -517,7 +537,7 @@ static struct MachineDriver machine_driver_laser310 =
 			17734000/5, 					/* 17.734MHz / 5 = 3.54690 Mhz */
 			readmem_laser310,writemem_laser310,
 			readport,writeport,
-			interrupt,1
+			vtech1_interrupt,1
 		},
 	},
 	50, 0,									/* frames per second, vblank duration */
@@ -544,10 +564,14 @@ static struct MachineDriver machine_driver_laser310 =
 	0,0,0,0,
 	{
 		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
+			SOUND_SPEAKER,
+			&speaker_interface
+        },
+		{
+			SOUND_WAVE,
+			&wave_interface
+        }
+    }
 };
 
 ROM_START( laser110 )
@@ -589,25 +613,27 @@ ROM_END
 ***************************************************************************/
 
 static const struct IODevice io_laser[] = {
-    {
-		IO_CASSETTE,			/* type */
-		1,						/* count */
-		"vz\0cas\0",            /* file extensions */
-		NULL,					/* private */
-		vtech1_cassette_id, 	/* id */
-		vtech1_cassette_init,	/* init */
-		vtech1_cassette_exit,	/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-    },
+	IO_CASSETTE_WAVE(1,"wav\0cas\0",vtech1_cassette_id,vtech1_cassette_init,vtech1_cassette_exit),
 	{
+        IO_SNAPSHOT,            /* type */
+        1,                      /* count */
+        "vz\0",                 /* file extensions */
+        NULL,                   /* private */
+        vtech1_snapshot_id,     /* id */
+        vtech1_snapshot_init,   /* init */
+        vtech1_snapshot_exit,   /* exit */
+        NULL,                   /* info */
+        NULL,                   /* open */
+        NULL,                   /* close */
+        NULL,                   /* status */
+        NULL,                   /* seek */
+        NULL,                   /* tell */
+        NULL,                   /* input */
+        NULL,                   /* output */
+        NULL,                   /* input_chunk */
+        NULL                    /* output_chunk */
+    },
+    {
 		IO_FLOPPY,				/* type */
 		2,						/* count */
 		"dsk\0",                /* file extensions */
@@ -620,7 +646,8 @@ static const struct IODevice io_laser[] = {
 		NULL,					/* close */
 		NULL,					/* status */
 		NULL,					/* seek */
-		NULL,					/* input */
+		NULL,					/* tell */
+        NULL,                   /* input */
 		NULL,					/* output */
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
@@ -640,7 +667,7 @@ static const struct IODevice io_laser[] = {
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP ( 1983, laser110, 0,		 laser110, vtech1,	 vtech1,   "Video Technology", "Laser 110" )
 COMP ( 1983, laser210, 0,		 laser210, vtech1,	 vtech1,   "Video Technology", "Laser 210" )
-COMPX( 1983, laser200, laser210, laser210, vtech1,	 vtech1,   "Video Technology", "Laser 200", GAME_ALIAS )
+COMPX( 1983, laser200, laser210, laser210, vtech1,   vtech1,   "Video Technology", "Laser 200", GAME_ALIAS )
 COMPX( 1983, vz200,    laser210, laser210, vtech1,	 vtech1,   "Video Technology", "Sanyo / Dick Smith VZ200", GAME_ALIAS )
 COMPX( 1983, fellow,   laser210, laser210, vtech1,	 vtech1,   "Video Technology", "Salora Fellow", GAME_ALIAS )
 COMPX( 1983, tx8000,   laser210, laser210, vtech1,	 vtech1,   "Video Technology", "Texet TX8000", GAME_ALIAS )
