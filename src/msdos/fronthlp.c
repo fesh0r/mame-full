@@ -11,7 +11,7 @@
 #include <unzip.h>
 
 #ifdef MESS
-#include "../mess/msdos.h"
+#include "msdos.h"
 #endif
 
 int silentident,knownstatus;

@@ -14,7 +14,7 @@
 #include "ui_text.h"
 
 #ifdef MESS
-  #include "../mess/mess.h"
+  #include "mess.h"
 #endif
 
 
