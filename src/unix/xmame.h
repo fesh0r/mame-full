@@ -104,6 +104,7 @@ EXTERN int		normal_use_aspect_ratio;
 EXTERN struct sysdep_palette_info display_palette_info;
 EXTERN struct sysdep_palette_struct *current_palette;
 EXTERN struct sysdep_palette_struct *normal_palette;
+EXTERN struct sysdep_palette_struct *debug_palette;
 EXTERN struct sound_stream_struct *sound_stream;
 #ifdef MESS
 EXTERN char		*crcdir;

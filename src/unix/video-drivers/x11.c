@@ -178,6 +178,7 @@ int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
 void sysdep_update_display (struct osd_bitmap *bitmap)
 {
    int new_video_mode = x11_video_mode;
+   int current_palette_normal = (current_palette == normal_palette);
 
    if (keyboard_pressed (KEYCODE_LALT))
    { 
@@ -195,19 +196,26 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
          fprintf(stderr_file,
             "X11: Warning: Couldn't create display for new x11-mode\n"
             "   Trying again with the old x11-mode\n");
-         x_func[new_video_mode].close_display();
-         if (x_func[x11_video_mode].create_display(bitmap->depth) != OSD_OK)
+         (*x_func[new_video_mode].close_display)();
+         if ((*x_func[x11_video_mode].create_display)(bitmap->depth) != OSD_OK)
             goto barf;
       }
       else
          x11_video_mode = new_video_mode;
 
-      if(sysdep_palette_change_display(&current_palette))
-	      goto barf;
+      if (sysdep_palette_change_display(&normal_palette))
+         goto barf;
 
-      if (display_palette_info.depth == 8)
-	      if(sysdep_display_alloc_palette(video_colors_used))
-		      goto barf;
+      if (debug_palette && sysdep_palette_change_display(&debug_palette))
+         goto barf;
+      
+      if (current_palette_normal)
+         current_palette = normal_palette;
+      else
+         current_palette = debug_palette;
+
+      if(sysdep_display_alloc_palette(video_colors_used))
+         goto barf;
 
       keyboard_clear();
       osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1);
