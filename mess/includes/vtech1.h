@@ -1,5 +1,7 @@
 /* from machine/vtech1.c */
 
+#define OLD_VIDEO
+
 extern char vtech1_frame_message[64+1];
 extern int vtech1_frame_time;
 
@@ -31,11 +33,15 @@ extern READ_HANDLER ( vtech1_keyboard_r );
 extern WRITE_HANDLER ( vtech1_latch_w );
 
 extern int vtech1_interrupt(void);
-
+#ifdef OLD_VIDEO
 /* from vidhrdw/vtech1.c */
 extern int  vtech1_vh_start(void);
 extern void vtech1_vh_stop(void);
 extern void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+#else
+extern int  vtech1_vh_start(void);
+
+#endif
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus
