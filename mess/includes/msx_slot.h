@@ -104,7 +104,7 @@ typedef struct {
 typedef struct {
 	int slot_type;
 	int mem_type;
-	char name[20];
+	char name[32];
 	int (*init)(slot_state*, int page, UINT8 *mem, int size);
 	void (*reset)(slot_state*);
 	void (*map)(slot_state*, int page);

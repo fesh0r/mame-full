@@ -1503,8 +1503,8 @@ MSX_SLOT_MAP(superloadrunner)
 		cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem);
-		cpu_setbank (4, state->mem + 0x2000);
+		cpu_setbank (3, msx1.empty);
+		cpu_setbank (4, msx1.empty);
 		break;
 	case 2:
 		mem = state->mem + 

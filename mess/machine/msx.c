@@ -873,14 +873,14 @@ void msx_memory_set_carts (void)
 	for (layout = msx1.layout; layout->type != SLOT_END; layout++) {
 		switch (layout->type) {
 		case SLOT_CARTRIDGE1:
-			for (page=0; page<3; page++) {
+			for (page=0; page<4; page++) {
 				msx1.all_state[layout->slot_primary]
 						      [layout->slot_secondary]
 							  [page] = msx1.cart_state[0];
 			}
 			break;
 		case SLOT_CARTRIDGE2:
-			for (page=0; page<3; page++) {
+			for (page=0; page<4; page++) {
 				msx1.all_state[layout->slot_primary]
 						      [layout->slot_secondary]
 							  [page] = msx1.cart_state[1];
