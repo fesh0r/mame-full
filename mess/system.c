@@ -231,7 +231,8 @@ TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
         DRIVER( nc100 ) 
 
         DRIVER( z88 )
-	/* VEB MIKROELEKTRONIK */
+        DRIVER( avigo )
+        /* VEB MIKROELEKTRONIK */
 	DRIVER( kccomp )	/* KC compact									  */
 	DRIVER( kc85_4 )	/* KC 85/4										  */
 #endif
