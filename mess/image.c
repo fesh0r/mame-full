@@ -444,7 +444,7 @@ void image_unload_all(int ispreload)
 
 const char *image_error(mess_image *img)
 {
-	const char *messages[] =
+	static const char *messages[] =
 	{
 		NULL,
 		"Internal error",

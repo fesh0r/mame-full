@@ -264,23 +264,28 @@ static UINT8 keystilldown;
   Helper Functions
 ***************************************************************************/
 
-INLINE int a2_has_keypad() {
+INLINE int a2_has_keypad(void)
+{
 	return port_tag_to_index("keypad_1") != -1;
 }
 
-INLINE int a2_has_reset_dip() {
+INLINE int a2_has_reset_dip(void)
+{
 	return port_tag_to_index("reset_dip") != -1;
 }
 
-INLINE int a2_has_repeat() {
+INLINE int a2_has_repeat(void)
+{
 	return port_tag_to_index("keyb_repeat") != -1;
 }
 
-INLINE int a2_has_capslock() {
+INLINE int a2_has_capslock(void)
+{
 	return !a2_has_repeat(); /* BUG: Doesn't work with Ace */
 }
 
-INLINE int a2_no_ctrl_reset() {
+INLINE int a2_no_ctrl_reset(void)
+{
 	return ((a2_has_repeat() && !a2_has_reset_dip()) ||
 			(a2_has_reset_dip() && !readinputportbytag("reset_dip")));
 }

@@ -5664,6 +5664,28 @@ static void MamePlayRecordWave()
 	}	
 }
 
+static void MameGetErrorText(DWORD dwExitCode, LPTSTR pszBuffer, UINT nBufferLen)
+{
+	switch(dwExitCode)
+	{
+		case 1:
+			_sntprintf(pszBuffer, nBufferLen, TEXT("Initialization error"));
+			break;
+
+		case 0xC0000005:
+			_sntprintf(pszBuffer, nBufferLen, TEXT("Access violation"));
+			break;
+
+		default:
+			if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwExitCode,
+				0, pszBuffer, nBufferLen, NULL) == 0)
+			{
+				_sntprintf(pszBuffer, nBufferLen, TEXT("Error 0x%08X"), dwExitCode);
+			}
+			break;
+	}
+}
+
 static void MamePlayGameWithOptions(int nGame)
 {
 	DWORD dwExitCode;
@@ -5700,12 +5722,7 @@ static void MamePlayGameWithOptions(int nGame)
 		ShowWindow(hMain, SW_SHOW);
 
 		// attempt to display a nice error message
-		if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwExitCode, 0,
-			szError, sizeof(szError) / sizeof(szError[0]), NULL) == 0)
-		{
-			_sntprintf(szError, sizeof(szError) / sizeof(szError[0]),
-				TEXT("Error 0x%08X"), dwExitCode);
-		}
+		MameGetErrorText(dwExitCode, szError, sizeof(szError) / sizeof(szError[0]));
 		_sntprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]),
 			TEXT(MAME32NAME " encountered a fatal error: %s"),
 			szError);
