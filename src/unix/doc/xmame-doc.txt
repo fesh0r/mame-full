@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.29, 26 May 2003
+v2.1.30, 18 June 2003
 
 Abstract
 
@@ -2630,9 +2630,11 @@ maintainer. --Lawrence Gold)
 
   * Chris Sharpp
 
-17. IRIX Sound code
+17. IRIX Sound Code
 
-  * [mailto:entropy@zippy.bernstein.com||entropy@zippy.bernstein.com] 
+  * [mailto:entropy@zippy.bernstein.com||entropy@zippy.bernstein.com] (original code)
+
+  * Brandon Corey (current code)
 
 18. PS2 Linux support
 
@@ -2685,7 +2687,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.69.1.tar.bz2||xmame/xmess-0.69.1 sources]
+  [download/xmame-0.70.1.tar.bz2||xmame/xmess-0.70.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2751,7 +2753,7 @@ maintainer. --Lawrence Gold)
 
 * [http://yeeking.net/cxmame/||CXmame], a simple console-based front-end
 
-* [http://designs.stormspirit.net/kmameleon/||KMameleon], a KDE front-end
+* [http://designs.stormheart.com/kmameleon/||KMameleon], a KDE front-end
 
 * [http://tkmame.retrogames.com/icons||Mamu_'s Icons for X]
 
@@ -2786,7 +2788,7 @@ release, the core of xmame/xmess.
  The Unix ChangeLog
 
 And now here is the HISTORY of the xmame project (of 
-course that's why you are here :;-)) ... René
+course that's why you are here :;-)) ... RenÃ©
 
 * [changes-unix.html||The Unix port changelog (changes.unix)]
 

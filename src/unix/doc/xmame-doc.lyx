@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.29, 26 May 2003
+v2.1.30, 18 June 2003
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -4310,7 +4310,7 @@ Chris Sharpp
 \end_deeper 
 \layout Enumerate
 
-IRIX Sound code
+IRIX Sound Code
 \begin_deeper 
 \layout Itemize
 
@@ -4323,7 +4323,10 @@ IRIX Sound code
 
 
 \family default 
- 
+ (original code)
+\layout Itemize
+
+Brandon Corey (current code)
 \end_deeper 
 \layout Enumerate
 
@@ -4423,7 +4426,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.69.1 sources]{download/xmame-0.69.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.70.1 sources]{download/xmame-0.70.1.tar.bz2}
 
 \end_inset 
 
@@ -4667,7 +4670,7 @@ Xmame/xmess download mirrors
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[KMameleon]{http://designs.stormspirit.net/kmameleon/}
+\begin_inset LatexCommand \url[KMameleon]{http://designs.stormheart.com/kmameleon/}
 
 \end_inset 
 
@@ -4805,7 +4808,7 @@ The Unix ChangeLog
 
 And now here is the HISTORY of the xmame project (of course that's why you
  are here :;-)) ...
- René
+ RenÃ©
 \layout Itemize
 
 
