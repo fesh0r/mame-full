@@ -4,12 +4,12 @@
 
 	This core will emulate the common feature set found in every tape controller.
 	Most controllers support additional features, but are still compatible with
-	the basic feature set.  I have a little documentation documentation on two specific
-	disk controllers (MT3200 and WD800/WD800A), but I have not tried to emulate
+	the basic feature set.  I have a little documentation on two specific
+	tape controllers (MT3200 and WD800/WD800A), but I have not tried to emulate
 	controller-specific features.
 
 
-	Long description: see 2234398-9701.
+	Long description: see 2234398-9701 and 2306140-9701.
 
 
 	Raphael Nabet 2002
@@ -172,9 +172,9 @@ void ti990_tpc_init(void (*interrupt_callback)(int state))
 /*
 	Clean-up the tape controller core
 */
-void ti990_tpc_exit(void)
+/*void ti990_tpc_exit(void)
 {
-}
+}*/
 
 /*
 	Parse the tape select lines, and return the corresponding tape unit.
@@ -214,7 +214,7 @@ static void update_interrupt(void)
 }
 
 /*
-	Perform the read binary forward command: read the next record on tape.
+	Handle the read binary forward command: read the next record on tape.
 */
 static void read_binary_forward(void)
 {
@@ -263,6 +263,7 @@ static void read_binary_forward(void)
 	char_count = tpc.w[4];
 	read_offset = tpc.w[3];
 
+retry:
 	bytes_read = osd_fread(tpc.t[tap_sel].fd, buffer, 4);
 	if (bytes_read != 4)
 	{
@@ -307,12 +308,18 @@ static void read_binary_forward(void)
 	}
 #endif
 
+	logerror("read binary forward: rec lenght %d, requested %d\n", reclen, char_count);
+
 	if (reclen == 0)
 	{	/* EOF mark (mere guess) */
+#if 0
 		tpc.w[0] |= w0_EOF;
 		tpc.w[7] |= w7_idle | w7_error | w7_tape_error;
 		update_interrupt();
 		goto update_registers;
+#else
+		goto retry;
+#endif
 	}
 
 	rec_count = reclen;
@@ -441,6 +448,9 @@ static void record_skip_forward(void)
 
 }
 
+/*
+	Handle the read transport status command: return the current tape status.
+*/
 static void read_transport_status(void)
 {
 	int tap_sel = cur_tape_unit();
@@ -483,6 +493,9 @@ static void read_transport_status(void)
 */
 static void execute_command(void)
 {
+	/* hack */
+	tpc.w[0] &= 0xff;
+
 	switch ((tpc.w[6] & w6_command) >> 8)
 	{
 	case 0b0000:
