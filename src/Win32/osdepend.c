@@ -145,9 +145,7 @@ int osd_init()
     else
         MAME32App.m_pDisplay = &DDrawDisplay;
 
-    if (bNoSound == TRUE)
-        MAME32App.m_pSound = &NullSound;
-    else
+    MAME32App.m_pSound = &NullSound;
 #if defined(MIDAS)
     if (bUseMIDASSound == TRUE)
         MAME32App.m_pSound = &MIDASSound;
