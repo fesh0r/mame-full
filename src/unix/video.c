@@ -55,7 +55,6 @@ static struct sysdep_display_open_params debug_params = {
   0, 0, 16, 0, 0, 0, NAME " debug window", 0, 1, 1, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
 
-static struct rectangle debug_bounds;
 
 /* average FPS calculation */
 static cycles_t start_time = 0;
@@ -532,10 +531,6 @@ int osd_create_display(const struct osd_create_params *params,
 	debug_params.height     = options.debug_height;
 	debug_params.max_width  = options.debug_width;
 	debug_params.max_height = options.debug_height;
-	debug_bounds.min_x      = 0;
-	debug_bounds.max_x      = options.debug_width - 1;
-	debug_bounds.min_y      = 0;
-	debug_bounds.max_y      = options.debug_height - 1;
 
 	return 0;
 }
@@ -682,6 +677,9 @@ static void update_palette(struct mame_display *display, int force_dirty)
 
 static void update_debug_display(struct mame_display *display)
 {
+        struct rectangle vis_area;
+        struct rectangle dirty_area;
+        
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
@@ -707,8 +705,17 @@ static void update_debug_display(struct mame_display *display)
 					i, r, g, b);
 		}
 	}
-	sysdep_display_update(display->debug_bitmap, &debug_bounds,
-	   &debug_bounds, debug_palette, 0, 0);
+
+	vis_area.min_x   = 0;
+	vis_area.max_x   = options.debug_width - 1;
+	vis_area.min_y   = 0;
+	vis_area.max_y   = options.debug_height - 1;
+	dirty_area.min_x = 0;
+	dirty_area.max_x = options.debug_width - 1;
+	dirty_area.min_y = 0;
+	dirty_area.max_y = options.debug_height - 1;
+	sysdep_display_update(display->debug_bitmap, &vis_area,
+          &dirty_area, debug_palette, 0, 0);
 }
 
 static void update_effect(void)
