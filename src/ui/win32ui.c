@@ -1621,6 +1621,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	HWND hwndSoftware;
 #endif /* MESS */
 
+	/* since the cpuintrf structure is filled dynamically now, we have to init first */
+	cpuintrf_init();
+
 	srand((unsigned)time(NULL));
 
 	game_count = 0;
