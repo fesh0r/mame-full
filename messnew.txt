@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- []
+- [TI81] ON/OFF fixed. ROM bank switching added (port 5). NVRAM support added.
+  [Krzysztof Strzecha]
 
 Source:
 -------
@@ -14,4 +15,5 @@ Source:
 - The core is based on MAME 0.54.  This incorporates all features of the 
   update to this core.  [MAME team] 
 
+- MESSRoms now recognizes more ROMs. [Krzysztof Strzecha]
 

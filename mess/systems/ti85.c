@@ -9,7 +9,7 @@ Notes:
 4. Only difference beetwen all TI-86 drivers is ROM version.
 5. Video engine (with grayscale support) based on the idea found in VTI source
    emulator written by Rusty Wagner.
-6. NVRAM is saved properly only when calculator is turned off during MESS exiting.
+6. NVRAM is saved properly only when calculator is turned off before exiting MESS.
 7. To receive data from TI press "R" immediately after TI starts to send data.
 8. To request screen dump from calculator press "S".
 9. TI-81 have not serial link.
@@ -21,6 +21,12 @@ Needed:
 4. Artworks.
 
 New:
+08/09/2001 TI-81, TI-85, TI-86 modified to new core.
+	   TI-81, TI-85, TI-86 reset corrected.
+21/08/2001 TI-81, TI-85, TI-86 NVRAM corrected.
+20/08/2001 TI-81 ON/OFF fixed.
+	   TI-81 ROM bank switching added (port 5).
+	   TI-81 NVRAM support added.
 15/08/2001 TI-81 kayboard is now mapped as it should be.
 14/08/2001 TI-81 preliminary driver added.
 05/07/2001 Serial communication corrected (transmission works now after reset).
@@ -58,21 +64,11 @@ New:
 02/02/2001 Preliminary driver
 
 To do:
+- port 7 (TI-86)
+- port 4 (all models)
+- artwork (all models)
 - add TI-82, TI-83 and TI-83+ drivers
 
-TI-81:
-- fix port 3 (ON/OFF not works)
-- port 4, 5 and 7
-- artwork
-- nvram;
-
-TI-85:
-- port 4
-- artwork
-
-TI-86:
-- finish port 7
-- artwork
 
 TI-81 memory map
 
@@ -145,6 +141,7 @@ PORT_READ_START( ti81_readport )
 	{0x0002, 0x0002, ti85_port_0002_r},
 	{0x0003, 0x0003, ti85_port_0003_r},
 	{0x0004, 0x0004, ti85_port_0004_r},
+	{0x0005, 0x0005, ti85_port_0005_r},
 PORT_END
 
 PORT_WRITE_START( ti81_writeport )
@@ -153,6 +150,8 @@ PORT_WRITE_START( ti81_writeport )
 	{0x0002, 0x0002, ti85_port_0002_w},
 	{0x0003, 0x0003, ti85_port_0003_w},
 	{0x0004, 0x0004, ti85_port_0004_w},
+	{0x0005, 0x0005, ti85_port_0005_w},
+	{0x0007, 0x0007, ti81_port_0007_w},
 PORT_END
 
 PORT_READ_START( ti85_readport )
@@ -202,12 +201,14 @@ PORT_END
 /* memory w/r functions */
 
 MEMORY_READ_START( ti81_readmem )
-	{0x0000, 0x7fff, MRA_ROM},
+	{0x0000, 0x3fff, MRA_BANK1},
+	{0x4000, 0x7fff, MRA_BANK2},
 	{0x8000, 0xffff, MRA_RAM},
 MEMORY_END
 
 MEMORY_WRITE_START( ti81_writemem )
-	{0x0000, 0x7fff, MWA_ROM},
+	{0x0000, 0x3fff, MWA_BANK3},
+	{0x4000, 0x7fff, MWA_BANK4},
 	{0x8000, 0xffff, MWA_RAM},
 MEMORY_END
 
@@ -373,7 +374,6 @@ static struct Speaker_interface ti85_speaker_interface=
  {50},
 };
 
-
 /* machine definition */
 
 static	struct MachineDriver machine_driver_ti81 =
@@ -398,7 +398,7 @@ static	struct MachineDriver machine_driver_ti81 =
 	330,					/* screen height */
 	{0, 440-1, 0, 330-1},			/* visible_area */
 	0,					/* graphics decode info */
-	32*7,
+	32*7 + 32768,
 	32*7,					/* colors used for the characters */
 	ti85_init_palette,			/* initialise palette */
 
@@ -412,7 +412,8 @@ static	struct MachineDriver machine_driver_ti81 =
 	0, 0, 0, 0,
 	{
 		{ 0 }
-	}
+	},
+	ti81_nvram_handler
 };
 
 static	struct MachineDriver machine_driver_ti85 =
@@ -437,7 +438,7 @@ static	struct MachineDriver machine_driver_ti85 =
 	330,					/* screen height */
 	{0, 440-1, 0, 330-1},			/* visible_area */
 	0,					/* graphics decode info */
-	32*7,
+	32*7 + 32768,
 	32*7,					/* colors used for the characters */
 	ti85_init_palette,			/* initialise palette */
 
@@ -454,7 +455,8 @@ static	struct MachineDriver machine_driver_ti85 =
 				SOUND_SPEAKER,
 				&ti85_speaker_interface
 		}
-	}
+	},
+	ti85_nvram_handler
 };
 
 static	struct MachineDriver machine_driver_ti86 =
@@ -479,7 +481,7 @@ static	struct MachineDriver machine_driver_ti86 =
 	330,					/* screen height */
 	{0, 440-1, 0, 330-1},			/* visible_area */
 	0,					/* graphics decode info */
-	32*7,
+	32*7 + 32768,
 	32*7,					/* colors used for the characters */
 	ti85_init_palette,			/* initialise palette */
 
@@ -496,12 +498,13 @@ static	struct MachineDriver machine_driver_ti86 =
 				SOUND_SPEAKER,
 				&ti85_speaker_interface
 		}
-	}
+	},
+	ti86_nvram_handler
 };
 
 ROM_START (ti81)
-	ROM_REGION (0x10000, REGION_CPU1,0)
-	ROM_LOAD ("ti81.bin", 0x0000, 0x8000, 0x94ac58e2)
+	ROM_REGION (0x18000, REGION_CPU1,0)
+	ROM_LOAD ("ti81.bin", 0x10000, 0x8000, 0x94ac58e2)
 ROM_END
 
 ROM_START (ti85)
