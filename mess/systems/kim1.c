@@ -262,5 +262,5 @@ static const struct IODevice io_kim1[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMP( 1975, kim1,	  0, 		kim1,	  kim1, 	kim1,	  "Commodore Business Machines Co.",  "KIM-1" )
+COMP( 1975, kim1,	  0, 		kim1,	  kim1, 	kim1,	  "MOS Technologies",  "KIM-1" )
 
