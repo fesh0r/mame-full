@@ -694,7 +694,6 @@ COREOBJS += \
 	$(OBJ)/cheat.o  			   \
 	$(OBJ)/mess/mess.o			   \
 	$(OBJ)/mess/image.o		       \
-	$(OBJ)/mess/pool.o			   \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/device.o	       \
 	$(OBJ)/mess/config.o	       \
@@ -712,10 +711,11 @@ COREOBJS += \
 	$(OBJ)/mess/eventlst.o         \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/bitbngr.o          \
-	$(OBJ)/mess/snapquik.o          \
+	$(OBJ)/mess/snapquik.o         \
 	$(OBJ)/mess/statetxt.o         \
 	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/messfmts.o         \
+	$(OBJ)/mess/mscommon.o         \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \

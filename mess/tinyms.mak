@@ -22,7 +22,7 @@ COREOBJS += \
 	$(OBJ)/cheat.o  	       \
 	$(OBJ)/mess/mess.o			   \
 	$(OBJ)/mess/image.o		       \
-	$(OBJ)/mess/pool.o			   \
+	$(OBJ)/mess/mscommon.o         \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/device.o	       \
 	$(OBJ)/mess/config.o	       \

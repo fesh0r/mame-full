@@ -81,6 +81,7 @@
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/kaypro.h"
+#include "mscommon.h"
 
 
 enum state {
@@ -121,7 +122,7 @@ static UINT8 kbd_buff[16];
 static int kbd_head = 0;
 static int kbd_tail = 0;
 
-static	short * video_buffer = NULL;
+static struct terminal *kaypro_terminal;
 
 static void kaypro_putstr(char * src)
 {
@@ -129,22 +130,19 @@ static void kaypro_putstr(char * src)
 		kaypro_conout_w(0, *src++);
 }
 
+static int kaypro_getcursorcode(int code)
+{
+	return code ^ 0x200;
+}
+
 VIDEO_START( kaypro )
 {
-	int i;
-
 	scroll_lines = KAYPRO_SCREEN_H;
 	videoram_size = KAYPRO_SCREEN_W * KAYPRO_SCREEN_H;
 
-	if (video_start_generic())
+	kaypro_terminal = terminal_create(0, ' ', 10, kaypro_getcursorcode, KAYPRO_SCREEN_W, KAYPRO_SCREEN_H);
+	if (!kaypro_terminal)
 		return 1;
-
-	video_buffer = auto_malloc(videoram_size * sizeof(short));
-	if (!video_buffer)
-		return 1;
-
-	for (i = 0; i < videoram_size; i++)
-		video_buffer[i] = 0x20;
 
 	kaypro_putstr(
 	/* a test of GB1/GB2 video mode graphics */ \
@@ -192,8 +190,6 @@ VIDEO_UPDATE( kaypro )
 {
 	static int blink_count = 0;
 	static int cursor_count = 0;
-	int i, j = -1;
-	int full_refresh = 1;
 
 	blink_count++;
 	if (!(blink_count & 15))
@@ -210,55 +206,13 @@ VIDEO_UPDATE( kaypro )
 		}
 	}
 
-/*	palette_init_used_colors();
-	if (palette_used_colors)
-		memset(palette_used_colors, PALETTE_COLOR_USED, 4);
-*/
 	cursor_count++;
-	if (cursor)
-		j = cur_y * KAYPRO_SCREEN_W + cur_x;
 
-	if (full_refresh)
-	{
-		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-	}
-
-	for (i = 0; i < videoram_size; i++)
-	{
-		if (dirtybuffer[i] || i == j)
-		{
-			int x, y, code, color;
-			struct rectangle r;
-
-			dirtybuffer[i] = 0;
-
-			y = i / KAYPRO_SCREEN_W;
-			x = i % KAYPRO_SCREEN_W;
-			r.min_x = x * KAYPRO_FONT_W;
-			r.max_x = r.min_x + KAYPRO_FONT_W - 1;
-			r.min_y = y * KAYPRO_FONT_H;
-			r.max_y = r.min_y + KAYPRO_FONT_H - 1;
-
-			code = video_buffer[i] & 0x3ff;
-			color = video_buffer[i] >> 10;
-
-			drawgfx(tmpbitmap, Machine->gfx[0], code, color,
-				0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
-			drawgfx(bitmap, Machine->gfx[0], code, color,
-				0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
-
-			if ( i == j && (cursor_count & 16) )
-			{
-				/* toggle reverse */
-				code ^= 0x0200;
-				drawgfx(tmpbitmap, Machine->gfx[0], code, color,
-					0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
-				drawgfx(bitmap, Machine->gfx[0], code, color,
-					0, 0, r.min_x, r.min_y, &r, TRANSPARENCY_NONE, 0);
-				dirtybuffer[i] = 1;
-			}
-		}
-	}
+	if (cursor && (cursor_count & 16))
+		terminal_setcursor(kaypro_terminal, cur_x, cur_y);
+	else
+		terminal_hidecursor(kaypro_terminal);
+	terminal_draw(bitmap, NULL, kaypro_terminal);
 }
 
 /******************************************************
@@ -270,10 +224,7 @@ VIDEO_UPDATE( kaypro )
 static void kaypro_vgbout(int offset, int data, short attr)
 {
 	data |= attr & AT_MASK;
-	if (data == video_buffer[offset])
-		return;
-	video_buffer[offset] = data;
-	dirtybuffer[offset] = 1;
+	terminal_putchar(kaypro_terminal, offset % KAYPRO_SCREEN_W, offset / KAYPRO_SCREEN_W, data);
 }
 
 /******************************************************
@@ -369,21 +320,13 @@ static void kaypro_scroll(int top, int lines)
 			{
 				for( x = 0; x < KAYPRO_SCREEN_W; x++ )
 				{
-					if (video_buffer[y * KAYPRO_SCREEN_W + x] != video_buffer[(y + 1) * KAYPRO_SCREEN_W + x])
-					{
-						video_buffer[y * KAYPRO_SCREEN_W + x] = video_buffer[(y + 1) * KAYPRO_SCREEN_W + x];
-						dirtybuffer[y * KAYPRO_SCREEN_W + x] = 1;
-					}
+					terminal_putchar(kaypro_terminal, x, y, terminal_getchar(kaypro_terminal, x, y+1));
 				}
 			}
 			attr = ' ';
 			for (x = 0; x < KAYPRO_SCREEN_W; x++)
 			{
-				if (attr != video_buffer[(scroll_lines - 1) * KAYPRO_SCREEN_W + x])
-				{
-					video_buffer[(scroll_lines - 1) * KAYPRO_SCREEN_W + x] = attr;
-					dirtybuffer[(scroll_lines - 1) * KAYPRO_SCREEN_W + x] = 1;
-				}
+				terminal_putchar(kaypro_terminal, x, scroll_lines - 1, attr);
 			}
 			lines--;
 		}
@@ -393,21 +336,13 @@ static void kaypro_scroll(int top, int lines)
 			{
 				for (x = 0; x < KAYPRO_SCREEN_W; x++)
 				{
-					if (video_buffer[y * KAYPRO_SCREEN_W + x] != video_buffer[(y - 1) * KAYPRO_SCREEN_W + x])
-					{
-						video_buffer[y * KAYPRO_SCREEN_W + x] = video_buffer[(y - 1) * KAYPRO_SCREEN_W + x];
-						dirtybuffer[y * KAYPRO_SCREEN_W + x] = 1;
-					}
+					terminal_putchar(kaypro_terminal, x, y, terminal_getchar(kaypro_terminal, x, y-1));
 				}
 			}
 			attr = ' ';
 			for (x = 0; x < KAYPRO_SCREEN_W; x++)
 			{
-				if (attr != video_buffer[top * KAYPRO_SCREEN_W + x])
-				{
-					video_buffer[top * KAYPRO_SCREEN_W + x] = attr;
-					dirtybuffer[top * KAYPRO_SCREEN_W + x] = 1;
-				}
+				terminal_putchar(kaypro_terminal, x, top, attr);
 			}
 			lines++;
 		}
@@ -483,32 +418,24 @@ static void kaypro_advance(void)
 
 static void kaypro_erase_end_of_line(void)
 {
-	int i, offs, attr;
-	offs = cur_y * KAYPRO_SCREEN_W + cur_x;
+	int x, attr;
 	attr = ' ';
-	for( i = 0; i < KAYPRO_SCREEN_W - cur_x; i++ )
-	{
-		if( attr != video_buffer[offs] )
-		{
-			video_buffer[offs] = attr;
-			dirtybuffer[offs] = 1;
-		}
-		offs++;
-	}
+
+	for (x = cur_x; x < KAYPRO_SCREEN_W; x++)
+		terminal_putchar(kaypro_terminal, x, cur_y, attr);
 }
 
 static void kaypro_erase_end_of_screen(void)
 {
-	int i, offs, attr;
-	offs = cur_y * KAYPRO_SCREEN_W + cur_x;
+	int x, y, attr;
+
 	attr = ' ';
-	for( i = offs; i < scroll_lines * KAYPRO_SCREEN_W; i++ )
+	kaypro_erase_end_of_line();
+
+	for (y = cur_y + 1; y < scroll_lines; y++)
 	{
-		if (attr != video_buffer[i])
-		{
-			video_buffer[i] = attr;
-			dirtybuffer[i] = 1;
-		}
+		for (x = 0; x < KAYPRO_SCREEN_W; x++)
+			terminal_putchar(kaypro_terminal, x, y, attr);
 	}
 }
 
@@ -543,7 +470,7 @@ static void kaypro_pixel(int x, int y, int set)
 	cx = x / 2;
 	cy = y / 4;
 	offs = cy * KAYPRO_SCREEN_W + cx;
-	attr = video_buffer[offs];
+	attr = terminal_getchar(kaypro_terminal, cx, cy);
 
 	/* if it is a space, we change it to a graphic space */
 	if ((attr & 0xff) == ' ')
@@ -570,12 +497,7 @@ static void kaypro_pixel(int x, int y, int set)
 	if (attr & AT_REVERSE)
 		attr ^= 0x7f;
 
-	/* attributed character changed ? */
-	if( attr != video_buffer[offs] )
-	{
-		video_buffer[offs] = attr;
-		dirtybuffer[offs] = 1;
-	}
+	terminal_putchar(kaypro_terminal, cx, cy, attr);
 }
 
 static void kaypro_line(int x0, int y0, int x1, int y1, int set)

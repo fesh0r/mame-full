@@ -3,6 +3,7 @@
 #include "includes/flopdrv.h"
 #include "config.h"
 #include "utils.h"
+#include "mscommon.h"
 
 /* ----------------------------------------------------------------------- */
 
