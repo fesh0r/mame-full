@@ -3,6 +3,11 @@
 	any model, as communication uses the CRU bus).
 
 	Raphael Nabet 2002
+
+TODO:
+	* support localized variants
+	* add more flexibility, so that we can create multiple-terminal configurations.
+	* support test mode???
 */
 
 
@@ -88,6 +93,9 @@ typedef struct vdt_t
 	unsigned int cursor_address;
 	unsigned int cursor_address_mask; /* 1023 for 960-char model, 2047 for 1920-char model */
 
+	void *beep_timer;
+	void *blink_clock;
+
 	UINT8 keyboard_data;
 	unsigned int keyboard_data_ready : 1;
 	unsigned int keyboard_interrupt_enable : 1;
@@ -95,6 +103,8 @@ typedef struct vdt_t
 	unsigned int display_enable : 1;
 	unsigned int dual_intensity_enable : 1;
 	unsigned int display_cursor : 1;
+	unsigned int blinking_cursor_enable : 1;
+	unsigned int blink_state : 1;
 
 	unsigned int word_select : 1;
 	unsigned int previous_word_select : 1;
@@ -102,7 +112,11 @@ typedef struct vdt_t
 
 static vdt_t vdt[MAX_VDT];
 
+static void blink_callback(int unit);
 
+/*
+	Initialize vdt911 palette
+*/
 void vdt911_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
 {
 	if ((sizeof(vdt911_palette) != vdt911_palette_size)
@@ -116,14 +130,32 @@ void vdt911_init_palette(unsigned char *palette, unsigned short *colortable, con
 	memcpy(colortable, & vdt911_colortable, sizeof(vdt911_colortable));
 }
 
+/*
+	Copy a character bitmap array to another location in memory
+*/
 static void copy_character_matrix_array(const UINT8 char_array[128][10], UINT8 *dest)
 {
 	int i, j;
 
 	for (i=0; i<128; i++)
-		for (j=0; j<10; j++)		
+		for (j=0; j<10; j++)
 			*(dest++) = char_array[i][j];
 }
+
+/*
+	Patch a character bitmap array according to an array of char_override_t
+*/
+static void apply_char_overrides(int nb_char_overrides, const char_override_t char_overrides[], UINT8 *dest)
+{
+	int i, j;
+
+	for (i=0; i<nb_char_overrides; i++)
+	{
+		for (j=0; j<10; j++)
+			dest[char_overrides[i].index*10+j] = char_overrides[i].character_bitmap[j];
+	}
+}
+
 
 /*
 	Initialize the 911 vdt core
@@ -134,11 +166,46 @@ void vdt911_init(void)
 
 	memset(vdt, 0, sizeof(vdt));
 
-	/* set up US character definitions*/
+	/* set up US character definitions */
 	base = memory_region(vdt911_chr_region)+vdt911_US_chr_offset;
 	copy_character_matrix_array(US_character_set, base);
 
-	/* todo: initialize other characters sets... */
+	/* set up UK character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_UK_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(UK_overrides)/sizeof(char_override_t), UK_overrides, base);
+
+	/* French character set is identical to US character set */
+
+	/* set up German character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_german_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(german_overrides)/sizeof(char_override_t), german_overrides, base);
+
+	/* set up Swedish/Finnish character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_swedish_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(swedish_overrides)/sizeof(char_override_t), swedish_overrides, base);
+
+	/* set up Norwegian/Danish character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_norwegian_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(norwegian_overrides)/sizeof(char_override_t), norwegian_overrides, base);
+
+	/* set up Katakana Japanese character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_japanese_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(japanese_overrides)/sizeof(char_override_t), japanese_overrides, base);
+
+	/* set up Arabic character definitions */
+	/*base = memory_region(vdt911_chr_region)+vdt911_arabic_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(arabic_overrides)/sizeof(char_override_t), arabic_overrides, base);*/
+
+	/* set up French word processing character definitions */
+	base = memory_region(vdt911_chr_region)+vdt911_frenchWP_chr_offset;
+	copy_character_matrix_array(US_character_set, base);
+	apply_char_overrides(sizeof(frenchWP_overrides)/sizeof(char_override_t), frenchWP_overrides, base);
 }
 
 /*
@@ -155,7 +222,30 @@ int vdt911_init_term(int unit, const vdt911_init_params_t *params)
 	else
 		vdt[unit].cursor_address_mask = 0x7ff;	/* 2 kb of RAM */
 
+	beep_set_frequency(unit, 2000);
+
+	/* set up cursor blink clock.  2Hz frequency -> .25s half-period. */
+	vdt[unit].blink_clock = timer_pulse(TIME_IN_SEC(.25), unit, blink_callback);
+
 	return 0;
+}
+
+/*
+	timer callback to toggle blink state
+*/
+static void blink_callback(int unit)
+{
+	vdt[unit].blink_state = ! vdt[unit].blink_state;
+}
+
+/*
+	timer callback to stop beep generator
+*/
+static void beep_callback(int unit)
+{
+	beep_set_state(unit, 0);
+
+	vdt[unit].beep_timer = NULL;
 }
 
 /*
@@ -258,7 +348,7 @@ void vdt911_cru_w(int offset, int data, int unit)
 
 		case 0xb:
 			/* blinking cursor enable */
-			/* ... */
+			vdt[unit].blinking_cursor_enable = data;
 			break;
 
 		case 0xc:
@@ -330,8 +420,16 @@ void vdt911_cru_w(int offset, int data, int unit)
 			break;
 
 		case 0xe:
-			/* beep enable strobe */
-			/* ... */
+			/* beep enable strobe - not tested */
+			if (vdt[unit].beep_timer)
+			{
+				timer_remove(vdt[unit].beep_timer);
+				vdt[unit].beep_timer = NULL;
+			}
+			else
+				beep_set_state(unit, 1);
+
+			vdt[unit].beep_timer = timer_set(TIME_IN_SEC(.3), unit, beep_callback);
 			break;
 
 		case 0xf:
@@ -391,7 +489,8 @@ void vdt911_refresh(struct mame_bitmap *bitmap, int full_refresh, int unit, int 
 					cur_char &= 0x7f;
 
 				/* display cursor in reverse video */
-				if (vdt[unit].display_cursor && (address == vdt[unit].cursor_address))
+				if ((address == vdt[unit].cursor_address) && vdt[unit].display_cursor
+						&& ((! vdt[unit].blinking_cursor_enable) || vdt[unit].blink_state))
 					color += 2;
 
 				address++;
