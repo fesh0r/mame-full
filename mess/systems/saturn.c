@@ -753,7 +753,8 @@ static int scu_irq_levels[32] =
 static void scu_set_imask(void)
 {
     int irq;
-
+	const char *dummy = int_names[0]; /* make compiler not complain about undefined names */
+	int dummy2 = scu_irq_levels[0]; /* make compiler not complain about undefined names */
     LOG(("saturn_scu_w    interrupt mask change:"));
     for (irq = 0; irq < 16; irq++)
     {
@@ -790,7 +791,8 @@ void scu_pulse_interrupt(int irq)
 
 WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-  //logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
+	const char *dummy = scu_regnames[0]; /* make compile shut up about not used variables */
+  /* logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC)); */
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
   if(offset == 0x28)
     scu_set_imask();
@@ -1906,12 +1908,12 @@ static struct MachineDriver machine_driver_saturn =
 ROM_START(saturn)
      ROM_REGION(0x00491000, REGION_CPU1,0)
      /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, 0x2ABA43C2) */
-     /*ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c) */
+     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c)
      /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, 0x4AFCF0FA) */
      /*Make sure you set the PAL define to 1 otherwise euro bios will lock badly */
 
      /* STV Bios Note these are in correct endian order. not byte swapped versions */
-     ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3)
+     /* ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3)*/
      /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, 0xBF7DBDD7) */
      ROM_REGION(0x00080000, REGION_CPU2,0)
 ROM_END
