@@ -260,7 +260,7 @@ static FLOPPY_CONSTRUCT(coco_jvc_construct)
  *
  * LSN0
  * Byte    size    use
- * $00     3       sector on disk
+ * $00     3       sectors on disk
  * $03     1       track size in sectors
  * $04     2       bytes in allocation bit map; typically 1bit/sector so for
  *                 35 tracks of 18 sectors each that's $4E (single sided disk)
@@ -283,7 +283,7 @@ static FLOPPY_CONSTRUCT(coco_jvc_construct)
  * 
  * Allocation bit map, fill with zeros and set bits from low to high as
  * sectors are used. So, for a fresh disk sectors LSN0,LSN1,LSN2, and LSN3
- * will be in use so the first byte will be %11110000 or $F0 and all others
+ * will be in use so the first byte will be $FF $C0 and all others
  * in the map are $00
  * 
  * Root directory LSN2
@@ -336,25 +336,26 @@ static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *p
 	floperr_t err;
 	time_t t;
 	struct tm *ltime;
-	int heads, tracks, sectors;
+	int heads, tracks, sectors, total_sectors;
 
 	heads	= option_resolution_lookup_int(params, PARAM_HEADS);
 	tracks	= option_resolution_lookup_int(params, PARAM_TRACKS);
 	sectors	= option_resolution_lookup_int(params, PARAM_SECTORS);
+	total_sectors = heads * tracks * sectors;
 
 	/* write the initial header */
 	time(&t);
 	ltime = localtime(&t);
 
 	memset(&header, 0, sizeof(header));
-	header[0x0000] = 0x00;
-	header[0x0001] = 0x00;
-	header[0x0002] = 0x00;
-	header[0x0003] = (UINT8) tracks;
-	header[0x0004] = (UINT8) ((tracks * sectors * heads) / 8) >> 8;
-	header[0x0005] = (UINT8) ((tracks * sectors * heads) / 8) >> 0;
+	header[0x0000] = (UINT8) (total_sectors >> 16);
+	header[0x0001] = (UINT8) (total_sectors >>  8);
+	header[0x0002] = (UINT8) (total_sectors >>  0);
+	header[0x0003] = (UINT8) sectors;
+	header[0x0004] = (UINT8) ((total_sectors + 7) / 8) >> 8;
+	header[0x0005] = (UINT8) ((total_sectors + 7) / 8) >> 0;
 	header[0x0006] = 0x00;
-	header[0x0007] = 0x00;
+	header[0x0007] = 0x01;
 	header[0x0008] = 0x00;
 	header[0x0009] = 0x00;
 	header[0x000a] = 0x02;
@@ -366,18 +367,19 @@ static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *p
 	header[0x0010] = (heads == 2) ? 3 : 2;
 	header[0x0011] = (UINT8) sectors >> 8;
 	header[0x0012] = (UINT8) sectors >> 0;
-	header[0x001A] = (UINT8) (ltime->tm_year % 100);
-	header[0x001B] = (UINT8) ltime->tm_mon;
+	header[0x001A] = (UINT8) ltime->tm_year;
+	header[0x001B] = (UINT8) ltime->tm_mon + 1;
 	header[0x001C] = (UINT8) ltime->tm_mday;
 	header[0x001D] = (UINT8) ltime->tm_hour;
 	header[0x001E] = (UINT8) ltime->tm_min;
 	header[0x001F] = 0xA0;
-	header[0x0100] = 0xF0;
+	header[0x0100] = 0xFF;
+	header[0x0101] = 0xC0;
 	header[0x0200] = 0xBF;
 	header[0x0201] = 0x00;
 	header[0x0202] = 0x00;
-	header[0x0203] = (UINT8) (ltime->tm_year % 100);
-	header[0x0204] = (UINT8) ltime->tm_mon;
+	header[0x0203] = (UINT8) ltime->tm_year;
+	header[0x0204] = (UINT8) ltime->tm_mon + 1;
 	header[0x0205] = (UINT8) ltime->tm_mday;
 	header[0x0206] = (UINT8) ltime->tm_hour;
 	header[0x0207] = (UINT8) ltime->tm_min;
