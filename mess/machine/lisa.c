@@ -964,6 +964,9 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 
 	}
 
+	if (cpunum_get_reg(0, M68K_SR) & 0x2000)
+		/* supervisor mode -> force register file 0 */
+		the_seg = 0;
 
 	{
 		int seg_offset = address & 0x01ffff;
@@ -1516,10 +1519,6 @@ READ16_HANDLER ( lisa_r )
 	int segment = (offset >> 16) & 0x7f;
 
 
-	if (cpunum_get_reg(0, M68K_REG_SR) & 0x2000)
-		/* supervisor mode -> force register file 0 */
-		the_seg = 0;
-
 	/*logerror("read, logical address%lX\n", offset);*/
 
 	if (setup)
@@ -1554,6 +1553,10 @@ READ16_HANDLER ( lisa_r )
 			return answer;
 		}
 	}
+
+	if (cpunum_get_reg(0, M68K_SR) & 0x2000)
+		/* supervisor mode -> force register file 0 */
+		the_seg = 0;
 
 	{
 		/* offset in segment */
@@ -1714,10 +1717,6 @@ WRITE16_HANDLER ( lisa_w )
 	int segment = (offset >> 16) & 0x7f;
 
 
-	if (cpunum_get_reg(0, M68K_REG_SR) & 0x2000)
-		/* supervisor mode -> force register file 0 */
-		the_seg = 0;
-
 	if (setup)
 	{
 		if (offset & 0x002000)
@@ -1785,6 +1784,10 @@ WRITE16_HANDLER ( lisa_w )
 			return;
 		}
 	}
+
+	if (cpunum_get_reg(0, M68K_SR) & 0x2000)
+		/* supervisor mode -> force register file 0 */
+		the_seg = 0;
 
 	{
 		/* offset in segment */
