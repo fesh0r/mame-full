@@ -80,39 +80,39 @@ const struct GameDriver *drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
-	DRIVER( a2600 ) 	/* Atari 2600									  */
-	DRIVER( a5200 ) 	/* Atari 5200									  */
-	DRIVER( a7800 ) 	/* Atari 7800									  */
-	DRIVER( lynx )		/* Atari Lynx Handheld							  */
-	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		  */
-	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions*/
-/*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
+	DRIVER( a2600 ) 	/* Atari 2600						*/
+	DRIVER( a5200 ) 	/* Atari 5200						*/
+	DRIVER( a7800 ) 	/* Atari 7800						*/
+	DRIVER( lynx )		/* Atari Lynx Handheld					*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions      */
+//      DRIVER( jaguar )	/* Atari Jaguar 					*/
 
 	/* NINTENDO */
-	DRIVER( nes )		/* Nintendo Entertainment System				  */
-	DRIVER( nespal )	/* Nintendo Entertainment System				  */
+	DRIVER( nes )		/* Nintendo Entertainment System			*/
+	DRIVER( nespal )	/* Nintendo Entertainment System			*/
 	DRIVER( famicom )
-	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
-	DRIVER (snes)		/* Nintendo Super Nintendo						  */
-/*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy 						  */
+	DRIVER( gameboy )	/* Nintendo GameBoy Handheld				*/
+	DRIVER (snes)		/* Nintendo Super Nintendo				*/
+//      DRIVER (vboy)		/* Nintendo Virtual Boy 				*/
 
 	/* SEGA */
-	DRIVER( gamegear )	/* Sega Game Gear Handheld						  */
-	DRIVER( sms )		/* Sega Sega Master System						  */
-	DRIVER( genesis )	/* Sega Genesis/MegaDrive						  */
-TESTDRIVER( saturn )	/* Sega Saturn									  */
+	DRIVER( gamegear )	/* Sega Game Gear Handheld				*/
+	DRIVER( sms )		/* Sega Sega Master System				*/
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive				*/
+TESTDRIVER( saturn )	/* Sega Saturn							*/
 
 	/* BALLY */
-	DRIVER( astrocde )	/* Bally Astrocade								  */
+	DRIVER( astrocde )	/* Bally Astrocade					*/
 
 	/* RCA */
-TESTDRIVER( vip )		/* Cosmac VIP									  */
-	DRIVER( studio2 )	/* Studio II									  */
+TESTDRIVER( vip )		/* Cosmac VIP						*/
+	DRIVER( studio2 )	/* Studio II						*/
 	/* hanimex mpt-02 */
-/*	DRIVER( cstudio2 )*//* Colour Studio II								  */
+//      DRIVER( cstudio2 )      /* Colour Studio II				        */
 
 	/* FAIRCHILD */
-	DRIVER( channelf )  /* Fairchild Channel F VES - 1976                 */
+	DRIVER( channelf )      /* Fairchild Channel F VES - 1976                       */
 	/* checkers cartridge, additional processor in it */
 	/* saba videoplay */
 	/* itt telematch */
@@ -124,8 +124,8 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
 	DRIVER( colecoa )	/* ColecoVision (Thick Characters)				  */
 	/* Please dont include these next 2 in a distribution, they are Hacks */
-/*	DRIVER( colecofb )	   ColecoVision (Fast BIOS load)				  */
-/*	DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
+//      DRIVER( colecofb )	   ColecoVision (Fast BIOS load)				  */
+//      DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
@@ -137,10 +137,10 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
-						/* (aka Milton-Bradley Vectrex) 				  */
+				/* (aka Milton-Bradley Vectrex) 				  */
 	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
 
-/*  DRIVER( intv )*/    /* Mattel Intellivision - 1979 AKA INTV           */
+//      DRIVER( intv )          /* Mattel Intellivision - 1979 AKA INTV           */
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision								  */
@@ -149,7 +149,7 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
 	/* Magnavox */
-/*	DRIVER( odyssey )*/	/* Magnavox Odyssey - analogue (1972)			  */
+//      DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)			  */
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* Watara */
@@ -159,7 +159,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* tiger game.com handheld*/
 
-	/* interton vc4000 */
+TESTDRIVER( vc4000 )		/* interton vc4000 */
 	/* grundig super play computer 4000 */
 
 	/* bandai wonderswan handheld*/
@@ -601,7 +601,11 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	/* NASCOM MICROCOMPUTERS */
 	DRIVER( nascom1 )	/* 1978 Nascom 1								  */
+	DRIVER( nascom1a )  /**/
+	DRIVER( nascom1b )  /**/
 	DRIVER( nascom2 )	/* 1979 Nascom 2								  */
+	DRIVER( nascom2a )	/* 1979 Nascom 2								  */
+
 
 	/* MILES GORDON TECHNOLOGY */
 	DRIVER( coupe ) 	/* 1989 Sam Coupe 256K RAM						  */
