@@ -701,6 +701,7 @@ static void change_display_settings(struct rectangle *new_visual,
 
 static void round_rectangle_to_8(struct rectangle *rect)
 {
+	int orig_width = rect->max_x - rect->min_x + 1;
 	if (rect->min_x & 7)
 	{
 		if ((rect->min_x - (rect->min_x & ~7)) < 4)
@@ -716,6 +717,13 @@ static void round_rectangle_to_8(struct rectangle *rect)
 		else
 			rect->max_x = ((rect->max_x + 1) & ~7) - 1;
 	}
+
+	/*
+	 * Make sure the rounded rectangle is at least as big as
+	 * the original.
+	 */
+	if (rect->max_x - rect->min_x + 1 < orig_width)
+		rect->max_x += 8;
 }
 
 static void update_visible_area(struct mame_display *display)
