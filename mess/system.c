@@ -253,9 +253,22 @@ TESTDRIVER( z88 )		/*												  */
 	DRIVER( apple2e )	/* 1983 Apple //e								  */
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced						  */
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum						  */
-
-	DRIVER( lisa2 ) 	/*												  */
-
+/*
+ * Lisa 				 January			 1983
+ * Lisa 2 				 January			 1984
+ * Macintosh XL 		 January			 1985
+ */
+	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2							  */
+	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10							  */
+	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL						  */
+/*
+ * Macintosh 			 January			 1984
+ * Macintosh 512k		 July?				 1984
+ * Macintosh 512ke		 ?					 1986
+ * Macintosh Plus 		 ?					 1986
+ * Macintosh SE			 ?					 1987
+ * Macintosh II 		 ?					 1987
+ */
 /*	DRIVER( mac512k )*/	/* 1984 Apple Macintosh 512k					  */
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
