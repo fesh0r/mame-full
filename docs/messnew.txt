@@ -23,6 +23,9 @@ System Driver Changes:
   
 - [PC1512] Video fixes [Andrew Jenner]
 
+- [TELMAC] Improved the accuracy of the cpu emulation and added some tmc2000t
+  code.  [Curt Coder]
+
 
 
 User Interface Changes:

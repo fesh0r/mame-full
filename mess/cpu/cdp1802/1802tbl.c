@@ -313,8 +313,7 @@ static void cdp1802_instruction(void)
 				cdp1802_out_n(oper & 7);
 			break;
 		case 0x68:
-			if (oper != 0x68)
-				cdp1802_in_n(oper & 7);
+			cdp1802_in_n(oper & 7);
 			break;
 		default:
 			switch (oper)
@@ -386,7 +385,7 @@ static void cdp1802_instruction(void)
 			case 0xc2: cdp1802_long_branch(D == 0);		break;
 			case 0xc3: cdp1802_long_branch(DF);			break;
 
-			case 0xc4: /* NOP */						break;
+			case 0xc4: /* NOP */ cdp1802_ICount -= 1;	break;
 
 			case 0xc5: cdp1802_long_skip(!Q);		cdp1802_ICount -= 1; break;
 			case 0xc6: cdp1802_long_skip(D != 0);	cdp1802_ICount -= 1; break;

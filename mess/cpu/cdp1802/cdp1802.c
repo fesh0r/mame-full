@@ -196,10 +196,6 @@ static void cdp1802_set_irq_line(int irqline, int state)
 	}
 }
 
-static void cdp1802_set_irq_callback(int (*callback)(int))
-{
-}
-
 void cdp1802_dma_write(UINT8 data)
 {
 	MW(R(0)++, data);

@@ -136,11 +136,7 @@ unsigned DasmCdp1802(char *dst, unsigned oldpc)
 			}
 			break;
 		case 0x68:
-			if (oper==0x68) {
-				sprintf(dst,"%-5s%.2x","ill",oper);
-			} else {
-				sprintf(dst,"%-5s%d",table[(oper&0xf8)|1].mnemonic, oper&0x7);
-			}
+			sprintf(dst,"%-5s%d",table[(oper&0xf8)|1].mnemonic, oper&0x7);
 			break;
 		default:
 			switch (table[oper].adr) {
