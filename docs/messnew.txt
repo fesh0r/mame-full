@@ -1,4 +1,4 @@
-0.95
+0.95.1
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -22,7 +22,7 @@ Source Changes:
 ----------------
 - Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
   Also, it is 4 cycles long. Thanks to David Keil and Sockmaster for pointing
-  this out.
+  this out.  [Tim Lindner]
 
 
 
