@@ -552,7 +552,10 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/pocketc.o  \
           $(OBJ)/mess/machine/aquarius.o \
           $(OBJ)/mess/vidhrdw/aquarius.o \
-          $(OBJ)/mess/systems/aquarius.o
+          $(OBJ)/mess/systems/aquarius.o \
+          $(OBJ)/mess/machine/odyssey2.o \
+          $(OBJ)/mess/vidhrdw/odyssey2.o \
+          $(OBJ)/mess/systems/odyssey2.o
 
 
 IMGTOOL_OBJS= \
