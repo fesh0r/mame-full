@@ -502,7 +502,13 @@ board.
 Macintosh MFS images (mfs)
 -----------------------------
 
-This module can catalog macintosh floppy disk images in diskcopy 4.2 format and
-in raw format (which is mostly equivalent to diskcopy 6 format).  The module is
-preliminary, but it seems to work fine.
+This module supports MFS (Macintosh File System) floppy disk images, either in
+diskcopy 4.2 or raw image format (the raw image format is partially compatible
+with diskcopy 6 format).
+
+This module can catalog images (no folder list).
+
+
+This module is preliminary, but it seems to work fine.
+
 
