@@ -205,10 +205,10 @@ typedef struct ti990_fdr
 	UINT16BE	flg;			/* flags word 2 */
 	UINT16BE	prs;			/* physical record size */
 	UINT16BE	lrs;			/* logical record size */
-	UINT16BE	pas;			/* primary allocation size */
-	UINT16BE	paa;			/* primary allocation address */
-	UINT16BE	sas;			/* secondary allocation size */
-	UINT16BE	saa;			/* offset of secondary table */
+	UINT16BE	pas;			/* primary allocation size: # of ADUs allocated in primary allocation block? */
+	UINT16BE	paa;			/* primary allocation address: first ADU of primary allocation block? */
+	UINT16BE	sas;			/* secondary allocation size: used to determinate the # of blocks allocated per secondary allocation */
+	UINT16BE	saa;			/* offset of secondary table: ???? */
 	UINT16BE	rfa;			/* record number of first alias */
 	UINT32BE	eom;			/* end of medium record number */
 	UINT32BE	bkm;			/* end of medium block number */
@@ -223,10 +223,10 @@ typedef struct ti990_fdr
 	UINT8		apb;			/* ADU's per block */
 	UINT8		bpa;			/* blocks per ADU */
 	UINT16BE	mrs;			/* minimumu KIF record size */
-	UINT8		sat[80];		/* secondary allocation table */
+	UINT8		sat[64];		/* secondary allocation table: 16-entry table (format unknown) */
 
 /* bytes >86 to >100 are optional */
-	UINT8		res[10];		/* reserved */
+	UINT8		res[10];		/* reserved: seem to be actually meaningful (at least under DX10 3.6.x) */
 	char		uid[8];			/* user id of file creator */
 	UINT16BE	psa;			/* public security attribute */
 	ti990_ace	ace[9];			/* 9 access control entries */
@@ -302,12 +302,16 @@ typedef struct ti990_image
 /*
 	ti990 catalog iterator, used when imgtool reads the catalog
 */
+#define MAX_DIR_LEVEL 25	/* We need to put a recursion limit to avoid endless recursion hazard */
+
 typedef struct ti990_iterator
 {
 	IMAGEENUM base;
 	ti990_image *image;
-	int nrc;
-	int index;			/* current index in the disk catalog */
+	int level;
+	int nrc[MAX_DIR_LEVEL];
+	int index[MAX_DIR_LEVEL];			/* current index in the disk catalog */
+	ti990_fdr fdr[MAX_DIR_LEVEL];
 } ti990_iterator;
 
 
@@ -1084,6 +1088,7 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	ti990_image *image = (ti990_image*) img;
 	ti990_iterator *iter;
 	ti990_dor dor;
+	int reply;
 
 	iter = malloc(sizeof(ti990_iterator));
 	*((ti990_iterator **) outenum) = iter;
@@ -1093,13 +1098,20 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	iter->base.module = img->module;
 	iter->image = image;
 
-	read_sector_logical_len(iter->image->file_handle,
-								get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa),
-								& iter->image->geometry, &dor, sizeof(dor));
+	reply = read_sector_logical_len(iter->image->file_handle,
+									get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa),
+									& iter->image->geometry, &dor, sizeof(dor));
 
-	iter->nrc = get_UINT16BE(dor.nrc);
+	if (reply)
+	{
+		free(iter);
+		*((ti990_iterator **) outenum) = NULL;
+		return IMGTOOLERR_READERROR;
+	}
 
-	iter->index = 0;
+	iter->level = 0;
+	iter->nrc[0] = get_UINT16BE(dor.nrc);
+	iter->index[0] = 0;
 
 	return 0;
 }
@@ -1110,24 +1122,27 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	ti990_iterator *iter = (ti990_iterator*) enumeration;
-	ti990_fdr fdr;
 	int reply;
-	/*int fdr_secnum;
-	int totsecs = (iter->image->sec0.totsecsMSB << 8) | iter->image->sec0.totsecsLSB;*/
+
 
 	ent->corrupt = 0;
 	ent->eof = 0;
 
-	set_UINT16BE(&fdr.hkc, 0);
-
-	while ((iter->index < iter->nrc)
+	while ((iter->level >= 0)
 			&& (! (reply = read_sector_logical_len(iter->image->file_handle,
-													get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + (iter->index+1),
-													& iter->image->geometry, &fdr, get_UINT16BE(iter->image->sec0.vpl))))
-			&& (get_UINT16BE(fdr.hkc) == 0))
-		iter->index++;
+													iter->level ? get_UINT16BE(iter->fdr[iter->level-1].paa) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1)
+																: get_UINT16BE(iter->image->sec0.vda) * get_UINT16BE(iter->image->sec0.spa) + (iter->index[iter->level]+1),
+													& iter->image->geometry, &iter->fdr[iter->level],
+													iter->level ? get_UINT16BE(iter->fdr[iter->level-1].prs)
+																: get_UINT16BE(iter->image->sec0.vpl))))
+			&& (iter->fdr[iter->level].fnm[0] == 0))
+	{
+		iter->index[iter->level]++;
+		while (iter->index[iter->level] >= iter->nrc[iter->level])
+			iter->level--;
+	}
 
-	if (iter->index >= iter->nrc)
+	if (iter->level < 0)
 	{
 		ent->eof = 1;
 	}
@@ -1135,23 +1150,43 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 		return IMGTOOLERR_READERROR;
 	else
 	{
-		fname_to_str(ent->fname, fdr.fnm, ent->fname_len);
+#if 0
+		fname_to_str(ent->fname, iter->fdr[iter->level].fnm, ent->fname_len);
+#else
+		{
+			int i;
+			char buf[9];
+
+			if (ent->fname_len)
+			{
+				ent->fname[0] = '\0';
+				for (i=0; i<iter->level; i++)
+				{
+					fname_to_str(buf, iter->fdr[i].fnm, 9);
+					strncat(ent->fname, buf, ent->fname_len);
+					strncat(ent->fname, ".", ent->fname_len);
+				}
+				fname_to_str(buf, iter->fdr[iter->level].fnm, 9);
+				strncat(ent->fname, buf, ent->fname_len);
+			}
+		}
+#endif
 
 		/* parse flags */
-		if (get_UINT16BE(fdr.flg) & fdr_flg_cdr)
+		if (get_UINT16BE(iter->fdr[iter->level].flg) & fdr_flg_cdr)
 		{
 			snprintf(ent->attr, ent->attr_len, "CDR");
 		}
-		else if (get_UINT16BE(fdr.flg) & fdr_flg_ali)
+		else if (get_UINT16BE(iter->fdr[iter->level].flg) & fdr_flg_ali)
 		{
 			snprintf(ent->attr, ent->attr_len, "ALIAS");
 		}
 		else
 		{
-			switch ((get_UINT16BE(fdr.flg) >> fdr_flg_fu_shift) & 3)
+			switch ((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_fu_shift) & 3)
 			{
 			case 0:
-				switch ((get_UINT16BE(fdr.flg) >> fdr_flg_ft_shift) & 3)
+				switch ((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_ft_shift) & 3)
 				{
 				case 0:
 					snprintf(ent->attr, ent->attr_len, "???");
@@ -1178,19 +1213,35 @@ static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				break;
 			}
 		}
-		/*if (fdr.flags & fdr99_f_program)
-			snprintf(ent->attr, ent->attr_len, "PGM%s",
-						(fdr.flags & fdr99_f_wp) ? " R/O" : "");
-		else
-			snprintf(ent->attr, ent->attr_len, "%c/%c %d%s",
-						(fdr.flags & fdr99_f_int) ? 'I' : 'D',
-						(fdr.flags & fdr99_f_var) ? 'V' : 'F',
-						fdr.reclen,
-						(fdr.flags & fdr99_f_wp) ? " R/O" : "");*/
 		/* len in sectors */
-		ent->filesize = get_UINT32BE(fdr.bkm);
+		ent->filesize = get_UINT32BE(iter->fdr[iter->level].bkm);
 
-		iter->index++;
+		iter->index[iter->level]++;
+
+		/* recurse subdirectory if applicable */
+		if ((((get_UINT16BE(iter->fdr[iter->level].flg) >> fdr_flg_fu_shift) & 3) == 1)
+			&& (iter->level < MAX_DIR_LEVEL)
+			&& ! ((iter->level == 0) && ! memcmp(iter->fdr[iter->level].fnm, "VCATALOG", 8)))
+		{
+			ti990_dor dor;
+
+			if (get_UINT16BE(iter->fdr[iter->level].saa) != 0)
+				printf("ninou");
+
+			read_sector_logical_len(iter->image->file_handle,
+									get_UINT16BE(iter->fdr[iter->level].paa) * get_UINT16BE(iter->image->sec0.spa),
+									& iter->image->geometry, &dor, sizeof(dor));
+
+			iter->level++;
+			iter->nrc[iter->level] = get_UINT16BE(dor.nrc)/*get_UINT32BE(iter->fdr[iter->level-1].eom)-1*/;
+			iter->index[iter->level] = 0;
+			if (get_UINT16BE(dor.nrc) != (get_UINT32BE(iter->fdr[iter->level-1].eom)-1))
+				printf("hiha");
+		}
+
+		/* go to upper level if applicable */
+		while (iter->index[iter->level] >= iter->nrc[iter->level])
+			iter->level--;
 	}
 
 	return 0;
