@@ -131,7 +131,7 @@ INPUT_PORTS_START(oric)
 	PORT_DIPSETTING(0x1, DEF_STR( On) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START(telestrat)
+INPUT_PORTS_START(telstrat)
 	INPUT_PORT_ORIC
 	/* left joystick port */
 	PORT_START
@@ -257,7 +257,7 @@ static struct MachineDriver machine_driver_oric =
 };
 
 
-static struct MachineDriver machine_driver_telestrat =
+static struct MachineDriver machine_driver_telstrat =
 {
 	/* basic machine hardware */
 	{
@@ -317,7 +317,7 @@ ROM_START(orica)
 	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
 ROM_END
 
-ROM_START(telestrat)
+ROM_START(telstrat)
 	ROM_REGION(0x010000+(0x04000*4), REGION_CPU1,0)
 	ROM_LOAD ("telmatic.rom", 0x010000, 0x04000, 0x94358dc6)
 	ROM_LOAD ("teleass.rom", 0x014000, 0x04000, 0x68b0fde6)
@@ -325,7 +325,22 @@ ROM_START(telestrat)
 	ROM_LOAD ("telmon24.rom", 0x01c000, 0x04000, 0xaa727c5d)
 ROM_END
 
-static const struct IODevice io_oric1[] = 
+ROM_START(prav8d)
+    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_LOAD ("pravetzt.rom", 0x10000, 0x4000, 0x58079502)
+ROM_END
+
+ROM_START(prav8dd)
+    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_LOAD ("8d.rom", 0x10000, 0x4000, 0xb48973ef)
+ROM_END
+
+ROM_START(prav8dda)
+    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_LOAD ("pravetzd.rom", 0x10000, 0x4000, 0xf8d23821)
+ROM_END
+
+static const struct IODevice io_oric1[] =
 {
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
  	{
@@ -351,10 +366,16 @@ static const struct IODevice io_oric1[] =
 	{ IO_END }
 };
 
+#define io_prav8d io_oric1
+#define io_prav8dd io_oric1
+#define io_prav8dda io_oric1
 #define io_orica io_oric1
-#define io_telestrat io_oric1
+#define io_telstrat io_oric1
 
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-COMP( 1983,  oric1,    0,		 oric,	   oric,	 0,		   "Tangerine", "Oric 1" )
-COMP( 1984,  orica,    oric1,		 oric,	   oric,	 0,		   "Tangerine", "Oric Atmos" )
-COMP( 198?,	 telestrat, oric1, telestrat, telestrat, 0, "Tangerine", "Oric Telestrat" )
+COMP( 1983,  oric1,    0,	 oric,	   oric,	0,	"Tangerine", "Oric 1" )
+COMP( 1984,  orica,    oric1,	 oric,	   oric,	0,	"Tangerine", "Oric Atmos" )
+COMP( 1985,  prav8d,   oric1,   oric,   oric,   0,  "Pravetz",  "Pravetz 8D" )
+COMPX( 1989, prav8dd,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED )
+COMPX( 1989, prav8dda,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM, alternate)", GAME_COMPUTER_MODIFIED )
+COMP( 198?,  telstrat,oric1,    telstrat,telstrat,   0,      "Tangerine", "Oric Telestrat" )

@@ -527,7 +527,10 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
-    DRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
+    DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
+    DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
+    DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
+    DRIVER( telstrat ) /* ??? Oric Telestrat/Stratos                       */
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T									  */
