@@ -301,9 +301,9 @@
 #define IDI_WIN_SNAP                    2103
 #define IDI_WIN_PRIN                    2104
 #define IDI_WIN_HARD                    2105
-#define ID_MESS_OPEN_SOFTWARE           50000
-#define ID_MESS_CREATE_SOFTWARE         50001
-#define IDD_PROP_SOFTWARE               51000
+#define ID_MESS_OPEN_SOFTWARE           2200
+#define ID_MESS_CREATE_SOFTWARE         2201
+#define IDD_PROP_SOFTWARE               2202
 #endif
 
 // Next default values for new objects
