@@ -61,6 +61,7 @@ struct dialog_info_trigger
 struct dialog_info
 {
 	HGLOBAL handle;
+	size_t handle_size;
 	struct dialog_info_trigger *trigger_first;
 	struct dialog_info_trigger *trigger_last;
 	WORD item_count;
@@ -206,7 +207,7 @@ static int dialog_write(struct dialog_info *di, const void *ptr, size_t sz, int 
 	}
 	else
 	{
-		base = GlobalSize(di->handle);
+		base = di->handle_size;
 		base += align - 1;
 		base -= base % align;
 		newhandle = GlobalReAlloc(di->handle, base + sz, GMEM_ZEROINIT);
@@ -231,6 +232,7 @@ static int dialog_write(struct dialog_info *di, const void *ptr, size_t sz, int 
 	memcpy(mem + base, ptr, sz);
 	GlobalUnlock(newhandle);
 	di->handle = newhandle;
+	di->handle_size = base + sz;
 	return 0;
 }
 
