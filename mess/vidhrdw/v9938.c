@@ -1547,7 +1547,7 @@ static void v9938_graphic7_draw_sprite_8 (UINT8 *ln, UINT8 *col)
 
 	for (i=0;i<256;i++)
 		{
-		if (col[i] & 0x80)
+		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
 			{
 			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
 			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
@@ -1568,7 +1568,7 @@ static void v9938_graphic7_draw_sprite_16 (UINT16 *ln, UINT8 *col)
 
 	for (i=0;i<256;i++)
 		{
-		if (col[i] & 0x80)
+		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
 			{
 			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
 			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
