@@ -1,0 +1,70 @@
+Texas Instruments TI-86
+-----------------------
+
+Just as the TI-83 succeeded the TI-82, the TI-86 followed up on the TI-85's
+advanced functionality while adding a stylish new case, assembly support
+similar to that of the TI-83, and greater memory capacity, while still
+maintaining compatibility with TI-85 programs. 
+(note taken from www.ticalc.org)
+
+
+Features
+--------
+CPU: Z80 6 MHz
+Memory: RAM 96kB, ROM 256kB
+Screen: 128x64 pixels, 21x8 characters
+Known ROM versions: 1.2, 1.3, 1.4, 1.5, 1.6
+Link port
+
+
+Emulator
+--------
+Emulator86 by Kirk Meyer
+TI86EMU by Steve Gordon (http://www.dogtech.com/cybop/ti86)
+TI-8X emulator by Randy Gluvna (http://ti8xemu.home.ml.org)
+Virtual 86 by Daniel Foesch (http://www.geocities.com/Area51/Station/7142/?startpage=v86.html)
+Virtual TI by Rusty Wagner (http://vti.acz.org)
+
+
+Links
+-----
+Texas Instruments Homepage
+http://www.ti.com
+ticalc.org
+http://www.ticalc.org
+TI-Files
+http://www.ti-files.org
+
+
+Mess Emulation State
+--------------------
+drivers for rom versions: 1.3, 1.4, 1.5, 1.6
+driver for ti86grom (homebrew rom by Daniel Foesch)
+sound emulated (speaker connected to link port)
+link port preliminary emulatation
+grayscale effects emulated
+nvram emulated
+200Hz timer and ON key interrupts emulated
+snapshot loading (Virtual TI 2.0 save state files)
+
+Notes:
+1. After start TI-86 waits for ON key interrupt, so press ON key to start
+   calculator.
+2. Video engine (with grayscale support) based on the idea found in VTI source
+   emulator written by Rusty Wagner.
+3. NVRAM is saved properly only when calculator is turned off during MESS exiting.
+4. To receive data from TI press "R" immediately after TI starts to send data.
+5. To send data to calculator start receiving on TI and choose file from
+   Built-in File Manager.
+6. Homebrew rom by Daniel Foesch does nothing but showing charset. 
+
+To do:
+- many corrections of existing code
+- port 3 and 4
+- better artworks
+- driver for rom version 1.2
+
+Needed:
+1. Info about ports 3 (bit 2 seems to be allways 0) and 4.
+2. High quality artwork.
+3. Dumps of rom version 1.2
