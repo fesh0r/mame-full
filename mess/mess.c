@@ -485,7 +485,7 @@ static char *battery_nvramfilename(const char *filename)
 /* load battery backed nvram from a driver subdir. in the nvram dir. */
 int battery_load(const char *filename, void *buffer, int length)
 {
-	void *f;
+	mame_file *f;
 	int bytes_read = 0;
 	int result = FALSE;
 	char *nvram_filename;
@@ -515,7 +515,7 @@ int battery_load(const char *filename, void *buffer, int length)
 /* save battery backed nvram to a driver subdir. in the nvram dir. */
 int battery_save(const char *filename, void *buffer, int length)
 {
-	void *f;
+	mame_file *f;
 	char *nvram_filename;
 
 	/* some sanity checking */
