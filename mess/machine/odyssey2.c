@@ -10,6 +10,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/odyssey2.h"
 #include "image.h"
+#include "devices/cartslot.h"
 
 static UINT8 ram[0x100];
 
@@ -25,27 +26,10 @@ MACHINE_INIT( odyssey2 )
 }
 
 
-int odyssey2_load_rom (int id, mame_file *cartfile, int open_mode)
+int odyssey2_cart_load(int id, mame_file *cartfile, int open_mode)
 {
-    int size;
-
-    logerror("ODYSSEY2 - Load_rom()\n");
-	if (cartfile == NULL)
-	{
-		logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
-		return INIT_FAIL;
-    }
-
-    logerror("ODYSSEY2 - Loading Image\n");
-    size=mame_fsize(cartfile);
-    mame_fread (cartfile, memory_region(REGION_USER1), size);	 /* non banked carts */
-
-    if (size<=0x800)
-		memcpy(memory_region(REGION_USER1)+0x800, memory_region(REGION_USER1), 0x800);
-    if (size<=0x1000)
-		memcpy(memory_region(REGION_USER1)+0x1000, memory_region(REGION_USER1), 0x1000);
-
-	return 0;
+	/* non banked carts */
+	return cartslot_load_generic(cartfile, REGION_USER1, 0, 0x0001, 0x2000, CARTLOAD_MUSTBEPOWEROFTWO | CARTLOAD_MIRROR);
 }
 
 

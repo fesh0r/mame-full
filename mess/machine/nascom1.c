@@ -116,36 +116,21 @@ WRITE_HANDLER (	nascom1_port_01_w )
 {
 }
 
-int	nascom1_init_cassette(int id, mame_file *file, int open_mode)
+int	nascom1_cassette_load(int id, mame_file *file, int open_mode)
 {
-	/* a cassette for the nascom1 isnt needed */
-	if (file == NULL)
-	{
-		logerror("Namcom - warning: no cassette specified!\n");
-		return INIT_PASS;
-	}
+	nascom1_tape_size = mame_fsize(file);
+	nascom1_tape_image = (UINT8 *) image_malloc(IO_CASSETTE, id, nascom1_tape_size);
+	if (!nascom1_tape_image || (mame_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
+		return INIT_FAIL;
 
-	if (file)
-	{
-		nascom1_tape_size = mame_fsize(file);
-		nascom1_tape_image = (UINT8 *)malloc(nascom1_tape_size);
-		if (!nascom1_tape_image || (mame_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
-			return (1);
-
-		nascom1_tape_index = 0;
-		return (0);
-	}
-	return (1);
+	nascom1_tape_index = 0;
+	return INIT_PASS;
 }
 
-void nascom1_exit_cassette(int id)
+void nascom1_cassette_unload(int id)
 {
-	if (nascom1_tape_image)
-	{
-		free(nascom1_tape_image);
-		nascom1_tape_image = NULL;
-		nascom1_tape_size = nascom1_tape_index = 0;
-	}
+	nascom1_tape_image = NULL;
+	nascom1_tape_size = nascom1_tape_index = 0;
 }
 
 int	nascom1_read_cassette(void)

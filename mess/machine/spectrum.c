@@ -30,6 +30,7 @@
 #include "eventlst.h"
 #include "vidhrdw/border.h"
 #include "devices/cassette.h"
+#include "devices/cartslot.h"
 #include "image.h"
 #include "utils.h"
 
@@ -1146,30 +1147,8 @@ QUICKLOAD_LOAD(spectrum)
 
 int spectrum_cart_load(int id, mame_file *file, int open_mode)
 {
-	logerror("Trying to load cartridge!\n");
-	if (file)
-	{
-		int datasize;
-		unsigned char *data, *ROM = memory_region(REGION_CPU1);
-
-		datasize = mame_fsize(file);
-
-		/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
-		if (datasize == 0x4000)
-		{
-			data = malloc(datasize);
-			if (data != NULL)
-			{
-				mame_fread(file, data, datasize);
-				memcpy(ROM, data, 0x4000);
-				free(data);
-				logerror("Cart loaded!\n");
-				return 0;
-			}
-		}
-		return 1;
-	}
-	return 0;
+	/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
+	return cartslot_load_generic(file, REGION_CPU1, 0, 0x4000, 0x4000, 0);
 }
 
 int timex_cart_load(int id, mame_file *file, int open_mode)
@@ -1256,7 +1235,7 @@ int timex_cart_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
-void timex_cart_exit(int id)
+void timex_cart_unload(int id)
 {
 	if (timex_cart_data)
 	{

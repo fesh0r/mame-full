@@ -671,44 +671,45 @@ SNAPSHOT_LOAD( ti8x )
   TI calculators serial link transmission
 ***************************************************************************/
 
-int ti85_serial_init (int id, mame_file *file, int open_mode)
+int ti85_serial_init(int id)
+{
+	ti85_free_serial_data_memory();
+	ti85_receive_serial (NULL,0);
+	return INIT_PASS;
+}
+
+int ti85_serial_load(int id, mame_file *file, int open_mode)
 {
 	UINT8* file_data;
 	UINT16 file_size;
 
 	if (ti85_serial_status != TI85_SEND_STOP) return INIT_FAIL;
 
-	ti85_free_serial_data_memory();
-	ti85_receive_serial (NULL,0);
+	file_size = mame_fsize(file);
 
-	if (file)
+	if (file_size != 0)
 	{
-		file_size = mame_fsize(file);
-
-		if (file_size != 0)
+		if ((file_data = (UINT8*) auto_malloc(file_size)))
 		{
-			if ((file_data = (UINT8*) auto_malloc(file_size)))
+			mame_fread(file, file_data, file_size);
+
+			if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
 			{
-				mame_fread(file, file_data, file_size);
-
-				if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
-				{
-					ti85_free_serial_stream (&ti85_serial_stream);
-					return INIT_FAIL;
-				}
-				                                      
-				ti85_serial_status = TI85_SEND_HEADER;
+				ti85_free_serial_stream (&ti85_serial_stream);
+				return INIT_FAIL;
 			}
+				                                    
+			ti85_serial_status = TI85_SEND_HEADER;
 		}
-		else 
-		{
-			return INIT_FAIL;
-		}
+	}
+	else 
+	{
+		return INIT_FAIL;
 	}
 	return INIT_PASS;
 }
 
-void ti85_serial_exit (int id)
+void ti85_serial_unload(int id)
 {
 	ti85_free_serial_data_memory();
 	ti85_serial_status = TI85_SEND_STOP;

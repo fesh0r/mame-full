@@ -459,12 +459,14 @@ ROM_START(intvkbd)
 ROM_END
 
 SYSTEM_CONFIG_START(intv)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "rom\0", intv_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "rom\0", intv_cart_init, NULL, intv_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(intvkbd)
-	CONFIG_DEVICE_CARTSLOT)OPT( 2, "rom\0bin\0", intvkbd_load_rom, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, 0, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 2, "rom\0bin\0", NULL, NULL, intvkbd_cart_load, NULL, NULL, NULL)
+#if 0
+	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, 0, NULL, NULL, NULL, NULL, NULL)
+#endif
 SYSTEM_CONFIG_END
 
 /***************************************************************************

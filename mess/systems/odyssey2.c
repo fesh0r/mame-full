@@ -151,7 +151,8 @@ static struct GfxLayout odyssey2_spritelayout =
         1*8
 };
 
-static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] = {
+static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] =
+{
     { REGION_GFX1, 0x0000, &odyssey2_graphicslayout,                     0, 2 },
     { REGION_GFX1, 0x0000, &odyssey2_spritelayout,                     0, 2 },
     { -1 } /* end of array */
@@ -199,13 +200,13 @@ ROM_END
 static DRIVER_INIT( odyssey2 )
 {
 	int i;
-	UINT8 *gfx=memory_region(REGION_GFX1);
+	UINT8 *gfx = memory_region(REGION_GFX1);
 	for (i=0; i<256; i++)
 		gfx[i]=i;
 }
 
 SYSTEM_CONFIG_START(odyssey2)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, odyssey2_load_rom, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, odyssey2_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */

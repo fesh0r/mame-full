@@ -288,7 +288,7 @@ static void lynx_crc_keyword(int io_device, int id)
 }
 
 
-static int lynx_init_cart(int id, mame_file *cartfile, int open_mode)
+static int lynx_cart_load(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *rom = memory_region(REGION_USER1);
 	int size;
@@ -300,9 +300,6 @@ static int lynx_init_cart(int id, mame_file *cartfile, int open_mode)
    32 chars name
    22 chars manufacturer
 */
-
-	if (cartfile == NULL)
-		return 0;
 
 	size=mame_fsize(cartfile);
 	if (mame_fread(cartfile, header, 0x40)!=0x40) {
@@ -356,8 +353,8 @@ static QUICKLOAD_LOAD( lynx )
 }
 
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, lynx_init_cart, NULL, NULL, lynx_partialcrc)
-	CONFIG_DEVICE_QUICKLOAD("o\0", lynx)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, lynx_cart_load, NULL, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_QUICKLOAD(  "o\0", lynx )
 SYSTEM_CONFIG_END
 
 /***************************************************************************

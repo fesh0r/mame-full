@@ -131,26 +131,23 @@ MACHINE_INIT( pow3000 )
 	memory_set_opbase_handler(0, pow3000_setopbase);
 }
 
-int zx_cassette_init(int id, mame_file *file, int open_mode)
+int zx_cassette_load(int id, mame_file *file, int open_mode)
 {
-	if (file)
+	tape_size = mame_fsize(file);
+	tape_image = image_malloc(IO_CASSETTE, id, tape_size);
+	if (tape_image)
 	{
-		tape_size = mame_fsize(file);
-		tape_image = image_malloc(IO_CASSETTE, id, tape_size);
-		if (tape_image)
-		{
-			if (mame_fread(file, tape_image, tape_size) != tape_size)
-				return 1;
-		}
-		else
-		{
-			tape_size = 0;
-		}
+		if (mame_fread(file, tape_image, tape_size) != tape_size)
+			return 1;
+	}
+	else
+	{
+		tape_size = 0;
 	}
 	return 0;
 }
 
-void zx_cassette_exit(int id)
+void zx_cassette_unload(int id)
 {
 	tape_image = 0;
 }

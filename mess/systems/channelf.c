@@ -37,7 +37,7 @@ static void init_channelf(void)
 
 static int channelf_cart_load(int id, mame_file *file, int open_mode)
 {
-	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x800);
+	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x800, 0);
 }
 
 static READ_HANDLER( channelf_port_0_r )

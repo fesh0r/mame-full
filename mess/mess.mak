@@ -187,23 +187,24 @@ DRVLIBS = \
 	$(OBJ)/nec.a	  \
 	$(OBJ)/fairch.a   \
 	$(OBJ)/ascii.a	  \
+	$(OBJ)/nascom1.a  \
+	$(OBJ)/samcoupe.a \
+	$(OBJ)/magnavox.a \
+	$(OBJ)/mtx.a	  \
+	$(OBJ)/ep128.a	  \
+	$(OBJ)/mk1.a      \
+	$(OBJ)/mk2.a      \
+	$(OBJ)/ti85.a     \
+	$(OBJ)/galaxy.a   \
+	$(OBJ)/vc4000.a   \
+	$(OBJ)/lviv.a     \
+	$(OBJ)/pmd85.a    \
+	$(OBJ)/sinclair.a \
 	$(OBJ)/lynx.a     \
+	$(OBJ)/intv.a     \
 	$(OBJ)/cpschngr.a \
 	$(OBJ)/magnavox.a \
 	$(OBJ)/bally.a	  \
-#	$(OBJ)/nascom1.a  \
-#	$(OBJ)/samcoupe.a \
-#	$(OBJ)/mtx.a	  \
-#	$(OBJ)/ep128.a	  \
-#	$(OBJ)/mk1.a      \
-#	$(OBJ)/mk2.a      \
-#	$(OBJ)/ti85.a     \
-#	$(OBJ)/galaxy.a   \
-#	$(OBJ)/vc4000.a   \
-#	$(OBJ)/lviv.a   \
-#	$(OBJ)/pmd85.a   \
-#	$(OBJ)/sinclair.a \
-#	$(OBJ)/intv.a     \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/apf.a      \
