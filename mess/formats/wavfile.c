@@ -6,6 +6,9 @@
 
 *********************************************************************/
 
+#include <stdio.h>
+#include <assert.h>
+
 #include "wavfile.h"
 #include "cassimg.h"
 #include "utils.h"
@@ -227,3 +230,50 @@ struct CassetteFormat wavfile_format =
 	wavfile_load,
 	wavfile_save
 };
+
+
+
+/*********************************************************************
+	wavfile_testload()
+
+	This is a hokey function used to test the cassette wave loading
+	system, specifically to test that when one loads a WAV file image
+	that the resulting info queried will be the same data in the WAV.
+
+	This code has already identified some rounding errors
+*********************************************************************/
+
+void wavfile_testload(const char *fname)
+{
+	cassette_image *cassette;
+	FILE *f;
+	long offset;
+	int freq, samples, i;
+	INT32 cassamp;
+	INT16 wavsamp;
+	
+	f = fopen(fname, "rb");
+	if (!f)
+		return;
+
+	if (cassette_open(f, &stdio_ioprocs, &wavfile_format, CASSETTE_FLAG_READONLY, &cassette))
+		return;
+
+	offset = 44;
+	freq = 44100;
+	samples = 5667062;
+
+	for (i = 0; i < samples; i++)
+	{
+		cassette_get_sample(cassette, 0, i / (double) freq, 0.0, &cassamp);
+
+		fseek(f, offset + i * 2, SEEK_SET);
+		fread(&wavsamp, 1, 2, f);
+		assert(cassamp == (((UINT32) wavsamp) << 16));
+	}
+
+	cassette_close(cassette);
+}
+
+
+

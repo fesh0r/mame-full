@@ -361,6 +361,16 @@ struct manipulation_ranges
 
 
 
+static size_t my_round(double d)
+{
+	size_t result;
+	d += 0.5;
+	result = (size_t) d;
+	return result;
+}
+
+
+
 static casserr_t compute_manipulation_ranges(cassette_image *cassette, int channel,
 	double time_index, double sample_period, struct manipulation_ranges *ranges)
 {
@@ -375,9 +385,12 @@ static casserr_t compute_manipulation_ranges(cassette_image *cassette, int chann
 		ranges->channel_last = channel;
 	}
 
-	ranges->sample_first = (size_t) (time_index * cassette->sample_frequency);
-	ranges->sample_last = ((size_t) ((time_index + sample_period) * cassette->sample_frequency)) - 1;
-//	ranges->sample_last = ranges->sample_first - 1 + ((size_t) (sample_period * cassette->sample_frequency));
+	ranges->sample_first = my_round(time_index * cassette->sample_frequency);
+	ranges->sample_last = my_round((time_index + sample_period) * cassette->sample_frequency);
+
+	if (ranges->sample_last > ranges->sample_first)
+		ranges->sample_last--;
+
 	return CASSETTE_ERROR_SUCCESS;
 }
 

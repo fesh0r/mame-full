@@ -51,6 +51,9 @@ Source Changes:
 - WAV file code can now handle files where the format header is longer than 16
   bytes.  [Nate Woods]
 
+- Identified a few rounding errors that caused some WAV files to not load in
+  certain drivers.  [Nate Woods]
+
 - Added a floppy_identify() function to the floppy format code.  [Nate Woods]
 
 
