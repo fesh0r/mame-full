@@ -906,8 +906,8 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( palamed )	/* (c) 1990 Taito Corporation (Japan) */
 	DRIVER( horshoes )	/* (c) 1990 Taito America Corporation (US) */
 	DRIVER( cachat )	/* (c) 1993 Taito Corporation (Japan) */
-TESTDRIVER( plgirls )	/* (c) 1992 Hot-B. */
-TESTDRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
+	DRIVER( plgirls )	/* (c) 1992 Hot-B. */
+	DRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
 
 	/* Taito B-System games */
 	DRIVER( masterw )	/* B72 (c) 1989 Taito Corporation Japan (World) */
