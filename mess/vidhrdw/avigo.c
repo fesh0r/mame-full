@@ -206,8 +206,8 @@ void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
 	}
 
 }
-extern		unsigned int avigo_ad_x;
-extern unsigned int avigo_ad_y;
+unsigned int avigo_ad_x;
+unsigned int avigo_ad_y;
 
 
 
