@@ -352,8 +352,8 @@ TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
 
 /*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
-	DRIVER( amiga ) 	/* Commodore Amiga								  */
-    TESTDRIVER( cdtv )
+TESTDRIVER( amiga ) 	/* Commodore Amiga								  */
+TESTDRIVER( cdtv )
 
 	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
 	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
