@@ -415,7 +415,7 @@ static int via1_irq=0;
 static void bbc_via0_irq(int level)
 {
   via0_irq=level;
-  //if (errorlog) { fprintf(errorlog, "SYSTEM via irq %d %d %d\n",via0_irq,via1_irq,level); }
+//  logerror("SYSTEM via irq %d %d %d\n",via0_irq,via1_irq,level);
   cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
 }
 
@@ -423,7 +423,7 @@ static void bbc_via0_irq(int level)
 static void bbc_via1_irq(int level)
 {
   via1_irq=level;
-  //if (errorlog) { fprintf(errorlog, "USER via irq %d %d %d\n",via0_irq,via1_irq,level); }
+//  logerror("USER via irq %d %d %d\n",via0_irq,via1_irq,level);
   cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
 }
 
@@ -443,10 +443,16 @@ bbcb_system_via= {
 };
 
 
+static READ_HANDLER( bbcb_via1_read_portb )
+{
+  return 0xff;
+}
+
+
 static struct via6522_interface
 bbcb_user_via= {
   0,//via1_read_porta,
-  0,//via1_read_portb,
+  bbcb_via1_read_portb,//via1_read_portb,
   0,//via1_read_ca1,
   0,//via1_read_cb1,
   0,//via1_read_ca2,
@@ -783,8 +789,6 @@ void init_machine_bbcb(void)
 
 	bbcb_IC32_initialise();
 
-    wd179x_init(bbc_wd179x_callback);
-
 	i8271_init(&bbc_i8271_interface);
 	i8271_reset();
 }
@@ -792,6 +796,32 @@ void init_machine_bbcb(void)
 
 void stop_machine_bbcb(void)
 {
-	wd179x_exit();
     i8271_stop();
+}
+
+
+void init_machine_bbcb1770(void)
+{
+	cpu_setbankhandler_r(1, MRA_BANK1);
+	cpu_setbankhandler_r(2, MRA_BANK2);
+
+	via_config(0, &bbcb_system_via);
+	via_set_clock(0,1000000);
+
+	via_config(1, &bbcb_user_via);
+	via_set_clock(1,1000000);
+
+	via_reset();
+
+	bbcb_IC32_initialise();
+
+	previous_wd179x_int_state=1;
+    wd179x_init(bbc_wd179x_callback);
+    wd179x_reset();
+}
+
+
+void stop_machine_bbcb1770(void)
+{
+	wd179x_exit();
 }

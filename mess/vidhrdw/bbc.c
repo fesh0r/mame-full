@@ -13,6 +13,12 @@
 #include "vidhrdw/m6845.h"
 #include "vidhrdw/bbctext.h"
 
+
+/* just needed here temp. while the SAA5050 is being worked on */
+void BBC_ula_showteletext(int col);
+
+
+
 /************************************************************************
  * video_refresh flag is used in optimising the screen redrawing
  * it is set whenever a 6845 or VideoULA registers are change.
@@ -136,6 +142,139 @@ void setscreenstart(int c0,int c1)
 	// emulation refresh optimisation
 	video_refresh=1;
 }
+
+
+/************************************************************************
+ * SAA5050 Teletext
+ ************************************************************************/
+
+static char *tt_lookup=teletext_characters;
+static char *tt_graphics=teletext_graphics;
+static int tt_colour=7;
+static int tt_bgcolour=0;
+static int tt_start_line=0;
+static int tt_double_height=0;
+static int tt_double_height_set=0;
+static int tt_double_height_offset=0;
+static int tt_linecount=0;
+
+void teletext_DEW(void)
+{
+	tt_linecount=9;
+	tt_double_height_set=0;
+	tt_double_height_offset=0;
+}
+
+void teletext_LOSE(void)
+{
+	tt_lookup=teletext_characters;
+	tt_colour=7;
+	tt_bgcolour=0;
+	tt_graphics=teletext_graphics;
+	tt_linecount=(tt_linecount+1)%10;
+	tt_start_line=0;
+	tt_double_height=0;
+
+
+	/* this double hight stuff works but has got a bit messy I will have another go and clean it up soon */
+	if (tt_linecount==0)
+	{
+		if (tt_double_height_set==1)
+		{
+			if (tt_double_height_offset)
+			{
+				tt_double_height_offset=0;
+			} else {
+				tt_double_height_offset=10;
+			}
+		} else {
+			tt_double_height_offset=0;
+		}
+		tt_double_height_set=0;
+	}
+}
+
+
+
+
+void SAA5050_clock(int code)
+{
+	int sc1;
+
+	code=code&0x7f;
+
+	switch (code)
+	{
+		// 0x00 Not used
+
+		case 0x01: case 0x02: case 0x03: case 0x04:
+		case 0x05: case 0x06: case 0x07:
+			tt_lookup=teletext_characters;
+			tt_colour=code;
+			break;
+
+
+		// 0x08		Flash      TO BE DONE
+		// 0x09		Steady     TO BE DOME
+
+		// 0x0a		End Box    NOT USED
+		// 0x0b     Start Box  NOT USED
+
+		case 0x0c:	// Normal Height
+			tt_double_height=0;
+			tt_start_line=0;
+			break;
+		case 0x0d:	// Double Height
+			tt_double_height=1;
+			tt_double_height_set=1;
+			tt_start_line=tt_double_height_offset;
+			break;
+
+		// 0x0e		S0         NOT USED
+		// 0x0f		S1         NOT USED
+		// 0x10		DLE        NOT USED
+
+		case 0x11: case 0x12: case 0x13: case 0x14:
+		case 0x15: case 0x16: case 0x17:
+			tt_lookup=teletext_graphics;
+			tt_colour=code&0x07;
+			break;
+
+		// 0x18		Conceal Display
+
+		case 0x19:	//  Contiguois Graphics
+			tt_graphics=teletext_graphics;
+			if (tt_lookup!=teletext_characters)
+				tt_lookup=tt_graphics;
+			break;
+		case 0x1a:	//  Separated Graphics
+			tt_graphics=teletext_separated_graphics;
+			if (tt_lookup!=teletext_characters)
+				tt_lookup=tt_graphics;
+			break;
+
+		// 0x1b		ESC        NOT USED
+
+		case 0x1c:  //  Black Background
+			tt_bgcolour=0;
+			break;
+		case 0x1d:  //  New Background
+			tt_bgcolour=tt_colour;
+			break;
+
+		// 0x1e		Hold Graphics    TO BE DONE
+		// 0x1f		Release Graphics TO BE DONE
+
+	}
+
+	if (code<0x20) {code=0x20;}
+	code=(code-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
+	for(sc1=0;sc1<6;sc1++)
+	{
+		BBC_ula_showteletext(tt_lookup[code++]?tt_colour:tt_bgcolour);
+	}
+}
+
 
 /************************************************************************
  * VideoULA
@@ -312,7 +451,7 @@ that recieves the output from the teletext IC
 
 static unsigned int teletext_cursor_state=7;
 
-void teletext_select_pallet(void)
+void teletext_set_cursor(void)
 {
 	teletext_cursor_state=VideoULA_CR?0:7;
 }
@@ -328,193 +467,12 @@ void BBC_ula_showteletext(int col)
 	BBC_display[ttx_c++]=tcol;
 }
 
-/************************************************************************
- * SAA5050 Teletext
- ************************************************************************/
 
-static char *tt_lookup=teletext_characters;
-static char *tt_graphics=teletext_graphics;
-static int tt_colour=7;
-static int tt_bgcolour=0;
-static int tt_start_line=0;
-static int tt_double_height=0;
-static int tt_double_height_set=0;
-static int tt_double_height_offset=0;
-static int tt_linecount=0;
-
-void teletext_DEW(void)
-{
-	tt_linecount=9;
-	tt_double_height_set=0;
-	tt_double_height_offset=0;
-}
-
-void teletext_LOSE(void)
-{
-	tt_lookup=teletext_characters;
-	tt_colour=7;
-	tt_bgcolour=0;
-	tt_graphics=teletext_graphics;
-	tt_linecount=(tt_linecount+1)%10;
-	tt_start_line=0;
-	tt_double_height=0;
-
-
-	/* this double hight stuff works but has got a bit messy I will have another go and clean it up soon */
-	if (tt_linecount==0)
-	{
-		if (tt_double_height_set==1)
-		{
-			if (tt_double_height_offset)
-			{
-				tt_double_height_offset=0;
-			} else {
-				tt_double_height_offset=10;
-			}
-		} else {
-			tt_double_height_offset=0;
-		}
-		tt_double_height_set=0;
-	}
-}
-
-
-
-
-void SA5050_clock(int i)
-{
-	int sc1;
-
-	i=i&0x7f;
-
-	switch (i)
-	{
-		// 0x00 Not used
-
-		case 0x01:  // Alpha Red
-			tt_lookup=teletext_characters;
-			tt_colour=1;
-			break;
-		case 0x02:  // Alpha Green
-			tt_lookup=teletext_characters;
-			tt_colour=2;
-			break;
-		case 0x03:  // Alpha Yellow
-			tt_lookup=teletext_characters;
-			tt_colour=3;
-			break;
-		case 0x04:  // Alpha Blue
-			tt_lookup=teletext_characters;
-			tt_colour=4;
-			break;
-		case 0x05:  //  Alpha Magenta
-			tt_lookup=teletext_characters;
-			tt_colour=5;
-			break;
-		case 0x06:  //  Alpha Cyan
-			tt_lookup=teletext_characters;
-			tt_colour=6;
-			break;
-		case 0x07:  //  Alpha White
-			tt_lookup=teletext_characters;
-			tt_colour=7;
-			break;
-
-		// 0x08		Flash
-		// 0x09		Steady
-		// 0x0a		End Box
-		// 0x0b     Start Box
-		case 0x0c:	// Normal Height
-			tt_double_height=0;
-			tt_start_line=0;
-			break;
-		case 0x0d:	// Double Height
-			tt_double_height=1;
-			tt_double_height_set=1;
-			tt_start_line=tt_double_height_offset;
-			break;
-		// 0x0e		S0
-		// 0x0f		S1
-		// 0x10		DLE
-
-		case 0x11:  // Graphics Red
-			tt_lookup=tt_graphics;
-			tt_colour=1;
-			break;
-		case 0x12:  // Graphics Green
-			tt_lookup=tt_graphics;
-			tt_colour=2;
-			break;
-		case 0x13:  // Graphics Yellow
-			tt_lookup=tt_graphics;
-			tt_colour=3;
-			break;
-		case 0x14:  // Graphics Blue
-			tt_lookup=tt_graphics;
-			tt_colour=4;
-			break;
-		case 0x15:  //  Graphics Magenta
-			tt_lookup=tt_graphics;
-			tt_colour=5;
-			break;
-		case 0x16:  //  Graphics Cyan
-			tt_lookup=tt_graphics;
-			tt_colour=6;
-			break;
-		case 0x17:  //  Graphics White
-			tt_lookup=tt_graphics;
-			tt_colour=7;
-			break;
-
-		// 0x18		Conceal Display
-
-		case 0x19:	//  Contiguois Graphics
-			tt_graphics=teletext_graphics;
-			if (tt_lookup!=teletext_characters)
-				tt_lookup=tt_graphics;
-			break;
-		case 0x1a:	//  Separated Graphics
-			tt_graphics=teletext_separated_graphics;
-			if (tt_lookup!=teletext_characters)
-				tt_lookup=tt_graphics;
-			break;
-
-		// 0x1b		ESC
-
-		case 0x1c:  //  Black Background
-			tt_bgcolour=0;
-			break;
-		case 0x1d:  //  New Background
-			tt_bgcolour=tt_colour;
-			break;
-
-		// 0x1e		Hold Graphics
-		// 0x1f		Release Graphics
-
-	}
-
-	if (i<0x20) {i=0x20;}
-	i=(i-0x20)*60+(6*((tt_linecount+tt_start_line)>>tt_double_height));
-	for(sc1=0;sc1<6;sc1++)
-	{
-		BBC_ula_showteletext(tt_lookup[i++]?tt_colour:tt_bgcolour);
-
-
-		/* this has all been pulled out into its own function */
-		//pixel_temp=tt_lookup[i++]?Machine->pens[teletext_pallet_lookup[tt_colour]]:Machine->pens[teletext_pallet_lookup[tt_bgcolour]];
-
-		//pixel_temp=tt_lookup[i++]?tt_colour:tt_bgcolour;
-
-		//BBC_display[c++]=pixel_temp;
-		//BBC_display[c++]=pixel_temp;
-		//BBC_display[c++]=pixel_temp;
-	}
-}
 
 void BBC_draw_teletext_enabled(void)
 {
 	ttx_c=0;
-	SA5050_clock( BBC_Video_RAM[ video_ram_lookup[crtc6845_memory_address_r(0)-1] ]&0x7f );
+	SAA5050_clock( BBC_Video_RAM[ video_ram_lookup[crtc6845_memory_address_r(0)-1] ]&0x7f );
 }
 
 
@@ -613,7 +571,7 @@ void BBC_Set_CR(int offset, int data)
 		video_refresh=video_refresh|4;
 		// set the pallet to the cursor pallet
 		videoULA_select_pallet();
-		teletext_select_pallet();
+		teletext_set_cursor();
 	}
 }
 
@@ -625,7 +583,7 @@ void BBC_Clock_CR(void)
 		VideoULA_CR=0;
 		video_refresh=video_refresh&0xfb;
 		videoULA_select_pallet();
-		teletext_select_pallet();
+		teletext_set_cursor();
 	}
 }
 
@@ -671,6 +629,9 @@ READ_HANDLER (BBC_6845_r)
 	}
 	return retval;
 }
+
+
+
 
 
 /************************************************************************

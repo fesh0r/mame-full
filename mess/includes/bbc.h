@@ -11,8 +11,12 @@
 int bbcb_keyscan(void);
 
 void init_machine_bbca(void);
+
 void init_machine_bbcb(void);
 void stop_machine_bbcb(void);
+
+void init_machine_bbcb1770(void);
+void stop_machine_bbcb1770(void);
 
 int bbc_floppy_init(int);
 

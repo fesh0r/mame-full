@@ -428,8 +428,9 @@ TESTDRIVER( atvga )     /*                                                */
     /* ACORN */
 #ifndef MESS_EXCLUDE_ACORN
     DRIVER( atom )      /* 1979 Acorn Atom                                */
-    DRIVER( bbca )      /* 1981 BBC Micro                                 */
-    DRIVER( bbcb )      /* 1981 BBC Micro                                 */
+    DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
+    DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
+    DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 #endif
 

@@ -15,9 +15,6 @@
 #include "includes/basicdsk.h"
 
 
-/* set i8271 to 1 to use 8271 disc controller set to 0 to use wd1770 disc controller */
-#define i8271 1
-
 
 /******************************************************************************
 FRED
@@ -131,11 +128,7 @@ static MEMORY_READ_START(readmem_bbcb)
 	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-#if i8271
-	{ 0xfe80, 0xfe9f, bbc_i8271_read   },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-#else
-	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },
-#endif
+	{ 0xfe80, 0xfe9f, bbc_i8271_read   },  /* &80-&9f  8271 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -155,11 +148,48 @@ static MEMORY_WRITE_START(writemem_bbcb)
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-#if i8271
-	{ 0xfe80, 0xfe9f, bbc_i8271_write  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-#else
-	{ 0xfe80, 0xfe9f, bbc_wd1770_write },
-#endif
+	{ 0xfe80, 0xfe9f, bbc_i8271_write  },  /* &80-&9f  8271 FDC      Floppy disc controller 	   */
+	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MWA_ROM		   },
+MEMORY_END
+
+
+static MEMORY_READ_START(readmem_bbcb1770)
+	{ 0x0000, 0x7fff, MRA_RAM		   },
+	{ 0x8000, 0xbfff, MRA_BANK2 	   },
+	{ 0xc000, 0xfbff, MRA_ROM		   },
+	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
+										   /* Shiela Address Page &fe00 - &feff 				   */
+	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
+	{ 0xfe08, 0xfe0f, BBC_NOP_00_r	   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe1f, BBC_NOP_00_r	   },  /* &10-&1f  Serial ULA	 Serial system chip 		   */
+	{ 0xfe20, 0xfe2f, videoULA_r	   },  /* &20-&2f  Video ULA	 Video system chip			   */
+	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
+	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
+	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
+	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
+	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xff00, 0xffff, MRA_ROM		   },
+MEMORY_END
+
+static MEMORY_WRITE_START(writemem_bbcb1770)
+	{ 0x0000, 0x7fff, memory_w		   },
+	{ 0x8000, 0xdfff, MWA_NOP		   },
+	{ 0xc000, 0xfdff, MWA_NOP		   },
+	{ 0xfc00, 0xfdff, MWA_NOP		   },  /* FRED & JIM Pages */
+										   /* Shiela Address Page &fe00 - &feff 				   */
+	{ 0xfe00, 0xfe07, BBC_6845_w	   },  /* &00-&07  6845 CRTC	 Video controller			   */
+	{ 0xfe08, 0xfe0f, MWA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe1f, MWA_NOP		   },  /* &10-&1f  Serial ULA	 Serial system chip 		   */
+	{ 0xfe20, 0xfe2f, videoULA_w	   },  /* &20-&2f  Video ULA	 Video system chip			   */
+	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
+	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
+	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
+	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -366,8 +396,6 @@ ROM_START(bbcb)
 														  /* rom page 13 44000 */
 #endif
 
-#if i8271
-
 	/* just use one of the following DFS roms */
 
 	/* dnfs is acorns disc and network fileing system rom it replaced dfs 0.9  */
@@ -380,18 +408,40 @@ ROM_START(bbcb)
 	/* dfs 1.44 from watford electronics, this is the best of the non-acorn dfs roms */
 	ROM_LOAD("dfs144.rom",  0x48000, 0x4000, 0x9fb8d13f ) /* rom page 14 48000 */
 
-#else
-
-    /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
-    ROM_LOAD("ddfs223.rom", 0x48000, 0x4000, 0x7891f9b7 ) /* rom page 14 48000 */
-#endif
-
-
 	ROM_LOAD("basic2.rom",  0x4c000, 0x4000, 0x79434781 ) /* rom page 15 4c000 */
 
 
 ROM_END
 
+
+
+ROM_START(bbcb1770)
+	ROM_REGION(0x50000,REGION_CPU1) /* ROM MEMORY */
+
+	ROM_LOAD("os12.rom",    0x0C000, 0x4000, 0x3c14fc70 )
+#ifdef MAME_DEBUG
+	ROM_LOAD("advromm.rom", 0x10000, 0x4000, 0xe7e2a294 ) /* rom page 0  10000 */
+	ROM_LOAD("exmon.rom",   0x14000, 0x4000, 0x9a50231f ) /* rom page 1  14000 */
+	ROM_LOAD("help.rom",    0x18000, 0x4000, 0xc1505821 ) /* rom page 2  18000 */
+	ROM_LOAD("toolkit.rom", 0x1c000, 0x4000, 0x557ce483 ) /* rom page 3  1c000 */
+	ROM_LOAD("view.rom",    0x20000, 0x4000, 0x4345359f ) /* rom page 4  20000 */
+	                                                      /* rom page 5  24000 */
+			  											  /* rom page 6  28000 */
+	                                                      /* rom page 7  2c000 */
+														  /* rom page 8  30000 */
+														  /* rom page 9  34000 */
+														  /* rom page 10 38000 */
+														  /* rom page 11 3c000 */
+														  /* rom page 12 40000 */
+														  /* rom page 13 44000 */
+#endif
+
+    /* ddfs 2.23 this is acorns 1770 disc controller Double density disc filing system */
+    ROM_LOAD("ddfs223.rom", 0x48000, 0x4000, 0x7891f9b7 ) /* rom page 14 48000 */
+
+	ROM_LOAD("basic2.rom",  0x4c000, 0x4000, 0x79434781 ) /* rom page 15 4c000 */
+
+ROM_END
 
 static int bbcb_vsync(void)
 {
@@ -497,6 +547,50 @@ static struct MachineDriver machine_driver_bbcb =
 };
 
 
+static struct MachineDriver machine_driver_bbcb1770 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			2000000,		/* 2.00Mhz */
+			readmem_bbcb1770,
+			writemem_bbcb1770,
+			0,
+			0,
+
+			bbcb_vsync, 	1,				/* screen refresh interrupts */
+			bbcb_keyscan, 1000				/* scan keyboard */
+		}
+	},
+	50, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	init_machine_bbcb1770, /* init_machine */
+	stop_machine_bbcb1770, /* stop_machine */
+
+	/* video hardware */
+	800,300, {0,800-1,0,300-1},
+	0,
+	16, /*total colours*/
+	16, /*colour_table_length*/
+	init_palette_bbc, /*init palette */
+
+	VIDEO_TYPE_RASTER,
+	0,
+	bbc_vh_startb,
+	bbc_vh_stop,
+	bbc_vh_screenrefresh,
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
+
 
 static const struct IODevice io_bbca[] = {
 	{
@@ -563,7 +657,49 @@ static const struct IODevice io_bbcb[] = {
 };
 
 
-/*	   year name	parent	machine input	init	company */
-COMP (1981,bbca,	0,		bbca,	bbca,	0,	"Acorn","BBC Micro Model A" )
-COMP (1981,bbcb,	bbca,	bbcb,	bbca,	0,	"Acorn","BBC Micro Model B" )
+static const struct IODevice io_bbcb1770[] = {
+	{
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"wav\0",                /* File extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		NULL,					/* init */
+		NULL,					/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},	{
+		IO_FLOPPY,				/* type */
+		2,						/* count */
+        "ssd\0bbc\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		basicdsk_floppy_id, 	/* id */
+		bbc_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{ IO_END }
+};
+
+/*	   year name	parent	machine  input	init	company */
+COMP (1981,bbca,	0,		bbca,	 bbca,	0,	"Acorn","BBC Micro Model A" )
+COMP (1981,bbcb,	bbca,	bbcb,	 bbca,	0,	"Acorn","BBC Micro Model B" )
+COMP (1981,bbcb1770,bbca,	bbcb1770,bbca,	0,	"Acorn","BBC Micro Model B with WD1770 disc controller" )
 
