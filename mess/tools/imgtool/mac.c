@@ -5473,63 +5473,56 @@ static int get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
 #pragma mark IMGTOOL MODULE IMPLEMENTATION
 #endif
 
-static int mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static imgtoolerr_t mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void mac_image_exit(IMAGE *img);
 static void mac_image_info(IMAGE *img, char *string, const int len);
-static int mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+static imgtoolerr_t mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
+static imgtoolerr_t mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void mac_image_closeenum(IMAGEENUM *enumeration);
-static size_t mac_image_freespace(IMAGE *img);
-static int mac_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int mac_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int mac_image_deletefile(IMAGE *img, const char *fname);
-static int mac_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size);
+static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname);
+static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
-static int mac_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
-static int mac_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
-
-#if 0
-static struct OptionTemplate mac_createopts[] =
+imgtoolerr_t mac_createmodule(imgtool_library *library)
 {
-	/*{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},*/
-	{ NULL, NULL, 0, 0, 0, 0 }
-};
-#endif
+	imgtoolerr_t err;
+	struct ImageModule *module;
 
-/*enum
-{
-	mac_createopts_volname = 0
-};*/
+	err = imgtool_library_createmodule(library, "mac", &module);
+	if (err)
+		return err;
 
-IMAGEMODULE(
-	mac,
-	"Macintosh disk image (MFS & HFS)",	/* human readable name */
-	"img",							/* file extension */
-	NULL,							/* crcfile */
-	NULL,							/* crc system name */
-	EOLN_CR,						/* eoln */
-	0,								/* flags */
-	mac_image_init,					/* init function */
-	mac_image_exit,					/* exit function */
-	mac_image_info,					/* info function */
-	mac_image_beginenum,			/* begin enumeration */
-	mac_image_nextenum,				/* enumerate next */
-	mac_image_closeenum,			/* close enumeration */
-	mac_image_freespace,			/* free space on image */
-	mac_image_readfile,				/* read file */
-	mac_image_writefile,			/* write file */
-	/*mac_image_deletefile*/NULL,	/* delete file */
-	/*mac_image_create*/NULL,		/* create image */
-	/*mac_read_sector*/NULL,
-	/*mac_write_sector*/NULL,
-	NULL,							/* file options */
-	/*mac_createopts*/NULL			/* create options */
-)
+	module->description				= "Macintosh disk image (MFS & HFS)";
+	module->extensions				= "image\0img\0";
+	module->eoln					= EOLN_CR;
+
+	module->open					= mac_image_init;
+	module->close					= mac_image_exit;
+	module->info					= mac_image_info;
+	module->begin_enum				= mac_image_beginenum;
+	module->next_enum				= mac_image_nextenum;
+	module->close_enum				= mac_image_closeenum;
+	module->free_space				= mac_image_freespace;
+	module->read_file				= mac_image_readfile;
+	module->write_file				= mac_image_writefile;
+	/*module->delete_file				= mac_image_deletefile;
+	module->create					= mac_image_create;*/
+
+	/*module->createimage_optguide	= ...;
+	module->createimage_optspec		= ...;
+	module->writefile_optguide		= ...;
+	module->writefile_optspec		= ...;*/
+	/*module->extra					= NULL;*/
+
+	return IMGTOOLERR_SUCCESS;
+}
 
 /*
 	Open a file as a mfs image (common code).
 */
-static int mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	mac_l2_imgref *image;
 	int errorcode;
@@ -5606,7 +5599,7 @@ typedef struct mac_iterator
 /*
 	Open the disk catalog for enumeration 
 */
-static int mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	mac_iterator *iter;
@@ -5650,7 +5643,7 @@ static int mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry (MFS)
 */
-static int mfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
+static imgtoolerr_t mfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 {
 	mfs_dir_entry *cur_dir_entry;
 	int errorcode;
@@ -5717,7 +5710,7 @@ static void concat_fname(char *dest, int *dest_cur_pos, int dest_max_len, const 
 /*
 	Enumerate disk catalog next entry (HFS)
 */
-static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
+static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 {
 	hfs_catKey *catrec_key;
 	hfs_catData *catrec_data;
@@ -5840,7 +5833,7 @@ static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 /*
 	Enumerate disk catalog next entry
 */
-static int mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	mac_iterator *iter = (mac_iterator *) enumeration;
 
@@ -5869,17 +5862,19 @@ static void mac_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image (in allocation blocks?)
 */
-static size_t mac_image_freespace(IMAGE *img)
+static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 
-	return image->freeABs;
+	*size = image->freeABs;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
 	Extract a file from a disk image.  The file is saved in macbinary format.
 */
-static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
+static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	UINT32 parID;
@@ -5930,7 +5925,7 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 			  attached comment on an MFS volume
 			b) we do not really care if the Desktop file is corrupt and we
 			  cannot read comments: we can still read the file's data, and it's
-			  what really matters
+			  the only thing that really matters
 		*/
 		comment[0] = '\0';
 		errorcode = 0;
@@ -6049,7 +6044,7 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 /*
 	Add a file to a disk image.  The file must be in macbinary format.
 */
-static int mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
+static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	UINT32 parID;
@@ -6063,6 +6058,8 @@ static int mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, c
 	UINT8 buf[512];
 	UINT32 i, run_len;
 	int errorcode;
+
+	(void) writeoptions;
 
 	if (image->format == L2I_HFS)
 		return IMGTOOLERR_UNIMPLEMENTED;
@@ -6228,35 +6225,15 @@ static int mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, c
 /*
 	Delete a file from a disk image.
 */
-static int mac_image_deletefile(IMAGE *img, const char *fname)
+/*static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
-}
+}*/
 
 /*
 	Create a blank disk image.
 */
-static int mac_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+/*static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
-}
-
-/*
-	Read one sector from a mfs image.
-*/
-static int mac_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
-{
-	(void) img; (void) head; (void) track; (void) sector; (void) offset; (void) buffer; (void) length;
-	/* not yet implemented */
-	return IMGTOOLERR_UNIMPLEMENTED;
-}
-
-/*
-	Write one sector to a mfs image.
-*/
-static int mac_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
-{
-	(void) img; (void) head; (void) track; (void) sector; (void) offset; (void) buffer; (void) length;
-	/* not yet implemented */
-	return IMGTOOLERR_UNIMPLEMENTED;
-}
+}*/

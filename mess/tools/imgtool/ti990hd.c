@@ -396,58 +396,67 @@ static void ti990_image_info(IMAGE *img, char *string, const int len);
 static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void ti990_image_closeenum(IMAGEENUM *enumeration);
-static size_t ti990_image_freespace(IMAGE *img);
+static imgtoolerr_t ti990_image_freespace(IMAGE *img, size_t *size);
 static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
-static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *options_);
+static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
 static int ti990_image_deletefile(IMAGE *img, const char *fpath);
-static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
-
-static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
-static int ti990_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
-
-static struct OptionTemplate ti990_createopts[] =
-{
-	//{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
-	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_CYLINDERS,	"145" },
-	{ "heads",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_HEADS,	"4" },
-	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	MAX_SECTORS_PER_TRACK,	"32" },
-	{ "seclen", "bytes per sector (typically 256)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	MIN_SECTOR_SIZE,	MAX_SECTOR_SIZE,	"256" },
-	{ NULL, NULL, 0, 0, 0, 0 }
-};
+static int ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 
 enum
 {
-	//ti990_createopts_volname = 0,
-	ti990_createopts_cylinders = 0,//1,
-	ti990_createopts_heads = 1,//2,
-	ti990_createopts_sectors = 2,//3,
-	ti990_createopts_sectorsize = 3//4
+	/*ti990_createopts_volname = 'A',*/
+	ti990_createopts_cylinders = 'B',
+	ti990_createopts_heads = 'C',
+	ti990_createopts_sectors = 'D',
+	ti990_createopts_sectorsize = 'E'
 };
 
-IMAGEMODULE(
-	ti990dsk,
-	"TI990 Hard Disk",				/* human readable name */
-	"hd",							/* file extension */
-	NULL,							/* crcfile */
-	NULL,							/* crc system name */
-	/*EOLN_CR*/0,					/* eoln */
-	0,								/* flags */
-	ti990_image_init,				/* init function */
-	ti990_image_exit,				/* exit function */
-	ti990_image_info,				/* info function */
-	ti990_image_beginenum,			/* begin enumeration */
-	ti990_image_nextenum,			/* enumerate next */
-	ti990_image_closeenum,			/* close enumeration */
-	ti990_image_freespace,			/* free space on image */
-	/*ti990_image_readfile*/NULL,			/* read file */
-	/*ti990_image_writefile*/NULL,			/* write file */
-	/*ti990_image_deletefile*/NULL,			/* delete file */
-	ti990_image_create,				/* create image */
-	/*ti990_read_sector*/NULL,
-	/*ti990_write_sector*/NULL,
-	NULL,							/* file options */
-	ti990_createopts				/* create options */
-)
+OPTION_GUIDE_START( ti990_create_optionguide )
+	/*OPTION_STRING(ti990_createopts_volname, "label",	"Volume name" )*/
+	OPTION_INT(ti990_createopts_cylinders, "cylinders", NULL )
+	OPTION_INT(ti990_createopts_heads, "heads", NULL )
+	OPTION_INT(ti990_createopts_sectors, "sectors", NULL )
+	OPTION_INT(ti990_createopts_sectorsize, "bytes per sector (typically 256)", NULL )
+OPTION_GUIDE_END
+
+#define symb2str2(a) #a
+#define symb2str(a) symb2str2(a)
+#define ti990_create_optionspecs "B1-[145]-"symb2str(MAX_CYLINDERS)";C1-[4]-"symb2str(MAX_HEADS)";D1-[32]-"symb2str(MAX_SECTORS_PER_TRACK)";E"symb2str(MIN_SECTOR_SIZE)"-[256]-"symb2str(MAX_SECTOR_SIZE)";"
+
+imgtoolerr_t ti990_createmodule(imgtool_library *library)
+{
+	imgtoolerr_t err;
+	struct ImageModule *module;
+
+	err = imgtool_library_createmodule(library, "ti990hd", &module);
+	if (err)
+		return err;
+
+	module->description				= "TI990 Hard Disk";
+	module->extensions				= "hd\0";
+	/*module->eoln					= EOLN_CR;*/
+
+	module->open					= ti990_image_init;
+	module->close					= ti990_image_exit;
+	module->info					= ti990_image_info;
+	module->begin_enum				= ti990_image_beginenum;
+	module->next_enum				= ti990_image_nextenum;
+	module->close_enum				= ti990_image_closeenum;
+	module->free_space				= ti990_image_freespace;
+	/*module->read_file				= ti990_image_readfile;
+	module->write_file				= ti990_image_writefile;
+	module->delete_file				= ti990_image_deletefile;*/
+	module->create					= ti990_image_create;
+
+	module->createimage_optguide	= ti990_create_optionguide;
+	module->createimage_optspec		= ti990_create_optionspecs;
+	/*module->writefile_optguide		= ...;
+	module->writefile_optspec		= ...;
+	module->extra					= NULL;*/
+
+	return IMGTOOLERR_SUCCESS;
+}
+
 
 /*
 	Convert a C string to a 8-character file name (padded with spaces if necessary)
@@ -1428,7 +1437,7 @@ static void ti990_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image (in ADUs)
 */
-static size_t ti990_image_freespace(IMAGE *img)
+static imgtoolerr_t ti990_image_freespace(IMAGE *img, size_t *size)
 {
 	ti990_image *image = (ti990_image*) img;
 	int totadus = get_UINT16BE(image->sec0.tna);
@@ -1458,7 +1467,9 @@ static size_t ti990_image_freespace(IMAGE *img)
 		record++;
 	}
 
-	return freeadus;
+	* size = freeadus;
+
+	return IMGTOOLERR_SUCCESS;
 }
 
 /*
@@ -1560,7 +1571,7 @@ static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 /*
 	Add a file to a ti990_image.
 */
-static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
+static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
@@ -1771,7 +1782,7 @@ static int ti990_image_deletefile(IMAGE *img, const char *fpath)
 /*
 	Create a blank ti990_image.
 */
-static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
+static int ti990_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
 {
 	//const char *volname;
 	ti990_geometry geometry;
@@ -1786,11 +1797,11 @@ static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const Re
 	(void) mod;
 
 	/* read options */
-	//volname = in_options[ti990_createopts_volname].s;
-	geometry.cylinders = in_options[ti990_createopts_cylinders].i;
-	geometry.heads = in_options[ti990_createopts_heads].i;
-	geometry.sectors_per_track = in_options[ti990_createopts_sectors].i;
-	geometry.bytes_per_sector = in_options[ti990_createopts_sectorsize].i;
+	//volname = option_resolution_lookup_string(createoptions, ti990_createopts_volname);
+	geometry.cylinders = option_resolution_lookup_int(createoptions, ti990_createopts_cylinders);
+	geometry.heads = option_resolution_lookup_int(createoptions, ti990_createopts_heads);
+	geometry.sectors_per_track = option_resolution_lookup_int(createoptions, ti990_createopts_sectors);
+	geometry.bytes_per_sector = option_resolution_lookup_int(createoptions, ti990_createopts_sectorsize);
 
 	totsecs = geometry.cylinders * geometry.heads * geometry.sectors_per_track;
 
@@ -1825,24 +1836,4 @@ static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const Re
 			return IMGTOOLERR_WRITEERROR;
 
 	return 0;
-}
-
-/*
-	Read one sector from a ti990_image.
-*/
-static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
-{
-	/* not yet implemented */
-	assert(0);
-	return IMGTOOLERR_UNEXPECTED;
-}
-
-/*
-	Write one sector to a ti990_image.
-*/
-static int ti990_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
-{
-	/* not yet implemented */
-	assert(0);
-	return IMGTOOLERR_UNEXPECTED;
 }
