@@ -98,14 +98,14 @@ MEMORY_END
 	CRU map
 */
 
-static PORT_WRITE16_START(writeport)
+static PORT_WRITE16_START(writecru)
 
 	{0x0000<<1, 0x07ff<<1, tms9901_CRU_write},
 	{0x0800<<1, 0x0fff<<1, ti99_expansion_CRU_w},
 
 PORT_END
 
-static PORT_READ16_START(readport)
+static PORT_READ16_START(readcru)
 
 	{0x0000<<1, 0x00ff<<1, tms9901_CRU_read},
 	{0x0100<<1, 0x01ff<<1, ti99_expansion_CRU_r},
@@ -248,48 +248,48 @@ INPUT_PORTS_START(ti99_4)
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "0 )", KEYCODE_0, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "P \"", KEYCODE_P, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "L ???", KEYCODE_L, IP_JOY_NONE)
 		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 
 	PORT_START	/* col 1 */
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "2 @", KEYCODE_2, IP_JOY_NONE)
-		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "W ~", KEYCODE_W, IP_JOY_NONE)
-		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "A |", KEYCODE_A, IP_JOY_NONE)
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z \\", KEYCODE_Z, IP_JOY_NONE)
+		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "W BEGIN", KEYCODE_W, IP_JOY_NONE)
+		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "A AID", KEYCODE_A, IP_JOY_NONE)
+		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Z BACK", KEYCODE_Z, IP_JOY_NONE)
 		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "9 (", KEYCODE_9, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "O '", KEYCODE_O, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "K ???", KEYCODE_K, IP_JOY_NONE)
 		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, ". >", KEYCODE_STOP, IP_JOY_NONE)
 
 	PORT_START	/* col 2 */
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "3 #", KEYCODE_3, IP_JOY_NONE)
-		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "E (UP)", KEYCODE_E, IP_JOY_NONE)
-		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "S (LEFT)", KEYCODE_S, IP_JOY_NONE)
-		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "X (DOWN)", KEYCODE_X, IP_JOY_NONE)
+		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "E UP", KEYCODE_E, IP_JOY_NONE)
+		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "S LEFT", KEYCODE_S, IP_JOY_NONE)
+		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "X DOWN", KEYCODE_X, IP_JOY_NONE)
 		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "8 *", KEYCODE_8, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "I ?", KEYCODE_I, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "J ???", KEYCODE_J, IP_JOY_NONE)
+		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "M ???", KEYCODE_M, IP_JOY_NONE)
 
 	PORT_START	/* col 3 */
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "4 $", KEYCODE_4, IP_JOY_NONE)
 		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "R REDO", KEYCODE_R, IP_JOY_NONE)
-		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "D (RIGHT)", KEYCODE_D, IP_JOY_NONE)
+		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "D RIGHT", KEYCODE_D, IP_JOY_NONE)
 		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "C CLEAR", KEYCODE_C, IP_JOY_NONE)
 		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "7 & AID", KEYCODE_7, IP_JOY_NONE)
 		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "U _", KEYCODE_U, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "H ???", KEYCODE_H, IP_JOY_NONE)
+		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "N ???", KEYCODE_N, IP_JOY_NONE)
 
 	PORT_START	/* col 4 */
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "5 %", KEYCODE_5, IP_JOY_NONE)
 		PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_KEYBOARD, "T ERASE", KEYCODE_T, IP_JOY_NONE)
-		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "F DELETE", KEYCODE_F, IP_JOY_NONE)
-		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
+		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD, "F DEL", KEYCODE_F, IP_JOY_NONE)
+		PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "V PROC'D", KEYCODE_V, IP_JOY_NONE)
 		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_KEYBOARD, "6 ^", KEYCODE_6, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "G INSERT", KEYCODE_G, IP_JOY_NONE)
-		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
+		PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "Y ???", KEYCODE_Y, IP_JOY_NONE)
+		PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "G INS", KEYCODE_G, IP_JOY_NONE)
+		PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "B ???", KEYCODE_B, IP_JOY_NONE)
 
 	PORT_START	/* col 5: "wired handset 1" (= joystick 1) */
 		PORT_BITX(0xE0, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -385,7 +385,7 @@ static struct MachineDriver machine_driver_ti99_4_60hz =
 		{
 			CPU_TMS9900,
 			3000000,	/* 3.0 Mhz*/
-			readmem, writemem, readport, writeport,
+			readmem, writemem, readcru, writecru,
 			ti99_vblank_interrupt, 1,
 			0, 0,
 			0
@@ -444,7 +444,7 @@ static struct MachineDriver machine_driver_ti99_4_50hz =
 		{
 			CPU_TMS9900,
 			3000000,	/* 3.0 Mhz*/
-			readmem, writemem, readport, writeport,
+			readmem, writemem, readcru, writecru,
 			ti99_vblank_interrupt, 1,
 			0, 0,
 			0
@@ -497,9 +497,6 @@ static struct MachineDriver machine_driver_ti99_4_50hz =
 };
 
 
-/*
-	machine description.
-*/
 static struct MachineDriver machine_driver_ti99_4a_60hz =
 {
 	/* basic machine hardware */
@@ -507,7 +504,7 @@ static struct MachineDriver machine_driver_ti99_4a_60hz =
 		{
 			CPU_TMS9900,
 			3000000,	/* 3.0 Mhz*/
-			readmem, writemem, readport, writeport,
+			readmem, writemem, readcru, writecru,
 			ti99_vblank_interrupt, 1,
 			0, 0,
 			0
@@ -566,7 +563,7 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 		{
 			CPU_TMS9900,
 			3000000,	/* 3.0 Mhz*/
-			readmem, writemem, readport, writeport,
+			readmem, writemem, readcru, writecru,
 			ti99_vblank_interrupt, 1,
 			0, 0,
 			0
@@ -660,6 +657,7 @@ ROM_START(ti99_4a)
 	ROM_LOAD("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
+
 /* a TI99 console only had one cartidge slot, but cutting the ROMs
  * in 3 files seems to be the only way to handle cartidges until I use
  * a headered format.
@@ -674,7 +672,7 @@ static const struct IODevice io_ti99_4[] =
 		IO_CARTSLOT,		/* type */
 		3,					/* count */
 		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
+		IO_RESET_CPU,		/* reset if file changed */
 		0,
 		ti99_load_rom,		/* init */
 		ti99_rom_cleanup,	/* exit */
@@ -712,6 +710,9 @@ static const struct IODevice io_ti99_4[] =
 	{ IO_END }
 };
 
+
+
+
 #define io_ti99_4e io_ti99_4
 #define io_ti99_4a io_ti99_4
 #define io_ti99_4ae io_ti99_4a
@@ -724,4 +725,3 @@ COMP( 1979, ti99_4,   0,	   ti99_4_60hz,  ti99_4,  ti99_4,  "Texas Instruments",
 COMPX(1980, ti99_4e,  ti99_4,  ti99_4_50hz,  ti99_4,  ti99_4,  "Texas Instruments", "TI99/4 Home Computer (Europe)", GAME_ALIAS )
 COMP( 1981, ti99_4a,  0,	   ti99_4a_60hz, ti99_4a, ti99_4a, "Texas Instruments", "TI99/4A Home Computer (US)" )
 COMPX(1981, ti99_4ae, ti99_4a, ti99_4a_50hz, ti99_4a, ti99_4a, "Texas Instruments", "TI99/4A Home Computer (Europe)", GAME_ALIAS )
-
