@@ -11,6 +11,9 @@ System Driver Changes:
 - [PC1512] Fixed a vblank regression introduced in the 0.85 input port changes
   [Andrew Jenner]
 
+- [TELMAC] Added printer output, tone sound, colorram/blink attribute, a
+  preliminary quickload for BASIC programs, and devices.  [Curt Coder]
+
 
 
 User Interface Changes:

@@ -15,7 +15,7 @@ static CDP1864_CONFIG cdp1864;
 
 PALETTE_INIT( tmc2000 )
 {
-	int colseq[] = { 5, 7, 6, 3 };
+	int background_color_sequence[] = { 5, 7, 6, 3 };
 
 	palette_set_color( 0, 0x4c, 0x96, 0x1c ); // white
 	palette_set_color( 1, 0x4c, 0x00, 0x1c ); // purple
@@ -26,12 +26,12 @@ PALETTE_INIT( tmc2000 )
 	palette_set_color( 6, 0x00, 0x96, 0x00 ); // green
 	palette_set_color( 7, 0x00, 0x00, 0x00 ); // black
 
-	cdp1864_set_background_color_sequence_w(colseq);
+	cdp1864_set_background_color_sequence_w(background_color_sequence);
 }
 
 PALETTE_INIT( tmc2000e )	// TODO: incorrect colors?
 {
-	int colseq[] = { 2, 0, 1, 4 };
+	int background_color_sequence[] = { 2, 0, 1, 4 };
 
 	palette_set_color( 0, 0x00, 0x00, 0x00 ); // black		  0 % of max luminance
 	palette_set_color( 1, 0x00, 0x97, 0x00 ); // green		 59
@@ -42,7 +42,7 @@ PALETTE_INIT( tmc2000e )	// TODO: incorrect colors?
 	palette_set_color( 6, 0x68, 0x00, 0x68 ); // magenta	 41
 	palette_set_color( 7, 0xff, 0xff, 0xff ); // white		100
 	
-	cdp1864_set_background_color_sequence_w(colseq);
+	cdp1864_set_background_color_sequence_w(background_color_sequence);
 }
 
 void cdp1864_set_background_color_sequence_w(int color[])
@@ -101,7 +101,7 @@ void cdp1864_reset_w(void)
 VIDEO_UPDATE( cdp1864 )
 {
 	fillbitmap(bitmap, cdp1864.bgcolseq[cdp1864.bgcolor], cliprect);
-	// TODO: draw videoram to screen
+	// TODO: draw videoram to screen using DMA
 }
 
 /*
@@ -115,6 +115,12 @@ VIDEO_UPDATE( cdp1864 )
 static struct tilemap *normal_tilemap, *double_tilemap;
 
 static CDP1869_CONFIG cdp1869;
+
+WRITE8_HANDLER( cdp1869_videoram_w )
+{
+	videoram[offset] = data;
+	colorram[offset] = cdp1869.fgcolor;
+}
 
 static unsigned short colortable_cdp1869[] =
 {
@@ -135,12 +141,27 @@ PALETTE_INIT( cdp1869 )
 	memcpy(colortable, colortable_cdp1869, sizeof(colortable_cdp1869));
 }
 
+static int blink;
+
 static void get_normal_tile_info(int tile_index)
 {
 	int offs = tile_index + cdp1869.hma;
 	int addr = (offs >= 960) ? (offs - 960) : offs;
 	int code = videoram[addr];
-	int color = 5;	// TODO: add colorram
+	int color = colorram[addr] & 0x07;
+
+	// HACK to make the cursor blink, cdp1869.pdf doesn't cover blinking so it's all guesswork
+	if (colorram[addr] & 0x08)
+	{
+		if (blink > 50)	// one second hidden
+		{
+			color = cdp1869.bkg;
+		}
+		if (blink > 100) // one second visible
+		{
+			blink = 0;
+		}
+	}
 
 	SET_TILE_INFO(0, code, color, 0)
 }
@@ -150,13 +171,32 @@ static void get_double_tile_info(int tile_index)
 	int offs = tile_index + cdp1869.hma;
 	int addr = (offs >= 240) ? (offs - 240) : offs;
 	int code = videoram[addr];
-	int color = 5;	// TODO: add colorram
+	int color = colorram[addr] & 0x07;
+
+	if (colorram[addr] & 0x08)
+	{
+		if (blink > 50)
+		{
+			color = cdp1869.bkg;
+		}
+		if (blink > 100)
+		{
+			blink = 0;
+		}
+	}
 
 	SET_TILE_INFO(1, code, color, 0)
 }
 
 VIDEO_START( cdp1869 )
 {
+	colorram = auto_malloc(videoram_size);
+
+	if (!colorram)
+		return 1;
+
+	memset(colorram, 0, videoram_size);
+
 	normal_tilemap = tilemap_create(get_normal_tile_info, tilemap_scan_rows, 
 		TILEMAP_TRANSPARENT, 6, 9, 40, 24);
 
@@ -178,6 +218,9 @@ VIDEO_START( cdp1869 )
 	tilemap_set_scrolldy(double_tilemap, 44, 0);
 
 	cdp1869.ntsc_pal = 1;
+
+	beep_set_volume(0, 0);
+	beep_set_state(0, 1);
 
 	return 0;
 }
@@ -204,12 +247,40 @@ VIDEO_UPDATE( cdp1869 )
 		else
 			tilemap_draw(bitmap, &clip, double_tilemap, 0, 0);
 	}
+
+	blink++;
 }
 
-void cdp1869_instruction_w(int n, int data)
+void cdp1869_set_tone_volume(int which, int value)
 {
+	beep_set_volume(0, value);
+}
+
+void cdp1869_set_tone_frequency(int which, int value)
+{
+	beep_set_frequency(0, value);
+}
+
+void cdp1869_set_noise_volume(int which, int value)
+{
+	// TODO: white noise
+}
+
+void cdp1869_set_noise_frequency(int which, int value)
+{
+	// TODO: white noise
+}
+
+void cdp1869_instruction_w(int which, int n, int data)
+{
+	int cpuclk = cdp1869.ntsc_pal ? CDP1869_CPU_CLK_PAL : CDP1869_CPU_CLK_NTSC;
+
 	switch (n)
 	{
+	case 2:
+		// set character color
+		cdp1869.fgcolor = data;
+		break;
 	case 3:
 		/*
 			  bit	description
@@ -258,8 +329,8 @@ void cdp1869_instruction_w(int n, int data)
 		cdp1869.toneoff = (data & 0x80) >> 7;
 		cdp1869.tonediv = (data & 0x7f00) >> 8;
 
-		//cdp1869_set_volume(0, 6.25 * cdp1869.toneamp);
-		//cdp1869_set_frequency(0, CDP1869_CPUCLK / 2 / cdp1869.tonefreq / something / cdp1869.tonediv); ???
+		cdp1869_set_tone_volume(0, cdp1869.toneoff ? 0 : (1.666 * cdp1869.toneamp));
+		cdp1869_set_tone_frequency(0, cpuclk / (512 >> cdp1869.tonefreq) / (cdp1869.tonediv + 1));
 		break;
 
 	case 5:
@@ -292,6 +363,9 @@ void cdp1869_instruction_w(int n, int data)
 		cdp1869.wnamp = (data & 0x0f00) >> 8;
 		cdp1869.wnfreq = (data & 0x7000) >> 12;
 		cdp1869.wnoff = (data & 0x8000) >> 15;
+
+		cdp1869_set_noise_volume(0, cdp1869.wnoff ? 0 : (1.666 * cdp1869.wnamp));
+		cdp1869_set_noise_frequency(0, cpuclk / (4096 >> cdp1869.wnfreq));
 		break;
 
 	case 6:
