@@ -273,6 +273,8 @@ WRITE_HANDLER ( gb_w_io )
 		gb_bpal[2] = Machine->pens[(data & 0x30) >> 4];
 		gb_bpal[3] = Machine->pens[(data & 0xC0) >> 6];
 		break;
+#if 0
+		// only 4 colors in Machine->pens allocated!
 	case 0xFF48:
 		gb_spal0[0] = Machine->pens[(data & 0x03) + 4];
 		gb_spal0[1] = Machine->pens[((data & 0x0C) >> 2) + 4];
@@ -285,6 +287,20 @@ WRITE_HANDLER ( gb_w_io )
 		gb_spal1[2] = Machine->pens[((data & 0x30) >> 4) + 8];
 		gb_spal1[3] = Machine->pens[((data & 0xC0) >> 6) + 8];
 		break;
+#else
+	case 0xFF48:
+		gb_spal0[0] = Machine->pens[(data & 0x03) ];
+		gb_spal0[1] = Machine->pens[((data & 0x0C) >> 2) ];
+		gb_spal0[2] = Machine->pens[((data & 0x30) >> 4) ];
+		gb_spal0[3] = Machine->pens[((data & 0xC0) >> 6) ];
+		break;
+	case 0xFF49:
+		gb_spal1[0] = Machine->pens[(data & 0x03) ];
+		gb_spal1[1] = Machine->pens[((data & 0x0C) >> 2) ];
+		gb_spal1[2] = Machine->pens[((data & 0x30) >> 4) ];
+		gb_spal1[3] = Machine->pens[((data & 0xC0) >> 6) ];
+		break;
+#endif
 	default:
 
 		/* Sound Registers */
