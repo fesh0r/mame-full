@@ -14,3 +14,8 @@ extern WRITE_HANDLER ( atom_8255_portc_w );
 
 extern int atom_vh_start (void);
 
+extern READ_HANDLER (atom_8271_r);
+extern WRITE_HANDLER (atom_8271_w);
+
+extern int atom_floppy_init(int id);
+
