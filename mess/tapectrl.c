@@ -15,6 +15,8 @@ int tapecontrol(struct osd_bitmap *bitmap, int selected)
     int arrowize;
 	int status;
 
+	if (device_count(IO_CASSETTE)==0) return 0;
+
     total = 0;
     sel = selected - 1;
 
