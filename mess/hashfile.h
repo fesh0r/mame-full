@@ -35,6 +35,8 @@ void hashfile_close(hash_file *hashfile);
 /* Looks up information in a hash file */
 const struct hash_info *hashfile_lookup(hash_file *hashfile,
 	UINT32 crc, const UINT8 *sha1, const UINT8 *md5);
+const struct hash_info *hashfile_lookup_bystring(hash_file *hashfile,
+	const char *hash_string);
 
 /* Performs a syntax check on a hash file */
 int hashfile_verify(const char *sysname, void (*error_proc)(const char *message));

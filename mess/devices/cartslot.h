@@ -31,7 +31,7 @@ const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	device_load_handler loadproc,
 	device_unload_handler unloadproc,
 	int (*verify)(const UINT8 *buf, size_t size),
-	UINT32 (*partialcrc)(const UINT8 *buf, size_t size));
+	device_partialhash_handler partialhash);
 
 /* required cartridge slot */
 #define CONFIG_DEVICE_CARTSLOT_REQ(count, file_extensions, init, exit, load, unload, imgverify, partialcrc)	\

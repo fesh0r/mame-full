@@ -586,40 +586,6 @@ static void lynx_blitter(void)
 		    blitter.memory_accesses++;
 		}
 	    }
-	    
-#if 0
-	    if (debug_pos<ARRAY_LENGTH(debug_strings)) {
-		snprintf(debug_strings[debug_pos],sizeof(debug_strings[0]),
-			 "%.2x%.2x%.2x %.4x %.4x %.4x %.4x",
-			 blitter.mem[blitter.cmd],
-			 blitter.mem[blitter.cmd+1],
-			 blitter.mem[blitter.cmd+2],
-			 blitter.x, blitter.y,
-			 blitter.width, blitter.height
-		    );
-		debug_pos++;
-	    }
-#endif
-	    
-#if 0
-	    logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
-		     blitter.cmd,
-		     blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
-		     blitter.x,blitter.y);
-	    if (blitter.mem[blitter.cmd+1]&0x30) {
-		logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
-	    }
-	    if (blitter.mem[blitter.cmd+1]&0x20) {
-		logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
-	    }
-	    if (!(blitter.mem[blitter.cmd+1]&0x8)) {
-		logerror(" c:");
-		for (i=0; i<colors/2; i++) {
-		    logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
-		}
-	    }
-	    logerror(" %.4x\n", blitter.bitmap);
-#endif
 	    lynx_blit_lines();
 	}
 	blitter.cmd=GET_WORD(blitter.mem, blitter.cmd+3);

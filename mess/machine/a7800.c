@@ -146,15 +146,15 @@ Versions:
 
 */
 
-UINT32 a7800_partialcrc(const unsigned char *buf, size_t size)
+void a7800_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions)
 {
-	UINT32 crc;
-	if (size < 129)
-		return 0;
-	crc =(UINT32) crc32(0L, &buf[128], size-128);
-	logerror("A7800 Partial CRC: %08lx %d [%s]\n", (long) crc, (int)size, &buf[1]);
-	return crc;
+	if (length <= 128)
+		return;
+	hash_compute(dest, &data[128], length - 128, functions);
 }
+
+
 
 static int a7800_verify_cart(char header[128])
 {

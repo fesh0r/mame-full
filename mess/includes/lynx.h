@@ -7,11 +7,8 @@ extern UINT32 lynx_palette[0x10];
 
 void lynx_draw_lines(int newline);
 
-
-extern UINT32 lynx_partialcrc(const unsigned char *, size_t);
-
-extern int debug_pos;
-extern char debug_strings[16][30];
+void lynx_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions);
 
 
 #define PAD_UP 0x80

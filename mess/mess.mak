@@ -905,7 +905,6 @@ IMGTOOL_OBJS =								\
 	$(OBJ)/harddisk.o						\
 	$(OBJ)/md5.o							\
 	$(OBJ)/sha1.o							\
-	$(OBJ)/mess/crcfile.o					\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\

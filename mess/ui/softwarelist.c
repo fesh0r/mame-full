@@ -142,7 +142,7 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
 							types[num_extensions].type = dev->type;
 							types[num_extensions].ext = ext;
 #if HAS_HASH
-							types[num_extensions].partialcrc = dev->partialcrc;
+							types[num_extensions].partialhash = dev->partialhash;
 #endif
 							num_extensions++;
 						}
@@ -195,15 +195,18 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 
 		do
 		{
-            if (pZip) {
+            if (pZip)
+			{
 				lpExt = NULL;
                 pZipEnt = readzip(pZip);
-                if (pZipEnt) {
+                if (pZipEnt)
+				{
                     lpExt = strrchr(pZipEnt->name, '.');
 					zipcrc = pZipEnt->crc32;
                 }
             }
-			if (lpExt) {
+			if (lpExt)
+			{
 				lpExt++;
 				imgtype = MessLookupImageType(imagetypes, lpExt);
 				if (imgtype)
@@ -212,15 +215,19 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 #if HAS_HASH
 					if (crc && zipcrc)
 					{
-						if (imgtype->partialcrc)
+						if (imgtype->partialhash)
 						{
 							unsigned char *buf = NULL;
+							char dest[HASH_BUF_SIZE];
+
 							assert(pZipEnt);
 							buf = malloc(pZipEnt->uncompressed_size);
 							if (buf)
 							{
 								readuncompresszip(pZip, pZipEnt, (char *) buf);
-								*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
+
+								imgtype->partialhash(dest, buf, (unsigned int) pZipEnt->uncompressed_size, HASH_CRC);
+								*crc = hash_data_extract_crc32(dest);
 								free(buf);
 							}
 						}
@@ -352,7 +359,7 @@ static BOOL ImageData_IsBad(ImageData *img)
 
 
 #if HAS_HASH
-static UINT32 CalculateCrc(const char *file, UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size))
+static UINT32 CalculateCrc(const char *file, device_partialhash_handler partialhash)
 {
 	UINT32 crc = 0;
 	int length;
@@ -381,8 +388,12 @@ static UINT32 CalculateCrc(const char *file, UINT32 (*partialcrc)(const unsigned
 	if (fread(data, sizeof(unsigned char), length, f) != (size_t)length)
 		goto done;
 
-	if (partialcrc)
-		crc = partialcrc(data, length);
+	if (partialhash)
+	{
+		char dest[64];
+		partialhash(dest, data, length, HASH_CRC);
+		crc = hash_data_extract_crc32(dest);
+	}
 	else
 		crc = crc32(0, data, length);
 
@@ -427,7 +438,7 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 			imgtype = MessLookupImageType(imagetypes, extension);
 			if (imgtype)
 			{
-				crc = CalculateCrc(img->fullname, imgtype->partialcrc);
+				crc = CalculateCrc(img->fullname, imgtype->partialhash);
 				bLearnedSomething = TRUE;
 			}
 		}

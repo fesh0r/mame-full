@@ -401,6 +401,16 @@ const struct hash_info *hashfile_lookup(hash_file *hashfile, UINT32 crc, const U
 
 
 
+const struct hash_info *hashfile_lookup_bystring(hash_file *hashfile,
+	const char *hash_string)
+{
+	UINT32 crc;
+	crc = hash_data_extract_crc32(hash_string);
+	return hashfile_lookup(hashfile, crc, NULL, NULL);
+}
+
+
+
 int hashfile_verify(const char *sysname, void (*my_error_proc)(const char *message))
 {
 	hash_file *hashfile;

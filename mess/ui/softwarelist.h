@@ -17,7 +17,7 @@ typedef struct
     int type;
     const char *ext;
 #if HAS_HASH
-	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
+	device_partialhash_handler partialhash;
 #endif /* HAS_HASH */
 } mess_image_type;
 

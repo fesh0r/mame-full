@@ -18,8 +18,8 @@ int port_b_io = 0;
 
 #define HALT		0
 #define RESUME		1
-static int genesis_isSMD(unsigned char *,unsigned int);
-static int genesis_isBIN(unsigned char *,unsigned int);
+static int genesis_isSMD(const unsigned char *,unsigned int);
+static int genesis_isBIN(const unsigned char *,unsigned int);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
 
@@ -184,7 +184,7 @@ bad:
 
 /* code taken directly from GoodGEN by Cowering */
 
-static int genesis_isfunkySMD(unsigned char *buf,unsigned int len)
+static int genesis_isfunkySMD(const unsigned char *buf,unsigned int len)
 {
 
 	/* aq quiz */
@@ -244,15 +244,18 @@ static int genesis_isfunkySMD(unsigned char *buf,unsigned int len)
 	return 0;
 }
 
+
 /* code taken directly from GoodGEN by Cowering */
-int genesis_isSMD(unsigned char *buf,unsigned int len)
+int genesis_isSMD(const unsigned char *buf,unsigned int len)
 {
 	if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A')
 		return 1;
 	return genesis_isfunkySMD(buf,len);
 }
 
-static int genesis_isfunkyBIN(unsigned char *buf,unsigned int len)
+
+
+static int genesis_isfunkyBIN(const unsigned char *buf,unsigned int len)
 {
 	/* all the special cases for crappy headered roms */
 	/* aq quiz */
@@ -312,7 +315,7 @@ static int genesis_isfunkyBIN(unsigned char *buf,unsigned int len)
     return 0;
 }
 
-static int genesis_isBIN(unsigned char *buf,unsigned int len)
+static int genesis_isBIN(const unsigned char *buf,unsigned int len)
 {
 	if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A')
 		return 1;
@@ -332,29 +335,27 @@ static int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 	if (len < 16384)
 		return 0;
 	tbuf = malloc(len + 32768);
-	if (tbuf)
-	{
-		for (i = 0; i < len; i += 16384)
-		{
-			for (j = 0; j < 8192; j++)
-			{
-				tbuf[offset + (j << 1) + 1] = inbuf[i + j];
-			}
-			for (j = 8192; j < 16384; j++)
-			{
-				tbuf[offset + ((j - 8192) << 1)] = inbuf[i + j];
-			}
-			offset += 16384;
-		}
-		memcpy(inbuf, tbuf, len);
-		free(tbuf);
-		return 1;
-	}
-	else
-	{
+	if (!tbuf)
 		return 0;
+
+	for (i = 0; i < len; i += 16384)
+	{
+		for (j = 0; j < 8192; j++)
+		{
+			tbuf[offset + (j << 1) + 1] = inbuf[i + j];
+		}
+		for (j = 8192; j < 16384; j++)
+		{
+			tbuf[offset + ((j - 8192) << 1)] = inbuf[i + j];
+		}
+		offset += 16384;
 	}
+	memcpy(inbuf, tbuf, len);
+	free(tbuf);
+	return 1;
 }
+
+
 
 static int genesis_md2bin(unsigned char *inbuf, unsigned int len)
 {
@@ -383,33 +384,34 @@ static int genesis_md2bin(unsigned char *inbuf, unsigned int len)
 	}
 }
 
-UINT32 genesis_partialcrc(const unsigned char *buf, size_t len)
-{
-	UINT32 crc = 0;
 
-	if (len < 1700)
-		return 0;						/* smallest known working ROM */
-	if ((len >= 0x2081 + 1700) && genesis_isSMD((unsigned char *) &buf[0x200],len))
+
+void genesis_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions)
+{
+	if (length < 1700)
+		return;						/* smallest known working ROM */
+	if ((length >= 0x2081 + 1700) && genesis_isSMD((unsigned char *) &data[0x200], length))
 	{
-		if (genesis_smd2bin((unsigned char *) &buf[0x200], len - 0x200))
+		if (genesis_smd2bin((unsigned char *) &data[0x200], length - 0x200))
 		{
-			crc = (UINT32) crc32(0L, &buf[0x200], len - 0x200);
+			hash_compute(dest, &data[0x200], length - 0x200, functions);
 		}
 	}
-	else if (genesis_isBIN((unsigned char *) buf,len))
+	else if (genesis_isBIN(data, length))
 	{
-		crc = (UINT32) crc32(0L, buf, len);
+		hash_compute(dest, data, length, functions);
 	}
-	else if ((buf[0x080] == 'E') && (buf[0x081] == 'A') && (buf[0x082] == 'M' || buf[0x082] == 'G'))
+	else if ((data[0x080] == 'E') && (data[0x081] == 'A') && (data[0x082] == 'M' || data[0x082] == 'G'))
 	{
-		if (genesis_md2bin((unsigned char *) buf, len))
+		if (genesis_md2bin((unsigned char *) data, length))
 		{
-			crc = (UINT32) crc32(0L, buf, len);
+			hash_compute(dest, data, length, functions);
 		}
 	}
-	logerror("Genesis Partial CRC: %08lx %d\n", (long) crc, (int) len);
-	return crc;
 }
+
+
 
 void genesis_interrupt(void)
 {

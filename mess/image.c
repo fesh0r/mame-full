@@ -12,8 +12,7 @@
 enum
 {
 	IMAGE_STATUS_ISLOADING		= 1,
-	IMAGE_STATUS_ISLOADED		= 2,
-	IMAGE_STATUS_CRCCALCULATED	= 4
+	IMAGE_STATUS_ISLOADED		= 2
 };
 
 struct _mess_image
@@ -31,7 +30,7 @@ struct _mess_image
 	UINT32 status;
 	char *name;
 	char *dir;
-	UINT32 crc;
+	char *hash;
 	UINT32 length;
 	int effective_mode;
 	char *longname;
@@ -310,7 +309,7 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 	img->status = 0;
 	img->name = NULL;
 	img->dir = NULL;
-	img->crc = 0;
+	img->hash = NULL;
 	img->length = 0;
 	img->longname = NULL;
 	img->manufacturer = NULL;
@@ -449,7 +448,7 @@ static int read_crc_config(const char *sysname, mess_image *image)
 	if (!hashfile)
 		goto done;
 
-	info = hashfile_lookup(hashfile, image->crc, NULL, NULL);
+	info = hashfile_lookup_bystring(hashfile, image->hash);
 	if (!info)
 		goto done;
 
@@ -467,85 +466,64 @@ done:
 
 
 
-static int image_checkcrc(mess_image *img)
+static int run_hash(mame_file *file,
+	void (*partialhash)(char *, const unsigned char *, unsigned long, unsigned int),
+	char *dest, unsigned int hash_functions)
 {
-	UINT8 static_buf[2048]; 
-	UINT8 *alloc_buf;
-	UINT8 *buf;
-	UINT32 bufsize;
-	UINT32 imgsize;
-	UINT32 chunksize;
+	UINT32 size;
+	UINT8 *buf = NULL;
+
+	*dest = '\0';
+	size = (UINT32) mame_fsize(file);
+
+	buf = (UINT8 *) malloc(size);
+	if (!buf)
+		return FALSE;
+
+	/* reset the file */
+	mame_fseek(file, 0, SEEK_SET);
+
+	if (partialhash)
+		partialhash(dest, buf, size, hash_functions);
+	else
+		hash_compute(dest, buf, size, hash_functions);
+
+	/* cleanup */
+	if (buf)
+		free(buf);
+	mame_fseek(file, 0, SEEK_SET);
+	return TRUE;
+}
+
+
+
+static int image_checkhash(mess_image *image)
+{
 	const struct IODevice *dev;
-	const struct GameDriver *drv;
 	mame_file *file;
-	UINT32 crc;
-	int rc;
+	char hash_string[HASH_BUF_SIZE];
 
 	/* this call should not be made when the image is not loaded */
-	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
+	assert(image->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 
 	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
-	if (!(img->status & IMAGE_STATUS_CRCCALCULATED) && (img->effective_mode == OSD_FOPEN_READ))
+	if (!image->hash && (image->effective_mode == OSD_FOPEN_READ))
 	{
 		/* initialize key variables */
-		file = image_fp(img);
-		imgsize = image_length(img);
-		dev = image_device(img);
-		crc = 0;
+		file = image_fp(image);
+		dev = image_device(image);
 
-		/* decide which buffer we need to use */
-		if (dev && dev->partialcrc && (imgsize > sizeof(static_buf)))
-		{
-			alloc_buf = (UINT8 *) malloc(imgsize);
-			if (!alloc_buf)
-				return FALSE;
-			buf = alloc_buf;
-			bufsize = imgsize;
-		}
-		else
-		{
-			alloc_buf = NULL;
-			buf = static_buf;
-			bufsize = sizeof(static_buf);
-		}
+		if (!run_hash(file, dev->partialhash, hash_string, HASH_CRC))
+			return FALSE;
 
-		/* reset the file */
-		mame_fseek(file, 0, SEEK_SET);
-
-		/* loop through the file, calculating the CRC */
-		while(imgsize > 0)
-		{
-			chunksize = (imgsize > bufsize) ? bufsize : imgsize;
-
-			mame_fread(file, buf, chunksize);
-
-			if (dev && dev->partialcrc)
-				crc = dev->partialcrc(buf, chunksize);
-			else
-				crc = crc32(crc, buf, chunksize);
-
-			imgsize -= chunksize;
-		}
-
-		/* cleanup */
-		if (alloc_buf)
-			free(alloc_buf);
-		img->crc = crc;
-		mame_fseek(file, 0, SEEK_SET);
-
-		/* now read the CRC file */
-		drv = Machine->gamedrv;
-		do
-		{
-			rc = read_crc_config(drv->name, img);
-			drv = mess_next_compatible_driver(drv);
-		}
-		while(rc && drv);
-		
-		img->status |= IMAGE_STATUS_CRCCALCULATED;
+		image->hash = image_strdup(image, hash_string);
+		if (!image->hash)
+			return FALSE;
 	}
 	return TRUE;
 }
+
+
 
 /****************************************************************************
   Accessor functions
@@ -625,10 +603,24 @@ unsigned int image_length(mess_image *img)
 
 
 
-unsigned int image_crc(mess_image *img)
+const char *image_hash(mess_image *img)
 {
-	image_checkcrc(img);
-	return img->crc;
+	image_checkhash(img);
+	return img->hash;
+}
+
+
+
+UINT32 image_crc(mess_image *img)
+{
+	const char *hash_string;
+	UINT32 crc = 0;
+	
+	hash_string = image_hash(img);
+	if (hash_string)
+		crc = hash_data_extract_crc32(hash_string);
+
+	return crc;
 }
 
 
@@ -705,33 +697,37 @@ void image_freeptr(mess_image *img, void *ptr)
 
 const char *image_longname(mess_image *img)
 {
-	image_checkcrc(img);
+	image_checkhash(img);
 	return img->longname;
 }
 
 const char *image_manufacturer(mess_image *img)
 {
-	image_checkcrc(img);
+	image_checkhash(img);
 	return img->manufacturer;
 }
 
 const char *image_year(mess_image *img)
 {
-	image_checkcrc(img);
+	image_checkhash(img);
 	return img->year;
 }
 
 const char *image_playable(mess_image *img)
 {
-	image_checkcrc(img);
+	image_checkhash(img);
 	return img->playable;
 }
 
+
+
 const char *image_extrainfo(mess_image *img)
 {
-	image_checkcrc(img);
+	image_checkhash(img);
 	return img->extrainfo;
 }
+
+
 
 /****************************************************************************
   Battery functions
@@ -746,6 +742,8 @@ static char *battery_nvramfilename(mess_image *img)
 	filename = image_filename(img);
 	return strip_extension(osd_basename((char *) filename));
 }
+
+
 
 /* load battery backed nvram from a driver subdir. in the nvram dir. */
 int image_battery_load(mess_image *img, void *buffer, int length)
@@ -777,6 +775,8 @@ int image_battery_load(mess_image *img, void *buffer, int length)
 	return result;
 }
 
+
+
 /* save battery backed nvram to a driver subdir. in the nvram dir. */
 int image_battery_save(mess_image *img, const void *buffer, int length)
 {
@@ -802,6 +802,8 @@ int image_battery_save(mess_image *img, const void *buffer, int length)
 	return FALSE;
 }
 
+
+
 /****************************************************************************
   Indexing functions
 
@@ -813,10 +815,14 @@ int image_absolute_index(mess_image *image)
 	return image - &images[0][0];
 }
 
+
+
 mess_image *image_from_absolute_index(int absolute_index)
 {
 	return &images[0][absolute_index];
 }
+
+
 
 /****************************************************************************
   Deprecated functions
@@ -831,16 +837,22 @@ int image_index_in_device(mess_image *img)
 	return image_index_in_devtype(img);
 }
 
+
+
 mess_image *image_from_device_and_index(const struct IODevice *dev, int id)
 {
 	return image_from_devtype_and_index(dev->type, id);
 }
+
+
 
 mess_image *image_from_devtype_and_index(int type, int id)
 {
 	assert(id < device_count(type));
 	return &images[type][id];
 }
+
+
 
 int image_devtype(mess_image *img)
 {
@@ -976,8 +988,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 	{
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
 		img->length = mame_fsize(img->fp);
-		img->crc = 0;
-		img->status &= ~IMAGE_STATUS_CRCCALCULATED;
+		img->hash = NULL;
 	}
 
 	return img->fp;

@@ -71,8 +71,6 @@ static VIDEO_START( lynx )
     return 0;
 }
 
-char debug_strings[16][30];
-int debug_pos=0;
 /*
 DISPCTL EQU $FD92       ; set to $D by INITMIKEY
 
@@ -179,15 +177,7 @@ void lynx_draw_lines(int newline)
 
 static VIDEO_UPDATE( lynx )
 {
-	int j;
-
 	lynx_audio_debug(bitmap);
-
-	for (j = 0; j < debug_pos; j++)
-	{
-		ui_text(bitmap, debug_strings[j], 0, j*8);
-	}
-	debug_pos = 0;
 }
 
 static PALETTE_INIT( lynx )
@@ -281,16 +271,17 @@ ROM_START(lynx2)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
 
-UINT32 lynx_partialcrc(const unsigned char *buf, size_t size)
-{
-	unsigned int crc;
 
-	if (size < 65) return 0;
-	crc = (UINT32) crc32(0L,&buf[64],size-64);
-	logerror("Lynx Partial CRC: %08lx %ld\n", (long) crc, (long) size);
-	/* printf("Lynx Partial CRC: %08x %d\n",crc,size); */
-	return (UINT32)crc;
+
+void lynx_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions)
+{
+	if (length <= 64)
+		return;
+	hash_compute(dest, &data[64], length - 64, functions);
 }
+
+
 
 static int lynx_verify_cart (char *header)
 {
@@ -388,7 +379,7 @@ static QUICKLOAD_LOAD( lynx )
 }
 
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, device_load_lynx_cart, NULL, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, device_load_lynx_cart, NULL, NULL, lynx_partialhash)
 	CONFIG_DEVICE_QUICKLOAD(  "o\0", lynx )
 SYSTEM_CONFIG_END
 

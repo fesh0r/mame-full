@@ -83,7 +83,8 @@ DRIVER_INIT( nespal );
 READ_HANDLER( nes_IN0_r );
 READ_HANDLER( nes_IN1_r );
 
-UINT32 nes_partialcrc(const unsigned char *, size_t);
+void nes_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions);
 
 WRITE_HANDLER( nes_low_mapper_w );
 READ_HANDLER ( nes_low_mapper_r );

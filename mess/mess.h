@@ -73,6 +73,8 @@ int mess_printf(const char *fmt, ...);
 void showmessinfo(void);
 int filemanager(struct mame_bitmap *bitmap, int selected);
 
+UINT32 hash_data_extract_crc32(const char *d);
+
 #if HAS_WAVE
 int tapecontrol(struct mame_bitmap *bitmap, int selected);
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos);

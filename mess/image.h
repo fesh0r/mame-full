@@ -120,7 +120,8 @@ const char *image_basename(mess_image *img);
 const char *image_filetype(mess_image *img);
 const char *image_filedir(mess_image *img);
 unsigned int image_length(mess_image *img);
-unsigned int image_crc(mess_image *img);
+const char *image_hash(mess_image *img);
+UINT32 image_crc(mess_image *img);
 
 int image_is_writable(mess_image *img);
 int image_has_been_created(mess_image *img);

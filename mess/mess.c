@@ -308,7 +308,7 @@ void showmessinfo(void)
 {
 	mess_printf(
 		"M.E.S.S. v%s\n"
-		"Multiple Emulation Super System - Copyright (C) 1997-2003 by the MESS Team\n"
+		"Multiple Emulation Super System - Copyright (C) 1997-2004 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
 		"Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n\n",
 		build_version);
@@ -319,8 +319,9 @@ void showmessinfo(void)
 		"        MESS -listdevices for a full list of supported devices\n"
 		"        MESS -showusage   to see usage instructions\n"
 		"See mess.txt for help, readme.txt for options.\n");
-
 }
+
+
 
 void ram_dump(const char *filename)
 {
@@ -338,6 +339,8 @@ void ram_dump(const char *filename)
 		mame_fclose(file);
 	}
 }
+
+
 
 void machine_hard_reset(void)
 {
@@ -369,6 +372,23 @@ int mess_count_compatible_drivers(const struct GameDriver *drv)
 		drv = mess_next_compatible_driver(drv);
 	}
 	return count;
+}
+
+
+
+UINT32 hash_data_extract_crc32(const char *d)
+{
+	UINT32 crc = 0;
+	UINT8 crc_bytes[4];
+
+	if (hash_data_extract_binary_checksum(d, HASH_CRC, crc_bytes) == 1)
+	{
+		crc = (((UINT32) crc_bytes[0]) << 24)
+			| (((UINT32) crc_bytes[1]) << 16)
+			| (((UINT32) crc_bytes[2]) << 8)
+			| (((UINT32) crc_bytes[3]) << 0);
+	}
+	return crc;
 }
 
 

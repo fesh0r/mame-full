@@ -26,7 +26,8 @@ WRITE_HANDLER ( cartridge_ram_w );*/
 
 /* machine/genesis.c */
 void genesis_interrupt (void);
-UINT32 genesis_partialcrc(const unsigned char *, size_t);
+void genesis_partialhash(char *dest, const unsigned char *data,
+	unsigned long length, unsigned int functions);
 
 void genesis_background_w(int offset,int data);
 void genesis_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
