@@ -32,7 +32,7 @@ static int isrowdirty(UINT8 *db, int rowbytes)
 	return FALSE;
 }
 
-static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
@@ -45,7 +45,7 @@ static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
@@ -58,7 +58,7 @@ static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
@@ -71,36 +71,36 @@ static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
 
 	for (i = 0; i < length; i++) {
 		c = *(vram++);
-		memset(scanline, pens[(c & 0xf0) >> 4], scale);	scanline += scale;
-		memset(scanline, pens[(c & 0x0f) >> 0], scale);	scanline += scale;
+		memset(scanline, pens[(c & 0xf0) >> 4], scale); scanline += scale;
+		memset(scanline, pens[(c & 0x0f) >> 0], scale); scanline += scale;
 	}
 }
 
-static void build_scanline2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
 
 	for (i = 0; i < length; i++) {
 		c = *(vram++);
-		memset(scanline, pens[(c & 0xc0) >> 6], scale);	scanline += scale;
-		memset(scanline, pens[(c & 0x30) >> 4], scale);	scanline += scale;
-		memset(scanline, pens[(c & 0x0c) >> 2], scale);	scanline += scale;
-		memset(scanline, pens[(c & 0x03) >> 0], scale);	scanline += scale;
+		memset(scanline, pens[(c & 0xc0) >> 6], scale); scanline += scale;
+		memset(scanline, pens[(c & 0x30) >> 4], scale); scanline += scale;
+		memset(scanline, pens[(c & 0x0c) >> 2], scale); scanline += scale;
+		memset(scanline, pens[(c & 0x03) >> 0], scale); scanline += scale;
 	}
 }
 
-static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	/* Arifacting isn't truely the same resolution as PMODE 3
-	 * it has a bias to the higher resolution.  We need to
+	 * it has a bias to the higher resolution.	We need to
 	 * emulate this because some things are unreadable if we
 	 * say that its just like PMODE 3 with different colors
 	 */
@@ -147,24 +147,24 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	 */
 #if 1
 	static int artifactcorrection[64][2] = {
-		{ 0,  0}, { 0,  0}, { 0,  8}, { 0,  3},
-		{ 5,  7}, { 5,  7}, { 1,  2}, { 1, 11},
-		{10,  8}, {10, 14}, {10,  9}, {10,  9},
+		{ 0,  0}, { 0,	0}, { 0,  8}, { 0,	3},
+		{ 5,  7}, { 5,	7}, { 1,  2}, { 1, 11},
+		{10,  8}, {10, 14}, {10,  9}, {10,	9},
 		{ 4,  4}, { 4, 15}, {12, 12}, {12, 15},
 
-		{ 5, 13}, { 5, 13}, {13,  0}, {13,  3},
-		{ 6,  6}, { 6,  6}, { 6, 15}, { 6, 11},
-		{ 2,  1}, { 2,  1}, {15,  9}, {15,  9},
+		{ 5, 13}, { 5, 13}, {13,  0}, {13,	3},
+		{ 6,  6}, { 6,	6}, { 6, 15}, { 6, 11},
+		{ 2,  1}, { 2,	1}, {15,  9}, {15,	9},
 		{11, 11}, {11, 11}, {15, 15}, {15, 15},
 
-		{14,  0}, {14,  0}, {14,  8}, {14,  3},
-		{ 0,  7}, { 0,  7}, { 1,  2}, { 1, 11},
-		{ 9,  8}, { 9, 14}, { 9,  9}, { 9,  9},
+		{14,  0}, {14,	0}, {14,  8}, {14,	3},
+		{ 0,  7}, { 0,	7}, { 1,  2}, { 1, 11},
+		{ 9,  8}, { 9, 14}, { 9,  9}, { 9,	9},
 		{15,  4}, {15, 15}, {12, 12}, {12, 15},
 
-		{ 3, 13}, { 3, 13}, { 3,  0}, { 3,  3},
-		{ 6,  6}, { 6,  6}, { 6, 15}, { 6, 11},
-		{12,  1}, {12,  1}, {12,  9}, {12,  9},
+		{ 3, 13}, { 3, 13}, { 3,  0}, { 3,	3},
+		{ 6,  6}, { 6,	6}, { 6, 15}, { 6, 11},
+		{12,  1}, {12,	1}, {12,  9}, {12,	9},
 		{15, 11}, {15, 11}, {15, 15}, {15, 15}
 	};
 #endif
@@ -231,7 +231,7 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	}
 }
 
-static void build_scanline1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT16 *pens)
+static void build_scanline1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
 {
 	UINT8 c;
 	int i;
@@ -272,7 +272,7 @@ static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UI
 	}
 }
 
-static void map_artifact_palette(UINT16 c0, UINT16 c1, const struct rasterbits_artifacting *artifact, UINT16 *artifactpens)
+static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_artifacting *artifact, UINT32 *artifactpens)
 {
 	int i, j;
 	int totalcolors, palettebase;
@@ -298,7 +298,7 @@ static void map_artifact_palette(UINT16 c0, UINT16 c1, const struct rasterbits_a
 		memcpy(rgb1, &artifact->u.staticpalette[c1 * 3], 3);
 	}
 
-  	for (i = 1; i < (totalcolors-1); i++) {
+	for (i = 1; i < (totalcolors-1); i++) {
 		mix_colors(myrgb, &table[(i-1)*3], rgb0, rgb1, artifact->flags & RASTERBITS_ARTIFACT_REVERSE);
 
 		if (palettebase < 0) {
@@ -342,9 +342,9 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
 	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
-	UINT16 artifactpens[16];
-	UINT16 *pens;
-	UINT16 *mappedpens = NULL;
+	UINT32 artifactpens[16];
+	UINT32 *pens;
+	UINT32 *mappedpens = NULL;
 	UINT8 *vram;
 	UINT8 *vramtop;
 	UINT8 *scanline = NULL;
@@ -354,7 +354,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 	int loopbackpixels;
 	int visualbytes;
 	int y, r, i;
-	void (*build_scanline)(UINT8 *, UINT8 *, int , int , UINT16 *) = NULL;
+	void (*build_scanline)(UINT8 *, UINT8 *, int , int , UINT32 *) = NULL;
 
 	scanline = malloc(mode->width * scalex);
 	if (!scanline)
@@ -426,7 +426,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 		else
 			num_colors = 1 << mode->depth;
 
-		mappedpens = malloc(num_colors * sizeof(UINT16));
+		mappedpens = malloc(num_colors * sizeof(UINT32));
 		if (!mappedpens)
 			goto done; /* PANIC */
 
@@ -448,11 +448,11 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			/* We have to draw this scanline */
 
 			if (loopbackpos >= 0) {
-				build_scanline(scanline,                  vram + mode->offset, loopbackpos,               scalex, pens);
-				build_scanline(scanline + loopbackpixels, vram,                visualbytes - loopbackpos, scalex, pens);
+				build_scanline(scanline,				  vram + mode->offset, loopbackpos, 			  scalex, pens);
+				build_scanline(scanline + loopbackpixels, vram, 			   visualbytes - loopbackpos, scalex, pens);
 			}
 			else {
-				build_scanline(scanline,                  vram + mode->offset, visualbytes,               scalex, pens);
+				build_scanline(scanline,				  vram + mode->offset, visualbytes, 			  scalex, pens);
 			}
 
 			/* We have the scanline, now draw it */
@@ -747,17 +747,17 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		 * The border is drawn in 4 zones
 		 *
 		 *
-		 *   +---------------------+
-		 *   |          1          |
-		 *   +-----+---------+-----+
-		 *   |     |         |     |
-		 *   |     |         |     |
-		 *   |  3  |         |  4  |
-		 *   |     |         |     |
-		 *   |     |         |     |
-		 *   +-----+---------+-----+
-		 *   |          2          |
-		 *   +---------------------+
+		 *	 +---------------------+
+		 *	 |			1		   |
+		 *	 +-----+---------+-----+
+		 *	 |	   |		 |	   |
+		 *	 |	   |		 |	   |
+		 *	 |	3  |		 |	4  |
+		 *	 |	   |		 |	   |
+		 *	 |	   |		 |	   |
+		 *	 +-----+---------+-----+
+		 *	 |			2		   |
+		 *	 +---------------------+
 		 *
 		 * ------------------------------ */
 		struct rectangle r;
