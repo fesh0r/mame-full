@@ -120,7 +120,6 @@ MACHINE_INIT( a800 )
 int a800_rom_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-	const char *filename;
 	int size;
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */

@@ -22,7 +22,7 @@
 #include "includes/dma8237.h"
 #include "mscommon.h"
 
-#include "includes/pc_hdc.h"
+#include "devices/pc_hdc.h"
 
 #define VERBOSE_HDC 0		/* HDC (hard disk controller) */
 
@@ -771,14 +771,13 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
  *		Port handlers.
  *
  *************************************/
-int pc_harddisk_init(int id, mame_file *fp, int open_mode)
+int pc_harddisk_load(int id, mame_file *fp, int open_mode)
 {
 	pc_hdc_file[id] = fp;
-
 	return INIT_PASS;
 }
 
-void pc_harddisk_exit(int id)
+void pc_harddisk_unload(int id)
 {
     pc_hdc_file[id] = NULL;
 }

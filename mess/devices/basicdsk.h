@@ -1,11 +1,13 @@
-
 /* DISK IMAGE FORMAT WHICH USED TO BE PART OF WD179X - NOW SEPERATED */
 
-#include "devices/flopdrv.h"
+#ifndef BASICDSK_H
+#define BASICDSK_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "devices/flopdrv.h"
 
 typedef struct {
 	UINT8	 track;
@@ -87,3 +89,5 @@ void basicdsk_set_ddam(UINT8 physical_drive, UINT8 physical_track, UINT8 physica
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* BASICDSK_H */

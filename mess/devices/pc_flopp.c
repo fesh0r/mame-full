@@ -5,7 +5,7 @@
 
 #include "driver.h"
 #include "devices/basicdsk.h"
-#include "includes/pc_flopp.h"
+#include "devices/pc_flopp.h"
 
 static int common_length_spt_heads[][3] = {
     { 8*1*40*512,  8, 1},   /* 5 1/4 inch double density single sided */
@@ -20,9 +20,9 @@ static int common_length_spt_heads[][3] = {
     {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
 
 
-int pc_floppy_init(int id, mame_file *fp, int open_mode)
+int pc_floppy_load(int id, mame_file *fp, int open_mode)
 {
-	if (basicdsk_floppy_load(id, fp, open_mode)==INIT_PASS)
+	if (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
@@ -35,7 +35,7 @@ int pc_floppy_init(int id, mame_file *fp, int open_mode)
 			/* tracks pre sector recognition with image size
 			works only 512 byte sectors! and 40 or 80 tracks*/
 			scl = heads = 2;
-			length=mame_fsize(fp);
+			length = mame_fsize(fp);
 			if (length==0) { // new image created
 #if 0
 			    logerror("image with heads per track:%d, heads:%d, tracks:%d created\n", 9, 2, 40);

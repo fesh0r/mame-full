@@ -161,9 +161,9 @@ DRVLIBS = \
 	$(OBJ)/sega.a     \
 	$(OBJ)/acorn.a    \
 	$(OBJ)/atari.a    \
-#	$(OBJ)/at.a       \
-#	$(OBJ)/pc.a       \
-#	$(OBJ)/pcshare.a  \
+	$(OBJ)/at.a       \
+	$(OBJ)/pc.a       \
+	$(OBJ)/pcshare.a  \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/vtech.a	  \
@@ -435,7 +435,7 @@ $(OBJ)/pcshare.a:	   \
 	  $(OBJ)/mess/sndhrdw/pc.o	     \
 	  $(OBJ)/mess/sndhrdw/sblaster.o \
 	  $(OBJ)/mess/machine/pc_fdc.o	 \
-	  $(OBJ)/mess/machine/pc_hdc.o	 \
+	  $(OBJ)/mess/devices/pc_hdc.o	 \
 	  $(OBJ)/mess/machine/pcshare.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
@@ -753,7 +753,7 @@ COREOBJS += \
 	$(OBJ)/mess/machine/centroni.o \
 	$(OBJ)/mess/machine/pckeybrd.o \
 	$(OBJ)/mess/machine/pc_fdc_h.o \
-	$(OBJ)/mess/machine/pc_flopp.o \
+	$(OBJ)/mess/devices/pc_flopp.o \
 	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \

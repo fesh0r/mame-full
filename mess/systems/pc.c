@@ -33,10 +33,10 @@
 #include "includes/pc_aga.h"
 #include "includes/pc_t1t.h"
 
-#include "includes/pc_hdc.h"
+#include "devices/pc_hdc.h"
 #include "includes/pc_ide.h"
 #include "includes/pc_fdc_h.h"
-#include "includes/pc_flopp.h"
+#include "devices/pc_flopp.h"
 #include "includes/pckeybrd.h"
 #include "includes/pclpt.h"
 #include "includes/sblaster.h"
@@ -1693,8 +1693,8 @@ ROM_END
 
 SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, NULL, floppy_status)
-	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "img\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW, pc_harddisk_init, pc_harddisk_exit, NULL)
+	CONFIG_DEVICE_PC_FLOPPY(2)
+	CONFIG_DEVICE_PC_HARDDISK(4)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

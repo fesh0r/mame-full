@@ -26,14 +26,14 @@
 #include "includes/pc_aga.h"
 #include "includes/pc_t1t.h"
 
-#include "includes/pc_flopp.h"
+#include "devices/pc_flopp.h"
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
 
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
 
-#include "includes/pc_hdc.h"
+#include "devices/pc_hdc.h"
 #include "includes/nec765.h"
 #include "includes/amstr_pc.h"
 #include "includes/europc.h"

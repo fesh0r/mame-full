@@ -98,7 +98,7 @@
 #include "includes/msm8251.h"	/* for NC100 uart */
 #include "includes/mc146818.h"	/* for NC200 real time clock */
 #include "includes/nec765.h"	/* for NC200 disk drive interface */
-#include "includes/pc_flopp.h"	/* for NC200 disk image */
+#include "devices/pc_flopp.h"	/* for NC200 disk image */
 #include "includes/serial.h"	/* for serial data transfers */
 #include "devices/cartslot.h"
 
@@ -1794,7 +1794,7 @@ SYSTEM_CONFIG_END
 SYSTEM_CONFIG_START(nc200)
 	CONFIG_IMPORT_FROM(nc_common)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, pc_floppy_init, NULL, floppy_status)
+	CONFIG_DEVICE_PC_FLOPPY(1)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
