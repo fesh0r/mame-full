@@ -59,7 +59,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	UINT32 header_size;
 	formatdriver_ctor formats[2];
 	struct disk_geometry local_geometry;
-	UINT8 track;
+	UINT8 track, head;
 	struct bdf_file dummy_bdf;
 	
 	if (!geometry)
@@ -110,9 +110,12 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 		dummy_bdf.file = file;
 		for(track = 0; track < geometry->tracks; track++)
 		{
-			err = drv.format_track(&drv, (void *) &dummy_bdf, geometry, track);
-			if (err)
-				goto error;
+			for( head = 1; head < geometry->heads; head++ )
+			{
+				err = drv.format_track(&drv, (void *) &dummy_bdf, geometry, track, head);
+				if (err)
+					goto error;
+			}
 		}
 	}
 	else

@@ -56,7 +56,7 @@ struct InternalBdFormatDriver
 	int (*header_encode)(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry);
 	int (*read_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 	int (*write_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-	int (*format_track)(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track);
+	int (*format_track)(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head);
 	int flags;
 };
 
