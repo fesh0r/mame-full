@@ -1,144 +1,114 @@
 /*
-  Experimental ti990/4 driver
+	Experimental ti990/4 driver
 
-  We emulate a ti990/4 set with a LOAD ROM.
+	We emulate a simple ti990/4 board part of a prototyping system.  As I do
+	not have software for this system, the interest is fairly limited.
 
-  4kb + 512 bytes RAM ?
 
-  512 bytes ROM
+	Setup options:
+	8kb of DRAM (onboard option, with optional parity): base 0x0000 or 0x2000
+	4 banks of 512 bytes of ROM or SRAM: base 0x0000, 0x0800, 0xF000 or 0xF800
+	power-up vector: 0x0000 (level 0) or 0xFFFC (load)
+	optional memerr interrupt (level 2)
+	optional power fail interrupt (level 1)
+	optional real-time clock interrupt (level 5 or 7)
 
-  The driver runs the boot ROM OK.  Unfortunately, no boot device is emulated.
+
+	Setup for the emulated system (prototyping system):
+	0x0000: 8kb DRAM?
+	0xF800: 512 bytes SRAM
+	0xFA00: 512 bytes SRAM or empty?
+	0xFC00: 512 bytes self-test ROM
+	0xFE00: 512 bytes loader ROM
+	power-up vector: 0xFFFC (load)
+
+	The driver runs the boot ROM OK.  Unfortunately, no boot device is emulated.
+
+	Note that only interrupt levels 3-7 are supported by the board (8-15 are not wired).
 
 TODO :
 * programmer panel
-* use the 911 vdt core (already used by 990/10)
 * emulate other devices: FD800, card reader, ASR/KSR, printer
 
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/tms9900/tms9900.h"
+#include "machine/ti990.h"
+#include "vidhrdw/911_vdt.h"
 
-static void *timer;
 
-static void clear_load(int dummy)
+static void machine_init_ti990_4(void)
 {
-	cpu_set_nmi_line(0, CLEAR_LINE);
+	ti990_hold_load();
+
+	ti990_reset_int();
 }
 
-static void ti990_4_init_machine(void)
+
+static void ti990_4_line_interrupt(void)
 {
-	cpu_set_nmi_line(0, ASSERT_LINE);
-	timer = timer_set(TIME_IN_MSEC(100), 0, clear_load);
+	vdt911_keyboard(0);
+
+	ti990_line_interrupt();
 }
 
-static void ti990_4_stop_machine(void)
+/*static void idle_callback(int state)
 {
+}*/
 
+static WRITE16_HANDLER ( rset_callback )
+{
+	ti990_cpuboard_reset();
+
+	vdt911_reset();
+	/* ... */
+
+	/* clear controller panel and smi fault LEDs */
 }
 
-static int ti990_4_vblank_interrupt(void)
+static WRITE16_HANDLER ( ckon_ckof_callback )
 {
+	ti990_ckon_ckof_callback((offset & 0x1000) ? 1 : 0);
+}
 
-
-	return ignore_interrupt();
+static WRITE16_HANDLER ( lrex_callback )
+{
+	/* right??? */
+	ti990_hold_load();
 }
 
 /*
-three panel types
-* operator panel
-* programmer panel
-* MDU
+	TI990/4 video emulation.
 
-Operator panel :
-* Power led
-* Fault led
-* Off/On/Load switch
-
-Programmer panel :
-* 16 status light, 32 switches, IDLE, RUN led
-* interface to a low-level debugger in ROMs
-
-* MDU :
-* includes a tape unit, possibly other stuff
-
-output :
-0-7 : lights 0-7
-8 : increment scan
-9 : clear scan
-A : run light
-B : fault light
-C : Memory Error Interrupt clear
-D : Start panel timer
-E : Set SIE function (interrupt after 2 instructions are executed)
-F : flag
-
-input :
-0-7 : switches 0-7 (or data from MDU tape)
-8 : scan count bit 1
-9 : scan count bit 0
-A : timer active
-B : programmer panel not present
-C : char in MDU tape unit buffer ?
-D : unused ?
-E : MDU tape unit present ?
-F : flag
-
+	We emulate a single VDT911 CRT terminal.
 */
 
-static READ16_HANDLER ( ti990_4_panel_read )
+static int video_start_ti990_4(void)
 {
-	if (offset == 1)
-		return 0x08;
+	const vdt911_init_params_t params =
+	{
+		char_1920,
+		vdt911_model_US,
+		ti990_set_int3
+	};
 
-	return 0;
+	return vdt911_init_term(0, & params);
 }
 
-static WRITE16_HANDLER ( ti990_4_panel_write )
+static void video_update_ti990_4(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
+	vdt911_refresh(bitmap, 0, 0, 0);
 }
-
-/*
-  TI990/4 video emulation.
-
-  I guess there was text terminal and CRT terminals.
-*/
-
-
-static void ti990_4_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
-{
-/*	memcpy(palette, & ti990_4_palette, sizeof(ti990_4_palette));
-	memcpy(colortable, & ti990_4_colortable, sizeof(ti990_4_colortable));*/
-}
-
-static int ti990_4_vh_start(void)
-{
-	return 0; /*video_start_generic();*/
-}
-
-static void ti990_4_vh_stop(void)
-{
-}
-
-static void ti990_4_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-
-}
-
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ -1 }	/* end of array */
-};
 
 
 /*
-  Memory map - see description above
+	Memory map - see description above
 */
 
 static MEMORY_READ16_START (ti990_4_readmem)
 
-	{ 0x0000, 0x1fff, MRA16_RAM },		/* dynamic RAM ? */
+	{ 0x0000, 0x1fff, MRA16_RAM },		/* dynamic RAM */
 	{ 0x2000, 0xf7ff, MRA16_NOP },		/* reserved for expansion */
 	{ 0xf800, 0xfbff, MRA16_RAM },		/* static RAM ? */
 	{ 0xfc00, 0xffff, MRA16_ROM },		/* LOAD ROM */
@@ -147,7 +117,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START (ti990_4_writemem)
 
-	{ 0x0000, 0x1fff, MWA16_RAM },		/* dynamic RAM ? */
+	{ 0x0000, 0x1fff, MWA16_RAM },		/* dynamic RAM */
 	{ 0x2000, 0xf7ff, MWA16_NOP },		/* reserved for expansion */
 	{ 0xf800, 0xfbff, MWA16_RAM },		/* static RAM ? */
 	{ 0xfc00, 0xffff, MWA16_ROM },		/* LOAD ROM */
@@ -156,63 +126,91 @@ MEMORY_END
 
 
 /*
-  CRU map
+	CRU map
+
+	0x000-0xF7F: user devices
+	0xF80-0xF9F: CRU interrupt + expansion control
+	0xFA0-0xFAF: TILINE coupler interrupt control
+	0xFB0-0xFCF: reserved
+	0xFD0-0xFDF: memory mapping and memory protect
+	0xFE0-0xFEF: internal interrupt control
+	0xFF0-0xFFF: front panel
 */
 
 static PORT_WRITE16_START ( ti990_4_writeport )
 
-	{ 0xff0 << 1, 0xfff << 1, ti990_4_panel_write },
+	{ 0x80 << 1, 0x8f << 1, vdt911_0_cru_w },
+
+	{ 0xff0 << 1, 0xfff << 1, ti990_panel_write },
+
+	/* external instruction decoding */
+	/*{ 0x2000 << 1, 0x2fff << 1, idle_callback },*/
+	{ 0x3000 << 1, 0x3fff << 1, rset_callback },
+	{ 0x5000 << 1, 0x6fff << 1, ckon_ckof_callback },
+	{ 0x7000 << 1, 0x7fff << 1, lrex_callback },
 
 PORT_END
 
 static PORT_READ16_START ( ti990_4_readport )
 
-	{ 0x1fe << 1, 0x1ff << 1, ti990_4_panel_read },
+	{ 0x10 << 1, 0x11 << 1, vdt911_0_cru_r },
+
+	{ 0x1fe << 1, 0x1ff << 1, ti990_panel_read },
 
 PORT_END
 
-static struct MachineDriver machine_driver_ti990_4 =
+static struct beep_interface vdt_911_beep_interface =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_TMS9900,
-			3000000,	/* unknown */
-			ti990_4_readmem, ti990_4_writemem, ti990_4_readport, ti990_4_writeport,
-			ti990_4_vblank_interrupt, 1,
-			0, 0,
-			0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
 	1,
-	ti990_4_init_machine,
-	ti990_4_stop_machine,
-
-	/* video hardware - no screen emulated */
-	200,						/* screen width */
-	200,						/* screen height */
-	{ 0, 200-1, 0, 200-1},		/* visible_area */
-	gfxdecodeinfo,				/* graphics decode info (???)*/
-	0/*TI990_4_PALETTE_SIZE*/,		/* palette is 3*total_colors bytes long */
-	0/*TI990_4_COLORTABLE_SIZE*/,	/* length in shorts of the color lookup table */
-	ti990_4_init_palette,		/* palette init */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ti990_4_vh_start,
-	ti990_4_vh_stop,
-	ti990_4_vh_refresh,
-
-	/* sound hardware */
-	0,
-	0,0,0,
-
-#if 0
-	{ /* no sound ! */
-	}
-#endif
+	{ 50 }
 };
+
+/*static tms9900reset_param reset_params =
+{
+	idle_callback
+};*/
+
+static MACHINE_DRIVER_START(ti990_4)
+
+	/* basic machine hardware */
+	/* TMS9900 CPU @ 3.0(???) MHz */
+	MDRV_CPU_ADD(TMS9900, 3000000)
+	/*MDRV_CPU_FLAGS(0)*/
+	/*MDRV_CPU_CONFIG(reset_params)*/
+	MDRV_CPU_MEMORY(ti990_4_readmem, ti990_4_writemem)
+	MDRV_CPU_PORTS(ti990_4_readport, ti990_4_writeport)
+	/*MDRV_CPU_VBLANK_INT(NULL, 0)*/
+	MDRV_CPU_PERIODIC_INT(ti990_4_line_interrupt, 120/*or 100 in Europe*/)
+
+	/* video hardware - we emulate a single 911 vdt display */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( ti990_4 )
+	/*MDRV_MACHINE_STOP( ti990_4 )*/
+	/*MDRV_NVRAM_HANDLER( NULL )*/
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(560, 280)
+	MDRV_VISIBLE_AREA(0, 560-1, 0, /*250*/280-1)
+
+	MDRV_GFXDECODE(vdt911_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(vdt911_palette_size)
+	MDRV_COLORTABLE_LENGTH(vdt911_colortable_size)
+
+	MDRV_PALETTE_INIT(vdt911)
+	MDRV_VIDEO_START(ti990_4)
+	/*MDRV_VIDEO_STOP(ti990_4)*/
+	/*MDRV_VIDEO_EOF(name)*/
+	MDRV_VIDEO_UPDATE(ti990_4)
+
+	MDRV_SOUND_ATTRIBUTES(0)
+	/* 911 VDT has a beep tone generator */
+	MDRV_SOUND_ADD(BEEP, vdt_911_beep_interface)
+
+MACHINE_DRIVER_END
 
 
 /*
@@ -221,6 +219,9 @@ static struct MachineDriver machine_driver_ti990_4 =
 ROM_START(ti990_4)
 	/*CPU memory space*/
 	ROM_REGION16_BE(0x10000, REGION_CPU1,0)
+
+	/* ROM set 945121-5: "733 ASR ROM loader with self test (prototyping)"
+	(cf 945401-9701 p 1-19) */
 
 	/* test ROM */
 	ROMX_LOAD("94519209.u39", 0xFC00, 0x100, 0x0a0b0c42, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
@@ -234,10 +235,15 @@ ROM_START(ti990_4)
 	ROMX_LOAD("94519115.u6", 0xFE01, 0x100, 0x9ccf8cca, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI | ROM_SKIP(1))
 	ROMX_LOAD("94519116.u7", 0xFE01, 0x100, 0xfa387bf3, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO | ROM_SKIP(1))
 
+
+	/* VDT911 character definitions */
+	ROM_REGION(vdt911_chr_region_len, vdt911_chr_region, 0)
+
 ROM_END
 
 static void init_ti990_4(void)
 {
+	vdt911_init();
 }
 
 static const struct IODevice io_ti990_4[] =
@@ -247,10 +253,10 @@ static const struct IODevice io_ti990_4[] =
 };
 
 INPUT_PORTS_START(ti990_4)
+
+	VDT911_KEY_PORTS
+
 INPUT_PORTS_END
 
 /*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		COMPANY					FULLNAME */
 COMP( 1976,	ti990_4,	0,		ti990_4,	ti990_4,	ti990_4,	"Texas Instruments",	"TI Model 990/4 Microcomputer System" )
-
-
-
