@@ -8,6 +8,10 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600,A7800] Left and Right difficulty switches can now be toggled
+  with the [ and ] keys.  The \ key will also toggle the Black&White
+  switch on the a2600.  [Christopher Stone]
+
 - [A2600] Remap Select/Reset Keys to match a7800 driver (bug #670)
   [Christopher Stone]
 
