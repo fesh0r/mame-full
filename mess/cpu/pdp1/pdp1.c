@@ -23,6 +23,11 @@
  * and finally, there is a nice article about SPACEWAR!, go to:
  * http://ars-www.uchicago.edu/~eric/lore/spacewar/spacewar.html
  *
+ * some extra documentation is available on spies:
+ * http://www.spies.com/~aek/pdf/dec/pdp1/
+ * The file "F17_PDP1Maint.pdf" explains operation procedures and much of the internals of pdp-1.
+ * The file "F25_PDP1_IO.pdf" has interesting information on the I/O system, too.
+ *
  * following is an extract from the handbook:
  *
  * INTRODUCTION
@@ -359,7 +364,6 @@ typedef struct
 	int ma;			/* memory address (12, 15 or 16 bits) */
 	int ac;			/* accumulator (18 bits) */
 	int io;			/* i/o register (18 bits) */
-	int ov;			/* overflow flip-flop (1 bit) */
 	int flags;		/* program flag register (6 bits) */
 
 	/* operator panel switches */
@@ -368,10 +372,14 @@ typedef struct
 	/* processor state flip-flops */
 	unsigned int run : 1;		/* processor is running */
 	unsigned int cycle : 1;		/* processor is in the midst of an instruction */
-	unsigned int deferred : 1;	/* processor is handling deferred (i.e. indirect) addressing */
+	unsigned int defer : 1;		/* processor is handling deferred (i.e. indirect) addressing */
+	unsigned int ov;			/* overflow flip-flop */
 	unsigned int read_in : 1;	/* processor is in read-in mode */
 #if 0
-	unsigned int seq_break : 1;	/* processor is in sequence break mode (i.e. an interrupt is in progress) */
+	unsigned int sbm : 1;		/* processor is in sequence break mode (i.e. interrupts are enabled) */
+	unsigned int irq_state : 1;	/* mirrors the state of the interrupt pin */
+	unsigned int b2: 1;			/* interrupt pending */
+	unsigned int b4: 1;			/* interrupt in progress */
 	unsigned int extend : 1;	/* processor is in extend mode */
 	unsigned int i_o_halt : 1;	/* processor is executing an Input-Output Transfer wait */
 #endif
@@ -469,9 +477,11 @@ unsigned pdp1_get_reg (int regnum)
 	{
 	case REG_PC:
 	case PDP1_PC: return PC;
+	case PDP1_INSTR: return INSTR;
+	case PDP1_MB: return MB;
+	case PDP1_MA: return MA;
 	case PDP1_AC: return AC;
 	case PDP1_IO: return IO;
-	case PDP1_MA: return MA;
 	case PDP1_OV: return OV;
 	case PDP1_F:  return FLAGS;
 	case PDP1_F1: return READFLAG(1);
@@ -488,6 +498,8 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_S5: return READSENSE(5);
 	case PDP1_S6: return READSENSE(6);
 	case PDP1_RUN: return pdp1.run;
+	case PDP1_CYCLE: return pdp1.cycle;
+	case PDP1_DEFER: return pdp1.defer;
 	case PDP1_RIM: return pdp1.read_in;
 	case REG_SP:  return 0;
 	}
@@ -500,9 +512,11 @@ void pdp1_set_reg (int regnum, unsigned val)
 	{
 	case REG_PC:
 	case PDP1_PC: PC = val & 07777; break;
+	case PDP1_INSTR: logerror("pdp1_set_reg to instr register ignored\n");/* no way!*/ break;
+	case PDP1_MB: MB = val & 0777777; break;
+	case PDP1_MA: MA = val & 07777; break;
 	case PDP1_AC: AC = val & 0777777; break;
 	case PDP1_IO: IO = val & 0777777; break;
-	case PDP1_MA: MA = val & 07777; break;
 	case PDP1_OV: OV = val ? 1 : 0; break;
 	case PDP1_F:  FLAGS = val & 077; break;
 	case PDP1_F1: WRITEFLAG(1, val ? 1 : 0); break;
@@ -518,6 +532,8 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_S4: WRITESENSE(4, val ? 1 : 0); break;
 	case PDP1_S5: WRITESENSE(5, val ? 1 : 0); break;
 	case PDP1_S6: WRITESENSE(6, val ? 1 : 0); break;
+	case PDP1_CYCLE: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
 	case PDP1_RUN: pdp1.run = val ? 1 : 0; break;
 	case PDP1_RIM: pdp1.read_in = val ? 1 : 0; break;
 	case REG_SP:  break;
@@ -605,7 +621,7 @@ int pdp1_execute (int cycles)
 
 				if ((instruction_kind[INSTR] & 1) && (MB & 010000))
 				{
-					pdp1.deferred = 1;
+					pdp1.defer = 1;
 					pdp1.cycle = 1;			/* instruction shall be executed later */
 				}
 				else if (instruction_kind[INSTR] & 2)
@@ -615,26 +631,26 @@ int pdp1_execute (int cycles)
 
 				pdp1_ICount -= 5;
 			}
-			else if (pdp1.deferred)
+			else if (pdp1.defer)
 			{	/* defer cycle : handle indirect addressing */
-				int new_deferred;
+				int new_defer;
 
 				MA = MB & 07777;
 
 				MB = READ_PDP_18BIT(MA);
 
-				/* determinate new value of pdp1.deferred */
-				new_deferred = (/*(pdp1.extend) &&*/ (MB & 010000)) ? 1 : 0;
+				/* determinate new value of pdp1.defer */
+				new_defer = (/*(pdp1.extend) &&*/ (MB & 010000)) ? 1 : 0;
 
 				/* execute JMP and JSP immediately if applicable */
-				if ((! new_deferred) && (! instruction_kind[INSTR] & 2))
+				if ((! new_defer) && (! instruction_kind[INSTR] & 2))
 				{
 					execute_instruction();	/* execute instruction at once */
 					/*pdp1.cycle = 0;*/
 				}
 
-				/* set new value of pdp1.deferred */
-				pdp1.deferred = new_deferred;
+				/* set new value of pdp1.defer */
+				pdp1.defer = new_defer;
 
 				pdp1_ICount -= 5;
 			}
@@ -680,9 +696,11 @@ const char *pdp1_info (void *context, int regnum)
 	switch (regnum)
 	{
 	case CPU_INFO_REG + PDP1_PC: sprintf (buffer[which], "PC:0%06o", r->pc); break;
+	case CPU_INFO_REG + PDP1_INSTR: sprintf (buffer[which], "INSTR:0%02o", r->instr); break;
+	case CPU_INFO_REG + PDP1_MB: sprintf (buffer[which], "MB:0%06o", r->mb);  break;
+	case CPU_INFO_REG + PDP1_MA: sprintf (buffer[which], "MA:0%06o", r->ma);  break;
 	case CPU_INFO_REG + PDP1_AC: sprintf (buffer[which], "AC:0%06o", r->ac); break;
 	case CPU_INFO_REG + PDP1_IO: sprintf (buffer[which], "IO:0%06o", r->io); break;
-	case CPU_INFO_REG + PDP1_MA: sprintf (buffer[which], "MA:0%06o", r->ma);  break;
 	case CPU_INFO_REG + PDP1_OV: sprintf (buffer[which], "OV:%X", r->ov); break;
 	case CPU_INFO_REG + PDP1_F:  sprintf (buffer[which], "FLAGS :0%02o", r->flags);  break;
 	case CPU_INFO_REG + PDP1_F1: sprintf (buffer[which], "FLAG1:%X", (r->flags >> 5) & 1); break;
@@ -699,6 +717,8 @@ const char *pdp1_info (void *context, int regnum)
 	case CPU_INFO_REG + PDP1_S5: sprintf (buffer[which], "SENSE5:%X", (r->sense_sw >> 1) & 1); break;
 	case CPU_INFO_REG + PDP1_S6: sprintf (buffer[which], "SENSE6:%X", r->sense_sw & 1); break;
 	case CPU_INFO_REG + PDP1_RUN: sprintf (buffer[which], "RUN:%X", pdp1.run); break;
+	case CPU_INFO_REG + PDP1_CYCLE: sprintf (buffer[which], "CYCLE:%X", pdp1.cycle); break;
+	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DEFER:%X", pdp1.defer); break;
 	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", pdp1.read_in); break;
     case CPU_INFO_FLAGS:
 		sprintf (buffer[which], "%c%c%c%c%c%c-%c%c%c%c%c%c",
@@ -749,7 +769,7 @@ static void execute_instruction(void)
 		INSTR = MB >> 13;		/* basic opcode */
 		if ((instruction_kind[INSTR] & 1) && (MB & 010000))
 		{
-			pdp1.deferred = 1;
+			pdp1.defer = 1;
 			/*pdp1.cycle = 1;*/			/* instruction shall be executed later */
 			goto no_fetch;			/* fall through to next instruction */
 		}
@@ -791,12 +811,15 @@ static void execute_instruction(void)
 		WRITE_PDP_18BIT(MA, 0);
 		break;
 	case ADD:		/* Add */
+	{
+		int new_ov;
 		AC = AC + READ_PDP_18BIT(MA);
-		OV = AC >> 18;
-		AC = (AC + OV) & 0777777;
+		OV |= new_ov = AC >> 18;
+		AC = (AC + new_ov) & 0777777;
 		if (AC == 0777777)
 			AC = 0;
 		break;
+	}
 	case SUB:		/* Subtract */
 		{
 			int diffsigns;
