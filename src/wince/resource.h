@@ -18,7 +18,7 @@
 #define IDM_HELP_ABOUT                  40003
 #define ID_TOOLS_PLAYGAME               40005
 #define ID_MENUITEM40006                40006
-#define ID_OPTIONS                      40007
+#define ID_DUMMY                        40007
 #define ID_OPTIONS_RESETOPTIONSTODEFAULT 40009
 #define ID_OPTIONS_SHOWFRAMERATE        40010
 #ifdef MAME_DEBUG
@@ -36,7 +36,10 @@
 #define ID_MENUITEM40021                40021
 #define ID_MENUITEM40022                40022
 #define IDS_CAP_FILE                    40024
+#define IDS_CAP_EDIT                    40025
 #define IDS_CAP_OPTIONS                 40026
+#define IDS_CAP_DEVICES                 40032
+#define IDS_CAP_HELP                    40033
 #define ID_FILE_INSTRUCTIONS            40027
 #define ID_OPTIONS_ROTATESCREENLEFT     40028
 #define ID_OPTIONS_ROTATESCREENRIGHT    40029
@@ -48,7 +51,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        1138
-#define _APS_NEXT_COMMAND_VALUE         40032
+#define _APS_NEXT_COMMAND_VALUE         40034
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           1101
 #endif

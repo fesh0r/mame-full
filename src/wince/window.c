@@ -1333,8 +1333,10 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
 {
+	extern void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT32 *palette);
+
 	if (win_video_window)
-		gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);
+		ce_blit(bitmap, 0, palette_16bit_lookup);
 /*
 	HBITMAP hBitmap;
 	HDC hDcBitmap;

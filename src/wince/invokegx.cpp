@@ -416,3 +416,14 @@ void gx_blit(struct mame_bitmap *bitmap, int update, int orientation, UINT32 *pa
 
 	GXEndDraw();
 }
+
+void gx_suspend(void)
+{
+	GXSuspend();
+}
+
+void gx_resume(void)
+{
+	GXResume();
+}
+

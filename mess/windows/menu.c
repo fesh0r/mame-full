@@ -434,7 +434,6 @@ static void pause(void)
 static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu)
 {
 	MENUITEMINFO mii;
-	int item_count;
 	int i;
 	TCHAR buf[128];
 
@@ -445,22 +444,17 @@ static HMENU find_sub_menu(HMENU menu, const char *menutext, int create_sub_menu
 
 	while(*menutext)
 	{
-#ifdef UNDER_CE
-		item_count = 32;
-#else
-		item_count = GetMenuItemCount(menu);
-#endif
-		for(i = 0; i < item_count; i++)
+		i = -1;
+		do
 		{
+			i++;
 			mii.dwTypeData = buf;
 			mii.cch = sizeof(buf) / sizeof(buf[0]);
 			if (!GetMenuItemInfo(menu, i, TRUE, &mii))
 				return NULL;
-			if ((mii.fType != MFT_SEPARATOR) && mii.dwTypeData && !strcmp(menutext, T2A(mii.dwTypeData)))
-				break;
 		}
-		if (i >= item_count)
-			return NULL;
+		while((mii.fType == MFT_SEPARATOR) || !mii.dwTypeData || strcmp(menutext, T2A(mii.dwTypeData)));
+
 		if (!mii.hSubMenu && create_sub_menu)
 		{
 			memset(&mii, 0, sizeof(mii));
@@ -491,7 +485,9 @@ static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 	int err;
 
 #ifdef UNDER_CE
-	result = EnableMenuItem(menu_bar, command, state | MF_BYCOMMAND);
+	result = EnableMenuItem(menu_bar, command, (state & MFS_GRAYED ? MF_GRAYED : MF_ENABLED) | MF_BYCOMMAND);
+	if (result)
+		result = CheckMenuItem(menu_bar, command, (state & MFS_CHECKED ? MF_CHECKED : MF_UNCHECKED) | MF_BYCOMMAND) != 0xffffffff;
 #else
 	MENUITEMINFO mii;
 
@@ -501,11 +497,11 @@ static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 	mii.fState = state;
 	result = SetMenuItemInfo(menu_bar, command, FALSE, &mii);
 #endif
-	if (!result)
+/*	if (!result)
 	{
 		err = GetLastError();
 		assert(FALSE);
-	}
+	}*/
 }
 
 //============================================================
@@ -558,13 +554,8 @@ static void prepare_menus(void)
 
 	// set up device menu
 	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
-#ifdef UNDER_CE
 	while(RemoveMenu(device_menu, 0, MF_BYPOSITION))
 		;
-#else
-	while(GetMenuItemCount(device_menu) > 0)
-		RemoveMenu(device_menu, 0, MF_BYPOSITION);
-#endif
 
 	for (dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
@@ -867,7 +858,7 @@ int win_setup_menus(HMENU menu_bar)
 	HMENU frameskip_menu;
 	HMENU joystick_menu;
 	char buf[256];
-	int i, joystick_count;
+	int i, joystick_count = 0;
 	MENUITEMINFO mii;
 
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
@@ -891,7 +882,9 @@ int win_setup_menus(HMENU menu_bar)
 	}
 
 	// set up joystick menu
+#ifndef UNDER_CE
 	joystick_count = count_joysticks();
+#endif
 	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, joystick_count ? MFS_ENABLED : MFS_GRAYED);
 	if (joystick_count > 0)
 	{
@@ -963,6 +956,9 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 #endif
 		osd_sound_enable(0);
 		win_timer_enable(0);
+#ifdef UNDER_CE
+		gx_suspend();
+#endif
 		break;
 
 	// resume sound and timer if we dome with resizing or a menu
@@ -972,6 +968,9 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 #endif
 		osd_sound_enable(1);
 		win_timer_enable(1);
+#ifdef UNDER_CE
+		gx_resume();
+#endif
 		break;
 
 	case WM_COMMAND:

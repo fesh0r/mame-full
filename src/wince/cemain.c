@@ -529,7 +529,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				hwndCB = CreateRpCommandBar(hWnd);
 				tbbi.cbSize = sizeof(tbbi);
 				tbbi.dwMask = TBIF_LPARAM;
-				SendMessage(hwndCB,TB_GETBUTTONINFO,ID_OPTIONS,(LPARAM)&tbbi);
+				SendMessage(hwndCB,TB_GETBUTTONINFO,IDS_CAP_OPTIONS,(LPARAM)&tbbi);
 
 				pExtra = malloc(sizeof(struct MainWindowExtra));
 				pExtra->hMenu = (HMENU) tbbi.lParam;

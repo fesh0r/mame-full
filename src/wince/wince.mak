@@ -1,8 +1,9 @@
 # only OS specific output files and rules
 OSOBJS = \
 		$(OBJ)/wince/crtsuppl.o \
-		$(OBJ)/wince/cesound.o \
+		$(OBJ)/wince/ceblit.o \
 		$(OBJ)/wince/ceinput.o \
+		$(OBJ)/wince/cesound.o \
 		$(OBJ)/wince/video.o \
 		$(OBJ)/wince/window.o \
 		$(OBJ)/wince/cemain.o \
@@ -14,6 +15,7 @@ OSOBJS = \
 		$(OBJ)/wince/rc.o \
 		$(OBJ)/wince/ticker.o \
 		$(OBJ)/wince/fronthlp.o \
+		$(OBJ)/wince/emitx86.o \
 		$(OBJ)/windows/fileio.o \
 		$(OBJ)/windows/snprintf.o \
 		$(OBJ)/mess/windows/menu.o \
