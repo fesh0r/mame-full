@@ -554,13 +554,11 @@ WRITE_HANDLER(bbc_i8271_write)
    WD1770 disc control function
 ***************************************/
 
-static int	drive0_select;
-static int  drive1_select;
-static int  drive_side_select;
-static int  density_select;
-static int  nmi_enable;
+static int  drive_control;
+/* bit 0: 1 = drq set, bit 1: 1 = irq set */
+static int	bbc_wd179x_drq_irq_state;
 
-
+static int previous_wd179x_int_state;
 
 /*
    B/ B+ drive control:
@@ -568,12 +566,12 @@ static int  nmi_enable;
         Bit       Meaning
         -----------------
         7,6       Not used.
-         5        Reset drive controller chip.
-         4        Interrupt Enable
+         5        Reset drive controller chip. (0 = reset controller, 1 = no reset)
+         4        Interrupt Enable (0 = enable int, 1 = disable int) 
          3        Double density select (0 = double, 1 = single).
          2        Side select (0 = side 0, 1 = side 1).
-         1        Drive select 1.
-         0        Drive select 0.
+         1        Drive select 1. 
+         0        Drive select 0. 
 */
 
 /*
@@ -588,31 +586,111 @@ density disc image
 
 void bbc_wd179x_callback(int event)
 {
-
+	int state;
 	/* WD179X_IRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
 	   WD179X_DRQ_SET and latch bit 4 (nmi_enable) are NAND'ED together
 	   the output of the above two NAND gates are then OR'ED together and sent to the 6502 NMI line.
-    */
+		DRQ and IRQ are active low outputs from wd179x. We use WD179X_DRQ_SET for DRQ = 0, 
+		and WD179X_DRQ_CLR for DRQ = 1. Similarly WD179X_IRQ_SET for IRQ = 0 and WD179X_IRQ_CLR
+		for IRQ = 1.
+	
+	  The above means that if IRQ or DRQ are set, a interrupt should be generated.
+	  The nmi_enable decides if interrupts are actually triggered.
+	  The nmi is edge triggered, and triggers on a +ve edge.
+	*/
+
+	/* update bbc_wd179x_drq_irq_state depending on event */
+	switch (event)
+	{
+        case WD179X_DRQ_SET:
+		{
+			bbc_wd179x_drq_irq_state |= 1;
+		}
+		break;
+
+		case WD179X_DRQ_CLR:
+		{
+			bbc_wd179x_drq_irq_state &= ~1;
+		}
+		break;
+
+		case  WD179X_IRQ_SET:
+		{
+			bbc_wd179x_drq_irq_state |= (1<<1);
+		}
+		break;
+
+		case WD179X_IRQ_CLR:
+		{
+			bbc_wd179x_drq_irq_state &= ~(1<<1);
+		}
+		break;
+	}
+
+	/* if drq or irq is set, and interrupt is enabled */
+	if (((bbc_wd179x_drq_irq_state & 3)!=0) && ((drive_control & (1<<4))==0))
+	{
+		/* int trigger */
+		state = 1;
+	}
+	else
+	{
+		/* do not trigger int */
+		state = 0;
+	}
+
+	/* nmi is edge triggered, and triggers when the state goes from clear->set.
+	Here we are checking this transition before triggering the nmi */
+	if (state!=previous_wd179x_int_state)
+	{
+		if (state)
+		{
+			/* I'll pulse it because if I used hold-line I'm not sure
+			it would clear - to be checked */
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+	}
+
+	previous_wd179x_int_state = state;
+
 }
 
 
 void bbc_wd179x_status_w(int offset,int data)
 {
+	int drive;
+	int density;
 
-		drive0_select     = (data>>0) & 0x01;
-        drive1_select     = (data>>1) & 0x01;
-		drive_side_select = (data>>2) & 0x01;  // 0=side 0 , 1= side 1
-		density_select    = (data>>3) & 0x01;  // 0=double , 1= single
-		nmi_enable        = (data>>4) & 0x01;
+	drive_control = data;
 
-		/* setting bit 5 will reset the WD1770 */
+	drive = 0;
+	if ((data & 0x03)==1)
+	{
+		drive = 0;
+	}
+	
+	if ((data & 0x03)==2)
+	{
+		drive = 1;
+	}
 
-		/* bits 6 and 7 are not used */
-
-		/* need to set the drive,side and density now
-		wd179x_set_drive(drive);
-        wd179x_set_side(head);
-		*/
+	/* set drive */
+	wd179x_set_drive(drive);
+	/* set side */
+	wd179x_set_side((data>>2) & 0x01);
+	
+    if ((data & (1<<3))!=0)
+	{
+		/* low-density */
+		density = DEN_FM_HI;
+	}
+	else
+	{
+		/* double density */
+		density = DEN_MFM_LO;
+	}
+	
+	wd179x_set_density(density);
 }
 
 
