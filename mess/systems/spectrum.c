@@ -66,17 +66,27 @@ Changes:
 					of "override" order, read functions changed to use READ_HANDLER
 					and write functions changed to use WRITE_HANDLER
 					Added Scorpion256 preliminary.
+18/6/2001		DJR - Added support for Interface 2 cartridges.
 
-  
  Initialisation values used when determining which model is being emulated.
    48K	   Spectrum doesn't use either port.
    128K/+2 Bank switches with port 7ffd only.
-   +3/+2a  Bank switches with both ports. 
+   +3/+2a  Bank switches with both ports.
 
 	Notes:
 
+48K machines can't run code in screen memory (128K, TS2068, TC2048 etc. OK).
+Port #FF Vertical refresh not emulated (Arkanoid doesn't run).
+No contented memory.
+No hi-res colour effects (need contended memory first for accurate timing).
+Multiface 1 and Interface 1 not supported.
+Horace and the Spiders cartridge doesn't run properly.
+.TZX files not supported.
 128K emulation is not perfect - the 128K machines crash and hang while
 running quite a lot of games.
+Disk errors occur on some +3 games.
+TS2068 sound emulation not working.
+
 The TK90X and TK95 roms output 0 to port #df on start up.
 The purpose of this port is unknown (probably display mode as TS2068) and
 thus is not emulated.
@@ -1305,12 +1315,12 @@ void tc2048_init_machine(void)
 /* microcontroller KR1818VG93 is a russian wd179x clone */
 #include "includes/wd179x.h"
 
-/* 
-DRQ (D6) and INTRQ (D7). 
-DRQ - signal showing request of data by microcontroller 
+/*
+DRQ (D6) and INTRQ (D7).
+DRQ - signal showing request of data by microcontroller
 INTRQ - signal of completion of execution of command.
 */
- 
+
 static int betadisk_status;
 static int betadisk_active;
 static void (*betadisk_memory_update)(void);
@@ -1377,7 +1387,7 @@ WRITE_HANDLER(betadisk_w)
 
 	if (betadisk_active)
 	{
-		
+
 	}
 }
 
@@ -1418,16 +1428,16 @@ void	betadisk_exit(void)
 
 /*
 port 7ffd. full compatibility with Zx spectrum 128. digits are:
- 
+
 D0-D2 - number of RAM page to put in C000-FFFF
 D3    - switch of address for RAM of screen. 0 - 4000, 1 - c000
 D4    - switch of ROM : 0-zx128, 1-zx48
 D5    - 1 in this bit will block further output in port 7FFD, until reset.
 */
 
-/* 
+/*
 port 1ffd - additional port for resources of computer.
- 
+
 D0    - block of ROM in 0-3fff. when set to 1 - allows read/write page 0 of RAM
 D1    - selects ROM expansion. this rom contains main part of service monitor.
 D2    - not used
@@ -1437,7 +1447,7 @@ D4    - extended RAM. set to 1 - connects RAM page with number 8-15 in
 D5    - signal of strobe for interface centronics. to form the strobe has to be
 	set to 1.
 D6-D7 - not used. ( yet ? )
-*/ 
+*/
 
 /* rom 0=zx128, 1=zx48, 2 = service monitor, 3=tr-dos */
 
@@ -1654,18 +1664,18 @@ static WRITE_HANDLER(scorpion_port_w)
 						D2     - hardware microcontroller reset. by resetting and then setting this bit
 							 again, we can form impulse of microcontroller reset. usually this reset
 							 happenes in very begin of TR-DOS session.
- 
+
 						D3     - this digit blocks signal HLT of microcontroller. For normal work must
 							 contain '1'.
- 
+
 						D4     - Diskdrive head select. contents of this digit translates directly to
 							 diskdrive. 0 means first head or 'bottom' side of disk, 1 - second
 							 head/'top' side of disk.
- 
+
 						D5     - Density select. reset of this digit makes microcontroller works in FM
 							 mode, seted digit - MFM.
 					*/
-					
+
 					wd179x_set_drive(data & 0x03);
 
 			//		if (data & (1<<2))
@@ -2541,9 +2551,9 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"sna\0z80\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_rom_id,	/* id */
-		spectrum_rom_load,	/* init */
-		spectrum_rom_exit,	/* exit */
+		spectrum_snap_id,	/* id */
+		spectrum_snap_load,	/* init */
+		spectrum_snap_exit,	/* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
@@ -2556,7 +2566,25 @@ static const struct IODevice io_spectrum[] = {
 	},
 		IODEVICE_SPEC_QUICK,
 		IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-		{ IO_END }
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
+		"rom\0",			/* file extensions */
+		IO_RESET_ALL,		/* reset if file changed */
+		spectrum_cart_id,	/* id */
+		spectrum_cart_load,	/* init */
+		NULL,				/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{ IO_END }
 };
 
 static const struct IODevice io_specpls3[] = {
@@ -2565,9 +2593,9 @@ static const struct IODevice io_specpls3[] = {
 		1,					/* count */
 		"sna\0z80\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		spectrum_rom_id,	/* id */
-		spectrum_rom_load,	/* init */
-		spectrum_rom_exit,	/* exit */
+		spectrum_snap_id,	/* id */
+		spectrum_snap_load,	/* init */
+		spectrum_snap_exit,	/* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
@@ -2601,6 +2629,30 @@ static const struct IODevice io_specpls3[] = {
 	{ IO_END }
 };
 
+static const struct IODevice io_ts2068[] = {
+	{
+		IO_SNAPSHOT,		/* type */
+		1,					/* count */
+		"sna\0z80\0",       /* file extensions */
+		IO_RESET_ALL,		/* reset if file changed */
+		spectrum_snap_id,	/* id */
+		spectrum_snap_load,	/* init */
+		spectrum_snap_exit,	/* exit */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+		IODEVICE_SPEC_QUICK,
+		IO_CASSETTE_WAVE(1,"wav\0tap\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
+		{ IO_END }
+};
+
 #define io_spec128	io_spectrum
 #define io_spec128s io_spectrum
 #define io_specpls2 io_spectrum
@@ -2613,7 +2665,6 @@ static const struct IODevice io_specpls3[] = {
 #define io_tk90x	io_spectrum
 #define io_tk95 	io_spectrum
 #define io_tc2048	io_spectrum
-#define io_ts2068	io_spectrum
 #define io_specpl2a io_specpls3
 #define io_specp2fr io_spectrum
 #define io_specp2sp io_spectrum

@@ -80,7 +80,7 @@ void spectrum_shutdown_machine(void)
 {
 }
 
-int spectrum_rom_load(int id)
+int spectrum_snap_load(int id)
 {
 	void *file;
 
@@ -127,7 +127,7 @@ int spectrum_rom_load(int id)
 	return 0;
 }
 
-void spectrum_rom_exit(int id)
+void spectrum_snap_exit(int id)
 {
 	if (pSnapshotData != NULL)
 	{
@@ -914,7 +914,7 @@ int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	return 0;
 }
 
-int spectrum_rom_id(int id)
+int spectrum_snap_id(int id)
 {
 	return 1;
 }
@@ -1000,7 +1000,7 @@ int spectrum_cassette_init(int id)
 void spectrum_cassette_exit(int id)
 {
 	device_close(IO_CASSETTE, id);
-	spectrum_rom_exit(id);
+	spectrum_snap_exit(id);
 }
 
 /*************************************
@@ -1063,5 +1063,43 @@ int spec_quick_open(int id, int mode, void *arg)
 	logerror("quick loading %s at %.4x size:%.4x\n",
 			 device_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
 
+	return 0;
+}
+
+int spectrum_cart_id(int id)
+{
+	return 1;
+}
+
+int spectrum_cart_load(int id)
+{
+	void *file;
+
+	logerror("Trying to load cartridge!\n");
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file)
+	{
+		int datasize;
+		unsigned char *data, *ROM = memory_region(REGION_CPU1);
+
+		datasize = osd_fsize(file);
+
+		/* Cartridges are always 16K in size (as they replace the BASIC ROM)*/
+		if (datasize == 0x4000)
+		{
+			data = malloc(datasize);
+			if (data != NULL)
+			{
+				osd_fread(file, data, datasize);
+				osd_fclose(file);
+				memcpy(ROM, data, 0x4000);
+				free(data);
+				logerror("Cart loaded!\n");
+				return 0;
+			}
+			osd_fclose(file);
+		}
+		return 1;
+	}
 	return 0;
 }

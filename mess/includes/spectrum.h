@@ -1,8 +1,12 @@
-extern int  spectrum_rom_load(int id);
-extern void spectrum_rom_exit(int id);
+extern int  spectrum_snap_load(int id);
+extern void spectrum_snap_exit(int id);
 
-extern int  spectrum_rom_id(int id);
+extern int  spectrum_snap_id(int id);
 extern int  load_snap(void);
+
+extern int  spectrum_cart_load(int id);
+extern void spectrum_cart_exit(int id);
+extern int  spectrum_cart_id(int id);
 
 extern void spectrum_init_machine(void);
 extern void spectrum_shutdown_machine(void);
