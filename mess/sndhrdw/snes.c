@@ -4,7 +4,8 @@
 
   File to handle the sound emulation of the Nintendo Super NES.
 
-  Anthony kruize
+  Anthony Kruize
+  Based on the original MESS driver by Lee Hammerton (aka Savoury Snax)
 
   Just a shell for the moment.
 
@@ -183,7 +184,10 @@ WRITE_HANDLER( spc_w_io )
 void snes_fakeapu_w_port( UINT8 port, UINT8 data )
 {
 	if( port == 0 )
+	{
+		fakeapu_port[2]++;
 		fakeapu_port[3]++;
+	}
 
 	fakeapu_port[port] = data;
 }
@@ -195,7 +199,7 @@ UINT8 snes_fakeapu_r_port( UINT8 port )
  *  G65816_NMI_STATE, G65816_IRQ_STATE
  */
 
-	static UINT8 portcount = 0;
+	static UINT8 portcount[2] = {0,0};
 	UINT8 retVal = 0;
 
 	switch( port )
@@ -203,7 +207,7 @@ UINT8 snes_fakeapu_r_port( UINT8 port )
 		case 0:
 		case 1:
 		{
-			switch( portcount )
+			switch( portcount[0] )
 			{
 				case 0:
 					retVal = fakeapu_port[port];
@@ -237,14 +241,35 @@ UINT8 snes_fakeapu_r_port( UINT8 port )
 					retVal = rand() & 0xFF;
 					break;
 			}
-			portcount++;
-			if( portcount > 10 )
-				portcount = 0;
+			portcount[0]++;
+			if( portcount[0] > 10 )
+				portcount[0] = 0;
 			return retVal;
 		} break;
 		case 2:
 		case 3:
-			return fakeapu_port[port];
+		{
+			switch( portcount[1] )
+			{
+				case 0:
+					retVal = fakeapu_port[port];
+					break;
+				case 1:
+					retVal = activecpu_get_reg(4) & 0xFF;
+					break;
+				case 2:
+					retVal = (activecpu_get_reg(4) >> 8) & 0xFF;
+					break;
+				case 3:
+				case 4:
+					retVal = rand() & 0xFF;
+					break;
+			}
+			portcount[1]++;
+			if( portcount[1] > 4 )
+				portcount[1] = 0;
+			return retVal;
+		} break;
 	}
 
 	return fakeapu_port[port];
