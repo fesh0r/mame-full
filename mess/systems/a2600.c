@@ -185,7 +185,7 @@ INPUT_PORTS_START( a2600 )
 INPUT_PORTS_END
 
 
-static unsigned char palette[] =
+static unsigned char a2600_palette[] =
 {
     /* Grey */
     0x00, 0x00, 0x00,
@@ -476,7 +476,7 @@ static unsigned char palette[] =
     0xff, 0xcb, 0x83
 };
 
-static unsigned short colortable[] = {
+static unsigned short a2600_colortable[] = {
     0, 0x00,
     0, 0x01,
     0, 0x02,
@@ -751,10 +751,10 @@ static unsigned short colortable[] = {
 };
 
 /* Initialise the palette */
-static void a2600_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( a2600 )
 {
-    memcpy(sys_palette, palette, sizeof (palette));
-    memcpy(sys_colortable, colortable, sizeof (colortable));
+	palette_set_colors(0, a2600_palette, sizeof(a2600_palette) / 3);
+    memcpy(colortable, a2600_colortable, sizeof(a2600_colortable));
 }
 
 static struct TIAinterface tia_interface =
@@ -767,52 +767,36 @@ static struct TIAinterface tia_interface =
 #ifdef USE_SCANLINE_WSYNC
 extern int a2600_scanline_int(void);
 #endif
-static struct MachineDriver machine_driver_a2600 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M6502,
-            3584160/3,					/* 1.19Mhz */
-            readmem, writemem, 0, 0,
-#ifndef USE_SCANLINE_WSYNC
-            0, 0                        /* for screen updates per scanline */
-#else
-            a2600_scanline_int, 262     /* for screen updates per scanline */
+
+static MACHINE_DRIVER_START( a2600 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 3584160/3)	/* 1.19Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+#ifdef USE_SCANLINE_WSYNC
+	MDRV_CPU_VBLANK_INT(a2600_scanline_int, 262)
 #endif
-        }
-    },
-    60, DEFAULT_60HZ_VBLANK_DURATION,
-    1,
-    a2600_init_machine,                 /* init_machine */
-    a2600_stop_machine,                 /* stop_machine */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( a2600 )
 
     /* video hardware */
-    228, 262,
-    {68, 227, 40, 261},
-    0,
-    sizeof (palette) / sizeof (palette[0]) / 3,
-    sizeof (colortable) / sizeof (colortable[0]),
-    a2600_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(228, 262)
+	MDRV_VISIBLE_AREA(68, 227, 40, 261)
+	MDRV_PALETTE_LENGTH(sizeof(a2600_palette) / sizeof(a2600_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(a2600_colortable) / sizeof(a2600_colortable[0]))
+	MDRV_PALETTE_INIT(a2600)
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-    0,
-    a2600_vh_start,
-    a2600_vh_stop,
-    a2600_vh_screenrefresh,
+	MDRV_VIDEO_START(a2600)
+	MDRV_VIDEO_UPDATE(a2600)
 
-    /* sound hardware */
-    0, 0, 0, 0,
-    {
-        {
-            SOUND_TIA,
-            &tia_interface
-        }
-
-    }
-
-};
-
+	/* sound hardware */
+	MDRV_SOUND_ADD(TIA, tia_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

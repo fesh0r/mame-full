@@ -418,7 +418,7 @@ READ_HANDLER( a2600_TIA_r )
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	unsigned int pc;
 
-	pc = cpu_get_pc();
+	pc = activecpu_get_pc();
 	{
 		INT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
@@ -497,7 +497,7 @@ WRITE_HANDLER( a2600_TIA_w )
 
 	unsigned int pc;
 
-	pc = cpu_get_pc();
+	pc = activecpu_get_pc();
 	{
 		INT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
@@ -914,18 +914,11 @@ void a2600_stop_machine(void)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int a2600_vh_start(void)
+VIDEO_START( a2600 )
 {
-	if ((stella_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
+	if ((stella_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
 		return 1;
 	return 0;
-}
-
-void a2600_vh_stop(void)
-{
-	if (stella_bitmap)
-		bitmap_free(stella_bitmap);
-	stella_bitmap = NULL;
 }
 
 
@@ -1333,13 +1326,12 @@ static void a2600_Cycle_cb(int riotdiff)
   Machine Initialisation
 
 ***************************************************************************/
-void a2600_init_machine(void)
+MACHINE_INIT( a2600 )
 {
-
 	/* start RIOT interface */
-
 	currentline = 0;
-	HSYNC_timer = timer_pulse(TIME_IN_CYCLES(76, 0), 0, a2600_main_cb);
+	HSYNC_timer = timer_alloc(a2600_main_cb);
+	timer_adjust(HSYNC_timer, 0, 0, TIME_IN_CYCLES(76, 0));
 	TIA_pf_mask.shiftreg = 0x080000;
 	return;
 
@@ -1351,7 +1343,7 @@ void a2600_init_machine(void)
 	This routine is called at the start of vblank to refresh the screen
 
 ***************************************************************************/
-void a2600_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( a2600 )
 {
 	if (!osd_skip_this_frame())
 		copybitmap(bitmap, stella_bitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);

@@ -146,7 +146,7 @@ DRVLIBS = \
 	$(OBJ)/apple.a    \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/atari.a    \
-#	$(OBJ)/advision.a \
+	$(OBJ)/advision.a \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
@@ -234,8 +234,8 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/a7800.o	 \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
-#	  $(OBJ)/mess/machine/a2600.o	 \
-#	  $(OBJ)/mess/systems/a2600.o    \
+	  $(OBJ)/mess/machine/a2600.o	 \
+	  $(OBJ)/mess/systems/a2600.o    \
 #         $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \

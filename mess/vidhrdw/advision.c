@@ -24,10 +24,10 @@ int advision_vh_hpos;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int advision_vh_start(void)
+VIDEO_START( advision )
 {
     advision_vh_hpos = 0;
-	advision_display = (UINT8 *)malloc(8 * 8 * 256);
+	advision_display = (UINT8 *)auto_malloc(8 * 8 * 256);
 	if( !advision_display )
 		return 1;
 	memset(advision_display, 0, 8 * 8 * 256);
@@ -40,30 +40,19 @@ int advision_vh_start(void)
 
 ***************************************************************************/
 
-void advision_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+PALETTE_INIT( advision )
 {
 	int i;
 	for( i = 0; i < 8; i++ )
 	{
-		game_palette[i*3+0] = i * 0x22; /* 8 shades of RED */
-		game_palette[i*3+1] = 0x00;
-		game_palette[i*3+2] = 0x00;
-		game_colortable[i*2+0] = 0;
-		game_colortable[i*2+0] = i;
+		/* 8 shades of RED */
+		palette_set_color(i, i * 0x22, 0x00, 0x00);
+		colortable[i*2+0] = 0;
+		colortable[i*2+0] = i;
 	}
-	game_palette[8*3+0] = 0x55; /* DK GREY - for MAME text only */
-	game_palette[8*3+1] = 0x55;
-	game_palette[8*3+2] = 0x55;
-	game_palette[9*3+0] = 0xf0; /* LT GREY - for MAME text only */
-	game_palette[9*3+1] = 0xf0;
-	game_palette[9*3+2] = 0xf0;
-}
 
-void advision_vh_stop(void)
-{
-	if( advision_display )
-		free(advision_display);
-	advision_display = NULL;
+	palette_set_color(8, 0x55, 0x55, 0x55);	/* DK GREY - for MAME text only */
+	palette_set_color(9, 0xf0, 0xf0, 0xf0);	/* LT GREY - for MAME text only */
 }
 
 void advision_vh_write(int data)
@@ -99,7 +88,7 @@ void advision_vh_update(int x)
 
 ***************************************************************************/
 
-void advision_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( advision )
 {
 	int x, y, bit;
 

@@ -2,7 +2,7 @@
 
   advision.c
 
-  Machine file to handle emulation of the Atari 7800.
+  Machine file to handle emulation of the AdventureVision.
 
 ***************************************************************************/
 
@@ -18,8 +18,8 @@ int advision_videobank;
 
 static UINT8 *ROM;
 
-void advision_init_machine(void) {
-
+MACHINE_INIT( advision )
+{
 	advision_ram = memory_region(REGION_CPU1) + 0x2000;
     advision_rambank = 0x300;
     cpu_setbank(1,memory_region(REGION_CPU1) + 0x1000);

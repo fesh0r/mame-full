@@ -788,8 +788,6 @@ VIDEO_START( atari )
  ************************************************************************/
 VIDEO_UPDATE( atari )
 {
-	int full_refresh = 0;
-
 	if( tv_artifacts != (readinputport(0) & 0x40) )
 	{
 		tv_artifacts = readinputport(0) & 0x40;

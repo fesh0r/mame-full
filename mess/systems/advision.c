@@ -62,39 +62,29 @@ INPUT_PORTS_START( advision )
     PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT)
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_advision =
-{
+static MACHINE_DRIVER_START( advision )
 	/* basic machine hardware */
-	{
-		{
-            CPU_I8048,
-            14000000/15,
-            readmem,writemem,readport,writeport,
-			ignore_interrupt,1
-		}
-	},
-	8*15, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	advision_init_machine,	/* init_machine */
-	0,						/* stop_machine */
+	MDRV_CPU_ADD_TAG("main", I8048, 14000000/15)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
 
-	/* video hardware */
-	320,200, {0,320-1,0,200-1},
-	NULL,
-	(8+2)*3,
-	8*2,
-	advision_vh_init_palette,
+	MDRV_FRAMES_PER_SECOND(8*15)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-    advision_vh_start,
-    advision_vh_stop,
-    advision_vh_screenrefresh,
+	MDRV_MACHINE_INIT( advision )
 
-	/* sound hardware */
-	0,0,0,0,
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 200)
+	MDRV_VISIBLE_AREA(0,320-1,0,200-1)
+	MDRV_PALETTE_LENGTH(8+2)
+	MDRV_COLORTABLE_LENGTH(8*2)
+	MDRV_PALETTE_INIT(advision)
 
+	MDRV_VIDEO_START(advision)
+	MDRV_VIDEO_UPDATE(advision)
+MACHINE_DRIVER_END
 
 ROM_START (advision)
 	ROM_REGION(0x2800,REGION_CPU1, 0)

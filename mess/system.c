@@ -85,7 +85,7 @@ const struct GameDriver *drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
-////	DRIVER( a2600 ) 	/* Atari 2600						*/
+	DRIVER( a2600 ) 	/* Atari 2600						*/
 	DRIVER( a5200 ) 	/* Atari 5200						*/
 	DRIVER( a7800 ) 	/* Atari 7800						*/
 ////	DRIVER( lynx )		/* Atari Lynx Handheld					*/
@@ -152,7 +152,7 @@ const struct GameDriver *drivers[] =
 ////	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??           */
 
 	/* ENTEX */
-////	DRIVER( advision )	/* Adventurevision								  */
+	DRIVER( advision )	/* Adventurevision								  */
 
 	/* CAPCOM */
 //TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
