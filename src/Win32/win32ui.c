@@ -40,7 +40,6 @@
 #include <wingdi.h>
 #include <tchar.h>
 #include <time.h>
-#include <assert.h>
 
 #include "resource.h"
 #include "resource.hm"
@@ -1431,6 +1430,10 @@ static void Win32UI_exit()
         free(game_data);
     if (icon_index != NULL)
         free(icon_index);
+#ifdef MESS
+	if (mess_icon_index != NULL)
+		free(mess_icon_index);
+#endif
 
     DirectInputClose();
     DirectDraw_Close();
@@ -3552,8 +3555,12 @@ static BOOL CreateIcons(HWND hWnd)
     ListView_SetImageList (hWnd, hSmall, LVSIL_SMALL);
    
     ListView_SetImageList (hWnd, hLarge, LVSIL_NORMAL);
-  
+ 
+#ifdef MESS
+	return CreateMessIcons();
+#else
     return TRUE;
+#endif
 }
 
 

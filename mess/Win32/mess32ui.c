@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <string.h>
+
 #include "mame32.h"
 #include "mess/mess.h"
 
@@ -34,6 +37,7 @@ static int  messRealColumn[MESS_COLUMN_MAX];
 static BOOL mess_idle_work;
 static UINT nIdleImageNum;
 static int nTheCurrentGame;
+static int *mess_icon_index;
 
 static void OnMessIdle(void);
 
@@ -48,6 +52,7 @@ static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
 static void MessRetrievePickerDefaults(void);
 static void MessOpenOtherSoftware(void);
+static BOOL CreateMessIcons(void);
 
 #include "win32ui.c"
 
@@ -345,6 +350,67 @@ static void InitMessPicker()
 	bListReady = TRUE;
 }
 
+static BOOL CreateMessIcons(void)
+{
+	int i;
+
+	if (!mess_icon_index) {
+		mess_icon_index = malloc(sizeof(int) * game_count * IO_COUNT);
+		if (!mess_icon_index)
+			return FALSE;
+	}
+
+	for (i = 0; i < (game_count * IO_COUNT); i++)
+		mess_icon_index[i] = 0;
+
+	return TRUE;
+}
+
+static int GetMessIcon(int nGame, int nSoftwareType)
+{
+	int index;
+	int nIconPos = 0;
+	HICON hIcon;
+	const struct GameDriver *drv;
+	char buffer[32];
+
+	static const char *iconnames[IO_COUNT] = {
+		NULL,	/* IO_END */
+		"cart",	/* IO_CARTSLOT */
+		"flop",	/* IO_FLOPPY */
+		"hard",	/* IO_HARDDISK */
+		"cass",	/* IO_CASSETTE */
+		"prin",	/* IO_PRINTER */
+		"serl",	/* IO_SERIAL */
+		"snap",	/* IO_SNAPSHOT */
+		"quik",	/* IO_QUICKLOAD */
+		NULL,	/* IO_ALIAS */
+	};
+
+	if ((nSoftwareType < IO_COUNT) && iconnames[nSoftwareType]) {
+		index = (nGame * IO_COUNT) + nSoftwareType;
+
+		nIconPos = mess_icon_index[index];
+		if (!nIconPos) {
+			for (drv = drivers[nGame]; drv; drv = drv->clone_of) {
+				sprintf(buffer, "%s/%s", drv->name, iconnames[nSoftwareType]);
+				hIcon = LoadIconFromFile(buffer);
+				if (hIcon)
+					break;
+			}
+
+			if (hIcon) {
+				nIconPos = ImageList_AddIcon(hSmall, hIcon);
+				ImageList_AddIcon(hLarge, hIcon);
+				if (nIconPos != -1)
+					mess_icon_index[index] = nIconPos;
+			}
+		}
+	}
+	return nIconPos;
+}
+
+
 static int WhichMessIcon(int nItem)
 {
 	static const int nMessImageIcons[] = {
@@ -361,11 +427,18 @@ static int WhichMessIcon(int nItem)
 		3  /* IO_COUNT (actually, bad files) */
 	};
 
-	int type = mess_images_index[nItem]->type;
-	if (type > (sizeof(nMessImageIcons) / sizeof(nMessImageIcons[0])))
-		type = IO_END;
+	int nType;
+	int nIcon;
 
-	return nMessImageIcons[type];
+	nType = mess_images_index[nItem]->type;
+	
+	nIcon = GetMessIcon(nTheCurrentGame, nType);
+	if (!nIcon) {
+		if (nType > (sizeof(nMessImageIcons) / sizeof(nMessImageIcons[0])))
+			nType = IO_END;
+		nIcon = nMessImageIcons[nType];
+	}
+	return nIcon;
 }
 
 static BOOL MessPickerNotify(NMHDR *nm)

@@ -17,6 +17,20 @@ Whats new:
 
 - Added a "Modified/Hacked" item in the treeview [Nate Woods]
 
+- Added support for custom icons for different software types.  These icons
+  must have the following names:
+
+  cart.ico for cartridges
+  flop.ico for floppies
+  hard.ico for hard drives
+  cass.ico for cartridges
+  snap.ico for snapshots
+  quik.ico for quick loads
+
+  To make these icons show up, they must be placed in a subdirectory of the
+  icons directory that matches the name of the driver.  Thus an icon for NES
+  cartridges would have the path "nes/cart.ico" [Nate Woods]
+
 ----------
 0.37 BETA 5
 ------------
