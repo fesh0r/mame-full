@@ -629,6 +629,7 @@ void exit_devices(void)
 {
 	const struct IODevice *dev = Machine->gamedrv->dev;
 	int id;
+	int type;
 
 	/* shutdown all devices */
 	while( dev->count )
@@ -661,6 +662,21 @@ void exit_devices(void)
 		}
 
 		dev++;
+	}
+
+	for( type = 0; type < IO_COUNT; type++ )
+	{
+		if( images[type] )
+		{
+			for( id = 0; id < device_count(dev->type); id++ )
+			{
+				if( images[type][id].name )
+					free(images[type][id].name);
+				images[type][id].name = NULL;
+			}
+			free(images[type]);
+		}
+		count[type] = 0;
 	}
 
 	/* KT: clean up */
