@@ -1,4 +1,16 @@
 /*
+ * Driver for Mac OS X CoreAudio architecture.
+ * written for Mac OS X 10.3 (panther).
+ * this version uses AudioUnit interface which seems to be called
+ * the 'DefaultOutputUnit'.
+ * The DefaultOutputUnit provides universal conversions
+ * between the input and the output format.
+ *
+ * app. 09/19/2004
+ */
+
+// following is the original document.
+/*
  * Driver for Mac OS X core audio interface, primarily for use
  * with the OpenStep driver on this system. This driver was written for
  * the OS X public beta, and emulated lower sample rates and mono sound as
@@ -17,12 +29,13 @@
 #include <pthread.h>
 #include <Carbon/Carbon.h>
 #include <CoreAudio/AudioHardware.h>
+#include <AudioUnit/AudioUnit.h>
 
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_dsp_priv.h"
 #include "sysdep/plugin_manager.h"
 
-#define NAME_LEN 256		/* max length of a device name */
+// #define NAME_LEN 256		/* max length of a device name */
 
 /*
  * We have to implement a FIFO of blocks of floats, without using up
@@ -32,8 +45,8 @@
  */
 
 struct audio_block {
-	float *block_base;		/* base of the memory block */
-	float *current_base;		/* current unread position */
+	SInt8 *block_base;		/* base of the memory block */
+	SInt8 *current_base;		/* current unread position */
 	int samples_left;		/* number left in block */
 	struct audio_block *next;	/* next block in list */
 };
@@ -51,7 +64,7 @@ struct audio_queue {
  */
 
 static void
-unsafe_queue_audio_block(struct audio_queue *queue, float *block, int len)
+unsafe_queue_audio_block(struct audio_queue *queue, SInt8 *block, int len)
 {
 	struct audio_block *new = malloc(sizeof(struct audio_block));
 
@@ -80,7 +93,7 @@ unsafe_queue_audio_block(struct audio_queue *queue, float *block, int len)
  */
 
 static void
-queue_audio_block(struct audio_queue *queue, float *block, int len)
+queue_audio_block(struct audio_queue *queue, SInt8 *block, int len)
 {
 	pthread_mutex_lock(&queue->mutex);
 	unsafe_queue_audio_block(queue, block, len);
@@ -97,7 +110,7 @@ queue_audio_block(struct audio_queue *queue, float *block, int len)
  */
 
 static void
-unsafe_dequeue_audio_block(struct audio_queue *queue, float *block, int len)
+unsafe_dequeue_audio_block(struct audio_queue *queue, SInt8 *block, int len)
 {
 	struct audio_block *head = queue->head;
 
@@ -109,20 +122,20 @@ unsafe_dequeue_audio_block(struct audio_queue *queue, float *block, int len)
 	if(!head) {
 		int i;
 		for(i=0;i<len;i++)
-			*block++ = 0.0;
+			*block++ = 0;
 		return;
 	}
 
 	/* smaller than current */
 	if(len < head->samples_left) {
-		memcpy(block, head->current_base, len*sizeof(float));
+		memcpy(block, head->current_base, len);
 		head->samples_left -= len;
 		head->current_base += len;
 		return;
 	}
 
 	/* copy all of this block */
-	memcpy(block, head->current_base, head->samples_left*sizeof(float));
+	memcpy(block, head->current_base, head->samples_left);
 	len -= head->samples_left;
 	block += head->samples_left;
 
@@ -140,7 +153,7 @@ unsafe_dequeue_audio_block(struct audio_queue *queue, float *block, int len)
  */
 
 static void
-dequeue_audio_block(struct audio_queue *queue, float *block, int len)
+dequeue_audio_block(struct audio_queue *queue, SInt8 *block, int len)
 {
 	pthread_mutex_lock(&queue->mutex);
 	unsafe_dequeue_audio_block(queue, block, len);
@@ -154,34 +167,73 @@ dequeue_audio_block(struct audio_queue *queue, float *block, int len)
  */
 
 struct coreaudio_private {
-	AudioDeviceID device;
+	AudioUnit unit;
 	struct audio_queue queue;
-	int fake_mono;			/* double samples for stereo channel */
-	int rate_mult;			/* rate mutiplier for samples */
+	// int num_channels;
+	int num_bytes_per_frame; // frame == time slice of sampling frequency
 };
 
 /*
  * This is the callback function which the audio device calls whenever it
  * wants some new blocks of data to process. For each data block in the
  * passed buffer list we dequeue the appropriate number of samples, padding
- * with zeroes in the case of an underrun. According to the headers there
- * can only ever be one buffer in the list, but we loose nothing by doing
- * things "properly" after all.
+ * with zeroes in the case of an underrun. 
  */
-
 static OSStatus
-coreaudio_dsp_play (AudioDeviceID device, const AudioTimeStamp *now_time,
-		const AudioBufferList *in_data, const AudioTimeStamp *in_time,
-		AudioBufferList *out_data, const AudioTimeStamp *out_time,
-		void *data)
+coreaudio_dsp_play(void 				*inRefCon, 
+	AudioUnitRenderActionFlags 	*ioActionFlags, 
+	const AudioTimeStamp 		*inTimeStamp, 
+	UInt32 						inBusNumber, 
+	UInt32 						inNumberFrames, 
+	AudioBufferList 			*ioData)
 {
-	int i;
-	struct coreaudio_private *priv = (struct coreaudio_private*)data;
-	for(i=0;i<out_data->mNumberBuffers;i++)
-		dequeue_audio_block(&(priv->queue),
-				out_data->mBuffers[i].mData,
-				out_data->mBuffers[i].mDataByteSize /
-				 sizeof(float));
+	// inNumberFrames == requested number of samples per channel
+	struct coreaudio_private *priv = (struct coreaudio_private*)inRefCon;
+	// int num_channels = priv->num_channels;
+	int num_bytes_per_frame = priv->num_bytes_per_frame;
+
+	// when not kLinearPCMFormatFlagIsNonInterleaved
+	/* in interleaved mode both the Left and the Right channels are
+	   stored in the same buffer. */
+
+	/* According to the headers there can only ever be one buffer in the list. */
+	if(ioData->mNumberBuffers != 1){
+		fprintf(stderr, "Error: This is unexpected. at line %d of %s.\n", __LINE__, __FILE__);
+		return -1;
+	}
+	if(ioData->mBuffers[0].mDataByteSize != num_bytes_per_frame * inNumberFrames){
+		fprintf(stderr, "Error: This is unexpected. at line %d of %s.\n", __LINE__, __FILE__);
+		return -1;
+	}
+
+	dequeue_audio_block(&(priv->queue),
+		ioData->mBuffers[0].mData,
+		num_bytes_per_frame * inNumberFrames);
+
+#if 0
+	// when kLinearPCMFormatFlagIsNonInterleaved
+	/* in non interleaved mode mBuffers[0] and mBuffers[1] represent
+	   the Left and the Right channels respectively. */
+
+	if(ioData->mNumberBuffers != 2){
+		fprintf(stderr, "Error: This is unexpected. at line %d of %s.\n", __LINE__, __FILE__);
+		return -1;
+	}
+	if(ioData->mBuffers[0].mDataByteSize != ioData->mBuffers[1].mDataByteSize){
+		fprintf(stderr, "Error: This is unexpected. at line %d of %s.\n", __LINE__, __FILE__);
+		return -1;
+	}
+	if(ioData->mBuffers[0].mDataByteSize != sizeof(float) * inNumberFrames){
+		fprintf(stderr, "Error: This is unexpected. at line %d of %s.\n", __LINE__, __FILE__);
+		return -1;
+	}
+
+	dequeue_audio_block(&(priv->queue),
+		ioData->mBuffers[0].mData,
+		ioData->mBuffers[1].mData,
+		inNumberFrames);
+#endif
+
 	return noErr;
 }
 
@@ -197,84 +249,39 @@ coreaudio_dsp_destroy(struct sysdep_dsp_struct *dsp)
 	struct coreaudio_private *priv = (struct coreaudio_private*)dsp->_priv;
 	OSStatus audio_err;
 
-	/* stop the device */
-        audio_err = AudioDeviceStop(priv->device, coreaudio_dsp_play);
-        if(audio_err != noErr)
-		fprintf(stderr,"error %ld stopping audio device\n",
-				audio_err);
+	verify_noerr (AudioOutputUnitStop (priv->unit));
+	
+    audio_err = AudioUnitUninitialize (priv->unit);
+	if (audio_err) { printf ("AudioUnitUninitialize=%ld\n", audio_err); return; }
 
-	/* remove the callback function */
-        audio_err = AudioDeviceRemoveIOProc(priv->device, coreaudio_dsp_play);
-        if(audio_err != noErr)
-		fprintf(stderr,"error %ld removing callback function\n",
-				audio_err);
+	CloseComponent (priv->unit);
 }
 
-/*
- * Queue a block of data. The API requires that samples are expressed as
- * floats between -1.0 and 1.0 for some reason. It makes sense numerically,
- * but it's hardly fast to convert from signed shorts ! Here is where we
- * carry our channel faking processes such as the doubling of mono to give
- * stereo and inserting mutiple copies of samples for when the output channel
- * rate has to be an integral multiple higher that that generated by xmame.
- */
-   
 static int
 coreaudio_dsp_write(struct sysdep_dsp_struct *dsp,
 		unsigned char *data, int count)
 {
 	struct coreaudio_private *priv = (struct coreaudio_private*)dsp->_priv;
-	int is_stereo = dsp->hw_info.type & SYSDEP_DSP_STEREO;
-	int fake_mono = priv->fake_mono;
-	int mult = priv->rate_mult;
-	float *data_block, *data_ptr;
-	short *short_ptr;
-	int i;
-
-	/* make the data block - always stereo */
-	data_block = malloc(count * 2 * sizeof(float) * mult);
+	// int num_channels = priv->num_channels;
+	int num_bytes_per_frame = priv->num_bytes_per_frame;
+	SInt8 *data_block;
+	
+	/* make the data block */
+	data_block = malloc(num_bytes_per_frame * count);
 	if(!data_block) {
 		fprintf(stderr, "out of memory queueing audio block");
 		return count;
 	}
-
-	/*
-	 * copy in the data, each sample is added twice if we are running
-	 * a half rate emulation. If we are in mono mode then the second sample
-	 * is the same as the first and not taken from the buffer at all
-	 */
-	data_ptr = data_block;
-	short_ptr = (short*)data;
-	for(i=0;i<count;i++) {
-		float left_chan, right_chan;
-		int m;
-
-		/* setup the left and right values */
-		left_chan = *short_ptr++ / 32768.0;
-		if(is_stereo)
-			right_chan = *short_ptr++ / 32768.0;
-		else
-			right_chan = left_chan;
-
-		/* add the sammples */
-		for(m=0;m<mult;m++) {
-			*data_ptr++ = left_chan;
-			if(fake_mono)
-				*data_ptr++ = right_chan;
-		}
-	}
+	memcpy(data_block, data, num_bytes_per_frame * count);
 
 	/* and queue it */
-	queue_audio_block(&(priv->queue), data_block, count * 2 * mult);
+	queue_audio_block(&(priv->queue), data_block, num_bytes_per_frame * count);
 	return count;
 }
 
 /*
  * Creation function. Attach ourselves to the default audio device if
- * we can, and set up the various parts of our internal structure. Public
- * beta did emulations of such things as lower sample rates and mono output.
- * For the OS X release we try and set these things up properly, but we
- * revert to the emulations if things do not work out.
+ * we can, and set up the various parts of our internal structure.
  */
 
 static void*
@@ -283,10 +290,10 @@ coreaudio_dsp_create(const void *flags)
 	const struct sysdep_dsp_create_params *params = flags;
 	struct sysdep_dsp_struct *dsp = NULL;
 	struct coreaudio_private *priv = NULL;
+	int samplerate, num_channels, num_bits, num_bytes_per_frame;
 	OSStatus audio_err;
 	UInt32 audio_count, audio_buff_len;
-	char audio_device[NAME_LEN];
-	AudioStreamBasicDescription default_format, new_format;
+	// char audio_device[NAME_LEN];
 
 	/* allocate the dsp struct */
 	if (!(dsp = calloc(1, sizeof(struct sysdep_dsp_struct))))
@@ -295,12 +302,6 @@ coreaudio_dsp_create(const void *flags)
 		return NULL;
 	}
 
-	/* always 16 bit samples */
-	dsp->hw_info.type |= SYSDEP_DSP_16BIT;
-	fprintf(stderr, "info: requesting %s sound at %d hz\n",
-			(params->type & SYSDEP_DSP_STEREO) ?
-			"stereo" : "mono", params->samplerate);
-
 	/* make the private structure */
 	if (!(priv = calloc(1, sizeof(struct coreaudio_private)))) {
 		perror("malloc failed for struct coreaudio_private\n");
@@ -308,7 +309,7 @@ coreaudio_dsp_create(const void *flags)
 	}
 
 	/* set up with queue, no device, and zero length buffer */
- 	priv->device = kAudioDeviceUnknown;
+	// priv->unit = ???;
 	priv->queue.head = NULL;
 	priv->queue.tail = NULL;
 	if(pthread_mutex_init(&(priv->queue.mutex),NULL)) {
@@ -316,130 +317,124 @@ coreaudio_dsp_create(const void *flags)
 		return NULL;
 	}
 
-	/* get the default device */
-	audio_count = sizeof(AudioDeviceID);
-	audio_err = AudioHardwareGetProperty(
-			kAudioHardwarePropertyDefaultOutputDevice,
-			&audio_count, &(priv->device));
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld getting default audio device\n",
-				audio_err);
-		return NULL;
-	}
+	samplerate = params->samplerate;
+	// if(samplerate == 22050) samplerate =22000; // XXXX this makes CPS2 audio work finer.
 
-	/* whats it called ? */
-	audio_count = NAME_LEN;
-	audio_err = AudioDeviceGetProperty(priv->device, 0, false,
-			kAudioDevicePropertyDeviceName,
-			&audio_count, audio_device);
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld getting default device name\n",
-				audio_err);
-		return NULL;
-	}
-	audio_device[NAME_LEN-1] = '\0';	/* just in case */
-	fprintf(stderr, "info: sound device is %s\n", audio_device);
+	num_channels = (params->type & SYSDEP_DSP_STEREO) ? 2 : 1;
+	num_bits = (params->type & SYSDEP_DSP_16BIT) ? 16 : 8;
+	num_bytes_per_frame = num_bits / 8 * num_channels;
+	priv->num_bytes_per_frame = num_bytes_per_frame;
+	// priv->num_channels = num_channels;
+	// priv->num_bits = num_bits;
 
-	/* get the default parameters */
-	audio_count = sizeof(AudioStreamBasicDescription);
-	audio_err = AudioDeviceGetProperty(priv->device, 0, false,
-			kAudioDevicePropertyStreamFormat,
-			&audio_count, &default_format);
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld getting basic device parameters\n",
-				audio_err);
-		return NULL;
-	}
 
-	/* try and set the parameters */
-	new_format = default_format;
-	new_format.mChannelsPerFrame = (params->type & SYSDEP_DSP_STEREO)
-			? 2 : 1;
-	/*
-	 * At this point we were supposed to set the device parameters
-	 * to the required rate and number of channels, buut we have not
-	 * so far found a way to do it in the API. Thus we do nothing here.
-	 * The following code re-reads the device parameters and makes do
-	 * with whatever we get, thus it should work if and when we find a call
-	 * to set things up properly !
-	 */
+	fprintf(stderr, "info: requesting %s %dbit sound at %d hz\n",
+		num_channels == 1 ? "mono" : "stereo",
+		num_bits, samplerate);
 
-	/* get the new parameters */
-	audio_count = sizeof(AudioStreamBasicDescription);
-	audio_err = AudioDeviceGetProperty(priv->device, 0, false,
-			kAudioDevicePropertyStreamFormat,
-			&audio_count, &new_format);
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld getting basic device parameters\n",
-				audio_err);
-		return NULL;
-	}
+	{
+		// Open the default output unit
 
-	/* the device must do linear pcm */
-	if(new_format.mFormatID != kAudioFormatLinearPCM) {
-		fprintf(stderr,"device does not do linear pcm!\n");
-		return NULL;
-	}
-
-	/* possibly emulate mono onto stereo */
-	priv->fake_mono = 0;
-	if(params->type & SYSDEP_DSP_STEREO) {
-		dsp->hw_info.type |= SYSDEP_DSP_STEREO;
-		if(new_format.mChannelsPerFrame != 2) {
-			fprintf(stderr,"device does not do stereo!\n");
-			return NULL;
-		} else
-			fprintf(stderr, "info: sound device native stereo\n");
-	} else  {
-		if(new_format.mChannelsPerFrame != 1) {
-			if(new_format.mChannelsPerFrame != 2) {
-				fprintf(stderr,"device does %ld channels!\n",
-						new_format.mChannelsPerFrame);
-				return NULL;
-			}
-			fprintf(stderr, "info: emulating mono onto stereo\n");
-			priv->fake_mono = 1;
-		} else
-			fprintf(stderr, "info: sound device native mono\n");
-	}
-
-	/* create and check the channel multiplier */
-	priv->rate_mult = ((int)(new_format.mSampleRate+0.5)) /
-			params->samplerate;
-	if(((int)(new_format.mSampleRate+0.5)) !=
-			(params->samplerate*priv->rate_mult)) {
-		fprintf(stderr,"rate %f is not a multiple of %d\n",
-				new_format.mSampleRate, params->samplerate);
-		return NULL;
-	}
-	if(priv->rate_mult != 1)
-		fprintf(stderr, "info: mutiplying %d hz by %d to give %d hz\n",
-				params->samplerate, priv->rate_mult,
-				(int)(new_format.mSampleRate+0.5));
-
-	/* attach the callback function */
-        audio_err = AudioDeviceAddIOProc(priv->device,
-			coreaudio_dsp_play, (void*)priv);
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld adding callback function\n",
-				audio_err);
-		return NULL;
-	}
-
-	/* start it playing */
-        audio_err = AudioDeviceStart(priv->device, coreaudio_dsp_play);
-	if(audio_err != noErr) {
-		fprintf(stderr,"error %ld starting audio device\n",
-				audio_err);
-		return NULL;
-	}
+		ComponentDescription desc;
+		desc.componentType = kAudioUnitType_Output;
+		desc.componentSubType = kAudioUnitSubType_DefaultOutput;
+		desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+		desc.componentFlags = 0;
+		desc.componentFlagsMask = 0;
 	
+		Component comp = FindNextComponent(NULL, &desc);
+		if(comp == NULL){
+		    fprintf(stderr, "Error: FindNextComponent()\n");
+		    return NULL;
+		}
+	
+		audio_err = OpenAComponent(comp, &priv->unit);
+		if(audio_err != noErr){
+		    fprintf(stderr, "Error: OpenAComponent(): %ld\n", audio_err);
+		    return NULL;
+		}
+
+		// Set up a callback function to generate output to the output unit
+		AURenderCallbackStruct input;
+		input.inputProc = coreaudio_dsp_play;
+		input.inputProcRefCon = (void *)priv;
+
+		audio_err = AudioUnitSetProperty (priv->unit, 
+			kAudioUnitProperty_SetRenderCallback, 
+			kAudioUnitScope_Input,
+			0, 
+			&input, 
+			sizeof(input));
+		if(audio_err != noErr){
+			fprintf(stderr, "Error: AudioUnitSetProperty(): CallBack: %ld\n", audio_err);
+			return NULL;
+		}
+	}
+
+	{
+		AudioStreamBasicDescription format;
+		format.mSampleRate = samplerate;
+		format.mFormatID = kAudioFormatLinearPCM;
+		format.mFormatFlags = 0 // kLinearPCMFormatFlagIsFloat 
+			| kLinearPCMFormatFlagIsSignedInteger
+			| kLinearPCMFormatFlagIsBigEndian
+			| kLinearPCMFormatFlagIsPacked
+			; // | kLinearPCMFormatFlagIsNonInterleaved;
+		format.mBytesPerPacket = num_bytes_per_frame;
+		format.mFramesPerPacket = 1;
+		format.mBytesPerFrame = num_bytes_per_frame;
+		format.mChannelsPerFrame = num_channels;
+		format.mBitsPerChannel = num_bits;	
+
+		audio_err = AudioUnitSetProperty (priv->unit,
+			kAudioUnitProperty_StreamFormat,
+			kAudioUnitScope_Input,
+			0,
+			&format,
+			sizeof(format));
+		if(audio_err != noErr){
+			fprintf(stderr, "Error: AudioUnitSetProperty(): StreamFormat: '%4.4s', %ld\n",
+					 (char *)&audio_err, audio_err);
+			return NULL;
+		}
+	
+		// Initialize unit
+		audio_err = AudioUnitInitialize(priv->unit);
+		if(audio_err != noErr){
+			fprintf(stderr, "Error: AudioUnitInitialize(): %ld\n", audio_err);
+			return NULL;
+		}
+    
+#if 0
+		Float64 out_samplerate;
+		UInt32 size = sizeof(out_samplerate);
+		audio_err = AudioUnitGetProperty (priv->unit,
+			kAudioUnitProperty_SampleRate,
+			kAudioUnitScope_Output,
+			0,
+			&out_samplerate,
+			&size);
+		if(audio_err != noErr){
+			fprintf(stderr, "Error: AudioUnitGetProperty(): SampleRate: '%4.4s' %ld\n",
+					(char *)&audio_err, audio_err);
+			return NULL;
+		}
+		fprintf(stderr, "out_samplerate = %f\n", out_samplerate);
+#endif
+
+		audio_err = AudioOutputUnitStart (priv->unit);
+		if(audio_err != noErr){
+			fprintf(stderr, "Error: AudioOutputUnitStart(): %ld\n", audio_err);
+			return NULL;
+		}
+	}
+
 	/* fill in the functions and private data */
 	dsp->_priv = priv;
 	dsp->write = coreaudio_dsp_write;
 	dsp->destroy = coreaudio_dsp_destroy;
 	dsp->hw_info.type = params->type;
-	dsp->hw_info.samplerate = params->samplerate;
+	dsp->hw_info.samplerate = samplerate;
 
 	return dsp;
 }
