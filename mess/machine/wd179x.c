@@ -20,7 +20,7 @@
 #include "includes/flopdrv.h"
 
 #define VERBOSE 1
-#define VERBOSE_DATA 1		/* This turns on and off the recording of each byte during read and write */
+#define VERBOSE_DATA 0		/* This turns on and off the recording of each byte during read and write */
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -232,7 +232,9 @@ void wd179x_init(int type,void (*callback)(int))
 		wd[i]->dir_sector = 0;
 		wd[i]->dir_length = 0;
 		wd[i]->secmap = 0;
-
+		wd[i]->timer = NULL;
+		wd[i]->timer_rs = NULL;
+		wd[i]->timer_ws = NULL;
 	}
 #endif
 }
@@ -732,7 +734,8 @@ static void	wd179x_read_sector_callback(int code)
 		wd179x_read_sector(w);
 
 	/* stop it, but don't allow it to be free'd */
-	timer_reset(w->timer_rs, TIME_NEVER); 
+	if (w->timer_rs !=NULL)
+		timer_reset(w->timer_rs, TIME_NEVER); 
 }
 
 /* callback to initiate write sector */
@@ -777,7 +780,8 @@ static void	wd179x_write_sector_callback(int code)
 	}
 
 	/* stop it, but don't allow it to be free'd */
-	timer_reset(w->timer_ws, TIME_NEVER); 
+	if (w->timer_ws !=NULL)
+		timer_reset(w->timer_ws, TIME_NEVER); 
 }
 
 /* setup a timed data request - data request will be triggered in a few usecs time */
