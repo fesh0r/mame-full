@@ -856,17 +856,18 @@ int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 				if( info )
 				{
 					dst += sprintf(dst,"%s", info);
-					info = device_year(type,id);
-					if( info )
+					info = stripspace(device_year(type,id));
+					if( info && strlen(info))
 						dst += sprintf(dst,", %s", info);
 					dst += sprintf(dst,"\n");
 				}
 				info = device_playable(type,id);
 				if( info )
 					dst += sprintf(dst,"%s\n", info);
-				info = device_extrainfo(type,id);
-				if( info )
-					dst += sprintf(dst,"%s\n", info);
+// why is extrainfo printed? only MSX and NES use it that i know of ... Cowering
+//				info = device_extrainfo(type,id);
+//				if( info )
+//					dst += sprintf(dst,"%s\n", info);
 			}
 			else
 			{
