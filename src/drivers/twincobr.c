@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1987
 		-------------------------------
 		Driver by: Quench
-		Flying Shark details: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
 		Flying Shark bootleg info: Ruben Panossian
 
 
