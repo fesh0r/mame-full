@@ -19,7 +19,7 @@
 #include "rc.h"
 
 #ifdef MESS
-#include "messcmds.h"
+#include "menu.h"
 #endif
 
 //============================================================
