@@ -867,11 +867,14 @@ static void hfdc_cru_w(int offset, int data)
 	case 1:
 		/* reset fdc (active low) */
 		if (data)
+		{
 			smc92x4_reset(0);
+			logerror("CRU sel %d\n", cru_sel);
+		}
 		break;
 
 	case 2:
-		/* Strobe motor + density */
+		/* Strobe motor + density ("CD0 OF 9216 CHIP") */
 		if (data && !motor_on)
 		{
 			DVENA = 1;
@@ -882,20 +885,21 @@ static void hfdc_cru_w(int offset, int data)
 		break;
 
 	case 3:
-		/* rom page select 0 + cru sel */
+		/* rom page select 0 + density ("CD1 OF 9216 CHIP") */
 		if (data)
 			hfdc_rom_offset |= 0x2000;
 		else
 			hfdc_rom_offset &= ~0x2000;
-		cru_sel = data;
 		break;
 
 	case 4:
-		/* rom page select 1 + density */
+		/* rom page select 1 + cru sel */
 		if (data)
 			hfdc_rom_offset |= 0x1000;
 		else
 			hfdc_rom_offset &= ~0x1000;
+		cru_sel = data;
+		logerror("CRU sel %d\n", cru_sel);
 		break;
 
 	case 9:
