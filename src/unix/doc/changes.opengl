@@ -381,7 +381,7 @@ peace, sven
 	o Now GLMame32 is compiled with MSVC 6.0
 
 	o Now GLMame32 just adds the OpenGL display driver,
-	  - the others are still avaiable !
+	  - the others are still available !
 	  - you can choose OpenGL within the properties.advanced dialog-box.
 
 	o The following values are transparent to the main Mame32
