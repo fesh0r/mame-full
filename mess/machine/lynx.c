@@ -193,11 +193,14 @@ static void lynx_blit_lines(void)
 	case 0x0000:
 		xdir=ydir=1;break;
 	case 0x0010:
-		xdir=1;ydir=-1;break;
+		xdir=1;ydir=-1;
+		blitter.y--;break;
 	case 0x0020:
-		xdir=-1;ydir=1;break;
+		xdir=-1;blitter.x--;ydir=1;break;
 	case 0x0030:
-		xdir=ydir=-1;break;
+		xdir=ydir=-1;
+		blitter.y--; blitter.x--;
+		break;
 	}
 	switch (blitter.mem[blitter.cmd+1]&3) {
 	case 0: 
@@ -225,11 +228,11 @@ static void lynx_blit_lines(void)
 			switch (flip&3) {
 			case 0:
 				ydir*=-1;
-				y=blitter.y+ydir;
+				y=blitter.y;
 				break;
 			case 1:
 				xdir*=-1;
-				y=blitter.y+ydir;
+				y=blitter.y;
 				break;
 			case 2:
 				ydir*=-1;
@@ -326,9 +329,11 @@ static void lynx_blit_lines(void)
   tilt: hpos adder
 
 */
+static int lynx_colors[4]={2,4,8,16};
+
 static void lynx_blitter(void)
 {
-	int i; int o;
+	int i; int o;int colors;
 
 	blitter.mem=memory_region(REGION_CPU1);
 	blitter.collision=GET_WORD(suzy.data, 0xa);
@@ -346,8 +351,6 @@ static void lynx_blitter(void)
 		blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
 		blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
 		blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
-		blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
-		blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
 
 		switch ( GET_WORD(blitter.mem,blitter.cmd)&0x80c7) {
 		case 0x8000: 
@@ -392,7 +395,15 @@ static void lynx_blitter(void)
 			blitter.line_function=lynx_blit_16color_rle_line_trans;break;
 		}
 
-		o=0xf;
+		o=0xb;
+		blitter.width=0x100;
+		blitter.height=0x100;
+		if (blitter.mem[blitter.cmd+1]&0x30) {
+			blitter.width=GET_WORD(blitter.mem, blitter.cmd+11);
+			blitter.height=GET_WORD(blitter.mem, blitter.cmd+13);
+			o+=4;
+		}
+
 		blitter.stretch=0;
 		blitter.tilt=0;
 		if (blitter.mem[blitter.cmd+1]&0x20) {
@@ -403,50 +414,32 @@ static void lynx_blitter(void)
 				o+=2;
 			}
 		}
+		colors=lynx_colors[blitter.mem[blitter.cmd]>>6];
+
 		if (!(blitter.mem[blitter.cmd+1]&8)) {
-			switch (blitter.mem[blitter.cmd]&0xc0) {
-			case 0:
-				blitter.color[0]=blitter.mem[blitter.cmd+o]>>4;
-				blitter.color[1]=blitter.mem[blitter.cmd+o]&0xf;
-				break;
-			case 0x40:
-				for (i=0; i<2; i++) {
-					blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
-					blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
-				}
-				break;
-			case 0x80:
-				for (i=0; i<4; i++) {
-					blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
-					blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
-				}
-				break;
-			case 0xc0:
-				for (i=0; i<8; i++) {
-					blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
-					blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
-				}
-				break;
+			for (i=0; i<colors/2; i++) {
+				blitter.color[i*2]=blitter.mem[blitter.cmd+o+i]>>4;
+				blitter.color[i*2+1]=blitter.mem[blitter.cmd+o+i]&0xf;
 			}
 		}
 #if 1
-		if (blitter.mem[blitter.cmd+1]&0x20) {
-			logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x w:%.4x h:%.4x s:%.4x t:%.4x %.4x\n",
-					 blitter.cmd,
-					 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
-					 blitter.x,blitter.y,
-					 blitter.width,blitter.height,
-					 blitter.stretch,
-					 blitter.tilt,
-					 blitter.bitmap);
-		} else {
-			logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x w:%.4x h:%.4x %.4x\n",
-					 blitter.cmd,
-					 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
-					 blitter.x,blitter.y,
-					 blitter.width,blitter.height,
-					 blitter.bitmap);
+		logerror("%04x %.2x %.2x %.2x x:%.4x y:%.4x",
+				 blitter.cmd,
+				 blitter.mem[blitter.cmd],blitter.mem[blitter.cmd+1],blitter.mem[blitter.cmd+2],
+				 blitter.x,blitter.y);
+		if (blitter.mem[blitter.cmd+1]&0x30) {
+			logerror(" w:%.4x h:%.4x", blitter.width,blitter.height);
 		}
+		if (blitter.mem[blitter.cmd+1]&0x20) {
+			logerror(" s:%.4x t:%.4x", blitter.stretch, blitter.tilt);
+		}
+		if (!(blitter.mem[blitter.cmd]&0x8)) {
+			logerror(" c:");
+			for (i=0; i<colors/2; i++) {
+				logerror("%.2x", blitter.mem[blitter.cmd+o+i]);
+			}
+		}
+		logerror(" %.4x\n", blitter.bitmap);
 #endif
 		lynx_blit_lines();
 	}
@@ -575,6 +568,7 @@ static void lynx_timer_signal_irq(LYNX_TIMER *This)
 {
 //	if ((This->data[1]&0x80)&&!(mikey.data[0x81]&(1<<This->nr))) {
 	if ((This->data[1]&0x80)) { // irq flag handling later
+//	{
 		cpu_set_irq_line(0, M65SC02_INT_IRQ, PULSE_LINE);
 		mikey.data[0x81]|=1<<This->nr; // vertical
 	}
@@ -635,7 +629,7 @@ static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
 	default:
 		data=This->data[offset];
 	}
-//	logerror("timer %d read %x %.2x\n",This-lynx_timer,offset,data);
+	logerror("timer %d read %x %.2x\n",This-lynx_timer,offset,data);
 	return data;
 }
 
@@ -649,6 +643,7 @@ static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
 	if (This->timer) { timer_remove(This->timer); This->timer=NULL; }
 //	if ((This->data[1]&0x80)&&(This->nr!=4)) { //timers are combined!
 	if ((This->data[1]&0x8)&&(This->nr!=4)) {
+//	if ((This->data[1]&0x8)) {
 		if ((This->data[1]&7)!=7) {
 			t=This->data[0]?This->data[0]:0x100;
 			if (This->data[1]&0x10) {
@@ -676,6 +671,10 @@ READ_HANDLER(mikey_read)
 	case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 		data=lynx_timer_read(lynx_timer+(offset/4), offset&3);
 		break;
+	case 0x8b:
+		data=mikey.data[offset];
+		data|=4; // no comlynx adapter
+		break;
 	case 0x8c:
 		data=mikey.data[offset]&~0x40; // no serial data received
 		break;
@@ -700,6 +699,9 @@ WRITE_HANDLER(mikey_write)
 	case 0x18: case 0x19: case 0x1a: case 0x1b:
 	case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 		lynx_timer_write(lynx_timer+(offset/4), offset&3, data);
+		break;
+	case 0x80:
+		mikey.data[0x81]&=~data; // clear interrupt source
 		break;
 	case 0x87:
 		if (data&2) {

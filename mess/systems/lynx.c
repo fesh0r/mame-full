@@ -97,7 +97,8 @@ void lynx_vh_stop(void)
 
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-	int x, y, j;
+	int x, y;
+	UINT16 j; // clipping needed!
 	UINT8 *mem=memory_region(REGION_CPU1);
 
 	if( palette_recalc() ) full_refresh = 1;
