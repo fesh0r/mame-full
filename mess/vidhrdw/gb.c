@@ -108,8 +108,10 @@ struct layer_struct
 	UINT8 enabled;
 	UINT16 *bg_tiles;
 	UINT8 *bg_map;
+	UINT16 *bg_pal;
 	UINT8 xindex;
 	UINT8 xshift;
+	UINT8 xstart;
 	UINT8 xend;
 };
 
@@ -151,8 +153,10 @@ void gb_refresh_scanline (void)
 		layer[0].bg_map = gb_bgdtab;
 		layer[0].bg_map += (bgline << 2) & 0x3E0;
 		layer[0].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[0].bg_pal = (UINT16 *)&gb_bpal;
 		layer[0].xindex = SCROLLX >> 3;
 		layer[0].xshift = SCROLLX & 7;
+		layer[0].xstart = 0;
 		layer[0].xend = 160;
 	}
 
@@ -161,17 +165,19 @@ void gb_refresh_scanline (void)
 		int bgline, xpos;
 
 		bgline = (CURLINE - WNDPOSY) & 0xFF;
-		xpos = WNDPOSX - 7;
+		xpos = WNDPOSX - 7;		/* Window is offset by 7 pixels */
+		if (xpos < 0)
+			xpos = 0;
 
 		layer[1].bg_map = gb_wndtab;
 		layer[1].bg_map += (bgline << 2) & 0x3E0;
 		layer[1].bg_tiles = (UINT16 *) gb_chrgen + (bgline & 7);
+		layer[1].bg_pal = (UINT16 *)&gb_wpal;
 		layer[1].xindex = 0;
 		layer[1].xshift = 0;
-		if (xpos < 0)
-			xpos = 0;
-		layer[0].xend = xpos;
+		layer[1].xstart = xpos;
 		layer[1].xend = 160 - xpos;
+		layer[0].xend = xpos;
 	}
 
 	while (l < 2)
@@ -199,13 +205,14 @@ void gb_refresh_scanline (void)
 #ifndef LSB_FIRST
 		data = (data << 8) | (data >> 8);
 #endif
-		xindex = 0;
+		xindex = layer[l].xstart;
 		while (i)
 		{
 			while ((bit < 8) && i)
 			{
 				register int colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
-				plot_pixel(bitmap, xindex, yindex, gb_bpal[colour]);
+				plot_pixel(bitmap, xindex, yindex, layer[l].bg_pal[colour]);
+/*				plot_pixel(bitmap, xindex, yindex, gb_bpal[colour]); */
 				xindex++;
 				*zbuf++ = colour;
 				data <<= 1;
