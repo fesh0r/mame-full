@@ -27,7 +27,7 @@ if [ -n "$D2U" ]; then
 	$D2U `find . -name "*.htm" -print` 2> /dev/null
 	$D2U `find . -name "*.html" -print` 2> /dev/null
 	$D2U `find . -name "*.mak" -print` 2> /dev/null
-	$D2U `find . -name "*.ini" -print` 2> /dev/null
+	$D2U `find . -name "*.cfg" -print` 2> /dev/null
 	$D2U `find . -name "*.pl" -print` 2> /dev/null
 	$D2U makefile 2> /dev/null
 fi
