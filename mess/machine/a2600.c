@@ -158,7 +158,7 @@ UINT8 HSYNC_colour_clock = 3;
 static void a2600_main_cb(int param);
 
 static void a2600_scanline_cb(void);
-static void a2600_Cycle_cb(int param);
+static void a2600_Cycle_cb(int riotdiff);
 
 static void *HSYNC_timer;
 
@@ -326,14 +326,10 @@ READ_HANDLER( a2600_riot_r )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	INT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
-
-		/* resync the riot timer */
+	/* resync */
 	previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 	riotdiff *= 3;
-	for (; riotdiff > 0; riotdiff--)
-	{
-		a2600_Cycle_cb(0);
-	}
+	a2600_Cycle_cb(riotdiff);
 
 	switch (offset)
 	{
@@ -369,10 +365,7 @@ WRITE_HANDLER( a2600_riot_w )
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		for (; riotdiff > 0; riotdiff--)
-		{
-			a2600_Cycle_cb(0);
-		}
+		a2600_Cycle_cb(riotdiff);
 	}
 
 	switch (offset)
@@ -432,10 +425,7 @@ READ_HANDLER( a2600_TIA_r )
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		for (; riotdiff > 0; riotdiff--)
-		{
-			a2600_Cycle_cb(0);
-		}
+		a2600_Cycle_cb(riotdiff);
 	}
 
 	switch (offset)
@@ -514,10 +504,7 @@ WRITE_HANDLER( a2600_TIA_w )
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		for (; riotdiff > 0; riotdiff--)
-		{
-			a2600_Cycle_cb(0);
-		}
+		a2600_Cycle_cb(riotdiff);
 	}
 
 	switch (offset)
@@ -1007,10 +994,7 @@ static void a2600_main_cb(int param)
 	/* resync the riot timer */
 	previous_tia_cycle = global_tia_cycle + 76;
 	riotdiff *= 3;
-	for (; riotdiff > 0; riotdiff--)
-	{
-		a2600_Cycle_cb(0);
-	}
+	a2600_Cycle_cb(riotdiff);
 	TIA_pixel_clock = 0;
 	TIA_pf_mask.shiftreg = 0x080000;
 	TIA_player_pattern_0_delayed = TIA_player_pattern_0;
@@ -1037,64 +1021,38 @@ static void a2600_main_cb(int param)
   Cycle Callback to Provide accurate timing
 
 ***************************************************************************/
-static void a2600_Cycle_cb(int param)
+static void a2600_Cycle_cb(int riotdiff)
 {
-	int forecolour;
+	int i, forecolour;
 	int plyr0 = TIA_reset_player_0 + TIA_motion_player_0 + TIA_player_0_offset;
 
-	/* Hsync Timing */
+	logerror("Cycle Callback - RIOTDIFF = %d\n", riotdiff);
 
-	HSYNC_Period++;
-	HSYNC_colour_clock--;
-
-
-	profiler_mark(PROFILER_USER2);
-
-	if(HSYNC_Period >= 68)
+	for (i=0; i<riotdiff; i++)
 	{
-		if(HSYNC_Period <= 147)
+
+		/* Hsync Timing */
+
+		HSYNC_Period++;
+		HSYNC_colour_clock--;
+
+
+		profiler_mark(PROFILER_USER2);
+
+		if(HSYNC_Period >= 68)
 		{
-			UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
-
-			if (PF_Score)
-			{
-				forecolour = tia.colreg.P0;
-			}
-			else
-			{
-				forecolour = tia.colreg.PF;
-			}
-
-			PF_Data[HSYNC_Period - 68] = forecolour * pix;
-
-			TIA_pixel_clock++;
-
-			if(TIA_pixel_clock == 4)
-			{
-				SHIFT_RIGHT20(TIA_pf_mask)
-
-				TIA_pixel_clock = 0;
-			}
-		}
-		else
-		{
-			if(HSYNC_Period == 148 && PF_Ref)
-			{
-				TIA_pf_mask.shiftreg = 0x000001;
-			}
-
+			if(HSYNC_Period <= 147)
 			{
 				UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
 
 				if (PF_Score)
 				{
-					forecolour = tia.colreg.P1;
+					forecolour = tia.colreg.P0;
 				}
 				else
 				{
 					forecolour = tia.colreg.PF;
 				}
-
 
 				PF_Data[HSYNC_Period - 68] = forecolour * pix;
 
@@ -1102,239 +1060,271 @@ static void a2600_Cycle_cb(int param)
 
 				if(TIA_pixel_clock == 4)
 				{
-					if(!PF_Ref)
-					{
-						SHIFT_RIGHT20(TIA_pf_mask)
-					}
-					else
-					{
-						SHIFT_LEFT20(TIA_pf_mask)
-					}
+					SHIFT_RIGHT20(TIA_pf_mask)
+
 					TIA_pixel_clock = 0;
 				}
 			}
-		}
-	}
-
-	if ((HSYNC_Period - 1) == 0)
-	{
-		TIA_player_pattern_0_tmp = TIA_player_pattern_0;
-		TIA_player_0_tick = 8;
-		TIA_player_pattern_1_tmp = TIA_player_pattern_1;
-		TIA_player_1_tick = 8;
-	}
-	profiler_mark(PROFILER_END);
-
-
-	profiler_mark(PROFILER_USER3);
-/* Player 0 stuff */
-	if ((TIA_player_0_mask_tmp & 0x01) && (TIA_reset_player_0) && (((HSYNC_Period - 1) >= (plyr0)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_0 + 7) + TIA_motion_player_0 + TIA_player_0_offset))) && (!TIA_player_0_finished))
-	{
-		//logerror("motion player 0 %d \n", TIA_motion_player_0);
-		if (!TIA_player_0_reflect)
-		{
-			UINT8 tmpbit = 0;
-			if (!TIA_player_delay_0)
-			{
-				if ((TIA_player_pattern_0_tmp & 0x80))
-				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
-					tmpbit = 0x01;
-				}
-			}
 			else
 			{
-				if ((TIA_player_pattern_0_delayed & 0x80))
+				if(HSYNC_Period == 148 && PF_Ref)
 				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
-					tmpbit = 0x01;
+					TIA_pf_mask.shiftreg = 0x000001;
 				}
-			}
-			//logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_0_pixel_delay_tmp--;
-			if(!TIA_player_0_pixel_delay_tmp)
-			{
-				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
-				SHIFT_LEFT8(TIA_player_pattern_0_tmp)
-				SHIFT_LEFT8(TIA_player_pattern_0_delayed)
-				TIA_player_0_tick--;
-				if (!TIA_player_0_tick)
+
 				{
-				TIA_player_0_tick = 8;
+					UINT8 pix = (TIA_playfield.shiftreg & TIA_pf_mask.shiftreg)? 1:0;
+
+					if (PF_Score)
+					{
+						forecolour = tia.colreg.P1;
+					}
+					else
+					{
+						forecolour = tia.colreg.PF;
+					}
+
+
+					PF_Data[HSYNC_Period - 68] = forecolour * pix;
+
+					TIA_pixel_clock++;
+
+					if(TIA_pixel_clock == 4)
+					{
+						if(!PF_Ref)
+						{
+							SHIFT_RIGHT20(TIA_pf_mask)
+						}
+						else
+						{
+							SHIFT_LEFT20(TIA_pf_mask)
+						}
+						TIA_pixel_clock = 0;
+					}
 				}
 			}
 		}
-		else
+
+		if ((HSYNC_Period - 1) == 0)
 		{
-			UINT8 tmpbit = 0;
-			if (!TIA_player_delay_0)
+			TIA_player_pattern_0_tmp = TIA_player_pattern_0;
+			TIA_player_0_tick = 8;
+			TIA_player_pattern_1_tmp = TIA_player_pattern_1;
+			TIA_player_1_tick = 8;
+		}
+		profiler_mark(PROFILER_END);
+
+
+		profiler_mark(PROFILER_USER3);
+	/* Player 0 stuff */
+		if ((TIA_player_0_mask_tmp & 0x01) && (TIA_reset_player_0) && (((HSYNC_Period - 1) >= (plyr0)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_0 + 7) + TIA_motion_player_0 + TIA_player_0_offset))) && (!TIA_player_0_finished))
+		{
+			//logerror("motion player 0 %d \n", TIA_motion_player_0);
+			if (!TIA_player_0_reflect)
 			{
-				if ((TIA_player_pattern_0_tmp & 0x01))
+				UINT8 tmpbit = 0;
+				if (!TIA_player_delay_0)
 				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
-					tmpbit = 0x80;
+					if ((TIA_player_pattern_0_tmp & 0x80))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+						tmpbit = 0x01;
+					}
 				}
-			}
-			else
-			{
-				if ((TIA_player_pattern_0_delayed & 0x01))
+				else
 				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
-					tmpbit = 0x80;
+					if ((TIA_player_pattern_0_delayed & 0x80))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+						tmpbit = 0x01;
+					}
 				}
-			}
-			//logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_0_pixel_delay_tmp--;
-			if(!TIA_player_0_pixel_delay_tmp)
-			{
-				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
-				SHIFT_RIGHT8(TIA_player_pattern_0_tmp)
-				SHIFT_RIGHT8(TIA_player_pattern_0_delayed)
-				TIA_player_0_tick--;
-				if (!TIA_player_0_tick)
+				//logerror("Hsync Period = %02x\n", HSYNC_Period);
+				TIA_player_0_pixel_delay_tmp--;
+				if(!TIA_player_0_pixel_delay_tmp)
 				{
+					TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
+					SHIFT_LEFT8(TIA_player_pattern_0_tmp)
+					SHIFT_LEFT8(TIA_player_pattern_0_delayed)
+					TIA_player_0_tick--;
+					if (!TIA_player_0_tick)
+					{
 					TIA_player_0_tick = 8;
+					}
+				}
+			}
+			else
+			{
+				UINT8 tmpbit = 0;
+				if (!TIA_player_delay_0)
+				{
+					if ((TIA_player_pattern_0_tmp & 0x01))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+						tmpbit = 0x80;
+					}
+				}
+				else
+				{
+					if ((TIA_player_pattern_0_delayed & 0x01))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P0;
+						tmpbit = 0x80;
+					}
+				}
+				//logerror("Hsync Period = %02x\n", HSYNC_Period);
+				TIA_player_0_pixel_delay_tmp--;
+				if(!TIA_player_0_pixel_delay_tmp)
+				{
+					TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
+					SHIFT_RIGHT8(TIA_player_pattern_0_tmp)
+					SHIFT_RIGHT8(TIA_player_pattern_0_delayed)
+					TIA_player_0_tick--;
+					if (!TIA_player_0_tick)
+					{
+						TIA_player_0_tick = 8;
+					}
 				}
 			}
 		}
-	}
-	profiler_mark(PROFILER_END);
+		profiler_mark(PROFILER_END);
 
-	profiler_mark(PROFILER_USER4);
-/* Player 1 stuff */
-	if ((TIA_player_1_mask_tmp & 0x01) && (TIA_reset_player_1) && (((HSYNC_Period - 1) >= (TIA_reset_player_1 + TIA_motion_player_1 + TIA_player_1_offset)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_1 + 7) + TIA_motion_player_1 + TIA_player_1_offset))) && (!TIA_player_1_finished))
-	{
-		//logerror("motion player 1 %d \n", TIA_motion_player_1);
-		if (!TIA_player_1_reflect)
+		profiler_mark(PROFILER_USER4);
+	/* Player 1 stuff */
+		if ((TIA_player_1_mask_tmp & 0x01) && (TIA_reset_player_1) && (((HSYNC_Period - 1) >= (TIA_reset_player_1 + TIA_motion_player_1 + TIA_player_1_offset)) && ((HSYNC_Period - 1) <= ((TIA_reset_player_1 + 7) + TIA_motion_player_1 + TIA_player_1_offset))) && (!TIA_player_1_finished))
 		{
-			UINT8 tmpbit = 0;
-			if (!TIA_player_delay_1)
+			//logerror("motion player 1 %d \n", TIA_motion_player_1);
+			if (!TIA_player_1_reflect)
 			{
-				if ((TIA_player_pattern_1_tmp & 0x80))
+				UINT8 tmpbit = 0;
+				if (!TIA_player_delay_1)
 				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
-					tmpbit = 0x01;
+					if ((TIA_player_pattern_1_tmp & 0x80))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+						tmpbit = 0x01;
+					}
 				}
-			}
-			else
-			{
-				if ((TIA_player_pattern_1_delayed & 0x80))
+				else
 				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
-					tmpbit = 0x01;
+					if ((TIA_player_pattern_1_delayed & 0x80))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+						tmpbit = 0x01;
+					}
 				}
-			}
-			//logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_1_pixel_delay_tmp--;
-			if(!TIA_player_1_pixel_delay_tmp)
-			{
-				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
-				SHIFT_LEFT8(TIA_player_pattern_1_tmp)
-				SHIFT_LEFT8(TIA_player_pattern_1_delayed)
-				TIA_player_1_tick--;
-				if (!TIA_player_1_tick)
+				//logerror("Hsync Period = %02x\n", HSYNC_Period);
+				TIA_player_1_pixel_delay_tmp--;
+				if(!TIA_player_1_pixel_delay_tmp)
 				{
-				TIA_player_1_tick = 8;
-				}
-			}
-		}
-		else
-		{
-			UINT8 tmpbit = 0;
-			if (!TIA_player_delay_1)
-			{
-				if ((TIA_player_pattern_1_tmp & 0x01))
-				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
-					tmpbit = 0x80;
-				}
-			}
-			else
-			{
-				if ((TIA_player_pattern_1_delayed & 0x01))
-				{
-					PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
-					tmpbit = 0x80;
-				}
-			}
-			//logerror("Hsync Period = %02x\n", HSYNC_Period);
-			TIA_player_1_pixel_delay_tmp--;
-			if(!TIA_player_1_pixel_delay_tmp)
-			{
-				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
-				SHIFT_RIGHT8(TIA_player_pattern_1_tmp)
-				SHIFT_RIGHT8(TIA_player_pattern_1_delayed)
-				TIA_player_1_tick--;
-				if (!TIA_player_1_tick)
-				{
+					TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
+					SHIFT_LEFT8(TIA_player_pattern_1_tmp)
+					SHIFT_LEFT8(TIA_player_pattern_1_delayed)
+					TIA_player_1_tick--;
+					if (!TIA_player_1_tick)
+					{
 					TIA_player_1_tick = 8;
+					}
 				}
 			}
-		}
-	}
-
-	if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_0 + TIA_motion_player_0))
-	{
-		TIA_player_0_block++;
-
-		if(TIA_player_0_block == 8)
-		{
-			TIA_player_0_offset+=8;
-			SHIFT_RIGHT10(TIA_player_0_mask_tmp)
-			TIA_player_0_mask_bit--;
-			TIA_player_0_block = 0;
-			if(!TIA_player_0_mask_bit)
+			else
 			{
-				TIA_player_0_mask_bit = 10;
-				TIA_player_0_finished = 1;
-			}
-
-		}
-	}
-	if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_1 + TIA_motion_player_1))
-	{
-		TIA_player_1_block++;
-
-		if(TIA_player_1_block == 8)
-		{
-			TIA_player_1_offset+=8;
-
-			SHIFT_RIGHT10(TIA_player_1_mask_tmp)
-			TIA_player_1_mask_bit--;
-			TIA_player_1_block = 0;
-			if(!TIA_player_1_mask_bit)
-			{
-				TIA_player_1_mask_bit = 10;
-				TIA_player_1_finished = 1;
-			}
-
-		}
-	}
-	if (HSYNC_Period >= 228)
-	{
-		HSYNC_Period = 0;
-	}
-
-	/* Deal with the RIOT Timer */
-	if (!HSYNC_colour_clock)
-	{
-		if (TMR_Period)
-		{
-			TMR_tmp--;
-			if (!TMR_tmp)
-			{
-				TMR_tmp = TMR_Period;
-				TMR_Intim--;
-				if (TMR_Intim == 0)
+				UINT8 tmpbit = 0;
+				if (!TIA_player_delay_1)
 				{
-					TMR_Period = 1;		/* Deals with the zero passing stuff */
+					if ((TIA_player_pattern_1_tmp & 0x01))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+						tmpbit = 0x80;
+					}
+				}
+				else
+				{
+					if ((TIA_player_pattern_1_delayed & 0x01))
+					{
+						PF_Data[((HSYNC_Period - 1) - 68)] = tia.colreg.P1;
+						tmpbit = 0x80;
+					}
+				}
+				//logerror("Hsync Period = %02x\n", HSYNC_Period);
+				TIA_player_1_pixel_delay_tmp--;
+				if(!TIA_player_1_pixel_delay_tmp)
+				{
+					TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
+					SHIFT_RIGHT8(TIA_player_pattern_1_tmp)
+					SHIFT_RIGHT8(TIA_player_pattern_1_delayed)
+					TIA_player_1_tick--;
+					if (!TIA_player_1_tick)
+					{
+						TIA_player_1_tick = 8;
+					}
 				}
 			}
 		}
-		HSYNC_colour_clock = 3;
-	}
 
-	profiler_mark(PROFILER_END);
+		if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_0 + TIA_motion_player_0))
+		{
+			TIA_player_0_block++;
+
+			if(TIA_player_0_block == 8)
+			{
+				TIA_player_0_offset+=8;
+				SHIFT_RIGHT10(TIA_player_0_mask_tmp)
+				TIA_player_0_mask_bit--;
+				TIA_player_0_block = 0;
+				if(!TIA_player_0_mask_bit)
+				{
+					TIA_player_0_mask_bit = 10;
+					TIA_player_0_finished = 1;
+				}
+
+			}
+		}
+		if((HSYNC_Period >= 68) && ((HSYNC_Period - 1)>=TIA_reset_player_1 + TIA_motion_player_1))
+		{
+			TIA_player_1_block++;
+
+			if(TIA_player_1_block == 8)
+			{
+				TIA_player_1_offset+=8;
+
+				SHIFT_RIGHT10(TIA_player_1_mask_tmp)
+				TIA_player_1_mask_bit--;
+				TIA_player_1_block = 0;
+				if(!TIA_player_1_mask_bit)
+				{
+					TIA_player_1_mask_bit = 10;
+					TIA_player_1_finished = 1;
+				}
+
+			}
+		}
+		if (HSYNC_Period >= 228)
+		{
+			HSYNC_Period = 0;
+		}
+
+		/* Deal with the RIOT Timer */
+		if (!HSYNC_colour_clock)
+		{
+			if (TMR_Period)
+			{
+				TMR_tmp--;
+				if (!TMR_tmp)
+				{
+					TMR_tmp = TMR_Period;
+					TMR_Intim--;
+					if (TMR_Intim == 0)
+					{
+						TMR_Period = 1;		/* Deals with the zero passing stuff */
+					}
+				}
+			}
+			HSYNC_colour_clock = 3;
+		}
+
+		profiler_mark(PROFILER_END);
+	}
 }
 
 
