@@ -42,6 +42,9 @@ typedef struct {
 	int 	reset_state;
 	int		intr_state;
 	int		intrm_state;
+	int 	reset_pending;
+	int		intr_pending;
+	int		intrm_pending;
 	int		mask_interrupts;
 }	cp1610_Regs;
 
@@ -1562,7 +1565,7 @@ static void cp1610_xori(int d)
 void cp1610_reset(void *param)
 {
 	/* This is how we set the reset vector */
-	cpu_set_irq_line(cpu_getactivecpu(), CP1610_RESET, ASSERT_LINE);
+	cpu_set_irq_line(cpu_getactivecpu(), CP1610_RESET, PULSE_LINE);
 }
 
 /* Shut down CPU core */
@@ -3360,27 +3363,27 @@ int cp1610_execute(int cycles)
 
         if (cp1610.mask_interrupts == 0)
         {
-			if (cp1610.intr_state == ASSERT_LINE)
+			if (cp1610.intr_pending == 1)
 			{
 				/* PSHR R7 */
 				cp1610_writemem16(cp1610.r[6],cp1610.r[7]);
 				cp1610.r[6]++;
 				cp1610_icount -= 9;
-				cp1610.intr_state = CLEAR_LINE;
+				cp1610.intr_pending = 0;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_INT_INTR);
 			}
-			if ((cp1610.intrm_state == ASSERT_LINE) && (cp1610.intr_enabled))
+			if ((cp1610.intrm_pending == 1) && (cp1610.intr_enabled))
 			{
 				/* PSHR R7 */
 				cp1610_writemem16(cp1610.r[6],cp1610.r[7]);
 				cp1610.r[6]++;
 				cp1610_icount -= 9;
-				cp1610.intrm_state = CLEAR_LINE;
+				cp1610.intrm_pending = 0;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_INT_INTRM);
 			}
-			if (cp1610.reset_state == ASSERT_LINE)
+			if (cp1610.reset_pending == 1)
 			{
-				cp1610.reset_state = CLEAR_LINE;
+				cp1610.reset_pending = 0;
 				cp1610.r[7] = cp1610.irq_callback(CP1610_RESET);
 			}
 		}
@@ -3417,11 +3420,33 @@ void cp1610_init(void)
 {
 	cp1610.intr_enabled = 0;
 
-	cp1610.reset_state = CLEAR_LINE;
-	cp1610.intr_state = CLEAR_LINE;
-	cp1610.intrm_state = CLEAR_LINE;
+	cp1610.reset_pending = 0;
+	cp1610.intr_pending = 0;
+	cp1610.intrm_pending = 0;
 
 	return;
+}
+
+static void cp1610_set_irq_line(UINT32 irqline, int state)
+{
+	switch(irqline)
+	{
+		case CP1610_INT_INTRM:
+			if (state == ASSERT_LINE)
+				cp1610.intrm_pending = 1;
+			cp1610.intrm_state = state;
+			break;
+		case CP1610_RESET:
+			if (state == ASSERT_LINE)
+				cp1610.reset_pending = 1;
+			cp1610.reset_state = state;
+			break;
+		case CP1610_INT_INTR:
+			if (state == ASSERT_LINE)
+				cp1610.intr_pending = 1;
+			cp1610.intr_state = state;
+			break;
+	}
 }
 
 static void cp1610_set_info(UINT32 state, union cpuinfo *info)
@@ -3430,9 +3455,10 @@ static void cp1610_set_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_PREVIOUSPC:	break;	/* TODO? */
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:	cp1610.intrm_state = info->i;	break;
-	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:		cp1610.reset_state = info->i;	break;
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:	cp1610.intr_state = info->i;	break;
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:
+	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:
+	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:
+			cp1610_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i);		break;
 
 	case CPUINFO_INT_REGISTER + CP1610_R0: cp1610.r[0] = info->i; 			break;
 	case CPUINFO_INT_REGISTER + CP1610_R1: cp1610.r[1] = info->i;			break;

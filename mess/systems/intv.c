@@ -359,6 +359,7 @@ static ADDRESS_MAP_START( writemem_kbd , ADDRESS_SPACE_PROGRAM, 16)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmem2 , ADDRESS_SPACE_PROGRAM, 8)
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0xff) )  /* Required because of probing */
 	AM_RANGE( 0x0000, 0x3fff) AM_READ( intvkbd_dualport8_lsb_r ) /* Dual-port RAM */
 	AM_RANGE( 0x4000, 0x7fff) AM_READ( intvkbd_dualport8_msb_r ) /* Dual-port RAM */
 	AM_RANGE( 0xb7f8, 0xb7ff) AM_READ( MRA8_RAM ) /* ??? */
