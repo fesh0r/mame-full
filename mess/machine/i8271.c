@@ -1,5 +1,5 @@
 /* Intel 8271 Floppy Disc Controller */
-/* used in BBC Micro B */
+/* used in BBC Micro B,Acorn Atom */
 /* Jun 2000. Kev Thacker */
 
 /* TODO:
@@ -32,7 +32,7 @@ static void i8271_set_dma_drq(void);
 static char temp_buffer[16384];
 
 // uncomment to give verbose debug information
-#define VERBOSE
+//#define VERBOSE
 
 static I8271 i8271;
 
@@ -67,7 +67,7 @@ static void i8271_seek_to_track(int track)
 		/* seek to track 0 */
 		unsigned char StepCount = 0x0ff;
 
-        logerror("step\n");
+        /*logerror("step\n"); */
 
 		while (
 			/* track 0 not set */
@@ -76,7 +76,7 @@ static void i8271_seek_to_track(int track)
 			(StepCount!=0)
 			)
 		{
-            logerror("step\n");
+/*            logerror("step\n"); */
 			StepCount--;
 			floppy_drive_seek(i8271.drive, -1);
 		}
@@ -146,6 +146,36 @@ static void i8271_timed_data_request(void)
 
 	/* set new timer */
 	i8271.timer = timer_set(TIME_IN_USEC(usecs), 0, i8271_data_timer_callback);
+}
+
+
+static void	i8271_timed_command_complete_callback(int code)
+{
+	i8271_command_complete(1,1);
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(i8271.timer, TIME_NEVER); 
+}
+
+/* setup a irq to occur 128us later - in reality this would be much later, because the int would
+come after reading the two CRC bytes at least! This function is used when a irq is required at
+command completion. Required for read data and write data, where last byte could be missed! */
+static void i8271_timed_command_complete(void)
+{
+	int usecs;
+
+	/* 64 for single density - 2 crc bytes later*/
+	usecs = 64*2;
+
+	/* remove old timer if it exists */
+	if (i8271.timer!=NULL)
+	{
+		timer_remove(i8271.timer);
+		i8271.timer = NULL;
+	}
+
+	/* set new timer */
+	i8271.timer = timer_set(TIME_IN_USEC(usecs), 0, i8271_timed_command_complete_callback);
 }
 
 void	i8271_stop(void)
@@ -268,7 +298,7 @@ static void i8271_update_state(void)
 				/* setup data with byte */
 				i8271.data = i8271.pExecutionPhaseData[i8271.ExecutionPhaseCount];
 			
-			//	logerror("read data %02x\n", i8271.data);
+				logerror("read data %02x\n", i8271.data);
 
 				/* update counters */
 				i8271.ExecutionPhaseCount++;
@@ -425,7 +455,7 @@ static void i8271_command_continue(void)
 			if (i8271.Counter==0)
 			{
 				
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 				return;
 			}
 			
@@ -448,7 +478,7 @@ static void i8271_command_continue(void)
 			if (i8271.Counter==0)
 			{
 				
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 				return;
 			}
 			
@@ -462,7 +492,7 @@ static void i8271_command_continue(void)
 
 			if (i8271.Counter==0)
 			{
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 				return;
 			}
 
@@ -494,7 +524,7 @@ static void i8271_do_read(void)
 	logerror("error getting sector data\n");
 #endif
 
-	i8271_command_complete(1,1);
+	i8271_timed_command_complete();
 }
 
 static void i8271_do_read_id(void)
@@ -529,7 +559,7 @@ static void i8271_do_write(void)
 	logerror("error getting sector data\n");
 #endif
 
-	i8271_command_complete(1,1);
+	i8271_timed_command_complete();
 }
 
 
@@ -977,7 +1007,7 @@ static void i8271_command_execute(void)
 			i8271_seek_to_track(i8271.CommandParameters[0]);
 
 			/* check for bad seek */
-			i8271_command_complete(1,1);
+			i8271_timed_command_complete();
 
 		}
 		break;
@@ -1010,7 +1040,7 @@ static void i8271_command_execute(void)
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
 				i8271.ResultRegister = (2<<3);
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 			}
 			else
 			{
@@ -1044,7 +1074,7 @@ static void i8271_command_execute(void)
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
 				i8271.ResultRegister = (2<<3);
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 			}
 			else
 			{
@@ -1085,7 +1115,7 @@ static void i8271_command_execute(void)
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
 				i8271.ResultRegister = (2<<3);
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 			}
 			else
 			{
@@ -1094,7 +1124,7 @@ static void i8271_command_execute(void)
 					/* Completion type: operation intervention probably required for recovery */
 					/* Completion code: Drive write protected */
 					i8271.ResultRegister = (2<<3) | (1<<1);
-					i8271_command_complete(1,1);
+					i8271_timed_command_complete();
 				}
 				else
 				{
@@ -1132,7 +1162,7 @@ static void i8271_command_execute(void)
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
 				i8271.ResultRegister = (2<<3);
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 			}
 			else
 			{
@@ -1141,7 +1171,7 @@ static void i8271_command_execute(void)
 					/* Completion type: operation intervention probably required for recovery */
 					/* Completion code: Drive write protected */
 					i8271.ResultRegister = (2<<3) | (1<<1);
-					i8271_command_complete(1,1);
+					i8271_timed_command_complete();
 				}
 				else
 				{
@@ -1174,7 +1204,7 @@ static void i8271_command_execute(void)
 				/* Completion type: operation intervention probably required for recovery */
 				/* Completion code: Drive not ready */
 				i8271.ResultRegister = (2<<3);
-				i8271_command_complete(1,1);
+				i8271_timed_command_complete();
 			}
 			else
 			{
