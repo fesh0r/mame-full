@@ -305,7 +305,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct beep_interface mz700_beep_interface =
 {
-	1
+	1,
+	{ 50 }
 };
 
 

@@ -110,7 +110,8 @@ void mz700_stop_machine(void)
 /* timer 0 is the clock for the speaker output */
 static void pit_clk_0(double clockout)
 {
-	beep_set_frequency(0, clockout);
+	beep_set_state(0, 1);
+    beep_set_frequency(0, clockout);
 }
 
 /* timer 1 is the clock for timer 2 clock input */
