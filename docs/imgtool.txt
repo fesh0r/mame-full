@@ -505,8 +505,11 @@ This module supports MFS (Macintosh File System) and HFS (Hierarchical File
 System) floppy disk images, either in diskcopy 4.2 or raw image format (the raw
 image format is partially compatible with diskcopy 6 format).
 
-This module can catalog images and extract individual files.  It does not
-support folders in MFS format, because MFS folders are not documented by Apple.
+This module can catalog images, and get files in MacBinary format.  You can put
+files on MFS-formatted images, too, but not on HFS-formatted images.
+
+The module does not support folders in MFS format, because MFS folders are not
+documented by Apple.
 
 Extracted files are in MacBinary III format (which is fully compatible with
 MacBinary I and II).  The MacBinary III format joins both macintosh file forks,
