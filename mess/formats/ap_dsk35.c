@@ -1015,6 +1015,25 @@ static FLOPPY_CONSTRUCT(apple35_2img_construct)
 	if (err)
 		return err;
 
+	if (data_size == 80*1*10*512)
+	{
+		/* single sided */
+		format_byte = 0x02;
+		sides = 1;
+	}
+	else if (data_size == 80*2*10*512)
+	{
+		/* double sided */
+		format_byte = 0x22;
+		sides = 2;
+	}
+	else
+	{
+		/* unknown... what to do... */
+		format_byte = 0x00;
+		sides = 2;
+	}
+
 	return apple35_construct(floppy, data_offset, data_size,
 		0, 0, format_byte, sides);
 }
@@ -1024,6 +1043,6 @@ static FLOPPY_CONSTRUCT(apple35_2img_construct)
 FLOPPY_OPTIONS_START( apple35 )
 	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,	NULL )
 	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	NULL )
-//	FLOPPY_OPTION( apple35_2img, "2mg\0002img\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,	NULL )
+//	FLOPPY_OPTION( apple35_2img, "2img\0002mg\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,	NULL )
 FLOPPY_OPTIONS_END
 
