@@ -702,6 +702,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {mess/machine}.c{$(OBJ)/mess/machine}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{mess/formats}.c{$(OBJ)/mess/formats}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {mess/tools}.c{$(OBJ)/mess/tools}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -794,6 +797,7 @@ maketree:
 	md $(OBJ)\mess\machine
 	md $(OBJ)\mess\systems
 	md $(OBJ)\mess\vidhrdw
+	md $(OBJ)\mess\formats
 	md $(OBJ)\mess\sndhrdw
 	md $(OBJ)\mess\tools
 	md $(OBJ)\Win32
@@ -848,6 +852,7 @@ clean:
 	del $(OBJ)\mess\machine\*.o
 	del $(OBJ)\mess\systems\*.o
 	del $(OBJ)\mess\vidhrdw\*.o
+	del $(OBJ)\mess\formats\*.o
 	del $(OBJ)\mess\sndhrdw\*.o
 	del $(OBJ)\mess\tools\*.o
 !ifdef HELPFILE
