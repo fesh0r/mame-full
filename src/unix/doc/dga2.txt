@@ -1,6 +1,6 @@
 Xmame DGA2 Video Driver Documentation
 
-November 18, 2001.
+November 27, 2001.
 
 Before reporting a bug, please
 ------------------------------
@@ -12,7 +12,7 @@ Blacklist of buggy XFree86(4.1.0) and Non-Free drivers
 IMPORTANT: These are not xmame's bugs.
 mga     - DGA does not work with the Matrox HAL module.
 nvidia  - the driver before v0.96 is buggy.
-radeon  - only DGA1 works.
+radeon  - only DGA1 works. (already fixed in XFree86 CVS.)
 s3virge - all DGA support seems broken. (Use XFree86 3.3.x.)
 tdfx    - some people reported DGA does not work with Voodoo3.
           (fixed in XFree86 CVS?)
