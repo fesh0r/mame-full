@@ -1,9 +1,6 @@
 #ifndef __VIC6567_H_
 #define __VIC6567_H_
 
-
-#include "praster.h"
-
 /*
  * if you need this chip in another mame/mess emulation than let it me know
  * I will split this from the c64 driver
@@ -78,8 +75,6 @@ WRITE_HANDLER( vic3_palette_w );
 
 /* to be called each vertical retrace */
 extern int vic2_frame_interrupt (void);
-
-extern void (*vic2_display_state)(PRASTER *This); /* calls machine after rastering frame*/
 
 /* private area */
 
