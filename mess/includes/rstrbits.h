@@ -29,6 +29,8 @@ enum {
 	RASTERBITS_CHARATTR_BLINKING	= 0x02
 };
 
+typedef void (*artifactproc)(int *artifactcolors);
+
 struct rasterbits_videomode {
 	int width;						/* in pixels/chars */
 	int height;						/* in pixels/chars */
@@ -36,6 +38,7 @@ struct rasterbits_videomode {
 	int bytesperrow;				/* number of bytes per row */
 	const int *metapalette;			/* color translation layer; can be NULL */
 	union {
+		artifactproc artifact;
 		struct {
 			UINT8 *(*mapper)(UINT8 *mem, int param, int *fg, int *bg, int *attr);
 			int mapper_param;

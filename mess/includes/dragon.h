@@ -7,7 +7,6 @@
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
-typedef void (*artifactproc)(int *artifactcolors);
 int internal_m6847_vh_start(int maxvram);
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,

@@ -374,8 +374,6 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int border_color, int wf, artifactproc artifact)
 {
-	int artifacting;
-	int artifactpalette[4];
 	struct rasterbits_source rs;
 	struct rasterbits_videomode rvm;
 	struct rasterbits_frame rf;
@@ -403,38 +401,27 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	{
 		rvm.flags = RASTERBITS_FLAG_GRAPHICS;
 
-		if ((currentstate->video_gmode & 0x02) && !(artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)))
+		if (currentstate->video_gmode & 0x02)
 		{
 			/* Resolution modes */
 			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
 			rvm.width = rvm.bytesperrow * 8;
 			rvm.depth = 1;
 			rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
+
+			if (artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)) {
+				/* I am here because we are doing PMODE 4 artifact colors */
+				rvm.flags |= RASTERBITS_FLAG_ARTIFACT;
+				rvm.u.artifact = artifact;
+			}
 		}
 		else
 		{
 			/* Color modes */
 			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
-
-			/* Are we doing PMODE 4 artifact colors? */
-			artifacting = ((currentstate->video_gmode & 0x0c) == 0x0c) && (currentstate->video_gmode & 0x02);
-			if (artifacting) {
-				/* I am here because we are doing PMODE 4 artifact colors */
-				artifactpalette[0] = metapalette[currentstate->video_gmode & 0x1 ? 10: 8];
-				artifactpalette[3] = metapalette[currentstate->video_gmode & 0x1 ? 11: 9];
-				artifact(artifactpalette);
-
-				rvm.width = rvm.bytesperrow * 8;
-				rvm.depth = 1;
-				rvm.metapalette = artifactpalette;
-				rvm.flags |= RASTERBITS_FLAG_ARTIFACT;
-			}
-			else {
-				/* If not, calculate offset normally */
-				rvm.width = rvm.bytesperrow * 4;
-				rvm.depth = 2;
-				rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
-			}
+			rvm.width = rvm.bytesperrow * 4;
+			rvm.depth = 2;
+			rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
 		}
 	}
 	else

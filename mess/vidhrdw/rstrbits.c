@@ -505,6 +505,7 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	int basex, basey;
 	int bitmapwidth;
 	int bitmapheight;
+	int artifactpalette[4];
 
 	assert(!clip);
 	assert(bitmap);
@@ -568,8 +569,12 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		case 1:
 			if (mode->flags & RASTERBITS_FLAG_ARTIFACT) {
 				assert(mode->bytesperrow == (mode->width / 8));
-				assert(src->db);
-				blitgraphics4artifact(bitmap, src->videoram, src->position, src->size, src->db, mode->metapalette,
+				assert(mode->u.artifact);
+				assert(mode->metapalette);
+				artifactpalette[0] = mode->metapalette[0];
+				artifactpalette[3] = mode->metapalette[1];
+				mode->u.artifact(artifactpalette);
+				blitgraphics4artifact(bitmap, src->videoram, src->position, src->size, src->db, artifactpalette,
 					mode->width / 8, mode->height, basex, basey, scalex, scaley);
 			}
 			else {
