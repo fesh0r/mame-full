@@ -54,7 +54,6 @@ extern  READ8_HANDLER( tms70x0_pf_r );
 //SJE: Added these..
 extern WRITE8_HANDLER( tms7000_internal_w );
 extern  READ8_HANDLER( tms7000_internal_r );
-extern int tms7000_icount;
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm7000 (char *buffer, unsigned pc);

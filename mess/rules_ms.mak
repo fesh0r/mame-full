@@ -129,6 +129,19 @@ else
 CPUDEFS += -DHAS_TMS7000=0
 endif
 
+CPU=$(strip $(findstring TMS7000_EXL@,$(CPUS)))
+ifneq ($(CPU),)
+TM7D = mess/cpu/tms7000
+OBJDIRS += $(OBJ)/$(TM7D)
+CPUDEFS += -DHAS_TMS7000_EXL=1
+CPUOBJS += $(OBJ)/$(TM7D)/tms7000.o
+DBGOBJS += $(OBJ)/$(TM7D)/7000dasm.o
+$(OBJ)/$(TM7D)/tms7000.o:	$(TM7D)/tms7000.h $(TM7D)/tms7000.c
+$(OBJ)/$(TM7D)/7000dasm.o:	$(TM7D)/tms7000.h $(TM7D)/7000dasm.c
+else
+CPUDEFS += -DHAS_TMS7000_EXL=0
+endif
+
 
 
 
