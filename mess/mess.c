@@ -25,6 +25,7 @@ struct image_info {
 	char *year;
 	char *playable;
 	char *extrainfo;
+	UINT32 (*partialcrc)(char *buf, UINT32 size);
 };
 
 static struct image_info *images[IO_COUNT] = {NULL,};
