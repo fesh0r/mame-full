@@ -127,6 +127,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->nSortCondition = 0;
 	pListView->nNumRows = 0;
 	pListView->rowMapping = NULL;
+	pListView->lpExtraColumnText = NULL;
 
 	/* Do we automatically center on our parent? */
 	if (pOptions->bCenterOnParent) {
@@ -176,6 +177,11 @@ void SmartListView_Free(struct SmartListView *pListView)
 		free(pListView->rowMapping);
 	free(pListView->piRealColumns);
 	free(pListView);
+
+#if HAS_EXTRACOLUMNTEXT
+	if (pListView->lpExtraColumnText)
+		free(pListView->lpExtraColumnText);
+#endif
 }
 
 /* ------------------------------------------------------------------------ *
@@ -836,6 +842,7 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 	int i;
 	int nColumn;
 	int nNumColumns;
+	TCHAR *pColumnText;
 
 	nNumColumns = pListView->pClass->nNumColumns;
 
@@ -865,9 +872,22 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 
 	for (i = 0; i < nNumColumns; i++) {
 		if (shown[order[i]]) {
+			pColumnText = (TCHAR *) pListView->pClass->ppColumnNames[order[i]];
+#if HAS_EXTRACOLUMNTEXT
+			if (pListView->lpExtraColumnText) {
+				static const TCHAR *pDivider = TEXT(" - ");
+				TCHAR *pNewColumnText;
+
+				pNewColumnText = _alloca((_tcslen(pColumnText) + _tcslen(pDivider) + _tcslen(pListView->lpExtraColumnText) + 1) * sizeof(TCHAR));
+				_tcscpy(pNewColumnText, pColumnText);
+				_tcscat(pNewColumnText, pDivider);
+				_tcscat(pNewColumnText, pListView->lpExtraColumnText);
+				pColumnText = pNewColumnText;
+			}
+#endif /* HAS_EXTRACOLUMNTEXT */
 			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
 			lvc.fmt = LVCFMT_LEFT; 
-			lvc.pszText = (TCHAR *) pListView->pClass->ppColumnNames[order[i]];
+			lvc.pszText = pColumnText;
 			lvc.iSubItem = nColumn;
 			lvc.cx = widths[order[i]]; 
 			ListView_InsertColumn(pListView->hwndListView, nColumn, &lvc);
@@ -1031,8 +1051,10 @@ void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible)
 
 	if (lNewStyle != lStyle) {
 		SetWindowLong(hWnd, GWL_STYLE, lNewStyle);
-		if (bVisible)
+		if (bVisible) {
+			SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
 			UpdateWindow(hWnd);
+		}
 	}
 }
 
@@ -1045,6 +1067,21 @@ void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem)
 	ListView_GetItemPosition(pListView->hwndListView, nVisualRow, &p);
 	ListView_Scroll(pListView->hwndListView, 0, p.y - 20);
 }
+
+#if HAS_EXTRACOLUMNTEXT
+void SmartListView_SetExtraColumnText(struct SmartListView *pListView, LPCTSTR lpExtraColumnText)
+{
+	if (pListView->lpExtraColumnText)
+		free(pListView->lpExtraColumnText);
+
+	if (lpExtraColumnText)
+		pListView->lpExtraColumnText = _tcsdup(lpExtraColumnText);
+	else
+		pListView->lpExtraColumnText = NULL;
+
+	SmartListView_InternalResetColumnDisplay(pListView, FALSE);
+}
+#endif /* HAS_EXTRACOLUMNTEXT */
 
 /* ------------------------------------------------------------------------ *
  * Sorting                                                                  *

@@ -8,10 +8,12 @@
 #define HAS_MYBITMAPINFO	0
 #define HAS_COLUMNEDIT		0
 #define HAS_CONTEXTMENU		0
+#define HAS_EXTRACOLUMNTEXT	1
 #else
 #define HAS_MYBITMAPINFO	1
 #define HAS_COLUMNEDIT		1
 #define HAS_CONTEXTMENU		1
+#define HAS_EXTRACOLUMNTEXT	0
 #include "Screenshot.h"
 #endif
 
@@ -80,6 +82,10 @@ struct SmartListView
 	struct RowMapping *rowMapping;
 	int *piRealColumns;
 	int nSortCondition;
+
+#if HAS_EXTRACOLUMNTEXT
+	LPTSTR lpExtraColumnText;
+#endif /* HAS_EXTRACOLUMNTEXT */
 };
 
 struct SmartListView *SmartListView_Create(struct SmartListViewOptions *pOptions,
@@ -108,6 +114,10 @@ void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELI
 void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrText);
 void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible);
 void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem);
+
+#if HAS_EXTRACOLUMNTEXT
+void SmartListView_SetExtraColumnText(struct SmartListView *pListView, LPCTSTR lpExtraColumnText);
+#endif /* HAS_EXTRACOLUMNTEXT */
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
 

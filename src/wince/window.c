@@ -496,6 +496,7 @@ int win32_init_window(void)
 
 	// update system menu
 	update_system_menu();
+
 	return 0;
 }
 
@@ -649,10 +650,12 @@ void destroy_window(void)
 
 void update_cursor_state(void)
 {
+#ifndef UNDER_CE
 	if (window_mode && !is_mouse_captured())
 		while (ShowCursor(TRUE) < 0) ;
 	else
 		while (ShowCursor(FALSE) >= 0) ;
+#endif
 }
 
 
@@ -1245,8 +1248,13 @@ static void adjust_window(void)
 	{
 		// compute the desired new bounds
 		window.left = window.top = 0;
+#ifdef UNDER_CE
+		window.right = GetSystemMetrics(SM_CXSCREEN);
+		window.bottom = GetSystemMetrics(SM_CYSCREEN);
+#else
 		window.right = primary_desc.dwWidth;
 		window.bottom = primary_desc.dwHeight;
+#endif
 	}
 
 	// adjust the position if different

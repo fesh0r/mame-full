@@ -134,6 +134,7 @@ int play_game(int game_index, struct ui_options *opts)
 	attenuation = 0;
 	use_dirty = opts->enable_dirtyline;
 	throttle = !opts->disable_throttle;
+	window_mode = 0;
 
 	/* remember the initial LED states */
 	original_leds = osd_get_leds();

@@ -3,12 +3,15 @@
 // I don't understand why this is necessary when building for x86em
 #define SHCreateMenuBar         dummy_SHCreateMenuBar   
 #define SHInitDialog            dummy_SHInitDialog   
+#define SHHandleWMSettingChange	dummy_SHHandleWMSettingChange
 #include <aygshell.h>
 #undef SHCreateMenuBar   
 #undef SHInitDialog 
+#undef SHHandleWMSettingChange
 
 WINSHELLAPI BOOL WINAPI SHCreateMenuBar(SHMENUBARINFO *pmbi);   
 BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi); 
+WINSHELLAPI BOOL WINAPI SHHandleWMSettingChange(HWND hwnd, WPARAM wParam, LPARAM lParam, SHACTIVATEINFO* psai);
 
 #include "resource.h"
 #include "driver.h"
@@ -67,6 +70,9 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	if (nError) {
 		MessageBox(pListView->hwndListView, TEXT("Failed to run"), NULL, MB_OK);
 	}
+
+	SmartListView_SetVisible(s_pGameListView, TRUE);
+	SmartListView_SetVisible(pListView, FALSE);
 }
 
 static LPCTSTR s_lpSoftwareColumnNames[] = 
@@ -108,8 +114,9 @@ static void GameList_Run(struct SmartListView *pListView)
 
 	nItem = SingleItemSmartListView_GetSelectedItem(pListView);
 	nGame = pGame_Index[nItem];
-	SmartListView_ScrollTo(pListView, nItem);
 	SmartListView_SetVisible(s_pSoftwareListView, TRUE);
+	SmartListView_SetVisible(pListView, FALSE);
+	SmartListView_SetExtraColumnText(s_pSoftwareListView, A2T(drivers[nGame]->description));
 
 	{
 		const char *software_paths = "\\Software";
@@ -462,9 +469,13 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				opts.hwndParent = hWnd;
 				opts.nIDDlgItem = IDC_SOFTWARELIST;
 				x = 10;
-				y = 92;
+				y = 56;
 				width = rBtns.right - 18;
-				height = rBtns.bottom - 161;
+				height = rBtns.bottom - 125;
+//				x = 10;
+//				y = 92;
+//				width = rBtns.right - 18;
+//				height = rBtns.bottom - 161;
 				s_pSoftwareListView = SmartListView_Create(&opts, FALSE, TRUE, x, y, width, height, hInst);
 
 				opts.pClass = &s_GameListClass;
@@ -511,7 +522,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			PostQuitMessage(0);
 			break;
 		case WM_SETTINGCHANGE:
-			//SHHandleWMSettingChange(hWnd, wParam, lParam, &s_sai);
+			SHHandleWMSettingChange(hWnd, wParam, lParam, &s_sai);
      		break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
