@@ -91,6 +91,9 @@ extern CBM_ROM cbm_rom[0x20];
 #define CONFIG_DEVICE_CBM_CARTSLOT(file_extensions) \
 	CONFIG_DEVICE_CARTSLOT_OPT(2, (file_extensions), cbm_rom_init, NULL, cbm_rom_load, cbm_rom_unload, NULL, NULL)
 
+#define CONFIG_DEVICE_CBM_CARTSLOT_REQ(file_extensions) \
+	CONFIG_DEVICE_CARTSLOT_REQ(2, (file_extensions), cbm_rom_init, NULL, cbm_rom_load, cbm_rom_unload, NULL, NULL)
+
 /* prg file format
  * sfx file format
  * sda file format

@@ -3,6 +3,10 @@
 #include "image.h"
 #include "includes/sms.h"
 
+#ifndef MIN
+#define MIN(a, b)	(((a) < (b)) ? (a) : (b))
+#endif /* MIN */
+
 UINT8 smsRomPageCount;
 UINT8 smsBiosPageCount;
 UINT8 smsFMDetect;
@@ -87,10 +91,12 @@ READ_HANDLER(gg_input_port_2_r) {
 	return (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80));
 }
 
-WRITE_HANDLER(sms_mapper_w) {
+WRITE_HANDLER(sms_mapper_w)
+{
 	int page;
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	UINT8 *USER_RAM;
+	size_t user_ram_size;
 
 	offset &= 3;
 
@@ -98,28 +104,35 @@ WRITE_HANDLER(sms_mapper_w) {
 	RAM[0xFFFC + offset] = data;
 
 
-	if (biosPort & IO_BIOS_ROM) {
-		if (!(biosPort & IO_CARTRIDGE)) {
+	if (biosPort & IO_BIOS_ROM)
+	{
+		if (!(biosPort & IO_CARTRIDGE))
+		{
 			page = (smsRomPageCount > 0) ? data % smsRomPageCount : 0;
 
 			USER_RAM = memory_region(REGION_USER2);
-			if (USER_RAM == NULL) {
+			if (USER_RAM == NULL)
 				return;
-			}
-		} else {
+			user_ram_size = memory_region_length(REGION_USER2);
+		}
+		else
+		{
 			/* nothing to page in */
 			return;
 		}
-	} else {
+	}
+	else
+	{
 		page = (smsBiosPageCount > 0) ? data % smsBiosPageCount : 0;
 
 		USER_RAM = memory_region(REGION_USER1);
-		if (USER_RAM == NULL) {
+		if (!USER_RAM)
 			return;
-		}
-		if (((page + 1) * 0x4000) > memory_region_length(REGION_USER1)) {
+
+		if (((page + 1) * 0x4000) > memory_region_length(REGION_USER1))
 			return;
-		}
+
+		user_ram_size = memory_region_length(REGION_USER1);
 	}
 
 	switch(offset) {
@@ -300,44 +313,55 @@ NVRAM_HANDLER(sms) {
 	}
 }
 
-void setup_rom(void) {
+void setup_rom(void)
+{
 	UINT8 *RAM;
 	UINT8 *USER_RAM;
+	size_t memregion_length;
 
 	/* Load up first 32K of image */
 	RAM = memory_region(REGION_CPU1);
-	if (!(biosPort & IO_BIOS_ROM)) {
-		if (IS_GG_UE || IS_GG_J) {
+	if (!(biosPort & IO_BIOS_ROM))
+	{
+		if (IS_GG_UE || IS_GG_J)
+		{
 			USER_RAM = memory_region(REGION_USER2);
-			if (USER_RAM == NULL) {
+			if (!USER_RAM)
 				return;
-			}
-			smsBiosPageCount = 0;
-			smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
 
-			memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
-			memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+			memregion_length = memory_region_length(REGION_USER2);
+			smsBiosPageCount = 0;
+			smsRomPageCount = memregion_length / 0x4000;
+
+			memcpy(&RAM[0x0000], &USER_RAM[0x0000], MIN(0x4000, memregion_length));			/* Only the first 2 banks are paged in */
+			if (memregion_length >= 0x4000)
+				memcpy(&RAM[0x4000], &USER_RAM[0x4000], MIN(0x4000, memregion_length - 0x4000));
 			logerror("bios general loaded.\n");
-		} else if (IS_GG_MAJ_UE	|| IS_GG_MAJ_J) {
+		}
+		else if (IS_GG_MAJ_UE || IS_GG_MAJ_J)
+		{
 			USER_RAM = memory_region(REGION_USER1);
-			if (USER_RAM == NULL) {
+			if (!USER_RAM)
 				return;
-			}
+
 			smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
 
 			memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x0400);
 			logerror("bios 0x0400 loaded.\n");
 
 			USER_RAM = memory_region(REGION_USER2);
-			if (USER_RAM == NULL) {
+			if (!USER_RAM)
 				return;
-			}
+
 			smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
 			memcpy(&RAM[0x0400], &USER_RAM[0x0400], 0x3C00);			/* Only the first 2 banks are paged in */
 			memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
 			logerror("bios general loaded.\n");
-		} else {
-			if ((biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD)) {
+		}
+		else
+		{
+			if ((biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD))
+			{
 				switch (systemType) {
 					case CONSOLE_SMS_U_V13:
 					case CONSOLE_SMS_E_V13:
@@ -347,9 +371,9 @@ void setup_rom(void) {
 					case CONSOLE_SMS_J_M3:
 					case CONSOLE_SMS_J_SS:
 						USER_RAM = memory_region(REGION_USER1);
-						if (USER_RAM == NULL) {
+						if (!USER_RAM)
 							return;
-						}
+
 						smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
 						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x2000);
 						logerror("bios 0x2000 loaded.\n");
@@ -365,9 +389,9 @@ void setup_rom(void) {
 //					case CONSOLE_SMS_U_MD_3D:
 //					case CONSOLE_SMS_E_MD_3D:
 						USER_RAM = memory_region(REGION_USER1);
-						if (USER_RAM == NULL) {
+						if (!USER_RAM)
 							return;
-						}
+
 						smsBiosPageCount = (memory_region_length(REGION_USER1) / 0x4000);
 						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
 						memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
@@ -375,9 +399,9 @@ void setup_rom(void) {
 						break;
 					case CONSOLE_SMS:
 						USER_RAM = memory_region(REGION_USER2);
-						if (USER_RAM == NULL) {
+						if (!USER_RAM)
 							return;
-						}
+
 						smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
 						memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
 						memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
@@ -386,7 +410,9 @@ void setup_rom(void) {
 				}
 			}
 		}
-	} else {
+	}
+	else
+	{
 		switch (systemType) {
 			case CONSOLE_SMS_U_V13:
 			case CONSOLE_SMS_E_V13:
@@ -407,33 +433,41 @@ void setup_rom(void) {
 			case CONSOLE_SMS_E_MD_3D:
 			case CONSOLE_SMS:
 			case CONSOLE_SMS_PAL:
-				if (!(biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION) && (biosPort & IO_CARD)) {
+				if (!(biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION) && (biosPort & IO_CARD))
+				{
 					/* Load up first 32K of image */
 					USER_RAM = memory_region(REGION_USER2);
-					if (USER_RAM == NULL) {
+					if (!USER_RAM)
 						return;
-					}
-					smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
-					memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
-					memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);
+
+					memregion_length = memory_region_length(REGION_USER2);
+					smsRomPageCount = memregion_length / 0x4000;
+					memcpy(&RAM[0x0000], &USER_RAM[0x0000], MIN(0x4000, memregion_length));			/* Only the first 2 banks are paged in */
+					if (memregion_length >= 0x4000)
+						memcpy(&RAM[0x4000], &USER_RAM[0x4000], MIN(0x4000, memregion_length - 0x4000));
 					logerror("cart full loaded.\n");
-				} else if (!(biosPort & IO_CARD) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION)) {
+				}
+				else if (!(biosPort & IO_CARD) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_EXPANSION))
+				{
 					/* Clear out card rom */
 					memset(RAM, 0, sizeof(UINT8) * 0x8000);
-				} else if (!(biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD)) {
+				}
+				else if (!(biosPort & IO_EXPANSION) && (biosPort & IO_CARTRIDGE) && (biosPort & IO_CARD))
+				{
 					/* Clear out expansion rom */
 					memset(RAM, 0, sizeof(UINT8) * 0x8000);
 				}
 				break;
+
 			case CONSOLE_GG_UE:
 			case CONSOLE_GG_J:
 			case CONSOLE_GG_MAJ_UE:
 			case CONSOLE_GG_MAJ_J:
 				/* Load up first 32K of image */
 				USER_RAM = memory_region(REGION_USER2);
-				if (USER_RAM == NULL) {
+				if (!USER_RAM)
 					return;
-				}
+
 				smsRomPageCount = (memory_region_length(REGION_USER2) / 0x4000);
 				memcpy(&RAM[0x0000], &USER_RAM[0x0000], 0x4000);			/* Only the first 2 banks are paged in */
 				memcpy(&RAM[0x4000], &USER_RAM[0x4000], 0x4000);

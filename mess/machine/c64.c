@@ -862,10 +862,6 @@ void ultimax_driver_init (void)
 	ultimax = 1;
     c64_cia1_on = 0;
 	c64_common_driver_init ();
-	if (cbm_rom[0].size==0) {
-	  printf("no cartridge found\n");
-	  exit(1);
-	}
 }
 
 void c64gs_driver_init (void)
@@ -878,7 +874,7 @@ void c64gs_driver_init (void)
 
 void sx64_driver_init (void)
 {
-	VC1541_CONFIG vc1541= { 1, 8 };
+	VC1541_CONFIG vc1541 = { 1, 8 };
 	c64_tape_on = 0;
 	c64_pal = 1;
 	c64_common_driver_init ();
