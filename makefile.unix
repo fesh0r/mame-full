@@ -32,7 +32,7 @@
 
 #set TAGET to "mame" (without the ") to compile xmame and to "mess" to
 #compile xmess.
-TARGET = mame
+TARGET = mess
 
 
 ##############################################################################
@@ -68,9 +68,9 @@ CC	= gcc
 ### this should work with all compilers 
 # CFLAGS    =
 ### to get full optimization under gcc/x Intel based OS's..
-# CFLAGS    = -O3 -m486 -Wall -Wno-unused -funroll-loops \
-#  -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
-#  -malign-jumps=2 -malign-loops=2
+CFLAGS    = -O3 -m486 -Wall -Wno-unused -funroll-loops \
+ -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
+ -malign-jumps=2 -malign-loops=2
 ### for Linux/PowerPC use following opts
 CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
@@ -115,13 +115,13 @@ INSTALL = cp
 # *** Extra include and or library paths, sometimes needed for zlib,
 # with suse linux -L/usr/X11R6/lib is needed for example,
 # and with unixware7 -lsocket is needed
-# LIBS     = -L/usr/X11R6/lib -L/usr/local/lib
-# INCLUDES = -I/usr/X11R6/include -I/usr/local/include
+LIBS     = -L/usr/X11R6/lib -L/usr/local/lib
+INCLUDES = -I/usr/X11R6/include -I/usr/local/include
 
 # *** If your system doesn't have zlib, or your systems zlib is giving you
 # troubles, you can use the one distributed with xmame.
 # Uncomment the following line to use xmame's own version of zlib
-# ZLIB = 1
+ZLIB = 1
 
 # *** Does your system support gettimeofday() function? If so, we encourage
 # you to enable this feature . Else .... comment it :-(
@@ -249,7 +249,7 @@ DISPLAY_METHOD = x11
 # MIT-Shared Memory X Extensions, comment the
 X11_MITSHM = 1
 # XFree86 DGA
-# X11_DGA = 1
+X11_DGA = 1
 # The XIL library (Solaris 2.5.1 and higher), uncomment
 # X11_XIL = 1
 
@@ -292,7 +292,7 @@ GLLIBS= -lGL -lGLU
 # *** Uncommenty the next lines to build xmame with build in debugger, only
 # supported for x11 and svgalib. Only enable this if you need it, if you
 # want to develop drivers that is, since it slows down xmame concederably.
-# MAME_DEBUG = 1
+MAME_DEBUG = 1
 
 # *** Uncomment the next lines to use x86-asm cpu cores. This is only
 # supported for some 386 machines with nasm-0.96 or higher available in your

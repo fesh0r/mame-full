@@ -2923,7 +2923,7 @@ static const struct IODevice io_cpc6128[] =
 		NULL						/* output_chunk */
 	},
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit),
-	IO_PRINTER_PORT(1,"\0"),
+	IO_PRINTER_PORT(1,"prn\0"),
 	{IO_END}
 };
 
