@@ -85,7 +85,7 @@ static void ide_interrupt_callback(int state)
 */
 DEVICE_LOAD( ti99_ide )
 {
-	return ide_hd_load(image, 0, 0, &ti99_ide_interface);
+	return ide_hd_load(image, file, open_mode, 0, 0, &ti99_ide_interface);
 }
 
 /*
