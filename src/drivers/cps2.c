@@ -168,8 +168,8 @@ WRITE16_HANDLER( cps2_eeprom_port_w )
 	coin_counter_w(0, data & 0x0001);
 	coin_counter_w(1, data & 0x0002);
 
-const char *gamename = Machine->gamedrv->name;
-	if(strncmp(gamename,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
+//const char *gamename = Machine->gamedrv->name;
+	if(strncmp(/*gamename*/Machine->gamedrv->name,"mmatrix",7)==0)		// Mars Matrix seems to require the coin lockout bit to be reversed
 	{
 		coin_lockout_w(0,data & 0x0010);
 		coin_lockout_w(1,data & 0x0020);
