@@ -141,8 +141,8 @@ int test_mit_shm (Display * display, XErrorEvent * error)
 		use_mit_shm = 0;
 		return 0;
 	}
-	/* else unspected error code: notify and exit */
-	fprintf (stderr, "Unspected X Error %d: %s\n", ret, msg);
+	/* else unexpected error code: notify and exit */
+	fprintf (stderr, "Unexpected X Error %d: %s\n", ret, msg);
 	exit(1);
 	/* to make newer gcc's shut up, grrr */
 	return 0;
