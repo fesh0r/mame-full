@@ -5,6 +5,7 @@
 
 #include "osdepend.h"
 #include "device.h"
+#include "driver.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
 
@@ -123,51 +124,6 @@ enum {
 	IO_RESET_ALL	/* restart the driver including audio/video 									*/
 };
 
-
-/******************************************************************************
- * This is a start at the proposed peripheral structure.
- * It will be filled with live starting with the next release (I hope).
- * For now it gets us rid of the several lines MESS specific code
- * in the GameDriver struct and replaces it by only one pointer.
- *	type				type of device (from above enum)
- *	count				maximum number of instances
- *	file_extensions 	supported file extensions
- *	_private			to be used by the peripheral driver code
- *	id					identify file
- *	init				initialize device
- *	exit				shutdown device
- *	info				get info for device instance
- *	open				open device (with specific args)
- *	close				close device
- *	status				(set a device status and) get the previous status
- *	seek				seek to file position
- *	tell				tell current file position
- *	input				input character or code
- *	output				output character or code
- *	input_chunk 		input chunk of data (eg. sector or track)
- *	output_chunk		output chunk of data (eg. sector or track)
- ******************************************************************************/
-struct IODevice {
-	int type;
-	int count;
-	const char *file_extensions;
-	int reset_depth;
-	char *dummy;
-	int (*init)(int id);
-	void (*exit)(int id);
-	const void *(*info)(int id, int whatinfo);
-	int (*open)(int id, int mode, void *args);
-	void (*close)(int id);
-	int (*status)(int id, int newstatus);
-    int (*seek)(int id, int offset, int whence);
-    int (*tell)(int id);
-	int (*input)(int id);
-	void (*output)(int id, int data);
-	int (*input_chunk)(int id, void *dst, int chunks);
-	int (*output_chunk)(int id, void *src, int chunks);
-	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
-};
-
 #ifdef MAME_DEBUG
 /* runs checks to see if device code is proper */
 int messvaliditychecks(void);
@@ -175,12 +131,12 @@ int messvaliditychecks(void);
 /* runs a set of test cases on the driver; can pass in an optional callback
  * to provide a way to identify images to test with
  */
-void messtestdriver(const void *game, const char *(*getfodderimage)(unsigned int index, int *foddertype));
+void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype));
 #endif
 
 /* these are called from mame.c*/
 extern int get_filenames(void);
-extern int init_devices(const void *game);
+extern int init_devices(const struct GameDriver *gamedrv);
 extern void exit_devices(void);
 extern int system_supports_cassette_device (void);
 
@@ -214,87 +170,18 @@ extern const void *device_info(int type, int id);
  */
 extern int mess_keep_going;
 
-/******************************************************************************
- * MESS' version of the GAME() and GAMEX() macros of MAME
- * CONS and CONSX are for consoles
- * COMP and COMPX are for computers
- ******************************************************************************/
-#define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT; \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	&machine_driver_##MACHINE,				\
-	input_ports_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	io_##NAME, 								\
-	ROT0									\
-};
-
-#define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	&machine_driver_##MACHINE,				\
-	input_ports_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	io_##NAME, 								\
-	ROT0|(FLAGS)							\
-};
-
-#define COMP(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	&machine_driver_##MACHINE,				\
-	input_ports_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	io_##NAME, 								\
-	ROT0|GAME_COMPUTER 						\
-};
-
-#define COMPX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-extern const struct GameDriver driver_##NAME;   \
-const struct GameDriver driver_##NAME = 	\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	&machine_driver_##MACHINE,				\
-	input_ports_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	io_##NAME, 								\
-	ROT0|GAME_COMPUTER|(FLAGS)	 			\
-};
-
+/* RAM configuration calls */
+#define RAM_STRING_BUFLEN 16
+extern UINT32 mess_ram_size;
+extern UINT8 *mess_ram;
+extern UINT32 ram_option(const struct GameDriver *gamedrv, unsigned int i);
+extern int ram_option_count(const struct GameDriver *gamedrv);
+extern int ram_is_valid_option(const struct GameDriver *gamedrv, UINT32 ram);
+extern UINT32 ram_default(const struct GameDriver *gamedrv);
+extern UINT32 ram_parse_string(const char *s);
+extern const char *ram_string(char *buffer, UINT32 ram);
+extern int ram_validate_option(void);
+extern void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler);
 
 #ifdef __cplusplus
 }

@@ -33,6 +33,20 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 }
 static const char *dev_opts;
 
+static int specify_ram(struct rc_option *option, const char *arg, int priority)
+{
+	UINT32 specified_ram;
+
+	specified_ram = ram_parse_string(arg);
+	if (specified_ram == 0)
+	{
+		fprintf(stderr, "Cannot recognize the RAM option %s; aborting\n", arg);
+		return -1;
+	}
+	options.ram = specified_ram;
+	return 0;
+}
+
 struct rc_option mess_opts[] = {
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -48,6 +62,7 @@ struct rc_option mess_opts[] = {
 	{ "parallel",  "parl", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to parallel device" },
 	{ "snapshot",  "dump", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
 	{ "quickload", "quik", rc_string, &dev_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
+	{ "ramsize",   "ram",  rc_string, &dev_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 

@@ -11,9 +11,9 @@ static int nc_card_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 static void nc_card_image_exit(IMAGE *img);
 static size_t nc_card_image_freespace(IMAGE *img);
 static int nc_card_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
 static int nc_card_image_deletefile(IMAGE *img, const char *fname);
-static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int nc_card_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void nc_card_image_closeenum(IMAGEENUM *enumeration);
@@ -483,7 +483,7 @@ static size_t nc_card_image_freespace(IMAGE *img)
 
 /* create a empty image */
 /* in this case a formatted image */
-static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	int code;
 
@@ -619,7 +619,7 @@ static int nc_card_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 /* put a file to the memcard */
-static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	unsigned long length;

@@ -94,9 +94,9 @@ static int ti85_file_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int ti85_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void ti85_file_closeenum(IMAGEENUM *enumeration);
 static int ti85_file_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
 static int ti85_file_deletefile(IMAGE *img, const char *fname);
-static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static void ti85b_file_info(IMAGE *img, char *string, const int len);
 static int ti85b_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
@@ -341,7 +341,7 @@ static int ti85_file_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
 {
 	ti85_file *file=(ti85_file*)img;
 	int ind;
@@ -349,7 +349,7 @@ static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	unsigned char name_size = strlen (fname);
 	UINT16 head_size = 0x04 + name_size;
 	UINT16 data_size = stream_size(sourcef);
-	unsigned char type = options[TI85_OPTION_FTYPE].i;
+	unsigned char type = options_[TI85_OPTION_FTYPE].i;
 	unsigned int offset = file->size-2;
 
 	if (!(file->data=realloc(file->data, file->size+data_size+head_size+4)) )
@@ -423,7 +423,7 @@ static int ti85_file_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 
 	ti85_header header = {	{'*','*','T','I','8','5','*','*'},
@@ -433,7 +433,7 @@ static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const Reso
 
 	char checksum[] = {0x00, 0x00};
 
-	strncpy(header.comment, options[TI85_OPTION_COMMENT].s,0x2a);
+	strncpy(header.comment, options_[TI85_OPTION_COMMENT].s,0x2a);
 	if (stream_write(f, &header, sizeof(ti85_header)) != sizeof(ti85_header)) 
 		return  IMGTOOLERR_WRITEERROR;
 	if (stream_write(f, &checksum, 2) != 2) 

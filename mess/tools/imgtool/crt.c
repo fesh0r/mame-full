@@ -366,9 +366,9 @@ static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void crt_image_closeenum(IMAGEENUM *enumeration);
 //static size_t crt_image_freespace(IMAGE *img);
 static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options);
 static int crt_image_deletefile(IMAGE *img, const char *fname);
-static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options);
 
 /*
 	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
@@ -423,7 +423,7 @@ IMAGEMODULE(
 	crt_image_create,				/* create image */
 	NULL,								/* read sector */
 	NULL,								/* write sector */
-	c64crt_fileeopts,					/* file options */
+	c64crt_fileeopts,					/* file _options */
 	c64crt_createopts					/* create options */
 )
 
@@ -567,7 +567,7 @@ static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
-							   const ResolvedOption *options)
+							   const ResolvedOption *_options)
 {
 	crt_image *image=(crt_image*)img;
 	int size;
@@ -597,9 +597,9 @@ static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 	memset(image->data+pos, 0, sizeof(crt_packet));
 	memcpy(PACKET(image,pos)->id,"CHIP",4);
 	SET_ULONG( PACKET(image, pos)->packet_length, size+sizeof(crt_packet));
-	SET_UWORD(PACKET(image, pos)->chip_type, options[C64CRT_FILEOPTION_FTYPE].i);
-	SET_UWORD( PACKET(image, pos)->address, options[C64CRT_FILEOPTION_FADDR].i);
-	SET_UWORD( PACKET(image, pos)->bank, options[C64CRT_FILEOPTION_FBANK].i);
+	SET_UWORD(PACKET(image, pos)->chip_type, _options[C64CRT_FILEOPTION_FTYPE].i);
+	SET_UWORD( PACKET(image, pos)->address, _options[C64CRT_FILEOPTION_FADDR].i);
+	SET_UWORD( PACKET(image, pos)->bank, _options[C64CRT_FILEOPTION_FBANK].i);
 	SET_UWORD( PACKET(image, pos)->length, size);
 
 	image->modified=1;
@@ -625,15 +625,15 @@ static int crt_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options)
 {
 	crt_header header={ "C64 CARTRIDGE   " };
 	SET_ULONG(header.length, sizeof(header));
 	SET_UWORD(header.version, 0x100);
-	SET_UWORD(header.hardware_type, options[C64CRT_CREATEOPTION_HARDWARETYPE].i);
-	header.game_line=options[C64CRT_CREATEOPTION_GAMELINE].i;
-	header.exrom_line=options[C64CRT_CREATEOPTION_EXROMLINE].i;
-	if (options[C64CRT_CREATEOPTION_LABEL].s) strcpy(header.name, options[C64CRT_CREATEOPTION_LABEL].s);
+	SET_UWORD(header.hardware_type, _options[C64CRT_CREATEOPTION_HARDWARETYPE].i);
+	header.game_line=_options[C64CRT_CREATEOPTION_GAMELINE].i;
+	header.exrom_line=_options[C64CRT_CREATEOPTION_EXROMLINE].i;
+	if (_options[C64CRT_CREATEOPTION_LABEL].s) strcpy(header.name, _options[C64CRT_CREATEOPTION_LABEL].s);
 	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header)) 
 		? 0 : IMGTOOLERR_WRITEERROR;
 }

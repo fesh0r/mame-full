@@ -16,10 +16,11 @@ extern const struct Devices devices[];
 extern const char *crcfile;
 extern const char *pcrcfile;
 
-
 /* Globals */
 int mess_keep_going;
 char *renamed_image;
+UINT32 mess_ram_size;
+UINT8 *mess_ram;
 
 struct image_info {
 	char *name;
@@ -521,14 +522,96 @@ static int supported_device(const struct IODevice *dev, int type)
 	return FALSE;
 }
 
+#if 0
+extern void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler)
+{
+	assert(mess_ram_size > 0);
+	assert(mess_ram);
+	assert((rhandler && whandler) || (!rhandler && !whandler));
+
+	if (ramposition >= mess_ram_size && rhandler)
+	{
+		memory_set_bankhandler_r(bank, MRA_NOP);
+		memory_set_bankhandler_w(bank, MWA_NOP);
+	}
+	else
+	{
+		if (rhandler)
+		{
+			/* this is only necessary if not mirroring */
+			memory_set_bankhandler_r(bank, rhandler);
+			memory_set_bankhandler_w(bank, whandler);
+		}
+		else
+		{
+			/* NULL handlers imply mirroring */
+			ramposition %= mess_ram_size;
+		}
+		cpu_setbank(bank, &mess_ram[ramposition]);
+	}
+}
+#endif
+
+static int ram_init(const struct GameDriver *gamedrv)
+{
+	int i;
+
+	/* validate RAM option */
+	if (options.ram != 0)
+	{
+		if (!ram_is_valid_option(gamedrv, options.ram))
+		{
+			char buffer[RAM_STRING_BUFLEN];
+			int opt_count;
+
+			opt_count = ram_option_count(gamedrv);
+			if (opt_count == 0)
+			{
+				/* this driver doesn't support RAM configurations */
+				mess_printf("Driver '%s' does not support RAM configurations\n", gamedrv->name);
+			}
+			else
+			{
+				mess_printf("%s is not a valid RAM option for driver '%s' (valid choices are ",
+					ram_string(buffer, options.ram), gamedrv->name);
+				for (i = 0; i < opt_count; i++)
+					mess_printf("%s%s",  i ? " or " : "", ram_string(buffer, ram_option(gamedrv, i)));
+				mess_printf(")\n");
+			}
+			return 1;
+		}
+		mess_ram_size = options.ram;
+	}
+	else
+	{
+		/* none specified; chose default */
+		mess_ram_size = ram_default(gamedrv);
+	}
+	/* if we have RAM, allocate it */
+	/*state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);*/
+	if (mess_ram_size >= 0)
+	{
+		mess_ram = (UINT8 *) auto_malloc(mess_ram_size);
+		if (!mess_ram)
+			return 1;
+		memset(mess_ram, 0xcd, mess_ram_size);
+
+		/*state_save_register_UINT8("mess", 0, "mess_ram", mess_ram, mess_ram_size);*/
+	}
+	else
+	{
+		mess_ram = NULL;
+	}
+	return 0;
+}
+
 /*****************************************************************************
  *  --Initialise Devices--
  *  Call the init() functions for all devices of a driver
  *  ith all user specified image names.
  ****************************************************************************/
-int init_devices(const void *game)
+extern int init_devices(const struct GameDriver *gamedrv)
 {
-	const struct GameDriver *gamedrv = game;
 	const struct IODevice *dev = gamedrv->dev;
 	int i,id;
 
@@ -551,7 +634,11 @@ int init_devices(const void *game)
 	/* Initialise all floppy drives here if the device is Setting can be overriden by the drivers and UI */
 	floppy_drives_init();
 
-	/* initialize --all-- devices */
+	/* Initialize RAM code */
+	if (ram_init(gamedrv))
+		return 1;
+
+	/* Initialize --all-- devices */
 	while( dev->count )
 	{
 		/* all instances */
@@ -591,6 +678,7 @@ int init_devices(const void *game)
 		}
 		dev++;
 	}
+
 	mess_printf("Device Initialision Complete!\n");
 	return 0;
 }
@@ -754,6 +842,12 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 
 	dst += sprintf(dst,"%s\n\n",Machine->gamedrv->description);
 
+	if (options.ram)
+	{
+		char buf2[RAM_STRING_BUFLEN];
+		dst += sprintf(dst, "RAM: %s\n\n", ram_string(buf2, options.ram));
+	}
+
 	for (type = 0; type < IO_COUNT; type++)
 	{
 		for( id = 0; id < device_count(type); id++ )
@@ -803,7 +897,8 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 		ui_displaymessagewindow(bitmap, buf);
 
 		sel = 0;
-		if (code_read_async() != KEYCODE_NONE ||
+		if (input_ui_posted() ||
+			code_read_async() != KEYCODE_NONE ||
 			code_read_async() != JOYCODE_NONE)
 			sel = -1;
 	}
@@ -889,6 +984,54 @@ int messvaliditychecks(void)
 		mess_printf("MESS Validity Error - Device struct entry missing\n");
 		error = 1;
 	}
+
+	/* MESS specific driver validity checks */
+	i = 0;
+	while(drivers[i])
+	{
+		if (drivers[i]->compcfg)
+		{
+			const struct ComputerConfigEntry *entry = drivers[i]->compcfg;
+			UINT32 highest_ram = 0;
+			int found_default_ram = 0;
+
+			while(entry->type != CCE_END)
+			{
+				switch(entry->type) {
+				case CCE_RAM_DEFAULT:
+					if (found_default_ram)
+					{
+						mess_printf("MESS Validiity Error - Multiple default RAMs found in driver %s\n", drivers[i]->name);
+						error = 1;
+					}
+					found_default_ram = 1;
+					/* fall through */
+
+				case CCE_RAM:
+					if (entry->param <= highest_ram)
+					{
+						mess_printf("MESS Validity Error - RAM configuration entry out of order in driver %s\n", drivers[i]->name);
+						error = 1;
+					}
+					highest_ram = entry->param;
+					break;
+
+				default:
+					mess_printf("MESS Validity Error - Unknown config entry type %d in driver %s\n", entry->type, drivers[i]->name);
+					error = 1;
+					break;
+				}
+				entry++;
+			}
+			if (!found_default_ram)
+			{
+				mess_printf("MESS Validiity Error - No default RAMs found in driver %s\n", drivers[i]->name);
+				error = 1;
+			}
+		}
+		i++;
+	}
+
 	return error;
 }
 
@@ -935,11 +1078,10 @@ static int try_driver(const struct GameDriver *gamedrv)
 	return 0;
 }
 
-void messtestdriver(const void *game, const char *(*getfodderimage)(unsigned int index, int *foddertype))
+void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype))
 {
 	int error;
 	struct GameOptions saved_options;
-	const struct GameDriver *gamedrv = game;
 
 	/* preserve old options; the MESS GUI needs this */
 	memcpy(&saved_options, &options, sizeof(saved_options));

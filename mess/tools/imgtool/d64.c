@@ -497,21 +497,21 @@ static int d64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void d64_image_closeenum(IMAGEENUM *enumeration);
 static size_t d64_image_freespace(IMAGE *img);
 static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
 static int d64_image_deletefile(IMAGE *img, const char *fname);
-static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int x64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int d71_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static size_t d71_image_freespace(IMAGE *img);
-static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int d81_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void d81_image_info(IMAGE *img, char *string, const int len);
 static size_t d81_image_freespace(IMAGE *img);
-static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
 static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
@@ -969,7 +969,7 @@ static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
 {
 	d64_image *image=(d64_image*)img;
 	int fsize, pos, i, b;
@@ -1086,7 +1086,7 @@ static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector,
 	return 0;
 }
 
-static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	unsigned char sector[0x100]={0};
 	int tracks=35;
@@ -1131,7 +1131,7 @@ static int d64_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 	return 0;
 }
 
-static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	struct { 
 		unsigned char data[0x40];
@@ -1144,11 +1144,11 @@ static int x64_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 	if (stream_write(f, &x64_header, sizeof(x64_header)) != sizeof(x64_header)) 
 		return  IMGTOOLERR_WRITEERROR;
 
-	d64_image_create(mod, f, options);
+	d64_image_create(mod, f, options_);
 	return 0;
 }
 
-static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	D71_HEADER d71_header= { { 0 } };
 	unsigned char sector[0x100]={0};
@@ -1212,7 +1212,7 @@ static int d71_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 	return 0;
 }
 
-static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	unsigned char sector[0x100]={0};
 	unsigned char id[2]={'1','2'};

@@ -106,17 +106,17 @@ static PARTITION_TABLE partition_table={
 #define CONTROL 	5
 
     /* fill in the drive geometry information */
-	buffer[0x1ad] = options->cylinders & 0xff;           /* cylinders */
-	buffer[0x1ae] = (options->cylinders >> 8) & 3;
-	buffer[0x1af] = options->heads;						/* heads */
-	buffer[0x1b0] = (options->cylinders+1) & 0xff;		/* write precompensation */
-	buffer[0x1b1] = ((options->cylinders+1) >> 8) & 3;
-	buffer[0x1b2] = (options->cylinders+1) & 0xff;		/* reduced write current */
-	buffer[0x1b3] = ((options->cylinders+1) >> 8) & 3;
+	buffer[0x1ad] = options_->cylinders & 0xff;           /* cylinders */
+	buffer[0x1ae] = (options_->cylinders >> 8) & 3;
+	buffer[0x1af] = options_->heads;						/* heads */
+	buffer[0x1b0] = (options_->cylinders+1) & 0xff;		/* write precompensation */
+	buffer[0x1b1] = ((options_->cylinders+1) >> 8) & 3;
+	buffer[0x1b2] = (options_->cylinders+1) & 0xff;		/* reduced write current */
+	buffer[0x1b3] = ((options_->cylinders+1) >> 8) & 3;
 	buffer[0x1b4] = ECC;						/* ECC length */
 	buffer[0x1b5] = CONTROL;					/* control (step rate) */
-	buffer[0x1b6] = options->cylinders & 0xff;			/* parking cylinder */
-	buffer[0x1b7] = (options->cylinders >> 8) & 3;
+	buffer[0x1b6] = options_->cylinders & 0xff;			/* parking cylinder */
+	buffer[0x1b7] = (options_->cylinders >> 8) & 3;
 	buffer[0x1b8] = 0x00;						/* no idea */
 	buffer[0x1b9] = 0x00;
 	buffer[0x1ba] = 0x00;
@@ -416,9 +416,9 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void fat_image_closeenum(IMAGEENUM *enumeration);
 static size_t fat_image_freespace(IMAGE *img);
 static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
 static int fat_image_deletefile(IMAGE *img, const char *fname);
-static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
 static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
@@ -431,8 +431,8 @@ static struct OptionTemplate fat_createopts[] =
 	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [2] */
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
-#define FAT_CREATEOPTIONS_SECTORS		0
-#define FAT_CREATEOPTIONS_HEADS			1
+#define FAT_CREATEOPTIONS__SECTORS		0
+#define FAT_CREATEOPTIONS__HEADS			1
 #define FAT_CREATEOPTIONS_CYLINDERS		2
 #else
 static struct OptionTemplate fat_createopts[] =
@@ -470,7 +470,7 @@ IMAGEMODULE(
 )
 
 static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 /*static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,16,1024} };*/
 
@@ -511,7 +511,7 @@ IMAGEMODULE(
 	fathd_image_create,				/* create image */
 	fat_read_sector,
 	fat_write_sector,
-	NULL,							/* file options */
+	NULL,							/* file options_ */
 	fathd_createopts				/* create options */
 )
 
@@ -819,7 +819,7 @@ static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
 {
 	fat_image *image=(fat_image*)img;
     FAT_DIRECTORY *entry;
@@ -1011,22 +1011,22 @@ static int fat_create(STREAM *f, FAT_FORMAT *format)
 	return 0;
 }
 
-static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	FAT_FORMAT format;
 #if 0
 	// maybe later (as option), when calculation of parameter available
 	format=fat_formats[3];
-	format.sectors=options[FAT_CREATEOPTIONS_SECTORS].i;
-	format.heads=options[FAT_CREATEOPTIONS_HEADS].i;
-	format.tracks=options[FAT_CREATEOPTIONS_CYLINDERS].i;
+	format.sectors=options_[FAT_CREATEOPTIONS_SECTORS].i;
+	format.heads=options_[FAT_CREATEOPTIONS_HEADS].i;
+	format.tracks=options_[FAT_CREATEOPTIONS_CYLINDERS].i;
 #else
-	format=fat_formats[options[FAT_CREATEOPTIONS_TYPE].i];
+	format=fat_formats[options_[FAT_CREATEOPTIONS_TYPE].i];
 #endif
 	return fat_create(f, &format);
 }
 
-static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
 {
 	FAT_FORMAT format;
 	unsigned char sector[0x200]={ 0 };
@@ -1036,11 +1036,11 @@ static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const Re
 
 #if 0
 	format=hd_formats[0];
-	format.sectors=options[FAT_CREATEOPTIONS_SECTORS].i;
-	format.heads=options[FAT_CREATEOPTIONS_HEADS].i;
-	format.tracks=options[FAT_CREATEOPTIONS_CYLINDERS].i;
+	format.sectors=options_[FAT_CREATEOPTIONS_SECTORS].i;
+	format.heads=options_[FAT_CREATEOPTIONS_HEADS].i;
+	format.tracks=options_[FAT_CREATEOPTIONS_CYLINDERS].i;
 #else
-	format=hd_formats[options[FAT_CREATEOPTIONS_TYPE].i];
+	format=hd_formats[options_[FAT_CREATEOPTIONS_TYPE].i];
 #endif
 
 	table->partition[3].bootflag=0x80;

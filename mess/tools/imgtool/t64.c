@@ -111,9 +111,9 @@ static int t64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void t64_image_closeenum(IMAGEENUM *enumeration);
 //static size_t t64_image_freespace(IMAGE *img);
 static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
+static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options);
 static int t64_image_deletefile(IMAGE *img, const char *fname);
-static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
+static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options);
 
 static struct OptionTemplate t64_createopts[] =
 {
@@ -146,7 +146,7 @@ IMAGEMODULE(
 	t64_image_create,					/* create image */
 	NULL,								/* read sector */
 	NULL,								/* write sector */
-	NULL,								/* file options */
+	NULL,								/* file _options */
 	t64_createopts						/* create options */
 )
 
@@ -287,7 +287,7 @@ static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
+static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options)
 {
 	t64_image *image=(t64_image*)img;
 	int size, fsize;
@@ -391,18 +391,18 @@ static int t64_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
+static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options)
 {
 	int entries;
 	t64_header header={ "T64 Tape archiv created by MESS\x1a" };
 	t64_entry entry= { 0 };
 	int i;
 
-	entries = options[T64_OPTION_ENTRIES].i;
+	entries = _options[T64_OPTION_ENTRIES].i;
 	if (entries==0) entries=10;
 	SET_UWORD(header.version, 0x0101);
 	SET_UWORD(header.max_entries, entries);
-	if (options[T64_OPTION_LABEL].s) strcpy(header.description, options[T64_OPTION_LABEL].s);
+	if (_options[T64_OPTION_LABEL].s) strcpy(header.description, _options[T64_OPTION_LABEL].s);
 	if (stream_write(f, &header, sizeof(t64_header)) != sizeof(t64_header)) 
 		return  IMGTOOLERR_WRITEERROR;
 	for (i=0; i<entries; i++) {

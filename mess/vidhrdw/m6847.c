@@ -1165,6 +1165,8 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 		bgc = fgc ^ 1;
 	}
 
+	assert(!character || ((character >= fontdata8x12) && (character < (fontdata8x12 + sizeof(pal_round_fontdata8x12)))));
+
 	*bg = bgc;
 	*fg = fgc;
 	return character;

@@ -20,10 +20,16 @@ System Driver Changes:
   Remaped some Spectrum+ keys. Added support to load .SP snapshots. Added .BLK
   tape images support. [Krzysztof Strzecha]
 
+- [COCO] Converted CoCo drivers to use configurable RAM sizes. [Nate Woods]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 
   update to this core.  [MAME team] 
+
+- The core now supports configurable RAM sizes; drivers can expose RAM
+  configurations (e.g. 4k, 16k, 32k etc) and on Windows, this setting is
+  exposed through a command line switch -ramsize.  [Nate Woods]
 
 - Fixed a bug that prevented introducing completely new software images when
   there was already one of that particular image type already loaded. [Nate

@@ -26,8 +26,8 @@ static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void rom16_image_closeenum(IMAGEENUM *enumeration);
 static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
-//static int rom16_image_create(STREAM *f, const geometry_options *options);
+static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
+//static int rom16_image_create(STREAM *f, const geometry_options *options_);
 
 IMAGEMODULE(
 	rom16,
@@ -180,7 +180,7 @@ static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
-							   const ResolvedOption *options)
+							   const ResolvedOption *options_)
 {
 	rom16_image *image=(rom16_image*)img;
 	int size;
@@ -207,9 +207,9 @@ static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 }
 
 #if 0
-static int rom16_image_create(STREAM *f, const ResolvedOption *options)
+static int rom16_image_create(STREAM *f, const ResolvedOption *options_)
 {
-//	if (options->label) strcpy(header.name, options->label);
+//	if (options_->label) strcpy(header.name, options->label);
 	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header))
 		? 0 : IMGTOOLERR_WRITEERROR;
 }

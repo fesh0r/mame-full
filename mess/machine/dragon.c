@@ -110,6 +110,9 @@ static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
 
+#define myMIN(a, b) ((a) < (b) ? (a) : (b))
+#define myMAX(a, b) ((a) > (b) ? (a) : (b))
+
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
  * don't have to worry abount accidently committing a version of the driver
@@ -207,17 +210,7 @@ static struct pia6821_interface coco3_pia_intf[] =
 	}
 };
 
-static struct sam6883_interface dragon_sam_intf =
-{
-	m6847_set_row_height,
-	m6847_set_video_offset,
-	d_sam_set_pageonemode,
-	d_sam_set_mpurate,
-	d_sam_set_memorysize,
-	NULL
-};
-
-static struct sam6883_interface dragon64_sam_intf =
+static struct sam6883_interface coco_sam_intf =
 {
 	m6847_set_row_height,
 	m6847_set_video_offset,
@@ -288,15 +281,15 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 
 static void pak_load_trailer(const pak_decodedtrailer *trailer)
 {
-	cpu_set_reg(M6809_PC, trailer->reg_pc);
-	cpu_set_reg(M6809_X, trailer->reg_x);
-	cpu_set_reg(M6809_Y, trailer->reg_y);
-	cpu_set_reg(M6809_U, trailer->reg_u);
-	cpu_set_reg(M6809_S, trailer->reg_s);
-	cpu_set_reg(M6809_DP, trailer->reg_dp);
-	cpu_set_reg(M6809_B, trailer->reg_b);
-	cpu_set_reg(M6809_A, trailer->reg_a);
-	cpu_set_reg(M6809_CC, trailer->reg_cc);
+	cpunum_set_reg(0, M6809_PC, trailer->reg_pc);
+	cpunum_set_reg(0, M6809_X, trailer->reg_x);
+	cpunum_set_reg(0, M6809_Y, trailer->reg_y);
+	cpunum_set_reg(0, M6809_U, trailer->reg_u);
+	cpunum_set_reg(0, M6809_S, trailer->reg_s);
+	cpunum_set_reg(0, M6809_DP, trailer->reg_dp);
+	cpunum_set_reg(0, M6809_B, trailer->reg_b);
+	cpunum_set_reg(0, M6809_A, trailer->reg_a);
+	cpunum_set_reg(0, M6809_CC, trailer->reg_cc);
 
 	/* I seem to only be able to get a small amount of the PIA state from the
 	 * snapshot trailers. Thus I am going to configure the PIA myself. The
@@ -353,6 +346,14 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		int trailerlen;
 		UINT8 trailerraw[500];
 
+		if (mess_ram_size < 0x10000) {
+#if LOG_PAK
+			logerror("Cannot load PAK files without at least 64k.\n");
+#endif
+			osd_fclose(fp);
+			return 1;
+		}
+
 		if (osd_fread(fp, &header, sizeof(header)) < sizeof(header)) {
 #if LOG_PAK
 			logerror("Could not fully read PAK.\n");
@@ -399,64 +400,40 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		if (paklength > 0xff00)
 			paklength = 0xff00;
 
-		/* Since PAK files allow the flexibility of loading anywhere in
-		 * the base RAM or ROM, we have to do tricks because in MESS's
-		 * memory, RAM and ROM may be separated, hense this function's
-		 * two parameters.
+		/* PAK files reflect the fact that JeffV's emulator did not appear to
+		 * differentiate between RAM and ROM memory.  So what we do when a PAK
+		 * loads is to copy the ROM into RAM, load the PAK into RAM, and then
+		 * copy the part of RAM corresponding to PAK ROM to the actual PAK ROM
+		 * area.
 		 *
-		 * Similarly, some PAKs appear to be loading into high RAM.  I
-		 * am not completely sure how to distinguish this, but I can
-		 * guess
+		 * It is ugly, but it reflects the way that JeffV's emulator works
 		 */
 
+		memcpy(rambase + 0x8000, rombase, 0x4000);
+		memcpy(rambase + 0xC000, pakbase, 0x3F00);
+
 		/* Get the RAM portion */
-		if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0x8000)) {
+		if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0xff00)) {
 			osd_fclose(fp);
 			return 1;
 		}
 
-		if (pakstart == 0x8000) {
-			/* We are probably loading into high RAM */
-			if ((rombase - rambase) < 0x10000) {
-				if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x8000, 0x7F00)) {
-					osd_fclose(fp);
-					return 1;
-				}
-			}
-		}
-		else {
-			/* Get the ROM portion */
-			if (load_pak_into_region(fp, &pakstart, &paklength, rombase, 0x8000, 0x4000)) {
-				osd_fclose(fp);
-				return 1;
-			}
-			/* Get the PAK portion */
-			if (load_pak_into_region(fp, &pakstart, &paklength, pakbase, 0xC000, 0x3F00)) {
-				osd_fclose(fp);
-				return 1;
-			}
-		}
+		memcpy(pakbase, rambase + 0xC000, 0x3F00);
 		osd_fclose(fp);
 	}
 	return INIT_PASS;
 }
 
-int dragon32_pak_load(int id)
+int coco_pak_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, &ROM[0], &ROM[0x8000], &ROM[0xc000]);
-}
-
-int dragon64_pak_load(int id)
-{
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, &ROM[0], &ROM[0x10000], &ROM[0x14000]);
+	return generic_pak_load(id, mess_ram, &ROM[0], &ROM[0x4000]);
 }
 
 int coco3_pak_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_pak_load(id, &ROM[0x70000], &ROM[0x80000], &ROM[0x8c000]);
+	return generic_pak_load(id, mess_ram + (0x70000 % mess_ram_size), &ROM[0x0000], &ROM[0xc000]);
 }
 
 /***************************************************************************
@@ -518,16 +495,10 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 	return INIT_PASS;
 }
 
-int dragon32_rom_load(int id)
+int coco_rom_load(int id)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0xc000], 0x4000);
-}
-
-int dragon64_rom_load(int id)
-{
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	return generic_rom_load(id, &ROM[0x14000], 0x4000);
+	return generic_rom_load(id, &ROM[0x4000], 0x4000);
 }
 
 int coco3_rom_load(int id)
@@ -544,11 +515,11 @@ int coco3_rom_load(int id)
 	if( count == 0 )
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM size is 32K max */
-		return generic_rom_load(id, &ROM[0x88000], 0x8000);
+		return generic_rom_load(id, &ROM[0x8000], 0x8000);
 	else
 		/* Load roms starting at 0x8000 and mirror upwards. */
 		/* ROM bank is 16K max */
-		return generic_rom_load(id, &ROM[0x88000], 0x4000);
+		return generic_rom_load(id, &ROM[0x8000], 0x4000);
 }
 
 /***************************************************************************
@@ -1146,20 +1117,15 @@ static READ_HANDLER ( d_pia1_pb_r_dragon )
 	/* This handles the reading of the memory sense switch (pb2) for the Dragon and CoCo 1,
 	 * and serial-in (pb0). Serial-in not yet implemented.
 	 */
+	int result;
 
-	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
-	{
-		case 0x00: /* 32/64K: wire output of pia0_pb7 to input pia1_pb2  */
-			return (pia0_pb & 0x80) >> 5;
-			break;
-		case 0x08: /* 16K: wire pia1_pb2 high */
-			return 0x04;
-			break;
-		case 0x10: /* 4K: wire pia1_pb2 low */
-			return 0x00;
-			break;
-	}
-	return 0;
+	if (mess_ram_size >= 0x8000)
+		result = (pia0_pb & 0x80) >> 5;
+	else if (mess_ram_size >= 0x4000)
+		result = 0x04;
+	else
+		result = 0x00;
+	return result;
 }
 
 static READ_HANDLER ( d_pia1_pb_r_coco2 )
@@ -1457,39 +1423,53 @@ static void coco3_timer_set_interval(int interval)
   MMU
 ***************************************************************************/
 
-WRITE_HANDLER ( dragon64_ram_w );
-WRITE_HANDLER ( dragon64_ram_w )
+static WRITE_HANDLER ( dragon64_ram_w )
 {
 	coco_ram_w(offset + 0x8000, data);
 }
 
 static void d_sam_set_maptype(int val)
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	if (val) {
-		cpu_setbank(1, &RAM[0x8000]);
-		memory_set_bankhandler_w(1, 0, dragon64_ram_w);
+	if (val && (mess_ram_size > 0x8000)) {
+		cpu_setbank(2, &mess_ram[0x8000]);
+		memory_set_bankhandler_w(2, 0, dragon64_ram_w);
 	}
 	else {
-		cpu_setbank(1, coco_rom);
-		memory_set_bankhandler_w(1, 0, MWA_ROM);
+		cpu_setbank(2, coco_rom);
+		memory_set_bankhandler_w(2, 0, MWA_ROM);
 	}
 }
 
 /* Coco 3 */
 
-int coco3_mmu_lookup(int block, int forceram);
-int coco3_mmu_lookup(int block, int forceram)
+/* This function translates a bank into an address within RAM; bank is a zero counted MAME bank */
+int coco3_mmu_translate(int bank, int offset)
 {
+	int forceram;
 	int result;
 
-	if (coco3_gimereg[0] & 0x40) {
-		if (coco3_gimereg[1] & 1)
-			block += 8;
-		result = coco3_mmu[block];
+	/* Bank 8 is the 0xfe00 block; and it is treated differently */
+	if (bank == 8) {
+		if (coco3_gimereg[0] & 8) {
+			assert(offset < 0x200);
+			return mess_ram_size - 0x200 + offset;
+		}
+		bank = 7;
+		offset += 0x1e00;
+		forceram = 1;
 	}
 	else {
-		result = block + 56;
+		forceram = 0;
+	}
+
+	/* Perform the MMU lookup */
+	if (coco3_gimereg[0] & 0x40) {
+		if (coco3_gimereg[1] & 1)
+			bank += 8;
+		result = coco3_mmu[bank];
+	}
+	else {
+		result = bank + 56;
 	}
 
 	/* Are we actually in ROM?
@@ -1512,33 +1492,15 @@ int coco3_mmu_lookup(int block, int forceram)
 			{ 0x44, 0x45, 0x46, 0x47 }
 		};
 		result = rommap[coco3_gimereg[0] & 3][result - 0x3c];
-	}
-
-	return result;
-}
-
-int coco3_mmu_translate(int block, int offset)
-{
-	int forceram;
-
-	/* Block 8 is the 0xfe00 block; and it is treated differently */
-	if (block == 8) {
-		if (coco3_gimereg[0] & 8)
-			return 0x7fe00 + offset;
-		block = 7;
-		offset += 0x1e00;
-		forceram = 1;
+		return ((result - 0x40) * 0x2000 + offset) | 0x80000000;
 	}
 	else {
-		forceram = 0;
+		return ((result * 0x2000) + offset) % mess_ram_size;
 	}
-	return (coco3_mmu_lookup(block, forceram) * 0x2000) + offset;
 }
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
-
 	static mem_write_handler handlers[] = {
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
@@ -1547,17 +1509,23 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 		coco3_ram_b9_w
 	};
 
-	int i;
-	UINT8 *p;
+	int i, offset;
 
 	for (i = lowblock; i <= hiblock; i++) {
-		p = &RAM[coco3_mmu_translate(i, 0)];
-		cpu_setbank(i + 1, p);
-		memory_set_bankhandler_w(i + 1, 0, ((p - RAM) >= 0x80000) ? MWA_ROM : handlers[i]);
+		offset = coco3_mmu_translate(i, 0);
+		if (offset & 0x80000000) {
+			offset &= ~0x80000000;
+			cpu_setbank(i + 1, &coco_rom[offset]);
+			memory_set_bankhandler_w(i + 1, 0, MWA_ROM);
+		}
+		else {
+			cpu_setbank(i + 1, &mess_ram[offset]);
+			memory_set_bankhandler_w(i + 1, 0, handlers[i]);
+		}
 #if LOG_MMU
 		logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
 			(i == 8) ? 0xfe00 : i * 0x2000,
-			p - RAM);
+			offset);
 #endif
 	}
 }
@@ -1956,14 +1924,12 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 
 static void coco_setcartbank(int bank)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	generic_setcartbank(bank, &ROM[0x14000]);
+	generic_setcartbank(bank, &coco_rom[0x4000]);
 }
 
 static void coco3_setcartbank(int bank)
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	generic_setcartbank(bank, &ROM[0x8C000]);
+	generic_setcartbank(bank, &coco_rom[0xC000]);
 }
 
 static const struct cartridge_callback coco_cartcallbacks =
@@ -1981,6 +1947,8 @@ static const struct cartridge_callback coco3_cartcallbacks =
 static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
 {
 	const struct cartridge_slot *cartslottype;
+
+	coco_rom = memory_region(REGION_CPU1);
 
 	cart_line = CARTLINE_CLEAR;
 	pia0_irq_a = CLEAR_LINE;
@@ -2017,20 +1985,23 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 void dragon32_init_machine(void)
 {
-	coco_rom = memory_region(REGION_CPU1) + 0x8000;
-	generic_init_machine(dragon_pia_intf, &dragon_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
+	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	generic_init_machine(dragon_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 }
 
 void coco_init_machine(void)
 {
-	coco_rom = memory_region(REGION_CPU1) + 0x10000;
-	generic_init_machine(dragon_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	generic_init_machine(dragon_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
 void coco2_init_machine(void)
 {
-	coco_rom = memory_region(REGION_CPU1) + 0x10000;
-	generic_init_machine(coco2_pia_intf, &dragon64_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
+	cpu_setbank(1, &mess_ram[0]);
+	memory_set_bankhandler_w(1, 0, coco_ram_w);
+	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
 void coco3_init_machine(void)
@@ -2047,7 +2018,6 @@ void coco3_init_machine(void)
 		coco3_gimereg[i] = 0;
 	}
 
-	coco_rom = memory_region(REGION_CPU1) + 0x80000;
 	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &cartridge_fdc_coco, &coco3_cartcallbacks);
 
 	coco3_mmu_update(0, 8);

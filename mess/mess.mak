@@ -686,6 +686,7 @@ COREOBJS += \
 	$(OBJ)/mess/device.o	       \
 	$(OBJ)/mess/config.o	       \
 	$(OBJ)/mess/filemngr.o	       \
+	$(OBJ)/mess/compcfg.o	       \
 	$(OBJ)/mess/tapectrl.o	       \
 	$(OBJ)/mess/menu.o	       \
 	$(OBJ)/mess/printer.o	       \
@@ -694,7 +695,7 @@ COREOBJS += \
 	$(OBJ)/mess/utils.o	       \
 	$(OBJ)/mess/bcd.o	       \
 	$(OBJ)/mess/gregoria.o	       \
-	$(OBJ)/mess/led.o			\
+	$(OBJ)/mess/led.o              \
 	$(OBJ)/mess/vidhrdw/state.o    \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \
