@@ -173,7 +173,7 @@ static void draw_background(struct osd_bitmap *bitmap, int transparency)
 /* TBD: need to handle sprites behind foreground? */
 static void draw_sprites(struct osd_bitmap *bitmap, int behind_foreground)
 {
-	int i,j;
+	int i;
 	int code;
 
 	for(i=7;i>=0;--i)
@@ -288,8 +288,6 @@ static int row_delay = 0;
 
 void stic_screenrefresh()
 {
-	int i,j;
-	int code;
 
 	logerror("%g: SCREEN_REFRESH\n",timer_get_time());
 
