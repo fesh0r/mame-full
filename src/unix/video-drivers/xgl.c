@@ -58,7 +58,10 @@ int alphablending=0; /* alphablending */
 
 int fullscreen = 0;
 int antialias=0;
+int antialiasvec=1;
 int translucency = 0;
+
+static int drawbitmapvec;
 
 XSetWindowAttributes window_attr;
 GLXContext glContext=NULL;
@@ -76,7 +79,7 @@ char * libGLUName=0;
 static char *gl_res = NULL;
 
 static const char * xgl_version_str = 
-	"\nGLmame v0.90, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.92, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -104,6 +107,9 @@ struct rc_option display_opts[] = {
    { "gldrawbitmap",	"glbitmap",		rc_bool,	&drawbitmap,
      "1",		0,			0,		NULL,
      "Enable/Disable the drawing of the bitmap - e.g. disable it within vector games for a speedup (default: true)" },
+   { "gldrawbitmapvec",	"glbitmapv",		rc_bool,	&drawbitmapvec,
+     "1",		0,			0,		NULL,
+     "Enable/Disable the drawing of the bitmap only for vector games - speedup (default: true)" },
    { "glcolormod",	"glcmod",		rc_bool,	&use_mod_ctable,
      "1",		0,			0,		NULL,
      "Enable/Disable color modulation (intensity,gamma) (default: true)" },
@@ -116,6 +122,9 @@ struct rc_option display_opts[] = {
    { "glantialias",	"glaa",			rc_bool,	&antialias,
      "1",		0,			0,		NULL,
      "Enable/disable antialiasing (default: true)" },
+   { "glantialiasvec",	"glaav",		rc_bool,	&antialiasvec,
+     "1",		0,			0,		NULL,
+     "Enable/disable vector antialiasing (default: true)" },
    { "gllibname",	"gllib",		rc_string,	&libGLName,
      "libGL.so",	0,			0,		NULL,
      "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
@@ -386,6 +395,9 @@ int sysdep_create_display(int depth)
 
 	XSetWMNormalHints(display,window,&hints);
   }
+
+  if ( (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR) 
+       && drawbitmap ) drawbitmap=drawbitmapvec;
 
   InitVScreen(depth);
 

@@ -77,6 +77,7 @@ int totalcolors;
 unsigned char gl_alpha_value;
 static int frame;
 
+static int screendirty;
 /* The squares that are tiled to make up the game screen polygon */
 
 struct TexSquare
@@ -87,6 +88,8 @@ struct TexSquare
   GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
   GLfloat fx1, fy1, fx2, fy2, fx3, fy3, fx4, fy4;
   GLfloat xcov, ycov;
+  int isDirty;
+  int dirtyXoff, dirtyYoff, dirtyWidth, dirtyHeight;
 };
 
 static struct TexSquare *texgrid;
@@ -170,11 +173,11 @@ void gl_bootstrap_resources()
   cabload_err=0;
   drawbitmap = 1;
   dopersist = 0;
-  screendirty = 1;
   dodepth = 1;
   totalcolors=0;
   gl_alpha_value = 255;
   frame = 0;
+  screendirty = 1;
 
   texnumx=0;
   texnumy=0;
@@ -247,10 +250,10 @@ void gl_reset_resources()
   palette_changed = 0;
   cabload_err=0;
   dopersist = 0;
-  screendirty = 1;
   dodepth = 1;
   gl_alpha_value = 255;
   frame = 0;
+  screendirty = 1;
 
   texnumx=0;
   texnumy=0;
@@ -456,14 +459,12 @@ void gl_set_cabview (int new_value)
   }
 }
 
-void gl_set_antialias (int new_value)
+int gl_stream_antialias (int aa)
 {
-  antialias = new_value;
-
   if (gl_is_initialized == 0)
-    return;
+    return aa;
 
-  if (antialias)
+  if (aa)
   {
     disp__glShadeModel (GL_SMOOTH);
     disp__glEnable (GL_POLYGON_SMOOTH);
@@ -477,16 +478,21 @@ void gl_set_antialias (int new_value)
     disp__glDisable (GL_LINE_SMOOTH);
     disp__glDisable (GL_POINT_SMOOTH);
   }
+
+  return aa;
 }
 
-void gl_set_alphablending (int new_value)
+void gl_set_antialias (int new_value)
 {
-  alphablending = new_value;
+  antialias = gl_stream_antialias(new_value);
+}
 
+int gl_stream_alphablending (int alpha)
+{
   if (gl_is_initialized == 0)
-    return;
+    return alpha;
 
-  if (alphablending)
+  if (alpha)
   {
     disp__glEnable (GL_BLEND);
     disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -495,6 +501,13 @@ void gl_set_alphablending (int new_value)
   {
     disp__glDisable (GL_BLEND);
   }
+
+  return alpha;
+}
+
+void gl_set_alphablending (int new_value)
+{
+  alphablending = gl_stream_alphablending(new_value);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -530,7 +543,6 @@ void gl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 
 void gl_update_32_to_32bpp(struct mame_bitmap *bitmap)
 {
-
    if(current_palette->lookup)
    {
    	if(!blit_notified) printf("GLINFO: 32bpp palette lookup bitblit\n");
@@ -552,7 +564,6 @@ void gl_update_32_to_32bpp(struct mame_bitmap *bitmap)
 	 */
    }
    blit_notified = 1;
-
 }
 
 int sysdep_display_16bpp_capable (void)
@@ -657,10 +668,9 @@ void InitVScreen (int depth)
 	  gl_bitmap_format = GL_COLOR_INDEX;
 	  gl_bitmap_type   = GL_UNSIGNED_BYTE;
 
-	  printf("GLINFO: Offering depth=%d, writable colors=%d (color index mode)\n",
+	  printf("GLINFO: Offering depth=%d, writable colors=%d (color index mode 8)\n",
 	  	display_palette_info.depth, display_palette_info.writable_colors);
           fflush(NULL);
-
   } else {
 	  useColorBlitter = useColorIndex;
 
@@ -1106,6 +1116,16 @@ void InitTextures ()
       tsq->isTexture=GL_FALSE;
       tsq->texobj=0;
 
+      tsq->dirtyXoff=0; tsq->dirtyYoff=0; 
+      if (use_dirty)
+      {
+	      tsq->isDirty=GL_FALSE;
+	      tsq->dirtyWidth=-1; tsq->dirtyHeight=-1;
+      } else {
+	      tsq->isDirty=GL_TRUE;
+	      tsq->dirtyWidth=text_width; tsq->dirtyHeight=text_height;
+      }
+
       disp__glGenTextures (1, &(tsq->texobj));
 
       disp__glBindTexture (GL_TEXTURE_2D, tsq->texobj);
@@ -1199,10 +1219,8 @@ sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
 {
     int cofs=pen*(alphablending?4:3);
 
-    /*
     printf("trying to set color table: %d (%X/%X/%X)\n",
     	pen, (int)red, (int)green, (int)blue);
-	*/
 
     if(pen>ctable_size)
     	return 1;
@@ -1439,11 +1457,97 @@ WAvg (GLfloat perc, GLfloat x1, GLfloat y1, GLfloat z1,
   *az = (1.0 - perc) * z1 + perc * z2;
 }
 
+void gl_dirty_init(void)
+{
+	printf ("GLINFO: dirty strategie on!\n");
+}
+
+void gl_dirty_close(void)
+{
+	printf ("GLINFO: dirty strategie off!\n");
+}
+
+void gl_mark_dirty(int x, int y, int x2, int y2)
+{
+	struct TexSquare *square;
+	int xi, yi, wd, ht, wh, hh;
+	int wdecr, hdecr, xh, yh;
+	int w = (x2-x)+1;
+	int h = (y2-y)+1;
+
+	screendirty = 1;
+
+	if (!use_dirty)
+		return;
+
+	wdecr=w; hdecr=h; xh=x; yh=y;
+
+	for (yi = 0; hdecr>0 && yi < texnumy; yi++)
+	{
+	    if (yi < texnumy - 1)
+	      ht = text_height;
+	    else
+	      ht = visual_height - text_height * yi;
+
+	    xh =x;
+	    wdecr =w;
+
+	    for (xi = 0; wdecr>0 && xi < texnumx; xi++)
+	    {
+		square = texgrid + yi * texnumx + xi;
+
+		if (xi < texnumx - 1)
+		  wd = text_width;
+		else
+		  wd = visual_width - text_width * xi;
+
+		if( 0 <= xh && xh < wd &&
+		    0 <= yh && yh < ht
+		  )
+		{
+			square->isDirty=GL_TRUE;
+
+			wh=(wdecr<wd)?wdecr:wd-xh;
+			if(wh<0) wh=0;
+
+			hh=(hdecr<ht)?hdecr:ht-yh;
+			if(hh<0) hh=0;
+
+			/*
+			#ifndef NDEBUG
+			     printf("\t %dx%d, %d/%d (%dx%d): %d/%d (%dx%d)\n", 
+				xi, yi, xh, yh, wdecr, hdecr, xh, yh, wh, hh);
+			#endif
+			*/
+
+			if(xh<square->dirtyXoff)
+				square->dirtyXoff=xh;
+
+			if(yh<square->dirtyYoff)
+				square->dirtyYoff=yh;
+
+			square->dirtyWidth = wd-square->dirtyXoff;
+			square->dirtyHeight = ht-square->dirtyYoff;
+			
+			wdecr-=wh;
+
+			if ( xi == texnumx - 1 )
+				hdecr-=hh;
+		}
+
+		xh-=wd;
+		if(xh<0) xh=0;
+	    }
+	    yh-=ht;
+	    if(yh<0) yh=0;
+       }
+}
+
 void
 drawTextureDisplay (int useCabinet, int updateTexture)
 {
   struct TexSquare *square;
-  int x, y, xoff=0, yoff=0, wd, ht;
+  int x, y;
   GLenum err;
   static const float z_pos = 0.9f;
 
@@ -1528,34 +1632,22 @@ drawTextureDisplay (int useCabinet, int updateTexture)
       }
 
       /* This is the quickest way I know of to update the texture */
-      if (updateTexture)
+      if (updateTexture && square->isDirty)
       {
-	if(use_dirty && dirtyRectNumber==1 && texnumx==1 && texnumy==1)
-	{
-		xoff=firstDirtyRect.min_x;
-		yoff=firstDirtyRect.min_y;
-		wd=(firstDirtyRect.max_x-xoff)+1;
-		ht=(firstDirtyRect.max_y-yoff)+1;
-		dirtyRectNumber=0;
-		#ifndef NDEBUG
-			printf("GLDEBUG: <dirty used>\n");
-		#endif
-	} else {
-		if (x < texnumx - 1)
-		  wd = text_width;
-		else
-		  wd = visual_width - text_width * x;
+	   disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
+		 square->dirtyXoff, square->dirtyYoff,
+		 square->dirtyWidth, square->dirtyHeight,
+		 gl_bitmap_format, gl_bitmap_type, square->texture);
 
-		if (y < texnumy - 1)
-		  ht = text_height;
-		else
-		  ht = visual_height - text_height * y;
-	}
-
-	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 
-	                 xoff, yoff,
-			 wd, ht,
-			 gl_bitmap_format, gl_bitmap_type, square->texture);
+           square->dirtyXoff=0; square->dirtyYoff=0; 
+	   if (use_dirty)
+	   {
+	      square->isDirty=GL_FALSE;
+	      square->dirtyWidth=-1; square->dirtyHeight=-1;
+           } else {
+	      square->isDirty=GL_TRUE;
+	      square->dirtyWidth=text_width; square->dirtyHeight=text_height;
+	   }
       }
 
       if (useCabinet)
@@ -1705,7 +1797,7 @@ void UpdateCabDisplay (void)
     disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
     disp__glShadeModel (GL_FLAT);
 
-    if (antialias)
+    if (antialiasvec)
     {
       disp__glEnable (GL_LINE_SMOOTH);
       disp__glEnable (GL_POINT_SMOOTH);
@@ -1713,7 +1805,7 @@ void UpdateCabDisplay (void)
 
     disp__glCallList (veclist);
 
-    if (antialias)
+    if (antialiasvec && !antialias)
     {
       disp__glDisable (GL_LINE_SMOOTH);
       disp__glDisable (GL_POINT_SMOOTH);
@@ -1802,10 +1894,11 @@ UpdateFlatDisplay (void)
 
   if (vecgame)
   {
+    disp__glDisable (GL_TEXTURE_2D);
     disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
     disp__glShadeModel (GL_FLAT);
 
-    if (antialias)
+    if (antialiasvec)
     {
       disp__glEnable (GL_LINE_SMOOTH);
       disp__glEnable (GL_POINT_SMOOTH);
@@ -1813,7 +1906,7 @@ UpdateFlatDisplay (void)
 
     disp__glCallList (veclist);
 
-    if (antialias)
+    if (antialiasvec && !antialias)
     {
       disp__glDisable (GL_LINE_SMOOTH);
       disp__glDisable (GL_POINT_SMOOTH);
@@ -1925,8 +2018,14 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   {
     if (keyboard_pressed_memory (KEYCODE_A))
     {
-	  gl_set_antialias (1-antialias);
-          printf("GLINFO: switched antialias := %d\n", antialias);
+    	  if(vecgame)
+	  {
+		  antialiasvec = 1-antialiasvec;
+		  printf("GLINFO: switched antialias := %d\n", antialiasvec);
+	  } else {
+		  gl_set_antialias (1-antialias);
+		  printf("GLINFO: switched antialias := %d\n", antialias);
+	  }
     }
     else if (keyboard_pressed_memory (KEYCODE_B))
     {

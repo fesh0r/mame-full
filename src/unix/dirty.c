@@ -2,7 +2,9 @@
 #include "driver.h"
 
 #ifdef xgl
-	#include "video-drivers/gldirty.h"
+        extern void gl_dirty_init(void);
+        extern void gl_dirty_close(void);
+	extern void gl_mark_dirty(int x1, int y1, int x2, int y2);
 #endif
 
 /* hmm no more way to find out what the width and height of the screenbitmap
@@ -53,7 +55,7 @@ int osd_dirty_init(void)
       }
    }
    #ifdef xgl
-	gl_dirty_init();
+      if(use_dirty) gl_dirty_init();
    #endif
    
    return OSD_OK;
@@ -73,7 +75,7 @@ void osd_dirty_close(void)
       free (dirty_lines);
    }
    #ifdef xgl
-	gl_dirty_close();
+      if(use_dirty) gl_dirty_close();
    #endif
 }
 
@@ -98,9 +100,9 @@ void osd_mark_dirty(int x1, int y1, int x2, int y2)
 	         dirty_blocks[y][x] = 1;
 	      }
 	   }
+           #ifdef xgl
+	       gl_mark_dirty(x1, y1, x2, y2);
+           #endif
 	}
-	#ifdef xgl
-		gl_mark_dirty(x1, y1, x2, y2);
-	#endif
 }
 

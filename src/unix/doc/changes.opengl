@@ -1,4 +1,4 @@
-GLMame v 0.88 Mame Display Driver
+GLMame v 0.92 Mame Display Driver
 =================================
 
 Sven Goethel
@@ -10,6 +10,58 @@ MAME License
 Based upon GLmame v0.6 driver for xmame, written by Mike Oliphant
 
 peace, sven
+
+  01/December/2001 GLMame OpenGL-Display-Driver Version 0.92
+  =================================================================
+  	o clean up: glvec.c again 
+
+	o added 2 new options for vector games:
+
+	  -[no]glantialiasvec, -[no]glaav , default true !
+	   Enable/disable vector antialiasing
+	   (otherwise 16bpp opengl displays looks kinda bad ..)
+
+	  -[no]gldrawbitmapvec, -[no]glbitmapv, default true
+	   Enable/Disable the drawing of the bitmap only for vector games - speedup
+	   
+	   (remember, you can also toggle this via RALT-O)
+
+	o  added vector flickering ;-)
+
+	o because of the buggy dirty-code,
+	  i recommend you use -nodirty for opengl as default ..
+
+
+  27/November/2001 GLMame OpenGL-Display-Driver Version 0.91
+  =================================================================
+  	o clean up: glvec.c, glgen.c 
+
+	o removed gldirty.[ch]
+	  added functionality to glgen.c
+
+	o added new dirty strategie to glgen's texture handling ..
+	  as for mplayer ;-)
+	  
+	  WARNING: still needs -nodirty flag for some games,
+	  like atetris !
+
+	o still don't know how to handle effect's .. ! HELP !
+
+	o WARNING: modified src/cpu/v60/v60.c to being compiled
+	  under PPC architecture !
+
+  18/November/2001 GLMame OpenGL-Display-Driver Version 0.90
+  =================================================================
+        - true color vector game bug (all vector game colors are true since 0.5x.y)
+
+        - using blit.h for 16bpp colorIndex mapping only,
+          e.g. true color games don't need it .. (xexex, shocking, ..)
+          -> useColorBlitter !
+
+        - added an own texture memory with BITMAP_SAFETY's,
+          if using useColorBlitter !
+
+        - removed color bpp "guessing" - this fixes some neogeo problems ..
 
   20/August/2001 GLMame OpenGL-Display-Driver Version 0.88
   =================================================================

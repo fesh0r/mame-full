@@ -48,14 +48,18 @@ static int vecwidth;
 static int vecheight;
 static int vecshift;
 
-static float intensity_correction = 2.0;
 static GLfloat vecoldx,vecoldy;
 
 float gl_beam=1.0;
+static int flicker;                              /* beam flicker value     */
 
 static int vector_orientation;
 
+/*
+static float gamma_correction = 1.2;
+*/
 static float flicker_correction = 0.0;
+static float intensity_correction = 1.5;
 
 /*
  * multiply and divide routines for drawing lines
@@ -109,6 +113,64 @@ void set_gl_beam(float new_value)
 float get_gl_beam()
 { return gl_beam; }
 
+void vector_set_flip_x (int flip)
+{
+	if (flip)
+		vector_orientation |= ORIENTATION_FLIP_X;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_X;
+}
+
+void vector_set_flip_y (int flip)
+{
+	if (flip)
+		vector_orientation |= ORIENTATION_FLIP_Y;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_Y;
+}
+
+void vector_set_swap_xy (int swap)
+{
+	if (swap)
+		vector_orientation |= ORIENTATION_SWAP_XY;
+	else
+		vector_orientation &= ~ORIENTATION_SWAP_XY;
+}
+
+/*
+void vector_set_gamma(float _gamma)
+{
+	gamma_correction = _gamma;
+}
+
+float vector_get_gamma(void)
+{
+	return gamma_correction;
+}
+*/
+
+void vector_set_flicker(float _flicker)
+{
+	flicker_correction = _flicker;
+	flicker = (int)(flicker_correction * 2.55);
+}
+
+float vector_get_flicker(void)
+{
+	return flicker_correction;
+}
+
+void vector_set_intensity(float _intensity)
+{
+	intensity_correction = _intensity;
+}
+
+float vector_get_intensity(void)
+{
+	return intensity_correction;
+}
+
+
 /*
  * Initializes vector game video emulation
  */
@@ -132,7 +194,9 @@ int vector_vh_start (void)
 	listcreated=1;
 
 	set_gl_beam(gl_beam);
-  return 0;
+	vector_set_flicker(options.vector_flicker);
+
+  	return 0;
 }
 
 /*
@@ -181,18 +245,6 @@ int PointConvert(int x,int y,GLfloat *sx,GLfloat *sy,GLfloat *sz)
 
   x1=x>>vecshift;
   y1=y>>vecshift;
-
-  /**
-   * JAU: funny hack .. some coords are not within 
-   *      the area [0/0] .. [vecwidth/vecheight] !
-   */
-   /*
-  if(x1>vecwidth) x1=vecwidth;
-  else if(x1<0) x1=0;
-
-  if(y1>vecheight) y1=vecheight;
-  else if(y1<0) y1=0;
-  */
 
   dx=(GLfloat)x1/(GLfloat)vecwidth;
   dy=(GLfloat)y1/(GLfloat)vecheight;
@@ -245,44 +297,79 @@ static void vector_begin_list(void)
   inbegin=1;
 }
 
+
 /*
  * Adds a line end point to the vertices list. The vector processor emulation
  * needs to call this.
  */
-
-#define LIMIT8(x) (((x) < 0xff)? (x) : 0xff)
-
 void vector_add_point (int x, int y, int color, int intensity)
 {
   unsigned char r1,g1,b1;
-  float red, green, blue, gamma_correction;
+  float red=0.0, green=0.0, blue=0.0;
   GLfloat sx,sy,sz;
+  int ptHack=0;
   int ok;
+  int gamma_correction = osd_get_gamma();
 
   if(!inlist)
 	vector_begin_list();
 
-  intensity *= intensity_correction/2.0;
-
   ok = PointConvert(x,y,&sx,&sy,&sz);
 
-  if(intensity==0) {
-  	if(inbegin) {
+  b1 =   color        & 0xff ;
+  g1 =  (color >>  8) & 0xff ;
+  r1 =  (color >> 16) & 0xff ;
+
+  if(intensity<0)
+	intensity=0;
+
+  if(sx==vecoldx&&sy==vecoldy&&inbegin&&intensity>0) 
+  {
+	  /**
+	   * Hack to draw points -- zero-length lines don't show up
+	   *
+	   * But games, e.g. tacscan have zero lines within the LINE_STRIP,
+	   * so we do try to continue the line strip :-)
+	   *
+	   * Part 1
+	   */
+	  GL_END();
+	  inbegin=0;
+  	  ptHack=1;
+  } else {
+  	  
+	  /**
+	   * the usual "normal" way ..
+	   */
+	  if(intensity==0&&inbegin)
+	  {
 		GL_END();
 		inbegin=0;
-	}
-	GL_BEGIN(GL_LINE_STRIP);
-	inbegin=1;
+	  }
+
+	  if(!inbegin)
+	  {
+		GL_BEGIN(GL_LINE_STRIP);
+		inbegin=1;
+	  }
+  	  ptHack=0;
   }
 
-  b1 = LIMIT8( (color & 0xff) ) ;
-  g1 = LIMIT8( ((color >> 8) & 0xff) ) ;
-  r1 = LIMIT8( (color >> 16) );
+  intensity *= intensity_correction;
+  if (intensity > 0xff)
+	intensity = 0xff;
+
+  if (flicker && (intensity > 0))
+  {
+	intensity += (intensity * (0x80-(rand()&0xff)) * flicker)>>16;
+	if (intensity < 0)
+		intensity = 0;
+	if (intensity > 0xff)
+		intensity = 0xff;
+  }
 
   if(use_mod_ctable)
   {
-	  gamma_correction = osd_get_gamma();
-	  
 	  red   = (float)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
 	  green = (float)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
 	  blue  = (float)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
@@ -291,16 +378,20 @@ void vector_add_point (int x, int y, int color, int intensity)
 	  disp__glColor3ub(r1, g1, b1);
   }
 
-  /**
-   * Hack to draw points -- zero-length lines don't show up
-   *
-   * But games, e.g. tacscan have zero lines within the LINE_STRIP,
-   * so we do try to continue the line strip :-)
-   */
-  if(sx==vecoldx&&sy==vecoldy) {
+  if(ptHack)
+  {
+	/**
+	 * Hack to draw points -- zero-length lines don't show up
+	 *
+	 * But games, e.g. tacscan have zero lines within the LINE_STRIP,
+	 * so we do try to continue the line strip :-)
+	 *
+	 * Part 2
+	 */
   	if(inbegin) {
-		GL_END();
-		inbegin=0;
+	        /* see above Part 1 */
+		fprintf(stderr,"GLERROR: never ever at %s, %d\n",
+			__FILE__, __LINE__);
 	}
 	GL_BEGIN(GL_POINTS);
 	inbegin=1;
@@ -309,10 +400,9 @@ void vector_add_point (int x, int y, int color, int intensity)
 	  disp__glVertex3d(sx,sy,sz);
 	else disp__glVertex2d(sx,sy);
 
-  	if(inbegin) {
-		GL_END();
-		inbegin=0;
-	}
+	GL_END();
+	inbegin=0;
+
 	GL_BEGIN(GL_LINE_STRIP);
 	inbegin=1;
   }
@@ -390,70 +480,5 @@ void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	vector_vh_update (bitmap, full_refresh);
 }
 
-
-/*
-void vector_vh_update_backdrop(struct mame_bitmap *bitmap, struct artwork *a, int full_refresh)
-{
-   osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-   vector_vh_update(bitmap, full_refresh);
-}
-
-void vector_vh_update_overlay(struct mame_bitmap *bitmap, struct artwork *a, int full_refresh)
-{
-   osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-   vector_vh_update(bitmap, full_refresh);
-}
-
-void vector_vh_update_artwork(struct mame_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh)
-{
-   osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
-   vector_vh_update(bitmap, full_refresh);
-}
-*/
-
-void vector_set_intensity(float _intensity)
-{
-	intensity_correction = _intensity;
-}
-
-float vector_get_intensity(void)
-{
-	return intensity_correction;
-}
-
-void vector_set_flip_x (int flip)
-{
-	if (flip)
-		vector_orientation |= ORIENTATION_FLIP_X;
-	else
-		vector_orientation &= ~ORIENTATION_FLIP_X;
-}
-
-void vector_set_flip_y (int flip)
-{
-	if (flip)
-		vector_orientation |= ORIENTATION_FLIP_Y;
-	else
-		vector_orientation &= ~ORIENTATION_FLIP_Y;
-}
-
-void vector_set_swap_xy (int swap)
-{
-	if (swap)
-		vector_orientation |= ORIENTATION_SWAP_XY;
-	else
-		vector_orientation &= ~ORIENTATION_SWAP_XY;
-}
-
-void vector_set_flicker(float _flicker)
-{
-	flicker_correction = _flicker;
-	/* flicker = (int)(flicker_correction * 2.55); */
-}
-
-float vector_get_flicker(void)
-{
-	return flicker_correction;
-}
 
 #endif /* ifdef xgl */
