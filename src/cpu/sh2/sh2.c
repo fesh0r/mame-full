@@ -2128,7 +2128,7 @@ int sh2_execute(int cycles)
 		sh2.pc += 2;
 		sh2.ppc = sh2.pc;
 
-		switch ((opcode >> 12) & 0x0f)
+		switch ((opcode >> 12) & 15)
 		{
 		case  0: op0000(opcode); break;
 		case  1: op0001(opcode); break;

@@ -87,98 +87,134 @@ WRITE_HANDLER( saturn_rom_w )	/* ROM */
 
 READ_HANDLER( saturn_workl_ram_r )
 {
-	return mem[SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1))];
+    offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
+	return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_workl_ram_w )
 {
-	mem[SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_workh_ram_r )
 {
-	return mem[SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1))];
+	offs_t ea = SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_workh_ram_w )
 {
-	mem[SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_sound_ram_r )
 {
-	return mem[SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1))];
+	offs_t ea = SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_sound_ram_w )
 {
-	mem[SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_vdp1_ram_r )
 {
-	return mem[SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1))];
+	offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_vdp1_ram_w )
 {
-	mem[SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_vdp2_ram_r )
 {
-	return mem[SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1))];
+	offs_t ea = SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_vdp2_ram_w )
 {
-	mem[SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_fb1_ram_r )
 {
-	return mem[SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1))];
+	offs_t ea = SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_fb1_ram_w )
 {
-	mem[SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_fb2_ram_r )
 {
-	return mem[SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1))];
+	offs_t ea = SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_fb2_ram_w )
 {
-	mem[SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_color_ram_r )
 {
-	return mem[SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1))];
+	offs_t ea = SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_color_ram_w )
 {
-	mem[SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_back_ram_r )
 {
-	return mem[SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1))];
+	offs_t ea = SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1));
+    return READ_WORD(&mem[ea]);
 }
 
 WRITE_HANDLER( saturn_back_ram_w )
 {
-	mem[SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1))] = data;
+	offs_t ea = SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1));
+	data_t oldword = READ_WORD(&mem[ea]);
+	data_t newword = COMBINE_WORD(oldword, data);
+	WRITE_WORD(&mem[ea], newword);
 }
 
 READ_HANDLER( saturn_smpc_r )   /* SMPC */
 {
     logerror("saturn_smpc_r  %07x\n", offset);
-    return 0xff;
+	return 0xffff;
 }
 
 WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
@@ -189,7 +225,7 @@ WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
 READ_HANDLER( saturn_cs0_r )    /* CS0 */
 {
 	logerror("saturn_cs0_r   %07x\n", offset);
-    return 0xff;
+	return 0xffff;
 }
 
 WRITE_HANDLER( saturn_cs0_w )	/* CS0 */
@@ -200,7 +236,7 @@ WRITE_HANDLER( saturn_cs0_w )	/* CS0 */
 READ_HANDLER( saturn_cs1_r )    /* CS1 */
 {
     logerror("saturn_cs1_r   %07x\n", offset);
-    return 0xff;
+	return 0xffff;
 }
 
 WRITE_HANDLER( saturn_cs1_w )	/* CS1 */
@@ -211,7 +247,7 @@ WRITE_HANDLER( saturn_cs1_w )	/* CS1 */
 READ_HANDLER( saturn_cs2_r )    /* CS2 */
 {
     logerror("saturn_cs2_r   %07x\n", offset);
-    return 0xff;
+	return 0xffff;
 }
 
 WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
@@ -489,7 +525,7 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 READ_HANDLER( saturn_minit_r )  /* MINIT */
 {
 	logerror("saturn_minit_r %07x\n", offset);
-    return 0xff;
+	return 0x00;
 }
 
 WRITE_HANDLER( saturn_minit_w )  /* MINIT */
@@ -504,7 +540,7 @@ WRITE_HANDLER( saturn_minit_w )  /* MINIT */
 READ_HANDLER( saturn_sinit_r )  /* SINIT */
 {
 	logerror("saturn_sinit_r %07x\n", offset);
-	return 0xff;
+	return 0x00;
 }
 
 WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
