@@ -707,7 +707,7 @@ static void coco3_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct 
 #endif
 
 	rows = coco3_calculate_rows(&border_top, NULL);
-	coco3_vidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
+	coco3_vidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8))) % mess_ram_size;
 
 	internal_m6847_rastertrack_newscreen(vvars, hvars, border_top, rows, coco3_vidbase, !coco3_hires, coco3_rastertrack_getvideomode);
 }

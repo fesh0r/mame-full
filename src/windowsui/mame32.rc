@@ -683,6 +683,11 @@ BEGIN
                     WS_TABSTOP,50,64,163,10,0,HIDC_CHEAT
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,50,79,163,10,0,HIDC_LOG
+#ifdef MESS
+    LTEXT           "RAM size",IDC_RAM_CAPTION,50,94,50,10
+    COMBOBOX        IDC_RAM_COMBOBOX,100,94,80,76,CBS_DROPDOWNLIST | WS_VSCROLL |
+                    WS_TABSTOP
+#endif
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,HIDC_USE_DEFAULT

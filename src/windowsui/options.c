@@ -228,7 +228,8 @@ static REG_OPTIONS regGameOpts[] =
 #ifdef MESS
 	/* mess options */
 	{ "extra_software",			RO_STRING,	&gOpts.extra_software_paths,	0, 0},
-	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0}
+	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0},
+	{ "ram_size",				RO_BOOL,	&gOpts.ram_size,			0, 0}
 #endif
 };
 

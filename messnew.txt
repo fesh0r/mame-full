@@ -43,8 +43,10 @@ Source Changes:
 - [Windows] Fixed a bug in the core that caused the MESS process to not die if
   the close box was pressed, and the UI was disabled (bug #170). [Nate Woods]
  
-- [IMGTOOL/Windows] Added wildcarding support, since the Windows shell doesn't
-  do this by default. [Nate Woods]
+- [Windows] Fixed a bug in the UI that caused heap corruptions. [Nate Woods]
+
+- [IMGTOOL/Windows] Added wildcard support in the put command, since the
+  Windows shell doesn't do this by default. [Nate Woods] 
   
 - [IMGTOOL/FAT driver] Fixed bug where files would get stored into a FAT image
   without forcing the filename to upper case. [Nate Woods]

@@ -1143,7 +1143,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 		sprintf(o->aspect, "%d:%d", n, d);
 	}
 #ifdef MESS
-	SoftwareDirectories_GetList(hWnd, pGameOpts->extra_software_paths, sizeof(pGameOpts->extra_software_paths) / sizeof(pGameOpts->extra_software_paths[0]));
+	MessPropToOptions(hWnd, o);
 #endif
 }
 
@@ -1349,7 +1349,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	}
 
 #ifdef MESS
-	SoftwareDirectories_InitList(hWnd, pGameOpts->extra_software_paths);
+	MessOptionsToProp(hWnd, o);
 #endif
 
 	g_bInternalSet = FALSE;

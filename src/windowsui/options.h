@@ -189,6 +189,7 @@ typedef struct
 #ifdef MESS
 	BOOL   use_new_filemgr;
 	char   extra_software_paths[MAX_PATH * 10];
+	UINT32 ram_size;
 #endif
 } options_type;
 

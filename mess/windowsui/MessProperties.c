@@ -6,14 +6,16 @@
 
 #include <windows.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windowsui/mame32.h"
 #include "windowsui/Directories.h"
 #include "mess/mess.h"
 #include "mess/utils.h"
 
-static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen);
-static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList);
+static void MessOptionsToProp(HWND hWnd, options_type *o);
+static void MessPropToOptions(HWND hWnd, options_type *o);
+
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
@@ -279,34 +281,81 @@ static BOOL SoftwareDirectories_OnNotify(HWND hDlg, int id, NMHDR* pNMHDR)
     return FALSE;
 }
 
-#ifdef USED
-static INT_PTR CALLBACK GameSoftwareOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+static void RamSize_InitList(HWND hDlg, UINT32 default_ram)
 {
+	char buf[RAM_STRING_BUFLEN];
+	int i, ramopt_count, sel, default_index;
+	UINT32 ramopt, default_ramopt;
+	HWND hRamComboBox, hRamCaption;
+	const struct GameDriver *gamedrv;
 
-    switch (Msg)
-    {
-    case WM_INITDIALOG:
-        /* Fill in the Game info at the top of the sheet */
-        Static_SetText(GetDlgItem(hDlg, IDC_PROP_TITLE), GameInfoTitle(g_nGame));
+	gamedrv = drivers[g_nGame];
 
+	/* how many RAM options do we have? */
+	ramopt_count = ram_option_count(gamedrv);
 
-		SoftwareDirectories_InitList(hDlg, pGameOpts->extra_software_paths);
-		return 1;
+	/* locate the controls */
+	hRamComboBox = GetDlgItem(hDlg, IDC_RAM_COMBOBOX);
+	hRamCaption = GetDlgItem(hDlg, IDC_RAM_CAPTION);
+	if (!hRamComboBox || !hRamCaption)
+		return;
 
-	case WM_COMMAND:
-        HANDLE_WM_COMMAND(hDlg, wParam, lParam, SoftwareDirectories_OnCommand);
-        return TRUE;
+	if (ramopt_count > 0)
+	{
+		/* we have RAM options */
+		ComboBox_ResetContent(hRamComboBox);
+		default_ramopt = ram_default(gamedrv);
+		default_index = sel = -1;
 
-	case WM_NOTIFY:
-        return (BOOL)HANDLE_WM_NOTIFY(hDlg, wParam, lParam, SoftwareDirectories_OnNotify);
+		for (i = 0; i < ramopt_count; i++)
+		{
+			ramopt = ram_option(gamedrv, i);
+			ram_string(buf, ramopt);
+			ComboBox_AddString(hRamComboBox, buf);
+			ComboBox_SetItemData(hRamComboBox, i, ramopt);
 
-	case WM_CLOSE:
-		return 1;  //DirectoriesDialogProc(hDlg, WM_CLOSE, wParam, lParam);
-
-	case WM_DESTROY:
-		return 1;  //DirectoriesDialogProc(hDlg, WM_DESTROY, wParam, lParam);
-	};
-
-	return 0;
+			if (sel < 0) {
+				if (default_ramopt == ramopt)
+					default_index = i;
+				else if (default_ram == ramopt)
+					sel = i;
+			}
+		}
+		
+		if (sel < 0) {
+			assert(default_index > 0);
+			sel = default_index;
+		}
+		ComboBox_SetCurSel(hRamComboBox, sel);
+	}
+	else
+	{
+		/* we do not have RAM options */
+		ShowWindow(hRamComboBox, SW_HIDE);
+		ShowWindow(hRamCaption, SW_HIDE);
+	}
 }
-#endif
+
+static void MessOptionsToProp(HWND hWnd, options_type* o)
+{
+	SoftwareDirectories_InitList(hWnd, o->extra_software_paths);
+	RamSize_InitList(hWnd, o->ram_size);
+}
+
+static void MessPropToOptions(HWND hWnd, options_type *o)
+{
+	HWND hRamComboBox;
+	int nIndex;
+
+	SoftwareDirectories_GetList(hWnd, o->extra_software_paths,
+		sizeof(o->extra_software_paths) / sizeof(o->extra_software_paths[0]));
+
+	hRamComboBox = GetDlgItem(hWnd, IDC_RAM_COMBOBOX);
+	if (hRamComboBox)
+	{
+		nIndex = ComboBox_GetCurSel(hRamComboBox);
+		if (nIndex != CB_ERR)
+			o->ram_size = ComboBox_GetItemData(hRamComboBox, nIndex);
+	}
+}
+

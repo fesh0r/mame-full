@@ -63,13 +63,14 @@ typedef enum
 
 typedef struct
 {
-	FILE*		   file;
-	unsigned char* data;
-	unsigned int   offset;
-	unsigned int   length;
-	eFileType	   type;
-	unsigned int   crc;
-} FakeFileHandle;
+	FILE *file;
+	unsigned char *data;
+	unsigned int offset;
+	unsigned int length;
+	eFileType type;
+	unsigned int crc;
+	int		eof;	// for kRamFiles only
+}	FakeFileHandle;
 
 /***************************************************************************
  function prototypes

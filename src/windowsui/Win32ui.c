@@ -557,8 +557,12 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 #ifdef MESS
 	for (i = 0; i < options.image_count; i++)
 	{
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", mess_opts[options.image_files[i].type].shortname, options.image_files[i].name);
+		const char *optname = mess_opts[options.image_files[i].type].shortname;
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, options.image_files[i].name);
 	}
+
+	if (pOpts->ram_size != 0)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
 #endif
 
 #ifdef MESS

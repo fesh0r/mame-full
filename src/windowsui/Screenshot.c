@@ -521,7 +521,7 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, BOOL flyer)
 	LPVOID	mfile;
 	int 	filetype;
 	BOOL	success = FALSE;
-	
+
 	if ((mfile = ImageIdent(filename, &filetype, flyer)) != 0)
 	{
 		switch (filetype)
@@ -553,7 +553,7 @@ static LPVOID ImageIdent(LPCSTR filename, int *filetype, BOOL flyer)
 		return FALSE;
 	
 	/* Read file header */
- 	if (osd_fread(mfile, buf, 16) != 16)
+ 	if (osd_fread(mfile, buf, sizeof(buf)) != sizeof(buf))
 	{
 		osd_fclose(mfile);
 		return 0;
