@@ -546,7 +546,7 @@ typedef struct ti99_lvl1_imgref
 {
 	ti99_img_format img_format;	/* tells the image format */
 	imgtool_stream *file_handle;		/* imgtool file handle */
-	void *harddisk_handle;		/* MAME harddisk handle (harddisk format) */
+	struct hard_disk_file *harddisk_handle;		/* MAME harddisk handle (harddisk format) */
 	ti99_geometry geometry;		/* geometry */
 	unsigned pc99_track_len;		/* unformatted track lenght (pc99 format) */
 	UINT32 *pc99_data_offset_array;	/* offset for each sector (pc99 format) */
@@ -962,8 +962,9 @@ static int read_image_vib_no_geometry(imgtool_stream *file_handle, ti99_img_form
 
 	Return imgtool error code
 */
-static int open_image_lvl1(imgtool_stream *file_handle, ti99_img_format img_format, ti99_lvl1_imgref *l1_img, dsk_vib *vib)
+static imgtoolerr_t open_image_lvl1(imgtool_stream *file_handle, ti99_img_format img_format, ti99_lvl1_imgref *l1_img, dsk_vib *vib)
 {
+	imgtoolerr_t err;
 	int reply;
 	int totphysrecs;
 
@@ -975,9 +976,9 @@ static int open_image_lvl1(imgtool_stream *file_handle, ti99_img_format img_form
 	{
 		const struct hard_disk_info *info; 
 
-		l1_img->harddisk_handle = imghd_open(file_handle);
-		if (!l1_img->harddisk_handle)
-			return IMGTOOLERR_CORRUPTIMAGE;	/* most likely error */
+		err = imghd_open(file_handle, &l1_img->harddisk_handle);
+		if (err)
+			return err;
 
 		info = imghd_get_header(l1_img->harddisk_handle);
 		l1_img->geometry.cylinders = info->cylinders;

@@ -134,7 +134,7 @@
 #include "formats/pc_dsk.h"
 #include "iflopimg.h"
 #include "unicode.h"
-#include "chd.h"
+#include "imghd.h"
 
 #define FAT_DIRENT_SIZE	32
 #define LOG(x)
@@ -153,7 +153,7 @@ struct fat_diskinfo
 	UINT32 heads;
 	UINT64 total_sectors;
 	UINT32 total_clusters;
-	struct chd_file *chd;
+	struct hard_disk_file *harddisk;
 };
 
 struct fat_file
@@ -298,9 +298,21 @@ static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
 
 
 
+static int fat_is_harddisk(imgtool_image *image)
+{
+	return !strcmp(img_module(image)->name, "pc_chd_fat");
+}
+
+
+
 static struct fat_diskinfo *fat_get_diskinfo(imgtool_image *image)
 {
-	return (struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+	void *ptr;
+	if (fat_is_harddisk(image))
+		ptr = img_extrabytes(image);
+	else
+		ptr = imgtool_floppy_extrabytes(image);
+	return (struct fat_diskinfo *) ptr;
 }
 
 
@@ -334,11 +346,30 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 {
 	floperr_t ferr;
 	int head, track, sector;
+	UINT8 data[512];
+	size_t len;
 
-	fat_get_sector_position(image, sector_index, &head, &track, &sector);
-	ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
+	if (fat_is_harddisk(image))
+	{
+		while(buffer_len > 0)
+		{
+			imghd_read(fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
+
+			len = MIN(buffer_len, sizeof(data) - offset);
+			memcpy(buffer, data + offset, len);
+
+			buffer = ((UINT8 *) buffer) + len;
+			buffer_len -= len;
+			offset = 0;
+		}
+	}
+	else
+	{
+		fat_get_sector_position(image, sector_index, &head, &track, &sector);
+		ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
+		if (ferr)
+			return imgtool_floppy_error(ferr);
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -349,11 +380,41 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 {
 	floperr_t ferr;
 	int head, track, sector;
+	UINT8 data[512];
+	const void *write_data;
+	size_t len;
 
-	fat_get_sector_position(image, sector_index, &head, &track, &sector);
-	ferr = floppy_write_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
+	if (fat_is_harddisk(image))
+	{
+		while(buffer_len > 0)
+		{
+			len = MIN(buffer_len, sizeof(data) - offset);
+
+			if ((offset != 0) || (buffer_len < sizeof(data)))
+			{
+				imghd_read(fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
+				memcpy(data + offset, buffer, len);
+				write_data = data;
+			}
+			else
+			{
+				write_data = buffer;
+			}
+
+			imghd_write(fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
+
+			buffer = ((const UINT8 *) buffer) + len;
+			buffer_len -= len;
+			offset = 0;
+		}
+	}
+	else
+	{
+		fat_get_sector_position(image, sector_index, &head, &track, &sector);
+		ferr = floppy_write_sector(imgtool_floppy(image), head, track, sector, offset, buffer, buffer_len);
+		if (ferr)
+			return imgtool_floppy_error(ferr);
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -2011,9 +2072,15 @@ FLOPPYMODULE(fat, "FAT format", pc, fat_module_populate)
 
 static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream *f)
 {
+	imgtoolerr_t err;
 	struct fat_diskinfo *disk_info;
+
 	disk_info = fat_get_diskinfo(image);
-	return IMGTOOLERR_UNIMPLEMENTED;
+	err = imghd_open(f, &disk_info->harddisk);
+	if (err)
+		return err;
+
+	return fat_diskimage_open(image);
 }
 
 
@@ -2022,7 +2089,7 @@ static void fat_chd_diskimage_close(imgtool_image *image)
 {
 	struct fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
-	chd_close(disk_info->chd);
+	imghd_close(disk_info->harddisk);
 }
 
 
@@ -2037,7 +2104,8 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 		return err;
 
 	module->name						= "pc_chd_fat";
-	module->description					= "PC CHD disk images (FAT format)";
+	module->description					= "PC CHD disk image (FAT format)";
+	module->extensions					= "chd\0";
 	module->initial_path_separator		= 1;
 	module->open_is_strict				= 1;
 	module->supports_creation_time		= 1;

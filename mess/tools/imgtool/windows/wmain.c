@@ -51,6 +51,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 			s[_tcslen(s)-1] = '\0';
 			command_line = s + 1;
 		}
+		
 		wimgtool_open_image(window, NULL, command_line, OSD_FOPEN_RW);
 	}
 

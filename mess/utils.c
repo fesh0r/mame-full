@@ -33,8 +33,9 @@ void rtrim(char *buf)
 	char *s;
 
 	buflen = strlen(buf);
-	if (buflen) {
-		for (s = &buf[buflen-1]; (*s == ' '); s--)
+	if (buflen)
+	{
+		for (s = &buf[buflen-1]; isspace(*s); s--)
 			*s = '\0';
 	}
 }

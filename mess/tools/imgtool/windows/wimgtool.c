@@ -194,7 +194,6 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	size_t size, i;
 	struct imgtool_module_features features;
 	struct tm *local_time;
-	LPTSTR local_time_string;
 
 	info = get_wimgtool_info(window);
 	features = img_get_module_features(img_module(info->image));
@@ -254,15 +253,17 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	if (features.supports_creation_time)
 	{
 		local_time = localtime(&entry->creation_time);
-		local_time_string = _tasctime(local_time);
-		ListView_SetItemText(info->listview, new_index, column_index++, local_time_string);
+		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
+		rtrim(buffer);
+		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 	}
 
 	if (features.supports_lastmodified_time)
 	{
 		local_time = localtime(&entry->lastmodified_time);
-		local_time_string = _tasctime(local_time);
-		ListView_SetItemText(info->listview, new_index, column_index++, local_time_string);
+		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
+		rtrim(buffer);
+		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 	}
 
 	if (entry->attr)
@@ -425,7 +426,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 
 	if (features.supports_creation_time)
 	{
-		col.cx = 60;
+		col.cx = 160;
 		col.pszText = (LPTSTR) TEXT("Creation time");
 		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 			return IMGTOOLERR_OUTOFMEMORY;
@@ -433,7 +434,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 
 	if (features.supports_lastmodified_time)
 	{
-		col.cx = 60;
+		col.cx = 160;
 		col.pszText = (LPTSTR) TEXT("Last modified time");
 		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 			return IMGTOOLERR_OUTOFMEMORY;
@@ -619,6 +620,12 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	}
 	
 	err = img_open(module, filename, read_or_write, &image);
+	if ((ERRORCODE(err) == IMGTOOLERR_READONLY) && read_or_write)
+	{
+		/* if we failed when open a read/write image, try again */
+		read_or_write = OSD_FOPEN_READ;
+		err = img_open(module, filename, read_or_write, &image);
+	}
 	if (err)
 		goto done;
 
