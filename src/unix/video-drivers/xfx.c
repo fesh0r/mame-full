@@ -57,7 +57,7 @@ typedef struct {
 
 int sysdep_init(void)
 {
-  fprintf(stdout,
+  fprintf(stderr,
      "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
   
   /* Open the display. */
