@@ -253,27 +253,40 @@ The file date information is not supported at this time.
 The card filesystem reading/writing in imgtool has not been heavily tested.
 
 
-Ti99 floppy disk images (ti99)
-------------------------------
+Ti99 floppy disk images (ti99/v9t9/pc99fm/pc99mfm)
+--------------------------------------------------
 
-This module enables you to create and catalog ti99 images, to delete individual
-files, and to get and put files in TIFILE format.  (The TIFILE format uses a
-data format similar to the one used on ti99 floppies (i.e. logical records are
-grouped in records of 256 bytes matching the sector size of 256 bytes), with
-a custom 128-byte header, and it is supported by many ti99 utilities.)
+These modules enable you to create and catalog ti99 images, to delete
+individual files, and to get and put files in TIFILE format.  Note that you
+cannot create images in pc99 format.
+
+The ti99 module supports MESS disk images, the v9t9 module supports v9t9 disk
+images, the pc99fm module supports FM-encoded pc99 images, and the pc99mfm
+supports MFM-encoded pc99 images.  The MESS ti99 drivers supports the MESS disk
+image format only.  Note that the V9T9 format is identical to the MESS format
+for single-sided disks, but that the track order is completely different for
+double-sided disks, which causes the two formats to be incompatible for
+double-sided disk images.
+
+The TIFILE format is a file format that is supported by many ti99 utilities: it
+encodes a TI99 file as a flat stream of bytes, which enables to store it on
+file systems that do not support the TI99 file structure and to transmit it
+through networks.  This format uses a data format similar to the one used on
+ti99 floppies (i.e. logical records are grouped in records of 256 bytes
+matching the sector size of 256 bytes), with a custom 128-byte header.
 
 Legal characters for volume and file names are upper case ASCII characters,
 except period ('.') and space (' ').  Lower case characters are not recommended
 because they are not supported by TI99/4.  You had better avoid control
 characters and non-ASCII characters, too.  (Additionally, the NULL character is
 forbidden in file name, but I think nobody in his right sense would even try to
-enter a NULL character in a file name.)  The restriction on period may sound
-strange to users of other OSes, but this character is used as a path separator
-by TI systems.  (As a matter of fact, all TI99 fdc DSRs (except the HFDC DSR)
-implements only one directory level (i.e. the root directory), but other TI
-systems implement this convention extensively.)  Since period is used as the
-path separator, TI99 users often use the slash character ('/') as the file
-extension separator; note, however, the use of file extensions is never
+enter a NULL character in a file name.)  The restriction on the period ('.')
+character may sound strange to users of other OSes, but this character is used
+as a path separator by TI systems.  (As a matter of fact, no TI99 floppy disk
+DSR (except the HFDC DSR) implements disk directories, but other TI systems
+implement this convention extensively.)  Since period is used as the path
+separator, TI99 users often use the slash ('/') or dash ('-') characters as
+file extension separators; note, however, the use of file extensions is never
 systematic in TI99: you may use file extensions if you find them useful, just
 like you may use any other file naming scheme, but no program enforce or
 require filename extensions as it is often the case in the DOS/windows world.
