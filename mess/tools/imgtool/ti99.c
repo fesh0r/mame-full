@@ -170,11 +170,11 @@ static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 
 static struct OptionTemplate ti99_createopts[] =
 {
-	{ "volume name",	NULL, IMGOPTION_FLAG_TYPE_STRING,	0,	0,	NULL},
-	{ "density",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,	2,	NULL},
-	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,	2,	NULL},
-	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,	40,	NULL},
-	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,	18,	NULL},
+	{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
+	{ "density",	"1 for single (FM), 2 for double (MFM)", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
+	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
+	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	40,	"40" },
+	{ "sectors",	"1->9 for FM, 1->18 for MFM", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	18,	"18" },
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
