@@ -1433,3 +1433,10 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 	return 0;
 }
+
+#ifdef MESS
+int osd_select_file(int sel, char *filename)
+{
+	return 0;
+}
+#endif
