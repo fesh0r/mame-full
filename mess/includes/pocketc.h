@@ -11,7 +11,6 @@
 
 extern unsigned char pocketc_palette[248][3];
 extern unsigned short pocketc_colortable[8][2];
-extern struct artwork_info *pocketc_backdrop;
 
 
 void pocketc_init_colors (unsigned char *sys_palette,

@@ -9,8 +9,6 @@
 
 UINT8 ssystem3_led[5]= {0};
 
-static struct artwork_info *backdrop;
-
 unsigned char ssystem3_palette[242][3] =
 {
 	{ 0,12,12 },
@@ -26,54 +24,31 @@ void ssystem3_init_colors (unsigned char *sys_palette,
 						  unsigned short *sys_colortable,
 						  const unsigned char *color_prom)
 {
-	char backdrop_name[200];
-	int used=2;
-
 	memcpy (sys_palette, ssystem3_palette, sizeof (ssystem3_palette));
 	memcpy(sys_colortable,ssystem3_colortable,sizeof(ssystem3_colortable));
-
-    /* try to load a backdrop for the machine */
-    sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
-
-    artwork_load (&backdrop, backdrop_name, used, Machine->drv->total_colors - used);
-
-	if (backdrop)
-    {
-        logerror("backdrop %s successfully loaded\n", backdrop_name);
-        memcpy (&sys_palette[used * 3], backdrop->orig_palette, 
-				backdrop->num_pens_used * 3 * sizeof (unsigned char));
-    }
-    else
-    {
-        logerror("no backdrop loaded\n");
-    }
 }
 
 int ssystem3_vh_start(void)
 {
-#if 1
 	// artwork seams to need this
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)malloc (videoram_size);
 	if (!videoram)
         return 1;
 
-    if (backdrop)
-        backdrop_refresh (backdrop);
+	{
+		char backdrop_name[200];
+	    /* try to load a backdrop for the machine */
+		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
+		backdrop_load(backdrop_name, 3);
+	}
 
 	return generic_vh_start();
-#else
-	return 0;
-#endif
 }
 
 void ssystem3_vh_stop(void)
 {
-    if (backdrop)
-        artwork_free (&backdrop);
-#if 1
 	generic_vh_stop();
-#endif
 }
 
 static const char led[]={
@@ -211,12 +186,6 @@ static void ssystem3_draw_led(struct osd_bitmap *bitmap,INT16 color, int x, int 
 void ssystem3_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
-
-    if (backdrop)
-        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
-					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
 	for (i=0; i<4; i++) {
 		ssystem3_draw_7segment(bitmap, ssystem3_led[i]&0x7f, ssystem3_led_pos[i].x, 

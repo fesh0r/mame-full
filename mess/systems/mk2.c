@@ -148,7 +148,7 @@ static struct MachineDriver machine_driver_mk2 =
 
 	252, 559, { 0, 252 - 1, 0, 559 - 1},
 	0, 			   /* graphics decode info */
-	sizeof (mk2_palette) / sizeof (mk2_palette[0]) ,
+	sizeof (mk2_palette) / sizeof (mk2_palette[0]) + 32768,
 	sizeof (mk2_colortable) / sizeof(mk2_colortable[0][0]),
 	mk2_init_colors,		/* convert color prom */
 

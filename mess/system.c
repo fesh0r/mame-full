@@ -150,7 +150,7 @@ TESTDRIVER( vip )		/* Cosmac VIP						*/
 	DRIVER( advision )	/* Adventurevision								  */
 
 	/* CAPCOM */
-//	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
 	/* Magnavox */
 //      DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)			  */
@@ -285,7 +285,7 @@ XL/XE 16kB OS roms
 //!!TESTDRIVER( atarist )	/* Atari ST 								  */
 
 	/* COMMODORE */
-//	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
 TESTDRIVER( sym1 )		/* Synertek SYM1								  */
 TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 
@@ -444,7 +444,6 @@ TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
 TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
 #endif
-#if 0
 	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
 TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
@@ -471,8 +470,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
-//    DRIVER( avigo )     /*                                                */
-#endif
+    DRIVER( avigo )     /*                                                */
 
 /* Texas Instruments Calculators */
 
@@ -747,9 +745,9 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 /*	DRIVER( maniac )*/	/* Maniac										  */
 
 	/* Computer Electronic */
-//	DRIVER( mk1 )		/* Chess Champion MK I							  */
+	DRIVER( mk1 )		/* Chess Champion MK I							  */
 	/* Quelle International */
-//	DRIVER( mk2 )		/* Chess Champion MK II							  */
+	DRIVER( mk2 )		/* Chess Champion MK II							  */
 	/* NOVAG Industries Ltd. */
 TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
 

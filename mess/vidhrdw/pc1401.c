@@ -146,11 +146,6 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     {
         osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
     }
-    if (pocketc_backdrop)
-        copybitmap (bitmap, pocketc_backdrop->artwork, 0, 0, 0, 0, NULL, 
-					TRANSPARENCY_NONE, 0);
-    else
-	fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
     
     if (pc1401_portc&1) {
 	for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {

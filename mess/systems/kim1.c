@@ -206,7 +206,7 @@ static struct MachineDriver machine_driver_kim1 =
 	/* video hardware (well, actually there was no video ;) */
 	600, 768, { 0, 600 - 1, 0, 768 - 1},
 	gfxdecodeinfo,
-	256*3,
+	32768+21,				/* leave extra colors for the overlay */
 	256,
 	kim1_init_colors,		/* convert color prom */
 

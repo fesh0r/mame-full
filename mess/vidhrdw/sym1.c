@@ -10,7 +10,6 @@
 
 #include "includes/sym1.h"
 
-static struct artwork_info *sym1_backdrop;
 UINT8 sym1_led[6]= {0};
 
 unsigned char sym1_palette[242][3] =
@@ -21,38 +20,24 @@ unsigned char sym1_palette[242][3] =
 
 void sym1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
-	char backdrop_name[200];
-    int nextfree;
-
-    /* try to load a backdrop for the machine */
-    sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
-
 	memcpy (palette, sym1_palette, sizeof (sym1_palette));
-
-    nextfree = 2;
-
-    artwork_load (&sym1_backdrop, backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
-	if (sym1_backdrop)
-    {
-        logerror("backdrop %s successfully loaded\n", backdrop_name);
-        memcpy (&palette[nextfree * 3], sym1_backdrop->orig_palette, sym1_backdrop->num_pens_used * 3 * sizeof (unsigned char));
-    }
-    else
-    {
-        logerror("no backdrop loaded\n");
-    }
-
 }
 
 int sym1_vh_start (void)
 {
     videoram_size = 6 * 2 + 24;
-    videoram = (UINT8*)malloc (videoram_size);
+    videoram = (UINT8*) auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
-    if (sym1_backdrop)
-        backdrop_refresh (sym1_backdrop);
-    if (generic_vh_start () != 0)
+
+	{
+		char backdrop_name[200];
+	    /* try to load a backdrop for the machine */
+		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
+		backdrop_load(backdrop_name, 3);
+	}  
+
+	if (generic_vh_start () != 0)
         return 1;
 
     return 0;
@@ -60,11 +45,6 @@ int sym1_vh_start (void)
 
 void sym1_vh_stop (void)
 {
-    if (sym1_backdrop)
-        artwork_free (&sym1_backdrop);
-    sym1_backdrop = NULL;
-    if (videoram)
-        free (videoram);
     videoram = NULL;
     generic_vh_stop ();
 }
@@ -171,12 +151,6 @@ void sym1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     {
         osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
     }
-    if (sym1_backdrop)
-        copybitmap (bitmap, sym1_backdrop->artwork, 0, 0, 0, 0, NULL, 
-					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
-
 	for (i=0; i<6; i++) {
 		sym1_draw_7segment(bitmap, sym1_led[i], sym1_led_pos[i].x, sym1_led_pos[i].y);
 //		sym1_draw_7segment(bitmap, sym1_led[i], sym1_led_pos[i].x-160, sym1_led_pos[i].y-120);

@@ -111,7 +111,7 @@ static struct MachineDriver machine_driver_sym1 =
 	800, 600, { 0, 800-1, 0, 600 - 1},
 //	640, 480, { 0, 640-1, 0, 480 - 1},
 	0,
-	242*3,
+	242*3 + 32768,
 	0,
 	sym1_init_colors,		/* convert color prom */
 

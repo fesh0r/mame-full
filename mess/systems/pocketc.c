@@ -621,7 +621,7 @@ static struct MachineDriver machine_driver_pc1401 =
 	594, 273, { 0, 594 - 1, 0, 273 - 1},
 //	640, 273, { 0, 640 - 1, 0, 273 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768,
 	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
@@ -673,7 +673,7 @@ static struct MachineDriver machine_driver_pc1251 =
 	608, 300, { 0, 608 - 1, 0, 300 - 1},
 //	640, 334, { 0, 640 - 1, 0, 334 - 1},
 	pc1251_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768 ,
 	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
@@ -724,7 +724,7 @@ static struct MachineDriver machine_driver_pc1350 =
 	640, 252, { 0, 640 - 1, 0, 252 - 1},
 //	640, 255, { 0, 640 - 1, 0, 255 - 1},
 	pc1350_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) + 32768,
 	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
@@ -774,7 +774,7 @@ static struct MachineDriver machine_driver_pc1403 =
 	848, 320, { 0, 848 - 1, 0, 320 - 1},
 //	848, 361, { 0, 848 - 1, 0, 361 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pocketc_palette) / sizeof (pocketc_palette[0]) ,
+	sizeof (pocketc_palette) / sizeof (pocketc_palette[0])  + 32768,
 	sizeof (pocketc_colortable) / sizeof(pocketc_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 

@@ -25,11 +25,7 @@
 
 void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
-	char backdrop_name[200];
-    int i, nextfree;
-
-    /* try to load a backdrop for the machine */
-    sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
+    int i;
 
 	/* initialize 16 colors with shades of red (orange) */
     for (i = 0; i < 16; i++)
@@ -71,28 +67,23 @@ void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, cons
     colortable[2 * 16 + 1 * 4 + 1] = 17;
     colortable[2 * 16 + 1 * 4 + 2] = 19;
     colortable[2 * 16 + 1 * 4 + 3] = 15;
-
-    nextfree = 21;
-
-	backdrop_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
-	if (artwork_backdrop)
-    {
-        logerror("backdrop %s successfully loaded\n", backdrop_name);
-		memcpy (&palette[nextfree * 3], artwork_backdrop->orig_palette, artwork_backdrop->num_pens_used * 3 * sizeof (unsigned char));
-    }
-    else
-    {
-        logerror( "no backdrop loaded\n");
-    }
 }
 
 int mekd2_vh_start (void)
 {
     videoram_size = 6 * 2 + 24;
-    videoram = (UINT8*)malloc (videoram_size);
+    videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
-    if (generic_vh_start () != 0)
+
+	{
+		char backdrop_name[200];
+	    /* try to load a backdrop for the machine */
+		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
+		backdrop_load(backdrop_name, 2);
+	}
+
+	if (generic_vh_start () != 0)
         return 1;
 
     return 0;
@@ -100,8 +91,6 @@ int mekd2_vh_start (void)
 
 void mekd2_vh_stop (void)
 {
-    if (videoram)
-        free (videoram);
     videoram = NULL;
     generic_vh_stop ();
 }
@@ -109,14 +98,6 @@ void mekd2_vh_stop (void)
 void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
     int x, y;
-
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-        memset (videoram, 0x0f, videoram_size);
-    }
-	if (artwork_backdrop == NULL)
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
     for (x = 0; x < 6; x++)
     {

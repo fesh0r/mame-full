@@ -104,7 +104,7 @@ static struct MachineDriver machine_driver_ssystem3 =
 
 	728, 437, { 0, 728 - 1, 0, 437 - 1},
 	0, 			   /* graphics decode info */
-	sizeof (ssystem3_palette) / sizeof (ssystem3_palette[0]) ,
+	sizeof (ssystem3_palette) / sizeof (ssystem3_palette[0]) + 32768,
 	sizeof (ssystem3_colortable) / sizeof(ssystem3_colortable[0][0]),
 	ssystem3_init_colors,		/* convert color prom */
 

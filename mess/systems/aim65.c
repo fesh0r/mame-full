@@ -160,7 +160,7 @@ static struct MachineDriver machine_driver_aim65 =
 
 	600, 320, { 0, 600 - 1, 0, 320 - 1},
 	aim65_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (aim65_palette) / sizeof (aim65_palette[0]) ,
+	sizeof (aim65_palette) / sizeof (aim65_palette[0]) + 32768,
 	sizeof (aim65_colortable) / sizeof(aim65_colortable[0][0]),
 	aim65_init_colors,		/* convert color prom */
 

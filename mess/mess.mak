@@ -190,17 +190,17 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
-#	$(OBJ)/aim65.a    \
-#	$(OBJ)/motorola.a \
-#	$(OBJ)/cpschngr.a \
-#	$(OBJ)/sharp.a    \
+	$(OBJ)/kim1.a     \
+	$(OBJ)/mk1.a      \
+	$(OBJ)/mk2.a      \
+	$(OBJ)/aim65.a    \
+	$(OBJ)/motorola.a \
+	$(OBJ)/sharp.a    \
+	$(OBJ)/ssystem3.a \
+	$(OBJ)/sym1.a     \
+	$(OBJ)/avigo.a    \
+	$(OBJ)/cpschngr.a \
 #	$(OBJ)/hp48.a     \
-#	$(OBJ)/mk1.a      \
-#	$(OBJ)/mk2.a      \
-#	$(OBJ)/ssystem3.a \
-#	$(OBJ)/kim1.a     \
-#	$(OBJ)/sym1.a     \
-#	$(OBJ)/avigo.a    \
 
 
 

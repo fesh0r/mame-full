@@ -189,7 +189,7 @@ static struct MachineDriver machine_driver_mekd2 =
 	/* video hardware (well, actually there was no video ;) */
 	600, 768, { 0, 600 - 1, 0, 768 - 1},
 	gfxdecodeinfo,
-	256*3,
+	21 + 32768,
 	256,
 	mekd2_init_colors,		 /* convert color prom */
 

@@ -9,8 +9,6 @@
 
 UINT8 mk2_led[5]= {0};
 
-static struct artwork_info *backdrop;
-
 unsigned char mk2_palette[242][3] =
 {
 	{ 0x20,0x02,0x05 },
@@ -25,54 +23,31 @@ void mk2_init_colors (unsigned char *sys_palette,
 						  unsigned short *sys_colortable,
 						  const unsigned char *color_prom)
 {
-	char backdrop_name[200];
-	int used=2;
-
 	memcpy (sys_palette, mk2_palette, sizeof (mk2_palette));
 	memcpy(sys_colortable,mk2_colortable,sizeof(mk2_colortable));
-
-    /* try to load a backdrop for the machine */
-    sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
-
-    artwork_load (&backdrop, backdrop_name, used, Machine->drv->total_colors - used);
-
-	if (backdrop)
-    {
-        logerror("backdrop %s successfully loaded\n", backdrop_name);
-        memcpy (&sys_palette[used * 3], backdrop->orig_palette, 
-				backdrop->num_pens_used * 3 * sizeof (unsigned char));
-    }
-    else
-    {
-        logerror("no backdrop loaded\n");
-    }
 }
 
 int mk2_vh_start(void)
 {
-#if 1
 	// artwork seams to need this
     videoram_size = 6 * 2 + 24;
-    videoram = (UINT8*)malloc (videoram_size);
+    videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
-    if (backdrop)
-        backdrop_refresh (backdrop);
+	{
+		char backdrop_name[200];
+	    /* try to load a backdrop for the machine */
+		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
+		backdrop_load(backdrop_name, 2);
+	}
 
 	return generic_vh_start();
-#else
-	return 0;
-#endif
 }
 
 void mk2_vh_stop(void)
 {
-    if (backdrop)
-        artwork_free (&backdrop);
-#if 1
 	generic_vh_stop();
-#endif
 }
 
 static const char led[]={
@@ -180,12 +155,6 @@ static void mk2_draw_led(struct osd_bitmap *bitmap,INT16 color, int x, int y)
 void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
-
-    if (backdrop)
-        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
-					TRANSPARENCY_NONE, 0);
-	else
-		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
 	for (i=0; i<4; i++) {
 		mk2_draw_7segment(bitmap, mk2_led[i]&0x7f, mk2_led_pos[i].x, mk2_led_pos[i].y);
