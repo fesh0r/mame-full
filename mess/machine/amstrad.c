@@ -39,6 +39,16 @@ static unsigned char *snapshot = NULL;
 extern unsigned char *Amstrad_Memory;
 static int snapshot_loaded;
 
+int amstrad_floppy_init(int id)
+{
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
+	return dsk_floppy_load(id);
+}
+
+
+
 /* used to setup computer if a snapshot was specified */
 OPBASE_HANDLER( amstrad_opbaseoverride )
 {
@@ -87,6 +97,12 @@ int amstrad_cassette_init(int id)
 {
 	void *file;
 
+	if (device_filename(IO_CASSETTE, id)==NULL)
+		return INIT_PASS;
+
+	/* filename specified */
+
+	/* attempt to open for reading */
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)
 	{
@@ -100,7 +116,7 @@ int amstrad_cassette_init(int id)
 		return INIT_PASS;
 	}
 
-	/* HJB 02/18: no file, create a new file instead */
+	/* can't open it, attempt to open for writing */
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
 	if (file)
 	{
@@ -309,8 +325,15 @@ int amstrad_load(int type, int id, unsigned char **ptr)
 /* load snapshot */
 int amstrad_snapshot_load(int id)
 {
+	/* machine can be started without a snapshot */
+	/* if filename not specified, then init is ok */
+	if (device_filename(IO_SNAPSHOT, id)==NULL)
+		return INIT_PASS;
+
+	/* filename specified */
 	snapshot_loaded = 0;
 
+	/* load and verify image */
 	if (amstrad_load(IO_SNAPSHOT,id,&snapshot))
 	{
 		snapshot_loaded = 1;
@@ -356,3 +379,20 @@ void amstrad_snapshot_exit(int id)
 	snapshot_loaded = 0;
 
 }
+
+int	amstrad_plus_cartridge_init(int id)
+{
+	/* cpc+ requires a cartridge to be inserted to run */
+	if (device_filename(IO_CARTSLOT, id)==NULL)
+		return INIT_FAIL;
+
+	return INIT_PASS;
+}
+
+void amstrad_plus_cartridge_exit(int id)
+{
+
+
+
+}
+

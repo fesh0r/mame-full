@@ -1153,6 +1153,9 @@ int oric_floppy_init(int id)
 {
 	int result;
 
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
 	/* attempt to open mfm disk */
 	result = mfm_disk_floppy_init(id);
 
@@ -1408,6 +1411,10 @@ int oric_cassette_init(int id)
 {
 	void *file;
 	struct wave_args wa;
+
+	if (device_filename(IO_CASSETTE, id)==NULL)
+		return INIT_PASS;
+
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if( file )
