@@ -111,8 +111,6 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-/* static UINT16 DiskPatches[] = { 0x10,0x13,0x16,0x1C,0x1F,0 }; */
-
 int msx_load_rom (int id)
 {
     void *F;
@@ -126,6 +124,9 @@ int msx_load_rom (int id)
         "Panasonic FM-PAC", "Super Load Runner",
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
+
+	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+		return 0;
 
     /* try to load it */
     F = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
@@ -974,6 +975,9 @@ int msx_floppy_init (int id)
 	void *f;
 	int size, heads = 2;
 
+	if (!device_filename(IO_FLOPPY,id) || !strlen(device_filename(IO_FLOPPY,id) ))
+		return 0;
+
 	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
 	if (f)
 		{
@@ -1627,6 +1631,9 @@ int msx_cassette_init(int id)
 {
     void *file;
 	int ret;
+
+	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+		return 0;
 
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )

@@ -12,6 +12,9 @@ int printer_init (int id)
 	{
 	void *f;
 
+	if (!device_filename(IO_PRINTER,id) || !strlen(device_filename(IO_PRINTER,id) ))
+		return 0;
+
 	f = image_fopen (IO_PRINTER, id, OSD_FILETYPE_IMAGE_RW,
 		OSD_FOPEN_RW_CREATE);
 	if (f)
