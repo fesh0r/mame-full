@@ -16,6 +16,9 @@ Source Changes:
 - New generic code for emulating terminals, now in use by the Apple I and
   Kaypro drivers. [Nate Woods]
 
+- Added the ability to specify a minimum resolution to display a system, in
+  order to better support low resolution drivers. [Nate Woods]
+
 0.62
 
 New System Drivers Supported (in no particular order):
