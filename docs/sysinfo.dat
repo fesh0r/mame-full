@@ -8180,42 +8180,42 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=ti99_2
-$bio
-Texas Instruments TI-99/2 BASIC Computer
-
-
+#$info=ti99_2
+#$bio
+#Texas Instruments TI-99/2 BASIC Computer
+#
+#
 #Known Issues:
-
+#
 #This TI99/2 driver is preliminary and could not be tested. (It may work,
 #it may not work.) It is commented out in the source code distribution.
-
-
+#
+#
 #History and Trivia:
-
+#
 #The TI99/2 BASIC Computer was an attempt at producing a cheap ($100)
 #computer.  TI started designing it in the summer of 1982, it was first
 #introduced in January 1983, and it was abandoned, before entering
 #production, by April 1983.
-
+#
 #It featured a TMS9995 microprocessor (with on-line timer and 256-byte RAM),
 #4kb of RAM, 24kb (or 32kb) of ROM, a B&W character-based display.  There
 #was no sound generator.  It was mostly incompatible with TI99/4(a), but
 #it used the same Basic syntax and file format.
-
+#
 #The computer was obviously unattractive. On the other hand, it would have
 #been cheap, fairly fast for its time, and easy to program in both BASIC and
 #assembly.
-
+#
 #Moreover, the expansion port of TI99/2 carried every bus signal, and even
 #allowed to disable the system ROMs and use one's own ROMs instead, so this
 #computer could have been a hobbyist's dream.
-
-
+#
+#
 #Wanted (dead or alive):
 #If you have an actual TI99/2 or TI99/2 ROM image at hand, please mail me at
 #pytheas@club-internet.fr
-
+#
 #$end
 
 #---------------------------------------------------------------------------------------------#
