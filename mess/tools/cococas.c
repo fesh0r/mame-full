@@ -4,8 +4,8 @@
 #include "osdepend.h"
 #include "imgtool.h"
 
-static int cococas_init(STREAM *f, IMAGE **outimg);
-static void cococas_exit(IMAGE *img);
+/* static int cococas_init(STREAM *f, IMAGE **outimg); */
+/* static void cococas_exit(IMAGE *img); */
 static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent);
 static int cococas_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static int cococas_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
@@ -23,7 +23,7 @@ WAVEMODULE(
 	cococas_nextfile,				/* enumerate next */
 	cococas_readfile,				/* read file */
 	cococas_writefile,				/* write file */
-	cococas_deletefile,				/* delete file */
+	cococas_deletefile				/* delete file */
 )
 
 typedef struct {
