@@ -817,6 +817,8 @@ floperr_t floppy_load_track(floppy_image *floppy, int head, int track, int dirti
 
 		floppy->loaded_track_status |= TRACK_LOADED | (dirtify ? TRACK_DIRTY : 0);
 	}
+	else
+		floppy->loaded_track_status |= (dirtify ? TRACK_DIRTY : 0);
 
 	if (track_data)
 		*track_data = floppy->loaded_track_data;

@@ -23,12 +23,14 @@
 extern struct rc_option fileio_opts[];
 
 static int dump_screenshots;
+static int preserve_directory;
 static int test_count, failure_count;
 
 static struct rc_option opts[] =
 {
 	{ NULL, NULL, rc_link, fileio_opts, NULL, 0, 0, NULL, NULL },
-	{ "dumpscreenshots",	"ds",	rc_bool,	&dump_screenshots,			"0", 0, 0, NULL,	"always dump screenshots" },
+	{ "dumpscreenshots", "ds",	rc_bool,	&dump_screenshots,			"0", 0, 0, NULL,	"always dump screenshots" },
+	{ "preservedir",     "pd",	rc_bool,	&preserve_directory,		"0", 0, 0, NULL,	"always dump screenshots" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -45,12 +47,17 @@ static int handle_arg(char *arg)
 	int this_test_count;
 	int this_failure_count;
 	int flags = 0;
+	struct messtest_options opts;
 
-	/* compute the flags */
-//	if (dump_screenshots)
-//		flags |= MESSTEST_ALWAYS_DUMP_SCREENSHOT;
+	/* setup options */
+	memset(&opts, 0, sizeof(opts));
+	opts.script_filename = arg;
+	if (preserve_directory)
+		opts.preserve_directory = 1;
+	if (dump_screenshots)
+		opts.dump_screenshots = 1;
 
-	if (messtest(arg, flags, &this_test_count, &this_failure_count))
+	if (messtest(&opts, &this_test_count, &this_failure_count))
 		exit(-1);
 
 	test_count += this_test_count;

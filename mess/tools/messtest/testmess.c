@@ -66,6 +66,7 @@ struct messtest_command
 		struct
 		{
 			const char *filename;
+			const char *format;
 			int device_type;
 			int device_slot;
 		} image_args;
@@ -121,6 +122,7 @@ static double final_time;
 static const struct messtest_command *current_command;
 static int test_flags;
 static int screenshot_num;
+static int format_index;
 static UINT64 runtime_hash;
 
 /* command list */
@@ -456,12 +458,17 @@ static void command_image_loadcreate(void)
 	mess_image *image;
 	int device_type;
 	int device_slot;
+	int i, format_index = 0;
 	const char *filename;
+	const char *format;
 	char buf[128];
+	const struct IODevice *dev;
+	const char *file_extensions;
 
 	device_slot = current_command->u.image_args.device_slot;
 	device_type = current_command->u.image_args.device_type;
 
+	/* look up the image slot */
 	image = image_from_devtype_and_index(device_type, device_slot);
 	if (!image)
 	{
@@ -469,36 +476,69 @@ static void command_image_loadcreate(void)
 			device_typename(device_type), device_slot);
 		return;
 	}
+	dev = image_device(image);
+	file_extensions = dev->file_extensions;
 
+	/* is an image format specified? */
+	format = current_command->u.image_args.format;
+	if (format)
+	{
+		if (current_command->command_type != MESSTEST_COMMAND_IMAGE_CREATE)
+		{
+			message(MSG_FAILURE, "Cannot specify format unless creating");
+			return;
+		}
+
+		if (!dev->createimage_options)
+		{
+			message(MSG_FAILURE, "Cannot specify format for device");
+			return;
+		}
+
+		for (i = 0; dev->createimage_options[i].name; i++)
+		{
+			if (!strcmp(format, dev->createimage_options[i].name))
+				break;
+		}
+		if (!dev->createimage_options[i].name)
+		{
+			message(MSG_FAILURE, "Unknown device '%s'", format);
+			return;
+		}
+		format_index = i;
+		file_extensions = dev->createimage_options[i].extensions;
+	}
+
+	/* figure out the filename */
 	filename = current_command->u.image_args.filename;
 	if (!filename)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
-			current_testcase.name,
-			device_find(Machine->devices, device_type)->file_extensions);
+			current_testcase.name, file_extensions);
 		filename = buf;
 	}
 
 	/* actually create or load the image */
-	switch(current_command->command_type) {
-	case MESSTEST_COMMAND_IMAGE_CREATE:
-		if (image_create(image, filename, 0, NULL))
-		{
-			message(MSG_FAILURE, "Failed to create image '%s': %s", filename, image_error(image));
-			return;
-		}
-		break;
-	
-	case MESSTEST_COMMAND_IMAGE_LOAD:
-		if (image_load(image, filename))
-		{
-			message(MSG_FAILURE, "Failed to load image '%s': %s", filename, image_error(image));
-			return;
-		}
-		break;
+	switch(current_command->command_type)
+	{
+		case MESSTEST_COMMAND_IMAGE_CREATE:
+			if (image_create(image, filename, format_index, NULL))
+			{
+				message(MSG_FAILURE, "Failed to create image '%s': %s", filename, image_error(image));
+				return;
+			}
+			break;
+		
+		case MESSTEST_COMMAND_IMAGE_LOAD:
+			if (image_load(image, filename))
+			{
+				message(MSG_FAILURE, "Failed to load image '%s': %s", filename, image_error(image));
+				return;
+			}
+			break;
 
-	default:
-		break;
+		default:
+			break;
 	}
 }
 
@@ -850,6 +890,7 @@ static void image_handler(struct messtest_state *state, const char **attributes,
 	const char *s1;
 	const char *s2;
 	const char *s3;
+	const char *s4;
 	int preload, device_type;
 
 	memset(&new_command, 0, sizeof(new_command));
@@ -882,9 +923,14 @@ static void image_handler(struct messtest_state *state, const char **attributes,
 	/* 'slot' attribute */
 	s3 = find_attribute(attributes, "slot");
 
+	/* 'format' attribute */
+	format_index = 0;
+	s4 = find_attribute(attributes, "format");
+
 	new_command.u.image_args.filename = s1 ? pool_strdup(&command_pool, s1) : NULL;
 	new_command.u.image_args.device_type = device_type;
 	new_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
+	new_command.u.image_args.format = s4 ? pool_strdup(&command_pool, s4) : NULL;
 }
 
 

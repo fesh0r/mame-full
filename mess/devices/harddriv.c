@@ -417,10 +417,12 @@ void harddisk_device_getinfo(struct IODevice *iodev)
 	iodev->create = device_create_mess_hd;
 	iodev->unload = device_unload_mess_hd;
 	iodev->createimage_optguide = mess_hd_option_guide;
-	iodev->createimage_options[0].extensions = iodev->file_extensions;
+	iodev->createimage_options[0].name = "chd";
 	iodev->createimage_options[0].description = "MAME/MESS CHD Hard drive";
+	iodev->createimage_options[0].extensions = iodev->file_extensions;
 	iodev->createimage_options[0].optspec = mess_hd_option_spec;
-	iodev->createimage_options[1].extensions = NULL;
+	iodev->createimage_options[1].name = NULL;
 	iodev->createimage_options[1].description = NULL;
+	iodev->createimage_options[1].extensions = NULL;
 	iodev->createimage_options[1].optspec = NULL;
 }

@@ -407,8 +407,9 @@ void floppy_device_getinfo(struct IODevice *iodev, const struct FloppyFormat *fl
 
 	for (i = 0; floppy_options[i].construct; i++)
 	{
-        iodev->createimage_options[i].extensions = floppy_options[i].extensions;
+        iodev->createimage_options[i].name = floppy_options[i].name;
         iodev->createimage_options[i].description = floppy_options[i].description;
+        iodev->createimage_options[i].extensions = floppy_options[i].extensions;
         iodev->createimage_options[i].optspec = floppy_options[i].param_guidelines;
 	}
 	memset(&iodev->createimage_options[count], 0,

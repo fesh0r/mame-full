@@ -51,8 +51,9 @@ typedef void (*device_partialhash_handler)(char *, const unsigned char *, unsign
 
 struct CreateImageOptions
 {
-	const char *extensions;
+	const char *name;
 	const char *description;
+	const char *extensions;
 	const char *optspec;
 };
 

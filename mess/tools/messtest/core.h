@@ -37,6 +37,13 @@ struct messtest_tagdispatch
 	const struct messtest_tagdispatch *subdispatch;
 };
 
+struct messtest_options
+{
+	const char *script_filename;
+	unsigned int preserve_directory : 1;
+	unsigned int dump_screenshots : 1;
+};
+
 
 
 /***************************************************************************
@@ -46,7 +53,7 @@ struct messtest_tagdispatch
 ***************************************************************************/
 
 /* executing the tests */
-int messtest(const char *script_filename, int flags, int *test_count, int *failure_count);
+int messtest(const struct messtest_options *opts, int *test_count, int *failure_count);
 
 /* utility functions to aid in parsing */
 int memory_region_from_string(const char *region_name);

@@ -10,7 +10,7 @@ System Driver Changes:
 ----------------------
 - [COCO] Fixed a bug in DMK disk loading; games encoded with certain forms of
   copy protection now run.  (bug #606) [Tim Lindner]
-
+  
 
 
 User Interface Changes:
@@ -41,6 +41,9 @@ Source Changes:
   
 - Fixed a latent problem where part of the natural language system still
   thought that we use 16-bit ports.  [Tim Lindner]
+
+- Fixed a bug in core floppy handling that prevented writes to CoCo DMK
+  images from working.  (bug #607) [Tim Lindner]
 
 
 

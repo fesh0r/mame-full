@@ -40,7 +40,6 @@ struct messtest_state
 
 	const char *script_filename;
 
-	int test_flags;
 	int test_count;
 	int failure_count;
 
@@ -146,6 +145,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	state->dispatch[++state->dispatch_pos] = dispatch;
 	if (dispatch && dispatch->datatype)
 		pile_clear(&state->blobpile);
+	state->blobstate = BLOBSTATE_INITIAL;
 }
 
 
@@ -185,6 +185,7 @@ static void data_handler_text(struct messtest_state *state, const XML_Char *s, i
 static void data_handler_binary(struct messtest_state *state, const XML_Char *s, int len)
 {
 	int i = 0;
+	int found;
 	char c;
 
 	while(i < len)
@@ -233,12 +234,16 @@ static void data_handler_binary(struct messtest_state *state, const XML_Char *s,
 			}
 			else
 			{
+				found = FALSE;
 				while(((i + 2) <= len) && isxdigit(s[i]) && isxdigit(s[i+1]))
 				{
 					c = (hexdigit(s[i]) << 4) | hexdigit(s[i+1]);
 					pile_putc(&state->blobpile, c);
 					i += 2;
+					found = TRUE;
 				}
+				if (!found)
+					goto parseerror;
 			}
 			break;
 
@@ -363,7 +368,7 @@ done:
 
 
 
-int messtest(const char *script_filename, int flags, int *test_count, int *failure_count)
+int messtest(const struct messtest_options *opts, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
 	char buf[1024];
@@ -374,30 +379,29 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	char *script_directory;
 
 	memset(&state, 0, sizeof(state));
-	state.test_flags = flags;
-	state.script_filename = script_filename;
+	state.script_filename = opts->script_filename;
 	state.dispatch[0] = &initial_dispatch;
 	pile_init(&state.blobpile);
 
 	/* open the script file */
-	in = fopen(script_filename, "r");
+	in = fopen(state.script_filename, "r");
 	if (!in)
 	{
-		fprintf(stderr, "%s: Cannot open file\n", script_filename);
+		fprintf(stderr, "%s: Cannot open file\n", state.script_filename);
 		goto done;
 	}
 
 	/* save the current working directory, and change to the test directory */
-	script_directory = osd_dirname(script_filename);
-	if (script_directory)
+	saved_directory[0] = '\0';
+	if (!opts->preserve_directory)
 	{
-		osd_getcurdir(saved_directory, sizeof(saved_directory) / sizeof(saved_directory[0]));
-		osd_setcurdir(script_directory);
-		free(script_directory);
-	}
-	else
-	{
-		saved_directory[0] = '\0';
+		script_directory = osd_dirname(state.script_filename);
+		if (script_directory)
+		{
+			osd_getcurdir(saved_directory, sizeof(saved_directory) / sizeof(saved_directory[0]));
+			osd_setcurdir(script_directory);
+			free(script_directory);
+		}
 	}
 
 	state.parser = XML_ParserCreate(NULL);
