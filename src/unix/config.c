@@ -796,8 +796,3 @@ void osd_die(const char *text,...)
 void osd_begin_final_unloading(void)
 {
 }
-
-int osd_select_file(mess_image *img, char *filename)
-{
-	return 0;
-}

@@ -25,6 +25,15 @@ int osd_display_loading_rom_message(const char *name,
 	return 0;
 }
 
+#ifdef MESS
+
+int osd_select_file(mess_image *img, char *filename)
+{
+	return 0;
+}
+
 void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
+
+#endif
