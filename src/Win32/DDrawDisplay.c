@@ -43,6 +43,8 @@
 
 #define GETC(col, pi)    (((col & (pi)->m_dwMask) >> (pi)->m_nShift)) << (8 - (pi)->m_nSize);
 
+#define VERBOSE 0
+
 /***************************************************************************
     Internal structures
  ***************************************************************************/
@@ -1239,6 +1241,7 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     HRESULT         hResult;
     DDSURFACEDESC   ddSurfaceDesc;
 	UINT            nDisplayLines, nDisplayColumns, nSkipLines, nSkipColumns;
+	UINT            nRenderSkipLines, nRenderSkipColumns;
 	RenderMethod	Render;
 	tRect			*pGameRect;
 #ifdef MAME_DEBUG
@@ -1254,8 +1257,9 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
 	if (This.debugger_has_focus)
 	{
 		Render = This.DebugRender;
-		nSkipLines = This.m_nScreenHeight - This.m_pBitmap->height;
-		nSkipColumns = This.m_nScreenWidth - This.m_pBitmap->width;
+		nRenderSkipLines = nRenderSkipColumns = 0;
+		nSkipLines = (This.m_nScreenHeight - This.m_pBitmap->height) / 2;
+		nSkipColumns = (This.m_nScreenWidth - This.m_pBitmap->width) / 2;
 
 		nDisplayLines = This.m_pBitmap->height;
 		nDisplayColumns = This.m_pBitmap->width;
@@ -1264,13 +1268,17 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
 		DebugRect.m_Left = nSkipColumns;
 		DebugRect.m_Height = nDisplayLines;
 		DebugRect.m_Width = nDisplayColumns;
+
+#if VERBOSE
+		logerror("DrawSurface(): Render=This.DebugRender This.m_nScreenHeight=%i This.m_nScreenWidth=%i nSkipLines=%i nSkipColumns=%i\n", This.m_nScreenHeight, This.m_nScreenWidth, nSkipLines, nSkipColumns);
+#endif
 	}
 	else
 #endif
 	{
 		Render = This.Render;
-		nSkipLines = This.m_nSkipLines;
-		nSkipColumns = This.m_nSkipColumns;
+		nRenderSkipLines = nSkipLines = This.m_nSkipLines;
+		nRenderSkipColumns = nSkipColumns = This.m_nSkipColumns;
 
 		nDisplayLines = This.m_nDisplayLines;
 		nDisplayColumns = This.m_nDisplayColumns;
@@ -1349,8 +1357,8 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     assert(Render != NULL);
 
 	Render(This.m_pBitmap,
-				nSkipLines,
-				nSkipColumns,
+				nRenderSkipLines,
+				nRenderSkipColumns,
 				nDisplayLines,
 				nDisplayColumns,
 				pbScreen,
@@ -1618,7 +1626,7 @@ static BOOL FindBestDisplayMode(DWORD  dwWidthIn,   DWORD  dwHeightIn, DWORD dwD
 #ifdef MAME_DEBUG
 	if (dwWidthIn < options.debug_width)
 		dwWidthIn = options.debug_width;
-	if (dwHeightIn < options.debug_width)
+	if (dwHeightIn < options.debug_height)
 		dwHeightIn = options.debug_height;
 #endif /* MAME_DEBUG */
 
@@ -1670,6 +1678,10 @@ static BOOL FindBestDisplayMode(DWORD  dwWidthIn,   DWORD  dwHeightIn, DWORD dwD
         *pdwWidthOut  = dwBiggestWidth;
         *pdwHeightOut = dwBiggestHeight;
     }
+
+#if VERBOSE
+	logerror("FindBestDisplayMode: dwWidthIn=%i dwHeightIn=%i dwDepth=%i *pdwWidthOut=%i *pdwHeightOut=%i\n", dwWidthIn, dwHeightIn, dwDepth, *pdwWidthOut, *pdwHeightOut);
+#endif
 
     return bFound;
 }
