@@ -176,7 +176,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 	case MESSTEST_COMMAND_INPUT:
 		/* post a set of characters to the emulation */
 		if (state == STATE_READY)
+		{
+			if (!inputx_can_post())
+			{
+				message(MSG_FAILURE, "Natural keyboard input not supported for this driver");
+				break;
+			}
+
 			inputx_post_utf8(current_command->u.input_chars);
+		}
 		state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
 		break;
 

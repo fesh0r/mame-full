@@ -26,11 +26,9 @@
 <test name="dragon64_001" driver="dragon64">
 	<wait time="2"/>
 	<memverify start="0x400" end="0x408">0x445241474F4E444F53</memverify>
-<!--
 	<input>EXEC 48000&#13;</input>
 	<wait time="3"/>
 	<memverify start="0x409" end="0x40E">0x445241474F4E</memverify>
--->
 </test>
 
 </tests>
