@@ -247,11 +247,11 @@ int xv_open_display(int reopen)
             case 0: /* try normal RGB */
               if(FindRGBXvFormat())
                 break;
-              fprintf(stderr,"Can't find a suitable RGB format - trying YUY2 instead... ");
+              fprintf(stderr,"Can't find a suitable RGB format - trying YUY2 instead.\n");
             case 1: /* force YUY2 */
               if(FindXvPort(FOURCC_YUY2))
                 break;
-              fprintf(stderr,"YUY2 not available - trying YV12... ");
+              fprintf(stderr,"YUY2 not available - trying YV12.\n");
             case 2: /* forced YV12 */
               if(FindXvPort(FOURCC_YV12))
                 break;
