@@ -19,7 +19,6 @@
 #include <float.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/cursorfont.h>
 
 #ifdef USE_MITSHM
 #  if defined(__DECC) && defined(VMS)
@@ -125,7 +124,6 @@ static unsigned long black_pen;
 static int use_xsync = 0;
 static int root_window_id; /* root window id (for swallowing the mame window) */
 static char *geometry = NULL;
-static int cursors_allocated = 0;
 static double x11_resolution_aspect=0.0;
 static int private_cmap_allocated = 0;
 
@@ -141,7 +139,6 @@ struct rc_option x11_window_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11-window Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL,
  NULL },
-	{ "cursor", "cu", rc_bool, &show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
 #ifdef USE_MITSHM
 	{ "mitshm", "ms", rc_bool, &use_mit_shm, "1", 0, 0, NULL, "Use/don't use MIT Shared Mem (if available and compiled in)" },
 #endif
@@ -332,47 +329,7 @@ void ClearYV12()
     }
   }
 }
-
 #endif
-
-/*
- * This function creates an invisible cursor.
- *
- * I got the idea and code fragment from in the Apple II+ Emulator
- * version 0.06 for Linux by Aaron Culliney
- * <chernabog@baldmountain.bbn.com>
- *
- * I also found a post from Steve Lamont <spl@szechuan.ucsd.edu> on
- * xforms@bob.usuf2.usuhs.mil.  His comments read:
- *
- * Lifted from unclutter
- * Mark M Martin. cetia 1991 mmm@cetia.fr
- * Version 4 changes by Charles Hannum <mycroft@ai.mit.edu>
- *
- * So I guess this code has been around the block a few times.
- */
-
-static Cursor create_invisible_cursor (Display * display, Window win)
-{
-   Pixmap cursormask;
-   XGCValues xgc;
-   XColor dummycolour;
-   Cursor cursor;
-   GC gc;
-
-   cursormask = XCreatePixmap (display, win, 1, 1, 1 /*depth */ );
-   xgc.function = GXclear;
-   gc = XCreateGC (display, cursormask, GCFunction, &xgc);
-   XFillRectangle (display, cursormask, gc, 0, 0, 1, 1);
-   dummycolour.pixel = 0;
-   dummycolour.red = 0;
-   dummycolour.flags = 04;
-   cursor = XCreatePixmapCursor (display, cursormask, cursormask,
-                                 &dummycolour, &dummycolour, 0, 0);
-   XFreeGC (display, gc);
-   XFreePixmap (display, cursormask);
-   return cursor;
-}
 
 static int x11_find_best_visual(int bitmap_depth)
 {
@@ -532,7 +489,6 @@ int x11_window_create_display (int bitmap_depth)
 	mit_shm_attached = 0;
 #endif
 	private_cmap_allocated = 0;
-	cursors_allocated = 0;
 	pseudo_color_allocated = NULL;
 	pseudo_color_lookup = NULL;
 	pseudo_color_lookup_dirty = FALSE;
@@ -1084,15 +1040,7 @@ int x11_window_create_display (int bitmap_depth)
 		}
 #endif
                 /* Select event mask */
-                event_mask |= FocusChangeMask | ExposureMask |
-                        EnterWindowMask | LeaveWindowMask |
-                        KeyPressMask | KeyReleaseMask;
-                if (use_mouse)
-                {
-                        event_mask |= ButtonPressMask | ButtonReleaseMask;
-                }
-                
-                XSelectInput (display, window, event_mask);
+                event_mask |= EnterWindowMask | LeaveWindowMask;
 	}
 
 	/* verify the number of bits per pixel and choose the correct update method */
@@ -1111,7 +1059,10 @@ int x11_window_create_display (int bitmap_depth)
 
 	/* setup the palette_info struct now we have the depth */
 	if (x11_init_palette_info() != OSD_OK)
+	{
+		x11_window_close_display();
 		return OSD_NOT_OK;
+	}
 
 	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
 	effect_dest_depth = depth;
@@ -1236,30 +1187,13 @@ int x11_window_create_display (int bitmap_depth)
 	}
 	fprintf(stderr_file, "Ok\n");
 
-	/* mouse pointer stuff */
-	if (!use_mouse || (x11_grab_mouse &&  XGrabPointer (display, window, True,
-					0, GrabModeAsync, GrabModeAsync, window, None, CurrentTime)))
-		x11_grab_mouse = FALSE;
-
-	if (x11_grab_keyboard && XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
-        {
-		fprintf(stderr_file, "Warning: keyboard grab failed\n");
-		x11_grab_keyboard = FALSE;
-        }
-
-	if (!run_in_root_window)
-	{
-		normal_cursor = XCreateFontCursor (display, XC_trek);
-		invisible_cursor = create_invisible_cursor (display, window);
-		cursors_allocated = 1;
-
-		if (x11_grab_mouse || !show_cursor)
-			XDefineCursor (display, window, invisible_cursor);
-		else
-			XDefineCursor (display, window, normal_cursor);
-	}
-
 	effect_init2(bitmap_depth, effect_dest_depth, window_width);
+
+#ifdef USE_HWSCALE
+	xinput_open((use_hwscale && hwscale_fullscreen)? 1:0, event_mask);
+#else
+	xinput_open(0, event_mask);
+#endif
 
 	return OSD_OK;
 }
@@ -1270,7 +1204,6 @@ int x11_window_create_display (int bitmap_depth)
  */
 void x11_window_close_display (void)
 {
-   /* FIXME: free cursors */
    int i;
 
    widthscale  = orig_widthscale;
@@ -1279,6 +1212,9 @@ void x11_window_close_display (void)
 
    /* Restore error handler to default */
    XSetErrorHandler (None);
+   
+   /* ungrab keyb and mouse */
+   xinput_close();
 
    /* better free any allocated colors before freeing the colormap */
    if (pseudo_color_lookup)
@@ -1300,25 +1236,12 @@ void x11_window_close_display (void)
       free(pseudo_color_lookup);
    }
 
-   /* This is only allocated/done if we succeeded to get a window */
+   /* now just free everything else */
    if (window)
    {
-      if (x11_grab_mouse)
-         XUngrabPointer (display, CurrentTime);
-
-      if (x11_grab_keyboard)
-         XUngrabKeyboard (display, CurrentTime);
-
-      if(cursors_allocated)
-      {
-		XFreeCursor(display, normal_cursor);
-                XFreeCursor(display, invisible_cursor);
-                cursors_allocated = FALSE;
-      }
-
       XDestroyWindow (display, window);
+      window = 0;
    }
-
 #ifdef USE_MITSHM
    if (use_mit_shm)
    {
@@ -1520,47 +1443,8 @@ void x11_window_update_display (struct mame_bitmap *bitmap)
    (*x11_window_update_display_func) (bitmap);
 
    x11_window_refresh_screen();
-
-   if (use_mouse &&
-       code_pressed (KEYCODE_LALT) &&
-       code_pressed_memory (KEYCODE_PGDN))
-   {
-      if (x11_grab_mouse)
-      {
-         XUngrabPointer (display, CurrentTime);
-         if (show_cursor)
-            XDefineCursor (display, window, normal_cursor);
-         x11_grab_mouse = FALSE;
-      }
-      else
-      {
-         if (!XGrabPointer (display, window, True, 0, GrabModeAsync,
-                            GrabModeAsync, window, None, CurrentTime))
-         {
-            if (show_cursor)
-               XDefineCursor (display, window, invisible_cursor);
-            x11_grab_mouse = TRUE;
-         }
-      }
-   }
-
-   /* toggle keyboard grabbing */
-   if (code_pressed (KEYCODE_LALT) &&
-       code_pressed_memory (KEYCODE_PGUP))
-   {
-     if (x11_grab_keyboard)
-     {
-       XUngrabKeyboard (display, CurrentTime);
-       x11_grab_keyboard = FALSE;
-     }
-     else
-     {
-       if (!XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
-	 x11_grab_keyboard = TRUE;
-       else
-	 fprintf(stderr_file, "Warning: keyboard grab failed\n");
-     }
-   }
+   
+   xinput_check_hotkeys();
 
    /* some games "flickers" with XFlush, so command line option is provided */
    if (use_xsync)
@@ -1623,21 +1507,23 @@ void x11_window_refresh_screen (void)
 #define BMASK 0x0000ff
 
 #define RGB2YUV(r,g,b,y,u,v) \
-    (y) = (( 9836*(r) + 19310*(g) + 3750*(b) ) / 32768); \
-    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) ) / 32768) + 128; \
-    (v) = (( 16448*(r) - 13783*(g) - 2665*(b) ) / 32768) + 128;
+    (y) = ((  9836*(r) + 19310*(g) +  3750*(b)          ) >> 15); \
+    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 15); \
+    (v) = (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 15)
+
 static void x11_window_make_yuv_lookup()
 {
-   int i,r,g,b,y,u,v,n;
+   int i,r,g,b,y,u,v,n, first_time = 0;
    n=current_palette->emulated.writable_colors;
 
    if(!hwscale_yuvlookup)
    {
       fprintf(stderr,"Making YUV lookup\n");
       hwscale_yuvlookup=malloc(sizeof(int)*n);
+      first_time = 1;
    }
 
-   if(current_palette->dirty)
+   if(current_palette->dirty || first_time)
    {
       for(i=0;i<n;++i)
       {
@@ -1647,18 +1533,6 @@ static void x11_window_make_yuv_lookup()
         b=(b&BMASK);
 
         RGB2YUV(r,g,b,y,u,v);
-        if (y > 255)
-           y = 255;
-        else if (y < 0)
-           y = 0;
-        if (u > 255)
-           u = 255;
-        else if (u < 0)
-           u = 0;
-        if (v > 255)
-           v = 255;
-        else if (v < 0)
-           v = 0;
 
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */

@@ -26,9 +26,6 @@ static struct
 {
 	int screen;
 	unsigned char *addr;
-	int grabbed_keybd;
-	int grabbed_mouse;
-	int old_grab_mouse;
 	char *base_addr;
 	int width;
 	int bank_size;
@@ -38,7 +35,7 @@ static struct
 	XF86VidModeModeInfo orig_mode;
 	int vidmode_changed;
 	int palette_dirty;
-} xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE};
+} xf86ctx = {-1,NULL,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE};
 		
 int xf86_dga1_init(void)
 {
@@ -299,8 +296,6 @@ int xf86_dga1_create_display(int bitmap_depth)
 	xf86_dga_fix_viewport  = 0;
 	xf86_dga_first_click   = 1;
 	xf86ctx.palette_dirty  = FALSE;
-	xf86ctx.old_grab_mouse = x11_grab_mouse;
-	x11_grab_mouse         = FALSE;
 
 	xvisual = DefaultVisual(display,xf86ctx.screen);
 	window  = RootWindow(display,xf86ctx.screen);
@@ -369,25 +364,12 @@ int xf86_dga1_create_display(int bitmap_depth)
 		return OSD_NOT_OK;
 	}
 	xf86ctx.vidmode_changed = TRUE;
-	if(XGrabKeyboard(display,window,True,
-				GrabModeAsync,GrabModeAsync,CurrentTime))
+
+        /* 2 means grab keyb and mouse ! */
+	if(xinput_open(2, 0))
 	{
 		fprintf(stderr_file,"XGrabKeyboard failed\n");
 		return OSD_NOT_OK;
-	}
-	xf86ctx.grabbed_keybd = 1;
-
-	if(use_mouse)
-	{
-		if(XGrabPointer(display,window,True,
-					PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
-					GrabModeAsync,GrabModeAsync,None,None,CurrentTime))
-		{
-			fprintf(stderr_file, "XGrabPointer failed, mouse disabled\n");
-			use_mouse = 0;
-		}
-		else
-			xf86ctx.grabbed_mouse = 1;
 	}
 
 	if(first_time)
@@ -503,23 +485,13 @@ void xf86_dga1_close_display(void)
 		XFreeColormap(display,xf86ctx.cmap);
 		xf86ctx.cmap = 0;
 	}
-	if(xf86ctx.grabbed_mouse)
-	{
-		XUngrabPointer(display,CurrentTime);
-		xf86ctx.grabbed_mouse = FALSE;
-	}
-	if(xf86ctx.grabbed_keybd)
-	{
-		XUngrabKeyboard(display,CurrentTime);
-		xf86ctx.grabbed_keybd = FALSE;
-	}
+	xinput_close();
 	XF86DGADirectVideo(display,xf86ctx.screen, 0);
 	if(xf86ctx.vidmode_changed)
 	{
 		xf86_dga_vidmode_restoremode(display);
 		xf86ctx.vidmode_changed = FALSE;
 	}
-	x11_grab_mouse = xf86ctx.old_grab_mouse;
 }
 
 #endif /*def USE_DGA*/

@@ -21,13 +21,8 @@ EXTERN Visual		*xvisual;
 EXTERN int		depth;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		mode_available[X11_MODE_COUNT];
-EXTERN Cursor		normal_cursor;
-EXTERN Cursor		invisible_cursor;
 EXTERN int		x11_video_mode;
-EXTERN int		x11_grab_mouse;
-EXTERN int		x11_grab_keyboard;
 EXTERN int		run_in_root_window;
-EXTERN int		show_cursor;
 EXTERN int		use_private_cmap;
 #ifdef USE_XIL
 EXTERN int		use_xil;
@@ -93,6 +88,11 @@ int  xf86_dga2_modify_pen(int pen, unsigned char red,unsigned char green,unsigne
 void xf86_dga2_update_display(struct mame_bitmap *bitmap);
 int  xf86_dga2_alloc_palette(int writable_colors);
 int  xf86_dga2_16bpp_capable(void);
+
+/* xinput functions */
+int xinput_open(int force_grab, int event_mask);
+void xinput_close(void);
+void xinput_check_hotkeys(void);
 
 /* XIL functions */
 #ifdef USE_XIL

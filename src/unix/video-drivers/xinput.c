@@ -5,30 +5,37 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 #include "xmame.h"
 #include "devices.h"
 #include "x11.h"
 #include "xkeyboard.h"
 
+static Cursor xinput_normal_cursor;
+static Cursor xinput_invisible_cursor;
 static int current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
-static int x11_use_winkeys = 0;
+static int xinput_use_winkeys = 0;
+static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
+static int xinput_keyboard_grabbed = 0;
+static int xinput_mouse_grabbed = 0;
+static int xinput_cursors_allocated = 0;
+static int xinput_grab_mouse = 0;
+static int xinput_grab_keyboard = 0;
+static int xinput_show_cursor = 1;
+static int xinput_force_grab = 0;
 
-static int x11_mapkey(struct rc_option *option, const char *arg, int priority);
+static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option x11_input_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11-input related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "grabmouse", "gm", rc_bool, &x11_grab_mouse, "0", 0, 0, NULL, "Enable/disable mousegrabbing (also alt + pagedown)" },
-	{ "grabkeyboard", "gkb", rc_bool, &x11_grab_keyboard, "0", 0, 0, NULL, "Enable/disable keyboardgrabbing (also alt + pageup)" },
-	{ "winkeys", "wk", rc_bool, &x11_use_winkeys, "0", 0, 0, NULL, "Enable/disable mapping of windowskeys under X" },
-	{ "mapkey", "mk", rc_use_function, NULL, NULL, 0, 0, x11_mapkey, "Set a specific key mapping, see xmamerc.dist" },
+	{ "grabmouse", "gm", rc_bool, &xinput_grab_mouse, "0", 0, 0, NULL, "Enable/disable mousegrabbing (also alt + pagedown)" },
+	{ "grabkeyboard", "gkb", rc_bool, &xinput_grab_keyboard, "0", 0, 0, NULL, "Enable/disable keyboardgrabbing (also alt + pageup)" },
+	{ "cursor", "cu", rc_bool, &xinput_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
+	{ "winkeys", "wk", rc_bool, &xinput_use_winkeys, "0", 0, 0, NULL, "Enable/disable mapping of windowskeys under X" },
+	{ "mapkey", "mk", rc_use_function, NULL, NULL, 0, 0, xinput_mapkey, "Set a specific key mapping, see xmamerc.dist" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
-
-#if defined(__sgi) && !defined(MESS)
-/* Under Xmame, track if the game is paused due to window iconification */
-static unsigned char game_paused_by_unmap = FALSE;
-#endif
 
 /*
  * Parse keyboard events
@@ -40,17 +47,9 @@ void sysdep_update_keyboard (void)
 	char				keyname[16+1];
 	int				mask;
 	struct xmame_keyboard_event	event;
-	static int			old_grab_mouse = FALSE;
 	/* grrr some windowmanagers send multiple focus events, this is used to
 	   filter them. */
 	static int			focus = FALSE;
-
-	/* handle winkey mappings */
-	if (x11_use_winkeys)
-	{
-		extended_code_table[XK_Meta_L&0x1FF] = KEY_LWIN; 
-		extended_code_table[XK_Meta_R&0x1FF] = KEY_RWIN; 
-	}
 
 #ifdef NOT_DEFINED /* x11 */
 	if(run_in_root_window && x11_video_mode == X11_WINDOW)
@@ -91,11 +90,6 @@ void sysdep_update_keyboard (void)
 			switch (E.type)
 			{
 				/* display events */
-#ifdef x11
-				case Expose:
-					if ( E.xexpose.count == 0 ) x11_window_refresh_screen();
-					break;
-#endif
 				case FocusIn:
 					/* check for multiple events and ignore them */
 					if (focus) break;
@@ -103,26 +97,27 @@ void sysdep_update_keyboard (void)
 					/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 					   perform a key reset whenever we retrieve keyboard focus */
 					xmame_keyboard_clear();
-					if (old_grab_mouse)
+					if (use_mouse &&
+					    (xinput_force_grab || xinput_grab_mouse) &&
+					    !XGrabPointer(display, window, True,
+					      PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
+					      GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
 					{
-						if (!XGrabPointer(display, window, True, 0, GrabModeAsync,
-									GrabModeAsync, window, None, CurrentTime))
-						{
-							if (show_cursor) XDefineCursor(display,window,invisible_cursor);
-							x11_grab_mouse = TRUE;
-						}
+						xinput_mouse_grabbed = 1;
+						if (xinput_cursors_allocated && xinput_show_cursor)
+						  XDefineCursor(display,window,xinput_invisible_cursor);
 					}
 					break;
 				case FocusOut:
 					/* check for multiple events and ignore them */
 					if (!focus) break;
 					focus = FALSE;
-					old_grab_mouse = x11_grab_mouse;
-					if (x11_grab_mouse)
+					if (xinput_mouse_grabbed)
 					{
 						XUngrabPointer(display, CurrentTime);
-						if (show_cursor) XDefineCursor(display,window,normal_cursor);
-						x11_grab_mouse = FALSE;
+						if (xinput_cursors_allocated && xinput_show_cursor)
+						  XDefineCursor(display,window,xinput_normal_cursor);
+						xinput_mouse_grabbed = 0;
 					}
 					break;
 				case EnterNotify:
@@ -175,13 +170,13 @@ void sysdep_update_keyboard (void)
 					xmame_keyboard_register_event(&event);
 					break;
 				default:
+					/* grrr we can't use case here since the event types for XInput devices
+					   aren't hardcoded, since we should have caught anything else above,
+					   just asume it's an XInput event */
 #ifdef USE_XINPUT_DEVICES
 					if (XInputProcessEvent(&E)) break;
 #endif
 #ifdef X11_JOYSTICK
-					/* grrr we can't use case here since the event types for XInput devices
-					   aren't hardcoded, since we should have caught anything else above,
-					   just asume it's an XInput event */
 					process_x11_joy_event(&E);
 #endif
 					break;
@@ -194,7 +189,7 @@ void sysdep_update_keyboard (void)
  *  invoiced in startup code
  *  returns 0-> success 1-> invalid from or to
  */
-static int x11_mapkey(struct rc_option *option, const char *arg, int priority)
+static int xinput_mapkey(struct rc_option *option, const char *arg, int priority)
 {
 	unsigned int from,to;
 	/* ultrix sscanf() requires explicit leading of 0x for hex numbers */
@@ -246,7 +241,7 @@ void sysdep_mouse_poll(void)
 			return;
 		}
 
-		if ( x11_grab_mouse )
+		if ( xinput_mouse_grabbed )
 		{
 			XWarpPointer(display, None, window, 0, 0, 0, 0,
 					visual_width/2, visual_height/2);
@@ -263,6 +258,162 @@ void sysdep_mouse_poll(void)
 	}
 }
 
+/*
+ * This function creates an invisible cursor.
+ *
+ * I got the idea and code fragment from in the Apple II+ Emulator
+ * version 0.06 for Linux by Aaron Culliney
+ * <chernabog@baldmountain.bbn.com>
+ *
+ * I also found a post from Steve Lamont <spl@szechuan.ucsd.edu> on
+ * xforms@bob.usuf2.usuhs.mil.  His comments read:
+ *
+ * Lifted from unclutter
+ * Mark M Martin. cetia 1991 mmm@cetia.fr
+ * Version 4 changes by Charles Hannum <mycroft@ai.mit.edu>
+ *
+ * So I guess this code has been around the block a few times.
+ */
+
+static Cursor xinput_create_invisible_cursor (Display * display, Window win)
+{
+   Pixmap cursormask;
+   XGCValues xgc;
+   XColor dummycolour;
+   Cursor cursor;
+   GC gc;
+
+   cursormask = XCreatePixmap (display, win, 1, 1, 1 /*depth */ );
+   xgc.function = GXclear;
+   gc = XCreateGC (display, cursormask, GCFunction, &xgc);
+   XFillRectangle (display, cursormask, gc, 0, 0, 1, 1);
+   dummycolour.pixel = 0;
+   dummycolour.red = 0;
+   dummycolour.flags = 04;
+   cursor = XCreatePixmapCursor (display, cursormask, cursormask,
+                                 &dummycolour, &dummycolour, 0, 0);
+   XFreeGC (display, gc);
+   XFreePixmap (display, cursormask);
+   return cursor;
+}
+
 void sysdep_set_leds(int leds)
 {
+}
+
+int xinput_open(int force_grab, int event_mask)
+{
+  xinput_force_grab = force_grab;
+  
+  /* handle winkey mappings */
+  if (xinput_use_winkeys)
+  {
+  	extended_code_table[XK_Meta_L&0x1FF] = KEY_LWIN; 
+  	extended_code_table[XK_Meta_R&0x1FF] = KEY_RWIN; 
+  }
+
+  /* mouse grab failing is not really a problem */
+  if (use_mouse && (xinput_force_grab || xinput_grab_mouse))
+  {
+    if(XGrabPointer (display, window, True,
+         PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
+         GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
+      fprintf(stderr_file, "Warning mouse grab failed\n");
+    else
+      xinput_mouse_grabbed = 1;
+  }
+
+  if (window != DefaultRootWindow(display))
+  {
+    /* setup the cursor */
+    xinput_normal_cursor     = XCreateFontCursor (display, XC_trek);
+    xinput_invisible_cursor  = xinput_create_invisible_cursor (display, window);
+    xinput_cursors_allocated = 1;
+
+    if (xinput_mouse_grabbed || !xinput_show_cursor || xinput_force_grab)
+ 	XDefineCursor (display, window, xinput_invisible_cursor);
+    else
+    	XDefineCursor (display, window, xinput_normal_cursor);
+
+    /* Select event mask */
+    event_mask |= FocusChangeMask | KeyPressMask | KeyReleaseMask;
+    if (use_mouse)
+    {
+       event_mask |= ButtonPressMask | ButtonReleaseMask;
+    }
+    XSelectInput (display, window, event_mask);
+  }
+
+  if ((xinput_force_grab == 2) || xinput_grab_keyboard)
+  {
+    /* keyboard grab failing could be fatal so let the caller know */
+    if (XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync,
+         CurrentTime))
+      return 1;
+
+    xinput_keyboard_grabbed = 1;
+  }
+  
+  return 0;
+}
+
+void xinput_close(void)
+{
+  if (xinput_mouse_grabbed)
+  {
+     XUngrabPointer (display, CurrentTime);
+     xinput_mouse_grabbed = 0;
+  }
+
+  if (xinput_keyboard_grabbed)
+  {
+     XUngrabKeyboard (display, CurrentTime);
+     xinput_keyboard_grabbed = 0;
+  }
+
+  if(xinput_cursors_allocated)
+  {
+     XFreeCursor(display, xinput_normal_cursor);
+     XFreeCursor(display, xinput_invisible_cursor);
+     xinput_cursors_allocated = 0;
+  }
+}
+
+void xinput_check_hotkeys(void)
+{
+  if (use_mouse && !xinput_force_grab &&
+      code_pressed (KEYCODE_LALT) &&
+      code_pressed_memory (KEYCODE_PGDN))
+  {
+     if (xinput_mouse_grabbed)
+     {
+        XUngrabPointer (display, CurrentTime);
+        if (xinput_cursors_allocated && xinput_show_cursor)
+           XDefineCursor (display, window, xinput_normal_cursor);
+        xinput_mouse_grabbed = 0;
+     }
+     else if (!XGrabPointer (display, window, True,
+                 PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
+                 GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
+     {
+        if (xinput_cursors_allocated && xinput_show_cursor)
+           XDefineCursor (display, window, xinput_invisible_cursor);
+        xinput_mouse_grabbed = 1;
+     }
+  }
+
+  /* toggle keyboard grabbing */
+  if ((xinput_force_grab!=2) && code_pressed (KEYCODE_LALT) &&
+      code_pressed_memory (KEYCODE_PGUP))
+  {
+    if (xinput_keyboard_grabbed)
+    {
+      XUngrabKeyboard (display, CurrentTime);
+      xinput_keyboard_grabbed = 0;
+    }
+    else if (!XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+    {
+      xinput_keyboard_grabbed = 1;
+    }
+  }
 }
