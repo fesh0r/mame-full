@@ -551,7 +551,7 @@ void vdt911_keyboard(int unit)
 	key_buf[4] &= ~0x0400;
 	key_buf[5] &= ~0x0520;
 
-	/* remove unused keys */	
+	/* remove unused keys */
 	if ((vdt[unit].model == vdt911_model_US) || (vdt[unit].model == vdt911_model_UK) || (vdt[unit].model == vdt911_model_French))
 		key_buf[4] &= ~0x0004;
 
@@ -604,7 +604,7 @@ void vdt911_keyboard(int unit)
 						last_key_pressed = (i << 4) | j;
 						last_modifier_state = modifier_state;
 
-						vdt[unit].keyboard_data = (int)US_key_translate[modifier_state][last_key_pressed];
+						vdt[unit].keyboard_data = (int)US_key_translate[modifier_state][(int)last_key_pressed];
 						vdt[unit].keyboard_data_ready = 1;
 						if (vdt[unit].keyboard_interrupt_enable)
 							(*vdt[unit].int_callback)(1);
