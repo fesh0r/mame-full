@@ -20,6 +20,8 @@ int cbm_quick_init (int id, mame_file *fp, int open_mode)
 	const char *cp;
 
 	memset (&quick, 0, sizeof (quick));
+	if (fp == NULL)
+		return INIT_PASS;
 
 	quick.specified = 1;
 
@@ -202,6 +204,11 @@ int cbm_rom_load(int id, mame_file *fp, int open_mode)
 		;
 	if (i >= sizeof(cbm_rom) / sizeof(cbm_rom[0]))
 		return INIT_FAIL;
+
+	if (!fp)
+	{
+		return INIT_PASS;
+	}
 
 	dev = cbm_rom_find_device();
 

@@ -935,6 +935,9 @@ int vc20_tape_attach_image (int id, mame_file *fp, int open_mode)
 	tape.motor = 0;
 	tape.data = 0;
 
+	if (!fp)
+		return INIT_PASS;
+
 	cp = image_filetype(IO_CASSETTE, id);
 	if (!cp)
 		return INIT_FAIL;

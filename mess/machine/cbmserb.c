@@ -108,6 +108,8 @@ static int d64_open (int id, mame_file *in)
 
 	cbm_drive[id].image_type = IO_FLOPPY;
 	cbm_drive[id].image_id = id;
+	if (in == NULL)
+		return 0;
 	size = mame_fsize (in);
 	if (!(cbm_drive[id].image = (UINT8*)malloc (size)))
 		return 1;
