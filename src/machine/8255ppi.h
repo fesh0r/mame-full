@@ -14,6 +14,7 @@ typedef struct
 	mem_write_handler portCwrite[MAX_8255];
 } ppi8255_interface;
 
+
 /* Init */
 void ppi8255_init( ppi8255_interface *intfce);
 
