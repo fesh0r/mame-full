@@ -89,7 +89,7 @@ static struct osd_bitmap *tmpbitmap9;
 unsigned char f2_4layer_priority;
 unsigned char *f2_sprite_extension;
 size_t f2_spriteext_size;
-unsigned int sprites_active_area = 0;
+int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 
 unsigned char *f2_4layerregs;
 
@@ -344,6 +344,7 @@ int taitof2_core_vh_start (void)
 			spritebank[i] = 0x400 * i;
 	}
 
+	sprites_disabled = 1;
 	sprites_active_area = 0;
 
 	return 0;
@@ -964,14 +965,15 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 	/* must remember enable status from last frame because driftout fails to
 	   reactivate them from a certain point onwards. */
-	static int sprites_disabled = 1;
+	int disabled = sprites_disabled;
 
 	/* must remember master scroll from previous frame because driftout
 	   sometimes doesn't set it. */
-	static int master_scrollx=0, master_scrolly=0;
+	int master_scrollx = sprites_master_scrollx;
+	int master_scrolly = sprites_master_scrolly;
 
-	/* must also remember the sprite bank from previous frame. This is a global
-	   in order to reset it in vh_start() */
+	/* must also remember the sprite bank from previous frame. */
+	int area = sprites_active_area;
 
 
 	scroll1x = 0;
@@ -986,28 +988,28 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 
 
 	/* safety check to avoid getting stuck in bank 2 for games using only one bank */
-	if (sprites_active_area == 0x8000 &&
+	if (area == 0x8000 &&
 			spriteram_buffered[(0x8000+6)/2] == 0 &&
 			spriteram_buffered[(0x8000+10)/2] == 0)
-		sprites_active_area = 0;
+		area = 0;
 
 
 	for (off = 0;off < 0x4000;off += 16)
 	{
 		/* sprites_active_area may change during processing */
-		int offs = off + sprites_active_area;
+		int offs = off + area;
 
 		if (spriteram_buffered[(offs+6)/2] & 0x8000)
 		{
-			sprites_disabled = spriteram_buffered[(offs+10)/2] & 0x1000;
+			disabled = spriteram_buffered[(offs+10)/2] & 0x1000;
 			sprites_flipscreen = spriteram_buffered[(offs+10)/2] & 0x2000;
 			f2_x_offset = f2_hide_pixels;   /* Get rid of 0-3 unwanted pixels on edge of screen. */
 			if (sprites_flipscreen) f2_x_offset = -f2_x_offset;
-			sprites_active_area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
+			area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
 			continue;
 		}
 
-//usrintf_showmessage("%04x",sprites_active_area);
+//usrintf_showmessage("%04x",area);
 
 		/* check for extra scroll offset */
 		if ((spriteram_buffered[(offs+4)/2] & 0xf000) == 0xa000)
@@ -1027,7 +1029,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int *primasks)
 			if (scroll1y >= 0x800) scroll1y -= 0x1000;   /* signed value */
 		}
 
-		if (sprites_disabled)
+		if (disabled)
 			continue;
 
 		spritedata = spriteram_buffered[(offs+8)/2];
@@ -1325,16 +1327,60 @@ static int prepare_sprites;
 static void taitof2_handle_sprite_buffering(void)
 {
 	if (prepare_sprites)	/* no buffering */
+	{
 		memcpy(spriteram_buffered,spriteram,spriteram_size);
+		prepare_sprites = 0;
+	}
+}
+
+void taitof2_update_sprites_active_area(void)
+{
+	int off;
+
+
+	/* if the frame was skipped, we'll have to do the buffering now */
+	taitof2_handle_sprite_buffering();
+
+	/* safety check to avoid getting stuck in bank 2 for games using only one bank */
+	if (sprites_active_area == 0x8000 &&
+			spriteram_buffered[(0x8000+6)/2] == 0 &&
+			spriteram_buffered[(0x8000+10)/2] == 0)
+		sprites_active_area = 0;
+
+	for (off = 0;off < 0x4000;off += 16)
+	{
+		/* sprites_active_area may change during processing */
+		int offs = off + sprites_active_area;
+
+		if (spriteram_buffered[(offs+6)/2] & 0x8000)
+		{
+			sprites_disabled = spriteram_buffered[(offs+10)/2] & 0x1000;
+			sprites_active_area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
+			continue;
+		}
+
+		/* check for extra scroll offset */
+		if ((spriteram_buffered[(offs+4)/2] & 0xf000) == 0xa000)
+		{
+			sprites_master_scrollx = spriteram_buffered[(offs+4)/2] & 0xfff;
+			if (sprites_master_scrollx >= 0x800) sprites_master_scrollx -= 0x1000;   /* signed value */
+			sprites_master_scrolly = spriteram_buffered[(offs+6)/2] & 0xfff;
+			if (sprites_master_scrolly >= 0x800) sprites_master_scrolly -= 0x1000;   /* signed value */
+		}
+	}
 }
 
 void taitof2_no_buffer_eof_callback(void)
 {
+	taitof2_update_sprites_active_area();
+
 	prepare_sprites = 1;
 }
 void taitof2_partial_buffer_delayed_eof_callback(void)
 {
 	int i;
+
+	taitof2_update_sprites_active_area();
 
 	prepare_sprites = 0;
 	memcpy(spriteram_buffered,spriteram_delayed,spriteram_size);
@@ -1345,6 +1391,8 @@ void taitof2_partial_buffer_delayed_eof_callback(void)
 void taitof2_partial_buffer_delayed_thundfox_eof_callback(void)
 {
 	int i;
+
+	taitof2_update_sprites_active_area();
 
 	prepare_sprites = 0;
 	memcpy(spriteram_buffered,spriteram_delayed,spriteram_size);
