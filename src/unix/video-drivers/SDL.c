@@ -64,7 +64,7 @@ int32_t* H_Palette;
 static int H_Palette_modified = 0;
 #endif
 
-typedef void (*update_func_t)(struct osd_bitmap *bitmap);
+typedef void (*update_func_t)(struct mame_bitmap *bitmap);
 
 update_func_t update_function;
 
@@ -93,14 +93,14 @@ struct rc_option display_opts[] = {
 };
 
 void list_sdl_modes(void);
-void sdl_update_8_to_8bpp(struct osd_bitmap *bitmap);
-void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap);
-void sdl_update_8_to_24bpp(struct osd_bitmap *bitmap);
-void sdl_update_8_to_32bpp(struct osd_bitmap *bitmap);
-void sdl_update_16_to_16bpp(struct osd_bitmap *bitmap);
-void sdl_update_16_to_24bpp(struct osd_bitmap *bitmap);
-void sdl_update_16_to_32bpp(struct osd_bitmap *bitmap);
-void sdl_update_rgb_direct_32bpp(struct osd_bitmap *bitmap);
+void sdl_update_8_to_8bpp(struct mame_bitmap *bitmap);
+void sdl_update_8_to_16bpp(struct mame_bitmap *bitmap);
+void sdl_update_8_to_24bpp(struct mame_bitmap *bitmap);
+void sdl_update_8_to_32bpp(struct mame_bitmap *bitmap);
+void sdl_update_16_to_16bpp(struct mame_bitmap *bitmap);
+void sdl_update_16_to_24bpp(struct mame_bitmap *bitmap);
+void sdl_update_16_to_32bpp(struct mame_bitmap *bitmap);
+void sdl_update_rgb_direct_32bpp(struct mame_bitmap *bitmap);
 
 int sysdep_init(void)
 {
@@ -381,7 +381,7 @@ static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
 }
 
 /* Update routines */
-void sdl_update_8_to_8bpp (struct osd_bitmap *bitmap)
+void sdl_update_8_to_8bpp (struct mame_bitmap *bitmap)
 {
 #define DEST_WIDTH Vid_width
 #define DEST Offscreen_surface->pixels
@@ -396,7 +396,7 @@ void sdl_update_8_to_8bpp (struct osd_bitmap *bitmap)
 #undef DEST_WIDTH
 }
 
-void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap)
+void sdl_update_8_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define BLIT_16BPP_HACK
 #define INDIRECT current_palette->lookup
@@ -415,7 +415,7 @@ void sdl_update_8_to_16bpp(struct osd_bitmap *bitmap)
 #undef BLIT_16BPP_HACK
 }
 
-void sdl_update_8_to_24bpp (struct osd_bitmap *bitmap)
+void sdl_update_8_to_24bpp (struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned char
 #define DEST_PIXEL unsigned int
@@ -439,7 +439,7 @@ void sdl_update_8_to_24bpp (struct osd_bitmap *bitmap)
 #undef SRC_PIXEL
 }
 
-void sdl_update_8_to_32bpp (struct osd_bitmap *bitmap)
+void sdl_update_8_to_32bpp (struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL  unsigned char
@@ -454,7 +454,7 @@ void sdl_update_8_to_32bpp (struct osd_bitmap *bitmap)
 #undef INDIRECT
 }
 
-void sdl_update_16_to_16bpp (struct osd_bitmap *bitmap)
+void sdl_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned short
 #define DEST_PIXEL unsigned short
@@ -476,7 +476,7 @@ void sdl_update_16_to_16bpp (struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-void sdl_update_16_to_24bpp (struct osd_bitmap *bitmap)
+void sdl_update_16_to_24bpp (struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned short
 #define DEST_PIXEL unsigned int
@@ -500,7 +500,7 @@ void sdl_update_16_to_24bpp (struct osd_bitmap *bitmap)
 #undef SRC_PIXEL
 }
 
-void sdl_update_16_to_32bpp (struct osd_bitmap *bitmap)
+void sdl_update_16_to_32bpp (struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned short
@@ -515,7 +515,7 @@ void sdl_update_16_to_32bpp (struct osd_bitmap *bitmap)
 #undef INDIRECT
 }
 
-void sdl_update_rgb_direct_32bpp(struct osd_bitmap *bitmap)
+void sdl_update_rgb_direct_32bpp(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL unsigned int
 #define DEST_PIXEL unsigned int
@@ -529,7 +529,7 @@ void sdl_update_rgb_direct_32bpp(struct osd_bitmap *bitmap)
 }
 
 #ifndef DIRECT_HERMES
-void sysdep_update_display(struct osd_bitmap *bitmap)
+void sysdep_update_display(struct mame_bitmap *bitmap)
 {
    int old_use_dirty = use_dirty;
    SDL_Rect srect = { 0,0,0,0 };
@@ -558,7 +558,7 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
    use_dirty = old_use_dirty;
 }
 #else /* DIRECT_HERMES */
-void sysdep_update_display(struct osd_bitmap *bitmap)
+void sysdep_update_display(struct mame_bitmap *bitmap)
 {
    int i,j,x,y,w,h;
    int locked =0 ;

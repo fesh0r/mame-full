@@ -45,7 +45,7 @@ struct ph_func_struct {
    int  (*init)(void);
    int  (*create_display)(int depth);
    void (*close_display)(void);
-   void (*update_display)(struct osd_bitmap *bitmap);
+   void (*update_display)(struct mame_bitmap *bitmap);
    int  (*alloc_palette)(int writable_colors);
    int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
    int  (*_16bpp_capable)(void);
@@ -186,7 +186,7 @@ int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
    return (*ph_func[ph_video_mode].modify_pen) (pen, red, green, blue);
 }
 
-void sysdep_update_display (struct osd_bitmap *bitmap)
+void sysdep_update_display (struct mame_bitmap *bitmap)
 {
    extern unsigned short *shrinked_pens;
    int new_video_mode = ph_video_mode;

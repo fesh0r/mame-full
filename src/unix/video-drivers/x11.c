@@ -42,7 +42,7 @@ struct x_func_struct {
    int  (*init)(void);
    int  (*create_display)(int depth);
    void (*close_display)(void);
-   void (*update_display)(struct osd_bitmap *bitmap);
+   void (*update_display)(struct mame_bitmap *bitmap);
    int  (*alloc_palette)(int writable_colors);
    int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
    int  (*_16bpp_capable)(void);
@@ -175,7 +175,7 @@ int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
    return (*x_func[x11_video_mode].modify_pen) (pen, red, green, blue);
 }
 
-void sysdep_update_display (struct osd_bitmap *bitmap)
+void sysdep_update_display (struct mame_bitmap *bitmap)
 {
    int new_video_mode = x11_video_mode;
    int current_palette_normal = (current_palette == normal_palette);

@@ -26,13 +26,13 @@ static int use_linear = 0;
 static int center_x = 0;
 static int center_y = 0;
 static vga_modeinfo video_modeinfo;
-static void svgalib_update_linear(struct osd_bitmap *bitmap);
-static void svgalib_update_planar(struct osd_bitmap *bitmap);
-static void svgalib_update_gl(struct osd_bitmap *bitmap);
-static void svgalib_update_gl_scaled(struct osd_bitmap *bitmap);
-static void svgalib_update_linear_16bpp(struct osd_bitmap *bitmap);
-static void svgalib_update_gl_16bpp(struct osd_bitmap *bitmap);
-static void svgalib_update_gl_scaled_16bpp(struct osd_bitmap *bitmap);
+static void svgalib_update_linear(struct mame_bitmap *bitmap);
+static void svgalib_update_planar(struct mame_bitmap *bitmap);
+static void svgalib_update_gl(struct mame_bitmap *bitmap);
+static void svgalib_update_gl_scaled(struct mame_bitmap *bitmap);
+static void svgalib_update_linear_16bpp(struct mame_bitmap *bitmap);
+static void svgalib_update_gl_16bpp(struct mame_bitmap *bitmap);
+static void svgalib_update_gl_scaled_16bpp(struct mame_bitmap *bitmap);
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -63,7 +63,7 @@ struct rc_option display_opts[] = {
 };
 
 
-typedef void (*update_func)(struct osd_bitmap *bitmap);
+typedef void (*update_func)(struct mame_bitmap *bitmap);
 
 static update_func update_functions[8] = {
    svgalib_update_linear,
@@ -416,7 +416,7 @@ int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green,
 }
 
 /* Update the display. */
-void sysdep_update_display(struct osd_bitmap *bitmap)
+void sysdep_update_display(struct mame_bitmap *bitmap)
 {
    int old_use_dirty = use_dirty;
    
@@ -429,7 +429,7 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
 }
 
 
-static void svgalib_update_linear(struct osd_bitmap *bitmap)
+static void svgalib_update_linear(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned char
 #define DEST_PIXEL unsigned char
@@ -444,7 +444,7 @@ static void svgalib_update_linear(struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-static void svgalib_update_planar(struct osd_bitmap *bitmap)
+static void svgalib_update_planar(struct mame_bitmap *bitmap)
 {
   /* use page flipping otherwise the screen tears in planar modes,
      unfortunatly this also means we can't use dirty in planar modes */
@@ -458,7 +458,7 @@ static void svgalib_update_planar(struct osd_bitmap *bitmap)
   vga_setdisplaystart(page);
 }
 
-static void svgalib_update_gl(struct osd_bitmap *bitmap)
+static void svgalib_update_gl(struct mame_bitmap *bitmap)
 {
    int bitmap_linewidth = (bitmap->line[1] - bitmap->line[0]) /
       video_modeinfo.bytesperpixel;
@@ -475,7 +475,7 @@ static void svgalib_update_gl(struct osd_bitmap *bitmap)
 #undef PUT_IMAGE
 }
 
-static void svgalib_update_gl_scaled(struct osd_bitmap *bitmap)
+static void svgalib_update_gl_scaled(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned char
 #define DEST_PIXEL unsigned char
@@ -495,7 +495,7 @@ static void svgalib_update_gl_scaled(struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-static void svgalib_update_linear_16bpp(struct osd_bitmap *bitmap)
+static void svgalib_update_linear_16bpp(struct mame_bitmap *bitmap)
 {
    int linewidth = video_modeinfo.linewidth/2;
 #define SRC_PIXEL  unsigned short
@@ -520,7 +520,7 @@ static void svgalib_update_linear_16bpp(struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-static void svgalib_update_gl_16bpp(struct osd_bitmap *bitmap)
+static void svgalib_update_gl_16bpp(struct mame_bitmap *bitmap)
 {
    if(current_palette->lookup)
    {
@@ -536,7 +536,7 @@ static void svgalib_update_gl_16bpp(struct osd_bitmap *bitmap)
    }
 }
 
-static void svgalib_update_gl_scaled_16bpp(struct osd_bitmap *bitmap)
+static void svgalib_update_gl_scaled_16bpp(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL  unsigned short
 #define DEST_PIXEL unsigned short

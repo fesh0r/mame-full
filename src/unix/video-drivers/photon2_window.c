@@ -31,16 +31,16 @@
 #include "phkeyboard.h"
 #include "devices.h"
 
-static void ph_window_update_8_to_8bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_8_to_16bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_8_to_24bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_8_to_32bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_8_to_8bpp_direct (struct osd_bitmap *bitmap);
-static void ph_window_update_16_to_16bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_16_to_24bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_16_to_32bpp (struct osd_bitmap *bitmap);
-static void ph_window_update_32_to_32bpp_direct (struct osd_bitmap *bitmap);
-static void (*ph_window_update_display_func) (struct osd_bitmap *bitmap) = NULL;
+static void ph_window_update_8_to_8bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_8_to_16bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_8_to_24bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_8_to_32bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap);
+static void ph_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
+static void ph_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
+static void (*ph_window_update_display_func) (struct mame_bitmap *bitmap) = NULL;
 
 /* hmm we need these to do the clean up correctly, or we could just 
    trust unix & X to clean up after us but lett's keep things clean */
@@ -74,7 +74,7 @@ struct ph_func_struct {
    int  (*init)(void);
    int  (*create_display)(int depth);
    void (*close_display)(void);
-   void (*update_display)(struct osd_bitmap *bitmap);
+   void (*update_display)(struct mame_bitmap *bitmap);
    int  (*alloc_palette)(int writable_colors);
    int  (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
    int  (*_16bpp_capable)(void);
@@ -661,7 +661,7 @@ int ph_window_modify_pen (int pen, unsigned char red, unsigned char green,
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void ph_window_update_display (struct osd_bitmap *bitmap)
+void ph_window_update_display (struct mame_bitmap *bitmap)
 {
    PhRegion_t region_info;	
 	
@@ -754,12 +754,12 @@ INLINE void ph_window_put_image (int x, int y, int width, int height)
 
 #define DEST_PIXEL unsigned char
 
-static void ph_window_update_8_to_8bpp_direct (struct osd_bitmap *bitmap)
+static void ph_window_update_8_to_8bpp_direct (struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
 
-static void ph_window_update_8_to_8bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_8_to_8bpp (struct mame_bitmap *bitmap)
 {
 #define INDIRECT pseudo_color_lookup
 #include "blit.h"
@@ -770,7 +770,7 @@ static void ph_window_update_8_to_8bpp (struct osd_bitmap *bitmap)
 
 #define INDIRECT current_palette->lookup
 
-static void ph_window_update_8_to_16bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_8_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define BLIT_16BPP_HACK
 #define DEST_PIXEL unsigned short
@@ -781,14 +781,14 @@ static void ph_window_update_8_to_16bpp (struct osd_bitmap *bitmap)
 
 #define DEST_PIXEL unsigned int
 
-static void ph_window_update_8_to_24bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_8_to_24bpp (struct mame_bitmap *bitmap)
 {
 #define PACK_BITS
 #include "blit.h"
 #undef PACK_BITS
 }
 
-static void ph_window_update_8_to_32bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_8_to_32bpp (struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -798,7 +798,7 @@ static void ph_window_update_8_to_32bpp (struct osd_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
 
-static void ph_window_update_16_to_16bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
 
@@ -818,14 +818,14 @@ static void ph_window_update_16_to_16bpp (struct osd_bitmap *bitmap)
 
 #define DEST_PIXEL unsigned int
 
-static void ph_window_update_16_to_24bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_16_to_24bpp (struct mame_bitmap *bitmap)
 {
 #define PACK_BITS
 #include "blit.h"
 #undef PACK_BITS
 }
 
-static void ph_window_update_16_to_32bpp (struct osd_bitmap *bitmap)
+static void ph_window_update_16_to_32bpp (struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -834,7 +834,7 @@ static void ph_window_update_16_to_32bpp (struct osd_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned int
 
-static void ph_window_update_32_to_32bpp_direct(struct osd_bitmap *bitmap)
+static void ph_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -842,4 +842,3 @@ static void ph_window_update_32_to_32bpp_direct(struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 #undef SRC_PIXEL
 
-#endif /* ifdef photon2 */

@@ -99,23 +99,23 @@ static void (*oldsigquith)(int) = NULL;
 #endif
 
 static void ggi_cleanup(void);
-static void (*update_function)(struct osd_bitmap *bitmap);
-static void ggi_update_8_to_8bpp(struct osd_bitmap *bitmap);
-static void ggi_update_8_to_8bpp_scaled(struct osd_bitmap *bitmap);
-static void ggi_update_8_to_16bpp(struct osd_bitmap *bitmap);
-static void ggi_update_8_to_24bpp(struct osd_bitmap *bitmap);
-static void ggi_update_8_to_32bpp(struct osd_bitmap *bitmap);
-static void ggi_update_16_to_16bpp(struct osd_bitmap *bitmap);
-static void ggi_update_16_to_16bpp_scaled(struct osd_bitmap *bitmap);
-static void ggi_update_16_to_24bpp(struct osd_bitmap *bitmap);
-static void ggi_update_16_to_32bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_8_to_8bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_8_to_16bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_8_to_24bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_8_to_32bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_16_to_16bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_16_to_24bpp(struct osd_bitmap *bitmap);
-static void ggi_update_linear_16_to_32bpp(struct osd_bitmap *bitmap);
+static void (*update_function)(struct mame_bitmap *bitmap);
+static void ggi_update_8_to_8bpp(struct mame_bitmap *bitmap);
+static void ggi_update_8_to_8bpp_scaled(struct mame_bitmap *bitmap);
+static void ggi_update_8_to_16bpp(struct mame_bitmap *bitmap);
+static void ggi_update_8_to_24bpp(struct mame_bitmap *bitmap);
+static void ggi_update_8_to_32bpp(struct mame_bitmap *bitmap);
+static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap);
+static void ggi_update_16_to_16bpp_scaled(struct mame_bitmap *bitmap);
+static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap);
+static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_8_to_8bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_8_to_16bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_8_to_24bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_8_to_32bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_16_to_16bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_16_to_24bpp(struct mame_bitmap *bitmap);
+static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap);
 
 
 /* do we need this? It makes debugging crashes sorta hard without a core file */
@@ -245,7 +245,7 @@ static int set_video_mode(int depth)
     int i, best_score = 0;
     ggi_graphtype type, best_type;
     const ggi_directbuffer *direct_buf;
-    typedef void(*updater_t)(struct osd_bitmap *bitmap);
+    typedef void(*updater_t)(struct mame_bitmap *bitmap);
     updater_t updaters[] = {
         /* linear updaters */
         ggi_update_linear_8_to_8bpp,
@@ -560,7 +560,7 @@ int sysdep_display_set_pen(int pen,unsigned char red, unsigned char green,
  */
 
 /* 8bpp to 8bpp, not scaled */
-static void ggi_update_8_to_8bpp(struct osd_bitmap *bitmap)
+static void ggi_update_8_to_8bpp(struct mame_bitmap *bitmap)
 {
 #define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
     { \
@@ -577,7 +577,7 @@ static void ggi_update_8_to_8bpp(struct osd_bitmap *bitmap)
 /*---------*/
 
 /* 8bpp to 8bpp, scaled */
-static void ggi_update_8_to_8bpp_scaled(struct osd_bitmap *bitmap)
+static void ggi_update_8_to_8bpp_scaled(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL unsigned char
 #define DEST_PIXEL unsigned char
@@ -601,7 +601,7 @@ static void ggi_update_8_to_8bpp_scaled(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_8_to_16bpp(struct osd_bitmap *bitmap)
+static void ggi_update_8_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned char
@@ -627,7 +627,7 @@ static void ggi_update_8_to_16bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_8_to_24bpp(struct osd_bitmap *bitmap)
+static void ggi_update_8_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned char
@@ -655,7 +655,7 @@ static void ggi_update_8_to_24bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_8_to_32bpp(struct osd_bitmap *bitmap)
+static void ggi_update_8_to_32bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned char
@@ -681,7 +681,7 @@ static void ggi_update_8_to_32bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_16_to_16bpp(struct osd_bitmap *bitmap)
+static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap)
 {
    if (current_palette->lookup)
    {
@@ -706,7 +706,7 @@ static void ggi_update_16_to_16bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-void ggi_update_16_to_16bpp_scaled(struct osd_bitmap *bitmap)
+void ggi_update_16_to_16bpp_scaled(struct mame_bitmap *bitmap)
 {
 #define SRC_PIXEL unsigned short
 #define DEST_PIXEL unsigned short
@@ -740,7 +740,7 @@ void ggi_update_16_to_16bpp_scaled(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_16_to_24bpp(struct osd_bitmap *bitmap)
+static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned short
@@ -768,7 +768,7 @@ static void ggi_update_16_to_24bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_16_to_32bpp(struct osd_bitmap *bitmap)
+static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define SRC_PIXEL unsigned short
@@ -794,7 +794,7 @@ static void ggi_update_16_to_32bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_8_to_8bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_8_to_8bpp(struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned char
 #define SRC_PIXEL unsigned char
@@ -811,7 +811,7 @@ static void ggi_update_linear_8_to_8bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_8_to_16bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_8_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define DEST_PIXEL unsigned short
@@ -832,7 +832,7 @@ static void ggi_update_linear_8_to_16bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_8_to_24bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_8_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define DEST_PIXEL unsigned int
@@ -853,7 +853,7 @@ static void ggi_update_linear_8_to_24bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_8_to_32bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_8_to_32bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define DEST_PIXEL unsigned int
@@ -872,7 +872,7 @@ static void ggi_update_linear_8_to_32bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_16_to_16bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_16_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
 #define SRC_PIXEL unsigned short
@@ -898,7 +898,7 @@ static void ggi_update_linear_16_to_16bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_16_to_24bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_16_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define DEST_PIXEL unsigned int
@@ -919,7 +919,7 @@ static void ggi_update_linear_16_to_24bpp(struct osd_bitmap *bitmap)
 
 /*---------*/
 
-static void ggi_update_linear_16_to_32bpp(struct osd_bitmap *bitmap)
+static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap)
 {
 #define INDIRECT current_palette->lookup
 #define DEST_PIXEL unsigned int
@@ -940,7 +940,7 @@ static void ggi_update_linear_16_to_32bpp(struct osd_bitmap *bitmap)
 /*
  * Update the display.
  */
-void sysdep_update_display(struct osd_bitmap *bitmap) {
+void sysdep_update_display(struct mame_bitmap *bitmap) {
     int old_usedirty = use_dirty;
 
     if (current_palette->lookup_dirty)

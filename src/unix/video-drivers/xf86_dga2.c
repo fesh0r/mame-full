@@ -22,14 +22,14 @@
 
 #ifdef USE_DGA
 
-static void xf86_dga_update_display_8_to_8bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_16bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_24bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap);
-static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap);
+static void xf86_dga_update_display_8_to_8bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_8_to_16bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_8_to_24bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_8_to_32bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_16_to_24bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_16_to_32bpp(struct mame_bitmap *bitmap);
+static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitmap);
 
 static struct
 {
@@ -41,7 +41,7 @@ static struct
 	char *base_addr;
 	int width;
 	Colormap cmap;
-	void (*xf86_dga_update_display_func)(struct osd_bitmap *bitmap);
+	void (*xf86_dga_update_display_func)(struct mame_bitmap *bitmap);
 	XDGADevice *device;
 	XDGAMode *modes;
 	int vidmode_changed;
@@ -414,7 +414,7 @@ int xf86_dga2_modify_pen(int pen,
 /* Use double buffering where it speeds things up */
 #define DOUBLEBUFFER
 
-static void xf86_dga_update_display_8_to_8bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_8_to_8bpp(struct mame_bitmap *bitmap)
 {
    if (xf86ctx.palette_dirty)
    {
@@ -428,7 +428,7 @@ static void xf86_dga_update_display_8_to_8bpp(struct osd_bitmap *bitmap)
 
 #define INDIRECT current_palette->lookup
 
-static void xf86_dga_update_display_8_to_16bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_8_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
 #define BLIT_16BPP_HACK
@@ -439,14 +439,14 @@ static void xf86_dga_update_display_8_to_16bpp(struct osd_bitmap *bitmap)
 
 #define DEST_PIXEL unsigned int
 
-static void xf86_dga_update_display_8_to_24bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_8_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define PACK_BITS
 #include "blit.h"
 #undef PACK_BITS
 }
 
-static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_8_to_32bpp(struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -456,7 +456,7 @@ static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
 
-static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
    if (current_palette->lookup)
@@ -474,14 +474,14 @@ static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap)
 
 #define DEST_PIXEL unsigned int
 
-static void xf86_dga_update_display_16_to_24bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_16_to_24bpp(struct mame_bitmap *bitmap)
 {
 #define PACK_BITS
 #include "blit.h"
 #undef PACK_BITS
 }
 
-static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_16_to_32bpp(struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
@@ -490,14 +490,14 @@ static void xf86_dga_update_display_16_to_32bpp(struct osd_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned int
 
-static void xf86_dga_update_display_32_to_32bpp_direct(struct osd_bitmap *bitmap)
+static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
 
 #undef DEST_PIXEL
 
-void xf86_dga2_update_display(struct osd_bitmap *bitmap)
+void xf86_dga2_update_display(struct mame_bitmap *bitmap)
 {
 	int old_use_dirty = use_dirty;
    

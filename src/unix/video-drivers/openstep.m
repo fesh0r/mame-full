@@ -319,7 +319,7 @@ sysdep_create_display(int depth)
  */
 
 static void
-update_display_8bpp(struct osd_bitmap *bitmap)
+update_display_8bpp(struct mame_bitmap *bitmap)
 {
 #define	SRC_PIXEL	unsigned char
 #define	DEST_PIXEL	unsigned short
@@ -339,7 +339,7 @@ update_display_8bpp(struct osd_bitmap *bitmap)
  */
 
 static void
-update_display_16bpp(struct osd_bitmap *bitmap)
+update_display_16bpp(struct mame_bitmap *bitmap)
 {
 #define	SRC_PIXEL	unsigned short
 #define	DEST_PIXEL	unsigned short
@@ -368,7 +368,7 @@ update_display_16bpp(struct osd_bitmap *bitmap)
  */
 
 void
-sysdep_update_display(struct osd_bitmap *bitmap)
+sysdep_update_display(struct mame_bitmap *bitmap)
 {
 	int old_use_dirty;
 

@@ -21,7 +21,7 @@
 static int  (*p_xf86_dga_create_display)(int);
 static void (*p_xf86_dga_close_display)(void);
 static int  (*p_xf86_dga_modify_pen)(int, unsigned char, unsigned char, unsigned char);
-static void (*p_xf86_dga_update_display)(struct osd_bitmap *);
+static void (*p_xf86_dga_update_display)(struct mame_bitmap *);
 static int  (*p_xf86_dga_alloc_palette)(int);
 static int  (*p_xf86_dga_16bpp_capable)(void);
 
@@ -102,7 +102,7 @@ int  xf86_dga_modify_pen(int pen, unsigned char red,unsigned char green,unsigned
 	return (*p_xf86_dga_modify_pen)(pen, red, green, blue);
 }
 
-void xf86_dga_update_display(struct osd_bitmap *bitmap)
+void xf86_dga_update_display(struct mame_bitmap *bitmap)
 {
 	(*p_xf86_dga_update_display)(bitmap);
 }
