@@ -660,10 +660,10 @@ static void f8_lr_dc_q(void)
  ***************************************************/
 static void f8_lr_dc_h(void)
 {
-	ROMC_06();
-    f8.r[10] = f8.dbus;
-	ROMC_09();
-    f8.r[11] = f8.dbus;
+	f8.dbus = f8.r[10];
+	ROMC_16();
+	f8.dbus = f8.r[11];
+	ROMC_19();
 	ROMC_00();
 }
 
@@ -673,10 +673,10 @@ static void f8_lr_dc_h(void)
  ***************************************************/
 static void f8_lr_h_dc(void)
 {
-    f8.dbus = f8.r[10];
-	ROMC_16();
-    f8.dbus = f8.r[11];
-	ROMC_19();
+	ROMC_06();
+	f8.r[10] = f8.dbus;
+	ROMC_09();
+	f8.r[11] = f8.dbus;
 	ROMC_00();
 }
 
