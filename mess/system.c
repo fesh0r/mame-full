@@ -104,9 +104,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( a5200 ) 	/* Atari 5200										*/
 	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
 	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
-//	DRIVER( lynx )		/* Atari Lynx Handheld								*/
-//	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
-//	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
+	DRIVER( lynx )		/* Atari Lynx Handheld								*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System					*/
@@ -144,7 +144,7 @@ const struct GameDriver *test_drivers[] =
 TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
-//	DRIVER( astrocde )	/* Bally Astrocade									*/
+	DRIVER( astrocde )	/* Bally Astrocade									*/
 
 	/* RCA */
 //TESTDRIVER( vip )		/* Cosmac VIP										*/
@@ -176,10 +176,10 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( advision )	/* Adventurevision									*/
 
 	/* CAPCOM */
-//	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
-//	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
+	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
 //	DRIVER( svision )	/* Super Vision	Handheld							*/

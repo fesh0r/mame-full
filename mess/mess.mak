@@ -187,9 +187,12 @@ DRVLIBS = \
 	$(OBJ)/nec.a	  \
 	$(OBJ)/fairch.a   \
 	$(OBJ)/ascii.a	  \
+	$(OBJ)/lynx.a     \
+	$(OBJ)/cpschngr.a \
+	$(OBJ)/magnavox.a \
+	$(OBJ)/bally.a	  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
-#	$(OBJ)/magnavox.a \
 #	$(OBJ)/mtx.a	  \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/mk1.a      \
@@ -200,12 +203,10 @@ DRVLIBS = \
 #	$(OBJ)/lviv.a   \
 #	$(OBJ)/pmd85.a   \
 #	$(OBJ)/sinclair.a \
-#	$(OBJ)/lynx.a     \
 #	$(OBJ)/intv.a     \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/apf.a      \
-#	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \
@@ -216,7 +217,6 @@ DRVLIBS = \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/ssystem3.a \
 #	$(OBJ)/hp48.a     \
-#	$(OBJ)/cpschngr.a \
 
 
 
