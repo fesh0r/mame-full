@@ -360,7 +360,7 @@ static int sony_get_track(void)
 	 *	Tracks 48-63 have  9 sectors each
 	 *	Tracks 64-79 have  8 sectors each
 	 *
-	 *	Each sector has 524 bytes, 512 of whom are really used by the Macintosh
+	 *	Each sector has 524 bytes, 512 of which are really used by the Macintosh
 	 *
 	 *	(80 tracks) * (avg of 10 sectors) * (512 bytes) * (2 sides) = 800 kB
 	 *
