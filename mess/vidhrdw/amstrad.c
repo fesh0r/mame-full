@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/amstrad.h"
-#include "vidhrdw/hd6845s.h"
+/*#include "vidhrdw/hd6845s.h"*/
 
 /* CRTC emulation code */
 #include "vidhrdw/m6845.h"
@@ -66,11 +66,11 @@ extern unsigned char *Amstrad_Memory;
 extern short AmstradCPC_PenColours[18];
 extern unsigned char AmstradCPC_GA_RomConfiguration;
 
-// this is the pixel position of the start of a scanline
-// -96 sets the screen display to the middle of emulated screen.
-static int x_screen_offset=0;	//-96;
 
-static int y_screen_offset=0;
+static int x_screen_offset=0;
+
+/* there are about 21 lines of monitor retrace */
+static int y_screen_offset=-21;
 
 static int amstrad_HSync=0;
 static int amstrad_VSync=0;
@@ -315,8 +315,17 @@ void amstrad_Set_HSync(int offset, int data)
                 {
                         /* end of hsync */
                         y_screen_pos+=1;
-                        x_screen_pos=x_screen_offset;
-                        amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+
+                        if (y_screen_pos>312)
+                        {
+                                y_screen_pos = 0;
+                        }
+
+                        if (y_screen_pos<AMSTRAD_SCREEN_HEIGHT)
+                        {
+                                x_screen_pos=x_screen_offset;
+                                amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+                        }
                 }
 	}
 
@@ -428,14 +437,15 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			// check that we are on the emulated screen area.
 			if ((x_screen_pos>=0) && (x_screen_pos<AMSTRAD_SCREEN_WIDTH) && (y_screen_pos>=0) && (y_screen_pos<AMSTRAD_SCREEN_HEIGHT))
 			{
-				// Move the CRT Beam on one 6845 character distance
-				x_screen_pos=x_screen_pos+16;	
-				amstrad_display=amstrad_display+16;	
-
 				// if the video ULA DE 'Display Enabled' input is high then draw the pixels else blank the screen
 				(draw_function)();
 
 			}
+
+                        // Move the CRT Beam on one 6845 character distance
+                        x_screen_pos=x_screen_pos+16; 
+                        amstrad_display=amstrad_display+16; 
+
 
 			// Clock the 6845
 			crtc6845_clock();
