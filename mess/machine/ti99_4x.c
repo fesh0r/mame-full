@@ -59,6 +59,9 @@ TODO:
 #include "99_ide.h"
 #include "99_hsgpl.h"
 
+#include "devices/mess_hd.h"	/* for device_init_mess_hd() */
+#include "smc92x4.h"	/* for smc92x4_hd_load()/smc92x4_hd_unload() */
+
 
 /* prototypes */
 static READ16_HANDLER ( ti99_rw_rspeech );
@@ -508,6 +511,57 @@ DEVICE_UNLOAD( ti99_cart )
 	slot_type[id] = SLOT_EMPTY;
 }
 
+DEVICE_INIT( ti99_hd )
+{
+	int id = image_index_in_device(image);
+
+	switch (id)
+	{
+	case 0:
+	case 1:
+	case 2:
+		return device_init_mess_hd(image);
+
+	case 3:
+		return device_init_ti99_ide(image);
+	}
+
+	return INIT_FAIL;
+}
+
+DEVICE_LOAD( ti99_hd )
+{
+	int id = image_index_in_device(image);
+
+	switch (id)
+	{
+	case 0:
+	case 1:
+	case 2:
+		return smc92x4_hd_load(image, id);
+
+	case 3:
+		return device_load_ti99_ide(image, file);
+	}
+
+	return INIT_FAIL;
+}
+
+DEVICE_UNLOAD( ti99_hd )
+{
+	int id = image_index_in_device(image);
+
+	switch (id)
+	{
+	case 0:
+	case 1:
+	case 2:
+		smc92x4_hd_unload(image, id);
+
+	case 3:
+		device_unload_ti99_ide(image);
+	}
+}
 
 /*
 	ti99_init_machine(); called before ti99_load_rom...

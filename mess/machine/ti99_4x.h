@@ -133,6 +133,10 @@ DEVICE_LOAD( ti99_cassette );
 DEVICE_LOAD( ti99_cart );
 DEVICE_UNLOAD( ti99_cart );
 
+DEVICE_INIT( ti99_hd );
+DEVICE_LOAD( ti99_hd );
+DEVICE_UNLOAD( ti99_hd );
+
 int video_start_ti99_4(void);
 int video_start_ti99_4a(void);
 int video_start_ti99_4ev(void);
