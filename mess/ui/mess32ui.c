@@ -83,6 +83,7 @@ static void MessTestsDoneIdle(void);
 #undef bool
 #endif
 
+static int s_nCurrentGame;
 static char s_szSelectedItem[256];
 
 #include "ui/win32ui.c"
@@ -223,6 +224,10 @@ static void MyFillSoftwareList(int nGame)
 	int software_dirs_length;
 	int path_count;
 	LPCSTR *pathsv;
+
+	if (nGame == s_nCurrentGame)
+		return;
+	s_nCurrentGame = nGame;
 
 	drv = drivers[nGame];
 	software_dirs = GetSoftwareDirs();
