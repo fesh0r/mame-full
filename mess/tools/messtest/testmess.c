@@ -194,7 +194,7 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	options.vector_intensity = 1.5;
 	options.use_artwork = 1;
 	options.skip_validitychecks = 1;
-	options.samplerate = 11025;
+	options.samplerate = 44100;
 
 	/* preload any needed images */
 	while(current_command->command_type == MESSTEST_COMMAND_IMAGE_PRELOAD)
@@ -282,8 +282,8 @@ void osd_stop_audio_stream(void)
 int osd_update_audio_stream(INT16 *buffer)
 {
 	if (wavptr && (Machine->sample_rate != 0))
-		wav_add_data_16(wavptr, buffer, samples_this_frame);
-	return 0;
+		wav_add_data_16(wavptr, buffer, samples_this_frame * 2);
+	return samples_this_frame;
 }
 
 
