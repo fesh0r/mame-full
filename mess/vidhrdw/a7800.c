@@ -493,7 +493,7 @@ int a7800_interrupt(void)
 	return M6502_INT_NMI;
     }
     else {
-	return 0;
+	return ignore_interrupt();
     }
 }
 

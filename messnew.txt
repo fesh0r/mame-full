@@ -12,6 +12,8 @@ System Driver Changes:
 - [JUPITER] Cartridge and Cassette Initialisation fixed 
   (Bug #126) [Ben Bruscella]
 
+- [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
+
 
 Source Changes:
 ---------------
