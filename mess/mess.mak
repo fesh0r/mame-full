@@ -57,6 +57,7 @@ CPUS+=M6809@
 CPUS+=M6809E@
 #CPUS+=KONAMI@
 CPUS+=M68000@
+CPUS+=M68008@
 CPUS+=M68010@
 CPUS+=M68EC020@
 CPUS+=M68020@
@@ -166,7 +167,7 @@ SOUNDS+=YM3812@
 #SOUNDS+=YMZ280B@
 #SOUNDS+=YM3526@
 #SOUNDS+=Y8950@
-#SOUNDS+=SN76477@
+SOUNDS+=SN76477@
 SOUNDS+=SN76496@
 SOUNDS+=POKEY@
 SOUNDS+=TIA@
@@ -302,6 +303,7 @@ DRVLIBS = \
 	$(OBJ)/multitch.a	\
 	$(OBJ)/telmac.a		\
 	$(OBJ)/tx0.a		\
+	$(OBJ)/luxor.a		\
 
 
 $(OBJ)/neocd.a:						\
@@ -462,7 +464,8 @@ $(OBJ)/sinclair.a: \
 	$(OBJ)/mess/machine/zx.o		\
 	$(OBJ)/mess/systems/spectrum.o		\
 	$(OBJ)/mess/machine/spectrum.o		\
-	$(OBJ)/mess/formats/zx81_p.o
+	$(OBJ)/mess/formats/zx81_p.o		\
+	$(OBJ)/mess/systems/ql.o		\
 
 $(OBJ)/apple.a:   \
 	$(OBJ)/mess/vidhrdw/apple2.o		\
@@ -869,6 +872,8 @@ $(OBJ)/tx0.a:				\
 	$(OBJ)/mess/machine/tx0.o	\
 	$(OBJ)/mess/vidhrdw/tx0.o	\
 
+$(OBJ)/luxor.a:					\
+	$(OBJ)/mess/systems/abc80.o	\
 
 
 # MESS specific core $(OBJ)s
