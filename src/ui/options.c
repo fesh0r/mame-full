@@ -42,6 +42,7 @@
 #include "dijoystick.h"
 #include "audit.h"
 #include "options.h"
+#include "windows/config.h"
 
 /***************************************************************************
     Internal function prototypes
@@ -362,8 +363,13 @@ static REG_OPTION global_game_options[] =
 	{"snapshot_directory", RO_STRING,  &settings.imgdir,           0, 0},
 	{"diff_directory",     RO_STRING,  &settings.diffdir,          0, 0},
 	{"cheat_file",         RO_STRING,  &settings.cheat_filename,   0, 0},
+#ifdef MESS
+	{"sysinfo_file",       RO_STRING,  &settings.history_filename, 0, 0},
+	{"messinfo_file",      RO_STRING,  &settings.mameinfo_filename,0, 0},
+#else
 	{"history_file",       RO_STRING,  &settings.history_filename, 0, 0},
 	{"mameinfo_file",      RO_STRING,  &settings.mameinfo_filename,0, 0},
+#endif
 	{"ctrlr_directory",    RO_STRING,  &settings.ctrlrdir,         0, 0},
 
 };
@@ -531,6 +537,40 @@ folder_filter_type *folder_filters;
 int size_folder_filters;
 int num_folder_filters;
 
+
+/***************************************************************************
+	Consistency checking functions
+ ***************************************************************************/
+
+#ifdef MAME_DEBUG
+BOOL CheckOptions(REG_OPTION *options, int option_count)
+{
+	struct rc_struct *rc;
+	int i;
+	int nBadOptions = 0;
+
+	rc = cli_rc_create();
+
+	for (i = 0; i < option_count; i++)
+	{
+		if ((options[i].ini_name[0] != '#') || (options[i].ini_name[1] != '*'))
+		{
+			if (!rc_get_option(rc, options[i].ini_name))
+			{
+				dprintf("CheckOptions(): Option '%s' is not represented in the MAME core\n", options[i].ini_name);
+				nBadOptions++;
+			}
+		}
+	}
+
+	assert(nBadOptions == 0);
+
+	rc_destroy(rc);
+	return nBadOptions == 0;
+}
+#endif /* MAME_DEBUG */
+
+
 /***************************************************************************
     External functions  
  ***************************************************************************/
@@ -540,6 +580,13 @@ BOOL OptionsInit()
 	int i;
 
 	extern const char g_szDefaultGame[];
+
+#ifdef MAME_DEBUG
+	if (!CheckOptions(regGameOpts, sizeof(regGameOpts) / sizeof(regGameOpts[0])))
+		return FALSE;
+	if (!CheckOptions(global_game_options, sizeof(global_game_options) / sizeof(global_game_options[0])))
+		return FALSE;
+#endif /* MAME_DEBUG */
 
 	num_games = GetNumGames();
 

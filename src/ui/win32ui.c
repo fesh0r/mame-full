@@ -1585,7 +1585,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	extern FOLDERDATA g_folderData[];
 	extern FILTER_ITEM g_filterList[];
 	extern const char g_szHistoryFileName[];
+	extern const char g_szMameInfoFileName[];
 	extern const char *history_filename;
+	extern const char *mameinfo_filename;
 
 #ifdef MESS
 	HWND hwndSoftware;
@@ -1709,6 +1711,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 #endif
 
 	history_filename = g_szHistoryFileName;
+	mameinfo_filename = g_szMameInfoFileName;
 
 	if (!InitSplitters())
 		return FALSE;
