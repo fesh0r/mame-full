@@ -1701,16 +1701,6 @@ void saturn_init_machine(void)
       mem[i] = 0; /* Clear RAM */
     }
 
-  cpu_setbank(1, (UINT8 *) &mem[SATURN_WORKL_RAM_BASE/4]); /* Setup banking (for???) */
-  cpu_setbank(2, (UINT8 *) &mem[SATURN_WORKH_RAM_BASE/4]);
-  cpu_setbank(3, (UINT8 *) &mem[SATURN_SOUND_RAM_BASE/4]);
-  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
-  cpu_setbank(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
-  cpu_setbank(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
-  cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
-  cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
-  cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);
-
   /* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
 
   for (i = 0; i < 2; i++)
@@ -1774,9 +1764,22 @@ void saturn_init_machine(void)
       install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
       install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
 
-      install_mem_read32_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
-      install_mem_write32_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
+      /*install_mem_read32_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
+      install_mem_write32_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );*/
+      install_mem_read32_handler (i, 0x06000000, 0x060fffff, MRA32_BANK2 );
+      install_mem_write32_handler(i, 0x06000000, 0x060fffff, MWA32_BANK2 );
     }
+
+  cpu_setbank(1, (UINT8 *) &mem[SATURN_WORKL_RAM_BASE/4]); /* Setup banking (for???) */
+  cpu_setbank(2, (UINT8 *) &mem[SATURN_WORKH_RAM_BASE/4]);
+  cpu_setbank(3, (UINT8 *) &mem[SATURN_SOUND_RAM_BASE/4]);
+  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
+  cpu_setbank(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
+  cpu_setbank(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
+  cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
+  cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
+  cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);
+
 }
 
 void init_saturn(void)
