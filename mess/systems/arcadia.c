@@ -270,18 +270,18 @@ ROM_START(vcg)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_cart_load(int id, mame_file *cartfile, int open_mode)
+static DEVICE_LOAD( arcadia_cart )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
 	memset(rom, 0, 0x8000);
-	size = mame_fsize(cartfile);
+	size = mame_fsize(file);
 
 	if (size > memory_region_length(REGION_CPU1))
 		size = memory_region_length(REGION_CPU1);
 
-	if (mame_fread(cartfile, rom, size) != size)
+	if (mame_fread(file, rom, size) != size)
 		return INIT_FAIL;
 
 	if (size > 0x1000)
@@ -320,7 +320,7 @@ static int arcadia_cart_load(int id, mame_file *cartfile, int open_mode)
 }
 
 SYSTEM_CONFIG_START(arcadia)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, arcadia_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, device_load_arcadia_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

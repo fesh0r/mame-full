@@ -143,11 +143,6 @@ MACHINE_STOP( kaypro )
 	cpm_exit();
 }
 
-int kaypro_floppy_init(mess_image *img, mame_file *fp, int open_mode)
-{
-	return cpm_floppy_init(id, fp, open_mode);
-}
-
 /******************************************************
  * vertical blank interrupt
  * used to scan keyboard; newly pressed keys

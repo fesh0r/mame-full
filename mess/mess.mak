@@ -179,15 +179,15 @@ DRVLIBS = \
 	$(OBJ)/mbee.a	  \
 	$(OBJ)/vtech.a	  \
 	$(OBJ)/jupiter.a  \
+	$(OBJ)/trs80.a	  \
+	$(OBJ)/gce.a	  \
+	$(OBJ)/arcadia.a  \
+	$(OBJ)/kaypro.a   \
+#	$(OBJ)/tangerin.a \
+#	$(OBJ)/cgenie.a   \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/trs80.a	  \
-#	$(OBJ)/gce.a	  \
-#	$(OBJ)/arcadia.a  \
-#	$(OBJ)/tangerin.a \
-#	$(OBJ)/kaypro.a   \
-#	$(OBJ)/cgenie.a   \
 #	$(OBJ)/aquarius.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/sym1.a     \

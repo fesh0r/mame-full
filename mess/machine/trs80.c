@@ -145,38 +145,31 @@ static void cas_copy_callback(int param)
 	activecpu_set_reg(Z80_PC, entry);
 }
 
-int trs80_cas_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( trs80_cas )
 {
 	cas_size = mame_fsize(file);
-	cas_buff = malloc(cas_size);
-	if (cas_buff)
+	cas_buff = image_malloc(image, cas_size);
+	if (!cas_buff)
+		return INIT_FAIL;
+
+	mame_fread(file, cas_buff, cas_size);
+	mame_fclose(file);
+	if (cas_buff[1] == 0x55)
 	{
-		mame_fread(file, cas_buff, cas_size);
-		mame_fclose(file);
-		if (cas_buff[1] == 0x55)
-		{
-			LOG(("trs80_cas_init: loading %s size %d\n", image_filename(IO_CASSETTE,id), cas_size));
-		}
-		else
-		{
-			free(cas_buff);
-			cas_buff = NULL;
-			cas_size = 0;
-			logerror("trs80_cas_init: CAS file is not in SYSTEM format\n");
-			return 1;
-		}
+		LOG(("trs80_cas_init: loading %s size %d\n", image_filename(image), cas_size));
 	}
 	else
 	{
+		cas_buff = NULL;
 		cas_size = 0;
+		logerror("trs80_cas_init: CAS file is not in SYSTEM format\n");
+		return 1;
 	}
 	return 0;
 }
 
-void trs80_cas_unload(int id)
+DEVICE_UNLOAD( trs80_cas )
 {
-	if (cas_buff)
-		free(cas_buff);
 	cas_buff = NULL;
 	cas_size = 0;
 }
@@ -246,7 +239,7 @@ extern QUICKLOAD_LOAD( trs80_cmd )
 	return INIT_PASS;
 }
 
-int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( trs80_floppy )
 {
 	static UINT8 pdrive[4*16];
 	int i;
@@ -255,27 +248,28 @@ int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 	int spt;		/* sector per track count per drive */
 	int dir_sector; /* first directory sector (aka DDSL) */
 	int dir_length; /* length of directory in sectors (aka DDGA) */
+	int id = image_index(image);
 
-    if (basicdsk_floppy_load(id, fp, open_mode) != INIT_PASS)
+    if (basicdsk_floppy_load(image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
-    if (id == 0)        /* first floppy? */
+    if (image_index(image) == 0)        /* first floppy? */
 	{
-		if (fp)
+		if (file)
 		{
 
-            mame_fseek(fp, 0, SEEK_SET);
-			mame_fread(fp, pdrive, 2);
+            mame_fseek(file, 0, SEEK_SET);
+			mame_fread(file, pdrive, 2);
 #if 0
 			if (pdrive[0] != 0x00 || pdrive[1] != 0xfe)
 			{
-				basicdsk_read_sectormap(id, &tracks[id], &heads[id], &spt[id]);
+				basicdsk_read_sectormap(image, &tracks[id], &heads[id], &spt[id]);
 			}
 			else
 #endif
 
-			mame_fseek(fp, 2 * 256, SEEK_SET);
-			mame_fread(fp, pdrive, 4*16);
+			mame_fseek(file, 2 * 256, SEEK_SET);
+			mame_fread(file, pdrive, 4*16);
 		}
 	}
 
@@ -286,7 +280,7 @@ int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 	dir_length = 5 * pdrive[id*16+9];
 
     /* set geometry so disk image can be read */
-	basicdsk_set_geometry(id, tracks, heads, spt, 256, 0, 0, FALSE);
+	basicdsk_set_geometry(image, tracks, heads, spt, 256, 0, 0, FALSE);
 
 	/* mark directory sectors with deleted data address mark */
 	/* assumption dir_sector is a sector offset */
@@ -311,7 +305,7 @@ int trs80_floppy_init(mess_image *img, mame_file *fp, int open_mode)
 		sector_id = sector_offset % spt;
 
 		/* set deleted data address mark for sector specified */
-		basicdsk_set_ddam(id, track, side, sector_id, 1);
+		basicdsk_set_ddam(image, track, side, sector_id, 1);
 	}
     return INIT_PASS;
 }

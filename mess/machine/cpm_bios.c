@@ -109,8 +109,10 @@ static void cpm_jumptable(void)
 	RAM[BIOS_EXEC + 2] = 0xc9;			/* RET */
 }
 
-int cpm_floppy_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( cpm_floppy )
 {
+	int id = image_index(image);
+
 	ff[id] = (file != NULL);
 
 	/* now try to open the image if a filename is given */

@@ -11,9 +11,10 @@
 
 /* From machine/vectrex.c */
 extern unsigned char *vectrex_ram;
-extern READ_HANDLER  ( vectrex_mirrorram_r );
-extern WRITE_HANDLER ( vectrex_mirrorram_w );
-extern int vectrex_cart_load (mess_image *img, mame_file *fp, int open_mode);
+READ_HANDLER  ( vectrex_mirrorram_r );
+WRITE_HANDLER ( vectrex_mirrorram_w );
+
+DEVICE_LOAD( vectrex_cart );
 
 /* From machine/vectrex.c */
 extern int vectrex_imager_status;

@@ -275,7 +275,7 @@ ROM_START (kaypro)
 ROM_END
 
 SYSTEM_CONFIG_START(kaypro)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	kaypro_floppy_init)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_cpm_floppy)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */

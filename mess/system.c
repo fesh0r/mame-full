@@ -160,13 +160,13 @@ const struct GameDriver *test_drivers[] =
 	/* NEC */
 //	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
-//	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
+	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
 //TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
-//	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
+	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
 						/* (aka Milton-Bradley Vectrex) 					*/
-//	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
+	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 				*/
 
 	/* MATTEL */
 //	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV				*/
@@ -508,7 +508,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 //	DRIVER( ep128a )	/* Enterprise 128 k 								*/
 
 	/* NON LINEAR SYSTEMS */
-//	DRIVER( kaypro )	/* Kaypro 2X										*/
+	DRIVER( kaypro )	/* Kaypro 2X										*/
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
@@ -523,12 +523,12 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 	DRIVER( mbee56 )	/* Microbee 56K (CP/M)								*/
 
 	/* TANDY RADIO SHACK */
-//	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC		*/
-//	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC	*/
-//	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC					*/
-//	DRIVER( sys80 ) 	/* EACA System 80									*/
-//	DRIVER( lnw80 ) 	/* LNW Research LNW-80								*/
-//TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
+	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC		*/
+	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC	*/
+	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC					*/
+	DRIVER( sys80 ) 	/* EACA System 80									*/
+	DRIVER( lnw80 ) 	/* LNW Research LNW-80								*/
+TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 	DRIVER( coco )		/* Color Computer									*/
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)				*/

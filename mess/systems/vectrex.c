@@ -117,7 +117,7 @@ static MACHINE_DRIVER_START( vectrex )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(vectrex)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0gam\0vec\0", NULL, NULL, vectrex_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0gam\0vec\0", NULL, NULL, device_load_vectrex_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 ROM_START(vectrex)
