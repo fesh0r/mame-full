@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "utils.h"
 #include "formats/coco_dsk.h"
 
@@ -23,7 +23,6 @@ typedef struct {
 	int eof;
 } rsdos_direnum;
 
-static int rsdos_diskimage_resolvegeometry(STREAM *f, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, UINT8 *first_sector_id, int *offset);
 static int rsdos_diskimage_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int rsdos_diskimage_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void rsdos_diskimage_closeenum(IMAGEENUM *enumeration);
@@ -132,11 +131,11 @@ static int lookup_rsdos_file(IMAGE *f, const char *fname, rsdos_dirent *ent, int
 
 static UINT8 get_granule_count(IMAGE *img)
 {
-	UINT8 tracks;
+	struct disk_geometry geometry;
 	UINT16 granules;
 
-	imgtool_bdf_get_geometry(img, &tracks, NULL, NULL);
-	granules = (((UINT16) tracks) - 1) * 2;
+	imgtool_bdf_get_geometry(img, &geometry);
+	granules = (((UINT16) geometry.tracks) - 1) * 2;
 	return (granules > 255) ? 255 : (UINT8) granules;
 }
 
@@ -250,20 +249,6 @@ static int prepare_dirent(rsdos_dirent *ent, const char *fname)
 	/* For now, all files are type 2 binary files */
 	ent->ftype = 2;
 	ent->asciiflag = 0;
-	return 0;
-}
-
-static int rsdos_diskimage_resolvegeometry(STREAM *f, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, UINT8 *first_sector_id, int *offset)
-{
-	size_t sz;
-
-	sz = stream_size(f);
-	*tracks = (sz / 256 / 18);
-	*sides = 1;
-	*sec_per_track = 18;
-	*sector_length = 256;
-	*first_sector_id = 1;
-	*offset = 0;
 	return 0;
 }
 

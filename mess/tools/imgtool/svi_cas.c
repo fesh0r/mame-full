@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "osdepend.h"
 #include "formats/svi_cas.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "utils.h"
 
 /*
@@ -12,19 +12,6 @@
 	SVI style .cas for the svi-318 and svi-328. Converts them to .wav files. 
 	Uses the mess/formats/svi_cas.[ch] files, for the actual conversion.
 */
-
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) ((((x) << 24) | (((unsigned long) (x)) >> 24) | \
-               (((x) & 0x0000ff00) << 8) | (((x) & 0x00ff0000) >> 8)))
-#endif
-
-#ifdef LSB_FIRST
-#define intelWord(x) (x)
-#else
-#define intelWord(x) ( ( (x) << 8) | ( ((x) >> 8) & 0xff) )
-#endif
 
 typedef struct {
 	IMAGE			base;
@@ -208,7 +195,7 @@ static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
     if( offset < 4 )
 		return IMGTOOLERR_WRITEERROR;
 
-	temp32 = intelLong(image->count * 2 + 0x24);
+	temp32 = LITTLE_ENDIANIZE_INT32(image->count * 2 + 0x24);
 	offset += stream_write(destf, &temp32, 4);
     if( offset < 8 )
 		return IMGTOOLERR_WRITEERROR;
@@ -224,37 +211,37 @@ static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_WRITEERROR;
 
 	/* format: PCM */
-	temp16 = intelWord (1);
+	temp16 = LITTLE_ENDIANIZE_INT16 (1);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 22 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* channels: 1 (mono) */
-	temp16 = intelWord (1);
+	temp16 = LITTLE_ENDIANIZE_INT16 (1);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 24 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* sample rate */
-	temp32 = intelLong(22050);
+	temp32 = LITTLE_ENDIANIZE_INT32(22050);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 24 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* byte rate */
-	temp32 = intelLong(22050 * 2);
+	temp32 = LITTLE_ENDIANIZE_INT32(22050 * 2);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 28 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* block align (size of one `sample') */
-	temp16 = intelWord (2);
+	temp16 = LITTLE_ENDIANIZE_INT16 (2);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 30 )
 		return IMGTOOLERR_WRITEERROR;
 
 	/* block align */
-	temp16 = intelWord (16);
+	temp16 = LITTLE_ENDIANIZE_INT16 (16);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 32 )
 		return IMGTOOLERR_WRITEERROR;
@@ -265,7 +252,7 @@ static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		return IMGTOOLERR_WRITEERROR;
 
 	/* data size */
-	temp32 = intelLong(image->count * 2);
+	temp32 = LITTLE_ENDIANIZE_INT32(image->count * 2);
 	offset += stream_write(destf, &temp32, 4);
 	if( offset < 40 )
 		return IMGTOOLERR_WRITEERROR;

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "zlib.h"
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 typedef struct {
 	IMAGE base;

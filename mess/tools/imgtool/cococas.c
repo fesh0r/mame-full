@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "formats/cococas.h"
 #include "utils.h"
 

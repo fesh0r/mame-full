@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "osdepend.h"
 #include "formats/fmsx_cas.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "utils.h"
 
 /*

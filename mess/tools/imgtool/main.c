@@ -7,15 +7,11 @@
 #include "imgtool.h"
 #include "snprintf.h"
 #include "utils.h"
+#include "mess.h"
+#include "main.h"
 
-struct command {
-	const char *name;
-	const char *usage;
-	int (*cmdproc)(struct command *c, int argc, char *argv[]);
-	int minargs;
-	int maxargs;
-	int lastargrepeats;
-};
+/* ---------------------------------------------------------------------- */
+
 
 static void writeusage(FILE *f, int write_word_usage, struct command *c, char *argv[])
 {
@@ -97,7 +93,7 @@ error:
 	return -1;
 }
 
-static void reporterror(int err, struct command *c, const char *format, const char *imagename,
+void reporterror(int err, struct command *c, const char *format, const char *imagename,
 	const char *filename, const char *newname, const struct NamedOption *namedoptions)
 {
 	char buf[256];
@@ -630,6 +626,8 @@ error:
 	return -1;
 }
 
+/* ----------------------------------------------------------------------- */
+
 #ifdef MAME_DEBUG
 static int cmd_test(struct command *c, int argc, char *argv[])
 {
@@ -661,6 +659,7 @@ error:
 static struct command cmds[] = {
 #ifdef MAME_DEBUG
 	{ "test", "<format>", cmd_test, 0, 1, 0 },
+	{ "testsuite", "<testsuitefile>", cmd_testsuite, 1, 1, 0 },
 #endif
 	{ "create", "<format> <imagename>", cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },

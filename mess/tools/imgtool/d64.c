@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "d64.h"
 
 #ifdef LSB_FIRST
@@ -973,14 +973,17 @@ static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
 {
 	d64_image *image=(d64_image*)img;
-	int fsize, pos, i, b;
+	int fsize, pos, i, b, freespace;
 	int track, sector;
 	D64_ENTRY *entry;
 
 	fsize=stream_size(sourcef)+1;
+
+	img_freespace(img, &freespace);
+
 	if ((entry=d64_image_findfile(image, (const unsigned char *)fname))!=NULL ) {
 		/* overriding */
-		if ((img->module->freespace(img)+GET_UWORD(entry->blocks))*254<fsize) 
+		if ((freespace + GET_UWORD(entry->blocks))*254<fsize) 
 			return IMGTOOLERR_NOSPACE;
 		track=entry->track;
 		sector=entry->sector;
@@ -992,7 +995,7 @@ static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 			sector=image->data[pos+1];
 		}
 	} else {
-		if (img->module->freespace(img)*254<fsize) return IMGTOOLERR_NOSPACE;
+		if (freespace*254<fsize) return IMGTOOLERR_NOSPACE;
 		// search free entry
 		entry=d64_get_free_entry(image);
 	}

@@ -116,20 +116,30 @@ void imgtool_bdf_close(IMAGE *img)
 int imgtool_bdf_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions)
 {
 	int err;
-	UINT8 tracks, heads, sectors;
+	struct disk_geometry geometry;
 	formatdriver_ctor format;
 
-	tracks = createoptions[OPT_TRACKS].i;
-	heads = createoptions[OPT_HEADS].i;
-	sectors = createoptions[OPT_SECTORS].i;
+	memset(&geometry, 0, sizeof(geometry));
+	geometry.tracks = createoptions[OPT_TRACKS].i;
+	geometry.heads = createoptions[OPT_HEADS].i;
+	geometry.sectors = createoptions[OPT_SECTORS].i;
+	
+	/* HACK HACK - the imgtool driver (not the formatdriver) should specify these! */
+	geometry.first_sector_id = 1;
+	geometry.sector_size = 256;
 
 	format = (formatdriver_ctor) mod->extra;
 
-	err = bdf_create(&imgtool_bdf_procs, format, (void *) f, NULL, tracks, heads, sectors, NULL);
+	err = bdf_create(&imgtool_bdf_procs, format, (void *) f, &geometry, NULL);
 	if (err)
 		return bdf_error(err);
 
 	return 0;
+}
+
+void imgtool_bdf_get_geometry(IMAGE *img, struct disk_geometry *geometry)
+{
+	bdf_get_geometry(get_bdf(img), geometry);
 }
 
 int imgtool_bdf_read_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size)
@@ -184,11 +194,6 @@ done:
 	if (buffer)
 		free(buffer);
 	return err;
-}
-
-void imgtool_bdf_get_geometry(IMAGE *img, UINT8 *tracks, UINT8 *heads, UINT8 *sectors)
-{
-	bdf_get_geometry(get_bdf(img), tracks, heads, sectors);
 }
 
 int imgtool_bdf_is_readonly(IMAGE *img)

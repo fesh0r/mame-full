@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "osd_cpu.h"
 #include "config.h"
 #include "utils.h"
@@ -325,10 +325,10 @@ int img_beginenum(IMAGE *img, IMAGEENUM **outenum)
 
 	*outenum = NULL;
 
-	if (!img->module->beginenum)
+	if (!img->module->begin_enum)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = img->module->beginenum(img, outenum);
+	err = img->module->begin_enum(img, outenum);
 	if (err)
 		return markerrorsource(err);
 
@@ -345,7 +345,7 @@ int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	if (ent->attr_len)
 		ent->attr[0] = '\0';
 
-	err = enumeration->module->nextenum(enumeration, ent);
+	err = enumeration->module->next_enum(enumeration, ent);
 	if (err)
 		return markerrorsource(err);
 
@@ -354,8 +354,8 @@ int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 
 void img_closeenum(IMAGEENUM *enumeration)
 {
-	if (enumeration->module->closeenum)
-		enumeration->module->closeenum(enumeration);
+	if (enumeration->module->close_enum)
+		enumeration->module->close_enum(enumeration);
 }
 
 int img_countfiles(IMAGE *img, int *totalfiles)
@@ -428,10 +428,10 @@ done:
 
 int img_freespace(IMAGE *img, int *sz)
 {
-	if (!img->module->freespace)
+	if (!img->module->free_space)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	*sz = img->module->freespace(img);
+	*sz = img->module->free_space(img);
 	return 0;
 }
 
@@ -458,7 +458,7 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filt
 	int err;
 	STREAM *newstream = NULL;
 
-	if (!img->module->readfile) {
+	if (!img->module->read_file) {
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
@@ -468,7 +468,7 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filt
 	if (err)
 		goto done;
 
-	err = img->module->readfile(img, fname, destf);
+	err = img->module->read_file(img, fname, destf);
 	if (err) {
 		err = markerrorsource(err);
 		goto done;
@@ -562,7 +562,7 @@ int img_writefile_resolved(IMAGE *img, const char *fname, STREAM *sourcef, const
 	char *s;
 	STREAM *newstream = NULL;
 
-	if (!img->module->writefile) {
+	if (!img->module->write_file) {
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
@@ -588,7 +588,7 @@ int img_writefile_resolved(IMAGE *img, const char *fname, STREAM *sourcef, const
 	if (err)
 		goto done;
 
-	err = img->module->writefile(img, fname, sourcef, ropts);
+	err = img->module->write_file(img, fname, sourcef, ropts);
 	if (err) {
 		err = markerrorsource(err);
 		goto done;
@@ -681,13 +681,22 @@ int img_deletefile(IMAGE *img, const char *fname)
 {
 	int err;
 
-	if (!img->module->deletefile)
+	if (!img->module->delete_file)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = img->module->deletefile(img, fname);
+	err = img->module->delete_file(img, fname);
 	if (err)
 		return markerrorsource(err);
 
+	return 0;
+}
+
+int img_get_geometry(IMAGE *img, struct disk_geometry *geometry)
+{
+	if (!img->module->get_geometry)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	img->module->get_geometry(img, geometry);
 	return 0;
 }
 

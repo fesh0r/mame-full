@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 /* commodore 64 lynx format
    motivation

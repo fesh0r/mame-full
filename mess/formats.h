@@ -14,6 +14,15 @@
 #include <stdlib.h>
 #include "osd_cpu.h"
 
+struct disk_geometry
+{
+	UINT8 tracks;
+	UINT8 heads;
+	UINT8 sectors;
+	UINT8 first_sector_id;
+	UINT16 sector_size;
+};
+
 /***************************************************************************
 
 	The format driver itself
@@ -38,17 +47,14 @@ enum
 struct InternalBdFormatDriver
 {
 	const char *extension;
-	UINT8 tracks_base;
 	UINT8 tracks_options[8];
-	UINT8 heads_base;
 	UINT8 heads_options[8];
-	UINT8 sectors_base;
 	UINT8 sectors_options[2];
 	UINT16 bytes_per_sector;
 	UINT32 header_size;
 	UINT8 filler_byte;
-	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset);
-	int (*header_encode)(void *buffer, UINT32 *header_size, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector);
+	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset);
+	int (*header_encode)(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry);
 	int flags;
 };
 
@@ -82,11 +88,8 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 	extern void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)
 
 #define	BDFD_EXTENSION(ext)							drv->extension = ext;
-#define BDFD_TRACKS_BASE(tracks_base_)				drv->tracks_base = tracks_base_;
 #define BDFD_TRACKS_OPTION(tracks_option)			drv->tracks_options[tracks_optnum++] = tracks_option;
-#define BDFD_HEADS_BASE(heads_base_)				drv->heads_base = heads_base_;
 #define BDFD_HEADS_OPTION(heads_option)				drv->heads_options[heads_optnum++] = heads_option;
-#define BDFD_SECTORS_BASE(sectors_base_)			drv->sectors_base = sectors_base_;
 #define BDFD_SECTORS_OPTION(sectors_option)			drv->sectors_options[sectors_optnum++] = sectors_option;
 #define BDFD_BYTES_PER_SECTOR(bytes_per_sector_)	drv->bytes_per_sector = bytes_per_sector_;
 #define BDFD_FLAGS(flags_)							drv->flags = flags_;
@@ -134,13 +137,13 @@ enum
 };
 
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
-	void *file, const char *extension, UINT8 tracks, UINT8 heads, UINT8 sectors, void **outbdf);
+	void *file, const struct disk_geometry *geometry, void **outbdf);
 int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	void *file, const char *extension, void **outbdf);
 void bdf_close(void *bdf);
+void bdf_get_geometry(void *bdf, struct disk_geometry *geometry);
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
-void bdf_get_geometry(void *bdf, UINT8 *tracks, UINT8 *heads, UINT8 *sectors);
 int bdf_is_readonly(void *bdf);
 
 #endif /* FORMATS_H */

@@ -1,5 +1,5 @@
 #include <string.h>
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 typedef struct {
 	IMAGE base;

@@ -9,9 +9,7 @@ struct bdf_file
 {
 	void *file;
 	const struct bdf_procs *procs;
-	UINT8 tracks, heads, sectors;
-	UINT8 tracks_base, heads_base, sectors_base;
-	UINT16 bytes_per_sector;
+	struct disk_geometry geometry;
 	int offset;
 };
 
@@ -46,9 +44,9 @@ static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT3
 
 static int try_format_driver(const struct InternalBdFormatDriver *drv, const struct bdf_procs *procs,
 	const char *extension, void *file, UINT32 file_size,
-	int *success, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset)
+	int *success, struct disk_geometry *geometry, int *offset)
 {
-	void *header;
+	void *header = NULL;
 	UINT32 header_size;
 
 	/* match the extension; if either the formatdriver or the caller do not
@@ -74,27 +72,20 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 		/* read the header */
 		procs->seekproc(file, 0, SEEK_SET);
 		procs->readproc(file, header, header_size);
+	}
 
-		/* try to decode the header */
-		*offset = header_size;	/* the default offset is the header size */
-		if (!drv->header_decode(header, file_size, header_size, tracks, heads, sectors, bytes_per_sector, offset))			
-			*success = 1;	/* success!!! */
+	/* try to decode the header */
+	*offset = header_size;	/* the default offset is the header size */
+	if (!drv->header_decode(header, file_size, header_size, geometry, offset))			
+		*success = 1;	/* success!!! */
 
+	if (header)
 		free(header);
-	}
-	else
-	{
-		*bytes_per_sector = 0;
-		*offset = 0;
-
-		if (!find_geometry_options(drv, file_size, header_size, tracks, heads, sectors))
-			*success = 1;	/* success!!! */
-	}
 	return 0;
 }
 
 int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
-	void *file, const char *extension, UINT8 tracks, UINT8 heads, UINT8 sectors, void **outbdf)
+	void *file, const struct disk_geometry *geometry, void **outbdf)
 {
 	char buffer[1024];
 	void *header = NULL;
@@ -116,7 +107,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 		if (!header)
 			goto outofmemory;
 
-		err = drv.header_encode(header, &header_size, tracks, heads, sectors, drv.bytes_per_sector);
+		err = drv.header_encode(header, &header_size, geometry);
 		if (err)
 			goto error;
 
@@ -127,7 +118,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 		header = NULL;
 	}
 
-	bytes_to_write = ((int) drv.bytes_per_sector) * tracks * heads * sectors;
+	bytes_to_write = ((int) drv.bytes_per_sector) * geometry->tracks * geometry->heads * geometry->sectors;
 	memset(buffer, drv.filler_byte, sizeof(buffer));
 
 	while(bytes_to_write > 0)
@@ -141,7 +132,7 @@ int bdf_create(const struct bdf_procs *procs, formatdriver_ctor format,
 	{
 		formats[0] = format;
 		formats[1] = NULL;
-		err = bdf_open(procs, formats, file, extension, outbdf);
+		err = bdf_open(procs, formats, file, NULL, outbdf);
 		if (err)
 			goto error;
 	}
@@ -193,7 +184,7 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 		(*formats)(&drv);
 
 		err = try_format_driver(&drv, procs, extension, file, filesize, &success,
-			&bdffile->tracks, &bdffile->heads, &bdffile->sectors, &bdffile->bytes_per_sector, &bdffile->offset);
+			&bdffile->geometry, &bdffile->offset);
 		if (err)
 			goto done;
 
@@ -210,11 +201,6 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 
 	bdffile->file = file;
 	bdffile->procs = procs;
-	bdffile->tracks_base = drv.tracks_base;
-	bdffile->heads_base = drv.heads_base;
-	bdffile->sectors_base = drv.sectors_base;
-	bdffile->bytes_per_sector = drv.bytes_per_sector;
-
 	err = BLOCKDEVICE_ERROR_SUCCESS;
 
 done:
@@ -236,32 +222,37 @@ void bdf_close(void *bdf)
 	free(bdffile);
 }
 
-static void bdf_seek(struct bdf_file *bdffile, UINT8 track, UINT8 head, UINT8 sector, int offset)
+static int bdf_seek(struct bdf_file *bdffile, UINT8 track, UINT8 head, UINT8 sector, int offset)
 {
 	int pos;
 
-	assert(track >= bdffile->tracks_base);
-	assert(track < bdffile->tracks);
-	assert(head >= bdffile->heads_base);
-	assert(head < bdffile->heads);
-	assert(sector >= bdffile->sectors_base);
-	assert(sector < bdffile->sectors);
+	sector -= bdffile->geometry.first_sector_id;
+	if ((track >= bdffile->geometry.tracks) || (head >= bdffile->geometry.heads) || (sector >= bdffile->geometry.sectors))
+		return -1;
 
-	pos = track - bdffile->tracks_base;
-	pos *= bdffile->heads;
-	pos += head - bdffile->heads_base;
-	pos *= bdffile->sectors;
-	pos += sector - bdffile->sectors_base;
-	pos *= bdffile->bytes_per_sector;
+	pos = track;
+	pos *= bdffile->geometry.heads;
+	pos += head;
+	pos *= bdffile->geometry.sectors;
+	pos += sector;
+	pos *= bdffile->geometry.sector_size;
 	pos += bdffile->offset;
 	pos += offset;
 	bdffile->procs->seekproc(bdffile->file, pos, SEEK_SET);
+	return 0;
+}
+
+void bdf_get_geometry(void *bdf, struct disk_geometry *geometry)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	*geometry = bdffile->geometry;
 }
 
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	bdf_seek(bdffile, track, head, sector, offset);
+	if (bdf_seek(bdffile, track, head, sector, offset))
+		return -1;
 	bdffile->procs->readproc(bdffile->file, buffer, length);
 	return 0;
 }
@@ -269,20 +260,10 @@ int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset
 int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	bdf_seek(bdffile, track, head, sector, offset);
+	if (bdf_seek(bdffile, track, head, sector, offset))
+		return -1;
 	bdffile->procs->writeproc(bdffile->file, buffer, length);
 	return 0;
-}
-
-void bdf_get_geometry(void *bdf, UINT8 *tracks, UINT8 *heads, UINT8 *sectors)
-{
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
-	if (tracks)
-		*tracks = bdffile->tracks;
-	if (heads)
-		*heads = bdffile->heads;
-	if (sectors)
-		*sectors = bdffile->sectors;
 }
 
 int bdf_is_readonly(void *bdf)
@@ -298,6 +279,6 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 	assert(tracks_optnum < sizeof(drv->tracks_options) / sizeof(drv->tracks_options[0]));
 	assert(heads_optnum < sizeof(drv->heads_options) / sizeof(drv->heads_options[0]));
 	assert(sectors_optnum < sizeof(drv->sectors_options) / sizeof(drv->sectors_options[0]));
-	assert(drv->header_decode || drv->bytes_per_sector);
+	assert(drv->header_decode);
 }
 #endif

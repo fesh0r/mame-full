@@ -786,6 +786,7 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
 	  $(OBJ)/mess/tools/imgtool/imgtfmts.o \
 	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
+	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 	  $(OBJ)/mess/tools/imgtool/filter.o   \
 	  $(OBJ)/mess/tools/imgtool/filteoln.o \
 	  $(OBJ)/mess/tools/imgtool/filtbas.o  \

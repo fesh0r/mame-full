@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 /*
   what to change/do for harddisk support?

@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 #ifdef LSB_FIRST
 typedef UINT16 littleuword;

@@ -12,7 +12,7 @@
 #include <limits.h>
 #include <assert.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 
 #include "snprintf.h"
 

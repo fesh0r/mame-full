@@ -41,7 +41,7 @@
 
 #include <assert.h>
 #include "osdepend.h"
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "utils.h"
 
 

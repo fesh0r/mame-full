@@ -13,54 +13,53 @@
  *	%24Ud.2359177%40news1.rdc1.bc.home.com                                 *
  * ----------------------------------------------------------------------- */
 
-static int cocojvc_decode_header(const void *header, UINT32 file_size, UINT32 header_size, UINT8 *tracks, UINT8 *heads, UINT8 *sectors, UINT16 *bytes_per_sector, int *offset)
+static int cocojvc_decode_header(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset)
 {
 	UINT8 *header_bytes = (UINT8 *) header;
 	UINT8 sectors_per_track;
-	UINT8 first_sector_id;
 	UINT8 sector_attribute_flag;
 	UINT16 physical_bytes_per_sector;
 
 	/* byte offset 0 - sectors per track */
-	*sectors = (header_size > 0) ? header_bytes[0] : 18;
+	geometry->sectors = (header_size > 0) ? header_bytes[0] : 18;
 
 	/* byte offset 1 - side count */
-	*heads = (header_size > 1) ? header_bytes[1] : 1;
+	geometry->heads = (header_size > 1) ? header_bytes[1] : 1;
 
 	/* byte offset 2 - sector size code */
-	*bytes_per_sector = 128 << ((header_size > 2) ? header_bytes[2] : 1);
+	geometry->sector_size = 128 << ((header_size > 2) ? header_bytes[2] : 1);
 
 	/* byte offset 3 - first sector ID */
-	first_sector_id = (header_size > 3) ? header_bytes[3] : 1;
+	geometry->first_sector_id = (header_size > 3) ? header_bytes[3] : 1;
 
 	/* byte offset 4 - sector attribute flag */
 	sector_attribute_flag = (header_size > 4) ? header_bytes[4] : 0;
 
-	/* we do not support weird first sector IDs and sector attribute flags */
-	if ((first_sector_id != 1) || (sector_attribute_flag != 0))
+	/* we do not support sector attribute flags */
+	if (sector_attribute_flag != 0)
 		return -1;
 
-	physical_bytes_per_sector = *bytes_per_sector;
+	physical_bytes_per_sector = geometry->sector_size;
 	if (sector_attribute_flag)
 		physical_bytes_per_sector++;
 
-	*tracks = (file_size - header_size) / *sectors / *heads / physical_bytes_per_sector;
+	geometry->tracks = (file_size - header_size) / geometry->sectors / geometry->heads / physical_bytes_per_sector;
 
-	if ((*tracks * *sectors * *heads * physical_bytes_per_sector) != (file_size - header_size))
+	if ((geometry->tracks * geometry->sectors * geometry->heads * physical_bytes_per_sector) != (file_size - header_size))
 		return -1;
 
 	return 0;
 }
 
-static int cocojvc_encode_header(void *buffer, UINT32 *header_size, UINT8 tracks, UINT8 heads, UINT8 sectors, UINT16 bytes_per_sector)
+static int cocojvc_encode_header(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry)
 {
 	UINT8 *header_bytes = (UINT8 *) buffer;
 	*header_size = 0;
 
-	header_bytes[0] = sectors;
-	header_bytes[1] = heads;
+	header_bytes[0] = geometry->sectors;
+	header_bytes[1] = geometry->heads;
 
-	switch(bytes_per_sector) {
+	switch(geometry->sector_size) {
 	case 128:
 		header_bytes[2] = 0x00;
 		break;
@@ -77,11 +76,11 @@ static int cocojvc_encode_header(void *buffer, UINT32 *header_size, UINT8 tracks
 		return -1;
 	}
 
-	if (sectors != 18)
+	if (geometry->sectors != 18)
 		*header_size = 1;
-	if (heads != 1)
+	if (geometry->heads != 1)
 		*header_size = 2;
-	if (bytes_per_sector != 128)
+	if (geometry->sector_size != 128)
 		*header_size = 3;
 	return 0;
 }
@@ -91,9 +90,9 @@ BLOCKDEVICE_FORMATDRIVER_START( coco_jvc )
 	BDFD_TRACKS_OPTION( 35 )
 	BDFD_TRACKS_OPTION( 40 )
 	BDFD_TRACKS_OPTION( 80 )
-	BDFD_SECTORS_BASE( 1 )
 	BDFD_SECTORS_OPTION( 18 )
 	BDFD_BYTES_PER_SECTOR( 256 )
+	BDFD_HEADER_SIZE_MODULO( 256 )
 	BDFD_HEADER_ENCODE( cocojvc_encode_header )
 	BDFD_HEADER_DECODE( cocojvc_decode_header )
 	BDFD_FLAGS( BDFD_ROUNDUP_TRACKS )
@@ -167,7 +166,7 @@ static int validate_header(struct vdk_header *hdr)
 	return INIT_PASS;
 }
 
-static int cocovdk_decode_header(const void *h, UINT32 file_size, UINT32 header_size, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, int *offset)
+static int cocovdk_decode_header(const void *h, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset)
 {
 	int err;
 	struct vdk_header *hdr;
@@ -182,21 +181,22 @@ static int cocovdk_decode_header(const void *h, UINT32 file_size, UINT32 header_
 		return err;
 
 	*offset = LITTLE_ENDIANIZE_INT16(hdr->header_len);
-	*tracks = hdr->tracks;
-	*sides = hdr->sides;
-	*sec_per_track = 18;
-	*sector_length = 256;
+	geometry->tracks = hdr->tracks;
+	geometry->heads = hdr->sides;
+	geometry->sectors = 18;
+	geometry->sector_size = 256;
 	return INIT_PASS;
 }
 
-static int cocovdk_encode_header(void *h, UINT32 *header_size, UINT8 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length)
+static int cocovdk_encode_header(void *h, UINT32 *header_size, const struct disk_geometry *geometry)
 {
 	struct vdk_header *hdr;
 
 	assert(sizeof(struct vdk_header) == VDK_HEADER_LEN);
 	assert(*header_size == VDK_HEADER_LEN);
 
-	if ((sec_per_track != 18) || (sector_length != 256) || (sides < 1) || (sides > 2))
+	if ((geometry->sectors != 18) || (geometry->sector_size != 256) || (geometry->heads < 1) || (geometry->heads > 2)
+			|| (geometry->first_sector_id != -1))
 		return INIT_FAIL;
 
 	hdr = (struct vdk_header *) h;
@@ -206,8 +206,8 @@ static int cocovdk_encode_header(void *h, UINT32 *header_size, UINT8 tracks, UIN
 	hdr->header_len = sizeof(struct vdk_header);
 	hdr->ver_actual = VDK_VERSION;
 	hdr->ver_compat = VDK_VERSION;
-	hdr->tracks = tracks;
-	hdr->sides = sides;
+	hdr->tracks = geometry->tracks;
+	hdr->sides = geometry->heads;
 	return INIT_PASS;
 }
 
@@ -219,7 +219,6 @@ BLOCKDEVICE_FORMATDRIVER_START( coco_vdk )
 	BDFD_TRACKS_OPTION( 35 )
 	BDFD_TRACKS_OPTION( 40 )
 	BDFD_TRACKS_OPTION( 80 )
-	BDFD_SECTORS_BASE( 1 )
 	BDFD_SECTORS_OPTION( 18 )
 	BDFD_BYTES_PER_SECTOR( 256 )
 	BDFD_FILLER_BYTE( 0xFF )
