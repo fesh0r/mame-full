@@ -4,7 +4,7 @@
 #include "cpu/m6809/m6809.h"
 
 #define BLACK 0x00
-#define RED   0x04
+#define RED	  0x04
 #define GREEN 0x02
 #define BLUE  0x01
 #define WHITE RED|GREEN|BLUE
@@ -16,16 +16,17 @@
 /* from vidhrdw/vectrex.c */
 extern void vector_add_point_stereo (int x, int y, int color, int intensity);
 extern void (*vector_add_point_function) (int, int, int, int);
+extern void vectrex_set_palette (void);
 
 /*********************************************************************
   Global variables
  *********************************************************************/
-unsigned char *vectrex_ram;        /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
+unsigned char *vectrex_ram;		   /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
 unsigned char vectrex_via_out[2];
-int vectrex_beam_color = WHITE;    /* the color of the vectrex beam */
-int vectrex_imager_status = 0;     /* 0 = off, 1 = right eye, 2 = left eye */
-int vectrex_refresh_with_T2;       /* For all known games it's OK to do the screen refresh when T2 expires.
-				    * This behaviour can be turned off via dipswitch settings */
+int vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
+int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
+int vectrex_refresh_with_T2;	   /* For all known games it's OK to do the screen refresh when T2 expires.
+					* This behaviour can be turned off via dipswitch settings */
 
 /*********************************************************************
   Local variables
@@ -49,8 +50,9 @@ static double imager_wheel_time = 0;
  *********************************************************************/
 int vectrex_load_rom (int id)
 {
+	static int first = 1;
 	const char *name;
-    FILE *cartfile = 0;
+	FILE *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
 	 * in Minestorm where the exec-rom attempts to access a vector list here.
@@ -79,13 +81,18 @@ int vectrex_load_rom (int id)
 			vectrex_imager_angles = minestorm_3d_angles;
 	}
 
+	if (first)
+		first = 0;
+	else
+		vectrex_set_palette ();
+
 	return INIT_OK;
 }
 
 int vectrex_id_rom (int id)
 {
 	const char *gamename = device_filename(IO_CARTSLOT,id);
-    void *romfile;
+	void *romfile;
 	char magic[5];
 
 	/* If no file was specified, don't bother */
@@ -108,12 +115,12 @@ int vectrex_id_rom (int id)
 /*********************************************************************
   Vectrex memory handler
  *********************************************************************/
-int vectrex_ram_r (int offset)
+READ_HANDLER ( vectrex_mirrorram_r )
 {
-	return (vectrex_ram[offset]);
+	return vectrex_ram[offset];
 }
 
-void vectrex_ram_w (int offset, int data)
+WRITE_HANDLER ( vectrex_mirrorram_w )
 {
 	vectrex_ram[offset] = data;
 }

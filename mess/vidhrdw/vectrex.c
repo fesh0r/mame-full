@@ -108,6 +108,8 @@ static void vectrex_screen_update_backup (int param)
 
 void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 {
+	palette_recalc();
+
 	vectrex_configuration();
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 
@@ -219,7 +221,7 @@ static void shade_fill (unsigned char *palette, int rgb, int start_index, int en
 	}
 }
 
-void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void vectrex_new_palette (unsigned char *palette)
 {
 	int i, nextfree;
 	char overlay_name[1024];
@@ -247,10 +249,12 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 	else
 		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
-
 	overlay_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree);
+	
 	if ((artwork_overlay != NULL))
+	{
 		overlay_set_palette (palette, MIN(256, Machine->drv->total_colors) - nextfree);
+	}
 	else
 	{
 		/* Dark red for red/blue glasses mode */
@@ -277,12 +281,38 @@ void vectrex_init_colors (unsigned char *palette, unsigned short *colortable,con
 	}
 }
 
+void vectrex_set_palette (void)
+{
+	unsigned char *palette;
+	int i;
+
+	palette = (unsigned char *)malloc(Machine->drv->total_colors * 3);
+
+	if (palette == 0)
+	{
+		logerror("Not enough memory!\n");
+		return;
+	}
+	
+	vectrex_new_palette (palette);
+
+	palette_recalc();
+
+	for (i = 0; i < Machine->drv->total_colors; i++)
+		palette_change_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
+		
+	free (palette);
+	return;
+}
+
 /*********************************************************************
   Startup and stop
  *********************************************************************/
 int vectrex_start (void)
 {
 	int width, height;
+
+	vectrex_set_palette ();
 
 	if (vector_vh_start())
 		return 1;

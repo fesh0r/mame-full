@@ -14,8 +14,8 @@ Bruce Tomlin (hardware info)
 
 /* From machine/vectrex.c */
 extern unsigned char *vectrex_ram;
-extern READ_HANDLER  ( vectrex_ram_r );
-extern WRITE_HANDLER ( vectrex_ram_w );
+extern READ_HANDLER  ( vectrex_mirrorram_r );
+extern WRITE_HANDLER ( vectrex_mirrorram_w );
 extern int vectrex_load_rom (int id);
 extern int vectrex_id_rom (int id);
 
@@ -33,8 +33,8 @@ extern void raaspec_vh_update (struct osd_bitmap *bitmap, int full_refresh);
 static struct MemoryReadAddress vectrex_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc800, 0xcbff, vectrex_ram_r},
-	{ 0xcc00, 0xcfff, vectrex_ram_r},
+	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
 	{ 0xd000, 0xd7ff, via_0_r },    /* VIA 6522 */
 	{ 0xe000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -43,8 +43,8 @@ static struct MemoryReadAddress vectrex_readmem[] =
 static struct MemoryWriteAddress vectrex_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc800, 0xcbff, vectrex_ram_w, &vectrex_ram },
-	{ 0xcc00, 0xcfff, vectrex_ram_w },
+	{ 0xc800, 0xcbff, MWA_RAM, &vectrex_ram },
+	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
 	{ 0xd000, 0xd7ff, via_0_w },    /* VIA 6522 */
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }
@@ -142,9 +142,9 @@ static struct MachineDriver machine_driver_vectrex =
 	380, 480, { 0, 500, 0, 600 },
 	0,
 	256 + 32768, 0,
-	vectrex_init_colors,
+	0,
 
-	VIDEO_TYPE_VECTOR,
+	VIDEO_TYPE_VECTOR | VIDEO_MODIFIES_PALETTE,
 	0,
 	vectrex_start,
 	vectrex_stop,
@@ -216,8 +216,8 @@ static struct MemoryReadAddress raaspec_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM }, /* Battery backed RAM for the Spectrum I+ */
-	{ 0xc800, 0xcbff, vectrex_ram_r },
-	{ 0xcc00, 0xcfff, vectrex_ram_r },
+	{ 0xc800, 0xcbff, MRA_RAM },
+	{ 0xcc00, 0xcfff, vectrex_mirrorram_r },
 	{ 0xd000, 0xd7ff, via_0_r },
 	{ 0xe000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -228,8 +228,8 @@ static struct MemoryWriteAddress raaspec_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0xa000, 0xa000, raaspec_led_w },
-	{ 0xc800, 0xcbff, vectrex_ram_w, &vectrex_ram },
-	{ 0xcc00, 0xcfff, vectrex_ram_w },
+	{ 0xc800, 0xcbff, MWA_RAM, &vectrex_ram },
+	{ 0xcc00, 0xcfff, vectrex_mirrorram_w },
 	{ 0xd000, 0xd7ff, via_0_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }
