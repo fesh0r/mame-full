@@ -21,6 +21,7 @@ floppy_interface d88image_floppy_interface=
 	d88image_get_id_callback,                   /* done */
 	d88image_read_sector_data_into_buffer,      /* done */
 	d88image_write_sector_data_from_buffer, /* done */
+	NULL,
 	NULL
 };
 

@@ -24,7 +24,8 @@ floppy_interface basicdsk_floppy_interface=
 	basicdsk_get_sectors_per_track,             /* done */
 	basicdsk_get_id_callback,                   /* done */
 	basicdsk_read_sector_data_into_buffer,      /* done */
-	basicdsk_write_sector_data_from_buffer, /* done */
+	basicdsk_write_sector_data_from_buffer, /* done */\
+	NULL,
 	NULL
 };
 

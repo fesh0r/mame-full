@@ -440,6 +440,12 @@ int	floppy_drive_get_current_track(int drive)
 	return drives[drive].current_track;
 }
 
+void	floppy_drive_read_track_data_info_buffer(int drive, int side, char *ptr, int *length )
+{
+	if (drives[drive].interface.read_track_data_info_buffer)
+		drives[drive].interface.read_track_data_info_buffer(drive, side, ptr, length);
+}
+
 void	floppy_drive_format_sector(int drive, int side, int sector_index,int c,int h, int r, int n, int filler)
 {
 	if (drives[drive].interface.format_sector)

@@ -24,6 +24,7 @@ floppy_interface mfm_disk_floppy_interface=
 	mfm_disk_get_id_callback,                   /* done */
 	mfm_disk_read_sector_data_into_buffer,      /* done */
 	mfm_disk_write_sector_data_from_buffer, /* done */
+	NULL,
 	NULL
 };
 

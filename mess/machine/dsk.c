@@ -38,6 +38,7 @@ floppy_interface dsk_floppy_interface=
 	dsk_get_id_callback,
 	dsk_read_sector_data_into_buffer,
 	dsk_write_sector_data_from_buffer,
+	NULL,
 	NULL
 };
 
