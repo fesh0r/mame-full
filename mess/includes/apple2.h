@@ -99,11 +99,13 @@ void apple2_setforceslotrom(UINT8 val);
 UINT8 apple2_getforceslotrom(void);
 
 /* machine/ap_disk2.c */
+extern UINT8 *apple_rom;
 void apple2_slot6_init(void);
 DEVICE_LOAD ( apple2_floppy );
 READ8_HANDLER ( apple2_c0xx_slot6_r );
 WRITE8_HANDLER ( apple2_c0xx_slot6_w );
 WRITE8_HANDLER ( apple2_slot6_w );
+data8_t apple2_getfloatingbusvalue(void);
 
 
 /* vidhrdw/apple2.c */

@@ -50,14 +50,13 @@ static WRITE8_HANDLER ( apple2_mainram0400_w );
 static WRITE8_HANDLER ( apple2_mainram2000_w );
 static WRITE8_HANDLER ( apple2_auxram0400_w );
 static WRITE8_HANDLER ( apple2_auxram2000_w );
-static data8_t apple2_getfloatingbusvalue(void);
 
 static double joystick_x1_time;
 static double joystick_y1_time;
 static double joystick_x2_time;
 static double joystick_y2_time;
 
-static UINT8 *apple_rom;
+UINT8 *apple_rom;
 static void *dummy_memory;
 
 /***************************************************************************
@@ -331,7 +330,8 @@ UINT8 apple2_getforceslotrom(void)
   apple2_getfloatingbusvalue
   preliminary floating bus video scanner code - look for comments with FIX:
 ***************************************************************************/
-static data8_t apple2_getfloatingbusvalue(void)
+
+data8_t apple2_getfloatingbusvalue(void)
 {
 	enum
 	{
