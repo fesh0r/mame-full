@@ -1292,7 +1292,6 @@ static void sony_doaction(void)
 				logerror("sony_doaction(): ejecting disk pc=0x%08x\n", (int) activecpu_get_pc());
 			#endif
 			/*if (f->fd) {
-				osd_fclose(f->fd);
 				memset(f, 0, sizeof(*f));
 			}*/
 			/* somewhat hackish, but better method (?) */
@@ -1417,8 +1416,6 @@ int sony_floppy_init(int id, void *fp, int open_mode, int allowablesizes)
 	return INIT_PASS;
 
 error:
-	if (f->fd)
-		osd_fclose(f->fd);
 	return INIT_FAIL;
 }
 
@@ -1458,7 +1455,6 @@ void sony_floppy_exit(int id)
 			}
 		}
 
-		osd_fclose(f->fd);
 		f->fd = NULL;
 	}
 	if (f->loadedtrack_data)

@@ -345,7 +345,6 @@ static MACHINE_DRIVER_START( laser110 )
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( laser110 )
-	MDRV_MACHINE_STOP( vtech1 )
 
     /* video hardware */
 	MDRV_M6847_PAL( vtech1 )

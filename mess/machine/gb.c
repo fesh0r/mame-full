@@ -1391,8 +1391,6 @@ int gb_load_rom (int id, void *F, int open_mode)
     for (J = 0x4000; J == 0x4000;)
 		J = osd_fread (F, gb_ram, 0x4000);
 
-	osd_fclose (F);
-
 	/* FIXME: should check first if a file is given, should give a more clear error */
 	if (!(F = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
@@ -1417,7 +1415,6 @@ int gb_load_rom (int id, void *F, int open_mode)
 	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
 		logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
-		osd_fclose (F);
 		return INIT_FAIL;
 	}
 
@@ -1519,7 +1516,6 @@ int gb_load_rom (int id, void *F, int open_mode)
 	if ( CartType & UNKNOWN )
 	{
 		logerror("Error loading cartridge: Unknown ROM type\n");
-		osd_fclose (F);
 		return INIT_FAIL;
 	}
 

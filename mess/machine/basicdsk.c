@@ -70,13 +70,6 @@ void basicdsk_floppy_exit(int id)
 
 	pDisk = &basicdsk_drives[id];
 
-	/* if file was opened, close it */
-	if (pDisk->image_file!=NULL)
-	{
-		osd_fclose(pDisk->image_file);
-		pDisk->image_file = NULL;
-	}
-
 	/* free ddam map */
 	if (pDisk->ddam_map!=NULL)
 	{

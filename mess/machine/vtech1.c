@@ -119,17 +119,6 @@ MACHINE_INIT( laser310 )
 	common_init_machine();
 }
 
-MACHINE_STOP( vtech1 )
-{
-	int i;
-	for( i = 0; i < 2; i++ )
-	{
-		if( vtech1_fdc_file[i] )
-			osd_fclose(vtech1_fdc_file[i]);
-		vtech1_fdc_file[i] = NULL;
-	}
-}
-
 /***************************************************************************
  * CASSETTE HANDLING
  ***************************************************************************/
@@ -400,8 +389,6 @@ int vtech1_floppy_init(int id, void *fp, int open_mode)
 
 void vtech1_floppy_exit(int id)
 {
-	if( vtech1_fdc_file[id] )
-		osd_fclose(vtech1_fdc_file[id]);
 	vtech1_fdc_file[id] = NULL;
 }
 

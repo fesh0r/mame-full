@@ -57,7 +57,6 @@ int coleco_init_cart (int id, void *cartfile, int open_mode)
 		logerror("Coleco - Image verify PASS\n");
 		init_result = INIT_PASS;
 	}
-	osd_fclose (cartfile);
 	return init_result;
 }
 

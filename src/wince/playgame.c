@@ -1,12 +1,29 @@
+//============================================================
+//
+//	playgame.c - WinCE front end code
+//
+//============================================================
+
+// standard windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <stdio.h>
+
+// MAME headers
 #include "mamece.h"
 #include "driver.h"
 #include "rc.h"
 #include "..\windows\window.h"
 #include "strconv.h"
 
-/* ------------------------------------------------------------------------*/
+//============================================================
+//	LOCAL VARIABLES
+//============================================================
+
+static int erroroslog = 0;
+
+//============================================================
+
 #ifdef MESS
 LPTSTR messages = NULL;
 
@@ -198,14 +215,14 @@ void CLIB_DECL logerror(const char *text,...)
 {
 #ifdef MAME_DEBUG
 	va_list arg;
+	char buffer[512];
 
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-
+	if (erroroslog)
 	{
-		char szBuffer[512];
-		_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
-		OutputDebugString(A2T(szBuffer));
+		/* standard vfprintf stuff here */
+		va_start(arg, text);
+		_vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
+		OutputDebugString(A2T(buffer));
 	}
 	va_end(arg);
 #endif

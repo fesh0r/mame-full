@@ -9,9 +9,12 @@ extern int image_load(int type, int id, const char *name);
 extern void image_unload(int type, int id);
 extern void image_unload_all(void);
 
+extern void *image_fp(int type, int id);
+
 extern void *image_malloc(int type, int id, size_t size);
 extern char *image_strdup(int type, int id, const char *src);
 
+/* needs to be phased out */
 extern void *image_fopen_custom(int type, int id, int filetype, int read_or_write);
 
 extern const char *image_typename_id(int type, int id);

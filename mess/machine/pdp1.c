@@ -369,10 +369,6 @@ int pdp1_tape_init(int id, void *fp, int open_mode  )
 */
 void pdp1_tape_exit(int id)
 {
-	void **fd = (id==0) ? & tape_reader.fd : & tape_puncher.fd;
-
-	if (*fd)
-		osd_fclose(*fd);
 }
 
 /*
@@ -662,8 +658,6 @@ int pdp1_typewriter_init(int id, void *fp, int open_mode)
 */
 void pdp1_typewriter_exit(int id)
 {
-	if (typewriter.fd)
-		osd_fclose(typewriter.fd);
 }
 
 /*

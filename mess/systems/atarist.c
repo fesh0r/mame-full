@@ -1829,14 +1829,11 @@ static int atari_st_image_type[2] = {ATARI_ST_IMAGE_TYPE_NONE, ATARI_ST_IMAGE_TY
 
 
 /* basic format like .ST */
-static int atarist_basic_floppy_init(int id)
+static int atarist_basic_floppy_init(int id, void *file, int open_mode)
 {
-	void *file;
-
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		/* Figure out correct disk format, try standard formats first */
-		file=image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file) {
 			int s=osd_fsize(file),i,f=0;
 			int table[][4]={
@@ -1880,8 +1877,6 @@ static int atarist_basic_floppy_init(int id)
 				}
 			}
 
-			osd_fclose(file);
-
 			atari_st_image_type[id] = ATARI_ST_IMAGE_TYPE_RAW;
 			return INIT_PASS;
 		}
@@ -1894,11 +1889,9 @@ static int atarist_basic_floppy_init(int id)
 
 
 /* load image */
-int atarist_load(int type, int id, unsigned char **ptr)
+int atarist_load(void *file, unsigned char **ptr)
 {
 	void *file;
-
-	file = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -1920,16 +1913,11 @@ int atarist_load(int type, int id, unsigned char **ptr)
 
 				*ptr = data;
 
-				/* close file */
-				osd_fclose(file);
-
 				logerror("File loaded!\r\n");
 
 				/* ok! */
 				return 1;
 			}
-			osd_fclose(file);
-
 		}
 	}
 
@@ -2270,10 +2258,10 @@ void msa_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr
 	memcpy(ptr, pDataPtr, length);
 }
 
-int atarist_msa_floppy_init(int id)
+int atarist_msa_floppy_init(int id, void *file, int open_mode)
 {
 	/* load whole file into memory */
-	if (atarist_load(IO_FLOPPY, id, &msa_images_data[id])!=NULL)
+	if (atarist_load(file, &msa_images_data[id])!=NULL)
 	{
 		if (msa_images_data[id][0]!=0xe && msa_images_data[id][1]!=0xf)
 			logerror("MSA Warning:  Header doesn't match\n");

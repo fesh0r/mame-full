@@ -50,17 +50,12 @@ int cbm_quick_init (int id, void *fp, int open_mode)
 		}
 	}
 	if (quick.addr == 0)
-	{
-		osd_fclose (fp);
 		return INIT_FAIL;
-	}
+
 	if ((quick.data = (UINT8*) image_malloc (IO_QUICKLOAD, id, quick.length)) == NULL)
-	{
-		osd_fclose (fp);
 		return INIT_FAIL;
-	}
+
 	read = osd_fread (fp, quick.data, quick.length);
-	osd_fclose (fp);
 	return read != quick.length;
 }
 
@@ -230,14 +225,11 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 			size -= 2;
 			logerror("loading rom %s at %.4x size:%.4x\n",
 						 image_filename(IO_CARTSLOT,id), in, size);
-			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
-				osd_fclose(fp);
+			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) )
 				return INIT_FAIL;
-			}
 			cbm_rom[i].addr=in;
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
-			osd_fclose (fp);
 			if (read != size)
 				return INIT_FAIL;
 		}
@@ -269,22 +261,18 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 				logerror("loading chip at %.4x size:%.4x\n", adr, in);
 
 
-				if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
-					osd_fclose(fp);
+				if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) )
 					return INIT_FAIL;
-				}
+
 				cbm_rom[i].addr=adr;
 				cbm_rom[i].size=in;
 				read = osd_fread (fp, cbm_rom[i].chip, in);
 				i++;
 				if (read != in)
-				{
-					osd_fclose (fp);
 					return INIT_FAIL;
-				}
+
 				j += 16 + in;
 			}
-			osd_fclose (fp);
 		}
 		else
 		{
@@ -323,15 +311,13 @@ int cbm_rom_init(int id, void *fp, int open_mode)
 						 image_filename(IO_CARTSLOT,id), adr, size);
 
 			cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
-			if (!cbm_rom[i].chip) {
-				osd_fclose(fp);
+			if (!cbm_rom[i].chip)
 				return INIT_FAIL;
-			}
+
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
 
-			osd_fclose (fp);
 			if (read != size)
 				return INIT_FAIL;
 		}

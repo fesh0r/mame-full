@@ -55,23 +55,21 @@ int svi318_load_rom (int id, void *f, int open_mode)
 
 	if (f)
 	{
-		p = malloc (0x8000);
+		p = image_malloc(IO_CARTSLOT, id, 0x8000);
 		if (!p)
 		{
 			logerror ("malloc () failed!\n");
-			osd_fclose (f);
 			return INIT_FAIL;
 		}
+
 		memset (p, 0xff, 0x8000);
 		size = osd_fsize (f);
 		if (osd_fread (f, p, size) != size)
 		{
 			logerror ("can't read file %s\n", image_filename (IO_CASSETTE, id) );
-			osd_fclose (f);
-			free (p);
 			return INIT_FAIL;
 		}
-		osd_fclose (f);
+
 		if(svi318_verify_cart(p)==IMAGE_VERIFY_FAIL)
 			return INIT_FAIL;
 		pcart = p;
@@ -84,13 +82,9 @@ int svi318_load_rom (int id, void *f, int open_mode)
 }
 
 void svi318_exit_rom (int id)
-	{
-	if (pcart)
-		{
-		free (pcart);
-		pcart = svi.banks[0][1] = NULL;
-		}
-	}
+{
+	pcart = svi.banks[0][1] = NULL;
+}
 
 /*
 ** PPI stuff

@@ -133,13 +133,11 @@ MACHINE_INIT( sym1 )
 }
 
 #if 0
-int kim1_cassette_init(int id)
+int kim1_cassette_init(int id, void *file, int open_mode)
 {
 	const char magic[] = "KIM1";
 	char buff[4];
-	void *file;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
 		UINT16 addr, size;
@@ -157,7 +155,6 @@ int kim1_cassette_init(int id)
 		logerror("kim1_rom_load: $%04X $%04X $%02X\n", addr, size, ident);
 		while (size-- > 0)
 			osd_fread(file, &RAM[addr++], 1);
-		osd_fclose(file);
 	}
 	return INIT_PASS;
 }

@@ -285,10 +285,8 @@ static int arcadia_init_cart(int id, void *cartfile, int open_mode)
 
 	if (osd_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		osd_fclose(cartfile);
 		return INIT_FAIL;
 	}
-	osd_fclose(cartfile);
 	if (size>0x1000) memmove(rom+0x2000, rom+0x1000, size-0x1000);
 #if 1
 	// golf cartridge support

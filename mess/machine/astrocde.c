@@ -28,10 +28,7 @@ int astrocade_load_rom(int id, void *file, int open_mode)
 
     /* load a cartidge  */
 	if (file)
-	{
 		size = osd_fread(file, memory_region(REGION_CPU1) + 0x2000, 0x8000);
-		osd_fclose(file);
-	}
 	return 0;
 }
 

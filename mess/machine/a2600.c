@@ -1344,7 +1344,6 @@ int a2600_load_rom(int id, void *cartfile, int open_mode)
 
 		cart_size = osd_fsize(cartfile);
 		osd_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
-		osd_fclose(cartfile);
 		/* copy to mirrorred memory regions */
 		crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
 		Bankswitch_Method = 0;

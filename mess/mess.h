@@ -206,6 +206,8 @@ extern const char *ram_string(char *buffer, UINT32 ram);
 extern int ram_validate_option(void);
 extern void cpu_setbank_fromram(int bank, UINT32 ramposition, mem_read_handler rhandler, mem_write_handler whandler);
 
+extern void ram_dump(const char *filename);
+
 /* gets the path to the MESS executable */
 extern const char *mess_path;
 

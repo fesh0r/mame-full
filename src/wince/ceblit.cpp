@@ -35,7 +35,7 @@ typedef void (__cdecl *blitter_func)(void *dest_bits, const void *source_bits);
 #define MAX_BLITTER_SIZE	32768
 #define DEBUG_BLITTERS		1
 
-#define PROFILER_GAPI		PROFILER_USER4
+//#define PROFILER_GAPI		PROFILER_USER4
 
 //============================================================
 //	LOCAL VARIABLES

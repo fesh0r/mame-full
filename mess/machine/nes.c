@@ -1262,13 +1262,11 @@ int nes_init_cart (int id, void *romfile, int open_mode)
 	if (nes.battery)
 		battery_load(image_filename(IO_CARTSLOT,id), battery_data, BATTERY_SIZE);
 
-	osd_fclose (romfile);
 	famicom_image_registered = 1;
 	return INIT_PASS;
 
 bad:
 	logerror("BAD section hit during LOAD ROM.\n");
-	osd_fclose (romfile);
 	return INIT_FAIL;
 }
 
@@ -1338,13 +1336,11 @@ int nes_load_disk (int id, void *diskfile, int open_mode)
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 
-	osd_fclose (diskfile);
 	famicom_image_registered = 1;
 	return INIT_PASS;
 
 //bad:
 	logerror("BAD section hit during disk load.\n");
-	if (diskfile) osd_fclose (diskfile);
 	return 1;
 }
 

@@ -326,12 +326,12 @@ ifdef MESS
 include mess/rules_ms.mak
 endif
 
-ifdef DEBUG
+#ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
-else
-DBGDEFS =
-DBGOBJS =
-endif
+#else
+#DBGDEFS =
+#DBGOBJS =
+#endif
 
 extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 

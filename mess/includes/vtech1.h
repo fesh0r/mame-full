@@ -12,7 +12,6 @@ extern int vtech1_latch;
 extern MACHINE_INIT( laser110 );
 extern MACHINE_INIT( laser210 );
 extern MACHINE_INIT( laser310 );
-extern MACHINE_STOP( vtech1 );
 
 extern int vtech1_cassette_init(int id, void *fp, int open_mode);
 

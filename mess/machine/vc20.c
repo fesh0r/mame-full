@@ -706,7 +706,6 @@ int vc20_rom_load (int id, void *fp, int open_mode)
 
 	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
 	read = osd_fread (fp, mem + addr, size);
-	osd_fclose (fp);
 	if (read != size)
 		return 1;
 	return 0;

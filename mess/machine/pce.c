@@ -43,9 +43,7 @@ int pce_load_rom(int id, void *fp, int open_mode)
         osd_fseek(fp, 512, SEEK_SET);
     }
     size = osd_fread(fp, ROM, size);
-    osd_fclose(fp);
-
-    return 0;
+return 0;
 }
 
 MACHINE_INIT( pce )

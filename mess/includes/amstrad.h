@@ -6,8 +6,6 @@
 void amstrad_setup_machine(void);
 void amstrad_shutdown_machine(void);
 
-int amstrad_floppy_init(int, void *fp, int open_mode);
-
 extern SNAPSHOT_LOAD( amstrad );
 
 int amstrad_floppy_load(int);

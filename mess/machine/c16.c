@@ -737,11 +737,7 @@ int c16_rom_init (int id, void *fp, int open_mode)
 
 void c16_rom_exit (int id)
 {
-	if (rom_fp[id])
-	{
-		osd_fclose(rom_fp[id]);
-		rom_fp[id] = NULL;
-	}
+	rom_fp[id] = NULL;
 }
 
 int c16_rom_load (int id)

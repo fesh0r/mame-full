@@ -182,12 +182,9 @@ int genesis_init_cart (int id, void *romfile, int open_mode)
 #endif
 	}
 
-	osd_fclose(romfile);
 	return INIT_PASS;
 
 bad:
-	if (romfile)
-		osd_fclose(romfile);
 	return INIT_FAIL;
 }
 

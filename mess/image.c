@@ -11,6 +11,7 @@ static void *image_fopen_new(int type, int id, int *effective_mode);
 
 struct image_info
 {
+	void *fp;
 	int loaded;
 	char *name;
 	char *dir;
@@ -59,6 +60,8 @@ char *image_strdup(int type, int id, const char *src)
 
 static void image_free_resources(struct image_info *img)
 {
+	if (img->fp)
+		osd_fclose(img->fp);
 	pool_exit(&img->memory_pool);
 }
 
@@ -90,6 +93,7 @@ int image_load(int type, int id, const char *name)
 	char *newname;
 	struct image_info *img;
 	int err;
+	void *fp = NULL;
 
 	img = get_image(type, id);
 
@@ -116,7 +120,6 @@ int image_load(int type, int id, const char *name)
 
 	if (dev->init)
 	{
-		void *fp;
 		int effective_mode;
 		int err0 = INIT_PASS;
 
@@ -127,15 +130,18 @@ int image_load(int type, int id, const char *name)
 			fp = image_fopen_new(type, id, &effective_mode);
 			if (fp == NULL)
 			{
-				printf("Unable to open imge file %s\n", image_filename(type, id));
+				printf("Unable to open image file %s\n", image_filename(type, id));
 				err0 = INIT_FAIL;
 			}
 		}
 		err = dev->init(id, fp, effective_mode);
 		if (err0 != INIT_PASS)
-			return err0;
-		else if (err != INIT_PASS)
+			err = err0;
+		if (err != INIT_PASS)
+		{
+			osd_fclose(fp);
 			return err;
+		}
 	}
 
 	/* init succeeded */
@@ -143,6 +149,7 @@ int image_load(int type, int id, const char *name)
 	if ((type == IO_FLOPPY) && img->name)
 		floppy_device_common_init(id);
 
+	img->fp = fp;
 	img->loaded = TRUE;
 	return INIT_PASS;
 }
@@ -450,3 +457,7 @@ const char *image_extrainfo(int type, int id)
 	return get_image(type, id)->extrainfo;
 }
 
+void *image_fp(int type, int id)
+{
+	return get_image(type, id)->fp;
+}

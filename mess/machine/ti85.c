@@ -690,7 +690,6 @@ int ti85_serial_init (int id, void *file, int open_mode)
 			if ((file_data = (UINT8*) auto_malloc(file_size)))
 			{
 				osd_fread(file, file_data, file_size);
-				osd_fclose(file);
 
 				if(!ti85_convert_file_data_to_serial_stream(file_data, file_size, &ti85_serial_stream, (char*)Machine->gamedrv->name))
 				{
@@ -703,7 +702,6 @@ int ti85_serial_init (int id, void *file, int open_mode)
 		}
 		else 
 		{
-			osd_fclose(file);
 			return INIT_FAIL;
 		}
 	}

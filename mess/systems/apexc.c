@@ -96,10 +96,6 @@ static void apexc_cylinder_exit(int id)
 		/* write */
 		osd_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), /*0x8000*/0x1000);
 	}
-	if (apexc_cylinder.fd)
-	{
-		osd_fclose(apexc_cylinder.fd);
-	}
 }
 
 
@@ -168,17 +164,6 @@ static int apexc_tape_init(int id, void *fp, int open_mode)
 								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	return INIT_PASS;
-}
-
-/*
-	Close a tape image
-*/
-static void apexc_tape_exit(int id)
-{
-	tape *t = &apexc_tapes[id];
-
-	if (t->fd)
-		osd_fclose(t->fd);
 }
 
 static READ32_HANDLER(tape_read)
@@ -853,7 +838,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(apexc)
 	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", IO_RESET_CPU, OSD_FOPEN_RW_OR_READ, apexc_cylinder_init, apexc_cylinder_exit, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", IO_RESET_NONE, OSD_FOPEN_NONE, apexc_tape_init, apexc_tape_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", IO_RESET_NONE, OSD_FOPEN_NONE, apexc_tape_init, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*		   YEAR		NAME		PARENT			MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */

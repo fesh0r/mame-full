@@ -353,8 +353,6 @@ static int sord_cartslot_init(int id, void *file, int open_mode)
 			/* read whole file */
 			osd_fread(file, cart_data, datasize);
 		}
-		osd_fclose(file);
-
 		return INIT_PASS;
 
 	}

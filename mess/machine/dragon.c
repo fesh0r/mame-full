@@ -446,10 +446,7 @@ static int generic_pak_load(void *fp, int rambase_index, int rombase_index, int 
 
 	/* Get the RAM portion */
 	if (load_pak_into_region(fp, &pakstart, &paklength, rambase, 0x0000, 0xff00))
-	{
-		osd_fclose(fp);
 		return INIT_FAIL;
-	}
 
 	memcpy(pakbase, rambase + 0xC000, 0x3F00);
 
@@ -508,7 +505,6 @@ static int generic_rom_load(int id, void *fp, UINT8 *dest, UINT16 destlength)
 		osd_fread(fp, dest, romsize);
 
 		cart_inserted = 1;
-		osd_fclose(fp);
 
 		/* Now we need to repeat the mirror the ROM throughout the ROM memory */
 		rombase = dest;

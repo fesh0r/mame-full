@@ -120,25 +120,24 @@ int msx_load_rom (int id, void *F, int open_mode)
     {
         logerror("%s: file to small\n",
             image_filename (IO_CARTSLOT, id));
-        osd_fclose (F);
         return 1;
     }
     /* get mapper type */
     pext = image_extrainfo (IO_CARTSLOT, id);
 	if (!pext || (1 != sscanf (pext, "%d", &type) ) )
-   		{
+   	{
        	logerror("Cart #%d No extra info found in crc file\n", id);
        	type = -1;
-   		}
+   	}
    	else
-   		{
+   	{
        	if (type < 0 || type > 17)
-       		{
+		{
            	logerror("Cart #%d Invalid extra info\n", id);
            	type = -1;
-       		}
-       	else logerror("Cart %d extra info: %s\n", id, pext);
-   		}
+		}
+      	else logerror("Cart %d extra info: %s\n", id, pext);
+   	}
 
     /* calculate aligned size (8, 16, 32, 64, 128, 256, etc. (kB) ) */
     size_aligned = 0x2000;
@@ -148,7 +147,6 @@ int msx_load_rom (int id, void *F, int open_mode)
     if (!pmem)
     {
         logerror("malloc () failed\n");
-        osd_fclose (F);
         return 1;
     }
     memset (pmem, 0xff, size_aligned);
@@ -156,11 +154,9 @@ int msx_load_rom (int id, void *F, int open_mode)
     {
         logerror("%s: can't read file\n",
             image_filename (IO_CARTSLOT, id));
-        osd_fclose (F);
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-    osd_fclose (F);
 
     /* check type */
     if (type < 0)

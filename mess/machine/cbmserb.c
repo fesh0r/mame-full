@@ -126,17 +126,13 @@ static int d64_open (int id, void *in)
 	cbm_drive[id].d.d64.image_id = id;
 	size = osd_fsize (in);
 	if (!(cbm_drive[id].d.d64.image = (UINT8*)malloc (size)))
-	{
-		osd_fclose (in);
 		return 1;
-	}
+
 	if (size != osd_fread (in, cbm_drive[id].d.d64.image, size))
 	{
 		free (cbm_drive[id].d.d64.image);
-		osd_fclose (in);
 		return 1;
 	}
-	osd_fclose (in);
 
 	logerror("floppy image %s loaded\n",
 				 image_filename(IO_FLOPPY,id));

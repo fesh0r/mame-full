@@ -518,100 +518,96 @@ static WRITE_HANDLER ( mtx_trap_write )
 		if(mtx_peek(0xfd68) == 0)
 		{
 			//save
-								if((start == 0xc001) && (length == 0x14))
-										{
-												//memcpy(mtx_savebuffer, mess_ram + start, 0x12);
-					int i;
-					for(i=0;i <= 0x12;i++)
-					{
-						mtx_savebuffer[i] = mtx_peek(start + i);
-					}
+			if((start == 0xc001) && (length == 0x14))
+			{
+				//memcpy(mtx_savebuffer, mess_ram + start, 0x12);
+				int i;
+				for(i=0;i <= 0x12;i++)
+				{
+					mtx_savebuffer[i] = mtx_peek(start + i);
+				}
 
-												mtx_saveindex = 0x12;
-										}
-										else
-										{
-												//memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
-					int i;
-					for(i=0;i <= length;i++)
-					{
-						mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
-					}
+				mtx_saveindex = 0x12;
+			}
+			else
+			{
+				//memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
+				int i;
+				for(i=0;i <= length;i++)
+				{
+					mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
+				}
 
-												mtx_saveindex+=length;
-										}
-										if(start == 0xc000)
-												{
-						int i;
+				mtx_saveindex+=length;
+			}
+			if(start == 0xc000)
+			{
+				int i;
 
-						for(i=0;i<=15;i++)
-						{
-																filename[i] = mtx_savebuffer[1 + i];
-						}
+				for(i=0;i<=15;i++)
+				{
+					filename[i] = mtx_savebuffer[1 + i];
+				}
 
-															//    logerror("Writing Header Filename ");
+				//    logerror("Writing Header Filename ");
 
-														for(i=14; i>0 && filename[i] == 0x20;i--);
+				for(i=14; i>0 && filename[i] == 0x20;i--);
 
-
-														filename[i + 1] = '\0';
-						logerror("%s\n", filename);
-														if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
-							{
-																			osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
-																			osd_fclose(f);
-							}
-
-												}
+				filename[i + 1] = '\0';
+				logerror("%s\n", filename);
+				if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
+				{
+					osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
+					osd_fclose(f);
+				}
+			}
 		}
 		else
 		{
-										if(mtx_peek(0xfd67) == 0)
+			if(mtx_peek(0xfd67) == 0)
+			{
+				//load
+				if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
 				{
-						//load
-
-												if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
+					int i;
+					for(i=0;i<=15;i++)
 					{
-
-						int i;
-						for(i=0;i<=15;i++)
-						{
-																filename[i] = mtx_peek(0xc002 + i);
-						}
-						for(i=15; i>0 && filename[i] == 0x20;i--)
-						filename[i+1] = '\0';
-						if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
-							{
-								filesize=osd_fsize(f);
-																		mtx_loadindex = filesize;
-								// check for buffer overflow....
-								if(filesize<65536)
-									{
-										osd_fread(f,mtx_tapebuffer,filesize);
-									}
-										osd_fclose(f);
-							}
+						filename[i] = mtx_peek(0xc002 + i);
 					}
+					for(i=15; i>0 && filename[i] == 0x20;i--)
+						filename[i+1] = '\0';
+					if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
+					{
+						filesize=osd_fsize(f);
+						mtx_loadindex = filesize;
+						// check for buffer overflow....
+						if(filesize<65536)
+						{
+							osd_fread(f,mtx_tapebuffer,filesize);
+						}
+						osd_fclose(f);
+					}
+				}
 
 				if(filesize<65536)
+				{
+					//memcpy(ramoffset, mtx_tapebuffer, length);
+					int i;
+					unsigned char v;
+					for(i=0;i <= length;i++)
 					{
-						//memcpy(ramoffset, mtx_tapebuffer, length);
-						int i;
-						unsigned char v;
-						for(i=0;i <= length;i++)
-						{
 						v = mtx_tapebuffer[i];
 						mtx_poke(start + i, v);
-						}
-
-						memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
-														mtx_loadindex -= length;
 					}
+
+					memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
+						mtx_loadindex -= length;
 				}
-				else
-				{
-					//verify
-				}
+			}
+			else
+			{
+				//verify
+			}
 		}
 	}
 }

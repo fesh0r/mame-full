@@ -822,7 +822,8 @@ static void fdc_setup_dma( void ) {
 	}
 }
 
-static void setup_fdc_buffer( int drive ) {
+static void setup_fdc_buffer( int drive )
+{
 	int sector, offset, len;
 	static unsigned char temp_cyl[512*11];
 
@@ -844,7 +845,6 @@ static void setup_fdc_buffer( int drive ) {
 
 	if ( osd_fseek( fdc_status[drive].f, offset * len, SEEK_SET ) ) {
 		logerror("FDC: osd_fseek failed!\n" );
-		osd_fclose( fdc_status[drive].f );
 		fdc_status[drive].f = NULL;
 		fdc_status[drive].disk_changed = 1;
 	}

@@ -589,7 +589,6 @@ int mekd2_rom_load(int id, void *file, int open_mode)
 /*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
 			while (size-- > 0)
 				osd_fread(file, &RAM[addr++], 1);
-			osd_fclose(file);
 		}
 
 	return 0;

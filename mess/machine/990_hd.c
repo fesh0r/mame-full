@@ -208,7 +208,6 @@ void ti990_hd_exit(int id)
 
 	if (d->fd)
 	{
-		osd_fclose(d->fd);
 		d->fd = NULL;
 		d->wp = 0;
 		d->unsafe = /*1*/0;

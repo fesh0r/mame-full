@@ -197,7 +197,6 @@ int jupiter_load_ace(int id, void *file, int open_mode)
 					jupiter_data[jupiter_index++] = jupiter_byte;
 			}
 		}
-		osd_fclose(file);
 	}
 	if (!done)
 	{
@@ -280,7 +279,6 @@ int jupiter_load_tap(int id, void *file, int open_mode)
 			jupiter_data_type = JUPITER_TAP;
 			logerror("File loaded\r\n");
 		}
-		osd_fclose(file);
 	}
 
 	if (!jupiter_data)

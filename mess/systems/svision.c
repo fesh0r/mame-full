@@ -391,7 +391,7 @@ static int svision_load_rom(int id, void *cartfile, int open_mode)
 		return 0;
 	}
 
-	size=osd_fsize(cartfile);
+	size = osd_fsize(cartfile);
 	if (size>0x10000) {
 	    logerror("%s: size %d not yet supported\n",image_filename(IO_CARTSLOT,id), size);
 	    return 1;
@@ -399,14 +399,12 @@ static int svision_load_rom(int id, void *cartfile, int open_mode)
 
 	if (osd_fread(cartfile, rom+0x20000-size, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		osd_fclose(cartfile);
 		return 1;
 	}
 	if (size==0x8000) {
 	    memcpy(rom+0x10000, rom+0x20000-size, size);
 	}
 	memcpy(rom+0xc000, rom+0x1c000, 0x10000-0xc000);
-	osd_fclose(cartfile);
 	return 0;
 }
 

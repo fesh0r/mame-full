@@ -502,6 +502,23 @@ void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
 	}
 }
 
+void ram_dump(const char *filename)
+{
+	void *file;
+
+	if (!filename)
+		filename = "ram.bin";
+
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_NVRAM, OSD_FOPEN_WRITE);
+	if (file)
+	{
+		osd_fwrite(file, mess_ram, mess_ram_size);
+
+		/* close file */
+		osd_fclose(file);
+	}
+}
+
 #ifdef MAME_DEBUG
 int messvaliditychecks(void)
 {

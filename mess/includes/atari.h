@@ -51,7 +51,6 @@ extern MACHINE_INIT( a800xl );
 extern MACHINE_INIT( a5200 );
 
 extern int a800_floppy_init(int id, void *fp, int open_mode);
-extern void a800_floppy_exit(int id);
 
 extern int a800_rom_init(int id, void *fp, int open_mode);
 extern void a800_rom_exit(int id);

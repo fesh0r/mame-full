@@ -1161,13 +1161,11 @@ int spectrum_cart_load(int id, void *file, int open_mode)
 			if (data != NULL)
 			{
 				osd_fread(file, data, datasize);
-				osd_fclose(file);
 				memcpy(ROM, data, 0x4000);
 				free(data);
 				logerror("Cart loaded!\n");
 				return 0;
 			}
-			osd_fclose(file);
 		}
 		return 1;
 	}
@@ -1192,21 +1190,18 @@ int timex_cart_load(int id, void *file, int open_mode)
 
 	if (file_size < 0x09)
 	{
-		osd_fclose(file);
 		logerror ("Bad file size\n");
 		return INIT_FAIL;
 	}
 
 	file_data = malloc(file_size);
 	if (file_data == NULL)
-        {
-		osd_fclose(file);
+	{
 		logerror ("Memory allocating error\n");
 		return INIT_FAIL;
 	}
 
 	osd_fread(file, file_data, file_size);
-	osd_fclose(file);
 
 	for (i=0; i<8; i++)
 		if(file_data[i+1]&0x02)	chunks_in_file++;

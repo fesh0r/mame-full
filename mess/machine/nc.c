@@ -95,9 +95,6 @@ static int nc_card_load(int id, void *file, unsigned char **ptr)
 
 				*ptr = data;
 
-				/* close file */
-				osd_fclose(file);
-
 				logerror("File loaded!\r\n");
 
 				nc_membank_card_ram_mask = nc_card_calculate_mask(datasize);
@@ -107,8 +104,6 @@ static int nc_card_load(int id, void *file, unsigned char **ptr)
 				/* ok! */
 				return 1;
 			}
-			osd_fclose(file);
-
 		}
 	}
 

@@ -147,7 +147,6 @@ void ti990_tape_exit(int id)
 
 	if (t->fd)
 	{
-		osd_fclose(t->fd);
 		t->fd = NULL;
 		t->wp = 0;
 		t->bot = 0;

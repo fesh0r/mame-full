@@ -29,14 +29,6 @@ rom/ram selection
 #include "cassette.h"
 #include "image.h"
 
-int amstrad_floppy_init(int id, void *fp, int open_mode)
-{
-	if (!image_exists(IO_FLOPPY, id))
-		return INIT_PASS;
-
-	return dsk_floppy_load(id, fp, open_mode);
-}
-
 void amstrad_setup_machine(void)
 {
 	Amstrad_Reset();

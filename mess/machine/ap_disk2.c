@@ -195,8 +195,6 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 		}
 	}
 
-	osd_fclose(f);
-
 #if 0
 	{
 		FILE *dump;

@@ -82,22 +82,20 @@ int	uk101_init_cassette(int id, void *file, int open_mode)
 	/* a cassette for the uk101 isnt needed */
 	if (file == NULL)
 	{
-			logerror("UK101/Superboard - warning: no cassette specified!\n");
-			return INIT_PASS;
+		logerror("UK101/Superboard - warning: no cassette specified!\n");
+		return INIT_PASS;
 	}                                                                                                                                     
 
 	if (file)
 	{
 		uk101_tape_size = osd_fsize(file);
-		uk101_tape_image = (UINT8 *)malloc(uk101_tape_size);
+		uk101_tape_image = (UINT8 *) image_malloc(IO_CASSETTE, id, uk101_tape_size);
 		if (!uk101_tape_image || (osd_fread(file, uk101_tape_image, uk101_tape_size) != uk101_tape_size))
 		{
-			osd_fclose(file);
 			return (1);
 		}
 		else
 		{
-			osd_fclose(file);
 			uk101_tape_index = 0;
 			return (0);
 		}
@@ -107,12 +105,8 @@ int	uk101_init_cassette(int id, void *file, int open_mode)
 
 void uk101_exit_cassette(int id)
 {
-	if (uk101_tape_image)
-	{
-		free(uk101_tape_image);
-		uk101_tape_image = NULL;
-		uk101_tape_size = uk101_tape_index = 0;
-	}
+	uk101_tape_image = NULL;
+	uk101_tape_size = uk101_tape_index = 0;
 }
 
 static	INT8	uk101_keyb;

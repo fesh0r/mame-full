@@ -74,7 +74,6 @@ int vectrex_init_cart (int id, void *cartfile, int open_mode)
 	if (cartfile)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);
-		osd_fclose (cartfile);
 
 		/* check image! */
 		if (vectrex_verify_cart((char*)memory_region(REGION_CPU1)) == IMAGE_VERIFY_FAIL)

@@ -648,18 +648,11 @@ int vc1541_init (int id, void *in, int open_mode)
 		return INIT_FAIL;
 
 	size = osd_fsize (in);
-	if (!(vc1541->d64.data = (UINT8*)malloc (size)))
-	{
-		osd_fclose (in);
+	if (!(vc1541->d64.data = (UINT8*) image_malloc(IO_FLOPPY, id, size)))
 		return INIT_FAIL;
-	}
+
 	if (size != osd_fread (in, vc1541->d64.data, size))
-	{
-		free (vc1541->d64.data);
-		osd_fclose (in);
 		return INIT_FAIL;
-	}
-	osd_fclose (in);
 
 	logerror("floppy image %s loaded\n", image_filename(IO_FLOPPY, id));
 
@@ -674,7 +667,7 @@ int vc1541_init (int id, void *in, int open_mode)
 void vc1541_exit(int id)
 {
 	/* writeback of image data */
-	free(vc1541->d64.data);vc1541->d64.data=NULL;
+	vc1541->d64.data=NULL;
 	timer_remove(vc1541->timer);
 }
 

@@ -282,14 +282,12 @@ static int studio2_load_rom(int id, void *cartfile, int open_mode)
 		return 0;
 	}
 
-	size=osd_fsize(cartfile);
+	size = osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom+0x400, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		osd_fclose(cartfile);
 		return 1;
 	}
-	osd_fclose(cartfile);
 	return 0;
 }
 

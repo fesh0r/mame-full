@@ -503,9 +503,7 @@ static void nc_common_open_stream_for_writing(void)
 static void	nc_common_close_stream(void)
 {
 	if (file)
-	{
 		osd_fclose(file);
-	}
 }
 
 

@@ -33,10 +33,7 @@ void mc10_init_machine(void)
 	{
 		void *rom = osd_fopen(Machine->gamedrv->name, "mc10ext.rom", OSD_FILETYPE_IMAGE, 0);
 		if( rom )
-		{
 			osd_fread(rom, memory_region(REGION_CPU1) + 0xc000, 0x2000);
-			osd_fclose(rom);
-        }
 	}
 	else
 	{

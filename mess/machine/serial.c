@@ -632,8 +632,6 @@ static int serial_device_load(int type, int id, void *file, unsigned char **ptr,
 				/* ok! */
 				return 1;
 			}
-			osd_fclose(file);
-
 		}
 	}
 

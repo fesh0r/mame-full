@@ -316,16 +316,11 @@ static int mfm_disk_load(int type, int id, void *file, unsigned char **ptr)
 
 				*ptr = data;
 
-				/* close file */
-				osd_fclose(file);
-
 				logerror("File loaded!\r\n");
 
 				/* ok! */
 				return 1;
 			}
-			osd_fclose(file);
-
 		}
 	}
 

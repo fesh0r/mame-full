@@ -778,8 +778,6 @@ int pc_harddisk_init(int id, void *fp, int open_mode)
 
 void pc_harddisk_exit(int id)
 {
-	if( pc_hdc_file[id] )
-		osd_fclose(pc_hdc_file[id]);
     pc_hdc_file[id] = NULL;
 }
 

@@ -554,13 +554,6 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
-static int	enterprise_dsk_floppy_init(int id, void *fp, int open_mode)
-{
-	 if (!image_exists(IO_FLOPPY, id))
-		 return INIT_PASS;
-	 return dsk_floppy_load(id, fp, open_mode);
-}
-
 static struct CustomSound_interface dave_custom_sound=
 {
 	Dave_sh_start,
@@ -621,7 +614,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(ep128)
 	CONFIG_RAM_DEFAULT((128*1024)+32768)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, enterprise_dsk_floppy_init, dsk_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY_DSK(4)
 #if 0
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	enterprise_floppy_init)
 #endif

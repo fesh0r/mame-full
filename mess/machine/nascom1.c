@@ -130,16 +130,10 @@ int	nascom1_init_cassette(int id, void *file, int open_mode)
 		nascom1_tape_size = osd_fsize(file);
 		nascom1_tape_image = (UINT8 *)malloc(nascom1_tape_size);
 		if (!nascom1_tape_image || (osd_fread(file, nascom1_tape_image, nascom1_tape_size) != nascom1_tape_size))
-		{
-			osd_fclose(file);
 			return (1);
-		}
-		else
-		{
-			osd_fclose(file);
-			nascom1_tape_index = 0;
-			return (0);
-		}
+
+		nascom1_tape_index = 0;
+		return (0);
 	}
 	return (1);
 }

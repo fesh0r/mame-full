@@ -30,7 +30,6 @@ static int laser_video_bank = 0;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static int flop_specified[2] = {0, 0};
 static void *laser_fdc_file[2] = {NULL, NULL};
 static UINT8 laser_track_x2[2] = {80, 80};
 static UINT8 laser_fdc_wrprot[2] = {0x80, 0x80};
@@ -141,11 +140,7 @@ MACHINE_STOP( laser )
 {
     int i;
     for( i = 0; i < 2; i++ )
-    {
-        if( laser_fdc_file[i] )
-            osd_fclose(laser_fdc_file[i]);
         laser_fdc_file[i] = NULL;
-    }
 }
 
 static WRITE_HANDLER ( mwa_empty )
@@ -358,7 +353,6 @@ int laser_rom_init(int id, void *file, int open_mode)
     if( file )
     {
 		size = osd_fread(file, &mem[0x30000], 0x10000);
-        osd_fclose(file);
 		laser_bank_mask &= ~0xf000;
 		if( size > 0 )
 			laser_bank_mask |= 0x1000;
@@ -552,34 +546,19 @@ int laser_floppy_init(int id, void *file, int open_mode)
 	UINT8 buff[32];
 
 	if (file == NULL)
-	{
-		flop_specified[id] = 0;
 		return INIT_PASS;
-	}
-	else
-		flop_specified[id] = 1;
 
-    if( file )
-    {
-        osd_fread(file, buff, sizeof(buff));
-		osd_fclose(file);
-		if( memcmp(buff, "\x80\x80\x80\x80\x80\x80\x00\xfe\0xe7\0x18\0xc3\x00\x00\x00\x80\x80", 16) == 0 )
-			return INIT_PASS;
-	}
-	else
-	{
+	osd_fread(file, buff, sizeof(buff));
+	if (memcmp(buff, "\x80\x80\x80\x80\x80\x80\x00\xfe\0xe7\0x18\0xc3\x00\x00\x00\x80\x80", 16))
 		return INIT_FAIL;
-	}
 
+	laser_fdc_file[id] = file;
 	return INIT_PASS;
 }
 
 void laser_floppy_exit(int id)
 {
-    if( laser_fdc_file[id] )
-        osd_fclose(laser_fdc_file[id]);
     laser_fdc_file[id] = NULL;
-	flop_specified[id] = 0;
 }
 
 static void laser_get_track(void)

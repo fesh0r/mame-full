@@ -485,7 +485,8 @@ static int sms_verify_cart(char * magic, int size) {
 	return retval;
 }
 
-int sms_init_cart(int id, void *handle, int open_mode) {
+int sms_init_cart(int id, void *handle, int open_mode)
+{
 	int size;
 	UINT8 *USER_RAM, *RAM;
 
@@ -591,9 +592,6 @@ int sms_init_cart(int id, void *handle, int open_mode) {
 
 		/* Load ROM banks */
 		size = osd_fread(handle, &USER_RAM[0x0000], size);
-
-		/* Close file */
-		osd_fclose(handle);
 
 		/* check the image */
 		if (!IS_SMS && !IS_SMS_PAL && !IS_GG_UE && !IS_GG_J) {

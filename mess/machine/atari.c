@@ -56,7 +56,6 @@ static void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
 static void pokey_reset(void);
 static void atari_pia_reset(void);
 
-static void open_floppy(int drive, void *file, int effective_mode);
 static void make_chksum(UINT8 * chksum, UINT8 data);
 static void clr_serout(int expect_data);
 static void clr_serin(int ser_delay);
@@ -118,20 +117,6 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
-int a800_floppy_init(int id, void *fp, int open_mode)
-{
-	if (fp)
-		open_floppy(id, fp, open_mode);
-	return INIT_PASS;
-}
-
-void a800_floppy_exit(int id)
-{
-	if( drv[id].image )
-		free(drv[id].image);
-	drv[id].image = NULL;
-}
-
 int a800_rom_init(int id, void *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
@@ -161,7 +146,6 @@ int a800_rom_init(int id, void *fp, int open_mode)
 			{
 				size = osd_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = (size == 0x2000);
-				osd_fclose(fp);
 				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 			}
 			else
@@ -170,7 +154,6 @@ int a800_rom_init(int id, void *fp, int open_mode)
 				a800_cart_loaded = size > 0x0000;
 				size = osd_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = size > 0x2000;
-				osd_fclose(fp);
 				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 			}
 			if( a800_cart_loaded )
@@ -219,7 +202,6 @@ int a800xl_load_rom(int id, void *fp, int open_mode)
 	if (basic_fp)
 	{
 		size = osd_fread(basic_fp, &mem[0x14000], 0x2000);
-		osd_fclose(basic_fp);
 		if( size < 0x2000 )
 		{
 			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename);
@@ -235,7 +217,6 @@ int a800xl_load_rom(int id, void *fp, int open_mode)
 			a800_cart_loaded = size / 0x2000;
 			size = osd_fread(fp, &mem[0x16000], 0x2000);
 			a800_cart_is_16k = size / 0x2000;
-			osd_fclose(fp);
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
 		}
@@ -270,7 +251,6 @@ int a5200_rom_init(int id, void *file, int open_mode)
 	{
 		{
 			size = osd_fread(file, &mem[0x4000], 0x8000);
-			osd_fclose(file);
 			if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
 			// mirroring of smaller cartridges
 			if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);
@@ -373,20 +353,22 @@ static	xfd_format xfd_formats[] = {
  * type of image and store the results into the global drv[] structure
  *
  *****************************************************************************/
-static void open_floppy(int id, void *file, int effective_mode)
-{
 #define MAXSIZE 5760 * 256 + 80
+
+int a800_floppy_init(int id, void *file, int effective_mode)
+{
 	int size, i;
 
 	if (!file)
-		return;
+		return INIT_PASS;
+
 	if (!drv[id].image)
 	{
 		const char *ext;
 
-		drv[id].image = malloc(MAXSIZE);
+		drv[id].image = image_malloc(IO_FLOPPY, id, MAXSIZE);
 		if (!drv[id].image)
-			return;
+			return INIT_FAIL;
 
 		/* tell whether the image is writable */
 		drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
@@ -403,12 +385,10 @@ static void open_floppy(int id, void *file, int effective_mode)
 		}
 
 		size = osd_fread(file, drv[id].image, MAXSIZE);
-		osd_fclose(file);
 		if( size <= 0 )
 		{
-			free(drv[id].image);
 			drv[id].image = NULL;
-			return;
+			return INIT_FAIL;
 		}
 		/* re allocate the buffer; we don't want to be too lazy ;) */
         drv[id].image = realloc(drv[id].image, size);
@@ -560,6 +540,7 @@ static void open_floppy(int id, void *file, int effective_mode)
 				(drv[id].density == 0) ? "SD" : (drv[id].density == 1) ? "MD" : "DD",
 				drv[id].seclen);
 	}
+	return INIT_PASS;
 }
 
 static	void make_chksum(UINT8 * chksum, UINT8 data)

@@ -1,8 +1,6 @@
 #include "includes/cococart.h"
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
-#include "formats/dmkdsk.h"
-#include "formats/cocovdk.h"
 #include "ds1315.h"
 #include "m6242b.h"
 #include "includes/dragon.h"
@@ -52,7 +50,6 @@ static const struct cartridge_callback *cartcallbacks;
 #endif
 
 static int	dskreg;
-static int	diskKind[4];
 static void	coco_fdc_callback(int event);
 static void	dragon_fdc_callback(int event);
 static int	drq_state;
@@ -153,98 +150,6 @@ static void dragon_fdc_callback(int event)
 		cartcallbacks->setcartline(CARTLINE_ASSERTED);
 		break;
 	}
-}
-
-void dragon_floppy_exit( int id)
-{
-	switch( diskKind[ id ] )
-	{
-		case DSK_DMK:
-			dmkdsk_floppy_exit( id );
-			break;
-		case DSK_BASIC:
-			basicdsk_floppy_exit( id );
-			break;
-		default:
-			break;
-	}
-}
-
-int dragon_floppy_init(int id, void *fp, int open_mode)
-{
-	if (dmkdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
-	{
-		diskKind[ id ] = DSK_DMK;
-		return INIT_PASS;
-	}
-
-	if(cocovdk_floppy_init(id, fp, open_mode)==INIT_PASS)
-	{
-		diskKind[ id ] = DSK_BASIC;
-		return INIT_PASS;
-	}
-
-	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
-	{
-		diskKind[ id ] = DSK_BASIC;
-		osd_fseek(fp, 0, SEEK_SET);
-		if (fp) {
-			int 	filesize = osd_fsize(fp),
-					headerSize = filesize % 256,
-					sectorPerTrack = 18,
-					sectorSizeCode = 1,
-					firstSectorID = 1,
-					sideCount = 1,
-					attributeFlag,
-					tracks;
-			UINT8	*buffer = malloc( headerSize+1 );
-
-			if( buffer == NULL )
-				return INIT_FAIL;
-
-			osd_fread(fp, buffer, headerSize);
-
-			if( headerSize > 0 )
-				sectorPerTrack = buffer[0];
-
-			if( headerSize > 1 )
-				sideCount = buffer[1];
-
-			if( headerSize > 2 )
-				sectorSizeCode = buffer[2];
-
-			if( headerSize > 3 )
-				firstSectorID = buffer[3];
-
-			if( headerSize > 4 )
-			{
-				attributeFlag = buffer[4];
-
-				if( attributeFlag != 0 )
-				{
-					//osd_fclose(fp);
-					free( buffer );
-					logerror("JVC: Attribute bytes not supported.\n");
-					return INIT_FAIL;
-				}
-			}
-
-			tracks = (filesize - headerSize) / (sectorPerTrack * (128 << sectorSizeCode)) / sideCount;
-
-			if( (filesize - headerSize) != (tracks * sectorPerTrack * (128 << sectorSizeCode) * sideCount) )
-			{
-				//osd_fclose(fp);
-				free( buffer );
-				logerror("JVC: Not a JVC disk.\n");
-				return INIT_FAIL;
-			}
-
-			basicdsk_set_geometry(id, tracks, sideCount, sectorPerTrack, (128 << sectorSizeCode), firstSectorID, headerSize);
-
-			free( buffer );
-		}
-	}
-	return INIT_PASS;
 }
 
 static void set_coco_dskreg(int data)
@@ -638,13 +543,6 @@ int coco_vhd_init(int id, void *fp, int open_mode)
 
 }
 
-void coco_vhd_exit(int id)
-{
-	if( vhdFile != NULL )
-		osd_fclose( vhdFile );
-
-}
-
 READ_HANDLER(coco_vhd_io_r)
 {
 	switch( offset )
@@ -741,15 +639,7 @@ void coco_vhd_readwrite( UINT8 data )
 			break;
 
 		case 2: /* Flush file cache */
-			osd_fclose( vhdFile );
-			vhdFile = NULL;
-			vhdFile = image_fopen_custom(IO_VHD, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-
-			if( vhdFile == NULL )
-				vhdStatus = 2; /* Unable to open image */
-			else
-				vhdStatus = 0; /* Aok */
-
+			vhdStatus = 0; /* Aok */
 			break;
 
 		default:

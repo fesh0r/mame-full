@@ -1213,11 +1213,11 @@ MACHINE_DRIVER_END
 is banked. */
 
 // for now all models use the same rom
-#define ROM_PCW(model) \
-ROM_START(model) \
-	ROM_REGION(0x014000, REGION_CPU1,0) \
-	ROM_LOAD("pcwboot.bin", 0x010000, 608, BADCRC(0x679b0287)) \
-ROM_END \
+#define ROM_PCW(model)												\
+	ROM_START(model)												\
+		ROM_REGION(0x014000, REGION_CPU1,0)							\
+		ROM_LOAD("pcwboot.bin", 0x010000, 608, BADCRC(0x679b0287))	\
+	ROM_END															\
 
 ROM_PCW(pcw8256)
 ROM_PCW(pcw8512)
@@ -1225,17 +1225,8 @@ ROM_PCW(pcw9256)
 ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
-
-static int pcw_floppy_init(int id, void *fp, int open_mode)
-{
-	if (!image_exists(IO_FLOPPY, id))
-		return INIT_PASS;
-
-	return dsk_floppy_load(id, fp, open_mode);
-}
-
 SYSTEM_CONFIG_START(pcw)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, pcw_floppy_init, dsk_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY_DSK(2)
 SYSTEM_CONFIG_END
 
 /* these are all variants on the pcw design */

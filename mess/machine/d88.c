@@ -122,19 +122,16 @@ void d88image_floppy_exit(int id)
 
 	w = &d88image_drives[id];
 
-	/* if file was opened, close it */
-	if (w->image_file!=NULL)
-	{
-		osd_fclose(w->image_file);
-		w->image_file = NULL;
-	}
+	w->image_file = NULL;
 
 	/* free sector map */
-	for(i=0;i<D88_NUM_TRACK;i++) {
-	  if(w->sects[i]!=NULL) {
-	    free(w->sects[i]);
-	    w->sects[i]=NULL;
-	  }
+	for(i=0;i<D88_NUM_TRACK;i++)
+	{
+		if(w->sects[i]!=NULL)
+		{
+			free(w->sects[i]);
+			w->sects[i]=NULL;
+		}
 	}
 }
 

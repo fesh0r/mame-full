@@ -136,21 +136,7 @@ static int pcw16_system_status;
 /* write ram */
 void pcw16_dump_ram(void)
 {
-	int i;
-	void *file;
-
-	file = osd_fopen(Machine->gamedrv->name, "pcwram.bin", OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
-
-	if (file)
-	{
-		for (i=0; i<2048*1024; i++)
-		{
-			osd_fwrite(file, &mess_ram[i], 1);
-		}
-
-//			osd_fwrite(file, mess_ram, 2048*1024);
-		osd_fclose(file);
-	}
+	ram_dump("pcwram.bin");
 }
 #endif
 

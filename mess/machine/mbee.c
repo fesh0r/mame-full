@@ -173,7 +173,6 @@ int mbee_rom_load(int id, void *file, int open_mode)
 			}
 			free(mem);
 		}
-		osd_fclose(file);
 	}
 	return INIT_PASS;
 }

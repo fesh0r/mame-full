@@ -815,12 +815,9 @@ void wave_close(int id)
 
     if( w->data )
 		free(w->data);
-    w->data = NULL;
 
-	if (w->file) {
-		osd_fclose(w->file);
-		w->file = NULL;
-	}
+    w->data = NULL;
+	w->file = NULL;
 	w->offset = 0;
 	w->play_pos = 0;
 	w->record_pos = 0;

@@ -136,31 +136,23 @@ int zx_cassette_init(int id, void *file, int open_mode)
 	if (file)
 	{
 		tape_size = osd_fsize(file);
-		tape_image = malloc(tape_size);
+		tape_image = image_malloc(IO_CASSETTE, id, tape_size);
 		if (tape_image)
 		{
 			if (osd_fread(file, tape_image, tape_size) != tape_size)
-			{
-				osd_fclose(file);
 				return 1;
-			}
 		}
 		else
 		{
 			tape_size = 0;
 		}
-		osd_fclose(file);
 	}
 	return 0;
 }
 
 void zx_cassette_exit(int id)
 {
-	if (tape_image)
-	{
-		free(tape_image);
-		tape_image = 0;
-	}
+	tape_image = 0;
 }
 
 static void tape_bit_shift(int param)

@@ -429,8 +429,6 @@ int ti99_load_rom(int id, void *cartfile, int open_mode)
 		}
 
 		}
-
-		osd_fclose(cartfile);
 	}
 
 	return INIT_PASS;

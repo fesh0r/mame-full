@@ -113,17 +113,7 @@ static int einstein_keyboard_data = 0x0ff;
 #ifdef EINSTEIN_DUMP_RAM
 static void einstein_dump_ram(void)
 {
-	void *file;
-
-	file = osd_fopen(Machine->gamedrv->name, "einstein.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
- 
-	if (file)
-	{
-		osd_fwrite(file, mess_ram, 0x10000);
-
-		/* close file */
-		osd_fclose(file);
-	}
+	ram_dump("einstein.bin");
 }
 #endif
 
@@ -367,14 +357,6 @@ static void	einstein_keyboard_timer_callback(int dummy)
 	einstein_update_interrupts();
 }
 
-
-
-static int einstein_floppy_init(int id, void *fp, int open_mode)
-{
-	if (!image_exists(IO_FLOPPY, id))
-		return INIT_PASS;
-	return dsk_floppy_load(id, fp, open_mode);
-}
 
 /* interrupt state callback for ctc */
 static void einstein_ctc_interrupt(int state)
@@ -1756,7 +1738,7 @@ ROM_END
 SYSTEM_CONFIG_START(einstein)
 	CONFIG_RAM_DEFAULT(65536)
 	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", IO_RESET_NONE, OSD_FOPEN_NONE, einstein_floppy_init, dsk_floppy_exit, floppy_status)
+	CONFIG_DEVICE_LEGACY_DSK(4)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */

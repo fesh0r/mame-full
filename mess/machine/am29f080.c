@@ -142,11 +142,9 @@ void	amd_flash_store(int index1, char *flash_name)
 	if (amd_flash[index1].base!=NULL)
 	{
 		file = osd_fopen(Machine->gamedrv->name, flash_name, OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
-
 		if (file)
 		{
 			osd_fwrite(file, amd_flash[index1].base, (1024*1024));
-	
 			osd_fclose(file);
 		}
 	}
@@ -161,11 +159,9 @@ void	amd_flash_restore(int index1, char *flash_name)
 	if (amd_flash[index1].base!=NULL)
 	{
 		file = osd_fopen(Machine->gamedrv->name, flash_name, OSD_FILETYPE_MEMCARD,OSD_FOPEN_READ);
-
 		if (file)
 		{
 			osd_fread(file, amd_flash[index1].base, (1024*1024));
-	
 			osd_fclose(file);
 		}
 	}

@@ -203,10 +203,7 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 
 		/* Check the cart */
 		if( a7800_verify_cart((char *)header) == IMAGE_VERIFY_FAIL)
-		{
-			osd_fclose(cartfile);
 			return INIT_FAIL;
-		}
 
 		len =(header[49] << 24) |(header[50] << 16) |(header[51] << 8) | header[52];
 		a7800_cart_size = len;
@@ -226,7 +223,6 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 			start = 0x10000 - len;
 			a7800_cartridge_rom = ROM + start;
 			osd_fread(cartfile, a7800_cartridge_rom, len);
-			osd_fclose(cartfile);
 		}
 		else if( a7800_cart_type & 0x02 )
 		{
@@ -241,7 +237,6 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 
 			a7800_cartridge_rom = ROM + 0x10000;
 			osd_fread(cartfile, a7800_cartridge_rom, len);
-			osd_fclose(cartfile);
 
 			/* bank 0 */
 			memcpy( ROM + 0x8000, ROM + 0x10000, 0x4000);
@@ -268,7 +263,6 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 
 			a7800_cartridge_rom = ROM + 0x10000;
 			osd_fread(cartfile, a7800_cartridge_rom, len );
-			osd_fclose(cartfile);
 
 			/* bank 0 */
 			memcpy( ROM + 0x4000, ROM + 0x10000, 0x4000 );
@@ -284,7 +278,6 @@ static int a7800_init_cart_cmn(int id, void *cartfile)
 
 			a7800_cartridge_rom = ROM + 0x10000;
 			osd_fread( cartfile, a7800_cartridge_rom, len );
-			osd_fclose( cartfile );
 
 			/* bank 0 */
 			memcpy( ROM + 0xA000, ROM + 0x10000, 0x4000 );

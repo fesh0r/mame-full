@@ -306,14 +306,12 @@ static int lynx_init_cart(int id, void *cartfile, int open_mode)
 	size=osd_fsize(cartfile);
 	if (osd_fread(cartfile, header, 0x40)!=0x40) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		osd_fclose(cartfile);
 		return 1;
 	}
 
 	/* Check the image */
 	if (lynx_verify_cart((char*)header) == IMAGE_VERIFY_FAIL)
 	{
-		osd_fclose(cartfile);
 		return INIT_FAIL;
 	}
 
@@ -325,10 +323,8 @@ static int lynx_init_cart(int id, void *cartfile, int open_mode)
 
 	if (osd_fread(cartfile, rom, size)!=size) {
 		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
-		osd_fclose(cartfile);
 		return 1;
 	}
-	osd_fclose(cartfile);
 
 	lynx_crc_keyword(IO_CARTSLOT, id);
 

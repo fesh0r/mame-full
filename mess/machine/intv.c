@@ -401,9 +401,6 @@ static int intv_load_rom_file(int id, void *romfile, int required)
 	{
 		osd_fread(romfile,&temp,1);
 	}
-
-	osd_fclose(romfile);
-
 	return INIT_PASS;
 }
 
@@ -531,8 +528,6 @@ int intvkbd_load_rom (int id, void *romfile, int open_mode)
 
 		/* Assume an 8K cart, like BASIC */
 		osd_fread(romfile,&memory[0xe000],0x2000);
-
-		osd_fclose(romfile);
 	}
 
 	return INIT_PASS;

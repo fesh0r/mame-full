@@ -108,11 +108,7 @@ extern WRITE_HANDLER( coco_m6847_fs_w );
 extern WRITE_HANDLER( coco3_m6847_hs_w );
 extern WRITE_HANDLER( coco3_m6847_fs_w );
 extern int coco3_mmu_translate(int bank, int offset);
-extern int dragon_floppy_init(int id, void *fp, int open_mode);
-extern int dragon_floppy_id(int id);
-extern void dragon_floppy_exit(int id);
 extern int coco_vhd_init(int id, void *fp, int open_mode);
-extern void coco_vhd_exit(int id);
 extern READ_HANDLER(coco_vhd_io_r);
 extern WRITE_HANDLER(coco_vhd_io_w);
 extern int coco_bitbanger_init (int id);
@@ -130,27 +126,6 @@ extern void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 
 /* Translates a logical address to a physical address */
 extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
-
-#define IO_FLOPPY_COCO \
-	{\
-		IO_FLOPPY,\
-		4,\
-		"dsk\0",\
-		IO_RESET_NONE,\
-		OSD_FOPEN_RW_CREATE_OR_READ,\
-		0,\
-		dragon_floppy_init,\
-		dragon_floppy_exit,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL,\
-        NULL \
-    }
 
 #define IO_BITBANGER IO_PRINTER
 #define IO_VHD IO_HARDDISK

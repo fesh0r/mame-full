@@ -47,43 +47,30 @@ static void dsk_disk_image_init(dsk_drive *);
 static dsk_drive drives[dsk_NUM_DRIVES]; /* the drives */
 
 /* load image */
-static int dsk_load(int type, int id, unsigned char **ptr)
+static int dsk_load(void *file, int id, unsigned char **ptr)
 {
-	void *file;
+	int datasize;
+	unsigned char *data;
 
-	file = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	/* get file size */
+	datasize = osd_fsize(file);
 
-	if (file)
+	if (datasize!=0)
 	{
-		int datasize;
-		unsigned char *data;
+		/* malloc memory for this data */
+		data = image_malloc(IO_FLOPPY, id, datasize);
 
-		/* get file size */
-		datasize = osd_fsize(file);
-
-		if (datasize!=0)
+		if (data!=NULL)
 		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
+			/* read whole file */
+			osd_fread(file, data, datasize);
 
-			if (data!=NULL)
-			{
-				/* read whole file */
-				osd_fread(file, data, datasize);
+			*ptr = data;
 
-				*ptr = data;
-
-				/* close file */
-				osd_fclose(file);
-
-				/* ok! */
-				return 1;
-			}
-			osd_fclose(file);
-
+			/* ok! */
+			return 1;
 		}
 	}
-
 	return 0;
 }
 
@@ -103,28 +90,30 @@ int dsk_floppy_load(int id, void *fp, int open_mode)
 {
 	dsk_drive *thedrive = &drives[id];
 
-	/* load disk image */
-	if (dsk_load(IO_FLOPPY,id,&thedrive->data))
+	if (fp)
 	{
-		if (thedrive->data)
+		/* load disk image */
+		if (dsk_load(fp, id, &thedrive->data))
 		{
-			dsk_disk_image_init(thedrive); /* initialise dsk */
-            floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
-            if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
-            	return INIT_PASS;
-            else
-            	return INIT_PASS;
+			if (thedrive->data)
+			{
+				dsk_disk_image_init(thedrive); /* initialise dsk */
+				floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
+				if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
+            		return INIT_PASS;
+				else
+            		return INIT_PASS;
+			}
 		}
 	}
-
 	return INIT_PASS;
 }
 
-static int dsk_save(int type, int id, unsigned char **ptr)
+static int dsk_save(int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+	file = image_fp(IO_FLOPPY, id);
 
 	if (file)
 	{
@@ -141,14 +130,9 @@ static int dsk_save(int type, int id, unsigned char **ptr)
 			{
 				osd_fwrite(file, data, datasize);
 
-				/* close file */
-				osd_fclose(file);
-
 				/* ok! */
 				return 1;
 			}
-			osd_fclose(file);
-
 		}
 	};
 
@@ -161,10 +145,7 @@ void dsk_floppy_exit(int id)
 	dsk_drive *thedrive = &drives[id];
 
 	if (thedrive->data!=NULL)
-	{
-		dsk_save(IO_FLOPPY,id,&thedrive->data);
-		free(thedrive->data);
-	}
+		dsk_save(id, &thedrive->data);
 	thedrive->data = NULL;
 }
 

@@ -83,7 +83,6 @@ static UINT8 head = 0;
 
 /* current tape file handles */
 static char tape_name[12+1];
-static void *tape_put_file = 0;
 static void *tape_get_file = 0;
 
 /* tape buffer for the first eight bytes at write (to extract a filename) */
@@ -488,7 +487,6 @@ int cgenie_rom_load(int id, void *fp, int open_mode)
 	{
 		logerror("%s found '%s' ROM\n", Machine->gamedrv->name, filename);
 		osd_fread(rom, &ROM[0x12000], 0x1000);
-		osd_fclose(rom);
 	}
 	else
 	{
@@ -527,20 +525,11 @@ static void tape_put_byte(UINT8 value)
 			else
 				strcpy(tape_name, "unknown.cas");
 			osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
-			if( tape_put_file )
-				osd_fwrite(tape_put_file, tape_buffer, 9);
 		}
 	}
 	else
 	{
 		tape_count++;
-		if( tape_put_file )
-			osd_fwrite(tape_put_file, &value, 1);
-	}
-	if( tape_put_file )
-	{
-		cgenie_frame_time = 30;
-		sprintf(cgenie_frame_message, "Tape write '%s' $%04X bytes", tape_name, tape_count);
 	}
 }
 
@@ -551,42 +540,7 @@ static void tape_put_byte(UINT8 value)
  *******************************************************************/
 static void tape_put_close(void)
 {
-	/* file open ? */
-	if( tape_put_file )
-	{
-		if( put_bit_count )
-		{
-			UINT8 value;
-			while( put_bit_count < 16 )
-			{
-				tape_bits <<= 1;
-				put_bit_count++;
-			}
-			value = 0;
-			if( tape_bits & 0x8000 )
-				value |= 0x80;
-			if( tape_bits & 0x2000 )
-				value |= 0x40;
-			if( tape_bits & 0x0800 )
-				value |= 0x20;
-			if( tape_bits & 0x0200 )
-				value |= 0x10;
-			if( tape_bits & 0x0080 )
-				value |= 0x08;
-			if( tape_bits & 0x0020 )
-				value |= 0x04;
-			if( tape_bits & 0x0008 )
-				value |= 0x02;
-			if( tape_bits & 0x0002 )
-				value |= 0x01;
-			tape_put_byte(value);
-		}
-		osd_fclose(tape_put_file);
-		cgenie_frame_time = 30;
-		sprintf(cgenie_frame_message, "Tape output closed");
-	}
 	tape_count = 0;
-	tape_put_file = 0;
 }
 
 /*******************************************************************
