@@ -361,10 +361,14 @@ void OptionsInit(int total_games)
 
     settings.language    = strdup("english");
 
+#ifdef MESS
+    settings.romdirs     = strdup(".;bios");
+#else
     settings.romdirs     = strdup(".;roms");
+#endif
     settings.sampledirs  = strdup(".;samples");
 #ifdef MESS
-    settings.softwaredirs = strdup("roms;software");
+    settings.softwaredirs = strdup("software");
 #endif
     settings.cfgdir      = strdup("cfg");
     settings.hidir       = strdup("hi");
