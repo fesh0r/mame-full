@@ -203,7 +203,7 @@ static struct win_menu sys_menu_table[] =
 	{ MENU_FULLSCREEN,	"Full Screen\tAlt+Enter",	win_toggle_full_screen }
 #ifdef MESS
 	,
-	{ MENU_PASTE,		"Paste\tAlt+V",				win_paste }
+	{ MENU_PASTE,		"Paste\tCtrl+V",			win_paste }
 #endif
 };
 

@@ -19,6 +19,11 @@ enum
 	STATUS_KEYDOWN = 1	
 };
 
+enum
+{
+	MODIFIER_SHIFT = 1
+};
+
 struct KeyBuffer
 {
 	int begin_pos;
@@ -40,22 +45,30 @@ static struct InputMapEntry input_map[] =
 	{ "LEFT",		8 },
 	{ "RIGHT",		9 },
 	{ "ENTER",		13 },
+	{ "CLEAR",		12 },
 	{ "SPACE",		' ' },
+	{ "BREAK",		3 },
 	{ DEF_STR( Unused ), 	0 },
 	{ "L-SHIFT",		0 },
 	{ "R-SHIFT",		0 }
 };
 
-static int find_code(const char *name)
+static struct InputCode *codes;
+static void *inputx_timer;
+
+static void inputx_timerproc(int dummy);
+
+
+static int find_code(const char *name, int modifiers)
 {
 	int i;
 	int code;
 	int len = strlen(name);
 
 	if (len == 1)
-		code = name[0];
+		code = (modifiers == 0) ? name[0] : 0;
 	else if ((len == 4) && isspace(name[1]) && isspace(name[2]))
-		code = name[0];
+		code = isspace(name[3]) ? 0 : name[(modifiers & MODIFIER_SHIFT) ? 3 : 0];
 	else
 	{
 		code = -1;
@@ -63,7 +76,7 @@ static int find_code(const char *name)
 		{
 			if (!strcmp(name, input_map[i].name))
 			{
-				code = input_map[i].code;
+				code = modifiers ? 0 : input_map[i].code;
 				break;
 			}
 		}
@@ -71,11 +84,13 @@ static int find_code(const char *name)
 	return code;
 }
 
-static void scan_keys(struct InputCode *codes, UINT16 *ports, UINT16 *masks, int keys)
+static void scan_keys(UINT16 *ports, const struct InputPortTiny **ipts, int keys, int modifiers, int *used_modifiers)
 {
 	const struct InputPortTiny *ipt;
 	UINT16 port = (UINT16) -1;
 	int code;
+
+	assert(keys < NUM_SIMUL_KEYS);
 
 	ipt = Machine->gamedrv->input_ports;
 	while(ipt->type != IPT_END)
@@ -86,17 +101,33 @@ static void scan_keys(struct InputCode *codes, UINT16 *ports, UINT16 *masks, int
 			break;
 
 		case IPT_KEYBOARD:
-			code = find_code(ipt->name);
-			if (code < 0)
+			if (!strcmp(ipt->name, "SHIFT") || !strcmp(ipt->name, "R-SHIFT") || !strcmp(ipt->name, "L-SHIFT"))
 			{
-				/* we've failed to translate this system's codes */
-				codes = NULL;
-				return;
+				/* we've found a shift key */
+				if ((*used_modifiers & MODIFIER_SHIFT) == 0)
+				{
+					ports[keys] = port;
+					ipts[keys] = ipt;				
+					*used_modifiers |= MODIFIER_SHIFT;
+					scan_keys(ports, ipts, keys+1, modifiers | MODIFIER_SHIFT, used_modifiers);
+				}
 			}
-			if (code > 0)
+			else
 			{
-				codes[code].port[keys] = port;
-				codes[code].ipt[keys] = ipt;
+				code = find_code(ipt->name, modifiers);
+				if (code < 0)
+				{
+					/* we've failed to translate this system's codes */
+					codes = NULL;
+					return;
+				}
+				if (code > 0)
+				{
+					memcpy(codes[code].port, ports, sizeof(ports[0]) * keys);
+					memcpy(codes[code].ipt, ipts, sizeof(ipt[0]) * keys);
+					codes[code].port[keys] = port;
+					codes[code].ipt[keys] = ipt;
+				}
 			}
 			break;
 		}
@@ -104,16 +135,14 @@ static void scan_keys(struct InputCode *codes, UINT16 *ports, UINT16 *masks, int
 	}
 }
 
-static struct InputCode *codes;
-static void *inputx_timer;
-
-static void inputx_timerproc(int dummy);
-
 void inputx_init(void)
 {
 	UINT16 ports[NUM_SIMUL_KEYS];
-	UINT16 masks[NUM_SIMUL_KEYS];
+	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
 	size_t buffer_size;
+	int used_modifiers;
+	int i;
+	int switch_upper;
 
 	codes = NULL;
 	inputx_timer = NULL;
@@ -127,7 +156,20 @@ void inputx_init(void)
 			return;
 		memset(codes, 0, buffer_size);
 
-		scan_keys(codes, ports, masks, 0);
+		scan_keys(ports, ipts, 0, 0, &used_modifiers);
+
+		/* special case; scan to see if upper case characters are specified, but not lower case */
+		switch_upper = 1;
+		for (i = 'A'; i <= 'Z'; i++)
+		{
+			if (!inputx_can_post_key(i) || inputx_can_post_key(tolower(i)))
+			{
+				switch_upper = 0;
+				break;
+			}
+		}
+		if (switch_upper)
+			memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
 
 		inputx_timer = timer_alloc(inputx_timerproc);
 	}
@@ -142,6 +184,15 @@ static struct KeyBuffer *get_buffer(void)
 {
 	assert(codes);
 	return (struct KeyBuffer *) (codes + NUM_CODES);
+}
+
+int inputx_can_post_key(int ch)
+{
+	if ((ch < 0) || (ch >= 128) || !inputx_can_post())
+		return 0;
+
+	assert(codes);
+	return codes[ch].ipt[0] != NULL;
 }
 
 void inputx_post(const char *text)
@@ -162,8 +213,15 @@ void inputx_post(const char *text)
 
 	while(*text && (keybuf->end_pos+1 != keybuf->begin_pos))
 	{
-		keybuf->buffer[keybuf->end_pos++] = *(text++);
-		keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+		if (inputx_can_post_key(*text))
+		{
+			keybuf->buffer[keybuf->end_pos++] = *(text++);
+			keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+		}
+		else
+		{
+			text++;
+		}
 	}
 }
 

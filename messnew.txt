@@ -9,9 +9,6 @@ System Driver Changes:
   special "Thank you" to Sellam Ismail for finding a Color Computer that contained
   Color BASIC 1.0. [tim lindner]
 
-- [COCO1/2] Made the hi-res joystick interface available to the CoCo 1-2 [Nate
-  Woods]
-
 - [COCO1/2/3] Moved disk handling code over to new FormatDriver system;
   allowing transparent disk image handling for JVC, VDK, and DMK file formats.
   [Nate Woods]
