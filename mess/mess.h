@@ -196,6 +196,8 @@ enum {
 					reels instead of cards) */
 	IO_PRINTER,		/* printer device */
 	IO_SERIAL,		/* some serial port */
+	IO_PARALLEL,    /* generic parallel port - some machines connect the printer to a cutom port, even
+	                if a parallel port is available */
 	IO_SNAPSHOT,	/* complete 'snapshot' of the state of the computer */
 	IO_QUICKLOAD,	/* some image which allow to load program/data into memory, without matching
 					any actual device */

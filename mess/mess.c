@@ -42,6 +42,7 @@ static const char *typename[IO_COUNT] = {
 	"Punchtape ",
 	"Printer   ",
 	"Serial    ",
+	"Parallel  ",
 	"Snapshot  ",
 	"Quickload "
 };
@@ -57,6 +58,7 @@ static const char *brieftypename[IO_COUNT] = {
 	"Ptap",
 	"Prin",
 	"Serl",
+	"Parl",
 	"Dump",
 	"Quik"
 };
