@@ -168,12 +168,13 @@ In short:
 	faster when reading consecutive bytes, although the address pointer can be
 	read and written at any time.
 
-	They are generally used to store programs in GPL (a proprietary, interpreted language -
-	the interpreter take most of a TI99/4(a) CPU ROMs).  They can used to store large pieces
-	of data, too.
+	They are generally used to store programs in GPL (Graphic Programming
+	Language: a proprietary, interpreted language - the interpreter takes most
+	of a TI99/4(a) CPU ROMs).  They can used to store large pieces of data,
+	too.
 
 	Both TI99/4 and TI99/4a include three GROMs, with some start-up code,
-	system routines and TI-Basic.  TI99/4 reportedly includes an additionnal
+	system routines and TI-Basic.  TI99/4 reportedly includes an additional
 	Equation Editor.  Maybe a part of the Hand Held Unit DSR lurks there, too
 	(this is only a supposition).  TI99/8 includes the three standard GROMs and
 	16 GROMs for the UCSD p-system.  TI99/2 does not include GROMs at all, and
@@ -509,7 +510,7 @@ void machine_init_ti99(void)
 	current_page_ptr = cartridge_pages[0];
 
 	/* init tms9901 */
-	tms9901_init(& tms9901reset_param_ti99);
+	tms9901_init(0, & tms9901reset_param_ti99);
 
 	if (! has_evpc)
 		TMS9928A_reset();
@@ -596,7 +597,7 @@ void machine_init_ti99(void)
 
 void machine_stop_ti99(void)
 {
-	tms9901_cleanup();
+	tms9901_cleanup(0);
 }
 
 
@@ -682,9 +683,10 @@ Theory:
 	These are registers to communicate with several peripherals.
 	These registers are all 8-bit-wide, and are located at even adresses between
 	0x8400 and 0x9FFE.
-	The registers are identified by (addr & 1C00), and, for VDP and GPL access, by (addr & 2).
-	These registers are either read-only or write-only.  (Or, more accurately,
-	(addr & 4000) disables register read, whereas !(addr & 4000) disables register read.)
+	The registers are identified by (addr & 1C00), and, for VDP and GPL access,
+	by (addr & 2).  These registers are either read-only or write-only.  (Or,
+	more accurately, (addr & 4000) disables register read, whereas
+	!(addr & 4000) disables register write.)
 
 	Memory mapped registers list:
 	- write sound chip. (8400-87FE)
@@ -803,12 +805,43 @@ static READ16_HANDLER ( ti99_rw_rspeech )
 	return ((int) tms5220_status_r(offset)) << 8;
 }
 
+#if 0
+
+static void speech_kludge_callback(int dummy)
+{
+	if (! tms5220_ready_r())
+	{
+		/* Weirdly enough, we are always seeing some problems even though
+		everything is working fine. */
+		/*double time_to_ready = tms5220_time_to_ready();
+		logerror("ti99/4a speech says aaargh!\n");
+		logerror("(time to ready: %f -> %d)\n", time_to_ready, (int) ceil(3000000*time_to_ready));*/
+	}
+}
+
+#endif
+
 /*
 	TMS5200 speech chip write
 */
 static WRITE16_HANDLER ( ti99_ww_wspeech )
 {
 	tms9900_ICount -= 30;		/* this is just an approx. minimum, it can be much more */
+
+#if 1
+	/* the stupid design of the tms5220 core means that ready is cleared when
+	there are 15 bytes in FIFO.  It should be 16.  Of course, if it were the
+	case, we would need to store the value on the bus, which would be more
+	complex. */
+	if (! tms5220_ready_r())
+	{
+		double time_to_ready = tms5220_time_to_ready();
+		logerror("time to ready: %f -> %d\n", time_to_ready, (int) ceil(3000000*time_to_ready));
+
+		tms9900_ICount -= (int) ceil(3000000*time_to_ready);
+		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
+	}
+#endif
 
 	tms5220_data_w(offset, (data >> 8) & 0xff);
 }
@@ -1009,7 +1042,7 @@ nota:
 */
 void tms9901_set_int2(int state)
 {
-	tms9901_set_single_int(2, state);
+	tms9901_set_single_int(0, 2, state);
 }
 
 /*
@@ -1423,13 +1456,13 @@ static void set_ila_bit(int bit, int state)
 	if (state)
 	{
 		ila |= 0x80 >> bit;
-		tms9901_set_single_int(1, 1);
+		tms9901_set_single_int(0, 1, 1);
 	}
 	else
 	{
 		ila &= ~(0x80 >> bit);
 		if (! ila)
-			tms9901_set_single_int(1, 0);
+			tms9901_set_single_int(0, 1, 0);
 	}
 }
 
