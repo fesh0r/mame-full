@@ -649,11 +649,11 @@ READ16_HANDLER ( ti99_rw_rvdp )
 
 	if (offset & 1)
 	{	/* read VDP status */
-		return ((int) TMS9928A_register_r()) << 8;
+		return ((int) TMS9928A_register_r(0)) << 8;
 	}
 	else
 	{	/* read VDP RAM */
-		return ((int) TMS9928A_vram_r()) << 8;
+		return ((int) TMS9928A_vram_r(0)) << 8;
 	}
 }
 
@@ -666,11 +666,11 @@ WRITE16_HANDLER ( ti99_ww_wvdp )
 
 	if (offset & 1)
 	{	/* write VDP adress */
-		TMS9928A_register_w((data >> 8) & 0xff);
+		TMS9928A_register_w(0, (data >> 8) & 0xff);
 	}
 	else
 	{	/* write VDP data */
-		TMS9928A_vram_w((data >> 8) & 0xff);
+		TMS9928A_vram_w(0, (data >> 8) & 0xff);
 	}
 }
 
