@@ -3,6 +3,11 @@
 
 #include "includes/studio2.h"
 
+/*
+  emulation of the rcata10171v1 (cdp1861) video controller
+ */
+
+
 static struct {
 	UINT8 data[128][8];
 	void *timer;
