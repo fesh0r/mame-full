@@ -196,10 +196,8 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 INLINE int wnd_extra_width(void)
 {
 	RECT window = { 100, 100, 200, 200 };
-#if !WINDOW_HAS_MENU
 	if (!win_window_mode)
 		return 0;
-#endif
 	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
@@ -213,10 +211,8 @@ INLINE int wnd_extra_width(void)
 INLINE int wnd_extra_height(void)
 {
 	RECT window = { 100, 100, 200, 200 };
-#if !WINDOW_HAS_MENU
 	if (!win_window_mode)
 		return 0;
-#endif
 	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window),
 		win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX);
 	return (window.bottom - window.top) - 100;

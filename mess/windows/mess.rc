@@ -69,7 +69,7 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "About This System...",        ID_HELP_ABOUTMACHINE, GRAYED
+        MENUITEM "About This System...",        ID_HELP_ABOUTSYSTEM
         MENUITEM "&About MESS...",              ID_HELP_ABOUT
     END
 END

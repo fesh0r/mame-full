@@ -564,6 +564,7 @@ void win_toggle_menubar(void)
 	}
 
 	win_adjust_window();
+	RedrawWindow(win_video_window, NULL, NULL, 0);
 }
 
 
@@ -610,6 +611,51 @@ static void device_command(const struct IODevice *dev, int id, int devoption)
 
 		}
 	}
+}
+
+//============================================================
+//	help_display
+//============================================================
+
+static void help_display(LPCTSTR chapter)
+{
+	typedef HWND (WINAPI *htmlhelpproc)(HWND hwndCaller, LPCTSTR pszFile, UINT uCommand, DWORD_PTR dwData);
+	static htmlhelpproc htmlhelp;
+	static DWORD htmlhelp_cookie;
+
+	if (htmlhelp == NULL)
+	{
+		htmlhelp = (htmlhelpproc) GetProcAddress(LoadLibrary(TEXT("hhctrl.ocx")), TEXT("HtmlHelpA"));
+		if (!htmlhelp)
+			return;
+		htmlhelp(NULL, NULL, 28 /*HH_INITIALIZE*/, (DWORD_PTR) &htmlhelp_cookie);
+	}
+
+	// if full screen, turn it off
+	if (!win_window_mode)
+		win_toggle_full_screen();
+
+	htmlhelp(win_video_window, chapter, 0 /*HH_DISPLAY_TOPIC*/, 0);
+}
+
+//============================================================
+//	help_about_mess
+//============================================================
+
+static void help_about_mess(void)
+{
+	help_display(TEXT("mess.chm::/html/mess_overview.htm"));
+}
+
+//============================================================
+//	help_about_thissystem
+//============================================================
+
+static void help_about_thissystem(void)
+{
+	TCHAR buf[256];
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "mess.chm::/sysinfo/%s.htm", Machine->gamedrv->name);
+	help_display(buf);
 }
 
 //============================================================
@@ -689,7 +735,11 @@ static int invoke_command(UINT command)
 		break;
 
 	case ID_HELP_ABOUT:
-		MessageBox(win_video_window, TEXT("MESS"), TEXT("MESS"), MB_OK);
+		help_about_mess();
+		break;
+
+	case ID_HELP_ABOUTSYSTEM:
+		help_about_thissystem();
 		break;
 
 	default:
@@ -753,8 +803,9 @@ HMENU win_create_menus(void)
 	HMENU frameskip_menu;
 	HMENU joystick_menu;
 	HMODULE module;
-	TCHAR buf[32];
+	TCHAR buf[256];
 	int i, joystick_count;
+	MENUITEMINFO mii;
 
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
 	is_paused = 0;
@@ -795,6 +846,14 @@ HMENU win_create_menus(void)
 			AppendMenu(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, buf);
 		}
 	}
+
+	// set the help menu to refer to this machine
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "About %s (%s)...", Machine->gamedrv->description, Machine->gamedrv->name);
+	memset(&mii, 0, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_TYPE;
+	mii.dwTypeData = buf;
+	SetMenuItemInfo(menu_bar, ID_HELP_ABOUTSYSTEM, FALSE, &mii);	
 
 	win_menu_bar = menu_bar;
 	return menu_bar;
