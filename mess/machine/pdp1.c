@@ -349,14 +349,14 @@ DEVICE_LOAD( pdp1_tape )
 {
 	int id = image_index_in_device(image);
 
-	tape_puncher.fd = file;
 	switch (id)
 	{
 	case 0:
 		/* reader unit */
+		tape_reader.fd = file;
 
-		/* start motor if image actually inserted */
-		tape_reader.motor_on = tape_reader.fd ? 1 : 0;
+		/* start motor */
+		tape_reader.motor_on = 1;
 
 		/* restart reader IO when necessary */
 		/* note that this function may be called before pdp1_init_machine, therefore
@@ -378,10 +378,35 @@ DEVICE_LOAD( pdp1_tape )
 
 	case 1:
 		/* punch unit */
+		tape_puncher.fd = file;
 		break;
 	}
 
 	return INIT_PASS;
+}
+
+DEVICE_UNLOAD( pdp1_tape )
+{
+	int id = image_index_in_device(image);
+
+	switch (id)
+	{
+	case 0:
+		/* reader unit */
+		tape_reader.fd = NULL;
+
+		/* stop motor */
+		tape_reader.motor_on = 0;
+
+		if (tape_reader.timer)
+			timer_enable(tape_reader.timer, 0);
+		break;
+
+	case 1:
+		/* punch unit */
+		tape_puncher.fd = NULL;
+		break;
+	}
 }
 
 /*
@@ -664,6 +689,11 @@ DEVICE_LOAD(pdp1_typewriter)
 	io_status |= io_st_tyo;
 
 	return INIT_PASS;
+}
+
+DEVICE_UNLOAD(pdp1_typewriter)
+{
+	typewriter.fd = NULL;
 }
 
 /*

@@ -172,8 +172,10 @@ INPUT_PORTS_START( pdp1 )
    	PORT_BITX( 0000001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Test Word Switch 18", KEYCODE_N, IP_JOY_NONE )
 
 	/*
-		Note that I can see 2 additional keys whose purpose is unknown to me (I cannot read the
-		caps on the photograph).
+		Note that I can see 2 additional keys whose purpose is unknown to me.
+		The caps look like "MAR REL" for the leftmost one and "MAR SET" for
+		rightmost one: maybe they were used to set the margin (I don't have the
+		manual for the typewriter).
 	*/
     PORT_START		/* 6: typewriter codes 00-17 */
 	PORT_BITX(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "(Space)", KEYCODE_SPACE, IP_JOY_NONE)
@@ -199,7 +201,7 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(0x0100, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
 	PORT_BITX(0x0200, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
 	PORT_BITX(0x0800, IP_ACTIVE_HIGH, IPT_KEYBOARD, ", =", KEYCODE_COMMA, IP_JOY_NONE)
-	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tab", KEYCODE_TAB, IP_JOY_NONE)
+	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tab Key", KEYCODE_TAB, IP_JOY_NONE)
 
     PORT_START		/* 8: typewriter codes 40-57 */
 	PORT_BITX(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "(non-spacing middle dot) _", KEYCODE_QUOTE, IP_JOY_NONE)
@@ -468,8 +470,8 @@ SYSTEM_CONFIG_START(pdp1)
 	/*CONFIG_RAM_DEFAULT(4 * 1024)
 	CONFIG_RAM(32 * 1024)
 	CONFIG_RAM(64 * 1024)*/
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0rim\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_pdp1_tape, NULL, device_load_pdp1_tape, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PRINTER, 1, "typ\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_WRITE, NULL, NULL, device_load_pdp1_typewriter, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0rim\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_pdp1_tape, NULL, device_load_pdp1_tape, device_unload_pdp1_tape, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PRINTER, 1, "typ\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_WRITE, NULL, NULL, device_load_pdp1_typewriter, device_unload_pdp1_typewriter, NULL)
 SYSTEM_CONFIG_END
 
 
