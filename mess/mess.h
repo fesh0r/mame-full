@@ -186,6 +186,10 @@ extern int          device_filename_change(int type, int id, const char *name);
 /* access functions from the struct IODevice arrays of a driver */
 extern const void *device_info(int type, int id);
 
+const struct IODevice *device_first(const struct GameDriver *drv);
+const struct IODevice *device_next(const struct GameDriver *drv, const struct IODevice *dev);
+const struct IODevice *device_find(const struct GameDriver *drv, int type);
+
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */
 

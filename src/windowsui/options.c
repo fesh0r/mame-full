@@ -1564,6 +1564,8 @@ static void LoadOptions(void)
 		BOOL bReset = FALSE;
 		char tmp[80];
 
+		strcpy(tmp, GetVersionString());
+
         /* force reset of configuration? */
 		GetRegBoolOption(hKey, "ResetGUI",			&bReset);
 

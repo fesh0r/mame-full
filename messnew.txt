@@ -17,6 +17,16 @@ Source Changes:
   specified.  Also changed the implementation of the SYSTEM_CONFIG_* macros to
   provide a more flexible system for representing the data. [Nate Woods]
 
+- Added new functions for iterating through devices, in order to better
+  abstract the internal representation of devices:
+  
+		device_first()
+		device_next()
+		device_find()
+		
+  Also renamed GameDriver dev field to dev_ in order to break any source
+  dependencies on the dev field. [Nate Woods]
+
 - [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
   particular file system format can point at a structure that lists allowable
   disk image formats.  This allows for the addition of new disk image format

@@ -219,11 +219,7 @@ void cbm_rom_exit(int id)
 
 static const struct IODevice *cbm_rom_find_device(void)
 {
-	int i;
-	for (i=0; (Machine->gamedrv->dev[i].count)
-			 &&(Machine->gamedrv->dev[i].type!=IO_CARTSLOT);
-		 i++) ;
-	return Machine->gamedrv->dev[i].count!=0?Machine->gamedrv->dev+i:NULL;
+	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
 int cbm_rom_init(int id)

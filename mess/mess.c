@@ -145,7 +145,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 	if (file)
 	{
 		void *config;
-		const struct IODevice *pc_dev = Machine->gamedrv->dev;
+		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
 
 		/* did osd_fopen() rename the image? (yes, I know this is a hack) */
 		if (renamed_image)
@@ -179,7 +179,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 					logerror("failed to malloc(%d)\n", img->length);
 				}
 			}
-			pc_dev++;
+			pc_dev = device_next(Machine->gamedrv, pc_dev);
 		}
 
 		if (!img->crc) img->crc = osd_fcrc(file);
@@ -219,21 +219,18 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	}
 
 	{	/* look for open_mode */
-		const struct IODevice *img_dev;
+		const struct IODevice *dev;
 
 		requested_mode = OSD_FOPEN_DUMMY;
 
-		img_dev = Machine->gamedrv->dev;
-		if (img_dev)
-			while (img_dev->count)
+		for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+		{
+			if (dev->type == type)
 			{
-				if (img_dev->type == type)
-				{
-					requested_mode = img_dev->open_mode;
-					break;
-				}
-				img_dev++;
+				requested_mode = dev->open_mode;
+				break;
 			}
+		}
 	}
 
 	switch (requested_mode)
@@ -332,17 +329,7 @@ static void floppy_device_common_exit(int id)
  */
 int system_supports_cassette_device (void)
 {
-	const struct IODevice *dev = Machine->gamedrv->dev;
-
-	/* Cycle through all devices for this system */
-	while(dev->type != IO_END)
-	{
-		if (dev->type == IO_CASSETTE)
-			return TRUE;
-		dev++;
-	}
-
-	return FALSE;
+	return device_find(Machine->gamedrv, IO_CASSETTE) ? TRUE : FALSE;
 }
 
 /*
@@ -406,11 +393,10 @@ const char *device_filename(int type, int id)
  */
 const char *device_file_extension(int type, int extnum)
 {
-	const struct IODevice *dev = Machine->gamedrv->dev;
+	const struct IODevice *dev;
 	const char *ext;
-	if (type >= IO_COUNT)
-		return NULL;
-	while( dev->count )
+
+	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
 		if( type == dev->type )
 		{
@@ -421,7 +407,6 @@ const char *device_file_extension(int type, int extnum)
 				ext = NULL;
 			return ext;
 		}
-		dev++;
 	}
 	return NULL;
 }
@@ -595,13 +580,13 @@ static int distribute_images(void)
 
 
 /* Small check to see if system supports device */
-static int supported_device(const struct IODevice *dev, int type)
+static int supported_device(const struct GameDriver *gamedrv, int type)
 {
-	while(dev->type!=IO_END)
+	const struct IODevice *dev;
+	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
 	{
 		if(dev->type==type)
 			return TRUE;	/* Return OK */
-		dev++;
 	}
 	return FALSE;
 }
@@ -696,7 +681,7 @@ static int ram_init(const struct GameDriver *gamedrv)
  ****************************************************************************/
 int init_devices(const struct GameDriver *gamedrv)
 {
-	const struct IODevice *dev = gamedrv->dev;
+	const struct IODevice *dev;
 	int i,id;
 
 	/* convienient place to call this */
@@ -717,7 +702,7 @@ int init_devices(const struct GameDriver *gamedrv)
 	/* Check that the driver supports all devices requested (options struct)*/
 	for( i = 0; i < options.image_count; i++ )
 	{
-		if (supported_device(dev, options.image_files[i].type)==FALSE)
+		if (supported_device(Machine->gamedrv, options.image_files[i].type)==FALSE)
 		{
 			mess_printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
 			return 1;
@@ -736,7 +721,7 @@ int init_devices(const struct GameDriver *gamedrv)
 		return 1;
 
 	/* Initialize --all-- devices */
-	while( dev->count )
+	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
 	{
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
@@ -773,7 +758,6 @@ int init_devices(const struct GameDriver *gamedrv)
 				mess_printf(" %s does not support init!\n", device_typename(dev->type));
 			}
 		}
-		dev++;
 	}
 
 	mess_printf("Device Initialision Complete!\n");
@@ -786,12 +770,12 @@ int init_devices(const struct GameDriver *gamedrv)
  */
 void exit_devices(void)
 {
-	const struct IODevice *dev = Machine->gamedrv->dev;
+	const struct IODevice *dev;
 	int id;
 	int type;
 
 	/* shutdown all devices */
-	while( dev->count )
+	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
 		/* all instances */
 		if( dev->exit)
@@ -866,19 +850,19 @@ void exit_devices(void)
  */
 int device_filename_change(int type, int id, const char *name)
 {
-	const struct IODevice *dev = Machine->gamedrv->dev;
+	const struct IODevice *dev;
 	struct image_info *img = &images[type][id];
 
 	if( type >= IO_COUNT )
 		return 1;
 
-	while( dev->count && dev->type != type )
-		dev++;
+	for(dev = device_first(Machine->gamedrv); dev && (dev->type != type); dev = device_next(Machine->gamedrv, dev))
+		;
 
-	if( id >= dev->count )
+	if (!dev || (id >= dev->count))
 		return 1;
 
-	if( dev->exit )
+	if (dev->exit)
 		dev->exit(id);
 
 	/* if floppy, perform common exit */
@@ -1150,9 +1134,9 @@ int messvaliditychecks(void)
 	for(i = 0; drivers[i]; i++)
 	{
 		/* check device array */
-		if (drivers[i]->dev)
+		if (drivers[i]->dev_)
 		{
-			const struct IODevice *dev = drivers[i]->dev;
+			const struct IODevice *dev = drivers[i]->dev_;
 			while(dev->type != IO_END)
 			{
 				assert(dev->type < IO_COUNT);

@@ -119,33 +119,31 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
 {
     const struct IODevice *dev;
     int num_extensions = 0;
-    int i;
 
 	memset(types, 0, sizeof(*types) * count);
-
     count--;
-    dev = drivers[nDriver]->dev;
 
-    if (bZip) {
+    if (bZip)
+	{
 		types[num_extensions].ext = "zip";
 		num_extensions++;
     }
 
-    for (i = 0; dev[i].type != IO_END; i++)
+	for(dev = device_first(drivers[nDriver]); dev; dev = device_next(drivers[nDriver], dev))
 	{
-        const char *ext = dev[i].file_extensions;
+        const char *ext = dev->file_extensions;
 		if (ext)
 		{
 			while(*ext)
 			{
-				if ((type == 0) || (type == dev[i].type))
+				if ((type == 0) || (type == dev->type))
 				{
 					if (num_extensions < count)
 					{
-						types[num_extensions].type = dev[i].type;
+						types[num_extensions].type = dev->type;
 						types[num_extensions].ext = ext;
 #if HAS_CRC
-						types[num_extensions].partialcrc = dev[i].partialcrc;
+						types[num_extensions].partialcrc = dev->partialcrc;
 #endif
 						num_extensions++;
 					}

@@ -42,7 +42,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 		while (drivers[i])
 		{
-			const struct IODevice *dev = drivers[i]->dev;
+			const struct IODevice *dev = device_first(drivers[i]);
 
 			if (!strwildcmp(gamename, drivers[i]->name))
 			{
@@ -51,11 +51,11 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 				printf("%-13s", drivers[i]->name);
 
 				/* if IODevice not used, print UNKNOWN */
-				if (dev->type == IO_END)
+				if (!dev)
 					printf("%-12s\n", "UNKNOWN");
 
 				/* else cycle through Devices */
-				while (dev->type != IO_END)
+				while (dev)
 				{
 					const char *src = dev->file_extensions;
 
@@ -63,25 +63,19 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 						printf("%-12s(%s)   ", device_typename(dev->type), device_brieftypename(dev->type));
 					else
 						printf("%-13s%-12s(%s)   ", "    ", device_typename(dev->type), device_brieftypename(dev->type));
-
 					devcount++;
 
 					while (src && *src)
 					{
-
 						printf(".%-5s", src);
 						src += strlen(src) + 1;
 					}
-					dev++;			   /* next IODevice struct */
+					dev = device_next(drivers[i], dev);			   /* next IODevice struct */
 					printf("\n");
 				}
-
-
 			}
 			i++;
-
 		}
-
 	}
 
 	/* -listtext */

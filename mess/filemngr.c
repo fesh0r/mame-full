@@ -698,18 +698,14 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	int types[40];
 	int ids[40];
 	char flag[40];
-
 	int sel, total, arrowize, type, id;
-
-	const struct IODevice *dev = Machine->gamedrv->dev;
+	const struct IODevice *dev;
 
 	sel = selected - 1;
-
-
 	total = 0;
 
 	/* Cycle through all devices for this system */
-	while(dev->type != IO_END)
+	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
 		type = dev->type;
 		for (id = 0; id < dev->count; id++)
@@ -727,9 +723,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			ids[total] = id;
 
 			total++;
-
 		}
-		dev++;
 	}
 
 

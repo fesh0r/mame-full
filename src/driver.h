@@ -414,7 +414,7 @@ struct GameDriver
 
 	const struct RomModule *rom;
 #ifdef MESS
-	const struct IODevice *dev;
+	const struct IODevice *dev_;
 	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
 #endif
 
