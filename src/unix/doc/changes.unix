@@ -2,7 +2,9 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.88
+Release 0.88, 7 November 2004
+	- Everything from MAME 0.88 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.88 (http://x.mame.net/changes-mess.html).
 	- The xml2info utility can now link against the system's libexpat, and 
 	  no longer requires BUILD_EXPAT to be set.  Fixes Bugzilla bug 592.
 	- Another slew of changes from Hans de Goede:
@@ -147,16 +149,25 @@ Release 0.88
 	    should make sure that the abort case doesn't get reached unless a 
 	    system is running out of memory or the like.
 	  * Fixed 16bpp to YUY2 blitting on 64-bit architectures.
+	  * Fixed a bug in DGA2 which caused the border of artwork to be 
+	    blitted each frame.
+	  * Slightly reworked alignment handling in video drivers which can 
+	    have different modes/resolutions (DGA, SVGAlib, SDL).
+	  * Completely rewrote the SDL driver.  It's now much faster than 
+	    before -- just as fast as the native X11 driver -- and has 100% 
+	    support for fullscreen, effects, scaling, etc.
 	- Added an ALSA mixer plugin, which can be enabled with 
 	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	  option accepts the name of a "simple mixer control", which you can 
 	  find by executing "amixer".  (Shyouzou Sugitani)
 	- MAME validity checks are now enabled for debug builds.  (Christopher 
 	  Stone)
+	- Update the CFLAGS for IRIX MIPSpro in the makefile.  (Brandon Corey)
+	- Fixed the IRIX AL sound driver's 8-bit output and updated rate setup 
+	  to deal with unsupported audio hardware rates.  (Brandon Corey)
 
 Release 0.87, 3 October 2004
-	- Everything from MAME 0.87 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.87 (http://x.mame.net/changes-mess.html).  Christopher Stone's 
+	- Everything from MAME 0.87 and MESS 0.87.  Christopher Stone's 
 	  makefile support for MAGE has been added, but MAGE is not yet 
 	  included.
 	- Setting the display method to SDL again implies JOY_SDL.  It now also 

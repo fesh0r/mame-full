@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-1 November 2004
+6 November 2004
 \layout SGML
 
 <authorgroup>
@@ -2825,11 +2825,6 @@ GLCFLAGS
 .
 \layout Standard
 
-The program starts up in cabinet mode.
- While this is pretty, and cool, you'll probably want to actually play in
- fullscreen mode.
-\layout Standard
-
 The OpenGL driver also adds several command-line options:
 \layout Code
 
@@ -3087,150 +3082,6 @@ All commands must be on separate lines.
  Use the (somewhat) commented glmamejau cabinet as an example to work from.
 \layout Subsubsection
 
-Common Questions (FAQ)
-\layout Standard
-
-Q: I am only getting a few frames-per-second.
- This sucks! What gives? 
-\layout Standard
-
-A1: You're probably running Mesa in software mode.
- You should read the "README.3Dfx" file in the Mesa distro.
- Specifically, you need to "setenv MESA_GLX_FX fullscreen".
-\layout Standard
-
-A2: You don't have a 3D graphics card.
- Go buy one (see below)!
-\layout Standard
-
-Q: When I run xmame.x11, it just dumps core.
- That's not as much fun as 3D Pac-Man, now is it?
-\layout Standard
-
-A1: If you are using a 3Dfx card, make sure you are running xmame.x11 as
- root.
- Root privileges are required to access the 3Dfx hardware.
-\layout Standard
-
-A2: If you're using Mesa and haven't upgraded to v3.0, do so.
- 
-\layout Standard
-
-Q: When I run xmame.xgl, it just hangs at the initial game screen.
-\layout Standard
-
-A: Are you running KDE? For some reason, I can't get keyboard input under
- KDE.
- If you have this problem, switch window managers.
-\layout Standard
-
-Q: Which graphics cards are usable with xmame.xgl? 
-\layout Standard
-
-A: We have the following experiences (date 20010713):
-\layout Itemize
-
-Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line options "-noglaa"
- and 16bpp X11 server color depth.
-\layout Itemize
-
-Vodoo1 + Mesa 3.4 + Glide, with command line options 
-\begin_inset Quotes eld
-\end_inset 
-
--glres 640x480
-\begin_inset Quotes erd
-\end_inset 
-
-!
-\layout Itemize
-
-GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command line options
- and 16/24bpp X11 server color depth.
-\layout Itemize
-
-NVIDIA TNT2 + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
- "-bpp 16" and 16bpp (may be 24bpp also ???) X11 server color depth (OpenGL
- colortable mapping is buggy).
-\layout Itemize
-
-NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
- "-bpp 16" and 16bpp (may be 24bpp also ???) X11 server color depth (OpenGL
- colortable mapping is buggy).
-\layout Itemize
-
-Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command line options
- "-bpp 16", "-noglaa" (???) and 16bpp (may be 24bpp also ???) X11 server
- color depth (OpenGL colortable mapping is buggy).
-\layout Itemize
-
-ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command line options 
-\begin_inset Quotes eld
-\end_inset 
-
--noglext78 -noglaa
-\begin_inset Quotes erd
-\end_inset 
-
- or 
-\begin_inset Quotes eld
-\end_inset 
-
--bpp 16 -noglaa
-\begin_inset Quotes erd
-\end_inset 
-
-, where the latter options are a bit slower (about 5 fps).
- 
-\layout Itemize
-
-LinuxPPC - Powerbook-Firewire + ATI R128: see above!
-\layout Standard
-
-All of the above drivers work with the option "-bpp 16" and/or "-noglext78",
- the latter of which is very slow, of course! So it looks like an OpenGL
- implementation bug is causing these driver/hardware combinations to only
- work with these command line options.
- The bug may lie within these OpenGL functions:
-\layout Itemize
-
-glColorTableEXT 
-\layout Itemize
-
-glColorSubTableEXT
-\layout Standard
-
-Currently fast and funny driver/hardware combinations are:
-\layout Itemize
-
-NVIDIA GeForce + NVIDIA OpenGL driver + XFree86 4.0.2; I have tested the GeForce25
-6 (AGP) hardware.
- 
-\layout Itemize
-
-Vodoo + DRI OpenGL driver (XFree86 4.0.2); I have tested the Vodoo3 hardware.
-\layout Standard
-
-Q: When I run xmame.xgl, everything is messed up.
-\layout Standard
-
-A: Read the above experiences ...
- and try
-\layout Itemize
-
-switching your X server's bpp value, e.g.
- switch from 32bpp or 24bpp to 16bpp; 
-\layout Itemize
-
-the command line option "-bpp 16";
-\layout Itemize
-
-the command line option "-noglaa";
-\layout Itemize
-
-the command line option "-noglext".
-\layout Subsubsection
-
 Present Limitations/Bugs
 \layout Itemize
 
@@ -3410,7 +3261,6 @@ fullscreen 1
 
  to your xmamerc file if you want SDL to start fullscreen automatically;
  the modenumber line can also be used in the xmamerc.
- :-)
 \layout Standard
 
 Most problems experienced by people who are trying to use SDL for fullscreen
@@ -3429,6 +3279,47 @@ During play you can switch between windowed and fullscreen mode.
 \end_inset 
 
 
+\layout Subsection
+
+I am only getting a few frames-per-second in xmame.x11/OpenGL.
+ This sucks! What gives? 
+\layout Itemize
+
+You're probably running Mesa in software mode.
+ You should read the "README.3Dfx" file in the Mesa distro.
+ Specifically, you need to "setenv MESA_GLX_FX fullscreen".
+\layout Itemize
+
+You don't have a 3D graphics card.
+ Go buy one (see below)!
+\layout Subsection
+
+When I run xmame.x11/OpenGL, it just dumps core.
+ That's not as much fun as 3D Pac-Man, now is it?
+\layout Itemize
+
+If you are using a 3Dfx card, make sure you are running xmame.x11 as root.
+ Root privileges are required to access the 3Dfx hardware.
+\layout Itemize
+
+If you're using Mesa and haven't upgraded to v3.0, do so.
+ 
+\layout Subsection
+
+When I run xmame.x11/OpenGL, everything is messed up.
+\layout Standard
+
+Read the above experiences, and try
+\layout Itemize
+
+switching your X server's bpp value, e.g., switch from 32bpp or 24bpp to 16bpp;
+ 
+\layout Itemize
+
+the command line option "-bpp 16";
+\layout Itemize
+
+the command line option "-noglaa".
 \layout Subsection
 
 xmame.SDL / fullscreen has a large border around the game.
@@ -4426,7 +4317,7 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_inset LatexCommand \url[xmame/xmess-0.87 sources]{download/xmame-0.87.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.88 sources]{download/xmame-0.88.tar.bz2}
 
 \end_inset 
 
