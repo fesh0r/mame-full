@@ -14,6 +14,9 @@
 #include "sysdep/misc.h"
 #include "effect.h"
 
+/* be sure, that device names are nullified */
+extern void XInput_trackballs_reset();
+
 /* from ... */
 extern char *cheatfile;
 extern char *db_filename;
@@ -38,6 +41,7 @@ static char pcrcfilename[BUF_SIZE] = "";
 const char *pcrcfile = pcrcfilename;
 static const char *mess_opts;
 #endif
+
 static struct rc_struct *rc;
 
 static int config_handle_arg(char *arg);
@@ -116,7 +120,7 @@ static struct rc_option opts[] = {
    { "General Options",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "loadconfig",	"lc",			rc_bool,	&loadconfig,
+   { "loadconfig",	"lcf",			rc_bool,	&loadconfig,
      "1",		0,			0,		NULL,
      "Load (don't load) configfiles" },
    { "showconfig",	"sc",			rc_set_int,	&showconfig,
@@ -197,9 +201,9 @@ static int config_handle_arg(char *arg)
          fprintf(stderr, "error: too many image names specified!\n");
          return -1;
       }
-      //options.image_files[options.image_count].type = iodevice_type;
-      //options.image_files[options.image_count].name = arg;
-      //options.image_count++;
+      /* options.image_files[options.image_count].type = iodevice_type; */
+      /* options.image_files[options.image_count].name = arg; */
+      /* options.image_count++; */
    }
 #else
    {
@@ -243,8 +247,13 @@ int config_init (int argc, char *argv[])
    int i;
    
    memset(&options,0,sizeof(options));
-   
-   /* Lett's see of the endians of this arch is correct otherwise
+
+   /* reset trackball devices */
+   #ifdef USE_XINPUT_DEVICES
+      XInput_trackballs_reset();
+   #endif
+
+   /* Let's see if the endianess of this arch is correct; otherwise,
       YELL about it and bail out. */
 #ifdef LSB_FIRST
    if(*((unsigned short*)lsb_test) != 0x0100)
@@ -470,7 +479,7 @@ int config_init (int argc, char *argv[])
             begin = strrchr(gamename,'/');
             if (begin)
             {
-               *begin='\0'; // dynamic allocation and copying will be better
+               *begin='\0'; /* dynamic allocation and copying will be better */
                init_rom_path(gamename);
             }
             game_index = i;
