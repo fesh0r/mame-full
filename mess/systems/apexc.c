@@ -322,7 +322,7 @@ static int apexc_interrupt(void)
 		/* note that we must take into account the possibility of simulteanous keypresses
 		(which would be a goofy thing to do when reading, but a normal one when writing,
 		if the user wants to clear several registers at once) */
-		int reg_id;
+		int reg_id = -1;
 
 		/* determinate value of reg_id */
 		if (control_transitions & panel_CR)
@@ -351,13 +351,16 @@ static int apexc_interrupt(void)
 			reg_id = APEXC_ML;
 		}
 
-		/* read/write register #reg_id */
-		if (control_keys & panel_write)
-			/* write reg */
-			cpunum_set_reg(0, reg_id, panel_data_reg);
-		else
-			/* read reg */
-			panel_data_reg = cpunum_get_reg(0, reg_id);
+		if (-1 != reg_id)
+		{
+			/* read/write register #reg_id */
+			if (control_keys & panel_write)
+				/* write reg */
+				cpunum_set_reg(0, reg_id, panel_data_reg);
+			else
+				/* read reg */
+				panel_data_reg = cpunum_get_reg(0, reg_id);
+		}
 	}
 
 	if (control_transitions & panel_mem)
@@ -519,6 +522,7 @@ static struct MachineDriver machine_driver_apexc =
 	0,
 	0,0,0,
 	{
+		{NULL,},
 	},
 
 	/* NVRAM handler */
