@@ -531,6 +531,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CR,							/* eoln */
+	0,									/* flags */
 	d64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -555,6 +556,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CR,							/* eoln */
+	0,									/* flags */
 	x64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -579,6 +581,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CR,							/* eoln */
+	0,									/* flags */
 	d71_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -603,6 +606,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CR,							/* eoln */
+	0,									/* flags */
 	d81_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d81_image_info,		/* info function */

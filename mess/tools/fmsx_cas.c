@@ -57,6 +57,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,									/* flags */
 	fmsx_cas_image_init,				/* init function */
 	fmsx_cas_image_exit,				/* exit function */
 	NULL,								/* info function */

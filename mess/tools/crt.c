@@ -408,6 +408,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,									/* flags */
 	crt_image_init,				/* init function */
 	crt_image_exit,				/* exit function */
 	crt_image_info, /* info function */

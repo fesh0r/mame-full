@@ -60,7 +60,8 @@ IMAGEMODULE(
 	"dsk",									/* file extension */
 	NULL,									/* crcfile */
 	NULL,									/* crc system name */
-	EOLN_CR,									/* eoln */
+	EOLN_CR,								/* eoln */
+	IMGMODULE_FLAG_FILENAMES_PREFERUCASE,	/* flags */
 	rsdos_diskimage_init,					/* init function */
 	rsdos_diskimage_exit,					/* exit function */
 	NULL,									/* info function */

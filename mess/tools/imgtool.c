@@ -336,19 +336,42 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 {
 	int err;
 	ResolvedOption ropts[MAX_OPTIONS];
+	char *buf = NULL;
+	char *s;
 
-	if (!img->module->writefile)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	if (!img->module->writefile) {
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
 
 	err = resolve_options(img->module->fileoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
-	if (err)
-		return err | IMGTOOLERR_SRC_PARAM_FILE;
+	if (err) {
+		err |= IMGTOOLERR_SRC_PARAM_FILE;
+		goto done;
+	}
+
+	/* Does this image module prefer upper case file names? */
+	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE) {
+		buf = strdup(fname);
+		if (!buf) {
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+		for (s = buf; *s; s++)
+			*s = toupper(*s);
+		fname = buf;
+	}
 
 	err = img->module->writefile(img, fname, sourcef, ropts);
-	if (err)
-		return markerrorsource(err);
+	if (err) {
+		err = markerrorsource(err);
+		goto done;
+	}
 
-	return 0;
+done:
+	if (buf)
+		free(buf);
+	return err;
 }
 
 int img_getfile(IMAGE *img, const char *fname, const char *dest)

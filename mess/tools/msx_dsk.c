@@ -52,6 +52,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,									/* flags */
 	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */

@@ -150,6 +150,10 @@ typedef union {
 	const char *s;	/* string */
 } ResolvedOption;
 
+enum {
+	IMGMODULE_FLAG_FILENAMES_PREFERUCASE	= 0x0001	/* this means that all filenames are normally upper case */
+};
+
 struct ImageModule {
 	const char *name;
 	const char *humanname;
@@ -157,6 +161,7 @@ struct ImageModule {
 	const char *crcfile;
 	const char *crcsysname;
 	const char *eoln;
+	int flags;
 
 	int (*init)(STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
@@ -184,7 +189,7 @@ struct ImageModule {
 /* ----------------------------------------------------------------------- */
 
 /* Use IMAGEMODULE for (potentially) full featured images */
-#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,eoln,\
+#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,eoln,flags,\
 		init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile, \
 		deletefile,create,read_sector,write_sector,fileoptions_template,createoptions_template)	\
 struct ImageModule imgmod_##name = \
@@ -195,6 +200,7 @@ struct ImageModule imgmod_##name = \
 	(crcfile),					\
 	(crcsysname),				\
 	(eoln),						\
+	(flags),					\
 	(init),						\
 	(exit),						\
 	(info),						\
@@ -223,6 +229,7 @@ struct ImageModule imgmod_##name = \
 	(#name ".crc"),	\
 	#name,			\
 	NULL,			\
+	0,				\
 	NULL,			\
 	NULL,			\
 	NULL,			\
@@ -513,7 +520,7 @@ struct WaveExtra
 
 };
 
-#define WAVEMODULE(name,humanname,ext,eoln,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
+#define WAVEMODULE(name,humanname,ext,eoln,flags,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
 		initalt,nextfile,readfilechunk)	\
 static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
 static struct WaveExtra waveextra_##name = \
@@ -536,6 +543,7 @@ struct ImageModule imgmod_##name = \
 	NULL,				\
 	NULL,				\
 	(eoln),				\
+	(flags),			\
 	imgmodinit_##name,	\
 	imgwave_exit,		\
 	NULL,				\

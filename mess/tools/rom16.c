@@ -35,6 +35,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,									/* flags */
 	rom16_image_init,				/* init function */
 	rom16_image_exit,				/* exit function */
 	NULL, /* info function */

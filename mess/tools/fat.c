@@ -333,7 +333,6 @@ static struct OptionTemplate fat_createopts[] =
 #define FAT_CREATEOPTIONS_SECTORS		1
 #define FAT_CREATEOPTIONS_HEADS			2
 
-/* IMAGE_USES_LABEL,  flags */
 IMAGEMODULE(
 	msdos,
 	"MSDOS/PCDOS Diskette",			/* human readable name */
@@ -341,6 +340,7 @@ IMAGEMODULE(
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
 	EOLN_CRLF,						/* eoln */
+	0,								/* flags */
 	fat_image_init,					/* init function */
 	fat_image_exit,					/* exit function */
 	fat_image_info,					/* info function */
@@ -378,6 +378,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CRLF,								/* eoln */
+	0,									/* flags */
 	fathd_image_init,				/* init function */
 	fat_image_exit,				/* exit function */
 	fat_image_info,		/* info function */

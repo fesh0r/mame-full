@@ -62,6 +62,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* eoln */
+	0,									/* flags */
 	lynx_image_init,				/* init function */
 	lynx_image_exit,				/* exit function */
 	NULL,//lynx_image_info,		/* info function */

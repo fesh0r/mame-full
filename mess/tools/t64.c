@@ -132,6 +132,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	EOLN_CR,							/* eoln */
+	0,									/* flags */
 	t64_image_init,						/* init function */
 	t64_image_exit,						/* exit function */
 	t64_image_info,						/* info function */
