@@ -189,10 +189,8 @@ int osd_init(void)
 void osd_exit(void)
 {
 	extern void win_shutdown_input(void);
-	extern void win_shutdown_window(void);
 
 	win_shutdown_input();
-	win_shutdown_window();
 	osd_set_leds(0);
 }
 

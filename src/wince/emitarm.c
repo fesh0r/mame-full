@@ -346,9 +346,9 @@ void emit_finish_loop(struct blitter_params *params, size_t loop_begin)
 {
 	INT32 adjustment;
 
-	// beq	begin
+	// bne	begin
 	adjustment = loop_begin - params->blitter_size - 8;
-	emit_int32(params, EQ | 0x0a000000 | (adjustment >> 2) & 0x00ffffff);
+	emit_int32(params, NE | 0x0a000000 | (adjustment >> 2) & 0x00ffffff);
 }
 
 void emit_filler(void *dest, size_t sz)

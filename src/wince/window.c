@@ -502,20 +502,6 @@ int win_init_window(void)
 }
 
 //============================================================
-//	win_shutdown_window
-//============================================================
-
-void win_shutdown_window(void)
-{
-	UnregisterClass(TEXT("MAME"), NULL);
-
-#ifdef UNDER_CE
-	gx_close_display();
-#endif
-}
-
-
-//============================================================
 //	win_create_window
 //============================================================
 
@@ -612,6 +598,10 @@ void win_destroy_window(void)
 #if HAS_DDRAW
 	// kill directdraw
 	win_ddraw_kill();
+#endif
+
+#ifdef UNDER_CE
+	gx_close_display();
 #endif
 
 	// kill the window if it still exists

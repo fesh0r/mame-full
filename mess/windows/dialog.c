@@ -796,12 +796,36 @@ void win_dialog_exit(void *dialog)
 void win_dialog_runmodal(void *dialog)
 {
 	struct dialog_info *di;
+	extern void win_timer_enable(int enabled);
 	
 	di = (struct dialog_info *) dialog;
 	assert(di);
+
+	// finishing touches on the dialog
 	dialog_prime(di);
+
+	// disable sound while in the dialog
 	osd_sound_enable(0);
+
+	// disable the timer while in the dialog
+	win_timer_enable(0);
+
+#ifdef UNDER_CE
+	// on WinCE, suspend GAPI
+	gx_suspend();
+#endif
+
 	DialogBoxIndirectParam(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+
+#ifdef UNDER_CE
+	// on WinCE, resume GAPI
+	gx_resume();
+#endif
+
+	// reenable timer
+	win_timer_enable(1);
+
+	// reenable sound
 	osd_sound_enable(1);
 }
 
