@@ -269,7 +269,6 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 #define change_pc20(pc) 	 change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
 #define change_pc21(pc) 	 change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
 #define change_pc24(pc) 	 change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
-#define change_pc24_8bit(pc) change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
 #define change_pc24bew(pc)	 change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
 #define change_pc26lew(pc)	 change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
 #define change_pc29(pc)      change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
@@ -314,7 +313,6 @@ READ_HANDLER(cpu_readmem16lew_word);
 READ_HANDLER(cpu_readmem20);
 READ_HANDLER(cpu_readmem21);
 READ_HANDLER(cpu_readmem24);
-READ_HANDLER(cpu_readmem24_8bit);
 READ_HANDLER(cpu_readmem24bew);
 READ_HANDLER(cpu_readmem24bew_word);
 READ_HANDLER(cpu_readmem24bew_dword);
@@ -341,7 +339,6 @@ WRITE_HANDLER(cpu_writemem20);
 WRITE_HANDLER(cpu_writemem21);
 WRITE_HANDLER(cpu_writemem24);
 WRITE_HANDLER(cpu_writemem24bew);
-WRITE_HANDLER(cpu_writemem24_8bit);
 WRITE_HANDLER(cpu_writemem24bew_word);
 WRITE_HANDLER(cpu_writemem24bew_dword);
 WRITE_HANDLER(cpu_writemem26lew);
@@ -378,7 +375,6 @@ void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
-void cpu_setOPbase24_8bit(int pc);
 void cpu_setOPbase24bew(int pc);
 void cpu_setOPbase26lew(int pc);
 void cpu_setOPbase29(int pc);

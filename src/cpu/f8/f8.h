@@ -54,6 +54,9 @@ extern void f8_state_load(void *file);
 extern const char *f8_info(void *context, int regnum);
 extern unsigned f8_dasm(char *buffer, unsigned pc);
 
+WRITE_HANDLER( f8_internal_w );
+READ_HANDLER( f8_internal_r );
+
 #ifdef MAME_DEBUG
 extern unsigned DasmF8( char *dst, unsigned pc );
 #endif

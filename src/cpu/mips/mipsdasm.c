@@ -103,6 +103,8 @@ static char *s_gtelm[] =
 	"nolimit","limit"
 };
 
+extern unsigned char *OP_ROM;
+
 unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 {
 	UINT32 pc, op;
@@ -605,3 +607,4 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 	}
 	return pc - oldpc;
 }
+

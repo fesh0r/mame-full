@@ -1618,15 +1618,39 @@ static void f8_ns_isar_d(void)
 	ROMC_00();
 }
 
-/* Reset registers to the initial values */
 void f8_reset(void *param)
 {
+	UINT8 data;
+	int i;
+
 	memset(&f8, 0, sizeof(F8));
 
-    /* fetch the first opcode */
+	/* save PC0 to PC1 and reset PC0 */
 	ROMC_08();
-}
+	/* fetch the first opcode */
+	ROMC_00();
 
+	/* initialize the timer shift register
+	 * this is an 8 bit polynome counter which can be loaded parallel
+	 * with 0xff the outputs never change and thus the timer is disabled.
+	 * with 0xfe the shifter starts cycling through 255 states until it
+	 * reaches 0xfe again (and then issues an interrupt).
+	 * the counter output values are not sequential, but go like this:
+	 * 0xfe, 0xfd, 0xfb, 0xf7, 0xee, 0xdc ... etc. :-)
+	 * We have to build a lookup table to tell how many cycles a write
+
+	 */
+	data = 0xfe;	/* initial value */
+	for (i = 0; i < 256; i++)
+	{
+		timer_shifter[i] = data;
+		if ( (((data >> 3) ^ (data >> 4)) ^
+			  ((data >> 5) ^ (data >> 7))) & 1 )
+			data <<= 1;
+		else
+			data = (data << 1) | 1;
+	}
+}
 /* Shut down CPU core */
 void f8_exit(void)
 {
@@ -1960,6 +1984,17 @@ unsigned f8_get_sp(void)
 void f8_set_sp(unsigned val)
 {
 	f8.pc1 = val;
+}
+
+
+WRITE_HANDLER( f8_internal_w )
+{
+    f8.r[ offset & 0x3f ] = data;
+}
+
+READ_HANDLER( f8_internal_r )
+{
+    return f8.r[ offset & 0x3f ];
 }
 
 unsigned f8_get_reg(int regnum)

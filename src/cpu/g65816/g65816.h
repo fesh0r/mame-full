@@ -168,14 +168,10 @@ unsigned g65816_dasm(char *buffer, unsigned pc);
 #undef G65816_CALL_DEBUGGER
 #define G65816_CALL_DEBUGGER CALL_MAME_DEBUG
 
-//#define cpu_readmem24_8bit				cpu_readmem24
-//#define cpu_writemem24_8bit				cpu_writemem24
-//#define change_pc24_8bit				change_pc24
-
-#define g65816_read_8(addr)				cpu_readmem24_8bit(addr)
-#define g65816_write_8(addr,data)		cpu_writemem24_8bit(addr,data)
-#define g65816_read_8_immediate(A)		cpu_readmem24_8bit(A)
-#define g65816_jumping(A)				change_pc24_8bit(A)
+#define g65816_read_8(addr) 			cpu_readmem24(addr)
+#define g65816_write_8(addr,data)		cpu_writemem24(addr,data)
+#define g65816_read_8_immediate(A)		cpu_readmem24(A)
+#define g65816_jumping(A)				change_pc24(A)
 #define g65816_branching(A)
 
 

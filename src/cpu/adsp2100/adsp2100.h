@@ -132,7 +132,11 @@ extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 
 #define adsp2105_icount adsp2100_icount
 
-#define ADSP2105_INT_NONE	-1		/* No interrupt requested */
+#define ADSP2105_DATA_OFFSET	ADSP2100_DATA_OFFSET
+#define ADSP2105_PGM_OFFSET 	ADSP2100_PGM_OFFSET
+#define ADSP2105_SIZE			ADSP2100_SIZE
+
+#define ADSP2105_INT_NONE   -1      /* No interrupt requested */
 #define ADSP2105_IRQ0		0		/* IRQ0 */
 #define ADSP2105_IRQ1		1		/* IRQ1 */
 #define ADSP2105_IRQ2		2		/* IRQ2 */

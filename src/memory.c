@@ -946,7 +946,6 @@ READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW)
 READWORD(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
 READBYTE(cpu_readmem24,     TYPE_8BIT,	  24)
-READBYTE(cpu_readmem24_8bit,TYPE_8BIT,	  24)
 
 READBYTE(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW)
 READWORD(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -1168,7 +1167,6 @@ WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW)
 WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
 WRITEBYTE(cpu_writemem24,	  TYPE_8BIT, 	24)
-WRITEBYTE(cpu_writemem24_8bit,TYPE_8BIT, 	24)
 
 WRITEBYTE(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW)
 WRITEWORD(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -1242,7 +1240,6 @@ SETOPBASE(cpu_setOPbase16lew, 16LEW, 0)
 SETOPBASE(cpu_setOPbase20,	  20,	 0)
 SETOPBASE(cpu_setOPbase21,	  21,	 0)
 SETOPBASE(cpu_setOPbase24,	  24,	 0)
-SETOPBASE(cpu_setOPbase24_8bit, 24,	 0)
 SETOPBASE(cpu_setOPbase24bew, 24BEW, 0)
 SETOPBASE(cpu_setOPbase26lew, 26LEW, 0)
 SETOPBASE(cpu_setOPbase29,	  29,	 3)

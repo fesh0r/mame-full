@@ -197,6 +197,9 @@ enum {
 #ifndef HAS_T11
 #define HAS_T11 		0
 #endif
+#ifndef HAS_F8
+#define HAS_F8			0
+#endif
 #ifndef HAS_S2650
 #define HAS_S2650		0
 #endif
@@ -269,8 +272,7 @@ enum {
 
 
 /* ASG 971222 -- added this generic structure */
-struct cpu_interface
-{
+struct cpu_interface {
 	unsigned cpu_num;
 	void (*reset)(void *param);
 	void (*exit)(void);
@@ -301,6 +303,9 @@ struct cpu_interface
 	int no_int, irq_int, nmi_int;
 	mem_read_handler memory_read;
 	mem_write_handler memory_write;
+	mem_read_handler internal_read;
+	mem_write_handler internal_write;
+	unsigned pgm_memory_base;
 	void (*set_op_base)(int pc);
 	int address_shift;
 	unsigned address_bits, endianess, align_unit, max_inst_len;

@@ -132,6 +132,9 @@
 
 #define RDMEM(a)	(*cpuintf[cputype].memory_read)(a)
 #define WRMEM(a,v)	(*cpuintf[cputype].memory_write)(a,v)
+#define RDINT(a)	(*cpuintf[cputype].internal_read)(a)
+#define WRINT(a,v)	(*cpuintf[cputype].internal_write)(a,v)
+#define PGM_MEMORY	cpuintf[cputype].pgm_memory_base
 
 /****************************************************************************
  * Globals
@@ -475,6 +478,7 @@ typedef struct {
 	s_edit	edit[MAX_DATA]; 	/* list of x,y,w triplets for the memory elements */
 	UINT32  base;               /* current base address */
 	UINT32	address;			/* current cursor address */
+	UINT32	pgm_memory_base;	/* program/data memory base toggle */
 	INT32   offset;             /* edit offset */
 	INT32   nibble;             /* edit nibble */
 	INT32	bytes;				/* number of bytes per edit line */
@@ -482,6 +486,7 @@ typedef struct {
 	INT32	size;				/* number of bytes in the edit window */
 	UINT8	mode;				/* 0 bytes, 1 words, 2 dword */
 	UINT8	ascii;				/* display ASCII values */
+	UINT8	internal;			/* display CPU internal memory instead of ROM/RAM? */
 	UINT8   changed;
 }	s_mem;
 
@@ -1070,7 +1075,6 @@ static int readkey(void)
 			key_old = k;
 		}
 	} while (k == KEYCODE_NONE);
-
 	if (cursor_on)
 		toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
 
@@ -1186,10 +1190,11 @@ static s_command commands[] = {
 	cmd_dasm_to_file },
 {	(1<<EDIT_CMDS),
 	"DUMP",         0,          CODE_NONE,
-	"<filename> <start> <end> [<data size> [<ASCII mode>]]",
+	"<filename> <start> <end> [<data size> [<ASCII mode> [<prog/data memory>]]]",
 	"Dump to <filename> from address <start> to <end>\n" \
 	"[data size BYTE|WORD|DWORD (also 0|1|2)]\n" \
-	"[ASCII mode OFF|TRANSLATE|FULL (also 0|1|2)]\n",
+	"[ASCII mode OFF|TRANSLATE|FULL (also 0|1|2)]\n" \
+	"[PROG or DATA memory (also 0|1) for CPUs supporting it]\n",
 	cmd_dump_to_file },
 {	(1<<EDIT_CMDS),
 	"TRACE",        0,          CODE_NONE,
@@ -1307,6 +1312,16 @@ static s_command commands[] = {
 	"",
 	"Toggle between hex, ASCII and full character set mode",
 	NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	0,				0,			KEYCODE_P,
+	"",
+	"Toggle memory display between DATA and PROGRAM memory (Harvard-architecture CPUs)",
+    NULL },
+{	(1<<EDIT_MEM1)|(1<<EDIT_MEM2),
+	0,				0,			KEYCODE_I,
+	"",
+	"Toggle memory display between CPU internal and normal memory",
+    NULL },
 {   (1<<EDIT_MEM1)|(1<<EDIT_MEM2),
 	0,				0,			KEYCODE_M,
 	"",
@@ -2003,7 +2018,7 @@ static void trace_output( void )
 		unsigned addr_width = (ABITS + 3) / 4;
 		int count, i;
 
-		// check for trace_loops
+		/* check for trace_loops */
 		for( i = count = 0; i < MAX_LOOPS; i++ )
 			if( TRACE.last_pc[i] == pc )
 				count++;
@@ -2227,19 +2242,22 @@ static const char *name_rdmem( unsigned base )
 		{
 			unsigned offset = base - mr->start;
 
-//			if( mr->description )
-//				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == videoram )
-//				sprintf(dst, "video+%04X", lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == colorram )
-//				sprintf(dst, "color+%04X", lshift(offset) );
-//			else
-//			if( mr->base && *mr->base == spriteram )
-//				sprintf(dst, "sprite+%04X", lshift(offset) );
-//			else
-			switch( (FPTR)mr->handler )
+#if 0
+/* Won't work since the MemoryWrite doesn't support ->base anymore */
+            if( mr->description )
+				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
+			else
+			if( mr->base && *mr->base == videoram )
+				sprintf(dst, "video+%04X", lshift(offset) );
+			else
+			if( mr->base && *mr->base == colorram )
+				sprintf(dst, "color+%04X", lshift(offset) );
+			else
+			if( mr->base && *mr->base == spriteram )
+				sprintf(dst, "sprite+%04X", lshift(offset) );
+			else
+#endif
+            switch( (FPTR)mr->handler )
 			{
 			case (FPTR)MRA_RAM:
 				sprintf(dst, "RAM%d+%04X", ram_cnt, lshift(offset) );
@@ -2359,10 +2377,13 @@ static const char *name_wrmem( unsigned base )
 	{
 		if( base >= mw->start && base <= mw->end )
 		{
-//			if( mw->description )
-//				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
-//			else
-			if( mw->base && *mw->base == videoram )
+#if 0
+/* Won't work since the MemoryRead doesn't support ->description anymore */
+            if( mw->description )
+				sprintf(dst, "%s+%04X", mw->description, lshift(base - mw->start) );
+			else
+#endif
+            if( mw->base && *mw->base == videoram )
 				sprintf(dst, "video+%04X", lshift(base - mw->start) );
 			else
 			if( mw->base && *mw->base == colorram )
@@ -2450,7 +2471,7 @@ static const char *name_memory( unsigned base )
 
 	/* both names differ? */
 	if( strcmp(rd,wr) )
-		/* well, return one of the names... */
+		/* well, return both (separated by tab means left/right aligned) */
 		sprintf(buffer[which], "%s\t%s", rd, wr);
 	else
 		/* return the name for readmem... */
@@ -3120,7 +3141,13 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 		if( DBGMEM[which].address == DBG.brk_data )
 			color = cur_col[E_BRK_DATA];
 
-		*val = RDMEM( DBGMEM[which].address );
+		if( DBGMEM[which].internal )
+			*val = RDINT( DBGMEM[which].address );
+        else
+		if( DBGMEM[which].pgm_memory_base )
+			*val = OP_ROM[DBGMEM[which].pgm_memory_base + DBGMEM[which].address];
+		else
+			*val = RDMEM( DBGMEM[which].address );
 
 		if( *val != *old )
 		{
@@ -3187,7 +3214,12 @@ static void dump_mem( int which, int set_title )
 	unsigned len_addr = (ABITS + ASHIFT + 3) / 4;
 
 	if( set_title )
-		win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base) );
+	{
+		if( DBGMEM[which].internal )
+			win_set_title( WIN_MEM(activecpu,which), "CPU internal" );
+        else
+			win_set_title( WIN_MEM(activecpu,which), name_memory(DBGMEM[which].base + DBGMEM[which].pgm_memory_base) );
+	}
 
 	switch( DBGMEM[which].mode )
 	{
@@ -3423,7 +3455,7 @@ static void edit_mem( int which )
 			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASK;
 			break;
 	}
-	win_set_title( win, name_memory( DBGMEM[which].address ) );
+	win_set_title( win, name_memory(DBGMEM[which].address + DBGMEM[which].pgm_memory_base) );
 
 	i = readkey();
 	k = keyboard_name(i);
@@ -3443,7 +3475,12 @@ static void edit_mem( int which )
 				if( val > 9 ) val -= 7;
 				val <<= shift;
 				/* now modify the register */
-				WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
+				if( DBGMEM[which].internal )
+					WRINT( DBGMEM[which].address, ( RDINT( DBGMEM[which].address ) & mask ) | val );
+				else
+				if( DBGMEM[which].pgm_memory_base == 0 )
+                    WRMEM( DBGMEM[which].address, ( RDMEM( DBGMEM[which].address ) & mask ) | val );
+				/* we don't write to 'program memory' */
 				update_window = 1;
 				i = KEYCODE_RIGHT;	/* advance to next nibble */
 		}
@@ -3524,15 +3561,31 @@ static void edit_mem( int which )
 			update_window = 1;
 			break;
 
-
-		case KEYCODE_M:
+		case KEYCODE_M: /* display mode */
 			DBGMEM[which].mode = ++(DBGMEM[which].mode) % 3;
 			/* Reset cursor coordinates and sizes of the edit info */
 			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
 			update_window = 1;
 			break;
 
-		case KEYCODE_ENTER:
+		case KEYCODE_P: /* program memory */
+			DBGMEM[which].pgm_memory_base ^= PGM_MEMORY;
+			/* Reset cursor coordinates and sizes of the edit info */
+			memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
+			update_window = 1;
+			break;
+
+		case KEYCODE_I: /* internal memory */
+			if( cpuintf[cputype].internal_read && cpuintf[cputype].internal_write )
+			{
+				DBGMEM[which].internal ^= 1;
+				/* Reset cursor coordinates and sizes of the edit info */
+				memset( DBGMEM[which].edit, 0, sizeof(DBGMEM[which].edit) );
+				update_window = 1;
+			}
+            break;
+
+        case KEYCODE_ENTER:
 			DBG.window = EDIT_CMDS;
 			break;
 
@@ -4245,8 +4298,7 @@ static void cmd_dasm_to_file( void )
 			for( i = 0; i < INSTL; i++ )
 			{
 				if ( i < s )
-					fprintf( file, "%02X ",
-						RDMEM(order(p+i,1)) );
+					fprintf( file, "%02X ", RDMEM(order(p+i,1)) );
 				else
 					fprintf( file, "   ");
 			}
@@ -4295,7 +4347,7 @@ static void cmd_dump_to_file( void )
 	int length;
 	FILE *file;
 	unsigned x, offs, address = 0, start, end, width, data;
-	unsigned datasize, asciimode;
+	unsigned datasize, asciimode, pgm_memory_base;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
@@ -4323,8 +4375,9 @@ static void cmd_dump_to_file( void )
 		return;
 	}
 	end = rshift(end);
-	asciimode = 1;		/* default to translation table */
-	datasize = ALIGN*2;	/* default to align unit of that CPU */
+	asciimode = 1;			/* default to translation table */
+	pgm_memory_base = 0;	/* default to data mode (offset 0) */
+	datasize = ALIGN*2; 	/* default to align unit of that CPU */
 	data = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0");
 	if( length )
 	{
@@ -4346,10 +4399,25 @@ static void cmd_dump_to_file( void )
 				data = 1;
 			}
 			asciimode = data;
-		}
+			/* look if there's also an PROG/DATA mode specified */
+			data = get_option_or_value( &cmd, &length, "PROG\0DATA\0" );
+			if( length )
+			{
+				if( data > 1 )
+				{
+					win_msgbox( cur_col[E_ERROR], "DUMP arguments",
+						"Wrong PROG/DATA mode. Only PROG or DATA\n(also 0,1) are supported");
+					data = 1;
+				}
+				pgm_memory_base = data;
+			}
+        }
 	}
 
-	file = fopen(filename, "w");
+	if( pgm_memory_base )
+		pgm_memory_base = PGM_MEMORY;
+
+    file = fopen(filename, "w");
 	if( !file )
 	{
 		win_msgbox( cur_col[E_ERROR], "DUMP to file",
@@ -4374,7 +4442,7 @@ static void cmd_dump_to_file( void )
 				address = (start + order(offs,4)) & AMASK;
 				break;
 		}
-		buffer[offs & 15] = RDMEM( address );
+		buffer[offs & 15] = RDMEM( address + pgm_memory_base );
 		if( (offs & 15) == 0 )
 			fprintf(file, "%0*X: ", width, lshift((start + offs) & AMASK) );
 		fprintf(file, "%02X", buffer[offs & 15] );
@@ -4664,7 +4732,6 @@ static void cmd_search_memory(void)
 				win_set_title( win, "[%3.0f%%] %s/%s",
 					100.0 * addr / (AMASK + 1),
 					kilobyte(addr), kilobyte(AMASK + 1) );
-//				osd_screen_update();
 			}
 			for( i = 0; i < search_count; i++)
 				if( RDMEM( addr+i ) != search_data[i] )
