@@ -47,6 +47,11 @@ char *__wide2ascii(char *dest, const WCHAR *widestr);
 #endif
 
 // --------------------------------------------------------------------------
+// Windows API redefines
+
+#define IsIconic(window)	(0)
+
+// --------------------------------------------------------------------------
 
 // our dialog/configured options //
 struct ui_options

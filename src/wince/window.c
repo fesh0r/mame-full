@@ -708,10 +708,8 @@ static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
 	last = bitmap;
 
 	// if we're iconic, don't bother
-#ifndef UNDER_CE
 	if (IsIconic(win_video_window))
 		return;
-#endif
 
 	// if we're in a window, constrain to a 16-byte aligned boundary
 	if (win_window_mode && !update)
