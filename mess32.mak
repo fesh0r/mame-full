@@ -584,25 +584,30 @@ DRV_OBJS = \
 
 
 IMGTOOL_OBJS= \
-          $(OBJ)/mess/tools/stubs.o   \
-          $(OBJ)/mess/config.o        \
-          $(OBJ)/unzip.o              \
-		  $(OBJ)/mess/utils.o		\
-          $(OBJ)/mess/tools/main.o    \
-          $(OBJ)/mess/tools/imgtool.o \
-		  $(OBJ)/mess/tools/imgwave.o \
-          $(OBJ)/mess/tools/stream.o  \
-          $(OBJ)/mess/tools/rsdos.o   \
-          $(OBJ)/mess/tools/cococas.o \
-		  $(OBJ)/mess/formats/cococas.o \
-          $(OBJ)/mess/tools/t64.o     \
-          $(OBJ)/mess/tools/lynx.o    \
-          $(OBJ)/mess/tools/crt.o     \
-          $(OBJ)/mess/tools/d64.o     \
-          $(OBJ)/mess/tools/fat.o     \
-          $(OBJ)/mess/tools/pchd.o    \
-          $(OBJ)/mess/tools/zip.o     \
-          $(OBJ)/mess/tools/fs.o     \
+	  $(OBJ)/mess/tools/stubs.o   \
+	  $(OBJ)/mess/config.o	      \
+	  $(OBJ)/unzip.o	      \
+	  $(OBJ)/mess/utils.o	\
+	  $(OBJ)/mess/tools/main.o    \
+	  $(OBJ)/mess/tools/imgtool.o \
+	  $(OBJ)/mess/tools/imgwave.o \
+	  $(OBJ)/mess/tools/cococas.o   \
+	  $(OBJ)/mess/tools/vmsx_tap.o   \
+	  $(OBJ)/mess/tools/vmsx_gm2.o   \
+	  $(OBJ)/mess/formats/fmsx_cas.o  \
+	  $(OBJ)/mess/tools/fmsx_cas.o  \
+	  $(OBJ)/mess/formats/cococas.o  \
+	  $(OBJ)/mess/tools/rsdos.o   \
+	  $(OBJ)/mess/tools/stream.o  \
+	  $(OBJ)/mess/tools/t64.o     \
+	  $(OBJ)/mess/tools/lynx.o    \
+	  $(OBJ)/mess/tools/crt.o     \
+	  $(OBJ)/mess/tools/d64.o     \
+	  $(OBJ)/mess/tools/fat.o     \
+	  $(OBJ)/mess/tools/pchd.o    \
+	  $(OBJ)/mess/tools/rom16.o     \
+	  $(OBJ)/mess/tools/zip.o     \
+	  $(OBJ)/mess/tools/fs.o	\
           $(OBJ)/mess/Win32/dirio.o zlib\zlib.lib
 
 !ifdef TINY_COMPILE
