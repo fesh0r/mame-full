@@ -41,6 +41,10 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 		features.supports_createdir = 1;
 	if (module->delete_dir)
 		features.supports_deletedir = 1;
+	if (module->supports_creation_time)
+		features.supports_creation_time = 1;
+	if (module->supports_lastmodified_time)
+		features.supports_lastmodified_time = 1;
 	return features;
 }
 

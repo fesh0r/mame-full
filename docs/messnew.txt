@@ -20,7 +20,7 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- Creation and last modified dates are now supported by the core.  [Nate Woods]
 
 
 

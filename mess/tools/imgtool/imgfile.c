@@ -267,6 +267,9 @@ done:
 imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
+	const struct ImageModule *module;
+
+	module = img_enum_module(enumeration);
 
 	/* This makes it so that drivers don't have to take care of clearing
 	 * the attributes if they don't apply
@@ -275,10 +278,18 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 		ent->filename[0] = '\0';
 	if (ent->attr_len)
 		ent->attr[0] = '\0';
+	ent->creation_time = 0;
+	ent->lastmodified_time = 0;
 
-	err = img_enum_module(enumeration)->next_enum(enumeration, ent);
+	err = module->next_enum(enumeration, ent);
 	if (err)
 		return markerrorsource(err);
+
+	/* don't trust the module! */
+	if (!module->supports_creation_time && (ent->creation_time != 0))
+		return IMGTOOLERR_UNEXPECTED;
+	if (!module->supports_lastmodified_time && (ent->lastmodified_time != 0))
+		return IMGTOOLERR_UNEXPECTED;
 
 	return IMGTOOLERR_SUCCESS;
 }

@@ -28,6 +28,8 @@ struct ImgtoolFloppyCallbacks
 	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
 	unsigned int open_is_strict : 1;
+	unsigned int supports_creation_time : 1;
+	unsigned int supports_lastmodified_time : 1;
 
 	imgtoolerr_t	(*create)		(imgtool_image *img, option_resolution *opts);
 	imgtoolerr_t	(*open)			(imgtool_image *img);

@@ -185,15 +185,19 @@ static int append_associated_icon(HWND window, const char *extension)
 static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *entry)
 {
 	LVITEM lvi;
-	int new_index;
+	int new_index, column_index;
 	struct wimgtool_info *info;
 	TCHAR buffer[32];
 	int icon_index;
 	const char *extension;
 	const char *ptr;
 	size_t size, i;
+	struct imgtool_module_features features;
+	struct tm *local_time;
+	LPTSTR local_time_string;
 
 	info = get_wimgtool_info(window);
+	features = img_get_module_features(img_module(info->image));
 
 	if (entry->directory)
 	{
@@ -244,12 +248,27 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]),
 			TEXT("%d"), entry->filesize);
 	}
-	ListView_SetItemText(info->listview, new_index, 1, buffer);
+	column_index = 1;
+	ListView_SetItemText(info->listview, new_index, column_index++, buffer);
+
+	if (features.supports_creation_time)
+	{
+		local_time = localtime(&entry->creation_time);
+		local_time_string = _tasctime(local_time);
+		ListView_SetItemText(info->listview, new_index, column_index++, local_time_string);
+	}
+
+	if (features.supports_lastmodified_time)
+	{
+		local_time = localtime(&entry->lastmodified_time);
+		local_time_string = _tasctime(local_time);
+		ListView_SetItemText(info->listview, new_index, column_index++, local_time_string);
+	}
 
 	if (entry->attr)
-		ListView_SetItemText(info->listview, new_index, 2, U2T(entry->attr));
+		ListView_SetItemText(info->listview, new_index, column_index++, U2T(entry->attr));
 	if (entry->corrupt)
-		ListView_SetItemText(info->listview, new_index, 3, (LPTSTR) TEXT("Corrupt"));
+		ListView_SetItemText(info->listview, new_index, column_index++, (LPTSTR) TEXT("Corrupt"));
 	return 0;
 }
 
@@ -358,10 +377,17 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	char buf[256];
 	TCHAR file_title[MAX_PATH];
 	const char *statusbar_text[2];
+	struct imgtool_module_features features;
 
 	info = get_wimgtool_info(window);
 
+	// get the modules and features
 	module = info->image ? img_module(info->image) : NULL;
+	if (module)
+		features = img_get_module_features(module);
+	else
+		memset(&features, 0, sizeof(features));
+
 	if (info->filename)
 	{
 		GetFileTitle(U2T(info->filename), file_title, sizeof(file_title) / sizeof(file_title[0]));
@@ -397,14 +423,33 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	col.pszText = (LPTSTR) TEXT("Filename");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
+
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Size");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
+
+	if (features.supports_creation_time)
+	{
+		col.cx = 60;
+		col.pszText = (LPTSTR) TEXT("Creation time");
+		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+			return IMGTOOLERR_OUTOFMEMORY;
+	}
+
+	if (features.supports_lastmodified_time)
+	{
+		col.cx = 60;
+		col.pszText = (LPTSTR) TEXT("Last modified time");
+		if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
+			return IMGTOOLERR_OUTOFMEMORY;
+	}
+
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Attributes");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)
 		return IMGTOOLERR_OUTOFMEMORY;
+
 	col.cx = 60;
 	col.pszText = (LPTSTR) TEXT("Notes");
 	if (ListView_InsertColumn(info->listview, column_index++, &col) < 0)

@@ -1138,22 +1138,22 @@ static imgtoolerr_t os9_diskimage_deletedir(imgtool_image *image, const char *pa
 
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
-	module->initial_path_separator	= 1;
-	module->open_is_strict			= 1;
-	module->image_extra_bytes		+= sizeof(struct os9_diskinfo);
-	module->imageenum_extra_bytes	+= sizeof(struct os9_direnum);
-	module->eoln					= EOLN_CR;
-	module->path_separator			= '/';
-	module->create					= os9_diskimage_create;
-	module->open					= os9_diskimage_open;
-	module->begin_enum				= os9_diskimage_beginenum;
-	module->next_enum				= os9_diskimage_nextenum;
-	module->free_space				= os9_diskimage_freespace;
-	module->read_file				= os9_diskimage_readfile;
-	module->write_file				= os9_diskimage_writefile;
-	module->delete_file				= os9_diskimage_deletefile;
-	module->create_dir				= os9_diskimage_createdir;
-	module->delete_dir				= os9_diskimage_deletedir;
+	module->initial_path_separator		= 1;
+	module->open_is_strict				= 1;
+	module->image_extra_bytes			+= sizeof(struct os9_diskinfo);
+	module->imageenum_extra_bytes		+= sizeof(struct os9_direnum);
+	module->eoln						= EOLN_CR;
+	module->path_separator				= '/';
+	module->create						= os9_diskimage_create;
+	module->open						= os9_diskimage_open;
+	module->begin_enum					= os9_diskimage_beginenum;
+	module->next_enum					= os9_diskimage_nextenum;
+	module->free_space					= os9_diskimage_freespace;
+	module->read_file					= os9_diskimage_readfile;
+	module->write_file					= os9_diskimage_writefile;
+	module->delete_file					= os9_diskimage_deletefile;
+	module->create_dir					= os9_diskimage_createdir;
+	module->delete_dir					= os9_diskimage_deletedir;
 	return IMGTOOLERR_SUCCESS;
 }
 

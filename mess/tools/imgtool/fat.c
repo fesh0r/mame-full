@@ -51,6 +51,19 @@
 	  28       4  File Size
 
 
+  Dates and times are stored in separate words; when together, the time is
+  first and the date is second.
+
+	Time:
+		bits 15-11		Hour
+		bits 10- 5		Minute
+		bits  4- 0		Second / 2
+
+	Date:
+		bits 15- 9		Year - 1980
+		bits  8- 5		Month
+		bits  4- 0		Day
+
   LFN Entry Format:
 
   Offset  Length  Description
@@ -128,6 +141,8 @@ struct fat_dirent
 	UINT32 first_cluster;
 	UINT32 dirent_sector_index;
 	UINT32 dirent_sector_offset;
+	time_t creation_time;
+	time_t lastmodified_time;
 };
 
 struct fat_freeentry_info
@@ -1145,6 +1160,45 @@ static void fat_cannonicalize_sfn(char *sfn, const UINT8 *sfn_bytes)
 
 
 
+static time_t fat_crack_time(UINT32 fat_time)
+{
+	struct tm t;
+	time_t now;
+
+	time(&now);
+	t = *localtime(&now);
+
+	t.tm_sec	= ((fat_time >>  0) & 0x001F) * 2;
+	t.tm_min	= ((fat_time >>  5) & 0x003F);
+	t.tm_hour	= ((fat_time >> 11) & 0x001F);
+	t.tm_mday	= ((fat_time >> 16) & 0x001F);
+	t.tm_mon	= ((fat_time >> 21) & 0x000F);
+	t.tm_year	= ((fat_time >> 25) & 0x007F) + 1980 - 1900;
+
+	return mktime(&t);
+}
+
+
+
+static UINT32 fat_setup_time(time_t ansi_time)
+{
+	struct tm t;
+	UINT32 result = 0;
+
+	t = *localtime(&ansi_time);
+
+	result |= (((UINT32) (t.tm_sec / 2))			& 0x001F) <<  0;
+	result |= (((UINT32) t.tm_min)					& 0x003F) <<  5;
+	result |= (((UINT32) t.tm_hour)					& 0x001F) << 11;
+	result |= (((UINT32) t.tm_mday)					& 0x001F) << 16;
+	result |= (((UINT32) t.tm_mon)					& 0x000F) << 21;
+	result |= (((UINT32) (t.tm_year + 1900 - 1980))	& 0x007F) << 25;
+
+	return result;
+}
+
+
+
 static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	struct fat_dirent *ent, struct fat_freeentry_info *freeent)
 {
@@ -1253,11 +1307,13 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	}
 
 	/* other attributes */
-	ent->filesize = pick_integer(entry, 28, 4);
-	ent->directory = (entry[11] & 0x10) ? 1 : 0;
-	ent->first_cluster = pick_integer(entry, 26, 2);
-	ent->dirent_sector_index = entry_sector_index;
-	ent->dirent_sector_offset = entry_sector_offset;
+	ent->filesize				= pick_integer(entry, 28, 4);
+	ent->directory				= (entry[11] & 0x10) ? 1 : 0;
+	ent->first_cluster			= pick_integer(entry, 26, 2);
+	ent->dirent_sector_index	= entry_sector_index;
+	ent->dirent_sector_offset	= entry_sector_offset;
+	ent->creation_time			= fat_crack_time(pick_integer(entry, 14, 4));
+	ent->lastmodified_time		= fat_crack_time(pick_integer(entry, 22, 4));
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1269,6 +1325,7 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	UINT8 *created_entry = NULL;
 	UINT8 *new_created_entry;
+	UINT32 now;
 	size_t created_entry_len = FAT_DIRENT_SIZE;
 	size_t created_entry_pos = 0;
 	unicode_char_t ch;
@@ -1294,9 +1351,17 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 		err = IMGTOOLERR_OUTOFMEMORY;
 		goto done;
 	}
+
+	/* set up the basics for the new dirent */
 	memset(created_entry +  0, ' ', 11);
 	memset(created_entry + 12, '\0', FAT_DIRENT_SIZE - 12);
 	created_entry[11] = (create == CREATE_DIR) ? 0x10 : 0x00;
+	
+	/* set up file dates in the new dirent */
+	now = fat_setup_time(time(NULL));
+	place_integer(created_entry, 14, 4, now);
+	place_integer(created_entry, 18, 2, now);
+	place_integer(created_entry, 22, 4, now);
 
 	while(*filename)
 	{
@@ -1671,11 +1736,14 @@ static imgtoolerr_t fat_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	if (err)
 		return err;
 
+	/* copy stuff from the FAT dirent to the Imgtool dirent */
 	snprintf(ent->filename, ent->filename_len, "%s", fatent.long_filename[0]
 		? fatent.long_filename : fatent.short_filename);
 	ent->filesize = fatent.filesize;
 	ent->directory = fatent.directory;
 	ent->eof = fatent.eof;
+	ent->creation_time = fatent.creation_time;
+	ent->lastmodified_time = fatent.lastmodified_time;
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -1858,6 +1926,8 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 {
 	module->initial_path_separator		= 1;
 	module->open_is_strict				= 1;
+	module->supports_creation_time		= 1;
+	module->supports_lastmodified_time	= 1;
 	module->path_separator				= '\\';
 	module->alternate_path_separator	= '/';
 	module->eoln						= EOLN_CRLF;

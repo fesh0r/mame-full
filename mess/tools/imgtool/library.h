@@ -15,6 +15,8 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
+#include <time.h>
+
 #include "osd_cpu.h"
 #include "opresolv.h"
 #include "stream.h"
@@ -39,6 +41,9 @@ typedef struct
 	char *attr;
 	size_t attr_len;
 	UINT64 filesize;
+
+	time_t creation_time;
+	time_t lastmodified_time;
 
 	/* flags */
 	unsigned int eof : 1;
@@ -67,6 +72,8 @@ struct ImageModule
 	unsigned int prefer_ucase : 1;
 	unsigned int initial_path_separator : 1;
 	unsigned int open_is_strict : 1;
+	unsigned int supports_creation_time : 1;
+	unsigned int supports_lastmodified_time : 1;
 
 	imgtoolerr_t	(*open)			(imgtool_image *image, imgtool_stream *f);
 	void			(*close)		(imgtool_image *image);
