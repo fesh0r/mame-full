@@ -692,9 +692,34 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * rvm->bytesperrow);
 	}
 	else {
-		int borderred, bordergreen, borderblue;
+		int borderred = 0, bordergreen = 0, borderblue = 0;
 
-		m6847_get_bordercolor_rgb(&borderred, &bordergreen, &borderblue);
+		switch(m6847_get_bordercolor()) {
+		case M6847_BORDERCOLOR_BLACK:
+			borderred = 0;
+			bordergreen = 0;
+			borderblue = 0;
+			break;
+
+		case M6847_BORDERCOLOR_GREEN:
+			borderred = 0;
+			bordergreen = 255;
+			borderblue = 0;
+			break;
+
+		case M6847_BORDERCOLOR_WHITE:
+			borderred = 255;
+			bordergreen = 255;
+			borderblue = 255;
+			break;
+
+		case M6847_BORDERCOLOR_ORANGE:
+			borderred = 255;
+			bordergreen = 85;
+			borderblue = 0;
+			break;
+		}
+
 		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 		if (palette_recalc())
 			full_refresh = 1;

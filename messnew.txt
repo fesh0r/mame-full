@@ -17,10 +17,11 @@ System Driver Changes:
 using the NC's built in terminal program. Some characters are dropped, could be synchronisation
 problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
 can be printed now. [Kev Thacker]
-- [COCO3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
+- [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
 some timing is still probably off.  Hi-res text will now display the underline in the proper
 place when the lines per row is not 8.  Lo-res font now skewed one scanline, as was the original
 machine. [Nate Woods]
+- [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. [Nate Woods]
 
 Other Changes:
 --------------

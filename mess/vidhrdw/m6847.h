@@ -82,7 +82,6 @@ enum {
 };
 
 int m6847_get_bordercolor(void);
-void m6847_get_bordercolor_rgb(int *red, int *green, int *blue);
 
 struct m6847_state {
 	int vram_mask;

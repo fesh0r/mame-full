@@ -503,7 +503,7 @@ static int m6847_bordercolor(void)
 		pen = 5;
 		break;
 	case M6847_BORDERCOLOR_ORANGE:
-		pen = 8;
+		pen = 16;
 		break;
 	}
 	return pen;
@@ -620,7 +620,7 @@ int m6847_get_bordercolor(void)
 		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
 		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
 		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
+		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_ORANGE,
 		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_ORANGE,
 		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
 		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
@@ -635,35 +635,6 @@ int m6847_get_bordercolor(void)
 		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE
 	};
 	return bordercolortable[the_state.video_gmode];
-}
-
-void m6847_get_bordercolor_rgb(int *red, int *green, int *blue)
-{
-	switch(m6847_get_bordercolor()) {
-	case M6847_BORDERCOLOR_BLACK:
-		*red = 0;
-		*green = 0;
-		*blue = 0;
-		break;
-
-	case M6847_BORDERCOLOR_GREEN:
-		*red = 0;
-		*green = 255;
-		*blue = 0;
-		break;
-
-	case M6847_BORDERCOLOR_WHITE:
-		*red = 255;
-		*green = 255;
-		*blue = 255;
-		break;
-
-	case M6847_BORDERCOLOR_ORANGE:
-		*red = 255;
-		*green = 128;
-		*blue = 0;
-		break;
-	}
 }
 
 int m6847_get_vram_size(void)
