@@ -246,7 +246,7 @@ void sysdep_display_update_mouse(void);
 
 /* misc */
 /* Check if widthscale, heightscale and yarbsize are compatible with
-   the choisen effect, if not update them so that they are. Always returns 0,
+   the chosen effect, if not update them so that they are. Always returns 0,
    except if params->effect is an invalid value. */
 int sysdep_display_check_effect_params(struct sysdep_display_open_params *params);
 

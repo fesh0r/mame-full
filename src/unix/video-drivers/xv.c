@@ -313,6 +313,7 @@ int xv_open_display(int reopen)
               sysdep_display_effect_properties[sysdep_display_params.effect].name);
             sysdep_display_params.effect = 0;
           }
+          sysdep_display_set_up_rotation();
           if (sysdep_display_params.depth == 32)
           {
               if (hwscale_perfect_yuv)

@@ -55,6 +55,7 @@ int sysdep_display_blit_dest_bitmap_equals_src_bitmap(void);
  * done, to free (partly) allocated buffers */
 blit_func_p sysdep_display_effect_open(void);
 void sysdep_display_effect_close(void);
+int sysdep_display_set_up_rotation(void);
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_PRIV_H */

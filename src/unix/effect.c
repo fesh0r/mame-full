@@ -443,7 +443,7 @@ blit_func_p sysdep_display_effect_open(void)
   /* FIXME only allocate if needed and of the right size */
   if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
   {
-    fprintf(stderr, "Error: couldnot allocate memory\n");
+    fprintf(stderr, "Error: could not allocate memory\n");
     return NULL;
   }
   memset(effect_dbbuf, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
@@ -519,44 +519,8 @@ blit_func_p sysdep_display_effect_open(void)
     effect_index %= EFFECT_COLOR_FORMATS*3;
   }
 
-  if (sysdep_display_params.orientation)
-  {
-    switch (sysdep_display_params.depth) {
-    case 15:
-    case 16:
-      rotate_func = rotate_16_16;
-      break;
-    case 32:
-      rotate_func = rotate_32_32;
-      break;
-    }
-
-    /* add safety of +- 16 bytes, since some effects assume that this
-       is present and otherwise segfault */
-    if (!(rotate_dbbuf0 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
-    {
-      fprintf(stderr, "Error: couldnot allocate memory\n");
-      return NULL;
-    }
-    rotate_dbbuf0 += 16;
-
-    if ((sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_SCALE2X) ||
-        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_HQ2X)    ||
-        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_LQ2X)) {
-      if (!(rotate_dbbuf1 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
-      {
-        fprintf(stderr, "Error: couldnot allocate memory\n");
-        return NULL;
-      }
-      rotate_dbbuf1 += 16;
-      if (!(rotate_dbbuf2 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
-      {
-        fprintf(stderr, "Error: couldnot allocate memory\n");
-        return NULL;
-      }
-      rotate_dbbuf2 += 16;
-    }
-  }
+  if (sysdep_display_set_up_rotation())
+	  return NULL;
 
   /* Effect specific initialiasations */
   switch (sysdep_display_params.effect)
@@ -602,7 +566,7 @@ blit_func_p sysdep_display_effect_open(void)
       if (!_6tap2x_buf0 || !_6tap2x_buf1 || !_6tap2x_buf2 || !_6tap2x_buf3 ||
           !_6tap2x_buf4 || !_6tap2x_buf5 )
       {
-        fprintf(stderr, "Error: couldnot allocate memory\n");
+        fprintf(stderr, "Error: could not allocate memory\n");
         return NULL;
       }
       /* We need the palette lookup table to be 888 rgb, this means that the
@@ -658,6 +622,51 @@ blit_func_p sysdep_display_effect_open(void)
   }
   
   return effect_funcs[effect_index];
+}
+
+/* Set up rotation function and buffer, if needed. */
+int sysdep_display_set_up_rotation(void)
+{
+  if (sysdep_display_params.orientation)
+  {
+    switch (sysdep_display_params.depth) {
+    case 15:
+    case 16:
+      rotate_func = rotate_16_16;
+      break;
+    case 32:
+      rotate_func = rotate_32_32;
+      break;
+    }
+
+    /* add safety of +- 16 bytes, since some effects assume that this
+       is present and otherwise segfault */
+    if (!(rotate_dbbuf0 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+    {
+      fprintf(stderr, "Error: could not allocate memory\n");
+      return -1;
+    }
+    rotate_dbbuf0 += 16;
+
+    if ((sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_SCALE2X) ||
+        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_HQ2X)    ||
+        (sysdep_display_params.effect == SYSDEP_DISPLAY_EFFECT_LQ2X)) {
+      if (!(rotate_dbbuf1 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+      {
+        fprintf(stderr, "Error: could not allocate memory\n");
+        return -1;
+      }
+      rotate_dbbuf1 += 16;
+      if (!(rotate_dbbuf2 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+      {
+        fprintf(stderr, "Error: could not allocate memory\n");
+        return -1;
+      }
+      rotate_dbbuf2 += 16;
+    }
+  }
+
+  return 0;
 }
 
 void sysdep_display_effect_close(void)
