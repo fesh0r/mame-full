@@ -2429,11 +2429,34 @@ $info=coleco
 $bio
 Coleco Industries ColecoVision
 
-
 Known Issues:
 
-This emulation runs most cartridges accurately. Games requiring analogue controls (Steering 
-Wheel, Roller Controller) are not playable. See coleco.crc for further compatibility notes.
+None. This emulation runs most cartridges accurately. 
+
+EXTRA CONTROLLERS INFO:
+
+*Driving Controller (Expansion Module #2). 
+It consist of a steering wheel and a gas pedal. Only one
+can be used on a real ColecoVision. The gas pedal is not analog, internally it is just a 
+switch.
+On a real ColecoVision, when the Driving Controller is enabled, the controller 1 do not work 
+because have been replaced by the Driving Controller, and controller 2 have to be used to 
+start game, gear shift, etc.
+Driving Controller is just a spinner on controller 1 socket similar to the one on Roller 
+Controller and Super Action Controllers so you can use Roller Controller or Super Action 
+Controllers to play games requiring Driving Controller.
+
+*Roller Controller. 
+Basically a trackball with four buttons (the two fire buttons from player 1 and the two fire 
+buttons from player 2). Only one Roller Controller can be used on a real ColecoVision.  Roller 
+Controller is connected to both controller sockets and both controllers are conected to the Roller
+Controller, it uses the spinner pins of both sockets to generate the X and Y signals (X from controller 1 
+and the Y from controller 2)
+
+*Super Action Controllers. 
+It is a hand controller with a keypad, four buttons (the two from
+the player pad and two more), and a spinner. This was made primarily for two player sport games, but
+will work for every other ColecoVision game.
 
 
 History and Trivia:
@@ -2444,17 +2467,14 @@ graphics and more expansion capabilities compared to it's chief rivals: the Atar
 Intellivision. Among the expansion module options were a hardware Atari 2600 emulator, and a 
 Steering Wheel for driving games, both unheard of at the time.
 
-
 The competitive price, technical superiority, and perhaps more importantly, the inclusion of 
 Donkey Kong as the pack-in cartridge, led to Coleco becoming an industry leader. With the 
 emergence of the popularity of home computers, however, the console market seemed in jeopardy 
 of losing it's share to the likes of Commodore and Apple. Coleco responded by releasing the 
 Adam Family Computer as both a standalone unit and as an expansion to the ColecoVision itself. 
 
-
 The Adam was a phenomenal market failure though, and Coleco pulled itself from both the 
 console and computer markets just before the game market crash in late 1984.
-
 
 Telegames purchased the rights to the system, and many of the manufactured games, and released 
 a clone, The Personal Arcade, in 1988. It was later re-released by them, as the DINA.
