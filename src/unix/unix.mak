@@ -140,7 +140,8 @@ OBJ     = $(NAME).obj
 OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
 
 OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers \
-	  $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+	  $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
+	  $(OBJ)/debug
 ifeq ($(TARGET), mess)
 OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
 	   $(OBJ)/mess/devices $(OBJ)/mess/systems $(OBJ)/mess/machine \
@@ -171,10 +172,11 @@ OBJDIRS += $(UNIX_OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
 IMGTOOL_LIBS = -lz
 
 ifeq ($(TARGET), mess)
-INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -Isrc/unix/sysdep -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 else
-INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
+
 ifeq ($(TARGET), mage)
 INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/includes -Isrc -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
@@ -198,6 +200,10 @@ ZLIB = $(OBJ)/libz.a
 else
 LIBS += -lz
 ZLIB =
+endif
+
+ifdef NEW_DEBUGGER
+CFLAGS += -DNEW_DEBUGGER
 endif
 
 all: maketree $(NAME).$(DISPLAY_METHOD) extra
