@@ -1,3 +1,5 @@
+#include "bcd.h"
+
 int bcd_adjust(int value)
 {
 	if ((value&0xf)>=0xa) value=value+0x10-0xa;

@@ -176,7 +176,7 @@ WRITE_HANDLER ( pc_cga_videoram_w )
 /*
  *	rW	CGA mode control register (see #P138)
  */
-void pc_cga_mode_control_w(int data)
+static void pc_cga_mode_control_w(int data)
 {
 	CGA_LOG(1,"CGA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, hires %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
@@ -188,7 +188,7 @@ void pc_cga_mode_control_w(int data)
 /*
  *	?W	reserved for color select register on color adapter
  */
-void pc_cga_color_select_w(int data)
+static void pc_cga_color_select_w(int data)
 {
 	CGA_LOG(1,"CGA_color_select_w",(errorlog, "$%02x\n", data));
 	if( cga.color_select == data )
@@ -212,7 +212,7 @@ void pc_cga_color_select_w(int data)
  *		=1	memory access without interfering with display
  *		(Genoa SuperEGA) horizontal or vertical retrace
  */
-int pc_cga_status_r(void)
+static int pc_cga_status_r(void)
 {
 	int data = (input_port_0_r(0) & 0x08) | cga.status;
 	cga.status ^= 0x01;

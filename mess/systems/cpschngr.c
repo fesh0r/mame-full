@@ -166,7 +166,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 }
 
 
-READ16_HANDLER( qsound_rom_r )
+static READ16_HANDLER( qsound_rom_r )
 {
 	unsigned char *rom = memory_region(REGION_USER1);
 
@@ -483,7 +483,7 @@ WRITE16_HANDLER( qsound_sharedram1_w )
 		qsound_sharedram1[offset] = data;
 }
 
-WRITE16_HANDLER( cps2_qsound_sharedram_w )
+static WRITE16_HANDLER( cps2_qsound_sharedram_w )
 {
     qsound_sharedram1_w(offset/2, data, 0xff00);
 }

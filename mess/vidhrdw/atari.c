@@ -1095,7 +1095,7 @@ static  renderer_function renderer[2][19][5] = {
  *	Antic Line Done
  *
  *****************************************************************************/
-void antic_line_done(int param)
+static void antic_line_done(int param)
 {
 	if( antic.w.wsync )
     {
@@ -1122,7 +1122,7 @@ void antic_line_done(int param)
  *  TRIGGER_HSYNC if WSYNC (D01A) was accessed
  *
  *****************************************************************************/
-void antic_steal_cycles(int param)
+static void antic_steal_cycles(int param)
 {
 	LOG((errorlog, "           @cycle #%3d steal %d cycles\n", cycle(), antic.steal_cycles));
 	after(antic.steal_cycles, antic_line_done, "antic_line_done");
@@ -1139,7 +1139,7 @@ void antic_steal_cycles(int param)
  *  of the GTIA if enabled (DMA_PLAYER or DMA_MISSILE)
  *
  *****************************************************************************/
-void antic_scanline_render(int param)
+static void antic_scanline_render(int param)
 {
 	VIDEO *video = antic.video[antic.scanline];
 	LOG((errorlog, "           @cycle #%3d render mode $%X lines to go #%d\n", cycle(), (antic.cmd & 0x0f), antic.modelines));

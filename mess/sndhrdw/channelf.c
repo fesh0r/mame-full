@@ -15,7 +15,7 @@ void channelf_sound_w(int mode)
 	sound_mode = mode;
 }
 
-int channelf_sh_start(void)
+static int channelf_sh_start(void)
 {
 	channel = stream_init("Digital out", 50, Machine->sample_rate, 0, channelf_sh_update);
     return 0;

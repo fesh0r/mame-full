@@ -6,6 +6,7 @@
  ******************************************************************************/
 
 #include "driver.h"
+#include "includes/kaypro.h"
 
 static	int channel;
 #define BELL_FREQ	1000
@@ -16,7 +17,7 @@ static	INT32 bell_counter;
 static	INT32 click_signal;
 static	INT32 click_counter;
 
-void kaypro_sound_update(int param, INT16 *buffer, int length)
+static void kaypro_sound_update(int param, INT16 *buffer, int length)
 {
 	while (length-- > 0)
 	{
@@ -34,16 +35,17 @@ void kaypro_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-void kaypro_sh_start(const struct MachineSound *msound)
+static int kaypro_sh_start(const struct MachineSound *msound)
 {
 	channel = stream_init("Beeper", 100, Machine->sample_rate, 0, kaypro_sound_update);
+	return 0;
 }
 
-void kaypro_sh_stop(void)
+static void kaypro_sh_stop(void)
 {
 }
 
-void kaypro_sh_update(void)
+static void kaypro_sh_update(void)
 {
 	stream_update(channel,0);
 }

@@ -26,7 +26,7 @@ static OPBASE_HANDLER(galaxy_opbaseoverride);
 int galaxy_interrupts_enabled = TRUE;
 
 
-int galaxy_irq_callback (int cpu)
+static int galaxy_irq_callback (int cpu)
 {
 	galaxy_interrupts_enabled = TRUE;
 	return 1;

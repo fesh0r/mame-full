@@ -187,7 +187,7 @@ WRITE32_HANDLER( saturn_workh_ram_w )
 }
 #endif
 
-READ32_HANDLER( saturn_sound_ram_r )
+static READ32_HANDLER( saturn_sound_ram_r )
 {
 
 #if DISP_MEM
@@ -198,7 +198,7 @@ READ32_HANDLER( saturn_sound_ram_r )
 
 }
 
-WRITE32_HANDLER( saturn_sound_ram_w )
+static WRITE32_HANDLER( saturn_sound_ram_w )
 {
 
   UINT16 *sb_temp = &sound_base[(offset<<1)];
@@ -211,7 +211,7 @@ WRITE32_HANDLER( saturn_sound_ram_w )
   *sb_temp = (*sb_temp & mem_mask) | data;
 }
 
-READ32_HANDLER( saturn_vdp1_ram_r )
+static READ32_HANDLER( saturn_vdp1_ram_r )
 {
   /*offs_t ea;*/
 
@@ -223,7 +223,7 @@ READ32_HANDLER( saturn_vdp1_ram_r )
   return vdp1_ram_base[offset] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_vdp1_ram_w )
+static WRITE32_HANDLER( saturn_vdp1_ram_w )
 {
 
 #if DISP_MEM
@@ -233,7 +233,7 @@ WRITE32_HANDLER( saturn_vdp1_ram_w )
   vdp1_ram_base[offset] = (vdp1_ram_base[offset] & mem_mask) | data;
 }
 
-READ32_HANDLER( saturn_vdp2_ram_r )
+static READ32_HANDLER( saturn_vdp2_ram_r )
 {
   /*offs_t ea;*/
 
@@ -245,7 +245,7 @@ READ32_HANDLER( saturn_vdp2_ram_r )
   return vdp2_ram_base[offset] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_vdp2_ram_w )
+static WRITE32_HANDLER( saturn_vdp2_ram_w )
 {
   /* offs_t ea;*/
 
@@ -257,7 +257,7 @@ WRITE32_HANDLER( saturn_vdp2_ram_w )
   vdp2_ram_base[offset] = (vdp2_ram_base[offset] & mem_mask) | data;
 }
 
-READ32_HANDLER( saturn_fb1_ram_r )
+static READ32_HANDLER( saturn_fb1_ram_r )
 {
   /* offs_t ea;*/
 
@@ -269,14 +269,14 @@ READ32_HANDLER( saturn_fb1_ram_r )
   return fb1_ram_base[offset] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_fb1_ram_w )
+static WRITE32_HANDLER( saturn_fb1_ram_w )
 {
   logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
   fb1_ram_base[offset] = (fb1_ram_base[offset] & mem_mask) | data;
 }
 
 /* FB2 not mapped directly */
-READ32_HANDLER( saturn_fb2_ram_r )
+static READ32_HANDLER( saturn_fb2_ram_r )
 {
   offs_t ea;
 
@@ -286,7 +286,7 @@ READ32_HANDLER( saturn_fb2_ram_r )
   return mem[ea] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_fb2_ram_w )
+static WRITE32_HANDLER( saturn_fb2_ram_w )
 
 {
   offs_t ea;
@@ -298,7 +298,7 @@ WRITE32_HANDLER( saturn_fb2_ram_w )
 }
 /* END FB2 */
 
-READ32_HANDLER( saturn_color_ram_r )
+static READ32_HANDLER( saturn_color_ram_r )
 
 {
   logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
@@ -306,7 +306,7 @@ READ32_HANDLER( saturn_color_ram_r )
   return color_ram_base[offset] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_color_ram_w )
+static WRITE32_HANDLER( saturn_color_ram_w )
 {
   /* offs_t ea;*/
 
@@ -318,7 +318,7 @@ WRITE32_HANDLER( saturn_color_ram_w )
   color_ram_base[offset] = (color_ram_base[offset] & mem_mask) | data;
 }
 
-READ32_HANDLER( saturn_back_ram_r )
+static READ32_HANDLER( saturn_back_ram_r )
 {
 
 #if DISP_MEM
@@ -328,7 +328,7 @@ if (offset >= 0x4000) offset -= 0x4000; /* do the shadow RAM offsets */
   return back_ram_base[offset] & (~mem_mask);
 }
 
-WRITE32_HANDLER( saturn_back_ram_w )
+static WRITE32_HANDLER( saturn_back_ram_w )
 {
 
 #if DISP_MEM
@@ -368,7 +368,7 @@ struct _smpc_state /* Holds infomation on the current state of the smpc */
 
 #define SET_TIMER 1    /* Set to 1 to indicate timer must be set */
 
-void reset_smpc(void)
+static void reset_smpc(void)
 
      /* Reset SMPC system */
 
@@ -380,7 +380,7 @@ void reset_smpc(void)
   smpc_state.set_timer = SET_TIMER; /* Setup set timer state */
 }
 
-void smpc_execcomm(int commcode)
+static void smpc_execcomm(int commcode)
 
      /* Function to execute a smpc command when COMMREG is written to */
 
@@ -449,7 +449,7 @@ void smpc_execcomm(int commcode)
     }
 }
 
-READ32_HANDLER( saturn_smpc_r )   /* SMPC */
+static READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 {
   UINT32 ret_val = 0;
   int loop;
@@ -518,7 +518,7 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
   return ret_val & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
+static WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 {
   int loop;
   UINT32 temp_mask;
@@ -586,32 +586,32 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
     }
 }
 
-READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
+static READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
 {
   logerror("cs0_r offset=%08lX mem_mask=%08lX\n",offset*4,mem_mask);
 
   return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_cs0_w )   /* CS0 */
+static WRITE32_HANDLER( saturn_cs0_w )   /* CS0 */
 {
 }
 
-READ32_HANDLER( saturn_cs1_r )	  /* CS1 */
-{
-  return 0xa5a5a5a5 & ~mem_mask;
-}
-
-WRITE32_HANDLER( saturn_cs1_w )   /* CS1 */
-{
-}
-
-READ32_HANDLER( saturn_cs2_r )	  /* CS2 */
+static READ32_HANDLER( saturn_cs1_r )	  /* CS1 */
 {
   return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
+static WRITE32_HANDLER( saturn_cs1_w )   /* CS1 */
+{
+}
+
+static READ32_HANDLER( saturn_cs2_r )	  /* CS2 */
+{
+  return 0xa5a5a5a5 & ~mem_mask;
+}
+
+static WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
 {
 }
 
@@ -699,14 +699,14 @@ enum
   ABUS_INT
 };
 
-void reset_scu(void)
+static void reset_scu(void)
 
 {
   memset(scu_regs,0,0x34*4);
   scu_regs[0x28] = 0xffffffff;
 }
 
-READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
+static READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
 
 {
   // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],activecpu_get_reg(SH2_PC));
@@ -739,7 +739,7 @@ static void scu_set_imask(void)
     LOG(("\n"));
 }
 
-void scu_pulse_interrupt(int irq)
+static void scu_pulse_interrupt(int irq)
 {
     if (irq >= ABUS_INT)
     {
@@ -762,7 +762,7 @@ void scu_pulse_interrupt(int irq)
     }
 }
 
-WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
+static WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
   logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,activecpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
@@ -790,7 +790,7 @@ UINT32 periodic; /* Currently a hack to bypass bios area */
 #define CD_CR3      0x8
 #define CD_CR4      0x9
 
-void reset_cd(void)
+static void reset_cd(void)
 
 {
   cd_regs[CD_CR1]  =  'C' << 16;
@@ -802,7 +802,7 @@ void reset_cd(void)
   periodic = 0; /* This will toggle every other read so that bios will execute */
 }
 
-void cd_execcomm(void)
+static void cd_execcomm(void)
 
 {
   int command;
@@ -828,7 +828,7 @@ void cd_execcomm(void)
     }
 }
 
-READ32_HANDLER( saturn_cd_r )	 /* CD */
+static READ32_HANDLER( saturn_cd_r )	 /* CD */
 
 {
   if(offset < 0xA)
@@ -860,7 +860,7 @@ READ32_HANDLER( saturn_cd_r )	 /* CD */
     return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_cd_w )	 /* CD */
+static WRITE32_HANDLER( saturn_cd_w )	 /* CD */
 {
   if(offset < 0xA)
     {
@@ -892,12 +892,12 @@ WRITE32_HANDLER( saturn_cd_w )	 /* CD */
  *  FRT master                                          *
  ********************************************************/
 
-READ32_HANDLER( saturn_minit_r )  /* MINIT */
+static READ32_HANDLER( saturn_minit_r )  /* MINIT */
 {
   return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
+static WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
 {
   logerror("minit_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 }
@@ -905,12 +905,12 @@ WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
 /********************************************************
  *  FRT slave
  ********************************************************/
-READ32_HANDLER( saturn_sinit_r )  /* SINIT */
+static READ32_HANDLER( saturn_sinit_r )  /* SINIT */
 {
   return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
+static WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
 {
   logerror("sinit_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 }
@@ -918,14 +918,14 @@ WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
 /********************************************************
  *  DSP
  ********************************************************/
-READ32_HANDLER( saturn_dsp_r )	 /* DSP */
+static READ32_HANDLER( saturn_dsp_r )	 /* DSP */
 {
   logerror("dsp_r offset=%08lX mem_mask=%08lX\n",offset*4,mem_mask);
 
   return 0xa5a5a5a5 & ~mem_mask;
 }
 
-WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
+static WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
 {
   logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
 }
@@ -961,13 +961,13 @@ static const char *vdp1_regnames[] =
   "Mode Status                  "
 };
 
-void reset_vdp1(void)
+static void reset_vdp1(void)
 
 {
   memset(vdp1_state.vdp1_regs,0,0xC<<1);
 }
 
-void cmd0(UINT32 comm, unsigned short *fb)
+static void cmd0(UINT32 comm, unsigned short *fb)
 {
 	UINT32 *vram;
 	short x,y;
@@ -1021,7 +1021,7 @@ void cmd0(UINT32 comm, unsigned short *fb)
 	}
 }
 
-void execute_vdp1(void)
+static void execute_vdp1(void)
 {
 	/* Execute the vdp1 command set */
 	UINT32 *base;
@@ -1070,7 +1070,7 @@ void execute_vdp1(void)
 	logerror("vdp1 execute end\n");
 }
 
-READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
+static READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 {
   UINT32 ret_val;
 
@@ -1090,7 +1090,7 @@ READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
   return SWAP_WORDS(ret_val);
 }
 
-WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
+static WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 {
   UINT32 olddata;
 
@@ -1279,7 +1279,7 @@ static const char *vdp2_regnames[] =
   "Colour Offs B (BLUE)                            "
 };
 
-void reset_vdp2(void)
+static void reset_vdp2(void)
 {
 	HBlankCount = 0;
 	timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
@@ -1287,7 +1287,7 @@ void reset_vdp2(void)
 	memset(vdp2_state.vdp2_regs,0,0x90*2);
 }
 
-void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
+static void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
 
      /* Draws a 1Hx1V cell in 8bit colour */
 
@@ -1313,7 +1313,7 @@ void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
     }
 }
 
-void render_plane(unsigned char *buffer,int pal,int trans)
+static void render_plane(unsigned char *buffer,int pal,int trans)
 
 {
   struct mame_bitmap *bitmap = saturn_bitmap[video_w];
@@ -1364,7 +1364,7 @@ void render_plane(unsigned char *buffer,int pal,int trans)
     }
 }
 
-void draw_nbg3(void)
+static void draw_nbg3(void)
 
 {
   UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
@@ -1419,7 +1419,7 @@ void draw_nbg3(void)
     }*/
 }
 
-void draw_nbg2(void)
+static void draw_nbg2(void)
 
 {
   UINT32 planea_addr,planeb_addr,planec_addr,planed_addr;
@@ -1515,7 +1515,7 @@ void timer_hblank(int param)
     }
 }
 
-void dump_vdp2(void)
+static void dump_vdp2(void)
 
 {
   FILE *fp;
@@ -1560,7 +1560,7 @@ void dump_vdp2(void)
     }
 }
 
-void draw_pal(void)
+static void draw_pal(void)
 
 {
   UINT32 loopx,loopy,col;
@@ -1586,7 +1586,7 @@ void draw_pal(void)
       }
 }
 
-READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
+static READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 {
   UINT32 ret_val;
 
@@ -1614,7 +1614,7 @@ READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
   return SWAP_WORDS(ret_val);
 }
 
-WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
+static WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 {
   UINT32 olddata;
 
@@ -1655,14 +1655,14 @@ WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 
 /* 68k handlers */
 
-READ16_HANDLER( dsp_68k_r )
+static READ16_HANDLER( dsp_68k_r )
 
 {
 	logerror("16 bit DSP READ offset %08x mask %08x\n",(UINT32)offset,(UINT32)mem_mask);
   return 0xdeed;
 }
 
-WRITE16_HANDLER( dsp_68k_w )
+static WRITE16_HANDLER( dsp_68k_w )
 
 {
 	logerror("16 bit DSP WRITE offset %08x mask %08x data %08x\n",(UINT32)offset,(UINT32)mem_mask,(UINT32)data);

@@ -347,7 +347,7 @@ static struct via6522_interface via6522[2] =
     }
 };
 
-void microtan_read_cassette(int param)
+static void microtan_read_cassette(int param)
 {
     int level = device_input(IO_CASSETTE,0);
 
@@ -516,7 +516,7 @@ void microtan_snapshot_exit(int id)
     snapshot_size = 0;
 }
 
-int parse_intel_hex(char *src)
+static int parse_intel_hex(char *src)
 {
     char line[128];
     int row = 0, column = 0, last_addr = 0, last_size = 0;
@@ -597,7 +597,7 @@ int parse_intel_hex(char *src)
     return INIT_PASS;
 }
 
-int parse_zillion_hex(char *src)
+static int parse_zillion_hex(char *src)
 {
     char line[128];
     int parsing = 0, row = 0, column = 0;

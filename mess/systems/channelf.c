@@ -24,7 +24,7 @@
 
 static UINT8 latch[4];
 
-void init_channelf(void)
+static void init_channelf(void)
 {
 	UINT8 *mem = memory_region(REGION_GFX1);
 	int i;
@@ -33,7 +33,7 @@ void init_channelf(void)
 		mem[i] = i;
 }
 
-int channelf_load_rom(int id)
+static int channelf_load_rom(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
     void *file;
@@ -53,7 +53,7 @@ int channelf_load_rom(int id)
     return INIT_FAIL;
 }
 
-READ_HANDLER( channelf_port_0_r )
+static READ_HANDLER( channelf_port_0_r )
 {
 	int data = readinputport(0);
 	data = (data ^ 0xff) | latch[0];
@@ -61,7 +61,7 @@ READ_HANDLER( channelf_port_0_r )
 	return data;
 }
 
-READ_HANDLER( channelf_port_1_r )
+static READ_HANDLER( channelf_port_1_r )
 {
 	int data = readinputport(1);
 	data = (data ^ 0xff) | latch[1];
@@ -69,7 +69,7 @@ READ_HANDLER( channelf_port_1_r )
 	return data;
 }
 
-READ_HANDLER( channelf_port_4_r )
+static READ_HANDLER( channelf_port_4_r )
 {
 	int data = readinputport(2);
 	data = (data ^ 0xff) | latch[2];
@@ -77,7 +77,7 @@ READ_HANDLER( channelf_port_4_r )
 	return data;
 }
 
-READ_HANDLER( channelf_port_5_r )
+static READ_HANDLER( channelf_port_5_r )
 {
 	int data = 0xff;
 	data = (data ^ 0xff) | latch[3];
@@ -85,7 +85,7 @@ READ_HANDLER( channelf_port_5_r )
 	return data;
 }
 
-WRITE_HANDLER( channelf_port_0_w )
+static WRITE_HANDLER( channelf_port_0_w )
 {
 	int offs;
 
@@ -107,7 +107,7 @@ WRITE_HANDLER( channelf_port_0_w )
 	latch[0] = data;
 }
 
-WRITE_HANDLER( channelf_port_1_w )
+static WRITE_HANDLER( channelf_port_1_w )
 {
 	LOG(("port_1_w: $%02x\n",data));
 
@@ -116,7 +116,7 @@ WRITE_HANDLER( channelf_port_1_w )
 	latch[1] = data;
 }
 
-WRITE_HANDLER( channelf_port_4_w )
+static WRITE_HANDLER( channelf_port_4_w )
 {
 	LOG(("port_4_w: $%02x\n",data));
 
@@ -125,7 +125,7 @@ WRITE_HANDLER( channelf_port_4_w )
     latch[2] = data;
 }
 
-WRITE_HANDLER( channelf_port_5_w )
+static WRITE_HANDLER( channelf_port_5_w )
 {
 	LOG(("port_5_w: $%02x\n",data));
 

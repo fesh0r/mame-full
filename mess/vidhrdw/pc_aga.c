@@ -99,7 +99,7 @@ extern void pc_aga_timer(void)
 	}
 }
 
-void pc_aga_cursor(CRTC6845_CURSOR *cursor)
+static void pc_aga_cursor(CRTC6845_CURSOR *cursor)
 {
 	switch (aga.mode) {
 	case AGA_COLOR: pc_cga_cursor(cursor);break;
@@ -134,7 +134,7 @@ VIDEO_UPDATE( pc_aga )
 	}
 }
 
-VIDEO_UPDATE( pc200 )
+static VIDEO_UPDATE( pc200 )
 {
 	switch (PC200_MODE) {
 	case PC200_MDA:

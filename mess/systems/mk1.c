@@ -40,7 +40,7 @@ speaker?
 
 static UINT8 mk1_f8[2];
 
-READ_HANDLER(mk1_f8_r)
+static READ_HANDLER(mk1_f8_r)
 {
     UINT8 data = mk1_f8[offset];
 
@@ -86,7 +86,7 @@ READ_HANDLER(mk1_f8_r)
     return data;
 }
 
-WRITE_HANDLER(mk1_f8_w)
+static WRITE_HANDLER(mk1_f8_w)
 {
 	/* 0 is high and allows also input */
 	mk1_f8[offset]=data;
@@ -195,7 +195,7 @@ static void mk1_interrupt(UINT16 addr, bool level)
     cpu_set_irq_line(0, F8_INT_INTR, level);
 }
 
-DRIVER_INIT( mk1 )
+static DRIVER_INIT( mk1 )
 {
     F3853_CONFIG config;
 	struct InternalMachineDriver drv;

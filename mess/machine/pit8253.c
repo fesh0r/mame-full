@@ -431,7 +431,7 @@ static data8_t pit8253_r(int which, offs_t offset)
 	return data;
 }
 
-void pit8253_gate_w(int which, offs_t offset, data8_t data)
+static void pit8253_gate_w(int which, offs_t offset, data8_t data)
 {
     PIT8253 *this = pit + which;
 	int timer = offset;

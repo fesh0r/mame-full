@@ -9,7 +9,7 @@
 
 #include "includes/vc4000.h"
 
-READ_HANDLER(vc4000_key_r)
+static READ_HANDLER(vc4000_key_r)
 {
 	UINT8 data=0;
 	switch(offset) {

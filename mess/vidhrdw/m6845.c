@@ -318,7 +318,7 @@ void	crtc6845_reset(int which)
 /* called when the internal horizontal display enabled or the
 vertical display enabled changed to set up the real
 display enabled output (which may be delayed 0,1 or 2 characters */
-void check_display_enabled(void)
+static void check_display_enabled(void)
 {
 	int Next_Display_Enabled;
 

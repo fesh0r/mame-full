@@ -10,5 +10,6 @@ extern WRITE_HANDLER ( a2600_riot_w );
 extern READ_HANDLER  ( a2600_bs_r );
 
 extern MACHINE_INIT( a2600 );
+extern MACHINE_STOP( a2600 );
 extern int  a2600_load_rom(int id);
 extern READ_HANDLER ( a2600_ROM_r );

@@ -34,9 +34,6 @@ extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);
 void pc_sh_speaker_change_clock(double pc_clock);
 
-/* from machine/pc_fdc.c */
-void pc_fdc_setup(void);
-
 extern WRITE_HANDLER ( pc_JOY_w );
 extern READ_HANDLER ( pc_JOY_r );
 

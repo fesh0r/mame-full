@@ -836,7 +836,7 @@ WRITE_HANDLER( a2600_TIA_w )
   Stop MAchine
 
 ***************************************************************************/
-void a2600_stop_machine(void)
+MACHINE_STOP( a2600 )
 {
 	/* Make sane the hardware */
 	timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));

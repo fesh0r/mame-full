@@ -326,7 +326,7 @@ READ_HANDLER( hp48_read )
 	return data;
 }
 
-void hp48_timer(int param)
+static void hp48_timer(int param)
 {
 	static int delay=256;
 	if (--delay==0) {

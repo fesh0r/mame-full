@@ -38,7 +38,7 @@ static void lviv_update_memory (void)
 	}
 }
 
-OPBASE_HANDLER(lviv_opbaseoverride)
+static OPBASE_HANDLER(lviv_opbaseoverride)
 {
 	if (readinputport(12)&0x01)
 		machine_reset();

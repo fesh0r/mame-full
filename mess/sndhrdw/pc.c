@@ -38,7 +38,7 @@ static int speaker_gate = 0;
 /************************************/
 /* Sound handler start				*/
 /************************************/
-int pc_sh_start(void)
+static int pc_sh_start(void)
 {
 	logerror("pc_sh_start\n");
 	channel = stream_init("PC speaker", 50, Machine->sample_rate, 0, pc_sh_update);

@@ -257,7 +257,7 @@ static RRIOT_CONFIG riot={
 	mk2_irq
 };
 
-void init_mk2(void)
+static void init_mk2(void)
 {
 	rriot_init(0,&riot);
 }

@@ -980,7 +980,7 @@ VIDEO_START( vga )
 }
 
 #ifndef VGA_GFX
-void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int width=CHAR_WIDTH, height=CRTC6845_CHAR_HEIGHT;
 	int pos, line, column, mask, w, h, addr;
@@ -1079,7 +1079,7 @@ void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 }
 #endif
 
-void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int pos, line, column, c, addr;
 
@@ -1132,7 +1132,7 @@ void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
+static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int pos, line, column, c, addr;
 

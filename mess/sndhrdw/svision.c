@@ -38,7 +38,7 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void svision_update (int param, INT16 **buffer, int length)
+static void svision_update (int param, INT16 **buffer, int length)
 {
     INT16 *left=buffer[0], *right=buffer[1];
     int i, j;

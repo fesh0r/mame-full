@@ -462,7 +462,7 @@ static WRITE_HANDLER(c65_ram_expansion_w)
 #endif
 }
 
-WRITE_HANDLER ( c65_write_io )
+static WRITE_HANDLER ( c65_write_io )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -498,7 +498,7 @@ WRITE_HANDLER ( c65_write_io )
 	}
 }
 
-WRITE_HANDLER ( c65_write_io_dc00 )
+static WRITE_HANDLER ( c65_write_io_dc00 )
 {
 	switch(offset&0xf00) {
 	case 0x000:

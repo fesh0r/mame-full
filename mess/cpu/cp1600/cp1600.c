@@ -2055,7 +2055,7 @@ static void cp1600_jd(UINT16 addr)
 	cp1600.intr_enabled = 0;
 }
 
-void cp1600_do_sdbd(void)
+static void cp1600_do_sdbd(void)
 {
 	UINT16 sdbdtype, dest;
 
@@ -2136,7 +2136,7 @@ void cp1600_do_sdbd(void)
 	}
 }
 
-void cp1600_do_jumps(void)
+static void cp1600_do_jumps(void)
 {
 	UINT16 jumptype, arg1, arg2, addr;
 

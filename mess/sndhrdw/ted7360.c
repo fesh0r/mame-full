@@ -93,7 +93,7 @@ void ted7360_soundport_w (int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void ted7360_update (int param, INT16 *buffer, int length)
+static void ted7360_update (int param, INT16 *buffer, int length)
 {
     int i, v;
     

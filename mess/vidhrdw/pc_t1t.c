@@ -130,7 +130,7 @@ extern void pc_t1t_reset(void)
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
-void pc_t1t_blink_textcolors(int on)
+static void pc_t1t_blink_textcolors(int on)
 {
 	int i, offs, size;
 
@@ -157,7 +157,7 @@ extern void pc_t1t_timer(void)
 	}
 }
 
-void pc_t1t_cursor(CRTC6845_CURSOR *cursor)
+static void pc_t1t_cursor(CRTC6845_CURSOR *cursor)
 {
 	dirtybuffer[cursor->pos*2]=1;
 }
@@ -196,7 +196,7 @@ READ_HANDLER ( pc_t1t_videoram_r )
 /*
  * 3d8 rW	T1T mode control register (see #P138)
  */
-void pc_t1t_mode_control_w(int data)
+static void pc_t1t_mode_control_w(int data)
 {
 	T1T_LOG(1,"T1T_mode_control_w",("$%02x: colums %d, gfx %d, hires %d, blink %d\n", \
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
@@ -205,7 +205,7 @@ void pc_t1t_mode_control_w(int data)
 	pcjr.mode_control = data;
 }
 
-int pc_t1t_mode_control_r(void)
+static int pc_t1t_mode_control_r(void)
 {
     int data = pcjr.mode_control;
     return data;
@@ -214,7 +214,7 @@ int pc_t1t_mode_control_r(void)
 /*
  * 3d9 ?W	color select register on color adapter
  */
-void pc_t1t_color_select_w(int data)
+static void pc_t1t_color_select_w(int data)
 {
 	T1T_LOG(1,"T1T_color_select_w",("$%02x\n", data));
 	if (pcjr.color_select == data)
@@ -223,7 +223,7 @@ void pc_t1t_color_select_w(int data)
 	pcjr.full_refresh=1;
 }
 
-int pc_t1t_color_select_r(void)
+static int pc_t1t_color_select_r(void)
 {
 	int data = pcjr.color_select;
 	T1T_LOG(1,"T1T_color_select_r",("$%02x\n", data));
@@ -245,7 +245,7 @@ int pc_t1t_color_select_r(void)
  *      =1  memory access without interfering with display
  *      (Genoa SuperEGA) horizontal or vertical retrace
  */
-int pc_t1t_status_r(void)
+static int pc_t1t_status_r(void)
 {
     int data = (input_port_0_r(0) & 0x08) | pcjr.status;
     pcjr.status ^= 0x01;
@@ -255,7 +255,7 @@ int pc_t1t_status_r(void)
 /*
  * 3db -W	light pen strobe reset (on any value)
  */
-void pc_t1t_lightpen_strobe_w(int data)
+static void pc_t1t_lightpen_strobe_w(int data)
 {
 	T1T_LOG(1,"T1T_lightpen_strobe_w",("$%02x\n", data));
 //	pc_port[0x3db] = data;
@@ -266,13 +266,13 @@ void pc_t1t_lightpen_strobe_w(int data)
  * 3da -W	(mono EGA/mono VGA) feature control register
  *			(see PORT 03DAh-W for details; VGA, see PORT 03CAh-R)
  */
-void pc_t1t_vga_index_w(int data)
+static void pc_t1t_vga_index_w(int data)
 {
 	T1T_LOG(1,"T1T_vga_index_w",("$%02x\n", data));
 	pcjr.reg.index = data;
 }
 
-void pc_t1t_vga_data_w(int data)
+static void pc_t1t_vga_data_w(int data)
 {
     pcjr.reg.data[pcjr.reg.index] = data;
 
@@ -307,7 +307,7 @@ void pc_t1t_vga_data_w(int data)
     }
 }
 
-int pc_t1t_vga_data_r(void)
+static int pc_t1t_vga_data_r(void)
 {
 	int data = pcjr.reg.data[pcjr.reg.index];
 
@@ -350,7 +350,7 @@ int pc_t1t_vga_data_r(void)
  *	   6-7	Display mode. 0: Text, 1: 16K graphics mode (4,5,6,8)
  *			2: 32K graphics mode (9,Ah)
  */
-void pc_t1t_bank_w(int data)
+static void pc_t1t_bank_w(int data)
 {
 	if (pcjr.bank != data)
 	{
@@ -376,7 +376,7 @@ void pc_t1t_bank_w(int data)
 	}
 }
 
-int pc_t1t_bank_r(void)
+static int pc_t1t_bank_r(void)
 {
 	int data = pcjr.bank;
     T1T_LOG(1,"t1t_bank_r",("$%02x\n", data));

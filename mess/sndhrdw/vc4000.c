@@ -36,7 +36,7 @@ void vc4000_soundport_w (int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void vc4000_update (int param, INT16 *buffer, int length)
+static void vc4000_update (int param, INT16 *buffer, int length)
 {
     int i;
 

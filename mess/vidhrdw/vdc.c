@@ -331,7 +331,7 @@ void pce_refresh_line(int line)
 
 
 
-void conv_obj(int i, int l, int hf, int vf, char *buf)
+static void conv_obj(int i, int l, int hf, int vf, char *buf)
 {
     int b0, b1, b2, b3, i0, i1, i2, i3, x;
     int xi;

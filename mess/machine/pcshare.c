@@ -37,6 +37,7 @@
 #include "includes/pc_flopp.h"
 #include "includes/pc_mouse.h"
 #include "includes/pckeybrd.h"
+#include "includes/pc_fdc_h.h"
 
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
@@ -698,7 +699,7 @@ void pc_vga_init(void)
 /* Done this way because PCW16 also has PC-com hardware but it
 is connected in a different way */
 
-int pc_COM_r(int n, int offset)
+static int pc_COM_r(int n, int offset)
 {
 	/* enabled? */
 	if( !(input_port_2_r(0) & (0x80 >> n)) )
@@ -710,7 +711,7 @@ int pc_COM_r(int n, int offset)
 	return uart8250_r(n, offset);
 }
 
-void pc_COM_w(int n, int offset, int data)
+static void pc_COM_w(int n, int offset, int data)
 {
 	/* enabled? */
 	if( !(input_port_2_r(0) & (0x80 >> n)) )

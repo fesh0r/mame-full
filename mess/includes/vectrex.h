@@ -29,6 +29,8 @@ extern READ_HANDLER(v_via_pb_r );
 extern void v_via_irq (int level);
 extern WRITE_HANDLER ( vectrex_psg_port_w );
 
+/* for spectrum 1+ */
+extern READ_HANDLER( s1_via_pb_r );
 
 /* From vidhrdw/vectrex.c */
 extern VIDEO_START( vectrex );

@@ -513,7 +513,7 @@ static void c128_bankswitch (int reset)
 	}
 }
 
-void c128_mmu8722_reset (void)
+static void c128_mmu8722_reset (void)
 {
 #if 0
 	cpu_setbank (1, c64_memory);

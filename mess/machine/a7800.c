@@ -53,7 +53,7 @@ unsigned long a7800_cart_size;
 unsigned char a7800_stick_type;
 static UINT8 *ROM;
 
-void a7800_init_machine_cmn(void)
+static void a7800_init_machine_cmn(void)
 {
 	a7800_ctrl_lock = 0;
 	a7800_ctrl_reg = 0;
@@ -159,7 +159,7 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-int a7800_init_cart_cmn(int id)
+static int a7800_init_cart_cmn(int id)
 {
 	void *cartfile = NULL;
 	long len,start;

@@ -123,7 +123,7 @@ static int kbd_tail = 0;
 
 static	short * video_buffer = NULL;
 
-void kaypro_putstr(char * src)
+static void kaypro_putstr(char * src)
 {
 	while (*src)
 		kaypro_conout_w(0, *src++);
@@ -357,7 +357,7 @@ WRITE_HANDLER ( kaypro_conin_w )
  *	either up or down. scroll up if lines > 0, down if lines < 0
  *	repeat lines times and mark changes in dirtybuffer
  ******************************************************************************/
-void kaypro_scroll(int top, int lines)
+static void kaypro_scroll(int top, int lines)
 {
 	int x, y;
 	short attr;

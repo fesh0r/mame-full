@@ -854,7 +854,7 @@ typedef enum {
 }
 SPECTRUM_Z80_SNAPSHOT_TYPE;
 
-SPECTRUM_Z80_SNAPSHOT_TYPE spectrum_identify_z80 (unsigned char *pSnapshot, unsigned long SnapshotSize)
+static SPECTRUM_Z80_SNAPSHOT_TYPE spectrum_identify_z80 (unsigned char *pSnapshot, unsigned long SnapshotSize)
 {
 	unsigned char lo, hi, data;
 
@@ -1225,7 +1225,7 @@ void spectrum_cassette_exit(int id)
  *
  *************************************/
 
-void spectrum_nmi_generate(int param)
+static void spectrum_nmi_generate(int param)
 {
 	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
 }

@@ -50,12 +50,10 @@ static int atari = 0;
 static int a800_cart_loaded = 0;
 static int a800_cart_is_16k = 0;
 
-void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
+static void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu);
 
-void gtia_reset(void);
-void pokey_reset(void);
-void atari_pia_reset(void);
-void antic_reset(void);
+static void pokey_reset(void);
+static void atari_pia_reset(void);
 
 static void open_floppy(int drive);
 static void make_chksum(UINT8 * chksum, UINT8 data);
@@ -63,7 +61,7 @@ static void clr_serout(int expect_data);
 static void clr_serin(int ser_delay);
 static void add_serin(UINT8 data, int with_checksum);
 
-void a800_setbank(int n)
+static void a800_setbank(int n)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	switch (n)
@@ -319,7 +317,7 @@ void a5200_rom_exit(int id)
 	memset(&mem[0x4000], 0x00, 0x8000);
 }
 
-void pokey_reset(void)
+static void pokey_reset(void)
 {
 	pokey1_w(15,0);
 }
@@ -1108,7 +1106,7 @@ WRITE_HANDLER ( MWA_PIA )
  * Reset hardware
  *
  **************************************************************/
-void	atari_pia_reset(void)
+static void	atari_pia_reset(void)
 {
 	/* reset the PIA */
 	MWA_PIA(3,0);

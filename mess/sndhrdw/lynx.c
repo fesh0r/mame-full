@@ -277,7 +277,7 @@ void lynx_audio_write(int offset, UINT8 data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void lynx_update (int param, INT16 *buffer, int length)
+static void lynx_update (int param, INT16 *buffer, int length)
 {
     int i, j;
     LYNX_AUDIO *channel;
@@ -294,7 +294,7 @@ void lynx_update (int param, INT16 *buffer, int length)
     }
 }
 
-void lynx2_update (int param, INT16 **buffer, int length)
+static void lynx2_update (int param, INT16 **buffer, int length)
 {
     INT16 *left=buffer[0], *right=buffer[1];
     int i, j;

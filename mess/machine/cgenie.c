@@ -1272,7 +1272,7 @@ INTERRUPT_GEN( cgenie_frame_interrupt )
 	}
 }
 
-void cgenie_nmi_generate(int param)
+static void cgenie_nmi_generate(int param)
 {
 	cpu_set_nmi_line(0, PULSE_LINE);
 }

@@ -207,7 +207,7 @@ static unsigned char *mfm_disk_get_track_ptr(int id, int track, int side)
 }
 
 /* this is endian safe */
-unsigned long mfm_get_long(unsigned char *addr)
+static unsigned long mfm_get_long(unsigned char *addr)
 {
 	int i;
 	unsigned long Data = 0;

@@ -110,7 +110,7 @@ static int einstein_keyboard_data = 0x0ff;
 #define EINSTEIN_DUMP_RAM
 
 #ifdef EINSTEIN_DUMP_RAM
-void einstein_dump_ram(void)
+static void einstein_dump_ram(void)
 {
 	void *file;
 
@@ -162,7 +162,7 @@ void einstein_dump_ram(void)
 static int einstein_80col_state;
 static char *einstein_80col_ram = NULL;
 
-WRITE_HANDLER(einstein_80col_ram_w)
+static WRITE_HANDLER(einstein_80col_ram_w)
 {
 	/* lower 3 bits of address define a 256-byte "row".
 		upper 8 bits define the offset in the row,
@@ -170,12 +170,12 @@ WRITE_HANDLER(einstein_80col_ram_w)
 	einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)] = data;
 }
 
-READ_HANDLER(einstein_80col_ram_r)
+static READ_HANDLER(einstein_80col_ram_r)
 {
 	return einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)];
 }
 
-READ_HANDLER(einstein_80col_state_r)
+static READ_HANDLER(einstein_80col_state_r)
 {
 	/* fake vsync for now */
 	einstein_80col_state^=0x01;
@@ -190,14 +190,14 @@ static int Einstein_VSync = 0;
 static int Einstein_DE = 0;
 
 // called when the 6845 changes the character row
-void Einstein_Set_RA(int offset, int data)
+static void Einstein_Set_RA(int offset, int data)
 {
 	Einstein_6845_RA=data;
 }
 
 
 // called when the 6845 changes the HSync
-void Einstein_Set_HSync(int offset, int data)
+static void Einstein_Set_HSync(int offset, int data)
 {
 	Einstein_HSync=data;
 	if(!Einstein_HSync)
@@ -208,7 +208,7 @@ void Einstein_Set_HSync(int offset, int data)
 }
 
 // called when the 6845 changes the VSync
-void Einstein_Set_VSync(int offset, int data)
+static void Einstein_Set_VSync(int offset, int data)
 {
 	Einstein_VSync=data;
 	if (!Einstein_VSync)
@@ -217,7 +217,7 @@ void Einstein_Set_VSync(int offset, int data)
 	}
 }
 
-void Einstein_Set_DE(int offset, int data)
+static void Einstein_Set_DE(int offset, int data)
 {
 	Einstein_DE = data;
 }
@@ -234,7 +234,7 @@ einstein_crtc6845_interface= {
 };
 
 /* 80 column card init */
-void	einstein_80col_init(void)
+static void	einstein_80col_init(void)
 {
 	/* 2K RAM */
 	einstein_80col_ram = auto_malloc(2048);
@@ -245,7 +245,7 @@ void	einstein_80col_init(void)
 	einstein_80col_state=(1<<2)|(1<<1);
 }
 
-READ_HANDLER(einstein_80col_r)
+static READ_HANDLER(einstein_80col_r)
 {
 	switch (offset & 0x0f)
 	{
@@ -267,7 +267,7 @@ READ_HANDLER(einstein_80col_r)
 }
 
 
-WRITE_HANDLER(einstein_80col_w)
+static WRITE_HANDLER(einstein_80col_w)
 {
 	switch (offset & 0x0f)
 	{
@@ -292,7 +292,7 @@ WRITE_HANDLER(einstein_80col_w)
 	}
 }
 
-void einstein_ctc_trigger_callback(int dummy)
+static void einstein_ctc_trigger_callback(int dummy)
 {
 	einstein_ctc_trigger^=1;
 
@@ -302,7 +302,7 @@ void einstein_ctc_trigger_callback(int dummy)
 }
 
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
-void einstein_scan_keyboard(void)
+static void einstein_scan_keyboard(void)
 {
 	unsigned char data = 0x0ff;
 	int i;
@@ -338,7 +338,7 @@ static void einstein_update_interrupts(void)
 */
 }
 
-void	einstein_keyboard_timer_callback(int dummy)
+static void	einstein_keyboard_timer_callback(int dummy)
 {
 	einstein_scan_keyboard();
 
@@ -368,7 +368,7 @@ void	einstein_keyboard_timer_callback(int dummy)
 
 
 
-int einstein_floppy_init(int id)
+static int einstein_floppy_init(int id)
 {
 	if (device_filename(IO_FLOPPY, id)==NULL)
 		return INIT_PASS;
@@ -389,12 +389,12 @@ static void einstein_pio_interrupt(int state)
 	cpu_set_irq_line(0, 3, state);
 }
 
-WRITE_HANDLER(einstein_serial_transmit_clock)
+static WRITE_HANDLER(einstein_serial_transmit_clock)
 {
 	msm8251_transmit_clock();
 }
 
-WRITE_HANDLER(einstein_serial_receive_clock)
+static WRITE_HANDLER(einstein_serial_receive_clock)
 {
 	msm8251_receive_clock();
 }
@@ -434,7 +434,7 @@ static z80pio_interface einstein_pio_intf =
 };
 
 /* not required for this interrupt source */
-void einstein_keyboard_int_reset(int which)
+static void einstein_keyboard_int_reset(int which)
 {
 	einstein_int_mask &= ~EINSTEIN_KEY_INT;
 
@@ -443,7 +443,7 @@ void einstein_keyboard_int_reset(int which)
 
 
 /* not required for this interrupt source */
-void einstein_adc_int_reset(int which)
+static void einstein_adc_int_reset(int which)
 {
 	einstein_int_mask &= ~EINSTEIN_ADC_INT;
 
@@ -451,14 +451,14 @@ void einstein_adc_int_reset(int which)
 }
 
 /* not required for this interrupt source */
-void einstein_fire_int_reset(int which)
+static void einstein_fire_int_reset(int which)
 {
 	einstein_int_mask &= ~EINSTEIN_FIRE_INT;
 
 	einstein_update_interrupts();
 }
 
-int einstein_keyboard_interrupt(int which)
+static int einstein_keyboard_interrupt(int which)
 {
 	logerror("keyboard int routine in daisy chain\n");
 
@@ -466,14 +466,14 @@ int einstein_keyboard_interrupt(int which)
 	return 0x0ff;
 }
 
-int einstein_adc_interrupt(int which)
+static int einstein_adc_interrupt(int which)
 {
 	logerror("adc int routine in daisy chain\n");
 	/* return vector */
 	return 0x0ff;
 }
 
-int einstein_fire_interrupt(int which)
+static int einstein_fire_interrupt(int which)
 {
 	logerror("fire int routine in daisy chain\n");
 	/* return vector */
@@ -481,17 +481,17 @@ int einstein_fire_interrupt(int which)
 }
 
 /* reti has no effect on this interrupt */
-void einstein_keyboard_reti(int which)
+static void einstein_keyboard_reti(int which)
 {
 }
 
 /* reti has no effect on this interrupt */
-void einstein_adc_reti(int which)
+static void einstein_adc_reti(int which)
 {
 }
 
 /* reti has no effect on this interrupt */
-void einstein_fire_reti(int which)
+static void einstein_fire_reti(int which)
 {
 }
 
@@ -939,7 +939,7 @@ static WRITE_HANDLER(einstein_fire_int_w)
 }
 
 
-READ_HANDLER(einstein2_port_r)
+static READ_HANDLER(einstein2_port_r)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1026,7 +1026,7 @@ READ_HANDLER(einstein2_port_r)
 	return 0xff;
 }
 
-WRITE_HANDLER(einstein2_port_w)
+static WRITE_HANDLER(einstein2_port_w)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1132,7 +1132,7 @@ WRITE_HANDLER(einstein2_port_w)
 }
 
 
-READ_HANDLER(einstein_port_r)
+static READ_HANDLER(einstein_port_r)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1202,7 +1202,7 @@ READ_HANDLER(einstein_port_r)
 	return 0xff;
 }
 
-WRITE_HANDLER(einstein_port_w)
+static WRITE_HANDLER(einstein_port_w)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1393,7 +1393,7 @@ static int einstein_cpu_acknowledge_int(int cpu)
 	return (vector<<1);
 }
 
-MACHINE_INIT( einstein )
+static MACHINE_INIT( einstein )
 {
 	cpu_setbank(2, mess_ram+0x02000);
 	cpu_setbank(3, mess_ram);
@@ -1438,7 +1438,7 @@ MACHINE_INIT( einstein )
 
 }
 
-MACHINE_INIT( einstein2 )
+static MACHINE_INIT( einstein2 )
 {
 	machine_init_einstein();
 	einstein_80col_init();
@@ -1604,7 +1604,7 @@ static struct AY8910interface einstein_ay_interface =
   127*262 = 33274 cycles per frame, vsync len 375 cycles
 */
 
-void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
+static void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
 {
 	if (Einstein_DE)
 	{
@@ -1647,7 +1647,7 @@ void einstein_80col_plot_char_line(int x,int y, struct mame_bitmap *bitmap)
 
 }
 
-VIDEO_UPDATE( einstein_80col )
+static VIDEO_UPDATE( einstein_80col )
 {
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 
@@ -1689,7 +1689,7 @@ VIDEO_UPDATE( einstein_80col )
 	}
 }
 
-VIDEO_UPDATE( einstein2 )
+static VIDEO_UPDATE( einstein2 )
 {
 	video_update_tms9928a(bitmap, cliprect);
 	video_update_einstein_80col(bitmap, cliprect);

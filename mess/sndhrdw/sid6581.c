@@ -65,7 +65,7 @@ void sid6581_update(void)
 	}
 }
 
-void sid6581_sh_update(int param, INT16 *buffer, int length)
+static void sid6581_sh_update(int param, INT16 *buffer, int length)
 {
 	sidEmuFillBuffer(sid6581+param,buffer, length);
 }

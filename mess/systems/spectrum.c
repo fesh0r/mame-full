@@ -178,7 +178,7 @@ static struct AY8910interface spectrum_ay_interface =
 
 int PreviousFE = 0;
 
-WRITE_HANDLER(spectrum_port_fe_w)
+static WRITE_HANDLER(spectrum_port_fe_w)
 {
 	unsigned char Changed;
 
@@ -225,7 +225,7 @@ MEMORY_END
 
 /* KT: more accurate keyboard reading */
 /* DJR: Spectrum+ keys added */
-READ_HANDLER(spectrum_port_fe_r)
+static READ_HANDLER(spectrum_port_fe_r)
 {
    int lines = offset>>8;
    int data = 0xff;
@@ -294,24 +294,24 @@ READ_HANDLER(spectrum_port_fe_r)
 }
 
 /* kempston joystick interface */
-READ_HANDLER(spectrum_port_1f_r)
+static READ_HANDLER(spectrum_port_1f_r)
 {
   return readinputport(13) & 0x1f;
 }
 
 /* fuller joystick interface */
-READ_HANDLER(spectrum_port_7f_r)
+static READ_HANDLER(spectrum_port_7f_r)
 {
   return readinputport(14) | (0xff^0x8f);
 }
 
 /* mikrogen joystick interface */
-READ_HANDLER(spectrum_port_df_r)
+static READ_HANDLER(spectrum_port_df_r)
 {
   return readinputport(15) | (0xff^0x1f);
 }
 
-READ_HANDLER ( spectrum_port_r )
+static READ_HANDLER ( spectrum_port_r )
 {
 		if ((offset & 1)==0)
 			return spectrum_port_fe_r(offset);
@@ -328,7 +328,7 @@ READ_HANDLER ( spectrum_port_r )
 		return cpu_getscanline()<193 ? spectrum_colorram[(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-WRITE_HANDLER ( spectrum_port_w )
+static WRITE_HANDLER ( spectrum_port_w )
 {
 		if ((offset & 1)==0)
 			spectrum_port_fe_w(offset,data);
@@ -451,7 +451,7 @@ static READ_HANDLER(spectrum_128_port_fffd_r)
 		return AY8910_read_port_0_r(0);
 }
 
-READ_HANDLER ( spectrum_128_port_r )
+static READ_HANDLER ( spectrum_128_port_r )
 {
 	 if ((offset & 1)==0)
 	 {
@@ -483,7 +483,7 @@ READ_HANDLER ( spectrum_128_port_r )
 	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-WRITE_HANDLER ( spectrum_128_port_w )
+static WRITE_HANDLER ( spectrum_128_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -748,7 +748,7 @@ static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
 }
 
 /* decoding as per spectrum FAQ on www.worldofspectrum.org */
-READ_HANDLER ( spectrum_plus3_port_r )
+static READ_HANDLER ( spectrum_plus3_port_r )
 {
 	 if ((offset & 1)==0)
 	 {
@@ -793,7 +793,7 @@ READ_HANDLER ( spectrum_plus3_port_r )
 	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-WRITE_HANDLER ( spectrum_plus3_port_w )
+static WRITE_HANDLER ( spectrum_plus3_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -964,7 +964,7 @@ static WRITE_HANDLER(ts2068_port_ff_w)
 }
 
 
-READ_HANDLER ( ts2068_port_r )
+static READ_HANDLER ( ts2068_port_r )
 {
 		switch (offset & 0xff)
 		{
@@ -984,7 +984,7 @@ READ_HANDLER ( ts2068_port_r )
 		return 0xff;
 }
 
-WRITE_HANDLER ( ts2068_port_w )
+static WRITE_HANDLER ( ts2068_port_w )
 {
 /* Ports #fd & #fc were reserved by Timex for bankswitching and are not used
    by either the hardware or system software.
@@ -1405,7 +1405,7 @@ static void tc2048_port_ff_w(int offset, int data)
 		logerror("Port %04x write %02x\n", offset, data);
 }
 
-READ_HANDLER ( tc2048_port_r )
+static READ_HANDLER ( tc2048_port_r )
 {
 		if ((offset & 1)==0)
 				return spectrum_port_fe_r(offset);
@@ -1421,7 +1421,7 @@ READ_HANDLER ( tc2048_port_r )
 		return 0xff;
 }
 
-WRITE_HANDLER ( tc2048_port_w )
+static WRITE_HANDLER ( tc2048_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -1545,7 +1545,7 @@ static void betadisk_wd179x_callback(int state)
 }
 
 /* these are active only when betadisk is enabled */
-WRITE_HANDLER(betadisk_w)
+static WRITE_HANDLER(betadisk_w)
 {
 
 	if (betadisk_active)
@@ -1556,7 +1556,7 @@ WRITE_HANDLER(betadisk_w)
 
 
 /* these are active only when betadisk is enabled */
-READ_HANDLER(betadisk_r)
+static READ_HANDLER(betadisk_r)
 {
 	if (betadisk_active)
 	{
@@ -1574,7 +1574,7 @@ READ_HANDLER(betadisk_r)
 	return 0x0ff;
 }
 
-void	 betadisk_init(void)
+static void	 betadisk_init(void)
 {
 	betadisk_active = 0;
 	betadisk_status = 0x03f;
@@ -1611,7 +1611,7 @@ D6-D7 - not used. ( yet ? )
 
 static int scorpion_256_port_1ffd_data = 0;
 
-extern void scorpion_update_memory(void)
+static void scorpion_update_memory(void)
 {
 		unsigned char *ChosenROM;
 		int ROMSelection;

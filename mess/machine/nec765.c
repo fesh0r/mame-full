@@ -613,7 +613,7 @@ is not ready.
 /* done when ready state of drive changes */
 /* this ignores if command is active, in which case command should terminate immediatly
 with error */
-void nec765_set_ready_change_callback(int drive, int state)
+static void nec765_set_ready_change_callback(int drive, int state)
 {
 	logerror("nec765: ready state change\n");
 

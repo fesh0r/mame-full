@@ -81,7 +81,7 @@ void snes_sh_update( int param, INT16 **buffer, int length )
 	}
 }
 
-UINT16 snes_dsp_r_io( UINT16 offset )
+static UINT16 snes_dsp_r_io( UINT16 offset )
 {
 	switch( offset )
 	{
@@ -89,7 +89,7 @@ UINT16 snes_dsp_r_io( UINT16 offset )
 	return 0xff;
 }
 
-void snes_dsp_w_io( UINT16 offset, UINT8 data )
+static void snes_dsp_w_io( UINT16 offset, UINT8 data )
 {
 	switch( offset )
 	{

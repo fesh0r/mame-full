@@ -548,7 +548,7 @@ INLINE void vic3_draw_block(int x, int y, UINT8 colors[8])
     }
 
 #define VIC3_ADDR(a) VIC3_BITPLANE_IADDR(a)
-void vic3_interlace_draw_block(int x, int y, int offset)
+static void vic3_interlace_draw_block(int x, int y, int offset)
 {
 	int colors[8]={0};
 	int i, p;
@@ -617,7 +617,7 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 
 #undef VIC3_ADDR
 #define VIC3_ADDR(a) VIC3_BITPLANE_ADDR(a)
-void vic3_draw_block(int x, int y, int offset)
+static void vic3_draw_block(int x, int y, int offset)
 {
 	int colors[8]={0};
 	int i, p;
@@ -685,7 +685,7 @@ void vic3_draw_block(int x, int y, int offset)
 }
 #endif
 
-void vic3_draw_bitplanes(void)
+static void vic3_draw_bitplanes(void)
 {
 	static int interlace=0;
 	int x, y, y1s, offset;

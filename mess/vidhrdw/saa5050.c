@@ -113,7 +113,7 @@ static VIDEO_START( saa5050 )
     return 0;
 }
 
-void saa5050_vh_callback (void)
+static void saa5050_vh_callback (void)
 {
 	if (frame_count++ > 49)
 		frame_count = 0;

@@ -42,7 +42,7 @@ void arcadia_soundport_w (int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-void arcadia_update (int param, INT16 *buffer, int length)
+static void arcadia_update (int param, INT16 *buffer, int length)
 {
     int i;
     

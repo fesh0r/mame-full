@@ -22,7 +22,7 @@ static nec765_interface pc_fdc_nec765_interface =
 	pc_fdc_hw_dma_drq
 };
 
-void pc_fdc_reset(void)
+static void pc_fdc_reset(void)
 {
 	/* setup reset condition */
 	fdc.data_rate_register = 2;
@@ -159,12 +159,12 @@ static WRITE_HANDLER(pc_fdc_data_w)
 	nec765_data_w(0, data);
 }
 
-READ_HANDLER(pc_fdc_dir_r)
+static READ_HANDLER(pc_fdc_dir_r)
 {
 	return fdc.digital_input_register;
 }
 
-WRITE_HANDLER(pc_fdc_dor_w)
+static WRITE_HANDLER(pc_fdc_dor_w)
 {
 
         int selected_drive;
@@ -238,7 +238,7 @@ WRITE_HANDLER(pc_fdc_dor_w)
 	}
 }
 
-READ_HANDLER(pc_fdc_dor_r)
+static READ_HANDLER(pc_fdc_dor_r)
 {
 	return fdc.digital_output_register;
 }

@@ -723,7 +723,7 @@ INLINE void arcadia_vh_draw_line(struct mame_bitmap *bitmap,
     }
 }
 
-bool arcadia_sprite_collision(int n1, int n2)
+static bool arcadia_sprite_collision(int n1, int n2)
 {
     int k, b1, b2, x;
     if (arcadia_video.pos[n1].x+8<=arcadia_video.pos[n2].x) return FALSE;

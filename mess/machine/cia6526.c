@@ -897,6 +897,7 @@ READ_HANDLER ( cia6526_7_porta_r )
 {
 	return cia[7].in_a;
 }
+#if 0
 READ_HANDLER ( cia6526_0_portb_r )
 {
 	return cia[0].in_b;
@@ -929,6 +930,7 @@ READ_HANDLER ( cia6526_7_portb_r )
 {
 	return cia[7].in_b;
 }
+#endif
 
 void cia6526_0_set_input_flag (int data)
 {

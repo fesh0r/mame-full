@@ -43,14 +43,14 @@ icq3250a-d
 
 #include "includes/comquest.h"
 
-READ_HANDLER(comquest_read)
+static READ_HANDLER(comquest_read)
 {
 	UINT8 data=0;
 	logerror("comquest read %.4x %.2x\n",offset,data);
 	return data;
 }
 
-WRITE_HANDLER(comquest_write)
+static WRITE_HANDLER(comquest_write)
 {
 	logerror("comquest read %.4x %.2x\n",offset,data);
 }
@@ -354,7 +354,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-DRIVER_INIT( comquest )
+static DRIVER_INIT( comquest )
 {
 //	int i;
 //	UINT8 *gfx=memory_region(REGION_GFX1);

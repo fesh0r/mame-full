@@ -77,6 +77,9 @@ extern void atari_interrupt_cb(int mask);
 extern void a800_handle_keyboard(void);
 extern void a5200_handle_keypads(void);
 
+extern void gtia_reset(void);
+extern void antic_reset(void);
+
 /* video */
 
 /* Enable this to make the video code use readmem16 to retrieve data */

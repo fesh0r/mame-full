@@ -13,7 +13,7 @@
 #include "includes/crtc6845.h"
 #include "includes/pet.h"
 
-void pet_vh_set_font(int font)
+static void pet_vh_set_font(int font)
 {
 	pet_font=font;
 }

@@ -61,6 +61,8 @@ int		pc_fdc_dack_r(void);
 void	pc_fdc_dack_w(int);
 void	pc_fdc_exit(void);
 
+void pc_fdc_setup(void);
+
 #ifdef __cplusplus
 }
 #endif

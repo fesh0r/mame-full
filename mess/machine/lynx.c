@@ -418,7 +418,7 @@ static void lynx_blit_lines(void)
 	}
 }
 
-void lynx_blitter_timer(int param)
+static void lynx_blitter_timer(int param)
 {
     suzy.u.s.SPRSYS&=~1; //blitter finished
 }
@@ -629,7 +629,7 @@ static void lynx_blitter(void)
 //    timer_set(TIME_IN_CYCLES(blitter.memory_accesses*20,0), 0, lynx_blitter_timer);
 }
 
-void lynx_divide(void)
+static void lynx_divide(void)
 {
 	UINT32 left=suzy.u.s.H|(suzy.u.s.G<<8)|(suzy.u.s.F<<16)|(suzy.u.s.E<<24);
 	UINT16 right=suzy.u.s.P|(suzy.u.s.N<<8);
@@ -654,7 +654,7 @@ void lynx_divide(void)
 	suzy.u.s.J=mod>>24;
 }
 
-void lynx_multiply(void)
+static void lynx_multiply(void)
 {
 	UINT16 left, right;
 	UINT32 res, accu;
@@ -977,7 +977,7 @@ static struct {
     bool buffer_loaded;
 } uart;
 
-void lynx_uart_reset(void)
+static void lynx_uart_reset(void)
 {
     memset(&uart, 0, sizeof(uart));
 }
@@ -998,7 +998,7 @@ static void lynx_uart_timer(int param)
     }
 }
 
-READ_HANDLER(lynx_uart_r)
+static READ_HANDLER(lynx_uart_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -1015,7 +1015,7 @@ READ_HANDLER(lynx_uart_r)
     return data;
 }
 
-WRITE_HANDLER(lynx_uart_w)
+static WRITE_HANDLER(lynx_uart_w)
 {
     logerror("uart write %.2x %.2x\n",offset,data);
     switch (offset) {

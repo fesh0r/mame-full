@@ -333,7 +333,7 @@ WRITE16_HANDLER( intv_ram16_w )
 	intv_ram16[offset] = data&0xffff;
 }
 
-int intv_load_rom_file(int id, int required)
+static int intv_load_rom_file(int id, int required)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *romfile;
@@ -447,7 +447,7 @@ MACHINE_INIT( intv )
 }
 
 
-void intv_interrupt_complete(int x)
+static void intv_interrupt_complete(int x)
 {
 	cpu_set_irq_line(0, CP1600_INT_INTRM, CLEAR_LINE);
 }

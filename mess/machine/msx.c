@@ -855,7 +855,7 @@ static void msx_wd179x_int (int state)
 		}
 	}
 
-READ_HANDLER (msx_disk_p1_r)
+static READ_HANDLER (msx_disk_p1_r)
 	{
 	switch (offset)
 		{
@@ -868,7 +868,7 @@ READ_HANDLER (msx_disk_p1_r)
 		}
 	}
 
-READ_HANDLER (msx_disk_p2_r)
+static READ_HANDLER (msx_disk_p2_r)
 	{
 	if (offset >= 0x1ff8)
 		{
@@ -886,7 +886,7 @@ READ_HANDLER (msx_disk_p2_r)
 		return 0xff;
 	}
 
-WRITE_HANDLER (msx_disk_w)
+static WRITE_HANDLER (msx_disk_w)
 	{
 	switch (offset)
 		{
@@ -1526,7 +1526,7 @@ READ_HANDLER (msx_mapper_r)
 static INT16* cas_samples;
 static int cas_len;
 
-int msx_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
+static int msx_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
 {
 	if (casdata == CODE_HEADER || casdata == CODE_TRAILER)
 		return 0;

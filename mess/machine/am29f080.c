@@ -71,6 +71,7 @@ typedef struct AMD_FLASH_FILE_MEMORY
 static AMD_FLASH_FILE_MEMORY amd_flash[MAX_FLASH_DEVICES];
 
 
+#if 0
 void	amd_flash_set_interface(int index1, struct amd_flash_interface *interface)
 {
 	if ((index1<0) || (index1>=MAX_FLASH_DEVICES))
@@ -95,6 +96,7 @@ void	amd_flash_set_sector_group_protection(int index1, int group_index, int is_p
 		amd_flash[index1].sector_group_protection |= (1<<group_index);
 	}
 }
+#endif
 
 
 

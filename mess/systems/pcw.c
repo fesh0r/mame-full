@@ -168,7 +168,7 @@ static nec765_interface pcw_nec765_interface =
 };
 
 /* determines if int line is held or cleared */
-void pcw_interrupt_handle(void)
+static void pcw_interrupt_handle(void)
 {
 	if (
 		(pcw_interrupt_counter!=0) ||
@@ -186,7 +186,7 @@ void pcw_interrupt_handle(void)
 
 
 /* callback for 1/300ths of a second interrupt */
-void pcw_timer_interrupt(int dummy)
+static void pcw_timer_interrupt(int dummy)
 {
 	pcw_update_interrupt_counter();
 
@@ -196,7 +196,7 @@ void pcw_timer_interrupt(int dummy)
 static int previous_fdc_int_state;
 
 /* set/clear fdc interrupt */
-void	pcw_trigger_fdc_int(void)
+static void	pcw_trigger_fdc_int(void)
 {
 	int state;
 
@@ -288,7 +288,7 @@ MEMORY_WRITE_START( writemem_pcw )
 MEMORY_END
 
 /* PCW keyboard is mapped into memory */
-READ_HANDLER(pcw_keyboard_r)
+static READ_HANDLER(pcw_keyboard_r)
 {
 	return readinputport(offset);
 }
@@ -468,7 +468,7 @@ static int pcw_get_sys_status(void)
 	return pcw_interrupt_counter | (readinputport(16) & (0x040 | 0x010)) | pcw_system_status;
 }
 
-READ_HANDLER(pcw_interrupt_counter_r)
+static READ_HANDLER(pcw_interrupt_counter_r)
 {
 	int data;
 
@@ -485,7 +485,7 @@ READ_HANDLER(pcw_interrupt_counter_r)
 }
 
 
-WRITE_HANDLER(pcw_bank_select_w)
+static WRITE_HANDLER(pcw_bank_select_w)
 {
 #ifdef VERBOSE
 	logerror("BANK: %2x %x\n",offset, data);
@@ -495,7 +495,7 @@ WRITE_HANDLER(pcw_bank_select_w)
 	pcw_update_mem(offset, data);
 }
 
-WRITE_HANDLER(pcw_bank_force_selection_w)
+static WRITE_HANDLER(pcw_bank_force_selection_w)
 {
 	pcw_bank_force = data;
 
@@ -506,7 +506,7 @@ WRITE_HANDLER(pcw_bank_force_selection_w)
 }
 
 
-WRITE_HANDLER(pcw_roller_ram_addr_w)
+static WRITE_HANDLER(pcw_roller_ram_addr_w)
 {
 	/*
 	Address of roller RAM. b7-5: bank (0-7). b4-1: address / 512. */
@@ -515,17 +515,17 @@ WRITE_HANDLER(pcw_roller_ram_addr_w)
 							((data & 0x01f)<<9);
 }
 
-WRITE_HANDLER(pcw_pointer_table_top_scan_w)
+static WRITE_HANDLER(pcw_pointer_table_top_scan_w)
 {
 	roller_ram_offset = data;
 }
 
-WRITE_HANDLER(pcw_vdu_video_control_register_w)
+static WRITE_HANDLER(pcw_vdu_video_control_register_w)
 {
 	pcw_vdu_video_control_register = data;
 }
 
-WRITE_HANDLER(pcw_system_control_w)
+static WRITE_HANDLER(pcw_system_control_w)
 {
 #ifdef VERBOSE
 	logerror("SYSTEM CONTROL: %d\n",data);
@@ -682,7 +682,7 @@ WRITE_HANDLER(pcw_system_control_w)
 	}
 }
 
-READ_HANDLER(pcw_system_status_r)
+static READ_HANDLER(pcw_system_status_r)
 {
 	/* from Jacob Nevins docs */
 	return pcw_get_sys_status();
@@ -690,7 +690,7 @@ READ_HANDLER(pcw_system_status_r)
 
 /* read from expansion hardware - additional hardware not part of
 the PCW custom ASIC */
-READ_HANDLER(pcw_expansion_r)
+static READ_HANDLER(pcw_expansion_r)
 {
 	logerror("pcw expansion r: %04x\n",offset+0x080);
 
@@ -740,7 +740,7 @@ READ_HANDLER(pcw_expansion_r)
 
 /* write to expansion hardware - additional hardware not part of
 the PCW custom ASIC */
-WRITE_HANDLER(pcw_expansion_w)
+static WRITE_HANDLER(pcw_expansion_w)
 {
 	logerror("pcw expansion w: %04x %02x\n",offset+0x080, data);
 
@@ -751,7 +751,7 @@ WRITE_HANDLER(pcw_expansion_w)
 
 }
 
-READ_HANDLER(pcw_fdc_r)
+static READ_HANDLER(pcw_fdc_r)
 {
 	/* from Jacob Nevins docs. FDC I/O is not fully decoded */
 	if (offset & 1)
@@ -762,7 +762,7 @@ READ_HANDLER(pcw_fdc_r)
 	return nec765_status_r(0);
 }
 
-WRITE_HANDLER(pcw_fdc_w)
+static WRITE_HANDLER(pcw_fdc_w)
 {
 	/* from Jacob Nevins docs. FDC I/O is not fully decoded */
 	if (offset & 1)
@@ -772,26 +772,26 @@ WRITE_HANDLER(pcw_fdc_w)
 }
 
 /* TODO: Implement the printer for PCW8256, PCW8512,PCW9256*/
-WRITE_HANDLER(pcw_printer_data_w)
+static WRITE_HANDLER(pcw_printer_data_w)
 {
 }
 
-WRITE_HANDLER(pcw_printer_command_w)
+static WRITE_HANDLER(pcw_printer_command_w)
 {
 }
 
-READ_HANDLER(pcw_printer_data_r)
+static READ_HANDLER(pcw_printer_data_r)
 {
 	return 0x0ff;
 }
 
-READ_HANDLER(pcw_printer_status_r)
+static READ_HANDLER(pcw_printer_status_r)
 {
 	return 0x0ff;
 }
 
 /* TODO: Implement parallel port! */
-READ_HANDLER(pcw9512_parallel_r)
+static READ_HANDLER(pcw9512_parallel_r)
 {
 	if (offset==1)
 	{
@@ -803,7 +803,7 @@ READ_HANDLER(pcw9512_parallel_r)
 }
 
 /* TODO: Implement parallel port! */
-WRITE_HANDLER(pcw9512_parallel_w)
+static WRITE_HANDLER(pcw9512_parallel_w)
 {
 	logerror("pcw9512 parallel w: offs: %04x data: %02x\n",offset,data);
 }
@@ -859,7 +859,7 @@ PORT_WRITE_START( writeport_pcw9512 )
 PORT_END
 
 
-void pcw_init_machine(void)
+static void pcw_init_machine(void)
 {
 
 	pcw_boot = 1;
@@ -913,7 +913,7 @@ void pcw_init_machine(void)
 	beep_set_frequency(0,3750);
 }
 
-void pcw_init_memory(int size)
+static void pcw_init_memory(int size)
 {
 	switch (size)
 	{
@@ -935,31 +935,31 @@ void pcw_init_memory(int size)
 	}
 }
 
-void init_pcw8256(void)
+static void init_pcw8256(void)
 {
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
 
-void init_pcw8512(void)
+static void init_pcw8512(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
 }
 
-void init_pcw9256(void)
+static void init_pcw9256(void)
 {
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
 
-void init_pcw9512(void)
+static void init_pcw9512(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
 }
 
-void init_pcw10(void)
+static void init_pcw10(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
@@ -1225,7 +1225,7 @@ ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
 
-int pcw_floppy_init(int id)
+static int pcw_floppy_init(int id)
 {
 	if (device_filename(IO_FLOPPY, id)==NULL)
 		return INIT_PASS;

@@ -44,7 +44,7 @@ int amstrad_floppy_init(int id)
 
 
 /* used to setup computer if a snapshot was specified */
-OPBASE_HANDLER( amstrad_opbaseoverride )
+static OPBASE_HANDLER( amstrad_opbaseoverride )
 {
 	/* clear op base override */
 	memory_set_opbase_handler(0,0);

@@ -47,7 +47,7 @@ static void dsk_disk_image_init(dsk_drive *);
 static dsk_drive drives[dsk_NUM_DRIVES]; /* the drives */
 
 /* load image */
-int dsk_load(int type, int id, unsigned char **ptr)
+static int dsk_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
@@ -120,7 +120,7 @@ int dsk_floppy_load(int id)
 	return INIT_PASS;
 }
 
-int dsk_save(int type, int id, unsigned char **ptr)
+static int dsk_save(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
@@ -170,7 +170,7 @@ void dsk_floppy_exit(int id)
 
 
 
-void dsk_dsk_init_track_offsets(dsk_drive *thedrive)
+static void dsk_dsk_init_track_offsets(dsk_drive *thedrive)
 {
 	int track_offset;
 	int i;
@@ -214,7 +214,7 @@ void dsk_dsk_init_track_offsets(dsk_drive *thedrive)
 
 }
 
-void dsk_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side)
+static void dsk_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side)
 {
 	int track_offset;
 
@@ -251,7 +251,7 @@ void dsk_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side)
 	}
 }
 
-void	 dsk_extended_dsk_init_track_offsets(dsk_drive *thedrive)
+static void	 dsk_extended_dsk_init_track_offsets(dsk_drive *thedrive)
 {
 	int track_offset;
 	int i;
@@ -301,7 +301,7 @@ void	 dsk_extended_dsk_init_track_offsets(dsk_drive *thedrive)
 }
 
 
-void dsk_extended_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side)
+static void dsk_extended_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side)
 {
 	int track_offset;
 
@@ -477,7 +477,7 @@ static void dsk_set_ddam(int drive, int id_index, int side, int ddam)
 }
 
 
-char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
+static char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 {
 	int track_offset;
 	int sector_offset;

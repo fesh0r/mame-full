@@ -141,12 +141,12 @@ static void ti85_timer_callback (int param)
 	}
 }
 
-void update_ti85_memory (void)
+static void update_ti85_memory (void)
 {
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x010000 + 0x004000*ti85_memory_page_0x4000);
 }
 
-void update_ti86_memory (void)
+static void update_ti86_memory (void)
 {
 	if (ti85_memory_page_0x4000 & 0x40)
 	{

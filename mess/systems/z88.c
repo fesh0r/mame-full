@@ -34,7 +34,7 @@ static void blink_reset(void)
 }
 
 /* load image */
-void z88_dump_ram(void)
+static void z88_dump_ram(void)
 {
 	void *file;
 
@@ -531,7 +531,7 @@ static void blink_pb_w(int offset, int data, int reg_index)
 
 
 /* segment register write */
-WRITE_HANDLER(blink_srx_w)
+static WRITE_HANDLER(blink_srx_w)
 {
 	blink.mem[offset] = data;
 
@@ -549,7 +549,7 @@ blink w: 03b1 03
 blink w: 03b6 03
 */
 
-WRITE_HANDLER(z88_port_w)
+static WRITE_HANDLER(z88_port_w)
 {
 	unsigned char port;
 
@@ -677,7 +677,7 @@ WRITE_HANDLER(z88_port_w)
 
 }
 
-READ_HANDLER(z88_port_r)
+static READ_HANDLER(z88_port_r)
 {
 	unsigned char port;
 

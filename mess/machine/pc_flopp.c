@@ -5,7 +5,7 @@
 
 #include "driver.h"
 #include "includes/basicdsk.h"
-
+#include "includes/pc_flopp.h"
 
 static int common_length_spt_heads[][3] = {
     { 8*1*40*512,  8, 1},   /* 5 1/4 inch double density single sided */

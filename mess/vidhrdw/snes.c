@@ -66,7 +66,7 @@ VIDEO_UPDATE( snes )
 {
 }
 
-void snes_draw_windows( UINT8 layer, UINT8 curline, UINT8 priority )
+static void snes_draw_windows( UINT8 layer, UINT8 curline, UINT8 priority )
 {
 	UINT8 w1en = 0, w2en = 0, w1mode = 0, w2mode = 0;
 	UINT16 ii;
@@ -248,7 +248,7 @@ INLINE void snes_draw_tile_4( UINT8 layer, UINT8 line, UINT16 tileaddr, INT16 x,
  *
  * Draw tiles with 8 bit planes(8 colors)
  *****************************************/
-void snes_draw_tile_8( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT16 y, UINT8 priority, UINT8 flip )
+static void snes_draw_tile_8( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT16 y, UINT8 priority, UINT8 flip )
 {
 	UINT8 ii;
 	UINT8 plane[8];
@@ -364,7 +364,7 @@ INLINE void snes_draw_object( UINT8 line, UINT16 tileaddr, INT16 x, INT16 y, UIN
  *
  * Update an entire line of 2 bit plane tiles.
  *********************************************/
-void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
+static void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
 {
 	UINT32 tilemap, tile;
 	UINT16 ii, vflip, hflip, pal;
@@ -459,7 +459,7 @@ void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
  *
  * Update an entire line of 4 bit plane tiles.
  *********************************************/
-void snes_update_line_4( UINT8 layer, UINT16 curline )
+static void snes_update_line_4( UINT8 layer, UINT16 curline )
 {
 	UINT32 tilemap, tile;
 	UINT16 ii, vflip, hflip, pal;
@@ -549,7 +549,7 @@ void snes_update_line_4( UINT8 layer, UINT16 curline )
  *
  * Update an entire line of 8 bit plane tiles.
  *********************************************/
-void snes_update_line_8( UINT8 layer, UINT16 curline )
+static void snes_update_line_8( UINT8 layer, UINT16 curline )
 {
 	UINT32 tilemap, tile;
 	UINT16 ii, vflip, hflip, pal;
@@ -640,7 +640,7 @@ void snes_update_line_8( UINT8 layer, UINT16 curline )
  *
  * Update an entire line of mode7 tiles.
  *********************************************/
-void snes_update_line_mode7( UINT16 curline )
+static void snes_update_line_mode7( UINT16 curline )
 {
 	UINT16 tilen, tiled, ii;
 	INT16 a, b, c, d, x0, y0, x1, y1, x2, y2, hs, vs;
@@ -829,7 +829,7 @@ INLINE void snes_update_objects( UINT16 curline )
  *
  * Debug to display maps
  *********************************************/
-void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, UINT16 curline, UINT8 layer )
+static void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, UINT16 curline, UINT8 layer )
 {
 	UINT32 tile, addr = tilemap;
 	UINT16 ii, vflip, hflip, pal;
@@ -878,7 +878,7 @@ void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, 
  *
  * Debug to display everything in VRAM.
  *********************************************/
-void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8 bpl, UINT16 pal )
+static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8 bpl, UINT16 pal )
 {
 	UINT16 ii, jj, kk;
 	UINT32 addr = tileaddr;

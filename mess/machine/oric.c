@@ -112,7 +112,7 @@ static int previous_input_port5;
 
 #ifdef ORIC_DUMP_RAM
 /* load image */
-void oric_dump_ram(void)
+static void oric_dump_ram(void)
 {
 	void *file;
 
@@ -136,7 +136,7 @@ void oric_dump_ram(void)
 	}
 }
 
-void    oric_dump_video(void)
+static void    oric_dump_video(void)
 {
         FILE *fh;
 
@@ -236,7 +236,7 @@ WRITE_HANDLER (oric_psg_porta_write)
 static char oric_psg_control;
 
 /* this port is also used to read printer data */
-READ_HANDLER ( oric_via_in_a_func )
+static READ_HANDLER ( oric_via_in_a_func )
 {
 	/*logerror("port a read\r\n"); */
 
@@ -257,7 +257,7 @@ READ_HANDLER ( oric_via_in_a_func )
 	return oric_via_port_a_data;
 }
 
-READ_HANDLER ( oric_via_in_b_func )
+static READ_HANDLER ( oric_via_in_b_func )
 {
 	int data;
 
@@ -298,7 +298,7 @@ static void oric_psg_connection_refresh(void)
 	}
 }
 
-WRITE_HANDLER ( oric_via_out_a_func )
+static WRITE_HANDLER ( oric_via_out_a_func )
 {
 	oric_via_port_a_data = data;
 
@@ -379,7 +379,7 @@ static void    oric_refresh_tape(int dummy)
 }
 
 static unsigned char previous_portb_data = 0;
-WRITE_HANDLER ( oric_via_out_b_func )
+static WRITE_HANDLER ( oric_via_out_b_func )
 {
 	int printer_handshake;
 
@@ -445,17 +445,17 @@ static CENTRONICS_CONFIG oric_cent_config[1]={
 };
 
 
-READ_HANDLER ( oric_via_in_ca2_func )
+static READ_HANDLER ( oric_via_in_ca2_func )
 {
 	return oric_psg_control & 1;
 }
 
-READ_HANDLER ( oric_via_in_cb2_func )
+static READ_HANDLER ( oric_via_in_cb2_func )
 {
 	return (oric_psg_control>>1) & 1;
 }
 
-WRITE_HANDLER ( oric_via_out_ca2_func )
+static WRITE_HANDLER ( oric_via_out_ca2_func )
 {
 	oric_psg_control &=~1;
 
@@ -467,7 +467,7 @@ WRITE_HANDLER ( oric_via_out_ca2_func )
 	oric_psg_connection_refresh();
 }
 
-WRITE_HANDLER ( oric_via_out_cb2_func )
+static WRITE_HANDLER ( oric_via_out_cb2_func )
 {
 	oric_psg_control &=~2;
 
@@ -480,7 +480,7 @@ WRITE_HANDLER ( oric_via_out_cb2_func )
 }
 
 
-void	oric_via_irq_func(int state)
+static void	oric_via_irq_func(int state)
 {
 	oric_irqs &= ~(1<<0);
 
@@ -999,7 +999,7 @@ static void oric_microdisc_wd179x_callback(int State)
 }
 
 
-void	oric_microdisc_set_mem_0x0c000(void)
+static void	oric_microdisc_set_mem_0x0c000(void)
 {
 	if (oric_is_telestrat)
 		return;
@@ -1263,7 +1263,7 @@ void	oric_floppy_exit(int id)
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
-void oric_common_init_machine(void)
+static void oric_common_init_machine(void)
 {
     /* clear all irqs */
 	oric_irqs = 0;
@@ -1743,7 +1743,7 @@ static WRITE_HANDLER(telestrat_via2_out_b_func)
 }
 
 
-void	telestrat_via2_irq_func(int state)
+static void	telestrat_via2_irq_func(int state)
 {
     oric_irqs &=~(1<<2);
 

@@ -123,7 +123,7 @@ INLINE int findstr(const char *dst, const char *src)
 }
 
 /* free a linked list of state_vars (aka section) */
-void config_free_section(void *config)
+static void config_free_section(void *config)
 {
 	struct config_hdl *cfg = (struct config_hdl *) config;
 	struct config_var *this, *next;
@@ -221,7 +221,7 @@ static void CLIB_DECL config_printf(void *config, const char *fmt,...)
 	}
 }
 
-void config_save_section(void *config, const char *section, int instance)
+static void config_save_section(void *config, const char *section, int instance)
 {
 	struct config_hdl *cfg = (struct config_hdl *) config;
 
@@ -401,7 +401,7 @@ void config_save_INT32(void *config, const char *section, int instance,
 }
 
 /* load a linked list of config_vars (aka section) */
-void config_load_section(void *config, const char *section, int instance)
+static void config_load_section(void *config, const char *section, int instance)
 {
 	struct config_hdl *cfg = (struct config_hdl *) config;
 

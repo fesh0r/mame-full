@@ -214,7 +214,7 @@ enum {
 } FILESELECT_ENTRY_TYPE;
 
 
-char *fs_dupe(const char *src, int len)
+static char *fs_dupe(const char *src, int len)
 {
 	char *dst;
 	int display_length;
@@ -241,7 +241,7 @@ char *fs_dupe(const char *src, int len)
 }
 
 
-void fs_free(void)
+static void fs_free(void)
 {
 	if (fs_chunk > 0)
 	{
@@ -267,7 +267,7 @@ void fs_free(void)
 	}
 }
 
-int fs_alloc(void)
+static int fs_alloc(void)
 {
 	if (fs_total < fs_chunk)
 	{

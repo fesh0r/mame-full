@@ -79,7 +79,7 @@ static int min(int v1, int v2) {
     return (v1 < v2 ? v1 : v2);
 }
 
-int sprites_collide(int spriteNum0, int spriteNum1) {
+static int sprites_collide(int spriteNum0, int spriteNum1) {
     UINT8 x1, x2, y1, y2, w1, w2, h1, h2, x0, y0, r0y, r1y,
           width, height, x, y;
 
@@ -117,7 +117,7 @@ int sprites_collide(int spriteNum0, int spriteNum1) {
     return FALSE;
 }
 
-void determine_sprite_collisions(void)
+static void determine_sprite_collisions(void)
 {
     //check sprite to sprite collisions
     int i, j;
@@ -139,7 +139,7 @@ void determine_sprite_collisions(void)
     }
 }
 
-void render_sprites(void)
+static void render_sprites(void)
 {
     INT32 cardMemoryLocation, pixelSize;
     INT32 spritePixelHeight;
@@ -220,7 +220,7 @@ void render_sprites(void)
     }
 }
 
-void render_line(struct mame_bitmap *bitmap, UINT8 nextByte, UINT16 x, UINT16 y,
+static void render_line(struct mame_bitmap *bitmap, UINT8 nextByte, UINT16 x, UINT16 y,
         UINT8 fgcolor, UINT8 bgcolor)
 {
     UINT32 color = (nextByte & 0x80 ? Machine->pens[fgcolor]
@@ -280,7 +280,7 @@ void render_line(struct mame_bitmap *bitmap, UINT8 nextByte, UINT16 x, UINT16 y,
     plot_pixel(bitmap, x+15, y+1, color);
 }
 
-void render_colored_squares(struct mame_bitmap *bitmap, UINT16 x, UINT16 y,
+static void render_colored_squares(struct mame_bitmap *bitmap, UINT16 x, UINT16 y,
         UINT8 color0, UINT8 color1, UINT8 color2, UINT8 color3)
 {
     plot_box(bitmap, x, y, 8, 8, Machine->pens[color0]);
@@ -289,7 +289,7 @@ void render_colored_squares(struct mame_bitmap *bitmap, UINT16 x, UINT16 y,
     plot_box(bitmap, x+8, y+8, 8, 8, Machine->pens[color3]);
 }
 
-void render_color_stack_mode(struct mame_bitmap *bitmap)
+static void render_color_stack_mode(struct mame_bitmap *bitmap)
 {
     UINT8 h, csPtr = 0, nexty = 0;
     UINT16 nextCard, nextx = 0;
@@ -348,7 +348,7 @@ void render_color_stack_mode(struct mame_bitmap *bitmap)
     }
 }
 
-void render_fg_bg_mode(struct mame_bitmap *bitmap)
+static void render_fg_bg_mode(struct mame_bitmap *bitmap)
 {
     UINT8 i, j, isGrom, fgcolor, bgcolor, nexty = 0;
     UINT16 nextCard, memoryLocation, nextx = 0;
@@ -384,7 +384,7 @@ void render_fg_bg_mode(struct mame_bitmap *bitmap)
     }
 }
 
-void copy_sprites_to_background(struct mame_bitmap *bitmap)
+static void copy_sprites_to_background(struct mame_bitmap *bitmap)
 {
     UINT8 width, currentPixel;
     UINT8 borderCollision, foregroundCollision;
@@ -453,7 +453,7 @@ void copy_sprites_to_background(struct mame_bitmap *bitmap)
     }
 }
 
-void render_background(struct mame_bitmap *bitmap)
+static void render_background(struct mame_bitmap *bitmap)
 {
 	if (intv_color_stack_mode)
         render_color_stack_mode(bitmap);

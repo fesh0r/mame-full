@@ -694,7 +694,7 @@ MACHINE_INIT( c16 )
 
 }
 
-int c16_rom_id (int id)
+static int c16_rom_id (int id)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */

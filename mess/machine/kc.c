@@ -39,7 +39,7 @@ bit 0: TRUCK */
 
 
 /* load image */
-void kc_dump_ram(void)
+static void kc_dump_ram(void)
 {
 	void *file;
 
@@ -64,7 +64,7 @@ void kc_dump_ram(void)
 }
 
 /* load image */
-int kc_load(int type, int id, unsigned char **ptr)
+static int kc_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
@@ -279,7 +279,7 @@ static void kc85_disk_reset_timer_callback(int dummy)
 	cpunum_set_pc(0,0x0f000);
 }
 
-void kc_disc_interface_init(void)
+static void kc_disc_interface_init(void)
 {
 	timer_set(TIME_NOW, 0, kc85_disk_reset_timer_callback);
 
@@ -293,7 +293,7 @@ void kc_disc_interface_init(void)
 }
 
 
-void kc_disc_interface_exit(void)
+static void kc_disc_interface_exit(void)
 {
 	nec765_stop();
 }

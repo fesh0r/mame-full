@@ -18,7 +18,7 @@ static void apf_charproc(UINT8 c)
 #define APF_DUMP_RAM
 
 #ifdef APF_DUMP_RAM
-void apf_dump_ram(void)
+static void apf_dump_ram(void)
 {
 	void *file;
 
@@ -50,7 +50,7 @@ WRITE_HANDLER(apf_video_w)
 
 extern unsigned int apf_ints;
 
-WRITE_HANDLER(apf_vsync_int)
+static WRITE_HANDLER(apf_vsync_int)
 {
 	if (data!=0)
 	{

@@ -6,7 +6,7 @@
 #include "includes/cbm.h"
 
 /* safer replacement str[0]=0; */
-int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...)
+static int DECL_SPEC cbm_snprintf (char *str, size_t size, const char *format,...)
 {
 	va_list list;
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.7 2002/06/13 02:51:41 npwoods Exp $
+  $Id: pc8801.c,v 1.8 2002/09/11 15:53:13 rnabet Exp $
 
 ***************************************************************************/
 
@@ -99,7 +99,7 @@ static int interrupt_level_reg;
 static int interrupt_mask_reg;
 static int interrupt_trig_reg;
 
-void pc8801_update_interrupt(void)
+static void pc8801_update_interrupt(void)
 {
   int level,i;
 
@@ -112,7 +112,7 @@ void pc8801_update_interrupt(void)
   }
 }
 
-int pc8801_interupt_callback (int cpu)
+static int pc8801_interupt_callback (int cpu)
 {
   int level,i;
 
@@ -136,7 +136,7 @@ WRITE_HANDLER(pc8801_write_interrupt_mask)
     | ((data&0x04)>>2) | 0xf8;
 }
 
-void pc8801_raise_interrupt(int level)
+static void pc8801_raise_interrupt(int level)
 {
   interrupt_trig_reg |= interrupt_mask_reg & (1<<level);
   pc8801_update_interrupt();
@@ -147,12 +147,12 @@ INTERRUPT_GEN( pc8801_interrupt )
 	pc8801_raise_interrupt(1);
 }
 
-void pc8801_timer_interrupt(int dummy)
+static void pc8801_timer_interrupt(int dummy)
 {
   pc8801_raise_interrupt(2);
 }
 
-void pc8801_init_interrupt(void)
+static void pc8801_init_interrupt(void)
 {
   interrupt_level_reg=0;
   interrupt_mask_reg=0xf8;

@@ -403,7 +403,7 @@ INLINE void waveCalcFilter(sidOperator* pVoice)
 	}
 }
 
-sbyte waveCalcMute(sidOperator* pVoice)
+static sbyte waveCalcMute(sidOperator* pVoice)
 {
 	(*pVoice->ADSRproc)(pVoice);  /* just process envelope */
 	return pVoice->filtIO;//&pVoice->outputMask;
@@ -436,7 +436,7 @@ sbyte sidWaveCalcNormal(sidOperator* pVoice)
 }
 
 
-sbyte waveCalcRangeCheck(sidOperator* pVoice)
+static sbyte waveCalcRangeCheck(sidOperator* pVoice)
 {
 #if defined(DIRECT_FIXPOINT)
 	pVoice->waveStepOld = pVoice->waveStep.w[HI];

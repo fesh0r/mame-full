@@ -123,7 +123,7 @@ static void z88_vh_render_line(struct mame_bitmap *bitmap, int x, int y,int pen)
 }
 
 /* convert absolute offset into correct address to get data from */
-unsigned  char *z88_convert_address(unsigned long offset)
+static unsigned  char *z88_convert_address(unsigned long offset)
 {
 //        return z88_memory;
 

@@ -150,7 +150,7 @@ static void update_psg(void)
 
 
 /* ppi port a read */
-READ_HANDLER ( amstrad_ppi_porta_r )
+static READ_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
 	
@@ -225,7 +225,7 @@ function 11:
 */
 
 
-READ_HANDLER (amstrad_ppi_portb_r)
+static READ_HANDLER (amstrad_ppi_portb_r)
 {
 	int data;
 
@@ -251,7 +251,7 @@ READ_HANDLER (amstrad_ppi_portb_r)
 	return data;
 }
 
-WRITE_HANDLER ( amstrad_ppi_porta_w )
+static WRITE_HANDLER ( amstrad_ppi_porta_w )
 {
 	ppi_port_outputs[0] = data;
 
@@ -262,7 +262,7 @@ WRITE_HANDLER ( amstrad_ppi_porta_w )
 /* previous value */
 static int previous_ppi_portc_w;
 
-WRITE_HANDLER ( amstrad_ppi_portc_w )
+static WRITE_HANDLER ( amstrad_ppi_portc_w )
 {
 	int changed_data;
 
@@ -412,7 +412,7 @@ void Amstrad_RethinkMemory(void)
 
 
 /* simplified ram configuration - e.g. only correct for 128k machines */
-void AmstradCPC_GA_SetRamConfiguration(void)
+static void AmstradCPC_GA_SetRamConfiguration(void)
 {
 	int ConfigurationIndex = AmstradCPC_GA_RamConfiguration & 0x07;
 	int BankIndex;
@@ -557,7 +557,7 @@ void AmstradCPC_SetUpperRom(int Data)
 
 
 /* port handler */
-READ_HANDLER ( AmstradCPC_ReadPortHandler )
+static READ_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0x0ff;
 
@@ -627,7 +627,7 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 static unsigned char previous_printer_data_byte;
 
 /* Offset handler for write */
-WRITE_HANDLER ( AmstradCPC_WritePortHandler )
+static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 {
 	if ((offset & 0x0c000) == 0x04000)
 	{
@@ -802,7 +802,7 @@ It is believed that it is used to make multiface invisible to programs */
 
 
 /* used to setup computer if a snapshot was specified */
-OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
+static OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
 {
 		int pc;
 
@@ -1126,7 +1126,7 @@ void amstrad_interrupt_timer_update(void)
 	}
 }
 
-void	amstrad_interrupt_timer_callback(int dummy)
+static void	amstrad_interrupt_timer_callback(int dummy)
 {
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 	amstrad_update_video();
@@ -1143,7 +1143,7 @@ static void amstrad_clear_top_bit_of_int_counter(void)
 }
 
 /* called when cpu acknowledges int */
-int 	amstrad_cpu_acknowledge_int(int cpu)
+static int 	amstrad_cpu_acknowledge_int(int cpu)
 {
 	amstrad_clear_top_bit_of_int_counter();
 
@@ -2270,7 +2270,7 @@ static const void *previous_xycb_table;
 static const void *previous_ex_table;
 
 
-void amstrad_common_init(void)
+static void amstrad_common_init(void)
 {
 
 	/* set all colours to black */
@@ -2456,7 +2456,7 @@ static PORT_WRITE_START (writeport_amstrad)
 PORT_END
 
 /* read PSG port A */
-READ_HANDLER ( amstrad_psg_porta_read )
+static READ_HANDLER ( amstrad_psg_porta_read )
 {	
 	/* read cpc keyboard */
 	return AmstradCPC_ReadKeyboard();

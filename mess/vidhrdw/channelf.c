@@ -68,7 +68,7 @@ static void plot_4_pixel(int x, int y, int color)
 	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
 }
 
-int recalc_palette_offset(int reg1, int reg2)
+static int recalc_palette_offset(int reg1, int reg2)
 {
 	/* Note: This is based on the very strange decoding they    */
 	/*       used to determine which palette this line is using */

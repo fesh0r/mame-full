@@ -105,7 +105,7 @@ VIDEO_START( a7800 )
 
 ***************************************************************************/
 
-void maria_draw_scanline(void)
+static void maria_draw_scanline(void)
 {
 	unsigned int graph_adr,data_addr;
 	int width,hpos,pal,mode,ind;

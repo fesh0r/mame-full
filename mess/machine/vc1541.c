@@ -1009,7 +1009,7 @@ MEMORY_WRITE_START( c1551_writemem )
 	{0xc000, 0xffff, MWA_ROM},
 MEMORY_END
 
-void c1551x_write_data (TPI6525 *This, int data)
+static void c1551x_write_data (TPI6525 *This, int data)
 {
 	DBG_LOG(1, "c1551 cpu", ("%d write data %.2x\n",
 						 cpu_getactivecpu (), data));
@@ -1019,7 +1019,7 @@ void c1551x_write_data (TPI6525 *This, int data)
 	tpi6525_0_port_a_w(0,data);
 }
 
-int c1551x_read_data (TPI6525 *This)
+static int c1551x_read_data (TPI6525 *This)
 {
 	int data=0xff;
 #ifdef CPU_SYNC
@@ -1031,7 +1031,7 @@ int c1551x_read_data (TPI6525 *This)
 	return data;
 }
 
-void c1551x_write_handshake (TPI6525 *This, int data)
+static void c1551x_write_handshake (TPI6525 *This, int data)
 {
 	DBG_LOG(1, "c1551 cpu",("%d write handshake %.2x\n",
 						 cpu_getactivecpu (), data));
@@ -1041,7 +1041,7 @@ void c1551x_write_handshake (TPI6525 *This, int data)
 	tpi6525_0_port_c_w(0,data&0x40?0xff:0x7f);
 }
 
-int c1551x_read_handshake (TPI6525 *This)
+static int c1551x_read_handshake (TPI6525 *This)
 {
 	int data=0xff;
 #ifdef CPU_SYNC
@@ -1053,7 +1053,7 @@ int c1551x_read_handshake (TPI6525 *This)
 	return data;
 }
 
-int c1551x_read_status (TPI6525 *This)
+static int c1551x_read_status (TPI6525 *This)
 {
 	int data=0xff;
 #ifdef CPU_SYNC

@@ -118,7 +118,7 @@ Green value, Red value, Blue value: 0 = 0%, 01/10 = 50%, 11 = 100%.
 The 01 case is not used, it is unknown if this produces a different amount of colour.
 */ 
 
-unsigned char kccomp_get_colour_element(int colour_value)
+static unsigned char kccomp_get_colour_element(int colour_value)
 {
 	switch (colour_value)
 	{
@@ -488,7 +488,7 @@ void amstrad_draw_screen_enabled(void)
 
 }
 #endif
-void amstrad_draw_screen_enabled(void)
+static void amstrad_draw_screen_enabled(void)
 {
 	struct mame_bitmap *bitmap = amstrad_bitmap;
 	int x = x_screen_pos;
@@ -737,7 +737,7 @@ void amstrad_draw_screen_disabled(void)
 	}
 }
 #endif
-void amstrad_draw_screen_disabled(void)
+static void amstrad_draw_screen_disabled(void)
 {
 	struct mame_bitmap *bitmap = amstrad_bitmap;
 	int x = x_screen_pos;
@@ -751,7 +751,7 @@ void amstrad_draw_screen_disabled(void)
 
 
 /* Select the Function to draw the screen area */
-void amstrad_Set_VideoULA_DE(void)
+static void amstrad_Set_VideoULA_DE(void)
 {
 	if (amstrad_DE)
 	{
@@ -769,7 +769,7 @@ void amstrad_Set_VideoULA_DE(void)
  ************************************************************************/
 
 // called when the 6845 changes the character row
-void amstrad_Set_Character_Row(int offset, int data)
+static void amstrad_Set_Character_Row(int offset, int data)
 {
 	amstrad_Character_Row=data;
 	amstrad_Set_VideoULA_DE();
@@ -777,7 +777,7 @@ void amstrad_Set_Character_Row(int offset, int data)
 
 /* the horizontal screen position on the display is determined
 by the length of the HSYNC and the position of the hsync */
-void amstrad_Set_HSync(int offset, int data)
+static void amstrad_Set_HSync(int offset, int data)
 {
 //	if (amstrad_rendering)
 //	{
@@ -819,7 +819,7 @@ void amstrad_Set_HSync(int offset, int data)
 	amstrad_HSync=data;
 }
 
-void amstrad_Set_VSync(int offset, int data)
+static void amstrad_Set_VSync(int offset, int data)
 {
 
         amstrad_vsync = data;
@@ -854,7 +854,7 @@ void amstrad_Set_VSync(int offset, int data)
 }
 
 // called when the 6845 changes the Display Enabled
-void amstrad_Set_DE(int offset, int data)
+static void amstrad_Set_DE(int offset, int data)
 {
 	amstrad_DE=data;
 	amstrad_Set_VideoULA_DE();

@@ -8,7 +8,7 @@ Nick has 256 colours, 3 bits for R and G, with 2 bits for Blue.
 It's a nice and flexible graphics processor..........
  */
 
-//#include "nick.h"
+#include "nick.h"
 #include "epnick.h"
 
 /*************************************************************/
@@ -125,7 +125,7 @@ static unsigned int	Nick_PenIndexLookup_4Colour[256];
 /* given a bit pattern, this will get the pen index */
 static unsigned int	Nick_PenIndexLookup_16Colour[256];
 
-void	Nick_Init(void)
+static void	Nick_Init(void)
 {
 	int i;
 
@@ -801,7 +801,7 @@ static void Nick_DoDisplay(LPT_ENTRY *pLPT)
 	}
 }
 
-void	Nick_UpdateLPT(void)
+static void	Nick_UpdateLPT(void)
 {
 	unsigned long CurLPT;
 
@@ -812,7 +812,7 @@ void	Nick_UpdateLPT(void)
 }
 
 
-void	Nick_ReloadLPT(void)
+static void	Nick_ReloadLPT(void)
 {
 	unsigned long LPT_Addr;
 
@@ -839,7 +839,7 @@ void	Nick_ReloadLPT(void)
 }
 
 /* call here to render a line of graphics */
-void	Nick_DoLine(void)
+static void	Nick_DoLine(void)
 {
 	unsigned char ScanLineCount;
 
@@ -893,12 +893,14 @@ int	Nick_vh_start(void)
   return 0;
 }
 
+#if 0
 int	Nick_reg_r(int RegIndex)
 {
   /* read from a nick register - return floating bus,
    because the registers are not readable! */
   return 0x0ff;
 }
+#endif
 
 void	Nick_reg_w(int RegIndex, int Data)
 {

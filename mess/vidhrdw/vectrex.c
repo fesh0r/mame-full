@@ -364,8 +364,6 @@ static WRITE_HANDLER ( v_via_ca2_w )
 
 *****************************************************************/
 
-extern READ_HANDLER ( s1_via_pb_r );
-
 static struct via6522_interface spectrum1_via6522_interface =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ v_via_pa_r, s1_via_pb_r, 0, 0, 0, 0,

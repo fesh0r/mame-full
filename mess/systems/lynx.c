@@ -260,7 +260,7 @@ UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
 	return (UINT32)crc;
 }
 
-int lynx_verify_cart (char *header)
+static int lynx_verify_cart (char *header)
 {
 
 	logerror("Trying Header Compare\n");
@@ -442,7 +442,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-DRIVER_INIT( lynx )
+static DRIVER_INIT( lynx )
 {
 	int i;
 	UINT8 *gfx = memory_region(REGION_GFX1);

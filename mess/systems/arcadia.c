@@ -363,7 +363,7 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-void init_arcadia(void)
+static void init_arcadia(void)
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);

@@ -553,7 +553,7 @@ static void svi318_set_banks ()
 static INT16* cas_samples;
 static int cas_len;
 
-int svi318_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
+static int svi318_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
 	{
 	if (casdata == CODE_HEADER || casdata == CODE_TRAILER)
 		return 0;

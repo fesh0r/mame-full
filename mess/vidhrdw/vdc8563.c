@@ -386,7 +386,7 @@ static int vdc8563_clocks_in_frame(void)
 	}
 }
 
-void vdc8563_time(void)
+static void vdc8563_time(void)
 {
 	double neu, ftime;
 	neu=timer_get_time();
@@ -410,7 +410,7 @@ void vdc8563_time(void)
 	}
 }
 
-void vdc8563_monotext_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+static void vdc8563_monotext_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i;
 	struct rectangle rect;
@@ -450,7 +450,7 @@ void vdc8563_monotext_screenrefresh (struct mame_bitmap *bitmap, int full_refres
 	}
 }
 
-void vdc8563_text_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+static void vdc8563_text_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
 	struct rectangle rect;
@@ -494,7 +494,7 @@ void vdc8563_text_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void vdc8563_graphic_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+static void vdc8563_graphic_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j, k;
 	struct rectangle rect;

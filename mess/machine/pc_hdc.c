@@ -550,7 +550,7 @@ static void pc_hdc_command(int n)
  *	cccccccc write precomp l
  *	eeeeeeee ecc
  */
-void pc_hdc_data_w(int n, int data)
+static void pc_hdc_data_w(int n, int data)
 {
 	if( data_cnt == 0 )
 	{
@@ -660,7 +660,7 @@ void pc_hdc_data_w(int n, int data)
 	}
 }
 
-void pc_hdc_reset_w(int n, int data)
+static void pc_hdc_reset_w(int n, int data)
 {
 	HDC_LOG(1,"hdc_reset_w",("INDEX #%d $%02x\n", n, data));
 	cylinder[n] = 0;
@@ -673,19 +673,19 @@ void pc_hdc_reset_w(int n, int data)
 	data_cnt = 0;
 }
 
-void pc_hdc_select_w(int n, int data)
+static void pc_hdc_select_w(int n, int data)
 {
 	HDC_LOG(3,"hdc_select_w",("BOARD #%d $%02x\n", n, data));
 	status[n] &= ~STA_INTERRUPT;
 	status[n] |= STA_SELECT;
 }
 
-void pc_hdc_control_w(int n, int data)
+static void pc_hdc_control_w(int n, int data)
 {
 	HDC_LOG(3,"hdc_control_w",("BOARD #%d $%02x\n", n, data));
 }
 
-int  pc_hdc_data_r(int n)
+static int  pc_hdc_data_r(int n)
 {
 	int data = 0xff;
 	if( data_cnt )
@@ -704,7 +704,7 @@ int  pc_hdc_data_r(int n)
     return data;
 }
 
-int  pc_hdc_status_r(int n)
+static int  pc_hdc_status_r(int n)
 {
 	static int old_stat = 0;
 	int data = status[n];
@@ -717,7 +717,7 @@ int  pc_hdc_status_r(int n)
     return data;
 }
 
-int  pc_hdc_dipswitch_r(int n)
+static int  pc_hdc_dipswitch_r(int n)
 {
 	int data = dip[n];
 	HDC_LOG(4,"hdc_dipswitch_r",("BOARD #%d $%02x\n", n, data));
@@ -731,7 +731,7 @@ int  pc_hdc_dipswitch_r(int n)
  *		hard disk controller
  *
  *************************************************************************/
-void pc_HDC_w(int chip, int offs, int data)
+static void pc_HDC_w(int chip, int offs, int data)
 {
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
 		return;
@@ -747,7 +747,7 @@ void pc_HDC_w(int chip, int offs, int data)
 WRITE_HANDLER ( pc_HDC1_w ) { pc_HDC_w(0, offset, data); }
 WRITE_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
 
-int pc_HDC_r(int chip, int offs)
+static int pc_HDC_r(int chip, int offs)
 {
 	int data = 0xff;
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )

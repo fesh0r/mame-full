@@ -81,7 +81,7 @@ static unsigned int video_ram_lookup3[0x4000];
 
 static unsigned int *video_ram_lookup;
 
-void set_video_memory_lookups(int ramsize)
+static void set_video_memory_lookups(int ramsize)
 {
 
 	int ma; // output from IC2 6845 MA address
@@ -172,7 +172,7 @@ void setscreenstart(int c0,int c1)
    this is used by the pallette lookup in the video ULA */
 static unsigned char pixel_bits[256];
 
-void set_pixel_lookup(void)
+static void set_pixel_lookup(void)
 {
 	int i;
 	for (i=0; i<256; i++)
@@ -214,12 +214,12 @@ static int tt_flash=0;
 
 static int tt_frame_count=0;
 
-void teletext_data_w(int offset, int data)
+static void teletext_data_w(int offset, int data)
 {
 	teletext_data=data & 0x7f;
 }
 
-void teletext_DEW(void)
+static void teletext_DEW(void)
 {
 	tt_linecount=9;
 	tt_double_height=0;
@@ -228,7 +228,7 @@ void teletext_DEW(void)
 	tt_frame_count=(tt_frame_count+1)%50;
 }
 
-void teletext_LOSE_w(int offset, int data)
+static void teletext_LOSE_w(int offset, int data)
 {
 	if ((data)&&(!teletext_LOSE))
 	{
@@ -255,7 +255,7 @@ void teletext_LOSE_w(int offset, int data)
 }
 
 
-void teletext_clock(void)
+static void teletext_clock(void)
 {
 	int sc1;
 	int code;
@@ -482,12 +482,12 @@ WRITE_HANDLER ( videoULA_w )
 
 // VideoULA Internal Cursor controls
 
-void set_cursor(void)
+static void set_cursor(void)
 {
 	cursor_state=VideoULA_CR?0:7;
 }
 
-void BBC_Clock_CR(void)
+static void BBC_Clock_CR(void)
 {
 	if (VideoULA_CR)
 	{
@@ -504,7 +504,7 @@ void BBC_Clock_CR(void)
 
 // This is the actual output of the Video ULA this fuction does all the output to the screen in the BBC emulator
 
-void BBC_ula_drawpixel(int col,int number_of_pixels)
+static void BBC_ula_drawpixel(int col,int number_of_pixels)
 {
 	int pixel_count;
 	int pixel_temp;
@@ -581,25 +581,25 @@ void BBC_draw_RGB_in(int rgb)
  * BBC circuits controlled by 6845 Outputs
  ************************************************************************/
 
-void BBC_Set_VideoULA_DE(void)
+static void BBC_Set_VideoULA_DE(void)
 {
 	VideoULA_DE=(BBC_DE) && (!(BBC_Character_Row&8));
 }
 
-void BBC_Set_Teletext_DE(void)
+static void BBC_Set_Teletext_DE(void)
 {
 	Teletext_Latch_Input_D7=BBC_DE?0x80:0;
 }
 
 // called when the 6845 changes the character row
-void BBC_Set_Character_Row(int offset, int data)
+static void BBC_Set_Character_Row(int offset, int data)
 {
 	BBC_Character_Row=data;
 	BBC_Set_VideoULA_DE();
 }
 
 // called when the 6845 changes the HSync
-void BBC_Set_HSync(int offset, int data)
+static void BBC_Set_HSync(int offset, int data)
 {
 	// catch the falling edge
 	if((!data)&&(BBC_HSync))
@@ -623,7 +623,7 @@ void BBC_Set_HSync(int offset, int data)
 }
 
 // called when the 6845 changes the VSync
-void BBC_Set_VSync(int offset, int data)
+static void BBC_Set_VSync(int offset, int data)
 {
 	// catch the falling edge
 	if ((!data)&&(BBC_VSync))
@@ -649,7 +649,7 @@ void BBC_Set_VSync(int offset, int data)
 }
 
 // called when the 6845 changes the Display Enabled
-void BBC_Set_DE(int offset, int data)
+static void BBC_Set_DE(int offset, int data)
 {
 	BBC_DE=data;
 	BBC_Set_VideoULA_DE();
@@ -659,7 +659,7 @@ void BBC_Set_DE(int offset, int data)
 
 
 // called when the 6845 changes the Cursor Enabled
-void BBC_Set_CRE(int offset, int data)
+static void BBC_Set_CRE(int offset, int data)
 {
 	if (data&2) {
 		VideoULA_CR_counter=emulation_cursor_size;

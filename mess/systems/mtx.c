@@ -331,7 +331,7 @@ static WRITE_HANDLER ( mtx_bankswitch_w )
 
 }
 
-unsigned char mtx_peek(int address)
+static unsigned char mtx_peek(int address)
 {
 	int base_address = 0;
 	unsigned char rtn = 0;
@@ -414,7 +414,7 @@ return(rtn);
 
 }
 
-void mtx_poke(int address, unsigned char data)
+static void mtx_poke(int address, unsigned char data)
 {
 	int base_address = 0;
 	int offset = address & 0x1fff;

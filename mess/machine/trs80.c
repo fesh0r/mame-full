@@ -691,7 +691,7 @@ INTERRUPT_GEN( trs80_frame_interrupt )
 {
 }
 
-void trs80_nmi_generate (int param)
+static void trs80_nmi_generate (int param)
 {
 	cpu_set_irq_line (0, IRQ_LINE_NMI, PULSE_LINE);
 }

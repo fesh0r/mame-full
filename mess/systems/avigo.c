@@ -584,7 +584,7 @@ MEMORY_WRITE_START( writemem_avigo )
 	{0x0c000, 0x0ffff, MWA_BANK8},
 MEMORY_END
 
-READ_HANDLER(avigo_key_data_read_r)
+static READ_HANDLER(avigo_key_data_read_r)
 {
 	UINT8 data;
 
@@ -616,47 +616,47 @@ READ_HANDLER(avigo_key_data_read_r)
 
 /* set key line(s) to read */
 /* bit 0 set for line 0, bit 1 set for line 1, bit 2 set for line 2 */
-WRITE_HANDLER(avigo_set_key_line_w)
+static WRITE_HANDLER(avigo_set_key_line_w)
 {
 	/* 5, 101, read back 3 */
 	avigo_key_line = data;
 }
 
-READ_HANDLER(avigo_irq_r)
+static READ_HANDLER(avigo_irq_r)
 {
 	return avigo_irq;
 }
 
-WRITE_HANDLER(avigo_irq_w)
+static WRITE_HANDLER(avigo_irq_w)
 {
         avigo_irq &= ~data;
 
 	avigo_refresh_ints();
 }
 
-READ_HANDLER(avigo_rom_bank_l_r)
+static READ_HANDLER(avigo_rom_bank_l_r)
 {
 	return avigo_rom_bank_l;
 }
 
-READ_HANDLER(avigo_rom_bank_h_r)
+static READ_HANDLER(avigo_rom_bank_h_r)
 {
 	return avigo_rom_bank_h;
 }
 
-READ_HANDLER(avigo_ram_bank_l_r)
+static READ_HANDLER(avigo_ram_bank_l_r)
 {
 	return avigo_ram_bank_l;
 }
 
-READ_HANDLER(avigo_ram_bank_h_r)
+static READ_HANDLER(avigo_ram_bank_h_r)
 {
 	return avigo_ram_bank_h;
 }
 
 
 
-WRITE_HANDLER(avigo_rom_bank_l_w)
+static WRITE_HANDLER(avigo_rom_bank_l_w)
 {
 	logerror("rom bank l w: %04x\n", data);
 
@@ -665,7 +665,7 @@ WRITE_HANDLER(avigo_rom_bank_l_w)
         avigo_refresh_memory();
 }
 
-WRITE_HANDLER(avigo_rom_bank_h_w)
+static WRITE_HANDLER(avigo_rom_bank_h_w)
 {
 	logerror("rom bank h w: %04x\n", data);
 
@@ -685,7 +685,7 @@ WRITE_HANDLER(avigo_rom_bank_h_w)
         avigo_refresh_memory();
 }
 
-WRITE_HANDLER(avigo_ram_bank_l_w)
+static WRITE_HANDLER(avigo_ram_bank_l_w)
 {
 	logerror("ram bank l w: %04x\n", data);
 
@@ -694,7 +694,7 @@ WRITE_HANDLER(avigo_ram_bank_l_w)
         avigo_refresh_memory();
 }
 
-WRITE_HANDLER(avigo_ram_bank_h_w)
+static WRITE_HANDLER(avigo_ram_bank_h_w)
 {
 	logerror("ram bank h w: %04x\n", data);
 
@@ -703,7 +703,7 @@ WRITE_HANDLER(avigo_ram_bank_h_w)
         avigo_refresh_memory();
 }
 
-READ_HANDLER(avigo_ad_control_status_r)
+static READ_HANDLER(avigo_ad_control_status_r)
 {
 	logerror("avigo ad control read %02x\n",avigo_ad_control_status);
 
@@ -712,7 +712,7 @@ READ_HANDLER(avigo_ad_control_status_r)
 
 static unsigned int avigo_ad_value;
 
-WRITE_HANDLER(avigo_ad_control_status_w)
+static WRITE_HANDLER(avigo_ad_control_status_w)
 {
 	logerror("avigo ad control w %02x\n",data);
 
@@ -783,7 +783,7 @@ WRITE_HANDLER(avigo_ad_control_status_w)
 	avigo_ad_control_status = data | 1;
 }
 
-READ_HANDLER(avigo_ad_data_r)
+static READ_HANDLER(avigo_ad_data_r)
 {
 	unsigned char data;
 
@@ -885,7 +885,7 @@ READ_HANDLER(avigo_ad_data_r)
 }
 
 
-WRITE_HANDLER(avigo_speaker_w)
+static WRITE_HANDLER(avigo_speaker_w)
 {
 	UINT8 previous_speaker;
 
@@ -900,7 +900,7 @@ WRITE_HANDLER(avigo_speaker_w)
 	}
 }
 
-READ_HANDLER(avigo_unmapped_r)
+static READ_HANDLER(avigo_unmapped_r)
 {
 	logerror("read unmapped port\n",offset);
 
@@ -913,7 +913,7 @@ READ_HANDLER(avigo_unmapped_r)
 
   /* port 0x029:
 	port 0x02e */
-READ_HANDLER(avigo_04_r)
+static READ_HANDLER(avigo_04_r)
 {
 	/* must be both 0 for it to boot! */
 	return 0x0ff^((1<<7) | (1<<5));

@@ -152,7 +152,7 @@ void apple2_interrupt(void)
 /***************************************************************************
   apple2_LC_ram1_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_LC_ram1_w )
+static WRITE_HANDLER ( apple2_LC_ram1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
@@ -164,7 +164,7 @@ WRITE_HANDLER ( apple2_LC_ram1_w )
 /***************************************************************************
   apple2_LC_ram2_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_LC_ram2_w )
+static WRITE_HANDLER ( apple2_LC_ram2_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */
@@ -176,7 +176,7 @@ WRITE_HANDLER ( apple2_LC_ram2_w )
 /***************************************************************************
   apple2_LC_ram_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_LC_ram_w )
+static WRITE_HANDLER ( apple2_LC_ram_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* If the aux switch is set, use the aux language card bank as well */

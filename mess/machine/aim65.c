@@ -162,7 +162,7 @@ struct {
 	int level;
 } printer={ 0 };
 
-void aim65_printer_timer(int param)
+static void aim65_printer_timer(int param)
 {
 	// hack until printer? is emulated
 	via_0_cb1_w(0,printer.level);
@@ -170,7 +170,7 @@ void aim65_printer_timer(int param)
 	printer.level^=1;
 }
 
-WRITE_HANDLER(aim65_printer_on)
+static WRITE_HANDLER(aim65_printer_on)
 {
 	if (!data)
 		timer_adjust(printer.timer, 0, 0, 1000e-6);

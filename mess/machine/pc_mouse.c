@@ -43,7 +43,7 @@ void pc_mouse_set_input_base(int base)
 }
 
 /* add data to queue */
-void	pc_mouse_queue_data(int data)
+static void	pc_mouse_queue_data(int data)
 {
 	pc_mouse.queue[pc_mouse.head] = data;
 	pc_mouse.head = ++pc_mouse.head % 256;
