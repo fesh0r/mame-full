@@ -293,7 +293,7 @@ ROM_START( macxl )
 #endif
 
 	ROM_REGION(0x100,REGION_GFX1, 0)		/* video ROM (includes S/N) ; no dump known, although Lisa ROM works fine at our level of emulation */
-	ROM_LOAD( "vidstate.rom", 0x00, 0x100, CRC(00000000))
+	ROM_LOAD( "vidstate.rom", 0x00, 0x100, NO_DUMP)
 
 	ROM_REGION(0x040000, REGION_USER1, 0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 

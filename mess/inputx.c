@@ -400,6 +400,7 @@ void inputx_init(void)
 		keybuffer = auto_malloc(sizeof(struct KeyBuffer));
 		if (!keybuffer)
 			goto error;
+		memset(keybuffer, 0, sizeof(*keybuffer));
 
 		if (!queue_chars)
 		{
