@@ -1,19 +1,27 @@
-/******************************************************************************
+/***************************************************************************
 
-  MESS - device.c
+	device.c
 
-  List of all available devices and Device handling interfaces.
+	Definitions and manipulations for device structures
 
-******************************************************************************/
+***************************************************************************/
 
+#include <assert.h>
 #include "driver.h"
 #include "device.h"
 #include "osdutils.h"
 #include "ui_text.h"
 
+
+/*************************************
+ *
+ *	Names and shortnames
+ *
+ *************************************/
+
 struct Devices
 {
-	int  id;
+	iodevice_t type;
 	const char *name;
 	const char *shortname;
 };
@@ -291,9 +299,9 @@ int device_valididtychecks(void)
 
 	/* Check the device struct array */
 	i=0;
-	while(devices[i].id != IO_COUNT)
+	while(devices[i].type != IO_COUNT)
 	{
-		if (devices[i].id != i)
+		if (devices[i].type != i)
 		{
 			printf("MESS Validity Error - Device struct array order mismatch\n");
 			error = 1;
@@ -308,9 +316,9 @@ int device_valididtychecks(void)
 
 	for(i = 0; i < sizeof(devices) / sizeof(devices[0]); i++)
 	{
-		if (devices[i].id != i)
+		if (devices[i].type != i)
 		{
-			printf("devices[%d].id should equal %d, but instead is %d\n", i, i, devices[i].id);
+			printf("devices[%d].id should equal %d, but instead is %d\n", i, i, devices[i].type);
 			error = 1;
 		}
 	}

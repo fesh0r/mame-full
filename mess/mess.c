@@ -143,11 +143,14 @@ static int ram_init(const struct GameDriver *gamedrv)
 	return 0;
 }
 
+
+
 /*****************************************************************************
  *  --Initialise Devices--
  *  Call the init() functions for all devices of a driver
  *  ith all user specified image names.
  ****************************************************************************/
+
 int devices_init(const struct GameDriver *gamedrv)
 {
 	const struct IODevice *dev;
@@ -252,6 +255,8 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 	return 0;
 }
 
+
+
 /*
  * Call the exit() functions for all devices of a
  * driver for all images.
@@ -294,15 +299,19 @@ void showmessdisclaimer(void)
 		"reported to the authors so that appropriate legal action can be taken.\n\n");
 }
 
+
+
 void showmessinfo(void)
 {
 	printf(
 		"M.E.S.S. v%s\n"
 		"Multiple Emulation Super System - Copyright (C) 1997-2004 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
-		"Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n\n",
+		"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n\n",
 		build_version);
+
 	showmessdisclaimer();
+
 	printf(
 		"Usage:  MESS <system> <device> <software> <options>\n\n"
 		"        MESS -list        for a brief list of supported systems\n"
@@ -336,6 +345,23 @@ void machine_hard_reset(void)
 {
 	memset(mess_ram, mess_ram_default_value, mess_ram_size);
 	machine_reset();
+}
+
+
+
+char *auto_strlistdup(char *strlist)
+{
+	int i;
+	char *s;
+
+	for (i = 2; strlist[i - 2] || strlist[i - 1]; i++)
+		;
+	s = auto_malloc(i * sizeof(*strlist));
+	if (!s)
+		return NULL;
+
+	memcpy(s, strlist, i * sizeof(*strlist));
+	return s;
 }
 
 
@@ -430,7 +456,7 @@ void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t
 
 ***************************************************************************/
 
-int messvaliditychecks(void)
+int mess_validitychecks(void)
 {
 	int i, j;
 	int is_invalid;

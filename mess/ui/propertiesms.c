@@ -12,6 +12,8 @@
 #include <windowsx.h>
 #include <sys/stat.h>
 
+#include "driver.h"
+#include "device.h"
 #include "ui/screenshot.h"
 #include "ui/bitmask.h"
 #include "ui/mame32.h"
@@ -23,6 +25,7 @@
 #include "utils.h"
 #include "propertiesms.h"
 #include "optionsms.h"
+#include "ms32util.h"
 
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
@@ -185,7 +188,7 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 
 BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
 {
-	return (ram_option_count(gamedrv) > 0) || device_find(gamedrv, IO_PRINTER);
+	return (ram_option_count(gamedrv) > 0) || DriverHasDevice(gamedrv, IO_PRINTER);
 }
 
 INT_PTR CALLBACK GameMessOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
@@ -435,7 +438,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	/* printer options? */
 	switch(msg) {
 	case CMSG_OPTIONSTOPROP:
-		if (!gamedrv || device_find(gamedrv, IO_PRINTER))
+		if (!gamedrv || DriverHasDevice(gamedrv, IO_PRINTER))
 		{
 			/* we have printer options */
 			SetWindowText(hPrinterText, o->mess.software[IO_PRINTER]);

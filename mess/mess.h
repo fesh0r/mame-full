@@ -68,6 +68,8 @@ extern "C" {
 #define DECL_SPEC
 #endif
 
+/***************************************************************************/
+
 void showmessinfo(void);
 int filemanager(struct mame_bitmap *bitmap, int selected);
 
@@ -146,7 +148,7 @@ enum
 };
 
 /* runs checks to see if device code is proper */
-int messvaliditychecks(void);
+int mess_validitychecks(void);
 
 /* runs a set of test cases on the driver; can pass in an optional callback
  * to provide a way to identify images to test with
@@ -157,6 +159,8 @@ void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderima
 int devices_init(const struct GameDriver *gamedrv);
 int devices_initialload(const struct GameDriver *gamedrv, int ispreload);
 void devices_exit(void);
+
+char *auto_strlistdup(char *strlist);
 
 struct IODevice;
 

@@ -1,5 +1,6 @@
-#include "ms32util.h"
 #include "driver.h"
+#include "device.h"
+#include "ms32util.h"
 
 BOOL DriverIsComputer(int driver_index)
 {
@@ -44,3 +45,10 @@ BOOL DriverUsesMouse(int driver_index)
 
 	return retval;
 }
+
+BOOL DriverHasDevice(const struct GameDriver *gamedrv, iodevice_t type)
+{
+	return device_find(gamedrv, type) ? TRUE : FALSE;
+}
+
+

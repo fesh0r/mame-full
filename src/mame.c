@@ -2139,7 +2139,7 @@ int mame_validitychecks(void)
 	}
 
 #ifdef MESS
-	if (messvaliditychecks())
+	if (mess_validitychecks())
 		error = 1;
 #endif /* MESS */
 
