@@ -39,8 +39,8 @@ System Driver Changes:
 - [A2600] Converted video code from using plot_pixel() to draw_scanline() [Nate
   Woods]
   
-- [VTECH1] Converted back to using generic M6847 video hardware module [Nate
-  Woods]
+- [VTECH1] Converted back to using generic M6847 video hardware module (Bug #36)
+  [Nate Woods]
 
 Source Changes:
 ---------------
