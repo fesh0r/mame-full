@@ -1289,7 +1289,7 @@
 	<hash crc32="3827a473" name="Twinbee">
 		<year>Konami</year>
 		<manufacturer>1986</manufacturer>
-		<extrainfo>07777</extrainfo>
+		<extrainfo>0</extrainfo>
 	</hash>
 	<hash crc32="1f1f1f26" name="Usas">
 		<year>Konami</year>
