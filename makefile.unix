@@ -44,11 +44,6 @@ TARGET = mame
 # Special features
 ###########################################################################
 
-# Limit blit code unrolling.  If you find that display-related files such 
-# as x11_window.c take too long to compile or crap out due to using too 
-# much memory, uncomment this.
-# LOW_MEM = 1
-
 # Enable experimental network support.  See 
 # src/unix/doc/multiplayer-readme.txt for more information.
 # XMAME_NET = 1
