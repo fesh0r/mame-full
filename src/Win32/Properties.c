@@ -1511,12 +1511,16 @@ static void InitializeMisc(HWND hDlg)
                         (LPARAM)MAKELONG(9999, 0));
     SendDlgItemMessage(hDlg, IDC_SKIP_LINES_SPIN, UDM_SETPOS, 0,
                         (LPARAM)MAKELONG(0, 0));
+    SendDlgItemMessage(hDlg, IDC_SKIP_LINES_SPIN, UDM_SETBUDDY,
+                        (WPARAM)GetDlgItem(hDlg, IDC_SKIP_LINES), 0);
 
     Edit_LimitText(GetDlgItem(hDlg, IDC_SKIP_COLUMNS), 4);
     SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETRANGE, 0,
                         (LPARAM)MAKELONG(9999, 0));
     SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETPOS, 0,
                         (LPARAM)MAKELONG(0, 0));
+    SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETBUDDY,
+                        (WPARAM)GetDlgItem(hDlg, IDC_SKIP_COLUMNS), 0);
 
     SendMessage(GetDlgItem(hDlg, IDC_GAMMA), TBM_SETRANGE,
                 (WPARAM)FALSE,
