@@ -23,6 +23,11 @@ Sord M5 (preliminary) [Kevin Thacker]
 System Driver Changes:
 ----------------------
 
+- [NC200] Keyboard reading and display memory address differences (compared to NC100) 
+  implemented. [Kev Thacker and Russell Marks]
+
+- [NC100/NC200] Changed CPU frequency to be more accurate [Kev Thacker and Russell Marks]
+
 - [PRAVETZ] Emulation of Apple2 disc controller interface (only DOS1.0->1.30 supported). 
   Disk images are ".DSK" and same as used by Apple2 driver. [Kev Thacker]
 
