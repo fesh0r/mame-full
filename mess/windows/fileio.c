@@ -43,10 +43,42 @@ extern char *cheatfile;
 static char *soft = NULL;
 static char **softpathv = NULL;
 static int softpathc = 0;
+static const char *swpath;
+extern const char *crcdir;
 
 struct rc_option fileio_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+#ifdef MESS
+	{ "biospath", "rp", rc_string, &rompath, "bios", 0, 0, NULL, "path to BIOS files" },
+	{ "softwarepath", "swp",  rc_string, &swpath,    "software", 0, 0, NULL, "path to software" },
+	{ "CRC_directory", "crc", rc_string, &crcdir, "crc"     , 0, 0, NULL, "path to CRC files" },
+#else
+	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, NULL, "path to romsets" },
+#endif
+	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, NULL, "path to samplesets" },
+	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
+	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
+	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
+	{ "input_directory", NULL, rc_string, &inpdir, "inp", 0, 0, NULL, "directory to save input device logs" },
+	{ "hiscore_directory", NULL, rc_string, &hidir, "hi", 0, 0, NULL, "directory to save hiscores" },
+	{ "state_directory", NULL, rc_string, &stadir, "sta", 0, 0, NULL, "directory to save states" },
+	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
+	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
+//	{ "cheat_directory", NULL, rc_string, &cheatdir, "cheat", 0, 0, NULL, "directory for cheatfiles" },
+#ifdef MESS
+	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.cdb", 0, 0, NULL, "cheat filename" },
+	{ "history_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
+#else
+	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
+	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
+#endif
+	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
+
+/*
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, request_decompose_rompath, "path to romsets" },
 	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, request_decompose_samplepath, "path to samplesets" },
@@ -63,7 +95,7 @@ struct rc_option fileio_opts[] =
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
-
+*/
 
 char *alternate_name;				   /* for "-romdir" */
 
@@ -255,10 +287,10 @@ void	decompose(char *dest_path, int *pathc, char *new_path, char ***ppathv)
 }
 /* This function can be called several times with different parameters,
  * for example by "mame -verifyroms *". */
-void decompose_rom_sample_path (char *rompath, char *samplepath)
+void decompose_rom_sample_path (char *_rompath, char *_samplepath)
 {
-		decompose(roms, &rompathc, rompath, &rompathv);
-		decompose(samples, &samplepathc, samplepath, &samplepathv);
+		decompose(roms, &rompathc, _rompath, &rompathv);
+		decompose(samples, &samplepathc, _samplepath, &samplepathv);
 
 #if FILE_CACHE
     /* AM 980919 */
@@ -1329,7 +1361,7 @@ int osd_fchecksum (const char *game, const char *filename, unsigned int *length,
 	int found = 0;
 	const char *gamename = game;
 
-	decompose_paths_if_needed();
+//	decompose_paths_if_needed();
 
 	/* Support "-romdir" yuck. */
 	if( alternate_name )
