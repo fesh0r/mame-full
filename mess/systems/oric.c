@@ -21,6 +21,8 @@
 #include "printer.h"
 
 
+extern int apple2_floppy_init(int id);
+
 /* 
 	Explaination of memory regions:
 
@@ -40,12 +42,16 @@
 	MRA_BANK2 and MRA_BANK3 are used for a 8k rom.
 	MRA_BANK3 is used for a 2k rom.
 
+	0x0300-0x03ff is I/O access. It is not defined below because the
+	memory is setup dynamically depending on hardware that has been selected (microdisc, jasmin, apple2) etc.
+	
 */
 
 
 static MEMORY_READ_START(oric_readmem)
     { 0x0000, 0x02FF, MRA_RAM },
-    { 0x0300, 0x03ff, oric_IO_r },
+
+	/* { 0x0300, 0x03ff, oric_IO_r }, */
     { 0x0400, 0xBFFF, MRA_RAM },
 
     { 0xc000, 0xdFFF, MRA_BANK1 },
@@ -55,7 +61,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
     { 0x0000, 0x02FF, MWA_RAM },
-    { 0x0300, 0x03ff, oric_IO_w },
+    /* { 0x0300, 0x03ff, oric_IO_w }, */
     { 0x0400, 0xbFFF, MWA_RAM },
     { 0xc000, 0xdFFF, MWA_BANK5 },
     { 0xe000, 0xf7ff, MWA_BANK6 },
@@ -172,6 +178,7 @@ INPUT_PORTS_START(oric)
 	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPSETTING(    0x01, "Microdisc" )
 	PORT_DIPSETTING(    0x02, "Jasmin" )
+/*	PORT_DIPSETTING(    0x03, "Apple2" ) */
 	/* vsync cable hardware. This is a simple cable connected to the video output
 	to the monitor/television. The sync signal is connected to the cassette input
 	allowing interrupts to be generated from the vsync signal. */
@@ -184,8 +191,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START(prav8d)
 	INPUT_PORT_ORIC
+	/* force apple2 disc interface for pravetz */
 	PORT_START
-	PORT_BIT (0x0f, 0x00, IPT_UNUSED)
+	PORT_BIT (0x0f, 0x03, IPT_UNUSED)
 INPUT_PORTS_END
 
 
@@ -372,18 +380,21 @@ ROM_START(telstrat)
 ROM_END
 
 ROM_START(prav8d)
-    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
     ROM_LOAD ("pravetzt.rom", 0x10000, 0x4000, 0x58079502)
+	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x02)
 ROM_END
 
 ROM_START(prav8dd)
-    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
     ROM_LOAD ("8d.rom", 0x10000, 0x4000, 0xb48973ef)
+	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x02)
 ROM_END
 
 ROM_START(prav8dda)
-    ROM_REGION (0x10000+0x4000,REGION_CPU1,0)
+    ROM_REGION (0x10000+0x4000+0x0100,REGION_CPU1,0)
     ROM_LOAD ("pravetzd.rom", 0x10000, 0x4000, 0xf8d23821)
+	ROM_LOAD_OPTIONAL ("eprom8d.rom", 0x014000, 0x0100, 0x02)
 ROM_END
 
 static const struct IODevice io_oric1[] =
@@ -416,6 +427,25 @@ static const struct IODevice io_prav8[] =
 {
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
  	IO_PRINTER_PORT(1,"prn\0"),
+	{
+		IO_FLOPPY,				/* type */
+		1,						/* count */
+		"dsk\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL, 					/* id */
+		apple2_floppy_init,		/* init */
+		apple2_floppy_exit,		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
 	{ IO_END }
 };
 
