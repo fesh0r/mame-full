@@ -179,12 +179,15 @@ int CLIB_DECL main(int ac, char **av)
 				else
 				if( strncmpi(line + 1, "end", 3) == 0 )
 				{
-                    fprintf(html_system, "<hr>\n");
-					fprintf(html_system, "<center><font size=-2>created on %s</font></center>\n", ctime(&tm));
-                    fprintf(html_system, "</body>\n");
-					fprintf(html_system, "</html>\n");
-					fclose(html_system);
-					html_system = NULL;
+					if (html_system)
+					{
+						fprintf(html_system, "<hr>\n");
+						fprintf(html_system, "<center><font size=-2>created on %s</font></center>\n", ctime(&tm));
+						fprintf(html_system, "</body>\n");
+						fprintf(html_system, "</html>\n");
+						fclose(html_system);
+						html_system = NULL;
+					}
 				}
 			}
 			else
