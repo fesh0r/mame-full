@@ -221,7 +221,7 @@ DBGOBJS = \
           $(OBJ)/cpu/m6805/6805dasm.o \
           $(OBJ)/cpu/m6809/6809dasm.o \
           $(OBJ)/cpu/konami/knmidasm.o \
-          $(OBJ)/cpu/m68000/d68k.o \
+          $(OBJ)/cpu/m68000/m68kdasm.o \
           $(OBJ)/cpu/t11/t11dasm.o \
           $(OBJ)/cpu/s2650/2650dasm.o \
           $(OBJ)/cpu/tms34010/34010dsm.o \
