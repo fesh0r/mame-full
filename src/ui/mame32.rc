@@ -62,11 +62,12 @@ BEGIN
         MENUITEM "Play and &Record Input...",   ID_FILE_PLAY_RECORD
         MENUITEM "P&layback Input...",          ID_FILE_PLAY_BACK
         MENUITEM SEPARATOR
+        MENUITEM "Loa&d Savestate...",          ID_FILE_LOADSTATE
 #ifdef MESS
         MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
         MENUITEM SEPARATOR
-	MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
-	MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
+        MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
+        MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
 #ifdef MAME_DEBUG
         MENUITEM SEPARATOR
         MENUITEM "Run Tests",					ID_MESS_RUN_TESTS
@@ -181,6 +182,11 @@ BEGIN
         MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
 #endif
         MENUITEM SEPARATOR
+        MENUITEM "Reset Pl&aycount",            ID_CONTEXT_RESET_PLAYCOUNT
+        MENUITEM "Reset Pla&y Time",            ID_CONTEXT_RESET_PLAYTIME
+        MENUITEM SEPARATOR
+        MENUITEM "A&udit",                      ID_GAME_AUDIT
+        MENUITEM SEPARATOR
         MENUITEM "Pr&operties",                 ID_GAME_PROPERTIES
     END
 END
@@ -208,6 +214,8 @@ BEGIN
             MENUITEM "overridden by code",          ID_CONTEXT_SHOW_FOLDER_START
 
         END
+        MENUITEM SEPARATOR
+        MENUITEM "&Audit",                      ID_FOLDER_AUDIT
         MENUITEM SEPARATOR
         MENUITEM "&Properties",                 ID_FOLDER_PROPERTIES
     END
@@ -277,8 +285,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,76,1,0
- PRODUCTVERSION 0,76,1,0
+ FILEVERSION 0,79,0,0
+ PRODUCTVERSION 0,79,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -304,9 +312,9 @@ BEGIN
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
 #endif
-            VALUE "FileVersion", "0, 76, 0, 0\0"
+            VALUE "FileVersion", "0, 79, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
-            VALUE "LegalCopyright", "Copyright 1997-2003 Nicola Salmoria and the MAME team\0"
+            VALUE "LegalCopyright", "Copyright 1997-2004 Nicola Salmoria and the MAME team\0"
             VALUE "LegalTrademarks", "\0"
 #ifdef MESS
             VALUE "OriginalFilename", "MESS.exe\0"
@@ -315,7 +323,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 76, 0, 0\0"
+            VALUE "ProductVersion", "0, 79, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -414,7 +422,7 @@ BEGIN
     CTEXT           "Multiple Arcade Machine Emulator",IDC_STATIC,147,7,142,
                     11,NOT WS_GROUP
     CTEXT           "Version 0",IDC_VERSION,147,18,142,11,NOT WS_GROUP
-    CTEXT           "Copyright (C) 1997-2003 The MAME Team",IDC_STATIC,147,
+    CTEXT           "Copyright (C) 1997-2004 The MAME Team",IDC_STATIC,147,
                     29,142,10,NOT WS_GROUP
     CTEXT           "MAME32 version by",IDC_STATIC,147,51,142,10,NOT
                     WS_GROUP
@@ -532,22 +540,22 @@ STYLE WS_CHILD | WS_CAPTION
 CAPTION "General"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDI_MAME32_ICON,IDC_GAME_ICON,20,10,21,20
+    ICON            IDI_MAME32_ICON,IDC_GAME_ICON,20,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
     LTEXT           "Manufactured:",IDC_STATIC,20,45,47,8
     LTEXT           "Static",IDC_PROP_MANUFACTURED,75,45,139,9,SS_NOPREFIX
     LTEXT           "Status:",IDC_STATIC,20,55,47,8
-    LTEXT           "Static",IDC_PROP_STATUS,75,55,139,38
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,101,174,1
-    LTEXT           "CPU:",IDC_STATIC,18,108,47,8
-    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_CPU,72,106,139,
-                    33
-    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,141,174,1
-    LTEXT           "Sound:",IDC_STATIC,18,148,47,8
-    LTEXT           "Static\nStatic\nStatic\nStatic",IDC_PROP_SOUND,72,146,
-                    139,32
+    LTEXT           "Static",IDC_PROP_STATUS,75,55,139,30
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,15,85,172,1
+    LTEXT           "CPU:",IDC_STATIC,22,90,47,8
+    LTEXT           "Static\nStatic\nStatic\nStatic\nStatic",IDC_PROP_CPU,72,
+                    90,139,40
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,130,173,1
+    LTEXT           "Sound:",IDC_STATIC,20,135,47,8
+    LTEXT           "Static\nStatic\nStatic\nStatic\nStatic",IDC_PROP_SOUND,
+                    74,135,139,45
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,18,181,174,1
     LTEXT           "Screen:",IDC_STATIC,18,188,47,8
     LTEXT           "Static",IDC_PROP_SCREEN,74,188,139,8
@@ -711,18 +719,18 @@ BEGIN
     COMBOBOX        IDC_SAMPLERATE,94,92,59,60,CBS_DROPDOWNLIST | 
                     CBS_UPPERCASE | WS_VSCROLL | WS_TABSTOP,0,
                     HIDC_SAMPLERATE
-    GROUPBOX        "Volume attenuation",IDC_VOLUMETEXT,40,110,130,25
     CONTROL         "Slider1",IDC_VOLUME,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,45,120,98,11,0,HIDC_VOLUME
-    CTEXT           "0dB",IDC_VOLUMEDISP,140,120,25,10,SS_CENTERIMAGE
+                    TBS_NOTICKS | WS_TABSTOP,45,120,100,10,0,HIDC_VOLUME
+    LTEXT           "0dB",IDC_VOLUMEDISP,150,120,25,10,SS_CENTERIMAGE
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809b0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809b0401
     LTEXT           "Audio latency",IDC_AUDIO_LATENCY_TEXT,45,140,44,8
     CONTROL         "Slider1",IDC_AUDIO_LATENCY,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,50,150,95,10,0,
+                    TBS_NOTICKS | WS_TABSTOP,45,150,100,10,0,
                     HIDC_AUDIO_LATENCY
-    LTEXT           "1/5",IDC_AUDIO_LATENCY_DISP,150,150,15,8
+    LTEXT           "1/5",IDC_AUDIO_LATENCY_DISP,150,150,20,8
+    LTEXT           "Volume attenuation",IDC_STATIC,45,110,62,8
 END
 
 IDD_PROP_ADVANCED DIALOGEX 0, 0, 220, 205
@@ -803,34 +811,41 @@ BEGIN
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
+    GROUPBOX        "",IDC_STATIC,5,45,95,50
+    GROUPBOX        "",IDC_STATIC,5,105,95,45
     CONTROL         "Enable joystick input",IDC_JOYSTICK,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,50,46,120,10,0,
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,10,45,79,10,0,
                     HIDC_JOYSTICK
-    GROUPBOX        "Analog joystick deadzone",IDC_A2DTEXT,50,63,120,33
+    LTEXT           "Analog joystick deadzone",IDC_STATIC,10,60,82,8
     CONTROL         "IntensitySlider",IDC_A2D,"msctls_trackbar32",TBS_BOTH | 
-                    TBS_NOTICKS | WS_TABSTOP,60,74,100,11,0,HIDC_A2D
-    CTEXT           "0.3",IDC_A2DDISP,100,84,19,9,NOT WS_GROUP
-    CONTROL         "Enable mouse input",IDC_USE_MOUSE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,49,102,121,10,0,
-                    HIDC_USE_MOUSE
+                    TBS_NOTICKS | WS_TABSTOP,10,70,85,11,0,HIDC_A2D
+    CTEXT           "0.3",IDC_A2DDISP,40,85,19,8,NOT WS_GROUP
     CONTROL         "Enable lightgun input",IDC_LIGHTGUN,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,49,117,121,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,10,105,80,10,0,
                     HIDC_LIGHTGUN
+    CONTROL         "Reload",IDC_RELOAD,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,120,39,10,0,HIDC_RELOAD
+    CONTROL         "Dual lightguns",IDC_DUAL_LIGHTGUN,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,135,61,10,0,
+                    HIDC_DUAL_LIGHTGUN
+    CONTROL         "Enable mouse input",IDC_USE_MOUSE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,115,50,75,10,0,
+                    HIDC_USE_MOUSE
     CONTROL         "Enable steadykey support",IDC_STEADYKEY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,49,132,121,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,115,64,95,10,0,
                     HIDC_STEADYKEY
-    GROUPBOX        "Default input layout",IDC_STATIC,50,150,120,32
-    COMBOBOX        IDC_DEFAULT_INPUT,72,161,78,55,CBS_DROPDOWNLIST | 
+    LTEXT           "Default input layout",IDC_STATIC,115,79,62,8
+    COMBOBOX        IDC_DEFAULT_INPUT,115,89,96,55,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_DEFAULT_INPUT
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809d0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809d0401
 END
 
-IDD_PROP_MISC DIALOGEX 0, 0, 220, 205
+IDD_PROP_MISC DIALOGEX 0, 0, 220, 220
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Miscellaneous"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_MAME32_ICON,IDC_STATIC,19,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -867,12 +882,12 @@ BEGIN
     CONTROL         "Use keyboard LEDs as game indicators",IDC_LEDS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,125,140,10,0,HIDC_LEDS
     CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,15,135,80,10,0,HIDC_CHEAT
+                    WS_TABSTOP,15,152,80,10,0,HIDC_CHEAT
 #endif
     CONTROL         "Use less CPU time when possible",IDC_SLEEP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,145,120,10,0,HIDC_SLEEP
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,162,120,10,0,HIDC_SLEEP
     CONTROL         "Use RDTSC timing system (for desktops)",IDC_OLD_TIMING,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,155,95,10,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,172,95,10,0,
                     HIDC_OLD_TIMING
 #ifdef MESS
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
@@ -881,12 +896,14 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,165,70,10,0,HIDC_LOG
 #else
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,165,95,10,0,HIDC_LOG
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,182,95,10,0,HIDC_LOG
 #endif
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809e0447
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,199,97,14,0,0,0x809e0447
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,199,99,14,
                     0,0,0x809e0401
     LTEXT           "Other",IDC_STATIC,10,115,18,8
+    COMBOBOX        IDC_LEDMODE,25,138,59,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_LEDMODE
 #ifdef MESS
     LTEXT           "Direct3D is incompatible with the new MESS UI, so it must be turned off before the new UI can be used",IDC_NEWUI_D3D_WARNING,108,177,110,28
 #endif
@@ -1077,51 +1094,61 @@ BEGIN
     PUSHBUTTON      "&Cancel",IDCANCEL,145,175,50,14
 END
 
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 328, 177
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 328, 201
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
 #ifdef MESS
-    GROUPBOX        "System Selection",IDC_STATIC,5,5,190,143
+    GROUPBOX        "System Selection",IDC_STATIC,5,5,190,170
     CONTROL         "&Search for new systems on start",IDC_START_GAME_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,110,10,0,
                     HIDC_START_GAME_CHECK
-    CONTROL         "&Allow system selection by a joystick (requires restart)",
+    CONTROL         "Allow system selection by a &joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
                     173,10,0,HIDC_JOY_GUI
+    CONTROL         "Allow system selection by custom &key sequences",
+                    IDC_KEY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,
+                    166,10
 #else
-    GROUPBOX        "Game Selection",IDC_STATIC,5,5,190,143
+    GROUPBOX        "Game Selection",IDC_STATIC,5,5,190,170
     CONTROL         "&Search for new games on start",IDC_START_GAME_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,110,10,0,
                     HIDC_START_GAME_CHECK
-    CONTROL         "&Allow game selection by a joystick (requires restart)",
+    CONTROL         "Allow game selection by a &joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
                     173,10,0,HIDC_JOY_GUI
+    CONTROL         "Allow game selection by custom &key sequences",
+                    IDC_KEY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,
+                    166,10
 #endif
     CONTROL         "Select &random background image",IDC_RANDOM_BG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,46,120,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,60,120,10,0,
                     HIDC_RANDOM_BG
 #ifdef MESS
     CONTROL         "&Broadcast selected system to all windows",IDC_BROADCAST,
 #else
     CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
 #endif
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,60,143,10,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,74,143,10,0,
                     HIDC_BROADCAST
     CONTROL         "Hide &mouse cursor (requires restart)",IDC_HIDE_MOUSE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,75,125,10,0,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,89,125,10,0,
                     HIDC_HIDE_MOUSE
     CONTROL         "&Cycle Screenshot",IDC_CYCLE_SCREENSHOT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,89,71,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,103,71,10,0,
                     HIDC_CYCLE_SCREENSHOT
-    LTEXT           "Cycletime in Seconds:",IDC_CYCLETIME,35,100,70,10,
+    LTEXT           "Cycletime in Seconds:",IDC_CYCLETIME,35,114,70,16,
                     SS_CENTERIMAGE
-    EDITTEXT        IDC_CYCLETIMESEC,105,100,25,12,ES_NUMBER,0,
+    EDITTEXT        IDC_CYCLETIMESEC,105,114,25,12,ES_NUMBER,0,
                     HIDC_CYCLETIMESEC
+    CONTROL         "S&tretch screenshot larger than natural size",
+                    IDC_STRETCH_SCREENSHOT_LARGER,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,131,148,10,0,
+                    HIDC_STRETCH_SCREENSHOT_LARGER
     CONTROL         "Inheritable Filters",IDC_FILTER_INHERIT,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,131,69,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,145,69,10
     GROUPBOX        "Emulation",IDC_STATIC,202,4,120,55
     CONTROL         "Skip &disclaimer",IDC_SKIP_DISCLAIMER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,209,14,60,10,0,
@@ -1138,17 +1165,16 @@ BEGIN
     CONTROL         "&High thread priority",IDC_HIGH_PRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,209,44,75,10,0,
                     HIDC_HIGH_PRIORITY
-    CONTROL         "S&tretch screenshot larger than natural size",
-                    IDC_STRETCH_SCREENSHOT_LARGER,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,15,117,148,10,0,
-                    HIDC_STRETCH_SCREENSHOT_LARGER
     GROUPBOX        "Bookkeeping",IDC_STATIC,201,65,120,39
-    CONTROL         "Reset all Play Times",IDC_RESET_PLAYTIME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,208,89,79,10
     CONTROL         "Reset all Playcounts",IDC_RESET_PLAYCOUNT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,208,74,80,10
-    DEFPUSHBUTTON   "&OK",IDOK,50,155,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,226,155,50,14
+    CONTROL         "Reset all Play Times",IDC_RESET_PLAYTIME,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,89,79,10
+    DEFPUSHBUTTON   "&OK",IDOK,105,180,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,165,180,50,14
+    CONTROL         "No offset for clones missing parent in view",
+                    IDC_NOOFFSET_CLONES,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,160,148,10
 END
 
 IDD_LANGUAGE DIALOGEX 0, 0, 186, 66
@@ -1194,14 +1220,6 @@ END
 
 IDA_TAB_KEYS ACCELERATORS DISCARDABLE
 BEGIN
-    "A",            ID_GAME_AUDIT,          VIRTKEY, ALT, NOINVERT
-    "D",            ID_VIEW_FOLDERS,        VIRTKEY, ALT, NOINVERT
-    "F",            ID_CONTEXT_FILTERS,     VIRTKEY, CONTROL, NOINVERT
-    "P",            ID_VIEW_PICTURE_AREA,   VIRTKEY, ALT, NOINVERT
-    "R",            ID_CONTEXT_SELECT_RANDOM, VIRTKEY, CONTROL, NOINVERT
-    "S",            ID_VIEW_STATUS,         VIRTKEY, ALT, NOINVERT
-    "T",            ID_VIEW_TOOLBARS,       VIRTKEY, ALT, NOINVERT
-    "B",            ID_VIEW_PAGETAB,        VIRTKEY, ALT, NOINVERT
     "1",            ID_VIEW_TAB_SCREENSHOT, VIRTKEY, ALT, NOINVERT
     "2",            ID_VIEW_TAB_FLYER,      VIRTKEY, ALT, NOINVERT
     "3",            ID_VIEW_TAB_CABINET,    VIRTKEY, ALT, NOINVERT
@@ -1209,10 +1227,21 @@ BEGIN
     "5",            ID_VIEW_TAB_TITLE,      VIRTKEY, ALT, NOINVERT
     "6",            ID_VIEW_TAB_CONTROL_PANEL, VIRTKEY, ALT, NOINVERT
     "7",            ID_VIEW_TAB_HISTORY,    VIRTKEY, ALT, NOINVERT
+    "A",            ID_GAME_AUDIT,          VIRTKEY, ALT, NOINVERT
+    "B",            ID_VIEW_PAGETAB,        VIRTKEY, ALT, NOINVERT
+    "D",            ID_VIEW_FOLDERS,        VIRTKEY, ALT, NOINVERT
+    "F",            ID_CONTEXT_FILTERS,     VIRTKEY, CONTROL, NOINVERT
+    "U",            ID_FOLDER_AUDIT,        VIRTKEY, ALT, NOINVERT
+    "P",            ID_VIEW_PICTURE_AREA,   VIRTKEY, ALT, NOINVERT
+    "R",            ID_CONTEXT_SELECT_RANDOM, VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_VIEW_STATUS,         VIRTKEY, ALT, NOINVERT
+    "T",            ID_VIEW_TOOLBARS,       VIRTKEY, ALT, NOINVERT
     VK_F1,          ID_HELP_CONTENTS,       VIRTKEY, NOINVERT
-    VK_F5,          ID_UPDATE_GAMELIST,     VIRTKEY, NOINVERT
-    VK_RETURN,      ID_GAME_PROPERTIES,     VIRTKEY, ALT, NOINVERT
     VK_F11,         ID_VIEW_FULLSCREEN,     VIRTKEY, NOINVERT
+    VK_F5,          ID_UPDATE_GAMELIST,     VIRTKEY, NOINVERT
+    VK_NEXT,        ID_UI_HISTORY_DOWN,     VIRTKEY, CONTROL, NOINVERT
+    VK_PRIOR,       ID_UI_HISTORY_UP,       VIRTKEY, CONTROL, NOINVERT
+    VK_RETURN,      ID_GAME_PROPERTIES,     VIRTKEY, ALT, NOINVERT
 END
 
 
@@ -1337,7 +1366,7 @@ BEGIN
         VERTGUIDE, 104
         VERTGUIDE, 114
         VERTGUIDE, 204
-        BOTTOMMARGIN, 198
+        BOTTOMMARGIN, 213
     END
 
     IDD_PROP_VECTOR, DIALOG
@@ -1372,11 +1401,6 @@ BEGIN
         RIGHTMARGIN, 153
         TOPMARGIN, 7
         BOTTOMMARGIN, 46
-    END
-
-    IDD_INTERFACE_OPTIONS, DIALOG
-    BEGIN
-        BOTTOMMARGIN, 154
     END
 
     IDD_LANGUAGE, DIALOG
@@ -1473,6 +1497,15 @@ BEGIN
     ID_OPTIONS_FONT         "Set game list and folder list font"
     ID_OPTIONS_DIR          "Set directory configuration"
     ID_OPTIONS_DEFAULTS     "Set default game options"
+#endif
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+#ifdef MESS
+    ID_FILE_LOADSTATE       "Run a system starting with the given savestate"
+#else
+    ID_FILE_LOADSTATE       "Play a game starting with the given savestate"
 #endif
 END
 
