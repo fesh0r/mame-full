@@ -1164,10 +1164,6 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 	UINT8 *blitter = NULL;
 	int i;
 
-	// determine MMX/XMM support
-	if (use_mmx == -1)
-		check_for_mmx();
-
 	// find the blitter -- custom case
 	switch (blit->dsteffect)
 	{
@@ -1491,6 +1487,10 @@ static void generate_blitter(const struct win_blit_params *blit)
 #if DEBUG_BLITTERS
 	fprintf(stderr, "Generating blitter\n");
 #endif
+
+	// determine MMX/XMM support
+	if (use_mmx == -1)
+		check_for_mmx();
 
 	// determine how many pixels to do at the middle, and end
 	middle = blit->srcwidth / 16;
