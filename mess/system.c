@@ -778,6 +778,9 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	DRIVER(tmc600)		/* 1982 Telmac TMC-600 (Series I)					*/
 	DRIVER(tmc600a)		/* 1982 Telmac TMC-600 (Series II)					*/
 
+	/* MIT */
+	DRIVER( tx0_64kw )	/* April 1956 MIT TX-0 (64kw RAM)                   */
+	DRIVER( tx0_8kw )	/* 1962 MIT TX-0 (8kw RAM)                          */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
