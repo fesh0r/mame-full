@@ -6,7 +6,7 @@
 
 	preliminary version by smf.
 
-	bad sound and no spu irq's generated
+	bad sound and spu irq's are probably wrong
 
 ***************************************************************************/
 
@@ -14,7 +14,7 @@
 #include "includes/psx.h"
 #include "state.h"
 
-#define VERBOSE_LEVEL ( 2 )
+#define VERBOSE_LEVEL ( 0 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
@@ -127,6 +127,14 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 				{
 					break;
 				}
+				if( ( m_n_spucontrol & 0x40 ) != 0 &&
+					( m_n_irqaddress * 4 ) >= m_p_n_blockaddress[ n_channel ] &&
+					( m_n_irqaddress * 4 ) <= m_p_n_blockaddress[ n_channel ] + 7 )
+				{
+					usrintf_showmessage_secs( 1, "spu interrupt" );
+					psx_irq_set( 0x0200 );
+				}
+
 //				fwrite( &m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ], 2, 8, f[ n_channel ] );
 				n_shift =   ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 0 ) & 0x0f;
 				n_predict = ( m_p_n_spuram[ m_p_n_blockaddress[ n_channel ] ] >> 4 ) & 0x0f;
@@ -143,7 +151,7 @@ static void PSXSPU_update(int num, INT16 **buffer, int length)
 					for( n_nibble = 0; n_nibble < 4; n_nibble++ )
 					{
 						n_unpacked = ( ( n_packed & 0xf ) << 12 );
-						if( n_unpacked & 0x8000 )
+						if( ( n_unpacked & 0x8000 ) != 0 )
 						{
 							n_unpacked |= 0xffff0000;
 						}
@@ -336,6 +344,16 @@ READ32_HANDLER( psx_spu_r )
 	{
 		switch( offset % 4 )
 		{
+		case SPU_CHANNEL_REG( 0x8 ):
+			if( ACCESSING_LSW32 )
+			{
+				verboselog( 1, "psx_spu_r() channel %d attack/decay/sustain = %04x\n", n_channel, m_p_n_attackdecaysustain[ n_channel ] );
+			}
+			if( ACCESSING_MSW32 )
+			{
+				verboselog( 1, "psx_spu_r() channel %d sustain/release = %04x\n", n_channel, m_p_n_sustainrelease[ n_channel ] );
+			}
+			return ( m_p_n_sustainrelease[ n_channel ] << 16 ) | m_p_n_attackdecaysustain[ n_channel ];
 		case SPU_CHANNEL_REG( 0xc ):
 			if( ACCESSING_LSW32 )
 			{
@@ -361,6 +379,12 @@ READ32_HANDLER( psx_spu_r )
 		case SPU_REG( 0xd8c ):
 			verboselog( 1, "psx_spu_r() voice off = %08x\n", m_n_voiceoff );
 			return m_n_voiceoff;
+		case SPU_REG( 0xd90 ):
+			verboselog( 1, "psx_spu_r() modulation mode = %08x\n", m_n_modulationmode );
+			return m_n_modulationmode;
+		case SPU_REG( 0xd94 ):
+			verboselog( 1, "psx_spu_r() noise mode = %08x\n", m_n_noisemode );
+			return m_n_noisemode;
 		case SPU_REG( 0xd98 ):
 			verboselog( 1, "psx_spu_r() reverb mode = %08x\n", m_n_reverbmode );
 			return m_n_reverbmode;
