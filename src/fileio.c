@@ -974,22 +974,24 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				char *s;
 				UINT32 ziplength;
 
-				while((path_info = osd_get_path_info(pathtype, pathindex, oldname)) == PATH_NOT_FOUND)
+				while ((oldname[0]) && ((path_info = osd_get_path_info(pathtype, pathindex, oldname)) == PATH_NOT_FOUND))
 				{
+					/* get name of parent directory into newname & oldname */
 					newname = osd_dirname(oldname);
 					if (oldnewname)
 						free(oldnewname);
 					oldname = oldnewname = newname;
 					if (!newname)
 						break;
-					
+
+					/* remove any trailing path separator if needed */
 					for (s = newname + strlen(newname) - 1; s >= newname && osd_is_path_separator(*s); s--)
 						*s = '\0';
 				}
 
 				if (newname)
 				{
-					if (path_info == PATH_IS_FILE)
+					if ((oldname[0]) &&(path_info == PATH_IS_FILE))
 					{
 						zipentryname = name + strlen(newname);
 						while(osd_is_path_separator(*zipentryname))
