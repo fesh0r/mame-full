@@ -609,7 +609,7 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
 
 	/* MATTEL */
-//	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
+	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
 						/* (Test marketed, later recalled )					*/
 	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
