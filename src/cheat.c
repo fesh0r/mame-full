@@ -885,6 +885,9 @@ void InitMemoryAreas(void)
 /* Init some variables */
 void InitCheat(void)
 {
+#ifdef MESS
+	char *copyofcheat = NULL,*t_cheat,*oldcheat = NULL;
+#endif
 	int i;
 
 	he_did_cheat = 0;
@@ -917,8 +920,51 @@ void InitCheat(void)
 		watches[i].x = 0;
 		watches[i].y = i * Machine->uifontheight;
 	}
+#ifdef MESS
+// append MESS specific cheat database if generic 'cheat' was specified
+// 2000-09-27 Cow
+// this can be simpler once cheatfile is malloc() not an array...
+
+	copyofcheat = (char *)malloc(strlen(cheatfile)+strlen(Machine->gamedrv->name)+16);
+	oldcheat = (char *)malloc(strlen(cheatfile)+1);
+	if (copyofcheat && oldcheat)
+	{
+		strcpy(oldcheat,cheatfile);
+		t_cheat = strstr(cheatfile,"cheat.dat");
+		if (!t_cheat) t_cheat = strstr(cheatfile,"cheat.cdb");
+		if (!t_cheat) t_cheat = strstr(cheatfile,"CHEAT.CDB");
+		if (!t_cheat) t_cheat = strstr(cheatfile,"CHEAT.DAT");
+		if (t_cheat)
+		{
+			strcpy(copyofcheat,cheatfile);
+			strcat(copyofcheat,";");
+			strcat(copyofcheat,Machine->gamedrv->name);
+			strcat(copyofcheat,".cdb");
+			if (strlen(copyofcheat) < sizeof(cheatfile))
+			{
+				strcpy(cheatfile,copyofcheat);
+				logerror("New cheatfile: %s\n",cheatfile);
+			}
+		} else 
+		{
+			logerror("default cheats not listed!\n");
+		}
+	} else 
+	{
+		logerror("No memory for temp cheat names\n");
+	}
+	if (copyofcheat) free(copyofcheat);
+
+#endif
 
 	LoadCheatFiles ();
+#ifdef MESS
+	if (oldcheat)
+	{
+		strcpy(cheatfile,oldcheat);
+		free(oldcheat);
+	}
+#endif
 /*	InitMemoryAreas(); */
 }
 
