@@ -1,4 +1,3 @@
-# *** remove me ***
 # set this to mame, mess or the destination you want to build
 TARGET = mame
 # TARGET = mess
