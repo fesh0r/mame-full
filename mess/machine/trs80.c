@@ -299,87 +299,81 @@ void trs80_cmd_exit(int id)
 
 int trs80_floppy_init(int id)
 {
-	void *file;
+	static UINT8 pdrive[4*16];
+	int i;
+	int tracks; 	/* total tracks count per drive */
+	int heads;		/* total heads count per drive */
+	int spt;		/* sector per track count per drive */
+	int dir_sector; /* first directory sector (aka DDSL) */
+	int dir_length; /* length of directory in sectors (aka DDGA) */
+    void *file;
 
     if (basicdsk_floppy_init(id) != INIT_OK)
 		return INIT_FAILED;
 
-	if (id != 0)		/* not the first floppy? */
-		return INIT_OK;
-
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-	if (file)
+    if (id == 0)        /* first floppy? */
 	{
-		int n, i;
-		UINT8 buff[16];
-		UINT8 tracks = 0;	/* total tracks count per drive */
-		UINT8 heads = 0;	/* total heads count per drive */
-		UINT8 spt = 0;		/* sector per track count per drive */
-		int dir_sector = 0; /* first directory sector (aka DDSL) */
-		int dir_length = 0; /* length of directory in sectors (aka DDGA) */
-
-		/* get PDRIVER parameters for drives 0-3 */
-        for (n = 0; n < 4; n++)
+		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		if (file)
 		{
-			osd_fseek(file, 0, SEEK_SET);
-			osd_fread(file, buff, 2);
+			int i;
+
+            osd_fseek(file, 0, SEEK_SET);
+			osd_fread(file, pdrive, 2);
 #if 0
-			if (buff[0] != 0x00 || buff[1] != 0xfe)
+			if (pdrive[0] != 0x00 || pdrive[1] != 0xfe)
 			{
-				basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
+				basicdsk_read_sectormap(id, &tracks[id], &heads[id], &spt[id]);
 			}
 			else
 #endif
-			{
-				osd_fseek(file, 2 * 256 + n * 16, SEEK_SET);
-				osd_fread(file, buff, 16);
-				logerror("trs80 disk #%d: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
-					n, buff[0], buff[1], buff[2], buff[3],
-					buff[4], buff[5], buff[6], buff[7],
-					buff[8], buff[9], buff[10], buff[11],
-					buff[12], buff[13], buff[14], buff[15]);
-				tracks = buff[3] + 1;
-				heads = (buff[7] & 0x40) ? 2 : 1;
-				spt = buff[4] / heads;
-				dir_sector = 5 * buff[0] * buff[5];
-				dir_length = 5 * buff[9];
 
-                /* set geometry so disk image can be read */
-				basicdsk_set_geometry(n, tracks, heads, spt, 256, 0);
-
-				/* mark directory sectors with deleted data address mark */
-				/* assumption dir_sector is a sector offset */
-				for (i = 0; i < dir_length; i++)
-				{
-					UINT8 track;
-					UINT8 side;
-					UINT8 sector_id;
-					UINT16 track_offset;
-					UINT16 sector_offset;
-
-					/* calc sector offset */
-					sector_offset = dir_sector + i;
-
-					/* get track offset */
-					track_offset = sector_offset / spt;
-
-					/* calc track */
-					track = track_offset / heads;
-
-					/* calc side */
-					side = track_offset % heads;
-
-					/* calc sector id - first sector id is 0! */
-					sector_id = sector_offset % spt;
-
-					/* set deleted data address mark for sector specified */
-					basicdsk_set_ddam(n, track, side, sector_id, 1);
-				}
-			}
+			osd_fseek(file, 2 * 256, SEEK_SET);
+			osd_fread(file, pdrive, 4*16);
+			osd_fclose(file);
 		}
-		osd_fclose(file);
 	}
-	return INIT_OK;
+
+	tracks = pdrive[id*16+3] + 1;
+	heads = (pdrive[id*16+7] & 0x40) ? 2 : 1;
+	spt = pdrive[id*16+4] / heads;
+	dir_sector = 5 * pdrive[id*16+0] * pdrive[id*16+5];
+	dir_length = 5 * pdrive[id*16+9];
+
+    /* set geometry so disk image can be read */
+	basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+
+	/* mark directory sectors with deleted data address mark */
+	/* assumption dir_sector is a sector offset */
+	for (i = 0; i < dir_length; i++)
+	{
+		int track, side, sector_id;
+		int track_offset, sector_offset;
+
+		/* calc sector offset */
+		sector_offset = dir_sector + i;
+
+		/* get track offset */
+		track_offset = sector_offset / spt;
+
+		/* calc track */
+		track = track_offset / heads;
+
+		/* calc side */
+		side = track_offset % heads;
+
+		/* calc sector id - first sector id is 0! */
+		sector_id = sector_offset % spt;
+
+		/* set deleted data address mark for sector specified */
+		basicdsk_set_ddam(id, track, side, sector_id, 1);
+	}
+
+	floppy_drive_set_flag_state(i, FLOPPY_DRIVE_PRESENT, 1);
+	floppy_drive_set_flag_state(i, FLOPPY_DRIVE_DISK_PRESENT, 1);
+    floppy_drive_set_flag_state(id, FLOPPY_DRIVE_READY, 1);
+
+    return INIT_OK;
 }
 
 static void trs80_fdc_callback(int);
@@ -726,7 +720,10 @@ void trs80_fdc_callback(int event)
 int trs80_frame_interrupt (void)
 {
 	if (motor_count && !--motor_count)
-		wd179x_stop_drive();
+	{
+		floppy_drive_set_flag_state(motor_drive, FLOPPY_DRIVE_MOTOR_ON, 0);
+        wd179x_stop_drive();
+	}
 	return 0;
 }
 
@@ -766,43 +763,40 @@ WRITE_HANDLER( trs80_irq_mask_w )
 
 WRITE_HANDLER( trs80_motor_w )
 {
-		/*UINT8 buff[16];*/
 	UINT8 drive = 255;
-		/*int n;*/
-		/*void *file0, *file1;*/
 
 	LOG(("trs80 motor_w $%02X\n", data));
 
 	switch (data)
 	{
-		case 1:
-			drive = 0;
-						head = 0;
-			break;
-		case 2:
-			drive = 1;
-						head = 0;
-			break;
-		case 4:
-			drive = 2;
-						head = 0;
-			break;
-		case 8:
-			drive = 3;
-						head = 0;
-			break;
-		case 9:
-			drive = 0;
-						head = 1;
-			break;
-		case 10:
-			drive = 1;
-						head = 1;
-			break;
-		case 12:
-			drive = 2;
-						head = 1;
-			break;
+	case 1:
+		drive = 0;
+		head = 0;
+		break;
+	case 2:
+		drive = 1;
+		head = 0;
+		break;
+	case 4:
+		drive = 2;
+		head = 0;
+		break;
+	case 8:
+		drive = 3;
+		head = 0;
+		break;
+	case 9:
+		drive = 0;
+		head = 1;
+		break;
+	case 10:
+		drive = 1;
+		head = 1;
+		break;
+	case 12:
+		drive = 2;
+		head = 1;
+		break;
 	}
 
 	if (drive > 3)
@@ -814,8 +808,9 @@ WRITE_HANDLER( trs80_motor_w )
 	/* let it run about 5 seconds */
 	motor_count = 5 * 60;
 
-	wd179x_set_drive(drive);
-		wd179x_set_side(head);
+	floppy_drive_set_flag_state(drive, FLOPPY_DRIVE_MOTOR_ON, 1);
+    wd179x_set_drive(drive);
+	wd179x_set_side(head);
 
 }
 
