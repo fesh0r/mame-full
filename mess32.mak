@@ -314,23 +314,31 @@ COREOBJS = \
 		$(OBJ)/mess/menuentr.o \
 		$(OBJ)/mess/utils.o            \
 		$(OBJ)/mess/bcd.o              \
-		$(OBJ)/mess/julian.o			\
-		$(OBJ)/mess/vidhrdw/state.o \
-		$(OBJ)/mess/machine/rriot.o	 \
+		$(OBJ)/mess/gregoria.o			\
+		$(OBJ)/mess/vidhrdw/state.o    \
+		$(OBJ)/mess/vidhrdw/m6847.o    \
+		$(OBJ)/mess/vidhrdw/m6845.o    \
+		$(OBJ)/mess/vidhrdw/tms9928a.o \
+		$(OBJ)/mess/machine/28f008sa.o \
+		$(OBJ)/mess/machine/rriot.o    \
+		$(OBJ)/mess/machine/riot6532.o \
+		$(OBJ)/mess/machine/pit8253.o  \
 		$(OBJ)/mess/machine/mc146818.o \
+		$(OBJ)/mess/machine/uart8250.o \
 		$(OBJ)/mess/machine/pc_mouse.o \
-		$(OBJ)/mess/machine/pclpt.o	 \
+		$(OBJ)/mess/machine/pclpt.o    \
 		$(OBJ)/mess/machine/centroni.o \
 		$(OBJ)/mess/machine/pckeybrd.o \
 		$(OBJ)/mess/machine/pc_fdc_h.o \
 		$(OBJ)/mess/machine/pc_flopp.o \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
-		$(OBJ)/mess/diskctrl.o \
-		$(OBJ)/mess/machine/dsk.o \
-		$(OBJ)/mess/machine/nec765.o	\
-		$(OBJ)/mess/vidhrdw/rstrbits.o	 \
-		$(OBJ)/mess/vidhrdw/rstrtrck.o	 \
+		$(OBJ)/mess/diskctrl.o         \
+		$(OBJ)/mess/machine/dsk.o      \
+		$(OBJ)/mess/machine/flopdrv.o  \
+		$(OBJ)/mess/machine/nec765.o   \
+		$(OBJ)/mess/vidhrdw/rstrbits.o \
+		$(OBJ)/mess/vidhrdw/rstrtrck.o \
 	 $(OBJ)/mess/Win32/fileio.o    \
 	 $(OBJ)/mess/Win32/dirio.o	       \
 	 $(OBJ)/mess/Win32/fdc.o
@@ -341,7 +349,6 @@ COREOBJS = \
 !endif
 
 DRV_OBJS = \
-          $(OBJ)/mess/vidhrdw/tms9928a.o \
           $(OBJ)/mess/machine/coleco.o   \
           $(OBJ)/mess/vidhrdw/coleco.o   \
           $(OBJ)/mess/systems/coleco.o	\
@@ -421,7 +428,6 @@ DRV_OBJS = \
 	  $(OBJ)/mess/machine/counter.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
-	  $(OBJ)/mess/vidhrdw/m6847.o	 \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
@@ -466,7 +472,6 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/mac.o	\
           $(OBJ)/mess/systems/avigo.o    \
           $(OBJ)/mess/vidhrdw/avigo.o    \
-          $(OBJ)/mess/machine/28f008sa.o \
 		  $(OBJ)/mess/systems/studio2.o  \
 		  $(OBJ)/mess/vidhrdw/studio2.o  \
 	  $(OBJ)/mess/systems/channelf.o \
@@ -479,17 +484,17 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/astrocde.o \
           $(OBJ)/mess/machine/astrocde.o \
           $(OBJ)/mess/systems/astrocde.o	\
-          $(OBJ)/mess/machine/pit8253.o  \
-          $(OBJ)/mess/machine/uart8250.o \
+	  $(OBJ)/mess/machine/ibmpc.o	 \
 	  $(OBJ)/mess/machine/tandy1t.o  \
 	  $(OBJ)/mess/machine/amstr_pc.o \
-	  $(OBJ)/mess/machine/europc.o \
+	  $(OBJ)/mess/machine/europc.o   \
 	  $(OBJ)/mess/machine/at.o	 \
 	  $(OBJ)/mess/machine/dma8237.o  \
 	  $(OBJ)/mess/machine/pic8259.o  \
 	  $(OBJ)/mess/vidhrdw/vga.o	 \
 	  $(OBJ)/mess/sndhrdw/pc.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
 	  $(OBJ)/mess/machine/pc.o	 \
@@ -506,7 +511,6 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/uk101.o     \
           $(OBJ)/mess/systems/uk101.o	\
           $(OBJ)/machine/8255ppi.o       \
-	  $(OBJ)/mess/machine/flopdrv.o  \
 	  $(OBJ)/mess/vidhrdw/amstrad.o  \
 	  $(OBJ)/mess/machine/amstrad.o  \
 	  $(OBJ)/mess/vidhrdw/pcw.o	 \
@@ -541,6 +545,7 @@ DRV_OBJS = \
 	  $(OBJ)/mess/vidhrdw/microtan.o \
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \
+      $(OBJ)/mess/machine/6551.o     \
 	  $(OBJ)/mess/vidhrdw/oric.o	 \
 	  $(OBJ)/mess/machine/oric.o	 \
 	  $(OBJ)/mess/systems/oric.o	\
@@ -562,7 +567,6 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/nascom1.o  \
           $(OBJ)/mess/machine/nascom1.o  \
           $(OBJ)/mess/systems/nascom1.o	\
-          $(OBJ)/mess/vidhrdw/m6845.o    \
 	  $(OBJ)/vidhrdw/cps1.o 	 \
 	  $(OBJ)/mess/systems/cpschngr.o	\
           $(OBJ)/mess/systems/mtx.o	\
