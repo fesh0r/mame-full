@@ -149,7 +149,7 @@ void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *
 void floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length, int ddam);
 int	floppy_drive_get_datarate_in_us(DENSITY density);
 
-/* managed buffer functions; 
+/* managed buffer functions */
 #ifdef __cplusplus
 };
 #endif
