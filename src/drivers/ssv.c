@@ -27,6 +27,7 @@ Main Board	ROM Board	Year + Game									By
 STA-0001	STS-0001	93	Super Real Mahjong PIV					Seta
 STA-0001	STS-0001	93	Dramatic Adventure Quiz Keith & Lucy	Visco
 STA-0001	SAM-5127	93	Survival Arts							Sammy
+STA-0001    SAM-5127    93  DynaGears                               Sammy
 STA-0001B	VISCO-001B	94	Drift Out '94							Visco
 STA-0001B	GOLF ROM	94	Eagle Shot Golf							Sammy
 STA-0001B	?			94	Twin Eagle II - The Rescue Mission		Seta
@@ -84,8 +85,11 @@ To Do:
 				to it (-$200,-$200) to move it off screen. But currently those offsets
 				are ignored for "tilemap" sprites. This may be related to the kludge for srmp4.
 
-- ultrax : bad gfx offsets and wrong visible area
-- twineag2 : protection controls sprite movements :
+- ultrax    :   bad gfx offsets and wrong visible area
+- twineag2  :   bad gfx offsets on some scenes
+
+- dynagear  :   Requires 2 kludges for the video emulation and has some bad shadow sprites
+                on the left side of the screen
 
 	code @ $e75cdc
 
@@ -607,11 +611,16 @@ static ADDRESS_MAP_START( survarts_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x210000, 0x210001) AM_READ(watchdog_reset16_r	)	// Watchdog
 //	AM_RANGE(0x290000, 0x290001) AM_READ(MRA16_NOP				)	// ?
 //	AM_RANGE(0x2a0000, 0x2a0001) AM_READ(MRA16_NOP				)	// ?
+
+	AM_RANGE(0x400000, 0x43ffff) AM_READ(MRA16_RAM) // dyna
+
 	AM_RANGE(0x500008, 0x500009) AM_READ(input_port_5_word_r	)	// Extra Buttons
 	SSV_READMEM( 0xf00000 )
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( survarts_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 //	AM_RANGE(0x210002, 0x210003) AM_WRITE(MWA16_NOP				)	// ? 0,4 at the start
+	AM_RANGE(0x400000, 0x43ffff) AM_WRITE(MWA16_RAM) // dyna
+
 	SSV_WRITEMEM
 ADDRESS_MAP_END
 
@@ -2166,6 +2175,138 @@ INPUT_PORTS_START( survarts )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/***************************************************************************
+  Dyna Gears
+***************************************************************************/
+
+INPUT_PORTS_START( dynagear )
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, "0" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	// IN2 - $210008
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+
+	PORT_START	// IN3 - $21000a
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+
+	PORT_START	// IN4 - $21000c
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 10 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 10 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_TILT     )
+	PORT_BIT(  0x00f0, IP_ACTIVE_LOW,  IPT_UNKNOWN  )
+INPUT_PORTS_END
 
 /***************************************************************************
 							Pachinko Sexy Reaction
@@ -2695,6 +2836,9 @@ DRIVER_INIT( stmblade )		{	init_ssv();
 DRIVER_INIT( survarts )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
+DRIVER_INIT( dynagear )		{	init_ssv(); ssv_special = 3;
+								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xec;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xec;	}
 DRIVER_INIT( sxyreact )		{	hypreac2_init();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
@@ -2882,6 +3026,13 @@ static MACHINE_DRIVER_START( survarts )
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( dynagear )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(survarts)
+	/* video hardware */
+	MDRV_VISIBLE_AREA(8, 0x158-16-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3818,6 +3969,79 @@ ROM_START( survarts )
 	ROM_LOAD16_WORD_SWAP( "si001-13.s3", 0x300000, 0x100000, CRC(d66a7e26) SHA1(57b659daef00421b6742963f792bd5e020f625c9) )
 ROM_END
 
+/*
+
+Dynagears
+Sammy, 1993
+
+This game runs on SSV hardware.
+
+Game PCB Layout
+---------------
+
+SAM-5127
+|----------------------------------------|
+| SI002-10.U6                            |
+|                                        |
+| SI002-09.U7                            |
+|                                        |
+| SI002-08.U8                            |
+|                                        |
+| SI002-07.U9                            |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                           SI002-05.U22 |
+|                                        |
+|                           SI002-02.U23 |
+|                                        |
+|                                        |
+|SI002-PRH.U3                            |
+|                                        |
+|SI002-PRL.U4                            |
+|                                        |
+|             SI002-06.U16  SI002-04.U26 |
+|PAL                                     |
+|(SI002-14)   SI002-03.U17  SI002-01.U27 |
+|                                        |
+|----------------------------------------|
+
+*/
+
+ROM_START( dynagear )
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )		/* V60 Code */
+	ROM_LOAD16_BYTE( "si002-prl.u4", 0x000000, 0x080000, CRC(71ba29c6) SHA1(ef43ab665daa4fc9ee01996d03f2f0b4c74c8435) )
+	ROM_LOAD16_BYTE( "si002-prh.u3", 0x000001, 0x080000, CRC(d0947a12) SHA1(95b54ed9dc51c952ad123103b8633a821cde05e9) )
+	ROM_LOAD16_BYTE( "si002-prl.u4", 0x100000, 0x080000, CRC(71ba29c6) SHA1(ef43ab665daa4fc9ee01996d03f2f0b4c74c8435) )
+	ROM_LOAD16_BYTE( "si002-prh.u3", 0x100001, 0x080000, CRC(d0947a12) SHA1(95b54ed9dc51c952ad123103b8633a821cde05e9) )
+
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "si002-01.u27", 0x0000000, 0x200000, CRC(0060a521) SHA1(10cdb967e6cb4fc7c23c1ac40b24e35262060f5c) )
+	ROM_LOAD( "si002-04.u26", 0x0200000, 0x200000, CRC(6140f47d) SHA1(49dcebe724990acdac76746886efe88b68ce956f) )
+
+	ROM_LOAD( "si002-02.u23", 0x0400000, 0x200000, CRC(c22f2a41) SHA1(969affc8bac9a6024e7e5103384a40a6a2acf653) )
+	ROM_LOAD( "si002-05.u22", 0x0600000, 0x200000, CRC(482412fd) SHA1(dfb896631b6999ce8ac6aeef84ff44150d67739a) )
+
+	ROM_LOAD( "si002-03.u17", 0x0800000, 0x200000, CRC(4261a6b8) SHA1(df163faa84a86f126d5d405aef316ff9dd3c05eb) )
+	ROM_LOAD( "si002-06.u16", 0x0a00000, 0x200000, CRC(0e1f23f6) SHA1(ea35c75776b75131ef9133a16a36d95132dc6776) )
+
+	ROM_FILL(                0xc00000, 0x400000, 0          )
+
+//	The chip seems to use REGION1 too, but produces no sound from there.
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND3, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "si002-07.u9", 0x000000, 0x100000, CRC(30d2bf11) SHA1(263e9a4e6a77aa451daf6d1225071cc1147a6541) )
+	ROM_LOAD16_WORD_SWAP( "si002-08.u8", 0x100000, 0x100000, CRC(253704ee) SHA1(887ebca2af497fc59b274838cdf284223cc92c97) )
+	ROM_LOAD16_WORD_SWAP( "si002-09.u7", 0x200000, 0x100000, CRC(1ea86db7) SHA1(e887ea5be99f753e73355a45e37dfddb2a1d6cf6) )
+	ROM_LOAD16_WORD_SWAP( "si002-10.u6", 0x300000, 0x100000, CRC(e369c177) SHA1(646aad00a8f9eda847e9a51fb0a511bf49eb9fe2) )
+ROM_END
+
+
 /***************************************************************************
 
 						Pachinko Sexy Reaction (Japan)
@@ -4061,6 +4285,7 @@ GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
 GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
+GAMEX( 1994,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy"         ,     "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
 GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )

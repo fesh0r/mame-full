@@ -7,8 +7,12 @@
 #include <math.h>
 
 
+#ifndef min
 #define min(a,b) (a<b?a:b)
+#endif
+#ifndef max
 #define max(a,b) (a>b?a:b)
+#endif
 
 UINT16 *model1_display_list0, *model1_display_list1;
 UINT16 *model1_color_xlat;

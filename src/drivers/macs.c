@@ -2,9 +2,7 @@
 
 macs.c - Multi Amenity Cassette System
 
-what processor? it seems to be z80 code but the roms are interleaved like a 16-bit cpu (16-bit z80 variant?)
-
-todo: everything .. unlikely to finish it myself
+processor seems to be ST0016 (z80 based) from SETA
 
 around 0x3700 of the bios (when interleaved) contains the ram test text
 

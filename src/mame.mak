@@ -995,6 +995,7 @@ $(OBJ)/afega.a: \
 
 $(OBJ)/esd.a: \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
+	$(OBJ)/drivers/firehawk.o \
 
 $(OBJ)/dynax.a: \
 	$(OBJ)/drivers/royalmah.o \
@@ -1138,6 +1139,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/tcl.o \
 	$(OBJ)/drivers/macs.o \
 	$(OBJ)/drivers/onetwo.o \
+	$(OBJ)/drivers/1945kiii.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

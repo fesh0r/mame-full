@@ -155,8 +155,8 @@ static const unsigned char at01[ 8 ] = { NODUMP };
 static const unsigned char at02[ 8 ] = { NODUMP };
 static const unsigned char cp01[ 8 ] = { 0xf0, 0x81, 0xc1, 0x20, 0xe2, 0xfe, 0x04, 0xf8 };
 static const unsigned char cp02[ 8 ] = { NODUMP };
-static const unsigned char cp03[ 8 ] = { NODUMP };
-static const unsigned char cp04[ 8 ] = { NODUMP };
+static const unsigned char cp03[ 8 ] = { 0xc0, 0x10, 0x60, 0x7c, 0x04, 0xfa, 0x03, 0x01 };
+static const unsigned char cp04[ 8 ] = { 0xf8, 0xe2, 0xe1, 0x81, 0x7c, 0x0c, 0x30, 0xc0 };
 static const unsigned char cp05[ 8 ] = { 0x80, 0x08, 0x30, 0xc2, 0xfe, 0xfd, 0xe1, 0xe0 };
 static const unsigned char cp06[ 8 ] = { 0xf0, 0x20, 0x3c, 0xfd, 0x81, 0x78, 0xfa, 0x02 };
 static const unsigned char cp07[ 8 ] = { NODUMP };
@@ -169,6 +169,7 @@ static const unsigned char cp13[ 8 ] = { 0x02, 0x70, 0x08, 0x04, 0x3c, 0x20, 0xe
 static const unsigned char cp14[ 8 ] = { NODUMP };
 static const unsigned char et01[ 8 ] = { 0x02, 0x08, 0x18, 0x1c, 0xfd, 0xc1, 0x40, 0x80 };
 static const unsigned char et02[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfe, 0x7c, 0x70, 0x08, 0xf8 };
+static const unsigned char et03[ 8 ] = { 0xc0, 0x08, 0xfa, 0xe2, 0xe1, 0xfd, 0x7c, 0x80 };
 static const unsigned char mg01[ 8 ] = { 0x80, 0xf2, 0x30, 0x38, 0xf9, 0xfd, 0x1c, 0xe0 };
 static const unsigned char mg02[ 8 ] = { 0xe0, 0x7c, 0x40, 0xc1, 0xf9, 0xfa, 0xf2, 0xf0 };
 static const unsigned char mg03[ 8 ] = { 0xc0, 0x04, 0x78, 0x82, 0x03, 0xf1, 0x10, 0xe0 };
@@ -196,22 +197,22 @@ static struct
 } zn_config_table[] =
 {
 	{ "nbajamex", ac01, ac02 }, /* black screen */
-	{ "jdredd",   ac01, ac02 }, /* missing controls */
-	{ "jdreddb",  ac01, ac02 }, /* missing controls */
+	{ "jdredd",   ac01, ac02 }, /* OK ( missing guns ) */
+	{ "jdreddb",  ac01, ac02 }, /* OK ( missing guns ) */
 	{ "primrag2", tw01, tw02 }, /* boots */
 /*	{ "hvnsgate", at01, at02 }, */
 	{ "ts2",      cp01, cp02 }, /* system error C930 */
 	{ "ts2j",     cp01, cp02 }, /* system error C930 */
-	{ "starglad", cp01, cp03 }, /* system error C930 */
-	{ "sfex",     cp01, cp04 }, /* system error C930 */
-	{ "sfexa",    cp01, cp04 }, /* system error C930 */
-	{ "sfexj",    cp01, cp04 }, /* system error C930 */
+	{ "starglad", cp01, cp03 }, /* OK */
+	{ "sfex",     cp01, cp04 }, /* OK */
+	{ "sfexa",    cp01, cp04 }, /* OK */
+	{ "sfexj",    cp01, cp04 }, /* OK */
 	{ "glpracr",  cp01, cp05 }, /* OK */
 	{ "rvschool", cp10, cp06 }, /* OK */
 	{ "jgakuen",  cp10, cp06 }, /* OK */
 	{ "plsmaswd", cp10, cp07 }, /* system error D094 */
 	{ "stargld2", cp10, cp07 }, /* system error D094 */
-	{ "sfex2",    cp10, cp08 }, /* OK ( locks up when drawing HAYATE ) */
+	{ "sfex2",    cp10, cp08 }, /* OK */
 	{ "techromn", cp10, cp09 }, /* system error D094 */
 	{ "kikaioh",  cp10, cp09 }, /* system error D094 */
 	{ "tgmj",     cp10, cp11 }, /* system error D094 */ /* ? */
@@ -731,6 +732,13 @@ static void zn_machine_init( void )
 	psx_machine_init();
 }
 
+static READ32_HANDLER( capcom_kickharness_r )
+{
+	/* required for buttons 4,5&6 */
+	verboselog( 2, "capcom_kickharness_r( %08x, %08x )\n", offset, mem_mask );
+	return 0xffffffff;
+}
+
 static WRITE32_HANDLER( bank_coh1000c_w )
 {
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 + ( data * 0x400000 ) );
@@ -738,10 +746,12 @@ static WRITE32_HANDLER( bank_coh1000c_w )
 
 DRIVER_INIT( coh1000c )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
-	install_mem_read32_handler( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
+	install_mem_read32_handler ( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
 	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, bank_coh1000c_w ); /* bankswitch */
-	install_mem_read32_handler( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
+	install_mem_read32_handler ( 0, 0x1fb40010, 0x1fb40013, capcom_kickharness_r );
+	install_mem_read32_handler ( 0, 0x1fb40020, 0x1fb40023, capcom_kickharness_r );
+	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
 	install_mem_write32_handler( 0, 0x1fb60000, 0x1fb60003, zn_qsound_w );
 
 	init_znsec();
@@ -995,22 +1005,15 @@ static WRITE32_HANDLER( bank_coh3002c_w )
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 + ( data * 0x400000 ) );
 }
 
-static READ32_HANDLER( kick_unknown_r )
-{
-	/* required for buttons 4,5&6 */
-	verboselog( 0, "kick_unknown_r( %08x, %08x )\n", offset, mem_mask );
-	return 0xffffffff;
-}
-
 DRIVER_INIT( coh3002c )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
-	install_mem_read32_handler( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
+	install_mem_read32_handler ( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
 	install_mem_read32_handler ( 0, 0x1fa60000, 0x1fa60003, MRA32_NOP );
-	install_mem_read32_handler( 0,  0x1fb40010, 0x1fb40013, kick_unknown_r );
-	install_mem_read32_handler( 0,  0x1fb40020, 0x1fb40023, kick_unknown_r );
+	install_mem_read32_handler ( 0, 0x1fb40010, 0x1fb40013, capcom_kickharness_r );
+	install_mem_read32_handler ( 0, 0x1fb40020, 0x1fb40023, capcom_kickharness_r );
 	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, bank_coh3002c_w ); /* bankswitch */
-	install_mem_read32_handler( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
+	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
 	install_mem_write32_handler( 0, 0x1fb60000, 0x1fb60003, zn_qsound_w );
 
 	init_znsec();
@@ -2801,10 +2804,10 @@ GAMEX( 1995, cpzn1,    0,        coh1000c, zn, coh1000c, ROT0, "Sony/Capcom", "Z
 
 GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, starglad, cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, sfex,     cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (USA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, sfexa,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, sfexj,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, starglad, cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, sfex,     cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (USA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, sfexa,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, sfexj,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, glpracr,  cpzn1,    coh1000c, zn, coh1000c, ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Capcom ZN2 */
@@ -2818,7 +2821,7 @@ GAMEX( 1997, sfexp,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "
 GAMEX( 1997, sfexpj,   sfexp,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

@@ -270,6 +270,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( tazmani2 )	/* (c) 1982 Stern */
 	DRIVER( calipso )	/* (c) 1982 Tago */
 	DRIVER( anteater )	/* (c) 1982 Tago */
+	DRIVER( anteatg )	/* (c) ? */
 	DRIVER( rescue )	/* (c) 1982 Stern */
 	DRIVER( aponow )	/* bootleg */
 	DRIVER( minefld )	/* (c) 1983 Stern */
@@ -664,6 +665,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( suzuka8h )
 	DRIVER( suzuk8hj )
 	/* 92.8  Bubble Trouble */
+	DRIVER( sws )		/* (c) 1992 (Japan) */
 	DRIVER( sws92 )		/* (c) 1992 (Japan) */
 	DRIVER( sws92g )	/* (c) 1992 (Japan) */
 	DRIVER( suzuk8h2 )
@@ -1294,6 +1296,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( myqbert )	/* GV-103?(c) 1982 Gottlieb */
 	DRIVER( qberttst )	/* GV-103 (c) 1982 Gottlieb */
 	DRIVER( insector )	/* GV-??? (c) 1982 Gottlieb - never released */
+	DRIVER( tylz )		/* GV-??? (c) 1982 Gottlieb - never released */
 	DRIVER( krull )		/* GV-105 (c) 1983 Gottlieb */
 	DRIVER( sqbert )	/* GV-??? (c) 1983 Mylstar - never released */
 	DRIVER( mach3 )		/* GV-109 (c) 1983 Mylstar */
@@ -1572,6 +1575,7 @@ const struct GameDriver *drivers[] =
 	/* Taito Z-System games */
 	DRIVER( contcirc )	/* B33 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( contcrcu )	/* B33 (c) 1987 Taito America Corporation (US) */
+	DRIVER( contcrua )	/* B33 (c) 1987 Taito America Corporation (US) */
 	DRIVER( chasehq )	/* B52 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( chasehqj )	/* B52 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( enforce )	/* B58 (c) 1988 Taito Corporation (Japan) */
@@ -1586,6 +1590,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( spacegun )	/* C57 (c) 1990 Taito Corporation Japan (World) */
 	DRIVER( dblaxle )	/* C78 (c) 1991 Taito America Corporation (US) */
 	DRIVER( pwheelsj )	/* C78 (c) 1991 Taito Corporation (Japan) */
+	DRIVER( racingb )	/* C84 (c) 1991 Taito Coropration .. */
 
 	/* Taito Air System games */
 	DRIVER( topland )	/* B62 (c) 1988 Taito Coporation Japan (World) */
@@ -3043,12 +3048,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 33 */
 						/* 34 */
 	DRIVER( mt_tlbba )	/* 35 */
-						/* 36 */
+	DRIVER( mt_cols )	/* 36 */
 						/* 37 */
 	DRIVER( mt_eswat )	/* 38 */
 	DRIVER( mt_smgp )	/* 39 */
 	DRIVER( mt_mwalk )	/* 40 */
-						/* 41 */
+	DRIVER( mt_crack )	/* 41 */
 						/* 42 */
 						/* 43 */
 						/* 44 */
@@ -3060,14 +3065,17 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 50 */
 						/* 51 */
 	DRIVER( mt_sonic )	/* 52 */
+	DRIVER( mt_sonia )	/* ^^ */
 	DRIVER( mt_fshrk )	/* 53 */
 						/* 54 */
 						/* 55 */
 						/* 56 */
 	DRIVER( mt_gaxe2 )	/* 57 */
-						/* 58 */
+	DRIVER( mt_stf )	/* 58 */
 						/* 59 */
 	DRIVER( mt_kcham )	/* 60 */
+						/* 61 */
+	DRIVER( mt_soni2 )	/* 62 */
 
 	/* Sega MegaPlay */
 	DRIVER( mp_sonic )	/* 01 */
@@ -4323,6 +4331,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( blockout )	/* TA-0029 (c) 1989 + California Dreams */
 	DRIVER( blckout2 )	/* TA-0029 (c) 1989 + California Dreams */
 	DRIVER( blckoutj )	/* TA-0029 (c) 1989 + California Dreams (Japan) */
+	DRIVER( agress )	/* TA-0029 (c) 1991 Palco */
 	DRIVER( ddragon3 )	/* TA-0030 (c) 1990 */
 	DRIVER( ddrago3b )	/* bootleg */
 	DRIVER( wwfwfest )	/* TA-0031 (c) 1991 (US) */
@@ -5009,6 +5018,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( twineag2 )	/* (c) 1994 Seta */
 	DRIVER( srmp7 )		/* (c) 1997 Seta */
 	DRIVER( survarts )	/* (c) 1993 Sammy (American) */
+	DRIVER( dynagear )	/* (c) 1993 Sammy */
 	DRIVER( eaglshot )
 	DRIVER( eaglshta )
 	DRIVER( hypreact )	/* (c) 1995 Sammy */
@@ -5250,6 +5260,7 @@ Other Sun games
 	/* http://www.esdgame.co.kr/english/ */
 	DRIVER( multchmp )	/* (c) 1998 (Korea) */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */
+	DRIVER( firehawk )
 
 	/* Dyna Electronics / Dynax / Nakanihon games */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
@@ -5538,6 +5549,7 @@ Other Sun games
 	DRIVER( landbrk )	/* Eolith */
 	DRIVER( racoon )	/* Eolith */
 	DRIVER( xfiles )	/* DfPix */
+	DRIVER( misncrft )	/* (c) 2000 Sun */
 	DRIVER( strvmstr )	/* (c) 1986 Enerdyne Technologies Inc */
 	DRIVER( dorachan )	/* (c) 1980 Craul Denshi */
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
@@ -5560,6 +5572,7 @@ Other Sun games
 	DRIVER( yuka )		/* (c) 1999 Yubis */
 	DRIVER( yujan )		/* (C) 1999 Yubis */
 	DRIVER( onetwo )	/* (c) 1997 Barko */
+	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

@@ -91,7 +91,7 @@ void z180_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_KONAMI)
 #include "cpu/konami/konami.h"
 #endif
-#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
+#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 #include "cpu/m68000/m68000.h"
 #endif
 #if (HAS_T11)
@@ -472,6 +472,9 @@ const struct
 #endif
 #if (HAS_M68000)
 	{ CPU_M68000, m68000_get_info },
+#endif
+#if (HAS_M68008)
+	{ CPU_M68008, m68008_get_info },
 #endif
 #if (HAS_M68010)
 	{ CPU_M68010, m68010_get_info },
@@ -1496,7 +1499,7 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
  *
  *************************************/
 
-#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
+#if (HAS_M68000 || HAS_M68008 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 {
 	void m68k_set_reset_instr_callback(void (*callback)(void));

@@ -267,7 +267,7 @@ DrawSpritesHelper(
 			sizey = size&0xffff;
 			zoomx = (1<<16)*sizex/0x20;
 			zoomy = (1<<16)*sizey/0x20;
-			
+
 			flipy = attrs&0x8;
 			numrows = attrs&0x7; /* 0000 0001 1111 1111 0000 0000 fccc frrr */
 			if( numrows==0 ) numrows = 8;
@@ -397,9 +397,9 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 		0x940000 -x------		sprite chip busy
 		0x940018 xxxx----		clr.w   $940018.l
 
-		0x940030 ----xxxx		
+		0x940030 ----xxxx
 		0x940034 xxxxxxxx		0x3070b0f
-		0x940038 xxxxxxxx		
+		0x940038 xxxxxxxx
 
 		0x940040 xxxxxxxx		sprite attribute size
 		0x940044 xxxxxxxx		?
@@ -423,25 +423,33 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 	num_sprites = (namcos22_vics_control[0x40/4]&0xffff)/0x10;
 	if( num_sprites>=1 )
 	{
-		num_sprites--;
 		pSource = &namcos22_vics_data[(namcos22_vics_control[0x48/4] - 0x900000)/4];
 		pPal    = &namcos22_vics_data[(namcos22_vics_control[0x58/4] - 0x900000)/4];
-		pSource += num_sprites*4;
-		pPal += num_sprites*2;
-		num_sprites++;
-		DrawSpritesHelper( bitmap, cliprect, pSource, pPal, num_sprites, deltax, deltay, 1 );
+		if ((pSource >= &namcos22_vics_data[0]) && (pSource <= &namcos22_vics_data[0xffff]))
+		{
+			num_sprites--;
+			pSource += num_sprites*4;
+			pPal += num_sprites*2;
+			num_sprites++;
+			DrawSpritesHelper( bitmap, cliprect, pSource, pPal, num_sprites, deltax, deltay, 1 );
+		}
 	}
 
 	num_sprites = (namcos22_vics_control[0x60/4]&0xffff)/0x10;
 	if( num_sprites>=1 )
 	{
-		num_sprites--;
 		pSource = &namcos22_vics_data[(namcos22_vics_control[0x68/4] - 0x900000)/4];
 		pPal    = &namcos22_vics_data[(namcos22_vics_control[0x78/4] - 0x900000)/4];
-		pSource += num_sprites*4;
-		pPal += num_sprites*2;
-		num_sprites++;
-		DrawSpritesHelper( bitmap, cliprect, pSource, pPal, num_sprites, deltax, deltay, 1 );
+
+		if ((pSource >= &namcos22_vics_data[0]) && (pSource <= &namcos22_vics_data[0xffff]))
+		{
+			num_sprites--;
+			pSource += num_sprites*4;
+			pPal += num_sprites*2;
+			num_sprites++;
+			DrawSpritesHelper( bitmap, cliprect, pSource, pPal, num_sprites, deltax, deltay, 1 );
+		}
+
 	}
 } /* DrawSprites */
 
@@ -571,34 +579,34 @@ DrawTextLayer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
  * 0e000: used for collision detection? (Time Crisis)
  *
  * 10000..1007f
- *	10000:	0000000f (always?)
+ *	00)10000:	0000000f (always?)
  *
- *	10004	000019b1 00007d64 // rolx (master camera)
- *	1000c	00005ece 000055fe // roly (master camera)
- *	10014	000001dd 00007ffc // rolz (master camera)
- *	1001c	00000002 (rolt)
+ *	01)10004	000019b1 00007d64 // rolx (master camera)
+ *	03)1000c	00005ece 000055fe // roly (master camera)
+ *	05)10014	000001dd 00007ffc // rolz (master camera)
+ *	07)1001c	00000002 (rolt)
  *
- *	10020	000000c8 // light power   [C008]
- *	10024	00000014 // light ambient [C009]
- *	10028	00000000 00005a82 ffffa57e // light vector [C00A]
+ *	08)10020	000000c8 // light power   [C008]
+ *	09)10024	00000014 // light ambient [C009]
+ *	0a)10028	00000000 00005a82 ffffa57e // light vector [C00A]
  *
- *	10034	00000002 (always?)        [C00D]
- *	10038	00000780 // field of view [C00E]
- *	1003c	00000140                  [C00F]
- *  10040	000000f0                  [C010]
+ *	0d)10034	00000002 (always?)        [C00D]
+ *	0e)10038	00000780 // field of view [C00E]
+ *	0f)1003c	00000140                  [C00F]
+ *  10)10040	000000f0                  [C010]
  *
- *	10048	00000000 00000000 00000000[C011..C013]
+ *	11)10048	00000000 00000000 00000000[C011..C013]
  *
- *	10050	00000007 // priority          [C014]
- *	10054	00000000 // viewport center x [C015]
- *	10058	00000000 // viewport center y [C016]
+ *	14)10050	00000007 // priority          [C014]
+ *	15)10054	00000000 // viewport center x [C015]
+ *	16)10058	00000000 // viewport center y [C016]
  *
- *	1005c	00000000 00007fff // rolx? [C017 C018]
- *			00000000 00007fff // roly? [C019 C01A]
- *			00000000 00007fff // rolz? [C01B C01C]
+ *	17)1005c	00000000 00007fff // rolx? [C017 C018]
+ *				00000000 00007fff // roly? [C019 C01A]
+ *				00000000 00007fff // rolz? [C01B C01C]
  *
- *	10074	00010000 // flags?         [C01D]
- *			00000000 00000000 // unknown
+ *	1d)10074	00010000 // flags?         [C01D]
+ *	1e)			00000000 00000000 // unknown
  *
  * 10080..100ff
  * 10100..1017f
@@ -643,9 +651,9 @@ SetupWindow( const INT32 *pWindow, int which )
 	}
 	fov = fov*3.141592654/180.0; /* degrees to radians */
 	mCamera.zoom = vw/tan(fov/2.0);
-	mWindowPri = pWindow[0x50/4]&0x7;
-	mCamera.power   = (INT16)(pWindow[0x20/4])/(double)0xff;
-	mCamera.ambient = (INT16)(pWindow[0x24/4])/(double)0xff;
+//	mWindowPri = pWindow[0x50/4]&0x7;
+//	mCamera.power   = (INT16)(pWindow[0x20/4])/(double)0xff;
+//	mCamera.ambient = (INT16)(pWindow[0x24/4])/(double)0xff;
 	mCamera.x       = (INT16)(pWindow[0x28/4])/(double)0x7fff;
 	mCamera.y       = (INT16)(pWindow[0x2c/4])/(double)0x7fff;
 	mCamera.z       = (INT16)(pWindow[0x30/4])/(double)0x7fff;
@@ -863,11 +871,7 @@ READ32_HANDLER( namcos22_dspram_r )
 WRITE32_HANDLER( namcos22_dspram_w )
 {
 	COMBINE_DATA( &namcos22_polygonram[offset] );
-	if( namcos22_polygonram[0x30/4] == 0xffffffff ||
-		namcos22_polygonram[0x2c/4] == 0xffffffff )
-	{
-		namcos22_UploadCodeToDSP();
-	}
+//	namcos22_UploadCodeToDSP();
 }
 
 static float
@@ -888,17 +892,200 @@ FloatDspToNative( data32_t iVal )
 	return fVal;
 }
 
+/*******************************************************************************/
+//#define SLAVE_BUFSIZE 0x4000 /* TBA: dynamically allocate */
+//static data32_t mSlaveBuf[SLAVE_BUFSIZE];
+//static int mSlaveBufWriteIdx;
+//static int mSlaveBufReadIdx;
+//
+//void
+//namcos22_WriteDataToRenderDevice( data32_t data )
+//{
+//	mSlaveBuf[mSlaveBufWriteIdx++] = data;
+//	logerror( "render: 0x%08x\n", data );
+//	if( mSlaveBufWriteIdx>=SLAVE_BUFSIZE )
+//	{
+//		mSlaveBufWriteIdx = 0;
+//	}
+//}
+//
+//static int
+//SlaveBufSize( void )
+//{
+//	return (mSlaveBufWriteIdx - mSlaveBufReadIdx)&(SLAVE_BUFSIZE-1);
+//}
+//
+//static data32_t
+//ReadDataFromSlaveBuf( void )
+//{
+//	data32_t result = mSlaveBuf[mSlaveBufReadIdx++];
+//	if( mSlaveBufReadIdx>=SLAVE_BUFSIZE )
+//	{
+//		mSlaveBufReadIdx = 0;
+//	}
+//	return result;
+//}
+
+/**
+ * master DSP can write directly to render device via port 0xc.
+ * This is used for "direct drawn" polygons, and "direct draw from point rom"
+ * feature - both opcodes exist in Ridge Racer's display-list processing
+ *
+ * record format:
+ *	header (3 words)
+ *		zcode
+ *		color
+ *		flags
+ *
+ *	per-vertex data (4*6 words)
+ *		u,v
+ *		sx,sy
+ *		intensity/z.exponent
+ *		z.mantissa
+ *
+ * master DSP can specify 3d objects indirectly (along with view transforms),
+ * via the "transmit" PDP opcode.  the "render device" emits object records in the
+ * same format above, performing viewspace clipping, projection, and lighting calculations
+ *
+ * most "3d object" references are 0x45 and greater.  references less than 0x45 are "special"
+ * commands, using a similar point rom format.  the point rom header may point to point ram.
+ *
+ *
+ * slave DSP can read records via port 4
+ * its primary purpose appears to be sorting the list of quads, and passing them on to a "draw device"
+ *
+ */
+
+/*******************************************************************************/
+
+static INT32 mCode;
+static double M[4][4], V[4][4];
+/**
+ * 0xfffd
+ * 0x0: transform
+ * 0x1
+ * 0x2
+ * 0x5: transform
+ * >=0x45: draw primitive
+ */
+
 static void
-SimulateSlaveDSP( struct mame_bitmap *pBitmap )
+Handle00BB0003( const INT32 *pSource )
+{
+	/*
+		00bb0003 (fov = 0x980)
+		001400c8
+		00010000 // ?,   light.dx
+		00065a82 // pri, light.dy
+		0000a57e // ?,   light.dz
+		00000000
+		00280000
+		0020a801		0020a801
+		001fbc01		001fbc01
+		002e0000
+		----7ffe		----0000		----0000
+		----0000		----7ffe		----0000
+		----0000		----0000		----7ffe
+
+		003b0003 (fov = 0x780)
+		001400c8
+		00010000 // ?,   light.dx
+		00075a82 // pri, light.dy
+		0000a57e // ?,   light.dz
+		00000000
+		00294548
+		001fb7f4		001fb7f4
+		001e9fee		001e9fee
+		002e0000
+		----7ffc		----0000		----0000
+		----0000		----7ffc		----0000
+		----0000		----0000		----7ffc
+	*/
+	mWindowPri = pSource[0x3]>>16;
+	mCamera.power   = (INT16)(pSource[0x1]&0xffff)/(double)0xff;
+	mCamera.ambient = (INT16)(pSource[0x1]>>16)/(double)0xff;
+	//mCamera.zoom = FloatDspToNative(pSource[6]);
+	/**
+	 *	light.dx      = (INT16)pSource[0x2];
+	 *	light.dy      = (INT16)pSource[0x3];
+	 *	light.dz      = (INT16)pSource[0x4];
+	 *
+	 * field of view related (floating point)
+	 *	pSource[0x6]
+	 *	pSource[0x7]==pSource[0x8]
+	 *	pSource[0x9]==pSource[0xa]
+	 */
+	V[0][0] = ((INT16)pSource[0x0c])/(double)0x7fff;
+	V[1][0] = ((INT16)pSource[0x0d])/(double)0x7fff;
+	V[2][0] = ((INT16)pSource[0x0e])/(double)0x7fff;
+	V[0][1] = ((INT16)pSource[0x0f])/(double)0x7fff;
+	V[1][1] = ((INT16)pSource[0x10])/(double)0x7fff;
+	V[2][1] = ((INT16)pSource[0x11])/(double)0x7fff;
+	V[0][2] = ((INT16)pSource[0x12])/(double)0x7fff;
+	V[1][2] = ((INT16)pSource[0x13])/(double)0x7fff;
+	V[2][2] = ((INT16)pSource[0x14])/(double)0x7fff;
+
+	{ /* hack for time crisis */
+		int i,j;
+		int bGood = 0;
+		for( i=0; i<3; i++ )
+		{
+			for( j=0; j<3; j++ )
+			{
+				if( V[i][j] ) bGood = 1;
+			}
+		}
+		if( !bGood )
+		{
+			struct RotParam param;
+			const INT32 *pSrc = 1 + &namcos22_polygonram[0x10080/4];
+			param.thx_sin = ((INT16)pSrc[0])/(double)0x7fff;
+			param.thx_cos = ((INT16)pSrc[1])/(double)0x7fff;
+			param.thy_sin = ((INT16)pSrc[2])/(double)0x7fff;
+			param.thy_cos = ((INT16)pSrc[3])/(double)0x7fff;
+			param.thz_sin = ((INT16)pSrc[4])/(double)0x7fff;
+			param.thz_cos = ((INT16)pSrc[5])/(double)0x7fff;
+			param.rolt = (INT16)pSrc[6];
+			matrix3d_Identity( V );
+			namcos3d_Rotate( V, &param );
+		}
+	}
+}
+
+static void
+Handle00200002( const INT32 *pSource )
+{
+	M[0][0] = ((INT16)pSource[0x1])/(double)0x7fff;
+	M[1][0] = ((INT16)pSource[0x2])/(double)0x7fff;
+	M[2][0] = ((INT16)pSource[0x3])/(double)0x7fff;
+	M[0][1] = ((INT16)pSource[0x4])/(double)0x7fff;
+	M[1][1] = ((INT16)pSource[0x5])/(double)0x7fff;
+	M[2][1] = ((INT16)pSource[0x6])/(double)0x7fff;
+	M[0][2] = ((INT16)pSource[0x7])/(double)0x7fff;
+	M[1][2] = ((INT16)pSource[0x8])/(double)0x7fff;
+	M[2][2] = ((INT16)pSource[0x9])/(double)0x7fff;
+	M[3][0] = pSource[0xa]; /* xpos */
+	M[3][1] = pSource[0xb]; /* ypos */
+	M[3][2] = pSource[0xc]; /* zpos */
+	if( mCode>=0x45 )
+	{
+		matrix3d_Multiply( M, V );
+		BlitPolyObject( Machine->scrbitmap, mCode, M );
+	}
+}
+
+static void
+SimulateSlaveDSP( int bDebug )
 {
 	const INT32 *pSource = 0x300 + (INT32 *)namcos22_polygonram;
-	double M[4][4], V[4][4];
+	INT16 len;
+
 	matrix3d_Identity( V );
 	matrix3d_Identity( M );
 
 	if( mbSuperSystem22 )
 	{
-		pSource += 4;
+		pSource += 4; /* FFFE 0400 */
 	}
 	else
 	{
@@ -907,47 +1094,25 @@ SimulateSlaveDSP( struct mame_bitmap *pBitmap )
 
 	for(;;)
 	{
-		INT32 code = *pSource++;
-		INT16 len  = (INT16)*pSource++;
-		INT32 unk;
 		INT16 marker, next;
+		mCode = *pSource++;
+		len  = (INT16)*pSource++;
+		if( bDebug )
+		{
+			int i;
+		//	logerror( "addr=0x%04x ", 0x8000 + (pSource - namcos22_polygonram) );
+			logerror( "[code=0x%x; len=0x%x]\n", mCode, len );
+			for( i=0; i<len; i++ )
+			{
+				logerror( " %08x", pSource[i] );
+			}
+			logerror( "\n" );
+		}
 
 		switch( len )
 		{
-		case 0x15: /* define viewport */
-			/**
-			 *	light.ambient = pSource[0x1]>>16;
-			 *	light.power   = pSource[0x1]&0xffff;
-			 *	light.dx      = (INT16)pSource[0x2];
-			 *	light.dy      = (INT16)pSource[0x3];
-			 *	light.dz      = (INT16)pSource[0x4];
-			 *
-			 * field of view related (floating point)
-			 *	pSource[0x6]
-			 *	pSource[0x7]==pSource[0x8]
-			 *	pSource[0x9]==pSource[0xa]
-			 *
-			 * view transform matrix:
-			 */
-			if( keyboard_pressed( KEYCODE_Q ) )
-			{
-				int i;
-				for( i=0; i<12; i++ )
-				{
-					logerror( "%02x: %08x %f\n", i, pSource[i], FloatDspToNative(pSource[i]) );
-				}
-			}
-			mCamera.zoom = FloatDspToNative(pSource[6]);
-			//zoom = 554.25625833453
-			V[0][0] = ((INT16)pSource[0x0c])/(double)0x7fff;
-			V[1][0] = ((INT16)pSource[0x0d])/(double)0x7fff;
-			V[2][0] = ((INT16)pSource[0x0e])/(double)0x7fff;
-			V[0][1] = ((INT16)pSource[0x0f])/(double)0x7fff;
-			V[1][1] = ((INT16)pSource[0x10])/(double)0x7fff;
-			V[2][1] = ((INT16)pSource[0x11])/(double)0x7fff;
-			V[0][2] = ((INT16)pSource[0x12])/(double)0x7fff;
-			V[1][2] = ((INT16)pSource[0x13])/(double)0x7fff;
-			V[2][2] = ((INT16)pSource[0x14])/(double)0x7fff;
+		case 0x15:
+			Handle00BB0003( pSource ); /* define viewport */
 			break;
 
 		case 0x10:
@@ -959,40 +1124,31 @@ SimulateSlaveDSP( struct mame_bitmap *pBitmap )
 			break;
 
 		case 0x0d:
-			unk = pSource[0]; /* 0x00200002 */
-			M[0][0] = ((INT16)pSource[0x1])/(double)0x7fff;
-			M[1][0] = ((INT16)pSource[0x2])/(double)0x7fff;
-			M[2][0] = ((INT16)pSource[0x3])/(double)0x7fff;
-			M[0][1] = ((INT16)pSource[0x4])/(double)0x7fff;
-			M[1][1] = ((INT16)pSource[0x5])/(double)0x7fff;
-			M[2][1] = ((INT16)pSource[0x6])/(double)0x7fff;
-			M[0][2] = ((INT16)pSource[0x7])/(double)0x7fff;
-			M[1][2] = ((INT16)pSource[0x8])/(double)0x7fff;
-			M[2][2] = ((INT16)pSource[0x9])/(double)0x7fff;
-			M[3][0] = pSource[0xa]; /* xpos */
-			M[3][1] = pSource[0xb]; /* ypos */
-			M[3][2] = pSource[0xc]; /* zpos */
-			if( code>=0x45 )
-			{
-				matrix3d_Multiply( M, V );
-				BlitPolyObject( pBitmap, code, M );
-			}
+			Handle00200002( pSource );
 			break;
 
 		default:
 			return;
 		}
 
+		/* hackery! commands should be streamed by PDP, not parsed here */
 		pSource += len;
 		marker = (INT16)*pSource++; /* always 0xffff */
 		next   = (INT16)*pSource++; /* link to next command */
-		
+
+		if( bDebug )
+		{
+			logerror( "cmd: %04x %04x\n", marker, next );
+		}
+
 		if( (next&0x7fff) != (pSource - (INT32 *)namcos22_polygonram) )
 		{ /* end of list */
 			break;
 		}
 	} /* for(;;) */
 } /* SimulateSlaveDSP */
+
+//static void DrawPolyOrig( struct mame_bitmap *bitmap );
 
 static void
 DrawPolygons( struct mame_bitmap *bitmap )
@@ -1001,7 +1157,19 @@ DrawPolygons( struct mame_bitmap *bitmap )
 	SetupWindow( pWindow,0 ); /* HACK! */
 	if( mbDSPisActive )
 	{
-		SimulateSlaveDSP(bitmap);
+		SimulateSlaveDSP( keyboard_pressed(KEYCODE_Q) );
+
+		if( 0 && keyboard_pressed(KEYCODE_Q) )
+		{
+			int i;
+			for( i=0x10000; i<0x20000; i+=4 )
+			{
+				if( (i&0x7f)==0 ) logerror( "\n%08x: ", i );
+				logerror( " %08x", namcos22_polygonram[i/4] );
+			}
+		}
+
+		while( keyboard_pressed(KEYCODE_Q) ){}
 	}
 } /* DrawPolygons */
 
@@ -1204,6 +1372,7 @@ static data16_t namcos22_dspram_bank;
 WRITE16_HANDLER( namcos22_dspram16_bank_w )
 {
 	COMBINE_DATA( &namcos22_dspram_bank );
+	namcos22_UploadCodeToDSP();
 }
 
 READ16_HANDLER( namcos22_dspram16_r )
@@ -1217,6 +1386,28 @@ READ16_HANDLER( namcos22_dspram16_r )
 
 	default:
 		value &= 0xffff;
+//		if( offset==0xe014-0x8000 || offset==0xc014-0x8000 )
+//		{
+//			return 0x3;
+//		}
+//		if( offset==0xe034-0x8000 || offset==0xc034-0x8000 )
+//		{
+//			return 0x4;
+//		}
+/*	0e)10038	00000780 // field of view [C00E]
+ *	0f)1003c	00000140                  [C00F]
+ *  10)10040	000000f0                  [C010]
+ *
+ *	11)10048	00000000 00000000 00000000[C011..C013]
+ *
+ *	14)10050	00000007 // priority          [C014]
+ *	15)10054	00000000 // viewport center x [C015]
+ *	16)10058	00000000 // viewport center y [C016]
+ *
+ *	17)1005c	00000000 00007fff // rolx? [C017 C018]
+ *				00000000 00007fff // roly? [C019 C01A]
+ *				00000000 00007fff // rolz? [C01B C01C]
+ */
 		break;
 	}
 	return (data16_t)value;
@@ -1253,4 +1444,5 @@ WRITE16_HANDLER( namcos22_dspram16_w )
 		break;
 	}
 	namcos22_polygonram[offset] = (hi<<16)|lo;
+	namcos22_UploadCodeToDSP();
 }

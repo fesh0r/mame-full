@@ -20,6 +20,7 @@ extern data32_t *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);
 
+/* Run and Gun 2 / Rushing Heroes */
 static void get_gx_psac_tile_info(int tile_index)
 {
 	int tileno, colour, flipx;
@@ -32,6 +33,7 @@ static void get_gx_psac_tile_info(int tile_index)
 	SET_TILE_INFO(0, tileno, colour, TILE_FLIPYX(flipx))
 }
 
+/* Soccer Superstars (tile and flip bits now TRUSTED) */
 static void get_gx_psac3_tile_info(int tile_index)
 {
 	int tileno, colour, flip;
@@ -47,16 +49,16 @@ static void get_gx_psac3_tile_info(int tile_index)
 	SET_TILE_INFO(0, tileno, colour, flip)
 }
 
+/* PSAC4 */
 static void get_gx_psac1a_tile_info(int tile_index)
 {
 	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];	// *8 / 4 (gx_psacram is data32_t)
 
-	tileno = map[1]<<8 | map[0];
+	// this should be &0x7f for opengolf, except that makes the tilemaps unrecognizable.  huh?
+	tileno = (map[1]&0x3f)<<8 | map[0];
 
-//	if (tileno) printf("1a map: %x\n", tileno);
-
-	colour = (psac_colorbase << 4);
+	colour = 0; //(psac_colorbase << 4);
 
 	flip = 0;
 	if (map[7] & 0x80) flip |= TILE_FLIPX;
@@ -68,13 +70,11 @@ static void get_gx_psac1a_tile_info(int tile_index)
 static void get_gx_psac1b_tile_info(int tile_index)
 {
 	int tileno, colour, flip;
-	data8_t *map = (data8_t *)&gx_psacram[tile_index*8];
+	data8_t *map = (data8_t *)&gx_psacram[tile_index*2];
 
-	tileno = map[5]<<8 | map[4];
+	tileno = (map[5]&0x3f)<<8 | map[4];
 
-//	if (tileno) printf("1b map: %x\n", tileno);
-
-	colour = (psac_colorbase << 4);
+	colour = 0; //(psac_colorbase << 4);
 
 	flip = 0;
 	if (map[7] & 0x20) flip |= TILE_FLIPX;

@@ -2188,7 +2188,7 @@ ROM_START( hogalley )
 	ROM_LOAD( "mds-ha4-1_1a_or_6a_e-1.bin",  0xe000, 0x2000, CRC(f9526852) SHA1(244c6a12801d4aa774a416f7c3dd8465d01dbca2) )
 
 	ROM_REGION( 0x4000,REGION_GFX1, 0 ) /* PPU memory */
-	ROM_LOAD( "mds-ha4-1_2b_or_8b_e-1.bin",  0x0000, 0x2000, CRC(fc5a91ad) SHA1(65cfce87bb4e72f0c84ce5eff48985a38c3dfc4a) )
+	ROM_LOAD( "mds-ha4-1_2b_or_8b_e-1.bin",  0x0000, 0x2000, CRC(fc5a91ad) SHA1(7ce6c64d81a9626d0b34bdc0a2a28fee457ebcb1) ) // there is another dump ( CRC 0x7623e954 ) where 0xFE1 = 04, the dump we use is probably the correct one
 	ROM_LOAD( "mds-ha4-1_2a_or_8a_e-1.bin",  0x2000, 0x2000, CRC(78c842b6) SHA1(39f2a7fc1f1cbe2378a369e45b5cbb05057db3f0) )
 ROM_END
 
