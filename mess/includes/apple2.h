@@ -100,22 +100,24 @@ extern void apple2_slotrom_disable(int offset, int data);
 
 extern READ_HANDLER ( apple2_c00x_r );
 extern WRITE_HANDLER ( apple2_c00x_w );
+
 extern READ_HANDLER ( apple2_c01x_r );
 extern WRITE_HANDLER ( apple2_c01x_w );
-extern READ_HANDLER ( apple2_c02x_r );
-extern WRITE_HANDLER ( apple2_c02x_w );
+
 extern READ_HANDLER ( apple2_c03x_r );
 extern WRITE_HANDLER ( apple2_c03x_w );
-extern READ_HANDLER ( apple2_c04x_r );
-extern WRITE_HANDLER ( apple2_c04x_w );
+
 extern READ_HANDLER ( apple2_c05x_r );
 extern WRITE_HANDLER ( apple2_c05x_w );
+
 extern READ_HANDLER ( apple2_c06x_r );
-extern WRITE_HANDLER ( apple2_c06x_w );
+
 extern READ_HANDLER ( apple2_c07x_r );
 extern WRITE_HANDLER ( apple2_c07x_w );
+
 extern READ_HANDLER ( apple2_c08x_r );
 extern WRITE_HANDLER ( apple2_c08x_w );
+
 extern READ_HANDLER ( apple2_c0xx_slot1_r );
 extern READ_HANDLER ( apple2_c0xx_slot2_r );
 extern READ_HANDLER ( apple2_c0xx_slot3_r );

@@ -38,7 +38,6 @@ UINT8 *apple2_slot7;
 APPLE2_STRUCT a2;
 
 /* local */
-
 static int a2_speaker_state;
 
 static void mockingboard_init (int slot);
@@ -46,6 +45,9 @@ static int mockingboard_r (int offset);
 static void mockingboard_w (int offset, int data);
 static WRITE_HANDLER ( apple2_mainram_w );
 static WRITE_HANDLER ( apple2_auxram_w );
+
+static double joystick_x_time;
+static double joystick_y_time;
 
 /***************************************************************************
   apple2_init_machine
@@ -81,6 +83,8 @@ MACHINE_INIT( apple2e )
 	/* TODO: add more initializers as we add more slots */
 	mockingboard_init (4);
 	apple2_slot6_init();
+
+	joystick_x_time = joystick_y_time = 0;
 }
 
 /***************************************************************************
@@ -309,143 +313,15 @@ WRITE_HANDLER ( apple2_c01x_w )
 }
 
 /***************************************************************************
-  apple2_c02x_r
-***************************************************************************/
-READ_HANDLER ( apple2_c02x_r )
-{
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
-
-	return 0;
-}
-
-/***************************************************************************
-  apple2_c02x_w
-***************************************************************************/
-WRITE_HANDLER ( apple2_c02x_w )
-{
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
-}
-
-/***************************************************************************
   apple2_c03x_r
 ***************************************************************************/
 READ_HANDLER ( apple2_c03x_r )
 {
-	switch (offset)
-	{
-		case 0x00:
-			if (a2_speaker_state==0xFF)
-				a2_speaker_state=0;
-			else
-				a2_speaker_state=0xFF;
-			DAC_data_w(0,a2_speaker_state);
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
-
 	if (a2_speaker_state==0xFF)
 		a2_speaker_state=0;
 	else
 		a2_speaker_state=0xFF;
 	DAC_data_w(0,a2_speaker_state);
-
 	return 0;
 }
 
@@ -454,147 +330,7 @@ READ_HANDLER ( apple2_c03x_r )
 ***************************************************************************/
 WRITE_HANDLER ( apple2_c03x_w )
 {
-	switch (offset)
-	{
-		case 0x00:
-			if (a2_speaker_state==0xFF)
-				a2_speaker_state=0;
-			else
-				a2_speaker_state=0xFF;
-			DAC_data_w(0,a2_speaker_state);
-			if (a2_speaker_state==0xFF)
-				a2_speaker_state=0;
-			else
-				a2_speaker_state=0xFF;
-			DAC_data_w(0,a2_speaker_state);
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
-	if (a2_speaker_state==0xFF)
-		a2_speaker_state=0;
-	else
-		a2_speaker_state=0xFF;
-	DAC_data_w(0,a2_speaker_state);
-	if (a2_speaker_state==0xFF)
-		a2_speaker_state=0;
-	else
-		a2_speaker_state=0xFF;
-	DAC_data_w(0,a2_speaker_state);
-}
-
-/***************************************************************************
-  apple2_c04x_r
-***************************************************************************/
-READ_HANDLER ( apple2_c04x_r )
-{
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
-
-	return 0;
-}
-
-/***************************************************************************
-  apple2_c04x_w
-***************************************************************************/
-WRITE_HANDLER ( apple2_c04x_w )
-{
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
+	apple2_c03x_r(offset);
 }
 
 /***************************************************************************
@@ -641,22 +377,6 @@ WRITE_HANDLER ( apple2_c05x_w )
 		case 0x05:		a2.PAGE2 = 0x80; break;
 		case 0x06:		a2.HIRES = 0x00; break;
 		case 0x07:		a2.HIRES = 0x80; break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
 	}
 }
 
@@ -665,97 +385,30 @@ WRITE_HANDLER ( apple2_c05x_w )
 ***************************************************************************/
 READ_HANDLER ( apple2_c06x_r )
 {
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			/* Open-Apple/Joystick button 0 */
-			if (input_port_1_r(0) & 0x02)
-				return 0x80;
-			else return 0x00;
-			break;
-		case 0x02:
-			/* Closed-Apple/Joystick button 1 */
-			if (input_port_1_r(0) & 0x04)
-				return 0x80;
-			else return 0x00;
-			break;
-		case 0x03:
-			/* Joystick button 2. Later revision motherboards connected this to SHIFT also */
-			if (input_port_1_r(0) & 0x08)
-				return 0x80;
-			else return 0x00;
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
+	int result = 0;
+	switch (offset) {
+	case 0x01:
+		/* Open-Apple/Joystick button 0 */
+		result = input_port_1_r(0) & 0x02;
+		break;
+	case 0x02:
+		/* Closed-Apple/Joystick button 1 */
+		result = input_port_1_r(0) & 0x04;
+		break;
+	case 0x03:
+		/* Joystick button 2. Later revision motherboards connected this to SHIFT also */
+		result = input_port_1_r(0) & 0x08;
+		break;
+	case 0x04:
+		/* X Joystick axis */
+		result = timer_get_time() < joystick_x_time;
+		break;
+	case 0x05:
+		/* Y Joystick axis */
+		result = timer_get_time() < joystick_y_time;
+		break;
 	}
-
-	return 0;
-}
-
-/***************************************************************************
-  apple2_c06x_w
-***************************************************************************/
-WRITE_HANDLER ( apple2_c06x_w )
-{
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
+	return result ? 0x80 : 0x00;
 }
 
 /***************************************************************************
@@ -763,42 +416,11 @@ WRITE_HANDLER ( apple2_c06x_w )
 ***************************************************************************/
 READ_HANDLER ( apple2_c07x_r )
 {
-	switch (offset)
+	if (offset == 0)
 	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
+		joystick_x_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputport(9);
+		joystick_y_time = timer_get_time() + TIME_IN_USEC(12.0) * readinputport(10);
 	}
-
 	return 0;
 }
 
@@ -807,41 +429,7 @@ READ_HANDLER ( apple2_c07x_r )
 ***************************************************************************/
 WRITE_HANDLER ( apple2_c07x_w )
 {
-	switch (offset)
-	{
-		case 0x00:
-			break;
-		case 0x01:
-			break;
-		case 0x02:
-			break;
-		case 0x03:
-			break;
-		case 0x04:
-			break;
-		case 0x05:
-			break;
-		case 0x06:
-			break;
-		case 0x07:
-			break;
-		case 0x08:
-			break;
-		case 0x09:
-			break;
-		case 0x0A:
-			break;
-		case 0x0B:
-			break;
-		case 0x0C:
-			break;
-		case 0x0D:
-			break;
-		case 0x0E:
-			break;
-		case 0x0F:
-			break;
-	}
+	apple2_c07x_r(offset);
 }
 
 /***************************************************************************
@@ -905,9 +493,7 @@ READ_HANDLER ( apple2_c08x_r )
 ***************************************************************************/
 WRITE_HANDLER ( apple2_c08x_w )
 {
-	/* same as reading */
-	LOG(("write -- "));
-	apple2_c08x_r (offset);
+	apple2_c08x_r(offset);
 }
 
 /***************************************************************************

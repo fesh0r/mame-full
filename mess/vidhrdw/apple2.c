@@ -108,9 +108,6 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow
 	UINT16 v;
 	UINT16 *p;
 
-//		0,  6, 3, 15,	/* green/purple artifacting */
-//		0, 12, 9, 15	/* blue/orange artifacting */
-
 	static int artifact_color_table[] =
 	{
 		BLACK,	PURPLE,	GREEN,	WHITE,

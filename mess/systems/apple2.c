@@ -16,9 +16,9 @@ static MEMORY_READ_START( readmem_apple2 )
     { 0x0200, 0xbfff, MRA_BANK5 },
     { 0xc000, 0xc00f, apple2_c00x_r },
     { 0xc010, 0xc01f, apple2_c01x_r },
-    { 0xc020, 0xc02f, apple2_c02x_r },
+    { 0xc020, 0xc02f, MRA_NOP },
     { 0xc030, 0xc03f, apple2_c03x_r },
-    { 0xc040, 0xc04f, apple2_c04x_r },
+    { 0xc040, 0xc04f, MRA_NOP },
     { 0xc050, 0xc05f, apple2_c05x_r },
     { 0xc060, 0xc06f, apple2_c06x_r },
     { 0xc070, 0xc07f, apple2_c07x_r },
@@ -32,14 +32,7 @@ static MEMORY_READ_START( readmem_apple2 )
     { 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
     { 0xc400, 0xc4ff, apple2_slot4_r },
     { 0xc100, 0xc7ff, MRA_BANK3 },
-//  { 0xc100, 0xc1ff, apple2_slot1_r },
-//  { 0xc200, 0xc2ff, apple2_slot2_r },
-//  { 0xc300, 0xc3ff, apple2_slot3_r },
-//  { 0xc500, 0xc5ff, apple2_slot5_r },
-//  { 0xc600, 0xc6ff, apple2_slot6_r },
-//  { 0xc700, 0xc7ff, apple2_slot7_r },
     { 0xc800, 0xcffe, MRA_BANK6 },
-//  { 0xcfff, 0xcfff, apple2_slotrom_disable },
     { 0xd000, 0xdfff, MRA_BANK1 },
     { 0xe000, 0xffff, MRA_BANK2 },
 MEMORY_END
@@ -49,12 +42,12 @@ static MEMORY_WRITE_START( writemem_apple2 )
     { 0x0200, 0xbfff, MWA_BANK5 },
     { 0xc000, 0xc00f, apple2_c00x_w },
     { 0xc010, 0xc01f, apple2_c01x_w },
-    { 0xc020, 0xc02f, apple2_c02x_w },
+    { 0xc020, 0xc02f, MWA_NOP },
     { 0xc030, 0xc03f, apple2_c03x_w },
-//  { 0xc040, 0xc04f, apple2_c04x_w },
+	{ 0xc040, 0xc04f, MWA_NOP },
     { 0xc050, 0xc05f, apple2_c05x_w },
-//  { 0xc060, 0xc06f, apple2_c06x_w },
-//  { 0xc070, 0xc07f, apple2_c07x_w },
+	{ 0xc060, 0xc06f, MWA_NOP },
+	{ 0xc070, 0xc07f, apple2_c07x_w },
     { 0xc080, 0xc08f, apple2_c08x_w },
     { 0xc090, 0xc09f, apple2_c0xx_slot1_w },
     { 0xc0a0, 0xc0af, apple2_c0xx_slot2_w },
@@ -78,13 +71,16 @@ MEMORY_END
 /**************************************************************************
 ***************************************************************************/
 
+#define JOYSTICK_DELTA			10
+#define JOYSTICK_SENSITIVITY	100
+
 INPUT_PORTS_START( apple2 )
 
-    PORT_START /* VBLANK */
+    PORT_START /* [0] VBLANK */
     PORT_BIT ( 0xBF, IP_ACTIVE_HIGH, IPT_UNUSED )
     PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
 
-    PORT_START /* KEYS #1 */
+    PORT_START /* [1] KEYS #1 */
     PORT_KEY1( 0x01, IP_ACTIVE_HIGH, "Backsp ", 		KEYCODE_BACKSPACE,   IP_JOY_NONE, 8 )
     PORT_KEY0( 0x02, IP_ACTIVE_HIGH, "Left   ", 		KEYCODE_LEFT,        IP_JOY_NONE )
     PORT_KEY1( 0x04, IP_ACTIVE_HIGH, "Tab    ", 		KEYCODE_TAB,         IP_JOY_NONE, 9 )
@@ -94,7 +90,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY0( 0x40, IP_ACTIVE_HIGH, "Right  ", 		KEYCODE_RIGHT,       IP_JOY_NONE )
     PORT_KEY1( 0x80, IP_ACTIVE_HIGH, "Escape ",			KEYCODE_ESC,         IP_JOY_NONE, 27 )
 
-    PORT_START /* KEYS #2 */
+    PORT_START /* [2] KEYS #2 */
     PORT_KEY1( 0x01, IP_ACTIVE_HIGH, "Space  ", 		KEYCODE_SPACE,		IP_JOY_NONE, ' ' )
     PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "'      ", 		KEYCODE_QUOTE,		IP_JOY_NONE, '\'' )
     PORT_KEY1( 0x04, IP_ACTIVE_HIGH, ",      ", 		KEYCODE_COMMA,		IP_JOY_NONE, ',' )
@@ -104,7 +100,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "0      ", 		KEYCODE_0,			IP_JOY_NONE, '0', ')' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "1      ", 		KEYCODE_1,			IP_JOY_NONE, '1', '!' )
 
-    PORT_START /* KEYS #3 */
+    PORT_START /* [3] KEYS #3 */
     PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "2      ", 		KEYCODE_2,			IP_JOY_NONE, '2', '\"' )
 	PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "3      ", 		KEYCODE_3,			IP_JOY_NONE, '3', '#' )
     PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "4      ", 		KEYCODE_4,			IP_JOY_NONE, '4', '$' )
@@ -114,7 +110,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "8      ", 		KEYCODE_8,			IP_JOY_NONE, '8', '*' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "9      ",			KEYCODE_9,			IP_JOY_NONE, '9', '(' )
 
-    PORT_START /* KEYS #4 */
+    PORT_START /* [4] KEYS #4 */
 	PORT_KEY1( 0x01, IP_ACTIVE_HIGH, ":      ", 		KEYCODE_COLON,		IP_JOY_NONE, ':' )
     PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "=      ", 		KEYCODE_EQUALS,		IP_JOY_NONE, '=' )
 	PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "[ {    ", 		KEYCODE_OPENBRACE,	IP_JOY_NONE, '[', '{' )
@@ -124,7 +120,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "a A    ", 		KEYCODE_A,			IP_JOY_NONE, 'a', 'A' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "b B    ", 		KEYCODE_B,			IP_JOY_NONE, 'b', 'B' )
 
-    PORT_START /* KEYS #5 */
+    PORT_START /* [5] KEYS #5 */
     PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "c C    ", 		KEYCODE_C,			IP_JOY_NONE, 'c', 'C' )
     PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "d D    ", 		KEYCODE_D,			IP_JOY_NONE, 'd', 'D' )
     PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "e E    ",			KEYCODE_E,			IP_JOY_NONE, 'e', 'E' )
@@ -134,7 +130,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "i I    ", 		KEYCODE_I,			IP_JOY_NONE, 'i', 'I' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "j J    ", 		KEYCODE_J,			IP_JOY_NONE, 'j', 'J' )
 
-    PORT_START /* KEYS #6 */
+    PORT_START /* [6] KEYS #6 */
     PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "k K    ",			KEYCODE_K,			IP_JOY_NONE, 'k', 'K' )
     PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "l L    ",			KEYCODE_L,			IP_JOY_NONE, 'l', 'L' )
     PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "m M    ", 		KEYCODE_M,			IP_JOY_NONE, 'm', 'M' )
@@ -144,7 +140,7 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "q Q    ", 		KEYCODE_Q,			IP_JOY_NONE, 'q', 'Q' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "r R    ", 		KEYCODE_R,			IP_JOY_NONE, 'r', 'R' )
 
-    PORT_START /* KEYS #7 */
+    PORT_START /* [7] KEYS #7 */
     PORT_KEY2( 0x01, IP_ACTIVE_HIGH, "s S    ", 		KEYCODE_S,			IP_JOY_NONE, 's', 'S' )
     PORT_KEY2( 0x02, IP_ACTIVE_HIGH, "t T    ", 		KEYCODE_T,			IP_JOY_NONE, 't', 'T' )
     PORT_KEY2( 0x04, IP_ACTIVE_HIGH, "u U    ", 		KEYCODE_U,			IP_JOY_NONE, 'u', 'U' )
@@ -154,13 +150,18 @@ INPUT_PORTS_START( apple2 )
     PORT_KEY2( 0x40, IP_ACTIVE_HIGH, "y Y    ", 		KEYCODE_Y,			IP_JOY_NONE, 'y', 'Y' )
     PORT_KEY2( 0x80, IP_ACTIVE_HIGH, "z Z    ",			KEYCODE_Z,			IP_JOY_NONE, 'z', 'Z' )
 
-    PORT_START /* Special keys */
+    PORT_START /* [8] Special keys */
     PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_TOGGLE, "Caps Lock", KEYCODE_CAPSLOCK, IP_JOY_DEFAULT )
     PORT_KEY1( 0x02, IP_ACTIVE_HIGH, "Left Shift",		KEYCODE_LSHIFT,		IP_JOY_NONE, UCHAR_SHIFT_1 )
     PORT_KEY1( 0x04, IP_ACTIVE_HIGH, "Right Shift",		KEYCODE_RSHIFT,		IP_JOY_NONE, UCHAR_SHIFT_1 )
     PORT_KEY1( 0x08, IP_ACTIVE_HIGH, "Left Control",	KEYCODE_LCONTROL,	IP_JOY_NONE, UCHAR_SHIFT_2 )
     PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3,	"Button 3",	IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
     PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Reset",	KEYCODE_F3,		IP_JOY_NONE )
+
+	PORT_START /* [9] Joystick X Axis */
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_4_PAD, KEYCODE_6_PAD, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START /* [10] Joystick X Axis */
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_8_PAD, KEYCODE_2_PAD, JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
 static struct GfxLayout apple2_text_layout =
