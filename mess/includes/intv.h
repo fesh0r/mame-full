@@ -33,7 +33,7 @@ READ16_HANDLER( intv_ram16_r );
 WRITE16_HANDLER( intv_ram16_w );
 
 /* for the console + keyboard component... */
-int intvkbd_text_blanked;
+extern int intvkbd_text_blanked;
 
 void init_intvkbd(void);
 int intvkbd_id_rom(int id);
