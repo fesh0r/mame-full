@@ -379,7 +379,7 @@ static int modrm(void)
 
 /*------------------------------------------------------------------------*/
 
-static void uprintf(char *s, ...)
+static void DECL_SPEC uprintf(char *s, ...)
 {
         va_list	arg_ptr;
 	va_start (arg_ptr, s);
