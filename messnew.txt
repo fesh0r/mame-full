@@ -28,6 +28,9 @@ System Driver Changes:
   emulated system to get paralyzed in beeping under certain situations (bug
   #151). [Nate Woods]
 
+- [TS1000] The main rom file is now called zx81a.rom, instead of zx81.rom in
+  order to match the other drivers in the family. [Nate Woods]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.56.  This incorporates all features of the 

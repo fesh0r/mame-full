@@ -698,7 +698,7 @@ ROM_END
 
 ROM_START(ts1000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("zx81.rom",  0x0000, 0x2000, 0x4b1dd6eb)
+	ROM_LOAD("zx81a.rom",  0x0000, 0x2000, 0x4b1dd6eb)
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END

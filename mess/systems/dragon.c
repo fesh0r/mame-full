@@ -822,8 +822,8 @@ ROM_END
 ROM_START(dragon64)
 	ROM_REGION(0xC000,REGION_CPU1,0)
 	ROM_LOAD(           "d64_1.rom",    0x0000,  0x4000, 0x60a4634c)
-//	ROM_LOAD_OPTIONAL(  "ddos10.bin",   0x4000,  0x2000, 0xb44536f6)
 	ROM_LOAD(           "d64_2.rom",    0x8000,  0x4000, 0x17893a42)
+	ROM_LOAD_OPTIONAL(  "ddos10.bin",   0x4000,  0x2000, 0xb44536f6)
 ROM_END
 
 ROM_START(coco)
