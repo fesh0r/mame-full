@@ -36,8 +36,11 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.87u2.  This incorporates all features of the
+- The core is based on MAME 0.87u3.  This incorporates all features of the
   update to this core.  [MAME team]
+  
+- Fixed a latent problem where part of the natural language system still
+  thought that we use 16-bit ports.  [Tim Lindner]
 
 
 

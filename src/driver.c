@@ -812,6 +812,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ladybug )	/* (c) 1981 */
 	DRIVER( ladybugb )	/* bootleg */
 	DRIVER( snapjack )	/* (c) */
+	DRIVER( sraider )	/* (c) 1982 Universal */
 	DRIVER( cavenger )	/* (c) 1981 */
 	DRIVER( dorodon )	/* Falcon */
 	DRIVER( dorodon2 )	/* Falcon */
@@ -1078,6 +1079,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( sisv2 )
 	DRIVER( spacewr3 )
 	DRIVER( invaderl )
+	DRIVER( invader4 )
 	DRIVER( yosakdon )
 	DRIVER( yosakdoa )
 	DRIVER( spceking )
@@ -1143,6 +1145,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( shollow2 )	/* (c) 1981 */
 	DRIVER( tron )		/* (c) 1982 */
 	DRIVER( tron2 )		/* (c) 1982 */
+	DRIVER( tron3 )		/* (c) 1982 */
+	DRIVER( tron4 )		/* (c) 1982 */
 	DRIVER( kroozr )	/* (c) 1982 */
 	DRIVER( domino )	/* (c) 1982 */
 	DRIVER( wacko )		/* (c) 1982 */
@@ -1489,6 +1493,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( opwolfb )	/* bootleg */
 	DRIVER( othunder )	/* B67 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( othundu )	/* B67 (c) 1988 Taito America Corporation (US) */
+	DRIVER( othunduo )	/* B67 (c) 1988 Taito America Corporation (US) */
 	DRIVER( rainbow )	/* B22 (c) 1987 Taito Corporation */
 	DRIVER( rainbowo )	/* B22 (c) 1987 Taito Corporation */
 	DRIVER( rainbowe )	/* B39 (c) 1988 Taito Corporation */
@@ -1980,6 +1985,7 @@ V-V                           TP-027
 	DRIVER( repulse )	/* (c) 1985 Sega */
 	DRIVER( 99lstwar )	/* (c) 1985 Proma */
 	DRIVER( 99lstwra )	/* (c) 1985 Proma */
+	DRIVER( 99lstwrk )	/* (c) 1985 Kyugo */
 	DRIVER( flashgal )	/* (c) 1985 Sega */
 	DRIVER( flashgla )	/* (c) 1985 Sega */
 	DRIVER( srdmissn )	/* (c) 1986 Taito Corporation */
@@ -2488,6 +2494,9 @@ V-V                           TP-027
 	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
 	DRIVER( gdarius2 )	/* G-Darius Ver.2 (Ver 2.03J) */
 
+	/* Taito GNET */
+	DRIVER( taitogn )
+
 	/* Namco System 11 */
 	DRIVER( tekken )	/* Tekken (TE4/VER.C) */
 	DRIVER( tekkena )	/* Tekken (TE2/VER.B) */
@@ -2530,6 +2539,7 @@ V-V                           TP-027
 	DRIVER( pbball96 )	/* GV017, Japan 1.03 */
 	DRIVER( hyperath )	/* GV021, Japan 1.00 */
 	DRIVER( susume )	/* GV027, Japan 1.20 */
+	DRIVER( btchamp )	/* GV053, UAA01 */
 	DRIVER( weddingr )	/* GX624, JAA */
 	DRIVER( simpbowl )	/* GQ829, UAA */
 
@@ -3600,6 +3610,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( trackflc )	/* GX361 (c) 1983 + Centuri license */
 	DRIVER( hyprolym )	/* GX361 (c) 1983 */
 	DRIVER( hyprolyb )	/* bootleg */
+	DRIVER( atlantol )	/* bootleg */
 	DRIVER( wizzquiz )	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( mastkin )	/* (c) 1988 Du Tech */
 	DRIVER( rocnrope )	/* GX364 (c) 1983 */
@@ -4764,6 +4775,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( armorap )
 	DRIVER( armorar )
 	DRIVER( wotw )
+	DRIVER( wotwc )
 	DRIVER( warrior )
 	DRIVER( starhawk )
 	DRIVER( solarq )	/* (c) 1981 */
@@ -4771,6 +4783,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( speedfrk )
 	DRIVER( sundance )
 	DRIVER( demon )		/* (c) 1982 Rock-ola */
+	DRIVER( qb3 )
 	/* this one uses 68000+Z80 instead of the Cinematronics CPU */
 	DRIVER( cchasm )
 	DRIVER( cchasm1 )	/* (c) 1983 Cinematronics / GCE */
@@ -4915,6 +4928,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( butasan )	/* (c) 1987 Jaleco */
 	DRIVER( psychic5 )	/* (c) 1987 Jaleco */
 	DRIVER( ginganin )	/* (c) 1987 Jaleco */
+	DRIVER( gingania )	/* (c) 1987 Jaleco */
 	DRIVER( skyfox )	/* (c) 1987 Jaleco + Nichibutsu USA license */
 	DRIVER( exerizrb )	/* bootleg */
 	DRIVER( homerun )	/* (c) 1988 Jaleco */
@@ -5591,6 +5605,9 @@ Other Sun games
 	DRIVER( raf102j )	/* (c) 1999 */
 	DRIVER( killbld )	/* (c) 1998 */
 	DRIVER( puzlstar )	/* (c) 1999 */
+	DRIVER( olds )		/* (c) 1999 */
+	DRIVER( olds100 )	/* (c) 1999 */
+	DRIVER( olds100a )	/* (c) 1999 */
 
 	/* RamTek games */
 	DRIVER( hitme )		/* [1976 Ramtek] */
@@ -5632,9 +5649,12 @@ Other Sun games
 	DRIVER( kinst )		/* (c) 1994 Rare */
 	DRIVER( kinst14 )	/* (c) 1994 Rare */
 	DRIVER( kinst13 )	/* (c) 1994 Rare */
-	DRIVER( kinst2 )	/* (c) 1994 Rare */
-	DRIVER( kinst213 )	/* (c) 1994 Rare */
-	DRIVER( kinst211 )	/* (c) 1994 Rare */
+	DRIVER( kinstp )	/* (c) 1994 Rare */
+	DRIVER( kinst2 )	/* (c) 1995 Rare */
+	DRIVER( kinst2k )	/* (c) 1995 Rare */
+	DRIVER( kinst213 )	/* (c) 1995 Rare */
+	DRIVER( kinst211 )	/* (c) 1995 Rare */
+	DRIVER( kinst210 )	/* (c) 1995 Rare */
 
 	/* Nihon System games */
 	DRIVER( gigasb )

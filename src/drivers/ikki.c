@@ -262,23 +262,20 @@ ROM_END
 
 ROM_START( farmer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main CPU */
-	/* one of the code roms might be bad, there are some odd spelling errors which might be bitrot / a bad read
-	   this should be investigated further */
-	ROM_LOAD( "fr1", 0x0000, 0x2000, CRC(2c0bd392) SHA1(138efa9bc2e40c847f5ac3d31bd62021fd894f49) )
-	ROM_CONTINUE(    0x8000, 0x2000 )
-	ROM_LOAD( "fr2", 0x2000, 0x2000, CRC(b86efe02) SHA1(a11cabd001b1577b5708c3f8b1f2717761096c75) )
-	ROM_LOAD( "fr3", 0x4000, 0x2000, CRC(67551e1d) SHA1(712b6b29b8156330c84124c2d2518c3e27782606) )
-	ROM_LOAD( "fr4", 0x6000, 0x2000, CRC(b5563168) SHA1(717321842d910803a3c3e40418d785c8b92502ed) )
+	ROM_LOAD( "tvg-1.10", 0x0000, 0x2000, CRC(2c0bd392) SHA1(138efa9bc2e40c847f5ac3d31bd62021fd894f49) )
+	ROM_CONTINUE(         0x8000, 0x2000 )
+	ROM_LOAD( "tvg-2.9",  0x2000, 0x2000, CRC(b86efe02) SHA1(a11cabd001b1577b5708c3f8b1f2717761096c75) )
+	ROM_LOAD( "tvg-3.8",  0x4000, 0x2000, CRC(fd686ff4) SHA1(0857b3061126c8dc18c0cd4bd43431f5f5551aef) )
+	ROM_LOAD( "tvg-4.7",  0x6000, 0x2000, CRC(1415355d) SHA1(5a3adcb6d03270b4139fbbd0097b6a089cf8c2e1) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sub CPU */
-	ROM_LOAD( "fr5", 0x0000, 0x2000, CRC(22bdb40e) SHA1(265801ad660a5a3fc5bb187fa92dbe6098b390f5) )
+	ROM_LOAD( "tvg-5.30",  0x0000, 0x2000, CRC(22bdb40e) SHA1(265801ad660a5a3fc5bb187fa92dbe6098b390f5) )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprite */
-	ROM_LOAD( "fr6",      0x0000, 0x4000, CRC(dc8aa269) SHA1(fd8b5c2bead52e1e136d4df4c26f136d8992d9be) )
-	ROM_LOAD( "fr7",      0x4000, 0x4000, CRC(0e9efeba) SHA1(d922c4276a988b78b9a2a3ca632136e64a80d995) )
-	ROM_LOAD( "fr8",      0x8000, 0x4000, CRC(45c9087a) SHA1(9db82fc194096588fde5048e922a654e2ad12c23) )
+	ROM_LOAD( "tvg-6.104", 0x0000, 0x4000, CRC(dc8aa269) SHA1(fd8b5c2bead52e1e136d4df4c26f136d8992d9be) )
+	ROM_LOAD( "tvg-7.103", 0x4000, 0x4000, CRC(0e9efeba) SHA1(d922c4276a988b78b9a2a3ca632136e64a80d995) )
+	ROM_LOAD( "tvg-8.102", 0x8000, 0x4000, CRC(45c9087a) SHA1(9db82fc194096588fde5048e922a654e2ad12c23) )
 
-	/**** below roms were missing on the dumped pcb ******/
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE ) /* bg */
 	ROM_LOAD( "tvg17_9",  0x8000,  0x4000, CRC(c594f3c5) SHA1(6fe19d9ccbe6934a210eb2cab441cd0ba83cbcf4) )
 	ROM_LOAD( "tvg17_10", 0x4000,  0x4000, CRC(2e510b4e) SHA1(c0ff4515e66ab4959b597a4d930cbbcc31c53cda) )
@@ -294,8 +291,7 @@ ROM_START( farmer )
 	ROM_REGION( 0x0200, REGION_USER1, 0 )
 	ROM_LOAD( "prom17_1", 0x0000,  0x0100, CRC(ca0af30c) SHA1(6d7cfeb16daf61c6e7f93172809b0983bf13cd6c) ) /* video attribute */
 	ROM_LOAD( "prom17_2", 0x0100,  0x0100, CRC(f3c55174) SHA1(936c5432c4fccfcb2601c1e08b98d5509202fe5b) ) /* unknown */
-	/**********************/
 ROM_END
 
 GAME( 1985, ikki,   0,    ikki, ikki, 0, ROT0, "Sun Electronics", "Ikki (Japan)" )
-GAMEX(1985, farmer, ikki, ikki, ikki, 0, ROT0, "Sun Electronics", "Farmers Rebellion", GAME_NOT_WORKING )
+GAME( 1985, farmer, ikki, ikki, ikki, 0, ROT0, "Sun Electronics", "Farmers Rebellion" )

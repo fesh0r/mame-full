@@ -83,46 +83,6 @@ INLINE void i960_write_word_unaligned(UINT32 address, UINT16 data)
 	}
 }
 
-static float u2f(UINT32 v)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.vv = v;
-	return u.ff;
-}
-
-static UINT32 f2u(float f)
-{
-	union {
-		float ff;
-		UINT32 vv;
-	} u;
-	u.ff = f;
-	return u.vv;
-}
-
-static float u2d(UINT64 v)
-{
-	union {
-		double dd;
-		UINT64 vv;
-	} u;
-	u.vv = v;
-	return u.dd;
-}
-
-static UINT64 d2u(double d)
-{
-	union {
-		double dd;
-		UINT64 vv;
-	} u;
-	u.dd = d;
-	return u.vv;
-}
-
 static void send_iac(UINT32 adr)
 {
 	UINT32 iac[4];

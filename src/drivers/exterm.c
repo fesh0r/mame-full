@@ -282,7 +282,7 @@ static ADDRESS_MAP_START( master_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x01580000, 0x0158000f) AM_WRITE(gottlieb_sh_word_w)
 	AM_RANGE(0x015c0000, 0x015c000f) AM_WRITE(watchdog_reset16_w)
 	AM_RANGE(0x01800000, 0x01807fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x02800000, 0x02807fff) AM_WRITE(MWA16_RAM) AM_BASE((data16_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEPROM */
+	AM_RANGE(0x02800000, 0x02807fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size) /* EEPROM */
 	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
 	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&exterm_code_rom) AM_SIZE(&code_rom_size)
 ADDRESS_MAP_END

@@ -47,6 +47,53 @@ extern "C" {
 #endif
 
 
+/***************************************************************************
+
+    Floating-point <-> unsigned converters
+
+***************************************************************************/
+
+
+static float u2f(UINT32 v)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.vv = v;
+	return u.ff;
+}
+
+static UINT32 f2u(float f)
+{
+	union {
+		float ff;
+		UINT32 vv;
+	} u;
+	u.ff = f;
+	return u.vv;
+}
+
+static float u2d(UINT64 v)
+{
+	union {
+		double dd;
+		UINT64 vv;
+	} u;
+	u.vv = v;
+	return u.dd;
+}
+
+static UINT64 d2u(double d)
+{
+	union {
+		double dd;
+		UINT64 vv;
+	} u;
+	u.dd = d;
+	return u.vv;
+}
+
 
 /***************************************************************************
 
@@ -110,6 +157,8 @@ struct data_accessors_t
 	void			(*write_qword)(offs_t offset, data64_t data);
 };
 
+/* ----- for generic function pointers ----- */
+typedef void genf(void);
 
 
 /***************************************************************************
@@ -506,7 +555,7 @@ struct data_accessors_t
 /* ----- a union of all the different read handler types ----- */
 union read_handlers_t
 {
-	void *				handler;
+	genf *				handler;
 	read8_handler		handler8;
 	read16_handler		handler16;
 	read32_handler		handler32;
@@ -516,7 +565,7 @@ union read_handlers_t
 /* ----- a union of all the different write handler types ----- */
 union write_handlers_t
 {
-	void *				handler;
+	genf *				handler;
 	write8_handler		handler8;
 	write16_handler		handler16;
 	write32_handler		handler32;
@@ -610,10 +659,10 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 	map->mirror = (_mirror);											\
 
 #define AM_READ(_handler)												\
-	map->read.handler = (void *)(read = _handler);						\
+	map->read.handler = (genf *)(read = _handler);						\
 
 #define AM_WRITE(_handler)												\
-	map->write.handler = (void *)(write = _handler);					\
+	map->write.handler = (genf *)(write = _handler);					\
 
 #define AM_REGION(_region, _offs)										\
 	map->memory = memory_region(_region) + _offs;						\

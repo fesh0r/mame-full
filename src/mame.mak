@@ -1175,7 +1175,7 @@ $(OBJ)/otherz80.a: \
 	
 $(OBJ)/hyprston.a: \
 	$(OBJ)/drivers/vamphalf.o \
-	$(OBJ)/drivers/dfpix.o \
+	$(OBJ)/drivers/dgpix.o \
 	$(OBJ)/drivers/eolith.o \
 
 $(OBJ)/other.a: \

@@ -355,12 +355,12 @@ static const char *charstr(unicode_char_t ch)
 
 
 
-static int scan_keys(const struct InputPort *input_ports, struct InputCode *codes, UINT16 *ports, const struct InputPort **shift_ports, int keys, int shift)
+static int scan_keys(const struct InputPort *input_ports, struct InputCode *codes, UINT32 *ports, const struct InputPort **shift_ports, int keys, int shift)
 {
 	int result = 0;
 	const struct InputPort *ipt;
 	const struct InputPort *ipt_key = NULL;
-	UINT16 port = (UINT16) -1;
+	UINT32 port = (UINT32) -1;
 	unicode_char_t code;
 
 	assert(keys < NUM_SIMUL_KEYS);
@@ -425,7 +425,7 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 
 static int build_codes(const struct InputPort *input_ports, struct InputCode *codes, int map_lowercase)
 {
-	UINT16 ports[NUM_SIMUL_KEYS];
+	UINT32 ports[NUM_SIMUL_KEYS];
 	const struct InputPort *ipts[NUM_SIMUL_KEYS];
 	int switch_upper, rc = 0;
 	unicode_char_t c;
