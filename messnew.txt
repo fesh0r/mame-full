@@ -17,6 +17,9 @@ Source Changes:
 - [Win32 GUI] Fixed an incredibly MORONIC bug where RAM preferences were stored
   as booleans (!?!) rather than integers (bug #260) [Nate Woods]
 
+- [Win32 GUI] Fixed a bug where certain elements in the treeview lost their
+  first character (bug #262) [Nate Woods]
+
 0.61.1
 
 New System Drivers Supported (in no particular order):

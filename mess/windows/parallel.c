@@ -70,6 +70,17 @@ static void SetThreadName(DWORD dwThreadID, LPCSTR szThreadName)
 #endif
 
 //============================================================
+//	get_processor_count
+//============================================================
+
+INLINE DWORD get_processor_count(void)
+{
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	return sysinfo.dwNumberOfProcessors;
+}
+
+//============================================================
 //	task_proc
 //============================================================
 
@@ -111,18 +122,20 @@ static DWORD WINAPI task_proc(void *param)
 
 int win_parallel_init(void)
 {
-	SYSTEM_INFO sysinfo;
+	typedef DWORD (*set_thread_ideal_processor_proc)(HANDLE hThread, DWORD dwIdealProcessor);
+
 	int i;
+	int processor_count;
+	HMODULE kernellib;
+	set_thread_ideal_processor_proc set_thread_ideal_processor;
 
 	tasks = NULL;
 	currently_parallel = 0;
+	processor_count = get_processor_count();
 
 	// if we didn't specify the amount of tasks, use the processor count
 	if (win_task_count == 0)
-	{
-		GetSystemInfo(&sysinfo);
-		win_task_count = sysinfo.dwNumberOfProcessors;
-	}
+		win_task_count = processor_count;
 
 	// are we going to go parallel?
 	if (win_task_count > 1)
@@ -130,6 +143,20 @@ int win_parallel_init(void)
 		tasks = malloc((win_task_count - 1) * sizeof(struct task_data));
 		if (!tasks)
 			goto error;
+
+		// SetThreadIdealProcessor is only defined in NT/2000/XP; so we have to
+		// dynamically link with it
+		kernellib = LoadLibrary(TEXT("KERNEL32.DLL"));
+		if (kernellib)
+		{
+			set_thread_ideal_processor = (set_thread_ideal_processor_proc)
+				GetProcAddress(kernellib, TEXT("SetThreadIdealProcessor"));
+			FreeLibrary(kernellib);
+		}
+		else
+		{
+			set_thread_ideal_processor = NULL;
+		}
 
 		memset(tasks, 0, (win_task_count - 1) * sizeof(struct task_data));
 
@@ -141,7 +168,11 @@ int win_parallel_init(void)
 			tasks[i].thread = CreateThread(NULL, 0, task_proc, (void *) &tasks[i], 0, &tasks[i].thread_id);
 			if (!tasks[i].thread)
 				goto error;
+			if (set_thread_ideal_processor)
+				set_thread_ideal_processor(tasks[i].thread, (i+1) % processor_count);
 		}
+		if (set_thread_ideal_processor)
+			set_thread_ideal_processor(GetCurrentThread(), 0);
 	}
 	return 0;
 

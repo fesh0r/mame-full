@@ -150,7 +150,6 @@ FOLDERDATA folderData[] =
 #endif /* CPUSND_FOLDER */
 	{"Working",     IS_ROOT,  FOLDER_WORKING,     FOLDER_NONE,  0,        ICON_WORKING},
 	{"Non-Working", IS_ROOT,  FOLDER_NONWORKING,  FOLDER_NONE,  0,        ICON_NONWORKING},
-//	{"Custom",        IS_ROOT,   FOLDER_CUSTOM,      FOLDER_NONE,  F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Played",      IS_FOLDER,FOLDER_PLAYED,      FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Favorites",   IS_FOLDER,FOLDER_FAVORITE,    FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Originals",   IS_ROOT,  FOLDER_ORIGINAL,    FOLDER_NONE,  0,        ICON_FOLDER},
@@ -637,8 +636,13 @@ void InitGames(UINT nGames)
 #endif
 				dwFolderFlags = GetFolderFlags(cTmp);
 
-				lpTemp = NewFolder(cTmp, IS_FOLDER, nFolderId++,
-								   FOLDER_MANUFACTURER, ICON_MANUFACTURER, 0, nGames);
+				lpTemp = NewFolder( cTmp, 
+                                    IS_FOLDER, 
+                                    nFolderId++,
+								    FOLDER_MANUFACTURER, 
+                                    ICON_MANUFACTURER, 
+                                    0, 
+                                    nGames );
 				AddFolder(lpTemp);
 				done[jj] = TRUE;
 
@@ -1225,7 +1229,7 @@ static char * FixString(char *s)
 
     ptmp = tmp;
 
-	while( *s++ )
+	while( *s )
 	{
         /* combinations where to end string */
 
@@ -1245,6 +1249,7 @@ static char * FixString(char *s)
 			*ptmp++ = *s;
         }
 		
+        ++s;
 	}
 
 	*ptmp = '\0';
@@ -1263,7 +1268,7 @@ static char * LicenseManufacturer(char *s)
     /* "Namco (Atari license)" */
 
 	ptr = strchr( s,'(' );
-    if ( ptr == NULL );
+    if ( ptr == NULL )
     {
         return NULL;
     }
