@@ -337,6 +337,24 @@ static void cmp_u(UINT32 v1, UINT32 v2)
 		i960.AC |= 1;
 }
 
+static void concmp_s(INT32 v1, INT32 v2)
+{
+	i960.AC &= ~7;
+	if(v1 <= v2)
+		i960.AC |= 2;
+	else
+		i960.AC |= 1;
+}
+
+static void concmp_u(UINT32 v1, UINT32 v2)
+{
+	i960.AC &= ~7;
+	if(v1 <= v2)
+		i960.AC |= 2;
+	else
+		i960.AC |= 1;
+}
+
 static void cmp_d(double v1, double v2)
 {
 	i960.AC &= ~7;
@@ -370,6 +388,16 @@ INLINE void test(UINT32 opcode, int mask)
 		i960.r[(opcode>>19) & 0x1f] = 1;
 	else
 		i960.r[(opcode>>19) & 0x1f] = 0;
+}
+
+static const char *i960_get_strflags(void)
+{
+	static const char *conditions[8] =
+	{
+		"no", "g", "e", "ge", "l", "ne", "le", "o"
+	};
+
+	return (conditions[i960.AC & 7]); 
 }
 
 static void check_irqs(void)
@@ -991,7 +1019,7 @@ static int i960_execute(int cycles)
 				if(!(i960.AC & 0x4)) {
 					t1 = get_1_ri(opcode);
 					t2 = get_2_ri(opcode);
-					cmp_u(t1, t2);
+					concmp_u(t1, t2);
 				}
 				break;
 
@@ -1000,7 +1028,7 @@ static int i960_execute(int cycles)
 				if(!(i960.AC & 0x4)) {
 					t1 = get_1_ri(opcode);
 					t2 = get_2_ri(opcode);
-					cmp_s(t1, t2);
+					concmp_s(t1, t2);
 				}
 				break;
 
@@ -1352,7 +1380,7 @@ static int i960_execute(int cycles)
 				src1 = (INT32)get_1_ri(opcode);
 				src2 = (INT32)get_2_ri(opcode);
 				dst = src2 - ((src2/src1)*src1);
-				if(((src2*src1) > 0) && (dst != 0))
+				if(((src2*src1) < 0) && (dst != 0))
 					dst += src1;
 				set_ri(opcode, dst);
 				break;
@@ -1670,6 +1698,9 @@ static void set_irq_line(int irqline, int state)
 		pend = program_read_dword_32le(int_tab + word);
 		pend |= (1 << wordofs);
 		program_write_dword_32le(int_tab + word, pend);
+
+		// and ack it to the core now that it's queued
+		(*i960.irq_cb)(irqline);
 	}
 }
 
@@ -1765,7 +1796,7 @@ static UINT8 i960_reg_layout[] =
 	I960_G8, I960_G9, -1,
 	I960_G10, I960_G11, -1,
 	I960_G12, I960_G13, -1,
-	I960_G14, -1,
+	I960_G14, I960_AC, -1,
 	0
 };
 
@@ -1822,7 +1853,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 		// CPU misc parameters
 	case CPUINFO_STR_NAME:               strcpy(info->s = cpuintrf_temp_str(), "i960KB"); break;
 	case CPUINFO_STR_CORE_FILE:          strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), " ");      break;
+	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), i960_get_strflags()); break;
 	case CPUINFO_INT_ENDIANNESS:         info->i = CPU_IS_LE;                             break;
 	case CPUINFO_INT_INPUT_LINES:        info->i = 4;                                     break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR: info->i = -1;                                    break;

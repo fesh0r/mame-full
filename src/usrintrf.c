@@ -16,7 +16,7 @@
 #include "state.h"
 
 #ifdef MESS
-#include "mess.h"
+  #include "mess.h"
 #include "mesintrf.h"
 #include "inputx.h"
 #endif
@@ -1586,8 +1586,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 			arrowize |= 1;
 		else
 		{
-			if (((in-1)->type & ~IPF_MASK) == switch_setting &&
-					!(!options.cheat && ((in-1)->cheat)))
+			if ((in-1)->type == switch_setting)
 				arrowize |= 1;
 		}
 	}
@@ -1603,8 +1602,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 			arrowize |= 2;
 		else
 		{
-			if (((in+1)->type & ~IPF_MASK) == switch_setting &&
-					!(!options.cheat && ((in+1)->cheat)))
+			if ((in+1)->type == switch_setting)
 				arrowize |= 2;
 		}
 	}
@@ -1631,8 +1629,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if (((in+1)->type & ~IPF_MASK) == switch_setting &&
-						!(!options.cheat && ((in+1)->cheat)))
+				if ((in+1)->type == switch_setting)
 					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
 
@@ -1655,8 +1652,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if (((in-1)->type & ~IPF_MASK) == switch_setting &&
-						!(!options.cheat && ((in-1)->cheat)))
+				if ((in-1)->type == switch_setting)
 					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
 			}
 
@@ -1720,7 +1716,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 {
 	const char *menu_item[500];
 	const char *menu_subitem[500];
-	struct ipd *entry[500];
+	InputSeq *entry[500];
 	char flag[500];
 	int i,sel;
 	struct ipd *in;
@@ -1738,13 +1734,19 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0  && in->type != IPT_UNKNOWN && in->type != IPT_OSD_RESERVED && !(in->type & IPF_UNUSED)
-			&& !(!options.cheat && (in->type & IPF_CHEAT)))
+		if (in->name != 0  && in->type != IPT_UNKNOWN && in->type != IPT_OSD_RESERVED)
 		{
-			entry[total] = in;
-			menu_item[total] = in->name;
+			int seq_count = (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END) ? 2 : 1;
+			int j;
+			for (j = 0; j < seq_count; j++)
+			{
+				entry[total] = &in->seq[j];
+				menu_item[total] = in->name;
+				if (j == 1 && in->type >= IPT_PEDAL && in->type <= IPT_PEDAL2)
+					menu_item[total] = "Auto Release <Y/N>";
 
-			total++;
+				total++;
+			}
 		}
 
 		in++;
@@ -1760,7 +1762,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	{
 		if (i < total - 1)
 		{
-			seq_name(&entry[i]->seq,menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			seq_name(entry[i],menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 		} else
 			menu_subitem[i] = 0;	/* no subitem */
@@ -1774,15 +1776,15 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 		menu_subitem[sel & SEL_MASK] = "    ";
 		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
 
-		ret = seq_read_async(&entry[sel & SEL_MASK]->seq,record_first_insert);
+		ret = seq_read_async(entry[sel & SEL_MASK],record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= SEL_MASK;
 
-			if (ret > 0 || seq_get_1(&entry[sel]->seq) == CODE_NONE)
+			if (ret > 0 || seq_get_1(entry[sel]) == CODE_NONE)
 			{
-				seq_set_1(&entry[sel]->seq,CODE_NONE);
+				seq_set_1(entry[sel],CODE_NONE);
 				ret = 1;
 			}
 
@@ -1849,7 +1851,6 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 {
 	const char *menu_item[500];
 	const char *menu_subitem[500];
-	struct InputPort *entry[500];
 	InputSeq *seq[500];
 	char flag[500];
 	int i,sel;
@@ -1873,16 +1874,26 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 			if (input_port_name(in) != 0 && seq_get_1(&in->seq[i]) != CODE_NONE
 				&& (in->type != IPT_UNKNOWN)
 #ifdef MESS
-			&& ((in->category == 0) || input_category_active(in->category))
+				&& ((in->category == 0) || input_category_active(in->category))
 #endif /* MESS */
 				&& in->type != IPT_OSD_RESERVED)
-		{
-			entry[total] = in;
-				seq[total] = input_port_seq(in, i);
-			menu_item[total] = input_port_name(in);
+			{
+				seq[total] = &in->seq[i];
+				menu_item[total] = input_port_name(in);
+				if (i == 1 && in->type >= IPT_PEDAL && in->type <= IPT_PEDAL2)
+					menu_item[total] = "Auto Release <Y/N>";
 
-			total++;
-		}
+				seq_name(input_port_seq(in, i), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
+				menu_subitem[total] = menu_subitem_buffer[total];
+
+				/* If the key isn't the default, flag it */
+				if (seq_get_1(seq[total]) != CODE_DEFAULT)
+					flag[total] = 1;
+				else
+					flag[total] = 0;
+
+				total++;
+			}
 		}
 
 		in++;
@@ -1891,25 +1902,9 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	if (total == 0) return 0;
 
 	menu_item[total] = ui_getstring (UI_returntomain);
+	menu_subitem[total] = 0;	/* no subitem */
 	menu_item[total + 1] = 0;	/* terminate array */
 	total++;
-
-	for (i = 0;i < total;i++)
-	{
-		if (i < total - 1)
-		{
-			seq_name(seq[i], menu_subitem_buffer[i], sizeof(menu_subitem_buffer[0]));
-			menu_subitem[i] = menu_subitem_buffer[i];
-
-			/* If the key isn't the default, flag it */
-			if (seq_get_1(seq[i]) != CODE_DEFAULT)
-				flag[i] = 1;
-			else
-				flag[i] = 0;
-
-		} else
-			menu_subitem[i] = 0;	/* no subitem */
-	}
 
 	if (sel > SEL_MASK)   /* are we waiting for a new key? */
 	{
@@ -2071,8 +2066,7 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-				&& !(!options.cheat && (in->cheat)))
+		if (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END)
 		{
 			entry[total] = in;
 			total++;
@@ -3121,7 +3115,7 @@ static int has_analog(void)
 	/* Determine if there are any analog controls */
 	num = 0;
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
+ 	{
 		if (in->type > IPT_ANALOG_START && in->type < IPT_ANALOG_END && input_port_active(in))
 			num++;
 	}
@@ -3181,9 +3175,9 @@ static void setup_menu_init(void)
 
 	if (has_analog())
 		append_menu(UI_analogcontrols, UI_ANALOG);
-
-	/* Joystick calibration possible? */
-	if ((osd_joystick_needs_calibration()) != 0)
+  
+  	/* Joystick calibration possible? */
+  	if ((osd_joystick_needs_calibration()) != 0)
 	{
 		append_menu(UI_calibrate, UI_CALIBRATE);
 	}
@@ -3327,10 +3321,10 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
-#ifndef MESS
+			#ifndef MESS
 			case UI_STATS:
 			case UI_GAMEINFO:
-#else
+			#else
 			case UI_GAMEINFO:
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:

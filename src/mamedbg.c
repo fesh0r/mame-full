@@ -5374,7 +5374,7 @@ void MAME_Debug(void)
 	{
 		debug_key_delay = 0;
 		if (!debug_key_pressed)
-			debug_key_pressed = seq_pressed(input_port_type_seq(IPT_UI_ON_SCREEN_DISPLAY));
+			debug_key_pressed = seq_pressed(input_port_type_seq(IPT_UI_ON_SCREEN_DISPLAY,0));
 	}
 
 	if( dbg_fast )

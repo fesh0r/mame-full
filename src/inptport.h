@@ -31,16 +31,11 @@ struct InputPort
 							/* This is different from IPT_UNUSED, which marks */
 							/* bits not connected to anything. */
 	UINT8 cocktail;			/* the bit is used in cocktail mode only */
-	UINT8 cheat;			/* Indicates that the input bit is a "cheat" key */
-							/* (providing invulnerabilty, level advance, and */
-							/* so on). MAME will not recognize it when the */
-							/* -nocheat command line option is specified. */
 	UINT8 player;			/* the player associated with this port; note that
 							 * player 1 is '0' */
 	UINT8 toggle;			/* When this is set, the key acts as a toggle - press */
 							/* it once and it goes on, press it again and it goes off. */
 							/* useful e.g. for sone Test Mode dip switches. */
-	UINT8 reset_cpu;		/* when the key is pressed, reset the first CPU */
 	UINT8 impulse;			/* When this is set, when the key corrisponding to */
 							/* the input bit is pressed it will be reported as */
 							/* pressed for a certain number of video frames and */
@@ -60,7 +55,9 @@ struct InputPort
 	UINT16 category;
 #endif /* MESS */
 
-	union
+	/* this used to be a union, but it's better as a struct because otherwise bad */
+	/* port definitions may overwrite important parts of the data */
+	struct
 	{
 		struct
 		{
@@ -73,10 +70,6 @@ struct InputPort
 			UINT8 reverse;			/* By default, analog inputs like IPT_TRACKBALL increase */
 									/* when going right/up. This flag inverts them. */
 			UINT8 center;			/* always preload in->default, autocentering the STICK/TRACKBALL */
-			UINT8 custom_update;	/* normally, analog ports are updated when they are accessed. */
-									/* When this flag is set, they are never updated automatically, */
-									/* it is the responsibility of the driver to call */
-									/* update_analog_port(int port). */
 		} analog;
 		struct
 		{
@@ -127,9 +120,9 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 #ifdef MESS
 	IPT_KEYBOARD,
 	IPT_CONFIG_NAME, IPT_CONFIG_SETTING,
-	IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING,
 	IPT_START, IPT_SELECT,
-#endif
+	IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING,
+#endif /* MESS */
 /* Many games poll an input bit to check for vertical blanks instead of using */
 /* interrupts. This special value allows you to handle that. If you set one of the */
 /* input bits to this, the bit will be inverted while a vertical blank is happening. */
@@ -180,6 +173,7 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 
 	/* Analog adjuster support */
 	IPT_ADJUSTER,
+
 	__ipt_max
 };
 
@@ -187,40 +181,7 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 
 
 /* accursed legacy macros */
-#define IPF_MASK       0xffffff00
-#define IPF_UNUSED     0x80000000
-#define IPF_COCKTAIL   IPF_PLAYER2
-#define IPF_CHEAT      0x40000000
-#define IPF_PLAYERMASK 0x00070000
-#define IPF_PLAYER1    0         
-#define IPF_PLAYER2    0x00010000
-#define IPF_PLAYER3    0x00020000
-#define IPF_PLAYER4    0x00030000
-#define IPF_PLAYER5    0x00040000
-#define IPF_PLAYER6    0x00050000
-#define IPF_PLAYER7    0x00060000
-#define IPF_PLAYER8    0x00070000
-#define IPF_8WAY       0         
-#define IPF_4WAY       0x00080000
-#define IPF_2WAY       0         
-#define IPF_IMPULSE    0x00100000
-#define IPF_TOGGLE     0x00200000
-#define IPF_REVERSE    0x00400000
-#define IPF_CENTER     0x00800000
-#define IPF_CUSTOM_UPDATE 0x01000000
-#define IPF_RESETCPU   0x02000000
-#define IPF_SENSITIVITY(percent)	((percent & 0xff) << 8)
-#define IPF_DELTA(val)				((val & 0xff) << 16)
-
 #define IP_NAME_DEFAULT ((const char *)-1)
-
-/* Wrapper for compatibility */
-#define IP_KEY_DEFAULT CODE_DEFAULT
-#define IP_JOY_DEFAULT CODE_DEFAULT
-#define IP_KEY_PREVIOUS CODE_PREVIOUS
-#define IP_JOY_PREVIOUS CODE_PREVIOUS
-#define IP_KEY_NONE CODE_NONE
-#define IP_JOY_NONE CODE_NONE
 
 /* start of table */
 #define INPUT_PORTS_START(name) \
@@ -264,11 +225,6 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 		port->mask = (mask_);							\
 		port->default_value = (default_);				\
 		seq_index[0] = seq_index[1] = 0;				\
-
-/* input bit definition with extended fields */
-#define PORT_BIT_NAME(mask,default,type,name) \
-	PORT_BIT(mask, default, type) \
-	PORT_NAME(name)
 
 /* new technique to append a code */
 #define PORT_CODE_SEQ(code,seq_)									\
@@ -323,58 +279,67 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 
 #define PORT_KEYDELTA(delta_)										\
 	port->u.analog.delta = (delta_);								\
+	
+#define PORT_UNUSED													\
+	port->unused = 1;
 
-/* key/joy code specification */
-#define PORT_CODELEGACY(key,joy) \
-	{																		\
-		PORT_CODE(key);														\
-		PORT_CODE(joy);														\
-	}																		\
-			
+/* fix me -- this should go away */
+#define PORT_CHEAT
 
-/* input bit definition with extended fields */
+
+#ifdef MESS
+/* NPW 6-Jul-2004 - this is in here until the MESS stuff gets changed over;
+ * this will go away very soon! */
+ 
+#define IPF_RESETCPU	0	/* need to get rid of this */
+
+#define PORT_CODELEGACY(code1,code2)								\
+	{ if ((code1) != CODE_NONE)	PORT_CODE(code1); }					\
+	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
+
+#define PORT_BIT_NAME(mask,default,type,name)	\
+	PORT_BIT(mask, default, type)					\
+	PORT_NAME(name)									\
+
 #define PORT_BITX(mask,default,type,name,key,joy) \
-	PORT_BIT_NAME(mask, default, type, name) \
-	PORT_CODELEGACY(key,joy)
+	PORT_BIT(mask, default, type)					\
+	PORT_NAME(name)									\
+	PORT_CODELEGACY(key, joy)						\
 
-/* analog input */
-#define PORT_ANALOG(mask,default,type,sensitivity_,delta_,min_,max_) \
-	PORT_BIT(mask, default, type) \
-	port->u.analog.min = (min_);								\
-	port->u.analog.max = (max_);								\
-	port->u.analog.sensitivity = (sensitivity_);				\
-	port->u.analog.delta = (delta_);							\
+#define PORT_ANALOG(mask,default,type,sensitivity,delta,min,max) \
+	PORT_BIT(mask, default, type)	\
+	PORT_MINMAX(min, max)			\
+	PORT_SENSITIVITY(sensitivity)	\
+	PORT_KEYDELTA(delta)			\
 
-#define PORT_ANALOGX(mask,default,type,sensitivity_,delta_,min_,max_,keydec,keyinc,joydec,joyinc) \
-	PORT_BIT(mask, default, type) \
-	port->u.analog.min = (min_);								\
-	port->u.analog.max = (max_);								\
-	port->u.analog.sensitivity = (sensitivity_);				\
-	port->u.analog.delta = (delta_);							\
-	PORT_CODE_DEC(keydec)										\
-	PORT_CODE_INC(keyinc)										\
-	PORT_CODE_DEC(joydec)										\
-	PORT_CODE_INC(joyinc)										\
+#define PORT_ANALOGX(mask,default,type,sensitivity,delta,min,max,keydec,keyinc,joydec,joyinc) \
+	PORT_ANALOG(mask,default,type,sensitivity,delta,min,max)	\
+	PORT_CODE_DEC(keydec)		\
+	PORT_CODE_INC(keyinc)		\
+	PORT_CODE_DEC(joydec)		\
+	PORT_CODE_INC(joyinc)		\
+
+#endif /* MESS */
 
 /* dip switch definition */
 #define PORT_DIPNAME(mask,default,name) \
-	PORT_BIT_NAME(mask, default, IPT_DIPSWITCH_NAME, name)
+	PORT_BIT(mask, default, IPT_DIPSWITCH_NAME) PORT_NAME(name)
 
 #define PORT_DIPSETTING(default,name) \
-	PORT_BIT_NAME(0, default, IPT_DIPSWITCH_SETTING, name)
+	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)
 
 /* analog adjuster definition */
 #define PORT_ADJUSTER(default,name) \
-	PORT_BIT_NAME(0x00ff, (default & 0xff) | (default << 8), IPT_ADJUSTER, name)
+	PORT_BIT(0x00ff, (default & 0xff) | (default << 8), IPT_ADJUSTER) PORT_NAME(name)
 
 
 #define PORT_SERVICE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, CODE_NONE )	\
+	PORT_BIT(    mask, mask & default, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE	\
 	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
 	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
 #define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, CODE_NONE )
+	PORT_BIT(    mask, mask & default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
 
 #define MAX_DEFSTR_LEN 20
 extern const char ipdn_defaultstrings[][MAX_DEFSTR_LEN];
@@ -498,7 +463,7 @@ void save_input_port_settings(void);
 
 const char *input_port_name(const struct InputPort *in);
 int input_port_active(const struct InputPort *in);
-InputSeq* input_port_type_seq(int type);
+InputSeq* input_port_type_seq(int type, int indx);
 InputSeq* input_port_seq(struct InputPort *in, int seq);
 int input_port_seq_count(const struct InputPort *in);
 
@@ -578,8 +543,9 @@ READ16_HANDLER( input_port_29_word_r );
 struct ipd
 {
 	UINT32 type;
+	UINT8 player;
 	const char *name;
-	InputSeq seq;
+	InputSeq seq[2];
 };
 
 struct ik
@@ -587,6 +553,7 @@ struct ik
 	const char *name;
 	UINT32 type;
 	UINT32 val;
+	UINT8 player;
 };
 extern struct ik input_keywords[];
 extern struct ik *osd_input_keywords;

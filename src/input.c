@@ -814,7 +814,7 @@ int input_ui_pressed(int code)
 
 	profiler_mark(PROFILER_INPUT);
 
-	pressed = seq_pressed(input_port_type_seq(code));
+	pressed = seq_pressed(input_port_type_seq(code,0));
 
 	if (pressed)
 	{
@@ -838,7 +838,7 @@ int input_ui_pressed_repeat(int code,int speed)
 
 	profiler_mark(PROFILER_INPUT);
 
-	pressed = seq_pressed(input_port_type_seq(code));
+	pressed = seq_pressed(input_port_type_seq(code,0));
 
 	if (pressed)
 	{

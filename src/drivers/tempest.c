@@ -298,7 +298,7 @@ INPUT_PORTS_START( tempest )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Diagnostic Step") PORT_CODE(KEYCODE_F1)
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
  	/* handled by tempest_IN0_r() */
@@ -309,7 +309,7 @@ INPUT_PORTS_START( tempest )
 
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. */
-	PORT_ANALOG( 0x0f, 0x00, IPT_DIAL, 25, 20, 0, 0)
+	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_MINMAX(0,0) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )

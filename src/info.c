@@ -672,7 +672,7 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 	expand_machine_driver(game->drv, &driver);
 
 	fprintf(out, "\t\t<driver");
-	if (game->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
+	if (game->flags & GAME_NOT_WORKING)
 		fprintf(out, " status=\"preliminary\"");
 	else
 		fprintf(out, " status=\"good\"");
@@ -690,6 +690,17 @@ static void print_game_driver(FILE* out, const struct GameDriver* game)
 		fprintf(out, " sound=\"imperfect\"");
 	else
 		fprintf(out, " sound=\"good\"");
+
+	if (game->flags & GAME_IMPERFECT_GRAPHICS)
+		fprintf(out, " graphic=\"preliminary\"");
+	else
+		fprintf(out, " graphic=\"good\"");
+
+	if (game->flags & GAME_NO_COCKTAIL)
+		fprintf(out, " cocktail=\"preliminary\"");
+
+	if (game->flags & GAME_UNEMULATED_PROTECTION)
+		fprintf(out, " protection=\"preliminary\"");
 
 	fprintf(out, " palettesize=\"%d\"", driver.total_colors);
 
@@ -926,6 +937,9 @@ void print_mame_xml(FILE* out, const struct GameDriver* games[])
 		"\t\t\t<!ATTLIST driver status (good|preliminary|test) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver color (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver sound (good|imperfect|preliminary) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver graphic (good|imperfect) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver cocktail (preliminary) #IMPLIED>\n"
+		"\t\t\t<!ATTLIST driver protection (preliminary) #IMPLIED>\n"
 		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
 #ifdef MESS
 		"\t\t<!ELEMENT device (extension*)>\n"

@@ -1468,7 +1468,7 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 
 	const int	kDelayRampTimer = 10;
 
-	if(seq_pressed(input_port_type_seq(code)))
+	if(seq_pressed(input_port_type_seq(code,0)))
 	{
 		if(lastCode != code)
 		{

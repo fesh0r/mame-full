@@ -45,22 +45,26 @@ enum
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
 #define PORT_KEY0(mask,default,name,key1,key2)						\
-	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
+	PORT_BIT(mask, default, IPT_KEYBOARD)							\
+	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
 
 #define PORT_KEY1(mask,default,name,key1,key2,uchar)				\
-	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
+	PORT_BIT(mask, default, IPT_KEYBOARD)							\
+	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
 	port->u.keyboard.chars[0] = (uchar);							\
 
 #define PORT_KEY2(mask,default,name,key1,key2,uchar1,uchar2)		\
-	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
+	PORT_BIT(mask, default, IPT_KEYBOARD)							\
+	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
 	port->u.keyboard.chars[0] = (uchar1);							\
 	port->u.keyboard.chars[1] = (uchar2);							\
 
 #define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
-	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
+	PORT_BIT(mask, default, IPT_KEYBOARD)							\
+	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
 	port->u.keyboard.chars[0] = (uchar1);							\
 	port->u.keyboard.chars[1] = (uchar2);							\
@@ -68,20 +72,24 @@ enum
 
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \
-	PORT_BIT_NAME(mask, default, IPT_CONFIG_NAME, name)
+	PORT_BIT(mask, default, IPT_CONFIG_NAME)						\
+	PORT_NAME(name)													\
 
 #define PORT_CONFSETTING(default,name) \
-	PORT_BIT_NAME(0, default, IPT_CONFIG_SETTING, name)
-
+	PORT_BIT(0, default, IPT_CONFIG_SETTING)						\
+	PORT_NAME(name)													\
+	
 /* categories */
 #define PORT_CATEGORY(category_) \
 	port->category = (category_);	\
 
-#define PORT_CATEGORY_CLASS(mask,default,name) \
-	PORT_BIT_NAME(mask, default, IPT_CATEGORY_NAME, name)
+#define PORT_CATEGORY_CLASS(mask,default,name) 						\
+	PORT_BIT(mask, default, IPT_CATEGORY_NAME)						\
+	PORT_NAME(name)
 
-#define PORT_CATEGORY_ITEM(default,name,category) \
-	PORT_BIT_NAME(0, default, IPT_CATEGORY_SETTING, name) \
+#define PORT_CATEGORY_ITEM(default,name,category) 					\
+	PORT_BIT(0, default, IPT_CATEGORY_SETTING) 						\
+	PORT_NAME(name)													\
 	PORT_CATEGORY(category)
 
 

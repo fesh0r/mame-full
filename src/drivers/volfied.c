@@ -100,23 +100,23 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )                                 \
 	                                                                              \
 	PORT_START                                                                    \
-	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )                        \
-	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )                        \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)                        \
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)                        \
 	                                                                              \
 	PORT_START                                                                    \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )                                     \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )                \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )                \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )                \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )                \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY                \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY                \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY                \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY                \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )                                  \
 	                                                                              \
 	PORT_START                                                                    \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 
 
 INPUT_PORTS_START( volfied )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( volfied )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Language" )
@@ -208,7 +208,7 @@ INPUT_PORTS_START( volfiedu )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Language" )
@@ -257,7 +257,7 @@ INPUT_PORTS_START( volfiedj )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Infinite Lives") PORT_CHEAT
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Language" )

@@ -249,6 +249,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( mrkougr2 )
 	DRIVER( mrkougb )	/* bootleg */
 	DRIVER( hotshock )	/* (c) 1982 E.G. Felaco */
+	DRIVER( conquer )	/* (c) 1982 ???? */
 	DRIVER( hunchbks )	/* (c) 1983 Century */
 	DRIVER( cavelon )	/* (c) 1983 Jetsoft */
 	DRIVER( sfx )
@@ -320,6 +321,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( swimmerb )	/* (c) 1982 Tehkan */
 	DRIVER( guzzler )	/* (c) 1983 Tehkan */
 	DRIVER( cannonb )	/* (c) 1985 Soft */
+	DRIVER( ckongb )	/* bootleg */
 
 	/* Nichibutsu games */
 	DRIVER( gomoku )	/* (c) 1981 */
@@ -1458,7 +1460,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( arkbloc2 )	/* bootleg */
 	DRIVER( arkangc )	/* bootleg */
 	DRIVER( arkatour )	/* ??? (c) 1987 Taito America Corporation + Romstar license (US) */
-	DRIVER( superqix )	/* B03 1987 */
+	DRIVER( sqix )		/* B03 1987 */
+	DRIVER( sqixa )		/* B03 1987 */
 	DRIVER( sqixbl )	/* bootleg? but (c) 1987 */
 	DRIVER( perestro )	/* (c) 1994 Promat */
 	DRIVER( perestrf )	/* (c) 1993 Promat / Fuuki */
@@ -4237,6 +4240,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( pballoon )	/* (c) 1982 SNK */
 	DRIVER( nibbler )	/* (c) 1982 Rock-ola */
 	DRIVER( nibblera )	/* (c) 1982 Rock-ola */
+	DRIVER( nibblerb )	/* (c) 1982 Rock-ola */
 
 	/* later SNK games, each game can be identified by PCB code and ROM
 	code, the ROM code is the same between versions, and usually based
@@ -4325,6 +4329,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sstingry )	/* (c) 1986 Alpha Denshi Co. */
 	DRIVER( kyros )		/* (c) 1987 World Games */
 	DRIVER( kyrosj )	/* (c) 1986 Alpha Denshi Co. */
+	DRIVER( jongbou )	/* (c) 1987 SNK */
 	DRIVER( paddlema )	/* Alpha-68K96I  'PM' (c) 1988 SNK */
 	DRIVER( timesold )	/* Alpha-68K96II 'BT' (c) 1987 SNK / Romstar */
 	DRIVER( timesol1 )  /* Alpha-68K96II 'BT' (c) 1987 */
@@ -5550,6 +5555,7 @@ Other Sun games
 	DRIVER( mugsmash )	/* (c) Electronic Devices (Italy) / 3D Games (England) */
 	DRIVER( stlforce )	/* (c) 1994 Electronic Devices (Italy) / Ecogames S.L. (Spain) */
 	DRIVER( fantland )	/* (c) 198? Electronic Devices Italy */
+	DRIVER( fantlnda )	/* (c) 198? Electronic Devices Italy */
 	DRIVER( galaxygn )	/* (c) 1989 Electronic Devices Italy */
 	DRIVER( gcpinbal )	/* (c) 1994 Excellent System */
 	DRIVER( vmetal )	/* (c) 1995 Excellent System? */
