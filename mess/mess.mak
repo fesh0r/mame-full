@@ -192,7 +192,7 @@ DRVLIBS = \
 	$(OBJ)/rca.a	  \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/amiga.a    \
-#	$(OBJ)/svi.a      \
+	$(OBJ)/svi.a      \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \

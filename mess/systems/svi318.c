@@ -320,56 +320,34 @@ static struct Wave_interface wave_interface = {
     { 25 }           /* mixing levels */
 };
 
-int svi318_vh_start(void)
+static VIDEO_START( svi318 )
 {
     return TMS9928A_start(TMS99x8A, 0x4000);
 }
 
-static struct MachineDriver machine_driver_svi318 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80,
-            3579545,    /* 3.579545 Mhz */
-            readmem,writemem,readport,writeport,
-            svi318_interrupt,1
-        }
-    },
-    50, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    1,
-    svi318_ch_reset, /* init_machine */
-    svi318_ch_stop, /* stop_machine */
+
+static MACHINE_DRIVER_START( svi318 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)        /* 3.579545 Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(svi318_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( svi318 )
+	MDRV_MACHINE_STOP( svi318 )
 
     /* video hardware */
-    32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    0,
-    TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-    tms9928A_init_palette,
+	MDRV_TMS9928A( svi318 )
 
-    VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-    0,
-    svi318_vh_start,
-    TMS9928A_stop,
-    TMS9928A_refresh,
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    }
-};
 
 /***************************************************************************
 

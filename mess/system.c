@@ -688,9 +688,9 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 //TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 
 	/* SpectraVideo */
-//	DRIVER( svi318 ) 	/* SVI-318										  */
-//	DRIVER( svi328 ) 	/* SVI-328										  */
-//	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)						  */
+	DRIVER( svi318 ) 	/* SVI-318										  */
+	DRIVER( svi328 ) 	/* SVI-328										  */
+	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)						  */
 
 	/* Booth (this is the builder, not a company) */
 	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
