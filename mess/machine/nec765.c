@@ -22,11 +22,11 @@
 
 typedef enum
 {
-        NEC765_COMMAND_PHASE_FIRST_BYTE,
-        NEC765_COMMAND_PHASE_BYTES,
-        NEC765_RESULT_PHASE,
-        NEC765_EXECUTION_PHASE_READ,
-        NEC765_EXECUTION_PHASE_WRITE
+	NEC765_COMMAND_PHASE_FIRST_BYTE,
+	NEC765_COMMAND_PHASE_BYTES,
+	NEC765_RESULT_PHASE,
+	NEC765_EXECUTION_PHASE_READ,
+	NEC765_EXECUTION_PHASE_WRITE
 } NEC765_PHASE;
 
 /* uncomment the following line for verbose information */
@@ -78,7 +78,7 @@ typedef struct nec765
 
 	int data_type;
 
-        char format_data[4];
+	char format_data[4];
 
 	NEC765_PHASE    nec765_phase;
 	unsigned int    nec765_command_bytes[16];
@@ -164,8 +164,8 @@ static void nec765_setup_st0(void)
 static int nec765_n_to_bytes(int n)
 {
 	/* 0-> 128 bytes, 1->256 bytes, 2->512 bytes etc */
-    /* data_size = ((1<<(N+7)) */
-    return 1<<(n+7);
+	/* data_size = ((1<<(N+7)) */
+	return 1<<(n+7);
 }
 
 static void nec765_set_data_request(void)
@@ -542,59 +542,48 @@ static void nec765_seek_setup(int is_recalibrate)
 
 static void     nec765_setup_execution_phase_read(char *ptr, int size)
 {
-//        fdc.FDC_main |=0x080;                       /* DRQ */
-        fdc.FDC_main |= 0x040;                     /* FDC->CPU */
-//		fdc.flags |= NEC765_FLAGS_DATA_TRANSFER_STARTED;
+	fdc.FDC_main |= 0x040;                     /* FDC->CPU */
 
-        fdc.nec765_transfer_bytes_count = 0;
-        fdc.nec765_transfer_bytes_remaining = size;
-        fdc.execution_phase_data = ptr;
-        fdc.nec765_phase = NEC765_EXECUTION_PHASE_READ;
+	fdc.nec765_transfer_bytes_count = 0;
+	fdc.nec765_transfer_bytes_remaining = size;
+	fdc.execution_phase_data = ptr;
+	fdc.nec765_phase = NEC765_EXECUTION_PHASE_READ;
 
-		/* setup a data request with first byte */
-//		fdc.nec765_data_reg = fdc.execution_phase_data[fdc.nec765_transfer_bytes_count];
-//		fdc.nec765_transfer_bytes_count++;
-//		fdc.nec765_transfer_bytes_remaining--;
-		nec765_setup_timed_data_request(1);
+	nec765_setup_timed_data_request(1);
 }
 
 static void     nec765_setup_execution_phase_write(char *ptr, int size)
 {
-//        fdc.FDC_main |=0x080;                       /* DRQ */
-        fdc.FDC_main &= ~0x040;                     /* FDC->CPU */
+	fdc.FDC_main &= ~0x040;                     /* FDC->CPU */
 
-        fdc.nec765_transfer_bytes_count = 0;
-        fdc.nec765_transfer_bytes_remaining = size;
-        fdc.execution_phase_data = ptr;
-        fdc.nec765_phase = NEC765_EXECUTION_PHASE_WRITE;
+	fdc.nec765_transfer_bytes_count = 0;
+	fdc.nec765_transfer_bytes_remaining = size;
+	fdc.execution_phase_data = ptr;
+	fdc.nec765_phase = NEC765_EXECUTION_PHASE_WRITE;
 
-		/* setup a data request with first byte */
-		nec765_setup_timed_data_request(1);
+	/* setup a data request with first byte */
+	nec765_setup_timed_data_request(1);
 }
 
 
 static void     nec765_setup_result_phase(int byte_count)
 {
-	//fdc.nec765_flags &= ~NEC765_TC;
+	fdc.FDC_main |= 0x040;                     /* FDC->CPU */
+	fdc.FDC_main &= ~0x020;                    /* not execution phase */
 
-		fdc.FDC_main |= 0x040;                     /* FDC->CPU */
-        fdc.FDC_main &= ~0x020;                    /* not execution phase */
+	fdc.nec765_transfer_bytes_count = 0;
+	fdc.nec765_transfer_bytes_remaining = byte_count;
+	fdc.nec765_phase = NEC765_RESULT_PHASE;
 
-        fdc.nec765_transfer_bytes_count = 0;
-        fdc.nec765_transfer_bytes_remaining = byte_count;
-        fdc.nec765_phase = NEC765_RESULT_PHASE;
-
-		nec765_setup_timed_result_data_request();
+	nec765_setup_timed_result_data_request();
 }
 
 void nec765_idle(void)
 {
-	//fdc.nec765_flags &= ~NEC765_TC;
-
-    fdc.FDC_main &= ~0x040;                     /* CPU->FDC */
-    fdc.FDC_main &= ~0x020;                    /* not execution phase */
-    fdc.FDC_main &= ~0x010;                     /* not busy */
-    fdc.nec765_phase = NEC765_COMMAND_PHASE_FIRST_BYTE;
+	fdc.FDC_main &= ~0x040;                     /* CPU->FDC */
+	fdc.FDC_main &= ~0x020;                    /* not execution phase */
+	fdc.FDC_main &= ~0x010;                     /* not busy */
+	fdc.nec765_phase = NEC765_COMMAND_PHASE_FIRST_BYTE;
 
 	nec765_set_data_request();
 }
@@ -630,18 +619,33 @@ void	nec765_set_dma_drq(int state)
 void    nec765_init(nec765_interface *iface, int version)
 {
 	fdc.version = version;
-		fdc.timer = 0;	//timer_set(TIME_NEVER, 0, nec765_timer_callback);
-		fdc.seek_timer = 0;
+	fdc.timer = 0;	//timer_set(TIME_NEVER, 0, nec765_timer_callback);
+	fdc.seek_timer = 0;
 	memset(&nec765_iface, 0, sizeof(nec765_interface));
 
-        if (iface)
-        {
-                memcpy(&nec765_iface, iface, sizeof(nec765_interface));
-        }
+	if (iface)
+	{
+		memcpy(&nec765_iface, iface, sizeof(nec765_interface));
+	}
 
 		fdc.nec765_flags &= NEC765_FDD_READY;
 
 		nec765_reset(0);
+}
+
+void	nec765_stop(void)
+{
+	if (fdc.timer!=NULL)
+	{
+		timer_remove(fdc.timer);
+		fdc.timer = NULL;
+	}
+
+	if (fdc.seek_timer!=NULL)
+	{
+		timer_remove(fdc.seek_timer);
+		fdc.seek_timer = NULL;
+	}
 }
 
 
@@ -678,9 +682,9 @@ void	nec765_set_tc_state(int state)
 			}
 
 #ifdef NO_END_OF_CYLINDER
-                        nec765_continue_command();
+			nec765_continue_command();
 #else
-                        nec765_update_state();
+			nec765_update_state();
 #endif
 		}
 	}
@@ -856,15 +860,15 @@ static void nec765_read_complete(void)
 
 	nec765_setup_st0();
 
-    fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-    fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-    fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-    fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
-    fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
-    fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
-    fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
+	fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+	fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+	fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+	fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
+	fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
+	fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
+	fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
 
-    nec765_setup_result_phase(7);
+	nec765_setup_result_phase(7);
 }
 
 static void     nec765_read_data(void)
@@ -872,17 +876,17 @@ static void     nec765_read_data(void)
 
 	if (!(floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY)))
 	{
-        fdc.nec765_status[0] = 0x0c0 | (1<<4) | fdc.drive | (fdc.side<<2);
-        fdc.nec765_status[1] = 0x00;
-        fdc.nec765_status[2] = 0x00;
+		fdc.nec765_status[0] = 0x0c0 | (1<<4) | fdc.drive | (fdc.side<<2);
+		fdc.nec765_status[1] = 0x00;
+		fdc.nec765_status[2] = 0x00;
 
-        fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-        fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-        fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-        fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
-        fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
-        fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
-        fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
+		fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+		fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+		fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+		fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
+		fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
+		fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
+		fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
 		nec765_setup_result_phase(7);
 		return;
 	}
@@ -1218,9 +1222,9 @@ static void	nec765_increment_sector(void)
 	if (fdc.nec765_command_bytes[0] & 0x080)
 	{
 		/* reached EOT? */
-                /* if (fdc.nec765_command_bytes[4]==fdc.nec765_command_bytes[6])*/
-                if (nec765_just_read_last_sector_on_track())
-                {
+		/* if (fdc.nec765_command_bytes[4]==fdc.nec765_command_bytes[6])*/
+		if (nec765_just_read_last_sector_on_track())
+		{
 			/* yes */
 
 			/* reached EOT */
@@ -1240,7 +1244,6 @@ static void	nec765_increment_sector(void)
 	}
 	else
 	{
-	
 		fdc.nec765_command_bytes[4]++;
 	}
 }
@@ -1306,19 +1309,19 @@ static void     nec765_continue_command(void)
 				{
 					/* TODO: Add correct info here */
 
-                                        fdc.nec765_status[1] |= NEC765_ST1_END_OF_CYLINDER;
+					fdc.nec765_status[1] |= NEC765_ST1_END_OF_CYLINDER;
 
-                                        nec765_setup_st0();
+					nec765_setup_st0();
 
-                                        fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-                                fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-                                fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-                                fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
-                                fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
-                                fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
-                                fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
+					fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+					fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+					fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+					fdc.nec765_result_bytes[3] = fdc.nec765_command_bytes[2]; /* C */
+					fdc.nec765_result_bytes[4] = fdc.nec765_command_bytes[3]; /* H */
+					fdc.nec765_result_bytes[5] = fdc.nec765_command_bytes[4]; /* R */
+					fdc.nec765_result_bytes[6] = fdc.nec765_command_bytes[5]; /* N */
 
-				        nec765_setup_result_phase(7);
+					nec765_setup_result_phase(7);
 				}
 				else
 				{
@@ -1341,75 +1344,74 @@ static void     nec765_continue_command(void)
 				if (fdc.sector_counter == fdc.nec765_command_bytes[3])
 				{
 					/* TODO: Check result is correct */
-				        fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-                        fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-                        fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-						fdc.nec765_result_bytes[3] = fdc.format_data[0];
-						fdc.nec765_result_bytes[4] = fdc.format_data[1];
-						fdc.nec765_result_bytes[5] = fdc.format_data[2];
-						fdc.nec765_result_bytes[6] = fdc.format_data[3];
-				        nec765_setup_result_phase(7);
+					fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+					fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+					fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+					fdc.nec765_result_bytes[3] = fdc.format_data[0];
+					fdc.nec765_result_bytes[4] = fdc.format_data[1];
+					fdc.nec765_result_bytes[5] = fdc.format_data[2];
+					fdc.nec765_result_bytes[6] = fdc.format_data[3];
+					nec765_setup_result_phase(7);
 				}
 				else
 				{
-
 					nec765_format_track();
 				}
 			}
 			break;
 
-
-
 			/* write data, write deleted data */
 			case 0x09:
-                case 0x05:
+			case 0x05:
+			{
 				/* sector id == EOT */
+				UINT8 ddam;
+
+				ddam = 0;
+				if (fdc.command == 0x09)
+				{
+					ddam = 1;
+				}
 
 				/* write data to disc */
-				floppy_drive_write_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,nec765_n_to_bytes(fdc.nec765_command_bytes[5]));
+				floppy_drive_write_sector_data(fdc.drive, fdc.side, fdc.sector_id,nec765_data_buffer,nec765_n_to_bytes(fdc.nec765_command_bytes[5]),ddam);
 
 				if (nec765_sector_count_complete())
-                 {
+				{
 					nec765_increment_sector();
-
 					nec765_write_complete();
 				}
 				else
 				{
 					nec765_increment_sector();
-
 					nec765_write_data();
 				}
-				break;
+			}
+			break;
 
 			/* read data, read deleted data */
 			case 0x0c:
-                case 0x06:
-                {
+			case 0x06:
+			{
 
-                        /* read all sectors? */
+				/* read all sectors? */
 
 				/* sector id == EOT */
 				if (nec765_sector_count_complete() || nec765_read_data_stop())
 			    {
-				//		nec765_increment_sector();
-
 					nec765_read_complete();
+				}
+				else
+				{
+					nec765_increment_sector();
+					nec765_read_data();
+				}
+				}
+				break;
 
-                        }
-                        else
-                        {
-                                nec765_increment_sector();
-
-                                nec765_read_data();
-                        }
-                }
-                break;
-
-
-                default:
-                        break;
-       }
+			default:
+				break;
+		}
 	}
 }
 
@@ -1512,7 +1514,7 @@ void	nec765_update_state(void)
 			 }
 
 #ifdef VERBOSE
-             logerror("NEC765: RESULT: %02x\r\n", fdc.nec765_data_reg);
+             logerror("NEC765: RESULT: %02x\n", fdc.nec765_data_reg);
 #endif
 
              fdc.nec765_transfer_bytes_count++;
@@ -1537,7 +1539,7 @@ void	nec765_update_state(void)
              fdc.nec765_transfer_bytes_remaining--;
 
 #ifdef SUPER_VERBOSE
-			logerror("EXECUTION PHASE READ: %02x\r\n", fdc.nec765_data_reg);
+			logerror("EXECUTION PHASE READ: %02x\n", fdc.nec765_data_reg);
 #endif
 
             if ((fdc.nec765_transfer_bytes_remaining==0) || (fdc.nec765_flags & NEC765_TC))
@@ -1556,7 +1558,7 @@ void	nec765_update_state(void)
         {
                 fdc.FDC_main |= 0x10;                      /* set BUSY */
 #ifdef VERBOSE
-                logerror("NEC765: COMMAND: %02x\r\n",fdc.nec765_data_reg);
+                logerror("NEC765: COMMAND: %02x\n",fdc.nec765_data_reg);
 #endif
 				/* seek in progress? */
 				if (fdc.nec765_flags & NEC765_SEEK_ACTIVE)
@@ -1589,7 +1591,7 @@ void	nec765_update_state(void)
                 case NEC765_COMMAND_PHASE_BYTES:
                 {
 #ifdef VERBOSE
-                        logerror("NEC765: COMMAND: %02x\r\n",fdc.nec765_data_reg);
+                        logerror("NEC765: COMMAND: %02x\n",fdc.nec765_data_reg);
 #endif
                         fdc.nec765_command_bytes[fdc.nec765_transfer_bytes_count] = fdc.nec765_data_reg;
                         fdc.nec765_transfer_bytes_count++;
@@ -1657,7 +1659,7 @@ READ_HANDLER(nec765_data_r)
 	}
 
 #ifdef SUPER_VERBOSE
-	logerror("DATA R: %02x\r\n", fdc.nec765_data_reg);
+	logerror("DATA R: %02x\n", fdc.nec765_data_reg);
 #endif
 
 	return fdc.nec765_data_reg;
@@ -1666,7 +1668,7 @@ READ_HANDLER(nec765_data_r)
 WRITE_HANDLER(nec765_data_w)
 {
 #ifdef SUPER_VERBOSE
-	logerror("DATA W: %02x\r\n", data);
+	logerror("DATA W: %02x\n", data);
 #endif
 
 	/* write data to data reg */
@@ -1700,136 +1702,133 @@ static void nec765_setup_invalid(void)
 
 static void     nec765_setup_command(void)
 {
-//	nec765_clear_data_request();
-
 	/* if not in dma mode set execution phase bit */
 	if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 	{
         fdc.FDC_main |= 0x020;              /* execution phase */
 	}
 
-        switch (fdc.nec765_command_bytes[0] & 0x01f)
-        {
-            case 0x03:      /* specify */
+	switch (fdc.nec765_command_bytes[0] & 0x01f)
+	{
+		case 0x03:      /* specify */
+		{
+			/* setup step rate */
+			fdc.srt_in_ms = 16-((fdc.nec765_command_bytes[1]>>4) & 0x0f);
+
+			fdc.nec765_flags &= ~NEC765_DMA_MODE;
+
+			if ((fdc.nec765_command_bytes[2] & 0x01)==0)
 			{
-				/* setup step rate */
-				fdc.srt_in_ms = 16-((fdc.nec765_command_bytes[1]>>4) & 0x0f);
+				fdc.nec765_flags |= NEC765_DMA_MODE;
+			}
 
-				fdc.nec765_flags &= ~NEC765_DMA_MODE;
+			nec765_idle();
+		}
+		break;
 
-				if ((fdc.nec765_command_bytes[2] & 0x01)==0)
-				{
-					fdc.nec765_flags |= NEC765_DMA_MODE;
-				}
+		case 0x04:  /* sense drive status */
+		{
+			nec765_setup_drive_and_side();
 
-                nec765_idle();
-            }
-			break;
+			fdc.nec765_status[3] = fdc.drive | (fdc.side<<2);
 
-            case 0x04:  /* sense drive status */
+			if (floppy_drive_get_flag_state(fdc.drive,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
 			{
-				nec765_setup_drive_and_side();
+				fdc.nec765_status[3] |= 0x040;
+			}
 
-                fdc.nec765_status[3] = fdc.drive | (fdc.side<<2);
+			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
+			{
+				fdc.nec765_status[3] |= 0x020;
+			}
 
-				if (floppy_drive_get_flag_state(fdc.drive,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
-				{
-					fdc.nec765_status[3] |= 0x040;
-				}
+			if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
+			{
+				fdc.nec765_status[3] |= 0x010;
+			}
 
-				if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_READY))
-				{
-					fdc.nec765_status[3] |= 0x020;
-				}
-
-				if (floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_HEAD_AT_TRACK_0))
-				{
-					fdc.nec765_status[3] |= 0x010;
-				}
-
-                                fdc.nec765_status[3] |= 0x08;
+			fdc.nec765_status[3] |= 0x08;
                                
 				/* two side and fault not set but should be? */
 
-                fdc.nec765_result_bytes[0] = fdc.nec765_status[3];
+			fdc.nec765_result_bytes[0] = fdc.nec765_status[3];
 
-                nec765_setup_result_phase(1);
-			}
+			nec765_setup_result_phase(1);
+		}
+		break;
+
+		case 0x07:          /* recalibrate */
+			nec765_seek_setup(1);
+			break;
+		case 0x0f:          /* seek */
+			nec765_seek_setup(0);
 			break;
 
-            case 0x07:          /* recalibrate */
-                nec765_seek_setup(1);
-                break;
-            case 0x0f:          /* seek */
-
-				nec765_seek_setup(0);
-				break;
-            case 0x0a:      /* read id */
-            {
+		case 0x0a:      /* read id */
+		{
 				/* improve so that unformatted discs are not recognised */
                 chrn_id id;
 
 				nec765_setup_drive_and_side();
 
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+			fdc.nec765_status[1] = 0;
+			fdc.nec765_status[2] = 0;
 
-				floppy_drive_get_next_id(fdc.drive, fdc.side, &id);
+			floppy_drive_get_next_id(fdc.drive, fdc.side, &id);
 
-                fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-                fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
-                fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
-                fdc.nec765_result_bytes[3] = id.C; /* C */
-                fdc.nec765_result_bytes[4] = id.H; /* H */
-                fdc.nec765_result_bytes[5] = id.R; /* R */
-                fdc.nec765_result_bytes[6] = id.N; /* N */
+			fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+			fdc.nec765_result_bytes[1] = fdc.nec765_status[1];
+			fdc.nec765_result_bytes[2] = fdc.nec765_status[2];
+			fdc.nec765_result_bytes[3] = id.C; /* C */
+			fdc.nec765_result_bytes[4] = id.H; /* H */
+			fdc.nec765_result_bytes[5] = id.R; /* R */
+			fdc.nec765_result_bytes[6] = id.N; /* N */
 
 
-                 nec765_setup_result_phase(7);
-            }
-            break;
+			nec765_setup_result_phase(7);
+		}
+		break;
 
 
 		case 0x08: /* sense interrupt status */
-  			/* interrupt pending? */
-			if (fdc.nec765_flags & NEC765_INT)
-			{
-				/* yes. Clear int */
-				nec765_set_int(0);
+		/* interrupt pending? */
+		if (fdc.nec765_flags & NEC765_INT)
+		{
+			/* yes. Clear int */
+			nec765_set_int(0);
 
-				/* clear drive seek bits */
-				fdc.FDC_main &= ~(1 | 2 | 4 | 8);
+			/* clear drive seek bits */
+			fdc.FDC_main &= ~(1 | 2 | 4 | 8);
 
-				/* return status */
-				fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
-           		/* return pcn */
-				fdc.nec765_result_bytes[1] = fdc.pcn[fdc.drive];
+			/* return status */
+			fdc.nec765_result_bytes[0] = fdc.nec765_status[0];
+			/* return pcn */
+			fdc.nec765_result_bytes[1] = fdc.pcn[fdc.drive];
 
-				/* return result */
-				nec765_setup_result_phase(2);
-			}
-			else
-			{
-				/* no int */
-				nec765_setup_invalid();
-			}
+			/* return result */
+			nec765_setup_result_phase(2);
+		}
+		else
+		{
+			/* no int */
+			nec765_setup_invalid();
+		}
+		break;
 
-            break;
+		case 0x06:  /* read data */
+		{
 
-		  case 0x06:  /* read data */
-            {
+			nec765_setup_drive_and_side();
 
-				nec765_setup_drive_and_side();
-
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+			fdc.nec765_status[1] = 0;
+			fdc.nec765_status[2] = 0;
 
 
-                nec765_read_data();
-            }
-	    	break;
+			nec765_read_data();
+		}
+		break;
 
 		/* read deleted data */
 		case 0x0c:
@@ -1850,65 +1849,65 @@ static void     nec765_setup_command(void)
 		/* write deleted data */
 		case 0x09:
 		{
-				nec765_setup_drive_and_side();
+			nec765_setup_drive_and_side();
 
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+			fdc.nec765_status[1] = 0;
+			fdc.nec765_status[2] = 0;
 
 			/* ... for now */
-                nec765_write_data();
-            }
-            break;
+			nec765_write_data();
+		}
+		break;
 
 		/* read a track */
 		case 0x02:
 		{
-				chrn_id id;
+			chrn_id id;
 
-				nec765_setup_drive_and_side();
+			nec765_setup_drive_and_side();
 
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+			fdc.nec765_status[1] = 0;
+			fdc.nec765_status[2] = 0;
 
-                fdc.nec765_status[0] |= NEC765_ST1_NO_DATA;
+			fdc.nec765_status[0] |= NEC765_ST1_NO_DATA;
 
-				/* wait for index */
-				do
-				{
-					/* get next id from disc */
-					floppy_drive_get_next_id(fdc.drive, fdc.side,&id);
-				}
-				while ((floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))==0);
+			/* wait for index */
+			do
+			{
+				/* get next id from disc */
+				floppy_drive_get_next_id(fdc.drive, fdc.side,&id);
+			}
+			while ((floppy_drive_get_flag_state(fdc.drive, FLOPPY_DRIVE_INDEX))==0);
 
 
-				fdc.sector_counter = 0;
+			fdc.sector_counter = 0;
 
-                nec765_read_a_track();
-            }
-            break;
+			nec765_read_a_track();
+			}
+			break;
 
-            case 0x05:  /* write data */
-            {
-				nec765_setup_drive_and_side();
+		case 0x05:  /* write data */
+		{
+			nec765_setup_drive_and_side();
 
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+			fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+			fdc.nec765_status[1] = 0;
+			fdc.nec765_status[2] = 0;
 
-                nec765_write_data();
-            }
-            break;
+			nec765_write_data();
+		}
+		break;
 
 		/* format a track */
 		case 0x0d:
 		{
 				nec765_setup_drive_and_side();
 
-                fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
-                fdc.nec765_status[1] = 0;
-                fdc.nec765_status[2] = 0;
+				fdc.nec765_status[0] = fdc.drive | (fdc.side<<2);
+				fdc.nec765_status[1] = 0;
+				fdc.nec765_status[2] = 0;
 
 				fdc.sector_counter = 0;
 
