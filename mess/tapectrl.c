@@ -35,7 +35,12 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		sprintf(timepos, "%04d/%04d", t0/11025, t1/11025);
 	else
 		sprintf(timepos, "%04d/%04d", 0, t1/11025);
-	menu_item[total] = (device_status(IO_CASSETTE,id,-1) & 1) ? "playing" : "stopped";
+	status = device_status(IO_CASSETTE,id,-1);
+	menu_item[total] = (status & WAVE_STATUS_MOTOR_ENABLE)
+							? (status & WAVE_STATUS_MOTOR_INHIBIT)
+								? ((status & WAVE_STATUS_WRITE_ONLY) ? "(recording)" : "(playing)")
+								: ((status & WAVE_STATUS_WRITE_ONLY) ? "recording" : "playing")
+							: "stopped";
 	menu_subitem[total] = timepos;
     flag[total] = 0;
 	total++;
@@ -45,7 +50,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
     flag[total] = 0;
 	total++;
 
-	menu_item[total] = "Play";
+	menu_item[total] = (status & WAVE_STATUS_WRITE_ONLY) ? "Record" : "Play";
 	menu_subitem[total] = 0;
     flag[total] = 0;
 	total++;
@@ -137,11 +142,11 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 				/* Pause/stop */
 				if ((status & 1) == 0)
 					device_seek(IO_CASSETTE,id,0,SEEK_SET);
-				device_status(IO_CASSETTE,id,status & ~1);
+				device_status(IO_CASSETTE,id,status & ~WAVE_STATUS_MOTOR_ENABLE);
 				break;
 			case 3:
-				/* Play */
-				device_status(IO_CASSETTE,id,status | 1);
+				/* Play/Record */
+				device_status(IO_CASSETTE,id,status | WAVE_STATUS_MOTOR_ENABLE);
                 break;
 			case 4:
 				/* Rewind */

@@ -34,6 +34,9 @@ struct wave_file {
 static struct Wave_interface *intf;
 static struct wave_file wave[MAX_WAVE] = {{-1,},{-1,}};
 
+static void wave_update_output_buffer(int id);
+
+
 #define WAVE_OK    0
 #define WAVE_ERR   1
 #define WAVE_FMT   2
@@ -49,7 +52,8 @@ static int wave_read(int id)
 	struct wave_file *w = &wave[id];
     UINT32 offset = 0;
 	UINT32 filesize, temp32;
-	UINT16 channels, bits, temp16;
+	UINT16 channels, blockAlign, bitsPerSample, temp16;
+	unsigned sample_padding;
 	char buf[32];
 
 	if( !w->file )
@@ -119,13 +123,8 @@ static int wave_read(int id)
     }
 	logerror("WAVE format %d (PCM)\n", temp16);
 
-	/* number of channels -- only mono is supported */
+	/* number of channels -- only mono is supported, but we can mix multi-channel to mono */
 	offset += osd_fread_lsbfirst(w->file, &channels, 2);
-	if( channels != 1 && channels != 2 )
-	{
-		logerror("WAVE channels %d not supported (only 1 mono or 2 stereo)\n", channels);
-		return WAVE_ERR;
-    }
 	logerror("WAVE channels %d\n", channels);
 
 	/* sample rate */
@@ -134,21 +133,29 @@ static int wave_read(int id)
 	logerror("WAVE sample rate %d Hz\n", w->smpfreq);
 
 	/* bytes/second and block alignment are ignored */
-	offset += osd_fread(w->file, buf, 6);
+	offset += osd_fread(w->file, buf, 4);
+	/* read block alignment */
+	offset += osd_fread_lsbfirst(w->file, &blockAlign, 2);
 
-	/* bits/sample */
-	offset += osd_fread_lsbfirst(w->file, &bits, 2);
-	if( bits != 8 && bits != 16 )
-	{
-		logerror("WAVE %d bits/sample not supported (only 8/16)\n", bits);
-		return WAVE_ERR;
-    }
-	logerror("WAVE bits/sample %d\n", bits);
-	w->resolution = bits;
+	/***Field specific to PCM***/
+	/* read bits/sample */
+	offset += osd_fread_lsbfirst(w->file, &bitsPerSample, 2);
+	logerror("WAVE bits/sample %d\n", bitsPerSample);
+	w->resolution = bitsPerSample;
 
 	/* seek past any extra data */
 	osd_fseek(w->file, w->length - 16, SEEK_CUR);
 	offset += w->length - 16;
+
+	/* Compute a few constants */
+	if (blockAlign % channels)
+	{
+		logerror("WAVE format is incorrect\n");		/* This is what Microsoft says */
+		return WAVE_ERR;
+	}
+
+	sample_padding = (blockAlign/channels) - ((bitsPerSample+7) >> 3);
+
 
 	/* seek until we find a data tag */
 	while( 1 )
@@ -170,6 +177,12 @@ static int wave_read(int id)
 	}
 
 	/* allocate the game sample */
+	w->max_samples = w->samples = w->length / blockAlign;
+	logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
+
+	w->resolution = 16;
+	w->length = w->max_samples * w->resolution / 8;
+
 	w->data = malloc(w->length);
 
 	if( w->data == NULL )
@@ -178,81 +191,63 @@ static int wave_read(int id)
 		return WAVE_ERR;
     }
 
-	/* read the data in */
-	if( w->resolution == 8 )
 	{
-		if( osd_fread(w->file, w->data, w->length) != w->length )
+		int bit;
+		int channel;
+		unsigned i;
+
+		UINT8 ch;
+		intmax_t sample_buf;
+		intmax_t buf;
+
+		UINT16 *dst = w->data;
+
+		for (i=0; i<w->samples; i++)
 		{
-			logerror("WAVE failed read %d data bytes\n", w->length);
-			free(w->data);
-			return WAVE_ERR;
-		}
-		if( channels == 2 )
-		{
-			UINT8 *src = w->data;
-			INT8 *dst = w->data;
-			logerror("WAVE mixing 8-bit unsigned stereo to 8-bit signed mono\n");
-            /* convert stereo 8-bit data to mono signed samples */
-			for( temp32 = 0; temp32 < w->length/2; temp32++ )
+
+			buf = 0;
+			for (channel=0; channel<channels; channel++)
 			{
-				*dst = ((src[0] + src[1]) / 2) ^ 0x80;
-				dst += 1;
-				src += 2;
+				sample_buf = 0;
+				/* skip pad bytes */
+				if (sample_padding)
+					osd_fseek(w->file, sample_padding, SEEK_CUR);
+				/* read ceil(wave_file->bitsPerSample/8) bits */
+				for (bit=0; bit<bitsPerSample; bit+=8)
+				{
+					/*ch = getc(wave_file->handle);
+					if (ch == EOF)
+						return read_error;*/
+					if (! osd_fread(w->file, &ch, 1))
+						return WAVE_ERR;
+
+					sample_buf |= ((uintmax_t) (ch /*& 0xff*/)) << bit;
+				}
+				/* shift out undefined bits */
+				if (bit > bitsPerSample)
+					sample_buf >>= bit-bitsPerSample;
+				if (bitsPerSample <= 8)
+					/* convert to signed if unsigned */
+					sample_buf -= 1 << (bitsPerSample-1);
+				else
+				{
+					/* extend sign bit */
+					if (sample_buf & ((intmax_t)1 << (bitsPerSample-1)))
+						sample_buf |= ~ (((intmax_t)1 << bitsPerSample)-1);
+				}
+
+				/* mix with previous channels */
+				buf += sample_buf;
 			}
-			w->length /= 2;
-            w->data = realloc(w->data, w->length);
-			if( w->data == NULL )
-			{
-				logerror("WAVE failed to malloc %d bytes\n", w->length);
-				return WAVE_ERR;
-			}
-        }
-		else
-		{
-			UINT8 *src = w->data;
-			INT8 *dst = w->data;
-            logerror("WAVE converting 8-bit unsigned to 8-bit signed\n");
-            /* convert 8-bit data to signed samples */
-			for( temp32 = 0; temp32 < w->length; temp32++ )
-				*dst++ = *src++ ^ 0x80;
+			/* normalize and save reply */
+			if (bitsPerSample < 16)
+				buf <<= 16-bitsPerSample;
+			else if (bitsPerSample >16)
+				buf >>= bitsPerSample-16;
+			buf /= channels;
+			*dst++ = buf;
 		}
 	}
-	else
-	{
-		/* 16-bit data is fine as-is */
-		if( osd_fread_lsbfirst(w->file, w->data, w->length) != w->length )
-		{
-			logerror("WAVE failed read %d data bytes\n", w->length);
-			free(w->data);
-			return WAVE_ERR;
-        }
-        if( channels == 2 )
-        {
-			INT16 *src = w->data;
-			INT16 *dst = w->data;
-            logerror("WAVE mixing 16-bit stereo to 16-bit mono\n");
-            /* convert stereo 16-bit data to mono */
-			for( temp32 = 0; temp32 < w->length/2; temp32++ )
-			{
-				*dst = ((INT32)src[0] + (INT32)src[1]) / 2;
-				dst += 1;
-				src += 2;
-			}
-			w->length /= 2;
-			w->data = realloc(w->data, w->length);
-			if( w->data == NULL )
-			{
-				logerror("WAVE failed to malloc %d bytes\n", w->length);
-				return WAVE_ERR;
-            }
-        }
-		else
-		{
-			logerror("WAVE using 16-bit signed samples as is\n");
-        }
-	}
-	w->max_samples = w->samples = w->length * 8 / w->resolution;
-	logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
 
 	return WAVE_OK;
 }
@@ -265,19 +260,12 @@ static int wave_write(int id)
 	struct wave_file *w = &wave[id];
 	UINT32 filesize, offset = 0, temp32;
 	UINT16 temp16;
+	UINT32 data_length;
 
 	if( !w->file )
         return WAVE_ERR;
 
-/*  -- this caused the entire sample to be wiped if sound is disabled,
-       or sometimes a bit of the end cut off if sound was enabled (but
-       not everything was replayed (Sean Young)
-	while( w->play_pos < w->samples )
-    {
-		*((INT16 *)w->data + w->play_pos) = 0;
-		w->play_pos++;
-	}
-*/
+	data_length = w->samples * w->resolution / 8;
 
     filesize =
 		4 + 	/* 'RIFF' */
@@ -286,7 +274,7 @@ static int wave_write(int id)
 		20 +	/* WAVE tag  (including size -- 0x10 in dword) */
 		4 + 	/* 'data' */
 		4 + 	/* size of data */
-		w->length;
+		data_length;
 
     /* write the core header for a WAVE file */
 	offset += osd_fwrite(w->file, "RIFF", 4);
@@ -385,7 +373,7 @@ static int wave_write(int id)
     }
 
 	/* data size */
-	temp32 = LITTLE_ENDIANIZE_INT32(w->length);
+	temp32 = LITTLE_ENDIANIZE_INT32(data_length);
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 40 )
 	{
@@ -393,7 +381,7 @@ static int wave_write(int id)
 		return WAVE_ERR;
     }
 
-	if( osd_fwrite_lsbfirst(w->file, w->data, w->length) != w->length )
+	if( osd_fwrite_lsbfirst(w->file, w->data, data_length) != data_length )
 	{
 		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
@@ -429,6 +417,9 @@ static void wave_display(int id)
 /*****************************************************************************
 	WaveSound interface
 	our tape can be heard on the machine video.
+
+TODO:
+	tape output cannot be heard if the recorder is not recording
  *****************************************************************************/
 
 /*
@@ -444,10 +435,19 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	if( !w->timer )
 	{
 		while( length-- > 0 )
-			*buffer++ = sample;
+			*buffer++ = /*sample*/0;
 	}
 	else
 	{
+		/*if (pos >= w->samples)
+		{
+			pos = w->samples - 1;
+			if (pos < 0)
+				pos = 0;
+		}*/
+		if (w->mode)
+			wave_update_output_buffer(id);
+
 		while (length--)
 		{
 			count -= w->smpfreq;
@@ -574,6 +574,7 @@ int wave_status(int id, int newstatus)
 {
 	/* wave status has the following bitfields:
 	 *
+	 *  Bit 3:  Write-only tape (1=write-only, 0=read-only) (read-only bit)
 	 *  Bit 2:  Inhibit Motor (1=inhibit 0=noinhibit)
 	 *	Bit 1:	Mute (1=mute 0=nomute)
 	 *	Bit 0:	Motor (1=on 0=off)
@@ -584,13 +585,14 @@ int wave_status(int id, int newstatus)
 	 *	Also, you can pass -1 to have it simply return the status
 	 */
 	struct wave_file *w = &wave[id];
+	int reply;
 
 	if( !w->file )
 		return 0;
 
     if( newstatus != -1 )
 	{
-		w->status = newstatus;
+		w->status = newstatus & (WAVE_STATUS_MOTOR_INHIBIT | WAVE_STATUS_MUTED | WAVE_STATUS_MOTOR_ENABLE);
 
 		if (newstatus & WAVE_STATUS_MOTOR_INHIBIT)
 			newstatus = 0;
@@ -605,14 +607,24 @@ int wave_status(int id, int newstatus)
 		else
 		if( !newstatus && w->timer )
 		{
+			if (w->mode)
+				wave_update_output_buffer(id);
 			w->offset = wave_tell(id);
 			timer_remove(w->timer);
 			w->timer = NULL;
 			schedule_full_refresh();
 		}
 	}
-	return (w->timer ? WAVE_STATUS_MOTOR_ENABLE : 0) |
-		(w->status & WAVE_STATUS_MOTOR_INHIBIT ? w->status : w->status & ~WAVE_STATUS_MOTOR_ENABLE);
+	reply = w->status;
+	/*if (w->timer)
+		reply |= WAVE_STATUS_MOTOR_ENABLE;*/
+	/*if (w->status & WAVE_STATUS_MOTOR_INHIBIT)
+		w->status & ~WAVE_STATUS_MOTOR_ENABLE;*/
+	/*if ((! (w->status & WAVE_STATUS_MOTOR_INHIBIT)) && ! w->timer)
+		reply &= ~WAVE_STATUS_MOTOR_ENABLE;*/
+	if (w->mode)
+		reply |= WAVE_STATUS_WRITE_ONLY;
+	return reply;
 }
 
 int wave_open(int id, int mode, void *args)
@@ -813,15 +825,20 @@ void wave_close(int id)
     if( !w->file )
 		return;
 
+#if 0
     if( w->timer )
 	{	/* if we are currently playing/recording the file, we chop off the end (why ???) */
 		//if( w->channel != -1 )
 		//	stream_update(w->channel, 0);	/* R. Nabet : aaargh ! (to be confirmed) */
-		w->samples = w->play_pos;
-		w->length = w->samples * w->resolution / 8;
+		/*w->samples = w->play_pos;
+		w->length = w->samples * w->resolution / 8;*/
 		timer_remove(w->timer);
 		w->timer = NULL;
 	}
+#else
+	/* turn motor off */
+	wave_status(id, wave_status(id, -1) & ~ WAVE_STATUS_MOTOR_ENABLE);
+#endif
 
     if( w->mode )
 	{	/* if image is writable , we do write it to disk */
@@ -924,22 +941,11 @@ int wave_input(int id)
     return level;
 }
 
-void wave_output(int id, int data)
+static void wave_update_output_buffer(int id)
 {
 	struct wave_file *w = &wave[id];
 	UINT32 pos = 0;
-
-	if( !w->file )
-		return;
-
-    if( !w->mode )
-		return;
-
-	if( data == w->record_sample )
-		return;
-
-	if( w->channel != -1 )
-		stream_update(w->channel, 0);
+	void *new_data;
 
     if( w->timer )
     {
@@ -952,13 +958,16 @@ void wave_output(int id, int data)
 			else
 				w->max_samples = pos;	/* more than one second */
 			w->length = w->max_samples * w->resolution / 8;
-			w->data = realloc(w->data, w->length);
-            if( !w->data )
+			new_data = realloc(w->data, w->length);
+			if (! new_data)
             {
                 logerror("WAVE realloc(%d) failed\n", w->length);
-                memset(w, 0, sizeof(struct wave_file));
+				/* turn motor off (as this is the kind of the thing we can expect from
+				a tape recorder which has reached the physical end of the tape) */
+				wave_status(id, wave_status(id, -1) & ~ WAVE_STATUS_MOTOR_ENABLE);
                 return;
             }
+			w->data = new_data;
         }
 		if (pos >= w->samples)
 			w->samples = pos;
@@ -971,6 +980,32 @@ void wave_output(int id, int data)
 			w->record_pos++;
         }
     }
+}
+
+void wave_output(int id, int data)
+{
+	struct wave_file *w = &wave[id];
+	UINT32 pos = 0;
+
+	if( !w->file )
+	{
+	    w->record_sample = data;
+		return;
+	}
+
+    if( !w->mode )
+    {
+	    w->record_sample = data;
+		return;
+	}
+
+	if( data == w->record_sample )
+		return;
+
+	if( w->channel != -1 )
+		stream_update(w->channel, 0);
+
+	wave_update_output_buffer(id);
 
     if( w->display )
         wave_display(id);
@@ -1018,7 +1053,7 @@ int wave_output_chunk(int id, void *src, int count)
 		pos = wave_tell(id);
 	}
 
-	if( pos + count >= w->/*length*/max_samples )	/* R Nabet : "length" does not make much sense */
+	if( pos + count >= w->max_samples )
 	{
 		/* add space for new data */
 		w->max_samples += count - pos;

@@ -102,6 +102,7 @@ struct wave_args {
 #define WAVE_STATUS_MOTOR_ENABLE	1
 #define WAVE_STATUS_MUTED			2
 #define WAVE_STATUS_MOTOR_INHIBIT	4
+#define WAVE_STATUS_WRITE_ONLY		8
 
 #ifdef __cplusplus
 }
