@@ -40,7 +40,7 @@ static void setstat(void)
 */
 static void getstat(void)
 {
-#if TMS99XX_MODEL <= TMS9985_ID
+#if (USE_ST_MASK)
 	I.STATUS &= ST_MASK;  /* unused bits are forced to 0 */
 #endif
 

@@ -11,6 +11,12 @@
 	must be some mistakes, particularily in tms9940 BCD support).  You'll just have to implement
 	bus interfaces, provided you know them.  (I don't...)
 
+	ti990/10 is WIP, far from being finished.  tms99000 can not be implemented fully due to lack
+	of documentation.
+
+	ti990/12 is not supported at all, but it should probably be implemented as a separate
+	processor core, anyway.
+
 	Original tms9900 emulator by Edward Swartz
 	Smoothed out by Raphael Nabet
 	Originally converted for Mame by M.Coates
@@ -18,41 +24,50 @@
 */
 
 /*
-	tms9900 is derived from the TI990/x minicomputer series (with multi-chip processors, except with
-	cheaper or later models, which used microprocessors).  However, tms99xx (and even extension-less
-	tms99xxx) only implement a reduced subset of the huge instruction set available on big TI990
-	systems.
+	The first member of the family is actually the ti990/10 minicomputer, released in 1975.
+	tms9900 was released in 1976, and has the same instruction set as ti990/10: however,
+	tms9900 is slower, it does not support privileges and memory mapping, and illegal
+	instructions do not cause an error interrupt.
 
-	AFAIK, tms9900, tms9980, and tms9985 have exactly the same programming model, and are actually
-	the same CPU with different bus interfaces.  The former affirmation is (almost) true with
-	tms9940, so I guess the later is true, too.  (The only problem with tms9940 is I have no idea
-	what its bus interfaces are - I have a pinout, but it does not help much, although it is obvious
-	that the beast is a microcontroller.)  tms9985 had on-chip RAM and timer, like tms9995, although
-	I don't know how the memory and CRU were mapped exactly.
+	The ti990 family later evoluted into the huge ti990/12 system, with support for 144 different
+	instructions, and microcode programming in case some user found it was not enough.
+	ti990/10 was eventually replaced by a cheaper ti990/10a board, built around a tms99000
+	microprocessor.
 
-	tms9989 is mostly alien to me.  I assumed it was more related to tms9900 than tms9995, although
-	it has most of the additionnal features tms9995 has.
+	The tms9980 processor is merely a tms9900 with a 8-bit data bus (instead of 16-bit on tms9900).
 
-	tms9995 belongs to another generation.  As a matter of fact, it quite faster than tms9900.
+	tms9940 looks mostly similar to 9900/9980, but it was designed for embedded applications.
+	It includes three additional opcodes, which are not to be found on any other member of the
+	family.  (The only problem with tms9940 is I have no idea what its bus interfaces are - I
+	have a pinout, but it does not help much, although it is obvious that the beast is
+	a microcontroller.)  tms9985 is said to be derived from tms9940: it had on-chip RAM and timer,
+	like tms9995, although I don't know how the memory and CRU were mapped exactly.  It was
+	ill-fated, as it was never released due to technical problems.
 
-	tms99xxx include all tms9995 advances, and add some advances of their own.  I know they support
-	many extra opcodes (84 instructions types on tms99105a, vs. 69 on tms9900), and support
-	privileges (i.e. supervisor mode), flags in multiprocessor environment, 32-bit operations...
-	There was yet other features (Macrostore to define custom instructions, op code compression...),
-	which are completely alien to me.
+	tms9989 is mostly alien to me.  I guess it is a close relative of tms9995, although
+	I am not sure.
 
-	I have written code to recognize every tms99xxx opcode, and all other TI990 instructions I have
-	heard of.  I cannot complete this code, since I have no documentation on tms99xxx.  I am not
-	even sure the instruction set I guessed for tms99xxx is correct.  Also, the proposed meaning for
-	these extra memnonics could be wrong.
+	tms9995 belongs to another generation.  It is quite faster than tms9900, and supports 4 extra
+	opcodes.
+
+	tms99000 is the successor to both ti9900 and ti990/10.  It supports privileges, and has
+	a coprocessor interface which enables the use of an external memory mapper.  Additionnally,
+	it can use a Macrostore ROM to emulate additional instructions.
+
+	This feature allowed TI to expand the 99000 family with the tms99105 (which was said to
+	support 84 instructions types), the tms99110 (which supported floating point instructions),
+	and possibly another chip (tms99220???) which included parts of the UCSD P-system
+	in Macrostore.
 
 References :
 * 9900 family systems design, chapter 6, 7, 8
 * TMS 9980A/ TMS 9981 Product Data Book
 * TMS 9995 16-Bit Microcomputer Data Manual
+* Model 990/10A computer general description, section 4 (p/n 2302633-9701 A)
+* 990/99000 assembly language reference manual (p/n 2270509-9701 A)
 
-Tons of thanks to the guy who posted these, whoever he is...
-<http://www.stormaster.com/Spies/arcade/simulation/processors/index.html>
+Can be found on spies.com:
+<http://www.spies.com/arcade/simulation/processors/index.html>
 */
 
 /* Set this to 1 to support HOLD_LINE */
@@ -74,7 +89,29 @@ Tons of thanks to the guy who posted these, whoever he is...
 #include <math.h>
 
 
-#if (TMS99XX_MODEL == TMS9900_ID)
+#if (TMS99XX_MODEL == TI990_10_ID)
+
+	/*#define TMS99XX_PREFIX ti990_10
+	#define TMS99XX_ICOUNT TMS99XX_PREFIX##_ICount	// generates TMS99XX_PREFIX_ICount
+	#define dummy(a) a
+	#define TMS99XX_ICOUNT dummy(TMS99XX_PREFIX)##_ICount	// generates ti990_10_ICount*/
+
+	#define TMS99XX_ICOUNT ti990_10_ICount
+	#define TMS99XX_INIT ti990_10_init
+	#define TMS99XX_RESET ti990_10_reset
+	#define TMS99XX_EXIT ti990_10_exit
+	#define TMS99XX_EXECUTE ti990_10_execute
+	#define TMS99XX_GET_CONTEXT ti990_10_get_context
+	#define TMS99XX_SET_CONTEXT ti990_10_set_context
+	#define TMS99XX_GET_REG ti990_10_get_reg
+	#define TMS99XX_SET_REG ti990_10_set_reg
+	#define TMS99XX_SET_IRQ_CALLBACK ti990_10_set_irq_callback
+	#define TMS99XX_INFO ti990_10_info
+	#define TMS99XX_DASM ti990_10_dasm
+
+	#define TMS99XX_CPU_NAME "TI990/10"
+
+#elif (TMS99XX_MODEL == TMS9900_ID)
 
 	#define TMS99XX_ICOUNT tms9900_ICount
 	#define TMS99XX_INIT tms9900_init
@@ -182,50 +219,106 @@ Tons of thanks to the guy who posted these, whoever he is...
 
 	#define TMS99XX_CPU_NAME "TMS9995"
 
-#elif (TMS99XX_MODEL == TMS99105A_ID)
+#elif (TMS99XX_MODEL == TMS99000_ID)
 
-	#define TMS99XX_ICOUNT tms99105a_ICount
-	#define TMS99XX_INIT tms99105a_init
-	#define TMS99XX_RESET tms99105a_reset
-	#define TMS99XX_EXIT tms99105a_exit
-	#define TMS99XX_EXECUTE tms99105a_execute
-	#define TMS99XX_GET_CONTEXT tms99105a_get_context
-	#define TMS99XX_SET_CONTEXT tms99105a_set_context
-	#define TMS99XX_GET_REG tms99105a_get_reg
-	#define TMS99XX_SET_REG tms99105a_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms99105a_set_irq_callback
-	#define TMS99XX_INFO tms99105a_info
-	#define TMS99XX_DASM tms99105a_dasm
+	#define TMS99XX_ICOUNT tms99000_ICount
+	#define TMS99XX_INIT tms99000_init
+	#define TMS99XX_RESET tms99000_reset
+	#define TMS99XX_EXIT tms99000_exit
+	#define TMS99XX_EXECUTE tms99000_execute
+	#define TMS99XX_GET_CONTEXT tms99000_get_context
+	#define TMS99XX_SET_CONTEXT tms99000_set_context
+	#define TMS99XX_GET_REG tms99000_get_reg
+	#define TMS99XX_SET_REG tms99000_set_reg
+	#define TMS99XX_SET_IRQ_CALLBACK tms99000_set_irq_callback
+	#define TMS99XX_INFO tms99000_info
+	#define TMS99XX_DASM tms99000_dasm
 
-	#define TMS99XX_CPU_NAME "TMS99105A"
+	#define TMS99XX_CPU_NAME "TMS99000"
 
-	#error "tms99105a is not yet supported"
-
-#elif (TMS99XX_MODEL == TMS99110A_ID)
-
-	#define TMS99XX_ICOUNT tms99110a_ICount
-	#define TMS99XX_INIT tms99110a_init
-	#define TMS99XX_RESET tms99110a_reset
-	#define TMS99XX_EXIT tms99110a_exit
-	#define TMS99XX_EXECUTE tms99110a_execute
-	#define TMS99XX_GET_CONTEXT tms99110a_get_context
-	#define TMS99XX_SET_CONTEXT tms99110a_set_context
-	#define TMS99XX_GET_REG tms99110a_get_reg
-	#define TMS99XX_SET_REG tms99110a_set_reg
-	#define TMS99XX_SET_IRQ_CALLBACK tms99110a_set_irq_callback
-	#define TMS99XX_INFO tms99110a_info
-	#define TMS99XX_DASM tms99110a_dasm
-
-	#define TMS99XX_CPU_NAME "TMS99110A"
-
-	#error "tms99110a is not yet supported"
+	#error "tms99000 is not yet supported"
 
 #endif
 
 
+/*
+	I include this macro because we may eventually support other 99000 variants such as tms99110,
+	and this macro will remain true for every 99000 family member, even though
+	TMS99XX_MODEL != TMS99000_ID.
+*/
+#define IS_99000 (TMS99XX_MODEL == TMS99000_ID)
+
+/*
+	On microprocessor implementations, the CKOF, CKON, IDLE, LREX and RSET cause an external
+	CRU write.  CKOF, CKON and LREX do nothing apart of this, therefore they must be implemented
+	with external hardware (CKON and CKOF are supposed to enable/disable a line clock interrupt,
+	and LREX to trigger a LOAD interrupt).  IDLE and RSET are functional, but, on the one hand,
+	the design allowed to light a diagnostic LED when the processor is in IDLE state, and, on
+	the other hand, the RSET instruction is supposed to reset external devices as well.
+
+	On the TI990/10 and TI990/12 minicomputers, there is no such CRU write.  The line clock
+	interrupt latch is part of the CPU board, LREX is fully functional, the IDLE led is connected
+	to the board, and the RSET line is part of the TILINE bus connector.
+*/
+#define EXTERNAL_INSTRUCTION_DECODING (TMS99XX_MODEL != TI990_10_ID)
+
+/*
+	ti990/10, ti990/12 and tms99000 support privileges
+
+	privileged instructions:
+	CKOF, CKON, IDLE, LIMI, LREX, RSET,
+	LDD, LDS, LMF, (memory mapping instructions)
+	DINT, EINT, EMD , LCS, LIM, SLSP. (990/12 instructions)
+
+	instructions which are privileged when the effective CRU address is higher than 0xE00:
+	LDCR, SBO, SBZ, STCR, TB.
+
+	instructions whose behaviour is modified in user mode:
+	RTWP,
+	LST. (ti990/12 and tms99000 instruction)
+*/
+#define HAS_PRIVILEGE ((TMS99XX_MODEL == TI990_10_ID) || IS_99000)
+
+/*
+	opcode groups
+
+	* 69 basic opcodes implemented on all family members
+	* 3 memory mapping opcodes implemented on ti990/10 with mapping option, ti990/12, and
+	  the tim99610 mapper in conjunction with any tms99000 family member: LMF, LDS, LDD
+	* 3 opcodes implemented on tms9940 only (possibly tms9985): DCA, DCS, LIIM
+	* 4 opcodes implemented on ti990/12, tms9989 and above: MPYS, DIVS, LST, LWP
+	* 1 opcode implemented on ti990/12, and tms99000: BIND
+	* 72 opcodes implemented on ti990/12 only (some of which are emulated by tms99105 & tms99110)
+*/
+
+#define HAS_MAPPING ((TMS99XX_MODEL == TI990_10_ID) /*|| IS_99000*/)
+#define HAS_9995_OPCODES ((TMS99XX_MODEL == TMS9989_ID) || (TMS99XX_MODEL == TMS9995_ID) || IS_99000)
+#define HAS_BIND_OPCODE IS_99000
+
+#define HAS_OVERFLOW_INTERRUPT ((TMS99XX_MODEL == TMS9995_ID) || IS_99000)
+
+/*
+	Under tms9900, opcodes >0200->03FF are incompletely decoded: bits 11 is ignored, and so are
+	bits 12-15 for instructions which do not require a register.  On the other hand, ti990/10
+	generates an illegal instruction error when bit 11 is set, but still ignores bits 12-15.
+	Additionnally, ti990/12 and tms9995 will generate an illegal error when bits 12-15 are
+	non-zero.
+*/
+#define BETTER_0200_DECODING (TMS99XX_MODEL == TI990_10_ID)
+#define COMPLETE_0200_DECODING (TMS99XX_MODEL >= TMS9995_ID)
+
+/*
+	TI990/10 and tms9900 force unused bits in the ST register to 0.
+	TMS9995 does not.
+*/
+#define USE_ST_MASK (TMS99XX_MODEL <= TMS9985_ID)
+
+
 INLINE void execute(UINT16 opcode);
 
+#if EXTERNAL_INSTRUCTION_DECODING
 static void external_instruction_notify(int ext_op_ID);
+#endif
 static UINT16 fetch(void);
 static UINT16 decipheraddr(UINT16 opcode);
 static UINT16 decipheraddrbyte(UINT16 opcode);
@@ -291,33 +384,47 @@ int TMS99XX_ICOUNT = 0;
 
 #endif
 
-#if (TMS99XX_MODEL == TMS99105A_ID)
+#if HAS_PRIVILEGE
 
 /* This bit is set in user (i.e. non-supervisor) mode */
-#define ST_PRIVILEGED 0x0100
+#define ST_PR  0x0100 /* PRivilege */
 
 #endif
 
-#if (TMS99XX_MODEL >= TMS9995_ID)
+#if HAS_MAPPING
 
-/* This bit is set in TMS9995 and later chips to generate a level-2 interrupt when the Overflow
-status bit is set */
-#define ST_OV_EN 0x0020 /* OVerflow interrupt ENable */
+/* This tells which map is currently in use */
+#define ST_MF  0x0080 /* Map File */
+
+#endif
+
+#if (HAS_OVERFLOW_INTERRUPT)
+
+/* This bit is set in ti990/12, TMS9995 and later chips to generate a level-2 interrupt when
+the Overflow status bit is set */
+#define ST_OVIE 0x0020 /* OVerflow Interrupt Enable */
+
+#endif
+
+#if (IS_99000)
+
+/* This bit enables the macrostore feature on tms99000 */
+/* (It is used on ti990/12 with a different meaning.) */
+#define ST_EMR 0x0010 /* Enable Macrostore Rom */
 
 #endif
 
 /* On models before TMS9995 (TMS9989 ?), unused ST bits are always forced to 0, so we define
 a ST_MASK */
-#if TMS99XX_MODEL == TMS9940_ID
-
-#define ST_MASK 0xFD03
-
-#elif TMS99XX_MODEL <= TMS9985_ID
-
-#define ST_MASK 0xFE0F
-
+#if (USE_ST_MASK)
+	#if (TMS99XX_MODEL == TI990_10_ID)
+		#define ST_MASK 0xFF8F
+	#elif (TMS99XX_MODEL == TMS9940_ID)
+		#define ST_MASK 0xFD03
+	#else
+		#define ST_MASK 0xFE0F
+	#endif
 #endif
-
 
 /* Offsets for registers. */
 #define R0   0
@@ -351,7 +458,7 @@ typedef struct
 
 	int load_state; /* nonzero if the LOAD* line is active (low) */
 
-#if ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
+#if (TMS99XX_MODEL == TI990_10_ID) || ((TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID))
 	/* On tms9900, we cache the state of INTREQ* and IC0-IC3 here */
 	/* On tms9980/9981, we translate the state of IC0-IC2 to the equivalent state for a tms9900,
 	and store the result here */
@@ -376,6 +483,10 @@ typedef struct
 	UINT16 FR[16];  /* contains a copy of the workspace for the needs of the debugger */
 #endif
 
+#if (TMS99XX_MODEL == TI990_10_ID)
+	UINT16 error_interrupt_register;	/* one flag for each interrupt condition */
+#endif
+
 #if (TMS99XX_MODEL == TMS9985_ID) || (TMS99XX_MODEL == TMS9995_ID)
 	unsigned char RAM[256]; /* on-chip RAM (yes, sir !) */
 #endif
@@ -386,19 +497,20 @@ typedef struct
 	UINT16 decrementer_interval;
 	UINT16 decrementer_count;	/* used in event counter mode*/
 	void *timer;  /* used in timer mode */
-#endif
 
-#if (TMS99XX_MODEL == TMS9995_ID)
 	/* additionnal registers */
-	UINT16 flag; 	  /* flag register */
+	UINT16 flag;    /* flag register */
 	int MID_flag;   /* MID flag register */
-#endif
 
-#if (TMS99XX_MODEL == TMS9995_ID)
 	/* chip config, which can be set on reset */
 	int memory_wait_states_byte;
 	int memory_wait_states_word;
 #endif
+
+	/* Some instructions (i.e. XOP, BLWP, and MID) disable interrupt recognition until another
+	instruction is executed : so they set this flag */
+	int disable_interrupt_recognition;
+
 }	tms99xx_Regs;
 
 static tms99xx_Regs I =
@@ -406,19 +518,113 @@ static tms99xx_Regs I =
 	0,0,0,0,  /* don't care */
 	0,        /* no pending interrupt */
 	0,        /* LOAD* inactive */
-  16, 0,    /* INTREQ* inactive */
+	16, 0,    /* INTREQ* inactive */
 };
 static UINT8 lastparity;  /* rather than handling ST_OP directly, we copy the last value which
                                   would set it here */
-/* Some instructions (i.e. XOP, BLWP, and MID) disable interrupt recognition until another
-instruction is executed : so they set this flag */
-static int disable_interrupt_recognition = 0;
 
 #if (TMS99XX_MODEL == TMS9995_ID)
 static void reset_decrementer(void);
 #endif
 
-#if (TMS99XX_MODEL == TMS9900_ID)
+
+#if (TMS99XX_MODEL == TI990_10_ID)
+
+/*
+	accessor for the internal ROM
+*/
+READ16_HANDLER(ti990_10_internal_r)
+{
+	//return I.ROM[offset];
+	return cpu_readmem24bew_word(0x1ffc00+offset);
+}
+
+#endif
+
+#if (TMS99XX_MODEL == TMS9995_ID)
+
+/*
+	accessor for the first 252 bytes of internal RAM
+*/
+READ_HANDLER(tms9995_internal1_r)
+{
+	return I.RAM[offset];
+}
+
+WRITE_HANDLER(tms9995_internal1_w)
+{
+	I.RAM[offset]=data;
+}
+
+/*
+	accessor for the last 4 bytes of internal RAM
+*/
+READ_HANDLER(tms9995_internal2_r)
+{
+	return I.RAM[offset+0xfc];
+}
+
+WRITE_HANDLER(tms9995_internal2_w)
+{
+	I.RAM[offset+0xfc]=data;
+}
+
+
+#endif
+
+#if (TMS99XX_MODEL == TI990_10_ID)
+
+#if 0
+	#define readword(addr)        cpu_readmem24bew_word(addr)
+	#define writeword(addr,data)  cpu_writemem24bew_word((addr), (data))
+
+	#define readbyte(addr)        cpu_readmem24bew(addr)
+	#define writebyte(addr,data)  cpu_writemem24bew((addr), (data))
+#else
+	/* on-board ROM are not emulated (we use a hack) */
+	static int readword(int addr)
+	{
+		if (addr < 0xf800)
+			return cpu_readmem24bew_word(addr);
+		else if (addr < 0xfc00)
+			return cpu_readmem24bew_word(0x1f0000+addr);
+		else
+			return cpu_readmem24bew_word(0x1f0000+addr);	/* hack... */
+	}
+
+	static void writeword (int addr, int data)
+	{
+		if (addr < 0xf800)
+			cpu_writemem24bew_word(addr, data);
+		else if (addr < 0xfc00)
+			cpu_writemem24bew_word(0x1f0000+addr, data);
+		else
+			cpu_writemem24bew_word(0x1f0000+addr, data);	/* hack... */
+	}
+
+	static int readbyte(int addr)
+	{
+		if (addr < 0xf800)
+			return cpu_readmem24bew(addr);
+		else if (addr < 0xfc00)
+			return cpu_readmem24bew(0x1f0000+addr);
+		else
+			return cpu_readmem24bew(0x1f0000+addr);	/* hack... */
+	}
+
+	static void writebyte (int addr, int data)
+	{
+		if (addr < 0xf800)
+			cpu_writemem24bew(addr, data);
+		else if (addr < 0xfc00)
+			cpu_writemem24bew(0x1f0000+addr, data);
+		else
+			cpu_writemem24bew(0x1f0000+addr, data);	/* hack... */
+	}
+
+#endif
+
+#elif (TMS99XX_MODEL == TMS9900_ID)
 	/*16-bit data bus, 16-bit address bus*/
 	/*Note that tms9900 actually never accesses a single byte : when performing byte operations,
 	it reads a 16-bit word, changes the revelant byte, then write a complete word.  You should
@@ -429,7 +635,7 @@ static void reset_decrementer(void);
 	#define writeword(addr,data)  cpu_writemem16bew_word((addr), (data))
 
 	#define readbyte(addr)        cpu_readmem16bew(addr)
-	#define writebyte(addr,data)  cpu_writemem16bew((addr),(data))
+	#define writebyte(addr,data)  cpu_writemem16bew((addr), (data))
 
 #elif (TMS99XX_MODEL == TMS9980_ID)
 	/*8-bit data bus, 14-bit address*/
@@ -648,12 +854,15 @@ static void reset_decrementer(void);
 
 	BTW, I have no idea what the timings are for tms9989 and tms99xxx...
 */
-#if TMS99XX_MODEL <= TMS9989_ID
+#if TMS99XX_MODEL == TI990_10_ID
+	/* Use TI990/10 timings*/
+	#define CYCLES(a,b,c) TMS99XX_ICOUNT -= a
+#elif TMS99XX_MODEL <= TMS9985_ID
 	/* Use TMS9900/TMS9980 timings*/
-	#define CYCLES(a,b) TMS99XX_ICOUNT -= a
+	#define CYCLES(a,b,c) TMS99XX_ICOUNT -= b
 #else
 	/* Use TMS9995 timings*/
-	#define CYCLES(a,b) TMS99XX_ICOUNT -= b*4
+	#define CYCLES(a,b,c) TMS99XX_ICOUNT -= c*4
 #endif
 
 #if (TMS99XX_MODEL == TMS9995_ID)
@@ -682,7 +891,7 @@ void TMS99XX_RESET(void *param)
 	contextswitch(0x0000);
 
 	I.STATUS = 0; /* TMS9980 and TMS9995 Data Book say so */
-	setstat();
+	getstat();
 
 	I.IDLE = 0;   /* clear IDLE condition */
 
@@ -713,7 +922,7 @@ void TMS99XX_RESET(void *param)
 	/* The ST register and interrupt latches changed, didn't it ? */
 	field_interrupt();
 
-	CYCLES(26, 14);
+	CYCLES(6, 26, 14);
 }
 
 void TMS99XX_EXIT(void)
@@ -728,72 +937,6 @@ int TMS99XX_EXECUTE(int cycles)
 	do
 	{
 
-		#ifdef MAME_DEBUG
-		{
-			if (mame_debug)
-			{
-				setstat();
-
-				I.FR[ 0] = READREG(R0);
-				I.FR[ 1] = READREG(R1);
-				I.FR[ 2] = READREG(R2);
-				I.FR[ 3] = READREG(R3);
-				I.FR[ 4] = READREG(R4);
-				I.FR[ 5] = READREG(R5);
-				I.FR[ 6] = READREG(R6);
-				I.FR[ 7] = READREG(R7);
-				I.FR[ 8] = READREG(R8);
-				I.FR[ 9] = READREG(R9);
-				I.FR[10] = READREG(R10);
-				I.FR[11] = READREG(R11);
-				I.FR[12] = READREG(R12);
-				I.FR[13] = READREG(R13);
-				I.FR[14] = READREG(R14);
-				I.FR[15] = READREG(R15);
-
-				#if 0		/* Trace */
-				logerror("> PC %4.4x :%4.4x %4.4x : R=%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x :T=%d\n",I.PC,I.STATUS,I.WP,I.FR[0],I.FR[1],I.FR[2],I.FR[3],I.FR[4],I.FR[5],I.FR[6],I.FR[7],I.FR[8],I.FR[9],I.FR[10],I.FR[11],I.FR[12],I.FR[13],I.FR[14],I.FR[15],TMS99XX_ICOUNT);
-					#if 0	/* useful with TI99/4a driver */
-					{
-						extern int gpl_addr;
-						logerror("> GPL pointer %4.4x\n", gpl_addr);
-					}
-					#endif
-				#endif
-
-				MAME_Debug();
-			}
-		}
-		#endif
-
-		if (I.IDLE)
-		{	/* IDLE instruction has halted execution */
-			external_instruction_notify(2);
-			CYCLES(2, 2); /* 2 cycles per CRU write */
-		}
-		else
-		{	/* we execute an instruction */
-			disable_interrupt_recognition = 0;  /* default value */
-			I.IR = fetch();
-			execute(I.IR);
-
-#if (TMS99XX_MODEL >= TMS9995_ID)
-			/* Note that TI had some problem implementing this...  I don't know if this feature works on
-			a real-world TMS9995. */
-			if ((I.STATUS & ST_OV_EN) && (I.STATUS & ST_OV) && (I.irq_level > 2))
-				I.irq_level = 2;  /* interrupt request */
-#endif
-		}
-
-		/*
-		  We handle interrupts here because :
-		  a) LOAD and level-0 (reset) interrupts are non-maskable, so, AFAIK, if the LOAD* line or
-		     INTREQ* line (with IC0-3 == 0) remain active, we will execute repeatedly the first
-		     instruction of the interrupt routine.
-		  b) if we did otherwise, we could have weird, buggy behavior if IC0-IC3 changed more than
-		     once in too short a while (i.e. before tms9900 executes another instruction).  Yes, this
-		     is rather pedantic, the probability is really small.
-		*/
 		if (I.interrupt_pending)
 		{
 			int level;
@@ -813,23 +956,23 @@ int TMS99XX_EXECUTE(int cycles)
 #endif
 			level = I.irq_level;
 
-			if (I.load_state)
-			{	/* LOAD has the highest priority */
-
-				contextswitch(0xFFFC);  /* load vector, save PC, WP and ST */
-
-				I.STATUS &= 0xFFF0;     /* clear mask */
-
-				/* clear IDLE status if necessary */
-				I.IDLE = 0;
-
-				CYCLES(22, 14);
-			}
 			/* all TMS9900 chips I know do not honor interrupts after XOP, BLWP or MID (after any
 			  interrupt-like instruction, actually) */
-			else if (! disable_interrupt_recognition)
+			if (! I.disable_interrupt_recognition)
 			{
-				if (level <= IMASK)
+				if (I.load_state)
+				{	/* LOAD has the highest priority */
+
+					contextswitch(0xFFFC);  /* load vector, save PC, WP and ST */
+
+					I.STATUS &= 0xFFF0;     /* clear mask */
+
+					/* clear IDLE status if necessary */
+					I.IDLE = 0;
+
+					CYCLES(6/*to be confirmed*/, 22, 14);
+				}
+				else if (level <= IMASK)
 				{	/* a maskable interrupt is honored only if its level isn't greater than IMASK */
 
 					contextswitch(level*4); /* load vector, save PC, WP and ST */
@@ -869,7 +1012,7 @@ int TMS99XX_EXECUTE(int cycles)
 					}
 #endif
 
-					CYCLES(22, 14);
+					CYCLES(6, 22, 14);
 				}
 				else
 #if SILLY_INTERRUPT_HACK
@@ -880,6 +1023,63 @@ int TMS99XX_EXECUTE(int cycles)
 					I.interrupt_pending = 0;
 				}
 			}
+		}
+
+		#ifdef MAME_DEBUG
+		{
+			if (mame_debug)
+			{
+				I.FR[ 0] = READREG(R0);
+				I.FR[ 1] = READREG(R1);
+				I.FR[ 2] = READREG(R2);
+				I.FR[ 3] = READREG(R3);
+				I.FR[ 4] = READREG(R4);
+				I.FR[ 5] = READREG(R5);
+				I.FR[ 6] = READREG(R6);
+				I.FR[ 7] = READREG(R7);
+				I.FR[ 8] = READREG(R8);
+				I.FR[ 9] = READREG(R9);
+				I.FR[10] = READREG(R10);
+				I.FR[11] = READREG(R11);
+				I.FR[12] = READREG(R12);
+				I.FR[13] = READREG(R13);
+				I.FR[14] = READREG(R14);
+				I.FR[15] = READREG(R15);
+
+				#if 0		/* Trace */
+				logerror("> PC %4.4x :%4.4x %4.4x : R=%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x :T=%d\n",I.PC,I.STATUS,I.WP,I.FR[0],I.FR[1],I.FR[2],I.FR[3],I.FR[4],I.FR[5],I.FR[6],I.FR[7],I.FR[8],I.FR[9],I.FR[10],I.FR[11],I.FR[12],I.FR[13],I.FR[14],I.FR[15],TMS99XX_ICOUNT);
+					#if 0	/* useful with TI99/4a driver */
+					{
+						extern int gpl_addr;
+						logerror("> GPL pointer %4.4x\n", gpl_addr);
+					}
+					#endif
+				#endif
+
+				MAME_Debug();
+			}
+		}
+		#endif
+
+		if (I.IDLE)
+		{	/* IDLE instruction has halted execution */
+#if EXTERNAL_INSTRUCTION_DECODING
+			external_instruction_notify(2);
+#endif
+			CYCLES(1/*to be confirmed*/, 2, 2); /* 2 cycles per CRU write */
+		}
+		else
+		{	/* we execute an instruction */
+			I.disable_interrupt_recognition = 0;  /* default value */
+			I.IR = fetch();
+			execute(I.IR);
+
+#if (HAS_OVERFLOW_INTERRUPT)
+			/* Note that TI had some problem implementing this...  I don't know if this feature works on
+			a real-world TMS9995. */
+			if ((I.STATUS & ST_OVIE) && (I.STATUS & ST_OV) && (I.irq_level > 2))
+				I.irq_level = 2;  /* interrupt request */
+#endif
 		}
 
 	} while (TMS99XX_ICOUNT > 0);
@@ -902,7 +1102,7 @@ void TMS99XX_SET_CONTEXT(void *src)
 	if( src )
 	{
 		I = *(tms99xx_Regs*)src;
-		/* We have to make additionnal checks this, because Mame debugger can foolishly initialize
+		/* We have to make additionnal checks, because Mame debugger can foolishly initialize
 		the context to all 0s */
 #if (TMS99XX_MODEL == TMS9900_ID)
 		if (! I.irq_state)
@@ -923,12 +1123,16 @@ unsigned TMS99XX_GET_REG(int regnum)
 {
 	switch( regnum )
 	{
+#if (TMS99XX_MODEL == TI990_10_ID)
+		case REG_PC: return (I.PC < 0xf800) ? I.PC : I.PC + 0x1f0000;
+#else
 		case REG_PC:
+#endif
 		case TMS9900_PC: return I.PC;
 		case TMS9900_IR: return I.IR;
 		case REG_SP:
 		case TMS9900_WP: return I.WP;
-		case TMS9900_STATUS: return I.STATUS;
+		case TMS9900_STATUS: setstat(); return I.STATUS;
 #ifdef MAME_DEBUG
 		case TMS9900_R0: return I.FR[0];
 		case TMS9900_R1: return I.FR[1];
@@ -955,12 +1159,17 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 {
 	switch( regnum )
 	{
+#if (TMS99XX_MODEL == TI990_10_ID)
+		#warning "how should we handle this ???"
+		case REG_PC: I.PC = val & 0xffff; break;
+#else
 		case REG_PC:
+#endif
 		case TMS9900_PC: I.PC = val; break;
 		case TMS9900_IR: I.IR = val; break;
 		case REG_SP:
 		case TMS9900_WP: I.WP = val; break;
-		case TMS9900_STATUS: I.STATUS = val; break;
+		case TMS9900_STATUS: I.STATUS = val; getstat(); break;
 #ifdef MAME_DEBUG
 		case TMS9900_R0: I.FR[0]= val; break;
 		case TMS9900_R1: I.FR[1]= val; break;
@@ -982,7 +1191,43 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 	}
 }
 
-#if (TMS99XX_MODEL == TMS9900_ID)
+#if (TMS99XX_MODEL == TI990_10_ID)
+
+/* FIXME */
+#warning "fixme"
+
+void ti990_10_set_irq_line(int irqline, int state)
+{
+	if (irqline == IRQ_LINE_NMI)
+	{
+		I.load_state = state;   /* save new state */
+
+		field_interrupt();  /* interrupt status changed */
+	}
+	else
+	{
+		/*if (I.irq_state == state)
+			return;*/
+
+		I.irq_state = state;
+
+		if (state == CLEAR_LINE)
+			I.irq_level = 16;
+			/* trick : 16 will always be bigger than the IM (0-15), so there will never be interrupts */
+		else
+		{
+	#if SILLY_INTERRUPT_HACK
+			I.irq_level = IRQ_MAGIC_LEVEL;
+	#else
+			I.irq_level = (* I.irq_callback)(0);
+	#endif
+		}
+
+		field_interrupt();  /* interrupt state is likely to have changed */
+	}
+}
+
+#elif (TMS99XX_MODEL == TMS9900_ID)
 
 /*
 void tms9900_set_irq_line(IRQ_LINE_NMI, int state) : change the state of the LOAD* line
@@ -992,7 +1237,7 @@ void tms9900_set_irq_line(IRQ_LINE_NMI, int state) : change the state of the LOA
 
 	While LOAD* is low, we keep triggering LOAD interrupts...
 
-	A problem : some peripheral lower the LOAD* line for a fixed time interval (causing the 1st
+	A problem : some peripherals lower the LOAD* line for a fixed time interval (causing the 1st
 	instruction of the LOAD interrupt routine to be repeated while the line is low), and will be
 	perfectly happy with the current scheme, but others might be more clever and wait for the IAQ
 	(Instruction acquisition) line to go high, and this needs a callback function to emulate.
@@ -1016,7 +1261,7 @@ void tms9900_set_irq_line(int irqline, int state) : sets the state of the interr
 
 	**Note** : HOLD_LINE *NEVER* makes sense on the TMS9900 (or 9980, 9995...).  The reason is the
 	TMS9900 does NOT tell the world it acknoledges an interrupt, so no matter how much hardware you
-	se, you cannot know when the CPU takes the interrupt, hence you cannot release the line when
+	use, you cannot know when the CPU takes the interrupt, hence you cannot release the line when
 	the CPU takes the interrupt.  Generally, the interrupt condition is cleared by the interrupt
 	routine (with some CRU or memory access).
 
@@ -1262,7 +1507,7 @@ void TMS99XX_SET_IRQ_CALLBACK(int (*callback)(int irqline))
  *
  * R Nabet.
  */
-#if (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID)
+#if (TMS99XX_MODEL == TI990_10_ID) || (TMS99XX_MODEL == TMS9900_ID) || (TMS99XX_MODEL == TMS9980_ID)
 
 static void field_interrupt(void)
 {
@@ -1382,7 +1627,7 @@ unsigned TMS99XX_DASM(char *buffer, unsigned pc)
 {
 
 #ifdef MAME_DEBUG
-	return Dasm9900(buffer,pc);
+	return Dasm9900(buffer, pc, TMS99XX_MODEL);
 #else
 	sprintf( buffer, "$%04X", readword(pc) );
 	return 2;
@@ -1417,6 +1662,12 @@ static void set_flag1(int val)
 
 #endif
 
+typedef enum
+{
+	CRU_OK = 0,
+	CRU_PRIVILEGE_VIOLATION = 1
+} cru_error_code;
+
 #if (TMS99XX_MODEL == TMS9900_ID)
 #define WRITEPORT(Port, data) cpu_writeport16bew_word((Port)<<1, (data))
 #else
@@ -1427,14 +1678,17 @@ static void set_flag1(int val)
 /*
 	performs a normal write to CRU bus (used by SBZ, SBO, LDCR : address range 0 -> 0xFFF)
 */
-static void writeCRU(int CRUAddr, int Number, UINT16 Value)
+static cru_error_code writeCRU(int CRUAddr, int Number, UINT16 Value)
 {
-#if (TMS99XX_MODEL == TMS9900_ID)
+#if (TMS99XX_MODEL == TI990_10_ID)
+	/* 3 MSBs do exist, although they are not connected (don't ask...) */
+	#define wCRUAddrMask 0x7FFF;
+#elif (TMS99XX_MODEL == TMS9900_ID)
 	/* 3 MSBs are always 0 to support external instructions */
-	#define wCRUAddrMask 0xFFF;
+	#define wCRUAddrMask 0x0FFF;
 #elif (TMS99XX_MODEL == TMS9980_ID)
 	/* 2 bits unused, and 2 MSBs are always 0 to support external instructions */
-	#define wCRUAddrMask 0x7FF;
+	#define wCRUAddrMask 0x07FF;
 #elif (TMS99XX_MODEL == TMS9995_ID)
 	/* no such problem here : data bus lines D0-D2 provide the external instruction code */
 	#define wCRUAddrMask 0x7FFF;
@@ -1445,7 +1699,7 @@ static void writeCRU(int CRUAddr, int Number, UINT16 Value)
 
 	int count;
 
-	logerror("PC %4.4x Write CRU %x for %x =%x\n",I.PC,CRUAddr,Number,Value);
+	/*logerror("PC %4.4x Write CRU %x for %x =%x\n",I.PC,CRUAddr,Number,Value);*/
 
 	CRUAddr &= wCRUAddrMask;
 
@@ -1453,6 +1707,10 @@ static void writeCRU(int CRUAddr, int Number, UINT16 Value)
 
 	for(count=0; count<Number; count++)
 	{
+#if HAS_PRIVILEGE
+		if ((I.STATUS & ST_PR) && (CRUAddr >= 0xE00))
+			return CRU_PRIVILEGE_VIOLATION;
+#endif
 #if (TMS99XX_MODEL == TMS9995_ID)
 		if (CRUAddr == 0xF70)
 			set_flag0(Value & 0x01);
@@ -1478,8 +1736,11 @@ static void writeCRU(int CRUAddr, int Number, UINT16 Value)
 		Value >>= 1;
 		CRUAddr = (CRUAddr + 1) & wCRUAddrMask;
 	}
+
+	return CRU_OK;
 }
 
+#if EXTERNAL_INSTRUCTION_DECODING
 /*
 	Some opcodes perform a dummy write to a special CRU address, so that an external function may be
 	triggered.
@@ -1533,6 +1794,7 @@ static void external_instruction_notify(int ext_op_ID)
 	}
 #endif
 }
+#endif
 
 /*
 	performs a normal read to CRU bus (used by TB, STCR : address range 0->0xFFF)
@@ -1547,7 +1809,7 @@ static void external_instruction_notify(int ext_op_ID)
 #define READPORT(Port) cpu_readport16(Port)
 #else
 /* on tms9995, we have to handle internal CRU port */
-int READPORT(int Port)
+static int READPORT(int Port)
 {
 	if (Port == 0x1EE)
 		/* flag, bits 0-7 */
@@ -1569,7 +1831,10 @@ int READPORT(int Port)
 
 static UINT16 readCRU(int CRUAddr, int Number)
 {
-#if (TMS99XX_MODEL == TMS9900_ID)
+#if (TMS99XX_MODEL == TI990_10_ID)
+	/* 3 MSBs do exist, although they are not connected (don't ask...) */
+	#define rCRUAddrMask 0xFFF;
+#elif (TMS99XX_MODEL == TMS9900_ID)
 	/* 3 MSBs are always 0 to support external instructions */
 	#define rCRUAddrMask 0x1FF
 #elif (TMS99XX_MODEL == TMS9980_ID)
@@ -1586,48 +1851,54 @@ static UINT16 readCRU(int CRUAddr, int Number)
 	static int BitMask[] =
 	{
 		0, /* filler - saves a subtract to find mask */
-		0x0100,0x0300,0x0700,0x0F00,0x1F00,0x3F00,0x7F00,0xFF00,
+		0x0001,0x0003,0x0007,0x000F,0x001F,0x003F,0x007F,0x00FF,
 		0x01FF,0x03FF,0x07FF,0x0FFF,0x1FFF,0x3FFF,0x7FFF,0xFFFF
 	};
 
-	int Offset,Location,Value;
+	int Offset, Location, Value;
 
-	logerror("Read CRU %x for %x\n",CRUAddr,Number);
+	/*logerror("Read CRU %x for %x\n",CRUAddr,Number);*/
 
-	Location = CRUAddr >> 3;
+	Location = (CRUAddr >> 3)  & rCRUAddrMask;
 	Offset   = CRUAddr & 07;
 
-	if (Number <= 8)
+	/* Read 8 bits */
+#if HAS_PRIVILEGE
+	if ((I.STATUS & ST_PR) && (Location >= (0xE00 >> 3)))
+		return CRU_PRIVILEGE_VIOLATION;
+#endif
+	Value = READPORT(Location);
+
+	if ((Offset+Number) > 8)
 	{
-		/* Read 16 Bits */
-		Value = (READPORT((Location + 1) & rCRUAddrMask) << 8)
-		                                | READPORT(Location & rCRUAddrMask);
+		/* Read next 8 bits */
+		Location = (Location + 1) & rCRUAddrMask;
+#if HAS_PRIVILEGE
+		if ((I.STATUS & ST_PR) && (Location >= (0xE00 >> 3)))
+			return CRU_PRIVILEGE_VIOLATION;
+#endif
+		Value |= READPORT(Location) << 8;
 
-		/* Allow for Offset */
-		Value >>= Offset;
-
-		/* Mask out what we want */
-		Value = (Value << 8) & BitMask[Number];
-
-		/* And update */
-		return (Value>>8);
+		if ((Offset+Number) > 16)
+		{
+			/* Read next 8 bits */
+			Location = (Location + 1) & rCRUAddrMask;
+#if HAS_PRIVILEGE
+			if ((I.STATUS & ST_PR) && (Location >= (0xE00 >> 3)))
+				return CRU_PRIVILEGE_VIOLATION;
+#endif
+			Value |= READPORT(Location) << 16;
+		}
 	}
-	else
-	{
-		/* Read 24 Bits */
-		Value = (READPORT((Location + 2) & rCRUAddrMask) << 16)
-		                                | (READPORT((Location + 1) & rCRUAddrMask) << 8)
-		                                | READPORT(Location & rCRUAddrMask);
 
-		/* Allow for Offset */
-		Value >>= Offset;
+	/* Allow for Offset */
+	Value >>= Offset;
 
-		/* Mask out what we want */
-		Value &= BitMask[Number];
+	/* Mask out what we want */
+	Value &= BitMask[Number];
 
-		/* and Update */
-		return Value;
-	}
+	/* And update */
+	return Value;
 }
 
 /**************************************************************************/
@@ -1679,7 +1950,7 @@ static UINT16 decipheraddr(UINT16 opcode)
 		return(reg + I.WP);
 	else if (ts == 0x10)
 	{	/* *Rx */
-		CYCLES(4, 1);
+		CYCLES(0, 4, 1);
 		return(readword(reg + I.WP));
 	}
 	else if (ts == 0x20)
@@ -1690,12 +1961,12 @@ static UINT16 decipheraddr(UINT16 opcode)
 
 		if (reg)
 		{	/* @>xxxx(Rx) */
-			CYCLES(8, 3);
+			CYCLES(1, 8, 3);
 			return(readword(reg + I.WP) + imm);
 		}
 		else
 		{	/* @>xxxx */
-			CYCLES(8, 1);
+			CYCLES(3, 8, 1);
 			return(imm);
 		}
 	}
@@ -1705,7 +1976,7 @@ static UINT16 decipheraddr(UINT16 opcode)
 
 		reg += I.WP;    /* reg now contains effective address */
 
-		CYCLES(8, 3);
+		CYCLES(1, 8, 3);
 
 		response = readword(reg);
 		writeword(reg, response+2); /* we increment register content */
@@ -1726,7 +1997,7 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 		return(reg + I.WP);
 	else if (ts == 0x10)
 	{	/* *Rx */
-		CYCLES(4, 1);
+		CYCLES(0, 4, 1);
 		return(readword(reg + I.WP));
 	}
 	else if (ts == 0x20)
@@ -1737,12 +2008,12 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 
 		if (reg)
 		{	/* @>xxxx(Rx) */
-			CYCLES(8, 3);
+			CYCLES(1, 8, 3);
 			return(readword(reg + I.WP) + imm);
 		}
 		else
 		{	/* @>xxxx */
-			CYCLES(8, 1);
+			CYCLES(3, 8, 1);
 			return(imm);
 		}
 	}
@@ -1752,7 +2023,7 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 
 		reg += I.WP;    /* reg now contains effective address */
 
-		CYCLES(6, 3);
+		CYCLES(1, 6, 3);
 
 		response = readword(reg);
 		writeword(reg, response+1); /* we increment register content */
@@ -1763,7 +2034,11 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 
 /*************************************************************************/
 
-#if TMS99XX_MODEL <= TMS9989_ID
+#if (TMS99XX_MODEL == TI990_10_ID)
+	/* TI990/10 generates an error interrupt */
+	#define HANDLE_ILLEGAL
+	#warning "todo..."
+#elif TMS99XX_MODEL <= TMS9989_ID
 	/* TMS9900/TMS9980 merely ignore the instruction */
 	#define HANDLE_ILLEGAL TMS99XX_ICOUNT -= 6
 #elif TMS99XX_MODEL == TMS9995_ID
@@ -1773,16 +2048,21 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 		I.MID_flag = 1; \
 		contextswitch(0x0008); \
 		I.STATUS = (I.STATUS & 0xFE00) | 0x1; \
-		disable_interrupt_recognition = 1; \
+		I.disable_interrupt_recognition = 1; \
 	}
 #else
 #define HANDLE_ILLEGAL
 #warning "don't know"
 #endif
 
+#if HAS_PRIVILEGE
+#define HANDLE_PRIVILEGE_VIOLATION
+#warning "todo!!!"
+#endif
+
 /*==========================================================================
    Illegal instructions                                        >0000->01FF (not for 9989 and later)
-                                                               >0C00->0FFF (not for 99xxx)
+                                                               >0C00->0FFF (not for 990/12 and 99110)
 ============================================================================*/
 
 static void illegal(UINT16 opcode)
@@ -1791,7 +2071,7 @@ static void illegal(UINT16 opcode)
 }
 
 
-#if (TMS99XX_MODEL >= TMS99105A_ID)
+#if 0		/* ti990/12 only */
 /*==========================================================================
    Additionnal instructions,                                   >0000->002F
    Additionnal single-register instruction,                    >0030->003F
@@ -1803,87 +2083,68 @@ static void illegal(UINT16 opcode)
     |     o p c o d e       | reg # |
     ---------------------------------
 
-tms99xxx : SRAM, SLAM, AM, SM
 ============================================================================*/
 static void h0000(UINT16 opcode)
 {
-#if 0
-	if (opcode & 0x30)
+	if (opcode >= 0x30)
 	{	/* STPC STore Program Counter */
 
 	}
 	else
-#endif
-
-	switch (opcode /*& 0x3F*/)
 	{
-	case 0x1C:  /* SRAM */
-		/* SRAM -- Shift Right Arithmetic Multiple */
-		/* right shift on a 32-bit operand */
-		/* ... */
-		break;
-	case 0x1D:  /* SLAM */
-		/* SLAM -- Shift Left Arithmetic Multiple */
-		/* left shift on a 32-bit operand */
-		/* ... */
-		break;
+		switch (opcode /*& 0x3F*/)
+		{
+		case 0x1C:  /* SRAM */
+			/* SRAM -- Shift Right Arithmetic Multiple precision */
+		case 0x1D:  /* SLAM */
+			/* SLAM -- Shift Left Arithmetic Multiple precision */
+		case 0x1E:
+			/* RTO --- Right Test for Ones */
+		case 0x1F:
+			/* LTO --- Left Test for Ones */
+		case 0x20:
+			/* CNTO -- CouNT Ones */
+		case 0x21:
+			/* SLSL -- Search LiSt Logical address */
+		case 0x22:
+			/* SLSP -- Search LiSt Physical address */
+		case 0x23:
+			/* BDC --- Binary to Decimal ascii Conversion */
+		case 0x24:
+			/* DBC --- Decimal to Binary ascii Conversion */
+		case 0x25:
+			/* SWPM -- SWaP Multiple precision */
+		case 0x26:
+			/* XORM -- eXclusive OR Multiple precision */
+		case 0x27:
+			/* ORM --- OR Multiple precision */
+		case 0x28:
+			/* ANDM -- AND Multiple precision */
+		case 0x29:  /* SM */
+			/* SM ---- Subtract Multiple precision integer */
+		case 0x2A:  /* AM */
+			/* AM ---- Add Multiple precision integer */
+		case 0x2B:
+			/* MOVA -- MOVe Address */
+		case 0x2D:
+			/* EMD --- Execute Micro-Diagnostics */
+		case 0x2E:
+			/* EINT -- Enable INTerrupts */
+		case 0x2F:
+			/* DINT -- Disable INTerrupts */
 
-	case 0x29:  /* AM (or SM ?) */
-		/* AM ---- Add Multiple */
-		/* add with 32-bit operands */
-		/* ... */
-		break;
-	case 0x2A:  /* SM (or AM ?) */
-		/* SM ---- Subtract Multiple */
-		/* substract with 32-bit operands */
-		/* ... */
-		break;
+			break;
 
-#if 0
-	case 0x1E:
-		/* RTO --- Right Test for One */
-	case 0x1F:
-		/* LTO --- Left Test for One */
-	case 0x20:
-		/* CNTO -- CouNT Ones */
-	case 0x21:
-		/* SLSL -- Search LiSt Logical address */
-	case 0x22:
-		/* SLSP -- Search LiSt Physical address */
-	case 0x23:
-		/* BDC --- Binary to Decimal ascii Conversion */
-	case 0x24:
-		/* DBC --- Decimal ascii to Binary Conversion */
-	case 0x25:
-		/* SWPM -- SWaP Multiple precision */
-	case 0x26:
-		/* XORM -- eXclusive OR Multiple precision */
-	case 0x27:
-		/* ORM --- OR Multiple precision */
-	case 0x28:
-		/* ANDM -- AND Multiple precision */
-
-	case 0x2B:
-		/* MOVA -- MOVe Address */
-	case 0x2D:
-		/* EMD --- Execute Micro-Diagnostics */
-	case 0x2E:
-		/* EINT -- Enable INTerrupts */
-	case 0x2F:
-		/* DINT -- Disable INTerrupts */
-
-		break;
-#endif
-
-	default:
-		HANDLE_ILLEGAL;
-		break;
+		default:
+			HANDLE_ILLEGAL;
+			break;
+		}
 	}
 }
 #endif
 
 
-#if (TMS99XX_MODEL >= TMS9989_ID)
+#if HAS_9995_OPCODES
 /*==========================================================================
    Additionnal single-register instructions,                   >0040->00FF
  ---------------------------------------------------------------------------
@@ -1894,7 +2155,6 @@ static void h0000(UINT16 opcode)
     ---------------------------------
 
 tms9989 and later : LST, LWP
-tms99xxx : BLSK
 ============================================================================*/
 static void h0040(UINT16 opcode)
 {
@@ -1908,22 +2168,22 @@ static void h0040(UINT16 opcode)
 	case 8:   /* LST */
 		/* LST --- Load STatus register */
 		/* ST = *Reg */
-		I.STATUS = readword(addr);
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+			I.STATUS = (I.STATUS & 0x01DF) | (readword(addr) & 0xFE20);
+		else
+#endif
+			I.STATUS = readword(addr);
+		getstat();  /* set last_parity */
 		break;
+
 	case 9:   /* LWP */
-		/* LWP --- Load Workspace Pointer register */
+		/* LWP --- Load Workspace Pointer */
 		/* WP = *Reg */
 		I.WP = readword(addr);
 		break;
 
-#if (TMS99XX_MODEL >= TMS99105A_ID)
-	case 11:  /* BLSK */
-		/* BLSK -- Branch immediate & Link to StacK */
-
-		break;
-#endif
-
-#if 0
+#if 0	/* 990/12 opcodes */
 	case 4:
 		/* CS ---- Compare Strings */
 	case 5:
@@ -1936,12 +2196,15 @@ static void h0040(UINT16 opcode)
 	case 10:
 		/* LCS --- Load writable Control Store */
 
+	case 11:  /* BLSK */
+		/* BLSK -- Branch immediate and push Link to StacK */
+
 	case 12:
 		/* MVSR -- MoVe String Reverse */
 	case 13:
-		/* MVSK -- MoVe String from stacK */
+		/* MVSK -- MoVe string from StacK */
 	case 14:
-		/* POPS -- POP String from stack	*/
+		/* POPS -- POP String from stack */
 	case 15:
 		/* PSHS -- PuSH String to stack */
 
@@ -1975,10 +2238,11 @@ static void h0100(UINT16 opcode)
 
   switch ((opcode & 0xC0) >> 6)
   {
-#if (TMS99XX_MODEL >= TMS99105A_ID)
+#if HAS_BIND_OPCODE
 	case 1:
 		/* BIND -- Branch INDirect */
-
+		I.PC = readword(src);
+		CYCLES(Mooof!, Mooof!, 3 /*don't know*/);
 		break;
 #endif
 
@@ -1993,7 +2257,7 @@ static void h0100(UINT16 opcode)
 			if ((q < -32768L) || (q > 32767L))
 			{
 				I.STATUS |= ST_OV;
-				CYCLES(24 /*don't know*/, 10);
+				CYCLES(Mooof!, Mooof!, 10);
 			}
 			else
 			{
@@ -2002,7 +2266,7 @@ static void h0100(UINT16 opcode)
 				WRITEREG(R0, q);
 				WRITEREG(R1, divq%d);
 				/* tms9995 : 33 is the worst case */
-				CYCLES(102 /*don't know*/, 33);
+				CYCLES(Mooof!, Mooof!, 33);
 			}
 		}
 		break;
@@ -2024,10 +2288,10 @@ static void h0100(UINT16 opcode)
 			WRITEREG(R0, prod >> 16);
 			WRITEREG(R1, prod);
 		}
-		CYCLES(56 /*don't know*/, 25);
+		CYCLES(Mooof!, Mooof!, 25);
 		break;
 
-#if 0
+#if 0	/* Origin unknown */
 	case 0:
 		/* EVAD -- EValuate ADdress instruction */
 
@@ -2052,6 +2316,7 @@ static void h0100(UINT16 opcode)
     ---------------------------------
 
   LI, AI, ANDI, ORI, CI, STWP, STST, LIMI, LWPI, IDLE, RSET, RTWP, CKON, CKOF, LREX
+systems with memory mapper: LMF
 ============================================================================*/
 static void h0200(UINT16 opcode)
 {
@@ -2061,32 +2326,48 @@ static void h0200(UINT16 opcode)
 	addr = opcode & 0xF;
 	addr = ((addr + addr) + I.WP) & ~1;
 
-#if 0
+#if HAS_MAPPING
 	if ((opcode >= 0x0320) && (opcode < 0x0340))
 	{	/* LMF */
 		/* LMF --- Load memory Map File */
-		/* I don't know what it does exactly.  I guess it was used by some paging system on some
-		TI990/10 variant.
-		Syntax : LMF Rx,x; where Rx can be any workspace register from 0 thru 15, and x can be
-		a `0' or a `1'. */
+		/* Used by the memory mapper on ti990/10 with mapping option, ti990/12, and the TIM99610
+		mapper chip to be associated with tms99000.
+		Syntax: "LMF Rn,m" loads map file m (0 or 1) with six words of memory, starting at address
+		specified in workspace register Rn (0 thru 15). */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			return;
+		}
+#endif
 		/* ... */
 		return;
 	}
 #endif
 
-#if (TMS99XX_MODEL >= TMS9995_ID)
-	/* better instruction decoding on tms9995 */
+#if BETTER_0200_DECODING
+	/* better instruction decoding on ti990/10 and tms9995 */
+	if (opcode & 0x10)
+	{
+		HANDLE_ILLEGAL;
+		return;
+	}
+#elif COMPLETE_0200_DECODING
+	/* full instruction decoding on tms9995 */
 	if (((opcode < 0x2E0) && (opcode & 0x10)) || ((opcode >= 0x2E0) && (opcode & 0x1F)))
 	{
-#if 0
+#if 0	/* Origin unknown */
 		if (opcode == 0x0301)
 		{	/* CR ---- Compare Reals */
 		}
-		else if (opcode == 0x0301)
+		else if (opcode == 0x0302)
 		{	/* MM ---- Multiply Multiple */
 		}
+#endif
+#if 0	/* ti990/12 only */
 		else if (opcode >= 0x03F0)
-		{	/* EP ---- Extend Precision */
+		{	/* EP ---- Extended Precision */
 		}
 		else
 #endif
@@ -2103,14 +2384,14 @@ static void h0200(UINT16 opcode)
 		value = fetch();
 		writeword(addr, value);
 		setst_lae(value);
-		CYCLES(12, 3);
+		CYCLES(3, 12, 3);
 		break;
 	case 1:   /* AI */
 		/* AI ---- Add Immediate */
 		/* *Reg += *PC+ */
 		value = fetch();
 		wadd(addr, value);
-		CYCLES(14, 4);
+		CYCLES(4, 14, 4);
 		break;
 	case 2:   /* ANDI */
 		/* ANDI -- AND Immediate */
@@ -2119,7 +2400,7 @@ static void h0200(UINT16 opcode)
 		value = readword(addr) & value;
 		writeword(addr, value);
 		setst_lae(value);
-		CYCLES(14, 4);
+		CYCLES(4, 14, 4);
 		break;
 	case 3:   /* ORI */
 		/* ORI --- OR Immediate */
@@ -2128,37 +2409,44 @@ static void h0200(UINT16 opcode)
 		value = readword(addr) | value;
 		writeword(addr, value);
 		setst_lae(value);
-		CYCLES(14, 4);
+		CYCLES(4, 14, 4);
 		break;
 	case 4:   /* CI */
 		/* CI ---- Compare Immediate */
 		/* status = (*Reg-*PC+) */
 		value = fetch();
 		setst_c_lae(value, readword(addr));
-		CYCLES(14, 4);
+		CYCLES(6, 14, 4);
 		break;
 	case 5:   /* STWP */
 		/* STWP -- STore Workspace Pointer */
 		/* *Reg = WP */
 		writeword(addr, I.WP);
-		CYCLES(8, 3);
+		CYCLES(2, 8, 3);
 		break;
 	case 6:   /* STST */
 		/* STST -- STore STatus register */
 		/* *Reg = ST */
 		setstat();
 		writeword(addr, I.STATUS);
-		CYCLES(8, 3);
+		CYCLES(2, 8, 3);
 		break;
 	case 7:   /* LWPI */
 		/* LWPI -- Load Workspace Pointer Immediate */
 		/* WP = *PC+ */
 		I.WP = fetch();
-		CYCLES(10, 4);
+		CYCLES(3, 10, 4);
 		break;
 	case 8:   /* LIMI */
 		/* LIMI -- Load Interrupt Mask Immediate */
 		/* ST&15 |= (*PC+)&15 */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
 		value = fetch();
 #if (TMS99XX_MODEL == TMS9940_ID)
 		/* Interrupt mask is only two-bit-long on tms9940 */
@@ -2167,7 +2455,7 @@ static void h0200(UINT16 opcode)
 		I.STATUS = (I.STATUS & ~ 0xF) | (value & 0xF);
 #endif
 		field_interrupt();  /*IM has been modified.*/
-		CYCLES(16, 5);
+		CYCLES(3, 16, 5);
 		break;
 	case 9:   /* LMF is implemented elsewhere - when it is implemented */
 		HANDLE_ILLEGAL;
@@ -2176,45 +2464,89 @@ static void h0200(UINT16 opcode)
 		/* IDLE -- IDLE until a reset, interrupt, load */
 		/* The TMS99000 locks until an interrupt happen (like with 68k STOP instruction),
 		   and continuously performs a special CRU write (code 2). */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
 		I.IDLE = 1;
+#if EXTERNAL_INSTRUCTION_DECODING
 		external_instruction_notify(2);
-		CYCLES(12, 7);
+#endif
+		CYCLES(4, 12, 7);
 		/* we take care of further external_instruction_notify(2); in execute() */
 		break;
 	case 11:  /* RSET */
 		/* RSET -- ReSET */
 		/* Reset the Interrupt Mask, and perform a special CRU write (code 3). */
 		/* Does not actually cause a reset, but an external circuitery could trigger one. */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
 		I.STATUS &= 0xFFF0; /*clear IM.*/
 		field_interrupt();  /*IM has been modified.*/
+#if (TMS99XX_MODEL == TMS9995_ID)
+		/*I.MID_flag = 0;*/		/* not sure about this */
+#endif
+#if (TMS99XX_MODEL == TI990_10_ID)
+		I.error_interrupt_register = 0;		/* not sure about this */
+#endif
+
+#if EXTERNAL_INSTRUCTION_DECODING
 		external_instruction_notify(3);
-		CYCLES(12, 7);
+#else
+		/*if (I.rset_callback)
+			(*I.rset_callback)();*/
+#endif
+		CYCLES(5, 12, 7);
 		break;
 	case 12:  /* RTWP */
 		/* RTWP -- Return with Workspace Pointer */
 		/* WP = R13, PC = R14, ST = R15 */
-		I.STATUS = READREG(R15);
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+			I.STATUS = (I.STATUS & 0x01DF) | (readword(addr) & 0xFE20);
+		else
+#endif
+			I.STATUS = READREG(R15);
 		getstat();  /* set last_parity */
 		I.PC = READREG(R14);
 		I.WP = READREG(R13);
 		field_interrupt();  /*IM has been modified.*/
-		CYCLES(14, 6);
+		CYCLES(3, 14, 6);
 		break;
 	case 13:  /* CKON */
 	case 14:  /* CKOF */
 	case 15:  /* LREX */
 		/* CKON -- ClocK ON */
 		/* Perform a special CRU write (code 5). */
-		/* An external circuitery could, for instance, enable a "decrement-and-interrupt" timer. */
+		/* An external circuitery could, for instance, enable the line clock interrupt (100Hz or 120Hz, depending on voltage). */
 		/* CKOF -- ClocK OFf */
 		/* Perform a special CRU write (code 6). */
-		/* An external circuitery could, for instance, disable a "decrement-and-interrupt" timer. */
+		/* An external circuitery could, for instance, disable the line clock interrupt. */
 		/* LREX -- Load or REstart eXecution */
 		/* Perform a special CRU write (code 7). */
 		/* An external circuitery could, for instance, activate the LOAD* line,
 		   causing a non-maskable LOAD interrupt (vector -1). */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
+#if EXTERNAL_INSTRUCTION_DECODING
 		external_instruction_notify((opcode & 0x00e0) >> 5);
-		CYCLES(12, 7);
+#else
+		#warning "todo..."
+#endif
+		CYCLES(5 /*6 for LREX*/, 12, 7);
 		break;
 	}
 }
@@ -2230,7 +2562,7 @@ static void h0200(UINT16 opcode)
     ---------------------------------
 
   BLWP, B, X, CLR, NEG, INV, INC, INCT, DEC, DECT, BL, SWPB, SETO, ABS
-tms99xxx : LDD, LDS
+systems with memory mapper: LDD, LDS
 ============================================================================*/
 static void h0400(UINT16 opcode)
 {
@@ -2244,14 +2576,14 @@ static void h0400(UINT16 opcode)
 		/* Result: WP = *S+, PC = *S */
 		/*         New R13=old WP, New R14=Old PC, New R15=Old ST */
 		contextswitch(addr);
-		CYCLES(26, 11);
-		disable_interrupt_recognition = 1;
+		CYCLES(3, 26, 11);
+		I.disable_interrupt_recognition = 1;
 		break;
 	case 1:   /* B */
 		/* B ----- Branch */
 		/* PC = S */
 		I.PC = addr;
-		CYCLES(8, 3);
+		CYCLES(2, 8, 3);
 		break;
 	case 2:   /* X */
 		/* X ----- eXecute */
@@ -2259,13 +2591,13 @@ static void h0400(UINT16 opcode)
 		execute(readword(addr));
 		/* On tms9900, the X instruction actually takes 8 cycles, but we gain 4 cycles on the next
 		instruction, as we don't need to fetch it. */
-		CYCLES(4, 2);
+		CYCLES(1, 4, 2);
 		break;
 	case 3:   /* CLR */
 		/* CLR --- CLeaR */
 		/* *S = 0 */
 		writeword(addr, 0);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 4:   /* NEG */
 		/* NEG --- NEGate */
@@ -2283,7 +2615,7 @@ static void h0400(UINT16 opcode)
 #endif
 		setst_laeo(value);
 		writeword(addr, value);
-		CYCLES(12, 3);
+		CYCLES(3, 12, 3);
 		break;
 	case 5:   /* INV */
 		/* INV --- INVert */
@@ -2291,38 +2623,38 @@ static void h0400(UINT16 opcode)
 		value = ~ readword(addr);
 		writeword(addr, value);
 		setst_lae(value);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 6:   /* INC */
 		/* INC --- INCrement */
 		/* (*S)++ */
 		wadd(addr, 1);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 7:   /* INCT */
 		/* INCT -- INCrement by Two */
 		/* (*S) +=2 */
 		wadd(addr, 2);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 8:   /* DEC */
 		/* DEC --- DECrement */
 		/* (*S)-- */
 		wsub(addr, 1);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 9:   /* DECT */
 		/* DECT -- DECrement by Two */
 		/* (*S) -= 2 */
 		wsub(addr, 2);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 10:  /* BL */
 		/* BL ---- Branch and Link */
 		/* IP=S, R11=old IP */
 		WRITEREG(R11, I.PC);
 		I.PC = addr;
-		CYCLES(12, 5);
+		CYCLES(3, 12, 5);
 		break;
 	case 11:  /* SWPB */
 		/* SWPB -- SWaP Bytes */
@@ -2330,20 +2662,20 @@ static void h0400(UINT16 opcode)
 		value = readword(addr);
 		value = logical_right_shift(value, 8) | (value << 8);
 		writeword(addr, value);
-		CYCLES(10, 13);
+		CYCLES(2, 10, 13);
 		break;
 	case 12:  /* SETO */
-		/* SETO -- SET Ones */
+		/* SETO -- SET to Ones */
 		/* *S = #$FFFF */
 		writeword(addr, 0xFFFF);
-		CYCLES(10, 3);
+		CYCLES(2, 10, 3);
 		break;
 	case 13:  /* ABS */
 		/* ABS --- ABSolute value */
 		/* *S = |*S| */
 		/* clearing ST_C seems to be necessary, although ABS will never set it. */
 #if (TMS99XX_MODEL <= TMS9985_ID)
-		/* tms9900/tms9980 only write the result if it has changed */
+		/* ti990/10 and tms9900/tms9980 only write the result if it has changed */
 		I.STATUS &= ~ (ST_LGT | ST_AGT | ST_EQ | ST_C | ST_OV);
 #if (TMS99XX_MODEL == TMS9940_ID)
 		/* I guess ST_DC is cleared here, too*/
@@ -2351,7 +2683,7 @@ static void h0400(UINT16 opcode)
 #endif
 		value = readword(addr);
 
-		CYCLES(12, Mooof!);
+		CYCLES(5, 12, Mooof!);
 
 		if (((INT16) value) > 0)
 			I.STATUS |= ST_LGT | ST_AGT;
@@ -2365,7 +2697,7 @@ static void h0400(UINT16 opcode)
 				I.STATUS |= ST_DC;
 #endif
 			writeword(addr, - ((INT16) value));
-			CYCLES(2, Mooof!);
+			CYCLES(0, 2, Mooof!);
 		}
 		else
 			I.STATUS |= ST_EQ;
@@ -2375,7 +2707,7 @@ static void h0400(UINT16 opcode)
 		I.STATUS &= ~ (ST_LGT | ST_AGT | ST_EQ | ST_C | ST_OV);
 		value = readword(addr);
 
-		CYCLES(12 /*Don't know for tms9989*/, 3);
+		CYCLES(Mooof!, Mooof!, 3);
 		if (((INT16) value) > 0)
 			I.STATUS |= ST_LGT | ST_AGT;
 		else if (((INT16) value) < 0)
@@ -2392,16 +2724,34 @@ static void h0400(UINT16 opcode)
 #endif
 
 		break;
-#if (TMS99XX_MODEL >= TMS99105A_ID)
-	/* "These opcode are designed to support the 99610 memory mapper, to allow easy access to
-	another page without the need of switching a page someplace." */
+
+#if HAS_MAPPING
+	/* Used by the memory mapper on ti990/10 with mapping option, ti990/12, and the TIM99610
+	mapper chip to be associated with tms99000.
+	/* These opcode allow access to another page without the need of switching a page someplace. */
 	case 14:  /* LDS */
 		/* LDS --- Long Distance Source */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
 		/* ... */
+		I.disable_interrupt_recognition = 1;
 		break;
 	case 15:  /* LDD */
 		/* LDD --- Long Distance Destination */
+#if HAS_PRIVILEGE
+		if (I.STATUS & ST_PR)
+		{
+			HANDLE_PRIVILEGE_VIOLATION
+			break;
+		}
+#endif
 		/* ... */
+		I.disable_interrupt_recognition = 1;
 		break;
 #else
 	default:
@@ -2433,11 +2783,11 @@ static void h0800(UINT16 opcode)
 	addr = (opcode & 0xF);
 	addr = ((addr+addr) + I.WP) & ~1;
 
-	CYCLES(12, 5);
+	CYCLES(3, 12, 5);
 
 	if (cnt == 0)
 	{
-		CYCLES(8, 2);
+		CYCLES(2, 8, 2);
 
 		cnt = READREG(0) & 0xF;
 
@@ -2445,7 +2795,7 @@ static void h0800(UINT16 opcode)
 			cnt = 16;
 	}
 
-	CYCLES(cnt+cnt, cnt);
+	CYCLES(cnt, cnt+cnt, cnt);
 
 	switch ((opcode & 0x300) >> 8)
 	{
@@ -2477,7 +2827,7 @@ static void h0800(UINT16 opcode)
 }
 
 
-#if (TMS99XX_MODEL >= TMS99105A_ID)
+#if 0	/* 990/12 opcodes */
 /*==========================================================================
    Additionnal instructions,                                   >0C00->0C0F
    Additionnal single-register instructions,                   >0C10->0C3F
@@ -2489,93 +2839,81 @@ static void h0800(UINT16 opcode)
     |     o p c o d e       | reg # |
     ---------------------------------
 
-tms99xxx : TMB, TCMB, TSMB
-tms99110a : CRI, NEGR, CRE, CER
 ============================================================================*/
 static void h0c00(UINT16 opcode)
 {
 	if (opcode & 0x30)
 	{
-#if 0
 		switch ((opcode & 0x30) >> 4)
 		{
 		case 1:
 			/* INSF -- INSert Field */
+			break;
 		case 2:
 			/* XV ---- eXtract Value */
+			break;
 		case 3:
 			/* XF ---- eXtract Field */
-
 			break;
 		}
-#else
-		HANDLE_ILLEGAL;
-#endif
 	}
 	else
 	{
 		switch (opcode & 0x0F)
 		{
-#if (TMS99XX_MODEL == TMS99110A_ID)
 		/* floating point instructions */
 		case 0:
 			/* CRI --- Convert Real to Integer */
-
 			break;
 		case 2:
 			/* NEGR -- NEGate Real */
-
 			break;
 		case 4:
 			/* CRE --- Convert Real to Extended integer */
-
 			break;
 		case 6:
 			/* CER --- Convert Extended integer to Real */
-
-			break;
-#endif
-
-		/* The next three instructions allow to handle multiprocessor systems */
-		case 9:
-			/* TMB --- Test Memory Bit */
-
-			break;
-		case 10:
-			/* TCMB -- Test and Clear Memory Bit */
-
-			break;
-		case 11:
-			/* TSMB -- Test and Set Memory Bit */
-
 			break;
 
-#if 0
-		/* the four next instructions support BCD */
 		case 1:
-			/* CDI --- Convert Decimal to Integer */
+			/* CDI --- Convert Double precision real to Integer */
+			break;
 		case 3:
-			/* NEGD -- NEGate Decimal */
+			/* NEGD -- NEGate Double precision real */
+			break;
 		case 5:
-			/* CDE --- Convert Decimal to Extended integer */
+			/* CDE --- Convert Double precision real to Extended integer */
+			break;
 		case 7:
-			/* CED --- Convert Extended integer to Decimal */
+			/* CED --- Convert Extended integer to Double precision real */
+			break;
 
 		case 8:
 			/* NRM --- NoRMalize */
+			break;
 
-	case 12:
+		case 9:
+			/* TMB --- Test Memory Bit */
+			break;
+		case 10:
+			/* TCMB -- Test and Clear Memory Bit */
+			break;
+		case 11:
+			/* TSMB -- Test and Set Memory Bit */
+			break;
+
+		case 12:
 			/* SRJ --- Subtract from Register and Jump */
 		case 13:
 			/* ARJ --- Add to Register and Jump */
 
 		case 14:
 		case 15:
-			/* XIT --- eXIT from floating point interpreter (???) */
-			/* Completely alien to me.  Must have existed on weird TI990 variants. */
-
+			/* XIT --- eXIT from floating point interpreter */
+			/* Generated by some compilers, but equivalent to NOP on TI990/12.  May have been used
+			by some software floating-point emulators. */
 			break;
-#endif
+
 		default:
 			HANDLE_ILLEGAL;
 			break;
@@ -2585,7 +2923,8 @@ static void h0c00(UINT16 opcode)
 
 
 /*==========================================================================
-   Additionnal single-operand instructions,                    >0C40->0FFF
+   Additionnal single-operand instructions,                    >0C40->0DFF
+                                                               >0E40->0FFF
  ---------------------------------------------------------------------------
 
      0 1 2 3-4 5 6 7+8 9 A B-C D E F
@@ -2593,7 +2932,6 @@ static void h0c00(UINT16 opcode)
     |    o p c o d e    |TS |   S   |
     ---------------------------------
 
-tms99110a : AR, CIR, SR, MR, DR, LR, STR
 ============================================================================*/
 static void h0c40(UINT16 opcode)
 {
@@ -2603,40 +2941,79 @@ static void h0c40(UINT16 opcode)
 
 	switch ((opcode & 0x03C0) >> 6)
 	{
-#if (TMS99XX_MODEL == TMS99110A_ID)
 	case 1:
 		/* AR ---- Add Real */
+		break;
 	case 2:
 		/* CIR --- Convert Integer to Real */
+		break;
 	case 3:
 		/* SR ---- Subtract Real */
+		break;
 	case 4:
 		/* MR ---- Multiply Real */
+		break;
 	case 5:
 		/* DR ---- Divide Real */
+		break;
 	case 6:
 		/* LR ---- Load Real */
+		break;
 	case 7:
 		/* STR --- STore Real */
-#endif
-#if 0
+		break;
 	case 9:
-		/* AD ---- Add Decimal */
+		/* AD ---- Add Double */
+		break;
 	case 10:
-		/* CID --- Convert Integer to Decimal */
+		/* CID --- Convert Integer to Double */
+		break;
 	case 11:
-		/* SD ---- Subtract Decimal */
+		/* SD ---- Subtract Double */
+		break;
 	case 12:
-		/* MD ---- Multiply Decimal */
+		/* MD ---- Multiply Double */
+		break;
 	case 13:
-		/* DD ---- Divide Decimal  */
+		/* DD ---- Divide Double  */
+		break;
 	case 14:
-		/* LD ---- Load Decimal */
+		/* LD ---- Load Double */
+		break;
 	case 15:
-		/* SD ---- Store Decimal */
-#endif
+		/* SD ---- Store Double */
+		break;
 	default:
 		HANDLE_ILLEGAL;
+		break;
+	}
+}
+
+/*==========================================================================
+   Additionnal single-register instructions,                   >0E00->0E3F
+ ---------------------------------------------------------------------------
+
+     0 1 2 3-4 5 6 7+8 9 A B-C D E F
+    ---------------------------------
+    |     o p c o d e       | reg # |
+    ---------------------------------
+
+============================================================================*/
+static void h0e00(UINT16 opcode)
+{
+	switch ((opcode & 0x30) >> 4)
+	{
+	case 1:
+		/* IOF --- Invert Order of Field */
+		break;
+	case 1:
+		/* SNEB -- Search string for Not Equal Byte */
+		break;
+	case 2:
+		/* CRC --- Cyclic Redundancy Code calculation */
+		break;
+	case 3:
+		/* TS ---- Translate String */
 		break;
 	}
 }
@@ -2667,7 +3044,7 @@ static void h1000(UINT16 opcode)
 		/* JMP --- unconditional JuMP */
 		/* PC += offset */
 		I.PC += (offset + offset);
-		CYCLES(10, 3);
+		CYCLES(3, 10, 3);
 		break;
 	case 1:   /* JLT */
 		/* JLT --- Jump if Less Than (arithmetic) */
@@ -2675,10 +3052,10 @@ static void h1000(UINT16 opcode)
 		if (! (I.STATUS & (ST_AGT | ST_EQ)))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 2:   /* JLE */
 		/* JLE --- Jump if Lower or Equal (logical) */
@@ -2686,10 +3063,10 @@ static void h1000(UINT16 opcode)
 		if ((! (I.STATUS & ST_LGT)) || (I.STATUS & ST_EQ))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 3:   /* JEQ */
 		/* JEQ --- Jump if EQual */
@@ -2697,10 +3074,10 @@ static void h1000(UINT16 opcode)
 		if (I.STATUS & ST_EQ)
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 4:   /* JHE */
 		/* JHE --- Jump if Higher or Equal (logical) */
@@ -2708,10 +3085,10 @@ static void h1000(UINT16 opcode)
 		if (I.STATUS & (ST_LGT | ST_EQ))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 5:   /* JGT */
 		/* JGT --- Jump if Greater Than (arithmetic) */
@@ -2719,10 +3096,10 @@ static void h1000(UINT16 opcode)
 		if (I.STATUS & ST_AGT)
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 6:   /* JNE */
 		/* JNE --- Jump if Not Equal */
@@ -2730,10 +3107,10 @@ static void h1000(UINT16 opcode)
 		if (! (I.STATUS & ST_EQ))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 7:   /* JNC */
 		/* JNC --- Jump if No Carry */
@@ -2741,10 +3118,10 @@ static void h1000(UINT16 opcode)
 		if (! (I.STATUS & ST_C))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 8:   /* JOC */
 		/* JOC --- Jump On Carry */
@@ -2752,10 +3129,10 @@ static void h1000(UINT16 opcode)
 		if (I.STATUS & ST_C)
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 9:   /* JNO */
 		/* JNO --- Jump if No Overflow */
@@ -2763,10 +3140,10 @@ static void h1000(UINT16 opcode)
 		if (! (I.STATUS & ST_OV))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 10:  /* JL */
 		/* JL ---- Jump if Lower (logical) */
@@ -2774,10 +3151,10 @@ static void h1000(UINT16 opcode)
 		if (! (I.STATUS & (ST_LGT | ST_EQ)))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 11:  /* JH */
 		/* JH ---- Jump if Higher (logical) */
@@ -2785,10 +3162,10 @@ static void h1000(UINT16 opcode)
 		if ((I.STATUS & ST_LGT) && ! (I.STATUS & ST_EQ))
 		{
 			I.PC += (offset + offset);
-			CYCLES(10, 3);
+			CYCLES(3, 10, 3);
 		}
 		else
-			CYCLES(8, 3);
+			CYCLES(2, 8, 3);
 		break;
 	case 12:  /* JOP */
 		/* JOP --- Jump On (odd) Parity */
@@ -2817,30 +3194,40 @@ static void h1000(UINT16 opcode)
 			if (i & 1)  /*(I.STATUS & ST_OP)*/
 			{
 				I.PC += (offset + offset);
-				CYCLES(10, 3);
+				CYCLES(3, 10, 3);
 			}
 			else
-				CYCLES(8, 3);
+				CYCLES(2, 8, 3);
 		}
 
 		break;
 	case 13:  /* SBO */
 		/* SBO --- Set Bit to One */
 		/* CRU Bit = 1 */
+#if HAS_PRIVILEGE
+		if (writeCRU((READREG(R12) >> 1) + offset, 1, 1) == CRU_PRIVILEGE_VIOLATION)
+			HANDLE_PRIVILEGE_VIOLATION;
+#else
 		writeCRU((READREG(R12) >> 1) + offset, 1, 1);
-		CYCLES(12, 8);
+#endif
+		CYCLES(4, 12, 8);
 		break;
 	case 14:  /* SBZ */
 		/* SBZ --- Set Bit to Zero */
 		/* CRU Bit = 0 */
+#if HAS_PRIVILEGE
+		if (writeCRU((READREG(R12) >> 1) + offset, 1, 0) == CRU_PRIVILEGE_VIOLATION)
+			HANDLE_PRIVILEGE_VIOLATION;
+#else
 		writeCRU((READREG(R12) >> 1) + offset, 1, 0);
-		CYCLES(12, 8);
+#endif
+		CYCLES(4, 12, 8);
 		break;
 	case 15:  /* TB */
 		/* TB ---- Test Bit */
 		/* EQ = (CRU Bit == 1) */
 		setst_e(readCRU((READREG(R12)>> 1) + offset, 1) & 1, 1);
-		CYCLES(12, 8);
+		CYCLES(5, 12, 8);
 		break;
 	}
 }
@@ -2877,7 +3264,7 @@ static void h2000(UINT16 opcode)
 		src &= ~1;
 		value = readword(src);
 		setst_e(value & readword(dest), value);
-		CYCLES(14, 4);
+		CYCLES(5, 14, 4);
 		break;
 	case 1:   /* CZC */
 		/* CZC --- Compare Zeroes Corresponding */
@@ -2886,7 +3273,7 @@ static void h2000(UINT16 opcode)
 		src &= ~1;
 		value = readword(src);
 		setst_e(value & (~ readword(dest)), value);
-		CYCLES(14, 4);
+		CYCLES(5, 14, 4);
 		break;
 	case 2:   /* XOR */
 		/* XOR --- eXclusive OR */
@@ -2896,7 +3283,7 @@ static void h2000(UINT16 opcode)
 		value = readword(dest) ^ readword(src);
 		setst_lae(value);
 		writeword(dest,value);
-		CYCLES(14, 4);
+		CYCLES(3, 14, 4);
 		break;
 	/*case 3:*/   /* XOP is implemented elsewhere */
 	/*case 4:*/   /* LDCR is implemented elsewhere */
@@ -2912,7 +3299,8 @@ static void h2000(UINT16 opcode)
 			writeword(dest, prod >> 16);
 			writeword(dest+2, prod);
 		}
-		CYCLES(52, 23);
+		/* ti990/10 : from 19 to 35, possibly 19 + (number of bits to 1 in one operand) */
+		CYCLES(35, 52, 23);
 		break;
 	case 7:   /* DIV */
 		/* DIV --- DIVide    (unsigned) */
@@ -2927,7 +3315,7 @@ static void h2000(UINT16 opcode)
 			if (d <= hi)
 			{
 				I.STATUS |= ST_OV;
-				CYCLES(16, 6);
+				CYCLES(4, 16, 6);
 			}
 			else
 			{
@@ -2936,7 +3324,8 @@ static void h2000(UINT16 opcode)
 				writeword(dest+2, divq%d);
 				/* tms9900 : from 92 to 124, possibly 92 + 2*(number of bits to 1 (or 0?) in quotient) */
 				/* tms9995 : 28 is the worst case */
-				CYCLES(92, 28);
+				/* ti990/10 : from 41 to 58, possibly 41 + (number of bits to 1 (or 0?) in quotient) */
+				CYCLES(41, 92, 28);
 			}
 		}
 		break;
@@ -3022,6 +3411,7 @@ static void xop(UINT16 opcode)
 		default:  /* normal XOP */
 #endif
 
+	/* TODO : emulate 990/10 hardware XOP */
 	operand = decipheraddr(opcode);
 
 #if (TMS99XX_MODEL <= TMS9989_ID)
@@ -3034,8 +3424,8 @@ static void xop(UINT16 opcode)
 		I.STATUS |= ST_X;
 #endif
 		WRITEREG(R11, operand);
-		CYCLES(36, 15);
-		disable_interrupt_recognition = 1;
+		CYCLES(7, 36, 15);
+		I.disable_interrupt_recognition = 1;
 
 #if (TMS99XX_MODEL == TMS9940_ID)
 			break;
@@ -3048,7 +3438,7 @@ static void ldcr_stcr(UINT16 opcode)
 {
 	register UINT16 cnt = (opcode & 0x3C0) >> 6;
 	register UINT16 addr;
-	register UINT16 value;
+	UINT16 value;
 
 	if (cnt == 0)
 		cnt = 16;
@@ -3069,24 +3459,32 @@ static void ldcr_stcr(UINT16 opcode)
 #else
 			/* just for once, tms9995 behaves like earlier 8-bit tms99xx chips */
 			/* this must be because instruction decoding is too complex */
-			value = readword(addr);
+			value = readword(addr & ~1);
 			if (addr & 1)
 				value &= 0xFF;
 			else
 				value = (value >> 8) & 0xFF;
 #endif
-			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess, cf TMS9995)*/
+#if (TMS99XX_MODEL == TMS9995_ID)
+			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess for TMS9995, does not happen on ti990/10)*/
+#endif
 			setst_byte_laep(value);
-			writeCRU((READREG(R12) >> 1), cnt, value);
 		}
 		else
 		{
 			value = readword(addr);
-			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess, cf TMS9995)*/
+#if (TMS99XX_MODEL == TMS9995_ID)
+			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess for TMS9995, does not happen on ti990/10)*/
+#endif
 			setst_lae(value);
-			writeCRU((READREG(R12) >> 1), cnt, value);
 		}
-		CYCLES(20 + cnt+cnt, 9 + cnt+cnt);
+#if HAS_PRIVILEGE
+		if (writeCRU((READREG(R12) >> 1), cnt, value) == CRU_PRIVILEGE_VIOLATION)
+			HANDLE_PRIVILEGE_VIOLATION;
+#else
+		writeCRU((READREG(R12) >> 1), cnt, value);
+#endif
+		CYCLES(4+cnt, 20 + cnt+cnt, 9 + cnt+cnt);
 	}
 	else
 	{	/* STCR */
@@ -3096,36 +3494,38 @@ static void ldcr_stcr(UINT16 opcode)
 		{
 #if (TMS99XX_MODEL != TMS9995_ID)
 			(void)readbyte(addr); /*dummy read*/
-			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess, cf TMS9995)*/
+			/*(void)READREG(cnt+cnt);*/ /*dummy read (reasonnable guess for TMS9995, does not happen on ti990/10)*/
 			value = readCRU((READREG(R12) >> 1), cnt);
 			setst_byte_laep(value);
 			writebyte(addr, value);
-			CYCLES((cnt != 8) ? 42 : 44, 19 + cnt);
+			CYCLES(18+cnt, (cnt != 8) ? 42 : 44, 19 + cnt);
 #else
 			/* just for once, tms9995 behaves like earlier 8-bit tms99xx chips */
 			/* this must be because instruction decoding is too complex */
-			int value2 = readword(addr);
+			int value2 = readword(addr & ~1);
 
 			READREG(cnt+cnt); /*dummy read (guessed from timing table)*/
 			value = readCRU((READREG(R12) >> 1), cnt);
 			setst_byte_laep(value);
 
 			if (addr & 1)
-				writeword(addr, (value & 0x00FF) | (value2 & 0xFF00));
+				writeword(addr & ~1, (value & 0x00FF) | (value2 & 0xFF00));
 			else
-				writeword(addr, (value2 & 0x00FF) | ((value << 8) & 0xFF00));
+				writeword(addr & ~1, (value2 & 0x00FF) | ((value << 8) & 0xFF00));
 
-			CYCLES(Mooof!, 19 + cnt);
+			CYCLES(Mooof!, Mooof!, 19 + cnt);
 #endif
 		}
 		else
 		{
 			(void)readword(addr); /*dummy read*/
-			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess, cf TMS9995)*/
+#if (TMS99XX_MODEL == TMS9995_ID)
+			(void)READREG(cnt+cnt); /*dummy read (reasonnable guess for TMS9995, does not happen on ti990/10)*/
+#endif
 			value = readCRU((READREG(R12) >> 1), cnt);
 			setst_lae(value);
 			writeword(addr, value);
-			CYCLES((cnt != 16) ? 58 : 60, 27 + cnt);
+			CYCLES(24+cnt, (cnt != 16) ? 58 : 60, 27 + cnt);
 		}
 	}
 }
@@ -3161,39 +3561,39 @@ static void h4000w(UINT16 opcode)
 		value = readword(dest) & (~ readword(src));
 		setst_lae(value);
 		writeword(dest, value);
-		CYCLES(14, 4);
+		CYCLES(2, 14, 4);
 		break;
 	case 3:   /* S */
 		/* S ----- Subtract */
 		/* D -= S */
 		value = setst_sub_laeco(readword(dest), readword(src));
 		writeword(dest, value);
-		CYCLES(14, 4);
+		CYCLES(2, 14, 4);
 		break;
 	case 4:   /* C */
 		/* C ----- Compare */
 		/* ST = (D - S) */
 		setst_c_lae(readword(dest), readword(src));
-		CYCLES(14, 4);
+		CYCLES(5, 14, 4);
 		break;
 	case 5:   /* A */
 		/* A ----- Add */
 		/* D += S */
 		value = setst_add_laeco(readword(dest), readword(src));
 		writeword(dest, value);
-		CYCLES(14, 4);
+		CYCLES(2, 14, 4);
 		break;
 	case 6:   /* MOV */
 		/* MOV --- MOVe */
 		/* D = S */
 		value = readword(src);
 		setst_lae(value);
-#if (TMS99XX_MODEL <= TMS9989_ID)
-		/* MOV performs a dummy read... */
+#if ((TMS99XX_MODEL >= TMS9900_ID) && (TMS99XX_MODEL <= TMS9985_ID))
+		/* MOV performs a dummy read under tms9900/9980 (but neither ti990/10 nor tms9995) */
 		(void)readword(dest);
 #endif
 		writeword(dest, value);
-		CYCLES(14, 3);
+		CYCLES(1, 14, 3);
 		break;
 	case 7:   /* SOC */
 		/* SOC --- Set Ones Corresponding */
@@ -3201,7 +3601,7 @@ static void h4000w(UINT16 opcode)
 		value = readword(dest) | readword(src);
 		setst_lae(value);
 		writeword(dest, value);
-		CYCLES(14, 4);
+		CYCLES(2, 14, 4);
 		break;
 	}
 }
@@ -3224,14 +3624,14 @@ static void h4000b(UINT16 opcode)
 		value = readbyte(dest) & (~ readbyte(src));
 		setst_byte_laep(value);
 		writebyte(dest, value);
-		CYCLES(14, 4);
+		CYCLES(3, 14, 4);
 		break;
 	case 3:   /* SB */
 		/* SB ---- Subtract, Byte */
 		/* D -= S */
 		value = setst_subbyte_laecop(readbyte(dest), readbyte(src));
 		writebyte(dest, value);
-		CYCLES(14, 4);
+		CYCLES(3, 14, 4);
 		break;
 	case 4:   /* CB */
 		/* CB ---- Compare Bytes */
@@ -3239,27 +3639,29 @@ static void h4000b(UINT16 opcode)
 		value = readbyte(src);
 		setst_c_lae(readbyte(dest)<<8, value<<8);
 		lastparity = value;
-		CYCLES(14, 4);
+		CYCLES(5, 14, 4);
 		break;
 	case 5:   /* AB */
 		/* AB ---- Add, Byte */
 		/* D += S */
 		value = setst_addbyte_laecop(readbyte(dest), readbyte(src));
 		writebyte(dest, value);
+		CYCLES(3, 14, 4);
 		break;
 	case 6:   /* MOVB */
 		/* MOVB -- MOVe Bytes */
 		/* D = S */
 		value = readbyte(src);
 		setst_byte_laep(value);
-#if (TMS99XX_MODEL <= TMS9989_ID)
-		/* on tms9900, MOVB needs to read destination, because it cannot actually read one single byte.
-		  It reads a word, replaces the revelant byte, then write the result */
-		/* A tms9980 theorically does not need to do so, but still does... */
+#if (TMS99XX_MODEL <= TMS9985_ID)
+		/* On ti990/10 and tms9900, MOVB needs to read destination, because it cannot actually
+		  read one single byte.  It reads a word, replaces the revelant byte, then write
+		  the result.  A tms9980 should not need to do so, but still does, because it is just
+		  a tms9900 with a 16 to 8 bit multiplexer (instead of a new chip design such as 9995). */
 		readbyte(dest);
 #endif
 		writebyte(dest, value);
-		CYCLES(14, 3);
+		CYCLES(3, 14, 3);
 		break;
 	case 7:   /* SOCB */
 		/* SOCB -- Set Ones Corresponding, Byte */
@@ -3267,7 +3669,7 @@ static void h4000b(UINT16 opcode)
 		value = readbyte(dest) | readbyte(src);
 		setst_byte_laep(value);
 		writebyte(dest, value);
-		CYCLES(14, 4);
+		CYCLES(3, 14, 4);
 		break;
 	}
 }
@@ -3275,7 +3677,7 @@ static void h4000b(UINT16 opcode)
 
 INLINE void execute(UINT16 opcode)
 {
-#if (TMS99XX_MODEL <= TMS9985_ID)
+#if (! HAS_9995_OPCODES)
 
 	/* tms9900-like instruction set*/
 
@@ -3301,9 +3703,10 @@ INLINE void execute(UINT16 opcode)
 
 	(* jumptable[opcode >> 9])(opcode);
 
-#elif (TMS99XX_MODEL <= TMS9995_ID)
+#else
 
 	/* tms9989 and tms9995 include 4 extra instructions, and one additionnal instruction type */
+	/* tms99000 includes yet another additional instruction */
 
 	static void (* jumptable[256])(UINT16) =
 	{
@@ -3342,148 +3745,6 @@ INLINE void execute(UINT16 opcode)
 	};
 
 	(* jumptable[opcode >> 8])(opcode);
-
-#elif (TMS99XX_MODEL >= TMS99105A_ID)
-
-	/* tms99xxx include even more instruction types */
-
-	static void (* jumptable[1024])(UINT16) =
-	{
-		&h0000,&h0040,&h0040,&illegal,&h0100,&h0100,&h0100,&h0100,
-		&h0200,&h0200,&h0200,&h0200,&h0200,&h0200,&h0200,&h0200,
-		&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,
-		&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,&h0400,
-		&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,
-		&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,&h0800,
-#if (TMS99XX_MODEL == TMS99110A_ID)
-		&h0c00,&h0c40,&h0c40,&h0c40,&h0c40,&h0c40,&h0c40,&h0c40,
-#else
-		&h0c00,&illegal,&illegal,&illegal,&illegal,&illegal,&illegal,&illegal,
-#endif
-		&illegal,&illegal,&illegal,&illegal,&illegal,&illegal,&illegal,&illegal,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,&h1000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&xop,&xop,&xop,&xop,&xop,&xop,&xop,&xop,
-		&xop,&xop,&xop,&xop,&xop,&xop,&xop,&xop,
-		&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,
-		&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,
-		&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,
-		&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,&ldcr_stcr,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,&h2000,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,&h4000w,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,
-		&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b,&h4000b
-	};
-
-	(* jumptable[opcode >> 6])(opcode);
 
 #endif
 }
