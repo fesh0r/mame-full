@@ -6,8 +6,9 @@
 
 	The specs have been published in <http://www.nouspikel.com/ti99/ide.html>.
 
-	The card is very simple, since it only implements PIO.  The only thing that
-	makes the design a little more complex is the clock chip and the SRAM.
+	The card is very simple, since it only implements PIO transfer.  The only 
+	thing that makes the design a little more complex is the clock chip and the
+	SRAM.
 
 	Raphael Nabet, 2002-2003.
 */
@@ -36,6 +37,9 @@ enum
 
 static UINT8 *ti99_ide_rtc_RAM;
 static int cur_rtc_page;
+
+static UINT8 ti99_ide_rtc_regs[64];
+static int cur_rtc_reg;
 
 static const ti99_exp_card_handlers_t ide_handlers =
 {
@@ -231,6 +235,12 @@ void ti99_ide_init(void)
 
 	ide_controller_init_custom(0, & ti99_ide_interface, NULL);
 	ide_controller_reset(0);
+
+	cur_page = 0;
+	cur_rtc_page = 0;
+	cur_rtc_reg = 0;
+	sram_enable = 0;
+	cru_register = 0;
 }
 
 /*
@@ -303,18 +313,18 @@ static READ_HANDLER(ide_mem_r)
 		case 0:		/* RTC RAM */
 			if (offset & 0x80)
 				/* RTC RAM page register */
-				return cur_rtc_page;
+				reply = cur_rtc_page;
 			else
 				/* RTC RAM write */
-				return ti99_ide_rtc_RAM[offset+0x0020*cur_rtc_page];
+				reply = ti99_ide_rtc_RAM[offset+0x0020*cur_rtc_page];
 			break;
 		case 1:		/* RTC registers */
-			if (offset == 0x20)
-				/* register data */
-				;
-			else if (offset == 0x30)
+			if (offset & 0x10)
 				/* register select */
-				;
+				reply = cur_rtc_reg;
+			else
+				/* register data */
+				reply = ti99_ide_rtc_regs[cur_rtc_reg];
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
@@ -344,7 +354,7 @@ static READ_HANDLER(ide_mem_r)
 	}
 	else
 	{	/* sram */
-		if (! (cru_register & cru_reg_page_0))
+		if ((cru_register & cru_reg_page_0) || (offset >= 0x1000))
 			reply = ti99_ide_RAM[offset+0x2000*cur_page];
 		else
 			reply = ti99_ide_RAM[offset];
@@ -360,7 +370,7 @@ static WRITE_HANDLER(ide_mem_w)
 {
 	if (cru_register & cru_reg_page_switching)
 	{
-		cur_page = (offset >> 1) & page_mask;//0xff
+		cur_page = (offset >> 1) & page_mask;
 	}
 
 	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
@@ -376,12 +386,12 @@ static WRITE_HANDLER(ide_mem_w)
 				ti99_ide_rtc_RAM[offset+0x0020*cur_rtc_page] = data;
 			break;
 		case 1:		/* RTC registers */
-			if (offset == 0x20)
-				/* register data */
-				;
-			else if (offset == 0x30)
+			if (offset & 0x10)
 				/* register select */
-				;
+				cur_rtc_reg = data & 0x3f;
+			else
+				/* register data */
+				ti99_ide_rtc_regs[cur_rtc_reg] = data;
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
 			if (offset & 1)
@@ -401,7 +411,7 @@ static WRITE_HANDLER(ide_mem_w)
 	{	/* sram */
 		if (! (cru_register & cru_reg_wp))
 		{
-			if (! (cru_register & cru_reg_page_0))
+			if ((cru_register & cru_reg_page_0) || (offset >= 0x1000))
 				ti99_ide_RAM[offset+0x2000*cur_page] = data;
 			else
 				ti99_ide_RAM[offset] = data;
