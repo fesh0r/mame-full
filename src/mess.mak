@@ -575,6 +575,7 @@ $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \
       $(OBJ)/mess/machine/6551.o     \
+      $(OBJ)/mess/formats/orictap.o  \
       $(OBJ)/mess/vidhrdw/oric.o	 \
 	  $(OBJ)/mess/machine/oric.o	 \
 	  $(OBJ)/mess/systems/oric.o
@@ -807,6 +808,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/d64.o     \
 	  $(OBJ)/mess/tools/fat.o     \
 	  $(OBJ)/mess/tools/rom16.o   \
+      $(OBJ)/mess/tools/nccard.o  \
 	  $(OBJ)/mess/snprintf.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
