@@ -32,3 +32,8 @@ Source Changes:
 
 - Switch -a for MESSRoms, which allow to scan files of all sizes.
   [Krzysztof Strzecha]
+
+- Removed extension renaming code. [Nate Woods]
+
+- [Windows] Added support for transparent zip paths (e.g. C:\imgs\mule.zip\mule.atr)
+  [Nate Woods]

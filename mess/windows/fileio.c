@@ -498,57 +498,29 @@ int osd_faccess (const char *newfilename, int filetype)
 	return 0;
 }
 
-/* NPW 30-Aug-2001 - direct image loading stuff */
 #ifdef MESS
-
-static int is_direct_path(const char *filename)
+static int is_zipfile(const char *filename)
 {
-	return strchr(filename, '/') || strchr(filename, '\\');
+	const char *extension;
+	extension = strrchr(filename, '.');
+	return extension && !stricmp(extension, ".zip");
 }
 
-static int try_direct(const char *filename, FakeFileHandle *f, const char *mode )
+static int is_path_separator(char c)
 {
-	char *ext;
-	int is_zip;
-	ZIP *z;
-	struct zipent *ent;
-	struct stat stat_buffer;
-	int found = 0;
-
-	ext = strrchr(filename, '.');
-	is_zip = (ext) ? !stricmp(ext, ".zip") : 0;
-	if (is_zip)
-	{
-		/* loading a ZIP file directly? */
-		if (cache_stat(filename, &stat_buffer) == 0)
-		{
-			z = openzip(filename);
-			if (z)
-			{
-				ent = readzip(z);
-				if (ent)
-				{
-					if (load_zipped_file(filename, ent->name, &f->data, &f->length) == 0)
-					{
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32(0L, f->data, f->length);
-						found = 1;
-					}
-				}
-				closezip(z);
-			}
-		}
-	}
-	else
-	{
-		f->type = kPlainFile;
-		f->file = fopen (filename, mode);
-		found = f->file != 0;
-	}
-	return found;
+	return (c == '/') || (c == '\\');
 }
 
+static int is_absolute_path(const char *filename)
+{
+	if (is_path_separator(filename[0]))
+		return 1;
+#ifndef UNDER_CE
+	if (filename[0] && (filename[1] == ':'))
+		return 1;
+#endif
+	return 0;
+}
 #endif
 
 /* JB 980920 update */
@@ -697,268 +669,164 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 
 #ifdef MESS
 	case OSD_FILETYPE_IMAGE_R:
-
 		/* only for reading */
-		if( openforwrite )
+		if (openforwrite)
 		{
 			logerror("osd_fopen: type %02x write not supported\n",filetype);
 			break;
 		}
-		else
-		{
-			LOG(("osd_fopen: using rompath\n"));
-			pathc = swpathc;
-			pathv = swpathv;
-		}
-
-		LOG(("Open IMAGE_R '%s' for %s\n", filename, game));
-
-		/* NPW 30-Aug-2001 - adding path support for images */
-		if ( !found && is_direct_path(filename) )
-		{
-			/* access the file directly */
-			found = try_direct(filename, f, "rb");
-		}
-
-		/* use the software paths */
-		for( indx = 0; indx < pathc && !found; ++indx )
-		{
-			const char *dir_name = pathv[indx];
-
-			/* this section allows exact path from .cfg */
-			if( !found )
-			{
-				sprintf(name,"%s",dir_name);
-				if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-				{
-					sprintf(name,"%s/%s",dir_name,filename);
-					if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
-					{
-						f->type = kRAMFile;
-						f->offset = 0;
-						found = 1;
-					}
-				}
-			}
-
-			if( !found )
-			{
-				sprintf (name, "%s/%s", dir_name, gamename);
-				LOG(("Trying %s directory\n", name));
-				if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-				{
-					sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
-					LOG(("Trying %s file\n", name));
-					if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
-					{
-						f->type = kRAMFile;
-						f->offset = 0;
-						found = 1;
-					}
-				}
-			}
-
-			/* Zip cart support for MESS */
-			if( !found && filetype == OSD_FILETYPE_IMAGE_R )
-			{
-				char *extension = strrchr (name, '.');	/* find extension */
-				if( extension )
-					strcpy (extension, ".zip");
-				else
-					strcat (name, ".zip");
-				LOG(("Trying %s file\n", name));
-				if( cache_stat(name, &stat_buffer) == 0 )
-				{
-					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
-					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32 (0L, f->data, f->length);
-						found = 1;
-					}
-				}
-			}
-
-			if( !found )
-			{
-				/* try with a .zip extension */
-				sprintf (name, "%s/%s.zip", dir_name, gamename);
-				LOG(("Trying %s file\n", name));
-				if( cache_stat(name, &stat_buffer) == 0 )
-				{
-					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
-					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32 (0L, f->data, f->length);
-						found = 1;
-					}
-				}
-			}
-		}
-		break; /* end of IMAGE_R */
+		/* pass through */
 
 	case OSD_FILETYPE_IMAGE_RW:
-	{
-		static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
-		char file[256];
-		char *extension;
-
-		LOG(("Open IMAGE_RW '%s' for %s mode '%s'\n", filename, game, write_modes[openforwrite]));
-		strcpy (file, filename);
-
-		pathc = swpathc;
-		pathv = swpathv;
-
-		/* NPW 30-Aug-2001 - adding path support for images */
-		if ( !found && is_direct_path(filename) )
 		{
-			/* access the file directly */
-			found = try_direct(filename, f, "rwb");
-		}
+			extern char *renamed_image;	/* HACK */
+			static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+			ZIP *z;
+			struct zipent *ent;
+			int file_exists;
 
-
-		do
-		{
-		/* 29-05-00 Lee Ward: Reversed the search order. */
-		for (indx=pathc-1; !found && indx>=0; --indx)
-		{
-			const char *dir_name = pathv[indx];
-
-			/* Exact path support */
-
-			/* 29-05-00 Lee Ward: Changed the search order to prevent new files
-			   being created in the application root as default */
-
-			if( !found )
+			if (renamed_image)
 			{
-				sprintf (name, "%s/%s", dir_name, gamename);
-				LOG(("Trying %s directory\n", name));
-				if( cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-				{
-					sprintf (name, "%s/%s/%s", dir_name, gamename, file);
-					LOG(("Trying %s file\n", name));
-					f->file = fopen (name, write_modes[openforwrite]);
-					found = f->file != 0;
-					if( !found && openforwrite == 3 )
-					{
-						f->file = fopen(name, write_modes[4]);
-						found = f->file != 0;
-					}
-				}
+				free(renamed_image);
+				renamed_image = NULL;
 			}
 
-			/* Steph - Zip disk images support for MESS */
-			if( !found && !openforwrite )
+			if (is_absolute_path(filename))
 			{
-				extension = strrchr (name, '.');    /* find extension */
-				/* add .zip for zipfile */
-				if( extension )
-					strcpy(extension, ".zip");
+				LOG(("osd_fopen: using absolute path\n"));
+				pathc = 1;
+				pathv = NULL;
+			}
+			else
+			{
+				LOG(("osd_fopen: using rompath\n"));
+				pathc = swpathc;
+				pathv = swpathv;
+			}
+
+			LOG(("Open IMAGE_%s '%s' for %s\n", (filetype == OSD_FILETYPE_IMAGE_R) ? "R" : "RW", filename, game));
+
+			/* use the software paths */
+			for (indx = 0; indx < pathc && !found; indx++)
+			{
+				if (pathv)
+					sprintf(name, "%s/%s/%s", pathv[indx], game, filename);
 				else
-					strcat(name, ".zip");
-				LOG(("Trying %s file\n", name));
-				if( cache_stat(name, &stat_buffer) == 0 )
-				{
-					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
-					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32(0L, f->data, f->length);
-						found = 1;
-					}
-				}
-			}
+					strcpy(name, filename);
 
-			if (!found)
-			{
-				sprintf(name, "%s", dir_name);
-				LOG(("Trying %s directory\n", name));
-				if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-				{
-					sprintf(name,"%s/%s", dir_name, file);
-					LOG(("Trying %s file\n", name));
-					f->file = fopen(name, write_modes[openforwrite]);
-					found = f->file != 0;
-					if( !found && openforwrite == 3 )
-					{
-						f->file = fopen(name, write_modes[4]);
-						found = f->file != 0;
-					}
-				}
-			}
+				/* we have a name; does this match a real file? */
+				file_exists = (cache_stat(name,&stat_buffer) == 0) && !(stat_buffer.st_mode & S_IFDIR);
 
-			if( !found && !openforwrite )
-			{
-				extension = strrchr (name, '.');    /* find extension */
-				/* add .zip for zipfile */
-				if( extension )
-					strcpy(extension, ".zip");
+				if (is_zipfile(name))
+				{
+					/* we can only open bare zip paths for reading, and the zip has to be there */
+					if (openforwrite || !file_exists)
+						continue;
+
+					/* a bare zip file was selected; so all we can do here is tranform
+					 * the name to a full zip name (i.e. a name with a zip path at the end
+					 */
+					z = openzip(name);
+					if (!z)
+						continue;
+
+					ent = readzip(z);
+					if (!ent)
+					{
+						closezip(z);
+						continue;
+					}
+
+					strcat(name, "/");
+					strcat(name, ent->name);
+					closezip(z);
+
+					renamed_image = strdup(name);
+					LOG(("osd_fopen: opened a raw zip file; renaming as '%s'\n", name));
+				}
 				else
-					strcat(name, ".zip");
-				LOG(("Trying %s file\n", name));
-				if( cache_stat(name, &stat_buffer) == 0 )
 				{
-					if( load_zipped_file(name, filename, &f->data, &f->length) == 0 )
+					/* a real, non-zip file */
+					if (openforwrite)
 					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32(0L, f->data, f->length);
-						found = 1;
-					}
-				}
-			}
-
-			if( !found && !openforwrite )
-			{
-				/* try with a .zip extension */
-				sprintf (name, "%s/%s.zip", dir_name, gamename);
-				LOG(("Trying %s file\n", name));
-				if( cache_stat (name, &stat_buffer) == 0 )
-				{
-					if( load_zipped_file (name, file, &f->data, &f->length) == 0 )
-					{
-						LOG(("Using (osd_fopen) zip file for %s\n", filename));
-						f->type = kZippedFile;
-						f->offset = 0;
-						f->crc = crc32 (0L, f->data, f->length);
-						found = 1;
-					}
-				}
-			}
-
-			if( !found )
-			{
-				/* try with a .zip directory (if ZipMagic is installed) */
-				sprintf (name, "%s/%s.zip", dir_name, gamename);
-				LOG(("Trying %s ZipMagic directory\n", name));
-				if( cache_stat (name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-				{
-					sprintf (name, "%s/%s.zip/%s", dir_name, gamename, file);
-					LOG(("Trying %s\n", name));
-					f->file = fopen (name, write_modes[openforwrite]);
-					found = f->file != 0;
-					if( !found && openforwrite == 3 )
-					{
-						f->file = fopen(name, write_modes[4]);
+						/* a real, non-zip file, for writing! */
+						f->file = fopen(name, write_modes[openforwrite]);
 						found = f->file != 0;
+						if( !found && openforwrite == OSD_FOPEN_RW_CREATE )
+						{
+							f->type = kPlainFile;
+							f->file = fopen(name, write_modes[4]);
+							found = f->file != 0;
+						}
+					}
+					else if (file_exists)
+					{
+						/* a real, non-zip file, read only */
+						if (checksum_file(name, &f->data, &f->length, &f->crc) == 0)
+						{
+							f->type = kRAMFile;
+							f->offset = 0;
+							found = 1;
+						}
+					}
+					continue;
+				}
+
+				/* at this point, we have a path that does not correspond to a real file; move
+				 * up the filepath to see if we can find a zip (assuming we are opening for 
+				 * read only).
+				 */
+				if (!found && !openforwrite)
+				{
+					char *s;
+					char c;
+					int done = 0;
+
+					s = name + strlen(name) - 1;
+
+					while(!done)
+					{
+						while(!is_path_separator(*s) && (s > name))
+							s--;
+
+						if (s <= name)
+						{
+							/* can't go up anymore */
+							done = 1;
+						}
+						else
+						{
+							c = *s;
+							*s = '\0';
+
+							if (cache_stat(name, &stat_buffer) == 0)
+							{
+								/* we found something; we are done with the tranversal */
+								done = 1;
+								if (!(stat_buffer.st_mode & S_IFDIR) && is_zipfile(name))
+								{
+									/* we have a zipfile, with a partial path */
+									if (load_zipped_file(name, s + 1, &f->data, &f->length) == 0)
+									{
+										LOG(("Using (osd_fopen) zip file for %s\n", filename));
+										f->type = kZippedFile;
+										f->offset = 0;
+										f->crc = crc32 (0L, f->data, f->length);
+										found = 1;
+									}
+								}
+							}
+							else
+							{
+								*(s--) = c;
+							}
+						}
 					}
 				}
 			}
-			if( found )
-				LOG(("IMAGE_RW %s FOUND in %s!\n", file, name));
 		}
+		break;
 
-		extension = strrchr (file, '.');
-		if( extension )
-			*extension = '\0';
-		} while( !found && extension );
-	}
-	break;
 #endif	/* MESS */
 
 

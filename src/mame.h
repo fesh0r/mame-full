@@ -112,8 +112,6 @@ struct GameOptions {
 	char savegame;
 
 	#ifdef MESS
-	int append_no_file_extension;
-
 	struct ImageFile image_files[MAX_IMAGES];
 	int image_count;
 	#endif
