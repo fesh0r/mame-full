@@ -79,12 +79,7 @@ static UINT8 irq_status = 0;
 
 static UINT8 motor_drive = 0;
 static short motor_count = 0;
-static UINT8 tracks[4] = {0,};
-static UINT8 heads[4] = {0,};
-static UINT8 s_p_t[4] = {0,};
 static UINT8 head = 0;
-static short dir_sector[4] = {0,};
-static short dir_length[4] = {0,};
 
 static int cass_specified = 0;
 /* current tape file handles */
@@ -391,7 +386,11 @@ int cgenie_floppy_init(int id)
 
 			int i, j, dir_offset;
 			UINT8 buff[16];
-
+			UINT8 tracks = 0;
+			UINT8 heads = 0;
+			UINT8 s_p_t = 0;
+			short dir_sector = 0;
+			short dir_length = 0;
 			/* determine geometry from disk contents */
 			for( i = 0; i < 12; i++ )
 			{
@@ -401,14 +400,14 @@ int cgenie_floppy_init(int id)
 				if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
 					continue;
 
-				dir_sector[id] = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-				dir_length[id] = pd_list[i].DDGA * pd_list[i].GPL;
+				dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+				dir_length = pd_list[i].DDGA * pd_list[i].GPL;
 				
 				/* scan directory for DIR/SYS or NCW1983/JHL files */
 				/* look into sector 2 and 3 first entry relative to DDSL */
 				for( j = 16; j < 32; j += 8 )
 				{
-									dir_offset = dir_sector[id] * 256 + j * 32;
+					dir_offset = dir_sector * 256 + j * 32;
 					if( osd_fseek(file, dir_offset, SEEK_SET) < 0 )
 						break;
 					if( osd_fread(file, buff, 16) != 16 )
@@ -416,26 +415,55 @@ int cgenie_floppy_init(int id)
 					if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
 						!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
 					{
-						tracks[id] = pd_list[i].TRK;
-						heads[id] = (pd_list[i].SPT > 18) ? 2 : 1;
-						s_p_t[id] = pd_list[i].SPT / heads[id];
-						dir_sector[id] = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-						dir_length[id] = pd_list[i].DDGA * pd_list[i].GPL;
-
-						/* set geometry so disk image can be read */
-						basicdsk_set_geometry(id, tracks[id], heads[id], s_p_t[id], 256, dir_sector[id], dir_length[id], 0);
-
+						tracks = pd_list[i].TRK;
+						heads = (pd_list[i].SPT > 18) ? 2 : 1;
+						s_p_t = pd_list[i].SPT / heads;
+						dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+						dir_length = pd_list[i].DDGA * pd_list[i].GPL;
 						memcpy(memory_region(REGION_CPU1) + 0x5A71 + id * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
 						break;
 					}
 				}
+
+				/* set geometry so disk image can be read */
+				basicdsk_set_geometry(id, tracks, heads, s_p_t, 256, 0);
+
+				/* mark directory sectors with deleted data address mark */
+				/* assumption dir_sector is a sector offset */
+				for (i=0; i<dir_length; i++)
+				{
+					UINT8 track;
+					UINT8 side;
+					UINT8 sector_id;
+					UINT16 track_offset;
+					UINT16 sector_offset;
+
+					/* calc sector offset */
+					sector_offset = dir_sector + i;
+
+					/* get track offset */
+					track_offset = sector_offset/s_p_t;
+
+					/* calc track */
+					track = track_offset/heads;
+
+					/* calc side */
+					side = track_offset % heads;
+
+					/* calc sector id - first sector id is 0! */
+					sector_id = dir_sector % s_p_t;
+					
+					/* set deleted data address mark for sector specified */
+					basicdsk_set_ddam(id, track, side, sector_id,1);
+				}
+
 			}
 
 			osd_fclose(file);
 		}
 
 		return INIT_OK;
-    }
+	}
 
 	return INIT_FAILED;
 }
