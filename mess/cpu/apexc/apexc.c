@@ -5,8 +5,12 @@
 
 	APE(X)C (All Purpose Electronic X-ray Computer) was a computer built by Andrew D. Booth
 	and others for the Birkbeck College, in London, which was used to compute cristal
-	structure using X-ray interferometry.  It was one of the APEC series of computer, which
-	were simple electronic computers built in the early 1950s.
+	structure using X-ray diffraction.
+
+	It was one of the APEC series of computer, which were simple electronic computers
+	built in the early 1950s for various British Universities.  The HEC (built by
+	the British Tabulating Machine Company) and another machine named MAC were based
+	on the APEXC.
 
 	References :
 	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
@@ -296,7 +300,7 @@ without danger */
 
 /* compute complete word address (i.e. translate a logical track address (expressed
 in current working store) to an absolute track address) */
-INLINE int effective_address(int address)
+static int effective_address(int address)
 {
 	if (address & 0x200)
 	{
@@ -420,6 +424,7 @@ INLINE int load_ml(int address, int vector)
 	the control panel operation (and I know virtually nothing on the control panel).
 	Currently, I fetch after the executing the instruction, so that the one may enter
 	an instruction into the control register with the control panel, then execute it.
+	This solution make timing simulation much simpler, too.
 */
 static void execute(void)
 {
@@ -661,8 +666,8 @@ static void execute(void)
 		case 30:
 			/* S(x) */
 			apexc.working_store = (x >> 5) & 0xf;	/* or is it (x >> 6) ? */
-			DELAY(32);	/* no idea what the value is...  All I know is that it is much more
-						than track switch (which is 6) */
+			DELAY(32);	/* no idea what the value is...  All I know is that it takes much
+						more time than track switching (which takes 6 cycles) */
 			break;
 		}
 		if (vector)
@@ -697,12 +702,15 @@ special_fetch:
 
 void apexc_reset(void *param)
 {
-	/* mmmh... */
-	apexc.cr = 0;	/* first instruction executed is stop (is this right ?) */
-	apexc.ml = 0;	/* no idea whether this is true or not */
+	/* mmmh...  I don't know what happens on reset with an actual APEXC. */
+
 	apexc.working_store = 1;	/* mere guess */
-	apexc.current_word = 0;		/* well, we do have to start somewhere */
-	apexc.running = FALSE;		/* who cares ? */
+	apexc.current_word = 0;		/* well, we do have to start somewhere... */
+
+	/* next two lines are just the product of my bold fantasy */
+	apexc.cr = 0;				/* first instruction executed will be a stop */
+	apexc.running = TRUE;		/* this causes the CPU to load the instruction at 0/0,
+								which enables easy booting (just press run on the panel) */
 }
 
 void apexc_exit(void)
@@ -728,12 +736,24 @@ void apexc_set_context(void *src)
 executed in the midst of an instruction */
 unsigned apexc_get_pc(void)
 {
-	return apexc.ml;
+	return effective_address(apexc.ml);
 }
 
 void apexc_set_pc(unsigned val)
 {
-	apexc.ml = val;
+	/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
+	or a switchable track group */
+	apexc.ml = val & 0x1ff;
+	if (val & 0x1e00)
+	{	/* we are accessing a switchable track group */
+		apexc.ml |= 0x200;	/* set 10th bit */
+
+		if (((val >> 9) & 0xf) != apexc.working_store)
+		{	/* we need to do a store switch */
+			apexc.working_store = ((val >> 9) & 0xf);
+		}
+	}
+	
 }
 
 /* no SP */
@@ -781,6 +801,8 @@ unsigned apexc_get_reg(int regnum)
 			return apexc.working_store;
 		case APEXC_STATE:
 			return apexc.running ? TRUE : FALSE;
+		case APEXC_ML_FULL:
+			return effective_address(apexc.ml);
 	}
 	return 0;
 }
