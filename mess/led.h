@@ -17,4 +17,4 @@ void draw_led(struct mame_bitmap *bitmap, const char *led, int valueorcolor, int
  *	"11111\r"
  *	" 111";
  */
-const char *radius_2_led;
+extern const char *radius_2_led;
