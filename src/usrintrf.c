@@ -2936,9 +2936,7 @@ static void setup_menu_init(void)
 #endif
 #endif
 
-#ifndef MESS
 	menu_item[menu_total] = ui_getstring (UI_resetgame); menu_action[menu_total++] = UI_RESET;
-#endif
 	menu_item[menu_total] = ui_getstring (UI_returntogame); menu_action[menu_total++] = UI_EXIT;
 	menu_item[menu_total] = 0; /* terminate array */
 }
@@ -3599,13 +3597,6 @@ static void display_fps(struct mame_bitmap *bitmap)
 	}
 }
 
-#ifdef MESS
-#ifdef SUPPRESS_UI_WARNING
-#define HAVE_UI_WARNING 0
-#else
-#define HAVE_UI_WARNING 1
-#endif
-#endif /* MESS */
 
 int show_profiler;
 
@@ -3646,7 +3637,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 		if( ui_active )
 		{
-			if( HAVE_UI_WARNING && ui_display_count > 0 )
+			if( ui_display_count > 0 )
 			{
 					buf[0] = 0;
 					strcpy(buf,ui_getstring (UI_keyb1));
@@ -3669,7 +3660,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		}
 		else
 		{
-			if( HAVE_UI_WARNING && ui_display_count > 0 )
+			if( ui_display_count > 0 )
 			{
 					buf[0] = 0;
 					strcpy(buf,ui_getstring (UI_keyb1));
