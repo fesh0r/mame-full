@@ -2,7 +2,6 @@
 #include "driver.h"
 #include "ds1315.h"
 #include "bcd.h"
-#include "gregoria.h"
 
 /* This is an emulation of Dallas Semiconductor's Phantom Time Chip.
    DS1315.
@@ -112,20 +111,22 @@ WRITE_HANDLER ( ds1315_w_data )
 
 static void ds1315_fill_raw_data( void )
 {
-	/* This routine will call hopefully standard 'C' library code to get the current
-	   date and time and fill in the raw data structor.
+	/* This routine will (hopefully) call a standard 'C' library routine to get the current
+	   date and time and then fill in the raw data struct.
 	*/
 
 	time_t		t;
 	struct tm 	*tmtime;
 	int			raw[8], i, j;
-
+	
+	/* Get seconds from epoch */
 	t=time(NULL);
 	if (t==-1) return;
-
+	
+	/* Convert seconds to local time */
 	tmtime=localtime(&t);
 
-	raw[0] = 0;
+	raw[0] = 0;	/* tenths and hundreths of seconds are always zero */
 	raw[1] = dec_2_bcd(tmtime->tm_sec);
 	raw[2] = dec_2_bcd(tmtime->tm_min);
 	raw[3] = dec_2_bcd(tmtime->tm_hour);
@@ -135,7 +136,7 @@ static void ds1315_fill_raw_data( void )
 	raw[6] = dec_2_bcd(tmtime->tm_mon+1);
 	raw[7] = dec_2_bcd(tmtime->tm_year%100);
 
-	/* Ok now we have the raw bcd bytes. Now we need to push it into our bit array */
+	/* Ok now we have the raw bcd bytes. Now we need to push them into our bit array */
 	
 	for( i=0; i<64; i++ )
 	{
@@ -144,14 +145,18 @@ static void ds1315_fill_raw_data( void )
 		raw[j] = raw[j] >> 1;
 	}
 
-	/* freeing of localtime??  Look into it */
+	/* After reading the sources for localtime(), I have determined the the
+	   buffer returned is a global variable, thus it does not need to be free()d.
+	*/
 }
 
 static void ds1315_input_raw_data( void )
 {
-	/* This routine is called when new date and time are being set inside the
+	/* This routine is called when new date and time has been written to the
 	   clock chip. Currently we ignore setting the date and time in the clock
 	   chip.
+	   
+	   We always return the host's time when asked.
 	*/
 }
 
