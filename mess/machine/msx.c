@@ -353,7 +353,6 @@ int msx_load_rom (int id)
             memset (pmem + size_aligned + i * 0x100 + 0x1880, 0xff, 0x80);
         }
         msx1.cart[id].mem = pmem;
-        msx1.cart[id].banks[0] = 0x1;
         break;
    case 7: /* ASCII/8kB with SRAM */
         pmem = realloc (msx1.cart[id].mem, size_aligned + 0x2000);

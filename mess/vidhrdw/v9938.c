@@ -821,7 +821,7 @@ static void v9938_sprite_mode1 (int line, UINT8 *col)
 static void v9938_sprite_mode2 (int line, UINT8 *col)
 	{
 	int attrtbl, patterntbl, patternptr, colourtbl;
-	int x, i, y, p, height, c, p2, n, pattern, colourmask, first_non_p;
+	int x, i, y, p, height, c, p2, n, pattern, colourmask;
 
 	memset (col, 0, 256);
 
@@ -838,7 +838,7 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 	/* magnified sprites (zoomed) */
 	if (vdp.contReg[1] & 1) height *= 2;
 
-	p2 = p = first_non_p = 0;
+	p2 = p = 0;
 	while (1)
 		{
 		y = v9938_vram_read (attrtbl);
