@@ -225,7 +225,6 @@ void inputx_validitycheck(const struct GameDriver *gamedrv)
 		{
 			for (j = 0; j < NUM_SIMUL_KEYS; j++)
 			{
-				assert(codes[i].port[j] >= 0);
 				assert(codes[i].port[j] < port_count);
 			}
 		}

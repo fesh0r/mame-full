@@ -45,6 +45,10 @@
 #include "Options.h"
 #include "help.h"
 
+#ifdef MESS
+#include "windowsui/MessResource.h"
+#endif
+
 #ifdef _MSC_VER
 #if _MSC_VER > 1200
 #define HAS_DUMMYUNIONNAME
