@@ -36,7 +36,8 @@ WRITE_HANDLER(pc1403_asic_write)
     case 8-8:
 	// output
 	break;
-    case 0xe-8: keyb=data; break;
+    case 0xe - 8:
+         keyb=data; break;
     }
 }
 
