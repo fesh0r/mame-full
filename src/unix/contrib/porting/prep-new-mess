@@ -15,26 +15,33 @@
 
 # Copy the MESS files over.
 if [ -d "$1" ]; then
-  cp -R $1/* .
+	cp -R $1/* .
 else
-  echo "Cannot find MESS source directory, exiting..."
-  exit 1
+	echo "Cannot find MESS source directory, exiting..."
+	exit 1
+fi
+
+D2U=
+if [ -x "`which dos2unix 2> /dev/null`" ]; then
+	D2U="dos2unix -kq"
+elif [ -x "`which d2u 2> /dev/null`" ]; then
+	D2U="d2u"
+else
+	echo "Unable to run dos2unix or d2u.  This may cause build problems on some platforms."
 fi
 
 # Fix the line endings of the included text files, makefiles, and sources.
-if [ -x "`which d2u 2> /dev/null`" ]; then
-  d2u `find . -name "*.txt" -print` 2> /dev/null
-  d2u `find . -name "*.htm" -print` 2> /dev/null
-  d2u `find . -name "*.html" -print` 2> /dev/null
-  d2u `find . -name "*.mak" -print` 2> /dev/null
-  d2u `find . -name "*.crc" -print` 2> /dev/null
-  d2u `find . -name "*.vc" -print` 2> /dev/null
-  d2u `find . -name "*.wce" -print` 2> /dev/null
-  d2u makefile.mes 2> /dev/null
-  d2u makefile.vc 2> /dev/null
-  d2u sysinfo.dat 2> /dev/null
-else
-  echo "Unable to run d2u.  This may cause build problems on some platforms."
+if [ -n "$D2U" ]; then
+	$D2U `find . -name "*.txt" -print` 2> /dev/null
+	$D2U `find . -name "*.htm" -print` 2> /dev/null
+	$D2U `find . -name "*.html" -print` 2> /dev/null
+	$D2U `find . -name "*.mak" -print` 2> /dev/null
+	$D2U `find . -name "*.hsi" -print` 2> /dev/null
+	$D2U `find . -name "*.vc" -print` 2> /dev/null
+	$D2U `find . -name "*.wce" -print` 2> /dev/null
+	$D2U makefile.mes 2> /dev/null
+	$D2U makefile.vc 2> /dev/null
+	$D2U sysinfo.dat 2> /dev/null
 fi
 
 # Change // comments to /* */ pairs.  Some C compilers don't like //.  We skip
@@ -47,24 +54,24 @@ rm -rf artwork bios cfg cheat memcard nvram snap software
 
 # Rename some files.
 if [ -f messnew.txt ]; then
-  mv messnew.txt doc/mess/
+	mv messnew.txt doc/mess/
 fi
 
 if [ -f sysinfo.dat ]; then
-  mv sysinfo.dat doc/mess/
+	mv sysinfo.dat doc/mess/
 fi
 
 if [ -f tools/imgtool.txt ]; then
-  mv tools/imgtool.txt doc/mess/
+	mv tools/imgtool.txt doc/mess/
 fi
 
 if [ -f tools/messroms.txt ]; then
-  mv tools/messroms.txt doc/mess/
+	mv tools/messroms.txt doc/mess/
 fi
 
 if [ -d docs ]; then
-  mv docs/* doc/mess/
-  rm -r docs
+	mv docs/* doc/mess/
+	rm -r docs
 fi
 
 # Clean up the files left over from d2u and fix-comments.

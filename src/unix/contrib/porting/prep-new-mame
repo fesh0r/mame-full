@@ -13,15 +13,22 @@
 # Last modified on 11 April 2001.
 
 # Fix the line endings of the included text files, makefiles, and sources.
-if [ -x "`which d2u 2> /dev/null`" ]; then
-  d2u `find . -name "*.txt" -print` 2> /dev/null
-  d2u `find . -name "*.htm" -print` 2> /dev/null
-  d2u `find . -name "*.html" -print` 2> /dev/null
-  d2u `find . -name "*.mak" -print` 2> /dev/null
-  d2u `find . -name "*.ini" -print` 2> /dev/null
-  d2u `find . -name "*.pl" -print` 2> /dev/null
+D2U=
+if [ -x "`which dos2unix 2> /dev/null`" ]; then
+	D2U="dos2unix -kq"
+elif [ -x "`which d2u 2> /dev/null`" ]; then
+	D2U="d2u"
 else
-  echo "Unable to run d2u.  This may cause build problems on some platforms."
+	echo "Unable to run dos2unix or d2u.  This may cause build problems on some platforms."
+fi
+
+if [ -n "$D2U" ]; then
+	$D2U `find . -name "*.txt" -print` 2> /dev/null
+	$D2U `find . -name "*.htm" -print` 2> /dev/null
+	$D2U `find . -name "*.html" -print` 2> /dev/null
+	$D2U `find . -name "*.mak" -print` 2> /dev/null
+	$D2U `find . -name "*.ini" -print` 2> /dev/null
+	$D2U `find . -name "*.pl" -print` 2> /dev/null
 fi
 
 
@@ -30,10 +37,10 @@ fix-comments `find . -name "*.[ch]" -print`
 
 # Copy over the src/unix folder from a previous release.
 if [ -d $1/src/unix ]; then
-  cp -R $1/src/unix src
+	cp -R $1/src/unix src
 else
-  echo "Cannot find src/unix in old xmame directory, exiting..."
-  exit 1
+	echo "Cannot find src/unix in old xmame directory, exiting..."
+	exit 1
 fi
 
 # Make some symlinks.
@@ -44,20 +51,20 @@ ln -s src/unix/install-sh .
 
 # Move the MAME text files to the doc directory.
 if [ -f whatsnew.txt ]; then
-  mv whatsnew.txt doc/mame/
+	mv whatsnew.txt doc/mame/
 fi
 
 if [ -f whatsold.txt ]; then
-  mv whatsold.txt doc/mame/
+	mv whatsold.txt doc/mame/
 fi
 
 if [ -f changed.txt ]; then
-  mv changed.txt doc/mame/
+	mv changed.txt doc/mame/
 fi
 
 if [ -d docs ]; then
-  mv docs/* doc/mame/
-  rm -r docs
+	mv docs/* doc/mame/
+	rm -r docs
 fi
 
 # Rename the MAME makefile and fix its line endings.
