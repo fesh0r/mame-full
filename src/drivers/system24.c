@@ -12,44 +12,140 @@
 */
 
 /*
+Sega System24 Overview
+Sega, 1987-1994
+
 PCB Layout
 ----------
 
-837-6442 SYSTEM 24 (C) SEGA 1987
+Note: The differences in the revisions is just the use of different sized RAMs
+and the quantities of RAM used.
+
+(1st Revision)
+837-6442 SYSTEM 24 (C)SEGA 1987
 |-------------------------------------------------------------------------------|
-| YM2151 DSW1 EPR12186.IC1           --------------------------| TMM41464-10 x4 |
-|          DSW2         EPR12187.IC2 |--------------------------                |
-|                                                CN2                            |
-|                 68000                                          TMM41464-10 x4 |
-|                |--------------|      315-5295                                 |
-|    315-5296    |HITACHI FD1094|      (QFP100)                                 |
-|-|  (QFP100)    |317-0058-03D  |                                               |
-  |              |--------------|                                               |
-|-|                                                              MB81C466-10 x4 |
-|                                                                               |
-|                                                                               |
-|S                                     315-5295                                 |
-|E                 20MHz   315-5195    (QFP100)                  MB81C466-10 x4 |
-|G                         (QFP100)                                             |
-|A                                                                              |
-|                                                                               |
-|5                                                                              |
-|6                                                                              |
-|                       315-5294        315-5292                  315-5293      |
-|                       (QFP100)        (QFP160)     32MHz        (QFP160)      |
-|            MB81C78A-45                                                        |
-|-|          MB81C78A-45                         M5M4464-12 x4   MB81461-12 x6  |
+| YM2151 DSW1 EPRxxxxx.IC1           --------------------------| TMM41464-10    |
+|          DSW2         EPRxxxxx.IC2 |-------------------------- TMM41464-10    |
+|                                                CN2             TMM41464-10    |
+|                 68000               |---------|                TMM41464-10    |
+|   |---------|  |--------------|     | 315-5295|                TMM41464-10    |
+|   | 315-5296|  |HITACHI FD1094|     |(QFP100) |                TMM41464-10    |
+|-| |(QFP100) |  |317-0xxx-0xx  |     |         |                TMM41464-10    |
+  | |         |  |--------------|     |---------|                TMM41464-10    |
+|-| |---------|                                                  MB81C466-10    |
+|                                                                MB81C466-10    |
+|                                     |---------|                MB81C466-10    |
+|S                        |---------| | 315-5295|                MB81C466-10    |
+|E                 20MHz  | 315-5295| |(QFP100) |                MB81C466-10    |
+|G                        |(QFP100) | |         |                MB81C466-10    |
+|A                        |         | |---------|                MB81C466-10    |
+|                         |---------|                            MB81C466-10    |
+|5                                                               |---------|    |
+|6                       |---------|  |---------|                | 315-5293|    |
+|                        | 315-5294|  | 315-5292|                | (QFP160)|    |
+|                        |(QFP100) |  | (QFP160)|    32MHz       |         |    |
+|            MB81C78A-45 |         |  |         |                |---------|    |
+|-|          MB81C78A-45 |---------|  |---------|M5M4464-12 x4   MB81461-12 x6  |
   |                                                                             |
 |-|      YM3012                                                                 |
-|                                                                               |
-|             315-5242  HM65256 HM65256 HM65256  M5M4464-12 x4   MB81461-12 x6  |
-|             (QFP44)   HM65256 HM65256 HM65256                                 |
+|            |--------|                                                         |
+|            |315-5242| HM65256 HM65256 HM65256  M5M4464-12 x4   MB81461-12 x6  |
+|            |(QFP44) | HM65256 HM65256 HM65256                                 |
+|------------|--------|---------------------------------------------------------|
+
+
+(2nd Revision)
+837-6442-01 SYSTEM 24 (C) SEGA 1987
 |-------------------------------------------------------------------------------|
+| YM2151 DSW1 EPRxxxxx.IC1           --------------------------| TMM41464-10    |
+|          DSW2         EPRxxxxx.IC2 |-------------------------- TMM41464-10    |
+|                                                CN2             TMM41464-10    |
+|                 68000               |---------|                TMM41464-10    |
+|   |---------|  |--------------|     | 315-5295|                TMM41464-10    |
+|   | 315-5296|  |HITACHI FD1094|     |(QFP100) |                TMM41464-10    |
+|-| |(QFP100) |  |317-0xxx-0xx  |     |         |                TMM41464-10    |
+  | |         |  |--------------|     |---------|                TMM41464-10    |
+|-| |---------|                                                  TMM41464-10    |
+|                                                                TMM41464-10    |
+|                                     |---------|                TMM41464-10    |
+|S                        |---------| | 315-5295|                TMM41464-10    |
+|E                 20MHz  | 315-5295| |(QFP100) |                TMM41464-10    |
+|G                        |(QFP100) | |         |                TMM41464-10    |
+|A                        |         | |---------|                TMM41464-10    |
+|                         |---------|                            TMM41464-10    |
+|5                                                               |---------|    |
+|6                       |---------|  |---------|                | 315-5293|    |
+|                        | 315-5294|  | 315-5292|                | (QFP160)|    |
+|                        |(QFP100) |  | (QFP160)|    32MHz       |         |    |
+|            MB81C78A-45 |         |  |         |                |---------|    |
+|-|          MB81C78A-45 |---------|  |---------|M5M4464-12 x4   MB81461-12 x6  |
+  |                                                                             |
+|-|      YM3012                                (*)                              |
+|            |--------|                                                         |
+|            |315-5242| HM65256 HM65256 HM65256  M5M4464-12 x4   MB81461-12 x6  |
+|            |(QFP44) | HM65256 HM65256 HM65256                                 |
+|------------|--------|---------------------------------------------------------|
+(*) Unpopulated Sockets for MB81C4256 x4
+
+
+(3rd Revision)
+837-6442-02 SYSTEM 24 (C) SEGA 1987
+|-------------------------------------------------------------------------------|
+| YM2151 DSW1 EPRxxxxx.IC1           --------------------------| TC514256-10    |
+|          DSW2         EPRxxxxx.IC2 |-------------------------- TC514256-10    |
+|                                                CN2             TC514256-10    |
+|                 68000               |---------|                TC514256-10    |
+|   |---------|  |--------------|     | 315-5295|                TC514256-10    |
+|   | 315-5296|  |HITACHI FD1094|     |(QFP100) |                TC514256-10    |
+|-| |(QFP100) |  |317-0xxx-0xx  |     |         |                TC514256-10    |
+  | |         |  |--------------|     |---------|                TC514256-10    |
+|-| |---------|                                                                 |
+|                                                                               |
+|                                     |---------|                               |
+|S                        |---------| | 315-5295|                               |
+|E                 20MHz  | 315-5295| |(QFP100) |                               |
+|G                        |(QFP100) | |         |                               |
+|A                        |         | |---------|                               |
+|                         |---------|                                           |
+|5                                                               |---------|    |
+|6                       |---------|  |---------|                | 315-5293|    |
+|                        | 315-5294|  | 315-5292|                | (QFP160)|    |
+|                        |(QFP100) |  | (QFP160)|    32MHz       |         |    |
+|            MB81C78A-45 |         |  |         |                |---------|    |
+|-|          MB81C78A-45 |---------|  |---------|                MB81461-12 x6  |
+  |                                                                             |
+|-|      YM3012                                                                 |
+|            |--------|                                                         |
+|            |315-5242| HM65256 HM65256 TC51832  TC514256-10 x4  MB81461-12 x6  |
+|            |(QFP44) | HM65256 HM65256 TC51832                                 |
+|------------|--------|---------------------------------------------------------|
+Notes:
+               315-5292: Custom Sega IC (QFP160, Tilemap Generator)
+               315-5293: Custom Sega IC (QFP160, Object Generator)
+               315-5294: Custom Sega IC (QFP100, Mixer Chip)
+               315-5295: Custom Sega IC (QFP100, Object Generator)
+               315-5296: Custom Sega IC (QFP100, I/O Chip)
+               315-5242: Custom Sega IC (QFP44, Colour Encoder)
+            68000 clock: 10.000MHz
+   Hitachi FD1094 clock: 10.000MHz
+           YM2151 clock: 4.000MHz
+                  VSync: 58Hz
+                  HSync: 24.33kHz (All System24 games require 24kHz monitor)
+        CN2 (Above PCB): Connector for ROM Board (Not used for floppy-based games)
+        CN2 (Below PCB): Connector for Floppy Controller Board (Not used for ROM-based games)
+        Main PCB Pinout same as System 16
+        Floppy Drive is a standard 1.44 High Density drive, but the controller is custom and
+        the floppy disk format is custom. The floppy disk can be read with "Anadisk"
+        depending on the PC being used and it's floppy controller. Most clone PC's can't read the
+        System 24 floppies even with "Anadisk"[1]. But many brand-name PC's can. It's likely due to the
+        propietry nature of the components used in brand-name PC's. Generally the older and crappier
+        the PC is, the better chance you have of being able to read the floppy ;-)
+
+        [1] Actually, most can _except_ for the Hotrod disks.  Those 8K sectors are deadly.
 
 
 Floppy Controller PCB Layout
 ----------------------------
-
 
 837-6443         ___________
 |---------------|    DATA   |-- ||||---|
@@ -65,21 +161,167 @@ Floppy Controller PCB Layout
 |--------------------------------------|
 
 
-Notes:
-            68000 clock: 10.000MHz
-   Hitachi FD1094 clock: 10.000MHz
-           YM2151 clock: 4.000MHz
-                  VSync: 58Hz
-                  HSync: 24.33kHz (game requires 24kHz monitor)
-        CN2 (Above PCB): Connector for ROM Board (Not used for Gain Ground)
-        CN2 (Below PCB): Connector for Floppy Controller Board
-        PCB Pinout same as System 16
-        Floppy Drive is a standard 1.44 High Density drive, but the controller
-        is custom and the floppy disk format is custom. The floppy disk can be read with "Anadisk"
-        depending on the PC being used and its floppy controller. Mostly, PC's can't read the System 24
-        floppies even with "Anadisk"[1]
+I/O Controller PCB Layout
+-------------------------
 
-  [1] Actually, most can _except_ for the hotrod disks.  Those 8K sectors are deadly.
+834-6510
+(sticker 834-6510-01)   ___________
+|----------------------|  IDC 34   |---|
+|                                      |
+|                                      |
+|  D4701          %2                   |
+|                                      |
+|                 %3                   |
+|    %1                       74LS139  |
+|                CN1                   |
+|     --------------------------|      |
+|     |--------------------------      |
+|--------------------------------------|
+Notes:
+      - %1 - Unpopulated position for D4701 IC
+        %2 - Unpopulated position for MSM6253RS IC
+        %3 - Unpopulated position for MSM6253RS IC
+
+      - CN1 is shown for completeness, it's actually underneath the I/O PCB.
+
+      - The custom I/O board plugs into the top connector on the main board and
+        is used for player steering controls. The wiring diagram has 8 pins coming from
+        the connector. Four are labelled 'JST4P 1P (L)', the other four are labelled
+        'JST4P 2P (R)'. I assume this is for an analog wheel or similar for player 1
+        (being on the left) and player 2 (being on the right)
+        The wiring diagram also lists some buttons for both PL1 and PL2 coming from
+        the regular 56-way edge connector....  'Nitro' and 'Accel'
+        The manual shows a controller that looks like a spinner which they call
+        a 'sensor board' with part 839-0138 and has a photo-sensor disc, which looks
+        like it's used for steering.
+        This board is used on Hot Rod, Rough Racer and the Golf games only.
+
+
+ROM Board Layout
+----------------
+
+837-7187-01
+171-5875-01B
+(SYSTEM24) (C)SEGA 1989 . 1991
+|------------------------------------------|
+|                                          |
+|                                          |
+|                                  J1      |
+|CN1    ROM1.IC4      ROM2.IC5     J2      |
+||-|                               J3      |
+|| |                               J4      |
+|| |    ROM3.IC6      ROM4.IC7             |
+|| |                               J5      |
+|| |                               J6      |
+|| |    ROM5.IC8      ROM6.IC9     J7      |
+|| |                               J8      |
+|| |                               J9      |
+|| |    ROM7.IC10     ROM8.IC11            |
+|| |                                       |
+|| |                  74HC4040  74LS139    |
+||-|    EPM5032DC.IC2                      |
+|------------------------------------------|
+Notes:
+      CN1: Connector for joining ROM board to Main Board. This connector is above and below the PCB to allow for chaining of several boards.
+
+      The ROM Daughter board has a protection device on it at location IC2. It's an Erasable Programmable Logic Device; EPLD, like a normal PLD,
+      but uses an EPROM and is erasable and re-programmable. It's type is Altera EPM5032DC. It's part of the Altera MAX 5000 Programmable Logic
+      Device Family and (generally) has it's protection bit set at the factory.
+
+      All jumpers are 2 pins, they're either shorted or not shorted. All ROMs are configured as the same type.
+      See the table below for details.
+      Jumpers to set ROM sizes:
+                               2M (J1, J3, J6, J8)
+                               4M (J2, J3, J7, J9)
+                               8M (J2, J4, J5, J9)
+
+
+FD1094/Floppy/ROM details
+-------------------------
+
+Game                   FD1094         Floppy          ROMs                                                          Other
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hot Rod (3p Turbo)     none           DS3-5000-01D    Main Board:     EPR11338.IC1, EPR11339.IC2                    I/O Controller PCB, Floppy Controller PCB
+
+Hot Rod (4p Rev C)     none           DS3-5000-01A    Main Board:     EPR11338.IC1, EPR11339.IC2                    I/O Controller PCB, Floppy Controller PCB
+                                      Rev C
+
+Hot Rod (4p Japanese   none           DS3-5000-01A    Main Board:     EPR11338.IC1, EPR11339.IC2                    I/O Controller PCB, Floppy Controller PCB
+         Rev B)                       Rev B
+
+Scramble Spirits       none           DS3-5000-02?    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+
+Scramble Spirits       317-0058-02D   DS3-5000-02D    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+(Encrypted Version)
+
+Gain Ground (Japan)    317-0058-03B   DS3-5000-03B    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+
+Gain Ground            317-0058-03D   DS3-5000-03D    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+
+Crack Down (Japan)     317-0058-04B   DS3-5000-04B    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+                                      Rev A
+
+Crack Down             317-0058-04D   DS3-5000-04D    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+
+Super Masters Golf     317-0058-05B   DS3-5000-05B    Main Board:     EPR12186.IC1, EPR12187.IC2                    I/O Controller PCB, Floppy Controller PCB
+Rev B
+
+Super Masters Golf     317-0058-05D   DS3-5000-05D    Main Board:     EPR12186.IC1, EPR12187.IC2                    I/O Controller PCB, Floppy Controller PCB
+Rev D
+
+Rough Racer            317-0058-06B   DS3-5000-06B    Main Board:     EPR12186.IC1, EPR12187.IC2                    I/O Controller PCB, Floppy Controller PCB
+
+Bonanza Bros           none           DS3-5000-07D    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+                                                      Daughter Board: MPR13187.IC4, MPR13188.IC5, MPR13189.IC6
+                                                                      MPR13190.IC7
+                                                                      EPLD: 317-0156
+
+Quiz Syukudai wo       317-0058-08B   DS3-5000-08B    Main Board:     EPR12186.IC1, EPR12187.IC2                    Floppy Controller PCB
+Wasuremashita
+
+Dynamic Country Club   317-0058-09D   DS3-5000-09D    Main Board:     EPR13947.IC1, EPR13948.IC2                    I/O Controller PCB, Floppy Controller PCB
+(Disk version)
+
+Dynamic Country Club   none           none            Main Board:     EPR13947.IC1, EPR13948.IC2
+(ROM version)                                         Daughter Board: EPR15345.IC4  EPR15344.IC5, MPR14097.IC6
+                                                                      MPR14096.IC7
+                                                                      EPLD: 317-0177
+
+Quiz Mekuromeku Story  none           none            Main Board:     EPR15342.IC1, EPR15343.IC2
+                                                      Daughter Board: EPR15344.IC4, EPR15345.IC5, EPR15346.IC6
+                                                                      EPR15347.IC7, EPR15348.IC8, EPR15349.IC9
+                                                                      EPLD: 317-0205
+
+Tokoro San no          none           none            Main Board:     EPR14812.IC1, EPR14813.IC2
+MahMahjan                                             Daughter Board: MPR14819.IC4, MPR14820.IC5, MPR14821.IC6
+                                                                      MPR14822IC.7, MPR14823.IC8, MPR14824.IC9
+                                                                      MPR14825.IC10, MPR14826.IC11
+                                                                      EPLD: 317-0200
+
+Quiz Rouka Ni          none           none            Main Board:     EPR14484.IC1, EPR14485.IC2
+Tattenasai                                            Daughter Board: EPR14482.IC5, EPR14483.IC7
+                                                                      EPLD: 317-0191
+
+Tokoro San no          none           none            Main Board:     EPR16798.IC1, EPR16799.IC2
+MahMahjan 2                                           Daughter Board: MPR16800.IC4, MPR16801.IC5, MPR16802.IC6
+                                                                      MPR16803.IC7, MPR16804.IC8, MPR16805.IC9
+                                                                      MPR16806.IC10, MPR16807.IC11
+                                                                      EPLD: 317-0220
+
+Quiz Ghost Hunter      none           none            Main Board:     EPR16899B.IC1, EPR16900B.IC2
+                                                      Daughter Board: MPR16901A.IC4, MPR16902A.IC5, MPR16903.IC6
+                                                                      MPR16904.IC7,  MPR16905.IC8,  MPR16906.IC9
+                                                                      MPR16907.IC10,  MPR16908.IC11
+                                                                      EPLD: 317-0226
+
+Notes:
+      A regular 68000-10 is used in position IC3. If used, the Hitachi CPU sits at position IC4.
+      Where FD1094 is listed as 'none', a standard 68000 CPU is used instead at IC4 on the PCB.
+
+      The last 3 digits of the floppy number is also the last part of the Hitachi CPU number....they're a matching pair.
+      So if one had the Hitachi part number and a floppy without a label, it's possible to create the correct floppy disk name from
+      the last 3 digits of the Hitachi FD1094 part number.
+
 */
 
 
@@ -363,10 +605,7 @@ static WRITE16_HANDLER( hotrod3_ctrl_w )
 {
 	if(ACCESSING_LSB) {
 		data &= 3;
-		if(data == 3)
-			hotrod_ctrl_cur = 0;
-		else
-			hotrod_ctrl_cur = readinputport(8+data);
+		hotrod_ctrl_cur = readinputport(9+data);
 	}
 }
 
@@ -387,11 +626,10 @@ static READ16_HANDLER( hotrod3_ctrl_r )
 			return readinputport(7) & 0xff;
 		case 5:
 			return readinputport(7) >> 8;
-
 		case 6:
-			return 0xff;
+			return readinputport(8) & 0xff;
 		case 7:
-			return 0xff;
+			return readinputport(8) >> 8;
 
 		case 8: { // Serial ADCs for the accel
 			int v = hotrod_ctrl_cur & 0x80;
@@ -929,6 +1167,9 @@ INPUT_PORTS_START( hotrod )
 	PORT_START
 	PORT_BIT( 0xfff, 0x000, IPT_DIAL ) PORT_MINMAX(0x000,0xfff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(3)
 
+	PORT_START /* p4 not used on this set */
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
 	PORT_START
 	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
@@ -937,6 +1178,85 @@ INPUT_PORTS_START( hotrod )
 
 	PORT_START
 	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(3)
+
+	PORT_START /* p4 not used on this set */
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( hotrodj )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN6 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN7 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN8 )
+
+	PORT_START
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	SYS16_COINAGE
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Start Credit" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "Coin Chute" )
+	PORT_DIPSETTING(    0x40, "Common" )
+	PORT_DIPSETTING(    0x00, "Individual" )
+	PORT_DIPNAME( 0x80, 0x80, "Monitor flip" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0xfff, 0x000, IPT_DIAL ) PORT_MINMAX(0x000,0xfff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0xfff, 0x000, IPT_DIAL ) PORT_MINMAX(0x000,0xfff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xfff, 0x000, IPT_DIAL ) PORT_MINMAX(0x000,0xfff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(3)
+
+	PORT_START
+	PORT_BIT( 0xfff, 0x000, IPT_DIAL ) PORT_MINMAX(0x000,0xfff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(4)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(3)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x01, IPT_PEDAL ) PORT_MINMAX(0x01,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(4)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bnzabros )
@@ -1034,23 +1354,23 @@ INPUT_PORTS_START( sspirits )
 	PORT_DIPNAME( 0x01, 0x01, "Monitor flip" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	
+
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
 	PORT_DIPSETTING(    0x00, "2" )
-	
+
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x30, "600K" )
 	PORT_DIPSETTING(    0x20, "500K" )
 	PORT_DIPSETTING(    0x10, "800K" )
 	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-	
+
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
@@ -1314,7 +1634,16 @@ ROM_START( hotrod )
 	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
 
 	ROM_REGION( 0x1d6000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-01d_3p_turbo.bin", 0x000000, 0x1d6000, CRC(627e8053) SHA1(d1a95f99078f5a29cccacfb1b30c3c9ead7b605c) )
+	ROM_LOAD( "ds3-5000-01d.bin", 0x000000, 0x1d6000, CRC(abf67b02) SHA1(f397435eaad691ff5a38d6d1d27840ed95a62df3) ) // World? 3 Playe TURBO
+ROM_END
+
+ROM_START( hotrodj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr11339.bin", 0x000000, 0x20000, CRC(75130e73) SHA1(e079739f4a3da3807aac570442c5afef1a7d7b0e) )
+	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
+
+	ROM_REGION( 0x1d6000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-01a-revb.bin", 0x000000, 0x1d6000, CRC(a39a0c2d) SHA1(ea8104c2266c48f480837aa7679c0a6f0c5e5452) ) // Japanese 4 Player
 ROM_END
 
 ROM_START( qgh )
@@ -1507,7 +1836,8 @@ static MACHINE_DRIVER_START( system24 )
 MACHINE_DRIVER_END
 
 
-GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (turbo 3 player)")
+GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo)")
+GAME( 1988, hotrodj,  hotrod,   system24, hotrodj,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)")
 GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros")
 GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club")
 GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan")

@@ -889,7 +889,7 @@ static void cpu_timeslice(void)
 	mame_timer_set_global_time(target);
 
 	/* huh? something for the debugger */
-	#ifdef MAME_DEBUG
+	#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	{
 		extern int debug_key_delay;
 		debug_key_delay = 0x7ffe;
@@ -1009,6 +1009,7 @@ int cpunum_is_suspended(int cpunum, int reason)
  *	Gets the current CPU's clock speed
  *
  *************************************/
+ 
 int cpunum_get_clock(int cpunum)
 {
 	VERIFY_CPUNUM(1.0, cpunum_get_clock);
@@ -1022,6 +1023,7 @@ int cpunum_get_clock(int cpunum)
  *	Sets the current CPU's clock speed
  *
  *************************************/
+ 
 void cpunum_set_clock(int cpunum, int clock)
 {
 	VERIFY_CPUNUM_VOID(cpunum_set_clock);

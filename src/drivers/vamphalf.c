@@ -5,9 +5,16 @@
  by bits from Angelo Salese, David Haywood,
     Pierpaolo Prazzoli and Tomasz Slanina
 
- Vamp 1/2			(c) 1999 Danbi & F2 System
- Mission Craft		(c) 2000 Sun
- Coolmini			(c) 199? Semicom
+ Games Supported:
+
+	Vamp 1/2				(c) 1999 Danbi & F2 System
+	Mission Craft			(c) 2000 Sun
+	Coolmini				(c) 199? Semicom
+	Super Lup Lup Puzzle	(c) 1999 Omega System
+
+ Games Needed:
+
+	Vamp 1/2 (World version)
 
 *********************************************************************/
 
@@ -97,7 +104,7 @@ static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles)
 	AM_RANGE(0x80000000, 0x8000ffff) AM_READ(MRA32_RAM) AM_WRITE(paletteram32_wordx2_w) AM_BASE(&paletteram32)
 	AM_RANGE(0xc0000000, 0xdfffffff) AM_READ(hyperstone_iram_r) AM_WRITE(hyperstone_iram_w)
-	AM_RANGE(0xfff80000, 0xffffffff) AM_READ(MRA32_BANK1)
+	AM_RANGE(0xfff00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1,0)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vamphalf_io, ADDRESS_SPACE_IO, 32 )
@@ -209,17 +216,6 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-VIDEO_START( common )
-{
-	palshift = 16;
-	return 0;
-}
-
-VIDEO_START( suplup )
-{
-	palshift=24; // or is it cpu core bug?
-	return 0;
-}
 
 VIDEO_UPDATE( common )
 {
@@ -253,35 +249,10 @@ INPUT_PORTS_START( common )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE )
 	PORT_SERVICE_NO_TOGGLE( 0x0010, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -305,7 +276,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	4000000, /* ? */
+	14318180/4,
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
 	{ 0 }, /* irq handler */
 	{ 0 } /* port_write */
@@ -314,7 +285,7 @@ static struct YM2151interface ym2151_interface =
 static struct OKIM6295interface m6295_interface =
 {
 	1,              	/* 1 chip */
-	{ 10000 },			/* ? */
+	{ 1789772.5 / 132 },/* sample rate */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 100 }				/* volume */
 };
@@ -331,6 +302,49 @@ static INTERRUPT_GEN( common_interrupts )
 	}
 }
 
+data8_t suplup_default_nvram[128] = {
+	0xE8, 0xFE, 0xFF, 0xFF, 0x10, 0x80, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x96, 0x2D, 0xB4, 0x80, 0x00,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xAA, 0xAA
+};
+
+data8_t misncrft_default_nvram[128] = {
+	0x67, 0xBE, 0x00, 0x01, 0x80, 0xFE, 0x04, 0x10, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xAA, 0xAA
+};
+
+void nvram_handler_93C46_vamphalf(mame_file *file,int read_or_write)
+{
+	if (read_or_write)
+		EEPROM_save(file);
+	else
+	{
+		EEPROM_init(&eeprom_interface_93C46);
+		if (file)
+		{
+			EEPROM_load(file);
+		}
+		else
+		{
+			if (!strcmp(Machine->gamedrv->name,"suplup")) EEPROM_set_data(suplup_default_nvram,128);
+			if (!strcmp(Machine->gamedrv->name,"misncrft")) EEPROM_set_data(misncrft_default_nvram,128);
+
+		}
+	}
+}
+
+
 static MACHINE_DRIVER_START( common )
 	MDRV_CPU_ADD_TAG("main", E132XS, 100000000/2)		 /* ?? */
 	MDRV_CPU_PROGRAM_MAP(common_map,0)
@@ -339,7 +353,7 @@ static MACHINE_DRIVER_START( common )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(93C46)
+	MDRV_NVRAM_HANDLER(93C46_vamphalf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -349,7 +363,6 @@ static MACHINE_DRIVER_START( common )
 	MDRV_PALETTE_LENGTH(0x8000)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_START(common)
 	MDRV_VIDEO_UPDATE(common)
 MACHINE_DRIVER_END
 
@@ -386,8 +399,6 @@ static MACHINE_DRIVER_START( suplup )
 	MDRV_IMPORT_FROM(common)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(suplup_io,0)
-
-	MDRV_VIDEO_START(suplup)
 
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
@@ -440,8 +451,9 @@ ROML* / U*:    Graphics, device is MX29F1610ML (surface mounted SOP44 MASK ROM)
 */
 
 ROM_START( vamphalf )
-	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "prom1", 0x00000, 0x80000, CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d) )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	/* 0 - 0x80000 empty */
+	ROM_LOAD( "prom1", 0x80000, 0x80000, CRC(f05e8e96) SHA1(c860e65c811cbda2dc70300437430fb4239d3e2d) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
 	ROM_LOAD32_WORD( "roml00", 0x000000, 0x200000, CRC(cc075484) SHA1(6496d94740457cbfdac3d918dce2e52957341616) )
@@ -500,8 +512,9 @@ Notes:
 */
 
 ROM_START( misncrft )
-	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "prg-rom2.bin", 0x00000, 0x80000, CRC(059ae8c1) SHA1(2c72fcf560166cb17cd8ad665beae302832d551c) )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	/* 0 - 0x80000 empty */
+	ROM_LOAD( "prg-rom2.bin", 0x80000, 0x80000, CRC(059ae8c1) SHA1(2c72fcf560166cb17cd8ad665beae302832d551c) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD32_WORD( "roml00", 0x000000, 0x200000, CRC(748c5ae5) SHA1(28005f655920e18c82eccf05c0c449dac16ee36e) )
@@ -521,20 +534,20 @@ ROM_END
 
 
 ROM_START( coolmini )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "cm-rom2.040", 0x00000, 0x80000,   CRC(9d588fef) SHA1(7b6b0ba074c7fa0aecda2b55f411557b015522b6) )
-	ROM_LOAD( "cm-rom1.040", 0x80000, 0x80000,   CRC(9688fa98) SHA1(d5ebeb1407980072f689c3b3a5161263c7082e9a) )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "cm-rom1.040", 0x00000, 0x80000, CRC(9688fa98) SHA1(d5ebeb1407980072f689c3b3a5161263c7082e9a) )
+	ROM_LOAD( "cm-rom2.040", 0x80000, 0x80000, CRC(9d588fef) SHA1(7b6b0ba074c7fa0aecda2b55f411557b015522b6) )
 
 	/* 8 flash roms missing */
-	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "coolmini.gfx1", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx2", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx3", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx4", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx5", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx6", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx7", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx8", 0x000000, 0x200000, NO_DUMP )
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "coolmini.gfx1", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx2", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx3", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx4", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx5", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx6", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx7", 0x000000, 0x100000, NO_DUMP )
+	ROM_LOAD( "coolmini.gfx8", 0x000000, 0x100000, NO_DUMP )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "cm-vrom1.020", 0x00000, 0x40000, CRC(fcc28081) SHA1(44031df0ee28ca49df12bcb73c83299fac205e21) )
@@ -589,9 +602,9 @@ Notes:
 
 
 ROM_START( suplup )
-	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "rom2.bin", 0x00000, 0x80000,   CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
-	ROM_LOAD( "rom1.bin", 0x80000, 0x80000,   CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
+	ROM_REGION32_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
+	ROM_LOAD( "rom2.bin", 0x80000, 0x80000, CRC(0c176c57) SHA1(f103a1afc528c01cbc18639273ab797fb9afacb1) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
 	ROM_LOAD32_WORD( "roml00.bin", 0x000000, 0x200000, CRC(7848e183) SHA1(1db8f0ea8f73f42824423d382b37b4d75fa3e54c) )
@@ -603,12 +616,25 @@ ROM_START( suplup )
 	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
 ROM_END
 
-
+static int irq_active(void)
+{
+	UINT32 FCR = activecpu_get_reg(27);
+	if( !(FCR&(1<<29)) ) // int 2 (irq 4)
+		return 1;
+	else
+		return 0;
+}
 
 static READ32_HANDLER( vamphalf_speedup_r )
 {
 	if(activecpu_get_pc() == 0x82de)
-		cpu_spinuntil_int();
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+
+	}
 
 	return wram[0x4a6d0/4];
 }
@@ -616,7 +642,12 @@ static READ32_HANDLER( vamphalf_speedup_r )
 static READ32_HANDLER( misncrft_speedup_r )
 {
 	if(activecpu_get_pc() == 0xecc8)
-		cpu_spinuntil_int();
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
 
 	return wram[0x72eb4/4];
 }
@@ -624,49 +655,62 @@ static READ32_HANDLER( misncrft_speedup_r )
 static READ32_HANDLER( coolmini_speedup_r )
 {
 	if(activecpu_get_pc() == 0x75f7a)
-		cpu_spinuntil_int();
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
 
 	return wram[0xd2e80/4];
 }
 
+static READ32_HANDLER( suplup_speedup_r )
+{
+	if(activecpu_get_pc() == 0xaf18a )
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
+
+	return wram[0x11605c/4];
+
+}
+
 DRIVER_INIT( vamphalf )
 {
-	cpu_setbank(1, memory_region(REGION_USER1));
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0004a6d0, 0x0004a6d3, 0, 0, vamphalf_speedup_r );
 
+	palshift = 16;
 	flip_bit = 0x80;
 }
 
 DRIVER_INIT( misncrft )
 {
-	cpu_setbank(1, memory_region(REGION_USER1));
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00072eb4, 0x00072eb7, 0, 0, misncrft_speedup_r );
 
+	palshift = 16;
 	flip_bit = 1;
 }
 
 DRIVER_INIT( coolmini )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff00000, 0xfff7ffff, 0, 0, MRA32_BANK2);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x000d2e80, 0x000d2e83, 0, 0, coolmini_speedup_r );
 
-	cpu_setbank(1, memory_region(REGION_USER1));
-	cpu_setbank(2, memory_region(REGION_USER1)+0x80000);
-
+	palshift = 16;
 	flip_bit = 1;
 }
 
 DRIVER_INIT( suplup )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfff00000, 0xfff7ffff, 0, 0, MRA32_BANK2);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0011605c, 0x0011605f, 0, 0, suplup_speedup_r );
 
-	cpu_setbank(1, memory_region(REGION_USER1));
-	cpu_setbank(2, memory_region(REGION_USER1)+0x80000);
-
-	flip_bit = 1;
+	palshift = 24;
 }
 
+GAME( 1999, suplup,   0, suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
 GAME( 1999, vamphalf, 0, vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
-GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",                   GAME_NOT_WORKING )
-GAMEX(1999, suplup,   0, suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle",        GAME_NOT_WORKING )
+GAMEX(2000, misncrft, 0, misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",					GAME_NO_SOUND )
+GAMEX(19??, coolmini, 0, coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",									GAME_NOT_WORKING )

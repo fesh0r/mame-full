@@ -508,9 +508,13 @@ void seibuspi_text_decrypt(unsigned char *rom);
 void seibuspi_bg_decrypt(unsigned char *rom, int size);
 void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
-void seibuspi_rf2_text_decrypt(unsigned char *rom);
-void seibuspi_rf2_bg_decrypt(unsigned char *rom, int size);
-void seibuspi_rf2_sprite_decrypt(data16_t* src, int romsize);
+void seibuspi_rise10_text_decrypt(unsigned char *rom);
+void seibuspi_rise10_bg_decrypt(unsigned char *rom, int size);
+void seibuspi_rise10_sprite_decrypt(data16_t* src, int romsize);
+
+void seibuspi_rise11_text_decrypt(unsigned char *rom);
+void seibuspi_rise11_bg_decrypt(unsigned char *rom, int size);
+void seibuspi_rise11_sprite_decrypt(data16_t* src, int romsize);
 
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
@@ -1419,9 +1423,9 @@ static DRIVER_INIT( viperp1o )
 
 static DRIVER_INIT( rf2 )
 {
-	seibuspi_rf2_text_decrypt(memory_region(REGION_GFX1));
-	seibuspi_rf2_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
-	seibuspi_rf2_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x600000);
+	seibuspi_rise10_text_decrypt(memory_region(REGION_GFX1));
+	seibuspi_rise10_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
+	seibuspi_rise10_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x600000);
 }
 
 static DRIVER_INIT( rf2_eur )
@@ -1441,7 +1445,10 @@ static DRIVER_INIT( rf2_us )
 
 static DRIVER_INIT( rfjet )
 {
-//	init_rf2(); /* not the same ..
+	seibuspi_rise11_text_decrypt(memory_region(REGION_GFX1));
+	seibuspi_rise11_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
+	seibuspi_rise11_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x800000);
+
 	old_vidhw = 0;
 	bg_size = 2;
 }
@@ -1876,6 +1883,40 @@ ROM_START(rfjet)
 ROM_END
 
 
+ROM_START(rfjetus)	/* Single board version SXX2G */
+	ROM_REGION(0x40000, REGION_CPU1, 0)
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("rfj-06.u0259", 0x000000, 0x80000, CRC(c835aa7a) SHA1(291eada97ceb907dfea15688ce6055e63b3aa675) ) /* PRG0 */
+	ROM_LOAD32_BYTE("rfj-07.u0258", 0x000001, 0x80000, CRC(3b6ca1ca) SHA1(9db019c0ddecfb58e2be5c345d78352f700035bf) ) /* PRG1 */
+	ROM_LOAD32_BYTE("rfj-08.u0265", 0x000002, 0x80000, CRC(1f5dd06c) SHA1(6f5a8c9035971a470212cd0a89b94181011602c3) ) /* PRG2 */
+	ROM_LOAD32_BYTE("rfj-09.u0264", 0x000003, 0x80000, CRC(cc71c402) SHA1(b040e600744e7b3f52de0fa852ce3ae08ae49985) ) /* PRG3 */
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_ERASEFF)
+	ROM_LOAD24_BYTE("fix0.u0524", 0x000000, 0x10000, CRC(8bc080be) SHA1(ad296fb98242c963072346a8de289e704b445ad4) ) /* rfj-01 */
+	ROM_LOAD24_BYTE("fix1.u0518", 0x000001, 0x10000, CRC(bded85e7) SHA1(ccb8c438ce6b9a742e3ab15be970b1e636783626) ) /* rfj-02 */
+	ROM_LOAD24_BYTE("fixp.u0514", 0x000002, 0x10000, CRC(015d0748) SHA1(b1e8eaeba63a7914f1dc27d7e3ca5d0b6db202ed) ) /* rfj-03 */
+
+	ROM_REGION( 0x900000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD_SWAP("bg-1d.u0543", 0x000000, 0x400000, CRC(edfd96da) SHA1(4813267f104619f569e5777e75b75304321abb49) )
+	ROM_LOAD24_BYTE("bg-1p.u0544", 0x000002, 0x200000, CRC(a4cc4631) SHA1(cc1c4f4de8a078ca774f5a328a9a58291949b1fb) )
+	ROM_LOAD24_WORD_SWAP("bg-2d.u0545", 0x600000, 0x200000, CRC(731fbb59) SHA1(13cd29ec4d4c73582c5fb363218e737886826e5f) )
+	ROM_LOAD24_BYTE("bg-2p.u0546", 0x600002, 0x100000, CRC(03652c25) SHA1(c0d77285111bc84e008362981ac02a246678ed0a) )
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("obj-1.u0442", 0x0000000, 0x800000, CRC(58a59896) SHA1(edeaaa69987bd5d08c47ed9bf47a3901e2dcc892) )
+	ROM_LOAD("obj-2.u0443", 0x0800000, 0x800000, CRC(a121d1e3) SHA1(1851ae81f2ae9d3404aadd9fbc0ed7f9230290b9) )
+	ROM_LOAD("obj-3.u0444", 0x1000000, 0x800000, CRC(bc2c0c63) SHA1(c8d395722f7012c3be366a0fc9b224c537afabae) )
+
+	ROM_REGION(0x40000, REGION_CPU2, 0)		/* 256k for the Z80 */
+	ROM_LOAD("rfj-05.u91", 0x000000, 0x40000, CRC(a55e8799) SHA1(5d4ca9ae920ab54e23ee3b1b33db72711e744516) ) /* ZPRG */
+
+	ROM_REGION(0x280000, REGION_SOUND1, 0)	/* YMF271 sound data */
+	ROM_LOAD("pcm-d.u0227", 0x000000, 0x200000, CRC(8ee3ff45) SHA1(2801b23495866c91c8f8bebd37d5fcae7a625838) )
+	ROM_LOAD("rfj-04.107", 0x200000, 0x80000, CRC(c050da03) SHA1(1002dac51a3a4932c4f0074c1f3d97a597d98755) ) /* SOUND1 */
+ROM_END
+
+
+
 /*******************************************************************/
 /* SYS386 games */
 
@@ -1922,7 +1963,7 @@ GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihats
 GAMEX( 1995, viperp1o,  viperp1, spi, spi_3button, viperp1o,	ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
 GAMEX( 1996, ejanhs, 	0,	     spi, spi_ejanhs, ejanhs,		ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
 GAMEX( 1996, rdft,	    0,	     spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
-GAMEX( 1996, rdftau,	rdft,    spi, spi_3button, rdft,	ROT90,	"Seibu Kaihatsu",	"Raiden Fighters (Australia)", GAME_NOT_WORKING )
+GAMEX( 1996, rdftau,	rdft,    spi, spi_3button, rdft,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters (Australia)", GAME_NOT_WORKING )
 
 
 GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, rf2_eur,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
@@ -1933,6 +1974,9 @@ GAMEX( 1998, rfjet,	0,       spi, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",
 
 /* SXX2F */
 GAMEX( 1997, rf2_us,	rf2_eur,	sxx2f, spi_2button, rf2_us,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
+
+/* SXX2G */
+GAMEX( 1997, rfjetus,	rfjet,		sxx2f, spi_2button, rfjet,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters Jet (US, Single Board)", GAME_NOT_WORKING )
 
 /* SYS386 */
 GAMEX( 2000, rf2_2k,	rf2_eur,	seibu386, spi_2button, rf2_2k,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )

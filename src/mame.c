@@ -744,7 +744,7 @@ static int vh_open(void)
 	if (Machine->uifont == NULL)
 		goto cant_build_uifont;
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* if the debugger is enabled, initialize its bitmap and font */
 	if (mame_debug)
 	{
@@ -784,7 +784,7 @@ static int vh_open(void)
 
 cant_init_palette:
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 cant_build_debugger_font:
 cant_create_debug_bitmap:
 #endif
@@ -1230,7 +1230,7 @@ void update_video_and_audio(void)
 {
 	int skipped_it = osd_skip_this_frame();
 
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	debug_trace_delay = 0;
 #endif
 
@@ -1267,7 +1267,7 @@ void update_video_and_audio(void)
 			current_display.changed_flags |= VECTOR_PIXELS_CHANGED;
 		}
 	
-#ifdef MAME_DEBUG
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* set the debugger bitmap */
 	current_display.debug_bitmap = Machine->debug_bitmap;
 	if (debugger_bitmap_changed)

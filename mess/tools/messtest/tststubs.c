@@ -168,6 +168,12 @@ void osd_image_load_status_changed(mess_image *img, int is_final_unload)
 {
 }
 
+#ifdef NEW_DEBUGGER
+void osd_wait_for_debugger(void)
+{
+}
+#endif
+
 int win_mess_validitychecks(void)
 {
 	return 0;

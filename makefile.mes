@@ -39,6 +39,9 @@ endif
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
+# uncomment next line to use the new multiwindow debugger
+NEW_DEBUGGER = 1
+
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
@@ -128,6 +131,10 @@ EMULATOR    = $(EMULATORCLI)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
 
+ifdef NEW_DEBUGGER
+DEFS += -DNEW_DEBUGGER
+endif
+
 ifeq ($(MAMEOS),windows)
 
 DEFS += -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
@@ -144,7 +151,7 @@ EMULATORALL = $(EMULATORCLI)
 endif
 
 CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
-	-Isrc -Isrc/includes -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
+	-Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Werror -Wall -Wno-unused -g
@@ -188,7 +195,7 @@ endif
 LIBS = -lz
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/xml2info
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug $(OBJ)/xml2info
 
 OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/expat										\

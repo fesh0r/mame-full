@@ -30,6 +30,15 @@ OSOBJS += \
 	$(OBJ)/mess/windows/strconv.o
 endif 
 
+# add resource file
+ifndef MESS
+OSOBJS += $(OBJ)/windows/mame.res
+endif
+
+ifdef NEW_DEBUGGER
+OSOBJS += $(OBJ)/windows/debugwin.o 
+endif
+
 RESFILE=$(OBJ)/mess/windows/mess.res
 
 # uncomment this line to enable guard pages on all memory allocations
@@ -72,4 +81,19 @@ endif
 # if we are not using x86drc.o, we should be
 ifndef X86_MIPS3_DRC
 COREOBJS += $(OBJ)/x86drc.o
+endif
+
+#####################################################################
+# Resources
+
+ifndef MESS
+RC = @windres --use-temp-file
+
+RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
+
+RCFLAGS = -O coff --include-dir src/windows
+
+$(OBJ)/windows/%.res: src/windows/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
 endif

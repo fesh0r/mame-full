@@ -18,6 +18,14 @@
 
 
  CHANGELOG:
+ 
+ Tomasz Slanina
+ - Fixed MULU/MULS 
+ - Fixed Carry in ADDC/SUBC
+
+ Pierpaolo Prazzoli
+ - Fixed software opcodes used as delay instructions
+ - Added nested delays
 
  Tomasz Slanina
  - Added "undefined" C flag to shift left instructions
@@ -184,11 +192,6 @@
 #define MISSIONCRAFT_FLAGS 1
 
 static int e132xs_ICount;
-
-/* Local variables */
-static int h_clear;
-static int instruction_length;
-static int intblock = 0;
 
 void e132xs_chk(void);
 void e132xs_movd(void);
@@ -399,6 +402,15 @@ UINT8 e132xs_win_layout[] =
 };
 
 
+/* Delay information */
+struct delay
+{
+	UINT8	delay_cmd;
+	UINT32	delay_pc;
+	UINT32	no_delay_pc;
+	struct  delay *prev;
+};
+
 /* Internal registers */
 typedef struct
 {
@@ -408,11 +420,15 @@ typedef struct
 	/* internal stuff */
 	UINT32	ppc;	// previous pc
 	UINT16	op;		// opcode
-	UINT8	delay;
-	UINT32	delay_pc;
 	UINT32	trap_entry; // entry point to get trap address
 
+	struct delay *delay_tail;
+
 	int	(*irq_callback)(int irqline);
+
+	int h_clear;
+	int instruction_length;
+	int intblock;
 
 } e132xs_regs;
 
@@ -1136,6 +1152,23 @@ static void decode_registers(void)
 	}
 }
 
+void remove_delay(struct delay *entry)
+{
+	free(entry);
+	entry = NULL;
+}
+
+void check_and_remove_delays(void)
+{
+	struct delay *tmp;
+	while(e132xs.delay_tail)
+	{
+		tmp = e132xs.delay_tail;
+		e132xs.delay_tail = (e132xs.delay_tail)->prev;
+		remove_delay(tmp);
+	}
+}
+
 UINT32 immediate_value(void)
 {
 	UINT16 imm1, imm2;
@@ -1148,7 +1181,7 @@ UINT32 immediate_value(void)
 			return N_VALUE;
 
 		case 17:
-			instruction_length = 3;
+			e132xs.instruction_length = 3;
 			imm1 = READ_OP(PC);
 			PC += 2;
 			imm2 = READ_OP(PC);
@@ -1157,14 +1190,14 @@ UINT32 immediate_value(void)
 			return ret;
 
 		case 18:
-			instruction_length = 2;
+			e132xs.instruction_length = 2;
 			imm1 = READ_OP(PC);
 			PC += 2;
 			ret = imm1;
 			return ret;
 
 		case 19:
-			instruction_length = 2;
+			e132xs.instruction_length = 2;
 			imm1 = READ_OP(PC);
 			PC += 2;
 			ret = 0xffff0000 | imm1;
@@ -1214,7 +1247,7 @@ INT32 get_const(void)
 	INT32 const_val;
 	UINT16 imm1;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	imm1 = READ_OP(PC);
 	PC += 2;
 
@@ -1222,7 +1255,7 @@ INT32 get_const(void)
 	{
 		UINT16 imm2;
 
-		instruction_length = 3;
+		e132xs.instruction_length = 3;
 		imm2 = READ_OP(PC);
 		PC += 2;
 
@@ -1254,7 +1287,7 @@ INT32 get_pcrel(void)
 	{
 		UINT16 next;
 
-		instruction_length = 2;
+		e132xs.instruction_length = 2;
 		next = READ_OP(PC);
 		PC += 2;
 
@@ -1284,7 +1317,7 @@ INT32 get_dis(UINT32 val)
 	{
 		UINT16 next;
 
-		instruction_length = 3;
+		e132xs.instruction_length = 3;
 		next = READ_OP(PC);
 		PC += 2;
 
@@ -1318,10 +1351,17 @@ void execute_br(INT32 rel)
 
 void execute_dbr(INT32 rel)
 {
-	e132xs.delay_pc = PC + rel;
-	e132xs.delay    = DELAY_TAKEN;
+	struct delay *tmp;
+	tmp = (struct delay *) malloc(sizeof(struct delay));
+	
+	tmp->delay_cmd    = DELAY_TAKEN;
+	tmp->delay_pc     = PC + rel;
+	tmp->no_delay_pc  = PC + 2;
+	tmp->prev         = e132xs.delay_tail;
 
-	intblock = 3;
+	e132xs.delay_tail = tmp;
+
+	e132xs.intblock = 3;
 
 	e132xs_ICount -= 1;
 }
@@ -1333,7 +1373,7 @@ void execute_trap(UINT32 addr)
 	UINT32 oldSR;
 	reg = GET_FP + GET_FL;
 
-	SET_ILC(instruction_length & 3);
+	SET_ILC(e132xs.instruction_length & 3);
 
 	oldSR = SR;
 
@@ -1361,7 +1401,7 @@ void execute_int(UINT32 addr)
 	UINT32 oldSR;
 	reg = GET_FP + GET_FL;
 
-	SET_ILC(instruction_length & 3);
+	SET_ILC(e132xs.instruction_length & 3);
 
 	oldSR = SR;
 
@@ -1390,7 +1430,7 @@ void execute_exception(UINT32 addr)
 	UINT32 oldSR;
 	reg = GET_FP + GET_FL;
 
-	SET_ILC(instruction_length & 3);
+	SET_ILC(e132xs.instruction_length & 3);
 
 	oldSR = SR;
 
@@ -1455,23 +1495,25 @@ static void e132xs_init(void)
 	state_save_register_UINT32("E132XS", cpu, "gregs",      e132xs.global_regs, 32);
 	state_save_register_UINT32("E132XS", cpu, "lregs",      e132xs.local_regs, 64);
 	state_save_register_UINT32("E132XS", cpu, "ppc",        &e132xs.ppc, 1);
-	state_save_register_UINT32("E132XS", cpu, "delay_pc",   &e132xs.delay_pc, 1);
 	state_save_register_UINT32("E132XS", cpu, "trap_entry", &e132xs.trap_entry, 1);
 	state_save_register_UINT16("E132XS", cpu, "op",         &e132xs.op, 1);
-	state_save_register_UINT8( "E132XS", cpu, "delay",      &e132xs.delay, 1);
-	state_save_register_int(   "E132XS", cpu, "h_clear",    &h_clear);
-	state_save_register_int(   "E132XS", cpu, "ilc",        &instruction_length);
-	state_save_register_int(   "E132XS", cpu, "intblock",   &intblock);
+	state_save_register_int(   "E132XS", cpu, "h_clear",    &e132xs.h_clear);
+	state_save_register_int(   "E132XS", cpu, "ilc",        &e132xs.instruction_length);
+	state_save_register_int(   "E132XS", cpu, "intblock",   &e132xs.intblock);
+
+	e132xs.delay_tail = NULL;
 }
 
 static void e132xs_reset(void *param)
 {
 	//TODO: Add different reset initializations for BCR, MCR, FCR, TPR
 
+	check_and_remove_delays();
+
 	memset(&e132xs, 0, sizeof(e132xs_regs));
 
-	h_clear = 0;
-	instruction_length = 0;
+	e132xs.h_clear = 0;
+	e132xs.instruction_length = 0;
 
 	e132xs_set_trap_entry(E132XS_ENTRY_MEM3); /* default entry point @ MEM3 */
 
@@ -1494,12 +1536,14 @@ static void e132xs_reset(void *param)
 	SET_L_REG(0, (PC & 0xfffffffe) | GET_S);
 	SET_L_REG(1, SR);
 
+	e132xs.delay_tail = NULL;
+
 	e132xs_ICount -= 2;
 }
 
 static void e132xs_exit(void)
 {
-	/* nothing */
+	check_and_remove_delays();
 }
 
 static int e132xs_execute(int cycles)
@@ -1519,7 +1563,7 @@ static int e132xs_execute(int cycles)
 
 		if(GET_H)
 		{
-			h_clear = 1;
+			e132xs.h_clear = 1;
 		}
 
 		if(e132xs_op[(OP & 0xff00) >> 8] == NULL)
@@ -1527,40 +1571,44 @@ static int e132xs_execute(int cycles)
 			osd_die("Opcode %02X @ %08X\n", (OP & 0xff00) >> 8, PC);
 		}
 
-		instruction_length = 1;
+		e132xs.instruction_length = 1;
 
 		decode_registers();
 
 		e132xs_op[(OP & 0xff00) >> 8]();
 
-		SET_ILC(instruction_length & 3);
+		SET_ILC(e132xs.instruction_length & 3);
 
-		if(h_clear == 1)
+		if(e132xs.h_clear == 1)
 		{
 			SET_H(0);
-			h_clear = 0;
+			e132xs.h_clear = 0;
 		}
 
-		if( GET_T && GET_P && !e132xs.delay_pc ) /* Not in a Delayed Branch instructions */
+		if( GET_T && GET_P && !e132xs.delay_tail ) /* Not in a Delayed Branch instructions */
 		{
 			UINT32 addr = get_trap_addr(TRACE_EXCEPTION);
 			execute_exception(addr);
 		}
 
-		if( e132xs.delay == DELAY_EXECUTE )
+		if(e132xs.delay_tail)
 		{
-			PC = e132xs.delay_pc;
-			e132xs.delay_pc = 0;
-			e132xs.delay = NO_DELAY;
+			if( (e132xs.delay_tail)->delay_cmd == DELAY_EXECUTE && (e132xs.delay_tail)->no_delay_pc == PC )
+			{
+				struct delay *tmp;
+				PC = (e132xs.delay_tail)->delay_pc;
+				tmp = e132xs.delay_tail;
+				e132xs.delay_tail = (e132xs.delay_tail)->prev;
+				remove_delay(tmp);
+			}
+			else if( (e132xs.delay_tail)->delay_cmd == DELAY_TAKEN )
+			{
+				(e132xs.delay_tail)->delay_cmd = DELAY_EXECUTE;
+			}
 		}
 
-		if( e132xs.delay == DELAY_TAKEN )
-		{
-			e132xs.delay = DELAY_EXECUTE;
-		}
-
-		if(intblock>0)
-			intblock--;
+		if(e132xs.intblock > 0)
+			e132xs.intblock--;
 
 	} while( e132xs_ICount > 0 );
 
@@ -1596,7 +1644,7 @@ static void set_irq_line(int irqline, int state)
 {
 	/* Interrupt-Lock flag isn't set */
 
-	if(intblock)
+	if(e132xs.intblock)
 		return;
 
 	if( !GET_L && state )
@@ -1705,7 +1753,7 @@ void e132xs_movd(void)
 			PC = SET_PC(SREG);
 			SR = (SREGF & 0xffe00000) | ((SREG & 0x01) << 18 ) | (SREGF & 0x3ffff);
 
-			instruction_length = 0; // undefined
+			e132xs.instruction_length = 0; // undefined
 
 			if( (!old_s && GET_S) || (!GET_S && !old_l && GET_L))
 			{
@@ -1864,7 +1912,7 @@ void e132xs_xm(void)
 	UINT16 next_source;
 	UINT8 x_code;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	next_source = READ_OP(PC);
 	PC += 2;
 
@@ -1874,7 +1922,7 @@ void e132xs_xm(void)
 	{
 		UINT16 next_source_2;
 
-		instruction_length = 3;
+		e132xs.instruction_length = 3;
 		next_source_2 = READ_OP(PC);
 		PC += 2;
 
@@ -2169,8 +2217,7 @@ void e132xs_subc(void)
 		CHECK_VSUB(SREG + GET_C,DREG,tmp);
 	}
 
-	CHECK_C(tmp);
-
+	
 	if( SRC_IS_SR )
 	{
 		DREG = DREG - GET_C;
@@ -2179,6 +2226,8 @@ void e132xs_subc(void)
 	{
 		DREG = DREG - (SREG + GET_C);
 	}
+
+	CHECK_C(tmp);
 
 	SET_DREG(DREG);
 
@@ -2276,12 +2325,14 @@ void e132xs_addc(void)
 		CHECK_VADD3(SREG,DREG,GET_C,tmp);
 	}
 
-	CHECK_C(tmp);
+	
 
 	if( SRC_IS_SR )
 		DREG = DREG + GET_C;
 	else
 		DREG = SREG + DREG + GET_C;
+
+	CHECK_C(tmp);
 
 	SET_DREG(DREG);
 	SET_Z( GET_Z & (DREG == 0 ? 1 : 0) );
@@ -2937,7 +2988,7 @@ void e132xs_ldxx1(void)
 	UINT16 next_op;
 	INT32 dis;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	next_op = READ_OP(PC);
 	PC += 2;
 
@@ -3099,7 +3150,7 @@ void e132xs_ldxx2(void)
 	UINT16 next_op;
 	INT32 dis;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	next_op = READ_OP(PC);
 	PC += 2;
 
@@ -3199,7 +3250,7 @@ void e132xs_stxx1(void)
 	UINT16 next_op;
 	INT32 dis;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	next_op = READ_OP(PC);
 	PC += 2;
 
@@ -3339,7 +3390,7 @@ void e132xs_stxx2(void)
 	UINT16 next_op;
 	INT32 dis;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	next_op = READ_OP(PC);
 	PC += 2;
 
@@ -3518,7 +3569,7 @@ void e132xs_mulu(void)
 	}
 	else
 	{
-		double_word = SREG * DREG;
+		double_word = (UINT64)SREG *(UINT64)DREG;
 
 		low_order = double_word & 0xffffffff;
 		high_order = double_word >> 32;
@@ -3548,7 +3599,7 @@ void e132xs_muls(void)
 	}
 	else
 	{
-		double_word = (INT32)(SREG) * (INT32)(DREG);
+		double_word = (INT64)(INT32)(SREG) * (INT64)(INT32)(DREG);
 		low_order = double_word & 0xffffffff;
 		high_order = double_word >> 32;
 
@@ -4026,7 +4077,7 @@ void e132xs_extend(void)
 	UINT16 ext_opcode;
 	UINT32 vals, vald;
 
-	instruction_length = 2;
+	e132xs.instruction_length = 2;
 	ext_opcode = READ_OP(PC);
 	PC += 2;
 
@@ -4053,7 +4104,7 @@ void e132xs_extend(void)
 		{
 			UINT64 result;
 
-			result = vals * vald;
+			result = (UINT64)vals * (UINT64)vald;
 			vals = result >> 32;
 			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
@@ -4066,7 +4117,7 @@ void e132xs_extend(void)
 		{
 			INT64 result;
 
-			result = (INT32)(vals) * (INT32)(vald);
+			result = (INT64)(INT32)(vals) * (INT64)(INT32)(vald);
 			vals = result >> 32;
 			vald = result & 0xffffffff;
 			SET_G_REG(14, vals);
@@ -4089,7 +4140,7 @@ void e132xs_extend(void)
 		{
 			INT64 result;
 
-			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + ((INT32)(vals) * (INT32)(vald));
+			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + (INT64)((INT64)(INT32)(vals) * (INT64)(INT32)(vald));
 
 			vals = result >> 32;
 			vald = result & 0xffffffff;
@@ -4113,7 +4164,7 @@ void e132xs_extend(void)
 		{
 			INT64 result;
 
-			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) - ((INT32)(vals) * (INT32)(vald));
+			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) - (INT64)((INT64)(INT32)(vals) * (INT64)(INT32)(vald));
 
 			vals = result >> 32;
 			vald = result & 0xffffffff;
@@ -4137,7 +4188,7 @@ void e132xs_extend(void)
 		{
 			INT64 result;
 
-			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + ((INT32)((vald & 0xffff0000) >> 16) * (INT32)((vals & 0xffff0000) >> 16)) + ((INT32)(vald & 0xffff) * (INT32)(vals & 0xffff));
+			result = (INT64)COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + (INT64)((INT64)(INT32)((vald & 0xffff0000) >> 16) * (INT64)(INT32)((vals & 0xffff0000) >> 16)) + ((INT64)(INT32)(vald & 0xffff) * (INT64)(INT32)(vals & 0xffff));
 
 			vals = result >> 32;
 			vald = result & 0xffffffff;
@@ -4485,7 +4536,7 @@ void e132xs_call(void)
 
 	const_val += SREG;
 
-	SET_ILC(instruction_length & 3);
+	SET_ILC(e132xs.instruction_length & 3);
 
 	SET_DREG((PC & 0xfffffffe) | GET_S);
 	SET_DREGF(SR);
@@ -4498,7 +4549,7 @@ void e132xs_call(void)
 	PPC = PC;
 	PC = const_val;
 
-	intblock = 2;
+	e132xs.intblock = 2;
 
 	//TODO: add interrupt locks, errors, ....
 

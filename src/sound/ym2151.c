@@ -2175,7 +2175,6 @@ INLINE void advance(void)
 		if (op->pms)	/* only when phase modulation from LFO is enabled for this channel */
 		{
 			INT32 mod_ind = PSG->lfp;		/* -128..+127 (8bits signed) */
-
 			if (op->pms < 6)
 				mod_ind >>= (6 - op->pms);
 			else

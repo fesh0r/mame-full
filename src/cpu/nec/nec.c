@@ -1078,6 +1078,7 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + NEC_PC:
 			if( info->i - (I.sregs[CS]<<4) < 0x10000 )
 			{
 				I.ip = info->i - (I.sregs[CS]<<4);
@@ -1158,7 +1159,8 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
 
-		case CPUINFO_INT_PC:							info->i = ((I.sregs[CS]<<4) + I.ip);	break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + NEC_PC:				info->i = ((I.sregs[CS]<<4) + I.ip);	break;
 		case CPUINFO_INT_REGISTER + NEC_IP:				info->i = I.ip;							break;
 		case CPUINFO_INT_SP:							info->i = (I.sregs[SS]<<4) + I.regs.w[SP]; break;
 		case CPUINFO_INT_REGISTER + NEC_SP:				info->i = I.regs.w[SP];					break;
@@ -1220,6 +1222,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
                 flags & 0x0001 ? 'C':'.');
             break;
 
+        case CPUINFO_STR_REGISTER + NEC_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", (I.sregs[CS]<<4) + I.ip); break;
         case CPUINFO_STR_REGISTER + NEC_IP:				sprintf(info->s = cpuintrf_temp_str(), "IP:%04X", I.ip); break;
         case CPUINFO_STR_REGISTER + NEC_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", I.regs.w[SP]); break;
         case CPUINFO_STR_REGISTER + NEC_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", CompressFlags()); break;

@@ -4015,10 +4015,18 @@ static ADDRESS_MAP_START( tetris_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
 	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
 	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
+	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w) // tetris
+	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // tetrisa + tetrisb
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( sonicbom_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
+	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
+	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
 	AM_RANGE(0x123406, 0x123407) AM_WRITE(sound_command_w)	// sonicbom
-	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // tetris
-
 	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
 ADDRESS_MAP_END
 
@@ -4057,18 +4065,30 @@ ADDRESS_MAP_END
 /***************************************************************************/
 
 
-static void tetris_update_proc( void )
+static void tetris_s16a_update_proc( void )
 {
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
+	sys16_fg_scrolly = sys16_textram[0xf24/2];
+	sys16_bg_scrolly = sys16_textram[0xf26/2];
+	sys16_fg_scrollx = sys16_textram[0xff8/2];
+	sys16_bg_scrollx = sys16_textram[0xffa/2];
+
+	set_fg_page( sys16_textram[0xe9e/2] );
+	set_bg_page( sys16_textram[0xe9c/2] );
+}
+
+static void tetris_s16b_update_proc( void )
+{
+	sys16_fg_scrolly = sys16_textram[0xe90/2];
+	sys16_bg_scrolly = sys16_textram[0xe92/2];
+	sys16_fg_scrollx = sys16_textram[0xe98/2];
+	sys16_bg_scrollx = sys16_textram[0xe9a/2];
 
 	set_fg_page( sys16_textram[0xe80/2] );
 	set_bg_page( sys16_textram[0xe82/2] );
 }
 
-static void tetrisbl_update_proc( void ){
+
+static void tetris_bootleg_update_proc( void ){
 	sys16_fg_scrolly = sys16_textram[0x748];
 	sys16_bg_scrolly = sys16_textram[0x749];
 	sys16_fg_scrollx = sys16_textram[0x74c];
@@ -4078,11 +4098,24 @@ static void tetrisbl_update_proc( void ){
 	set_bg_page( sys16_extraram2[0x28/2] );
 }
 
-static MACHINE_INIT( tetris )
+static MACHINE_INIT( tetris_s16a )
 {
 	fd1094_machine_init();
-	sys16_sprxoffset = -0x40;
-	sys16_update_proc = tetris_update_proc;
+
+	sys16_textmode=1;
+	sys16_spritesystem = sys16_sprite_quartet2;
+	sys16_sprxoffset = -0xb8;
+	sys16_tilebank_switch=0x2000;
+	sys16_fgxoffset = sys16_bgxoffset = 8;
+
+	sys16_update_proc = tetris_s16a_update_proc;
+}
+
+static MACHINE_INIT( tetris_s16b )
+{
+	fd1094_machine_init();
+	sys16_sprxoffset = -0xb0;
+	sys16_update_proc = tetris_s16b_update_proc;
 }
 
 static MACHINE_INIT( tetrisbl ){
@@ -4090,7 +4123,7 @@ static MACHINE_INIT( tetrisbl ){
 //	sys16_patch_code( 0xba7, 0x71 );
 
 	sys16_sprxoffset = -0x40;
-	sys16_update_proc = tetrisbl_update_proc;
+	sys16_update_proc = tetris_bootleg_update_proc;
 }
 
 static DRIVER_INIT( tetris )
@@ -4123,8 +4156,7 @@ static DRIVER_INIT( tetrisbl )
 static MACHINE_INIT( sonicbom )
 {
 	fd1094_machine_init();
-//	sys16_sprxoffset = -0x40;
-	sys16_update_proc = tetris_update_proc;
+	sys16_update_proc = tetris_s16b_update_proc;
 }
 
 static DRIVER_INIT( sonicbom )
@@ -4200,15 +4232,26 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( tetris )
+static MACHINE_DRIVER_START( tetris_s16a )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(tetris_readmem,tetris_writemem)
 
-	MDRV_MACHINE_INIT(tetris)
+	MDRV_MACHINE_INIT(tetris_s16a)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( tetris_s16b )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(system16)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(tetris_readmem,tetris_writemem)
+
+	MDRV_MACHINE_INIT(tetris_s16b)
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( tetrisbl )
 
@@ -4225,7 +4268,7 @@ static MACHINE_DRIVER_START( sonicbom )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(system16_7759)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(tetris_readmem,tetris_writemem)
+	MDRV_CPU_PROGRAM_MAP(tetris_readmem,sonicbom_writemem)
 
 	MDRV_MACHINE_INIT(sonicbom)
 MACHINE_DRIVER_END
@@ -5850,7 +5893,7 @@ ROM_START( ddux )
 	ROM_LOAD16_BYTE( "913.a6", 0x080001, 0x20000, CRC(30c6cb92) SHA1(2e17c74eeb37c9731fc2e365cc0114f7383c0106) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0096.key", 0x0000, 0x2000, CRC(4fed2e85) SHA1(cce2e2f206a5caa8e9797dc0433a1911ab9b62cf) )
+	ROM_LOAD( "317-0096.key", 0x0000, 0x2000, CRC(6fd7d26e) SHA1(6e8feaf14d0981e8b0fa8dcf4cc45aabb0a09f83) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "mpr11917.a14", 0x00000, 0x10000, CRC(6f772190) SHA1(e68dc78785a1cb0da362efc8c4a088ccc580bd6e) )
@@ -5909,7 +5952,7 @@ ROM_START( eswat )
 	ROM_LOAD16_BYTE( "epr12658.bin", 0x000001, 0x40000, CRC(af40bd71) SHA1(3d7422d5c95fd2cbf1ac4916cc8c625a53391eea) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0130.key", 0x0000, 0x2000, CRC(6ed4e917) SHA1(1d63a40aca5f782d004336c91308aa09e5295cb0) )
+	ROM_LOAD( "317-0130.key", 0x0000, 0x2000, CRC(ba7b717b) SHA1(7a5cef9f525d8b5e4199a94f6ba5e960ab44eb0c) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "mpr12624.b11", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) )
@@ -5936,7 +5979,7 @@ ROM_START( eswatu )
 	ROM_LOAD16_BYTE( "epr12656.a1", 0x000001, 0x40000, CRC(5f018967) SHA1(753cd39bdb51126591b5814d54bb57ed1f77cf22) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0129.key", 0x0000, 0x2000, CRC(c62c9aab) SHA1(9c88bf9cbf5e44ffc771a2d642f6c2e3e4c73847) )
+	ROM_LOAD( "317-0129.key", 0x0000, 0x2000, CRC(128302c7) SHA1(6abeab57e3c55ab5e7f57add68a6e6e918d88c1c) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "mpr12624.b11", 0x00000, 0x40000, CRC(375a5ec4) SHA1(42b9116bdc0e0a5b1dd667ac1856b4c2252829ba) )
@@ -6090,7 +6133,7 @@ ROM_START( fpoint )
 	ROM_LOAD16_BYTE( "epr12590b.a5", 0x000001, 0x10000, CRC(75256e3d) SHA1(87a7d9952f29e49958c135906ac2fd19bdc29b67) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0127a.key", 0x0000, 0x2000, CRC(c1c0e5b7) SHA1(51774c7a6c4379ec543cf872ed1e872b3a55f615) )
+	ROM_LOAD( "317-0127a.key", 0x0000, 0x2000, CRC(5adb0042) SHA1(07c565cd741df3de2923921b1009dac4021acd41) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr12593.a14", 0x00000, 0x10000, CRC(cc0582d8) SHA1(92c7d125a6dcb9c5e6e7bd92a5bf3008385ed487) )
@@ -6297,7 +6340,7 @@ ROM_START( goldnaxc )
 	ROM_LOAD16_BYTE( "epr12542.a1", 0x00001, 0x40000, CRC(b7994d3c) SHA1(87570f23826922fca465c69df6b892c59f14e103) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0122.key", 0x0000, 0x2000, CRC(3343274a) SHA1(ed70330cad5313e962db81efb2c226cddd7cee89) )
+	ROM_LOAD( "317-0122.key", 0x0000, 0x2000, CRC(cb73d365) SHA1(8daa3deb367f7661287549554d19a1a4ae254fdc) )
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12385", 0x00000, 0x20000, CRC(b8a4e7e0) SHA1(9b36f50209d45a835ded53eb045f63c649b02fc9) )
@@ -6902,7 +6945,7 @@ ROM_START( sonicbom )
 	ROM_LOAD16_BYTE( "epr11341.a2",  0x020001, 0x10000, CRC(0338f771) SHA1(a1a2928eb3f9826733bad54bbf17f622d9307285) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0053.key", 0x0000, 0x2000, CRC(4661b85a) SHA1(b000deea54a12cd9c5d27f3caa4737aa7fa0766e) )
+	ROM_LOAD( "317-0053.key", 0x0000, 0x2000, CRC(91c80c88) SHA1(db2345257474c7e74a12ef8d125b7d0ea2ecd4c8) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "opr11344.b9",  0x00000, 0x10000, CRC(59a9f940) SHA1(b1c13cfa9609a22cbe047ee39681ccf8d0b3cf9c) )
@@ -6970,7 +7013,7 @@ ROM_START( tetris )
 	ROM_LOAD16_BYTE( "epr12200.rom", 0x000001, 0x8000, CRC(fb058779) SHA1(0045985ea943ebc7e44bd95127c5e5212c2821e8) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0093.key", 0x0000, 0x2000, CRC(1022d623) SHA1(2af332ac3aacb9153dc8b0fbd6985e479253f956) )
+	ROM_LOAD( "317-0093.key", 0x0000, 0x2000, CRC(e0064442) SHA1(cc70b1a2c66729c4540dabd6a24a5f5615beedcd) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12202.rom", 0x00000, 0x10000, CRC(2f7da741) SHA1(51a685673b4a57a13818eca65d122230f20bd9a0) )
@@ -6994,7 +7037,7 @@ ROM_START( tetrisa )
 	ROM_LOAD16_BYTE( "epr12192.rom", 0x000001, 0x10000, CRC(98d590ca) SHA1(4d18409c0b5734d0adcea5646d13f65b687dd05d) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0092.key", 0x0000, 0x2000, CRC(01e5f4e8) SHA1(ec1bd43cd9dc8253a356187e6f364c20edc66692) )
+	ROM_LOAD( "317-0092.key", 0x0000, 0x2000, CRC(d10e1ad9) SHA1(26e81b5f62d96ea50bf203f66dc3643f29dd1596) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12165.b9",  0x00000, 0x10000, CRC(62640221) SHA1(c311d3847a981d0e1609f9b3d80481565d32d78c) )
@@ -7052,7 +7095,7 @@ ROM_START( tetrisb )
 	ROM_LOAD16_BYTE( "epr12164.a4", 0x000000, 0x08000, CRC(b329cd6f) SHA1(409322f32ee676dc72a3b007e3f8d691ca991e60) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0091.key", 0x0000, 0x2000, CRC(9e37695c) SHA1(e97ba8c0d67c4a0f6b8957cb97427d72e9df8d63) )
+	ROM_LOAD( "317-0091.key", 0x0000, 0x2000, CRC(a7937661) SHA1(a1f74749641fe5a25696dc328530377c7707adaf) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12165.b9",  0x00000, 0x10000, CRC(62640221) SHA1(c311d3847a981d0e1609f9b3d80481565d32d78c) )
@@ -7262,7 +7305,7 @@ ROM_START( wb3a )
 	ROM_LOAD16_BYTE( "epr12136.a5", 0x000001, 0x20000, CRC(4cf05003) SHA1(bd4c64c327e53143aa94062f91946eda0a7146c2) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0089.key", 0x0000, 0x2000, CRC(b24ca5b4) SHA1(159f652e7987563f967cf186db3c3cafef7a84f2) )
+	ROM_LOAD( "317-0089.key", 0x0000, 0x2000, CRC(597d30d3) SHA1(3ee713128595a3423a3c826d6bbcedf4099c1178) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12124.a14", 0x00000, 0x10000, CRC(dacefb6f) SHA1(789a5a99ad9419aee9da5397bcea34452ea8b4b3) )
@@ -7328,7 +7371,7 @@ ROM_START( wb3b )
 	ROM_LOAD16_BYTE( "epr12101.a5", 0x020000, 0x10000, CRC(6146492b) SHA1(93515578a6ccf770944fea86d2f3200fa08f5075) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0085.key", 0x0000, 0x2000, CRC(3ba47fc3) SHA1(6054a3a789facbbaa0b75600ccdd56623a2ed441) )
+	ROM_LOAD( "317-0085.key", 0x0000, 0x2000, CRC(8150f38d) SHA1(27baf09294422ff77781449b013f7d0dd0dded9c) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr12124.b9", 0x00000, 0x10000, CRC(dacefb6f) SHA1(789a5a99ad9419aee9da5397bcea34452ea8b4b3) )
@@ -7750,7 +7793,7 @@ GAMEX(1987, shinobia, shinobi,  shinobl,  shinobi,  shinobi,  ROT0,   "Sega",   
 GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobi,  ROT0,   "bootleg", "Shinobi (bootleg)" )
 GAME( 1987, sdi,      0,        sdi,      sdi,      sdi,      ROT0,   "Sega",    "SDI - Strategic Defense Initiative" )
 GAMEX(1987, sdioj,    sdi,      sdi,      sdi,      sdi,      ROT0,   "Sega",    "SDI - Strategic Defense Initiative (Japan)", GAME_NOT_WORKING )
-GAMEX(1988, tetris,   0,        tetris,   tetris,   tetris,   ROT0,   "Sega",    "Tetris (Japan, System 16A, 317-0093)", GAME_NOT_WORKING )
+GAME( 1988, tetris,   0,        tetris_s16a, tetris,   tetris,   ROT0,   "Sega",    "Tetris (Japan, System 16A, 317-0093)" )
 
 /* System16B */
 /*          rom       parent    machine   inp       init */
@@ -7805,8 +7848,8 @@ GAME( 1987, sonicbom, 0,        sonicbom, sonicbom, sonicbom, ROT270, "Sega",   
 /* SDI */
 /* Sukeban Jansi Ryuko */
 GAMEX(19??, suprleag, 0,        s16dummy, s16dummy, s16dummy, ROT0,   "Sega",    "Super League", GAME_NOT_WORKING )
-GAME( 1988, tetrisa,  tetris,   tetris,   tetris,   tetrisa,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 1, 317-0092)" )
-GAME( 1988, tetrisb,  tetris,   tetris,   tetris,   tetrisb,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 2, 317-0091)" )
+GAME( 1988, tetrisa,  tetris,   tetris_s16b,  tetris,   tetrisa,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 1, 317-0092)" )
+GAME( 1988, tetrisb,  tetris,   tetris_s16b,  tetris,   tetrisb,  ROT0,   "Sega",    "Tetris (Japan, System 16B, set 2, 317-0091)" )
 GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)" )
 GAME( 1987, timscanr, 0,        timscanr, timscanr, timscanr, ROT270, "Sega",    "Time Scanner" )
 GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,   "Sega",    "Toryumon" )

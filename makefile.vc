@@ -32,6 +32,8 @@ BSCMAKE = @-bscmake.exe
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
+# uncomment next line to use the new multiwindow debugger
+NEW_DEBUGGER = 1
 
 # uncomment next line to build expat as part of MAME build
 BUILD_EXPAT = 1
@@ -137,6 +139,10 @@ ifndef DEBUG
 DEFS += -DNDEBUG
 endif
 
+ifdef NEW_DEBUGGER
+DEFS += -DNEW_DEBUGGER
+endif
+
 ifdef MESS
 DEFS += -DMESS=1 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 endif
@@ -158,6 +164,7 @@ INCLUDES += \
 	-Isrc/expat \
 	-Isrc/zlib \
 	-Isrc/includes \
+	-Isrc/debug \
 	-Isrc/windows \
 	-Isrc/ui \
 
@@ -254,6 +261,7 @@ OBJDIRS = \
 	obj				\
 	$(OBJ)			\
 	$(OBJ)/cpu		\
+	$(OBJ)/debug	\
 	$(OBJ)/sound	\
 	$(OBJ)/drivers	\
 	$(OBJ)/machine	\
