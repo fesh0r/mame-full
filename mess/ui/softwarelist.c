@@ -59,24 +59,30 @@ extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, u
  * Type declarations                                                 *
  * ----------------------------------------------------------------- */
 
-enum RealizeLevel {
+enum RealizeLevel
+{
 	REALIZE_IMMEDIATE,	/* Calculate the file type when the extension is known */
 	REALIZE_ZIPS,		/* Open up ZIPs, and calculate their extensions and CRCs */
-	REALIZE_ALL			/* Open up all files, and calculate their CRCs */
+	REALIZE_ALL,		/* Open up all files, and calculate their full hashes */
+	REALIZE_DONE
 };
 
-struct deviceentry {
+struct deviceentry
+{
 	int icon;
 	const char *dlgname;
 };
 
-typedef struct tagImageData {
+typedef struct tagImageData
+{
     struct tagImageData *next;
     const TCHAR *name;
     TCHAR *fullname;
-    int type;
+    const struct IODevice *dev;
+	int realized;
 
 #if HAS_HASH
+	char hash[HASH_BUF_SIZE];
 	const struct hash_info *hashinfo;
 #endif /* HAS_HASH */
 } ImageData;
@@ -123,6 +129,7 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
     if (bZip)
 	{
 		types[num_extensions].ext = "zip";
+		types[num_extensions].dev = NULL;
 		num_extensions++;
     }
 
@@ -139,11 +146,8 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
 					{
 						if (num_extensions < count)
 						{
-							types[num_extensions].type = dev->type;
+							types[num_extensions].dev = dev;
 							types[num_extensions].ext = ext;
-#if HAS_HASH
-							types[num_extensions].partialhash = dev->partialhash;
-#endif
 							num_extensions++;
 						}
 					}
@@ -166,89 +170,68 @@ static mess_image_type *MessLookupImageType(mess_image_type *imagetypes, const c
 	return NULL;
 }
 
-static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc)
+
+
+static void MessDiscoverImageType(ImageData *img, mess_image_type *imagetypes, BOOL bReadZip, char *hash)
 {
-	int type;
 	char *lpExt;
 	ZIP *pZip = NULL;
 	UINT32 zipcrc = 0;
 	struct zipent *pZipEnt = NULL;
 	mess_image_type *imgtype;
+	const char *filename = T2A(img->fullname);
 
-	if (crc)
-		*crc = 0;
+	if (hash)
+		*hash = '\0';
 	lpExt = strrchr(filename, '.');
-	type = IO_COUNT;
 
-    if (lpExt) {
-        /* Are we a ZIP file? */
-        if (!stricmp(lpExt, ".ZIP")) {
-			lpExt = NULL;
-            if (bReadZip) {
-                pZip = openzip(0, 0, filename);
-            }
-            else {
-                /* IO_UNKNOWN represents uncalculated zips */
-                type = IO_UNKNOWN;
-            }
-        }
-
-		do
+    if (lpExt)
+	{
+		/* are we a ZIP file? */
+		if (!stricmp(lpExt, ".zip"))
 		{
-            if (pZip)
+			lpExt = NULL;
+			if (bReadZip)
 			{
-				lpExt = NULL;
-                pZipEnt = readzip(pZip);
-                if (pZipEnt)
+				img->realized = 1;
+				pZip = openzip(0, 0, filename);
+				if (pZip)
 				{
-                    lpExt = strrchr(pZipEnt->name, '.');
-					zipcrc = pZipEnt->crc32;
-                }
-            }
-			if (lpExt)
-			{
-				lpExt++;
-				imgtype = MessLookupImageType(imagetypes, lpExt);
-				if (imgtype)
-				{
-					type = imgtype->type;
-#if HAS_HASH
-					if (crc && zipcrc)
+					lpExt = NULL;
+					pZipEnt = readzip(pZip);
+					if (pZipEnt)
 					{
-						if (imgtype->partialhash)
-						{
-							unsigned char *buf = NULL;
-							char dest[HASH_BUF_SIZE];
-
-							assert(pZipEnt);
-							buf = malloc(pZipEnt->uncompressed_size);
-							if (buf)
-							{
-								readuncompresszip(pZip, pZipEnt, (char *) buf);
-
-								imgtype->partialhash(dest, buf, (unsigned int) pZipEnt->uncompressed_size, HASH_CRC);
-								*crc = hash_data_extract_crc32(dest);
-								free(buf);
-							}
-						}
-						else
-						{
-							*crc = zipcrc;
-						}
+						lpExt = strrchr(pZipEnt->name, '.');
+						zipcrc = pZipEnt->crc32;
 					}
-#endif /* HAS_HASH */
 				}
 			}
-		} while( pZip && pZipEnt );
+		}
+		else
+			img->realized = 1;
+
+		if (lpExt)
+		{
+			lpExt++;
+			imgtype = MessLookupImageType(imagetypes, lpExt);
+			if (imgtype)
+			{
+				img->dev = imgtype->dev;
+#if HAS_HASH
+				/* while we have the ZIP file open, we have a convenient opportunity
+				 * to specify the CRC */
+				if (hash && zipcrc && !imgtype->dev->partialhash)
+					sprintf(hash, "c:%08x#", zipcrc);
+#endif /* HAS_HASH */
+			}
+		}
 
         if (pZip)
             closezip(pZip);
     }
-
-	if ((type != IO_UNKNOWN) && (type != IO_ZIP))
-		AssertValidDevice(type);
-    return type;
 }
+
+
 
 static void MessRemoveImage(int imagenum)
 {
@@ -274,11 +257,12 @@ static void MessRemoveImage(int imagenum)
     options.image_count = j;
 }
 
+
+
 static BOOL MessSetImage(int nDriver, int imagenum, int entry)
 {
     char *filename;
     mess_image_type imagetypes[64];
-	int nDeviceType;
 
     if (!mess_images_index || (imagenum >= mess_images_count))
         return FALSE;		/* Invalid image index */
@@ -288,23 +272,21 @@ static BOOL MessSetImage(int nDriver, int imagenum, int entry)
 
     SetupImageTypes(nDriver, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
-	nDeviceType = MessDiscoverImageType(filename, imagetypes, TRUE, NULL);
-	if ((nDeviceType == IO_UNKNOWN) || (nDeviceType == IO_BAD) || (nDeviceType == IO_ZIP))
-	{
-		free(filename);
+	MessDiscoverImageType(mess_images_index[imagenum], imagetypes, TRUE, NULL);
+
+	if (!mess_images_index[imagenum]->dev)
 		return FALSE;
-	}
-	assert(nDeviceType >= 0);
-	assert(nDeviceType < IO_COUNT);
 
 	if (options.image_files[entry].name)
 		free((void *) options.image_files[entry].name);
-    options.image_files[entry].type = nDeviceType;
+    options.image_files[entry].type = mess_images_index[imagenum]->dev->type;
     options.image_files[entry].name = filename;
 
     mess_image_nums[entry] = imagenum;
 	return TRUE;
 }
+
+
 
 static BOOL MessAddImage(int nGame, int imagenum)
 {
@@ -319,6 +301,8 @@ static BOOL MessAddImage(int nGame, int imagenum)
 	options.image_count++;
 	return TRUE;
 }
+
+
 
 static ImageData *ImageData_Alloc(const char *fullname)
 {
@@ -338,7 +322,6 @@ static ImageData *ImageData_Alloc(const char *fullname)
 
     separator_pos = _tcsrchr(newimg->fullname, '\\');
     newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
-	newimg->type = IO_UNKNOWN;
 	return newimg;
 }
 
@@ -353,54 +336,56 @@ static void ImageData_Free(ImageData *img)
 
 static BOOL ImageData_IsBad(ImageData *img)
 {
-	return img->type == IO_COUNT;
+	return img->realized && !img->dev;
 }
 
 
 
 #if HAS_HASH
-static UINT32 CalculateCrc(const char *file, device_partialhash_handler partialhash)
-{
-	UINT32 crc = 0;
-	int length;
-	unsigned char *data = NULL;
-	FILE *f = NULL;
+extern char *mess_try_image_file_as_zip(int pathindex, const char *path,
+	const struct IODevice *dev);
 
-	f = fopen (file, "rb");
-	if (!f)
+static void CalculateHash(char *hash, const char *filename, unsigned int functions, const struct IODevice *dev)
+{
+	UINT32 length;
+	char *new_filename;
+	unsigned char *data = NULL;
+	mame_file *file = NULL;
+
+	/* check to see if we are a ZIP file */
+	new_filename = mess_try_image_file_as_zip(0, filename, dev);
+	if (new_filename)
+		filename = new_filename;
+
+	/* open file */
+	file = mame_fopen(drivers[s_nGame]->name, filename, FILETYPE_IMAGE, OSD_FOPEN_READ);
+	if (!file)
 		goto done;
 
 	/* determine length of file */
-	if (fseek (f, 0L, SEEK_END) != 0)
-		goto done;
-
-	length = ftell(f);
-	if (length == -1)
-		goto done;
+	length = (UINT32) mame_fsize(file);
 
 	/* allocate space for entire file */
-	data = alloca(length);
+	data = malloc(length);
+	if (!data)
+		goto done;
 
 	/* read entire file into memory */
-	if (fseek (f, 0L, SEEK_SET) != 0)
+	if (mame_fread(file, data, length) != length)
 		goto done;
 
-	if (fread(data, sizeof(unsigned char), length, f) != (size_t)length)
-		goto done;
-
-	if (partialhash)
-	{
-		char dest[64];
-		partialhash(dest, data, length, HASH_CRC);
-		crc = hash_data_extract_crc32(dest);
-	}
+	if (dev->partialhash)
+		dev->partialhash(hash, data, length, functions);
 	else
-		crc = crc32(0, data, length);
+		hash_compute(hash, data, length, functions);
 
 done:
-	if (f)
-		fclose(f);
-	return crc;
+	if (file)
+		mame_fclose(file);
+	if (new_filename)
+		free(new_filename);
+	if (data)
+		free(data);
 }
 #endif /* HAS_HASH */
 
@@ -409,51 +394,43 @@ done:
 static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_image_type *imagetypes)
 {
 	BOOL bLearnedSomething = FALSE;
-
+	char *hash_ptr = NULL;
 #if HAS_HASH
-	UINT32 crc = 0;
-	UINT32 *pzipcrc = &crc;
-	mess_image_type *imgtype;
-	const char *extension;
-#else
-	UINT32 *pzipcrc = NULL;
-#endif
+	mess_image_type *imgtype = NULL;
+#endif /* HAS_HASH */
 
 	/* Calculate image type */
-	if (img->type == IO_UNKNOWN)
+	if (!img->realized)
 	{
-		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, pzipcrc);
-		if (img->type != IO_UNKNOWN)
+#if HAS_HASH
+		hash_ptr = img->hash;
+#endif
+		MessDiscoverImageType(img, imagetypes, eRealize > REALIZE_IMMEDIATE, hash_ptr);
+		if (img->realized)
 			bLearnedSomething = TRUE;
 	}
 
 #if HAS_HASH
 	/* Calculate a hash? */
-	if ((eRealize >= REALIZE_ALL) && !crc && !img->hashinfo)
+	if ((eRealize >= REALIZE_ALL) && img->dev &&
+		(hashfile_functions_used(mess_hash_file) & ~hash_data_used_functions(img->hash)))
 	{
-		extension = strrchr(img->fullname, '.');
-		if (extension)
-		{
-			extension++;
-			imgtype = MessLookupImageType(imagetypes, extension);
-			if (imgtype)
-			{
-				crc = CalculateCrc(img->fullname, imgtype->partialhash);
-				bLearnedSomething = TRUE;
-			}
-		}
+		CalculateHash(img->hash, img->fullname,
+			hashfile_functions_used(mess_hash_file),
+			img->dev);
+		bLearnedSomething = TRUE;
 	}
 
-	/* Load CRC information? */
-	if (mess_hash_file && crc && !img->hashinfo)
+	/* Load hash information? */
+	if (mess_hash_file && img->hash[0] && !img->hashinfo)
 	{
-		img->hashinfo = hashfile_lookup(mess_hash_file, crc, NULL, NULL);
+		img->hashinfo = hashfile_lookup(mess_hash_file, img->hash);
 	}
 #endif /* HAS_HASH */
 
 	return bLearnedSomething;
 }
-
+	
 
 
 static BOOL AppendNewImage(const char *fullname, enum RealizeLevel eRealize, ImageData ***listend, mess_image_type *imagetypes)
@@ -556,7 +533,8 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
     if (mess_images_index)
         free(mess_images_index);
     imgd = mess_images;
-    while(imgd) {
+    while(imgd)
+	{
         ImageData *next = imgd->next;
 		ImageData_Free(imgd);
         imgd = next;
@@ -752,11 +730,11 @@ void MessIntroduceItem(struct SmartListView *pListView, const char *filename, me
     return;
 
 unknownsoftware:
-    MessageBox(NULL, TEXT("Unknown type of software"), TEXT(MAME32NAME), MB_OK);
+    MessageBox(pListView->hwndParent, TEXT("Unknown type of software"), TEXT(MAME32NAME), MB_OK);
     return;
 
 outofmemory:
-    MessageBox(NULL, TEXT("Out of memory"), TEXT(MAME32NAME), MB_OK);
+    MessageBox(pListView->hwndParent, TEXT("Out of memory"), TEXT(MAME32NAME), MB_OK);
     return;
 }
 
@@ -795,6 +773,8 @@ BOOL MessApproveImageList(HWND hParent, int nDriver)
 	return TRUE;
 }
 
+
+
 /* ************************************************************************ *
  * Accessors                                                                *
  * ************************************************************************ */
@@ -804,42 +784,42 @@ int MessImageCount(void)
 	return mess_images_count;
 }
 
+
+
 int GetImageType(int nItem)
 {
-	return mess_images_index[nItem]->type;
+	const ImageData *img = mess_images_index[nItem];
+	return img->dev ? img->dev->type : img->realized ? IO_BAD : IO_UNKNOWN;
 }
+
+
 
 LPCTSTR GetImageName(int nItem)
 {
 	return mess_images_index[nItem]->name;
 }
 
+
+
 LPCTSTR GetImageFullName(int nItem)
 {
 	return mess_images_index[nItem]->fullname;
 }
 
+
+
 /* ************************************************************************ *
  * SoftwareListView class code                                              *
  * ************************************************************************ */
-/*
-enum {
-	MESS_COLUMN_IMAGES,
-	MESS_COLUMN_GOODNAME,
-	MESS_COLUMN_MANUFACTURER,
-	MESS_COLUMN_YEAR,
-	MESS_COLUMN_PLAYABLE,
-	MESS_COLUMN_CRC,
-	MESS_COLUMN_MAX
-};
-*/
+
 LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
 {
 	LPCTSTR s = NULL;
 	ImageData *imgd;
 #if HAS_HASH
-	static char crcstr[9];
-#endif
+	unsigned int hash_function = 0;
+	static char buf[128];
+#endif /* HAS_HASH */
 
 	imgd = mess_images_index[nRow];
 
@@ -866,11 +846,19 @@ LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nCol
 		break;
 
 	case MESS_COLUMN_CRC:
+	case MESS_COLUMN_MD5:
+	case MESS_COLUMN_SHA1:
+		switch (nColumn)
+		{
+			case MESS_COLUMN_CRC:	hash_function = HASH_CRC;	break;
+			case MESS_COLUMN_MD5:	hash_function = HASH_MD5;	break;
+			case MESS_COLUMN_SHA1:	hash_function = HASH_SHA1;	break;
+		}
+
+		buf[0] = '\0';
 		if (imgd->hashinfo)
-			snprintf(crcstr, sizeof(crcstr) / sizeof(crcstr[0]), "%08x", imgd->hashinfo->crc32);
-		else
-			crcstr[0] = '\0';
-		s = crcstr;
+			hash_data_extract_printable_checksum(imgd->hashinfo->hash, hash_function, buf);
+		s = buf;
 		break;
 
 #endif /* HAS_HASH */
@@ -947,7 +935,8 @@ void SoftwareList_Idle(struct SmartListView *pListView)
         s_nIdleImageNum++;
     }
 
-    if (s_nIdleImageNum >= mess_images_count) {
+    if (s_nIdleImageNum >= mess_images_count)
+	{
         s_nIdleImageNum = 0;
 
 		switch(s_eRealizeLevel) {
@@ -956,14 +945,18 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 			break;
 
 		case REALIZE_ALL:
-			s_eRealizeLevel = REALIZE_ZIPS;
-			mess_idle_work = FALSE;
+			s_eRealizeLevel = REALIZE_DONE;
+			break;
+
+		case REALIZE_DONE:
+			/* we are done */
 			break;
 
 		default:
 			assert(0);
 			break;
 		}
+		mess_idle_work = (s_eRealizeLevel != REALIZE_DONE);
     }
 }
 #endif /* HAS_IDLING */
@@ -976,8 +969,9 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 
 static const char *MessGui_getfodderimage(unsigned int i, int *foddertype)
 {
-	if (i < mess_images_count) {
-		*foddertype = mess_images_index[i]->type;
+	if (i < mess_images_count)
+	{
+		*foddertype = mess_images_index[i]->dev->type;
 		return mess_images_index[i]->name;
 	}
 	return NULL;
@@ -1000,21 +994,25 @@ void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gam
 	SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
 	/* Try appending an item to the list */
-	for (i = 0; i < nItemsToAdd; i++) {
+	for (i = 0; i < nItemsToAdd; i++)
+	{
 		nItem = i * nItemsToAddSkip;
-		if ((nItem < mess_images_count) && (mess_images_index[nItem]->type != IO_COUNT)) {
+		if ((nItem < mess_images_count) && (GetImageType(nItem) < IO_COUNT))
+		{
 			MessIntroduceItem(pListView, T2A(mess_images_index[nItem]->fullname), imagetypes);
 		}
 	}
 
 	/* Assert that we have resolved all the types */
-	for (i = 0; i < mess_images_count; i++) {
+	for (i = 0; i < mess_images_count; i++)
+	{
 		img = mess_images_index[i];
-		assert(img->type != IO_UNKNOWN);
+		assert(img->realized);
 	}
 
 	/* Now lets try to see if we can load everything */
-	for (i = 0; i < mess_images_count; i++) {
+	for (i = 0; i < mess_images_count; i++)
+	{
 		SmartListView_SelectItem(pListView, i, FALSE);
 		messtestdriver(gamedrv, MessGui_getfodderimage);
 	}

@@ -3,6 +3,7 @@
 
 #include <tchar.h>
 #include "SmartListView.h"
+#include "messdrv.h"
 
 #ifdef UNDER_CE
 #define HAS_IDLING	0
@@ -14,11 +15,8 @@
 
 typedef struct
 {
-    int type;
+	const struct IODevice *dev;
     const char *ext;
-#if HAS_HASH
-	device_partialhash_handler partialhash;
-#endif /* HAS_HASH */
 } mess_image_type;
 
 /* SoftwareListView Class calls */

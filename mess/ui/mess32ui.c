@@ -34,13 +34,16 @@ static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int
 static void SoftwareListClass_Run(struct SmartListView *pListView);
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 
-static const char *mess_column_names[] = {
+static const char *mess_column_names[] =
+{
     "Software",
 	"Goodname",
     "Manufacturer",
     "Year",
     "Playable",
-	"CRC"
+	"CRC",
+	"SHA-1",
+	"MD5"
 };
 
 static struct SmartListViewClass s_softwareListClass =
@@ -530,10 +533,10 @@ static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_p
     // The others
     for (i = 0; imagetypes[i].ext; i++)
 	{
-		if (imagetypes[i].type == IO_ZIP)
+		if (!imagetypes[i].dev)
 			typname = "Compressed images";
 		else
-			typname = lookupdevice(imagetypes[i].type)->dlgname;
+			typname = lookupdevice(imagetypes[i].dev->type)->dlgname;
 
         strcpy(s, typname);
         //strcpy(s, imagetypes[i].ext);

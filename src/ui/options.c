@@ -260,9 +260,9 @@ static REG_OPTION regSettings[] =
 	{ "icons_directory",            RO_STRING,  &settings.iconsdir,         "icons" },
 
 #ifdef MESS
-	{ "mess_column_widths",         RO_ENCODE,  &settings.mess.mess_column_width, "186, 230, 88, 84, 84, 68", FALSE, MessColumnEncodeString, MessColumnDecodeWidths},
-	{ "mess_column_order",          RO_ENCODE,  &settings.mess.mess_column_order, "0,   1,  2,  3,  4,  5",   FALSE, MessColumnEncodeString, MessColumnDecodeString},
-	{ "mess_column_shown",          RO_ENCODE,  &settings.mess.mess_column_shown, "1,   1,  1,  1,  1,  1",   FALSE, MessColumnEncodeString, MessColumnDecodeString},
+	{ "mess_column_widths",         RO_ENCODE,  &settings.mess.mess_column_width, "186, 230, 88, 84, 84, 68, 248, 248",	FALSE, MessColumnEncodeString, MessColumnDecodeWidths},
+	{ "mess_column_order",          RO_ENCODE,  &settings.mess.mess_column_order,   "0,   1,  2,  3,  4,  5,   6,   7",	FALSE, MessColumnEncodeString, MessColumnDecodeString},
+	{ "mess_column_shown",          RO_ENCODE,  &settings.mess.mess_column_shown,   "1,   1,  1,  1,  1,  0,   0,   0",	FALSE, MessColumnEncodeString, MessColumnDecodeString},
 #endif
 	{ "" }
 };

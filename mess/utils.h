@@ -162,9 +162,15 @@ unsigned short ccitt_crc16_one( unsigned short crc, const unsigned char data );
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 
+
+
+/* miscellaneous functions */
 char *stripspace(const char *src);
 char *strip_extension(const char *filename);
 int compute_log2(int val);
+int findextension(const char *extensions, const char *ext);
+
+
 
 /* Endian macros */
 #define FLIPENDIAN_INT16(x)	(((((UINT16) (x)) >> 8) | ((x) << 8)) & 0xffff) 
@@ -182,7 +188,5 @@ int compute_log2(int val);
 #define LITTLE_ENDIANIZE_INT16(x)	(FLIPENDIAN_INT16(x))
 #define LITTLE_ENDIANIZE_INT32(x)	(FLIPENDIAN_INT32(x))
 #endif /* LSB_FIRST */
-
-int findextension(const char *extensions, const char *ext);
 
 #endif /* UTILS_H */

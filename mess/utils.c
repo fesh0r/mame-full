@@ -157,6 +157,10 @@ int compute_log2(int val)
 
 int findextension(const char *extensions, const char *ext)
 {
+	/* special case to allow ext to be in the form '.EXT' */
+	if (*ext == '.')
+		ext++;
+
 	while(*extensions)
 	{
 		if (!strcmpi(extensions, ext))

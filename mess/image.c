@@ -439,7 +439,7 @@ void *image_lookuptag(mess_image *img, const char *tag)
   to be loaded
 ****************************************************************************/
 
-static int read_crc_config(const char *sysname, mess_image *image)
+static int read_hash_config(const char *sysname, mess_image *image)
 {
 	hash_file *hashfile = NULL;
 	const struct hash_info *info = NULL;
@@ -448,7 +448,7 @@ static int read_crc_config(const char *sysname, mess_image *image)
 	if (!hashfile)
 		goto done;
 
-	info = hashfile_lookup_bystring(hashfile, image->hash);
+	info = hashfile_lookup(hashfile, image->hash);
 	if (!info)
 		goto done;
 
@@ -480,8 +480,9 @@ static int run_hash(mame_file *file,
 	if (!buf)
 		return FALSE;
 
-	/* reset the file */
+	/* read the file */
 	mame_fseek(file, 0, SEEK_SET);
+	mame_fread(file, buf, size);
 
 	if (partialhash)
 		partialhash(dest, buf, size, hash_functions);
@@ -499,9 +500,11 @@ static int run_hash(mame_file *file,
 
 static int image_checkhash(mess_image *image)
 {
+	const struct GameDriver *drv;
 	const struct IODevice *dev;
 	mame_file *file;
 	char hash_string[HASH_BUF_SIZE];
+	int rc;
 
 	/* this call should not be made when the image is not loaded */
 	assert(image->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
@@ -513,12 +516,21 @@ static int image_checkhash(mess_image *image)
 		file = image_fp(image);
 		dev = image_device(image);
 
-		if (!run_hash(file, dev->partialhash, hash_string, HASH_CRC))
+		if (!run_hash(file, dev->partialhash, hash_string, HASH_CRC | HASH_MD5 | HASH_SHA1))
 			return FALSE;
 
 		image->hash = image_strdup(image, hash_string);
 		if (!image->hash)
 			return FALSE;
+
+		/* now read the hash file */
+		drv = Machine->gamedrv;
+		do
+		{
+			rc = read_hash_config(drv->name, image);
+			drv = mess_next_compatible_driver(drv);
+		}
+		while(rc && drv);
 	}
 	return TRUE;
 }
@@ -865,6 +877,56 @@ int image_index_in_devtype(mess_image *img)
 {
 	assert(img);
 	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
+}
+
+
+
+/* this code tries opening the image as a raw ZIP file, and if relevant, returns the
+ * zip file and the entry */
+char *mess_try_image_file_as_zip(int pathindex, const char *path,
+	const struct IODevice *dev)
+{
+	ZIP *zip = NULL;
+	struct zipent *zipentry = NULL;
+	char *name;
+	const char *ext;
+	int is_zip;
+	char *new_path = NULL;
+	char path_sep[2] = { PATH_SEPARATOR, '\0' };
+
+	name = osd_basename((char *) path);
+	if (!name)
+		goto done;
+
+	ext = strrchr(name, '.');
+	is_zip = (ext && !stricmp(ext, ".zip"));
+
+	if (is_zip)
+	{
+		zip = openzip(FILETYPE_IMAGE, pathindex, path);
+		if (!zip)
+			goto done;
+	
+		while((zipentry = readzip(zip)) != NULL)
+		{
+			ext = strrchr(zipentry->name, '.');
+			if (!dev || (ext && findextension(dev->file_extensions, ext)))
+			{
+				new_path = malloc(strlen(path) + 1 + strlen(zipentry->name) + 1);
+				if (!new_path)
+					goto done;
+				strcpy(new_path, path);
+				strcat(new_path, path_sep);
+				strcat(new_path, zipentry->name);
+				break;
+			}
+		}
+	}
+
+done:
+	if (zip)
+		closezip(zip);
+	return new_path;
 }
 
 

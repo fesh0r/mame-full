@@ -21,6 +21,7 @@ struct _hash_file
 {
 	mame_file *file;
 	memory_pool pool;
+	unsigned int functions;
 
 	struct hash_info **preloaded_hashes;
 	int preloaded_hash_count;
@@ -43,7 +44,7 @@ struct hash_parse_state
 	hash_file *hashfile;
 	int done;
 	
-	int (*selector_proc)(hash_file *hashfile, void *param, const char *name, UINT32 crc32);
+	int (*selector_proc)(hash_file *hashfile, void *param, const char *name, const char *hash);
 	void (*use_proc)(hash_file *hashfile, void *param, struct hash_info *hi);
 	void (*error_proc)(const char *message);
 	void *param;
@@ -100,10 +101,11 @@ static void unknown_attribute(struct hash_parse_state *state, const char *attrna
 static void start_handler(void *data, const char *tagname, const char **attributes)
 {
 	struct hash_parse_state *state = (struct hash_parse_state *) data;
-	UINT32 crc;
 	const char *name;
 	struct hash_info *hi;
 	char **text_dest;
+	char hash_string[HASH_BUF_SIZE];
+	unsigned int functions;
 
 	switch(state->pos++) {
 	case POS_ROOT:
@@ -120,10 +122,11 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 		if (!strcmp(tagname, "hash"))
 		{
 			name = NULL;
-			crc = 0;
+			memset(hash_string, 0, sizeof(hash_string));
 
 			while(attributes[0])
 			{
+				functions = 0;
 				if (!strcmp(attributes[0], "name"))
 				{
 					/* name attribute */
@@ -132,17 +135,34 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 				else if (!strcmp(attributes[0], "crc32"))
 				{
 					/* crc32 attribute */
-					sscanf(attributes[1], "%x", &crc);
+					functions = HASH_CRC;
+				}
+				else if (!strcmp(attributes[0], "md5"))
+				{
+					/* md5 attribute */
+					functions = HASH_MD5;
+				}
+				else if (!strcmp(attributes[0], "sha1"))
+				{
+					/* sha1 attribute */
+					functions = HASH_SHA1;
 				}
 				else
 				{
 					unknown_attribute(state, attributes[0]);
 				}
+
+				if (functions)
+				{
+					hash_data_insert_printable_checksum(hash_string, functions, attributes[1]);
+					state->hashfile->functions |= functions;
+				}
+
 				attributes += 2;
 			}
 
 			/* do we use this hash? */
-			if (!state->selector_proc || state->selector_proc(state->hashfile, state->param, name, crc))
+			if (!state->selector_proc || state->selector_proc(state->hashfile, state->param, name, hash_string))
 			{
 				hi = pool_malloc(&state->hashfile->pool, sizeof(struct hash_info));
 				if (!hi)
@@ -153,7 +173,7 @@ static void start_handler(void *data, const char *tagname, const char **attribut
 				if (!hi->longname)
 					return;
 
-				hi->crc32 = crc;
+				strcpy(hi->hash, hash_string);
 				state->hi = hi;
 			}
 		}
@@ -232,7 +252,7 @@ static void data_handler(void *data, const XML_Char *s, int len)
 
 
 static void hashfile_parse(hash_file *hashfile,
-	int (*selector_proc)(hash_file *hashfile, void *param, const char *name, UINT32 crc32),
+	int (*selector_proc)(hash_file *hashfile, void *param, const char *name, const char *hash),
 	void (*use_proc)(hash_file *hashfile, void *param, struct hash_info *hi),
 	void (*error_proc)(const char *message),
 	void *param)
@@ -343,20 +363,17 @@ void hashfile_close(hash_file *hashfile)
 
 struct hashlookup_params
 {
-	UINT32 crc;
-	const UINT8 *sha1;
-	const UINT8 *md5;
+	const char *hash;
 	struct hash_info *hi;
 };
 
 
 
-static int singular_selector_proc(hash_file *hashfile, void *param, const char *name, UINT32 crc32)
+static int singular_selector_proc(hash_file *hashfile, void *param, const char *name, const char *hash)
 {
 	struct hashlookup_params *hlparams = (struct hashlookup_params *) param;
-	if (hlparams->crc && (hlparams->crc != crc32))
-		return FALSE;
-	return TRUE;
+	return hash_data_is_equal(hash, hlparams->hash,
+		hash_data_used_functions(hash)) == 1;
 }
 
 
@@ -369,44 +386,30 @@ static void singular_use_proc(hash_file *hashfile, void *param, struct hash_info
 
 
 
-const struct hash_info *hashfile_lookup(hash_file *hashfile, UINT32 crc, const UINT8 *sha1, const UINT8 *md5)
+const struct hash_info *hashfile_lookup(hash_file *hashfile, const char *hash)
 {
 	struct hashlookup_params param;
 	int i;
 
-	assert(!sha1);	/* SHA-1 support not implemented yet */
-	assert(!md5);	/* MD5 not implemented yet */
-
-	/* nothing specified? */
-	if (!crc && !sha1 && !md5)
-		return NULL;
+	param.hash = hash;
+	param.hi = NULL;
 
 	for (i = 0; i < hashfile->preloaded_hash_count; i++)
 	{
-		if (!crc || (crc == hashfile->preloaded_hashes[i]->crc32))
-		{
+		if (singular_selector_proc(hashfile, &param, NULL, hashfile->preloaded_hashes[i]->hash))
 			return hashfile->preloaded_hashes[i];
-		}
 	}
 
-	memset(&param, 0, sizeof(param));
-	param.crc = crc;
-	param.sha1 = sha1;
-	param.md5 = md5;
 	hashfile_parse(hashfile, singular_selector_proc, singular_use_proc,
 		error_proc, (void *) &param);
-
 	return param.hi;
 }
 
 
 
-const struct hash_info *hashfile_lookup_bystring(hash_file *hashfile,
-	const char *hash_string)
+unsigned int hashfile_functions_used(hash_file *hashfile)
 {
-	UINT32 crc;
-	crc = hash_data_extract_crc32(hash_string);
-	return hashfile_lookup(hashfile, crc, NULL, NULL);
+	return hashfile->functions;
 }
 
 

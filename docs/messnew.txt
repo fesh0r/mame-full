@@ -28,8 +28,8 @@ Imgtool Changes:
 Source Changes:
 ----------------
 - Changed around how CRC files work; changed the format to XML and they are
-  no longer specific to CRC32.  The files are now called 'Hash' files are are
-  in the hash directory.  [Nate Woods]
+  no longer specific to CRC32; SHA-1 and MD5 are now supported.  The files
+  are now called 'Hash' files are are in the hash directory.  [Nate Woods]
 
 
 
