@@ -717,8 +717,8 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 static void snes_update_line_mode7( UINT16 curline )
 {
 	UINT32 tilen, tiled;
-	INT16 a,b_,c,d;
-	INT16 xc, yc, tx, ty, sx, sy, hs, vs;
+	INT16 ma,mb,mc,md;
+	INT16 xc, yc, tx, ty, sx, sy, hs, vs, xpos, xdir;
 	register UINT8 colour = 0;
 
 #ifdef MAME_DEBUG
@@ -728,10 +728,10 @@ static void snes_update_line_mode7( UINT16 curline )
 	}
 #endif
 
-	a = mode7_data[0];
-	b_ = -mode7_data[1];
-	c = -mode7_data[2];
-	d = mode7_data[3];
+	ma = mode7_data[0];
+	mb = -mode7_data[1];
+	mc = -mode7_data[2];
+	md = mode7_data[3];
 	xc = mode7_data[4];
 	yc = mode7_data[5];
 	hs = bg_hoffset[0];
@@ -747,14 +747,29 @@ static void snes_update_line_mode7( UINT16 curline )
 	vs <<= 3;
 	vs >>= 3;
 
-	sy = curline;
+	/* Vertical flip */
+	if( snes_ram[M7SEL] & 0x2 )
+		sy = 255 - curline;
+	else
+		sy = curline;
 
-#if 1
-	/* Let's do some mode7 drawing huh? */
-	for( sx = 0; sx < 256; sx++ )
+	/* Horizontal flip */
+	if( snes_ram[M7SEL] & 0x1 )
 	{
-		tx = (((a * ((sx + hs) - xc)) + (c * ((sy + vs) - yc))) >> 8) + xc;
-		ty = (((b_ * ((sx + hs) - xc)) + (d * ((sy + vs) - yc))) >> 8) + yc;
+		xpos = 255;
+		xdir = -1;
+	}
+	else
+	{
+		xpos = 0;
+		xdir = 1;
+	}
+
+	/* Let's do some mode7 drawing huh? */
+	for( sx = 0; sx < 256; sx++, xpos += xdir )
+	{
+		tx = (((ma * ((sx + hs) - xc)) + (mc * ((sy + vs) - yc))) >> 8) + xc;
+		ty = (((mb * ((sx + hs) - xc)) + (md * ((sy + vs) - yc))) >> 8) + yc;
 		switch( snes_ram[M7SEL] & 0xc0 )
 		{
 			case 0x00:	/* Repeat if outside screen area */
@@ -788,72 +803,15 @@ static void snes_update_line_mode7( UINT16 curline )
 				break;
 		}
 
-		if( scanlines[MAINSCREEN].zbuf[sx] < table_bgd_pty[0][0] && colour > 0 )
+		/* Draw pixel if appropriate */
+		if( scanlines[MAINSCREEN].zbuf[xpos] < table_bgd_pty[0][0] && colour > 0 )
 		{
 			UINT16 clr = Machine->remapped_colortable[colour];
-			SNES_DRAW_BLEND( sx, clr, layers[0].blend );
-			scanlines[MAINSCREEN].buffer[sx] = clr;
-			scanlines[MAINSCREEN].zbuf[sx] = table_bgd_pty[0][0];
+			SNES_DRAW_BLEND( xpos, clr, layers[0].blend );
+			scanlines[MAINSCREEN].buffer[xpos] = clr;
+			scanlines[MAINSCREEN].zbuf[xpos] = table_bgd_pty[0][0];
 		}
 	}
-
-#else
-	/* From the original driver */
-	switch( snes_ram[M7SEL] & 0xc0 )
-	{
-		case 0x00:
-			for( sx = 0; sx < 256; sx++ )
-			{
-				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc) & 0x3ff;
-				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc) & 0x3ff;
-				tilen = snes_vram[((ty / 8) * 128 * 2) + ((tx / 8) * 2)];
-				tiled = 1 + (tilen * 8 * 8 * 2);
-				colour = snes_vram[tiled + ((ty & 7) * 8 * 2) + ((tx & 7) * 2)];
-				if( scanlines[MAINSCREEN].zbuf[sx] <= table_bgd_pty[0][1] && colour > 0 )
-				{
-					scanlines[MAINSCREEN].buffer[sx] = Machine->remapped_colortable[colour];
-					scanlines[MAINSCREEN].zbuf[sx] = table_bgd_pty[0][1];
-				}
-			}
-			break;
-		case 0x80:
-			for( sx = 0; sx < 256; sx++ )
-			{
-				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc);
-				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
-				tilen = snes_vram[(((ty & 0x3ff) / 8) * 128 * 2) + (((tx & 0x3ff) / 8) * 2)];
-				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
-					tiled = 1 + (tilen * 8 * 8 * 2);
-				else
-					tiled = 1;
-				colour = snes_vram[tiled + ((ty & 7) * 8 * 2) + ((tx & 7) * 2)];
-				if( scanlines[MAINSCREEN].zbuf[sx] <= table_bgd_pty[0][1] && colour > 0 )
-				{
-					scanlines[MAINSCREEN].buffer[sx] = Machine->remapped_colortable[colour];
-					scanlines[MAINSCREEN].zbuf[sx] = table_bgd_pty[0][1];
-				}
-			}
-			break;
-		case 0xc0:
-			for( sx = 0; sx < 256; sx++ )
-			{
-				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc);
-				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
-				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
-				{
-					tilen = snes_vram[((ty / 8) * 128 * 2) + ((tx / 8) * 2)];
-					tiled = 1 + (tilen * 8 * 8 * 2);
-					colour = snes_vram[tiled + ((ty & 7) * 8 * 2) + ((tx & 7) * 2)];
-					if( scanlines[MAINSCREEN].zbuf[sx] <= table_bgd_pty[0][1] && colour > 0 )
-					{
-						scanlines[MAINSCREEN].buffer[sx] = Machine->remapped_colortable[colour];
-						scanlines[MAINSCREEN].zbuf[sx] = table_bgd_pty[0][1];
-					}
-				}
-			}
-			break;
-	}
-#endif
 }
 
 /*********************************************
@@ -1115,7 +1073,7 @@ void snes_refresh_scanline( UINT16 curline )
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
 		sprintf( t, "BCK   %s", (snes_ram[CGADSUB] & 0x20)?"B":" " );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "Flags: %s%s%s", (snes_ram[CGWSEL] & 0x2)?"S":"F", (snes_ram[CGADSUB] & 0x80)?"-":"+", (snes_ram[CGADSUB] & 0x40)?" 50%":"100%" );
+		sprintf( t, "Flags: %s%s%s%s", (snes_ram[CGWSEL] & 0x2)?"S":"F", (snes_ram[CGADSUB] & 0x80)?"-":"+", (snes_ram[CGADSUB] & 0x40)?" 50%":"100%",(snes_ram[CGWSEL] & 0x1)?"D":"P" );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
 /*		sprintf( t, "a %d", mode7_data[0] );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
