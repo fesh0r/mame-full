@@ -4,6 +4,8 @@ Whats new:
 0.37 BETA 15
 ------------
 
+This likely will be the last MESS32 release based on the classic MESS32 source code.  Further releases will have the MESS32 UI added onto the base Win32 MESS releases.
+
 - Added a new MESS32-specific file manager. [Nate Woods]
 - Fixed a bug in "other directory software" selected through a file dialog.
   [Nate Woods]
