@@ -80,7 +80,7 @@ OBJ = obj/$(NAME)
 EMULATORDLL = $(NAME)lib.dll
 EMULATORCLI = $(NAME)$(EXE)
 EMULATORGUI = $(GUINAME)$(EXE)
-EMULATOR = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
+EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 
@@ -281,8 +281,8 @@ maketree: $(sort $(OBJDIRS))
 clean: cleantools cleantexts
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r $(OBJ)
-	@echo Deleting $(EMULATOR)...
-	$(RM) $(EMULATOR)
+	@echo Deleting $(EMULATORALL)...
+	$(RM) $(EMULATORALL)
 	@echo Deleting Map file...
 	$(RM) $(NAME).map
 	
