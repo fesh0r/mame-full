@@ -9,6 +9,8 @@
 /*    14-Jan-97 - V1.1 - Cleaned up sound output by eliminating counter      */
 /*                       reset.                                              */
 /*    30-Oct-98 - Modified for use in MESS by Dan Boris                      */
+/*    28-Jul-01 - Added support for sample rates > TIA clock rate,           */
+/*                through oversampling                                       */
 /*                                                                           */
 /*                                                                           */
 /*                                                                           */
@@ -139,6 +141,7 @@ static UINT8 Div_n_max[2];              /* Divide by n maximum, one for each cha
 static UINT16 Samp_n_max;               /* Sample max, multiplied by 256 */
 static UINT16 Samp_n_cnt;               /* Sample cnt. */
 
+static int oversampling;				/* Added oversampling for sample_rate > clock_rate */
 
 /*****************************************************************************/
 /* Module:  tia_w()                                                          */
@@ -413,22 +416,42 @@ void tia_process(int param, INT16 *buffer, int length)
             }
         }
 
-        /* decrement the sample counter - value is 256 since the lower
-         * byte contains the fractional part */
-        Samp_n_cnt -= 256;
+		if (!oversampling)
+		{
+			/* decrement the sample counter - value is 256 since the lower
+			 * byte contains the fractional part */
+			Samp_n_cnt -= 256;
 
-        /* if the count down has reached zero */
-        if (Samp_n_cnt < 256)
-        {
-            /* adjust the sample counter */
-            Samp_n_cnt += Samp_n_max;
+			/* if the count down has reached zero */
+			if (Samp_n_cnt < 256)
+			{
+				/* adjust the sample counter */
+				Samp_n_cnt += Samp_n_max;
 
-            /* calculate the latest output value and place in buffer */
-            *buffer++ = outvol_0 + outvol_1;
+				/* calculate the latest output value and place in buffer */
+				*buffer++ = outvol_0 + outvol_1;
 
-            /* and indicate one less byte to process */
-            length--;
-        }
+				/* and indicate one less byte to process */
+				length--;
+			}
+		}
+		else
+		{
+			do
+			{
+				/* decrement the sample counter - value is 256 since the lower
+				 * byte contains the fractional part */
+				Samp_n_cnt -= 256;
+				/* calculate the latest output value and place in buffer */
+				*buffer++ = outvol_0 + outvol_1;
+				length--;
+			}
+			while ((Samp_n_cnt >= 256) && (length > 0));
+
+			/* adjust the sample counter if necessary */
+			if (Samp_n_cnt < 256)
+				Samp_n_cnt += Samp_n_max;
+		}
     }
 
     /* save for next round */
@@ -485,12 +508,12 @@ void tia_sound_init(int clock, int sample_rate, int gain)
     Samp_n_max = ((UINT16)(UINT32)clock << 8) / sample_rate;
     Samp_n_cnt = Samp_n_max;                     /* initialize all bits of the sample counter */
 
-	/* FIXME */
-	if (Samp_n_max < 256) /* Sample rate is > TIA Clock, just generate samples */
+	if (Samp_n_max < 256) /* we need to use oversampling for sample_rate > clock_rate */
 	                      /* at the Machine->sample_rate for now */
 	{
-		Samp_n_max = 256; /* No aliasing, but pitch is off */
-		Samp_n_cnt = 0;
+    	Samp_n_max = ((UINT16)(UINT32)sample_rate << 8) / clock;
+		Samp_n_cnt = Samp_n_max;
+		oversampling = 1;
 	}
 
     /* initialize the local globals */
