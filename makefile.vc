@@ -389,6 +389,7 @@ wimgtool$(EXE): \
 		$(PLATFORM_TOOL_OBJS)							\
 		$(OBJ)/mess/pile.o								\
 		$(OBJ)/mess/ui/dirent.o							\
+		$(OBJ)/mess/windows/strconv.o					\
 		$(OBJ)/mess/tools/imgtool/stubs.o				\
 		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\
 		$(OBJ)/mess/tools/imgtool/windows/wimgtool.o	\

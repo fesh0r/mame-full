@@ -23,6 +23,8 @@ struct wimgtool_info
 	HWND listview;
 	HWND statusbar;
 	IMAGE *image;
+	char *filename;
+
 	HIMAGELIST iconlist_normal;
 	HIMAGELIST iconlist_small;
 	mess_pile iconlist_extensions;
@@ -180,15 +182,62 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 
 
 
-static imgtoolerr_t refresh_image(HWND window)
+static imgtoolerr_t refresh_image(HWND window, BOOL full_setup)
 {
 	imgtoolerr_t err;
 	IMAGEENUM *imageenum = NULL;
-	char enumfilename[256];
+	char buf[256];
 	imgtool_dirent entry;
 	struct wimgtool_info *info;
+	LVCOLUMN col;
+	const struct OptionGuide *guide;
+	const struct ImageModule *module;
 
 	info = get_wimgtool_info(window);
+
+	if (full_setup)
+	{
+		module = info->image ? img_module(info->image) : NULL;
+		if (info->filename)
+		{
+			SetWindowText(window, U2T(info->filename));
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+				"%s: %s", osd_basename((char *) info->filename), module->description);
+			SetWindowText(info->statusbar, U2T(buf));
+		}
+		else
+		{
+			SetWindowText(window, TEXT(""));
+			SetWindowText(info->statusbar, TEXT(""));
+		}
+		DragAcceptFiles(window, info->filename != NULL);
+
+		// create module specific listview columns
+		guide = module ? module->writefile_optguide : NULL;
+		if (guide)
+		{
+			col.mask = LVCF_TEXT | LVCF_WIDTH;
+			col.cx = 100;
+
+			while(guide->option_type != OPTIONTYPE_END)
+			{
+				switch(guide->option_type)
+				{
+					case OPTIONTYPE_INT:
+					case OPTIONTYPE_STRING:
+					case OPTIONTYPE_ENUM_BEGIN:
+						col.pszText = (LPTSTR) U2T(guide->display_name);
+						if (ListView_InsertColumn(info->listview, 1, &col) < 0)
+							return -1;
+						break;
+
+					default:
+						break;
+				}
+				guide++;
+			}
+		}
+	}
 
 	ListView_DeleteAllItems(info->listview);
 
@@ -197,8 +246,8 @@ static imgtoolerr_t refresh_image(HWND window)
 		goto done;
 
 	memset(&entry, 0, sizeof(entry));
-	entry.fname = enumfilename;
-	entry.fname_len = sizeof(enumfilename) / sizeof(enumfilename[0]);
+	entry.fname = buf;
+	entry.fname_len = sizeof(buf) / sizeof(buf[0]);
 	do
 	{
 		err = img_nextenum(imageenum, &entry);
@@ -309,7 +358,6 @@ static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
 	imgtoolerr_t err;
 	IMAGE *image;
 	struct wimgtool_info *info;
-	char buf[256];
 
 	info = get_wimgtool_info(window);
 
@@ -318,6 +366,13 @@ static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
 		err = img_identify(library, filename, &module, 1);
 		if (err)
 			goto done;
+	}
+
+	info->filename = strdup(filename);
+	if (!info->filename)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
 	}
 	
 	err = img_open(module, filename, read_or_write, &image);
@@ -329,12 +384,7 @@ static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
 	info->image = image;
 
 	// refresh the window
-	SetWindowText(window, filename);
-	refresh_image(window);
-	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-		"%s: %s", osd_basename((char *) filename), module->description);
-	SetWindowText(info->statusbar, A2T(buf));
-	DragAcceptFiles(window, TRUE);
+	refresh_image(window, TRUE);
 	
 done:
 	return err;
@@ -445,7 +495,7 @@ static void menu_insert(HWND window)
 	if (err)
 		goto done;
 
-	err = refresh_image(window);
+	err = refresh_image(window, FALSE);
 	if (err)
 		goto done;
 
@@ -514,7 +564,7 @@ static void menu_delete(HWND window)
 	if (err)
 		goto done;
 
-	err = refresh_image(window);
+	err = refresh_image(window, FALSE);
 	if (err)
 		goto done;
 
@@ -608,7 +658,7 @@ static void drop_files(HWND window, HDROP drop)
 	}
 
 done:
-	refresh_image(window);
+	refresh_image(window, FALSE);
 	if (err)
 		report_error(window, err);
 }

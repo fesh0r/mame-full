@@ -305,6 +305,16 @@ imgtoolerr_t img_deletefile(IMAGE *img, const char *fname);
 imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, option_resolution *opts);
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts);
 
+/* img_module
+ *
+ * Description:
+ *		Retrieves the module associated with an image
+ */
+INLINE const struct ImageModule *img_module(IMAGE *img)
+{
+	return img->module;
+}
+
 /* imgtool_test
  * imgtool_test_byname
  *
