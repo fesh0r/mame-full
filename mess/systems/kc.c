@@ -25,37 +25,97 @@ static Z80_DaisyChain kc85_daisy_chain[] =
 };
 
 
+static READ_HANDLER(kc85_4_port_r)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+//		case 0x080:
+//			return kc85_module_r(offset);
+
+		case 0x085:
+		case 0x084:
+			return kc85_4_84_r(offset);
+
+
+		case 0x086:
+		case 0x087:
+			return kc85_4_86_r(offset);
+
+		case 0x088:
+		case 0x089:
+			return kc85_pio_data_r(port-0x088);
+		case 0x08a:
+		case 0x08b:
+			return kc85_pio_control_r(port-0x08a);
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			return kc85_ctc_r(port-0x08c);
+
+	}
+
+	logerror("unhandled port r: %04x\n",offset);
+	return 0x0ff;
+}
+
+static WRITE_HANDLER(kc85_4_port_w)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+//		case 0x080:
+//			kc85_module_w(offset,data);
+//			return;
+
+		case 0x085:
+		case 0x084:
+			kc85_4_84_w(offset,data);
+			return;
+
+		case 0x086:
+		case 0x087:
+			kc85_4_86_w(offset,data);
+			return;
+
+		case 0x088:
+		case 0x089:
+			kc85_4_pio_data_w(port-0x088, data);
+			return;
+
+		case 0x08a:
+		case 0x08b:
+			kc85_pio_control_w(port-0x08a, data);
+			return;
+
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			kc85_ctc_w(port-0x08c, data);
+			return;
+	}
+
+	logerror("unhandled port w: %04x\n",offset);
+}
+
 
 PORT_READ_START( readport_kc85_4 )
-	{0x000, 0x083, kc85_unmapped_r},
-	{0x084, 0x084, kc85_4_84_r},
-	{0x085, 0x085, kc85_4_84_r},
-	{0x086, 0x086, kc85_4_86_r},
-	{0x087, 0x087, kc85_4_86_r},
-	{0x088, 0x089, kc85_pio_data_r},
-	{0x08a, 0x08b, kc85_pio_control_r},
-	{0x08c, 0x08f, kc85_ctc_r},
-	{0x090, 0x0ff, kc85_unmapped_r},
+	{ 0x0000, 0x0ffff, kc85_4_port_r },
 PORT_END
 
 PORT_WRITE_START( writeport_kc85_4 )
-	/* D05 decodes io ports on schematic */
-	/* D08,D09 on schematic handle these ports */
-	{0x084, 0x084, kc85_4_84_w},
-	{0x085, 0x085, kc85_4_84_w},
-	{0x086, 0x086, kc85_4_86_w},
-	{0x087, 0x087, kc85_4_86_w},
-
-	/* D06 on schematic handle these ports */
-	{0x088, 0x089, kc85_4_pio_data_w},
-	{0x08a, 0x08b, kc85_pio_control_w},
-
-	/* D07 on schematic handle these ports */
-	{0x08c, 0x08f, kc85_ctc_w },
-
+	{0x0000, 0x0ffff, kc85_4_port_w},
 PORT_END
 
-static READ_HANDLER(kc85_4_port_r)
+static READ_HANDLER(kc85_4d_port_r)
 {
 	int port;
 
@@ -98,7 +158,7 @@ static READ_HANDLER(kc85_4_port_r)
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(kc85_4_port_w)
+static WRITE_HANDLER(kc85_4d_port_w)
 {
 	int port;
 
@@ -149,11 +209,11 @@ static WRITE_HANDLER(kc85_4_port_w)
 }
 
 PORT_READ_START( readport_kc85_4d )
-	{0x0000, 0x0ffff, kc85_4_port_r},
+	{0x0000, 0x0ffff, kc85_4d_port_r},
 PORT_END
 
 PORT_WRITE_START( writeport_kc85_4d )
-	{0x0000, 0x0ffff, kc85_4_port_w},
+	{0x0000, 0x0ffff, kc85_4d_port_w},
 PORT_END
 
 MEMORY_READ_START( readmem_kc85_4 )
@@ -172,38 +232,90 @@ MEMORY_WRITE_START( writemem_kc85_4 )
 	{0x08000, 0x0a7ff, MWA_BANK9},
 	//{0x0a800, 0x0bfff, MWA_RAM},
 	{0x0a800, 0x0bfff, MWA_BANK10},
-	{0x0c000, 0x0dfff, MWA_NOP},
-	{0x0e000, 0x0ffff, MWA_NOP},
 MEMORY_END
 
 MEMORY_READ_START( readmem_kc85_3 )
 	{0x00000, 0x03fff, MRA_BANK1},
-	{0x04000, 0x07fff, MRA_NOP},
-	{0x08000, 0x0bfff, MRA_BANK2},
-	{0x0c000, 0x0dfff, MRA_BANK3},
-	{0x0e000, 0x0ffff, MRA_BANK4},
+	{0x04000, 0x07fff, MRA_BANK2},
+	{0x08000, 0x0bfff, MRA_BANK3},
+	{0x0c000, 0x0dfff, MRA_BANK4},
+	{0x0e000, 0x0ffff, MRA_BANK5},
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_kc85_3 )
-	{0x00000, 0x03fff, MWA_BANK5},
-	{0x04000, 0x07fff, MWA_NOP},
-	{0x08000, 0x0bfff, MWA_BANK6},
-	{0x0c000, 0x0dfff, MWA_NOP},
-	{0x0e000, 0x0ffff, MWA_NOP},
+	{0x00000, 0x03fff, MWA_BANK6},
+	{0x04000, 0x07fff, MWA_BANK7},
+	{0x08000, 0x0bfff, MWA_BANK8},
 MEMORY_END
 
+static READ_HANDLER(kc85_3_port_r)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+//		case 0x080:
+//			return kc85_module_r(offset);
+
+		case 0x088:
+		case 0x089:
+			return kc85_pio_data_r(port-0x088);
+		case 0x08a:
+		case 0x08b:
+			return kc85_pio_control_r(port-0x08a);
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			return kc85_ctc_r(port-0x08c);
+	}
+
+	logerror("unhandled port r: %04x\n",offset);
+	return 0x0ff;
+}
+
+static WRITE_HANDLER(kc85_3_port_w)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+//		case 0x080:
+//			kc85_module_w(offset,data);
+//			return;
+
+		case 0x088:
+		case 0x089:
+			kc85_4_pio_data_w(port-0x088, data);
+			return;
+
+		case 0x08a:
+		case 0x08b:
+			kc85_pio_control_w(port-0x08a, data);
+			return;
+
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			kc85_ctc_w(port-0x08c, data);
+			return;
+	}
+
+	logerror("unhandled port w: %04x\n",offset);
+}
+
+
 PORT_READ_START( readport_kc85_3 )
-	{0x000, 0x087, kc85_unmapped_r},
-	{0x088, 0x089, kc85_pio_data_r},
-	{0x08a, 0x08b, kc85_pio_control_r},
-	{0x08c, 0x08f, kc85_ctc_r},
-	{0x090, 0x0ff, kc85_unmapped_r},
+	{ 0x0000, 0x0ffff, kc85_3_port_r},
 PORT_END
 
 PORT_WRITE_START( writeport_kc85_3 )
-	{0x088, 0x089, kc85_3_pio_data_w},
-	{0x08a, 0x08b, kc85_pio_control_w},
-	{0x08c, 0x08f, kc85_ctc_w },
+	{ 0x0000, 0x0ffff, kc85_3_port_w},
 PORT_END
 
 
@@ -261,7 +373,7 @@ static struct MachineDriver machine_driver_kc85_4 =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80_MSX,  /* type */
+			CPU_Z80_MSX|CPU_16BIT_PORT,  /* type */
 			KC85_4_CLOCK,
 			readmem_kc85_4,		   /* MemoryReadAddress */
 			writemem_kc85_4,		   /* MemoryWriteAddress */
@@ -372,7 +484,7 @@ static struct MachineDriver machine_driver_kc85_3 =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80_MSX,  /* type */
+			CPU_Z80_MSX|CPU_16BIT_PORT,  /* type */
 			KC85_3_CLOCK,
 			readmem_kc85_3,		   /* MemoryReadAddress */
 			writemem_kc85_3,		   /* MemoryWriteAddress */
