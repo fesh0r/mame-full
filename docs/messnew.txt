@@ -43,6 +43,9 @@ Source Changes:
 ----------------
 - Fixed a cassette crash that affected the TI-99 among other drivers.  [Nate
   Woods]
+  
+- Changes to device handling in order to support richer image creation.  [Nate
+  Woods]
 
 
 

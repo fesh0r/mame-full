@@ -1,3 +1,11 @@
+/****************************************************************************
+
+	opresolv.h
+
+	Extensible ranged option resolution handling
+
+****************************************************************************/
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -203,24 +211,7 @@ option_resolution *option_resolution_create(const struct OptionGuide *guide, con
 	assert(guide);
 
 	/* first count the number of options specified in the guide */
-	option_count = 0;
-	guide_entry = guide;
-	while(guide_entry->option_type != OPTIONTYPE_END)
-	{
-		switch(guide_entry->option_type) {
-		case OPTIONTYPE_INT:
-		case OPTIONTYPE_STRING:
-		case OPTIONTYPE_ENUM_BEGIN:
-			if (lookup_in_specification(specification, guide_entry))
-				option_count++;
-			break;
-		case OPTIONTYPE_ENUM_VALUE:
-			break;
-		default:
-			goto unexpected;
-		}
-		guide_entry++;
-	}
+	option_count = option_resolution_countoptions(guide, specification);
 
 	/* allocate the main structure */
 	resolution = malloc(sizeof(option_resolution));
@@ -455,6 +446,57 @@ const char *option_resolution_lookup_string(option_resolution *resolution, int o
 
 
 
+const char *option_resolution_specification(option_resolution *resolution)
+{
+	return resolution->specification;
+}
+
+
+
+const struct OptionGuide *option_resolution_find_option(option_resolution *resolution, int option_char)
+{
+	const struct option_resolution_entry *entry;
+	entry = option_resolution_lookup_entry(resolution, option_char);
+	return entry ? entry->guide_entry : NULL;
+}
+
+
+
+const struct OptionGuide *option_resolution_index_option(option_resolution *resolution, int indx)
+{
+	if ((indx < 0) || (indx >= resolution->option_count))
+		return NULL;
+	return resolution->entries[indx].guide_entry;
+}
+
+
+
+int option_resolution_countoptions(const struct OptionGuide *guide, const char *specification)
+{
+	int option_count = 0;
+
+	while(guide->option_type != OPTIONTYPE_END)
+	{
+		switch(guide->option_type) {
+		case OPTIONTYPE_INT:
+		case OPTIONTYPE_STRING:
+		case OPTIONTYPE_ENUM_BEGIN:
+			if (lookup_in_specification(specification, guide))
+				option_count++;
+			break;
+		case OPTIONTYPE_ENUM_VALUE:
+			break;
+		default:
+			assert(FALSE);
+			return 0;
+		}
+		guide++;
+	}
+	return option_count;
+}
+
+
+
 optreserr_t option_resolution_listranges(const char *specification, int option_char,
 	struct OptionRange *range, size_t range_count)
 {
@@ -485,6 +527,13 @@ optreserr_t option_resolution_getdefault(const char *specification, int option_c
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
 
 	return resolve_single_param(specification + 1, val, NULL, 0);
+}
+
+
+
+int option_resolution_contains(const char *specification, int option_char)
+{
+	return strchr(specification, option_char) != NULL;
 }
 
 

@@ -1,6 +1,6 @@
 //============================================================
 //
-//	dialog.c - Win32 MESS dialogs handling
+//	dialog.h - Win32 MESS dialog handling
 //
 //============================================================
 
@@ -49,7 +49,8 @@
 enum
 {
 	TRIGGER_INITDIALOG	= 1,
-	TRIGGER_APPLY		= 2
+	TRIGGER_APPLY		= 2,
+	TRIGGER_CHANGED		= 4
 };
 
 typedef LRESULT (*trigger_function)(dialog_box *dialog, HWND dlgwnd, UINT message, WPARAM wparam, LPARAM lparam);
@@ -62,7 +63,8 @@ struct dialog_info_trigger
 	UINT message;
 	WPARAM wparam;
 	LPARAM lparam;
-	UINT16 *result;
+	void (*storeval)(void *param, int val);
+	void *storeval_param;
 	trigger_function trigger_proc;
 };
 
@@ -232,8 +234,8 @@ static void dialog_trigger(HWND dlgwnd, WORD trigger_flags)
 			if (trigger->trigger_proc)
 				result = trigger->trigger_proc(di, dialog_item, trigger->message, trigger->wparam, trigger->lparam);
 
-			if (trigger->result)
-				*(trigger->result) = result;
+			if (trigger->storeval)
+				trigger->storeval(trigger->storeval_param, result);
 		}
 	}
 }
@@ -458,7 +460,8 @@ static int dialog_write_item(dialog_box *di, DWORD style, short x, short y,
 
 static int dialog_add_trigger(struct _dialog_box *di, WORD dialog_item,
 	WORD trigger_flags, UINT message, trigger_function trigger_proc,
-	WPARAM wparam, LPARAM lparam, UINT16 *result)
+	WPARAM wparam, LPARAM lparam,
+	void (*storeval)(void *param, int val), void *storeval_param)
 {
 	struct dialog_info_trigger *trigger;
 
@@ -476,7 +479,8 @@ static int dialog_add_trigger(struct _dialog_box *di, WORD dialog_item,
 	trigger->trigger_proc = trigger_proc;
 	trigger->wparam = wparam;
 	trigger->lparam = lparam;
-	trigger->result = result;
+	trigger->storeval = storeval;
+	trigger->storeval_param = storeval_param;
 
 	if (di->trigger_last)
 		di->trigger_last->next = trigger;
@@ -499,7 +503,7 @@ static int dialog_add_object(dialog_box *di, HGDIOBJ obj)
 
 	if (!di->objpool)
 	{
-		objpool = malloc(sizeof(struct dialog_object_pool));
+		objpool = pool_malloc(&di->mempool, sizeof(struct dialog_object_pool));
 		if (!objpool)
 			return 1;
 		memset(objpool, 0, sizeof(struct dialog_object_pool));
@@ -550,7 +554,7 @@ static LRESULT dialog_scrollbar_init(dialog_box *dialog, HWND dlgwnd, UINT messa
 
 static int dialog_add_scrollbar(dialog_box *dialog)
 {
-	if (dialog_add_trigger(dialog, 0, TRIGGER_INITDIALOG, 0, dialog_scrollbar_init, 0, 0, NULL))
+	if (dialog_add_trigger(dialog, 0, TRIGGER_INITDIALOG, 0, dialog_scrollbar_init, 0, 0, NULL, NULL))
 		return 1;
 
 	dialog->style |= WS_VSCROLL;
@@ -581,6 +585,8 @@ static void dialog_prime(dialog_box *di)
 	GlobalUnlock(di->handle);
 }
 
+
+
 //============================================================
 //	dialog_get_combo_value
 //============================================================
@@ -593,6 +599,8 @@ static LRESULT dialog_get_combo_value(dialog_box *dialog, HWND dialog_item, UINT
 		return 0;
 	return SendMessage(dialog_item, CB_GETITEMDATA, idx, 0);
 }
+
+
 
 //============================================================
 //	win_dialog_init
@@ -681,39 +689,77 @@ static void dialog_finish_control(struct _dialog_box *di, short x, short y)
 
 
 //============================================================
-//	win_dialog_add_combobox
+//	dialog_combo_changed
 //============================================================
 
-int win_dialog_add_combobox(dialog_box *dialog, const char *item_label, UINT16 *value)
+static LRESULT dialog_combo_changed(dialog_box *dialog, HWND dlgitem, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	dialog_box *di = dialog;
+	dialog_itemchangedproc changed = (dialog_itemchangedproc) wparam;
+	changed(dialog, dlgitem, (void *) lparam);
+	return 0;
+}
+
+
+
+//============================================================
+//	win_dialog_add_active_combobox
+//============================================================
+
+int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, int default_value,
+	void (*storeval)(void *param, int val), void *storeval_param,
+	void (*changed)(dialog_box *dialog, HWND dlgwnd, void *changed_param), void *changed_param)
+{
 	short x;
 	short y;
 
-	assert(item_label);
+	dialog_new_control(dialog, &x, &y);
 
-	dialog_new_control(di, &x, &y);
-
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y, DIM_LABEL_WIDTH, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC, NULL))
-		return 1;
+		goto error;
 
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
-	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
+	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
 			x, y, DIM_COMBO_WIDTH, DIM_COMBO_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX, NULL))
-		return 1;
-	di->combo_string_count = 0;
-	di->combo_default_value = *value;
+		goto error;
+	dialog->combo_string_count = 0;
+	dialog->combo_default_value = default_value;
 
-	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, dialog_get_combo_value, 0, 0, value))
-		return 1;
+	// add the trigger invoked when the apply button is pressed
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_APPLY, 0, dialog_get_combo_value, 0, 0, storeval, storeval_param))
+		goto error;
+
+	// if appropriate, add the optional changed trigger
+	if (changed)
+	{
+		if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG | TRIGGER_CHANGED, 0, dialog_combo_changed, (WPARAM) changed, (LPARAM) changed_param, NULL, NULL))
+			goto error;
+	}
 
 	x += DIM_COMBO_WIDTH + DIM_HORIZONTAL_SPACING;
 	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 
-	dialog_finish_control(di, x, y);
+	dialog_finish_control(dialog, x, y);
 	return 0;
+
+error:
+	return 1;
 }
+
+
+
+//============================================================
+//	win_dialog_add_combobox
+//============================================================
+
+int win_dialog_add_combobox(dialog_box *dialog, const char *item_label, int default_value,
+	void (*storeval)(void *param, int val), void *storeval_param)
+{
+	return win_dialog_add_active_combobox(dialog, item_label, default_value,
+		storeval, storeval_param, NULL, NULL);
+}
+
+
 
 //============================================================
 //	win_dialog_add_combobox_item
@@ -721,19 +767,28 @@ int win_dialog_add_combobox(dialog_box *dialog, const char *item_label, UINT16 *
 
 int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int item_data)
 {
-	dialog_box *di = dialog;
-	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_ADDSTRING, NULL, 0, (LPARAM) item_label, NULL))
-		return 1;
-	di->combo_string_count++;
-	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_SETITEMDATA, NULL, di->combo_string_count-1, (LPARAM) item_data, NULL))
-		return 1;
-	if (item_data == di->combo_default_value)
+	// create our own copy of the string
+	if (item_label)
 	{
-		if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_SETCURSEL, NULL, di->combo_string_count-1, 0, NULL))
+		item_label = pool_strdup(&dialog->mempool, item_label);
+		if (!item_label)
+			return 1;
+	}
+
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, CB_ADDSTRING, NULL, 0, (LPARAM) item_label, NULL, NULL))
+		return 1;
+	dialog->combo_string_count++;
+	if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, CB_SETITEMDATA, NULL, dialog->combo_string_count-1, (LPARAM) item_data, NULL, NULL))
+		return 1;
+	if (item_data == dialog->combo_default_value)
+	{
+		if (dialog_add_trigger(dialog, dialog->item_count, TRIGGER_INITDIALOG, CB_SETCURSEL, NULL, dialog->combo_string_count-1, 0, NULL, NULL))
 			return 1;
 	}
 	return 0;
 }
+
+
 
 //============================================================
 //	seqselect_wndproc
@@ -892,12 +947,14 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 	stuff->code = code;
 	stuff->pos = di->item_count;
 	stuff->timer = 0;
-	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, 0, seqselect_setup, di->item_count, (LPARAM) stuff, NULL))
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, 0, seqselect_setup, di->item_count, (LPARAM) stuff, NULL, NULL))
 		return 1;
-	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, seqselect_apply, 0, 0, NULL))
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, seqselect_apply, 0, 0, NULL, NULL))
 		return 1;
 	return 0;
 }
+
+
 
 //============================================================
 //	win_dialog_add_seqselect
@@ -949,6 +1006,94 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *
 	return 0;
 }
 
+
+
+//============================================================
+//	storeval_option_resolution
+//============================================================
+
+struct storeval_optres_param
+{
+	option_resolution *resolution;
+	const struct OptionGuide *guide_entry;
+};
+
+static void storeval_option_resolution(void *storeval_param, int val)
+{
+	struct storeval_optres_param *optres_param;
+	char param_str[32];
+	char value_str[16];
+	
+	optres_param = (struct storeval_optres_param *) storeval_param;
+	snprintf(param_str, sizeof(param_str) / sizeof(param_str[0]), "%s", optres_param->guide_entry->identifier);
+	snprintf(value_str, sizeof(value_str) / sizeof(value_str[0]), "%d", val);
+	option_resolution_add_param(optres_param->resolution, param_str, value_str);
+}
+
+
+
+//============================================================
+//	win_dialog_add_resolved_option
+//============================================================
+
+int win_dialog_add_option_resolution(dialog_box *dialog, option_resolution *resolution)
+{
+	int indx = 0;
+	int i, j;
+	optreserr_t err;
+	const struct OptionGuide *guide_entry;
+	const char *optspec;
+	struct OptionRange ranges[100]; 
+	char buf[256];
+	int val;
+	struct storeval_optres_param *optres_param;
+
+	optspec = option_resolution_specification(resolution);
+
+	while((guide_entry = option_resolution_index_option(resolution, indx++)) != NULL)
+	{
+		switch(guide_entry->option_type) {
+		case OPTIONTYPE_INT:
+		case OPTIONTYPE_ENUM_BEGIN:
+			err = option_resolution_listranges(optspec, guide_entry->parameter, ranges, sizeof(ranges) / sizeof(ranges[0]));
+			if (err)
+				goto done;
+
+			err = option_resolution_getdefault(optspec, guide_entry->parameter, &val);
+			if (err)
+				goto done;
+
+			optres_param = pool_malloc(&dialog->mempool, sizeof(*optres_param));
+			if (!optres_param)
+				goto done;
+			optres_param->resolution = resolution;
+			optres_param->guide_entry = guide_entry;
+
+			win_dialog_add_combobox(dialog, guide_entry->display_name, val, storeval_option_resolution, optres_param);
+
+			// loop through the options
+			for (i = 0; ranges[i].min >= 0; i++)
+			{
+				for (j = ranges[i].min; j <= ranges[i].max; j++)
+				{
+					snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%i", j);
+					win_dialog_add_combobox_item(dialog, buf, j);
+				}
+			}
+			break;
+
+		case OPTIONTYPE_STRING:
+		default:
+			break;
+		}
+	}
+
+done:
+	return 0;
+}
+
+
+
 //============================================================
 //	win_dialog_add_standard_buttons
 //============================================================
@@ -973,6 +1118,8 @@ int win_dialog_add_standard_buttons(dialog_box *dialog)
 	di->size_y += DIM_BUTTON_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 	return 0;
 }
+
+
 
 //============================================================
 //	create_png_bitmap
@@ -1059,7 +1206,7 @@ int win_dialog_add_image(dialog_box *dialog, const struct png_info *png)
 	if (dialog_write_item(dialog, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_BITMAP,
 			x, y, width, height, "", DLGITEM_STATIC, &id))
 		return 1;
-	if (dialog_add_trigger(dialog, id, TRIGGER_INITDIALOG, STM_SETIMAGE, NULL, (WPARAM)IMAGE_BITMAP, (LPARAM) bitmap, NULL))
+	if (dialog_add_trigger(dialog, id, TRIGGER_INITDIALOG, STM_SETIMAGE, NULL, (WPARAM)IMAGE_BITMAP, (LPARAM) bitmap, NULL, NULL))
 		return 1;
 	if (dialog_add_object(dialog, bitmap))
 		return 1;
@@ -1096,7 +1243,6 @@ void win_dialog_exit(dialog_box *dialog)
 	{
 		for (i = 0; i < sizeof(objpool->objects) / sizeof(objpool->objects[0]); i++)
 			DeleteObject(objpool->objects[i]);
-		free(objpool);
 	}
 
 	if (dialog->handle)
@@ -1104,6 +1250,19 @@ void win_dialog_exit(dialog_box *dialog)
 	pool_exit(&dialog->mempool);
 	free(dialog);
 }
+
+
+
+//============================================================
+//	win_dialog_malloc
+//============================================================
+
+void *win_dialog_malloc(dialog_box *dialog, size_t size)
+{
+	return pool_malloc(&dialog->mempool, size);
+}
+
+
 
 //============================================================
 //	win_dialog_runmodal
@@ -1155,16 +1314,34 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 {
 	OPENFILENAME *ofn;
 	dialog_box *dialog;
-	UINT_PTR rc = 1;
+	UINT_PTR rc = 0;
+	LPNMHDR notify;
 
 	switch(message) {
 	case WM_INITDIALOG:
-		ofn = ((OFNOTIFY *) lparam)->lpOFN;
+		ofn = (OPENFILENAME *) lparam;
 		dialog = (dialog_box *) ofn->lCustData;
 
 		SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) dialog);
 		dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
-		rc = 0;
+		rc = 1;
+		break;
+
+	case WM_NOTIFY:
+		notify = (LPNMHDR) lparam;
+		switch(notify->code) {
+		case CDN_FILEOK:
+			dialog_trigger(dlgwnd, TRIGGER_APPLY);
+			break;
+		}
+		break;
+
+	case WM_COMMAND:
+		switch(HIWORD(wparam)) {
+		case CBN_SELCHANGE:
+			dialog_trigger(dlgwnd, TRIGGER_CHANGED);
+			break;
+		}
 		break;
 	}
 	return rc;
@@ -1199,7 +1376,7 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 
 	if (custom_dialog)
 	{
-		custom_dialog->style = WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL;
+		custom_dialog->style = WS_CHILD | WS_CLIPSIBLINGS | DS_3DLOOK | DS_CONTROL | DS_SETFONT;
 		dialog_prime(custom_dialog);
 
 		ofn.Flags |= OFN_ENABLETEMPLATEHANDLE | OFN_ENABLEHOOK;

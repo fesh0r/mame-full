@@ -88,7 +88,7 @@ void image_exit(mess_image *img)
   Mac floppy drives) may call this from within a driver.
 ****************************************************************************/
 
-int image_load(mess_image *img, const char *name)
+static int image_load_internal(mess_image *img, const char *name, int create_format, option_resolution *create_args)
 {
 	const struct IODevice *dev;
 	char *newname;
@@ -159,8 +159,14 @@ int image_load(mess_image *img, const char *name)
 		buffer = NULL;
 	}
 
-	/* call device load */
-	if (dev->load)
+	/* call device load or create */
+	if (image_has_been_created(img) && dev->create)
+	{
+		err = dev->create(img, fp, create_format, create_args);
+		if (err)
+			goto error;
+	}
+	else if (dev->load)
 	{
 		err = dev->load(img, fp);
 		if (err)
@@ -187,6 +193,23 @@ error:
 
 	return INIT_FAIL;
 }
+
+
+
+int image_load(mess_image *img, const char *name)
+{
+	return image_load_internal(img, name, 0, NULL);
+}
+
+
+
+int image_create(mess_image *img, const char *name, int create_format, option_resolution *create_args)
+{
+	osd_rmfile(name);	/* hack until image_load gets cleaned */
+	return image_load_internal(img, name, create_format, create_args);
+}
+
+
 
 static void image_unload_internal(mess_image *img, int is_final_unload)
 {

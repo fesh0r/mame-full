@@ -25,13 +25,14 @@
 	2.	An "option guide"; a struct that provides information about what the
 		various members of the option specification mean (i.e. - H=heads)
 
-	3.  An "option bid"; a string that represents a set of specified options.
-		This string is then processed and options that are not specifed are
-		set to defaults.
-
-	4.  An "option resolution"; an object that represents a set of interpreted
+	3.  An "option resolution"; an object that represents a set of interpreted
 		options.  At this stage, the option bid has been processed and it is
 		guaranteed that all options reside in their expected ranges.
+
+	An option_resolution object is created based on an option guide and an
+	option specification.  It is then possible to specify individual parameters
+	to the option_resolution object.  Argument checks occur at this time.  When
+	one is all done, you can then query the object for any given value.
 
 ****************************************************************************/
 
@@ -65,7 +66,7 @@ struct OptionGuide
 };
 
 #define OPTION_GUIDE_START(option_guide)									\
-	struct OptionGuide option_guide[] =										\
+	const struct OptionGuide option_guide[] =								\
 	{																		\
 
 #define OPTION_GUIDE_END													\
@@ -73,7 +74,7 @@ struct OptionGuide
 	};																		\
 
 #define OPTION_GUIDE_EXTERN(option_guide)									\
-	extern struct OptionGuide option_guide[]								\
+	extern const struct OptionGuide option_guide[]							\
 
 #define OPTION_INT(option_char, identifier, display_name)					\
 		{ OPTIONTYPE_INT, (option_char), (identifier), (display_name) },	\
@@ -128,6 +129,7 @@ struct OptionRange
 
 ***************************************************************************/
 
+/* processing options with option_resolution objects */
 option_resolution *option_resolution_create(const struct OptionGuide *guide, const char *specification);
 optreserr_t option_resolution_add_param(option_resolution *resolution, const char *param, const char *value);
 optreserr_t option_resolution_finish(option_resolution *resolution);
@@ -135,11 +137,21 @@ void option_resolution_close(option_resolution *resolution);
 int option_resolution_lookup_int(option_resolution *resolution, int option_char);
 const char *option_resolution_lookup_string(option_resolution *resolution, int option_char);
 
+/* option resolution accessors */
+const char *option_resolution_specification(option_resolution *resolution);
+const struct OptionGuide *option_resolution_find_option(option_resolution *resolution, int option_char);
+const struct OptionGuide *option_resolution_index_option(option_resolution *resolution, int indx);
+
+/* processing option guides */
+int option_resolution_countoptions(const struct OptionGuide *guide, const char *specification);
+
+/* processing option specifications */
 optreserr_t option_resolution_listranges(const char *specification, int option_char,
 	struct OptionRange *range, size_t range_count);
-
 optreserr_t option_resolution_getdefault(const char *specification, int option_char, int *val);
+int option_resolution_contains(const char *specification, int option_char);
 
+/* misc */
 const char *option_resolution_error_string(optreserr_t err);
 
 #endif /* RANGEOPT_H */

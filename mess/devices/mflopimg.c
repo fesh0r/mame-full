@@ -206,7 +206,7 @@ static DEVICE_INIT(floppy)
 
 
 
-static DEVICE_LOAD(floppy)
+static int internal_floppy_device_load(mess_image *image, mame_file *file, int create_format, option_resolution *create_args)
 {
 	floperr_t err;
 	struct mess_flopimg *flopimg;
@@ -226,7 +226,7 @@ static DEVICE_LOAD(floppy)
 	if (image_has_been_created(image))
 	{
 		/* creating an image */
-		err = floppy_create(file, &mess_ioprocs, floppy_options, NULL, &flopimg->floppy);
+		err = floppy_create(file, &mess_ioprocs, &floppy_options[create_format], create_args, &flopimg->floppy);
 		if (err)
 			goto error;
 	}
@@ -243,6 +243,20 @@ static DEVICE_LOAD(floppy)
 
 error:
 	return INIT_FAIL;
+}
+
+
+
+static DEVICE_LOAD(floppy)
+{
+	return internal_floppy_device_load(image, file, -1, NULL);
+}
+
+
+
+static DEVICE_CREATE(floppy)
+{
+	return internal_floppy_device_load(image, file, create_format, create_args);
 }
 
 
@@ -301,7 +315,7 @@ const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbu
 	if (iodev->count == 0)
 	{
 		memset(extbuf, 0, extbuflen);
-		for(i = 0; floppy_options[i].construct; i++)
+		for (i = 0; floppy_options[i].construct; i++)
 			specify_extension(extbuf, extbuflen, floppy_options[i].extensions);
 		assert(extbuf[0]);
 
@@ -313,8 +327,18 @@ const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbu
 		iodev->open_mode = floppy_options->param_guidelines ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
 		iodev->init = device_init_floppy;
 		iodev->load = device_load_floppy;
+		iodev->create = device_create_floppy;
 		iodev->unload = device_unload_floppy;
 		iodev->user1 = (void *) floppy_options;
+		iodev->createimage_optguide = floppy_option_guide;
+
+		for (i = 0; floppy_options[i].construct; i++)
+		{
+			assert(i < sizeof(iodev->createimage_options) / sizeof(iodev->createimage_options[0]));
+            iodev->createimage_options[i].extensions = floppy_options[i].extensions;
+            iodev->createimage_options[i].description = floppy_options[i].description;
+            iodev->createimage_options[i].optspec = floppy_options[i].param_guidelines;
+		}
 	}
 	return iodev;
 }

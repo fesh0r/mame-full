@@ -1,16 +1,36 @@
+//============================================================
+//
+//	dialog.h - Win32 MESS dialog handling
+//
+//============================================================
+
 #ifndef DIALOG_H
 #define DIALOG_H
 
 #include <windows.h>
 #include "mame.h"
 #include "png.h"
+#include "opresolv.h"
 
 typedef struct _dialog_box dialog_box;
 
+typedef void (*dialog_itemstoreval)(void *param, int val);
+typedef void (*dialog_itemchangedproc)(dialog_box *dialog, HWND dlgitem, void *changed_param);
+
+/* dialog allocation / termination */
 dialog_box *win_dialog_init(const char *title);
 void win_dialog_exit(dialog_box *dialog);
+
+/* dialog memory allocation */
+void *win_dialog_malloc(dialog_box *dialog, size_t size);
+
+/* dialog operations */
 void win_dialog_runmodal(dialog_box *dialog);
-int win_dialog_add_combobox(dialog_box *dialog, const char *label, UINT16 *value);
+int win_dialog_add_combobox(dialog_box *dialog, const char *item_label, int default_value,
+	dialog_itemstoreval storeval, void *storeval_param);
+int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, int default_value,
+	dialog_itemstoreval storeval, void *storeval_param,
+	dialog_itemchangedproc changed, void *changed_param);
 int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int item_data);
 int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *r);
 int win_dialog_add_standard_buttons(dialog_box *dialog);
