@@ -10,7 +10,7 @@ Remarkable features
 Apple II (original model)
 -------------------------
 
-RAM: 4/8/12/16/20/24/32/36/48 KB
+RAM: 4/8/12/16/20/24/32/36/48 KB (according to the manual)
 
 ROM: 8 KB mapped to $E000-$FFFF
 Empty ROM sockets mapped at $D000-$D7FF (usually occupied by Programmer's
@@ -55,8 +55,7 @@ NO Up/Down arrows keys
 
 Users still did the SHIFT key mod
 
-AppleSoft BASIC in ROM: users of previous models can now use "Apple Firmware
-Card" (mapped to slot 0)
+AppleSoft BASIC in ROM
 
 AutoStart ROM - no more need to press RESET after switching the machine on
 
