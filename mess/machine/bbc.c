@@ -145,7 +145,7 @@ static int b7_shift_lock_led;
 static int via0_porta;
 
 
-int column=0;
+static int column=0;
 
 int bbcb_keyscan(void)
 {
@@ -224,7 +224,7 @@ static void bbcb_IC32_initialise(void)
 	b7_shift_lock_led=0x01;
 }
 
-WRITE_HANDLER( bbcb_via0_write_porta )
+static WRITE_HANDLER( bbcb_via0_write_porta )
 {
 	via0_porta=data;
 	if (b0_sound==0)
@@ -247,7 +247,7 @@ WRITE_HANDLER( bbcb_via0_write_porta )
 }
 
 
-WRITE_HANDLER( bbcb_via0_write_portb )
+static WRITE_HANDLER( bbcb_via0_write_portb )
 {
 	int bit,value;
 	bit=data & 0x07;
@@ -356,39 +356,39 @@ WRITE_HANDLER( bbcb_via0_write_portb )
 
 }
 
-READ_HANDLER( bbcb_via0_read_porta )
+static READ_HANDLER( bbcb_via0_read_porta )
 {
   return via0_porta;
 }
 
-READ_HANDLER( bbcb_via0_read_portb )
+static READ_HANDLER( bbcb_via0_read_portb )
 {
   return 0xff;
 }
 
 /* vertical sync pulse from video circuit */
-READ_HANDLER( bbcb_via0_read_ca1 )
+static READ_HANDLER( bbcb_via0_read_ca1 )
 {
   return 0xf0;
 }
 
 
 /* joystick EOC (not emulated yet) */
-READ_HANDLER( bbcb_via0_read_cb1 )
+static READ_HANDLER( bbcb_via0_read_cb1 )
 {
-  return 1;
+  return 0x01;
 }
 
 
 /* keyboard pressed detect */
-READ_HANDLER( bbcb_via0_read_ca2 )
+static READ_HANDLER( bbcb_via0_read_ca2 )
 {
   return 0x01;
 }
 
 
 /* light pen strobe detect (not emulated yet) */
-READ_HANDLER( bbcb_via0_read_cb2 )
+static READ_HANDLER( bbcb_via0_read_cb2 )
 {
   return 0x01;
 }
@@ -396,14 +396,14 @@ READ_HANDLER( bbcb_via0_read_cb2 )
 
 /* this is wired as in input port so writing to this port would be bad */
 
-WRITE_HANDLER( bbcb_via0_write_ca2 )
+static WRITE_HANDLER( bbcb_via0_write_ca2 )
 {
   //if( errorlog ) fprintf(errorlog, "via0_write_ca2: $%02X\n", data);
 }
 
 /* this is wired as in input port so writing to this port would be bad */
 
-WRITE_HANDLER( bbcb_via0_write_cb2 )
+static WRITE_HANDLER( bbcb_via0_write_cb2 )
 {
   //if( errorlog ) fprintf(errorlog, "via0_write_cb2: $%02X\n", data);
 }
@@ -511,7 +511,7 @@ static i8271_interface bbc_i8271_interface=
 };
 
 
-READ_HANDLER(bbc_i8271_read)
+READ_HANDLER( bbc_i8271_read )
 {
 	switch (offset)
 	{
@@ -530,7 +530,7 @@ READ_HANDLER(bbc_i8271_read)
 	return 0x0ff;
 }
 
-WRITE_HANDLER(bbc_i8271_write)
+WRITE_HANDLER( bbc_i8271_write )
 {
 	switch (offset)
 	{
