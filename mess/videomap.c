@@ -53,7 +53,7 @@ enum
 	FLAG_INVAL_LINEINFO		= 2,
 	FLAG_BORDER_MODIFIED	= 4,
 	FLAG_ENDIAN_FLIP		= 8,
-	FLAG_FIRST_DRAW			= 16
+	FLAG_FULL_REFRESH		= 16
 };
 static UINT8 flags;
 
@@ -445,7 +445,7 @@ static void general_invalidate(UINT8 inval_flags_mask, void (*callback)(int), in
 
 	if (scanline <= cpu_getscanline())
 	{
-		flags |= inval_flags_mask;
+		flags |= inval_flags_mask | FLAG_FULL_REFRESH;
 		callback(scanline);
 	}
 	else if (!(flags & inval_flags_mask))
@@ -790,8 +790,8 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 	if (tmpbitmap)
 	{
 		/* writing to buffered bitmap; partial refresh (except on first draw) */
-		full_refresh = (flags & FLAG_FIRST_DRAW) ? 1 : 0;
-		flags &= ~FLAG_FIRST_DRAW;
+		full_refresh = (flags & FLAG_FULL_REFRESH) ? 1 : 0;
+		flags &= ~FLAG_FULL_REFRESH;
 		bmp = tmpbitmap;
 	}
 	else
@@ -831,7 +831,7 @@ int videomap_init(const struct videomap_config *config)
 	assert(config->videoram_windowsize || mess_ram_size);
 
 	callbacks = config->intf;
-	flags = FLAG_FIRST_DRAW;
+	flags = FLAG_FULL_REFRESH;
 	border_scanline = (UINT16 *) auto_malloc(Machine->drv->screen_width * sizeof(UINT16));
 	if (!border_scanline)
 		return 1;

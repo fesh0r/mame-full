@@ -7,7 +7,7 @@
 	<body>
 		<h1>How to compile MESS (Win32)</h1>
 		<p>
-			<i>(Last updated 22-Sep-2002)</i>
+			<i>(Last updated 15-Mar-2002)</i>
 		</p>
 		<p>
 			(This document is based on <a href="http://www.mame.net/compilewin.html">"How to 
@@ -22,7 +22,7 @@
 				GCC</a> and its libraries.
 		</p>
 		<p>
-			This particular how-to is written for MESS 0.63, but with a bit of luck you can 
+			This particular how-to is written for MESS 0.66, but with a bit of luck you can 
 			compile other versions with the help of this page. This how-to tells how to 
 			compile the Win32 version of MESS, which includes both the command line and GUI 
 			versions.
@@ -70,7 +70,7 @@
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><span><b><A href="http://www.mame.net/zips/compile/unzip.exe">unzip.exe</A></b></span></td>
+					<td><span><b><A href="http://www.mame.net/downmain.html">unzip.exe</A></b></span></td>
 					<td><span>140kB</span></td>
 					<td><span>This is the <a href="http://www.info-zip.org/pub/infozip/">Info-ZIP</a> uncompressing 
 								utility called UnZip/NT v5.41.</span></td>
@@ -78,7 +78,27 @@
 			</table>
 		<p>
 			<hr>
-			<b>2. Get MinGW</b>
+			<b>2. Get Win32 ports GNU Tar and GNU Unzip</b>
+		<p>
+			These utilities are needed by step 4 to properly patch 
+the MinGW toolchain.&nbsp; Again, 
+		you may already have&nbsp;an archiver capable of&nbsp;extracting .tar.gz files.&nbsp;
+		<p>
+			<table width="100%" border="2" cellspacing="1" cellpadding="5" ID="Table1">
+				<TR>
+					<td><span><b>File&nbsp;name</b></span></td>
+					<td><span><b>File&nbsp;size</b></span></td>
+					<td><span><b>Description</b></span></td>
+				</TR>
+				<TR>
+					<td><span><b><A href="http://www.weihenstephan.de/~syring/win32/UnxUtils.zip">UnxUtils.zip</A></b></span></td>
+					<td><span>2911kB</span></td>
+					<td><span>Native Win32 <a href="http://www.weihenstephan.de/~syring/win32/UnxUtils.html">ports</a> of some GNU utilities.</span></td>
+				</TR>
+			</table>
+		<p>
+			<hr>
+			<b>3. Get MinGW</b>
 		<p>
 			Then you need the MinGW files. Make a new directory, for example
 			<span class="filename">
@@ -99,14 +119,19 @@
 					<td><span>MinGW 2.0.0 compile environment for use in Windows.</span></td>
 				</TR>
 				<TR>
-					<td><span><A href="http://www.mame.net/zips/mingw-over.zip">mingw-over.zip</A></span></td>
+					<td><span><A href="http://www.mame.net/downmain.html">mingw-over.zip</A></span></td>
 					<td><span>549 kB</span></td>
-					<td><span>Other files needed to compile MAME in the MinGW compile environment. Uncompress this over the MinGW directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
+					<td><span>Other files needed to compile MESS in the MinGW compile environment. Uncompress this over the MinGW directory and add <span class="filename">c:\mingw\bin</span> to your PATH. Compile the Win32 version by typing make.</span></td>
+				</TR>
+				<TR>
+					<td><span><A href="http://prdownloads.sf.net/mingw/gcc-3.2.2-20030208-1.tar.gz">gcc-3.2.2-20030208-1.tar.gz</A></span></td>
+					<td><span>7148 kB</span></td>
+					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.66. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 			</Table>
 		<p>
 			<hr>
-			<b>3. Uncompress MinGW</b>
+			<b>4. Uncompress MinGW</b>
 		<p>
 			Next we will uncompress the MinGW files and set up some environment variables 
 			so that MinGW is functional. Open up a command prompt. You can find it either 
@@ -118,8 +143,12 @@
 			<ul>
 				<li>
 					<span class="command">unzip mingw_for_mame.zip -d c:\</span>
-					<br>
-					and hit enter to start uncompressing the MinGW files.
+				<li>
+					<span class="command">cd c:\</span>
+				<li>
+					<span class="command">gunzip gcc-3.2.2-20030208-1.tar.gz</span>
+				<li>
+					<span class="command">tar -xvf gcc-3.2.2-20030208-1.tar</span>
 				</li>
 			</ul>
 		<p>
@@ -131,7 +160,7 @@
 			<span class="filename">c:\windows\command\</span>
 		<p>
 			<hr>
-			<b>4. Set up MinGW</b>
+			<b>5. Set up MinGW</b>
 		<p>
 			Next we will have to set up the environment variables. To make the changes 
 			permanent, we will have to edit
@@ -174,7 +203,7 @@
 		to run it) before being able to use MinGW.
 		<p>
 			<hr>
-			<b>5. Compile MESS</b>
+			<b>6. Compile MESS</b>
 		<p>
 			Now you can compile MESS. Download the source ZIP into
 			<span class="filename">
@@ -187,10 +216,10 @@
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><a href="http://www.retrogames.com/mess/mess063s.zip"><b>mess063s.zip</b></a><br>
+					<td><a href="http://www.retrogames.com/mess/mess066s.zip"><b>mess066s.zip</b></a><br>
 					</td>
 					<td>2717 kB</td>
-					<td>This is the source archive of MESS 0.63.</td>
+					<td>This is the source archive of MESS 0.66.</td>
 				</TR>
 			</Table>
 		<p>
@@ -199,7 +228,7 @@
 					cd \download</span>
 			and uncompress the MESS sources by typing
 			<span class="command">
-					unzip mess061s.zip -d c:\mingw\mess\</span>
+					unzip mess066s.zip -d c:\mingw\mess\</span>
 		.
 		<p>
 			Then you can compile MESS. Type
@@ -230,7 +259,7 @@
 		Congratulations, you did it!
 		<p>
 			<hr>
-			<b>6. A new MESS appeared</b>
+			<b>7. A new MESS appeared</b>
 		<p>
 		To successfully compile a new version of MESS, you should NOT uncompress a new 
 		set of sources over an old version of MESS. Instead, rename the MESS directory 
@@ -239,7 +268,7 @@
 		directory.
 		<p>
 			<hr>
-			<b>7. Then what..</b>
+			<b>8. Then what..</b>
 		<p>
 			Of course, the biggest advantage of building your own binary is the possibility 
 			to tinker around with the source files. For example, to try out drivers which 
@@ -256,17 +285,13 @@
 		should not be any reasons to redistribute such binaries since this page makes 
 		it easy for everybody to build their own binaries.
 		<p>
-			You might notice that the UPX part takes an obscene amount of time. The 
-			simplest solution to avoid it is to just rename
-			<span class="filename">
-					upx.exe</span>
-			to another name. If you do that, the make utility will give you an error and 
-			the file
-			<span class="filename">MESSDLIB.DLL</span>
-		is about 7 MB, but it will work fine.
+			You might notice that the executables created by the 
+build are much larger than the ones released by the MESS team.&nbsp; This is 
+because the 
+			MESS releases are archived with <a href="http://upx.sourceforge.net/">UPX</a> to make them smaller.
 		<p>
 			<hr>
-			<b>8. Debug modes</b>
+			<b>9. Debug modes</b>
 		<p>
 			To include the debugger functionality in your MESS executable, edit
 			<span class="filename">
