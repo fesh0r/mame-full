@@ -1595,12 +1595,12 @@ static void save_default_keys(void)
 {
 	config_file *cfg;
 
-	cfg = config_create(NULL);
+	cfg = config_open(NULL);
 	if (cfg)
 	{
 		config_write_default_ports(cfg, inputport_defaults_backup, inputport_defaults);
 		config_close(cfg);
-	}
+			}
 
 	memcpy(inputport_defaults,inputport_defaults_backup,sizeof(inputport_defaults_backup));
 }

@@ -159,10 +159,7 @@ static int sh2_cycles;
 
 INLINE UINT32 sh2_gettotalcycles(SH2 *cpu)
 {
-	if(cpu == &sh2 && sh2_active)
-		return sh2.total_cycles + sh2_cycles - sh2_icount;
-	else
-		return cpu->total_cycles;
+	return cpunum_gettotalcycles(cpu->cpu_number);
 }
 
 static const int div_tab[4] = { 3, 5, 7, 0 };
@@ -2425,6 +2422,9 @@ static void sh2_timer_resync(SH2 *cpu)
 {
 	int divider = div_tab[(cpu->m[5] >> 8) & 3];
 	UINT32 cur_time = sh2_gettotalcycles(cpu);
+
+	logerror("SH2.%d: cycles %d\n", cpu->cpu_number, cur_time);
+	// The timer system is sometimes off by one, hence the +1
 	if(divider)
 		cpu->frc += (cur_time - cpu->frc_base) >> divider;
 	cpu->frc_base = cur_time;
@@ -2461,6 +2461,7 @@ static void sh2_timer_activate(SH2 *cpu)
 		if(divider) {
 			max_delta <<= divider;
 			cpu->frc_base = sh2_gettotalcycles(cpu);
+			logerror("SH2.%d: Adjusting timer, current_cycles=%d, cb at %d\n", cpu->cpu_number, cpu->frc_base, cpu->frc_base+max_delta);
 			timer_adjust(cpu->timer, TIME_IN_CYCLES(max_delta, cpu->cpu_number), cpu->cpu_number, 0);
 		} else {
 			logerror("SH2.%d: Timer event in %d cycles of external clock", cpu->cpu_number, max_delta);
@@ -2511,15 +2512,16 @@ static void sh2_timer_callback(int cpunum)
 {
 	SH2 *cpu;
 	UINT16 frc;
-	cpu = cpunum_get_context_ptr(cpunum);
+	
+	cpuintrf_push_context(cpunum);
 
-	if(!cpu)
-		cpu = &sh2;
+	cpu = &sh2;
 
 	sh2_timer_resync(cpu);
 
 	frc = cpu->frc;
 
+	logerror("SH2.%d: Timer callback, frc=%04x, ocra=%04x, ocrb=%04x\n", cpunum, frc, cpu->ocra, cpu->ocrb);
 	if(frc == cpu->ocrb)
 		cpu->m[4] |= OCFB;
 
@@ -2536,6 +2538,8 @@ static void sh2_timer_callback(int cpunum)
 
 	sh2_recalc_irq(cpu);
 	sh2_timer_activate(cpu);
+
+	cpuintrf_pop_context();
 }
 
 static void sh2_dmac_callback(int dma)

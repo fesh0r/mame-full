@@ -403,4 +403,4 @@ DRIVER_INIT( compgolf )
 	compgolf_expand_bg();
 }
 
-GAME( 1985, compgolf, 0, compgolf, compgolf, compgolf, ROT0, "Data East", "Competition Golf Final Round (Japan)" )
+GAMEX( 1985, compgolf, 0, compgolf, compgolf, compgolf, ROT0, "Data East", "Competition Golf Final Round (Japan)", GAME_NOT_WORKING )

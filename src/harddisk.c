@@ -991,8 +991,6 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 
 /* DUPE BLOCK */
 /* kill our arrays */
-printf("freeing temp_md5\n");
-if (temp_md5) free(temp_md5);
 printf("freeing unique blocks\n");
 if (unique_blocks) free(unique_blocks);
 printf("freeing temp_cache\n");

@@ -1120,7 +1120,7 @@ static READ32_HANDLER( puzloopj_speedup_r )
 
 static READ32_HANDLER( puzloopu_speedup_r )
 {
-	if (activecpu_get_pc()==0x401daB2) cpu_spinuntil_int();
+	if (activecpu_get_pc()==0x401dab2) cpu_spinuntil_int();
 	return skns_main_ram[0x85cec/4];
 }
 
@@ -1373,8 +1373,8 @@ ROM_START( puzzloop )
 	ROM_LOAD       ( "sknse1.u10", 0x000000, 0x080000, CRC(e2b9d7d1) SHA1(b530a3bb9dedc8cfafcba9f1f10277590be04a15) ) /* Europe BIOS */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* SH-2 Code mapped at 0x04000000 */
-	ROM_LOAD16_BYTE( "puzloope.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
-	ROM_LOAD16_BYTE( "puzloope.u4",  0x000001, 0x080000, CRC(14ac2870) SHA1(d1abcfd64d7c0ead67e879c40e1010453fd4da13) )
+	ROM_LOAD16_BYTE( "pl00e1.u6",  0x000000, 0x080000, CRC(273adc38) SHA1(37ca873342ba9fb9951114048a9cd255f73fe19c) )
+	ROM_LOAD16_BYTE( "pl00e1.u4",  0x000001, 0x080000, CRC(14ac2870) SHA1(d1abcfd64d7c0ead67e879c40e1010453fd4da13) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
 	ROM_LOAD( "pzl10000.u24", 0x000000, 0x400000, CRC(35bf6897) SHA1(8a1f1f5234a61971a62401633de1dec1920fc4da) )

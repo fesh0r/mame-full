@@ -794,6 +794,7 @@ COREOBJS += \
 	$(OBJ)/mess/pool.o				\
 	$(OBJ)/mess/cheatms.o			\
 	$(OBJ)/mess/opresolv.o			\
+	$(OBJ)/mess/formats/ioprocs.o	\
 	$(OBJ)/mess/formats/flopimg.o	\
 	$(OBJ)/mess/formats/basicdsk.o	\
 	$(OBJ)/mess/formats/pc_dsk.o	\
@@ -875,6 +876,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/pool.o	               \
 	  $(OBJ)/mess/opresolv.o	           \
 	  $(OBJ)/mess/snprintf.o				\
+	  $(OBJ)/mess/formats/ioprocs.o        \
 	  $(OBJ)/mess/formats/flopimg.o        \
 	  $(OBJ)/mess/formats/basicdsk.o       \
 	  $(OBJ)/mess/formats/coco_dsk.o       \

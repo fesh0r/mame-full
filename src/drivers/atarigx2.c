@@ -1628,7 +1628,7 @@ static DRIVER_INIT( rrreveng )
  *
  *************************************/
 
-GAMEX( 1992, spclords, 0,        atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1992, spclorda, spclords, atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords (alternate)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1992, motofren, 0,        atarigx2, spclords, motofren, ROT0, "Atari Games", "Moto Frenzy", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, rrreveng, 0,        atarigx2, rrreveng, rrreveng, ROT0, "Atari Games", "Road Riot's Revenge (prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1992, spclords, 0,        atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1992, spclorda, spclords, atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords (alternate)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1992, motofren, 0,        atarigx2, spclords, motofren, ROT0, "Atari Games", "Moto Frenzy", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1994, rrreveng, 0,        atarigx2, rrreveng, rrreveng, ROT0, "Atari Games", "Road Riot's Revenge (prototype)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

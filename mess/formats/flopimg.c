@@ -33,8 +33,7 @@
 
 struct _floppy_image
 {
-	void *fp;
-	const struct io_procs *ioprocs;
+	struct io_generic io;
 
 	const struct FloppyOption *floppy_option;
 	struct FloppyFormat format;
@@ -45,7 +44,6 @@ struct _floppy_image
 	UINT32 loaded_track_size;
 	void *loaded_track_data;
 	UINT8 loaded_track_status;
-	UINT8 filler;
 	UINT8 flags;
 
 	/* tagging system */
@@ -104,9 +102,9 @@ static floppy_image *floppy_init(void *fp, const struct io_procs *procs, int fla
 
 	memset(floppy, 0, sizeof(*floppy));
 	tagpool_init(&floppy->tags);
-	floppy->fp = fp;
-	floppy->ioprocs = procs;
-	floppy->filler = 0xFF;
+	floppy->io.file = fp;
+	floppy->io.procs = procs;
+	floppy->io.filler = 0xFF;
 	floppy->flags = (UINT8) flags;
 	return floppy;
 }
@@ -304,8 +302,8 @@ static void floppy_close_internal(floppy_image *floppy, int close_file)
 	assert(floppy);
 
 	floppy_track_unload(floppy);
-	if (close_file && floppy->ioprocs->closeproc)
-		floppy->ioprocs->closeproc(floppy->fp);
+	if (close_file)
+		io_generic_close(&floppy->io);
 	if (floppy->loaded_track_data)
 		free(floppy->loaded_track_data);
 	tagpool_exit(&floppy->tags);
@@ -349,14 +347,14 @@ void *floppy_create_tag(floppy_image *floppy, const char *tagname, size_t tagsiz
 
 UINT8 floppy_get_filler(floppy_image *floppy)
 {
-	return floppy->filler;
+	return floppy->io.filler;
 }
 
 
 
 void floppy_set_filler(floppy_image *floppy, UINT8 filler)
 {
-	floppy->filler = filler;
+	floppy->io.filler = filler;
 }
 
 
@@ -365,89 +363,30 @@ void floppy_set_filler(floppy_image *floppy, UINT8 filler)
 	calls for accessing the raw disk image
 *********************************************************************/
 
-static void floppy_image_seek(floppy_image *floppy, UINT64 offset)
-{
-	floppy->ioprocs->seekproc(floppy->fp, offset, SEEK_SET);
-}
-
-
-
 void floppy_image_read(floppy_image *floppy, void *buffer, UINT64 offset, size_t length)
 {
-	UINT64 size;
-	size_t bytes_read;
-
-	size = floppy_image_size(floppy);
-	if (size <= offset)
-	{
-		bytes_read = 0;
-	}
-	else
-	{
-		floppy_image_seek(floppy, offset);
-		bytes_read = floppy->ioprocs->readproc(floppy->fp, buffer, length);
-	}
-	memset(((UINT8 *) buffer) + bytes_read, floppy->filler, length - bytes_read);
+	io_generic_read(&floppy->io, buffer, offset, length);
 }
 
 
 
 void floppy_image_write(floppy_image *floppy, const void *buffer, UINT64 offset, size_t length)
 {
-	UINT64 filler_size = 0;
-	char filler_buffer[1024];
-	size_t bytes_to_write;
-	UINT64 size;
-
-	size = floppy_image_size(floppy);
-
-	if (size < offset)
-	{
-		filler_size = offset - size;
-		offset = size;
-	}
-
-	floppy_image_seek(floppy, offset);
-
-	if (filler_size)
-	{
-		memset(filler_buffer, floppy->filler, sizeof(buffer));
-		do
-		{
-			bytes_to_write = (filler_size > sizeof(filler_buffer)) ? sizeof(filler_buffer) : (size_t) filler_size;
-			floppy->ioprocs->writeproc(floppy->fp, filler_buffer, bytes_to_write);
-			filler_size -= bytes_to_write;
-		}
-		while(filler_size > 0);
-	}
-
-	if (length > 0)
-		floppy->ioprocs->writeproc(floppy->fp, buffer, length);
+	io_generic_write(&floppy->io, buffer, offset, length);
 }
 
 
 
 void floppy_image_write_filler(floppy_image *floppy, UINT8 filler, UINT64 offset, size_t length)
 {
-	UINT8 buffer[512];
-	size_t this_length;
-
-	memset(buffer, filler, length > sizeof(buffer) ? sizeof(buffer) : length);
-
-	while(length > 0)
-	{
-		this_length = length > sizeof(buffer) ? sizeof(buffer) : length;
-		floppy_image_write(floppy, buffer, offset, this_length);
-		offset += this_length;
-		length -= this_length;
-	}
+	io_generic_write_filler(&floppy->io, filler, offset, length);
 }
 
 
 
 UINT64 floppy_image_size(floppy_image *floppy)
 {
-	return floppy->ioprocs->filesizeproc(floppy->fp);
+	return io_generic_size(&floppy->io);
 }
 
 

@@ -1752,7 +1752,7 @@ GAME( 1990, pc_radr2,playch10, playch10, playch10, pcgboard_type2, ROT0, "Square
 GAME( 1985, pc_gntlt,playch10, playch10, playch10, pcgboard_type2, ROT0, "Atari/Tengen (Nintendo of America license)", "PlayChoice-10: Gauntlet" )
 
 /* H-Board Games */
-GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1988, pc_pinbt,playch10, playch10, playch10, pchboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: PinBot", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 /* i-Board Games */
 GAME( 1989, pc_cshwk,playch10, playch10, playch10, pciboard, ROT0, "Rare (Nintendo of America license)", "PlayChoice-10: Captain Sky Hawk" )

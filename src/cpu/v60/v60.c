@@ -215,7 +215,7 @@ const char *v60_reg_names[68] = {
 
 static void v60_try_irq(void);
 
-#define STACK_REG(IS,EL)	((IS)==1?37+(EL):36)
+#define STACK_REG(IS,EL)	((IS)==0?37+(EL):36)
 
 static UINT32 v60ReadPSW(void)
 {
@@ -445,7 +445,7 @@ int v60_execute(int cycles)
 			v60_try_irq();
 	}
 
-	return cycles;
+	return cycles - v60_ICount;
 }
 
 unsigned v60_get_context(void *dst)

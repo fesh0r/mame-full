@@ -6,25 +6,25 @@ Similar to Beam Invader
 Todo:
 - discrete sound
 - d14.rom - is it color map ?
-- dips (if any) - bits 5,6,7 of input port 0 ?  
-*/ 
+- dips (if any) - bits 5,6,7 of input port 0 ?
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 extern int dorachan_ctrl;
 
 WRITE_HANDLER( dorachan_videoram_w );
-	
+
 static READ_HANDLER( dorachan_protection_r )
 {
-	
+
 	switch (activecpu_get_previouspc())
 	{
 		case 0x70ce : return 0xf2;
 		case 0x72a2 : return 0xd5;
 		case 0x72b5 : return 0xcb;
 	}
-	printf("unhandled $2400 read @ %x\n",activecpu_get_previouspc());	
+	printf("unhandled $2400 read @ %x\n",activecpu_get_previouspc());
 	return 0xff;
 }
 
@@ -45,23 +45,23 @@ static MEMORY_READ_START( readmem )
 	{0x2000, 0x23ff, MRA_ROM },
 	{0x2400, 0x2400, dorachan_protection_r},
 	{0x2800, 0x2800, input_port_0_r },
-	{0x2c00, 0x2c00, input_port_1_r},	
-	{0x3800, 0x3800, dorachan_status_r },	
+	{0x2c00, 0x2c00, input_port_1_r},
+	{0x3800, 0x3800, dorachan_status_r },
 	{0x4000, 0x5fff, MRA_RAM },
 	{0x6000, 0x77ff, MRA_ROM},
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
 	{0x0000, 0x17ff, MWA_ROM},
-	{0x1800, 0x1fff, MWA_RAM },		
+	{0x1800, 0x1fff, MWA_RAM },
 	{0x2000, 0x23ff, MWA_ROM},
 	{0x4000, 0x5fff, dorachan_videoram_w,&videoram},
 	{0x6000, 0x77ff, MWA_ROM},
 MEMORY_END
 
 static PORT_READ_START( readport )
-	
-PORT_END	
+
+PORT_END
 
 static PORT_WRITE_START( writeport )
 	{0x01, 0x01, IOWP_NOP},
@@ -70,7 +70,7 @@ static PORT_WRITE_START( writeport )
 PORT_END
 
 INPUT_PORTS_START( dorachan )
-	PORT_START      
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
@@ -86,8 +86,8 @@ INPUT_PORTS_START( dorachan )
 	PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x00, DEF_STR( On ) )
 
-	
-	PORT_START	
+
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
@@ -102,7 +102,7 @@ static MACHINE_DRIVER_START( dorachan )
 	MDRV_CPU_ADD(Z80, 2000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_PORTS(readport,writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)   
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -111,11 +111,10 @@ static MACHINE_DRIVER_START( dorachan )
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
-	MDRV_ASPECT_RATIO(3,4)
 MACHINE_DRIVER_END
 
 ROM_START( dorachan )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "c1.e1",      0x0000, 0x400, CRC(29d66a96) SHA1(a0297d87574af65c6ded99aeb377ac407f6f163f) )
 	ROM_LOAD( "d2.e2",      0x0400, 0x400, CRC(144b6cd1) SHA1(195ce86e912a4b395097008c6d812fd75a1a2482) )
 	ROM_LOAD( "d3.e3",      0x0800, 0x400, CRC(a9a1bed7) SHA1(98af6f851c4477f770b6bd67e5465b5a271311ee) )
@@ -129,9 +128,9 @@ ROM_START( dorachan )
 	ROM_LOAD( "d11.rom",    0x6c00, 0x400, CRC(c2e0f066) SHA1(be6b780a8957d945e5634ac9689b440a41e9a2a4) )
 	ROM_LOAD( "d12.rom",    0x7000, 0x400, CRC(275e5dc1) SHA1(ac07db4b428daa49a52c679de95ddedbea0076b9) )
 	ROM_LOAD( "d13.rom",    0x7400, 0x400, CRC(24ccfcf9) SHA1(85e5052ee657f518b0509eb64e494bc3a74e651e) )
-	ROM_REGION( 0x400, REGION_USER1, 0 )	
+	ROM_REGION( 0x400, REGION_USER1, 0 )
 	ROM_LOAD( "d14.rom",    0x0000, 0x400, CRC(c0d3ee84) SHA1(f2207c685ce8d5144a373c28f11d2cebf9518b65) ) /* color map ? */
 ROM_END
 
-GAMEX( 1980, dorachan, 0, dorachan, dorachan, 0, ROT0, "Craul Denshi", "Dorachan",GAME_NO_SOUND)
+GAMEX( 1980, dorachan, 0, dorachan, dorachan, 0, ROT90, "Craul Denshi", "Dorachan",GAME_NO_SOUND)
 

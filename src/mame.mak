@@ -317,6 +317,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/taitosj.o $(OBJ)/vidhrdw/taitosj.o $(OBJ)/drivers/taitosj.o \
 	$(OBJ)/machine/grchamp.o $(OBJ)/vidhrdw/grchamp.o $(OBJ)/drivers/grchamp.o \
 	$(OBJ)/machine/pitnrun.o $(OBJ)/vidhrdw/pitnrun.o $(OBJ)/drivers/pitnrun.o \
+	$(OBJ)/drivers/marinedt.o \
 	$(OBJ)/vidhrdw/crbaloon.o $(OBJ)/drivers/crbaloon.o \
 	$(OBJ)/vidhrdw/bking2.o $(OBJ)/drivers/bking2.o \
 	$(OBJ)/vidhrdw/gsword.o $(OBJ)/drivers/gsword.o $(OBJ)/machine/tait8741.o \
@@ -677,7 +678,7 @@ $(OBJ)/snk.a: \
 	$(OBJ)/drivers/munchmo.o $(OBJ)/vidhrdw/munchmo.o \
 	$(OBJ)/vidhrdw/marvins.o $(OBJ)/drivers/marvins.o \
 	$(OBJ)/vidhrdw/jcross.o $(OBJ)/drivers/jcross.o \
-	$(OBJ)/drivers/mainsnk.o \
+	$(OBJ)/vidhrdw/mainsnk.o $(OBJ)/drivers/mainsnk.o \
 	$(OBJ)/drivers/hal21.o \
 	$(OBJ)/vidhrdw/snk.o $(OBJ)/drivers/snk.o \
 	$(OBJ)/drivers/sgladiat.o \
@@ -1070,6 +1071,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/vamphalf.o \
 	$(OBJ)/drivers/strvmstr.o \
 	$(OBJ)/vidhrdw/dorachan.o $(OBJ)/drivers/dorachan.o \
+	$(OBJ)/vidhrdw/ladyfrog.o $(OBJ)/drivers/ladyfrog.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

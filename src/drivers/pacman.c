@@ -12,6 +12,7 @@
 		* Ponpoko
 		* Eyes
 		* Mr. TNT
+		* Gorkans
 		* Lizard Wizard
 		* The Glob
 		* Dream Shopper
@@ -2723,7 +2724,7 @@ static MACHINE_DRIVER_START( s2650games )
 	MDRV_VIDEO_UPDATE(s2650games)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76489_interface)
+	MDRV_SOUND_REPLACE("namco", SN76496, sn76489_interface)
 MACHINE_DRIVER_END
 
 
@@ -3615,6 +3616,33 @@ ROM_START( mrtnt )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
 ROM_END
 
+ROM_START( gorkans )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "gorkans8.rom",        0x0000, 0x0800, CRC(55100b18) SHA1(8f657c1b2865987b60d95960c5297a82bb1cc6e0) )
+	ROM_LOAD( "gorkans4.rom",        0x0800, 0x0800, CRC(b5c604bf) SHA1(0f3608d630fba9d4734a3ef30199a5d1a067cdff) )
+ 	ROM_LOAD( "gorkans7.rom",        0x1000, 0x0800, CRC(b8c6def4) SHA1(58ac78fc5b3559ef771ca708a79089b7a00cf6b8) )
+	ROM_LOAD( "gorkans3.rom",        0x1800, 0x0800, CRC(4602c840) SHA1(c77de0e991c44c2ee8a4537e264ac8fbb1b4b7db) )
+	ROM_LOAD( "gorkans6.rom",        0x2000, 0x0800, CRC(21412a62) SHA1(ece44c3204cf182db23b594ebdc051b51340ba2b) )
+	ROM_LOAD( "gorkans2.rom",        0x2800, 0x0800, CRC(a013310b) SHA1(847ba7ca033eaf49245bef49d6513619edec3472) )
+	ROM_LOAD( "gorkans5.rom",        0x3000, 0x0800, CRC(122969b2) SHA1(0803e1ec5e5ed742ea83ff156ae75a2d48530f71) )
+	ROM_LOAD( "gorkans1.rom",        0x3800, 0x0800, CRC(f2524b11) SHA1(1216b963e73c1de63cc323e361875f6810d83a05) )
+
+	/* where are the gfx ?!, if we use the gfx from mrtnt we get the playfield but titlescreen and sprites are corrupt */
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gorkgfx.1",        0x0000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gorkgfx.2",        0x0000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "gorkprom.4",  0x0000, 0x0020, NO_DUMP )
+	ROM_LOAD( "gorkprom.1",   0x0020, 0x0100, CRC(3eb3a8e4) SHA1(19097b5f60d1030f8b82d9f1d3a241f93e5c75d6) )
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "gorkprom.3",    0x0000, 0x0100, CRC(a9cc86bf) SHA1(bbcec0570aeceb582ff8238a4bc8546a23430081) )
+	ROM_LOAD( "gorkprom.2"  ,  0x0100, 0x0100, CRC(77245b66) SHA1(0c4d0bee858b97632411c440bea6948a74759746) )	/* timing - not used */
+ROM_END
+
 ROM_START( eggor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1.bin",        0x0000, 0x0800, CRC(818ed154) SHA1(8c0f555a3ab1d20a2c284d721b31278a0ddf9e51) )
@@ -4288,6 +4316,22 @@ static DRIVER_INIT( porky )
 
 }
 
+static DRIVER_INIT( gorkans )
+{
+	int i;
+	unsigned char *RAM;
+
+
+	/* Graphics ROMs  (from MRTNT)*/
+
+	/* Data lines D4 and D6 and address lines A0 and A2 are swapped */
+	RAM = memory_region(REGION_GFX1);
+	for (i = 0;i < memory_region_length(REGION_GFX1);i += 8)
+		eyes_decode(&RAM[i]);
+	RAM = memory_region(REGION_GFX2);
+	for (i = 0;i < memory_region_length(REGION_GFX2);i += 8)
+		eyes_decode(&RAM[i]);
+}
 
 /*************************************
  *
@@ -4334,6 +4378,7 @@ GAME( 1982, ponpokov, ponpoko,  pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent
 GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
 GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar (Rock-ola license)", "Eyes (Techstar)" )
 GAMEX(1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT", GAME_WRONG_COLORS )
+GAMEX(1983, gorkans,  mrtnt,    pacman,   mrtnt,    gorkans,  ROT90,  "Techstar", "Gorkans", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS   )
 GAMEX(1983, eggor,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Eggor", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND  )
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )

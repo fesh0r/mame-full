@@ -1481,14 +1481,18 @@ BEGIN
     ID_VIEW_PICTURE_AREA    "Show or hide the picture area"
     ID_HELP_CONTENTS        "Display help contents"
 #ifdef MESS
-    ID_HELP_WHATS_NEW32     "What's new in MESS"
+    ID_HELP_WHATS_NEW32     "Recent changes"
+    ID_HELP_TROUBLE         "Troubleshooting Documentation"
+    ID_HELP_RELEASE         "MESS release notes"
+    ID_HELP_WHATS_NEW       "What's new in MESS"
+    ID_HELP_CHEATS          "How cheats work"
 #else
     ID_HELP_WHATS_NEW32     "New game changes"
     ID_HELP_TROUBLE         "Troubleshooting Documentation"
-#endif
     ID_HELP_RELEASE         "MAME release notes"
     ID_HELP_WHATS_NEW       "What's new in MAME"
     ID_HELP_CHEATS          "How cheats work"
+#endif
 END
 
 STRINGTABLE DISCARDABLE
