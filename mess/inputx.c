@@ -177,6 +177,32 @@ static const struct
 	const char *str;
 } alternate_charmap[] =
 {
+	{ 0x0061,	"A" },		/* a */
+	{ 0x0062,	"B" },		/* b */
+	{ 0x0063,	"C" },		/* c */
+	{ 0x0064,	"D" },		/* d */
+	{ 0x0065,	"E" },		/* e */
+	{ 0x0066,	"F" },		/* f */
+	{ 0x0067,	"G" },		/* g */
+	{ 0x0068,	"H" },		/* h */
+	{ 0x0069,	"I" },		/* i */
+	{ 0x006a,	"J" },		/* j */
+	{ 0x006b,	"K" },		/* k */
+	{ 0x006c,	"L" },		/* l */
+	{ 0x006d,	"M" },		/* m */
+	{ 0x006e,	"N" },		/* n */
+	{ 0x006f,	"O" },		/* o */
+	{ 0x0070,	"P" },		/* p */
+	{ 0x0071,	"Q" },		/* q */
+	{ 0x0072,	"R" },		/* r */
+	{ 0x0073,	"S" },		/* s */
+	{ 0x0074,	"T" },		/* t */
+	{ 0x0075,	"U" },		/* u */
+	{ 0x0076,	"V" },		/* v */
+	{ 0x0077,	"W" },		/* w */
+	{ 0x0078,	"X" },		/* x */
+	{ 0x0079,	"Y" },		/* y */
+	{ 0x007a,	"Z" },		/* z */
 	{ 0x00a0,	" " },		/* non breaking space */
 	{ 0x00a1,	"!" },		/* inverted exclaimation mark */
 	{ 0x00a6,	"|" },		/* broken bar */
@@ -278,6 +304,7 @@ static const char *find_alternate(unicode_char_t target_char)
 	int i;
 	unicode_char_t ch;
 
+	/* perform a simple binary search to find the proper alternate */
 	while(high > low)
 	{
 		i = (high + low) / 2;
@@ -574,7 +601,7 @@ static void inputx_timerproc(int dummy)
 	if (queue_chars)
 	{
 		/* the driver has a queue_chars handler */
-		while(queue_chars(&keybuf->buffer[keybuf->begin_pos], 1))
+		while((keybuf->begin_pos != keybuf->end_pos) && queue_chars(&keybuf->buffer[keybuf->begin_pos], 1))
 		{
 			keybuf->begin_pos++;
 			keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);

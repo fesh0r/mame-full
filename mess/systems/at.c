@@ -651,6 +651,8 @@ SYSTEM_CONFIG_START(ibmat)
 	CONFIG_DEVICE_PRINTER(3)
 	CONFIG_DEVICE_PC_FLOPPY(2)
 	CONFIG_DEVICE_PC_HARDDISK(4)
+	CONFIG_QUEUE_CHARS( at_keyboard )
+	CONFIG_ACCEPT_CHAR( at_keyboard )
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -12,8 +12,12 @@
 
 /* AT keyboard documentation comes from www.beyondlogic.org and HelpPC documentation */
 
-// uncomment to enable logging of keyboard read/writes
-//#define KEYBOARD_LOG
+/* to enable logging of keyboard read/writes */
+#ifdef MAME_DEBUG
+#define LOG_KEYBOARD	0
+#else
+#define LOG_KEYBOARD	0
+#endif
 
 
 /*
@@ -333,7 +337,7 @@ void	at_keyboard_set_scan_code_set(int set)
 }
 
 /* set base index for input ports */
-void	at_keyboard_set_input_port_base(int base)
+void at_keyboard_set_input_port_base(int base)
 {
 	keyboard.input_port_base = base;
 }
@@ -347,7 +351,7 @@ void at_keyboard_set_type(AT_KEYBOARD_TYPE type)
 /* insert a code into the buffer */
 static void at_keyboard_queue_insert(UINT8 data)
 {
-#ifdef KEYBOARD_LOG
+#if LOG_KEYBOARD
 	logerror("keyboard queueing %.2x\n",data);
 #endif
 	keyboard.queue[keyboard.head] = data;
@@ -358,9 +362,8 @@ static void at_keyboard_queue_insert(UINT8 data)
 static void at_keyboard_helper(const char *codes)
 {
 	int i;
-	for (i=0; codes[i]; i++) {
+	for (i = 0; codes[i]; i++)
 		at_keyboard_queue_insert(codes[i]);
-	}
 }
 
 
@@ -560,7 +563,7 @@ int at_keyboard_read(void)
 	if (keyboard.tail==keyboard.head) return -1;
 
 	data=keyboard.queue[keyboard.tail];
-#ifdef KEYBOARD_LOG
+#if LOG_KEYBOARD
 	logerror("keyboard read %.2x\n",data);
 #endif
 	keyboard.tail = ++keyboard.tail%256;
@@ -623,7 +626,7 @@ SeeAlso: #P046
 
 void at_keyboard_write(UINT8 data)
 {
-#ifdef KEYBOARD_LOG
+#if LOG_KEYBOARD
 	logerror("keyboard write %.2x\n",data);
 #endif
 	switch (keyboard.input_state) {
@@ -775,5 +778,180 @@ void at_keyboard_write(UINT8 data)
 
 		break;
 	}
+}
+
+/***************************************************************************
+  unicode_char_to_at_keycode
+***************************************************************************/
+
+static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
+{
+	UINT8 b;
+	switch(ch) {
+	case '`':						b = 1;		break;
+	case '1':						b = 2;		break;
+	case '2':						b = 3;		break;
+	case '3':						b = 4;		break;
+	case '4':						b = 5;		break;
+	case '5':						b = 6;		break;
+	case '6':						b = 7;		break;
+	case '7':						b = 8;		break;
+	case '8':						b = 9;		break;
+	case '9':						b = 10;		break;
+	case '0':						b = 11;		break;
+	case '-':						b = 12;		break;
+	case '=':						b = 13;		break;
+	case '\010':					b = 14;		break;
+	case '\t':						b = 15;		break;
+	case 'q':						b = 16;		break;
+	case 'w':						b = 17;		break;
+	case 'e':						b = 18;		break;
+	case 'r':						b = 19;		break;
+	case 't':						b = 20;		break;
+	case 'y':						b = 21;		break;
+	case 'u':						b = 22;		break;
+	case 'i':						b = 23;		break;
+	case 'o':						b = 24;		break;
+	case 'p':						b = 25;		break;
+	case '[':						b = 26;		break;
+	case ']':						b = 27;		break;
+	case '\r':						b = 28;		break;
+	case UCHAR_MAMEKEY(CAPSLOCK):	b = 29;		break;
+	case 'a':						b = 30;		break;
+	case 's':						b = 31;		break;
+	case 'd':						b = 32;		break;
+	case 'f':						b = 33;		break;
+	case 'g':						b = 34;		break;
+	case 'h':						b = 35;		break;
+	case 'j':						b = 36;		break;
+	case 'k':						b = 37;		break;
+	case 'l':						b = 38;		break;
+	case ';':						b = 39;		break;
+	case '\'':						b = 40;		break;
+	case '\032':					b = 41;		break;
+	case '\\':						b = 43;		break;
+	case 'z':						b = 44;		break;
+	case 'x':						b = 45;		break;
+	case 'c':						b = 46;		break;
+	case 'v':						b = 47;		break;
+	case 'b':						b = 48;		break;
+	case 'n':						b = 49;		break;
+	case 'm':						b = 50;		break;
+	case ',':						b = 51;		break;
+	case '.':						b = 52;		break;
+	case '/':						b = 53;		break;
+	case UCHAR_MAMEKEY(F1):			b = 0x3b;	break;
+	case UCHAR_MAMEKEY(F2):			b = 0x3c;	break;
+	case UCHAR_MAMEKEY(F3):			b = 0x3d;	break;
+	case UCHAR_MAMEKEY(F4):			b = 0x3e;	break;
+	case UCHAR_MAMEKEY(F5):			b = 0x3f;	break;
+	case UCHAR_MAMEKEY(F6):			b = 0x40;	break;
+	case UCHAR_MAMEKEY(F7):			b = 0x41;	break;
+	case UCHAR_MAMEKEY(F8):			b = 0x42;	break;
+	case UCHAR_MAMEKEY(F9):			b = 0x43;	break;
+	case UCHAR_MAMEKEY(F10):		b = 0x44;	break;
+	case UCHAR_MAMEKEY(NUMLOCK):	b = 0x45;	break;
+	case UCHAR_MAMEKEY(SCRLOCK):	b = 0x46;	break;
+	case UCHAR_MAMEKEY(7_PAD):		b = 0x47;	break;
+	case UCHAR_MAMEKEY(8_PAD):		b = 0x48;	break;
+	case UCHAR_MAMEKEY(9_PAD):		b = 0x49;	break;
+	case UCHAR_MAMEKEY(MINUS_PAD):	b = 0x4a;	break;
+	case UCHAR_MAMEKEY(4_PAD):		b = 0x4b;	break;
+	case UCHAR_MAMEKEY(5_PAD):		b = 0x4c;	break;
+	case UCHAR_MAMEKEY(6_PAD):		b = 0x4d;	break;
+	case UCHAR_MAMEKEY(PLUS_PAD):	b = 0x4e;	break;
+	case UCHAR_MAMEKEY(1_PAD):		b = 0x4f;	break;
+	case UCHAR_MAMEKEY(2_PAD):		b = 0x50;	break;
+	case UCHAR_MAMEKEY(3_PAD):		b = 0x51;	break;
+	case UCHAR_MAMEKEY(0_PAD):		b = 0x52;	break;
+	case UCHAR_MAMEKEY(DEL_PAD):	b = 0x53;	break;
+	case UCHAR_MAMEKEY(F11):		b = 0x57;	break;
+	case UCHAR_MAMEKEY(F12):		b = 0x58;	break;
+	case '~':						b = 0x81;	break;
+	case '!':						b = 0x82;	break;
+	case '@':						b = 0x83;	break;
+	case '#':						b = 0x84;	break;
+	case '$':						b = 0x85;	break;
+	case '%':						b = 0x86;	break;
+	case '^':						b = 0x87;	break;
+	case '&':						b = 0x88;	break;
+	case '*':						b = 0x89;	break;
+	case '(':						b = 0x8a;	break;
+	case ')':						b = 0x8b;	break;
+	case '_':						b = 0x8c;	break;
+	case '+':						b = 0x8d;	break;
+	case 'Q':						b = 0x90;	break;
+	case 'W':						b = 0x91;	break;
+	case 'E':						b = 0x92;	break;
+	case 'R':						b = 0x93;	break;
+	case 'T':						b = 0x94;	break;
+	case 'Y':						b = 0x95;	break;
+	case 'U':						b = 0x96;	break;
+	case 'I':						b = 0x97;	break;
+	case 'O':						b = 0x98;	break;
+	case 'P':						b = 0x99;	break;
+	case '{':						b = 0x9a;	break;
+	case '}':						b = 0x9b;	break;
+	case 'A':						b = 0x9e;	break;
+	case 'S':						b = 0x9f;	break;
+	case 'D':						b = 0xa0;	break;
+	case 'F':						b = 0xa1;	break;
+	case 'G':						b = 0xa2;	break;
+	case 'H':						b = 0xa3;	break;
+	case 'J':						b = 0xa4;	break;
+	case 'K':						b = 0xa5;	break;
+	case 'L':						b = 0xa6;	break;
+	case ':':						b = 0xa7;	break;
+	case '\"':						b = 0xa8;	break;
+	case '|':						b = 0xab;	break;
+	case 'Z':						b = 0xac;	break;
+	case 'X':						b = 0xad;	break;
+	case 'C':						b = 0xae;	break;
+	case 'V':						b = 0xaf;	break;
+	case 'B':						b = 0xb0;	break;
+	case 'N':						b = 0xb1;	break;
+	case 'M':						b = 0xb2;	break;
+	case '<':						b = 0xb3;	break;
+	case '>':						b = 0xb4;	break;
+	case '?':						b = 0xb5;	break;
+	default:						b = 0;		break;
+	}
+	return b;
+}
+
+/***************************************************************************
+  QUEUE_CHARS( at_keyboard )
+***************************************************************************/
+
+QUEUE_CHARS( at_keyboard )
+{
+	int i;
+	UINT8 b;
+
+	for (i = 0; i < text_len; i++)
+	{
+		b = unicode_char_to_at_keycode(text[i]);
+		if (b)
+		{
+			if (b & 0x80)
+				at_keyboard_queue_insert(0x36);
+
+			at_keyboard_queue_insert(b & 0x7f);
+			at_keyboard_queue_insert(b | 0x80);
+
+			if (b & 0x80)
+				at_keyboard_queue_insert(0xb6);
+		}
+	}
+	return i;
+}
+
+/***************************************************************************
+  ACCEPT_CHAR( at_keyboard )
+***************************************************************************/
+
+ACCEPT_CHAR( at_keyboard )
+{
+	return unicode_char_to_at_keycode(ch) != 0;
 }
 

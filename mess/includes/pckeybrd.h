@@ -1,3 +1,5 @@
+#include "inputx.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -17,6 +19,9 @@ void pc_keyboard_init(void);
 void at_keyboard_set_scan_code_set(int set);
 void at_keyboard_set_input_port_base(int base);
 void at_keyboard_set_type(AT_KEYBOARD_TYPE type);
+
+QUEUE_CHARS( at_keyboard );
+ACCEPT_CHAR( at_keyboard );
 
 /*
 #define KEYBOARD_ON 1

@@ -865,6 +865,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/tools/imgtool/ti85.o     \
 	  $(OBJ)/mess/tools/imgtool/ti99.o     \
 	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
+	  $(OBJ)/mess/tools/imgtool/concept.o  \
 	  $(OBJ)/mess/snprintf.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)

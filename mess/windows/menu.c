@@ -44,6 +44,10 @@ extern int showfpstemp;
 // from mamedbg.c
 extern int debug_key_pressed;
 
+// from timer.c
+extern void win_timer_enable(int enabled);
+
+
 //============================================================
 //	PARAMETERS
 //============================================================
@@ -1097,7 +1101,59 @@ HMENU win_create_menus(void)
 
 LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	extern void win_timer_enable(int enabled);
+	int i;
+	MSG msg;
+
+	static WPARAM keytrans[][2] =
+	{
+		{ VK_F1,		UCHAR_MAMEKEY(F1) },
+		{ VK_F2,		UCHAR_MAMEKEY(F2) },
+		{ VK_F3,		UCHAR_MAMEKEY(F3) },
+		{ VK_F4,		UCHAR_MAMEKEY(F4) },
+		{ VK_F5,		UCHAR_MAMEKEY(F5) },
+		{ VK_F6,		UCHAR_MAMEKEY(F6) },
+		{ VK_F7,		UCHAR_MAMEKEY(F7) },
+		{ VK_F8,		UCHAR_MAMEKEY(F8) },
+		{ VK_F9,		UCHAR_MAMEKEY(F9) },
+		{ VK_F10,		UCHAR_MAMEKEY(F10) },
+		{ VK_F11,		UCHAR_MAMEKEY(F11) },
+		{ VK_F12,		UCHAR_MAMEKEY(F12) },
+		{ VK_NUMLOCK,	UCHAR_MAMEKEY(F12) },
+		{ VK_SCROLL,	UCHAR_MAMEKEY(F12) },
+		{ VK_NUMPAD0,	UCHAR_MAMEKEY(0_PAD) },
+		{ VK_NUMPAD1,	UCHAR_MAMEKEY(1_PAD) },
+		{ VK_NUMPAD2,	UCHAR_MAMEKEY(2_PAD) },
+		{ VK_NUMPAD3,	UCHAR_MAMEKEY(3_PAD) },
+		{ VK_NUMPAD4,	UCHAR_MAMEKEY(4_PAD) },
+		{ VK_NUMPAD5,	UCHAR_MAMEKEY(5_PAD) },
+		{ VK_NUMPAD6,	UCHAR_MAMEKEY(6_PAD) },
+		{ VK_NUMPAD7,	UCHAR_MAMEKEY(7_PAD) },
+		{ VK_NUMPAD8,	UCHAR_MAMEKEY(8_PAD) },
+		{ VK_NUMPAD9,	UCHAR_MAMEKEY(9_PAD) },
+		{ VK_DECIMAL,	UCHAR_MAMEKEY(DEL_PAD) },
+		{ VK_ADD,		UCHAR_MAMEKEY(PLUS_PAD) },
+		{ VK_SUBTRACT,	UCHAR_MAMEKEY(MINUS_PAD) }
+	};
+
+	if (win_use_natural_keyboard && (message == WM_KEYDOWN))
+	{
+		for (i = 0; i < sizeof(keytrans) / sizeof(keytrans[0]); i++)
+		{
+			if (wparam == keytrans[i][0])
+			{
+				inputx_postc(keytrans[i][1]);
+				message = WM_NULL;
+
+				/* check to see if there is a corresponding WM_CHAR in our
+				 * future.  If so, remove it
+				 */
+				PeekMessage(&msg, wnd, 0, 0, PM_NOREMOVE);
+				if ((msg.message == WM_CHAR) && (msg.lParam == lparam))
+					PeekMessage(&msg, wnd, 0, 0, PM_REMOVE);
+				break;
+			}
+		}
+	}
 
 	switch(message) {
 	case WM_INITMENU:
