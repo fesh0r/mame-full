@@ -29,7 +29,8 @@ RES = $(OBJ)/Win32/mame32.res
 
 # check if this is a MESS build
 ifdef MESS
-OSOBJS += $(OBJ)/mess/Win32/mess32ui.o
+OSOBJS += $(OBJ)/mess/Win32/mess32ui.o $(OBJ)/mess/Win32/fdc.o \
+	$(OBJ)/mess/Win32/fileio.o $(OBJ)/mess/Win32/dirio.o
 else
 OSOBJS += $(OBJ)/Win32/Win32ui.o
 endif

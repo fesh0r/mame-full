@@ -586,11 +586,11 @@ TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
 
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 
 mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 
 imgtool$(EXE):	     \
 	  $(IMGTOOL_OBJS) \
@@ -614,7 +614,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/zip.o     \
 	  $(OBJ)/mess/tools/fs.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+	$(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 
 
 #transdsk$(EXE):       \
@@ -622,15 +622,17 @@ imgtool$(EXE):	     \
 #      $(OBJ)/mess/tools/stubs.o   \
 #      $(OBJ)/mess/tools/transdsk/nec765.o   
 #    @echo Linking $@...
-#    $(LD) $(LDFLAGS) $^ -lz -o $@
+#    $(LD) $(LDFLAGS) $(LIBS) $^ -o $@
 
 
 # text files
+ifeq ($(OS),msdos)
 TEXTS = mess.txt
 mess.txt: $(EMULATOR)
 	@echo Generating $@...
 	@$(EMULATOR) -listtext > mess.txt
 	@$(EMULATOR) -listdevices >> mess.txt
+endif
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
