@@ -9,7 +9,7 @@
 #ifndef PC_DSK_H
 #define PC_DSK_H
 
-#include "flopimg.h"
+#include "formats/flopimg.h"
 
 
 /**************************************************************************/
