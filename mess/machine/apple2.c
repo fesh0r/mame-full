@@ -444,6 +444,7 @@ DRIVER_INIT( apple2 )
 	memset(mess_ram, 0, mess_ram_size);
 
 	dummy_memory = auto_malloc(0x4000);
+	memset(dummy_memory, '\0', 0x4000);
 
 	apple2_slot6_init();
 }
