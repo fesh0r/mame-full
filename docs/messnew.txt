@@ -24,6 +24,10 @@ User Interface Changes:
 - [Windows GUI] Fixed a bug by which BIOSless systems would not be filtered
   as available.  (bug #516) [Nate Woods]
 
+- [Windows GUI] Fixed a stupid layout bug the Miscellaneous properties tab.
+  (bug #518) [Nate Woods]
+
+
 
 
 Imgtool Changes:

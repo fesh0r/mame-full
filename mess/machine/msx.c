@@ -300,20 +300,6 @@ MACHINE_INIT( msx2 )
 	msx_ch_reset_core ();
 }
 
-/* z80 stuff */
-static struct {
-	int table;
-	const void *old_table;
-} z80_cycle_table[] = {
-	{ Z80_TABLE_op, NULL },
-	{ Z80_TABLE_cb, NULL },
-	{ Z80_TABLE_xy, NULL },
-	{ Z80_TABLE_ed, NULL },
-	{ Z80_TABLE_xycb, NULL },
-	{ Z80_TABLE_ex, NULL },
-	{ -1, NULL }
-};
-
 static void msx_wd179x_int (int state);
 
 static WRITE_HANDLER ( msx_ppi_port_a_w );
@@ -337,6 +323,13 @@ DRIVER_INIT( msx )
 {
 	int i, n;
 
+	/* z80 stuff */
+	static int z80_cycle_table[] =
+	{
+		Z80_TABLE_op, Z80_TABLE_cb, Z80_TABLE_xy,
+        Z80_TABLE_ed, Z80_TABLE_xycb, Z80_TABLE_ex
+	};
+
 	memset (&msx1, 0, sizeof (MSX));
 	/* LOAD_DEVICE is called before DRIVER_INIT */
 	for (i=0; i<MSX_MAX_CARTS; i++) {
@@ -353,20 +346,22 @@ DRIVER_INIT( msx )
 	msx_memory_init ();
 
 	/* adjust z80 cycles for the M1 wait state */
-	for (i=0; z80_cycle_table[i].table != -1; i++) {
+	for (i = 0; i < sizeof(z80_cycle_table) / sizeof(z80_cycle_table[0]); i++)
+	{
 		UINT8 *table = auto_malloc (0x100);
+		const UINT8 *old_table;
 
-		z80_cycle_table[i].old_table = cpunum_get_info_ptr (0,
-				CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table);
-		memcpy (table, z80_cycle_table[i].old_table, 0x100);
+		old_table = cpunum_get_info_ptr (0,
+				CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i]);
+		memcpy (table, old_table, 0x100);
 
-		if (z80_cycle_table[i].table == Z80_TABLE_ex) {
+		if (z80_cycle_table[i] == Z80_TABLE_ex) {
 			table[0x66]++; /* NMI overhead (not used) */
 			table[0xff]++; /* INT overhead */
 		}
 		else {
 			for (n=0; n<256; n++) {
-				if (z80_cycle_table[i].table == Z80_TABLE_op) {
+				if (z80_cycle_table[i] == Z80_TABLE_op) {
 					table[n]++;
 				}
 				else {
@@ -375,7 +370,7 @@ DRIVER_INIT( msx )
 			}
 		}
 		cpunum_set_info_ptr (0,
-					CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table,
+					CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i],
 					(void*)table);
 	}
 }
@@ -384,17 +379,6 @@ DRIVER_INIT( msx2 )
 {
 	init_msx ();
 	tc8521_init (&tc);
-}
-
-MACHINE_STOP( msx )
-{
-	int i;
-
-	for (i=0; z80_cycle_table[i].table != -1; i++) {
-		cpunum_set_info_ptr (0,
-						CPUINFO_PTR_Z80_CYCLE_TABLE + z80_cycle_table[i].table, 
-						(void*)z80_cycle_table[i].old_table);
-	}
 }
 
 INTERRUPT_GEN( msx2_interrupt )

@@ -877,7 +877,7 @@ BEGIN
     CONTROL         "Use keyboard LEDs as system indicators",IDC_LEDS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,125,140,10,0,HIDC_LEDS
     CONTROL         "Enable system cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,15,135,80,10,0,HIDC_CHEAT
+                    WS_TABSTOP,15,152,90,10,0,HIDC_CHEAT
 #else
     CONTROL         "Use keyboard LEDs as game indicators",IDC_LEDS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,125,140,10,0,HIDC_LEDS
@@ -889,14 +889,11 @@ BEGIN
     CONTROL         "Use RDTSC timing system (for desktops)",IDC_OLD_TIMING,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,172,95,10,0,
                     HIDC_OLD_TIMING
-#ifdef MESS
-    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,165,100,10,0,HIDC_LOG
-    CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,130,165,70,10,0,HIDC_LOG
-#else
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,182,95,10,0,HIDC_LOG
+#ifdef MESS
+    CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,152,70,10,0,HIDC_LOG
 #endif
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,199,97,14,0,0,0x809e0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,199,99,14,

@@ -1393,8 +1393,13 @@ MSX_SLOT_RESET(fmpac)
 	for (i=0; i<=state->bank_mask; i++) {
 		state->mem[0x3ff6 + i * 0x4000] = 0;
 	}
-	state->cart.fmpac.mem[0x3ff6] = 0;
-	state->cart.fmpac.mem[0x3ff7] = 0;
+
+	/* NPW 21-Feb-2004 - Adding check for null */
+	if (state->cart.fmpac.mem)
+	{
+		state->cart.fmpac.mem[0x3ff6] = 0;
+		state->cart.fmpac.mem[0x3ff7] = 0;
+	}
 
 	/* IMPROVE: reset sound chip */
 }

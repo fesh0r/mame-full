@@ -43,7 +43,6 @@ extern DRIVER_INIT( msx );
 extern DRIVER_INIT( msx2 );
 extern MACHINE_INIT( msx );
 extern MACHINE_INIT( msx2 );
-extern MACHINE_STOP( msx );
 extern INTERRUPT_GEN( msx_interrupt );
 extern INTERRUPT_GEN( msx2_interrupt );
 extern NVRAM_HANDLER( msx2 );
