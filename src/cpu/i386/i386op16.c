@@ -2683,14 +2683,13 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				// TODO: Check for protection fault
 				UINT8 b;
 				if( modrm >= 0xc0 ) {
-					address = LOAD_RM16(modrm);
-					ea = i386_translate( CS, address );
+					b = LOAD_RM8(modrm);
 				} else {
 					ea = GetEA(modrm);
+					b = READ8(ea);
 				}
-				b = READ8(ea);
 				I.cr[0] &= ~0x03;
-				I.cr[0]= b & 0x03;
+				I.cr[0] |= b & 0x03;
 				break;
 			}
 		default:
