@@ -930,7 +930,7 @@ static WRITE_HANDLER ( d_pia0_pb_w )
   PIA1 PA1		- RS232 OUT
   PIA1 PA2-PA7	- DAC
   PIA1 PB0		- RS232 IN
-  PIA1 PB1		- ??? (NYI)
+  PIA1 PB1		- Single bit sound
   PIA1 PB2		- RAMSZ (I believe this was a jumper cable?)
   PIA1 PB3		- M6847 CSS
   PIA1 PB4		- M6847 INT/EXT and M6847 GM0
@@ -991,11 +991,13 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	m6847_css_w(0,		data & 0x08);
 	schedule_full_refresh();
 
-	/* NYI - When SNDEN if false, PB1 will drive the sound output.  This is a
-	 * single bit sound mode that I never even heard of.
+	/* When SNDEN if false, PB1 will drive the sound output.  This is a rarely
+	 * used single bit sound mode
 	 *
 	 * Source:  Page 31 of the Tandy Color Computer Serice Manual
 	 */
+	if ((soundmux_status & SOUNDMUX_STATUS_ENABLE) == 0)
+		DAC_data_w(0, (data & 0x02) ? 0xff : 0x00);
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
