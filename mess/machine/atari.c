@@ -117,53 +117,33 @@ MACHINE_INIT( a800 )
 	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
-int a800_rom_init(int id, mame_file *fp, int open_mode)
+int a800_rom_load(int id, mame_file *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
-	mame_file *monitor_fp;
 	int size;
 
-	/* load an optional monitor.rom */
-	filename = "monitor.rom";
-	monitor_fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_IMAGE, 0);
-	if (monitor_fp)
+	/* load an optional (dual) cartridge (e.g. basic.rom) */
+	if( id > 0 )
 	{
-		logerror("%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename);
-		size = mame_fread(monitor_fp, &mem[0xc000], 0x1000);
-		mame_fclose(monitor_fp);
+		size = mame_fread(fp, &mem[0x12000], 0x2000);
+		a800_cart_is_16k = (size == 0x2000);
+		logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 	}
 	else
 	{
-		logerror("%s optional image '%s' not found\n", Machine->gamedrv->name, filename);
+		size = mame_fread(fp, &mem[0x10000], 0x2000);
+		a800_cart_loaded = size > 0x0000;
+		size = mame_fread(fp, &mem[0x12000], 0x2000);
+		a800_cart_is_16k = size > 0x2000;
+		logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 	}
-
-	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if (fp)
-	{
-		{
-			if( id > 0 )
-			{
-				size = mame_fread(fp, &mem[0x12000], 0x2000);
-				a800_cart_is_16k = (size == 0x2000);
-				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
-			}
-			else
-			{
-				size = mame_fread(fp, &mem[0x10000], 0x2000);
-				a800_cart_loaded = size > 0x0000;
-				size = mame_fread(fp, &mem[0x12000], 0x2000);
-				a800_cart_is_16k = size > 0x2000;
-				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
-			}
-			if( a800_cart_loaded )
-				a800_setbank(1);
-		}
-	}
+	if (a800_cart_loaded)
+		a800_setbank(1);
 	return INIT_PASS;
 }
 
-void a800_rom_exit(int id)
+void a800_rom_unload(int id)
 {
 	if( id > 0 )
 	{
@@ -241,38 +221,33 @@ MACHINE_INIT( a5200 )
 	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
-int a5200_rom_init(int id, mame_file *file, int open_mode)
+int a5200_rom_load(int id, mame_file *file, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	int size;
 
 	/* load an optional (dual) cartidge */
-	if (file)
+	size = mame_fread(file, &mem[0x4000], 0x8000);
+	if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
+	// mirroring of smaller cartridges
+	if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);
+	if (size <= 0x2000) memcpy(mem+0x8000, mem+0xa000, 0x2000);
+	if (size <= 0x4000)
 	{
-		{
-			size = mame_fread(file, &mem[0x4000], 0x8000);
-			if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
-			// mirroring of smaller cartridges
-			if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);
-			if (size <= 0x2000) memcpy(mem+0x8000, mem+0xa000, 0x2000);
-			if (size <= 0x4000)
-			{
-			    const char *info;
-			    memcpy(&mem[0x4000], &mem[0x8000], 0x4000);
-			    info = image_extrainfo(IO_CARTSLOT, id);
-			    if (info!=NULL && strcmp(info, "A13MIRRORING")==0) {
-				memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
-				memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
-			    }
-			}
-			logerror("%s loaded cartridge '%s' size %dK\n",
-				Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , size/1024);
+		const char *info;
+		memcpy(&mem[0x4000], &mem[0x8000], 0x4000);
+		info = image_extrainfo(IO_CARTSLOT, id);
+		if (info!=NULL && strcmp(info, "A13MIRRORING")==0) {
+		memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
+		memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
 		}
 	}
+	logerror("%s loaded cartridge '%s' size %dK\n",
+		Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , size/1024);
 	return INIT_PASS;
 }
 
-void a5200_rom_exit(int id)
+void a5200_rom_unload(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
     /* zap the cartridge memory (again) */
@@ -355,156 +330,116 @@ static	xfd_format xfd_formats[] = {
  *****************************************************************************/
 #define MAXSIZE 5760 * 256 + 80
 
-int a800_floppy_init(int id, mame_file *file, int effective_mode)
+int a800_floppy_load(int id, mame_file *file, int effective_mode)
 {
 	int size, i;
+	const char *ext;
 
-	if (!file)
-		return INIT_PASS;
-
+	drv[id].image = image_malloc(IO_FLOPPY, id, MAXSIZE);
 	if (!drv[id].image)
+		return INIT_FAIL;
+
+	/* tell whether the image is writable */
+	drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
+	/* set up image if it has been created */
+	if ((file) && is_effective_mode_create(effective_mode))
 	{
-		const char *ext;
+		int sector;
+		char buff[256];
+		memset(buff, 0, 256);
+		/* default to 720 sectors */
+		for( sector = 0; sector < 720; sector++ )
+			mame_fwrite(file, buff, 256);
+		mame_fseek(file, 0, SEEK_SET);
+	}
 
-		drv[id].image = image_malloc(IO_FLOPPY, id, MAXSIZE);
-		if (!drv[id].image)
-			return INIT_FAIL;
+	size = mame_fread(file, drv[id].image, MAXSIZE);
+	if( size <= 0 )
+	{
+		drv[id].image = NULL;
+		return INIT_FAIL;
+	}
+	/* re allocate the buffer; we don't want to be too lazy ;) */
+    drv[id].image = image_realloc(IO_FLOPPY, id, drv[id].image, size);
 
-		/* tell whether the image is writable */
-		drv[id].mode = (file) && is_effective_mode_writable(effective_mode);
-		/* set up image if it has been created */
-		if ((file) && is_effective_mode_create(effective_mode))
+	ext = image_filetype(IO_FLOPPY, id);
+    /* no extension: assume XFD format (no header) */
+    if (!ext)
+    {
+        drv[id].type = FORMAT_XFD;
+        drv[id].header_skip = 0;
+    }
+    else
+    /* XFD extension */
+    if( toupper(ext[0])=='X' && toupper(ext[1])=='F' && toupper(ext[2])=='D' )
+    {
+        drv[id].type = FORMAT_XFD;
+        drv[id].header_skip = 0;
+    }
+    else
+    /* ATR extension */
+    if( toupper(ext[0])=='A' && toupper(ext[1])=='T' && toupper(ext[2])=='R' )
+    {
+        drv[id].type = FORMAT_ATR;
+        drv[id].header_skip = 16;
+    }
+    else
+    /* DSK extension */
+    if( toupper(ext[0])=='D' && toupper(ext[1])=='S' && toupper(ext[2])=='K' )
+    {
+        drv[id].type = FORMAT_DSK;
+        drv[id].header_skip = sizeof(dsk_format);
+    }
+    else
+    {
+		drv[id].type = FORMAT_XFD;
+        drv[id].header_skip = 0;
+    }
+
+	if( drv[id].type == FORMAT_ATR &&
+		(drv[id].image[0] != 0x96 || drv[id].image[1] != 0x02) )
+	{
+		drv[id].type = FORMAT_XFD;
+		drv[id].header_skip = 0;
+	}
+
+	switch (drv[id].type)
+	{
+	/* XFD or unknown format: find a matching size from the table */
+	case FORMAT_XFD:
+		for( i = 0; xfd_formats[i].size; i++ )
 		{
-			int sector;
-			char buff[256];
-			memset(buff, 0, 256);
-			/* default to 720 sectors */
-			for( sector = 0; sector < 720; sector++ )
-				mame_fwrite(file, buff, 256);
-			mame_fseek(file, 0, SEEK_SET);
-		}
-
-		size = mame_fread(file, drv[id].image, MAXSIZE);
-		if( size <= 0 )
-		{
-			drv[id].image = NULL;
-			return INIT_FAIL;
-		}
-		/* re allocate the buffer; we don't want to be too lazy ;) */
-        drv[id].image = image_realloc(IO_FLOPPY, id, drv[id].image, size);
-
-		ext = image_filetype(IO_FLOPPY, id);
-        /* no extension: assume XFD format (no header) */
-        if (!ext)
-        {
-            drv[id].type = FORMAT_XFD;
-            drv[id].header_skip = 0;
-        }
-        else
-        /* XFD extension */
-        if( toupper(ext[0])=='X' && toupper(ext[1])=='F' && toupper(ext[2])=='D' )
-        {
-            drv[id].type = FORMAT_XFD;
-            drv[id].header_skip = 0;
-        }
-        else
-        /* ATR extension */
-        if( toupper(ext[0])=='A' && toupper(ext[1])=='T' && toupper(ext[2])=='R' )
-        {
-            drv[id].type = FORMAT_ATR;
-            drv[id].header_skip = 16;
-        }
-        else
-        /* DSK extension */
-        if( toupper(ext[0])=='D' && toupper(ext[1])=='S' && toupper(ext[2])=='K' )
-        {
-            drv[id].type = FORMAT_DSK;
-            drv[id].header_skip = sizeof(dsk_format);
-        }
-        else
-        {
-			drv[id].type = FORMAT_XFD;
-            drv[id].header_skip = 0;
-        }
-
-		if( drv[id].type == FORMAT_ATR &&
-			(drv[id].image[0] != 0x96 || drv[id].image[1] != 0x02) )
-		{
-			drv[id].type = FORMAT_XFD;
-			drv[id].header_skip = 0;
-		}
-
-		switch (drv[id].type)
-		{
-		/* XFD or unknown format: find a matching size from the table */
-		case FORMAT_XFD:
-			for( i = 0; xfd_formats[i].size; i++ )
+			if( size == xfd_formats[i].size )
 			{
-				if( size == xfd_formats[i].size )
-				{
-					drv[id].density = xfd_formats[i].dsk.density;
-					drv[id].tracks = xfd_formats[i].dsk.tracks;
-					drv[id].spt = xfd_formats[i].dsk.spt;
-					drv[id].heads = (xfd_formats[i].dsk.doublesided) ? 2 : 1;
-					drv[id].bseclen = 128;
-					drv[id].seclen = 256 * xfd_formats[i].dsk.seclen_hi + xfd_formats[i].dsk.seclen_lo;
-					drv[id].sectors = drv[id].tracks * drv[id].heads * drv[id].spt;
-					break;
-				}
-			}
-			break;
-		/* ATR format: find a size including the 16 bytes header */
-		case FORMAT_ATR:
-			{
-				int s;
-
+				drv[id].density = xfd_formats[i].dsk.density;
+				drv[id].tracks = xfd_formats[i].dsk.tracks;
+				drv[id].spt = xfd_formats[i].dsk.spt;
+				drv[id].heads = (xfd_formats[i].dsk.doublesided) ? 2 : 1;
 				drv[id].bseclen = 128;
-				/* get sectors from ATR header */
-				s = (size - 16) / 128;
-				/* 3 + odd number of sectors ? */
-				if ( drv[id].image[4] == 128 || (s % 18) == 0 || (s % 26) == 0 || ((s - 3) % 1) != 0 )
+				drv[id].seclen = 256 * xfd_formats[i].dsk.seclen_hi + xfd_formats[i].dsk.seclen_lo;
+				drv[id].sectors = drv[id].tracks * drv[id].heads * drv[id].spt;
+				break;
+			}
+		}
+		break;
+	/* ATR format: find a size including the 16 bytes header */
+	case FORMAT_ATR:
+		{
+			int s;
+
+			drv[id].bseclen = 128;
+			/* get sectors from ATR header */
+			s = (size - 16) / 128;
+			/* 3 + odd number of sectors ? */
+			if ( drv[id].image[4] == 128 || (s % 18) == 0 || (s % 26) == 0 || ((s - 3) % 1) != 0 )
+			{
+				drv[id].sectors = s;
+				drv[id].seclen = 128;
+				/* sector size 128 or count not evenly dividable by 26 ? */
+				if( drv[id].seclen == 128 || (s % 26) != 0 )
 				{
-					drv[id].sectors = s;
-					drv[id].seclen = 128;
-					/* sector size 128 or count not evenly dividable by 26 ? */
-					if( drv[id].seclen == 128 || (s % 26) != 0 )
-					{
-						/* yup! single density */
-						drv[id].density = 0;
-						drv[id].spt = 18;
-						drv[id].heads = 1;
-						drv[id].tracks = s / 18;
-						if( s % 18 != 0 )
-							drv[id].tracks += 1;
-						if( drv[id].tracks % 2 == 0 && drv[id].tracks > 80 )
-						{
-							drv[id].heads = 2;
-							drv[id].tracks /= 2;
-						}
-					}
-					else
-					{
-						/* yes: medium density */
-						drv[id].density = 0;
-						drv[id].spt = 26;
-						drv[id].heads = 1;
-						drv[id].tracks = s / 26;
-						if( s % 26 != 0 )
-							drv[id].tracks += 1;
-						if( drv[id].tracks % 2 == 0 && drv[id].tracks > 80 )
-						{
-							drv[id].heads = 2;
-							drv[id].tracks /= 2;
-						}
-					}
-				}
-				else
-				{
-					/* it's double density */
-					s = (s - 3) / 2 + 3;
-					drv[id].sectors = s;
-					drv[id].density = 2;
-					drv[id].seclen = 256;
+					/* yup! single density */
+					drv[id].density = 0;
 					drv[id].spt = 18;
 					drv[id].heads = 1;
 					drv[id].tracks = s / 18;
@@ -516,30 +451,63 @@ int a800_floppy_init(int id, mame_file *file, int effective_mode)
 						drv[id].tracks /= 2;
 					}
 				}
+				else
+				{
+					/* yes: medium density */
+					drv[id].density = 0;
+					drv[id].spt = 26;
+					drv[id].heads = 1;
+					drv[id].tracks = s / 26;
+					if( s % 26 != 0 )
+						drv[id].tracks += 1;
+					if( drv[id].tracks % 2 == 0 && drv[id].tracks > 80 )
+					{
+						drv[id].heads = 2;
+						drv[id].tracks /= 2;
+					}
+				}
 			}
-			break;
-		/* DSK format: it's all in the header */
-		case FORMAT_DSK:
+			else
 			{
-				dsk_format *dsk = (dsk_format *) drv[id].image;
-
-				drv[id].tracks = dsk->tracks;
-				drv[id].spt = dsk->spt;
-				drv[id].heads = (dsk->doublesided) ? 2 : 1;
-				drv[id].seclen = 256 * dsk->seclen_hi + dsk->seclen_lo;
-				drv[id].bseclen = drv[id].seclen;
-				drv[id].sectors = drv[id].tracks * drv[id].heads * drv[id].spt;
+				/* it's double density */
+				s = (s - 3) / 2 + 3;
+				drv[id].sectors = s;
+				drv[id].density = 2;
+				drv[id].seclen = 256;
+				drv[id].spt = 18;
+				drv[id].heads = 1;
+				drv[id].tracks = s / 18;
+				if( s % 18 != 0 )
+					drv[id].tracks += 1;
+				if( drv[id].tracks % 2 == 0 && drv[id].tracks > 80 )
+				{
+					drv[id].heads = 2;
+					drv[id].tracks /= 2;
+				}
 			}
-			break;
 		}
-		logerror("atari opened floppy #%d '%s', %d sectors (%d %s%s) %d bytes/sector\n",
-				id+1, image_filename(IO_FLOPPY,id),
-				drv[id].sectors,
-				drv[id].tracks,
-				(drv[id].heads == 1) ? "SS" : "DS",
-				(drv[id].density == 0) ? "SD" : (drv[id].density == 1) ? "MD" : "DD",
-				drv[id].seclen);
+		break;
+	/* DSK format: it's all in the header */
+	case FORMAT_DSK:
+		{
+			dsk_format *dsk = (dsk_format *) drv[id].image;
+
+			drv[id].tracks = dsk->tracks;
+			drv[id].spt = dsk->spt;
+			drv[id].heads = (dsk->doublesided) ? 2 : 1;
+			drv[id].seclen = 256 * dsk->seclen_hi + dsk->seclen_lo;
+			drv[id].bseclen = drv[id].seclen;
+			drv[id].sectors = drv[id].tracks * drv[id].heads * drv[id].spt;
+		}
+		break;
 	}
+	logerror("atari opened floppy #%d '%s', %d sectors (%d %s%s) %d bytes/sector\n",
+			id+1, image_filename(IO_FLOPPY,id),
+			drv[id].sectors,
+			drv[id].tracks,
+			(drv[id].heads == 1) ? "SS" : "DS",
+			(drv[id].density == 0) ? "SD" : (drv[id].density == 1) ? "MD" : "DD",
+			drv[id].seclen);
 	return INIT_PASS;
 }
 

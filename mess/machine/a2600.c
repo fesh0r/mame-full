@@ -1323,163 +1323,146 @@ MACHINE_INIT( a2600 )
   Cartridge Loading
 
 ***************************************************************************/
-int a2600_load_rom(int id, mame_file *cartfile, int open_mode)
+int a2600_cart_load(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	if (cartfile == NULL)
-	{
-		printf("a2600 Requires Cartridge!\n");
-		return INIT_FAIL;
-	}
-
-	/* A cartridge isn't strictly mandatory, but it's recommended */
+	UINT32 crc;
+	int cart_size;
 
 	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
 
-	if (cartfile != NULL)
+	cart_size = mame_fsize(cartfile);
+	mame_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
+	/* copy to mirrorred memory regions */
+	crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
+	Bankswitch_Method = 0;
+
+	switch(cart_size)
 	{
-		UINT32 crc;
-		int cart_size;
+		case 0x10000:
+					break;
+		case 0x08000:
+					break;
+		case 0x04000:
+					break;
+		case 0x03000:
+					break;
+		case 0x02000:
+					switch(crc)
+					{
 
-		cart_size = mame_fsize(cartfile);
-		mame_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
-		/* copy to mirrorred memory regions */
-		crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
-		Bankswitch_Method = 0;
+						case 0x91b8f1b2:
+									Bankswitch_Method = 0xFE;
+									logerror("Decathlon detected and loaded\n");
+									break;
+						case 0xfd8c81e5:
+									Bankswitch_Method = 0xE0;
+									logerror("Tooth Protectors detected and loaded\n");
+									break;
+						case 0x0886a55d:
+									Bankswitch_Method = 0xE0;
+									logerror("SW: Death Star Battle detected and loaded\n");
+									break;
+						case 0x0d78e8a9:
+									Bankswitch_Method = 0xE0;
+									logerror("Gyruss detected and loaded\n");
+									break;
+						case 0x34d3ffc8:
+									Bankswitch_Method = 0xE0;
+									logerror("James Bond 007 detected and loaded\n");
+									break;
+						case 0xde97103d:
+									Bankswitch_Method = 0xE0;
+									logerror("Super Cobra detected and loaded\n");
+									break;
+						case 0xec959bf2:
+									Bankswitch_Method = 0xE0;
+									logerror("Tutankham detected and loaded\n");
+									break;
+						case 0x7d287f20:
+									Bankswitch_Method = 0xE0;
+									logerror("Popeye detected and loaded\n");
+									break;
+						case 0x65c31ca4:
+									Bankswitch_Method = 0xE0;
+									logerror("SW: Arcade Game detected and loaded\n");
+									break;
+						case 0xa87be8fd:
+									Bankswitch_Method = 0xE0;
+									logerror("Q*Bert's Qubes detected and loaded\n");
+									break;
+						case 0x3ba0d9bf:
+									Bankswitch_Method = 0xE0;
+									logerror("Frogger ][: Threeedeep detected and loaded\n");
+									break;
+						case 0xe680a1c9:
+									Bankswitch_Method = 0xE0;
+									logerror("Montezuma's Revenge detected and loaded\n");
+									break;
+						case 0x044735b9:
+									Bankswitch_Method = 0xE0;
+									logerror("Mr. Do's Castle detected and loaded\n");
+									break;
+						case 0xc820bd75:
+									Bankswitch_Method = 0x3F;
+									logerror("River Patrol detected and loaded\n");
+									break;
+						case 0xdd183a4f:
+									Bankswitch_Method = 0x3F;
+									logerror("Springer detected and loaded\n");
+									break;
+						case 0xdb376663:
+									Bankswitch_Method = 0x3F;
+									logerror("Polaris detected and loaded\n");
+									break;
+						case 0xbd08d915:
+									Bankswitch_Method = 0x3F;
+									logerror("Miner 2049'er detected and loaded\n");
+									break;
+						case 0xbfa477cd:
+									Bankswitch_Method = 0x3F;
+									logerror("Miner 2049'er Volume ][ detected and loaded\n");
+									break;
+						case 0x34b80a97:
+									Bankswitch_Method = 0x3F;
+									logerror("Espial detected and loaded\n");
+									break;
+						default:
+									Bankswitch_Method = 0xf8;
+									break;
+					}
 
-		switch(cart_size)
-		{
-			case 0x10000:
-						break;
-			case 0x08000:
-						break;
-			case 0x04000:
-						break;
-			case 0x03000:
-						break;
-			case 0x02000:
-						switch(crc)
-						{
+					switch(Bankswitch_Method)
+					{
+						case 0xf8:
+									memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
+									memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
+									break;
+						case 0xe0:
+									memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+									memcpy(&ROM[0x1400], &ROM[0x10400], 0x1000);
+									memcpy(&ROM[0x1800], &ROM[0x10800], 0x1000);
+									memcpy(&ROM[0x1c00], &ROM[0x11c00], 0x1000);
 
-							case 0x91b8f1b2:
-										Bankswitch_Method = 0xFE;
-										logerror("Decathlon detected and loaded\n");
-										break;
-							case 0xfd8c81e5:
-										Bankswitch_Method = 0xE0;
-										logerror("Tooth Protectors detected and loaded\n");
-										break;
-							case 0x0886a55d:
-										Bankswitch_Method = 0xE0;
-										logerror("SW: Death Star Battle detected and loaded\n");
-										break;
-							case 0x0d78e8a9:
-										Bankswitch_Method = 0xE0;
-										logerror("Gyruss detected and loaded\n");
-										break;
-							case 0x34d3ffc8:
-										Bankswitch_Method = 0xE0;
-										logerror("James Bond 007 detected and loaded\n");
-										break;
-							case 0xde97103d:
-										Bankswitch_Method = 0xE0;
-										logerror("Super Cobra detected and loaded\n");
-										break;
-							case 0xec959bf2:
-										Bankswitch_Method = 0xE0;
-										logerror("Tutankham detected and loaded\n");
-										break;
-							case 0x7d287f20:
-										Bankswitch_Method = 0xE0;
-										logerror("Popeye detected and loaded\n");
-										break;
-							case 0x65c31ca4:
-										Bankswitch_Method = 0xE0;
-										logerror("SW: Arcade Game detected and loaded\n");
-										break;
-							case 0xa87be8fd:
-										Bankswitch_Method = 0xE0;
-										logerror("Q*Bert's Qubes detected and loaded\n");
-										break;
-							case 0x3ba0d9bf:
-										Bankswitch_Method = 0xE0;
-										logerror("Frogger ][: Threeedeep detected and loaded\n");
-										break;
-							case 0xe680a1c9:
-										Bankswitch_Method = 0xE0;
-										logerror("Montezuma's Revenge detected and loaded\n");
-										break;
-							case 0x044735b9:
-										Bankswitch_Method = 0xE0;
-										logerror("Mr. Do's Castle detected and loaded\n");
-										break;
-							case 0xc820bd75:
-										Bankswitch_Method = 0x3F;
-										logerror("River Patrol detected and loaded\n");
-										break;
-							case 0xdd183a4f:
-										Bankswitch_Method = 0x3F;
-										logerror("Springer detected and loaded\n");
-										break;
-							case 0xdb376663:
-										Bankswitch_Method = 0x3F;
-										logerror("Polaris detected and loaded\n");
-										break;
-							case 0xbd08d915:
-										Bankswitch_Method = 0x3F;
-										logerror("Miner 2049'er detected and loaded\n");
-										break;
-							case 0xbfa477cd:
-										Bankswitch_Method = 0x3F;
-										logerror("Miner 2049'er Volume ][ detected and loaded\n");
-										break;
-							case 0x34b80a97:
-										Bankswitch_Method = 0x3F;
-										logerror("Espial detected and loaded\n");
-										break;
-							default:
-										Bankswitch_Method = 0xf8;
-										break;
-						}
-
-						switch(Bankswitch_Method)
-						{
-							case 0xf8:
-										memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
-										memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
-										break;
-							case 0xe0:
-										memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
-										memcpy(&ROM[0x1400], &ROM[0x10400], 0x1000);
-										memcpy(&ROM[0x1800], &ROM[0x10800], 0x1000);
-										memcpy(&ROM[0x1c00], &ROM[0x11c00], 0x1000);
-
-										memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
-										memcpy(&ROM[0xf400], &ROM[0x10400], 0x1000);
-										memcpy(&ROM[0xf800], &ROM[0x10800], 0x1000);
-										memcpy(&ROM[0xfc00], &ROM[0x11c00], 0x1000);
-										break;
-						}
-						break;
-			case 0x01000:
-						memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
-						memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
-						break;
-			case 0x00800:
-						memcpy(&ROM[0x1000], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0x1800], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0xf000], &ROM[0x10000], 0x0800);
-						memcpy(&ROM[0xf800], &ROM[0x10000], 0x0800);
-						break;
-		}
-		logerror("cartridge crc = %08x\n", crc);
+									memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+									memcpy(&ROM[0xf400], &ROM[0x10400], 0x1000);
+									memcpy(&ROM[0xf800], &ROM[0x10800], 0x1000);
+									memcpy(&ROM[0xfc00], &ROM[0x11c00], 0x1000);
+									break;
+					}
+					break;
+		case 0x01000:
+					memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+					memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+					break;
+		case 0x00800:
+					memcpy(&ROM[0x1000], &ROM[0x10000], 0x0800);
+					memcpy(&ROM[0x1800], &ROM[0x10000], 0x0800);
+					memcpy(&ROM[0xf000], &ROM[0x10000], 0x0800);
+					memcpy(&ROM[0xf800], &ROM[0x10000], 0x0800);
+					break;
 	}
-	else
-	{
-		return 1;
-	}
-
+	logerror("cartridge crc = %08x\n", crc);
 	return 0;
 }
 

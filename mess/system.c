@@ -100,10 +100,10 @@ const struct GameDriver *test_drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
-//	DRIVER( a2600 ) 	/* Atari 2600										*/
-//	DRIVER( a5200 ) 	/* Atari 5200										*/
-//	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
-//	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
+	DRIVER( a2600 ) 	/* Atari 2600										*/
+	DRIVER( a5200 ) 	/* Atari 5200										*/
+	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
+	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
 //	DRIVER( lynx )		/* Atari Lynx Handheld								*/
 //	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
 //	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
@@ -285,11 +285,11 @@ XL/XE 16kB OS roms
 4    XEGS    05/07/1987  0x1eaf4002  C101687
 */
 
-//	DRIVER( a400 )		/* 1979 Atari 400									*/
-//	DRIVER( a400pal )	/* 1979 Atari 400 PAL								*/
-//	DRIVER( a800 )		/* 1979 Atari 800									*/
-//	DRIVER( a800pal )	/* 1979 Atari 800 PAL								*/
-//	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
+	DRIVER( a400 )		/* 1979 Atari 400									*/
+	DRIVER( a400pal )	/* 1979 Atari 400 PAL								*/
+	DRIVER( a800 )		/* 1979 Atari 800									*/
+	DRIVER( a800pal )	/* 1979 Atari 800 PAL								*/
+	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
 //TESTDRIVER( atarist )	/* Atari ST 										*/
 

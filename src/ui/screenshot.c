@@ -136,8 +136,8 @@ static BOOL DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal)
 #ifdef MESS
 static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwareName, int nType)
 {
-	char *s = alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 1);
-	sprintf(s, "%s/%s", drv->name, lpSoftwareName);
+	char *s = alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 5);
+	sprintf(s, "%s/%s.png", drv->name, lpSoftwareName);
 	return LoadDIB(s, &m_hDIB, &m_hPal, nType);
 }
 #endif /* MESS */
@@ -165,7 +165,7 @@ BOOL LoadScreenShot(int nGame, int nType)
 	if (lpSoftwareName)
 	{
 		loaded = LoadSoftwareScreenShot(drivers[nGame], lpSoftwareName, nType);
-		if (!loaded && (drivers[nGame]->clone_of))
+		if (!loaded && (drivers[nGame]->clone_of && !(drivers[nGame]->clone_of->flags & NOT_A_DRIVER)))
 			loaded = LoadSoftwareScreenShot(drivers[nGame]->clone_of, lpSoftwareName, nType);
 	}
 	if (!loaded)

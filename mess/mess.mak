@@ -160,10 +160,10 @@ DRVLIBS = \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/sega.a     \
 	$(OBJ)/acorn.a    \
+	$(OBJ)/atari.a    \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/pcshare.a  \
-#	$(OBJ)/atari.a    \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/vtech.a	  \

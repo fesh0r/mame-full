@@ -148,7 +148,7 @@ static int a7800_verify_cart(char header[128])
 	return IMAGE_VERIFY_PASS;
 }
 
-static int a7800_init_cart_cmn(int id, mame_file *cartfile)
+static int a7800_load_cart_cmn(int id, mame_file *cartfile)
 {
 	long len,start;
 	unsigned char header[128];
@@ -163,16 +163,6 @@ static int a7800_init_cart_cmn(int id, mame_file *cartfile)
 	cpu_setbank( 2, ROM + 0x8000 );
 	cpu_setbank( 3, ROM + 0xA000 );
 	cpu_setbank( 4, ROM + 0xC000 );
-
-	/* A cartridge is mandatory, since it doesnt do much without one */
-	if (cartfile == NULL)
-	{
-		if( !a7800_ispal )
-		{
-			logerror("A7800 - no cartridge specified!\n");
-			return INIT_FAIL;
-		}
-	}
 
 	/* Allocate memory for BIOS bank switching */
 	a7800_bios_bkup = (UINT8*) image_malloc(IO_CARTSLOT, id, 0x4000);
@@ -303,16 +293,16 @@ static int a7800_init_cart_cmn(int id, mame_file *cartfile)
 	return 0;
 }
 
-int a7800_init_cart(int id, mame_file *cartfile, int open_mode)
+int a7800_cart_load(int id, mame_file *cartfile, int open_mode)
 {
 	a7800_ispal = 0;
-	return a7800_init_cart_cmn(id, cartfile);
+	return a7800_load_cart_cmn(id, cartfile);
 }
 
-int a7800p_init_cart(int id, mame_file *cartfile, int open_mode)
+int a7800p_cart_load(int id, mame_file *cartfile, int open_mode)
 {
 	a7800_ispal = 1;
-	return a7800_init_cart_cmn(id, cartfile);
+	return a7800_load_cart_cmn(id, cartfile);
 }
 
 

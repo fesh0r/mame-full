@@ -45,39 +45,39 @@ typedef struct {
 }	ATARI_PIA;
 extern ATARI_PIA atari_pia;
 
-extern MACHINE_INIT( a400 );
-extern MACHINE_INIT( a800 );
-extern MACHINE_INIT( a800xl );
-extern MACHINE_INIT( a5200 );
+MACHINE_INIT( a400 );
+MACHINE_INIT( a800 );
+MACHINE_INIT( a800xl );
+MACHINE_INIT( a5200 );
 
-extern int a800_floppy_init(int id, mame_file *fp, int open_mode);
+int a800_floppy_load(int id, mame_file *fp, int open_mode);
 
-extern int a800_rom_init(int id, mame_file *fp, int open_mode);
-extern void a800_rom_exit(int id);
+int a800_rom_load(int id, mame_file *fp, int open_mode);
+void a800_rom_unload(int id);
 
-extern int a800xl_load_rom(int id, mame_file *fp, int open_mode);
-extern int a800xl_id_rom(int id);
+int a800xl_load_rom(int id, mame_file *fp, int open_mode);
+int a800xl_id_rom(int id);
 
-extern int a5200_rom_init(int id, mame_file *fp, int open_mode);
-extern void a5200_rom_exit(int id);
+int a5200_rom_load(int id, mame_file *fp, int open_mode);
+void a5200_rom_unload(int id);
 
-extern READ_HANDLER ( MRA_GTIA );
-extern READ_HANDLER ( MRA_PIA );
-extern READ_HANDLER ( MRA_ANTIC );
+READ_HANDLER ( MRA_GTIA );
+READ_HANDLER ( MRA_PIA );
+READ_HANDLER ( MRA_ANTIC );
 
-extern WRITE_HANDLER ( MWA_GTIA );
-extern WRITE_HANDLER ( MWA_PIA  );
-extern WRITE_HANDLER ( MWA_ANTIC );
+WRITE_HANDLER ( MWA_GTIA );
+WRITE_HANDLER ( MWA_PIA  );
+WRITE_HANDLER ( MWA_ANTIC );
 
-extern READ_HANDLER ( atari_serin_r );
-extern WRITE_HANDLER ( atari_serout_w );
-extern void atari_interrupt_cb(int mask);
+READ_HANDLER ( atari_serin_r );
+WRITE_HANDLER ( atari_serout_w );
+void atari_interrupt_cb(int mask);
 
-extern void a800_handle_keyboard(void);
-extern void a5200_handle_keypads(void);
+void a800_handle_keyboard(void);
+void a5200_handle_keypads(void);
 
-extern void gtia_reset(void);
-extern void antic_reset(void);
+void gtia_reset(void);
+void antic_reset(void);
 
 /* video */
 
