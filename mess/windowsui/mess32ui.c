@@ -13,6 +13,7 @@
 #include "SoftwareList.h"
 #include "../windows/window.h"
 #include "messwin.h"
+#include "rc.h"
 
 /* from src/mess/win32.c */
 /*
