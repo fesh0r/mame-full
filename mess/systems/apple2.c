@@ -534,8 +534,15 @@ static MACHINE_DRIVER_START( apple2 )
 	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( apple2p )
+	MDRV_IMPORT_FROM( apple2_common )
+	MDRV_VIDEO_START(apple2p)
+	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( apple2e )
 	MDRV_IMPORT_FROM( apple2_common )
+	MDRV_VIDEO_START(apple2e)
 	MDRV_GFXDECODE(apple2e_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -689,7 +696,7 @@ SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
 COMPX( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][", GAME_IMPERFECT_COLORS )
-COMPX( 1979, apple2p,  apple2,   0,			apple2,   apple2,   apple2,   apple2p,	"Apple Computer", "Apple ][+", GAME_IMPERFECT_COLORS )
+COMPX( 1979, apple2p,  apple2,   0,			apple2p,  apple2,   apple2,   apple2p,	"Apple Computer", "Apple ][+", GAME_IMPERFECT_COLORS )
 COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (Platinum)" )

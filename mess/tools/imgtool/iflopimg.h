@@ -28,7 +28,7 @@ imgtoolerr_t imgtool_floppy_write_sector_from_stream(IMAGE *img, int head, int t
 
 
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,
-	const char *description, const struct FloppyOption *format,
+	const char *description, const struct FloppyFormat *format,
 	imgtoolerr_t (*populate)(imgtool_library *library, struct ImageModule *module));
 
 

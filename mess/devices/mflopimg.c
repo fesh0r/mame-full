@@ -111,7 +111,7 @@ static void flopimg_read_track_data_info_buffer(mess_image *image, int side, voi
 {
 	struct mess_flopimg *flopimg;
 	flopimg = get_flopimg(image);
-	floppy_read_track(flopimg->floppy, side, flopimg->track, ptr, *length);
+	floppy_read_track_data(flopimg->floppy, side, flopimg->track, ptr, *length);
 }
 
 
@@ -120,7 +120,7 @@ static void flopimg_write_track_data_info_buffer(mess_image *image, int side, co
 {
 	struct mess_flopimg *flopimg;
 	flopimg = get_flopimg(image);
-	floppy_write_track(flopimg->floppy, side, flopimg->track, ptr, *length);
+	floppy_write_track_data(flopimg->floppy, side, flopimg->track, ptr, *length);
 }
 
 
@@ -190,7 +190,7 @@ static DEVICE_LOAD(floppy)
 	floperr_t err;
 	struct mess_flopimg *flopimg;
 	const struct IODevice *dev;
-	const struct FloppyOption *floppy_options;
+	const struct FloppyFormat *floppy_options;
 	int floppy_flags;
 	const char *extension;
 
@@ -272,7 +272,7 @@ void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 
 
 const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
-	int count, const struct FloppyOption *floppy_options)
+	int count, const struct FloppyFormat *floppy_options)
 {
 	int i;
 

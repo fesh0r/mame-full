@@ -45,7 +45,7 @@ static const struct basicdsk_geometry *get_geometry(floppy_image *floppy)
 floperr_t basicdsk_construct(floppy_image *floppy, const struct basicdsk_geometry *geometry)
 {
 	struct basicdsk_tag *tag;
-	struct FloppyFormat *format;
+	struct FloppyCallbacks *format;
 
 	assert(geometry->heads);
 	assert(geometry->tracks);
@@ -57,7 +57,7 @@ floperr_t basicdsk_construct(floppy_image *floppy, const struct basicdsk_geometr
 	tag->geometry = *geometry;
 
 	/* set up format callbacks */
-	format = floppy_format(floppy);
+	format = floppy_callbacks(floppy);
 	format->read_sector = basicdsk_read_sector;
 	format->write_sector = basicdsk_write_sector;
 	format->get_sector_length = basicdsk_get_sector_length;
@@ -222,7 +222,7 @@ static floperr_t basicdsk_get_indexed_sector_info(floppy_image *floppy, int head
  * Generic Basicdsk Constructors
  ********************************************************************/
 
-static void basicdsk_default_geometry(const struct FloppyOption *format, struct basicdsk_geometry *geometry)
+static void basicdsk_default_geometry(const struct FloppyFormat *format, struct basicdsk_geometry *geometry)
 {
 	optreserr_t err;
 	int sector_length;

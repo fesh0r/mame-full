@@ -13,7 +13,7 @@
 #include "formats/flopimg.h"
 
 const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
-	int count, const struct FloppyOption *floppy_options);
+	int count, const struct FloppyFormat *floppy_options);
 
 #define CONFIG_DEVICE_FLOPPY(count, floppy_options)							\
 	if (cfg->device_num-- == 0)												\

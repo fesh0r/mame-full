@@ -95,9 +95,9 @@ static imgtoolerr_t imgtool_floppy_open(const struct ImageModule *mod, STREAM *f
 	floperr_t ferr;
 	imgtoolerr_t err;
 	struct imgtool_floppy_image *fimg;
-	const struct FloppyOption *format;
+	const struct FloppyFormat *format;
 
-	format = (const struct FloppyOption *) mod->extra;
+	format = (const struct FloppyFormat *) mod->extra;
 
 	/* allocate space for our image */
 	fimg = (struct imgtool_floppy_image *) malloc(sizeof(struct imgtool_floppy_image));
@@ -130,9 +130,9 @@ error:
 static imgtoolerr_t imgtool_floppy_create(const struct ImageModule *mod, STREAM *f, option_resolution *opts)
 {
 	floperr_t ferr;
-	const struct FloppyOption *format;
+	const struct FloppyFormat *format;
 
-	format = (const struct FloppyOption *) mod->extra;
+	format = (const struct FloppyFormat *) mod->extra;
 
 	/* open up the floppy */
 	ferr = floppy_create(f, &imgtool_ioprocs_procs, format, opts, NULL);
@@ -153,7 +153,7 @@ static void imgtool_floppy_close(IMAGE *img)
 
 
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,
-	const char *description, const struct FloppyOption *format,
+	const char *description, const struct FloppyFormat *format,
 	imgtoolerr_t (*populate)(imgtool_library *library, struct ImageModule *module))
 {
 	imgtoolerr_t err;

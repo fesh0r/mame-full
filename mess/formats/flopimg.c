@@ -36,8 +36,8 @@ struct _floppy_image
 {
 	struct io_generic io;
 
-	const struct FloppyOption *floppy_option;
-	struct FloppyFormat format;
+	const struct FloppyFormat *floppy_option;
+	struct FloppyCallbacks format;
 
 	/* loaded track stuff */
 	int loaded_track_head;
@@ -100,11 +100,11 @@ static floppy_image *floppy_init(void *fp, const struct io_procs *procs, int fla
 
 
 static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, const char *extension,
-	const struct FloppyOption *floppy_options, size_t max_options, int flags, floppy_image **outfloppy)
+	const struct FloppyFormat *floppy_options, size_t max_options, int flags, floppy_image **outfloppy)
 {
 	floperr_t err;
 	floppy_image *floppy;
-	const struct FloppyOption *best_option;
+	const struct FloppyFormat *best_option;
 	int best_vote, vote;
 
 	floppy = floppy_init(fp, procs, flags);
@@ -168,14 +168,14 @@ error:
 
 
 
-floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *format, int flags, floppy_image **outfloppy)
+floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *format, int flags, floppy_image **outfloppy)
 {
 	return floppy_open_internal(fp, procs, extension, format, 1, flags, outfloppy);
 }
 
 
 
-floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *formats, int flags, floppy_image **outfloppy)
+floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *formats, int flags, floppy_image **outfloppy)
 {
 	return floppy_open_internal(fp, procs, extension, formats, (size_t) -1, flags, outfloppy);
 }
@@ -207,7 +207,7 @@ static floperr_t option_to_floppy_error(optreserr_t oerr)
 
 
 
-floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyOption *format, option_resolution *parameters, floppy_image **outfloppy)
+floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyFormat *format, option_resolution *parameters, floppy_image **outfloppy)
 {
 	floppy_image *floppy = NULL;
 	optreserr_t oerr;
@@ -312,7 +312,7 @@ void floppy_close(floppy_image *floppy)
 	functions useful in format constructors
 *********************************************************************/
 
-struct FloppyFormat *floppy_format(floppy_image *floppy)
+struct FloppyCallbacks *floppy_callbacks(floppy_image *floppy)
 {
 	return &floppy->format;
 }
@@ -386,9 +386,9 @@ UINT64 floppy_image_size(floppy_image *floppy)
 static floperr_t get_max_read_sector(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
 {
 	floperr_t err;
-	const struct FloppyFormat *fmt;
+	const struct FloppyCallbacks *fmt;
 	
-	fmt = floppy_format(floppy);
+	fmt = floppy_callbacks(floppy);
 	if (fmt->get_sector_length)
 	{
 		err = fmt->get_sector_length(floppy, head, track, sector, sector_length);
@@ -408,14 +408,14 @@ static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int tra
 	void *buffer, size_t buffer_len, int writing)
 {
 	floperr_t err;
-	const struct FloppyFormat *fmt;
+	const struct FloppyCallbacks *fmt;
 	size_t this_buffer_len;
 	UINT8 *alloc_buf = NULL;
 	UINT8 *new_alloc_buf;
 	UINT32 sector_length;
 	UINT8 *buffer_ptr = buffer;
 
-	fmt = floppy_format(floppy);
+	fmt = floppy_callbacks(floppy);
 
 	if (!fmt->get_sector_length || !fmt->read_sector || (writing && !fmt->write_sector))
 	{
@@ -516,12 +516,30 @@ floperr_t floppy_write_sector(floppy_image *floppy, int head, int track, int sec
 
 
 
-floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len)
+static floperr_t floppy_get_track_data_offset(floppy_image *floppy, int head, int track, UINT64 *offset)
 {
 	floperr_t err;
-	const struct FloppyFormat *format;
+	const struct FloppyCallbacks *callbacks;
 
-	format = floppy_format(floppy);
+	*offset = 0;
+	callbacks = floppy_callbacks(floppy);
+	if (callbacks->get_track_data_offset)
+	{
+		err = callbacks->get_track_data_offset(floppy, head, track, offset);
+		if (err)
+			return err;
+	}
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+static floperr_t floppy_read_track_offset(floppy_image *floppy, int head, int track, UINT64 offset, void *buffer, size_t buffer_len)
+{
+	floperr_t err;
+	const struct FloppyCallbacks *format;
+
+	format = floppy_callbacks(floppy);
 
 	if (!format->read_track)
 		return FLOPPY_ERROR_UNSUPPORTED;
@@ -530,7 +548,7 @@ floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buf
 	if (err)
 		return err;
 
-	err = format->read_track(floppy, head, track, buffer, buffer_len);
+	err = format->read_track(floppy, head, track, offset, buffer, buffer_len);
 	if (err)
 		return err;
 
@@ -539,12 +557,33 @@ floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buf
 
 
 
-floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len)
+floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len)
+{
+	return floppy_read_track_offset(floppy, head, track, 0, buffer, buffer_len);
+}
+
+
+
+floperr_t floppy_read_track_data(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len)
+{
+	floperr_t err;
+	UINT64 offset;
+
+	err = floppy_get_track_data_offset(floppy, head, track, &offset);
+	if (err)
+		return err;
+
+	return floppy_read_track_offset(floppy, head, track, offset, buffer, buffer_len);
+}
+
+
+
+static floperr_t floppy_write_track_offset(floppy_image *floppy, int head, int track, UINT64 offset, const void *buffer, size_t buffer_len)
 {
 	floperr_t err;
 
 	/* track writing supported? */
-	if (!floppy_format(floppy)->write_track)
+	if (!floppy_callbacks(floppy)->write_track)
 		return FLOPPY_ERROR_UNSUPPORTED;
 
 	/* read only? */
@@ -555,7 +594,7 @@ floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const vo
 	if (err)
 		return err;
 
-	err = floppy_format(floppy)->write_track(floppy, head, track, buffer, buffer_len);
+	err = floppy_callbacks(floppy)->write_track(floppy, head, track, offset, buffer, buffer_len);
 	if (err)
 		return err;
 
@@ -564,15 +603,36 @@ floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const vo
 
 
 
+floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len)
+{
+	return floppy_write_track_offset(floppy, head, track, 0, buffer, buffer_len);
+}
+
+
+
+floperr_t floppy_write_track_data(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len)
+{
+	floperr_t err;
+	UINT64 offset;
+
+	err = floppy_get_track_data_offset(floppy, head, track, &offset);
+	if (err)
+		return err;
+
+	return floppy_write_track_offset(floppy, head, track, offset, buffer, buffer_len);
+}
+
+
+
 floperr_t floppy_format_track(floppy_image *floppy, int head, int track, option_resolution *parameters)
 {
 	floperr_t err;
-	struct FloppyFormat *format;
+	struct FloppyCallbacks *format;
 	option_resolution *alloc_resolution = NULL;
 	optreserr_t oerr;
 
 	/* supported? */
-	format = floppy_format(floppy);
+	format = floppy_callbacks(floppy);
 	if (!format->format_track)
 	{
 		err = FLOPPY_ERROR_UNSUPPORTED;
@@ -612,30 +672,30 @@ done:
 
 int floppy_get_tracks_per_disk(floppy_image *floppy)
 {
-	return floppy_format(floppy)->get_tracks_per_disk(floppy);
+	return floppy_callbacks(floppy)->get_tracks_per_disk(floppy);
 }
 
 
 
 int floppy_get_heads_per_disk(floppy_image *floppy)
 {
-	return floppy_format(floppy)->get_heads_per_disk(floppy);
+	return floppy_callbacks(floppy)->get_heads_per_disk(floppy);
 }
 
 
 
 UINT32 floppy_get_track_size(floppy_image *floppy, int head, int track)
 {
-	return floppy_format(floppy)->get_track_size(floppy, head, track);
+	return floppy_callbacks(floppy)->get_track_size(floppy, head, track);
 }
 
 
 
 floperr_t floppy_get_sector_length(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
 {
-	const struct FloppyFormat *fmt;
+	const struct FloppyCallbacks *fmt;
 
-	fmt = floppy_format(floppy);
+	fmt = floppy_callbacks(floppy);
 	if (!fmt->get_sector_length)
 		return FLOPPY_ERROR_UNSUPPORTED;
 
@@ -646,9 +706,9 @@ floperr_t floppy_get_sector_length(floppy_image *floppy, int head, int track, in
 
 floperr_t floppy_get_indexed_sector_info(floppy_image *floppy, int head, int track, int sector_index, int *sector, UINT32 *sector_length)
 {
-	const struct FloppyFormat *fmt;
+	const struct FloppyCallbacks *fmt;
 
-	fmt = floppy_format(floppy);
+	fmt = floppy_callbacks(floppy);
 	if (!fmt->get_indexed_sector_info)
 		return FLOPPY_ERROR_UNSUPPORTED;
 
@@ -703,7 +763,7 @@ floperr_t floppy_load_track(floppy_image *floppy, int head, int track, int dirti
 		if (err)
 			goto error;
 
-		track_size = floppy_format(floppy)->get_track_size(floppy, head, track);
+		track_size = floppy_callbacks(floppy)->get_track_size(floppy, head, track);
 
 		new_loaded_track_data = realloc(floppy->loaded_track_data, track_size);
 		if (!new_loaded_track_data)
@@ -717,7 +777,7 @@ floperr_t floppy_load_track(floppy_image *floppy, int head, int track, int dirti
 		floppy->loaded_track_head = head;
 		floppy->loaded_track_index = track;
 
-		err = floppy_format(floppy)->read_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, floppy->loaded_track_data, floppy->loaded_track_size);
+		err = floppy_callbacks(floppy)->read_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, 0, floppy->loaded_track_data, floppy->loaded_track_size);
 		if (err)
 			goto error;
 
@@ -746,7 +806,7 @@ static floperr_t floppy_track_unload(floppy_image *floppy)
 
 	if (floppy->loaded_track_status & TRACK_DIRTY)
 	{
-		err = floppy_format(floppy)->write_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, floppy->loaded_track_data, floppy->loaded_track_size);
+		err = floppy_callbacks(floppy)->write_track(floppy, floppy->loaded_track_head, floppy->loaded_track_index, 0, floppy->loaded_track_data, floppy->loaded_track_size);
 		if (err)
 			return err;
 	}

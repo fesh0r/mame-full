@@ -47,12 +47,12 @@ floperr_t;
 
 typedef struct _floppy_image floppy_image;
 
-struct FloppyFormat
+struct FloppyCallbacks
 {
 	floperr_t (*read_sector)(floppy_image *floppy, int head, int track, int sector, void *buffer, size_t buflen);
 	floperr_t (*write_sector)(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen);
-	floperr_t (*read_track)(floppy_image *floppy, int head, int track, void *buffer, size_t buflen);
-	floperr_t (*write_track)(floppy_image *floppy, int head, int track, const void *buffer, size_t buflen);
+	floperr_t (*read_track)(floppy_image *floppy, int head, int track, UINT64 offset, void *buffer, size_t buflen);
+	floperr_t (*write_track)(floppy_image *floppy, int head, int track, UINT64 offset, const void *buffer, size_t buflen);
 	floperr_t (*format_track)(floppy_image *floppy, int head, int track, option_resolution *params);
 	int (*get_heads_per_disk)(floppy_image *floppy);
 	int (*get_tracks_per_disk)(floppy_image *floppy);
@@ -60,24 +60,25 @@ struct FloppyFormat
 	UINT32 (*get_track_size)(floppy_image *floppy, int head, int track);
 	floperr_t (*get_sector_length)(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length);
 	floperr_t (*get_indexed_sector_info)(floppy_image *floppy, int head, int track, int sector_index, int *sector, UINT32 *sector_length);
+	floperr_t (*get_track_data_offset)(floppy_image *floppy, int head, int track, UINT64 *offset);
 };
 
 
 
-struct FloppyOption
+struct FloppyFormat
 {
 	const char *name;
 	const char *extensions;
 	const char *description;
-	floperr_t (*identify)(floppy_image *floppy, const struct FloppyOption *format, int *vote);
-	floperr_t (*construct)(floppy_image *floppy, const struct FloppyOption *format, option_resolution *params);
+	floperr_t (*identify)(floppy_image *floppy, const struct FloppyFormat *format, int *vote);
+	floperr_t (*construct)(floppy_image *floppy, const struct FloppyFormat *format, option_resolution *params);
 	const char *param_guidelines;
 };
 
 
 
 #define FLOPPY_OPTIONS_START(name)												\
-	struct FloppyOption floppyoptions_##name[] =								\
+	struct FloppyFormat floppyoptions_##name[] =								\
 	{																			\
 
 #define FLOPPY_OPTIONS_END														\
@@ -85,7 +86,7 @@ struct FloppyOption
 	};
 
 #define FLOPPY_OPTIONS_EXTERN(name)												\
-	extern struct FloppyOption floppyoptions_##name[]							\
+	extern struct FloppyFormat floppyoptions_##name[]							\
 
 #define FLOPPY_OPTION(name, extensions_, description_, identify_, construct_, ranges_)\
 	{ #name, extensions_, description_, identify_, construct_, ranges_ },				\
@@ -106,8 +107,8 @@ struct FloppyOption
 #define INTERLEAVE(range)		"I" #range
 #define FIRST_SECTOR_ID(range)	"F" #range
 
-#define FLOPPY_IDENTIFY(name)	floperr_t name(floppy_image *floppy, const struct FloppyOption *format, int *vote)
-#define FLOPPY_CONSTRUCT(name)	floperr_t name(floppy_image *floppy, const struct FloppyOption *format, option_resolution *params)
+#define FLOPPY_IDENTIFY(name)	floperr_t name(floppy_image *floppy, const struct FloppyFormat *format, int *vote)
+#define FLOPPY_CONSTRUCT(name)	floperr_t name(floppy_image *floppy, const struct FloppyFormat *format, option_resolution *params)
 
 /***************************************************************************
 
@@ -118,15 +119,15 @@ struct FloppyOption
 OPTION_GUIDE_EXTERN(floppy_option_guide);
 
 /* opening, closing and creating of floppy images */
-floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *format, int flags, floppy_image **outfloppy);
-floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyOption *formats, int flags, floppy_image **outfloppy);
-floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyOption *format, option_resolution *parameters, floppy_image **outfloppy);
+floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *format, int flags, floppy_image **outfloppy);
+floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *formats, int flags, floppy_image **outfloppy);
+floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyFormat *format, option_resolution *parameters, floppy_image **outfloppy);
 void floppy_close(floppy_image *floppy);
 
 /* functions useful within format constructors */
 void *floppy_tag(floppy_image *floppy, const char *tagname);
 void *floppy_create_tag(floppy_image *floppy, const char *tagname, size_t tagsize);
-struct FloppyFormat *floppy_format(floppy_image *floppy);
+struct FloppyCallbacks *floppy_callbacks(floppy_image *floppy);
 UINT8 floppy_get_filler(floppy_image *floppy);
 void floppy_set_filler(floppy_image *floppy, UINT8 filler);
 
@@ -135,6 +136,8 @@ floperr_t floppy_read_sector(floppy_image *floppy, int head, int track, int sect
 floperr_t floppy_write_sector(floppy_image *floppy, int head, int track, int sector, int offset, const void *buffer, size_t buffer_len);
 floperr_t floppy_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len);
 floperr_t floppy_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len);
+floperr_t floppy_read_track_data(floppy_image *floppy, int head, int track, void *buffer, size_t buffer_len);
+floperr_t floppy_write_track_data(floppy_image *floppy, int head, int track, const void *buffer, size_t buffer_len);
 floperr_t floppy_format_track(floppy_image *floppy, int head, int track, option_resolution *params);
 int floppy_get_tracks_per_disk(floppy_image *floppy);
 int floppy_get_heads_per_disk(floppy_image *floppy);
@@ -158,7 +161,7 @@ UINT64 floppy_image_size(floppy_image *floppy);
 const char *floppy_error(floperr_t err);
 
 /* debugging calls */
-floperr_t floppy_test_format(const struct FloppyOption *format, int (*printerror)(const char *format, ...));
+floperr_t floppy_test_format(const struct FloppyFormat *format, int (*printerror)(const char *format, ...));
 
 
 

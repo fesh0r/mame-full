@@ -465,11 +465,11 @@ struct dmk_tag
 	UINT32 track_size;
 };
 
-#define DMK_TAG			"dmktag"
-#define DMK_HEADER_LEN	16
-#define DMK_TOC_LEN		64
-#define DMK_IDAM_LENGTH	7
-#define DMK_DATA_GAP	80
+#define DMK_TAG					"dmktag"
+#define DMK_HEADER_LEN			16
+#define DMK_TOC_LEN				64
+#define DMK_IDAM_LENGTH			7
+#define DMK_DATA_GAP			80
 #define DMK_LEAD_IN				32
 #define DMK_EXTRA_TRACK_LENGTH	156
 
@@ -483,9 +483,9 @@ struct dmk_tag
 
 
 static struct dmk_tag *get_dmk_tag(floppy_image *floppy)
-	{
+{
 	return floppy_tag(floppy, DMK_TAG);
-	}
+}
 
 
 static floperr_t coco_dmk_get_offset(floppy_image *floppy, int head, int track, UINT64 *offset)
@@ -514,31 +514,39 @@ static UINT32 coco_dmk_min_track_size(int sectors, int sector_length)
 
 	
 	
-static floperr_t coco_dmk_read_track(floppy_image *floppy, int head, int track, void *buffer, size_t buflen)
+static floperr_t coco_dmk_read_track(floppy_image *floppy, int head, int track, UINT64 offset, void *buffer, size_t buflen)
 {
 	floperr_t err;
-	UINT64 offset;
+	UINT64 track_offset;
 	
-	err = coco_dmk_get_offset(floppy, head, track, &offset);
+	err = coco_dmk_get_offset(floppy, head, track, &track_offset);
 	if (err)
 		return err;
 
-	floppy_image_read(floppy, buffer, offset, buflen);
+	floppy_image_read(floppy, buffer, offset + track_offset, buflen);
 	return FLOPPY_ERROR_SUCCESS;
 }
 	
 	
 
-static floperr_t coco_dmk_write_track(floppy_image *floppy, int head, int track, const void *buffer, size_t buflen)
+static floperr_t coco_dmk_write_track(floppy_image *floppy, int head, int track, UINT64 offset, const void *buffer, size_t buflen)
 {
 	floperr_t err;
-	UINT64 offset;
+	UINT64 track_offset;
 
-	err = coco_dmk_get_offset(floppy, head, track, &offset);
+	err = coco_dmk_get_offset(floppy, head, track, &track_offset);
 	if (err)
 		return err;
 	
-	floppy_image_write(floppy, buffer, offset, buflen);
+	floppy_image_write(floppy, buffer, offset + track_offset, buflen);
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+
+
+static floperr_t coco_dmk_get_track_data_offset(floppy_image *floppy, int head, int track, UINT64 *offset)
+{
+	*offset = DMK_TOC_LEN + 1;
 	return FLOPPY_ERROR_SUCCESS;
 }
 
@@ -893,7 +901,7 @@ static void coco_dmk_interpret_header(floppy_image *floppy, int *heads, int *tra
 	
 FLOPPY_CONSTRUCT(coco_dmk_construct)
 {
-	struct FloppyFormat *format_;
+	struct FloppyCallbacks *callbacks;
 	struct dmk_tag *tag;
 	UINT8 header[DMK_HEADER_LEN];
 	int heads, tracks, track_size, sectors, sector_length;
@@ -927,17 +935,18 @@ FLOPPY_CONSTRUCT(coco_dmk_construct)
 	tag->track_size = track_size;
 	tag->tracks = tracks;
     
-	format_ = floppy_format(floppy);
-	format_->read_track = coco_dmk_read_track;
-	format_->write_track = coco_dmk_write_track;
-	format_->format_track = coco_dmk_format_track;
-	format_->get_heads_per_disk = coco_dmk_get_heads_per_disk;
-	format_->get_tracks_per_disk = coco_dmk_get_tracks_per_disk;
-	format_->get_track_size = coco_dmk_get_track_size;
-	format_->get_sector_length = coco_dmk_get_sector_length;
-	format_->get_indexed_sector_info = coco_dmk_get_indexed_sector_info;
-	format_->read_sector = coco_dmk_read_sector;
-	format_->write_sector = coco_dmk_write_sector;
+	callbacks = floppy_callbacks(floppy);
+	callbacks->read_track = coco_dmk_read_track;
+	callbacks->write_track = coco_dmk_write_track;
+	callbacks->get_track_data_offset = coco_dmk_get_track_data_offset;
+	callbacks->format_track = coco_dmk_format_track;
+	callbacks->get_heads_per_disk = coco_dmk_get_heads_per_disk;
+	callbacks->get_tracks_per_disk = coco_dmk_get_tracks_per_disk;
+	callbacks->get_track_size = coco_dmk_get_track_size;
+	callbacks->get_sector_length = coco_dmk_get_sector_length;
+	callbacks->get_indexed_sector_info = coco_dmk_get_indexed_sector_info;
+	callbacks->read_sector = coco_dmk_read_sector;
+	callbacks->write_sector = coco_dmk_write_sector;
 
 	return FLOPPY_ERROR_SUCCESS;
 }

@@ -105,6 +105,8 @@ WRITE_HANDLER ( apple2_slot6_w );
 
 /* vidhrdw/apple2.c */
 VIDEO_START( apple2 );
+VIDEO_START( apple2p );
+VIDEO_START( apple2e );
 VIDEO_UPDATE( apple2 );
 void apple2_video_touch(offs_t offset);
 
