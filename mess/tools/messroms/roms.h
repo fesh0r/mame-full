@@ -491,7 +491,7 @@ static struct {
 	{ 0xc9bb21bc , 0x2000, "??? C64 kernel Dolphin mager" },
 	{ 0xffaeb9bc , 0x2000, "??? C64 kernel Dolphin dos20" },
 	{ 0x8438e77b , 0x2000, "??? C64 kernel speeddos plus" },
-	{ 0x10aee0ae , 0x2000, "??? C64 kernel speeddos plus +" },
+	{ 0x10aee0ae , 0x2000, "??? C64 kernel speeddos plus + 2.0" },
 	{ 0xe801dadc , 0x2000, "??? C64 kernel 80 column" },
 	{ 0xe6c763a2 , 0x2000, "??? C64 kernel cockroach turbo-rom v1" },
 	{ 0x41dad9fe , 0x2000, "??? C64 kernel mikrotronic system professional dos" },
