@@ -40,6 +40,20 @@ const char *crcfile = crcfilename;
 static char pcrcfilename[BUF_SIZE] = "";
 const char *pcrcfile = pcrcfilename;
 static const char *mess_opts;
+
+static int specify_ram(struct rc_option *option, const char *arg, int priority)
+{
+	UINT32 specified_ram;
+
+	specified_ram = ram_parse_string(arg);
+	if (specified_ram == 0)
+	{
+		fprintf(stderr, "Cannot recognize the RAM option %s; aborting\n", arg);
+		return -1;
+	}
+	options.ram = specified_ram;
+	return 0;
+}
 #endif
 
 static struct rc_struct *rc;
@@ -86,6 +100,7 @@ static struct rc_option opts[] = {
 	{ "parallel",  "parl", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to parallel device" },
 	{ "snapshot",  "dump", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to snapshot device" },
 	{ "quickload", "quik", rc_string, &mess_opts, NULL, 0, 0, add_device, "Attach software to quickload device" },
+	{ "ramsize", "ram", rc_string, &mess_opts, NULL, 0, 0, specify_ram, "Specifies size of RAM (if supported by driver)" },
 #else
    { "Mame Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
