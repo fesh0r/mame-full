@@ -10,6 +10,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
+- [ATOM] Added preliminary floppy disc emulation. [Kev Thacker]
+
 - [BBC B] Updated to use updated 8271 FDC code. Disk images can be used and games
   can be loaded and played. [Kev Thacker]
 
