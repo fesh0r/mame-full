@@ -231,7 +231,7 @@ static void cmd_read_binary_forward(void)
 	int char_count;
 	int read_offset;
 
-	int rec_count;
+	int rec_count = 0;
 	int chunk_len;
 	int bytes_to_read;
 	int bytes_read;
@@ -1149,72 +1149,72 @@ static void execute_command(void)
 
 	switch ((tpc.w[6] & w6_command) >> 8)
 	{
-	case 0b0000:
-	case 0b1100:
-	case 0b1110:
+	case 0x00: //0b0000:
+	case 0x0C: //0b1100:
+	case 0x0E: //0b1110:
 		/* NOP */
 		logerror("NOP\n");
 		tpc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
-	case 0b0001:
+	case 0x01: //0b0001:
 		/* buffer sync: means nothing under emulation */
 		logerror("buffer sync\n");
 		tpc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
-	case 0b0010:
+	case 0x02: //0b0010:
 		/* write EOF - not emulated */
 		logerror("write EOF\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0b0011:
+	case 0x03: //0b0011:
 		/* record skip reverse - not fully tested */
 		cmd_record_skip_reverse();
 		break;
-	case 0b0100:
+	case 0x04: //0b0100:
 		/* read binary forward */
 		logerror("read binary forward\n");
 		cmd_read_binary_forward();
 		break;
-	case 0b0101:
+	case 0x05: //0b0101:
 		/* record skip forward - not tested */
 		logerror("record skip forward\n");
 		cmd_record_skip_forward();
 		break;
-	case 0b0110:
+	case 0x06: //0b0110:
 		/* write binary forward - not emulated */
 		logerror("write binary forward\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0b0111:
+	case 0x07: //0b0111:
 		/* erase - not emulated */
 		logerror("erase\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0b1000:
-	case 0b1001:
+	case 0x08: //0b1000:
+	case 0x09: //0b1001:
 		/* read transport status */
 		logerror("read transport status\n");
 		read_transport_status();
 		break;
-	case 0b1010:
+	case 0x0A: //0b1010:
 		/* rewind - not tested */
 		logerror("rewind\n");
 		cmd_rewind();
 		break;
-	case 0b1011:
+	case 0x0B: //0b1011:
 		/* rewind and offline - not tested */
 		logerror("rewind and offline\n");
 		cmd_rewind_and_offline();
 		break;
-	case 0b1111:
+	case 0x0F: //0b1111:
 		/* extended control and status - not emulated */
 		logerror("extended control and status\n");
 		/* ... */
