@@ -7,7 +7,7 @@
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
-int internal_m6847_vh_start(int maxvram);
+int internal_m6847_vh_start(int version, int maxvram);
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
@@ -28,6 +28,7 @@ extern void coco3_ram_b8_w (offs_t offset, data8_t data);
 extern void coco3_ram_b9_w (offs_t offset, data8_t data);
 extern void coco3_vh_sethires(int hires);
 extern int dragon_vh_start(void);
+extern int coco2b_vh_start(void);
 extern int coco3_vh_start(void);
 extern void coco3_vh_stop(void);
 extern void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);

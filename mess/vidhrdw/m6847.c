@@ -15,6 +15,7 @@
 struct m6847_state the_state;
 static m6847_vblank_proc vblankproc;
 static int artifact_dipswitch;
+static int chip_version;
 
 #define MAX_VRAM 6144
 
@@ -244,7 +245,7 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 	memcpy(sys_palette,palette,sizeof(palette));
 }
 
-int internal_m6847_vh_start(int maxvram)
+int internal_m6847_vh_start(int version, int maxvram)
 {
 	the_state.vram_mask = 0;
 	the_state.video_offset = 0;
@@ -252,6 +253,7 @@ int internal_m6847_vh_start(int maxvram)
 	the_state.video_vmode = 0;
 	vblankproc = NULL;
 	artifact_dipswitch = -1;
+	chip_version = version;
 
 	calc_videoram_size();
 
@@ -262,9 +264,9 @@ int internal_m6847_vh_start(int maxvram)
 	return 0;
 }
 
-int m6847_vh_start(void)
+int m6847_vh_start(int version)
 {
-	return internal_m6847_vh_start(MAX_VRAM);
+	return internal_m6847_vh_start(version, MAX_VRAM);
 }
 
 void m6847_set_vram(void *ram, int rammask)
@@ -517,7 +519,7 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 
 	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
 		full_refresh, m6847_metapalette, videoram,
-		&the_state, FALSE, (full_refresh ? m6847_bordercolor() : -1),
+		&the_state, (chip_version == M6847_VERSION_M6847T1), (full_refresh ? m6847_bordercolor() : -1),
 		1, artifacts[artifact_value & 3]);
 
 	raster_bits(bitmap, &rs, &rvm, &rf, NULL);

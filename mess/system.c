@@ -495,13 +495,13 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( coco )		/* Color Computer								  */
 /*	DRIVER( coco2 )*/ 	/* Color Computer 2 							  */
+	DRIVER( coco2b ) 	/* Color Computer 2B (uses M6847T1 video chip)    */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
 	DRIVER( dragon32 )	/* Dragon32 									  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
 	DRIVER( mc10 )		/* MC-10										  */
 
-	/* DRAGON DATA LTD */
 	/* dragon 32 coco compatible */
 /*	DRIVER( dragon64 */	/* Dragon 64									  */
 

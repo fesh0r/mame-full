@@ -544,6 +544,53 @@ static struct MachineDriver machine_driver_coco =
 	}
 };
 
+static struct MachineDriver machine_driver_coco2b =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			894886,	/* 0,894886 Mhz */
+			d64_readmem,d64_writemem,
+			0, 0,
+			dragon_interrupt, 1,
+			0, 0,
+		},
+	},
+	60, 0,		 /* frames per second, vblank duration */
+	0,
+	coco_init_machine,
+	dragon_stop_machine,
+
+	/* video hardware */
+	320,					/* screen width */
+	240,					/* screen height (pixels doubled) */
+	{ 0, 319, 0, 239 },		/* visible_area */
+	0,						/* graphics decode info */
+	M6847_TOTAL_COLORS,
+	0,
+	m6847_vh_init_palette,						/* initialise palette */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
+	coco2b_vh_start,
+	m6847_vh_stop,
+	m6847_vh_update,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_DAC,
+			&d_dac_interface
+		},
+        {
+			SOUND_WAVE,
+            &d_wave_interface
+        }
+	}
+};
+
 static struct MachineDriver machine_driver_coco3 =
 {
 	/* basic machine hardware */
@@ -669,6 +716,7 @@ ROM_START(cp400)
 ROM_END
 
 #define rom_coco3h	rom_coco3
+#define rom_coco2b	rom_coco
 
 static const struct IODevice io_coco[] = {
 	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
@@ -703,9 +751,11 @@ static const struct IODevice io_coco3[] = {
 };
 
 #define io_coco3h io_coco3
+#define io_coco2b io_coco
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
 COMP(  1982, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer" )
+COMP(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B (M6847T1 video chip)" )
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  "Prologica",          "Prologica CP400" )

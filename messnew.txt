@@ -8,7 +8,7 @@ Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- 
+- CoCo 2B (CoCo with a M6847T1 VDG chip) [Nate Woods]
 
 System Driver Changes:
 ----------------------
@@ -17,6 +17,8 @@ System Driver Changes:
 using the NC's built in terminal program. Some characters are dropped, could be synchronisation
 problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
 can be printed now. [Kev Thacker]
+- [COCO3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
+some timing is still probably off. [Nate Woods]
 
 Other Changes:
 --------------

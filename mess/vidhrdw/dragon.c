@@ -76,9 +76,9 @@ static void dragon_vblank(void)
 	pia_0_cb1_w (0, 0);
 }
 
-int dragon_vh_start(void)
+static int internal_dragon_vh_start(int m6847_version)
 {
-	if (m6847_vh_start())
+	if (m6847_vh_start(m6847_version))
 		return 1;
 
 	m6847_set_vram(memory_region(REGION_CPU1), 0xffff);
@@ -86,6 +86,16 @@ int dragon_vh_start(void)
 	m6847_set_artifact_dipswitch(12);
 	sam_videomode = 0;
 	return 0;
+}
+
+int dragon_vh_start(void)
+{
+	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL);
+}
+
+int coco2b_vh_start(void)
+{
+	return internal_dragon_vh_start(M6847_VERSION_M6847T1);
 }
 
 WRITE_HANDLER(coco_ram_w)
@@ -151,7 +161,7 @@ int coco3_vh_start(void)
 {
     int i;
 
-	if (internal_m6847_vh_start(MAX_HIRES_VRAM)) {
+	if (internal_m6847_vh_start(M6847_VERSION_M6847T1, MAX_HIRES_VRAM)) {
 		paletteram = NULL;
 		return 1;
 	}

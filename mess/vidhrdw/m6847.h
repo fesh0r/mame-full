@@ -10,8 +10,13 @@
 
 typedef void (*m6847_vblank_proc)(void);
 
+enum {
+	M6847_VERSION_ORIGINAL,
+	M6847_VERSION_M6847T1
+};
+
 void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int m6847_vh_start(void);
+int m6847_vh_start(int version);
 void m6847_vh_stop(void);
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh);
 #define m6847_vh_stop			generic_vh_stop
