@@ -350,6 +350,7 @@ static ppi8255_interface sord_ppi8255_interface =
 
 
 void *video_timer = NULL;
+//void *cassette_timer = NULL;
 
 static char cart_data[0x06fff-0x02000];
 
@@ -467,11 +468,19 @@ MEMORY_END
 
 static READ_HANDLER(sord_ctc_r)
 {
-	return z80ctc_0_r(offset & 0x03);
+	unsigned char data;
+
+	data = z80ctc_0_r(offset & 0x03);
+
+	logerror("sord ctc r: %04x %02x\n",(offset & 0x03), data);
+
+	return data;
 }
 
 static WRITE_HANDLER(sord_ctc_w)
 {
+	logerror("sord ctc w: %04x %02x\n",(offset & 0x03), data);
+
 	z80ctc_0_w(offset & 0x03, data);
 }
 
@@ -496,20 +505,6 @@ static WRITE_HANDLER(sord_video_w)
 	TMS9928A_vram_w(offset,data);
 }
 
-/* 3,2 written */
-/*
-+----------+--------------------+-------------------------------+
-|   bit    | vstup 		| vystup			|
-| 76543210 +--------------------+-------------------------------+
-| 00000001 | vstup OLD z MGF	| SAVE na MGF a DSTB na PRT	|
-| 00000010 | BUSY od PRT	| STS na PRT a na civku rele	|
-| 00000100 | COM pro PRT	| ---				|
-| 10000000 | klavesa <RESET>	| ---				|
-+----------+--------------------+-------------------------------+
-*/
-
-
-/* when bit 1 of $50 is 1, can write to $40 */
 
 static READ_HANDLER(sord_sys_r)
 {
@@ -517,6 +512,10 @@ static READ_HANDLER(sord_sys_r)
 	int printer_handshake;
 
 	data = 0;
+
+	/* cassette read */
+	if (device_input(IO_CASSETTE,0) > 255)
+		data |=(1<<0);
 
 	printer_handshake = centronics_read_handshake(0);
 
@@ -526,14 +525,9 @@ static READ_HANDLER(sord_sys_r)
 		data|=(1<<1);
 	}
 
-	/* cassette read */
-	if (device_input(IO_CASSETTE,0) > 255)
-		data |=(1<<0);
+	/* bit 7 must be 0 for saving and loading to work */
 
-	/* reset from keyboard */
-	data |= ((readinputport(16) & 0x01)<<7);
-
-	//	logerror("sys read: %02x\n",data);
+	logerror("sys read: %02x\n",data);
 
 	return data;
 }
@@ -543,7 +537,7 @@ static READ_HANDLER(sord_sys_r)
 /* bit 1 is cassette remote */
 
 /* read */
-/* bit 0 is cassette data */
+/* bit 0 is cassette read data */
 /* bit 1 is printer busy */
 
 static WRITE_HANDLER(sord_sys_w)
@@ -566,7 +560,7 @@ static WRITE_HANDLER(sord_sys_w)
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 	centronics_write_handshake(0, handshake, CENTRONICS_STROBE);
 
-//	logerror("sys write: %02x\n",data);
+	logerror("sys write: %02x\n",data);
 }
 
 static WRITE_HANDLER(sord_printer_w)
@@ -580,8 +574,16 @@ PORT_READ_START( readport_sord_m5 )
 	{ 0x010, 0x01f, sord_video_r},
 	{ 0x030, 0x03f, sord_keyboard_r},
 	{ 0x050, 0x050, sord_sys_r},
+PORT_END
+
+PORT_READ_START( readport_srdm5fd5 )
+	{ 0x000, 0x00f, sord_ctc_r},
+	{ 0x010, 0x01f, sord_video_r},
+	{ 0x030, 0x03f, sord_keyboard_r},
+	{ 0x050, 0x050, sord_sys_r},
 	{ 0x070, 0x073, ppi8255_0_r},
 PORT_END
+
 
 PORT_WRITE_START( writeport_sord_m5 )
 	{ 0x000, 0x00f, sord_ctc_w},
@@ -589,9 +591,16 @@ PORT_WRITE_START( writeport_sord_m5 )
 	{ 0x020, 0x02f, SN76496_0_w},
 	{ 0x040, 0x040, sord_printer_w}, 
 	{ 0x050, 0x050, sord_sys_w},
-	{ 0x070, 0x073, ppi8255_0_w},
 PORT_END
 
+PORT_WRITE_START( writeport_srdm5fd5 )
+	{ 0x000, 0x00f, sord_ctc_w},
+	{ 0x010, 0x01f, sord_video_w},
+	{ 0x020, 0x02f, SN76496_0_w},
+	{ 0x040, 0x040, sord_printer_w}, 
+	{ 0x050, 0x050, sord_sys_w},
+	{ 0x070, 0x073, ppi8255_0_w},
+PORT_END
 
 static int sord_m5_interrupt(void)
 {
@@ -604,6 +613,19 @@ static void video_timer_callback(int dummy)
 	z80ctc_0_trg3_w(0,1);
 	z80ctc_0_trg3_w(0,0);
 }
+
+
+//static void cassette_timer_callback(int dummy)
+//{
+//	int data;
+//
+//	data = 0;
+//	/* cassette read */
+//	if (device_input(IO_CASSETTE,0) > 255)
+//		data |=(1<<0);
+//
+//	z80ctc_0_trg2_w(0,data);
+//}
 
 
 static CENTRONICS_CONFIG sordm5_cent_config[1]={
@@ -622,6 +644,8 @@ void sord_m5_init_machine(void)
 	ppi8255_set_mode2_interface(&sord_ppi8255_mode2_interface);
 
 	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
+
+//	cassette_timer = timer_pulse(TIME_IN_HZ(11025), 0, cassette_timer_callback);
 
 	TMS9928A_reset ();
 	z80ctc_reset(0);
@@ -698,6 +722,12 @@ void sord_m5_shutdown_machine(void)
 		timer_remove(video_timer);
 		video_timer = NULL;
 	}
+
+//	if (cassette_timer)
+//	{
+//		timer_remove(cassette_timer);
+//		cassette_timer = NULL;
+//	}
 
 	centronics_exit(0);
 
@@ -890,8 +920,8 @@ static struct MachineDriver machine_driver_sord_m5_fd5 =
 			3800000,
 			readmem_sord_m5,		   /* MemoryReadAddress */
 			writemem_sord_m5,		   /* MemoryWriteAddress */
-			readport_sord_m5,		   /* IOReadPort */
-			writeport_sord_m5,		   /* IOWritePort */
+			readport_srdm5fd5,		   /* IOReadPort */
+			writeport_srdm5fd5,		   /* IOWritePort */
             sord_m5_interrupt, 1,
 			0, 0,	/* every scanline */
 			sord_m5_daisy_chain
