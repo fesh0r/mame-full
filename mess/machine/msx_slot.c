@@ -20,6 +20,39 @@
 
 extern MSX msx1;
 
+static void msx_cpu_setbank (int page, UINT8 *mem)
+{
+	switch (page) {
+	case 1:
+	case 2:
+	case 3:
+		cpu_setbank (page, mem);
+		break;
+	case 4:
+		cpu_setbank (4, mem);
+		cpu_setbank (5, mem + 0x1ff8);
+		install_mem_read_handler (0, 0x7ff8, 0x7fff, MRA8_BANK5);
+		break;
+	case 5:
+		cpu_setbank (6, mem);
+		cpu_setbank (7, mem + 0x1800);
+		install_mem_read_handler (0, 0x9800, 0x9fff, MRA8_BANK7);
+		break;
+	case 6:
+		cpu_setbank (8, mem);
+		cpu_setbank (9, mem + 0x1800);
+		install_mem_read_handler (0, 0xb800, 0xbfff, MRA8_BANK9);
+		break;
+	case 7:
+		cpu_setbank (10, mem);
+		break;
+	case 8:
+		cpu_setbank (11, mem);
+		msx1.top_page = mem;
+		break;
+	}
+}
+
 MSX_SLOT_INIT(empty)
 {
 	state->type = SLOT_EMPTY;
@@ -34,8 +67,8 @@ MSX_SLOT_RESET(empty)
 
 MSX_SLOT_MAP(empty)
 {
-	cpu_setbank (page * 2 + 1, msx1.empty);
-	cpu_setbank (page * 2 + 2, msx1.empty);
+	msx_cpu_setbank (page * 2 + 1, msx1.empty);
+	msx_cpu_setbank (page * 2 + 2, msx1.empty);
 }
 
 MSX_SLOT_INIT(rom)
@@ -57,8 +90,8 @@ MSX_SLOT_MAP(rom)
 {
 	UINT8 *mem = state->mem + (page - state->start_page) * 0x4000;
 	
-	cpu_setbank (page * 2 + 1, mem);
-	cpu_setbank (page * 2 + 2, mem + 0x2000);
+	msx_cpu_setbank (page * 2 + 1, mem);
+	msx_cpu_setbank (page * 2 + 2, mem + 0x2000);
 }
 
 MSX_SLOT_INIT(ram)
@@ -81,8 +114,8 @@ MSX_SLOT_MAP(ram)
 	UINT8 *mem = state->mem + (page - state->start_page) * 0x4000;
 
 	msx1.ram_pages[page] = mem;
-	cpu_setbank (page * 2 + 1, mem);
-	cpu_setbank (page * 2 + 2, mem + 0x2000);
+	msx_cpu_setbank (page * 2 + 1, mem);
+	msx_cpu_setbank (page * 2 + 2, mem + 0x2000);
 }
 
 MSX_SLOT_RESET(ram)
@@ -92,7 +125,10 @@ MSX_SLOT_RESET(ram)
 MSX_SLOT_INIT(rammm)
 {
 	int i, mask, nsize;
-
+#ifdef MONMSX
+	FILE *f;
+#endif
+	
 	nsize = 0x10000; /* 64 kb */
 	mask = 3;
 	for (i=0; i<6; i++) {
@@ -113,6 +149,15 @@ MSX_SLOT_INIT(rammm)
 		return 1;
 	}
 	memset (state->mem, 0, size);
+
+#ifdef MONMSX
+	f = fopen ("/home/sean/msx/hack/monmsx.bin", "r");
+	if (f) {
+		fseek (f, 6L, SEEK_SET);
+		fread (state->mem, 1, 6151 - 6, f);
+		fclose (f);
+	}
+#endif
 
 	state->type = SLOT_RAM_MM;
 	state->start_page = page;
@@ -137,8 +182,8 @@ MSX_SLOT_MAP(rammm)
 			0x4000 * (msx1.ram_mapper[page] & state->bank_mask);
 	
 	msx1.ram_pages[page] = mem;
-	cpu_setbank (page * 2 + 1, mem);
-	cpu_setbank (page * 2 + 2, mem + 0x2000);
+	msx_cpu_setbank (page * 2 + 1, mem);
+	msx_cpu_setbank (page * 2 + 2, mem + 0x2000);
 }
 
 MSX_SLOT_INIT(msxdos2)
@@ -162,11 +207,11 @@ MSX_SLOT_RESET(msxdos2)
 MSX_SLOT_MAP(msxdos2)
 {
 	if (page != 1) {
-		cpu_setbank (page * 2 + 1, msx1.empty);
-		cpu_setbank (page * 2 + 2, msx1.empty);
+		msx_cpu_setbank (page * 2 + 1, msx1.empty);
+		msx_cpu_setbank (page * 2 + 2, msx1.empty);
 	} else {
-		cpu_setbank (3, state->mem + state->banks[0] * 0x4000);
-		cpu_setbank (4, state->mem + state->banks[0] * 0x4000 + 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x4000);
+		msx_cpu_setbank (4, state->mem + state->banks[0] * 0x4000 + 0x2000);
 	}
 }
 
@@ -211,20 +256,20 @@ MSX_SLOT_MAP(konami)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, state->mem);
-		cpu_setbank (2, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (1, state->mem);
+		msx_cpu_setbank (2, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (8, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (7, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (8, state->mem + state->banks[3] * 0x2000);
 	}
 }
 
@@ -287,10 +332,7 @@ MSX_SLOT_RESET(konami_scc)
 
 READ_HANDLER (konami_scc_bank5)
 {
-	if (offset < 0x1800) {
-		return msx1.state[2]->mem[msx1.state[2]->banks[2] * 0x2000 + offset];
-	}
-	else if (offset & 0x80) {
+	if (offset & 0x80) {
 #if 0
 		if ((offset & 0xff) >= 0xe0) {
 			/* write 0xff to deformation register */
@@ -307,26 +349,22 @@ MSX_SLOT_MAP(konami_scc)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (2, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (1, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (2, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
-		install_mem_read_handler (0, 0x8000, 0x9fff, 
-				state->cart.scc.active ? konami_scc_bank5 : MRA8_BANK5);
-		/*
-		memory_set_bankhandler_r (5, 0, 
-			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
-		*/
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		install_mem_read_handler (0, 0x9800, 0x9fff, 
+				state->cart.scc.active ? konami_scc_bank5 : MRA8_BANK7);
 		break;
 	case 3:
-		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (8, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (8, state->mem + state->banks[1] * 0x2000);
 	}
 }
 
@@ -420,20 +458,20 @@ MSX_SLOT_MAP(ascii8)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -489,22 +527,22 @@ MSX_SLOT_MAP(ascii16)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
 		mem = state->mem + state->banks[0] * 0x4000;
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		msx_cpu_setbank (3, mem);
+		msx_cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
 		mem = state->mem + state->banks[1] * 0x4000;
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -582,20 +620,20 @@ MSX_SLOT_MAP(ascii8_sram)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, ascii8_sram_bank_select (state, 0));
-		cpu_setbank (4, ascii8_sram_bank_select (state, 1));
+		msx_cpu_setbank (3, ascii8_sram_bank_select (state, 0));
+		msx_cpu_setbank (4, ascii8_sram_bank_select (state, 1));
 		break;
 	case 2:
-		cpu_setbank (5, ascii8_sram_bank_select (state, 2));
-		cpu_setbank (6, ascii8_sram_bank_select (state, 3));
+		msx_cpu_setbank (5, ascii8_sram_bank_select (state, 2));
+		msx_cpu_setbank (6, ascii8_sram_bank_select (state, 3));
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -737,22 +775,22 @@ MSX_SLOT_MAP(ascii16_sram)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
 		mem = ascii16_sram_bank_select (state, 0);
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		msx_cpu_setbank (3, mem);
+		msx_cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
 		mem = ascii16_sram_bank_select (state, 1);
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -870,22 +908,22 @@ MSX_SLOT_MAP(rtype)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
 		mem = state->mem + 15 * 0x4000;
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		msx_cpu_setbank (3, mem);
+		msx_cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
 		mem = state->mem + state->banks[0] * 0x4000;
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -949,30 +987,30 @@ MSX_SLOT_MAP(gmaster2)
 	switch (page) {
 	case 0:
 	case 1:
-		cpu_setbank (1 + page * 2, state->mem); /* bank 0 is hardwired */
+		msx_cpu_setbank (1 + page * 2, state->mem); /* bank 0 is hardwired */
 		if (state->banks[1] > 15) {
-			cpu_setbank (2 + page * 2, state->cart.sram.mem + 
+			msx_cpu_setbank (2 + page * 2, state->cart.sram.mem + 
 					(state->banks[1] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (2 + page * 2, state->mem + state->banks[1] * 0x2000);
+			msx_cpu_setbank (2 + page * 2, state->mem + state->banks[1] * 0x2000);
 		}
 		break;
 	case 2:
 	case 3:
 		if (state->banks[2] > 15) {
-			cpu_setbank (5 + page * 2, state->cart.sram.mem +
+			msx_cpu_setbank (5 + page * 2, state->cart.sram.mem +
 					(state->banks[2] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (5 + page * 2, state->mem + state->banks[2] * 0x2000);
+			msx_cpu_setbank (5 + page * 2, state->mem + state->banks[2] * 0x2000);
 		}
 		if (state->banks[3] > 15) {
-			cpu_setbank (6 + page * 2, state->cart.sram.mem +
+			msx_cpu_setbank (6 + page * 2, state->cart.sram.mem +
 					(state->banks[3] - 16) * 0x2000);
 		}
 		else {
-			cpu_setbank (6 + page * 2, state->mem + state->banks[3] * 0x2000);
+			msx_cpu_setbank (6 + page * 2, state->mem + state->banks[3] * 0x2000);
 		}
 		break;
 	}
@@ -1102,33 +1140,32 @@ MSX_SLOT_RESET(diskrom)
 static READ_HANDLER (msx_diskrom_page1_r)
 {
 	switch (offset) {
-	case 0x1ff8: return wd179x_status_r (0);
-	case 0x1ff9: return wd179x_track_r (0);
-	case 0x1ffa: return wd179x_sector_r (0);
-	case 0x1ffb: return wd179x_data_r (0);
-	case 0x1fff: 
-		return msx1.dsk_stat;
+	case 0: return wd179x_status_r (0);
+	case 1: return wd179x_track_r (0);
+	case 2: return wd179x_sector_r (0);
+	case 3: return wd179x_data_r (0);
+	case 7: return msx1.dsk_stat;
 	default: 
-		return msx1.state[1]->mem[offset + 0x2000];
+		return msx1.state[1]->mem[offset + 0x3ff8];
 	}
 }
 																				
 static READ_HANDLER (msx_diskrom_page2_r)
 {
-	if (offset >= 0x1ff8) {
+	if (offset >= 0x7f8) {
 		switch (offset) {
-		case 0x1ff8: 
+		case 0x7f8: 
 			return wd179x_status_r (0);
-		case 0x1ff9: 
+		case 0x7f9: 
 			return wd179x_track_r (0);
-		case 0x1ffa: 
+		case 0x7fa: 
 			return wd179x_sector_r (0);
-		case 0x1ffb: 
+		case 0x7fb: 
 			return wd179x_data_r (0);
-		case 0x1fff: 
+		case 0x7ff: 
 			return msx1.dsk_stat;
 		default: 
-			return msx1.state[2]->mem[offset + 0x2000];
+			return msx1.state[2]->mem[offset + 0x3800];
 		}
 	}
 	else {
@@ -1140,24 +1177,22 @@ MSX_SLOT_MAP(diskrom)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem);
-		cpu_setbank (4, state->mem + 0x2000);
-		install_mem_read_handler (0, 0x6000, 0x7fff, msx_diskrom_page1_r);
-		/* memory_set_bankhandler_r (4, 0, msx_diskrom_page1_r); */
+		msx_cpu_setbank (3, state->mem);
+		msx_cpu_setbank (4, state->mem + 0x2000);
+		install_mem_read_handler (0, 0x7ff8, 0x7fff, msx_diskrom_page1_r);
 		break;
 	case 2:
-		cpu_setbank (5, msx1.empty);
-		cpu_setbank (6, msx1.empty);
-		install_mem_read_handler (0, 0xa000, 0xbfff, msx_diskrom_page2_r);
-		/* memory_set_bankhandler_r (6, 0, msx_diskrom_page2_r); */
+		msx_cpu_setbank (5, msx1.empty);
+		msx_cpu_setbank (6, msx1.empty);
+		install_mem_read_handler (0, 0xb800, 0xbfff, msx_diskrom_page2_r);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1214,20 +1249,20 @@ MSX_SLOT_MAP(synthesizer)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem);
-		cpu_setbank (4, state->mem + 0x2000);
+		msx_cpu_setbank (3, state->mem);
+		msx_cpu_setbank (4, state->mem + 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + 0x4000);
-		cpu_setbank (6, state->mem + 0x6000);
+		msx_cpu_setbank (5, state->mem + 0x4000);
+		msx_cpu_setbank (6, state->mem + 0x6000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1265,20 +1300,21 @@ MSX_SLOT_MAP(majutsushi)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (2, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (8, state->mem + state->banks[3] * 0x2000);
+		break;
 	}
 }
 
@@ -1290,14 +1326,16 @@ MSX_SLOT_WRITE(majutsushi)
 	else if (addr >= 0x6000 && addr < 0x8000) {
 		state->banks[1] = val & 0x0f;
 		slot_majutsushi_map (state, 1);
+		if (msx1.state[0] == state) {
+			slot_konami_map (state, 0);
+		}
 	}
-	else if (addr >= 0x8000 && addr < 0xa000) {
-		state->banks[2] = val & 0x0f;
+	else if (addr >= 0x8000 && addr < 0xc000) {
+		state->banks[addr < 0xa000 ? 2 : 3] = val & 0x0f;
 		slot_majutsushi_map (state, 2);
-	}
-	else if (addr >= 0xa000 && addr < 0xc000) {
-		state->banks[3] = val & 0x0f;
-		slot_majutsushi_map (state, 2);
+		if (msx1.state[3] == state) {
+			slot_konami_map (state, 3);
+		}
 	}
 }
 
@@ -1365,17 +1403,17 @@ MSX_SLOT_MAP(fmpac)
 {
 	if (page == 1) {
 		if (state->cart.fmpac.sram_active) {
-			cpu_setbank (3, state->cart.fmpac.mem);
-			cpu_setbank (4, state->cart.fmpac.mem + 0x2000);
+			msx_cpu_setbank (3, state->cart.fmpac.mem);
+			msx_cpu_setbank (4, state->cart.fmpac.mem + 0x2000);
 		}
 		else {
-			cpu_setbank (3, state->mem + state->banks[0] * 0x4000);
-			cpu_setbank (4, state->mem + state->banks[0] * 0x4000 + 0x2000);
+			msx_cpu_setbank (3, state->mem + state->banks[0] * 0x4000);
+			msx_cpu_setbank (4, state->mem + state->banks[0] * 0x4000 + 0x2000);
 		}
 	}
 	else {
-		cpu_setbank (page * 2 + 1, msx1.empty);
-		cpu_setbank (page * 2 + 2, msx1.empty);
+		msx_cpu_setbank (page * 2 + 1, msx1.empty);
+		msx_cpu_setbank (page * 2 + 2, msx1.empty);
 	}
 }
 
@@ -1519,12 +1557,12 @@ MSX_SLOT_MAP(superloadrunner)
 		UINT8 *mem = state->mem + 
 				(msx1.superloadrunner_bank & state->bank_mask) * 0x4000;
 
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 	}
 	else {
-		cpu_setbank (page * 2 + 1, msx1.empty);
-		cpu_setbank (page * 2 + 2, msx1.empty);
+		msx_cpu_setbank (page * 2 + 1, msx1.empty);
+		msx_cpu_setbank (page * 2 + 2, msx1.empty);
 	}
 }
 
@@ -1552,21 +1590,21 @@ MSX_SLOT_MAP(crossblaim)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem);
-		cpu_setbank (4, state->mem + 0x2000);
+		msx_cpu_setbank (3, state->mem);
+		msx_cpu_setbank (4, state->mem + 0x2000);
 		break;
 	case 2:
 		mem = state->mem + state->banks[0] * 0x4000;
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1614,20 +1652,20 @@ MSX_SLOT_MAP(korean80in1)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1683,30 +1721,30 @@ MSX_SLOT_MAP(korean90in1)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		msx_cpu_setbank (3, mem);
+		msx_cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
 		switch (msx1.korean90in1_bank & 0xc0) {
 		case 0x80: /* 32 kb mode */
 			mem += 0x4000;
 		default: /* ie. 0x00 and 0x40: same memory as page 1 */
-			cpu_setbank (5, mem);
-			cpu_setbank (6, mem + 0x2000);
+			msx_cpu_setbank (5, mem);
+			msx_cpu_setbank (6, mem + 0x2000);
 			break;
 		case 0xc0: /* same memory as page 1, but swap lower/upper 8kb */
-			cpu_setbank (5, mem + 0x2000);
-			cpu_setbank (6, mem);
+			msx_cpu_setbank (5, mem + 0x2000);
+			msx_cpu_setbank (6, mem);
 			break;
 		}
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1745,22 +1783,22 @@ MSX_SLOT_MAP(korean126in1)
 
 	switch (page) {
 	case 0:
-		cpu_setbank (1, msx1.empty);
-		cpu_setbank (2, msx1.empty);
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
 		break;
 	case 1:
 		mem = state->mem + state->banks[0] * 0x4000;
-		cpu_setbank (3, mem);
-		cpu_setbank (4, mem + 0x2000);
+		msx_cpu_setbank (3, mem);
+		msx_cpu_setbank (4, mem + 0x2000);
 		break;
 	case 2:
 		mem = state->mem + state->banks[1] * 0x4000;
-		cpu_setbank (5, mem);
-		cpu_setbank (6, mem + 0x2000);
+		msx_cpu_setbank (5, mem);
+		msx_cpu_setbank (6, mem + 0x2000);
 		break;
 	case 3:
-		cpu_setbank (7, msx1.empty);
-		cpu_setbank (8, msx1.empty);
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
 	}
 }
 
@@ -1815,8 +1853,10 @@ READ_HANDLER (soundcartridge_scc)
 {
 	int reg;
 
-	if (offset < 0x1800 || offset >= 0x1fdf) {
-		return msx1.state[2]->mem[msx1.state[2]->banks[2] * 0x2000 + offset];
+
+	if (offset >= 0x7e0) {
+		return msx1.state[2]->mem[
+				msx1.state[2]->banks[2] * 0x2000 + 0x1800 + offset];
 	}
 
 	reg = offset & 0xff;
@@ -1844,8 +1884,9 @@ READ_HANDLER (soundcartridge_sccp)
 {
 	int reg;
 
-	if (offset < 0x1800 || offset >= 0x1fdf) {
-		return msx1.state[2]->mem[msx1.state[2]->banks[3] * 0x2000 + offset];
+	if (offset >= 0x7e0) {
+		return msx1.state[2]->mem[
+				msx1.state[2]->banks[3] * 0x2000 + 0x1800 + offset];
 	}
 
 	reg = offset & 0xff;
@@ -1866,31 +1907,24 @@ MSX_SLOT_MAP(soundcartridge)
 {
 	switch (page) {
 	case 0:
-		cpu_setbank (1, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (2, state->mem + state->banks[3] * 0x2000);
+		msx_cpu_setbank (1, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (2, state->mem + state->banks[3] * 0x2000);
 		break;
 	case 1:
-		cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (3, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (4, state->mem + state->banks[1] * 0x2000);
 		break;
 	case 2:
-		cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
-		cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
-		install_mem_read_handler (0, 0x8000, 0x9fff, 
-			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
-		install_mem_read_handler (0, 0xa000, 0xbfff, 
-			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6); 
-
-		/*	state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6);
-	    memory_set_bankhandler_r (5, 0, 
-			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK5);
-	    memory_set_bankhandler_r (6, 0, 
-			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK6); 
-			*/
+		msx_cpu_setbank (5, state->mem + state->banks[2] * 0x2000);
+		msx_cpu_setbank (6, state->mem + state->banks[3] * 0x2000);
+		install_mem_read_handler (0, 0x9800, 0x9fff, 
+			state->cart.sccp.scc_active ? soundcartridge_scc : MRA8_BANK7);
+		install_mem_read_handler (0, 0xb800, 0xbfff, 
+			state->cart.sccp.sccp_active ? soundcartridge_sccp : MRA8_BANK9); 
 		break;
 	case 3:
-		cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
-		cpu_setbank (8, state->mem + state->banks[1] * 0x2000);
+		msx_cpu_setbank (7, state->mem + state->banks[0] * 0x2000);
+		msx_cpu_setbank (8, state->mem + state->banks[1] * 0x2000);
 		break;
 	}
 }

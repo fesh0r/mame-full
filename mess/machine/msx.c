@@ -927,17 +927,6 @@ void msx_memory_map_page (int page)
 	slot_state *state;
 	const msx_slot *slot;
 
-	switch (page) {
-	case 1:
-		install_mem_read_handler (0, 0x4000, 0x5fff, MRA8_BANK3);
-		install_mem_read_handler (0, 0x6000, 0x7fff, MRA8_BANK4);
-		break;
-	case 2:
-		install_mem_read_handler (0, 0x8000, 0x9fff, MRA8_BANK5);
-		install_mem_read_handler (0, 0xa000, 0xbfff, MRA8_BANK6);
-		break;
-	}
-
 	slot_primary = (msx1.primary_slot >> (page * 2)) & 3;
 	slot_secondary = (msx1.secondary_slot[slot_primary] >> (page * 2)) & 3;
 
@@ -1036,12 +1025,7 @@ READ_HANDLER (msx_sec_slot_r)
 		return ~msx1.secondary_slot[slot];
 	}
 	else {
-		if (msx1.slot[3]->mem_type == MSX_MEM_RAM) {
-			return msx1.ram_pages[3][0x3fff];
-		}
-		else {
-			return 0xff; /* FIXME!! */
-		}
+		return msx1.top_page[0x1fff];
 	}
 }
 
