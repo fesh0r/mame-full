@@ -55,7 +55,7 @@ static void calc_skip_mask(int dimension, int maximum, int *new_dimension, int *
 				*skip_mask |= 1;
 			}
 		}
-		while(*new_dimension > maximum);
+		while((*new_dimension > maximum) && (*skip_mask != 1));
 	}
 	else {
 		// We already fit

@@ -17,8 +17,6 @@ static void mamece3_init();
 static BOOL InitInstance(int nCmdShow);
 static void RefreshGameListBox();
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-static LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
-static void Display_FAQ(HWND hWnd);
 static void RefreshGameListBox();
 static LRESULT CALLBACK Instructions(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 static HWND CreateRpCommandBar(HWND hwnd);
@@ -145,6 +143,34 @@ static struct SmartListViewClass s_GameListClass =
  * Blah                                                                    *
  * ----------------------------------------------------------------------- */
 
+static void Display_About(HWND hWnd)
+{
+	TCHAR buf[] = 
+		TEXT("MessCE");
+
+	MessageBox(hWnd, buf, TEXT("About MessCE..."), MB_ICONINFORMATION | MB_OK);
+}
+
+
+static void Display_Instructions(HWND hWnd)
+{
+	TCHAR buf[] = 
+		TEXT("Instructions");
+
+	MessageBox(hWnd, buf, TEXT("Instructions"), MB_ICONINFORMATION | MB_OK);
+}
+
+
+static void Display_FAQ(HWND hWnd)
+{
+	TCHAR buf[] = 
+		TEXT("A license agreement will appear the first time you run each specific game.\r\n")
+		TEXT("Click [LEFT] then [RIGHT] on the Gamepad to agree to it.\r\n");
+
+	MessageBox(hWnd, buf, TEXT("FAQ - Top 3 Answers"), MB_ICONINFORMATION | MB_OK);
+}
+
+
 static void SetDefaultOptions(struct ui_options *opts)
 {
 	opts->enable_sound = 1; 
@@ -250,7 +276,7 @@ static BOOL InitInstance(int nCmdShow)
 	hInst = GetModuleHandle(NULL);
 
 	// Initialize global strings
-	LoadString(hInst, IDC_MAMECE3, szWindowClass, MAX_LOADSTRING);
+	tcscpy(szWindowClass, TEXT("MAMECE3"));
 	LoadString(hInst, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 
 	//If it is already running, then focus on the window
@@ -351,9 +377,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			// Parse the menu selections:
 			switch (wmId)
 			{	
-				case IDM_HELP_ABOUT:
-					DialogBox(hInst, (LPCTSTR)IDD_ABOUTBOX, hWnd, (DLGPROC)About);
-				    break;
 				case IDOK:
 					SendMessage(hWnd, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), (LPARAM)hWnd);
 					SendMessage (hWnd, WM_CLOSE, 0, 0);
@@ -417,14 +440,28 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 				case IDC_PLAY:
 					if (wmEvent == BN_CLICKED)
-						GameList_Run(s_pGameListView);
+					{
+						if (SmartListView_GetVisible(s_pGameListView))
+							GameList_Run(s_pGameListView);
+						else if (SmartListView_GetVisible(s_pSoftwareListView))
+							SoftwareList_Run(s_pSoftwareListView);
+					}
 					break;
+
+					// Dialog boxes
+				case IDM_HELP_ABOUT:
+					Display_About(hWnd);
+				    break;
+
 				case ID_FILE_INSTRUCTIONS:
-					DialogBox(hInst, (LPCTSTR)IDD_INSTRUCTIONBOX, hWnd, (DLGPROC)Instructions);
+					Display_Instructions(hWnd);
 					break;
+				
 				case ID_FILE_FAQ:
 					Display_FAQ(hWnd);
 					break;
+
+
 				default:
 				   return DefWindowProc(hWnd, message, wParam, lParam);
 			}
@@ -544,56 +581,6 @@ static HWND CreateRpCommandBar(HWND hwnd)
 	return mbi.hwndMB;
 }
 
-// Mesage handler for the About box.
-static LRESULT CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	SHINITDLGINFO shidi;
-
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			// Create a Done button and size it.  
-			shidi.dwMask = SHIDIM_FLAGS;
-			 shidi.dwFlags = SHIDIF_DONEBUTTON | SHIDIF_SIPDOWN | SHIDIF_SIZEDLGFULLSCREEN;
-			shidi.hDlg = hDlg;
-			SHInitDialog(&shidi);
-			return TRUE; 
-
-		case WM_COMMAND:
-			if (LOWORD(wParam) == IDOK) {
-				EndDialog(hDlg, LOWORD(wParam));
-				return TRUE;
-			}
-			break;
-	}
-    return FALSE;
-}
-
-// Mesage handler for the Instructions box.
-static LRESULT CALLBACK Instructions(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	SHINITDLGINFO shidi;
-
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			// Create a Done button and size it.  
-			shidi.dwMask = SHIDIM_FLAGS;
-			 shidi.dwFlags = SHIDIF_DONEBUTTON | SHIDIF_SIPDOWN | SHIDIF_SIZEDLGFULLSCREEN;
-			shidi.hDlg = hDlg;
-			SHInitDialog(&shidi);
-			return TRUE; 
-
-		case WM_COMMAND:
-			if (LOWORD(wParam) == IDOK) {
-				EndDialog(hDlg, LOWORD(wParam));
-				return TRUE;
-			}
-			break;
-	}
-    return FALSE;
-}
-
 static void RefreshGameListBox()
 {
 	int i, pos = 0;
@@ -615,15 +602,6 @@ static void RefreshGameListBox()
 	/* Sort them */
 	SmartListView_SetTotalItems(s_pGameListView, pos);
 	SmartListView_SetSorting(s_pGameListView, 0, FALSE);
-}
-
-static void Display_FAQ(HWND hWnd)
-{
-	TCHAR buf[] = TEXT("A license agreement will appear the first time you run each specific game. \
-		Click [LEFT] then [RIGHT] on the Gamepad to agree to it. \
-		\n\nDifference in versions:\nMameCE3 -  100+ Games\nMegaCE3 - 1000+ Games\nPC MAME - 2000+ Games \
-		\n\nNO Version includes any Game ROMS!");
-	MessageBox(hWnd, buf, TEXT("FAQ - Top 3 Answers"), MB_ICONINFORMATION | MB_OK);
 }
 
 

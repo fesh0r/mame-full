@@ -1072,6 +1072,17 @@ void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible)
 	}
 }
 
+BOOL SmartListView_GetVisible(struct SmartListView *pListView)
+{
+	LONG lStyle;
+	HWND hWnd;
+
+	hWnd = pListView->hwndListView;
+
+	lStyle = GetWindowLong(hWnd, GWL_STYLE);
+	return (lStyle & WS_VISIBLE) ? TRUE : FALSE;
+}
+
 void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem)
 {
 	int nVisualRow;

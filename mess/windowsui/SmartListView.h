@@ -113,6 +113,7 @@ void SmartListView_SaveColumnSettings(struct SmartListView *pListView);
 void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELIST hSmall, HIMAGELIST hLarge);
 void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrText);
 void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible);
+BOOL SmartListView_GetVisible(struct SmartListView *pListView);
 void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem);
 
 #if HAS_EXTRACOLUMNTEXT

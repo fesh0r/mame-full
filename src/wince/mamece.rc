@@ -70,6 +70,14 @@ BEGIN
     IDS_CAP_OPTIONS, 0, 1,
 END
 
+IDM_RUNMENU RCDATA MOVEABLE PURE 
+BEGIN
+    IDM_RUNMENU, 2,
+    I_IMAGENONE, IDM_MAIN_COMMAND1, TBSTATE_ENABLED, 
+    TBSTYLE_DROPDOWN | TBSTYLE_AUTOSIZE, IDS_CAP_FILE, 0, 0,
+    I_IMAGENONE, ID_OPTIONS, TBSTATE_ENABLED, TBSTYLE_DROPDOWN, 
+    IDS_CAP_OPTIONS, 0, 1,
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -111,54 +119,19 @@ BEGIN
     END
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Dialog
-//
-
-IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 140, 57
-STYLE WS_POPUP | WS_CAPTION
-EXSTYLE WS_EX_CAPTIONOKBTN
-CAPTION "About MameCE3"
-FONT 8, "System"
+IDM_RUNMENU MENU DISCARDABLE 
 BEGIN
-    ICON            IDI_MAMECE3,IDC_STATIC,11,17,20,20
-    LTEXT           "MameCE3 for PocketPC",IDC_STATIC,40,11,84,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2000",IDC_STATIC,43,30,70,8
-    LTEXT           "Version 9.10",IDC_STATIC,55,20,52,8
-    LTEXT           "Released by TechMaster",IDC_STATIC,36,40,86,10
+    POPUP "File"
+    BEGIN
+		MENUITEM "Pause",						ID_FILE_PAUSE
+        MENUITEM "E&xit",                       IDOK
+    END
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Show Frame Rate",             ID_OPTIONS_SHOWFRAMERATE
+        MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
+	END
 END
-
-IDD_INSTRUCTIONBOX DIALOGEX 0, 0, 206, 166
-STYLE WS_POPUP | WS_CAPTION
-EXSTYLE WS_EX_CAPTIONOKBTN
-CAPTION "Instructions"
-FONT 8, "System"
-BEGIN
-    ICON            IDI_MAMECE3,IDC_STATIC,8,10,20,20
-    CTEXT           "MameCE3 INSTRUCTIONS",IDC_STATIC,27,8,87,8,SS_NOPREFIX
-    CTEXT           "*****************************",IDC_STATIC,24,15,93,8
-    LTEXT           "MameCE3 Game Key Definitions:",IDC_STATIC,7,28,161,10
-    LTEXT           "(I=iPaq, C=Casio, J=HP Jornado)",IDC_STATIC,8,37,106,8
-    LTEXT           "Gamepad=UP-DOWN-LEFT-RIGHT",IDC_STATIC,7,49,111,8
-    LTEXT           "Rocker=UP-DOWN",IDC_STATIC,7,56,61,8
-    LTEXT           "(For HP) LEFT=B1, RIGHT=B2",IDC_STATIC,7,63,97,8
-    LTEXT           "Exit Game = I-B1, C-Esc, J-*",IDC_STATIC,7,75,91,8
-    LTEXT           "Coins        = I-B3, C-Act, J-B3",IDC_STATIC,7,82,96,8
-    LTEXT           "1Player     = I-B3,  C-B1, J-B3",IDC_STATIC,7,89,95,8
-    LTEXT           "2Player     = I-B4,  C-B3, J-B4",IDC_STATIC,7,96,103,8
-    LTEXT           "Fire1        = I-Act, C-B2, J-B4",IDC_STATIC,7,103,98,8
-    LTEXT           "Fire2        = I-B4,  C-B1, J-B3",IDC_STATIC,7,110,102,
-                    8
-    LTEXT           "Fire3        = I-Rec, C-B3, J-* ",IDC_STATIC,7,117,105,
-                    8
-    LTEXT           "Mame Menu = I-B2,  C-Rec, J-*",IDC_STATIC,7,124,133,8
-    LTEXT           "Menu Select = I-Rec, C-B2,  J-*",IDC_STATIC,7,131,136,8
-    LTEXT           "HP Users must enable their 'Game Keys'",IDC_STATIC,7,
-                    142,134,8
-END
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -226,9 +199,6 @@ BEGIN
     IDS_APP_TITLE           "MameCE"
     IDS_HELLO               "MameCE"
 #endif
-
-	// This string is just a window class; so it doesn't need to be localized
-    IDC_MAMECE3             "MAMECE"
 END
 
 STRINGTABLE DISCARDABLE 

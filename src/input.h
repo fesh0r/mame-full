@@ -140,5 +140,6 @@ int seq_read_async(InputSeq* code, int first);
 
 int input_ui_pressed(int code);
 int input_ui_pressed_repeat(int code, int speed);
+void input_ui_post(int code);
 
 #endif

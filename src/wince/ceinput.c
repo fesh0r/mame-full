@@ -360,9 +360,9 @@ int osd_is_key_pressed(int keycode)
 }
 
 
-void press_char(char c)
+void wince_press_char(int keycode)
 {
-	pressed_char = c;
+	pressed_char = keycode;
 	pressed_char_expire = GetTickCount() + 100;
 }
 

@@ -1,16 +1,14 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by MameCE3.rc
 //
 #define IDS_APP_TITLE                   1
 #define IDS_HELLO                       2
 #define IDC_MAMECE3                     3
 #define IDI_MAMECE3                     101
 #define IDM_MENU                        102
-#define IDD_ABOUTBOX                    103
+#define IDM_RUNMENU						103
 #define IDS_HELP                        104
 #define IDB_BITMAP1                     104
-#define IDD_INSTRUCTIONBOX              104
 #define IDB_BITMAP2                     105
 #define IDS_COMMAND1                    301
 #define IDM_MAIN_COMMAND1               40001
@@ -38,13 +36,14 @@
 #define ID_OPTIONS_ROTATESCREENLEFT     40028
 #define ID_OPTIONS_ROTATESCREENRIGHT    40029
 #define ID_FILE_FAQ                     40030
+#define ID_FILE_PAUSE					40031
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        138
-#define _APS_NEXT_COMMAND_VALUE         40031
+#define _APS_NEXT_COMMAND_VALUE         40032
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

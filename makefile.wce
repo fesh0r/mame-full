@@ -16,7 +16,7 @@ DEBUG = 1
 MAME_DEBUG = -DMAME_DEBUG
 
 # build with browser information for debugging
-BSCMAKE = bscmake.exe
+BSCMAKE = @bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
 # UPX = upx.exe -9 --compress-icons=0
@@ -71,8 +71,8 @@ endif
 AR = @lib
 #CC =
 CCL = gcc
-LD = @link
-RC = @rc
+LD = link
+RC = rc
 ASM = @nasmw
 ASMFLAGS = -f win32
 RM = rm

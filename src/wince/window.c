@@ -34,7 +34,8 @@
 
 #ifdef UNDER_CE
 #include "mamece.h"
-extern void press_char(char c);
+#include "resource.h"
+static HMENU wince_menubar;
 #endif
 
 #ifndef WMSZ_LEFT
@@ -66,7 +67,7 @@ extern UINT8 win_trying_to_quit;
 // window styles
 #ifdef UNDER_CE
 #define WINDOW_STYLE			0
-#define WINDOW_STYLE_EX			0
+#define WINDOW_STYLE_EX			WS_EX_TOPMOST
 #else // !UNDER_CE
 #define WINDOW_STYLE			WS_OVERLAPPEDWINDOW
 #define WINDOW_STYLE_EX			0
@@ -77,8 +78,13 @@ extern UINT8 win_trying_to_quit;
 #define DEBUG_WINDOW_STYLE_EX	0
 
 // full screen window styles
+#ifdef UNDER_CE
+#define FULLSCREEN_STYLE		0
+#define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
+#else
 #define FULLSCREEN_STYLE		WS_OVERLAPPED
 #define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
+#endif
 
 // menu items
 #define MENU_FULLSCREEN			1000
@@ -388,7 +394,20 @@ INLINE void get_work_area(RECT *maximum)
 	}
 }
 
+//============================================================
+//	wince_add_button
+//============================================================
 
+int wince_add_button(LPCTSTR text, int x, int y, int width, int height, int keycode)
+{
+	HWND button;
+	
+	button = CreateWindowEx(0, TEXT("BUTTON"), text, WS_VISIBLE | WS_CHILD, x, y, width, height, win_video_window, (HMENU)keycode, GetModuleHandle(NULL), NULL);
+	if (!button)
+		return 1;
+
+	return 0;
+}
 
 //============================================================
 //	win_init_window
@@ -462,6 +481,8 @@ int win_init_window(void)
 	if (!win_video_window)
 		return 1;
 
+	wince_add_button(TEXT("Exit"), 0, 300, 80, 20, IPT_UI_CANCEL);
+
 	// possibly create the debug window, but don't show it yet
 	if (options.mame_debug)
 		if (create_debug_window())
@@ -482,6 +503,7 @@ void win_shutdown_window(void)
 	UnregisterClass(TEXT("MAME"), NULL);
 
 #ifdef UNDER_CE
+	wince_menubar = NULL;
 	gx_close_display();
 #endif
 }
@@ -638,22 +660,36 @@ void win_update_cursor_state(void)
 //	update_system_menu
 //============================================================
 
+#ifdef UNDER_CE
 static void update_system_menu(void)
 {
-#ifdef UNDER_CE
-	SHMENUBARINFO mbi;
+	SHMENUBARINFO menubar;
+	int use_sip;
 
-	memset(&mbi, 0, sizeof(SHMENUBARINFO));
-	mbi.cbSize     = sizeof(SHMENUBARINFO);
-	mbi.hwndParent = win_video_window;
-	mbi.dwFlags	   = SHCMBF_EMPTYBAR; //SHCMBF_HIDESIPBUTTON;
-	mbi.nToolBarId = 102;
-	mbi.hInstRes   = GetModuleHandle(NULL);
-	mbi.nBmpId     = 0;
-	mbi.cBmpImages = 0;
+	if (wince_menubar)
+		return;
 
-	SHCreateMenuBar(&mbi);
+#ifdef MESS
+	use_sip = Machine->gamedrv->flags & GAME_COMPUTER;
 #else
+	use_sip = 0;
+#endif
+
+	memset(&menubar, 0, sizeof(menubar));
+	menubar.cbSize = sizeof(menubar);
+	menubar.hwndParent = win_video_window;
+	menubar.dwFlags = use_sip ? SHCMBF_HIDESIPBUTTON : SHCMBF_HIDESIPBUTTON;
+	menubar.hInstRes = GetModuleHandle(NULL);
+	menubar.nBmpId = 0;
+	menubar.cBmpImages = 0;
+	menubar.nToolBarId = IDM_RUNMENU;
+	
+	SHCreateMenuBar(&menubar);
+	wince_menubar = menubar.hwndMB;
+}
+#else
+static void update_system_menu(void)
+{
 	HMENU menu;
 
 	// revert the system menu
@@ -663,8 +699,8 @@ static void update_system_menu(void)
 	menu = GetSystemMenu(win_video_window, FALSE);
 	if (menu)
 		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, "Full Screen\tAlt+Enter");
-#endif
 }
+#endif
 
 
 
@@ -802,6 +838,30 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			win_trying_to_quit = 1;
 			win_video_window = 0;
 			break;
+
+#ifdef UNDER_CE
+		case WM_COMMAND:
+			{
+				static int commandmap[] =
+				{
+					ID_FILE_PAUSE,				IPT_UI_PAUSE,
+					IDOK,						IPT_UI_CANCEL,
+					ID_OPTIONS_SHOWFRAMERATE,	IPT_UI_SHOW_FPS,
+					ID_OPTIONS_SHOWPROFILER,	IPT_UI_SHOW_PROFILER
+				};
+				int i;
+
+				for (i = 0; i < sizeof(commandmap) / sizeof(commandmap[0]); i += 2)
+				{
+					if (commandmap[i] == LOWORD(wparam))
+					{
+						input_ui_post(commandmap[i+1]);
+						break;
+					}
+				}
+			}
+			break;
+#endif
 
 		// everything else: defaults
 		default:
@@ -1419,7 +1479,8 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 {
-	gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);
+	if (win_video_window)
+		gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);
 /*
 	HBITMAP hBitmap;
 	HDC hDcBitmap;
