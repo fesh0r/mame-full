@@ -521,7 +521,7 @@ static Ptr SeekSymbolNamesByConnection (CFragConnectionID myConnID, Str255 name)
              }
 }
 
-#endif /* ifndef NDEBUG */
+#endif /* ifndef GLDEBUG */
 
 #endif /* ifdef _MAC_OS9_ */
 

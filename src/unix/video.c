@@ -1390,7 +1390,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	  bufsize -= i;
         }
 
-	/* for hotkey choisen effect or scale add effect or scale */
+	/* for hotkey chosen effect or scale add effect or scale */
 	if (show_effect_or_scale)
 	{
           show_effect_or_scale--;
