@@ -139,7 +139,7 @@
 		f5081
 		fa16a
 		f9a83
-		checksum error on extended cmos
+			Message: "Checksum Error on Extended CMOS"
 		f4840 34
 		f488c 35
 		reset
@@ -150,10 +150,10 @@
 		fe842
 		f4a5a
 		f4b01 38
-		memory test
+			(Memory Test)
 		f4b41 3b
 		f4c0f
-		Invalid ...
+			Message: "Invalid configuration information - please run SETUP program"
 		f4c5c
 		f86fc
 		f8838

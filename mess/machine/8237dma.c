@@ -434,41 +434,14 @@ void dma8237_run_transfer(int which, int channel)
 
 
 
-static data32_t dma8237_read32(int which, offs_t offset)
-{
-	data32_t result = 0;
-	result |= (((data32_t) dma8237_read(which, offset * 4 + 0)) << 0);
-	result |= (((data32_t) dma8237_read(which, offset * 4 + 1)) << 8);
-	result |= (((data32_t) dma8237_read(which, offset * 4 + 2)) << 16);
-	result |= (((data32_t) dma8237_read(which, offset * 4 + 3)) << 24);
-	return result;
-}
-
-
-
-static void dma8237_write32(int which, offs_t offset, data32_t data, data32_t mem_mask)
-{
-	if ((mem_mask & 0x000000FF) == 0)
-		dma8237_write(which, offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		dma8237_write(which, offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		dma8237_write(which, offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		dma8237_write(which, offset * 4 + 3, data >> 24);
-}
-
-
-
-/******************* Standard 8-bit CPU interfaces *******************/
+/******************* Standard 8-bit/32-bit CPU interfaces *******************/
 
 READ_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
 READ_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
-
 WRITE_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
 WRITE_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
 
-READ32_HANDLER( dma8237_32_0_r ) { return dma8237_read32(0, offset); }
-READ32_HANDLER( dma8237_32_1_r ) { return dma8237_read32(1, offset); }
-WRITE32_HANDLER( dma8237_32_0_w ) { dma8237_write32(0, offset, data, mem_mask); }
-WRITE32_HANDLER( dma8237_32_1_w ) { dma8237_write32(1, offset, data, mem_mask); }
+READ32_HANDLER( dma8237_32_0_r ) { return read32_with_read8_handler(dma8237_0_r, offset, mem_mask); }
+READ32_HANDLER( dma8237_32_1_r ) { return read32_with_read8_handler(dma8237_1_r, offset, mem_mask); }
+WRITE32_HANDLER( dma8237_32_0_w ) { write32_with_write8_handler(dma8237_0_w, offset, data, mem_mask); }
+WRITE32_HANDLER( dma8237_32_1_w ) { write32_with_write8_handler(dma8237_1_w, offset, data, mem_mask); }
