@@ -162,6 +162,8 @@ int devices_init(const struct GameDriver *gamedrv);
 int devices_initialload(const struct GameDriver *gamedrv, int ispreload);
 void devices_exit(void);
 
+struct IODevice;
+
 /* access mess.c internal fields for a device type (instance id) */
 extern int			device_count(int type);
 extern const char  *device_typename(int type);
