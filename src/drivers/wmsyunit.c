@@ -1,7 +1,7 @@
 /*************************************************************************
 
 	Driver for Williams/Midway Y/Z-unit games.
-  
+
 	TMS34010 processor @ 6.00 - 6.25MHz
 	Two sound options:
 		standard Williams CVSD board, with 6809 @ 2MHz, a YM2151, and an HC55516 CVSD decoder
@@ -35,7 +35,7 @@
 	  frame. This actually might be there on the original, because if the
 	  game runs over 60% (as it does now on my PII 266) it's very hard to
 	  notice. With 100% framerate, it would be invisible.
-	
+
 	- Terminator 2 freezes while playing the movies after destroying skynet
 	  Currently we have a hack in which prevents the freeze, but we really
 	  should eventually figure it out for real.
@@ -224,7 +224,7 @@ INPUT_PORTS_START( narc )
 	PORT_DIPSETTING(      0xc000, "English" )
 	PORT_DIPSETTING(      0x8000, "French" )
 	PORT_DIPSETTING(      0x4000, "German" )
-	PORT_DIPSETTING(      0x0000, "unknown" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Unknown ) )
 
 	PORT_START
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1572,7 +1572,7 @@ GAME( 1990, smashtv6, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0_16BIT, "
 GAME( 1990, smashtv5, smashtv, yunit_cvsd_6bit, smashtv, smashtv,  ROT0_16BIT, "Williams", "Smash T.V. (rev 5.00)" )
 GAME( 1990, smashtv4, smashtv, yunit_cvsd_6bit, smashtv, smashtv4, ROT0_16BIT, "Williams", "Smash T.V. (rev 4.00)" )
 GAME( 1990, hiimpact, 0,       yunit_cvsd_6bit, trog,    hiimpact, ROT0_16BIT, "Williams", "High Impact Football (rev LA3 12/27/90)" )
-GAMEX(1991, shimpact, 0,       yunit_cvsd_6bit, trog,    shimpact, ROT0_16BIT, "Williams", "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
+GAMEX(1991, shimpact, 0,       yunit_cvsd_6bit, trog,    shimpact, ROT0_16BIT, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 
 GAME( 1991, term2,    0,       yunit_adpcm,     term2,   term2,    ROT0_16BIT, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
 GAME( 1992, mkla1,    mk,      yunit_adpcm,     mkla1,   mkla1,    ROT0_16BIT, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
