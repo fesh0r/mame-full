@@ -31,11 +31,12 @@
 	NOTES:
 	- The ADC is not emulated!
 	- printer not emulated
-	- 2mhz clock to CTC not emulated
-	- trigger for channel 3 not emulated
 
 	Many thanks to Chris Coxall for the schematics of the TC-01, the dump of the
 	system rom and a dump of a Xtal boot disc.
+
+	Many thanks to Andrew Dunipace for his help with the 80-column card
+	and Speculator hardware (Spectrum emulator).
 
 	Kevin Thacker [MESS driver]
 
@@ -93,11 +94,13 @@ static int einstein_rom_enabled = 1;
 static int einstein_int = 0;
 static int einstein_int_mask = 0;
 
+static void *einstein_ctc_trigger_timer = NULL;
+static int einstein_ctc_trigger = 0;
+
 /* KEYBOARD */
 static void *einstein_keyboard_timer = NULL;
 static int einstein_keyboard_line = 0;
 static int einstein_keyboard_data = 0x0ff;
-
 
 /**********************************************************/
 /* 
@@ -275,6 +278,15 @@ WRITE_HANDLER(einstein_80col_w)
 	}
 }
 
+void einstein_ctc_trigger_callback(int dummy)
+{
+	einstein_ctc_trigger^=1;
+
+	/* channel 0 and 1 have a 2Mhz input clock for triggering */
+	z80ctc_0_trg0_w(0,einstein_ctc_trigger);
+	z80ctc_0_trg1_w(0,einstein_ctc_trigger);
+}
+
 /* refresh keyboard data. It is refreshed when the keyboard line is written */
 void einstein_scan_keyboard(void)
 {
@@ -292,10 +304,26 @@ void einstein_scan_keyboard(void)
 	einstein_keyboard_data = data;
 }
 
+static void einstein_update_interrupts(void)
+{
+
+
+
+
+}
 
 void	einstein_keyboard_timer_callback(int dummy)
 {
 	einstein_scan_keyboard();
+
+	if ((readinputport(9) & 0x03)!=0)
+	{
+		einstein_int |= EINSTEIN_FIRE_INT;
+	}
+	else
+	{
+		einstein_int &= ~EINSTEIN_FIRE_INT;
+	}
 
 	/* keyboard data changed? */
 	if (einstein_keyboard_data!=0x0ff)
@@ -303,6 +331,8 @@ void	einstein_keyboard_timer_callback(int dummy)
 		/* generate interrupt */
 		einstein_int |= EINSTEIN_KEY_INT;
 		
+		einstein_update_interrupts();
+
 //		if (einstein_int & einstein_int_mask)
 //		{
 //			cpu_cause_interrupt(0, 0x0ff);
@@ -325,6 +355,22 @@ static void einstein_z80fmly_interrupt(int state)
 	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 }
 
+WRITE_HANDLER(einstein_serial_transmit_clock)
+{
+	msm8251_transmit_clock();
+}
+
+WRITE_HANDLER(einstein_serial_receive_clock)
+{
+	msm8251_receive_clock();
+}
+
+WRITE_HANDLER(einstein_ctc_ch2_zc0)
+{
+	/* the terminal count of channel 2 is connected to the trigger for channel 3 */
+	z80ctc_0_trg3_w(0,data);
+}
+
 
 static z80ctc_interface	einstein_ctc_intf =
 {
@@ -332,9 +378,9 @@ static z80ctc_interface	einstein_ctc_intf =
 	{EINSTEIN_SYSTEM_CLOCK},
 	{0},
 	{einstein_z80fmly_interrupt},
-	{0},
-	{0},
-    {0}
+	{einstein_serial_transmit_clock},
+	{einstein_serial_receive_clock},
+    {einstein_ctc_ch2_zc0}
 };
 
 
@@ -696,7 +742,7 @@ static READ_HANDLER(einstein_key_int_r)
 	/* bit 2: 1=printer busy */
 	/* bit 1: fire 1 */
 	/* bit 0: fire 0 */
-	return ((readinputport(8) & 0x07)<<5) | 0x01f;
+	return ((readinputport(8) & 0x07)<<5) | (readinputport(9) & 0x03) | 0x01c;
 }
 
 
@@ -974,15 +1020,22 @@ void einstein_init_machine(void)
 	/* the int is actually clocked at the system clock 4Mhz, but this would be too fast for our
 	driver. So we update at 50Hz and hope this is good enough. */
 	einstein_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, einstein_keyboard_timer_callback);
+
+	/* the input to channel 0 and 1 of the ctc is a 2mhz clock */
+	einstein_ctc_trigger = 0;
+	einstein_ctc_trigger_timer = timer_pulse(TIME_IN_HZ(1000000), 0, einstein_ctc_trigger_callback);
+}
+
+void einstein2_init_machine(void)
+{
+	einstein_init_machine();
 	
 	einstein_80col_init();
-
 }
 
 
 void einstein_shutdown_machine(void)
 {
-	einstein_80col_exit();
 #ifdef EINSTEIN_DUMP_RAM
 	einstein_dump_ram();
 #endif
@@ -992,6 +1045,12 @@ void einstein_shutdown_machine(void)
 		einstein_ram = NULL;
 	}
 
+	if (einstein_ctc_trigger_timer)
+	{
+		timer_remove(einstein_ctc_trigger_timer);
+		einstein_ctc_trigger_timer = NULL;
+	}
+
 	if (einstein_keyboard_timer)
 	{
 		timer_remove(einstein_keyboard_timer);
@@ -999,6 +1058,13 @@ void einstein_shutdown_machine(void)
 	}
 	
 	wd179x_exit();
+}
+
+void einstein2_shutdown_machine(void)
+{
+	einstein_shutdown_machine();
+
+	einstein_80col_exit();
 }
 
 INPUT_PORTS_START(einstein)
@@ -1089,6 +1155,27 @@ INPUT_PORTS_START(einstein)
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "CONTROL", KEYCODE_RCONTROL, IP_JOY_NONE)
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
+	
+	/* fire buttons for analogue joysticks */
+	PORT_START
+	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1,	"Joystick 1 Button 1", CODE_DEFAULT, CODE_NONE)
+	PORT_BITX( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1|IPF_PLAYER2,	"Joystick 2 Button 1", CODE_DEFAULT, CODE_NONE)
+
+	/* analog joystick 1 x axis */
+	PORT_START
+	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_X|IPF_CENTER|IPF_REVERSE,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_1_LEFT,JOYCODE_1_RIGHT)
+
+	/* analog joystick 1 y axis */
+	PORT_START 
+	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_Y|IPF_CENTER|IPF_REVERSE,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_1_UP,JOYCODE_1_DOWN)
+
+	/* analog joystick 2 x axis */
+	PORT_START
+	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_X|IPF_CENTER|IPF_REVERSE|IPF_PLAYER2,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_2_LEFT,JOYCODE_2_RIGHT)
+
+	/* analog joystick 2 Y axis */
+	PORT_START
+	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_Y|IPF_CENTER|IPF_REVERSE|IPF_PLAYER2,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_2_UP,JOYCODE_2_DOWN)
 
 INPUT_PORTS_END
 
@@ -1225,15 +1312,63 @@ void einstein_80col_refresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void einstein_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void einstein2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	TMS9928A_refresh(bitmap,full_refresh);
 	einstein_80col_refresh(bitmap,full_refresh);
 }
 
+void einstein_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	TMS9928A_refresh(bitmap,full_refresh);
+}
+
 
 
 static struct MachineDriver machine_driver_einstein =
+{
+	/* basic machine hardware */
+	{
+		/* MachineCPU */
+		{
+			CPU_Z80 | CPU_16BIT_PORT,  /* type */
+			EINSTEIN_SYSTEM_CLOCK,
+			readmem_einstein,		   /* MemoryReadAddress */
+			writemem_einstein,		   /* MemoryWriteAddress */
+			readport_einstein,		   /* IOReadPort */
+			writeport_einstein,		   /* IOWritePort */
+            0, 0,
+			0, 0,	
+			einstein_daisy_chain
+		},
+	},
+	50, 							   /* frames per second */
+	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
+	1,								   /* cpu slices per frame */
+	einstein_init_machine,			   /* init machine */
+	einstein_shutdown_machine,
+	/* video hardware */
+	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
+	0,								
+	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
+	tms9928A_init_palette,
+	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
+	0,								   /* MachineLayer */
+	einstein_vh_init,
+	TMS9928A_stop,
+	einstein_vh_screenrefresh,
+
+		/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&einstein_ay_interface
+		},
+	}
+};
+
+static struct MachineDriver machine_driver_einstein2 =
 {
 	/* basic machine hardware */
 	{
@@ -1288,6 +1423,11 @@ static struct MachineDriver machine_driver_einstein =
 ROM_START(einstein)
 	ROM_REGION(0x010000+0x02000+0x0800, REGION_CPU1,0)
 	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
+ROM_END
+
+ROM_START(einstein2)
+	ROM_REGION(0x010000+0x02000+0x0800, REGION_CPU1,0)
+	ROM_LOAD("einstein.rom",0x10000, 0x02000, 0x0ec134953)
 	ROM_LOAD("charrom.rom",0x012000, 0x0800, 0x0)
 ROM_END
 
@@ -1315,5 +1455,9 @@ static const struct IODevice io_einstein[] =
 	{IO_END}
 };
 
+#define io_einstein2 io_einstein
+
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
 COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
+COMP( 19??, einstein2,      0,            einstein2,          einstein,      0,       "Tatung", "Tatung Einstein TC-01 + 80 column device + Speculator")
+
