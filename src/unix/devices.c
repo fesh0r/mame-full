@@ -77,7 +77,13 @@ UINT8				trying_to_quit;
 /*============================================================ */
 
 /* this will be filled in dynamically */
-static struct OSCodeInfo	codelist[KEY_CODES + JOY_CODES];
+
+#define TOTAL_CODES KEY_CODES \
+	+ SYSDEP_DISPLAY_MOUSE_MAX * (SYSDEP_DISPLAY_MOUSE_AXES + SYSDEP_DISPLAY_MOUSE_BUTTONS) \
+	+ JOY_MAX * (JOY_BUTTONS + JOY_AXES * (JOY_DIRS + 1)) \
+	+ GUN_MAX * 2
+
+static struct OSCodeInfo	codelist[TOTAL_CODES];
 static int			total_codes;
 
 /* Controller override options */

@@ -9,7 +9,6 @@
 #define EXTERN extern
 #endif
 
-#define JOY_CODES		256
 #define JOY_MAX			8
 #define JOY_BUTTONS		32
 #define JOY_AXES		8
