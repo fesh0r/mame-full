@@ -15,6 +15,8 @@
 #include "windows/rc.h"
 #include "windows/glob.h"
 #include "windows/parallel.h"
+#elif defined XMAME
+#include "rc.h"
 #endif /* WIN32 */
 
 extern struct rc_option fileio_opts[];
