@@ -9,6 +9,20 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Atari Lynx (preliminary) [PeT]
 
+System Driver Changes:
+----------------------
+
+- [KC85/4] Implemented keyboard hardware. Previous hack has been removed.
+Seperated machine/kc.c into machine/kc.c and systems/kc.c.
+Merged all headers into includes/kc.h, and added all defines here.
+Cleaned up some of the code, and made sure allocated memory was free'd properly.
+[Kev Thacker]
+
+
+ 
+- [src/machine/z80fmly] Added support for BSTB and ASTB inputs for Z80 PIO.
+These are required by KC85/4 system. Added code to execute callback for 
+BRDY and ARDY outputs. [Kev Thacker]
 
 -------------------------------------------------------------------------------  
 0.37b10
@@ -58,7 +72,6 @@ Other Changes:
 - [IMGTOOL] Added filter support, and filters that translate endoflines, as
   well as the startings of BASIC tokenization.  Also updated the docs [Nate
   Woods]
-  
   
 -------------------------------------------------------------------------------  
 0.37b9 
