@@ -111,9 +111,6 @@
 #if (HAS_CCPU)
 #include "cpu/ccpu/ccpu.h"
 #endif
-#if (HAS_PDP1)
-#include "cpu/pdp1/pdp1.h"
-#endif
 #if (HAS_ADSP2100 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
@@ -147,6 +144,9 @@
 #endif
 #if (HAS_G65816)
 #include "mess/cpu/g65816/g65816.h"
+#endif
+#if (HAS_PDP1)
+#include "mess/cpu/pdp1/pdp1.h"
 #endif
 #if (HAS_SC61860)
 #include "mess/cpu/sc61860/sc61860.h"
@@ -624,9 +624,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_CCPU)
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,16bew,  0,15,BE,2, 3	),
 #endif
-#if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
-#endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,17lew, -1,14,LE,2, 4	),
 #endif
@@ -665,6 +662,9 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_G65816)
 	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
+#endif
+#if (HAS_PDP1)
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount

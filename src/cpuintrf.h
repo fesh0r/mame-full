@@ -225,9 +225,6 @@ enum
 #if (HAS_CCPU)
 	CPU_CCPU,
 #endif
-#if (HAS_PDP1)
-	CPU_PDP1,
-#endif
 #if (HAS_ADSP2100)
 	CPU_ADSP2100,
 #endif
@@ -262,6 +259,9 @@ enum
 #endif
 #if (HAS_G65816)
 	CPU_G65816,
+#endif
+#if (HAS_PDP1)
+	CPU_PDP1,
 #endif
 #if (HAS_SC61860)
 	CPU_SC61860,

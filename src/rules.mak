@@ -737,17 +737,6 @@ else
 CPUDEFS += -DHAS_CCPU=0
 endif
 
-CPU=$(strip $(findstring PDP1@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/pdp1
-CPUDEFS += -DHAS_PDP1=1
-CPUOBJS += $(OBJ)/cpu/pdp1/pdp1.o
-DBGOBJS += $(OBJ)/cpu/pdp1/pdp1dasm.o
-$(OBJ)/cpu/pdp1/pdp1.o: pdp1.c pdp1.h
-else
-CPUDEFS += -DHAS_PDP1=0
-endif
-
 CPU=$(strip $(findstring ADSP2100@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/adsp2100
@@ -779,17 +768,6 @@ DBGOBJS += $(OBJ)/cpu/mips/mipsdasm.o
 $(OBJ)/cpu/mips/mips.o: mips.c mips.h
 else
 CPUDEFS += -DHAS_PSXCPU=0
-endif
-
-CPU=$(strip $(findstring SH2@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/sh2
-CPUDEFS += -DHAS_SH2=1
-CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
-DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
-$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
-else
-CPUDEFS += -DHAS_SH2=0
 endif
 
 CPU=$(strip $(findstring SPC700@,$(CPUS)))

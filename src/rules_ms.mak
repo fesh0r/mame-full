@@ -49,6 +49,19 @@ CPUDEFS += -DHAS_G65816=0
 endif
 
 
+CPU=$(strip $(findstring PDP1@,$(CPUS)))
+ifneq ($(CPU),)
+PDPD = mess/cpu/pdp1
+OBJDIRS += $(OBJ)/$(PDPD)
+CPUDEFS += -DHAS_PDP1=1
+CPUOBJS += $(OBJ)/$(PDPD)/pdp1.o
+DBGOBJS += $(OBJ)/$(PDPD)/pdp1dasm.o
+$(OBJ)/$(PDPD)/pdp1.o: $(PDPD)/pdp1.c $(PDPD)/pdp1.h
+else
+CPUDEFS += -DHAS_PDP1=0
+endif
+
+
 CPU=$(strip $(findstring SC61860@,$(CPUS)))
 ifneq ($(CPU),)
 SCD = mess/cpu/sc61860
@@ -60,4 +73,18 @@ $(OBJ)/$(SCD)/sc61860.o: $(SCD)/sc61860.h  $(SCD)/sc.h $(SCD)/scops.c $(SCD)/sct
 else
 CPUDEFS += -DHAS_SC61860=0
 endif
+
+
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+SH2D = mess/cpu/sh2
+OBJDIRS += $(OBJ)/$(SH2D)
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/$(SH2D)/sh2.o
+DBGOBJS += $(OBJ)/$(SH2D)/sh2dasm.o
+$(OBJ)/$(SH2D)/sh2.o: $(SH2D)/sh2.c $(SH2D)/sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 
