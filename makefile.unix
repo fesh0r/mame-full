@@ -125,6 +125,10 @@ CFLAGS = -O -Wall -Wno-unused
 # CFLAGS = -O2 -Wall -Wno-unused -mcpu=i686 -fomit-frame-pointer \
 #  -fstrict-aliasing -fstrength-reduce -ffast-math
 
+# GCC 3.4.x and newer on x86 with some optimizations
+# CFLAGS = -O2 -Wall -Wno-unused -mtune=i686 -fomit-frame-pointer \
+#  -fstrict-aliasing -fstrength-reduce -ffast-math
+
 # GCC on Linux/PowerPC
 # CFLAGS = -O2 -Wall -Wno-unused -funroll-loops -fstrength-reduce \
 #  -fomit-frame-pointer -ffast-math -fsigned-char -mlongcall
@@ -255,6 +259,8 @@ ifneq (,$(findstring gcc,$(CC)))
   # use -mcpu instead.  For example, -mcpu=pentiumpro will produce an 
   # executable that (in theory) should be optimized for a PentiumPro 
   # system, but it will still run on a 386.
+  # Note: As of GCC 3.4.x, -mcpu is deprecated, and you should use 
+  # -mtune instead.
 
   # x86 options that work with any version of GCC:
   # CFLAGS += -march=i386
@@ -603,13 +609,9 @@ ARCH  = linux
 # Uncomment any joystick types that you want to use; the one that is 
 # actually used can be selected at runtime with the -joytype switch.
 
-# X Input Extensions-based joystick.  This is known to not work right now.
-# JOY_X11 = 1
-
-# If supported, you can use the standard joystick driver.  Note that this 
-# can work on non-x86 platforms.  I just haven't come up with a good 
-# replacement name for it.
-# JOY_I386 = 1
+# Enable the standard joystick driver, which should work in Linux, OpenBSD, 
+# NetBSD, and FreeBSD.
+# JOY_STANDARD = 1
 
 # Linux FM-TOWNS game pad joystick emulation support.  Thanks to Osamu 
 # Kurati.
@@ -618,7 +620,7 @@ ARCH  = linux
 # NetBSD/FreeBSD USB joystick support.
 # JOY_USB = 1
 
-# PlayStation2-linux native pad support.
+# PlayStation2-Linux native pad support.
 # JOY_PS2 = 1
 
 # SDL joystick support.
