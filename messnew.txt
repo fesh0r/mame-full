@@ -20,7 +20,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [SNES] Added support for fullgraphic VRAM transfers. Fixed VRAM reads. Fixed
+  a rare clip window bug. [Anthony Kruize]
 
 Source Changes:
 ---------------
