@@ -178,6 +178,9 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_I386)
 #include "cpu/i386/i386intf.h"
 #endif
+#if (HAS_I960)
+#include "cpu/i960/i960.h"
+#endif
 
 #ifdef MESS
 
@@ -614,6 +617,9 @@ const struct
 #endif
 #if (HAS_I386)
 	{ CPU_I386, i386_get_info },
+#endif
+#if (HAS_I960)
+	{ CPU_I960, i960_get_info },
 #endif
 
 #ifdef MESS
@@ -1233,7 +1239,7 @@ void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
 	memory_set_opbase(0);
 	(*cpu[cpunum].intf.reset)(param);
 	if (irqack)
-		activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *) irqack);
+		activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *)irqack);
 	cpuintrf_pop_context();
 }
 

@@ -210,7 +210,7 @@ static struct {
 	AT8042_TYPE type;
 	void (*set_address_mask)(unsigned mask);
 
-	UINT8 inport, outport, data;
+	UINT8 inport, outport, data, command;
 
 	struct {
 		int received;
@@ -244,6 +244,7 @@ static struct {
 
 void at_8042_init(AT8042_CONFIG *config)
 {
+	memset(&at_8042, 0, sizeof(at_8042));
 	at_8042.type = config->type;
 	at_8042.set_address_mask = config->set_address_mask;
 
@@ -315,7 +316,7 @@ READ8_HANDLER(at_8042_8_r)
 
 	switch (offset) {
 	case 0:
-		data=at_8042.data;
+		data = at_8042.data;
 		if (at_8042.type != AT8042_AT386 || (data != 0x55))
 		{
 			/* at386 self test doesn't like this */
@@ -326,17 +327,17 @@ READ8_HANDLER(at_8042_8_r)
 		break;
 
 	case 1:
-		data=at_8042.speaker;
-		data &= ~0xc0; /* at bios don't likes this being set */
+		data = at_8042.speaker;
+		data &= ~0xc0; /* AT BIOS don't likes this being set */
 
-		/* needed for ami bios, maybe only some keyboard controller revisions! */
-		at_8042.keyboard.received=0;
-		at_8042.mouse.received=0;
+		/* needed for AMI BIOS, maybe only some keyboard controller revisions! */
+		at_8042.keyboard.received = 0;
+		at_8042.mouse.received = 0;
 
 		/* polled for changes in ibmat bios */
-		if (--poll_delay<0)
+		if (--poll_delay < 0)
 		{
-			if (at_8042.type!=AT8042_PS2)
+			if (at_8042.type != AT8042_PS2)
 				poll_delay = 4; /* ibmat */
 			else
 				poll_delay = 8; /* ibm ps2m30 */
@@ -396,40 +397,47 @@ WRITE_HANDLER(at_8042_8_w)
 
 	switch (offset) {
 	case 0:
-		at_8042.last_write_to_control=0;
-		at_8042.status_read_mode=0;
+		at_8042.last_write_to_control = 0;
+		at_8042.status_read_mode = 0;
 		switch (at_8042.operation_write_state) {
 		case 0:
-			at_8042.data=data;
+			/* normal case */
+			at_8042.data = data;
 			at_8042.sending=1;
 			at_keyboard_write(data);
 			break;
 
 		case 1:
+			/* preceeded by writing 0xD1 to port 60h */
 			change = at_8042.outport ^ data;
-			at_8042.operation_write_state=0;
-			at_8042.outport=data;
+			at_8042.data = data;
 			if (change & 0x02)
 				at_8042.set_address_mask(data & 0x02 ? 0xffffff : 0xfffff);
 			break;
 
 		case 2:
-			at_8042.operation_write_state=0;
-			at_8042.data=data;
+			/* preceeded by writing 0xD2 to port 60h */
+			at_8042.data = data;
 			at_8042.sending=1;
 			at_keyboard_write(data);
 			break;
 
 		case 3:
-			at_8042.operation_write_state=0;
-			at_8042.data=data;
+			/* preceeded by writing 0xD3 to port 60h */
+			at_8042.data = data;
 			break;
 
 		case 4:
-			at_8042.operation_write_state=0;
-			at_8042.data=data;
+			/* preceeded by writing 0xD4 to port 60h */
+			at_8042.data = data;
+			break;
+
+		case 5:
+			/* preceeded by writing 0x60 to port 60h */
+			at_8042.command = data;
 			break;
 		}
+		at_8042.operation_write_state = 0;
 		break;
 
 	case 1:
@@ -442,6 +450,13 @@ WRITE_HANDLER(at_8042_8_w)
 
 		/* switch based on the command */
 		switch(data) {
+		case 0x20:	/* current 8042 command byte is placed on port 60h */
+			at_8042.data = at_8042.command;
+			break;
+		case 0x60:	/* next data byte is placed in 8042 command byte */
+			at_8042.operation_write_state = 5;
+			at_8042.send_to_mouse = 0;
+			break;
 		case 0xa7:	/* disable auxilary interface */
 			at_8042.mouse.on = 0;
 			break;
@@ -475,18 +490,29 @@ WRITE_HANDLER(at_8042_8_w)
 		case 0xd0:	/* read output port */
 			at_8042_receive(at_8042.outport);
 			break;
-		case 0xd1:	/* write output port */
-			at_8042.operation_write_state=1;
+		case 0xd1:
+			/* write output port; next byte written to port 60h is placed on
+			 * 8042 output port */
+			at_8042.operation_write_state = 1;
 			break;
-		case 0xd2:	/* write keyboard output register */
+		case 0xd2:
+			/* write keyboard output register; on PS/2 systems next port 60h
+			 * write is written to port 60h output register as if initiated
+			 * by a device; invokes interrupt if enabled */
 			at_8042.operation_write_state = 2;
 			at_8042.send_to_mouse = 0;
 			break;
-		case 0xd3:	/* write auxillary output register */
+		case 0xd3:
+			/* write auxillary output register; on PS/2 systems next port 60h
+			 * write is written to port 60h input register as if initiated
+			 * by a device; invokes interrupt if enabled */
 			at_8042.operation_write_state = 3;
 			at_8042.send_to_mouse = 1;
 			break;
-		case 0xd4:	/* write auxillary device */
+		case 0xd4:
+			/* write auxillary device; on PS/2 systems the next data byte
+			 * written to input register a port at 60h is sent to the
+			 * auxiliary device  */
 			at_8042.operation_write_state = 4;
 			break;
 

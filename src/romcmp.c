@@ -9,12 +9,8 @@
 #	include "macromcmp.h"
 #else
 #ifndef _WIN32
-#   include <dirent.h>
-#   if defined __sgi || (defined __SVR4 && defined __sun)
-#      include <errno.h>
-#   else
-#      include <sys/errno.h>
-#   endif
+#	include <dirent.h>
+#	include <errno.h>
 #else
 #	include "dirent.h"
 #endif

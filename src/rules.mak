@@ -1100,6 +1100,16 @@ else
 CPUDEFS += -DHAS_E132XS=0
 endif
 
+CPU=$(strip $(findstring I960@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i960
+CPUDEFS += -DHAS_I960=1
+CPUOBJS += $(OBJ)/cpu/i960/i960.o
+$(OBJ)/cpu/i960/i960.o: i960.c i960.h
+else
+CPUDEFS += -DHAS_I960=0
+endif
+
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CDDA=1

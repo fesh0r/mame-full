@@ -92,6 +92,7 @@ CPUS+=G65816@
 CPUS+=SPC700@
 CPUS+=E132XS@
 CPUS+=I386@
+CPUS+=I960@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
