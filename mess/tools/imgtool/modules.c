@@ -54,5 +54,6 @@ MODULE(mac)
 MODULE(mess_hd)
 MODULE(rsdos)
 MODULE(ti99)
+MODULE(ti990)
 
 #endif /* MODULES_RECURSIVE */
