@@ -26,6 +26,8 @@ System Driver Changes:
 
 - [MPF1] Changed MPF-1 BIOS set.  [Curt Coder]
 
+- [A7800] Changed Atari 7800 (NTSC) BIOS set. (Thanks to Mitch) [Christopher Stone]
+
 - [PC] Cleanups; code simplified and CGA video slightly faster now.  [Nate
   Woods]
 
