@@ -18,7 +18,9 @@
 #include "window.h"
 #include "rc.h"
 
-
+#ifdef MESS
+#include "messcmds.h"
+#endif
 
 //============================================================
 //	IMPORTS
@@ -924,6 +926,11 @@ int osd_is_key_pressed(int keycode)
 			_getch();
 		return result;
 	}
+
+#ifdef MESS
+	if (win_use_natural_keyboard)
+		return 0;
+#endif
 
 	// otherwise, just return the current keystate
 	if (steadykey)

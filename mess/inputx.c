@@ -533,6 +533,11 @@ void inputx_post(const unicode_char_t *text)
 	inputx_postn(text, len);
 }
 
+void inputx_postc(unicode_char_t ch)
+{
+	inputx_postn(&ch, 1);
+}
+
 void inputx_postn_utf16(const utf16_char_t *text, size_t text_len)
 {
 	size_t len = 0;

@@ -14,6 +14,7 @@ CFLAGS += -DWINUI
 OSOBJS += $(OBJ)/mess/windows/dirio.o	\
 	$(OBJ)/mess/windows/messwin.o		\
 	$(OBJ)/mess/windows/messopts.o		\
+	$(OBJ)/mess/windows/messcmds.o		\
 	$(OBJ)/mess/windows/parallel.o
 endif 
 
