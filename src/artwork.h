@@ -19,6 +19,9 @@
   This structure is a generic structure used to hold both backdrops
   and overlays.
 *********************************************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct artwork_info
 {
@@ -87,6 +90,10 @@ void drawgfx_backdrop(struct osd_bitmap *dest,const struct GfxElement *gfx,
   functions that are overlay-specific
 *********************************************************************/
 int overlay_set_palette (unsigned char *palette, int num_shades);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
