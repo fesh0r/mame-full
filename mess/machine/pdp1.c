@@ -158,6 +158,7 @@ int pdp1_iot(int *io, int md)
 	case 00:
 	{
 		/* Waiting for output to finnish */
+		/* not documented !!! */
 		etime=5;
 		break;
 	}
@@ -166,6 +167,9 @@ int pdp1_iot(int *io, int md)
 	case 01: /* RPA */
 	{
 		/*
+		 * Read Perforated Tape, Alphanumeric
+		 * rpa Address 0001
+		 *
 		 * This instruction reads one line of tape (all eight Channels) and transfers the resulting 8-bit code to
 		 * the Reader Buffer. If bits 5 and 6 of the rpa function are both zero (720001), the contents of the
 		 * Reader Buffer must be transferred to the IO Register by executing the rrb instruction. When the Reader
@@ -202,15 +206,6 @@ int pdp1_iot(int *io, int md)
 		{
 			/* code to IO */
 			*io = reader_buffer;
-			/**io=0;
-			*io|=(reader_buffer&128)<<9;
-			*io|=(reader_buffer&64)<<10;
-			*io|=(reader_buffer&32)<<11;
-			*io|=(reader_buffer&16)<<12;
-			*io|=(reader_buffer&8)<<13;
-			*io|=(reader_buffer&4)<<14;
-			*io|=(reader_buffer&2)<<15;
-			*io|=(reader_buffer&1)<<16;*/
 		}
 		break;
 	}
@@ -283,17 +278,36 @@ int pdp1_iot(int *io, int md)
 
 	/* perforated tape punch */
 	case 05: /* PPA */
-	{
+	{	/*
+		 * Punch Perforated Tape, Alphanumeric
+		 * ppa Address 0005
+		 *
+		 * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
+		 * Bit 17 conditions Hole 1. Bit 16 conditions Hole 2, etc. Bit 10 conditions Hole 8
+		 */
+		tape_write(*io & 0377);
+		etime=5;
 		break;
 	}
-	case 06: /* PPA */
-	{
+	case 06: /* PPB */
+	{	/*
+		 * Punch Perforated Tape, Binary
+		 * ppb Addres 0006 
+		 *
+		 * For each In-Out Transfer instruction one line of tape is punched. In-Out Register
+		 * Bit 5 conditions Hole 1. Bit 4 conditions Hole 2, etc. Bit 0 conditions Hole 6.
+		 * Hole 7 is left blank. Hole 8 is always punched in this mode. 
+		 */
+		tape_write((*io >> 12) | 0200);
+		etime=5;
 		break;
 	}
 
 	/* alphanumeric on-line typewriter */
 	case 03: /* TYO */
 	{
+		logerror("typewriter output %o\n", (*io) & 077);
+		etime=5;
 		break;
 	}
 	case 04: /* TYI */
