@@ -183,7 +183,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 			if (dev->type == devtype)
 			{
 				id = allocated_slots[dev - Machine->devices];
-				if (id < MAX_DEV_INSTANCES)
+				if (id < dev->count)
 				{
 					result = INIT_PASS;
 					if (image_name)
