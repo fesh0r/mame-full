@@ -154,22 +154,38 @@ Other references can be found on spies.com:
 
 #endif
 
-#define DUMMY_EVAL(a) a
-#define TMS99XX_PREFIXED_NAME(suffix) DUMMY_EVAL(TMS99XX_PREFIX)##suffix
+/*
+	Now for some preprocessor wizardry.
+*/
+#define concat2(a,b) a##b
 
-#define TMS99XX_ICOUNT TMS99XX_PREFIXED_NAME(_ICount)
-#define TMS99XX_INIT TMS99XX_PREFIXED_NAME(_init)
-#define TMS99XX_RESET TMS99XX_PREFIXED_NAME(_reset)
-#define TMS99XX_EXIT TMS99XX_PREFIXED_NAME(_exit)
-#define TMS99XX_EXECUTE TMS99XX_PREFIXED_NAME(_execute)
-#define TMS99XX_GET_CONTEXT TMS99XX_PREFIXED_NAME(_get_context)
-#define TMS99XX_SET_CONTEXT TMS99XX_PREFIXED_NAME(_set_context)
-#define TMS99XX_GET_REG TMS99XX_PREFIXED_NAME(_get_reg)
-#define TMS99XX_SET_REG TMS99XX_PREFIXED_NAME(_set_reg)
-#define TMS99XX_SET_IRQ_CALLBACK TMS99XX_PREFIXED_NAME(_set_irq_callback)
-#define TMS99XX_INFO TMS99XX_PREFIXED_NAME(_info)
-#define TMS99XX_DASM TMS99XX_PREFIXED_NAME(_dasm)
-#define TMS99XX_RESET_PARAM TMS99XX_PREFIXED_NAME(reset_param)
+#define ICOUNT(prefix)				concat2(prefix,_ICount)
+#define INIT(prefix)				concat2(prefix,_init)
+#define RESET(prefix)				concat2(prefix,_reset)
+#define EXIT(prefix)				concat2(prefix,_exit)
+#define EXECUTE(prefix)				concat2(prefix,_execute)
+#define GET_CONTEXT(prefix)			concat2(prefix,_get_context)
+#define SET_CONTEXT(prefix)			concat2(prefix,_set_context)
+#define GET_REG(prefix)				concat2(prefix,_get_reg)
+#define SET_REG(prefix)				concat2(prefix,_set_reg)
+#define SET_IRQ_CALLBACK(prefix)	concat2(prefix,_set_irq_callback)
+#define INFO(prefix)				concat2(prefix,_info)
+#define DASM(prefix)				concat2(prefix,_dasm)
+#define RESET_PARAM(prefix)			concat2(prefix,reset_param)
+
+#define TMS99XX_ICOUNT				ICOUNT(TMS99XX_PREFIX)
+#define TMS99XX_INIT				INIT(TMS99XX_PREFIX)
+#define TMS99XX_RESET				RESET(TMS99XX_PREFIX)
+#define TMS99XX_EXIT				EXIT(TMS99XX_PREFIX)
+#define TMS99XX_EXECUTE				EXECUTE(TMS99XX_PREFIX)
+#define TMS99XX_GET_CONTEXT			GET_CONTEXT(TMS99XX_PREFIX)
+#define TMS99XX_SET_CONTEXT			SET_CONTEXT(TMS99XX_PREFIX)
+#define TMS99XX_GET_REG				GET_REG(TMS99XX_PREFIX)
+#define TMS99XX_SET_REG				SET_REG(TMS99XX_PREFIX)
+#define TMS99XX_SET_IRQ_CALLBACK	SET_IRQ_CALLBACK(TMS99XX_PREFIX)
+#define TMS99XX_INFO				INFO(TMS99XX_PREFIX)
+#define TMS99XX_DASM				DASM(TMS99XX_PREFIX)
+#define TMS99XX_RESET_PARAM			RESET_PARAM(TMS99XX_PREFIX)
 
 
 
