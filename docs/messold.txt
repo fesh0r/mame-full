@@ -1866,15 +1866,15 @@ Source:
 
 
 ----------------------------------------------------------
-0.01
+0.1
 
 First version, based upon MAME 0.31 source
 
 New drivers supported (in no particular order):
 -----------------------------------------------
 
-Colecovision [?]
-NES [Brad Oliver?]
+Colecovision [Mike Balfour]
+NES [Brad Oliver]
 TRS-80 [Jurgen Buchmueller]
 Colour Genie [Juergen Buchmueller]
-Genesis [?]
+Genesis [Gareth Long]
