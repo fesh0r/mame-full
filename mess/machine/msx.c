@@ -21,7 +21,7 @@
 #include "sndhrdw/scc.h"
 #include "formats/fmsx_cas.h"
 #include "printer.h"
-#include "mess/utils.h"
+#include "utils.h"
 
 MSX msx1;
 static void msx_set_all_mem_banks (void);

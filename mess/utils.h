@@ -50,16 +50,27 @@ int strncmpi(const char *dst, const char *src, size_t n);
 
 #ifdef WIN32
 inline const char *basename(const char *name)
-{
-	const char *s = name;
-	const char *result = name;
+	{
+	int len = strlen (name);
 
-	for (s = name; *s; s++) {
-		if ((*s == '\\') || (*s == '/'))
-			result = s + 1;
+	while (len-- >= 0)
+		{
+		if ((name[len] == '\\') || (name[len] == '/'))
+			return name + len + 1;
+		}
+
+	return name;
 	}
-	return result;
-}
+#endif
+
+#ifdef UNIX
+inline const char *basename (const char *name)
+	{
+	const char *p;
+
+	p = strrchr (name, '/');
+	return (p == NULL ? name : p);
+	}
 #endif
 
 #endif /* UTILS_H */
