@@ -18,6 +18,7 @@ static unsigned char *video_mem;
 static unsigned char *doublebuffer_buffer = NULL;
 static int use_linear = 1;
 static vga_modeinfo video_modeinfo;
+static int video_mode = -1;
 
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -55,7 +56,7 @@ void sysdep_display_exit(void)
 int sysdep_display_driver_open(int reopen)
 {
 	int i;
-	int video_mode = -1;
+	int best_mode = -1;
 	int score, best_score = 0;
 	int depth, bpp;
 	vga_modeinfo *my_modeinfo;
@@ -102,7 +103,7 @@ int sysdep_display_driver_open(int reopen)
 		if (score > best_score)
 		{
 			best_score = score;
-			video_mode = i;
+			best_mode = i;
 			video_modeinfo = *my_modeinfo;
 		}
 		/* also determine the max size of the display */
@@ -123,6 +124,13 @@ int sysdep_display_driver_open(int reopen)
 		fprintf(stderr, "Svgalib: Couldn't find a suitable mode\n");
 		return 1;
 	}
+
+	mode_set_aspect_ratio((double)(video_modeinfo.width)/video_modeinfo.height);
+        scaled_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
+        scaled_height = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
+          sysdep_display_params.height * sysdep_display_params.heightscale;
+	startx = ((video_modeinfo.width  - scaled_width ) / 2) & ~7;
+	starty =  (video_modeinfo.height - scaled_height) / 2;
 
 	fprintf(stderr, "Using videomode %dx%dx%d, starting at %dx%d\n",
 			video_modeinfo.width, video_modeinfo.height, video_modeinfo.colors,
@@ -167,14 +175,11 @@ int sysdep_display_driver_open(int reopen)
 		return 1;
 	}
 
-	mode_set_aspect_ratio((double)(video_modeinfo.width)/video_modeinfo.height);
-        scaled_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
-        scaled_height = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
-          sysdep_display_params.height * sysdep_display_params.heightscale;
-	startx = ((video_modeinfo.width  - scaled_width ) / 2) & ~7;
-	starty =  (video_modeinfo.height - scaled_height) / 2;
-
-	vga_setmode(video_mode);
+	if(best_mode != video_mode)
+	{
+	  vga_setmode(best_mode);
+	  video_mode = best_mode;
+        }
 
 	/* do we have a linear framebuffer ? */
 	i = video_modeinfo.width * video_modeinfo.height *
@@ -192,7 +197,7 @@ int sysdep_display_driver_open(int reopen)
 	}
 	else /* use gl funcs todo the updating */
 	{
-	  gl_setcontextvga(video_mode);
+	  gl_setcontextvga(best_mode);
           /* do we need to blit to a doublebuffer buffer because using
              effects, scaling etc. */
 	  if (!sysdep_display_blit_dest_bitmap_equals_src_bitmap())
@@ -229,7 +234,11 @@ void sysdep_display_close(void)
 	svga_input_close();
 
 	/* close svgalib */
-	vga_setmode(TEXT);
+	if (video_mode != -1)
+	{
+	  vga_setmode(TEXT);
+	  video_mode = -1;
+        }
 
 	/* and don't forget to free our other resources */
 	if (doublebuffer_buffer)
