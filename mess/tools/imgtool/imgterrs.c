@@ -18,6 +18,8 @@ static const char *msgs[] =
 	"Write error",
 	"Image is read only",
 	"Corrupt image",
+	"Corrupt file",
+	"Corrupt directory",
 	"File not found",
 	"Unrecognized format",
 	"Not implemented",

@@ -24,6 +24,13 @@
 		<entry name="BAR.TXT" size="7"/>
 	</checkdirectory>
 	<checkfile name="FOO.TXT"/>
+	<checkfile name="BAR.TXT">'Dingus!'</checkfile>
+
+	<deletefile name="BAR.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
 </imgtooltest>
 
 </tests>

@@ -746,6 +746,20 @@ static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file
 
 
 
+static imgtoolerr_t fat_corrupt_file_error(const struct fat_file *file)
+{
+	imgtoolerr_t err;
+	if (file->root)
+		err = IMGTOOLERR_CORRUPTIMAGE;
+	else if (file->directory)
+		err = IMGTOOLERR_CORRUPTDIR;
+	else
+		err = IMGTOOLERR_CORRUPTFILE;
+	return err;
+}
+
+
+
 static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *file,
 	void *buffer, size_t buffer_len, size_t *bytes_read, int read_or_write)
 {
@@ -765,7 +779,7 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 	{
 		sector_index = fat_get_filepos_sector_index(image, file);
 		if (sector_index == 0)
-			return IMGTOOLERR_CORRUPTIMAGE;
+			return fat_corrupt_file_error(file);
 
 		offset = file->index % disk_info->sector_size;
 		len = MIN(buffer_len, disk_info->sector_size - offset);
@@ -830,6 +844,7 @@ static UINT32 fat_allocate_cluster(imgtool_image *image, UINT8 *fat_table)
 
 
 
+/* sets the size of a file; 0xFFFFFFFF means 'delete' */
 static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *file,
 	UINT32 new_size)
 {
@@ -837,14 +852,22 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	const struct fat_diskinfo *disk_info;
 	UINT32 new_cluster_count;
 	UINT32 old_cluster_count;
-	UINT32 cluster, new_cluster, pos;
+	UINT32 cluster, write_cluster, last_cluster, pos, i;
 	UINT8 *fat_table = NULL;
 	UINT8 dirent[32];
+	int delete_file = FALSE;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
+	/* special case */
+	if (new_size == 0xFFFFFFFF)
+	{
+		delete_file = TRUE;
+		new_size = 0;
+	}
+	
 	/* if this is the trivial case (not changing the size), succeed */
-	if (file->filesize == new_size)
+	if (!delete_file && (file->filesize == new_size))
 	{
 		err = IMGTOOLERR_SUCCESS;
 		goto done;
@@ -861,7 +884,6 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	}
 	else
 	{
-		/* TODO: need to implement setting the file size */
 		old_cluster_count = (file->filesize + disk_info->cluster_size - 1) / disk_info->cluster_size;
 		new_cluster_count = (new_size + disk_info->cluster_size - 1) / disk_info->cluster_size;
 		cluster = 0;
@@ -877,45 +899,60 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 			err = fat_load_fat(image, &fat_table);
 			if (err)
 				goto done;
-		}
 
-		if (old_cluster_count < new_cluster_count)
-		{
-			/* grow the file (TODO: This only works if the size is zero) */
+			cluster = 0;
+			i = 0;
 			do
 			{
-				new_cluster = fat_allocate_cluster(image, fat_table);
-				if (new_cluster == 0)
-				{
-					err = IMGTOOLERR_NOSPACE;
-					goto done;
-				}
+				last_cluster = cluster;
+				write_cluster = 0;
 
-				if (cluster == 0)
-				{
-					place_integer(dirent, 26, 2, new_cluster);
-					file->first_cluster = new_cluster;
-				}
+				/* identify the next cluster */
+				if (cluster != 0)
+					cluster = fat_get_fat_entry(image, fat_table, cluster);
 				else
+					cluster = file->first_cluster ? file->first_cluster : 0xFFFFFFFF;
+
+				/* do we need to grow the file by a cluster? */
+				if (i < new_cluster_count && ((cluster < 2) || (cluster >= disk_info->total_clusters)))
 				{
-					fat_set_fat_entry(image, fat_table, cluster, new_cluster);
+					/* grow this file by a cluster */
+					cluster = fat_allocate_cluster(image, fat_table);
+					if (cluster == 0)
+					{
+						err = IMGTOOLERR_NOSPACE;
+						goto done;
+					}
+					
+					write_cluster = cluster;
+				}
+				else if ((i >= new_cluster_count) && (cluster != 0xFFFFFFFF))
+				{
+					/* we are shrinking the file; we need to unlink this node */
+					if ((cluster < 2) || (cluster < disk_info->total_clusters))
+						cluster = 0xFFFFFFFF; /* ack file is corrupt! recover */
+					write_cluster = 0xFFFFFFFF;
 				}
 
-				cluster = new_cluster;
-				old_cluster_count++;
+				/* write out the entry, if appropriate */
+				if (write_cluster != 0)
+				{
+					if (last_cluster == 0)
+						file->first_cluster = write_cluster;
+					else
+						fat_set_fat_entry(image, fat_table, last_cluster, write_cluster);
+				}
 			}
-			while(old_cluster_count < new_cluster_count);
-
-			fat_set_fat_entry(image, fat_table, cluster, 0xFFFFFFFF);
-		}
-		else if (old_cluster_count > new_cluster_count)
-		{
-			err = IMGTOOLERR_UNIMPLEMENTED;
-			goto done;
+			while((++i < new_cluster_count) || (cluster != 0xFFFFFFFF));
 		}
 
 		/* record the new file size */
+		place_integer(dirent, 26, 2, file->first_cluster);
 		place_integer(dirent, 28, 4, new_size);
+
+		/* delete the file, if appropriate */
+		if (delete_file)
+			dirent[0] = 0xE5;
 
 		/* save the dirent */
 		err = fat_write_sector(image, file->dirent_sector_index, file->dirent_sector_offset, dirent, sizeof(dirent));
@@ -1513,6 +1550,24 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 
 
 
+static imgtoolerr_t fat_diskimage_deletefile(imgtool_image *image, const char *filename)
+{
+	imgtoolerr_t err;
+	struct fat_file file;
+
+	err = fat_lookup_path(image, filename, CREATE_NONE, &file);
+	if (err)
+		return err;
+
+	err = fat_set_file_size(image, &file, 0xFFFFFFFF);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t fat_diskimage_freespace(imgtool_image *image, UINT64 *size)
 {
 	imgtoolerr_t err;
@@ -1560,6 +1615,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
 	module->write_file					= fat_diskimage_writefile;
+	module->delete_file					= fat_diskimage_deletefile;
 	module->free_space					= fat_diskimage_freespace;
 	return IMGTOOLERR_SUCCESS;
 }
