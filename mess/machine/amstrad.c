@@ -21,7 +21,7 @@ rom/ram selection
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/m6845.h"
-#include "machine/amstrad.h"
+#include "includes/amstrad.h"
 //#include "systems/i8255.h"
 #include "machine/8255ppi.h"
 #include "includes/nec765.h"
