@@ -13,10 +13,17 @@ main.c, roms.h, comp.h messroms tool
 dumppc.c, dumppc.txt, dumppc.exe msdos utility for dumping pc rom area 
  (also binary, because with djgpp you can't create a 8086 based pure msdos utility)
 read6530.c contains the info for dumping mos rriot 6530
+rddil24.c contains the info for dumping mos rom6332 or similar 24 pin roms
 read6332.c contains the info for dumping mos rom 6332
+rddil32.c this is more a bugfix for my eprommer software
 
 cbm.txt info for dumping, saving, transfering commodore computers and devices
 c64savec.prg program to copy c64 character to basic area for later saving
+
+svision.txt info for building an adapter for supervision cartridge to
+			27c4001 eprom pinout
+
+cvhp48.c conversion utility for hp48 ascii/romdump dumps into binary
 
 messroms utility
 ----------------
@@ -44,10 +51,23 @@ I will give only a few tips for special chips:
 Always use the romcmp utility to identify bad dumps.
 Dump several times, and compare if the dumped data is the same.
 
+Weak dumps: had different dumps with watara supervision cartridges
+ when oe, ce was not switched when reading
+
 MOS6332: rom 4 kbyte 8bit, DIL 24 package
  for pinout look into mess/messroms/read6332.c
  to allow dumping as 2732 build an adapter exchanging pin 18 and 20
  
+Signetics C19081, C19082 (24 pin dil) look into rd24dil.c
+
+EPROM DIL 32 PIN:
+ dumping as 278001 should be save
+
+rom/eprom in epoxy:
+ often you can see the wire into the epoxy.
+ These are in the same ordering as the pinout of the chip
+ (helped finding out watara super vision cartridge pinout)
+
 MOS6530: rom, ram, input, output timer
  difficult to read
  look into mess/messroms/read6530.c
@@ -55,9 +75,6 @@ MOS6530: rom, ram, input, output timer
  you have to identify the rom, ram, io area in the usually 8kbyte dumped data
  ram 64 bytes 0xff, io 16 bytes misc data, rom 1kbyte, 
  unused depends on your hardware in mine 0
-
-EPROM DIL 32 PIN:
- dumping as 278001 should be save
 
 PIC1655
  info at www.microchip.com: technical reference manual and programming reference manual
@@ -112,6 +129,12 @@ Sharp Pocket Computer
 look into src/cpu/sc61860/readpc.c
 Internal rom only accessible in machine language
 
+HP48S/SX/G/GX
+-------------
+In some emulators (x48) you can find instructions and a tool for 
+transmitting the rom to a computer with 
+rs232 (9600 8N1 with kermit? protocoll).
+cvhp48.c converts this dump into a binary.
 
 Transfering data to another computer
 ------------------------------------
