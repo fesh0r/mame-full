@@ -601,7 +601,7 @@ static struct MachineDriver machine_driver_coco3 =
 	}
 };
 
-static struct MachineDriver machine_driver_coco36309 =
+static struct MachineDriver machine_driver_coco3h =
 {
 	/* basic machine hardware */
 	{
@@ -678,7 +678,7 @@ ROM_START(cp400)
      ROM_LOAD("cp400dsk.rom",  0x14000, 0x2000, 0xe9ad60a0)
 ROM_END
 
-#define rom_coco36309	rom_coco3
+#define rom_coco3h	rom_coco3
 
 #define IO_FLOPPY_COCO \
 	{\
@@ -748,11 +748,11 @@ static const struct IODevice io_coco3[] = {
     { IO_END }
 };
 
-#define io_coco36309 io_coco3
+#define io_coco3h io_coco3
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
 COMP(  1982, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer" )
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  "Prologica",          "Prologica CP400" )
-COMPX( 19??, coco36309, coco3, 	coco36309, coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (6309)", GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED)
+COMPX( 19??, coco3h, coco3, 	coco3h, coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (6309)", GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED)
