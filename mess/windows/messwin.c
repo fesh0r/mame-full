@@ -8,9 +8,12 @@ needs it ;-)
 #include "messwin.h"
 #include <ctype.h>
 #include <dirent.h>
+
+#ifndef UNDER_CE
 #include <sys/stat.h>
 #include <dos.h>
 #include <unistd.h>
+#endif /* UNDER_CE */
 
 /* fronthlp functions */
 extern int strwildcmp(const char *sp1, const char *sp2);

@@ -1,9 +1,12 @@
 //#include "mamalleg.h"
 #include "driver.h"
 #include "unzip.h"
-#include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+
+#ifndef _MSC_VER
+#include <sys/stat.h>
+#endif
 
 /* Verbose outputs to error.log ? */
 #define VERBOSE 	0

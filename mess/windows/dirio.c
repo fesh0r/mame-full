@@ -12,7 +12,7 @@
 
 typedef struct {
 	HANDLE hDir;
-	WIN32_FIND_DATAA finddata;
+	WIN32_FIND_DATA finddata;
 	BOOL bDone;
 } OSD_WIN32_FIND_DATA;
 
@@ -20,14 +20,20 @@ static char szCurrentDirectory[MAX_PATH];
 
 static void checkinit_curdir(void)
 {
-	const char *p;
-
 	if (szCurrentDirectory[0] == '\0') {
+#ifdef UNDER_CE
+		WCHAR szBuffer[MAX_PATH];
+		GetModuleFileName(NULL, szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]));
+		wcsrchr(szBuffer, '\\')[1] = '\0';
+		_snprintf(szCurrentDirectory, sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]), "%S", szBuffer);
+#else
+		const char *p;
 		GetCurrentDirectoryA(sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]), szCurrentDirectory);
 		/* Make sure there is a trailing backslash */
 		p = strrchr(szCurrentDirectory, '\\');
 		if (!p || p[1])
 			strncatz(szCurrentDirectory, "\\", sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
+#endif
 	}
 }
 
@@ -94,6 +100,17 @@ const char *resolve_path(const char *path, char *buf, size_t buflen)
 	return buf;
 }
 
+#ifdef UNDER_CE
+int osd_num_devices(void)
+{
+	return 1;
+}
+
+const char *osd_get_device_name(int idx)
+{
+	return "\\";
+}
+#else
 int osd_num_devices(void)
 {
 	char szBuffer[128];
@@ -121,6 +138,7 @@ const char *osd_get_device_name(int idx)
 
 	return p;
 }
+#endif
 
 void *osd_dir_open(const char *dirname, const char *filemask)
 {
@@ -146,7 +164,7 @@ void *osd_dir_open(const char *dirname, const char *filemask)
 	s[0] = '\\';
 	strcpy(s + 1, filemask);
 
-	pfd->hDir = FindFirstFileA(tmpbuf, &pfd->finddata);
+	pfd->hDir = FindFirstFile(tmpbuf, &pfd->finddata);
 	if (pfd->hDir == INVALID_HANDLE_VALUE)
 		goto error;
 
@@ -172,14 +190,23 @@ int osd_dir_get_entry(void *dir, char *name, int namelength, int *is_dir)
 		result = 0;
 	}
 	else {
-		if (name)
+		if (name) {
+#ifdef UNICODE
+			_snprintf(name, namelength, "%S", pfd->finddata.cFileName);
+#else
 			strncpyz(name, pfd->finddata.cFileName, namelength);
+#endif
+		}
+#ifdef UNICODE
+		result = wcslen(pfd->finddata.cFileName);
+#else
 		result = strlen(pfd->finddata.cFileName);
+#endif
 
 		if (is_dir)
 			*is_dir = (pfd->finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ? 1 : 0;
 
-		pfd->bDone = FindNextFileA(pfd->hDir, &pfd->finddata) == 0;
+		pfd->bDone = FindNextFile(pfd->hDir, &pfd->finddata) == 0;
 	}
 	return result;
 }
