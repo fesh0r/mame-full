@@ -27,11 +27,14 @@ VPATH=src $(wildcard src/cpu/*)
 # compiler, linker and utilities
 AR = @ar
 CC = @gcc
-LD = gcc
+LD = @gcc
 #ASM = @nasm
 ASM = @nasmw
 ASMFLAGS = -f coff
 
+ifdef DEBUG
+NAME = $(TARGET)d
+else
 ifdef K6
 NAME = $(TARGET)k6
 ARCH = -march=k6
@@ -42,6 +45,7 @@ ARCH = -march=pentiumpro
 else
 NAME = $(TARGET)
 ARCH = -march=pentium
+endif
 endif
 endif
 
@@ -224,6 +228,7 @@ ifdef MESS
 	@md $(OBJ)\mess\sndhrdw
 	@md $(OBJ)\mess\tools
 	@md $(OBJ)\mess\formats
+	@md $(OBJ)\mess\msdos
 endif
 
 clean:
@@ -261,4 +266,5 @@ cleandebug:
 	@del $(OBJ)\cpu\mips\*.o
 	@del $(OBJ)\cpu\arm\*.o
 	@del $(EMULATOR)
+
 
