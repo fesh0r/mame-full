@@ -88,13 +88,6 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 } /* end of table */
 };
 
-static struct IOWritePort writeport[] =
-{
-	{ Z80_HALT_PORT, Z80_HALT_PORT+1, MWA_NOP },	/* HALT ports */
-	{ -1 }	/* end of table */
-};
-
-
 INPUT_PORTS_START( suprloco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -212,7 +205,7 @@ static struct MachineDriver machine_driver_suprloco =
 		{
 			CPU_Z80,
 			4000000,	/* 4 MHz (?) */
-			readmem,writemem,0,writeport,
+			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
