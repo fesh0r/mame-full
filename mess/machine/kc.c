@@ -39,6 +39,31 @@ bit 0: TRUCK */
 
 
 /* load image */
+void kc_dump_ram(void)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, "kcram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+ 
+	if (file)
+	{
+		int i;
+		for (i=0; i<65536; i++)
+		{
+			char data;
+
+			data = kc85_ram[i];
+		
+			osd_fwrite(file, &data, 1);
+
+		}
+
+		/* close file */
+		osd_fclose(file);
+	}
+}
+
+/* load image */
 int kc_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
@@ -116,7 +141,7 @@ int kc_quickload_load(int id)
 
 		for (i=0; i<datasize; i++)
 		{
-			cpu_writemem16(addr+i, data[i+128]);
+			kc85_ram[(addr+i) & 0x0ffff] = data[i+128];
 		}
 			
 		return INIT_OK;
@@ -299,7 +324,7 @@ static void	kc_cassette_set_motor(int motor_state)
 /* The basic transmit proceedure is working, keys are received */
 /* Todo: Key-repeat, and allowing the same key to be pressed twice! */
 
-//#define KC_KEYBOARD_DEBUG
+#define KC_KEYBOARD_DEBUG
 
 /*
 
@@ -543,6 +568,73 @@ triggers the time measurement by the CTC channel 3." */
 03e5  c8        ret     z
 03e6  a7        and     a
 03e7  c9        ret     
+
+
+  Keyboard reading procedure extracted from KC85/3 rom:
+
+
+019a  f5        push    af
+019b  db8f      in      a,(#8f)
+019d  f5        push    af
+019e  3ea7      ld      a,#a7
+01a0  d38f      out     (#8f),a
+01a2  3e8f      ld      a,#8f
+01a4  d38f      out     (#8f),a
+01a6  f1        pop     af
+01a7  ddcb085e  bit     3,(ix+#08)
+01ab  ddcb089e  res     3,(ix+#08)
+01af  2055      jr      nz,#0206        ; (85)
+
+01b1  fe65      cp      #65				
+01b3  3054      jr      nc,#0209        
+
+
+	;; count>=#65 = 0 bit
+	;; #44<=count<#65 = 1 bit 
+	;; count<#44 = end of code
+
+01b5  fe44      cp      #44
+01b7  3053      jr      nc,#020c       
+01b9  e5        push    hl
+01ba  d5        push    de
+01bb  ddcb0c3e  srl     (ix+#0c)
+01bf  dd7e08    ld      a,(ix+#08)
+01c2  e680      and     #80
+01c4  07        rlca    
+01c5  ddae0c    xor     (ix+#0c)
+01c8  2600      ld      h,#00
+01ca  dd5e0e    ld      e,(ix+#0e)
+01cd  dd560f    ld      d,(ix+#0f)
+01d0  6f        ld      l,a
+01d1  19        add     hl,de
+01d2  7e        ld      a,(hl)
+01d3  d1        pop     de
+01d4  e1        pop     hl
+01d5  ddbe0d    cp      (ix+#0d)
+01d8  2811      jr      z,#01eb         ; (17)
+01da  dd770d    ld      (ix+#0d),a
+01dd  ddcb08a6  res     4,(ix+#08)
+01e1  ddcb08c6  set     0,(ix+#08)
+01e5  dd360a00  ld      (ix+#0a),#00
+01e9  181b      jr      #0206           ; (27)
+01eb  dd340a    inc     (ix+#0a)
+01ee  ddcb0866  bit     4,(ix+#08)
+01f2  200c      jr      nz,#0200        ; (12)
+01f4  ddcb0a66  bit     4,(ix+#0a)
+01f8  280c      jr      z,#0206         ; (12)
+01fa  ddcb08e6  set     4,(ix+#08)
+01fe  18e1      jr      #01e1           ; (-31)
+0200  ddcb0a4e  bit     1,(ix+#0a)
+0204  20db      jr      nz,#01e1        ; (-37)
+0206  f1        pop     af
+0207  ed4d      reti    
+0209  b7        or      a
+020a  1801      jr      #020d           ; (1)
+020c  37        scf     
+020d  ddcb0c1e  rr      (ix+#0c)
+0211  18f3      jr      #0206           ; (-13)
+
+
 */
 
 /* number of keycodes that can be stored in queue */
@@ -858,6 +950,11 @@ static void	kc_keyboard_update(int dummy)
 	}
 
 	kc_keyboard_attempt_transmit();
+
+	if (readinputport(0))
+	{
+		kc_dump_ram();
+	}
 }
 
 /*********************************************************************/
@@ -1572,15 +1669,33 @@ static z80pio_interface kc85_pio_intf =
 	{ kc85_pio_brdy_callback }	/* portB ready active callback */
 };
 
+/* used in cassette write -> K0 */
+static WRITE_HANDLER(kc85_zc0_callback)
+{
+
+}
+
+/* used in cassette write -> K1 */
+static WRITE_HANDLER(kc85_zc1_callback)
+{
+
+}
+
+/* video blink */
+static WRITE_HANDLER(kc85_zc2_callback)
+{
+
+}
+
 static z80ctc_interface	kc85_ctc_intf =
 {
 	1,
 	{1379310.344828},
 	{0},
     {kc85_ctc_interrupt},
-	{0},
-	{0},
-    {0}
+	{kc85_zc0_callback},
+	{kc85_zc1_callback},
+    {kc85_zc2_callback}
 };
 
 static void	kc85_common_init(void)

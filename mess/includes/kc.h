@@ -5,25 +5,23 @@
 
 #define KC85_4_SCREEN_PIXEL_RAM_SIZE 0x04000
 #define KC85_4_SCREEN_COLOUR_RAM_SIZE 0x04000
-#define KC85_4_PALETTE_SIZE 24
-#define KC85_4_SCREEN_WIDTH 320
-#define KC85_4_SCREEN_HEIGHT (32*8)
 
-#define KC85_3_PALETTE_SIZE 24
-#define KC85_3_SCREEN_WIDTH 320
-#define KC85_3_SCREEN_HEIGHT (32*8)
+#define KC85_PALETTE_SIZE 24
+#define KC85_SCREEN_WIDTH 320
+#define KC85_SCREEN_HEIGHT 256
 
 int	kc_quickload_load(int id);
 
 
-void kc85_4_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+void kc85_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+
+
 int kc85_4_vh_start(void);
 void kc85_4_vh_stop(void);
 void kc85_4_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void kc85_4_shutdown_machine(void);
 void kc85_4_init_machine(void);
 
-void kc85_3_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
 int	kc85_3_vh_start(void);
 void kc85_3_vh_stop(void);
 void kc85_3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);

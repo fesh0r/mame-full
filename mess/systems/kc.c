@@ -160,14 +160,14 @@ static struct MachineDriver machine_driver_kc85_4 =
 	kc85_4_init_machine,			   /* init machine */
 	kc85_4_shutdown_machine,
 	/* video hardware */
-	KC85_4_SCREEN_WIDTH,			   /* screen width */
-	KC85_4_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_4_SCREEN_WIDTH - 1), 0, (KC85_4_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
+	KC85_SCREEN_WIDTH,			   /* screen width */
+	KC85_SCREEN_HEIGHT,			   /* screen height */
+	{0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /* graphics decode info */
-	KC85_4_PALETTE_SIZE,								   /* total colours
+	KC85_PALETTE_SIZE,								   /* total colours
 									    */
-	KC85_4_PALETTE_SIZE,								   /* color table len */
-	kc85_4_init_palette,			   /* init palette */
+	KC85_PALETTE_SIZE,								   /* color table len */
+	kc85_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER,				   /* video attributes */
 	0,								   /* MachineLayer */
@@ -215,14 +215,14 @@ static struct MachineDriver machine_driver_kc85_3 =
 	kc85_3_init_machine,			   /* init machine */
 	kc85_3_shutdown_machine,
 	/* video hardware */
-	KC85_3_SCREEN_WIDTH,			   /* screen width */
-	KC85_3_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_3_SCREEN_WIDTH - 1), 0, (KC85_3_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
+	KC85_SCREEN_WIDTH,			   /* screen width */
+	KC85_SCREEN_HEIGHT,			   /* screen height */
+	{0, (KC85_SCREEN_WIDTH - 1), 0, (KC85_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /* graphics decode info */
-	KC85_3_PALETTE_SIZE,								   /* total colours
+	KC85_PALETTE_SIZE,								   /* total colours
 									    */
-	KC85_3_PALETTE_SIZE,								   /* color table len */
-	kc85_3_init_palette,			   /* init palette */
+	KC85_PALETTE_SIZE,								   /* color table len */
+	kc85_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER,				   /* video attributes */
 	0,								   /* MachineLayer */
