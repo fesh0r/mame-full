@@ -270,7 +270,7 @@ static void trojan_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void lwings_mark_sprite_colors()
+static void lwings_mark_sprite_colors(void)
 {
 	int offs;
 	unsigned char *sprite_colors;
@@ -290,7 +290,7 @@ static void lwings_mark_sprite_colors()
 	}
 }
 
-static void trojan_mark_sprite_colors()
+static void trojan_mark_sprite_colors(void)
 {
 	int offs;
 	unsigned char *sprite_colors;
