@@ -576,7 +576,7 @@ COREOBJS += $(OBJ)/mess/machine/dsk.o $(OBJ)/mess/machine/nec765.o
 endif
 
 # additional tools
-TOOLS += transdsk$(EXE) dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
+TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o
 	@echo Linking $@...
@@ -609,12 +609,12 @@ imgtool$(EXE):	     \
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 
-transdsk$(EXE):       \
-      $(TRANSDISK_OBJS) \
-	  $(OBJ)/mess/tools/stubs.o   \
-      $(OBJ)/mess/tools/transdsk/nec765.o   
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ -lz -o $@
+#transdsk$(EXE):       \
+#      $(TRANSDISK_OBJS) \
+#      $(OBJ)/mess/tools/stubs.o   \
+#      $(OBJ)/mess/tools/transdsk/nec765.o   
+#    @echo Linking $@...
+#    $(LD) $(LDFLAGS) $^ -lz -o $@
 
 
 # text files
