@@ -155,6 +155,7 @@ Keyboard interface:
 #include "sndhrdw/spchroms.h"
 #include "machine/99_peb.h"
 #include "cpu/tms9900/tms9900.h"
+#include "devices/cassette.h"
 
 /*
   Memory map - see description above
@@ -464,7 +465,7 @@ SYSTEM_CONFIG_START(ti99_8)
 	/* Hex-bus disk controller: supports up to 4 floppy disk drives */
 	/* expansion port (similar to 99/4(a) - yet slightly different) */
 
-	CONFIG_DEVICE_CASSETTE			(1, "",												device_load_ti99_cassette)
+	CONFIG_DEVICE_CASSETTE			(1, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
 #if 0
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
