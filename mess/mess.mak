@@ -790,7 +790,8 @@ COREOBJS += \
 	$(OBJ)/mess/eventlst.o         \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/mscommon.o         \
-	$(OBJ)/mess/pool.o             \
+	$(OBJ)/mess/pool.o				\
+	$(OBJ)/mess/cheatms.o			\
 	$(OBJ)/mess/opresolv.o			\
 	$(OBJ)/mess/formats/flopimg.o	\
 	$(OBJ)/mess/formats/basicdsk.o	\

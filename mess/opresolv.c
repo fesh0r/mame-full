@@ -214,6 +214,8 @@ option_resolution *option_resolution_create(const struct OptionGuide *guide, con
 			if (lookup_in_specification(specification, guide_entry))
 				option_count++;
 			break;
+		case OPTIONTYPE_ENUM_VALUE:
+			break;
 		default:
 			goto unexpected;
 		}
@@ -246,6 +248,8 @@ option_resolution *option_resolution_create(const struct OptionGuide *guide, con
 		case OPTIONTYPE_STRING:
 			if (lookup_in_specification(specification, guide_entry))
 				resolution->entries[opt++].guide_entry = guide_entry;
+			break;
+		case OPTIONTYPE_ENUM_VALUE:
 			break;
 		default:
 			goto unexpected;

@@ -752,7 +752,6 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 	int err=0;
 	int i;
 	int block = 0;
-	UINT8 *bytes;
 
 /* DUPE BLOCK */
 	/* pointer to the array of unique blocks */
