@@ -271,6 +271,7 @@ int TMS9928A_start (int model, unsigned int vram) {
 	state_save_register_UINT8 ("tms9928a", 0, "read_ahead", &tms.ReadAhead, 1);
 	state_save_register_UINT8 ("tms9928a", 0, "first_byte", &tms.FirstByte, 1);
 	state_save_register_UINT8 ("tms9928a", 0, "latch", &tms.latch, 1);
+	state_save_register_UINT16 ("tms9928a", 0, "vram_latch", (UINT16*)&tms.Addr, 1);
 	state_save_register_UINT8 ("tms9928a", 0, "interrupt_line", &tms.INT, 1);
 	state_save_register_UINT8 ("tms9928a", 0, "VRAM", tms.vMem, vram);
 
