@@ -326,7 +326,6 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
       break;
     }
 
-  /* fixme: these buffers are never free'd */
     if ((effect == EFFECT_SCALE2X) ||
         (effect == EFFECT_HQ2X)    ||
         (effect == EFFECT_LQ2X)) {
@@ -345,14 +344,12 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
   /* I need these buffers regardless of whether the display is rotated or not */
   if (effect == EFFECT_6TAP2X)
     {
-    free(rotate_dbbuf);
     free(rotate_dbbuf0);
     free(rotate_dbbuf1);
     free(rotate_dbbuf2);
     free(rotate_dbbuf3);
     free(rotate_dbbuf4);
     free(rotate_dbbuf5);
-    rotate_dbbuf = calloc(visual_width*4, sizeof(char));
     rotate_dbbuf0 = calloc(visual_width*8, sizeof(char));
     rotate_dbbuf1 = calloc(visual_width*8, sizeof(char));
     rotate_dbbuf2 = calloc(visual_width*8, sizeof(char));
@@ -747,13 +744,16 @@ void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *loo
   UINT8 *u8dest;
   UINT32 i;
   INT32 pixel;
+  char *tmp;
 
   /* first, move the existing lines up by one */
-  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
-  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
-  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
-  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
-  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+  tmp = rotate_dbbuf0;
+  rotate_dbbuf0 = rotate_dbbuf1;
+  rotate_dbbuf1 = rotate_dbbuf2;
+  rotate_dbbuf2 = rotate_dbbuf3;
+  rotate_dbbuf3 = rotate_dbbuf4;
+  rotate_dbbuf4 = rotate_dbbuf5;
+  rotate_dbbuf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
@@ -817,13 +817,16 @@ void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
   UINT8 *u8dest;
   UINT32 i;
   INT32 pixel;
+  char *tmp;
 
   /* first, move the existing lines up by one */
-  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
-  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
-  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
-  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
-  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+  tmp = rotate_dbbuf0;
+  rotate_dbbuf0 = rotate_dbbuf1;
+  rotate_dbbuf1 = rotate_dbbuf2;
+  rotate_dbbuf2 = rotate_dbbuf3;
+  rotate_dbbuf3 = rotate_dbbuf4;
+  rotate_dbbuf4 = rotate_dbbuf5;
+  rotate_dbbuf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
@@ -938,13 +941,16 @@ void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *loo
   UINT8 *u8dest;
   UINT32 i;
   INT32 pixel;
+  char *tmp;
 
   /* first, move the existing lines up by one */
-  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
-  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
-  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
-  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
-  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+  tmp = rotate_dbbuf0;
+  rotate_dbbuf0 = rotate_dbbuf1;
+  rotate_dbbuf1 = rotate_dbbuf2;
+  rotate_dbbuf2 = rotate_dbbuf3;
+  rotate_dbbuf3 = rotate_dbbuf4;
+  rotate_dbbuf4 = rotate_dbbuf5;
+  rotate_dbbuf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
@@ -1010,13 +1016,16 @@ void effect_6tap_addline_16_16_direct(const void *src0, unsigned count)
   UINT8 *u8dest;
   UINT32 i;
   INT32 pixel;
+  char *tmp;
 
   /* first, move the existing lines up by one */
-  memcpy(rotate_dbbuf0, rotate_dbbuf1, count << 3);
-  memcpy(rotate_dbbuf1, rotate_dbbuf2, count << 3);
-  memcpy(rotate_dbbuf2, rotate_dbbuf3, count << 3);
-  memcpy(rotate_dbbuf3, rotate_dbbuf4, count << 3);
-  memcpy(rotate_dbbuf4, rotate_dbbuf5, count << 3);
+  tmp = rotate_dbbuf0;
+  rotate_dbbuf0 = rotate_dbbuf1;
+  rotate_dbbuf1 = rotate_dbbuf2;
+  rotate_dbbuf2 = rotate_dbbuf3;
+  rotate_dbbuf3 = rotate_dbbuf4;
+  rotate_dbbuf4 = rotate_dbbuf5;
+  rotate_dbbuf5 = tmp;
 
   /* if there's no new line, clear the last one and return */
   if (!src0)
@@ -1423,7 +1432,6 @@ void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned
   UINT32 *u32lookup = (UINT32 *)lookup;
   UINT32 r,g,b,y,u,v,y2,u2,v2,s;
   INT32 us,vs;
-  UINT16 t, t2;
 
   s = 1;
   while (count) {
@@ -7029,7 +7037,6 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
   int    pattern = 0;
   int    flag    = 1;
   int    c;
-  int    r1, g1, b1, r2, g2, b2;
   int    yuv1,yuv2;
 
   yuv1 = w[4];
@@ -9469,7 +9476,7 @@ void effect_hq2x_16_YUY2
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
   UINT32 *u32lookup = (UINT32 *)lookup;
-  INT32 r,g,b,r2,g2,b2,y,y2,u,v;
+  INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
 
@@ -9550,7 +9557,7 @@ void effect_hq2x_32_YUY2_direct
   UINT32 *u32src0 = (UINT32 *)src0;
   UINT32 *u32src1 = (UINT32 *)src1;
   UINT32 *u32src2 = (UINT32 *)src2;
-  INT32 c,r,g,b,r2,g2,b2,y,y2,u,v;
+  INT32 r,g,b,y,y2,u,v;
   UINT32 p1[2],p2[2];
   UINT32 w[9];
 
@@ -12609,7 +12616,7 @@ void effect_lq2x_16_YUY2
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
   UINT32 *u32lookup = (UINT32 *)lookup;
-  INT32 r,g,b,r2,g2,b2,y,y2,u,v;
+  INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
 
@@ -12690,7 +12697,7 @@ void effect_lq2x_32_YUY2_direct
   UINT32 *u32src0 = (UINT32 *)src0;
   UINT32 *u32src1 = (UINT32 *)src1;
   UINT32 *u32src2 = (UINT32 *)src2;
-  INT32 c,r,g,b,r2,g2,b2,y,y2,u,v;
+  INT32 r,g,b,y,y2,u,v;
   UINT32 p1[2],p2[2];
   UINT32 w[9];
 
