@@ -258,7 +258,7 @@ void osd_change_directory(const char *dir)
 	s = resolve_path(dir, buf, sizeof(buf) / sizeof(buf[0]));
 	if (s && (s != szCurrentDirectory)) {
 		/* If there is no trailing backslash, add one */
-		if ((s == buf) && (buf[strlen(buf)-1] != '\\'))
+		if ((s == buf) && (buf[strlen(buf)-1] != '\\') && (buf[strlen(buf)-1] != '/'))
 			strncatz(buf, "\\", sizeof(buf) / sizeof(buf[0]));
 
 		if (dir_exists(s))

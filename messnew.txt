@@ -1,4 +1,4 @@
-0.60
+0.61
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -48,7 +48,7 @@ System Driver Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.60.  This incorporates all features of the 
+- The core is based on MAME 0.61.  This incorporates all features of the 
   update to this core.  [MAME team] 
 
 - Converted numerous drivers to use the auto_malloc() and auto_bitmap_alloc()
@@ -73,6 +73,8 @@ Source Changes:
   
 - Added palette_set_colors() function to make it easy to initialize a palette
   with a predefined list of colors. [Nate Woods]
+  
+- Readded record/playback support. [Nate Woods]
 
 - Fixed bugs #192 and #200 - remember that:
 
