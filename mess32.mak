@@ -216,7 +216,8 @@ CPUOBJS = \
           $(OBJ)/cpu/g65816/g65816o1.o \
           $(OBJ)/cpu/g65816/g65816o2.o \
           $(OBJ)/cpu/g65816/g65816o3.o \
-          $(OBJ)/cpu/g65816/g65816o4.o
+          $(OBJ)/cpu/g65816/g65816o4.o \
+	  $(OBJ)/cpu/cp1600/cp1600.o
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
@@ -245,7 +246,8 @@ DBGOBJS = \
           $(OBJ)/cpu/pdp1/pdp1dasm.o \
           $(OBJ)/cpu/sc61860/disasm.o \
           $(OBJ)/cpu/arm/dasm.o \
-          $(OBJ)/cpu/g65816/g65816ds.o
+          $(OBJ)/cpu/g65816/g65816ds.o \
+	  $(OBJ)/cpu/cp1600/1600dasm.o
 
 SNDOBJS = \
          $(OBJ)/sound/samples.o \
@@ -745,6 +747,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {src/cpu/g65816}.c{$(OBJ)/cpu/g65816}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/cp1600}.c{$(OBJ)/cpu/cp1600}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/vidhrdw}.c{$(OBJ)/vidhrdw}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -878,6 +883,7 @@ maketree:
 	md $(OBJ)\cpu\arm
 	md $(OBJ)\cpu\g65816
 	md $(OBJ)\cpu\f8
+	md $(OBJ)\cpu\cp1600
 	md $(OBJ)\sound
 	md $(OBJ)\drivers
 	md $(OBJ)\machine
@@ -936,6 +942,7 @@ clean:
 	del $(OBJ)\cpu\arm\*.o
 	del $(OBJ)\cpu\g65816\*.o
 	del $(OBJ)\cpu\f8\*.o
+	del $(OBJ)\cpu\cp1600\*.o
 	del $(OBJ)\sound\*.o
 	del $(OBJ)\drivers\*.o
 	del $(OBJ)\machine\*.o
@@ -998,6 +1005,7 @@ cleandebug:
 	del $(OBJ)\cpu\arm\*.o
 	del $(OBJ)\cpu\g65816\*.o
 	del $(OBJ)\cpu\f8\*.o
+	del $(OBJ)\cpu\cp1600\*.o
 	del $(EXENAME)
 
 cleantiny:
