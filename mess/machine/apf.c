@@ -28,90 +28,93 @@ int apf_cassette_init(int id)
 {
 	void *file;
 	struct wave_args wa;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		int apf_apt_size;
-
-		/* get size of .tap file */
-		apf_apt_size = osd_fsize(file);
-
-		logerror("apf .apt size: %04x\n",apf_apt_size);
-
-		if (apf_apt_size!=0)
+		if (! is_effective_mode_create(effective_mode))
 		{
-			UINT8 *apf_apt_data;
+			int apf_apt_size;
 
-			/* allocate a temporary buffer to hold .apt image */
-			/* this is used to calculate the number of samples that would be filled when this
-			file is converted */
-			apf_apt_data = (UINT8 *)malloc(apf_apt_size);
+			/* get size of .tap file */
+			apf_apt_size = osd_fsize(file);
 
-			if (apf_apt_data!=NULL)
+			logerror("apf .apt size: %04x\n",apf_apt_size);
+
+			if (apf_apt_size!=0)
 			{
-				/* number of samples to generate */
-				int size_in_samples;
+				UINT8 *apf_apt_data;
 
-				/* read data into temporary buffer */
-				osd_fread(file, apf_apt_data, apf_apt_size);
+				/* allocate a temporary buffer to hold .apt image */
+				/* this is used to calculate the number of samples that would be filled when this
+				file is converted */
+				apf_apt_data = (UINT8 *)malloc(apf_apt_size);
 
-				/* calculate size in samples */
-				size_in_samples = apf_cassette_calculate_size_in_samples(apf_apt_size, apf_apt_data);
+				if (apf_apt_data!=NULL)
+				{
+					/* number of samples to generate */
+					int size_in_samples;
 
-				/* seek back to start */
-				osd_fseek(file, 0, SEEK_SET);
+					/* read data into temporary buffer */
+					osd_fread(file, apf_apt_data, apf_apt_size);
 
-				/* free temporary buffer */
-				free(apf_apt_data);
+					/* calculate size in samples */
+					size_in_samples = apf_cassette_calculate_size_in_samples(apf_apt_size, apf_apt_data);
 
-				/* size of data in samples */
-				logerror("size in samples: %d\n",size_in_samples);
+					/* seek back to start */
+					osd_fseek(file, 0, SEEK_SET);
 
-				/* internal calculation used in wave.c:
+					/* free temporary buffer */
+					free(apf_apt_data);
 
-				length =
-					wa->header_samples +
-					((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
-					wa->trailer_samples;
-				*/
+					/* size of data in samples */
+					logerror("size in samples: %d\n",size_in_samples);
+
+					/* internal calculation used in wave.c:
+
+					length =
+						wa->header_samples +
+						((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+						wa->trailer_samples;
+					*/
 
 
-				memset(&wa, 0, sizeof(&wa));
-				wa.file = file;
-				wa.chunk_size = apf_apt_size;
-				wa.chunk_samples = size_in_samples;
-                wa.smpfreq = APF_WAV_FREQUENCY;
-				wa.fill_wave = apf_cassette_fill_wave;
-				wa.header_samples = 0;
-				wa.trailer_samples = 0;
-				wa.display = 1;
-				if( device_open(IO_CASSETTE,id,0,&wa) )
-					return INIT_FAIL;
+					memset(&wa, 0, sizeof(&wa));
+					wa.file = file;
+					wa.chunk_size = apf_apt_size;
+					wa.chunk_samples = size_in_samples;
+					wa.smpfreq = APF_WAV_FREQUENCY;
+					wa.fill_wave = apf_cassette_fill_wave;
+					wa.header_samples = 0;
+					wa.trailer_samples = 0;
+					wa.display = 1;
+					if( device_open(IO_CASSETTE,id,0,&wa) )
+						return INIT_FAIL;
 
-				return INIT_PASS;
+					return INIT_PASS;
+				}
+
+				return INIT_FAIL;
 			}
+		}
+		/*else*/
+		{
+			memset(&wa, 0, sizeof(&wa));
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 22050;
+			if( device_open(IO_CASSETTE,id,1,&wa) )
+				return INIT_FAIL;
 
-			return INIT_FAIL;
+			return INIT_PASS;
 		}
 	}
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	if( file )
-    {
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-
-		return INIT_PASS;
-    }
 
 	return INIT_FAIL;
 }

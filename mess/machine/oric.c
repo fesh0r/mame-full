@@ -1458,94 +1458,97 @@ int oric_cassette_init(int id)
 {
 	void *file;
 	struct wave_args wa;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		int oric_tap_size;
-
-		/* get size of .tap file */
-		oric_tap_size = osd_fsize(file);
-
-		logerror("oric .tap size: %04x\n",oric_tap_size);
-
-		if (oric_tap_size!=0)
+		if (! is_effective_mode_create(effective_mode))
 		{
-			UINT8 *oric_tap_data;
+			int oric_tap_size;
 
-			/* allocate a temporary buffer to hold .tap image */
-			/* this is used to calculate the number of samples that would be filled when this
-			file is converted */
-			oric_tap_data = (UINT8 *)malloc(oric_tap_size);
+			/* get size of .tap file */
+			oric_tap_size = osd_fsize(file);
 
-			if (oric_tap_data!=NULL)
+			logerror("oric .tap size: %04x\n",oric_tap_size);
+
+			if (oric_tap_size!=0)
 			{
-				/* number of samples to generate */
-				int size_in_samples;
+				UINT8 *oric_tap_data;
 
-				/* read data into temporary buffer */
-				osd_fread(file, oric_tap_data, oric_tap_size);
+				/* allocate a temporary buffer to hold .tap image */
+				/* this is used to calculate the number of samples that would be filled when this
+				file is converted */
+				oric_tap_data = (UINT8 *)malloc(oric_tap_size);
 
-				/* calculate size in samples */
-				size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
+				if (oric_tap_data!=NULL)
+				{
+					/* number of samples to generate */
+					int size_in_samples;
 
-				/* seek back to start */
-				osd_fseek(file, 0, SEEK_SET);
+					/* read data into temporary buffer */
+					osd_fread(file, oric_tap_data, oric_tap_size);
 
-				/* free temporary buffer */
-				free(oric_tap_data);
+					/* calculate size in samples */
+					size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
 
-				/* size of data in samples */
-				logerror("size in samples: %d\n",size_in_samples);
+					/* seek back to start */
+					osd_fseek(file, 0, SEEK_SET);
 
+					/* free temporary buffer */
+					free(oric_tap_data);
 
-				/* 30000, 416 */
-
-				/* internal calculation used in wave.c:
-
-				length =
-					wa->header_samples +
-					((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
-					wa->trailer_samples;
-				*/
+					/* size of data in samples */
+					logerror("size in samples: %d\n",size_in_samples);
 
 
-				memset(&wa, 0, sizeof(&wa));
-				wa.file = file;
-				wa.chunk_size = oric_tap_size;
-				wa.chunk_samples = size_in_samples;
-                                wa.smpfreq = ORIC_WAV_FREQUENCY;
-				wa.fill_wave = oric_cassette_fill_wave;
-				wa.header_samples = ORIC_WAVESAMPLES_HEADER;
-				wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
-				wa.display = 1;
-				if( device_open(IO_CASSETTE,id,0,&wa) )
-					return INIT_FAIL;
+					/* 30000, 416 */
 
-				return INIT_PASS;
+					/* internal calculation used in wave.c:
+
+					length =
+						wa->header_samples +
+						((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+						wa->trailer_samples;
+					*/
+
+
+					memset(&wa, 0, sizeof(&wa));
+					wa.file = file;
+					wa.chunk_size = oric_tap_size;
+					wa.chunk_samples = size_in_samples;
+					wa.smpfreq = ORIC_WAV_FREQUENCY;
+					wa.fill_wave = oric_cassette_fill_wave;
+					wa.header_samples = ORIC_WAVESAMPLES_HEADER;
+					wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
+					wa.display = 1;
+					if( device_open(IO_CASSETTE,id,0,&wa) )
+						return INIT_FAIL;
+
+					return INIT_PASS;
+				}
+
+				return INIT_FAIL;
 			}
+		}
+		/*else*/
+		{
+			memset(&wa, 0, sizeof(&wa));
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 19200;
+			if( device_open(IO_CASSETTE,id,1,&wa) )
+				return INIT_FAIL;
 
-			return INIT_FAIL;
+			/* immediately inhibit/mute/play the output */
+		 /*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
+			return INIT_PASS;
 		}
 	}
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	if( file )
-    {
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 19200;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-
-		/* immediately inhibit/mute/play the output */
-     /*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
-		return INIT_PASS;
-    }
 
 	return INIT_FAIL;
 }
@@ -1554,33 +1557,36 @@ int oric_cassette_init(int id)
 int oric_cassette_init(int id)
 {
 	void *file;
+	int effective_mode;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	if (file)
+
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
+	if( file )
 	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
+		if (! is_effective_mode_create(effective_mode))
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
 
-		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAIL;
+			if (device_open(IO_CASSETTE, id, 0, &wa))
+				return INIT_FAIL;
 
-		return INIT_PASS;
+			return INIT_PASS;
+		}
+		/* HJB 02/18: no file, created a new file instead */
+		else
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+			/* open in write mode */
+			if (device_open(IO_CASSETTE, id, 1, &wa))
+				return INIT_FAIL;
+			return INIT_PASS;
+		}
 	}
-
-	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-        if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAIL;
-		return INIT_PASS;
-    }
 
 	return INIT_FAIL;
 }

@@ -1233,7 +1233,7 @@ static void spectrum_nmi_generate(int param)
 
 int spec_quick_init(int id)
 {
-	FILE *fp;
+	void *fp;
 	int read_;
 
 	memset(&quick, 0, sizeof (quick));

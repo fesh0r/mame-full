@@ -554,7 +554,7 @@ int pet_rom_id (int id)
 	int retval = 0;
 	unsigned char magic[] =
 	{0xc3, 0xc2, 0xcd, 0x38, 0x30}, buffer[sizeof (magic)];
-	FILE *romfile;
+	void *romfile;
 	char *cp;
 
 	logerror("c64_rom_id %s\n", image_filename(IO_CARTSLOT,id));

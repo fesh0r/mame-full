@@ -445,36 +445,39 @@ static void kc85_module_system_init(void)
 int kc_cassette_device_init(int id)
 {
 	void *file;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	if (file)
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
+	if( file )
 	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
+		if (! is_effective_mode_create(effective_mode))
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
 
-		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAIL;
+			if (device_open(IO_CASSETTE, id, 0, &wa))
+				return INIT_FAIL;
 
-		return INIT_PASS;
+			return INIT_PASS;
+		}
+		else
+		/* HJB 02/18: no file, created a new file instead */
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+			/* open in write mode */
+			if (device_open(IO_CASSETTE, id, 1, &wa))
+				return INIT_FAIL;
+			return INIT_PASS;
+		}
 	}
-
-	/* HJB 02/18: no file, create a new file instead */
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
-	if (file)
-	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-        if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAIL;
-		return INIT_PASS;
-    }
 
 	return INIT_FAIL;
 }

@@ -487,7 +487,7 @@ static int sms_verify_cart(char * magic, int size) {
 
 int sms_init_cart(int id) {
 	int size;
-	FILE *handle;
+	void *handle;
 	UINT8 *USER_RAM, *RAM;
 
 	if (!strcmp(Machine->gamedrv->name, "sms")) {

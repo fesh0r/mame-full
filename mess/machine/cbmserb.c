@@ -118,7 +118,7 @@ int cbm_drive_attach_fs (int id)
 
 static int d64_open (int id)
 {
-	FILE *in;
+	void *in;
 	int size;
 
 	memset (&(cbm_drive[id].d.d64), 0, sizeof (cbm_drive[id].d.d64));

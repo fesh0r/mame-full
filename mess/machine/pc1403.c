@@ -204,11 +204,11 @@ bool pc1403_reset(void)
 /* currently enough to save the external ram */
 static void pc1403_load(void)
 {
-	FILE *file;
+	void *file;
 	UINT8 *ram=memory_region(REGION_CPU1)+0x8000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=(FILE*)osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 0))==NULL) {
+	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 0))==NULL) {
 		power=0;
 		return;
 	}
@@ -220,11 +220,11 @@ static void pc1403_load(void)
 
 static void pc1403_save(void)
 {
-	FILE *file;
+	void *file;
 	UINT8 *ram=memory_region(REGION_CPU1)+0x8000,
 		*cpu=sc61860_internal_ram();
 
-	if ( (file=(FILE*)osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 1))==NULL)
+	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 
 	osd_fwrite(file, cpu, 96);

@@ -517,38 +517,42 @@ int laser_cassette_verify (UINT8 buff[])
 int laser_cassette_init(int id)
 {
 	void *file;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
-	file = image_fopen_new(IO_CASSETTE, id, NULL);
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.fill_wave = fill_wave;
-		wa.smpfreq = 600*BITSAMPLES;
-		wa.header_samples = SILENCE;
-		wa.trailer_samples = SILENCE;
-		wa.chunk_size = 1;
-		wa.chunk_samples = BYTESAMPLES;
-		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAIL;
-		return INIT_PASS;
-    }
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	if( file )
-    {
-		struct wave_args wa = {0,};
-		wa.file = file;
-		wa.display = 1;
-		wa.fill_wave = fill_wave;
-		wa.smpfreq = 600*BITSAMPLES;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-			return INIT_FAIL;
-        return INIT_PASS;
-    }
+		if (! is_effective_mode_create(effective_mode))
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			wa.fill_wave = fill_wave;
+			wa.smpfreq = 600*BITSAMPLES;
+			wa.header_samples = SILENCE;
+			wa.trailer_samples = SILENCE;
+			wa.chunk_size = 1;
+			wa.chunk_samples = BYTESAMPLES;
+			if( device_open(IO_CASSETTE,id,0,&wa) )
+				return INIT_FAIL;
+			return INIT_PASS;
+		}
+		else
+	    {
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			wa.fill_wave = fill_wave;
+			wa.smpfreq = 600*BITSAMPLES;
+			if( device_open(IO_CASSETTE,id,1,&wa) )
+				return INIT_FAIL;
+			return INIT_PASS;
+		}
+	}
     return INIT_FAIL;
 }
 

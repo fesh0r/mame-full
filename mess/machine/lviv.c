@@ -238,70 +238,73 @@ int lviv_tape_init(int id)
 {
 	void *file;
 	struct wave_args wa;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
 	if( file )
 	{
-		int lviv_lvt_size;
-
-		lviv_lvt_size = osd_fsize(file);
-
-		logerror("Lviv .lvt size: %04x\n",lviv_lvt_size);
-
-		if (lviv_lvt_size!=0)
+		if (! is_effective_mode_create(effective_mode))
 		{
-			UINT8 *lviv_lvt_data;
+			int lviv_lvt_size;
 
-			lviv_lvt_data = (UINT8 *)malloc(lviv_lvt_size);
+			lviv_lvt_size = osd_fsize(file);
 
-			if (lviv_lvt_data!=NULL)
+			logerror("Lviv .lvt size: %04x\n",lviv_lvt_size);
+
+			if (lviv_lvt_size!=0)
 			{
-				int size_in_samples;
+				UINT8 *lviv_lvt_data;
 
-				osd_fread(file, lviv_lvt_data, lviv_lvt_size);
-				if (strncmp ((char *)lviv_lvt_data, "LVOV/2.0/", 9))
+				lviv_lvt_data = (UINT8 *)malloc(lviv_lvt_size);
+
+				if (lviv_lvt_data!=NULL)
 				{
+					int size_in_samples;
+
+					osd_fread(file, lviv_lvt_data, lviv_lvt_size);
+					if (strncmp ((char *)lviv_lvt_data, "LVOV/2.0/", 9))
+					{
+						free(lviv_lvt_data);
+						logerror ("Unsupported file version\n");
+						return INIT_FAIL;
+					}
+					size_in_samples = lviv_cassette_calculate_size_in_samples(lviv_lvt_size, lviv_lvt_data);
+					osd_fseek(file, 0, SEEK_SET);
 					free(lviv_lvt_data);
-					logerror ("Unsupported file version\n");
-					return INIT_FAIL;
+					logerror("size in samples: %d\n",size_in_samples);
+
+					memset(&wa, 0, sizeof(&wa));
+					wa.file = file;
+					wa.chunk_size = lviv_lvt_size;
+					wa.chunk_samples = size_in_samples;
+	                                wa.smpfreq = 44100;
+					wa.fill_wave = lviv_cassette_fill_wave;
+					wa.header_samples = 0;
+					wa.trailer_samples = 0;
+					wa.display = 1;
+					if( device_open(IO_CASSETTE,id,0,&wa) )
+						return INIT_FAIL;
+
+					return INIT_PASS;
 				}
-				size_in_samples = lviv_cassette_calculate_size_in_samples(lviv_lvt_size, lviv_lvt_data);
-				osd_fseek(file, 0, SEEK_SET);
-				free(lviv_lvt_data);
-				logerror("size in samples: %d\n",size_in_samples);
 
-				memset(&wa, 0, sizeof(&wa));
-				wa.file = file;
-				wa.chunk_size = lviv_lvt_size;
-				wa.chunk_samples = size_in_samples;
-                                wa.smpfreq = 44100;
-				wa.fill_wave = lviv_cassette_fill_wave;
-				wa.header_samples = 0;
-				wa.trailer_samples = 0;
-				wa.display = 1;
-				if( device_open(IO_CASSETTE,id,0,&wa) )
-					return INIT_FAIL;
-
-				return INIT_PASS;
+				return INIT_FAIL;
 			}
-
-			return INIT_FAIL;
 		}
-	}
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	if( file )
-	{
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.display = 1;
-		wa.smpfreq = 44100;
-		if( device_open(IO_CASSETTE,id,1,&wa) )
-        		return INIT_FAIL;
-		return INIT_PASS;
+		/*else*/
+		{
+			memset(&wa, 0, sizeof(&wa));
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 44100;
+			if( device_open(IO_CASSETTE,id,1,&wa) )
+	        		return INIT_FAIL;
+			return INIT_PASS;
+		}
 	}
 
 	return INIT_FAIL;

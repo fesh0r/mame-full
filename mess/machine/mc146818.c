@@ -135,7 +135,7 @@ void mc146818_init(MC146818_TYPE type)
 
 void mc146818_load(void)
 {
-	FILE *file;
+	void *file;
 
 	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 0))==NULL)
 		return;
@@ -199,7 +199,7 @@ void mc146818_set_time(void)
 
 void mc146818_save(void)
 {
-	FILE *file;
+	void *file;
 	if ( (file=osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 	osd_fwrite(file, mc146818.data, sizeof(mc146818.data));

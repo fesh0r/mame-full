@@ -1581,47 +1581,50 @@ int msx_cassette_init(int id)
 {
     void *file;
 	int ret;
+	int effective_mode;
+
 
 	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-    if( file )
-    {
-        struct wave_args wa = {0,};
-        wa.file = file;
-        wa.display = 1;
-		/* for cas files */
-		cas_samples = NULL;
-		cas_len = -1;
-		if (!check_fmsx_cas (file) )
+	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
+	if( file )
+	{
+		if (! is_effective_mode_create(effective_mode))
 		{
-			wa.smpfreq = 22050;
-			wa.fill_wave = msx_cassette_fill_wave;
-			wa.header_samples = cas_len;
-			wa.trailer_samples = 0;
-			wa.chunk_size = cas_len;
-			wa.chunk_samples = 0;
-		}
-        ret = device_open(IO_CASSETTE,id,0,&wa);
-		free (cas_samples);
-		cas_samples = NULL;
-		cas_len = -1;
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			/* for cas files */
+			cas_samples = NULL;
+			cas_len = -1;
+			if (!check_fmsx_cas (file) )
+			{
+				wa.smpfreq = 22050;
+				wa.fill_wave = msx_cassette_fill_wave;
+				wa.header_samples = cas_len;
+				wa.trailer_samples = 0;
+				wa.chunk_size = cas_len;
+				wa.chunk_samples = 0;
+			}
+			ret = device_open(IO_CASSETTE,id,0,&wa);
+			free (cas_samples);
+			cas_samples = NULL;
+			cas_len = -1;
 
-		return (ret ? INIT_FAIL : INIT_PASS);
-    }
-    file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE,
-        OSD_FOPEN_RW_CREATE);
-    if( file )
-    {
-        struct wave_args wa = {0,};
-        wa.file = file;
-        wa.display = 1;
-        wa.smpfreq = 44100;
-        if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAIL;
-        return INIT_PASS;
-    }
-    return INIT_FAIL;
+			return (ret ? INIT_FAIL : INIT_PASS);
+		}
+		else
+		{
+			struct wave_args wa = {0,};
+			wa.file = file;
+			wa.display = 1;
+			wa.smpfreq = 44100;
+			if( device_open(IO_CASSETTE,id,1,&wa) )
+				return INIT_FAIL;
+			return INIT_PASS;
+		}
+	}
+	return INIT_FAIL;
 }
 
