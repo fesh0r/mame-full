@@ -28,6 +28,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.95u1.  This incorporates all features of the
+  update to this core.  [MAME team]  
+
 - Fixed SEXW in hd6309 core. It really is a signed extension of W into Q.
   Also, it is 4 cycles long. Thanks to David Keil and Sockmaster for pointing
   this out.  [Tim Lindner]

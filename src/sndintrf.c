@@ -938,17 +938,16 @@ void sound_stop(void)
 		wav_close(wavfile);
 
 #ifdef MAME_DEBUG
-	if (VERBOSE)
+{
+	int spknum;
+	
+	/* log the maximum sample values for all speakers */
+	for (spknum = 0; spknum < totalspeakers; spknum++)
 	{
-		int spknum;
-		
-		/* log the maximum sample values for all speakers */
-		for (spknum = 0; spknum < totalspeakers; spknum++)
-		{
-			struct speaker_info *spk = &speaker[spknum];
-			printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
-		}
+		struct speaker_info *spk = &speaker[spknum];
+		logerror("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
 	}
+}
 #endif /* MAME_DEBUG */
 
 	/* stop all the sound chips */

@@ -83,7 +83,10 @@ void iwm_init(const iwm_interface *intf)
 	iwm_lines = 0;
 	iwm_mode = 0x1f;	/* default value needed by Lisa 2 - no, I don't know if it is true */
 	motor_off_timer = timer_alloc(iwm_turnmotoroff);
-	iwm_intf = * intf;
+	if (intf)
+		iwm_intf = *intf;
+	else
+		memset(&iwm_intf, 0, sizeof(iwm_intf));
 }
 
 
