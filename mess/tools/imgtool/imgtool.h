@@ -451,7 +451,8 @@ int img_freespace(IMAGE *img, int *sz);
 int img_readfile(IMAGE *img, const char *fname, STREAM *destf,
 	FILTERMODULE filter);
 
-/* img_writefile
+/* img_writefile_resolved
+ * img_writefile
  *
  * Description:
  *		Start writing to a new file on an image with a stream
@@ -460,9 +461,11 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf,
  *		img:				The image to read from
  *		fname:				The filename on the image
  *		destf:				Place to receive the stream
- *		options:			Options to specify on the new file
+ *		options/ropts:		Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
+int img_writefile_resolved(IMAGE *img, const char *fname, STREAM *sourcef,
+	const ResolvedOption *ropts, FILTERMODULE filter);
 int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 	const struct NamedOption *_options, FILTERMODULE filter);
 
@@ -480,7 +483,8 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 int img_getfile(IMAGE *img, const char *fname, const char *dest,
 	FILTERMODULE filter);
 
-/* img_putfile
+/* img_putfile_resolved
+ * img_putfile
  *
  * Description:
  *		Read a native file and store it on an image
@@ -490,9 +494,11 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest,
  *		newfname:			The filename on the image to store (if NULL, then
  *							the file will be named basename(source)
  *		source:				Native filename for source
- *		options:			Options to specify on the new file
+ *		options/ropts:		Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
+int img_putfile_resolved(IMAGE *img, const char *newfname, const char *source,
+	const ResolvedOption *ropts, FILTERMODULE filter);
 int img_putfile(IMAGE *img, const char *newfname, const char *source,
 	const struct NamedOption *_options, FILTERMODULE filter);
 

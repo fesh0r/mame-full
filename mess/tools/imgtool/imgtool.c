@@ -381,7 +381,7 @@ static const struct NamedOption *findnamedoption(const struct NamedOption *nopts
 	return NULL;
 }
 
-static int check_minmax(const struct OptionTemplate *o, int optnum, const ResolvedOption *ropts, int i)
+static int check_minmax(const struct OptionTemplate *o, int optnum, const ResolvedOption *ropts/*, int i*/)
 {
 	if (ropts[optnum].i < o->min)
 		return PARAM_TO_ERROR(IMGTOOLERR_PARAMTOOSMALL, optnum);
@@ -392,7 +392,7 @@ static int check_minmax(const struct OptionTemplate *o, int optnum, const Resolv
 
 static int resolve_options(const struct OptionTemplate *opttemplate, const struct NamedOption *nopts, ResolvedOption *ropts, int roptslen)
 {
-	int i = 0;
+	//int i = 0;
 	int optnum, err;
 	const char *val;
 	const struct NamedOption *n;
@@ -419,7 +419,7 @@ static int resolve_options(const struct OptionTemplate *opttemplate, const struc
 			case IMGOPTION_FLAG_TYPE_INTEGER:
 				ropts[optnum].i = atoi(val);
 				
-				err = check_minmax(o, optnum, ropts, i);
+				err = check_minmax(o, optnum, ropts/*, i*/);
 				if (err)
 					return err;
 				break;
@@ -428,7 +428,7 @@ static int resolve_options(const struct OptionTemplate *opttemplate, const struc
 					return PARAM_TO_ERROR(IMGTOOLERR_PARAMCORRUPT, optnum);
 				ropts[optnum].i = toupper(val[0]);
 
-				err = check_minmax(o, optnum, ropts, i);
+				err = check_minmax(o, optnum, ropts/*, i*/);
 				if (err)
 					return err;
 				break;
@@ -442,6 +442,52 @@ static int resolve_options(const struct OptionTemplate *opttemplate, const struc
 		}
 	}
 	return 0;
+}
+
+int img_writefile_resolved(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *ropts, FILTERMODULE filter)
+{
+	int err;
+	char *buf = NULL;
+	char *s;
+	STREAM *newstream = NULL;
+
+	if (!img->module->writefile) {
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* Does this image module prefer upper case file names? */
+	if (img->module->flags & IMGMODULE_FLAG_FILENAMES_PREFERUCASE) {
+		/*buf = strdup(fname);*/
+		buf = malloc(strlen(fname)+1);
+		if (buf)
+			strcpy(buf, fname);
+		if (!buf) {
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+		for (s = buf; *s; s++)
+			*s = toupper(*s);
+		fname = buf;
+	}
+
+	/* Custom filter? */
+	err = process_filter(&sourcef, &newstream, img->module, filter, PURPOSE_WRITE);
+	if (err)
+		goto done;
+
+	err = img->module->writefile(img, fname, sourcef, ropts);
+	if (err) {
+		err = markerrorsource(err);
+		goto done;
+	}
+
+done:
+	if (buf)
+		free(buf);
+	if (newstream)
+		stream_close(newstream);
+	return err;
 }
 
 int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts, FILTERMODULE filter)
@@ -518,6 +564,23 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest, FILTERMODULE fi
 done:
 	if (f)
 		stream_close(f);
+	return err;
+}
+
+int img_putfile_resolved(IMAGE *img, const char *newfname, const char *source, const ResolvedOption *ropts, FILTERMODULE filter)
+{
+	int err;
+	STREAM *f;
+
+	if (!newfname)
+		newfname = osd_basename(source);
+
+	f = stream_open(source, OSD_FOPEN_READ);
+	if (!f)
+		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+
+	err = img_writefile_resolved(img, newfname, f, ropts, filter);
+	stream_close(f);
 	return err;
 }
 
