@@ -92,7 +92,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( a7800 ) 	/* Atari 7800									  */
 /*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
 /*	DRIVER( lynx )*/	/* Atari Lynx Handheld							  */
-
+    DRIVER( atarist )
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
