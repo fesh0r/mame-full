@@ -113,6 +113,11 @@ System Driver Changes:
 - Commodore: m65ce02/m4510 timing corrected, fixed rtn, plp, rti, eom, added m65ce02 aug
   c65 speed improvements, ega/vga speed improvements [Peter Trauner]
 
+- AMSTRAD: Changed video hardware code to use 6845 CRTC code.  Also added Eventlist code to 
+  the Amstrad video hardware code. It will record colour changes, mode changes and crtc 
+  register writes.  This means support for multi-modes on the same screen, colour changing 
+  effects, and demos. [Kev Thacker]
+
 
 
 Other Changes:

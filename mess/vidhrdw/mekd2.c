@@ -16,7 +16,7 @@
 #endif
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror(x)
 #else
 #define LOG(x)	/* x */
 #endif
@@ -76,12 +76,12 @@ void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, cons
 
 	if ((mekd2_backdrop = artwork_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree)) != NULL)
     {
-        LOG ((errorlog, "backdrop %s successfully loaded\n", backdrop_name));
+        LOG (("backdrop %s successfully loaded\n", backdrop_name));
 		memcpy (&palette[nextfree * 3], mekd2_backdrop->orig_palette, mekd2_backdrop->num_pens_used * 3 * sizeof (unsigned char));
     }
     else
     {
-        LOG ((errorlog, "no backdrop loaded\n"));
+        LOG (( "no backdrop loaded\n"));
     }
 }
 
@@ -131,7 +131,7 @@ void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
         drawgfx (bitmap, Machine->gfx[0],
                  videoram[2 * x + 0], videoram[2 * x + 1],
-                 0, 0, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+                 0, 0, sx, sy, NULL, TRANSPARENCY_PEN, 0);
         osd_mark_dirty (sx, sy, sx + 15, sy + 31, 1);
     }
 
@@ -158,7 +158,7 @@ void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
             videoram[6 * 2 + code] = color;
             drawgfx (bitmap, Machine->gfx[1],
                      layout[y][x], color,
-                     0, 0, sx, sy, &Machine->drv->visible_area,
+                     0, 0, sx, sy, NULL,
                      TRANSPARENCY_NONE, 0);
             osd_mark_dirty (sx, sy, sx + 23, sy + 17, 1);
         }

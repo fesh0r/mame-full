@@ -16,7 +16,7 @@
 #endif
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror(x)
 #else
 #define LOG(x)						   /* x */
 #endif
@@ -586,13 +586,13 @@ int mekd2_rom_load(int id)
 			osd_fread(file, buff, sizeof (buff));
 			if (memcmp(buff, magic, sizeof (buff)))
 			{
-				LOG((errorlog, "mekd2_rom_load: magic '%s' not found\n", magic));
+				LOG(( "mekd2_rom_load: magic '%s' not found\n", magic));
 				return 1;
 			}
 			osd_fread_lsbfirst(file, &addr, 2);
 			osd_fread_lsbfirst(file, &size, 2);
 			osd_fread(file, &ident, 1);
-			LOG((errorlog, "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident));
+/*			LOG(( "mekd2_rom_load: $%04X $%04X $%02X\n", addr, size, ident)); */
 			while (size-- > 0)
 				osd_fread(file, &RAM[addr++], 1);
 			osd_fclose(file);
@@ -614,7 +614,7 @@ int mekd2_rom_id(int id)
 		osd_fread(file, buff, sizeof (buff));
 		if (memcmp(buff, magic, sizeof (buff)) == 0)
 		{
-			LOG((errorlog, "mekd2_rom_id: magic '%s' found\n", magic));
+			LOG(( "mekd2_rom_id: magic '%s' found\n", magic));
 			return 1;
 		}
 	}

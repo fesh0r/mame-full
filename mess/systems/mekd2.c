@@ -34,7 +34,7 @@
 #endif
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror(x)
 #else
 #define LOG(x)	/* x */
 #endif
@@ -44,7 +44,7 @@ extern void init_mekd2(void);
 extern void mekd2_init_machine(void);
 
 extern int mekd2_rom_load (int id);
-extern int mekd2_rom_id (const char *name, const char *gamename);
+extern int mekd2_rom_id (int id);
 
 extern int mekd2_interrupt(void);
 
@@ -54,20 +54,20 @@ extern int mekd2_vh_start (void);
 extern void mekd2_vh_stop (void);
 extern void mekd2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
-static int mekd2_pia_r(int offs) { return 0xff; }
-static int mekd2_cas_r(int offs) { return 0xff; }
-static int mekd2_kbd_r(int offs) { return 0xff; }
-static int mekd2_mirror_r(int offs) { UINT8 *mem = memory_region(REGION_CPU1); return mem[0xe000+(offs&0x3ff)]; }
+static READ_HANDLER(mekd2_pia_r) { return 0xff; }
+static READ_HANDLER(mekd2_cas_r) { return 0xff; }
+static READ_HANDLER(mekd2_kbd_r) { return 0xff; }
+static READ_HANDLER(mekd2_mirror_r) { UINT8 *mem = memory_region(REGION_CPU1); return mem[0xe000+(offset&0x3ff)]; }
 
 UINT8 pia[8];
 
-static void mekd2_pia_w(int offs, int data) { }
-static void mekd2_cas_w(int offs, int data) { }
+static WRITE_HANDLER(mekd2_pia_w) { }
+static WRITE_HANDLER(mekd2_cas_w) { }
 
-static void mekd2_kbd_w(int offs, int data)
+static WRITE_HANDLER(mekd2_kbd_w)
 {
-	pia[offs] = data;
-	switch( offs )
+	pia[offset] = data;
+	switch( offset )
 	{
 	case 2:
 		if( data & 0x20 )
