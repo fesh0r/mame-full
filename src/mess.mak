@@ -345,8 +345,7 @@ $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/vc20tape.o \
 	  $(OBJ)/mess/vidhrdw/vic6567.o  \
 	  $(OBJ)/mess/machine/c64.o	 \
-	  $(OBJ)/mess/vidhrdw/crtc6845.o \
-	  $(OBJ)/mess/vidhrdw/praster.o  
+	  $(OBJ)/mess/vidhrdw/crtc6845.o
 
 $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/vidhrdw/pet.o	 \
@@ -362,6 +361,7 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/systems/c16.o	 \
 	  $(OBJ)/mess/systems/cbmb.o	 \
 	  $(OBJ)/mess/machine/cbmb.o	 \
+	  $(OBJ)/mess/vidhrdw/cbmb.o	 \
 	  $(OBJ)/mess/systems/c64.o	 \
 	  $(OBJ)/mess/systems/c65.o	 \
 	  $(OBJ)/mess/machine/c65.o	 \
@@ -648,6 +648,7 @@ COREOBJS += \
 		$(OBJ)/mess/printer.o \
 		$(OBJ)/mess/menuentr.o \
 		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/vidhrdw/state.o \
 		$(OBJ)/mess/vidhrdw/m6847.o	 \
 		$(OBJ)/mess/vidhrdw/m6845.o	 \
 		$(OBJ)/mess/vidhrdw/tms9928a.o \
