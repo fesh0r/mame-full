@@ -422,18 +422,14 @@ int  mfm_disk_get_sectors_per_track(int drive, int side)
 {
 	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
 
-	logerror("%02x\n", mfm_disk->CurrentTrack);
-
-	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
-
-	logerror("%02x\n", mfm_disk->NumSectors);
-
 	/* attempting to access an invalid side or track? */
 	if ((side>=mfm_disk->NumSides) || (mfm_disk->CurrentTrack>=mfm_disk->NumTracks))
 	{
 		/* no sectors */
 		return 0;
 	}
+	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
+
 	/* return number of sectors per track */
 	return mfm_disk->NumSectors;
 }
