@@ -25,11 +25,11 @@ struct os9_diskinfo
 	UINT32 bootstrap_size;
 	UINT32 sector_size;
 
-	unsigned char sides : 2;
-	unsigned char double_density : 1;
-	unsigned char double_track : 1;
-	unsigned char quad_track_density : 1;
-	unsigned char octal_track_density : 1;
+	unsigned int sides : 2;
+	unsigned int double_density : 1;
+	unsigned int double_track : 1;
+	unsigned int quad_track_density : 1;
+	unsigned int octal_track_density : 1;
 
 	char name[33];
 };
@@ -151,7 +151,6 @@ static int os9_decode_file_header(imgtool_image *image,
 {
 	floperr_t ferr;
 	UINT32 attributes, count;
-	size_t offset;
 	int max_entries, i, track, sector;
 	UINT8 header[256];
 
@@ -287,7 +286,6 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 	struct os9_direnum *os9enum = (struct os9_direnum *) enumeration;
 	UINT32 lsn, index;
 	imgtoolerr_t err;
-	int i;
 	UINT8 dir_entry[32];
 	char filename[29];
 	struct os9_fileinfo file_info;
