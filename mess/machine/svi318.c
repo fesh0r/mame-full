@@ -352,7 +352,7 @@ READ_HANDLER (svi318_fdc_status_r)
 }
 
 static unsigned long svi318_calcoffset(UINT8 t, UINT8 h, UINT8 s,
-	UINT8 heads, UINT16 offset, UINT8 first_sector_id, UINT8 sec_per_track, UINT16 sector_length)
+	UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
 {
 	unsigned long o;
 
