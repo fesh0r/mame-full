@@ -521,6 +521,7 @@ static void data_handler(void *data, const XML_Char *s, int len)
 
 	switch(state->phase) {
 	case STATE_COMMAND:
+	case STATE_SUBCOMMAND:
 		switch(command->command_type) {
 		case MESSTEST_COMMAND_INPUT:
 		case MESSTEST_COMMAND_RAWINPUT:
@@ -566,7 +567,6 @@ static int external_entity_handler(XML_Parser parser,
 	XML_Parser extparser = NULL;
 	int rc = 0, i;
 	char buf[256];
-	char charbuf[UTF8_CHAR_MAX + 1];
 	static const char *mamekey_prefix = "mamekey_";
 	input_code_t c;
 
@@ -576,7 +576,7 @@ static int external_entity_handler(XML_Parser parser,
 	if (strcmp(systemId, "http://www.mess.org/messtest/"))
 		goto done;
 
-	extparser = XML_ExternalEntityParserCreate(parser, context, "UTF-8");
+	extparser = XML_ExternalEntityParserCreate(parser, context, "us-ascii");
 	if (!extparser)
 		goto done;
 
@@ -598,15 +598,9 @@ static int external_entity_handler(XML_Parser parser,
 
 		if (c != CODE_NONE)
 		{
-			i = utf8_from_uchar(charbuf, sizeof(charbuf) / sizeof(charbuf[0]),
-				UCHAR_MAMEKEY_BEGIN + c);
-			if (i < 0)
-				goto done;
-			charbuf[i] = 0;
-
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "<%s%s>%s</%s%s>",
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "<%s%s>&#%d;</%s%s>",
 				mamekey_prefix, context,
-				charbuf,
+				UCHAR_MAMEKEY_BEGIN + c,
 				mamekey_prefix, context);
 
 			if (XML_Parse(extparser, buf, strlen(buf), 0) == XML_STATUS_ERROR)
