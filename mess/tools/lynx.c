@@ -57,12 +57,13 @@ static int lynx_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 
 IMAGEMODULE(
 	lynx,
-	"Commodore 64 Archiv",	/* human readable name */
+	"Commodore 64 Archive",	/* human readable name */
 	"lnx",								/* file extension */
 	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	NULL,
 	lynx_image_init,				/* init function */
 	lynx_image_exit,				/* exit function */

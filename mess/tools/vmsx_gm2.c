@@ -50,6 +50,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	NULL,
 	vmsx_gm2_image_init,				/* init function */
 	vmsx_gm2_image_exit,				/* exit function */

@@ -58,6 +58,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	NULL,
 	fmsx_cas_image_init,				/* init function */
 	fmsx_cas_image_exit,				/* exit function */

@@ -44,6 +44,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	fs_image_init,				/* init function */
 	NULL,				/* init function */
 	fs_image_exit,				/* exit function */

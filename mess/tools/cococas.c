@@ -17,6 +17,7 @@ WAVEMODULE(
 	cococas,
 	"Tandy CoCo Cassette",
 	"wav",
+	"\r",
 	1200, 1600, 2400,		/* 0=1200 Hz, 1=2400 Hz, threshold=1600 Hz */
 	WAVEIMAGE_LSB_FIRST,
 	blockheader, sizeof(blockheader) / sizeof(blockheader[0]),

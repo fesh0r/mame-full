@@ -31,12 +31,13 @@ static int zip_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 
 IMAGEMODULE(
 	zip,
-	"Zip Archiv",	/* human readable name */
+	"Zip Archive",	/* human readable name */
 	"zip",								/* file extension */
 	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	zip_image_init,				/* init function */
 	NULL,				/* init function */
 	zip_image_exit,				/* exit function */

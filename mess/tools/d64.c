@@ -524,6 +524,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	"\r",								/* eoln */
 	NULL,
 	d64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
@@ -549,6 +550,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	"\r",								/* eoln */
 	NULL,
 	x64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
@@ -574,6 +576,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	"\r",								/* eoln */
 	NULL,
 	d71_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
@@ -599,6 +602,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	"\r",								/* eoln */
 	NULL,
 	d81_image_init,				/* init function */
 	d64_image_exit,				/* exit function */

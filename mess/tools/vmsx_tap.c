@@ -86,6 +86,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	NULL,
 	vmsx_tap_image_init,				/* init function */
 	vmsx_tap_image_exit,				/* exit function */

@@ -182,6 +182,7 @@ struct ImageModule {
 	const char *crcfile;
 	const char *crcsysname;
 	const geometry_ranges *ranges;
+	const char *eoln;
 	int (*init_by_name)(const char *name, IMAGE **outimg); /* used for directory and archiver access */
 	int (*init)(STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
@@ -205,7 +206,7 @@ struct ImageModule {
 /* ----------------------------------------------------------------------- */
 
 /* Use IMAGEMODULE for (potentially) full featured images */
-#define IMAGEMODULE(name,humanname,ext,flags,crcfile,crcsysname,ranges,\
+#define IMAGEMODULE(name,humanname,ext,flags,crcfile,crcsysname,ranges,eoln,\
 		initbyname, init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create,extract,read_sector, write_sector)	\
 struct ImageModule imgmod_##name = \
 {					\
@@ -216,6 +217,7 @@ struct ImageModule imgmod_##name = \
 	(crcfile),		\
 	(crcsysname),	\
 	(ranges),		\
+	(eoln),			\
 	(initbyname),	\
 	(init),			\
 	(exit),			\
@@ -244,6 +246,7 @@ struct ImageModule imgmod_##name = \
 	0,				\
 	(#name ".crc"),	\
 	#name,			\
+	NULL,			\
 	NULL,			\
 	NULL,			\
 	NULL,			\
@@ -546,7 +549,7 @@ struct WaveExtra
 
 };
 
-#define WAVEMODULE(name,humanname,ext,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
+#define WAVEMODULE(name,humanname,ext,eoln,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
 		initalt,nextfile,readfilechunk)	\
 static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
 static struct WaveExtra waveextra_##name = \
@@ -570,6 +573,7 @@ struct ImageModule imgmod_##name = \
 	NULL,				\
 	NULL,				\
 	NULL,				\
+	(eoln),				\
 	NULL,				\
 	imgmodinit_##name,	\
 	imgwave_exit,		\

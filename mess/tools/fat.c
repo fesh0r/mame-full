@@ -331,6 +331,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	&fat_geometry,								/* geometry ranges */
+	"\r\n",								/* eoln */
 	NULL,
 	fat_image_init,				/* init function */
 	fat_image_exit,				/* exit function */
@@ -362,6 +363,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	&fathd_geometry,								/* geometry ranges */
+	"\r\n",								/* eoln */
 	NULL,
 	fathd_image_init,				/* init function */
 	fat_image_exit,				/* exit function */

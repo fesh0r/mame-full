@@ -15,6 +15,7 @@ IMAGEMODULE(pchd,
 	NULL,										/* crcfile */
 	NULL,										/* crc system name */
 	&pchd_geometry,								/* geometry ranges */
+	"\r\n",										/* eoln */
 	NULL,
 	NULL,										/* init function */
 	NULL,										/* exit function */

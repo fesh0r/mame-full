@@ -379,6 +379,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,								/* eoln */
 	NULL,
 	crt_image_init,				/* init function */
 	crt_image_exit,				/* exit function */
