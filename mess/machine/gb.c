@@ -12,7 +12,10 @@
 						 own palette. Tidied init code.
 	15/3/2002		AK - More init code tidying with a slight hack to stop
 						 sound when the machine starts.
-	19/3/2002		AK - Changed NVRAM code to the new way of using fopen.
+	19/3/2002		AK - Changed NVRAM code to the new battery_* functions.
+	24/3/2002		AK - Added MBC1 mode switching, and partial MBC3 RTC support.
+	28/3/2002		AK - Improved LCD status timing and interrupts.
+						 Free memory when we shutdown instead of leaking.
 
 ***************************************************************************/
 #define __MACHINE_GB_C
@@ -27,21 +30,23 @@ static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
 static UINT8 *ROMMap[512];			   /* Addresses of ROM banks                      */
 static UINT16 ROMBank;				   /* Number of ROM bank currently used           */
 static UINT8 ROMMask;				   /* Mask for the ROM bank number                */
-static int ROMBanks;				   /* Total number of ROM banks                   */
+static UINT8 ROMBanks;				   /* Total number of ROM banks                   */
 static UINT8 *RAMMap[256];			   /* Addresses of RAM banks                      */
 static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
-static int RAMBanks;				   /* Total number of RAM banks                   */
-static UINT32 SIOCount;				   /* Serial I/O counter                     */
-char nvram_name[1024];
+static UINT8 RAMBanks;				   /* Total number of RAM banks                   */
+static UINT32 SIOCount;				   /* Serial I/O counter                          */
+static UINT8 MBC1Mode;				   /* MBC1 ROM/RAM mode                           */
+static UINT8 MBC3RTCMap[5];			   /* MBC3 Real-Time-Clock banks                  */
+static UINT8 MBC3RTCBank;			   /* Number of RTC bank for MBC3                 */
+char nvram_name[1024];				   /* Name to store NVRAM under                   */
+UINT8 *gb_ram;
 
 #define Verbose 0x00
 #define SGB 0
 #define CheckCRC 1
 #define LineDelay 0
 #define IFreq 60
-
-UINT8 *gb_ram;
 
 void gb_init_machine (void)
 {
@@ -51,6 +56,8 @@ void gb_init_machine (void)
 	RAMBank = 0;
 	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+	MBC1Mode = 0;
+	MBC3RTCBank = 0;
 
 	/* Initialise the registers */
 	LCDSTAT = 0x00;
@@ -73,7 +80,7 @@ void gb_init_machine (void)
 	gameboy_sound_w(0xFF10,0x80);
 	gameboy_sound_w(0xFF11,0xBF);
 	gameboy_sound_w(0xFF12,0xF3);
-	gameboy_sound_w(0xFF14,0x3F); /* Should be 0xBF but this causes a tone at the start */
+	gameboy_sound_w(0xFF14,0x3F); /* NOTE: Should be 0xBF but it causes a tone at startup */
 	gameboy_sound_w(0xFF16,0x3F);
 	gameboy_sound_w(0xFF17,0x00);
 	gameboy_sound_w(0xFF19,0xBF);
@@ -112,6 +119,16 @@ void gb_shutdown_machine(void)
 		}
 		battery_save( nvram_name, battery_ram, RAMBanks * 0x2000 );
 	}
+
+	/* Release memory */
+	for( I = 0; I < RAMBanks; I++ )
+	{
+		free( RAMMap[I] );
+	}
+	for( I = 0; I < ROMBanks; I++ )
+	{
+		free( ROMMap[I] );
+	}
 }
 
 WRITE_HANDLER ( gb_rom_bank_select )
@@ -130,16 +147,18 @@ WRITE_HANDLER ( gb_rom_bank_select )
 	{
 		switch( MBCType )
 		{
-		case MBC1:	/* Need to handle different modes */
-		case MBC3:
-		case HUC1:	/* Probably wrong */
-		case HUC3:	/* Probably wrong */
-			ROMBank = data;
+		case MBC1:
+			ROMBank = data & 0x1F; /* Only uses lower 5 bits */
 			break;
 		case MBC2:
 			/* The least significant bit of the upper address byte must be 1 */
 			if( offset & 0x0100 )
 				ROMBank = data;
+			break;
+		case MBC3:
+		case HUC1:	/* Probably wrong */
+		case HUC3:	/* Probably wrong */
+			ROMBank = data;
 			break;
 		case MBC5:
 			/* MBC5 has a 9 bit bank select */
@@ -172,8 +191,32 @@ WRITE_HANDLER ( gb_ram_bank_select )
 	{
 		switch( MBCType )
 		{
-		case MBC1:	/* Need to handle different modes */
-		case MBC3:	/* Need to handle RTC */
+		case MBC1:
+			data &= 0x3; /* Only uses the lower 2 bits */
+			if( MBC1Mode )
+			{
+				/* Select the upper bits of the ROMMask */
+				ROMBank |= data << 5;
+				cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+				return;
+			}
+			else
+			{
+				RAMBank = data;
+			}
+			break;
+		case MBC3:
+			if( data & 0x3 )
+			{
+				RAMBank = data & 0x3;
+			}
+			if( data & 0x8 )
+			{
+				MBC3RTCBank = data & 0x3;
+				cpu_setbank (2, &MBC3RTCMap[MBC3RTCBank]);
+				return;
+			}
+			break;
 		case MBC5:
 			RAMBank = data;
 			break;
@@ -183,6 +226,22 @@ WRITE_HANDLER ( gb_ram_bank_select )
 		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 		if (Verbose & 0x08)
 			printf ("RAM: Bank %d selected\n", RAMBank);
+	}
+}
+
+WRITE_HANDLER ( gb_mem_mode_select )
+{
+	switch( MBCType )
+	{
+		case MBC1:
+			MBC1Mode = data & 0x1;
+			break;
+		case MBC3:
+			if( CartType & TIMER )
+			{
+				// RTC Latch
+			}
+			break;
 	}
 }
 
@@ -868,24 +927,13 @@ int gb_load_rom (int id)
 
 int gb_scanline_interrupt (void)
 {
-	/* test ! */
+	/* This is a little dodgy, but it works... mostly */
 	static UINT8 count = 0;
-
 	count = (count + 1) % 3;
-	switch (count)
-	{
-	case 0:
-		/* continue */
-		break;
-	case 1:
-		gb_scanline_interrupt_set_mode2 (0);
+	if ( count )
 		return ignore_interrupt();
-	case 2:
-		gb_scanline_interrupt_set_mode3 (0);
-		return ignore_interrupt();
-	}
 
-	/* first let's draw the current scanline */
+	/* First let's draw the current scanline */
 	if (CURLINE < 144)
 		gb_refresh_scanline ();
 
@@ -902,27 +950,18 @@ int gb_scanline_interrupt (void)
 		else
 			LCDSTAT &= 0xFB;
 
-		CURLINE = (CURLINE + 1) % 154;
-
-		/*gb_ram[0xFF44] = CURLINE; */
-
 		if (CURLINE < 144)
 		{
-			/* first  lcdstate change after aprox 49 uS */
-			timer_set (48.6 / 1000000.0, 0, gb_scanline_interrupt_set_mode2);
-
-			/* second lcdstate change after aprox 69 uS */
-			timer_set (67.6 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
-
-			/* modify lcdstate */
-			LCDSTAT = LCDSTAT & 0xFC;
-
+			/* Set Mode 2 lcdstate */
+			LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
 			/* generate lcd interrupt if requested */
-			if( LCDSTAT & 0x08 )
-			{
-				/*logerror("generating lcd interrupt\n");*/
+			if (LCDSTAT & 0x20)
 				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
-			}
+
+			/* first  lcdstate change after aprox 19 uS */
+			timer_set (19.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
+			/* second lcdstate change after aprox 60 uS */
+			timer_set (60.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode0);
 		}
 		else
 		{
@@ -939,15 +978,17 @@ int gb_scanline_interrupt (void)
 			}
 		}
 
-		/* Generate serial IO interrupt */
-		if (SIOCount)
+		CURLINE = (CURLINE + 1) % 154;
+	}
+
+	/* Generate serial IO interrupt */
+	if (SIOCount)
+	{
+		SIODATA = (SIODATA << 1) | 0x01;
+		if (!--SIOCount)
 		{
-			SIODATA = (SIODATA << 1) | 0x01;
-			if (!--SIOCount)
-			{
-				SIOCONT &= 0x7F;
-				cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
-			}
+			SIOCONT &= 0x7F;
+			cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
 		}
 	}
 
@@ -956,17 +997,17 @@ int gb_scanline_interrupt (void)
 	return ignore_interrupt();
 }
 
-void gb_scanline_interrupt_set_mode2 (int param)
+void gb_scanline_interrupt_set_mode0 (int param)
 {
-	/* modify lcdstate */
-	LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
+	/* Set Mode 0 lcdstate */
+	LCDSTAT = LCDSTAT & 0xFC;
 	/* generate lcd interrupt if requested */
-	if (LCDSTAT & 0x20)
+	if( LCDSTAT & 0x08 )
 		cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
 }
 
 void gb_scanline_interrupt_set_mode3 (int param)
 {
-	/* modify lcdstate */
+	/* Set Mode 3 lcdstate */
 	LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
 }
