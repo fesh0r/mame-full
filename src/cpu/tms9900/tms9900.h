@@ -29,6 +29,7 @@
                           /* This chip is available in several variants (tms99105, tms99110...), */
                           /* which are similar but emulate additional instructions thanks */
                           /* to the so-called macrostore feature. */
+                          /* tms99105 includes BLSK, TMB, TCMB, TSMC */
 
 
 
@@ -62,6 +63,10 @@ extern unsigned ti990_10_dasm(char *buffer, unsigned pc);
 
 /* accessor for the internal ROM */
 extern READ16_HANDLER(ti990_10_internal_r);
+
+/* CRU accessor for the mapper registers (R12 base 0x1fa0) */
+extern READ16_HANDLER(ti990_10_mapper_cru_r);
+extern WRITE16_HANDLER(ti990_10_mapper_cru_w);
 
 #endif
 

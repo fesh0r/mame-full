@@ -48,6 +48,10 @@ static void getstat(void)
 		lastparity = 1;
 	else
 		lastparity = 0;
+
+#if HAS_MAPPING
+	I.cur_map = (I.STATUS & ST_MF) ? 1 : 0;
+#endif
 }
 
 /*
@@ -189,9 +193,6 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 	}
 }
 
-#define wadd(addr,expr) { int lval = setst_add_laeco(readword(addr), (expr)); writeword((addr),lval); }
-#define wsub(addr,expr) { int lval = setst_sub_laeco(readword(addr), (expr)); writeword((addr),lval); }
-
 #ifdef __POWERPC__
 
 // setst_add_32_laeco :
@@ -203,7 +204,7 @@ INLINE void setst_c_lae(UINT16 to, UINT16 val)
 
 static INT32 asm setst_add_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
   addco. r3, b, a   // add, set CR0, and set CA and OV
@@ -223,7 +224,7 @@ positive_result:
   ori st, st, ST_LGT | ST_AGT   // if result > 0, set ST_LGT and ST_AGT
 
 next:
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   andi. st, st, (~ ST_DC) & 0xFFFF
 
   or r7,r6,b
@@ -253,7 +254,7 @@ nocarry:
 
 static INT32 asm setst_sub_32_laeco(register INT32 a, register INT32 b, register INT16 st)
 {
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   mr r6,a           // save operand
 #endif
   subco. r3, a, b   // sub, set CR0, and set CA and OV
@@ -273,7 +274,7 @@ positive_result:
   ori st, st, ST_LGT | ST_AGT   // if result > 0, set ST_LGT and ST_AGT
 
 next:
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
   andi. st, st, (~ ST_DC) & 0xFFFF
 
   orc r7,r6,b
@@ -406,7 +407,7 @@ INLINE INT16 setst_add_laeco(int a, int b)
 	if ((res ^ b) & (res ^ a) & 0x8000)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & b) | ((a | b) & ~ res)) & 0x0800)
 		I.STATUS |= ST_DC;
 #endif
@@ -442,7 +443,7 @@ INLINE INT16 setst_sub_laeco(int a, int b)
 	if ((a ^ b) & (a ^ res) & 0x8000)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & ~ b) | ((a | ~ b) & ~ res)) & 0x0800)
 		I.STATUS |= ST_DC;
 #endif
@@ -478,7 +479,7 @@ INLINE INT8 setst_addbyte_laecop(int a, int b)
 	if ((res ^ b) & (res ^ a) & 0x80)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & b) | ((a | b) & ~ res)) & 0x08)
 		I.STATUS |= ST_DC;
 #endif
@@ -516,7 +517,7 @@ INLINE INT8 setst_subbyte_laecop(int a, int b)
 	if ((a ^ b) & (a ^ res) & 0x80)
 		I.STATUS |= ST_OV;
 
-#if (TMS99XX_MODEL == TMS9940_ID)
+#if (TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID)
 	if (((a & ~ b) | ((a | ~ b) & ~ res)) & 0x08)
 		I.STATUS |= ST_DC;
 #endif
