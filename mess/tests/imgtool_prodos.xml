@@ -127,6 +127,18 @@
 	</checkdirectory>
 </imgtooltest>
 
+<imgtooltest name="prodos_004">
+	<createimage driver="apple2_do_prodos_525"/>
+	<putfile name="FILE.TXT">'tree!' * 26400</putfile>
+	<checkfile name="FILE.TXT">'tree!' * 26400</checkfile>
+	<putfile name="FILE.TXT">'splng' * 500</putfile>
+	<checkfile name="FILE.TXT">'splng' * 500</checkfile>
+	<putfile name="FILE.TXT">'splng' * 500</putfile>
+	<checkfile name="FILE.TXT">'splng' * 500</checkfile>
+	<putfile name="FILE.TXT"/>
+	<checkfile name="FILE.TXT"/>
+</imgtooltest>
+
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>

@@ -978,8 +978,8 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 	struct prodos_dirent *ent, UINT8 *bitmap, UINT32 new_blockcount)
 {
 	imgtoolerr_t err;
-	int depth, new_depth;
-	UINT16 new_block;
+	int depth, new_depth, i;
+	UINT16 new_block, block;
 	UINT8 buffer[BLOCK_SIZE];
 
 	/* determine the current tree depth */
@@ -1009,6 +1009,7 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 		if (err)
 			return err;
 
+		/* create this new key block, with a link to the previous one */
 		memset(buffer, 0, sizeof(buffer));
 		buffer[0] = (UINT8) (ent->key_pointer >> 0);
 		buffer[256] = (UINT8) (ent->key_pointer >> 8);
@@ -1025,7 +1026,43 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 	/* do we have to shrink the tree? */
 	while(new_depth < depth)
 	{
-		return IMGTOOLERR_UNEXPECTED;
+		err = prodos_load_block(image, ent->key_pointer, buffer);
+		if (err)
+			return err;
+
+		for (i = 1; i < 256; i++)
+		{
+			block = buffer[i + 256];
+			block <<= 8;
+			block |= buffer[i + 0];
+
+			if (block > 0)
+			{
+				if (depth > 2)
+				{
+					/* remove this block's children */
+					err = prodos_fill_file(image, bitmap, block, FALSE, depth - 1, 0, 0);
+					if (err)
+						return err;
+				}
+
+				/* and remove this block */
+				prodos_set_volume_bitmap_bit(bitmap, block, 0);
+			}
+		}
+
+		/* remove this key block */
+		prodos_set_volume_bitmap_bit(bitmap, ent->key_pointer, 0);
+
+		/* set the new key pointer */
+		block = buffer[256];
+		block <<= 8;
+		block |= buffer[0];
+		ent->key_pointer = block;
+	
+		depth--;
+		ent->storage_type &= ~0xF0;
+		ent->storage_type |= depth * 0x10;
 	}
 
 	if (new_blockcount > 0)
@@ -1353,10 +1390,7 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
 
-	/* we cannot shrink files yet */
-	if ((ent.filesize / BLOCK_SIZE) > (file_size / BLOCK_SIZE))
-		return IMGTOOLERR_UNIMPLEMENTED;
-
+	/* set the file size */
 	err = prodos_set_file_size(image, &direnum, &ent, file_size);
 	if (err)
 		return err;
