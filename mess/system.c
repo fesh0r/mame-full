@@ -19,7 +19,7 @@
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-struct GameDriver driver_0 =
+const struct GameDriver driver_0 =
 {
   __FILE__,
   0,

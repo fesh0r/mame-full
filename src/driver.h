@@ -244,6 +244,9 @@ enum
 #if (HAS_PSXCPU)
 	CPU_PSX,
 #endif
+#if (HAS_SH2)
+	CPU_SH2,
+#endif
 #if (HAS_SC61860)
 	CPU_SC61860,
 #endif
