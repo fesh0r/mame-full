@@ -41,6 +41,7 @@ LPCTSTR GetImageName(int nItem);
 LPCTSTR GetImageFullName(int nItem);
 
 #ifdef MAME_DEBUG
+#include "driver.h"
 void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *drv);
 #endif
 

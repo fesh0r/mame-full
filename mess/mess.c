@@ -780,9 +780,10 @@ int messvaliditychecks(void)
 	return error;
 }
 
-void messtestdriver(const struct GameDriver *gamedrv)
+void messtestdriver(const void *gamedrv)
 {
 #if 0
+	const struct GameDriver *gamedrv = game;
 	Machine->gamedrv = gamedrv;
 	Machine->drv = gamedrv->drv;
 	memset(&Machine->memory_region, 0, sizeof(Machine->memory_region));

@@ -99,11 +99,19 @@ static void update_sam(void)
 
 void sam_init(const struct sam6883_interface *intf)
 {
+	static int sam_postload_registered = 0;
 	sam.intf = intf;
 	sam.state = 0;
 	sam.old_state = 0x8000;
 	state_save_register_UINT16("6883sam", 0, "state", &sam.state, 1);
-	state_save_register_func_postload(update_sam);
+
+	if (!sam_postload_registered) {
+		/* i have to do this because the state_save code is too dumb to
+		 * recognize a postload called after reset
+		 */
+		state_save_register_func_postload(update_sam);
+		sam_postload_registered = 1;
+	}
 	update_sam();
 }
 
