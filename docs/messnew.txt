@@ -22,7 +22,7 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - The tape control in the classic UI is now only available on systems with
-  a cassette device.  [Lawrence Gold]
+  a cassette device.  [Dave Humphreys]
 
 - [Windows] Fixed a bug in the new UI that could cause crashes when
   customizing analog inputs.  [Nate Woods]
