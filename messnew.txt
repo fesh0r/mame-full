@@ -8,6 +8,9 @@ System Driver Changes:
 ----------------------
 - [AQUARIUS/TRS80/MICROTAN/APPLE1] Now use tilemap. [Nate Woods]
 
+- [GAMEBOY] Fixed envelope generation in sound channels 1 and 2. (bug #289)
+  [Anthony Kruize]
+
 Source Changes:
 ---------------
 (none)
