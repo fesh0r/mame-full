@@ -15,7 +15,6 @@ This file is a set of function calls and defs required for MESS.
 #include "inputx.h"
 
 extern struct GameOptions options;
-extern const struct Devices devices[];
 
 /* Globals */
 const char *mess_path;
@@ -46,30 +45,6 @@ int DECL_SPEC mess_printf(char *fmt, ...)
 int system_supports_cassette_device (void)
 {
 	return device_find(Machine->gamedrv, IO_CASSETTE) ? TRUE : FALSE;
-}
-
-int device_count(int type)
-{
-	const struct IODevice *dev;
-	dev = device_find(Machine->gamedrv, type);
-	return dev ? dev->count : 0;
-}
-
-/*
- * Return a name for the device type (to be used for UI functions)
- */
-const char *device_typename(int type)
-{
-	if (type < IO_COUNT)
-		return devices[type].name;
-	return "UNKNOWN";
-}
-
-const char *device_brieftypename(int type)
-{
-	if (type < IO_COUNT)
-		return devices[type].shortname;
-	return "UNKNOWN";
 }
 
 /* Return a name for a device of type 'type' with id 'id' */
@@ -570,7 +545,6 @@ void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
 }
 
 #ifdef MAME_DEBUG
-
 int messvaliditychecks(void)
 {
 	int i;
@@ -579,28 +553,11 @@ int messvaliditychecks(void)
 	const struct IODevice *dev;
 	long used_devices;
 	const char *s;
-
-	/* Check the device struct array */
-	i=0;
-	while (devices[i].id != IO_COUNT)
-	{
-		if (devices[i].id != i)
-		{
-			printf("MESS Validity Error - Device struct array order mismatch\n");
-			error = 1;
-		}
-		i++;
-	}
-	if (i < IO_COUNT)
-	{
-		printf("MESS Validity Error - Device struct entry missing\n");
-		error = 1;
-	}
+	extern int device_valididtychecks(void);
 
 	/* MESS specific driver validity checks */
 	for(i = 0; drivers[i]; i++)
 	{
-
 		/* check device array */
 		used_devices = 0;
 		for(dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
@@ -614,7 +571,7 @@ int messvaliditychecks(void)
 			/* make sure that we can't duplicate devices */
 			if (used_devices & (1 << dev->type))
 			{
-				printf("%s: device type '%s' is specified multiple times\n", drivers[i]->name, devices[dev->type].name);
+				printf("%s: device type '%s' is specified multiple times\n", drivers[i]->name, device_typename(dev->type));
 				error = 1;
 			}
 			used_devices |= (1 << dev->type);
@@ -630,7 +587,7 @@ int messvaliditychecks(void)
 			case IO_SNAPSHOT:
 				if (dev->count != 1)
 				{
-					printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, devices[dev->type].name);
+					printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, device_typename(dev->type));
 					error = 1;
 				}
 				/* fallthrough */
@@ -638,7 +595,7 @@ int messvaliditychecks(void)
 			case IO_CARTSLOT:
 				if (dev->open_mode != OSD_FOPEN_READ)
 				{
-					printf("%s: devices of type '%s' must have open mode OSD_FOPEN_READ\n", drivers[i]->name, devices[dev->type].name);
+					printf("%s: devices of type '%s' must have open mode OSD_FOPEN_READ\n", drivers[i]->name, device_typename(dev->type));
 					error = 1;
 				}
 				break;
@@ -663,6 +620,8 @@ int messvaliditychecks(void)
 			error = 1;
 	}
 
+	if (device_valididtychecks())
+		error = 1;
 	return error;
 }
 

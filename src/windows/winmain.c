@@ -88,6 +88,14 @@ int main(int argc, char **argv)
 		strcat(mapfile_name, ".map");
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
 
+#if defined(MESS) && defined(MAME_DEBUG)
+	{
+		extern int messopts_valididty_checks(void);
+		if (messopts_valididty_checks())
+			return -1;
+	}
+#endif
+
 	// remember the initial LED states
 	original_leds = osd_get_leds();
 

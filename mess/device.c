@@ -9,9 +9,16 @@
 #include "driver.h"
 #include "device.h"
 
+struct Devices
+{
+	int  id;
+	const char *name;
+	const char *shortname;
+};
+
 /* The List of Devices, with Associated Names - Be careful to ensure that 	*/
 /* this list matches the ENUM from device.h, so searches can use IO_COUNT	*/
-const struct Devices devices[] =
+static const struct Devices devices[] =
 {
 	{IO_END,		"NONE",			"NONE"}, /*  0 */
 	{IO_CARTSLOT,	"cartridge",	"cart"}, /*  1 */
@@ -223,4 +230,80 @@ const struct IODevice *device_find(const struct GameDriver *gamedrv, int type)
 	}
 	return NULL;
 }
+
+int device_count(int type)
+{
+	const struct IODevice *dev;
+	dev = device_find(Machine->gamedrv, type);
+	return dev ? dev->count : 0;
+}
+
+int device_typeid(const char *name)
+{
+	int i;
+	for(i = 1; i < sizeof(devices) / sizeof(devices[0]); i++)
+	{
+		if (devices[i].name && (!strcmpi(name, devices[i].name) || !strcmpi(name, devices[i].shortname)))
+			return i;
+	}
+	return -1;
+}
+
+/*
+ * Return a name for the device type (to be used for UI functions)
+ */
+const char *device_typename(int type)
+{
+	if (type < IO_COUNT)
+		return devices[type].name;
+	return "UNKNOWN";
+}
+
+const char *device_brieftypename(int type)
+{
+	if (type < IO_COUNT)
+		return devices[type].shortname;
+	return "UNKNOWN";
+}
+
+#ifdef MAME_DEBUG
+int device_valididtychecks(void)
+{
+	int error = 0;
+	int i;
+
+	if ((sizeof(devices) / sizeof(devices[0])) != IO_COUNT+1)
+	{
+		printf("devices array should match size of IO_* enum\n");
+		error = 1;
+	}
+
+	/* Check the device struct array */
+	i=0;
+	while(devices[i].id != IO_COUNT)
+	{
+		if (devices[i].id != i)
+		{
+			printf("MESS Validity Error - Device struct array order mismatch\n");
+			error = 1;
+		}
+		i++;
+	}
+	if (i < IO_COUNT)
+	{
+		printf("MESS Validity Error - Device struct entry missing\n");
+		error = 1;
+	}
+
+	for(i = 0; i < sizeof(devices) / sizeof(devices[0]); i++)
+	{
+		if (devices[i].id != i)
+		{
+			printf("devices[%d].id should equal %d, but instead is %d\n", i, i, devices[i].id);
+			error = 1;
+		}
+	}
+	return error;
+}
+#endif
 

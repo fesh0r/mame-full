@@ -12,38 +12,29 @@
 #include "rc.h"
 #include "parallel.h"
 #include "menu.h"
+#include "device.h"
 
-/* add_device() is called when the MESS CLI option has been identified 		*/
-/* This searches throught the devices{} struct array to grab the ID of the 	*/
-/* option, which then registers the device using register_device()			*/
+static const char *dev_opts;
+
+/*	add_device() is called when the MESS CLI option has been identified
+ *	This searches throught the devices{} struct array to grab the ID of the
+ *	option, which then registers the device using register_device()
+ */
 static int add_device(struct rc_option *option, const char *arg, int priority)
 {
-	extern const struct Devices devices[]; /* from mess device.c */
-	int i=0;
-
-	/* First, we need to find the ID of this option - kludge alert!			*/
-	while(devices[i].id != IO_COUNT)
+	int id;
+	id = device_typeid(option->name);
+	if (id < 0)
 	{
-		if (!stricmp(option->name, devices[i].name)  		||
-			!stricmp(option->shortname, devices[i].shortname))
-		{
-			/* A match!  we now know the ID of the device */
-			option->priority = priority;
-			return (register_device (devices[i].id, arg));
-		}
-		else
-		{
-			/* No match - keep looking */
-			i++;
-		}
+		/* If we get to here, log the error - This is mostly due to a mismatch in the array */
+		logerror("Command Line Option [-%s] not a valid device - ignoring\n", option->name);
+		return -1;
 	}
 
-	/* If we get to here, log the error - This is mostly due to a mismatch in the array */
-	logerror("Command Line Option [-%s] not a valid device - ignoring\n", option->name);
-    return -1;
-
+	/* A match!  we now know the ID of the device */
+	option->priority = priority;
+	return register_device(id, arg);
 }
-static const char *dev_opts;
 
 static int specify_ram(struct rc_option *option, const char *arg, int priority)
 {
@@ -59,7 +50,8 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 	return 0;
 }
 
-struct rc_option mess_opts[] = {
+struct rc_option mess_opts[] =
+{
 	/* FIXME - these option->names should NOT be hardcoded! */
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "newui",     "nu",   rc_bool,   &options.disable_normal_ui,	"1", 0, 0, NULL,			"use the new MESS UI" },
@@ -81,3 +73,40 @@ struct rc_option mess_opts[] = {
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
+#ifdef MAME_DEBUG
+int messopts_valididty_checks(void)
+{
+	int i;
+	int id_fromshortname;
+	int id_fromlongname;
+	int error = 0;
+
+	for (i = 0; i < sizeof(mess_opts) / sizeof(mess_opts[0]); i++)
+	{
+		if(mess_opts[i].func == add_device)
+		{
+			id_fromlongname = device_typeid(mess_opts[i].name);
+			if (id_fromlongname < 0)
+			{
+				printf("option -%s is supposed to load a device, but it does not\n", mess_opts[i].name);
+				error = 1;
+			}
+
+			id_fromshortname = device_typeid(mess_opts[i].shortname);
+			if (id_fromshortname < 0)
+			{
+				printf("option -%s is supposed to load a device, but it does not\n", mess_opts[i].shortname);
+				error = 1;
+			}
+
+			if (id_fromlongname != id_fromshortname)
+			{
+				printf("options -%s and -%s are supposed to map to the same device\n", mess_opts[i].name, mess_opts[i].shortname);
+				error = 1;
+			}
+		}
+	}
+	return error;
+}
+
+#endif /* MAME_DEBUG */

@@ -175,6 +175,7 @@ extern int system_supports_cassette_device (void);
 extern int			device_count(int type);
 extern const char  *device_typename(int type);
 extern const char  *device_brieftypename(int type);
+extern int          device_typeid(const char *name);
 extern const char  *device_typename_id(int type, int id);
 extern const char  *device_file_extension(int type, int extnum);
 

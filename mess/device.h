@@ -19,12 +19,6 @@ enum
 	IO_COUNT		/* 13 - Total Number of IO_devices for searching										*/
 };
 
-struct Devices {
-	const int  id;
-	const char *name;
-	const char *shortname;
-};
-
 /* Call this from the CLI to add a DEVICE (with its arg) to the options struct */
 int register_device (const int type, const char *arg);
 
