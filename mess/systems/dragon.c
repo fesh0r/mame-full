@@ -732,6 +732,13 @@ ROM_START(coco3)
      ROM_LOAD_OPTIONAL(	"disk11.rom",	0x8E000, 0x2000, 0x0b9c5415)
 ROM_END
 
+ROM_START(coco3p)
+     ROM_REGION(0x90000,REGION_CPU1,0)
+	 ROM_LOAD(			"coco3p.rom",	0x80000, 0x8000, 0xff050d80)
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x8C000, 0x2000, 0x0b9c5415)
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x8E000, 0x2000, 0x0b9c5415)
+ROM_END
+
 ROM_START(cp400)
      ROM_REGION(0x18000,REGION_CPU1,0)
      ROM_LOAD("cp400bas.rom",  0x10000, 0x4000, 0x878396a5)
@@ -779,6 +786,7 @@ static const struct IODevice io_coco3[] = {
 #define io_cocoe io_coco
 #define io_coco2 io_coco
 #define io_coco2b io_coco
+#define io_coco3p io_coco3
 #define io_coco3h io_coco3
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
@@ -786,7 +794,8 @@ COMP(  1980, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Co
 COMP(  1981, cocoe,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer (Extended BASIC 1.0)" )
 COMP(  198?, coco2,     coco,	coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer 2" )
 COMP(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B" )
-COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
-COMPX( 19??, coco3h,	coco,	coco3h,    coco3,	 0, 	  "Tandy Radio Shack",  "Color Computer 3 (HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
+COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (NTSC)" )
+COMP(  1986, coco3p,    coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (PAL)" )
+COMPX( 19??, coco3h,	coco,	coco3h,    coco3,	 0, 	  "Tandy Radio Shack",  "Color Computer 3 (NTSC; HD6309)", GAME_COMPUTER_MODIFIED|GAME_ALIAS)
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  "Prologica",          "CP400" )
