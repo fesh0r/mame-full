@@ -54,7 +54,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 				else
 				{
 					/* else cycle through Devices */
-					for (j = 0; j < devices[j].type < IO_COUNT; j++)
+					for (j = 0; j < devices[j].type && j < IO_COUNT; j++)
 					{
 						src = devices[j].file_extensions;
 						name = device_typename(devices[j].type);
