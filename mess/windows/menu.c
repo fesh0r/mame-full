@@ -1535,13 +1535,20 @@ static int invoke_command(UINT command)
 	case ID_OPTIONS_PROFILER:
 		ui_show_profiler_set(!ui_show_profiler_get());
 		break;
-#endif
+#endif // HAS_PROFILER
 
 #if HAS_DEBUGGER
 	case ID_OPTIONS_DEBUGGER:
+#ifdef NEW_DEBUGGER
 		debug_halt_on_next_instruction();
-		break;
+#else
+		{
+			extern int debug_key_pressed;
+			debug_key_pressed = 1;
+		}
 #endif
+		break;
+#endif // HAS_DEBUGGER
 
 	case ID_OPTIONS_CONFIGURATION:
 		customize_configuration();
