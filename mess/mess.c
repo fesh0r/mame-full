@@ -9,6 +9,7 @@ This file is a set of function calls and defs required for MESS.
 #include "config.h"
 #include "includes/flopdrv.h"
 #include "utils.h"
+#include "state.h"
 
 extern struct GameOptions options;
 extern const struct Devices devices[];
@@ -589,7 +590,6 @@ static int ram_init(const struct GameDriver *gamedrv)
 		mess_ram_size = ram_default(gamedrv);
 	}
 	/* if we have RAM, allocate it */
-	/*state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);*/
 	if (mess_ram_size >= 0)
 	{
 		mess_ram = (UINT8 *) auto_malloc(mess_ram_size);
@@ -597,7 +597,8 @@ static int ram_init(const struct GameDriver *gamedrv)
 			return 1;
 		memset(mess_ram, 0xcd, mess_ram_size);
 
-		/*state_save_register_UINT8("mess", 0, "mess_ram", mess_ram, mess_ram_size);*/
+		state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);
+		state_save_register_UINT8("mess", 0, "mess_ram", mess_ram, mess_ram_size);
 	}
 	else
 	{
