@@ -767,6 +767,8 @@ static MACHINE_DRIVER_START( msx )
 
 	/* video hardware */
 	MDRV_TMS9928A( &tms9928a_interface )
+	MDRV_SCREEN_SIZE(15 + 256 + 15, 27 + 192 + 24)
+	MDRV_VISIBLE_AREA(15 - 8, 15 + 256 + 8 - 1, 27 - 24, 27 + 192 + 24 - 1)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)

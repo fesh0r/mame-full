@@ -38,6 +38,7 @@ struct _mess_image
 	char *year;
 	char *playable;
 	char *extrainfo;
+	char *basename_noext;
 	memory_pool mempool;
 };
 
@@ -316,6 +317,7 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 	img->year = NULL;
 	img->playable = NULL;
 	img->extrainfo = NULL;
+	img->basename_noext = NULL;
 
 	osd_image_load_status_changed(img, is_final_unload);
 }
@@ -571,6 +573,25 @@ const char *image_filename(mess_image *img)
 const char *image_basename(mess_image *img)
 {
 	return osd_basename((char *) image_filename(img));
+}
+
+const char *image_basename_noext(mess_image *img)
+{
+	const char *s;
+	char *ext;
+
+	if (!img->basename_noext)
+	{
+		s = image_basename(img);
+		if (s)
+		{
+			img->basename_noext = image_strdup(img, s);
+			ext = strrchr(img->basename_noext, '.');
+			if (ext)
+				*ext = '\0';
+		}
+	}
+	return img->basename_noext;
 }
 
 const char *image_filetype(mess_image *img)

@@ -29,29 +29,57 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 {
 	const char *fname;
 	const char *ext;
-	int len = -1;
+	const char *strs[3];
+	char *s;
+	int len, pos, i;
 
-	fname = image_basename(img);
-	if (fname)
+	/* This function builds the override_artfile string.  This string is a
+	 * list of NUL terminated strings.  These strings become the basename for
+	 * the .art file that we use.
+	 *
+	 * We use the following strings:
+	 * 1.  The basename
+	 * 2.  The goodname
+	 * 3.  The file specified by defaultartfile
+	 */
+
+	strs[0] = image_basename_noext(img);
+	strs[1] = image_longname(img);
+	strs[2] = defaultartfile;
+
+	/* concatenate the strings; first calculate length of the string */
+	len = 1;
+	for (i = 0; i < sizeof(strs) / sizeof(strs[0]); i++)
 	{
-		ext = strrchr(fname, '.');
-		if (ext)
-			len = ext - fname;
+		if (strs[i])
+			len += strlen(strs[i]) + 1;
 	}
 
-	override_artfile = malloc((fname ? len + 1 : 0) + strlen(defaultartfile) + 1 + 1);
+	override_artfile = malloc(len);
 	if (!override_artfile)
 		return;
+	override_artfile[len - 1] = '\0';
 
-	if (fname)
+	/* now actually concatenate the strings */
+	pos = 0;
+	for (i = 0; i < sizeof(strs) / sizeof(strs[0]); i++)
 	{
-		memcpy(override_artfile, fname, len);
-		override_artfile[len] = 0;
+		if (strs[i])
+		{
+			strcpy(&override_artfile[pos], strs[i]);
+			pos += strlen(strs[i]) + 1;
+		}
 	}
 
-	strcpy(&override_artfile[len + 1], defaultartfile);
-	override_artfile[len + 1 + strlen(defaultartfile) + 1] = '\0';
+	/* small transformations */
+	for (i = 0; i < len; i++)
+	{
+		if (override_artfile[i] == ':')
+			override_artfile[i] = '-';
+	}
 }
+
+
 
 static int mess_activate_artwork(struct osd_create_params *params)
 {
@@ -62,6 +90,8 @@ static int mess_activate_artwork(struct osd_create_params *params)
 	}
 	return FALSE;
 }
+
+
 
 static mame_file *mess_load_artwork_file(const struct GameDriver **driver)
 {
@@ -90,6 +120,8 @@ static mame_file *mess_load_artwork_file(const struct GameDriver **driver)
 	return artfile;
 }
 
+
+
 struct artwork_callbacks mess_artwork_callbacks =
 {
 	mess_activate_artwork,
@@ -113,6 +145,8 @@ static char *strip_space(char *string)
 	for (end = start + strlen(start) - 1; end > start && isspace(*end); end--) *end = 0;
 	return start;
 }
+
+
 
 void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	struct inputform_customization *customizations, int customizations_length)

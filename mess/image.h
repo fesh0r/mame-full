@@ -117,6 +117,7 @@ int image_slotexists(mess_image *img);
 const char *image_typename_id(mess_image *img);
 const char *image_filename(mess_image *img);
 const char *image_basename(mess_image *img);
+const char *image_basename_noext(mess_image *img);
 const char *image_filetype(mess_image *img);
 const char *image_filedir(mess_image *img);
 unsigned int image_length(mess_image *img);

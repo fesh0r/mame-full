@@ -1,8 +1,9 @@
 /***************************************************************************
 
-  WD179X.c
+	wd179x.c
 
-  Functions to emulate a WD179x floppy disc controller
+	Implementations of the Western Digitial 17xx and 19xx families of
+	floppy disk controllers
 
   KT - Removed disk image code and replaced it with floppy drive functions.
 	   Any disc image is now useable with this code.
@@ -13,6 +14,7 @@
 	 - Multiple record read/write
 	 - What happens if a track is read that doesn't have any id's on it?
 	   (e.g. unformatted disc)
+
 ***************************************************************************/
 
 
@@ -33,6 +35,128 @@
 #define DELAY_ERROR		3
 #define DELAY_NOTREADY	1
 #define DELAY_DATADONE	3
+
+
+
+/***************************************************************************
+
+	Constants
+
+***************************************************************************/
+
+#define TYPE_I			1
+#define TYPE_II 		2
+#define TYPE_III		3
+#define TYPE_IV 		4
+
+#define FDC_STEP_RATE   0x03    /* Type I additional flags */
+#define FDC_STEP_VERIFY 0x04	/* verify track number */
+#define FDC_STEP_HDLOAD 0x08	/* load head */
+#define FDC_STEP_UPDATE 0x10	/* update track register */
+
+#define FDC_RESTORE 	0x00	/* Type I commands */
+#define FDC_SEEK		0x10
+#define FDC_STEP		0x20
+#define FDC_STEP_IN 	0x40
+#define FDC_STEP_OUT	0x60
+
+#define FDC_MASK_TYPE_I 		(FDC_STEP_HDLOAD|FDC_STEP_VERIFY|FDC_STEP_RATE)
+
+/* Type I commands status */
+#define STA_1_BUSY		0x01	/* controller is busy */
+#define STA_1_IPL		0x02	/* index pulse */
+#define STA_1_TRACK0	0x04	/* track 0 detected */
+#define STA_1_CRC_ERR	0x08	/* CRC error */
+#define STA_1_SEEK_ERR	0x10	/* seek error */
+#define STA_1_HD_LOADED 0x20	/* head loaded */
+#define STA_1_WRITE_PRO 0x40	/* floppy is write protected */
+#define STA_1_NOT_READY 0x80	/* controller not ready */
+
+/* Type II and III additional flags */
+#define FDC_DELETED_AM	0x01	/* read/write deleted address mark */
+#define FDC_SIDE_CMP_T	0x02	/* side compare track data */
+#define FDC_15MS_DELAY	0x04	/* delay 15ms before command */
+#define FDC_SIDE_CMP_S	0x08	/* side compare sector data */
+#define FDC_MULTI_REC	0x10	/* only for type II commands */
+
+/* Type II commands */
+#define FDC_READ_SEC	0x80	/* read sector */
+#define FDC_WRITE_SEC	0xA0	/* write sector */
+
+#define FDC_MASK_TYPE_II		(FDC_MULTI_REC|FDC_SIDE_CMP_S|FDC_15MS_DELAY|FDC_SIDE_CMP_T|FDC_DELETED_AM)
+
+/* Type II commands status */
+#define STA_2_BUSY		0x01
+#define STA_2_DRQ		0x02
+#define STA_2_LOST_DAT	0x04
+#define STA_2_CRC_ERR	0x08
+#define STA_2_REC_N_FND 0x10
+#define STA_2_REC_TYPE	0x20
+#define STA_2_WRITE_PRO 0x40
+#define STA_2_NOT_READY 0x80
+
+#define FDC_MASK_TYPE_III		(FDC_SIDE_CMP_S|FDC_15MS_DELAY|FDC_SIDE_CMP_T|FDC_DELETED_AM)
+
+/* Type III commands */
+#define FDC_READ_DAM	0xc0	/* read data address mark */
+#define FDC_READ_TRK	0xe0	/* read track */
+#define FDC_WRITE_TRK	0xf0	/* write track (format) */
+
+/* Type IV additional flags */
+#define FDC_IM0 		0x01	/* interrupt mode 0 */
+#define FDC_IM1 		0x02	/* interrupt mode 1 */
+#define FDC_IM2 		0x04	/* interrupt mode 2 */
+#define FDC_IM3 		0x08	/* interrupt mode 3 */
+
+#define FDC_MASK_TYPE_IV		(FDC_IM3|FDC_IM2|FDC_IM1|FDC_IM0)
+
+/* Type IV commands */
+#define FDC_FORCE_INT	0xd0	/* force interrupt */
+
+
+
+/***************************************************************************
+
+	Structures
+
+***************************************************************************/
+
+typedef struct
+{
+	void   (*callback)(int event);   /* callback for IRQ status */
+	DENSITY   density;				/* FM/MFM, single / double density */
+	wd179x_type_t type;
+	UINT8	track_reg;				/* value of track register */
+	UINT8	data;					/* value of data register */
+	UINT8	command;				/* last command written */
+	UINT8	command_type;			/* last command type */
+	UINT8	sector; 				/* current sector # */
+
+	UINT8	read_cmd;				/* last read command issued */
+	UINT8	write_cmd;				/* last write command issued */
+	INT8	direction;				/* last step direction */
+
+	UINT8	status; 				/* status register */
+	UINT8	status_drq; 			/* status register data request bit */
+	UINT8	status_ipl; 			/* status register toggle index pulse bit */
+	UINT8	busy_count; 			/* how long to keep busy bit set */
+
+	UINT8	buffer[6144];			/* I/O buffer (holds up to a whole track) */
+	UINT32	data_offset;			/* offset into I/O buffer */
+	INT32	data_count; 			/* transfer count from/into I/O buffer */
+
+	UINT8	*fmt_sector_data[256];	/* pointer to data after formatting a track */
+
+	UINT8	dam_list[256][4];		/* list of data address marks while formatting */
+	int 	dam_data[256];			/* offset to data inside buffer while formatting */
+	int 	dam_cnt;				/* valid number of entries in the dam_list */
+	UINT16	sector_length;			/* sector length (byte) */
+
+	UINT8	ddam;					/* ddam of sector found - used when reading */
+	UINT8	sector_data_id;
+	mame_timer	*timer, *timer_rs, *timer_ws;
+	int		data_direction;
+}	WD179X;
 
 
 
@@ -117,21 +241,27 @@ static mess_image *wd179x_current_image(void)
 	return image_from_devtype_and_index(IO_FLOPPY, current_drive);
 }
 
+
+
 /* use this to determine which drive is controlled by WD */
 void wd179x_set_drive(UINT8 drive)
 {
 	current_drive = drive;
 }
 
+
+
 void wd179x_set_side(UINT8 head)
 {
 #if VERBOSE
 	if( head != hd )
-	logerror("wd179x_set_side: $%02x\n", head);
+		logerror("wd179x_set_side: $%02x\n", head);
 #endif
 
 	hd = head;
 }
+
+
 
 void wd179x_set_density(DENSITY density)
 {
@@ -146,6 +276,7 @@ void wd179x_set_density(DENSITY density)
 }
 
 
+
 static void	wd179x_busy_callback(int dummy)
 {
 	WD179X *w = (WD179X *)dummy;
@@ -153,6 +284,8 @@ static void	wd179x_busy_callback(int dummy)
 	wd179x_set_irq(w);			
 	timer_reset(busy_timer, TIME_NEVER);
 }
+
+
 
 static void wd179x_set_busy(WD179X *w, double milliseconds)
 {
@@ -209,17 +342,21 @@ static void wd179x_restore(WD179X *w)
 	wd179x_set_busy(w,0.1);
 }
 
-void	wd179x_reset(void)
+
+
+void wd179x_reset(void)
 {
 	wd179x_restore(&wd);
 }
+
+
 
 static void	wd179x_busy_callback(int dummy);
 static void	wd179x_misc_timer_callback(int code);
 static void	wd179x_read_sector_callback(int code);
 static void	wd179x_write_sector_callback(int code);
 
-void wd179x_init(int type,void (*callback)(int))
+void wd179x_init(wd179x_type_t type, void (*callback)(int))
 {
 	memset(&wd, 0, sizeof(WD179X));
 	wd.status = STA_1_TRACK0;
@@ -227,66 +364,21 @@ void wd179x_init(int type,void (*callback)(int))
 	wd.callback = callback;
 //	wd.status_ipl = STA_1_IPL;
 	wd.density = DEN_MFM_LO;
-	busy_timer = timer_alloc(wd179x_busy_callback);
-	wd.timer = timer_alloc(wd179x_misc_timer_callback);
-	wd.timer_rs = timer_alloc(wd179x_read_sector_callback);
-	wd.timer_ws = timer_alloc(wd179x_write_sector_callback);
+	busy_timer = mame_timer_alloc(wd179x_busy_callback);
+	wd.timer = mame_timer_alloc(wd179x_misc_timer_callback);
+	wd.timer_rs = mame_timer_alloc(wd179x_read_sector_callback);
+	wd.timer_ws = mame_timer_alloc(wd179x_write_sector_callback);
 
 	wd179x_reset();
-
-#if 0
-
-	for (i = 0; i < MAX_DRIVES; i++)
-	{
-		wd[i] = malloc(sizeof(WD179X));
-		if (!wd[i])
-		{
-			while (--i >= 0)
-			{
-				free(wd[i]);
-				wd[i] = 0;
-			}
-			return;
-		}
-		memset(wd[i], 0, sizeof(WD179X));
-		wd[i]->unit = 0;
-		wd[i]->tracks = 40;
-		wd[i]->heads = 1;
-		wd[i]->density = DEN_MFM_LO;
-		wd[i]->offset = 0;
-		wd[i]->first_sector_id = 0;
-		wd[i]->sec_per_track = 18;
-		wd[i]->sector_length = 256;
-		wd[i]->head = 0;
-		wd[i]->track = 0;
-		wd[i]->track_reg = 0;
-		wd[i]->direction = 1;
-		wd[i]->sector = 0;
-		wd[i]->data = 0;
-		wd[i]->status = (active) ? STA_1_TRACK0 : 0;
-		wd[i]->status_drq = 0;
-		wd[i]->status_ipl = 0;
-		wd[i]->busy_count = 0;
-		wd[i]->data_offset = 0;
-		wd[i]->data_count = 0;
-		wd[i]->image_name = 0;
-		wd[i]->image_size = 0;
-		wd[i]->dir_sector = 0;
-		wd[i]->dir_length = 0;
-		wd[i]->secmap = 0;
-		wd[i]->timer = NULL;
-		wd[i]->timer_rs = NULL;
-		wd[i]->timer_ws = NULL;
-	}
-#endif
 }
+
+
 
 static void write_track(WD179X * w)
 {
-
-
-
 }
+
+
 
 /* read an entire track */
 static void read_track(WD179X * w)
@@ -421,19 +513,7 @@ static void read_track(WD179X * w)
 	w->busy_count = 0;
 }
 
-#if 0
-void wd179x_stop_drive(void)
-{
-	WD179X *w = &wd;
 
-	w->busy_count = 0;
-	w->status = 0;
-	w->status_drq = 0;
-	if (w->callback)
-		(*w->callback) (WD179X_DRQ_CLR);
-	w->status_ipl = 0;
-}
-#endif
 
 /* calculate CRC for data address marks or sector data */
 static void calc_crc(UINT16 * crc, UINT8 value)
@@ -457,6 +537,8 @@ static void calc_crc(UINT16 * crc, UINT8 value)
 	l &= 0xe0;
 	*crc = *crc ^ l;
 }
+
+
 
 /* read the next data address mark */
 static void wd179x_read_id(WD179X * w)
@@ -512,6 +594,7 @@ static void wd179x_read_id(WD179X * w)
 }
 
 
+
 static int wd179x_find_sector(WD179X *w)
 {
 	UINT8 revolution_count;
@@ -563,6 +646,8 @@ static int wd179x_find_sector(WD179X *w)
 	return 0;
 }
 
+
+
 /* read a sector */
 static void wd179x_read_sector(WD179X *w)
 {
@@ -582,6 +667,8 @@ static void wd179x_read_sector(WD179X *w)
 	}
 }
 
+
+
 static void	wd179x_set_irq(WD179X *w)
 {
 	w->status &= ~STA_2_BUSY;
@@ -590,12 +677,16 @@ static void	wd179x_set_irq(WD179X *w)
 		(*w->callback) (WD179X_IRQ_SET);
 }
 
+
+
 /* 0=command callback; 1=data callback */
 enum
 {
 	MISCCALLBACK_COMMAND,
 	MISCCALLBACK_DATA
 };
+
+
 
 static void wd179x_misc_timer_callback(int callback_type)
 {
@@ -617,6 +708,8 @@ static void wd179x_misc_timer_callback(int callback_type)
 	/* stop it, but don't allow it to be free'd */
 	timer_reset(w->timer, TIME_NEVER); 
 }
+
+
 
 /* called on error, or when command is actually completed */
 /* KT - I have used a timer for systems that use interrupt driven transfers.
@@ -641,6 +734,8 @@ static void wd179x_complete_command(WD179X *w, int delay)
 	timer_adjust(w->timer, TIME_IN_USEC(usecs), MISCCALLBACK_COMMAND, 0);
 }
 
+
+
 static void wd179x_write_sector(WD179X *w)
 {
 	/* at this point, the disc is write enabled, and data
@@ -657,6 +752,7 @@ static void wd179x_write_sector(WD179X *w)
 		floppy_drive_write_sector_data(wd179x_current_image(), hd, w->sector_data_id, (char *)w->buffer, w->sector_length,w->write_cmd & 0x01);
 	}
 }
+
 
 
 /* verify the seek operation by looking for a id that has a matching track value */
@@ -698,6 +794,7 @@ static void wd179x_verify_seek(WD179X *w)
 }
 
 
+
 /* clear a data request */
 static void wd179x_clear_data_request(void)
 {
@@ -708,6 +805,8 @@ static void wd179x_clear_data_request(void)
 		(*w->callback) (WD179X_DRQ_CLR);
 	w->status &= ~STA_2_DRQ;
 }
+
+
 
 /* set data request */
 static void wd179x_set_data_request(void)
@@ -726,6 +825,8 @@ static void wd179x_set_data_request(void)
 		(*w->callback) (WD179X_DRQ_SET);
 	w->status |= STA_2_DRQ;
 }
+
+
 
 /* callback to initiate read sector */
 static void	wd179x_read_sector_callback(int code)
@@ -747,8 +848,9 @@ static void	wd179x_read_sector_callback(int code)
 	timer_reset(w->timer_rs, TIME_NEVER); 
 }
 
-/* callback to initiate write sector */
 
+
+/* callback to initiate write sector */
 static void	wd179x_write_sector_callback(int code)
 {
 	WD179X *w = &wd;
@@ -792,6 +894,8 @@ static void	wd179x_write_sector_callback(int code)
 	timer_reset(w->timer_ws, TIME_NEVER); 
 }
 
+
+
 /* setup a timed data request - data request will be triggered in a few usecs time */
 static void wd179x_timed_data_request(void)
 {
@@ -803,6 +907,8 @@ static void wd179x_timed_data_request(void)
 	/* set new timer */
 	timer_adjust(w->timer, TIME_IN_USEC(usecs), MISCCALLBACK_DATA, 0);
 }
+
+
 
 /* setup a timed read sector - read sector will be triggered in a few usecs time */
 static void wd179x_timed_read_sector_request(void)
@@ -816,6 +922,8 @@ static void wd179x_timed_read_sector_request(void)
 	timer_reset(w->timer_rs, TIME_IN_USEC(usecs));
 }
 
+
+
 /* setup a timed write sector - write sector will be triggered in a few usecs time */
 static void wd179x_timed_write_sector_request(void)
 {
@@ -827,6 +935,7 @@ static void wd179x_timed_write_sector_request(void)
 	/* set new timer */
 	timer_reset(w->timer_ws, TIME_IN_USEC(usecs));
 }
+
 
 
 /* read the FDC status register. This clears IRQ line too */
@@ -886,6 +995,8 @@ READ_HANDLER ( wd179x_status_r )
 	return result;
 }
 
+
+
 /* read the FDC track register */
 READ_HANDLER ( wd179x_track_r )
 {
@@ -897,6 +1008,8 @@ READ_HANDLER ( wd179x_track_r )
 	return w->track_reg;
 }
 
+
+
 /* read the FDC sector register */
 READ_HANDLER ( wd179x_sector_r )
 {
@@ -907,6 +1020,8 @@ READ_HANDLER ( wd179x_sector_r )
 #endif
 	return w->sector;
 }
+
+
 
 /* read the FDC data register */
 READ_HANDLER ( wd179x_data_r )
@@ -962,6 +1077,8 @@ READ_HANDLER ( wd179x_data_r )
 	}
 	return w->data;
 }
+
+
 
 /* write the FDC command register */
 WRITE_HANDLER ( wd179x_command_w )
@@ -1271,6 +1388,8 @@ WRITE_HANDLER ( wd179x_command_w )
 	}
 }
 
+
+
 /* write the FDC track register */
 WRITE_HANDLER ( wd179x_track_w )
 {
@@ -1282,6 +1401,8 @@ WRITE_HANDLER ( wd179x_track_w )
 #endif
 }
 
+
+
 /* write the FDC sector register */
 WRITE_HANDLER ( wd179x_sector_w )
 {
@@ -1291,6 +1412,8 @@ WRITE_HANDLER ( wd179x_sector_w )
 	logerror("wd179x_sector_w $%02X\n", data);
 #endif
 }
+
+
 
 /* write the FDC data register */
 WRITE_HANDLER ( wd179x_data_w )
@@ -1327,13 +1450,55 @@ WRITE_HANDLER ( wd179x_data_w )
 		}
 
 	}
-#if VERBOSE
 	else
 	{
+#if VERBOSE
 		logerror("wd179x_data_w $%02X\n", data);
-	}
 #endif
+	}
 	w->data = data;
 }
 
+
+
+READ_HANDLER( wd179x_r )
+{
+	data8_t result = 0;
+
+	switch(offset % 4) {
+	case 0: 
+		result = wd179x_status_r(0);
+		break;
+	case 1: 
+		result = wd179x_track_r(0);
+		break;
+	case 2: 
+		result = wd179x_sector_r(0);
+		break;
+	case 3: 
+		result = wd179x_data_r(0);
+		break;
+	}
+	return result;
+}
+
+
+
+WRITE_HANDLER( wd179x_w )
+{
+	switch(offset % 4) {
+	case 0:
+		wd179x_command_w(0, data);
+		break;
+	case 1:
+		wd179x_track_w(0, data);
+		break;
+	case 2:
+		wd179x_sector_w(0, data);
+		break;
+	case 3:
+		wd179x_data_w(0, data);
+		break;
+	}
+}
 

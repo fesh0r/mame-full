@@ -303,10 +303,8 @@ WRITE_HANDLER (fdc_disk_motor_w)
 	UINT8 seldrive = 255;
 
 	if (data == 0)
-	{
-//		  wd179x_stop_drive();
 		return;
-	}
+
 	if (data & 2) seldrive=1;
 
 	if (data & 1) seldrive=0;

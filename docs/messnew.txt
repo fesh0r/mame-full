@@ -81,6 +81,9 @@ Source Changes:
   no longer specific to CRC32; SHA-1 and MD5 are now supported.  The files
   are now called 'Hash' files are are in the hash directory.  [Nate Woods]
 
+- The artwork will now try to load artwork files with the goodname of the
+  image in addition to the other filenames.  [Nate Woods]
+
 
 
 0.80
