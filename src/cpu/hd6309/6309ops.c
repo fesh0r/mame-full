@@ -39,6 +39,18 @@ INLINE void illegal( void )
 	CHANGE_PC;
 }
 
+static void IIError(void)
+{
+	SEII;			// Set illegal Instruction Flag
+	illegal();		// Vector to Trap handler
+}
+
+static void DZError(void)
+{
+	SEDZ;			// Set Division by Zero Flag
+	illegal();		// Vector to Trap handler
+}
+
 #if macintosh
 #pragma mark ____0x____
 #endif
@@ -255,7 +267,8 @@ INLINE void sexw( void )
 	t = SIGNED_16(W);
 	D = t;
 	CLR_NZV;
-	SET_NZ32(t);
+	SET_N8(A);
+	if ( D == 0 && W == 0 ) SEZ;
 }
 
 /* $15 ILLEGAL */
@@ -2696,10 +2709,11 @@ INLINE void ldq_im( void )
 	PAIR	q;
 
 	IMMLONG(q);
-	CLR_NZV;
-	SET_NZ32(q.d);
 	D = q.w.h;
 	W = q.w.l;
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $108E LDY immediate -**0- */
@@ -2731,7 +2745,7 @@ INLINE void divd_im( void )
 	IMMBYTE( t );
 	if ( t == 0 )
 	{
-		DivisionByZeroError;
+		DZError();
 	}
 	else
 	{
@@ -3046,10 +3060,11 @@ INLINE void ldq_di( void )
 	PAIR	q;
 
 	DIRLONG(q);
-	CLR_NZV;
-	SET_NZ32(q.d);
 	D = q.w.h;
 	W = q.w.l;
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $109E LDY direct -**0- */
@@ -3076,11 +3091,11 @@ INLINE void stq_di( void )
 
 	q.w.h = D;
 	q.w.l = W;
-
-	CLR_NZV;
-	SET_NZ32(q.d);
 	DIRECT;
 	WM32(EAD,&q);
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $109F STY direct -**0- */
@@ -3389,10 +3404,11 @@ INLINE void ldq_ix( void )
 
 	fetch_effective_address();
 	q.d=RM32(EAD);
-	CLR_NZV;
-	SET_NZ32(q.d);
 	D = q.w.h;
 	W = q.w.l;
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $10aE LDY indexed -**0- */
@@ -3420,11 +3436,11 @@ INLINE void stq_ix( void )
 
 	q.w.h = D;
 	q.w.l = W;
-
 	fetch_effective_address();
-	CLR_NZV;
-	SET_NZ32(q.d);
 	WM32(EAD,&q);
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $10aF STY indexed -**0- */
@@ -3714,11 +3730,11 @@ INLINE void ldq_ex( void )
 	PAIR	q;
 
 	EXTLONG(q);
-	CLR_NZV;
-	SET_NZ32(q.d);
-
 	D = q.w.h;
 	W = q.w.l;
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $10bE LDY extended -**0- */
@@ -3745,11 +3761,11 @@ INLINE void stq_ex( void )
 
 	q.w.h = D;
 	q.w.l = W;
-
-	CLR_NZV;
-	SET_NZ32(q.d);
 	EXTENDED;
 	WM32(EAD,&q);
+	CLR_NZV;
+	SET_N8(A);
+	SET_Z(q.d);
 }
 
 /* $10bF STY extended -**0- */
@@ -5382,7 +5398,7 @@ INLINE void pref10( void )
 		case 0xfe: lds_ex();	hd6309_ICount-=7;	break;
 		case 0xff: sts_ex();	hd6309_ICount-=7;	break;
 
-		default:   IlegalInstructionError;			break;
+		default:   IIError();						break;
 	}
 }
 
@@ -5487,7 +5503,7 @@ INLINE void pref11( void )
 		case 0xf7: stf_ex();	hd6309_ICount-=6;	break;
 		case 0xfb: addf_ex();	hd6309_ICount-=6;	break;
 
-		default:   IlegalInstructionError;			break;
+		default:   IIError();						break;
 	}
 }
 

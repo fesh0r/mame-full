@@ -437,3 +437,39 @@ INLINE void sts_ex( void );
 INLINE void pref10( void );
 INLINE void pref11( void );
 
+#if !defined(BIG_SWITCH)
+static void (*hd6309_main[0x100])(void) = {
+	neg_di,  oim_di,  aim_di,  com_di,  lsr_di,  eim_di,  ror_di,  asr_di,
+	asl_di,  rol_di,  dec_di,  tim_di,  inc_di,  tst_di,  jmp_di,  clr_di,
+	pref10,  pref11,  nop,     sync,    sexw,    IIError, lbra,    lbsr,
+	IIError, daa,     orcc,    IIError, andcc,   sex,     exg,     tfr,
+	bra,     brn,     bhi,     bls,     bcc,     bcs,     bne,     beq,
+	bvc,     bvs,     bpl,     bmi,     bge,     blt,     bgt,     ble,
+	leax,    leay,    leas,    leau,    pshs,    puls,    pshu,    pulu,
+	IIError, rts,     abx,     rti,     cwai,    mul,     IIError, swi,
+	nega,    IIError, IIError, coma,    lsra,    IIError, rora,    asra,
+	asla,    rola,    deca,    IIError, inca,    tsta,    IIError, clra,
+	negb,    IIError, IIError, comb,    lsrb,    IIError, rorb,    asrb,
+	aslb,    rolb,    decb,    IIError, incb,    tstb,    IIError, clrb,
+	neg_ix,  oim_ix,  aim_ix,  com_ix,  lsr_ix,  eim_ix,  ror_ix,  asr_ix,
+	asl_ix,  rol_ix,  dec_ix,  tim_ix,  inc_ix,  tst_ix,  jmp_ix,  clr_ix,
+	neg_ex,  oim_ex,  aim_ex,  com_ex,  lsr_ex,  eim_ex,  ror_ex,  asr_ex,
+	asl_ex,  rol_ex,  dec_ex,  tim_ex,  inc_ex,  tst_ex,  jmp_ex,  clr_ex,
+	suba_im, cmpa_im, sbca_im, subd_im, anda_im, bita_im, lda_im,  IIError,
+	eora_im, adca_im, ora_im,  adda_im, cmpx_im, bsr,     ldx_im,  IIError,
+	suba_di, cmpa_di, sbca_di, subd_di, anda_di, bita_di, lda_di,  sta_di,
+	eora_di, adca_di, ora_di,  adda_di, cmpx_di, jsr_di,  ldx_di,  stx_di,
+	suba_ix, cmpa_ix, sbca_ix, subd_ix, anda_ix, bita_ix, lda_ix,  sta_ix,
+	eora_ix, adca_ix, ora_ix,  adda_ix, cmpx_ix, jsr_ix,  ldx_ix,  stx_ix,
+	suba_ex, cmpa_ex, sbca_ex, subd_ex, anda_ex, bita_ex, lda_ex,  sta_ex,
+	eora_ex, adca_ex, ora_ex,  adda_ex, cmpx_ex, jsr_ex,  ldx_ex,  stx_ex,
+	subb_im, cmpb_im, sbcb_im, addd_im, andb_im, bitb_im, ldb_im,  IIError,
+	eorb_im, adcb_im, orb_im,  addb_im, ldd_im,  ldq_im,  ldu_im,  IIError,
+	subb_di, cmpb_di, sbcb_di, addd_di, andb_di, bitb_di, ldb_di,  stb_di,
+	eorb_di, adcb_di, orb_di,  addb_di, ldd_di,  std_di,  ldu_di,  stu_di,
+	subb_ix, cmpb_ix, sbcb_ix, addd_ix, andb_ix, bitb_ix, ldb_ix,  stb_ix,
+	eorb_ix, adcb_ix, orb_ix,  addb_ix, ldd_ix,  std_ix,  ldu_ix,  stu_ix,
+	subb_ex, cmpb_ex, sbcb_ex, addd_ex, andb_ex, bitb_ex, ldb_ex,  stb_ex,
+	eorb_ex, adcb_ex, orb_ex,  addb_ex, ldd_ex,  std_ex,  ldu_ex,  stu_ex
+};
+#endif
