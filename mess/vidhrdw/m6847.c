@@ -452,8 +452,34 @@ static void fs_rise(int dummy)
 #endif
 }
 
-int internal_m6847_vblank(int hsyncs, double trailingedgerow)
+struct newlineproc_info {
+	void (*newlineproc)(void);
+	int hsyncsleft;
+};
+
+static void call_newlineproc(int data)
 {
+	struct newlineproc_info *ni;
+	ni = (struct newlineproc_info *) data;
+	ni->newlineproc();
+	if (ni->hsyncsleft--)
+		timer_set(CLK * 227.5, (int) ni, call_newlineproc);
+	else
+		free(ni);
+}
+
+int internal_m6847_vblank(int hsyncs, double trailingedgerow, void (*newlineproc)(void))
+{
+	if (newlineproc) {
+		struct newlineproc_info *ni;
+		ni = malloc(sizeof(struct newlineproc_info));
+		if (ni) {
+			ni->newlineproc = newlineproc;
+			ni->hsyncsleft = hsyncs - 2;
+			timer_set(CLK * 227.5, (int) ni, call_newlineproc);
+		}
+	}
+
 	timer_set(CLK * 0                       + DHS_F,	hsyncs-1,	hs_fall);
 	timer_set(CLK * 16.5                    + DHS_R,	hsyncs-1,	hs_rise);
 	timer_set(CLK * 0                       + DFS_F,	0,			fs_fall);
@@ -483,7 +509,7 @@ int m6847_vblank(void)
 		break;
 	}
 
-	return internal_m6847_vblank(hsyncs, 32.0);
+	return internal_m6847_vblank(hsyncs, 32.0, NULL);
 }
 
 /* --------------------------------------------------
@@ -624,7 +650,14 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 8;
 			rvm->depth = 1;
-			rvm->pens = &pens[the_state.modebits & M6847_MODEBIT_CSS ? 10 : 8];
+			if (the_state.modebits & M6847_MODEBIT_CSS) {
+				rvm->pens[0] = pens[10];
+				rvm->pens[1] = pens[11];
+			}
+			else {
+				rvm->pens[0] = pens[8];
+				rvm->pens[1] = pens[9];
+			}
 
 			if (artifact_value && (rvm->bytesperrow == 32)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
@@ -653,7 +686,18 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 4;
 			rvm->depth = 2;
-			rvm->pens = &pens[the_state.modebits & M6847_MODEBIT_CSS ? 4: 0];
+			if (the_state.modebits & M6847_MODEBIT_CSS) {
+				rvm->pens[0] = pens[4];
+				rvm->pens[1] = pens[5];
+				rvm->pens[2] = pens[6];
+				rvm->pens[3] = pens[7];
+			}
+			else {
+				rvm->pens[0] = pens[0];
+				rvm->pens[1] = pens[1];
+				rvm->pens[2] = pens[2];
+				rvm->pens[3] = pens[3];
+			}
 		}
 	}
 	else
@@ -662,7 +706,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		rvm->bytesperrow = 32;
 		rvm->width = 32;
 		rvm->depth = 8;
-		rvm->pens = pens;
+		memcpy(rvm->pens, pens, sizeof(rvm->pens));
 		rvm->u.text.mapper = mapper_alphanumeric;
 		rvm->u.text.mapper_param = skew_up;
 		rvm->u.text.fontheight = 12;

@@ -56,7 +56,7 @@ struct rasterbits_videomode {
 	int bytesperrow;						/* number of bytes per row */
 	int offset;								/* only meaningful if used in conjunction with RASTERBITS_FLAG_WRAPINROW */
 	int wrapbytesperrow;					/* the number of bytes per row with regard to RASTERBITS_FLAG_WRAPINROW */
-	UINT16 *pens;							/* color translation layer; can be NULL */
+	UINT16 pens[16];						/* color translation layer */
 	union {
 		struct rasterbits_artifacting artifact;
 			

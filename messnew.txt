@@ -22,7 +22,7 @@ System Driver Changes:
   broken). [Kev Thacker]
   
 - [COCO 3] More work on improving video timing for mid frame video register
-  modification. [Nate Woods]
+  modification. Now supports mid frame palette modification [Nate Woods]
 
 Other Changes:
 --------------

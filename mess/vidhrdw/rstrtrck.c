@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// --------------------------------------------------------------------------------------------
+/* -------------------------------------------------------------------------------------------- */
 
 #ifdef MAME_DEBUG
 #define LOG_RASTERTRACK 1
@@ -60,10 +60,15 @@ static int equalentry(const struct rastertrack_queueent *e1, const struct raster
  * "Demarcating" the queue means "for all scanlines from A to B; these
  * characteristics are associated with it
  */
+
+#if LOG_RASTERTRACK
+static int logicalbase;
+#endif
+
 static void demarcate(int begin, int end, struct rastertrack_queueent *newentry)
 {
 #if LOG_RASTERTRACK
-	logerror("demarcate(): Demarcating [%i..%i] with entry 0x%08x\n", begin, end, newentry);
+	logerror("demarcate(): Demarcating [%i..%i] (logical %i..%i) with entry 0x%08x\n", begin, end, begin - logicalbase, end - logicalbase, newentry);
 #endif
 
 	/* Check to see if this is a bogus demarcation */
@@ -203,6 +208,10 @@ void rastertrack_init(const struct rastertrack_info *ri)
 
 void rastertrack_newscreen(int toplines, int contentlines)
 {
+#if LOG_RASTERTRACK
+	logicalbase = toplines;
+#endif
+
 	if (!current_state) {
 		current_state = createentry(the_ri->videoproc, last_full_refresh);
 	}
@@ -230,8 +239,12 @@ void rastertrack_newline(void)
 	*/
 
 	if (videomode_dirty) {
+		/* We are demarcating current_base up to the _previous_ scanline; this
+		 * is because timing routines that wait on hsync don't get activated
+		 * until the last line just begun
+		 */
 		if (current_state) {
-			demarcate(current_base, current_scanline, current_state);
+			demarcate(current_base, current_scanline-1, current_state);
 		}
 		else {
 #if LOG_RASTERTRACK
@@ -239,13 +252,11 @@ void rastertrack_newline(void)
 #endif
 		}
 
-		current_base = ++current_scanline;
+		current_base = current_scanline;
 		current_state = NULL;
 		videomode_dirty = 0;
 	}
-	else {
-		current_scanline++;
-	}
+	current_scanline++;
 }
 
 void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh)

@@ -619,7 +619,7 @@ static struct MachineDriver machine_driver_coco3 =
 	240,							/* screen height (pixels doubled) */
 	{ 0, 639, 0, 239 },				/* visible_area */
 	0,								/* graphics decode info */
-	17+M6847_ARTIFACT_COLOR_COUNT,	/* 16 colors + border color + artifact colors */
+	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
 	0,
 	NULL,							/* initialise palette */
 
@@ -666,7 +666,7 @@ static struct MachineDriver machine_driver_coco3h =
 	240,							/* screen height (pixels doubled) */
 	{ 0, 639, 0, 239 },				/* visible_area */
 	0,								/* graphics decode info */
-	17+M6847_ARTIFACT_COLOR_COUNT,	/* 16 colors + border color + artifact colors */
+	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
 	0,
 	NULL,							/* initialise palette */
 

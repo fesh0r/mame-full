@@ -107,23 +107,35 @@ static void coco3_pia1_firq_a(int state);
 static void coco3_pia1_firq_b(int state);
 static void coco_cartridge_enablesound(int enable);
 
+/* These sets of defines control logging.  When MAME_DEBUG is off, all logging
+ * is off.  There is a different set of defines for when MAME_DEBUG is on so I
+ * don't have to worry abount accidently committing a version of the driver
+ * with logging enabled after doing some debugging work
+ *
+ * Logging options marked as "Sparse" are logging options that happen rarely,
+ * and should not get in the way.  As such, these options are always on 
+ * (assuming MAME_DEBUG is on).  "Frequent" options are options that happen
+ * enough that they might get in the way.
+ */
 #ifdef MAME_DEBUG
-#define LOG_PAK			1	/* Logging on PAK trailers; sparse */
-#define LOG_INT_MASKING	1	/* Logging on changing GIME interrupt masks; sparse */
-#define LOG_WAVE		0
-#define LOG_INT_TMR		0
+#define LOG_PAK			1	/* [Sparse]   Logging on PAK trailers */
+#define LOG_INT_MASKING	1	/* [Sparse]   Logging on changing GIME interrupt masks */
+#define LOG_CASSETTE	1	/* [Sparse]   Logging when cassette motor changes state */
+#define LOG_TIMER_SET	1	/* [Sparse]   Logging when setting the timer */
+#define LOG_INT_TMR		1	/* [Frequent] Logging when timer interrupt is invoked */
+#define LOG_FLOPPY		0	/* [Frequent] Set when floppy interrupts occur */
 #define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
-#define LOG_VBORD		0
+#define LOG_VBORD		1   /* [Frequent] Occurs when VBORD is changed */
 #define LOG_OS9         0
-#define LOG_FLOPPY		0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
 #else /* !MAME_DEBUG */
 #define LOG_PAK			0
-#define LOG_WAVE		0
+#define LOG_CASSETTE	0
 #define LOG_INT_MASKING	0
+#define LOG_TIMER_SET   0
 #define LOG_INT_TMR		0
 #define LOG_INT_COCO3	0
 #define LOG_GIME		0
@@ -615,9 +627,7 @@ WRITE_HANDLER( coco_m6847_fs_w )
 
 WRITE_HANDLER( coco3_m6847_hs_w )
 {
-	if (data == 0)
-		rastertrack_newline();
-	else
+	if (data)
 		coco3_timer_hblank();
 	pia_0_ca1_w(0, data);
 	coco3_raise_interrupt(COCO3_INT_HBORD, !data);
@@ -632,9 +642,9 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
 
 	if (data) {
-		int top, rows;
-		rows = coco3_calculate_rows(&top, NULL);
-		rastertrack_newscreen(top, rows);
+		int bottom, rows;
+		rows = coco3_calculate_rows(NULL, &bottom);
+		rastertrack_newscreen(bottom, rows);
 	}
 }
 
@@ -764,8 +774,8 @@ static void soundmux_update(void)
 	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
 
 	if (casstatus != new_casstatus) {
-#if LOG_WAVE
-		logerror("CoCo: Turning cassette speaker %s\n", data ? "on" : "off");
+#if LOG_CASSETTE
+		logerror("CoCo: Turning cassette speaker %s\n", new_casstatus ? "on" : "off");
 #endif
 		device_status(IO_CASSETTE, 0, new_casstatus);
 	}
@@ -1142,7 +1152,7 @@ static void coco3_timer_newvalue(void)
 {
 	if (coco3_timer_value == 0) {
 #if LOG_INT_TMR
-		logerror("CoCo3 GIME: Triggering TMR interrupt\n");
+		logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", rastertrack_scanline(), timer_get_time());
 #endif
 		coco3_raise_interrupt(COCO3_INT_TMR, 1);
 
@@ -1240,6 +1250,10 @@ static void coco3_timer_hblank(void)
 /* Write into MSB of timer ($FF94); this causes a reset (source: Sockmaster) */
 static void coco3_timer_msb_w(int data)
 {
+#if LOG_TIMER_SET
+	logerror("coco3_timer_msb_w(): data=$%02x\n", data);
+#endif
+
 	coco3_timer_base &= 0x00ff;
 	coco3_timer_base |= (data & 0x0f) << 8;
 	coco3_timer_cannonicalize(coco3_timer_actualvalue(coco3_timer_base));
@@ -1248,6 +1262,10 @@ static void coco3_timer_msb_w(int data)
 /* Write into LSB of timer ($FF95); this does not cause a reset (source: Sockmaster) */
 static void coco3_timer_lsb_w(int data)
 {
+#if LOG_TIMER_SET
+	logerror("coco3_timer_lsb_w(): data=$%02x\n", data);
+#endif
+
 	coco3_timer_base &= 0xff00;
 	coco3_timer_base |= (data & 0xff);
 }
@@ -1258,7 +1276,7 @@ static void coco3_timer_set_interval(int interval)
 	if (interval)
 		interval = 1;
 
-#if LOG_TIMER
+#if LOG_TIMER_SET
 	logerror("coco3_timer_set_interval(): Interval is %s\n", interval ? "280ns" : "63.5us");
 #endif
 
@@ -1992,10 +2010,6 @@ static void set_dskreg(int data, int hardware)
 		wd179x_set_drive(drive);
 		wd179x_set_side(head);
 	}
-//	else {
-//		wd179x_stop_drive();
-//	}
-
 }
 
 static int dc_floppy_r(int offset)

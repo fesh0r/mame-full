@@ -730,10 +730,7 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	scalex = (frame->width + mode->width - 1) / mode->width;
 	scaley = (frame->height + mode->height - 1) / mode->height;
 	basex = (bitmapwidth - frame->width) / 2;
-	if (frame->total_scanlines == -1)
-		basey = (bitmapheight - frame->height) / 2;
-	else
-		basey = (bitmapheight - frame->total_scanlines) / 2 + frame->top_scanline;
+	basey = (bitmapheight - frame->height) / 2;
 
 	assert(scalex > 0);
 	assert(scaley > 0);
