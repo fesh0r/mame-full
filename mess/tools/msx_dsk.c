@@ -267,6 +267,8 @@ static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 			return IMGTOOLERR_UNEXPECTED;
 		}
 
+	stream_seek (image->file_handle, offset, SEEK_SET);
+
 	while (i--)
 		{
 		if (0x1200 != stream_read (image->file_handle, buf, 0x1200) )
@@ -301,6 +303,8 @@ static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 #define maxhufcnt (127)
 #define logtblsize (4)
+
+
 #define tblsize (1<<logtblsize)
 
 typedef struct huf_node {
