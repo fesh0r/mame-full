@@ -29,65 +29,60 @@ static void svi318_set_banks (void);
 ** Cartridge stuff
 */
 
-#ifdef VERIFY_IMAGE
-int svi318_id_rom (int id)
-	{
-    void *f;
-    UINT8 magic[2];
-	int ret = 0;
-
+static int svi318_verify_cart (UINT8 magic[2])
+{
     /* read the first two bytes */
-    f = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
-    if (f)
-		{
-		if (osd_fsize (f) <= 0x8000)
-    		if (osd_fread (f, magic, 2) == 2)
-				{
-				if ( (magic[0] == 0xf3) && (magic[1] == 0xc3) )
-					ret = 1;
-				}
-    	osd_fclose (f);
-		}
+	if ( (magic[0] == 0xf3) && (magic[1] == 0xc3) )
+		return IMAGE_VERIFY_PASS;
+	else
+		return IMAGE_VERIFY_FAIL;
+}
 
-    return ret;
-	}
-#endif
 
 
 int svi318_load_rom (int id)
-	{
+{
 	void *f;
 	UINT8 *p;
 	int size;
 
+	/* A cartridge isn't strictly mandatory */
+	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+	{
+		logerror("SVI318 - warning: no cartridge specified!\n");
+		return INIT_PASS;
+	}
+
 	f = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (f)
-		{
+	{
 		p = malloc (0x8000);
 		if (!p)
-			{
+		{
 			logerror ("malloc () failed!\n");
 			osd_fclose (f);
 			return INIT_FAIL;
-			}
+		}
 		memset (p, 0xff, 0x8000);
 		size = osd_fsize (f);
 		if (osd_fread (f, p, size) != size)
-			{
+		{
 			logerror ("can't read file %s\n", device_filename (IO_CASSETTE, id) );
 			osd_fclose (f);
 			free (p);
 			return INIT_FAIL;
-			}
+		}
 		osd_fclose (f);
+		if(svi318_verify_cart(p)==IMAGE_VERIFY_FAIL)
+			return INIT_FAIL;
 		pcart = p;
 		svi.banks[0][1] = p;
 
 		return INIT_PASS;
-		}
+	}
 
 	return INIT_FAIL;
-	}
+}
 
 void svi318_exit_rom (int id)
 	{
@@ -615,6 +610,13 @@ int svi318_cassette_init(int id)
 	{
     void *file;
 	int ret;
+
+   	/* A cartridge isn't strictly mandatory for the coleco */
+	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+	{
+		logerror("SVI318 - warning: no cassette specified!\n");
+		return INIT_PASS;
+	}
 
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
     if( file )
