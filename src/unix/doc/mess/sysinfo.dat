@@ -7,8 +7,7 @@
 # This file contains the basic documentation for most of the drivers presented in the MESS
 # distribution. Please read the readme.txt, mess.txt and messnew.txt prior to reading this
 # supplementary documentation. This file should be placed in the same directory as the MESS
-# executable when using the DOS version of MESS. This file must be renamed HISTORY.DAT to
-# be used with MESS32.
+# executable when using the DOS version of MESS.
 
 # Driver entries are usually divided into sections such as: Usage, Features, Links, Known Issues,
 # History and Trivia, and MESS Emulation State.
@@ -66,18 +65,22 @@ Cartridge ROM: 2k up to 64k
 Links:
 
 Atari Age - www.atariage.com
+
 Atari Historical Society - www.atari-history.com/a2600.html
 
 
 MESS Emulation State:
 
-Current known limitations of the driver:
 
 1) Restricted to 2KB and 4KB carts
+
 2) supports NTSC games only
+
 3) Limited compatibility
+
 4) no support for keypad controls
-5) Dip switch used to select joystick or paddles.. 
+
+5) Dip switch used to select joystick or paddles
 
 $end
 
@@ -477,10 +480,12 @@ According to a 1956 document, the APEC series included the following machines:
 
  * MAC (Magnetic Automatic Calculator): "built by Wharf Engineering Laboratories" (February 1955)
 
- * The HEC (H... Electronic Computer - still no idea what 'H' can stand for), built by the British
-Tabulating Machine Company (later to become International Computers and Tabulators (ICT),
-then International Computers Limited (ICL)), a commercial machine sold in at least two models
-(HEC 2M and HEC 4) (before 1955)
+ * The HEC (Hollerith Electronic Computer - silly name invented by BTM
+directors), built by the British Tabulating Machine Company (later to become
+International Computers and Tabulators (ICT), then International Computers
+Limited (ICL)), a commercial machine sold in several models (I have heard of
+HEC 1, HEC 2, HEC 2M (no idea what the difference with HEC 2 is) and HEC 4)
+(before 1955)
 
 
 Only one of each of these machines was built, with the exception of HEC (and possibly MAC)
@@ -488,7 +493,9 @@ which were commercial machines produced in small series. They were similar in de
 with various small differences, mostly in I/O equipment (either punched-card machines - APEXC,
 APEHC - or teletypers (keyboard and printer, and paper tape reader and puncher) - APERC, APENC).
 Also, the UCC had 8k words of storage, instead of 1k word for other machines, and the MAC
-used germanium diodes in replacement of many tubes.
+used germanium diodes in replacement of many tubes.  The HEC used standard
+Hollerith punch cards; the HEC 4 had a printer, too, and it featured several
+instructions (divide) and registers not found on the APEXC.
 
 
 I am sorry I know little more about Booth, his team, and the history of these machines.
@@ -1867,7 +1874,7 @@ $end
 
 $info=c65
 $bio
-commodore c65
+Commodore c65 (1991)
 
 
 homecomputer under the keyboard to redo the commodore c64
@@ -2443,15 +2450,15 @@ Software: it is a mono-tasking OS, with source-level compatibility with the
 UCSD p-system, and vague reminiscences of UNIX.
 
 The Concept has a bitmapped screen, which enables to mix text in any style and
-size with graphics, and some programs were reportedly WYSIWYG (which was still
-relatively uncommon at the time).  The system includes a primitive window
-manager, but don't delude yourself: it is no GUI.  The most original feature is
-probably the rotatable screen that can be used either in horizontal or vertical
-position: however you need to reboot the computer after flipping the screen. 
-Another feature of interest is the integrated network support: the Concept can
-be used either as a disk-less network computer or as a full-featured personal
-computer, and you could connect Concepts, Apple IIs and IBM PCs in an
-heterogeneous Omninet LAN.
+size with graphics, and some programs were reportedly WYSIWYG (which was
+uncommon at the time).  The system includes a primitive window manager, but
+don't delude yourself: it is no GUI.  The most original feature is probably the
+rotatable screen that can be used either in horizontal or vertical position:
+however you need to reboot the computer after flipping the screen.   Another
+feature of interest is the integrated network support: the Concept can be used
+either as a disk-less network computer or as a full-featured personal computer,
+and you could connect Concepts, Apple IIs and IBM PCs in an heterogeneous
+Omninet LAN.
 
 Available programs were mostly business applications: word processor,
 spreadsheet, grapher, database, accounting...  Thanks to its large screen, its
@@ -3537,14 +3544,16 @@ $end
 
 $info=intv
 $bio
-Mattel Intellivision (intv)
+Mattel Intellivision (1979)
 
 
 Usage/Known Issues:
 
-This driver is almost complete.  
+This driver is almost complete.
+ 
 
 Still TBD are:
+
 collision detection - 16-way controller mapping - default mapping of the right player 
 controller - Only .ROM format cartridges (Intellicart) are supported in this release.
 
@@ -3555,12 +3564,13 @@ $end
 
 $info=intvkbd
 $bio
-Mattel Intellivision + Keyboard Component (intvkbd)
+Mattel Intellivision + Keyboard Component (1981)
 
 
 Usage/Known Issues:
 
 This driver is almost complete.  The tape drive is not yet supported.
+
 The keyboard component has two cartridge slots - one to replace the occupied intv cart slot, 
 and one for new keyboard carts (BASIC).   If you want to use the BASIC cart at startup, you
 must specify it as the second cart, even if the first cart slot is unused. 
@@ -3576,7 +3586,7 @@ $end
 
 $info=intvsrs
 $bio
-Mattel Intellivision - Sears version (intvsrs)
+Mattel Intellivision - Sears version (19??)
 
 
 Usage/Known Issues:
@@ -3586,6 +3596,25 @@ info for current status of this driver.
 
   
 $end
+
+#---------------------------------------------------------------------------------------------#
+
+#$info=jaguar
+#$bio
+#Atari Jaguar (1993)
+
+
+#Features:
+
+
+#Usage/Known Issues:
+
+
+#MESS Emulation State:
+#nowhere near working yet, but the title screen now loads
+
+  
+#$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -3897,15 +3926,14 @@ the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and
 
 Features:
 
-Two 16-Bit custom CMOS chips running at 16Mhz(named Mikey and Suzy)
+Two 16-Bit custom CMOS chips running at 16Mhz (named Mikey and Suzy)
 Sound: 8 bit DAC for each channel; 4 channels integrated stereo speaker (wired for mono in original)
 Screen: 160 x 102 (horz) 60.00 Hz 
 Color: 4096 colors, 16 max per scanline
 Others: 64KB RAM of 120ns DRAM
 
 
-Ports: 
-Headphones (mini-DIN 3.5mm stereo; wired for mono on the original Lynx)
+Headphone port (mini-DIN 3.5mm stereo; wired for mono on the original Lynx)
 ComLynx (multiple unit communications, serial)
 Power (9V DC, 1 A)
 Game cartridge slot
@@ -3917,23 +3945,31 @@ Screen: 3.5" diagonal (3.25" x 1.88" approx.)
 
 
 Notes:
+
 Lynx is flip-able for optimal support of left and right hand players (hold down pause and press 
 option 2 in many games) Some games want to be rotated by 90 degree
 
 
 Links:
+
+Atari age - www.atariage.com
+
 FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
-Atari age - www.atariage.com (Excellent Site)
 
 
 MESS Emulation State:
 
 several cartridges playable
+
 blitter imperfect
+
 timer system incomplete
+
 audio imperfect
+
 no serial port emulation
 
+Lynx II bios is needed.
 
 $end
 
@@ -6421,7 +6457,7 @@ $end
 
 $info=sfzch
 $bio
-Capcom CPS Changer
+Capcom CPS Changer (1995)
 
 
 History and Trivia:
@@ -7656,28 +7692,38 @@ several optional extensions:
 
 
 * Speech synthesis is emulated completely.  The speech synthesizer occasionally
-generates some weird noises instead of the expected phonemes.  I think the
+generates some weird noise instead of the expected phonemes.  I think the
 actual reason for this issue is the original ti-99/4(a) speech synthesizer did
 not use the tms5220 chip that is used under emulation: I think I have read
 somewhere that TI 99/8, which did use a tms5220, was affected by similar bugs.
 
 
 * Three types of memory expansion cards are emulated: the original TI 32kbyte
-card, and the Super AMS card, and the Foundation card.
+card, the Super AMS card, and the Foundation card.
 
 
 * Any of three different floppy disk controllers can be emulated: TI's original
 SD disk controller, SNUG's BwG disk controller, and Myarc's HFDC disk
-controller.  Note that neither the hard disk nor tape interface of the HFDC
-card are emulated.  These disk controllers have different abilities: TI's
-controller only supports single density disks with 9 sectors per track and 40
-tracks per sides; the BwG controller supports double density, and it uses no
-VDP RAM at all; the HFDC controller supports 80-track disks as well (high
-density support is incomplete and non-functional because of TI99 bugs).  Four
-floppy disk drives are emulated, but the TI controller only supports three of
-them (the fourth disk drive will be ignored if the TI controller is selected).
-Floppy disk images are in a MESS-specific format that is compatible with
-single-sided V9T9 disk images (but not double-sided ones).
+controller.  These disk controllers have different abilities: TI's controller
+only supports single density disks with 9 sectors per track and 40 tracks per
+sides; the BwG controller supports double density, and it uses no VDP RAM at
+all; the HFDC controller supports 80-track floppy disks (high density support
+is incomplete and non-functional on the TI-99 because of issues with the DSR,
+though it works fine on the Geneve).  Four floppy disk drives are emulated,
+though the TI controller only supports three of them (the fourth disk drive
+will be ignored by the TI-99 if the TI controller is selected, but it will work
+fine with other controllers).  Floppy disk images are in V9T9 format.  The
+older MESS-specific format that was used in MESS .69 and earlier has been
+abandonned; note that this format was compatible with single-sided V9T9 disk
+images (but not double-sided ones).
+
+
+* In addition to the floppy drives, the HFDC can support up to 3 MFM hard
+disks.  If you want to use these hard disks, you must use the HFDC as a floppy
+disk controller.  Disk images use a variant of the MAME harddisk format that
+supports sector sizes other than 512 (the sector size for HFDC harddisks is
+256).  (BTW, early HFDC cards also included a tape interface  which is not
+emulated.)
 
 
 * Thierry Nouspickel's IDE card prototype is emulated.  A description can be
@@ -7688,9 +7734,9 @@ to >20; the byte at offset >13 should be edited from >02 to >01, too, but this
 is not a critical issue at present.  Note that the disk image does not work
 very well with the BwG disk controller, though I cannot figure out why (it
 works fine with both the TI controller and the HFDC controller).  The hard disk
-image is a standard MAME disk image; since MESS does not support image diff
-file currently, only un-compressed images can be written to (compressed images
-ARE supported, but only as read-only disks).
+image is in the standard MESS/MAME hardddisk format; since MESS does not
+support image diff file currently, only un-compressed images can be written to
+(compressed images ARE supported, but only as read-only disks).
 
 
 * Serial port and PIO emulation is incomplete.  On the one hand, nothing useful

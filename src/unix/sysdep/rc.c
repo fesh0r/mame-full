@@ -212,6 +212,7 @@ int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    {
       struct rc_option *option;
       char *name, *tmp, *arg = NULL;
+      int errin3 = 0;
       
       line ++;
       
@@ -222,29 +223,39 @@ int rc_read(struct rc_struct *rc, FILE *f, const char *description,
          
       if(!(option = rc_get_option2(rc->option, name)))
       {
-         fprintf(stderr, "error: unknown option %s, on line %d of file: %s\n",
-            name, line, description);
+         fprintf(stderr, "error: %s(%d): unknown option %s",
+            description, line, name);
       }
       else if (rc_requires_arg[option->type] &&
          !(arg = strtok(NULL, " \t\r\n")))
       {
          fprintf(stderr,
-            "error: %s requires an argument, on line %d of file: %s\n",
-            name, line, description);
+            "error: %s(%d): %s requires an argument",
+            description, line, name);
       }
       else if ( (tmp = strtok(NULL, " \t\r\n")) && (tmp[0] != '#') )
       {
          fprintf(stderr,
-            "error: trailing garbage: \"%s\" on line: %d of file: %s\n",
-            tmp, line, description);
+            "error: %s(%d): trailing garbage: \"%s\"",
+            description, line, tmp);
       }
-      else if (!rc_set_option3(option, arg, priority))
+      else if (rc_set_option3(option, arg, priority))
+         errin3 = 1;
+      else
          continue;
       
       if (continue_on_errors)
-         fprintf(stderr, "   ignoring line\n");
+      {
+         if (errin3)
+            fprintf(stderr, "   ignoring line\n");
+         else
+            fprintf(stderr, ", ignoring line\n");
+      }
       else
+      {
+         fputc('\n', stderr);
          return -1;
+      }
    }
    return 0;
 }
@@ -587,7 +598,7 @@ int rc_set_option3(struct rc_option *option, const char *arg, int priority)
             x = strtol(arg, &end, 0);
             if (*end || rc_verify(option, x))
             {
-               fprintf(stderr, "error invalid value for %s: %s\n", option->name, arg);
+               fprintf(stderr, "error: invalid value for %s: %s\n", option->name, arg);
                return -1;
             }
             *(int *)option->dest = x;
@@ -599,7 +610,7 @@ int rc_set_option3(struct rc_option *option, const char *arg, int priority)
             x = strtod(arg, &end);
             if (*end || rc_verify(option, x))
             {
-               fprintf(stderr, "error invalid value for %s: %s\n", option->name, arg);
+               fprintf(stderr, "error: invalid value for %s: %s\n", option->name, arg);
                return -1;
             }
             *(float *)option->dest = x;

@@ -59,6 +59,7 @@ UINT16 *color_values;
 #endif
 
 int force_dirty_palette = 0;
+int emulation_paused = 0;
 
 extern UINT8 trying_to_quit;
 
@@ -697,16 +698,6 @@ static void update_visible_area(struct mame_display *display)
 			display->game_visible_area.min_y,
 			display->game_visible_area.max_x,
 			display->game_visible_area.max_y);
-
-#ifndef xgl
-
-	/* Allocate a new buffer for the code that handles rotation/flipping. */
-	if (blit_flipx || blit_flipy || blit_swapxy)
-	{
-		free(rotate_dbbuf);
-		rotate_dbbuf = calloc(video_width*video_depth/8, sizeof(char));
-	}
-#endif
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)
@@ -1042,8 +1033,11 @@ void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
 
 	sysdep_update_display(srcbitmap);
 }
+#endif
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
+#ifndef xgl
+struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, 
+		struct rectangle *bounds)
 {
 	struct rectangle newbounds;
 	struct mame_bitmap *copy;
@@ -1082,12 +1076,12 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 				case 15:
 				case 16:
 					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
-							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
+						*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
 
 				case 32:
 					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
-							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
+						*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
 					break;
 			}
 		}
@@ -1121,11 +1115,11 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
 	*bounds = newbounds;
 	return copy;
 }
-
 #endif
 
 void osd_pause(int paused)
 {
+	emulation_paused = paused;	
 }
 
 const char *osd_get_fps_text(const struct performance_info *performance)

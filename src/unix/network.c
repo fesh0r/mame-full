@@ -1,6 +1,6 @@
 #include "xmame.h"
 
-#ifdef MAME_NET
+#ifdef XMAME_NET
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -253,7 +253,7 @@ _parse_master_addr(struct rc_option *option, const char *arg, int priority)
 #endif
 struct rc_option network_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
-#ifdef MAME_NET
+#ifdef XMAME_NET
    { "Network Related",       NULL,		rc_seperator,	 NULL,
      NULL,		      0,		0,		 NULL,
      NULL },
@@ -281,7 +281,7 @@ struct rc_option network_opts[] = {
      NULL }
 };
 
-#ifdef MAME_NET
+#ifdef XMAME_NET
 
 static int _socket_fd;
 
@@ -2334,4 +2334,4 @@ osd_net_close(void)
     }
 }
 
-#endif /* MAME_NET */
+#endif /* XMAME_NET */

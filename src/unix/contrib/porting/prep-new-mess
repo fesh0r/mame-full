@@ -68,9 +68,6 @@ if [ -d docs ]; then
   rm -r docs
 fi
 
-# Delete the MESS docs directory.
-rm -r docs
-
 # Clean up the files left over from d2u and fix-comments.
 rm -f `find . -name "*~" -print`
 rm -f `find . -name "*.orig" -print`

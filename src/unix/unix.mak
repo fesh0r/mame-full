@@ -203,8 +203,8 @@ MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
 endif
 
-ifdef MAME_NET
-MY_CFLAGS += -DMAME_NET
+ifdef XMAME_NET
+MY_CFLAGS += -DXMAME_NET
 endif
    
 # CONFIG are the cflags used to build the unix tree, this is where most defines

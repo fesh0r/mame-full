@@ -253,12 +253,12 @@ The file date information is not supported at this time.
 The card filesystem reading/writing in imgtool has not been heavily tested.
 
 
-Ti99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
+TI99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
 ------------------------------------------------------
 
 These modules enable you to create and catalog ti99 images, to delete
-individual files, and to get and put files in TIFILE format.  Note that you
-cannot create images in pc99 format.
+individual files and directories, and to get and put files in TIFILE format.
+Note that you cannot create images in pc99 format.
 
 The v9t9 module supports the v9t9 disk images that is used by MESS, the pc99fm
 module supports FM-encoded pc99 images, and the pc99mfm supports MFM-encoded
@@ -299,16 +299,16 @@ Parameters for create:
 --label=...: an optional string of up to 10 characters.
 --sides=[1|2]: 1 for single-sided, 2 for double-sided
 --tracks=[1-80]: number of track per side.  From 1 to 40 on 40-track disks,
-	from 1 to 80 on 80-track disks.
+    from 1 to 80 on 80-track disks.
 --sectors=[1-36]: number of sectors per track.  From 1 to 9 in single density
-	(FM), from 1 to 18 in double density (MFM), from 1 to 36 in high density
-	(MFM).
+    (FM), from 1 to 18 in double density (MFM), from 1 to 36 in high density
+    (MFM).
 --protection=[0|1]: when set to 1, the disk will be protected and some (but not
-	all) TI99 programs won't overwrite the disk.
+    all) TI99 programs won't overwrite the disk.
 --density=[0|1|2|3]: you should probably leave this parameter to 0 to select
-	the correct value automatically.  If you really want to know, 1 means
-	40-track single density (FM), 2 means 40-track double density (MFM), and 3
-	means either 80-track double density or high density (MFM).
+    the correct value automatically.  If you really want to know, 1 means
+    single density (FM), 2 means double density (MFM), and 3 means high density
+    (MFM).
 
 Supported geometries for create:
 
@@ -327,17 +327,35 @@ DSHD 3"1/2       |  2  |  80  |   36  |1.44M | Myarc HFDC (Geneve Only) (3)
 
 (1) Only emulated controllers are listed in this table
 (2) SNUG BwG can read such images, but it will corrupt them when writing new
-	data to them
+    data to them
 (3) You cannot boot from such images (this is because the Geneve MDOS operating
-	system needs to replaces the incomplete HFDC DSR with a better DSR to
-	support HD: since MDOS is not loaded yet at boot time, you cannot boot from
-	a HD disk).
+    system needs to replaces the incomplete HFDC DSR with a better DSR to
+    support HD: since MDOS is not loaded yet at boot time, you cannot boot from
+    a HD disk).
 
 
 Examples:
 
 List the catalog of image test.dsk:
 imgtool dir v9t9 test.dsk
+
+Extract file FILE1 located on image test.dsk:
+imgtool get v9t9 test.dsk FILE1
+
+Extract file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
+imgtool get v9t9 test.dsk SUBDIR1.FILE1
+
+Write file FILE1 on image test.dsk:
+imgtool put v9t9 test.dsk FILE1
+(Note that file FILE1 must not exist before the command is run.  Use the delete
+command if you need to an existing file.)
+
+Delete file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
+imgtool delete v9t9 test.dsk SUBDIR1.FILE1
+
+Delete subdirectory SUBDIR1 on image test.dsk:
+imgtool delete v9t9 test.dsk SUBDIR1
+(Subdirectory SUBDIR1 must be empty.)
 
 Create a SSSD image compatible with all controllers:
 imgtool create v9t9 test.dsk --sides=1 --tracks=40 --sectors=9
@@ -353,6 +371,14 @@ imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=18
 
 Create a DSHD image compatible with the Geneve with a HFDC controller:
 imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=36
+
+
+TI99 hard disk images (ti99hd)
+------------------------------
+
+This module can catalog ti99 hard disk images, delete individual files and
+directories, and get and put files in TIFILE format.  Only images in HFDC
+format are supported for now (no SCSI format).
 
 
 TI990 disk images (ti990hd)
@@ -379,13 +405,13 @@ emulation.
 Known restrictions on geometry:
 
 256 < bytes per sector < 512 (arbitrary restriction, actual TI990s might
-	accept values out of this range)
+    accept values out of this range)
 bytes per sector must be even
 3 < # cylinders < 2047
 1 < # heads < 31
 1 < sectors per track < 256
 (sectors per track) * (bytes per sector) < 2^17 = 131072 (which implies
-	(sectors per track) < 255 if sectors are 512-byte long)
+    (sectors per track) < 255 if sectors are 512-byte long)
 
 (There are probably other restrictions, so you had better stick to values
 similar to the ones used by actual disk units...  Also note that according to
@@ -400,33 +426,33 @@ through 5-28, 946250-9701B pp. 2-1 through 2-3, 2540219A-0001 pp. 4-2 and 4-3,
 2306140-9701 p. 1-15, 223439B-9701 pp. 3-14 and 3-28.  See also "Spectra
 126-Plus Product Reference Manual" by Cipher P/N 8500055 revision A4 page 2-8.)
 
-Disk Type		Units	Size (MB)	Cylinders	Heads	Sectors/Track	Bytes/Sector
-FD800 (min)		1		.240? .256?	  77		 1?		 26?			128?
-FD800 (max)		1		.968? 1.15?	  77		 ?		  ?				  ?
-FD1000			1		  1.15		  77		 2		 26				288
-DS31/DS32		1		  2.81		 203		 2		 24				288
-DS10			2		  4.70		 408		 2(*2)	 20				288
-DS25			1		 22.3		 408		 5		 38				288
-DS50			1		 44.6		 815		 5		 38				288
-DS200			1		169.5		 815		19		 38				288
-CD1400-32		2		 13.5		 821		 1		 64				256
-CD1400-96 (rem)	1		 13.5		 821		 1		 64				256
-CD1400-96 (fix)	1		 67.3		 821		 5		 64				256
-DS80			1		 62.7		 803(c)		 5		 61				256
-DS300			1		238.3		 803(c)		19		 61				256
-WD800-18		1		 18.5		 651(b)		 3		 37				256
-WD800-43		1		 43.2		 651(b)		 7		 37				256
-WD800A/38		1		 38.5		 911(d)		 5		 33				256
-WD800A/69		1		 69.3		 911(d)		 9		 33				256
-WD800A/114		1		114.6		 904(d)		15		 33				256
-WD500			1		  4.92		 150(a)		 4		 32				256
-WD500A			1		 17.1		 694(a)		 3		 32				256
-WD900-138		1		138.1		 805(e)		10		 67				256
-WD900-138/2		2		 69.0		 805(e)		 5(*2)	 67				256
-WD900-425		1		425.8		 693(e)		24		100				256
-WD900-425/2		2		212.9		 693(e)		12(*2)	100				256
-MSU	II			1		158.8		 957(f)		 9		 36				512
-MSU IIA			1		332.9		1204(f)		15		 36				512
+Disk Type       Units   Size (MB)   Cylinders   Heads   Sectors/Track   Bytes/Sector
+FD800 (min)     1          .244?      77         1?      26?            128?
+FD800 (max)     1          .978???    77         2???    26???          256???
+FD1000          1         1.15        77         2       26             288
+DS31/DS32       1         2.81       203         2       24             288
+DS10            2         4.70       408         2(*2)   20             288
+DS25            1        22.3        408         5       38             288
+DS50            1        44.6        815         5       38             288
+DS200           1       169.5        815        19       38             288
+CD1400-32       2        13.5        821         1       64             256
+CD1400-96 (rem) 1        13.5        821         1       64             256
+CD1400-96 (fix) 1        67.3        821         5       64             256
+DS80            1        62.7        803(c)      5       61             256
+DS300           1       238.3        803(c)     19       61             256
+WD800-18        1        18.5        651(b)      3       37             256
+WD800-43        1        43.2        651(b)      7       37             256
+WD800A/38       1        38.5        911(d)      5       33             256
+WD800A/69       1        69.3        911(d)      9       33             256
+WD800A/114      1       114.6        904(d)     15       33             256
+WD500           1         4.92       150(a)      4       32             256
+WD500A          1        17.1        694(a)      3       32             256
+WD900-138       1       138.1        805(e)     10       67             256
+WD900-138/2     2        69.0        805(e)      5(*2)   67             256
+WD900-425       1       425.8        693(e)     24      100             256
+WD900-425/2     2       212.9        693(e)     12(*2)  100             256
+MSU II          1       158.8        957(f)      9       36             512
+MSU IIA         1       332.9       1204(f)     15       36             512
 
 a) some extra cylinders are reserved for diagnostics
 b) 6 extra cylinders are reserved for storage system use (including 2 for
@@ -471,3 +497,12 @@ listed as WD900-138/2 and WD900-425/2.
 
 MSU II and MSU IIa are SCSI units to be connected to the 990/SCSI controller
 board.
+
+
+Macintosh MFS images (mfs)
+-----------------------------
+
+This module can catalog macintosh floppy disk images in diskcopy 4.2 format and
+in raw format (which is mostly equivalent to diskcopy 6 format).  The module is
+preliminary, but it seems to work fine.
+

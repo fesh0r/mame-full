@@ -25,7 +25,7 @@ bios\cpc464.zip
 system inside this sub-directory.
 
 e.g.
-"bios\cpc464 directory" containing "cpc464.rom" and "cpcados.rom"
+"bios\cpc464" directory containing "cpc464.rom" and "cpcados.rom"
 
 bios\cpc464\cpc464.rom
 bios\cpc464\cpcados.rom

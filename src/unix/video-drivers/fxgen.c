@@ -45,7 +45,7 @@ static int SetResolution(struct rc_option *option, const char *arg,
 extern int pointnum;
 extern UINT32 direct_rgb_components[3];
 extern UINT16 *color_values;
-extern float brightness_paused_adjust;
+extern int emulation_paused;
 
 int fxwidth = 640;
 int fxheight = 480;
@@ -452,7 +452,7 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
-				if (brightness_paused_adjust == 1.0) {	
+				if (emulation_paused) {	
 					for(i = 0;i < width;i++) {	
 						square->texture[texline*texsize+i] = ((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i];
 					}
@@ -480,7 +480,7 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				else width=visual_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
-				if (brightness_paused_adjust == 1.0) {
+				if (emulation_paused) {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] = 
 							color_values[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
@@ -511,7 +511,7 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 					
-				if (brightness_paused_adjust == 1.0) {
+				if (emulation_paused) {
 					for(i = 0;i < width;i++) {
 						square->texture[texline*texsize+i] = 
 							PIXELCOLOR((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));

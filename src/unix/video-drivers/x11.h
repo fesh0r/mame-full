@@ -10,8 +10,8 @@
 #define EXTERN extern
 #endif
 
-enum { X11_WINDOW, X11_DGA };
-#define X11_MODE_COUNT 2
+enum { X11_WINDOW, X11_DGA, X11_XV_WINDOW, X11_XV_FULLSCREEN };
+#define X11_MODE_COUNT 4
 
 EXTERN Display 		*display;
 EXTERN Window		window;

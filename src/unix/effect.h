@@ -14,6 +14,10 @@ enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCA
 
 /* buffer for doublebuffering */
 EXTERN_EFFECT char *effect_dbbuf;
+EXTERN_EFFECT char *rotate_dbbuf;
+EXTERN_EFFECT char *rotate_dbbuf0;
+EXTERN_EFFECT char *rotate_dbbuf1;
+EXTERN_EFFECT char *rotate_dbbuf2;
 
 /* from video.c, needed to scale the display according to the requirements of the effect */
 extern int normal_widthscale, normal_heightscale;
@@ -91,7 +95,9 @@ void effect_scan2_16_16 (void *dst0, void *dst1, const void *src, unsigned count
 void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count);
 void effect_scan2_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
 void effect_scan2_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
+void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
 void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count);
+void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count);
 
 /*****************************/
 
@@ -99,7 +105,9 @@ void effect_rgbstripe_16_16 (void *dst0, void *dst1, const void *src, unsigned c
 void effect_rgbstripe_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count);
 void effect_rgbstripe_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
 void effect_rgbstripe_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
+void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
 void effect_rgbstripe_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count);
+void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count);
 
 /*****************************/
 
@@ -107,7 +115,9 @@ void effect_rgbscan_16_16 (void *dst0, void *dst1, void *dst2, const void *src, 
 void effect_rgbscan_16_16_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 void effect_rgbscan_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
+void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 void effect_rgbscan_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 
 /*****************************/
 
@@ -115,6 +125,14 @@ void effect_scan3_16_16 (void *dst0, void *dst1, void *dst2, const void *src, un
 void effect_scan3_16_16_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup);
 void effect_scan3_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+
+/*****************************/
+
+EXTERN_EFFECT void (*rotate_func)(void *dst, struct mame_bitmap *bitamp, int y);
+void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y);
+void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y);
 
 #endif /* __EFFECT_H */

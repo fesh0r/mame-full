@@ -2730,10 +2730,11 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   UpdateGLDisplayEnd (bitmap);
 }
 
-void osd_override_snapshot(struct mame_bitmap *bitmap,
-		const struct rectangle *bounds)
+struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
+		struct rectangle *bounds)
 {
 	do_snapshot = 1;
+	return NULL;
 }
 
 

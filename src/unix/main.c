@@ -17,7 +17,7 @@ void osd_video_initpre();
 int osd_init(void)
 {
 	/* now invoice system-dependent initialization */
-#ifdef MAME_NET
+#ifdef XMAME_NET
 	if (osd_net_init()      !=OSD_OK) return OSD_NOT_OK;
 #endif	
 	if (osd_input_initpre() !=OSD_OK) return OSD_NOT_OK;
@@ -30,7 +30,7 @@ int osd_init(void)
  */
 void osd_exit(void)
 {
-#ifdef MAME_NET
+#ifdef XMAME_NET
 	osd_net_close();
 #endif
 	osd_input_close();
