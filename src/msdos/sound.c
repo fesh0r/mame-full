@@ -199,7 +199,7 @@ int msdos_init_sound(void)
 		/* wait some time to let everything stabilize */
 		do
 		{
-			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+			AUpdateAudioEx(Machine->sample_rate / (double)Machine->refresh_rate);
 			b = osd_cycles();
 		} while (b-a < cps/10);
 
@@ -207,7 +207,7 @@ int msdos_init_sound(void)
 		AGetVoicePosition(hVoice[0],&start);
 		do
 		{
-			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+			AUpdateAudioEx(Machine->sample_rate / (double)Machine->refresh_rate);
 			b = osd_cycles();
 		} while (b-a < cps);
 		AGetVoicePosition(hVoice[0],&end);
@@ -272,7 +272,7 @@ int osd_start_audio_stream(int stereo)
 	stream_cache_stereo = stereo;
 
 	/* determine the number of samples per frame */
-	samples_per_frame = (double)Machine->sample_rate / (double)Machine->drv->frames_per_second;
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->refresh_rate;
 
 	/* compute how many samples to generate this frame */
 	samples_left_over = samples_per_frame;
@@ -378,6 +378,17 @@ int osd_start_audio_stream(int stereo)
 	return samples_this_frame;
 }
 
+//============================================================
+//	sound_update_refresh_rate
+//============================================================
+
+void sound_update_refresh_rate(float newrate)
+{
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->refresh_rate;
+}
+
+
+
 void osd_stop_audio_stream(void)
 {
 #ifdef USE_SEAL
@@ -460,7 +471,7 @@ static void updateaudiostream( int throttle )
 					break;
 				}
 			}
-			AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+			AUpdateAudioEx(samples_per_frame);
 		}
 		profiler_mark(PROFILER_END);
 	}
@@ -614,7 +625,7 @@ int msdos_update_audio( int throttle )
 	profiler_mark(PROFILER_MIXER);
 
 #ifdef USE_SEAL
-	AUpdateAudioEx(Machine->sample_rate / Machine->drv->frames_per_second);
+	AUpdateAudioEx(samples_per_frame);
 #endif
 
 	updateaudiostream( throttle );

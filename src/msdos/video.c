@@ -23,6 +23,9 @@
 #include "gen15khz.h"
 #include "blit.h"
 
+// from sound.c
+extern void sound_update_refresh_rate(float newrate);
+
 /* from zvg/zvgintrf.c, for zvg board */
 extern int zvg_enabled;
 
@@ -2752,6 +2755,14 @@ void osd_update_video_and_audio(struct mame_display *display)
 	// if the visible area has changed, update it
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 		update_visible_area(display);
+
+	// if the refresh rate has changed, update it
+	if (display->changed_flags & GAME_REFRESH_RATE_CHANGED)
+	{
+		video_fps = display->game_refresh_rate;
+		sound_update_refresh_rate(display->game_refresh_rate);
+		/* todo: vsync */
+	}
 
 	if (warming_up)
 	{
