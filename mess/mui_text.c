@@ -16,6 +16,7 @@ const char *mess_default_text[] =
 	"File Manager",
 	"Tape Control",
 
+	"No Tape Image loaded",
 	"recording",
 	"playing",
 	"(recording)",

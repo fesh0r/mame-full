@@ -36,15 +36,29 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	int arrowize;
 	cassette_state state;
 
-	if (!device_find(Machine->devices, IO_CASSETTE))
-		return 0;
-
 	total = 0;
 	sel = selected - 1;
 
 	img = image_from_devtype_and_index(IO_CASSETTE, id);
 	if ( !image_filename(img) )
-		return 0;
+	{
+		sprintf(name, "\t%s\n\n\t", ui_getstring(UI_notapeimageloaded) );
+		strcat(name, ui_getstring(UI_lefthilight));
+		strcat(name, " ");
+		strcat(name, ui_getstring(UI_returntomain));
+		strcat(name, " ");
+		strcat(name, ui_getstring(UI_righthilight));
+		ui_displaymessagewindow(bitmap, name);
+		
+		if (input_ui_pressed(IPT_UI_SELECT) || input_ui_pressed(IPT_UI_CANCEL))
+			sel = -1;
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
+			sel = -2;
+		if (sel == -1 || sel == -2)
+			schedule_full_refresh();
+
+		return sel + 1;
+	}
 
 	strcpy( name, image_typename_id(img) );
 	menu_item[total] = name;

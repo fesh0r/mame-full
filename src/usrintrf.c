@@ -3218,6 +3218,13 @@ static int has_categories(void)
 	}
 	return num > 0;
 }
+
+static int has_cassette(void)
+{
+	if ( !device_find(Machine->devices, IO_CASSETTE) )
+		return 0;
+	return 1;
+}
 #endif /* MESS */
 
 
@@ -3256,7 +3263,8 @@ static void setup_menu_init(void)
 	append_menu(UI_imageinfo, UI_IMAGEINFO);
 	append_menu(UI_filemanager, UI_FILEMANAGER);
 #if HAS_WAVE
-	append_menu(UI_tapecontrol, UI_TAPECONTROL);
+	if (has_cassette())
+		append_menu(UI_tapecontrol, UI_TAPECONTROL);
 #endif /* HAS_WAVE */
 	append_menu(UI_history, UI_HISTORY);
 #endif /* !MESS */
