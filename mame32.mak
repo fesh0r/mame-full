@@ -178,7 +178,6 @@ WIN32_OBJS = \
 
 CPUOBJS = \
           $(Z80OBJS) \
-	  $(OBJ)/cpu/cdp1802/cdp1802.o \
           $(OBJ)/cpu/i8085/i8085.o \
           $(OBJ)/cpu/m6502/m6502.o \
           $(OBJ)/cpu/h6280/h6280.o \
@@ -203,7 +202,6 @@ CPUOBJS = \
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
-	  $(OBJ)/cpu/cdp1802/disasm.o \
           $(OBJ)/cpu/i8085/8085dasm.o \
           $(OBJ)/cpu/m6502/6502dasm.o \
           $(OBJ)/cpu/h6280/6280dasm.o \
