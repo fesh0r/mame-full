@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "generic.h"
 
 
 extern unsigned char *taitol_rambanks;
@@ -9,9 +8,11 @@ static struct tilemap *bg19_tilemap;
 static struct tilemap *ch1a_tilemap;
 
 static int cur_ctrl = 0;
-static int cur_bankg = 0;
+static int horshoes_gfxbank = 0;
 static int bankc[4];
 static int flipscreen;
+#define SPRITERAM_SIZE 0x400
+static unsigned char buffered_spriteram[SPRITERAM_SIZE];
 
 
 /***************************************************************************
@@ -23,17 +24,23 @@ static int flipscreen;
 static void get_bg18_tile_info(int tile_index)
 {
 	int attr = taitol_rambanks[2*tile_index+0x4000+1];
-	int code = taitol_rambanks[2*tile_index+0x4000]|((attr&0x03)<<8)|(bankc[(attr&0xc)>>2]<<10);
+	int code = taitol_rambanks[2*tile_index+0x4000]
+			| ((attr & 0x03) << 8)
+			| ((bankc[(attr & 0xc) >> 2]) << 10)
+			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO (0, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
 }
 
 static void get_bg19_tile_info(int tile_index)
 {
 	int attr = taitol_rambanks[2*tile_index+0x5000+1];
-	int code = taitol_rambanks[2*tile_index+0x5000]|((attr&0x03)<<8)|(bankc[(attr&0xc)>>2]<<10);
+	int code = taitol_rambanks[2*tile_index+0x5000]
+			| ((attr & 0x03) << 8)
+			| ((bankc[(attr & 0xc) >> 2]) << 10)
+			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO (0, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
 }
 
 static void get_ch1a_tile_info(int tile_index)
@@ -41,7 +48,7 @@ static void get_ch1a_tile_info(int tile_index)
 	int attr = taitol_rambanks[2*tile_index+0x6000+1];
 	int code = taitol_rambanks[2*tile_index+0x6000]|((attr&0x01)<<8)|((attr&0x04)<<7);
 
-	SET_TILE_INFO (2, code, (attr & 0xf0)>>4);
+	SET_TILE_INFO(2,code,(attr & 0xf0) >> 4);
 }
 
 
@@ -64,6 +71,7 @@ int taitol_vh_start(void)
 		return 1;
 
 	bankc[0] = bankc[1] = bankc[2] = bankc[3] = 0;
+	horshoes_gfxbank = 0;
 	cur_ctrl = 0;
 
 	bg18_tilemap->transparent_pen = 0;
@@ -87,30 +95,22 @@ int taitol_vh_start(void)
 
 ***************************************************************************/
 
-WRITE_HANDLER( taitol_bankg_w )
+WRITE_HANDLER( horshoes_bankg_w )
 {
-	if (data != cur_bankg)
+	if (horshoes_gfxbank != data)
 	{
-		int i;
-		for(i=0;i<4;i++)
-			bankc[i] = bankc[i] + (data - cur_bankg)*4;
-		cur_bankg = data;
+		horshoes_gfxbank = data;
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
 		tilemap_mark_all_tiles_dirty(bg19_tilemap);
 	}
 }
 
-READ_HANDLER( taitol_bankg_r )
-{
-	return cur_bankg;
-}
-
 WRITE_HANDLER( taitol_bankc_w )
 {
-	if (bankc[offset] != data + cur_bankg*4)
+	if (bankc[offset] != data)
 	{
-		bankc[offset] = data + cur_bankg*4;
+		bankc[offset] = data;
 //		logerror("Bankc %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
@@ -120,7 +120,7 @@ WRITE_HANDLER( taitol_bankc_w )
 
 READ_HANDLER( taitol_bankc_r )
 {
-	return bankc[offset] - cur_bankg*4;
+	return bankc[offset];
 }
 
 
@@ -239,28 +239,43 @@ void taitol_obj1b_m(int offset)
 
 ***************************************************************************/
 
+/*
+	Sprite format:
+	00: xxxxxxxx tile number (low)
+	01: xxxxxxxx tile number (high)
+	02: ----xxxx color
+	    ----x--- priority
+	03: -------x flip x
+	    ------x- flip y
+	04: xxxxxxxx x position (low)
+	05: -------x x position (high)
+	06: xxxxxxxx y position
+	07: xxxxxxxx unknown / ignored? Seems just garbage in many cases, e.g
+	             plgirs2 bullets and raimais big bosses.
+*/
+
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
 
-	spriteram = taitol_rambanks + 0x7000;
-	spriteram_size = 0x3e8;
 	/* at spriteram + 0x3f0 and 03f8 are the tilemap control registers;
 		spriteram + 0x3e8 seems to be unused
 	*/
-
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	for (offs = 0;offs < SPRITERAM_SIZE-3*8;offs += 8)
 	{
 		int code,color,sx,sy,flipx,flipy;
 
-		color = spriteram[offs + 2] & 0x0f;
-		code = spriteram[offs] | (spriteram[offs + 1] << 8);
-		sx = spriteram[offs + 4] | ((spriteram[offs + 5] & 1) << 8);
-		sy = spriteram[offs + 6] | ((spriteram[offs + 7] & 1) << 8);
+		color = buffered_spriteram[offs + 2] & 0x0f;
+		code = buffered_spriteram[offs] | (buffered_spriteram[offs + 1] << 8);
+
+		code |= (horshoes_gfxbank & 0x03) << 10;
+
+		sx = buffered_spriteram[offs + 4] | ((buffered_spriteram[offs + 5] & 1) << 8);
+		sy = buffered_spriteram[offs + 6];
 		if (sx >= 320) sx -= 512;
-		flipx = spriteram[offs + 3] & 0x01;
-		flipy = spriteram[offs + 3] & 0x02;
+		flipx = buffered_spriteram[offs + 3] & 0x01;
+		flipy = buffered_spriteram[offs + 3] & 0x02;
 
 		if (flipscreen)
 		{
@@ -269,9 +284,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			flipx = !flipx;
 			flipy = !flipy;
 		}
-
-if (keyboard_pressed(KEYCODE_Q) && (color & 8)) color = rand();
-if (keyboard_pressed(KEYCODE_W) && (~color & 8)) color = rand();
 
 		pdrawgfx(bitmap,Machine->gfx[1],
 				code,
@@ -330,4 +342,13 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+}
+
+
+
+void taitol_eof_callback(void)
+{
+	unsigned char *spriteram = taitol_rambanks + 0x7000;
+
+	memcpy(buffered_spriteram,spriteram,SPRITERAM_SIZE);
 }
