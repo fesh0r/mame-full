@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.30 2004/07/12 21:29:02 npwoods Exp $
+  $Id: pc8801.c,v 1.31 2004/08/01 23:50:42 npwoods Exp $
 
 ***************************************************************************/
 
@@ -164,8 +164,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 #define SW_HS \
 	PORT_DIPNAME( 0x04, 0x04, "Speed mode" ) \
-	PORT_DIPSETTING(    0x00, "slow" ) \
-	PORT_DIPSETTING(    0x04, "high" )
+	PORT_DIPSETTING(    0x00, "Slow" ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( High ) )
 
 #define SW_8MHZ \
 	PORT_DIPNAME( 0x08, 0x00, "Main CPU clock" ) \

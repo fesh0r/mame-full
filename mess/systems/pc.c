@@ -705,13 +705,13 @@ INPUT_PORTS_START( pc200 )
     PORT_START /* IN1 */
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
 	PORT_DIPSETTING(	0x00, "English/less checks" )
-	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
+	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
 	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
-	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
-	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
-	PORT_DIPSETTING(	0x06, "German/Deutsch" ) // bitte warten
-	PORT_DIPSETTING(	0x07, "English" ) // please wait
+	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
+	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
+	PORT_DIPSETTING(	0x06, DEF_STR( German ) ) // bitte warten
+	PORT_DIPSETTING(	0x07, DEF_STR( English ) ) // please wait
 	PORT_DIPNAME( 0x08, 0x00, "37a 0x40")
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x08, "0x08" )
@@ -727,7 +727,7 @@ INPUT_PORTS_START( pc200 )
 	PORT_DIPSETTING(	0x00, "external Color 80 Columns" )
 	PORT_DIPSETTING(	0x40, "Color 40 Columns" )
 	PORT_DIPSETTING(	0x80, "Color 80 Columns" )
-	PORT_DIPSETTING(	0xc0, "Mono" )
+	PORT_DIPSETTING(	0xc0, DEF_STR( Mono ) )
 	PORT_START /* IN2 */
 PORT_BIT ( 0x80, 0x80,	 IPT_UNUSED ) // com 1 on motherboard
 	PORT_DIPNAME( 0x40, 0x40, "COM2: enable")
@@ -792,14 +792,14 @@ INPUT_PORTS_START( pc1512 )
 
     PORT_START /* IN1 */
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
-	PORT_DIPSETTING(	0x00, "English/512k only/less checks" )
-	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
+	PORT_DIPSETTING(	0x00, "English/less checks" )
+	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
 	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
-	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
-	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
-	PORT_DIPSETTING(	0x06, "German/Deutsch" ) // bitte warten
-	PORT_DIPSETTING(	0x07, "English" ) // please wait
+	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
+	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
+	PORT_DIPSETTING(	0x06, DEF_STR( German ) ) // bitte warten
+	PORT_DIPSETTING(	0x07, DEF_STR( English ) ) // please wait
 	PORT_BIT( 0x20, 0x20,	IPT_UNUSED ) // pc1512 integrated special cga
 	PORT_BIT( 0xc0, 0x00,	IPT_UNUSED ) // not used in pc1512
 	PORT_BIT( 0xe00, 0x00,	IPT_UNUSED ) // not used in pc1512
@@ -887,14 +887,15 @@ INPUT_PORTS_START( pc1640 )
 
     PORT_START /* IN1 */
 	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
+	PORT_DIPNAME( 0x07, 0x07, "Name/Language")
 //	PORT_DIPSETTING(	0x00, "PC 512k" ) // machine crashes with ega bios at 0xc0000
-	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
+	PORT_DIPSETTING(	0x01, DEF_STR( Italian ) ) //prego attendere
 	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
-	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
-	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
-	PORT_DIPSETTING(	0x06, "German/Deutsch" ) // bitte warten
-	PORT_DIPSETTING(	0x07, "English" ) // please wait
+	PORT_DIPSETTING(	0x04, DEF_STR( Spanish ) ) //Por favor
+	PORT_DIPSETTING(	0x05, DEF_STR( French ) ) //patientez
+	PORT_DIPSETTING(	0x06, DEF_STR( German ) ) // bitte warten
+	PORT_DIPSETTING(	0x07, DEF_STR( English ) ) // please wait
 	PORT_BIT( 0x20, 0x00,	IPT_UNUSED ) // not pc1512 integrated special cga
 	PORT_DIPNAME( 0x40, 0x00, "37a 0x40")
 	PORT_DIPSETTING(	0x00, "0x00" )

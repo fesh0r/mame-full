@@ -263,7 +263,7 @@ INPUT_PORTS_START( a800 )
 
     PORT_START  /* IN0 console keys & switch settings */
 	PORT_CONFNAME(0x80, 0x80, "Cursor keys act as" )
-    PORT_CONFSETTING(0x80, "Joystick")
+    PORT_CONFSETTING(0x80, DEF_STR( Joystick ))
     PORT_CONFSETTING(0x00, "Cursor")
 	PORT_CONFNAME(0x40, 0x00, "Television Artifacts" )
 	PORT_CONFSETTING(0x00, DEF_STR( Off ))
@@ -404,7 +404,7 @@ INPUT_PORTS_START( a800xl )
 
     PORT_START  /* IN0 console keys & switch settings */
 	PORT_CONFNAME(0x80, 0x80, "Cursor keys act as" )
-    PORT_CONFSETTING(0x80, "Joystick")
+    PORT_CONFSETTING(0x80, DEF_STR( Joystick ))
     PORT_CONFSETTING(0x00, "Cursor")
 	PORT_CONFNAME(0x40, 0x00, "Television Artifacts" )
 	PORT_CONFSETTING(0x00, DEF_STR( Off ))

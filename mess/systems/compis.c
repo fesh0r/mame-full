@@ -211,7 +211,7 @@ INPUT_PORTS_START (compis)
 
 	PORT_START /* 6 */
 	PORT_DIPNAME( 0x18, 0x00, "S8 Test mode")
-	PORT_DIPSETTING( 0x00, "Normal" )
+	PORT_DIPSETTING( 0x00, DEF_STR( Normal ) )
 	PORT_DIPSETTING( 0x08, "Remote" )
 	PORT_DIPSETTING( 0x10, "Stand alone" )
 	PORT_DIPSETTING( 0x18, "Reserved" )

@@ -410,7 +410,7 @@ INPUT_PORTS_START( coco3 )
 	PORT_CONFSETTING(	0x00, "Composite" )
 	PORT_CONFSETTING(	0x08, "RGB" )
 	PORT_CONFNAME( 0x30, 0x00, "Joystick Type" )
-	PORT_CONFSETTING(	0x00, "Normal" )
+	PORT_CONFSETTING(	0x00, DEF_STR( Normal ) )
 	PORT_CONFSETTING(	0x10, "Hi-Res Interface" )
 	PORT_CONFSETTING(	0x30, "Hi-Res Interface (CoCoMax 3 Style)" )
 	

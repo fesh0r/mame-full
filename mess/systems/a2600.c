@@ -608,10 +608,10 @@ INPUT_PORTS_START( a2600 )
 
 	PORT_START /* [9] */
 	PORT_CATEGORY_CLASS( 0xf0, 0x00, "Left Controller" )
-	PORT_CATEGORY_ITEM(    0x00, "Joystick", 1 )
+	PORT_CATEGORY_ITEM(    0x00, DEF_STR( Joystick ), 1 )
 	PORT_CATEGORY_ITEM(    0x10, "Paddles", 2 )
 	PORT_CATEGORY_CLASS( 0x0f, 0x00, "Right Controller" )
-	PORT_CATEGORY_ITEM(    0x00, "Joystick", 3 )
+	PORT_CATEGORY_ITEM(    0x00, DEF_STR( Joystick ), 3 )
 	PORT_CATEGORY_ITEM(    0x01, "Paddles", 4 )
 
 	PORT_START /* [10] */
