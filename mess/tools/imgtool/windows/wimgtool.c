@@ -475,6 +475,81 @@ done:
 
 #define CONTROL_START 10000
 
+static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
+	const struct OptionGuide *guide, const char *optspec)
+{
+	int label_width = 100;
+	int control_height = 20;
+	int control_count = 0;
+	RECT dialog_rect;
+	HWND control, aux_control;
+	DWORD style;
+	int i, x, width;
+	char buf[256];
+
+	GetWindowRect(dialog, &dialog_rect);
+
+	for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
+	{
+		// set up label control
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
+		control = CreateWindow("STATIC", U2T(buf), WS_CHILD | WS_VISIBLE,
+			margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
+		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+		SetProp(control, owner_prop, (HANDLE) 1);
+
+		// set up the active control
+		x = margin + label_width;
+		width = dialog_rect.right - dialog_rect.left - x - margin;
+
+		aux_control = NULL;
+		switch(guide[i].option_type)
+		{
+			case OPTIONTYPE_STRING:
+				style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP;
+				control = CreateWindow(TEXT("Edit"), NULL, style,
+						x, *y, width, control_height, dialog, NULL, NULL, NULL);
+				break;
+
+			case OPTIONTYPE_INT:
+				style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_NUMBER;
+				control = CreateWindow(TEXT("Edit"), NULL, style,
+						x, *y, width - 16, control_height, dialog, NULL, NULL, NULL);
+				style = WS_CHILD | WS_VISIBLE | UDS_AUTOBUDDY;
+				aux_control = CreateWindow(TEXT("msctls_updown32"), NULL, style,
+						x + width - 16, *y, 16, control_height, dialog, NULL, NULL, NULL);
+				SendMessage(aux_control, UDM_SETRANGE32, 0x80000000, 0x7FFFFFFF);
+				break;
+
+			case OPTIONTYPE_ENUM_BEGIN:
+				style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
+				control = CreateWindow(TEXT("ComboBox"), NULL, style,
+						x, *y, width, control_height * 8, dialog, NULL, NULL, NULL);
+				break;
+
+			default:
+				control = NULL;
+				break;
+		}
+
+		if (!control)
+			return -1;
+
+		SetWindowLong(control, GWL_ID, CONTROL_START + control_count++);
+		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
+		SetProp(control, owner_prop, (HANDLE) 1);
+		win_prepare_option_control(control, &guide[i], optspec);
+
+		if (aux_control)
+			SetProp(aux_control, owner_prop, (HANDLE) 1);
+
+		*y += control_height;
+	}
+	return control_count;
+}
+
+
+
 struct new_dialog_info
 {
 	HWND parent;
@@ -522,18 +597,14 @@ static void adjust_dialog_height(HWND dlgwnd)
 
 static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 {
-	int label_width = 100;
-	int control_height = 20;
 	struct new_dialog_info *info;
-	int i, x, y, width;
+	int y;
 	const struct OptionGuide *guide;
 	LONG_PTR l;
 	HWND more_button;
-	HWND control, aux_control, next_control;
+	HWND control, next_control;
 	LRESULT lres;
-	DWORD style;
 	RECT r1, r2;
-	char buf[256];
 	HFONT font;
 
 	l = GetWindowLongPtr(dlgwnd, GWLP_USERDATA);
@@ -564,63 +635,8 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 		GetWindowRect(dlgwnd, &r2);
 		y = r1.bottom + info->margin - r2.top;
 
-		for (i = 0; guide[i].option_type != OPTIONTYPE_END; i++)
-		{
-			// set up label control
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
-			control = CreateWindow("STATIC", U2T(buf), WS_CHILD | WS_VISIBLE,
-				r1.left - r2.left, y + 2, label_width, control_height, dlgwnd, NULL, NULL, NULL);
-			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
-			SetProp(control, owner_prop, (HANDLE) 1);
-
-			// set up the active control
-			x = r1.left - r2.left + label_width;
-			width = r2.right - r2.left - x - (r1.left - r2.left);
-
-			aux_control = NULL;
-			switch(guide[i].option_type)
-			{
-				case OPTIONTYPE_STRING:
-					style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP;
-					control = CreateWindow(TEXT("Edit"), NULL, style,
-						 x, y, width, control_height, dlgwnd, NULL, NULL, NULL);
-					break;
-
-				case OPTIONTYPE_INT:
-					style = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_NUMBER;
-					control = CreateWindow(TEXT("Edit"), NULL, style,
-						 x, y, width - 16, control_height, dlgwnd, NULL, NULL, NULL);
-					style = WS_CHILD | WS_VISIBLE | UDS_AUTOBUDDY;
-					aux_control = CreateWindow(TEXT("msctls_updown32"), NULL, style,
-						 x + width - 16, y, 16, control_height, dlgwnd, NULL, NULL, NULL);
-					SendMessage(aux_control, UDM_SETRANGE32, 0x80000000, 0x7FFFFFFF);
-					break;
-
-				case OPTIONTYPE_ENUM_BEGIN:
-					style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
-					control = CreateWindow(TEXT("ComboBox"), NULL, style,
-						 x, y, width, control_height * 8, dlgwnd, NULL, NULL, NULL);
-					break;
-
-				default:
-					control = NULL;
-					break;
-			}
-
-			if (!control)
-				return -1;
-
-			SetWindowLong(control, GWL_ID, CONTROL_START + info->control_count++);
-			SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
-			SetProp(control, owner_prop, (HANDLE) 1);
-			win_prepare_option_control(control, &guide[i], 
-				info->module->createimage_optspec);
-
-			if (aux_control)
-				SetProp(aux_control, owner_prop, (HANDLE) 1);
-
-			y += control_height;
-		}
+		info->control_count = create_option_controls(dlgwnd, font,
+			r1.left - r2.left, &y, guide, info->module->createimage_optspec);
 	}
 	adjust_dialog_height(dlgwnd);
 	return 0;
@@ -827,6 +843,63 @@ done:
 
 
 
+static INT_PTR CALLBACK putfileopt_dialogproc(HWND dialog, UINT message,
+	WPARAM wparam, LPARAM lparam)
+{
+	option_resolution *res;
+	
+	switch(message)
+	{
+		case WM_INITDIALOG:
+			res = (option_resolution *) lparam;
+			break;
+
+		case WM_COMMAND:
+			if (HIWORD(wparam) == BN_CLICKED)
+				EndDialog(dialog, LOWORD(wparam));
+			break;
+	}
+	return 0;
+}
+
+
+
+static imgtoolerr_t show_putfileopt_dialog(HWND window, option_resolution **result)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	const struct ImageModule *module;
+	option_resolution *res = NULL;
+	struct wimgtool_info *info;
+
+	info = get_wimgtool_info(window);
+	module = img_module(info->image);
+
+	if (0) //module->writefile_optguide && module->writefile_optspec)
+	{
+		res = option_resolution_create(module->writefile_optguide,
+			module->writefile_optspec);
+		if (!res)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+
+		DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_FILEOPTIONS), window,
+			putfileopt_dialogproc, (LPARAM) res);
+	}
+
+done:
+	if (err && res)
+	{
+		option_resolution_close(res);
+		res = NULL;
+	}
+	*result = res;
+	return err;
+}
+
+
+
 static void menu_insert(HWND window)
 {
 	imgtoolerr_t err;
@@ -835,6 +908,7 @@ static void menu_insert(HWND window)
 	const TCHAR *s;
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
+	option_resolution *opts = NULL;
 
 	info = get_wimgtool_info(window);
 
@@ -848,11 +922,15 @@ static void menu_insert(HWND window)
 		goto done;
 	}
 
+	err = show_putfileopt_dialog(window, &opts);
+	if (err)
+		goto done;
+
 	s = _tcsrchr(ofn.lpstrFile, '\\');
 	s = s ? s + 1 : ofn.lpstrFile;
 	image_filename = T2A(s);
 
-	err = img_putfile(info->image, NULL, ofn.lpstrFile, NULL, NULL);
+	err = img_putfile(info->image, NULL, ofn.lpstrFile, opts, NULL);
 	if (err)
 		goto done;
 
@@ -861,6 +939,8 @@ static void menu_insert(HWND window)
 		goto done;
 
 done:
+	if (opts)
+		option_resolution_close(opts);
 	if (err)
 		report_error(window, err);
 }

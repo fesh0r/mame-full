@@ -18,13 +18,16 @@
 #define ID_VIEW_ASSOCIATIONS            114
 #define IDI_IMGTOOL                     115
 #define IDI_DOC                         116
+#define IDD_FILEOPTIONS                 117
+#define IDD_DIALOG2                     118
+#define IDD_ASSOCIATIONS                118
 #define IDC_MORE                        1000
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        117
+#define _APS_NEXT_RESOURCE_VALUE        119
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101
