@@ -270,12 +270,47 @@ static struct {
 	{ 0x7a70d9b8 , 0x1000, "325181-01 C128 8x8 character set c64, c128 swedish" },
 	{ 0xbad36b88 , 0x1000, "325167-01 I/F/B C128 8x8 characters sets" }, //italian and french verified to be the same
 
-	// commodore ieee disk drives
-	{ 0xd04c1fbb , 0x2000, "? CBM2040 ???" },
-	{ 0xf4967a7f , 0x3000, "? CBM3040 ???" },
-	{ 0x40e0ebaa , 0x3000, "? CBM4040 ???" },
-	{ 0x87e6a94e , 0x4000, "? CBM1001 ???" },
-	{ 0x21b80fdf , 0x4000, "? CBM2031 2parts, 1541 hardware? c000" },
+	// commodore ieee bus devices
+	{ 0x0ab338dc, 0x400, "901466-04 CBM2040 dos 2 6530" },
+	{ 0x25b5eed5, 0x1000, "901468-06 CBM2040 dos 1 e000" },
+	{ 0x9b09ae83, 0x1000, "901468-07 CBM2040 dos 1 f000" },
+	{ 0xb7157458, 0x1000, "901468-11 CBM2040 dos 2 d000" },
+	{ 0x02c44ff9, 0x1000, "901468-12 CBM2040 dos 2 e000" },
+	{ 0xcbd785b3, 0x1000, "901468-13 CBM2040 dos 2 f000" },
+	{ 0xbc4d4872, 0x1000, "901468-14 CBM2040 dos 2r d000" },
+	{ 0xb6970533, 0x1000, "901468-15 CBM2040 dos 2r e000" },
+	{ 0x1f5eefb7, 0x1000, "901468-16 CBM2040 dos 2r f000" },
+	{ 0xd04c1fbb , 0x2000, "MERGED! 901468-06+901468-07" },
+	{ 0xf4967a7f , 0x3000, "MERGED! 901468-11+901468-12+901468-13" },
+	{ 0x40e0ebaa , 0x3000, "MERGED! 901468-14+901468-15+901468-16" },
+
+	{ 0xee4b893b, 0x2000, "901484-03 CBM2031 C000" },
+	{ 0x6a629054, 0x2000, "901484-05 CBM2031 E000" },
+	{ 0x21b80fdf , 0x4000, "MERGED! 901484-03+901484-05" },
+
+	{ 0xf0aa31bd,  0x400,  "251257-02A CBM1001 FDC" },
+	{ 0x0073b8b2, 0x2000, "901887-01 CBM8050 DOS 2.7 c000" },
+	{ 0xde9b6132, 0x2000, "901888-01 CBM8050 DOS 2.7 e000" },
+	{ 0xa23337eb, 0x800, "901467-01 CBM8050 ?" },
+	{ 0x09a609b9, 0x2000, "901482-03 CBM8050 dos 2.5 c000" },
+	{ 0x1bcf9df9, 0x2000, "901482-04 CBM8050 dos 2.5 e000" },
+	{ 0x3cbd2756, 0x2000, "901482-06 CBM8050 dos 2.5r c000" },
+	{ 0xc7532d90, 0x2000, "901482-07 CBM8050 dos 2.5r e000" },
+	{ 0x9e83fa70, 0x400, "901483-03 CBM8050 dos2.5 micropolis" },
+	{ 0x2915327a, 0x400, "901869-01 CBM8050 dos2.7 mpi" },
+	{ 0xbab998c9, 0x400, "901885-04 CBM8050 dos2.7 micropolis" },
+	{ 0x87e6a94e , 0x4000, "MERGED! 901887-01+901888-01" },
+
+	{ 0xcb07b2db, 0x800, "BADDUMP! 300541-001 CBM8280" },
+	{ 0x3c6eee1e, 0x2000, "300542-001 CBM8280 c000" },
+	{ 0xf58e665e, 0x2000, "300543-001 CBM8280 e000" },
+
+	{ 0x99e096f7, 0x800, "300515-001 CBM9090 4c" },
+	{ 0x566df630, 0x2000, "BADDUMP! 300517-001? CBM9090 7d" },
+	{ 0x49adf4fb, 0x800, "300515-002 CBM9060 4c" },
+	{ 0x2d758a14, 0x2000, "300516-002 CBM9060 7c" },
+	{ 0xf0382bc3, 0x2000, "300517-002 CBM9060 7d" },
+
 	{ 0xc6bb0977 , 0x2000, "? CBM4023 printer 4023 /P 360-02 (1526 hardware?)" },
 	{ 0xb6d8519c , 0x1000, "901472-06 CBM3022 printer" },
 	{ 0xe5c4a58c , 0x2000, "325320-02 CBM8023P printer" },
@@ -309,6 +344,7 @@ static struct {
 	{ 0xa9011b84 , 0x8000, "318045-02 CBM1581 bios 8000" },
 	{ 0xecc223cd , 0x8000, "? CBM1581 beta 8000" },
 	{ 0xe08801d7 , 0x8000, "? CBM1581 modified 8000" },
+
 	{ 0x3ef63c59 , 0x2000, "? CBM1526 printer rev05?" },
 	{ 0x21051f69 , 0x2000, "? CBM1526 printer rev07b scandinavian?" },
 	{ 0x38f85b4a , 0x2000, "? CBM1526 printer rev07c?" },
