@@ -59,12 +59,12 @@ SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
 SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
-    $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o
+    $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o $(DSP_DIR)/waveout.o
 
 # joystick objs
 JOY_DIR  = $(OBJDIR)/joystick-drivers
 JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
-    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/XInputDevices.o
+    $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_SDL.o $(JOY_DIR)/XInputDevices.o
 
 # framskip objs
 FRAMESKIP_DIR  = $(OBJDIR)/frameskip-drivers
