@@ -170,8 +170,11 @@ static struct MachineDriver machine_driver_arcadia =
 	1,				/* single CPU */
 	arcadia_machine_init,
 	0,//pc1401_machine_stop,
-
+#if DEBUG
+	128+2*XPOS+40, 208+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+128-1+40, 0, YPOS+208+YBOTTOM_SIZE-1},
+#else
 	128+2*XPOS, 208+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+128-1, 0, YPOS+208+YBOTTOM_SIZE-1},
+#endif
 	arcadia_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (arcadia_palette) / sizeof (arcadia_palette[0]) ,
 	sizeof (arcadia_colortable) / sizeof(arcadia_colortable[0][0]),
@@ -267,7 +270,7 @@ void init_arcadia(void)
 }
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_COLORS|GAME_IMPERFECT_SOUND )
 // schmid tvg 2000 (developer? PAL)
 // several other firms/names
 

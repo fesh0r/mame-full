@@ -5,9 +5,12 @@ Console
 
 Hanimex mpt-03 (first variant?) with large cartridge slot
 
+Emerson Arcadia 2001
+Schmid TVG2000 / Tele Fever
+
+Palladium 3rd model?, different cartridges?
+
 sold from several firms with different names
-
-
 
 Features
 --------
@@ -25,3 +28,5 @@ r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
 Mess emulation state
 --------------------
 based on info by Paul Robson
+look into crc/arcadia.crc for some issues
+bad analog joystick emulation

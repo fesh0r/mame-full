@@ -86,6 +86,8 @@ static struct {
     int line;
     int charline;
     int shift;
+    int ad_delay;
+    int ad_select;
     struct { int x, y; } pos[4];
     UINT8 bg[208+YPOS+YBOTTOM_SIZE][16+2*XPOS/8];
     union {
@@ -111,7 +113,7 @@ static struct {
 		pal1, pal2, pal3;
 	    UINT8 collision_bg, 
 		collision_sprite;
-	    UINT8 res3[2];
+	    UINT8 ad[2];
 	    // 0x1a00
 	    UINT8 chars2[13][16];
 	    UINT8 ram3[3][16];
@@ -156,17 +158,17 @@ READ_HANDLER(arcadia_video_r)
     case 0x108: data=input_port_0_r(0);break;
 #if 0
     case 0x1fe:
-	if (arcadia_video.reg.d.pal1&0x40) data=input_port_10_r(0)<<3;
+	if (arcadia_video.ad_select) data=input_port_10_r(0)<<3;
 	else data=input_port_9_r(0)<<3;
 	break;
     case 0x1ff:
-	if (arcadia_video.reg.d.pal1&0x40) data=input_port_7_r(0)<<3;
+	if (arcadia_video.ad_select) data=input_port_7_r(0)<<3;
 	else data=input_port_8_r(0)<<3;
 	break;
 #else
     case 0x1fe:
 	data = 0x80;
-	if (arcadia_video.reg.d.pal1&0x40) {
+	if (arcadia_video.ad_select) {
 	    if (input_port_7_r(0)&0x10) data=0;
 	    if (input_port_7_r(0)&0x20) data=0xff;
 	} else {
@@ -176,7 +178,7 @@ READ_HANDLER(arcadia_video_r)
 	break;
     case 0x1ff:
 	data = 0x6f; // 0x7f too big for alien invaders (movs right)
-	if (arcadia_video.reg.d.pal1&0x40) {
+	if (arcadia_video.ad_select) {
 	    if (input_port_7_r(0)&0x1) data=0;
 	    if (input_port_7_r(0)&0x2) data=0xff;
 	} else {
@@ -191,8 +193,15 @@ READ_HANDLER(arcadia_video_r)
     return data;
 }
 
+#if DEBUG
+static int _y;
+#endif
+
 WRITE_HANDLER(arcadia_video_w)
 {
+#if DEBUG
+    char str[40];
+#endif
     switch (offset) {
     case 0xfc: case 0xfd: case 0xfe:
 	arcadia_video.reg.data[offset]=data;
@@ -203,10 +212,22 @@ WRITE_HANDLER(arcadia_video_w)
     case 0xf0: case 0xf2: case 0xf4: case 0xf6:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_video.pos[(offset>>1)&3].y=(data^0xff)-16;
+#if DEBUG
+	snprintf(str, sizeof(str), "y %d %d",(offset>>1)&3,
+		 arcadia_video.reg.d.pos[(offset>>1)&3].y );
+	ui_text(Machine->scrbitmap, str, 120, _y);
+	_y+=8;
+#endif
 	break;
     case 0xf1: case 0xf3: case 0xf5: case 0xf7:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_video.pos[(offset>>1)&3].x=data-44;
+#if DEBUG
+	snprintf(str, sizeof(str), "x %d %d",(offset>>1)&3,
+		 arcadia_video.reg.d.pos[(offset>>1)&3].x );
+	ui_text(Machine->scrbitmap, str, 120, _y);
+	_y+=8;
+#endif
 	break;
     case 0x180: case 0x181: case 0x182: case 0x183: case 0x184: case 0x185: case 0x186: case 0x187:
     case 0x188: case 0x189: case 0x18a: case 0x18b: case 0x18c: case 0x18d: case 0x18e: case 0x18f:
@@ -219,6 +240,10 @@ WRITE_HANDLER(arcadia_video_w)
 	arcadia_video.reg.data[offset]=data;
 	chars[0x38|((offset>>3)&7)][offset&7]=data;
 	break;
+    case 0x1f9:
+	arcadia_video.reg.data[offset]=data;
+	arcadia_video.ad_delay=10;
+	break;
     default:
 	arcadia_video.reg.data[offset]=data;
     }
@@ -228,9 +253,12 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
 			      int y, int x)
 {
     int k,b;
+#if DEBUG
+    Machine->gfx[0]->colortable[1]=Machine->pens[4];
+#else
     Machine->gfx[0]->colortable[1]=
 	Machine->pens[((arcadia_video.reg.d.pal1>>3)&7)^((color>>5)&6)];
-
+#endif
     if (!(arcadia_video.reg.d.resolution&0x40)) {
 	for (k=0; k<8; k++) {
 	    b=ch[k];
@@ -274,11 +302,22 @@ INLINE void arcadia_vh_draw_line(struct osd_bitmap *bitmap,
 	    arcadia_draw_char(bitmap, chars[ch&0x3f], ch, y, x);
 	}
     }
+#if !DEBUG
     plot_box(bitmap, x, y, bitmap->width-x, h, Machine->gfx[0]->colortable[0]);
+#endif
 }
 
 int arcadia_video_line(void)
 {
+    if (arcadia_video.ad_delay<=0)
+	arcadia_video.ad_select=arcadia_video.reg.d.pal1&0x40;
+    else arcadia_video.ad_delay--;
+
+    arcadia_video.line++;
+    arcadia_video.line%=262;
+#if DEBUG
+    if (arcadia_video.line==0) _y=0;
+#endif
     // unbelievable, reflects only charline, but alien invaders uses it for 
     // alien scrolling
     if (!(arcadia_video.reg.d.resolution&0x40)) {
@@ -315,8 +354,6 @@ int arcadia_video_line(void)
 	    }
 	}
     }
-    arcadia_video.line++;
-    arcadia_video.line%=262;
     return 0;
 }
 
@@ -328,15 +365,17 @@ READ_HANDLER(arcadia_vsync_r)
 //bool arcadia_sprite_collision(int n1, int n2)
 int arcadia_sprite_collision(int n1, int n2)
 {
-    int k, b1, b2;
+    int k, b1, b2, x;
     if (arcadia_video.pos[n1].x+8<=arcadia_video.pos[n2].x) return FALSE;
     if (arcadia_video.pos[n1].x>=arcadia_video.pos[n2].x+8) return FALSE;
     for (k=0; k<8; k++) {
 	if (arcadia_video.pos[n1].y+k<arcadia_video.pos[n2].y) continue;
-	if (arcadia_video.pos[n1].y+k>=arcadia_video.pos[n2].y+8) continue;
-	b1=arcadia_video.reg.d.chars[n1][k]<<(8-(arcadia_video.pos[n1].x&7));
-	b2=arcadia_video.reg.d.chars[n2][arcadia_video.pos[n1].y+k-arcadia_video.pos[n2].y]
-	    <<(8-(arcadia_video.pos[n2].x&7));
+	if (arcadia_video.pos[n1].y+k>=arcadia_video.pos[n2].y+8) break;
+	x=arcadia_video.pos[n1].x-arcadia_video.pos[n2].x;
+	b1=arcadia_video.reg.d.chars[n1][k];
+	b2=arcadia_video.reg.d.chars[n2][arcadia_video.pos[n1].y+k-arcadia_video.pos[n2].y];
+	if (x<0) b2>>=-x;
+	if (x>0) b1>>=x;
 	if (b1&b2) return TRUE;
     }
     return FALSE;
@@ -392,7 +431,7 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     if (arcadia_sprite_collision(1,3)) arcadia_video.reg.d.collision_sprite&=~0x10; //guess
     if (arcadia_sprite_collision(2,3)) arcadia_video.reg.d.collision_sprite&=~0x20; //guess
 
-#if 0
+#if DEBUG
     char str[0x40];
 //    snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",
 //	     input_port_7_r(0), input_port_8_r(0),
@@ -420,5 +459,11 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	     arcadia_video.pos[3].x,
 	     arcadia_video.pos[3].y );
     ui_text(bitmap, str, 0, 8);
+    snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",
+	     arcadia_video.reg.d.resolution,
+	     arcadia_video.reg.d.pal1,
+	     arcadia_video.reg.d.pal2,
+	     arcadia_video.reg.d.pal3 );
+    ui_text(bitmap, str, 0, 16);
 #endif
 }

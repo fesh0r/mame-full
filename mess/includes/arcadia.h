@@ -8,6 +8,13 @@
 # endif
 #endif
 
+// use this for debugging
+#if 0
+#define DEBUG 1
+#else
+#define DEBUG 0
+#endif
+
 int arcadia_video_line(void);
 READ_HANDLER(arcadia_vsync_r);
 
@@ -22,7 +29,11 @@ WRITE_HANDLER(arcadia_video_w);
 // grand slam sprites left and right
 // space vultures left
 // space attack left
+#if DEBUG
 #define XPOS 48
+#else
+#define XPOS 32
+#endif
 extern int arcadia_vh_start(void);
 extern void arcadia_vh_stop(void);
 extern void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
