@@ -190,8 +190,8 @@ int vdt911_cru_r(int offset, int unit)
 			reply = (vdt[unit].cursor_address >> 8) & 0x07;
 			if (vdt[unit].keyboard_data & 0x80)
 				reply |= 0x08;
-			/*if (vdt[unit].terminal_ready)*/
-				reply |= 0x10;
+			/*if (! vdt[unit].terminal_ready)
+				reply |= 0x10;*/
 			if (vdt[unit].previous_word_select)
 				reply |= 0x20;
 			/*if (vdt[unit].keyboard_parity_error)
