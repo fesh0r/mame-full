@@ -142,6 +142,11 @@ static int imgwave_readsample(IMAGE *img, INT16 *sample)
 		INT16 buf16[2];
 	} u;
 
+	if (wimg->curpos > wimg->basepos + wimg->length) {
+		*sample = 0;
+		return 0;
+	}
+
 	if (wimg->resolution == 8) {
 		len = stream_read(wimg->f, u.buf8, wimg->channels);
 		wimg->curpos += len;
@@ -198,7 +203,7 @@ static int imgwave_readtransition(IMAGE *img, int *frequency)
 		wimg->lastsample = sample;
 		count++;
 	}
-	while(!transitioned);
+	while(!transitioned && sample);
 
 	*frequency = wimg->frequency / count;
 	return 0;
