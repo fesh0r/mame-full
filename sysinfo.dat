@@ -904,49 +904,72 @@ in bargain bins in toy stores for many years following.
 
 $end
 
+
 #---------------------------------------------------------------------------------------------#
 
 $info=arcadia
 $bio
-Emerson Arcadia 2001
+Emerson Arcadia 2001 (1982)
 
 
-Console
+8-bit Console system
+
+
+Sold from several firms with different names:
 
 Hanimex mpt-03 (first variant?) with large cartridge slot
+
 Palladium Video - Computer - Game with different cartridge slot, Controllers
 
 Emerson Arcadia 2001
-Schmid TVG2000 / Tele Fever
+
+Schmid TVG2000 / Tele Fever (Germany)
+
 Hanimex hmg 2650
-? leisure vision
 
-sold from several firms with different names
+LeisureVision (Canada)
 
-Features
---------
+Leonardo (Italy)
+
+Advision Home Arcade (France)
+
+
+Features:
+
 128x208 in 8 colors
+
 4 8x8 single color sprites
+
 single channel sound
+
 2 controller with analog joystick and keypad
 
-controller layout
------------------
+
+Controller Layout:
+
   1   2   3
+
   4   5   6
+
   7   8   9
+
  Del  0 Enter
 
-Emulator
---------
+
+Links:
+
+
 r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
 
 
-Known issues:
+MESS Emulation State:
 
-* Based on info by Paul Robson, Ward Shrake
-* Look into crc/arcadia.crc for some issues
-* Bad analog joystick emulation
+Based on info by Paul Robson, Ward Shrake
+
+Look into crc/arcadia.crc for some issues
+
+Bad analog joystick emulation
+
 
 $end
 
