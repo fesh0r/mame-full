@@ -58,6 +58,7 @@ Other possible B-Sys games:
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "sndhrdw/taitosnd.h"
 
 
 extern unsigned char *taitob_fscroll;
@@ -121,13 +122,6 @@ WRITE_HANDLER( hitice_pixelram_w );/*this doesn't look like a pixel layer*/
 READ_HANDLER ( taitob_videoram_r );
 WRITE_HANDLER( taitob_videoram_w );
 
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-READ_HANDLER ( rastan_sound_comm_r );
-
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
-READ_HANDLER ( rastan_a001_r );
 
 
 
@@ -331,18 +325,18 @@ static WRITE_HANDLER( taitob_sound_w )
 {
 	if (offset == 0)
 	{
-		rastan_sound_port_w(0, (data>>8) & 0xff);
+		taito_soundsys_sound_port_w(0, (data>>8) & 0xff);
 	}
 	else if (offset == 2)
 	{
-		rastan_sound_comm_w(0, (data>>8) & 0xff);
+		taito_soundsys_sound_comm_w(0, (data>>8) & 0xff);
 	}
 }
 
 static READ_HANDLER( taitob_sound_r )
 {
 	if (offset == 2)
-		return (rastan_sound_comm_r(0)<<8 );
+		return (taito_soundsys_sound_comm_r(0)<<8 );
 	else return 0;
 }
 
@@ -1045,7 +1039,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
+	{ 0xe201, 0xe201, taito_soundsys_a001_r },
 	{ 0xea00, 0xea00, MRA_NOP },
 	{ -1 }  /* end of table */
 };
@@ -1058,8 +1052,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taito_soundsys_a000_w },
+	{ 0xe201, 0xe201, taito_soundsys_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xe600, 0xe600, MWA_NOP }, /* ? */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
@@ -1075,7 +1069,7 @@ static struct MemoryReadAddress hitice_sound_readmem[] =
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0xb000, 0xb000, OKIM6295_status_0_r },
-	{ 0xa001, 0xa001, rastan_a001_r },
+	{ 0xa001, 0xa001, taito_soundsys_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -1087,8 +1081,8 @@ static struct MemoryWriteAddress hitice_sound_writemem[] =
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
 	{ 0xb000, 0xb000, OKIM6295_data_0_w },
 	{ 0xb001, 0xb001, OKIM6295_data_1_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xa000, 0xa000, taito_soundsys_a000_w },
+	{ 0xa001, 0xa001, taito_soundsys_a001_w },
 	{ -1 }  /* end of table */
 };
 
@@ -1098,7 +1092,7 @@ static struct MemoryReadAddress masterw_sound_readmem[] =
 	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0xa001, 0xa001, rastan_a001_r },
+	{ 0xa001, 0xa001, taito_soundsys_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -1108,8 +1102,8 @@ static struct MemoryWriteAddress masterw_sound_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xa000, 0xa000, taito_soundsys_a000_w },
+	{ 0xa001, 0xa001, taito_soundsys_a001_w },
 	{ -1 }  /* end of table */
 };
 

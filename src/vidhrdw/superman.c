@@ -16,14 +16,36 @@ unsigned char *supes_attribram;
 //static unsigned char *dirtybuffer;		/* foreground */
 //static unsigned char *dirtybuffer2;		/* background */
 
+static int tilemask      = 0x3fff;		// Superman : 0x3fff, Balloon Bros : 0x0fff
+static int xstart        = 0;			// For Daisenpu
+static int fill_backdrop = 0;			// For Daisenpu
+
 int superman_vh_start (void)
 {
+	tilemask = 0x3fff;
+	xstart   = 16;
 	return 0;
 }
 
 void superman_vh_stop (void)
 {
 }
+
+int ballbros_vh_start (void)
+{
+	tilemask = 0x0fff;
+	xstart   = 16;
+	return 0;
+}
+
+int daisenpu_vh_start (void)
+{
+	tilemask = 0x3fff;
+	xstart   = 16;
+	fill_backdrop = 1;
+	return 0;
+}
+
 
 /*************************************
  *
@@ -74,7 +96,7 @@ READ_HANDLER( supes_videoram_r )
 }
 
 
-void superman_update_palette (void)
+void superman_update_palette (int bankbase)
 {
 	unsigned short palette_map[32]; /* range of color table is 0-31 */
 	int i;
@@ -93,10 +115,12 @@ void superman_update_palette (void)
 
 			color = 0;
 
-			tile = READ_WORD (&supes_videoram[0x800 + i2]) & 0x3fff;
+			tile = READ_WORD (&supes_videoram[0x800 + bankbase + i2]) & tilemask;
 			if (tile)
-				color = READ_WORD (&supes_videoram[0xc00 + i2]) >> 11;
-
+				color = READ_WORD (&supes_videoram[0xc00 + bankbase + i2]) >> 11;
+			else
+				color = 0x1f;
+				
 			palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
 
 		}
@@ -110,9 +134,9 @@ void superman_update_palette (void)
 
 		color = 0;
 
-		tile = READ_WORD (&supes_videoram[i]) & 0x3fff;
+		tile = READ_WORD (&supes_videoram[i + bankbase]) & tilemask;
 		if (tile)
-			color = READ_WORD (&supes_videoram[0x400 + i]) >> 11;
+			color = READ_WORD (&supes_videoram[0x400 + bankbase + i]) >> 11;
 
 		palette_map[color] |= Machine->gfx[0]->pen_usage[tile];
 	}
@@ -143,47 +167,75 @@ void superman_update_palette (void)
 void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
-
-	superman_update_palette ();
-
+	int bankbase;
+	int attribfix;
+	int cocktail;
+	
+	/* Set bank base */
+	if ( (READ_WORD(&supes_attribram[0x602]) & 0x40 ) )
+		bankbase = 0x2000;
+	else
+		bankbase = 0x0000;
+	
 	osd_clearbitmap(bitmap);
-
+	
+	/* attribute fix */
+	attribfix = ( ( READ_WORD(&supes_attribram[0x604]) & 0xff ) << 8 ) |
+	            ( ( READ_WORD(&supes_attribram[0x606]) & 0xff ) << 16 );
+	
+	/* cocktail mode */
+	cocktail = READ_WORD(&supes_attribram[0x600]) & 0x40;
+	
+	/* Update palette */
+	superman_update_palette (bankbase);
+	
+	/* Fill backdrop color for Daisenpu */
+	if (fill_backdrop)
+		fillbitmap(bitmap, Machine->pens[0x34], &Machine->visible_area);			/* This may be wrong. */
+	
 	/* Refresh the background tile plane */
-	for (i = 0; i < 0x400; i += 0x40)
+	for (i = 0; i < 0x400 ; i += 0x40)
 	{
 		int x1, y1;
 		int i2;
-
-		x1 = READ_WORD (&supes_attribram[0x408 + (i >> 1)]);
+		int x, y;
+				
+		x1 = READ_WORD (&supes_attribram[0x408 + (i >> 1)]) | (attribfix & 0x100);
 		y1 = READ_WORD (&supes_attribram[0x400 + (i >> 1)]);
-
+		
+		attribfix >>= 1;
+		
 		for (i2 = i; i2 < (i + 0x40); i2 += 2)
 		{
 			int tile;
 
-			tile = READ_WORD (&supes_videoram[0x800 + i2]) & 0x3fff;
+			tile = READ_WORD (&supes_videoram[0x800 + bankbase + i2]) & tilemask;
+
 			if (tile)
 			{
-				int x, y;
+				int flipx = READ_WORD (&supes_videoram[0x800 + bankbase + i2]) & 0x8000;
+				int flipy = READ_WORD (&supes_videoram[0x800 + bankbase + i2]) & 0x4000;
+				int color = READ_WORD (&supes_videoram[0xc00 + bankbase + i2]) >> 11;
 
-				x = (        x1 + ((i2 & 0x03) << 3))  & 0x1ff;
-				y = ((265 - (y1 - ((i2 & 0x3c) << 2))) &  0xff);
-
-//				if ((x > 0) && (y > 0) && (x < 388) && (y < 272))
-				{
-					int flipx = READ_WORD (&supes_videoram[0x800 + i2]) & 0x4000;
-					int flipy = READ_WORD (&supes_videoram[0x800 + i2]) & 0x8000;
-					int color = READ_WORD (&supes_videoram[0xc00 + i2]) >> 11;
-
-					/* Some tiles are transparent, e.g. the gate, so we use TRANSPARENCY_PEN */
-					drawgfx(bitmap,Machine->gfx[0],
-						tile,
-						color,
-						flipx,flipy,
-						x,y,
-						&Machine->visible_area,
-						TRANSPARENCY_PEN,0);
+				x = ((x1 + ((i2 & 0x03) << 3)) + xstart) & 0x1ff;
+				if ( !cocktail )
+					y = (265 -  (y1 - ((i2 & 0x3c) << 2))    ) & 0xff;
+				else
+					y = (       (y1 - ((i2 & 0x3c) << 2)) - 7) & 0xff;
+			
+				if (cocktail){
+					flipx ^= 0x8000;
+					flipy ^= 0x4000;
 				}
+
+				/* Some tiles are transparent, e.g. the gate, so we use TRANSPARENCY_PEN */
+				drawgfx(bitmap,Machine->gfx[0],
+					tile,
+					color,
+					flipx,flipy,
+					x,y,
+					&Machine->visible_area,
+					TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -193,28 +245,35 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	{
 		int sprite;
 
-		sprite = READ_WORD (&supes_videoram[i]) & 0x3fff;
+		sprite = READ_WORD (&supes_videoram[i + bankbase]) & tilemask;
+		
 		if (sprite)
 		{
 			int x, y;
 
-			x = (      READ_WORD (&supes_videoram [0x400 + i]))  & 0x1ff;
-			y = (250 - READ_WORD (&supes_attribram[i        ]))  & 0xff;
+			int flipx = READ_WORD (&supes_videoram[        bankbase + i]) & 0x8000;
+			int flipy = READ_WORD (&supes_videoram[        bankbase + i]) & 0x4000;
+			int color = READ_WORD (&supes_videoram[0x400 + bankbase + i]) >> 11;
 
-//			if ((x > 0) && (y > 0) && (x < 388) && (y < 272))
-			{
-				int flipy = READ_WORD (&supes_videoram[i]) & 0x4000;
-				int flipx = READ_WORD (&supes_videoram[i]) & 0x8000;
-				int color = READ_WORD (&supes_videoram[0x400 + i]) >> 11;
-
-				drawgfx(bitmap,Machine->gfx[0],
-					sprite,
-					color,
-					flipx,flipy,
-					x,y,
-					&Machine->visible_area,
-					TRANSPARENCY_PEN,0);
+			if (cocktail){
+				flipx ^= 0x8000;
+				flipy ^= 0x4000;
 			}
+
+			x = (READ_WORD (&supes_videoram [0x400 + bankbase + i])  + xstart)  & 0x1ff;
+			
+			if (!cocktail)
+				y = (250 - READ_WORD (&supes_attribram[i])) & 0xff;
+			else
+				y = (10  + READ_WORD (&supes_attribram[i])) & 0xff;
+			
+			drawgfx(bitmap,Machine->gfx[0],
+				sprite,
+				color,
+				flipx,flipy,
+				x,y,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN,0);
 		}
 	}
 }

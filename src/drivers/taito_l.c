@@ -41,6 +41,7 @@ TODO:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sndhrdw/taitosnd.h"
 
 void taitol_eof_callback(void);
 int taitol_vh_start(void);
@@ -64,14 +65,6 @@ READ_HANDLER( taitol_control_r );
 WRITE_HANDLER( horshoes_bankg_w );
 WRITE_HANDLER( taitol_bankc_w );
 READ_HANDLER( taitol_bankc_r );
-
-
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-READ_HANDLER( rastan_sound_comm_r );
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 
 
 
@@ -643,7 +636,7 @@ static struct MemoryReadAddress fhawk_2_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK6 },
 	{ 0xc800, 0xc800, MRA_NOP },
-	{ 0xc801, 0xc801, rastan_sound_comm_r },
+	{ 0xc801, 0xc801, taito_soundsys_sound_comm_r },
 	{ 0xe000, 0xffff, shared_r },
 	{ 0xd000, 0xd000, input_port_0_r },
 	{ 0xd001, 0xd001, input_port_1_r },
@@ -657,8 +650,8 @@ static struct MemoryWriteAddress fhawk_2_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, rombank2switch_w },
-	{ 0xc800, 0xc800, rastan_sound_port_w },
-	{ 0xc801, 0xc801, rastan_sound_comm_w },
+	{ 0xc800, 0xc800, taito_soundsys_sound_port_w },
+	{ 0xc801, 0xc801, taito_soundsys_sound_comm_w },
 	{ 0xd000, 0xd000, MWA_NOP },	// Direct copy of input port 0
 	{ 0xd004, 0xd004, control2_w },
 	{ 0xd005, 0xd006, MWA_NOP },	// Always 0
@@ -672,7 +665,7 @@ static struct MemoryReadAddress fhawk_3_readmem[] =
 	{ 0x4000, 0x7fff, MRA_BANK7 },
 	{ 0x8000, 0x9fff, MRA_RAM },
 	{ 0xe000, 0xe000, MRA_NOP },
-	{ 0xe001, 0xe001, rastan_a001_r },
+	{ 0xe001, 0xe001, taito_soundsys_a001_r },
 	{ 0xf000, 0xf000, YM2203_status_port_0_r },
 	{ -1 }
 };
@@ -681,8 +674,8 @@ static struct MemoryWriteAddress fhawk_3_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xe000, 0xe000, rastan_a000_w },
-	{ 0xe001, 0xe001, rastan_a001_w },
+	{ 0xe000, 0xe000, taito_soundsys_a000_w },
+	{ 0xe001, 0xe001, taito_soundsys_a001_w },
 	{ 0xf000, 0xf000, YM2203_control_port_0_w },
 	{ 0xf001, 0xf001, YM2203_write_port_0_w },
 	{ -1 }
@@ -695,7 +688,7 @@ static struct MemoryReadAddress raimais_readmem[] =
 	{ 0x8800, 0x8800, mux_r },
 	{ 0x8801, 0x8801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
 	{ 0x8c00, 0x8c00, MRA_NOP },
-	{ 0x8c01, 0x8c01, rastan_sound_comm_r },
+	{ 0x8c01, 0x8c01, taito_soundsys_sound_comm_r },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ -1 }
 };
@@ -705,8 +698,8 @@ static struct MemoryWriteAddress raimais_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM, &shared_ram },
 	{ 0x8800, 0x8800, mux_w },
 	{ 0x8801, 0x8801, mux_ctrl_w },
-	{ 0x8c00, 0x8c00, rastan_sound_port_w },
-	{ 0x8c01, 0x8c01, rastan_sound_comm_w },
+	{ 0x8c00, 0x8c00, taito_soundsys_sound_port_w },
+	{ 0x8c01, 0x8c01, taito_soundsys_sound_comm_w },
 	{ 0xa000, 0xbfff, MWA_RAM },
 	{ -1 }
 };
@@ -737,7 +730,7 @@ static struct MemoryReadAddress raimais_3_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
+	{ 0xe201, 0xe201, taito_soundsys_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -757,8 +750,8 @@ static struct MemoryWriteAddress raimais_3_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taito_soundsys_a000_w },
+	{ 0xe201, 0xe201, taito_soundsys_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xe600, 0xe600, MWA_NOP }, /* ? */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
@@ -797,7 +790,7 @@ static struct MemoryReadAddress champwr_2_readmem[] =
 	{ 0xe007, 0xe007, input_port_4_r },
 	{ 0xe008, 0xe00f, MRA_NOP },
 	{ 0xe800, 0xe800, MRA_NOP },
-	{ 0xe801, 0xe801, rastan_sound_comm_r },
+	{ 0xe801, 0xe801, taito_soundsys_sound_comm_r },
 	{ 0xf000, 0xf000, rombank2switch_r },
 	{ -1 }
 };
@@ -808,8 +801,8 @@ static struct MemoryWriteAddress champwr_2_writemem[] =
 	{ 0xc000, 0xdfff, shared_w },
 	{ 0xe000, 0xe000, MWA_NOP },	// Watchdog
 	{ 0xe004, 0xe004, control2_w },
-	{ 0xe800, 0xe800, rastan_sound_port_w },
-	{ 0xe801, 0xe801, rastan_sound_comm_w },
+	{ 0xe800, 0xe800, taito_soundsys_sound_port_w },
+	{ 0xe801, 0xe801, taito_soundsys_sound_comm_w },
 	{ 0xf000, 0xf000, rombank2switch_w },
 	{ -1 }
 };
@@ -821,7 +814,7 @@ static struct MemoryReadAddress champwr_3_readmem[] =
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0xa000, 0xa000, MRA_NOP },
-	{ 0xa001, 0xa001, rastan_a001_r },
+	{ 0xa001, 0xa001, taito_soundsys_a001_r },
 	{ -1 }
 };
 
@@ -831,8 +824,8 @@ static struct MemoryWriteAddress champwr_3_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
+	{ 0xa000, 0xa000, taito_soundsys_a000_w },
+	{ 0xa001, 0xa001, taito_soundsys_a001_w },
 	{ -1 }
 };
 

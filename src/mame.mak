@@ -235,8 +235,8 @@ $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/m72.o $(OBJ)/sndhrdw/m72.o $(OBJ)/drivers/m72.o \
 	$(OBJ)/vidhrdw/shisen.o $(OBJ)/drivers/shisen.o \
 	$(OBJ)/machine/irem_cpu.o \
-        $(OBJ)/vidhrdw/m90.o $(OBJ)/drivers/m90.o \
-        $(OBJ)/vidhrdw/m92.o $(OBJ)/drivers/m92.o \
+	$(OBJ)/vidhrdw/m90.o $(OBJ)/drivers/m90.o \
+	$(OBJ)/vidhrdw/m92.o $(OBJ)/drivers/m92.o \
 	$(OBJ)/drivers/m97.o \
 	$(OBJ)/vidhrdw/m107.o $(OBJ)/drivers/m107.o \
 
@@ -256,7 +256,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/lsasquad.o $(OBJ)/vidhrdw/lsasquad.o $(OBJ)/drivers/lsasquad.o \
 	$(OBJ)/machine/bublbobl.o $(OBJ)/vidhrdw/bublbobl.o $(OBJ)/drivers/bublbobl.o \
 	$(OBJ)/machine/mexico86.o $(OBJ)/vidhrdw/mexico86.o $(OBJ)/drivers/mexico86.o \
-	$(OBJ)/vidhrdw/rastan.o $(OBJ)/sndhrdw/rastan.o $(OBJ)/drivers/rastan.o \
+	$(OBJ)/vidhrdw/rastan.o $(OBJ)/drivers/rastan.o \
 	$(OBJ)/machine/rainbow.o $(OBJ)/drivers/rainbow.o \
 	$(OBJ)/machine/arkanoid.o $(OBJ)/vidhrdw/arkanoid.o $(OBJ)/drivers/arkanoid.o \
 	$(OBJ)/vidhrdw/superqix.o $(OBJ)/drivers/superqix.o \
@@ -267,8 +267,9 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/lkage.o $(OBJ)/vidhrdw/lkage.o $(OBJ)/drivers/lkage.o \
 	$(OBJ)/vidhrdw/taito_l.o $(OBJ)/drivers/taito_l.o \
 	$(OBJ)/vidhrdw/taito_b.o $(OBJ)/drivers/taito_b.o \
-	$(OBJ)/vidhrdw/taitoic.o \
+	$(OBJ)/vidhrdw/taitoic.o $(OBJ)/sndhrdw/taitosnd.o \
 	$(OBJ)/vidhrdw/taito_f2.o $(OBJ)/drivers/taito_f2.o \
+	$(OBJ)/drivers/taito_z.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \

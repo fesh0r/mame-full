@@ -250,6 +250,7 @@ background. This is probably the same thing as the waterfall in Gun Frontier.
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
+#include "sndhrdw/taitosnd.h"
 
 
 
@@ -304,13 +305,6 @@ WRITE_HANDLER( koshien_spritebank_w );
 WRITE_HANDLER( taitof2_sprite_extension_w );
 WRITE_HANDLER( taitof2_scrbank_w );
 //WRITE_HANDLER( taitof2_unknown_reg_w );
-
-WRITE_HANDLER( rastan_sound_port_w );
-WRITE_HANDLER( rastan_sound_comm_w );
-READ_HANDLER( rastan_sound_comm_r );
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
 
 extern unsigned char *cchip_ram;
 READ_HANDLER( cchip2_r );
@@ -861,9 +855,9 @@ static WRITE_HANDLER( bankswitch_w )
 WRITE_HANDLER( taitof2_sound_w )
 {
 	if (offset == 0)
-		rastan_sound_port_w (0, data & 0xff);
+		taito_soundsys_sound_port_w (0, data & 0xff);
 	else if (offset == 2)
-		rastan_sound_comm_w (0, data & 0xff);
+		taito_soundsys_sound_comm_w (0, data & 0xff);
 #ifdef MAME_DEBUG
 	if (data & 0xff00)
 	{
@@ -878,16 +872,16 @@ WRITE_HANDLER( taitof2_sound_w )
 READ_HANDLER( taitof2_sound_r )
 {
 	if (offset == 2)
-		return ((rastan_sound_comm_r (0) & 0xff));
+		return ((taito_soundsys_sound_comm_r (0) & 0xff));
 	else return 0;
 }
 
 WRITE_HANDLER( taitof2_msb_sound_w )
 {
 	if (offset == 0)
-		rastan_sound_port_w (0,(data >> 8) & 0xff);
+		taito_soundsys_sound_port_w (0,(data >> 8) & 0xff);
 	else if (offset == 2)
-		rastan_sound_comm_w (0,(data >> 8) & 0xff);
+		taito_soundsys_sound_comm_w (0,(data >> 8) & 0xff);
 #ifdef MAME_DEBUG
 	if (data & 0xff)
 	{
@@ -902,7 +896,7 @@ WRITE_HANDLER( taitof2_msb_sound_w )
 READ_HANDLER( taitof2_msb_sound_r )
 {
 	if (offset == 2)
-		return ((rastan_sound_comm_r (0) & 0xff) << 8);
+		return ((taito_soundsys_sound_comm_r (0) & 0xff) << 8);
 	else return 0;
 }
 
@@ -1742,7 +1736,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0xe001, 0xe001, YM2610_read_port_0_r },
 	{ 0xe002, 0xe002, YM2610_status_port_0_B_r },
 	{ 0xe200, 0xe200, MRA_NOP },
-	{ 0xe201, 0xe201, rastan_a001_r },
+	{ 0xe201, 0xe201, taito_soundsys_a001_r },
 	{ 0xea00, 0xea00, MRA_NOP },
 	{ -1 }  /* end of table */
 };
@@ -1755,8 +1749,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xe001, 0xe001, YM2610_data_port_0_A_w },
 	{ 0xe002, 0xe002, YM2610_control_port_0_B_w },
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
-	{ 0xe200, 0xe200, rastan_a000_w },
-	{ 0xe201, 0xe201, rastan_a001_w },
+	{ 0xe200, 0xe200, taito_soundsys_a000_w },
+	{ 0xe201, 0xe201, taito_soundsys_a001_w },
 	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
@@ -6482,6 +6476,10 @@ ROM_START( driveout )
 ROM_END
 
 
+void init_taitof2(void)
+{
+	taito_soundsys_setz80_soundcpu( 1 );
+}
 
 void init_finalb(void)
 {
@@ -6489,6 +6487,8 @@ void init_finalb(void)
 	unsigned char data;
 	unsigned int offset;
 	UINT8 *gfx = memory_region(REGION_GFX2);
+
+	init_taitof2();
 
 	offset = 0x100000;
 	for (i = 0x180000; i<0x200000; i++)
@@ -6515,6 +6515,8 @@ void init_mjnquest(void)
 	int i;
 	UINT8 *gfx = memory_region(REGION_GFX2);
 
+	init_taitof2();
+
 	/* the bytes in each longword are in reversed order, put them in the
 	   order used by the other games. */
 	for (i = 0;i < memory_region_length(REGION_GFX2);i += 2)
@@ -6531,48 +6533,48 @@ void init_mjnquest(void)
 
 GAME( 1988, finalb,   0,        finalb,   finalb,   finalb,   ROT0,       "Taito Corporation Japan", "Final Blow (World)" )
 GAME( 1988, finalbj,  finalb,   finalb,   finalbj,  finalb,   ROT0,       "Taito Corporation", "Final Blow (Japan)" )
-GAME( 1989, dondokod, 0,        dondokod, dondokod, 0,        ROT0,       "Taito Corporation", "Don Doko Don (Japan)" )
-GAME( 1989, megab,    0,        megab,    megab,    0,        ROT0,       "Taito Corporation Japan", "Mega Blast (World)" )
-GAME( 1989, megabj,   megab,    megab,    megabj,   0,        ROT0,       "Taito Corporation", "Mega Blast (Japan)" )
-GAME( 1990, thundfox, 0,        thundfox, thundfox, 0,        ROT0,       "Taito Corporation", "Thunder Fox (Japan)" )
-GAME( 1989, cameltry, 0,        cameltry, cameltry, 0,        ROT0,       "Taito Corporation", "Camel Try (Japan)"  )
-GAME( 1989, cameltru, cameltry, cameltry, cameltry, 0,        ROT0,       "Taito America Corporation", "Camel Try (US)" )
-GAME( 1990, qtorimon, 0,        qtorimon, qtorimon, 0,        ROT0,       "Taito Corporation", "Quiz Torimonochou (Japan)" )
-GAME( 1990, liquidk,  0,        liquidk,  liquidk,  0,        ROT0,       "Taito Corporation Japan", "Liquid Kids (World)" )
-GAME( 1990, liquidku, liquidk,  liquidk,  liquidk,  0,        ROT0,       "Taito America Corporation", "Liquid Kids (US)" )
-GAME( 1990, mizubaku, liquidk,  liquidk,  mizubaku, 0,        ROT0,       "Taito Corporation", "Mizubaku Daibouken (Japan)" )
-GAME( 1990, quizhq,   0,        quizhq,   quizhq,   0,        ROT0,       "Taito Corporation", "Quiz HQ (Japan)" )
-GAME( 1990, ssi,      0,        ssi,      ssi,      0,        ROT270,     "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
-GAME( 1990, majest12, ssi,      ssi,      majest12, 0,        ROT270,     "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )
-GAME( 1990, gunfront, 0,        gunfront, gunfront, 0,        ROT270,     "Taito Corporation Japan", "Gun & Frontier (World)" )
-GAME( 1990, gunfronj, gunfront, gunfront, gunfronj, 0,        ROT270,     "Taito Corporation", "Gun Frontier (Japan)" )
-GAME( 1990, growl,    0,        growl,    growl,    0,        ROT0,       "Taito Corporation Japan", "Growl (World)" )
-GAME( 1990, growlu,   growl,    growl,    growl,    0,        ROT0,       "Taito America Corporation", "Growl (US)" )
-GAME( 1990, runark,   growl,    growl,    runark,   0,        ROT0,       "Taito Corporation", "Runark (Japan)" )
+GAME( 1989, dondokod, 0,        dondokod, dondokod, taitof2,  ROT0,       "Taito Corporation", "Don Doko Don (Japan)" )
+GAME( 1989, megab,    0,        megab,    megab,    taitof2,  ROT0,       "Taito Corporation Japan", "Mega Blast (World)" )
+GAME( 1989, megabj,   megab,    megab,    megabj,   taitof2,  ROT0,       "Taito Corporation", "Mega Blast (Japan)" )
+GAME( 1990, thundfox, 0,        thundfox, thundfox, taitof2,  ROT0,       "Taito Corporation", "Thunder Fox (Japan)" )
+GAME( 1989, cameltry, 0,        cameltry, cameltry, taitof2,  ROT0,       "Taito Corporation", "Camel Try (Japan)"  )
+GAME( 1989, cameltru, cameltry, cameltry, cameltry, taitof2,  ROT0,       "Taito America Corporation", "Camel Try (US)" )
+GAME( 1990, qtorimon, 0,        qtorimon, qtorimon, taitof2,  ROT0,       "Taito Corporation", "Quiz Torimonochou (Japan)" )
+GAME( 1990, liquidk,  0,        liquidk,  liquidk,  taitof2,  ROT0,       "Taito Corporation Japan", "Liquid Kids (World)" )
+GAME( 1990, liquidku, liquidk,  liquidk,  liquidk,  taitof2,  ROT0,       "Taito America Corporation", "Liquid Kids (US)" )
+GAME( 1990, mizubaku, liquidk,  liquidk,  mizubaku, taitof2,  ROT0,       "Taito Corporation", "Mizubaku Daibouken (Japan)" )
+GAME( 1990, quizhq,   0,        quizhq,   quizhq,   taitof2,  ROT0,       "Taito Corporation", "Quiz HQ (Japan)" )
+GAME( 1990, ssi,      0,        ssi,      ssi,      taitof2,  ROT270,     "Taito Corporation Japan", "Super Space Invaders '91 (World)" )
+GAME( 1990, majest12, ssi,      ssi,      majest12, taitof2,  ROT270,     "Taito Corporation", "Majestic Twelve - The Space Invaders Part IV (Japan)" )
+GAME( 1990, gunfront, 0,        gunfront, gunfront, taitof2,  ROT270,     "Taito Corporation Japan", "Gun & Frontier (World)" )
+GAME( 1990, gunfronj, gunfront, gunfront, gunfronj, taitof2,  ROT270,     "Taito Corporation", "Gun Frontier (Japan)" )
+GAME( 1990, growl,    0,        growl,    growl,    taitof2,  ROT0,       "Taito Corporation Japan", "Growl (World)" )
+GAME( 1990, growlu,   growl,    growl,    growl,    taitof2,  ROT0,       "Taito America Corporation", "Growl (US)" )
+GAME( 1990, runark,   growl,    growl,    runark,   taitof2,  ROT0,       "Taito Corporation", "Runark (Japan)" )
 GAME( 1990, mjnquest, 0,        mjnquest, mjnquest, mjnquest, ROT0,       "Taito Corporation", "Mahjong Quest (Japan)" )
 GAME( 1990, mjnquesb, mjnquest, mjnquest, mjnquest, mjnquest, ROT0,       "Taito Corporation", "Mahjong Quest (No Nudity)" )
-GAME( 1990, footchmp, 0,        footchmp, footchmp, 0,        ROT0,       "Taito Corporation Japan", "Football Champ (World)" )
-GAME( 1990, hthero,   footchmp, hthero,   hthero,   0,        ROT0,       "Taito Corporation", "Hat Trick Hero (Japan)" )
-GAME( 1992, euroch92, footchmp, footchmp, footchmp, 0,        ROT0,       "Taito Corporation Japan", "Euro Champ '92 (World)" )
-GAME( 1990, koshien,  0,        koshien,  koshien,  0,        ROT0,       "Taito Corporation", "Ah Eikou no Koshien (Japan)" )
-GAME( 1990, yuyugogo, 0,        yuyugogo, yuyugogo, 0,        ROT0,       "Taito Corporation", "Yuuyu no Quiz de GO!GO! (Japan)" )
-GAME( 1990, ninjak,   0,        ninjak,   ninjak,   0,        ROT0,       "Taito Corporation Japan", "Ninja Kids (World)" )
-GAME( 1990, ninjakj,  ninjak,   ninjak,   ninjakj,  0,        ROT0,       "Taito Corporation", "Ninja Kids (Japan)" )
-GAME( 1991, solfigtr, 0,        solfigtr, solfigtr, 0,        ROT0,       "Taito Corporation Japan", "Solitary Fighter (World)" )
-GAME( 1991, qzquest,  0,        qzquest , qzquest,  0,        ROT0,       "Taito Corporation", "Quiz Quest - Hime to Yuusha no Monogatari (Japan)" )
-GAME( 1991, pulirula, 0,        pulirula, pulirula, 0,        ROT0,       "Taito Corporation Japan", "PuLiRuLa (World)" )
-GAME( 1991, pulirulj, pulirula, pulirula, pulirulj, 0,        ROT0,       "Taito Corporation", "PuLiRuLa (Japan)" )
-GAME( 1991, metalb,   0,        metalb,   metalb,   0,        ROT0_16BIT, "Taito Corporation Japan", "Metal Black (World)" )
-GAME( 1991, metalbj,  metalb,   metalb,   metalbj,  0,        ROT0_16BIT, "Taito Corporation", "Metal Black (Japan)" )
-GAME( 1991, qzchikyu, 0,        qzchikyu, qzchikyu, 0,        ROT0,       "Taito Corporation", "Quiz Chikyu Bouei Gun (Japan)" )
-GAME( 1992, yesnoj,   0,        yesnoj,   yesnoj,   0,        ROT0,       "Taito Corporation", "Yes/No Sinri Tokimeki Chart" )
-GAME( 1992, deadconx, 0,        deadconx, deadconx, 0,        ROT0,       "Taito Corporation Japan", "Dead Connection (World)" )
-GAME( 1992, deadconj, deadconx, deadconj, deadconj, 0,        ROT0,       "Taito Corporation", "Dead Connection (Japan)" )
-GAME( 1992, dinorex,  0,        dinorex,  dinorex,  0,        ROT0,       "Taito Corporation Japan", "Dino Rex (World)" )
-GAME( 1992, dinorexj, dinorex,  dinorex,  dinorexj, 0,        ROT0,       "Taito Corporation", "Dino Rex (Japan)" )
-GAME( 1992, dinorexu, dinorex,  dinorex,  dinorex,  0,        ROT0,       "Taito America Corporation", "Dino Rex (US)" )
-GAME( 1992, qjinsei,  0,        qjinsei,  qjinsei,  0,        ROT0,       "Taito Corporation", "Quiz Jinsei Gekijoh (Japan)" )
-GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  0,        ROT0,       "Taito Corporation", "Quiz Crayon Shinchan (Japan)" )
-GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, 0,        ROT0,       "Taito Corporation", "Crayon Shinchan Orato Asobo (Japan)" )
-GAMEX(1991, driftout, 0,        driftout, driftout, 0,        ROT270,     "Visco", "Drift Out (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1991, driveout, driftout, driftout, driftout, 0,        ROT270,     "bootleg", "Drive Out", GAME_NO_SOUND )
+GAME( 1990, footchmp, 0,        footchmp, footchmp, taitof2,  ROT0,       "Taito Corporation Japan", "Football Champ (World)" )
+GAME( 1990, hthero,   footchmp, hthero,   hthero,   taitof2,  ROT0,       "Taito Corporation", "Hat Trick Hero (Japan)" )
+GAME( 1992, euroch92, footchmp, footchmp, footchmp, taitof2,  ROT0,       "Taito Corporation Japan", "Euro Champ '92 (World)" )
+GAME( 1990, koshien,  0,        koshien,  koshien,  taitof2,  ROT0,       "Taito Corporation", "Ah Eikou no Koshien (Japan)" )
+GAME( 1990, yuyugogo, 0,        yuyugogo, yuyugogo, taitof2,  ROT0,       "Taito Corporation", "Yuuyu no Quiz de GO!GO! (Japan)" )
+GAME( 1990, ninjak,   0,        ninjak,   ninjak,   taitof2,  ROT0,       "Taito Corporation Japan", "Ninja Kids (World)" )
+GAME( 1990, ninjakj,  ninjak,   ninjak,   ninjakj,  taitof2,  ROT0,       "Taito Corporation", "Ninja Kids (Japan)" )
+GAME( 1991, solfigtr, 0,        solfigtr, solfigtr, taitof2,  ROT0,       "Taito Corporation Japan", "Solitary Fighter (World)" )
+GAME( 1991, qzquest,  0,        qzquest , qzquest,  taitof2,  ROT0,       "Taito Corporation", "Quiz Quest - Hime to Yuusha no Monogatari (Japan)" )
+GAME( 1991, pulirula, 0,        pulirula, pulirula, taitof2,  ROT0,       "Taito Corporation Japan", "PuLiRuLa (World)" )
+GAME( 1991, pulirulj, pulirula, pulirula, pulirulj, taitof2,  ROT0,       "Taito Corporation", "PuLiRuLa (Japan)" )
+GAME( 1991, metalb,   0,        metalb,   metalb,   taitof2,  ROT0_16BIT, "Taito Corporation Japan", "Metal Black (World)" )
+GAME( 1991, metalbj,  metalb,   metalb,   metalbj,  taitof2,  ROT0_16BIT, "Taito Corporation", "Metal Black (Japan)" )
+GAME( 1991, qzchikyu, 0,        qzchikyu, qzchikyu, taitof2,  ROT0,       "Taito Corporation", "Quiz Chikyu Bouei Gun (Japan)" )
+GAME( 1992, yesnoj,   0,        yesnoj,   yesnoj,   taitof2,  ROT0,       "Taito Corporation", "Yes/No Sinri Tokimeki Chart" )
+GAME( 1992, deadconx, 0,        deadconx, deadconx, taitof2,  ROT0,       "Taito Corporation Japan", "Dead Connection (World)" )
+GAME( 1992, deadconj, deadconx, deadconj, deadconj, taitof2,  ROT0,       "Taito Corporation", "Dead Connection (Japan)" )
+GAME( 1992, dinorex,  0,        dinorex,  dinorex,  taitof2,  ROT0,       "Taito Corporation Japan", "Dino Rex (World)" )
+GAME( 1992, dinorexj, dinorex,  dinorex,  dinorexj, taitof2,  ROT0,       "Taito Corporation", "Dino Rex (Japan)" )
+GAME( 1992, dinorexu, dinorex,  dinorex,  dinorex,  taitof2,  ROT0,       "Taito America Corporation", "Dino Rex (US)" )
+GAME( 1992, qjinsei,  0,        qjinsei,  qjinsei,  taitof2,  ROT0,       "Taito Corporation", "Quiz Jinsei Gekijoh (Japan)" )
+GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  taitof2,  ROT0,       "Taito Corporation", "Quiz Crayon Shinchan (Japan)" )
+GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, taitof2,  ROT0,       "Taito Corporation", "Crayon Shinchan Orato Asobo (Japan)" )
+GAMEX(1991, driftout, 0,        driftout, driftout, taitof2,  ROT270,     "Visco", "Drift Out (Japan)", GAME_NO_COCKTAIL )
+GAMEX(1991, driveout, driftout, driftout, driftout, taitof2,  ROT270,     "bootleg", "Drive Out", GAME_NO_SOUND )

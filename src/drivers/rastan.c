@@ -8,6 +8,7 @@ driver by Jarek Burczynski
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sndhrdw/taitosnd.h"
 
 unsigned char *rastan_ram;
 extern unsigned char *rastan_videoram1,*rastan_videoram3;
@@ -38,20 +39,8 @@ void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int  rastan_vh_start(void);
 void rastan_vh_stop(void);
 
-WRITE_HANDLER( rastan_sound_w );
-READ_HANDLER( rastan_sound_r );
+//void rastan_irq_handler(int irq);
 
-
-
-READ_HANDLER( rastan_a001_r );
-WRITE_HANDLER( rastan_a000_w );
-WRITE_HANDLER( rastan_a001_w );
-WRITE_HANDLER( rastan_adpcm_trigger_w );
-
-WRITE_HANDLER( rastan_c000_w );
-WRITE_HANDLER( rastan_d000_w );
-
-void rastan_irq_handler(int irq);
 
 int rastan_interrupt(void)
 {
@@ -92,7 +81,7 @@ static struct MemoryReadAddress rastan_readmem[] =
 { 0x10dc10, 0x10dc11, rastan_cycle_r },
 	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
 	{ 0x200000, 0x20ffff, paletteram_word_r },
-	{ 0x3e0000, 0x3e0003, rastan_sound_r },
+	{ 0x3e0000, 0x3e0003, taito_soundsys_sound_r },
 	{ 0x390000, 0x39000f, rastan_input_r },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_r },
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
@@ -111,7 +100,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 	{ 0x350008, 0x35000b, MWA_NOP },     /* 0 only (often) ? */
 	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
 	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
-	{ 0x3e0000, 0x3e0003, rastan_sound_w },
+	{ 0x3e0000, 0x3e0003, taito_soundsys_sound_w },
 	{ 0xc00000, 0xc03fff, rastan_videoram1_w, &rastan_videoram1, &rastan_videoram_size },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_w, &rastan_videoram3 },
@@ -140,7 +129,7 @@ static struct MemoryReadAddress rastan_s_readmem[] =
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9001, 0x9001, YM2151_status_port_0_r },
 	{ 0x9002, 0x9100, MRA_RAM },
-	{ 0xa001, 0xa001, rastan_a001_r },
+	{ 0xa001, 0xa001, taito_soundsys_a001_r },
 	{ -1 }  /* end of table */
 };
 
@@ -150,11 +139,11 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2151_register_port_0_w },
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
-	{ 0xa000, 0xa000, rastan_a000_w },
-	{ 0xa001, 0xa001, rastan_a001_w },
-	{ 0xb000, 0xb000, rastan_adpcm_trigger_w },
-	{ 0xc000, 0xc000, rastan_c000_w },
-	{ 0xd000, 0xd000, rastan_d000_w },
+	{ 0xa000, 0xa000, taito_soundsys_a000_w },
+	{ 0xa001, 0xa001, taito_soundsys_a001_w },
+	{ 0xb000, 0xb000, taito_soundsys_adpcm_trigger_w },
+	{ 0xc000, 0xc000, taito_soundsys_c000_w },
+	{ 0xd000, 0xd000, taito_soundsys_d000_w },
 	{ -1 }  /* end of table */
 };
 
@@ -359,7 +348,7 @@ static struct YM2151interface ym2151_interface =
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz ? */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
-	{ rastan_irq_handler },
+	{ taito_soundsys_irq_handler },
 	{ rastan_bankswitch_w }
 };
 
