@@ -343,7 +343,7 @@ INLINE void amiga_display_msg (struct osd_bitmap *bitmap, const char *str ) {
 		dt[0].color = DT_COLOR_WHITE;
 		dt[0].x = dt[0].y = 10;
 		dt[1].text = 0;
-		displaytext(bitmap, dt,0,0);
+		displaytext(bitmap, dt);
 	}
 
 	update_regs.once_per_frame = 1;
