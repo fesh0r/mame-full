@@ -243,6 +243,7 @@ $(OBJ)/apple2.a:   \
 $(OBJ)/mac.a: \
           $(OBJ)/mess/sndhrdw/mac.o      \
           $(OBJ)/mess/machine/iwm.o      \
+          $(OBJ)/mess/machine/iwm_lisa.o \
           $(OBJ)/mess/vidhrdw/mac.o      \
           $(OBJ)/mess/machine/mac.o      \
           $(OBJ)/mess/systems/mac.o
