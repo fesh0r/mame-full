@@ -19,6 +19,7 @@ int port_b_io = 0;
 #define HALT		0
 #define RESUME		1
 static int genesis_isSMD(unsigned char *);
+static int genesis_isBIN(unsigned char *buf);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
 
@@ -50,8 +51,29 @@ void genesis_init_machine(void)
 	logerror("Machine init\n");
 }
 
+static int genesis_verify_cart(unsigned char *temp)
+{
+	int retval = IMAGE_VERIFY_FAIL;
 
-int genesis_load_rom(int id)
+	/* is this an SMD file..? */
+	if (genesis_isSMD(&temp[0x200]))
+		retval = IMAGE_VERIFY_PASS;
+
+	/* How about a BIN file..? */
+	if ((retval == IMAGE_VERIFY_FAIL) && genesis_isBIN(&temp[0]))
+		retval = IMAGE_VERIFY_PASS;
+
+	/* maybe a .md file? (rare) */
+	if ((retval == IMAGE_VERIFY_FAIL) && (temp[0x080] == 'E') && (temp[0x081] == 'A') && (temp[0x082] == 'M' || temp[0x082] == 'G'))
+		retval = IMAGE_VERIFY_PASS;
+
+	if (retval == IMAGE_VERIFY_FAIL)
+		logerror("Invalid Image!\n");
+
+	return retval;
+}
+
+int genesis_init_cart (int id)
 {
 	FILE *romfile = NULL;
 	unsigned char *tmpROMnew, *tmpROM;
@@ -90,6 +112,9 @@ int genesis_load_rom(int id)
 	logerror("image length = 0x%x", length);
 	if (length < 1024 + 512)
 		goto bad;						/* smallest known rom is 1.7K */
+
+	if (genesis_verify_cart(&rawROM[0x2000]) == IMAGE_VERIFY_FAIL)
+		goto bad;
 
 	if (genesis_isSMD(&rawROM[0x2200]))	/* is this a SMD file..? */
 	{
@@ -373,6 +398,9 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 {
 	UINT32 crc = 0;
 
+	/* FIXME!! This function falls over! */
+	return 0;
+
 	if (len < 1700)
 		return 0;						/* smallest known working ROM */
 	if (genesis_isSMD((unsigned char *) &buf[0x200]))
@@ -396,43 +424,6 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 	logerror("Genesis Partial CRC: %08lx %d\n", crc, len);
 	return crc;
 }
-
-#ifdef IMAGE_VERIFY
-int genesis_id_rom(int id)
-{
-	FILE *romfile;
-	unsigned char *temp;
-	int retval = ID_FAILED;
-
-	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return ID_FAILED;
-	temp = (unsigned char *) malloc(0x8000 + 0x200);
-	if (temp)
-	{
-
-		osd_fread(romfile, temp, 0x8000 + 0x200);
-
-		/* is this an SMD file..? */
-		if (genesis_isSMD(&temp[0x200]))
-			retval = ID_OK;
-
-		/* How about a BIN file..? */
-		if ((retval == ID_FAILED) && genesis_isBIN(&temp[0]))
-			retval = ID_OK;
-
-		/* maybe a .md file? (rare) */
-		if ((retval == ID_FAILED) && (temp[0x080] == 'E') && (temp[0x081] == 'A') && (temp[0x082] == 'M' || temp[0x082] == 'G'))
-			retval = ID_OK;
-	}
-	else
-	{
-		logerror("genesis_id_rom(): Out of Memory\n");
-	}
-
-	osd_fclose(romfile);
-	return retval;
-}
-#endif
 
 int genesis_interrupt(void)
 {
