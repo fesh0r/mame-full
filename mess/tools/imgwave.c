@@ -134,7 +134,7 @@ int imgwave_seek(IMAGE *img, int pos)
 static int imgwave_readsample(IMAGE *img, INT16 *sample)
 {
 	int len;
-	INT16 s;
+	INT16 s = 0;
 	waveimage *wimg = (waveimage *) img;
 
 	union {
@@ -186,7 +186,7 @@ static int imgwave_readtransition(IMAGE *img, int *frequency)
 	int transitioned;
 	INT16 sample;
 	waveimage *wimg;
-	
+
 	wimg = (waveimage *) img;
 
 	do {
@@ -230,7 +230,7 @@ int imgwave_forward(IMAGE *img)
 	UINT8 *buffer;
 	waveimage *wimg;
 	struct WaveExtra *extra;
-	
+
 	wimg = (waveimage *) img;
 	extra = (struct WaveExtra *) wimg->base.module->extra;
 
@@ -246,7 +246,7 @@ int imgwave_forward(IMAGE *img)
 			free(buffer);
 			return err;
 		}
-		
+
 		for (i = extra->blockheadersize-1; i >= 0; i--) {
 			newcarry = buffer[i] & 0x80;
 			buffer[i] <<= 1;
@@ -302,7 +302,7 @@ int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 {
 	int err;
 	waveimageenum *wenum;
-	
+
 	wenum = (waveimageenum *) enumeration;
 
 	err = imgwave_seek((IMAGE *) wenum->wimg, wenum->pos);
