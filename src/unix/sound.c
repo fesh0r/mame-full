@@ -133,7 +133,6 @@ void osd_opl_write (int chip, int data)
 
 int osd_start_audio_stream(int stereo)
 {
-   int i;
    int type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
    
    sound_stream = NULL;
