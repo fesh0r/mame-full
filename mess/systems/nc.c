@@ -1505,6 +1505,8 @@ void nc200_init_machine(void)
 
 	/* fdc, serial */
 	nc_irq_latch_mask = /*(1<<5) |*/ (1<<2);
+
+	nc200_video_set_backlight(0);
 }
 
 
@@ -1624,7 +1626,6 @@ WRITE_HANDLER(nc200_uart_control_w)
 /* writes 86,82 */
 
 /* bit 7: nc200 power control: 1=on, 0=off */
-/* bit 2: backlight: 1=off, 0=on */
 /* bit 1: disk motor??  */
 /* bit 0: NEC765 Terminal Count input */
 
@@ -1639,6 +1640,7 @@ WRITE_HANDLER(nc200_memory_card_wait_state_w)
 	nec765_set_tc_state((data & 0x01));
 }
 
+/* bit 2: backlight: 1=off, 0=on */
 /* bit 1 cleared to zero in disk code */
 /* bit 0 seems to be the same as nc100 */
 WRITE_HANDLER(nc200_poweroff_control_w)
@@ -1646,6 +1648,8 @@ WRITE_HANDLER(nc200_poweroff_control_w)
 #ifdef NC200_DEBUG
 	logerror("nc200 power off: PC: %04x %02x\n", cpu_get_pc(),data);
 #endif
+
+	nc200_video_set_backlight(((data^(1<<2))>>2) & 0x01);
 }
 
 PORT_READ_START( readport_nc200 )

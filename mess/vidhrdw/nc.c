@@ -27,14 +27,16 @@ void    nc_vh_stop(void)
 /* two colours */
 static unsigned short nc_colour_table[NC_NUM_COLOURS] =
 {
-	0, 1
+	0, 1,2,3
 };
 
 /* black/white */
 static unsigned char nc_palette[NC_NUM_COLOURS * 3] =
 {
-    0x0ff, 0x0ff, 0x0ff,
-    0x000, 0x000, 0x000
+	0x060, 0x060, 0x060,
+    0x040, 0x040, 0x040,
+	0x060, 0x060, 0x060,
+	0x000, 0x000, 0x000
 };
 
 
@@ -49,6 +51,14 @@ extern int nc_display_memory_start;
 extern char *nc_memory;
 extern UINT8 nc_type;
 
+static int nc200_backlight = 0;
+
+void nc200_video_set_backlight(int state)
+{
+	nc200_backlight = state;
+}
+
+
 /***************************************************************************
   Draw the game screen in the given osd_bitmap.
   Do NOT call osd_update_display() from this function,
@@ -62,19 +72,32 @@ void nc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int height, width;
 	int pens[2];
 
+
+
     if (nc_type==NC_TYPE_200)
     {
-            height = NC200_SCREEN_HEIGHT;
-            width = NC200_SCREEN_WIDTH;
+        height = NC200_SCREEN_HEIGHT;
+        width = NC200_SCREEN_WIDTH;
+
+		if (nc200_backlight)
+		{
+			pens[0] = Machine->pens[2];
+			pens[1] = Machine->pens[3];
+		}
+		else
+		{
+			pens[0] = Machine->pens[0];
+			pens[1] = Machine->pens[1];
+		}
     }
     else
     {
-            height = NC_SCREEN_HEIGHT;
-            width = NC_SCREEN_WIDTH;
-    }
+		height = NC_SCREEN_HEIGHT;
+		width = NC_SCREEN_WIDTH;
+		pens[0] = Machine->pens[2];
+		pens[1] = Machine->pens[3];	
+	}
 
-    pens[0] = Machine->pens[0];
-    pens[1] = Machine->pens[1];
 
     for (y=0; y<height; y++)
     {
@@ -106,3 +129,4 @@ void nc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 	}
 }
+
