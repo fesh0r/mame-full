@@ -279,7 +279,11 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
 	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
 	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
-	$(OBJDIR)/parallel.o $(OBJDIR)/fileio_more.o
+	$(OBJDIR)/parallel.o
+
+ifdef MESS
+COMMON_OBJS += $(OBJDIR)/xmess.o
+endif
 
 # sysdep objs
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
@@ -483,6 +487,10 @@ endif
 
 ifdef LIGHTGUN_ABS_EVENT
 CONFIG += -DUSE_LIGHTGUN_ABS_EVENT
+endif
+
+ifdef LIGHTGUN_DEFINE_INPUT_ABSINFO
+CONFIG += -DLIGHTGUN_DEFINE_INPUT_ABSINFO
 endif
 
 ifdef EFENCE
@@ -708,3 +716,7 @@ clean68k:
 	rm -f $(OBJ)/cpuintrf.o
 	rm -f $(OBJ)/drivers/cps2.o
 	rm -rf $(OBJ)/cpu/m68000
+
+cleanosd:
+	@echo Deleting OSDEPEND files...
+	rm -rf $(OBJDIR)
