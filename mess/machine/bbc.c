@@ -16,18 +16,24 @@
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
 #include "includes/i8271.h"
+#include "includes/mc146818.h"
 #include "machine/mc6850.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
+
 #include "image.h"
 
 
+/* BBC Memory Size */
+static int bbc_RAMSize=1;
 /* this stores the DIP switch setting for the DFS type being used */
 static int bbc_DFSType=0;
 /* this stores the DIP switch setting for the SWRAM type being used */
 static int bbc_SWRAMtype=0;
 
-
+/* if 0 then we are emulating a BBC B style machine
+   if 1 then we are emulating a BBC Master style machine */
+static int bbc_Master=0;
 
 /** via irq status local store **/
 
@@ -72,7 +78,8 @@ WRITE8_HANDLER ( page_selecta_w )
 }
 
 
-WRITE8_HANDLER ( memory_w )
+
+WRITE8_HANDLER ( memorya1_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 
@@ -95,6 +102,20 @@ WRITE8_HANDLER ( page_selectb_w )
 	} else {
 		cpu_setbank(4,memory_region(REGION_USER2)+((bbc_DFSType)<<14));
 	}
+}
+
+
+WRITE8_HANDLER ( memoryb3_w )
+{
+	if (bbc_RAMSize) {
+		memory_region(REGION_CPU1)[offset+0x4000]=data;
+		// this array is set so that the video emulator know which addresses to redraw
+		vidmem[offset+0x4000]=1;
+	} else {
+		memory_region(REGION_CPU1)[offset]=data;
+		vidmem[offset]=1;
+	}
+
 }
 
 /* I have setup 3 types of sideways ram:
@@ -170,14 +191,14 @@ WRITE8_HANDLER ( page_selectbp_w )
 		if (pagedRAM)
 		{
 			/* if paged ram then set 8000 to afff to read from the ram 8000 to afff */
-			cpu_setbank(3,memory_region(REGION_CPU1)+0x8000);
+			cpu_setbank(4,memory_region(REGION_CPU1)+0x8000);
 		} else {
 			/* if paged rom then set the rom to be read from 8000 to afff */
-			cpu_setbank(3,memory_region(REGION_USER1)+(bbc_rombank<<14));
+			cpu_setbank(4,memory_region(REGION_USER1)+(bbc_rombank<<14));
 		};
 
 		/* set the rom to be read from b000 to bfff */
-		cpu_setbank(4,memory_region(REGION_USER1)+(bbc_rombank<<14)+0x03000);
+		cpu_setbank(6,memory_region(REGION_USER1)+(bbc_rombank<<14)+0x03000);
 	}
 	else
 	{
@@ -193,7 +214,7 @@ WRITE8_HANDLER ( page_selectbp_w )
    the writes to this memory are just done the normal
    way */
 
-WRITE8_HANDLER ( memorybp0_w )
+WRITE8_HANDLER ( memorybp1_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 
@@ -203,7 +224,7 @@ WRITE8_HANDLER ( memorybp0_w )
 
 
 
- READ8_HANDLER ( memorybp1_r )
+READ8_HANDLER ( memorybp2_r )
 {
 	if (vdusel==0)
 	{
@@ -221,7 +242,7 @@ WRITE8_HANDLER ( memorybp0_w )
 	}
 }
 
-WRITE8_HANDLER ( memorybp1_w )
+WRITE8_HANDLER ( memorybp2_w )
 {
 	if (vdusel==0)
 	{
@@ -245,7 +266,7 @@ WRITE8_HANDLER ( memorybp1_w )
 
 /* if the pagedRAM is set write to RAM between 0x8000 to 0xafff
 otherwise this area contains ROM so no write is required */
-WRITE8_HANDLER ( memorybp3_w )
+WRITE8_HANDLER ( memorybp4_w )
 {
 	if (pagedRAM)
 	{
@@ -268,7 +289,7 @@ static unsigned short bbc_b_plus_sideways_ram_banks[16]=
 };
 
 
-WRITE8_HANDLER ( memorybp3_128_w )
+WRITE8_HANDLER ( memorybp4_128_w )
 {
 	if (pagedRAM)
 	{
@@ -283,7 +304,7 @@ WRITE8_HANDLER ( memorybp3_128_w )
 	}
 }
 
-WRITE8_HANDLER ( memorybp4_128_w )
+WRITE8_HANDLER ( memorybp6_128_w )
 {
 	if (bbc_b_plus_sideways_ram_banks[bbc_rombank])
 	{
@@ -385,12 +406,12 @@ WRITE8_HANDLER ( bbcm_ACCCON_write )
 
 	if (ACCCON_Y)
 	{
-		cpu_setbank(5,memory_region(REGION_CPU1)+0x9000);
+		cpu_setbank(7,memory_region(REGION_CPU1)+0x9000);
 	} else {
-		cpu_setbank(5,memory_region(REGION_USER1)+0x40000);
+		cpu_setbank(7,memory_region(REGION_USER1)+0x40000);
 	}
 
-	bbcbp_setvideoshadow(vdusel);
+	bbcbp_setvideoshadow(ACCCON_D);
 
 }
 
@@ -410,24 +431,24 @@ WRITE8_HANDLER ( page_selectbm_w )
 
 	if (pagedRAM)
 	{
-		cpu_setbank(3,memory_region(REGION_CPU1)+0x8000);
-		cpu_setbank(4,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		cpu_setbank(4,memory_region(REGION_CPU1)+0x8000);
+		cpu_setbank(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
 	} else {
-		cpu_setbank(3,memory_region(REGION_USER1)+((bbc_rombank)<<14));
-		cpu_setbank(4,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
+		cpu_setbank(4,memory_region(REGION_USER1)+((bbc_rombank)<<14));
+		cpu_setbank(5,memory_region(REGION_USER1)+((bbc_rombank)<<14)+0x1000);
 	}
 
 }
 
 
 
-WRITE8_HANDLER ( memorybm0_w )
+WRITE8_HANDLER ( memorybm1_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 	vidmem[offset]=1;
 }
 
-READ8_HANDLER ( memorybm1_r )
+READ8_HANDLER ( memorybm2_r )
 {
 	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
 	{
@@ -437,7 +458,7 @@ READ8_HANDLER ( memorybm1_r )
 	}
 }
 
-WRITE8_HANDLER ( memorybm1_w )
+WRITE8_HANDLER ( memorybm2_w )
 {
 	if ((ACCCON_E && bbcm_vdudriverset()) || ACCCON_X)
 	{
@@ -455,7 +476,7 @@ static unsigned short bbc_master_sideways_ram_banks[16]=
 };
 
 
-WRITE8_HANDLER ( memorybm3_w )
+WRITE8_HANDLER ( memorybm4_w )
 {
 	if (pagedRAM)
 	{
@@ -471,7 +492,7 @@ WRITE8_HANDLER ( memorybm3_w )
 }
 
 
-WRITE8_HANDLER ( memorybm4_w )
+WRITE8_HANDLER ( memorybm5_w )
 {
 	if (bbc_master_sideways_ram_banks[bbc_rombank])
 	{
@@ -480,7 +501,7 @@ WRITE8_HANDLER ( memorybm4_w )
 }
 
 
-WRITE8_HANDLER ( memorybm5_w )
+WRITE8_HANDLER ( memorybm7_w )
 {
 	if (ACCCON_Y)
 	{
@@ -556,8 +577,8 @@ long myo;
 	{
 		myo=offset-0x200;
 		if ((myo>=0x00) && (myo<=0x07)) return BBC_6845_r(myo-0x00);		/* Video Controller */
-		if ((myo>=0x08) && (myo<=0x0f)) return 00;							/* Serial Controller */
-		if ((myo>=0x10) && (myo<=0x17)) return 00;							/* Serial System Chip */
+		if ((myo>=0x08) && (myo<=0x0f)) return BBC_6850_r(myo-0x08);		/* Serial Controller */
+		if ((myo>=0x10) && (myo<=0x17)) return 0xfe;						/* Serial System Chip */
 		if ((myo>=0x18) && (myo<=0x1f)) return uPD7002_r(myo-0x18);			/* A to D converter */
 		if ((myo>=0x20) && (myo<=0x23)) return 0xfe;						/* VideoULA */
 		if ((myo>=0x24) && (myo<=0x27)) return bbcm_wd1770l_read(myo-0x24); /* 1770 */
@@ -566,11 +587,11 @@ long myo;
 		if ((myo>=0x34) && (myo<=0x37)) return bbcm_ACCCON_read(myo-0x34);	/* ACCCON */
 		if ((myo>=0x38) && (myo<=0x3f)) return 0xfe;						/* NC ?? */
 		if ((myo>=0x40) && (myo<=0x5f)) return via_0_r(myo-0x40);
-		if ((myo>=0x60) && (myo<=0x7f)) return 0;
-		if ((myo>=0x80) && (myo<=0x9f)) return 0;
-		if ((myo>=0xa0) && (myo<=0xbf)) return 0;
-		if ((myo>=0xc0) && (myo<=0xdf)) return 0;
-		if ((myo>=0xe0) && (myo<=0xff)) return 0;
+		if ((myo>=0x60) && (myo<=0x7f)) return via_1_r(myo-0x60);
+		if ((myo>=0x80) && (myo<=0x9f)) return 0xfe;
+		if ((myo>=0xa0) && (myo<=0xbf)) return 0xfe;
+		if ((myo>=0xc0) && (myo<=0xdf)) return 0xfe;
+		if ((myo>=0xe0) && (myo<=0xff)) return 0xfe;
 	}
 
 	return 0xfe;
@@ -578,6 +599,28 @@ long myo;
 
 WRITE8_HANDLER ( bbcm_w )
 {
+long myo;
+
+	if ((offset>=0x200) && (offset<=0x2ff)) /* SHEILA */
+	{
+		myo=offset-0x200;
+		if ((myo>=0x00) && (myo<=0x07)) BBC_6845_w(myo-0x00,data);			/* Video Controller */
+		if ((myo>=0x08) && (myo<=0x0f)) BBC_6850_w(myo-0x08,data);			/* Serial Controller */
+		if ((myo>=0x10) && (myo<=0x17)) BBC_SerialULA_w(myo-0x10,data);		/* Serial System Chip */
+		if ((myo>=0x18) && (myo<=0x1f)) uPD7002_w(myo-0x18,data);			/* A to D converter */
+		if ((myo>=0x20) && (myo<=0x23)) videoULA_w(myo-0x20,data);			/* VideoULA */
+		if ((myo>=0x24) && (myo<=0x27)) bbcm_wd1770l_write(myo-0x24,data); 	/* 1770 */
+		if ((myo>=0x28) && (myo<=0x2f)) bbcm_wd1770_write(myo-0x28,data);  	/* disc control latch */
+		if ((myo>=0x30) && (myo<=0x33)) page_selectbm_w(myo-0x30,data);		/* page select */
+		if ((myo>=0x34) && (myo<=0x37)) bbcm_ACCCON_write(myo-0x34,data);	/* ACCCON */
+		//if ((myo>=0x38) && (myo<=0x3f)) 									/* NC ?? */
+		if ((myo>=0x40) && (myo<=0x5f)) via_0_w(myo-0x40,data);
+		if ((myo>=0x60) && (myo<=0x7f)) via_1_w(myo-0x60,data);
+		//if ((myo>=0x80) && (myo<=0x9f))
+		//if ((myo>=0xa0) && (myo<=0xbf))
+		//if ((myo>=0xc0) && (myo<=0xdf))
+		//if ((myo>=0xe0) && (myo<=0xff))
+	}
 
 }
 
@@ -614,19 +657,11 @@ PB4 and PB5 inputs
 These are the inputs from the joystick FIRE buttons. They are
 normally at logic 1 with no button pressed and change to 0
 when a button is pressed.
-----------------------------------------------------------------
-PB4 and PB5 are not needed in initial emulation
-and should be set to logic high, should be mapped through to
-joystick emulator later.
 
 
 PB6 and PB7 inputs from the speech processor
 PB6 is the speech processor 'ready' output and PB7 is from the
 speech processor 'interrupt' output.
-----------------------------------------------------------------
-PB6 and PB7 are not needed in intial emulation
-and should be set to logic high, should be mapped through to
-speech emulator later.
 
 
 CA1 input
@@ -646,18 +681,13 @@ CB1 input
 The CB1 input is the end of conversion (EOC) signal from the
 7002 analogue to digital converter. It can be used to interrupt
 the 6502 whenever a conversion is complete.
-----------------------------------------------------------------
-CB1 is not needed in the initial emulation
-and should be set to logic high, should be mapped through to
-joystick emulator later.
 
 
 CA2 input
 This input comes from the keyboard circuit, and is used to
 generate an interrupt whenever a key is pressed. See the
 keyboard circuit section for more details.
-----------------------------------------------------------------
-Is required to detect keyboard presses.
+
 
 
 CB2 input
@@ -680,17 +710,17 @@ PB0-PB2 are set to the required address of the output bit to be set.
 PB3 is set to the value which should be programmed at that bit.
 The function of the 8 output bits from this latch are:-
 
-B0 - Write Enable to the sound generator IC (Not needed initally)
-B1 - READ select on the speech processor    (Not needed initally)
-B2 - WRITE select on the speech processor   (Not needed initally)
-B3 - Keyboard write enable	            ***NEEDED***
+B0 - Write Enable to the sound generator IC
+B1 - READ select on the speech processor
+B2 - WRITE select on the speech processor
+B3 - Keyboard write enable
 B4,B5 - these two outputs define the number to be added to the
 start of screen address in hardware to control hardware scrolling:-
 Mode	Size	Start of screen	 Number to add	B5   	B4
 0,1,2	20K	&3000		 12K		1    	1
-3	16K	&4000		 16K		0	0
-4,5	10K	&5800 (or &1800) 22K		1	0
-6	8K	&6000 (or &2000) 24K		0	1
+3		16K	&4000		 16K		0	0
+4,5		10K	&5800 (or &1800) 22K		1	0
+6		8K	&6000 (or &2000) 24K		0	1
 B6 - Operates the CAPS lock LED  (Pin 17 keyboard connector)
 B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 
@@ -707,9 +737,18 @@ static int b6_caps_lock_led;
 static int b7_shift_lock_led;
 
 
+
+static int MC146818_WR=0;	// FE30 bit 1
+static int MC146818_DS=0;	// FE30 bit 2
+static int MC146818_AS=0;	// 6522 port b bit 7
+static int MC146818_CE=0;	// 6522 port b bit 6
+
 static int via_system_porta;
 
+
+
 static int column=0;
+
 
 INTERRUPT_GEN( bbcb_keyscan )
 {
@@ -784,26 +823,23 @@ static int bbc_keyboard(int data)
 	row=(data>>4) & 0x07;
 
 	bit=0;
-		if (column<10) {
-			res=readinputport(column);
-		} else {
-			res=0xff;
-		}
 
-		/* temp development fix to force start up into screen mode 0 */
-		//if ((row==0) && ((column==7) || (column==8) || (column==9)))
-		//	{ bit=1; }
+	if (column<10) {
+		res=readinputport(column);
+	} else {
+		res=0xff;
+	}
 
-		/* Normal keyboard result */
-		if ((res&(1<<row))==0)
-			{ bit=1; }
+	/* Normal keyboard result */
+	if ((res&(1<<row))==0)
+		{ bit=1; }
 
-		if ((res|1)!=0xff)
-		{
-			via_0_ca2_w(0,1);
-		} else {
-			via_0_ca2_w(0,0);
-		}
+	if ((res|1)!=0xff)
+	{
+		via_0_ca2_w(0,1);
+	} else {
+		via_0_ca2_w(0,0);
+	}
 
 	return (data & 0x7f) | (bit<<7);
 }
@@ -811,36 +847,66 @@ static int bbc_keyboard(int data)
 
 static void bbcb_IC32_initialise(void)
 {
-	b0_sound=0x01;
-	b1_speech_read=0x01;
-	b2_speech_write=0x01;
-	b3_keyboard=0x01;
+	b0_sound=0x01;				// Sound is negative edge trigered
+	b1_speech_read=0x01;		// ????
+	b2_speech_write=0x01;		// ????
+	b3_keyboard=0x01;			// Keyboard is negative edge trigered
 	b4_video0=0x01;
 	b5_video1=0x01;
 	b6_caps_lock_led=0x01;
 	b7_shift_lock_led=0x01;
+
 }
+
+
+/* This the BBC Masters Real Time Clock and NVRam IC */
+void MC146818_set(void)
+{
+	logerror ("146181 WR=%d DS=%d AS=%d CE=%d \n",MC146818_WR,MC146818_DS,MC146818_AS,MC146818_CE);
+
+	// if chip enabled
+	if (MC146818_CE)
+	{
+		// if data select is set then access the data in the 146818
+		if (MC146818_DS)
+		{
+			if (MC146818_WR)
+			{
+				via_system_porta=mc146818_port_r(1);
+				//logerror("read 146818 data %d \n",via_system_porta);
+			} else {
+				mc146818_port_w(1,via_system_porta);
+				//logerror("write 146818 data %d \n",via_system_porta);
+			}
+		}
+
+		// if address select is set then set the address in the 146818
+		if (MC146818_AS)
+		{
+			mc146818_port_w(0,via_system_porta);
+			//logerror("write 146818 address %d \n",via_system_porta);
+		}
+	}
+}
+
 
 static WRITE8_HANDLER( bbcb_via_system_write_porta )
 {
+
+	//logerror("SYSTEM write porta %d\n",data);
+
 	via_system_porta=data;
 	if (b0_sound==0)
 	{
+ 		//logerror("Doing an unsafe write to the sound chip %d \n",data);
 		SN76496_0_w(0,via_system_porta);
-	}
-	if (b1_speech_read==0)
-	{
-		// Call Speech
-	}
-	if (b2_speech_write==0)
-	{
-		// Call Speech
 	}
 	if (b3_keyboard==0)
 	{
+ 		//logerror("Doing an unsafe write to the keyboard %d \n",data);
 		via_system_porta=bbc_keyboard(via_system_porta);
 	}
-
+	if (bbc_Master) MC146818_set();
 }
 
 
@@ -850,6 +916,9 @@ static WRITE8_HANDLER( bbcb_via_system_write_portb )
 	bit=data & 0x07;
 	value=(data>>3) &0x01;
 
+
+    //logerror("SYSTEM write portb %d %d %d\n",data,bit,value);
+
 	if (value) {
 		switch (bit) {
 		case 0:
@@ -858,15 +927,35 @@ static WRITE8_HANDLER( bbcb_via_system_write_portb )
 			}
 			break;
 		case 1:
-			if (b1_speech_read==0) {
-				b1_speech_read=1;
-				/* BBC MASTER has NV RAM Here */
+			if (bbc_Master)
+			{
+				if (MC146818_WR==0)
+				{
+					/* BBC MASTER has NV RAM Here */
+					MC146818_WR=1;
+					MC146818_set();
+				}
+			} else {
+				if (b1_speech_read==0) {
+					/* VSP TMS 5220 */
+					b1_speech_read=1;
+				}
 			}
 			break;
 		case 2:
-			if (b2_speech_write==0) {
-				b2_speech_write=1;
-				/* BBC MASTER has NV RAM Here */
+			if (bbc_Master)
+			{
+				if (MC146818_DS==0)
+				{
+					/* BBC MASTER has NV RAM Here */
+					MC146818_DS=1;
+					MC146818_set();
+				}
+			} else {
+				if (b2_speech_write==0) {
+					/* VSP TMS 5220 */
+					b2_speech_write=1;
+				}
 			}
 			break;
 		case 3:
@@ -909,16 +998,35 @@ static WRITE8_HANDLER( bbcb_via_system_write_portb )
 			}
 			break;
 		case 1:
-			if (b1_speech_read==1) {
-				b1_speech_read=0;
-				via_system_porta=0xff;
-				/* BBC MASTER has NV RAM Here */
+			if (bbc_Master)
+			{
+				if (MC146818_WR==1)
+				{
+					/* BBC MASTER has NV RAM Here */
+					MC146818_WR=0;
+					MC146818_set();
+				}
+			} else {
+				if (b1_speech_read==1) {
+					/* VSP TMS 5220 */
+					b1_speech_read=0;
+				}
 			}
 			break;
 		case 2:
-			if (b2_speech_write==1) {
-				b2_speech_write=0;
-				/* BBC MASTER has NV RAM Here */
+			if (bbc_Master)
+			{
+				if (MC146818_DS==1)
+				{
+					/* BBC MASTER has NV RAM Here */
+					MC146818_DS=0;
+					MC146818_set();
+				}
+			} else {
+				if (b2_speech_write==1) {
+					/* VSP TMS 5220 */
+					b2_speech_write=0;
+				}
 			}
 			break;
 		case 3:
@@ -955,20 +1063,63 @@ static WRITE8_HANDLER( bbcb_via_system_write_portb )
 		}
 	}
 
+
+
+	if (bbc_Master)
+	{
+		//set the Address Select
+		if (MC146818_AS != ((data>>7)&1))
+		{
+			MC146818_AS=(data>>7)&1;
+			MC146818_set();
+		}
+
+		//if CE changes
+		if (MC146818_CE != ((data>>6)&1))
+		{
+			MC146818_CE=(data>>6)&1;
+			MC146818_set();
+		}
+	}
 }
+
 
 static  READ8_HANDLER( bbcb_via_system_read_porta )
 {
-  return via_system_porta;
+	//logerror("SYSTEM read porta %d\n",via_system_porta);
+	return via_system_porta;
 }
-
 
 // D4 of portb is joystick fire button 1
 // D5 of portb is joystick fire button 2
-static  READ8_HANDLER( bbcb_via_system_read_portb )
+// D6 VSPINT
+// D7 VSPRDY
+
+/* this is the interupt and ready signal from the BBC B Speech processor */
+static int TMSint=1;
+static int TMSrdy=1;
+
+//void bbc_TMSint(int status)
+//{
+//	TMSint=(!status)&1;
+//	TMSrdy=(!tms5220_ready_r())&1;
+//	via_0_portb_w(0,(0xf | readinputport(16)|(TMSint<<6)|(TMSrdy<<7)));
+//}
+
+
+
+static READ8_HANDLER( bbcb_via_system_read_portb )
 {
-  return (0xcf | readinputport(16));
+//	TMSint=(!tms5220_int_r())&1;
+//	TMSrdy=(!tms5220_ready_r())&1;
+
+	//logerror("SYSTEM read portb %d\n",0xf | readinputport(16)|(TMSint<<6)|(TMSrdy<<7));
+
+	return (0xf | readinputport(16)|(TMSint<<6)|(TMSrdy<<7));
+
+
 }
+
 
 /* vertical sync pulse from video circuit */
 static  READ8_HANDLER( bbcb_via_system_read_ca1 )
@@ -1825,9 +1976,15 @@ DEVICE_LOAD( bbcb_cart )
 
 DRIVER_INIT( bbc )
 {
+	bbc_Master=0;
 	bbc_tape_timer = timer_alloc(bbc_tape_timer_cb);
 }
-
+DRIVER_INIT( bbcm )
+{
+	bbc_Master=1;
+	bbc_tape_timer = timer_alloc(bbc_tape_timer_cb);
+    mc146818_init(MC146818_STANDARD);
+}
 
 MACHINE_INIT( bbca )
 {
@@ -1836,7 +1993,7 @@ MACHINE_INIT( bbca )
 
 	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	cpu_setbank(7,memory_region(REGION_USER1)+0x10000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(8,memory_region(REGION_USER1)+0x13f00);  /* bank 8 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x13f00);  /* bank 8 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -1850,11 +2007,25 @@ MACHINE_INIT( bbca )
 
 MACHINE_INIT( bbcb )
 {
+	bbc_DFSType=  (readinputport(21)>>0)&0x07;
+	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
+	bbc_RAMSize=  (readinputport(21)>>5)&0x01;
+
 	cpu_setbank(1,memory_region(REGION_CPU1));
+	if (bbc_RAMSize)
+	{
+		/* 32K Model B */
+		cpu_setbank(3,memory_region(REGION_CPU1)+0x4000);
+		set_video_memory_lookups(32);
+	} else {
+		/* 16K just repeat the lower 16K*/
+		cpu_setbank(3,memory_region(REGION_CPU1));
+		set_video_memory_lookups(16);
+	}
 
 	cpu_setbank(4,memory_region(REGION_USER1));          /* bank 4 is the paged ROMs     from 8000 to bfff */
 	cpu_setbank(7,memory_region(REGION_USER1)+0x40000);  /* bank 7 points at the OS rom  from c000 to ffff */
-	cpu_setbank(8,memory_region(REGION_USER1)+0x43f00);  /* bank 8 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00);  /* bank 8 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -1865,9 +2036,6 @@ MACHINE_INIT( bbcb )
 	via_reset();
 
 	bbcb_IC32_initialise();
-
-	bbc_DFSType=readinputport(21)&0x07;
-	bbc_SWRAMtype=(readinputport(21)>>3)&0x03;
 
 	uPD7002_config(&BBC_uPD7002);
 	MC6850_config(&BBC_MC6850_calls);
@@ -1886,15 +2054,20 @@ MACHINE_INIT( bbcb )
 	    wd179x_reset();
 		break;
 	}
+
+	tms5220_reset();
 }
 
 
 
 MACHINE_INIT( bbcbp )
 {
-	cpu_setbank(2,memory_region(REGION_USER1)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
-	cpu_setbank(3,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
-	cpu_setbank(4,memory_region(REGION_USER1)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
+	cpu_setbank(1,memory_region(REGION_CPU1));
+	//bank 2 is not used it is all done by hand
+	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
+	cpu_setbank(6,memory_region(REGION_USER1)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
+	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 8 points at the OS rom  from c000 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -1917,12 +2090,13 @@ MACHINE_INIT( bbcbp )
 
 MACHINE_INIT( bbcm )
 {
-														/* bank 0 regular lower ram		from 0000 to 2fff */
-														/* bank 1 screen/shadow ram		from 3000 to 7fff */
-	cpu_setbank(3,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to 8fff */
-	cpu_setbank(4,memory_region(REGION_USER1)+0x01000); /* bank 4 is the paged ROMs     from 9000 to bfff */
-	cpu_setbank(5,memory_region(REGION_USER1)+0x40000); /* bank 5 OS rom of RAM			from c000 to dfff */
-	cpu_setbank(2,memory_region(REGION_USER1)+0x42000); /* bank 2 OS rom  				from e000 to ffff */
+	cpu_setbank(1,memory_region(REGION_CPU1));			/* bank 0 regular lower ram		from 0000 to 2fff */
+	//bank 2 not used it is all done by hand			/* bank 1 screen/shadow ram		from 3000 to 7fff */
+	cpu_setbank(4,memory_region(REGION_USER1));         /* bank 4 is paged ROM or RAM   from 8000 to 8fff */
+	cpu_setbank(5,memory_region(REGION_USER1)+0x01000); /* bank 5 is the paged ROMs     from 9000 to bfff */
+	cpu_setbank(7,memory_region(REGION_USER1)+0x40000); /* bank 6 OS rom of RAM			from c000 to dfff */
+	cpu_setbank(8,memory_region(REGION_USER1)+0x42000); /* bank 8 OS rom  				from e000 to ffff */
+	cpu_setbank(9,memory_region(REGION_USER1)+0x43f00); /* bank 9 is the top of the OS  from ff00 to ffff */
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
@@ -1940,4 +2114,5 @@ MACHINE_INIT( bbcm )
 	previous_wd177x_int_state=1;
     wd179x_init(WD_TYPE_177X,bbc_wd177x_callback);
     wd179x_reset();
+
 }

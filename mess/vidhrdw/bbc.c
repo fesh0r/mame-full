@@ -80,7 +80,7 @@ static unsigned int video_ram_lookup3[0x4000];
 
 static unsigned int *video_ram_lookup;
 
-static void set_video_memory_lookups(int ramsize)
+void set_video_memory_lookups(int ramsize)
 {
 
 	int ma; // output from IC2 6845 MA address
@@ -827,7 +827,7 @@ VIDEO_START( bbca )
 VIDEO_START( bbcb )
 {
 	set_pixel_lookup();
-	set_video_memory_lookups(32);
+
 	crtc6845_config(&BBC6845);
 
 	BBC_Video_RAM= memory_region(REGION_CPU1);
@@ -840,6 +840,7 @@ VIDEO_START( bbcbp )
 {
 	/* need to set up the lookups to work with the BBC B plus memory */
 	set_pixel_lookup();
+
 	set_video_memory_lookups(32);
 	crtc6845_config(&BBC6845);
 

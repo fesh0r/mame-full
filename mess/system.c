@@ -207,7 +207,7 @@ TESTDRIVER( wscolor )	/* Bandai WonderSwan Color Handheld					*/
 	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
 	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
 	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
-TESTDRIVER( bbcm)		/* 198? BBC Master									*/
+	DRIVER( bbcm)		/* 198? BBC Master									*/
 TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */

@@ -15,6 +15,7 @@
 #include "machine/6522via.h"
 #include "includes/bbc.h"
 #include "includes/upd7002.h"
+#include "includes/mc146818.h"
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
 #include "devices/printer.h"
@@ -25,45 +26,45 @@
 /******************************************************************************
 A= BBC Model A
 
-					A	B
-+	&0000			+	+
-|					|	|
-|	&1000			|	|
-|1					|	|
-|	&2000			|1	|
-|					|	|
-+	&3000			|	|
-|2					|	|
-+	&4000			+	|1
-|					|	|
-|	&5000			|	|
-|					|	|
-|3	&6000			|3	|
-|					|	|
-|	&7000			|	|
-|					|	|
-+	&8000			+	+
-|4					|	|
-+   &9000			|	|
-|					|	|
-|5	&A000			|4	|4
-|					|	|
-+	&B000			|	|
-|6					|	|
-+	&C000			+	+
-|					|	|
-|7	&D000			|	|
-|					|	|
-+	&E000			|7	|7
-|					|	|
-|8	&F000			|	|
-|					|	|
-+	&FC00 FRED		+	+
-	&FD00 JIM		+	+
-	&FE00 SHEILA	+	+
-+	&FF00			+	+
-|9					|8	|8
-+	&FFFF			+	+
+					A	B   B+	M
++	&0000			+	+	+	+
+|					|	|	|	|
+|	&1000			|	|	|	|
+|1					|	|	|1	|1
+|	&2000			|1	|	|	|
+|					|	|	|	|
++	&3000			|	|	+	+
+|2					|	|	|	|
++	&4000			+	|1	|	|
+|					|	|	|	|
+|	&5000			|	|	|	|
+|					|	|	|2	|2
+|3	&6000			|3	|	|	|
+|					|	|	|	|
+|	&7000			|	|	|	|
+|					|	|	|	|
++	&8000			+	+	+	+
+|4					|	|	|	|4
++   &9000			|	|	|	+
+|					|	|	|4	|
+|5	&A000			|4	|4	|	|5
+|					|	|	|	|
++	&B000			|	|	+	|
+|6					|	|	|6	|
++	&C000			+	+	+	+
+|					|	|	|	|7
+|7	&D000			|	|	|	|
+|					|	|	|	|
++	&E000			|7	|7	|7	+
+|					|	|	|	|
+|8	&F000			|	|	|	|8
+|					|	|	|	|
++	&FC00 FRED		+	+	+	+
+	&FD00 JIM		+	+	+	+
+	&FE00 SHEILA	+	+	+	+
++	&FF00			+	+	+	+
+|9					|9	|9	|9	|9
++	&FFFF			+	+	+	+
 
 
 
@@ -89,8 +90,8 @@ read:
 static ADDRESS_MAP_START(bbca_mem, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )											/* 	Hardware marked with a 1 is not present in a Model A	 	*/
 
-	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1		, memory_w      	)	/*    0000-3fff					Regular Ram						*/
-	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK3		, memory_w      	)	/*    4000-7fff                 Repeat of the Regular Ram		*/
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1		, memorya1_w      	)	/*    0000-3fff					Regular Ram						*/
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK3		, memorya1_w      	)	/*    4000-7fff                 Repeat of the Regular Ram		*/
 
 	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK4		, MWA8_ROM      	)	/*    8000-bfff					Paged ROM						*/
 
@@ -114,14 +115,15 @@ static ADDRESS_MAP_START(bbca_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_NOP													/*    fec0-fedf  uPD7002		1 Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ     (return8_FE    	                	)	/*    fee0-feff  Tube ULA 	 	1 Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK8    	, MWA8_ROM      	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9    	, MWA8_ROM      	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(bbcb_mem, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )
 
-	AM_RANGE(0x0000, 0x7fff) AM_READWRITE(MRA8_BANK1      	, memory_w       	)	/*    0000-7fff 			 	Regular Ram						*/
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1		, memorya1_w      	)	/*    0000-3fff					Regular Ram						*/
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK3		, memoryb3_w      	)	/*    4000-7fff                 Repeat of the Regular Ram		*/
 
 
 	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK4    	, bbc_bank4_w      	)	/*    8000-bfff 			 	Paged ROM						*/
@@ -146,21 +148,21 @@ static ADDRESS_MAP_START(bbcb_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w		 	)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE						 	)	/*    fee0-feff  Tube ULA 	 	Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK8		, MWA8_ROM		 	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM		 	)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START(bbcbp_mem, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )
 
-	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_RAM			, memorybp0_w		)	/*    0000-2fff 			 	Regular Ram						*/
+	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybp1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp1_r		, memorybp1_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp2_r		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
-	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK3		, memorybp3_w		)	/*    8000-afff					Paged ROM or 12K of RAM			*/
-	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK4		, MWA8_ROM			)	/*    b000-bfff					Rest of paged ROM area			*/
+	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK4		, memorybp4_w		)	/*    8000-afff					Paged ROM or 12K of RAM			*/
+	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK6		, MWA8_ROM			)	/*    b000-bfff					Rest of paged ROM area			*/
 
-	AM_RANGE(0xc000, 0xfbff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    c000-fbff					OS ROM							*/
+	AM_RANGE(0xc000, 0xfbff) AM_READWRITE(MRA8_BANK7		, MWA8_ROM			)	/*    c000-fbff					OS ROM							*/
 
 	AM_RANGE(0xfc00, 0xfdff) AM_READ	 (return8_FF							)	/*    fc00-fdff					FRED & JIM Pages				*/
 
@@ -180,7 +182,7 @@ static ADDRESS_MAP_START(bbcbp_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w			)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	/*    fee0-feff  Tube ULA		Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -188,14 +190,14 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START(bbcbp128_mem, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )
 
-	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_RAM			, memorybp0_w		)	/*    0000-2fff 			 	Regular Ram						*/
+	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybp1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp1_r		, memorybp1_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybp2_r		, memorybp2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
-	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK3		, memorybp3_128_w	)	/*    8000-afff					Paged ROM or 12K of RAM			*/
-	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK4		, memorybp4_128_w	)	/*    b000-bfff					Rest of paged ROM area			*/
+	AM_RANGE(0x8000, 0xafff) AM_READWRITE(MRA8_BANK4		, memorybp4_128_w	)	/*    8000-afff					Paged ROM or 12K of RAM			*/
+	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK6		, memorybp6_128_w	)	/*    b000-bfff					Rest of paged ROM area			*/
 
-	AM_RANGE(0xc000, 0xfbff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    c000-fbff					OS ROM							*/
+	AM_RANGE(0xc000, 0xfbff) AM_READWRITE(MRA8_BANK7		, MWA8_ROM			)	/*    c000-fbff					OS ROM							*/
 
 	AM_RANGE(0xfc00, 0xfdff) AM_READ	 (return8_FF							)	/*    fc00-fdff					FRED & JIM Pages				*/
 
@@ -216,7 +218,7 @@ static ADDRESS_MAP_START(bbcbp128_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfec0, 0xfedf) AM_READWRITE(uPD7002_r			, uPD7002_w			)	/*    fec0-fedf  uPD7002		Analogue to digital converter	*/
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	/*    fee0-feff  Tube ULA		Tube system interface			*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -247,15 +249,15 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(0) )
 
-	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_RAM			, memorybm0_w		)	/*    0000-2fff 			 	Regular Ram						*/
+	AM_RANGE(0x0000, 0x2fff) AM_READWRITE(MRA8_BANK1		, memorybm1_w		)	/*    0000-2fff 			 	Regular Ram						*/
 
-	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybm1_r		, memorybm1_w		)	/*    3000-7fff					Video/Shadow Ram				*/
+	AM_RANGE(0x3000, 0x7fff) AM_READWRITE(memorybm2_r		, memorybm2_w		)	/*    3000-7fff					Video/Shadow Ram				*/
 
-	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK3		, memorybm3_w		)	/*    8000-8fff					Paged ROM/RAM or 4K of RAM ANDY	*/
-	AM_RANGE(0x9000, 0xbfff) AM_READWRITE(MRA8_BANK4		, memorybm4_w		)	/*    9000-bfff					Rest of paged ROM/RAM area		*/
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK4		, memorybm4_w		)	/*    8000-8fff					Paged ROM/RAM or 4K of RAM ANDY	*/
+	AM_RANGE(0x9000, 0xbfff) AM_READWRITE(MRA8_BANK5		, memorybm5_w		)	/*    9000-bfff					Rest of paged ROM/RAM area		*/
 
-	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_BANK5		, memorybm5_w		)	/*    c000-dfff					OS ROM or 8K of RAM		  HAZEL	*/
-	AM_RANGE(0xe000, 0xfbff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    e000-fbff					OS ROM							*/
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_BANK7		, memorybm7_w		)	/*    c000-dfff					OS ROM or 8K of RAM		  HAZEL	*/
+	AM_RANGE(0xe000, 0xfbff) AM_READWRITE(MRA8_BANK8		, MWA8_ROM			)	/*    e000-fbff					OS ROM							*/
 
 	AM_RANGE(0xfc00, 0xfeff) AM_READWRITE(bbcm_r			, bbcm_w			)   /*    this is now processed directly because it can be ROM or hardware */
 	/*
@@ -280,7 +282,7 @@ static ADDRESS_MAP_START(bbcm_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xfee0, 0xfeff) AM_READ	 (return8_FE							)	      fee0-feff  Tube ULA		Tube system interface
 	*/
 
-	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK2		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(MRA8_BANK9		, MWA8_ROM			)	/*    ff00-ffff 			 	OS Rom (continued)				*/
 ADDRESS_MAP_END
 
 
@@ -481,6 +483,11 @@ INPUT_PORTS_START(bbca)
 	PORT_DIPSETTING(    0x10, "Acorn 64K (fe30)" )
 	PORT_DIPSETTING(    0x18, "Acorn 128K (fe30)" )
 
+	PORT_DIPNAME( 0x20, 0x20, "Main Ram Size" )
+	PORT_DIPSETTING(    0x00, "16K" )
+	PORT_DIPSETTING(    0x20, "32K" )
+
+
 INPUT_PORTS_END
 
 
@@ -515,7 +522,8 @@ ROM_START(bbcb)
 	ROM_LOAD("os12.rom", 0x40000,0x4000, CRC(3c14fc70) SHA1(0d9bcaf6a393c9ce2359ed700ddb53c232c2c45d))
 
 	ROM_LOAD("basic2.rom",  0x00000, 0x4000, CRC(79434781) SHA1(4a7393f3a45ea309f744441c16723e2ef447a281)) /* rom page 15 3c000 */
-
+	ROM_LOAD("speech-1.0.rom",  0x08000, 0x2000, CRC(e63f7fb7) )
+	ROM_RELOAD(                 0x0a000, 0x2000                )
 	//ROM_LOAD("dfs144.rom",  0x04000, 0x4000, CRC(9fb8d13f) SHA1(387d2468c6e1360f5b531784ce95d5f71a50c2b5)) /* rom page 14 38000 */
 	                                                      /* rom page 0  00000 */
 	                                                      /* rom page 1  04000 */
@@ -542,7 +550,7 @@ ROM_START(bbcb)
 	ROM_LOAD("zdfs-0.90.rom",0x0C000, 0x2000, CRC(ea579d4d) )
 	ROM_LOAD("ddfs223.rom",  0x10000, 0x4000, CRC(7891f9b7) SHA1(0d7ed0b0b3852cb61970ada1993244f2896896aa))
 	ROM_LOAD("ddfs-1.53.rom",0x14000, 0x4000, CRC(e1be4ee4) )
-	ROM_LOAD("chall.rom",    0x18000, 0x4000, CRC(2f64503d) )
+	ROM_LOAD("ch103.rom",    0x18000, 0x4000, CRC(98367cf4) )
    /*NONE*/
 
 	ROM_REGION(0x80000,REGION_DISKS,0) /* Opus Ram Disc Space */
@@ -606,7 +614,7 @@ ROM_START(bbcbp128)
 ROM_END
 
 
-/************************* THIS IS JUST A COPY OF THE BBC BP 128 (NEEDS WORKED ON) */
+/* BBC Master Rom Load */
 ROM_START(bbcm)
 	ROM_REGION(0x10000,REGION_CPU1,0) /* ROM MEMORY */
 
@@ -652,6 +660,14 @@ static struct SN76496interface sn76496_interface =
 };
 
 
+//static struct TMS5220interface tms5220_interface =
+//{
+//	680000L,
+//	50,
+//	bbc_TMSint
+//};
+
+
 static MACHINE_DRIVER_START( bbca )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 2000000)        /* 2.00Mhz */
@@ -677,6 +693,7 @@ static MACHINE_DRIVER_START( bbca )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+//	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
 MACHINE_DRIVER_END
 
 
@@ -733,6 +750,8 @@ static MACHINE_DRIVER_START( bbcm )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+
+	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END
 
 static void bbc_cartslot_getinfo(struct IODevice *dev)
@@ -787,6 +806,6 @@ COMP ( 1981, bbca,	   0,		 0,		bbca,     bbca,   bbc,     bbca,	"Acorn","BBC Mic
 COMP ( 1981, bbcb,     bbca,	 0,		bbcb,     bbca,   bbc,	   bbc,		"Acorn","BBC Micro Model B" )
 COMP ( 1985, bbcbp,    bbca,	 0,		bbcbp,    bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 64K" )
 COMP ( 1985, bbcbp128, bbca,     0,		bbcbp128, bbca,   bbc,     bbc,		"Acorn","BBC Micro Model B+ 128k" )
-COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbc,     bbc,		"Acorn","BBC Master" )
+COMP ( 198?, bbcm,     bbca,     0,		bbcm,     bbca,   bbcm,    bbc,		"Acorn","BBC Master" )
 
 
