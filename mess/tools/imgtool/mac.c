@@ -11,7 +11,7 @@
 	terminology:
 	disk block: 512-byte logical block.  With sectors of 512 bytes, one logical
 		block is equivalent to one sector; when the sector size is not 512
-		bytes, sectors are split or grouped to 
+		bytes, sectors are split or grouped to make 512-byte disk blocks.
 	allocation block: The File Manager always allocates logical disk blocks to
 		a file in groups called allocation blocks; an allocation block is
 		simply a group of consecutive logical blocks.  The size of a volume's
@@ -33,7 +33,7 @@
 		billions IIRC), and many extra features, including longer file names
 		(up to 255 UTF-16 Unicode chars).
 	tag data: with the GCR encoding, each disk block is associated with a 12
-		(3.5" floppies) or 20 (HD20) tag record.  This tag record contains
+		(3.5" floppies) or 20 (HD20) byte tag record.  This tag record contains
 		information on the block allocation status (whether it is allocated
 		in a file or free, which file is it belongs to, what offset the block
 		has in the file).  This enables to recover all files whose data blocks
@@ -1393,7 +1393,7 @@ typedef struct floppy_tag_record
 								/* bit 0 = 1 if block is allocated to user file (i.e. it is not
 									in HFS extent & catalog, and not in non-AB blocks such
 									as MDB and MFS directory)??? */
-								/* bit 7 seems to be used, but don't know what it means */
+								/* bit 7 seems to be used, but I don't know what it means */
 								/* a value of $FF seems to be the default for non-AB blocks, but this is not consistent */
 	UINT8 fattr;				/* bit 0 = 1 if locked(?) */
 								/* a value of $FF seems to be the default for non-AB blocks, but this is not consistent */
