@@ -66,6 +66,11 @@ TARGET = mame
 # Uncomment to use DRC MIPS3 engine
 # X86_MIPS3_DRC = 1
 
+# Uncomment the line below to enable the MMX assembly-language optimized
+# routines for the "light scanlines" and "6-tap filter" effects. This
+# requires an IA-32 processor with MMX capability and the NASM assembler.
+# EFFECT_MMX_ASM = 1
+
 
 ###########################################################################
 # Development environment options 
@@ -469,6 +474,10 @@ HAVE_MEMMOVE = 1
 # you're having problems using X86_MIPS3_DRC on an OS and CPU that supports the 
 # NO_EXECUTE bit (currently only 64-bit AMD chips).
 # HAVE_MPROTECT = 1
+
+# Most UNIX-like systems use LF for an end-of-line.  Set this to 1 for CR or 2 
+# for CR/LF.
+CRLF = 2
 
 # Uncomment this if you want to link with ElectricFence (for developers 
 # only).
