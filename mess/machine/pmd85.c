@@ -504,7 +504,7 @@ READ_HANDLER ( pmd85_io_r )
 											case 0x01: return msm8251_status_r(offset & 0x01);
 										}
 										break;
-								case 0x40:      /* 8255 (GPIO/0, GPIO/0) */
+								case 0x40:      /* 8255 (GPIO/0, GPIO/1) */
 										return ppi8255_1_r(offset & 0x03);
 								case 0x50:	/* 8253 */
 										return pit8253_0_r (offset & 0x03);
@@ -698,62 +698,65 @@ static void pmd85_cassette_timer_callback(int dummy)
 	static int clk_level = 1;
 	static int clk_level_tape = 1;
 
-	/* tape reading */
-	if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_PLAY)
+	if (!(readinputport(0x11)&0x02))	/* V.24 / Tape Switch */
 	{
-		switch (pmd85_model)
+		/* tape reading */
+		if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_PLAY)
 		{
-			case PMD85_1:
-				if (clk_level_tape)
-				{
-					previous_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
-					clk_level_tape = 0;
-				}
-				else
-				{
-					current_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
-
-					if (previous_level!=current_level)
-					{			
-						data = (!previous_level && current_level) ? 1 : 0;
-
-						set_out_data_bit(pmd85_cassette_serial_connection.State, data);
-						serial_connection_out(&pmd85_cassette_serial_connection);
-						msm8251_receive_clock();
-
-						clk_level_tape = 1;
+			switch (pmd85_model)
+			{
+				case PMD85_1:
+					if (clk_level_tape)
+					{
+						previous_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
+						clk_level_tape = 0;
 					}
-				}
-				return;
-			case PMD85_2:
-			case PMD85_2A:
-			case PMD85_3:
-			case ALFA:
-				/* not hardware data decoding */
-				return;
+					else
+					{
+						current_level = (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038) ? 1 : 0;
+					
+						if (previous_level!=current_level)
+						{			
+							data = (!previous_level && current_level) ? 1 : 0;
+			
+							set_out_data_bit(pmd85_cassette_serial_connection.State, data);
+							serial_connection_out(&pmd85_cassette_serial_connection);
+							msm8251_receive_clock();
+
+							clk_level_tape = 1;
+						}
+					}
+					return;
+				case PMD85_2:
+				case PMD85_2A:
+				case PMD85_3:
+				case ALFA:
+					/* not hardware data decoding */
+					return;
+			}      
 		}
-	}
 
-	/* tape writing */
-	if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_RECORD)
-	{
-		data = get_in_data_bit(pmd85_cassette_serial_connection.input_state);
-		data ^= clk_level_tape;
-		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), data&0x01 ? 1 : -1);
+		/* tape writing */
+		if (cassette_get_state(image_from_devtype_and_index(IO_CASSETTE, 0))&CASSETTE_RECORD)
+		{
+			data = get_in_data_bit(pmd85_cassette_serial_connection.input_state);
+			data ^= clk_level_tape;
+			cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), data&0x01 ? 1 : -1);
 
-		if (!clk_level_tape)
+			if (!clk_level_tape)
+				msm8251_transmit_clock();
+
+			clk_level_tape = clk_level_tape ? 0 : 1;
+
+			return;
+		}
+
+		clk_level_tape = 1;
+
+		if (!clk_level)
 			msm8251_transmit_clock();
-
-		clk_level_tape = clk_level_tape ? 0 : 1;
-
-		return;
+		clk_level = clk_level ? 0 : 1;
 	}
-
-	clk_level_tape = 1;
-
-	if (!clk_level)
-		msm8251_transmit_clock();
-	clk_level = clk_level ? 0 : 1;
 }
 
 static OPBASE_HANDLER(pmd85_opbaseoverride)

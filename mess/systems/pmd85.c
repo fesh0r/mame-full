@@ -5,6 +5,7 @@ PMD-85 driver by Krzysztof Strzecha
 What's new:
 -----------
 
+21.05.2004	V.24 / Tape switch added. V.24 is not emulated.
 25.04.2004	PMD-85.1 tape emulation with support for .pmd format files added.
 19.04.2004	Verified PMD-85.1 and PMD-85.2 monitor roms and replaced with
 		unmodified ones.
@@ -22,7 +23,7 @@ What's new:
 Notes on emulation status and to do list:
 -----------------------------------------
 
-1. Tape/V.24 (8251) selection.
+1. V.24.
 2. Tape emulation for other machines than PMD-85.1.
 3. Flash video attribute.
 4. External interfaces connectors (K2-K5).
