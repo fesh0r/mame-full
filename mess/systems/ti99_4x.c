@@ -664,7 +664,7 @@ static const struct IODevice io_ti99_4[] =
 		3,					/* count */
 		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        ti99_id_rom,        /* id */
+		ti99_id_rom,		/* id */
 		ti99_load_rom,		/* init */
 		ti99_rom_cleanup,	/* exit */
 		NULL,				/* info */
@@ -678,25 +678,25 @@ static const struct IODevice io_ti99_4[] =
 		NULL,				/* input_chunk */
 		NULL				/* output_chunk */
 	},
-    IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,ti99_cassette_exit),
+	IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,ti99_cassette_exit),
 	{
-		IO_FLOPPY,			/* type */
-		3,					/* count */
-		"dsk\0",			/* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-        basicdsk_floppy_id,               /* id */
-                ti99_floppy_init,       /* init */
-                basicdsk_floppy_exit,                            /* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-                floppy_status,                           /* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		IO_FLOPPY,				/* type */
+		3,						/* count */
+		"dsk\0",				/* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		basicdsk_floppy_id,		/* id */
+		ti99_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
 	},
 	{ IO_END }
 };
