@@ -218,6 +218,8 @@ int vic6560_custom_start (const struct MachineSound *driver)
 {
 	int i;
 
+	if (!options.samplerate) return 0;
+
 	channel = stream_init ("VIC6560", 50, options.samplerate, 0, vic6560_update);
 
 

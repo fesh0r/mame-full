@@ -184,6 +184,8 @@ int ted7360_custom_start (const struct MachineSound *driver)
 {
 	int i;
 
+	if (!options.samplerate) return 0;
+
 	/* slowest played sample */
 	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
 
