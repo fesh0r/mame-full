@@ -80,7 +80,7 @@ CPUS+=PSXCPU@
 #CPUS+=UPD7810@
 #CPUS+=UPD7807@
 CPUS+=ARM@
-#CPUS+=JAGUAR@
+CPUS+=JAGUAR@
 #CPUS+=R3000@
 #CPUS+=R4600@
 #CPUS+=R5000@
@@ -266,6 +266,9 @@ $(OBJ)/atari.a:                      \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
+	  $(OBJ)/mess/systems/jaguar.o   \
+	  $(OBJ)/sndhrdw/jaguar.o        \
+	  $(OBJ)/vidhrdw/jaguar.o        \
 #	  $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	                     \

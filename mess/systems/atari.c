@@ -978,10 +978,10 @@ SYSTEM_CONFIG_END
 
 ***************************************************************************/
 
-/*     YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
-COMP ( 1979, a400,	   0,		 0,		a400,	   a800,	 0, 	a400,	"Atari",  "Atari 400 (NTSC)" )
-COMP ( 1979, a400pal,  a400,	 0,		a400pal,  a800,	 0, 	a400,	"Atari",  "Atari 400 (PAL)" )
-COMP ( 1979, a800,	   0,		 0,		a800,	   a800,	 0, 	a800,	"Atari",  "Atari 800 (NTSC)" )
-COMP ( 1979, a800pal,  a800,	 0,		a800pal,  a800,	 0,		a800,	"Atari",  "Atari 800 (PAL)" )
-COMPX( 1983, a800xl,   a800,	 0,		a800xl,   a800xl,	 0, 	a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
-CONS ( 1982, a5200,    0,		 0,		a5200,    a5200,	 0, 	a5200,	"Atari",  "Atari 5200")
+/*     YEAR  NAME      PARENT    COMPAT	MACHINE		INPUT    INIT	CONFIG	COMPANY   FULLNAME */
+COMP ( 1979, a400,	   0,		 0,		a400,		a800,	 0, 	a400,	"Atari",  "Atari 400 (NTSC)" )
+COMP ( 1979, a400pal,  a400,	 0,		a400pal,	a800,	 0, 	a400,	"Atari",  "Atari 400 (PAL)" )
+COMP ( 1979, a800,	   0,		 0,		a800,		a800,	 0, 	a800,	"Atari",  "Atari 800 (NTSC)" )
+COMP ( 1979, a800pal,  a800,	 0,		a800pal,	a800,	 0,		a800,	"Atari",  "Atari 800 (PAL)" )
+COMPX( 1983, a800xl,   a800,	 0,		a800xl,		a800xl,	 0, 	a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
+CONS ( 1982, a5200,    0,		 0,		a5200,		a5200,	 0, 	a5200,	"Atari",  "Atari 5200")

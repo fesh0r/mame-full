@@ -102,13 +102,14 @@ const struct GameDriver *test_drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
-	DRIVER( a2600 ) 	/* Atari 2600									*/
-	DRIVER( a5200 ) 	/* Atari 5200									*/
-	DRIVER( a7800 ) 	/* Atari 7800 NTSC								*/
-	DRIVER( a7800p ) 	/* Atari 7800 PAL								*/
-	DRIVER( lynx )		/* Atari Lynx Handheld							*/
-	DRIVER( lynxa )	/* Atari Lynx Handheld alternate rom save			*/
-	DRIVER( lynx2 )	/* Atari Lynx II Handheld redesigned, no additions	*/
+	DRIVER( a2600 ) 	/* Atari 2600										*/
+	DRIVER( a5200 ) 	/* Atari 5200										*/
+	DRIVER( a7800 ) 	/* Atari 7800 NTSC									*/
+	DRIVER( a7800p ) 	/* Atari 7800 PAL									*/
+	DRIVER( lynx )		/* Atari Lynx Handheld								*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save			*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions	*/
+TESTDRIVER( jaguar )	/* Atari Jaguar										*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System					*/
@@ -116,35 +117,35 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
-	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld				*/
+	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
-	DRIVER( snes )		/* Nintendo Super Nintendo NTSC					*/
-	DRIVER( snespal )	/* Nintendo Super Nintendo PAL					*/
+	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
+	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
 	/* SEGA */
-	DRIVER( gamegear )	/* Sega GameGear								*/
-	DRIVER( gamegj )	/* Sega GameGear (Japanese)						*/
-	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)			*/
-	DRIVER( gamgj )	/* Sega GameGear (Japanese Majesco)				*/
+	DRIVER( gamegear )	/* Sega GameGear									*/
+	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
+	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
+	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
 	DRIVER( sms )		/* Sega Master System (NTSC)						*/
-	DRIVER( smspal )	/* Sega Master System (PAL)						*/
+	DRIVER( smspal )	/* Sega Master System (PAL)							*/
 	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
-	DRIVER( smsm3 )	/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
-	DRIVER( smsss )	/* Sega Master System							*/
-	DRIVER( smsu13 )	/* Sega Master System							*/
-	DRIVER( smse13 )	/* Sega Master System							*/
-	DRIVER( smsu13h )	/* Sega Master System							*/
-	DRIVER( smse13h )	/* Sega Master System							*/
-	DRIVER( smsuam )	/* Sega Master System							*/
-	DRIVER( smseam )	/* Sega Master System							*/
-	DRIVER( smsesh )	/* Sega Master System							*/
-	DRIVER( smsbsh )	/* Sega Master System							*/
-	DRIVER( smsuhs24 )	/* Sega Master System							*/
-	DRIVER( smsehs24 )	/* Sega Master System							*/
-	DRIVER( smsuh34 )	/* Sega Master System							*/
-	DRIVER( smseh34 )	/* Sega Master System							*/
-	DRIVER( genesis )	/* Sega Genesis/MegaDrive						*/
-TESTDRIVER( saturn )	/* Sega Saturn									*/
+	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
+	DRIVER( smsss )		/* Sega Master System								*/
+	DRIVER( smsu13 )	/* Sega Master System								*/
+	DRIVER( smse13 )	/* Sega Master System								*/
+	DRIVER( smsu13h )	/* Sega Master System								*/
+	DRIVER( smse13h )	/* Sega Master System								*/
+	DRIVER( smsuam )	/* Sega Master System								*/
+	DRIVER( smseam )	/* Sega Master System								*/
+	DRIVER( smsesh )	/* Sega Master System								*/
+	DRIVER( smsbsh )	/* Sega Master System								*/
+	DRIVER( smsuhs24 )	/* Sega Master System								*/
+	DRIVER( smsehs24 )	/* Sega Master System								*/
+	DRIVER( smsuh34 )	/* Sega Master System								*/
+	DRIVER( smseh34 )	/* Sega Master System								*/
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
+TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								*/
