@@ -1,7 +1,7 @@
 /*
 
   Merit trivia games
-  
+
   preliminary driver by Pierpaolo Prazzoli
 
   TODO:
@@ -11,7 +11,7 @@
   - sound
 
 Note: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
-      with 0xff, because the built-in roms test checks how many question roms 
+      with 0xff, because the built-in roms test checks how many question roms
 	  the games has and the type of each one.
 	  The  type is stored in one byte in an offset which change for every game
 	  (it's the offset stored in rom_type variable).
@@ -40,10 +40,10 @@ static READ8_HANDLER( questions_r )
 
 	data8_t *questions = memory_region(REGION_USER1);
 	int address;
-	
+
 	/* the question rom read depends on the offset */
 	switch(offset)
-	{		
+	{
 		case 0x30:
 			address = 0x00000;
 			break;
@@ -318,7 +318,7 @@ static void get_tile_info_bg(int tile_index)
 
 
 VIDEO_START( merit )
-{	
+{
 	bg_tilemap = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
 	if(!bg_tilemap)
@@ -328,7 +328,7 @@ VIDEO_START( merit )
 }
 
 VIDEO_UPDATE( merit )
-{	
+{
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
@@ -439,7 +439,7 @@ MACHINE_DRIVER_END
 ROM_START( phrcraze )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "phrz.11",      0x00000, 0x8000, CRC(ccd33a0c) SHA1(869b66af4369f3b4bc19336ca2b8104c7f652de7) )
-	
+
 	ROM_REGION( 0x18000, REGION_GFX1, 0 )
 	ROM_LOAD( "phrz.10",      0x00000, 0x8000, CRC(bfa78b67) SHA1(1b51c0e00240f798fe717624e706cb15700bc2f9) )
 	ROM_LOAD( "phrz.8",       0x08000, 0x8000, CRC(9ce22cb3) SHA1(b653afb8f13decd993e434aaad69a6e09ab65f83) )
@@ -504,6 +504,26 @@ ROM_START( tictac )
 	ROM_LOAD( "merit.pb9",    0x80000, 0x8000, CRC(9333dbca) SHA1(dd87e6f69d60580fdb6f979398edbeb1a51be355) )
 	ROM_LOAD( "merit.pba",    0x90000, 0x8000, CRC(6eda81f4) SHA1(6d64344691e3e52035a7d30fb3e762f0bd397db7) )
 ROM_END
+
+ROM_START( pitboss )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5-0c.rom",     0x00000, 0x2000, CRC(d8902656) SHA1(06da829201f6141a6b23afa0e277a3c7a122c26e) )
+	ROM_LOAD( "u6-0.rom",      0x02000, 0x2000, CRC(bf903b01) SHA1(1f5f69cfd3eb105bd9bad071016931a79defa16b) )
+	ROM_LOAD( "u7-0.rom",      0x04000, 0x2000, CRC(306351b9) SHA1(32cd243aa65571ee7fc72971b6a16beeb4ed9d85) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39.rom",    0x00000, 0x2000, CRC(6662f607) SHA1(6b423f8de011d196700839af0be37effbf87383f) )
+	ROM_LOAD( "u38.rom",    0x02000, 0x2000, CRC(a014b44f) SHA1(906d426b1de75f26030c19dcd599b6570909f510) )
+	ROM_LOAD( "u37.rom",    0x04000, 0x2000, CRC(cb12e139) SHA1(06fe91281faae5d0c0ae4b3cd8ad103bd3995c38) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40.rom",    0x00000, 0x2000, CRC(52298162) SHA1(79aa6c4ab6bec6450d882615e64f61cfef934153) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	/* no questions - missing or doesn't have them? */
+ROM_END
+
+/* super pit boss is not on this hardware? (roms for 2xZ80..) so not added here */
 
 ROM_START( trvwhiz )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -576,5 +596,6 @@ DRIVER_INIT(trvwhzii)
 
 GAMEX( 1986, phrcraze, 0, phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",		GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 198?, tictac,   0, tictac,   phrcraze, tictac,   ROT0,  "Merit", "Tic Tac Trivia",	GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 198?, pitboss,  0, trvwhiz,  phrcraze, trvwhiz,  ROT0,  "Merit", "Pit Boss",			GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 198?, trvwhiz,  0, trvwhiz,  phrcraze, trvwhiz,  ROT90, "Merit", "Trivia Whiz",		GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 198?, trvwhzii, 0, trvwhiz,  phrcraze, trvwhzii, ROT90, "Merit", "Trivia Whiz II ?", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

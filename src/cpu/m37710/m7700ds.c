@@ -1,6 +1,6 @@
 /*
 
-Mitsubishi 7700 Series CPU disassembler v1.00
+Mitsubishi 7700 Series CPU disassembler v1.1
 
 By R. Belmont
 Based on G65C816 CPU Emulator by Karl Stenerud
@@ -36,7 +36,7 @@ enum
 	IMP , ACC , RELB, RELW, IMM , A   , AI  , AL  , ALX , AX  , AXI ,
 	AY  , D   , DI  , DIY , DLI , DLIY, DX  , DXI , DY  , S   , SIY ,
 	SIG /*, MVN , MVP , PEA , PEI , PER */, LDM4, LDM5, LDM4X, LDM5X,
-	BBCD, BBCA,
+	BBCD, BBCA, ACCB
 };
 
 enum
@@ -52,14 +52,14 @@ enum
   BRK ,  BRL ,  BVC ,  BVS ,  CLC ,  CLD ,  CLI ,  CLV ,  CMP ,  COP ,  CPX ,
   CPY ,  DEA ,  DEC ,  DEX ,  DEY ,  EOR ,  INA ,  INC ,  INX ,  INY ,  JML ,
   JMP ,  JSL ,  JSR ,  LDA ,  LDX ,  LDY ,  LSR ,  MVN ,  MVP ,  NOP ,  ORA ,
-  PEA ,  PEI ,  PER ,  PHA ,  PHB ,  PHD ,  PHK ,  PHP ,  PHX ,  PHY ,  PLA ,
+  PEA ,  PEI ,  PER ,  PHA ,  PHT ,  PHD ,  PHK ,  PHP ,  PHX ,  PHY ,  PLA ,
   PLB ,  PLD ,  PLP ,  PLX ,  PLY ,  CLP ,  ROL ,  ROR ,  RTI ,  RTL ,  RTS ,
   SBC ,  SEC ,  SED ,  SEI ,  SEP ,  STA ,  STP ,  STX ,  STY ,  STZ ,  TAX ,
   TAY ,  TCS ,  TCD ,  TDC ,  TRB ,  TSB ,  TSC ,  TSX ,  TXA ,  TXS ,  TXY ,
   TYA ,  TYX ,  WAI ,  WDM ,  XBA ,  XCE ,  MPY ,  DIV ,  MPYS,  DIVS,  RLA ,
   EXTS, EXTZ ,  LDT ,  LDM ,  UNK ,  SEB ,  SEM ,  CLM ,  STB ,  LDB ,  ADCB ,
   SBCB, EORB ,  TBX ,  CMPB,  INB ,  DEB ,  TXB ,  TYB ,  LSRB,  ORB ,  CLB ,
-  BBC,   BBS,   TBY,   ANDB,  PUL ,  PSH ,
+  BBC,   BBS,   TBY,   ANDB,  PUL ,  PSH ,  PLAB,  XAB ,  PHB ,  
 };
 
 static const char* g_opnames[] =
@@ -68,14 +68,14 @@ static const char* g_opnames[] =
  "BRK", "BRL", "BVC", "BVS", "CLC", "CLD", "CLI", "CLV", "CMP", "COP", "CPX",
  "CPY", "DEA", "DEC", "DEX", "DEY", "EOR", "INA", "INC", "INX", "INY", "JML",
  "JMP", "JSL", "JSR", "LDA", "LDX", "LDY", "LSR", "MVN", "MVP", "NOP", "ORA",
- "PEA", "PEI", "PER", "PHA", "PHB", "PHD", "PHK", "PHP", "PHX", "PHY", "PLA",
- "PLB", "PLD", "PLP", "PLX", "PLY", "CLP", "ROL", "ROR", "RTI", "RTL", "RTS",
+ "PEA", "PEI", "PER", "PHA", "PHT", "PHD", "PHK", "PHP", "PHX", "PHY", "PLA",
+ "PLT", "PLD", "PLP", "PLX", "PLY", "CLP", "ROL", "ROR", "RTI", "RTL", "RTS",
  "SBC", "SEC", "SED", "SEI", "SEP", "STA", "STP", "STX", "STY", "STZ", "TAX",
  "TAY", "TCS", "TCD", "TDC", "TRB", "TSB", "TSC", "TSX", "TXA", "TXS", "TXY",
  "TYA", "TYX", "WAI", "WDM", "XBA", "XCE", "MPY", "DIV", "MPYS", "DIVS", "RLA",
  "EXTS","EXTZ","LDT", "LDM", "UNK", "SEB", "SEM", "CLM", "STB", "LDB", "ADCB",
  "SBCB","EORB","TBX", "CMPB","INB", "DEB", "TXB", "TYB", "LSRB", "ORB", "CLB",
- "BBC", "BBS", "TBY", "ANDB","PUL", "PSH",
+ "BBC", "BBS", "TBY", "ANDB","PUL", "PSH", "PLB", "XAB", "PHB", 
 };
 
 static opcode_struct g_opcodes[256] =
@@ -122,7 +122,7 @@ static opcode_struct g_opcodes[256] =
 // 0x80
 	{BRA, I, RELB}, {STA, M, DXI }, {BRL, I, RELW}, {STA, M, S   },
 	{STY, X, D   }, {STA, M, D   }, {STX, X, D   }, {STA, M, DLI },
-	{DEY, I, IMP }, {BIT, M, IMM }, {TXA, I, IMP }, {PHB, I, IMP },
+	{DEY, I, IMP }, {BIT, M, IMM }, {TXA, I, IMP }, {PHT, I, IMP },
 	{STY, X, A   }, {STA, M, A   }, {STX, X, A   }, {STA, M, AL  },
 // 0x90
 	{BCC, I, RELB}, {STA, M, DIY }, {STA, M, DI  }, {STA, M, SIY },
@@ -175,7 +175,7 @@ static opcode_struct g_opcodes_prefix42[256] =
 // 0x20
 	{JSR, I, A   }, {ANDB, M, DXI }, {JSL, I, AL  }, {ANDB, M, S   },
 	{BIT, M, D   }, {ANDB, M, D   }, {ROL, M, D   }, {ANDB, M, DLI },
-	{PLP, I, IMP }, {ANDB, M, IMM }, {ROL, M, ACC }, {PLD, I, IMP },
+	{PLP, I, IMP }, {ANDB, M, IMM }, {ROL, M, ACCB }, {PLD, I, IMP },
 	{BIT, M, A   }, {ANDB, M, A   }, {ROL, M, A   }, {ANDB, M, AL  },
 // 0x30
 	{BMI, I, RELB}, {AND, M, DIY }, {AND, M, DI  }, {AND, M, SIY },
@@ -195,7 +195,7 @@ static opcode_struct g_opcodes_prefix42[256] =
 // 0x60
 	{RTS, I, IMP }, {ADCB, M, DXI }, {PER, I, PER }, {ADCB, M, S   },
 	{STZ, M, D   }, {ADCB, M, D   }, {ROR, M, D   }, {ADCB, M, DLI },
-	{PLA, I, IMP }, {ADCB, M, IMM }, {ROR, M, ACC }, {RTL, I, IMP },
+	{PLAB,I, IMP }, {ADCB, M, IMM }, {ROR, M, ACC }, {RTL, I, IMP },
 	{JMP, I, AI  }, {ADCB, M, A   }, {ROR, M, A   }, {ADCB, M, AL  },
 // 0x70
 	{BVS, I, RELB}, {ADCB, M, DIY }, {ADCB, M, DI  }, {ADCB, M, SIY },
@@ -258,7 +258,7 @@ static opcode_struct g_opcodes_prefix89[256] =
 // 0x20
 	{JSR, I, A   }, {AND, M, DXI }, {JSL, I, AL  }, {AND, M, S   },
 	{BIT, M, D   }, {AND, M, D   }, {ROL, M, D   }, {AND, M, DLI },
-	{PLP, I, IMP }, {AND, M, IMM }, {ROL, M, ACC }, {PLD, I, IMP },
+	{XAB, I, IMP }, {AND, M, IMM }, {ROL, M, ACC }, {PLD, I, IMP },
 	{BIT, M, A   }, {AND, M, A   }, {ROL, M, A   }, {AND, M, AL  },
 // 0x30
 	{BMI, I, RELB}, {AND, M, DIY }, {AND, M, DI  }, {AND, M, SIY },
@@ -421,6 +421,9 @@ int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, 
 			break;
 		case ACC :
 			sprintf(ptr, " A");
+			break;
+		case ACCB :
+			sprintf(ptr, " B");
 			break;
 		case RELB:
 			varS = read_8(address+1);

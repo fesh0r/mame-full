@@ -365,6 +365,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( kodure )	/* (c) 1987 (Japan) */
 	DRIVER( armedf )	/* (c) 1988 */
 	DRIVER( cclimbr2 )	/* (c) 1988 (Japan) */
+	DRIVER( bigfghtr )	/* (c) 1989 */
 
 	/* Nichibutsu Mahjong games */
 	DRIVER( hyhoo )		/* (c) 1987 */
@@ -1366,6 +1367,7 @@ const struct GameDriver *drivers[] =
 
 	/* other Taito games */
 	DRIVER( fgoal )		/*     (c) 1979 Taito Corporation */
+	DRIVER( fgoala )	/*     (c) 1979 Taito Corporation */
 	DRIVER( crbaloon )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( crbalon2 )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( sbowling )	/* KB  (c) 1982 Taito Corporation */
@@ -2951,6 +2953,9 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( swa )
 	DRIVER( wingwar )
 
+	/* Sega H1 games */
+	DRIVER( coolridr )
+
 	/* Sega ST-V games */
 	DRIVER( astrass )
 	DRIVER( bakubaku )
@@ -3798,6 +3803,17 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bmdct )		/* GX995 (c) 2000 (Japan) */
 	DRIVER( hmcompm2 )	/* GX988 (c) 2000 (Japan) */
 	DRIVER( bm6thmix )	/* GxA21 (c) 2001 (Japan) */
+
+	/* PowerPC based Konami games */
+	DRIVER( gticlub )	/* GX688 (c)1996 */
+	DRIVER( gradius4 )	/* GX837 (c)1999 */
+	DRIVER( sscope )	/* GX830 (c)1999 */
+	DRIVER( sscope2 )	/* GX931 (c)2000 */
+	DRIVER( racingj )	/* GX676 (c)1998 */
+	DRIVER( racingj2 )	/* GX888 (c)1999 */
+	DRIVER( thrilld )	/* GX713 (c)1998 */
+	DRIVER( midnrun )	/* GX??? (c)1995 */
+	DRIVER( windheat )	/* GX677 (c)1996 */
 
 	/* Exidy games */
 	DRIVER( carpolo )	/* (c) 1977 */
@@ -5695,6 +5711,7 @@ Other Sun games
 	DRIVER( racoon )	/* Eolith */
 	DRIVER( xfiles )	/* DfPix */
 	DRIVER( misncrft )	/* (c) 2000 Sun */
+	DRIVER( coolmini )	/* (c) ???? Semicom */
 	DRIVER( strvmstr )	/* (c) 1986 Enerdyne Technologies Inc */
 	DRIVER( dorachan )	/* (c) 1980 Craul Denshi */
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
@@ -5723,6 +5740,7 @@ Other Sun games
 	DRIVER( trvgns )	/* ? */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */
 	DRIVER( tictac )	/* (c) 198? Merit */
+	DRIVER( pitboss )	/* (c) 198? Merit */
 	DRIVER( trvwhiz )	/* (c) 198? Merit */
 	DRIVER( trvwhzii )	/* (c) 198? Merit */
 

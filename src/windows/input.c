@@ -1005,6 +1005,8 @@ int win_init_input(void)
 			goto cant_init_joystick;
 	}
 
+	total_codes = 0;
+
 	// init the keyboard list
 	init_keycodes();
 

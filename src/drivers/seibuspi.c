@@ -43,7 +43,7 @@
 #include "machine/intelfsh.h"
 
 void seibuspi_text_decrypt(unsigned char *rom);
-void seibuspi_bg_decrypt(unsigned char *rom);
+void seibuspi_bg_decrypt(unsigned char *rom, int size);
 void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
 VIDEO_START( spi );
@@ -540,8 +540,9 @@ static struct GfxLayout spi_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
-	6,			/* 6 bits per pixel */
-	{ 0, 4, 8, 12, 16, 20 },
+	5,			/* 6 bits per pixel */
+	//{ 0, 4, 8, 12, 16, 20 },
+	{ 0, 4, 16, 16, 20 },
 	{ 0, 1, 2, 3, 24, 25, 26, 27 },
 	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
 	6*8*8
@@ -550,9 +551,10 @@ static struct GfxLayout spi_charlayout =
 static struct GfxLayout spi_tilelayout =
 {
 	16,16,
-	32768,
+	RGN_FRAC(1,1),
 	6,
-	{ 0, 4, 8, 12, 16, 20 },
+	//{ 0, 4, 8, 12, 16, 20 },
+	{ 0, 4, 16, 20, 16, 20 },
 	{
 		 0, 1, 2, 3,
 	    24,25,26,27,
@@ -874,7 +876,7 @@ READ32_HANDLER ( ejanhs_speedup_r )
 static DRIVER_INIT( spi )
 {
 	seibuspi_text_decrypt(memory_region(REGION_GFX1));
-	seibuspi_bg_decrypt(memory_region(REGION_GFX2));
+	seibuspi_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
 	seibuspi_sprite_decrypt((data16_t*)memory_region(REGION_GFX3), 0x400000);
 
 }

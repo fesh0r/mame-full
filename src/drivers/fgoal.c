@@ -1,6 +1,19 @@
 /***************************************************************************
 
-	Taito Field Goal driver
+Taito Field Goal driver
+
+	set #1 / orig Taito PCB / sticker "AFN00004" / Field Goal
+	set #2 / orig Taito PCB / sticker "MFN00001" / Field Goal (different)
+
+Differences between these sets include
+
+	- ball speed
+	- paddle color and position
+	- scoring of bonus points
+	- when bonus score reaches 1000...
+	    set #1: paddle gets sticky
+	    set #2: paddle reflects the ball vertically upward
+	- dip switches
 
 ***************************************************************************/
 
@@ -62,6 +75,16 @@ static PALETTE_INIT( fgoal )
 			intensity(b));
 	}
 
+	palette_set_color(0x40,
+		0x00,
+		0x80,
+		0x00);
+
+	palette_set_color(0x41,
+		0x00,
+		0x00,
+		0x00);
+
 	/* for B/W screens PCB can be jumpered to use lower half of PROM */
 
 	for (i = 0; i < 128; i++)
@@ -69,23 +92,23 @@ static PALETTE_INIT( fgoal )
 		colortable[i] = color_prom[0x80 | i] & 63;
 	}
 
-	colortable[0x80] = 8;
-	colortable[0x81] = 8;
-	colortable[0x82] = 8;
-	colortable[0x83] = 8;
-	colortable[0x84] = 8;
-	colortable[0x85] = 8;
-	colortable[0x86] = 8;
-	colortable[0x87] = 8;
+	colortable[0x80] = 0x40;
+	colortable[0x81] = 0x40;
+	colortable[0x82] = 0x40;
+	colortable[0x83] = 0x40;
+	colortable[0x84] = 0x40;
+	colortable[0x85] = 0x40;
+	colortable[0x86] = 0x40;
+	colortable[0x87] = 0x40;
 
-	colortable[0x88] = 0;
-	colortable[0x89] = 0;
-	colortable[0x8a] = 0;
-	colortable[0x8b] = 0;
-	colortable[0x8c] = 0;
-	colortable[0x8d] = 0;
-	colortable[0x8e] = 0;
-	colortable[0x8f] = 0;
+	colortable[0x88] = 0x41;
+	colortable[0x89] = 0x41;
+	colortable[0x8a] = 0x41;
+	colortable[0x8b] = 0x41;
+	colortable[0x8c] = 0x41;
+	colortable[0x8d] = 0x41;
+	colortable[0x8e] = 0x41;
+	colortable[0x8f] = 0x41;
 }
 
 
@@ -260,7 +283,6 @@ static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00fc, 0x00ff) AM_WRITE(fgoal_sound2_w)
 
 	AM_RANGE(0x0100, 0x03ff) AM_RAM
-	AM_RANGE(0x2000, 0x3fff) AM_ROM
 	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&fgoal_video_ram) 
 
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(fgoal_ypos_w)
@@ -268,7 +290,7 @@ static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8002, 0x8002) AM_WRITE(fgoal_color_w)
 	
 	AM_RANGE(0xa000, 0xbfff) AM_ROM
-	AM_RANGE(0xe000, 0xffff) AM_ROM
+	AM_RANGE(0xd000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -285,7 +307,7 @@ INPUT_PORTS_START( fgoal )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown )) /* actually a jumper */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, "Enable Extra Credits" )
+	PORT_DIPNAME( 0x08, 0x08, "Enable Extra Credits" ) /* this dip differs between sets */
 	PORT_DIPSETTING(    0x00, DEF_STR( No ))
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ))
 	PORT_DIPNAME( 0x07, 0x05, "Initial Extra Credit Score" )
@@ -297,7 +319,6 @@ INPUT_PORTS_START( fgoal )
 	PORT_DIPSETTING(    0x05, "65000" )
 	PORT_DIPSETTING(    0x06, "79000" )
 	PORT_DIPSETTING(    0x07, "93000" )
-	PORT_DIPSETTING(    0x08, DEF_STR( None ))
 
 	/* extra credit score changes depending on player's performance */
 
@@ -318,6 +339,65 @@ INPUT_PORTS_START( fgoal )
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	/* game freezes when analog controls read $00 or $ff */
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1, 254) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1, 254) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(2)
+
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( fgoala )
+
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_DIPNAME( 0x40, 0x40, "Display Coinage Settings" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x40, DEF_STR( On ))
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ))
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown )) /* actually a jumper */
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x08, 0x08, "Replace Helmets" ) /* this dip differs between sets */
+	PORT_DIPSETTING(    0x00, "One Row Clear" )
+	PORT_DIPSETTING(    0x08, "All Rows Clear" )
+	PORT_DIPNAME( 0x07, 0x05, "Initial Extra Credit Score" )
+	PORT_DIPSETTING(    0x00, "9000" )
+	PORT_DIPSETTING(    0x01, "17000" )
+	PORT_DIPSETTING(    0x02, "28000" )
+	PORT_DIPSETTING(    0x03, "39000" )
+	PORT_DIPSETTING(    0x04, "50000" )
+	PORT_DIPSETTING(    0x05, "65000" )
+	PORT_DIPSETTING(    0x06, "79000" )
+	PORT_DIPSETTING(    0x07, "93000" )
+
+	/* extra credit score changes depending on player's performance */
+
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* 128V */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Coinage ))
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ))
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ))
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Language ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Japanese ))
+	PORT_DIPSETTING(    0x10, DEF_STR( English ))
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+
+	/* game freezes when analog controls read $00 or $ff */
 
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1, 254) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(1)
@@ -374,14 +454,14 @@ static MACHINE_DRIVER_START( fgoal )
 
 	MDRV_MACHINE_INIT(fgoal)
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_VBLANK_DURATION(24 * 1000000 / 15750)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 263)
 	MDRV_VISIBLE_AREA(0, 255, 16, 255)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(64)
+	MDRV_PALETTE_LENGTH(64 + 2)
 	MDRV_COLORTABLE_LENGTH(128 + 16)
 
 	MDRV_PALETTE_INIT(fgoal)
@@ -394,25 +474,50 @@ MACHINE_DRIVER_END
 
 ROM_START( fgoal )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "tf04.bin", 0xA000, 0x0800, CRC(45fd7b03) SHA1(adc75a7fff6402c5c668ac28aec5d7c31c67c948) ) 
-	ROM_RELOAD(           0xE000, 0x0800 ) 
-	ROM_LOAD( "tf03.bin", 0xA800, 0x0800, CRC(01891c32) SHA1(013480dc970da83bda969506b2bd8865753a78ad) ) 
-	ROM_RELOAD(           0xE800, 0x0800 ) 
-	ROM_LOAD( "tf02.bin", 0xB000, 0x0800, CRC(c297d509) SHA1(a180e5203008db6b358dceee7349682ae3675c20) ) 
-	ROM_RELOAD(           0xF000, 0x0800 ) 
-	ROM_LOAD( "tf01.bin", 0xB800, 0x0800, CRC(1b0bfa5c) SHA1(768e14f08063cc022d7e18a9cb2197d64a9e1b8d) ) 
-	ROM_RELOAD(           0xF800, 0x0800 ) 
+	ROM_LOAD( "tf04.m28", 0xa000, 0x0800, CRC(45fd7b03) SHA1(adc75a7fff6402c5c668ac28aec5d7c31c67c948) ) 
+	ROM_RELOAD(           0xe000, 0x0800 ) 
+	ROM_LOAD( "tf03.m31", 0xa800, 0x0800, CRC(01891c32) SHA1(013480dc970da83bda969506b2bd8865753a78ad) ) 
+	ROM_RELOAD(           0xe800, 0x0800 ) 
+	ROM_LOAD( "tf02.m38", 0xb000, 0x0800, CRC(c297d509) SHA1(a180e5203008db6b358dceee7349682ae3675c20) ) 
+	ROM_RELOAD(           0xf000, 0x0800 ) 
+	ROM_LOAD( "tf01.m46", 0xb800, 0x0800, CRC(1b0bfa5c) SHA1(768e14f08063cc022d7e18a9cb2197d64a9e1b8d) ) 
+	ROM_RELOAD(           0xf800, 0x0800 ) 
 
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) /* background */
-	ROM_LOAD( "tf05.bin", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) ) 
-	ROM_LOAD( "tf06.bin", 0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) ) 
-	ROM_LOAD( "tf07.bin", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) ) 
-	ROM_LOAD( "tf08.bin", 0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) ) 
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) /* overlay proms */
+	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) ) 
+	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) ) 
+	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) ) 
+	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) ) 
 
 	ROM_REGION( 0x0100, REGION_PROMS, ROMREGION_INVERT )
-	ROM_LOAD_NIB_LOW ( "tf09.bin", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) ) 
-	ROM_LOAD_NIB_HIGH( "tf10.bin", 0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) ) 
+	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) ) 
+	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) ) 
 ROM_END
 
 
-GAMEX( 1979, fgoal, 0, fgoal, fgoal, 0, ROT90, "Taito", "Field Goal", GAME_NO_SOUND )
+ROM_START( fgoala )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "mf04.m28", 0xa000, 0x0800, CRC(acba21bc) SHA1(4a82e88555491883628a07f905d130380d5274f1) ) 
+	ROM_RELOAD(           0xe000, 0x0800 ) 
+	ROM_LOAD( "mf03.m31", 0xa800, 0x0800, CRC(4ce7462d) SHA1(ff02b4a831967c4e75e1d42e0679224b107d61bd) ) 
+	ROM_RELOAD(           0xe800, 0x0800 ) 
+	ROM_LOAD( "mf02.m38", 0xb000, 0x0800, CRC(5cd889b9) SHA1(7c8d810fed6d5e57c9b6a00e699f5b1d1253e84e) ) 
+	ROM_RELOAD(           0xf000, 0x0800 ) 
+	ROM_LOAD( "mf01.m46", 0xb800, 0x0800, CRC(9b9f5faa) SHA1(f944fff2c07e70f86fdd28fa5c9dc6c75ea2028b) ) 
+	ROM_RELOAD(           0xf800, 0x0800 ) 
+	ROM_LOAD( "mf05.m22", 0xd800, 0x0800, CRC(58082b8b) SHA1(72cd4153f7939cd33fc69ba82b44391fc19ae152) ) 
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) /* overlay proms */
+	ROM_LOAD( "tf05.m11", 0x0000, 0x0400, CRC(925b78ab) SHA1(97d6e572658715dc4f6c37b98ba5352643fc8e27) ) 
+	ROM_LOAD( "tf06.m4",  0x0400, 0x0400, CRC(3d2f007b) SHA1(7f4b6f3f08be8c886af3e2ccd3c0d93ae54d4649) ) 
+	ROM_LOAD( "tf07.m12", 0x0800, 0x0400, CRC(0b1d01c4) SHA1(8680602fecd412e5136e1107618a2e0a59b37d08) ) 
+	ROM_LOAD( "tf08.m5",  0x0c00, 0x0400, CRC(5cbc7dfd) SHA1(1a054dc72d25615ea6f903f6da8108033514fd1f) ) 
+
+	ROM_REGION( 0x0100, REGION_PROMS, ROMREGION_INVERT )
+	ROM_LOAD_NIB_LOW ( "tf09.m13", 0x0000, 0x0100, CRC(b0fc4b80) SHA1(c6029f6d912275aa65302ca97281e10ccbf63159) ) 
+	ROM_LOAD_NIB_HIGH( "tf10.m6",  0x0000, 0x0100, CRC(7b30b15d) SHA1(e9826a107b209e18d891ead341eda3d4523ce195) ) 
+ROM_END
+
+
+GAMEX( 1979, fgoal,  0,     fgoal, fgoal,  0, ROT90, "Taito", "Field Goal",             GAME_NO_SOUND )
+GAMEX( 1979, fgoala, fgoal, fgoal, fgoala, 0, ROT90, "Taito", "Field Goal (different)", GAME_NO_SOUND )

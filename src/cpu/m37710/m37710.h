@@ -83,9 +83,11 @@ unsigned m37710_dasm(char *buffer, unsigned pc);
 #undef M37710_CALL_DEBUGGER
 
 #define M37710_CALL_DEBUGGER CALL_MAME_DEBUG
-#define m37710_read_8(addr) 			program_read_byte_8(addr)      
-#define m37710_write_8(addr,data)		program_write_byte_8(addr,data)
-#define m37710_read_8_immediate(A)		program_read_byte_8(A)         
+#define m37710_read_8(addr) 			program_read_byte_16le(addr)      
+#define m37710_write_8(addr,data)		program_write_byte_16le(addr,data)
+#define m37710_read_8_immediate(A)		program_read_byte_16le(A)         
+#define m37710_read_16(addr) 			program_read_word_16le(addr)      
+#define m37710_write_16(addr,data)		program_write_word_16le(addr,data)
 #define m37710_jumping(A)			change_pc(A)
 #define m37710_branching(A)
 

@@ -1,4 +1,4 @@
-0.85.1
+0.86
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -42,7 +42,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.85u3.  This incorporates all features of the
+- The core is based on MAME 0.86.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Fixed default names for input ports that use PORT_CHAR.  [Nate Woods]

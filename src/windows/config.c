@@ -89,6 +89,8 @@ static int video_rol = 0;
 static int video_autoror = 0;
 static int video_autorol = 0;
 
+static int got_gamename;
+
 static char *win_basename(char *filename);
 static char *win_dirname(char *filename);
 static char *win_strip_extension(char *filename);
@@ -419,6 +421,7 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* parse the commandline */
+	got_gamename = 0;
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{
 		fprintf (stderr, "error while parsing cmdline\n");
@@ -760,7 +763,6 @@ void cli_frontend_exit(void)
 
 static int config_handle_arg(char *arg)
 {
-	static int got_gamename = 0;
 
 	/* notice: for MESS game means system */
 	if (got_gamename)

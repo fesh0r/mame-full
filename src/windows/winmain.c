@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 	output_symbol_list(stderr);
 #endif
 
-	exit(res);
+	return res;
 }
 
 

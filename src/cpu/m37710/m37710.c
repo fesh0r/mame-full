@@ -1,5 +1,5 @@
 /*
-	Mitsubishi M37710 CPU Emulator v1.00
+	Mitsubishi M37710 CPU Emulator
 
 	The 7700 series is based on the WDC 65C816 core, with the following 
 	notable changes:
@@ -40,6 +40,8 @@
 
 	History:
 	- v1.0	RB	First version, basic operation OK, timers not complete
+	- v1.1  RB	Data bus is 16-bit, dozens of bugfixes to IRQs, opcodes,
+	                and opcode mapping.  New opcodes added, internal timers added.
 */
 
 #include "cpuintrf.h"
@@ -50,6 +52,8 @@
 #include "m37710cm.h"
 
 #define M37710_DEBUG	(0)	// enables verbose logging for peripherals, etc.
+
+extern void m37710_set_irq_line(int line, int state);
 
 /* Our CPU structure */
 m37710i_cpu_struct m37710i_cpu = {0};
@@ -275,9 +279,76 @@ static char *m37710_tnames[8] =
 };
 #endif
 
+static void m37710_timer_a0_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[0], TIME_IN_HZ(m37710i_cpu.reload[0]), 0, 0);
+	
+	m37710i_cpu.m37710_regs[m37710_irq_levels[12]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERA0, PULSE_LINE);
+}
+
+static void m37710_timer_a1_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[1], TIME_IN_HZ(m37710i_cpu.reload[1]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[11]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERA1, PULSE_LINE);
+}
+
+static void m37710_timer_a2_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[2], TIME_IN_HZ(m37710i_cpu.reload[2]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[10]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERA2, PULSE_LINE);
+}
+
+static void m37710_timer_a3_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[3], TIME_IN_HZ(m37710i_cpu.reload[3]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[9]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERA3, PULSE_LINE);
+}
+
+static void m37710_timer_a4_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[4], TIME_IN_HZ(m37710i_cpu.reload[4]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[8]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERA4, PULSE_LINE);
+}
+
+static void m37710_timer_b0_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[5], TIME_IN_HZ(m37710i_cpu.reload[5]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[7]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERB0, PULSE_LINE);
+}
+
+static void m37710_timer_b1_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[6], TIME_IN_HZ(m37710i_cpu.reload[6]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[6]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERB1, PULSE_LINE);
+}
+
+static void m37710_timer_b2_cb(int num)
+{
+	timer_adjust(m37710i_cpu.timers[7], TIME_IN_HZ(m37710i_cpu.reload[7]), 0, 0);
+
+	m37710i_cpu.m37710_regs[m37710_irq_levels[5]] |= 0x04;
+	m37710_set_irq_line(M37710_LINE_TIMERB2, PULSE_LINE);
+}
+
 static void m37710_recalc_timer(int timer)
 {
 	int tval;
+	int tcr[8] = { 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d };
+	double time;
+	static double tscales[4] = { 2.0, 16.0, 64.0, 512.0 };
 
 	// check if enabled
 	if (m37710i_cpu.m37710_regs[0x40] & (1<<timer))
@@ -299,6 +370,12 @@ static void m37710_recalc_timer(int timer)
 					#if M37710_DEBUG
 					logerror("Timer %d in timer mode\n", timer);
 					#endif
+
+					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
+					time /= ((double)tval+1.0);
+	
+					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), 0, 0);
+					m37710i_cpu.reload[timer] = time;
 					break;
 
 				case 1:	      	// event counter mode
@@ -328,6 +405,12 @@ static void m37710_recalc_timer(int timer)
 					#if M37710_DEBUG
 					logerror("Timer %d in timer mode\n", timer);
 					#endif
+
+					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
+					time /= ((double)tval+1.0);
+	
+					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), 0, 0);
+					m37710i_cpu.reload[timer] = time;
 					break;
 
 				case 1:	      	// event counter mode
@@ -354,7 +437,7 @@ static void m37710_recalc_timer(int timer)
 
 int toggle = 0;
 
-READ8_HANDLER( m37710_internal_r )
+static data8_t m37710_internal_r(int offset)
 {
 	#if M37710_DEBUG
 	logerror("m37710_internal_r from %02x: %s (PC=%x)\n", (int)offset, m37710_rnames[(int)offset], REG_PB<<16 | REG_PC);
@@ -371,7 +454,7 @@ READ8_HANDLER( m37710_internal_r )
 		case 0xf: // p7
 		case 0x12: // p8
 			#if M37710_DEBUG
-			logerror("m37710: read I/O port @ %x (PC=%06x)\n", offset, REG_PC);
+//			logerror("m37710: read I/O port @ %x (PC=%06x)\n", offset, REG_PC);
 			#endif
 			return 0;
 			break;
@@ -385,7 +468,7 @@ READ8_HANDLER( m37710_internal_r )
 	return m37710i_cpu.m37710_regs[offset];
 }
 
-WRITE8_HANDLER( m37710_internal_w )
+static void m37710_internal_w(int offset, data8_t data)
 {
 	int i;
 
@@ -401,7 +484,7 @@ WRITE8_HANDLER( m37710_internal_w )
 		case 0xf: // p7
 		case 0x12: // p8
 			#if M37710_DEBUG
-			logerror("m37710: %02x to I/O port @ %x (PC=%06x)\n", data, offset, REG_PC);
+//			logerror("m37710: %02x to I/O port @ %x (PC=%06x)\n", data, offset, REG_PC);
 			#endif
 			break;
 
@@ -410,10 +493,13 @@ WRITE8_HANDLER( m37710_internal_w )
 			{
 				if ((data & (1<<i)) && !(m37710i_cpu.m37710_regs[offset] & (1<<i)))
 				{
+					m37710i_cpu.m37710_regs[offset] |= (1<<i);
 					m37710_recalc_timer(i);
 				}
 			}
+
 			m37710i_cpu.m37710_regs[offset] = data;
+
 			return;
 			break;
 
@@ -427,6 +513,28 @@ WRITE8_HANDLER( m37710_internal_w )
 	#if M37710_DEBUG
 	logerror("m37710_internal_w %x to %02x: %s = %x\n", data, (int)offset, m37710_rnames[(int)offset], m37710i_cpu.m37710_regs[offset]);
 	#endif
+}
+
+static READ16_HANDLER( m37710_internal_word_r )
+{
+	return (m37710_internal_r(offset*2) | m37710_internal_r((offset*2)+1)<<8);
+}
+
+static WRITE16_HANDLER( m37710_internal_word_w )
+{
+	if (mem_mask == 0)
+	{
+		m37710_internal_w((offset*2), data & 0xff);
+		m37710_internal_w((offset*2)+1, data>>8);
+	}
+	else if (mem_mask == 0xff)
+	{
+		m37710_internal_w((offset*2)+1, data>>8);
+	}
+	else if (mem_mask == 0xff00)
+	{
+		m37710_internal_w((offset*2), data & 0xff);
+	}
 }
 
 extern void (*m37710i_opcodes_M0X0[])(void);
@@ -533,18 +641,14 @@ INLINE void m37710i_push_16(uint value)
 
 INLINE uint m37710i_get_reg_p(void)
 {
-	uint ret = 0;
-
-	if (FLAG_N) ret |= 0x80;
-	if (FLAG_V) ret |= 0x40;
-	if (FLAG_M) ret |= 0x20;
-	if (FLAG_X) ret |= 0x10;
-	if (FLAG_D) ret |= 0x08;
-	if (FLAG_I) ret |= 0x04;
-	if (FLAG_Z) ret |= 0x02;
-	if (FLAG_C) ret |= 0x01;
-
-	return ret;
+	return	(FLAG_N&0x80)		|
+			((FLAG_V>>1)&0x40)	|
+			FLAG_M				|
+			FLAG_X				|
+			FLAG_D				|
+			FLAG_I				|
+			((!FLAG_Z)<<1)		|
+			((FLAG_C>>8)&1);
 }
 
 void m37710i_update_irqs(void)
@@ -599,21 +703,29 @@ void m37710i_update_irqs(void)
 			m37710i_cpu.m37710_regs[m37710_irq_levels[wantedIRQ]] &= ~8;
 		}
 
+		// auto-clear if it's an internal line
+		if (wantedIRQ <= 12)
+		{
+			m37710_set_irq_line(wantedIRQ, CLEAR_LINE);
+		}
+
 		// let's do it...
 		// push PB, then PC, then status
 		CLK(8);
+//		logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
 		m37710i_push_8(REG_PB>>16); 
 		m37710i_push_16(REG_PC);
 		m37710i_push_8(m37710i_get_reg_p());
 		m37710i_push_8(m37710i_cpu.ipl);
 
 		// set I to 1, set IPL to the interrupt we're taking
-		FLAG_I = 1;
+		FLAG_I = IFLAG_SET;
 		m37710i_cpu.ipl = curpri;
 		// then PB=0, PC=(vector)
 		REG_PB = 0;
 		REG_PC = m37710_read_8(m37710_irq_vectors[wantedIRQ]) | 
 			 m37710_read_8(m37710_irq_vectors[wantedIRQ]+1)<<8;
+//		logerror("IRQ @ %06x\n", REG_PB | REG_PC);
 		m37710i_jumping(REG_PB | REG_PC);
 	}
 }
@@ -777,7 +889,17 @@ unsigned m37710_dasm(char *buffer, unsigned pc)
 }
 
 
-void m37710_init(void){ return; }
+void m37710_init(void)
+{ 
+	m37710i_cpu.timers[0] = timer_alloc(m37710_timer_a0_cb);
+	m37710i_cpu.timers[1] = timer_alloc(m37710_timer_a1_cb);
+	m37710i_cpu.timers[2] = timer_alloc(m37710_timer_a2_cb);
+	m37710i_cpu.timers[3] = timer_alloc(m37710_timer_a3_cb);
+	m37710i_cpu.timers[4] = timer_alloc(m37710_timer_a4_cb);
+	m37710i_cpu.timers[5] = timer_alloc(m37710_timer_b0_cb);
+	m37710i_cpu.timers[6] = timer_alloc(m37710_timer_b1_cb);
+	m37710i_cpu.timers[7] = timer_alloc(m37710_timer_b2_cb);
+}
 
 /**************************************************************************
  * Generic set_info
@@ -792,12 +914,12 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	m37710_set_irq_line(M37710_LINE_IRQ1, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	m37710_set_irq_line(M37710_LINE_IRQ2, info->i); break;
 
-		case CPUINFO_INT_PC:					m37710_set_pc(info->i);	     			break;
+		case CPUINFO_INT_PC:					REG_PB = info->i & 0xff0000; m37710_set_pc(info->i & 0xffff);	break;
 		case CPUINFO_INT_SP:					m37710_set_sp(info->i);	     			break;
 
 		case CPUINFO_INT_REGISTER + M37710_PC:			m37710_set_reg(M37710_PC, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_S:			m37710_set_reg(M37710_S, info->i);		break;
-		case CPUINFO_INT_REGISTER + M37710_P:			m37710_set_reg(M37710_P, info->i);		break;
+		case CPUINFO_INT_REGISTER + M37710_P:			m37710_set_reg(M37710_P, info->i&0xff);	m37710i_cpu.ipl = (info->i>>8)&0xff;	break;
 		case CPUINFO_INT_REGISTER + M37710_A:			m37710_set_reg(M37710_A, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_X:			m37710_set_reg(M37710_X, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_Y:			m37710_set_reg(M37710_Y, info->i);		break;
@@ -814,8 +936,8 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 }
 
 // On-board RAM and peripherals
-static ADDRESS_MAP_START( m37710_internal_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x000000, 0x00007f) AM_READWRITE(m37710_internal_r, m37710_internal_w)
+static ADDRESS_MAP_START( m37710_internal_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00007f) AM_READWRITE(m37710_internal_word_r, m37710_internal_word_w)
 	AM_RANGE(0x000080, 0x00027f) AM_RAM
 ADDRESS_MAP_END
 
@@ -838,39 +960,38 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
 		case CPUINFO_INT_INPUT_LINES:        				info->i = M37710_LINE_MAX;                      break;
 		
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:	info->i = 8;				break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 	info->i = 16;				break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 	info->i = 0;				break;
 
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ0: 	info->i = 0;				break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	info->i = 0;				break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	info->i = 0;				break;
-		case CPUINFO_INT_INPUT_STATE + M37710_LINE_RESET:	info->i = 0;					break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_RESET:	info->i = 0;				break;
 
-		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
-
-		case CPUINFO_INT_PC:	 				info->i = REG_PC;				break;
-		case CPUINFO_INT_SP:					info->i = m37710_get_sp();				break;
+		case CPUINFO_INT_PREVIOUSPC:				info->i = REG_PPC;			break;
+		case CPUINFO_INT_PC:	 				info->i = (REG_PB | REG_PC);		break;
+		case CPUINFO_INT_SP:					info->i = m37710_get_sp();		break;
 
 		case CPUINFO_INT_REGISTER + M37710_PC:			info->i = m37710_get_reg(M37710_PC);	break;
-		case CPUINFO_INT_REGISTER + M37710_S:			info->i = m37710_get_reg(M37710_S);		break;
-		case CPUINFO_INT_REGISTER + M37710_P:			info->i = m37710_get_reg(M37710_P);		break;
-		case CPUINFO_INT_REGISTER + M37710_A:			info->i = m37710_get_reg(M37710_A);		break;
-		case CPUINFO_INT_REGISTER + M37710_B:			info->i = m37710_get_reg(M37710_B);		break;
-		case CPUINFO_INT_REGISTER + M37710_X:			info->i = m37710_get_reg(M37710_X);		break;
-		case CPUINFO_INT_REGISTER + M37710_Y:			info->i = m37710_get_reg(M37710_Y);		break;
+		case CPUINFO_INT_REGISTER + M37710_S:			info->i = m37710_get_reg(M37710_S);	break;
+		case CPUINFO_INT_REGISTER + M37710_P:			info->i = m37710_get_reg(M37710_P) | (m37710i_cpu.ipl<<8);	break;
+		case CPUINFO_INT_REGISTER + M37710_A:			info->i = m37710_get_reg(M37710_A);	break;
+		case CPUINFO_INT_REGISTER + M37710_B:			info->i = m37710_get_reg(M37710_B);	break;
+		case CPUINFO_INT_REGISTER + M37710_X:			info->i = m37710_get_reg(M37710_X);	break;
+		case CPUINFO_INT_REGISTER + M37710_Y:			info->i = m37710_get_reg(M37710_Y);	break;
 		case CPUINFO_INT_REGISTER + M37710_PB:			info->i = m37710_get_reg(M37710_PB);	break;
 		case CPUINFO_INT_REGISTER + M37710_DB:			info->i = m37710_get_reg(M37710_DB);	break;
-		case CPUINFO_INT_REGISTER + M37710_D:			info->i = m37710_get_reg(M37710_D);		break;
-		case CPUINFO_INT_REGISTER + M37710_E:			info->i = m37710_get_reg(M37710_E);		break;
-		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:	info->i = m37710_get_reg(M37710_NMI_STATE); break;
-		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:	info->i = m37710_get_reg(M37710_IRQ_STATE); break;
+		case CPUINFO_INT_REGISTER + M37710_D:			info->i = m37710_get_reg(M37710_D);	break;
+		case CPUINFO_INT_REGISTER + M37710_E:			info->i = m37710_get_reg(M37710_E);	break;
+		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:	info->i = m37710_get_reg(M37710_NMI_STATE); 	break;
+		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:	info->i = m37710_get_reg(M37710_IRQ_STATE); 	break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m37710_set_info;		break;
@@ -894,7 +1015,7 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:						strcpy(info->s = cpuintrf_temp_str(), "M37710"); break;
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "M7700"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
 		case CPUINFO_STR_CORE_FILE:					strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2004 R. Belmont, based on G65816 by Karl Stenerud"); break;
 
@@ -915,7 +1036,7 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + M37710_DB:			sprintf(info->s = cpuintrf_temp_str(), "DB:%02X", m37710i_cpu.db>>16); break;
 		case CPUINFO_STR_REGISTER + M37710_D:			sprintf(info->s = cpuintrf_temp_str(), "D:%04X", m37710i_cpu.d); break;
 		case CPUINFO_STR_REGISTER + M37710_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m37710i_cpu.s); break;
-		case CPUINFO_STR_REGISTER + M37710_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X",
+		case CPUINFO_STR_REGISTER + M37710_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%04X",
 																 (m37710i_cpu.flag_n&0x80)		|
 																((m37710i_cpu.flag_v>>1)&0x40)	|
 																m37710i_cpu.flag_m				|
@@ -923,7 +1044,7 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 																m37710i_cpu.flag_d				|
 																m37710i_cpu.flag_i				|
 																((!m37710i_cpu.flag_z)<<1)		|
-																((m37710i_cpu.flag_c>>8)&1)); break;
+																((m37710i_cpu.flag_c>>8)&1)) | (m37710i_cpu.ipl<<8); break;
 		case CPUINFO_STR_REGISTER + M37710_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%d", m37710i_cpu.flag_e); break;
 		case CPUINFO_STR_REGISTER + M37710_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%04X", m37710i_cpu.a | m37710i_cpu.b); break;
 		case CPUINFO_STR_REGISTER + M37710_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%04X", m37710i_cpu.ba | m37710i_cpu.bb); break;

@@ -611,7 +611,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
-		case CPUINFO_INT_PC:	/* intentional fallthrough */
+		case CPUINFO_INT_PC:	/* intentional fallthrough */
 		case CPUINFO_INT_REGISTER + PPC_PC:				info->i = ppc.pc;						break;
 		case CPUINFO_INT_REGISTER + PPC_MSR:			info->i = ppc_get_msr();				break;
 		case CPUINFO_INT_REGISTER + PPC_CR:				info->i = ppc_get_cr();					break;

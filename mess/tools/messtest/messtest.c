@@ -554,9 +554,11 @@ static int external_entity_handler(XML_Parser parser,
 	if (!extparser)
 		goto done;
 
-	s =	"<!DOCTYPE tests [\r\n"
-		"<!ENTITY mamekey_esc \"&#63292;\">\r\n"
-		"]>\r\n";
+	s = "<!ENTITY mamekey_esc \"Microsoft Press\">";
+//	s = "<!ENTITY mamekey_esc \"&#63292;\">";
+//	s =	"<!DOCTYPE tests [\r\n"
+//		"<!ENTITY mamekey_esc \"&#63292;\">\r\n"
+//		"]>\r\n";
 	if (XML_Parse(extparser, s, strlen(s), 0))
 		goto done;
 	if (XML_Parse(extparser, NULL, 0, 1))
@@ -564,8 +566,8 @@ static int external_entity_handler(XML_Parser parser,
 
 	rc = 1;
 done:
-	if (extparser)
-		XML_ParserFree(extparser);
+//	if (extparser)
+//		XML_ParserFree(extparser);
 	return rc;
 }
 

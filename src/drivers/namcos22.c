@@ -163,8 +163,13 @@
 #include "cpu/tms32025/tms32025.h"
 #include "cpu/m37710/m37710.h"
 
+#define SS22_MASTER_CLOCK (49152000)	/* info from Guru */
+
 // enables HLE of M37710 subcpu (37710 still runs)
 #define FAKE_SUBCPU (1)
+
+// enables actual sharing of RAM between the CPU and MCU
+#define SHARE_MCU_RAM (0)
 
 enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
 static int mbSuperSystem22; /* used to dispatch Sys22/SuperSys22 differences */
@@ -1630,19 +1635,26 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 	}
 }
 
-static READ8_HANDLER( s22mcu_shared_r )
+// $$TODO - communications doesn't work (endian problems?) and also there seems 
+//          to be a way for the 68020 to shut off the MCU's vblank.  
+//          Otherwise the MCU crashes when the 68020 overwrites it's work variables 
+//          during the shared RAM test.  (Prop Cycle has no such POST test and
+//          will actually run with SHARE_MCU_RAM on right now).
+#if SHARE_MCU_RAM
+static READ16_HANDLER( s22mcu_shared_r )
 {
-	data8_t *share8 = (data8_t *)namcos22_shareram;
+	data16_t *share16 = (data16_t *)namcos22_shareram;
 
-	return share8[offset];
+	return share16[offset];
 }
 
-static WRITE8_HANDLER( s22mcu_shared_w )
+static WRITE16_HANDLER( s22mcu_shared_w )
 {
-	data8_t *share8 = (data8_t *)namcos22_shareram;
+	data16_t *share16 = (data16_t *)namcos22_shareram;
 
-	share8[offset] = data;
+	COMBINE_DATA(&share16[offset]);
 }
+#endif
 
 /*
   MCU memory map
@@ -1653,21 +1665,30 @@ static WRITE8_HANDLER( s22mcu_shared_w )
   200000-27ffff: data ROM
   301000-301001: watchdog?
   308000-308003: unknown (I/O?)
+
+  pin hookups:
+  5 (IRQ0): C383 custom (probably vsync)
+  7 (IRQ2): 74F244 at 8c, pin 3
+
 */
 
-static ADDRESS_MAP_START( mcu_program, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x002000, 0x002fff) AM_NOP	// C352 can't handle 8-bit access yet, and
-						// this MCU does nothing useful with it yet anyway...
+static ADDRESS_MAP_START( mcu_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x002000, 0x002fff) AM_READWRITE( c352_0_r, c352_0_w ) 
+#if SHARE_MCU_RAM
 	AM_RANGE(0x004000, 0x00bfff) AM_READWRITE( s22mcu_shared_r, s22mcu_shared_w )
+#else
+	AM_RANGE(0x004000, 0x00bfff) AM_RAM
+#endif
 	AM_RANGE(0x00c000, 0x00ffff) AM_ROM AM_REGION(REGION_USER4, 0xc000)
 	AM_RANGE(0x200000, 0x27ffff) AM_ROM AM_REGION(REGION_USER4, 0)
 	AM_RANGE(0x301000, 0x301001) AM_NOP	// watchdog? LEDs?
+	AM_RANGE(0x308000, 0x308003) AM_NOP	// volume control IC?
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( mcu_interrupt )
 {
 	if (cpu_getiloops() == 0)
-		cpunum_set_input_line(3, M37710_LINE_IRQ0, HOLD_LINE);
+ 		cpunum_set_input_line(3, M37710_LINE_IRQ0, HOLD_LINE);
 	else
 		cpunum_set_input_line(3, M37710_LINE_IRQ2, HOLD_LINE);
 }
@@ -1680,23 +1701,23 @@ static struct C352interface c352_interface =
 };
 
 static MACHINE_DRIVER_START( namcos22s )
-	MDRV_CPU_ADD(M68EC020,25000000) /* 25 MHz? */
+	MDRV_CPU_ADD(M68EC020,SS22_MASTER_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(namcos22s_am,0)
 	MDRV_CPU_VBLANK_INT(namcos22s_interrupt,2)
 
-	MDRV_CPU_ADD(TMS32025,24000000*2) /* ? */
+	MDRV_CPU_ADD(TMS32025,SS22_MASTER_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(master_dsp_program,0)
 	MDRV_CPU_DATA_MAP(master_dsp_data,0)
 	MDRV_CPU_IO_MAP(master_dsp_io,0)
 	MDRV_CPU_VBLANK_INT(dsp_serial_pulse1,SERIAL_IO_PERIOD)
 
-	MDRV_CPU_ADD(TMS32025,24000000*2) /* ? */
+	MDRV_CPU_ADD(TMS32025,SS22_MASTER_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(slave_dsp_program,0)
 	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
 	MDRV_CPU_IO_MAP(slave_dsp_io,0)
 //	MDRV_CPU_VBLANK_INT(dsp_serial_pulse2,SERIAL_IO_PERIOD)
 
-	MDRV_CPU_ADD(M37710, 16000000)
+	MDRV_CPU_ADD(M37710, SS22_MASTER_CLOCK/3)
 	MDRV_CPU_PROGRAM_MAP(mcu_program, 0)
 	MDRV_CPU_VBLANK_INT(mcu_interrupt, 2);
 
