@@ -100,10 +100,6 @@ int main(int argc, char **argv)
 	options.vector_width = gfx_width;
 	options.vector_height = gfx_height;
 
-	#ifdef MESS
-	load_image(argc, argv, 0, game_index);
-	#endif
-
 	// have we decided on a game?
 	if (game_index != -1)
 		res = run_game(game_index);
@@ -120,7 +116,6 @@ int main(int argc, char **argv)
 	osd_set_leds(original_leds);
 	exit(res);
 }
-
 
 
 //============================================================

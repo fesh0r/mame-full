@@ -454,6 +454,9 @@ int run_game(int game)
 #ifdef MAME_DEBUG
 	/* validity checks */
 	if (validitychecks()) return 1;
+	#ifdef MESS
+	if (messvaliditychecks()) return 1;
+	#endif
 #endif
 
 

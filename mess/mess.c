@@ -909,6 +909,32 @@ void device_output_chunk(int type, int id, void *src, int chunks)
 
 
 
+#ifdef MAME_DEBUG
+int messvaliditychecks(void)
+{
+	int i;
+	int error = 0;
+
+	/* Check the device struct array */
+	i=0;
+	while (devices[i].id != IO_COUNT)
+	{
+		if (devices[i].id != i)
+		{
+			printf("MESS Validity Error - Device struct array order mismatch\n");
+			error = 1;
+		}
+		i++;
+	}
+	if (i < IO_COUNT)
+	{
+		printf("MESS Validity Error - Device struct entry missing\n");
+		error = 1;
+	}
+	return error;
+}
+#endif
+
 
 int displayimageinfo(struct osd_bitmap *bitmap, int selected)
 {

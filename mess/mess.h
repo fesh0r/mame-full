@@ -85,14 +85,6 @@ enum { INIT_OK, INIT_FAILED, INIT_UNKNOWN };
 enum { ID_FAILED, ID_OK, ID_UNKNOWN };
 
 
-/* fileio.c */
-typedef struct
-{
-	int crc;
-	int length;
-	char * name;
-} image_details;
-
 /* possible values for osd_fopen() last argument
  * OSD_FOPEN_READ
  *	open existing file in read only mode.
@@ -115,9 +107,6 @@ typedef struct
  */
 enum { OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE };
 
-
-/* mess.c functions [for external use] */
-int parse_image_types(char *arg);
 
 /******************************************************************************
  *	floppy disc controller direct access
@@ -233,8 +222,10 @@ struct IODevice {
 };
 
 
-/* these are called from mame.c run_game() */
-
+/* these are called from mame.c*/
+#ifdef MAME_DEBUG
+int messvaliditychecks(void);
+#endif
 extern int get_filenames(void);
 extern int init_devices(const void *game);
 extern void exit_devices(void);

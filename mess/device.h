@@ -1,7 +1,6 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-
 enum
 {	/* List of all supported devices.  Refer to the device by these names only							*/
 	IO_END = 0,		/*  0 - Dummy type to end IODevice enumerations 									*/
@@ -26,5 +25,7 @@ struct Devices {
 	const char *shortname;
 };
 
+/* Call this from the CLI to add a DEVICE (with its arg) to the options struct */
+int register_device (const int type, const char *arg);
 
 #endif
