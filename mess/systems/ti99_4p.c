@@ -6,11 +6,24 @@
 	originally the name used in TI documentation to refer to either (or both) TI99/5 and
 	TI99/8 projects), is a reimplementation of the old ti99/4a console.
 
-	TODO: write support for HSGPL and EVPC, as they actually required.
+	It was designed by Michael Becker for the hardware part and Harald Glaab for
+	the software part.  It has no relationship with TI.
+
+	The card is architectured around a 16-bit bus (vs. an 8-bit bus in every other
+	TI99 system).  It includes 64kb of ROM, including a GPL interpreter, an internal
+	DSR ROM which contains system-specific code, and part of the TI extended Basic
+	interpreter, and up to 1Mbyte of RAM.  It still includes a 16-bit to 8-bit multiplexer
+	in order to support extension cards designed for TI99/4a, but it can support 16-bit
+	cards, too.  It does not include GROMs, video or sound: instead, it relies on the HSGPL
+	and EVPC cards to do the job.
+
+	TODO:
+	* write support for HSGPL, as it is actually required.
+	* finish and test support for EVPC
 */
 
 #include "driver.h"
-#include "vidhrdw/tms9928a.h"
+#include "vidhrdw/v9938.h"
 
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
@@ -26,7 +39,7 @@ static MEMORY_READ16_START (readmem)
 	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
 	{ 0x8000, 0x83ff, MRA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_rw_rvdp },		/*vdp read*/
+	{ 0x8800, 0x8bff, ti99_rw_rv38 },		/*vdp read*/
 	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
 	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
 	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
@@ -51,7 +64,7 @@ static MEMORY_WRITE16_START (writemem)
 	{ 0x8000, 0x83ff, MWA16_BANK2 },		/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
 	{ 0x8800, 0x8bff, ti99_ww_null8bits },	/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_ww_wvdp },		/*vdp write*/
+	{ 0x8C00, 0x8fff, ti99_ww_wv38 },		/*vdp write*/
 	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
 	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
 	{ 0x9800, 0x9bff, ti99_ww_null8bits },	/*GPL read*/
@@ -202,7 +215,7 @@ static struct TMS5220interface tms5220interface =
 	680000L,					/* 640kHz -> 8kHz output */
 	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
-#if 0
+#if 1
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
 	spchroms_read_and_branch/*,*/	/* speech ROM read and branch handler */
@@ -242,64 +255,49 @@ static struct Wave_interface tape_input_intf =
 /*
 	machine description.
 */
-static struct MachineDriver machine_driver_ti99_4p_60hz =
-{
+static MACHINE_DRIVER_START(ti99_4p_60hz)
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_TMS9900,
-			3000000,	/* 3.0 Mhz???*/
-			readmem, writemem, readcru, writecru,
-			ti99_vblank_interrupt, 1,
-			0, 0,
-			0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	ti99_init_machine,
-	ti99_stop_machine,
+	/* TMS9900 CPU @ 3.0 MHz */
+	MDRV_CPU_ADD(TMS9900, 3000000)
+	/*MDRV_CPU_FLAGS(0)*/
+	/*MDRV_CPU_CONFIG(0)*/
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_VBLANK_INT(ti99_4ev_hblank_interrupt, 263)	/* 262.5 in 60Hz, 312.5 in 50Hz */
+	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
+
+	MDRV_FRAMES_PER_SECOND(60)	/* or 50Hz */
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	/*MDRV_INTERLEAVE(interleave)*/
+
+	MDRV_MACHINE_INIT( ti99 )
+	MDRV_MACHINE_STOP( ti99 )
+	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware */
-	256,						/* screen width */
-	192,						/* screen height */
-	{ 0, 256-1, 0, 192-1},		/* visible_area */
-	gfxdecodeinfo,				/* graphics decode info (???)*/
-	TMS9928A_PALETTE_SIZE,		/* palette is 3*total_colors bytes long */
-	TMS9928A_COLORTABLE_SIZE,	/* length in shorts of the color lookup table */
-	tms9928A_init_palette,		/* palette init */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	/*MDRV_ASPECT_RATIO(num, den)*/
+	MDRV_SCREEN_SIZE(512+32, (212+16)*2)
+	MDRV_VISIBLE_AREA(0, 512+32 - 1, 0, (212+16)*2 - 1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ti99_4a_vh_start,
-	TMS9928A_stop,
-	TMS9928A_refresh,
+	/*MDRV_GFXDECODE(NULL)*/
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(512)
 
-	/* sound hardware */
-	0,
-	0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&tms9919interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220interface
-		},
-		{
-			SOUND_DAC,
-			&aux_sound_intf
-		},
-		{
-			SOUND_WAVE,
-			&tape_input_intf
-		}
-	},
+	MDRV_PALETTE_INIT(v9938)
+	MDRV_VIDEO_START(ti99_4ev)
+	/*MDRV_VIDEO_EOF(name)*/
+	MDRV_VIDEO_UPDATE(v9938)
 
-	/* NVRAM handler */
-	NULL
-};
+	MDRV_SOUND_ATTRIBUTES(0)
+	MDRV_SOUND_ADD(SN76496, tms9919interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220interface)
+	MDRV_SOUND_ADD(DAC, aux_sound_intf)
+	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+
+MACHINE_DRIVER_END
+
 
 ROM_START(ti99_4p)
 	/*CPU memory space*/
@@ -314,6 +312,7 @@ ROM_START(ti99_4p)
 	/* Used for disk DSR */
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD("disk.bin", 0x0000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+	ROM_LOAD("evpcdsr.bin", 0x2000, 0x10000, 0xa062b75d) /* evpc DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
@@ -329,6 +328,7 @@ static const struct IODevice io_ti99_4p[] =
 		3,						/* count */
 		"dsk\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		/*OSD_FOPEN_DUMMY,*/		/* open mode */
 		0,
 		ti99_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
