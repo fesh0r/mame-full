@@ -161,6 +161,7 @@ void speaker_get_info(void *token, UINT32 state, union sndinfo *info);
 void wave_get_info(void *token, UINT32 state, union sndinfo *info);
 void sid6581_get_info(void *token, UINT32 state, union sndinfo *info);
 void sid8580_get_info(void *token, UINT32 state, union sndinfo *info);
+void es5503_get_info(void *token, UINT32 state, union sndinfo *info);
 #endif
 
 void filter_volume_get_info(void *token, UINT32 state, union sndinfo *info);
@@ -415,6 +416,9 @@ const struct
 #endif
 #if (HAS_SID8580)
 	{ SOUND_SID8580, sid8580_get_info },
+#endif
+#if (HAS_ES5503)
+	{ SOUND_ES5503, es5503_get_info },
 #endif
 #endif
 

@@ -970,11 +970,14 @@ WRITE8_HANDLER( apple2_c02x_w )
 
 READ8_HANDLER ( apple2_c03x_r )
 {
-	if (a2_speaker_state == 0xFF)
-		a2_speaker_state = 0;
-	else
-		a2_speaker_state = 0xFF;
-	DAC_data_w(0, a2_speaker_state);
+	if (!offset)
+	{
+		if (a2_speaker_state == 0xFF)
+			a2_speaker_state = 0;
+		else
+			a2_speaker_state = 0xFF;
+		DAC_data_w(0, a2_speaker_state);
+	}
 	return apple2_getfloatingbusvalue();
 }
 

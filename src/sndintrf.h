@@ -101,6 +101,7 @@ enum
 	SOUND_WAVE,
 	SOUND_SID6581,
 	SOUND_SID8580,
+	SOUND_ES5503,
 #endif
 
 	/* filters start here */

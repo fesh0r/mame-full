@@ -112,6 +112,7 @@
 #include "machine/8530scc.h"
 #include "devices/flopdrv.h"
 #include "cpu/g65816/g65816.h"
+#include "sound/es5503.h"
 
 #define LOG_C0XX			0
 #define LOG_ADB				0
@@ -124,6 +125,7 @@
 #define IRQ_VGC_SECOND		0x10
 #define IRQ_INTEN_QSECOND	0x20
 #define IRQ_INTEN_VBL		0x40
+#define IRQ_DOC			0x80
 
 UINT8 *apple2gs_slowmem;
 data8_t apple2gs_newvideo;
@@ -296,6 +298,7 @@ static const char *apple2gs_irq_name(UINT8 irq_mask)
 		case IRQ_VGC_SECOND:		return "IRQ_VGC_SECOND";
 		case IRQ_INTEN_QSECOND:		return "IRQ_INTEN_QSECOND";
 		case IRQ_INTEN_VBL:			return "IRQ_INTEN_VBL";
+		case IRQ_DOC:				return "IRQ_DOC";
 	}
 	return NULL;
 }
@@ -329,6 +332,17 @@ static void apple2gs_remove_irq(UINT8 irq_mask)
 	}
 }
 
+void apple2gs_doc_irq(int state)
+{
+	if (state)
+	{
+		apple2gs_add_irq(IRQ_DOC);
+	}
+	else
+	{
+		apple2gs_remove_irq(IRQ_DOC);
+	}
+}
 
 
 /* -----------------------------------------------------------------------
@@ -817,35 +831,32 @@ INTERRUPT_GEN( apple2gs_interrupt )
  * Sound handlers
  * ----------------------------------------------------------------------- */
 
-static data8_t sndglu_docram[64*1024];
 static data8_t sndglu_ctrl;
-static int sndglu_addr;
+static int sndglu_addr, sndglu_dummy_read;
 
 static READ8_HANDLER( gssnd_r )
 {
 	data8_t ret = 0;
-	
+
 	switch (offset)
 	{
 		case 0:	// control
 			ret = sndglu_ctrl;
 			break;
 		case 1:	// data read
+			if (sndglu_dummy_read)
+			{
+				sndglu_dummy_read = 0;
+				return 0;
+			}
+
 			if (sndglu_ctrl & 0x40)	// docram access
 			{
-				ret = sndglu_docram[sndglu_addr];
+				ret = ES5503_ram_0_r(sndglu_addr);
 			}
 			else
 			{
-				// DOC
-				if (sndglu_addr == 0xe0)
-				{
-					ret = 0x80;	// interrupt control - return no DOC IRQ
-				}
-				else
-				{
-					ret = 0;
-				}
+				ret = ES5503_reg_0_r(sndglu_addr);
 			}
 
 			if (sndglu_ctrl & 0x20)	// auto-increment
@@ -880,7 +891,11 @@ static WRITE8_HANDLER( gssnd_w )
 		case 1:	// data write
 			if (sndglu_ctrl & 0x40)	// docram access
 			{
-				sndglu_docram[sndglu_addr] = data;
+				ES5503_ram_0_w(sndglu_addr, data);
+			}
+			else
+			{
+				ES5503_reg_0_w(sndglu_addr, data);
 			}
 
 			if (sndglu_ctrl & 0x20)	// auto-increment
@@ -891,10 +906,12 @@ static WRITE8_HANDLER( gssnd_w )
 		case 2:	// addr l
 			sndglu_addr &= 0xff00;
 			sndglu_addr |= data;
+			sndglu_dummy_read = 1;
 			break;
 		case 3: // addr h
 			sndglu_addr &= 0x00ff;
 			sndglu_addr |= data<<8;
+			sndglu_dummy_read = 1;
 			break;
 	}
 }

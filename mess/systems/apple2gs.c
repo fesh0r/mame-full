@@ -5,7 +5,6 @@
 	Apple IIgs
 	
     TODO:
-    - Implement Apple IIgs sound
     - Fix spurrious interrupt problem
     - Fix 5.25" disks
     - Optimize video code
@@ -22,7 +21,7 @@
 #include "formats/ap2_dsk.h"
 #include "includes/apple2gs.h"
 #include "machine/sonydriv.h"
-
+#include "sound/es5503.h"
 
 static struct GfxLayout apple2gs_text_layout =
 {
@@ -101,6 +100,17 @@ static PALETTE_INIT( apple2gs )
 	palette_set_colors(0, apple2gs_palette, sizeof(apple2gs_palette) / 3);
 }
 
+static READ8_HANDLER( apple2gs_adc_read )
+{
+	return 0x80;
+}
+
+static struct ES5503interface es5503_interface = 
+{
+	apple2gs_doc_irq,
+	apple2gs_adc_read
+};
+
 static MACHINE_DRIVER_START( apple2gs )
 	MDRV_IMPORT_FROM( apple2e )
 	MDRV_CPU_REPLACE("main", G65816, 1021800)
@@ -117,6 +127,12 @@ static MACHINE_DRIVER_START( apple2gs )
 	MDRV_VIDEO_UPDATE( apple2gs )
 
 	MDRV_NVRAM_HANDLER( apple2gs )
+
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(ES5503, 0)
+	MDRV_SOUND_CONFIG(es5503_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

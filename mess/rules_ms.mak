@@ -205,3 +205,12 @@ SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sou
 else
 SOUNDDEFS += -DHAS_SID8580=0
 endif
+
+SOUND=$(strip $(findstring ES5503@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_ES5503=1
+SOUNDOBJS += $(OBJ)/mess/sound/es5503.o
+else
+SOUNDDEFS += -DHAS_ES5503=0
+endif
+

@@ -23,4 +23,6 @@ VIDEO_UPDATE( apple2gs );
 
 NVRAM_HANDLER( apple2gs );
 
+void apple2gs_doc_irq(int state);
+
 #endif /* APPLE2GS_H */
