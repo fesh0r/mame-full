@@ -148,7 +148,7 @@ void OnSizeSplitter(HWND hWnd)
     GetWindowRect(hWnd, &pRect);
     if (!PtInRect(&pRect, p) || nSplitterOffset[0] >= nSplitterOffset[1])
     {
-#ifdef MESS
+#ifdef MESS_PICKER
         nSplitterOffset[0] = (pRect.right - pRect.left) / 5;
 #else
         nSplitterOffset[0] = (pRect.right - pRect.left) / 4;
@@ -160,14 +160,14 @@ void OnSizeSplitter(HWND hWnd)
     ClientToScreen(splitter[1].m_hWnd, &p);
     if (!PtInRect(&pRect, p) || nSplitterOffset[1] <= nSplitterOffset[0])
     {
-#ifdef MESS
+#ifdef MESS_PICKER
         nSplitterOffset[1] = ((pRect.right - pRect.left) * 2) / 5;
 #else
         nSplitterOffset[1] = (pRect.right - pRect.left) / 2;
 #endif
         changed = TRUE;
     }
-#ifdef MESS
+#ifdef MESS_PICKER
     if (!PtInRect(&pRect, p) || nSplitterOffset[2] <= nSplitterOffset[1])
     {
         nSplitterOffset[2] = nSplitterOffset[1] + 8;

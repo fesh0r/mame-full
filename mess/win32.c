@@ -33,14 +33,14 @@ typedef struct {
 } OSD_WIN32_FIND_DATA;
 
 static char szCurrentDirectory[MAX_PATH];
-static char crcfilename[MAX_PATH] = "";
-static char pcrcfilename[MAX_PATH] = "";
+char crcfilename[MAX_PATH] = "";
+char pcrcfilename[MAX_PATH] = "";
 const char *crcfile = crcfilename;
 const char *pcrcfile = pcrcfilename;
 
 /* ************************************************************************ */
 
-static char *strncpyz(char *dest, const char *source, size_t len)
+char *strncpyz(char *dest, const char *source, size_t len)
 {
 	char *s;
 	if (len) {
@@ -53,7 +53,7 @@ static char *strncpyz(char *dest, const char *source, size_t len)
 	return s;
 }
 
-static char *strncatz(char *dest, const char *source, size_t len)
+char *strncatz(char *dest, const char *source, size_t len)
 {
 	int l;
 	l = strlen(dest);
@@ -134,7 +134,7 @@ static void checkinit_curdir(void)
 		GetCurrentDirectoryA(sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]), szCurrentDirectory);
 		/* Make sure there is a trailing backslash */
 		p = strrchr(szCurrentDirectory, '\\');
-		if (p && !p[1])
+		if (!p || p[1])
 			strncatz(szCurrentDirectory, "\\", sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
 	}
 }
@@ -153,17 +153,17 @@ static const char *resolve_path(const char *path, char *buf, size_t buflen)
 		return szCurrentDirectory;
 
 	/* Absolute pathname? */
-	if (path[1] == ':')
-		return path;
-	if (path[0] == '\\') {
-		/* UNC pathname? */
-		if (path[1] == '\\')
-			return path;
-
-		/* Absolute pathname without drive letter */
-		buf[0] = szCurrentDirectory[0];
-		buf[1] = szCurrentDirectory[1];
-		buf[2] = '\0';
+	if ((path[0] == '\\') || (path[1] == ':')) {
+		if ((path[1] == ':') || (path[1] == '\\')) {
+			/* Absolute pathname with drive letter or UNC pathname */
+			buf[0] = '\0';
+		}
+		else {
+			/* Absolute pathname without drive letter */
+			buf[0] = szCurrentDirectory[0];
+			buf[1] = szCurrentDirectory[1];
+			buf[2] = '\0';
+		}
 		strncatz(buf, path, buflen);
 		return buf;
 	}
@@ -191,9 +191,9 @@ static const char *resolve_path(const char *path, char *buf, size_t buflen)
 			path++;
 	}
 
-	strncatz(buf, "\\", buflen);
-	if (path && *path)
+	if (path && *path) {
 		strncatz(buf, path, buflen);
+	}
 	return buf;
 }
 
@@ -246,7 +246,7 @@ void *osd_dir_open(const char *dirname, const char *filemask)
 		goto error;
 	strcpy(tmpbuf, dirname);
 	s = tmpbuf + strlen(tmpbuf);
-	*s = '\\';
+	s[0] = '\\';
 	strcpy(s + 1, filemask);
 
 	pfd->hDir = FindFirstFileA(tmpbuf, &pfd->finddata);
@@ -314,8 +314,13 @@ void osd_change_directory(const char *dir)
 	const char *s;
 
 	s = resolve_path(dir, buf, sizeof(buf) / sizeof(buf[0]));
-	if (s && (s != szCurrentDirectory) && dir_exists(s)) {
-		strncpyz(szCurrentDirectory, s, sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
+	if (s && (s != szCurrentDirectory)) {
+		/* If there is no trailing backslash, add one */
+		if ((s == buf) && (buf[strlen(buf)-1] != '\\'))
+			strncatz(buf, "\\", sizeof(buf) / sizeof(buf[0]));
+
+		if (dir_exists(s))
+			strncpyz(szCurrentDirectory, s, sizeof(szCurrentDirectory) / sizeof(szCurrentDirectory[0]));
 	}
 }
 
@@ -332,210 +337,6 @@ const char *osd_get_cwd(void)
 {
 	checkinit_curdir();
 	return szCurrentDirectory;
-}
-
-/* ************************************************************************ */
-/* UI                                                                       */
-/* ************************************************************************ */
-
-typedef struct {
-	int type;
-	const char *ext;
-} mess_image_type;
-
-static void SetupImageTypes(int (*GetSelectedPickItem)(void), mess_image_type *types, int count, BOOL bZip)
-{
-    const struct IODevice *dev;
-	int num_extensions = 0;
-	int i;
-
-	count--;
-    dev = drivers[GetSelectedPickItem()]->dev;
-
-	if (bZip) {
-		types[num_extensions].type = 0;
-		types[num_extensions].ext = "zip";
-		num_extensions++;
-	}
-
-	for (i = 0; dev[i].type != IO_END; i++) {
-		const char *ext = dev[i].file_extensions;
-		while(*ext) {
-			if (num_extensions < count) {
-				types[num_extensions].type = dev[i].type;
-				types[num_extensions].ext = ext;
-				num_extensions++;
-			}
-			ext += strlen(ext) + 1;
-		}
-	}
-	types[num_extensions].type = 0;
-	types[num_extensions].ext = NULL;
-}
-
-static BOOL CommonFileImageDialog(HWND hMain, char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
-{
-    BOOL success;
-    OPENFILENAME of;
-	char szFilter[2048];
-	LPSTR s;
-	int i;
-
-	s = szFilter;
-
-	// Common image types
-	strcpy(s, "Common image types");
-	s += strlen(s) + 1;
-	for (i = 0; imagetypes[i].ext; i++) {
-		*(s++) = '*';
-		*(s++) = '.';
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = ';';
-	}
-	*(s++) = '\0';
-
-	// All files
-	strcpy(s, "All files (*.*)");
-	s += strlen(s) + 1;
-	strcpy(s, "*.*");
-	s += strlen(s) + 1;
- 
-	// The others
-	for (i = 0; imagetypes[i].ext; i++) {
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		strcpy(s, " files (*.");
-		s += strlen(s);
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = ')';
-		*(s++) = '\0';
-		*(s++) = '*';
-		*(s++) = '.';
-		strcpy(s, imagetypes[i].ext);
-		s += strlen(s);
-		*(s++) = '\0';
-	}
-	*(s++) = '\0';
-
-    of.lStructSize = sizeof(of);
-    of.hwndOwner = hMain;
-    of.hInstance = NULL;
-	of.lpstrFilter = szFilter;
-    of.lpstrCustomFilter = NULL;
-    of.nMaxCustFilter = 0;
-    of.nFilterIndex = 1;
-    of.lpstrFile = filename;
-    of.nMaxFile = MAX_PATH;
-    of.lpstrFileTitle = NULL;
-    of.nMaxFileTitle = 0;
-    of.lpstrInitialDir = last_directory;
-    of.lpstrTitle = NULL; 
-    of.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-    of.nFileOffset = 0;
-    of.nFileExtension = 0;
-    of.lpstrDefExt = "rom"; 
-    of.lCustData = 0;
-    of.lpfnHook = NULL;
-    of.lpTemplateName = NULL;
-    
-    success = cfd(&of);
-    if (success)
-    {
-        //GetDirectory(filename,last_directory,sizeof(last_directory));
-    }
-    
-    return success;
-}
-
-void MessImageConfig(HWND hMain, int (*GetSelectedPickItem)(void), char *last_directory, int image)
-{
-    INP_HEADER inpHeader;
-    char filename[MAX_PATH];
-    LPTREEFOLDER lpOldFolder = GetCurrentFolder();
-    LPTREEFOLDER lpNewFolder = GetFolder(00);
-    DWORD        dwOldFilters = 0;
-    int          nOldPick = GetSelectedPickItem();
-
-
-	MENUITEMINFO	im_mmi;
-	int im;
-    HMENU           hMenu = GetMenu(hMain);
-	char buf[200];
-
-	mess_image_type imagetypes[64];
-	int i;
-
-	SetupImageTypes(GetSelectedPickItem, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
-
-    *filename = 0;
-    memset(&inpHeader,'\0', sizeof(INP_HEADER));
-
-    if (CommonFileImageDialog(hMain, last_directory, GetOpenFileName, filename, imagetypes))
-    {
-		char *lpExt;
-		int type = IO_SNAPSHOT;
-		ZIP *pZip = NULL;
-		
-		lpExt = strrchr(filename, '.');
-
-		/* Are we a ZIP file? */
-		if (!stricmp(lpExt, ".ZIP")) {
-			pZip = openzip(filename);
-			if (pZip) {
-				struct zipent *pZipEnt = readzip(pZip);
-				if (pZipEnt) {
-					lpExt = strrchr(pZipEnt->name, '.');
-				}
-			}
-		}
-
-		if (lpExt)
-			lpExt++;
-
-		type = IO_CARTSLOT;
-
-		for (i = 0; imagetypes[i].ext; i++) {
-			if (!stricmp(lpExt, imagetypes[i].ext)) {
-				type = imagetypes[i].type;
-				break;
-			}
-		}
-
-		if (pZip)
-			closezip(pZip);
-
-		options.image_files[image].type = type;
-		options.image_files[image].name = strdup(filename);
-		if (options.image_count <= image)
-			options.image_count = image + 1;
-    }
-
-	sprintf(buf,"Image %d: %s", image, filename);
-	im_mmi.cbSize = sizeof(im_mmi);
-	im_mmi.fMask = MIIM_TYPE;
-	im_mmi.fType = MFT_STRING;
-	im_mmi.dwTypeData = buf;
-	im_mmi.cch = strlen(im_mmi.dwTypeData);
-
-	switch(image) {
-	case 0:
-		im=ID_IMAGE0_CONFIG;
-		break;
-	case 1:
-		im=ID_IMAGE1_CONFIG;
-		break;
-	case 2:
-		im=ID_IMAGE2_CONFIG;
-		break;
-	case 3:
-		im=ID_IMAGE3_CONFIG;
-		break;
-	}
-	SetMenuItemInfo(hMenu,im,FALSE,&im_mmi);
-
-	EnableMenuItem(hMenu, im, MF_ENABLED);
 }
 
 static int MessImageFopenZip(const char *filename, mame_file *mf, int write)
@@ -620,8 +421,10 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 			if (!s)
 				return 0;
 			strcpy(s, filename);
-//			strcpy(s + (strlen(filename) - strlen(lpExt)),zipext);
-			strcpy(s + (lpExt - filename), zipext);
+			if (lpExt)
+				strcpy(s + (lpExt - filename), zipext);
+			else
+				strcat(s, zipext);
 			found = MessImageFopenZip(s, mf, write);
 			free(s);
 			if (found)
@@ -638,66 +441,5 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 		}
 	}
 	return 1;
-}
-
-void MessSetupCrc(int game_index)
-{
-	const char *crcdir = "crc";
-
-	/* Build the CRC database filename */
-	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
-	if (drivers[game_index]->clone_of->name)
-		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
-	else
-		pcrcfilename[0] = 0;
-}
-
-/* ------------------------------------------------------------------------ */
-
-static int SliderWithTextChange(HWND hDlg, int nSlider, int nSliderText)
-{
-	char buf[100];
-	int  nValue;
-
-	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hDlg, nSlider), TBM_GETPOS, 0, 0);
-    
-	/* Set the static display to the new value */
-	sprintf(buf, "%i", nValue);
-	Static_SetText(GetDlgItem(hDlg, nSliderText), buf);
-	return nValue;
-}
-
-static void SliderSetRange(HWND hDlg, int nSlider, int nLow, int nHigh)
-{
-	SendMessage(GetDlgItem(hDlg, nSlider), TBM_SETRANGE,
-		(WPARAM)FALSE,
-		(LPARAM)MAKELONG(nLow, nHigh));
-}
-
-static BOOL SaveNewImageFileAs(HWND hDlg, LPCSTR lpstrFilter, LPSTR lpBuffer, UINT iBufferLen)
-{
-    OPENFILENAME of;
-    of.lStructSize = sizeof(of);
-    of.hwndOwner = hDlg;
-    of.hInstance = NULL;
-	of.lpstrFilter = lpstrFilter;
-    of.lpstrCustomFilter = NULL;
-    of.nMaxCustFilter = 0;
-    of.nFilterIndex = 1;
-    of.lpstrFile = lpBuffer;
-    of.nMaxFile = iBufferLen;
-    of.lpstrFileTitle = NULL;
-    of.nMaxFileTitle = 0;
-    of.lpstrInitialDir = NULL;
-    of.lpstrTitle = NULL; 
-    of.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-    of.nFileOffset = 0;
-    of.nFileExtension = 0;
-    of.lpstrDefExt = "img"; 
-    of.lCustData = 0;
-    of.lpfnHook = NULL;
-    of.lpTemplateName = NULL;
-	return GetSaveFileName(&of);
 }
 

@@ -5,13 +5,13 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=4
+BETA_VERSION = -DBETA_VERSION=5
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
-MAME_DEBUG = -DMAME_DEBUG
+# MAME_DEBUG = -DMAME_DEBUG
 
 # if MAME_MMX is defined, MMX will be compiled in
 MAME_MMX = -DMAME_MMX
@@ -43,7 +43,7 @@ ASMFLAGS = -f win32
 ASMDEFS =
 
 # uncomment out the DEBUG = line to build a debugging version of mame32.
-DEBUG = 1
+# DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
@@ -90,7 +90,7 @@ z80DEF =
 
 DEFS   = -DLSB_FIRST -DWIN32 -DPI=3.1415926535 \
          -DINLINE="static __inline" -Dinline=__inline -D__inline__=__inline \
-	 -DPNG_SAVE_SUPPORT -D_WINDOWS -DZLIB_DLL -Dvsscanf=sscanf
+	 -DPNG_SAVE_SUPPORT -D_WINDOWS -DZLIB_DLL
 
 AUDIOFLAGS =
 AUDIOOBJS  =
@@ -171,7 +171,7 @@ WIN32_OBJS = \
          $(OBJ)/Win32/debug.o \
          $(OBJ)/Win32/fmsynth.o $(OBJ)/Win32/NTFMSynth.o \
          $(OBJ)/Win32/audit32.o \
-         $(OBJ)/Win32/Win32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
+         $(OBJ)/Win32/mess32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
          $(OBJ)/Win32/Screenshot.o $(OBJ)/Win32/TreeView.o $(OBJ)/Win32/Splitters.o \
          $(OBJ)/Win32/options.o $(OBJ)/Win32/Bitmask.o $(OBJ)/Win32/DataMap.o \
          $(OBJ)/Win32/Avi.o \
@@ -206,7 +206,8 @@ CPUOBJS = \
           $(OBJ)/cpu/sc61860/sc61860.o \
           $(OBJ)/cpu/m6502/m4510.o \
           $(OBJ)/cpu/i86/i286.o \
-		  $(OBJ)/cpu/tms9900/tms9995.o
+          $(OBJ)/cpu/tms9900/tms9995.o \
+          $(OBJ)/cpu/arm/arm.o
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
@@ -230,7 +231,8 @@ DBGOBJS = \
           $(OBJ)/cpu/ccpu/ccpudasm.o \
           $(OBJ)/cpu/adsp2100/2100dasm.o \
           $(OBJ)/cpu/pdp1/pdp1dasm.o \
-          $(OBJ)/cpu/sc61860/disasm.o
+          $(OBJ)/cpu/sc61860/disasm.o \
+          $(OBJ)/cpu/arm/dasm.o
 
 SNDOBJS = \
          $(OBJ)/sound/samples.o \
@@ -449,7 +451,6 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/uk101.o	\
           $(OBJ)/machine/8255ppi.o       \
 	  $(OBJ)/mess/machine/flopdrv.o  \
-          $(OBJ)/mess/vidhrdw/hd6845s.o  \
           $(OBJ)/mess/vidhrdw/amstrad.o  \
           $(OBJ)/mess/vidhrdw/kc.o       \
           $(OBJ)/mess/machine/amstrad.o  \
@@ -510,7 +511,8 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/lisa.o	\
           $(OBJ)/mess/machine/atom.o     \
           $(OBJ)/mess/vidhrdw/atom.o     \
-          $(OBJ)/mess/systems/atom.o	\
+	  $(OBJ)/mess/systems/atom.o	 \
+	  $(OBJ)/mess/systems/a310.o	\
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o	\
@@ -666,6 +668,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {src/cpu/sc61860}.c{$(OBJ)/cpu/sc61860}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/arm}.c{$(OBJ)/cpu/arm}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/vidhrdw}.c{$(OBJ)/vidhrdw}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -758,6 +763,7 @@ $(OBJ)/cpu/t11/t11.o:           src/cpu/t11/t11.c src/cpu/t11/t11.h src/cpu/t11/
 $(OBJ)/cpu/m68000/m68kcpu.o:    $(OBJ)/cpu/m68000/m68kops.c src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
 $(OBJ)/cpu/ccpu/ccpu.o:         src/cpu/ccpu/ccpu.c src/cpu/ccpu/ccpu.h src/cpu/ccpu/ccputabl.c
 $(OBJ)/cpu/konami/konami.o:     src/cpu/konami/konami.c src/cpu/konami/konami.h src/cpu/konami/konamops.c src/cpu/konami/konamtbl.c
+$(OBJ)/win32/mess32ui.o:		src/win32/mess32ui.c src/win32/win32ui.c src/win32/win32ui.h
 
 .IGNORE:
 
@@ -788,6 +794,7 @@ maketree:
 	md $(OBJ)\cpu\pdp1
 	md $(OBJ)\cpu\mips
 	md $(OBJ)\cpu\sc61860
+	md $(OBJ)\cpu\arm
 	md $(OBJ)\sound
 	md $(OBJ)\drivers
 	md $(OBJ)\machine
@@ -840,6 +847,7 @@ clean:
 	del $(OBJ)\cpu\pdp1\*.o
 	del $(OBJ)\cpu\mips\*.o
 	del $(OBJ)\cpu\sc61860\*.o
+	del $(OBJ)\cpu\arm\*.o
 	del $(OBJ)\sound\*.o
 	del $(OBJ)\drivers\*.o
 	del $(OBJ)\machine\*.o
@@ -896,6 +904,7 @@ cleandebug:
 	del $(OBJ)\cpu\adsp2100\*.o
 	del $(OBJ)\cpu\pdp1\*.o
 	del $(OBJ)\cpu\sc61860\*.o
+	del $(OBJ)\cpu\arm\*.o
 	del $(EXENAME)
 
 cleantiny:

@@ -33,8 +33,7 @@
 #define MAX_GAMEDESC 256
 
 #ifdef MESS
-/* This is not ready yet */
-/* #define MESS_PICKER */
+#define MESS_PICKER
 #endif
 
 enum {
@@ -215,7 +214,7 @@ typedef struct
     char*    romdirs;
     char*    sampledirs;
 #ifdef MESS_PICKER
-	char*    imgdumpdirs;
+	char*    softwaredirs;
 #endif
     char*    cfgdir;
     char*    hidir;
@@ -336,8 +335,8 @@ const char* GetSampleDirs(void);
 void  SetSampleDirs(const char* paths);
 
 #ifdef MESS_PICKER
-const char* GetImgdumpDirs(void);
-void  SetImgdumpDirs(const char* paths);
+const char* GetSoftwareDirs(void);
+void  SetSoftwareDirs(const char* paths);
 #endif
 
 const char* GetCfgDir(void);

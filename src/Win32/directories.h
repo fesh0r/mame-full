@@ -15,10 +15,14 @@
 
 #ifdef MESS
 #define HASDIR_SAMPLE	0
-#define HASDIR_IMGDUMP	0
+#ifdef MESS_PICKER
+#define HASDIR_SOFTWARE	1
+#else
+#define HASDIR_SOFTWARE	0
+#endif
 #else
 #define HASDIR_SAMPLE	1
-#define HASDIR_IMGDUMP	0
+#define HASDIR_SOFTWARE	0
 #endif
 
 /* Dialog return codes */
@@ -29,8 +33,8 @@
 #define DIRDLG_IMG          0x0100
 #define DIRDLG_INP          0x0200
 
-#if HASDIR_IMGDUMP
-#define DIRDLG_IMGDUMPS		0x0400
+#if HASDIR_SOFTWARE
+#define DIRDLG_SOFTWARE		0x0400
 #endif
 
 INT_PTR CALLBACK DirectoriesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);

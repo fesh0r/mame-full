@@ -39,7 +39,7 @@ typedef signed int			INT32;
 typedef signed __int64	    INT64;
 
 /* Combine to 32-bit integers into a 64-bit integer */
-#define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (B))
+#define COMBINE_64_32_32(A,B)     ((((UINT64)(A))<<32) | (UINT32)(B))
 #define COMBINE_U64_U32_U32(A,B)  COMBINE_64_32_32(A,B)
 
 /* Return upper 32 bits of a 64-bit integer */
@@ -166,10 +166,11 @@ typedef union {
 #define HAS_TMS320C10   0
 #define HAS_CCPU        0
 #define HAS_ADSP2100    0
+#define HAS_ADSP2105    0
 #define HAS_PDP1        1
 #define HAS_MIPS        0
 #define HAS_SC61860     1
-#define HAS_ARM			1
+#define HAS_ARM         1
 #else
 #define HAS_Z80         1
 #define HAS_Z80GB       0
@@ -233,9 +234,11 @@ typedef union {
 #define HAS_TMS320C10   1
 #define HAS_CCPU        1
 #define HAS_ADSP2100    1
+#define HAS_ADSP2105    1
 #define HAS_PDP1        0
 #define HAS_MIPS        1
 #define HAS_SC61860     0
+#define ARM             0
 #endif
 
 #endif  /* !NEOMAME */
@@ -309,6 +312,7 @@ typedef union {
 #define HAS_YM3438      1
 #define HAS_YM2413      1
 #define HAS_YM3812      1
+#define HAS_YMZ280B     1
 #define HAS_YM3526      1
 #define HAS_Y8950       1
 #define HAS_SN76477     1

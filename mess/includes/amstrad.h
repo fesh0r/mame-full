@@ -54,7 +54,7 @@ This gives a total of 19968 NOPs per frame. */
 #define AMSTRAD_MONITOR_SCREEN_WIDTH	(64*16)
 #define AMSTRAD_MONITOR_SCREEN_HEIGHT	(39*8)
 
-#ifdef AMSTRAD_VIDEO_USE_EVENT_LIST
+#if AMSTRAD_VIDEO_USE_EVENT_LIST || 1
 /* codes for eventlist */
 enum
 {

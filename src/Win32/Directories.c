@@ -34,8 +34,8 @@ enum {
 #if HASDIR_SAMPLE
 	SAMPLE,
 #endif
-#if HASDIR_IMGDUMP
-	IMGDUMP,
+#if HASDIR_SOFTWARE
+	SOFTWARE,
 #endif
 	CFG,
 	HI,
@@ -56,19 +56,15 @@ enum {
 
 char *dir_names[LASTDIR] = {
     "ROMs",    /* path */
-#if HASDIR_IMGDUMP
-    "Images",  /* path */
+#if HASDIR_SOFTWARE
+    "Software",/* path */
 #endif
 #if HASDIR_SAMPLE
     "Samples", /* path */
 #endif
     "Config",
     "High Scores",
-#ifdef MESS
-	"Pictures",
-#else
-    "Images",
-#endif
+    "Snapshots",
     "Input files (*.inp)",
     "State",
     "Artwork",
@@ -180,8 +176,8 @@ static void DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const c
     switch (nType)
     {
     case ROM:
-#if HASDIR_IMGDUMP
-    case IMGDUMP:
+#if HASDIR_SOFTWARE
+    case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
     case SAMPLE:
@@ -243,8 +239,8 @@ static void UpdateDirectoryList(HWND hDlg)
     switch (nType)
     {
     case ROM:
-#if HASDIR_IMGDUMP
-    case IMGDUMP:
+#if HASDIR_SOFTWARE
+    case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
     case SAMPLE:
@@ -334,18 +330,18 @@ static BOOL Directories_OnInitDialog(HWND hDlg, HWND hwndFocus, LPARAM lParam)
     }
     pDirInfo->m_Paths[ROM].m_bModified = FALSE;
 
-#if HASDIR_IMGDUMP
-    strcpy(buf, GetImgdumpDirs());
+#if HASDIR_SOFTWARE
+    strcpy(buf, GetSoftwareDirs());
 
-    pDirInfo->m_Paths[IMGDUMP].m_NumDirectories = 0;
+    pDirInfo->m_Paths[SOFTWARE].m_NumDirectories = 0;
     token = strtok(buf, ";");
-    while ((DirInfo_NumDir(pDirInfo, IMGDUMP) < MAX_DIRS) && token)
+    while ((DirInfo_NumDir(pDirInfo, SOFTWARE) < MAX_DIRS) && token)
     {
-        strcpy(DirInfo_Path(pDirInfo, IMGDUMP, DirInfo_NumDir(pDirInfo, IMGDUMP)), token);
-        DirInfo_NumDir(pDirInfo, IMGDUMP)++;
+        strcpy(DirInfo_Path(pDirInfo, SOFTWARE, DirInfo_NumDir(pDirInfo, SOFTWARE)), token);
+        DirInfo_NumDir(pDirInfo, SOFTWARE)++;
         token = strtok(NULL, ";");
     }
-    pDirInfo->m_Paths[IMGDUMP].m_bModified = FALSE;
+    pDirInfo->m_Paths[SOFTWARE].m_bModified = FALSE;
 #endif
 
 #if HASDIR_SAMPLE
@@ -417,21 +413,21 @@ static void Directories_OnOk(HWND hDlg)
         nResult |= DIRDLG_ROMS;
     }
 
-#if HASDIR_IMGDUMP
-    if (pDirInfo->m_Paths[IMGDUMP].m_bModified == TRUE)
+#if HASDIR_SOFTWARE
+    if (pDirInfo->m_Paths[SOFTWARE].m_bModified == TRUE)
     {
         memset(buf, 0, MAX_PATH * MAX_DIRS);
-        nPaths = DirInfo_NumDir(pDirInfo, IMGDUMP);
-        for (i = 0; i < DirInfo_NumDir(pDirInfo, IMGDUMP); i++)
+        nPaths = DirInfo_NumDir(pDirInfo, SOFTWARE);
+        for (i = 0; i < DirInfo_NumDir(pDirInfo, SOFTWARE); i++)
         {
-            strcat(buf, FixSlash(DirInfo_Path(pDirInfo, IMGDUMP, i)));
+            strcat(buf, FixSlash(DirInfo_Path(pDirInfo, SOFTWARE, i)));
 
             if (i < nPaths - 1)
                 strcat(buf, ";");
         }
-        SetImgdumpDirs(buf);
+        SetSoftwareDirs(buf);
 
-        nResult |= DIRDLG_IMGDUMPS;
+        nResult |= DIRDLG_SOFTWARE;
     }
 #endif
 
@@ -494,8 +490,8 @@ static void Directories_OnInsert(HWND hDlg)
         switch (nType)
         {
         case ROM:
-#if HASDIR_IMGDUMP
-		case IMGDUMP:
+#if HASDIR_SOFTWARE
+		case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
 		case SAMPLE:
@@ -540,8 +536,8 @@ static void Directories_OnBrowse(HWND hDlg)
     switch (nType)
     {
     case ROM:
-#if HASDIR_IMGDUMP
-    case IMGDUMP:
+#if HASDIR_SOFTWARE
+    case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
     case SAMPLE:
@@ -587,8 +583,8 @@ static void Directories_OnDelete(HWND hDlg)
     switch (nType)
     {
     case ROM:
-#if HASDIR_IMGDUMP
-    case IMGDUMP:
+#if HASDIR_SOFTWARE
+    case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
     case SAMPLE:
@@ -633,8 +629,8 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
     switch (nType)
     {
     case ROM:
-#if HASDIR_IMGDUMP
-	case IMGDUMP:
+#if HASDIR_SOFTWARE
+	case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
 	case SAMPLE:
@@ -692,8 +688,8 @@ static BOOL Directories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR)
         switch (nType)
         {
         case ROM:
-#if HASDIR_IMGDUMP
-		case IMGDUMP:
+#if HASDIR_SOFTWARE
+		case SOFTWARE:
 #endif
 #if HASDIR_SAMPLE
 		case SAMPLE:

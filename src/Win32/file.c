@@ -124,16 +124,16 @@ static tDirPaths RomDirPath;
 static tDirPaths SampleDirPath;
 
 #ifdef MESS_PICKER
-static tDirPaths ImgdumpDirPath;
+static tDirPaths SoftwareDirPath;
 
-int GetMessImgdumpPathCount(void)
+int GetMessSoftwarePathCount(void)
 {
-	return ImgdumpDirPath.m_NumPaths;
+	return SoftwareDirPath.m_NumPaths;
 }
 
-const char *GetMessImgdumpPath(int i)
+const char *GetMessSoftwarePath(int i)
 {
-	return ImgdumpDirPath.m_Paths[i];
+	return SoftwareDirPath.m_Paths[i];
 }
 #endif
 
@@ -154,8 +154,8 @@ static int File_init(void)
     SetPaths(&SampleDirPath, GetSampleDirs());
 
 #ifdef MESS_PICKER
-    memset(&ImgdumpDirPath, 0, sizeof(tDirPaths));
-    SetPaths(&ImgdumpDirPath, GetImgdumpDirs());
+    memset(&SoftwareDirPath, 0, sizeof(tDirPaths));
+    SetPaths(&SoftwareDirPath, GetSoftwareDirs());
 #endif
     return 0;
 }
@@ -491,7 +491,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
 						sprintf(name, "%s/cabinets.zip", dirname);
 				}
                 else
-                    sprintf(name, "%s/images.zip", dirname);
+                    sprintf(name, "%s/snap.zip", dirname);
 
                 if (load_zipped_file(name, imagename, &mf->file_data, &mf->file_length) == 0)
                 {
@@ -514,7 +514,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                         sprintf(name, "%s/cabinets.zip/%s.%s", dirname, gamename, pic_format[i]);
                 }
                 else
-                    sprintf(name, "%s/images.zip/%s.%s", dirname, gamename, pic_format[i]);
+                    sprintf(name, "%s/snap.zip/%s.%s", dirname, gamename, pic_format[i]);
                 mf->fptr = fopen(name, "rb");
                 mf->access_type = ACCESS_FILE;
                 if ((found = mf->fptr != 0) != 0)

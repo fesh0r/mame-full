@@ -173,7 +173,7 @@ REG_OPTIONS regSettings[] = {
     {"RomDirs",         RO_PSTRING, &settings.romdirs,          0, 0},
     {"SampleDirs",      RO_PSTRING, &settings.sampledirs,       0, 0},
 #ifdef MESS_PICKER
-    {"ImgDumpDirs",      RO_PSTRING,&settings.imgdumpdirs,      0, 0},
+    {"SoftwareDirs",    RO_PSTRING, &settings.softwaredirs,     0, 0},
 #endif
     {"CfgDir",          RO_PSTRING, &settings.cfgdir,           0, 0},
     {"HiDir",           RO_PSTRING, &settings.hidir,            0, 0},
@@ -351,16 +351,12 @@ void OptionsInit(int total_games)
     settings.romdirs     = strdup(".;roms");
     settings.sampledirs  = strdup(".;samples");
 #ifdef MESS_PICKER
-    settings.imgdumpdirs = strdup("roms;images");
+    settings.softwaredirs = strdup("roms;software");
 #endif
     settings.cfgdir      = strdup("cfg");
     settings.hidir       = strdup("hi");
     settings.inpdir      = strdup("inp");
-#ifdef MESS_PICKER
-    settings.imgdir      = strdup("pictures");
-#else
-    settings.imgdir      = strdup("images");
-#endif
+    settings.imgdir      = strdup("snap");
     settings.statedir    = strdup("sta");
     settings.artdir      = strdup("artwork");
 	settings.memcarddir  = strdup("memcard");
@@ -945,21 +941,21 @@ void SetSampleDirs(const char* paths)
 }
 
 #ifdef MESS_PICKER
-const char* GetImgdumpDirs(void)
+const char* GetSoftwareDirs(void)
 {
-    return settings.imgdumpdirs;
+    return settings.softwaredirs;
 }
 
-void SetImgdumpDirs(const char* paths)
+void SetSoftwareDirs(const char* paths)
 {
-    if (settings.imgdumpdirs != NULL)
+    if (settings.softwaredirs != NULL)
     {
-        free(settings.imgdumpdirs);
-        settings.imgdumpdirs = NULL;
+        free(settings.softwaredirs);
+        settings.softwaredirs = NULL;
     }
 
     if (paths != NULL)
-        settings.imgdumpdirs = strdup(paths);
+        settings.softwaredirs = strdup(paths);
 }
 #endif
 

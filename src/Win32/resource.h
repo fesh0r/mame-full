@@ -287,10 +287,18 @@
 #ifdef MESS
 #define IDC_SPLITTER3				    2000
 #define IDC_LIST2                       2001
+#define IDI_WIN_FLOP                    2002
+#define IDI_WIN_CASS                    2003
+#define IDI_WIN_SERL                    2004
+#define IDI_WIN_SNAP                    2005
+#define IDI_WIN_PRIN                    2006
+#define IDI_WIN_HARD                    2007
+#if 0
 #define ID_IMAGE0_CONFIG                50000
 #define ID_IMAGE1_CONFIG                50001
 #define ID_IMAGE2_CONFIG                50002
 #define ID_IMAGE3_CONFIG                50003
+#endif
 #endif
 
 // Next default values for new objects

@@ -2,6 +2,8 @@
 //
 #include "resource.h"
 
+#define MESS_PICKER
+
 // Generated Help ID header file
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "resource.hm"
@@ -104,7 +106,7 @@ BEGIN
         MENUITEM "Default &Options...",         ID_OPTIONS_DEFAULTS
         MENUITEM "&Reset to Default...",        ID_OPTIONS_RESET_DEFAULTS
         MENUITEM "&Startup Options...",         ID_OPTIONS_STARTUP
-#ifdef MESS
+#if defined(MESS) && !defined(MESS_PICKER)
         MENUITEM SEPARATOR
         MENUITEM "Image 0",                     ID_IMAGE0_CONFIG
         MENUITEM "Image 1",                     ID_IMAGE1_CONFIG
@@ -301,6 +303,14 @@ IDI_SOUND               ICON    DISCARDABLE     "Res\\samples.ico"
 IDI_DISPLAY             ICON    DISCARDABLE     "Res\\display.ico"
 IDI_CHECKMARK           ICON    DISCARDABLE     "Res\\checkmark.ico"
 IDI_NETPLAY             ICON    DISCARDABLE     "Res\\netplay.ico"
+#if defined(MESS) && defined(MESS_PICKER)
+IDI_WIN_FLOP            ICON    DISCARDABLE     "res/win_flop.ico"
+IDI_WIN_CASS            ICON    DISCARDABLE     "res/win_cass.ico"
+IDI_WIN_SERL            ICON    DISCARDABLE     "res/win_serl.ico"
+IDI_WIN_SNAP            ICON    DISCARDABLE     "res/win_snap.ico"
+IDI_WIN_PRIN            ICON    DISCARDABLE     "res/win_prin.ico"
+IDI_WIN_HARD            ICON    DISCARDABLE     "res/win_hard.ico"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
