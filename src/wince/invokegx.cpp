@@ -90,7 +90,7 @@ void swap(T *t1, T *t2)
 	*t2 = temp;
 }
 
-static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
+static struct gxstate_params *create_gxstate(mame_bitmap *bitmap, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
 {
 	struct gxstate_params *params;
 
@@ -367,7 +367,7 @@ void __fastcall blit2(pixtyp *pixels, struct gxstate_params *params, blend_funct
 
 
 // The uber-function that performs blits
-void gx_blit(struct osd_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
+void gx_blit(struct mame_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup)
 {
 	BYTE *pvBits;
 	DWORD ffFormat;

@@ -197,6 +197,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 			imgtype = MessLookupImageType(imagetypes, lpExt);
 			if (imgtype) {
                 type = imgtype->type;
+#if HAS_CRC
 				if (crc && zipcrc) {
 					if (imgtype->partialcrc) {
 						char *buf = NULL;
@@ -212,6 +213,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 						*crc = zipcrc;
 					}
 				}
+#endif /* HAS_CRC */
 			}
         }
 

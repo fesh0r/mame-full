@@ -191,18 +191,20 @@ static struct win_effect_data effect_table[] =
 	{ "scan75v", EFFECT_SCANLINE_75V,2, 2, 2, 2 },
 };
 
+
+
 //============================================================
 //	PROTOTYPES
 //============================================================
 
 static void update_system_menu(void);
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update);
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update);
 
-static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update);
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update);
 
 static int create_debug_window(void);
-static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap);
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 
@@ -684,7 +686,7 @@ static void update_system_menu(void)
 //	win_update_video_window
 //============================================================
 
-void win_update_video_window(struct osd_bitmap *bitmap)
+void win_update_video_window(struct mame_bitmap *bitmap)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
@@ -701,9 +703,9 @@ void win_update_video_window(struct osd_bitmap *bitmap)
 //	draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct osd_bitmap *bitmap, int update)
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update)
 {
-	static struct osd_bitmap *last;
+	static struct mame_bitmap *last;
 
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
@@ -989,6 +991,7 @@ void win_constrain_to_aspect_ratio(RECT *rect, int adjustment)
 			break;
 	}
 }
+
 
 
 //============================================================
@@ -1439,7 +1442,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 #ifdef UNDER_CE
-static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
 {
 	if (win_video_window)
 		gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);
@@ -1500,7 +1503,7 @@ static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 */
 }
 #else // !UNDER_CE
-static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;
@@ -1689,7 +1692,7 @@ static int create_debug_window(void)
 //	win_update_debug_window
 //============================================================
 
-void win_update_debug_window(struct osd_bitmap *bitmap)
+void win_update_debug_window(struct mame_bitmap *bitmap)
 {
 #ifdef MAME_DEBUG
 	// if the window isn't 8bpp, force it there and clear it
@@ -1717,9 +1720,9 @@ void win_update_debug_window(struct osd_bitmap *bitmap)
 //	draw_debug_contents
 //============================================================
 
-static void draw_debug_contents(HDC dc, struct osd_bitmap *bitmap)
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap)
 {
-	static struct osd_bitmap *last;
+	static struct mame_bitmap *last;
 	UINT8 *bitmap_base;
 	int i;
 

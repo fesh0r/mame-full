@@ -106,7 +106,7 @@ int gx_open_input(void);
 int gx_close_input(void);
 int gx_open_display(HWND hWnd, int *rsrc_shift, int *gsrc_shift, int *bsrc_shift, int *rdest_shift, int *gdest_shift, int *bdest_shift);
 int gx_close_display(void);
-void gx_blit(struct osd_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
+void gx_blit(struct mame_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
 
 #ifdef __cplusplus
 };

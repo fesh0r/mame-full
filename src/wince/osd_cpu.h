@@ -33,7 +33,11 @@
 
 #ifdef __MWERKS__
 #define INLINE static inline
+#define __extension__
 #endif
+
+int index;	/* avoid a common "shadows global declaration" warning in the DOS build */
+
 
 #ifdef _MSC_VER
 #define strnicmp _strnicmp

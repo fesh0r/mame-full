@@ -37,7 +37,7 @@ static int isrowdirty(UINT8 *db, int rowbytes)
 	return FALSE;
 }
 
-static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -50,7 +50,7 @@ static void build_scanline4_4(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -63,7 +63,7 @@ static void build_scanline4_2(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -76,7 +76,7 @@ static void build_scanline4_1(UINT8 *scanline, UINT8 *vram, int length, int scal
 	}
 }
 
-static void build_scanline4(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline4(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -88,7 +88,7 @@ static void build_scanline4(UINT8 *scanline, UINT8 *vram, int length, int scale,
 	}
 }
 
-static void build_scanline2(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline2(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -102,7 +102,7 @@ static void build_scanline2(UINT8 *scanline, UINT8 *vram, int length, int scale,
 	}
 }
 
-static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	/* Arifacting isn't truely the same resolution as PMODE 3
 	 * it has a bias to the higher resolution.	We need to
@@ -197,11 +197,11 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	 * never happen
 	 */
 
-	UINT32 w;
+	pen_t w;
 	int i;
 	int *b;
 
-	w = ((UINT32) vram[0]) | 0xff00;
+	w = ((pen_t) vram[0]) | 0xff00;
 
 	for (i = 0; i < length; i++) {
 		w <<= 8;
@@ -236,7 +236,7 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	}
 }
 
-static void build_scanline1(UINT8 *scanline, UINT8 *vram, int length, int scale, UINT32 *pens)
+static void build_scanline1(UINT8 *scanline, UINT8 *vram, int length, int scale, pen_t *pens)
 {
 	UINT8 c;
 	int i;
@@ -269,7 +269,7 @@ static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UI
 	}
 }
 
-static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_artifacting *artifact, UINT32 *artifactpens)
+static void map_artifact_palette(pen_t c0, pen_t c1, const struct rasterbits_artifacting *artifact, pen_t *artifactpens)
 {
 	int i, ii, j;
 	int totalcolors, palettebase;
@@ -347,9 +347,9 @@ static void raster_graphics(struct mame_bitmap *bitmap, struct rasterbits_source
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
 	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
-	UINT32 artifactpens[16];
-	UINT32 *pens;
-	UINT32 *mappedpens = NULL;
+	pen_t artifactpens[16];
+	pen_t *pens;
+	pen_t *mappedpens = NULL;
 	UINT8 *vram;
 	UINT8 *vramtop;
 	UINT8 *scanline = NULL;
@@ -359,7 +359,7 @@ static void raster_graphics(struct mame_bitmap *bitmap, struct rasterbits_source
 	int loopbackpixels;
 	int visualbytes;
 	int y, r, i;
-	void (*build_scanline)(UINT8 *, UINT8 *, int , int , UINT32 *) = NULL;
+	void (*build_scanline)(UINT8 *, UINT8 *, int , int , pen_t *) = NULL;
 
 	scanline = malloc(mode->width * scalex);
 	if (!scanline)
@@ -431,7 +431,7 @@ static void raster_graphics(struct mame_bitmap *bitmap, struct rasterbits_source
 		else
 			num_colors = 1 << mode->depth;
 
-		mappedpens = malloc(num_colors * sizeof(UINT32));
+		mappedpens = malloc(num_colors * sizeof(pen_t));
 		if (!mappedpens)
 			goto done; /* PANIC */
 

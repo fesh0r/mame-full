@@ -1,24 +1,19 @@
-/***************************************************************************
-
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
-
- ***************************************************************************/
+//============================================================
+//
+//	osinline.c - Win32 inline functions
+//
+//============================================================
 
 #ifndef __OSINLINE__
 #define __OSINLINE__
 
-/* What goes herein depends heavily on the OS. */
-
 #include "osd_cpu.h"
 #include "video.h"
 
-/* Clean dirty method */
+//============================================================
+//	MACROS
+//============================================================
+
 #define osd_mark_vector_dirty MARK_DIRTY
 
 #if defined(_M_IX86) && defined(_MSC_VER)

@@ -1,10 +1,10 @@
-#include <stdlib.h>
 #include "driver.h"
 #include "info.h"
 #include "audit.h"
 #include "rc.h"
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #ifndef _MSC_VER
 #include <sys/stat.h>
@@ -17,15 +17,14 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE };
 #else
-
 #include "messwin.h"
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR };
 #endif
 
 #define VERIFY_ROMS		0x00000001
@@ -65,6 +64,7 @@ struct rc_option frontend_opts[] = {
 	{ "listdupcrc", NULL, rc_set_int, &list, NULL, LIST_DUPCRC, 0, NULL, "duplicate crc's" },
 	{ "listwrongmerge", "lwm", rc_set_int, &list, NULL, LIST_WRONGMERGE, 0, NULL, "wrong merge attempts" },
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
+	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "palette size" },
 	{ "listcpu", NULL, rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "cpu's used" },
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 	{ "lmr", NULL, rc_set_int, &list, NULL, LIST_LMR, 0, NULL, "missing roms" },
@@ -94,7 +94,13 @@ struct rc_option frontend_opts[] = {
 
 int silentident,knownstatus;
 
-extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+#ifdef _MSC_VER
+#define ZEXPORT WINAPI
+#else
+#define ZEXPORT
+#endif
+
+extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath);
 
@@ -486,7 +492,6 @@ int frontend_help (char *gamename)
 	{
 
         #ifdef MESS
-		//#if 0
 		case LIST_MESSTEXT: /* all mess specific calls here */
 		{
 					/* send the gamename and arg to mess.c */
@@ -1175,6 +1180,15 @@ int frontend_help (char *gamename)
 								j += ROM_GETLENGTH(chunk);
 
 					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
+				}
+			return 0;
+			break;
+
+		case LIST_PALETTESIZE: /* I used this for statistical analysis */
+			for (i = 0; drivers[i]; i++)
+				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+				{
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drivers[i]->drv->total_colors);
 				}
 			return 0;
 			break;
