@@ -82,6 +82,7 @@ typedef struct tms9902_t
 	unsigned int INT : 1;
 
 	unsigned int CLK4M : 1;
+	unsigned int RCL : 2;
 
 	unsigned int RDV8 : 1;
 	unsigned int RDR : 10;
@@ -330,7 +331,7 @@ static void initiate_transmit(int which)
 	/* Do transmit at once (I will add a timer delay some day, maybe) */
 
 	if (tms9902[which].xmit_callback)
-		(*tms9902[which].xmit_callback)(which, tms9902[which].XSR);
+		(*tms9902[which].xmit_callback)(which, tms9902[which].XSR & (0xff >> (3-tms9902[which].RCL)));
 
 	tms9902[which].XSRE = 1;
 
@@ -438,9 +439,22 @@ void tms9902_CRU_write(int which, int offset, int data)
 			{	/* Control Register */
 				if (offset <= 7)
 				{
-					/* ... */
-					if (offset == 3)
+					switch (offset)
+					{
+					case 0:
+					case 1:
+						if (data)
+							tms9902[which].RCL |= mask;
+						else
+							tms9902[which].RCL &= ~mask;
+						break;
+
+					case 3:
 						tms9902[which].CLK4M = data;
+						break;
+
+					/* ... */
+					}
 
 					if (offset == 7)
 						tms9902[which].register_select &= ~register_select_LDCTRL;
