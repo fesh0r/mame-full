@@ -40,17 +40,17 @@ INLINE void sc61860_load(void)
 
 INLINE void sc61860_load_imm_p(UINT8 v)
 {
-	sc61860.p=v;
+	sc61860.p=v&0x7f;
 }
 
 INLINE void sc61860_load_imm_q(UINT8 v)
 {
-	sc61860.q=v;
+	sc61860.q=v&0x7f;
 }
 
 INLINE void sc61860_load_r(void)
 {
-	sc61860.r=sc61860.ram[A];
+	sc61860.r=sc61860.ram[A]&0x7f;
 }
 
 INLINE void sc61860_load_ext(int r)
@@ -151,6 +151,7 @@ INLINE void sc61860_swap(void)
 	sc61860.ram[A]=(t<<4)|((t>>4)&0xf);
 }
 
+// q=reg sideeffect
 INLINE void sc61860_inc(int reg)
 {
 	sc61860.q=reg;
@@ -163,6 +164,7 @@ INLINE void sc61860_inc_p(void)
 	sc61860.p++;
 }
 
+// q=reg sideeffect
 INLINE void sc61860_dec(int reg)
 {
 	sc61860.q=reg;
@@ -191,14 +193,16 @@ INLINE void sc61860_add_carry(void)
 	sc61860.carry=t>=0x100;
 }
 
+// p++ sideeffect
 INLINE void sc61860_add_word(void)
 {
 	int t=sc61860.ram[sc61860.p]+sc61860.ram[A],t2;
 	sc61860.ram[sc61860.p]=t;
-	t2=sc61860.ram[sc61860.p+1]+sc61860.ram[B];
+	sc61860.p++;
+	t2=sc61860.ram[sc61860.p]+sc61860.ram[B];
 	if (t>=0x100) t2++;
-	sc61860.ram[sc61860.p+1]=t2;
-	sc61860.zero=t2==0;
+	sc61860.ram[sc61860.p]=t2;
+	sc61860.zero=(t2&0xff)==0 &&(t&0xff)==0;
 	sc61860.carry=t2>=0x100;
 }
 
@@ -219,14 +223,16 @@ INLINE void sc61860_sub_carry(void)
 }
 
 
+// p++ sideeffect
 INLINE void sc61860_sub_word(void)
 {
 	int t=sc61860.ram[sc61860.p]-sc61860.ram[A],t2;
 	sc61860.ram[sc61860.p]=t;
-	t2=sc61860.ram[sc61860.p+1]-sc61860.ram[B];
+	sc61860.p++;
+	t2=sc61860.ram[sc61860.p]-sc61860.ram[B];
 	if (t<0) t2--;
-	sc61860.ram[sc61860.p+1]=t2;
-	sc61860.zero=t2==0;
+	sc61860.ram[sc61860.p]=t2;
+	sc61860.zero=(t2&0xff)==0 && (t&0xff)==0;
 	sc61860.carry=t2<0;
 }
 
@@ -247,10 +253,12 @@ INLINE void sc61860_push(void)
 	PUSH(sc61860.ram[A]);
 }
 
+static UINT8 h;
 INLINE void sc61860_prepare_table_call(void)
 {
 	int adr;
-	sc61860.ram[H]=READ_OP();
+//	sc61860.ram[H]=READ_OP();
+	h=READ_OP();
 	adr=READ_OP_ARG_WORD();
 	PUSH(adr>>8);
 	PUSH(adr&0xff);
@@ -259,7 +267,8 @@ INLINE void sc61860_prepare_table_call(void)
 INLINE void sc61860_execute_table_call(void)
 {
 	int i, v, adr;
-	for (i=0; i<sc61860.ram[H]; i++) {
+//	for (i=0; i<sc61860.ram[H]; i++) {
+	for (i=0; i<h; i++) {
 		v=READ_OP();
 		adr=READ_OP_ARG_WORD();
 		sc61860.zero=v==sc61860.ram[A];
@@ -424,6 +433,7 @@ INLINE void sc61860_test_special(void)
 	if (sc61860.timer.t2ms) t|=2;
 	if (sc61860.config&&sc61860.config->brk&&sc61860.config->brk()) t|=8;
 	if (sc61860.config&&sc61860.config->reset&&sc61860.config->reset()) t|=0x40;
+	if (sc61860.config&&sc61860.config->x&&sc61860.config->x()) t|=0x80;
 
 	sc61860.zero=(t&READ_OP())==0;
 }
@@ -431,6 +441,8 @@ INLINE void sc61860_test_special(void)
 /************************************************************************************
  "string" operations
 ***********************************************************************************/
+
+// p-=I+1 sideeffect
 INLINE void sc61860_add_bcd_a(void)
 {
 	int i,t, v=sc61860.ram[A];
@@ -447,6 +459,8 @@ INLINE void sc61860_add_bcd_a(void)
 	}
 }
 
+
+// p-=I+1, q-=I+2 sideeffect
 INLINE void sc61860_add_bcd(void)
 {
 	int i,t,v=0;
@@ -461,6 +475,7 @@ INLINE void sc61860_add_bcd(void)
 		v=(sc61860.carry)?1:0;
 		sc61860_icount-=3;
 	}
+	sc61860.q--;
 }
 
 INLINE void sc61860_sub_bcd_a(void)
@@ -519,44 +534,56 @@ INLINE void sc61860_shift_right_nibble(void)
 	}
 }
 
+// q=reg+1 sideeffect
 INLINE void sc61860_inc_load_dp(int reg)
 {
-	if (++sc61860.ram[reg]==0) sc61860.ram[reg+1]++;
-	sc61860.dp=sc61860.ram[reg]|(sc61860.ram[reg+1]<<8);
+    if (++sc61860.ram[reg]==0) sc61860.ram[reg+1]++;
+    sc61860.dp=sc61860.ram[reg]|(sc61860.ram[reg+1]<<8);
+    sc61860.q=reg+1;
 }
 
+// q=reg+1 sideeffect
 INLINE void sc61860_dec_load_dp(int reg)
-{
-	if (--sc61860.ram[reg]==0xff) sc61860.ram[reg+1]--;
-	sc61860.dp=sc61860.ram[reg]|(sc61860.ram[reg+1]<<8);
+{    
+    if (--sc61860.ram[reg]==0xff) sc61860.ram[reg+1]--;
+    sc61860.dp=sc61860.ram[reg]|(sc61860.ram[reg+1]<<8);
+    sc61860.q=reg+1;
 }
 
+// q=XH sideeffect
 INLINE void sc61860_inc_load_dp_load(void)
 {
-	if (++sc61860.ram[XL]==0) sc61860.ram[XH]++;
-	sc61860.dp=sc61860.ram[XL]|(sc61860.ram[XH]<<8);
-	sc61860.ram[A]=READ_BYTE(sc61860.dp);
+    if (++sc61860.ram[XL]==0) sc61860.ram[XH]++;
+    sc61860.dp=sc61860.ram[XL]|(sc61860.ram[XH]<<8);
+    sc61860.q=XH; // hopefully correct before real read
+    sc61860.ram[A]=READ_BYTE(sc61860.dp);
 }
 
+// q=XH sideeffect
 INLINE void sc61860_dec_load_dp_load(void)
 {
-	if (--sc61860.ram[XL]==0xff) sc61860.ram[XH]--;
-	sc61860.dp=sc61860.ram[XL]|(sc61860.ram[XH]<<8);
-	sc61860.ram[A]=READ_BYTE(sc61860.dp);
+    if (--sc61860.ram[XL]==0xff) sc61860.ram[XH]--;
+    sc61860.dp=sc61860.ram[XL]|(sc61860.ram[XH]<<8);
+    sc61860.q=XH; // hopefully correct before real read
+    sc61860.ram[A]=READ_BYTE(sc61860.dp);
 }
 
+// q=YH sideeffect
 INLINE void sc61860_inc_load_dp_store(void)
 {
-	if (++sc61860.ram[YL]==0) sc61860.ram[YH]++;
-	sc61860.dp=sc61860.ram[YL]|(sc61860.ram[YH]<<8);
-	WRITE_BYTE(sc61860.dp,sc61860.ram[A]);
+    if (++sc61860.ram[YL]==0) sc61860.ram[YH]++;
+    sc61860.dp=sc61860.ram[YL]|(sc61860.ram[YH]<<8);
+    sc61860.q=YH; // hopefully correct before real write!
+    WRITE_BYTE(sc61860.dp,sc61860.ram[A]);
 }
 
+// q=YH sideeffect
 INLINE void sc61860_dec_load_dp_store(void)
 {
-	if (--sc61860.ram[YL]==0xff) sc61860.ram[YH]--;
-	sc61860.dp=sc61860.ram[YL]|(sc61860.ram[YH]<<8);
-	WRITE_BYTE(sc61860.dp,sc61860.ram[A]);
+    if (--sc61860.ram[YL]==0xff) sc61860.ram[YH]--;
+    sc61860.dp=sc61860.ram[YL]|(sc61860.ram[YH]<<8);
+    sc61860.q=XH; // hopefully correct before real write!
+    WRITE_BYTE(sc61860.dp,sc61860.ram[A]);
 }
 
 INLINE void sc61860_fill(void)
@@ -578,6 +605,7 @@ INLINE void sc61860_fill_ext(void)
 	}
 }
 
+// p+=count+1, q+=count+1 sideeffects
 INLINE void sc61860_copy(int count)
 {
 	int i;
@@ -588,6 +616,7 @@ INLINE void sc61860_copy(int count)
 
 }
 
+// p+=count+1, dp+=count sideeffects
 INLINE void sc61860_copy_ext(int count)
 {
 	int i;
@@ -635,3 +664,22 @@ INLINE void sc61860_exchange_ext(int count)
 		sc61860_icount-=6;
 	}
 }
+
+// undocumented
+INLINE void sc61860_wait_x(bool level)
+{
+    int c;
+    sc61860.zero=level;
+
+    if (sc61860.config&&sc61860.config->x) {
+	for (c=sc61860.ram[I]; c>=0; c--) {
+//	    sc61860.ram[sc61860.p]=(sc61860.ram[sc61860.p]+1)%0x60;
+	    sc61860.ram[sc61860.p]=(sc61860.ram[sc61860.p]+1)&0x7f;
+	    sc61860.zero=sc61860.config->x();
+	    sc61860_icount-=4;
+	    if ( level != sc61860.zero) break;
+	}
+    }
+}
+
+
