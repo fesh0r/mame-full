@@ -328,8 +328,8 @@ void cdb_reset(void){
 			CD_part[i].sect[j] = NULL;
 
 		// reset filter conditions
-		CD_filt[i].true		= i;
-		CD_filt[i].false	= 0xff;
+		CD_filt[i].true_	= i;
+		CD_filt[i].false_	= 0xff;
 		CD_filt[i].mode		= 0;
 		CD_filt[i].fad		= 0;
 		CD_filt[i].range	= 0;
@@ -1007,8 +1007,8 @@ void do_cd_command(void){
 					logerror("ERROR: invalid selector\n");
 				}
 
-				if(CR1 & 0x01){ CD_filt[fn].true = CR2 >> 8; }
-				if(CR1 & 0x02){ CD_filt[fn].false = CR2 & 0xff; }
+				if(CR1 & 0x01){ CD_filt[fn].true_ = CR2 >> 8; }
+				if(CR1 & 0x02){ CD_filt[fn].false_ = CR2 & 0xff; }
 
 				CDB_SEND_REPORT();
 
@@ -1024,7 +1024,7 @@ void do_cd_command(void){
 				}
 
 				CR1 = (CD_status << 8);
-				CR2 = (CD_filt[fn].true << 8) | CD_filt[fn].false;
+				CR2 = (CD_filt[fn].true_ << 8) | CD_filt[fn].false_;
 				CR3 = 0;
 				CR4 = 0;
 
@@ -1054,8 +1054,8 @@ void do_cd_command(void){
 				// all partitions are reset
 
 				for(i = 0; i < CDB_SEL_NUM; i++){
-					if(rf & 0x80){ CD_filt[i].false = 0xff; }
-					if(rf & 0x40){ CD_filt[i].true = i; }
+					if(rf & 0x80){ CD_filt[i].false_ = 0xff; }
+					if(rf & 0x40){ CD_filt[i].true_ = i; }
 					if(rf & 0x20){
 						CD_filt_num = 0xff;
 						CD_mpeg_filt_num = 0xff;
@@ -1097,8 +1097,8 @@ void do_cd_command(void){
 							//exit(1);
 						}
 
-						if(rf & 0x80){ CD_filt[pn].false = 0xff; }
-						if(rf & 0x40){ CD_filt[pn].true = pn; }
+						if(rf & 0x80){ CD_filt[pn].false_ = 0xff; }
+						if(rf & 0x40){ CD_filt[pn].true_ = pn; }
 						if(rf & 0x20){ }
 						if(rf & 0x10){
 							CD_filt[pn].mode = 0x00;

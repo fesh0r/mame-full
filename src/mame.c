@@ -875,16 +875,12 @@ static int init_game_options(void)
 	alpha_active = 0;
 	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 	{
-		/* first pick a default */
+		/* pick a default */
 		if (Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN)
 			Machine->color_depth = 32;
 		else
 			Machine->color_depth = 15;
-		
-		/* now allow overrides */
-		if (options.color_depth == 15 || options.color_depth == 32)
-			Machine->color_depth = options.color_depth;
-		
+
 		/* enable alpha for direct video modes */
 		alpha_active = 1;
 		alpha_init();

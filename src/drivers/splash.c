@@ -307,7 +307,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct YM3812interface splash_ym3812_interface =
 {
 	1,						/* 1 chip */
-	3000000,				/* 3 MHz? */
+	3000000,				/* 3.75 MHz (30/8) */
 	{ 80 },					/* volume */
 	{ 0 }					/* IRQ handler */
 };
@@ -315,7 +315,7 @@ static struct YM3812interface splash_ym3812_interface =
 static struct MSM5205interface splash_msm5205_interface =
 {
 	1,						/* 1 chip */
-	384000,					/* 384KHz */
+	384000,					/* 384KHz (384000/48) */
 	{ splash_msm5205_int },	/* IRQ handler */
 	{ MSM5205_S48_4B },		/* 8KHz */
 	{ 80 }					/* volume */
@@ -325,12 +325,12 @@ static struct MSM5205interface splash_msm5205_interface =
 static MACHINE_DRIVER_START( splash )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz (24/2) */
 	MDRV_CPU_PROGRAM_MAP(splash_readmem,splash_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,30000000/8)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz (30/8) */
 	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
 
@@ -515,6 +515,69 @@ ROM_START( splash )
 	ROM_LOAD( "13i",	0x060000, 0x020000, CRC(febb9893) SHA1(bb607a608c6c1658748a17a62431e8c30323c7ec) )
 ROM_END
 
+/***************************************************************************
+
+Painted Lady (US, version 1.3)
+(Splash! alternative title)
+Gaelco, 1992
+
+PCB Layout
+----------
+
+REF. 922704
+|------------------------------------------------|
+|       384kHz                 |----------------||
+|       M5205        24MHz     |     68000      ||
+|       YM3812             PAL |                ||
+|       6116    PAL  30MHz     |----------------||
+|       1.5C                                     |
+|       Z80B                    2.4G       6.4I  |
+|J                              3.5G       7.5I  |
+|A                              4.6G       8.6I  |
+|M         6116                 5.8G       9.8I  |
+|M         6116                 6264       6264  |
+|A                    6116  |----------|         |
+|  DSW2               6116  |          |         |
+|                           |TPC1020AFN|         |
+|        KM681000           |-084C     |  10.13I |
+|                           |          |  11.15I |
+|  DSW1                     |----------|  12.16I |
+|                                  6264   13.18I |
+|                     6116                       |
+|------------------------------------------------|
+Notes:
+      68000 clock : 12MHz [24/2)
+      Z80 clock   : 3.75MHz [30/8]
+      M5205 clock : 384kHz, sample rate = 384000/48
+      YM3812 clock: 3.75MHz [30/8]
+      6116        : 2k x8 SRAM
+      6264        : 8k x8 SRAM
+      KM681000    : 128k x8 SRAM
+      VSync       : 58Hz
+
+***************************************************************************/
+
+ROM_START( paintlad )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code + gfx */
+	ROM_LOAD16_BYTE(	"2.4g",	0x000000, 0x020000, CRC(cd00864a) SHA1(24cbcf43b7237d1e5374a684aac89dad7e7bb75b) )
+	ROM_LOAD16_BYTE(	"6.4i",	0x000001, 0x020000, CRC(0f19d830) SHA1(3bfb4c98c87f0bf8d9dc7c7f468e1c58b16356e5) )
+	ROM_LOAD16_BYTE(	"5g",	0x100000, 0x080000, CRC(a4e8ed18) SHA1(64ce47193ee4bb3a8014d7c14c559b4ebb3af083) )
+	ROM_LOAD16_BYTE(	"5i",	0x100001, 0x080000, CRC(73e1154d) SHA1(2c055ad29a32c6c1e712cc35b5972f1e69cdebb7) )
+	ROM_LOAD16_BYTE(	"6g",	0x200000, 0x080000, CRC(ffd56771) SHA1(35ad9874b6ea5aa3ba38a31d723093b4dd2cfdb8) )
+	ROM_LOAD16_BYTE(	"6i",	0x200001, 0x080000, CRC(16e9170c) SHA1(96fc237cb172039df153dc70d15ed7d9ee750363) )
+	ROM_LOAD16_BYTE(	"8g",	0x300000, 0x080000, CRC(dc3a3172) SHA1(2b322b52e3e8da00f26dd276cb72bd2d48c2deaa) )
+	ROM_LOAD16_BYTE(	"8i",	0x300001, 0x080000, CRC(2e23e6c3) SHA1(baf9ab4c3261c3f06f5e43c1e50aba9222acb71d) )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )	/* Z80 code + sound data */
+	ROM_LOAD( "5c",		0x00000, 0x10000, CRC(0ed7ebc9) SHA1(28ef16e20d754deef49be6a5c9f63311e9ec94a3) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "13.18i",	0x000000, 0x020000, CRC(262ee31f) SHA1(1756dfd482c3e889df393d37a5c680aa283702ee) )
+	ROM_LOAD( "11.15i",	0x020000, 0x020000, CRC(6e4d598f) SHA1(b5b0d65c50ec469b5ffcd6187ca3aacddd97a477) )
+	ROM_LOAD( "12.16i",	0x040000, 0x020000, CRC(15761eb5) SHA1(61a47dad0e70ff4f1ae7f56ee529d2987eab1997) )
+	ROM_LOAD( "10.13i",	0x060000, 0x020000, CRC(92a0eff8) SHA1(e27a73791d499b0449251ea0678d9a34040e9883) )
+ROM_END
+
 /* DRIVER INITs */
 
 void init_protection_data (void)
@@ -539,6 +602,7 @@ DRIVER_INIT( roldfrog )
 
 
 GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
+GAME( 1992, paintlad, splash,   splash, splash, splash, ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)" )
 
 GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
 GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )

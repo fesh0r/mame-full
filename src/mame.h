@@ -221,7 +221,6 @@ struct GameOptions
 	float	brightness;		/* brightness of the display */
 	float	pause_bright;		/* additional brightness when in pause */
 	float	gamma;			/* gamma correction of the display */
-	int		color_depth;	/* 15, 16, or 32, any other value means auto */
 	int vector_width;	/* requested width for vector games; 0 means default (640) */
 	int vector_height;	/* requested height for vector games; 0 means default (480) */
 	int		ui_orientation;	/* orientation of the UI relative to the video */

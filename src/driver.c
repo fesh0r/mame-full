@@ -1796,6 +1796,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( popnpopu )	/* E51 (c) 1997 Taito Corporation (US) */
 	DRIVER( landmakr )	/* E61 (c) 1998 Taito Corporation (Japan) */
 	DRIVER( landmkrp )	/* E61 (c) 1998 Taito Corporation (World, prototype) */
+	DRIVER( recalh )	/* prototype */
+	DRIVER( commandw )	/* prototype */
 
 	/* Taito JC System */
 	DRIVER( landgear )	/* E17 (c) 199? Taito Corporation */
@@ -3050,6 +3052,52 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sfish2 )
 	DRIVER( sfish2j )
 
+	/* Sega Model 2 Games */
+
+	/* Model 2 (TGPs, Model 1 sound board) */
+	DRIVER( daytona )	/* 1993 */
+	DRIVER( daytonat )	/* 1993, hack */
+	DRIVER( daytonam )	/* 1993, hack */
+	DRIVER( desert )	/* 1994 */
+	DRIVER( vcop )		/* 1994 */
+
+	/* Model 2A-CRX (TGPs, SCSP sound board) */
+	DRIVER( manxtt )	/* 1995 */
+	DRIVER( srallyc )	/* 1995 */
+	DRIVER( vf2 )		/* 1995 */
+	DRIVER( vf21 )		/* 1995 */
+	DRIVER( vcop2 )		/* 1995 */
+	DRIVER( dynamcop )	/* 1996 */
+	DRIVER( doaa )		/* 1996 */
+	DRIVER( zeroguna )	/* 1997 */
+	DRIVER( pltkidsa )	/* 1998 */
+
+	/* Model 2B-CRX (SHARC, SCSP sound board) */
+	DRIVER( vstriker )	/* 1994 */
+	DRIVER( vstrikra )	/* 1994 */
+	DRIVER( fvipers )	/* 1995 */
+	DRIVER( gunblade )	/* 1995 */
+	DRIVER( indy500 )	/* 1995 */
+	DRIVER( skytargt )	/* 1995 */
+	DRIVER( dynmcopb )	/* 1996 */
+	DRIVER( schamp )	/* 1996 */
+	DRIVER( lastbrxa )	/* 1996 */
+	DRIVER( lastbexp )	/* 1996 */
+	DRIVER( doa )		/* 1996 */
+	DRIVER( sgt24h )	/* 1996 */
+	DRIVER( von )		/* 1996 */
+	DRIVER( vonusa )	/* 1996 */
+	DRIVER( dynabb )	/* 1996 */
+	DRIVER( zerogun )	/* 1997 */
+	DRIVER( zerogunj )	/* 1997 */
+	DRIVER( pltkids )	/* 1998 */
+
+	/* Model 2C-CRX (TGPx4, SCSP sound board) */
+	DRIVER( stcc )		/* 1996 */
+	DRIVER( hotd )		/* 1997 */
+	DRIVER( topskatr )	/* 1997 */
+	DRIVER( bel )		/* 1998 */
+
 	/* Deniam games */
 	/* they run on Sega System 16 video hardware */
 	DRIVER( logicpro )	/* (c) 1996 Deniam */
@@ -3383,6 +3431,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rohga )		/* MAM (c) 1991 Data East Corporation (Asia/Euro) */
 	DRIVER( rohgah )	/* MAM (c) 1991 Data East Corporation (Hong Kong) */
 	DRIVER( rohgau )	/* MAM (c) 1991 Data East Corporation (US) */
+	DRIVER( schmeisr )	/* Hot B */
 	DRIVER( captaven )	/* MAN (c) 1991 Data East Corporation (Asia) */
 	DRIVER( captavna )	/* MAN (c) 1991 Data East Corporation (Asia) */
 	DRIVER( captavne )	/* MAN (c) 1991 Data East Corporation (UK) */
@@ -3541,7 +3590,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( trackflc )	/* GX361 (c) 1983 + Centuri license */
 	DRIVER( hyprolym )	/* GX361 (c) 1983 */
 	DRIVER( hyprolyb )	/* bootleg */
-/*	DRIVER( whizquiz ) */	/* (c) 1985 Zilec-Zenitone */
+	DRIVER( wizzquiz )	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( mastkin )	/* (c) 1988 Du Tech */
 	DRIVER( rocnrope )	/* GX364 (c) 1983 */
 	DRIVER( rocnropk )	/* GX364 (c) 1983 + Kosuka */
@@ -4581,6 +4630,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Based on nmk16? */
 	DRIVER( quizpani )
+	DRIVER( acommand )
 
 	/* don't know what hardare Banpresto used for these games */
 	DRIVER( macrossp )	/* (c) 1996 Banpresto */
@@ -5034,6 +5084,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bigkarnk )	/* (c) 1991 - Ref 901112-1 */
 	/* Master Boy 2 */	/* (c) 1991 - Ref ??? */
 	DRIVER( splash )	/* (c) 1992 - Ref 922804 */
+	DRIVER( paintlad )	/* (c) 1992 - ver 1.3 */
 	DRIVER( roldfrog )	/* not a gaelco game but based on splash code */
 	DRIVER( roldfrga )	/* not a gaelco game but based on splash code */
 	DRIVER( thoop )		/* (c) 1992 - Ref 922804/1 */
@@ -5401,6 +5452,7 @@ Other Sun games
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( magicbub )	/* (c) Yun Sung */
 	DRIVER( shocking )	/* (c) 1997 Yun Sung */
+	DRIVER( nmg5 )		/* (c) 1998 Yun Sung */
 
 	/* Zilec games */
 	DRIVER( blueprnt )	/* (c) 1982 Bally Midway (Zilec in ROM 3U, and the programmer names) */
@@ -5620,6 +5672,12 @@ Other Sun games
 	DRIVER( shangkid )	/* (c) 1985 Taiyo + Data East license */
 	DRIVER( hiryuken )	/* (c) 1985 Taito */
 
+	/* Tatsumi Games */
+	DRIVER( apache3 )	/* (c) 1988 */
+	DRIVER( roundup5 )	/* (c) 1989 */
+	DRIVER( cyclwarr )	/* (c) 1991 */
+
+	/* Other Games */
 	DRIVER( astinvad )	/* (c) 1980 Stern */
 	DRIVER( kamikaze )	/* Leijac Corporation */
 	DRIVER( spcking2 )
@@ -5722,6 +5780,7 @@ Other Sun games
 	DRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
 	DRIVER( gumbo )		/* (c) 1994 Min Corp. */
 	DRIVER( mspuzzle )	/* (c) 1994 Min Corp. */
+	DRIVER( msbingo )	/* (C) 1994 Min Corp. */
 	DRIVER( dblpoint )	/* (c) 1995 Dong Bang Electron */
 	DRIVER( hangman )	/* (c) 1984 Status Games */
 	DRIVER( trivquiz )	/* (c) 1984 Status Games */
@@ -5754,7 +5813,7 @@ Other Sun games
 	DRIVER( vamphalf )	/* DanBi */
 	DRIVER( hidnctch )	/* Eolith */
 	DRIVER( landbrk )	/* Eolith */
-	DRIVER( racoon )	/* Eolith */
+	DRIVER( raccoon )	/* Eolith */
 	DRIVER( xfiles )	/* DfPix */
 	DRIVER( misncrft )	/* (c) 2000 Sun */
 	DRIVER( coolmini )	/* (c) ???? Semicom */
@@ -5792,6 +5851,7 @@ Other Sun games
 	DRIVER( suprgolf )	/* (c) 19?? Nasco */
 	DRIVER( hotblock )	/* (c) 1993 Nics? / Nix? */
 	DRIVER( pntnpuzl )	/* Century? */
+	DRIVER( trucocl )	/* (c) 1991 Caloi Miky SRL */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

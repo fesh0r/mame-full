@@ -16,7 +16,6 @@
 
 static data32_t hyperstone_iram[0x1000];
 static data32_t *tiles, *wram;
-static UINT32 mux_data;
 
 static WRITE32_HANDLER( hyperstone_iram_w )
 {
@@ -56,36 +55,20 @@ static WRITE32_HANDLER( oki_w )
 	OKIM6295_data_0_w(0, data);
 }
 
-static READ32_HANDLER( ym2151_r )
+static READ32_HANDLER( ym2151_status_r )
 {
 	return YM2151_status_port_0_r(0);
 }
 
-static WRITE32_HANDLER( ym2151_w )
+static WRITE32_HANDLER( ym2151_data_w )
 {
-	static int which = 0;
-
-	if(which)
-		YM2151_data_port_0_w(0, data);
-	else
-		YM2151_register_port_0_w(0,data);
-
-	which ^= 1;
+	YM2151_data_port_0_w(0, data);
 }
 
-static READ32_HANDLER( vamphalf_inputs_r )
+static WRITE32_HANDLER( ym2151_register_w )
 {
-#define E132XS_CL0 33
-	mux_data = activecpu_get_reg(E132XS_CL0);
-	mux_data &= 0xf000;
-	mux_data >>= 12;
-	/*This uses a multiplexer with CL0 register or this is a CPU core bug...*/
-	switch(mux_data)
-	{
-		case 0:	return 0xffff0000 | readinputport(1);
-		case 2: return 0xffff0000 | readinputport(0);
-		default: return 0xffffffff;
-	}
+
+	YM2151_register_port_0_w(0,data);
 }
 
 static READ32_HANDLER( vamphalf_eeprom_r )
@@ -108,22 +91,28 @@ static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vamphalf_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x030, 0x033) AM_READWRITE(oki_r, oki_w)
-	AM_RANGE(0x050, 0x053) AM_READWRITE(ym2151_r, ym2151_w)
-	AM_RANGE(0x070, 0x073) AM_READ(vamphalf_eeprom_r)
-	AM_RANGE(0x180, 0x183) AM_READWRITE(vamphalf_inputs_r, vamphalf_eeprom_w)
+	AM_RANGE(0x0c0, 0x0c3) AM_READWRITE(oki_r, oki_w)
+	AM_RANGE(0x140, 0x143) AM_WRITE(ym2151_register_w)
+	AM_RANGE(0x144, 0x147) AM_READWRITE(ym2151_status_r, ym2151_data_w)
+	AM_RANGE(0x1c0, 0x1c3) AM_READ(vamphalf_eeprom_r)
+	AM_RANGE(0x600, 0x603) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x604, 0x607) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x608, 0x60b) AM_WRITE(vamphalf_eeprom_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( misncrft_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x080, 0x083) AM_READ(input_port_0_dword_r)
-	AM_RANGE(0x090, 0x093) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x200, 0x203) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x240, 0x243) AM_READ(input_port_1_dword_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( coolmini_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x0c0, 0x0c3) AM_READWRITE(vamphalf_inputs_r, vamphalf_eeprom_w)
-	AM_RANGE(0x130, 0x133) AM_READWRITE(oki_r, oki_w)
-	AM_RANGE(0x150, 0x153) AM_READWRITE(ym2151_r, ym2151_w)
-	AM_RANGE(0x1f0, 0x1f3) AM_READ(vamphalf_eeprom_r)
+	AM_RANGE(0x300, 0x303) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x304, 0x307) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x308, 0x30b) AM_WRITE(vamphalf_eeprom_w)
+	AM_RANGE(0x4c0, 0x4c3) AM_READWRITE(oki_r, oki_w)
+	AM_RANGE(0x540, 0x543) AM_WRITE(ym2151_register_w)
+	AM_RANGE(0x544, 0x547) AM_READWRITE(ym2151_status_r, ym2151_data_w)
+	AM_RANGE(0x7c0, 0x7c3) AM_READ(vamphalf_eeprom_r)
 ADDRESS_MAP_END
 
 

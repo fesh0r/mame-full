@@ -207,12 +207,32 @@ static UINT32 get_2_ri(UINT32 opcode)
 		return (opcode>>14) & 0x1f;
 }
 
+static UINT64 get_2_ri64(UINT32 opcode)
+{
+	if(!(opcode & 0x00001000))
+		return i960.r[(opcode>>14) & 0x1f] | ((UINT64)i960.r[((opcode>>14) & 0x1f)+1]<<32);
+	else
+		return (opcode>>14) & 0x1f;
+}
+
 static void set_ri(UINT32 opcode, UINT32 val)
 {
 	if(!(opcode & 0x00002000))
 		i960.r[(opcode>>19) & 0x1f] = val;
 	else {
 		osd_die("I960: %x: set_ri on literal?\n", i960.PIP);
+	}
+}
+
+static void set_ri2(UINT32 opcode, UINT32 val, UINT32 val2)
+{
+	if(!(opcode & 0x00002000))
+	{
+		i960.r[(opcode>>19) & 0x1f] = val;
+		i960.r[((opcode>>19) & 0x1f)+1] = val2;
+	}
+	else {
+		osd_die("I960: %x: set_ri2 on literal?\n", i960.PIP);
 	}
 }
 
@@ -420,7 +440,7 @@ static const char *i960_get_strflags(void)
 		"no", "g", "e", "ge", "l", "ne", "le", "o"
 	};
 
-	return (conditions[i960.AC & 7]); 
+	return (conditions[i960.AC & 7]);
 }
 
 static void check_irqs(void)
@@ -428,7 +448,7 @@ static void check_irqs(void)
 	int int_tab =  program_read_dword_32le(i960.PRCB+20);	// interrupt table
 	int int_SP  =  program_read_dword_32le(i960.PRCB+24);	// interrupt stack
 	int cpu_pri = (i960.PC>>16)&0x1f;
-	int pending_pri;
+	int pending_pri, SP;
 	int lvl, irq, take = -1;
 	int vword, lvlmask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
@@ -474,20 +494,31 @@ static void check_irqs(void)
 
 			// get the vector back
 			take += ((lvl/4) * 32);
-			
+
 			// start the process
-			if(!(i960.PC & 0x0020))	// if this is a nested interrupt, don't re-get int_SP
-				do_call(program_read_dword_32le(int_tab + 36 + (take-8)*4), 7, int_SP);
+			if(!(i960.PC & 0x2000))	// if this is a nested interrupt, don't re-get int_SP
+			{
+				SP = int_SP;
+			}
 			else
-				do_call(program_read_dword_32le(int_tab + 36 + (take-8)*4), 7, i960.r[I960_SP]);
+			{
+				SP = i960.r[I960_SP];
+			}
+		
+			SP = (SP + 63) & ~63;
+			SP += 128;	// emulate ElSemi's core, this fixes the crash in sonic the fighters
+
+			do_call(program_read_dword_32le(int_tab + 36 + (take-8)*4), 7, SP);
 
 			// save the processor state
 			program_write_dword_32le(i960.r[I960_FP]-16, i960.AC);
 			program_write_dword_32le(i960.r[I960_FP]-12, i960.PC);
+			// store the vector
+			program_write_dword_32le(i960.r[I960_FP]-8, take-8);
 
-			i960.PC &= ~0x1f41;	// clear priority, state, trace-fault pending, and trace enable
+			i960.PC &= ~0x1f00;	// clear priority, state, trace-fault pending, and trace enable
 			i960.PC |= (lvl<<16);	// set CPU level to current IRQ level
-			i960.PC |= 0x0020;	// set "interrupted" flag
+			i960.PC |= 0x2002;	// set supervisor mode & interrupt flag
 			return;
 		}
 	}
@@ -503,11 +534,12 @@ static void do_call(UINT32 adr, int type, UINT32 stack)
 
 	// set the new RIP
 	i960.r[I960_RIP] = i960.IP;
+//	printf("CALL (type %d): FP %x, %x => %x, stack %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.r[I960_RIP], adr, stack, i960.rcache_pos);
 
 	// are we out of cache entries?
 	if (i960.rcache_pos >= RCACHE_SIZE) {
 		// flush the current register set to the current frame
-		FP = i960.r[I960_FP] & ~7;
+		FP = i960.r[I960_FP] & ~0x3f;
 		for (i = 0; i < 16; i++) {
 			program_write_dword_32le(FP + (i*4), i960.r[i]);
 		}
@@ -537,7 +569,9 @@ static void do_call(UINT32 adr, int type, UINT32 stack)
 
 static void do_ret_0(void)
 {
-	i960.r[I960_FP] = i960.r[I960_PFP] & ~7;
+//	int type = i960.r[I960_PFP] & 7;
+
+	i960.r[I960_FP] = i960.r[I960_PFP] & ~0x3f;
 
 	i960.rcache_pos--;
 
@@ -560,6 +594,7 @@ static void do_ret_0(void)
 		memcpy(i960.r, i960.rcache[i960.rcache_pos], 0x10*sizeof(UINT32));
 	}
 
+//	printf("RET (type %d): FP %x, %x => %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.IP, i960.r[I960_RIP], i960.rcache_pos);
 	i960.IP = i960.r[I960_RIP];
 	change_pc(i960.IP);
 }
@@ -886,6 +921,13 @@ static int i960_execute(int cycles)
 				set_ri(opcode, t2 | t1);
 				break;
 
+			case 0x8: // nor
+				i960_icount--;
+				t1 = get_1_ri(opcode);
+				t2 = get_2_ri(opcode);
+				set_ri(opcode, ((~t2) ^ (~t1)));
+				break;
+
 			case 0x9: // xnor
 				i960_icount--;
 				t1 = get_1_ri(opcode);
@@ -911,6 +953,13 @@ static int i960_execute(int cycles)
 				t1 = get_1_ri(opcode);
 				t2 = get_2_ri(opcode);
 				set_ri(opcode, t2 & ~(1<<(t1 & 31)));
+				break;
+
+			case 0xe: // nand
+				i960_icount -= 2;
+				t1 = get_1_ri(opcode);
+				t2 = get_2_ri(opcode);
+				set_ri(opcode, ~t2 | ~t1);
 				break;
 
 			case 0xf: // alterbit
@@ -1095,6 +1144,49 @@ static int i960_execute(int cycles)
 			}
 			break;
 
+		case 0x5b:
+			switch((opcode >> 7) & 0xf) {
+			case 0x0:	// addc
+				{
+					UINT64 res;
+
+					i960_icount -= 2;
+					t1 = get_1_ri(opcode);
+					t2 = get_2_ri(opcode);
+					res = t2+(t1+((i960.AC>>1)&1));
+					set_ri(opcode, res&0xffffffff);
+
+					i960.AC &= ~0x3;	// clear C and V
+					// set carry
+					i960.AC |= ((res) & (((UINT64)1) << 32)) ? 0x2 : 0;
+					// set overflow
+					i960.AC |= (((res) ^ (t1)) & ((res) ^ (t2)) & 0x80000000) ? 1: 0;
+				}
+				break;
+
+			case 0x2:	// subc
+				{
+					UINT64 res;
+
+					i960_icount -= 2;
+					t1 = get_1_ri(opcode);
+					t2 = get_2_ri(opcode);
+					res = t2-(t1+((i960.AC>>1)&1));
+					set_ri(opcode, res&0xffffffff);
+
+					i960.AC &= ~0x3;	// clear C and V
+					// set carry
+					i960.AC |= ((res) & (((UINT64)1) << 32)) ? 0x2 : 0;
+					// set overflow
+					i960.AC |= (((t2) ^ (t1)) & ((t2) ^ (res)) & 0x80000000) ? 1 : 0;
+				}
+				break;
+
+			default:
+				osd_die("I960: %x: Unhandled 5b.%x\n", i960.PIP, (opcode >> 7) & 0xf);
+			}
+			break;
+
 		case 0x5c:
 			switch((opcode >> 7) & 0xf) {
 			case 0xc: // mov
@@ -1195,6 +1287,29 @@ static int i960_execute(int cycles)
 
 		case 0x64:
 			switch((opcode >> 7) & 0xf) {
+			case 0x1: // scanbit
+				{
+					UINT32 res = 0xffffffff;
+					int i;
+
+					i960_icount -= 10;
+
+					t1 = get_1_ri(opcode);
+					i960.AC &= ~7;
+
+					for (i = 31; i >= 0; i--)
+					{
+						if (t1 & (1<<i))
+						{
+							i960.AC |= 2;
+							res = i;
+						}
+					}
+
+					set_ri(opcode, res);
+				}
+				break;
+
 			case 0x5: // modac
 				i960_icount -= 10;
 				t1 = get_1_ri(opcode);
@@ -1226,13 +1341,17 @@ static int i960_execute(int cycles)
 		case 0x66:
 			switch((opcode >> 7) & 0xf) {
 			case 0xd: // flushreg
-				for(t1=0; t1<(i960.rcache_pos & 3); t1++)
+				if (i960.rcache_pos > 4)
+				{
+					i960.rcache_pos = 4;
+				}
+				for(t1=0; t1 < i960.rcache_pos; t1++)
 				{
 					int i;
 
 					for (i = 0; i < 0x10; i++)
 					{
-						program_write_dword_32le(i960.rcache_frame_addr[t1] + (i * sizeof(UINT32)), i960.r[i]);
+						program_write_dword_32le(i960.rcache_frame_addr[t1] + (i * sizeof(UINT32)), i960.rcache[t1][i]);
 					}
 				}
 				i960.rcache_pos = 0;
@@ -1253,10 +1372,36 @@ static int i960_execute(int cycles)
 				set_ri64(opcode, (INT64)t1 * (INT64)t2);
 				break;
 
+			case 0x1: // ediv
+				i960_icount -= 37;
+				{
+					UINT64 src1, src2;
+
+					src1 = get_1_ri(opcode);
+					src2 = get_2_ri64(opcode);
+
+					set_ri2(opcode, src2 % src1, src2 / src1);
+				}
+				break;
+
 			case 0x4: // cvtir
 				i960_icount -= 30;
 				t1 = get_1_ri(opcode);
 				set_rif(opcode, (double)(INT32)t1);
+				break;
+
+			case 0x6: // scalerl
+				i960_icount -= 30;
+				t1 = get_1_ri(opcode);
+				t2f = get_2_rifl(opcode);
+				set_rifl(opcode, t2f * pow(2.0, (double)t1));
+				break;
+
+			case 0x7: // scaler
+				i960_icount -= 30;
+				t1 = get_1_ri(opcode);
+				t2f = get_2_rif(opcode);
+				set_rif(opcode, t2f * pow(2.0, (double)t1));
 				break;
 
 			default:
@@ -1266,11 +1411,31 @@ static int i960_execute(int cycles)
 
 		case 0x68:
 			switch((opcode >> 7) & 0xf) {
+			case 0x0: // atanr
+				i960_icount -= 267;
+				t1f = get_1_rif(opcode);
+				set_rif(opcode, atan(t1f));
+				break;
+
+			case 0x1: // logepr
+				i960_icount -= 400;
+				t1f = get_1_rif(opcode);
+				t2f = get_2_rif(opcode);
+				set_rif(opcode, t1f*log2(t2f+1.0));
+				break;
+
+			case 0x3: // remr
+				i960_icount -= 67;	// (67 to 75878 depending on opcodes!!!)
+				t1f = get_1_rif(opcode);
+				t2f = get_2_rif(opcode);
+				set_rif(opcode, fmod(t2f, t1f));
+				break;
+
 			case 0x5: // cmpr
 				i960_icount -= 10;
 				t1f = get_1_rif(opcode);
 				t2f = get_2_rif(opcode);
-				cmp_d(t1, t2);
+				cmp_d(t1f, t2f);
 				break;
 
 			case 0x8: // sqrtr
@@ -1285,6 +1450,32 @@ static int i960_execute(int cycles)
 				set_rif(opcode, logb(t1f));
 				break;
 
+			case 0xb: // roundr
+				{
+					INT32 st1 = get_1_rif(opcode);
+					i960_icount -= 69;
+					set_rif(opcode, (double)st1);
+				}
+				break;
+
+			case 0xc: // sinr
+				i960_icount -= 406;
+				t1f = get_1_rif(opcode);
+				set_rif(opcode, sin(t1f));
+				break;
+
+			case 0xd: // cosr
+				i960_icount -= 406;
+				t1f = get_1_rif(opcode);
+				set_rif(opcode, sin(t1f));
+				break;
+
+			case 0xe: // tanr
+				i960_icount -= 293;
+				t1f = get_1_rif(opcode);
+				set_rif(opcode, tan(t1f));
+				break;
+
 			default:
 				osd_die("I960: %x: Unhandled 68.%x\n", i960.PIP, (opcode >> 7) & 0xf);
 			}
@@ -1292,11 +1483,23 @@ static int i960_execute(int cycles)
 
 		case 0x69:
 			switch((opcode >> 7) & 0xf) {
+			case 0x0: // atanrl
+				i960_icount -= 350;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, atan(t1f));
+				break;
+
+			case 0x2: // logrl
+				i960_icount -= 438;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, log(t1f));
+				break;
+
 			case 0x5: // cmprl
 				i960_icount -= 12;
 				t1f = get_1_rifl(opcode);
 				t2f = get_2_rifl(opcode);
-				cmp_d(t1, t2);
+				cmp_d(t1f, t2f);
 				break;
 
 			case 0x8: // sqrtrl
@@ -1305,19 +1508,57 @@ static int i960_execute(int cycles)
 				set_rifl(opcode, sqrt(t1f));
 				break;
 
+			case 0x9: // exprl
+				i960_icount -= 334;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, pow(2.0, t1f)-1.0);
+				break;
+
 			case 0xa: // logbnrl
 				i960_icount -= 37;
 				t1f = get_1_rifl(opcode);
 				set_rifl(opcode, logb(t1f));
 				break;
 
+			case 0xb: // roundrl
+				{
+					INT32 st1 = get_1_rifl(opcode);
+					i960_icount -= 70;
+					set_rifl(opcode, (double)st1);
+				}
+				break;
+
+			case 0xc: // sinrl
+				i960_icount -= 441;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, sin(t1f));
+				break;
+
+			case 0xd: // cosrl
+				i960_icount -= 441;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, cos(t1f));
+				break;
+
+			case 0xe: // tanrl
+				i960_icount -= 323;
+				t1f = get_1_rifl(opcode);
+				set_rifl(opcode, tan(t1f));
+				break;
+
 			default:
-				osd_die("I960: %x: Unhandled 68.%x\n", i960.PIP, (opcode >> 7) & 0xf);
+				osd_die("I960: %x: Unhandled 69.%x\n", i960.PIP, (opcode >> 7) & 0xf);
 			}
 			break;
 
 		case 0x6c:
 			switch((opcode >> 7) & 0xf) {
+			case 0x0: // cvtri
+				i960_icount -= 33;
+				t1f = get_1_rif(opcode);
+				set_ri(opcode, (INT32)t1f);
+				break;
+
 			case 0x2: // cvtzri
 				i960_icount -= 43;
 				t1f = get_1_rif(opcode);
@@ -1354,6 +1595,47 @@ static int i960_execute(int cycles)
 			}
 			break;
 
+		case 0x6e:
+			switch((opcode >> 7) & 0xf) {
+			case 0x1: // movre
+				{
+					UINT32 *src=0, *dst=0;
+
+					i960_icount -= 8;
+
+					if(!(opcode & 0x00000800)) {
+						src = (UINT32 *)&i960.r[opcode & 0x1e];
+					} else {
+						int idx = opcode & 0x1f;
+						if(idx < 4)
+							src = (UINT32 *)&i960.fp[idx];
+					}
+
+					if(!(opcode & 0x00002000)) {
+						dst = (UINT32 *)&i960.r[(opcode>>19) & 0x1e];
+					} else if(!(opcode & 0x00e00000))
+						dst = (UINT32 *)&i960.fp[(opcode>>19) & 3];
+
+					dst[0] = src[0];
+					dst[1] = src[1];
+					dst[2] = src[2]&0xffff;
+				}
+				break;
+			case 0x2: // cpysre
+				i960_icount -= 8;
+				t1f = get_1_rifl(opcode);
+				t2f = get_2_rifl(opcode);
+
+				if (t2f >= 0.0)
+					set_rifl(opcode, fabs(t1f));
+				else
+					set_rifl(opcode, -fabs(t1f));
+				break;
+			default:
+				osd_die("I960: %x: Unhandled 6e.%x\n", i960.PIP, (opcode >> 7) & 0xf);
+			}
+			break;
+
 		case 0x70:
 			switch((opcode >> 7) & 0xf) {
 			case 0x1: // mulo
@@ -1374,7 +1656,10 @@ static int i960_execute(int cycles)
 				i960_icount -= 37;
 				t1 = get_1_ri(opcode);
 				t2 = get_2_ri(opcode);
-				set_ri(opcode, t2/t1);
+				if (t1 == 0)	// HACK!
+					set_ri(opcode, 0);
+				else
+					set_ri(opcode, t2/t1);
 				break;
 
 			default:
@@ -1594,7 +1879,7 @@ static int i960_execute(int cycles)
 			t1 = get_ea(opcode);
 			t2 = (opcode>>19)&0x1c;
 			i960.bursting = 1;
-			for(i=0; i<4; i++) {
+			for(i=0; i<3; i++) {
 				i960_write_dword_unaligned(t1, i960.r[t2+i]);
 				if(i960.bursting)
 					t1 += 4;

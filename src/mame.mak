@@ -496,6 +496,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segaic24.o \
 	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
+	$(OBJ)/drivers/model2.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/coolridr.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
@@ -1196,6 +1197,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/supertnk.o \
 	$(OBJ)/drivers/dynadice.o \
 	$(OBJ)/drivers/hotblock.o \
+	$(OBJ)/drivers/tatsumi.o $(OBJ)/vidhrdw/tatsumi.o $(OBJ)/machine/tatsumi.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
