@@ -261,4 +261,4 @@ static const struct IODevice io_galaxy[] = {
 };
 
 /*    YEAR    NAME  PARENT  MACHINE   INPUT  INIT  COMPANY     FULLNAME */
-COMP( 1983, galaxy,      0,  galaxy, galaxy,    0,      "", "Galaksija" )
+COMPX( 1983, galaxy,      0,  galaxy, galaxy,    0,      "", "Galaksija", GAME_NO_SOUND )
