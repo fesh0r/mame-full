@@ -696,8 +696,9 @@ static struct {
 	{ 0xe88792b3 , 0x2000, "IBM PC bios fe000 1501-476 10/27/82" },
 	{ 0x031aafad , 0x2000, "PC bios fe000" },
 	{ 0xd435a405 , 0x2000, "Bondwell PC fe000" },
-	{ 0x1775a11d , 0x8000, "50145 Europc bios f8000" },
+	{ 0x1775a11d , 0x8000, "50145 Europc bios f8000 V2.07" },
 	{ 0x1305dcf5 , 0x2000, "50146 Europc character sets" },
+	{ 0xecca89c8 , 0x8000, "50145? Europc II bios V3.01" },
 	{ 0x0c19c1a8 , 0x8000, "INCOMPLETE IBM PC Junior basic c1.2 f6000 (f0000-f5fff missing)" },
 	{ 0x98463f95 , 0x2000, "INCOMPLETE IBM PC Junior bios fe000 (f0000-f5fff missing)" },
 	{ 0xc3bcb418 , 0x8002, "OVERDUMP IBM PC Junior basic cartridge (additional 2 bytes)" },
@@ -708,7 +709,6 @@ static struct {
 	{ 0x1ae69276 , 0x10000, "OVERDUMP Tandy 1000 1.02.00 (last 16kbyte)(different fillbyte)" },
 	{ 0x9b34765c , 0x8000, "Tandy 1000tx 1.03.00" }, // most likely 2 16kbyte chips
 	{ 0xf607533b , 0x10000, "OVERDUMP Tandy 1000 1.03.00 (last 32kbyte)" },
-	{ 0x318ba789 , 0x4010, "OVERDUMP? Tandy 1000 extended colour basic?" },
 	{ 0x6f3acd80 , 0x20000, "Tandy 1000 HX bios (2.00.00)" },
 	// tandy 1000rl 2.00.01
 	{ 0xe5e534e6 , 0x1000, "RECONSTRUCTED Tandy 1000 HX characterset" },
@@ -725,7 +725,7 @@ static struct {
 	{ 0xf1c074f3 , 0x2000, "40044 Amstrad PC1640 bios even fc000 (v3)" },
 	{ 0x664f5360 , 0x80000, "Tandy 1000 RLX (2.00.00)" },
 	{ 0x11cb1983, 0x10000, "UNUSEABLE PART TANDY 1000 RLX (last 64kbyte)" },
-	{ 0xf518ab17 , 0x10000, "INCOMPLETE Tandy1td? (2.00.00)" },
+	{ 0xf518ab17 , 0x10000, "INCOMPLETE Tandy1td? (DAC) (2.00.00)" },
 	{ 0xe288f12c , 0x10000, "INCOMPLETE Tandy 1000TL/2? (2.00.00)" },
 	{ 0x4995be7a , 0x8000, "IBM AT bios even f0000" },
 	{ 0xc32713e4 , 0x8000, "IBM AT bios odd f0000" },
@@ -748,6 +748,16 @@ static struct {
 	{ 0xa362ffe6 , 0x800, "AUTHENTIC? PC cga character set" },
 	{ 0x42009069 , 0x1000, "AUTHENTIC? PC cga character set" },
 
+/* applied computer techniques (act)/ apricot */
+	{ 0x30b3f803 , 0x1000, "Sirius1 rom fe000" },
+	{ 0x2bf3c0e4 , 0x1000, "Sirius1 rom ff000" },
+	{ 0x0da581b7 , 0x2000, "Sirius1 rom newer" },
+	{ 0x9bf49f7d , 0x400, "Sirius1 disk controller" },
+	{ 0xadc601bd , 0x800, "Sirius1 gcr en-/decoder? rom" },
+
+	{ 0xbfd46ada, 0x4000, "Apricot F bios 3.1.1 even" },
+	{ 0x67ad5b3a, 0x4000, "Apricot F Bios 3.1.1 odd" },
+	{ 0xfecfad9b, 0x8000, "COMBINED Apricot F bios 3.1.1" },
 
 /* Sinclair ZX-80 Computer and Clones ******************************************/
 	{ 0x4c7fc597 , 0x1000 , "Sinclair ZX-80" },
@@ -1104,7 +1114,8 @@ static struct {
 	{ 0xa04a8732 , 0x2000, "COCO basic 1.3 (1byte different to 0xd8f4d15e" },
 	{ 0x6111a086 , 0x2000, "NOT AUTHENTIC? COCO extbasic 1.0" },
 	{ 0xa82a6254 , 0x2000, "COCO extbasic 1.1" },
-	{ 0x2ea0fb7f , 0x4000, "MERGED! 0xa82a6254+0x54368805" },
+	{ 0x2ea0fb7f , 0x4000, "MERGED! COCO extbasic 1.1 0xa82a6254+0x54368805" },
+	{ 0x318ba789 , 0x4010, "OVERDUMP COCO extbasic 1.1 (remove first 16bytes)=0x2ea0fb7f" },
 	{ 0xb4f9968e , 0x2000, "COCO disk 1.0" },
 	{ 0x0b9c5415 , 0x2000, "COCO disk 1.1" },
 	{ 0x7eaa44e3 , 0x2000, "COCO disk (2bytes different to 0x0b9c5415" },
@@ -1114,10 +1125,15 @@ static struct {
 	{ 0xdfce21e5 , 0x7f00, "INCOMPLETE COCO3 saved from running machine" },
 	{ 0x7d48ba8e , 0x2000, "??? COCO3 disk?" },
 	{ 0xe3879310 , 0x4000, "DRAGON32" },
+	{ 0xdcab048d , 0x4010, "Overdump DRAGON32 (remove first 16bytes)=0xe3879310" },
 	{ 0xb44536f6 , 0x2000, "DRAGON DOS 1.0" },
 	{ 0x878396a5 , 0x4000, "CP400 basic" },
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
 	{ 0x11fda97e , 0x2000, "MC10" },
+	{ 0x17893a42 , 0x4000, "Dragon64? d64rom2" },
+	{ 0x84f68bf9 , 0x4000, "Dragon64? dragrom" },
+	{ 0xcedc6a52 , 0x4010, "Overdump Dragon64? (remove first 16bytes)=0x17893a42" },
+	{ 0x615236cc , 0x4010, "Overdump Dragon64? (remove first 16bytes)=0x84f68bf9" },
 
 	{ 0x70d06dff , 0x1000, "TRS80 Level1 0000" },
 	{ 0x83dbbbe2 , 0x1000, "TRS80 0000" },
