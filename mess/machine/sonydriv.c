@@ -54,6 +54,9 @@ static int sony_floppy_select = 0;	/* which drive is enabled */
 
 static int sony_sel_line;			/* one single line Is 0 or 1 */
 
+static unsigned int rotation_speed;		/* drive rotation speed - ignored if ext_speed_control == 0 */
+
+
 typedef struct
 {
 	void *fd;
@@ -68,6 +71,9 @@ typedef struct
 			long tag_offset;
 		} apple_diskcopy;
 	} format_specific;
+
+	unsigned int ext_speed_control : 1;	/* is motor rotation controlled by external device ? */
+
 	unsigned int disk_switched : 1;	/* disk-in-place status bit */
 	unsigned int wp : 1;			/* disk write protected */
 	unsigned int motor : 1;			/* drive motor on */
@@ -1087,15 +1093,34 @@ static int sony_rpm(floppy *f)
 	 * Note - the timing values are the values returned by the Mac Plus routine
 	 * that calculates the speed; I'm not sure what units they are in
 	 */
-	static int speeds[] = {
-		500,	/* 00-15:	timing value 117B (acceptable range {1135-11E9} */
-		550,	/* 16-31:	timing value ???? (acceptable range {12C6-138A} */
-		600,	/* 32-47:	timing value ???? (acceptable range {14A7-157F} */
-		675,	/* 48-63:	timing value ???? (acceptable range {16F2-17E2} */
-		750		/* 64-79:	timing value ???? (acceptable range {19D0-1ADE} */
-	};
 
-	return speeds[f->track / 16];
+	if (f->ext_speed_control)
+	{	/* 400k unit : rotation speed controlled by computer */
+		return rotation_speed;
+	}
+	else
+	{	/* 800k unit : rotation speed controlled by drive */
+#if 1	/* Mac Plus */
+		static int speeds[] = {
+			500,	/* 00-15:	timing value 117B (acceptable range {1135-11E9} */
+			550,	/* 16-31:	timing value ???? (acceptable range {12C6-138A} */
+			600,	/* 32-47:	timing value ???? (acceptable range {14A7-157F} */
+			675,	/* 48-63:	timing value ???? (acceptable range {16F2-17E2} */
+			750		/* 64-79:	timing value ???? (acceptable range {19D0-1ADE} */
+		};
+#else	/* Lisa 2 */
+		/* 237 + 1.3*(256-reg) */
+		static int speeds[] = {
+			293,	/* 00-15:	timing value ???? (acceptable range {0330-0336} */
+			322,	/* 16-31:	timing value ???? (acceptable range {02ED-02F3} */
+			351,	/* 32-47:	timing value ???? (acceptable range {02A7-02AD} */
+			394,	/* 48-63:	timing value ???? (acceptable range {0262-0266} */
+			439		/* 64-79:	timing value ???? (acceptable range {021E-0222} */
+		};
+#endif
+
+		return speeds[f->track / 16];
+	}
 }
 
 int sony_read_status(void)
@@ -1143,6 +1168,7 @@ int sony_read_status(void)
 			result = f->drive_sides;
 			break;
 		case 0x0a:	/* At track 0 */
+			logerror("sony_status(): reading Track 0 pc=0x%08x\n", (int) cpu_get_pc());
 			result = f->track != 0;	/* 0=track zero 1=not track zero */
 			break;
 		case 0x0b:	/* Disk ready: 0=ready, 1=not ready */
@@ -1223,7 +1249,7 @@ static void sony_doaction(void)
 					f->track++;
 			}
 			#if LOG_SONY
-				logerror("sony_doaction(): stepping to track %i\n", (int) f->step);
+				logerror("sony_doaction(): stepping to track %i\n", (int) f->track);
 			#endif
 			break;
 		case 0x08:	/* Turn motor on */
@@ -1266,6 +1292,9 @@ int sony_floppy_init(int id, int allowablesizes)
 	f = &sony_floppy[id];
 
 	memset(f, 0, sizeof(*f));
+
+	f->ext_speed_control = (allowablesizes & SONY_FLOPPY_EXT_SPEED_CONTROL) ? 1 : 0;
+	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
 	if (!device_filename(IO_FLOPPY,id))
 		return INIT_OK;
@@ -1340,8 +1369,6 @@ int sony_floppy_init(int id, int allowablesizes)
 	{
 		image_len = osd_fsize(f->fd);
 	}
-
-	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
 	switch(image_len) {
 	case 80*10*512*1:
@@ -1472,6 +1499,11 @@ void sony_set_sel_line(int sel)
 	#if LOG_SONY_EXTRA
 		logerror("sony_set_sel_line(): %s line IWM_SEL\n", sony_sel_line ? "setting" : "clearing");
 	#endif
+}
+
+void sony_set_speed(int speed)
+{
+	rotation_speed = speed;
 }
 
 /*int sony_get_sel_line(void)
