@@ -10,9 +10,12 @@
 
 #include "rc.h"
 #include "messtest.h"
-#include "parallel.h"
 #include "hashfile.h"
+
+#ifdef WIN32
 #include "glob.h"
+#include "parallel.h"
+#endif /* WIN32 */
 
 extern struct rc_option fileio_opts[];
 
@@ -164,6 +167,7 @@ static int handle_arg(char *arg)
 
 
 
+#ifdef WIN32
 static void win_expand_wildcards(int *argc, char **argv[])
 {
 	int i;
@@ -177,6 +181,7 @@ static void win_expand_wildcards(int *argc, char **argv[])
 	*argc = g.gl_pathc;
 	*argv = g.gl_pathv;
 }
+#endif /* WIN32 */
 
 
 
@@ -190,10 +195,23 @@ int main(int argc, char *argv[])
 
 	mess_ghost_images = 1;
 
+#ifdef WIN32
 	/* expand wildcards so '*' can be used; this is not UNIX */
 	win_expand_wildcards(&argc, &argv);
 
 	win_parallel_init();
+#else
+	{
+		/* this is for XMESS */
+		extern const char *cheatfile;
+		extern const char *db_filename;
+		extern const char *history_filename;
+		extern const char *mameinfo_filename;
+
+		cheatfile = db_filename = history_filename = mameinfo_filename
+			= NULL;
+	}
+#endif /* WIN32 */
 
 	test_count = 0;
 	failure_count = 0;
@@ -246,7 +264,9 @@ int main(int argc, char *argv[])
 done:
 	if (rc)
 		rc_destroy(rc);
+#ifdef WIN32
 	win_parallel_exit();
+#endif /* WIN32 */
 	return result;
 }
 

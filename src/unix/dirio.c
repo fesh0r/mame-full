@@ -286,7 +286,11 @@ int osd_is_absolute_path(const char *path)
 
 void osd_getcurdir(char *buffer, size_t buffer_len)
 {
+#ifdef BSD43
 	getwd(buffer);
+#else
+	getcwd(buffer, buffer_len);
+#endif
 }
 
 
