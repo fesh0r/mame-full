@@ -104,7 +104,7 @@ void apple2_interrupt(void)
 
 	scanline = cpu_getscanline();
 
-	if (scanline == 192)
+	if (scanline > 190)
 	{
 		irq_freq --;
 		if (irq_freq < 0)
