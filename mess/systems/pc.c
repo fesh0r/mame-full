@@ -19,6 +19,7 @@
 #include "driver.h"
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
+#include "vidhrdw/generic.h"
 #include "printer.h"
 
 #include "includes/uart8250.h"
@@ -29,6 +30,7 @@
 #include "includes/vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
+#include "includes/pc_aga.h"
 #include "includes/pc_t1t.h"
 
 #include "includes/pc_hdc.h"
@@ -42,9 +44,13 @@
 #include "includes/europc.h"
 #include "includes/tandy1t.h"
 #include "includes/amstr_pc.h"
+#include "includes/ibmpc.h"
 #include "includes/at.h"
 
 #include "includes/pc.h"
+
+/* window resizing with dirtybuffering traping in xmess window */
+//#define RESIZING_WORKING
 
 #define ym3812_StdClock 3579545
 
@@ -158,6 +164,28 @@ static PORT_WRITE_START( pc_writeport )
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 PORT_END
 
+static MEMORY_READ_START( europc_readmem )
+	{ 0x00000, 0x7ffff, MRA_RAM },
+	{ 0x80000, 0x9ffff, MRA_RAM },
+	{ 0xa0000, 0xaffff, MRA_NOP },
+	{ 0xb0000, 0xbffff, pc_aga_videoram_r },
+	{ 0xc0000, 0xc7fff, MRA_NOP },
+	{ 0xc8000, 0xcffff, MRA_ROM },
+	{ 0xd0000, 0xeffff, MRA_NOP },
+	{ 0xf0000, 0xfffff, MRA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE_START( europc_writemem )
+	{ 0x00000, 0x7ffff, MWA_RAM },
+	{ 0x80000, 0x9ffff, MWA_RAM },
+	{ 0xa0000, 0xaffff, MWA_NOP },
+	{ 0xb0000, 0xbffff, pc_aga_videoram_w, &videoram, &videoram_size },
+	{ 0xc0000, 0xc7fff, MWA_NOP },
+	{ 0xc8000, 0xcffff, MWA_ROM },
+	{ 0xd0000, 0xeffff, MWA_NOP },
+	{ 0xf0000, 0xfffff, MWA_ROM },
+MEMORY_END
+
 static PORT_READ_START( europc_readport)
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
@@ -167,6 +195,7 @@ static PORT_READ_START( europc_readport)
 	{ 0x0200, 0x0207, pc_JOY_r },
 	{ 0x0250, 0x025f, europc_jim_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
+	{ 0x2e0, 0x2e0, europc_jim2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
     { 0x0320, 0x0323, pc_HDC1_r },
@@ -176,7 +205,9 @@ static PORT_READ_START( europc_readport)
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_status_port_0_r },
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
+	{ 0x3b0, 0x3bf, pc_aga_mda_r },
+//	{ 0x03bc, 0x03be, pc_parallelport0_r },
+	{ 0x3d0, 0x3df, pc_aga_cga_r },
 	{ 0x03d0, 0x03df, pc_CGA_r },
 	{ 0x03e8, 0x03ef, pc_COM3_r },
 	{ 0x03f0, 0x03f7, pc_fdc_r },
@@ -202,7 +233,9 @@ static PORT_WRITE_START( europc_writeport )
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_w },
+	{ 0x3b0, 0x3bf, pc_aga_mda_w },
+//	{ 0x03bc, 0x03be, pc_parallelport0_w },
+	{ 0x3d0, 0x3df, pc_aga_cga_w },
 	{ 0x03d0, 0x03df, pc_CGA_w },
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
@@ -422,17 +455,6 @@ static PORT_WRITE_START( at_writeport )
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 PORT_END
 
-static unsigned char palette[] = {
-/*  normal colors */
-    0x00,0x00,0x00, 0x00,0x00,0x7f, 0x00,0x7f,0x00, 0x00,0x7f,0x7f,
-    0x7f,0x00,0x00, 0x7f,0x00,0x7f, 0x7f,0x7f,0x00, 0x7f,0x7f,0x7f,
-/*  light colors */
-    0x3f,0x3f,0x3f, 0x00,0x00,0xff, 0x00,0xff,0x00, 0x00,0xff,0xff,
-    0xff,0x00,0x00, 0xff,0x00,0xff, 0xff,0xff,0x00, 0xff,0xff,0xff,
-/*  black for 640x200 gfx */
-    0x00,0x00,0x00
-};
-
 #define PC_JOYSTICK \
 	PORT_START	/* IN15 */\
 	PORT_BIT ( 0xf, 0xf,	 IPT_UNUSED ) \
@@ -453,180 +475,71 @@ static unsigned char palette[] = {
 	PORT_START /* IN19 */\
 	PORT_ANALOGX(0xff,0x80,IPT_AD_STICK_Y|IPF_CENTER|IPF_REVERSE|IPF_PLAYER2,100,1,1,0xff,CODE_NONE,CODE_NONE,JOYCODE_2_UP,JOYCODE_2_DOWN)
 
-#define PC_KEYBOARD \
-    PORT_START  /* IN4 */\
-	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */\
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */\
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */\
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */\
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */\
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */\
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */\
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */\
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */\
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */\
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */\
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */\
-		\
-	PORT_START	/* IN5 */\
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */\
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */\
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */\
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */\
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */\
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */\
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */\
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */\
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */\
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */\
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */\
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */\
-		\
-	PORT_START	/* IN6 */\
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */\
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */\
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */\
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */\
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */\
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"` ~",          KEYCODE_TILDE,      IP_JOY_NONE ) /* `                           29  A9 */\
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */\
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"\\ |",         KEYCODE_BACKSLASH,  IP_JOY_NONE ) /* \                           2B  AB */\
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */\
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */\
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */\
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */\
-		\
-	PORT_START	/* IN7 */\
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */\
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */\
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */\
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP * (PrtScr)",KEYCODE_ASTERISK,   IP_JOY_NONE ) /* Keypad *  (PrtSc)           37  B7 */\
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */\
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */\
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */\
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */\
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */\
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */\
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */\
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */\
-		\
-	PORT_START	/* IN8 */\
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */\
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */\
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"ScrLock",      KEYCODE_SCRLOCK,    IP_JOY_NONE ) /* Scroll Lock                 46  C6 */\
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )/* Keypad 7  (Home)            47  C7 */\
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 (Up)",    KEYCODE_8_PAD,      KEYCODE_UP )  /* Keypad 8  (Up arrow)        48  C8 */\
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      KEYCODE_PGUP) /* Keypad 9  (PgUp)            49  C9 */\
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"KP -",         KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* Keypad -                    4A  CA */\
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 (Left)",  KEYCODE_4_PAD,      KEYCODE_LEFT )/* Keypad 4  (Left arrow)      4B  CB */\
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */\
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT )/* Keypad 6  (Right arrow)     4D  CD */\
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"KP +",         KEYCODE_PLUS_PAD,   IP_JOY_NONE ) /* Keypad +                    4E  CE */\
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END ) /* Keypad 1  (End)             4F  CF */\
-		\
-	PORT_START	/* IN9 */\
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN ) /* Keypad 2  (Down arrow)      50  D0 */\
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN ) /* Keypad 3  (PgDn)            51  D1 */\
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */\
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP . (Del)",   KEYCODE_DEL_PAD,    KEYCODE_DEL ) /* Keypad .  (Del)             53  D3 */\
-	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )\
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"(84/102)\\",   KEYCODE_BACKSLASH2, IP_JOY_NONE ) /* Backslash 2                 56  D6 */\
-		\
-	PORT_BIT ( 0xff80, 0x0000, IPT_UNUSED )\
-		\
-	PORT_START	/* IN10 */\
-	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )\
-		\
-	PORT_START	/* IN11 */\
-	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-
-
-
 INPUT_PORTS_START( pcmda )
 	PORT_START /* IN0 */
 	PORT_BIT ( 0x80, 0x80,	 IPT_VBLANK )
 	PORT_BIT ( 0x7f, 0x7f,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x30, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x30, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16/ 64/256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32/128/512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48/192/576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64/256/640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x02, DEF_STR(Yes) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Any floppy drive installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Any floppy drive installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x01, DEF_STR(Yes) )
 
     PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x80, DEF_STR(Yes) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x40, DEF_STR(Yes) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR(No) )
 	PORT_DIPSETTING(	0x20, DEF_STR(Yes) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
@@ -646,70 +559,127 @@ INPUT_PORTS_START( pccga )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
 	PC_KEYBOARD
+
+	INPUT_MICROSOFT_MOUSE
+
+	PC_JOYSTICK
+INPUT_PORTS_END
+
+INPUT_PORTS_START( europc )
+	PORT_START /* IN0 */
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
+	PORT_BIT ( 0x08, 0x08,	 IPT_VBLANK )
+	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
+
+    PORT_START /* IN1 */
+
+	PORT_START /* IN2 */
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+
+    PORT_START /* IN3 */
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x80, "COM1" )
+	PORT_DIPSETTING(	0x40, "COM2" )
+	PORT_DIPSETTING(	0x20, "COM3" )
+	PORT_DIPSETTING(	0x10, "COM4" )
+    PORT_DIPSETTING(    0x00, "none" )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
+	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
+	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
+
+	EUROPC_KEYBOARD
 
 	INPUT_MICROSOFT_MOUSE
 
@@ -723,67 +693,67 @@ INPUT_PORTS_START( xtcga )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Turbo Switch", CODE_DEFAULT, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Turbo Switch", CODE_DEFAULT, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "Off(4.77 MHz)" )
 	PORT_DIPSETTING(	0x02, "On(12 MHz)" )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
@@ -805,145 +775,38 @@ INPUT_PORTS_START( tandy1t )
 	PORT_BIT ( 0xff, 0xff,	 IPT_UNUSED )
 
     PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
 	PORT_BIT ( 0x30, 0x00,	 IPT_UNUSED )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 	PORT_BIT ( 0x06, 0x00,	 IPT_UNUSED )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"Esc",          KEYCODE_ESC,        IP_JOY_NONE ) /* Esc                         01  81 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"1 !",          KEYCODE_1,          IP_JOY_NONE ) /* 1                           02  82 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"2 @",          KEYCODE_2,          IP_JOY_NONE ) /* 2                           03  83 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"3 #",          KEYCODE_3,          IP_JOY_NONE ) /* 3                           04  84 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"4 $",          KEYCODE_4,          IP_JOY_NONE ) /* 4                           05  85 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"5 %",          KEYCODE_5,          IP_JOY_NONE ) /* 5                           06  86 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"6 ^",          KEYCODE_6,          IP_JOY_NONE ) /* 6                           07  87 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"7 &",          KEYCODE_7,          IP_JOY_NONE ) /* 7                           08  88 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"8 *",          KEYCODE_8,          IP_JOY_NONE ) /* 8                           09  89 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"9 (",          KEYCODE_9,          IP_JOY_NONE ) /* 9                           0A  8A */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"0 )",          KEYCODE_0,          IP_JOY_NONE ) /* 0                           0B  8B */
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"- _",          KEYCODE_MINUS,      IP_JOY_NONE ) /* -                           0C  8C */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"= +",          KEYCODE_EQUALS,     IP_JOY_NONE ) /* =                           0D  8D */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"<--",          KEYCODE_BACKSPACE,  IP_JOY_NONE ) /* Backspace                   0E  8E */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"Tab",          KEYCODE_TAB,        IP_JOY_NONE ) /* Tab                         0F  8F */
-
-	PORT_START	/* IN5 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"Q",            KEYCODE_Q,          IP_JOY_NONE ) /* Q                           10  90 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"W",            KEYCODE_W,          IP_JOY_NONE ) /* W                           11  91 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"E",            KEYCODE_E,          IP_JOY_NONE ) /* E                           12  92 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"R",            KEYCODE_R,          IP_JOY_NONE ) /* R                           13  93 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"T",            KEYCODE_T,          IP_JOY_NONE ) /* T                           14  94 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"Y",            KEYCODE_Y,          IP_JOY_NONE ) /* Y                           15  95 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"U",            KEYCODE_U,          IP_JOY_NONE ) /* U                           16  96 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"I",            KEYCODE_I,          IP_JOY_NONE ) /* I                           17  97 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"O",            KEYCODE_O,          IP_JOY_NONE ) /* O                           18  98 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"P",            KEYCODE_P,          IP_JOY_NONE ) /* P                           19  99 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"[ {",          KEYCODE_OPENBRACE,  IP_JOY_NONE ) /* [                           1A  9A */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"] }",          KEYCODE_CLOSEBRACE, IP_JOY_NONE ) /* ]                           1B  9B */
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Enter",        KEYCODE_ENTER,      IP_JOY_NONE ) /* Enter                       1C  9C */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"L-Ctrl",       KEYCODE_LCONTROL,   IP_JOY_NONE ) /* Left Ctrl                   1D  9D */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"A",            KEYCODE_A,          IP_JOY_NONE ) /* A                           1E  9E */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"S",            KEYCODE_S,          IP_JOY_NONE ) /* S                           1F  9F */
-
-	PORT_START	/* IN6 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"D",            KEYCODE_D,          IP_JOY_NONE ) /* D                           20  A0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F",            KEYCODE_F,          IP_JOY_NONE ) /* F                           21  A1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"G",            KEYCODE_G,          IP_JOY_NONE ) /* G                           22  A2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"H",            KEYCODE_H,          IP_JOY_NONE ) /* H                           23  A3 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"J",            KEYCODE_J,          IP_JOY_NONE ) /* J                           24  A4 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"K",            KEYCODE_K,          IP_JOY_NONE ) /* K                           25  A5 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"L",            KEYCODE_L,          IP_JOY_NONE ) /* L                           26  A6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"; :",          KEYCODE_COLON,      IP_JOY_NONE ) /* ;                           27  A7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"' \"",         KEYCODE_QUOTE,      IP_JOY_NONE ) /* '                           28  A8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Cursor Up",    KEYCODE_UP,			IP_JOY_NONE ) /*                             29  A9 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"L-Shift",      KEYCODE_LSHIFT,     IP_JOY_NONE ) /* Left Shift                  2A  AA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"Cursor Left",  KEYCODE_LEFT,		IP_JOY_NONE ) /*                             2B  AB */
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"Z",            KEYCODE_Z,          IP_JOY_NONE ) /* Z                           2C  AC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"X",            KEYCODE_X,          IP_JOY_NONE ) /* X                           2D  AD */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"C",            KEYCODE_C,          IP_JOY_NONE ) /* C                           2E  AE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"V",            KEYCODE_V,          IP_JOY_NONE ) /* V                           2F  AF */
-
-	PORT_START	/* IN7 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"B",            KEYCODE_B,          IP_JOY_NONE ) /* B                           30  B0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"N",            KEYCODE_N,          IP_JOY_NONE ) /* N                           31  B1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"M",            KEYCODE_M,          IP_JOY_NONE ) /* M                           32  B2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	", <",          KEYCODE_COMMA,      IP_JOY_NONE ) /* ,                           33  B3 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	". >",          KEYCODE_STOP,       IP_JOY_NONE ) /* .                           34  B4 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"/ ?",          KEYCODE_SLASH,      IP_JOY_NONE ) /* /                           35  B5 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"R-Shift",      KEYCODE_RSHIFT,     IP_JOY_NONE ) /* Right Shift                 36  B6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"Print",		CODE_NONE,			IP_JOY_NONE ) /*                             37  B7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Alt",          KEYCODE_LALT,       IP_JOY_NONE ) /* Left Alt                    38  B8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"Space",        KEYCODE_SPACE,      IP_JOY_NONE ) /* Space                       39  B9 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Caps",         KEYCODE_CAPSLOCK,   IP_JOY_NONE ) /* Caps Lock                   3A  BA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"F1",           KEYCODE_F1,         IP_JOY_NONE ) /* F1                          3B  BB */
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"F2",           KEYCODE_F2,         IP_JOY_NONE ) /* F2                          3C  BC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"F3",           KEYCODE_F3,         IP_JOY_NONE ) /* F3                          3D  BD */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"F4",           KEYCODE_F4,         IP_JOY_NONE ) /* F4                          3E  BE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"F5",           KEYCODE_F5,         IP_JOY_NONE ) /* F5                          3F  BF */
-
-	PORT_START	/* IN8 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"F6",           KEYCODE_F6,         IP_JOY_NONE ) /* F6                          40  C0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"F7",           KEYCODE_F7,         IP_JOY_NONE ) /* F7                          41  C1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"F8",           KEYCODE_F8,         IP_JOY_NONE ) /* F8                          42  C2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"F9",           KEYCODE_F9,         IP_JOY_NONE ) /* F9                          43  C3 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"F10",          KEYCODE_F10,        IP_JOY_NONE ) /* F10                         44  C4 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"NumLock",      KEYCODE_NUMLOCK,    IP_JOY_NONE ) /* Num Lock                    45  C5 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	"Hold",			KEYCODE_SCRLOCK,    IP_JOY_NONE ) /*		                     46  C6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"KP 7 /",		KEYCODE_7_PAD,      IP_JOY_NONE ) /* Keypad 7                    47  C7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"KP 8 ~",		KEYCODE_8_PAD,      IP_JOY_NONE ) /* Keypad 8                    48  C8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"KP 9 (PgUp)",  KEYCODE_9_PAD,      IP_JOY_NONE ) /* Keypad 9  (PgUp)            49  C9 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"Cursor Down",  KEYCODE_DOWN,		IP_JOY_NONE ) /*                             4A  CA */
-	PORT_BITX( 0x0800, 0x0000, IPT_KEYBOARD,	"KP 4 |",		KEYCODE_4_PAD,		IP_JOY_NONE ) /* Keypad 4                    4B  CB */
-	PORT_BITX( 0x1000, 0x0000, IPT_KEYBOARD,	"KP 5",         KEYCODE_5_PAD,      IP_JOY_NONE ) /* Keypad 5                    4C  CC */
-	PORT_BITX( 0x2000, 0x0000, IPT_KEYBOARD,	"KP 6",			KEYCODE_6_PAD,		IP_JOY_NONE ) /* Keypad 6                    4D  CD */
-	PORT_BITX( 0x4000, 0x0000, IPT_KEYBOARD,	"Cursor Right", KEYCODE_RIGHT,		IP_JOY_NONE ) /*                             4E  CE */
-	PORT_BITX( 0x8000, 0x0000, IPT_KEYBOARD,	"KP 1 (End)",   KEYCODE_1_PAD,      IP_JOY_NONE ) /* Keypad 1  (End)             4F  CF */
-
-	PORT_START	/* IN9 */
-	PORT_BITX( 0x0001, 0x0000, IPT_KEYBOARD,	"KP 2 `",		KEYCODE_2_PAD,		IP_JOY_NONE ) /* Keypad 2                    50  D0 */
-	PORT_BITX( 0x0002, 0x0000, IPT_KEYBOARD,	"KP 3 (PgDn)",  KEYCODE_3_PAD,      IP_JOY_NONE ) /* Keypad 3  (PgDn)            51  D1 */
-	PORT_BITX( 0x0004, 0x0000, IPT_KEYBOARD,	"KP 0",			KEYCODE_0_PAD,      IP_JOY_NONE ) /* Keypad 0                    52  D2 */
-	PORT_BITX( 0x0008, 0x0000, IPT_KEYBOARD,	"KP - (Del)",   KEYCODE_MINUS_PAD,  IP_JOY_NONE ) /* - Delete                    53  D3 */
-	PORT_BITX( 0x0010, 0x0000, IPT_KEYBOARD,	"Break",		KEYCODE_STOP,       IP_JOY_NONE ) /* Break                       54  D4 */
-	PORT_BITX( 0x0020, 0x0000, IPT_KEYBOARD,	"+ Insert",		KEYCODE_PLUS_PAD,	IP_JOY_NONE ) /* + Insert                    55  D5 */
-	PORT_BITX( 0x0040, 0x0000, IPT_KEYBOARD,	".",			KEYCODE_DEL_PAD,    IP_JOY_NONE ) /* .                           56  D6 */
-	PORT_BITX( 0x0080, 0x0000, IPT_KEYBOARD,	"Enter",		KEYCODE_ENTER_PAD,  IP_JOY_NONE ) /* Enter                       57  D7 */
-	PORT_BITX( 0x0100, 0x0000, IPT_KEYBOARD,	"Home",			KEYCODE_HOME,       IP_JOY_NONE ) /* HOME                        58  D8 */
-	PORT_BITX( 0x0200, 0x0000, IPT_KEYBOARD,	"F11",			KEYCODE_F11,        IP_JOY_NONE ) /* F11                         59  D9 */
-	PORT_BITX( 0x0400, 0x0000, IPT_KEYBOARD,	"F12",			KEYCODE_F12,        IP_JOY_NONE ) /* F12                         5a  Da */
-
-	PORT_START	/* IN10 */
-	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
-
-	PORT_START	/* IN11 */
-	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+	TANDY1000_KEYB
 
 	INPUT_MICROSOFT_MOUSE
 
@@ -957,7 +820,7 @@ INPUT_PORTS_START( pc1512 )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "English/512k only/less checks" )
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
 	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
@@ -972,37 +835,37 @@ INPUT_PORTS_START( pc1512 )
 	PORT_BIT( 0xe000, 0x00,	IPT_UNUSED ) // not used in pc1512
 	PORT_START /* IN2 */
 PORT_BIT ( 0x80, 0x80,	 IPT_UNUSED ) // com 1 on motherboard
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
@@ -1015,33 +878,33 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( pc1640 )
 	PORT_START	/* IN0 */
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 5", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 5", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 6", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 6", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 7", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 7", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 8", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 8", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, CODE_NONE )
 //	PORT_DIPSETTING(	0x00, "PC 512k" ) // machine crashes with ega bios at 0xc0000
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
 	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
@@ -1051,39 +914,39 @@ INPUT_PORTS_START( pc1640 )
 	PORT_DIPSETTING(	0x06, "German/Deutsch" ) // bitte warten
 	PORT_DIPSETTING(	0x07, "English" ) // please wait
 	PORT_BIT( 0x20, 0x00,	IPT_UNUSED ) // not pc1512 integrated special cga
-	PORT_BITX( 0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x40", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x40", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x40, "0x40" )
-	PORT_BITX( 0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x80", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x80", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x80, "0x80" )
 #if 0
-	PORT_BITX( 0x200, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x20 after 27[8a] read (font?)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x200, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x20 after 27[8a] read (font?)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x200, "0x20" )
-	PORT_BITX( 0x400, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x40 after 27[8a] read (font?)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x400, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x40 after 27[8a] read (font?)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x400, "0x40" )
-	PORT_BITX( 0x800, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x80 after 27[8a] read (font?)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x800, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x80 after 27[8a] read (font?)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x800, "0x80" )
-	PORT_BITX( 0x2000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x20 after 427a read", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x2000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a 0x20 after 427a read", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x2000, "0x20" )
-	PORT_BITX( 0x4000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, " 37a 0x40 after 427a read", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x4000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, " 37a 0x40 after 427a read", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x4000, "0x40" )
-	PORT_BITX( 0x8000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, " 37a 0x80 after 427a read", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x8000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, " 37a 0x80 after 427a read", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "0x00" )
 	PORT_DIPSETTING(	0x8000, "0x80" )
 #else
-	PORT_BITX( 0xe00, 0x600, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a after 427a read", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xe00, 0x600, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a after 427a read", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x000, "?0standard" ) // diaresis a, seldom c, acut u, circumflex e, grave a, acute e
 	PORT_DIPSETTING(	0x200, "?scandinavian" ) //diaresis a, o slashed, acute u, circumflex e, grave a, acute e
 	PORT_DIPSETTING(	0x600, "?spain" ) // tilde a, seldom c, acute u, circumflex e, grave a, acute e
 	PORT_DIPSETTING(	0xa00, "?greeck" ) // E, circumflex ???,micro, I, Z, big kappa?
 	PORT_DIPSETTING(	0xe00, "?standard" ) // diaresis a, seldom e, acute u, circumflex e, grave a, acute e
-	PORT_BITX( 0xe000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a after 427a read", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xe000, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "37a after 427a read", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x0000, "?Integrated Graphic Adapter IGA (EGA)" )
 	PORT_DIPSETTING(	0x2000, "?External EGA/VGA" )
 	PORT_DIPSETTING(	0x6000, "CGA 40 Columns" )
@@ -1092,37 +955,37 @@ INPUT_PORTS_START( pc1640 )
 #endif
 	PORT_START /* IN2 */
 PORT_BIT ( 0x80, 0x80,	 IPT_UNUSED ) // com 1 on motherboard
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
 PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
@@ -1136,80 +999,80 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( xtvga )
 	PORT_START /* IN0 */
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )		PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )		PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Turbo Switch", CODE_DEFAULT, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Turbo Switch", CODE_DEFAULT, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "Off(4.77 MHz)" )
 	PORT_DIPSETTING(	0x02, "On(12 MHz)" )
 	PORT_BIT( 0x01, 0x01,	IPT_UNUSED )
@@ -1228,65 +1091,65 @@ INPUT_PORTS_START( atcga )
 	PORT_BIT ( 0x07, 0x07,	 IPT_UNUSED )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
@@ -1301,79 +1164,79 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( atvga )
 	PORT_START /* IN0 */
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 1", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 2", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 3", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
-	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xc0, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Number of floppy drives", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x40, "2" )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0xc0, "4" )
-	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x30, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Graphics adapter", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "EGA/VGA" )
 	PORT_DIPSETTING(	0x10, "Color 40x25" )
 	PORT_DIPSETTING(	0x20, "Color 80x25" )
 	PORT_DIPSETTING(	0x30, "Monochrome" )
-	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0c, 0x0c, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "RAM banks", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, "1 - 16  64 256K" )
 	PORT_DIPSETTING(	0x04, "2 - 32 128 512K" )
 	PORT_DIPSETTING(	0x08, "3 - 48 192 576K" )
 	PORT_DIPSETTING(	0x0c, "4 - 64 256 640K" )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "80387 installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy installed", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x01, DEF_STR( Yes ) )
 
 	PORT_START /* IN2 */
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
-	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
-	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "COM4: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT1: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT2: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
-	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "LPT3: enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( Yes ) )
-	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Game port enable", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
     PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
 
     PORT_START /* IN3 */
-	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0xf0, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Serial mouse", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x80, "COM1" )
 	PORT_DIPSETTING(	0x40, "COM2" )
 	PORT_DIPSETTING(	0x20, "COM3" )
 	PORT_DIPSETTING(	0x10, "COM4" )
     PORT_DIPSETTING(    0x00, "none" )
-	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC1 (C800:0 port 320-323)", KEYCODE_NONE, CODE_NONE )
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x08, DEF_STR( Yes ) )
-	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "HDC2 (CA00:0 port 324-327)", KEYCODE_NONE, CODE_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Yes ) )
 	PORT_BIT( 0x02, 0x02,	IPT_UNUSED ) /* no turbo switch */
@@ -1443,15 +1306,14 @@ static struct GfxLayout pc_mda_charlayout =
 
 static struct GfxLayout pc_mda_gfxlayout_1bpp =
 {
-	8,32,					/* 8 x 32 graphics */
+	8,1,					/* 8 x 32 graphics */
 	256,					/* 256 codes */
 	1,						/* 1 bit per pixel */
 	{ 0 },					/* no bit planes */
     /* x offsets */
 	{ 0,1,2,3,4,5,6,7 },
 	/* y offsets (we only use one byte to build the block) */
-	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+	{ 0 },
 	8						/* every code takes 1 byte */
 };
 
@@ -1462,6 +1324,9 @@ static struct GfxDecodeInfo pc_mda_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
+/* to be done:
+   only 2 digital color lines to mda/hercules monitor
+   (maximal 4 colors) */
 static unsigned short mda_colortable[] = {
      0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 0, 0,10,10,10,10,10,10,10,10,10,10,10,10, 0,10,
      2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
@@ -1481,99 +1346,65 @@ static unsigned short mda_colortable[] = {
     10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
     10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,
 /* the two colors for HGC graphics */
-     0,10,
+     0, 10
 };
 
 
 static struct GfxLayout CGA_charlayout =
 {
-	8,32,					/* 8 x 32 characters */
+	8,16,					/* 8 x 16 characters */
     256,                    /* 256 characters */
     1,                      /* 1 bits per pixel */
     { 0 },                  /* no bitplanes; 1 bit per pixel */
     /* x offsets */
     { 0,1,2,3,4,5,6,7 },
     /* y offsets */
-	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
-	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
-    8*8                     /* every char takes 8 bytes */
-};
-
-static struct GfxLayout CGA_charlayout_dw =
-{
-	16,32,					/* 16 x 32 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7 },
-	/* y offsets */
-	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
-	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-      4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
+	{ 0*8,1*8,2*8,3*8,
+	  4*8,5*8,6*8,7*8,
+	  0*8,1*8,2*8,3*8,
+	  4*8,5*8,6*8,7*8 },
     8*8                     /* every char takes 8 bytes */
 };
 
 static struct GfxLayout CGA_gfxlayout_1bpp =
 {
-    8,32,                   /* 8 x 32 graphics */
+    8,1,                   /* 8 x 32 graphics */
     256,                    /* 256 codes */
     1,                      /* 1 bit per pixel */
     { 0 },                  /* no bit planes */
     /* x offsets */
     { 0,1,2,3,4,5,6,7 },
     /* y offsets (we only use one byte to build the block) */
-    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+    { 0 },
     8                       /* every code takes 1 byte */
 };
 
 static struct GfxLayout CGA_gfxlayout_2bpp =
 {
-	8,32,					/* 8 x 32 graphics */
+	4,1,					/* 8 x 32 graphics */
     256,                    /* 256 codes */
     2,                      /* 2 bits per pixel */
 	{ 0, 1 },				/* adjacent bit planes */
     /* x offsets */
-    { 0,0, 2,2, 4,4, 6,6  },
+    { 0,2,4,6  },
     /* y offsets (we only use one byte to build the block) */
-    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+    { 0 },
     8                       /* every code takes 1 byte */
 };
 
 static struct GfxLayout europc_cga_charlayout =
 {
-	8,32,					/* 8 x 32 characters */
+	8,16,					/* 8 x 32 characters */
     256,                    /* 256 characters */
     1,                      /* 1 bits per pixel */
     { 0 },                  /* no bitplanes; 1 bit per pixel */
     /* x offsets */
     { 0,1,2,3,4,5,6,7 },
     /* y offsets */
-	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
-	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
-    8*16                     /* every char takes 8 bytes */
-};
-
-static struct GfxLayout europc_cga_charlayout_dw =
-{
-	16,32,					/* 16 x 32 characters */
-    256,                    /* 256 characters */
-    1,                      /* 1 bits per pixel */
-    { 0 },                  /* no bitplanes; 1 bit per pixel */
-    /* x offsets */
-    { 0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7 },
-	/* y offsets */
-	{ 0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-	  4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8,
-	  0*8,0*8,1*8,1*8,2*8,2*8,3*8,3*8,
-      4*8,4*8,5*8,5*8,6*8,6*8,7*8,7*8 },
+	{ 0*8,1*8,2*8,3*8,
+	  4*8,5*8,6*8,7*8,
+	  8*8,9*8,10*8,11*8,
+	  12*8,13*8,14*8,15*8 },
     8*16                     /* every char takes 8 bytes */
 };
 
@@ -1633,41 +1464,40 @@ static unsigned short cga_colortable[] = {
     14, 0,14, 1,14, 2,14, 3,14, 4,14, 5,14, 6,14, 7,14, 8,14, 9,14,10,14,11,14,12,14,13,14,14,14,15,
     15, 0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15,
 /* the color sets for 1bpp graphics mode */
-	 0,16,
+	 0,0, 0,1, 0,2, 0,3, 0,4, 0,5, 0,6, 0,7,
+	 0,8, 0,9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
 /* the color sets for 2bpp graphics mode */
-     0, 2, 4, 6,  0,10,12,14,
-     0, 3, 5, 7,  0,11,13,15,
+     /*0, 2, 4, 6,*/  0,10,12,14,
+     /*0, 3, 5, 7,*/  0,11,13,15 // only 2 sets!?
 };
 
 static struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &CGA_charlayout,			  0, 256 },   /* single width */
-	{ 1, 0x0000, &CGA_charlayout_dw,		  0, 256 },   /* double width */
-	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,   1 },   /* 640x400x1 gfx */
-	{ 1, 0x1000, &CGA_gfxlayout_2bpp, 256*2+1*2,   4 },   /* 320x200x4 gfx */
+	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,  16 },   /* 640x400x1 gfx */
+	{ 1, 0x1000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
     { -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo europc_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &europc_cga_charlayout,	  0, 256 },   /* single width */
-	{ 1, 0x0000, &europc_cga_charlayout_dw,	  0, 256 },   /* double width */
-	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	  256*2,   1 },   /* 640x400x1 gfx */
-	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+1*2,   4 },   /* 320x200x4 gfx */
-	{ 1, 0x1000, &europc_mda_charlayout,	  0, 256 },   /* single width */
+	{ 1, 0x0000, &europc_cga_charlayout,	   0, 256 },   /* single width */
+	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
+	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
+	{ 1, 0x1000, &europc_mda_charlayout,	   256*2+16*2+2*4, 256 },   /* single width */
+	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp,256*2+16*2+2*4+256*2,	 1 },	/* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 
 #if 0
 static struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &CGA_charlayout,			  0, 256 },   /* single width */
-	{ 1, 0x0000, &CGA_charlayout_dw,		  0, 256 },   /* double width */
-	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	  256*2,   1 },   /* 640x400x1 gfx */
-	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+1*2,   4 },   /* 320x200x4 gfx */
-	{ 1, 0x0800, &CGA_charlayout,			  0, 256 },   /* single width */
-	{ 1, 0x0800, &CGA_charlayout_dw,		  0, 256 },   /* double width */
-	{ 1, 0x1000, &MDA_charlayout,			  0, 256 },   /* single width */
+	{ 1, 0x0000, &CGA_charlayout,			   0, 256 },   /* single width */
+	{ 1, 0x2000, &CGA_gfxlayout_1bpp,	   256*2,  16 },   /* 640x400x1 gfx */
+	{ 1, 0x2000, &CGA_gfxlayout_2bpp, 256*2+16*2,   2 },   /* 320x200x4 gfx */
+	{ 1, 0x0800, &CGA_charlayout,			   0, 256 },   /* second characterset */
+	{ 1, 0x1000, &MDA_charlayout,			   256*2+16*2+2*4, 256 },   /* single width */
+	{ 1, 0x2000, &pc_mda_gfxlayout_1bpp, 256*2+16*2+2*4+2*256,	 1 },	/* 640x400x1 gfx */
     { -1 } /* end of array */
 };
 #endif
@@ -1678,84 +1508,25 @@ static struct GfxDecodeInfo vga_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
-static struct GfxLayout t1t_gfxlayout_4bpp_160 =
+static struct GfxLayout t1t_gfxlayout_4bpp =
 {
-	8,32,					/* 8 x 32 graphics */
+	2,1,					/* 8 x 32 graphics */
     256,                    /* 256 codes */
 	4,						/* 4 bit per pixel */
 	{ 0,1,2,3 },			/* adjacent bit planes */
     /* x offsets */
-	{ 0,0,0,0,4,4,4,4 },
+	{ 0,4 },
     /* y offsets (we only use one byte to build the block) */
-    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
+    { 0 },
 	1*8 					/* every code takes 1 byte */
-};
-
-static struct GfxLayout t1t_gfxlayout_4bpp_320 =
-{
-	4,32,					/* 4 x 32 graphics */
-    256,                    /* 256 codes */
-	4,						/* 4 bit per pixel */
-	{ 0,1,2,3 },			/* adjacent bit planes */
-    /* x offsets */
-	{ 0,0,4,4 },
-    /* y offsets (we only use one byte to build the block) */
-    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-	1*8 					/* every code takes 1 byte */
-};
-
-static struct GfxLayout t1t_gfxlayout_2bpp_640 =
-{
-	4,32,					/* 4 x 32 graphics */
-    256,                    /* 256 codes */
-    2,                      /* 2 bits per pixel */
-	{ 0, 1 },				/* adjacent bit planes */
-    /* x offsets */
-	{ 0,2,4,6 },
-    /* y offsets (we only use one byte to build the block) */
-    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-    8                       /* every code takes 1 byte */
-};
-
-static unsigned short t1t_colortable[] = {
-     0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
-     1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
-     2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
-     3, 0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3, 6, 3, 7, 3, 8, 3, 9, 3,10, 3,11, 3,12, 3,13, 3,14, 3,15,
-     4, 0, 4, 1, 4, 2, 4, 3, 4, 4, 4, 5, 4, 6, 4, 7, 4, 8, 4, 9, 4,10, 4,11, 4,12, 4,13, 4,14, 4,15,
-     5, 0, 5, 1, 5, 2, 5, 3, 5, 4, 5, 5, 5, 6, 5, 7, 5, 8, 5, 9, 5,10, 5,11, 5,12, 5,13, 5,14, 5,15,
-     6, 0, 6, 1, 6, 2, 6, 3, 6, 4, 6, 5, 6, 6, 6, 7, 6, 8, 6, 9, 6,10, 6,11, 6,12, 6,13, 6,14, 6,15,
-     7, 0, 7, 1, 7, 2, 7, 3, 7, 4, 7, 5, 7, 6, 7, 7, 7, 8, 7, 9, 7,10, 7,11, 7,12, 7,13, 7,14, 7,15,
-/* flashing is done by dirtying the videoram buffer positions with attr bit #7 set */
-     8, 0, 8, 1, 8, 2, 8, 3, 8, 4, 8, 5, 8, 6, 8, 7, 8, 8, 8, 9, 8,10, 8,11, 8,12, 8,13, 8,14, 8,15,
-     9, 0, 9, 1, 9, 2, 9, 3, 9, 4, 9, 5, 9, 6, 9, 7, 9, 8, 9, 9, 9,10, 9,11, 9,12, 9,13, 9,14, 9,15,
-    10, 0,10, 1,10, 2,10, 3,10, 4,10, 5,10, 6,10, 7,10, 8,10, 9,10,10,10,11,10,12,10,13,10,14,10,15,
-    11, 0,11, 1,11, 2,11, 3,11, 4,11, 5,11, 6,11, 7,11, 8,11, 9,11,10,11,11,11,12,11,13,11,14,11,15,
-    12, 0,12, 1,12, 2,12, 3,12, 4,12, 5,12, 6,12, 7,12, 8,12, 9,12,10,12,11,12,12,12,13,12,14,12,15,
-    13, 0,13, 1,13, 2,13, 3,13, 4,13, 5,13, 6,13, 7,13, 8,13, 9,13,10,13,11,13,12,13,13,13,14,13,15,
-    14, 0,14, 1,14, 2,14, 3,14, 4,14, 5,14, 6,14, 7,14, 8,14, 9,14,10,14,11,14,12,14,13,14,14,14,15,
-    15, 0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15,
-/* the color set for 1bpp graphics mode */
-	 0,16,
-/* the color sets for 2bpp graphics mode */
-     0, 2, 4, 6,  0,10,12,14,
-     0, 3, 5, 7,  0,11,13,15,
-/* the color set for 4bpp graphics mode */
-	 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
 };
 
 static struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &CGA_charlayout,		  0,			256 },	/* single width */
-	{ 1, 0x0000, &CGA_charlayout_dw,	  0,			256 },	/* double width */
-	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,		  1 },	/* 640x400 1bpp gfx */
-    { 1, 0x1000, &CGA_gfxlayout_2bpp,     256*2+1*2,      4 },  /* 320x200 2bpp gfx */
-	{ 1, 0x1000, &t1t_gfxlayout_4bpp_160, 256*2+1*2+4*4, 16 },	/* 160x200 4bpp gfx */
-	{ 1, 0x1000, &t1t_gfxlayout_4bpp_320, 256*2+1*2+4*4, 16 },	/* 320x200 4bpp gfx */
-    { 1, 0x1000, &t1t_gfxlayout_2bpp_640, 256*2+1*2,      4 },  /* 640x200 2bpp gfx */
+	{ 1, 0x0000, &europc_cga_charlayout,		  0,			 256 },	/* single width */
+	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,		  16 },	/* 640x400 1bpp gfx */
+    { 1, 0x1000, &CGA_gfxlayout_2bpp,     256*2+16*2,      4 },  /* 320x200 2bpp gfx */
+	{ 1, 0x1000, &t1t_gfxlayout_4bpp,	  256*2+16*2+2*4, 16 },	/* 160x200 4bpp gfx */
     { -1 } /* end of array */
 };
 
@@ -1763,7 +1534,8 @@ static struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
 /* Initialise the mda palette */
 static void mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
-    memcpy(sys_palette,palette,sizeof(palette));
+//    memcpy(sys_palette,mda_palette,sizeof(mda_palette));
+    memcpy(sys_palette,cga_palette,sizeof(cga_palette));
     memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
 }
 
@@ -1791,7 +1563,8 @@ static struct MachineDriver machine_driver_pcmda =
     25*14,                                      /* screen height */
     { 0,80*9-1, 0,25*14-1 },                    /* visible_area */
     pc_mda_gfxdecodeinfo,                       /* graphics decode info */
-    sizeof(palette) / sizeof(palette[0]) / 3,
+//    sizeof(mda_palette) / sizeof(mda_palette[0]),
+    sizeof(cga_palette) / sizeof(cga_palette[0]),
     sizeof(mda_colortable) / sizeof(mda_colortable[0]),
     mda_init_palette,                           /* init palette */
 
@@ -1817,7 +1590,7 @@ static struct MachineDriver machine_driver_pcmda =
 /* Initialise the cga palette */
 static void cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
-	memcpy(sys_palette,palette,sizeof(palette));
+	memcpy(sys_palette,cga_palette,sizeof(cga_palette));
 	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
 }
 
@@ -1841,15 +1614,18 @@ static struct MachineDriver machine_driver_pccga =
 	0,
 
     /* video hardware */
-    80*8,                                       /* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+    80*8, 25*8, 									/* screen width, height  */
+	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
 	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
 	cga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+#ifdef RESIZING_WORKING
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
 	0,
 	pc_cga_vh_start,
 	pc_cga_vh_stop,
@@ -1868,39 +1644,51 @@ static struct MachineDriver machine_driver_pccga =
 	}
 };
 
+/* Initialise the cga palette */
+static void aga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,cga_palette,sizeof(cga_palette));
+	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
+	memcpy((char*)sys_colortable+sizeof(cga_colortable), mda_colortable, sizeof(mda_colortable));
+}
+
 static struct MachineDriver machine_driver_europc =
 {
     /* basic machine hardware */
     {
         {
             CPU_I88,
-			4772720,	/* 4,77 Mhz */
-			pc_readmem,pc_writemem,
+			4772720*2,
+			europc_readmem,europc_writemem,
 			europc_readport,europc_writeport,
-			pc_cga_frame_interrupt,4,
+			pc_aga_frame_interrupt,4,
 			0,0,
 			&i86_address_mask
         },
     },
     60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	0,
-	pc_cga_init_machine,
+	pc_aga_init_machine,
 	0,
 
     /* video hardware */
-    80*8,                                       /* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+    80*9,                                       /* screen width */
+	25*14, 									/* screen height (pixels doubled) */
+	{ 0,80*9-1, 0,25*14-1},					/* visible_area */
 	europc_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
-	cga_init_palette,							/* init palette */
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
+	(sizeof(cga_colortable)+sizeof(mda_colortable) )/sizeof(cga_colortable[0]),
+	aga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+#ifdef RESIZING_WORKING
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
 	0,
-	pc_cga_vh_start,
-	pc_cga_vh_stop,
-	pc_cga_vh_screenrefresh,
+	pc_aga_vh_start,
+	pc_aga_vh_stop,
+	pc_aga_vh_screenrefresh,
 
     /* sound hardware */
 	0,0,0,0,
@@ -1934,14 +1722,18 @@ static struct MachineDriver machine_driver_xtcga =
 
     /* video hardware */
     80*8,                                       /* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+	25*8, 									/* screen height (pixels doubled) */
+	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
 	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
 	cga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+#ifdef RESIZING_WORKING
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
 	0,
 	pc_cga_vh_start,
 	pc_cga_vh_stop,
@@ -1974,21 +1766,25 @@ static struct MachineDriver machine_driver_pc1512 =
 			&i86_address_mask
         },
     },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	0,
 	pc_cga_init_machine,
 	0,
 
     /* video hardware */
     80*8,                                       /* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+	25*8, 									/* screen height (pixels doubled) */
+	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
 	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
 	cga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+#ifdef RESIZING_WORKING
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
 	0,
 	pc1512_vh_start,
 	pc1512_vh_stop,
@@ -2032,7 +1828,7 @@ static struct MachineDriver machine_driver_pc1640 =
 	350, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,350-1},					/* visible_area */
 	vga_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(ega_palette) / sizeof(ega_palette[0]) / 3,
+	sizeof(ega_palette) / sizeof(ega_palette[0]),
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	ega_init_palette,							/* init palette */
 
@@ -2081,7 +1877,7 @@ static struct MachineDriver machine_driver_xtvga =
 	480, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,480-1},					/* visible_area */
 	vga_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(vga_palette) / sizeof(vga_palette[0]) / 3,
+	sizeof(vga_palette) / sizeof(vga_palette[0]),
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
@@ -2102,13 +1898,6 @@ static struct MachineDriver machine_driver_xtvga =
 #endif
 	}
 };
-
-/* Initialise the t1t palette */
-static void t1t_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
-{
-    memcpy(sys_palette,palette,sizeof(palette));
-    memcpy(sys_colortable,t1t_colortable,sizeof(t1t_colortable));
-}
 
 static struct MachineDriver machine_driver_t1000hx =
 {
@@ -2131,14 +1920,18 @@ static struct MachineDriver machine_driver_t1000hx =
 
     /* video hardware */
 	80*8,										/* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+	25*9, 									/* screen height (pixels doubled) */
+	{ 0,80*8-1, 0,25*9-1},					/* visible_area */
 	t1t_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(t1t_colortable) / sizeof(t1t_colortable[0]),
-	t1t_init_palette,							/* init palette */
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
+	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
+	cga_init_palette,							/* init palette */
 
+#ifdef RESIZING_WORKING
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+#else
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+#endif
 	0,
 	pc_t1t_vh_start,
 	pc_t1t_vh_stop,
@@ -2174,14 +1967,18 @@ static struct MachineDriver machine_driver_atcga =
 
     /* video hardware */
     80*8,                                       /* screen width */
-	25*8*2, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8*2-1},					/* visible_area */
+	25*8, 									/* screen height (pixels doubled) */
+	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
 	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,
+	sizeof(cga_palette) / sizeof(cga_palette[0]),
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
 	cga_init_palette,							/* init palette */
 
+#ifdef RESIZING
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+#else
+	VIDEO_TYPE_RASTER,
+#endif
 	0,
 	pc_cga_vh_start,
 	pc_cga_vh_stop,
@@ -2225,7 +2022,7 @@ static struct MachineDriver machine_driver_atvga =
 	480, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,480-1},					/* visible_area */
 	vga_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(vga_palette) / sizeof(vga_palette[0]) / 3,
+	sizeof(vga_palette) / sizeof(vga_palette[0]),
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 
@@ -2393,7 +2190,6 @@ ROM_START( bondwell )
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069) // taken from cga
 ROM_END
 
-
 ROM_START( pcmda )
     ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
@@ -2436,8 +2232,11 @@ ROM_START( t1000hx )
     ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
-	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+//	ROM_REGION(0x01100,REGION_GFX1, 0)
+	ROM_REGION(0x02000,REGION_GFX1, 0)
+    // expects 8x9 charset!
+//    ROM_LOAD("", 0x00000, 0x01000, 0x0 )
+    ROM_LOAD("50146", 0x00000, 0x02000, 0) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( ibmxt )
@@ -2446,7 +2245,7 @@ ROM_START( ibmxt )
 //    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da) //this was inside
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
-    ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, 0x2a629953) // BASIC C1.1, hangs
+    ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, 0x2a629953)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
@@ -2596,7 +2395,7 @@ COMP ( 1982,	ibmpc,		0,		 pccga,    pccga,	 pccga,	   "International Business Ma
 COMP ( 1982,	ibmpca,		ibmpc,	 pccga,    pccga,	 pccga,	   "International Business Machines",  "IBM PC 08/16/82" )
 COMP ( 1987,	pc,			ibmpc,	 pccga,    pccga,	 pccga,	   "",  "PC (CGA)" )
 COMPX ( 1985,	bondwell,	ibmpc,	 pccga,	   pccga,	 bondwell, "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
-COMPX ( 1988,	europc,		ibmpc,	 europc,   pccga,	 europc,   "Schneider Rdf. AG",  "EURO PC", GAME_NOT_WORKING )
+COMPX ( 1988,	europc,		ibmpc,	 europc,   europc,	 europc,   "Schneider Rdf. AG",  "EURO PC", GAME_NOT_WORKING )
 
 // pcjr (better graphics, better sound)
 COMPX( 1983,	ibmpcjr,	ibmpc,	 t1000hx,  tandy1t,  t1000hx,  "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
