@@ -2236,7 +2236,7 @@ ROM_START( t1000hx )
 	ROM_REGION(0x02000,REGION_GFX1, 0)
     // expects 8x9 charset!
 //    ROM_LOAD("", 0x00000, 0x01000, 0x0 )
-    ROM_LOAD("50146", 0x00000, 0x02000, 0) //taken from europc, 9th blank
+    ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( ibmxt )
@@ -2360,7 +2360,7 @@ static const struct IODevice io_ibmpc[] = {
         NULL,               /* input_chunk */
         NULL                /* output_chunk */
     },
-	IO_PRINTER_PORT(3,"\0"),
+	IO_PRINTER_PORT(3,"prn\0"),
     { IO_END }
 };
 
