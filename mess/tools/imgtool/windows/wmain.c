@@ -41,6 +41,15 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	if (!window)
 		goto done;
 
+#ifdef MAME_DEBUG
+	if (imgtool_validitychecks())
+	{
+		MessageBox(window,
+			TEXT("Imgtool has failed its consistency checks; this build has problems"),
+			wimgtool_producttext, MB_OK);
+	}
+#endif
+
 	accel = LoadAccelerators(NULL, MAKEINTRESOURCE(IDA_WIMGTOOL_MENU));
 
 	// pump messages until the window is gone

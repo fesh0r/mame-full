@@ -11,6 +11,8 @@
 #include "../imgtool.h"
 
 extern const TCHAR wimgtool_class[];
+extern const TCHAR wimgtool_producttext[];
+
 extern imgtool_library *library;
 
 BOOL wimgtool_registerclass(void);

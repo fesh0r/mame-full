@@ -16,9 +16,9 @@
 #include "strconv.h"
 
 const TCHAR wimgtool_class[] = TEXT("wimgtool_class");
+const TCHAR wimgtool_producttext[] = TEXT("MESS Image Tool");
 
 static const TCHAR owner_prop[] = TEXT("wimgtool_owned");
-static const TCHAR product_text[] = TEXT("MESS Image Tool");
 
 struct wimgtool_info
 {
@@ -36,7 +36,7 @@ struct wimgtool_info
 
 static void nyi(HWND window)
 {
-	MessageBox(window, TEXT("Not yet implemented"), product_text, MB_OK);
+	MessageBox(window, TEXT("Not yet implemented"), wimgtool_producttext, MB_OK);
 }
 
 
@@ -100,7 +100,7 @@ done:
 
 static void report_error(HWND window, imgtoolerr_t err)
 {
-	MessageBox(window, imgtool_error(err), product_text, MB_OK);
+	MessageBox(window, imgtool_error(err), wimgtool_producttext, MB_OK);
 }
 
 
@@ -262,7 +262,7 @@ static imgtoolerr_t full_refresh_image(HWND window)
 	else
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),
-			"%s %s", product_text, build_version);
+			"%s %s", wimgtool_producttext, build_version);
 		SetWindowText(window, U2T(buf));
 		SetWindowText(info->statusbar, TEXT(""));
 	}
@@ -528,7 +528,7 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 	info = (struct new_dialog_info *) l;
 	more_button = GetDlgItem(dlgwnd, IDC_MORE);
 
-	info->module = imgtool_library_index(library, filter_index - 1);
+	info->module = find_filter_module(filter_index, TRUE);
 
 	// clean out existing control windows
 	info->control_count = 0;

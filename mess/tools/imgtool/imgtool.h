@@ -346,4 +346,11 @@ imgtoolerr_t imgtool_test(imgtool_library *library, const struct ImageModule *mo
 imgtoolerr_t imgtool_test_byname(imgtool_library *library, const char *modulename);
 #endif /* MAME_DEBUG */
 
+/* imgtool_validitychecks
+ *
+ * Description:
+ *		Runs consistency checks to make sure that all is well
+ */
+int imgtool_validitychecks(void);
+
 #endif /* IMGTOOL_H */

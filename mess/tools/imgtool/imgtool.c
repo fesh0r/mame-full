@@ -6,6 +6,7 @@
 #include "osd_cpu.h"
 #include "utils.h"
 #include "library.h"
+#include "modules.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -29,4 +30,24 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 
 
 
+int imgtool_validitychecks(void)
+{
+	int error = 0;
+	imgtoolerr_t err;
+	imgtool_library *library;
+
+	err = imgtool_create_cannonical_library(&library);
+	if (err)
+		goto done;
+
+done:
+	if (err)
+	{
+		printf("imgtool: %s\n", imgtool_error(err));
+		error = 1;
+	}
+	if (library)
+		imgtool_library_close(library);
+	return error;
+}
 

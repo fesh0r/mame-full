@@ -675,6 +675,11 @@ int CLIB_DECL main(int argc, char *argv[])
 	struct command *c;
 	imgtoolerr_t err;
 
+#ifdef MAME_DEBUG
+	if (imgtool_validitychecks())
+		return -1;
+#endif /* MAME_DEBUG */
+
 #ifdef WIN32
 	win_expand_wildcards(&argc, &argv);
 #endif

@@ -10,6 +10,7 @@
 
 #include "core.h"
 #include "hashfile.h"
+#include "../imgtool/imgtool.h"
 
 #ifdef WIN32
 #include "windows/rc.h"
@@ -113,6 +114,9 @@ int main(int argc, char *argv[])
 	
 	/* run MAME's validity checks; if these fail cop out now */
 	if (mame_validitychecks())
+		goto done;
+	/* run Imgtool's validity checks; if these fail cop out now */
+	if (imgtool_validitychecks())
 		goto done;
 
 	/* create rc struct */
