@@ -15,7 +15,10 @@ System Driver Changes:
 
 - [APPLE2] Fixed modifier keys.  (bug #637) [Nate Woods]
 
-- [APPLE2] Recalibrated Joysticks. (bug #648) [Nate Woods]
+- [APPLE2] Recalibrated Joysticks.  (bug #648) [Nate Woods]
+
+- [APPLE2] Workaround for apple2/apple2p inverse colors.  (bug #475) [Nate
+  Woods]
 
 
 

@@ -425,13 +425,25 @@ int apple2_video_start(const UINT8 *vram, size_t vram_size, UINT32 ignored_softs
 
 VIDEO_START( apple2 )
 {
-	return apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 4);
+	if (apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 4))
+		return 1;
+
+	/* hack to fix the colors on apple2/apple2p */
+	fgcolor = 0;
+	bgcolor = 15;
+	return 0;
 }
 
 
 VIDEO_START( apple2p )
 {
-	return apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 8);
+	if (apple2_video_start(mess_ram, mess_ram_size, VAR_80COL | VAR_ALTCHARSET | VAR_DHIRES, 8))
+		return 1;
+
+	/* hack to fix the colors on apple2/apple2p */
+	fgcolor = 0;
+	bgcolor = 15;
+	return 0;
 }
 
 
