@@ -200,7 +200,8 @@ void rastertrack_refresh(struct osd_bitmap *bmap, int full_refresh)
 	switch(frame_state) {
 	case FRAME_PARTIALREFRESH:
 	case FRAME_FULLREFRESH:
-		update_lines(scanline_updatebase, scanline_current, (frame_state == FRAME_FULLREFRESH) || full_refresh || ALWAYS_REFRESH);
+		if ((hvars.mode.width != 0) && (hvars.mode.height != 0))
+			update_lines(scanline_updatebase, scanline_current, (frame_state == FRAME_FULLREFRESH) || full_refresh || ALWAYS_REFRESH);
 		break;
 	}
 
