@@ -54,8 +54,6 @@ TODO:
 #include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
 #include "cassette.h"
-#include "image.h"
-#include "mscommon.h"
 #include "ti99_4x.h"
 #include "994x_ser.h"
 
@@ -1229,16 +1227,21 @@ static void ti99_CS_output(int offset, int data)
 	Peripheral expansion card support.
 
 	ti99/4, ti99/4a, geneve, snug sgcpu (a.k.a. 99/4p), and ti99/8 systems have
-	a bus connector that enables the connection of extension cards.  (Note that
-	although the hexbus is the preferred peripheral expansion bus for ti99/8,
-	ti99/8 is believed to be compatible with the PEB system.)
+	a bus connector that enables the connection of extension cards.  (Although
+	the hexbus is the preferred peripheral expansion bus for ti99/8, ti99/8 is
+	believed to be compatible with the PEB system.)
 
-	The normal way to do so is connecting a PEB, which is a big box with an
-	alimentation, a few drivers and several card slots.
+	While a few cards (e.g. TI speech synthesizer) are to be connected to the
+	side port of the console, most extension cards were designed to be inserted
+	in a PEB instead.  The PEB (Peripheral Expansion Box) is a big box with an
+	alimentation, a few drivers, and several card slots, that connects to the
+	ti99/4(a) side port.  The reason for using the PEB is that daisy-chaining
+	many modules caused the system to be unreliable due to the noise produced
+	by the successive contacts.
 
-In short:
-	16 CRU address intervals are reserved for expansion.  I appended known TI peripherals which
-	use each port (appended '???' when I don't know what the peripheral is :-) ).
+	Each expansion card is assigned to one of 16 CRU address ranges.
+	I appended the names of known TI peripherals that use each port (I appended
+	'???' when I don't know what the peripheral is :-) ).
 	* 0x1000-0x10FE "For test equipment use on production line"
 	* 0x1100-0x11FE disk controller
 	* 0x1200-0x12FE modem???
@@ -1251,14 +1254,17 @@ In short:
 	* 0x1900-0x19FE EPROM programmer??? (Mezzanine board in July 1981's TI99/7 prototype)
 	* 0x1A00-0x1AFE unassigned
 	* 0x1B00-0x1BFE TI GPL debugger card
-	* 0x1C00-0x1CFE Video Controller Card (Possibly the weirdest device.  The card is connected to
-		the computer video output, a VCR video output, and a monitor.  It can control the VCR,
-		connect the display to either VCR output or computer video output, and it can read or save
-		binary data to video tape.  I think it can act as a genlock interface (i.e. TMS9918
-		transparent background shows the video signal), too, but I am not sure.)
-	* 0x1D00-0x1DFE IEEE 488 Controller Card (parallel port, schematics on ftp.whtech.com)
+	* 0x1C00-0x1CFE Video Controller Card (Possibly the weirdest device.  This
+		card is connected to the video output of the computer, to a VCR, and a
+		video monitor.  It can control the VCR, connect the display to either
+		VCR output or computer video output, and it can read or save binary
+		data to video tape.  I think it can act as a genlock interface (i.e.
+		TMS9918 transparent background shows the video signal), too, but I am
+		not sure about this.)
+	* 0x1D00-0x1DFE IEEE 488 Controller Card ('intelligent' parallel bus,
+		schematics on ftp.whtech.com)
 	* 0x1E00-0x1EFE unassigned
-	* 0x1F00-0x1FFE P-code card
+	* 0x1F00-0x1FFE P-code card (part of a complete development system)
 
 	Known mappings for 3rd party cards:
 	* Horizon RAMdisk: any ports from 0 to 7 (port 0 is most common).
@@ -1342,7 +1348,7 @@ static int ila;
 connected) */
 static int ilb;
 
-/* only supported by ti99/4p */
+/* only supported by the SNUG SGCPU (a.k.a. 99/4p) */
 static int senila, senilb;
 
 /* hack to simulate TMS9900 byte write */
@@ -1718,7 +1724,7 @@ WRITE16_HANDLER ( ti99_4p_ww_expansion )
 
 /*===========================================================================*/
 /*
-	TI99/4p internal DSR support.
+	SNUG SGCPU (a.k.a. 99/4p) internal DSR support.
 
 	Includes a few specific signals, and an extra ROM.
 */
@@ -1960,7 +1966,8 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
 
 /*===========================================================================*/
 /*
-	TI99/4p Super AMS clone support.  Compatible with Super AMS, but uses a 16-bit bus.
+	SNUG SGCPU (a.k.a. 99/4p) Super AMS clone support.
+	Compatible with Super AMS, but uses a 16-bit bus.
 
 	Up to 1Mb of SRAM.  Straightforward mapper, works with 4kb chunks.
 */
