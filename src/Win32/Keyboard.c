@@ -291,6 +291,9 @@ static int Keyboard_is_key_pressed(int keycode)
   systems while using the debugger. If you don't want to or can't support this
   function you can just return OSD_KEY_NONE.
 */
+
+#define OSD_KEY_NONE 0
+
 static int Keyboard_wait_keypress(void)
 {
     This.m_key_pressed = FALSE;
