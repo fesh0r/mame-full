@@ -527,12 +527,26 @@ static void CALLBACK Picker_TimerProc(HWND hwndPicker, UINT uMsg,
   UINT_PTR idEvent, DWORD dwTime)
 {
 	struct PickerInfo *pPickerInfo;
-	BOOL bContinueIdle = FALSE;
+	BOOL bContinueIdle;
+	DWORD nTickCount, nBaseTickCount;
+	DWORD nMaxIdleTicks = 50;
 
 	pPickerInfo = GetPickerInfo(hwndPicker);
+	bContinueIdle = FALSE;
+	nBaseTickCount = GetTickCount();
 
-	if (pPickerInfo->pCallbacks->pfnOnIdle)
-		bContinueIdle = pPickerInfo->pCallbacks->pfnOnIdle(hwndPicker);
+	// This idle procedure will loop until either idling is over, or until
+	// a specified amount of time elapses (in this case, 50ms).  This frees
+	// idle callbacks of any responsibility for balancing their workloads; the
+	// picker code will 
+	do
+	{
+		if (pPickerInfo->pCallbacks->pfnOnIdle)
+			bContinueIdle = pPickerInfo->pCallbacks->pfnOnIdle(hwndPicker);
+		nTickCount = GetTickCount();
+	}
+	while(bContinueIdle && ((nTickCount - nBaseTickCount) < nMaxIdleTicks));
+
 	if (!bContinueIdle)
 		Picker_ClearIdle(hwndPicker);
 }
@@ -907,7 +921,7 @@ static int CALLBACK Picker_CompareProc(LPARAM index1, LPARAM index2, LPARAM nPar
 				szBuffer1, sizeof(szBuffer1) / sizeof(szBuffer1[0]));
 			s2 = Picker_CallGetItemString(pPickerInfo, index2, pcpp->nSortColumn,
 				szBuffer2, sizeof(szBuffer2) / sizeof(szBuffer2[0]));
-			nResult = tcsicmp(s1, s2);
+			nResult = _tcsicmp(s1, s2);
 		}
 
 		if (pcpp->bReverse)

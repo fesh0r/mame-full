@@ -1004,19 +1004,16 @@ BOOL SoftwareList_Idle(HWND hwndSoftware)
 {
     static mess_image_type imagetypes[64];
     ImageData *pImageData;
-    int i;
 
     if (s_nIdleImageNum == 0)
         SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
-    for (i = 0; (i < 10) && (s_nIdleImageNum < mess_images_count); i++)
-	{
-        pImageData = mess_images_index[s_nIdleImageNum];
+    pImageData = mess_images_index[s_nIdleImageNum];
 
-        if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
-            ListView_RedrawItems(hwndSoftware, s_nIdleImageNum, s_nIdleImageNum);
-        s_nIdleImageNum++;
-    }
+	/* Realize one image */
+    if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
+        ListView_RedrawItems(hwndSoftware, s_nIdleImageNum, s_nIdleImageNum);
+    s_nIdleImageNum++;
 
     if (s_nIdleImageNum >= mess_images_count)
 	{

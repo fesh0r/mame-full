@@ -3749,8 +3749,9 @@ static void SetView(int menu_id)
 	Picker_SetViewID(GetDlgItem(hMain, IDC_LIST2), menu_id - ID_VIEW_LARGE_ICON);
 #endif
 
+
 	if (force_reset)
-		ResetListView();
+		Picker_Sort(hwndList);
 }
 
 static void ResetListView()

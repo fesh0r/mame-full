@@ -710,8 +710,8 @@ BOOL OptionsInit()
 	{
 		game_variables[i].play_count = 0;
 		game_variables[i].play_time = 0;
-		game_variables[i].rom_audit_results = UNKNOWN;
-		game_variables[i].samples_audit_results = UNKNOWN;
+		game_variables[i].rom_audit_results = DriverUsesRoms(i) ? UNKNOWN : CORRECT;
+		game_variables[i].samples_audit_results = DriverUsesSamples(i) ? UNKNOWN : CORRECT;
 		
 		game_variables[i].options_loaded = FALSE;
 		game_variables[i].use_default = TRUE;
