@@ -184,33 +184,34 @@ static struct {
 	{ 0xa81ceb7c , 0x80000, "ARCHIMEDES 310 bios 30000" },
 	{ 0x707b0c6c , 0x80000, "ARCHIMEDES 310 bios 38000" },
 
-/* Atari 800/800XL *************************************************************/
-	{ 0x6a5d766e , 0x0800, "Atari 800 floating point d800 (CO12399B?)" },
-	{ 0x8e547f56 , 0x1000, "Atari 800 PAL A e000 (CO15199?)" },
-	{ 0xbe55b413 , 0x1000, "Atari 800 PAL A f000 (CO15299?)" },
-	{ 0x6ea08467 , 0x1000, "Atari 800 PAL B? (few differences to NTSC B) e000" },
-	{ 0x7509ffc4 , 0x1000, "Atari 800 PAL B? (few differences to NTSC B) f000" },
-	{ 0xd818f3e8 , 0x1000, "Atari 800 NTSC B e000 (CO12499B?)" },
-	{ 0xc1690a9b , 0x1000, "Atari 800 NTSC B f000 (CO14599B?)" },
+/* Atari 400/800 Computers *****************************************************/
+	{ 0x6a5d766e , 0x0800, "Atari 400/800 floating point d800 (CO12399B?)" },
+	{ 0x8e547f56 , 0x1000, "Atari 400/800 PAL A e000 (CO15199?)" },
+	{ 0xbe55b413 , 0x1000, "Atari 400/800 PAL A f000 (CO15299?)" },
+	{ 0x6ea08467 , 0x1000, "Atari 400/800 PAL B? (few differences to NTSC B) e000" },
+	{ 0x7509ffc4 , 0x1000, "Atari 400/800 PAL B? (few differences to NTSC B) f000" },
+	{ 0xd818f3e8 , 0x1000, "Atari 400/800 NTSC B e000 (CO12499B?)" },
+	{ 0xc1690a9b , 0x1000, "Atari 400/800 NTSC B f000 (CO14599B?)" },
 
-	{ 0x72b3fed4 , 0x2800, "MERGED Atari 800 PAL A (CO12399B+CO15199+CO15299?)" },
-	{ 0xcb4db9af , 0x2000, "MERGED Atari 800 PAL B? (e000+f000)" },
-	{ 0x3e28a1fe , 0x2800, "MERGED Atari 800 PAL B? (d000+e000+f000)" },
-	{ 0x0e86d61d , 0x2800, "MERGED Atari 800 NTSC B (CO12399B+CO12499B+CO14599B?)" },
+	{ 0x72b3fed4 , 0x2800, "MERGED Atari 400/800 PAL A (CO12399B+CO15199+CO15299?)" },
+	{ 0xcb4db9af , 0x2000, "MERGED Atari 400/800 PAL B? (e000+f000)" },
+	{ 0x3e28a1fe , 0x2800, "MERGED Atari 400/800 PAL B? (d000+e000+f000)" },
+	{ 0x0e86d61d , 0x2800, "MERGED Atari 400/800 NTSC B (CO12399B+CO12499B+CO14599B?)" },
 
-	{ 0x643bcc98 , 0x4000, "Atari 800XL rev. 01 (CO62024)" },
-	{ 0x1f9cd270 , 0x4000, "Atari 800XL rev. 02 (CO61598B)" },
-	{ 0x29f133f7 , 0x4000, "Atari 800XL rev. 03 (C300717)" },
-	{ 0x0391386b , 0x2000, "Atari 800XL rev. 10 part 1 (CO60616A)" },
-	{ 0xb502f1e7 , 0x2000, "Atari 800XL rev. 10 part 2 (CO60617A)" },
-	{ 0x89d5661d , 0x1000, "Atari 800XL BASIC rev. A part 1 (co12402)" },
-	{ 0x4b4e6762 , 0x1000, "Atari 800XL BASIC rev. A part 2 (co12502)" },
-	{ 0xf0202fb3 , 0x2000, "Atari 800XL BASIC rev. B (CO60302A)" },
-	{ 0x7d684184 , 0x2000, "Atari 800XL BASIC rev. C (CO24947A)" },
+/* Atari XL/XE Computers *****************************************************/
+	{ 0x643bcc98 , 0x4000, "Atari 600XL rev. 01 (CO62024)" },
+	{ 0x1f9cd270 , 0x4000, "Atari XL/XE rev. 02 (CO61598B)" },
+	{ 0x29f133f7 , 0x4000, "Atari 800XE rev. 03 (C300717)" },
+	{ 0x0391386b , 0x2000, "Atari 1200XL rev. 10 part 1 (CO60616A)" },
+	{ 0xb502f1e7 , 0x2000, "Atari 1200XL rev. 10 part 2 (CO60617A)" },
+	{ 0x89d5661d , 0x1000, "Atari XL/XE BASIC rev. A part 1 (co12402)" },
+	{ 0x4b4e6762 , 0x1000, "Atari XL/XE BASIC rev. A part 2 (co14502)" },
+	{ 0xf0202fb3 , 0x2000, "Atari XL/XE BASIC rev. B (CO60302A)" },
+	{ 0x7d684184 , 0x2000, "Atari XL/XE BASIC rev. C (CO24947A)" },
 
-	{ 0xc5c11546 , 0x4000, "MERGED Atari 800XL rev. 10 (CO60616A+CO60617A)" },
-	{ 0x4bec4de2 , 0x2000, "MERGED Atari 800XL BASIC rev. A (CO12402+CO12502)" },
-	{ 0x1eaf4002 , 0x4000, "PART Atari 800XL rev. 04 (C101687)" },
+	{ 0xc5c11546 , 0x4000, "MERGED Atari 1200XL rev. 10 (CO60616A+CO60617A)" },
+	{ 0x4bec4de2 , 0x2000, "MERGED Atari XL/XE BASIC rev. A (CO12402+CO14502)" },
+	{ 0x1eaf4002 , 0x4000, "PART Atari XEGS rev. 04 (C101687)" },
 
 /* Atari 800/800XL OS replacements *********************************************/
 	{ 0xa1fb9bfa , 0x4000 , "Atari 800XL Qmeg OS ver. 2.3" },
@@ -219,6 +220,9 @@ static struct {
 	{ 0x78f2c102 , 0x4000 , "Atari 800XL Qmeg OS ver. 3.8" },
 	{ 0x64ccfc53 , 0x4000 , "Atari 800XL Qmeg OS ver. 4.2" },
 	{ 0xbe2242da , 0x4000 , "Atari 800XL Qmeg OS ver. 4.3" },
+
+	{ 0xf10064a3 , 0x1000 , "Atari 1060 CP/M Module boot ROM"},
+	{ 0xd1c68dda , 0x1000 , "Atari 1060 CP/M Module character set ROM"},
 
 /* Atari ST/STF/SFM/STFM/Mega ST/Mega STE/Stacey *******************************/
 	/* info on Atari ST TOS dumps taken from dat by TOSEC team */
@@ -729,11 +733,17 @@ static struct {
 	{ 0x7c20e2c9 , 0x8000, "ZX128 plus3e" },
 	{ 0x4a700c7e , 0x8000, "ZX128 plus3e" },
 
-	{ 0x5cc6b3ac, 0xc000, "QL mcg" },
-	{ 0x54e93572, 0xc000, "QL mf" },
-	{ 0xe2b94296, 0xc000, "QL jm" },
-	{ 0x0f95aab5, 0xc000, "QL js" },
-	{ 0x953f8f51, 0xc000, "QL js-4," },
+	{ 0xc7143fc7, 0xc000 , "Sinclair QL ah" },
+	{ 0xe2b94296, 0xc000 , "Sinclair QL jm" },
+	{ 0xe2ac3b71, 0xc000 , "Sinclair QL tb" },
+	{ 0x0f95aab5, 0xc000 , "Sinclair QL js" },
+	{ 0x953f8f51, 0xc000 , "Sinclair QL js (patched for use with 4MB memory systems)" },
+	{ 0xfa74b1e8, 0xc000 , "Sinclair QL mg" },
+	{ 0x5cc6b3ac, 0xc000 , "Sinclair QL mg (german)" },
+	{ 0x15931c02, 0xc000 , "Sinclair QL mg (italian)" },
+	{ 0x7cba78d3, 0xc000 , "Sinclair QL mguk (mg with new facilites by John Alexander)" },
+	{ 0x54e93572, 0xc000 , "Sinclair QL mf (german)" },
+	{ 0x930befe3, 0xc000 , "Sinclair QL Minerva 1.89 (QDOS replacement)" },
 
 /* tandy *************************************************************************/
 	{ 0x73316e3e , 0x2000, "NOT AUTHENTIC? COCO basic 1.0" },
@@ -1082,22 +1092,25 @@ static struct {
 
 	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
 
-	{ 0xa87696c7 , 0x40000, "HP48S a" },
-	{ 0x034f6ce4 , 0x40000, "HP48S b" },
-	{ 0xa9a0279d , 0x40000, "HP48S c" },
-	{ 0x6e71244e , 0x40000, "HP48S d" },
-	{ 0x704ffa08 , 0x40000, "HP48S e" },
-	{ 0xd4f1390b , 0x40000, "SAVE HP48S e (diffs only in hardware window)" },
-	{ 0x5619ccaf , 0x40000, "BAD DUMP HP48S E" },
-	{ 0x1a6378ef , 0x40000, "HP48S j" },
-	{ 0xbdd5d2ee , 0x80000, "HP48G k" },
-	{ 0x70958e6b , 0x80000, "HP48G l" },
-	{ 0xe21a09e4 , 0x80000, "HP48G m" },
-	{ 0x27f90428 , 0x80000, "HP48G p" },
-	{ 0x00ee1a62 , 0x80000, "HP48G r" },
-	{ 0xd6bb68c5 , 0x80000, "BAD DUMP HP48G R" },
+/* Hewlett Packard Calculators *************************************************/
+	{ 0x3f2d9469 , 0x400000, "Hewlett Packard HP-39G (1 nibble stored in byte)" },
+	{ 0xa87696c7 , 0x40000 , "Hewlett Packard HP-48S ver. a" },
+	{ 0x034f6ce4 , 0x40000 , "Hewlett Packard HP-48S ver. b" },
+	{ 0xa9a0279d , 0x40000 , "Hewlett Packard HP-48S ver. c" },
+	{ 0x6e71244e , 0x40000 , "Hewlett Packard HP-48S ver. d" },
+	{ 0x704ffa08 , 0x40000 , "Hewlett Packard HP-48S ver. e" },
+	{ 0x1a6378ef , 0x40000 , "Hewlett Packard HP-48S ver. j" },
+	{ 0xbdd5d2ee , 0x80000 , "Hewlett Packard HP-48G ver. k" },
+	{ 0x70958e6b , 0x80000 , "Hewlett Packard HP-48G ver. l" },
+	{ 0xe21a09e4 , 0x80000 , "Hewlett Packard HP-48G ver. m" },
+	{ 0x27f90428 , 0x80000 , "Hewlett Packard HP-48G ver. p" },
+	{ 0x00ee1a62 , 0x80000 , "Hewlett Packard HP-48G ver. r" },
 
-	{ 0x3f2d9469 , 0x400000, "HP39G (1 nibble stored in byte)" },
+	{ 0xd4f1390b , 0x40000 , "SAVE Hewlett Packard HP-48S ver. e (diffs only in hardware window)" },
+
+	{ 0x5619ccaf , 0x40000 , "BAD DUMP Hewlett Packard HP-48S ver. e" },
+	{ 0xd6bb68c5 , 0x80000 , "BAD DUMP Hewlett Packard HP-48G ver. r" },
+
 
 	{ 0xa2a56502 , 0x400, "6530-003 KIM1 1800" },
 	{ 0x2b08e923 , 0x400, "6530-002 KIM1 1c00" },
