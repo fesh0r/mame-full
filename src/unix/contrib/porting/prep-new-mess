@@ -1,0 +1,72 @@
+#!/bin/bash
+# This is a script which automates some of the operations needed for porting DOS
+# MESS to UN*X.  Run it in a directory containing the latest xmame sources.  You
+# must specify a path to the latest MESS sources, which were unzipped with -L to
+# force filenames to lower case.  For example, here's what I would do in my
+# ~/emulators directory to port 0.37b14:
+#           mkdir mess-0.37b14
+#           cd mess-0.37b14
+#           unzip -L ../ms37b14s.zip
+#           cd ../xmame-0.37b14.1
+#           prep-new-mess ../mess-0.37b14
+#
+# Lawrence Gold <gold@aros.net>
+# Last modified on 11 April 2001.
+
+# Copy the MESS files over.
+if [ -d $1 ]; then
+  cp -R $1/* .
+else
+  echo "Cannot find MESS source directory, exiting..."
+  exit 1
+fi
+
+# Fix the line endings of the included text and makefiles.
+d2u `find . -name "*.txt" -print`
+d2u `find . -name "*.mak" -print`
+d2u makefile.mes
+
+# Change // comments to /* */ pairs.  Some C compilers don't like //.  We skip
+# the src/unix directory, though, since fix-comments mangles some of the files.
+# Besides, they should already be fine.
+fix-comments `find . -path './src/unix' -prune -o -name "*.c" -print`
+fix-comments `find . -name './src/unix' -prune -o -name "*.h" -print`
+
+# Do some cleanup.
+rm -rf artwork bios cfg cheat crc memcard nvram snap software tools 
+
+# Rename some files.
+if [ -f mess.txt ]; then
+  mv mess.txt doc/readme.mess
+fi
+
+if [ -f messnew.txt ]; then
+  mv messnew.txt doc/changes.mess
+fi
+
+if [ -f messold.txt ]; then
+  mv messold.txt doc/old-changes.mess
+fi
+
+if [ -f docs/credits.txt ]; then
+  mv docs/credits.txt doc/credits.mess
+fi
+
+if [ -f docs/imgtool.txt ]; then
+  mv docs/imgtool.txt doc/
+fi
+
+if [ -f docs/messroms.txt ]; then
+  mv docs/messroms.txt doc/
+fi
+
+if [ -d docs/sysinfo ]; then
+  cp -R docs/sysinfo doc/
+fi
+
+# Delete the MESS docs directory.
+rm -r docs
+
+# Clean up the files left over from d2u and fix-comments.
+rm `find . -name "*~" -print`
+rm `find . -name "*.orig" -print`

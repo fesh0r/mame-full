@@ -1,62 +1,66 @@
-This file gives a quick description on howto port a new dos version to unix
+This file describes the process for getting new MAME and MESS releases working
+as xmame/xmess.  It is heavily adapted from documentation originally written by
+Hans de Goede.
 
-It is meant for those who want to have the latest and hotest version even
-before your xmame-maintainer finds the time to release it. And to
-stop them from porting mistakes and thus reporting unjustified bugs ;)
+In Hans's words:
 
-I also wrote this so that I don't leave a big void if anything might happen 
-to me, I know this is a bit doomsday thinking, but i have seen to many young
+"It is meant for those who want to have the latest and hottest version even
+before your xmame-maintainer finds the time to release it.  And to stop them
+from porting mistakes and thus reporting unjustified bugs ;)
+
+"I also wrote this so that I don't leave a big void if anything might happen
+to me, I know this is a bit doomsday thinking, but i have seen too many young
 people die around me not to take this precaution. ;(,
-Don't worry though I'm planning on staying around for a while.
+Don't worry though I'm planning on staying around for a while."
 
-Hans
+Lawrence Gold
+<gold@aros.net>
 
-And now the story:
+Preparation 
+===========
+- Unpack the latest xmame release.  You'll need fix-comments.c and
+  prep-new-mame from its contrib dir.
+- Compile fix-comments.c: gcc -o fix-comments fix-comments.c
+- Put fix-comments and prep-new-mame somewhere in your PATH (e.g.,
+  /usr/local/bin).
 
-Preperation 
--unpack on old xmame-version you'll need it, the following files
- should be taken from it's contrib-dir:
--compile fix-includes.c to fix-comments (gcc -o fix-comments fix-comments.c)
--put fix-includes, fix-mame, fix-comments and lowercase in a dir somewhere in
- your PATH (~/bin comes to mind, make sure it's in your path though)
+Porting MAME
+============
+- Make a new directory called xmame-newversionnumber.1 (e.g., xmame-0.37b14.1).
+- cd to this directory.
+- Run unzip -L on the DOS source .zip file.  The -L makes all of the filenames
+  lowercase.
+- Run prep-new-mame from within this directory, providing the path to a previous
+  xmame release's directory.  For example:
 
-Actual 'porting'
--make a new dir called something like xmame-newversionno.1
--cd into this dir
--unzip -L (make all filenames lowercase) newdossourcedist.zip
--run fix-mame from this dir, this will in order do the following:
- -remove some unwanted files
- -mv docs to a doc subdir and remove cariage returns from them
- -run fix-comments on all .c and .h files which will remove all <cr> from them and
-  convert // style comments to /* */ style, and lowercase all includes.
- -mv makefile to makefile.dos
--create makefile.objs:
- -see makefile.objs from the older xmame as an example
- -cut and paste the objs-list and all the .a file dependencies from
-  makefile.dos to your new makefile.objs
- -run: lowercase makefile.objs. This will lowercase all info in this file.
- -Call the objs-list in the file OBJCORE
- -Add the .a files from LIBS in makefile.dos to OBJCORE
- -make sure the .a's are listed after the .o's otherwise linking will fail
--cp makefile.unix from the old-xmame to .
--cp the src/unix <dir> from the old-xmame to src/unix
--edit makefile.unix and update the version number
--do a diff -uBbr <old-xmame>/src/msdos <new-xmame>/src/msdos > bla
--look in bla if anything on the osd side changed that needs to be changed
- in the unix-osd part to, things like different return/call values, new
- functions alltogether, different prototypes etc.
--make the nescesarry changes to src/unix/*
--do a diff -uBbr <old-xmame>/src/unix <new-xmame>/src/unix > bla
--look in bla and make sure you didn't break anything.
--if you want to distribute this port, better leave the defaults in
- makefile.unix alone, they're pretty sane, so copy makefile.unix
- to makefile.bla.
--edit makefile.bla to suit your needs, if possible force ansi-compliance on
- your compiler to test the new version on ansi-compliance.
--make -f makefile.bla 2> stderrlog (remember use GNU-make)
--if something went wrong see stderrlog, if everything went right see
- stderrlog for non-ansi warnings and fix them unless they are about unused
- vars, or trigraphs
--all done, enjoy your new-xmame, make clean and tgz to distribute to friends
- if you followed this step by step you should have a xmame of the
- same-quality as the official distributions.
+	fix-mame ~/emulators/xmame-0.37b13.2
+
+  This will copy over src/unix and makefile.unix from the previous release;
+  create symlinks to some of the directories in there; rename/move doc files;
+  fix the line endings of source, text, and makefiles; and fix the comments in
+  source files.
+- Run diff -uBbr <old-xmame>/src/msdos <new-xmame>/src/msdos > dos-changes 
+- Look in the dos-changes file to see if anything on the OSD side has
+  changed--things like different return/call value, new functions altogether,
+  different prototypes, etc.
+- Make the necessary changes to <new-xmame>/src/unix/*
+- Do a diff -uBbr <old-xmame>/src/unix <new-xmame>/src/unix > unix-changes
+- Look in unix-changes and make sure you didn't break anything.
+- If you want to distribute this port, it's best to leave the defaults in
+  makefile.unix alone since they're pretty sane.  So copy makefile.unix to
+  Makefile.
+- Edit Makefile to suit your needs; if possible, force ANSI compliance on your
+  compiler to test the new version's compliance.
+- make -f makefile.bla 2> stderrlog (remember use GNU-make)
+- If something goes wrong, see stderrlog.  If everything goes well, see
+  stderrlog for non-ANSI warnings and fix them unless they are about unused
+  vars or trigraphs.
+- All done!  Enjoy your new xmame.  Now you just need to 'make clean' and bundle
+  it up in a tarball to distribute to friends.  If you followed this step by
+  step, you should have an xmame of the same quality as the official
+  distributions.
+
+Porting MESS
+============
+- See the prep-new-mess script.  I'll fill this section in later, when my
+  fingers aren't so tired.  ;-)
