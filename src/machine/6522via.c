@@ -617,6 +617,8 @@ void via_write(int which, int offset, int data)
 			if (v->intf->out_b_func && v->ddr_b)
 				v->intf->out_b_func(0, v->out_b & v->ddr_b);
 		}
+/* if this is enabled, the Oric fails to load/save cassette files */
+#if 0
 		if (T1_CONTINUOUS(data))
 		{
 			if (v->t1)
@@ -624,6 +626,8 @@ void via_write(int which, int offset, int data)
 			else
 				v->t1 = timer_set (V_CYCLES_TO_TIME(TIMER1_VALUE(v) + IFR_DELAY), which, via_t1_timeout);
 		}
+#endif
+
 		/* kludge for Mac Plus (and 128k, 512k, 512ke) : */
 		if (v->intf->si_ready_func && SI_EXT_CONTROL(data))
 			v->intf->si_ready_func();
