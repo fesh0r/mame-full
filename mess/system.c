@@ -239,6 +239,7 @@ const struct GameDriver *drivers[] =
 
 	/* INTELLIGENT SOFTWARE */
 	DRIVER( ep128 )		/* Enterprise 128 k                               */
+	DRIVER( ep128a )		/* Enterprise 128 k                               */
 
 	/* NON LINEAR SYSTEMS */
 	DRIVER( kaypro )		/* Kaypro 2X						  */
