@@ -94,7 +94,7 @@ static void *oss_dsp_create(const void *flags)
    }
    
    /* alloc private data */
-   if(!(priv = calloc(1, sizeof(struct oss_dsp_priv_data))))
+   if (!(priv = calloc(1, sizeof(struct oss_dsp_priv_data))))
    {
       fprintf(stderr,
          "error malloc failed for struct oss_dsp_priv_data\n");
@@ -116,17 +116,17 @@ static void *oss_dsp_create(const void *flags)
       device = AUDIO_DEVICE;
    
    /* always open in non-blocking mode, otherwise the open itself may
-      block hanging the entire application */
-   if((priv->fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
+      block, hanging the entire application */
+   if ((priv->fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
       perror("error: " AUDIO_DEVICE);
       oss_dsp_destroy(dsp);
       return NULL;
    }
    
    /* set back to blocking mode, unless non-blocking mode was selected */
-   if(!(params->flags & SYSDEP_DSP_O_NONBLOCK))
+   if (!(params->flags & SYSDEP_DSP_O_NONBLOCK))
    {
-      if(fcntl(priv->fd, F_SETFL, O_WRONLY) < 0)
+      if (fcntl(priv->fd, F_SETFL, O_WRONLY) < 0)
       {
          perror("OSS-driver, error: fnctl");
          oss_dsp_destroy(dsp);
@@ -136,19 +136,21 @@ static void *oss_dsp_create(const void *flags)
    
    /* set the number of bits */
 #ifdef LSB_FIRST
-   i = j = (dsp->hw_info.type & SYSDEP_DSP_16BIT)? AFMT_S16_LE:AFMT_U8;
+   i = j = (dsp->hw_info.type & SYSDEP_DSP_16BIT) ? AFMT_S16_LE : AFMT_U8;
 #else
-   i = j = (dsp->hw_info.type & SYSDEP_DSP_16BIT)? AFMT_S16_BE:AFMT_U8;
+   i = j = (dsp->hw_info.type & SYSDEP_DSP_16BIT) ? AFMT_S16_BE : AFMT_U8;
 #endif
+
    if (ioctl(priv->fd, SNDCTL_DSP_SETFMT, &i) < 0)
    {
       perror("error: SNDCTL_DSP_SETFMT");
       oss_dsp_destroy(dsp);
       return NULL;
    }
+
    if (i != j)
    {
-      if(dsp->hw_info.type & SYSDEP_DSP_16BIT)
+      if (dsp->hw_info.type & SYSDEP_DSP_16BIT)
       {
          fprintf(stderr, "warning: couldn't set sound to 16 bits,\n"
             "   trying again with 8 bits: ");
@@ -159,6 +161,7 @@ static void *oss_dsp_create(const void *flags)
          oss_dsp_destroy(dsp);
          return NULL;
       }
+
       dsp->hw_info.type &= ~SYSDEP_DSP_16BIT;
       i = AFMT_U8;
       if (ioctl(priv->fd, SNDCTL_DSP_SETFMT, &i) < 0)
@@ -167,6 +170,7 @@ static void *oss_dsp_create(const void *flags)
          oss_dsp_destroy(dsp);
          return NULL;
       }
+
       if (i != AFMT_U8)
       {
          fprintf(stderr, "failed\n");
@@ -177,20 +181,21 @@ static void *oss_dsp_create(const void *flags)
    }
    
    /* set the number of channels */
-   i = (dsp->hw_info.type & SYSDEP_DSP_STEREO)? 1:0;
-   if(ioctl(priv->fd, SNDCTL_DSP_STEREO, &i) < 0)
+   i = (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? 1 : 0;
+   if (ioctl(priv->fd, SNDCTL_DSP_STEREO, &i) < 0)
    {
       perror("error: SNDCTL_DSP_STEREO");
       oss_dsp_destroy(dsp);
       return NULL;
    }
-   if(i)
+
+   if (i)
       dsp->hw_info.type |= SYSDEP_DSP_STEREO;
    else
       dsp->hw_info.type &= ~SYSDEP_DSP_STEREO;
    
    /* set the samplerate */
-   if(ioctl(priv->fd, SNDCTL_DSP_SPEED, &dsp->hw_info.samplerate) < 0)
+   if (ioctl(priv->fd, SNDCTL_DSP_SPEED, &dsp->hw_info.samplerate) < 0)
    {
       perror("error: SNDCTL_DSP_SPEED");
       oss_dsp_destroy(dsp);
@@ -211,7 +216,7 @@ static void *oss_dsp_create(const void *flags)
    /* set the fraginfo */
    i = j = i | (j << 16);
    fprintf(stderr, "info: setting fragsize to %d, numfrags to %d\n",
-   	1 << (i&0x0000FFFF), i >> 16);
+   	1 << (i & 0x0000FFFF), i >> 16);
    if (ioctl(priv->fd, SNDCTL_DSP_SETFRAGMENT, &i) < 0)
    {
       perror("error: SNDCTL_DSP_SETFRAGMENT");
@@ -222,7 +227,7 @@ static void *oss_dsp_create(const void *flags)
    if (ioctl(priv->fd, SNDCTL_DSP_GETOSPACE, &info) < 0)
    {
       perror("warning: SNDCTL_DSP_GETOSPACE");
-      fprintf(stderr, "   falling back to timer based audio\n");
+      fprintf(stderr, "   falling back to timer based-audio\n");
       dsp->get_freespace = NULL;
    }
    else
@@ -230,19 +235,19 @@ static void *oss_dsp_create(const void *flags)
       fprintf(stderr, "info: fragsize = %d, numfrags = %d\n", info.fragsize,
          info.fragstotal);
       /* i = requested fragsize, j = requested numfrags */
-      i = 1 << (j&0x0000FFFF);
+      i = 1 << (j & 0x0000FFFF);
       j = j >> 16;
-      if((info.fragsize < (i/2)) || (info.fragsize > (i*2)) ||
-         (info.fragstotal < (j-2)) || (info.fragstotal > (j+2)))
+      if ((info.fragsize < (i / 2)) || (info.fragsize > (i * 2)) ||
+         (info.fragstotal < (j - 2)) || (info.fragstotal > (j + 2)))
       {
-         fprintf(stderr, "warning: gotten fragsize/numfrags differs to much from requested\n"
-            "   assuming buggy OSS (sb64 / 128 pci?), falling back to timer based audio\n");
-         dsp->get_freespace = NULL;
+         fprintf(stderr, "warning: obtained fragsize/numfrags differs too much from requested\n"
+            "   you may wish to adjust the bufsize setting in your xmamerc file, or try\n"
+	    "   timer-based audio by adding -timer to your command line\n");
       }
-      else if(info.bytes > (info.fragsize * info.fragstotal))
+      else if (info.bytes > (info.fragsize * info.fragstotal))
       {
          fprintf(stderr, "warning: freespace > (fragsize * numfrags) assuming buggy FreeBSD PCM driver,\n"
-            "   falling back to timer based audio\n");
+            "   falling back to timer based-audio\n");
          dsp->get_freespace = NULL;
       }
       else
@@ -263,9 +268,9 @@ static void oss_dsp_destroy(struct sysdep_dsp_struct *dsp)
 {
    struct oss_dsp_priv_data *priv = dsp->_priv;
    
-   if(priv)
+   if (priv)
    {
-      if(priv->fd >= 0)
+      if (priv->fd >= 0)
          close(priv->fd);
       
       free(priv);
