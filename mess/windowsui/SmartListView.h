@@ -115,6 +115,10 @@ void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrTex
 void SmartListView_SetVisible(struct SmartListView *pListView, BOOL bVisible);
 BOOL SmartListView_GetVisible(struct SmartListView *pListView);
 void SmartListView_ScrollTo(struct SmartListView *pListView, int nItem);
+void SmartListView_SetBackground(struct SmartListView *pListView, HBITMAP hBackground);
+#if HAS_MYBITMAPINFO
+void SmartListView_SetMyBitmapInfo(struct SmartListView *pListView, const MYBITMAPINFO *pbmDesc);
+#endif /* HAS_MYBITMAPINFO */
 
 #if HAS_EXTRACOLUMNTEXT
 void SmartListView_SetExtraColumnText(struct SmartListView *pListView, LPCTSTR lpExtraColumnText);

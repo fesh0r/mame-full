@@ -3876,6 +3876,14 @@ static void LoadListBitmap()
 	else
 		hBitmap = LoadBitmapAndPalette(hInst, MAKEINTRESOURCE(nResource), &hPALbg, &bmDesc);
 #endif
+
+#ifdef MESS
+	if (s_pSoftwareListView)
+	{
+		SmartListView_SetBackground(s_pSoftwareListView, hBitmap);
+		SmartListView_SetMyBitmapInfo(s_pSoftwareListView, &bmDesc);
+	}
+#endif
 }
 
 /* Initialize the Picker and List controls */

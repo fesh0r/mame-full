@@ -1193,6 +1193,18 @@ void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELI
 		ListView_SetImageList(pListView->hwndListView, hLarge, LVSIL_NORMAL);
 }
 
+void SmartListView_SetBackground(struct SmartListView *pListView, HBITMAP hBackground)
+{
+	pListView->hBackground = hBackground;
+}
+
+#if HAS_MYBITMAPINFO
+void SmartListView_SetMyBitmapInfo(struct SmartListView *pListView, const MYBITMAPINFO *pbmDesc)
+{
+	pListView->bmDesc = *pbmDesc;
+}
+#endif /* HAS_MYBITMAPINFO */
+
 /* ------------------------------------------------------------------------ *
  * Comparators                                                              *
  * ------------------------------------------------------------------------ */

@@ -113,3 +113,7 @@ Source Changes:
 
 - With help from SockMaster, fixed some very subtle timer bugs in the m6809
   and hd6309 CPU cores [Nate Woods, tim lindner, John Kowalski]
+  
+- [GUI] Fixed a very minor bug that caused the software list view background
+  to not be updated at the same time as the system list if the snap directory
+  was changed. [Nate Woods]
