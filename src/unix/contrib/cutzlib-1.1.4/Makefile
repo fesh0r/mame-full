@@ -14,7 +14,7 @@
 
 CC=gcc
 
-CFLAGS=-O3 -march=athlon -Wall -Wno-unused -fomit-frame-pointer -ffast-math -finline-limit=5000 -pipe -DHAVE_UNISTD_H -DUSE_MMAP
+CFLAGS=-O3 -DHAVE_UNISTD_H -DUSE_MMAP
 #CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
 #CFLAGS=-g -DDEBUG
 #CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
