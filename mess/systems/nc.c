@@ -37,7 +37,10 @@
  ******************************************************************************/
 #include "driver.h"
 #include "includes/nc.h"
+/* for NC100 real time clock */
 #include "includes/tc8521.h"
+/* for NC100 uart */
+#include "includes/msm8251.h"
 
 /* for NC200 disk drive interface */
 #include "includes/nec765.h"
@@ -104,6 +107,29 @@ void    nc_set_card_write_protect_state(int state)
 unsigned char    *nc_memory;
 /* card ram */
 extern unsigned char    *nc_card_ram;
+
+
+
+/* 
+  bit 7     select card register 1=common, 0=attribute
+        bit 6     parallel interface Strobe signal
+        bit 5     Not Used
+        bit 4     uPD4711 line driver, 1=off, 0=on
+        bit 3     UART clock and reset, 1=off, 0=on
+
+        bits 2-0  set the baud rate as follows
+
+                000 = 150
+                001 = 300
+                010 = 600
+                011 = 1200
+                100 = 2400
+                101 = 4800
+                110 = 9600
+                111 = 19200
+*/
+
+unsigned char nc_uart_control;
 
 
 /*
@@ -280,25 +306,68 @@ static void nc_refresh_memory_config(void)
         nc_refresh_memory_bank_config(3);
 }
 
-#if 0
-static void nc_tc8521_interrupt(int state)
+
+
+static int previous_alarm_state;
+
+void	nc_tc8521_alarm_callback(int state)
 {
-        if (state)
-        {
-                cpu_set_nmi_line(0,HOLD_LINE);
-        }
-        else
-        {
-                cpu_set_nmi_line(0,CLEAR_LINE);
-        }
+	/* I'm assuming that the nmi is edge triggered */
+	/* a interrupt from the fdc will cause a change in line state, and
+	the nmi will be triggered, but when the state changes because the int
+	is cleared this will not cause another nmi */
+	/* I'll emulate it like this to be sure */
+	
+	if (state!=previous_alarm_state)
+	{
+		if (state)
+		{
+			/* I'll pulse it because if I used hold-line I'm not sure
+			it would clear - to be checked */
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+	}
+
+	previous_alarm_state = state;
 }
-#endif
+
+static void nc100_txrdy_callback(int state)
+{
+	nc_irq_status &= ~(1<<1);
+
+	if (state)
+	{
+		nc_irq_status |= (1<<1);
+	}
+
+	nc_update_interrupts();
+}
+
+static void nc100_rxrdy_callback(int state)
+{
+	nc_irq_status &= ~(1<<0);
+
+	if (state)
+	{
+		nc_irq_status |= (1<<0);
+	}
+
+	nc_update_interrupts();
+}
+
 
 static struct tc8521_interface nc100_tc8521_interface=
 {
-  NULL,
-  NULL
+  nc_tc8521_alarm_callback,
 };
+
+static struct msm8251_interface nc100_uart_interface=
+{
+	nc100_txrdy_callback,
+	NULL,
+	nc100_rxrdy_callback
+};
+
 
 void nc_common_init_machine(void)
 {
@@ -362,7 +431,11 @@ void nc_common_init_machine(void)
                 }
         }
 
+		nc_uart_control = 0x0ff;
+
         tc8521_init(&nc100_tc8521_interface);
+
+		msm8251_init(&nc100_uart_interface);
 }
 
 void nc100_init_machine(void)
@@ -433,6 +506,8 @@ void nc_shutdown_machine(void)
 {
         
         tc8521_stop();
+
+		msm8251_stop();
 
         if (nc_memory!=NULL)
         {
@@ -668,12 +743,46 @@ WRITE_HANDLER(nc_sound_w)
           }
 }
 
+static unsigned long baud_rate_table[]=
+{
+	150,
+    300,
+    600,
+    1200,
+    2400,
+    4800,
+    9600,
+    19200
+};
+
+WRITE_HANDLER(nc_uart_control_w)
+{
+
+	/* on/off changed state? */
+	if (((nc_uart_control ^ data) & (1<<3))!=0)
+	{
+		/* changed uart from off to on */
+		if ((data & (1<<3))==0)
+		{
+			msm8251_reset();
+		}
+	}
+	
+	nc_uart_control = data;
+
+	msm8251_set_baud_rate(baud_rate_table[(data & 0x03)]);
+
+}
+
+
 static struct IOReadPort readport_nc[] =
 {
         {0x010, 0x013, nc_memory_management_r},
         {0x0a0, 0x0a0, nc_card_battery_status_r},
         {0x0b0, 0x0b9, nc_key_data_in_r},
         {0x090, 0x090, nc_irq_status_r},
+		{0x0c0, 0x0c0, msm8251_data_r},
+		{0x0c1, 0x0c1, msm8251_status_r},
         {0x0d0, 0x0df, tc8521_r},
 	{-1}							   /* end of table */
 };
@@ -682,9 +791,12 @@ static struct IOWritePort writeport_nc[] =
 {
         {0x000, 0x000, nc_display_memory_start_w},
         {0x010, 0x013, nc_memory_management_w},
+		{0x030, 0x030, nc_uart_control_w},
         {0x060, 0x060, nc_irq_mask_w},
         {0x070, 0x070, nc_poweroff_control_w},
         {0x090, 0x090, nc_irq_status_w},
+		{0x0c0, 0x0c0, msm8251_data_w},
+		{0x0c1, 0x0c1, msm8251_control_w},
         {0x0d0, 0x0df, tc8521_w},
         {0x050, 0x053, nc_sound_w},
         {-1}                                                       /* end of table */
