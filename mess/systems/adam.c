@@ -686,9 +686,9 @@ Lineal virtual memory map:
 */
 ROM_START (adam)
     ROM_REGION( 0x42000, REGION_CPU1, 0)
-    ROM_LOAD ("wp.rom", 0x20000, 0x8000, CRC(58d86a2a))
-    ROM_LOAD ("os7.rom", 0x30000, 0x2000, CRC(3aa93ef3))
-    ROM_LOAD ("eos.rom", 0x38000, 0x2000, CRC(05a37a34))
+    ROM_LOAD ("wp.rom", 0x20000, 0x8000, CRC(58d86a2a) SHA1(d4aec4efe1431e56fe52d83baf9118542c525255))
+    ROM_LOAD ("os7.rom", 0x30000, 0x2000, CRC(3aa93ef3) SHA1(45bedc4cbdeac66c7df59e9e599195c778d86a92))
+    ROM_LOAD ("eos.rom", 0x38000, 0x2000, CRC(05a37a34) SHA1(ad3c20ef444f10af7ae8eb75c81e500d9b1bba3d))
     //ROM_REGION( 0x10000, REGION_CPU2, 0)
     //ROM_LOAD ("master68.rom", 0x0100, 0x0E4, CRC(619a47b8)) /* Replacement 6801 Master ROM */
 ROM_END

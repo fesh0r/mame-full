@@ -2720,11 +2720,11 @@ ROM_START(cpc6128)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x020000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
-	ROM_LOAD("cpc6128.rom", 0x10000, 0x8000, CRC(9e827fe1))
-	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd))
+	ROM_LOAD("cpc6128.rom", 0x10000, 0x8000, CRC(9e827fe1) SHA1(5977adbad3f7c1e0e082cd02fe76a700d9860c30))
+	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
 
 	/* optional Multiface hardware */
-		ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, CRC(f36086de))
+		ROM_LOAD_OPTIONAL("multface.rom", 0x01c000, 0x02000, CRC(f36086de) SHA1(1431ec628d38f000715545dd2186b684c5fe5a6f))
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0100,REGION_GFX1) */
@@ -2734,8 +2734,8 @@ ROM_START(cpc464)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
-	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, CRC(40852f25))
-	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd))
+	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, CRC(40852f25) SHA1(56d39c463da60968d93e58b4ba0e675829412a20))
+	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0100,REGION_GFX1) */
@@ -2745,8 +2745,8 @@ ROM_START(cpc664)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
 	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
-	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, CRC(9AB5A036))
-	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd))
+	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, CRC(9AB5A036) SHA1(073a7665527b5bd8a148747a3947dbd3328682c8))
+	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, CRC(1fe22ecd) SHA1(39102c8e9cb55fcc0b9b62098780ed4a3cb6a4bb))
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0100,REGION_GFX1) */
@@ -2755,10 +2755,10 @@ ROM_END
 
 ROM_START(kccomp)
 	ROM_REGION(0x018000, REGION_CPU1,0)
-	ROM_LOAD("kccos.rom", 0x10000, 0x04000, CRC(7f9ab3f7))
-	ROM_LOAD("kccbas.rom", 0x14000, 0x04000, CRC(ca6af63d))
+	ROM_LOAD("kccos.rom", 0x10000, 0x04000, CRC(7f9ab3f7) SHA1(f828045e98e767f737fd93df0af03917f936ad08))
+	ROM_LOAD("kccbas.rom", 0x14000, 0x04000, CRC(ca6af63d) SHA1(d7d03755099d0aff501fa5fffc9c0b14c0825448))
 	ROM_REGION(0x018000+0x0800, REGION_PROMS, 0 )
-	ROM_LOAD("farben.rom", 0x018000, 0x0800, CRC(a50fa3cf))
+	ROM_LOAD("farben.rom", 0x018000, 0x0800, CRC(a50fa3cf) SHA1(2f229ac9f62d56973139dad9992c208421bc0f51))
 
 	/* fake region - required by graphics decode structure */
 	/*ROM_REGION(0x0c00, REGION_GFX1) */
