@@ -615,16 +615,21 @@ static int ram_init(const struct GameDriver *gamedrv)
  ****************************************************************************/
 int init_devices(const struct GameDriver *gamedrv)
 {
-	const char *cwd;
 	const struct IODevice *dev = gamedrv->dev;
 	int i,id;
 
 	/* convienient place to call this */
-	cwd = osd_get_cwd();
-	mess_path = auto_malloc(strlen(cwd) + 1);
-	if (!mess_path)
-		return 1;
-	strcpy(mess_path, cwd);
+	{
+		const char *cwd;
+		char *s;
+
+		cwd = osd_get_cwd();
+		s = auto_malloc(strlen(cwd) + 1);
+		if (!s)
+			return 1;
+		strcpy(s, cwd);
+		mess_path = s;
+	}
 
 	logerror("Initialising Devices...\n");
 
