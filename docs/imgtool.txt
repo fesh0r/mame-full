@@ -339,6 +339,12 @@ Examples:
 List the catalog of image test.dsk:
 imgtool dir v9t9 test.dsk
 
+Extract file FILE1 located on image test.dsk:
+imgtool get v9t9 test.dsk FILE1
+
+Extract file FILE1 located in subdirectory SUBDIR1 on image test.dsk:
+imgtool get v9t9 test.dsk SUBDIR1.FILE1
+
 Create a SSSD image compatible with all controllers:
 imgtool create v9t9 test.dsk --sides=1 --tracks=40 --sectors=9
 
