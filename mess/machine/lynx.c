@@ -899,7 +899,7 @@ static void lynx_timer_shot(int nr)
 		This->timer_active = 0;
 }
 
-static double times[]= { 1e-6, 2e-6, 4e-6, 8e-6, 16e-6, 32e-6, 64e-6 };
+static double lynx_times[]= { 1e-6, 2e-6, 4e-6, 8e-6, 16e-6, 32e-6, 64e-6 };
 
 static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
 {
@@ -913,7 +913,7 @@ static UINT8 lynx_timer_read(LYNX_TIMER *This, int offset)
 		else
 		{
 			if (This->timer_active)
-				data=(UINT8)(This->u.s.bakup-timer_timeleft(This->timer)/times[This->u.s.cntrl1&7]);
+				data=(UINT8)(This->u.s.bakup-timer_timeleft(This->timer)/lynx_times[This->u.s.cntrl1&7]);
 		}
 		break;
 
@@ -958,9 +958,9 @@ static void lynx_timer_write(LYNX_TIMER *This, int offset, UINT8 data)
 			{
 				t=This->u.s.bakup+1;
 				if (This->u.s.cntrl1&0x10)
-					timer_adjust(This->timer, 0, This->nr, t*times[This->u.s.cntrl1&7]);
+					timer_adjust(This->timer, 0, This->nr, t*lynx_times[This->u.s.cntrl1&7]);
 				else
-					timer_adjust(This->timer, t*times[This->u.s.cntrl1&7], This->nr, 0);
+					timer_adjust(This->timer, t*lynx_times[This->u.s.cntrl1&7], This->nr, 0);
 				This->timer_active = 1;
 			}
 		}
