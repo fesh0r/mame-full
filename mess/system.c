@@ -72,62 +72,62 @@ const struct GameDriver *drivers[] =
 
 #ifndef NEOMAME
 
-  /****************CONSOLES****************************************************/
+/****************CONSOLES****************************************************/
 
-      /* ATARI */
-  TESTDRIVER( a2600 )       /* Atari 2600                                     */
-      DRIVER( a5200 )       /* Atari 5200                                     */
-      DRIVER( a7800 )       /* Atari 7800                                     */
+	/* ATARI */
+  TESTDRIVER( a2600 )		/* Atari 2600                                     */
+	DRIVER( a5200 )		/* Atari 5200                                     */
+	DRIVER( a7800 )		/* Atari 7800                                     */
 
-      /* BALLY */
-      DRIVER( astrocde )    /* Bally Astrocade                                */
+	/* BALLY */
+	DRIVER( astrocde )	/* Bally Astrocade                                */
 
-      /* COLECO */
-      DRIVER( coleco )      /* ColecoVision (Original BIOS )                  */
-      /* Please dont include these next 2 in a distribution, they are Hacks   */
-  TESTDRIVER( colecofb )    /* ColecoVision (Fast BIOS load)                  */
-  TESTDRIVER( coleconb )    /* ColecoVision (No BIOS load)                    */
+	/* COLECO */
+	DRIVER( coleco )		/* ColecoVision (Original BIOS )                  */
+	/* Please dont include these next 2 in a distribution, they are Hacks   */
+  TESTDRIVER( colecofb )	/* ColecoVision (Fast BIOS load)                  */
+  TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)                    */
 
       /* NINTENDO */
-      DRIVER( nes )         /* Nintendo Entertainment System                  */
-      DRIVER( nespal )      /* Nintendo Entertainment System                  */
-      DRIVER( famicom )
-      DRIVER( gameboy )     /* Nintendo GameBoy Handheld                      */
-  TESTDRIVER( snes )        /* Nintendo Super Nintendo                        */
-  TESTDRIVER( vboy )        /* Nintendo Virtual Boy                           */
+	DRIVER( nes )		/* Nintendo Entertainment System                  */
+	DRIVER( nespal )		/* Nintendo Entertainment System                  */
+	DRIVER( famicom )
+	DRIVER( gameboy )		/* Nintendo GameBoy Handheld                      */
+  TESTDRIVER( snes )		/* Nintendo Super Nintendo                        */
+  TESTDRIVER( vboy )		/* Nintendo Virtual Boy                           */
 
-	  /* NEC */
-      DRIVER( pce )         /* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
+	/* NEC */
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
 
-      /* SEGA */
-      DRIVER( gamegear )    /* Sega Game Gear Handheld                        */
-      DRIVER( sms )         /* Sega Sega Master System                        */
-      DRIVER( genesis )     /* Sega Genesis/MegaDrive                         */
+	/* SEGA */
+	DRIVER( gamegear )	/* Sega Game Gear Handheld                        */
+	DRIVER( sms )		/* Sega Sega Master System                        */
+	DRIVER( genesis )		/* Sega Genesis/MegaDrive                         */
 
-	  /* GCE */
-      DRIVER( vectrex )     /* General Consumer Electric Vectrex - 1982-1984  */
-                            /* aka Milton-Bradley Vectrex)                    */
-      DRIVER( raaspec )     /* RA+A Spectrum - Modified Vectrex               */
+	/* GCE */
+	DRIVER( vectrex )		/* General Consumer Electric Vectrex - 1982-1984  */
+					/* (aka Milton-Bradley Vectrex)                   */
+	DRIVER( raaspec )		/* RA+A Spectrum - Modified Vectrex               */
 
-      /* Other */
-	  DRIVER( advision )
-      DRIVER( sfzch )       /* CPS Changer (Street Fighter ZERO)              */
+	/* ENTEX */
+	DRIVER( advision )
 
+	/* CAPCOM */
+	DRIVER( sfzch )		/* CPS Changer (Street Fighter ZERO)              */
 
+/****************COMPUTERS****************************************************/
 
-  /****************COMPUTERS****************************************************/
-
-      /* APPLE */
-	  DRIVER( apple1 )		/* Apple 1										  */
-	  DRIVER( apple2c ) 	/* Apple //c									  */
-	  DRIVER( apple2c0 )	/* Apple //c (3.5 ROM)							  */
-	  DRIVER( apple2cp )	/* Apple //c+									  */
-	  DRIVER( apple2e ) 	/* Apple //e									  */
-	  DRIVER( apple2ee )	/* Apple //e Enhanced							  */
-	  DRIVER( apple2ep )	/* Apple //e Platinum							  */
-      DRIVER( macplus )	    /* Apple MacIntosh Plus      					  */
-      DRIVER( mac512ke )
-      DRIVER( lisa2 )
+	/* APPLE */
+	DRIVER( apple1 )		/* Apple 1							  */
+	DRIVER( apple2c )		/* Apple //c						  */
+	DRIVER( apple2c0 )	/* Apple //c (3.5 ROM)					  */
+	DRIVER( apple2cp )	/* Apple //c+						  */
+	DRIVER( apple2e )		/* Apple //e						  */
+	DRIVER( apple2ee )	/* Apple //e Enhanced					  */
+	DRIVER( apple2ep )	/* Apple //e Platinum					  */
+	DRIVER( macplus )		/* Apple MacIntosh Plus      				  */
+	DRIVER( mac512ke )
+	DRIVER( lisa2 )
   TESTDRIVER( mac2 )
 				/*
 				CPU Model             Month               Year
@@ -153,255 +153,244 @@ const struct GameDriver *drivers[] =
 
 
 
-      /* ATARI */
-      DRIVER( a400 )        /* Atari 400                                      */
-      DRIVER( a400pal )     /* Atari 400 PAL                                  */
-      DRIVER( a800 )        /* Atari 800                                      */
-      DRIVER( a800pal )     /* Atari 800 PAL                                  */
-	  DRIVER( a800xl )		/* Atari 800 XL 								  */
+	/* ATARI */
+	DRIVER( a400 )		/* Atari 400                                      */
+	DRIVER( a400pal )		/* Atari 400 PAL                                  */
+	DRIVER( a800 )		/* Atari 800                                      */
+	DRIVER( a800pal )		/* Atari 800 PAL                                  */
+	DRIVER( a800xl )		/* Atari 800 XL 						  */
 
-      /* COMMODORE */
-      DRIVER( c16 )         /* Commodore 16                                   */
-      DRIVER( c16c )        /* Commodore 16  c1551                            */
-  TESTDRIVER( c16v )        /* Commodore 16  vc1541                           */
-      DRIVER( plus4 )       /* Commodore +4  c1551                            */
-      DRIVER( plus4c )      /* Commodore +4  vc1541                           */
-  TESTDRIVER( plus4v )      /* Commodore +4                                   */
-	  DRIVER( c364 )		/* Commodore 364 - Prototype					  */
+	/* COMMODORE */
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975                     */
+	DRIVER( c16 )		/* Commodore 16                                   */
+	DRIVER( c16c )		/* Commodore 16  c1551                            */
+  TESTDRIVER( c16v )		/* Commodore 16  vc1541                           */
+	DRIVER( plus4 )		/* Commodore +4  c1551                            */
+	DRIVER( plus4c )		/* Commodore +4  vc1541                           */
+  TESTDRIVER( plus4v )		/* Commodore +4                                   */
+	DRIVER( c364 )		/* Commodore 364 - Prototype				  */
 
-      DRIVER( c64 )         /* Commodore 64 - NTSC                            */
-      DRIVER( c64pal )      /* Commodore 64 - PAL                             */
-      DRIVER( c64gs )       /* Commodore 64 - NTSC                            */
-	  DRIVER( cbm4064 ) 	/* Commodore CBM4064							  */
-  TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
-      DRIVER( max )         /* Ulitimax                                       */
-      DRIVER( vic64s )      /*                                                */
+	DRIVER( c64 )		/* Commodore 64 - NTSC                            */
+	DRIVER( c64pal )		/* Commodore 64 - PAL                             */
+	DRIVER( c64gs )		/* Commodore 64 - NTSC                            */
+	DRIVER( cbm4064 )		/* Commodore CBM4064					  */
+  TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL				  */
+	DRIVER( max )		/* Ultimax                                        */
+	DRIVER( vic64s )		/*                                                */
 
-      DRIVER( c65 ) 		/* Commodore 65 - NTSC							  */
-      DRIVER( c65e )
-      DRIVER( c65d )
-      DRIVER( c65c )
-      DRIVER( c65ger )
-      DRIVER( c65a )
+	DRIVER( c65 ) 		/* Commodore 65 - NTSC					  */
+	DRIVER( c65e )
+	DRIVER( c65d )
+	DRIVER( c65c )
+	DRIVER( c65ger )
+	DRIVER( c65a )
 
-	  DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
-	  DRIVER( c128ger ) 	/* Commodore 128 - PAL (german) 				  */
-	  DRIVER( c128fra ) 	/* Commodore 128 - PAL (french) 				  */
-	  DRIVER( c128ita ) 	/* Commodore 128 - PAL (italian) 				  */
+	DRIVER( c128 )		/* Commodore 128 - NTSC 				  */
+	DRIVER( c128ger )		/* Commodore 128 - PAL (german) 			  */
+	DRIVER( c128fra )		/* Commodore 128 - PAL (french) 			  */
+	DRIVER( c128ita )		/* Commodore 128 - PAL (italian) 			  */
 
-      DRIVER( vic20 )       /* Commodore Vic-20 NTSC                          */
-      DRIVER( vic20swe )    /*                                                */
-      DRIVER( vc20 )        /* Commodore Vic-20 PAL                           */
-      DRIVER( vic20i )
+	DRIVER( vic20 )		/* Commodore Vic-20 NTSC                          */
+	DRIVER( vic20swe )	/*                                                */
+	DRIVER( vc20 )		/* Commodore Vic-20 PAL                           */
+	DRIVER( vic20i )
 
-      DRIVER( pet )
-	  DRIVER( cbm30 )
-	  DRIVER( cbm30b )
-	  DRIVER( cbm40 )
-	  DRIVER( cbm40pal )
-	  DRIVER( cbm40b )
-	  DRIVER( cbm80 )
-	  DRIVER( cbm80pal )
-	  DRIVER( cbm80ger )
-	  DRIVER( cbm80swe )
-	  DRIVER( superpet )
+	DRIVER( pet )
+	DRIVER( cbm30 )
+	DRIVER( cbm30b )
+	DRIVER( cbm40 )
+	DRIVER( cbm40pal )
+	DRIVER( cbm40b )
+	DRIVER( cbm80 )
+	DRIVER( cbm80pal )
+	DRIVER( cbm80ger )
+	DRIVER( cbm80swe )
+	DRIVER( superpet )
 
-      DRIVER( cbm500 )
-      DRIVER( cbm610 )
-      DRIVER( cbm620 )
-      DRIVER( cbm710 )
-      DRIVER( cbm720 )
+	DRIVER( cbm500 )
+	DRIVER( cbm610 )
+	DRIVER( cbm620 )
+	DRIVER( cbm710 )
+	DRIVER( cbm720 )
 
-      DRIVER( amiga )       /* Commodore Amiga                                */
+	DRIVER( amiga )		/* Commodore Amiga                                */
 
-      /* AMSTRAD */
-      DRIVER( cpc464 )      /* Amstrad (Schneider in Germany) 1984            */
-      DRIVER( cpc664 )      /* Amstrad (Schneider in Germany) 1985            */
-      DRIVER( cpc6128 )     /* Amstrad (Schneider in Germany) 1985                                    */
-  TESTDRIVER( cpc464p )     /* Amstrad CPC464  Plus - 1987                    */
-  TESTDRIVER( cpc6128p )    /* Amstrad CPC6128 Plus - 1987                    */
-      DRIVER( pcw8256 )     /*                                                */
-      DRIVER( pcw8512 )     /*                                                */
-      DRIVER( pcw9256 )     /*                                                */
-      DRIVER( pcw9512 )     /*                                                */
-      DRIVER( pcw10 )       /*                                                */
-      DRIVER( pcw16 )       /*                                                */
+	/* AMSTRAD */
+	DRIVER( cpc464 )		/* Amstrad (Schneider in Germany) 1984            */
+	DRIVER( cpc664 )		/* Amstrad (Schneider in Germany) 1985            */
+	DRIVER( cpc6128 )		/* Amstrad (Schneider in Germany) 1985                                    */
+  TESTDRIVER( cpc464p )		/* Amstrad CPC464  Plus - 1987                    */
+  TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987                    */
+	DRIVER( pcw8256 )		/*                                                */
+	DRIVER( pcw8512 )		/*                                                */
+	DRIVER( pcw9256 )		/*                                                */
+	DRIVER( pcw9512 )		/*                                                */
+	DRIVER( pcw10 )		/*                                                */
+	DRIVER( pcw16 )		/*                                                */
 
+	/* VEB MIKROELEKTRONIK */
+	DRIVER( kccomp )		/* KC compact                                     */
+	DRIVER( kc85_4 )		/* KC 85/4							  */
 
+	/* CANTAB */
+	DRIVER( jupiter )		/* Jupiter Ace						  */
 
-      /* VEB MIKROELEKTRONIK */
-      DRIVER( kccomp )      /* KC compact                                     */
-	  DRIVER( kc85_4 )		/* KC 85/4										  */
+	/* INTELLIGENT SOFTWARE */
+	DRIVER( ep128 )		/* Enterprise 128 k                               */
 
-	  /* CANTAB */
-	  DRIVER( jupiter ) 	/* Jupiter Ace									  */
+	/* NON LINEAR SYSTEMS */
+	DRIVER( kaypro )		/* Kaypro 2X						  */
 
-	  /* INTELLIGENT SOFTWARE */
-      DRIVER( ep128 )       /* Enterprise 128 k                               */
+	/* MICROBEE SYSTEMS */
+	DRIVER( mbee )		/* Microbee 						  */
+	DRIVER( mbee56k )		/* Microbee 56K (CP/M)					  */
 
-	  /* NON LINEAR SYSTEMS */
-	  DRIVER( kaypro )		/* Kaypro 2X									  */
+	/* TANDY RADIO SHACK */
+	DRIVER( trs80l1 )
+	DRIVER( trs80 )		/* TRS-80 Model I   - Radio Shack/Tandy           */
+	DRIVER( trs80alt )
+  TESTDRIVER( trs80m3 )		/* TRS-80 Model III - Radio Shack/Tandy           */
+	DRIVER( coco )		/* Color Computer                                 */
+	DRIVER( coco3 )		/* Color Computer 3                               */
+	DRIVER( cp400 )		/* Prologica CP400                                */
+	DRIVER( mc10 )		/* MC-10							  */
 
-	  /* MICROBEE SYSTEMS */
-	  DRIVER( mbee )		/* Microbee 									  */
-	  DRIVER( mbee56k ) 	/* Microbee 56K (CP/M)							  */
+	/* DRAGON DATA LTD */
+	DRIVER( dragon32 )	/* Dragon32                                       */
 
-	  DRIVER( trs80l1 )
-      DRIVER( trs80 )       /* TRS-80 Model I   - Radio Shack/Tandy           */
-      DRIVER( trs80alt )
-  TESTDRIVER( trs80m3 )     /* TRS-80 Model III - Radio Shack/Tandy           */
+	/* EACA */
+	DRIVER( cgenie )		/* Colour Genie 						  */
+	DRIVER( sys80 )		/* System 80						  */
 
-	  /* DRAGON DATA LTD */
-      DRIVER( dragon32 )    /* Dragon32                                       */
+	/* VIDEO TECHNOLOGY */
+	DRIVER( laser110 )	/* Laser 110						  */
+	DRIVER( laser200 )	/* Laser 200						  */
+	DRIVER( laser210 )	/* Laser 210 (indentical to Laser 200 ?)		  */
+	DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
+	DRIVER( vz200 )		/* Dick Smith Electronics / Sanyo VZ200 		  */
+	DRIVER( vz300 )		/* Dick Smith Electronics / Sanyo VZ300 		  */
+	DRIVER( fellow )		/* Salora Fellow (Finland)				  */
+	DRIVER( tx8000 )		/* Texet TX-8000 (U.K.) 				  */
+	DRIVER( laser350 )	/* Laser 350						  */
+	DRIVER( laser500 )	/* Laser 500						  */
+	DRIVER( laser700 )	/* Laser 700						  */
 
-	  /* TANDY */
-      DRIVER( coco )        /* Color Computer                                 */
-	  DRIVER( coco3 )       /* Color Computer 3                               */
-      DRIVER( cp400 )       /* Prologica CP400                                */
-	  DRIVER( mc10 )		/* MC-10										  */
+	/* TANGERINE */
+	DRIVER( microtan )
+	DRIVER( oric1 )		/* Oric 1                                         */
+	DRIVER( orica )		/* Oric Atmos						  */
 
-	  /* EACA */
-	  DRIVER( cgenie )		/* Colour Genie 								  */
-	  DRIVER( sys80 )		/* System 80									  */
+	/* TEXAS INSTRUMENTS */
+  TESTDRIVER( ti99_2_24 )	/* Texas Instruments TI 99/2				  */
+  TESTDRIVER( ti99_2_32 )	/* Texas Instruments TI 99/2				  */
+	DRIVER( ti99_4 )		/* Texas Instruments TI 99/4				  */
+	DRIVER( ti99_4e )		/* Texas Instruments TI 99/4E				  */
+	DRIVER( ti99_4a )		/* Texas Instruments TI 99/4A				  */
+	DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE			  */
 
-	  /* VIDEO TECHNOLOGY */
-	  DRIVER( laser110 )	/* Laser 110									  */
-	  DRIVER( laser200 )	/* Laser 200									  */
-	  DRIVER( laser210 )	/* Laser 210 (indentical to Laser 200 ?)		  */
-	  DRIVER( laser310 )	/* Laser 310 (210 with diff. keyboard and RAM)	  */
-	  DRIVER( vz200 )		/* Dick Smith Electronics / Sanyo VZ200 		  */
-	  DRIVER( vz300 )		/* Dick Smith Electronics / Sanyo VZ300 		  */
-	  DRIVER( fellow )		/* Salora Fellow (Finland)						  */
-	  DRIVER( tx8000 )		/* Texet TX-8000 (U.K.) 						  */
-	  DRIVER( laser350 )	/* Laser 350									  */
-	  DRIVER( laser500 )	/* Laser 500									  */
-	  DRIVER( laser700 )	/* Laser 700									  */
+	/* IBM & Clones */
+	DRIVER( pc )		/* IBM PC  - parent Driver, so no need            */
+	DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
+	DRIVER( pccga )		/* IBM PC/XT with CGA					  */
 
-      /* Tangerine */
-	  DRIVER( microtan )
-      DRIVER( oric1 )       /* Oric 1                                         */
-	  DRIVER( orica )		/* Oric Atmos									  */
+	DRIVER( t1000hx )		/* Tandy 1000TX (similiar to PCJr)			  */
 
-      /* Texas Instruments */
-  TESTDRIVER( ti99_2_24 )	/* Texas Instruments TI 99/2					  */
-  TESTDRIVER( ti99_2_32 )	/* Texas Instruments TI 99/2					  */
-	  DRIVER( ti99_4 )		/* Texas Instruments TI 99/4					  */
-	  DRIVER( ti99_4e ) 	/* Texas Instruments TI 99/4E					  */
-	  DRIVER( ti99_4a ) 	/* Texas Instruments TI 99/4A					  */
-	  DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE					  */
+	DRIVER( pc1512 )
+	DRIVER( pc1640 )
 
-      /* IBM & Clones */
-      DRIVER( pc )          /* IBM PC  - parent Driver, so no need            */
-	  DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
-	  DRIVER( pccga )		/* IBM PC/XT with CGA							  */
-	  DRIVER( t1000hx ) 	/* Tandy 1000TX (similiar to PCJr)				  */
-	  DRIVER( pc1512 )
-	  DRIVER( pc1640 )
+  TESTDRIVER( xtcga )		/*                                                */
+  TESTDRIVER( xtega )		/*                                                */
+	DRIVER( xtvga )		/*                                                */
+	DRIVER( atcga )		/*                                                */
+  TESTDRIVER( atvga )		/*                                                */
 
+	/* PHILIPS */
+	DRIVER( p2000t )		/* Philips - P2000T 					  */
+	DRIVER( p2000m )		/*                  					  */
 
-  TESTDRIVER( xtcga )       /*                                                */
-  TESTDRIVER( xtega )       /*                                                */
-      DRIVER( xtvga )       /*                                                */
-      DRIVER( atcga )       /*                                                */
-  TESTDRIVER( atvga )       /*                                                */
+	/* COMPUKIT */
+	DRIVER( uk101 )		/*                  					  */
 
+	/* OHIO SCIENTIFIC */
+	DRIVER( superbrd )	/*                  					  */
 
-	  DRIVER( p2000t )		/* Philips - P2000T 							  */
-	  DRIVER( p2000m )		/*                  							  */
-	  DRIVER( uk101 )		/*                  							  */
-	  DRIVER( superbrd )    /*                  							  */
+	/* SINCLAIR */
+	DRIVER( zx80 )		/* Sinclair ZX-80						  */
+	DRIVER( zx81 )		/* Sinclair ZX-81						  */
+	DRIVER( ts1000 )		/* Timex Sinclair 1000					  */
+	DRIVER( aszmic )		/* ASZMIC ZX-81 ROM swap				  */
+	DRIVER( pc8300 )		/* Your Computer - PC8300				  */
+	DRIVER( pow3000 )		/* Creon Enterprises - Power 3000			  */
 
-      /* Sinclair */
-	  DRIVER( zx80 )		/* Sinclair ZX-80								  */
-	  DRIVER( zx81 )		/* Sinclair ZX-81								  */
-	  DRIVER( ts1000 )		/* Timex Sinclair 1000							  */
-	  DRIVER( aszmic )		/* ASZMIC ZX-81 ROM swap						  */
-	  DRIVER( pc8300 )		/* Your Computer - PC8300						  */
-	  DRIVER( pow3000 ) 	/* Creon Enterprises - Power 3000				  */
+	DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 				  */
+	DRIVER( inves )		/*                                                */
+	DRIVER( tk90x )		/*                                                */
+	DRIVER( tk95 )		/*                                                */
+	DRIVER( tc2048 )		/*                                                */
+	DRIVER( ts2068 )		/*                                                */
 
-	  DRIVER( spectrum )	/* Sinclair ZX Spectrum 48k 					  */
-	  DRIVER( inves )	    /*                                                */
-	  DRIVER( tk90x )   	/*                                                */
-	  DRIVER( tk95 )	    /*                                                */
-	  DRIVER( tc2048 )	    /*                                                */
-	  DRIVER( ts2068 )    	/*                                                */
+	DRIVER( spec128  )	/* Spectrum                                       */
+	DRIVER( specpls2 )	/* Spectrum                                       */
+	DRIVER( specpl2a )	/* Spectrum                                       */
+	DRIVER( specp2fr )	/*                                                */
+	DRIVER( specp2sp )	/*                                                */
+	DRIVER( specpls3 )	/* Spectrum Plus 3                                */
+	DRIVER( specp3sp )	/*                                                */
+	DRIVER( specpl3e )	/*                                                */
+	DRIVER( specpls4 )	/*                                                */
 
-      DRIVER( spec128  )    /* Spectrum                                       */
-      DRIVER( specpls2 )    /* Spectrum                                       */
-      DRIVER( specpl2a )    /* Spectrum                                       */
-      DRIVER( specp2fr )    /*                                                */
-      DRIVER( specp2sp )    /*                                                */
-      DRIVER( specpls3 )    /* Spectrum Plus 3                                */
-      DRIVER( specp3sp )    /*                                                */
-	  DRIVER( specpls4 )	/*                                                */
+	/* ASCII & MICROSOFT */
+	DRIVER( msx )		/* MSX                                            */
+	DRIVER( msxj )		/* MSX Jap                                        */
+	DRIVER( msxkr )		/* MSX Korean                                     */
+	DRIVER( msxuk )		/* MSX UK                                         */
 
+	/* NASCOM MICROCOMPUTERS */
+	DRIVER( nascom1 )		/* Nascom 1 						  */
+	DRIVER( nascom2 )		/* Nascom 2 						  */
 
+	/* ACORN */
+	DRIVER( atom )		/* Acorn Atom           				  */
+	DRIVER( bbca )		/* BBC Micro                                      */
+	DRIVER( bbcb )		/* BBC Micro                                      */
+	DRIVER( a310 )		/* Acorn Archimedes 310					  */
 
-	  /* ASCII & Microsoft */
-      DRIVER( msx )         /* MSX                                            */
-      DRIVER( msxj )        /* MSX Jap                                        */
-      DRIVER( msxkr )       /* MSX Korean                                     */
-      DRIVER( msxuk )       /* MSX UK                                         */
+	/* MILES GORDON TECHNOLOGY */
+	DRIVER( coupe )		/*                      				  */
 
-      /* Nascom */
-	  DRIVER( nascom1 ) 	/* Nascom 1 									  */
-	  DRIVER( nascom2 ) 	/* Nascom 2 									  */
+	/* SHARP */
+	DRIVER( pc1401 )		/* Pocket Computer 1401      				  */
+	DRIVER( pc1402 )		/* Pocket Computer 1402    				  */
+	DRIVER( pc1350 )		/* Pocket Computer 1350    				  */
 
+	DRIVER( mz700 )
+	DRIVER( mz700j )
 
-      /* ACORN */
-	  DRIVER( atom ) 	    /* Acorn Atom           						  */
-      DRIVER( bbca )       /* BBC Micro                                      */
-      DRIVER( bbcb )       /* BBC Micro                                      */
-	  DRIVER( a310 )	   /* Acorn Archimedes 310							 */
+	/* MOTOROLA */
+  TESTDRIVER( mekd2 )		/* Motorola Evaluation Kit				  */
 
+	/* DEC */
+	DRIVER( pdp1 )		/* DEC PDP1 for SPACEWAR! - 1962                  */
 
-      /* SAM COUPE */
-	  DRIVER( coupe ) 	    /*                      						  */
+	/* MEMOTECH */
+	DRIVER( mtx512 )		/*                                                */
 
-      /* Sharp */
-      DRIVER( pc1401 ) 	    /* Pocket Computer         						  */
-      DRIVER( mz700 )
-      DRIVER( mz700j )
+	/* MATTEL */
+	DRIVER( aquarius )	/*                                                */
 
-  TESTDRIVER( mekd2 ) 	    /* Motorola 									  */
+/****************OTHERS******************************************************/
 
-
-  /****************OTHERS******************************************************/
-
-      DRIVER( kim1 )        /* Commodore (MOS) KIM-1 1975                     */
-      DRIVER( pdp1 ) 	    /* DEC PDP1 for SPACEWAR! - 1962                  */
-      DRIVER( mtx512 ) 	    /*                                                */
-      DRIVER( aquarius )    /*                                                */
-
-
-
-
-
-
-    //DRIVER( arcadia )     /* Arcadia 2001                                   */
-    //DRIVER( atarist )     /* Atari ST                                       */
-
-
-
-    //DRIVER( channelf )    /* Fairchild Channel F VES - 1976                 */
-    //DRIVER( coco2 )       /* Color Computer 2                               */
-
-  							/* AkA Phillips Videopac                          */
-    //DRIVER( intv )        /* Mattel Intellivision - 1979 AKA INTV           */
-    //DRIVER( jaguar )      /* Atari Jaguar                                   */
-
-    //DRIVER( lynx )        /* Atari Lynx Handheld                            */
-
-
-    //DRIVER( odyssey )     /* Magnavox Odyssey - analogue (1972)             */
-    //DRIVER( odyssey2 )    /* Magnavox Odyssey 2 - 1978-1983                  */
-
-
-    //DRIVER( trs80_m2 )    /* TRS-80 Model II -                              */
-
-
-    //DRIVER( x68000 )      /* X68000                                         */
-
+	//DRIVER( arcadia )	/* Arcadia 2001                                   */
+	//DRIVER( atarist )	/* Atari ST                                       */
+	//DRIVER( channelf )	/* Fairchild Channel F VES - 1976                 */
+	//DRIVER( coco2 )		/* Color Computer 2                               */
+	//DRIVER( intv )		/* Mattel Intellivision - 1979 AKA INTV           */
+	//DRIVER( jaguar )	/* Atari Jaguar                                   */
+	//DRIVER( lynx )		/* Atari Lynx Handheld                            */
+	//DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)             */
+	//DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983                 */
+	//DRIVER( trs80_m2 )	/* TRS-80 Model II -                              */
+	//DRIVER( x68000 )	/* X68000                                         */
 
 #endif  /* NEOMAME */
 
