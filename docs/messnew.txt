@@ -9,7 +9,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.  The
-  apple2 driver no longer requires a CTRL key to reset.  [Christopher Stone]
+  apple2 driver no longer requires a CTRL key to reset.  (bug #642)
+  [Christopher Stone]
 
 - [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
   packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
@@ -17,6 +18,9 @@ System Driver Changes:
 - [GAMEBOY] Fixed regression introduced in 0.93.  [Nate Woods]
 
 - [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
+
+- [A2600] Remap Select/Reset Keys to match a7800 driver (bug #670)
+  [Christopher Stone]
 
 
 
