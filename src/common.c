@@ -1204,6 +1204,15 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 }
 
 
+static const struct GameDriver *next_related_driver(const struct GameDriver *drv)
+{
+#ifdef MESS
+	if (drv->compatible_with)
+		return drv->compatible_with;
+#endif
+	return drv->clone_of;
+}
+
 /*-------------------------------------------------
 	open_rom_file - open a ROM file, searching
 	up the parent and loading via CRC
@@ -1222,13 +1231,13 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
 
 	/* first attempt reading up the chain through the parents */
 	romdata->file = NULL;
-	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
+	for (drv = Machine->gamedrv; !romdata->file && drv; drv = next_related_driver(drv))
 		if (drv->name && *drv->name)
 			romdata->file = mame_fopen(drv->name, ROM_GETNAME(romp), FILETYPE_ROM, 0);
 
 	/* if that failed, attempt to open via CRC */
 	sprintf(crc, "%08x", ROM_GETCRC(romp));
-	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
+	for (drv = Machine->gamedrv; !romdata->file && drv; drv = next_related_driver(drv))
 		if (drv->name && *drv->name)
 			romdata->file = mame_fopen(drv->name, crc, FILETYPE_ROM, 0);
 

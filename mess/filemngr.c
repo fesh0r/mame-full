@@ -741,7 +741,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			img = image_from_devtype_and_index(types[sel], ids[sel]);
+			img = image_from_devtype_and_index(types[previous_sel], ids[previous_sel]);
 			image_load(img, entered_filename[0] ? entered_filename : NULL);
 		}
 
@@ -799,7 +799,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		int os_sel;
-		img = image_from_devtype_and_index(types[sel], ids[sel]);
+
+		img = NULL;
 
 		/* Return to main menu? */
 		if (sel == total-1)
@@ -808,7 +809,11 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			os_sel = -1;
 		}
 		/* no, let the osd code have a crack at changing files */
-		else os_sel = osd_select_file(img, entered_filename);
+		else
+		{
+			img = image_from_devtype_and_index(types[sel], ids[sel]);
+			os_sel = osd_select_file(img, entered_filename);
+		}
 
 		if (os_sel != 0)
 		{
