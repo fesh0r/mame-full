@@ -1036,18 +1036,19 @@ static int coco3_timer_r(void)
 	return result;	/* result = 0..4095 */
 }
 
+/* Write into MSB of timer ($FF94); this causes a reset (source: Sockmaster) */
 static void coco3_timer_msb_w(int data)
 {
-	coco3_timer_base &= 0xff;
+	coco3_timer_base &= 0x00ff;
 	coco3_timer_base |= (data & 0x0f) << 8;
 	coco3_timer_reset();
 }
 
+/* Write into LSB of timer ($FF95); this does not cause a reset (source: Sockmaster) */
 static void coco3_timer_lsb_w(int data)
 {
 	coco3_timer_base &= 0xff00;
 	coco3_timer_base |= (data & 0xff);
-	coco3_timer_reset();
 }
 
 static void coco3_timer_set_interval(int interval)
