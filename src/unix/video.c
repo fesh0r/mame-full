@@ -8,6 +8,7 @@
 #include "driver.h"
 #include "profiler.h"
 #include "input.h"
+#include "keyboard.h"
 /* for uclock */
 #include "sysdep/misc.h"
 
@@ -16,7 +17,7 @@
 extern int bitmap_dirty;
 static const int safety = 16;
 static float beam_f, flicker_f;
-static float widthscale_f, heightscale_f;
+static int normal_widthscale = 1, normal_heightscale = 1;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
@@ -25,11 +26,13 @@ static int brightness = 100;
 static float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static struct osd_bitmap *scrbitmap = NULL;
+static int debugger_has_focus = 0;
+static struct sysdep_palette_struct *debug_palette = NULL;
+static struct my_rectangle normal_visual;
+static struct my_rectangle debug_visual;
 
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
-   int priority);
-static int video_verify_scale(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_beam(struct rc_option *option, const char *arg,
    int priority);
@@ -39,6 +42,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
+static void osd_free_colors(void);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -48,11 +52,11 @@ struct rc_option video_opts[] = {
    { "bpp",		"b",			rc_int,		&options.color_depth,
      "0",		0,			0,		video_verify_bpp,
      "Specify the colordepth the core should render, one of: auto(0), 8, 16" },
-   { "heightscale",	"hs",			rc_float,	&heightscale_f,
-     "1",		0.5,			5.0,		video_verify_scale,
+   { "heightscale",	"hs",			rc_int,		&normal_heightscale,
+     "1",		1,			8,		NULL,
      "Set Y-Scale aspect ratio" },
-   { "widthscale",	"ws",			rc_float,	&widthscale_f,
-     "1",		0.5,			5.0,		video_verify_scale,
+   { "widthscale",	"ws",			rc_int,		&normal_widthscale,
+     "1",		1,			8,		NULL,
      "Set X-Scale aspect ratio" },
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
@@ -142,25 +146,6 @@ static int video_handle_scale(struct rc_option *option, const char *arg,
    if (rc_set_option2(video_opts, "heightscale", arg, priority))
       return -1;
       
-   option->priority = priority;
-   
-   return 0;
-}
-
-static int video_verify_scale(struct rc_option *option, const char *arg,
-   int priority)
-{
-   int scale = *(float *)option->dest;
-   
-   if (scale < 1)
-      scale = 1;
-   
-   /* widthscale or heightscale? */
-   if (!strcmp(option->name, "widthscale"))
-      widthscale = scale;
-   else
-      heightscale = scale;
-
    option->priority = priority;
    
    return 0;
@@ -313,6 +298,12 @@ int osd_create_display(int width, int height, int depth,
    int fps, int attributes, int orientation)
 {
    int i;
+   
+   current_palette = normal_palette = NULL;
+   debug_visual.min_x = 0;
+   debug_visual.max_x = options.debug_width - 1;
+   debug_visual.min_y = 0;
+   debug_visual.max_y = options.debug_height - 1;
 
    /* Can we do dirty? First check if its a vector game */
    if (attributes & VIDEO_TYPE_VECTOR)
@@ -329,18 +320,20 @@ int osd_create_display(int width, int height, int depth,
       VIDEO_PIXEL_ASPECT_RATIO_1_2)
    {
       if (orientation & ORIENTATION_SWAP_XY)
-         widthscale  *= 2;
+         normal_widthscale  *= 2;
       else
-         heightscale *= 2;
+         normal_heightscale *= 2;
    }
   
 #if !defined xgl
    if (osd_dirty_init()!=OSD_OK) return -1;
 #endif
 
-   visual_width = width;
+   visual_width  = width;
    visual_height = height;
-   video_fps = fps;
+   widthscale    = normal_widthscale;
+   heightscale   = normal_heightscale;
+   video_fps     = fps;
    
    if (sysdep_create_display(depth) != OSD_OK)
       return -1;
@@ -359,83 +352,132 @@ int osd_create_display(int width, int height, int depth,
 
 void osd_close_display (void)
 {
+   osd_free_colors();
    sysdep_display_close();
 #if !defined xgl
    osd_dirty_close ();
 #endif
 }
 
-void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
+static void osd_change_display_settings(struct my_rectangle *new_visual,
+   struct sysdep_palette_struct *new_palette, int new_widthscale,
+   int new_heightscale)
 {
-   int new_visual_width, new_visual_height;
+   int new_visual_width, new_visual_height, palette_dirty = 0;
    
-   visual.min_x = min_x;
-   visual.max_x = max_x;
-   visual.min_y = min_y;
-   visual.max_y = max_y;
-
-   /* round to 8, since the new dirty code works with 8x8 blocks,
-      and we need to round to sizeof(long) for the long copies anyway */
-   if (visual.min_x & 7)
-   {
-      if((visual.min_x - (visual.min_x & ~7)) < 4)
-         visual.min_x &= ~7;
-       else
-         visual.min_x = (visual.min_x + 7) & ~7;
-   }
-   if ((visual.max_x+1) & 7)
-   {
-      if(((visual.max_x+1) - ((visual.max_x+1) & ~7)) > 4)
-         visual.max_x = ((visual.max_x+1 + 7) & ~7) - 1;
-       else
-         visual.max_x = ((visual.max_x+1) & ~7) - 1;
-   }
+   /* always update the visual info */
+   visual = *new_visual;
    
-   /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
-   if (use_dirty)
-   {
-      if (visual.min_y & 7)
-      {
-         if((visual.min_y - (visual.min_y & ~7)) < 4)
-            visual.min_y &= ~7;
-          else
-            visual.min_y = (visual.min_y + 7) & ~7;
-      }
-      if ((visual.max_y+1) & 7)
-      {
-         if(((visual.max_y+1) - ((visual.max_y+1) & ~7)) > 4)
-            visual.max_y = ((visual.max_y+1 + 7) & ~7) - 1;
-          else
-            visual.max_y = ((visual.max_y+1) & ~7) - 1;
-      }
-   }
-   
-   /* now calculate the visual width / height */
+   /* calculate the new visual width / height */
    new_visual_width  = visual.max_x - visual.min_x + 1;
    new_visual_height = visual.max_y - visual.min_y + 1;
    
-   if( (visual_width != new_visual_width) || (visual_height != new_visual_height) )
+   if( current_palette != new_palette )
    {
-      visual_width = new_visual_width;
-      visual_height = new_visual_height;
+      current_palette = new_palette;
+      palette_dirty = 1;
+   }
+   
+   if( (visual_width  != new_visual_width ) ||
+       (visual_height != new_visual_height) ||
+       (widthscale    != new_widthscale   ) ||
+       (heightscale   != new_heightscale  ) )
+   {
       sysdep_display_close();
+      
+      visual_width  = new_visual_width;
+      visual_height = new_visual_height;
+      widthscale    = new_widthscale;
+      heightscale   = new_heightscale;
+      
       if (sysdep_create_display(bitmap_depth) != OSD_OK)
       {
          /* oops this sorta sucks */
          fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
          exit(1);
       }
+      
+      /* only realloc the palette if it has been initialised */
+      if(current_palette)
+      {
+         if (sysdep_display_alloc_palette(video_colors_used))
+         {
+            /* better restore the video mode before calling exit() */
+            sysdep_display_close();
+            /* oops this sorta sucks */
+            fprintf(stderr_file, "Argh, (re)allocating the palette failed in osd_set_visible_area, aborting\n");
+            exit(1);
+         }
+         palette_dirty = 1;
+      }
+      
+      /* mark the current visual area of the bitmap dirty */
+      osd_mark_dirty(visual.min_x, visual.min_y,
+         visual.max_x, visual.max_y, 1);
+      
+      /* to stop keys from getting stuck */
+      keyboard_clear();
+         
+      /* for debugging only */
+      fprintf(stderr_file, "viswidth = %d, visheight = %d,"
+              "visstartx= %d, visstarty= %d\n",
+               visual_width, visual_height, visual.min_x,
+               visual.min_y);
    }
    
-   set_ui_visarea (visual.min_x, visual.min_y, visual.max_x, visual.max_y);
-   
-   /* for debugging only */
-   fprintf(stderr_file, "viswidth = %d, visheight = %d,"
-           "visstartx= %d, visstarty= %d\n",
-            visual_width, visual_height, visual.min_x,
-            visual.min_y);
+   if (palette_dirty && current_palette)
+      sysdep_palette_mark_dirty(current_palette);
 }
 
+void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
+{
+   normal_visual.min_x = min_x;
+   normal_visual.max_x = max_x;
+   normal_visual.min_y = min_y;
+   normal_visual.max_y = max_y;
+
+   /* round to 8, since the new dirty code works with 8x8 blocks,
+      and we need to round to sizeof(long) for the long copies anyway */
+   if (normal_visual.min_x & 7)
+   {
+      if((normal_visual.min_x - (normal_visual.min_x & ~7)) < 4)
+         normal_visual.min_x &= ~7;
+       else
+         normal_visual.min_x = (normal_visual.min_x + 7) & ~7;
+   }
+   if ((normal_visual.max_x+1) & 7)
+   {
+      if(((normal_visual.max_x+1) - ((normal_visual.max_x+1) & ~7)) > 4)
+         normal_visual.max_x = ((normal_visual.max_x+1 + 7) & ~7) - 1;
+       else
+         normal_visual.max_x = ((normal_visual.max_x+1) & ~7) - 1;
+   }
+   
+   /* rounding of the y-coordinates is only nescesarry when we are doing dirty */
+   if (use_dirty)
+   {
+      if (normal_visual.min_y & 7)
+      {
+         if((normal_visual.min_y - (normal_visual.min_y & ~7)) < 4)
+            normal_visual.min_y &= ~7;
+          else
+            normal_visual.min_y = (normal_visual.min_y + 7) & ~7;
+      }
+      if ((normal_visual.max_y+1) & 7)
+      {
+         if(((normal_visual.max_y+1) - ((normal_visual.max_y+1) & ~7)) > 4)
+            normal_visual.max_y = ((normal_visual.max_y+1 + 7) & ~7) - 1;
+          else
+            normal_visual.max_y = ((normal_visual.max_y+1) & ~7) - 1;
+      }
+   }
+   
+   if(!debugger_has_focus)
+      osd_change_display_settings(&normal_visual, normal_palette,
+         normal_widthscale, normal_heightscale);
+   
+   set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
+}
 
 int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    unsigned short *pens, int modifiable, const unsigned char *debugger_palette,
@@ -446,6 +488,7 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    int writable_colors = 0;
    int max_colors = (bitmap_depth == 8)? 256:65536;
    
+   /* calculate the size of the normal palette */
    if (totalcolors > max_colors)
    {
       fprintf(stderr_file,
@@ -468,62 +511,133 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          writable_colors = max_colors;
    }
    
-   /* alloc the sysdep_palette */
-   if(!(sysdep_palette = sysdep_palette_create(bitmap_depth,
+   /* create the normal palette */
+   if(!(normal_palette = sysdep_palette_create(bitmap_depth,
       writable_colors)))
       return 1;
+   
+   video_colors_used = writable_colors;
+   
+   /* create the debug palette */
+   if (debugger_pens)
+   {
+      i = (bitmap_depth == 8)? DEBUGGER_TOTAL_COLORS:0;
       
-   sysdep_palette_set_gamma(sysdep_palette, gamma_correction);
-   sysdep_palette_set_brightness(sysdep_palette, brightness * brightness_paused_adjust);
+      if(!(debug_palette = sysdep_palette_create(bitmap_depth, i)))
+      {
+         osd_free_colors();
+         return 1;
+      }
+      
+      if (i > video_colors_used)
+         video_colors_used = i;
+   }
+   
+   /* now alloc the total number of colors used by both palettes */
+   if(sysdep_display_alloc_palette(video_colors_used))
+   {
+      osd_free_colors();
+      return 1;
+   }
+      
+   sysdep_palette_set_gamma(normal_palette, gamma_correction);
+   sysdep_palette_set_brightness(normal_palette, brightness * brightness_paused_adjust);
+   if(debug_palette)
+   {
+      sysdep_palette_set_gamma(debug_palette, gamma_correction);
+      sysdep_palette_set_brightness(debug_palette, brightness * brightness_paused_adjust);
+   }
    
    /* init the palette */
    if (writable_colors)
    {
       int color_start = (totalcolors < max_colors)? 1:0;
-
+      
+      /* normal palette */
       for (i=0; i<totalcolors; i++)
       {
          pens[i] = i+color_start;
-         sysdep_palette_set_pen(sysdep_palette, i+color_start, palette[i*3],
+         sysdep_palette_set_pen(normal_palette, i+color_start, palette[i*3],
             palette[i*3+1], palette[i*3+2]);
       }
       if(color_start)
-         sysdep_palette_set_pen(sysdep_palette, 0, 0, 0, 0);
+         sysdep_palette_set_pen(normal_palette, 0, 0, 0, 0);
       if( writable_colors > (totalcolors+color_start) )
-         sysdep_palette_set_pen(sysdep_palette, writable_colors - 1, 0xFF, 0xFF,
+         sysdep_palette_set_pen(normal_palette, writable_colors - 1, 0xFF, 0xFF,
             0xFF);
       Machine->uifont->colortable[0] = 0;
       Machine->uifont->colortable[1] = writable_colors - 1;
       Machine->uifont->colortable[2] = writable_colors - 1;
       Machine->uifont->colortable[3] = 0;
+      
+      /* debug palette */
+      if (debugger_pens)
+      {
+         for (i=0; i<DEBUGGER_TOTAL_COLORS; i++)
+         {
+            debugger_pens[i] = i;
+            sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
+               debugger_palette[i*3+1], debugger_palette[i*3+2]);
+         }
+      }
    }
    else
    {
+      /* normal palette */
       for (i=0; i<totalcolors; i++)
       {
-         pens[i] = sysdep_palette_make_pen(sysdep_palette, palette[i*3],
+         pens[i] = sysdep_palette_make_pen(normal_palette, palette[i*3],
             palette[i*3+1], palette[i*3+2]);
       }
-      Machine->uifont->colortable[0] = sysdep_palette_make_pen(sysdep_palette,
+      Machine->uifont->colortable[0] = sysdep_palette_make_pen(normal_palette,
          0, 0, 0);
-      Machine->uifont->colortable[1] = sysdep_palette_make_pen(sysdep_palette,
+      Machine->uifont->colortable[1] = sysdep_palette_make_pen(normal_palette,
          0xFF, 0xFF, 0xFF);
-      Machine->uifont->colortable[2] = sysdep_palette_make_pen(sysdep_palette,
+      Machine->uifont->colortable[2] = sysdep_palette_make_pen(normal_palette,
          0xFF, 0xFF, 0xFF);
-      Machine->uifont->colortable[3] = sysdep_palette_make_pen(sysdep_palette,
+      Machine->uifont->colortable[3] = sysdep_palette_make_pen(normal_palette,
          0, 0, 0);
+      
+      /* debug palette */
+      if (debugger_pens)
+      {
+         for (i=0; i<DEBUGGER_TOTAL_COLORS; i++)
+         {
+            debugger_pens[i] = sysdep_palette_make_pen(debug_palette,
+               debugger_palette[i*3], debugger_palette[i*3+1],
+               debugger_palette[i*3+2]);
+         }
+      }
    }
+   
+   /* set the current_palette to the normal_palette */
+   current_palette = normal_palette;
+   
    return 0;
+}
+
+static void osd_free_colors(void)
+{
+   if(normal_palette)
+   {
+      sysdep_palette_destroy(normal_palette);
+      normal_palette = NULL;
+   }
+   if(debug_palette)
+   {
+      sysdep_palette_destroy(debug_palette);
+      debug_palette = NULL;
+   }
 }
 
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue)
 {
-    sysdep_palette_get_pen(sysdep_palette, pen, red, green, blue);
+    sysdep_palette_get_pen(normal_palette, pen, red, green, blue);
 }
 
 void osd_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char blue) 
 {
-   sysdep_palette_set_pen(sysdep_palette, pen, red, green, blue);
+   sysdep_palette_set_pen(normal_palette, pen, red, green, blue);
 }
 
 static int skip_next_frame = 0;
@@ -540,39 +654,45 @@ int osd_skip_this_frame(void)
    return skip_next_frame;
 }
 
-/* HJB: unfinished implementation - needs to swap/save the palette */
-static int show_debugger;
-static int debugger_focus_changed;
-void osd_debugger_focus(int debugger_has_focus)
+void osd_debugger_focus(int new_debugger_focus)
 {
-   if (show_debugger != debugger_has_focus)
+   if( (!debugger_has_focus &&  new_debugger_focus) || 
+       ( debugger_has_focus && !new_debugger_focus))
    {
-      show_debugger = debugger_has_focus;
-      debugger_focus_changed = 1;
+      if(new_debugger_focus)
+         osd_change_display_settings(&debug_visual, debug_palette,
+            1, 1);
+      else
+         osd_change_display_settings(&normal_visual, normal_palette,
+            normal_widthscale, normal_heightscale);
+      
+      debugger_has_focus = new_debugger_focus;
    }
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *debug_bitmap, int leds_status)
+void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap, struct osd_bitmap *debug_bitmap, int leds_status)
 {
    int i;
    static int showfps=0, showfpstemp=0, old_leds_status = 0; 
    int skip_this_frame;
    int need_to_clear_bitmap=0;
+   struct osd_bitmap *current_bitmap = normal_bitmap;
    
    /* save the active bitmap for use in osd_clearbitmap, I know this
       sucks blame the core ! */
-   scrbitmap = bitmap;
+   scrbitmap = normal_bitmap;
 
    if (leds_status != old_leds_status)
    {
-      int leds_changes = old_leds_status ^ leds_status;
-      extern void osd_led_w(int led, int on);
-      old_leds_status = leds_status;
-      if (leds_changes & 1) osd_led_w(0, (leds_status & 1) ? 1 : 0);
-      if (leds_changes & 2) osd_led_w(1, (leds_status & 2) ? 1 : 0);
-      if (leds_changes & 4) osd_led_w(2, (leds_status & 4) ? 1 : 0);
+	   int leds_changes = old_leds_status ^ leds_status;
+	   extern void osd_led_w(int led, int on);
+	   old_leds_status = leds_status;
+	   if (leds_changes & 1) osd_led_w(0, (leds_status & 1) ? 1 : 0);
+	   if (leds_changes & 2) osd_led_w(1, (leds_status & 2) ? 1 : 0);
+	   if (leds_changes & 4) osd_led_w(2, (leds_status & 4) ? 1 : 0);
    }
+   
    
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
    {
@@ -593,22 +713,6 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *de
 
       if (showfps == 0) showfpstemp = 2 * Machine->drv->frames_per_second;
    }
-
-   /* HJB: cut + paste from the msdos/video.c code */
-   if (debug_bitmap && keyboard_pressed_memory(KEYCODE_F5))
-   {
-       osd_debugger_focus(show_debugger ^ 1);
-   }
-   if (debugger_focus_changed)
-   {
-#if 0 /* there is no internal_set_visible_area yet and I dunno if that would be appropriate anyway */
-       if (show_debugger)
-           internal_set_visible_area(0,debug_bitmap->width-1,0,debug_bitmap->height);
-       else
-           internal_set_visible_area(vis_min_x,vis_max_x,vis_min_y,vis_max_y);
-#endif
-   }
-   /* HJB: end cut + paste */
 
    if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
    {
@@ -665,6 +769,60 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *de
          frameskipper = 1;
    }
    
+   if (debug_bitmap)
+   {
+      if (keyboard_pressed_memory(KEYCODE_F5))
+         osd_debugger_focus(!debugger_has_focus);
+      if (debugger_has_focus)
+         current_bitmap = debug_bitmap;
+   }
+   /* this should not happen I guess, but better safe then sorry */
+   else if (debugger_has_focus)
+      osd_debugger_focus(0);
+
+   if (keyboard_pressed (KEYCODE_LSHIFT))
+   {
+      int widthscale_mod  = 0;
+      int heightscale_mod = 0;
+      
+      if (keyboard_pressed_memory (KEYCODE_INSERT))
+         widthscale_mod = 1;
+      if (keyboard_pressed_memory (KEYCODE_DEL))
+         widthscale_mod = -1;
+      if (keyboard_pressed_memory (KEYCODE_HOME))
+         heightscale_mod = 1;
+      if (keyboard_pressed_memory (KEYCODE_END))
+         heightscale_mod = -1;
+      if (keyboard_pressed_memory (KEYCODE_PGUP))
+      {
+         widthscale_mod  = 1;
+         heightscale_mod = 1;
+      }
+      if (keyboard_pressed_memory (KEYCODE_PGDN))
+      {
+         widthscale_mod  = -1;
+         heightscale_mod = -1;
+      }
+      if (widthscale_mod || heightscale_mod)
+      {
+         normal_widthscale  += widthscale_mod;
+         normal_heightscale += heightscale_mod;
+         
+         if (normal_widthscale > 8)
+            normal_widthscale = 8;
+         else if (normal_widthscale < 1)
+            normal_widthscale = 1;
+         if (normal_heightscale > 8)
+            normal_heightscale = 8;
+         else if (normal_heightscale < 1)
+            normal_heightscale = 1;
+         
+         if (!debugger_has_focus)
+            osd_change_display_settings(&normal_visual, normal_palette,
+               normal_widthscale, normal_heightscale);
+      }
+   }
+   
    if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
    {
       showfpstemp--;
@@ -674,38 +832,44 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap, struct osd_bitmap *de
    skip_this_frame = skip_next_frame;
    skip_next_frame =
       (*skip_next_frame_functions[frameskipper])(showfps || showfpstemp,
-        bitmap);
-   
-   if (skip_this_frame == 0)
-   {
-      profiler_mark(PROFILER_BLIT);
-      sysdep_palette_update(sysdep_palette);
-      sysdep_update_display(bitmap);
-      profiler_mark(PROFILER_END);
-   }
+        normal_bitmap);
    
    if (sound_stream && sound_enabled)
       sound_stream_update(sound_stream);
 
-   if (need_to_clear_bitmap) osd_clearbitmap(bitmap);
+   if (skip_this_frame == 0)
+   {
+      profiler_mark(PROFILER_BLIT);
+      sysdep_palette_update(current_palette);
+      sysdep_update_display(current_bitmap);
+      profiler_mark(PROFILER_END);
+   }
+   
+   if (need_to_clear_bitmap) osd_clearbitmap(normal_bitmap);
+
+   osd_poll_joysticks();
 }
 
 void osd_set_gamma(float gamma)
 {
-   sysdep_palette_set_gamma(sysdep_palette, gamma);
+   sysdep_palette_set_gamma(normal_palette, gamma);
+   if(debug_palette)
+      sysdep_palette_set_gamma(debug_palette, gamma);
 }
 
 float osd_get_gamma(void)
 {
-   return sysdep_palette_get_gamma(sysdep_palette);
+   return sysdep_palette_get_gamma(normal_palette);
 }
 
 /* brightess = percentage 0-100% */
 void osd_set_brightness(int _brightness)
 {
    brightness = _brightness;
-   sysdep_palette_set_brightness(sysdep_palette, brightness *
+   sysdep_palette_set_brightness(normal_palette, brightness *
       brightness_paused_adjust);
+   if (debug_palette)
+      sysdep_palette_set_brightness(debug_palette, brightness);
 }
 
 int osd_get_brightness(void)
@@ -725,6 +889,5 @@ void osd_pause(int paused)
    else
       brightness_paused_adjust = 1.0;
    
-   sysdep_palette_set_brightness(sysdep_palette, brightness *
-      brightness_paused_adjust);
+   osd_set_brightness(brightness);
 }

@@ -390,8 +390,6 @@ void InitVScreen(void)
   if(cabspecified||!LoadCabinet(drivers[game_index]->name)) {
 	if(!LoadCabinet(cabname)) {
 	  printf("Unable to load cabinet %s\n",cabname);
-	  cabname="glmame";
-	  LoadCabinet(cabname);
 	}
   }
 

@@ -14,7 +14,6 @@ int osd_init(void)
 	if (osd_net_init()      !=OSD_OK) return OSD_NOT_OK;
 #endif	
 	if (osd_input_initpre() !=OSD_OK) return OSD_NOT_OK;
-	if (osd_debug_init()    !=OSD_OK) return OSD_NOT_OK;
 	
 	return OSD_OK;
 }
@@ -28,7 +27,6 @@ void osd_exit (void)
 	osd_net_close();
 #endif
 	osd_input_close();
-	osd_debug_close();
 }
 
 

@@ -44,7 +44,7 @@
 /*
  * Definitions.
  */
-
+ 
 #ifndef TRUE
 #define	TRUE			(1)
 #endif
@@ -83,11 +83,12 @@ EXTERN unsigned char **old_dirty_blocks;
 /* global variables and miscellaneous flags */
 
 EXTERN int		sound_enabled;
-EXTERN int	 	widthscale;     /* X scale */
-EXTERN int	 	heightscale;    /* Y SCALE */
+EXTERN int	 	widthscale;        /* X scale */
+EXTERN int	 	heightscale;       /* Y SCALE */
+EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN int		video_fps;
 EXTERN char		*home_dir;
-EXTERN char		title[50]; 
+EXTERN char		title[50];
 EXTERN int		use_mouse;
 EXTERN int		use_dirty;
 EXTERN int		throttle;
@@ -101,7 +102,8 @@ EXTERN float		display_aspect_ratio;
 EXTERN int 		sleep_idle;
 EXTERN int 		max_autoframeskip;
 EXTERN struct sysdep_palette_info display_palette_info;
-EXTERN struct sysdep_palette_struct *sysdep_palette;
+EXTERN struct sysdep_palette_struct *current_palette;
+EXTERN struct sysdep_palette_struct *normal_palette;
 EXTERN struct sound_stream_struct *sound_stream;
 #ifdef MESS
 EXTERN char		*crcdir;
@@ -133,6 +135,7 @@ void sysdep_set_text_mode(void);
 int  osd_input_initpre(void);
 int  osd_input_initpost(void);
 void osd_input_close(void);
+void osd_poll_joysticks(void);
 void sysdep_update_keyboard (void);
 void sysdep_mouse_poll(void);
 

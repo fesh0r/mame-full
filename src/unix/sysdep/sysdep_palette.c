@@ -76,11 +76,17 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
       return NULL;
    }
    
+/* If the display gets recreated this must be done again, but the
+   palette can be kept, so now the creator of the display is responsible
+   for calling this. Also because there can be 2 palette's for one
+   display (the normal and debugger one in xmame for example) */
+#if 0
    /* if the display is 8 bpp allocate the nescesarry pens for displays
       with a shared palette like X */
    if (display_palette_info.depth == 8)
       if (sysdep_display_alloc_palette(writable_colors))
          return NULL;
+#endif
    
    /* allocate the palette struct */
    if (!(palette = calloc(1, sizeof(struct sysdep_palette_struct))))
@@ -107,13 +113,10 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
       }
    }
    
-   /* can we do our 8 -> 16 bpp speedup hack? */
-   if((depth == 8) &&
-      (display_palette_info.depth == 16) &&
-      (widthscale == 1) &&
-      (heightscale <= 2))
+   /* can we do our 8 -> 16 bpp speedup hack?
+      do not check for the scaleing factors sicne those might change */
+   if((depth == 8) && (display_palette_info.depth == 16))
       lookup_size = 65536;
-   
    /* do we need a lookup table? */
    else if ( (display_palette_info.depth != depth) ||
         ( (depth == 16) && writable_colors) )
@@ -318,6 +321,11 @@ void sysdep_palette_update(struct sysdep_palette_struct *palette)
    }
 }
 
+/* This is broken, and for now is no longer used, instead
+   sysdep_palette_marked dirty should be used,
+   and display_alloc_palette palette must be called every time a dispay is
+   created. So also on recreation! */
+#if 0 
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
 {
    int i;
@@ -366,6 +374,7 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
    *palette = new_palette;
    return 0;
 }
+#endif
 
 void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette)
 {

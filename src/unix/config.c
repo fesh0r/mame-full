@@ -20,9 +20,11 @@ extern char *mameinfo_filename;
 
 /* some local vars */
 static int showconfig = 0;
+static int showmanusage = 0;
 static int showversion = 0;
 static int showusage  = 0;
 static int use_fuzzycmp = 1;
+static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
 #ifndef MESS
@@ -37,6 +39,8 @@ const char *pcrcfile = pcrcfilename;
 static struct rc_struct *rc;
 
 static int config_handle_arg(char *arg);
+static int config_handle_debug_size(struct rc_option *option, const char *arg,
+   int priority);
 void show_usage(void);
 
 /* struct definitions */
@@ -96,9 +100,14 @@ static struct rc_option opts[] = {
    { "cheat",		"c",			rc_bool,	&options.cheat,
      "0",		0,			0,		NULL,
      "Enable/disable cheat subsystem" },
+#ifdef MAME_DEBUG     
    { "debug",		"d",			rc_bool,	&options.mame_debug,
      NULL,		0,			0,		NULL,
-     "Enable debugger if compiled in" },
+     "Enable/disable debugger" },
+   { "debug-size",	"ds",			rc_use_function, NULL,
+     "640x480",		0,			0,		config_handle_debug_size,
+     "Specify the resolution/ windowsize to use for the debugger(window) in the form of XRESxYRES (minimum size = 640x480)" },
+#endif
    { NULL,		NULL,			rc_link,	frontend_list_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -108,9 +117,15 @@ static struct rc_option opts[] = {
    { "General Options",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
+   { "loadconfig",	"lc",			rc_bool,	&loadconfig,
+     "1",		0,			0,		NULL,
+     "Load (don't load) configfiles" },
    { "showconfig",	"sc",			rc_set_int,	&showconfig,
      NULL,		1,			0,		NULL,
      "Display Running parameters in rc style" },
+   { "manhelp",		"mh",			rc_set_int,	&showmanusage,
+     NULL,		1,			0,		NULL,
+     "Print commandline help in man format, usefull for manpage creation" },
    { "version",		"V",			rc_set_int,	&showversion,
      NULL,		1,			0,		NULL,
      "Display version" },
@@ -197,6 +212,26 @@ static int config_handle_arg(char *arg)
    return 0;
 }
 
+static int config_handle_debug_size(struct rc_option *option, const char *arg,
+   int priority)
+{
+  int width, height;
+  
+  if (sscanf(arg, "%dx%d", &width, &height) == 2)
+  {
+     if((width >= 640) && (height >= 480))
+     {
+        options.debug_width  = width;
+        options.debug_height = height;
+        return 0;
+     }
+  }
+  fprintf(stderr,
+      "error: invalid debugger size or too small (minimum size = 640x480): \"%s\".\n",
+      arg);
+  return -1;
+}
+
 
 /*
  * get configuration from configfile and env.
@@ -276,19 +311,22 @@ int config_init (int argc, char *argv[])
       
    /* parse the various configfiles, starting with the one with the
       lowest priority */
-   snprintf(buffer, BUF_SIZE, "%s/%src", XMAMEROOT, NAME);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
-   snprintf(buffer, BUF_SIZE, "%s/.%s/%src", home_dir, NAME, NAME);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
-   snprintf(buffer, BUF_SIZE, "%s/%s-%src", XMAMEROOT, NAME, DISPLAY_METHOD);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
-   snprintf(buffer, BUF_SIZE, "%s/.%s/%s-%src", home_dir, NAME, NAME,
-      DISPLAY_METHOD);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
+   if(loadconfig)
+   {
+      snprintf(buffer, BUF_SIZE, "%s/%src", XMAMEROOT, NAME);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+      snprintf(buffer, BUF_SIZE, "%s/.%s/%src", home_dir, NAME, NAME);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+      snprintf(buffer, BUF_SIZE, "%s/%s-%src", XMAMEROOT, NAME, DISPLAY_METHOD);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+      snprintf(buffer, BUF_SIZE, "%s/.%s/%s-%src", home_dir, NAME, NAME,
+         DISPLAY_METHOD);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+   }
    
    /* setup stderr_file and stdout_file */
    if (!stderr_file) stderr_file = stderr;
@@ -297,6 +335,12 @@ int config_init (int argc, char *argv[])
    if (showconfig)
    {
       rc_write(rc, stdout_file, NAME" running parameters");
+      return OSD_OK;
+   }
+   
+   if (showmanusage)
+   {
+      rc_print_man_options(rc, stdout_file);
       return OSD_OK;
    }
    
@@ -438,14 +482,17 @@ int config_init (int argc, char *argv[])
    }
    
    /* now that we've got the gamename parse the game specific configfile */
-   snprintf(buffer, BUF_SIZE, "%s/rc/%src", XMAMEROOT,
-      drivers[game_index]->name);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
-   snprintf(buffer, BUF_SIZE, "%s/.%s/rc/%src", home_dir, NAME,
-      drivers[game_index]->name);
-   if(rc_load(rc, buffer, 1, 1))
-      return OSD_NOT_OK;
+   if (loadconfig)
+   {
+      snprintf(buffer, BUF_SIZE, "%s/rc/%src", XMAMEROOT,
+         drivers[game_index]->name);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+      snprintf(buffer, BUF_SIZE, "%s/.%s/rc/%src", home_dir, NAME,
+         drivers[game_index]->name);
+      if(rc_load(rc, buffer, 1, 1))
+         return OSD_NOT_OK;
+   }
    
 #ifdef MESS
    /* Build the CRC database filename */

@@ -435,6 +435,43 @@ void rc_print_help(struct rc_struct *rc, FILE *f)
    rc_real_print_help(rc->option, f);
 }
 
+/* needed to walk the tree */
+static void rc_real_print_man_options(struct rc_option *option, FILE *f)
+{
+   int i;
+   static const char *type_name[] = {"", "", " Ar string", " Ar int",
+      " Ar float", "", "", " Ar filename", " Ar arg", "", "" };
+   
+   for(i=0; option[i].type; i++)
+   {
+      switch (option[i].type)
+      {
+         case rc_ignore:
+            break;
+         case rc_seperator:
+            fprintf(f, ".It \\fB*** %s ***\\fR\n", option[i].name);
+            break;
+         case rc_link:
+            rc_real_print_man_options(option[i].dest, f);
+            break;
+         default:
+            fprintf(f, ".It Fl %s%s%s%s%s%s\n%s\n",
+               (option[i].type == rc_bool)? "[no]":"",
+               option[i].name,
+               (option[i].shortname)? " , ":"",
+               (option[i].shortname && (option[i].type == rc_bool))? "[no]":"",
+               (option[i].shortname)? option[i].shortname:"",
+               type_name[option[i].type],
+               (option[i].help)? option[i].help:"no help available");
+      }
+   }
+}
+
+void rc_print_man_options(struct rc_struct *rc, FILE *f)
+{
+   rc_real_print_man_options(rc->option, f);
+}
+
 int rc_verify_power_of_2(struct rc_option *option, const char *arg,
    int priority)
 {

@@ -224,7 +224,7 @@ int sysdep_create_display(int depth)
 void sdl_update_8bpp_16bpp(struct osd_bitmap *bitmap)
 {
 #define BLIT_16BPP_HACK
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
 #define SRC_PIXEL  unsigned char
 #define DEST_PIXEL unsigned short
 #define DEST Offscreen_surface->pixels
@@ -251,7 +251,7 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
    drect.w = Vid_width;
    drect.h = Vid_height;
 
-   if (sysdep_palette->lookup_dirty)
+   if (current_palette->lookup_dirty)
       use_dirty = 0;
    
    (*update_function)(bitmap);

@@ -73,7 +73,7 @@
 #define MOUSE_GET_BUTTON(code) \
  ((code - JOY_LIST_LEN) % MOUSE_LIST_TOTAL_ENTRIES)
 
-enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW };
+enum { JOY_NONE, JOY_I386, JOY_PAD, JOY_X11, JOY_I386NEW, JOY_USB };
 
 /*** variables ***/
 
@@ -112,12 +112,14 @@ EXTERN int joytype;
 extern struct rc_option joy_i386_opts[];
 extern struct rc_option joy_pad_opts[];
 extern struct rc_option joy_x11_opts[];
+extern struct rc_option joy_usb_opts[];
 
 /*** prototypes ***/
 void joy_evaluate_moves(void);
 void joy_i386_init(void);
 void joy_pad_init(void);
 void joy_x11_init(void);
+void joy_usb_init(void);
 
 #undef EXTERN
 #endif

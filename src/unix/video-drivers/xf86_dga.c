@@ -119,7 +119,7 @@ static int xf86_dga_vidmode_check_exts(void)
 	return OSD_OK;
 }
 
-static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(void)
+static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(int depth)
 {
 	XF86VidModeModeInfo **modes,*bestmode = NULL;
 	int score, best_score = 0;
@@ -136,6 +136,8 @@ static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(void)
 
 	for(i=0;i<modecount;i++)
 	{
+		if (mode_disabled(modes[i]->hdisplay, modes[i]->vdisplay, depth))
+			continue;
 		fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
 		   modes[i]->hdisplay, modes[i]->vdisplay);
 		/* ignore modes with a width which is not 64 bit aligned */
@@ -222,6 +224,10 @@ int xf86_dga_alloc_palette(int writable_colors)
 {
 	XColor color;
 	int i;
+
+	/* this is only relevant for 8bpp displays */
+	if (depth != 8)
+	   return 0;
 
 	xf86ctx.cmap = XCreateColormap(display,window,xvisual,AllocAll);
 
@@ -368,7 +374,7 @@ int xf86_dga_create_display(int bitmap_depth)
 	if(xf86_dga_vidmode_check_exts())
 		return OSD_NOT_OK;
 
-	bestmode = xf86_dga_vidmode_find_best_vidmode();
+	bestmode = xf86_dga_vidmode_find_best_vidmode(bitmap_depth);
 	if(!bestmode)
 	{
 		fprintf(stderr_file,"no suitable mode found\n");
@@ -477,7 +483,7 @@ static void xf86_dga_update_display_8_to_8bpp(struct osd_bitmap *bitmap)
 #undef DEST_PIXEL
 }
 
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
 
 static void xf86_dga_update_display_8_to_16bpp(struct osd_bitmap *bitmap)
 {
@@ -510,7 +516,7 @@ static void xf86_dga_update_display_8_to_32bpp(struct osd_bitmap *bitmap)
 static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
-   if (sysdep_palette->lookup)
+   if (current_palette->lookup)
    {
 #include "blit.h"
    }
@@ -518,7 +524,7 @@ static void xf86_dga_update_display_16_to_16bpp(struct osd_bitmap *bitmap)
    {
 #undef  INDIRECT
 #include "blit.h"
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
    }
 #undef DEST_PIXEL
 }
@@ -548,7 +554,7 @@ void xf86_dga_update_display(struct osd_bitmap *bitmap)
 		xf86_dga_fix_viewport = 0;
 	}
 	
-	if (sysdep_palette->lookup_dirty)
+	if (current_palette->lookup_dirty)
 		use_dirty = 0;
 	
 	(*xf86ctx.xf86_dga_update_display_func)(bitmap);

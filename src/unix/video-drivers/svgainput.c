@@ -13,6 +13,7 @@
 #include "keyboard.h"
 
 static int console_fd       = -1;
+static int mouse_fd         = -1;
 static int leds             =  0;
 static int release_signal   =  0;
 static int acquire_signal   =  0;
@@ -203,7 +204,30 @@ void keyboard_handler(int scancode, int press)
    keyboard_register_event(&event);
 }
 
-int svga_input_init(void (*release_func)(void), void (*acquire_func)(void))
+int svga_input_init(void)
+{
+   /* open the mouse here and not in open/close, this is not done
+      because this requires root rights, but because open/close can
+      be called multiple times, and svgalib's mouse_open/close can't
+      handle that */
+   mouse_fd = mouse_init_return_fd("/dev/mouse", vga_getmousetype(),
+      MOUSE_DEFAULTSAMPLERATE);
+   if(mouse_fd < 0)
+   {
+      perror("mouse_init");
+      fprintf(stderr_file,"SVGALib: failed to open mouse device\n");
+   }
+   
+   return 0;
+}
+
+void svga_input_exit(void)
+{
+   if (mouse_fd >= 0)
+      mouse_close();
+}
+
+int svga_input_open(void (*release_func)(void), void (*acquire_func)(void))
 {
    release_function = release_func;
    acquire_function = acquire_func;
@@ -239,30 +263,21 @@ int svga_input_init(void (*release_func)(void), void (*acquire_func)(void))
    keyboard_seteventhandler(keyboard_handler);
    ioctl(console_fd, KDSETLED, leds);
 
-   /* 
-      not sure if this is the best site but mouse init routine must be 
-      called after video initialization...
-   */   
-   if(use_mouse)
+   /* init the mouse */
+   if((mouse_fd >= 0) && use_mouse)
    {
-	if (mouse_init("/dev/mouse", vga_getmousetype(), MOUSE_DEFAULTSAMPLERATE))
-	{
-		perror("mouse_init");
-		fprintf(stderr_file,"SVGALib: failed to open mouse device\n");
-		use_mouse=0;
-	}
-	else
-	{
-		/* fix ranges and initial position of mouse */
-		mouse_setrange_6d(-500,500, -500,500, -500,500, -500,500,
-                   -500,500, -500,500, MOUSE_6DIM);
-		mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
-	}
+	/* fix ranges and initial position of mouse */
+	mouse_setrange_6d(-500,500, -500,500, -500,500, -500,500,
+                  -500,500, -500,500, MOUSE_6DIM);
+	mouse_setposition_6d(0, 0, 0, 0, 0, 0, MOUSE_6DIM);
    }
+   else
+      use_mouse = 0;
+   
    return 0;
 }
 
-void svga_input_exit(void)
+void svga_input_close(void)
 {
    /* restore the old handlers */
    sigaction(release_signal, &oldrelease_sa, NULL);
@@ -273,14 +288,14 @@ void svga_input_exit(void)
       ioctl(console_fd, KDSETLED, 8);
       keyboard_close();
    }
-
-   if (use_mouse)
-      mouse_close();
 }
 
 void sysdep_mouse_poll (void)
 {
 	int i, mouse_buttons;
+	
+	if((mouse_fd < 0) || !use_mouse)
+	   return;
 	
 	mouse_update();
 	

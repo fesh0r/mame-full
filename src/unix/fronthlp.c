@@ -263,6 +263,8 @@ char *get_description(int driver)
    /* Move leading "The" to the end */
    if (strncmp(copy, "The ", 4) == 0)
       snprintf(description, BUF_SIZE, "%s, The", copy+4);
+   else if (strncmp(copy, "Le ", 3) == 0)
+      snprintf(description, BUF_SIZE, "%s, Le", copy+3);
    else
       snprintf(description, BUF_SIZE, copy);
    
@@ -991,28 +993,34 @@ static int frontend_list_gamelistheader(void)
       "The list is generated automatically and is not 100%% accurate, particularly in\n"
       "the \"Screen Flip\" column. Please let us know of any errors you find so we can\n"
       "correct them.\n"
-      "\n"
+      "\n");
+   fprintf(stdout_file,
       "The meanings of the columns are as follows:\n"
       "Working - \"No\" means that the emulation has shortcomings that cause the game\n"
       "  not to work correctly. This can be anywhere from just showing a black screen\n"
-      "  to being playable with major problems.\n"
+      "  to being playable with major problems.\n");
+   fprintf(stdout_file,
       "Correct Colors - \"Yes\" means that colors should be identical to the original,\n"
       "  \"Close\" that they are very similar but wrong in places, \"No\" that they are\n"
-      "  completely wrong. In some cases, we were not able to find the color PROMs of\n"
+      "  completely wrong. In some cases, we were not able to find the color PROMs of\n");
+   fprintf(stdout_file,
       "  the game. Those PROMs will be reported as \"NO GOOD DUMP KNOWN\" on startup,\n"
       "  and the game will have wrong colors. The game is still reported as \"Yes\" in\n"
       "  this column, because the code to handle the color PROMs is in the driver and\n"
-      "  if you provide them colors will be correct.\n"
+      "  if you provide them colors will be correct.\n");
+   fprintf(stdout_file,
       "Sound - \"Partial\" means that sound support is either incomplete or not entirely\n"
       "  accurate. Note that, due to analog circuitry which is difficult to emulate,\n"
       "  sound may be significantly different from the real board. A common case is\n"
       "  the presence of low pass filters that make the real board sound less harsh\n"
-      "  than the emulation.\n"
+      "  than the emulation.\n");
+   fprintf(stdout_file,
       "Screen Flip - A large number of games have a dip switch setting for \"Cocktail\"\n"
       "  cabinet, meaning that the players sit in front of each other, and the screen\n"
       "  is flipped when player 2 is playing. Some games also have a \"Flip Screen\" dip\n"
       "  switch. Those need special support in the driver, which is missing in many\n"
-      "  cases.\n"
+      "  cases.\n");
+   fprintf(stdout_file,
       "Internal Name - This is the unique name that should be specified on the command\n"
       "  line to run the game. ROMs must be placed in the ROM path, either in a .zip\n"
       "  file or in a subdirectory of the same name. The former is suggested, because\n"

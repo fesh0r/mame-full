@@ -195,28 +195,6 @@ int osd_is_key_pressed(int keycode)
    return key[keycode];
 }
 
-int osd_wait_keypress(void)
-{
-   struct keyboard_event event;
-   
-   /* blames to the dos-people who want to check key states before
-      the display (and under X thus the keyboard) is initialised */
-   if (!kbd_fifo)
-   {
-      getchar();
-      return KEY_ENTER;
-   }
-   
-   keyboard_clear();
-   
-   for (;;)
-   {
-      sysdep_update_keyboard();
-      if(!kbd_fifo_get(kbd_fifo, &event) && event.press)
-         return event.scancode;
-   }
-}
-
 int osd_readkey_unicode(int flush)
 {
    struct keyboard_event event;

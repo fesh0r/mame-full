@@ -54,11 +54,13 @@
 /* #include "config.h" */
 #define HAVE_STDARG_H
 
-#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
-
+/* moved above the #ifdef to avoid warning about empty c-files */
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
+
+#if !defined(HAVE_SNPRINTF) || !defined(HAVE_VSNPRINTF)
+
 
 /* Define this as a fall through, HAVE_STDARG_H is probably already set */
 #define HAVE_VARARGS_H

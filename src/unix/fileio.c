@@ -70,14 +70,14 @@ struct rc_option fileio_opts[] = {
      ".",		0,			0,		NULL,
      "Set dir to store screenshots in" },
 #ifdef MESS
-   { "cheatdir",       NULL,                   rc_string,      &cheatdir,
-     XMAMEROOT"/cheat",        0,              0,              NULL,
+   { "cheatdir",	NULL,			rc_string,	&cheatdir,
+     XMAMEROOT"/cheat",	0,			0,		NULL,
      "Set dir to look for cheat files in" },
    { "crcdir",		NULL,			rc_string,	&crcdir,
      XMAMEROOT"/crc",	0,			0,		NULL,
      "Set dir to look for crc files in" },
    { "cheatfile",	"cf",			rc_string,	&cheatfile,
-     XMAMEROOT"/cheat.cdb", 0,			0,		NULL,
+     "cheat.cdb",	 0,			0,		NULL,
      "Set the file to use as cheat database" },
 #else
    { "cheatfile",	"cf",			rc_string,	&cheatfile,
@@ -519,11 +519,11 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    break;
 		case OSD_FILETYPE_HIGHSCORE_DB:
 		case OSD_FILETYPE_HISTORY:
-                    /* only for reading */
-                    if (write) break;
- 
-                    f->file = fopen (filename, "r");
-                    break;
+		    /* only for reading */
+		    if (write) break;
+
+		    f->file = fopen (filename, "r");
+		    break;
 		case OSD_FILETYPE_CHEAT:
 		    /* only for reading */
 		    if (write) break;

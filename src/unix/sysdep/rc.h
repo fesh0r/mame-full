@@ -78,6 +78,9 @@ int rc_get_non_option_args(struct rc_struct *rc, int *argc, char **argv[]);
 /* print help */
 void rc_print_help(struct rc_struct *rc, FILE *f);
 
+/* print commandline options in manpage style */
+void rc_print_man_options(struct rc_struct *rc, FILE *f);
+
 /* some default verify functions */
 int rc_verify_power_of_2(struct rc_option *option, const char *arg,
    int priority);

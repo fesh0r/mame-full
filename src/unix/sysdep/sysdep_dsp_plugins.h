@@ -42,6 +42,9 @@ extern struct plugin_struct sysdep_dsp_aix;
 #ifdef SYSDEP_DSP_ESOUND
 extern struct plugin_struct sysdep_dsp_esound;
 #endif
+#ifdef SYSDEP_DSP_ALSA
+extern struct plugin_struct sysdep_dsp_alsa;
+#endif
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DSP_PLUGINS_H */

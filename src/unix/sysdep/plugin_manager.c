@@ -22,6 +22,7 @@ Version 0.1, January 2000
 -initial release (Hans de Goede)
 */
 #include <stdlib.h>
+#include <string.h>
 #include "plugin_manager.h"
 #include "plugin_manager_priv.h"
 #include "misc.h"

@@ -198,19 +198,19 @@ void sysdep_update_keyboard (void)
  */
 static int x11_mapkey(struct rc_option *option, const char *arg, int priority)
 {
-   int from,to;
+   unsigned int from,to;
    /* ultrix sscanf() requires explicit leading of 0x for hex numbers */
    if ( sscanf(arg,"0x%x,0x%x",&from,&to) == 2)
    {
       /* perform tests */
       /* fprintf(stderr_file,"trying to map %x to%x\n",from,to); */
-      if ( (to>=0) || (to<=127) )
+      if ( to <= 127 )
       {
-         if ( (from>=0) && (from<=0x00ff) ) 
+         if ( from <= 0x00ff ) 
          {
             code_table[from]=to; return OSD_OK;
          }
-         if ( (from>=0xfe00) && (from<=0xffff) ) 
+         else if ( (from>=0xfe00) && (from<=0xffff) ) 
          {
             extended_code_table[from&0x01ff]=to; return OSD_OK;
          }

@@ -23,6 +23,7 @@ Version 0.1, March 2000
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "sound_stream.h"
 #include "sound_stream_priv.h"
 #include "fifo.h"

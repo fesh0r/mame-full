@@ -10,9 +10,9 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/main.o $(OBJDIR)/sound.o \
 	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
 	$(OBJDIR)/video.o $(OBJDIR)/dirty.o $(OBJDIR)/mode.o \
-	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
-	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
-	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/debug.o
+	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
+	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
+	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o
 
 # sysdep objs
 SYSDEP_DIR  = $(OBJDIR)/sysdep
@@ -38,12 +38,11 @@ VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
 # sound driver objs per arch
 DSP_DIR = $(OBJDIR)/sysdep/dsp-drivers
 MIXER_DIR = $(OBJDIR)/sysdep/mixer-drivers
-SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
+SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o $(DSP_DIR)/alsa.o
 SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
 SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
 SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
-SOUND_OBJS.macosx  = $(DSP_DIR)/soundkit.o
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
@@ -53,7 +52,8 @@ SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o
 
 # joystick objs
 JOY_DIR  = $(OBJDIR)/joystick-drivers
-JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o
+JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
+    $(JOY_DIR)/joy_usb.o
 
 # framskip objs
 FRAMESKIP_DIR  = $(OBJDIR)/frameskip-drivers
@@ -78,7 +78,6 @@ CFLAGS.freebsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_V
 CFLAGS.netbsd     = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
-CFLAGS.macosx     = -DSYSDEP_DSP_SOUNDKIT
 CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.irix       = -DSYSDEP_DSP_IRIX
@@ -86,7 +85,7 @@ CFLAGS.generic    =
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
 
 #all cflags
-MY_CFLAGS = $(CFLAGS) $(CFLAGS.$(ARCH)) -I. -I.. -I../mess
+MY_CFLAGS = $(CFLAGS) $(CFLAGS.$(ARCH)) -I. -I.. -I../../mess
 
 
 ##############################################################################

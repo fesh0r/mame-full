@@ -330,10 +330,12 @@ int x11_window_create_display (int bitmap_depth)
          return OSD_NOT_OK;
       }
       
-      window     = RootWindowOfScreen (screen);
-      use_mouse  = FALSE;
-      startx     = ((width  - window_width)  / 2) & ~0x07;
-      starty     = ((height - window_height) / 2) & ~0x07;
+      startx        = ((width  - window_width)  / 2) & ~0x07;
+      starty        = ((height - window_height) / 2) & ~0x07;
+      window        = RootWindowOfScreen (screen);
+      window_width  = width;
+      window_height = height;
+      use_mouse     = FALSE;
    }
    else
    {
@@ -685,6 +687,10 @@ int x11_window_alloc_palette (int writable_colors)
 {
    int i;
    
+   /* this is only relevant for 8bpp displays */
+   if (depth != 8)
+      return 0;
+   
    if(!(pseudo_color_lookup = malloc(writable_colors * sizeof(unsigned long))))
    {
       fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
@@ -715,6 +721,8 @@ int x11_window_alloc_palette (int writable_colors)
       if (!(pseudo_color_allocated = calloc(writable_colors, sizeof(char))))
       {
          fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
+         XFreeColors (display, colormap, pseudo_color_lookup,
+            writable_colors, 0);
          free(pseudo_color_lookup);
          pseudo_color_lookup=NULL;
          return -1;
@@ -820,11 +828,11 @@ void x11_window_update_display (struct osd_bitmap *bitmap)
 {
    int old_use_dirty = use_dirty;
    
-   if (sysdep_palette->lookup_dirty || pseudo_color_lookup_dirty)
+   if (current_palette->lookup_dirty || pseudo_color_lookup_dirty)
    {
       use_dirty = 0;
       pseudo_color_lookup_dirty = 0;
-      /* sysdep_palette->lookup_dirty is cleared for us by
+      /* current_palette->lookup_dirty is cleared for us by
          sysdep_palette_update() */
    }
 
@@ -929,7 +937,7 @@ static void x11_window_update_8_to_8bpp (struct osd_bitmap *bitmap)
 
 #undef DEST_PIXEL
 
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
 
 static void x11_window_update_8_to_16bpp (struct osd_bitmap *bitmap)
 {
@@ -963,7 +971,7 @@ static void x11_window_update_16_to_16bpp (struct osd_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
 
-   if (sysdep_palette->lookup)
+   if (current_palette->lookup)
    {
 #include "blit.h"
    }
@@ -971,7 +979,7 @@ static void x11_window_update_16_to_16bpp (struct osd_bitmap *bitmap)
    {
 #undef  INDIRECT
 #include "blit.h"
-#define INDIRECT sysdep_palette->lookup
+#define INDIRECT current_palette->lookup
    }
 
 #undef DEST_PIXEL

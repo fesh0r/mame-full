@@ -86,6 +86,9 @@ static const struct plugin_struct *sysdep_dsp_plugins[] = {
 #ifdef SYSDEP_DSP_ESOUND
    &sysdep_dsp_esound,
 #endif
+#ifdef SYSDEP_DSP_ALSA
+   &sysdep_dsp_alsa,
+#endif
    NULL
 };
 

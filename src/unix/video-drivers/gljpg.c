@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 #include "jpeglib.h"
 #include <setjmp.h>
 #include <GL/glut.h>

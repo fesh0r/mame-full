@@ -203,11 +203,12 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
       else
          x11_video_mode = new_video_mode;
 
-      if(sysdep_palette_change_display(&sysdep_palette))
+      if(sysdep_display_alloc_palette(video_colors_used))
          goto barf;
       
       keyboard_clear();
       osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1, 1);
+      sysdep_palette_mark_dirty(current_palette);
       /* poll mouse twice to clear internal vars */
       if (use_mouse)
       {
@@ -222,8 +223,6 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
 barf:   
    sysdep_display_close();   /* This cleans up and must be called to
                              restore the videomode with dga */
-   osd_exit();
-   sysdep_close();
    fprintf (stderr_file,
       "X11: Error: couldn't create new display while switching display modes\n");
    exit (1);              /* ugly, anyone know a better way ? */

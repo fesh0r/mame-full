@@ -30,7 +30,7 @@ static NSDate *the_past = nil;
  * External window variable
  */
 
-extern NSWindow *thisWin;
+extern NSWindow *theWindow;
 
 /*
  * Keyboard init - all I really do here is set up the keymapping array
@@ -132,7 +132,7 @@ openstep_keyboard_init(void)
 
 /*
  * Nothing needs doing to close the keybaord, but we release the variable
- * used to hold the diatant past here as it is a keyboard variable.
+ * used to hold the distant past here as it is a keyboard variable.
  */
 
 void
@@ -157,7 +157,7 @@ sysdep_mouse_poll(void)
 	if(!use_mouse)		/* to save time */
 		return;
 
-	current = [thisWin mouseLocationOutsideOfEventStream];
+	current = [theWindow mouseLocationOutsideOfEventStream];
 
 	mouse_data[0].deltas[0] = current.x - last.x;
 	mouse_data[0].deltas[1] = last.y - current.y; /* inverted */
@@ -365,12 +365,14 @@ queue_key_event(NSEvent *keyevent)
  * queueing key up and down events to the xmame fifo. Anything we dont
  * use gets passed on to whoever might want it. We handle the mouse
  * button events in this loop too, passing them downwards to allow other
- * things such as minaturisation to happen.
+ * things such as minaturisation to happen. This loop is surrounded by an
+ * autorelease pool as we do create some objects here.
  */
 
 void
 sysdep_update_keyboard(void)
 {
+	NSAutoreleasePool *pool = [NSAutoreleasePool new];
 	NSEvent *event=nil;
 
 	for(;;) {
@@ -409,6 +411,8 @@ sysdep_update_keyboard(void)
 				break;
 		}
 	}
+
+	[pool release];
 }
 
 /*

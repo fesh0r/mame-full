@@ -28,8 +28,8 @@ struct rc_option input_opts[] = {
       NULL,		0,			0,		NULL,
       NULL },
    { "joytype",		"jt",			rc_int,		&joytype,
-      "0",      	0,			4,		NULL,
-      "Select type of joysticksupport to use:\n0 No joystick\n1 i386 style joystick driver (if compiled in)\n2 Fm Town Pad support (if compiled in)\n3 X11 input extension joystick (if compiled in)\n4 new i386 linux 1.x.x joystick driver(if compiled in)" },
+      "0",      	0,			5,		NULL,
+      "Select type of joysticksupport to use:\n0 No joystick\n1 i386 style joystick driver (if compiled in)\n2 Fm Town Pad support (if compiled in)\n3 X11 input extension joystick (if compiled in)\n4 new i386 linux 1.x.x joystick driver(if compiled in)\n5 NetBSD USB joystick driver (if compiled in)" },
    { "analogstick",	"as",			rc_bool,	&analogstick,
      "0",		0,			0,		NULL,
      "Use Joystick as analog for analog controls" },
@@ -40,6 +40,9 @@ struct rc_option input_opts[] = {
      NULL,		0,			0,		NULL,
      NULL },
    { NULL,		NULL,			rc_link,	joy_x11_opts,
+     NULL,		0,			0,		NULL,
+     NULL },
+   { NULL,		NULL,			rc_link,	joy_usb_opts,
      NULL,		0,			0,		NULL,
      NULL },
    { "mouse",		"m",			rc_bool,	&use_mouse,
@@ -195,6 +198,11 @@ int osd_input_initpost (void)
 #ifdef X11_JOYSTICK
       case JOY_X11:
          joy_x11_init();
+         break;
+#endif
+#ifdef USB_JOYSTICK
+      case JOY_USB:
+         joy_usb_init();
          break;
 #endif
       default:
