@@ -5,8 +5,13 @@ typedef void (*STATE_FUNCTION)(void);
 static struct {
 	int count;
 	STATE_FUNCTION functions[10];
-	int y;
 	struct osd_bitmap *bitmap;
+
+	int y;
+	// this is here to generate a full refresh when needed!
+	int line;
+	int last_widths[20];
+	int full_refresh;
 } state= {0};
 
 // call this at init time to add your state functions
@@ -18,9 +23,7 @@ void state_add_function(void (*function)(void))
 // call this in your state function to output text
 void state_display_text(const char *text)
 {
-	int x, x0, y2, width = (Machine->visible_area.max_x -
-							Machine->visible_area.min_x) / Machine->uifont->width;
-
+	int x, x0, y2, width = Machine->uiwidth / Machine->uifont->width;
 
 	if (text[0] != 0)
 	{
@@ -30,15 +33,19 @@ void state_display_text(const char *text)
 		x = 0;
 		while (text[x])
 		{
-			for (x0 = Machine->visible_area.min_x;
-				 text[x] && (x0 < Machine->visible_area.max_x -
-							 Machine->uifont->width);
+			for (x0 = Machine->uiymin;
+				 text[x] && (x0 < Machine->uiymin + Machine->uiwidth-Machine->uifont->width);
 				 x++, x0 += Machine->uifont->width)
 			{
 				drawgfx (state.bitmap, Machine->uifont,
 						 text[x], 0, 0, 0, x0, y2, 0,
 						 TRANSPARENCY_NONE, 0);
 			}
+			if (state.last_widths[state.line]!=x) {
+				state.full_refresh=1;
+				state.last_widths[state.line]=x;
+			}
+			state.line++;
 			y2 += Machine->uifont->height;
 		}
 	}
@@ -50,10 +57,18 @@ void state_display(struct osd_bitmap *bitmap)
 	int i;
 
 	state.bitmap=bitmap;
-	state.y=Machine->visible_area.max_y + 1 - Machine->uifont->height;
+	state.line=0;
+	state.full_refresh=0;
+	state.y=Machine->uiymin + Machine->uiheight - Machine->uifont->height;
 
 	for (i=0; i<state.count; i++) {
 		state.functions[i]();
 	}
+
+	if (state.full_refresh||state.last_widths[state.line]!=0) {
+		state.last_widths[state.line]=0;
+		schedule_full_refresh();
+	}
+
 }
 
