@@ -19,10 +19,10 @@
 
 	#ifndef SYMBOL_PREFIX
 		#ifndef __ELF__
-			#ifdef	__sgi
-				#define SYMBOL_PREFIX	""
+			#ifdef  __sgi
+				#define SYMBOL_PREFIX   ""
 			#else
-				#define SYMBOL_PREFIX	"_"
+				#define SYMBOL_PREFIX   "_"
 			#endif
 		#else
 			#define SYMBOL_PREFIX	""

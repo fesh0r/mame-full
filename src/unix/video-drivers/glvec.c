@@ -175,7 +175,7 @@ float vector_get_intensity(void)
  * Initializes vector game video emulation
  */
 
-int vector_vh_start (void)
+VIDEO_START( vector )
 {
         vec_min_x =Machine->visible_area.min_x;
         vec_min_y =Machine->visible_area.min_y;
@@ -414,6 +414,11 @@ void vector_add_point (int x, int y, int color, int intensity)
   vecoldx=sx; vecoldy=sy;
 }
 
+void vector_add_point_callback (int x, int y, rgb_t (*color_callback)(void), int intensity)
+{
+  vector_add_point(x, y, (*color_callback)(), intensity);
+}
+
 /*
  * Add new clipping info to the list
  */
@@ -455,13 +460,12 @@ void vector_clear_list(void)
 
 /* Called when the frame is complete */
 
-void vector_vh_update (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vector )
 {
-  if (full_refresh && bitmap!=NULL)
+  if (!cliprect && bitmap!=NULL)
   {
 	fillbitmap(bitmap,Machine->uifont->colortable[0],NULL);
   }
-
 
   if(inlist && inbegin)
   {
@@ -474,11 +478,5 @@ void vector_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 	inlist=0;
   }
 }
-
-void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
-{
-	vector_vh_update (bitmap, full_refresh);
-}
-
 
 #endif /* ifdef xgl */

@@ -23,7 +23,7 @@
 
 int LoadCabinet (const char *fname);
 void SwapBuffers (void);
-void vector_vh_update (struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_UPDATE(vector);
 void vector_clear_list (void);
 
 
@@ -1176,7 +1176,7 @@ void InitTextures ()
       disp__glTexImage2D (GL_TEXTURE_2D, 0,
 		    gl_internal_format,
 		    text_width, text_height,
-		    0, gl_bitmap_format, gl_bitmap_type, NULL);
+		    0, gl_bitmap_format, gl_bitmap_type, tsq->texture);
 
       CHECK_GL_ERROR ();
 
@@ -1958,7 +1958,7 @@ void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
 
   if (vecgame)
   {
-    vector_vh_update (NULL, 0);
+    video_update_vector (NULL, NULL);
     CHECK_GL_BEGINEND();
 
     /**
