@@ -314,17 +314,24 @@ extern int tms9900_ICount;
 void init_ti99_4(void)
 {
 	int i, j;
-	UINT8 *GROM;
 
 
 	ti99_model = model_99_4;
 	has_evpc = FALSE;
 
-	GROM = memory_region(region_grom);
+	/* set up RAM pointers */
+	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
+	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	console_GROMs.data_ptr = memory_region(region_grom);
+
+	/* Generate missing chunk of each console GROMs */
 	for (i=0; i<2; i++)
 		for (j=0; j<0x800; j++)
 		{
-			GROM[0x2000*i+0x1800+j] = GROM[0x2000*i+0x0800+j] | GROM[0x2000*i+0x1000+j];
+			console_GROMs.data_ptr[0x2000*i+0x1800+j] = console_GROMs.data_ptr[0x2000*i+0x0800+j]
+															| console_GROMs.data_ptr[0x2000*i+0x1000+j];
 		}
 }
 
@@ -332,18 +339,37 @@ void init_ti99_4a(void)
 {
 	ti99_model = model_99_4a;
 	has_evpc = FALSE;
+
+	/* set up RAM pointers */
+	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
+	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
 void init_ti99_4ev(void)
 {
 	ti99_model = model_99_4a;
 	has_evpc = TRUE;
+
+	/* set up RAM pointers */
+	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
+	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
 void init_ti99_4p(void)
 {
 	ti99_model = model_99_4p;
 	has_evpc = TRUE;
+
+	/* set up RAM pointers */
+	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram_4p);
+	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
+	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
 DEVICE_LOAD( ti99_cassette )
@@ -371,18 +397,18 @@ DEVICE_LOAD( ti99_cart )
 	/* Original idea by Norberto Bensa */
 	const char *name = image_filename(image);
 	const char *ch, *ch2;
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 	slot_type_t type = (slot_type_t) id;
 
 	/* There is a circuitry in TI99/4(a) that resets the console when a
 	cartridge is inserted or removed.  We emulate this instead of resetting the
 	emulator (which is the default in MESS). */
-	cpu_set_reset_line(0, PULSE_LINE);
+	/*cpu_set_reset_line(0, PULSE_LINE);
 	tms9901_reset(0);
 	if (! has_evpc)
 		TMS9928A_reset();
 	if (has_evpc)
-		v9938_reset();
+		v9938_reset();*/
 
 	ch = strrchr(name, '.');
 	ch2 = (ch-1 >= name) ? ch-1 : "";
@@ -441,17 +467,17 @@ DEVICE_LOAD( ti99_cart )
 
 DEVICE_UNLOAD( ti99_cart )
 {
-	int id = image_index(image);
+	int id = image_index_in_device(image);
 
 	/* There is a circuitry in TI99/4(a) that resets the console when a
 	cartridge is inserted or removed.  We emulate this instead of resetting the
 	emulator (which is the default in MESS). */
-	cpu_set_reset_line(0, PULSE_LINE);
+	/*cpu_set_reset_line(0, PULSE_LINE);
 	tms9901_reset(0);
 	if (! has_evpc)
 		TMS9928A_reset();
 	if (has_evpc)
-		v9938_reset();
+		v9938_reset();*/
 
 	switch (slot_type[id])
 	{
@@ -487,18 +513,6 @@ void machine_init_ti99(void)
 	int i;
 
 
-	/* set up RAM pointers */
-	if (ti99_model == model_99_4p)
-	{
-		sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram_4p);
-		xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
-	}
-	else
-	{
-		sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
-		xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
-	}
-
 	/* erase GPL_port_lookup, so that only console_GROMs are installed by default */
 	memset(GPL_port_lookup, 0, sizeof(GPL_port_lookup));
 
@@ -524,8 +538,6 @@ void machine_init_ti99(void)
 		cpu_setbank(4, sRAM_ptr);
 	}
 
-	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
 	/* reset cartridge mapper */
 	current_page_ptr = cartridge_pages[0];
 
@@ -1484,7 +1496,7 @@ static int ti99_R9901_3(int offset)
 		answer = 4;	/* on systems without handset, the pin is pulled up to avoid spurious interrupts */
 
 	/* we don't take CS2 into account, as CS2 is a write-only unit */
-	if (device_input(image_instance(IO_CASSETTE, 0)) > 0)
+	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
 		answer |= 8;
 
 	return answer;
@@ -1535,7 +1547,7 @@ static void ti99_AlphaW(int offset, int data)
 
 static void ti99_CSx_motor(int data, int cassette_id)
 {
-	mess_image *img = image_instance(IO_CASSETTE, cassette_id);
+	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, cassette_id);
 	if (data)
 		device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
 	else
@@ -1582,8 +1594,8 @@ static void ti99_audio_gate(int offset, int data)
 */
 static void ti99_CS_output(int offset, int data)
 {
-	device_output(image_instance(IO_CASSETTE, 0), data ? 32767 : -32767);
-	device_output(image_instance(IO_CASSETTE, 1), data ? 32767 : -32767);
+	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? 32767 : -32767);
+	device_output(image_from_devtype_and_index(IO_CASSETTE, 1), data ? 32767 : -32767);
 }
 
 
