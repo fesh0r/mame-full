@@ -262,12 +262,12 @@ static int rs232_cru_r(int offset)
 
 	case 1:
 		/* first 9902 */
-		reply = tms9902_CRU_read(0, offset);
+		reply = tms9902_cru_r(0, offset);
 		break;
 
 	case 2:
 		/* second 9902 */
-		reply = tms9902_CRU_read(1, offset);
+		reply = tms9902_cru_r(1, offset);
 		break;
 
 	default:
@@ -292,7 +292,7 @@ static void rs232_cru_w(int offset, int data)
 		{
 		case 0:
 			/* WRITE to rs232 card enable bit (bit 0) */
-			/* handled in ti99_expansion_CRU_w() */
+			/* handled in xxx_peb_cru_w() */
 			break;
 
 		case 1:
@@ -363,12 +363,12 @@ static void rs232_cru_w(int offset, int data)
 
 	case 1:
 		/* first 9902 */
-		tms9902_CRU_write(0, offset, data);
+		tms9902_cru_w(0, offset, data);
 		break;
 
 	case 2:
 		/* second 9902 */
-		tms9902_CRU_write(1, offset, data);
+		tms9902_cru_w(1, offset, data);
 		break;
 
 	default:

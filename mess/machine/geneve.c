@@ -910,7 +910,7 @@ WRITE_HANDLER ( geneve_w )
 #pragma mark CRU HANDLERS
 #endif
 
-WRITE_HANDLER ( geneve_peb_mode_CRU_w )
+WRITE_HANDLER ( geneve_peb_mode_cru_w )
 {
 	if ((offset >= /*0x770*/0x775) && (offset < 0x780))
 	{
@@ -950,7 +950,7 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 		}
 	}
 
-	geneve_peb_CRU_w(offset, data);
+	geneve_peb_cru_w(offset, data);
 }
 
 /*===========================================================================*/

@@ -347,7 +347,7 @@ static void tms9901_timer_reload(int which)
 
 	bit 16-31: current status of the P0-P15 pins (quits timer mode, too...)
 */
-int tms9901_CRU_read(int which, int offset)
+int tms9901_cru_r(int which, int offset)
 {
 	int answer;
 
@@ -428,7 +428,7 @@ int tms9901_CRU_read(int which, int offset)
 
 	bit 16-31: set output state of P0-P15 (and set them as output pin) (quit timer mode, too...)
 */
-void tms9901_CRU_write(int which, int offset, int data)
+void tms9901_cru_w(int which, int offset, int data)
 {
 	data &= 1;	/* clear extra bits */
 	offset &= 0x01F;
@@ -576,33 +576,22 @@ void tms9901_CRU_write(int which, int offset, int data)
 	}
 }
 
-READ_HANDLER ( tms9901_0_CRU_read )
+READ_HANDLER ( tms9901_0_cru_r )
 {
-	return tms9901_CRU_read(0, offset);
+	return tms9901_cru_r(0, offset);
 }
 
-WRITE_HANDLER ( tms9901_0_CRU_write )
+WRITE_HANDLER ( tms9901_0_cru_w )
 {
-	tms9901_CRU_write(0, offset, data);
+	tms9901_cru_w(0, offset, data);
 }
 
-READ_HANDLER ( tms9901_1_CRU_read )
+READ_HANDLER ( tms9901_1_cru_r )
 {
-	return tms9901_CRU_read(1, offset);
+	return tms9901_cru_r(1, offset);
 }
 
-WRITE_HANDLER ( tms9901_1_CRU_write )
+WRITE_HANDLER ( tms9901_1_cru_w )
 {
-	tms9901_CRU_write(1, offset, data);
+	tms9901_cru_w(1, offset, data);
 }
-
-READ16_HANDLER ( tms9901_0_CRU_read16 )
-{
-	return tms9901_CRU_read(0, offset);
-}
-
-WRITE16_HANDLER ( tms9901_0_CRU_write16 )
-{
-	tms9901_CRU_write(0, offset, data);
-}
-

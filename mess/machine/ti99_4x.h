@@ -168,25 +168,25 @@ void ti99_4ev_hblank_interrupt(void);
 
 void set_hsgpl_crdena(int data);
 
-READ16_HANDLER ( ti99_rw_null8bits );
-WRITE16_HANDLER ( ti99_ww_null8bits );
+READ16_HANDLER ( ti99_nop_8_r );
+WRITE16_HANDLER ( ti99_nop_8_w );
 
-READ16_HANDLER ( ti99_rw_cartmem );
-WRITE16_HANDLER ( ti99_ww_cartmem );
-READ16_HANDLER ( ti99_4p_rw_cartmem );
-WRITE16_HANDLER ( ti99_4p_ww_cartmem );
+READ16_HANDLER ( ti99_cart_r );
+WRITE16_HANDLER ( ti99_cart_w );
+READ16_HANDLER ( ti99_4p_cart_r );
+WRITE16_HANDLER ( ti99_4p_cart_w );
 
-WRITE16_HANDLER( ti99_ww_wsnd );
+WRITE16_HANDLER( ti99_wsnd_w );
 
-READ16_HANDLER ( ti99_rw_rvdp );
-WRITE16_HANDLER ( ti99_ww_wvdp );
-READ16_HANDLER ( ti99_rw_rv38 );
-WRITE16_HANDLER ( ti99_ww_wv38 );
+READ16_HANDLER ( ti99_rvdp_r );
+WRITE16_HANDLER ( ti99_wvdp_w );
+READ16_HANDLER ( ti99_rv38_r );
+WRITE16_HANDLER ( ti99_wv38_w );
 
-READ16_HANDLER ( ti99_rw_rgpl );
-WRITE16_HANDLER( ti99_ww_wgpl );
-READ16_HANDLER ( ti99_4p_rw_rgpl );
-WRITE16_HANDLER ( ti99_4p_ww_wgpl );
+READ16_HANDLER ( ti99_rgpl_r );
+WRITE16_HANDLER( ti99_wgpl_w );
+READ16_HANDLER ( ti99_4p_rgpl_r );
+WRITE16_HANDLER ( ti99_4p_wgpl_w );
 
 extern void tms9901_set_int2(int state);
 

@@ -14,8 +14,8 @@ void ti990_set_int13(int state);
 
 void ti990_hold_load(void);
 
-READ16_HANDLER ( ti990_panel_read );
-WRITE16_HANDLER ( ti990_panel_write );
+READ_HANDLER ( ti990_panel_read );
+WRITE_HANDLER ( ti990_panel_write );
 
 void ti990_line_interrupt(void);
 void ti990_ckon_ckof_callback(int state);

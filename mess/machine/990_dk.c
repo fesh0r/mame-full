@@ -719,7 +719,7 @@ static void fd800_do_cmd(void)
 		30: unit MSB
 		31: Interrupt (CBUSY???) (1 -> controller is ready)
 */
-READ16_HANDLER(fd800_cru_r)
+READ_HANDLER(fd800_cru_r)
 {
 	int reply = 0;
 
@@ -753,7 +753,7 @@ READ16_HANDLER(fd800_cru_r)
 	27: FD unit number MSB/extended command code
 	28-31: command code
 */
-WRITE16_HANDLER(fd800_cru_w)
+WRITE_HANDLER(fd800_cru_w)
 {
 	switch (offset)
 	{

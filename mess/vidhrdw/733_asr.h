@@ -33,8 +33,8 @@ void asr733_reset(int unit);
 int asr733_cru_r(int offset, int unit);
 void asr733_cru_w(int offset, int data, int unit);
 
-READ16_HANDLER(asr733_0_cru_r);
-WRITE16_HANDLER(asr733_0_cru_w);
+READ_HANDLER(asr733_0_cru_r);
+WRITE_HANDLER(asr733_0_cru_w);
 
 void asr733_refresh(struct mame_bitmap *bitmap, int unit, int x, int y);
 

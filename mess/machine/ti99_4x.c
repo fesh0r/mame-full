@@ -790,8 +790,8 @@ void machine_init_ti99(void)
 	{
 		if (ti99_model != model_99_8)
 		{
-			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rw_null8bits);
-			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_ww_null8bits);
+			install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_nop_8_r);
+			install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_nop_8_w);
 		}
 	}
 
@@ -800,10 +800,10 @@ void machine_init_ti99(void)
 	case xRAM_kind_none:
 	default:
 		/* reset mem handler to none */
-		install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_rw_null8bits);
-		install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_ww_null8bits);
-		install_mem_read16_handler(0, 0xa000, 0xffff, ti99_rw_null8bits);
-		install_mem_write16_handler(0, 0xa000, 0xffff, ti99_ww_null8bits);
+		install_mem_read16_handler(0, 0x2000, 0x3fff, ti99_nop_8_r);
+		install_mem_write16_handler(0, 0x2000, 0x3fff, ti99_nop_8_w);
+		install_mem_read16_handler(0, 0xa000, 0xffff, ti99_nop_8_r);
+		install_mem_write16_handler(0, 0xa000, 0xffff, ti99_nop_8_w);
 		break;
 	case xRAM_kind_TI:
 		ti99_TIxram_init();
@@ -937,16 +937,16 @@ void set_hsgpl_crdena(int data)
 */
 
 /*
-	Same as MRA_NOP, but with an additionnal delay.
+	Same as MRA16_NOP, but with an additionnal delay.
 */
-READ16_HANDLER ( ti99_rw_null8bits )
+READ16_HANDLER ( ti99_nop_8_r )
 {
 	tms9900_ICount -= 4;
 
 	return (0);
 }
 
-WRITE16_HANDLER ( ti99_ww_null8bits )
+WRITE16_HANDLER ( ti99_nop_8_w )
 {
 	tms9900_ICount -= 4;
 }
@@ -957,7 +957,7 @@ WRITE16_HANDLER ( ti99_ww_null8bits )
 
 	HSGPL maps here, too.
 */
-READ16_HANDLER ( ti99_rw_cartmem )
+READ16_HANDLER ( ti99_cart_r )
 {
 	tms9900_ICount -= 4;
 
@@ -974,7 +974,7 @@ READ16_HANDLER ( ti99_rw_cartmem )
 /*
 	this handler handles ROM switching in cartridges
 */
-WRITE16_HANDLER ( ti99_ww_cartmem )
+WRITE16_HANDLER ( ti99_cart_w )
 {
 	tms9900_ICount -= 4;
 
@@ -1003,7 +1003,7 @@ WRITE16_HANDLER ( ti99_ww_cartmem )
 
 	HSGPL maps here, too.
 */
-READ16_HANDLER ( ti99_4p_rw_cartmem )
+READ16_HANDLER ( ti99_4p_cart_r )
 {
 	if (ti99_4p_internal_rom6_enable)
 		return ti99_4p_internal_ROM6[offset];
@@ -1020,7 +1020,7 @@ READ16_HANDLER ( ti99_4p_rw_cartmem )
 /*
 	this handler handles ROM switching in cartridges
 */
-WRITE16_HANDLER ( ti99_4p_ww_cartmem )
+WRITE16_HANDLER ( ti99_4p_cart_w )
 {
 	if (ti99_4p_internal_rom6_enable)
 	{
@@ -1068,7 +1068,7 @@ Theory:
 /*
 	TMS9919 sound chip write
 */
-WRITE16_HANDLER ( ti99_ww_wsnd )
+WRITE16_HANDLER ( ti99_wsnd_w )
 {
 	tms9900_ICount -= 4;
 
@@ -1078,7 +1078,7 @@ WRITE16_HANDLER ( ti99_ww_wsnd )
 /*
 	TMS9918(A)/9928(A)/9929(A) VDP read
 */
-READ16_HANDLER ( ti99_rw_rvdp )
+READ16_HANDLER ( ti99_rvdp_r )
 {
 	tms9900_ICount -= 4;
 
@@ -1095,7 +1095,7 @@ READ16_HANDLER ( ti99_rw_rvdp )
 /*
 	TMS9918(A)/9928(A)/9929(A) vdp write
 */
-WRITE16_HANDLER ( ti99_ww_wvdp )
+WRITE16_HANDLER ( ti99_wvdp_w )
 {
 	tms9900_ICount -= 4;
 
@@ -1112,7 +1112,7 @@ WRITE16_HANDLER ( ti99_ww_wvdp )
 /*
 	V38 VDP read
 */
-READ16_HANDLER ( ti99_rw_rv38 )
+READ16_HANDLER ( ti99_rv38_r )
 {
 	tms9900_ICount -= 4;
 
@@ -1129,7 +1129,7 @@ READ16_HANDLER ( ti99_rw_rv38 )
 /*
 	V38 vdp write
 */
-WRITE16_HANDLER ( ti99_ww_wv38 )
+WRITE16_HANDLER ( ti99_wv38_w )
 {
 	tms9900_ICount -= 4;
 
@@ -1210,7 +1210,7 @@ static WRITE16_HANDLER ( ti99_ww_wspeech )
 /*
 	GPL read
 */
-READ16_HANDLER ( ti99_rw_rgpl )
+READ16_HANDLER ( ti99_rgpl_r )
 {
 	int reply;
 
@@ -1254,7 +1254,7 @@ READ16_HANDLER ( ti99_rw_rgpl )
 /*
 	GPL write
 */
-WRITE16_HANDLER ( ti99_ww_wgpl )
+WRITE16_HANDLER ( ti99_wgpl_w )
 {
 	tms9900_ICount -= 4/*20+3*/;		/* from 4 to 23? */
 
@@ -1300,7 +1300,7 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 /*
 	GPL read
 */
-READ16_HANDLER ( ti99_4p_rw_rgpl )
+READ16_HANDLER ( ti99_4p_rgpl_r )
 {
 	tms9900_ICount -= 4;		/* HSGPL is located on 8-bit bus? */
 
@@ -1310,7 +1310,7 @@ READ16_HANDLER ( ti99_4p_rw_rgpl )
 /*
 	GPL write
 */
-WRITE16_HANDLER ( ti99_4p_ww_wgpl )
+WRITE16_HANDLER ( ti99_4p_wgpl_w )
 {
 	tms9900_ICount -= 4;		/* HSGPL is located on 8-bit bus? */
 
@@ -1387,7 +1387,7 @@ READ_HANDLER ( ti99_8_r )
 			case 6:
 				/* GPL read */
 				if (! (offset & 1))
-					reply = ti99_rw_rgpl(offset >> 1, 0) >> 8;
+					reply = ti99_rgpl_r(offset >> 1, 0) >> 8;
 				break;
 
 			default:
@@ -1568,7 +1568,7 @@ WRITE_HANDLER ( ti99_8_w )
 			case 7:
 				/* GPL write */
 				if (! (offset & 1))
-					ti99_ww_wgpl(offset >> 1, data << 8, 0);
+					ti99_wgpl_w(offset >> 1, data << 8, 0);
 				break;
 
 			default:

@@ -365,7 +365,7 @@ static void initiate_transmit(int which)
 	bit 13-15: not emulated, normally used for diagnostics
 	bit 16: RBINT (RBRL&RIENB)
 */
-int tms9902_CRU_read(int which, int offset)
+int tms9902_cru_r(int which, int offset)
 {
 	int answer = 0;
 
@@ -413,7 +413,7 @@ int tms9902_CRU_read(int which, int offset)
 	signification:
 	...
 */
-void tms9902_CRU_write(int which, int offset, int data)
+void tms9902_cru_w(int which, int offset, int data)
 {
 	data &= 1;	/* clear extra bits */
 	offset &= 0x01F;
@@ -616,23 +616,12 @@ void tms9902_CRU_write(int which, int offset, int data)
 }
 
 
-READ_HANDLER ( tms9902_0_CRU_read )
+READ_HANDLER ( tms9902_0_cru_r )
 {
-	return tms9902_CRU_read(0, offset);
+	return tms9902_cru_r(0, offset);
 }
 
-WRITE_HANDLER ( tms9902_0_CRU_write )
+WRITE_HANDLER ( tms9902_0_cru_w )
 {
-	tms9902_CRU_write(0, offset, data);
+	tms9902_cru_w(0, offset, data);
 }
-
-READ16_HANDLER ( tms9902_0_CRU_read16 )
-{
-	return tms9902_CRU_read(0, offset);
-}
-
-WRITE16_HANDLER ( tms9902_0_CRU_write16 )
-{
-	tms9902_CRU_write(0, offset, data);
-}
-

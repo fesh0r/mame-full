@@ -650,50 +650,28 @@ static WRITE_HANDLER(video_joy_w)
 	0x3000-0x3fff: 4kb onboard ROM
 */
 
-static MEMORY_READ_START (tm990_189_readmem)
+static ADDRESS_MAP_START(tm990_189_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0x07ff, MRA_RAM },		/* RAM */
-	{ 0x0800, 0x0fff, MRA_ROM },		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
-	{ 0x1000, 0x2fff, MRA_NOP },		/* reserved for expansion (RAM and/or tms9918 video controller) */
-	{ 0x3000, 0x3fff, MRA_ROM },		/* main ROM - unibug or university basic */
+	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)	/* RAM */
+	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
+	AM_RANGE(0x1000, 0x2fff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/* reserved for expansion (RAM and/or tms9918 video controller) */
+	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* main ROM - unibug or university basic */
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (tm990_189_writemem)
+static ADDRESS_MAP_START(tm990_189_v_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0x07ff, MWA_RAM },		/* RAM */
-	{ 0x0800, 0x0fff, MWA_ROM },		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
-	{ 0x1000, 0x2fff, MWA_NOP },		/* reserved for expansion (RAM and/or tms9918 video controller) */
-	{ 0x3000, 0x3fff, MWA_ROM },		/* main ROM - unibug or university basic */
+	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)		/* RAM */
+	AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
 
-MEMORY_END
+	AM_RANGE(0x1000, 0x17ff) AM_READWRITE(MRA8_ROM, MWA8_NOP)		/* video board ROM 1 */
+	AM_RANGE(0x1800, 0x1fff) AM_READWRITE(MRA8_ROM, video_joy_w)	/* video board ROM 2 and joystick write port*/
+	AM_RANGE(0x2000, 0x27ff) AM_READWRITE(video_vdp_r, MWA8_NOP)	/* video board tms9918 read ports (bogus) */
+	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(video_joy_r, video_vdp_w)	/* video board joystick read port and tms9918 write ports */
 
-static MEMORY_READ_START (tm990_189_v_readmem)
+	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)		/* main ROM - unibug or university basic */
 
-	{ 0x0000, 0x07ff, MRA_RAM },		/* RAM */
-	{ 0x0800, 0x0fff, MRA_ROM },		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
-
-	{ 0x1000, 0x1fff, MRA_ROM },		/* video board ROMs */
-	{ 0x2000, 0x27ff, video_vdp_r },	/* video board tms9918 read ports (bogus) */
-	{ 0x2800, 0x2fff, video_joy_r },	/* video board joystick read port */
-
-	{ 0x3000, 0x3fff, MRA_ROM },		/* main ROM - unibug or university basic */
-
-MEMORY_END
-
-static MEMORY_WRITE_START (tm990_189_v_writemem)
-
-	{ 0x0000, 0x07ff, MWA_RAM },		/* RAM */
-	{ 0x0800, 0x0fff, MWA_ROM },		/* extra ROM - application programs with unibug, remaining 2kb of program for university basic */
-
-	{ 0x1000, 0x17ff, MWA_NOP },		/* unassigned */
-	{ 0x1800, 0x1fff, video_joy_w },	/* video board joystick write port */
-	{ 0x2000, 0x27ff, MWA_NOP },		/* unassigned */
-	{ 0x2800, 0x2fff, video_vdp_w },	/* video board tms9918 write ports */
-
-	{ 0x3000, 0x3fff, MWA_ROM },		/* main ROM - unibug or university basic */
-
-MEMORY_END
+ADDRESS_MAP_END
 
 /*
 	CRU map
@@ -749,24 +727,24 @@ MEMORY_END
 		   d
 */
 
-static PORT_WRITE_START ( tm990_189_writeport )
+static ADDRESS_MAP_START(tm990_189_writecru, ADDRESS_SPACE_IO, 8)
 
 
-	{ 0x000, 0x1ff, tms9901_0_CRU_write },	/* user I/O tms9901 */
-	{ 0x200, 0x3ff, tms9901_1_CRU_write },	/* system I/O tms9901 */
-//	{ 0x400, 0x5ff, tms9902_0_CRU_write },	/* optional tms9902 */
+	AM_RANGE(0x000, 0x1ff) AM_WRITE(tms9901_0_cru_w)	/* user I/O tms9901 */
+	AM_RANGE(0x200, 0x3ff) AM_WRITE(tms9901_1_cru_w)	/* system I/O tms9901 */
+//	AM_RANGE(0x400, 0x5ff) AM_WRITE(tms9902_0_cru_w)	/* optional tms9902 */
 
-	{0x0800,0x1fff, ext_instr_decode },		/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
+	AM_RANGE(0x0800,0x1fff)AM_WRITE(ext_instr_decode)		/* external instruction decoding (IDLE, RSET, CKON, CKOF, LREX) */
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_READ_START ( tm990_189_readport )
+static ADDRESS_MAP_START(tm990_189_readcru, ADDRESS_SPACE_IO, 8)
 
-	{ 0x00, 0x3f, tms9901_0_CRU_read },		/* user I/O tms9901 */
-	{ 0x40, 0x6f, tms9901_1_CRU_read },		/* system I/O tms9901 */
-//	{ 0x80, 0xcf, tms9902_0_CRU_read },		/* optional tms9902 */
+	AM_RANGE(0x00, 0x3f) AM_READ(tms9901_0_cru_r)		/* user I/O tms9901 */
+	AM_RANGE(0x40, 0x6f) AM_READ(tms9901_1_cru_r)		/* system I/O tms9901 */
+//	AM_RANGE(0x80, 0xcf) AM_READ(tms9902_0_cru_r)		/* optional tms9902 */
 
-PORT_END
+ADDRESS_MAP_END
 
 /*
 	Simple 2-level speaker
@@ -809,8 +787,8 @@ static MACHINE_DRIVER_START(tm990_189)
 	MDRV_CPU_ADD(TMS9980, 2000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(reset_params)
-	MDRV_CPU_MEMORY(tm990_189_readmem, tm990_189_writemem)
-	MDRV_CPU_PORTS(tm990_189_readport, tm990_189_writeport)
+	MDRV_CPU_PROGRAM_MAP(tm990_189_memmap, 0)
+	MDRV_CPU_IO_MAP(tm990_189_readcru, tm990_189_writecru)
 	/*MDRV_CPU_VBLANK_INT(tm990_189_interrupt, 1)*/
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 
@@ -853,9 +831,8 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	MDRV_CPU_ADD(TMS9980, 2000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(reset_params)
-	MDRV_CPU_MEMORY(tm990_189_v_readmem, tm990_189_v_writemem)
-
-	MDRV_CPU_PORTS(tm990_189_readport, tm990_189_writeport)
+	MDRV_CPU_PROGRAM_MAP(tm990_189_v_memmap, 0)
+	MDRV_CPU_IO_MAP(tm990_189_readcru, tm990_189_writecru)
 	/*MDRV_CPU_VBLANK_INT(tm990_189_interrupt, 1)*/
 	/*MDRV_CPU_PERIODIC_INT(NULL, 0)*/
 

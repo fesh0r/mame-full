@@ -40,108 +40,65 @@ Historical notes: TI made several last minute design changes.
 	memory map
 */
 
-static MEMORY_READ16_START (readmem)
+static ADDRESS_MAP_START(memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x0000, 0x1fff, MRA16_ROM },			/*system ROM*/
-	{ 0x2000, 0x3fff, ti99_rw_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_4x_peb_r },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
-	{ 0x8000, 0x80ff, MRA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8100, 0x81ff, MRA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8200, 0x82ff, MRA16_BANK3 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MRA16_BANK4 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_rw_rvdp },		/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
-	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
-	{ 0x9800, 0x9bff, ti99_rw_rgpl },		/*GPL read*/
-	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
-	{ 0xa000, 0xffff, ti99_rw_null8bits },	/*upper 24kb of RAM extension - installed dynamically*/
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)			/*system ROM*/
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*lower 8kb of RAM extension - installed dynamically*/
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(ti99_4x_peb_r, ti99_4x_peb_w)	/*DSR ROM space*/
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(ti99_cart_r, ti99_cart_w)		/*cartridge memory*/
+	AM_RANGE(0x8000, 0x80ff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8100, 0x81ff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8200, 0x82ff) AM_READWRITE(MRA16_BANK3, MWA16_BANK3)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8300, 0x83ff) AM_READWRITE(MRA16_BANK4, MWA16_BANK4)		/*RAM PAD*/
+	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(ti99_nop_8_r, ti99_wsnd_w)	/*soundchip write*/
+	AM_RANGE(0x8800, 0x8bff) AM_READWRITE(ti99_rvdp_r, ti99_nop_8_w)	/*vdp read*/
+	AM_RANGE(0x8C00, 0x8fff) AM_READWRITE(ti99_nop_8_r, ti99_wvdp_w)	/*vdp write*/
+	AM_RANGE(0x9000, 0x93ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech read - installed dynamically*/
+	AM_RANGE(0x9400, 0x97ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech write - installed dynamically*/
+	AM_RANGE(0x9800, 0x9bff) AM_READWRITE(ti99_rgpl_r, ti99_nop_8_w)	/*GPL read*/
+	AM_RANGE(0x9c00, 0x9fff) AM_READWRITE(ti99_nop_8_r, ti99_wgpl_w)	/*GPL write*/
+	AM_RANGE(0xa000, 0xffff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*upper 24kb of RAM extension - installed dynamically*/
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START (writemem)
+static ADDRESS_MAP_START(memmap_4ev, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x0000, 0x1fff, MWA16_ROM },			/*system ROM*/
-	{ 0x2000, 0x3fff, ti99_ww_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_4x_peb_w },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
-	{ 0x8000, 0x80ff, MWA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8100, 0x81ff, MWA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8200, 0x82ff, MWA16_BANK3 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MWA16_BANK4 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_ww_null8bits },	/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_ww_wvdp },		/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
-	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
-	{ 0x9800, 0x9bff, ti99_ww_null8bits },	/*GPL read*/
-	{ 0x9c00, 0x9fff, ti99_ww_wgpl },		/*GPL write*/
-	{ 0xa000, 0xffff, ti99_ww_null8bits },	/*upper 24kb of RAM extension - installed dynamically*/
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)			/*system ROM*/
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*lower 8kb of RAM extension - installed dynamically*/
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(ti99_4x_peb_r, ti99_4x_peb_w)	/*DSR ROM space*/
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(ti99_cart_r, ti99_cart_w)		/*cartridge memory*/
+	AM_RANGE(0x8000, 0x80ff) AM_READWRITE(MRA16_BANK1, MWA16_BANK1)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8100, 0x81ff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8200, 0x82ff) AM_READWRITE(MRA16_BANK3, MWA16_BANK3)		/*RAM PAD, mirrors 0x8300-0x83ff*/
+	AM_RANGE(0x8300, 0x83ff) AM_READWRITE(MRA16_BANK4, MWA16_BANK4)		/*RAM PAD*/
+	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(ti99_nop_8_r, ti99_wsnd_w)	/*soundchip write*/
+	AM_RANGE(0x8800, 0x8bff) AM_READWRITE(ti99_rv38_r, ti99_nop_8_w)	/*vdp read*/
+	AM_RANGE(0x8C00, 0x8fff) AM_READWRITE(ti99_nop_8_r, ti99_wv38_w)	/*vdp write*/
+	AM_RANGE(0x9000, 0x93ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech read - installed dynamically*/
+	AM_RANGE(0x9400, 0x97ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech write - installed dynamically*/
+	AM_RANGE(0x9800, 0x9bff) AM_READWRITE(ti99_rgpl_r, ti99_nop_8_w)	/*GPL read*/
+	AM_RANGE(0x9c00, 0x9fff) AM_READWRITE(ti99_nop_8_r, ti99_wgpl_w)	/*GPL write*/
+	AM_RANGE(0xa000, 0xffff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*upper 24kb of RAM extension - installed dynamically*/
 
-MEMORY_END
-
-
-static MEMORY_READ16_START (readmem_4ev)
-
-	{ 0x0000, 0x1fff, MRA16_ROM },			/*system ROM*/
-	{ 0x2000, 0x3fff, ti99_rw_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_4x_peb_r },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartridge memory*/
-	{ 0x8000, 0x80ff, MRA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8100, 0x81ff, MRA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8200, 0x82ff, MRA16_BANK3 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MRA16_BANK4 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_rw_rv38 },		/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
-	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
-	{ 0x9800, 0x9bff, ti99_rw_rgpl },		/*GPL read*/
-	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
-	{ 0xa000, 0xffff, ti99_rw_null8bits },	/*upper 24kb of RAM extension - installed dynamically*/
-
-MEMORY_END
-
-static MEMORY_WRITE16_START (writemem_4ev)
-
-	{ 0x0000, 0x1fff, MWA16_ROM },			/*system ROM*/
-	{ 0x2000, 0x3fff, ti99_ww_null8bits },	/*lower 8kb of RAM extension - installed dynamically*/
-	{ 0x4000, 0x5fff, ti99_4x_peb_w },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_ww_cartmem },	/*cartridge memory (some carts include RAM or a pager chip)*/
-	{ 0x8000, 0x80ff, MWA16_BANK1 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8100, 0x81ff, MWA16_BANK2 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8200, 0x82ff, MWA16_BANK3 },		/*RAM PAD, mirrors 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MWA16_BANK4 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_ww_null8bits },	/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_ww_wv38 },		/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
-	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
-	{ 0x9800, 0x9bff, ti99_ww_null8bits },	/*GPL read*/
-	{ 0x9c00, 0x9fff, ti99_ww_wgpl },		/*GPL write*/
-	{ 0xa000, 0xffff, ti99_ww_null8bits },	/*upper 24kb of RAM extension - installed dynamically*/
-
-MEMORY_END
+ADDRESS_MAP_END
 
 /*
 	CRU map
 */
 
-static PORT_WRITE16_START(writecru)
+static ADDRESS_MAP_START(writecru, ADDRESS_SPACE_IO, 8)
 
-	{0x0000<<1, (0x07ff<<1) + 1, tms9901_0_CRU_write16},
-	{0x0800<<1, (0x0fff<<1) + 1, ti99_4x_peb_CRU_w},
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(tms9901_0_cru_w)
+	AM_RANGE(0x0800, 0x0fff) AM_WRITE(ti99_4x_peb_cru_w)
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_READ16_START(readcru)
+static ADDRESS_MAP_START(readcru, ADDRESS_SPACE_IO, 8)
 
-	{0x0000<<1, (0x00ff<<1) + 1, tms9901_0_CRU_read16},
-	{0x0100<<1, (0x01ff<<1) + 1, ti99_4x_peb_CRU_r},
+	AM_RANGE(0x0000, 0x00ff) AM_READ(tms9901_0_cru_r)
+	AM_RANGE(0x0100, 0x01ff) AM_READ(ti99_4x_peb_cru_r)
 
-PORT_END
+ADDRESS_MAP_END
 
 
 /*
@@ -597,8 +554,8 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -628,8 +585,8 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -659,8 +616,8 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -690,8 +647,8 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -721,8 +678,8 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem_4ev, writemem_4ev)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap_4ev, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_4ev_hblank_interrupt, 263)	/* 262.5 in 60Hz, 312.5 in 50Hz */
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 

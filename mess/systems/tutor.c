@@ -387,38 +387,22 @@ static WRITE_HANDLER(tutor_printer_w)
 	}
 }*/
 
-static MEMORY_READ_START (tutor_readmem )
+static ADDRESS_MAP_START(tutor_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0x7fff, MRA_ROM },			/*system ROM*/
+	AM_RANGE(0x0000, 0x7fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/*system ROM*/
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)	/*BASIC ROM & cartridge ROM*/
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/*free for expansion, or cartridge ROM?*/
 
-	{ 0x8000, 0xbfff, MRA_BANK1 },			/*BASIC ROM & cartridge ROM*/
-	{ 0xc000, 0xdfff, MRA_NOP },			/*free for expansion, or cartridge ROM?*/
+	AM_RANGE(0xe000, 0xe000) AM_READWRITE(TMS9928A_vram_r, TMS9928A_vram_w)	/*VDP data*/
+	AM_RANGE(0xe002, 0xe002) AM_READWRITE(TMS9928A_register_r, TMS9928A_register_w)/*VDP status*/
+	AM_RANGE(0xe100, 0xe1ff) AM_READWRITE(tutor_mapper_r, tutor_mapper_w)	/*cartridge mapper*/
+	AM_RANGE(0xe200, 0xe200) AM_READWRITE(MRA8_NOP, SN76496_0_w)			/*sound chip*/
+	AM_RANGE(0xe800, 0xe8ff) AM_READWRITE(tutor_printer_r, tutor_printer_w)	/*printer*/
+	AM_RANGE(0xee00, 0xeeff) AM_READWRITE(MRA8_NOP, tutor_cassette_w)		/*cassette interface*/
 
-	{ 0xe000, 0xe000, TMS9928A_vram_r },	/*VDP data*/
-	{ 0xe002, 0xe002, TMS9928A_register_r },/*VDP status*/
-	{ 0xe100, 0xe1ff, tutor_mapper_r },		/*cartridge mapper*/
-	{ 0xe800, 0xe8ff, tutor_printer_r },	/*printer*/
-	{ 0xf000, 0xffff, MRA_NOP },			/*free for expansion (and internal processor RAM)*/
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_NOP, MWA8_NOP)	/*free for expansion (and internal processor RAM)*/
 
-MEMORY_END
-
-static MEMORY_WRITE_START ( tutor_writemem )
-
-	{ 0x0000, 0x7fff, MWA_ROM },			/*system ROM*/
-
-	{ 0x8000, 0xbfff, MWA_ROM },			/*BASIC ROM & cartridge ROM*/
-	{ 0xc000, 0xdfff, MWA_NOP },            /*free for expansion, or cartridge ROM?*/
-
-	{ 0xe000, 0xe000, TMS9928A_vram_w },	/*VDP data*/
-	{ 0xe002, 0xe002, TMS9928A_register_w },/*VDP register*/
-	{ 0xe100, 0xe1ff, tutor_mapper_w },		/*cartridge mapper*/
-	{ 0xe200, 0xe200, SN76496_0_w },		/*sound chip*/
-	{ 0xe800, 0xe8ff, tutor_printer_w },	/*printer*/
-	{ 0xee00, 0xeeff, tutor_cassette_w },	/*cassette interface*/
-	{ 0xf000, 0xffff, MWA_NOP },            /*free for expansion (and internal processor RAM)*/
-
-MEMORY_END
-
+ADDRESS_MAP_END
 
 /*
 	CRU map summary:
@@ -430,17 +414,17 @@ MEMORY_END
 	>ed00(r): tape input
 */
 
-static PORT_READ_START ( tutor_readcru )
+static ADDRESS_MAP_START(tutor_readcru, ADDRESS_SPACE_IO, 8)
 
-	{ 0xec0, 0xec7, read_keyboard },		/*keyboard interface*/
-	{ 0xed0, 0xed0, tutor_cassette_r },		/*cassette interface*/
+	AM_RANGE(0xec0, 0xec7) AM_READ(read_keyboard)			/*keyboard interface*/
+	AM_RANGE(0xed0, 0xed0) AM_READ(tutor_cassette_r)		/*cassette interface*/
 
-PORT_END
+ADDRESS_MAP_END
 
-/*static PORT_WRITE_START ( tutor_writecru )
+/*static ADDRESS_MAP_START(tutor_writecru, ADDRESS_SPACE_IO, 8)
 
 
-PORT_END*/
+ADDRESS_MAP_END*/
 
 
 
@@ -596,8 +580,8 @@ static MACHINE_DRIVER_START(tutor)
 	MDRV_CPU_ADD(TMS9995, 10700000)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(tutor_processor_config)
-	MDRV_CPU_MEMORY(tutor_readmem, tutor_writemem)
-	MDRV_CPU_PORTS(tutor_readcru, /*tutor_writecru*/NULL)
+	MDRV_CPU_PROGRAM_MAP(tutor_memmap, 0)
+	MDRV_CPU_IO_MAP(tutor_readcru, /*tutor_writecru*/0)
 	MDRV_CPU_VBLANK_INT(tutor_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 

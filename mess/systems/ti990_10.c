@@ -141,54 +141,42 @@ static VIDEO_UPDATE( ti990_10 )
   Memory map - see description above
 */
 
-static MEMORY_READ16_START (ti990_10_readmem)
+static ADDRESS_MAP_START(ti990_10_memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x000000, 0x0fffff, MRA16_RAM },		/* let's say we have 1MB of RAM */
-	{ 0x100000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, ti990_hdc_r },	/* disk controller TPCS */
-	{ 0x1ff820, 0x1ff87f, MRA16_NOP },		/* free TPCS */
-	{ 0x1ff880, 0x1ff89f, ti990_tpc_r },	/* tape controller TPCS */
-	{ 0x1ff8a0, 0x1ffbff, MRA16_NOP },		/* free TPCS */
-	{ 0x1ffc00, 0x1fffff, MRA16_ROM },		/* LOAD ROM */
+	AM_RANGE(0x000000, 0x0fffff) AM_READWRITE(MRA16_RAM, MWA16_RAM)		/* let's say we have 1MB of RAM */
+	AM_RANGE(0x100000, 0x1ff7ff) AM_READWRITE(MRA16_NOP, MWA16_NOP)		/* free TILINE space */
+	AM_RANGE(0x1ff800, 0x1ff81f) AM_READWRITE(ti990_hdc_r, ti990_hdc_w)	/* disk controller TPCS */
+	AM_RANGE(0x1ff820, 0x1ff87f) AM_READWRITE(MRA16_NOP, MWA16_NOP)		/* free TPCS */
+	AM_RANGE(0x1ff880, 0x1ff89f) AM_READWRITE(ti990_tpc_r, ti990_tpc_w)	/* tape controller TPCS */
+	AM_RANGE(0x1ff8a0, 0x1ffbff) AM_READWRITE(MRA16_NOP, MWA16_NOP)		/* free TPCS */
+	AM_RANGE(0x1ffc00, 0x1fffff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* LOAD ROM */
 
-MEMORY_END
-
-static MEMORY_WRITE16_START (ti990_10_writemem)
-
-	{ 0x000000, 0x0fffff, MWA16_RAM },		/* let's say we have 1MB of RAM */
-	{ 0x100000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, ti990_hdc_w },	/* disk controller TPCS */
-	{ 0x1ff820, 0x1ff87f, MWA16_NOP },		/* free TPCS */
-	{ 0x1ff880, 0x1ff89f, ti990_tpc_w },	/* tape controller TPCS */
-	{ 0x1ff8a0, 0x1ffbff, MWA16_NOP },		/* free TPCS */
-	{ 0x1ffc00, 0x1fffff, MWA16_ROM },		/* LOAD ROM */
-
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /*
   CRU map
 */
 
-static PORT_WRITE16_START ( ti990_10_writeport )
+static ADDRESS_MAP_START(ti990_10_writecru, ADDRESS_SPACE_IO, 8)
 
-	{ 0x80 << 1, (0x8f << 1) + 1, vdt911_0_cru_w },
+	AM_RANGE(0x80, 0x8f) AM_WRITE(vdt911_0_cru_w)
 
-	{ 0xfd0 << 1, (0xfdf << 1) + 1, ti990_10_mapper_cru_w },
-	{ 0xfe0 << 1, (0xfef << 1) + 1, ti990_10_eir_cru_w },
-	{ 0xff0 << 1, (0xfff << 1) + 1, ti990_panel_write },
+	AM_RANGE(0xfd0, 0xfdf) AM_WRITE(ti990_10_mapper_cru_w)
+	AM_RANGE(0xfe0, 0xfef) AM_WRITE(ti990_10_eir_cru_w)
+	AM_RANGE(0xff0, 0xfff) AM_WRITE(ti990_panel_write)
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_READ16_START ( ti990_10_readport )
+static ADDRESS_MAP_START(ti990_10_readcru, ADDRESS_SPACE_IO, 8)
 
-	{ 0x10 << 1, (0x11 << 1) + 1, vdt911_0_cru_r },
+	AM_RANGE(0x10, 0x11) AM_READ(vdt911_0_cru_r)
 
-	{ 0x1fa << 1, (0x1fb << 1) + 1, ti990_10_mapper_cru_r },
-	{ 0x1fc << 1, (0x1fd << 1) + 1, ti990_10_eir_cru_r },
-	{ 0x1fe << 1, (0x1ff << 1) + 1, ti990_panel_read },
+	AM_RANGE(0x1fa, 0x1fb) AM_READ(ti990_10_mapper_cru_r)
+	AM_RANGE(0x1fc, 0x1fd) AM_READ(ti990_10_eir_cru_r)
+	AM_RANGE(0x1fe, 0x1ff) AM_READ(ti990_panel_read)
 
-PORT_END
+ADDRESS_MAP_END
 
 static ti990_10reset_param reset_params =
 {
@@ -214,8 +202,8 @@ static MACHINE_DRIVER_START(ti990_10)
 	MDRV_CPU_ADD(TI990_10, 4000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(reset_params)
-	MDRV_CPU_MEMORY(ti990_10_readmem, ti990_10_writemem)
-	MDRV_CPU_PORTS(ti990_10_readport, ti990_10_writeport)
+	MDRV_CPU_PROGRAM_MAP(ti990_10_memmap, 0)
+	MDRV_CPU_IO_MAP(ti990_10_readcru, ti990_10_writecru)
 	/*MDRV_CPU_VBLANK_INT(NULL, 0)*/
 	MDRV_CPU_PERIODIC_INT(ti990_10_line_interrupt, 120/*or 100 in Europe*/)
 

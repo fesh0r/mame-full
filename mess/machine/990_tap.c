@@ -378,7 +378,7 @@ static void cmd_read_binary_forward(void)
 		/* DMA */
 		for (i=0; i<bytes_read; i+=2)
 		{
-			cpu_writemem24bew_word(dma_address, (((int) buffer[i]) << 8) | buffer[i+1]);
+			program_write_word_16be(dma_address, (((int) buffer[i]) << 8) | buffer[i+1]);
 			dma_address = (dma_address + 2) & 0x1ffffe;
 		}
 

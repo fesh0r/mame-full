@@ -8,6 +8,6 @@ DEVICE_LOAD( fd800 );
 
 void fd800_machine_init(void (*interrupt_callback)(int state));
 
-extern READ16_HANDLER(fd800_cru_r);
-extern WRITE16_HANDLER(fd800_cru_w);
+extern READ_HANDLER(fd800_cru_r);
+extern WRITE_HANDLER(fd800_cru_w);
 

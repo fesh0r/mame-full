@@ -40,4 +40,4 @@ void geneve_hblank_interrupt(void);
 READ_HANDLER ( geneve_r );
 WRITE_HANDLER ( geneve_w );
 
-WRITE_HANDLER ( geneve_peb_mode_CRU_w );
+WRITE_HANDLER ( geneve_peb_mode_cru_w );

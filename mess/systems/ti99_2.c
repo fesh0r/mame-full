@@ -212,27 +212,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
   Memory map - see description above
 */
 
-static MEMORY_READ_START (ti99_2_readmem )
+static ADDRESS_MAP_START(ti99_2_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0x3fff, MRA_ROM },            /*system ROM*/
-	{ 0x4000, 0x5fff, /*MRA_ROM*/MRA_BANK1 },   /*system ROM, banked on 32kb ROMs protos*/
-	{ 0x6000, 0xdfff, MRA_NOP },            /*free for expansion*/
-	{ 0xe000, 0xefff, MRA_RAM },            /*system RAM*/
-	{ 0xf000, 0xffff, MRA_NOP },            /*processor RAM or free*/
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)		/*system ROM*/
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)	/*system ROM, banked on 32kb ROMs protos*/
+	AM_RANGE(0x6000, 0xdfff) AM_READWRITE(MRA8_NOP, MWA8_NOP)		/*free for expansion*/
+	AM_RANGE(0xe000, 0xebff) AM_READWRITE(MRA8_RAM, MWA8_RAM)		/*system RAM*/
+	AM_RANGE(0xec00, 0xeeff) AM_READWRITE(MRA8_RAM, ti99_2_video_w) AM_BASE(& videoram)	/*system RAM: used for video*/
+	AM_RANGE(0xef00, 0xefff) AM_READWRITE(MRA8_RAM, MWA8_RAM)		/*system RAM*/
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_NOP, MWA8_NOP)		/*free for expansion (and internal processor RAM)*/
 
-MEMORY_END
-
-static MEMORY_WRITE_START ( ti99_2_writemem )
-
-	{ 0x0000, 0x3fff, MWA_ROM },            /*system ROM*/
-	{ 0x4000, 0x5fff, /*MWA_ROM*/MWA_BANK1 },       /*system ROM, banked on 32kb ROMs protos*/
-	{ 0x6000, 0xdfff, MWA_NOP },            /*free for expansion*/
-	{ 0xe000, 0xebff, MWA_RAM },            /*system RAM*/
-	{ 0xec00, 0xeeff, ti99_2_video_w, & videoram }, /*system RAM : used for video*/
-	{ 0xef00, 0xefff, MWA_RAM },            /*system RAM*/
-	{ 0xf000, 0xffff, MWA_NOP },            /*processor RAM or free*/
-
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /*
@@ -289,12 +279,12 @@ static WRITE_HANDLER ( ti99_2_write_misc_cru )
 	}
 }
 
-static PORT_WRITE_START ( ti99_2_writecru )
+static ADDRESS_MAP_START(ti99_2_writecru, ADDRESS_SPACE_IO, 8)
 
-	{0x7000, 0x73ff, ti99_2_write_kbd},
-	{0x7400, 0x77ff, ti99_2_write_misc_cru},
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(ti99_2_write_kbd)
+	AM_RANGE(0x7400, 0x77ff) AM_WRITE(ti99_2_write_misc_cru)
 
-PORT_END
+ADDRESS_MAP_END
 
 /* read keys in the current row */
 static READ_HANDLER ( ti99_2_read_kbd )
@@ -307,12 +297,12 @@ static READ_HANDLER ( ti99_2_read_misc_cru )
 	return 0;
 }
 
-static PORT_READ_START ( ti99_2_readcru )
+static ADDRESS_MAP_START(ti99_2_readcru, ADDRESS_SPACE_IO, 8)
 
-	{0x0E00, 0x0E7f, ti99_2_read_kbd},
-	{0x0E80, 0x0Eff, ti99_2_read_misc_cru},
+	AM_RANGE(0x0E00, 0x0E7f) AM_READ(ti99_2_read_kbd)
+	AM_RANGE(0x0E80, 0x0Eff) AM_READ(ti99_2_read_misc_cru)
 
-PORT_END
+ADDRESS_MAP_END
 
 
 /* ti99/2 : 54-key keyboard */
@@ -399,51 +389,6 @@ static struct tms9995reset_param ti99_2_processor_config =
 	1           /* enable automatic wait state generation */
 };
 
-#if 0
-static struct MachineDriver machine_driver_ti99_2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_TMS9995,
-			10700000,     /* 10.7 Mhz*/
-
-			ti99_2_readmem, ti99_2_writemem, ti99_2_readport, ti99_2_writeport,
-			ti99_2_vblank_interrupt, 1,
-			0, 0,
-			& ti99_2_processor_config
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	1,
-	ti99_2_init_machine,
-	ti99_2_stop_machine,
-
-	/* video hardware */
-	256,                      /* screen width */
-	192,                      /* screen height */
-	{ 0, 256-1, 0, 192-1},    /* visible_area */
-	gfxdecodeinfo,            /* graphics decode info (???)*/
-	TI99_2_PALETTE_SIZE,      /* palette is 3*total_colors bytes long */
-	TI99_2_COLORTABLE_SIZE,   /* length in shorts of the color lookup table */
-	ti99_2_init_palette,      /* palette init */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ti99_2_vh_start,
-	ti99_2_vh_stop,
-	ti99_2_vh_refresh,
-
-	/* sound hardware */
-	0,
-	0,0,0,
-#if 0
-	{ /* no sound ! */
-	}
-#endif
-};
-#else
-
 static MACHINE_DRIVER_START(ti99_2)
 
 	/* basic machine hardware */
@@ -451,8 +396,8 @@ static MACHINE_DRIVER_START(ti99_2)
 	MDRV_CPU_ADD(TMS9995, 10700000)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(ti99_2_processor_config)
-	MDRV_CPU_MEMORY(ti99_2_readmem, ti99_2_writemem)
-	MDRV_CPU_PORTS(ti99_2_readcru, ti99_2_writecru)
+	MDRV_CPU_PROGRAM_MAP(ti99_2_memmap, 0)
+	MDRV_CPU_IO_MAP(ti99_2_readcru, ti99_2_writecru)
 	MDRV_CPU_VBLANK_INT(ti99_2_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -477,12 +422,9 @@ static MACHINE_DRIVER_START(ti99_2)
 	MDRV_VIDEO_START(ti99_2)
 	MDRV_VIDEO_UPDATE(ti99_2)
 
-	/* no sound ! */
+	/* no sound! */
 
 MACHINE_DRIVER_END
-
-
-#endif
 
 
 

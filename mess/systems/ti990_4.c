@@ -75,7 +75,7 @@ static void ti990_4_line_interrupt(void)
 {
 }*/
 
-static WRITE16_HANDLER ( rset_callback )
+static WRITE_HANDLER ( rset_callback )
 {
 	ti990_cpuboard_reset();
 
@@ -87,12 +87,12 @@ static WRITE16_HANDLER ( rset_callback )
 	/* clear controller panel and smi fault LEDs */
 }
 
-static WRITE16_HANDLER ( ckon_ckof_callback )
+static WRITE_HANDLER ( ckon_ckof_callback )
 {
 	ti990_ckon_ckof_callback((offset & 0x1000) ? 1 : 0);
 }
 
-static WRITE16_HANDLER ( lrex_callback )
+static WRITE_HANDLER ( lrex_callback )
 {
 	/* right??? */
 	ti990_hold_load();
@@ -141,23 +141,14 @@ static VIDEO_UPDATE( ti990_4 )
 	Memory map - see description above
 */
 
-static MEMORY_READ16_START (ti990_4_readmem)
+static ADDRESS_MAP_START(ti990_4_memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x0000, 0x7fff, MRA16_RAM },		/* dynamic RAM */
-	{ 0x8000, 0xf7ff, MRA16_NOP },		/* reserved for expansion */
-	{ 0xf800, 0xfbff, MRA16_RAM },		/* static RAM ? */
-	{ 0xfc00, 0xffff, MRA16_ROM },		/* LOAD ROM */
+	AM_RANGE(0x0000, 0x7fff) AM_READWRITE(MRA16_RAM, MWA16_RAM)	/* dynamic RAM */
+	AM_RANGE(0x8000, 0xf7ff) AM_READWRITE(MRA16_NOP, MWA16_NOP)	/* reserved for expansion */
+	AM_RANGE(0xf800, 0xfbff) AM_READWRITE(MRA16_RAM, MWA16_RAM)	/* static RAM? */
+	AM_RANGE(0xfc00, 0xffff) AM_READWRITE(MRA16_ROM, MWA16_ROM)	/* LOAD ROM */
 
-MEMORY_END
-
-static MEMORY_WRITE16_START (ti990_4_writemem)
-
-	{ 0x0000, 0x7fff, MWA16_RAM },		/* dynamic RAM */
-	{ 0x8000, 0xf7ff, MWA16_NOP },		/* reserved for expansion */
-	{ 0xf800, 0xfbff, MWA16_RAM },		/* static RAM ? */
-	{ 0xfc00, 0xffff, MWA16_ROM },		/* LOAD ROM */
-
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /*
@@ -182,39 +173,39 @@ MEMORY_END
 	0x0a0-0x0bf: VDT3 (int ??? - wired to int 9, unused)
 */
 
-static PORT_WRITE16_START ( ti990_4_writeport )
+static ADDRESS_MAP_START(ti990_4_writecru, ADDRESS_SPACE_IO, 8)
 
 #if VIDEO_911
-	{ 0x80 << 1, (0x8f << 1)+1, vdt911_0_cru_w },
+	AM_RANGE(0x80, 0x8f) AM_WRITE(vdt911_0_cru_w)
 #else
-	{ 0x00 << 1, (0x0f << 1)+1, asr733_0_cru_w },
+	AM_RANGE(0x00, 0x0f) AM_WRITE(asr733_0_cru_w)
 #endif
 
-	{ 0x40 << 1, (0x5f << 1)+1, fd800_cru_w },
+	AM_RANGE(0x40, 0x5f) AM_WRITE(fd800_cru_w)
 
-	{ 0xff0 << 1, (0xfff << 1)+1, ti990_panel_write },
+	AM_RANGE(0xff0, 0xfff) AM_WRITE(ti990_panel_write)
 
 	/* external instruction decoding */
-	/*{ 0x2000 << 1, (0x2fff << 1)+1, idle_callback },*/
-	{ 0x3000 << 1, (0x3fff << 1)+1, rset_callback },
-	{ 0x5000 << 1, (0x6fff << 1)+1, ckon_ckof_callback },
-	{ 0x7000 << 1, (0x7fff << 1)+1, lrex_callback },
+/*	AM_RANGE(0x2000, 0x2fff) AM_WRITE(idle_callback)*/
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(rset_callback)
+	AM_RANGE(0x5000, 0x6fff) AM_WRITE(ckon_ckof_callback)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(lrex_callback)
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_READ16_START ( ti990_4_readport )
+static ADDRESS_MAP_START(ti990_4_readcru, ADDRESS_SPACE_IO, 8)
 
 #if VIDEO_911
-	{ 0x10 << 1, (0x11 << 1)+1, vdt911_0_cru_r },
+	AM_RANGE(0x10, 0x11) AM_READ(vdt911_0_cru_r)
 #else
-	{ 0x00 << 1, (0x01 << 1)+1, asr733_0_cru_r },
+	AM_RANGE(0x00, 0x01) AM_READ(asr733_0_cru_r)
 #endif
 
-	{ 0x08 << 1, (0x0b << 1)+1, fd800_cru_r },
+	AM_RANGE(0x08, 0x0b) AM_READ(fd800_cru_r)
 
-	{ 0x1fe << 1, (0x1ff << 1)+1, ti990_panel_read },
+	AM_RANGE(0x1fe, 0x1ff) AM_READ(ti990_panel_read)
 
-PORT_END
+ADDRESS_MAP_END
 
 #if VIDEO_911
 static struct beep_interface vdt_911_beep_interface =
@@ -236,8 +227,8 @@ static MACHINE_DRIVER_START(ti990_4)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(reset_params)*/
-	MDRV_CPU_MEMORY(ti990_4_readmem, ti990_4_writemem)
-	MDRV_CPU_PORTS(ti990_4_readport, ti990_4_writeport)
+	MDRV_CPU_PROGRAM_MAP(ti990_4_memmap, 0)
+	MDRV_CPU_IO_MAP(ti990_4_readcru, ti990_4_writecru)
 	/*MDRV_CPU_VBLANK_INT(NULL, 0)*/
 	MDRV_CPU_PERIODIC_INT(ti990_4_line_interrupt, 120/*or 100 in Europe*/)
 

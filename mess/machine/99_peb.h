@@ -30,8 +30,8 @@ typedef struct ti99_peb_16bit_card_handlers_t
 	cru_read_handler cru_read;		/* card CRU read handler */
 	cru_write_handler cru_write;	/* card CRU handler */
 
-	mem_read16_handler mem_read;	/* card mem read handler (16 bits) */
-	mem_write16_handler mem_write;	/* card mem write handler (16 bits) */
+	read16_handler mem_read;		/* card mem read handler (16 bits) */
+	write16_handler mem_write;		/* card mem write handler (16 bits) */
 } ti99_peb_16bit_card_handlers_t;
 
 /* masks for ila and ilb (from actual ILA and ILB registers) */
@@ -58,23 +58,23 @@ void ti99_peb_set_16bit_card_handlers(int cru_base, const ti99_peb_16bit_card_ha
 void ti99_peb_set_ila_bit(int bit, int state);
 void ti99_peb_set_ilb_bit(int bit, int state);
 
-READ16_HANDLER ( ti99_4x_peb_CRU_r );
-WRITE16_HANDLER ( ti99_4x_peb_CRU_w );
+READ_HANDLER ( ti99_4x_peb_cru_r );
+WRITE_HANDLER ( ti99_4x_peb_cru_w );
 READ16_HANDLER ( ti99_4x_peb_r );
 WRITE16_HANDLER ( ti99_4x_peb_w );
 
-READ_HANDLER ( geneve_peb_CRU_r );
-WRITE_HANDLER ( geneve_peb_CRU_w );
+READ_HANDLER ( geneve_peb_cru_r );
+WRITE_HANDLER ( geneve_peb_cru_w );
 READ_HANDLER ( geneve_peb_r );
 WRITE_HANDLER ( geneve_peb_w );
 
-READ_HANDLER ( ti99_8_peb_CRU_r );
-WRITE_HANDLER ( ti99_8_peb_CRU_w );
+READ_HANDLER ( ti99_8_peb_cru_r );
+WRITE_HANDLER ( ti99_8_peb_cru_w );
 READ_HANDLER ( ti99_8_peb_r );
 WRITE_HANDLER ( ti99_8_peb_w );
 
-READ16_HANDLER ( ti99_4p_peb_CRU_r );
-WRITE16_HANDLER ( ti99_4p_peb_CRU_w );
+READ_HANDLER ( ti99_4p_peb_cru_r );
+WRITE_HANDLER ( ti99_4p_peb_cru_w );
 READ16_HANDLER ( ti99_4p_peb_r );
 WRITE16_HANDLER ( ti99_4p_peb_w );
 

@@ -407,7 +407,7 @@ static void fdc_cru_w(int offset, int data)
 	{
 	case 0:
 		/* WRITE to DISK DSR ROM bit (bit 0) */
-		/* handled in ti99_expansion_CRU_w() */
+		/* handled in xxx_peb_cru_w() */
 		break;
 
 	case 1:
@@ -633,7 +633,7 @@ static void bwg_cru_w(int offset, int data)
 	{
 	case 0:
 		/* WRITE to DISK DSR ROM bit (bit 0) */
-		/* handled in ti99_expansion_CRU_w() */
+		/* handled in xxx_peb_cru_w() */
 		break;
 
 	case 1:
@@ -1039,7 +1039,7 @@ static void hfdc_cru_w(int offset, int data)
 	{
 	case 0:
 		/* WRITE to DISK DSR ROM bit (bit 0) */
-		/* handled in ti99_expansion_CRU_w() */
+		/* handled in xxx_peb_cru_w() */
 		break;
 
 	case 1:

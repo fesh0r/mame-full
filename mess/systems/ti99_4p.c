@@ -40,69 +40,44 @@
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 
-static MEMORY_READ16_START (readmem)
+static ADDRESS_MAP_START(memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x0000, 0x1fff, MRA16_BANK1 },		/*system ROM*/
-	{ 0x2000, 0x2fff, MRA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
-	{ 0x3000, 0x3fff, MRA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
-	{ 0x4000, 0x5fff, ti99_4p_peb_r },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_4p_rw_cartmem },	/*cartridge space (internal or hsgpl)*/
-	{ 0x8000, 0x83ff, MRA16_BANK2 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_rw_rv38 },		/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
-	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
-	{ 0x9800, 0x98ff, ti99_4p_rw_rgpl },	/*GPL read*/
-	{ 0x9900, 0x9bff, MRA16_BANK11 },		/*extra RAM for debugger*/
-	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
-	{ 0xa000, 0xafff, MRA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
-	{ 0xb000, 0xbfff, MRA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
-	{ 0xc000, 0xcfff, MRA16_BANK7 },		/*upper 24kb of RAM extension: AMS bank 12*/
-	{ 0xd000, 0xdfff, MRA16_BANK8 },		/*upper 24kb of RAM extension: AMS bank 13*/
-	{ 0xe000, 0xefff, MRA16_BANK9 },		/*upper 24kb of RAM extension: AMS bank 14*/
-	{ 0xf000, 0xffff, MRA16_BANK10 },		/*upper 24kb of RAM extension: AMS bank 15*/
+	AM_RANGE(0x0000, 0x1fff) AM_ROMBANK(1)								/*system ROM*/
+	AM_RANGE(0x2000, 0x2fff) AM_RAMBANK(3)								/*lower 8kb of RAM extension: AMS bank 2*/
+	AM_RANGE(0x3000, 0x3fff) AM_RAMBANK(4)								/*lower 8kb of RAM extension: AMS bank 3*/
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(ti99_4p_peb_r, ti99_4p_peb_w)	/*DSR ROM space*/
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(ti99_4p_cart_r,ti99_4p_cart_w)/*cartridge space (internal or hsgpl)*/
+	AM_RANGE(0x8000, 0x83ff) AM_RAMBANK(2)								/*RAM PAD*/
+	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(ti99_nop_8_r, ti99_wsnd_w)	/*soundchip write*/
+	AM_RANGE(0x8800, 0x8bff) AM_READWRITE(ti99_rv38_r, ti99_nop_8_w)	/*vdp read*/
+	AM_RANGE(0x8C00, 0x8fff) AM_READWRITE(ti99_nop_8_r, ti99_wv38_w)	/*vdp write*/
+	AM_RANGE(0x9000, 0x93ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech read - installed dynamically*/
+	AM_RANGE(0x9400, 0x97ff) AM_READWRITE(ti99_nop_8_r, ti99_nop_8_w)	/*speech write - installed dynamically*/
+	AM_RANGE(0x9800, 0x98ff) AM_READWRITE(ti99_4p_rgpl_r, ti99_nop_8_w)	/*GPL read*/
+	AM_RANGE(0x9900, 0x9bff) AM_RAMBANK(11)								/*extra RAM for debugger*/
+	AM_RANGE(0x9c00, 0x9fff) AM_READWRITE(ti99_nop_8_r, ti99_4p_wgpl_w)	/*GPL write*/
+	AM_RANGE(0xa000, 0xafff) AM_RAMBANK(5)								/*upper 24kb of RAM extension: AMS bank 10*/
+	AM_RANGE(0xb000, 0xbfff) AM_RAMBANK(6)								/*upper 24kb of RAM extension: AMS bank 11*/
+	AM_RANGE(0xc000, 0xcfff) AM_RAMBANK(7)								/*upper 24kb of RAM extension: AMS bank 12*/
+	AM_RANGE(0xd000, 0xdfff) AM_RAMBANK(8)								/*upper 24kb of RAM extension: AMS bank 13*/
+	AM_RANGE(0xe000, 0xefff) AM_RAMBANK(9)								/*upper 24kb of RAM extension: AMS bank 14*/
+	AM_RANGE(0xf000, 0xffff) AM_RAMBANK(10)								/*upper 24kb of RAM extension: AMS bank 15*/
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static MEMORY_WRITE16_START (writemem)
+static ADDRESS_MAP_START(writecru, ADDRESS_SPACE_IO, 8)
 
-	{ 0x0000, 0x1fff, MWA16_BANK1 },		/*system ROM*/
-	{ 0x2000, 0x2fff, MWA16_BANK3 },		/*lower 8kb of RAM extension: AMS bank 2*/
-	{ 0x3000, 0x3fff, MWA16_BANK4 },		/*lower 8kb of RAM extension: AMS bank 3*/
-	{ 0x4000, 0x5fff, ti99_4p_peb_w },		/*DSR ROM space*/
-	{ 0x6000, 0x7fff, ti99_4p_ww_cartmem },	/*cartridge space (internal or hsgpl)*/
-	{ 0x8000, 0x83ff, MWA16_BANK2 },		/*RAM PAD*/
-	{ 0x8400, 0x87ff, ti99_ww_wsnd },		/*soundchip write*/
-	{ 0x8800, 0x8bff, ti99_ww_null8bits },	/*vdp read*/
-	{ 0x8C00, 0x8fff, ti99_ww_wv38 },		/*vdp write*/
-	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
-	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
-	{ 0x9800, 0x98ff, ti99_ww_null8bits },	/*GPL read*/
-	{ 0x9900, 0x9bff, MWA16_BANK11 },		/*extra RAM for debugger*/
-	{ 0x9c00, 0x9fff, ti99_4p_ww_wgpl },	/*GPL write*/
-	{ 0xa000, 0xafff, MWA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
-	{ 0xb000, 0xbfff, MWA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
-	{ 0xc000, 0xcfff, MWA16_BANK7 },		/*upper 24kb of RAM extension: AMS bank 12*/
-	{ 0xd000, 0xdfff, MWA16_BANK8 },		/*upper 24kb of RAM extension: AMS bank 13*/
-	{ 0xe000, 0xefff, MWA16_BANK9 },		/*upper 24kb of RAM extension: AMS bank 14*/
-	{ 0xf000, 0xffff, MWA16_BANK10 },		/*upper 24kb of RAM extension: AMS bank 15*/
+	AM_RANGE(0x0000, 0x01ff) AM_WRITE(tms9901_0_cru_w)
+	AM_RANGE(0x0200, 0x0fff) AM_WRITE(ti99_4p_peb_cru_w)
 
-MEMORY_END
+ADDRESS_MAP_END
 
-static PORT_WRITE16_START(writecru)
+static ADDRESS_MAP_START(readcru, ADDRESS_SPACE_IO, 8)
 
-	{0x0000<<1, (0x01ff<<1) + 1, tms9901_0_CRU_write16},
-	{0x0200<<1, (0x0fff<<1) + 1, ti99_4p_peb_CRU_w},
+	AM_RANGE(0x0000, 0x003f) AM_READ(tms9901_0_cru_r)
+	AM_RANGE(0x0040, 0x01ff) AM_READ(ti99_4p_peb_cru_r)
 
-PORT_END
-
-static PORT_READ16_START(readcru)
-
-	{0x0000<<1, (0x003f<<1) + 1, tms9901_0_CRU_read16},
-	{0x0040<<1, (0x01ff<<1) + 1, ti99_4p_peb_CRU_r},
-
-PORT_END
+ADDRESS_MAP_END
 
 
 /*
@@ -295,8 +270,8 @@ static MACHINE_DRIVER_START(ti99_4p_60hz)
 	MDRV_CPU_ADD(TMS9900, 3000000)
 	/*MDRV_CPU_FLAGS(0)*/
 	/*MDRV_CPU_CONFIG(0)*/
-	MDRV_CPU_MEMORY(readmem, writemem)
-	MDRV_CPU_PORTS(readcru, writecru)
+	MDRV_CPU_PROGRAM_MAP(memmap, 0)
+	MDRV_CPU_IO_MAP(readcru, writecru)
 	MDRV_CPU_VBLANK_INT(ti99_4ev_hblank_interrupt, 263)	/* 262.5 in 60Hz, 312.5 in 50Hz */
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 

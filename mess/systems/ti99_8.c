@@ -162,39 +162,33 @@ Keyboard interface:
 #include "devices/cassette.h"
 
 /*
-  Memory map - see description above
+	Memory map - see description above
 */
 
-static MEMORY_READ_START (ti99_8_readmem )
+static ADDRESS_MAP_START(ti99_8_memmap, ADDRESS_SPACE_PROGRAM, 8)
 
-	{ 0x0000, 0xffff, ti99_8_r },
+	AM_RANGE(0x0000, 0xffff) AM_READWRITE(ti99_8_r, ti99_8_w)
 
-MEMORY_END
-
-static MEMORY_WRITE_START ( ti99_8_writemem )
-
-	{ 0x0000, 0xffff, ti99_8_w },
-
-MEMORY_END
+ADDRESS_MAP_END
 
 
 /*
-  CRU map - see description above
+	CRU map - see description above
 */
 
-static PORT_WRITE_START ( ti99_8_writecru )
+static ADDRESS_MAP_START(ti99_8_writecru, ADDRESS_SPACE_IO, 8)
 
-	{0x0000, 0x07ff, tms9901_0_CRU_write},
-	{0x0800, 0x17ff, ti99_8_peb_CRU_w},
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(tms9901_0_cru_w)
+	AM_RANGE(0x0800, 0x17ff) AM_WRITE(ti99_8_peb_cru_w)
 
-PORT_END
+ADDRESS_MAP_END
 
-static PORT_READ_START ( ti99_8_readcru )
+static ADDRESS_MAP_START(ti99_8_readcru, ADDRESS_SPACE_IO, 8)
 
-	{0x0000, 0x00ff, tms9901_0_CRU_read},
-	{0x0100, 0x02ff, ti99_8_peb_CRU_r},
+	AM_RANGE(0x0000, 0x00ff) AM_READ(tms9901_0_cru_r)
+	AM_RANGE(0x0100, 0x02ff) AM_READ(ti99_8_peb_cru_r)
 
-PORT_END
+ADDRESS_MAP_END
 
 
 /* ti99/8 : 54-key keyboard */
@@ -412,8 +406,8 @@ static MACHINE_DRIVER_START(ti99_8_60hz)
 	MDRV_CPU_ADD(TMS9995, 10738635)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(ti99_8_processor_config)
-	MDRV_CPU_MEMORY(ti99_8_readmem, ti99_8_writemem)
-	MDRV_CPU_PORTS(ti99_8_readcru, ti99_8_writecru)
+	MDRV_CPU_PROGRAM_MAP(ti99_8_memmap, 0)
+	MDRV_CPU_IO_MAP(ti99_8_readcru, ti99_8_writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
@@ -443,8 +437,8 @@ static MACHINE_DRIVER_START(ti99_8_50hz)
 	MDRV_CPU_ADD(TMS9995, 10738635)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(ti99_8_processor_config)
-	MDRV_CPU_MEMORY(ti99_8_readmem, ti99_8_writemem)
-	MDRV_CPU_PORTS(ti99_8_readcru, ti99_8_writecru)
+	MDRV_CPU_PROGRAM_MAP(ti99_8_memmap, 0)
+	MDRV_CPU_IO_MAP(ti99_8_readcru, ti99_8_writecru)
 	MDRV_CPU_VBLANK_INT(ti99_vblank_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 

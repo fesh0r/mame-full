@@ -62,8 +62,8 @@ void vdt911_reset(void);
 int vdt911_cru_r(int offset, int unit);
 void vdt911_cru_w(int offset, int data, int unit);
 
-READ16_HANDLER(vdt911_0_cru_r);
-WRITE16_HANDLER(vdt911_0_cru_w);
+READ_HANDLER(vdt911_0_cru_r);
+WRITE_HANDLER(vdt911_0_cru_w);
 
 void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y);
 
