@@ -111,7 +111,7 @@ struct rc_option video_opts[] = {
 	     "6 = lq2x (2x low  quality magnification filter)\n"
 	     "7 = hq2x (2x high quality magnification filter)\n"
 	     "8 = 6tap2x (2x sinc-based 6-tap filter with scanlines\n"
-	     "9 = fake scanlines (skip 1 line during heightscaling" },
+	     "9 = fake scanlines (skip 1 line during height scaling)" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
