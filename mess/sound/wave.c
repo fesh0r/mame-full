@@ -34,13 +34,6 @@ struct wave_file {
 static struct Wave_interface *intf;
 static struct wave_file wave[MAX_WAVE] = {{-1,},{-1,}};
 
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
-                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-#endif
-
 #define WAVE_OK    0
 #define WAVE_ERR   1
 #define WAVE_FMT   2
@@ -82,7 +75,7 @@ static int wave_read(int id)
 		logerror("WAVE read error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
-	filesize = intelLong(temp32);
+	filesize = LITTLE_ENDIANIZE_INT32(temp32);
 	logerror("WAVE filesize %u bytes\n", filesize);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
@@ -103,7 +96,7 @@ static int wave_read(int id)
 	{
 		offset += osd_fread(w->file, buf, 4);
 		offset += osd_fread(w->file, &temp32, 4);
-		w->length = intelLong(temp32);
+		w->length = LITTLE_ENDIANIZE_INT32(temp32);
 		if( memcmp(&buf[0], "fmt ", 4) == 0 )
 			break;
 
@@ -137,7 +130,7 @@ static int wave_read(int id)
 
 	/* sample rate */
 	offset += osd_fread(w->file, &temp32, 4);
-	w->smpfreq = intelLong(temp32);
+	w->smpfreq = LITTLE_ENDIANIZE_INT32(temp32);
 	logerror("WAVE sample rate %d Hz\n", w->smpfreq);
 
 	/* bytes/second and block alignment are ignored */
@@ -162,7 +155,7 @@ static int wave_read(int id)
 	{
 		offset += osd_fread(w->file, buf, 4);
 		offset += osd_fread(w->file, &temp32, 4);
-		w->length = intelLong(temp32);
+		w->length = LITTLE_ENDIANIZE_INT32(temp32);
 		if( memcmp(&buf[0], "data", 4) == 0 )
 			break;
 
@@ -303,7 +296,7 @@ static int wave_write(int id)
 		return WAVE_ERR;
     }
 
-	temp32 = intelLong(filesize) - 8;
+	temp32 = LITTLE_ENDIANIZE_INT32(filesize) - 8;
 	offset += osd_fwrite(w->file, &temp32, 4);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
@@ -348,7 +341,7 @@ static int wave_write(int id)
     }
 
 	/* sample rate */
-	temp32 = intelLong(w->smpfreq);
+	temp32 = LITTLE_ENDIANIZE_INT32(w->smpfreq);
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 24 )
 	{
@@ -357,7 +350,7 @@ static int wave_write(int id)
     }
 
 	/* byte rate */
-	temp32 = intelLong(w->smpfreq * w->resolution / 8);
+	temp32 = LITTLE_ENDIANIZE_INT32(w->smpfreq * w->resolution / 8);
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 28 )
 	{
@@ -392,7 +385,7 @@ static int wave_write(int id)
     }
 
 	/* data size */
-	temp32 = intelLong(w->length);
+	temp32 = LITTLE_ENDIANIZE_INT32(w->length);
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 40 )
 	{
@@ -417,13 +410,13 @@ static void wave_display(int id)
 	static int tape_pos = 0;
     struct wave_file *w = &wave[id];
 
-	if( abs(w->play_pos - tape_pos) > w->smpfreq / 4 )
+	if (w->smpfreq && (abs(w->play_pos - tape_pos) > w->smpfreq / 4))
 	{
         char buf[32];
 		int x, y, n, t0, t1;
 
-        x = Machine->uixmin + id * Machine->uifontwidth * 16 + 1;
-		y = Machine->uiymin + Machine->uiheight - 9;
+        x = id * Machine->uifontwidth * 16 + 1;
+		y = Machine->uiheight - 9;
 		n = (w->play_pos * 4 / w->smpfreq) & 3;
 		t0 = w->play_pos / w->smpfreq;
 		t1 = w->samples / w->smpfreq;

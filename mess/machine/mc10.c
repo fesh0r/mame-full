@@ -138,12 +138,9 @@ int mc10_vh_start(void)
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x8000;
 	p.charproc = dragon_charproc;
+	p.initial_video_offset = 0x4000;
 
-	if (m6847_vh_start(&p))
-		return 1;
-
-	m6847_set_video_offset(0x4000);
-	return 0;
+	return m6847_vh_start(&p);
 }
 
 WRITE_HANDLER ( mc10_bfff_w )
@@ -169,7 +166,14 @@ WRITE_HANDLER ( mc10_bfff_w )
 
 WRITE_HANDLER ( mc10_ram_w )
 {
-	/* from vidhrdw/dragon.c */
-	extern void coco_ram_w (int offset_loc, int data_loc);
-	coco_ram_w(offset + 0x4000, data);
+	UINT8 *ram;
+
+	offset += 0x4000;
+
+	ram = memory_region(REGION_CPU1);
+	if (ram[offset] != data)
+	{
+		m6847_touch_vram(offset);
+		ram[offset] = data;
+	}
 }

@@ -61,19 +61,19 @@ int apple2_vh_start(void)
 			return 1;
 		}
 
-		if ((dirty_text[i] = malloc(0x400)) == 0)
+		if ((dirty_text[i] = auto_malloc(0x400)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
 
-		if ((dirty_lores[i] = malloc(0x400)) == 0)
+		if ((dirty_lores[i] = auto_malloc(0x400)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
 		}
 
-		if ((dirty_hires[i] = malloc(0x2000)) == 0)
+		if ((dirty_hires[i] = auto_malloc(0x2000)) == 0)
 		{
 			apple2_vh_stop();
 			return 1;
@@ -103,13 +103,6 @@ void apple2_vh_stop(void)
 			bitmap_free(apple2_lores[i]);
 		if (apple2_hires[i]!=0)
 			bitmap_free(apple2_hires[i]);
-
-		if (dirty_text[i]!=0)
-			free(dirty_text[i]);
-		if (dirty_lores[i]!=0)
-			free(dirty_lores[i]);
-		if (dirty_hires[i]!=0)
-			free(dirty_hires[i]);
 
 		apple2_text[i] = apple2_lores[i] = apple2_hires[i] = 0;
 		dirty_text[i]  = dirty_lores[i]  = dirty_hires[i]  = 0;

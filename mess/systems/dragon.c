@@ -16,12 +16,15 @@
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "includes/6883sam.h"
-#include "includes/rstrtrck.h"
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
 #include "includes/6551.h"
 #include "formats/dmkdsk.h"
 #include "printer.h"
+
+#define SHOW_FULL_AREA			0
+#define JOYSTICK_DELTA			10
+#define JOYSTICK_SENSITIVITY	100
 
 static MEMORY_READ_START( coco_readmem )
 	{ 0x0000, 0x7fff, MRA_BANK1 },
@@ -213,13 +216,13 @@ INPUT_PORTS_START( dragon32 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "R-SHIFT", KEYCODE_RSHIFT, CODE_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 	PORT_START /* 9 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
 	PORT_START /* 10 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button", KEYCODE_RALT, JOYCODE_1_BUTTON1)
@@ -228,8 +231,8 @@ INPUT_PORTS_START( dragon32 )
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Red" )
-	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPSETTING(    0x01, "Standard" )
+	PORT_DIPSETTING(    0x02, "Reverse" )
 	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -317,13 +320,13 @@ INPUT_PORTS_START( coco )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "R-SHIFT", KEYCODE_RSHIFT, CODE_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 	PORT_START /* 9 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
 	PORT_START /* 10 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button", KEYCODE_RALT, JOYCODE_1_BUTTON1)
@@ -332,8 +335,8 @@ INPUT_PORTS_START( coco )
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Red" )
-	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPSETTING(    0x01, "Standard" )
+	PORT_DIPSETTING(    0x02, "Reverse" )
 	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -430,13 +433,13 @@ INPUT_PORTS_START( coco3 )
 	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_KEYBOARD, "R-SHIFT", KEYCODE_RSHIFT, CODE_NONE)
 
 	PORT_START /* 7 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
 	PORT_START /* 8 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN)
 	PORT_START /* 9 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_LEFT, KEYCODE_RIGHT, JOYCODE_2_LEFT, JOYCODE_2_RIGHT)
 	PORT_START /* 10 */
-	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0x0, 0xff, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_2_UP, JOYCODE_2_DOWN)
 
 	PORT_START /* 11 */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Right Button 1", KEYCODE_RCONTROL, JOYCODE_1_BUTTON1)
@@ -448,8 +451,8 @@ INPUT_PORTS_START( coco3 )
 	PORT_START /* 12 */
 	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Red" )
-	PORT_DIPSETTING(    0x02, "Blue" )
+	PORT_DIPSETTING(    0x01, "Standard" )
+	PORT_DIPSETTING(    0x02, "Reverse" )
 	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
@@ -497,15 +500,15 @@ static struct MachineDriver machine_driver_dragon32 =
 	coco_stop_machine,
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
+	M6847_SCREEN_WIDTH,							/* screen width */
+	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
+	0,											/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	M6847_VIDEO_TYPE,
 	0,
 	dragon_vh_start,
 	m6847_vh_stop,
@@ -544,15 +547,15 @@ static struct MachineDriver machine_driver_dragon64 =
 	dragon64_stop_machine,
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
+	M6847_SCREEN_WIDTH,							/* screen width */
+	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
+	0,											/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	M6847_VIDEO_TYPE,
 	0,
 	dragon_vh_start,
 	m6847_vh_stop,
@@ -591,15 +594,15 @@ static struct MachineDriver machine_driver_coco =
 	coco_stop_machine,
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
+	M6847_SCREEN_WIDTH,							/* screen width */
+	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
+	0,											/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	M6847_VIDEO_TYPE,
 	0,
 	dragon_vh_start,
 	m6847_vh_stop,
@@ -638,15 +641,15 @@ static struct MachineDriver machine_driver_coco2 =
 	coco_stop_machine,
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
+	M6847_SCREEN_WIDTH,							/* screen width */
+	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
+	0,											/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	M6847_VIDEO_TYPE,
 	0,
 	dragon_vh_start,
 	m6847_vh_stop,
@@ -685,15 +688,15 @@ static struct MachineDriver machine_driver_coco2b =
 	coco_stop_machine,
 
 	/* video hardware */
-	320,					/* screen width */
-	240,					/* screen height (pixels doubled) */
-	{ 0, 319, 0, 239 },		/* visible_area */
-	0,						/* graphics decode info */
+	M6847_SCREEN_WIDTH,							/* screen width */
+	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
+	0,											/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,
 	m6847_vh_init_palette,						/* initialise palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	M6847_VIDEO_TYPE,
 	0,
 	coco2b_vh_start,
 	m6847_vh_stop,
@@ -722,7 +725,7 @@ static struct MachineDriver machine_driver_coco3 =
 			COCO_CPU_SPEED_HZ,
 			coco3_readmem,coco3_writemem,
 			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
+			coco3_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
 			0, 0,
 		},
 	},
@@ -733,8 +736,12 @@ static struct MachineDriver machine_driver_coco3 =
 
 	/* video hardware */
 	640,							/* screen width */
-	240,							/* screen height (pixels doubled) */
-	{ 0, 639, 0, 239 },				/* visible_area */
+	263,							/* screen height (pixels doubled) */
+#if SHOW_FULL_AREA
+	{ 0, 639, 0, 262 },				/* visible_area */
+#else
+	{ 0, 639, 11, 250 },			/* visible_area */
+#endif
 	0,								/* graphics decode info */
 	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
 	0,
@@ -780,8 +787,12 @@ static struct MachineDriver machine_driver_coco3h =
 
 	/* video hardware */
 	640,							/* screen width */
-	240,							/* screen height (pixels doubled) */
-	{ 0, 639, 0, 239 },				/* visible_area */
+	263,							/* screen height (pixels doubled) */
+#if SHOW_FULL_AREA
+	{ 0, 639, 0, 262 },				/* visible_area */
+#else
+	{ 0, 639, 11, 250 },			/* visible_area */
+#endif
 	0,								/* graphics decode info */
 	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
 	0,

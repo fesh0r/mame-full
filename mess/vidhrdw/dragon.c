@@ -35,13 +35,13 @@
  * Also, take note that the CoCo family have 262 scan lines.  In these drivers
  * we only display 240 of them.
  */
+#include <assert.h>
+
 #include "driver.h"
 #include "machine/6821pia.h"
-#include "includes/rstrtrck.h"
 #include "vidhrdw/m6847.h"
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
-#include "includes/rstrbits.h"
 
 static int coco3_hires;
 static int coco3_gimevhreg[8];
@@ -66,7 +66,7 @@ static int coco3_vidbase;
 #endif /* MAME_DEBUG */
 
 static int coco3_palette_recalc(int force);
-static int coco3_calculate_rows(int *bordertop, int *borderbottom);
+int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
 /* --------------------------------------------------
  * CoCo 1/2 Stuff
@@ -153,17 +153,261 @@ WRITE_HANDLER(coco_ram_w)
  * CoCo 3 Stuff
  * -------------------------------------------------- */
 
-static void coco3_rastertrack_getvideomode(struct rastertrack_hvars *hvars);
-static void coco3_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
-
-static struct rastertrack_interface coco3_rastertrack_intf =
+static void coco3_frame_callback(struct videomap_framecallback_info *info)
 {
-	263,
-	coco3_rastertrack_newscreen,
-	NULL,
-	internal_m6847_rastertrack_endcontent,
-	coco3_rastertrack_getvideomode,
-	RI_PALETTERECALC
+	int border_top, rows;
+
+	coco3_vidbase = (
+		((coco3_gimevhreg[3] & 0x03) * 0x80000) +
+		(coco3_gimevhreg[5] * 0x800) +
+		(coco3_gimevhreg[6] * 8)
+		) % mess_ram_size;
+	rows = coco3_calculate_rows(&border_top, NULL);
+
+	if (coco3_hires)
+	{
+		/* hires CoCo 3 specific video modes */
+		info->video_base = coco3_vidbase;
+		info->bordertop_scanlines = border_top;
+		info->visible_scanlines = rows;
+
+		if (coco3_gimevhreg[7] & 0x80)
+		{
+			/* we have horizontal scrolling */
+			info->pitch = 256;
+		}
+		else
+		{
+			if (coco3_gimevhreg[0] & 0x80)
+			{
+				/* graphics */
+				info->pitch = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
+			}
+			else
+			{
+				/* text */
+				info->pitch = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
+				if (coco3_gimevhreg[1] & 1)
+					info->pitch *= 2;
+			}
+			if (coco3_gimevhreg[1] & 0x04)
+				info->pitch |= info->pitch / 4;
+		}
+	}
+	else
+	{
+		/* legacy CoCo 1/2 video modes */
+		internal_m6847_frame_callback(info, coco3_vidbase, border_top, rows);
+	}
+}
+
+static UINT16 coco3_metapalette[16];
+
+static UINT8 coco3_lores_charproc(UINT32 c, UINT16 *charpalette, int row)
+{
+	return internal_m6847_charproc(c, charpalette, coco3_metapalette, row, 1);
+}
+
+static UINT8 internal_coco3_hires_charproc(UINT32 c, int row)
+{
+	const UINT8 *ROM;
+	const UINT8 *resultptr;
+	UINT8 result;
+
+	if (row >= 8)
+	{
+		result = 0;
+	}
+	else
+	{
+		/* subtracting here so that we can get an offset that looks like a real CoCo address */
+		ROM = memory_region(REGION_CPU1) - 0x8000;
+
+		c &= 0xff;
+		if (c < 32)
+			resultptr = &ROM[0xfa10 + (c * 8)];	/* characters 0-31 are at $FA10 - $FB0F */
+		else
+			resultptr = &ROM[0xf09d + ((c - 32) * 8)];	/* characters 32-127 are at $F09D - $F39C */
+		result = resultptr[row];
+	}
+	return result;
+}
+
+static int coco3_hires_linesperrow(void);
+
+static UINT8 coco3_hires_charproc_withattr(UINT32 c, UINT16 *charpalette, int row)
+{
+	int linesperrow;
+	int underlinepos = -1;
+
+	/* foreground and background */
+	charpalette[0] = paletteram[((c >>  8) & 0x07) + 0];
+	charpalette[1] = paletteram[((c >> 11) & 0x07) + 8];
+
+	/* blink? */
+	if (c & 0x8000)
+	{
+		if (!coco3_blinkstatus)
+			return 0x00;
+	}
+
+	/* underline? */
+	if (c & 0x4000)
+	{
+		/* to quote SockMaster:
+		 *
+		 * The underline attribute will light up the bottom scan line of the character
+		 * if the lines are set to 8 or 9.  Not appear at all when less, or appear on
+		 * the 2nd to bottom scan line if set higher than 9.  Further exception being
+		 * the $x7 setting where the whole screen is filled with only one line of data
+		 * - but it's glitched - the line repeats over and over again every 16 scan
+		 * lines..  Nobody will use this mode, but that's what happens if you want to
+		 * make things really authentic :)
+		 *
+		 * NPW Note: The '$x7' mode is not yet implemented
+		 */
+		linesperrow = coco3_hires_linesperrow();
+		if (linesperrow >= 8)
+		{
+			if (linesperrow >= 10)
+				underlinepos = linesperrow - 2;
+			else
+				underlinepos = linesperrow - 1;
+			if (underlinepos == row)
+				return 0xff;
+		}
+	}
+	return internal_coco3_hires_charproc(c, row);
+}
+
+static UINT8 coco3_hires_charproc_withoutattr(UINT32 c, UINT16 *charpalette, int row)
+{
+	charpalette[0] = paletteram[0];
+	charpalette[1] = paletteram[1];
+	return internal_coco3_hires_charproc(c, row);
+}
+
+static void coco3_compute_color(int color, int *red, int *green, int *blue);
+
+static void coco3_getcolorrgb(int color, UINT8 *red, UINT8 *green, UINT8 *blue)
+{
+	int r, g, b;
+	coco3_compute_color(color, &r, &g, &b);
+	*red = (UINT8) r;
+	*green = (UINT8) g;
+	*blue = (UINT8) b;
+}
+
+static int coco3_setup_dynamic_artifact_palette(int artifact_mode, UINT8 *bgcolor, UINT8 *fgcolor)
+{
+	coco3_getcolorrgb(paletteram[(artifact_mode & 2) ? 10 : 8], &bgcolor[0], &bgcolor[1], &bgcolor[2]);
+	coco3_getcolorrgb(paletteram[(artifact_mode & 2) ? 11 : 9], &fgcolor[0], &fgcolor[1], &fgcolor[2]);
+	return 64;
+}
+
+static UINT16 coco3_calculate_artifact_color(UINT16 metacolor, int artifact_mode)
+{
+	UINT16 result;
+	switch(metacolor)
+	{
+	case 0:
+		result = paletteram[(artifact_mode & 2) ? 10 : 8];
+		break;
+	case 15:
+		result = paletteram[(artifact_mode & 2) ? 11 : 9];
+		break;
+	default:
+		result = (metacolor - 1) + 64;
+		break;					
+	}
+	return result;
+}
+
+static struct internal_m6847_linecallback_interface coco3_linecallback_interface =
+{
+	2,
+	coco3_lores_charproc,
+	coco3_calculate_artifact_color,
+	coco3_setup_dynamic_artifact_palette
+};
+
+static void coco3_line_callback(struct videomap_linecallback_info *info)
+{
+	int i;
+
+	if (coco3_hires)
+	{
+		/* new CoCo 3 video modes */
+		info->visible_columns = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
+		info->scanlines_per_row = coco3_hires_linesperrow();
+		info->borderleft_columns = (Machine->scrbitmap->width - info->visible_columns) / 2;
+		info->border_value = 0xff;
+		info->offset = (coco3_gimevhreg[7] & 0x7f) * 2;
+		info->offset_wrap = 256;
+
+		if (coco3_gimevhreg[0] & 0x80)
+		{
+			/* graphics */
+			info->grid_depth = 1 << (coco3_gimevhreg[1] & 3);
+			info->grid_width = 128 << (((coco3_gimevhreg[1] >> 3) & 0x03) - (coco3_gimevhreg[1] & 3));
+			info->flags = VIDEOMAP_FLAGS_USEPALETTERAM;
+		}
+		else
+		{
+			/* text */
+			info->grid_depth = 8 << (coco3_gimevhreg[1] & 1);
+			info->grid_width = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
+			info->charproc = (coco3_gimevhreg[1] & 1) ? coco3_hires_charproc_withattr : coco3_hires_charproc_withoutattr;
+		}
+		if (coco3_gimevhreg[1] & 0x04)
+			info->grid_width |= info->grid_width / 4;
+	}
+	else
+	{
+		internal_m6847_line_callback(info, coco3_metapalette, &coco3_linecallback_interface);
+	}
+
+	/* Now translate the pens */
+	for (i = 0; i < (sizeof(coco3_metapalette) / sizeof(coco3_metapalette[0])); i++)
+		coco3_metapalette[i] = paletteram[i];
+}
+
+static UINT16 coco3_get_border_color_callback(void)
+{
+	int bordercolor = 0;
+
+	if (coco3_hires)
+	{
+		bordercolor = coco3_gimevhreg[2] & 0x3f;
+	}
+	else
+	{
+		switch(m6847_get_bordercolor()) {
+		case M6847_BORDERCOLOR_BLACK:
+			bordercolor = 0;
+			break;
+
+		case M6847_BORDERCOLOR_GREEN:
+			bordercolor = 18;
+			break;
+
+		case M6847_BORDERCOLOR_WHITE:
+			bordercolor = 63;
+			break;
+
+		case M6847_BORDERCOLOR_ORANGE:
+			bordercolor = 38;
+			break;
+		}
+	}
+	return bordercolor;
+}
+
+static struct videomap_interface coco3_videomap_interface =
+{
+	coco3_frame_callback,
+	coco3_line_callback,
+	coco3_get_border_color_callback
 };
 
 int coco3_vh_start(void)
@@ -178,19 +422,18 @@ int coco3_vh_start(void)
 	p.ramsize = mess_ram_size;
 	p.charproc = coco2b_charproc;
 	p.hs_func = coco3_m6847_hs_w;
-	p.fs_func = coco3_m6847_fs_w;
+	p.fs_func = coco_m6847_fs_w;
 
-	if (internal_m6847_vh_start(&p, &coco3_rastertrack_intf, MAX_HIRES_VRAM)) {
-		paletteram = NULL;
-		return 1;
-	}
-
+	/* initialize palette RAM */
 	paletteram = malloc(16 * sizeof(int));
 	if (!paletteram)
 		return 1;
-
 	memset(paletteram, 0, 16 * sizeof(int));
 
+	if (internal_m6847_vh_start(&p, &coco3_videomap_interface, MAX_HIRES_VRAM)) {
+		paletteram = NULL;
+		return 1;
+	}
 
 	for (i = 0; i < (sizeof(coco3_gimevhreg) / sizeof(coco3_gimevhreg[0])); i++)
 		coco3_gimevhreg[i] = 0;
@@ -357,11 +600,13 @@ static int coco3_palette_recalc(int force)
 void coco3_vh_blink(void)
 {
 	coco3_blinkstatus = !coco3_blinkstatus;
+	if (coco3_hires && ((coco3_gimevhreg[0] & 0x80) == 0))
+		schedule_full_refresh();
 }
 
 WRITE_HANDLER(coco3_palette_w)
 {
-	rastertrack_touchvideomode();
+	videomap_invalidate_lineinfo();
 
 	data &= 0x3f;
 
@@ -372,7 +617,7 @@ WRITE_HANDLER(coco3_palette_w)
 #endif
 }
 
-static int coco3_calculate_rows(int *bordertop, int *borderbottom)
+int coco3_calculate_rows(int *bordertop, int *borderbottom)
 {
 	int rows = 0;
 	int t = 0;
@@ -405,13 +650,13 @@ static int coco3_calculate_rows(int *bordertop, int *borderbottom)
 	switch((coco3_gimevhreg[1] & 0x60) >> 5) {
 	case 0:
 		rows = 192;
-		t = 38;
-		b = 33;
+		t = 43;
+		b = 28;
 		break;
 	case 1:
 		rows = 199;
-		t = 33;
-		b = 31;
+		t = 41;
+		b = 23;
 		break;
 	case 2:
 		rows = 0;	/* NYI - This is "zero/infinite" lines, according to Sock Master */
@@ -525,34 +770,6 @@ static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, i
 	return result;
 }
 
-static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int *attr)
-{
-	int b;
-	int a;
-
-	b = mem[1];
-	*bg = b & 0x07;
-	*fg = 8 + ((b & 0x38) >> 3);
-
-	a = 0;
-	if (b & 0x80)
-		a |= RASTERBITS_CHARATTR_BLINKING;
-	if (b & 0x40)
-		a |= RASTERBITS_CHARATTR_UNDERLINE;
-	*attr = a;
-
-	return coco3_textmapper_noattr(mem, param, NULL, NULL, NULL);
-}
-
-static void coco3_getcolorrgb(int color, UINT8 *red, UINT8 *green, UINT8 *blue)
-{
-	int r, g, b;
-	coco3_compute_color(color, &r, &g, &b);
-	*red = (UINT8) r;
-	*green = (UINT8) g;
-	*blue = (UINT8) b;
-}
-
 /*
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
@@ -561,159 +778,7 @@ void coco3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 {
 	if (coco3_palette_recalc(0))
 		full_refresh = 1;
-	rastertrack_refresh(bitmap, full_refresh);
-}
-
-static void coco3_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
-{
-	static UINT32 coco3_pens[] = {
-		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-	};
-	int i;
-
-	/* Initialize the pens array */
-	for (i = 0; i < (sizeof(hvars->mode.pens) / sizeof(hvars->mode.pens[0])); i++)
-		hvars->mode.pens[i] = i;
-
-	if (coco3_hires) {
-		static int last_blink;
-		int linesperrow, rows;
-		int visualbytesperrow;
-
-		rows = coco3_calculate_rows(NULL, NULL);
-		linesperrow = coco3_hires_linesperrow();
-
-		hvars->mode.height = (rows + linesperrow - 1) / linesperrow;
-		hvars->mode.flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
-		if (coco3_gimevhreg[7]) {
-			hvars->mode.flags |= RASTERBITS_FLAG_WRAPINROW;
-			hvars->mode.offset = ((coco3_gimevhreg[7] & 0x7f) * 2);
-			hvars->mode.wrapbytesperrow = 256;
-		}
-		else {
-			hvars->mode.offset = 0;
-		}
-
-		if (coco3_gimevhreg[0] & 0x80) {
-			/* Graphics */
-			switch(coco3_gimevhreg[1] & 3) {
-			case 0:
-				/* Two colors */
-				hvars->mode.depth = 1;
-				break;
-			case 1:
-				/* Four colors */
-				hvars->mode.depth = 2;
-				break;
-			case 2:
-				/* Sixteen colors */
-				hvars->mode.depth = 4;
-				break;
-			case 3:
-				/* Blank screen */
-				/* TODO - Draw a blank screen! */
-				hvars->mode.depth = 4;
-				break;
-			}
-			visualbytesperrow = 16 << ((coco3_gimevhreg[1] & 0x18) >> 3);
-		}
-		else {
-			/* Text */
-			visualbytesperrow = (coco3_gimevhreg[1] & 0x10) ? 64 : 32;
-
-			if (coco3_gimevhreg[1] & 1) {
-				/* With attributes */
-				hvars->mode.depth = 16;
-				hvars->mode.u.text.mapper = coco3_textmapper_attr;
-				visualbytesperrow *= 2;
-
-				if (coco3_blinkstatus != last_blink)
-					hvars->mode.flags |= RASTERBITS_FLAG_BLINKNOW;
-				if (coco3_blinkstatus)
-					hvars->mode.flags |= RASTERBITS_FLAG_BLINKING;
-				last_blink = coco3_blinkstatus;
-			}
-			else {
-				/* Without attributes */
-				hvars->mode.depth = 8;
-				hvars->mode.u.text.mapper = coco3_textmapper_noattr;
-			}
-			hvars->mode.u.text.mapper_param = (int) mess_ram;
-			hvars->mode.u.text.fontheight = 8;
-
-			/* To quote SockMaster:
-			 *
-			 * The underline attribute will light up the bottom scan line of the character
-			 * if the lines are set to 8 or 9.  Not appear at all when less, or appear on
-			 * the 2nd to bottom scan line if set higher than 9.  Further exception being
-			 * the $x7 setting where the whole screen is filled with only one line of data
-			 * - but it's glitched - the line repeats over and over again every 16 scan
-			 * lines..  Nobody will use this mode, but that's what happens if you want to
-			 * make things really authentic :)
-			 *
-			 * NPW Note: The '$x7' mode is not yet implemented
-			 */
-			if (linesperrow < 8)
-				hvars->mode.u.text.underlinepos = -1;
-			else if (linesperrow < 10)
-				hvars->mode.u.text.underlinepos = linesperrow - 1;
-			else
-				hvars->mode.u.text.underlinepos = linesperrow - 2;
-		}
-
-		if (coco3_gimevhreg[1] & 0x04)
-			visualbytesperrow |= (visualbytesperrow / 4);
-
-		hvars->mode.width = visualbytesperrow * 8 / hvars->mode.depth;
-		hvars->mode.bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
-		hvars->border_pen = coco3_gimevhreg[2] & 0x3f;
-		hvars->frame_width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
-		hvars->frame_height = rows;
-	}
-	else {
-		int bordercolor = 0;
-
-		switch(m6847_get_bordercolor()) {
-		case M6847_BORDERCOLOR_BLACK:
-			bordercolor = 0;
-			break;
-
-		case M6847_BORDERCOLOR_GREEN:
-			bordercolor = 18;
-			break;
-
-		case M6847_BORDERCOLOR_WHITE:
-			bordercolor = 63;
-			break;
-
-		case M6847_BORDERCOLOR_ORANGE:
-			bordercolor = 38;
-			break;
-		}
-		internal_m6847_rastertrack_getvideomode(hvars, coco3_pens, 2, bordercolor, 2, readinputport(12) & 3, 64, coco3_getcolorrgb);
-	}
-
-	/* Now translate the pens */
-	for (i = 0; i < (sizeof(hvars->mode.pens) / sizeof(hvars->mode.pens[0])); i++)
-		hvars->mode.pens[i] = paletteram[hvars->mode.pens[i]];
-}
-
-static void coco3_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars)
-{
-	int rows, border_top;
-
-#if LOG_VIDEO
-	log_video();
-#endif
-
-	rows = coco3_calculate_rows(&border_top, NULL);
-	coco3_vidbase = (
-		((coco3_gimevhreg[3] & 0x03) * 0x80000) +
-		(coco3_gimevhreg[5] * 0x800) +
-		(coco3_gimevhreg[6] * 8)
-		) % mess_ram_size;
-
-	internal_m6847_rastertrack_newscreen(vvars, hvars, border_top, rows, coco3_vidbase, !coco3_hires, coco3_rastertrack_getvideomode);
+	m6847_vh_update(bitmap, full_refresh);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
@@ -791,7 +856,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 	int xorval;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, cpu_get_pc(), rastertrack_scanline());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, cpu_get_pc(), cpu_getscanline());
 #endif
 	/* Features marked with '!' are not yet implemented */
 
@@ -804,7 +869,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 	case 1:
 	case 4:
 	case 7:
-		rastertrack_touchvideomode();
+		videomap_invalidate_lineinfo();
 		break;
 	};
 
@@ -821,7 +886,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 0-2 LPR Lines per row
 		 */
 		if (xorval & 0xB7) {
-			schedule_full_refresh();
+			videomap_invalidate_frameinfo();
 #if LOG_GIME
 			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
 #endif
@@ -835,7 +900,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 2-4 HRES Horizontal Resolution
 		 *		  Bits 0-1 CRES Color Resolution
 		 */
-		rastertrack_touchvideomode();
+		videomap_invalidate_frameinfo();
 		break;
 
 	case 2:
@@ -844,8 +909,10 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 0-5 BRDR Border color
 		 */
 #if LOG_BORDER
-		logerror("CoCo3 GIME: Writing $%02x into border; scanline=%i\n", data, rastertrack_scanline());
+		logerror("CoCo3 GIME: Writing $%02x into border; scanline=%i\n", data, cpu_getscanline());
 #endif
+		if (coco3_hires)
+			videomap_invalidate_border();
 		break;
 
 	case 4:
@@ -853,17 +920,13 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 4-7 Reserved
 		 *		! Bits 0-3 VSC Vertical Scroll bits
 		 */
-		rastertrack_touchvideomode();
+		videomap_invalidate_frameinfo();
 		break;
 
 	case 3:
 	case 5:
 	case 6:
 		/*	$FF9B,$FF9D,$FF9E Vertical Offset Registers
-		 *
-		 *	$FF9F Horizontal Offset Register
-		 *		  Bit 7 HVEN Horizontal Virtual Enable
-		 *		  Bits 0-6 X0-X6 Horizontal Offset Address
 		 *
 		 *	According to JK, if an odd value is placed in $FF9E on the 1986
 		 *	GIME, the GIME crashes
@@ -874,7 +937,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *  The reason that $FF9B is not mentioned in offical documentation
 		 *  is because it is only meaninful in CoCo 3's with the 2mb upgrade
 		 */
-		schedule_full_refresh();
+		videomap_invalidate_frameinfo();
 		break;
 
 	case 7:
@@ -885,7 +948,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *
 		 *  Unline $FF9D-E, this value can be modified mid frame
 		 */
-		rastertrack_touchvideomode();
+		videomap_invalidate_lineinfo();
 		break;
 	}
 }
@@ -897,7 +960,9 @@ void coco3_vh_sethires(int hires)
 #if LOG_GIME
 		logerror("CoCo3 GIME: %s hires graphics/text\n", hires ? "Enabling" : "Disabling");
 #endif
-		rastertrack_touchvideomode();
+		videomap_invalidate_frameinfo();
+		videomap_invalidate_lineinfo();
+		videomap_invalidate_border();
 	}
 }
 

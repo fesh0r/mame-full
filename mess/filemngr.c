@@ -7,6 +7,8 @@ static char *enter_string;
 static int enter_string_size;
 static int enter_filename_mode;
 
+static char fs_label_none[] = "[none]";
+
 static char entered_filename[512];
 
 static void start_enter_string(char *string_buffer, int max_string_size, int filename_mode)
@@ -239,9 +241,13 @@ void fs_free(void)
 		/* free duplicated strings of file and directory names */
 		for (i = 0; i < fs_total; i++)
 		{
-			if (fs_types[i] == FILESELECT_FILE ||
-				fs_types[i] == FILESELECT_DIRECTORY)
-				free((char *)fs_item[i]);
+			switch(fs_types[i]) {
+			case FILESELECT_FILE:
+			case FILESELECT_DIRECTORY:
+				if (fs_item[i] != fs_label_none)
+					free((char *)fs_item[i]);
+				break;
+			}
 		}
 		free(fs_item);
 		free(fs_subitem);
@@ -305,8 +311,6 @@ static int DECL_SPEC fs_compare(const void *p1, const void *p2)
 
 #define MAX_ENTRIES_IN_MENU (SEL_MASK-1)
 
-int fs_init_done = 0;
-
 void fs_generate_filelist(void)
 {
 	void *dir;
@@ -315,17 +319,6 @@ void fs_generate_filelist(void)
 	const char **tmp_menu_subitem;
 	char *tmp_flags;
 	int *tmp_types;
-
-	/* should be moved inside mess.c ??? */
-	if (fs_init_done==0)
-	{
-		/* this will not work if roms is not a sub-dir of mess, and
-		   will also not work if we are not in the mess dir */
-		/* go to initial roms directory */
-		osd_change_directory("software");
-		osd_change_directory(Machine->gamedrv->name);
-		fs_init_done = 1;
-	}
 
 	/* just to be safe */
 	fs_free();
@@ -371,6 +364,13 @@ void fs_generate_filelist(void)
 	fs_item[n] = "-";
 	fs_subitem[n] = 0;
 	fs_types[n] = FILESELECT_NONE;
+	fs_flags[n] = 0;
+
+	/* insert empty specifier */
+	n = fs_alloc();
+	fs_item[n] = fs_label_none;
+	fs_subitem[n] = fs_file;
+	fs_types[n] = FILESELECT_FILE;
 	fs_flags[n] = 0;
 
 	qsort_start = fs_total;
@@ -465,7 +465,7 @@ void fs_generate_filelist(void)
 /* and mask to get bits */
 #define SEL_BITS_MASK			(~SEL_MASK)
 
-int fileselect(struct mame_bitmap *bitmap, int selected)
+static int fileselect(struct mame_bitmap *bitmap, int selected, const char *default_selection)
 {
 	int sel, total, arrowize;
 	int visible;
@@ -474,7 +474,31 @@ int fileselect(struct mame_bitmap *bitmap, int selected)
 
 	/* generate menu? */
 	if (fs_total == 0)
+	{
+		static char *mess_path = NULL;
+		if (!mess_path)
+		{
+			const char *s;
+			s = osd_get_cwd();
+			mess_path = malloc(strlen(s) + 1);
+			strcpy(mess_path, s);
+		}
+
+		if (default_selection)
+		{
+			char *dirname;
+			dirname = osd_dirname((char *) default_selection);
+			osd_change_directory(dirname);
+			free(dirname);
+		}
+		else
+		{
+			osd_change_directory(mess_path);
+			osd_change_directory("software");
+			osd_change_directory(Machine->gamedrv->name);
+		}
 		fs_generate_filelist();
+	}
 
 	total = fs_total - 1;
 
@@ -594,8 +618,15 @@ int fileselect(struct mame_bitmap *bitmap, int selected)
 
 				case FILESELECT_FILE:
 					/* copy filename */
-					strncpyz(entered_filename, osd_get_cwd(), sizeof(entered_filename) / sizeof(entered_filename[0]));
-					strncatz(entered_filename, fs_item[sel], sizeof(entered_filename) / sizeof(entered_filename[0]));
+					if (fs_item[sel] == fs_label_none)
+					{
+						entered_filename[0] = '\0';
+					}
+					else
+					{
+						strncpyz(entered_filename, osd_get_cwd(), sizeof(entered_filename) / sizeof(entered_filename[0]));
+						strncatz(entered_filename, fs_item[sel], sizeof(entered_filename) / sizeof(entered_filename[0]));
+					}
 
 					fs_free();
 					sel = -3;
@@ -689,7 +720,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	/* if the fileselect() mode is active */
 	if (sel & (2 << SEL_BITS))
 	{
-		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS));
+		sel = fileselect(bitmap, selected & ~(2 << SEL_BITS), device_filename(types[previous_sel & SEL_MASK], ids[previous_sel & SEL_MASK]));
 		if (sel != 0 && sel != -1 && sel!=-2)
 			return sel | (2 << SEL_BITS);
 
@@ -701,7 +732,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 			previous_sel = previous_sel & SEL_MASK;
 
 			/* attempt a filename change */
-			device_filename_change(types[previous_sel], ids[previous_sel], entered_filename);
+			device_filename_change(types[previous_sel], ids[previous_sel], entered_filename[0] ? entered_filename : NULL);
 		}
 
 		sel = previous_sel;

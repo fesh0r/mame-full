@@ -1,3 +1,33 @@
+0.60
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+[none]
+
+System Driver Changes:
+----------------------
+- [ATARI/APPLE2] Converted a few malloc() calls over to use auto_malloc()
+  [Nate Woods]
+  
+- [COCO] The virtual printer should now be responsive to bitbanger output of
+  any arbitrary baud. [Nate Woods]
+
+Source Changes:
+---------------
+- Added new videomap code that makes it easy to support arbitrary video modes
+  in a fast, efficient manner.  This takes the place of the old
+  rasterbits/rastertrack code; converted m6847 and CoCo 3 video hardware to
+  use videomap. [Nate Woods]
+
+- Fixed a bug in the wave code that could cause a crash if a cassette image is
+  unloaded. [Nate Woods]
+  
+- Added a [none] entry in the File Manager, that allows the user to unload an
+  image. [Nate Woods]
+  
+- The file manager will now default to the directory that a preexisting image
+  resides in. [Nate Woods]
+
 0.561
 
 New System Drivers Supported (in no particular order):

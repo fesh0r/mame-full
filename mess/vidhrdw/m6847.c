@@ -13,29 +13,27 @@
 #include "m6847.h"
 #include "state.h"
 #include "vidhrdw/generic.h"
-#include "includes/rstrbits.h"
-#include "includes/rstrtrck.h"
+#include "videomap.h"
 
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
 #ifdef MAME_DEBUG
-#define LOG_FS	0
-#define LOG_HS	0
+#define LOG_FS			0
+#define LOG_HS			0
+#define LOG_INTERRUPT	0
 #else /* !MAME_DEBUG */
-#define LOG_FS	0
-#define LOG_HS	0
+#define LOG_FS			0
+#define LOG_HS			0
+#define LOG_INTERRUPT	0
 #endif /* MAME_DEBUG */
-
-static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars);
-static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars);
 
 struct m6847_state {
 	struct m6847_init_params initparams;
 	int modebits;
 	int videooffset;
 	int latched_videooffset;
-	int rowsize;
+	int rowheight;
 	int fs, hs;
 };
 
@@ -852,6 +850,37 @@ void m6847_vh_normalparams(struct m6847_init_params *params)
 	params->artifactdipswitch = -1;
 }
 
+static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UINT8 *c1)
+{
+	double v;
+	int i;
+
+	for (i = 0; i < 3; i++) {
+		v = (c0[i] * (1.0 - val[i])) + (c1[i] * val[i]);
+		dest[i] = (UINT8) (v + 0.5);
+	}
+}
+
+static void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16 c1,
+	const double *colorfactors, int numfactors, int reverse)
+{
+	int i, ii;
+	const UINT8 *rgb0;
+	const UINT8 *rgb1;
+
+	rgb0 = &destpalette[c0 * 3];
+	rgb1 = &destpalette[c1 * 3];
+	destpalette += (destcolor * 3);
+
+	for (i = 0; i < numfactors; i++) {
+		ii = i;
+		if (reverse)
+			ii ^= 1;
+
+		mix_colors(&destpalette[i * 3], &colorfactors[ii * 3], rgb0, rgb1);
+	}
+}
+
 void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
 	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
@@ -873,25 +902,284 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 	game_palette = sys_palette;
 }
 
-static struct rastertrack_interface m6847_rastertrack_intf =
+UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metapalette, int row, int skew)
 {
-	263,
-	m6847_rastertrack_newscreen,
-	NULL,
-	internal_m6847_rastertrack_endcontent,
-	m6847_rastertrack_getvideomode,
-	0
+	int fgc, bgc;
+	const UINT8 *character;
+
+	/* give the host machine a chance to pull our strings */
+	the_state.initparams.charproc(c & 0xff);
+
+	if (the_state.modebits & M6847_MODEBIT_AS) {
+		/* semigraphics */
+		bgc = 8;
+
+		if ((the_state.modebits & M6847_MODEBIT_INTEXT) &&  (!m6847_is_t1(the_state.initparams.version)) ) {
+			/* semigraphics 6 */
+			character = &fontdata8x12[(96 + (c & 0x3f)) * 12];
+			fgc = ((c >> 6) & 0x3);
+			if (the_state.modebits & M6847_MODEBIT_CSS)
+				fgc += 4;
+		}
+		else {
+			/* Semigraphics 4 */
+			bgc = 8;
+			fgc = (c >> 4) & 0x7;
+			character = &fontdata8x12[(160 + (c & 0x0f)) * 12];
+		}
+
+	}
+	else {
+		/* Text */
+		fgc = (the_state.modebits & M6847_MODEBIT_CSS) ? 15 : 13;
+
+		/* Inverse the character, if appropriate */
+		if (the_state.modebits & M6847_MODEBIT_INV)
+			fgc ^= 1;
+
+		if ((the_state.initparams.version == M6847_VERSION_M6847T1_PAL) || (the_state.initparams.version == M6847_VERSION_M6847T1_NTSC) ) {
+			/* M6847T1 specific features */
+
+			/* Lowercase */
+			if ((the_state.modebits & M6847_MODEBIT_GM0) && ((c & 0xff) < 0x20))
+				c += 0x40;
+			else
+				c &= 0x3f;
+
+			/* Inverse (The following was verified in Rainbow Magazine 12/86) */
+			if (the_state.modebits & M6847_MODEBIT_GM1)
+				fgc ^= 1;
+		}
+		else {
+			c &= 0x3f;
+		}
+		character = &fontdata8x12[(c & 0x7f) * 12 + skew];
+		bgc = fgc ^ 1;
+	}
+
+	assert(((character >= fontdata8x12) && (character < (fontdata8x12 + sizeof(pal_round_fontdata8x12)))));
+
+	charpalette[0] = metapalette[bgc];
+	charpalette[1] = metapalette[fgc];
+	return character[row];
+}
+
+static UINT16 m6847_metapalette[] = { 1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12};
+
+static UINT8 m6847_charproc(UINT32 c, UINT16 *charpalette, int row)
+{
+	return internal_m6847_charproc(c, charpalette, m6847_metapalette, row, 0);
+}
+
+void internal_m6847_frame_callback(struct videomap_framecallback_info *info, int offset, int border_top, int rows)
+{
+	/* keep track of the video offset so we can handle dirty buffers */
+	the_state.latched_videooffset = the_state.videooffset;
+
+	/* now fill in the struct */
+	info->video_base = the_state.videooffset + offset;
+	info->bordertop_scanlines = border_top;
+	info->visible_scanlines = rows;
+	if (the_state.modebits & M6847_MODEBIT_AG)
+	{
+		if (the_state.modebits & M6847_MODEBIT_GM0)
+			info->pitch = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
+		else
+			info->pitch = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
+	}
+	else
+	{
+		info->pitch = 32;
+	}
+}
+
+static void m6847_frame_callback(struct videomap_framecallback_info *info)
+{
+	internal_m6847_frame_callback(info, 0, 13+25, 192);
+}
+
+static UINT16 artifactcorrection[128] = {
+	 0,  0,		 0,	 0,		 0,  6,		 0,	 2,
+	 5,  7,		 5,	 7,		 1,  3,		 1, 11,
+	 8,  6,		 8, 14,		 8,  9,		 8,	 9,
+	 4,  4,		 4, 15,		12, 12,		12, 15,
+
+	 5, 13,		 5, 13,		13,  0,		13,	 2,
+	10, 10,		10, 10,		10, 15,		10, 11,
+	 3,  1,		 3,	 1,		15,  9,		15,	 9,
+	11, 11,		11, 11,		15, 15,		15, 15,
+
+	14,  0,		14,	 0,		14,  6,		14,	 2,
+	 0,  7,		 0,	 7,		 1,  3,		 1, 11,
+	 9,  6,		 9, 14,		 9,  9,		 9,	 9,
+	15,  4,		15, 15,		12, 12,		12, 15,
+
+	 2, 13,		 2, 13,		 2,  0,		 2,	 2,
+	10, 10,		10, 10,		10, 15,		10, 11,
+	12,  1,		12,	 1,		12,  9,		12,	 9,
+	15, 11,		15, 11,		15, 15,		15, 15
 };
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, struct rastertrack_interface *intf, int dirtyramsize)
+static int get_artifact_value(void)
 {
-	struct rastertrack_initvars vars;
+	return (the_state.initparams.artifactdipswitch == -1) ? 0 : (readinputport(the_state.initparams.artifactdipswitch) & 3);
+}
+
+void internal_m6847_line_callback(struct videomap_linecallback_info *info, const UINT16 *metapalette,
+	struct internal_m6847_linecallback_interface *intf)
+{
+	int i;
+	int artifact_value, artifact_mode;
+	int metapalette_pos;
+	int palettebase;
+	UINT8 myrgb[3];
+	UINT8 rgb0[3];
+	UINT8 rgb1[3];
+	static UINT16 artifact_metapalette[128];
+
+	info->visible_columns = 256 * intf->width_factor;
+	info->scanlines_per_row = the_state.rowheight;
+	info->borderleft_columns = (Machine->scrbitmap->width - info->visible_columns) / 2;
+	info->border_value = 0xff;
+
+	if (the_state.modebits & M6847_MODEBIT_AG)
+	{
+		if (the_state.modebits & M6847_MODEBIT_GM0)
+		{
+			/* resolution modes */
+			info->grid_width = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 256 : 128;
+			info->grid_depth = 1;
+
+			artifact_value = get_artifact_value();
+
+			if (artifact_value && (info->grid_width == 256))
+			{
+				/* arifacting */
+				metapalette_pos = -1;
+				info->flags = VIDEOMAP_FLAGS_ARTIFACT;
+				info->metapalette = artifact_metapalette;
+
+				/* figure out which mode we need to use */
+				artifact_mode = (artifact_value >= 2) ? 0 : 1;
+				if (the_state.modebits & M6847_MODEBIT_CSS)
+					artifact_mode += 2;
+
+				/* do we have a dynamic palette */
+				if (intf->setup_dynamic_artifact_palette)
+				{
+					palettebase = intf->setup_dynamic_artifact_palette(artifact_mode, rgb0, rgb1);
+					for (i = 0; i < M6847_ARTIFACT_COLOR_COUNT; i++)
+					{
+						mix_colors(myrgb, &artifactfactors[(i ^ (artifact_mode & 1)) * 3], rgb0, rgb1);
+						palette_set_color(palettebase + i, myrgb[0], myrgb[1], myrgb[2]);
+					}
+				}
+
+				/* set up the arifact metapalette */
+				assert(sizeof(artifactcorrection) == sizeof(artifact_metapalette));
+				for (i = 0; i < (sizeof(artifactcorrection) / sizeof(artifactcorrection[0])); i++)
+					artifact_metapalette[i] = intf->calculate_artifact_color(artifactcorrection[i], artifact_mode);
+			}
+			else
+			{
+				if (the_state.modebits & M6847_MODEBIT_CSS)
+					metapalette_pos = 10;
+				else
+					metapalette_pos = 8;
+			}
+		}
+		else
+		{
+			/* color modes */
+			info->grid_width = (the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 128 : 64;
+			info->grid_depth = 2;
+			if (the_state.modebits & M6847_MODEBIT_CSS)
+				metapalette_pos = 4;
+			else
+				metapalette_pos = 0;
+		}
+		if (metapalette_pos >= 0)
+			info->metapalette = &metapalette[metapalette_pos];
+	}
+	else
+	{
+		/* text/semigraphic modes */
+		info->grid_width = 32;
+		info->grid_depth = 8;
+		info->charproc = intf->charproc;
+	}
+}
+
+static UINT16 m6847_calculate_artifact_color(UINT16 metacolor, int artifact_mode)
+{
+	UINT16 result, artifact_base;
+
+	switch(metacolor)
+	{
+	case 0:
+		result = 0;
+		break;
+	case 15:
+		result = (artifact_mode & 2) ? 5 : 1;
+		break;
+	default:
+		artifact_base = (sizeof(palette) / (sizeof(palette[0])*3)) + (artifact_mode * M6847_ARTIFACT_COLOR_COUNT);
+		result = artifact_base + metacolor - 1;
+		break;					
+	}
+	return result;
+}
+
+static struct internal_m6847_linecallback_interface m6847_linecallback_interface =
+{
+	1,
+	m6847_charproc,
+	m6847_calculate_artifact_color,
+	NULL
+};
+
+static void m6847_line_callback(struct videomap_linecallback_info *info)
+{
+	internal_m6847_line_callback(info, m6847_metapalette, &m6847_linecallback_interface);
+}
+
+static UINT16 internal_m6847_get_border_color_callback(void)
+{
+	UINT16 pen = 0;
+
+	switch(m6847_get_bordercolor()) {
+	case M6847_BORDERCOLOR_BLACK:
+		pen = 0;
+		break;
+	case M6847_BORDERCOLOR_GREEN:
+		pen = 1;
+		break;
+	case M6847_BORDERCOLOR_WHITE:
+		pen = 5;
+		break;
+	case M6847_BORDERCOLOR_ORANGE:
+		pen = 12;
+		break;
+	}
+	return pen;
+}
+
+static struct videomap_interface m6847_videomap_interface =
+{
+	m6847_frame_callback,
+	m6847_line_callback,
+	internal_m6847_get_border_color_callback
+};
+
+int internal_m6847_vh_start(const struct m6847_init_params *params, const struct videomap_interface *videointf, int dirtyramsize)
+{
+	struct videomap_config cfg;
 
 	the_state.initparams = *params;
 	the_state.modebits = 0;
-	the_state.videooffset = 0;
+	the_state.videooffset = params->initial_video_offset % params->ramsize;
 	the_state.latched_videooffset = 0;
-	the_state.rowsize = 12;
+	the_state.rowheight = 12;
 	the_state.fs = 1;
 	the_state.hs = 1;
 
@@ -899,10 +1187,11 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, struct raste
 	if (generic_vh_start())
 		return 1;
 
-	vars.intf = intf;
-	vars.vram = params->ram;
-	vars.vramwrap = params->ramsize;
-	rastertrack_init(&vars);
+	cfg.intf = videointf;
+	cfg.videoram = params->ram;
+	cfg.videoram_windowsize = params->ramsize;
+	cfg.dirtybuffer = dirtybuffer;
+	videomap_init(&cfg);
 
 	/* The following code sets up which font to use.			*/
 	switch( params->version )
@@ -934,7 +1223,7 @@ int m6847_vh_start(const struct m6847_init_params *params)
 {
 	int result;
 
-	result = internal_m6847_vh_start(params, &m6847_rastertrack_intf, MAX_VRAM);
+	result = internal_m6847_vh_start(params, &m6847_videomap_interface, MAX_VRAM);
 	if (result)
 		return result;
 
@@ -1051,7 +1340,7 @@ static void fs_fall(int dummy)
 	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
 
 #if LOG_FS
-	logerror("fs_fall(): fs=0 time=%g\n", timer_get_time());
+	logerror("fs_fall(): fs=0 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 #endif
 }
 
@@ -1061,20 +1350,61 @@ static void fs_rise(int dummy)
 	invoke_callback(the_state.initparams.fs_func, the_state.initparams.callback_delay, the_state.fs);
 
 #if LOG_FS
-	logerror("fs_rise(): fs=1 time=%g\n", timer_get_time());
+	logerror("fs_rise(): fs=1 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 #endif
 }
 
-void internal_m6847_rastertrack_endcontent(void)
+int internal_m6847_getadjustedscanline(void)
 {
-	timer_set(DFS_F, 0, fs_fall);
+	int scanline;
+	int horzbeampos;
+
+	scanline = cpu_getscanline();
+	horzbeampos = cpu_gethorzbeampos();
+
+	/* adjust scanline because things seem to behave weird here */
+	if ((horzbeampos + (Machine->scrbitmap->width / 4)) < Machine->scrbitmap->width)
+	{
+		if (scanline == 0)
+			scanline = Machine->scrbitmap->height-1;
+		else
+			scanline--;
+	}
+	return scanline;
+}
+
+int internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline)
+{
+#if LOG_INTERRUPT
+	logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
+#endif
+
+	/* vsync interrupt */
+	if (rise_scanline > fall_scanline)
+	{
+		if (scanline >= rise_scanline)
+			timer_set(DFS_R, 0, fs_rise);
+		else if (scanline >= fall_scanline)
+			timer_set(DFS_F, 0, fs_fall);
+	}
+	else
+	{
+		if (scanline >= fall_scanline)
+			timer_set(DFS_F, 0, fs_fall);
+		else if (scanline >= rise_scanline)
+			timer_set(DFS_R, 0, fs_rise);
+	}
+
+	/* hsync interrupt */
+	timer_set(DHS_F, 0, hs_fall);
+	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
+
+	return ignore_interrupt();
 }
 
 int m6847_vh_interrupt(void)
 {
-	timer_set(DHS_F, 0, hs_fall);
-	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
-	return rastertrack_hblank();
+	return internal_m6847_vh_interrupt(internal_m6847_getadjustedscanline(), 0, 13+25+192);
 }
 
 /* --------------------------------------------------
@@ -1084,189 +1414,6 @@ int m6847_vh_interrupt(void)
 void m6847_set_ram_size(int ramsize)
 {
 	the_state.initparams.ramsize = ramsize;
-}
-
-static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *attr)
-{
-	UINT8 b;
-	UINT8 *character;
-	int bgc = 0, fgc = 0;
-
-	b = *mem;
-
-	/* Give the host machine a chance to pull our strings */
-	the_state.initparams.charproc(b);
-
-	if (the_state.modebits & M6847_MODEBIT_AS) {
-		/* Semigraphics */
-		bgc = 8;
-
-		if ((the_state.modebits & M6847_MODEBIT_INTEXT) &&  (!m6847_is_t1(the_state.initparams.version)) ) {
-			/* Semigraphics 6 */
-			character = &fontdata8x12[(96 + (b & 0x3f)) * 12];
-			fgc = ((b >> 6) & 0x3);
-			if (the_state.modebits & M6847_MODEBIT_CSS)
-				fgc += 4;
-		}
-		else {
-			/* Semigraphics 4 */
-			switch(b & 0x0f) {
-			case 0:
-				bgc = 8;
-				character = NULL;
-				break;
-			case 15:
-				bgc = (b >> 4) & 0x7;
-				character = NULL;
-				break;
-			default:
-				bgc = 8;
-				fgc = (b >> 4) & 0x7;
-				character = &fontdata8x12[(160 + (b & 0x0f)) * 12];
-				break;
-			}
-		}
-
-	}
-	else {
-		/* Text */
-		fgc = (the_state.modebits & M6847_MODEBIT_CSS) ? 15 : 13;
-
-		/* Inverse the character, if appropriate */
-		if (the_state.modebits & M6847_MODEBIT_INV)
-			fgc ^= 1;
-
-		if ((the_state.initparams.version == M6847_VERSION_M6847T1_PAL) || (the_state.initparams.version == M6847_VERSION_M6847T1_NTSC) ) {
-			/* M6847T1 specific features */
-
-			/* Lowercase */
-			if ((the_state.modebits & M6847_MODEBIT_GM0) && (b < 0x20))
-				b += 0x40;
-			else
-				b &= 0x3f;
-
-			/* Inverse (The following was verified in Rainbow Magazine 12/86) */
-			if (the_state.modebits & M6847_MODEBIT_GM1)
-				fgc ^= 1;
-		}
-		else {
-			b &= 0x3f;
-		}
-
-
-		if (b == 0x20) {
-			character = NULL;
-		}
-		else {
-			character = &fontdata8x12[b * 12];
-			if (param)
-				character += 1;	/* Skew up */
-		}
-		bgc = fgc ^ 1;
-	}
-
-	assert(!character || ((character >= fontdata8x12) && (character < (fontdata8x12 + sizeof(pal_round_fontdata8x12)))));
-
-	*bg = bgc;
-	*fg = fgc;
-	return character;
-}
-
-/* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
- * mode.  Internally, it treats the colors like a CoCo 3 and uses the pens array to
- * translate those colors to the proper palette.
- *
- * video_vmode
- *     bit 4	1=graphics, 0=text
- *     bit 3    resolution high bit
- *     bit 2    resolution low bit
- *     bit 1    1=b/w graphics, 0=color graphics
- *     bit 0	color set
- */
-void internal_m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars,
-	UINT32 *pens, int skew_up, int border_pen, int wf,
-	int artifact_value, int artifact_palettebase,
-	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue))
-{
-	hvars->mode.height = 192 / the_state.rowsize;
-	hvars->mode.offset = 0;
-	hvars->frame_width = 256 * wf;
-	hvars->frame_height = 192;
-	hvars->border_pen = Machine->pens[border_pen];
-
-	if (the_state.modebits & M6847_MODEBIT_AG)
-	{
-		hvars->mode.flags = RASTERBITS_FLAG_GRAPHICS;
-		hvars->mode.flags = RASTERBITS_FLAG_GRAPHICS;
-
-		if (the_state.modebits & M6847_MODEBIT_GM0)
-		{
-			/* Resolution modes */
-			hvars->mode.bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
-			hvars->mode.width = hvars->mode.bytesperrow * 8;
-			hvars->mode.depth = 1;
-			if (the_state.modebits & M6847_MODEBIT_CSS) {
-				hvars->mode.pens[0] = pens[10];
-				hvars->mode.pens[1] = pens[11];
-			}
-			else {
-				hvars->mode.pens[0] = pens[8];
-				hvars->mode.pens[1] = pens[9];
-			}
-
-			if (artifact_value && (hvars->mode.bytesperrow == 32)) {
-				/* I am here because we are doing PMODE 4 artifact colors */
-
-				hvars->mode.flags |= RASTERBITS_FLAG_ARTIFACT;
-				if (artifact_palettebase < 0) {
-					hvars->mode.u.artifact.flags = RASTERBITS_ARTIFACT_STATICPALLETTE;
-					hvars->mode.u.artifact.u.staticpalette = game_palette;
-				}
-				else {
-					hvars->mode.u.artifact.flags = RASTERBITS_ARTIFACT_DYNAMICPALETTE;
-					hvars->mode.u.artifact.u.dynamicpalettebase = artifact_palettebase;
-				}
-
-				if (artifact_value >= 2)
-					hvars->mode.u.artifact.flags |= RASTERBITS_ARTIFACT_REVERSE;
-
-				hvars->mode.u.artifact.colorfactors = artifactfactors;
-				hvars->mode.u.artifact.numfactors = M6847_ARTIFACT_COLOR_COUNT;
-				hvars->mode.u.artifact.getcolorrgb = getcolorrgb;
-			}
-		}
-		else
-		{
-			/* Color modes */
-			hvars->mode.bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
-			hvars->mode.width = hvars->mode.bytesperrow * 4;
-			hvars->mode.depth = 2;
-			if (the_state.modebits & M6847_MODEBIT_CSS) {
-				hvars->mode.pens[0] = pens[4];
-				hvars->mode.pens[1] = pens[5];
-				hvars->mode.pens[2] = pens[6];
-				hvars->mode.pens[3] = pens[7];
-			}
-			else {
-				hvars->mode.pens[0] = pens[0];
-				hvars->mode.pens[1] = pens[1];
-				hvars->mode.pens[2] = pens[2];
-				hvars->mode.pens[3] = pens[3];
-			}
-		}
-	}
-	else
-	{
-		hvars->mode.flags = RASTERBITS_FLAG_TEXT | RASTERBITS_FLAG_TEXTMODULO;
-		hvars->mode.bytesperrow = 32;
-		hvars->mode.width = 32;
-		hvars->mode.depth = 8;
-		memcpy(hvars->mode.pens, pens, sizeof(hvars->mode.pens));
-		hvars->mode.u.text.mapper = mapper_alphanumeric;
-		hvars->mode.u.text.mapper_param = skew_up;
-		hvars->mode.u.text.fontheight = 12;
-		hvars->mode.u.text.underlinepos = -1;
-	}
 }
 
 int m6847_get_bordercolor(void)
@@ -1295,63 +1442,24 @@ int m6847_get_bordercolor(void)
 	return bordercolor;
 }
 
-static int m6847_bordercolor(void)
-{
-	int pen = 0;
-
-	switch(m6847_get_bordercolor()) {
-	case M6847_BORDERCOLOR_BLACK:
-		pen = 0;
-		break;
-	case M6847_BORDERCOLOR_GREEN:
-		pen = 1;
-		break;
-	case M6847_BORDERCOLOR_WHITE:
-		pen = 5;
-		break;
-	case M6847_BORDERCOLOR_ORANGE:
-		pen = 12;
-		break;
-	}
-	return pen;
-}
-
-static void m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
-{
-	int artifact_value;
-	static UINT32 m6847_metapalette[] = {
-		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12
-	};
-
-	artifact_value = (the_state.initparams.artifactdipswitch == -1) ? 0 : (readinputport(the_state.initparams.artifactdipswitch) & 3);
-	internal_m6847_rastertrack_getvideomode(hvars, m6847_metapalette, 0, m6847_bordercolor(), 1, artifact_value, -1, NULL);
-}
-
-void internal_m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars,
-	int border_top, int rows, int baseoffset, int use_m6847_offset, void (*getvideomode)(struct rastertrack_hvars *))
-{
-	timer_set(DFS_R, 0, fs_rise);
-
-	the_state.latched_videooffset = the_state.videooffset;
-
-	if (vvars) {
-		vvars->bordertop = border_top;
-		vvars->rows = rows;
-		vvars->baseaddress = (use_m6847_offset ? the_state.latched_videooffset : 0) + baseoffset;
-	}
-	if (hvars) {
-		getvideomode(hvars);
-	}
-}
-
-static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars)
-{
-	internal_m6847_rastertrack_newscreen(vvars, hvars, 38, 192, 0, TRUE, m6847_rastertrack_getvideomode);
-}
-
 void m6847_vh_update(struct mame_bitmap *bitmap, int full_refresh)
 {
-	rastertrack_refresh(bitmap, full_refresh);
+	static int last_artifact_value = 0;
+	int artifact_value;
+	int mode_with_arifact = M6847_MODEBIT_AG|M6847_MODEBIT_GM2|M6847_MODEBIT_GM1|M6847_MODEBIT_GM0;
+
+	/* this code is needed so we can detect changes in the artifact dip switch */
+	if ((the_state.modebits & mode_with_arifact) == mode_with_arifact)
+	{
+		artifact_value = get_artifact_value();
+		if (artifact_value != last_artifact_value)
+		{
+			last_artifact_value = artifact_value;
+			videomap_invalidate_lineinfo();
+		}
+	}
+
+	videomap_update(bitmap, full_refresh);
 }
 
 int m6847_is_t1(int version)
@@ -1378,7 +1486,7 @@ void m6847_set_video_offset(int offset)
 	offset %= the_state.initparams.ramsize;
 	if (offset != the_state.videooffset) {
 		the_state.videooffset = offset;
-		schedule_full_refresh();
+		videomap_invalidate_frameinfo();
 	}
 }
 
@@ -1398,9 +1506,9 @@ void m6847_touch_vram(int offset)
 
 void m6847_set_row_height(int rowheight)
 {
-	if (rowheight != the_state.rowsize) {
-		the_state.rowsize = rowheight;
-		rastertrack_touchvideomode();
+	if (rowheight != the_state.rowheight) {
+		the_state.rowheight = rowheight;
+		videomap_invalidate_lineinfo();
 	}
 }
 
@@ -1438,10 +1546,14 @@ static void write_modebits(int data, int mask, int causesrefresh)
 	else
 		newmodebits = the_state.modebits & ~mask;
 
-	if (newmodebits != the_state.modebits) {
+	if (newmodebits != the_state.modebits)
+	{
 		the_state.modebits = newmodebits;
 		if (causesrefresh)
-			rastertrack_touchvideomode();
+		{
+			videomap_invalidate_lineinfo();
+			videomap_invalidate_border();
+		}
 	}
 }
 

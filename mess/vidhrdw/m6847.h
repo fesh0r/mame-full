@@ -27,16 +27,19 @@ enum {
 	M6847_VERSION_M6847T1_NTSC
 };
 
+#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+
 struct m6847_init_params {
 	int version;				/* use one of the above initialization constants */
 	int artifactdipswitch;		/* dip switch that controls artifacting; -1 if NA */
 	UINT8 *ram;					/* the base of RAM */
 	int ramsize;				/* the size of accessible RAM */
 	void (*charproc)(UINT8 c);	/* the proc that gives the host a chance to change mode bits */
+	int initial_video_offset;	/* the first video offset to use */
 
-	mem_write_handler hs_func;	/* Horizontal sync */
-	mem_write_handler fs_func;	/* Field sync */
-	double callback_delay;		/* Amount of time to wait before invoking callbacks (this is a CoCo related hack */
+	mem_write_handler hs_func;	/* horizontal sync */
+	mem_write_handler fs_func;	/* field sync */
+	double callback_delay;		/* amount of time to wait before invoking callbacks (this is a CoCo related hack */
 };
 
 /* This call fills out the params structure with defaults; this is so I can
@@ -50,6 +53,9 @@ void m6847_vh_stop(void);
 int m6847_vh_interrupt(void);
 int m6847_is_t1(int version);
 
+#define M6847_SCREEN_WIDTH	320
+#define M6847_SCREEN_HEIGHT	263
+#define M6847_SCREEN_VISIBLE_AREA	{0,319,11,250}
 
 /******************* Modifiers *******************/
 

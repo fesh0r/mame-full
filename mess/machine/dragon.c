@@ -55,7 +55,6 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
-#include "includes/rstrtrck.h"
 #include "includes/dragon.h"
 #include "includes/cococart.h"
 #include "includes/6883sam.h"
@@ -64,6 +63,8 @@
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
 #include "cassette.h"
+#include "bitbngr.h"
+#include "printer.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -130,13 +131,12 @@ static void coco3_setcartline(int data);
 #define LOG_PAK			1	/* [Sparse]   Logging on PAK trailers */
 #define LOG_INT_MASKING	1	/* [Sparse]   Logging on changing GIME interrupt masks */
 #define LOG_CASSETTE	1	/* [Sparse]   Logging when cassette motor changes state */
-#define LOG_TIMER_SET	1	/* [Sparse]   Logging when setting the timer */
+#define LOG_TIMER_SET	0	/* [Sparse]   Logging when setting the timer */
 #define LOG_INT_TMR		0	/* [Frequent] Logging when timer interrupt is invoked */
 #define LOG_FLOPPY		0	/* [Frequent] Set when floppy interrupts occur */
 #define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
-#define LOG_VBORD		0   /* [Frequent] Occurs when VBORD is changed */
 #define LOG_OS9         0
 #define LOG_TIMER       0
 #define LOG_DEC_TIMER	0
@@ -151,7 +151,6 @@ static void coco3_setcartline(int data);
 #define LOG_INT_COCO3	0
 #define LOG_GIME		0
 #define LOG_MMU			0
-#define LOG_VBORD		0
 #define LOG_OS9         0
 #define LOG_FLOPPY		0
 #define LOG_TIMER       0
@@ -703,7 +702,7 @@ static void coco3_raise_interrupt(int mask, int state)
 			coco3_recalc_irq();
 
 #if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising IRQ; scanline=%i\n", rastertrack_scanline());
+			logerror("CoCo3 Interrupt: Raising IRQ; scanline=%i\n", cpu_getscanline());
 #endif
 		}
 		if ((coco3_gimereg[0] & 0x10) && (coco3_gimereg[3] & mask)) {
@@ -711,7 +710,7 @@ static void coco3_raise_interrupt(int mask, int state)
 			coco3_recalc_firq();
 
 #if LOG_INT_COCO3
-			logerror("CoCo3 Interrupt: Raising FIRQ; scanline=%i\n", rastertrack_scanline());
+			logerror("CoCo3 Interrupt: Raising FIRQ; scanline=%i\n", cpu_getscanline());
 #endif
 		}
 	}
@@ -724,23 +723,52 @@ WRITE_HANDLER( coco_m6847_hs_w )
 
 WRITE_HANDLER( coco_m6847_fs_w )
 {
-	pia_0_cb1_w(0, !data);
+	pia_0_cb1_w(0, data);
 }
 
 WRITE_HANDLER( coco3_m6847_hs_w )
 {
 	if (data)
 		coco3_timer_hblank();
-	pia_0_ca1_w(0, data);
-	coco3_raise_interrupt(COCO3_INT_HBORD, !data);
+	pia_0_ca1_w(0, !data);
+	coco3_raise_interrupt(COCO3_INT_HBORD, data);
 }
+
+int coco3_calculate_rows(int *bordertop, int *borderbottom);
+
+int coco3_vh_interrupt(void)
+{
+	int border_top, border_bottom, body_scanlines;
+	int scanline;
+
+	body_scanlines = coco3_calculate_rows(&border_top, &border_bottom);
+
+	scanline = internal_m6847_getadjustedscanline();
+
+#if 1
+	{
+		static int last_scanline = 0;
+		if (scanline < last_scanline)
+			logerror("scanline=%d\n", scanline);
+		last_scanline = scanline;
+	}
+#endif
+
+	if (scanline == 0)
+		coco3_raise_interrupt(COCO3_INT_VBORD, CLEAR_LINE);
+	else if (scanline >= border_top+body_scanlines)
+		coco3_raise_interrupt(COCO3_INT_VBORD, ASSERT_LINE);
+
+	return internal_m6847_vh_interrupt(scanline, 4, 0);
+}
+
 
 WRITE_HANDLER( coco3_m6847_fs_w )
 {
 #if LOG_VBORD
-	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, rastertrack_scanline());
+	logerror("coco3_m6847_fs_w(): data=%i scanline=%i\n", data, cpu_getscanline());
 #endif
-	pia_0_cb1_w(0, !data);
+	pia_0_cb1_w(0, data);
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
 }
 
@@ -1332,7 +1360,7 @@ static void coco3_timer_newvalue(void)
 {
 	if (coco3_timer_value == 0) {
 #if LOG_INT_TMR
-		logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", rastertrack_scanline(), timer_get_time());
+		logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", cpu_getscanline(), timer_get_time());
 #endif
 		coco3_raise_interrupt(COCO3_INT_TMR, 1);
 
@@ -1796,24 +1824,32 @@ static void coco3_sam_set_maptype(int val)
   Joystick autocenter
 ***************************************************************************/
 
-static int autocenter_val;
+struct autocenter_info
+{
+	int dipport;
+	int dipmask;
+	int old_value;
+};
 
 static void autocenter_timer_proc(int data)
 {
 	struct InputPort *in;
-	int dipport, dipmask, portval;
+	struct autocenter_info *info;
+	int portval;
 
-	dipport = (data & 0xff00) >> 8;
-	dipmask = data & 0x00ff;
-	portval = readinputport(dipport) & dipmask;
+	info = (struct autocenter_info *) data;
+	portval = readinputport(info->dipport) & info->dipmask;
 
-	if (autocenter_val != portval) {
+	if (info->old_value != portval)
+	{
 		/* Now go through all inputs, and set or reset IPF_CENTER on all
 		 * joysticks
 		 */
-		for (in = Machine->input_ports; in->type != IPT_END; in++) {
+		for (in = Machine->input_ports; in->type != IPT_END; in++)
+		{
 			if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
-					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END)) {
+					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
+			{
 				/* We found a joystick */
 				if (portval)
 					in->type |= IPF_CENTER;
@@ -1821,13 +1857,23 @@ static void autocenter_timer_proc(int data)
 					in->type &= ~IPF_CENTER;
 			}
 		}
+		info->old_value = portval;
 	}
 }
 
 static void autocenter_init(int dipport, int dipmask)
 {
-	autocenter_val = -1;
-	timer_pulse(TIME_IN_HZ(10), (dipport << 8) | dipmask, autocenter_timer_proc);
+	struct autocenter_info *info;
+
+	info = (struct autocenter_info *) auto_malloc(sizeof(struct autocenter_info));
+	if (!info)
+		return;	/* ACK */
+
+	info->dipport = dipport;
+	info->dipmask = dipmask;
+	info->old_value = -1;
+
+	timer_pulse(TIME_IN_HZ(60), (int) info, autocenter_timer_proc);
 }
 
 /***************************************************************************
@@ -1913,43 +1959,60 @@ static void coco_cartridge_enablesound(int enable)
   Bitbanger port
 ***************************************************************************/
 
-static void *bitbanger_file;
-static int bitbanger_word;
-static int bitbanger_line;
-
-static void coco_bitbanger_poll(int dummy)
+static int coco_bitbanger_filter(int id, const int *pulses, int total_pulses, int total_duration)
 {
-	char c;
+	int i;
+	int result = 0;
+	int word;
+	int pos;
+	int pulse_type;
+	int c;
 
-	bitbanger_word >>= 1;
-	if (bitbanger_line)
-		bitbanger_word |= 0x400;
+	if (total_duration >= 11)
+	{
+		word = 0;
+		pos = 0;
+		pulse_type = 0;
+		result = 1;
 
-	if ((bitbanger_word & 0x403) == 0x401) {
-		c = (char) (bitbanger_word >> 2);
-		if (bitbanger_file)
-			osd_fwrite(bitbanger_file, &c, 1);
-		bitbanger_word = 0;
+		for (i = 0; i < total_pulses; i++)
+		{
+			if (pulse_type)
+				word |= ((1 << pulses[i]) - 1) << pos;
+			pulse_type ^= 1;
+			pos += pulses[i];
+		}
+
+		c = (word >> 1) & 0xff;
+		printer_output(id, c);
 	}
+	return result;
 }
 
 int coco_bitbanger_init (int id)
 {
-	bitbanger_word = 0;
-	bitbanger_line = 0;
-	bitbanger_file = image_fopen (IO_BITBANGER, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	return INIT_PASS;
+	static const struct bitbanger_config cfg =
+	{
+		coco_bitbanger_filter,
+		1.0 / 10.0,
+		0.2,
+		2,
+		10,
+		0,
+		0
+	};
+
+	return bitbanger_init(id, &cfg);
 }
 
 void coco_bitbanger_exit (int id)
 {
-	if (bitbanger_file)
-		osd_fclose(bitbanger_file);
+	printer_exit(id);
 }
 
 void coco_bitbanger_output (int id, int data)
 {
-	bitbanger_line = data;
+	bitbanger_output(id, data);
 }
 
 /***************************************************************************
@@ -2077,8 +2140,6 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 
 	coco_cartrige_init(cart_inserted ? cartslottype : cartinterface, cartcallback);
 	autocenter_init(12, 0x04);
-
-	timer_pulse(TIME_IN_HZ(600), 0, coco_bitbanger_poll);
 }
 
 void dragon32_init_machine(void)

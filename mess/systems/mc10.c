@@ -157,9 +157,9 @@ static struct MachineDriver machine_driver_mc10 =
 	mc10_stop_machine,
 
 	/* video hardware */
-	32*8,										/* screen width */
-	16*12,									/* screen height (pixels doubled) */
-	{ 0, 32*8-1, 0, 16*12-1},					/* visible_area */
+	M6847_SCREEN_WIDTH,										/* screen width */
+	M6847_SCREEN_HEIGHT,									/* screen height (pixels doubled) */
+	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
 	0,							/* graphics decode info */
 	M6847_TOTAL_COLORS,
 	0,

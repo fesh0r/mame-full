@@ -724,7 +724,7 @@ int atari_vh_start(void)
     memset(&antic, 0, sizeof(antic));
 	memset(&gtia, 0, sizeof(gtia));
 
-	antic.cclk_expand = malloc(21 * 256 * sizeof(UINT32));
+	antic.cclk_expand = auto_malloc(21 * 256 * sizeof(UINT32));
 	if( !antic.cclk_expand )
 		return 1;
 
@@ -738,12 +738,10 @@ int atari_vh_start(void)
 	antic.pf_gtia2	  = &antic.cclk_expand[19 * 256];
 	antic.pf_gtia3	  = &antic.cclk_expand[20 * 256];
 
-	antic.used_colors = malloc(21 * 256 * sizeof(UINT8));
+	antic.used_colors = auto_malloc(21 * 256 * sizeof(UINT8));
 	if( !antic.used_colors )
-	{
-		free(antic.cclk_expand);
 		return 1;
-	}
+
 	memset(antic.used_colors, 0, 21 * 256 * sizeof(UINT8));
 
 	antic.uc_21 	  = &antic.used_colors[ 0 * 256];
@@ -765,13 +763,9 @@ int atari_vh_start(void)
 
 	for( i = 0; i < 64; i++ )
     {
-		antic.prio_table[i] = malloc(8*256);
+		antic.prio_table[i] = auto_malloc(8*256);
 		if( !antic.prio_table[i] )
-		{
-			while( --i >= 0 )
-				free(antic.prio_table[i]);
 			return 1;
-		}
     }
 
 	LOG((errorlog, "atari prio_init\n"));
@@ -779,13 +773,9 @@ int atari_vh_start(void)
 
 	for( i = 0; i < Machine->drv->screen_height; i++ )
     {
-		antic.video[i] = malloc(sizeof(VIDEO));
+		antic.video[i] = auto_malloc(sizeof(VIDEO));
 		if( !antic.video[i] )
-        {
-			while( --i >= 0 )
-				free(antic.video[i]);
             return 1;
-        }
 		memset(antic.video[i], 0, sizeof(VIDEO));
     }
 
@@ -801,27 +791,13 @@ void atari_vh_stop(void)
 	int i;
 
 	for( i = 0; i < 64; i++ )
-	{
-		if (antic.prio_table[i])
-		{
-			free(antic.prio_table[i]);
-			antic.prio_table[i] = 0;
-		}
-	}
+		antic.prio_table[i] = 0;
+
 	for( i = 0; i < Machine->drv->screen_height; i++ )
-	{
-		if (antic.video[i])
-		{
-			free(antic.video[i]);
-			antic.video[i] = 0;
-		}
-	}
+		antic.video[i] = 0;
 
 	if( antic.cclk_expand )
-	{
-		free(antic.cclk_expand);
 		antic.cclk_expand = 0;
-	}
 }
 
 /************************************************************************

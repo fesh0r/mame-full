@@ -2,8 +2,7 @@
 #define DRAGON_H
 
 #include "vidhrdw/m6847.h"
-#include "includes/rstrbits.h"
-#include "includes/rstrtrck.h"
+#include "videomap.h"
 
 #define COCO_CPU_SPEED_HZ		894886	/* 0.894886 MHz */
 #define COCO_FRAMES_PER_SECOND	(COCO_CPU_SPEED_HZ / 57.0 / 263)
@@ -18,17 +17,26 @@
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, struct rastertrack_interface *intf, int dirtyramsize);
+int internal_m6847_vh_start(const struct m6847_init_params *params, const struct videomap_interface *videointf,
+	int dirtyramsize);
 
-void internal_m6847_rastertrack_endcontent(void);
+void internal_m6847_frame_callback(struct videomap_framecallback_info *info, int offset, int border_top, int rows);
 
-void internal_m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct rastertrack_hvars *hvars,
-	int border_top, int rows, int baseoffset, int use_m6847_offset, void (*getvideomode)(struct rastertrack_hvars *));
+struct internal_m6847_linecallback_interface
+{
+	int width_factor;
+	charproc_callback charproc;
+	UINT16 (*calculate_artifact_color)(UINT16 metacolor, int artifact_mode);
+	int (*setup_dynamic_artifact_palette)(int artifact_mode, UINT8 *bgcolor, UINT8 *fgcolor);
+};
 
-void internal_m6847_rastertrack_getvideomode(struct rastertrack_hvars *hvars,
-	UINT32 *pens, int skew_up, int border_pen, int wf,
-	int artifact_value, int artifact_palettebase,
-	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue));
+void internal_m6847_line_callback(struct videomap_linecallback_info *info, const UINT16 *metapalette,
+	struct internal_m6847_linecallback_interface *intf);
+
+UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metapalette, int row, int skew);
+
+int internal_m6847_getadjustedscanline(void);
+int internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
@@ -60,6 +68,7 @@ extern void coco3_vh_blink(void);
  * from machine/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
+extern int coco3_vh_interrupt(void);
 extern void dragon32_init_machine(void);
 extern void dragon64_init_machine(void);
 extern void coco_init_machine(void);
