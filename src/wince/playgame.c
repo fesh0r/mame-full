@@ -60,12 +60,7 @@ static char *__localconcat(char *dest, const char *s1, const char *s2)
 
 void get_mame_root(TCHAR *buffer, int buflen)
 {
-#ifdef WINCE_EMULATION
-	// To make things simple when running under emulation
-	sntprintf(buffer, buflen, TEXT("\\"));
-#else
 	GetModuleFileName(NULL, buffer, buflen);
-#endif
 	tcsrchr(buffer, '\\')[0] = '\0';
 }
 

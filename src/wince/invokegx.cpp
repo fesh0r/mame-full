@@ -61,12 +61,16 @@ static void reporterror(const char *msg)
 {
 	DWORD err;
 	TCHAR buffer[256];
+	TCHAR *s;
 
 	err = GetLastError();
 	buffer[0] = ' ';
 	buffer[1] = '(';
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, err, 0, buffer + 2, sizeof(buffer) / sizeof(buffer[0]) - 3, NULL))
 	{
+		s = wcsrchr(buffer, '\r');
+		if (s)
+			*s = '\0';
 		wcscat(buffer, TEXT(")"));
 	}
 	else
@@ -201,8 +205,10 @@ void gx_get_display_properties(struct GXDisplayProperties *properties)
 {
 	if (cdecl_GXGetDisplayProperties)
 		*properties = cdecl_GXGetDisplayProperties();
-	else
+	else if (stdcall_GXGetDisplayProperties)
 		*properties = stdcall_GXGetDisplayProperties();
+	else
+		DebugBreak();
 }
 
 void gx_get_default_keys(struct GXKeyList *keylist, int iOptions)
