@@ -391,9 +391,9 @@ VIDEO_UPDATE( odyssey2 )
 	collision=0;
 //	for (y=0; y<bitmap->height; y++) {
 //		for (x=0; x<bitmap->width; x++) {
-	for (y=0; y<200; y++)
+	for (y=0; y<300; y++)
 	{
-		for (x=0; x<200; x++)
+		for (x=0; x<320; x++)
 		{
 			switch (bg[y][x]) {
 			case 0: case 1: case 2: case 4: case 8:
@@ -403,8 +403,7 @@ VIDEO_UPDATE( odyssey2 )
 			default:
 				if (bg[y][x]&o2_vdc.s.collision)
 				{
-				    collision|=bg[y][x]-1;	/* NPW 23-Nov-2002 - subtracting by 1 as per
-											 * fix by Dopefish Justin */
+				    collision|=bg[y][x]&(~o2_vdc.s.collision);
 				}
 				break;
 			}
@@ -434,6 +433,7 @@ void odyssey2_sh_update( int param, INT16 *buffer, int length )
 	static UINT32 signal;
 	static UINT16 count = 0;
 	int ii;
+	int period;
 
 	/* Generate the signal */
 	signal = o2_vdc.s.shift3 | (o2_vdc.s.shift2 << 8) | (o2_vdc.s.shift1 << 16);
@@ -444,7 +444,8 @@ void odyssey2_sh_update( int param, INT16 *buffer, int length )
 		{
 			*buffer = 0;
 			*buffer = signal & 0x1;
-			if( ++count >= o2_snd_shift[(o2_vdc.s.sound & 0x20) >> 4] )
+			period = (o2_vdc.s.sound & 0x20) ? 11 : 44;
+			if( ++count >= period )
 			{
 				count = 0;
 				signal >>= 1;
