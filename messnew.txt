@@ -6,6 +6,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE2] Moved Apple 2 disks over to use the standard floppy device code.
+  [Nate Woods]
+
 - [PC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
   error to be displayed (bug #427). [Colin Howell, Nate Woods]
 

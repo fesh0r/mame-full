@@ -188,6 +188,8 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 #include "inputx.h"
 #include "snprintf.h"
 #include "machine/ay3600.h"
+#include "devices/basicdsk.h"
+#include "formats/ap2_disk.h"
 
 static MEMORY_READ_START( readmem_apple2 )
 	{ 0x0000, 0x01ff, MRA_BANK4 },
@@ -647,7 +649,8 @@ ROM_START(apple2cp)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2_common)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0do\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_apple2_floppy, NULL, device_load_apple2_floppy, NULL, NULL)
+	/*CONFIG_DEVICE_FLOPPY		(2, apple2, apple2_dsk )	(would work if it wern't for caching problem */
+	CONFIG_DEVICE_FLOPPY_BASICDSK_RO( 2, "dsk\0bin\0do\0", device_load_apple2_floppy )
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 	CONFIG_QUEUE_CHARS			( AY3600 )
 	CONFIG_ACCEPT_CHAR			( AY3600 )

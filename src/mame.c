@@ -1704,6 +1704,7 @@ static int validitychecks(void)
 				printf("%s: %s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
+#ifndef MESS
 			if (drivers[i]->rom && drivers[i]->rom == drivers[j]->rom
 					&& (drivers[i]->flags & NOT_A_DRIVER) == 0
 					&& (drivers[j]->flags & NOT_A_DRIVER) == 0)
@@ -1711,6 +1712,7 @@ static int validitychecks(void)
 				printf("%s: %s and %s use the same ROM set\n",drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
 			}
+#endif
 		}
 
 #ifndef MESS

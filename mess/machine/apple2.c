@@ -367,6 +367,8 @@ DRIVER_INIT( apple2 )
 
 	/* apple2 behaves much better when the default memory is zero */
 	memset(mess_ram, 0, mess_ram_size);
+
+	apple2_slot6_init();
 }
 
 /***************************************************************************
@@ -415,8 +417,6 @@ MACHINE_INIT( apple2 )
 	/* TODO: add more initializers as we add more slots */
 	if (apple2_hasslots())
 		mockingboard_init(4);
-
-	apple2_slot6_init();
 
 	joystick_x1_time = joystick_y1_time = 0;
 	joystick_x2_time = joystick_y2_time = 0;

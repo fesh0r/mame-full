@@ -180,7 +180,16 @@ static int try_format_driver(const struct InternalBdFormatDriver *drv, const str
 
 	/* try to decode the header */
 	bdf->offset = header_size;	/* the default offset is the header size */
-	if (!drv->header_decode(header_size ? &bdf->header : NULL, file_size, header_size, &bdf->geometry, &bdf->offset))
+	if (!drv->header_decode)
+	{
+		bdf->geometry.tracks = drv->tracks_options[0];
+		bdf->geometry.sectors = drv->sectors_options[0];
+		bdf->geometry.heads = drv->heads_options[0];
+		bdf->geometry.sector_size = drv->bytes_per_sector;
+		/* success! */
+		*bdffile = bdf;
+	}
+	else if (!drv->header_decode(header_size ? &bdf->header : NULL, file_size, header_size, &bdf->geometry, &bdf->offset))
 	{
 		/* success! */
 		*bdffile = bdf;
@@ -415,6 +424,6 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 	assert(tracks_optnum < sizeof(drv->tracks_options) / sizeof(drv->tracks_options[0]));
 	assert(heads_optnum < sizeof(drv->heads_options) / sizeof(drv->heads_options[0]));
 	assert(sectors_optnum < sizeof(drv->sectors_options) / sizeof(drv->sectors_options[0]));
-	assert(drv->header_decode);
+	assert(drv->header_decode || ((tracks_optnum == 1) && (heads_optnum == 1) && (sectors_optnum == 1)));
 }
 #endif

@@ -139,10 +139,10 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_NOZIP);
 #else
 			{
-				int flags = FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_ZIP_PATHS;
+				int flags = FILEFLAG_ALLOW_ABSOLUTE;
 				switch(openforwrite) {
 				case OSD_FOPEN_READ:   
-					flags |= FILEFLAG_OPENREAD /*| FILEFLAG_HASH*/;
+					flags |= FILEFLAG_OPENREAD | FILEFLAG_ZIP_PATHS;
 					break;   
 				case OSD_FOPEN_WRITE:   
 					flags |= FILEFLAG_OPENWRITE;   

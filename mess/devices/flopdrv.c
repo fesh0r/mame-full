@@ -266,7 +266,7 @@ int	floppy_drive_get_flag_state(mess_image *img, int flag)
 	flags |= drive_flags & FLOPPY_DRIVE_HEAD_AT_TRACK_0;
 
 	/* if disk image is read-only return write protected all the time */
-	if (drive_flags & FLOPPY_DRIVE_DISK_IMAGE_READ_ONLY)
+	if (!image_is_writable(img))
 	{
 		flags |= FLOPPY_DRIVE_DISK_WRITE_PROTECTED;
 	}

@@ -9,13 +9,6 @@
 #ifndef APPLE2H
 #define APPLE2H 1
 
-#define SWITCH_OFF 0
-#define SWITCH_ON  1
-
-#define A2_DISK_DO	0 /* DOS order */
-#define A2_DISK_PO  1 /* ProDOS/Pascal order */
-#define A2_DISK_NIB 2 /* Raw nibble format */
-
 #define VAR_80STORE		0x000001
 #define VAR_RAMRD		0x000002
 #define VAR_RAMWRT		0x000004
@@ -42,81 +35,78 @@
 extern UINT32 a2;
 
 /* machine/apple2.c */
-extern DRIVER_INIT( apple2 );
-extern MACHINE_INIT( apple2 );
+DRIVER_INIT( apple2 );
+MACHINE_INIT( apple2 );
 
-extern int  apple2_id_rom(int id);
+int  apple2_id_rom(int id);
 
-extern int	apple2e_load_rom(int id);
-extern int	apple2ee_load_rom(int id);
+int	apple2e_load_rom(int id);
+int	apple2ee_load_rom(int id);
 
-extern void apple2_interrupt(void);
+void apple2_interrupt(void);
 
-extern READ_HANDLER ( apple2_c00x_r );
-extern WRITE_HANDLER ( apple2_c00x_w );
+READ_HANDLER ( apple2_c00x_r );
+WRITE_HANDLER ( apple2_c00x_w );
 
-extern READ_HANDLER ( apple2_c01x_r );
-extern WRITE_HANDLER ( apple2_c01x_w );
+READ_HANDLER ( apple2_c01x_r );
+WRITE_HANDLER ( apple2_c01x_w );
 
-extern READ_HANDLER ( apple2_c02x_r );
-extern WRITE_HANDLER ( apple2_c02x_w );
+READ_HANDLER ( apple2_c02x_r );
+WRITE_HANDLER ( apple2_c02x_w );
 
-extern READ_HANDLER ( apple2_c03x_r );
-extern WRITE_HANDLER ( apple2_c03x_w );
+READ_HANDLER ( apple2_c03x_r );
+WRITE_HANDLER ( apple2_c03x_w );
 
-extern READ_HANDLER ( apple2_c05x_r );
-extern WRITE_HANDLER ( apple2_c05x_w );
+READ_HANDLER ( apple2_c05x_r );
+WRITE_HANDLER ( apple2_c05x_w );
 
-extern READ_HANDLER ( apple2_c06x_r );
+READ_HANDLER ( apple2_c06x_r );
 
-extern READ_HANDLER ( apple2_c07x_r );
-extern WRITE_HANDLER ( apple2_c07x_w );
+READ_HANDLER ( apple2_c07x_r );
+WRITE_HANDLER ( apple2_c07x_w );
 
-extern READ_HANDLER ( apple2_c08x_r );
-extern WRITE_HANDLER ( apple2_c08x_w );
+READ_HANDLER ( apple2_c08x_r );
+WRITE_HANDLER ( apple2_c08x_w );
 
-extern READ_HANDLER ( apple2_c0xx_slot1_r );
-extern READ_HANDLER ( apple2_c0xx_slot2_r );
-extern READ_HANDLER ( apple2_c0xx_slot3_r );
-extern READ_HANDLER ( apple2_c0xx_slot4_r );
-extern READ_HANDLER ( apple2_c0xx_slot5_r );
-extern READ_HANDLER ( apple2_c0xx_slot7_r );
-extern WRITE_HANDLER ( apple2_c0xx_slot1_w );
-extern WRITE_HANDLER ( apple2_c0xx_slot2_w );
-extern WRITE_HANDLER ( apple2_c0xx_slot3_w );
-extern WRITE_HANDLER ( apple2_c0xx_slot4_w );
-extern WRITE_HANDLER ( apple2_c0xx_slot5_w );
-extern WRITE_HANDLER ( apple2_c0xx_slot7_w );
-extern WRITE_HANDLER ( apple2_slot1_w );
-extern WRITE_HANDLER ( apple2_slot2_w );
-extern WRITE_HANDLER ( apple2_slot3_w );
-extern WRITE_HANDLER ( apple2_slot4_w );
-extern WRITE_HANDLER ( apple2_slot5_w );
-extern WRITE_HANDLER ( apple2_slot7_w );
-/*extern int  apple2_slot1_r(int offset);
-extern int  apple2_slot2_r(int offset);
-extern int  apple2_slot3_r(int offset);*/
-extern READ_HANDLER ( apple2_slot4_r );
-/*extern int  apple2_slot5_r(int offset);
-extern int  apple2_slot6_r(int offset);*/
-extern READ_HANDLER ( apple2_slot7_r );
+READ_HANDLER ( apple2_c0xx_slot1_r );
+READ_HANDLER ( apple2_c0xx_slot2_r );
+READ_HANDLER ( apple2_c0xx_slot3_r );
+READ_HANDLER ( apple2_c0xx_slot4_r );
+READ_HANDLER ( apple2_c0xx_slot5_r );
+READ_HANDLER ( apple2_c0xx_slot7_r );
+WRITE_HANDLER ( apple2_c0xx_slot1_w );
+WRITE_HANDLER ( apple2_c0xx_slot2_w );
+WRITE_HANDLER ( apple2_c0xx_slot3_w );
+WRITE_HANDLER ( apple2_c0xx_slot4_w );
+WRITE_HANDLER ( apple2_c0xx_slot5_w );
+WRITE_HANDLER ( apple2_c0xx_slot7_w );
+WRITE_HANDLER ( apple2_slot1_w );
+WRITE_HANDLER ( apple2_slot2_w );
+WRITE_HANDLER ( apple2_slot3_w );
+WRITE_HANDLER ( apple2_slot4_w );
+WRITE_HANDLER ( apple2_slot5_w );
+WRITE_HANDLER ( apple2_slot7_w );
+/*int  apple2_slot1_r(int offset);
+int  apple2_slot2_r(int offset);
+int  apple2_slot3_r(int offset);*/
+READ_HANDLER ( apple2_slot4_r );
+/*int  apple2_slot5_r(int offset);
+int  apple2_slot6_r(int offset);*/
+READ_HANDLER ( apple2_slot7_r );
 
 
 /* machine/ap_disk2.c */
-extern void apple2_slot6_init(void);
-
-extern DEVICE_INIT(apple2_floppy);
-extern DEVICE_LOAD(apple2_floppy);
-
-extern READ_HANDLER ( apple2_c0xx_slot6_r );
-extern WRITE_HANDLER ( apple2_c0xx_slot6_w );
-extern WRITE_HANDLER ( apple2_slot6_w );
+void apple2_slot6_init(void);
+DEVICE_LOAD ( apple2_floppy );
+READ_HANDLER ( apple2_c0xx_slot6_r );
+WRITE_HANDLER ( apple2_c0xx_slot6_w );
+WRITE_HANDLER ( apple2_slot6_w );
 
 
 /* vidhrdw/apple2.c */
-extern VIDEO_START( apple2 );
-extern VIDEO_UPDATE( apple2 );
-extern void apple2_video_touch(offs_t offset);
+VIDEO_START( apple2 );
+VIDEO_UPDATE( apple2 );
+void apple2_video_touch(offs_t offset);
 
 /* keyboard wrappers */
 #define pressed_specialkey(key)	(input_port_8_r(0) & (key))
