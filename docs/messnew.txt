@@ -8,7 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
+  and split mode support.  [Gordon Jefferyes]
 
 
 
