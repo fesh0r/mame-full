@@ -141,12 +141,14 @@ int dragon_floppy_init(int id)
 	void *file;
 	int tracks;
 	int heads;
+	int err;
 
-	if (basicdsk_floppy_init(id)==INIT_PASS) {
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-		if (!file)
-			return INIT_FAIL;
+	err = basicdsk_floppy_init(id);
+	if (err != INIT_PASS)
+		return err;
 
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	if (file) {
 		tracks = osd_fsize(file) / (18*256);
 		heads = (tracks > 80) ? 2 : 1;
 		tracks /= heads;
