@@ -306,9 +306,9 @@ endif
 CPU=$(strip $(findstring HD6309@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_HD6309=1
-CPUOBJS += $(OBJ)/cpu/m6809/m6809.o
-DBGOBJS += $(OBJ)/cpu/m6809/6809dasm.o
-$(OBJ)/cpu/m6809/m6809.o: m6809.c m6809.h 6809ops.c 6809tbl.c
+CPUOBJS += $(OBJ)/cpu/hd6309/hd6309.o
+DBGOBJS += $(OBJ)/cpu/hd6309/6309dasm.o
+$(OBJ)/cpu/hd6309/hd6309.o: hd6309.c hd6309.h 6309ops.c 6309tbl.c
 endif
 
 CPU=$(strip $(findstring M6809@,$(CPUS)))
