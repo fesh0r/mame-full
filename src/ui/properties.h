@@ -46,7 +46,7 @@ typedef struct
 	DLGPROC pfnDlgProc;
 } PROPERTYSHEETINFO;
 
-extern PROPERTYSHEETINFO g_propSheets[];
+extern const PROPERTYSHEETINFO g_propSheets[];
 
 BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
 

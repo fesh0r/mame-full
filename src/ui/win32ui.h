@@ -25,8 +25,16 @@ enum
 	NUM_TABS
 };
 
+typedef struct
+{
+	INT resource;
+	const char *icon_name;
+} ICONDATA;
+
 /* global variables */
 extern const char *column_names[COLUMN_MAX];
+
+extern const ICONDATA g_iconData[];
 
 extern HWND GetMainWindow(void);
 extern HWND GetTreeView(void);

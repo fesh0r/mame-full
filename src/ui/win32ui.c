@@ -397,28 +397,6 @@ static HIMAGELIST   hSmall = NULL;
 static HIMAGELIST   hHeaderImages = NULL;
 static int          *icon_index = NULL; /* for custom per-game icons */
 
-/* Icon names we will load and use */
-static const char* icon_names[] =
-{
-	"noroms",
-	"roms",
-	"unknown",
-	"clone",
-	"warning",
-#ifdef MESS
-	"noromsneeded",
-	"missingoptrom",
-	"floppy",
-	"cassette",
-	"serial",
-	"snapshot",
-	"printer",
-	"hard",
-#endif
-};
-
-#define NUM_ICONS (sizeof(icon_names) / sizeof(icon_names[0]))
-
 static TBBUTTON tbb[] =
 {
 	{0, ID_VIEW_FOLDERS,    TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 0},
@@ -4037,30 +4015,17 @@ static void ReloadIcons(void)
 			icon_index[i] = 0; // these are indices into hSmall
 	}
 
-	for (i = IDI_WIN_NOROMS; i <= IDI_WIN_REDX; i++)
+	for (i = 0; g_iconData[i].icon_name; i++)
 	{
-		hIcon = LoadIconFromFile((char *)icon_names[i - IDI_WIN_NOROMS]);
+		hIcon = LoadIconFromFile((char *) g_iconData[i].icon_name);
 		if (hIcon == NULL)
-			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(i));
+			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(g_iconData[i].resource));
 
 		ImageList_AddIcon(hSmall, hIcon);
 		ImageList_AddIcon(hLarge, hIcon);
 	}
-#ifdef MESS
-	for (i = IDI_WIN_NOROMSNEEDED; i <= IDI_WIN_HARD; i++)
-	{
-		INT icon_name_index;
-		icon_name_index = i - IDI_WIN_NOROMSNEEDED + IDI_WIN_REDX - IDI_WIN_NOROMS + 1;
-		assert(icon_name_index >= 0);
-		assert(icon_name_index < sizeof(icon_names) / sizeof(icon_names[0]));
-		if ((hIcon = LoadIconFromFile((char *) icon_names[icon_name_index])) == 0)
-			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
-
-		ImageList_AddIcon (hSmall, hIcon);
-		ImageList_AddIcon (hLarge, hIcon);
-	}
-#endif
 }
+
 static DWORD GetShellLargeIconSize(void)
 {
 	DWORD  dwSize, dwLength = 512, dwType = REG_SZ;
@@ -4090,6 +4055,12 @@ static void CreateIcons(void)
 	HWND header;
 	DWORD dwLargeIconSize = GetShellLargeIconSize();
 	HICON hIcon;
+	int icon_count;
+	DWORD dwStyle;
+
+	icon_count = 0;
+	while(g_iconData[icon_count].icon_name)
+		icon_count++;
 
 	// the current window style affects the sizing of the rows when changing
 	// between list views, so put it in small icon mode temporarily while we associate
@@ -4099,13 +4070,13 @@ static void CreateIcons(void)
 	// full refresh, which seems odd (it should recreate the scrollbar when
 	// set back to report mode, for example, but it doesn't).
 
-	DWORD dwStyle = GetWindowLong(hwndList,GWL_STYLE);
+	dwStyle = GetWindowLong(hwndList,GWL_STYLE);
 	SetWindowLong(hwndList,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
 
 	hSmall = ImageList_Create(ICONMAP_WIDTH, ICONMAP_HEIGHT,
-							  ILC_COLORDDB | ILC_MASK, NUM_ICONS, 500);
+							  ILC_COLORDDB | ILC_MASK, icon_count, 500);
 	hLarge = ImageList_Create(dwLargeIconSize, dwLargeIconSize,
-							  ILC_COLORDDB | ILC_MASK, NUM_ICONS, 500);
+							  ILC_COLORDDB | ILC_MASK, icon_count, 500);
 
 	ReloadIcons();
 

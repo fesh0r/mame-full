@@ -36,6 +36,7 @@
 #include "help.h"
 #include "properties.h"
 #include "audit32.h"
+#include "win32ui.h"
 
 static BOOL FilterAvailable(int driver_index);
 
@@ -118,7 +119,7 @@ const MAMEHELPINFO g_helpInfo[] =
 	{ -1 }
 };
 
-PROPERTYSHEETINFO g_propSheets[] =
+const PROPERTYSHEETINFO g_propSheets[] =
 {
 	{ FALSE,	NULL,					IDD_PROP_GAME,			GamePropertiesDialogProc },
 	{ FALSE,	NULL,					IDD_PROP_AUDIT,			GameAuditDialogProc },
@@ -129,6 +130,16 @@ PROPERTYSHEETINFO g_propSheets[] =
 	{ TRUE,		NULL,					IDD_PROP_MISC,			GameOptionsProc },
 	{ TRUE,		PropSheetFilter_Vector,	IDD_PROP_VECTOR,		GameOptionsProc },
 	{ FALSE }
+};
+
+const ICONDATA g_iconData[] =
+{
+	{ IDI_WIN_NOROMS,			"noroms" },
+	{ IDI_WIN_ROMS,				"roms" },
+	{ IDI_WIN_UNKNOWN,			"unknown" },
+	{ IDI_WIN_CLONE,			"clone" },
+	{ IDI_WIN_REDX,				"warning" },
+	{ 0 }
 };
 
 const char g_szDefaultGame[] = "pacman";

@@ -164,7 +164,8 @@ static BOOL CreateMessIcons(void)
 {
     int i;
 
-    if (!mess_icon_index) {
+    if (!mess_icon_index)
+	{
         mess_icon_index = malloc(sizeof(int) * game_count * IO_COUNT);
         if (!mess_icon_index)
             return FALSE;
@@ -477,9 +478,9 @@ static void SoftwareListClass_Run(struct SmartListView *pListView)
 static int LookupIcon(const char *icon_name)
 {
 	int i;
-	for (i = 0; i < sizeof(icon_names) / sizeof(icon_names[0]); i++)
+	for (i = 0; g_iconData[i].icon_name; i++)
 	{
-		if (!strcmp(icon_names[i], icon_name))
+		if (!strcmp(g_iconData[i].icon_name, icon_name))
 			return i;
 	}
 	return -1;

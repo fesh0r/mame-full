@@ -114,7 +114,7 @@ const MAMEHELPINFO g_helpInfo[] =
 	{ -1 }
 };
 
-PROPERTYSHEETINFO g_propSheets[] =
+const PROPERTYSHEETINFO g_propSheets[] =
 {
 	{ FALSE,	NULL,					IDD_PROP_GAME,			GamePropertiesDialogProc },
 	{ FALSE,	NULL,					IDD_PROP_AUDIT,			GameAuditDialogProc },
@@ -127,6 +127,24 @@ PROPERTYSHEETINFO g_propSheets[] =
 	{ FALSE,	PropSheetFilter_Config,	IDD_PROP_CONFIGURATION,	GameMessOptionsProc },
 	{ TRUE,		PropSheetFilter_Vector,	IDD_PROP_VECTOR,		GameOptionsProc },
 	{ FALSE }
+};
+
+const ICONDATA g_iconData[] =
+{
+	{ IDI_WIN_NOROMS,			"noroms" },
+	{ IDI_WIN_ROMS,				"roms" },
+	{ IDI_WIN_UNKNOWN,			"unknown" },
+	{ IDI_WIN_CLONE,			"clone" },
+	{ IDI_WIN_REDX,				"warning" },
+	{ IDI_WIN_NOROMSNEEDED,		"noromsneeded" },
+	{ IDI_WIN_MISSINGOPTROM,	"missingoptrom" },
+	{ IDI_WIN_FLOP,				"floppy" },
+	{ IDI_WIN_CASS,				"cassette" },
+	{ IDI_WIN_SERL,				"serial" },
+	{ IDI_WIN_SNAP,				"snapshot" },
+	{ IDI_WIN_PRIN,				"printer" },
+	{ IDI_WIN_HARD,				"hard" },
+	{ 0 }
 };
 
 const char g_szDefaultGame[] = "nes";
