@@ -552,7 +552,11 @@ static void prepare_menus(void)
 
 void win_toggle_menubar(void)
 {
+	extern void win_pause_input(int pause_);
+
+	win_pause_input(1);
 	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
+	win_pause_input(0);
 	
 	if (win_window_mode)
 	{

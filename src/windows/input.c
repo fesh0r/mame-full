@@ -176,6 +176,10 @@ static void init_keylist(void);
 static void init_joylist(void);
 
 
+#if WINDOW_HAS_MENU
+#define use_mouse_	use_mouse
+#define use_mouse	(use_mouse_ && !GetMenu(win_video_window))
+#endif
 
 //============================================================
 //	KEYBOARD LIST
@@ -851,11 +855,7 @@ void win_poll_input(void)
 
 int win_is_mouse_captured(void)
 {
-	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse)
-#if WINDOW_HAS_MENU
-		&& !GetMenu(win_video_window)
-#endif
-		;
+	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse);
 }
 
 

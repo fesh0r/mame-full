@@ -8,6 +8,9 @@ int mess_pause_for_ui = 0;
 
 int handle_mess_user_interface(struct mame_bitmap *bitmap)
 {
+	static int ui_active = 0, ui_toggle_key = 0;
+	static int ui_display_count = 30;
+
 	char buf[2048];
 	int trying_to_quit;
 	int type, id;
@@ -25,9 +28,6 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 		{
 			if (Machine->gamedrv->flags & GAME_COMPUTER)
 			{
-				static int ui_active = 0, ui_toggle_key = 0;
-				static int ui_display_count = 30;
-
 				if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 				{
 					if( !ui_toggle_key )
@@ -43,7 +43,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 					ui_toggle_key = 0;
 				}
 
-				if( ui_active )
+				if (ui_active)
 				{
 					if( ui_display_count > 0 )
 					{
@@ -90,7 +90,8 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 					}
 				}
 			}
-			trying_to_quit = handle_user_interface(bitmap);
+			if (((Machine->gamedrv->flags & GAME_COMPUTER) == 0) || ui_active)
+				trying_to_quit = handle_user_interface(bitmap);
 		}
 
 		/* run display routine for device */

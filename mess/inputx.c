@@ -129,6 +129,11 @@ static int scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, 
 	return result;
 }
 
+static unicode_char_t unicode_tolower(unicode_char_t c)
+{
+	return (c < 128) ? tolower((char) c) : c;
+}
+
 #define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer))
 
 static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes, int map_lowercase)
@@ -149,7 +154,7 @@ static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes
 		switch_upper = 1;
 		for (c = 'A'; c <= 'Z'; c++)
 		{
-			if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
+			if (!inputx_can_post_key(c) || inputx_can_post_key(unicode_tolower(c)))
 			{
 				switch_upper = 0;
 				break;
