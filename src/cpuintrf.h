@@ -263,7 +263,7 @@ enum
 /* The old system is obsolete and no longer supported by the core */
 #define NEW_INTERRUPT_SYSTEM    1
 
-#define MAX_IRQ_LINES   8       /* maximum number of IRQ lines per CPU */
+#define MAX_IRQ_LINES	16		/* maximum number of IRQ lines per CPU */
 
 #define CLEAR_LINE		0		/* clear (a fired, held or pulsed) line */
 #define ASSERT_LINE     1       /* assert an interrupt immediately */

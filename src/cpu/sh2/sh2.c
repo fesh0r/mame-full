@@ -78,8 +78,8 @@ typedef struct {
 	UINT32	delay;
 	UINT32	cpu_off;
 	UINT32	dvsr, dvdnth, dvdntl, dvcr;
-	UINT32	int_pending;
-	UINT32	int_queue[16];
+	UINT32	pending_irq;
+	INT8	irq_line_state[16];
 	int 	(*irq_callback)(int irqline);
 	UINT8	*m;
 }	SH2;
@@ -169,6 +169,61 @@ INLINE void WL(offs_t A, data_t V)
 		return;
 	cpu_writemem27bew_dword(A & AM,V);
 }
+
+static void sh2_exception(int irqline)
+{
+    int vector;
+
+    vector = (*sh2.irq_callback)(irqline) * 4;
+    logerror("SH-2 #%d take irq #%d (vector %x)\n", cpu_getactivecpu(), irqline, vector);
+    sh2.r[15] -= 4;
+    WL( sh2.r[15], sh2.sr );        /* push SR onto stack */
+    sh2.r[15] -= 4;
+    WL( sh2.r[15], sh2.pc );        /* push PC onto stack */
+    /* set I flags in SR */
+    sh2.sr = (sh2.sr & ~I) | (irqline << 4);
+    /* fetch PC */
+    sh2.pc = RL( sh2.vbr + vector * 4 );
+    change_pc27bew(sh2.pc & AM);
+}
+
+#define CHECK_PENDING_IRQ                                           \
+	switch (sh2.sr & I) 											\
+	{																\
+	case 0x00:														\
+		if (sh2.pending_irq & 0x0001) sh2_exception( 0);			\
+	case 0x10:														\
+		if (sh2.pending_irq & 0x0002) sh2_exception( 1);			\
+    case 0x20:                                                      \
+		if (sh2.pending_irq & 0x0004) sh2_exception( 2);			\
+    case 0x30:                                                      \
+		if (sh2.pending_irq & 0x0008) sh2_exception( 3);			\
+    case 0x40:                                                      \
+		if (sh2.pending_irq & 0x0010) sh2_exception( 4);			\
+    case 0x50:                                                      \
+		if (sh2.pending_irq & 0x0020) sh2_exception( 5);			\
+    case 0x60:                                                      \
+		if (sh2.pending_irq & 0x0040) sh2_exception( 6);			\
+    case 0x70:                                                      \
+		if (sh2.pending_irq & 0x0080) sh2_exception( 7);			\
+    case 0x80:                                                      \
+		if (sh2.pending_irq & 0x0100) sh2_exception( 8);			\
+    case 0x90:                                                      \
+		if (sh2.pending_irq & 0x0200) sh2_exception( 9);			\
+    case 0xa0:                                                      \
+		if (sh2.pending_irq & 0x0400) sh2_exception(10);			\
+    case 0xb0:                                                      \
+		if (sh2.pending_irq & 0x0800) sh2_exception(11);			\
+	case 0xc0:														\
+		if (sh2.pending_irq & 0x1000) sh2_exception(12);			\
+	case 0xd0:														\
+		if (sh2.pending_irq & 0x2000) sh2_exception(13);			\
+	case 0xe0:														\
+		if (sh2.pending_irq & 0x4000) sh2_exception(14);			\
+	case 0xf0:														\
+		if (sh2.pending_irq & 0x4000) sh2_exception(15);			\
+	}																\
+
 
 /* Layout of the registers in the debugger */
 static UINT8 sh2_reg_layout[] = {
@@ -773,6 +828,7 @@ INLINE void JSR(data_t m)
 INLINE void LDCSR(data_t m)
 {
 	sh2.sr = sh2.r[m] & FLAGS;
+	CHECK_PENDING_IRQ
 }
 
 /*	LDC 	Rm,GBR */
@@ -794,6 +850,7 @@ INLINE void LDCMSR(data_t m)
 	sh2.sr = RL( sh2.ea ) & FLAGS;
 	sh2.r[m] += 4;
 	sh2_icount -= 2;
+	CHECK_PENDING_IRQ
 }
 
 /*	LDC.L	@Rm+,GBR */
@@ -1376,6 +1433,7 @@ INLINE void RTE(void)
 	sh2.r[15] += 4;
 	sh2.delay = sh2.ppc;
 	sh2_icount -= 3;
+	CHECK_PENDING_IRQ
 }
 
 /*	RTS */
@@ -2070,36 +2128,6 @@ void sh2_exit(void)
 	sh2.m = NULL;
 }
 
-static int sh2_get_interrupt(void)
-{
-	int i;
-	for (i = 15; i >= 0; i--)
-	{
-		if (sh2.int_queue[i] & 0x00f0)
-			return i;
-	}
-	return -1;
-}
-
-static void sh2_exception(int inum)
-{
-	int vector;
-
-	if ((sh2.sr & I) >= (sh2.int_queue[inum] & I))
-		return;
-	vector = sh2.int_queue[inum] >> 8;
-	sh2.r[15] -= 4;
-	WL( sh2.r[15], sh2.sr );		/* push SR onto stack */
-	sh2.r[15] -= 4;
-	WL( sh2.r[15], sh2.pc );		/* push PC onto stack */
-	/* set I flags in SR */
-	sh2.sr = (sh2.sr & ~I) | (sh2.int_queue[inum] & I);
-	/* fetch PC */
-	sh2.pc = RL( sh2.vbr + vector * 4 );
-	change_pc27bew(sh2.pc & AM);
-	(*sh2.irq_callback)(inum);
-}
-
 /* Execute cycles - returns number of cycles actually run */
 int sh2_execute(int cycles)
 {
@@ -2149,15 +2177,6 @@ int sh2_execute(int cycles)
 		}
 
 		sh2_icount--;
-
-		if (sh2.int_pending)
-		{
-			int nextint;
-			if ((nextint = sh2_get_interrupt()) >= 0)
-				sh2_exception(nextint);
-			else
-				sh2.int_pending = 0;
-		}
 	} while( sh2_icount > 0 );
 
 	return cycles - sh2_icount;
@@ -2423,7 +2442,10 @@ void sh2_set_reg (int regnum, unsigned val)
 	case SH2_PC:   sh2.pc = val;	   break;
 	case SH2_SP:   sh2.r[15] = val;    break;
 	case SH2_PR:   sh2.pr = val;	   break;
-	case SH2_SR:   sh2.sr = val;	   break;
+	case SH2_SR:
+		sh2.sr = val;
+		CHECK_PENDING_IRQ
+        break;
 	case SH2_GBR:  sh2.gbr = val;	   break;
 	case SH2_VBR:  sh2.vbr = val;	   break;
 	case SH2_MACH: sh2.mach = val;	   break;
@@ -2454,25 +2476,22 @@ void sh2_set_nmi_line(int state)
 
 void sh2_set_irq_line(int irqline, int state)
 {
-	if( state == CLEAR_LINE )
+	if (sh2.irq_line_state[irqline] == state)
+		return;
+	sh2.irq_line_state[irqline] = state;
+
+    if( state == CLEAR_LINE )
 	{
-		if (sh2.int_queue[irqline] & I)
-		{
-			sh2.int_queue[irqline] = 0;
-			sh2.int_pending--;
-		}
+		logerror("SH-2 #%d cleared irq #%d\n", cpu_getactivecpu(), irqline);
+		sh2.pending_irq &= ~(1 << irqline);
 	}
 	else
-	{
+    {
 		int prior = (sh2.m[SH2_IRPB & 0x1ff] & 15) << 4;
-		/* if priority not 0, ie. if callable */
-		if (prior)
-		{
-			int vecno = sh2.m[SH2_VCRC & 0x1ff];
-			sh2.int_queue[irqline] = (vecno << 8) | prior;
-			sh2.int_pending++;
-		}
-	}
+		logerror("SH-2 #%d assert irq #%d\n", cpu_getactivecpu(), irqline);
+		sh2.pending_irq |= 1 << irqline;
+    }
+	CHECK_PENDING_IRQ
 }
 
 void sh2_set_irq_callback(int (*callback)(int irqline))
