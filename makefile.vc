@@ -313,11 +313,11 @@ $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 endif
 
 ifndef DEBUG
-# Workaround for VC6 optimization bug
+# Workarounds for VC6 optimization bugs
 $(OBJ)/input.o: src/input.c
 	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
 
-$(OBJ)/cpu/g65816/g65816o0.o: src/cpu/g65816/g65816o0.c
+$(OBJ)/mess/cpu/g65816/g65816o0.o: mess/cpu/g65816/g65816o0.c
 	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Gs -G5 -Gr -Fo$@ -c $<
 
 $(OBJ)/mess/machine/msx.o: mess/machine/msx.c
