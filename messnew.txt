@@ -67,6 +67,12 @@ Source Changes:
   provided a cassette_exit() function that drivers can specify, removing this
   responsibility from system drivers. [Nate Woods]
 
+- Implemented preliminary paste functionality; it attempts to decode the
+  driver's input tables and attempts to create a mapping between ASCII and
+  input signals.  This process is far from perfect at this time.  In the
+  future, it will be possible for drivers to customize the way that paste works
+  for a more perfect translation.  [Nate Woods]
+
 - [Win32 GUI] Printers are now treated separately from the other devices; you
   do not specify printer ouput like you do disk images.  Printer output now
   gets specified in the configuration tab of the system properties.  The added

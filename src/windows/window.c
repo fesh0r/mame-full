@@ -26,7 +26,9 @@
 #include "mamedbg.h"
 #include "../window.h"
 
-
+#ifdef MESS
+#include "inputx.h"
+#endif
 
 //============================================================
 //	IMPORTS
@@ -61,7 +63,9 @@ extern UINT8 win_trying_to_quit;
 // minimum window dimension
 #define MIN_WINDOW_DIM			200
 
-
+#ifdef MESS
+#define MENU_PASTE				1001
+#endif
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -167,6 +171,12 @@ static struct win_effect_data effect_table[] =
 	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
+struct win_menu
+{
+	UINT_PTR item_id;
+	LPCTSTR text;
+	void (*command)(void);
+};
 
 
 //============================================================
@@ -183,7 +193,19 @@ static int create_debug_window(void);
 static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+#ifdef MESS
+static void win_paste(void);
+#endif
 
+// system menus
+static struct win_menu sys_menu_table[] =
+{
+	{ MENU_FULLSCREEN,	"Full Screen\tAlt+Enter",	win_toggle_full_screen }
+#ifdef MESS
+	,
+	{ MENU_PASTE,		"Paste\tAlt+V",				win_paste }
+#endif
+};
 
 //============================================================
 //	wnd_extra_width
@@ -572,14 +594,19 @@ void win_update_cursor_state(void)
 static void update_system_menu(void)
 {
 	HMENU menu;
+	int i;
 
 	// revert the system menu
 	GetSystemMenu(win_video_window, TRUE);
 
 	// add to the system menu
 	menu = GetSystemMenu(win_video_window, FALSE);
+
 	if (menu)
-		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, "Full Screen\tAlt+Enter");
+	{
+		for (i = 0; i < sizeof(sys_menu_table) / sizeof(sys_menu_table[0]); i++)
+			AppendMenu(menu, MF_ENABLED | MF_STRING, sys_menu_table[i].item_id, sys_menu_table[i].text);
+	}
 }
 
 
@@ -696,10 +723,20 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 				win_toggle_maximize();
 				break;
 			}
-			else if (wparam == MENU_FULLSCREEN)
+			else
 			{
-				win_toggle_full_screen();
-				break;
+				int i;
+				for (i = 0; i < sizeof(sys_menu_table) / sizeof(sys_menu_table[0]); i++)
+				{
+					if (wparam == sys_menu_table[i].item_id)
+					{
+						sys_menu_table[i].command();
+						i = -1;
+						break;
+					}
+				}
+				if (i == -1)
+					break;
 			}
 			return DefWindowProc(wnd, message, wparam, lparam);
 		}
@@ -1573,3 +1610,32 @@ void win_set_debugger_focus(int focus)
 		SetForegroundWindow(win_video_window);
 	}
 }
+
+#ifdef MESS
+//============================================================
+//	win_paste
+//============================================================
+
+static void win_paste(void)
+{
+	HANDLE h;
+	LPTSTR text;
+
+	if (!OpenClipboard(NULL))
+		return;
+	
+	h = GetClipboardData(CF_TEXT);
+	if (h)
+	{
+		text = GlobalLock(h);
+		if (text)
+		{
+			inputx_post(text);
+			GlobalUnlock(h);
+		}
+	}
+
+	CloseClipboard();
+}
+#endif
+

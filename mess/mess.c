@@ -11,6 +11,7 @@ This file is a set of function calls and defs required for MESS.
 #include "utils.h"
 #include "state.h"
 #include "image.h"
+#include "inputx.h"
 
 extern struct GameOptions options;
 extern const struct Devices devices[];
@@ -283,6 +284,8 @@ int init_devices(const struct GameDriver *gamedrv)
 		strcpy(s, cwd);
 		mess_path = s;
 	}
+
+	inputx_init();
 
 	logerror("Initialising Devices...\n");
 

@@ -13,6 +13,10 @@ TODO:	remove the 1 analog device per port limitation
 #include "driver.h"
 #include <math.h>
 
+#ifdef MESS
+#include "inputx.h"
+#endif
+
 #ifdef MAME_NET
 #include "network.h"
 
@@ -2185,6 +2189,10 @@ if (IP_GET_IMPULSE(in) == 0)
 			if (in->type == IPT_PORT) in++;
 		}
 	}
+
+#ifdef MESS
+	inputx_update(input_port_value);
+#endif
 
 	if (record)
 	{
