@@ -21,6 +21,9 @@ extern struct GfxLayout saa5050_charlayout;
 #define SAA5050_CONCEAL	0x0020
 #define SAA5050_HOLDGR	0x0040
 
+#define SAA5050_BLACK   0
+#define SAA5050_WHITE   7
+
 struct	{
 	UINT16	saa5050_flags;
 	UINT8	saa5050_forecol;
@@ -29,9 +32,6 @@ struct	{
 	UINT8	saa5050_prvchr;
 } saa5050_state;
 
-enum { SAA5050_BLACK=0, SAA5050_RED, SAA5050_GREEN, SAA5050_YELLOW,
-		SAA5050_BLUE, SAA5050_MAGENTA, SAA5050_CYAN, SAA5050_WHITE
-};
 
 int	saa5050_vh_start (void)
 {
