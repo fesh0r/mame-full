@@ -1177,8 +1177,8 @@ DEVICE_LOAD(snes_cart)
 	/* Cart types */
 	static struct
 	{
-		INT8 Code;
-		char *Name;
+		INT16 Code;
+		const char *Name;
 	} CartTypes[] =
 	{
 		{  0, "ROM"             },

@@ -137,7 +137,7 @@ static const char *mame_default_text[] =
 	"Memory Card Ejected!",
 	"Memory Card Created OK!",
 	"Failed To Create Memory Card!",
-	"(It already exists?)",
+	"(It already exists ?)",
 	"DAMN!! Internal Error!",
 
 	/* cheats */
@@ -218,16 +218,6 @@ static const char **default_text[] =
 
 
 static const char **trans_text;
-
-
-static char *auto_strdup(const char *str)
-{
-	char *new_str = auto_malloc(strlen(str) + 1);
-	if (!new_str)
-		return NULL;
-	strcpy(new_str, str);
-	return new_str;
-}
 
 
 int uistring_init (mame_file *langfile)
@@ -329,16 +319,16 @@ int uistring_init (mame_file *langfile)
 				for (j = 0; default_text[i][j]; j++)
 				{
 					if (strcmp (curline, default_text[i][j]) == 0)
-					{
-						char transline[255];
+				{
+					char transline[255];
 
-						/* Found a match, read next line as the translation */
-						mame_fgets (transline, 255, langfile);
+					/* Found a match, read next line as the translation */
+					mame_fgets (transline, 255, langfile);
 
-						/* Get all text up to the first line ending */
-						ptr = strtok (transline, "\n\r");
+					/* Get all text up to the first line ending */
+					ptr = strtok (transline, "\n\r");
 
-						/* Allocate storage and copy the string */
+					/* Allocate storage and copy the string */
 						trans_text[str] = auto_strdup(transline);
 						if (!trans_text[str])
 							return 1;
@@ -353,11 +343,9 @@ int uistring_init (mame_file *langfile)
 	return 0;
 }
 
-void uistring_shutdown (void)
-{
-}
+
 
 const char * ui_getstring (int string_num)
 {
-	return trans_text[string_num];
+		return trans_text[string_num];
 }

@@ -1533,17 +1533,17 @@ Custom chip: DYNAX TC17G032AP-0246 JAPAN 8929EAI
 
 ROM_START( hnoridur )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "2309.12",  0x00000, 0x20000, CRC(5517dd68) )
+	ROM_LOAD( "2309.12",  0x00000, 0x20000, CRC(5517dd68) SHA1(3da27032a412b51b67e852b61166c2fdc138a370) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* blitter data */
-	ROM_LOAD( "2302.21",  0x000000, 0x20000, CRC(9dde2d59) )
-	ROM_LOAD( "2303.22",  0x020000, 0x20000, CRC(1ac59443) )
-	ROM_LOAD( "2301.20",  0x040000, 0x20000, CRC(24391ddc) )
-	ROM_LOAD( "2304.1",   0x060000, 0x20000, BAD_DUMP CRC(9792d9fa)  )
-	ROM_LOAD( "2305.2",   0x080000, 0x20000, CRC(249d360a) )
-	ROM_LOAD( "2306.3",   0x0a0000, 0x20000, CRC(014a4945) )
-	ROM_LOAD( "2307.4",   0x0c0000, 0x20000, CRC(8b6f8a2d) )
-	ROM_LOAD( "2308.5",   0x0e0000, 0x20000, CRC(6f996e6e) )
+	ROM_LOAD( "2302.21",  0x000000, 0x20000, CRC(9dde2d59) SHA1(96df4ba97ee9611d9a3c7bcaae9cd97815a7b8a5) )
+	ROM_LOAD( "2303.22",  0x020000, 0x20000, CRC(1ac59443) SHA1(e70fe6184e7090cf7229d83b87db65f7715de2a8) )
+	ROM_LOAD( "2301.20",  0x040000, 0x20000, CRC(24391ddc) SHA1(6a2e3fae4b6d0b1d8073306f37c9fdaa04b69eb8) )
+	ROM_LOAD( "2304.1",   0x060000, 0x20000, BAD_DUMP CRC(9792d9fa) SHA1(5835d3d97a5b0a6594654010c8061238cd0514f6) )
+	ROM_LOAD( "2305.2",   0x080000, 0x20000, CRC(249d360a) SHA1(688fced1298c345a18314d2c88664c757a2de35c) )
+	ROM_LOAD( "2306.3",   0x0a0000, 0x20000, CRC(014a4945) SHA1(0cd747787a81226fd4937616a6ce45af731a4049) )
+	ROM_LOAD( "2307.4",   0x0c0000, 0x20000, CRC(8b6f8a2d) SHA1(c5f3ec64a7ea3edc556182f42e6da4842d88e0ba) )
+	ROM_LOAD( "2308.5",   0x0e0000, 0x20000, CRC(6f996e6e) SHA1(c2b916afbfd257417f0383ad261f3720a027fdd9) )
 ROM_END
 
 
@@ -1639,50 +1639,50 @@ Notes:
 
 ROM_START( roldfrog )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
 	ROM_RELOAD(               0x20000, 0x20000 )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) )
-	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
-	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
-	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
-	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) )
-	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
-	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) )
-	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) )
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) SHA1(5691807b711ea5137f91afd6033fcd734d2b5ad0) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) SHA1(01453168df4dc84069346cecd1fba9adeae6fcb8) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
+	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
-	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
-	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) )
-	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) SHA1(940c4231b21d16c62cad47c22fe735b18662af4a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) SHA1(04a7efac2e83c6747d4bd480b1f3118eb44a1f76) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) SHA1(2d44dba1e76e5ceebf33fa6fc148ed665701a7ff) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) SHA1(eccd7b1440d3a0d433c92ff33213326e0d57422a) )
 ROM_END
 
 ROM_START( roldfrga )
 	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) )
+	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
 	ROM_RELOAD(               0x20000, 0x20000 )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) )
-	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) )
-	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) )
-	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) )
-	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) )
-	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) )
-	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) )
-	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) )	// differs with roldfrog.009 by 1 byte
+	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
+	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
+	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
+	ROM_LOAD16_BYTE( "roldfrog.007",	0x100001, 0x080000, CRC(e5805c4e) SHA1(5691807b711ea5137f91afd6033fcd734d2b5ad0) )
+	ROM_LOAD16_BYTE( "roldfrog.004",	0x200000, 0x080000, CRC(709281f5) SHA1(01453168df4dc84069346cecd1fba9adeae6fcb8) )
+	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
+	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
+	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
 
 	ROM_REGION( 0x10000, REGION_GFX1, 0 )	/* blitter data ?? */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) )
-	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) )
-	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) )
-	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) )
+	ROM_LOAD( "roldfrog.010",       0x00000, 0x20000, CRC(51fd0e1a) SHA1(940c4231b21d16c62cad47c22fe735b18662af4a) )
+	ROM_LOAD( "roldfrog.011",       0x20000, 0x20000, CRC(610bf6f3) SHA1(04a7efac2e83c6747d4bd480b1f3118eb44a1f76) )
+	ROM_LOAD( "roldfrog.012",       0x40000, 0x20000, CRC(466ede67) SHA1(2d44dba1e76e5ceebf33fa6fc148ed665701a7ff) )
+	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) SHA1(eccd7b1440d3a0d433c92ff33213326e0d57422a) )
 ROM_END
 
 
@@ -1840,7 +1840,8 @@ GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0,    ROT0,   "Dynax",     "
 GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0,    ROT0,   "Dynax (Fabtek license)", "Sports Match" )
 GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0,    ROT180, "Dynax",     "Mahjong Friday (Japan)" )
 GAMEX(1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0,    ROT180, "Dynax",     "Mahjong Dial Q2 (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, roldfrog, 0,        roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
-GAMEX(1993, roldfrga, roldfrog, roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )
 GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya, ROT0,   "Promat",    "Maya" )
 
+// should move these to splash.c, its a protected bootleg of splash, not dynax stuff */
+GAMEX(1993, roldfrog, 0,        roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
+GAMEX(1993, roldfrga, roldfrog, roldfrog, sprtmtch, 0,    ROT0,   "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )

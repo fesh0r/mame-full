@@ -8,13 +8,14 @@
 	for the FM still comes from the wavetable RAM.
 
 	Unsupported:
-		- FM mode (VF3 uses it, no other games seem to)
+		- FM mode (VF3 uses it, Hanagumi might late in the title song...)
 		- on-board programmable DSP and related functionality
 
 	ChangeLog:
 	* November 25, 2003 (ES) Fixed buggy timers and envelope overflows.
                             (RB) Improved sample rates other than 44100, multiple
 	             		 chips now works properly.
+	* December 02, 2003 (ES) Added DISDL register support, improves mix.
 */
 
 #include <math.h>
@@ -451,8 +452,8 @@ static void SCSP_Init(int n, struct SCSPinterface *intf)
 		else
 			fSDL=0.0;
 
-		LPANTABLE[i]=FIX((LPAN*TL*fSDL));
-		RPANTABLE[i]=FIX((RPAN*TL*fSDL));
+		LPANTABLE[i]=FIX((4.0*LPAN*TL*fSDL));
+		RPANTABLE[i]=FIX((4.0*RPAN*TL*fSDL));
 	}
 
 	for(i=0;i<62;++i)
@@ -750,7 +751,7 @@ SCSPNAME(_8bit,lfo,alfo,loop)\
 		}\
 		else\
 		{\
-			signed short *p=(signed short *) (slot->base+(slot->cur_addr>>SHIFT));\
+			signed short *p=(signed short *) (slot->base+((slot->cur_addr>>(SHIFT-1))&(~1)));\
 			signed int fpart;\
 			fpart=slot->cur_addr&((1<<SHIFT)-1);\
 			sample=p[0];\
@@ -852,7 +853,7 @@ static void SCSP_DoMasterSamples(int chip, int nsamples)
 		if(SCSPs[chip].Slots[sl].active)
 		{
 			struct _SLOT *slot=SCSPs[chip].Slots+sl;
-			unsigned short Enc=((TL(slot))<<0x0)|((DIPAN(slot))<<0x8)|((0x7)<<0xd);
+			unsigned short Enc=((TL(slot))<<0x0)|((DIPAN(slot))<<0x8)|((DISDL(slot))<<0xd);
 			unsigned int mode=LPCTL(slot);
 			if(PLFOS(slot))
 				mode|=8;

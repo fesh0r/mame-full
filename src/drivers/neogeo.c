@@ -1562,7 +1562,7 @@ SYSTEM_BIOS_END
 
 /* we only have one irritating maze bios and thats asia */
 #define IRRMAZE_BIOS \
-	ROM_LOAD16_WORD_SWAP(         "236-bios.bin", 0x00000, 0x020000, CRC(853e6b96) ) \
+	ROM_LOAD16_WORD_SWAP(         "236-bios.bin", 0x00000, 0x020000, CRC(853e6b96) SHA1(de369cb4a7df147b55168fa7aaf0b98c753b735e) ) \
 
 #define NEO_BIOS_SOUND_512K(name,sum) \
 	ROM_REGION16_BE( 0x20000, REGION_USER1, 0 ) \

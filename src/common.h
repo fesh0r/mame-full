@@ -429,6 +429,7 @@ INLINE int get_resource_tag(void)
 
 /* automatically-freeing memory */
 void *auto_malloc(size_t size);
+char *auto_strdup(const char *str);
 struct mame_bitmap *auto_bitmap_alloc(int width,int height);
 struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 

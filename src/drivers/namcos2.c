@@ -2499,7 +2499,7 @@ ROM_START( finallap )
 	ROM_LOAD16_BYTE( "fl1-sp1",  0x000001, 0x010000, CRC(ea9d1a2e) SHA1(37f96306c49475bf45157f768c9173a057bade20) )
 
 	ROM_REGION( 0x030000, REGION_CPU3, 0 ) /* Sound CPU (Banked) */
-	ROM_LOAD( "fl1-s0b",  0x00c000, 0x004000, CRC(f5d76989) )
+	ROM_LOAD( "fl1-s0b",  0x00c000, 0x004000, CRC(f5d76989) SHA1(05c45ccc60fe833cee04f8300620bea5fecc110f) )
 	ROM_CONTINUE( 0x010000, 0x01c000 )
 	ROM_RELOAD(  0x010000, 0x020000 )
 
@@ -3929,7 +3929,7 @@ ROM_START( suzuk8h2 )
 	/* No ROZ files present in ZIP archive */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
-	ROM_LOAD( "ehs1shap.bin",  0x000000, 0x80000, CRC(0f0e2dbf) )
+	ROM_LOAD( "ehs1shap.bin",  0x000000, 0x80000, CRC(0f0e2dbf) SHA1(a4575fbdc868ba959d23204be7d659d40d8db4c2) )
 
 	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
 	NAMCOS2_DATA_LOAD_E_512K( "ehs1dat0.bin",  0x000000, CRC(12a202fb) SHA1(dca1b88cb524d54a699d4f6003854cfc980e084b) )

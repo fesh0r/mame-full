@@ -1363,7 +1363,8 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( retofin1 )	/* bootleg */
 	DRIVER( retofin2 )	/* bootleg */
 	DRIVER( fightrol )	/* (c) 1983 Taito */
-	DRIVER( rollrace )	/* (c) 1983 Williams */
+	DRIVER( rollace )	/* (c) 1983 Williams */
+	DRIVER( rollace2 )	/* (c) 1983 Williams */
 	DRIVER( vsgongf )	/* (c) 1984 Kaneko */
 	DRIVER( ringfgt )	/* (c) 1984 Taito */
 	DRIVER( ringfgt2 )	/* (c) 1984 Taito */
@@ -1469,6 +1470,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( slapshot )	/* D71 (c) 1994 Taito Corporation (Japan) */
 	DRIVER( opwolf3 )	/* D74 (c) 1994 Taito */
 	DRIVER( opwolf3u )	/* D74 (c) 1994 Taito */
+	DRIVER( ashnojoe )	/* ??? (c) 1990 Wave / Taito */
 
 	/* Taito multi-screen games */
 	DRIVER( ninjaw )	/* B31 (c) 1987 Taito Corporation Japan (World) */
@@ -1795,8 +1797,10 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( batugnsp )	/* TP-??? (c) 1993 Toaplan */
 	DRIVER( snowbro2 )	/* TP-??? (c) 1994 Hanafram */
 	/* see http://www.vsa-ag.ch/r8zing/ for a list of Raizing/8ing games */
+	DRIVER( sstriker )	/* (c) 1993 Raizing */
 	DRIVER( mahoudai )	/* (c) 1993 Raizing + Able license */
 	DRIVER( shippumd )	/* (c) 1994 Raizing/8ing */
+	DRIVER( kingdmgp )	/* (c) 1994 Raizing/8ing (hack?) */
 	DRIVER( battleg )	/* (c) 1996 Raizing/8ing */
 	DRIVER( battlega )	/* (c) 1996 Raizing/8ing */
 	DRIVER( battlegb )	/* (c) 1996 Raizing/8ing */
@@ -1804,7 +1808,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( batridra )	/* (c) 1998 Raizing/8ing */
 	DRIVER( batridrk )	/* (c) 1998 Raizing/8ing */
 	DRIVER( bbakraid )	/* (c) 1999 8ing */
-	DRIVER( bbakrada )	/* (c) 1999 8ing */
+	DRIVER( bbkraidu )	/* (c) 1999 8ing */
 
 /*
 Toa Plan's board list
@@ -2442,6 +2446,7 @@ V-V                           TP-027
 	DRIVER( wcbwl12 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( sftm )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftm110 )	/* (c) 1995 Capcom/Incredible Technologies */
+	DRIVER( sftm111 )	/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftmj )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( shufshot )	/* (c) Strata/Incredible Technologies */
 	DRIVER( sshot137 )	/* (c) Strata/Incredible Technologies */
@@ -4865,6 +4870,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Atlus games */
 	DRIVER( powerins )	/* (c) 1993 Atlus (Japan) */
+	DRIVER( powerina )	/* (c) 1993 Atlus (Japan) */
 	DRIVER( ohmygod )	/* (c) 1993 Atlus (Japan) */
 	DRIVER( naname )	/* (c) 1994 Atlus (Japan) */
 	DRIVER( blmbycar )	/* (c) 1994 ABM & Gecas - uses same gfx chip as powerins? */
@@ -4970,6 +4976,7 @@ Other Sun games
 	DRIVER( fantsy95 )	/* (c) 1995 Hi-max Technology Inc. */
 	DRIVER( missw96 )	/* (c) 1996 Comad */
 	DRIVER( fantsia2 )	/* (c) 1997 Comad */
+	DRIVER( galhustl )	/* (c) 1997 ACE International */
 
 	/* Playmark games */
 	DRIVER( sslam )		/* (c) 1993 */
@@ -5332,6 +5339,7 @@ Other Sun games
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
 	DRIVER( rabbit )	/* (c) 1997 Electronic Arts */
 	DRIVER( tmmjprd )	/* (c) 1997 Media / Sonnet */
+	DRIVER( malzak )
 
 #endif /* CPSMAME */
 #endif /* NEOMAME */

@@ -67,6 +67,7 @@ CPUS+=TMS32031@
 CPUS+=CCPU@
 CPUS+=ADSP2100@
 CPUS+=ADSP2101@
+CPUS+=ADSP2104@
 CPUS+=ADSP2105@
 CPUS+=ADSP2115@
 CPUS+=PSXCPU@
@@ -151,6 +152,7 @@ SOUNDS+=MULTIPCM@
 SOUNDS+=C6280@
 SOUNDS+=SP0250@
 SOUNDS+=SCSP@
+SOUNDS+=YMF271@
 
 
 DRVLIBS = \
@@ -361,6 +363,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/exzisus.o $(OBJ)/drivers/exzisus.o \
 	$(OBJ)/drivers/taito_x.o $(OBJ)/machine/cchip.o \
 	$(OBJ)/vidhrdw/minivadr.o $(OBJ)/drivers/minivadr.o \
+	$(OBJ)/drivers/ashnojoe.o \
 	$(OBJ)/machine/volfied.o $(OBJ)/vidhrdw/volfied.o $(OBJ)/drivers/volfied.o \
 	$(OBJ)/machine/bonzeadv.o $(OBJ)/vidhrdw/asuka.o $(OBJ)/drivers/asuka.o \
 	$(OBJ)/vidhrdw/wgp.o $(OBJ)/drivers/wgp.o \
@@ -460,6 +463,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
+	$(OBJ)/machine/scudsp.o \
 	$(OBJ)/vidhrdw/stvvdp1.o $(OBJ)/vidhrdw/stvvdp2.o \
 
 $(OBJ)/deniam.a: \
@@ -1084,6 +1088,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/dorachan.o $(OBJ)/drivers/dorachan.o \
 	$(OBJ)/vidhrdw/ladyfrog.o $(OBJ)/drivers/ladyfrog.o \
 	$(OBJ)/drivers/rabbit.o \
+	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

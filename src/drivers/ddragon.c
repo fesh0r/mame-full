@@ -1355,8 +1355,8 @@ ROM_END
 
 ROM_START( ddungeon )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 ) /* Main CPU? */
-	ROM_LOAD( "dd3.bin", 0x10000, 0x8000, CRC(922e719c) )
-	ROM_LOAD( "dd2.bin", 0x08000, 0x8000, CRC(a6e7f608) )
+	ROM_LOAD( "dd3.bin", 0x10000, 0x8000, CRC(922e719c) SHA1(d1c73f56913cd368158abc613d7bbab669509742) )
+	ROM_LOAD( "dd2.bin", 0x08000, 0x8000, CRC(a6e7f608) SHA1(83b9301c39bfdc1e50a37f2bdc4d4f65a1111bee) )
 	/* IC23 is replaced with a daughterboard containing a 68705 MCU */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sprite cpu */

@@ -277,6 +277,52 @@ static void hotrod_io_w(int port, UINT8 data)
 	}
 }
 
+static UINT8 hotrod_ctrl_cur;
+
+static WRITE16_HANDLER( hotrod3_ctrl_w )
+{
+	if(ACCESSING_LSB) {
+		data &= 3;
+		if(data == 3)
+			hotrod_ctrl_cur = 0;
+		else
+			hotrod_ctrl_cur = readinputport(8+data);
+	}
+}
+
+static READ16_HANDLER( hotrod3_ctrl_r )
+{
+	if(ACCESSING_LSB) {
+		switch(offset) {
+			// Steering dials
+		case 0:
+			return readinputport(5) & 0xff;
+		case 1:
+			return readinputport(5) >> 8;
+		case 2:
+			return readinputport(6) & 0xff;
+		case 3:
+			return readinputport(6) >> 8;
+		case 4:
+			return readinputport(7) & 0xff;
+		case 5:
+			return readinputport(7) >> 8;
+
+		case 6:
+			return 0xff;
+		case 7:
+			return 0xff;
+
+		case 8: { // Serial ADCs for the accel
+			int v = hotrod_ctrl_cur & 0x80;
+			hotrod_ctrl_cur <<= 1;
+			return v ? 0xff : 0;
+		}
+		}
+	}
+	return 0;
+}
+
 static READ16_HANDLER( iod_r )
 {
 	logerror("IO daughterboard read %02x (%x)\n", offset, activecpu_get_pc());
@@ -355,7 +401,7 @@ static UINT8  mahmajn_mlt[8] = { 5, 1, 6, 2, 3, 7, 4, 0 };
 static UINT8 mahmajn2_mlt[8] = { 6, 0, 5, 3, 1, 4, 2, 7 };
 static UINT8      gqh_mlt[8] = { 3, 7, 4, 0, 2, 6, 5, 1 };
 static UINT8 bnzabros_mlt[8] = { 2, 4, 0, 5, 7, 3, 1, 6 };
-static UINT8       qu_mlt[8] = { 1, 6, 4, 7, 0, 5, 3, 2 };
+static UINT8   qrouka_mlt[8] = { 1, 6, 4, 7, 0, 5, 3, 2 };
 static UINT8 quizmeku_mlt[8] = { 0, 3, 2, 4, 6, 1, 7, 5 };
 
 static UINT8 mlatch;
@@ -515,7 +561,7 @@ static READ16_HANDLER(ctrl_r)
 static MEMORY_READ16_START( system24_readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
 	{ 0x080000, 0x0fffff, MRA16_BANK2 },
-{ 0x1003a0, 0x1003a3, MRA16_NOP },
+	{ 0x100000, 0x13ffff, MRA16_BANK4 }, // Rom mirror
 	{ 0x200000, 0x20ffff, sys24_tile_r },
 	{ 0x280000, 0x29ffff, sys24_char_r },
 	{ 0x400000, 0x403fff, MRA16_RAM },
@@ -526,7 +572,7 @@ static MEMORY_READ16_START( system24_readmem )
 	{ 0xa00000, 0xa00007, irq_r },
 	{ 0xb00000, 0xb00007, fdc_r },
 	{ 0xb00008, 0xb0000f, fdc_status_r },
-{ 0xc00000, 0xc00011, ctrl_r },
+	{ 0xc00000, 0xc00011, hotrod3_ctrl_r },
 	{ 0xc80000, 0xcbffff, MRA16_BANK1 },
 	{ 0xcc0000, 0xcc0001, curbank_r },
 	{ 0xcc0006, 0xcc0007, mlatch_r },
@@ -552,7 +598,7 @@ static MEMORY_WRITE16_START( system24_writemem )
 	{ 0xa00000, 0xa00007, irq_w },
 	{ 0xb00000, 0xb00007, fdc_w },
 	{ 0xb00008, 0xb0000f, fdc_ctrl_w },
-{ 0xc00000, 0xc00011, MWA16_NOP },
+	{ 0xc00010, 0xc00011, hotrod3_ctrl_w },
 	{ 0xcc0000, 0xcc0001, curbank_w },
 	{ 0xcc0006, 0xcc0007, mlatch_w },
 { 0xd00300, 0xd00301, MWA16_NOP },
@@ -563,7 +609,7 @@ MEMORY_END
 static MEMORY_READ16_START( system24_readmem2 )
 	{ 0x000000, 0x03ffff, MRA16_RAM },
 	{ 0x080000, 0x0fffff, MRA16_BANK2 },
-{ 0x1003a0, 0x1003a3, MRA16_NOP },
+	{ 0x100000, 0x13ffff, MRA16_BANK4 },
 	{ 0x200000, 0x20ffff, sys24_tile_r },
 	{ 0x280000, 0x29ffff, sys24_char_r },
 	{ 0x400000, 0x403fff, paletteram16_word_r },
@@ -572,7 +618,7 @@ static MEMORY_READ16_START( system24_readmem2 )
 	{ 0x800000, 0x80007f, system24temp_sys16_io_r },
 	{ 0x800102, 0x800103, ym_status_r },
 	{ 0xa00000, 0xa00007, irq_r },
-{ 0xc00000, 0xc00011, ctrl_r },
+	{ 0xc00000, 0xc00011, hotrod3_ctrl_r },
 	{ 0xc80000, 0xcbffff, MRA16_BANK1 },
 	{ 0xcc0000, 0xcc0001, curbank_r },
 	{ 0xcc0006, 0xcc0007, mlatch_r },
@@ -596,7 +642,7 @@ static MEMORY_WRITE16_START( system24_writemem2 )
 	{ 0x800100, 0x800101, ym_register_w },
 	{ 0x800102, 0x800103, ym_data_w },
 	{ 0xa00000, 0xa00007, irq_w },
-{ 0xc00000, 0xc00011, MWA16_NOP },
+	{ 0xc00010, 0xc00011, hotrod3_ctrl_w },
 	{ 0xcc0000, 0xcc0001, curbank_w },
 	{ 0xcc0006, 0xcc0007, mlatch_w },
 { 0xd00300, 0xd00301, MWA16_NOP },
@@ -611,10 +657,10 @@ static DRIVER_INIT(qgh)
 	track_size = 0;
 }
 
-static DRIVER_INIT(qu)
+static DRIVER_INIT(qrouka)
 {
 	system24temp_sys16_io_set_callbacks(qgh_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
-	mlatch_table = qu_mlt;
+	mlatch_table = qrouka_mlt;
 	track_size = 0;
 }
 
@@ -676,9 +722,20 @@ static DRIVER_INIT(bnzabros)
 	track_size = 0x2d00;
 }
 
+static NVRAM_HANDLER(system24)
+{
+	if(!track_size || !file)
+		return;
+	if(read_or_write)
+		mame_fwrite(file, memory_region(REGION_USER2), 2*track_size);
+	else
+		mame_fread(file, memory_region(REGION_USER2), 2*track_size);
+}
+
 static MACHINE_INIT(system24)
 {
 	cpu_set_halt_line(1, ASSERT_LINE);
+	cpu_setbank(4, memory_region(REGION_CPU1));
 	prev_resetcontrol = resetcontrol = 0x06;
 	fdc_init();
 	curbank = 0;
@@ -689,79 +746,90 @@ static MACHINE_INIT(system24)
 
 INPUT_PORTS_START( hotrod )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-
-	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN5 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN6 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START
+	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	SYS16_COINAGE
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "Monitor flip" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x08, "Easy" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x30, 0x30, "Initial lives" )
-	PORT_DIPSETTING(    0x30, "5" )
-	PORT_DIPSETTING(    0x20, "4" )
-	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Start Credit" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "Coin Chute" )
+	PORT_DIPSETTING(    0x40, "Common" )
+	PORT_DIPSETTING(    0x00, "Individual" )
+	PORT_DIPNAME( 0x80, 0x80, "Monitor flip" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_ANALOG( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER1, 25, 15, 0x000, 0xfff )
+
+	PORT_START
+	PORT_ANALOG( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER2, 25, 15, 0x000, 0xfff )
+
+	PORT_START
+	PORT_ANALOG( 0xfff, 0x000, IPT_DIAL | IPF_PLAYER3, 25, 15, 0x000, 0xfff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x01, IPT_PEDAL | IPF_PLAYER1, 25, 15, 0x01, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x01, IPT_PEDAL | IPF_PLAYER2, 25, 15, 0x01, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x01, IPT_PEDAL | IPF_PLAYER3, 25, 15, 0x01, 0xff )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bnzabros )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -771,11 +839,37 @@ INPUT_PORTS_START( bnzabros )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	SYS16_COINAGE
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Start Credit" )
+	PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Chute" )
+	PORT_DIPSETTING(    0x04, "Common" )
+	PORT_DIPSETTING(    0x00, "Individual" )
+	PORT_DIPNAME( 0x08, 0x08, "Monitor flip" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Initial lives" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x00, "1" )
 INPUT_PORTS_END
 
 
@@ -804,7 +898,7 @@ INPUT_PORTS_START( qgh )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -813,7 +907,7 @@ INPUT_PORTS_START( qgh )
 	SYS16_COINAGE
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "Monitor flip" )
+	PORT_DIPNAME( 0x01, 0x01, "Monitor flip" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
@@ -835,6 +929,64 @@ INPUT_PORTS_START( qgh )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( quizmeku )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	SYS16_COINAGE
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "Players" )
+	PORT_DIPSETTING(    0x01, "2P" )
+	PORT_DIPSETTING(    0x00, "4P" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Initial lives" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x10, 0x10, "Answer Counts" )
+	PORT_DIPSETTING(    0x10, "Every" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x20, 0x20, "Monitor flip" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0xc0, "Normal" )
+	PORT_DIPSETTING(    0x80, "Easy" )
+	PORT_DIPSETTING(    0x40, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( mahmajn )
@@ -921,13 +1073,13 @@ INPUT_PORTS_END
 
 ROM_START( hotrod )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr11339.bin", 0x000000, 0x20000, CRC(75130e73) )
-	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) )
+	ROM_LOAD16_BYTE( "epr11339.bin", 0x000000, 0x20000, CRC(75130e73) SHA1(e079739f4a3da3807aac570442c5afef1a7d7b0e) )
+	ROM_LOAD16_BYTE( "epr11338.bin", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
 
 	ROM_REGION( 0x1d6000, REGION_USER2, 0)
 	/* not 100% sure of the integrity of this, the game has some strange issues */
-	ROM_LOAD( "hotrod3t.dsk", 0x000000, 0x1d6000, CRC(cad6cb5d) ) // label: ds3-5000-01d_3p_turbo
-//	ROM_LOAD( "ds3-5000-01d_3p_turbo.bin", 0x000000, 0x1d6000, CRC(cad6cb5d) ) // but mame complains ;-)
+	ROM_LOAD( "hotrod3t.dsk", 0x000000, 0x1d6000, CRC(cad6cb5d) SHA1(b0c6d78fa15cc07badc66da5a5d29caadfe6e13d) ) // label: ds3-5000-01d_3p_turbo
+//	ROM_LOAD( "ds3-5000-01d_3p_turbo.bin", 0x000000, 0x1d6000, CRC(cad6cb5d) SHA1(b0c6d78fa15cc07badc66da5a5d29caadfe6e13d) ) // but mame complains ;-)
 ROM_END
 
 ROM_START( qgh )
@@ -948,12 +1100,12 @@ ROM_END
 
 ROM_START( qrouka )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "14485", 0x000000, 0x20000, CRC(fc0085f9) )
-	ROM_LOAD16_BYTE( "14484", 0x000001, 0x20000, CRC(f51c641c) )
+	ROM_LOAD16_BYTE( "14485", 0x000000, 0x20000, CRC(fc0085f9) SHA1(0250d1e17e19b541b85198ec4207e55bfbd5c32e) )
+	ROM_LOAD16_BYTE( "14484", 0x000001, 0x20000, CRC(f51c641c) SHA1(3f2fd0be7d58c75e88565393da5e810655413b53) )
 
 	ROM_REGION16_BE( 0x100000, REGION_USER1, 0)
-	ROM_LOAD16_BYTE( "14482", 0x000000, 0x80000, CRC(7a13dd97) )
-	ROM_LOAD16_BYTE( "14483", 0x000001, 0x80000, CRC(f3eb51a0) )
+	ROM_LOAD16_BYTE( "14482", 0x000000, 0x80000, CRC(7a13dd97) SHA1(bfe9950d2cd41f3f866520923c1ed7b8da1990ec) )
+	ROM_LOAD16_BYTE( "14483", 0x000001, 0x80000, CRC(f3eb51a0) SHA1(6904830ff5e7aa5f016e115572fb6da678896ede) )
 ROM_END
 
 ROM_START( mahmajn )
@@ -990,17 +1142,17 @@ ROM_END
 
 ROM_START( bnzabros )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) )
-	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) )
+	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
 	ROM_REGION16_BE( 0x180000, REGION_USER1, 0)
-	ROM_LOAD16_BYTE( "mpr13188.h2",  0x000000, 0x80000, CRC(d3802294) )
-	ROM_LOAD16_BYTE( "mpr13187.h1",  0x000001, 0x80000, CRC(e3d8c5f7) )
-	ROM_LOAD16_BYTE( "mpr13190.4",   0x080000, 0x40000, CRC(0b4df388) )
-	ROM_LOAD16_BYTE( "mpr13189.3",   0x080001, 0x40000, CRC(5ea5a2f3) )
+	ROM_LOAD16_BYTE( "mpr13188.h2",  0x000000, 0x80000, CRC(d3802294) SHA1(7608e71e8ef398ac24dbf851994253bca5ace625) )
+	ROM_LOAD16_BYTE( "mpr13187.h1",  0x000001, 0x80000, CRC(e3d8c5f7) SHA1(5b1e8646debee2f2ef272ddd3320b0a17192fbbe) )
+	ROM_LOAD16_BYTE( "mpr13190.4",   0x080000, 0x40000, CRC(0b4df388) SHA1(340478bba82069ab745d6d8703e6801411fd2fc4) )
+	ROM_LOAD16_BYTE( "mpr13189.3",   0x080001, 0x40000, CRC(5ea5a2f3) SHA1(514b5446303c50aeb1d6d10d0a3f210da2577e16) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "bb-disk.bin",        0x000000, 0x1c2000, CRC(ea7a3302) )
+	ROM_LOAD( "bb-disk.bin",        0x000000, 0x1c2000, CRC(ea7a3302) SHA1(5f92efb2e1135c1f3eeca38ba5789739a22dbd11) )
 ROM_END
 
 ROM_START( quizmeku ) // Quiz Mekiromeki Story (not 100% sure of name)
@@ -1044,6 +1196,7 @@ static MACHINE_DRIVER_START( system24 )
 	MDRV_INTERLEAVE(4)
 
 	MDRV_MACHINE_INIT(system24)
+	MDRV_NVRAM_HANDLER(system24)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(62*8, 48*8)
@@ -1064,24 +1217,18 @@ MACHINE_DRIVER_END
 GAMEX( 1994, qgh,      0, system24, qgh,      qgh,      ROT0, "Sega", "Quiz Ghost Hunter", GAME_IMPERFECT_GRAPHICS )
 
 /* mostly ok, playable, some graphical problems */
+GAMEX( 1988, hotrod,   0, system24, hotrod,   hotrod,   ROT0, "Sega", "Hot Rod (turbo 3 player)", GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, mahmajn,  0, system24, mahmajn,  mahmajn,  ROT0, "Sega", "Tokoro San no MahMahjan", GAME_IMPERFECT_GRAPHICS )
-
-/* mostly ok, playable, some graphical problems */
 GAMEX( 1994, mahmajn2, 0, system24, mahmajn,  mahmajn2, ROT0, "Sega", "Tokoro San no MahMahjan 2", GAME_IMPERFECT_GRAPHICS )
 
 /* reasonable, playable, some graphical problems, appears to take a while to start up */
-GAMEX( 1994, quizmeku, 0, system24, qgh,      quizmeku, ROT0, "Sega", "Quiz Mekurumeku Story", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, quizmeku, 0, system24, quizmeku, quizmeku, ROT0, "Sega", "Quiz Mekurumeku Story", GAME_IMPERFECT_GRAPHICS )
 
 /* NOT REALLY WORKING */
-
-/* not working, game boots up but you can't coin up, attract mode doesn't work, graphical problems */
-GAMEX( 1988, hotrod,   0, system24, hotrod,   hotrod,   ROT0, "Sega", "Hot Rod", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 1994, qrouka,   0, system24, qgh,      qrouka,   ROT0, "Sega", "Quiz Rouka Ni Tattenasai", GAME_NOT_WORKING )
 
 /* coins up, controls work but not really playable due to serious priority problems */
-GAMEX( 1990, bnzabros, 0, system24, bnzabros, bnzabros, ROT0, "Sega", "Bonanza Bros", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-
-/* not working, doesn't boot */
-GAMEX( 1994, qrouka,   0, system24, qgh,      qu,       ROT0, "Sega", "Quiz Rouka Ni Tattenasai", GAME_NOT_WORKING )
+GAMEX( 1990, bnzabros, 0, system24, bnzabros, bnzabros, ROT0, "Sega", "Bonanza Bros", GAME_IMPERFECT_GRAPHICS )
 
 /* Other S24 Games, mostly not dumped / encrypted / only bad disk images exist
 

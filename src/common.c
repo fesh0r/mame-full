@@ -551,6 +551,9 @@ struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_aut
 		bitmapsize = (height + 2 * BITMAP_SAFETY) * rowlen;
 		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
 
+		/* align to 16 bytes */
+		linearraysize = (linearraysize + 15) & ~15;
+
 		/* allocate the bitmap data plus an array of line pointers */
 		bitmap->line = use_auto ? auto_malloc(linearraysize + bitmapsize) : malloc(linearraysize + bitmapsize);
 		if (bitmap->line == NULL)
@@ -653,6 +656,22 @@ void *auto_malloc(size_t size)
 	}
 	return result;
 }
+
+
+
+/*-------------------------------------------------
+	auto_strdup - allocate auto-freeing string
+-------------------------------------------------*/
+
+char *auto_strdup(const char *str)
+{
+	char *new_str = auto_malloc(strlen(str) + 1);
+	if (!new_str)
+		return NULL;
+	strcpy(new_str, str);
+	return new_str;
+}
+
 
 
 /*-------------------------------------------------

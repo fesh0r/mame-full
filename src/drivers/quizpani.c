@@ -50,17 +50,15 @@ static WRITE16_HANDLER( quizpani_oki6295_bankswitch_w )
 	#define BANKSIZE 0x10000
 	int banknum = offset & 3;
 	unsigned char *rom = memory_region(REGION_SOUND1);
-	int size = memory_region_length(REGION_SOUND1) - 0x40000;
-	int bankaddr = (data * BANKSIZE) & (size-1);
+	int bankaddr = data * BANKSIZE;
 
 	/* copy the samples */
-	memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
+	memcpy(rom + banknum * BANKSIZE, rom + 0x40000 + bankaddr, BANKSIZE);
 
 	/* and also copy the samples address table */
 	rom += banknum * TABLESIZE;
-	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
+	memcpy(rom, rom + 0x40000 + bankaddr, TABLESIZE);
 }
-
 
 static MEMORY_READ16_START( quizpani_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -306,9 +304,9 @@ ROM_START( quizpani )
 	ROM_LOAD( "93090-22.9",  0x100000, 0x100000, CRC(93382cd3) SHA1(6527e92f696c21aae65d008bb237231eaba7a105) )
 
 	ROM_REGION( 0x340000, REGION_SOUND1, 0 )
-	ROM_LOAD( "93090-4.56",  0x040000, 0x100000, CRC(ee370ed6) SHA1(9b1edfada5805014aa23d28d0c70227728b0e04f) )
+	ROM_LOAD( "93090-31.58", 0x040000, 0x100000, CRC(1cce0e13) SHA1(43816762e7907a8ff4b5a7b8da9f799b5baa64d5) )
 	ROM_LOAD( "93090-32.57", 0x140000, 0x100000, CRC(5d38f62e) SHA1(22fe95de6e1de1be0cec73b8163ab4283f2b8186) )
-	ROM_LOAD( "93090-31.58", 0x240000, 0x100000, CRC(1cce0e13) SHA1(43816762e7907a8ff4b5a7b8da9f799b5baa64d5) )
+	ROM_LOAD( "93090-4.56",  0x240000, 0x100000, CRC(ee370ed6) SHA1(9b1edfada5805014aa23d28d0c70227728b0e04f) )
 
 	ROM_REGION( 0x300, REGION_PROMS, 0 )
 	ROM_LOAD( "qz6.88",  0x000, 0x100, CRC(19dbbad2) SHA1(ebf7950d1869ca3bc1e72228505fbc17d095746a) ) /* unknown */

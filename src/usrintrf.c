@@ -2657,12 +2657,10 @@ int showgameinfo(struct mame_bitmap *bitmap)
 	}
 
 #ifdef MESS
-#if 0
 	while (displayimageinfo(bitmap,0) == 1)
 	{
 		update_video_and_audio();
 	}
-#endif
 #endif
 
 	erase_screen(bitmap);

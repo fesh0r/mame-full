@@ -620,9 +620,6 @@ static void shutdown_machine(void)
 	/* close down the input system */
 	code_close();
 
-	/* close down the localization */
-	uistring_shutdown();
-	
 	/* reset the saved states */
 	state_save_reset();
 }

@@ -661,7 +661,11 @@ static MACHINE_DRIVER_START( hyperpac )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
-
+static MACHINE_DRIVER_START( _4in1 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hyperpac)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -783,38 +787,38 @@ ROM_END
 
 ROM_START( moremorp )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "mmp_u52.bin",  0x00001, 0x40000, CRC(66baf9b2) )
-	ROM_LOAD16_BYTE( "mmp_u74.bin",  0x00000, 0x40000, CRC(7c6fede5) )
+	ROM_LOAD16_BYTE( "mmp_u52.bin",  0x00001, 0x40000, CRC(66baf9b2) SHA1(f1d383a94ef4313cb02c59ace17b9562eddcfb3c) )
+	ROM_LOAD16_BYTE( "mmp_u74.bin",  0x00000, 0x40000, CRC(7c6fede5) SHA1(41bc539a6efe9eb2304243701857b972d2170bcf) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) )
+	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , CRC(4d098cad) SHA1(a79d417e7525a25dd6697da9f3d1de269e759d2e) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) )
+	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, CRC(211a2566) SHA1(48138547822a8e76c101dd4189d581f80eee1e24) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "mmp_u75.bin", 0x000000, 0x80000, CRC(af9e824e) )
-	ROM_LOAD( "mmp_u76.bin", 0x080000, 0x80000, CRC(c42af064) )
-	ROM_LOAD( "mmp_u77.bin", 0x100000, 0x80000, CRC(1d7396e1) )
-	ROM_LOAD( "mmp_u78.bin", 0x180000, 0x80000, CRC(5508d80b) )
+	ROM_LOAD( "mmp_u75.bin", 0x000000, 0x80000, CRC(af9e824e) SHA1(2b68813bf025a34b8958033108e4f8d39fd618cb) )
+	ROM_LOAD( "mmp_u76.bin", 0x080000, 0x80000, CRC(c42af064) SHA1(f9d755e7cb52828d8594f7871932daf11443689f) )
+	ROM_LOAD( "mmp_u77.bin", 0x100000, 0x80000, CRC(1d7396e1) SHA1(bde7e925051408dd2371b5da8235a6a4cae8cf6a) )
+	ROM_LOAD( "mmp_u78.bin", 0x180000, 0x80000, CRC(5508d80b) SHA1(1b9a70a502b237fa11d1d55dce761e2def18873a) )
 ROM_END
 
 ROM_START( 3in1semi )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "u52",  0x00001, 0x40000, CRC(b0e4a0f7) )
-	ROM_LOAD16_BYTE( "u74",  0x00000, 0x40000, CRC(266862c4) )
+	ROM_LOAD16_BYTE( "u52",  0x00001, 0x40000, CRC(b0e4a0f7) SHA1(e1f8b8ef020a85fcd7817814cf6c5d560e9e608d) )
+	ROM_LOAD16_BYTE( "u74",  0x00000, 0x40000, CRC(266862c4) SHA1(2c5c513fee99bdb6e0ae3e0e644e516bdaddd629) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
-	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(e40481da) )
+	ROM_LOAD( "u35", 0x00000, 0x10000 , CRC(e40481da) SHA1(1c1fabcb67693235eaa6ff59ae12a35854b5564a) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(c83c11be) )
+	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(c83c11be) SHA1(c05d96d61e5b8245232c85cbbcb7cc1e4e066492) )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
-	ROM_LOAD( "u75", 0x000000, 0x80000, CRC(b66a0db6) )
-	ROM_LOAD( "u76", 0x080000, 0x80000, CRC(5f4b48ea) )
-	ROM_LOAD( "u77", 0x100000, 0x80000, CRC(d44211e3) )
-	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) )
+	ROM_LOAD( "u75", 0x000000, 0x80000, CRC(b66a0db6) SHA1(a4e604eb3c0a5b16b4b0bb99219045bf2146287c) )
+	ROM_LOAD( "u76", 0x080000, 0x80000, CRC(5f4b48ea) SHA1(e9dd1100d55b021b060990988c1e5271ce1ae35b) )
+	ROM_LOAD( "u77", 0x100000, 0x80000, CRC(d44211e3) SHA1(53af19dec03e76912632450414cdbcbb31cc094c) )
+	ROM_LOAD( "u78", 0x180000, 0x80000, CRC(af596afc) SHA1(875d7a51ff5c741cae4483d8da33df9cae8de52a) )
 ROM_END
 
 ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
@@ -828,9 +832,8 @@ ROM_START( 4in1boot ) /* snow bros, tetris, hyperman 1, pacman 2 */
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "u14", 0x00000, 0x40000, CRC(94b09b0e) SHA1(414de3e36eff85126038e8ff74145b35076e0a43) )
 
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
-	/* this only seems to have snowbros gfx? */
-	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(0f925f01) SHA1(74f35185ffb19ca291673ce8a5330fd11fede276) )
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "u78", 0x000000, 0x100000, BAD_DUMP CRC(5a06a928) SHA1(d35f239f2dddfe174547c1404aed6faf6b61e19f) ) // half missing
 ROM_END
 
 
@@ -1252,19 +1255,6 @@ static DRIVER_INIT(4in1boot)
 		free(buffer);
 	}
 
-	/* is this swapped too? i'm not sure */
-	src = memory_region(REGION_GFX1);
-	len = memory_region_length(REGION_GFX1);
-
-	if ((buffer = malloc(len)))
-	{
-		int i;
-		for (i = 0;i < len; i++)
-			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)];
-		memcpy(src,buffer,len);
-		free(buffer);
-	}
-
 	install_mem_read16_handler (0, 0x200000, 0x200001, _4in1_02_read );
 
 
@@ -1278,10 +1268,10 @@ GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Win
 /* SemiCom Games */
 GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
+GAME (1996, cookbib2, 0,        hyperpac, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" ) // sound cuts out in later levels? (investigate)
 /* the following don't work, they either point the interrupts at an area of ram probably shared by
    some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
 GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME (1996, cookbib2, 0,        hyperpac, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
-/* bad dump? */
-GAMEX(199?, 4in1boot, 0,        hyperpac, snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING )
+/* bad dump */
+GAMEX(199?, 4in1boot, 0,        _4in1,    snowbros, 4in1boot, ROT0, "bootleg", "4-in-1 bootleg", GAME_NOT_WORKING ) // gfx rom is half the size it should be, pacman 2 and snowbros are playable tho

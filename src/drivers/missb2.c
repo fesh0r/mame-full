@@ -3,16 +3,14 @@
 A rather odd bootleg of Bubble Bobble with level select, redesigned levels,
 redesigned (8bpp!) graphics and different sound hardware... Crazy
 
--- bgs don't work, how are they enabled?  are there comms issues are the palette isn't always right for them either
-
 -- where is oki?
 
-
 */
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *bg_paletteram;
+data8_t *bg_paletteram,*bg_vram;
 
 /* vidhrdw/bublbobl.c */
 extern unsigned char *bublbobl_objectram;
@@ -49,7 +47,7 @@ VIDEO_UPDATE( missb2 )
 	int sx,sy,xc,yc;
 	int gfx_num,gfx_attr,gfx_offs;
 	const UINT8 *prom_line;
-
+	UINT16 bg_offs;
 
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */
 	/* and sprites) are stored in the same memory region, and information on */
@@ -59,6 +57,19 @@ VIDEO_UPDATE( missb2 )
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);
 
 	if (!bublbobl_video_enable) return;
+
+	/* background map register */
+	//usrintf_showmessage("%02x",(*bg_vram) & 0x1f);
+	for(bg_offs = ((*bg_vram) << 4);bg_offs<(((*bg_vram)<< 4)|0xf);bg_offs++)
+	{
+		drawgfx(bitmap,Machine->gfx[1],
+				bg_offs,
+				1,
+				0,0,
+				0,(bg_offs & 0xf) * 0x10,
+				&Machine->visible_area,TRANSPARENCY_NONE,0xff);
+	}
+
 
 	sx = 0;
 
@@ -146,6 +157,18 @@ WRITE_HANDLER( bg_paletteram_RRRRGGGGBBBBxxxx_swap_w )
 	bg_changecolor_RRRRGGGGBBBBxxxx(offset / 2,bg_paletteram[offset | 1] | (bg_paletteram[offset & ~1] << 8));
 }
 
+WRITE_HANDLER( bg_bank_w )
+{
+	int bankaddress;
+	unsigned char *RAM = memory_region(REGION_CPU2);
+
+	/*I don't know how this is really connected,bit 1 is always high afaik...*/
+	bankaddress = ((data & 2) ? 0x1000 : 0x0000) | ((data & 1) ? 0x4000 : 0x0000) | (0x8000);
+	cpu_setbank(2,&RAM[bankaddress]);
+}
+
+
+
 static MEMORY_READ_START( missb2_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
@@ -191,9 +214,7 @@ MEMORY_END
 static MEMORY_READ_START( missb2_readmem2 )
 	{ 0x0000, 0x7fff, MRA_ROM },
 
-	{ 0x9000, 0x91ff, MRA_ROM }, // ? banked ?
-
-	{ 0xae00, 0xafff, MRA_RAM },
+	{ 0x9000, 0xafff, MRA_BANK2 }, /* ROM data for the background palette ram*/
 	{ 0xb000, 0xb1ff, MRA_ROM }, // ? banked ?
 
 	{ 0xc800, 0xcfff, MRA_RAM }, /* main? */
@@ -202,15 +223,16 @@ MEMORY_END
 
 static MEMORY_WRITE_START( missb2_writemem2 )
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xc1ff, bg_paletteram_RRRRGGGGBBBBxxxx_swap_w,&bg_paletteram  }, // it seems to write palette for the bg here, but not always the right ones (comms issue? banking issue?)
+	{ 0xc000, 0xc1ff, bg_paletteram_RRRRGGGGBBBBxxxx_swap_w,&bg_paletteram  },
 	{ 0xc800, 0xcfff, MWA_RAM }, /* main? */
 
-	{ 0xd002, 0xd002, MWA_NOP }, /* ? */
-
+	{ 0xd000, 0xd000, bg_bank_w },
+	{ 0xd002, 0xd002, MWA_NOP },
+	{ 0xd003, 0xd003, MWA_RAM,&bg_vram },
 	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w },
 MEMORY_END
 
-/* does it actually it actually use the original sound hw or is it just leftover code .. */
+/* does it actually use the original sound hw or is it just leftover code .. */
 
 static MEMORY_READ_START( sound_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -469,10 +491,10 @@ ROM_START( missb2 )
 	ROM_LOAD( "msbub2-u.125", 0xc0000, 0x40000, CRC(77b710e2) SHA1(f6f46804a23de6c930bc40a3f45ac70e160f0645) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 ) /* background images */
-	ROM_LOAD16_BYTE( "msbub2-u.ic1", 0x000001, 0x80000, CRC(d621cbc3) SHA1(36343d85bdde0e40dfe0f0e4e646546f175903f8) )
-	ROM_LOAD16_BYTE( "msbub2-u.ic3", 0x000000, 0x80000, CRC(90e56035) SHA1(8fa18d97a05890178c52b97ff75aed300344a93e) )
-	ROM_LOAD16_BYTE( "msbub2-u.ic2", 0x100001, 0x80000, CRC(694c2783) SHA1(401dc8713a02130289f364786c38e70c4c4f9b2e) )
-	ROM_LOAD16_BYTE( "msbub2-u.ic4", 0x100000, 0x80000, CRC(be71c9f0) SHA1(1961e931017f644486cea0ce431d50973679c848) )
+	ROM_LOAD16_BYTE( "msbub2-u.ic1", 0x100001, 0x80000, CRC(d621cbc3) SHA1(36343d85bdde0e40dfe0f0e4e646546f175903f8) )
+	ROM_LOAD16_BYTE( "msbub2-u.ic3", 0x100000, 0x80000, CRC(90e56035) SHA1(8fa18d97a05890178c52b97ff75aed300344a93e) )
+	ROM_LOAD16_BYTE( "msbub2-u.ic2", 0x000001, 0x80000, CRC(694c2783) SHA1(401dc8713a02130289f364786c38e70c4c4f9b2e) )
+	ROM_LOAD16_BYTE( "msbub2-u.ic4", 0x000000, 0x80000, CRC(be71c9f0) SHA1(1961e931017f644486cea0ce431d50973679c848) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "msbub2-u.13", 0x00000, 0x20000, CRC(14f07386) SHA1(097897d92226f900e11dbbdd853aff3ac46ff016) )

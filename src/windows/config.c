@@ -756,7 +756,7 @@ void cli_frontend_exit(void)
 #ifdef MESS
 	if (win_write_config)
 		write_config(NULL, Machine->gamedrv);
-#endif
+#endif /* MESS */
 }
 
 static int config_handle_arg(char *arg)
@@ -791,17 +791,12 @@ static int config_handle_arg(char *arg)
 }
 
 
-/*
- * logerror
- */
+//============================================================
+//	vlogerror
+//============================================================
 
-void CLIB_DECL logerror(const char *text,...)
+static void vlogerror(const char *text, va_list arg)
 {
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-
 	if (errorlog && logfile)
 	{
 		curlogsize += vfprintf(logfile, text, arg);
@@ -820,7 +815,38 @@ void CLIB_DECL logerror(const char *text,...)
 		_vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
 		OutputDebugString(buffer);
 	}
+}
+
+
+//============================================================
+//	logerror
+//============================================================
+
+void CLIB_DECL logerror(const char *text,...)
+{
+	va_list arg;
+
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	vlogerror(text, arg);
 	va_end(arg);
+}
+
+
+//============================================================
+//	osd_die
+//============================================================
+
+void CLIB_DECL osd_die(const char *text,...)
+{
+	va_list arg;
+
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	vlogerror(text, arg);
+	va_end(arg);
+
+	exit(-1);
 }
 
 

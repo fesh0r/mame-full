@@ -16,7 +16,7 @@
 #ifndef _WIN32
 #define SETUP_FPU()
 #define RESTORE_FPU()
-#define TRUNC_TO_INT(f) (floorf(f))
+#define TRUNC_TO_INT(f) (float) (floor(f))
 #else
 #include <float.h>
 #define SETUP_FPU() { int oldfpu = _controlfp(_RC_CHOP/*_RC_DOWN*/ | _PC_24, _MCW_RC | _MCW_PC)
@@ -1172,25 +1172,25 @@ WRITE32_HANDLER( voodoo_regs_w )
 		
 		/* floating-point vertex data */
 		case fvertexAx:
-			if (chips & 1) tri_va.x = *(float *)&data;
+			if (chips & 1) tri_va.x = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		case fvertexAy:
-			if (chips & 1) tri_va.y = *(float *)&data;
+			if (chips & 1) tri_va.y = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		case fvertexBx:
-			if (chips & 1) tri_vb.x = *(float *)&data;
+			if (chips & 1) tri_vb.x = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		case fvertexBy:
-			if (chips & 1) tri_vb.y = *(float *)&data;
+			if (chips & 1) tri_vb.y = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		case fvertexCx:
-			if (chips & 1) tri_vc.x = *(float *)&data;
+			if (chips & 1) tri_vc.x = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		case fvertexCy:
-			if (chips & 1) tri_vc.y = *(float *)&data;
+			if (chips & 1) tri_vc.y = TRUNC_TO_INT(*(float *)&data * 16. + 0.5) * (1. / 16.);
 			break;
 		
-		/* fixed point starting data */
+		/* floating-point starting data */
 		case fstartR:
 			if (chips & 1) tri_startr = (INT32)(*(float *)&data * 65536.0);
 			break;
@@ -1220,7 +1220,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			if (chips & 4) tri_startt1 = *(float *)&data;
 			break;
 		
-		/* fixed point delta X data */
+		/* floating-point delta X data */
 		case fdRdX:
 			if (chips & 1) tri_drdx = (INT32)(*(float *)&data * 65536.0);
 			break;
@@ -1250,7 +1250,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			if (chips & 4) tri_dt1dx = *(float *)&data;
 			break;
 		
-		/* fixed point delta Y data */
+		/* floating-point delta Y data */
 		case fdRdY:
 			if (chips & 1) tri_drdy = (INT32)(*(float *)&data * 65536.0);
 			break;
@@ -1809,7 +1809,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			{
 				if (data & 0x80000000)
 				{
-					texel_lookup[0][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
+					texel_lookup[0][5][((data >> 23) & 0xfe) | (~offset & 1)] = 0xff000000 | data;
 					texel_lookup_dirty[0][14] = 1;
 				}
 				else
@@ -1826,7 +1826,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			{
 				if (data & 0x80000000)
 				{
-					texel_lookup[1][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
+					texel_lookup[1][5][((data >> 23) & 0xfe) | (~offset & 1)] = 0xff000000 | data;
 					texel_lookup_dirty[1][14] = 1;
 				}
 				else
@@ -1849,7 +1849,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			{
 				if (data & 0x80000000)
 				{
-					texel_lookup[0][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
+					texel_lookup[0][5][((data >> 23) & 0xfe) | (~offset & 1)] = 0xff000000 | data;
 					texel_lookup_dirty[0][14] = 1;
 				}
 				else
@@ -1866,7 +1866,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 			{
 				if (data & 0x80000000)
 				{
-					texel_lookup[1][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
+					texel_lookup[1][5][((data >> 23) & 0xfe) | (~offset & 1)] = 0xff000000 | data;
 					texel_lookup_dirty[1][14] = 1;
 				}
 				else
@@ -1913,37 +1913,21 @@ WRITE32_HANDLER( voodoo_regs_w )
 		case nccTable+19:
 			if (chips & 2)
 			{
-				if (data & 0x80000000)
-				{
-					texel_lookup[0][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
-					texel_lookup_dirty[0][14] = 1;
-				}
-				else
-				{
-					int base = offset - (nccTable+16);
-					ncc_ir[0][1][base] = (INT32)(data <<  5) >> 23;
-					ncc_ig[0][1][base] = (INT32)(data << 14) >> 23;
-					ncc_ib[0][1][base] = (INT32)(data << 23) >> 23;
-					texel_lookup_dirty[0][7] = 1;
-					texel_lookup_dirty[0][15] = 1;
-				}
+				int base = offset - (nccTable+16);
+				ncc_ir[0][1][base] = (INT32)(data <<  5) >> 23;
+				ncc_ig[0][1][base] = (INT32)(data << 14) >> 23;
+				ncc_ib[0][1][base] = (INT32)(data << 23) >> 23;
+				texel_lookup_dirty[0][7] = 1;
+				texel_lookup_dirty[0][15] = 1;
 			}
 			if (chips & 4)
 			{
-				if (data & 0x80000000)
-				{
-					texel_lookup[1][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
-					texel_lookup_dirty[1][14] = 1;
-				}
-				else
-				{
-					int base = offset - (nccTable+16);
-					ncc_ir[1][1][base] = (INT32)(data <<  5) >> 23;
-					ncc_ig[1][1][base] = (INT32)(data << 14) >> 23;
-					ncc_ib[1][1][base] = (INT32)(data << 23) >> 23;
-					texel_lookup_dirty[1][7] = 1;
-					texel_lookup_dirty[1][15] = 1;
-				}
+				int base = offset - (nccTable+16);
+				ncc_ir[1][1][base] = (INT32)(data <<  5) >> 23;
+				ncc_ig[1][1][base] = (INT32)(data << 14) >> 23;
+				ncc_ib[1][1][base] = (INT32)(data << 23) >> 23;
+				texel_lookup_dirty[1][7] = 1;
+				texel_lookup_dirty[1][15] = 1;
 			}
 			break;
 		
@@ -1953,37 +1937,21 @@ WRITE32_HANDLER( voodoo_regs_w )
 		case nccTable+23:
 			if (chips & 2)
 			{
-				if (data & 0x80000000)
-				{
-					texel_lookup[0][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
-					texel_lookup_dirty[0][14] = 1;
-				}
-				else
-				{
-					int base = offset - (nccTable+20);
-					ncc_qr[0][1][base] = (INT32)(data <<  5) >> 23;
-					ncc_qg[0][1][base] = (INT32)(data << 14) >> 23;
-					ncc_qb[0][1][base] = (INT32)(data << 23) >> 23;
-					texel_lookup_dirty[0][7] = 1;
-					texel_lookup_dirty[0][15] = 1;
-				}
+				int base = offset - (nccTable+20);
+				ncc_qr[0][1][base] = (INT32)(data <<  5) >> 23;
+				ncc_qg[0][1][base] = (INT32)(data << 14) >> 23;
+				ncc_qb[0][1][base] = (INT32)(data << 23) >> 23;
+				texel_lookup_dirty[0][7] = 1;
+				texel_lookup_dirty[0][15] = 1;
 			}
 			if (chips & 4)
 			{
-				if (data & 0x80000000)
-				{
-					texel_lookup[1][5][((data >> 23) & 0xfe) | (offset & 1)] = 0xff000000 | data;
-					texel_lookup_dirty[1][14] = 1;
-				}
-				else
-				{
-					int base = offset - (nccTable+20);
-					ncc_qr[1][1][base] = (INT32)(data <<  5) >> 23;
-					ncc_qg[1][1][base] = (INT32)(data << 14) >> 23;
-					ncc_qb[1][1][base] = (INT32)(data << 23) >> 23;
-					texel_lookup_dirty[1][7] = 1;
-					texel_lookup_dirty[1][15] = 1;
-				}
+				int base = offset - (nccTable+20);
+				ncc_qr[1][1][base] = (INT32)(data <<  5) >> 23;
+				ncc_qg[1][1][base] = (INT32)(data << 14) >> 23;
+				ncc_qb[1][1][base] = (INT32)(data << 23) >> 23;
+				texel_lookup_dirty[1][7] = 1;
+				texel_lookup_dirty[1][15] = 1;
 			}
 			break;
 		

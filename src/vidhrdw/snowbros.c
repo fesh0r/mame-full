@@ -45,7 +45,7 @@ VIDEO_UPDATE( snowbros )
 
 	/* This clears & redraws the entire screen each pass */
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	fillbitmap(bitmap,0xf0,&Machine->visible_area);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{

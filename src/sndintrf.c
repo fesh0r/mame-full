@@ -1131,6 +1131,18 @@ struct snd_interface sndintf[] =
 },
 
 #endif
+#if (HAS_YMF271)
+	{
+		SOUND_YMF271,
+		"YMF271",
+		0,
+		0,
+		YMF271_sh_start,
+		YMF271_sh_stop,
+		0,
+		0
+	},
+#endif
 
 
 

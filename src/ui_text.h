@@ -190,10 +190,9 @@ struct lang_struct
 
 extern struct lang_struct lang;
 
-int uistring_init(mame_file *language_file);
-void uistring_shutdown(void);
+int uistring_init (mame_file *language_file);
 
-const char *ui_getstring(int string_num);
+const char * ui_getstring (int string_num);
 
 #endif /* UI_TEXT_H */
 

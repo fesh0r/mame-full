@@ -29,6 +29,8 @@ void midway_ioasic_reset(void);
 void midway_ioasic_fifo_w(data16_t data);
 READ32_HANDLER( midway_ioasic_r );
 WRITE32_HANDLER( midway_ioasic_w );
+READ32_HANDLER( midway_ioasic_packed_r );
+WRITE32_HANDLER( midway_ioasic_packed_w );
 
 enum
 {
@@ -36,7 +38,8 @@ enum
 	MIDWAY_IOASIC_BLITZ99,
 	MIDWAY_IOASIC_CARNEVIL,
 	MIDWAY_IOASIC_CALSPEED,
-	MIDWAY_IOASIC_MACE
+	MIDWAY_IOASIC_MACE,
+	MIDWAY_IOASIC_INVASION
 };
 
 
