@@ -58,10 +58,10 @@ typedef struct
 	int			index;
 	} DSK_ITERATOR;
 
-static int msx_img_image_init(STREAM *f, IMAGE **outimg);
-static int msx_ddi_image_init(STREAM *f, IMAGE **outimg);
-static int msx_msx_image_init(STREAM *f, IMAGE **outimg);
-static int msx_multi_image_init(STREAM *f, IMAGE **outimg);
+static int msx_img_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int msx_ddi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int msx_msx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int msx_multi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format);
 static void msx_dsk_image_exit(IMAGE *img);
 static int msx_dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -177,16 +177,16 @@ IMAGEMODULE(
 static struct ImageModule *modules[4] = 
 	{ &imgmod_msx_img, &imgmod_msx_ddi, &imgmod_msx_msx, &imgmod_msx_mul };
 
-static int msx_img_image_init(STREAM *f, IMAGE **outimg) 
+static int msx_img_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
 	{ return msx_dsk_image_init (f, outimg, FORMAT_IMG); }
 
-static int msx_ddi_image_init(STREAM *f, IMAGE **outimg) 
+static int msx_ddi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
 	{ return msx_dsk_image_init (f, outimg, FORMAT_DDI); }
 
-static int msx_msx_image_init(STREAM *f, IMAGE **outimg) 
+static int msx_msx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
 	{ return msx_dsk_image_init (f, outimg, FORMAT_MSX); }
 
-static int msx_multi_image_init(STREAM *f, IMAGE **outimg) 
+static int msx_multi_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg) 
 	{ return msx_dsk_image_init (f, outimg, FORMAT_MULTI); }
 
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg, int format)

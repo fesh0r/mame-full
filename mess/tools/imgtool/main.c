@@ -623,9 +623,32 @@ error:
 	return -1;
 }
 
+#ifdef MAME_DEBUG
+static int cmd_test(struct command *c, int argc, char *argv[])
+{
+	int err;
+
+	fprintf(stdout, "Running test suite for module '%s':\n\n", argv[0]);
+
+	err = imgtool_test_byname(argv[0]);
+	if (err)
+		goto error;
+
+	fprintf(stdout, "...Test succeeded!\n", argv[0]);
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], NULL, NULL, NULL, NULL);
+	return -1;
+}
+#endif
+
 /* ----------------------------------------------------------------------- */
 
 static struct command cmds[] = {
+#ifdef MAME_DEBUG
+	{ "test", "<format>", cmd_test, 1, 1, 1 },
+#endif
 	{ "create", "<format> <imagename>", cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
 	{ "get", "<format> <imagename> <filename> [newname] [--filter=filter]", cmd_get, 3, 4, 0 },

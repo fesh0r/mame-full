@@ -1,3 +1,29 @@
+0.37b13
+
+Several drivers may be broken due to the MAME memory handling changes.
+And as a result, the Amiga has been temporarily removed.
+
+Note: .inp record/playback does still not work currently.
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+...
+
+System Driver Changes:
+----------------------
+...
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b13. This incorporates all features of the update to this 
+  core.  [MAME team] 
+
+- [IMGTOOL] Added special support in imgtool to separate floppy image formats
+  from the file system.  Also added a test command that only gets built in
+  debug builds that runs a set of test cases on an imgtool driver.  [Nate Woods]
+
+
+-------------------------------------------------------------------------------  
 0.37b12
 
 Several drivers may be broken due to the MAME memory handling changes.

@@ -211,7 +211,7 @@ size_t stream_read(STREAM *s, void *buf, size_t sz)
 	return result;
 }
 
-size_t stream_write(STREAM *s, void *buf, size_t sz)
+size_t stream_write(STREAM *s, const void *buf, size_t sz)
 {
 	size_t result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;

@@ -74,7 +74,7 @@ STREAM *stream_open_write_stream(int filesize);
 STREAM *stream_open_mem(void *buf, size_t sz);
 void stream_close(STREAM *f);
 size_t stream_read(STREAM *f, void *buf, size_t sz);
-size_t stream_write(STREAM *f, void *buf, size_t sz);
+size_t stream_write(STREAM *f, const void *buf, size_t sz);
 size_t stream_size(STREAM *f);
 int stream_seek(STREAM *f, size_t pos, int where);
 /* works currently only for IMG_FILE
@@ -133,7 +133,7 @@ enum {
 
 FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
 void filter_term(FILTER *f);
-int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen);
+int filter_writetostream(FILTER *f, STREAM *s, const void *buf, int buflen);
 int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
 int filter_readintobuffer(FILTER *f, STREAM *s);
 
@@ -198,7 +198,7 @@ struct ImageModule {
 	const char *eoln;
 	int flags;
 
-	int (*init)(STREAM *f, IMAGE **outimg);
+	int (*init)(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
 	void (*info)(IMAGE *img, char *string, const int len);
 	int (*beginenum)(IMAGE *img, IMAGEENUM **outenum);
@@ -208,12 +208,12 @@ struct ImageModule {
 	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
 	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *writeoptions);
 	int (*deletefile)(IMAGE *img, const char *fname);
-	int (*create)(STREAM *f, const ResolvedOption *createoptions);
+	int (*create)(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
 
 	/* size must be set with the size of the buffer,
 	   if the buffer is too small it will be relocated with realloc */
-	int (*read_sector)(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
-	int (*write_sector)(IMAGE *img, int head, int track, int sector, char *buffer, int size);
+	int (*read_sector)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
+	int (*write_sector)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
 
 	const struct OptionTemplate *fileoptions_template;
 	const struct OptionTemplate *createoptions_template;
@@ -393,6 +393,29 @@ int img_beginenum(IMAGE *img, IMAGEENUM **outenum);
  */
 int img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 
+/* img_countfiles
+ *
+ * Description:
+ *		Counts the total amount of files within an image
+ *
+ * Parameters:
+ *		img:				The image to enumerate
+ *		totalfiles:			Place to receive the file count
+ */
+int img_countfiles(IMAGE *img, int *totalfiles);
+
+/* img_filesize
+ *
+ * Description:
+ *		Retrieves the file length of the specified file
+ *
+ * Parameters:
+ *		img:				The image to enumerate
+ *		fname				Filename of file on the image
+ *		filesize			Place to receive the file length
+ */
+int img_filesize(IMAGE *img, const char *fname, int *filesize);
+
 /* img_closeenum
  *
  * Description:
@@ -539,6 +562,21 @@ int img_getinfo_byname(const char *modulename, const char *fname, imageinfo *inf
 int img_goodname(const struct ImageModule *module, const char *fname, const char *base, char **result);
 int img_goodname_byname(const char *modulename, const char *fname, const char *base, char **result);
 
+/* imgtool_test
+ * imgtool_test_byname
+ *
+ * Description:
+ *		(Only present when MAME_DEBUG is on)
+ *		These functions run a test suite on the module
+ *
+ * Parameters:
+ *		module/modulename:	The module for this image format.  If NULL, tests are run on all modules
+ */
+#ifdef MAME_DEBUG
+int imgtool_test(const struct ImageModule *module);
+int imgtool_test_byname(const char *modulename);
+#endif /* MAME_DEBUG */
+
 /* ---------------------------------------------------------------------------
  * Wave/Cassette calls
  * ---------------------------------------------------------------------------
@@ -565,7 +603,6 @@ struct WaveExtra
 
 #define WAVEMODULE(name,humanname,ext,eoln,flags,zeropulse,onepulse,threshpulse,waveflags,blockheader,blockheadersize,\
 		initalt,nextfile,readfilechunk)	\
-static int imgmodinit_##name(STREAM *f, IMAGE **outimg); \
 static struct WaveExtra waveextra_##name = \
 {						\
 	(initalt),			\
@@ -587,7 +624,7 @@ struct ImageModule imgmod_##name = \
 	NULL,				\
 	(eoln),				\
 	(flags),			\
-	imgmodinit_##name,	\
+	imgwave_init,		\
 	imgwave_exit,		\
 	NULL,				\
 	imgwave_beginenum,	\
@@ -603,21 +640,151 @@ struct ImageModule imgmod_##name = \
 	NULL,				\
 	NULL,				\
 	(void *) &waveextra_##name \
-}; \
-static int imgmodinit_##name(STREAM *f, IMAGE **outimg) \
-{ \
-	return imgwave_init(&imgmod_##name, f, outimg); \
-}
+};
 
-int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+/* These are called internally */
+int imgwave_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 void imgwave_exit(IMAGE *img);
 int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum);
 int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 void imgwave_closeenum(IMAGEENUM *enumeration);
 int imgwave_readfile(IMAGE *img, const char *fname, STREAM *destf);
 
+/* These are callable from wave modules */
 int imgwave_seek(IMAGE *img, int pos);
 int imgwave_forward(IMAGE *img);
 int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
+
+/* ---------------------------------------------------------------------------
+ * Floppy calls
+ * ---------------------------------------------------------------------------
+ */
+
+struct FloppyFormat
+{
+	int (*init)(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, IMAGE **outimg);
+	void (*exit)(IMAGE *img);
+	int (*create)(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, UINT8 sides, UINT8 tracks, UINT8 filler);
+	int (*readdata)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
+	int (*writedata)(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
+	void (*get_geometry)(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
+	int (*isreadonly)(IMAGE *img);
+	void *extra;
+};
+
+#define FLOPPYFORMAT(name, init,exit,create,readdata,writedata) \
+static const struct FloppyFormat imgfloppyfmt_##name = \
+{\
+	(init), \
+	(exit), \
+	(create), \
+	(readdata), \
+	(writedata), \
+	NULL \
+};
+
+struct BasicDskExtra
+{
+	int (*resolvegeometry)(STREAM *f, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, UINT8 *first_sector_id, int *offset);
+	int (*createheader)(STREAM *f, UINT8 sides, UINT8 tracks, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id);
+	UINT8 sec_per_track;
+	UINT8 first_sector_id;
+	UINT16 sector_length;
+};
+
+#define BASICDSKFORMAT(name, resolvegeometry,createheader,sec_per_track,sector_length,first_sector_id) \
+static const struct BasicDskExtra imgfloppyfmt_basicdsk_##name = \
+{\
+	(resolvegeometry),\
+	(createheader),\
+	(sec_per_track),\
+	(first_sector_id),\
+	(sector_length)\
+};\
+static const struct FloppyFormat imgfloppyfmt_##name = \
+{\
+	imgfloppy_basicdsk_init, \
+	imgfloppy_basicdsk_exit, \
+	imgfloppy_basicdsk_create, \
+	imgfloppy_basicdsk_readdata, \
+	imgfloppy_basicdsk_writedata, \
+	imgfloppy_basicdsk_get_geometry, \
+	imgfloppy_basicdsk_isreadonly, \
+	(void *) &imgfloppyfmt_basicdsk_##name \
+};
+
+struct FloppyExtra
+{
+	const struct FloppyFormat *flopformat;
+	UINT8 filler;
+};
+
+#define FLOPPYMODULE(name,humanname,ext,crcfile,crcsysname,eoln,flags,\
+		info,beginenum,nextenum,closeenum,freespace,readfile,writefile, \
+		deletefile,fileoptions_template, \
+		floppyformat,maxsides,mintracks,maxtracks,deftracks,filler) \
+\
+static const struct OptionTemplate imgfloppy_##name##_copts[] = \
+{\
+	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	mintracks,	maxtracks,	NULL},	\
+	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,			maxsides,	NULL},	\
+	{ NULL, NULL, 0, 0, 0, 0 } \
+};\
+static const struct FloppyExtra imgfloppy_##name##_extra = \
+{\
+	&imgfloppyfmt_##floppyformat, \
+	filler \
+};\
+struct ImageModule imgmod_##name = \
+{								\
+	#name,						\
+	(humanname),				\
+	(ext),						\
+	(crcfile),					\
+	(crcsysname),				\
+	(eoln),						\
+	(flags),					\
+	imgfloppy_init,				\
+	imgfloppy_exit,				\
+	(info),						\
+	(beginenum),				\
+	(nextenum),					\
+	(closeenum),				\
+	(freespace),				\
+	(readfile),					\
+	(writefile),				\
+	(deletefile),				\
+	imgfloppy_create,			\
+	imgfloppy_readsector,		\
+	imgfloppy_writesector,		\
+	(fileoptions_template),		\
+	imgfloppy_##name##_copts,	\
+	(void *) &imgfloppy_##name##_extra	\
+};
+
+/* These are called internally */
+int imgfloppy_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+void imgfloppy_exit(IMAGE *img);
+int imgfloppy_readsector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
+int imgfloppy_writesector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
+int imgfloppy_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
+int imgfloppy_basicdsk_init(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, IMAGE **outimg);
+void imgfloppy_basicdsk_exit(IMAGE *img);
+int imgfloppy_basicdsk_create(const struct ImageModule *mod, const struct FloppyFormat *flopformat, STREAM *f, UINT8 sides, UINT8 tracks, UINT8 filler);
+int imgfloppy_basicdsk_readdata(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
+int imgfloppy_basicdsk_writedata(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
+void imgfloppy_basicdsk_get_geometry(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
+int imgfloppy_basicdsk_isreadonly(IMAGE *img);
+
+#define IMGFLOP_CREATEOPTION_TRACKS			0
+#define IMGFLOP_CREATEOPTION_SIDES			1
+
+/* These are callable from floppy modules */
+int imgfloppy_read(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, UINT8 *buf);
+int imgfloppy_write(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, const UINT8 *buf);
+int imgfloppy_transfer_from(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, STREAM *destf);
+int imgfloppy_transfer_to(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, int length, STREAM *destf);
+void imgfloppy_get_geometry(IMAGE *img, UINT8 *sides, UINT8 *tracks, UINT8 *sectors);
+int imgfloppy_isreadonly(IMAGE *img);
 
 #endif /* IMGTOOL_H */

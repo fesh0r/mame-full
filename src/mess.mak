@@ -806,6 +806,8 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
 	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
 	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
+	  $(OBJ)/mess/tools/imgtool/imgflop.o  \
+	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
 	  $(OBJ)/mess/tools/imgtool/filter.o   \
 	  $(OBJ)/mess/tools/imgtool/filteoln.o \
 	  $(OBJ)/mess/tools/imgtool/filtbas.o  \

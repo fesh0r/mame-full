@@ -489,7 +489,7 @@ static int d64_filesize(d64_image *image, D64_ENTRY *entry)
 }
 #endif
 
-static int d64_image_init(STREAM *f, IMAGE **outimg);
+static int d64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void d64_image_exit(IMAGE *img);
 static void d64_image_info(IMAGE *img, char *string, const int len);
 static int d64_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -499,22 +499,22 @@ static size_t d64_image_freespace(IMAGE *img);
 static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 static int d64_image_deletefile(IMAGE *img, const char *fname);
-static int d64_image_create(STREAM *f, const ResolvedOption *options);
+static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
 
-static int x64_image_init(STREAM *f, IMAGE **outimg);
-static int x64_image_create(STREAM *f, const ResolvedOption *options);
+static int x64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
+static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
 
-static int d71_image_init(STREAM *f, IMAGE **outimg);
+static int d71_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static size_t d71_image_freespace(IMAGE *img);
-static int d71_image_create(STREAM *f, const ResolvedOption *options);
+static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
 
-static int d81_image_init(STREAM *f, IMAGE **outimg);
+static int d81_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void d81_image_info(IMAGE *img, char *string, const int len);
 static size_t d81_image_freespace(IMAGE *img);
-static int d81_image_create(STREAM *f, const ResolvedOption *options);
+static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options);
 
-static int d64_read_sector(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
-static int d64_write_sector(IMAGE *img, int head, int track, int sector, char *buffer, int size);
+static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char **buffer, int *size);
+static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, char *buffer, int size);
 
 static struct OptionTemplate d64_createopts[] =
 {
@@ -624,7 +624,7 @@ IMAGEMODULE(
 	d64_createopts						/* create options */
 )
 
-static int d64_image_init(STREAM *f, IMAGE **outimg)
+static int d64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	d64_image *image;
 
@@ -666,7 +666,7 @@ static int d64_image_init(STREAM *f, IMAGE **outimg)
 	return 0;
 }
 
-static int x64_image_init(STREAM *f, IMAGE **outimg)
+static int x64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	d64_image *image;
 
@@ -707,7 +707,7 @@ static int x64_image_init(STREAM *f, IMAGE **outimg)
 	return 0;
 }
 
-static int d71_image_init(STREAM *f, IMAGE **outimg)
+static int d71_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	d64_image *image;
 
@@ -738,7 +738,7 @@ static int d71_image_init(STREAM *f, IMAGE **outimg)
 	return 0;
 }
 
-static int d81_image_init(STREAM *f, IMAGE **outimg)
+static int d81_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	d64_image *image;
 
@@ -1054,7 +1054,7 @@ static int d64_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int d64_read_sector(IMAGE *img, int head, int track, int sector, 
+static int d64_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 						   char **buffer, int *size)
 {
 	d64_image *image=(d64_image*)img;
@@ -1071,7 +1071,7 @@ static int d64_read_sector(IMAGE *img, int head, int track, int sector,
 	return 0;
 }
 
-static int d64_write_sector(IMAGE *img, int head, int track, int sector, 
+static int d64_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 							char *buffer, int size)
 {
 	d64_image *image=(d64_image*)img;
@@ -1086,7 +1086,7 @@ static int d64_write_sector(IMAGE *img, int head, int track, int sector,
 	return 0;
 }
 
-static int d64_image_create(STREAM *f, const ResolvedOption *options)
+static int d64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
 {
 	unsigned char sector[0x100]={0};
 	int tracks=35;
@@ -1131,7 +1131,7 @@ static int d64_image_create(STREAM *f, const ResolvedOption *options)
 	return 0;
 }
 
-static int x64_image_create(STREAM *f, const ResolvedOption *options)
+static int x64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
 {
 	struct { 
 		unsigned char data[0x40];
@@ -1144,11 +1144,11 @@ static int x64_image_create(STREAM *f, const ResolvedOption *options)
 	if (stream_write(f, &x64_header, sizeof(x64_header)) != sizeof(x64_header)) 
 		return  IMGTOOLERR_WRITEERROR;
 
-	d64_image_create(f, options);
+	d64_image_create(mod, f, options);
 	return 0;
 }
 
-static int d71_image_create(STREAM *f, const ResolvedOption *options)
+static int d71_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
 {
 	D71_HEADER d71_header= { { 0 } };
 	unsigned char sector[0x100]={0};
@@ -1212,7 +1212,7 @@ static int d71_image_create(STREAM *f, const ResolvedOption *options)
 	return 0;
 }
 
-static int d81_image_create(STREAM *f, const ResolvedOption *options)
+static int d81_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options)
 {
 	unsigned char sector[0x100]={0};
 	unsigned char id[2]={'1','2'};

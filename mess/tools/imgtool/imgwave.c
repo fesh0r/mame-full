@@ -41,7 +41,7 @@ static int find_wavtag(STREAM *f, int filelen, const char *tag, int *offset, UIN
 	return 0;
 }
 
-int imgwave_init(struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+int imgwave_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	int err;
 	waveimage *wimg;

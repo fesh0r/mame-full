@@ -31,7 +31,7 @@ typedef struct
 	} XSA_ITERATOR;
 
 static int xsa_extract (STREAM *in, STREAM *out);
-static int xsa_image_init(STREAM *f, IMAGE **outimg);
+static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void xsa_image_exit(IMAGE *img);
 static int xsa_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int xsa_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
@@ -63,7 +63,7 @@ IMAGEMODULE(
 	NULL							/* create options */
 )
 
-static int xsa_image_init(STREAM *f, IMAGE **outimg)
+static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	{
 	XSA_IMAGE *image;
 	int pos, len, size;

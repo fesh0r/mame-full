@@ -47,7 +47,7 @@ typedef struct {
 	int index;
 } lynx_iterator;
 
-static int lynx_image_init(STREAM *f, IMAGE **outimg);
+static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void lynx_image_exit(IMAGE *img);
 //static void lynx_image_info(IMAGE *img, char *string, const int len);
 static int lynx_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -142,7 +142,7 @@ static int lynx_read_image(lynx_image *image)
 	return 0;
 }
 
-static int lynx_image_init(STREAM *f, IMAGE **outimg)
+static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	lynx_image *image;
 	int rc;

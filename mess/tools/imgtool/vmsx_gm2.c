@@ -34,7 +34,7 @@ typedef struct
 	int			index;
 	} TAP_ITERATOR;
 
-static int vmsx_gm2_image_init(STREAM *f, IMAGE **outimg);
+static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void vmsx_gm2_image_exit(IMAGE *img);
 //static void vmsx_gm2_image_info(IMAGE *img, char *string, const int len);
 static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -67,7 +67,7 @@ IMAGEMODULE(
 	NULL					/* create options */
 )
 
-static int vmsx_gm2_image_init(STREAM *f, IMAGE **outimg)
+static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	{
 	GM2_IMAGE *image;
 

@@ -43,7 +43,7 @@ typedef struct
 	int			index;
 	} CAS_ITERATOR;
 
-static int svi_cas_image_init(STREAM *f, IMAGE **outimg);
+static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void svi_cas_image_exit(IMAGE *img);
 //static void svi_cas_image_info(IMAGE *img, char *string, const int len);
 static int svi_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -76,7 +76,7 @@ IMAGEMODULE(
 	NULL					/* create options */
 )
 
-static int svi_cas_image_init(STREAM *f, IMAGE **outimg)
+static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 	{
 	CAS_IMAGE *image;
 	int len, i;

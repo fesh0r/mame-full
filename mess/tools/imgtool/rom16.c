@@ -18,7 +18,7 @@ typedef struct {
 	int index;
 } rom16_iterator;
 
-static int rom16_image_init(STREAM *f, IMAGE **outimg);
+static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 static void rom16_image_exit(IMAGE *img);
 //static void rom16_image_info(IMAGE *img, char *string, const int len);
 static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
@@ -53,7 +53,7 @@ IMAGEMODULE(
 	NULL							/* create options */
 )
 
-static int rom16_image_init(STREAM *f, IMAGE **outimg)
+static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
 	rom16_image *image;
 

@@ -180,7 +180,7 @@ int img_open(const struct ImageModule *module, const char *fname, int read_or_wr
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
 	
-	err = module->init(f, outimg);
+	err = module->init(module, f, outimg);
 	if (err) {
 		stream_close(f);
 		return markerrorsource(err);
@@ -210,6 +210,9 @@ int img_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	int err;
 
 	assert(img);
+	assert(outenum);
+
+	*outenum = NULL;
 
 	if (!img->module->beginenum)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
@@ -242,6 +245,74 @@ void img_closeenum(IMAGEENUM *enumeration)
 {
 	if (enumeration->module->closeenum)
 		enumeration->module->closeenum(enumeration);
+}
+
+int img_countfiles(IMAGE *img, int *totalfiles)
+{
+	int err;
+	IMAGEENUM *imgenum;
+	imgtool_dirent ent;
+	char fnamebuf[256];
+
+	*totalfiles = 0;
+	memset(&ent, 0, sizeof(ent));
+	ent.fname = fnamebuf;
+	ent.fname_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
+
+	err = img_beginenum(img, &imgenum);
+	if (err)
+		goto done;
+
+	do {
+		err = img_nextenum(imgenum, &ent);
+		if (err)
+			goto done;
+
+		if (ent.fname[0])
+			(*totalfiles)++;
+	}
+	while(ent.fname[0]);
+
+done:
+	if (imgenum)
+		img_closeenum(imgenum);
+	return err;
+}
+
+int img_filesize(IMAGE *img, const char *fname, int *filesize)
+{
+	int err;
+	IMAGEENUM *imgenum;
+	imgtool_dirent ent;
+	char fnamebuf[256];
+
+	*filesize = -1;
+	memset(&ent, 0, sizeof(ent));
+	ent.fname = fnamebuf;
+	ent.fname_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
+
+	err = img_beginenum(img, &imgenum);
+	if (err)
+		goto done;
+
+	do {
+		err = img_nextenum(imgenum, &ent);
+		if (err)
+			goto done;
+
+		if (!strcmpi(fname, ent.fname)) {
+			*filesize = ent.filesize;
+			goto done;
+		}
+	}
+	while(ent.fname[0]);
+
+	err = IMGTOOLERR_FILENOTFOUND;
+
+done:
+	if (imgenum)
+		img_closeenum(imgenum);
+	return err;
 }
 
 int img_freespace(IMAGE *img, int *sz)
@@ -495,7 +566,7 @@ int img_create(const struct ImageModule *module, const char *fname, const struct
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = module->create(f, ropts);
+	err = module->create(module, f, ropts);
 	stream_close(f);
 	if (err)
 		return markerrorsource(err);
