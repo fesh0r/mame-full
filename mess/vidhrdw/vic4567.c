@@ -813,7 +813,7 @@ int vic3_raster_irq (void)
 		if (LIGHTPEN_BUTTON)
 		{
 			double tme = 0.0;
-			
+
 			/* lightpen timer starten */
 			vic2.lightpentimer = timer_set (tme, 1, vic2_timer_timeout);
 		}
@@ -825,6 +825,6 @@ int vic3_raster_irq (void)
 			vic2_drawlines (vic2.lastline, vic2.rasterline);
 		vic2_set_interrupt (1);
 	}
-	return 0;
+	return ignore_interrupt();
 }
 
