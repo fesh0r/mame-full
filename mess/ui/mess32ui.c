@@ -30,6 +30,7 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 static int SoftwarePicker_GetItemImage(int nItem);
 static void SoftwarePicker_LeavingItem(int nItem);
 static void SoftwarePicker_EnteringItem(int nItem);
+static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn);
 
 static const char *mess_column_names[] =
 {
@@ -405,29 +406,31 @@ static void InitMessPicker(void)
 {
 	static const struct PickerCallbacks s_softwareListCallbacks =
 	{
-		SetMessSortColumn,				/* pfnSetSortColumn */
-		GetMessSortColumn,				/* pfnGetSortColumn */
-		SetMessSortReverse,				/* pfnSetSortReverse */
-		GetMessSortReverse,				/* pfnGetSortReverse */
-		NULL,							/* pfnSetViewMode */
-		GetViewMode,					/* pfnGetViewMode */
-		SetMessColumnWidths,			/* pfnSetColumnWidths */
-		GetMessColumnWidths,			/* pfnGetColumnWidths */
-		SetMessColumnOrder,				/* pfnSetColumnOrder */
-		GetMessColumnOrder,				/* pfnGetColumnOrder */
-		SetMessColumnShown,				/* pfnSetColumnShown */
-		GetMessColumnShown,				/* pfnGetColumnShown */
-		NULL,							/* pfnGetOffsetChildren */
+		SetMessSortColumn,					/* pfnSetSortColumn */
+		GetMessSortColumn,					/* pfnGetSortColumn */
+		SetMessSortReverse,					/* pfnSetSortReverse */
+		GetMessSortReverse,					/* pfnGetSortReverse */
+		NULL,								/* pfnSetViewMode */
+		GetViewMode,						/* pfnGetViewMode */
+		SetMessColumnWidths,				/* pfnSetColumnWidths */
+		GetMessColumnWidths,				/* pfnGetColumnWidths */
+		SetMessColumnOrder,					/* pfnSetColumnOrder */
+		GetMessColumnOrder,					/* pfnGetColumnOrder */
+		SetMessColumnShown,					/* pfnSetColumnShown */
+		GetMessColumnShown,					/* pfnGetColumnShown */
+		NULL,								/* pfnGetOffsetChildren */
 
-		NULL,							/* pfnCompare */
-		MamePlayGame,					/* pfnDoubleClick */
-		SoftwarePicker_GetItemString,	/* pfnGetItemString */
-		SoftwarePicker_GetItemImage,	/* pfnGetItemImage */
-		SoftwarePicker_LeavingItem,		/* pfnLeavingItem */
-		SoftwarePicker_EnteringItem,	/* pfnEnteringItem */
-		NULL,							/* pfnBeginListViewDrag */
-		NULL,							/* pfnFindItemParent */
-		SoftwareList_Idle				/* pfnIdle */
+		NULL,								/* pfnCompare */
+		MamePlayGame,						/* pfnDoubleClick */
+		SoftwarePicker_GetItemString,		/* pfnGetItemString */
+		SoftwarePicker_GetItemImage,		/* pfnGetItemImage */
+		SoftwarePicker_LeavingItem,			/* pfnLeavingItem */
+		SoftwarePicker_EnteringItem,		/* pfnEnteringItem */
+		NULL,								/* pfnBeginListViewDrag */
+		NULL,								/* pfnFindItemParent */
+		SoftwarePicker_OnIdle,				/* pfnIdle */
+		SoftwarePicker_OnHeaderContextMenu,	/* pfnOnHeaderContextMenu */
+		NULL								/* pfnOnBodyContextMenu */
 	};
 
 	struct PickerOptions opts;
@@ -667,6 +670,119 @@ static void SoftwarePicker_EnteringItem(int nItem)
 }
 
 
+
+/* ------------------------------------------------------------------------
+ * Header context menu stuff
+ * ------------------------------------------------------------------------ */
+
+static HWND MyColumnDialogProc_hwndPicker;
+static int *MyColumnDialogProc_order;
+static int *MyColumnDialogProc_shown;
+
+static void MyGetRealColumnOrder(int *order)
+{
+	int i, nColumnCount;
+	nColumnCount = Picker_GetColumnCount(MyColumnDialogProc_hwndPicker);
+	for (i = 0; i < nColumnCount; i++)
+		order[i] = Picker_GetRealColumnFromViewColumn(MyColumnDialogProc_hwndPicker, i);
+}
+
+
+
+static void MyGetColumnInfo(int *order, int *shown)
+{
+	const struct PickerCallbacks *pCallbacks;
+	pCallbacks = Picker_GetCallbacks(MyColumnDialogProc_hwndPicker);
+	pCallbacks->pfnGetColumnOrder(order);
+	pCallbacks->pfnGetColumnShown(shown);
+}
+
+
+
+static void MySetColumnInfo(int *order, int *shown)
+{
+	const struct PickerCallbacks *pCallbacks;
+	pCallbacks = Picker_GetCallbacks(MyColumnDialogProc_hwndPicker);
+	pCallbacks->pfnSetColumnOrder(order);
+	pCallbacks->pfnSetColumnShown(shown);
+}
+
+
+
+static INT_PTR CALLBACK MyColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	int nColumnCount = Picker_GetColumnCount(MyColumnDialogProc_hwndPicker);
+	LPCTSTR *ppszColumnNames = Picker_GetColumnNames(MyColumnDialogProc_hwndPicker);
+	return InternalColumnDialogProc(hDlg, Msg, wParam, lParam, nColumnCount,
+		MyColumnDialogProc_shown, MyColumnDialogProc_order, ppszColumnNames,
+		MyGetRealColumnOrder, MyGetColumnInfo, MySetColumnInfo);
+}
+
+
+
+static BOOL RunColumnDialog(HWND hwndPicker)
+{
+	BOOL bResult;
+	int nColumnCount;
+
+	MyColumnDialogProc_hwndPicker = hwndPicker;
+	nColumnCount = Picker_GetColumnCount(MyColumnDialogProc_hwndPicker);
+
+	MyColumnDialogProc_order = alloca(nColumnCount * sizeof(int));
+	MyColumnDialogProc_shown = alloca(nColumnCount * sizeof(int));
+	bResult = DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_COLUMNS), hMain, MyColumnDialogProc);
+	return bResult;
+}
+
+
+
+static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn)
+{
+	HMENU hMenu;
+	HMENU hMenuLoad;
+	HWND hwndPicker;
+	int nMenuItem;
+
+	hMenuLoad = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
+	hMenu = GetSubMenu(hMenuLoad, 0);
+
+	nMenuItem = (int) TrackPopupMenu(hMenu,
+		TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+		pt.x,
+		pt.y,
+		0,
+		hMain,
+		NULL);
+
+	DestroyMenu(hMenuLoad);
+
+	hwndPicker = GetDlgItem(hMain, IDC_LIST2);
+
+	switch(nMenuItem) {
+	case ID_SORT_ASCENDING:
+		SetMessSortReverse(FALSE);
+		SetMessSortColumn(Picker_GetRealColumnFromViewColumn(hwndPicker, nColumn));
+		Picker_Sort(hwndPicker);
+		break;
+
+	case ID_SORT_DESCENDING:
+		SetMessSortReverse(TRUE);
+		SetMessSortColumn(Picker_GetRealColumnFromViewColumn(hwndPicker, nColumn));
+		Picker_Sort(hwndPicker);
+		break;
+
+	case ID_CUSTOMIZE_FIELDS:
+		if (RunColumnDialog(hwndPicker))
+			Picker_ResetColumnDisplay(hwndPicker);
+		break;
+	}
+}
+
+
+
+/* ------------------------------------------------------------------------
+ * MessCommand
+ * ------------------------------------------------------------------------ */
 
 static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 {

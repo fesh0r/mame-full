@@ -25,7 +25,7 @@ BOOL SoftwareList_ItemChanged(HWND hwndSoftware, BOOL bWasSelected, BOOL bNowSel
 BOOL SoftwareList_IsItemSelected(HWND hwndSoftware, int nItem);
 
 #if HAS_IDLING
-BOOL SoftwareList_Idle(HWND hwndSoftware);
+BOOL SoftwarePicker_OnIdle(HWND hwndSoftware);
 #endif
 
 /* External calls */

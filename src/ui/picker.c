@@ -342,8 +342,60 @@ static BOOL ListViewNotify(HWND hWnd, LPNMHDR lpNmHdr)
 
 
 
+static BOOL ListViewContextMenu(HWND hwndPicker, LPARAM lParam)
+{
+	struct PickerInfo *pPickerInfo;
+	POINT pt, headerPt;
+	int i, nViewID, nColumn = -1;
+	HWND hwndHeader;
+	RECT rcCol;
+
+	pPickerInfo = GetPickerInfo(hwndPicker);
+
+	// Extract the point out of the lparam
+	pt.x = GET_X_LPARAM(lParam);
+	pt.y = GET_Y_LPARAM(lParam);
+	if (pt.x < 0 && pt.y < 0)
+		GetCursorPos(&pt);
+
+	// Figure out which header column was clicked, if at all
+	nViewID = Picker_GetViewID(hwndPicker);
+	if ((nViewID == VIEW_REPORT) || (nViewID == VIEW_GROUPED))
+	{
+		hwndHeader = ListView_GetHeader(hwndPicker);
+		headerPt = pt;
+		ScreenToClient(hwndHeader, &headerPt);
+
+		for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++)
+		{
+			if (PtInRect(&rcCol, headerPt))
+			{
+				nColumn = i;
+				break;
+			}
+		}
+	}
+
+	if (nColumn >= 0)
+	{
+		// A column header was clicked
+		if (pPickerInfo->pCallbacks->pfnOnHeaderContextMenu)
+			pPickerInfo->pCallbacks->pfnOnHeaderContextMenu(pt, nColumn);
+	}
+	else
+	{
+		// The body was clicked
+		if (pPickerInfo->pCallbacks->pfnOnBodyContextMenu)
+			pPickerInfo->pCallbacks->pfnOnBodyContextMenu(pt);
+	}
+	return TRUE;
+}
+
+
+
 static void Picker_Free(struct PickerInfo *pPickerInfo)
 {
+	// Free up all resources associated with this picker structure
 	if (pPickerInfo->pnColumnsShown)
 		free(pPickerInfo->pnColumnsShown);
 	if (pPickerInfo->pnColumnsOrder)
@@ -397,6 +449,10 @@ static LRESULT CALLBACK ListViewWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 			hwndHeaderCtrl = ListView_GetHeader(hWnd);
 			if (hwndHeaderCtrl)
 				hHeaderCtrlFont = GetWindowFont(hwndHeaderCtrl);
+			break;
+
+		case WM_CONTEXTMENU:
+			bHandled = ListViewContextMenu(hWnd, lParam);
 			break;
 
 		case WM_DESTROY:
@@ -1528,5 +1584,30 @@ void Picker_HandleDrawItem(HWND hWnd, LPDRAWITEMSTRUCT lpDrawItemStruct)
 }
 
 
+
+const struct PickerCallbacks *Picker_GetCallbacks(HWND hwndPicker)
+{
+	struct PickerInfo *pPickerInfo;
+	pPickerInfo = GetPickerInfo(hwndPicker);
+	return pPickerInfo->pCallbacks;
+}
+
+
+
+int Picker_GetColumnCount(HWND hwndPicker)
+{
+	struct PickerInfo *pPickerInfo;
+	pPickerInfo = GetPickerInfo(hwndPicker);
+	return pPickerInfo->nColumnCount;
+}
+
+
+
+LPCTSTR *Picker_GetColumnNames(HWND hwndPicker)
+{
+	struct PickerInfo *pPickerInfo;
+	pPickerInfo = GetPickerInfo(hwndPicker);
+	return pPickerInfo->ppszColumnNames;
+}
 
 

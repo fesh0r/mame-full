@@ -40,6 +40,8 @@ struct PickerCallbacks
 	void (*pfnBeginListViewDrag)(NM_LISTVIEW *pnlv);
 	int (*pfnFindItemParent)(int nItem);
 	BOOL (*pfnOnIdle)(HWND hwndPicker);
+	void (*pfnOnHeaderContextMenu)(POINT pt, int nColumn);
+	void (*pfnOnBodyContextMenu)(POINT pt);
 };
 
 struct PickerOptions
@@ -82,5 +84,10 @@ BOOL Picker_IsIdling(HWND hwndPicker);
 // picker controls
 BOOL Picker_HandleNotify(LPNMHDR lpNmHdr);
 void Picker_HandleDrawItem(HWND hwndPicker, LPDRAWITEMSTRUCT lpDrawItemStruct);
+
+// Accessors
+const struct PickerCallbacks *Picker_GetCallbacks(HWND hwndPicker);
+int Picker_GetColumnCount(HWND hwndPicker);
+LPCTSTR *Picker_GetColumnNames(HWND hwndPicker);
 
 #endif // PICKER_H

@@ -1000,7 +1000,7 @@ BOOL SoftwareList_ItemChanged(HWND hwndSoftware, BOOL bWasSelected, BOOL bNowSel
 
 
 #if HAS_IDLING
-BOOL SoftwareList_Idle(HWND hwndSoftware)
+BOOL SoftwarePicker_OnIdle(HWND hwndSoftware)
 {
     static mess_image_type imagetypes[64];
     ImageData *pImageData;

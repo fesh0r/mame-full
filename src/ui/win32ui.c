@@ -234,10 +234,10 @@ static void             AddDriverIcon(int nItem,int default_icon_index);
 static void             UpdateMenu(HMENU hMenu);
 static void InitTreeContextMenu(HMENU hTreeMenu);
 static void ToggleShowFolder(int folder);
-static BOOL             HandleContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
-static BOOL             HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HandleTreeContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HandleScreenShotContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
+static void				GamePicker_OnHeaderContextMenu(POINT pt, int nColumn);
+static void				GamePicker_OnBodyContextMenu(POINT pt);
 
 static void             InitListView(void);
 /* Re/initialize the ListView header columns */
@@ -2165,8 +2165,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 	case WM_CONTEXTMENU:
 		if (HandleTreeContextMenu(hWnd, wParam, lParam)
-		||	HandleScreenShotContextMenu(hWnd, wParam, lParam)
-		||	HandleContextMenu(hWnd, wParam, lParam))
+		||	HandleScreenShotContextMenu(hWnd, wParam, lParam))
 			return FALSE;
 		break;
 
@@ -3301,56 +3300,23 @@ static BOOL TabNotify(NMHDR *nm)
 	return FALSE;
 }
 
-static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
+
+
+static void GamePicker_OnHeaderContextMenu(POINT pt, int nColumn)
 {
+	// Right button was clicked on header
 	HMENU hMenuLoad;
 	HMENU hMenu;
-	/* Right button was clicked on header */
-	POINT	pt,client_pt;
-	RECT	rcCol;
-	int 	cmkindex;
-	int 	i;
-	BOOL	found = FALSE;
-	HWND	hwndHeader;
 
-	if ((HWND)wParam != GetDlgItem(hWnd, IDC_LIST))
-		return FALSE;
+	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
+	hMenu = GetSubMenu(hMenuLoad, 0);
+	lastColumnClick = nColumn;
+	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hMain,NULL);
 
-	hwndHeader = ListView_GetHeader(hwndList);
-
-	pt.x = GET_X_LPARAM(lParam);
-	pt.y = GET_Y_LPARAM(lParam);
-	if (pt.x < 0 && pt.y < 0)
-		GetCursorPos(&pt);
-
-	client_pt = pt;
-	ScreenToClient(hwndHeader, &client_pt);
-
-	/* Determine the column index */
-	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++)
-	{
-		if (PtInRect(&rcCol, client_pt))
-		{
-			cmkindex = i;
-			found = TRUE;
-			break;
-		}
-	}
-
-	/* Do the context menu */
-	if (found)
-	{
-		hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
-		hMenu = GetSubMenu(hMenuLoad, 0);
-		lastColumnClick = i;
-		TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hWnd,NULL);
-
-		DestroyMenu(hMenuLoad);
-
-		return TRUE;
-	}
-	return FALSE;
+	DestroyMenu(hMenuLoad);
 }
+
+
 
 char* ConvertAmpersandString(const char *s)
 {
@@ -3675,7 +3641,7 @@ static void PollGUIJoystick()
 		SendMessage(hMain, WM_COMMAND, ID_UI_HISTORY_DOWN, 0);
 	}
 
-  // User pressed EXECUTE COMMANDLINE
+	// User pressed EXECUTE COMMANDLINE
 	if (g_pJoyGUI->is_joy_pressed(JOYCODE(GetUIJoyExec(0), GetUIJoyExec(1), GetUIJoyExec(2),GetUIJoyExec(3))))
 	{
 		if (++exec_counter >= GetExecWait()) // Button has been pressed > exec timeout
@@ -4649,29 +4615,31 @@ static void InitListView()
 {
 	static const struct PickerCallbacks s_gameListCallbacks =
 	{
-		SetSortColumn,				/* pfnSetSortColumn */
-		GetSortColumn,				/* pfnGetSortColumn */
-		SetSortReverse,				/* pfnSetSortReverse */
-		GetSortReverse,				/* pfnGetSortReverse */
-		SetViewMode,				/* pfnSetViewMode */
-		GetViewMode,				/* pfnGetViewMode */
-		SetColumnWidths,			/* pfnSetColumnWidths */
-		GetColumnWidths,			/* pfnGetColumnWidths */
-		SetColumnOrder,				/* pfnSetColumnOrder */
-		GetColumnOrder,				/* pfnGetColumnOrder */
-		SetColumnShown,				/* pfnSetColumnShown */
-		GetColumnShown,				/* pfnGetColumnShown */
-		GetOffsetClones,			/* pfnGetOffsetChildren */
+		SetSortColumn,					/* pfnSetSortColumn */
+		GetSortColumn,					/* pfnGetSortColumn */
+		SetSortReverse,					/* pfnSetSortReverse */
+		GetSortReverse,					/* pfnGetSortReverse */
+		SetViewMode,					/* pfnSetViewMode */
+		GetViewMode,					/* pfnGetViewMode */
+		SetColumnWidths,				/* pfnSetColumnWidths */
+		GetColumnWidths,				/* pfnGetColumnWidths */
+		SetColumnOrder,					/* pfnSetColumnOrder */
+		GetColumnOrder,					/* pfnGetColumnOrder */
+		SetColumnShown,					/* pfnSetColumnShown */
+		GetColumnShown,					/* pfnGetColumnShown */
+		GetOffsetClones,				/* pfnGetOffsetChildren */
 
-		GamePicker_Compare,			/* pfnCompare */
-		MamePlayGame,				/* pfnDoubleClick */
-		GamePicker_GetItemString,	/* pfnGetItemString */
-		GamePicker_GetItemImage,	/* pfnGetItemImage */
-		GamePicker_LeavingItem,		/* pfnLeavingItem */
-		GamePicker_EnteringItem,	/* pfnEnteringItem */
-		BeginListViewDrag,			/* pfnBeginListViewDrag */
-		GamePicker_FindItemParent,	/* pfnFindItemParent */
-		OnIdle						/* pfnIdle */
+		GamePicker_Compare,				/* pfnCompare */
+		MamePlayGame,					/* pfnDoubleClick */
+		GamePicker_GetItemString,		/* pfnGetItemString */
+		GamePicker_GetItemImage,		/* pfnGetItemImage */
+		GamePicker_LeavingItem,			/* pfnLeavingItem */
+		GamePicker_EnteringItem,		/* pfnEnteringItem */
+		BeginListViewDrag,				/* pfnBeginListViewDrag */
+		GamePicker_FindItemParent,		/* pfnFindItemParent */
+		OnIdle,							/* pfnIdle */
+		GamePicker_OnHeaderContextMenu,	/* pfnOnHeaderContextMenu */
+		GamePicker_OnBodyContextMenu	/* pfnOnBodyContextMenu */
 	};
 
 	struct PickerOptions opts;
@@ -5700,38 +5668,24 @@ static BOOL HandleTreeContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	return TRUE;
 }
 
-static BOOL HandleContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
+
+
+static void GamePicker_OnBodyContextMenu(POINT pt)
 {
 	HMENU hMenuLoad;
 	HMENU hMenu;
-	POINT pt;
-
-	if ((HWND)wParam != GetDlgItem(hWnd, IDC_LIST))
-		return FALSE;
-
-	pt.x = GET_X_LPARAM(lParam);
-	pt.y = GET_Y_LPARAM(lParam);
-	if (pt.x < 0 && pt.y < 0)
-		GetCursorPos(&pt);
-
-	if ((Picker_GetViewID(hwndList) == VIEW_REPORT
-		|| Picker_GetViewID(hwndList) == VIEW_GROUPED)
-		&&	HeaderOnContextMenu(hWnd, wParam, lParam) == TRUE)
-	{
-		return TRUE;
-	}
 
 	hMenuLoad = LoadMenu(hInst, MAKEINTRESOURCE(IDR_CONTEXT_MENU));
 	hMenu = GetSubMenu(hMenuLoad, 0);
 
 	UpdateMenu(hMenu);
 
-	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hWnd,NULL);
+	TrackPopupMenu(hMenu,TPM_LEFTALIGN | TPM_RIGHTBUTTON,pt.x,pt.y,0,hMain,NULL);
 
 	DestroyMenu(hMenuLoad);
-
-	return TRUE;
 }
+
+
 
 static BOOL HandleScreenShotContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
