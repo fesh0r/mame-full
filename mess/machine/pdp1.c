@@ -47,7 +47,7 @@ int pdp1_load_rom (int id)
 	}
 
 	/* Allocate memory and set up memory regions */
-	if( new_memory_region(REGION_CPU1, 0x10000 * sizeof(int)) )
+	if( new_memory_region(REGION_CPU1, 0x10000 * sizeof(int), 0) )
 	{
 		logerror("PDP1: Memory allocation failed!\n");
 		return 1;
@@ -97,7 +97,7 @@ void pdp1_init_machine(void)
 {
 	/* init pdp1 cpu */
 	extern_iot=pdp1_iot;
-	cpu_setOPbaseoverride(0,setOPbasefunc);
+	memory_set_opbase_handler(0,setOPbasefunc);
 }
 
 READ18_HANDLER(pdp1_read_mem)
