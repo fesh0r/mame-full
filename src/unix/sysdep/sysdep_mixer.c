@@ -69,6 +69,9 @@ static const struct plugin_struct *sysdep_mixer_plugins[] = {
 #ifdef DSYSDEP_MIXER_AIX
    &sysdep_mixer_aix,
 #endif
+#ifdef SYSDEP_MIXER_ALSA
+   &sysdep_mixer_alsa,
+#endif
    NULL
 };
 #ifdef SYSDEP_MIXER_DEBUG

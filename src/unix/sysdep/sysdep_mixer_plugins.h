@@ -39,6 +39,9 @@ extern struct plugin_struct sysdep_mixer_irix;
 #ifdef SYSDEP_MIXER_AIX
 extern struct plugin_struct sysdep_mixer_aix;
 #endif
+#ifdef SYSDEP_MIXER_ALSA
+extern struct plugin_struct sysdep_mixer_alsa;
+#endif
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_MIXER_PLUGINS_H */

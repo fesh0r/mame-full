@@ -204,7 +204,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 							strcat(name_ref,strchr(drivers[i]->description,'('));
 					}
 
-					//fprintf(stdout_file, "| %-33.33s",name_ref);
+					/*fprintf(stdout_file, "| %-33.33s",name_ref); */
 					fprintf(stdout_file, "| %-40.40s",name_ref);
 
 					if (drivers[i]->flags & GAME_NOT_WORKING)

@@ -2,7 +2,97 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.87, 2 October 2004
+Release 0.87.1
+	- The xml2info utility can now link against the system's libexpat, and 
+	  no longer requires BUILD_EXPAT to be set.  Fixes Bugzilla bug 592.
+	- Another slew of changes from Hans de Goede:
+	  * Added "-alwaysusemouse(-aum)" to the X11 driver.  If this is not 
+	    set, mouse events won't be reported to the core when fullscreen 
+	    mode is disabled and the mouse is not grabbed.
+	  * The code for handling a grabbed mouse now uses the window size 
+	    instead of the image size, which fixes problems when the Xv window 
+	    is shrunk to less than half its original size.
+	  * The in-game cursor no longer jumps when the mouse is grabbed. 
+	  * BIG cleanup of the display code: Internal changes should 
+	    theoretically allow the display drivers to be placed in shared 
+	    object (.so) files and loaded dynamically.
+	  * The game_bitmap_update bounds are now honored, resulting in a nice 
+	    speedup for vector games.
+	  * The rounding of bounds is now only done for blitting to the 
+	    offscreen image, and not for displaying on the screen.  This gets 
+	    rid of the black borders in some games, such as mspacman with 
+	    artwork enabled.
+	  * The xgl and xfx drivers are now built into the X11 target, 
+	    alongside Xv and DGA.   OpenGL can be selected at runtime with 
+	    "-x11-mode (-x11) 2", and GLIDE can be selected with "-x11-mode 
+	    (-x11) 2".
+	  * Reworked the hotkeys for switching between X11 video modes and 
+	    fullscreen and windowed modes: left-alt +
+	    insert:    normal or DGA rendering
+	    home:      Xv rendering
+	    page up:   OpenGL rendering
+	    delete:    GLIDE rendering
+	    page down: toggle between windowed and fullscreen
+	  * Changed the hotkeys for grabbing keyboard and mouse from left-alt + 
+	    page up/page down to left-control + page up/page down.
+	  * The DGA code can now display any color depth on any depth just like 
+	    normal windowed mode.
+	  * The DGA 2.0 code now tries to obtain a mode with the best and 
+	    fastest color depth; for example, a depth 15 mode for vector games, 
+	    so that the entire bitmap can be copied straight into the 
+	    framebuffer with no conversion.
+	  * Fixed a small memory leak in the DGA 1.0 code.
+	  * Made a small tweak to the Xv window size handling to avoid a small 
+	    black border in Xv windowed mode.
+	  * Now "-geometry (-geo)" sets not only the x- and y-coordinates, but 
+	    also the window size when the window is resizable (xgl and Xv).  
+	    The requested size gets clipped to the largest constrained size 
+	    with the correct aspect ratio.
+	  * Removed the "-fxres" option.  GLIDE now honors the window size 
+	    passed with "-geometry (-geo)".
+	  * Really fixed artwork with vector games in the GLIDE targets.
+	  * Added a "-hwvec <int>" option:
+	    0: Never use GLIDE/OpenGL vectors.
+	    1: Auto (don't use when there is an artwork overlay).
+	    2: Always use GLIDE/OpenGL vectors.
+	  * Fixed rotation with artwork-enabled vector games in GLIDE targets.
+	  * Force a full screen update so that artwork bezels get shown when 
+	    DGA mode is enabled via hotkey.
+	  * Prefer 16bpp deep modes over 15bpp deep modes when we must 
+	    downsample from 32bpp; try to avoid 24bpp packed modes.
+	  * Added a "-forcemode (-fm) WxHxD" option; this is intended mostly 
+	    for testing purposes.
+	  * The DGA 2.0 driver no longer uses fillsolidrectangle, which isn't 
+	    supported on some cards, notably Radeons in 32bpp mode.  This is 
+	    not in a speed-critical path, so memset is always used.
+	  * The DGA 2.0 driver can now pageflip on vsync.  This fixes tearing 
+	    in side-scrolling games and flashing in all games.  Added an option 
+	    "-vsync-pagelimit (-vspl) <int>" with which the user can specify 
+	    the maximum number of frames to queue in offscreen video memory for 
+	    displaying on vsync; the default is 2, and 0 disables this feature. 
+	    Note: When a game's FPS is higher than the refresh rate of the 
+	    chosen video mode, the game will run slower or skip frames.
+	  * Rewrote the OpenGL vector code, which now works with artwork 
+	    (without overlays), supports clipping, fixes a number of bugs with 
+	    cabinet mode, and generates shorter OpenGL command lists.
+	  * Made the resizing of the OpenGL window not bound to the aspect when 
+	    in cabinet mode.
+	  * Don't resize the window for display methods that can do hardware 
+	    scaling when the visual area of the game changes.  This fixes 
+	    flashing with, for example, raystorm when Xv or OpenGL is used.
+	  * Removed the definition of GLX_LIBNAME from the makefile; now it is 
+	    always libglut.so.
+	  * Removed TDFX_DGA_WORKAROUND from the makefile; this is now always 
+	    enabled, since it shouldn't hurt cards which don't have the bug.
+	  * Added a "-fxresolution (-fxres)" option for GLIDE: Now "-geometry 
+	    (-geo)" can be used for hardware-scaled windows (Xv, OpenGL) 
+	    without causing GLIDE to complain about an invalid resolution.
+	- Added an ALSA mixer plugin, which can be enabled with 
+	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
+	  option accepts the name of a "simple mixer control", which you can 
+	  find by executing "amixer".  (Shyouzou Sugitani)
+
+Release 0.87, 3 October 2004
 	- Everything from MAME 0.87 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.87 (http://x.mame.net/changes-mess.html).  Christopher Stone's 
 	  makefile support for MAGE has been added, but MAGE is not yet 
