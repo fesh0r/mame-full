@@ -27,6 +27,9 @@ System Driver Changes:
 - [PC] Fixed a problem in the PIC8254 interrupt controller, and enhanced
   natural keyboard support.  [Nate Woods]
 
+- [PC] Fixed hard drive support to recognize CHD geometry information.  [Nate
+  Woods]
+
 
 
 User Interface Changes:

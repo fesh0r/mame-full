@@ -87,7 +87,6 @@ static int head[MAX_HARD] = {0,};				/* current head */
 static int sector[MAX_HARD] = {0,}; 			/* current sector */
 static int sector_cnt[MAX_HARD] = {0,};         /* sector count */
 static int control[MAX_HARD] = {0,};            /* control */
-static int lbasector[MAX_HARD] = {0,};          /* offset into image file */
 
 static int csb[MAX_BOARD];				/* command status byte */
 static int status[MAX_BOARD];			/* drive status */
@@ -183,6 +182,25 @@ static int no_dma(void)
 
 
 
+static int get_lbasector(void)
+{
+	struct hard_disk_info *info;
+	struct hard_disk_file *file;
+	int lbasector;
+
+	file = pc_hdc_file(idx);
+	info = hard_disk_get_info(file);
+	
+	lbasector = cylinder[idx];
+	lbasector *= info->heads;
+	lbasector += head[idx];
+	lbasector *= info->sectors;
+	lbasector += sector[idx];
+	return lbasector;
+}
+
+
+
 /********************************************************************
  *
  * Read a number of sectors to the address set up for DMA chan #3
@@ -212,10 +230,9 @@ int pc_hdc_dack_r(void)
 
 	if (hdcdma_read == 0)
 	{
-		hard_disk_read(file, lbasector[idx], 1, hdcdma_data);
+		hard_disk_read(file, get_lbasector(), 1, hdcdma_data);
 		hdcdma_read = 512;
 		hdcdma_size -= 512;
-		lbasector[idx]++;
 		hdcdma_src = hdcdma_data;
 		sector[idx]++;
 	}
@@ -255,10 +272,9 @@ void pc_hdc_dack_w(int data)
 
 	if( --hdcdma_write == 0 )
 	{
-		hard_disk_write(file, lbasector[idx], 1, hdcdma_data);
+		hard_disk_write(file, get_lbasector(), 1, hdcdma_data);
 		hdcdma_write = 512;
 		hdcdma_size -= 512;
-		lbasector[idx]++;
 
         /* end of cylinder ? */
 		if( ++sector[idx] >= info->sectors )
@@ -357,7 +373,6 @@ static void get_chsn(int n)
 	sector_cnt[idx] = buffer[4];
 	control[idx] = buffer[5];   /* 7: no retry, 6: no ecc retry, 210: step rate */
 
-	lbasector[idx] = ((cylinder[idx] * heads[idx] + head[idx]) * spt[idx] + sector[idx]);
 	error[n] = 0x80;	/* a potential error has C/H/S/N info */
 }
 
