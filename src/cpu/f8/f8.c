@@ -56,6 +56,9 @@ int f8_icount;
 
 static F8 f8;
 
+/* timer shifter polynome values (will be used for timer interrupts) */
+static UINT8 timer_shifter[256];
+
 /* clear all flags */
 #define CLR_OZCS                \
 	f8.w &= ~(O|Z|C|S)
