@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 #include "includes/oric.h"
 
-int oric_powerup_screen;
-
+static int oric_powerup_screen;
+static int oric_powerup_countdown;
 typedef struct{
         int tcolour;
         int pcolour;
@@ -23,18 +23,49 @@ typedef struct{
         int hires_this_line;
         int flashshow;
         int attr;
+		void *timer;
 } ORIC_VIDEO_STRUCT;
 
-ORIC_VIDEO_STRUCT _ORIC;
+static ORIC_VIDEO_STRUCT _ORIC;
 
-ORIC_VIDEO_STRUCT _ORIC_tmp;
+static ORIC_VIDEO_STRUCT _ORIC_tmp;
 
-ORIC_VIDEO_STRUCT _ORIC_HIRES[10];
+static ORIC_VIDEO_STRUCT _ORIC_HIRES[10];
 
-unsigned char inverse_attrs[] = { 7,6,5,4,3,2,1,0 };
+static unsigned char inverse_attrs[] = { 7,6,5,4,3,2,1,0 };
+
+void	*oric_vh_timer;
+static int oric_flashcount;
+
+static void oric_vh_timer_callback(int reg)
+{
+	// Flash Attrs
+	oric_flashcount++;
+	if (oric_flashcount == 30)
+		oric_set_flash_show (0);
+	if (oric_flashcount >= 60)
+	{
+		oric_set_flash_show (1);
+		oric_flashcount = 0;
+	}
+
+	// here, we shall draw a funky screen for power up
+	if (oric_powerup_countdown != 0)
+	{
+		oric_powerup_countdown--;
+		if (oric_powerup_countdown == 0)
+			oric_set_powerscreen_mode (0);
+	}
+
+}
 
 int oric_vh_start(void)
 {
+		oric_set_powerscreen_mode (1);
+		oric_set_flash_show (1);
+		oric_flashcount = 0;
+		oric_powerup_countdown = 50 * 5;
+		oric_vh_timer = timer_pulse(TIME_IN_HZ(50), 0, oric_vh_timer_callback);
         oric_init_char_attrs();
         _ORIC.hires = 0;
         return 0;
@@ -42,6 +73,12 @@ int oric_vh_start(void)
 
 void oric_vh_stop(void)
 {
+	if (oric_vh_timer!=NULL)
+	{
+		timer_remove(oric_vh_timer);
+		oric_vh_timer = NULL;
+	}
+
 	return;
 }
 
