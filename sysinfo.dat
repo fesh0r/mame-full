@@ -1717,10 +1717,8 @@ Mattel Intellivision (intv)
 Usage/Known Issues:
 
 This driver is almost complete.  Still TBD are:
-- collision detection
-- 16-way controller mapping
-- default mapping of the right player controller.  
-- Only .ROM format cartridges (Intellicart) are supported in this release.
+collision detection - 16-way controller mapping - default mapping of the right player 
+controller - Only .ROM format cartridges (Intellicart) are supported in this release.
 
   
 
@@ -1741,7 +1739,8 @@ and one for new keyboard carts (BASIC).   If you want to use the BASIC cart at s
 must specify it as the second cart, even if the first cart slot is unused. 
 (ex. -cart dummy -cart basic.bin)  Some tapes require the BASIC cartridge.
 Also, there is currently no mapping to the normal intellivision hand controllers yet, when 
-using the keyboard component.
+using the keyboard component.  This driver uses the full keyboard, to toggle to the standard
+MESS keys, hit scroll-lock.
 
   
 
