@@ -520,9 +520,51 @@ static int cocodmk_read_sector(void *bdf, const void *header, UINT8 track, UINT8
 
 static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
-	/* To be implemented */
+	int					error, actual_sector_length, size;
+	UINT16				calculated_crc;
+	struct dmk_header	*hdr;
+	UINT8				*sectorData;
+	
+	hdr = (struct dmk_header *) header;
+	
+	if( track > hdr->trackCount)
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
 
-	return 0;
+	if( head > ((hdr->diskOptions && 0x10) ? 0 : 1) )
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
+		
+	error = cocodmk_seek_to_start_of_sector( bdf, hdr, track, head, sector, &actual_sector_length );
+	
+	if( error )
+		return error;
+
+	if( (offset + length) > actual_sector_length )
+		return BLOCKDEVICE_ERROR_UNDEFINEERROR;
+		
+	sectorData = (UINT8 *)malloc( actual_sector_length );
+	
+	/* Read sector data into buffer */
+	size = bdf_read( bdf, sectorData, actual_sector_length);
+	if( size != actual_sector_length )
+	{
+		free( sectorData );
+		return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+	}
+
+	memcpy( sectorData + offset, buffer, length );
+	
+	calculated_crc = 0xE295;	/* Seed crc with proper value */
+	cocodmk_calculate_crc( &calculated_crc, sectorData, actual_sector_length );
+
+	bdf_seek( bdf, -actual_sector_length, SEEK_SET );
+	bdf_write( bdf, sectorData, actual_sector_length );
+
+	calculated_crc = BIG_ENDIANIZE_INT16( calculated_crc );
+	bdf_write( bdf, &calculated_crc, 2 );
+	
+	free( sectorData );
+	
+	return error;
 }
 
 BLOCKDEVICE_FORMATDRIVER_START( coco_dmk )
