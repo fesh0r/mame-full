@@ -117,9 +117,9 @@ extern void pc_shutdown_machine(void);
 extern void pc1512_close_machine(void);
 extern void pc1640_close_machine(void);
 
-extern WRITE_HANDLER( pc_ppi_portb_w );
-extern READ_HANDLER( pc_ppi_portb_r );
-extern READ_HANDLER( pc_ppi_porta_r );
+extern void pc_ppi_portb_w(int chip, int data );
+extern int pc_ppi_portb_r(int chip );
+extern int pc_ppi_porta_r(int chip );
 
 void pc_keyboard(void);
 
