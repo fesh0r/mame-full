@@ -117,53 +117,38 @@ DIPS_HELPER( 0x001, "NEW GAME", KEYCODE_F3, CODE_NONE) // seams to be direct wir
 #endif
 INPUT_PORTS_END
 
-static int mk2_frame_int(void)
-{
-	return ignore_interrupt();
-}
-
-static void mk2_machine_init(void)
+static MACHINE_INIT( mk2 )
 {
 	rriot_reset(0);
 }
 
 static struct DACinterface mk2_dac={ 1, {80}}; // silence is golden
 
-static struct MachineDriver machine_driver_mk2 =
-{
+static MACHINE_DRIVER_START( mk2 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502, // 6504
-			1000000,
-			mk2_readmem,mk2_writemem,0,0,
-			mk2_frame_int, 1,
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
-	1,				/* single CPU */
-	mk2_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(M6502, 1000000)        /* 6504 */
+	MDRV_CPU_MEMORY(mk2_readmem,mk2_writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	252, 559, { 0, 252 - 1, 0, 559 - 1},
-	0, 			   /* graphics decode info */
-	sizeof (mk2_palette) / sizeof (mk2_palette[0]) + 32768,
-	sizeof (mk2_colortable) / sizeof(mk2_colortable[0][0]),
-	mk2_init_colors,		/* convert color prom */
+	MDRV_MACHINE_INIT( mk2 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    mk2_vh_start,
-	mk2_vh_stop,
-	mk2_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(252, 559)
+	MDRV_VISIBLE_AREA(0, 252-1, 0, 559-1)
+	MDRV_PALETTE_LENGTH(242 + 32768)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT(mk2)
+
+	MDRV_VIDEO_START( mk2 )
+	MDRV_VIDEO_UPDATE( mk2 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_DAC, &mk2_dac }
-    }
-};
+	MDRV_SOUND_ADD(DAC, mk2_dac)
+MACHINE_DRIVER_END
+
 
 ROM_START(mk2)
 	ROM_REGION(0x10000,REGION_CPU1,0)

@@ -61,8 +61,6 @@ static UINT8 ti85_snap_data_type = TI85_NONE;
 
 static ti85_serial_data ti85_serial_stream;
 
-static void * ti85_timer;
-
 static void ti85_setup_sav(UINT8*, unsigned long);
 static void ti86_setup_sav(UINT8*, unsigned long);
 static OPBASE_HANDLER(ti85_opbaseoverride);
@@ -174,7 +172,7 @@ void update_ti86_memory (void)
 	}
 }
 
-void ti81_init_machine(void)
+MACHINE_INIT( ti81 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -197,7 +195,7 @@ void ti81_init_machine(void)
 
 	ti_calculator_model = TI_81;
 
-	ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
+	timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
 	memory_set_bankhandler_w(3, 0, MWA_ROM);
@@ -207,16 +205,7 @@ void ti81_init_machine(void)
 	cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 }
 
-void ti81_stop_machine(void)
-{
-	if (ti85_timer)
-	{
-		timer_remove(ti85_timer);
-		ti85_timer = NULL;
-	}
-}
-
-void ti85_init_machine(void)
+MACHINE_INIT( ti85 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -238,7 +227,7 @@ void ti85_init_machine(void)
 
 	ti_calculator_model = TI_85;
 
-	ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
+	timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
 	ti85_reset_serial();
 
@@ -258,18 +247,12 @@ void ti85_init_machine(void)
 	}
 }
 
-void ti85_stop_machine(void)
+MACHINE_STOP( ti85 )
 {
 	ti85_free_serial_data_memory();
-
-	if (ti85_timer)
-	{
-		timer_remove(ti85_timer);
-		ti85_timer = NULL;
-	}
 }
 
-void ti86_init_machine(void)
+MACHINE_INIT( ti86 )
 {
 	ti85_timer_interrupt_mask = 0;
 	ti85_timer_interrupt_status = 0;
@@ -311,7 +294,7 @@ void ti86_init_machine(void)
 
 		ti_calculator_model = TI_86;
 
-		ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
+		timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
 
 		if (ti85_snap_data)
 		{
@@ -321,14 +304,9 @@ void ti86_init_machine(void)
 	}
 }
 
-void ti86_stop_machine(void)
+MACHINE_STOP( ti86 )
 {
 	ti85_free_serial_data_memory();
-	if (ti85_timer!=NULL)
-	{
-		timer_remove(ti85_timer);
-		ti85_timer = NULL;
-	}
 }
 
 
@@ -481,8 +459,7 @@ WRITE_HANDLER ( ti86_port_0006_w )
 
 
 /* NVRAM functions */
-
-void ti81_nvram_handler (void *file,int read_or_write)
+NVRAM_HANDLER( ti81 )
 {
 	if (read_or_write)
 		osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
@@ -491,14 +468,14 @@ void ti81_nvram_handler (void *file,int read_or_write)
 		if (file)
 		{
 			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
-			cpu_set_reg(Z80_PC,0x0239);
+			activecpu_set_reg(Z80_PC,0x0239);
 		}
 		else
 			memset(memory_region(REGION_CPU1)+0x8000, 0, sizeof(unsigned char)*0x8000);
 	}
 }
 
-void ti85_nvram_handler (void *file,int read_or_write)
+NVRAM_HANDLER( ti85 )
 {
 	if (read_or_write)
 		osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
@@ -507,14 +484,14 @@ void ti85_nvram_handler (void *file,int read_or_write)
 		if (file)
 		{
 			osd_fread(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
-			cpu_set_reg(Z80_PC,0x0b5f);
+			activecpu_set_reg(Z80_PC,0x0b5f);
 		}
 		else
 			memset(memory_region(REGION_CPU1)+0x8000, 0, sizeof(unsigned char)*0x8000);
 	}
 }
 
-void ti86_nvram_handler (void *file,int read_or_write)
+NVRAM_HANDLER( ti86 )
 {
 	if (read_or_write)
 	{
@@ -533,7 +510,7 @@ void ti86_nvram_handler (void *file,int read_or_write)
 			if (file)
 			{
 				osd_fread(file, ti86_ram, sizeof(unsigned char)*128*1024);
-				cpu_set_reg(Z80_PC,0x0c59);
+				activecpu_set_reg(Z80_PC,0x0c59);
 			}
 			else
 				memset(ti86_ram, 0, sizeof(unsigned char)*128*1024);
@@ -601,7 +578,7 @@ static OPBASE_HANDLER( ti85_opbaseoverride )
 				break;
 	}
 
-	return (cpu_get_reg(Z80_PC) & 0x0ffff);
+	return (activecpu_get_reg(Z80_PC) & 0x0ffff);
 }
 
 static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
@@ -616,51 +593,51 @@ static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 	lo = reg[0x04] & 0x0ff;
 	hi = reg[0x05] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	lo = reg[0x08] & 0x0ff;
 	hi = reg[0x09] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 	lo = reg[0x0c] & 0x0ff;
 	hi = reg[0x0d] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 	lo = reg[0x10] & 0x0ff;
 	hi = reg[0x11] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 	lo = reg[0x14] & 0x0ff;
 	hi = reg[0x15] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 	lo = reg[0x18] & 0x0ff;
 	hi = reg[0x19] & 0x0ff;
-	cpu_set_reg(Z80_PC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 	lo = reg[0x1c] & 0x0ff;
 	hi = reg[0x1d] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	lo = reg[0x20] & 0x0ff;
 	hi = reg[0x21] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 	lo = reg[0x24] & 0x0ff;
 	hi = reg[0x25] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 	lo = reg[0x28] & 0x0ff;
 	hi = reg[0x29] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 	lo = reg[0x2c] & 0x0ff;
 	hi = reg[0x2d] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
-	cpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
-	cpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
-	cpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
-	cpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
-	cpu_set_reg(Z80_I, reg[0x40]&0x0ff);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
+	activecpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
+	activecpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
+	activecpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
+	activecpu_set_reg(Z80_I, reg[0x40]&0x0ff);
 
-	cpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
+	activecpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_IRQ_STATE, 0);
-	cpu_set_reg(Z80_HALT, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_IRQ_STATE, 0);
+	activecpu_set_reg(Z80_HALT, 0);
 
 	/* Memory dump */
 	for (i = 0; i < 0x8000; i++)
@@ -702,51 +679,51 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
-	cpu_set_reg(Z80_AF, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF, (hi << 8) | lo);
 	lo = reg[0x04] & 0x0ff;
 	hi = reg[0x05] & 0x0ff;
-	cpu_set_reg(Z80_BC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC, (hi << 8) | lo);
 	lo = reg[0x08] & 0x0ff;
 	hi = reg[0x09] & 0x0ff;
-	cpu_set_reg(Z80_DE, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE, (hi << 8) | lo);
 	lo = reg[0x0c] & 0x0ff;
 	hi = reg[0x0d] & 0x0ff;
-	cpu_set_reg(Z80_HL, (hi << 8) | lo);
+	activecpu_set_reg(Z80_HL, (hi << 8) | lo);
 	lo = reg[0x10] & 0x0ff;
 	hi = reg[0x11] & 0x0ff;
-	cpu_set_reg(Z80_IX, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IX, (hi << 8) | lo);
 	lo = reg[0x14] & 0x0ff;
 	hi = reg[0x15] & 0x0ff;
-	cpu_set_reg(Z80_IY, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IY, (hi << 8) | lo);
 	lo = reg[0x18] & 0x0ff;
 	hi = reg[0x19] & 0x0ff;
-	cpu_set_reg(Z80_PC, (hi << 8) | lo);
+	activecpu_set_reg(Z80_PC, (hi << 8) | lo);
 	lo = reg[0x1c] & 0x0ff;
 	hi = reg[0x1d] & 0x0ff;
-	cpu_set_reg(Z80_SP, (hi << 8) | lo);
+	activecpu_set_reg(Z80_SP, (hi << 8) | lo);
 	lo = reg[0x20] & 0x0ff;
 	hi = reg[0x21] & 0x0ff;
-	cpu_set_reg(Z80_AF2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_AF2, (hi << 8) | lo);
 	lo = reg[0x24] & 0x0ff;
 	hi = reg[0x25] & 0x0ff;
-	cpu_set_reg(Z80_BC2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_BC2, (hi << 8) | lo);
 	lo = reg[0x28] & 0x0ff;
 	hi = reg[0x29] & 0x0ff;
-	cpu_set_reg(Z80_DE2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_DE2, (hi << 8) | lo);
 	lo = reg[0x2c] & 0x0ff;
 	hi = reg[0x2d] & 0x0ff;
-	cpu_set_reg(Z80_HL2, (hi << 8) | lo);
-	cpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
-	cpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
-	cpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
-	cpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
-	cpu_set_reg(Z80_I, reg[0x40]&0x0ff);
+	activecpu_set_reg(Z80_HL2, (hi << 8) | lo);
+	activecpu_set_reg(Z80_IFF1, reg[0x30]&0x0ff);
+	activecpu_set_reg(Z80_IFF2, reg[0x34]&0x0ff);
+	activecpu_set_reg(Z80_HALT, reg[0x38]&0x0ff);
+	activecpu_set_reg(Z80_IM, reg[0x3c]&0x0ff);
+	activecpu_set_reg(Z80_I, reg[0x40]&0x0ff);
 
-	cpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
+	activecpu_set_reg(Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
 
-	cpu_set_reg(Z80_NMI_STATE, 0);
-	cpu_set_reg(Z80_IRQ_STATE, 0);
-	cpu_set_reg(Z80_HALT, 0);
+	activecpu_set_reg(Z80_NMI_STATE, 0);
+	activecpu_set_reg(Z80_IRQ_STATE, 0);
+	activecpu_set_reg(Z80_HALT, 0);
 
 	/* Memory dump */
 	memcpy(ti86_ram, data+0x94, 0x20000);

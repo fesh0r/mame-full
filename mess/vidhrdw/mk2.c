@@ -10,44 +10,30 @@
 
 UINT8 mk2_led[5]= {0};
 
-unsigned char mk2_palette[242][3] =
+unsigned char mk2_palette[] =
 {
-	{ 0x20,0x02,0x05 },
-	{ 0xc0, 0, 0 },
+	0x20, 0x02, 0x05,
+	0xc0, 0x00, 0x00
 };
 
-unsigned short mk2_colortable[1][2] = {
-	{ 0, 1 },
+unsigned short mk2_colortable[] = {
+	0, 1
 };
 
-void mk2_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+PALETTE_INIT( mk2 )
 {
-	memcpy (sys_palette, mk2_palette, sizeof (mk2_palette));
-	memcpy(sys_colortable,mk2_colortable,sizeof(mk2_colortable));
+	palette_set_colors(0, mk2_palette, sizeof(mk2_palette) / 3);
+	memcpy(colortable, mk2_colortable, sizeof(mk2_colortable));
 }
 
-int mk2_vh_start(void)
+VIDEO_START( mk2 )
 {
 	// artwork seams to need this
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
-
-	{
-		char backdrop_name[200];
-	    /* try to load a backdrop for the machine */
-		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
-		backdrop_load(backdrop_name, 2);
-	}
-
 	return video_start_generic();
-}
-
-void mk2_vh_stop(void)
-{
 }
 
 static const char led[]={
@@ -103,13 +89,12 @@ static void mk2_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 	draw_led(bitmap, radius_2_led, color, x, y);
 }
 
-void mk2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mk2 )
 {
 	int i;
 
-	for (i=0; i<4; i++) {
+	for (i=0; i<4; i++)
 		mk2_draw_7segment(bitmap, mk2_led[i]&0x7f, mk2_led_pos[i].x, mk2_led_pos[i].y);
-	}
 
 	mk2_draw_led(bitmap, Machine->pens[mk2_led[4]&8?1:0], 
 				 mk2_led_pos[4].x, mk2_led_pos[4].y);

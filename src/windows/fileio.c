@@ -295,7 +295,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 		// NVRAM files
 		case OSD_FILETYPE_NVRAM:
 #ifdef MESS
-			return generic_fopen(pathc, pathv, gamename, filename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE|FILEFLAG_CREATE_GAME_DIR : FILEFLAG_OPENREAD);
+			return generic_fopen(pathc, pathv, filename ? gamename : NULL, filename ? filename : gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE|FILEFLAG_CREATE_GAME_DIR : FILEFLAG_OPENREAD);
 #else
 			return generic_fopen(pathc, pathv, NULL, gamename, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
 #endif

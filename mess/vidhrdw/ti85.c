@@ -112,20 +112,14 @@ unsigned short ti85_colortable[32][7] =
 	{ 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf }
 };
  
-void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( ti85 )
 {
-	char backdrop_name[8+4+1];
 	int used = sizeof (ti85_palette) / 3;
+	int i;
 
-	memcpy (sys_palette, ti85_palette, sizeof (ti85_palette));
-	memcpy (sys_colortable, ti85_colortable, sizeof (ti85_colortable));
-
-	/* try to load a backdrop for the machine */
-	strncpy(backdrop_name, Machine->gamedrv->name, 4);
-	backdrop_name[4] = '\0';
-	strcat(backdrop_name, ".png");
-
-	backdrop_load (backdrop_name, used);
+	for (i = 0; i < used; i++)
+		palette_set_color(i, ti85_palette[i][0], ti85_palette[i][1], ti85_palette[i][2]);
+	memcpy (colortable, ti85_colortable, sizeof (ti85_colortable));
 
 	if (!strncmp(Machine->gamedrv->name, "ti81", 4))
 	{
@@ -161,6 +155,7 @@ void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortab
 
 VIDEO_START( ti85 )
 {
+	return 0;
 }
 
 VIDEO_UPDATE( ti85 )

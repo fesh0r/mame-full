@@ -1,21 +1,5 @@
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void mk2_runtime_loader_init(void);
-# else
-	extern void mk2_runtime_loader_init(void);
-# endif
-#endif
-
-
-
 extern UINT8 mk2_led[5];
-extern unsigned short mk2_colortable[1][2];
-extern unsigned char mk2_palette[242][3];
 
-void mk2_init_colors (unsigned char *sys_palette,
-					  unsigned short *sys_colortable,
-					  const unsigned char *color_prom);
-
-int mk2_vh_start(void);
-void mk2_vh_stop(void);
-void mk2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern PALETTE_INIT( mk2 );
+extern VIDEO_START( mk2 );
+extern VIDEO_UPDATE( mk2 );

@@ -375,132 +375,63 @@ static struct Speaker_interface ti85_speaker_interface=
 };
 
 /* machine definition */
-
-static	struct MachineDriver machine_driver_ti81 =
-{
+static MACHINE_DRIVER_START( ti81 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2000000,	/* 2 MHz */
-			ti81_readmem, ti81_writemem,
-			ti81_readport, ti81_writeport,
-			0, 0,
-		},
-	},
-	50, 0,	/* frames per second, vblank duration */
-	1,
-	ti81_init_machine,
-	ti81_stop_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 2000000)        /* 2 MHz */
+	MDRV_CPU_MEMORY(ti81_readmem, ti81_writemem)
+	MDRV_CPU_PORTS(ti81_readport, ti81_writeport)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	440,					/* screen width */
-	330,					/* screen height */
-	{0, 440-1, 0, 330-1},			/* visible_area */
-	0,					/* graphics decode info */
-	32*7 + 32768,
-	32*7,					/* colors used for the characters */
-	ti85_init_palette,			/* initialise palette */
+	MDRV_MACHINE_INIT( ti81 )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ti85_vh_start,
-	ti85_vh_stop,
-	ti85_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(440, 330)
+	MDRV_VISIBLE_AREA(0, 440-1, 0, 330-1)
+	MDRV_PALETTE_LENGTH(32*7 + 32768)
+	MDRV_COLORTABLE_LENGTH(32*7 + 32768)
+	MDRV_PALETTE_INIT( ti85 )
+
+	MDRV_VIDEO_START( ti85 )
+	MDRV_VIDEO_UPDATE( ti85 )
+
+	MDRV_NVRAM_HANDLER( ti81 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ti85 )
+	MDRV_IMPORT_FROM( ti81 )
+	MDRV_CPU_REPLACE("main", Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_MEMORY(ti85_readmem, ti85_writemem)
+	MDRV_CPU_PORTS(ti85_readport, ti85_writeport)
+
+	MDRV_MACHINE_INIT( ti85 )
+	MDRV_MACHINE_STOP( ti85 )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	},
-	ti81_nvram_handler
-};
+	MDRV_SOUND_ADD(SPEAKER, ti85_speaker_interface)
 
-static	struct MachineDriver machine_driver_ti85 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz */
-			ti85_readmem, ti85_writemem,
-			ti85_readport, ti85_writeport,
-			0, 0,
-		},
-	},
-	50, 0,	/* frames per second, vblank duration */
-	1,
-	ti85_init_machine,
-	ti85_stop_machine,
+	MDRV_NVRAM_HANDLER( ti85 )
+MACHINE_DRIVER_END
 
-	/* video hardware */
-	440,					/* screen width */
-	330,					/* screen height */
-	{0, 440-1, 0, 330-1},			/* visible_area */
-	0,					/* graphics decode info */
-	32*7 + 32768,
-	32*7,					/* colors used for the characters */
-	ti85_init_palette,			/* initialise palette */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	ti85_vh_start,
-	ti85_vh_stop,
-	ti85_vh_screenrefresh,
+static MACHINE_DRIVER_START( ti86 )
+	MDRV_IMPORT_FROM( ti81 )
+	MDRV_CPU_REPLACE("main", Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_MEMORY(ti86_readmem, ti86_writemem)
+	MDRV_CPU_PORTS(ti86_readport, ti86_writeport)
+
+	MDRV_MACHINE_INIT( ti86 )
+	MDRV_MACHINE_STOP( ti86 )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-				SOUND_SPEAKER,
-				&ti85_speaker_interface
-		}
-	},
-	ti85_nvram_handler
-};
+	MDRV_SOUND_ADD(SPEAKER, ti85_speaker_interface)
 
-static	struct MachineDriver machine_driver_ti86 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz */
-			ti86_readmem, ti86_writemem,
-			ti86_readport, ti86_writeport,
-			0, 0,
-		},
-	},
-	50, 0,	/* frames per second, vblank duration */
-	1,
-	ti86_init_machine,
-	ti86_stop_machine,
+	MDRV_NVRAM_HANDLER( ti86 )
+MACHINE_DRIVER_END
 
-	/* video hardware */
-	440,					/* screen width */
-	330,					/* screen height */
-	{0, 440-1, 0, 330-1},			/* visible_area */
-	0,					/* graphics decode info */
-	32*7 + 32768,
-	32*7,					/* colors used for the characters */
-	ti85_init_palette,			/* initialise palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ti85_vh_start,
-	ti85_vh_stop,
-	ti85_vh_screenrefresh,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-				SOUND_SPEAKER,
-				&ti85_speaker_interface
-		}
-	},
-	ti86_nvram_handler
-};
 
 ROM_START (ti81)
 	ROM_REGION (0x18000, REGION_CPU1,0)

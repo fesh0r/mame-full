@@ -176,7 +176,8 @@ DRVLIBS = \
 	$(OBJ)/amstrad.a  \
 	$(OBJ)/ep128.a	  \
 	$(OBJ)/mk1.a      \
-#	$(OBJ)/mk2.a      \
+	$(OBJ)/mk2.a      \
+	$(OBJ)/ti85.a     \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -192,7 +193,6 @@ DRVLIBS = \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/apf.a      \
 #	$(OBJ)/svi.a      \
-#	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/aim65.a    \
