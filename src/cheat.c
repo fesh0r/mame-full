@@ -647,7 +647,7 @@ void LoadCheatFile (int merge, char *filename)
         data8_t temp_data;
 #ifdef MESS
         data8_t temp_olddata;
-        int temp_olddata16;
+        unsigned int temp_olddata16;
 #endif
         INT32 temp_code;
 
@@ -709,7 +709,7 @@ void LoadCheatFile (int merge, char *filename)
         ptr = strtok(NULL, ":");
         if (!ptr) continue;
         {
-            int t;
+            unsigned int t;
             sscanf(ptr,"%x", &t);
             temp_data = t;
         }
