@@ -1066,7 +1066,6 @@ static int mfs_file_open_DF(mfs_l2_imgref *l2_img, mfs_dir_entry *dir_entry, mfs
 */
 static int mfs_file_open_RF(mfs_l2_imgref *l2_img, mfs_dir_entry *dir_entry, mfs_fileref *fileref)
 {
-<<<<<<< mac.c
 	fileref->l2_img = l2_img;
 
 	fileref->stBlk = get_UINT16BE(dir_entry->rsrcStartBlock);
@@ -1079,9 +1078,6 @@ static int mfs_file_open_RF(mfs_l2_imgref *l2_img, mfs_dir_entry *dir_entry, mfs
 
 	return 0;
 }
-=======
-	mac_str255 fname;
->>>>>>> 1.2
 
 /*
 	mfs_file_read
