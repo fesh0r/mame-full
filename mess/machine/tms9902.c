@@ -9,7 +9,7 @@
 
 #include "tms9902.h"
 
-#define MAX_9902 1
+#define MAX_9902 2
 
 /*
 	TMS9902 emulation.
@@ -34,10 +34,10 @@ typedef struct tms9902_t
 	(warning: 3MHz on a tms9900 is equivalent to 12MHz on a tms9995 or tms99000) */
 	double clock_rate;
 
-	void (*int_callback)(int INT);		/* called when interrupt pin state changes */
-	void (*rts_callback)(int RTS);		/* called when Request To Send pin state changes */
-	void (*brk_callback)(int BRK);		/* called when BReaK state changes */	
-	void (*xmit_callback)(int data);	/* called when a character is transmitted */
+	void (*int_callback)(int which, int INT);	/* called when interrupt pin state changes */
+	void (*rts_callback)(int which, int RTS);	/* called when Request To Send pin state changes */
+	void (*brk_callback)(int which, int BRK);	/* called when BReaK state changes */
+	void (*xmit_callback)(int which, int data);	/* called when a character is transmitted */
 
 
 	/* CRU interface */
@@ -158,7 +158,7 @@ static void reset(int which)
 	tms9902[which].XBIENB = 0;
 	tms9902[which].RIENB = 0;
 	if (tms9902[which].int_callback)
-		(*tms9902[which].int_callback)(0);
+		(*tms9902[which].int_callback)(which, 0);
 	/* initialize transmitter */
 	tms9902[which].XBRE = 1;
 	tms9902[which].XSRE = 1;
@@ -169,14 +169,14 @@ static void reset(int which)
 	tms9902[which].RTSON = 0;
 	tms9902[which].RTS = 0;
 	if (tms9902[which].rts_callback)
-		(*tms9902[which].rts_callback)(0);
+		(*tms9902[which].rts_callback)(which, 0);
 	/* set all resister load flags to 1 */
 	tms9902[which].register_select = 0xf;
 	/* clear break condition */
 	tms9902[which].BRKON = 0;
 	tms9902[which].BRK = 0;
 	if (tms9902[which].brk_callback)
-		(*tms9902[which].brk_callback)(0);
+		(*tms9902[which].brk_callback)(which, 0);
 	field_interrupts(which);
 }
 
@@ -195,7 +195,7 @@ static void field_interrupts(int which)
 		tms9902[which].INT = new_int;
 
 		if (tms9902[which].int_callback)
-			(*tms9902[which].int_callback)(new_int);
+			(*tms9902[which].int_callback)(which, new_int);
 	}
 }
 
@@ -300,7 +300,7 @@ static void set_rts(int which, int state)
 		tms9902[which].RTS = state;
 
 		if (tms9902[which].rts_callback)
-			(*tms9902[which].rts_callback)(state);
+			(*tms9902[which].rts_callback)(which, state);
 	}
 }
 
@@ -314,7 +314,7 @@ static void set_brk(int which, int state)
 		tms9902[which].BRK = state;
 
 		if (tms9902[which].brk_callback)
-			(*tms9902[which].brk_callback)(state);
+			(*tms9902[which].brk_callback)(which, state);
 	}
 }
 
@@ -330,7 +330,7 @@ static void initiate_transmit(int which)
 	/* Do transmit at once (I will add a timer delay some day, maybe) */
 
 	if (tms9902[which].xmit_callback)
-		(*tms9902[which].xmit_callback)(tms9902[which].XSR);
+		(*tms9902[which].xmit_callback)(which, tms9902[which].XSR);
 
 	tms9902[which].XSRE = 1;
 

@@ -1,10 +1,10 @@
 typedef struct tms9902reset_param
 {
-	double clock_rate;					/* clock rate (2MHz-3.3MHz, with 4MHz overclocking) */
-	void (*int_callback)(int INT);		/* called when interrupt pin state changes */
-	void (*rts_callback)(int RTS);		/* called when Request To Send pin state changes */
-	void (*brk_callback)(int BRK);		/* called when BReaK state changes */	
-	void (*xmit_callback)(int data);	/* called when a character is transmitted */
+	double clock_rate;							/* clock rate (2MHz-3.3MHz, with 4MHz overclocking) */
+	void (*int_callback)(int which, int INT);	/* called when interrupt pin state changes */
+	void (*rts_callback)(int which, int RTS);	/* called when Request To Send pin state changes */
+	void (*brk_callback)(int which, int BRK);	/* called when BReaK state changes */
+	void (*xmit_callback)(int which, int data);	/* called when a character is transmitted */
 } tms9902reset_param;
 
 
