@@ -26,14 +26,15 @@
 
 /* ----------------------------------------------------------------------- */
 
-enum blobparse_state
+typedef enum
 {
 	BLOBSTATE_INITIAL,
 	BLOBSTATE_AFTER_0,
+	BLOBSTATE_AFTER_STAR,
 	BLOBSTATE_HEX,
 	BLOBSTATE_SINGLEQUOTES,
 	BLOBSTATE_DOUBLEQUOTES
-};
+} blobparse_state_t;
 
 struct messtest_state
 {
@@ -51,7 +52,8 @@ struct messtest_state
 	int failure_count;
 
 	mess_pile blobpile;
-	enum blobparse_state blobstate;
+	blobparse_state_t blobstate;
+	size_t multiple;
 };
 
 static struct messtest_state *state;
@@ -128,11 +130,10 @@ static const struct messtest_tagdispatch initial_dispatch = { NULL, DATA_NONE, N
 
 static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
 {
-//	struct messtest_state *state = (struct messtest_state *) data;
 	const struct messtest_tagdispatch *dispatch;
 
 	/* try to find the tag */
-	dispatch = state->dispatch[state->dispatch_pos]->subdispatch;
+	dispatch = state->dispatch[state->dispatch_pos] ? state->dispatch[state->dispatch_pos]->subdispatch : NULL;
 	if (dispatch)
 	{
 		while(dispatch->tag)
@@ -161,7 +162,6 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 
 static void end_handler(void *data, const XML_Char *name)
 {
-//	struct messtest_state *state = (struct messtest_state *) data;
 	const struct messtest_tagdispatch *dispatch;
 	void *ptr;
 	size_t size;
@@ -193,7 +193,9 @@ static void data_handler_text(const XML_Char *s, int len)
 
 static void data_handler_binary(const XML_Char *s, int len)
 {
+	void *ptr;
 	int i = 0;
+	size_t j, size;
 	int found;
 	char c;
 
@@ -209,6 +211,12 @@ static void data_handler_binary(const XML_Char *s, int len)
 			else if (s[i] == '0')
 			{
 				state->blobstate = BLOBSTATE_AFTER_0;
+				i++;
+			}
+			else if (s[i] == '*')
+			{
+				state->blobstate = BLOBSTATE_AFTER_STAR;
+				state->multiple = (size_t) -1;
 				i++;
 			}
 			else if (s[i] == '\'')
@@ -233,6 +241,34 @@ static void data_handler_binary(const XML_Char *s, int len)
 			}
 			else
 				goto parseerror;
+			break;
+
+		case BLOBSTATE_AFTER_STAR:
+			if (isdigit(s[i]))
+			{
+				if (state->multiple == (size_t) -1)
+					state->multiple = 0;
+				else
+					state->multiple *= 10;
+				state->multiple += s[i] - '0';
+			}
+			else if (isspace(s[i]) && (state->multiple == (size_t) -1))
+			{
+				/* ignore whitespace */
+				i++;
+			}
+			else
+			{
+				/* do the multiplication */
+				size = pile_size(&state->blobpile);
+				ptr = pile_detach(&state->blobpile);
+
+				for (j = 0; j < state->multiple; j++)
+					pile_write(&state->blobpile, ptr, size);
+
+				free(ptr);
+				state->blobstate = BLOBSTATE_INITIAL;
+			}
 			break;
 
 		case BLOBSTATE_HEX:
