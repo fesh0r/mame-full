@@ -693,6 +693,17 @@ else
 CPUDEFS += -DHAS_TMS9995=0
 endif
 
+CPU=$(strip $(findstring TMS9900@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/tms9900
+CPUDEFS += -DHAS_TMS99000=1
+CPUOBJS += $(OBJ)/cpu/tms9900/tms9900.o
+DBGOBJS += $(OBJ)/cpu/tms9900/9900dasm.o
+$(OBJ)/cpu/tms9900/tms9900.o: tms9900.c tms9900.h 99xxcore.h 9900stat.h
+else
+CPUDEFS += -DHAS_TMS99000=0
+endif
+
 CPU=$(strip $(findstring TMS99010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/tms9900
