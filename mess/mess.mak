@@ -909,7 +909,7 @@ tools/imgtool$(EXE):	                   \
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 # text files
-TEXTS = mess.txt sysinfo.htm
+TEXTS = sysinfo.htm
 
 mess.txt: $(EMULATORCLI)
 	@echo Generating $@...

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<help title="MESS Help" objdir="obj/mess/mess/ui/help" target="mess.chm">
+	<topic		basepath="docs"		filepath="windows/main.htm"		text="Overview"/>
+	<topic		basepath="docs"		filepath="messnew.txt"			text="Whats new?"/>
+	<topic		basepath="docs"		filepath="windows/install.htm"	text="Installing MESS"/>
+	<topic		basepath="docs"		filepath="windows/choice.htm"	text="Choosing which MESS"/>
+	<topic		basepath="docs"		filepath="windows/update.htm"	text="Updating MESS"/>
+	<topic		basepath="docs"		filepath="windows/suppsys.htm"	text="Supported Systems"/>
+	<topic		basepath="docs"		filepath="windows/instbios.htm"	text="Installing BIOSes and Software"/>
+	<topic		basepath="docs"		filepath="windows/mgebios.htm"	text="Managing BIOSes"/>
+	<topic		basepath="docs"		filepath="windows/runsw.htm"	text="Running Software"/>
+	<topic		basepath="docs"		filepath="windows/win32cmd.htm"	text="Using MESS at the Command Line"/>
+	<topic		basepath="docs"		filepath="windows/config.htm"	text="MESS Configuration Files"/>
+	<folder text="The MESS Front End">
+		<topic	basepath="docs"		filepath="windows/guiconf.htm"	text="Configuration"/>
+		<topic	basepath="docs"		filepath="windows/guiuse.htm"	text="Usage"/>
+	</folder>
+	<folder text="While running MESS...">
+		<topic	basepath="docs"		filepath="windows/control.htm"	text="Controls"/>
+		<topic	basepath="docs"		filepath="windows/osmenu.htm"	text="On-screen menus"/>
+	</folder>
+
+	<topic		basepath="docs"		filepath="windows/compile.htm"	text="Compiling MESS"/>
+	<topic		basepath="docs"		filepath="faq.htm"				text="FAQ"/>
+	<topic		basepath="docs"		filepath="credits.htm"			text="Credits"/>
+	
+	<file		basepath="docs"		filepath="images/logo.gif"/>
+	<file		basepath="docs"		filepath="windows/images/command.gif"/>
+	<file		basepath="docs"		filepath="windows/images/frog.gif"/>
+	<file		basepath="docs"		filepath="windows/images/gui.gif"/>
+	<file		basepath="docs"		filepath="windows/images/guiaudit.gif"/>
+	<file		basepath="docs"		filepath="windows/images/iniicon.gif"/>
+	<file		basepath="docs"		filepath="windows/images/keybcnt.gif"/>
+	<file		basepath="docs"		filepath="windows/images/newmenu.gif"/>
+	<file		basepath="docs"		filepath="windows/images/oldmenu.gif"/>
+	<file		basepath="docs"		filepath="windows/images/prop.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propadv.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propcnt.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propd3d.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propmsc.gif"/>
+	<file		basepath="docs"		filepath="windows/images/props.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propsnd.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propvec.gif"/>
+	<file		basepath="docs"		filepath="windows/images/startup.gif"/>
+	<file		basepath="docs"		filepath="windows/images/tree.gif"/>
+	<file		basepath="docs"		filepath="windows/images/propvec.gif"/>
+	<file		basepath="docs"		filepath="windows/images/wzip.gif"/>
+	<file		basepath="docs"		filepath="style.css"/>
+</help>

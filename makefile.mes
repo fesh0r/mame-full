@@ -343,7 +343,7 @@ $(OBJ)/%.a:
 	$(AR) cr $@ $^
 
 mess.chm::
-	cscript mess\\ui\\help\\makehelp.vbs mess\\ui\\help\\topics.xml
+	cscript mess\\ui\\help\\makehelp.vbs docs\\wintoc.xml
 
 makedir:
 	@echo make makedir is no longer necessary, just type make

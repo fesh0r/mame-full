@@ -1,3 +1,35 @@
+0.74.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+System Driver Changes:
+----------------------
+- [COCO3] Fixed a bug that caused Hi-Res graphic modes where the line pitch
+  was less than 128 bytes to fail (bug #465).  [Nate Woods]
+  
+- [PC] Fixed a bug in the i86 CMPSW instruction (bug #466).  [Bob Dayley]
+
+
+User Interface Changes:
+-----------------------
+(none)
+  
+
+Imgtool Changes:
+----------------
+(none)
+
+
+Source Changes:
+---------------
+- The core is based on MAME 0.75.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.74
 
 New System Drivers Supported (in no particular order):
