@@ -1,8 +1,8 @@
 /* from mess/machine/mbee.c */
-extern void mbee_init_machine(void);
-extern void mbee_shutdown_machine(void);
+extern MACHINE_INIT( mbee );
+extern MACHINE_STOP( mbee );
 
-extern int mbee_interrupt(void);
+extern void mbee_interrupt(void);
 extern int mbee_cassette_init(int id);
 extern void mbee_cassette_exit(int id);
 extern int mbee_floppy_init(int id);
@@ -39,6 +39,5 @@ extern WRITE_HANDLER ( mbee_videoram_w );
 extern READ_HANDLER ( mbee_pcg_color_r );
 extern WRITE_HANDLER ( mbee_pcg_color_w );
 
-extern int  mbee_vh_start(void);
-extern void mbee_vh_stop(void);
-extern void mbee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( mbee );
+extern VIDEO_UPDATE( mbee );

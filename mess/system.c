@@ -617,10 +617,10 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* a7100 i8086 based */
 
 	/* MICROBEE SYSTEMS */
-//	DRIVER( mbee )		/* Microbee 32 IC									  */
-//	DRIVER( mbeepc )	/* Microbee 32 PC				  */
-    ////	DRIVER( mbeepc85 )	/* Microbee 32 PC85					*/
-    ////	DRIVER( mbee56 )	/* Microbee 56K (CP/M)							  */
+	DRIVER( mbee )		/* Microbee 32 IC									  */
+	DRIVER( mbeepc )	/* Microbee 32 PC				  */
+	DRIVER( mbeepc85 )	/* Microbee 32 PC85					*/
+	DRIVER( mbee56 )	/* Microbee 56K (CP/M)							  */
 
 	/* TANDY RADIO SHACK */
 //	DRIVER( trs80 )	    /* TRS-80 Model I	- Radio Shack Level I BASIC   */

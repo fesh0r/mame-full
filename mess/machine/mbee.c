@@ -10,8 +10,9 @@
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
-#include "machine/mbee.h"
+#include "includes/mbee.h"
 #include "cassette.h"
+#include "cpu/z80/z80.h"
 
 static UINT8 fdc_drv = 0;
 static UINT8 fdc_head = 0;
@@ -30,16 +31,16 @@ static z80pio_interface pio_intf =
 
 static void pio_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line(0, Z80_IRQ_STATE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
-void mbee_init_machine(void)
+MACHINE_INIT( mbee )
 {
 	z80pio_init(&pio_intf);
     wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
 }
 
-void mbee_shutdown_machine(void)
+MACHINE_STOP( mbee )
 {
 	wd179x_exit();
 }
@@ -129,7 +130,7 @@ WRITE_HANDLER ( mbee_fdc_motor_w )
 
 }
 
-int mbee_interrupt(void)
+void mbee_interrupt(void)
 {
 	int tape = readinputport(9);
 
@@ -144,7 +145,6 @@ int mbee_interrupt(void)
     logerror("mbee interrupt\n");
 	z80pio_p_w(0, 1, 0x80);
     z80pio_p_w(0, 1, 0x00);
-    return ignore_interrupt();
 }
 
 int mbee_cassette_init(int id)

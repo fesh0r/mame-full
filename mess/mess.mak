@@ -147,6 +147,7 @@ DRVLIBS = \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/atari.a    \
 	$(OBJ)/advision.a \
+	$(OBJ)/mbee.a	  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
@@ -185,7 +186,6 @@ DRVLIBS = \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/trs80.a	  \
-#	$(OBJ)/mbee.a	  \
 #	$(OBJ)/cgenie.a   \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \

@@ -38,7 +38,7 @@
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
-#include "machine/mbee.h"
+#include "includes/mbee.h"
 #include "includes/basicdsk.h"
 
 #define VERBOSE 1
@@ -254,15 +254,15 @@ static UINT8 palette[] = {
     0xe0,0xe0,0xe0  /* white    */
 };
 
-void mbee_init_palette(unsigned char *system_palette, unsigned short *system_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( mbee )
 {
-    int i;
-    memcpy(system_palette, palette, sizeof(palette));
-    for( i = 0; i < 256; i++ )
-    {
-        system_colortable[2*i+0] = i / 32;
-        system_colortable[2*i+1] = i & 31;
-    }
+	int i;
+	palette_set_colors(0, palette, sizeof(palette) / 3);
+	for( i = 0; i < 256; i++ )
+	{
+		colortable[2*i+0] = i / 32;
+		colortable[2*i+1] = i & 31;
+	}
 }
 
 Z80_DaisyChain mbee_daisy_chain[] =
@@ -281,99 +281,45 @@ static struct Wave_interface wave_interface = {
     { 25 }      /* mixing levels */
 };
 
-static struct MachineDriver machine_driver_mbee =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80,
-            3375000,    /* 3.37500 Mhz */
-            readmem_mbee,writemem_mbee,
-            readport_mbee,writeport_mbee,
-            mbee_interrupt,1,
-            0,0,&mbee_daisy_chain
-        },
-    },
-    50, 2500,  /* frames per second, vblank duration */
-    1,
-    mbee_init_machine,
-    mbee_shutdown_machine,
 
-    /* video hardware */
-    70*8,                           /* screen width (inc. blank/sync) */
-    310,                            /* screen height (inc. blank/sync) */
-    { 0*8, 70*8-1, 0, 19*16-1},     /* visible_area */
-    mbee_gfxdecodeinfo,             /* graphics decode info */
-    sizeof(palette)/sizeof(palette[0])/3,   /* colors used for the characters */
-    256 * 2,
-    mbee_init_palette,              /* init palette */
+/* &mbee_daisy_chain? */
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-    0,
-    mbee_vh_start,
-    mbee_vh_stop,
-    mbee_vh_screenrefresh,
+static MACHINE_DRIVER_START( mbee )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 3375000)         /* 3.37500 Mhz */
+	MDRV_CPU_MEMORY(readmem_mbee,writemem_mbee)
+	MDRV_CPU_PORTS(readport_mbee,writeport_mbee)
+	MDRV_CPU_VBLANK_INT(mbee_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SPEAKER,
-            &speaker_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    }
-};
+	MDRV_MACHINE_INIT( mbee )
+	MDRV_MACHINE_STOP( mbee )
 
-static struct MachineDriver machine_driver_mbee56 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80,
-            3375000,    /* 3.37500 Mhz */
-            readmem_56k,writemem_56k,
-            readport_mbee,writeport_mbee,
-            mbee_interrupt,1,
-            0,0,&mbee_daisy_chain
-        },
-    },
-    50, 2500,  /* frames per second, vblank duration */
-    1,
-    mbee_init_machine,
-    mbee_shutdown_machine,
+	MDRV_GFXDECODE(mbee_gfxdecodeinfo)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(70*8, 310)
+	MDRV_VISIBLE_AREA(0*8, 70*8-1, 0, 19*16-1)
+	MDRV_PALETTE_LENGTH(sizeof(palette)/sizeof(palette[0])/3)
+	MDRV_COLORTABLE_LENGTH(256 * 2)
+	MDRV_PALETTE_INIT(mbee)
 
-    /* video hardware */
-    70*8,                           /* screen width (inc. blank/sync) */
-    310,                            /* screen height (inc. blank/sync) */
-    { 0*8, 70*8-1, 0, 19*16-1},     /* visible_area */
-    mbee_gfxdecodeinfo,             /* graphics decode info */
-    sizeof(palette)/sizeof(palette[0])/3,   /* colors used for the characters */
-    256 * 2,
-    mbee_init_palette,              /* init palette */
+	MDRV_VIDEO_START(mbee)
+	MDRV_VIDEO_UPDATE(mbee)
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-    0,
-    mbee_vh_start,
-    mbee_vh_stop,
-    mbee_vh_screenrefresh,
+	/* sound hardware */
+	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_SPEAKER,
-            &speaker_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    }
-};
+
+static MACHINE_DRIVER_START( mbee56 )
+	MDRV_IMPORT_FROM( mbee )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( readmem_56k,writemem_56k )
+MACHINE_DRIVER_END
+
 
 ROM_START( mbee )
     ROM_REGION(0x10000,REGION_CPU1,0)
