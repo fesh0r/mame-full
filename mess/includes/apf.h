@@ -10,3 +10,5 @@ extern void apf_cassette_exit(int);
 
 void	apf_update_ints(void);
 
+extern int apfimag_floppy_init(int id);
+
