@@ -1,17 +1,21 @@
 /***************************************************************************
 	zx.c
-    14.05.2004 finally fixed and readded
-	Krzysztof Strzecha
 
-    system driver
+    Orginal driver by:
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
-	TODO:
-	Check the CPU clock, scanlines, cycles per scanlines value ect.
-	It seems I'm very close to the real video timing now, but it
-	still isn't perfect (see also vidhrdw/zx.c)
+    Fixes and additions by Krzysztof Strzecha:
+    	29.05.2004 CPU clock, number of scanlines, vblank duration corrected.
+		   Some cleanups. Two non-working TESTDRIVERS added.
+    	14.05.2004 Finally fixed and readded.
+
+    To do:
 	Tape emulation is broken and needs rewrite.
-	PC8300, POW3000 and Lambda video emulation is not fully correct.
+	Some memory areas are not mirrored as they should.
+	Video hardware is not fully emulated, so it does not support pseudo
+	hi-res and hi-res modes.
+	NTSC video emulation is not fully correct.
+	Some memory packs are unemulated.
 
 ****************************************************************************/
 
@@ -19,14 +23,8 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/zx.h"
-
-#define VERBOSE 0
-
-#if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
-#else
-#define LOG(x)						   /* x */
-#endif
+#include "devices/cassette.h"
+#include "formats/zx81_p.h"
 
 ADDRESS_MAP_START( readmem_zx80 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x0fff) AM_READ( MRA8_ROM)
@@ -455,25 +453,35 @@ static struct DACinterface dac_interface =
 	{100}							   /* volume */
 };
 
-#define CPU_CLOCK	3227500
-#define CYCLES_PER_SCANLINE 207
+#define ZX81_CPU_CLOCK			3250000
+#define ZX81_CYCLES_PER_SCANLINE	207
+#define ZX81_PIXELS_PER_SCANLINE	256
+#define ZX81_CYCLES_PER_VBLANK		1235
+#define ZX81_VBLANK_DURATION		(1.0*ZX81_CYCLES_PER_VBLANK/ZX81_CPU_CLOCK)
+
+#define ZX81_PAL_SCANLINES		304
+#define ZX81_PAL_FRAMES_PER_SECOND	(1.0*ZX81_CPU_CLOCK/(ZX81_PAL_SCANLINES*ZX81_CYCLES_PER_SCANLINE+ZX81_CYCLES_PER_VBLANK))
+
+#define ZX81_NTSC_SCANLINES		256
+#define ZX81_NTSC_FRAMES_PER_SECOND	(1.0*ZX81_CPU_CLOCK/(ZX81_NTSC_SCANLINES*ZX81_CYCLES_PER_SCANLINE+ZX81_CYCLES_PER_VBLANK))
+
 
 static MACHINE_DRIVER_START( zx80 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, CPU_CLOCK)
+	MDRV_CPU_ADD_TAG("main", Z80, ZX81_CPU_CLOCK)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 	MDRV_CPU_PROGRAM_MAP(readmem_zx80, writemem_zx80)
 	MDRV_CPU_IO_MAP(readport, writeport)
-	MDRV_FRAMES_PER_SECOND(1.0 * CPU_CLOCK / 310 / CYCLES_PER_SCANLINE)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_FRAMES_PER_SECOND(ZX81_PAL_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(ZX81_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( zx80 )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 310)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 48, 310-32-1)
+	MDRV_SCREEN_SIZE(ZX81_PIXELS_PER_SCANLINE, ZX81_PAL_SCANLINES)
+	MDRV_VISIBLE_AREA(0, ZX81_PIXELS_PER_SCANLINE-1, 0, ZX81_PAL_SCANLINES-1)
 	MDRV_GFXDECODE( zx80_gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(6)
 	MDRV_COLORTABLE_LENGTH(4)
@@ -500,10 +508,10 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ts1000 )
 	MDRV_IMPORT_FROM( zx81 )
-	MDRV_FRAMES_PER_SECOND(1.0 * CPU_CLOCK / 262 / CYCLES_PER_SCANLINE)
+	MDRV_FRAMES_PER_SECOND(ZX81_NTSC_FRAMES_PER_SECOND)
 
-	MDRV_SCREEN_SIZE(32*8, 262)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 17, 262-15-1)
+	MDRV_SCREEN_SIZE(ZX81_PIXELS_PER_SCANLINE, ZX81_NTSC_SCANLINES)
+	MDRV_VISIBLE_AREA(0, ZX81_PIXELS_PER_SCANLINE-1, 0, ZX81_NTSC_SCANLINES-1)
 	MDRV_PALETTE_INIT( ts1000 )
 MACHINE_DRIVER_END
 
@@ -524,7 +532,7 @@ static MACHINE_DRIVER_START( pow3000 )
 	MDRV_CPU_MODIFY( "main" )
 	MDRV_CPU_PROGRAM_MAP( readmem_pow3000, writemem_pow3000 )
 
-	MDRV_MACHINE_INIT( pow3000 )
+	MDRV_MACHINE_INIT( pc8300 )
 	MDRV_GFXDECODE( pow3000_gfxdecodeinfo )
 	MDRV_PALETTE_INIT( zx81 )
 MACHINE_DRIVER_END
@@ -566,6 +574,20 @@ ROM_START(zx81b)
         /* filled in by zx_init_driver */
 ROM_END                                                                                                                                       
 
+ROM_START(h4th)
+        ROM_REGION(0x10000, REGION_CPU1,0)
+        ROM_LOAD("h4th.rom",    0x0000, 0x2000, CRC(257d5a32))
+        ROM_REGION(0x00100, REGION_GFX1,0)
+        /* filled in by zx_init_driver */
+ROM_END                                                                                                                                       
+
+ROM_START(tree4th)
+        ROM_REGION(0x10000, REGION_CPU1,0)
+        ROM_LOAD("tree4th.rom",    0x0000, 0x2000, CRC(71616238))
+        ROM_REGION(0x00100, REGION_GFX1,0)
+        /* filled in by zx_init_driver */
+ROM_END                                                                                                                                       
+
 ROM_START(ts1000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("zx81a.rom",  0x0000, 0x2000, CRC(4b1dd6eb))
@@ -600,12 +622,18 @@ ROM_START(lambda)
         ROM_LOAD("8300_fnt.bin",0x0000, 0x0200, CRC(6bd0408c))
 ROM_END                                                                                                                                       
 
+static struct CassetteOptions zx81_cassette_options = {
+	1,		/* channels */
+	16,		/* bits per sample */
+	44100		/* sample frequency */
+};
+
 SYSTEM_CONFIG_START(zx80)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "80\0o\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_zx_cassette, device_unload_zx_cassette, NULL)
+	CONFIG_DEVICE_CASSETTEX(1, zx81_p_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(zx81)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "81\0p\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_zx_cassette, device_unload_zx_cassette, NULL)
+	CONFIG_DEVICE_CASSETTEX(1, zx81_p_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
@@ -619,6 +647,8 @@ COMPX(	1981,	aszmic,  zx80,	0,	zx80,	zx80,	zx,	zx80,	"Sinclair Research",		"ZX.A
 COMPX(	1981,	zx81,    0,	0,	zx81,	zx81,   zx,	zx81,	"Sinclair Research",		"ZX-81",		GAME_NOT_WORKING)
 COMPX(	198?,	zx81a,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (2nd rev)",	GAME_NOT_WORKING)
 COMPX(	198?,	zx81b,   zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"ZX-81 (3rd rev)",	GAME_NOT_WORKING)
+COMPX(	198?,	h4th,	zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Forth by David Husband",	GAME_NOT_WORKING)
+COMPX(	198?,	tree4th,zx81,	0,	zx81,	zx81,	zx,	zx81,	"Sinclair Research",		"Sinclair ZX-81 Tree-Forth by Tree Systems",	GAME_NOT_WORKING)
 COMPX(	1982,	ts1000,  zx81,	0,	ts1000,	zx81,	zx,	zx81,	"Timex Sinclair",		"Timex Sinclair 1000",	GAME_NOT_WORKING)
 COMPX(	1984,	pc8300,  zx81,	0,	pc8300,	pow3000,zx,	zx81,	"Your Computer",		"PC8300",		GAME_NOT_WORKING)
 COMPX(	1983,	pow3000, zx81,	0,	pow3000,pow3000,zx,	zx81,	"Creon Enterprises",		"Power 3000",		GAME_NOT_WORKING)

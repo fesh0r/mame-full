@@ -5,9 +5,6 @@ extern MACHINE_INIT( zx81 );
 extern MACHINE_INIT( pc8300 );
 extern MACHINE_INIT( pow3000 );
 
-DEVICE_LOAD( zx_cassette );
-DEVICE_UNLOAD( zx_cassette );
-
 extern READ_HANDLER ( zx_io_r );
 extern WRITE_HANDLER ( zx_io_w );
 
@@ -27,8 +24,8 @@ extern void zx_ula_bkgnd(int color);
 extern int zx_ula_r(int offs, int region);
 
 extern void *ula_nmi;
-extern void *ula_irq;
 extern int ula_irq_active;
+extern int ula_nmi_active;
 extern int ula_frame_vsync;
 extern int ula_scanline_count;
 extern int ula_scancode_count;
