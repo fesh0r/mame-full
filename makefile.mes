@@ -203,8 +203,9 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw					\
 		$(OBJ)/mess/formats $(OBJ)/mess/tools					\
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg	\
-		$(OBJ)/mess/tools/messroms \
-		$(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/imgtool/windows	\
+		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool 	\
+		$(OBJ)/mess/tools/imgtool/windows 						\
+		$(OBJ)/mess/tools/imgtool/windows/res					\
 		$(OBJ)/mess/tools/messdocs $(OBJ)/mess/tools/messtest	\
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound			\
 		$(OBJ)/ui $(OBJ)/mess/ui

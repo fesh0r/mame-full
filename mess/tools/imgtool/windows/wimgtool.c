@@ -586,7 +586,7 @@ static UINT_PTR new_dialog_typechange(HWND dlgwnd, int filter_index)
 
 				case OPTIONTYPE_ENUM_BEGIN:
 					style = WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_TABSTOP | CBS_DROPDOWNLIST;
-					control = CreateWindow(TEXT("Edit"), NULL, style,
+					control = CreateWindow(TEXT("ComboBox"), NULL, style,
 						 x, y, width, control_height * 8, dlgwnd, NULL, NULL, NULL);
 					break;
 
@@ -1113,6 +1113,7 @@ BOOL wimgtool_registerclass(void)
 	wimgtool_wndclass.lpfnWndProc = wimgtool_wndproc;
 	wimgtool_wndclass.lpszClassName = wimgtool_class;
 	wimgtool_wndclass.lpszMenuName = MAKEINTRESOURCE(IDR_WIMGTOOL_MENU);
+	wimgtool_wndclass.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_IMGTOOL));
 	return RegisterClass(&wimgtool_wndclass);
 }
 

@@ -129,6 +129,17 @@ END
 
 
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_IMGTOOL         ICON    DISCARDABLE     "res/imgtool.ico"
+IDI_DOC             ICON    DISCARDABLE     "res/doc.ico"
+
+
 #ifndef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //

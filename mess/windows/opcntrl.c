@@ -45,10 +45,11 @@ static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 {
 	struct OptionRange ranges[128];
 	int default_value, default_index, current_index, option_count;
-	int i, j;
+	int i, j, k;
 	BOOL has_option;
 	TCHAR buf1[256];
 	TCHAR buf2[256];
+	LPCTSTR text;
 
 	SendMessage(control, CB_GETLBTEXT, SendMessage(control, CB_GETCURSEL, 0, 0), (LPARAM) buf1);
 	SendMessage(control, CB_RESETCONTENT, 0, 0);
@@ -56,7 +57,8 @@ static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 
 	if (has_option)
 	{
-		assert(guide->option_type == OPTIONTYPE_INT);
+		if ((guide->option_type != OPTIONTYPE_INT) && (guide->option_type != OPTIONTYPE_ENUM_BEGIN))
+			goto unexpected;
 
 		option_resolution_listranges(optspec, guide->parameter,
 			ranges, sizeof(ranges) / sizeof(ranges[0]));
@@ -70,7 +72,25 @@ static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 		{
 			for (j = ranges[i].min; j <= ranges[i].max; j++)
 			{
-				_sntprintf(buf2, sizeof(buf2) / sizeof(buf2[0]), TEXT("%d"), j);
+				if (guide->option_type == OPTIONTYPE_INT)
+				{
+					_sntprintf(buf2, sizeof(buf2) / sizeof(buf2[0]), TEXT("%d"), j);
+					text = buf2;
+				}
+				else if (guide->option_type == OPTIONTYPE_ENUM_BEGIN)
+				{
+					for (k = 1; guide[k].option_type == OPTIONTYPE_ENUM_VALUE; k++)
+					{
+						if (guide[k].parameter == j)
+							break;
+					}
+					if (guide[k].option_type != OPTIONTYPE_ENUM_VALUE)
+						goto unexpected;
+					text = A2T(guide[k].display_name);
+				}
+				else
+					goto unexpected;
+
 				SendMessage(control, CB_ADDSTRING, 0, (LPARAM) buf2);
 				SendMessage(control, CB_SETITEMDATA, option_count, j);
 
@@ -99,6 +119,10 @@ static BOOL prepare_combobox(HWND control, const struct OptionGuide *guide,
 	}
 	EnableWindow(control, has_option);
 	return TRUE;
+
+unexpected:
+	assert(FALSE);
+	return FALSE;
 }
 
 
@@ -113,34 +137,45 @@ static BOOL check_combobox(HWND control)
 static BOOL prepare_editbox(HWND control, const struct OptionGuide *guide,
 	const char *optspec)
 {
-	optreserr_t err;
+	optreserr_t err = OPTIONRESOLUTION_ERROR_SUCCESS;
 	TCHAR buf[32];
 	int val, has_option, option_count;
 
 	has_option = guide && optspec;
+	buf[0] = '\0';
 
 	if (has_option)
 	{
-		err = option_resolution_getdefault(optspec, guide->parameter, &val);
-		if (err)
-			has_option = FALSE;
+		switch(guide->option_type)
+		{
+			case OPTIONTYPE_STRING:
+				break;
+
+			case OPTIONTYPE_INT:
+				err = option_resolution_getdefault(optspec, guide->parameter, &val);
+				if (err)
+					goto done;
+				_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), "%d", val);
+				break;
+
+			default:
+				err = OPTIONRESOLTUION_ERROR_INTERNAL;
+				goto done;
+		}
 	}
 
 	if (has_option)
 	{
-		_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), "%d", val);
-
 		option_count = get_option_count(guide, optspec);
 		if (option_count <= 1)
 			has_option = FALSE;
 	}
-	else
-	{
-		buf[0] = '\0';
-	}
+
+done:
+	assert(err != OPTIONRESOLTUION_ERROR_INTERNAL);
 	SetWindowText(control, buf);
-	EnableWindow(control, has_option);
-	return TRUE;
+	EnableWindow(control, !err && has_option);
+	return err == OPTIONRESOLUTION_ERROR_SUCCESS;
 }
 
 
@@ -179,8 +214,11 @@ static BOOL check_editbox(HWND control)
 
 		default:
 			err = OPTIONRESOLTUION_ERROR_INTERNAL;
-			break;
+			goto done;
 	}
+
+done:
+	assert(err != OPTIONRESOLTUION_ERROR_INTERNAL);
 	return (err != OPTIONRESOLUTION_ERROR_SUCCESS);
 }
 

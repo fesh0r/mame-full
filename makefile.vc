@@ -279,6 +279,7 @@ OBJDIRS += \
 	$(OBJ)/mess/tools/dat2html \
 	$(OBJ)/mess/tools/imgtool \
 	$(OBJ)/mess/tools/imgtool/windows \
+	$(OBJ)/mess/tools/imgtool/windows/res \
 	$(OBJ)/mess/tools/mkhdimg \
 	$(OBJ)/mess/tools/messroms \
 	$(OBJ)/mess/tools/messdocs \
