@@ -98,6 +98,7 @@ extern int *pdp1_memory;
 
 void init_pdp1(void);
 MACHINE_INIT( pdp1 );
+MACHINE_STOP( pdp1 );
 READ18_HANDLER ( pdp1_read_mem );
 WRITE18_HANDLER ( pdp1_write_mem );
 
@@ -117,27 +118,27 @@ INTERRUPT_GEN( pdp1_interrupt );
 
 /* From vidhrdw/pdp1.c */
 VIDEO_START( pdp1 );
+VIDEO_EOF( pdp1 );
 VIDEO_UPDATE( pdp1 );
 
 void pdp1_plot(int x, int y);
-void pdp1_screen_update(void);
 
-void pdp1_teletyper_drawchar(int character);
+void pdp1_typewriter_drawchar(int character);
 
 
 enum
 {
-	/* size and position of crt view */
+	/* size and position of crt window */
 	crt_window_width = 512,
 	crt_window_height = 512,
 	crt_window_offset_x = 0,
 	crt_window_offset_y = 0,
-	/* size and position of operator control panel view */
+	/* size and position of operator control panel window */
 	panel_window_width = 384,
 	panel_window_height = 128,
 	panel_window_offset_x = crt_window_width,
 	panel_window_offset_y = 0,
-	/* size and position of typewriter view */
+	/* size and position of typewriter window */
 	typewriter_window_width = 640,
 	typewriter_window_height = 160,
 	typewriter_window_offset_x = 0,
@@ -149,7 +150,7 @@ enum
 	total_width = crt_window_width + panel_window_width,
 	total_height = crt_window_height + typewriter_window_height,
 
-	/* respect 4:3 aspect ratio */
+	/* respect 4:3 aspect ratio to keep pixels square */
 	virtual_width_1 = ((total_width+3)/4)*4,
 	virtual_height_1 = ((total_height+2)/3)*3,
 	virtual_width_2 = virtual_height_1*4/3,
@@ -158,20 +159,27 @@ enum
 	virtual_height = (virtual_height_1 > virtual_height_2) ? virtual_height_1 : virtual_height_2
 };
 
+enum
+{	/* refresh rate in Hz: can be changed at will */
+	refresh_rate = 60
+};
+
 /* Color codes */
 enum
 {
-	/* first pen_crt_num_levels colors used for CRT remanence */
-	pen_crt_num_levels = 32,
+	/* first pen_crt_num_levels colors used for CRT (with remanence) */
+	pen_crt_num_levels = 62,
 	pen_crt_max_intensity = pen_crt_num_levels-1,
 
+	/* next colors used for control panel and typewriter */
 	pen_black = 0,
-	pen_white = pen_crt_max_intensity,
-	pen_green = pen_crt_num_levels,
-	pen_dk_green = pen_crt_num_levels+1,
-	pen_red = pen_crt_num_levels+2,
-	pen_lt_gray = pen_crt_num_levels+3,
+	pen_white = pen_crt_num_levels,
+	pen_green,
+	pen_dk_green,
+	pen_red,
+	pen_lt_gray,
 
+	/* color constants for control panel */
 	pen_panel_bg = pen_black,
 	pen_panel_caption = pen_white,
 	color_panel_caption = 0,
@@ -180,6 +188,7 @@ enum
 	pen_lit_lamp = pen_green,
 	pen_unlit_lamp = pen_dk_green,
 
+	/* color constants for typewriter */
 	pen_typewriter_bg = pen_white,
 	color_typewriter_black = 1,
 	color_typewriter_red = 2

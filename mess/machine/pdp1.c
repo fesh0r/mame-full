@@ -262,11 +262,6 @@ void init_pdp1(void)
 	dst = memory_region(REGION_GFX1);
 
 	memcpy(dst, fontdata6x8, pdp1_fontdata_size);
-
-	/* init variables */
-	io_status = io_st_tyo | io_st_ptp;
-	tape_reader.rcl = tape_reader.rc = 0;
-	tape_reader.timer = tape_puncher.timer = typewriter.tyo_timer = dpy_timer = NULL;
 }
 
 
@@ -293,6 +288,18 @@ MACHINE_INIT( pdp1 )
 	tape_puncher.timer = timer_alloc(puncher_callback);
 	typewriter.tyo_timer = timer_alloc(tyo_callback);
 	dpy_timer = timer_alloc(dpy_callback);
+
+	/* reset device state */
+	tape_reader.rcl = tape_reader.rc = 0;
+	io_status = io_st_tyo | io_st_ptp;
+}
+
+
+MACHINE_STOP( pdp1 )
+{
+	/* the core will take care of freeing the timers, BUT we must set the variables
+	to NULL if we don't want to risk confusing the tape image init function */
+	tape_reader.timer = tape_puncher.timer = typewriter.tyo_timer = dpy_timer = NULL;
 }
 
 
@@ -518,9 +525,104 @@ static void typewriter_out(UINT8 data)
 	#if LOG_IOT_EXTRA
 		logerror("typewriter output %o\n", data);
 	#endif
-	pdp1_teletyper_drawchar(data);
+	pdp1_typewriter_drawchar(data);
 	if (typewriter.fd)
+#if 1
 		osd_fwrite(typewriter.fd, & data, 1);
+#else
+	{
+		static const char ascii_table[2][64] =
+		{	/* n-s = non-spacing */
+			{	/* lower case */
+				' ',				'1',				'2',				'3',
+				'4',				'5',				'6',				'7',
+				'8',				'9',				'*',				'*',
+				'*',				'*',				'*',				'*',
+				'0',				'/',				's',				't',
+				'u',				'v',				'w',				'x',
+				'y',				'z',				'*',				',',
+				'*',/*black*/		'*',/*red*/			'*',/*Tab*/			'*',
+				'\200',/*n-s middle dot*/'j',			'k',				'l',
+				'm',				'n',				'o',				'p',
+				'q',				'r',				'*',				'*',
+				'-',				')',				'\201',/*n-s overstrike*/'(',
+				'*',				'a',				'b',				'c',
+				'd',				'e',				'f',				'g',
+				'h',				'i',				'*',/*Lower Case*/	'.',
+				'*',/*Upper Case*/	'*',/*Backspace*/	'*',				'*'/*Carriage Return*/
+			},
+			{	/* upper case */
+				' ',				'"',				'\'',				'~',
+				'\202',/*implies*/	'\203',/*or*/		'\204',/*and*/		'<',
+				'>',				'\205',/*up arrow*/	'*',				'*',
+				'*',				'*',				'*',				'*',
+				'\206',/*right arrow*/'?',				'S',				'T',
+				'U',				'V',				'W',				'X',
+				'Y',				'Z',				'*',				'=',
+				'*',/*black*/		'*',/*red*/			'\t',/*Tab*/		'*',
+				'_',/*n-s???*/		'J',				'K',				'L',
+				'M',				'N',				'O',				'P',
+				'Q',				'R',				'*',				'*',
+				'+',				']',				'|',/*n-s???*/		'[',
+				'*',				'A',				'B',				'C',
+				'D',				'E',				'F',				'G',
+				'H',				'I',				'*',/*Lower Case*/	'\207',/*multiply*/
+				'*',/*Upper Case*/	'\b',/*Backspace*/	'*',				'*'/*Carriage Return*/
+			}
+		};
+		static int case_shift;
+
+		data &= 0x3f;
+
+		switch (data)
+		{
+		case 034:
+			/* Black: ignore */
+			//color = color_typewriter_black;
+			{
+				static char black[5] = { '\033', '[', '3', '0', 'm' };
+				osd_fwrite(typewriter.fd, black, sizeof(black));
+			}
+			break;
+
+		case 035:
+			/* Red: ignore */
+			//color = color_typewriter_red;
+			{
+				static char red[5] = { '\033', '[', '3', '1', 'm' };
+				osd_fwrite(typewriter.fd, red, sizeof(red));
+			}
+			break;
+
+		case 072:
+			/* Lower case */
+			case_shift = 0;
+			break;
+
+		case 074:
+			/* Upper case */
+			case_shift = 1;
+			break;
+
+		case 077:
+			/* Carriage Return */
+			{
+				static char line_end[2] = { '\r', '\n' };
+				osd_fwrite(typewriter.fd, line_end, sizeof(line_end));
+			}
+			break;
+
+		default:
+			/* Any printable character... */
+
+			if ((data != 040) && (data != 056))	/* 040 and 056 are non-spacing characters: don't try to print right now */
+				/* print character (lookup ASCII equivalent in table) */
+				osd_fwrite(typewriter.fd, & ascii_table[case_shift][data], 1);
+
+			break;
+		}
+	}
+#endif
 }
 
 
@@ -889,7 +991,7 @@ static void pdp1_keyboard(void)
 			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 0);	/* interrupt it, baby */
 #endif
 			cpunum_set_reg(0, PDP1_PF1, 1);
-			/*pdp1_teletyper_drawchar(typewriter.tb);*/	/* right??? */
+			/*pdp1_typewriter_drawchar(typewriter.tb);*/	/* right??? */
 			break;
 		}
 	}
@@ -914,10 +1016,6 @@ INTERRUPT_GEN( pdp1_interrupt )
 	int control_transitions;
 	int tw_transitions;
 	int ta_transitions;
-
-
-	/* update display */
-	pdp1_screen_update();
 
 
 	cpunum_set_reg(0, PDP1_SS, readinputport(pdp1_sense_switches));

@@ -44,6 +44,7 @@ and the java source).
 
 */
 
+#include <math.h>
 
 #include "driver.h"
 
@@ -51,8 +52,6 @@ and the java source).
 #include "includes/pdp1.h"
 
 /*
- * PRECISION CRT DISPLAY (TYPE 30)
- * is the only display - hardware emulated, this is needed for SPACEWAR!
  *
  * The loading storing OS... is not emulated (I haven't a clue where to
  * get programs for the machine)
@@ -282,6 +281,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 */
 static unsigned char palette[] =
 {
+	0xFF,0xFF,0xFF,	/* white */
 	0x00,0xFF,0x00,	/* green */
 	0x00,0x40,0x00,	/* dark green */
 	0xFF,0x00,0x00,	/* red */
@@ -299,24 +299,42 @@ static unsigned short colortable[] =
 static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned char *dummy)
 {
 	int i;
-	double cur_level;
-	int i_cur_level;
-	const double decay = /*.8*/.95;	/* decay factor for the CRT */
+	const double half_period_1 = .05, half_period_2 = .20;
+	const double update_period = 1./refresh_rate;
+	double decay_1, decay_2;	/* decay factor for the CRT */
+	double cur_level_1, cur_level_2;
+	double cut_level = .03;		/* level at which we stop the decay and say the pixel is black */
+	int r, g, b;
 
 
 	/* initialize CRT palette */
-	cur_level = 255.;	/* start with white */
+	decay_1 = pow(.5, update_period / half_period_1);
+	decay_2 = pow(.5, update_period / half_period_2);
+
+	cur_level_1 = cur_level_2 = 255.;	/* start with maximum */
 
 	for (i=pen_crt_max_intensity; i>0; i--)
 	{
-		i_cur_level = (int) (cur_level+.5);
-		palette_set_color(i, i_cur_level, i_cur_level, i_cur_level);
-		cur_level *= decay;
+		r = (int) ((cur_level_1*/*.2*/0.+cur_level_2*.8)+.5);
+		g = (int) ((cur_level_1*/*.2*/0.+cur_level_2*.8)+.5);
+		b = (int) ((cur_level_1*.8+cur_level_2*.2)+.5);
+		palette_set_color(i, r, g, b);
+		cur_level_1 *= decay_1;
+		cur_level_2 *= decay_2;
 	}
 
 #ifdef MAME_DEBUG
-	if (cur_level > 0.05)
-		printf("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);
+	{
+		int recommended_pen_crt_num_levels;
+		if (decay_1 > decay_2)
+			recommended_pen_crt_num_levels = ceil(log(cut_level)/log(decay_1))+1;
+		else
+			recommended_pen_crt_num_levels = ceil(log(cut_level)/log(decay_2))+1;
+		if (recommended_pen_crt_num_levels != pen_crt_num_levels)
+			printf("File %s line %d: recommended value for pen_crt_num_levels is %d\n", __FILE__, __LINE__, recommended_pen_crt_num_levels);
+	}
+	/*if ((cur_level_1 > 255.*cut_level) || (cur_level_2 > 255.*cut_level))
+		printf("File %s line %d: Please take higher value for pen_crt_num_levels or smaller value for decay\n", __FILE__, __LINE__);*/
 #endif
 
 	palette_set_color(0, 0, 0, 0);
@@ -374,12 +392,12 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_CPU_VBLANK_INT(pdp1_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(refresh_rate)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( pdp1 )
-	/*MDRV_MACHINE_STOP( NULL )*/
+	MDRV_MACHINE_STOP( pdp1 )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware (includes the control panel and typewriter output) */
@@ -387,6 +405,7 @@ static MACHINE_DRIVER_START(pdp1)
 	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(virtual_width, virtual_height)
 	MDRV_VISIBLE_AREA(0, virtual_width-1, 0, virtual_height-1)
+	/*MDRV_VISIBLE_AREA(0, crt_window_width-1, 0, crt_window_height-1)*/
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(pen_crt_num_levels + (sizeof(palette) / sizeof(palette[0]) / 3))
@@ -394,7 +413,7 @@ static MACHINE_DRIVER_START(pdp1)
 
 	MDRV_PALETTE_INIT(pdp1)
 	MDRV_VIDEO_START(pdp1)
-	/*MDRV_VIDEO_EOF(name)*/
+	MDRV_VIDEO_EOF(pdp1)
 	MDRV_VIDEO_UPDATE(pdp1)
 
 	/* no sound */
