@@ -142,8 +142,17 @@ static floperr_t apple2_general_construct(floppy_image *floppy, int floppy_type)
 static FLOPPY_IDENTIFY(apple2_dsk_identify)
 {
 	UINT64 size;
+	UINT64 expected_size;
+
 	size = floppy_image_size(floppy);
-	*vote = (size == APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE) ? 100 : 0;
+	expected_size = APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE;
+
+	if (size == expected_size)
+		*vote = 100;
+	else if ((size > expected_size) && (size < expected_size + 8))
+		*vote = 90;		/* tolerate images with up to eight extra bytes (bug #638) */
+	else
+		*vote = 0;
 	return FLOPPY_ERROR_SUCCESS;
 }
 

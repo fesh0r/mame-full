@@ -16,6 +16,9 @@ System Driver Changes:
 
 - [APPLE2] Complete rewrite of Apple II banking.  [Nate Woods]
 
+- [APPLE2] Driver will now accept .dsk images with up to eight extraneous
+  bytes.  (bug #638) [Nate Woods]
+
 
 
 User Interface Changes:
