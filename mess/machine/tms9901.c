@@ -15,31 +15,37 @@
 	TMS9901 emulation.
 
 Overview:
-	TMS9901 is a support chip for TMS9900.  It handles interrupts, provides several I/O pins, and
-	a timer (a.k.a. clock: it is merely a register which decrements regularily and can generate
-	an interrupt when it reaches 0).
+	TMS9901 is a support chip for TMS9900.  It handles interrupts, provides
+	several I/O pins, and a timer (a.k.a. clock: it is merely a register which
+	decrements regularly and can generate an interrupt when it reaches 0).
 
-	It communicates with the TMS9900 with the CRU bus, and with the rest of the world with
-	a number of parallel I/O pins.
+	It communicates with the TMS9900 with the CRU bus, and with the rest of the
+	world with a number of parallel I/O pins.
 
-	I/O and timer functions should work with any other 990/99xx/99xxx CPU.  Since the interrupt
-	bus is different on each CPU, I guess interrupt handling was only used on tms9900-based
-	systems.
+	I/O and timer functions should work with any other 990/99xx/99xxx CPU.
+	On the other hand, interrupt handling was primarily designed for tms9900
+	and 99000 based systems: other CPUs can support interrupts, but not the 16
+	distinct interrupt vectors.
 
 Pins:
-	Reset
+	Vcc, Vss: power supply
+	Phi*: system clock (connected to TMS9900 Phi3* or TMS9980 CLKOUT*)
+	RST1*: reset input
+	CRUIN, CRUOUT, CRUCLK, CE*, S0-S4: CRU bus (CPU interface)
+	INTREQ*, IC0-IC3: interrupt bus (CPU interface)
 	INT1-INT7: used as interrupt/input pins.
 	P0-P7: used as input/output pins.
 	INT8/P15-INT15/P8: used as either interrupt/input or input/output pins.
 	  Note that a pin cannot be used simultaneously as output and as interrupt.
 	  (This is mostly obvious, but it implies that you cannot trigger an
 	  interrupt by setting the output state of a pin, which is not SO obvious.)
+	
 
 Interrupt handling:
-	After each clock cycle, TMS9901 latches the state of INT1*-INT15* (except pins which are set
-	as output pins).  If the clock is enabled, it replaces INT3* with an internal timer int
-	pending register.  Then it inverts the value and performs a bit-wise AND with the interrupt
-	mask.
+	After each clock cycle, TMS9901 latches the state of INT1*-INT15* (except
+	pins which are set as output pins).  If the clock is enabled, it replaces
+	INT3* with an internal timer with flag.  Then it inverts the value and
+	performs a bit-wise AND with the interrupt mask.
 
 	If there are some unmasked interrupt bits, INTREQ* is asserted and the code
 	of the lowest active interrupt is placed on IC0-IC3.  If these pins are
@@ -49,20 +55,21 @@ Interrupt handling:
 	that no unmasked higher-priority (i.e. lower-level) interrupt pin is set.
 
 	This interrupt request lasts for as long as the interrupt pin and the
-	revelant bit in the interrupt mask are set (level-triggered interrupts).
+	relevant bit in the interrupt mask are set (level-triggered interrupts).
 	(The request may be shadowed by a higher-priority interrupt request, but
-	it will resume when the higher level request ends)
+	it will resume when the higher level request ends.)
 
-	TIMER interrupts are kind of an exception, since they are not associated with an external
-	interrupt pin.  I think the request is set by the decrementer reaching 0, and is cleared by a
-	write to the 9901 int3 enable bit ("SBO 3") (or am I wrong once again ?).
+	TIMER interrupts are kind of an exception, since they are not associated
+	with an external interrupt pin.  I think there is an internal timer
+	interrupt flag that is set when the decrementer reaches 0, and is cleared
+	by a write to the 9901 int3 enable bit ("SBO 3").
 
 TODO:
 	* Emulate the RST1* input.  Note that RST1* active (low) makes INTREQ*
 	  inactive (high) with IC0-IC3 = 0.
 	* the clock read register is updated every time the timer decrements when
-	  the TMS9901 is not in clock mode.  This probably implies tat if you clear
-	  the clock mode and re-assert it immediately, the tms9901 may have failed
+	  the TMS9901 is not in clock mode.  This probably implies that if the
+	  clock mode is cleared and re-asserted immediately, the tms9901 may fail
 	  to update the clock read register: this is not emulated.
 	* The clock mode is entered when a 1 is written to the control bit.  It is
 	  exited when a 0 is written to the control bit or the a tms9901 select bit
@@ -71,7 +78,8 @@ TODO:
 	  As the CPU is accessing memory, A10-A14 could very easily have a value of
 	  15 or greater" (this is assuming that S0-S4 are connected to A10-A14,
 	  which makes sense with most tms9900 family members).  There is no way
-	  this "feature" (I would call this a hardwre bug) can be emulated.
+	  this "feature" (I would call it a hardware bug) can be emulated
+	  efficiently, as we would need to watch every memory access.
 */
 
 
@@ -82,7 +90,6 @@ TODO:
 typedef struct tms9901_t
 {
 	/* interrupt registers */
-
 	int supported_int_mask;	/* mask:  bit #n is set if pin #n is supported as an interrupt pin,
 							  i.e. the driver sends a notification whenever the pin state changes */
 							/* setting these bits is not required, but it saves you the trouble of
@@ -358,7 +365,7 @@ int tms9901_cru_r(int which, int offset)
 	case 0:
 		if (tms9901[which].mode9901)
 		{	/* timer mode */
-			return ((tms9901[which].latchedtimer & 0x7F) << 1) | 0x01;
+			answer = ((tms9901[which].latchedtimer & 0x7F) << 1) | 0x01;
 		}
 		else
 		{	/* I/O mode */
@@ -374,7 +381,6 @@ int tms9901_cru_r(int which, int offset)
 	case 1:
 		if (tms9901[which].mode9901)
 		{	/* timer mode */
-
 			answer = (tms9901[which].latchedtimer & 0x3F80) >> 7;
 			if (! tms9901[which].int_pending)
 				answer |= 0x80;
