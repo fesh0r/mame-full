@@ -1,8 +1,17 @@
 
-/* Oric 1, Oric Atmos and Oric Telestrat Machine Drivers ..... */
+/* 
+	Systems supported by this driver:
 
-/* Pravetz is a Bulgarian copy of the Oric Atmos */
-/* it uses Apple disc drives */
+	Oric 1,
+	Oric Atmos,
+	Oric Telestrat,
+	Pravetz 8D
+
+	Pravetz is a Bulgarian copy of the Oric Atmos and uses
+	Apple 2 disc drives for storage 
+
+	This driver originally by Paul Cook, rewritten by Kevin Thacker.
+*/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -11,12 +20,37 @@
 #include "includes/centroni.h"
 #include "printer.h"
 
+
+/* 
+	Explaination of memory regions:
+
+	I have split the memory region &c000-&ffff in this way because:
+
+	All roms (os, microdisc and jasmin) use the 6502 IRQ vectors at the end
+	of memory &fff8-&ffff, but they are different sizes. The os is 16k, microdisc
+	is 8k and jasmin is 2k.
+
+	There is also 16k of ram at &c000-&ffff which is normally masked
+	by the os rom, but when the microdisc or jasmin interfaces are used,
+	this ram can be accessed. For the microdisc and jasmin, the ram not
+	covered by the roms for these interfaces, can be accessed 
+	if it is enabled.
+
+	MRA_BANK1,MRA_BANK2 and MRA_BANK3 are used for a 16k rom.
+	MRA_BANK2 and MRA_BANK3 are used for a 8k rom.
+	MRA_BANK3 is used for a 2k rom.
+
+*/
+
+
 static MEMORY_READ_START(oric_readmem)
     { 0x0000, 0x02FF, MRA_RAM },
     { 0x0300, 0x03ff, oric_IO_r },
     { 0x0400, 0xBFFF, MRA_RAM },
+
     { 0xc000, 0xdFFF, MRA_BANK1 },
-	{ 0xe000, 0xffff, MRA_BANK2 },
+	{ 0xe000, 0xf7ff, MRA_BANK2 },	
+	{ 0xf800, 0xffff, MRA_BANK3 },	
 MEMORY_END
 
 static MEMORY_WRITE_START(oric_writemem)
@@ -24,9 +58,13 @@ static MEMORY_WRITE_START(oric_writemem)
     { 0x0300, 0x03ff, oric_IO_w },
     { 0x0400, 0xbFFF, MWA_RAM },
     { 0xc000, 0xdFFF, MWA_BANK5 },
-    { 0xe000, 0xffff, MWA_BANK6 },
+    { 0xe000, 0xf7ff, MWA_BANK6 },
+	{ 0xf800, 0xffff, MWA_BANK7 },
 MEMORY_END
 
+/* 
+The telestrat has the memory regions split into 16k blocks.
+Memory region &c000-&ffff can be ram or rom. */
 static MEMORY_READ_START(telestrat_readmem)
     { 0x0000, 0x02FF, MRA_RAM },
     { 0x0300, 0x03ff, telestrat_IO_r },
