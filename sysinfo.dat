@@ -3496,12 +3496,43 @@ Now type CALL #<number> to execute the program.
 History and Trivia:
 
 The Pravetz 8D is a Bulgarian clone of the Oric Atmos.
-It was produced between 1986 and 1989.
+It was produced between 1985 and 1989: Pravetz is both the name of the firm and the name of
+the city where the firm is located. The "D" in the name stands for "Domashen" ('home' in
+Bulgarian) while the "8" stands for (you've never guess!) '8 bits'.
 
-Thankyou to:
+There was a whole family of Pravetz computer which included the following models:
 
-George Dramchev for the Pravetz information,
-Fabrice Frances for the Oric information,
+Pravetz 82, 8M, 8A, 8E, 8C, 8D (8 bits)
+Pravetz 16, 16A, 286 (16 bits, PC clones)
+
+Most of 8 bits machines were Apple II compatibles, "8D" being the exception. The "8D" model was
+issued in 1985 and costed 420 lev - if you think that the average salary by that time was about
+180-200 lev, you can see that it was pretty expensive.
+
+The "82" model was the trade name of a machine called "IMKO-2" and was released in 1981. The "IMKO-2"
+was the upgraded version of the "IMKO", designed in 1979 and used for robot control.
+
+The main differences from the Oric Atmos were obviously the keyboard and the floppy interface.
+
+The Pravetz 8D can display both Cyrillic and Latin alphabets - the one currently in use is selected
+by the key labelled "C/L" which takes place of the "FUNCT" key present on the Atmos. Other features
+of the keyboard are the "ESC" and "CTRL" keys, labelled respectively "OSV" and "MK".
+
+During Pravetz' glory days none of Oric's disk interfaces were imported in Bulgaria, thus the magazine
+"Computer for you" organized a competition to develop a disk interface which was compatible with
+the most widespread disk drive currently used, namely the Apple II's disk drive.
+The competition was won in 1989 by Borislav "Boby" Zahariev, student at MEI University of Sofia.
+The first version of the disk interface used top 16Kb of RAM to store the DOS, which prevented
+users from loading larger programs. Later Boris developed an upgrade of his interface which
+used in conjunction with a new version of the DOS allowed programs to use the whole memory. He provided
+also a new version of BIOS which detected the presence of the interface and automatically booted
+the DOS from the disk.
+
+
+Thanks to:
+
+Joro Dramchev, Ventzislav Alexandrov and Todor Arnaudov for Pravetz information,
+Fabrice Frances for Oric information,
 
 $end
 #---------------------------------------------------------------------------------------------#
