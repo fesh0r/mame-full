@@ -11,16 +11,24 @@
 #include "driver.h"
 #include "osd_cpu.h"
 
-#define TMS9900_ID      0 /* original processor, 1976 (huh... it had some multi-chip ancestors, */
-                          /* the 9x0 series)*/
-#define TMS9940_ID      1 /* embedded version, 1979 */
-#define TMS9980_ID      2 /* 8-bit variant of tms9900.  Two distinct chips actually : tms9980a, */
+/*#define TI990_9_ID	0*//* early implementation, used in a few real-world applications, 1974 */
+                          /* ("ti990/9" is likely to be a nickname) */
+#define TI990_10_ID		1 /* original multi-chip implementation for minicomputer systems, 1975 */
+/*#define TI990_12_ID		2*//* multi-chip implementation, faster than 990/10. huge instruction set */
+                          /* (144 instructions, with up to 16 additional custom instructions simulteanously) */
+                          /* 1979 (or before) */
+#define TMS9900_ID      3 /* mono-chip implementation, 1976 */
+#define TMS9940_ID      4 /* embedded version, 1979 */
+#define TMS9980_ID      5 /* 8-bit variant of tms9900.  Two distinct chips actually : tms9980a, */
                           /* and tms9981 with an extra clock and simplified power supply */
-#define TMS9985_ID      3 /* 9980 with on-chip 16-bit RAM and decrementer, c. 1978 (never released) */
-#define TMS9989_ID      4 /* improved 9980, used in bombs, missiles, and other *nice* hardware */
-#define TMS9995_ID      5 /* tms9985-like, with many improvements */
-#define TMS99105A_ID    6 /* late variant, widely improved, 1981 */
-#define TMS99110A_ID    7 /* same as above, with floating point support, c. 1981 */
+#define TMS9985_ID      6 /* 9980 with on-chip 16-bit RAM and decrementer, c. 1978 (never released) */
+#define TMS9989_ID      7 /* improved 9980, used in bombs, missiles, and other *nice* hardware */
+/*#define SM68689_ID      8*//* improved 9989, built as an ASIC as 9989 was running scarce */
+#define TMS9995_ID      9 /* tms9985-like, with many improvements */
+#define TMS99000_ID     10/* improved mono-chip implementation, meant to replace 990/10, 1981 */
+                          /* This chip is available in several variants (tms99105, tms99110...), */
+                          /* which are similar but emulate additional instructions thanks */
+                          /* to the so-called macrostore feature. */
 
 
 
@@ -34,6 +42,28 @@ enum {
 	TMS9900_R12, TMS9900_R13, TMS9900_R14, TMS9900_R15
 #endif
 };
+
+#if (HAS_TI990_10)
+
+extern	int ti990_10_ICount;
+
+extern void ti990_10_init(void);
+extern void ti990_10_reset(void *param);
+extern int ti990_10_execute(int cycles);
+extern void ti990_10_exit(void);
+extern unsigned ti990_10_get_context(void *dst);
+extern void ti990_10_set_context(void *src);
+extern unsigned ti990_10_get_reg(int regnum);
+extern void ti990_10_set_reg(int regnum, unsigned val);
+extern void ti990_10_set_irq_line(int irqline, int state);
+extern void ti990_10_set_irq_callback(int (*callback)(int irqline));
+extern const char *ti990_10_info(void *context, int regnum);
+extern unsigned ti990_10_dasm(char *buffer, unsigned pc);
+
+/* accessor for the internal ROM */
+extern READ16_HANDLER(ti990_10_internal_r);
+
+#endif
 
 #if (HAS_TMS9900)
 
@@ -157,48 +187,36 @@ typedef struct tms9995reset_param
 	int auto_wait_state;
 } tms9995reset_param;
 
-#endif
-
-#if (HAS_TMS99105A)
-
-extern	int tms99105a_ICount;
-
-extern void tms99105a_init(void);
-extern void tms99105a_reset(void *param);
-extern int tms99105a_execute(int cycles);
-extern void tms99105a_exit(void);
-extern unsigned tms99105a_get_context(void *dst);
-extern void tms99105a_set_context(void *src);
-extern unsigned tms99105a_get_reg(int regnum);
-extern void tms99105a_set_reg(int regnum, unsigned val);
-extern void tms99105a_set_irq_line(int irqline, int state);
-extern void tms99105a_set_irq_callback(int (*callback)(int irqline));
-extern const char *tms99105a_info(void *context, int regnum);
-extern unsigned tms99105a_dasm(char *buffer, unsigned pc);
+/* accessor for the first 252 bytes of internal RAM */
+extern READ_HANDLER(tms9995_internal1_r);
+extern WRITE_HANDLER(tms9995_internal1_w);
+/* accessors for the last 4 bytes of internal RAM */
+extern READ_HANDLER(tms9995_internal2_r);
+extern WRITE_HANDLER(tms9995_internal2_w);
 
 #endif
 
-#if (HAS_TMS99110A)
+#if (HAS_TMS99000)
 
-extern	int tms99110A_ICount;
+extern	int tms99000_ICount;
 
-extern void tms99110a_init(void);
-extern void tms99110a_reset(void *param);
-extern int tms99110a_execute(int cycles);
-extern void tms99110a_exit(void);
-extern unsigned tms99110a_get_context(void *dst);
-extern void tms99110a_set_context(void *src);
-extern unsigned tms99110a_get_reg(int regnum);
-extern void tms99110a_set_reg(int regnum, unsigned val);
-extern void tms99110a_set_irq_line(int irqline, int state);
-extern void tms99110a_set_irq_callback(int (*callback)(int irqline));
-extern const char *tms99110a_info(void *context, int regnum);
-extern unsigned tms99110a_dasm(char *buffer, unsigned pc);
+extern void tms99000_init(void);
+extern void tms99000_reset(void *param);
+extern int tms99000_execute(int cycles);
+extern void tms99000_exit(void);
+extern unsigned tms99000_get_context(void *dst);
+extern void tms99000_set_context(void *src);
+extern unsigned tms99000_get_reg(int regnum);
+extern void tms99000_set_reg(int regnum, unsigned val);
+extern void tms99000_set_irq_line(int irqline, int state);
+extern void tms99000_set_irq_callback(int (*callback)(int irqline));
+extern const char *tms99000_info(void *context, int regnum);
+extern unsigned tms99000_dasm(char *buffer, unsigned pc);
 
 #endif
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm9900 (char *buffer, unsigned pc);
+extern unsigned Dasm9900 (char *buffer, unsigned pc, int model_id);
 #endif
 
 #endif
