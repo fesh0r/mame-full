@@ -647,6 +647,7 @@ void LoadCheatFile (int merge, char *filename)
         data8_t temp_data;
 #ifdef MESS
         data8_t temp_olddata;
+        int temp_olddata16;
 #endif
         INT32 temp_code;
 
@@ -718,8 +719,8 @@ void LoadCheatFile (int merge, char *filename)
         /* old data byte */
         ptr = strtok(NULL, ":");
         if (!ptr) continue;
-        sscanf(ptr,"%x", &temp_olddata);
-        temp_olddata &= 0xff;
+        sscanf(ptr,"%x", &temp_olddata16);
+        temp_olddata = temp_olddata16 & 0xff;
 #endif
 
         /* special code */
