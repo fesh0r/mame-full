@@ -547,7 +547,7 @@ int gb_load_rom (int id)
 	}
 
 
-#if 0								   // FIXME
+#if 0	/* FIXME */
 	if ((gb_ram[0x0147] == 3) || (gb_ram[0x0147] == 6))
 	{
 		strcpy (TempFileName, BaseCartName);

@@ -161,7 +161,7 @@ extern int  pc_vga_frame_interrupt(void);
 
 /* from sndhrdw/pc.c */
 extern int  pc_sh_init(const char *name);
-#if 1 // adjustmends for mame36b
+#if 1	/* adjustmends for mame36b */
 extern int  pc_sh_custom_start(const struct MachineSound *driver);
 extern void pc_sh_custom_update(void);
 #endif

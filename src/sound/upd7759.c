@@ -254,8 +254,8 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 	if (!data[j]) j++;
 	if ((data[j] & 0xf0) != 0x50) j++;
 
-	// Added and Modified by Takahiro Nogi. 1999/10/28
-#if 0	// original
+	/* Added and Modified by Takahiro Nogi. 1999/10/28 */
+#if 0	/* original */
 	switch (data[j])
 	{
 		case 0x53: sample->freq = 8000; break;
@@ -264,13 +264,13 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 		default:
 			sample->freq = 5000;
 	}
-#else	// modified by Takahiro Nogi. 1999/10/28
+#else	/* modified by Takahiro Nogi. 1999/10/28 */
 	switch (data[j] & 0x1f)
 	{
 		case 0x13: sample->freq = 8000; break;
 		case 0x19: sample->freq = 6000; break;
 		case 0x1f: sample->freq = 5000; break;
-		default:				// ???
+		default:				/* ??? */
 			sample->freq = 5000;
 	}
 #endif
@@ -473,7 +473,7 @@ void UPD7759_message_w (int num, int data)
 	{
 		int offset = -1;
 
-		//LOG(1,("upd7759_message_w $%02x\n", data));
+		/* LOG(1,("upd7759_message_w $%02x\n", data)); */
 		logerror("upd7759_message_w $%2x\n",data);
 
         switch (data) {
@@ -513,7 +513,7 @@ void UPD7759_message_w (int num, int data)
 
 			default:
 
-				//LOG(1,("upd7759_message_w unhandled $%02x\n", data));
+				/* LOG(1,("upd7759_message_w unhandled $%02x\n", data)); */
 				logerror("upd7759_message_w unhandled $%02x\n", data);
 				if ((data & 0xc0) == 0xc0)
 				{
@@ -528,7 +528,7 @@ void UPD7759_message_w (int num, int data)
 		if (offset > 0)
 		{
 			voice->base = &memory_region(upd7759_intf->region[num])[offset];
-			//LOG(1,("upd7759_message_w set base $%08x\n", offset));
+			/* LOG(1,("upd7759_message_w set base $%08x\n", offset)); */
 			logerror("upd7759_message_w set base $%08x\n", offset);
         }
 	}

@@ -184,8 +184,8 @@ static int ega_get_clock(void)
 	switch(vga.miscellaneous_output&0xc) {
 	case 0: clock=14000000;break;
 	case 4: clock=16000000;break;
-	//case 8: //external
-	//case 0xc: //reserved
+	/* case 8: external */
+	/* case 0xc: reserved */
 	}
 	if (vga.sequencer.data[1]&8) clock/=2;
 	return clock;
@@ -197,14 +197,14 @@ static int vga_get_clock(void)
 	switch(vga.miscellaneous_output&0xc) {
 	case 0: clock=25000000;break;
 	case 4: clock=28000000;break;
-	//case 8: //external
-	//case 0xc: //reserved
+	/* case 8: external */
+	/* case 0xc: reserved */
 	}
 	if (vga.sequencer.data[1]&8) clock/=2;
 	return clock;
 }
 
-static int ega_get_crtc_columns(void) // in clocks!
+static int ega_get_crtc_columns(void) /* in clocks! */
 {
 	int columns=vga.crtc.data[0]+2;
 	if (!GRAPHIC_MODE) {
@@ -222,7 +222,7 @@ static int ega_get_crtc_lines(void)
 	return lines;
 }
 
-static int vga_get_crtc_columns(void) // in clocks!
+static int vga_get_crtc_columns(void) /* in clocks! */
 {
 	int columns=vga.crtc.data[0]+5;
 
@@ -456,7 +456,7 @@ static READ_HANDLER(vga_crtc_r)
 	case 0xa:
 		vga.attribute.state=0;
 		data=0;/*4; */
-#if 0 //slow
+#if 0 /* slow */
 		{
 			int clock=vga.monitor.get_clock();
 			int lines=vga.monitor.get_lines();
@@ -933,7 +933,7 @@ void vga_vh_ega(struct osd_bitmap *bitmap, int full_refresh)
 			Machine->scrbitmap->line[line][c+7]=
 				vga.pens[ega_bitplane_to_packed(vga.memory+pos,7)];
 #else
-			// recognizable speed improvement compared to above
+			/* recognizable speed improvement compared to above */
 			int data[4];
 			int i;
 
@@ -943,8 +943,8 @@ void vga_vh_ega(struct osd_bitmap *bitmap, int full_refresh)
 			data[3]=vga.memory[pos+3]<<3;
 			for (i=7; i>=0; i--) {
 #if 0
-				// plotpixel is 16 bit aware,
-				// but recognizable speed loss compared to following
+				/* plotpixel is 16 bit aware, */
+				/* but recognizable speed loss compared to following */
 				plot_pixel(Machine->scrbitmap, c+i, line,
 						   vga.pens[(data[0]&1)|(data[1]&2)|(data[2]&4)|(data[3]&8)]);
 #else

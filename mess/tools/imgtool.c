@@ -74,7 +74,7 @@ static const struct ImageModule *images[] = {
 	&imgmod_vc20,
 	&imgmod_vectrex,
 	&imgmod_vic20
-#if 1 // these are only here for testing of these two
+#if 1 /* these are only here for testing of these two */
 	,&imgmod_fs,
 	&imgmod_zip
 #endif

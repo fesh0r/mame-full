@@ -793,7 +793,7 @@ static struct IOReadPort readport_pcw[] =
 };
 
 
-#if 0 //unused
+#if 0 /* unused */
 static struct IOReadPort readport_pcw9512[] =
 {
 	{0x000, 0x07f, pcw_fdc_r},
@@ -822,7 +822,7 @@ static struct IOWritePort writeport_pcw[] =
 };
 
 
-#if 0 //unused
+#if 0 /* unused */
 static struct IOWritePort writeport_pcw9512[] =
 {
 	{0x000, 0x07f, pcw_fdc_w},
