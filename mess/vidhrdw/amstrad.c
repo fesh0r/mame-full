@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/amstrad.h"
+#include "cpuintrf.h"
 /*#include "vidhrdw/hd6845s.h"*/
 
 /* CRTC emulation code */
@@ -435,7 +436,7 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	crtc6845_set_state(0, &amstrad_vidhrdw_6845_state);
 
 	previous_time = 0;
-	num_cycles_remaining = 19968;
+        num_cycles_remaining = 19968; //cpu_getfperiod();
 
 	amstrad_bitmap=bitmap;
 	amstrad_display = amstrad_bitmap->line[0];
