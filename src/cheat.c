@@ -107,10 +107,8 @@
 #include "ui_text.h"
 
 #ifndef MESS
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 extern struct GameDriver driver_neogeo;
-#endif
 #endif
 #endif
 
@@ -209,7 +207,7 @@ enum
 	kCheatSpecial_Timed = 1000
 };
 
-char *cheatfile = NULL;
+char *cheatfile = "cheat.dat";
 
 char database[CHEAT_FILENAME_MAXLEN+1];
 
@@ -508,7 +506,6 @@ void cheat_set_status (int cheat_num, int active)
 #ifdef MESS
             struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];  /* Steph */
 #endif
-
 			/* Reset the active variables */
 			CheatTable[cheat_num].subcheat[i].frame_count = 0;
 			CheatTable[cheat_num].subcheat[i].backup = 0;
@@ -625,7 +622,6 @@ void LoadCheatFile (int merge, char *filename)
 	struct subcheat_struct *subcheat;
 	int sub = 0;
 
-	logerror("LoadCheatFile = %s\n",filename);
 	if (!merge)
 	{
 		ActiveCheatTotal = 0;
@@ -881,27 +877,7 @@ void InitMemoryAreas(void)
 /* Init some variables */
 void InitCheat(void)
 {
-#ifdef MESS
-// 2000-09-27 Cow
-	char *copyofcheat = NULL,*t_cheat,*oldcheat = NULL;
-#endif
 	int i;
-
-	if (!cheatfile)
-	{
-		cheatfile = malloc(16); // long enough for 'cheat.???'
-		if (cheatfile)
-		{
-#ifdef MESS
-			strcpy(cheatfile,"cheat.cdb");
-#else
-			strcpy(cheatfile,"cheat.dat");
-#endif
-		} else 
-		{
-			return;
-		}
-	}
 
 	he_did_cheat = 0;
 	CheatEnabled = 1;
@@ -934,46 +910,7 @@ void InitCheat(void)
 		watches[i].y = i * Machine->uifontheight;
 	}
 
-#ifdef MESS
-// append MESS specific cheat database if generic 'cheat' was specified
-// 2000-09-27 Cow and Steph 20000730
-
-	if (cheatfile) copyofcheat = (char *)malloc(strlen(cheatfile)+strlen(Machine->gamedrv->name)+16);
-	oldcheat = cheatfile;
-	if (copyofcheat)
-	{
-		t_cheat = strstr(cheatfile,"cheat.dat");
-		if (!t_cheat) t_cheat = strstr(cheatfile,"cheat.cdb");
-		if (!t_cheat) t_cheat = strstr(cheatfile,"CHEAT.DAT");
-		if (!t_cheat) t_cheat = strstr(cheatfile,"CHEAT.CDB");
-		if (t_cheat)
-		{
-			strcpy(copyofcheat,cheatfile);
-			strcat(copyofcheat,";");
-			strcat(copyofcheat,Machine->gamedrv->name);
-			strcat(copyofcheat,".cdb");
-			cheatfile = copyofcheat;
-			logerror("New cheatfile: %s\n",cheatfile);
-		}
-		else 
-		{
-			logerror("No default cheatfile\n");
-		}
-	}
-	else 
-	{
-		logerror("No memory for temp cheat names - cheatfile not changed\n");
-	}
-
-#endif
-
 	LoadCheatFiles ();
-
-#ifdef MESS
-	cheatfile = oldcheat;
-	if (copyofcheat) free(copyofcheat);
-#endif
-
 /*	InitMemoryAreas(); */
 }
 
@@ -1052,8 +989,7 @@ INT32 EnableDisableCheatMenu (struct osd_bitmap *bitmap, INT32 selected)
 
 	if ((input_ui_pressed_repeat(IPT_UI_LEFT,8)) || (input_ui_pressed_repeat(IPT_UI_RIGHT,8)))
 	{
-// Cow.. fix the left/right on 'return to main menu' bug
-		if ((sel != (total - 1)) && (CheatTable[tag[sel]].flags & CHEAT_FLAG_COMMENT) == 0)
+		if ((CheatTable[tag[sel]].flags & CHEAT_FLAG_COMMENT) == 0)
 		{
 			int active = CheatTable[tag[sel]].flags & CHEAT_FLAG_ACTIVE;
 
@@ -1666,7 +1602,7 @@ static int build_tables (int cpu)
 		BankToScanTable[2] = 1;
 	}
 #endif
-#ifndef NEOFREE
+#ifndef MESS
 #ifndef TINY_COMPILE
 	if (Machine->gamedrv->clone_of == &driver_neogeo)
 	{
@@ -1867,17 +1803,11 @@ INT32 PerformSearch (struct osd_bitmap *bitmap, INT32 selected)
 }
 
 
-/******************************************
+/*****************
  * Start a cheat search
  * If the method 1 is selected, ask the user a number
-
-#define MAX_LOADEDCHEATS	200
-#define CHEAT_FILENAME_MAXLEN	255
-
-
  * In all cases, backup the ram.
  *
-
  * Ask the user to select one of the following:
  *	1 - Lives or other number (byte) (exact)        ask a start value, ask new value
  *	2 - Timers (byte) (+ or - X)                    nothing at start,  ask +-X
@@ -2189,7 +2119,7 @@ INT32 ViewSearchResults (struct osd_bitmap *bitmap, INT32 selected)
 
 void RestoreSearch (void)
 {
-        int restoreString = 0;       /* Steph */
+	int restoreString = NULL;	/* Steph */
 
 	switch (restoreStatus)
 	{
@@ -2531,6 +2461,9 @@ static INT32 ConfigureWatch (struct osd_bitmap *bitmap, INT32 selected, UINT8 wa
 
 	if (sel == -1 || sel == -2)
 	{
+		textedit_active = 0;
+		/* flush the text buffer */
+		osd_readkey_unicode (1);
 		/* tell updatescreen() to clean after us */
 		need_to_clear_bitmap = 1;
 	}
@@ -2779,10 +2712,6 @@ INT32 cheat_menu(struct osd_bitmap *bitmap, INT32 selected)
 		{
 			submenu_choice = 0;
 			sel = -1;
-		}
-		else if (sel == Menu_RestoreSearch)
-		{
-			RestoreSearch ();
 		}
 		else if (sel == Menu_RestoreSearch)
 		{
