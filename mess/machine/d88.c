@@ -80,7 +80,7 @@ int d88image_floppy_init(int id)
 		    w->num_sects[i] = tmp16;
 		    w->sects[i]=malloc(sizeof(d88sect)*w->num_sects[i]);
 		    osd_fseek(w->image_file, toffset, SEEK_SET);
-		    
+
 		    for(j=0;j<w->num_sects[i];j++) {
 		      osd_fread(w->image_file, &(w->sects[i][j].C), 1);
 		      osd_fread(w->image_file, &(w->sects[i][j].H), 1);
@@ -126,7 +126,7 @@ void d88image_floppy_exit(int id)
 {
 	d88image *w;
 	int i;
-	
+
 	/* sanity check */
 	if ((id<0) || (id>=d88image_MAX_DRIVES))
 		return;
@@ -174,7 +174,7 @@ unsigned long offset;
 
 	offset = w->sects[t*2+h][s].offset;
 
-             
+
 #if VERBOSE
     logerror("d88image seek track:%d head:%d sector:%d-> offset #0x%08lX\n",
              t, h, s, offset);
