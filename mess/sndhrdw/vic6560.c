@@ -266,5 +266,5 @@ void *vic6560_custom_start(int clock, const struct CustomSound_interface *config
 	{
 		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
-	return 0;
+	return (void *) ~0;
 }

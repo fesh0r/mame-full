@@ -13,6 +13,8 @@ System Driver Changes:
 
 - [GAMEBOY] Fixed regression introduced in 0.93.  [Nate Woods]
 
+- [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
+
 
 
 User Interface Changes:
