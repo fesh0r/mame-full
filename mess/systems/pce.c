@@ -198,7 +198,7 @@ static struct MachineDriver machine_driver_pce =
     /*pce_gfxdecodeinfo,*/
     512, 512,
     0,
-    VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+    VIDEO_TYPE_RASTER,
     0,		/* was... (256*2) */
     pce_vh_start,
     pce_vh_stop,

@@ -492,7 +492,7 @@ static struct MachineDriver machine_driver_sfzch =
 	4096, 4096,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	cps1_eof_callback,
 	cps1_vh_start,
 	cps1_vh_stop,

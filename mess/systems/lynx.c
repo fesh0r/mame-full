@@ -226,7 +226,6 @@ static struct MachineDriver machine_driver_lynx =
 	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
 	lynx_init_colors,		/* convert color prom */
 
-//	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,	/* video flags */
 	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
     lynx_vh_start,
@@ -267,7 +266,6 @@ static struct MachineDriver machine_driver_lynx2 =
 	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
 	lynx_init_colors,		/* convert color prom */
 
-//	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,	/* video flags */
 	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
     lynx_vh_start,

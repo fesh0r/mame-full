@@ -272,7 +272,6 @@ void atarist_pixel_update(void)
 
 void atarist_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	palette_recalc();
 }
 
 /***************************************************************************/
@@ -2125,7 +2124,7 @@ static struct MachineDriver machine_driver_atarist =
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	atarist_eof_callback,
 	atarist_vh_start,
 	atarist_vh_stop,
@@ -2166,7 +2165,7 @@ static struct MachineDriver machine_driver_stmono =
 	2,2,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	atarist_keyboard_update,
 	atarist_vh_start,
 	atarist_vh_stop,
@@ -2422,4 +2421,4 @@ http://home.wanadoo.nl/jarod/museum/megaste.htm
 /* 1987 : Mega STf - Seperate keyboard, blitter, 1/2/4 Meg ram options */
 /* 1989 : Mega STe - Seperate keyboard, 16MHz 68000 (switchable to 8MHz), memory cache, VME bus, TOS 2.05 & 2.06 */
 
-COMPX(1985, atarist,0, atarist, atarist,0, "atarist", "atarist", GAME_REQUIRES_16BIT )
+COMP(1985, atarist,0, atarist, atarist,0, "atarist", "atarist" )

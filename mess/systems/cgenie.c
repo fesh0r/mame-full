@@ -432,7 +432,7 @@ static struct MachineDriver machine_driver_cgenie =
 	sizeof(colortable) / sizeof(colortable[0]), /* colortable */
 	cgenie_init_palette,						/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	cgenie_vh_start,
 	cgenie_vh_stop,

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.7 2001/08/03 12:24:59 ben Exp $
+  $Id: pc8801.c,v 1.8 2001/09/01 01:14:59 npwoods Exp $
 
 ***************************************************************************/
 
@@ -642,7 +642,6 @@ static struct MachineDriver machine_driver_pc88srl =
         pc8801_init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY |
-	VIDEO_MODIFIES_PALETTE |
 	VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_ASPECT_RATIO(8,5),
 	0,
 	pc8801_vh_start,
@@ -695,7 +694,6 @@ static struct MachineDriver machine_driver_pc88srh =
         pc8801_init_palette,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY |
-	VIDEO_MODIFIES_PALETTE |
 	VIDEO_ASPECT_RATIO(8,5),
 	0,
 	pc8801_vh_start,

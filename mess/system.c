@@ -80,13 +80,13 @@ const struct GameDriver *drivers[] =
 /* for pong style games look into docs/pong.txt */
 
 	/* ATARI */
-//	DRIVER( a2600 ) 	/* Atari 2600						*/
+	DRIVER( a2600 ) 	/* Atari 2600						*/
 //	DRIVER( a5200 ) 	/* Atari 5200						*/
-//	DRIVER( a7800 ) 	/* Atari 7800						*/
-//	DRIVER( lynx )		/* Atari Lynx Handheld					*/
-//	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
-//	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions      */
-//      DRIVER( jaguar )	/* Atari Jaguar 					*/
+	DRIVER( a7800 ) 	/* Atari 7800						*/
+	DRIVER( lynx )		/* Atari Lynx Handheld					*/
+	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
+	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions      */
+//	DRIVER( jaguar )	/* Atari Jaguar 					*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System			*/
@@ -100,7 +100,7 @@ const struct GameDriver *drivers[] =
 //	DRIVER( gamegear )	/* Sega Game Gear Handheld				*/
 //	DRIVER( sms )		/* Sega Sega Master System				*/
 //	DRIVER( genesis )	/* Sega Genesis/MegaDrive				*/
-//    DRIVER( saturn )	/* Sega Saturn							*/
+    DRIVER( saturn )	/* Sega Saturn							*/
 
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade					*/
@@ -289,26 +289,26 @@ XL/XE 16kB OS roms
 TESTDRIVER( sym1 )		/* Synertek SYM1								  */
 TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 
-//	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 			  */
-//	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 					  */
-//	DRIVER( cbm30b )	/* Commodore 30xx (Basic 2) (business keyboard)   */
-//	DRIVER( cbm40 ) 	/* Commodore 40xx FAT (CRTC) 60Hz				  */
-//	DRIVER( cbm40pal )	/* Commodore 40xx FAT (CRTC) 50Hz				  */
-//	DRIVER( cbm40b )	/* Commodore 40xx THIN (business keyboard)		  */
-//	DRIVER( cbm80 ) 	/* Commodore 80xx 60Hz							  */
-//	DRIVER( cbm80pal )	/* Commodore 80xx 50Hz							  */
-//	DRIVER( cbm80ger )	/* Commodore 80xx German (50Hz) 				  */
-//	DRIVER( cbm80swe )	/* Commodore 80xx Swedish (50Hz)				  */
-//	DRIVER( superpet )	/* Commodore SP9000/MMF9000 (50Hz)				  */
+	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 			  */
+	DRIVER( cbm30 ) 	/* Commodore 30xx (Basic 2) 					  */
+	DRIVER( cbm30b )	/* Commodore 30xx (Basic 2) (business keyboard)   */
+	DRIVER( cbm40 ) 	/* Commodore 40xx FAT (CRTC) 60Hz				  */
+	DRIVER( cbm40pal )	/* Commodore 40xx FAT (CRTC) 50Hz				  */
+	DRIVER( cbm40b )	/* Commodore 40xx THIN (business keyboard)		  */
+	DRIVER( cbm80 ) 	/* Commodore 80xx 60Hz							  */
+	DRIVER( cbm80pal )	/* Commodore 80xx 50Hz							  */
+	DRIVER( cbm80ger )	/* Commodore 80xx German (50Hz) 				  */
+	DRIVER( cbm80swe )	/* Commodore 80xx Swedish (50Hz)				  */
+	DRIVER( superpet )	/* Commodore SP9000/MMF9000 (50Hz)				  */
 TESTDRIVER( mmf9000 )	/* Commodore MMF9000 Swedish					  */
 
-//	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
-/*	DRIVER( vic1001 )*/	/* Commodore VIC-1001 (VIC20 Japan)				  */
-//	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
-//	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
+	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
+//	DRIVER( vic1001 )	/* Commodore VIC-1001 (VIC20 Japan)				  */
+	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
+	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
 TESTDRIVER( vic20v ) 	/* Commodore Vic-20 NTSC, VC1540				  */
 TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
-//	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
+	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
 
 //	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
 //	DRIVER( c64 )		/* Commodore 64 - NTSC							  */

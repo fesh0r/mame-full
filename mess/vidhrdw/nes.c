@@ -111,7 +111,9 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 	/* Loop through the emphasis modes (8 total) */
 	for (x = 0; x < 8; x ++)
 	{
-		double r_mod, g_mod, b_mod;
+		double r_mod = 0;
+		double g_mod = 0;
+		double b_mod = 0;
 
 		switch (x)
 		{

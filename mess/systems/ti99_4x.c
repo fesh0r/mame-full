@@ -380,7 +380,7 @@ static struct MachineDriver machine_driver_ti99_4_60hz =
 	TMS9928A_COLORTABLE_SIZE,	/* length in shorts of the color lookup table */
 	tms9928A_init_palette,		/* palette init */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ti99_4_vh_start,
 	TMS9928A_stop,
@@ -439,7 +439,7 @@ static struct MachineDriver machine_driver_ti99_4_50hz =
 	TMS9928A_COLORTABLE_SIZE,	/* length in shorts of the color lookup table */
 	tms9928A_init_palette,		/* palette init */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ti99_4_vh_start,
 	TMS9928A_stop,
@@ -502,7 +502,7 @@ static struct MachineDriver machine_driver_ti99_4a_60hz =
 	TMS9928A_COLORTABLE_SIZE,	/* length in shorts of the color lookup table */
 	tms9928A_init_palette,		/* palette init */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ti99_4a_vh_start,
 	TMS9928A_stop,
@@ -561,7 +561,7 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 	TMS9928A_COLORTABLE_SIZE,	/* length in shorts of the color lookup table */
 	tms9928A_init_palette,		/* palette init */
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ti99_4a_vh_start,
 	TMS9928A_stop,

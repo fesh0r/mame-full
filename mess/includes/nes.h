@@ -11,7 +11,9 @@
 
 /* Uncomment this to have proper emulation of the color intensity */
 /* bits, at the expense of speed (and wonked sprites). */
-//#define COLOR_INTENSITY
+/* NPW 31-Aug-2001 - Uncommented because this is the only way to get it to work at this point */
+#define COLOR_INTENSITY
+
 extern unsigned char nes_palette[3*64];
 extern int dirtychar[0x200];
 extern UINT32 colortable_mono[4*16];

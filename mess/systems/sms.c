@@ -179,7 +179,7 @@ static struct MachineDriver machine_driver_sms =
 	32, 32,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	sms_vdp_start,
 	sms_vdp_stop,
@@ -222,7 +222,7 @@ static struct MachineDriver machine_driver_gamegear =
 	32, 32,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	gamegear_vdp_start,
 	sms_vdp_stop,
