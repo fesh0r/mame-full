@@ -21,9 +21,9 @@
 
 MSX msx1;
 static void msx_set_all_mem_banks (void);
-static WRITE_HANDLER( msx_ppi_port_a_w );
-static READ_HANDLER( msx_ppi_port_b_r );
-static WRITE_HANDLER( msx_ppi_port_c_w );
+static void msx_ppi_port_a_w (int chip, int data);
+static void msx_ppi_port_c_w (int chip, int data);
+static int msx_ppi_port_b_r (int chip);
 static ppi8255_interface msx_ppi8255_interface = {
     1,
     NULL,
@@ -626,12 +626,12 @@ WRITE_HANDLER ( msx_fmpac_w )
 ** The PPI functions
 */
 
-static WRITE_HANDLER( msx_ppi_port_a_w )
+static void msx_ppi_port_a_w (int chip, int data)
 {
     msx_set_all_mem_banks ();
 }
 
-static WRITE_HANDLER( msx_ppi_port_c_w )
+static void msx_ppi_port_c_w (int chip, int data)
 {
     static int old_val = 0xff;
 
@@ -651,7 +651,7 @@ static WRITE_HANDLER( msx_ppi_port_c_w )
     old_val = data;
 }
 
-static READ_HANDLER( msx_ppi_port_b_r )
+static int msx_ppi_port_b_r (int chip)
 {
     int row;
 
