@@ -5,7 +5,9 @@
   Routines to control the Atari 7800 video hardware
 
   TODO:
-	Kangaroo mode
+	precise DMA cycle stealing
+
+	2003-06-23 ericball Kangaroo mode & 320 mode & other stuff
 
 	2002-05-14 kubecj vblank dma stop fix
 
@@ -59,8 +61,9 @@ int maria_rm;
 
 unsigned int maria_charbase;
 
-#define inc_hpos() { if( ++hpos > 510 ) hpos = 0; }
-#define inc_hpos_by_2() { hpos += 2; if( hpos > 510 ) hpos = 0; }
+// 20030621 ericball define using logical operations
+#define inc_hpos() { hpos = (hpos + 1) & 0x1FF; }
+#define inc_hpos_by_2() { hpos = (hpos + 2) & 0x1FF; }
 
 /***************************************************************************
 
@@ -110,12 +113,17 @@ static void maria_draw_scanline(void)
 	unsigned int graph_adr,data_addr;
 	int width,hpos,pal,mode,ind;
 	unsigned int dl;
-	int x,d,c;
+	int x, d, c, i;
 	int ind_bytes;
+	UINT16 *scanline;
+
+	/* set up scanline */
+	scanline = tmpbitmap->line[maria_scanline];
+	for (i = 0; i < 320; i++)
+		scanline[i] = maria_backcolor;
 
 	/* Process this DLL entry */
 	dl = maria_dl;
-	plot_box(tmpbitmap, 0, maria_scanline, 320, 1, maria_backcolor);
 
 	/* Step through DL's */
 	while (READ_MEM(dl + 1) != 0)
@@ -147,384 +155,191 @@ static void maria_draw_scanline(void)
 
 		/*logerror("%x DL: ADR=%x  width=%x  hpos=%x  pal=%x  mode=%x  ind=%x\n",maria_scanline,graph_adr,width,hpos,pal,mode,ind );*/
 
-	 	switch (mode)
+		for (x=0; x<width; x++) // 20030621 ericball get graphic data first, then switch (mode)
 		{
-			case 0x00:  /* 160A (160x2) */
-			case 0x01:  /* 160A (160x2) */
-				for (x=0; x<width; x++)
+			ind_bytes = 1;
+
+			/* Do indirect mode */
+			if (ind)
+			{
+	 			c = READ_MEM(graph_adr + x) & 0xFF;
+	 			data_addr= (maria_charbase | c) + (maria_offset << 8);
+	 			if( maria_cwidth )
+					ind_bytes = 2;
+			}
+			else
+			{
+	 			data_addr = graph_adr + x + (maria_offset  << 8);
+			}
+
+ 			if ( (maria_holey & 0x02) && ((data_addr & 0x9000) == 0x9000))
+				continue;
+ 			if ( (maria_holey & 0x01) && ((data_addr & 0x8800) == 0x8800))
+				continue;
+
+			while (ind_bytes > 0)
+			{
+				ind_bytes--;
+				d = READ_MEM(data_addr++);
+
+			 	switch (mode)
 				{
-					ind_bytes = 1;
-
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-
-			 			if( maria_cwidth )
-							ind_bytes = 2;
-					}
-
-					while (ind_bytes > 0)
-					{
-						ind_bytes--;
-						d = READ_MEM(data_addr++);
-
+					case 0x00:  /* 160A (160x2) */
+					case 0x01:  /* 160A (160x2) */
 						c = (d & 0xC0) >> 6;
-						if (c)
+						if (c || maria_kangaroo)
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
 						}
-
 						inc_hpos_by_2();
 
 						c = (d & 0x30) >> 4;
-						if (c)
+						if (c || maria_kangaroo)
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
 						}
-
 						inc_hpos_by_2();
 
 						c = (d & 0x0C) >> 2;
-						if (c)
+						if (c || maria_kangaroo)
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
 						}
-
 						inc_hpos_by_2();
 
 						c = (d & 0x03);
-						if (c)
+						if (c || maria_kangaroo)
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
 						}
+						inc_hpos_by_2();
+					 	break;
 
+					case 0x02: /* 320D used by Jinks! */
+						c = pal & 0x04;
+						if ( d & 0xC0 || pal & 0x03 || maria_kangaroo )
+						{
+							scanline[hpos + 0] = maria_palette[c][((d & 0x80) >> 6) | ((pal & 2) >> 1)];
+							scanline[hpos + 1] = maria_palette[c][((d & 0x40) >> 5) | ((pal & 1) >> 0)];
+						}
 						inc_hpos_by_2();
 
-					}	/* endwhile */
-			 	}	/* endfor */
-			 	break;
-
-			case 0x02: /* 320D used by Jinks! */
-			 	for (x=0; x<width; x++)
-				{
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-
-					c = ( ( d & 0x80 ) >> 6 ) | ( ( pal & 2 ) >> 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x40 ) >> 5 ) | ( pal & 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x20 ) >> 4 ) | ( ( pal & 2 ) >> 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x10 ) >> 3 ) | ( pal & 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x08 ) >> 2 ) | ( ( pal & 2 ) >> 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x4 ) >> 1 ) | ( pal & 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( d & 0x02 ) | ( ( pal & 2 ) >> 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-					c = ( ( d & 0x1 ) << 1 ) | ( pal & 1 );
-					if ( c )
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][ c ]);
-
-					inc_hpos();
-
-			 	} /* endfor */
-			 	break;
-
-			case 0x03:  /* MODE 320A */
-			 	for (x=0; x<width; x++)
-				{
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-
-					if (d & 0x80)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x40)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x20)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x10)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x08)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x04)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x02)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-					if (d & 0x01)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][2]);
-
-					inc_hpos();
-
-			 	} /* endfor */
-			 	break;
-
-			case 0x04:  /* 160B (160x4) */
-			case 0x05:  /* 160B (160x4) */
-				for (x=0; x<width; x++)
-				{
-					ind_bytes = 1;
-
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-
-			 			if( maria_cwidth )
-							ind_bytes = 2;
-					}
-
-					while (ind_bytes > 0)
-					{
-						ind_bytes--;
-						d = READ_MEM(data_addr++);
-
-						c = (d & 0x0C) | ((d & 0xC0) >> 6);
-						if (c == 4 || c == 8 || c == 12)
-							c=0;
-						if (c)
+						if ( d & 0x30 || pal & 0x03 || maria_kangaroo )
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[c][((d & 0x20) >> 4) | ((pal & 2) >> 1)];
+							scanline[hpos + 1] = maria_palette[c][((d & 0x10) >> 3) | ((pal & 1) >> 0)];
 						}
-
 						inc_hpos_by_2();
 
-						c = ((d & 0x03) << 2) | ((d & 0x30) >> 4);
-
-						if (c == 4 || c == 8 || c == 12)
-							c=0;
-
-						if (c)
+						if ( d & 0x0C || pal & 0x03 || maria_kangaroo )
 						{
-							plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
-							plot_pixel(tmpbitmap, hpos + 1, maria_scanline, maria_palette[pal][c]);
+							scanline[hpos + 0] = maria_palette[c][((d & 0x08) >> 2) | ((pal & 2) >> 1)];
+							scanline[hpos + 1] = maria_palette[c][((d & 0x04) >> 1) | ((pal & 1) >> 0)];
 						}
-
 						inc_hpos_by_2();
-		 			}
-		 		}
-			 	break;
 
-		 	case 0x06:  /* MODE 320B */
-			 	for (x=0; x<width; x++)
-				{
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
+						if ( d & 0x03 || pal & 0x03 || maria_kangaroo )
+						{
+							scanline[hpos + 0] = maria_palette[c][((d & 0x08) << 0) | ((pal & 2) >> 1)];
+							scanline[hpos + 1] = maria_palette[c][((d & 0x04) << 1) | ((pal & 1) >> 0)];
+						}
+						inc_hpos_by_2();
 
-					c = ((d & 0x80) >> 6) | ((d & 0x08) >> 3);
-					if (c)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+					 	break;
 
-					inc_hpos();
+					case 0x03:  /* MODE 320A */
+						if (d & 0xC0 || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x80) >> 6];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x40) >> 5];
+						}
+						inc_hpos_by_2();
 
-					c = ((d & 0x40) >> 5) | ((d & 0x04) >> 2);
-					if (c)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						if ( d & 0x30 || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x20) >> 4];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x10) >> 3];
+						}
+						inc_hpos_by_2();
 
-					inc_hpos();
+						if (d & 0x0C || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x08) >> 2];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x04) >> 1];
+						}
+						inc_hpos_by_2();
 
-					c = ((d & 0x20) >> 4) | ((d & 0x02) >> 1);
-					if (c)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+						if (d & 0x03 || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x02)];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x01) << 1];
+						}
+						inc_hpos_by_2();
+					 	break;
 
-					inc_hpos();
+					case 0x04:  /* 160B (160x4) */
+					case 0x05:  /* 160B (160x4) */
+						c = (d & 0xC0) >> 6;
+						if (c || maria_kangaroo)
+						{
+							pal = (pal & 0x04) | ((d & 0x0C) >> 2);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
+						}
+						inc_hpos_by_2();
 
-					c = ((d & 0x10) >> 3) | (d & 0x01);
+						c = (d & 0x30) >> 4;
+						if (c || maria_kangaroo)
+						{
+							pal = (pal & 0x04) | (d & 0x03);
+							scanline[hpos + 0] = maria_palette[pal][c];
+							scanline[hpos + 1] = maria_palette[pal][c];
+						}
+						inc_hpos_by_2();
+					 	break;
 
-					if (c)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[pal][c]);
+				 	case 0x06:  /* MODE 320B */
+						if (d & 0xCC || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][((d & 0x80) >> 6) | ((d & 0x08) >> 3)];
+							scanline[hpos + 1] = maria_palette[pal][((d & 0x40) >> 5) | ((d & 0x04) >> 2)];
+						}
+						inc_hpos_by_2();
 
-					inc_hpos();
+						if ( d & 0x30 || maria_kangaroo)
+						{
+							scanline[hpos + 0] = maria_palette[pal][((d & 0x20) >> 4) | ((d & 0x02) >> 1)];
+							scanline[hpos + 1] = maria_palette[pal][((d & 0x10) >> 3) | (d & 0x01)];
+						}
+						inc_hpos_by_2();
+						break;
 
-			}
-			break;
+					case 0x07: /* (320C mode) */
+						if (d & 0xC0 || maria_kangaroo)
+						{
+							pal = (pal & 0x04) || ((d & 0x0C) >> 2);
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x80) >> 6];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x40) >> 5];
+						}
+						inc_hpos_by_2();
 
-			case 0x07: /* (320C mode) */
-				for (x=0; x<width; x++)
-				{
-					/* Do direct mode */
-					if (!ind)
-					{
-			 			data_addr = graph_adr + x + (maria_offset  << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
-					else
-					{
-			 			c = READ_MEM(graph_adr + x) & 0xFF;
-			 			data_addr= (maria_charbase | c) + (maria_offset << 8);
-			 			if (maria_holey == 0x02 && ((data_addr & 0x9000) == 0x9000))
-							continue;
-			 			if (maria_holey == 0x01 && ((data_addr & 0x8800) == 0x8800))
-							continue;
-			 			d = READ_MEM(data_addr);
-					}
+						if ( d & 0x30 || maria_kangaroo)
+						{
+							pal = (pal & 0x04) || (d & 0x03);
+							scanline[hpos + 0] = maria_palette[pal][(d & 0x20) >> 4];
+							scanline[hpos + 1] = maria_palette[pal][(d & 0x10) >> 3];
+						}
+						inc_hpos_by_2();
+						break;
 
-					c = ((d & 0x0C) >> 2) | (pal & 0x04);
-					if (d & 0x80)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
-
-					inc_hpos();
-
-					if (d & 0x40)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
-
-					inc_hpos();
-
-					c = (d & 0x03) | (pal & 0x04);
-					if (d & 0x20)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
-
-					inc_hpos();
-
-					if (d & 0x10)
-						plot_pixel(tmpbitmap, hpos, maria_scanline, maria_palette[c][2]);
-
-					inc_hpos();
-				}
-				break;
-		}	/* endcase */
-	} /* endwhile */
+					}	/* endswitch (mode) */
+				}	/* endwhile (ind_bytes > 0)*/
+		 	}	/* endfor (x=0; x<width; x++) */
+	}	/* endwhile (READ_MEM(dl + 1) != 0) */
 }
 
 
@@ -668,6 +483,15 @@ WRITE_HANDLER( a7800_MARIA_w )
 	{
 		case 0x00:
 			maria_backcolor = Machine->pens[data];
+			// 20030621 ericball added maria_palette[pal][0] to make kanagroo mode easier
+			maria_palette[0][0]=maria_backcolor;
+			maria_palette[1][0]=maria_backcolor;
+			maria_palette[2][0]=maria_backcolor;
+			maria_palette[3][0]=maria_backcolor;
+			maria_palette[4][0]=maria_backcolor;
+			maria_palette[5][0]=maria_backcolor;
+			maria_palette[6][0]=maria_backcolor;
+			maria_palette[7][0]=maria_backcolor;
 			break;
 		case 0x01:
 			maria_palette[0][1] = Machine->pens[data];

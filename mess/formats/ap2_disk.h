@@ -26,6 +26,7 @@
 #define APPLE2_IMAGE_UNKNOWN	0
 #define APPLE2_IMAGE_DO			1
 #define APPLE2_IMAGE_PO			2
+#define APPLE2_IMAGE_NIB		3
 
 
 
@@ -35,7 +36,7 @@
 
 ***************************************************************************/
 
-int apple2_choose_image_type(const char *filetype);
+int apple2_choose_image_type(const char *filetype, UINT64 size);
 int apple2_skew_sector(int sector, int image_type);
 void apple2_disk_encode_nib(UINT8 *nibble, const UINT8 *data, int volume, int track, int sector);
 int apple2_disk_decode_nib(UINT8 *data, const UINT8 *nibble, int *volume, int *track, int *sector);

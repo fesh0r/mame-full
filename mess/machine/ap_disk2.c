@@ -71,10 +71,7 @@ DEVICE_LOAD(apple2_floppy)
 	int image_type;
 	struct apple2_drive *drive;
 
-	if (mame_fsize(file) != APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE)
-		return INIT_FAIL;
-
-	image_type = apple2_choose_image_type(image_filetype(image));
+	image_type = apple2_choose_image_type(image_filetype(image), mame_fsize(file));
 	if (image_type == APPLE2_IMAGE_UNKNOWN)
 		return INIT_FAIL;
 
@@ -103,6 +100,7 @@ static void load_current_track(mess_image *image, struct apple2_drive *disk)
 {
 	int track, sector, skewed_sector;
 	UINT8 data[APPLE2_SECTOR_SIZE];
+	UINT8 *this_sector;
 	
 	memset(data, 0, sizeof(data));
 	memset(disk->track_data, 0xff, sizeof(disk->track_data));
@@ -112,8 +110,9 @@ static void load_current_track(mess_image *image, struct apple2_drive *disk)
 	for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
 	{
 		skewed_sector = apple2_skew_sector(sector, disk->image_type);
+		this_sector = &disk->track_data[sector * APPLE2_NIBBLE_SIZE];
 		floppy_drive_read_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE);
-		apple2_disk_encode_nib(&disk->track_data[sector * APPLE2_NIBBLE_SIZE], data, 254, track, sector);
+		apple2_disk_encode_nib(this_sector, data, 254, track, sector);
 	}
 	disk->transient_state |= TRSTATE_LOADED;
 }
@@ -126,6 +125,7 @@ static void save_current_track(mess_image *image, struct apple2_drive *disk)
 {
 	int track, sector, skewed_sector;
 	UINT8 data[APPLE2_SECTOR_SIZE];
+	const UINT8 *this_sector;
 
 	if (disk->transient_state & TRSTATE_DIRTY)
 	{
@@ -136,6 +136,7 @@ static void save_current_track(mess_image *image, struct apple2_drive *disk)
 			for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
 			{
 				skewed_sector = apple2_skew_sector(sector, disk->image_type);
+				this_sector = &disk->track_data[sector * APPLE2_NIBBLE_SIZE];
 				apple2_disk_decode_nib(data, &disk->track_data[sector * APPLE2_NIBBLE_SIZE], NULL, NULL, NULL);
 				floppy_drive_write_sector_data(image, 0, skewed_sector, (void *) data, APPLE2_SECTOR_SIZE, 0);
 			}

@@ -146,7 +146,7 @@ void floppy_drive_seek(mess_image *img, signed int signed_tracks);
 void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, char *ptr, int *length );
 void floppy_drive_format_sector(mess_image *img, int side, int sector_index, int c, int h, int r, int n, int filler);
 void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length);
-void floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer, int length, int ddam);
+void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const char *pBuffer, int length, int ddam);
 int	floppy_drive_get_datarate_in_us(DENSITY density);
 
 /* managed buffer functions */

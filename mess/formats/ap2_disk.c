@@ -27,30 +27,36 @@ static const UINT8 translate6[0x40] =
 	figures out what image type the file is
 -------------------------------------------------*/
 
-int apple2_choose_image_type(const char *filetype)
+int apple2_choose_image_type(const char *filetype, UINT64 size)
 {
+	int image_type = APPLE2_IMAGE_UNKNOWN;
+	UINT64 expected_size = 0;
+	
 	switch(filetype[0]) {
 	case 'p':
 	case 'P':
 		if (!strcmpi(filetype, "po"))
-			return APPLE2_IMAGE_PO;
-		break;
-
-	case 'd':
-	case 'D':
-		if (!strcmpi(filetype, "do"))
-			return APPLE2_IMAGE_DO;
-		if (!strcmpi(filetype, "dsk"))
-			return APPLE2_IMAGE_DO;
+		{
+			image_type = APPLE2_IMAGE_PO;
+			expected_size = APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE;
+		}
 		break;
 
 	case 'b':
 	case 'B':
-		if (!strcmpi(filetype, "bin"))
-			return APPLE2_IMAGE_DO;
+	case 'd':
+	case 'D':
+		if (!strcmpi(filetype, "do") || !strcmpi(filetype, "dsk") || !strcmpi(filetype, "bin"))
+		{
+			image_type = APPLE2_IMAGE_DO;
+			expected_size = APPLE2_TRACK_COUNT * APPLE2_SECTOR_COUNT * APPLE2_SECTOR_SIZE;
+		}
 		break;
 	}
-	return APPLE2_IMAGE_UNKNOWN;
+
+	if (size != expected_size)
+		image_type = APPLE2_IMAGE_UNKNOWN;
+	return image_type;
 }
 
 

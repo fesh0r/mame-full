@@ -431,7 +431,7 @@ void floppy_drive_read_sector_data(mess_image *img, int side, int index1, char *
 	}
 }
 
-void floppy_drive_write_sector_data(mess_image *img, int side, int index1, char *pBuffer,int length, int ddam)
+void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const char *pBuffer,int length, int ddam)
 {
 	if (image_exists(img))
 	{

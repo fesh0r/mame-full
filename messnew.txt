@@ -7,6 +7,11 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A7800] Implemented Kangaroo and transparency modes. [Eric Ball]
+
+- [A7800] Removed use of plot_pixel(), resulting in performance gains. [Nate
+  Woods]
+
 - [APPLE2] Writing to disk images and ProDOS order (*.po) disk images are now
   supported.  [Nate Woods]
 
