@@ -20,7 +20,6 @@
 
 #define FRAMESKIP_DRIVER_COUNT 2
 static const int safety = 16;
-static float beam_f;
 int normal_widthscale = 1, normal_heightscale = 1;
 int yarbsize = 0;
 static char *vector_res = NULL;
@@ -34,6 +33,15 @@ static struct mame_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct rectangle normal_visual;
 static struct rectangle debug_visual;
+
+static float f_beam;
+static float f_flicker;
+static float f_intensity;
+
+static int use_artwork = 1;
+static int use_backdrops = -1;
+static int use_overlays = -1;
+static int use_bezels = -1;
 
 #if (defined svgafx) || (defined xfx) 
 UINT16 *color_values;
@@ -49,6 +57,8 @@ static int video_verify_beam(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_flicker(struct rc_option *option, const char *arg,
    int priority);
+static int video_verify_intensity(struct rc_option *option, const char *arg,
+		int priority);
 static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
@@ -91,9 +101,12 @@ struct rc_option video_opts[] = {
    { "scanlines",	"sl",			rc_bool,	&use_scanlines,
      "0",		0,			0,		NULL,
      "Enable/disable displaying simulated scanlines" },
-   { "artwork",		"a",			rc_bool,	&options.use_artwork,
-     "1",		0,			0,		NULL,
-     "Use/don't use artwork if available" },
+	{ "artwork", "art", rc_bool, &use_artwork, "1", 0, 0, NULL, "Use additional game artwork (sets default for specific options below)." },
+	{ "use_backdrops", "backdrop", rc_bool, &use_backdrops, "1", 0, 0, NULL, "Use backdrop artwork." },
+	{ "use_overlays", "overlay", rc_bool, &use_overlays, "1", 0, 0, NULL, "Use overlay artwork." },
+	{ "use_bezels", "bezel", rc_bool, &use_bezels, "1", 0, 0, NULL, "Use bezel artwork." },
+	{ "artwork_crop", "artcrop", rc_bool, &options.artwork_crop, "0", 0, 0, NULL, "Crop artwork to game screen only." },
+	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "Artwork resolution (0 for auto)." },
    { "frameskipper",	"fsr",			rc_int,		&frameskipper,
      "0",		0,			FRAMESKIP_DRIVER_COUNT-1, NULL,
      "Select which autoframeskip and throttle routines to use. Available choices are:\n0 Dos frameskip code\n1 Enhanced frameskip code by William A. Barath" },
@@ -139,12 +152,9 @@ struct rc_option video_opts[] = {
    { "vectorres",	"vres",			rc_string,	&vector_res,
      NULL,		0,			0,		video_verify_vectorres,
      "Always scale vectorgames to XresxYres, keeping their aspect ratio. This overrides the scale options" },
-   { "beam",		"B",			rc_float,	&beam_f,
-     "1.0",		1.0,			16.0,		video_verify_beam,
-     "Set the beam size for vector games" },
-   { "flicker",		"f",			rc_float,	&options.vector_flicker,
-     "0.0",		0.0,			100.0,		video_verify_flicker,
-     "Set the flicker for vector games" },
+	{ "beam", "B", rc_float, &f_beam, "1.0", 1.0, 16.0, video_verify_beam, "Set the beam size for vector games" },
+	{ "flicker", "f", rc_float, &f_flicker, "0.0", 0.0, 100.0, video_verify_flicker, "Set the flicker for vector games" },
+	{ "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_verify_intensity, "Set intensity in vector games" },
    { "antialias",	"aa",			rc_bool,	&options.antialias,
      "1",		0,			0,		NULL,
      "Enable/disable antialiasing" },
@@ -153,10 +163,8 @@ struct rc_option video_opts[] = {
      "Enable/disable tranlucency" },
    { NULL,		NULL,			rc_link,	display_opts,
      NULL,		0,			0,		NULL,
-     NULL },     
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
+     NULL },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
 static int video_handle_scale(struct rc_option *option, const char *arg,
@@ -173,30 +181,39 @@ static int video_handle_scale(struct rc_option *option, const char *arg,
 }
 
 static int video_verify_beam(struct rc_option *option, const char *arg,
-   int priority)
+		int priority)
 {
-   options.beam = (int)(beam_f * 0x00010000);
-   if (options.beam < 0x00010000)
-      options.beam = 0x00010000;
-   else if (options.beam > 0x00100000)
-      options.beam = 0x00100000;
+	options.beam = (int)(f_beam * 0x00010000);
+	if (options.beam < 0x00010000)
+		options.beam = 0x00010000;
+	else if (options.beam > 0x00100000)
+		options.beam = 0x00100000;
 
-   option->priority = priority;
-   
-   return 0;
+	option->priority = priority;
+
+	return 0;
 }
 
 static int video_verify_flicker(struct rc_option *option, const char *arg,
-   int priority)
+		int priority)
 {
-   if (options.vector_flicker < 0.0)
-      options.vector_flicker = 0.0;
-   else if (options.vector_flicker > 100.0)
-      options.vector_flicker = 100.0;
+	options.vector_flicker = (int)(f_flicker * 2.55);
+	if (options.vector_flicker < 0)
+		options.vector_flicker = 0;
+	else if (options.vector_flicker > 255)
+		options.vector_flicker = 255;
 
-   option->priority = priority;
-   
-   return 0;
+	option->priority = priority;
+
+	return 0;
+}
+
+static int video_verify_intensity(struct rc_option *option, const char *arg,
+		int priority)
+{
+	options.vector_intensity = f_intensity;
+	option->priority = priority;
+	return 0;
 }
 
 static int video_verify_bpp(struct rc_option *option, const char *arg,
@@ -233,116 +250,133 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
    return 0;
 }
 
+void osd_video_initpre()
+{
+	/* set the artwork options */
+	options.use_artwork = ARTWORK_USE_ALL;
+	if (use_backdrops == 0)
+		options.use_artwork &= ~ARTWORK_USE_BACKDROPS;
+	if (use_overlays == 0)
+		options.use_artwork &= ~ARTWORK_USE_OVERLAYS;
+	if (use_bezels == 0)
+		options.use_artwork &= ~ARTWORK_USE_BEZELS;
+	if (!use_artwork)
+		options.use_artwork = ARTWORK_USE_NONE;
+}
+
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
-   int r, g, b;
+	int r, g, b;
 
-   bitmap_depth = (params->depth == 15) ? 16 : params->depth;
-   using_15bpp_rgb_direct = (params->depth == 15);
+	bitmap_depth = (params->depth == 15) ? 16 : params->depth;
+	using_15bpp_rgb_direct = (params->depth == 15);
 
-   current_palette = normal_palette = NULL;
-   debug_visual.min_x = 0;
-   debug_visual.max_x = options.debug_width - 1;
-   debug_visual.min_y = 0;
-   debug_visual.max_y = options.debug_height - 1;
+	current_palette = normal_palette = NULL;
+	debug_visual.min_x = 0;
+	debug_visual.max_x = options.debug_width - 1;
+	debug_visual.min_y = 0;
+	debug_visual.max_y = options.debug_height - 1;
 
-   if (use_auto_double)
-   {
-      if ( (params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-         VIDEO_PIXEL_ASPECT_RATIO_1_2)
-      {
-         if (params->orientation & ORIENTATION_SWAP_XY)
-            normal_widthscale  *= 2;
-         else
-            normal_heightscale *= 2;
-      }
-      if ( (params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
-         VIDEO_PIXEL_ASPECT_RATIO_2_1)
-      {
-         if (params->orientation & ORIENTATION_SWAP_XY)
-            normal_heightscale *= 2;
-         else
-            normal_widthscale  *= 2;
-      }
-   }
+	if (use_auto_double)
+	{
+		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
+			== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+      		{
+			if (params->orientation & ORIENTATION_SWAP_XY)
+				normal_widthscale *= 2;
+			else
+				normal_heightscale *= 2;
+		}
+
+		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) 
+			== VIDEO_PIXEL_ASPECT_RATIO_2_1)
+		{
+			if (params->orientation & ORIENTATION_SWAP_XY)
+				normal_heightscale *= 2;
+			else
+				normal_widthscale *= 2;
+		}
+	}
   
-   visual_width     = params->width;
-   visual_height    = params->height;
-   widthscale       = normal_widthscale;
-   heightscale      = normal_heightscale;
-   use_aspect_ratio = normal_use_aspect_ratio;
-   video_fps        = params->fps;
-   
-   if (sysdep_create_display(bitmap_depth) != OSD_OK)
-      return -1;
-   
-   /* a lot of display_targets need to have the display initialised before
-      initialising any input devices */
-   if (osd_input_initpost() != OSD_OK) return -1;
-   
-   if (bitmap_depth == 16) fprintf(stderr_file,"Using 16bpp video mode\n");
+	visual_width		= params->width;
+	visual_height		= params->height;
+	widthscale		= normal_widthscale;
+	heightscale		= normal_heightscale;
+	use_aspect_ratio	= normal_use_aspect_ratio;
+	video_fps		= params->fps;
 
-   if (!(normal_palette = sysdep_palette_create(bitmap_depth, 65536)))
-   {
-      return 1;
-   }
+	if (sysdep_create_display(bitmap_depth) != OSD_OK)
+		return -1;
 
-   /* alloc the total number of colors that can be used by the palette */
-   if (sysdep_display_alloc_palette(65536))
-   {
-      osd_free_colors();
-      return 1;
-   }
+	/* a lot of display_targets need to have the display initialised before
+	   initialising any input devices */
+	if (osd_input_initpost() != OSD_OK)
+		return -1;
 
-   sysdep_palette_set_gamma(normal_palette, gamma_correction);
-   sysdep_palette_set_brightness(normal_palette, 
-      brightness * brightness_paused_adjust);
+	if (bitmap_depth == 16)
+		fprintf(stderr_file,"Using 16bpp video mode\n");
 
-   /* initialize the palette to a fixed 5-5-5 mapping */
-   if (using_15bpp_rgb_direct)
-   {
-      for (r = 0; r < 32; r++)
-         for (g = 0; g < 32; g++)
-            for (b = 0; b < 32; b++)
-            {
-               int idx = (r << 10) | (g << 5) | b;
-               sysdep_palette_set_pen(normal_palette, idx, 
-                  (r << 3) | (r >> 2),
-                  (g << 3) | (g >> 2),
-                  (b << 3) | (b >> 2));
-            }
-   }
-   else
-   {
-      for (r = 0; r < 32; r++)
-         for (g = 0; g < 32; g++)
-            for (b = 0; b < 32; b++)
-            {
-               int idx = (r << 10) | (g << 5) | b;
-               sysdep_palette_set_pen(normal_palette, idx, r, g, b);
-            }
-   }
+	if (!(normal_palette = sysdep_palette_create(bitmap_depth, 65536)))
+		return 1;
 
-   current_palette = normal_palette;
+	/* alloc the total number of colors that can be used by the palette */
+	if (sysdep_display_alloc_palette(65536))
+	{
+		osd_free_colors();
+		return 1;
+	}
 
-   /* fill in the resulting RGB components */
-   if (rgb_components)
-   {
-      if (bitmap_depth == 32)
-      {
-         rgb_components[0] = (0xff << 16) | (0x00 << 8) | 0x00;
-         rgb_components[1] = (0x00 << 16) | (0xff << 8) | 0x00;
-         rgb_components[2] = (0x00 << 16) | (0x00 << 8) | 0xff;
-      }
-      else
-      {
-         rgb_components[0] = 0x7c00;
-         rgb_components[1] = 0x03e0;
-         rgb_components[2] = 0x001f;
-      }
-   }
+	sysdep_palette_set_gamma(normal_palette, gamma_correction);
+	sysdep_palette_set_brightness(normal_palette, 
+		brightness * brightness_paused_adjust);
 
-   return 0;
+	/* initialize the palette to a fixed 5-5-5 mapping */
+	if (using_15bpp_rgb_direct)
+	{
+		for (r = 0; r < 32; r++)
+			for (g = 0; g < 32; g++)
+				for (b = 0; b < 32; b++)
+				{
+					int idx = (r << 10) | (g << 5) | b;
+					sysdep_palette_set_pen(normal_palette, 
+						idx,
+						(r << 3) | (r >> 2),
+						(g << 3) | (g >> 2),
+						(b << 3) | (b >> 2));
+				}
+	}
+	else
+	{
+		for (r = 0; r < 32; r++)
+			for (g = 0; g < 32; g++)
+				for (b = 0; b < 32; b++)
+				{
+					int idx = (r << 10) | (g << 5) | b;
+					sysdep_palette_set_pen(normal_palette,
+						idx, r, g, b);
+				}
+	}
+
+	current_palette = normal_palette;
+
+	/* fill in the resulting RGB components */
+	if (rgb_components)
+	{
+		if (bitmap_depth == 32)
+		{
+			rgb_components[0] = (0xff << 16) | (0x00 << 8) | 0x00;
+			rgb_components[1] = (0x00 << 16) | (0xff << 8) | 0x00;
+			rgb_components[2] = (0x00 << 16) | (0x00 << 8) | 0xff;
+		}
+		else
+		{
+			rgb_components[0] = 0x7c00;
+			rgb_components[1] = 0x03e0;
+			rgb_components[2] = 0x001f;
+		}
+	}
+
+	return 0;
 }   
 
 void osd_close_display (void)
