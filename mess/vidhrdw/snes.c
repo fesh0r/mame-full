@@ -1285,7 +1285,7 @@ static void snes_update_windowmasks(void)
  *
  * Update the palette with the latest changes.
  *********************************************/
-void snes_update_palette(void)
+static void snes_update_palette(void)
 {
 	UINT8 r, g, b, fade;
 	UINT16 ii;
