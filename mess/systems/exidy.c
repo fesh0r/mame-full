@@ -67,6 +67,28 @@
 #include "includes/centroni.h"
 #include "includes/hd6402.h"
 #include "cpu/z80/z80.h"
+#include "includes/wd179x.h"
+#include "includes/basicdsk.h"
+
+
+int exidy_floppy_init(int id)
+{
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
+	if (strlen(device_filename(IO_FLOPPY, id))==0)
+		return INIT_PASS;
+
+	if (basicdsk_floppy_init(id)==INIT_PASS)
+	{
+		/* not correct */
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
+		return INIT_PASS;
+	}
+
+	return INIT_FAIL;
+}
+
 
 //static unsigned char exidy_fc;
 //static unsigned char exidy_fd;
@@ -81,6 +103,7 @@ static WRITE_HANDLER(exidy_fe_port_w);
 
 /* timer for exidy serial chip transmit and receive */
 static void *serial_timer;
+static void *exidy_reset_timer;
 
 static void exidy_serial_timer_callback(int dummy)
 {
@@ -188,16 +211,22 @@ static void exidy_hd6402_callback(int mask, int data)
 	logerror("hd6402 state: %04x %04x\n",mask,data);
 }
 
+static void exidy_reset_timer_callback(int dummy)
+{
+	cpunum_set_pc(0,0x0e000);
 
+	timer_reset(exidy_reset_timer, TIME_NEVER);
+}
+#if 0
 static OPBASE_HANDLER( exidy_opbaseoverride )
 {
 	memory_set_opbase_handler(0,0);
 
-	cpu_set_reg(Z80_PC, 0x0e000);
+	cpunum_set_pc(0,0x0e000);
 
-	return (cpu_get_pc() & 0x0ffff);
+	return (cpunum_get_pc(0) & 0x0ffff);
 }
-
+#endif
 static void exidy_printer_handshake_in(int number, int data, int mask)
 {
 	if (mask & CENTRONICS_ACKNOWLEDGE)
@@ -249,9 +278,20 @@ void exidy_init_machine(void)
 	exidy_fe_port_w(0,0);
 
 
+	exidy_reset_timer = timer_set(TIME_NOW, 0, exidy_reset_timer_callback);
+	
+	wd179x_init(WD_TYPE_179X,NULL);
+
+	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+
 	/* this is temporary. Normally when a Z80 is reset, it will
 	execute address 0. The exidy starts executing from 0x0e000 */
-	memory_set_opbase_handler(0, exidy_opbaseoverride);
+//	memory_set_opbase_handler(0, exidy_opbaseoverride);
+	
+//	cpunum_write_byte(0,0,0x0c3);
+//	cpunum_write_byte(0,1,0x000);
+//	cpunum_write_byte(0,2,0x0e0);
+
 }
 
 void exidy_shutdown_machine(void)
@@ -269,18 +309,73 @@ void exidy_shutdown_machine(void)
 		timer_remove(serial_timer);
 		serial_timer = NULL;
 	}
+
+	if (exidy_reset_timer)
+		timer_remove(exidy_reset_timer);
+
 }
 
 static READ_HANDLER(exidy_unmapped_r)
 {
+	logerror("unmapped r: %04x\r\n",offset);
 	return 0x0ff;
+}
+
+static WRITE_HANDLER(exidy_unmapped_w)
+{
+	logerror("unmapped r: %04x\r\n",offset,data);
 }
 
 
 
+static READ_HANDLER ( exidy_wd179x_r )
+{
+	switch (offset & 0x03)
+	{
+	case 0:
+		return wd179x_status_r(offset);
+	case 1:
+		return wd179x_track_r(offset);
+	case 2:
+		return wd179x_sector_r(offset);
+	case 3:
+		return wd179x_data_r(offset);
+	default:
+		break;
+	}
+
+	return 0x0ff;
+}
+
+static WRITE_HANDLER ( exidy_wd179x_w )
+{
+	switch (offset & 0x03)
+	{
+	case 0:
+		wd179x_command_w(offset, data);
+		return;
+	case 1:
+		wd179x_track_w(offset, data);
+		return;
+	case 2:
+		wd179x_sector_w(offset, data);
+		return;
+	case 3:
+		wd179x_data_w(offset, data);
+		return;
+	default:
+		break;
+	}
+}
+
+
 MEMORY_READ_START( readmem_exidy )
 	{0x00000, 0x07fff, MRA_RAM},		/* ram 32k machine */
-	{0x08000, 0x0bfff, exidy_unmapped_r},
+//	{0x08000, 0x0bbff, exidy_unmapped_r},
+	{0x0bc00,0x0bcff, MRA_ROM},
+//	{0x0bd00, 0x0bfff, exidy_unmapped_r},
+	{0x0be00,0x0be03, exidy_wd179x_r},
+
 	{0x0c000, 0x0efff, MRA_ROM},		/* rom pac */
 	{0x0f000, 0x0f7ff, MRA_RAM},		/* screen ram */	
 	{0x0f800, 0x0fbff, MRA_ROM},		/* char rom */
@@ -290,7 +385,10 @@ MEMORY_END
 
 MEMORY_WRITE_START( writemem_exidy )
 	{0x00000, 0x07fff, MWA_RAM},		/* ram 32k machine */
-	{0x0c000, 0x0efff, MWA_ROM},			/* rom pac */	
+//	{0x08000, 0x0bbff, exidy_unmapped_w},
+//	{0x0bd00, 0x0bfff, exidy_unmapped_w},
+{0x0be00, 0x0be03, exidy_wd179x_w},	
+{0x0c000, 0x0efff, MWA_ROM},			/* rom pac */	
 	{0x0f000, 0x0f7ff, MWA_RAM},		/* screen ram */
 	{0x0f800, 0x0fbff, MWA_ROM},		/* char rom */
 	{0x0fc00, 0x0ffff, MWA_RAM},		/* programmable chars */
@@ -553,7 +651,7 @@ static READ_HANDLER(exidy_ff_port_r)
 
 
 PORT_READ_START( readport_exidy )
-	{0x000, 0x0fb, exidy_unmapped_r},
+//	{0x000, 0x0fb, exidy_unmapped_r},
 	{0x0fc, 0x0fc, exidy_fc_port_r},
 	{0x0fd, 0x0fd, exidy_fd_port_r},
 	{0x0fe, 0x0fe, exidy_fe_port_r},
@@ -714,7 +812,7 @@ static struct MachineDriver machine_driver_exidy =
 			readport_exidy,                  /* IOReadPort */
 			writeport_exidy,                 /* IOWritePort */
 			0,						   /* VBlank Interrupt */
-			1,				   /* vblanks per frame */
+			0,				   /* vblanks per frame */
 			0, 0,   /* every scanline */
 		},
 	},
@@ -763,6 +861,8 @@ ROM_START(exidy)
 		/* these are common to all because they are inside the machine */
         ROM_REGION(64*1024+32, REGION_CPU1,0)
 
+		ROM_LOAD("diskboot.dat",0x0bc00, 0x0100, 0x1)
+
 		/* char rom */
 		ROM_LOAD("exchr-1.dat",0x0f800, 1024, 0x4a7e1cdd)
 
@@ -780,8 +880,27 @@ ROM_END
 
 static const struct IODevice io_exidy[] =
 {
-	IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,exidy_cassette_exit),
+	//IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,exidy_cassette_exit),
 	IO_PRINTER_PORT(1,"prn\0"),
+	{
+		IO_FLOPPY,					/* type */
+		4,							/* count */
+		"dsk\0",                    /* file extensions */
+		IO_RESET_NONE,				/* reset if file changed */
+		0,
+		exidy_floppy_init,			/* init */
+		basicdsk_floppy_exit,			/* exit */
+		NULL,						/* info */
+		NULL,						/* open */
+		NULL,						/* close */
+        floppy_status,                                           /* status */
+        NULL,                                           /* seek */
+		NULL,						/* tell */
+		NULL,						/* input */
+		NULL,						/* output */
+		NULL,						/* input_chunk */
+		NULL						/* output_chunk */
+	},
 	{IO_END}
 };
 
