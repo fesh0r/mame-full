@@ -20,13 +20,13 @@ void mc10_init_machine(void)
 	/* NPW: Taken from Juergen's MC-10 attempt that I just noticed... */
 	if( readinputport(7) & 0x80 )
 	{
-		install_mem_read_handler(0, 0x5000, 0xbffe, MRA_RAM);
-		install_mem_write_handler(0, 0x5000, 0xbffe, MWA_RAM);
+		install_mem_read_handler(0, 0x5000, 0xbffe, MRA8_RAM);
+		install_mem_write_handler(0, 0x5000, 0xbffe, MWA8_RAM);
 	}
 	else
 	{
-		install_mem_read_handler(0, 0x5000, 0xbffe, MRA_NOP);
-		install_mem_write_handler(0, 0x5000, 0xbffe, MWA_NOP);
+		install_mem_read_handler(0, 0x5000, 0xbffe, MRA8_NOP);
+		install_mem_write_handler(0, 0x5000, 0xbffe, MWA8_NOP);
 	}
 	/* Install DOS ROM ? */
 	if( readinputport(7) & 0x40 )
@@ -37,13 +37,9 @@ void mc10_init_machine(void)
 	}
 	else
 	{
-		install_mem_read_handler(0, 0xc000, 0xdfff, MRA_NOP);
-		install_mem_write_handler(0, 0xc000, 0xdfff, MWA_NOP);
+		install_mem_read_handler(0, 0xc000, 0xdfff, MRA8_NOP);
+		install_mem_write_handler(0, 0xc000, 0xdfff, MWA8_NOP);
     }
-}
-
-void mc10_stop_machine(void)
-{
 }
 
 READ_HANDLER ( mc10_bfff_r )

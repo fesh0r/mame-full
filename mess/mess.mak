@@ -372,9 +372,9 @@ $(OBJ)/coco.a:   \
 	$(OBJ)/mess/formats/cocopak.o	\
 	$(OBJ)/mess/formats/coco_cas.o	\
 	$(OBJ)/mess/formats/coco_dsk.o	\
-	$(OBJ)/mess/devices/coco_vhd.o
-#	$(OBJ)/mess/machine/mc10.o		\
-#	$(OBJ)/mess/systems/mc10.o		\
+	$(OBJ)/mess/devices/coco_vhd.o	\
+	$(OBJ)/mess/machine/mc10.o		\
+	$(OBJ)/mess/systems/mc10.o		\
 
 $(OBJ)/trs80.a:    \
 	$(OBJ)/mess/machine/trs80.o	 \

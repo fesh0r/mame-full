@@ -628,11 +628,11 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /* ----- common shortcuts ----- */
 #define AM_READWRITE(_read,_write)			AM_READ(_read) AM_WRITE(_write)
-#define AM_ROM								AM_READ((void *)STATIC_ROM)
-#define AM_RAM								AM_READWRITE((void *)STATIC_RAM, (void *)STATIC_RAM)
+#define AM_ROM								AM_READ((read8_handler)STATIC_ROM)
+#define AM_RAM								AM_READWRITE((read8_handler)STATIC_RAM, (write8_handler)STATIC_RAM)
 #define AM_ROMBANK(_bank)					AM_READ((void *)(STATIC_BANK1 + (_bank) - 1))
 #define AM_RAMBANK(_bank)					AM_READWRITE((void *)(STATIC_BANK1 + (_bank) - 1), (void *)(STATIC_BANK1 + (_bank) - 1))
-#define AM_NOP								AM_READWRITE((void *)STATIC_NOP, (void *)STATIC_NOP)
+#define AM_NOP								AM_READWRITE((read8_handler)STATIC_NOP, (write8_handler)STATIC_NOP)
 #define AM_READNOP							AM_READ((void *)STATIC_NOP)
 #define AM_WRITENOP							AM_WRITE((void *)STATIC_NOP)
 

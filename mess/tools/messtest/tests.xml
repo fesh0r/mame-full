@@ -30,5 +30,10 @@
 	<wait time="3"/>
 	<memverify start="0x409" end="0x40E">0x445241474F4E</memverify>
 </test>
-
+<!--
+<test name="mc10_001" driver="mc10">
+	<wait time="2"/>	
+	<memverify start="0x4000">"MICROCOLOR"</memverify>
+</test>
+-->
 </tests>

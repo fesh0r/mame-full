@@ -170,7 +170,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 			attr_name = "end";
 			s2 = find_attribute(attributes, attr_name);
 			if (!s2)
-				goto missing_attribute;
+				s2 = "0";
 
 			state->current_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
 			parse_offset(s1, &state->current_command.u.verify_args.start);
@@ -202,6 +202,7 @@ unknowntag:
 static void end_handler(void *data, const XML_Char *name)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
+	struct messtest_command *command = &state->current_command;
 
 	switch(state->phase) {
 	case STATE_TEST:
@@ -216,6 +217,16 @@ static void end_handler(void *data, const XML_Char *name)
 		break;
 
 	case STATE_COMMAND:
+		switch(command->command_type) {
+		case MESSTEST_COMMAND_VERIFY_MEMORY:
+			if (command->u.verify_args.end == 0)
+			{
+				command->u.verify_args.end = command->u.verify_args.start
+					+ command->u.verify_args.verify_data_size - 1;
+			}
+			break;
+		};
+
 		if (!append_command(state))
 			goto outofmemory;
 		state->phase = STATE_TEST;
@@ -243,13 +254,58 @@ static int hexdigit(char c)
 
 
 
+static void get_blob(struct messtest_state *state, const XML_Char *s, int len,
+	 void **blob, size_t *blob_len)
+{
+	UINT8 *bytes = NULL;
+	int bytes_len = 0;
+	int i;
+
+	if ((len >= 2) && (s[0] == '0') && (tolower(s[1]) == 'x'))
+	{
+		/* hex data in the form 0x... */
+		s += 2;
+		len -= 2;
+
+		for (i = 0; (i < len) && isxdigit(s[i]); i++)
+			;
+		bytes_len = i / 2;
+
+		bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
+		for (i = 0; i < bytes_len; i++)
+			bytes[i + *blob_len] = (hexdigit(s[i*2+0]) << 4) + hexdigit(s[i*2+1]);
+	}
+	else if ((len >= 2) && (s[0] == '\"'))
+	{
+		/* escaped ascii data in the form "...." */
+		s++;
+		len--;
+
+		bytes_len = len;
+		for (i = 0; i < len; i++)
+		{
+			if (s[i] == '\"')
+			{
+				bytes_len = i;
+				break;
+			}
+		}
+
+		bytes = pool_realloc(&state->pool, *blob, *blob_len + bytes_len);
+		memcpy(bytes + *blob_len, s, bytes_len);
+	}
+	*blob = bytes;
+	*blob_len += bytes_len;
+}
+
+
+
 static void data_handler(void *data, const XML_Char *s, int len)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
 	struct messtest_command *command = &state->current_command;
-	UINT8 *bytes;
 	char *str;
-	int i, bytes_len, line_begin;
+	int i, line_begin;
 	int old_len;
 
 	switch(state->phase) {
@@ -266,23 +322,9 @@ static void data_handler(void *data, const XML_Char *s, int len)
 			break;
 
 		case MESSTEST_COMMAND_VERIFY_MEMORY:
-			/* skip over '0x' prefix */
-			if ((len >= 2) && (s[0] == '0') && (tolower(s[1]) == 'x'))
-			{
-				s += 2;
-				len -= 2;
-			}
-
-			for (i = 0; (i < len) && isxdigit(s[i]); i++)
-				;
-			bytes_len = i / 2;
-
-			bytes = pool_malloc(&state->pool, bytes_len);
-			for (i = 0; i < bytes_len; i++)
-				bytes[i] = (hexdigit(s[i*2+0]) << 4) + hexdigit(s[i*2+1]);
-
-			command->u.verify_args.verify_data = bytes;
-			command->u.verify_args.verify_data_size = bytes_len;
+			get_blob(state, s, len,
+				(void **) &command->u.verify_args.verify_data,
+				&command->u.verify_args.verify_data_size);
 			break;
 		}
 	}
@@ -299,7 +341,7 @@ outofmemory:
 void messtest(const char *script_filename)
 {
 	struct messtest_state state;
-	char buf[1024];
+	char buf[2048];
 	FILE *in;
 	int len, done;
 
@@ -357,9 +399,12 @@ static struct rc_option opts[] =
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
+static int tests_ran;
+
 static int handle_arg(char *arg)
 {
 	messtest(arg);
+	tests_ran++;
 	return 0;
 }
 
@@ -383,12 +428,17 @@ int main(int argc, char *argv[])
 		goto done;
 	}
 
+	tests_ran = 0;
+
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, handle_arg))
 	{
 		fprintf(stderr, "Error while parsing cmdline\n");
 		goto done;
 	}
+
+	if (tests_ran == 0)
+		fprintf(stderr, "Usage: %s [test1] [test2]...\n", argv[0]);
 
 	result = 0;
 

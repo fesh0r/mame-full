@@ -7,39 +7,22 @@
 #include "inputx.h"
 
 
-static ADDRESS_MAP_START( mc10_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x001f) AM_READ(m6803_internal_registers_r)
-	AM_RANGE(0x0020, 0x007f, MRA_NOP }, /* unused */
-	AM_RANGE(0x0080, 0x00ff, MRA_RAM }, /* 6803 internal RAM */
-	AM_RANGE(0x0100, 0x3fff, MRA_NOP }, /* unused */
-	AM_RANGE(0x4000, 0x4fff, MRA_RAM },
-//	AM_RANGE(0x5000, 0xbffe, MRA_RAM }, /* expansion RAM */
-	AM_RANGE(0xbfff, 0xbfff, mc10_bfff_r },
-//	AM_RANGE(0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
-	AM_RANGE(0xe000, 0xffff, MRA_ROM }, /* ROM */
+static ADDRESS_MAP_START( mc10_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(m6803_internal_registers_r, m6803_internal_registers_w)
+	AM_RANGE(0x0020, 0x007f) AM_NOP		/* unused */
+	AM_RANGE(0x0080, 0x00ff) AM_RAM		/* 6803 internal RAM */
+	AM_RANGE(0x0100, 0x3fff) AM_NOP		/* unused */
+	AM_RANGE(0x4000, 0x4fff) AM_READWRITE(MRA8_RAM, mc10_ram_w)
+//	AM_RANGE(0x5000, 0xbffe) AM_RAM		/* expansion RAM */
+	AM_RANGE(0xbfff, 0xbfff) AM_READWRITE(mc10_bfff_r, mc10_bfff_w)
+//	AM_RANGE(0xc000, 0xdfff) AM_ROM		/* expansion ROM */
+	AM_RANGE(0xe000, 0xffff) AM_ROM		/* ROM */
 ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( mc10_writemem )
-	{ 0x0000, 0x001f, m6803_internal_registers_w },
-	{ 0x0020, 0x007f, MWA_NOP }, /* unused */
-	{ 0x0080, 0x00ff, MWA_RAM }, /* 6803 internal RAM */
-	{ 0x0100, 0x3fff, MWA_NOP }, /* unused */
-	{ 0x4000, 0x4fff, mc10_ram_w },
-//	{ 0x5000, 0xbffe, MWA_RAM }, /* expansion RAM */
-	{ 0xbfff, 0xbfff, mc10_bfff_w },
-//	{ 0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
-	{ 0xe000, 0xffff, MWA_ROM }, /* ROM */
-MEMORY_END
-
-static PORT_READ_START( mc10_readport )
-	{ M6803_PORT1, M6803_PORT1, mc10_port1_r },
-	{ M6803_PORT2, M6803_PORT2, mc10_port2_r },
-PORT_END
-
-static PORT_WRITE_START( mc10_writeport )
-	{ M6803_PORT1, M6803_PORT1, mc10_port1_w },
-	{ M6803_PORT2, M6803_PORT2, mc10_port2_w },
-PORT_END
+static ADDRESS_MAP_START( mc10_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(M6803_PORT1, M6803_PORT1) AM_READWRITE(mc10_port1_r, mc10_port1_w)
+	AM_RANGE(M6803_PORT2, M6803_PORT2) AM_READWRITE(mc10_port2_r, mc10_port2_w)
+ADDRESS_MAP_END
 
 /* MC-10 keyboard
 
@@ -142,8 +125,8 @@ static struct DACinterface mc10_dac_interface =
 static MACHINE_DRIVER_START( mc10 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6803, 894886)        /* 0,894886 Mhz */
-	MDRV_CPU_MEMORY(mc10_readmem, mc10_writemem)
-	MDRV_CPU_PORTS(mc10_readport, mc10_writeport)
+	MDRV_CPU_PROGRAM_MAP(mc10_mem, 0)
+	MDRV_CPU_IO_MAP(mc10_io, 0)
 	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)

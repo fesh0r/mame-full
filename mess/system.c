@@ -559,7 +559,7 @@ XL/XE 16kB OS roms
 	DRIVER( dragon32 )	/* Dragon32 										*/
 	DRIVER( dragon64 )	/* Dragon64 										*/
 	DRIVER( cp400 ) 	/* Prologica CP400									*/
-//	DRIVER( mc10 )		/* MC-10											*/
+	DRIVER( mc10 )		/* MC-10											*/
 
 	/* EACA */
 //	DRIVER( cgenie )	/* Colour Genie EG2000								*/
