@@ -44,6 +44,7 @@ MIDAS = 1
 
 # set this the operating system you're building for
 OS = win32
+# OS = windows
 
 # extension for executables
 EXE = .exe
@@ -169,6 +170,8 @@ else
 CFLAGS += -Ox -G5 -Ob2
 endif
 
+MAMEOS = $(OS)
+
 #####################################################################
 # Resources
 
@@ -238,6 +241,7 @@ OBJDIRS = \
         $(OBJ)/machine \
         $(OBJ)/vidhrdw \
         $(OBJ)/sndhrdw \
+        $(OBJ)/windows \
         $(OBJ)/Win32 \
         $(OBJ)/Win32/hlp \
 
@@ -258,6 +262,7 @@ OBJDIRS += \
         $(OBJ)/mess/tools\messroms \
         $(OBJ)/mess/tools\mkimage \
         $(OBJ)/mess/formats \
+        $(OBJ)/mess/windows \
         $(OBJ)/mess/Win32
 endif
 
@@ -273,7 +278,7 @@ ifdef MESS
 include src/rules_ms.mak
 else
 endif
-include src/$(OS)/$(OS).mak
+include src/$(MAMEOS)/$(MAMEOS).mak
 
 ifdef MAME_DEBUG
 DBGDEFS = -DMAME_DEBUG
