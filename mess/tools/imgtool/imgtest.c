@@ -260,7 +260,7 @@ int imgtool_test(const struct ImageModule *module)
 {
 	int err, i;
 	size_t allmodules_count;
-	const struct ImageModule **allmodules;
+	const struct ImageModule *allmodules;
 
 	if (module) {
 		err = internal_test(module);
@@ -270,7 +270,7 @@ int imgtool_test(const struct ImageModule *module)
 	else {
 		allmodules = getmodules(&allmodules_count);
 		for (i = 0; i < allmodules_count; i++) {
-			err = internal_test(allmodules[i]);
+			err = internal_test(&allmodules[i]);
 			if (err)
 				return err;
 		}

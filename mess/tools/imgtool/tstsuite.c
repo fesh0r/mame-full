@@ -1,6 +1,8 @@
 #include <ctype.h>
 #include "imgtool.h"
 #include "main.h"
+#include "utils.h"
+#include "snprintf.h"
 
 #ifdef MAME_DEBUG
 
@@ -165,7 +167,7 @@ needimgmodule:
 	goto error;
 
 syntaxerror:
-	fprintf(stderr, "*** syntax error: \n", buffer);
+	fprintf(stderr, "*** syntax error: %s\n", buffer);
 	goto error;
 
 error:

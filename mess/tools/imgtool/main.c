@@ -639,7 +639,7 @@ static int cmd_test(struct command *c, int argc, char *argv[])
 	if (module_name)
 		fprintf(stdout, "Running test suite for module '%s':\n\n", module_name);
 	else
-		fprintf(stdout, "Running test suite for all modules\n\n", module_name);
+		fprintf(stdout, "Running test suite for all modules\n\n");
 
 	err = imgtool_test_byname(module_name);
 	if (err)
