@@ -103,7 +103,7 @@
 #include "sound/tiaintf.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
-#include "machine/riot.h"
+//#include "includes/riot6532.h"
 
 #include "includes/a2600.h"
 

@@ -9,7 +9,7 @@
 
 
 #include "driver.h"
-#include "machine/riot.h"
+//#include "includes/riot6532.h"
 #include "sound/tiaintf.h"
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
