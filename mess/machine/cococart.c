@@ -57,7 +57,6 @@ static void	coco_fdc_callback(int event);
 static void	dragon_fdc_callback(int event);
 static int	drq_state;
 static int	intrq_state;
-static int	m6242_address;
 
 #define       COCO_HALTENABLE   (dskreg & 0x80)
 #define   SET_COCO_HALTENABLE    dskreg &= 0x80
@@ -361,7 +360,7 @@ READ_HANDLER(coco_floppy_r)
 		/* This is the real time clock in Disto's many products */
 
 		if( offset == ( 0xff50-0xff40 ) )
-			result = m6242_data_r( m6242_address );
+			result = m6242_data_r( 0 );
 	}
 	else
 	{
@@ -415,10 +414,10 @@ WRITE_HANDLER(coco_floppy_w)
 		/* This is the real time clock in Disto's many products */
 
 		if( offset == ( 0xff50-0xff40 ) )
-			m6242_data_w( m6242_address, data );
+			m6242_data_w( 0, data );
 
 		if( offset == ( 0xff51-0xff40 ) )
-			m6242_address = data & 0x0f;
+			m6242_address_w( 0, data );
 	}
 
 	coco_vhd_io_w( offset, data );
@@ -636,24 +635,17 @@ READ_HANDLER(coco_vhd_io_r)
 
 WRITE_HANDLER(coco_vhd_io_w)
 {
+	int		pos;
+	
 	switch( offset )
 	{
 		case 0xff80 - 0xff40:
-			logicalRecordNumber &= 0xFF00FFFF;
-			logicalRecordNumber += data << 16;
-			LOG(( "vhd: LRN write: %d (%2.2X....)\n", logicalRecordNumber, data ));
-			break;
-
 		case 0xff81 - 0xff40:
-			logicalRecordNumber &= 0xFFFF00FF;
-			logicalRecordNumber += data << 8;
-			LOG(( "vhd: LRN write: %d (..%2.2X..)\n", logicalRecordNumber, data ));
-			break;
-
 		case 0xff82 - 0xff40:
-			logicalRecordNumber &= 0xFFFFFF00;
-			logicalRecordNumber += data;
-			LOG(( "vhd: LRN write: %d (....%2.2X)\n", logicalRecordNumber, data ));
+			pos = ((0xff82 - 0xff40) - offset) * 8;
+			logicalRecordNumber &= ~(0xFF << pos);
+			logicalRecordNumber += data << pos;
+			LOG(( "vhd: LRN write: %6.6X\n", logicalRecordNumber ));
 			break;
 
 		case 0xff83 - 0xff40:
@@ -672,6 +664,12 @@ WRITE_HANDLER(coco_vhd_io_w)
 			bufferAddress += data;
 			LOG(( "vhd: BA write: %X (..%2.2X)\n", bufferAddress, data ));
 			break;
+
+
+
+
+
+
 	}
 }
 
@@ -679,7 +677,7 @@ void coco_vhd_readwrite( UINT8 data )
 {
 	int		result;
 	int		phyOffset;
-	long	nBA = BIG_ENDIANIZE_INT32(bufferAddress);
+	long	nBA = bufferAddress;
 
 	if( vhdFile == NULL )
 	{
@@ -687,7 +685,7 @@ void coco_vhd_readwrite( UINT8 data )
 		return;
 	}
 
-	result = osd_fseek(vhdFile, ((BIG_ENDIANIZE_INT32(logicalRecordNumber))) * 256, SEEK_SET);
+	result = osd_fseek(vhdFile, ((logicalRecordNumber)) * 256, SEEK_SET);
 
 	if( result < 0 )
 	{
