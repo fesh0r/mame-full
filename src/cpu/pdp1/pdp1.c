@@ -979,4 +979,5 @@ int intern_iot (int *iio, int md)
 {
 	logerror("No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *iio);
 	exit (1);
+	return 1;
 }
