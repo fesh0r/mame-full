@@ -1,8 +1,19 @@
 #include "xmame.h"
 #include "devices.h"
 
+static char *joy_dev = NULL; /* name of joystick device prefix */
+
 struct rc_option joy_i386_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
+#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
+   { "joydevname",	"jdev",			rc_string,	&joy_dev,
+     "/dev/joy",	0,			0,		NULL,
+     "Joystick device prefix (defaults to /dev/joy)" },
+#elif defined __ARCH_linux
+   { "joydevname",	"jdev",			rc_string,	&joy_dev,
+     "/dev/js",		0,			0,		NULL,
+     "Joystick device prefix (defaults to /dev/js)" },
+#endif  /* arch */
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -17,13 +28,11 @@ struct rc_option joy_i386_opts[] = {
 
 #include <machine/joystick.h>
 typedef struct joystick joy_struct;
-#define JOYSTICK_DEVICE_NAME "/dev/joy"
 
 #elif defined __ARCH_linux
 
 #include <linux/joystick.h>
 typedef struct JS_DATA_TYPE joy_struct;
-#define JOYSTICK_DEVICE_NAME "/dev/js"
 
 #ifdef JS_VERSION
 #define I386NEW_JOYSTICK 1
@@ -51,7 +60,8 @@ void joy_i386_init (void)
    fprintf (stderr_file, "I386 joystick interface initialization...\n");
    for (i = 0; i < JOY; i++)
    {
-      sprintf (devname, "%s%d", JOYSTICK_DEVICE_NAME, i);
+      sprintf (devname, "%s%d", joy_dev, i);
+      printf("Ahhhhhhhhh!!!!!!!!!!!%s\n", devname);
       if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
       {
          if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
