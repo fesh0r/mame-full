@@ -1,5 +1,5 @@
 /*
-	Flash ROM emulation 
+	Flash ROM emulation
 
 	Explicitly supports:
 	Intel 28F016S5 (byte-wide)
@@ -27,7 +27,7 @@ enum
 	FM_READAMDID3,	// part 3 of alt ID sequence
 };
 
-struct flash_chip 
+struct flash_chip
 {
 	int flash_mode;
 	int flash_master_lock;
@@ -38,7 +38,7 @@ struct flash_chip
 
 static struct flash_chip chips[FLASH_CHIPS_MAX];
 
-static void intelflash_init(int chip)
+void intelflash_init(int chip)
 {
 	chips[chip].flash_mode = FM_NORMAL;
 	chips[chip].flash_master_lock = 0;
@@ -182,7 +182,7 @@ void intelflash_write_byte(int chip, data32_t address, data8_t data)
 				case 0x60:	// set master lock
 					chips[chip].flash_mode = FM_SETMASTER;
 					break;
-				case 0x70:	// read status	
+				case 0x70:	// read status
 					chips[chip].flash_mode = FM_READSTATUS;
 					break;
 				case 0xaa:	// AMD ID select part 1
@@ -237,7 +237,7 @@ void intelflash_write_byte(int chip, data32_t address, data8_t data)
 			{
 				chips[chip].flash_master_lock = 1;
 			}
-			else if ((data & 0xff) == 0xd0) 
+			else if ((data & 0xff) == 0xd0)
 			{
 				chips[chip].flash_master_lock = 0;
 			}
@@ -326,7 +326,7 @@ void intelflash_write_word(int chip, data32_t address, data16_t data)
 				case 0x60:	// set master lock
 					chips[chip].flash_mode = FM_SETMASTER;
 					break;
-				case 0x70:	// read status	
+				case 0x70:	// read status
 					chips[chip].flash_mode = FM_READSTATUS;
 					break;
 				default:
@@ -356,7 +356,7 @@ void intelflash_write_word(int chip, data32_t address, data16_t data)
 			{
 				chips[chip].flash_master_lock = 1;
 			}
-			else if ((data & 0xff) == 0xd0) 
+			else if ((data & 0xff) == 0xd0)
 			{
 				chips[chip].flash_master_lock = 0;
 			}

@@ -1,4 +1,4 @@
-0.93.1
+0.94
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [GAMEBOY] Fixed regression introduced in 0.93.  [Nate Woods]
 
 
 
@@ -26,7 +26,7 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
-- The core is based on MAME 0.93u3.  This incorporates all features of the
+- The core is based on MAME 0.94.  This incorporates all features of the
   update to this core.  [MAME team]  
   
   

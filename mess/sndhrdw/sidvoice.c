@@ -552,7 +552,7 @@ void sidEmuSet(sidOperator* pVoice)
     pVoice->ADSRctrl = enveTemp & (255-ENVE_ALTER-1);
     
     pVoice->filtEnabled = pVoice->sid->filter.Enabled &&
-        ((pVoice->sid->reg[0x17]&pVoice->filtVoiceMask)!=0);
+        ((pVoice->sid->reg[0x17] & pVoice->filtVoiceMask)!=0);
 }
 
 /* -------------------------------------------------- Operator frame set-up 2 */

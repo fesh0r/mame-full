@@ -622,5 +622,5 @@ void *gameboy_sh_start(int clock, const struct CustomSound_interface *config)
 		length_mode3_table[I] = ((256 - I) * ((1 << FIXED_POINT)/256) * rate) >> FIXED_POINT;
 	}
 
-	return 0;
+	return (void *) ~0;
 }

@@ -1,0 +1,7 @@
+<tests>
+
+<test name="c65_000" driver="c65">
+	<wait time="20"/>
+</test>
+
+</tests>

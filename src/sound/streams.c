@@ -574,74 +574,26 @@ static void resample_input_stream(struct stream_input *input, int samples)
 	/* perfectly matching */
 	if (step == FRAC_ONE)
 	{
-		/* no or low gain */
-		if (gain <= 0x100)
+		while (samples--)
 		{
-			while (samples--)
-			{
-				/* compute the sample */
-				sample = source[pos >> FRAC_BITS];
-				*dest++ = (sample * gain) >> 8;
-				pos += FRAC_ONE;
-			}
-		}
-		
-		/* with potentially clipping gain */
-		else
-		{
-			while (samples--)
-			{
-				/* compute the sample */
-				sample = source[pos >> FRAC_BITS];
-				sample = (sample * gain) >> 8;
-				pos += FRAC_ONE;
-
-				/* clamp and store */
-				if (sample < -32768)
-					sample = -32768;
-				else if (sample > 32767)
-					sample = 32767;
-				*dest++ = sample;
-			}
+			/* compute the sample */
+			sample = source[pos >> FRAC_BITS];
+			*dest++ = (sample * gain) >> 8;
+			pos += FRAC_ONE;
 		}
 	}
 	
 	/* input is undersampled: use linear interpolation */
 	else if (step < FRAC_ONE)
 	{
-		/* no or low gain */
-		if (gain <= 0x100)
+		while (samples--)
 		{
-			while (samples--)
-			{
-				/* compute the sample */
-				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
-				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
-				sample >>= FRAC_BITS;
-				*dest++ = (sample * gain) >> 8;
-				pos += step;
-			}
-		}
-		
-		/* with potentially clipping gain */
-		else
-		{
-			while (samples--)
-			{
-				/* compute the sample */
-				sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
-				sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
-				sample >>= FRAC_BITS;
-				sample = (sample * gain) >> 8;
-				pos += step;
-
-				/* clamp and store */
-				if (sample < -32768)
-					sample = -32768;
-				else if (sample > 32767)
-					sample = 32767;
-				*dest++ = sample;
-			}
+			/* compute the sample */
+			sample  = source[(pos >> FRAC_BITS) + 0] * (FRAC_ONE - (pos & FRAC_MASK));
+			sample += source[(pos >> FRAC_BITS) + 1] * (pos & FRAC_MASK);
+			sample >>= FRAC_BITS;
+			*dest++ = (sample * gain) >> 8;
+			pos += step;
 		}
 	}
 	
@@ -651,63 +603,26 @@ static void resample_input_stream(struct stream_input *input, int samples)
 		/* use 8 bits to allow some extra headroom */
 		int smallstep = step >> (FRAC_BITS - 8);
 
-		/* no or low gain */
-		if (gain <= 0x100)
+		while (samples--)
 		{
-			while (samples--)
+			int tpos = pos >> FRAC_BITS;
+			int remainder = smallstep;
+			int scale;
+			
+			/* compute the sample */
+			scale = (FRAC_ONE - (pos & FRAC_MASK)) >> (FRAC_BITS - 8);
+			sample = source[tpos++] * scale;
+			remainder -= scale;
+			while (remainder > 0x100)
 			{
-				int tpos = pos >> FRAC_BITS;
-				int remainder = smallstep;
-				int scale;
-				
-				/* compute the sample */
-				scale = (FRAC_ONE - (pos & FRAC_MASK)) >> (FRAC_BITS - 8);
-				sample = source[tpos++] * scale;
-				remainder -= scale;
-				while (remainder > 0x100)
-				{
-					sample += source[tpos++] * 0x100;
-					remainder -= 0x100;
-				}
-				sample += source[tpos] * remainder;
-				sample /= smallstep;
-				
-				*dest++ = (sample * gain) >> 8;
-				pos += step;
+				sample += source[tpos++] * 0x100;
+				remainder -= 0x100;
 			}
-		}
-		
-		/* with potentially clipping gain */
-		else
-		{
-			while (samples--)
-			{
-				int tpos = pos >> FRAC_BITS;
-				int remainder = smallstep;
-				int scale;
-				
-				/* compute the sample */
-				scale = (FRAC_ONE - (pos & FRAC_MASK)) >> (FRAC_BITS - 8);
-				sample = source[tpos++] * scale;
-				remainder -= scale;
-				while (remainder > 0x100)
-				{
-					sample += source[tpos++] * 0x100;
-					remainder -= 0x100;
-				}
-				sample += source[tpos] * remainder;
-				sample /= smallstep;
-
-				sample = (sample * gain) >> 8;
-				pos += step;
-
-				/* clamp and store */
-				if (sample < -32768)
-					sample = -32768;
-				else if (sample > 32767)
-					sample = 32767;
-				*dest++ = sample;
-			}
+			sample += source[tpos] * remainder;
+			sample /= smallstep;
+			
+			*dest++ = (sample * gain) >> 8;
+			pos += step;
 		}
 	}
 	

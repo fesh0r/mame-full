@@ -9,6 +9,8 @@
 
 #define FLASH_CHIPS_MAX	(8)	// 8 chips
 
+void intelflash_init(int chip);
+
 void nvram_handler_intelflash_0(mame_file *file,int read_or_write);
 void nvram_handler_intelflash_1(mame_file *file,int read_or_write);
 void nvram_handler_intelflash_2(mame_file *file,int read_or_write);
