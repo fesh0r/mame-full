@@ -1089,5 +1089,5 @@ static const struct IODevice io_avigo[] =
 
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMPX( 1997, avigo,   0,                avigo,  avigo,      0,       "Texas Instruments", "avigo",GAME_NOT_WORKING)
+COMPX( 1997, avigo,   0,                avigo,  avigo,      0,       "Texas Instruments", "TI Avigo 100 PDA",GAME_NOT_WORKING)
 
