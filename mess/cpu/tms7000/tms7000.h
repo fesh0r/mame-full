@@ -44,15 +44,9 @@ enum {
 };
 
 /* PUBLIC FUNCTIONS */
-extern void tms7000_init(void);
-extern void tms7000_reset(void *param);
-extern void tms7000_exit(void);
-extern unsigned tms7000_dasm(char *buffer, unsigned pc);
-extern void tms7000_set_irq_line(int irqline, int state);
-extern void tms7000_set_irq_callback(int (*callback)(int irqline));
-extern int tms7000_execute(int cycles);
 extern void tms7000_A6EC1( void ); /* External event counter */
-void tms7000_get_info(UINT32 state, union cpuinfo *info);
+extern void tms7000_get_info(UINT32 state, union cpuinfo *info);
+extern void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 
 extern WRITE8_HANDLER( tms70x0_pf_w );
 extern  READ8_HANDLER( tms70x0_pf_r );

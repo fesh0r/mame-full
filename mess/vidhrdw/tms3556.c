@@ -2,7 +2,7 @@
 	tms3556 emulation
 
 	TODO:
-	* implement VRAM read/write
+	* test VRAM read/write
 	* implement remaining flags in control registers
 	* test the whole thing
 
@@ -75,18 +75,28 @@ static VIDEO_UPDATE(tms3556);
 */
 READ8_HANDLER(tms3556_vram_r)
 {
-	/***TODO***/
-	return 0;
+	int reply;
+
+	reply = vdp.vram[vdp.addressRegs[1]];
+	vdp.addressRegs[1] ++;
+
+	return reply;
 }
 
 /*
-	tms3556_vram_r
+	tms3556_vram_w
 
 	write a byte to tms3556 VRAM port
 */
 WRITE8_HANDLER(tms3556_vram_w)
 {
-	/***TODO***/
+	int address;
+
+	address = (vdp.controlRegs[1] << 8) | vdp.controlRegs[2];
+	vdp.vram[address] = data;
+	address++;
+	vdp.controlRegs[1] = address >> 8;
+	vdp.controlRegs[2] = address;
 }
 
 /*
@@ -120,27 +130,43 @@ WRITE8_HANDLER(tms3556_reg_w)
 	switch (vdp.reg_access_phase)
 	{
 	case 0:
-		vdp.reg_ptr = data & 0x0f;
-		vdp.reg_access_phase = 1;
+		if (data == 0xfe)
+		{	/* this value is sent by some exeltel ROM routine, no idea what it
+			means */
+			/* ... */
+			vdp.reg_ptr = -1;
+			vdp.reg_access_phase = 1;
+		}
+		else
+		{
+			vdp.reg_ptr = data & 0x0f;
+			vdp.reg_access_phase = 1;
+		}
 		break;
 	case 1:
-		if (vdp.reg_ptr < 8)
+		if (vdp.reg_ptr == -1)
+		{
+			/* ??? */
+			vdp.reg_access_phase = 0;
+		}
+		else if (vdp.reg_ptr < 8)
 		{
 			vdp.controlRegs[vdp.reg_ptr] = data;
 			vdp.reg_access_phase = 0;
 		}
 		else
 		{
-			vdp.addressRegs[vdp.reg_ptr-8] = (vdp.addressRegs[vdp.reg_ptr] & 0xff00) | vdp.controlRegs[1];
+			vdp.addressRegs[vdp.reg_ptr-8] = (vdp.addressRegs[vdp.reg_ptr-8] & 0xff00) | vdp.controlRegs[1];
 			vdp.reg_access_phase = 2;
 		}
 		break;
 	case 2:
-		vdp.addressRegs[vdp.reg_ptr-8] = (vdp.addressRegs[vdp.reg_ptr] & 0x00ff) | (vdp.controlRegs[2] << 8);
+		vdp.addressRegs[vdp.reg_ptr-8] = (vdp.addressRegs[vdp.reg_ptr-8] & 0x00ff) | (vdp.controlRegs[2] << 8);
 		if ((vdp.reg_ptr <= 10) || (vdp.reg_ptr == 15))
 			vdp.addressRegs[vdp.reg_ptr-8] ++;
 		else
 			vdp.addressRegs[vdp.reg_ptr-8] += 2;
+		vdp.reg_access_phase = 0;
 		break;
 	}
 }
@@ -590,10 +616,6 @@ static void tms3556_interrupt_start_vblank(void)
 */
 void tms3556_interrupt(void)
 {
-	int scanline;
-
-	scanline = vdp.scanline;
-
 	/* check for start of vblank */
 	if (vdp.scanline == 310)	/*no idea what the real value is*/
 		tms3556_interrupt_start_vblank();
@@ -601,7 +623,7 @@ void tms3556_interrupt(void)
 	/* render the current line */
 	if ((vdp.scanline >= 0) && (vdp.scanline < TOTAL_HEIGHT))
 	{
-		if (!osd_skip_this_frame())
+		//if (!osd_skip_this_frame())
 			tms3556_draw_line(Machine->scrbitmap, vdp.scanline);
 	}
 

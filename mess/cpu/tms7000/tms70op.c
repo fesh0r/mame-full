@@ -3868,6 +3868,46 @@ void swap_r( void )
 	tms7000_icount -=8;
 }
 
+static void swap_r_exl( void )
+{
+	UINT8	a,b,r;
+	UINT16	t;
+	
+	IMMBYTE(r);
+
+	if (r == 0)
+	{	/* opcode D7 00 (LVDP) mostly equivalent to MOVP P46,A??? (timings must
+		be different, possibly the microcode polls the state of the VDP RDY
+		line prior to doing the transfer) */
+		t=RM(0x012e);
+		WRA(t);
+
+		CLR_NZC;
+		SET_N8(t);
+		SET_Z8(t);
+
+		tms7000_icount -= 9;	/* ?????? */
+	}
+	else
+	{	/* stright swap Rn instruction */
+		a = b = RM(r);
+		
+		a <<= 4;
+		b >>= 4;
+		t = a+b;
+		
+		WM(r,t);
+		
+		CLR_NZC;
+		
+		pSR|=((t&0x0001)<<7);
+		SET_N8(t);
+		SET_Z8(t);
+		
+		tms7000_icount -=8;
+	}
+}
+
 void tstb( void );
 void tstb( void )
 {
