@@ -43,6 +43,7 @@
 #include "dijoystick.h"
 #include "audit.h"
 #include "options.h"
+#include "picker.h"
 #include "windows/config.h"
 
 #ifdef _MSC_VER
@@ -2482,9 +2483,12 @@ static void ListDecodeString(const char* str, void* data)
 
 static void ListEncodeString(void* data, char *str)
 {
-	int* value = (int*)data;
+	int value = *((int*)data);
+	const char* view_mode_string = "";
 
-	strcpy(str, view_modes[*value]);
+	if ((value >= 0) && (value < sizeof(view_modes) / sizeof(view_modes[0])))
+		view_mode_string = view_modes[value];
+	strcpy(str, view_mode_string);
 }
 
 /* Parse the given comma-delimited string into a LOGFONT structure */

@@ -39,13 +39,13 @@ OSOBJS += \
 		$(OBJ)/ui/history.o \
 		$(OBJ)/ui/dialogs.o \
 		$(OBJ)/ui/properties.o \
+		$(OBJ)/ui/picker.o \
  		$(OBJ)/mess/ui/ms32main.o \
  		$(OBJ)/mess/ui/layoutms.o \
 		$(OBJ)/mess/ui/mess32ui.o \
 		$(OBJ)/mess/ui/ms32util.o \
 		$(OBJ)/mess/ui/optionsms.o \
 		$(OBJ)/mess/ui/propertiesms.o \
-		$(OBJ)/mess/ui/smartlistview.o \
 		$(OBJ)/mess/ui/softwarelist.o
 
 # add resource file

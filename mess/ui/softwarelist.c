@@ -3,13 +3,14 @@
 #include <string.h>
 #include <assert.h>
 #include <tchar.h>
+#include <commctrl.h>
 
 #include "ui/screenshot.h"
 #include "ui/bitmask.h"
 #include "ui/options.h"
 #include "ui/mame32.h"
+#include "ui/picker.h"
 
-#include "SmartListView.h"
 #include "SoftwareList.h"
 #include "mame.h"
 #include "driver.h"
@@ -226,7 +227,7 @@ static void MessDiscoverImageType(ImageData *img, mess_image_type *imagetypes, B
 			img->dev = imgtype->dev;
 #if HAS_HASH
 			/* while we have the ZIP file open, we have a convenient opportunity
-				* to specify the CRC */
+			 * to specify the CRC */
 			if (hash && zipcrc && (!imgtype->dev || !imgtype->dev->partialhash))
 				sprintf(hash, "c:%08x#", zipcrc);
 #endif /* HAS_HASH */
@@ -446,7 +447,8 @@ static BOOL AppendNewImage(const char *fullname, enum RealizeLevel eRealize, Ima
 
 	ImageData_Realize(newimg, eRealize, imagetypes);
 
-	if (ImageData_IsBad(newimg)) {
+	if (ImageData_IsBad(newimg))
+	{
 		/* Unknown type of software */
 		ImageData_Free(newimg);
 		return FALSE;
@@ -469,7 +471,8 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
     SetupImageTypes(nDriver, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_COUNT);
 
     d = osd_dir_open(dir, "*.*");
-    if (d) {
+    if (d)
+	{
 		/* Cache the old directory */
 		olddirc = osd_get_cwd();
 		olddir = alloca(strlen(olddirc) + 1);
@@ -480,13 +483,16 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
         strncpyz(buffer, osd_get_cwd(), buffersz);
         pathlen = strlen(buffer);
 
-        while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
-            if (!is_dir) {
+        while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir))
+		{
+            if (!is_dir)
+			{
                 /* Not a directory */
                 if (AppendNewImage(buffer, REALIZE_IMMEDIATE, listend, imagetypes))
                     mess_images_count++;
             }
-            else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
+            else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, ".."))
+			{
                 AddImagesFromDirectory(nDriver, buffer + pathlen, bRecurse, buffer, buffersz, listend);
 
                 strncpyz(buffer, osd_get_cwd(), buffersz);
@@ -502,7 +508,23 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
 
 
 
-static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, int nGame,
+static BOOL InsertSoftwareListItem(HWND hwndSoftware, int nItem)
+{
+	LV_ITEM lvi;
+
+	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
+	lvi.stateMask = 0;
+	lvi.iItem = nItem;
+	lvi.iSubItem = 0;
+	lvi.lParam = nItem;
+	lvi.pszText  = LPSTR_TEXTCALLBACK;
+	lvi.iImage   = I_IMAGECALLBACK;
+	return ListView_InsertItem(hwndSoftware, &lvi);
+}
+
+
+
+static void InternalFillSoftwareList(HWND hwndSoftware, int nGame,
 	int nPaths, LPCSTR *plpPaths, void (*error_proc)(const char *message))
 {
     int i;
@@ -551,10 +573,12 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
     mess_images_count = 0;
     pimgd = &mess_images;
 
-	for (i = 0; i < nPaths; i++) {
+	for (i = 0; i < nPaths; i++)
+	{
 		/* Do we have a semicolon? */
 		s = strchr(plpPaths[i], ';');
-		if (s) {
+		if (s)
+		{
 			int nLen = s - plpPaths[i];
 			s = malloc((nLen + 1) * sizeof(*s));
 			if (!s)
@@ -563,7 +587,8 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 			s[nLen] = '\0';
 			path = s;
 		}
-		else {
+		else
+		{
 			path = plpPaths[i];
 			s = NULL;
 		}
@@ -574,36 +599,44 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 			free(s);
     }
 
-    if (mess_images_count) {
-        mess_images_index = (ImageData **) malloc(sizeof(ImageData *) * mess_images_count);
-        if (mess_images_index) {
-            imgd = mess_images;
-            for (i = 0; i < mess_images_count; i++) {
-                mess_images_index[i] = imgd;
-                imgd = imgd->next;
-            }
-        }
-        else {
-            mess_images_count = 0;
-        }
+    if (mess_images_count)
+	{
+		mess_images_index = (ImageData **) malloc(sizeof(ImageData *) * mess_images_count);
+		if (mess_images_index)
+		{
+			imgd = mess_images;
+			for (i = 0; i < mess_images_count; i++)
+			{
+				mess_images_index[i] = imgd;
+				imgd = imgd->next;
+			}
+		}
+		else
+		{
+			mess_images_count = 0;
+		}
     }
-    else {
+    else
+	{
         mess_images_index = NULL;
     }
 
-	SmartListView_SetTotalItems(pSoftwareListView, mess_images_count);
-	SmartListView_SetSorting(pSoftwareListView, 0, FALSE);
+	ListView_DeleteAllItems(hwndSoftware);
+	ListView_SetItemCount(hwndSoftware, mess_images_count);
+	for (i = 0; i < mess_images_count; i++)
+		InsertSoftwareListItem(hwndSoftware, i);
 
 #if HAS_IDLING
     mess_idle_work = TRUE;
     s_nIdleImageNum = 0;
 	s_eRealizeLevel = REALIZE_ZIPS;
+	Picker_ResetIdle(hwndSoftware);
 #endif /* HAS_IDLING */
 }
 
 
 
-void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths,
+void FillSoftwareList(HWND hwndSoftware, int nGame, int nBasePaths,
 	LPCSTR *plpBasePaths, LPCSTR lpExtraPath, void (*error_proc)(const char *message))
 {
 	LPCSTR s;
@@ -615,8 +648,6 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	int nChainCount;
 	const struct GameDriver *drv;
 	char buffer[MAX_PATH];
-
-	assert(pSoftwareListView);
 
 	/* Count the number of extra paths */
 	if (lpExtraPath && *lpExtraPath)
@@ -665,7 +696,7 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 
 	assert(nPath == nTotalPaths);
 
-	InternalFillSoftwareList(pSoftwareListView, nGame, nTotalPaths, (LPCSTR*)plpPaths,
+	InternalFillSoftwareList(hwndSoftware, nGame, nTotalPaths, (LPCSTR*)plpPaths,
 		error_proc);
 }
 
@@ -713,11 +744,11 @@ int MessLookupByFilename(const TCHAR *filename)
     return -1;
 }
 
-void MessIntroduceItem(struct SmartListView *pListView, const char *filename, mess_image_type *imagetypes)
+void MessIntroduceItem(HWND hwndSoftware, const char *filename, mess_image_type *imagetypes)
 {
-    ImageData       **pLastImageNext;
-    ImageData       **pOldLastImageNext;
-    ImageData       **pNewIndex;
+    ImageData **pLastImageNext;
+    ImageData **pOldLastImageNext;
+    ImageData **pNewIndex;
     int i;
 
 	assert(filename);
@@ -738,17 +769,19 @@ void MessIntroduceItem(struct SmartListView *pListView, const char *filename, me
     pNewIndex[i] = (*pOldLastImageNext);
     mess_images_index = pNewIndex;
 
-	if (!SmartListView_AppendItem(pListView))
+	if (!InsertSoftwareListItem(hwndSoftware, i))
 		goto outofmemory;
-	SmartListView_SelectItem(pListView, i, TRUE);
+
+	ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+	ListView_EnsureVisible(hwndSoftware, i, FALSE);
     return;
 
 unknownsoftware:
-    MessageBox(pListView->hwndParent, TEXT("Unknown type of software"), TEXT(MAME32NAME), MB_OK);
+    MessageBox(hwndSoftware, TEXT("Unknown type of software"), TEXT(MAME32NAME), MB_OK);
     return;
 
 outofmemory:
-    MessageBox(pListView->hwndParent, TEXT("Out of memory"), TEXT(MAME32NAME), MB_OK);
+    MessageBox(hwndSoftware, TEXT("Out of memory"), TEXT(MAME32NAME), MB_OK);
     return;
 }
 
@@ -866,7 +899,7 @@ static void TstringFromUtf8(TCHAR *buf, size_t bufsize, const char *utf8string)
  * SoftwareListView class code                                              *
  * ************************************************************************ */
 
-LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
+LPCTSTR SoftwareList_GetText(HWND hwndSoftware, int nRow, int nColumn)
 {
 	LPCTSTR s = NULL;
 	ImageData *imgd;
@@ -926,7 +959,7 @@ LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nCol
 
 
 
-BOOL SoftwareList_IsItemSelected(struct SmartListView *pListView, int nItem)
+BOOL SoftwareList_IsItemSelected(HWND hwndSoftware, int nItem)
 {
 	int i;
 
@@ -939,27 +972,27 @@ BOOL SoftwareList_IsItemSelected(struct SmartListView *pListView, int nItem)
 	return FALSE;
 }
 
-BOOL SoftwareList_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
+BOOL SoftwareList_ItemChanged(HWND hwndSoftware, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
 	int i;
 
     if (bWasSelected && !bNowSelected)
     {
         if (nRow >= 0) {
-            if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
+            if ((GetKeyState(VK_SHIFT) & 0xff00) == 0)
+			{
                 /* We are about to clear all images.  We have to go through
                  * and tell the other items to update */
-                for (i = 0; i < options.image_count; i++) {
+                for (i = 0; i < options.image_count; i++)
+				{
                     int imagenum = mess_image_nums[i];
                     mess_image_nums[i] = -1;
-                    SmartListView_Update(pListView, imagenum);
+					ListView_Update(hwndSoftware, imagenum);
                 }
                 MessRemoveImage(-1);
             }
 
         }
-        /* leaving item */
-        /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
     }
 
     if (!bWasSelected && bNowSelected)
@@ -970,13 +1003,10 @@ BOOL SoftwareList_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected
 	return TRUE;
 }
 
-#if HAS_IDLING
-BOOL SoftwareList_CanIdle(struct SmartListView *pListView)
-{
-	return mess_idle_work;
-}
 
-void SoftwareList_Idle(struct SmartListView *pListView)
+
+#if HAS_IDLING
+BOOL SoftwareList_Idle(HWND hwndSoftware)
 {
     static mess_image_type imagetypes[64];
     ImageData *pImageData;
@@ -985,11 +1015,12 @@ void SoftwareList_Idle(struct SmartListView *pListView)
     if (s_nIdleImageNum == 0)
         SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
-    for (i = 0; (i < 10) && (s_nIdleImageNum < mess_images_count); i++) {
+    for (i = 0; (i < 10) && (s_nIdleImageNum < mess_images_count); i++)
+	{
         pImageData = mess_images_index[s_nIdleImageNum];
 
         if (ImageData_Realize(pImageData, s_eRealizeLevel, imagetypes))
-            SmartListView_RedrawItem(pListView, s_nIdleImageNum);
+            ListView_RedrawItems(hwndSoftware, s_nIdleImageNum, s_nIdleImageNum);
         s_nIdleImageNum++;
     }
 
@@ -1016,8 +1047,11 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 		}
 		mess_idle_work = (s_eRealizeLevel != REALIZE_DONE);
     }
+	return mess_idle_work;
 }
 #endif /* HAS_IDLING */
+
+
 
 /* ------------------------------------------------------------------------ *
  * MESS GUI Diagnostics                                                     *
@@ -1035,7 +1069,7 @@ static const char *MessGui_getfodderimage(unsigned int i, int *foddertype)
 	return NULL;
 }
 
-void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gamedrv)
+void MessTestsFlex(HWND hwndSoftware, const struct GameDriver *gamedrv)
 {
 	/* We get called here when we are done idling
 	 *
@@ -1052,14 +1086,14 @@ void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gam
 	SetupImageTypes(s_nGame, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_COUNT);
 
 	/* Try appending an item to the list */
-	for (i = 0; i < nItemsToAdd; i++)
-	{
-		nItem = i * nItemsToAddSkip;
-		if ((nItem < mess_images_count) && (GetImageType(nItem) < IO_COUNT))
-		{
-			MessIntroduceItem(pListView, T2A(mess_images_index[nItem]->fullname), imagetypes);
-		}
-	}
+//	for (i = 0; i < nItemsToAdd; i++)
+//	{
+//		nItem = i * nItemsToAddSkip;
+//		if ((nItem < mess_images_count) && (GetImageType(nItem) < IO_COUNT))
+//		{
+//			MessIntroduceItem(hwndSoftware, T2A(mess_images_index[nItem]->fullname), imagetypes);
+//		}
+//	}
 
 	/* Assert that we have resolved all the types */
 	for (i = 0; i < mess_images_count; i++)
@@ -1071,7 +1105,7 @@ void MessTestsFlex(struct SmartListView *pListView, const struct GameDriver *gam
 	/* Now lets try to see if we can load everything */
 	for (i = 0; i < mess_images_count; i++)
 	{
-		SmartListView_SelectItem(pListView, i, FALSE);
+		ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
 		messtestdriver(gamedrv, MessGui_getfodderimage);
 	}
 }

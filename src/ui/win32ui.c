@@ -59,6 +59,7 @@
 #include "Directories.h"
 #include "Properties.h"
 #include "ColumnEdit.h"
+#include "picker.h"
 #include "bitmask.h"
 #include "TreeView.h"
 #include "Splitters.h"
@@ -155,11 +156,11 @@ static BOOL             Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int n
 static void             Win32UI_exit(void);
 
 static BOOL             PumpMessage(void);
-static void             OnIdle(void);
+static BOOL             OnIdle(HWND hWnd);
 static void             OnSize(HWND hwnd, UINT state, int width, int height);
 static long WINAPI      MameWindowProc(HWND hwnd,UINT message,UINT wParam,LONG lParam);
 
-static void             SetView(int menu_id,int listview_style);
+static void             SetView(int menu_id);
 static void             ResetListView(void);
 static void             UpdateGameList(void);
 static void             DestroyIcons(void);
@@ -173,7 +174,6 @@ static void             KeyboardStateClear(void);
 
 static void             UpdateStatusBar(void);
 static BOOL             PickerHitTest(HWND hWnd);
-static BOOL             MamePickerNotify(NMHDR *nm);
 static BOOL             TreeViewNotify(NMHDR *nm);
 // "tab" = value in options.h (TAB_SCREENSHOT, for example)
 // "tab index" = index in the ui tab control
@@ -190,17 +190,14 @@ static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y)
 
 static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2);
 static void             ResetTabControl(void);
-static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
+static int CALLBACK     ListCompareFunc(LPARAM index1, LPARAM index2, LPARAM sort_subitem);
 static int              BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem);
 
 static void             DisableSelection(void);
 static void             EnableSelection(int nGame);
 
 static int              GetSelectedPick(void);
-static int              GetSelectedPickItem(void);
 static HICON			GetSelectedPickItemIcon(void);
-static void             SetSelectedPick(int new_index);
-static void             SetSelectedPickItem(int val);
 static void             SetRandomPickItem(void);
 
 static LPTREEFOLDER     GetSelectedFolder(void);
@@ -220,19 +217,12 @@ static void             MamePlayGame(void);
 static void             MamePlayGameWithOptions(int nGame);
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata);
-static void SortListView(void);
 static BOOL             GameCheck(void);
 static BOOL FolderCheck(void);
 
 static void             ToggleScreenShot(void);
 static void             AdjustMetrics(void);
 static void             EnablePlayOptions(int nIndex, options_type *o);
-
-/* for header */
-static LRESULT CALLBACK ListViewWndProc(HWND, UINT, WPARAM, LPARAM);
-static BOOL             ListCtrlOnErase(HWND hWnd, HDC hDC);
-static BOOL             ListCtrlOnPaint(HWND hWnd, UINT uMsg);
-static void ResetHeaderSortIcon(void);
 
 /* Icon routines */
 static DWORD            GetShellLargeIconSize(void);
@@ -253,12 +243,6 @@ static BOOL             HandleScreenShotContextMenu( HWND hWnd, WPARAM wParam, L
 static void             InitListView(void);
 /* Re/initialize the ListView header columns */
 static void ResetColumnDisplay(BOOL first_time);
-static int GetRealColumnFromViewColumn(int view_column);
-static int GetViewColumnFromRealColumn(int real_column);
-
-/* Custom Draw item */
-static void             DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
-static int              GetNumColumns(HWND hWnd);
 
 static void             CopyToolTipText (LPTOOLTIPTEXT lpttt);
 
@@ -417,9 +401,6 @@ static int  game_index;
 static int  progBarStep;
 
 static BOOL bDoGameCheck = FALSE;
-
-/* current menu check for listview */
-static int current_view_id;
 
 /* Tree control variables */
 static BOOL bShowTree      = 1;
@@ -606,7 +587,6 @@ static GUISequence GUISequenceControl[]=
 
 
 static UINT    lastColumnClick   = 0;
-static WNDPROC g_lpListViewWndProc = NULL;
 static WNDPROC g_lpHistoryWndProc = NULL;
 static WNDPROC g_lpPictureFrameWndProc = NULL;
 static WNDPROC g_lpPictureWndProc = NULL;
@@ -620,7 +600,6 @@ static HWND hToolBar   = 0;
 /* Column Order as Displayed */
 static BOOL oldControl = FALSE;
 static BOOL xpControl = FALSE;
-static int  realColumn[COLUMN_MAX];
 
 /* Used to recalculate the main window layout */
 static int  bottomMargin;
@@ -1110,8 +1089,6 @@ int Mame32Main(HINSTANCE    hInstance,
                    LPSTR        lpCmdLine,
                    int          nCmdShow)
 {
-	MSG 	msg;
-
 	dprintf("MAME32 starting");
 
 	options.gui_host = 1;
@@ -1126,44 +1103,11 @@ int Mame32Main(HINSTANCE    hInstance,
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))
 		return 1;
 
-	/*
-		Simplified MFC Run() alg. See mfc/src/thrdcore.cpp.
-	*/
-	for (;;)
-	{
-		// phase1: check to see if we can do idle work
-		while (idle_work && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-		{
-			// call OnIdle while idle_work
-			OnIdle();
-        }
+	// pump message, but quit on WM_QUIT
+	while(PumpMessage())
+		;
 
-#ifdef MESS
-		if (!idle_work)
-		{
-			BOOL bDoneIdling;
-			bDoneIdling = SmartListView_IdleUntilMsg(s_pSoftwareListView);
-#ifdef MAME_DEBUG
-			if (bDoneIdling)
-				MessTestsDoneIdle();
-#endif /* MAME_DEBUG */
-		}
-#endif /* MESS */
-
-		// phase2: pump messages while available
-		do
-		{
-			// pump message, but quit on WM_QUIT
-			if (!PumpMessage())
-			{
-				Win32UI_exit();
-				return msg.wParam;
-			}
-
-		}
-		while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE));
-	}
-
+	Win32UI_exit();
 	return 0;
 }
 
@@ -1178,35 +1122,13 @@ HWND GetTreeView(void)
 	return hTreeView;
 }
 
-int GetNumColumns(HWND hWnd)
-{
-	int  nColumn = 0;
-	int  i;
-	HWND hwndHeader;
-	int  shown[COLUMN_MAX];
-
-	GetColumnShown(shown);
-	hwndHeader = ListView_GetHeader(hwndList);
-
-	if (oldControl || (nColumn = Header_GetItemCount(hwndHeader)) < 1)
-	{
-		nColumn = 0;
-		for (i = 0; i < COLUMN_MAX ; i++ )
-		{
-			if (shown[i])
-				nColumn++;
-		}
-	}
-	return nColumn;
-}
-
 void GetRealColumnOrder(int order[])
 {
 	int tmpOrder[COLUMN_MAX];
 	int nColumnMax;
 	int i;
 
-	nColumnMax = GetNumColumns(hwndList);
+	nColumnMax = Picker_GetNumColumns(hwndList);
 
 	/* Get the Column Order and save it */
 	if (!oldControl)
@@ -1215,7 +1137,7 @@ void GetRealColumnOrder(int order[])
 
 		for (i = 0; i < nColumnMax; i++)
 		{
-			order[i] = GetRealColumnFromViewColumn(tmpOrder[i]);
+			order[i] = Picker_GetRealColumnFromViewColumn(hwndList, tmpOrder[i]);
 		}
 	}
 }
@@ -1460,11 +1382,11 @@ void UpdateScreenShot(void)
 	if (have_selection)
 	{
 #ifdef MESS
-		if (!s_szSelectedItem[0] || !LoadScreenShotEx(GetSelectedPickItem(), s_szSelectedItem, GetCurrentTab()))
+		if (!s_szSelectedItem[0] || !LoadScreenShotEx(Picker_GetSelectedItem(hwndList), s_szSelectedItem, GetCurrentTab()))
 #endif
 		{
 			// load and set image, or empty it if we don't have one
-			LoadScreenShot(GetSelectedPickItem(), GetCurrentTab());
+			LoadScreenShot(Picker_GetSelectedItem(hwndList), GetCurrentTab());
 		}
 	}
 
@@ -1657,6 +1579,16 @@ HPALETTE GetBackgroundPalette(void)
 MYBITMAPINFO * GetBackgroundInfo(void)
 {
 	return &bmDesc;
+}
+
+BOOL GetUseOldControl(void)
+{
+	return oldControl;
+}
+
+BOOL GetUseXPControl(void)
+{
+	return xpControl;
 }
 
 int GetMinimumScreenShotWindowWidth(void)
@@ -2131,20 +2063,20 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	switch (GetViewMode())
 	{
 	case VIEW_LARGE_ICONS :
-		SetView(ID_VIEW_LARGE_ICON,LVS_ICON);
+		SetView(ID_VIEW_LARGE_ICON);
 		break;
 	case VIEW_SMALL_ICONS :
-		SetView(ID_VIEW_SMALL_ICON,LVS_SMALLICON);
+		SetView(ID_VIEW_SMALL_ICON);
 		break;
 	case VIEW_INLIST :
-		SetView(ID_VIEW_LIST_MENU,LVS_LIST);
+		SetView(ID_VIEW_LIST_MENU);
 		break;
 	case VIEW_REPORT :
-		SetView(ID_VIEW_DETAIL,LVS_REPORT);
+		SetView(ID_VIEW_DETAIL);
 		break;
 	case VIEW_GROUPED :
 	default :
-		SetView(ID_VIEW_GROUPED,LVS_REPORT);
+		SetView(ID_VIEW_GROUPED);
 		break;
 	}
 
@@ -2214,7 +2146,6 @@ static void Win32UI_exit()
 	SaveOptions();
 
 	FreeFolders();
-	SetViewMode(current_view_id - ID_VIEW_LARGE_ICON);
 
     /* DestroyTree(hTreeView); */
 
@@ -2231,12 +2162,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 {
 	MINMAXINFO	*mminfo;
 	int 		i;
-
-#ifdef MESS
-	if (s_pSoftwareListView && SmartListView_IsEvent(s_pSoftwareListView, message, wParam, lParam)) {
-		return SmartListView_HandleEvent(s_pSoftwareListView, message, wParam, lParam);
-	}
-#endif /* MESS */
+	TCHAR szClass[128];
 
 	switch (message)
 	{
@@ -2361,13 +2287,14 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			SetWindowLong(hwndList,GWL_STYLE,
 						  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_REPORT);
 
-			nColumnMax = GetNumColumns(hwndList);
+			nColumnMax = Picker_GetNumColumns(hwndList);
 
 			if (oldControl)
 			{
 				for (i = 0; i < nColumnMax; i++)
 				{
-					widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
+					widths[Picker_GetRealColumnFromViewColumn(hwndList, i)] =
+						ListView_GetColumnWidth(hwndList, i);
 				}
 			}
 			else
@@ -2377,17 +2304,14 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 				for (i = 0; i < nColumnMax; i++)
 				{
-					widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
-					order[i] = GetRealColumnFromViewColumn(tmpOrder[i]);
+					widths[Picker_GetRealColumnFromViewColumn(hwndList, i)]
+						= ListView_GetColumnWidth(hwndList, i);
+					order[i] = Picker_GetRealColumnFromViewColumn(hwndList, tmpOrder[i]);
 				}
 			}
 
 			SetColumnWidths(widths);
 			SetColumnOrder(order);
-
-#ifdef MESS
-			SmartListView_SaveColumnSettings(s_pSoftwareListView);
-#endif /* MESS */
 
 			GetWindowRect(hWnd, &rect);
 			area.x		= rect.left;
@@ -2397,15 +2321,11 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			SetWindowArea(&area);
 
 			/* Save the users current game options and default game */
-			nItem = GetSelectedPickItem();
+			nItem = Picker_GetSelectedItem(hwndList);
 			SetDefaultGame(ModifyThe(drivers[nItem]->name));
 
 #ifdef MESS
 			MessWriteMountedSoftware(nItem);
-
-			/* Set the default software in the pane */
-			SmartListView_Free(s_pSoftwareListView);
-			s_pSoftwareListView = NULL;
 #endif /* MESS */
 
 			/* hide window to prevent orphan empty rectangles on the taskbar */
@@ -2471,13 +2391,15 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 				LPTOOLTIPTEXT lpttt = (LPTOOLTIPTEXT)lParam;
 				CopyToolTipText(lpttt);
 			}
-			if (lpNmHdr->hwndFrom == hwndList)
-				return MamePickerNotify(lpNmHdr);
+
 			if (lpNmHdr->hwndFrom == hTreeView)
 				return TreeViewNotify(lpNmHdr);
 			if (lpNmHdr->hwndFrom == hTabCtrl)
 				return TabNotify(lpNmHdr);
-			
+
+			GetClassName(lpNmHdr->hwndFrom, szClass, sizeof(szClass) / sizeof(szClass[0]));
+			if (!strcmp(szClass, "SysListView32"))
+				return Picker_HandleNotify(lpNmHdr);	
 		}
 		break;
 
@@ -2487,7 +2409,10 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			switch (lpDis->CtlID)
 			{
 			case IDC_LIST:
-				DrawItem(lpDis);
+#ifdef MESS
+			case IDC_LIST2:
+#endif
+				Picker_HandleDrawItem(GetDlgItem(hMain, lpDis->CtlID), lpDis);
 				break;
 			}
 		}
@@ -2558,19 +2483,6 @@ static BOOL PumpMessage()
 	}
 
 	return TRUE;
-}
-
-static void SortListView(void)
-{
-	LV_FINDINFO lvfi;
-
-	ListView_SortItems(hwndList, ListCompareFunc, GetSortColumn());
-
-	ResetHeaderSortIcon();
-
-	lvfi.flags = LVFI_PARAM;
-	lvfi.lParam = GetSelectedPickItem();
-	ListView_EnsureVisible(hwndList, ListView_FindItem(hwndList, -1, &lvfi), FALSE);
 }
 
 static BOOL FolderCheck(void)
@@ -2646,7 +2558,7 @@ static BOOL FolderCheck(void)
 			ProgressBarStepParam(i, nCount);
 	}
 	ProgressBarHide();
-	pDescription = ModifyThe(drivers[GetSelectedPickItem()]->description);
+	pDescription = ModifyThe(drivers[Picker_GetSelectedItem(hwndList)]->description);
 	SetStatusBarText(0, pDescription);
 	UpdateStatusBar();
 	return TRUE;
@@ -2694,7 +2606,7 @@ static BOOL GameCheck(void)
 	return changed;
 }
 
-static void OnIdle()
+static BOOL OnIdle(HWND hWnd)
 {
 	static int	bFirstTime = TRUE;
 	static int	bResetList = TRUE;
@@ -2710,7 +2622,7 @@ static void OnIdle()
 	if (bDoGameCheck)
 	{
 		bResetList |= GameCheck();
-		return;
+		return idle_work;
 	}
 	// NPW 17-Jun-2003 - Commenting this out because it is redundant
 	// and it causes the game to reset back to the original game after an F5 
@@ -2719,13 +2631,15 @@ static void OnIdle()
 	//SetSelectedPickItem(driver_index);
 
 	// in case it's not found, get it back
-	driver_index = GetSelectedPickItem();
+	driver_index = Picker_GetSelectedItem(hwndList);
 
 	pDescription = ModifyThe(drivers[driver_index]->description);
 	SetStatusBarText(0, pDescription);
 	idle_work = FALSE;
 	UpdateStatusBar();
 	bFirstTime = TRUE;
+
+	return idle_work;
 }
 
 static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
@@ -2971,7 +2885,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 			SendMessage(hStatusBar, SB_GETTEXT, (WPARAM)iButton, (LPARAM)(LPSTR) &String );
 		else
 			//for first pane we get the Status directly, to get the line breaks
-			strcpy(String, GameInfoStatus(GetSelectedPickItem(), FALSE) );
+			strcpy(String, GameInfoStatus(Picker_GetSelectedItem(hwndList), FALSE) );
 	}
 	else
 		strcpy(String,"Invalid Button Index");
@@ -3076,7 +2990,7 @@ static void UpdateStatusBar()
 	/* Show number of games in the current 'View' in the status bar */
 	SetStatusBarTextF(2, g_szGameCountString, games_shown);
 
-	i = GetSelectedPickItem();
+	i = Picker_GetSelectedItem(hwndList);
 
 	if (games_shown == 0)
 		DisableSelection();
@@ -3099,7 +3013,7 @@ static void UpdateHistory(void)
 
 	if (GetSelectedPick() >= 0)
 	{
-		char *histText = GetGameHistory(GetSelectedPickItem());
+		char *histText = GetGameHistory(Picker_GetSelectedItem(hwndList));
 
 		have_history = (histText && histText[0]) ? TRUE : FALSE;
 		Edit_SetText(GetDlgItem(hMain, IDC_HISTORY), histText);
@@ -3284,193 +3198,6 @@ static BOOL PickerHitTest(HWND hWnd)
 	ListView_HitTest(hWnd, &htInfo);
 
 	return (! (htInfo.flags & LVHT_NOWHERE));
-}
-
-static BOOL MamePickerNotify(NMHDR *nm)
-{
-	NM_LISTVIEW *pnmv;
-	static int nLastItem  = -1;
-
-	switch (nm->code)
-	{
-	case NM_RCLICK:
-	case NM_CLICK:
-		/* don't allow selection of blank spaces in the listview */
-		if (!PickerHitTest(hwndList))
-		{
-			/* we have no current game selected */
-			if (nLastItem != -1)
-				SetSelectedPickItem(nLastItem);
-			return TRUE;
-		}
-		break;
-
-	case NM_DBLCLK:
-		/* Check here to make sure an item was selected */
-		if (!PickerHitTest(hwndList))
-		{
-			if (nLastItem != -1);
-				SetSelectedPickItem(nLastItem);
-			return TRUE;
-		}
-		else
-			MamePlayGame();
-		return TRUE;
-
-	case LVN_GETDISPINFO:
-		{
-			LV_DISPINFO* pDispInfo = (LV_DISPINFO*)nm;
-			int nItem = pDispInfo->item.lParam;
-
-			if (pDispInfo->item.mask & LVIF_IMAGE)
-			{
-			   pDispInfo->item.iImage = GetIconForDriver(nItem);
-			}
-
-			if (pDispInfo->item.mask & LVIF_STATE)
-				pDispInfo->item.state = 0;
-
-			if (pDispInfo->item.mask & LVIF_TEXT)
-			{
-				switch (GetRealColumnFromViewColumn(pDispInfo->item.iSubItem))
-				{
-				case COLUMN_GAMES:
-					/* Driver description */
-					pDispInfo->item.pszText = (char *)ModifyThe(drivers[nItem]->description);
-					break;
-
-				case COLUMN_ROMS:
-					/* Has Roms */
-					pDispInfo->item.pszText = (char *)GetAuditString(GetRomAuditResults(nItem));
-					break;
-
-				case COLUMN_SAMPLES:
-					/* Samples */
-					if (DriverUsesSamples(nItem))
-					{
-						pDispInfo->item.pszText = 
-							(char *)GetAuditString(GetSampleAuditResults(nItem));
-					}
-					else
-					{
-						pDispInfo->item.pszText = (char *)"";
-					}
-					break;
-
-				case COLUMN_DIRECTORY:
-					/* Driver name (directory) */
-					pDispInfo->item.pszText = (char*)drivers[nItem]->name;
-					break;
-
-				case COLUMN_SRCDRIVERS:
-					/* Source drivers */
-					pDispInfo->item.pszText = (char *)GetDriverFilename(nItem);
-					break;
-
-                case COLUMN_PLAYTIME:
-					/* Source drivers */
-					GetTextPlayTime(nItem, pDispInfo->item.pszText);
-					break;
-
-				case COLUMN_TYPE:
-                {
-                    struct InternalMachineDriver drv;
-                    expand_machine_driver(drivers[nItem]->drv,&drv);
-
-					/* Vector/Raster */
-					if (drv.video_attributes & VIDEO_TYPE_VECTOR)
-						pDispInfo->item.pszText = (char *)"Vector";
-					else
-						pDispInfo->item.pszText = (char *)"Raster";
-					break;
-                }
-				case COLUMN_TRACKBALL:
-					/* Trackball */
-					if (DriverUsesTrackball(nItem))
-						pDispInfo->item.pszText = (char *)"Yes";
-					else
-						pDispInfo->item.pszText = (char *)"No";
-					break;
-
-				case COLUMN_PLAYED:
-					/* times played */
-					{
-						static char buf[100];
-						sprintf(buf, "%i", GetPlayCount(nItem));
-						pDispInfo->item.pszText = buf;
-					}
-					break;
-
-				case COLUMN_MANUFACTURER:
-					/* Manufacturer */
-					pDispInfo->item.pszText = (char *)drivers[nItem]->manufacturer;
-					break;
-
-				case COLUMN_YEAR:
-					/* Year */
-					pDispInfo->item.pszText = (char *)drivers[nItem]->year;
-					break;
-
-				case COLUMN_CLONE:
-					pDispInfo->item.pszText = (char *)GetCloneParentName(nItem);
-					break;
-
-				}
-			}
-		}
-		return TRUE;
-
-	case LVN_ITEMCHANGED :
-		pnmv = (NM_LISTVIEW *)nm;
-
-		if ( (pnmv->uOldState & LVIS_SELECTED)
-		&&	!(pnmv->uNewState & LVIS_SELECTED))
-		{
-			if (pnmv->lParam != -1)
-				nLastItem = pnmv->lParam;
-			/* leaving item */
-			/* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
-#ifdef MESS
-			MessWriteMountedSoftware(pnmv->lParam);
-#endif
-		}
-
-		if (!(pnmv->uOldState & LVIS_SELECTED)
-		&&	 (pnmv->uNewState & LVIS_SELECTED))
-		{
-			/* printf("entering %s\n",drivers[pnmv->lParam]->name); */
-			if (g_bDoBroadcast == TRUE)
-			{
-				ATOM a = GlobalAddAtom(drivers[pnmv->lParam]->description);
-				SendMessage(HWND_BROADCAST, g_mame32_message, a, a);
-				GlobalDeleteAtom(a);
-			}
-
-			EnableSelection(pnmv->lParam);
-#ifdef MESS
-			MessReadMountedSoftware(pnmv->lParam);
-#endif
-		}
-		return TRUE;
-
-	case LVN_COLUMNCLICK :
-		pnmv = (NM_LISTVIEW *)nm;
-		// if clicked on the same column we're sorting by, reverse it
-		if (GetSortColumn() == GetRealColumnFromViewColumn(pnmv->iSubItem))
-			SetSortReverse(!GetSortReverse());
-		else
-			SetSortReverse(FALSE);
-		SetSortColumn(GetRealColumnFromViewColumn(pnmv->iSubItem));
-		SortListView();
-		return TRUE;
-
-	case LVN_BEGINDRAG :		
-		pnmv = (NM_LISTVIEW *)nm;
-		BeginListViewDrag(pnmv);
-		break;
-
-	}
-	return FALSE;
 }
 
 static BOOL TreeViewNotify(LPNMHDR nm)
@@ -4004,7 +3731,7 @@ static void PressKey(HWND hwnd, UINT vk)
 	SendMessage(hwnd, WM_KEYUP,   vk, 0xc0000000);
 }
 
-static void SetView(int menu_id, int listview_style)
+static void SetView(int menu_id)
 {
 	BOOL force_reset = FALSE;
 
@@ -4012,22 +3739,16 @@ static void SetView(int menu_id, int listview_style)
 	CheckMenuRadioItem(GetMenu(hMain), ID_VIEW_LARGE_ICON, ID_VIEW_GROUPED, menu_id, MF_CHECKED);
 	ToolBar_CheckButton(hToolBar, menu_id, MF_CHECKED);
 
-#ifdef MESS
-	SetWindowLong(GetDlgItem(hMain, IDC_LIST2),GWL_STYLE,
-		(GetWindowLong(GetDlgItem(hMain, IDC_LIST2),GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
-#endif
-
-	SetWindowLong(hwndList, GWL_STYLE,
-				  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | listview_style );
-
-	if (current_view_id == ID_VIEW_GROUPED || menu_id == ID_VIEW_GROUPED)
+	if (Picker_GetViewID(hwndList) == VIEW_GROUPED || menu_id == ID_VIEW_GROUPED)
 	{
 		// this changes the sort order, so redo everything
 		force_reset = TRUE;
 	}
 
-	current_view_id = menu_id;
-	SetViewMode(menu_id - ID_VIEW_LARGE_ICON);
+	Picker_SetViewID(hwndList, menu_id - ID_VIEW_LARGE_ICON);
+#ifdef MESS
+	Picker_SetViewID(GetDlgItem(hMain, IDC_LIST2), menu_id - ID_VIEW_LARGE_ICON);
+#endif
 
 	if (force_reset)
 		ResetListView();
@@ -4052,7 +3773,7 @@ static void ResetListView()
 		no_selection = TRUE;
     }
 
-	current_game = GetSelectedPickItem();
+	current_game = Picker_GetSelectedItem(hwndList);
 
 	SetWindowRedraw(hwndList,FALSE);
 
@@ -4083,22 +3804,22 @@ static void ResetListView()
 		}
 	} while (i != -1);
 
-	SortListView();
+	Picker_Sort(hwndList);
 
 	if (bListReady)
 	{
 	    /* If last folder was empty, select the first item in this folder */
 	    if (no_selection)
-		    SetSelectedPick(0);
+		    Picker_SetSelectedPick(hwndList, 0);
 		else
-		    SetSelectedPickItem(current_game);
+		    Picker_SetSelectedItem(hwndList, current_game);
 	}
 
 	/*RS Instead of the Arrange Call that was here previously on all Views
 		 We now need to set the ViewMode for SmallIcon again,
 		 for an explanation why, see SetView*/
 	if (GetViewMode() == VIEW_SMALL_ICONS)
-		SetView(ID_VIEW_SMALL_ICON,LVS_SMALLICON);
+		SetView(ID_VIEW_SMALL_ICON);
 
 	SetWindowRedraw(hwndList, TRUE);
 
@@ -4126,12 +3847,15 @@ static void UpdateGameList()
 	LoadBackgroundBitmap();
 	InvalidateRect(hMain,NULL,TRUE);
 	ResetListView();
+	Picker_ResetIdle(hwndList);
 }
 
 static void PickFont(void)
 {
 	LOGFONT font;
 	CHOOSEFONT cf;
+	TCHAR szClass[128];
+	HWND hWnd;
 
 	GetListFont(&font);
 	font.lfQuality = DEFAULT_QUALITY;
@@ -4176,12 +3900,24 @@ static void PickFont(void)
             SetWindowFont( hwndHeaderCtrl, hHeaderCtrlFont, TRUE );
         }
 
-		ListView_SetTextColor(hwndList, textColor);
-		TreeView_SetTextColor(hTreeView,textColor);
-#ifdef MESS
-		SetWindowFont(s_pSoftwareListView->hwndListView, hFont, TRUE);
-		SmartListView_SetTextColor(s_pSoftwareListView, textColor);
-#endif
+		hWnd = GetWindow(hMain, GW_CHILD);
+		while(hWnd)
+		{
+			if (GetClassName(hWnd, szClass, sizeof(szClass) / sizeof(szClass[0])))
+			{
+				if (!strcmp(szClass, "SysListView32"))
+				{
+					ListView_SetTextColor(hWnd, textColor);
+					SetWindowFont(hWnd, hFont, TRUE);
+				}
+				else if (!strcmp(szClass, "SysTreeView32"))
+				{
+					TreeView_SetTextColor(hTreeView, textColor);
+				}
+			}
+			hWnd = GetWindow(hWnd, GW_HWNDNEXT);
+		}
+
 		SetListFontColor(cf.rgbColors);
 		SetWindowFont(GetDlgItem(hMain, IDC_HISTORY), hFont, FALSE);
 		ResetListView();
@@ -4243,61 +3979,61 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		return TRUE;
 
 	case ID_VIEW_LARGE_ICON:
-		SetView(ID_VIEW_LARGE_ICON, LVS_ICON);
+		SetView(ID_VIEW_LARGE_ICON);
 		return TRUE;
 
 	case ID_VIEW_SMALL_ICON:
-		SetView(ID_VIEW_SMALL_ICON, LVS_SMALLICON);
+		SetView(ID_VIEW_SMALL_ICON);
 		ResetListView();
 		return TRUE;
 
 	case ID_VIEW_LIST_MENU:
-		SetView(ID_VIEW_LIST_MENU, LVS_LIST);
+		SetView(ID_VIEW_LIST_MENU);
 		return TRUE;
 
 	case ID_VIEW_DETAIL:
-		SetView(ID_VIEW_DETAIL, LVS_REPORT);
+		SetView(ID_VIEW_DETAIL);
 		return TRUE;
 
 	case ID_VIEW_GROUPED:
-		SetView(ID_VIEW_GROUPED, LVS_REPORT);
+		SetView(ID_VIEW_GROUPED);
 		return TRUE;
 
 	/* Arrange Icons submenu */
 	case ID_VIEW_BYGAME:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_GAMES);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_BYDIRECTORY:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_DIRECTORY);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_BYMANUFACTURER:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_MANUFACTURER);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_BYTIMESPLAYED:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_PLAYED);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_BYTYPE:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_TYPE);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_BYYEAR:
 		SetSortReverse(FALSE);
 		SetSortColumn(COLUMN_YEAR);
-		SortListView();
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_VIEW_FOLDERS:
@@ -4350,8 +4086,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		InitGameAudit(0);
 		if (!oldControl)
 		{
-			InitPropertyPageToPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), AUDIT_PAGE, -1, SRC_GAME);
-			SaveGameOptions(GetSelectedPickItem());
+			InitPropertyPageToPage(hInst, hwnd, Picker_GetSelectedItem(hwndList), GetSelectedPickItemIcon(), AUDIT_PAGE, -1, SRC_GAME);
+			SaveGameOptions(Picker_GetSelectedItem(hwndList));
 		}
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
@@ -4363,7 +4099,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	    int  nResult;
 
 		nResult = DialogBoxParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_CUSTOM_FILE),
-								 hMain,AddCustomFileDialogProc,GetSelectedPickItem());
+								 hMain,AddCustomFileDialogProc,Picker_GetSelectedItem(hwndList));
 		SetFocus(hwndList);
 		break;
 	}
@@ -4442,14 +4178,14 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	/* Header Context Menu */
 	case ID_SORT_ASCENDING:
 		SetSortReverse(FALSE);
-		SetSortColumn(GetRealColumnFromViewColumn(lastColumnClick));
-		SortListView();
+		SetSortColumn(Picker_GetRealColumnFromViewColumn(hwndList, lastColumnClick));
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_SORT_DESCENDING:
 		SetSortReverse(TRUE);
-		SetSortColumn(GetRealColumnFromViewColumn(lastColumnClick));
-		SortListView();
+		SetSortColumn(Picker_GetRealColumnFromViewColumn(hwndList, lastColumnClick));
+		Picker_Sort(hwndList);
 		break;
 
 	case ID_CUSTOMIZE_FIELDS:
@@ -4468,9 +4204,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (!oldControl)
 		{
 			//folder = GetSelectedFolder();
-			folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(GetSelectedPickItem()) );
-			InitPropertyPage(hInst, hwnd, GetSelectedPickItem(), GetSelectedPickItemIcon(), folder->m_nFolderId, SRC_GAME);
-			SaveGameOptions(GetSelectedPickItem());
+			folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
+			InitPropertyPage(hInst, hwnd, Picker_GetSelectedItem(hwndList), GetSelectedPickItemIcon(), folder->m_nFolderId, SRC_GAME);
+			SaveGameOptions(Picker_GetSelectedItem(hwndList));
 #ifdef MESS
 			{
 				extern BOOL g_bModifiedSoftwarePaths;
@@ -4489,8 +4225,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (!oldControl)
 		{
 			folder = GetSelectedFolder();
-			InitPropertyPage(hInst, hwnd, folder->m_nFolderId, GetSelectedFolderIcon(), GetSelectedPickItem(), SRC_FOLDER);
-			SaveFolderOptions(folder->m_nFolderId, GetSelectedPickItem() );
+			InitPropertyPage(hInst, hwnd, folder->m_nFolderId, GetSelectedFolderIcon(), Picker_GetSelectedItem(hwndList), SRC_FOLDER);
+			SaveFolderOptions(folder->m_nFolderId, Picker_GetSelectedItem(hwndList) );
 		}
 		/* Just in case the toggle MMX on/off */
 		UpdateStatusBar();
@@ -4666,30 +4402,30 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		break;
 
 	case ID_UI_UP:
-		SetSelectedPick(GetSelectedPick() - 1);
+		Picker_SetSelectedPick(hwndList, GetSelectedPick() - 1);
  		break;
 
 	case ID_UI_DOWN:
-		SetSelectedPick(GetSelectedPick() + 1);
+		Picker_SetSelectedPick(hwndList, GetSelectedPick() + 1);
  		break;
 
 	case ID_UI_PGUP:
-		SetSelectedPick(GetSelectedPick() - ListView_GetCountPerPage(hwndList));
+		Picker_SetSelectedPick(hwndList, GetSelectedPick() - ListView_GetCountPerPage(hwndList));
  		break;
 
 	case ID_UI_PGDOWN:
 		if ( (GetSelectedPick() + ListView_GetCountPerPage(hwndList)) < ListView_GetItemCount(hwndList) )
-			SetSelectedPick( GetSelectedPick() + ListView_GetCountPerPage(hwndList) );
+			Picker_SetSelectedPick(hwndList,  GetSelectedPick() + ListView_GetCountPerPage(hwndList) );
 		else
-			SetSelectedPick( ListView_GetItemCount(hwndList)-1 );
+			Picker_SetSelectedPick(hwndList,  ListView_GetItemCount(hwndList)-1 );
  		break;
 
 	case ID_UI_HOME:
-		SetSelectedPick(0);
+		Picker_SetSelectedPick(hwndList, 0);
  		break;
 
 	case ID_UI_END:
-		SetSelectedPick( ListView_GetItemCount(hwndList)-1 );
+		Picker_SetSelectedPick(hwndList,  ListView_GetItemCount(hwndList)-1 );
 		break;
 	case ID_UI_LEFT:
 		/* hmmmmm..... */
@@ -4727,12 +4463,12 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		break;
 
 	case ID_CONTEXT_RESET_PLAYTIME:
-		ResetPlayTime( GetSelectedPickItem() );
+		ResetPlayTime( Picker_GetSelectedItem(hwndList) );
 		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 		break;
 
 	case ID_CONTEXT_RESET_PLAYCOUNT:
-		ResetPlayCount( GetSelectedPickItem() );
+		ResetPlayCount( Picker_GetSelectedItem(hwndList) );
 		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
 		break;
 
@@ -4803,153 +4539,193 @@ static void LoadBackgroundBitmap()
 		GlobalFree(hDIBbg);
 		ReleaseDC(hwndList, hDC);
 	}
+}
 
-#ifdef MESS
-	if (s_pSoftwareListView)
+static void ResetColumnDisplay(BOOL first_time)
+{
+	int driver_index;
+
+	if (!first_time)
+		Picker_ResetColumnDisplay(hwndList);
+
+	ResetListView();
+
+	driver_index = GetGameNameIndex(GetDefaultGame());
+	Picker_SetSelectedItem(hwndList, driver_index);
+}
+
+int GamePicker_GetItemImage(int nItem)
+{
+	return GetIconForDriver(nItem);
+}
+
+const TCHAR *GamePicker_GetItemString(int nItem, int nColumn,
+	TCHAR *pszBuffer, UINT nBufferLength)
+{
+	const TCHAR *s = NULL;
+
+	switch(nColumn)
 	{
-		SmartListView_SetBackground(s_pSoftwareListView, hBackground);
-		SmartListView_SetMyBitmapInfo(s_pSoftwareListView, &bmDesc);
+		case COLUMN_GAMES:
+			/* Driver description */
+			s = ModifyThe(drivers[nItem]->description);
+			break;
+
+		case COLUMN_ROMS:
+			/* Has Roms */
+			s = GetAuditString(GetRomAuditResults(nItem));
+			break;
+
+		case COLUMN_SAMPLES:
+			/* Samples */
+			if (DriverUsesSamples(nItem))
+				s = GetAuditString(GetSampleAuditResults(nItem));
+			break;
+
+		case COLUMN_DIRECTORY:
+			/* Driver name (directory) */
+			s = drivers[nItem]->name;
+			break;
+
+		case COLUMN_SRCDRIVERS:
+			/* Source drivers */
+			s = GetDriverFilename(nItem);
+			break;
+
+        case COLUMN_PLAYTIME:
+			/* Source drivers */
+			GetTextPlayTime(nItem, pszBuffer);
+			s = pszBuffer;
+			break;
+
+		case COLUMN_TYPE:
+        {
+            struct InternalMachineDriver drv;
+            expand_machine_driver(drivers[nItem]->drv,&drv);
+
+			/* Vector/Raster */
+			if (drv.video_attributes & VIDEO_TYPE_VECTOR)
+				s = TEXT("Vector");
+			else
+				s = TEXT("Raster");
+			break;
+        }
+		case COLUMN_TRACKBALL:
+			/* Trackball */
+			if (DriverUsesTrackball(nItem))
+				s = TEXT("Yes");
+			else
+				s = TEXT("No");
+			break;
+
+		case COLUMN_PLAYED:
+			/* times played */
+			sprintf(pszBuffer, "%i", GetPlayCount(nItem));
+			s = pszBuffer;
+			break;
+
+		case COLUMN_MANUFACTURER:
+			/* Manufacturer */
+			s = drivers[nItem]->manufacturer;
+			break;
+
+		case COLUMN_YEAR:
+			/* Year */
+			s = drivers[nItem]->year;
+			break;
+
+		case COLUMN_CLONE:
+			s = GetCloneParentName(nItem);
+			break;
 	}
+	return s;
+}
+
+void GamePicker_LeavingItem(int nItem)
+{
+	// leaving item
+	// printf("leaving %s\n",drivers[nItem]->name);
+#ifdef MESS
+	MessWriteMountedSoftware(nItem);
+#endif	
+}
+
+void GamePicker_EnteringItem(int nItem)
+{
+	// printf("entering %s\n",drivers[nItem]->name);
+	if (g_bDoBroadcast == TRUE)
+	{
+		ATOM a = GlobalAddAtom(drivers[nItem]->description);
+		SendMessage(HWND_BROADCAST, g_mame32_message, a, a);
+		GlobalDeleteAtom(a);
+	}
+
+	EnableSelection(nItem);
+#ifdef MESS
+	MessReadMountedSoftware(nItem);
 #endif
+}
+
+static int GamePicker_FindItemParent(int nItem)
+{
+	int i;
+	const struct GameDriver *drv = drivers[nItem]->clone_of;
+
+	for (i = 0; drivers[i]; i++)
+	{
+		if (drivers[i] == drv)
+			return i;
+	}
+	return -1;
 }
 
 /* Initialize the Picker and List controls */
 static void InitListView()
 {
-	int order[COLUMN_MAX];
-	int shown[COLUMN_MAX];
-	int i;
-
-	/* subclass the list view */
-	g_lpListViewWndProc = (WNDPROC)(LONG)(int)GetWindowLong(hwndList, GWL_WNDPROC);
-	SetWindowLong(hwndList, GWL_WNDPROC, (LONG)ListViewWndProc);
-
-	/* Disabled column customize with old Control */
-	if (oldControl)
+	static const struct PickerCallbacks s_gameListCallbacks =
 	{
-		for (i = 0; i < COLUMN_MAX; i++)
-		{
-			order[i] = i;
-			shown[i] = TRUE;
-		}
-		SetColumnOrder(order);
-		SetColumnShown(shown);
-	}
+		ListCompareFunc,			/* pfnCompare */
+
+		SetSortColumn,				/* pfnSetSortColumn */
+		GetSortColumn,				/* pfnGetSortColumn */
+		SetSortReverse,				/* pfnSetSortReverse */
+		GetSortReverse,				/* pfnGetSortReverse */
+		SetViewMode,				/* pfnSetViewMode */
+		GetViewMode,				/* pfnGetViewMode */
+		SetColumnWidths,			/* pfnSetColumnWidths */
+		GetColumnWidths,			/* pfnGetColumnWidths */
+		SetColumnOrder,				/* pfnSetColumnOrder */
+		GetColumnOrder,				/* pfnGetColumnOrder */
+		SetColumnShown,				/* pfnSetColumnShown */
+		GetColumnShown,				/* pfnGetColumnShown */
+		GetOffsetClones,			/* pfnGetOffsetChildren */
+
+		MamePlayGame,				/* pfnDoubleClick */
+		GamePicker_GetItemString,	/* pfnGetItemString */
+		GamePicker_GetItemImage,	/* pfnGetItemImage */
+		GamePicker_LeavingItem,		/* pfnLeavingItem */
+		GamePicker_EnteringItem,	/* pfnEnteringItem */
+		BeginListViewDrag,			/* pfnBeginListViewDrag */
+		GamePicker_FindItemParent,	/* pfnFindItemParent */
+		OnIdle						/* pfnIdle */
+	};
+
+	struct PickerOptions opts;
+
+	// subclass the list view
+	memset(&opts, 0, sizeof(opts));
+	opts.pCallbacks = &s_gameListCallbacks;
+	opts.nColumnCount = COLUMN_MAX;
+	opts.ppszColumnNames = column_names;
+	SetupPicker(hwndList, &opts);
 
 	CreateIcons();
-	GetColumnOrder(realColumn);
 
 	ResetColumnDisplay(TRUE);
 
 	// Allow selection to change the default saved game
 	bListReady = TRUE;
 }
-
-/* Re/initialize the ListControl Columns */
-static void ResetColumnDisplay(BOOL first_time)
-{
-	LV_COLUMN   lvc;
-	int         i;
-	int         nColumn;
-	int         widths[COLUMN_MAX];
-	int         order[COLUMN_MAX];
-	int         shown[COLUMN_MAX];
-	int shown_columns;
-	int driver_index;
-
-	GetColumnWidths(widths);
-	GetColumnOrder(order);
-	GetColumnShown(shown);
-
-	if (!first_time)
-	{
-		DWORD style = GetWindowLong(hwndList, GWL_STYLE);
-
-		// switch the list view to LVS_REPORT style so column widths reported correctly
-		SetWindowLong(hwndList,GWL_STYLE,
-					  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_REPORT);
-
-		nColumn = GetNumColumns(hwndList);
-		// The first time thru this won't happen, on purpose
-		// because the column widths will be in the negative millions,
-		// since it's been created but not setup properly yet
-		for (i = 0; i < nColumn; i++)
-		{
-			widths[GetRealColumnFromViewColumn(i)] = ListView_GetColumnWidth(hwndList, i);
-		}
-
-		SetColumnWidths(widths);
-
-		SetWindowLong(hwndList,GWL_STYLE,style);
-
-		for (i = nColumn; i > 0; i--)
-		{
-			ListView_DeleteColumn(hwndList, i - 1);
-		}
-	}
-
-	ListView_SetExtendedListViewStyle(hwndList,LVS_EX_FULLROWSELECT | LVS_EX_HEADERDRAGDROP |
-								  LVS_EX_UNDERLINEHOT | LVS_EX_UNDERLINECOLD | LVS_EX_LABELTIP);
-
-
-	nColumn = 0;
-	for (i = 0; i < COLUMN_MAX; i++)
-	{
-		if (shown[order[i]])
-		{
-			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
-			lvc.pszText = (char *)column_names[order[i]];
-			lvc.iSubItem = nColumn;
-			lvc.cx = widths[order[i]];
-			lvc.fmt = LVCFMT_LEFT;
-			ListView_InsertColumn(hwndList, nColumn, &lvc);
-			realColumn[nColumn] = order[i];
-			nColumn++;
-		}
-	}
-
-	shown_columns = nColumn;
-
-	/* Fill this in so we can still sort on columns NOT shown */
-	for (i = 0; i < COLUMN_MAX && nColumn < COLUMN_MAX; i++)
-	{
-		if (!shown[order[i]])
-		{
-			realColumn[nColumn] = order[i];
-			nColumn++;
-		}
-	}
-
-	if (GetListFontColor() == RGB(255, 255, 255))
-		ListView_SetTextColor(hwndList, RGB(240, 240, 240));
-	else
-		ListView_SetTextColor(hwndList, GetListFontColor());
-
-	ResetListView();
-
-	driver_index = GetGameNameIndex(GetDefaultGame());
-	SetSelectedPickItem(driver_index);
-}
-
-static int GetRealColumnFromViewColumn(int view_column)
-{
-	return realColumn[view_column];
-}
-
-static int GetViewColumnFromRealColumn(int real_column)
-{
-	int i;
-
-	for (i = 0; i < COLUMN_MAX; i++)
-	{
-		if (realColumn[i] == real_column)
-			return i;
-	}
-
-	// major error, shouldn't be possible, but no good way to warn
-	return 0;
-}
-
 
 static void AddDriverIcon(int nItem,int default_icon_index)
 {
@@ -5126,7 +4902,7 @@ static void CreateIcons(void)
 }
 
 /* Sort subroutine to sort the list control */
-static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
+static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, LPARAM sort_subitem)
 {
 	if (GetViewMode() != VIEW_GROUPED)
 		return BasicCompareFunc(index1,index2,sort_subitem);
@@ -5374,22 +5150,6 @@ static int GetSelectedPick()
 	return ListView_GetNextItem(hwndList, -1, LVIS_SELECTED | LVIS_FOCUSED);
 }
 
-static int GetSelectedPickItem()
-{
-	/*r eturns lParam (game index) of listview selected item */
-	LV_ITEM lvi;
-
-	lvi.iItem = GetSelectedPick();
-	if (lvi.iItem == -1)
-		return 0;
-
-	lvi.iSubItem = 0;
-	lvi.mask	 = LVIF_PARAM;
-	ListView_GetItem(hwndList, &lvi);
-
-	return lvi.lParam;
-}
-
 static HICON GetSelectedPickItemIcon()
 {
 	LV_ITEM lvi;
@@ -5402,37 +5162,6 @@ static HICON GetSelectedPickItemIcon()
 	return ImageList_GetIcon(hLarge, lvi.iImage, ILD_TRANSPARENT);
 }
 
-static void SetSelectedPick(int new_index)
-{
-	if (new_index < 0)
-		new_index = 0;
-
-	ListView_SetItemState(hwndList, new_index, LVIS_FOCUSED | LVIS_SELECTED,
-						  LVIS_FOCUSED | LVIS_SELECTED);
-	ListView_EnsureVisible(hwndList, new_index, FALSE);
-}
-
-static void SetSelectedPickItem(int val)
-{
-	int i;
-	LV_FINDINFO lvfi;
-
-	if (val < 0)
-		return;
-
-	lvfi.flags = LVFI_PARAM;
-	lvfi.lParam = val;
-	i = ListView_FindItem(hwndList, -1, &lvfi);
-	if (i == -1)
-	{
-		POINT p = {0,0};
-		lvfi.flags = LVFI_NEARESTXY;
-		lvfi.pt = p;
-		i = ListView_FindItem(hwndList, -1, &lvfi);
-	}
-	SetSelectedPick((i == -1) ? 0 : i);
-}
-
 static void SetRandomPickItem()
 {
 	int nListCount;
@@ -5441,7 +5170,7 @@ static void SetRandomPickItem()
 
 	if (nListCount > 0)
 	{
-		SetSelectedPick(rand() % nListCount);
+		Picker_SetSelectedPick(hwndList, rand() % nListCount);
 	}
 }
 
@@ -5630,7 +5359,7 @@ static void MamePlayBackGame()
 
 	*filename = 0;
 
-	nGame = GetSelectedPickItem();
+	nGame = Picker_GetSelectedItem(hwndList);
 	if (nGame != -1)
 		strcpy(filename, drivers[nGame]->name);
 
@@ -5701,7 +5430,7 @@ static void MameLoadState()
 
 	*filename = 0;
 
-	nGame = GetSelectedPickItem();
+	nGame = Picker_GetSelectedItem(hwndList);
 	if (nGame != -1)
 	{
 		strcpy(filename, drivers[nGame]->name);
@@ -5792,7 +5521,7 @@ static void MamePlayRecordGame()
 	char filename[MAX_PATH];
 	*filename = 0;
 
-	nGame = GetSelectedPickItem();
+	nGame = Picker_GetSelectedItem(hwndList);
 	strcpy(filename, drivers[nGame]->name);
 
 	if (CommonFileDialog(GetSaveFileName, filename, FALSE, TRUE))
@@ -5821,7 +5550,7 @@ static void MamePlayGame()
 {
 	int nGame;
 
-	nGame = GetSelectedPickItem();
+	nGame = Picker_GetSelectedItem(hwndList);
 
 	g_pPlayBkName = NULL;
 	g_pRecordName = NULL;
@@ -5864,7 +5593,7 @@ static void MamePlayGameWithOptions(int nGame)
 
 	// re-sort if sorting on # of times played
 	if (GetSortColumn() == COLUMN_PLAYED)
-		SortListView();
+		Picker_Sort(hwndList);
 
 	UpdateStatusBar();
 
@@ -5899,6 +5628,8 @@ static void AdjustMetrics(void)
 	int  offX, offY;
 	int  maxX, maxY;
 	COLORREF textColor;
+	TCHAR szClass[128];
+	HWND hWnd;
 
 	/* WM_SETTINGCHANGE also */
 	xtraX  = GetSystemMetrics(SM_CXFIXEDFRAME); /* Dialog frame width */
@@ -5916,17 +5647,28 @@ static void AdjustMetrics(void)
 	MIN_HEIGHT = (int)((tm.tmHeight 	  / 8.0) * DBU_MIN_HEIGHT) + xtraY;
 	ReleaseDC(hMain, hDC);
 
-	ListView_SetBkColor(hwndList, GetSysColor(COLOR_WINDOW));
 	if ((textColor = GetListFontColor()) == RGB(255, 255, 255))
 		textColor = RGB(240, 240, 240);
 
-	ListView_SetTextColor(hwndList, textColor);
-#ifdef MESS
-	ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
-	SmartListView_SetTextColor(s_pSoftwareListView, textColor);
-#endif
-	TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
-	TreeView_SetTextColor(hTreeView, textColor);
+	hWnd = GetWindow(hMain, GW_CHILD);
+	while(hWnd)
+	{
+		if (GetClassName(hWnd, szClass, sizeof(szClass) / sizeof(szClass[0])))
+		{
+			if (!strcmp(szClass, "SysListView32"))
+			{
+				ListView_SetBkColor(hWnd, GetSysColor(COLOR_WINDOW));
+				ListView_SetTextColor(hWnd, textColor);
+			}
+			else if (!strcmp(szClass, "SysTreeView32"))
+			{
+				TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
+				TreeView_SetTextColor(hTreeView, textColor);
+			}
+		}
+		hWnd = GetWindow(hWnd, GW_HWNDNEXT);
+	}
+
 	GetWindowArea(&area);
 
 	offX = area.x + area.width;
@@ -6060,7 +5802,8 @@ static BOOL HandleContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	if (pt.x < 0 && pt.y < 0)
 		GetCursorPos(&pt);
 
-	if ((current_view_id == ID_VIEW_DETAIL || current_view_id == ID_VIEW_GROUPED)
+	if ((Picker_GetViewID(hwndList) == VIEW_REPORT
+		|| Picker_GetViewID(hwndList) == VIEW_GROUPED)
 		&&	HeaderOnContextMenu(hWnd, wParam, lParam) == TRUE)
 	{
 		return TRUE;
@@ -6108,7 +5851,7 @@ static void UpdateMenu(HMENU hMenu)
 {
 	char			buf[200];
 	MENUITEMINFO	mItem;
-	int 			nGame = GetSelectedPickItem();
+	int 			nGame = Picker_GetSelectedItem(hwndList);
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 	int i;
 	const char *pParent;
@@ -6256,37 +5999,6 @@ void ToggleShowFolder(int folder)
 	SelectTreeViewFolder(current_id);
 
 	SetWindowRedraw(hwndList,TRUE);
-}
-
-/* Add ... to Items in ListView if needed */
-static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
-{
-	static const CHAR szThreeDots[] = "...";
-	static CHAR szShort[MAX_PATH];
-	int nStringLen = lstrlen(lpszLong);
-	int nAddLen;
-	SIZE size;
-	int i;
-
-	GetTextExtentPoint32(hDC, lpszLong, nStringLen, &size);
-	if (nStringLen == 0 || size.cx + nOffset <= nColumnLen)
-		return lpszLong;
-
-	lstrcpy(szShort, lpszLong);
-	GetTextExtentPoint32(hDC, szThreeDots, sizeof(szThreeDots), &size);
-	nAddLen = size.cx;
-
-	for (i = nStringLen - 1; i > 0; i--)
-	{
-		szShort[i] = 0;
-		GetTextExtentPoint32(hDC, szShort, i, &size);
-		if (size.cx + nOffset + nAddLen <= nColumnLen)
-			break;
-	}
-
-	lstrcat(szShort, szThreeDots);
-
-	return szShort;
 }
 
 static LRESULT CALLBACK HistoryWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -6469,642 +6181,7 @@ static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPAR
 	return CallWindowProc(g_lpPictureWndProc, hWnd, uMsg, wParam, lParam);
 }
 
-/* DrawItem for ListView */
-static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
-{
-	HDC         hDC = lpDrawItemStruct->hDC;
-	RECT        rcItem = lpDrawItemStruct->rcItem;
-	UINT        uiFlags = ILD_TRANSPARENT;
-	HIMAGELIST  hImageList;
-	int         nItem = lpDrawItemStruct->itemID;
-	COLORREF    clrTextSave = 0;
-	COLORREF    clrBkSave = 0;
-	COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
-	static CHAR szBuff[MAX_PATH];
-	BOOL        bFocus = (GetFocus() == hwndList);
-	LPCTSTR     pszText;
-	UINT        nStateImageMask;
-	BOOL        bSelected;
-	LV_COLUMN   lvc;
-	LV_ITEM     lvi;
-	RECT        rcAllLabels;
-	RECT        rcLabel;
-	RECT        rcIcon;
-	int         offset;
-	SIZE        size;
-	int         i, j;
-	int         nColumn;
-	int         nColumnMax = 0;
-	int         order[COLUMN_MAX];
-	BOOL draw_as_clone;
-	int indent_space;
-	BOOL		bParentFound = FALSE;
-	BOOL		bColourClone = FALSE;
-
-	nColumnMax = GetNumColumns(hwndList);
-
-	if (oldControl)
-	{
-		GetColumnOrder(order);
-	}
-	else
-	{
-		/* Get the Column Order and save it */
-		ListView_GetColumnOrderArray(hwndList, nColumnMax, order);
-
-		/* Disallow moving column 0 */
-		if (order[0] != 0)
-		{
-			for (i = 0; i < nColumnMax; i++)
-			{
-				if (order[i] == 0)
-				{
-					order[i] = order[0];
-					order[0] = 0;
-				}
-			}
-			ListView_SetColumnOrderArray(hwndList, nColumnMax, order);
-		}
-	}
-
-	/* Labels are offset by a certain amount */
-	/* This offset is related to the width of a space character */
-	GetTextExtentPoint32(hDC, " ", 1 , &size);
-	offset = size.cx;
-
-	lvi.mask	   = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE | LVIF_PARAM;
-	lvi.iItem	   = nItem;
-	lvi.iSubItem   = order[0];
-	lvi.pszText    = szBuff;
-	lvi.cchTextMax = sizeof(szBuff);
-	lvi.stateMask  = 0xFFFF;	   /* get all state flags */
-	ListView_GetItem(hwndList, &lvi);
-
-	bSelected = ((lvi.state & LVIS_DROPHILITED) || ( (lvi.state & LVIS_SELECTED)
-		&& ((bFocus) || (GetWindowLong(hwndList, GWL_STYLE) & LVS_SHOWSELALWAYS))));
-
-	/* figure out if we indent and draw grayed */
-	draw_as_clone = (GetViewMode() == VIEW_GROUPED && DriverIsClone(lvi.lParam));
-
-	/* only indent if parent is also in this view */
-	if( DriverIsClone(lvi.lParam) && draw_as_clone )
-	{
-		char cDesc[256];
-		char *pDesc2 = NULL;
-		for( i=0;i<ListView_GetItemCount(hwndList);i++)
-		{
-			ListView_GetItemText(hwndList,i,0,cDesc, 255 );
-			pDesc2 = ModifyThe(drivers[lvi.lParam]->clone_of->description);
-			if( strcmp(pDesc2, cDesc ) == 0 )
-			{
-				bParentFound = TRUE;
-				break;
-			}
-		}
-	}
-	if( GetOffsetClones() )
-	{
-		if( ! bParentFound && draw_as_clone)
-		{
-			/*Reset it, as no Parent is there*/
-			draw_as_clone = FALSE;
-			bColourClone = TRUE;
-		}
-		else
-		{
-			bParentFound = FALSE;
-		}
-	}
-
-	ListView_GetItemRect(hwndList, nItem, &rcAllLabels, LVIR_BOUNDS);
-
-	ListView_GetItemRect(hwndList, nItem, &rcLabel, LVIR_LABEL);
-	rcAllLabels.left = rcLabel.left;
-
-	if (hBackground != NULL)
-	{
-		RECT		rcClient;
-		HRGN		rgnBitmap;
-		RECT		rcTmpBmp = rcItem;
-		RECT		rcFirstItem;
-		HPALETTE	hPAL;
-		HDC 		htempDC;
-		HBITMAP 	oldBitmap;
-
-		htempDC = CreateCompatibleDC(hDC);
-
-		oldBitmap = SelectObject(htempDC, hBackground);
-
-		GetClientRect(hwndList, &rcClient);
-		rcTmpBmp.right = rcClient.right;
-		/* We also need to check whether it is the last item
-		   The update region has to be extended to the bottom if it is */
-		if (nItem == ListView_GetItemCount(hwndList) - 1)
-			rcTmpBmp.bottom = rcClient.bottom;
-
-		rgnBitmap = CreateRectRgnIndirect(&rcTmpBmp);
-		SelectClipRgn(hDC, rgnBitmap);
-		DeleteObject(rgnBitmap);
-
-		hPAL = GetBackgroundPalette();
-		if (hPAL == NULL)
-			hPAL = CreateHalftonePalette(hDC);
-
-		if (GetDeviceCaps(htempDC, RASTERCAPS) & RC_PALETTE && hPAL != NULL)
-		{
-			SelectPalette(htempDC, hPAL, FALSE);
-			RealizePalette(htempDC);
-		}
-
-		ListView_GetItemRect(hwndList, 0, &rcFirstItem, LVIR_BOUNDS);
-
-		for (i = rcFirstItem.left; i < rcClient.right; i += bmDesc.bmWidth)
-			for (j = rcFirstItem.top; j < rcClient.bottom; j += bmDesc.bmHeight)
-				BitBlt(hDC, i, j, bmDesc.bmWidth, bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY);
-
-		SelectObject(htempDC, oldBitmap);
-		DeleteDC(htempDC);
-
-		if (GetBackgroundPalette() == NULL)
-		{
-			DeleteObject(hPAL);
-			hPAL = NULL;
-		}
-	}
-
-	indent_space = 0;
-
-	if (draw_as_clone)
-	{
-		RECT rect;
-		ListView_GetItemRect(hwndList, nItem, &rect, LVIR_ICON);
-
-		/* indent width of icon + the space between the icon and text
-		 * so left of clone icon starts at text of parent
-         */
-		indent_space = rect.right - rect.left + offset;
-	}
-
-	rcAllLabels.left += indent_space;
-
-	if (bSelected)
-	{
-		HBRUSH hBrush;
-		HBRUSH hOldBrush;
-
-		if (bFocus)
-		{
-			clrTextSave = SetTextColor(hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-			clrBkSave	= SetBkColor(hDC, GetSysColor(COLOR_HIGHLIGHT));
-			hBrush		= CreateSolidBrush(GetSysColor(COLOR_HIGHLIGHT));
-		}
-		else
-		{
-			clrTextSave = SetTextColor(hDC, GetSysColor(COLOR_BTNTEXT));
-			clrBkSave	= SetBkColor(hDC, GetSysColor(COLOR_BTNFACE));
-			hBrush		= CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-		}
-
-		hOldBrush = SelectObject(hDC, hBrush);
-		FillRect(hDC, &rcAllLabels, hBrush);
-		SelectObject(hDC, hOldBrush);
-		DeleteObject(hBrush);
-	}
-	else
-	{
-		if (hBackground == NULL)
-		{
-			HBRUSH hBrush;
-			
-			hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-			FillRect(hDC, &rcAllLabels, hBrush);
-			DeleteObject(hBrush);
-		}
-		
-		if( GetOffsetClones() )
-		{
-			if ( draw_as_clone || bColourClone)
-				clrTextSave = SetTextColor(hDC,GetListCloneColor());
-			else
-				clrTextSave = SetTextColor(hDC,GetListFontColor());
-		}
-		else
-		{
-			if ( draw_as_clone )
-				clrTextSave = SetTextColor(hDC,GetListCloneColor());
-			else
-				clrTextSave = SetTextColor(hDC,GetListFontColor());
-		}
-
-		clrBkSave = SetBkColor(hDC,GetSysColor(COLOR_WINDOW));
-	}
-
-
-	if (lvi.state & LVIS_CUT)
-	{
-		clrImage = GetSysColor(COLOR_WINDOW);
-		uiFlags |= ILD_BLEND50;
-	}
-	else
-	if (bSelected)
-	{
-		if (bFocus)
-			clrImage = GetSysColor(COLOR_HIGHLIGHT);
-		else
-			clrImage = GetSysColor(COLOR_BTNFACE);
-
-		uiFlags |= ILD_BLEND50;
-	}
-
-	nStateImageMask = lvi.state & LVIS_STATEIMAGEMASK;
-
-	if (nStateImageMask)
-	{
-		int nImage = (nStateImageMask >> 12) - 1;
-		hImageList = ListView_GetImageList(hwndList, LVSIL_STATE);
-		if (hImageList)
-			ImageList_Draw(hImageList, nImage, hDC, rcItem.left, rcItem.top, ILD_TRANSPARENT);
-	}
-
-	ListView_GetItemRect(hwndList, nItem, &rcIcon, LVIR_ICON);
-
-	rcIcon.left += indent_space;
-
-	ListView_GetItemRect(hwndList, nItem, &rcItem, LVIR_LABEL);
-
-	hImageList = ListView_GetImageList(hwndList, LVSIL_SMALL);
-	if (hImageList)
-	{
-		UINT nOvlImageMask = lvi.state & LVIS_OVERLAYMASK;
-		if (rcIcon.left + 16 + indent_space < rcItem.right)
-		{
-			ImageList_DrawEx(hImageList, lvi.iImage, hDC, rcIcon.left, rcIcon.top, 16, 16,
-							 GetSysColor(COLOR_WINDOW), clrImage, uiFlags | nOvlImageMask);
-		}
-	}
-
-	ListView_GetItemRect(hwndList, nItem, &rcItem, LVIR_LABEL);
-
-	pszText = MakeShortString(hDC, szBuff, rcItem.right - rcItem.left, 2*offset + indent_space);
-
-	rcLabel = rcItem;
-	rcLabel.left  += offset + indent_space;
-	rcLabel.right -= offset;
-
-	DrawText(hDC, pszText, -1, &rcLabel,
-			 DT_LEFT | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER);
-
-	for (nColumn = 1; nColumn < nColumnMax; nColumn++)
-	{
-		int 	nRetLen;
-		UINT	nJustify;
-		LV_ITEM lvItem;
-
-		lvc.mask = LVCF_FMT | LVCF_WIDTH;
-		ListView_GetColumn(hwndList, order[nColumn], &lvc);
-
-		lvItem.mask 	  = LVIF_TEXT;
-		lvItem.iItem	  = nItem;
-		lvItem.iSubItem   = order[nColumn];
-		lvItem.pszText	  = szBuff;
-		lvItem.cchTextMax = sizeof(szBuff);
-
-		if (ListView_GetItem(hwndList, &lvItem) == FALSE)
-			continue;
-
-		rcItem.left   = rcItem.right;
-		rcItem.right += lvc.cx;
-
-		nRetLen = strlen(szBuff);
-		if (nRetLen == 0)
-			continue;
-
-		pszText = MakeShortString(hDC, szBuff, rcItem.right - rcItem.left, 2 * offset);
-
-		nJustify = DT_LEFT;
-
-		if (pszText == szBuff)
-		{
-			switch (lvc.fmt & LVCFMT_JUSTIFYMASK)
-			{
-			case LVCFMT_RIGHT:
-				nJustify = DT_RIGHT;
-				break;
-
-			case LVCFMT_CENTER:
-				nJustify = DT_CENTER;
-				break;
-
-			default:
-				break;
-			}
-		}
-
-		rcLabel = rcItem;
-		rcLabel.left  += offset;
-		rcLabel.right -= offset;
-		DrawText(hDC, pszText, -1, &rcLabel,
-				 nJustify | DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER);
-	}
-
-	if (lvi.state & LVIS_FOCUSED && bFocus)
-		DrawFocusRect(hDC, &rcAllLabels);
-
-	SetTextColor(hDC, clrTextSave);
-	SetBkColor(hDC, clrBkSave);
-}
-
-/* Header code - Directional Arrows */
-static LRESULT CALLBACK ListViewWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (hBackground != NULL)
-{
-	switch (uMsg)
-	{
-	    case WM_MOUSEMOVE:
-		{
-			if (MouseHasBeenMoved())
-				ShowCursor(TRUE);
-			break;
-		}
-    
-	case WM_ERASEBKGND:
-		return ListCtrlOnErase(hwnd, (HDC)wParam);
-
-	case WM_PAINT:
-			if (current_view_id != ID_VIEW_DETAIL && current_view_id != ID_VIEW_GROUPED)
-			if (ListCtrlOnPaint(hwnd, uMsg) == 0)
-				return 0;
-		break;
-
-	case WM_NOTIFY:
-		{
-			HD_NOTIFY *pHDN = (HD_NOTIFY*)lParam;
-
-			/*
-			   This code is for using bitmap in the background
-			   Invalidate the right side of the control when a column is resized			
-			*/
-			if (pHDN->hdr.code == HDN_ITEMCHANGINGW || pHDN->hdr.code == HDN_ITEMCHANGINGA)
-				{
-					RECT rcClient;
-					DWORD dwPos;
-					POINT pt;
-
-					dwPos = GetMessagePos();
-					pt.x = LOWORD(dwPos);
-					pt.y = HIWORD(dwPos);
-
-					GetClientRect(hwnd, &rcClient);
-					ScreenToClient(hwnd, &pt);
-					rcClient.left = pt.x;
-				InvalidateRect(hwnd, &rcClient, FALSE);
-			}
-			break;
-		}
-		}
-	}
-#if 0
-	switch (uMsg)
-	{
-		case WM_CHAR: /* List-View controls use this message for searching the items "as user types" */
-			//MessageBox(NULL,"wm_char message arrived","TitleBox",MB_OK);
-			return 0;
-	}
-#endif
-	/* message not handled */
-	return CallWindowProc(g_lpListViewWndProc, hwnd, uMsg, wParam, lParam);
-}
-
-static BOOL ListCtrlOnErase(HWND hWnd, HDC hDC)
-{
-	RECT		rcClient;
-	HRGN		rgnBitmap;
-	HPALETTE	hPAL;
-
-	int 		i, j;
-	HDC 		htempDC;
-	POINT		ptOrigin;
-	POINT		pt = {0,0};
-	HBITMAP 	hOldBitmap;
-
-	// this does not draw the background properly in report view
-
-	GetClientRect(hWnd, &rcClient);
-
-	htempDC = CreateCompatibleDC(hDC);
-	hOldBitmap = SelectObject(htempDC, hBackground);
-
-	rgnBitmap = CreateRectRgnIndirect(&rcClient);
-	SelectClipRgn(hDC, rgnBitmap);
-	DeleteObject(rgnBitmap);
-
-	hPAL = (!hPALbg) ? CreateHalftonePalette(hDC) : hPALbg;
-
-	if (GetDeviceCaps(htempDC, RASTERCAPS) & RC_PALETTE && hPAL != NULL)
-	{
-		SelectPalette(htempDC, hPAL, FALSE);
-		RealizePalette(htempDC);
-	}
-
-	/* Get x and y offset */
-	MapWindowPoints(hWnd,hTreeView,&pt,1);
-	GetDCOrgEx(hDC, &ptOrigin);
-	ptOrigin.x -= pt.x;
-	ptOrigin.y -= pt.y;
-	ptOrigin.x = -GetScrollPos(hWnd, SB_HORZ);
-	ptOrigin.y = -GetScrollPos(hWnd, SB_VERT);
-
-	for (i = ptOrigin.x; i < rcClient.right; i += bmDesc.bmWidth)
-		for (j = ptOrigin.y; j < rcClient.bottom; j += bmDesc.bmHeight)
-			BitBlt(hDC, i, j, bmDesc.bmWidth, bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY);
-
-	SelectObject(htempDC, hOldBitmap);
-	DeleteDC(htempDC);
-
-	if (!bmDesc.bmColors)
-	{
-		DeleteObject(hPAL);
-		hPAL = 0;
-	}
-
-	return TRUE;
-}
-
-static BOOL ListCtrlOnPaint(HWND hWnd, UINT uMsg)
-{
-	PAINTSTRUCT ps;
-	HDC 		hDC;
-	RECT		rcClip, rcClient;
-	HDC 		memDC;
-	HBITMAP 	bitmap;
-	HBITMAP 	hOldBitmap;
-
-	hDC = BeginPaint(hWnd, &ps);
-	rcClient = ps.rcPaint;
-	GetClipBox(hDC, &rcClip);
-	GetClientRect(hWnd, &rcClient);
-	/* Create a compatible memory DC */
-	memDC = CreateCompatibleDC(hDC);
-
-	/* Select a compatible bitmap into the memory DC */
-	bitmap = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left,
-									rcClient.bottom - rcClient.top );
-	hOldBitmap = SelectObject(memDC, bitmap);
-
-	BitBlt(memDC, rcClip.left, rcClip.top,
-		   rcClip.right - rcClip.left, rcClip.bottom - rcClip.top,
-		   hDC, rcClip.left, rcClip.top, SRCCOPY);
-
-	/* First let the control do its default drawing. */
-	CallWindowProc(g_lpListViewWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
-	/* Draw bitmap in the background */
-	if( hBackground )
-	{
-		HPALETTE	hPAL;
-		HDC maskDC;
-		HBITMAP maskBitmap;
-		HDC tempDC;
-		HDC imageDC;
-		HBITMAP bmpImage;
-		HBITMAP hOldBmpImage;
-		HBITMAP hOldMaskBitmap;
-		HBITMAP hOldHBitmap;
-		int i, j;
-		POINT ptOrigin;
-		POINT pt = {0,0};
-
-		/* Now create a mask */
-		maskDC = CreateCompatibleDC(hDC);
-
-		/* Create monochrome bitmap for the mask */
-		maskBitmap = CreateBitmap(rcClient.right  - rcClient.left,
-								  rcClient.bottom - rcClient.top,
-								  1, 1, NULL );
-
-		hOldMaskBitmap = SelectObject(maskDC, maskBitmap);
-		SetBkColor(memDC, GetSysColor(COLOR_WINDOW));
-
-		/* Create the mask from the memory DC */
-		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left,
-			   rcClient.bottom - rcClient.top, memDC,
-			   rcClient.left, rcClient.top, SRCCOPY);
-
-		tempDC = CreateCompatibleDC(hDC);
-		hOldHBitmap = SelectObject(tempDC, hBackground);
-
-		imageDC = CreateCompatibleDC(hDC);
-		bmpImage = CreateCompatibleBitmap(hDC,
-										  rcClient.right  - rcClient.left,
-										  rcClient.bottom - rcClient.top);
-		hOldBmpImage = SelectObject(imageDC, bmpImage);
-
-		hPAL = (! hPALbg) ? CreateHalftonePalette(hDC) : hPALbg;
-
-		if (GetDeviceCaps(hDC, RASTERCAPS) & RC_PALETTE && hPAL != NULL)
-		{
-			SelectPalette(hDC, hPAL, FALSE);
-			RealizePalette(hDC);
-			SelectPalette(imageDC, hPAL, FALSE);
-		}
-
-		/* Get x and y offset */
-		ClientToScreen(hWnd, &pt);
-		GetDCOrgEx(hDC, &ptOrigin);
-		ptOrigin.x -= pt.x;
-		ptOrigin.y -= pt.y;
-		ptOrigin.x = -GetScrollPos(hWnd, SB_HORZ);
-		ptOrigin.y = -GetScrollPos(hWnd, SB_VERT);
-
-		/* Draw bitmap in tiled manner to imageDC */
-		for (i = ptOrigin.x; i < rcClient.right; i += bmDesc.bmWidth)
-			for (j = ptOrigin.y; j < rcClient.bottom; j += bmDesc.bmHeight)
-				BitBlt(imageDC,  i, j, bmDesc.bmWidth, bmDesc.bmHeight,
-					   tempDC, 0, 0, SRCCOPY);
-
-		/*
-		   Set the background in memDC to black. Using SRCPAINT with black
-		   and any other color results in the other color, thus making black
-		   the transparent color
-		*/
-		SetBkColor(memDC, RGB(0, 0, 0));
-		SetTextColor(memDC, RGB(255, 255, 255));
-		BitBlt(memDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   maskDC, rcClip.left, rcClip.top, SRCAND);
-
-		/* Set the foreground to black. See comment above. */
-		SetBkColor(imageDC, RGB(255, 255, 255));
-		SetTextColor(imageDC, RGB(0, 0, 0));
-		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   maskDC, rcClip.left, rcClip.top, SRCAND);
-
-		/* Combine the foreground with the background */
-		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   memDC, rcClip.left, rcClip.top, SRCPAINT);
-
-		/* Draw the final image to the screen */
-		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top,
-			   imageDC, rcClip.left, rcClip.top, SRCCOPY);
-
-		SelectObject(maskDC, hOldMaskBitmap);
-		SelectObject(tempDC, hOldHBitmap);
-		SelectObject(imageDC, hOldBmpImage);
-
-		DeleteDC(maskDC);
-		DeleteDC(imageDC);
-		DeleteDC(tempDC);
-		DeleteObject(bmpImage);
-		DeleteObject(maskBitmap);
-		if (!hPALbg)
-		{
-			DeleteObject(hPAL);
-		}
-	}
-	SelectObject(memDC, hOldBitmap);
-	DeleteObject(bitmap);
-	DeleteDC(memDC);
-	EndPaint(hWnd, &ps);
-	return 0;
-}
-
-// put the arrow on the new sort column
-static void ResetHeaderSortIcon(void)
-{
-	HWND header = ListView_GetHeader(hwndList);
-	HD_ITEM hdi;
-	int i;
-
-	// take arrow off non-current columns
-	hdi.mask = HDI_FORMAT;
-	hdi.fmt = HDF_STRING;
-	for (i=0;i<COLUMN_MAX;i++)
-	{
-		if (i != GetSortColumn())
-			Header_SetItem(header,GetViewColumnFromRealColumn(i),&hdi);
-	}
-
-	if (xpControl)
-	{
-		// use built in sort arrows
-		hdi.mask = HDI_FORMAT;
-		hdi.fmt = HDF_STRING | (GetSortReverse() ? HDF_SORTDOWN : HDF_SORTUP);
-	}
-	else
-	{
-		// put our arrow icon next to the text
-		hdi.mask = HDI_FORMAT | HDI_IMAGE;
-		hdi.fmt = HDF_STRING | HDF_IMAGE | HDF_BITMAP_ON_RIGHT;
-		hdi.iImage = GetSortReverse() ? 1 : 0;
-	}
-	Header_SetItem(header,GetViewColumnFromRealColumn(GetSortColumn()),&hdi);
-}
-
 // replaces function in src/windows/fileio.c:
-
 int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata)
 {
 	int retval;
@@ -7268,7 +6345,7 @@ int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
 
 void RemoveCurrentGameCustomFolder(void)
 {
-    RemoveGameCustomFolder(GetSelectedPickItem());
+    RemoveGameCustomFolder(Picker_GetSelectedItem(hwndList));
 }
 
 void RemoveGameCustomFolder(int driver_index)
@@ -7287,16 +6364,16 @@ void RemoveGameCustomFolder(int driver_index)
 
 		    RemoveFromCustomFolder(folders[i],driver_index);
 
-			if (driver_index == GetSelectedPickItem())
+			if (driver_index == Picker_GetSelectedItem(hwndList))
 			{
 			   /* if we just removed the current game,
 				  move the current selection so that when we rebuild the listview it
 				  leaves the cursor on next or previous one */
 			
 			   current_pick_index = GetSelectedPick();
-			   SetSelectedPick(GetSelectedPick() + 1);
+			   Picker_SetSelectedPick(hwndList, GetSelectedPick() + 1);
 			   if (current_pick_index == GetSelectedPick()) /* we must have deleted the last item */
-				  SetSelectedPick(GetSelectedPick() - 1);
+				  Picker_SetSelectedPick(hwndList, GetSelectedPick() - 1);
 			}
 
 			ResetListView();

@@ -39,16 +39,6 @@ enum
 };
 
 
-enum
-{
-	VIEW_LARGE_ICONS = 0,
-	VIEW_SMALL_ICONS,
-	VIEW_INLIST,
-	VIEW_REPORT,
-	VIEW_GROUPED,
-	VIEW_MAX
-};
-
 // can't be the same as the VerifyRomSet() results, listed in audit.h
 enum
 {
