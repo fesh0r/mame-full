@@ -157,7 +157,7 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	DRIVER( advision )	/* Adventurevision								  */
 
 	/* CAPCOM */
-TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
+	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
 	/* Magnavox */
 /*	DRIVER( odyssey )*/	/* Magnavox Odyssey - analogue (1972)			  */

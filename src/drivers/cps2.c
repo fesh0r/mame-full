@@ -329,6 +329,9 @@ static const struct MachineDriver machine_driver_cps2 =
     60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	0,
+#ifdef MESS
+	0,
+#endif
 
 	/* video hardware */
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
@@ -2529,7 +2532,7 @@ ROM_START( xmvsfa )
 	ROM_LOAD( "xvs.12",   0x200000, 0x200000, 0x7b11e460 )
 ROM_END
 
-
+#ifndef MESS
 GAME( 1995, 19xx,     0,       cps2, cps2, cps2, ROT270_16BIT, "Capcom", "19XX: The War Against Destiny (US 951207)" )
 GAME( 1995, 19xxj,    19xx,    cps2, cps2, cps2, ROT270_16BIT, "Capcom", "19XX: The War Against Destiny (Japan 951207)" )
 GAME( 1995, 19xxh,    19xx,    cps2, cps2, cps2, ROT270_16BIT, "Capcom", "19XX: The War Against Destiny (Hispanic)" )
@@ -2597,3 +2600,5 @@ GAME( 1994, xmcotaj1, xmcota,  cps2, cps2, cps2, ROT0_16BIT,   "Capcom", "X-Men:
 GAME( 1996, xmvsf,    0,       cps2, cps2, cps2, ROT0_16BIT,   "Capcom", "X-Men Vs. Street Fighter (US 961004)" )
 GAME( 1996, xmvsfj,   xmvsf,   cps2, cps2, cps2, ROT0_16BIT,   "Capcom", "X-Men Vs. Street Fighter (Japan 960910)" )
 GAME( 1996, xmvsfa,   xmvsf,   cps2, cps2, cps2, ROT0_16BIT,   "Capcom", "X-Men Vs. Street Fighter (Asia 961023)" )
+#endif /* !MESS */
+
