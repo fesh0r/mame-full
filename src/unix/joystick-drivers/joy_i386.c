@@ -177,7 +177,7 @@ void joy_i386new_poll (void)
  */
 void joy_i386_poll (void)
 {
-   int i, j /*, res*/;
+   int i, j;
 
    for (i=0; i<JOY; i++)
    {
