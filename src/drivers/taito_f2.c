@@ -173,30 +173,6 @@ Lots of jerky sprites, I think this is caused by the new sprite banking code,
 it didn't do that before.
 
 
-Mega Blast
-----------
-
-C-Chip protection makes it unplayable. Background doesn't scroll or
-have correct graphics; no enemy sprites show up. Sound and controls ok.
-
-C-Chip reads from log:
-Offs	PC
-==========
-04	a450
-16	a31e, a326
-18	a42a, a432
-1a	a336, a33c
-1c	a442, a448
-22	f2f8, f308, f310
-4c	d780
-4e	166dc, 1679e, 167cc, 167e2, 167fa, 16812, 16d46
-50	166ee, 167b4, 167d2, 167e8, 16800, 16818
-52	140c0
-
-Perhaps they return incorrect values. [update cchip1_r so it logs
-PC for each read.]
-
-
 Hat Trick Hero / Football Champ
 -------------------------------
 
@@ -368,35 +344,6 @@ background. This is probably the same thing as the waterfall in Gun Frontier.
 
 
 
-static WRITE_HANDLER( TC0360PRI_halfword_w )
-{
-	if ((data & 0x00ff0000) == 0)
-	{
-		TC0360PRI_w(offset >> 1,data & 0xff);
-if (data & 0xff00)
-logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-	else
-	{
-logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-}
-
-static WRITE_HANDLER( TC0360PRI_halfword_swap_w )
-{
-	if ((data & 0xff000000) == 0)
-	{
-		TC0360PRI_w(offset >> 1,(data >> 8) & 0xff);
-if (data & 0xff)
-logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-	else
-	{
-logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
-	}
-}
-
-extern unsigned char *taitof2_ram;
 extern unsigned char *taitof2_rotate;
 extern unsigned char *f2_4layerregs;
 
@@ -457,7 +404,6 @@ WRITE_HANDLER( taitof2_spriteram_w );
 WRITE_HANDLER( taitof2_spritebank_w );
 READ_HANDLER( koshien_spritebank_r );
 WRITE_HANDLER( koshien_spritebank_w );
-READ_HANDLER( taitof2_sprite_extension_r );
 WRITE_HANDLER( taitof2_sprite_extension_w );
 WRITE_HANDLER( taitof2_scrbank_w );
 //WRITE_HANDLER( taitof2_unknown_reg_w );
@@ -469,10 +415,39 @@ READ_HANDLER( rastan_a001_r );
 WRITE_HANDLER( rastan_a000_w );
 WRITE_HANDLER( rastan_a001_w );
 
-void cchip1_init_machine(void);
-READ_HANDLER( cchip1_r );
-WRITE_HANDLER( cchip1_w );
+extern unsigned char *cchip_ram;
+READ_HANDLER( cchip2_r );
+WRITE_HANDLER( cchip2_w );
 
+
+
+static WRITE_HANDLER( TC0360PRI_halfword_w )
+{
+	if ((data & 0x00ff0000) == 0)
+	{
+		TC0360PRI_w(offset >> 1,data & 0xff);
+if (data & 0xff00)
+logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
+	}
+	else
+	{
+logerror("CPU #0 PC %06x: warning - write %02x to MSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
+	}
+}
+
+static WRITE_HANDLER( TC0360PRI_halfword_swap_w )
+{
+	if ((data & 0xff000000) == 0)
+	{
+		TC0360PRI_w(offset >> 1,(data >> 8) & 0xff);
+if (data & 0xff)
+logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
+	}
+	else
+	{
+logerror("CPU #0 PC %06x: warning - write %02x to LSB of TC0360PRI address %02x\n",cpu_get_pc(),data,offset);
+	}
+}
 
 /**********************************************************
 			GAME INPUTS
@@ -1056,7 +1031,7 @@ static struct MemoryReadAddress finalb_readmem[] =
 static struct MemoryWriteAddress finalb_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_sound_w },
@@ -1085,7 +1060,7 @@ static struct MemoryReadAddress dondokod_readmem[] =
 static struct MemoryWriteAddress dondokod_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_msb_sound_w },
@@ -1103,7 +1078,7 @@ static struct MemoryReadAddress megab_readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x100000, 0x100003, taitof2_msb_sound_r },
 	{ 0x120000, 0x12000f, TC0220IOC_halfword_r },	/* I/O */
-	{ 0x180000, 0x180fff, cchip1_r },
+	{ 0x180000, 0x180fff, cchip2_r },
 	{ 0x200000, 0x20ffff, MRA_BANK1 },
 	{ 0x300000, 0x301fff, paletteram_word_r },
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_r },	/* tilemaps */
@@ -1120,7 +1095,7 @@ static struct MemoryWriteAddress megab_writemem[] =
 	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x100000, 0x100003, taitof2_msb_sound_w },
 	{ 0x120000, 0x12000f, TC0220IOC_halfword_w },	/* I/O */
-	{ 0x180000, 0x180fff, cchip1_w },
+	{ 0x180000, 0x180fff, cchip2_w, &cchip_ram },
 	{ 0x400000, 0x40001f, TC0360PRI_halfword_w },	/* ?? */
 	{ 0x600000, 0x60ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x610000, 0x61ffff, MWA_BANK8 },   /* unused? */
@@ -1150,7 +1125,7 @@ static struct MemoryWriteAddress thundfox_writemem[] =
 	{ 0x100000, 0x101fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x200000, 0x20000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x220000, 0x220003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x300000, 0x30ffff, MWA_BANK1 },
 	{ 0x400000, 0x40ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x420000, 0x42000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_1_w },	/* tilemaps */
@@ -1178,7 +1153,7 @@ static struct MemoryReadAddress cameltry_readmem[] =
 static struct MemoryWriteAddress cameltry_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_msb_sound_w },
@@ -1207,7 +1182,7 @@ static struct MemoryReadAddress qtorimon_readmem[] =
 static struct MemoryWriteAddress qtorimon_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x500000, 0x50000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x600000, 0x600003, taitof2_msb_sound_w },
@@ -1234,7 +1209,7 @@ static struct MemoryReadAddress liquidk_readmem[] =
 static struct MemoryWriteAddress liquidk_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x300000, 0x30000f, TC0220IOC_halfword_w },	/* I/O */
 	{ 0x320000, 0x320003, taitof2_sound_w },
@@ -1262,7 +1237,7 @@ static struct MemoryReadAddress quizhq_readmem[] =
 static struct MemoryWriteAddress quizhq_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x500004, 0x500005, MWA_NOP },   /* irq ack ? */
 	{ 0x580000, 0x580001, MWA_NOP },   /* irq ack ? */
@@ -1319,7 +1294,7 @@ static struct MemoryReadAddress gunfront_readmem[] =
 static struct MemoryWriteAddress gunfront_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_wordswap_w },
 	{ 0x320000, 0x320003, taitof2_msb_sound_w },
@@ -1350,7 +1325,7 @@ static struct MemoryReadAddress growl_readmem[] =
 static struct MemoryWriteAddress growl_writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x340000, 0x340001, MWA_NOP },   /* irq ack? */
 	{ 0x400000, 0x400003, taitof2_msb_sound_w },
@@ -1381,7 +1356,7 @@ static struct MemoryWriteAddress mjnquest_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x110000, 0x11ffff, MWA_BANK8 },   /* sram ? */
-	{ 0x120000, 0x12ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x120000, 0x12ffff, MWA_BANK1 },
 	{ 0x200000, 0x200007, TC0110PCR_word_w },	/* palette */
 	{ 0x320000, 0x320001, mjnquest_inputselect_w },
 	{ 0x330000, 0x330001, MWA_NOP },   /* watchdog ? */
@@ -1412,7 +1387,7 @@ static struct MemoryReadAddress footchmp_readmem[] =
 static struct MemoryWriteAddress footchmp_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
 	{ 0x300000, 0x30000f, taitof2_spritebank_w },
 	{ 0x400000, 0x403fff, taitof2_4layer_w, &f2_4layerram, &f2_4layerram_size },   /* background layers */
@@ -1444,7 +1419,7 @@ static struct MemoryReadAddress koshien_readmem[] =
 static struct MemoryWriteAddress koshien_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_w },
 	{ 0x320000, 0x320003, taitof2_msb_sound_w },
@@ -1466,7 +1441,6 @@ static struct MemoryReadAddress yuyugogo_readmem[] =
 	{ 0x900000, 0x90ffff, taitof2_spriteram_r },
 	{ 0xa00000, 0xa01fff, paletteram_word_r },
 	{ 0xb00000, 0xb10fff, MRA_BANK1 },
-//	{ 0xc00000, 0xc01fff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ 0xd00000, 0xdfffff, MRA_BANK8 },   /* extra data rom */
 	{ -1 }  /* end of table */
 };
@@ -1480,7 +1454,7 @@ static struct MemoryWriteAddress yuyugogo_writemem[] =
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_w },
 	{ 0x900000, 0x90ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
 	{ 0xa00000, 0xa01fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0xb00000, 0xb10fff, MWA_BANK1, &taitof2_ram },   /* deliberate writes to $b10xxx, I think */
+	{ 0xb00000, 0xb10fff, MWA_BANK1 },   /* deliberate writes to $b10xxx, I think */
 	{ 0xc00000, 0xc01fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
 	{ 0xd00000, 0xdfffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -1502,7 +1476,7 @@ static struct MemoryReadAddress ninjak_readmem[] =
 static struct MemoryWriteAddress ninjak_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x380000, 0x380001, MWA_NOP },   /* irq ack? */
 	{ 0x400000, 0x400003, taitof2_msb_sound_w },
@@ -1531,7 +1505,7 @@ static struct MemoryReadAddress solfigtr_readmem[] =
 static struct MemoryWriteAddress solfigtr_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x400000, 0x400003, taitof2_msb_sound_w },
 	{ 0x500000, 0x50000f, taitof2_spritebank_w },
@@ -1562,7 +1536,7 @@ static struct MemoryWriteAddress qzquest_writemem[] =
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_w },
 	{ 0x300000, 0x300003, taitof2_sound_w },
 	{ 0x400000, 0x401fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
-	{ 0x500000, 0x50ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x500000, 0x50ffff, MWA_BANK1 },
 	{ 0x600000, 0x60ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_w },
@@ -1575,7 +1549,6 @@ static struct MemoryReadAddress pulirula_readmem[] =
 	{ 0x200000, 0x200003, taitof2_msb_sound_r },
 	{ 0x300000, 0x30ffff, MRA_BANK1 },
 	{ 0x400000, 0x401fff, TC0430GRW_word_r },
-//	{ 0x600000, 0x603fff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ 0x700000, 0x701fff, paletteram_word_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
@@ -1588,7 +1561,7 @@ static struct MemoryWriteAddress pulirula_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x300000, 0x30ffff, MWA_BANK1 },
 	{ 0x400000, 0x401fff, TC0430GRW_word_w },	/* ROZ tilemap */
 	{ 0x402000, 0x40200f, TC0430GRW_ctrl_word_w },
 //	{ 0x500000, 0x500001, MWA_NOP },   /* ??? */
@@ -1620,7 +1593,7 @@ static struct MemoryReadAddress metalb_readmem[] =
 static struct MemoryWriteAddress metalb_writemem[] =
 {
 	{ 0x000000, 0x0bffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x300000, 0x30ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
 //	{ 0x42000c, 0x42000f, MWA_BANK3, &taitof2_screen_regs },   /* zeroed */
 	{ 0x500000, 0x503fff, taitof2_4layer_w, &f2_4layerram, &f2_4layerram_size },   /* background layers */
@@ -1655,7 +1628,7 @@ static struct MemoryWriteAddress qzchikyu_writemem[] =
 	{ 0x200000, 0x20000f, TC0510NIO_halfword_w },
 	{ 0x300000, 0x300003, taitof2_sound_w },
 	{ 0x400000, 0x401fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
-	{ 0x500000, 0x50ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x500000, 0x50ffff, MWA_BANK1 },
 	{ 0x600000, 0x60ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
 	{ 0x700000, 0x70ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x720000, 0x72000f, TC0100SCN_ctrl_word_0_w },
@@ -1680,7 +1653,7 @@ static struct MemoryReadAddress yesnoj_readmem[] =
 static struct MemoryWriteAddress yesnoj_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x200000, 0x20ffff, MWA_BANK1 },
 	{ 0x400000, 0x40ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0x520000, 0x52000f, TC0100SCN_ctrl_word_0_w },
@@ -1710,7 +1683,7 @@ static struct MemoryReadAddress deadconx_readmem[] =
 static struct MemoryWriteAddress deadconx_writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
 	{ 0x300000, 0x30000f, taitof2_spritebank_w },
 	{ 0x400000, 0x403fff, taitof2_4layer_w, &f2_4layerram, &f2_4layerram_size },   /* background layers */
@@ -1730,7 +1703,6 @@ static struct MemoryReadAddress dinorex_readmem[] =
 {
 	{ 0x000000, 0x2fffff, MRA_ROM },
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_r },
-//	{ 0x400000, 0x400fff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ 0x500000, 0x501fff, paletteram_word_r },
 	{ 0x600000, 0x60ffff, MRA_BANK1 },
 	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
@@ -1746,7 +1718,7 @@ static struct MemoryWriteAddress dinorex_writemem[] =
 	{ 0x300000, 0x30000f, TC0510NIO_halfword_w },
 	{ 0x400000, 0x400fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
 	{ 0x500000, 0x501fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
-	{ 0x600000, 0x60ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x600000, 0x60ffff, MWA_BANK1 },
 	{ 0x700000, 0x70001f, TC0360PRI_halfword_w },	/* ?? */
 	{ 0x800000, 0x80ffff, taitof2_spriteram_w, &spriteram, &spriteram_size },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_w },	/* tilemaps */
@@ -1761,7 +1733,6 @@ static struct MemoryReadAddress qjinsei_readmem[] =
 	{ 0x000000, 0x1fffff, MRA_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_r },
 	{ 0x300000, 0x30ffff, MRA_BANK1 },
-//	{ 0x600000, 0x603fff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ 0x700000, 0x701fff, paletteram_word_r },
 	{ 0x800000, 0x80ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0x820000, 0x82000f, TC0100SCN_ctrl_word_0_r },
@@ -1774,7 +1745,7 @@ static struct MemoryWriteAddress qjinsei_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x300000, 0x30ffff, MWA_BANK1 },
 	{ 0x500000, 0x500001, MWA_NOP },   /* watchdog ? */
 	{ 0x600000, 0x603fff, taitof2_sprite_extension_w, &f2_sprite_extension, &f2_spriteext_size },
 	{ 0x700000, 0x701fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
@@ -1792,7 +1763,6 @@ static struct MemoryReadAddress qcrayon_readmem[] =
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x300000, 0x3fffff, MRA_BANK8 },   /* extra data rom */
 	{ 0x500000, 0x500003, taitof2_msb_sound_r },
-//	{ 0x600000, 0x603fff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ 0x700000, 0x701fff, paletteram_word_r },
 	{ 0x800000, 0x80ffff, taitof2_spriteram_r },
 	{ 0x900000, 0x90ffff, TC0100SCN_word_0_r },	/* tilemaps */
@@ -1804,7 +1774,7 @@ static struct MemoryReadAddress qcrayon_readmem[] =
 static struct MemoryWriteAddress qcrayon_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
 //	{ 0x200000, 0x200001, MWA_NOP },   /* unknown */
 	{ 0x300000, 0x3fffff, MWA_ROM },
 	{ 0x500000, 0x500003, taitof2_msb_sound_w },
@@ -1829,14 +1799,13 @@ static struct MemoryReadAddress qcrayon2_readmem[] =
 	{ 0x600000, 0x67ffff, MRA_BANK8 },   /* extra data rom */
 	{ 0x700000, 0x70000f, TC0510NIO_halfword_r },
 	{ 0xa00000, 0xa00003, taitof2_msb_sound_r },
-//	{ 0xb00000, 0xb017ff, taitof2_sprite_extension_r },   /* for debugging spritebank */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress qcrayon2_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x200000, 0x20ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x200000, 0x20ffff, MWA_BANK1 },
 	{ 0x300000, 0x301fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram },
 	{ 0x400000, 0x40ffff, taitof2_spriteram_w, &spriteram, &spriteram_size  },
 	{ 0x500000, 0x50ffff, TC0100SCN_word_0_w },	/* tilemaps */
@@ -1868,7 +1837,7 @@ static struct MemoryWriteAddress driftout_writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
 	{ 0x200000, 0x200003, taitof2_msb_sound_w },
-	{ 0x300000, 0x30ffff, MWA_BANK1, &taitof2_ram },
+	{ 0x300000, 0x30ffff, MWA_BANK1 },
 	{ 0x400000, 0x401fff, TC0430GRW_word_w },	/* ROZ tilemap */
 	{ 0x402000, 0x40200f, TC0430GRW_ctrl_word_w },
 	{ 0x700000, 0x701fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
@@ -4541,8 +4510,6 @@ static void init_machine_qcrayon(void)
 	cpu_setbank(8,memory_region(REGION_USER1));
 }
 
-#define init_machine_cchip1 cchip1_init_machine
-
 #define init_machine_0 0
 
 #define MACHINE_DRIVER(NAME,INIT,GFX,VHSTART,VHREFRESH,EOF)							\
@@ -4598,7 +4565,7 @@ static struct MachineDriver machine_driver_##NAME =									\
 /*              NAME      INIT     GFX       VHSTART   VHREFRESH        EOF*/
 MACHINE_DRIVER( finalb,   0,       finalb,   finalb,   taitof2,         partial_buffer_delayed )
 MACHINE_DRIVER( dondokod, 0,       pivot,    dondokod, taitof2_pri_roz, partial_buffer_delayed )
-MACHINE_DRIVER( megab,    cchip1,  taitof2,  3p,       taitof2_pri,     no_buffer )
+MACHINE_DRIVER( megab,    0,       taitof2,  3p,       taitof2_pri,     no_buffer )
 MACHINE_DRIVER( thundfox, 0,       thundfox, thundfox, thundfox,        partial_buffer_delayed_thundfox )
 MACHINE_DRIVER( cameltry, 0,       pivot,    dondokod, taitof2_pri_roz, no_buffer )
 MACHINE_DRIVER( qtorimon, 0,       yuyugogo, default,  taitof2,         partial_buffer_delayed )
@@ -5846,10 +5813,11 @@ void init_mjnquest(void)
 
 
 
-/* Working games */
 GAME( 1988, finalb,   0,        finalb,   finalb,   finalb,   ROT0,   "Taito Corporation Japan", "Final Blow (World)" )
 GAME( 1988, finalbj,  finalb,   finalb,   finalb,   finalb,   ROT0,   "Taito Corporation", "Final Blow (Japan)" )
 GAME( 1989, dondokod, 0,        dondokod, dondokod, 0,        ROT0,   "Taito Corporation", "Don Doko Don (Japan)" )
+GAME( 1989, megab,    0,        megab,    megab,    0,        ROT0,   "Taito Corporation Japan", "Mega Blast (World)" )
+GAME( 1989, megabj,   megab,    megab,    megab,    0,        ROT0,   "Taito Corporation", "Mega Blast (Japan)" )
 GAME( 1990, thundfox, 0,        thundfox, thundfox, 0,        ROT0,   "Taito Corporation", "Thunder Fox (Japan)" )
 GAME( 1989, cameltry, 0,        cameltry, cameltry, 0,        ROT0,   "Taito Corporation", "Camel Try (Japan)"  )
 GAME( 1989, cameltru, cameltry, cameltry, cameltry, 0,        ROT0,   "Taito America Corporation", "Camel Try (US)" )
@@ -5878,6 +5846,8 @@ GAME( 1991, solfigtr, 0,        solfigtr, solfigtr, 0,        ROT0,   "Taito Cor
 GAME( 1991, qzquest,  0,        qzquest , qzquest,  0,        ROT0,   "Taito Corporation", "Quiz Quest - Hime to Yuusha no Monogatari (Japan)" )
 GAME( 1991, pulirula, 0,        pulirula, pulirula, 0,        ROT0,   "Taito Corporation Japan", "PuLiRuLa (World)" )
 GAME( 1991, pulirulj, pulirula, pulirula, pulirula, 0,        ROT0,   "Taito Corporation", "PuLiRuLa (Japan)" )
+GAMEX(1991, metalb,   0,        metalb,   metalb,   0,        ROT0,   "Taito Corporation Japan", "Metal Black (World)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1991, metalbj,  metalb,   metalb,   metalb,   0,        ROT0,   "Taito Corporation", "Metal Black (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1991, qzchikyu, 0,        qzchikyu, qzchikyu, 0,        ROT0,   "Taito Corporation", "Quiz Chikyu Bouei Gun (Japan)" )
 GAME( 1992, yesnoj,   0,        yesnoj,   yesnoj,   0,        ROT0,   "Taito Corporation", "Yes/No Sinri Tokimeki Chart" )
 GAMEX(1992, deadconx, 0,        deadconx, deadconx, 0,        ROT0,   "Taito Corporation Japan", "Dead Connection (World)", GAME_NO_COCKTAIL )
@@ -5890,9 +5860,3 @@ GAME( 1993, qcrayon,  0,        qcrayon,  qcrayon,  0,        ROT0,   "Taito Cor
 GAME( 1993, qcrayon2, 0,        qcrayon2, qcrayon2, 0,        ROT0,   "Taito Corporation", "Quiz Crayon Shinchan Orato Asobo (Japan)" )
 GAME( 1991, driftout, 0,        driftout, driftout, 0,        ROT270, "Visco", "Drift Out (Japan)" )
 GAMEX(1991, driveout, driftout, driftout, driftout, 0,        ROT270, "bootleg", "Drive Out", GAME_NO_SOUND )
-
-/* Busted games */
-GAMEX(1989, megab,    0,        megab,    megab,    0,      ROT0,   "Taito Corporation Japan", "Mega Blast (World)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1989, megabj,   megab,    megab,    megab,    0,      ROT0,   "Taito Corporation", "Mega Blast (Japan)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, metalb,   0,        metalb,   metalb,   0,      ROT0,   "Taito Corporation Japan", "Metal Black (World)", GAME_NO_COCKTAIL )
-GAMEX(1991, metalbj,  metalb,   metalb,   metalb,   0,      ROT0,   "Taito Corporation", "Metal Black (Japan)", GAME_NO_COCKTAIL )
