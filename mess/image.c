@@ -186,11 +186,15 @@ int image_load(int type, int id, const char *name)
 error:
 	if (fp)
 		mame_fclose(fp);
-	if (img)
-		img->fp = NULL;
 	if (buffer)
 		free(buffer);
-	return err;
+	if (img)
+	{
+		img->fp = NULL;
+		img->name = NULL;
+		img->status &= ~IMAGE_STATUS_ISLOADING|IMAGE_STATUS_ISLOADED;
+	}
+	return INIT_FAIL;
 }
 
 void image_unload(int type, int id)
