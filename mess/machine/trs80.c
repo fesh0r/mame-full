@@ -8,6 +8,7 @@
 ***************************************************************************/
 #include "includes/trs80.h"
 #include "includes/basicdsk.h"
+#include "includes/flopdrv.h"
 
 #define VERBOSE 1
 
@@ -316,7 +317,6 @@ int trs80_floppy_init(int id)
 		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
 		if (file)
 		{
-			int i;
 
             osd_fseek(file, 0, SEEK_SET);
 			osd_fread(file, pdrive, 2);
@@ -369,8 +369,10 @@ int trs80_floppy_init(int id)
 		basicdsk_set_ddam(id, track, side, sector_id, 1);
 	}
 
-	floppy_drive_set_flag_state(i, FLOPPY_DRIVE_PRESENT, 1);
-	floppy_drive_set_flag_state(i, FLOPPY_DRIVE_DISK_PRESENT, 1);
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_PRESENT, 1);
+
+	/* KT - These should not be necessary because they are handled in basicdsk_floppy_init */
+	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_PRESENT, 1);
     floppy_drive_set_flag_state(id, FLOPPY_DRIVE_READY, 1);
 
     return INIT_OK;
