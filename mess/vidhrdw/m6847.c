@@ -367,6 +367,14 @@ int m6847_vh_start(const struct m6847_init_params *params)
 #define DFS_F	TIME_IN_NSEC(520)
 #define DFS_R	TIME_IN_NSEC(600)
 
+/* TO BE RESOLVED:  The M6847 Manual says that HSYNCs occur every 227.5 clock
+ * cycles; however every indication with the CoCo 3 seems to imply that HSYNCs
+ * happen every 228 clock cycles.  To be honest, I'm not sure what the truth
+ * really is... maybe they were different?  (Remember that the CoCo 3 did not
+ * actually use the m6847 */
+#define HSYNC	(CLK * 228)
+/*#define HSYNC	(CLK * 227.5)*/
+
 /* The reason we have a delay is because of a very fine point in MAME/MESS's
  * emulation.  In the CoCo, fs/hs are tied to interrupts, and the game "Popcorn"
  * polls the interrupt sync flag (on $ff03 in PIA0), waiting for fs to trigger
@@ -412,7 +420,7 @@ static void hs_fall(int hsyncsleft)
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
 
 	if (hsyncsleft)
-		timer_set(CLK * 227.5, hsyncsleft - 1, hs_fall);
+		timer_set(HSYNC, hsyncsleft - 1, hs_fall);
 
 #if LOG_HS
 	logerror("hs_fall(): hs=0 time=%g\n", timer_get_time());
@@ -425,7 +433,7 @@ static void hs_rise(int hsyncsleft)
 	invoke_callback(the_state.initparams.hs_func, the_state.initparams.callback_delay, the_state.hs);
 
 	if (hsyncsleft)
-		timer_set(CLK * 227.5, hsyncsleft - 1, hs_rise);
+		timer_set(HSYNC, hsyncsleft - 1, hs_rise);
 
 #if LOG_HS
 	logerror("hs_rise(): hs=1 time=%g\n", timer_get_time());
@@ -463,7 +471,7 @@ static void call_newlineproc(int data)
 	ni = (struct newlineproc_info *) data;
 	ni->newlineproc();
 	if (ni->hsyncsleft--)
-		timer_set(CLK * 227.5, (int) ni, call_newlineproc);
+		timer_set(HSYNC, (int) ni, call_newlineproc);
 	else
 		free(ni);
 }
@@ -476,14 +484,14 @@ int internal_m6847_vblank(int hsyncs, double trailingedgerow, void (*newlineproc
 		if (ni) {
 			ni->newlineproc = newlineproc;
 			ni->hsyncsleft = hsyncs - 2;
-			timer_set(CLK * 227.5, (int) ni, call_newlineproc);
+			timer_set(HSYNC, (int) ni, call_newlineproc);
 		}
 	}
 
-	timer_set(CLK * 0                       + DHS_F,	hsyncs-1,	hs_fall);
-	timer_set(CLK * 16.5                    + DHS_R,	hsyncs-1,	hs_rise);
-	timer_set(CLK * 0                       + DFS_F,	0,			fs_fall);
-	timer_set(CLK * 227.5 * trailingedgerow + DFS_R,	0,			fs_rise);
+	timer_set(CLK * 0                   + DHS_F,	hsyncs-1,	hs_fall);
+	timer_set(CLK * 16.5                + DHS_R,	hsyncs-1,	hs_rise);
+	timer_set(CLK * 0                   + DFS_F,	0,			fs_fall);
+	timer_set(HSYNC * trailingedgerow	+ DFS_R,	0,			fs_rise);
 
 	return ignore_interrupt();
 }
