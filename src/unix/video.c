@@ -591,7 +591,7 @@ void osd_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-   struct rectangle updatebounds = display->game_bitmap_update;
+//   struct rectangle updatebounds = display->game_bitmap_update;
    static int showfps = 0, showfpstemp = 0; 
    int skip_this_frame;
    struct mame_bitmap *current_bitmap = display->game_bitmap;

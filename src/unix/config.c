@@ -193,11 +193,12 @@ static int fuzzycmp (const char *s, const char *l)
    return gaps;
 }
 
-/* for verify roms which is used for the random game selection */
+/* for verify roms which is used for the random game selection
 static int config_printf(const char *fmt, ...)
 {
    return 0;
 }
+*/
 
 static int config_handle_arg(char *arg)
 {
