@@ -83,7 +83,6 @@ enum
 //============================================================
 
 int win_use_natural_keyboard;
-char *win_state_hack;
 
 #if HAS_PROFILER
 extern int show_profiler;
@@ -303,8 +302,7 @@ static void loadsave(int type)
 #ifdef UNICODE
 		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%S", filenamew);
 #endif
-		win_state_hack = filename;
-		cpu_loadsave_schedule(type, '\1');
+		cpu_loadsave_schedule_file(type, filename);
 	}
 	if (dir)
 		free(dir);
