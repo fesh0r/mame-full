@@ -676,11 +676,25 @@ ROM_START(aszmic)
 ROM_END
 
 ROM_START(zx81)
+        ROM_REGION(0x10000, REGION_CPU1,0)
+        ROM_LOAD("zx81.rom",    0x0000, 0x2000, 0xfcbbd617)
+        ROM_REGION(0x00100, REGION_GFX1,0)
+        /* filled in by zx_init_driver */
+ROM_END                                                                                                                                       
+
+ROM_START(zx81a)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("zx81.rom",    0x0000, 0x2000, 0x4b1dd6eb)
+	ROM_LOAD("zx81a.rom",    0x0000, 0x2000, 0x4b1dd6eb)
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END
+
+ROM_START(zx81b)
+        ROM_REGION(0x10000, REGION_CPU1,0)
+        ROM_LOAD("zx81b.rom",    0x0000, 0x2000, 0x522c37b8)
+        ROM_REGION(0x00100, REGION_GFX1,0)
+        /* filled in by zx_init_driver */
+ROM_END                                                                                                                                       
 
 ROM_START(ts1000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
@@ -707,6 +721,14 @@ ROM_START(pow3000)
 	ROM_LOAD("pow3000.chr", 0x0000, 0x0200, 0x1c42fe46)
 ROM_END
 
+ROM_START(lambda)
+        ROM_REGION(0x10000, REGION_CPU1,0)
+        ROM_LOAD("lambda.rom",0x0000, 0x2000, 0x8a49b2c3)
+        ROM_REGION(0x00100, REGION_GFX1,0)
+        /* filled in by zx_init_driver */
+        ROM_REGION(0x00200, REGION_GFX2,0)
+        ROM_LOAD("8300_fnt.bin",0x0000, 0x0200, 0x6bd0408c)
+ROM_END                                                                                                                                       
 
 static const struct IODevice io_zx80[] =
 {
@@ -757,20 +779,25 @@ static const struct IODevice io_zx81[] =
 };
 
 #define io_aszmic	io_zx80
+#define io_zx81a	io_zx81
+#define io_zx81b	io_zx81
 #define io_ts1000	io_zx81
 #define io_pc8300	io_zx81
 #define io_pow3000	io_zx81
+#define io_lambda	io_zx81
 
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
-/*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY				FULLNAME */
-COMPX (1980,   zx80,    0,		 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX-80", GAME_NOT_WORKING)
-COMPX (1981,   aszmic,  zx80,	 zx80,	   zx80,	 zx,	   "Sinclair Research", "ZX.Aszmic", GAME_NOT_WORKING)
-COMPX (1981,   zx81,    0,		 zx81,	   zx81,	 zx,	   "Sinclair Research", "ZX-81", GAME_NOT_WORKING)
-COMPX (1981,   ts1000,  zx81,	 ts1000,   zx81,	 zx,	   "Timex Sinclair",    "TS1000", GAME_NOT_WORKING | GAME_ALIAS)
-COMPX (198?,   pc8300,  zx81,	 pc8300,   zx81,	 zx,	   "Your Computer",     "PC8300", GAME_NOT_WORKING)
-COMPX (198?,   pow3000, zx81,	 pow3000,  pow3000,  zx,	   "Creon Enterprises", "Power 3000", GAME_NOT_WORKING)
-
+/*	YEAR 	NAME	 PARENT	 MACHINE   INPUT	 INIT	   COMPANY		FULLNAME */
+COMPX (1980,   zx80,    0,	 zx80,	   zx80,	zx,	"Sinclair Research", "ZX-80",		GAME_NOT_WORKING)
+COMPX (1981,   aszmic,  zx80,	 zx80,	   zx80,	zx,	"Sinclair Research", "ZX.Aszmic",	GAME_NOT_WORKING)
+COMPX (1981,   zx81,    0,       zx81,     zx81,        zx,     "Sinclair Research", "ZX-81",           GAME_NOT_WORKING)
+COMPX (198?,   zx81a,   zx81,	 zx81,	   zx81,	zx,	"Sinclair Research", "ZX-81 (2nd rev)",	GAME_NOT_WORKING)
+COMPX (198?,   zx81b,   zx81,    zx81,     zx81,        zx,     "Sinclair Research", "ZX-81 (3rd rev)", GAME_NOT_WORKING)
+COMPX (198?,   ts1000,  zx81,	 ts1000,   zx81,	zx,	"Timex Sinclair",    "TS1000",		GAME_NOT_WORKING | GAME_ALIAS)
+COMPX (1982,   pc8300,  zx81,	 pc8300,   pow3000,	zx,	"Your Computer",     "PC8300",		GAME_NOT_WORKING)
+COMPX (1982,   pow3000, zx81,	 pow3000,  pow3000,  	zx,	"Creon Enterprises", "Power 3000",	GAME_NOT_WORKING)
+COMPX (1982,   lambda,  zx81,    pc8300,   pow3000,    	zx,	"Lambda Electronics Ltd","Lambda 8300",	GAME_NOT_WORKING)

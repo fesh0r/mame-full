@@ -405,10 +405,13 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 
 	DRIVER( zx80 )		/* Sinclair ZX-80								  */
 	DRIVER( zx81 )		/* Sinclair ZX-81								  */
+	DRIVER( zx81a )
+	DRIVER( zx81b )
 	DRIVER( ts1000 )	/* Timex Sinclair 1000							  */
 	DRIVER( aszmic )	/* ASZMIC ZX-81 ROM swap						  */
 	DRIVER( pc8300 )	/* Your Computer - PC8300						  */
 	DRIVER( pow3000 )	/* Creon Enterprises - Power 3000				  */
+	DRIVER( lambda )	/* Lambda 8300							*/
 
 	DRIVER( spectrum )	/* 1982 ZX Spectrum 							  */
 	DRIVER( specpls4 )	/* 2000 ZX Spectrum +4							  */
