@@ -83,7 +83,7 @@
 #include "mamedbg.h"
 #include "hd6309.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -532,7 +532,7 @@ void CHECK_IRQ_LINES( void )
 		}
 		else
 		{
-			if ( hd6309.md & MD_FM )
+			if ( MD & MD_FM )
 			{
 				CC |= CC_E; 				/* save entire state */
 				PUSHWORD(pPC);
@@ -540,7 +540,7 @@ void CHECK_IRQ_LINES( void )
 				PUSHWORD(pY);
 				PUSHWORD(pX);
 				PUSHBYTE(DP);
-				if ( hd6309.md & MD_EM )
+				if ( MD & MD_EM )
 				{
 					PUSHBYTE(F);
 					PUSHBYTE(E);

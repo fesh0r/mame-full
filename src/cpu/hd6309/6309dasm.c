@@ -774,8 +774,6 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				ea = (cpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
-//			  if( pb == 0x8c )
-//				  buffer += sprintf (buffer, " ; ($%04X)", offset + pc);
 		}
 		else
 		if( pb2 == 0x89 || pb2 == 0x8d || pb2 == 0x8f )
@@ -795,14 +793,17 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				sym1 = set_ea_info(1, pc, (INT16)offset, EA_REL_PC);
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
+			else if ( pb == 0x9f || pb == 0xbf || pb == 0xdf || pb == 0xff )
+			{
+				sym1 = set_ea_info(1, offset, EA_UINT16, EA_VALUE);
+                buffer += sprintf (buffer, "%s", sym1);
+			}
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
 				ea = (cpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
 				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
-//			  if( pb == 0x8d )
-//				  buffer += sprintf (buffer, " ; ($%04X)", offset + pc);
 		}
 		else
 		if ( pb == 0x8f || pb == 0x90 )
@@ -838,7 +839,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			buffer += sprintf (buffer, ",--W");
 		}
 		else
-		if( pb & 0x80 )
+		if( (pb & 0x80) )
 		{
 			if( (pb & 0x90) == 0x90 )
 				buffer += sprintf (buffer, "[");

@@ -1364,8 +1364,9 @@ INLINE void rti( void )
 		PULLBYTE(B);
 		if ( MD & MD_EM )
 		{
-			PUSHBYTE(E);
-			PUSHBYTE(F);
+			PULLBYTE(E);
+			PULLBYTE(F);
+			hd6309_ICount -= 2;
 		}
 		PULLBYTE(DP);
 		PULLWORD(XD);
@@ -2262,10 +2263,11 @@ INLINE void dec_ix( void )
 /* $6B TIM indexed */
 INLINE void tim_ix( void )
 {
-	UINT8	r,im;
+	UINT8	r,im,m;
 	IMMBYTE(im);
 	fetch_effective_address();
-	r = im & RM(EAD);
+	m = RM(EAD);
+	r = im & m;
 	CLR_NZV;
 	SET_NZ8(r);
 }
