@@ -46,9 +46,9 @@ unsigned int vscrnwidth;
 unsigned int vscrnheight;
 unsigned int vecvscrnwidth;
 unsigned int vecvscrnheight;
+unsigned int fxwidth;
+unsigned int fxheight;
 
-static unsigned int fxwidth;
-static unsigned int fxheight;
 static char version[80];
 static GrTexInfo texinfo;
 static int bilinear=1; /* Do binlinear filtering? */

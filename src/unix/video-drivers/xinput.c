@@ -13,6 +13,8 @@
 #include "xkeyboard.h"
 #include "sysdep/sysdep_display_priv.h"
 
+enum { X11_NO_FORCED_GRAB, X11_FORCE_MOUSE_GRAB, X11_FORCE_INPUT_GRAB };
+
 #ifdef USE_XINPUT_DEVICES
 #include <X11/extensions/XInput.h>
 
@@ -20,7 +22,6 @@ enum { XMAME_NULLDEVICE, XMAME_TRACKBALL, XMAME_JOYSTICK };
 enum { XINPUT_MOUSE_0, XINPUT_MOUSE_1, XINPUT_MOUSE_2, XINPUT_MOUSE_3,
        XINPUT_JOYSTICK_0, XINPUT_JOYSTICK_1, XINPUT_JOYSTICK_2, XINPUT_JOYSTICK_3,
        XINPUT_MAX_NUM_DEVICES };
-enum { X11_NO_FORCED_GRAB, X11_FORCE_MOUSE_GRAB, X11_FORCE_INPUT_GRAB };
 
 /* struct which keeps all info for a XInput-devices */
 typedef struct {
