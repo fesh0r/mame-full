@@ -15,9 +15,6 @@
 extern "C" {
 #endif
 
-#pragma warn_padding on
-#pragma options align= packed
-
 typedef struct
 {
 	UINT8	IDAM;
@@ -25,7 +22,8 @@ typedef struct
 	UINT8	sideNumber;
 	UINT8	sectorNumber;
 	UINT8	lengthCode;
-	UINT16	idCRC;
+	UINT8	idCRC_high;
+	UINT8	idCRC_low;
 	UINT8	DM;
 	UINT8	data[];
 } packedIDData, *packedIDData_P;
@@ -34,8 +32,8 @@ typedef struct
 {
 	UINT8		writeProtect; /* 0xff = writed protected, 0x00 = OK to write	*/
 	UINT8		trackCount;   /* Ones based 									*/
-	UINT16		trackLength;  /* This number includes artifical track header
-								 (little endian in file)						*/
+	UINT8		trackLength_low; /* This number includes artifical track header */
+	UINT8		trackLength_high;/*(little endian in file)						*/
 	UINT8		diskOptions;  /* Bit 0: Unused. 								*/
 							  /* Bit 1: Unused.									*/
 							  /* Bit 2: Unused.									*/
@@ -46,12 +44,20 @@ typedef struct
 							  /* Bit 7: Ignore density flags?
 							  	 (always write one byte, depreciated)			*/
 	UINT8		reserved[7];
-	UINT32		realDiskCode; /* If this is 0x12345678 (little endian)
-							     then access a real disk drive (unsurported)	*/
+	UINT8		realDiskCode[4];/* If this is 0x12345678 (little endian)
+							     then access a real disk drive (unsupported)	*/
 } dmkHeader, *dmkHeader_p;
 
-#pragma options align=reset
-#pragma warn_padding reset
+typedef struct
+{
+	UINT8	type;
+	UINT8	trackNumber;
+	UINT8	sideNumber;
+	UINT8	sectorNumber;
+	UINT8	sectorLength;
+	UINT8	crc_high;
+	UINT8	crc_low;
+} dmkIDAM, *dmkIDAM_p;
 
 typedef struct
 {
@@ -88,6 +94,10 @@ typedef union
 int     dmkdsk_floppy_init(int id);
 /* exit and free up data */
 void    dmkdsk_floppy_exit(int id);
+
+UINT16 dmkdsk_GetTrackLength( dmkHeader_p header );
+UINT16 dmkdsk_GetIDAMCRC( packedIDData_P IDAM );
+UINT32 dmkdsk_GetRealDiskCode( dmkHeader_p header );
 
 #ifdef __cplusplus
 }
