@@ -1,0 +1,21 @@
+Magnavox? Odyssey2
+------------------
+
+Console for tv connection
+
+Philips G7000 videopac
+
+Features
+--------
+2 digital joysticks
+keyboard
+
+
+Emulators
+---------
+Dan Boris o2em for DOS
+
+
+Mess Emulation
+--------------
+based on info by Dan Boris
