@@ -253,7 +253,7 @@ DRVLIBS += \
 	$(OBJ)/sym1.a \
 	$(OBJ)/aim65.a \
 	$(OBJ)/cbm.a $(OBJ)/cbmshare.a \
-#	$(OBJ)/amiga.a \
+#    $(OBJ)/amiga.a \
 
 else
 COREDEFS += -DMESS_EXCLUDE_CBM
@@ -314,7 +314,7 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
       $(OBJ)/mess/systems/a2600.o   \
-#    $(OBJ)/mess/systems/atarist.o
+#      $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
 	  $(OBJ)/mess/vidhrdw/vectrex.o  \
@@ -521,6 +521,8 @@ $(OBJ)/amstrad.a:  \
 $(OBJ)/veb.a: \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
 	  $(OBJ)/mess/machine/kc.o	 \
+      $(OBJ)/mess/systems/kc.o   \
+
 
 $(OBJ)/nec.a:	   \
 	  $(OBJ)/mess/vidhrdw/vdc.o	 \
