@@ -11,6 +11,17 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
+CPU=$(strip $(findstring Z180@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/z180
+CPUDEFS += -DHAS_Z180=1
+CPUOBJS += $(OBJ)/cpu/z180/z180.o
+DBGOBJS += $(OBJ)/cpu/z180/z180dasm.o
+$(OBJ)/cpu/z180/z180.o: z180.c z180cb.c z180xy.c z180dd.c z180ed.c z180fd.c z180.h z180ops.h z180tbl.h z180daa.h
+else
+CPUDEFS += -DHAS_Z180=0
+endif
+
 CPU=$(strip $(findstring Z80GB@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z80gb

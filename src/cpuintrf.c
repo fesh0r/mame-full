@@ -18,6 +18,9 @@
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
+#if (HAS_Z180)
+#include "cpu/z180/z180.h"
+#endif
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
@@ -402,6 +405,9 @@ struct cpu_interface cpuintf[] =
 	CPU0(DUMMY,    Dummy,	 1,  0,1.00,0,				   -1,			   -1,			   16,	  0,16,LE,1, 1,16	),
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    16,	  0,16,LE,1, 4,16	),
+#endif
+#if (HAS_Z180)
+	CPU1(Z180,	   z180,	 3,255,1.00,Z180_IGNORE_INT,   Z180_INT0,	   Z180_NMI,		z180,  0,16,LE,1, 4,20	 ),
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   16,	  0,16,LE,1, 4,16	),
