@@ -8,6 +8,8 @@ System Driver Changes:
 ----------------------
 - [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
 - [C16] Improved TED7360 sound emulation. [Attila Grosz]
+- [PDP1] Added support for lightpen with variable tip size.
+  [Raphael Nabet]
 
 Source Changes:
 ---------------
