@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Corvus Concept [Raphael Nabet]
 - Tomy Tutor [Raphael Nabet]
 
 System Driver Changes:
