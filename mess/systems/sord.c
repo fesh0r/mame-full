@@ -532,4 +532,4 @@ static const struct IODevice io_sordm5[] =
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 19??, sordm5,      0,            sord_m5,          sord_m5,      0,       "Sord", "Sord M5")
+COMP( 1983, sordm5,      0,            sord_m5,          sord_m5,      0,       "Sord", "Sord M5")
