@@ -290,108 +290,18 @@ DWORD GetHelpIDs(void)
 	return (DWORD) (LPSTR) dwHelpIDs;
 }
 
+static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
+{
+	// throw it away
+}
+
 /* Checks of all ROMs are available for 'game' and returns result
  * Returns TRUE if all ROMs found, 0 if any ROMs are missing.
  */
 BOOL FindRomSet(int game)
 {
-	const struct RomModule	*region, *rom;
-	const struct GameDriver *gamedrv;
-	const char				*name;
-	int 					err;
-	unsigned int			length, icrc;
-
-	gamedrv = drivers[game];
-
-	// cmk for this to actually be useful, we'd really need to set the rompath for the file
-	// functions to our rom path
-	if (!mame_faccess(gamedrv->name, FILETYPE_ROM))
-	{
-		/* if the game is a clone, try loading the ROM from the main version */
-		if (DriverIsClone(game))
-		{
-			if (!mame_faccess(gamedrv->clone_of->name, FILETYPE_ROM))
-				return FALSE;
-		}
-	}
-
-	/* loop over regions, then over files */
-	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
-	{
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			if (ROMREGION_ISROMDATA(region))
-			{
-				extern struct GameDriver driver_0;
-				const struct GameDriver *drv;
-
-				name = ROM_GETNAME(rom);
-				icrc = ROM_GETCRC(rom);
-				length = 0;
-
-				/* obtain CRC-32 and length of ROM file */
-				drv = gamedrv;
-				do
-				{
-					err = mame_fchecksum(drv->name, name, &length, &icrc);
-					drv = drv->clone_of;
-				}
-				while (err && drv && drv != &driver_0);
-				
-				if (err)
-					return FALSE;
-			}
-			else if (ROMREGION_ISDISKDATA(region))
-			{
-				name = ROM_GETNAME(rom);
-				// should look to see if the file is actually here
-			}
-			
-		}
-	}
-
-	return TRUE;
-}
-
-/* Checks if the game uses external samples at all
- * Returns TRUE if this driver expects samples
- */
-BOOL GameUsesSamples(int game)
-{
-#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
-
-	int i;
-    struct InternalMachineDriver drv;
-
-	expand_machine_driver(drivers[game]->drv,&drv);
-
-	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
-	{
-		const char **samplenames = NULL;
-
-#if (HAS_SAMPLES == 1)
-		if (drv.sound[i].sound_type == SOUND_SAMPLES)
-			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-
-        /*
-#if (HAS_VLM5030 == 1)
-		if (drv.sound[i].sound_type == SOUND_VLM5030)
-			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
-#endif
-        */
-		if (samplenames != 0 && samplenames[0] != 0)
-			return TRUE;
-	}
-
-#endif
-
-	return FALSE;
-}
-
-static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
-{
-	// throw it away
+    int audit = VerifyRomSet(game,(verify_printf_proc)DetailsPrintf);
+	return (audit == CORRECT) || (audit == BEST_AVAILABLE);
 }
 
 /* Checks for all samples in a sample set.

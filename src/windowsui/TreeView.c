@@ -111,8 +111,8 @@ typedef struct
 	const char *m_lpTitle;					/* Folder Title */
 	UINT        m_nFolderId;				/* ID */
 	UINT        m_nIconId;					/* Icon index into the ImageList */
-	BOOL		(*m_pfnQuery)(int nDriver);	/* Query function */
-	BOOL		m_bExpectedResult;			/* Expected query result */
+	BOOL        (*m_pfnQuery)(int nDriver);	/* Query function */
+	BOOL        m_bExpectedResult;			/* Expected query result */
 } FOLDERDATA, *LPFOLDERDATA;
 
 static BOOL AlwaysTrue(int driver_index)
@@ -120,7 +120,7 @@ static BOOL AlwaysTrue(int driver_index)
 	return TRUE;
 }
 
-FOLDERDATA folderData[] =
+static FOLDERDATA folderData[] =
 {
 #ifdef MESS
 	{"All Systems",     FOLDER_ALLGAMES,    ICON_FOLDER,				AlwaysTrue,			TRUE },
@@ -138,7 +138,7 @@ FOLDERDATA folderData[] =
 #endif
 	{"Manufacturer",    FOLDER_MANUFACTURER,ICON_FOLDER_MANUFACTURER},
 	{"Year",            FOLDER_YEAR,        ICON_FOLDER_YEAR},
-    {"Source",          FOLDER_SOURCE,      ICON_FOLDER_SOURCE},
+	{"Source",          FOLDER_SOURCE,      ICON_FOLDER_SOURCE},
 	{"CPU",             FOLDER_CPU,         ICON_FOLDER},
 	{"SND",             FOLDER_SND,         ICON_FOLDER},
 	{"Working",         FOLDER_WORKING,     ICON_WORKING,				DriverIsBroken,		FALSE },

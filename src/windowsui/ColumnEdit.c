@@ -121,12 +121,26 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 	int         nAvail;
 	int         i, nCount = 0;
 	LV_ITEM     lvi;
+	DWORD dwShowStyle, dwAvailableStyle, dwView;
 
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
 		hShown	   = GetDlgItem(hDlg, IDC_LISTSHOWCOLUMNS);
 		hAvailable = GetDlgItem(hDlg, IDC_LISTAVAILABLECOLUMNS);
+		/*Change Style to Always Show Selection */
+		dwShowStyle = GetWindowLong(hShown, GWL_STYLE); 
+		dwAvailableStyle = GetWindowLong(hAvailable, GWL_STYLE); 
+		dwView = LVS_SHOWSELALWAYS | LVS_LIST;
+
+		/* Only set the window style if the view bits have changed. */
+		if ((dwShowStyle & LVS_TYPEMASK) != dwView) 
+		SetWindowLong(hShown, GWL_STYLE, 
+			(dwShowStyle & ~LVS_TYPEMASK) | dwView); 
+		if ((dwAvailableStyle & LVS_TYPEMASK) != dwView) 
+		SetWindowLong(hAvailable, GWL_STYLE, 
+			(dwAvailableStyle & ~LVS_TYPEMASK) | dwView); 
+
 		pfnGetColumnInfo(order, shown);
 
 		showMsg = TRUE;
@@ -145,9 +159,9 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
         {
             char tmp[80];
             
-            sprintf(tmp,"ColumnOrder: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+            sprintf(tmp,"ColumnOrder: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d, %d",
                 order[0], order[1], order[2], order[3], order[4],
-                order[5], order[6], order[7], order[8], order[9]);
+                order[5], order[6], order[7], order[8], order[9], order[10]);
             MessageBox(0, tmp, "Column Order", IDOK);
         }
 #endif

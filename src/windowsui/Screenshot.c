@@ -170,7 +170,9 @@ BOOL LoadScreenShot(int nGame, int nType)
 	}
 	if (!loaded)
 #endif /* MESS */
-	loaded = LoadDIB(drivers[nGame]->name, &m_hDIB, &m_hPal, nType);
+	{
+		loaded = LoadDIB(drivers[nGame]->name, &m_hDIB, &m_hPal, nType);
+	}
 
 	/* If not loaded, see if there is a clone and try that */
 	if (!loaded

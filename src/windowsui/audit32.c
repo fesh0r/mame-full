@@ -220,8 +220,11 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 			SetWindowText(GetDlgItem(hDlg, IDC_PROP_ROMS), StatusString(iStatus));
 
 			iStatus = VerifySampleSet(rom_index, (verify_printf_proc)DetailsPrintf);
-			SetHasSamples(rom_index, (iStatus == CORRECT) ? 1 : 0);
-			SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES), StatusString(iStatus));
+			SetHasSamples(rom_index,(iStatus == CORRECT || iStatus == BEST_AVAILABLE));
+			if (DriverUsesSamples(rom_index))
+				SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES),StatusString(iStatus));
+			else
+				SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES),"None required");
 		}
 		ShowWindow(hDlg, SW_SHOW);
 		break;
@@ -283,7 +286,7 @@ static void ProcessNextSample()
 	switch (retval)
 	{
 	case CORRECT:
-		if (GameUsesSamples(sample_index))
+		if (DriverUsesSamples(sample_index))
 		{
 			samples_correct++;
 			sprintf(buffer, "%i", samples_correct);
@@ -345,7 +348,7 @@ static const char * StatusString(int iStatus)
 {
 	static const char *ptr;
 
-	ptr = "None required";
+	ptr = "Unknown";
 
 	switch (iStatus)
 	{

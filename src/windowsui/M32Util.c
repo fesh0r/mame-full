@@ -115,19 +115,6 @@ UINT GetDepth(HWND hWnd)
 	return nBPP;
 }
 
-BOOL OnNT()
-{
-	OSVERSIONINFO version_info;
-
-	version_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&version_info);
-
-	if (version_info.dwPlatformId == VER_PLATFORM_WIN32_NT)
-		return TRUE;
-	else
-		return FALSE;
-}
-
 /*
  * Return TRUE if comctl32.dll is version 4.71 or greater
  * otherwise return FALSE.
@@ -325,6 +312,39 @@ BOOL DriverIsVector(int driver_index)
     struct InternalMachineDriver drv;
     expand_machine_driver(drivers[driver_index]->drv, &drv);
 	return (drv.video_attributes & VIDEO_TYPE_VECTOR) != 0;
+}
+
+BOOL DriverUsesSamples(int driver_index)
+{
+#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
+
+	int i;
+    struct InternalMachineDriver drv;
+
+	expand_machine_driver(drivers[driver_index]->drv,&drv);
+
+	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
+	{
+		const char **samplenames = NULL;
+
+#if (HAS_SAMPLES == 1)
+		if (drv.sound[i].sound_type == SOUND_SAMPLES)
+			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
+#endif
+
+        /*
+#if (HAS_VLM5030 == 1)
+		if (drv.sound[i].sound_type == SOUND_VLM5030)
+			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
+#endif
+        */
+		if (samplenames != 0 && samplenames[0] != 0)
+			return TRUE;
+	}
+
+#endif
+
+	return FALSE;
 }
 
 void FlushFileCaches(void)

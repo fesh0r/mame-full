@@ -34,9 +34,6 @@ DWORD   GetHelpIDs(void);
 BOOL    FindRomSet(int game);
 BOOL    FindSampleSet(int game);
 
-/* Check the driver to see if it uses samples */
-BOOL    GameUsesSamples(int game);
-
 /* Get Game status text string */
 const char*   GameInfoStatus(UINT game);
 

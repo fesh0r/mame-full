@@ -18,8 +18,6 @@ extern void __cdecl dprintf(const char* fmt, ...);
 
 extern UINT GetDepth(HWND hWnd);
 
-extern BOOL OnNT(void);
-
 /* Open a text file */
 extern void DisplayTextFile(HWND hWnd, char *cName);
 
@@ -38,6 +36,7 @@ BOOL DriverIsBroken(int driver_index);
 BOOL DriverIsHarddisk(int driver_index);
 BOOL DriverIsStereo(int driver_index);
 BOOL DriverIsVector(int driver_index);
+BOOL DriverUsesSamples(int driver_index);
 
 void FlushFileCaches(void);
 
