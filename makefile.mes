@@ -70,10 +70,10 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
-CFLAGS = -I. -Isrc -Isrc/$(OS) -Imess -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -I. -Isrc -Isrc/$(OS) -Imess -Imess/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -I. -Isrc -Isrc/$(OS) -Imess -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -I. -Isrc -Isrc/$(OS) -Imess -Imess/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
