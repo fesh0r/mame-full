@@ -315,8 +315,7 @@ int xf86_dga2_create_display(int bitmap_depth)
 	   who do a lott of dga <-> window switching will get a lott of
 	   children */
 	static int first_time  = 1;
-	xf86_dga_fix_viewport  = 0;
-	xf86_dga_first_click   = 1;
+	xf86_dga_first_click   = 0;
 	xf86ctx.palette_dirty  = FALSE;
 	xf86ctx.old_grab_mouse = x11_grab_mouse;
 	x11_grab_mouse         = FALSE;
@@ -402,7 +401,9 @@ int xf86_dga2_create_display(int bitmap_depth)
 			xf86ctx.grabbed_mouse = 1;
 	}
 
-	XDGASetViewport(display,xf86ctx.screen,0,0,XDGAFlipImmediate);
+	XDGASetViewport(display,xf86ctx.screen,0,0,0);
+	while(XDGAGetViewportStatus(display, xf86ctx.screen))
+		;
 
 	memset(xf86ctx.base_addr, 0,
 	       xf86ctx.device->mode.bytesPerScanline
@@ -522,12 +523,6 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap)
 {
 	int old_use_dirty = use_dirty;
    
-	if(xf86_dga_fix_viewport)
-	{
-		XF86DGASetViewPort(display,xf86ctx.screen,0,0);
-		xf86_dga_fix_viewport = 0;
-	}
-
 	if (current_palette->lookup_dirty)
 		use_dirty = 0;
 	
