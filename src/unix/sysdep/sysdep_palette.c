@@ -23,6 +23,7 @@ Version 0.1, November 1999
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <driver.h>
 #include <math.h>
 #include "sysdep_palette.h"
 
@@ -277,12 +278,20 @@ void sysdep_palette_update(struct sysdep_palette_struct *palette)
       {
          if(palette->color_dirty[i])
          {
-            unsigned char red =
-               palette->bright_lookup[palette->colors[i*3]];
-            unsigned char green =
-               palette->bright_lookup[palette->colors[i*3+1]];
-            unsigned char blue =
-               palette->bright_lookup[palette->colors[i*3+2]];
+            unsigned char red, green, blue;
+
+            if (i != Machine->uifont->colortable[1])
+            {
+               red = palette->bright_lookup[palette->colors[i*3]];
+               green = palette->bright_lookup[palette->colors[i*3+1]];
+               blue = palette->bright_lookup[palette->colors[i*3+2]];
+            }
+            else
+            {
+               red = palette->colors[i*3];
+               green = palette->colors[i*3+1];
+               blue = palette->colors[i*3+2];
+            }
             
             if(!palette->lookup)
             {
