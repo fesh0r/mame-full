@@ -46,6 +46,10 @@ Source Changes:
 
 - CDP1802 cycle count fixes.  [Curt Coder]
 
+- Fixed a regression in which Start and Select buttons were not properly
+  specified.  This could result in crashes when customizing the inputs of
+  certain drivers in the new Win32 UI.  [Nate Woods]
+
 
 
 0.85

@@ -164,7 +164,7 @@ static void customize_input(const char *title, int cust_type, int player, int in
 	while(in->type != IPT_END)
 	{
 		this_inputclass = input_classify_port(in);
-		if (this_inputclass == inputclass)
+		if (input_port_name(in) && (this_inputclass == inputclass))
 		{
 			/* most of the time, the player parameter is the player number
 			 * but in the case of INPUT_CLASS_CATEGORIZED, it is the

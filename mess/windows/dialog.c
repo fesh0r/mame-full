@@ -1311,6 +1311,7 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 	int len, i;
 
 	port_name = input_port_name(port);
+	assert(port_name);
 	
 	if (port_type_is_analog(port->type))
 	{
