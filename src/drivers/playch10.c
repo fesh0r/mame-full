@@ -139,7 +139,7 @@ screen. Game works fine tho. Normal behaviour?. Bad rom?.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/ppu2c03b.h"
-#include "cpu/Z80/Z80.h"
+#include "cpu/z80/z80.h"
 #include "machine/rp5h01.h"
 
 /* clock frequency */
