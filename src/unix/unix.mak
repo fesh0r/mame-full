@@ -239,6 +239,10 @@ ifdef HAVE_MPROTECT
 MY_CFLAGS += -DHAVE_MPROTECT
 endif
 
+ifdef CRLF
+MY_CFLAGS += -DCRLF=$(CRLF)
+endif
+
 ##############################################################################
 # Object listings
 ##############################################################################
@@ -426,6 +430,11 @@ OSDEPEND = $(OBJDIR)/osdepend.a
 
 VECTOR = $(OBJDIR)/vector.o
 
+# MMX assembly language effects
+ifdef EFFECT_MMX_ASM
+CONFIG += -DEFFECT_MMX_ASM
+UNIX_OBJS += $(UNIX_OBJDIR)/effect_asm.o
+endif
 
 ##############################################################################
 # Start of the real makefile.
@@ -456,7 +465,7 @@ chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-xml2info: src/xml2info/xml2info.c
+xml2info: src/xml2info/xml2info.o
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(CC) -O1 -o $@ $^
 
@@ -517,11 +526,11 @@ $(OSDEPEND): $(UNIX_OBJS)
 	$(CC_COMPILE) $(RANLIB) $@
 
 $(UNIX_OBJDIR)/%.o: src/unix/%.c src/unix/xmame.h
-	$(CC_COMMENT) @echo '[OSEPEND] Compiling $< ...'
+	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(CONFIG) -o $@ -c $<
 
 $(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
-	$(CC_COMMENT) @echo '[OSEPEND] Compiling $< ...'
+	$(CC_COMMENT) @echo '[OSDEPEND] Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
 # special cases for the 68000 core
@@ -564,6 +573,11 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 	$(CC_COMMENT) @echo Assembling $<...
 	$(CC_COMPILE) $(ASM_STRIP) $<
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $(subst -D,-d,$(ASMDEFS)) $<
+
+# MMX assembly language for effect filters
+$(OBJ)/unix.$(DISPLAY_METHOD)/effect_asm.o: src/unix/effect_asm.asm
+	$(CC_COMMENT) @echo Assembling $<...
+	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
 
 #some tricks, since vector.o these days is display method-dependent:
 $(VECTOR): src/vidhrdw/vector.c
