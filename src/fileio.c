@@ -142,7 +142,7 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 				int flags = FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_ZIP_PATHS;
 				switch(openforwrite) {
 				case OSD_FOPEN_READ:   
-					flags |= FILEFLAG_OPENREAD | FILEFLAG_HASH;   
+					flags |= FILEFLAG_OPENREAD /*| FILEFLAG_HASH*/;
 					break;   
 				case OSD_FOPEN_WRITE:   
 					flags |= FILEFLAG_OPENWRITE;   

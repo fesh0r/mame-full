@@ -712,7 +712,7 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 /* Cowering, partial crcs for NES/A7800/others */
 		img->crc = 0;
 
-		if (!img->crc)
+		if ((!img->crc) && (image_devtype(img) != IO_HARDDISK))
 		{
 			unsigned char *pc_buf = (unsigned char *)malloc(img->length);
 			const struct IODevice *pc_dev;
