@@ -102,12 +102,12 @@ void sc61860_2ms_tick(int param)
 }
 
 
-READ_HANDLER(sc61860_read_internal)
+READ_HANDLER(sc61860_internal_r)
 {
 	return sc61860.ram[offset];
 }
 
-WRITE_HANDLER(sc61860_write_internal)
+WRITE_HANDLER(sc61860_internal_w)
 {
 	sc61860.ram[offset]=data;
 }
