@@ -41,30 +41,28 @@ Priority:  Todo:                                                  Done:
 #include "includes/gb.h"
 
 static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x3fff, MRA_ROM },		/* 16k fixed ROM BANK #0*/
-	{ 0x4000, 0x7fff, MRA_BANK1 },		/* 16k switched ROM bank */
-	{ 0x8000, 0x9fff, MRA_RAM },		/* 8k video ram */
-	{ 0xa000, 0xbfff, MRA_BANK2 },		/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfe9f, MRA_RAM },		/* internal ram + echo + sprite Ram & IO */
-	{ 0xfea0, 0xfeff, MRA_NOP },		/* Unusable */
-	{ 0xff00, 0xff03, gb_ser_regs },	/* serial regs */
-	{ 0xff04, 0xff04, gb_r_divreg },	/* special case for the division reg */
-	{ 0xff05, 0xff05, gb_r_timer_cnt },	/* special case for the timer count reg */
-	{ 0xff06, 0xffff, MRA_RAM },		/* IO */
+	{ 0x0000, 0x3fff, MRA_ROM },			/* 16k fixed ROM BANK #0*/
+	{ 0x4000, 0x7fff, MRA_BANK1 },			/* 16k switched ROM bank */
+	{ 0x8000, 0x9fff, MRA_RAM },			/* 8k video ram */
+	{ 0xa000, 0xbfff, MRA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
+	{ 0xc000, 0xfe9f, MRA_RAM },			/* internal ram + echo + sprite Ram & IO */
+	{ 0xfea0, 0xfeff, MRA_NOP },			/* Unusable */
+	{ 0xff00, 0xff7f, gb_r_io },			/* gb io */
+	{ 0xff80, 0xffff, MRA_RAM },			/* plain ram (high) */
 MEMORY_END
 
 static MEMORY_WRITE_START (writemem)
-	{ 0x0000, 0x1fff, MWA_ROM },			/* plain rom */
-	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* rom bank select */
-	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* ram bank select */
-	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* ram/rom mode select */
+	{ 0x0000, 0x1fff, MWA_ROM },			/* plain rom (should really be RAM enable */
+	{ 0x2000, 0x3fff, gb_rom_bank_select },	/* ROM bank select */
+	{ 0x4000, 0x5fff, gb_ram_bank_select },	/* RAM bank select */
+	{ 0x6000, 0x7fff, gb_mem_mode_select },	/* RAM/ROM mode select */
 	{ 0x8000, 0x9fff, MWA_RAM },			/* plain ram */
 	{ 0xa000, 0xbfff, MWA_BANK2 },			/* 8k switched RAM bank (on cartridge) */
-	{ 0xc000, 0xfeff, MWA_RAM, &videoram, &videoram_size },	/* video & sprite ram */
-	{ 0xff00, 0xffff, gb_w_io },			/* gb io */
-/*	{ 0xff00, 0xff7f, gb_w_io },*/			/* gb io */
-/*	{ 0xff80, 0xffef, MWA_RAM },*/			/* plain ram (high) */
-/*	{ 0xffff, 0xffff, gb_w_ie },*/			/* gb io (interrupt enable) */
+	{ 0xc000, 0xfe9f, MWA_RAM, &videoram, &videoram_size },	/* video & sprite ram */
+	{ 0xfea0, 0xfeff, MWA_NOP },			/* unusable */
+	{ 0xff00, 0xff7f, gb_w_io },			/* gb io */
+	{ 0xff80, 0xfffe, MWA_RAM },			/* plain ram (high) */
+	{ 0xffff, 0xffff, gb_w_ie },			/* gb io (interrupt enable) */
 MEMORY_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
