@@ -1106,7 +1106,7 @@ void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	typedef void (*writehandler)(offs_t wh_offset, data8_t data);
+	typedef mem_write_handler writehandler;
 	static writehandler handlers[] = {
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
