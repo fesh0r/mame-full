@@ -151,6 +151,9 @@ static net_options  netOpts;/* Network options */
 /* Global UI options */
 REG_OPTIONS regSettings[] = {
     {"DefaultGame",     RO_STRING,  settings.default_game,      0, 0},
+#ifdef MESS_PICKER
+    {"DefaultSoftware", RO_PSTRING, &settings.default_software, 0, 0},
+#endif
     {"FolderID",        RO_INT,     &settings.folder_id,        0, 0},
     {"ShowScreenShot",  RO_BOOL,    &settings.show_screenshot,  0, 0},
 	{"ShowFlyer",		RO_INT,		&settings.show_pict_type,		0, 0},
@@ -293,6 +296,12 @@ The current version is %s. It is recommended that the\n\
 configuration is set to the new defaults.\n\n\
 Would you like to use the new configuration?";
 
+#ifdef MESS
+#define DEFAULT_GAME "nes"
+#else
+#define DEFAULT_GAME "pacman"
+#endif
+
 /***************************************************************************
     External functions  
  ***************************************************************************/
@@ -303,7 +312,10 @@ void OptionsInit(int total_games)
 
     num_games = total_games;
 
-    strcpy(settings.default_game, "pacman");
+    strcpy(settings.default_game, DEFAULT_GAME);
+#ifdef MESS_PICKER
+	settings.default_software = NULL;
+#endif
     settings.folder_id       = 0;
     settings.view            = VIEW_REPORT;
     settings.show_folderlist = TRUE;
@@ -634,6 +646,25 @@ const char *GetDefaultGame(void)
 {
     return settings.default_game;
 }
+
+#ifdef MESS_PICKER
+void SetDefaultSoftware(const char *name)
+{
+    if (settings.default_software != NULL)
+    {
+        free(settings.default_software);
+        settings.default_software = NULL;
+    }
+
+    if (name != NULL)
+        settings.default_software = strdup(name);
+}
+
+const char *GetDefaultSoftware(void)
+{
+    return settings.default_software ? settings.default_software : "";
+}
+#endif
 
 void SetWindowArea(AREA *area)
 {

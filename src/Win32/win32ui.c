@@ -1577,6 +1577,11 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             nItem = GetSelectedPickItem();
             SetDefaultGame(ModifyThe(drivers[nItem]->description));
 
+#ifdef MESS_PICKER
+			/* Set the default software in the pane */
+			MessSetPickerDefaults();
+#endif
+
             /* hide window to prevent orphan empty rectangles on the taskbar */
             ShowWindow(hWnd,SW_HIDE);
 

@@ -46,6 +46,8 @@ static void InitMessPicker(void);
 static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 static BOOL MessPickerNotify(NMHDR *nm);
 static void MessUpdateSoftwareList(void);
+static void MessSetPickerDefaults(void);
+static void MessRetrievePickerDefaults(void);
 #else
 static void MessImageConfig(HWND hMain, char *last_directory, int image);
 #endif /* MESS_PICKER */
@@ -211,6 +213,7 @@ static void MessAddImage(int imagenum)
 	mess_image_nums[options.image_count++] = imagenum;
 }
 
+
 static BOOL MessIsImageSelected(int imagenum)
 {
 	int i;
@@ -304,6 +307,9 @@ static void ResetMessColumnDisplay(BOOL firstime)
         ListView_SetTextColor(hwndSoftware, RGB(240,240,240));
     else
         ListView_SetTextColor(hwndSoftware, GetListFontColor());
+
+	// Set the default software
+	MessRetrievePickerDefaults();
 }
 
 static void InitMessPicker()
@@ -589,6 +595,83 @@ static void FillSoftwareList(int nGame)
 static void MessUpdateSoftwareList(void)
 {
 	FillSoftwareList(nTheCurrentGame);
+}
+
+static int MessLookupByFilename(const char *filename)
+{
+	int i;
+
+	for (i = 0; i < mess_images_count; i++) {
+		if (!strcmp(filename, mess_images_index[i]->fullname))
+			return i;
+	}
+	return -1;
+}
+
+static void MessSetPickerDefaults(void)
+{
+	int i;
+	size_t nDefaultSize = 0;
+	char *default_software = NULL;
+	char *s;
+
+	for (i = 0; i < options.image_count; i++)
+		nDefaultSize += strlen(options.image_files[i].name) + 1;
+	
+	if (nDefaultSize) {
+		default_software = malloc(nDefaultSize);
+		if (default_software) {
+			s = NULL;
+			for (i = 0; i < options.image_count; i++) {
+				if (s)
+					*(s++) = '|';
+				else
+					s = default_software;
+				strcpy(s, options.image_files[i].name);
+				s += strlen(s);
+			}
+		}
+	}
+
+	SetDefaultSoftware(default_software);
+
+	if (default_software)
+		free(default_software);
+}
+
+static void MessRetrievePickerDefaults(void)
+{
+	char *default_software = strdup(GetDefaultSoftware());
+	char *this_software;
+	char *s;
+	int i;
+
+	if (!default_software)
+		return;
+
+	this_software = default_software;
+	while(this_software && *this_software) {
+		s = strchr(this_software, '|');
+		if (s)
+			*(s++) = '\0';
+		else
+			s = NULL;
+
+		i = MessLookupByFilename(this_software);
+		if (i >= 0) {
+			if (this_software == default_software) {
+				ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+				ListView_EnsureVisible(hwndList, i, FALSE);
+			}
+			else {
+				ListView_SetItemState(hwndSoftware, i, LVIS_SELECTED, LVIS_SELECTED);
+			}
+		}
+
+		this_software = s;
+	}
+
+	free(default_software);
 }
 
 static void DrawMessItem(LPDRAWITEMSTRUCT lpDrawItemStruct)

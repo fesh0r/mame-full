@@ -196,6 +196,9 @@ typedef struct
     BOOL     version_check;     /* Version mismatch warings */
     BOOL     mmx_check;         /* Detect MMX processors */
     char     default_game[MAX_GAMEDESC];
+#ifdef MESS_PICKER
+	char     *default_software;
+#endif
     int      column_width[COLUMN_MAX];
     int      column_order[COLUMN_MAX];
     int      column_shown[COLUMN_MAX];
@@ -286,6 +289,11 @@ int  GetShowPictType(void);
 
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
+
+#ifdef MESS_PICKER
+void SetDefaultSoftware(const char *name);
+const char *GetDefaultSoftware(void);
+#endif
 
 void SetWindowArea(AREA *area);
 void GetWindowArea(AREA *area);

@@ -1,6 +1,13 @@
 Whats new:
 
 ----------
+0.37 BETA 6
+------------
+
+- MESS32 will now remember what items were selected in the software picker.
+  [Nate Woods]
+
+----------
 0.37 BETA 5
 ------------
 
