@@ -387,14 +387,8 @@ int frontend_list(char *gamename)
                   /* First, the rom name */
                   fprintf(stdout_file, "%-8s  ",drivers[i]->name);
 
-#ifndef MESS
-                  /* source file (skip the leading "src/drivers/" */
-                  fprintf(stdout_file, "%-10s  ",&drivers[i]->source_file[12]);
-#else
-                  /* source file (skip the leading "src/mess/systems/" */
-                  fprintf(stdout_file, "%-10s  ",&drivers[i]->source_file[17]);
-#endif
-
+                  /* source file (skip the leading path) */
+                  fprintf(stdout_file, "%-10s  ", strrchr (drivers[i]->source_file, '/') + 1);
                   /* Then, cpus */
                   for(j=0;j<MAX_CPU;j++)
                   {
