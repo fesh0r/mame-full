@@ -1,5 +1,5 @@
 /*
-	Machine code for TI99/4 and TI-99/4A.
+	Machine code for TI99/4, TI-99/4A, TI99/4P.
 	Raphael Nabet, 1999-2002.
 	Some code derived from Ed Swartz's V9T9.
 
@@ -9,14 +9,16 @@
 	  interest are:
 		<ftp://ftp.whtech.com//datasheets/Hardware manuals/99-4  console specification and schematic.pdf>
 		<ftp://ftp.whtech.com//datasheets/Hardware manuals/99-4A Console and peripheral Expansion System Technical Data.pdf>
-	  Schematics for various extnesion cards are available in the same directory.
+	  Schematics for various extension cards are available in the same directory.
 	* V9T9 source code.
+	* Harald Glaab's site has software and documentation for the TI99/4P (nicknamed "SGCPU").
+		<http://home.t-online.de/home/harald.glaab/snug/>
 
 Emulated:
 	* All TI99 basic console hardware, except a few tricks in TMS9901 emulation.
 	* Cartridge with ROM (either non-paged or paged) and GROM (GRAM or extra GPL ports are possible).
 	* Speech Synthesizer, with standard speech ROM (no speech ROM expansion).
-	* Disk emulation (incomplete, but seems to work OK).
+	* Disk emulation (only SSSD disk images, and timings are completely wrong).
 
 	Compatibility looks quite good.
 
@@ -24,7 +26,8 @@ TODO:
 	* DUMP THIS BLOODY TI99/4 ROM
 	* Submit speech improvements to Nicola again
 	* support for other peripherals and DSRs as documentation permits
-	* find programs which use super AMS or any extended other memory card
+	* find programs which use super AMS or any other extended memory card
+	* finish 99/4p support: ROM6, HSGPL and EVPC cards
 
 New (9911):
 	* updated for 16 bit handlers.
@@ -95,8 +98,10 @@ static void ti99_audio_gate(int offset, int data);
 static void ti99_CS_output(int offset, int data);
 
 static void ti99_expansion_card_init(void);
+static void ti99_4p_internal_dsr_init(void);
 static void ti99_TIxram_init(void);
 static void ti99_sAMSxram_init(void);
+static void ti99_4p_mapper_init(void);
 static void ti99_myarcxram_init(void);
 static void ti99_fdc_init(void);
 
@@ -116,7 +121,8 @@ static UINT16 *xRAM_ptr;
 static enum
 {
 	model_99_4,
-	model_99_4a
+	model_99_4a,
+	model_99_4p
 } ti99_model;
 /* memory extension type */
 static xRAM_kind_t xRAM_kind;
@@ -309,6 +315,11 @@ void init_ti99_4a(void)
 	ti99_model = model_99_4a;
 }
 
+void init_ti99_4p(void)
+{
+	ti99_model = model_99_4p;
+}
+
 int ti99_floppy_init(int id)
 {
 	if (basicdsk_floppy_init(id)==INIT_PASS)
@@ -347,9 +358,16 @@ int ti99_load_rom(int id)
 
 	int slot_empty = ! (name && name[0]);
 
-
-	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	if (ti99_model == model_99_4p)
+	{
+		cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart_4p);
+		cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart_4p + 0x2000);
+	}
+	else
+	{
+		cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+		cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	}
 
 
 	if (slot_empty)
@@ -371,7 +389,7 @@ int ti99_load_rom(int id)
 		/* Original idea by Norberto Bensa */
 		{
 
-		char *ch, *ch2;
+		const char *ch, *ch2;
 		slot_type_t type = (slot_type_t) id;
 
 		ch = strrchr(name, '.');
@@ -468,8 +486,16 @@ void ti99_init_machine(void)
 
 
 	/* set up RAM pointers */
-	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
-	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
+	if (ti99_model == model_99_4p)
+	{
+		sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram_4p);
+		xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
+	}
+	else
+	{
+		sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+		xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
+	}
 
 	/* erase GPL_port_lookup, so that only console_GROMs are installed by default */
 	memset(GPL_port_lookup, 0, sizeof(GPL_port_lookup));
@@ -481,11 +507,20 @@ void ti99_init_machine(void)
 	console_GROMs.addr = 0;
 	console_GROMs.cur_flags = console_GROMs.GROM_flags[0];
 
-	/* set up 4 mirrors of scratch pad to the same address */
-	cpu_setbank(1, sRAM_ptr);
-	cpu_setbank(2, sRAM_ptr);
-	cpu_setbank(3, sRAM_ptr);
-	cpu_setbank(4, sRAM_ptr);
+	if (ti99_model == model_99_4p)
+	{
+		/* set up system ROM and scratch pad pointers */
+		cpu_setbank(1, memory_region(REGION_CPU1) + offset_rom0_4p);
+		cpu_setbank(2, sRAM_ptr);
+	}
+	else
+	{
+		/* set up 4 mirrors of scratch pad to the same address */
+		cpu_setbank(1, sRAM_ptr);
+		cpu_setbank(2, sRAM_ptr);
+		cpu_setbank(3, sRAM_ptr);
+		cpu_setbank(4, sRAM_ptr);
+	}
 
 	/* init tms9901 */
 	tms9901_init(& tms9901reset_param_ti99);
@@ -500,12 +535,18 @@ void ti99_init_machine(void)
 	AlphaLockLine = 0;
 
 	/* read config */
-	xRAM_kind = (readinputport(input_port_config) >> config_xRAM_bit) & config_xRAM_mask;
+	if (ti99_model == model_99_4p)
+		xRAM_kind = xRAM_kind_99_4p_1Mb;	/* hack */
+	else
+		xRAM_kind = (readinputport(input_port_config) >> config_xRAM_bit) & config_xRAM_mask;
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
 	has_fdc = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
 
 	/* set up optional expansion hardware */
 	ti99_expansion_card_init();
+
+	if (ti99_model == model_99_4p)
+		ti99_4p_internal_dsr_init();
 
 	if (has_speech)
 	{
@@ -537,6 +578,9 @@ void ti99_init_machine(void)
 		break;
 	case xRAM_kind_super_AMS:
 		ti99_sAMSxram_init();
+		break;
+	case xRAM_kind_99_4p_1Mb:
+		ti99_4p_mapper_init();
 		break;
 	case xRAM_kind_foundation_128k:
 	case xRAM_kind_foundation_512k:
@@ -740,7 +784,7 @@ READ16_HANDLER ( ti99_rw_rgpl )
 	int reply;
 
 
-	tms9900_ICount -= 16;		/* approx. */
+	tms9900_ICount -= 4/*16*/;		/* from 4 to 16? */
 
 	if (offset & 1)
 	{	/* read GPL address */
@@ -806,7 +850,7 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 	GROM_port_t *port = GPL_port_lookup[(offset & 0x1FE) >> 1];	/* GROM/GRAM can be paged */
 
 
-	tms9900_ICount -= 16;		/* approx. */
+	tms9900_ICount -= 4/*16*/;		/* from 4 to 16? */
 
 	if (offset & 1)
 	{	/* write GPL adress */
@@ -964,7 +1008,7 @@ static int ti99_R9901_0(int offset)
 
 	answer = (readinputport(input_port_keyboard + KeyCol) << 3) & 0xF8;
 
-	if (ti99_model == model_99_4a)
+	if ((ti99_model == model_99_4a) || (ti99_model == model_99_4p))
 	{
 		if (! AlphaLockLine)
 			answer &= ~ (readinputport(input_port_caps_lock) << 3);
@@ -1044,7 +1088,7 @@ static void ti99_KeyC0(int offset, int data)
 */
 static void ti99_AlphaW(int offset, int data)
 {
-	if (ti99_model == model_99_4a)
+	if ((ti99_model == model_99_4a) || (ti99_model == model_99_4p))
 		AlphaLockLine = data;
 }
 
@@ -1111,11 +1155,11 @@ In short:
 	* 0x1900-0x19FE EPROM programmer??? (Mezzanine board in July 1981's TI99/7 prototype)
 	* 0x1A00-0x1AFE unassigned
 	* 0x1B00-0x1BFE TI GPL debugger card
-	* 0x1C00-0x1CFE Video Controller Card??? (what on earth is it? It is listed in TI
-	  documentation, but I can't find any description.  I think I can remember from
-	  another life that it was an 80-column video card, but don't take my word for it.
-	  Another hypothesis is that it was a genlock interface, as tms9918/28/29 does support
-	  such funny stuff.)
+	* 0x1C00-0x1CFE Video Controller Card (Possibly the weirdest device.  The card is connected to
+		the computer video output, a VCR video output, and a monitor.  It can control the VCR,
+		connect the display to either VCR output or computer video output, and it can read or save
+		binary data to video tape.  I think it can act as a genlock interface (i.e. TMS9918
+		transparent background shows the video signal), too, but I am not sure.)
 	* 0x1D00-0x1DFE IEEE 488 Controller Card (parallel port, schematics on ftp.whtech.com)
 	* 0x1E00-0x1EFE unassigned
 	* 0x1F00-0x1FFE P-code card
@@ -1127,6 +1171,8 @@ In short:
 	* Super AMS 128k/512k: port 14 (0x1E00-0x1EFE)
 	* Foundation 128k/512k: port 14 (0x1E00-0x1EFE)
 	* Gram Karte: any port (0-15)
+	* EVPC (video card): 0x1400-0x14FE
+	* HSGPL (GROM replacement): 0x1B00-0x1BFE
 
 	Of course, these devices additionnally need some support routines, and possibly memory-mapped
 	registers.  To do this, memory range 0x4000-5FFF is shared by all cards.  The system enables
@@ -1136,14 +1182,15 @@ In short:
 	and startup routines (all these routines are generally called DSR = Device Service Routine).
 
 	Also, the cards can trigger level-1 ("INTA") interrupts.  (A LOAD interrupt is possible, too,
-	but it was never used by TI, AFAIK.  An interrupt line called "INTB" is found on several
-	cards built by TI and it is suggested)  The INTB interrupt and
-	interrupt status sensing is supported by some cards (cf Peripheral Expansion Box connector),
-	but neither TI99/4(A) (nor TI99/8, as far as I can tell) take advantage of these feature.
-	Also, these cards actually support 19-bit addressing, whereas 16 lines would be enough.
-	TI documentation refer to the "Personal Computer PCC at Texas Instrument", which is not very
-	explicit (What on earth does "PCC" stand for?).  Maybe it refers to the TI99/4(a) development
-	system running on a TI990/10, or to the TI99/7 and TI99/8 prototypes.
+	but it was never used by TI, AFAIK.  Also, an interrupt line called "INTB" is found on several
+	cards built by TI, but it is not connected: I am quite unsure whether it was intended to be
+	connected to the LOAD line, to the INT2 line of TMS9985, or it was only to be used with the
+	TI99/4(a) development system running on a TI990/10.  This is not the only unused feature:
+	cards built by TI support sensing of an interrupt status register and 19-bit addressing,
+	even though TI99/4(A) does not take advantage of these feature.  TI documentation tells that
+	some of these features are used by the "Personal Computer PCC at Texas Instrument",
+	which is not very explicit (What on earth does "PCC" stand for?).  Maybe it refers to
+	the TI99/4(a) development system running on a TI990/10, or to the TI99/7 and TI99/8 prototypes.
 
 	Note that I use 8-bit handlers.  Obviously, using 16-bit handlers would be equivalent and
 	quite faster, but I wanted to be able to interface the extension cards to a future 99/8
@@ -1164,14 +1211,76 @@ typedef struct expansion_port_t
 	mem_write_handler mem_write;	/* card mem write handler (8 bits) */
 } expansion_port_t;
 
-/* handlers for each of 16 cards */
+/* handlers for each of 16 slots */
 static expansion_port_t expansion_ports[16];
+
+/* expansion port for the 99/4p system, which supports dynamical 16-bit accesses */
+/* (TI did not design this!) */
+typedef struct ti99_4p_expansion_port_t
+{
+	cru_read_handler cru_read;		/* card CRU read handler */
+	cru_write_handler cru_write;	/* card CRU handler */
+
+	enum {width_8bit = 0, width_16bit} width;
+	union
+	{
+		struct
+		{
+			mem_read_handler mem_read;		/* card mem read handler (8 bits) */
+			mem_write_handler mem_write;	/* card mem write handler (8 bits) */
+		} width_8bit;
+		struct
+		{
+			mem_read16_handler mem_read;		/* card mem read handler (8 bits) */
+			mem_write16_handler mem_write;	/* card mem write handler (8 bits) */
+		} width_16bit;
+	};
+} ti99_4p_expansion_port_t;
+
+typedef struct ti99_4p_16bit_expansion_port_t
+{
+	cru_read_handler cru_read;		/* card CRU read handler */
+	cru_write_handler cru_write;	/* card CRU handler */
+
+	mem_read16_handler mem_read;	/* card mem read handler (16 bits) */
+	mem_write16_handler mem_write;	/* card mem write handler (16 bits) */
+} ti99_4p_16bit_expansion_port_t;
+
+/* handlers for each of 28 slots */
+static ti99_4p_expansion_port_t ti99_4p_expansion_ports[28];
 
 /* index of the currently active card (-1 if none) */
 static int active_card = -1;
 
-/* hack to simulate byte write in general case */
+/* ila: inta status register (not actually used on TI99/4(A), but still present) */
+static int ila;
+/* ilb: intb status register (completely pointless on TI99/4(A), as neither ilb nor senilb are
+connected) */
+static int ilb;
+
+/* only supported by ti99/4p */
+static int senila, senilb;
+
+/* masks for ila and ilb (from actual ILA and ILB registers) */
+enum
+{
+	inta_rs232_1_bit = 0,
+	inta_rs232_2_bit = 1,
+	inta_rs232_3_bit = 4,
+	inta_rs232_4_bit = 5,
+
+	/*inta_rs232_1_mask = (0x80 >> inta_rs232_1_bit),
+	inta_rs232_2_mask = (0x80 >> inta_rs232_2_bit),
+	inta_rs232_3_mask = (0x80 >> inta_rs232_3_bit),
+	inta_rs232_4_mask = (0x80 >> inta_rs232_4_bit),*/
+
+	intb_fdc_bit     = 0,
+	intb_ieee488_bit = 1
+};
+
+/* hack to simulate TMS9900 byte write */
 static int tmp_buffer;
+
 
 /*
 	Resets the expansion card handlers
@@ -1181,15 +1290,108 @@ static void ti99_expansion_card_init(void)
 	memset(expansion_ports, 0, sizeof(expansion_ports));
 
 	active_card = -1;
+	ila = 0;
+	ilb = 0;
 }
 
-static void ti99_set_expansion_card_handlers(int port, const expansion_port_t *handler)
+/*
+	Sets the handlers for one expansion port
+
+	cru_base: CRU base address (any of 0x1000, 0x1100, 0x1200, ..., 0x1F00)
+*/
+static void ti99_set_expansion_card_handlers(int cru_base, const expansion_port_t *handler)
 {
-	if ((port>=0) && (port<16))
+	int port;
+
+	if (cru_base & 0xff)
+		return;
+
+	if (ti99_model == model_99_4p)
 	{
-		expansion_ports[port] = *handler;
+		port = (cru_base - 0x0400) >> 8;
+
+		if ((port>=0) && (port<28))
+		{
+			ti99_4p_expansion_ports[port].cru_read = handler->cru_read;
+			ti99_4p_expansion_ports[port].cru_write = handler->cru_write;
+			ti99_4p_expansion_ports[port].width = width_8bit;
+			ti99_4p_expansion_ports[port].width_8bit.mem_read = handler->mem_read;
+			ti99_4p_expansion_ports[port].width_8bit.mem_write = handler->mem_write;
+		}
+	}
+	else
+	{
+		port = (cru_base - 0x1000) >> 8;
+
+		if ((port>=0) && (port<16))
+		{
+			expansion_ports[port] = *handler;
+		}
 	}
 }
+
+/*
+	Sets the handlers for one expansion port
+
+	cru_base: CRU base address (any of 0x1000, 0x1100, 0x1200, ..., 0x1F00)
+*/
+static void ti99_4p_set_16bit_expansion_card_handlers(int cru_base, const ti99_4p_16bit_expansion_port_t *handler)
+{
+	int port;
+
+	if (cru_base & 0xff)
+		return;
+
+	if (ti99_model == model_99_4p)
+	{
+		port = (cru_base - 0x0400) >> 8;
+
+		if ((port>=0) && (port<28))
+		{
+			ti99_4p_expansion_ports[port].cru_read = handler->cru_read;
+			ti99_4p_expansion_ports[port].cru_write = handler->cru_write;
+			ti99_4p_expansion_ports[port].width = width_16bit;
+			ti99_4p_expansion_ports[port].width_16bit.mem_read = handler->mem_read;
+			ti99_4p_expansion_ports[port].width_16bit.mem_write = handler->mem_write;
+		}
+	}
+}
+
+/*
+	Update ila status register and asserts or clear interrupt line accordingly.
+
+	bit: bit number [0,7]
+	state: 1 to assert bit, 0 to clear
+*/
+static void set_ila_bit(int bit, int state)
+{
+	if (state)
+	{
+		ila |= 0x80 >> bit;
+		tms9901_set_single_int(1, 1);
+	}
+	else
+	{
+		ila &= ~(0x80 >> bit);
+		if (! ila)
+			tms9901_set_single_int(1, 0);
+	}
+}
+
+/*
+	Update ilb status register.
+
+	bit: bit number [0,7]
+	state: 1 to assert bit, 0 to clear
+*/
+static void set_ilb_bit(int bit, int state)
+{
+	if (state)
+		ilb |= 0x80 >> bit;
+	else
+		ilb &= ~(0x80 >> bit);
+}
+
 
 /*
 	Read CRU in range >1000->1ffe (>800->8ff)
@@ -1234,7 +1436,7 @@ WRITE16_HANDLER ( ti99_expansion_CRU_w )
 		{
 			if (port == active_card)	/* geez... who cares? */
 			{
-				active_card = -1;			/* no drive selected */
+				active_card = -1;			/* no port selected */
 			}
 		}
 	}
@@ -1254,7 +1456,10 @@ READ16_HANDLER ( ti99_rw_expansion )
 	{
 		handler = expansion_ports[active_card].mem_read;
 		if (handler)
-			reply = (((unsigned) (*handler)(offset << 1)) << 8) | (*handler)((offset << 1) + 1);
+		{
+			reply = (*handler)((offset << 1) + 1);
+			reply |= ((unsigned) (*handler)(offset << 1)) << 8;
+		}
 	}
 
 	return tmp_buffer = reply;
@@ -1277,10 +1482,223 @@ WRITE16_HANDLER ( ti99_ww_expansion )
 		handler = expansion_ports[active_card].mem_write;
 		if (handler)
 		{
-			(*handler)(offset << 1, (data >> 8) & 0xff);
 			(*handler)((offset << 1) + 1, data & 0xff);
+			(*handler)(offset << 1, (data >> 8) & 0xff);
 		}
 	}
+}
+
+
+/*
+	Read CRU in range >0400->1ffe (>200->8ff)
+*/
+READ16_HANDLER ( ti99_4p_expansion_CRU_r )
+{
+	int port;
+	cru_read_handler handler;
+	int reply;
+
+	port = offset >> 4;
+	handler = ti99_4p_expansion_ports[port].cru_read;
+
+	reply = (handler) ? (*handler)(offset & 0xf) : 0;
+
+	return reply;
+}
+
+/*
+	Write CRU in range >0400->1ffe (>200->8ff)
+*/
+WRITE16_HANDLER ( ti99_4p_expansion_CRU_w )
+{
+	int port;
+	cru_write_handler handler;
+
+	port = offset >> 7;
+	handler = ti99_4p_expansion_ports[port].cru_write;
+
+	if (handler)
+		(*handler)(offset & 0x7f, data);
+
+	/* expansion card enable? */
+	if ((offset & 0x7f) == 0)
+	{
+		if (data & 1)
+		{
+			/* enable */
+			active_card = port;
+		}
+		else
+		{
+			if (port == active_card)	/* geez... who cares? */
+			{
+				active_card = -1;			/* no port selected */
+			}
+		}
+	}
+}
+
+/*
+	Read mem in range >4000->5ffe
+*/
+READ16_HANDLER ( ti99_4p_rw_expansion )
+{
+	int reply = 0;
+	mem_read_handler handler;
+	mem_read16_handler handler16;
+
+
+	if (active_card == -1)
+		tms9900_ICount -= 4;	/* ??? */
+	else
+	{
+
+		if (ti99_4p_expansion_ports[active_card].width == width_8bit)
+		{
+			tms9900_ICount -= 4;
+
+			handler = ti99_4p_expansion_ports[active_card].width_8bit.mem_read;
+			if (handler)
+			{
+				reply = (*handler)((offset << 1) + 1);
+				reply |= ((unsigned) (*handler)(offset << 1)) << 8;
+			}
+		}
+		else
+		{
+			tms9900_ICount -= 1;	/* ??? */
+
+			handler16 = ti99_4p_expansion_ports[active_card].width_16bit.mem_read;
+			if (handler16)
+				reply = (*handler16)(offset, /*mem_mask*/0);
+		}
+	}
+
+	if (senila || senilb)
+	{
+		if ((active_card != -1) || (senila && senilb))
+			/* ah, the smell of burnt silicon... */
+			logerror("<Scrrrrr>: your computer has just burnt (maybe).\n");
+
+		if (senila)
+			reply = ila | (ila << 8);
+		else if (senilb)
+			reply = ilb | (ilb << 8);
+	}
+
+	return tmp_buffer = reply;
+}
+
+/*
+	Write mem in range >4000->5ffe
+*/
+WRITE16_HANDLER ( ti99_4p_ww_expansion )
+{
+	mem_write_handler handler;
+	mem_write16_handler handler16;
+
+	if (active_card == -1)
+		tms9900_ICount -= 4;	/* ??? */
+	else
+	{
+		/* simulate byte write */
+		data = (tmp_buffer & mem_mask) | (data & ~mem_mask);
+
+		if (ti99_4p_expansion_ports[active_card].width == width_8bit)
+		{
+			tms9900_ICount -= 4;
+
+			handler = ti99_4p_expansion_ports[active_card].width_8bit.mem_write;
+			if (handler)
+			{
+				(*handler)((offset << 1) + 1, data & 0xff);
+				(*handler)(offset << 1, (data >> 8) & 0xff);
+			}
+		}
+		else
+		{
+			tms9900_ICount -= 1;	/* ??? */
+
+			handler16 = ti99_4p_expansion_ports[active_card].width_16bit.mem_write;
+			if (handler16)
+				(*handler16)(offset, data, /*mem_mask*/0);
+		}
+	}
+}
+
+
+/*===========================================================================*/
+/*
+	TI99/4p internal DSR support.
+
+	Includes a few specific signals, and an extra ROM.
+*/
+
+/* prototypes */
+static void ti99_4p_internal_dsr_cru_w(int offset, int data);
+static READ16_HANDLER(ti99_4p_rw_internal_dsr);
+
+
+static const ti99_4p_16bit_expansion_port_t ti99_4p_internal_dsr_handlers =
+{
+	NULL,
+	ti99_4p_internal_dsr_cru_w,
+	ti99_4p_rw_internal_dsr,
+	NULL
+};
+
+/* pointer to the internal DSR ROM data */
+static UINT16 *ti99_4p_internal_DSR;
+
+static int internal_rom6_enable;
+
+
+/* set up handlers, and set initial state */
+static void ti99_4p_internal_dsr_init(void)
+{
+	ti99_4p_internal_DSR = (UINT16 *) (memory_region(REGION_CPU1) + offset_rom4_4p);
+
+	ti99_4p_set_16bit_expansion_card_handlers(0x0f00, & ti99_4p_internal_dsr_handlers);
+
+	internal_rom6_enable = 0;
+	senila = 0;
+	senilb = 0;
+}
+
+/* write CRU bit:
+	bit0: enable/disable internal DSR ROM,
+	bit1: enable/disable internal cartridge ROM
+	bit2: set/clear senila
+	bit3: set/clear senilb*/
+static void ti99_4p_internal_dsr_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 1:
+		internal_rom6_enable = data;
+		/* ... */
+		break;
+	case 2:
+		senila = data;
+		break;
+	case 3:
+		senilb = data;
+		break;
+	case 4:
+		/* 0: 16-bit (fast) memory timings */
+		/* 1: 8-bit memory timings */
+		break;
+	case 5:
+		/* if 0: "KBENA" mode (enable keyboard?) */
+		/* if 1: "KBINH" mode (inhibit keyboard?) */
+		break;
+	}
+}
+
+/* read internal DSR ROM */
+static READ16_HANDLER(ti99_4p_rw_internal_dsr)
+{
+	return ti99_4p_internal_DSR[offset];
 }
 
 
@@ -1325,14 +1743,14 @@ static READ16_HANDLER ( ti99_rw_TIxramhigh )
 {
 	tms9900_ICount -= 4;
 
-	return xRAM_ptr[offset+0x2000];
+	return xRAM_ptr[offset+0x1000];
 }
 
 static WRITE16_HANDLER ( ti99_ww_TIxramhigh )
 {
 	tms9900_ICount -= 4;
 
-	COMBINE_DATA(xRAM_ptr + offset+0x2000);
+	COMBINE_DATA(xRAM_ptr + offset+0x1000);
 }
 
 
@@ -1379,12 +1797,12 @@ static void ti99_sAMSxram_init(void)
 	install_mem_read16_handler(0, 0xa000, 0xffff, ti99_rw_sAMSxramhigh);
 	install_mem_write16_handler(0, 0xa000, 0xffff, ti99_ww_sAMSxramhigh);
 
-	ti99_set_expansion_card_handlers(14, & sAMS_expansion_handlers);
+	ti99_set_expansion_card_handlers(0x1e00, & sAMS_expansion_handlers);
 
 	sAMS_mapper_on = 0;
 
 	for (i=0; i<16; i++)
-		sAMSlookup[i] = i;
+		sAMSlookup[i] = i << 1;
 }
 
 /* write CRU bit:
@@ -1399,13 +1817,13 @@ static void sAMS_cru_w(int offset, int data)
 /* read a mapper register */
 static READ_HANDLER(sAMS_mapper_r)
 {
-	return (offset & 1) ? 0 : (sAMSlookup[(offset >> 1) & 0xf] >> 12);
+	return (sAMSlookup[(offset >> 1) & 0xf] >> 11);
 }
 
 /* write a mapper register */
 static WRITE_HANDLER(sAMS_mapper_w)
 {
-	sAMSlookup[(offset >> 1) & 0xf] = ((int) data) << 12;
+	sAMSlookup[(offset >> 1) & 0xf] = ((int) data) << 11;
 }
 
 /* low 8 kb: 0x2000-0x3fff */
@@ -1414,7 +1832,7 @@ static READ16_HANDLER ( ti99_rw_sAMSxramlow )
 	tms9900_ICount -= 4;
 
 	if (sAMS_mapper_on)
-		return xRAM_ptr[(offset&0xfff)+sAMSlookup[(0x2000+offset)>>12]];
+		return xRAM_ptr[(offset&0x7ff)+sAMSlookup[(0x1000+offset)>>11]];
 	else
 		return xRAM_ptr[offset];
 }
@@ -1424,7 +1842,7 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramlow )
 	tms9900_ICount -= 4;
 
 	if (sAMS_mapper_on)
-		COMBINE_DATA(xRAM_ptr + (offset&0xfff)+sAMSlookup[(0x2000+offset)>>12]);
+		COMBINE_DATA(xRAM_ptr + (offset&0x7ff)+sAMSlookup[(0x1000+offset)>>11]);
 	else
 		COMBINE_DATA(xRAM_ptr + offset);
 }
@@ -1435,9 +1853,9 @@ static READ16_HANDLER ( ti99_rw_sAMSxramhigh )
 	tms9900_ICount -= 4;
 
 	if (sAMS_mapper_on)
-		return xRAM_ptr[(offset&0xfff)+sAMSlookup[(0xa000+offset)>>12]];
+		return xRAM_ptr[(offset&0x7ff)+sAMSlookup[(0x5000+offset)>>11]];
 	else
-		return xRAM_ptr[offset+0x2000];
+		return xRAM_ptr[offset+0x1000];
 }
 
 static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
@@ -1445,9 +1863,160 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
 	tms9900_ICount -= 4;
 
 	if (sAMS_mapper_on)
-		COMBINE_DATA(xRAM_ptr + (offset&0xfff)+sAMSlookup[(0xa000+offset)>>12]);
+		COMBINE_DATA(xRAM_ptr + (offset&0x7ff)+sAMSlookup[(0x5000+offset)>>11]);
 	else
-		COMBINE_DATA(xRAM_ptr + offset+0x2000);
+		COMBINE_DATA(xRAM_ptr + offset+0x1000);
+}
+
+
+/*===========================================================================*/
+/*
+	TI99/4p Super AMS clone support.  "99% compatible" with Super AMS, but uses a 16-bit bus.
+
+	Up to 1Mb of SRAM.  Straightforward mapper, works with 4kb chunks.
+*/
+
+/* prototypes */
+static void ti99_4p_mapper_cru_w(int offset, int data);
+static READ16_HANDLER(ti99_4p_rw_mapper);
+static WRITE16_HANDLER(ti99_4p_ww_mapper);
+
+
+static const ti99_4p_16bit_expansion_port_t ti99_4p_mapper_handlers =
+{
+	NULL,
+	ti99_4p_mapper_cru_w,
+	ti99_4p_rw_mapper,
+	ti99_4p_ww_mapper
+};
+
+
+static int ti99_4p_mapper_on;
+static int ti99_4p_mapper_lookup[16];
+
+
+/* set up handlers, and set initial state */
+static void ti99_4p_mapper_init(void)
+{
+	int i;
+
+	/* Not required at run-time */
+	/*install_mem_read16_handler(0, 0x2000, 0x2fff, MRA16_BANK3);
+	install_mem_write16_handler(0, 0x2000, 0x2fff, MWA16_BANK3);
+	install_mem_read16_handler(0, 0x3000, 0x3fff, MRA16_BANK4);
+	install_mem_write16_handler(0, 0x3000, 0x3fff, MWA16_BANK4);
+	install_mem_read16_handler(0, 0xa000, 0xafff, MRA16_BANK5);
+	install_mem_write16_handler(0, 0xa000, 0xafff, MWA16_BANK5);
+	install_mem_read16_handler(0, 0xb000, 0xbfff, MRA16_BANK6);
+	install_mem_write16_handler(0, 0xb000, 0xbfff, MWA16_BANK6);
+	install_mem_read16_handler(0, 0xc000, 0xcfff, MRA16_BANK7);
+	install_mem_write16_handler(0, 0xc000, 0xcfff, MWA16_BANK7);
+	install_mem_read16_handler(0, 0xd000, 0xdfff, MRA16_BANK8);
+	install_mem_write16_handler(0, 0xd000, 0xdfff, MWA16_BANK8);
+	install_mem_read16_handler(0, 0xe000, 0xefff, MRA16_BANK9);
+	install_mem_write16_handler(0, 0xe000, 0xefff, MWA16_BANK9);
+	install_mem_read16_handler(0, 0xf000, 0xffff, MRA16_BANK10);
+	install_mem_write16_handler(0, 0xf000, 0xffff, MWA16_BANK10);*/
+
+	ti99_4p_set_16bit_expansion_card_handlers(0x1e00, & ti99_4p_mapper_handlers);
+
+	ti99_4p_mapper_on = 0;
+
+	for (i=0; i<16; i++)
+	{
+		ti99_4p_mapper_lookup[i] = i << 11;
+
+		/* update bank base */
+		switch (i)
+		{
+		case 2:
+		case 3:
+			cpu_setbank(3+(i-2), xRAM_ptr + (i<<11));
+			break;
+
+		case 10:
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+			cpu_setbank(5+(i-10), xRAM_ptr + (i<<11));
+			break;
+		}
+	}
+}
+
+/* write CRU bit:
+	bit0: enable/disable mapper registers in DSR space,
+	bit1: enable/disable address mapping */
+static void ti99_4p_mapper_cru_w(int offset, int data)
+{
+	int i;
+
+	if (offset == 1)
+	{
+		if (ti99_4p_mapper_on != data)
+		{
+			ti99_4p_mapper_on = data;
+
+			for (i=0; i<16; i++)
+			{
+				/* update bank base */
+				switch (i)
+				{
+				case 2:
+				case 3:
+					cpu_setbank(3+(i-2), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
+					break;
+
+				case 10:
+				case 11:
+				case 12:
+				case 13:
+				case 14:
+				case 15:
+					cpu_setbank(5+(i-10), xRAM_ptr + (ti99_4p_mapper_on ? (ti99_4p_mapper_lookup[i]) : (i<<11)));
+					break;
+				}
+			}
+		}
+	}
+
+}
+
+/* read a mapper register */
+static READ16_HANDLER(ti99_4p_rw_mapper)
+{
+	return (ti99_4p_mapper_lookup[offset & 0xf] >> 3);
+}
+
+/* write a mapper register */
+static WRITE16_HANDLER(ti99_4p_ww_mapper)
+{
+	int page = offset & 0xf;
+
+	ti99_4p_mapper_lookup[page] = (data & 0xff00) << 3;
+
+	if (ti99_4p_mapper_on)
+	{
+		/* update bank base */
+		switch (page)
+		{
+		case 2:
+		case 3:
+			cpu_setbank(3+(page-2), xRAM_ptr+ti99_4p_mapper_lookup[page]);
+			break;
+
+		case 10:
+		case 11:
+		case 12:
+		case 13:
+		case 14:
+		case 15:
+			cpu_setbank(5+(page-10), xRAM_ptr+ti99_4p_mapper_lookup[page]);
+			break;
+		}
+	}
 }
 
 
@@ -1492,29 +2061,29 @@ static void ti99_myarcxram_init(void)
 	{
 	case xRAM_kind_foundation_128k:	/* 128kb foundation */
 	case xRAM_kind_myarc_128k:		/* 128kb myarc clone */
-		myarc_page_offset_mask = 0x18000;
+		myarc_page_offset_mask = 0x0c000;
 		break;
 	case xRAM_kind_foundation_512k:	/* 512kb foundation */
 	case xRAM_kind_myarc_512k:		/* 512kb myarc clone */
-		myarc_page_offset_mask = 0x78000;
+		myarc_page_offset_mask = 0x3c000;
 		break;
 	default:
-		break;
+		break;	/* let's just keep GCC's big mouth shut */
 	}
 
 	switch (xRAM_kind)
 	{
 	case xRAM_kind_foundation_128k:	/* 128kb foundation */
 	case xRAM_kind_foundation_512k:	/* 512kb foundation */
-		ti99_set_expansion_card_handlers(14, & myarc_expansion_handlers);
+		ti99_set_expansion_card_handlers(0x1e00, & myarc_expansion_handlers);
 		break;
 	case xRAM_kind_myarc_128k:		/* 128kb myarc clone */
 	case xRAM_kind_myarc_512k:		/* 512kb myarc clone */
-		ti99_set_expansion_card_handlers(0, & myarc_expansion_handlers);
-		ti99_set_expansion_card_handlers(9, & myarc_expansion_handlers);
+		ti99_set_expansion_card_handlers(0x1000, & myarc_expansion_handlers);
+		ti99_set_expansion_card_handlers(0x1900, & myarc_expansion_handlers);
 		break;
 	default:
-		break;
+		break;	/* let's just keep GCC's big mouth shut */
 	}
 
 	myarc_cur_page_offset = 0;
@@ -1537,7 +2106,7 @@ static void myarc_cru_w(int offset, int data)
 	offset &= 0x7;	/* right??? */
 	if (offset >= 1)
 	{
-		int mask = 1 << (offset-1+15);
+		int mask = 1 << (offset-1+14);
 
 		if (data)
 			myarc_cur_page_offset |= mask;
@@ -1568,14 +2137,14 @@ static READ16_HANDLER ( ti99_rw_myarcxramhigh )
 {
 	tms9900_ICount -= 4;
 
-	return xRAM_ptr[myarc_cur_page_offset + offset+0x2000];
+	return xRAM_ptr[myarc_cur_page_offset + offset+0x1000];
 }
 
 static WRITE16_HANDLER ( ti99_ww_myarcxramhigh )
 {
 	tms9900_ICount -= 4;
 
-	COMBINE_DATA(xRAM_ptr + myarc_cur_page_offset + offset+0x2000);
+	COMBINE_DATA(xRAM_ptr + myarc_cur_page_offset + offset+0x1000);
 }
 
 
@@ -1607,10 +2176,19 @@ enum
 /* current state of the DRQ and IRQ lines */
 static int DRQ_IRQ_status;
 
+/* disk selection bits */
+static int DSEL;
 /* currently selected disk unit */
 static int DSKnum;
 /* current side */
 static int DSKside;
+
+/* 1 if motor is on */
+static int DVENA;
+/* on rising edge, sets DVENA for 4.23 seconds on rising edge */
+static int motor_on;
+/* count 4.23s from rising edge of motor_on */
+void *motor_on_timer;
 
 static const expansion_port_t fdc_handlers =
 {
@@ -1628,10 +2206,15 @@ static void ti99_fdc_init(void)
 {
 	ti99_disk_DSR = memory_region(region_dsr) + offset_fdc_dsr;
 
+	DSEL = 0;
 	DSKnum = -1;
 	DSKside = 0;
 
-	ti99_set_expansion_card_handlers(1, & fdc_handlers);
+	DVENA = 0;
+	motor_on = 0;
+	motor_on_timer = NULL;
+
+	ti99_set_expansion_card_handlers(0x1100, & fdc_handlers);
 
 	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
 	wd179x_set_density(DEN_FM_LO);
@@ -1639,13 +2222,14 @@ static void ti99_fdc_init(void)
 
 
 /*
-	call this when the state of DSKhold or DRQ/IRQ change
+	call this when the state of DSKhold or DRQ/IRQ or DVENA change
 
-	Emulation is faulty because the CPU is actually stopped in the midst of memory access
+	Emulation is faulty because the CPU is actually stopped in the midst of instruction, at
+	the end of the memory access
 */
 static void fdc_handle_hold(void)
 {
-	if (DSKhold && (!DRQ_IRQ_status))
+	if (DSKhold && (!DRQ_IRQ_status) && DVENA)
 		cpu_set_halt_line(1, ASSERT_LINE);
 	else
 		cpu_set_halt_line(1, CLEAR_LINE);
@@ -1660,9 +2244,11 @@ static void fdc_callback(int event)
 	{
 	case WD179X_IRQ_CLR:
 		DRQ_IRQ_status &= ~fdc_IRQ;
+		set_ilb_bit(intb_fdc_bit, 0);
 		break;
 	case WD179X_IRQ_SET:
 		DRQ_IRQ_status |= fdc_IRQ;
+		set_ilb_bit(intb_fdc_bit, 1);
 		break;
 	case WD179X_DRQ_CLR:
 		DRQ_IRQ_status &= ~fdc_DRQ;
@@ -1675,12 +2261,22 @@ static void fdc_callback(int event)
 	fdc_handle_hold();
 }
 
+/*
+	callback called at the end of DVENA pulse
+*/
+static void motor_on_timer_callback(int dummy)
+{
+	DVENA = 0;
+	fdc_handle_hold();
+
+	motor_on_timer = NULL;
+}
 
 /*
 	Read disk CRU interface
 
 	bit 0: HLD pin
-	bit 1-3: drive n selected (setting the bit means it is absent ???)
+	bit 1-3: drive n active
 	bit 4: 0: motor strobe on
 	bit 5: always 0
 	bit 6: always 1
@@ -1694,6 +2290,12 @@ static int fdc_cru_r(int offset)
 	{
 	case 0:
 		reply = 0x40;
+		if (DSKside)
+			reply |= 0x80;
+		if (DVENA)
+			reply |= (DSEL << 1);
+		if (! DVENA)
+			reply |= 0x10;
 		break;
 
 	default:
@@ -1718,7 +2320,15 @@ static void fdc_cru_w(int offset, int data)
 
 	case 1:
 		/* Strobe motor (motor is on for 4.23 sec) */
-		/* ... */
+		if (data && !motor_on)
+		{	/* on rising edge, set DVENA for 4.23s */
+			DVENA = 1;
+			fdc_handle_hold();
+			if (motor_on_timer)
+				timer_remove(motor_on_timer);
+			motor_on_timer = timer_set(4.23, 0, motor_on_timer_callback);
+		}
+		motor_on = data;
 		break;
 
 	case 2:
@@ -1727,12 +2337,13 @@ static void fdc_cru_w(int offset, int data)
 			1: TMS9900 is stopped until IRQ or DRQ are set (OR the motor stops rotating - rotates
 			  for 4.23s after write to revelant CRU bit, this is not emulated and could cause
 			  the TI99 to lock...) */
-		DSKhold = data & 1;
+		DSKhold = data;
 		fdc_handle_hold();
 		break;
 
 	case 3:
 		/* Load disk heads (HLT pin) (bit 3) */
+		/* ... */
 		break;
 
 	case 4:
@@ -1742,8 +2353,10 @@ static void fdc_cru_w(int offset, int data)
 		{
 			int drive = offset-4;					/* drive # (0-2) */
 
-			if (data & 1)
+			if (data)
 			{
+				DSEL |= 1 << drive;
+
 				if (drive != DSKnum)			/* turn on drive... already on ? */
 				{
 					DSKnum = drive;
@@ -1754,6 +2367,8 @@ static void fdc_cru_w(int offset, int data)
 			}
 			else
 			{
+				DSEL &= ~ (1 << drive);
+
 				if (drive == DSKnum)			/* geez... who cares? */
 				{
 					DSKnum = -1;				/* no drive selected */
@@ -1764,7 +2379,7 @@ static void fdc_cru_w(int offset, int data)
 
 	case 7:
 		/* Select side of disk (bit 7) */
-		DSKside = data & 1;
+		DSKside = data;
 		wd179x_set_side(DSKside);
 		break;
 	}
