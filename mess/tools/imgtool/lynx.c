@@ -33,8 +33,8 @@ typedef struct {
 } LYNX_ENTRY;
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	int size;
 	unsigned char *data;
 	int count;
@@ -42,18 +42,18 @@ typedef struct {
 } lynx_image;
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	lynx_image *image;
 	int index;
 } lynx_iterator;
 
-static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void lynx_image_exit(IMAGE *img);
-//static void lynx_image_info(IMAGE *img, char *string, const int len);
-static int lynx_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int lynx_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void lynx_image_closeenum(IMAGEENUM *enumeration);
-static int lynx_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static int lynx_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void lynx_image_exit(imgtool_image *img);
+//static void lynx_image_info(imgtool_image *img, char *string, const int len);
+static int lynx_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int lynx_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void lynx_image_closeenum(imgtool_imageenum *enumeration);
+static int lynx_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
 	lynx,
@@ -142,7 +142,7 @@ static int lynx_read_image(lynx_image *image)
 	return 0;
 }
 
-static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int lynx_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	lynx_image *image;
 	int rc;
@@ -172,7 +172,7 @@ static int lynx_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	return 0;
 }
 
-static void lynx_image_exit(IMAGE *img)
+static void lynx_image_exit(imgtool_image *img)
 {
 	lynx_image *image=(lynx_image*)img;
 	stream_close(image->file_handle);
@@ -182,7 +182,7 @@ static void lynx_image_exit(IMAGE *img)
 }
 
 #if 0
-static void lynx_image_info(IMAGE *img, char *string, const int len)
+static void lynx_image_info(imgtool_image *img, char *string, const int len)
 {
 	lynx_image *image=(lynx_image*)img;
 	char dostext_with_null[33]= { 0 };
@@ -197,7 +197,7 @@ static void lynx_image_info(IMAGE *img, char *string, const int len)
 }
 #endif
 
-static int lynx_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int lynx_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	lynx_image *image=(lynx_image*)img;
 	lynx_iterator *iter;
@@ -212,7 +212,7 @@ static int lynx_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int lynx_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int lynx_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	lynx_iterator *iter=(lynx_iterator*)enumeration;
 	ent->corrupt=0;
@@ -237,7 +237,7 @@ static int lynx_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void lynx_image_closeenum(IMAGEENUM *enumeration)
+static void lynx_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -252,7 +252,7 @@ static LYNX_ENTRY* lynx_image_findfile(lynx_image *image, const char *fname)
 	return NULL;
 }
 
-static int lynx_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int lynx_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	lynx_image *image=(lynx_image*)img;
 	LYNX_ENTRY *entry;

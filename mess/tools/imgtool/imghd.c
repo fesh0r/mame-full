@@ -42,7 +42,7 @@ enum
 	Encode an image pointer into an ASCII string that can be passed to
 	hard_disk_open as a file name.
 */
-static void encode_image_ref(const STREAM *stream, char encoded_image_ref[encoded_image_ref_max_len])
+static void encode_image_ref(const imgtool_stream *stream, char encoded_image_ref[encoded_image_ref_max_len])
 {
 	int actual_len;
 	char buf[encoded_image_ref_len_len+1];
@@ -65,7 +65,7 @@ static void encode_image_ref(const STREAM *stream, char encoded_image_ref[encode
 	This function will decode an image pointer, provided one has been encoded
 	in the ASCII string.
 */
-static STREAM *decode_image_ref(const char *encoded_image_ref)
+static imgtool_stream *decode_image_ref(const char *encoded_image_ref)
 {
 	int expected_len;
 	void *ptr;
@@ -75,7 +75,7 @@ static STREAM *decode_image_ref(const char *encoded_image_ref)
 	{
 		/* only return ptr if lenght match */
 		if (expected_len == strlen(encoded_image_ref))
-			return (STREAM *) ptr;
+			return (imgtool_stream *) ptr;
 	}
 
 	return NULL;
@@ -104,7 +104,7 @@ static struct chd_interface imgtool_chd_interface =
 */
 static struct chd_interface_file *imgtool_chd_open(const char *filename, const char *mode)
 {
-	STREAM *img = decode_image_ref(filename);
+	imgtool_stream *img = decode_image_ref(filename);
 
 
 	/* invalid "file name"? */
@@ -132,8 +132,8 @@ static void imgtool_chd_close(struct chd_interface_file *file)
 */
 static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	stream_seek((STREAM *)file, offset, SEEK_SET);
-	return stream_read((STREAM *)file, buffer, count);
+	stream_seek((imgtool_stream *)file, offset, SEEK_SET);
+	return stream_read((imgtool_stream *)file, buffer, count);
 }
 
 /*
@@ -141,8 +141,8 @@ static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, U
 */
 static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	stream_seek((STREAM *)file, offset, SEEK_SET);
-	return stream_write((STREAM *)file, buffer, count);
+	stream_seek((imgtool_stream *)file, offset, SEEK_SET);
+	return stream_write((imgtool_stream *)file, buffer, count);
 }
 
 /*
@@ -150,7 +150,7 @@ static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, 
 
 	Create a MAME HD image
 */
-static imgtoolerr_t imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression)
+static imgtoolerr_t imghd_create(imgtool_stream *stream, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression)
 {
 	char encoded_image_ref[encoded_image_ref_max_len];
 	struct chd_interface interface_save;
@@ -171,7 +171,7 @@ static imgtoolerr_t imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hun
 
 
 
-imgtoolerr_t imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
+imgtoolerr_t imghd_create_base_v1_v2(imgtool_stream *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
 {
 	imgtoolerr_t errorcode;
 	char *buf;
@@ -221,7 +221,7 @@ imgtoolerr_t imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 bloc
 
 	Open stream as a MAME HD image
 */
-void *imghd_open(STREAM *stream)
+void *imghd_open(imgtool_stream *stream)
 {
 	struct chd_file *chd;
 	char encoded_image_ref[encoded_image_ref_max_len];
@@ -309,7 +309,7 @@ const struct hard_disk_info *imghd_get_header(struct hard_disk_file *disk)
 }
 
 
-static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);
 
 enum
 {
@@ -406,7 +406,7 @@ imgtoolerr_t mess_hd_createmodule(imgtool_library *library)
 
 
 
-static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t mess_hd_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	UINT32  version, blocksize, cylinders, heads, sectors, seclen;
 

@@ -365,11 +365,11 @@ static void fname_to_str(char *dst, const char src[10], int n)
 /*
 	Check a 10-character file name.
 
-	fname (I): 10-character array with file name
+	filename (I): 10-character array with file name
 
 	Return non-zero if the file name is invalid.
 */
-static int check_fname(const char fname[10])
+static int check_fname(const char filename[10])
 {
 	int i;
 	int space_found_flag;
@@ -379,7 +379,7 @@ static int check_fname(const char fname[10])
 	space_found_flag = FALSE;
 	for (i=0; i<10; i++)
 	{
-		switch (fname[i])
+		switch (filename[i])
 		{
 		case '.':
 		case '\0':
@@ -545,7 +545,7 @@ typedef enum
 typedef struct ti99_lvl1_imgref
 {
 	ti99_img_format img_format;	/* tells the image format */
-	STREAM *file_handle;		/* imgtool file handle */
+	imgtool_stream *file_handle;		/* imgtool file handle */
 	void *harddisk_handle;		/* MAME harddisk handle (harddisk format) */
 	ti99_geometry geometry;		/* geometry */
 	unsigned pc99_track_len;		/* unformatted track lenght (pc99 format) */
@@ -597,7 +597,7 @@ static void calc_crc(UINT16 *crc, UINT8 value)
 */
 #define MAX_TRACK_LEN 6872
 #define DATA_OFFSET_NONE 0xffffffff
-static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, dsk_vib *vib, const ti99_geometry *geometry, UINT32 *data_offset_array, unsigned *out_track_len)
+static int parse_pc99_image(imgtool_stream *file_handle, int fm_format, int pass, dsk_vib *vib, const ti99_geometry *geometry, UINT32 *data_offset_array, unsigned *out_track_len)
 {
 	int track_len, num_tracks;	/* lenght of a track in bytes, and number of tracks */
 	int phys_track;
@@ -922,7 +922,7 @@ static int parse_pc99_image(STREAM *file_handle, int fm_format, int pass, dsk_vi
 
 	Return imgtool error code
 */
-static int read_image_vib_no_geometry(STREAM *file_handle, ti99_img_format img_format, dsk_vib *dest)
+static int read_image_vib_no_geometry(imgtool_stream *file_handle, ti99_img_format img_format, dsk_vib *dest)
 {
 	int reply;
 
@@ -962,7 +962,7 @@ static int read_image_vib_no_geometry(STREAM *file_handle, ti99_img_format img_f
 
 	Return imgtool error code
 */
-static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99_lvl1_imgref *l1_img, dsk_vib *vib)
+static int open_image_lvl1(imgtool_stream *file_handle, ti99_img_format img_format, ti99_lvl1_imgref *l1_img, dsk_vib *vib)
 {
 	int reply;
 	int totphysrecs;
@@ -1491,7 +1491,7 @@ typedef struct ti99_lvl2_imgref_win
 
 typedef struct ti99_lvl2_imgref
 {
-	IMAGE base;
+	imgtool_image base;
 	ti99_lvl1_imgref l1_img;/* image format, imgtool image handle, image geometry */
 	ti99_AUformat AUformat;	/* AU format */
 	int data_offset;		/* In order to reduce seek times when searching the
@@ -1709,7 +1709,7 @@ typedef struct ti99_lvl2_fileref_win
 
 typedef struct ti99_lvl2_fileref_tifiles
 {
-	STREAM *file_handle;
+	imgtool_stream *file_handle;
 	tifile_header hdr;
 } ti99_lvl2_fileref_tifiles;
 
@@ -2783,7 +2783,7 @@ static int win_alloc_file_physrecs(ti99_lvl2_fileref_win *win_file, int nb_alloc
 /*
 	Allocate a new (empty) file
 */
-static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char fname[10], ti99_lvl2_fileref *l2_file)
+static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char filename[10], ti99_lvl2_fileref *l2_file)
 {
 	ti99_catalog *catalog = &l2_img->u.dsk.catalogs[parent_ref];
 	unsigned fdr_AU, fdr_aphysrec;
@@ -2801,7 +2801,7 @@ static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char fnam
 		return IMGTOOLERR_NOSPACE;
 
 	/* find insertion point in catalog */
-	for (i=0; (i < catalog->num_files) && ((reply = memcmp(catalog->files[i].name, fname, 10)) < 0); i++)
+	for (i=0; (i < catalog->num_files) && ((reply = memcmp(catalog->files[i].name, filename, 10)) < 0); i++)
 		;
 
 	if ((i<catalog->num_files) && (reply == 0))
@@ -2822,7 +2822,7 @@ static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char fnam
 
 		/* write new catalog entry */
 		catalog->files[catalog_index].fdr_ptr = fdr_aphysrec;
-		memcpy(catalog->files[catalog_index].name, fname, 10);
+		memcpy(catalog->files[catalog_index].name, filename, 10);
 
 		/* update catalog len */
 		catalog->num_files++;
@@ -2833,7 +2833,7 @@ static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char fnam
 	l2_file->u.dsk.l2_img = l2_img;
 	l2_file->u.dsk.fdr_aphysrec = fdr_aphysrec;
 	memset(&l2_file->u.dsk.fdr, 0, sizeof(l2_file->u.dsk.fdr));
-	memcpy(l2_file->u.dsk.fdr.name, fname, 10);
+	memcpy(l2_file->u.dsk.fdr.name, filename, 10);
 
 	return 0;
 }
@@ -2841,7 +2841,7 @@ static int new_file_lvl2_dsk(ti99_lvl2_imgref *l2_img, int parent_ref, char fnam
 /*
 	Allocate a new (empty) file
 */
-static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_catalog, char fname[10], ti99_lvl2_fileref *l2_file)
+static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_catalog, char filename[10], ti99_lvl2_fileref *l2_file)
 {
 	unsigned fdr_AU;
 	int catalog_index, i;
@@ -2854,7 +2854,7 @@ static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_cata
 		return IMGTOOLERR_NOSPACE;
 
 	/* find insertion point in catalog */
-	for (i=0; (i < parent_catalog->num_files) && ((reply = memcmp(parent_catalog->files[i].name, fname, 10)) < 0); i++)
+	for (i=0; (i < parent_catalog->num_files) && ((reply = memcmp(parent_catalog->files[i].name, filename, 10)) < 0); i++)
 		;
 
 	if ((i<parent_catalog->num_files) && (reply == 0))
@@ -2874,7 +2874,7 @@ static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_cata
 
 		/* write new catalog entry */
 		parent_catalog->files[catalog_index].fdr_ptr = fdr_AU;
-		memcpy(parent_catalog->files[catalog_index].name, fname, 10);
+		memcpy(parent_catalog->files[catalog_index].name, filename, 10);
 
 		/* update catalog len */
 		parent_catalog->num_files++;
@@ -2887,7 +2887,7 @@ static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_cata
 	l2_file->u.win.eldestfdr_aphysrec = fdr_AU * l2_img->AUformat.physrecsperAU;
 	l2_file->u.win.curfdr_aphysrec = l2_file->u.win.eldestfdr_aphysrec;
 	memset(&l2_file->u.win.curfdr, 0, sizeof(l2_file->u.win.curfdr));
-	memcpy(l2_file->u.win.curfdr.name, fname, 10);
+	memcpy(l2_file->u.win.curfdr.name, filename, 10);
 
 	return 0;
 }
@@ -2895,7 +2895,7 @@ static int new_file_lvl2_win(ti99_lvl2_imgref *l2_img, ti99_catalog *parent_cata
 /*
 	Allocate a new (empty) file
 */
-static int new_file_lvl2_tifiles(STREAM *file_handle, ti99_lvl2_fileref *l2_file)
+static int new_file_lvl2_tifiles(imgtool_stream *file_handle, ti99_lvl2_fileref *l2_file)
 {
 	/* set up file handle */
 	l2_file->type = L2F_TIFILES;
@@ -3071,7 +3071,7 @@ static int open_file_lvl2_win(ti99_lvl2_imgref *l2_img, const char *fpath, ti99_
 /*
 	Open an existing file in TIFILES format
 */
-static int open_file_lvl2_tifiles(STREAM *file_handle, ti99_lvl2_fileref *l2_file)
+static int open_file_lvl2_tifiles(imgtool_stream *file_handle, ti99_lvl2_fileref *l2_file)
 {
 	/* set up file handle */
 	l2_file->type = L2F_TIFILES;
@@ -3809,7 +3809,7 @@ static int read_next_record(ti99_lvl3_fileref *l3_file, void *dest, int *out_rec
 */
 typedef struct dsk_iterator
 {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	ti99_lvl2_imgref *image;
 	int level;
 	int listing_subdirs;		/* true if we are listing subdirectories at current level */
@@ -3819,7 +3819,7 @@ typedef struct dsk_iterator
 
 typedef struct win_iterator
 {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	ti99_lvl2_imgref *image;
 	int level;
 	int listing_subdirs;		/* true if we are listing subdirectories at current level */
@@ -3828,26 +3828,26 @@ typedef struct win_iterator
 } win_iterator;
 
 
-static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static imgtoolerr_t win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void ti99_image_exit(IMAGE *img);
-static void ti99_image_info(IMAGE *img, char *string, const int len);
-static imgtoolerr_t dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void dsk_image_closeenum(IMAGEENUM *enumeration);
-static imgtoolerr_t win_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void win_image_closeenum(IMAGEENUM *enumeration);
-static imgtoolerr_t ti99_image_freespace(IMAGE *img, size_t *size);
-static imgtoolerr_t ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
-static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions);
-static imgtoolerr_t dsk_image_deletefile(IMAGE *img, const char *fpath);
-static imgtoolerr_t win_image_deletefile(IMAGE *img, const char *fpath);
-static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
-static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
+static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static imgtoolerr_t win_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void ti99_image_exit(imgtool_image *img);
+static void ti99_image_info(imgtool_image *img, char *string, size_t len);
+static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void dsk_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t win_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void win_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size);
+static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf);
+static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath);
+static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath);
+static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);
+static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);
 
 enum
 {
@@ -4004,7 +4004,7 @@ imgtoolerr_t ti99_createmodule(imgtool_library *library)
 /*
 	Open a file as a ti99_image (common code).
 */
-static int dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg, ti99_img_format img_format)
+static int dsk_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg, ti99_img_format img_format)
 {
 	ti99_lvl2_imgref *image;
 	dsk_vib vib;
@@ -4118,7 +4118,7 @@ static int dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 /*
 	Open a file as a ti99_image (MESS format).
 */
-static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_mess);
 }
@@ -4126,7 +4126,7 @@ static imgtoolerr_t dsk_image_init_mess(const struct ImageModule *mod, STREAM *f
 /*
 	Open a file as a ti99_image (V9T9 format).
 */
-static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_v9t9);
 }
@@ -4134,7 +4134,7 @@ static imgtoolerr_t dsk_image_init_v9t9(const struct ImageModule *mod, STREAM *f
 /*
 	Open a file as a ti99_image (PC99 FM format).
 */
-static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_pc99_fm);
 }
@@ -4142,7 +4142,7 @@ static imgtoolerr_t dsk_image_init_pc99_fm(const struct ImageModule *mod, STREAM
 /*
 	Open a file as a ti99_image (PC99 MFM format).
 */
-static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	return dsk_image_init(mod, f, outimg, if_pc99_mfm);
 }
@@ -4150,7 +4150,7 @@ static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, STREA
 /*
 	Open a file as a ti99_image (harddisk format).
 */
-static imgtoolerr_t win_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t win_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	ti99_lvl2_imgref *image;
 	win_vib_ddr vib;
@@ -4219,7 +4219,7 @@ static imgtoolerr_t win_image_init(const struct ImageModule *mod, STREAM *f, IMA
 /*
 	close a ti99_image
 */
-static void ti99_image_exit(IMAGE *img)
+static void ti99_image_exit(imgtool_image *img)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 
@@ -4233,7 +4233,7 @@ static void ti99_image_exit(IMAGE *img)
 
 	Currently returns the volume name
 */
-static void ti99_image_info(IMAGE *img, char *string, const int len)
+static void ti99_image_info(imgtool_image *img, char *string, size_t len)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	char vol_name[11];
@@ -4246,7 +4246,7 @@ static void ti99_image_info(IMAGE *img, char *string, const int len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_iterator *iter;
@@ -4270,7 +4270,7 @@ static imgtoolerr_t dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	dsk_iterator *iter = (dsk_iterator*) enumeration;
 	dsk_fdr fdr;
@@ -4314,7 +4314,7 @@ static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 	{
 		if (iter->listing_subdirs)
 		{
-			fname_to_str(ent->fname, iter->image->u.dsk.catalogs[0].subdirs[iter->index[iter->level]].name, ent->fname_len);
+			fname_to_str(ent->filename, iter->image->u.dsk.catalogs[0].subdirs[iter->index[iter->level]].name, ent->filename_len);
 
 			/* set type of DIR */
 			snprintf(ent->attr, ent->attr_len, "DIR");
@@ -4336,21 +4336,21 @@ static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 			if (reply)
 				return IMGTOOLERR_READERROR;
 #if 0
-			fname_to_str(ent->fname, fdr.name, ent->fname_len);
+			fname_to_str(ent->filename, fdr.name, ent->filename_len);
 #else
 			{
 				char buf[11];
 
-				if (ent->fname_len)
+				if (ent->filename_len)
 				{
-					ent->fname[0] = '\0';
+					ent->filename[0] = '\0';
 					if (iter->level)
 					{
-						fname_to_str(ent->fname, iter->image->u.dsk.catalogs[0].subdirs[iter->index[0]].name, ent->fname_len);
-						strncat(ent->fname, ".", ent->fname_len);
+						fname_to_str(ent->filename, iter->image->u.dsk.catalogs[0].subdirs[iter->index[0]].name, ent->filename_len);
+						strncat(ent->filename, ".", ent->filename_len);
 					}
 					fname_to_str(buf, fdr.name, 11);
-					strncat(ent->fname, buf, ent->fname_len);
+					strncat(ent->filename, buf, ent->filename_len);
 				}
 			}
 #endif
@@ -4377,7 +4377,7 @@ static imgtoolerr_t dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 /*
 	Free enumerator
 */
-static void dsk_image_closeenum(IMAGEENUM *enumeration)
+static void dsk_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -4385,7 +4385,7 @@ static void dsk_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t win_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t win_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	win_iterator *iter;
@@ -4412,7 +4412,7 @@ static imgtoolerr_t win_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	win_iterator *iter = (win_iterator*) enumeration;
 	unsigned fdr_aphysrec;
@@ -4452,22 +4452,22 @@ static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 		if (iter->listing_subdirs)
 		{
 #if 0
-			fname_to_str(ent->fname, iter->catalog[iter->level].subdirs[iter->index[iter->level]].name, ent->fname_len);
+			fname_to_str(ent->filename, iter->catalog[iter->level].subdirs[iter->index[iter->level]].name, ent->filename_len);
 #else
 			{
 				char buf[11];
 
-				if (ent->fname_len)
+				if (ent->filename_len)
 				{
-					ent->fname[0] = '\0';
+					ent->filename[0] = '\0';
 					for (i=0; i<iter->level; i++)
 					{
 						fname_to_str(buf, iter->catalog[i].subdirs[iter->index[i]].name, 11);
-						strncat(ent->fname, buf, ent->fname_len);
-						strncat(ent->fname, ".", ent->fname_len);
+						strncat(ent->filename, buf, ent->filename_len);
+						strncat(ent->filename, ".", ent->filename_len);
 					}
 					fname_to_str(buf, iter->catalog[iter->level].subdirs[iter->index[iter->level]].name, 11);
-					strncat(ent->fname, buf, ent->fname_len);
+					strncat(ent->filename, buf, ent->filename_len);
 				}
 			}
 #endif
@@ -4496,22 +4496,22 @@ static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 			if (reply)
 				return IMGTOOLERR_READERROR;
 #if 0
-			fname_to_str(ent->fname, iter->catalog[iter->level].files[iter->index[iter->level]].name, ent->fname_len);
+			fname_to_str(ent->filename, iter->catalog[iter->level].files[iter->index[iter->level]].name, ent->filename_len);
 #else
 			{
 				char buf[11];
 
-				if (ent->fname_len)
+				if (ent->filename_len)
 				{
-					ent->fname[0] = '\0';
+					ent->filename[0] = '\0';
 					for (i=0; i<iter->level; i++)
 					{
 						fname_to_str(buf, iter->catalog[i].subdirs[iter->index[i]].name, 11);
-						strncat(ent->fname, buf, ent->fname_len);
-						strncat(ent->fname, ".", ent->fname_len);
+						strncat(ent->filename, buf, ent->filename_len);
+						strncat(ent->filename, ".", ent->filename_len);
 					}
 					fname_to_str(buf, iter->catalog[iter->level].files[iter->index[iter->level]].name, 11);
-					strncat(ent->fname, buf, ent->fname_len);
+					strncat(ent->filename, buf, ent->filename_len);
 				}
 			}
 #endif
@@ -4538,7 +4538,7 @@ static imgtoolerr_t win_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 /*
 	Free enumerator
 */
-static void win_image_closeenum(IMAGEENUM *enumeration)
+static void win_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -4546,7 +4546,7 @@ static void win_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image (in AUs)
 */
-static imgtoolerr_t ti99_image_freespace(IMAGE *img, size_t *size)
+static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	size_t freeAUs;
@@ -4567,7 +4567,7 @@ static imgtoolerr_t ti99_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a ti99_image.  The file is saved in tifile format.
 */
-static imgtoolerr_t ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
+static imgtoolerr_t ti99_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf)
 {
 #if 1
 
@@ -4704,10 +4704,10 @@ static imgtoolerr_t ti99_image_readfile(IMAGE *img, const char *fpath, STREAM *d
 /*
 	Add a file to a ti99_image.  The file must be in tifile format.
 */
-static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t ti99_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
-	const char *fname;
+	const char *filename;
 	char ti_fname[10];
 	ti99_lvl2_fileref src_file;
 	ti99_lvl2_fileref dst_file;
@@ -4751,12 +4751,12 @@ static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *
 		return errorcode;
 
 	/* create new file */
-	fname = strrchr(fpath, '.');
-	if (fname)
-		fname++;
+	filename = strrchr(fpath, '.');
+	if (filename)
+		filename++;
 	else
-		fname = fpath;
-	str_to_fname(ti_fname, fname);
+		filename = fpath;
+	str_to_fname(ti_fname, filename);
 	switch (image->type)
 	{
 	case L2I_DSK:
@@ -4925,7 +4925,7 @@ static imgtoolerr_t ti99_image_writefile(IMAGE *img, const char *fpath, STREAM *
 /*
 	Delete a file from a ti99_image.
 */
-static imgtoolerr_t dsk_image_deletefile(IMAGE *img, const char *fpath)
+static imgtoolerr_t dsk_image_deletefile(imgtool_image *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_fdr fdr;
@@ -5063,7 +5063,7 @@ static imgtoolerr_t dsk_image_deletefile(IMAGE *img, const char *fpath)
 	return 0;
 }
 
-static imgtoolerr_t win_image_deletefile(IMAGE *img, const char *fpath)
+static imgtoolerr_t win_image_deletefile(imgtool_image *img, const char *fpath)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	int parent_ddr_AU, is_dir, catalog_index;
@@ -5277,7 +5277,7 @@ static imgtoolerr_t win_image_deletefile(IMAGE *img, const char *fpath)
 
 	Supports MESS and V9T9 formats only
 */
-static imgtoolerr_t dsk_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions, ti99_img_format img_format)
+static imgtoolerr_t dsk_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions, ti99_img_format img_format)
 {
 	const char *volname;
 	int density;
@@ -5400,7 +5400,7 @@ static imgtoolerr_t dsk_image_create(const struct ImageModule *mod, STREAM *f, o
 /*
 	Create a blank ti99_image (MESS format).
 */
-static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	return dsk_image_create(mod, f, createoptions, if_mess);
 }
@@ -5408,7 +5408,7 @@ static imgtoolerr_t dsk_image_create_mess(const struct ImageModule *mod, STREAM 
 /*
 	Create a blank ti99_image (V9T9 format).
 */
-static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t dsk_image_create_v9t9(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	return dsk_image_create(mod, f, createoptions, if_v9t9);
 }

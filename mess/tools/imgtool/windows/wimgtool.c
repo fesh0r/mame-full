@@ -22,7 +22,7 @@ struct wimgtool_info
 {
 	HWND listview;
 	HWND statusbar;
-	IMAGE *image;
+	imgtool_image *image;
 	char *filename;
 
 	HIMAGELIST iconlist_normal;
@@ -54,7 +54,7 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 {
 	struct wimgtool_info *info;
 	int selected_item;
-	IMAGEENUM *imageenum = NULL;
+	imgtool_imageenum *imageenum = NULL;
 	imgtoolerr_t err;
 	
 	info = get_wimgtool_info(window);
@@ -88,7 +88,7 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 
 done:
 	if (err)
-		memset(entry->fname, 0, entry->fname_len);
+		memset(entry->filename, 0, entry->filename_len);
 	if (imageenum)
 		img_closeenum(imageenum);
 	return err;
@@ -141,7 +141,7 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 	size_t size, i;
 
 	info = get_wimgtool_info(window);
-	extension = strchr(entry->fname, '.');
+	extension = strchr(entry->filename, '.');
 	if (!extension)
 		extension = ".bin";
 
@@ -169,7 +169,7 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 	memset(&lvi, 0, sizeof(lvi));
 	lvi.iItem = ListView_GetItemCount(info->listview);
 	lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
-	lvi.pszText = entry->fname;
+	lvi.pszText = entry->filename;
 	lvi.iImage = icon_index;
 	new_index = ListView_InsertItem(info->listview, &lvi);
 
@@ -185,7 +185,7 @@ static imgtoolerr_t append_dirent(HWND window, const imgtool_dirent *entry)
 static imgtoolerr_t refresh_image(HWND window, BOOL full_setup)
 {
 	imgtoolerr_t err;
-	IMAGEENUM *imageenum = NULL;
+	imgtool_imageenum *imageenum = NULL;
 	char buf[256];
 	imgtool_dirent entry;
 	struct wimgtool_info *info;
@@ -246,15 +246,15 @@ static imgtoolerr_t refresh_image(HWND window, BOOL full_setup)
 		goto done;
 
 	memset(&entry, 0, sizeof(entry));
-	entry.fname = buf;
-	entry.fname_len = sizeof(buf) / sizeof(buf[0]);
+	entry.filename = buf;
+	entry.filename_len = sizeof(buf) / sizeof(buf[0]);
 	do
 	{
 		err = img_nextenum(imageenum, &entry);
 		if (err)
 			goto done;
 
-		if (entry.fname[0])
+		if (entry.filename[0])
 		{
 			err = append_dirent(window, &entry);
 			if (err)
@@ -356,7 +356,7 @@ static imgtoolerr_t open_image(HWND window, const struct ImageModule *module,
 	const char *filename, int read_or_write)
 {
 	imgtoolerr_t err;
-	IMAGE *image;
+	imgtool_image *image;
 	struct wimgtool_info *info;
 
 	info = get_wimgtool_info(window);
@@ -518,8 +518,8 @@ static void menu_extract(HWND window)
 	info = get_wimgtool_info(window);
 
 	memset(&entry, 0, sizeof(entry));
-	entry.fname = image_filename;
-	entry.fname_len = sizeof(image_filename) / sizeof(image_filename[0]);
+	entry.filename = image_filename;
+	entry.filename_len = sizeof(image_filename) / sizeof(image_filename[0]);
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;
@@ -533,7 +533,7 @@ static void menu_extract(HWND window)
 	if (!GetSaveFileName(&ofn))
 		goto done;
 
-	err = img_getfile(info->image, entry.fname, ofn.lpstrFile, NULL);
+	err = img_getfile(info->image, entry.filename, ofn.lpstrFile, NULL);
 	if (err)
 		goto done;
 
@@ -554,8 +554,8 @@ static void menu_delete(HWND window)
 	info = get_wimgtool_info(window);
 
 	memset(&entry, 0, sizeof(entry));
-	entry.fname = image_filename;
-	entry.fname_len = sizeof(image_filename) / sizeof(image_filename[0]);
+	entry.filename = image_filename;
+	entry.filename_len = sizeof(image_filename) / sizeof(image_filename[0]);
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;

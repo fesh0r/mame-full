@@ -7,16 +7,16 @@
 
 /* NC Card image handling code by Kevin Thacker. February 2001 */
 
-static int nc_card_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void nc_card_image_exit(IMAGE *img);
-static size_t nc_card_image_freespace(IMAGE *img);
-static int nc_card_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int nc_card_image_deletefile(IMAGE *img, const char *fname);
-static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
-static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int nc_card_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void nc_card_image_closeenum(IMAGEENUM *enumeration);
+static int nc_card_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void nc_card_image_exit(imgtool_image *img);
+static size_t nc_card_image_freespace(imgtool_image *img);
+static int nc_card_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int nc_card_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
+static int nc_card_image_deletefile(imgtool_image *img, const char *fname);
+static int nc_card_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
+static int nc_card_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int nc_card_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void nc_card_image_closeenum(imgtool_imageenum *enumeration);
 
 IMAGEMODULE(
 	nccard,
@@ -412,12 +412,12 @@ static int	memcard_del(struct nc_memcard *memcard,char *pNCFilename)
 
 struct nc_card_image
 {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	struct nc_memcard memcard;
 };
 
-static int nc_card_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int nc_card_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	struct nc_card_image *nc_card;
 
@@ -447,11 +447,11 @@ static int nc_card_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 		return IMGTOOLERR_READERROR;
 	}
 
-	*outimg = (IMAGE *)nc_card;
+	*outimg = (imgtool_image *)nc_card;
 	return 0;
 }
 
-static void nc_card_image_exit(IMAGE *img)
+static void nc_card_image_exit(imgtool_image *img)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 
@@ -464,7 +464,7 @@ static void nc_card_image_exit(IMAGE *img)
 
 
 /* count number of free blocks and calculate freespace */
-static size_t nc_card_image_freespace(IMAGE *img)
+static size_t nc_card_image_freespace(imgtool_image *img)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	int i;
@@ -483,7 +483,7 @@ static size_t nc_card_image_freespace(IMAGE *img)
 
 /* create a empty image */
 /* in this case a formatted image */
-static int nc_card_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
+static int nc_card_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	int code;
 
@@ -537,7 +537,7 @@ static void setup_nc_filename(char *nc_filename, const char *fname)
 	while ((ch!=0) && (offset<12));
 }
 
-static int nc_card_image_deletefile(IMAGE *img, const char *fname)
+static int nc_card_image_deletefile(imgtool_image *img, const char *fname)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	char nc_filename[12];
@@ -555,7 +555,7 @@ static int nc_card_image_deletefile(IMAGE *img, const char *fname)
 
 
 /* get a file from the memcard */
-static int nc_card_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int nc_card_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	char nc_filename[12];
@@ -619,7 +619,7 @@ static int nc_card_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 /* put a file to the memcard */
-static int nc_card_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
+static int nc_card_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	unsigned long length;
@@ -723,7 +723,7 @@ eod is 1 if end of directory (no more blocks) or 0 if not end of directory */
 
 struct nc_card_direnum 
 {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	/* card image */
 	struct nc_card_image *img;
 	/* directory block index */
@@ -735,7 +735,7 @@ struct nc_card_direnum
 };
 
 
-static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int nc_card_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	struct nc_card_image *nc_card = (struct nc_card_image *)img;
 	struct nc_card_direnum *card_enum;
@@ -759,7 +759,7 @@ static int nc_card_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int nc_card_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int nc_card_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	struct nc_card_direnum *card_enum = (struct nc_card_direnum *) enumeration;
 
@@ -874,7 +874,7 @@ static int nc_card_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void nc_card_image_closeenum(IMAGEENUM *enumeration)
+static void nc_card_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }

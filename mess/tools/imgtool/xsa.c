@@ -10,26 +10,26 @@
 
 
 typedef struct {
-	IMAGE			base;
+	imgtool_image			base;
 	char			*file_name;
-	STREAM 			*file_handle;
+	imgtool_stream 			*file_handle;
 	int 			size;
 	} XSA_IMAGE;
 
 typedef struct
 	{
-	IMAGEENUM 	base;
+	imgtool_imageenum 	base;
 	XSA_IMAGE	*image;
 	int			index;
 	} XSA_ITERATOR;
 
-static int xsa_extract (STREAM *in, STREAM *out);
-static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void xsa_image_exit(IMAGE *img);
-static int xsa_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int xsa_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void xsa_image_closeenum(IMAGEENUM *enumeration);
-static int xsa_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static int xsa_extract (imgtool_stream *in, imgtool_stream *out);
+static int xsa_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void xsa_image_exit(imgtool_image *img);
+static int xsa_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int xsa_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void xsa_image_closeenum(imgtool_imageenum *enumeration);
+static int xsa_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
 	xsa,
@@ -56,7 +56,7 @@ IMAGEMODULE(
 	NULL							/* create options */
 )
 
-static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int xsa_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 	{
 	XSA_IMAGE *image;
 	int pos, len, size;
@@ -104,7 +104,7 @@ static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 
 	image = (XSA_IMAGE*)malloc (sizeof (XSA_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
-	*outimg = (IMAGE*)image;
+	*outimg = (imgtool_image*)image;
 
 	memset(image, 0, sizeof(XSA_IMAGE));
 	image->base.module = mod;
@@ -115,7 +115,7 @@ static int xsa_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	return 0;
 	}
 
-static void xsa_image_exit(IMAGE *img)
+static void xsa_image_exit(imgtool_image *img)
 	{
 	XSA_IMAGE *image=(XSA_IMAGE*)img;
 	stream_close(image->file_handle);
@@ -123,7 +123,7 @@ static void xsa_image_exit(IMAGE *img)
 	free(image);
 	}
 
-static int xsa_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int xsa_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	{
 	XSA_IMAGE *image=(XSA_IMAGE*)img;
 	XSA_ITERATOR *iter;
@@ -138,7 +138,7 @@ static int xsa_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 	}
 
-static int xsa_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int xsa_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	{
 	XSA_ITERATOR *iter=(XSA_ITERATOR*)enumeration;
 
@@ -156,12 +156,12 @@ static int xsa_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 	}
 
-static void xsa_image_closeenum(IMAGEENUM *enumeration)
+static void xsa_image_closeenum(imgtool_imageenum *enumeration)
 	{
 	free(enumeration);
 	}
 
-static int xsa_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int xsa_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 	{
 	XSA_IMAGE *image=(XSA_IMAGE*)img;
 
@@ -287,7 +287,7 @@ static void inithufinfo( void )
 /****************************************************************/
 /* global vars													*/
 /****************************************************************/
-static STREAM *in_stream, *out_stream;
+static imgtool_stream *in_stream, *out_stream;
 
 static UINT8 *outbuf;       /* the output buffer     */
 static UINT8 *outbufpos;    /* pos in output buffer  */
@@ -314,7 +314,7 @@ static UINT8 bitin( void );        /* read a bit                           */
 /****************************************************************/
 /* de hoofdlus													*/
 /****************************************************************/
-static int xsa_extract (STREAM *in, STREAM *out)
+static int xsa_extract (imgtool_stream *in, imgtool_stream *out)
     {
     UINT8 byt;
 

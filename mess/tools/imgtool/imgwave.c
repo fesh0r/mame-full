@@ -2,8 +2,8 @@
 #include "imgtoolx.h"
 
 typedef struct {
-	IMAGE base;
-	STREAM *f;
+	imgtool_image base;
+	imgtool_stream *f;
 	int basepos;
 	int length;
 	int curpos;
@@ -15,12 +15,12 @@ typedef struct {
 } waveimage;
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	waveimage *wimg;
 	int pos;
 } waveimageenum;
 
-static int find_wavtag(STREAM *f, int filelen, const char *tag, int *offset, UINT32 *blocklen)
+static int find_wavtag(imgtool_stream *f, int filelen, const char *tag, int *offset, UINT32 *blocklen)
 {
 	char buf[4];
 
@@ -41,7 +41,7 @@ static int find_wavtag(STREAM *f, int filelen, const char *tag, int *offset, UIN
 	return 0;
 }
 
-int imgwave_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+int imgwave_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	int err;
 	waveimage *wimg;
@@ -144,14 +144,14 @@ initalt:
 	return 0;
 }
 
-void imgwave_exit(IMAGE *img)
+void imgwave_exit(imgtool_image *img)
 {
 	waveimage *wimg = (waveimage *) img;
 	stream_close(wimg->f);
 	free(wimg);
 }
 
-int imgwave_seek(IMAGE *img, int pos)
+int imgwave_seek(imgtool_image *img, int pos)
 {
 	waveimage *wimg = (waveimage *) img;
 
@@ -162,7 +162,7 @@ int imgwave_seek(IMAGE *img, int pos)
 	return 0;
 }
 
-static int imgwave_readsample(IMAGE *img, INT16 *sample)
+static int imgwave_readsample(imgtool_image *img, INT16 *sample)
 {
 	int len;
 	INT16 s = 0;
@@ -215,7 +215,7 @@ static int imgwave_readsample(IMAGE *img, INT16 *sample)
 	return 0;
 }
 
-static int imgwave_readtransition(IMAGE *img, int *frequency)
+static int imgwave_readtransition(imgtool_image *img, int *frequency)
 {
 	int err;
 	int count = 0;
@@ -245,7 +245,7 @@ static int imgwave_readtransition(IMAGE *img, int *frequency)
 	return 0;
 }
 
-static int imgwave_readbit(IMAGE *img, UINT8 *bit)
+static int imgwave_readbit(imgtool_image *img, UINT8 *bit)
 {
 	int err, freq;
 	waveimage *wimg;
@@ -265,7 +265,7 @@ static int imgwave_readbit(IMAGE *img, UINT8 *bit)
 	return 0;
 }
 
-int imgwave_forward(IMAGE *img)
+int imgwave_forward(imgtool_image *img)
 {
 	int err;
 	int i;
@@ -314,7 +314,7 @@ int imgwave_forward(IMAGE *img)
 	return 0;
 }
 
-int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
+int imgwave_read(imgtool_image *img, UINT8 *buf, int bufsize)
 {
 	int err;
 	int i, j;
@@ -349,7 +349,7 @@ int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize)
 	return 0;
 }
 
-int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum)
+int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	/* TODO - Enumerating wave images should be cached */
 
@@ -363,22 +363,22 @@ int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	wenum->base.module = img->module;
 	wenum->wimg = wimg;
 	wenum->pos = wimg->basepos;
-	*outenum = (IMAGEENUM *) wenum;
+	*outenum = (imgtool_imageenum *) wenum;
 	return 0;
 }
 
-int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	int err;
 	waveimageenum *wenum;
 
 	wenum = (waveimageenum *) enumeration;
 
-	err = imgwave_seek((IMAGE *) wenum->wimg, wenum->pos);
+	err = imgwave_seek((imgtool_image *) wenum->wimg, wenum->pos);
 	if (err)
 		return err;
 
-	err = ((struct WaveExtra *) wenum->wimg->base.module->extra)->nextfile((IMAGE *) wenum->wimg, ent);
+	err = ((struct WaveExtra *) wenum->wimg->base.module->extra)->nextfile((imgtool_image *) wenum->wimg, ent);
 	if (err)
 		return err;
 
@@ -386,17 +386,17 @@ int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-void imgwave_closeenum(IMAGEENUM *enumeration)
+void imgwave_closeenum(imgtool_imageenum *enumeration)
 {
 	waveimageenum *wenum = (waveimageenum *) enumeration;
 	free(wenum);
 }
 
-int imgwave_readfile(IMAGE *img, const char *fname, STREAM *destf)
+int imgwave_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	int err, pos;
 	imgtool_dirent ent;
-	IMAGEENUM *enumeration;
+	imgtool_imageenum *enumeration;
 	waveimageenum *wenum;
 	waveimage *wimg;
 	struct WaveExtra *extra;

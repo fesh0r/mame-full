@@ -41,8 +41,8 @@ typedef struct {
 } ti85_header;
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	unsigned int size;
 	int modified;
 	UINT8 *data;
@@ -51,21 +51,21 @@ typedef struct {
 } ti85_file;
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	unsigned int size;
 	int modified;
 	UINT8 *data;
 } ti85b_file;
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	ti85_file *image;
 	int index;
 } ti85_iterator;
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	ti85b_file *image;
 	int index;
 } ti85b_iterator;
@@ -87,23 +87,23 @@ static struct OptionTemplate ti85_createoptions[] =
 #define TI85_OPTION_FTYPE	0
 #define TI85_OPTION_COMMENT	0
 
-static void ti85_file_info(IMAGE *img, char *string, const int len);
-static int ti85_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void ti85_file_exit(IMAGE *img);
-static int ti85_file_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int ti85_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void ti85_file_closeenum(IMAGEENUM *enumeration);
-static int ti85_file_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int ti85_file_deletefile(IMAGE *img, const char *fname);
-static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static void ti85_file_info(imgtool_image *img, char *string, const int len);
+static int ti85_file_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void ti85_file_exit(imgtool_image *img);
+static int ti85_file_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int ti85_file_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void ti85_file_closeenum(imgtool_imageenum *enumeration);
+static int ti85_file_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int ti85_file_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
+static int ti85_file_deletefile(imgtool_image *img, const char *fname);
+static int ti85_file_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
 
-static void ti85b_file_info(IMAGE *img, char *string, const int len);
-static int ti85b_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void ti85b_file_exit(IMAGE *img);
-static int ti85b_file_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int ti85b_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void ti85b_file_closeenum(IMAGEENUM *enumeration);
+static void ti85b_file_info(imgtool_image *img, char *string, const int len);
+static int ti85b_file_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void ti85b_file_exit(imgtool_image *img);
+static int ti85b_file_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int ti85b_file_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void ti85b_file_closeenum(imgtool_imageenum *enumeration);
 
 
 #define TI85FILE(name,human_name,extension) \
@@ -187,7 +187,7 @@ IMAGEMODULE(
 	NULL
 )
 
-static int ti85_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int ti85_file_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	ti85_file *file;
 
@@ -234,7 +234,7 @@ static int ti85_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	return 0;
 }
 
-static void ti85_file_exit(IMAGE * img)
+static void ti85_file_exit(imgtool_image * img)
 {
 	ti85_file *file=(ti85_file*)img;
 	if (file->modified) {
@@ -247,7 +247,7 @@ static void ti85_file_exit(IMAGE * img)
 	free(file);
 }
 
-static void ti85_file_info(IMAGE *img, char *string, const int len)
+static void ti85_file_info(imgtool_image *img, char *string, const int len)
 {
 	UINT16 file_checksum;
 	UINT16 checksum;
@@ -270,7 +270,7 @@ static void ti85_file_info(IMAGE *img, char *string, const int len)
 	if (checksum!=file_checksum) strcat (string, " (BAD)");
 }
 
-static int ti85_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int ti85_file_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	ti85_file *file=(ti85_file*)img;
 	ti85_iterator *iter;
@@ -285,7 +285,7 @@ static int ti85_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int ti85_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int ti85_file_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	ti85_iterator *iter=(ti85_iterator*)enumeration;
 
@@ -308,7 +308,7 @@ static int ti85_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void ti85_file_closeenum(IMAGEENUM *enumeration)
+static void ti85_file_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -325,7 +325,7 @@ static int ti85_findfile (ti85_file * file, const char * fname)
 }
 
 
-static int ti85_file_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int ti85_file_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	ti85_file *file=(ti85_file*)img;
 	int start, size;
@@ -341,7 +341,7 @@ static int ti85_file_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
+static int ti85_file_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_)
 {
 	ti85_file *file=(ti85_file*)img;
 	int ind;
@@ -395,7 +395,7 @@ static int ti85_file_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	return 0;
 }
 
-static int ti85_file_deletefile(IMAGE *img, const char *fname)
+static int ti85_file_deletefile(imgtool_image *img, const char *fname)
 {
 	ti85_file *file=(ti85_file*)img;
 	int ind,i;
@@ -423,7 +423,7 @@ static int ti85_file_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
+static int ti85_file_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 
 	ti85_header header = {	{'*','*','T','I','8','5','*','*'},
@@ -442,7 +442,7 @@ static int ti85_file_create(const struct ImageModule *mod, STREAM *f, const Reso
 	return 0;
 }
 
-static int ti85b_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int ti85b_file_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	ti85b_file *file;
 
@@ -478,7 +478,7 @@ static int ti85b_file_init(const struct ImageModule *mod, STREAM *f, IMAGE **out
 	return 0;
 }
 
-static void ti85b_file_exit(IMAGE * img)
+static void ti85b_file_exit(imgtool_image * img)
 {
 	ti85b_file *file=(ti85b_file*)img;
 	stream_close(file->file_handle);
@@ -486,7 +486,7 @@ static void ti85b_file_exit(IMAGE * img)
 	free(file);
 }
 
-static void ti85b_file_info(IMAGE *img, char *string, const int len)
+static void ti85b_file_info(imgtool_image *img, char *string, const int len)
 {
 	UINT16 file_checksum;
 	UINT16 checksum;
@@ -508,7 +508,7 @@ static void ti85b_file_info(IMAGE *img, char *string, const int len)
 	if (checksum!=file_checksum) strcat (string, " (BAD)");
 }
 
-static int ti85b_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int ti85b_file_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	ti85b_file *file=(ti85b_file*)img;
 	ti85b_iterator *iter;
@@ -523,7 +523,7 @@ static int ti85b_file_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int ti85b_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int ti85b_file_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	ti85b_iterator *iter=(ti85b_iterator*)enumeration;
 
@@ -553,7 +553,7 @@ static int ti85b_file_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void ti85b_file_closeenum(IMAGEENUM *enumeration)
+static void ti85b_file_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }

@@ -19,8 +19,9 @@ struct expected_dirent
 };
 
 static imgtool_library *library;
-static IMAGE *image;
+static imgtool_image *image;
 static struct expected_dirent entries[256];
+static char filename_buffer[256];
 static int entry_count;
 
 
@@ -65,6 +66,16 @@ static void createimage_handler(struct messtest_state *state, const char **attri
 
 static void putfile_start_handler(struct messtest_state *state, const char **attributes)
 {
+	const char *filename;
+
+	filename = find_attribute(attributes, "name");
+	if (!filename)
+	{
+		error_missingattribute(state, "name");
+		return;
+	}
+
+	snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
 }
 
 
@@ -110,14 +121,14 @@ static void checkdirectory_entry_handler(struct messtest_state *state, const cha
 static void checkdirectory_end_handler(struct messtest_state *state, const void *buffer, size_t size)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	IMAGEENUM *imageenum;
+	imgtool_imageenum *imageenum;
 	imgtool_dirent ent;
 	char filename_buffer[1024];
 	int i;
 
 	memset(&ent, 0, sizeof(ent));
-	ent.fname = filename_buffer;
-	ent.fname_len = sizeof(filename_buffer) / sizeof(filename_buffer[0]);
+	ent.filename = filename_buffer;
+	ent.filename_len = sizeof(filename_buffer) / sizeof(filename_buffer[0]);
 
 	err = img_beginenum(image, &imageenum);
 	if (err)
@@ -129,7 +140,7 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 		if (err)
 			goto done; 
 
-		if (ent.eof || strcmp(ent.fname, entries[i].filename))
+		if (ent.eof || strcmp(ent.filename, entries[i].filename))
 		{
 			error_report(state, "Misnamed file entry");
 			goto done;

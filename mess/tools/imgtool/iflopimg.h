@@ -20,11 +20,11 @@
 
 ***************************************************************************/
 
-floppy_image *imgtool_floppy(IMAGE *img);
+floppy_image *imgtool_floppy(imgtool_image *img);
 imgtoolerr_t imgtool_floppy_error(floperr_t err);
 
-imgtoolerr_t imgtool_floppy_read_sector_to_stream(IMAGE *img, int head, int track, int sector, int offset, size_t length, STREAM *f);
-imgtoolerr_t imgtool_floppy_write_sector_from_stream(IMAGE *img, int head, int track, int sector, int offset, size_t length, STREAM *f);
+imgtoolerr_t imgtool_floppy_read_sector_to_stream(imgtool_image *img, int head, int track, int sector, int offset, size_t length, imgtool_stream *f);
+imgtoolerr_t imgtool_floppy_write_sector_from_stream(imgtool_image *img, int head, int track, int sector, int offset, size_t length, imgtool_stream *f);
 
 
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,

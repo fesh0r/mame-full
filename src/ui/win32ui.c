@@ -91,38 +91,30 @@
 
 #ifndef LVS_EX_LABELTIP
 #define LVS_EX_LABELTIP         0x00004000 // listview unfolds partly hidden labels if it does not have infotip text
+#endif // LVS_EX_LABELTIP
+
+// fix warning: cast does not match function type
+#if defined(__GNUC__) && defined(ListView_CreateDragImage)
+#undef ListView_CreateDragImage
 #endif
 
-#if defined(__GNUC__)
-
-/* fix warning: cast does not match function type */
-#undef ListView_GetImageList
-#define ListView_GetImageList(w,i) (HIMAGELIST)(LRESULT)(int)SendMessage((w),LVM_GETIMAGELIST,(i),0)
-
-#undef ListView_CreateDragImage
+#ifndef ListView_CreateDragImage
 #define ListView_CreateDragImage(hwnd, i, lpptUpLeft) \
     (HIMAGELIST)(LRESULT)(int)SendMessage((hwnd), LVM_CREATEDRAGIMAGE, (WPARAM)(int)(i), (LPARAM)(LPPOINT)(lpptUpLeft))
+#endif // ListView_CreateDragImage
 
-#undef TreeView_EditLabel
+#ifndef TreeView_EditLabel
 #define TreeView_EditLabel(w, i) \
     SNDMSG(w,TVM_EDITLABEL,0,(LPARAM)(i))
-
-#undef ListView_GetHeader
-#define ListView_GetHeader(w) (HWND)(LRESULT)(int)SNDMSG((w),LVM_GETHEADER,0,0)
-
-#define HDM_SETIMAGELIST        (HDM_FIRST + 8)
-#define Header_SetImageList(h,i) (HIMAGELIST)(LRESULT)(int)SNDMSG((h), HDM_SETIMAGELIST, 0, (LPARAM)i)
-
-
-#endif /* defined(__GNUC__) */
+#endif // TreeView_EditLabel
 
 #ifndef HDF_SORTUP
 #define HDF_SORTUP 0x400
-#endif
+#endif // HDF_SORTUP
 
 #ifndef HDF_SORTDOWN
 #define HDF_SORTDOWN 0x200
-#endif
+#endif // HDF_SORTDOWN
 
 #ifndef LVM_SETBKIMAGEA
 #define LVM_SETBKIMAGEA         (LVM_FIRST + 68)

@@ -6,28 +6,28 @@
 #include "imgtoolx.h"
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	int size;
 	int modified;
 	unsigned char *data;
 } rom16_image;
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	rom16_image *image;
 	int index;
 } rom16_iterator;
 
-static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void rom16_image_exit(IMAGE *img);
-//static void rom16_image_info(IMAGE *img, char *string, const int len);
-static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void rom16_image_closeenum(IMAGEENUM *enumeration);
-static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-//static int rom16_image_create(STREAM *f, const geometry_options *options_);
+static int rom16_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void rom16_image_exit(imgtool_image *img);
+//static void rom16_image_info(imgtool_image *img, char *string, const int len);
+static int rom16_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int rom16_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void rom16_image_closeenum(imgtool_imageenum *enumeration);
+static int rom16_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int rom16_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
+//static int rom16_image_create(imgtool_stream *f, const geometry_options *options_);
 
 IMAGEMODULE(
 	rom16,
@@ -54,7 +54,7 @@ IMAGEMODULE(
 	NULL							/* create options */
 )
 
-static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int rom16_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	rom16_image *image;
 
@@ -77,7 +77,7 @@ static int rom16_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 	return 0;
 }
 
-static void rom16_image_exit(IMAGE *img)
+static void rom16_image_exit(imgtool_image *img)
 {
 	rom16_image *image=(rom16_image*)img;
 	if (image->modified) {
@@ -90,7 +90,7 @@ static void rom16_image_exit(IMAGE *img)
 }
 
 #if 0
-static void rom16_image_info(IMAGE *img, char *string, const int len)
+static void rom16_image_info(imgtool_image *img, char *string, const int len)
 {
 	_image *image=(rom16_image*)img;
 	sprintf(string, "%-32s\nversion:%.4x type:%d:%s exrom:%d game:%d",
@@ -103,7 +103,7 @@ static void rom16_image_info(IMAGE *img, char *string, const int len)
 }
 #endif
 
-static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int rom16_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	rom16_image *image=(rom16_image*)img;
 	rom16_iterator *iter;
@@ -118,7 +118,7 @@ static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int rom16_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
     int pos = 0;
 	rom16_iterator *iter=(rom16_iterator*)enumeration;
@@ -152,12 +152,12 @@ static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void rom16_image_closeenum(IMAGEENUM *enumeration)
+static void rom16_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
 
-static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int rom16_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	rom16_image *image=(rom16_image*)img;
 	int pos;
@@ -179,7 +179,7 @@ static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
+static int rom16_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef,
 							   const ResolvedOption *options_)
 {
 	rom16_image *image=(rom16_image*)img;
@@ -207,7 +207,7 @@ static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 }
 
 #if 0
-static int rom16_image_create(STREAM *f, const ResolvedOption *options_)
+static int rom16_image_create(imgtool_stream *f, const ResolvedOption *options_)
 {
 //	if (options_->label) strcpy(header.name, options->label);
 	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header))

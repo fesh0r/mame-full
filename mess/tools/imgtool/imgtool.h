@@ -43,9 +43,7 @@ struct filter_module
 	int statesize;
 };
 
-typedef struct {
-	int dummy;
-} FILTER;
+typedef struct _imgtool_filter imgtool_filter;
 
 typedef const struct filter_module *FILTERMODULE;
 
@@ -54,17 +52,17 @@ enum {
 	PURPOSE_WRITE
 };
 
-FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
-void filter_term(FILTER *f);
-int filter_writetostream(FILTER *f, STREAM *s, const void *buf, int buflen);
-int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
-int filter_readintobuffer(FILTER *f, STREAM *s);
+imgtool_filter *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose);
+void filter_term(imgtool_filter *f);
+int filter_writetostream(imgtool_filter *f, imgtool_stream *s, const void *buf, int buflen);
+int filter_readfromstream(imgtool_filter *f, imgtool_stream *s, void *buf, int buflen);
+int filter_readintobuffer(imgtool_filter *f, imgtool_stream *s);
 
 extern FILTERMODULE filters[];
 
 FILTERMODULE filter_lookup(const char *name);
 
-STREAM *stream_open_filter(STREAM *s, FILTER *f);
+imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f);
 
 /* ----------------------------------------------------------------------- */
 
@@ -87,8 +85,8 @@ struct tagIMAGEENUM
 	const struct ImageModule *module;
 };
 
-typedef struct tagIMAGE IMAGE;
-typedef struct tagIMAGEENUM IMAGEENUM;
+typedef struct tagIMAGE imgtool_image;
+typedef struct tagIMAGEENUM imgtool_imageenum;
 
 /* ---------------------------------------------------------------------------
  * Image calls
@@ -112,9 +110,9 @@ typedef struct tagIMAGEENUM IMAGEENUM;
  *
  *	Parameters:
  *		library:			The imgtool_library to search
- *		fname:				The file to check
+ *		filename:			The file to check
  */
-imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
+imgtoolerr_t img_identify(imgtool_library *library, const char *filename,
 	ImageModuleConstPtr *modules, size_t count);
 
 /* img_open
@@ -125,12 +123,12 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
  *
  * Parameters:
  *		module/modulename:	The module for this image format
- *		fname:				The native filename for the image
+ *		filename:			The native filename for the image
  *		read_or_write:		Open mode (use OSD_FOPEN_* constants)
  *		outimg:				Placeholder for image pointer
  */
-imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg);
-imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, IMAGE **outimg);
+imgtoolerr_t img_open(const struct ImageModule *module, const char *filename, int read_or_write, imgtool_image **outimg);
+imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *filename, int read_or_write, imgtool_image **outimg);
 
 /* img_close
  *
@@ -140,7 +138,7 @@ imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, c
  * Parameters:
  *		img:				The image to close
  */
-void img_close(IMAGE *img);
+void img_close(imgtool_image *img);
 
 /* img_info
  *
@@ -152,7 +150,7 @@ void img_close(IMAGE *img);
  *		string:				Buffer to place info in
  *		len:				Length of buffer
  */
-imgtoolerr_t img_info(IMAGE *img, char *string, const int len);
+imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len);
 
 /* img_beginenum
  *
@@ -163,7 +161,7 @@ imgtoolerr_t img_info(IMAGE *img, char *string, const int len);
  *		img:				The image to enumerate
  *		outenum:			The resulting enumeration
  */
-imgtoolerr_t img_beginenum(IMAGE *img, IMAGEENUM **outenum);
+imgtoolerr_t img_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
 
 /* img_nextenum
  *
@@ -174,7 +172,7 @@ imgtoolerr_t img_beginenum(IMAGE *img, IMAGEENUM **outenum);
  *		enumeration:		The enumeration
  *		ent:				Place to receive directory entry
  */
-imgtoolerr_t img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
+imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 
 /* img_countfiles
  *
@@ -185,7 +183,7 @@ imgtoolerr_t img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
  *		img:				The image to enumerate
  *		totalfiles:			Place to receive the file count
  */
-imgtoolerr_t img_countfiles(IMAGE *img, int *totalfiles);
+imgtoolerr_t img_countfiles(imgtool_image *img, int *totalfiles);
 
 /* img_filesize
  *
@@ -194,10 +192,10 @@ imgtoolerr_t img_countfiles(IMAGE *img, int *totalfiles);
  *
  * Parameters:
  *		img:				The image to enumerate
- *		fname				Filename of file on the image
+ *		filename			Filename of file on the image
  *		filesize			Place to receive the file length
  */
-imgtoolerr_t img_filesize(IMAGE *img, const char *fname, int *filesize);
+imgtoolerr_t img_filesize(imgtool_image *img, const char *filename, UINT64 *filesize);
 
 /* img_closeenum
  *
@@ -207,7 +205,7 @@ imgtoolerr_t img_filesize(IMAGE *img, const char *fname, int *filesize);
  * Parameters:
  *		enumeration:		The enumeration to close
  */
-void img_closeenum(IMAGEENUM *enumeration);
+void img_closeenum(imgtool_imageenum *enumeration);
 
 /* img_freespace
  *
@@ -218,7 +216,7 @@ void img_closeenum(IMAGEENUM *enumeration);
  *		img:				The image to query
  *		sz					Place to receive free space
  */
-imgtoolerr_t img_freespace(IMAGE *img, int *sz);
+imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz);
 
 /* img_readfile
  *
@@ -231,7 +229,7 @@ imgtoolerr_t img_freespace(IMAGE *img, int *sz);
  *		destf:				Place to receive the stream
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_readfile(IMAGE *img, const char *fname, STREAM *destf,
+imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf,
 	FILTERMODULE filter);
 
 /* img_writefile
@@ -246,7 +244,7 @@ imgtoolerr_t img_readfile(IMAGE *img, const char *fname, STREAM *destf,
  *		options/ropts:		Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
+imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef,
 	option_resolution *resolution, FILTERMODULE filter);
 
 /* img_getfile
@@ -260,7 +258,7 @@ imgtoolerr_t img_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
  *		dest:				Filename for native file to write to
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_getfile(IMAGE *img, const char *fname, const char *dest,
+imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest,
 	FILTERMODULE filter);
 
 /* img_putfile
@@ -276,7 +274,7 @@ imgtoolerr_t img_getfile(IMAGE *img, const char *fname, const char *dest,
  *		opts:				Options to specify on the new file
  *      filter:             Filter to use, or NULL if none
  */
-imgtoolerr_t img_putfile(IMAGE *img, const char *newfname, const char *source,
+imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *source,
 	option_resolution *opts, FILTERMODULE filter);
 
 /* img_deletefile
@@ -288,7 +286,7 @@ imgtoolerr_t img_putfile(IMAGE *img, const char *newfname, const char *source,
  *		img:				The image to read from
  *		fname:				The filename on the image
  */
-imgtoolerr_t img_deletefile(IMAGE *img, const char *fname);
+imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname);
 
 /* img_create
  * img_create_byname
@@ -310,7 +308,7 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
  * Description:
  *		Retrieves the module associated with an image
  */
-INLINE const struct ImageModule *img_module(IMAGE *img)
+INLINE const struct ImageModule *img_module(imgtool_image *img)
 {
 	return img->module;
 }

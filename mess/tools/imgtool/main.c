@@ -146,9 +146,9 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	int total_count, total_size, freespace_err;
-	int freespace;
-	IMAGE *img;
-	IMAGEENUM *imgenum;
+	UINT64 freespace;
+	imgtool_image *img;
+	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	char buf[512];
 	char attrbuf[50];
@@ -165,8 +165,8 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	}
 
 	memset(&ent, 0, sizeof(ent));
-	ent.fname = buf;
-	ent.fname_len = sizeof(buf);
+	ent.filename = buf;
+	ent.filename_len = sizeof(buf);
 	ent.attr = attrbuf;
 	ent.attr_len = sizeof(attrbuf);
 
@@ -182,7 +182,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
 	{
-		fprintf(stdout, "%-20s\t%8d %15s\n", ent.fname, ent.filesize, ent.attr);
+		fprintf(stdout, "%-20s\t%8u %15s\n", ent.filename, (unsigned int) ent.filesize, ent.attr);
 		total_count++;
 		total_size += ent.filesize;
 	}
@@ -198,7 +198,7 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	fprintf(stdout, "------------------------  ------ ---------------\n");
 	fprintf(stdout, "%8i File(s)        %8i bytes\n", total_count, total_size);
 	if (!freespace_err)
-		fprintf(stdout, "                        %8d bytes free\n", freespace);
+		fprintf(stdout, "                        %8u bytes free\n", (unsigned int) freespace);
 	return 0;
 
 error:
@@ -211,7 +211,7 @@ error:
 static int cmd_get(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	IMAGE *img;
+	imgtool_image *img;
 	char *newfname;
 	int unnamedargs;
 	FILTERMODULE filter;
@@ -243,8 +243,8 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	int i;
-	IMAGE *img;
-	const char *fname = NULL;
+	imgtool_image *img;
+	const char *filename = NULL;
 	int unnamedargs;
 	FILTERMODULE filter;
 	const struct ImageModule *module;
@@ -278,9 +278,9 @@ static int cmd_put(const struct command *c, int argc, char *argv[])
 
 	for (i = 2; i < unnamedargs; i++)
 	{
-		fname = argv[i];
-		printf("Putting file '%s'...\n", fname);
-		err = img_putfile(img, NULL, fname, resolution, filter);
+		filename = argv[i];
+		printf("Putting file '%s'...\n", filename);
+		err = img_putfile(img, NULL, filename, resolution, filter);
 		if (err)
 			goto error;
 	}
@@ -295,7 +295,7 @@ error:
 		img_close(img);
 	if (resolution)
 		option_resolution_close(resolution);
-	reporterror(err, c, argv[0], argv[1], fname, NULL, resolution);
+	reporterror(err, c, argv[0], argv[1], filename, NULL, resolution);
 	return -1;
 }
 
@@ -304,8 +304,8 @@ error:
 static int cmd_getall(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	IMAGE *img;
-	IMAGEENUM *imgenum;
+	imgtool_image *img;
+	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	FILTERMODULE filter;
 	int unnamedargs;
@@ -326,14 +326,14 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	}
 
 	memset(&ent, 0, sizeof(ent));
-	ent.fname = buf;
-	ent.fname_len = sizeof(buf);
+	ent.filename = buf;
+	ent.filename_len = sizeof(buf);
 
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
 	{
-		fprintf(stdout, "Retrieving %s (%i bytes)\n", ent.fname, ent.filesize);
+		fprintf(stdout, "Retrieving %s (%u bytes)\n", ent.filename, (unsigned int) ent.filesize);
 
-		err = img_getfile(img, ent.fname, NULL, filter);
+		err = img_getfile(img, ent.filename, NULL, filter);
 		if (err)
 			break;
 	}
@@ -356,7 +356,7 @@ error:
 static int cmd_del(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	IMAGE *img;
+	imgtool_image *img;
 
 	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)

@@ -42,7 +42,7 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 {
 	imgtoolerr_t err;
 	const struct ImageModule *module = NULL;
-	IMAGE *image;
+	imgtool_image *image;
 	size_t i = 0;
 	const char *extension;
 	int null_terminate;
@@ -84,10 +84,10 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 
 
 
-imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg)
+imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, imgtool_image **outimg)
 {
 	imgtoolerr_t err;
-	STREAM *f;
+	imgtool_stream *f;
 
 	*outimg = NULL;
 
@@ -107,7 +107,9 @@ imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int r
 	return 0;
 }
 
-imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, IMAGE **outimg)
+
+
+imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, const char *fname, int read_or_write, imgtool_image **outimg)
 {
 	const struct ImageModule *module;
 
@@ -118,13 +120,17 @@ imgtoolerr_t img_open_byname(imgtool_library *library, const char *modulename, c
 	return img_open(module, fname, read_or_write, outimg);
 }
 
-void img_close(IMAGE *img)
+
+
+void img_close(imgtool_image *img)
 {
 	if (img->module->close)
 		img->module->close(img);
 }
 
-imgtoolerr_t img_info(IMAGE *img, char *string, const int len)
+
+
+imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len)
 {
 	if (len > 0)
 	{
@@ -136,7 +142,9 @@ imgtoolerr_t img_info(IMAGE *img, char *string, const int len)
 	return 0;
 }
 
-imgtoolerr_t img_beginenum(IMAGE *img, IMAGEENUM **outenum)
+
+
+imgtoolerr_t img_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	imgtoolerr_t err;
 
@@ -155,7 +163,9 @@ imgtoolerr_t img_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-imgtoolerr_t img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+
+
+imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	imgtoolerr_t err;
 
@@ -172,23 +182,27 @@ imgtoolerr_t img_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-void img_closeenum(IMAGEENUM *enumeration)
+
+
+void img_closeenum(imgtool_imageenum *enumeration)
 {
 	if (enumeration->module->close_enum)
 		enumeration->module->close_enum(enumeration);
 }
 
-imgtoolerr_t img_countfiles(IMAGE *img, int *totalfiles)
+
+
+imgtoolerr_t img_countfiles(imgtool_image *img, int *totalfiles)
 {
 	int err;
-	IMAGEENUM *imgenum;
+	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	char fnamebuf[256];
 
 	*totalfiles = 0;
 	memset(&ent, 0, sizeof(ent));
-	ent.fname = fnamebuf;
-	ent.fname_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
+	ent.filename = fnamebuf;
+	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
 	err = img_beginenum(img, &imgenum);
 	if (err)
@@ -199,10 +213,10 @@ imgtoolerr_t img_countfiles(IMAGE *img, int *totalfiles)
 		if (err)
 			goto done;
 
-		if (ent.fname[0])
+		if (ent.filename[0])
 			(*totalfiles)++;
 	}
-	while(ent.fname[0]);
+	while(ent.filename[0]);
 
 done:
 	if (imgenum)
@@ -210,17 +224,19 @@ done:
 	return err;
 }
 
-imgtoolerr_t img_filesize(IMAGE *img, const char *fname, int *filesize)
+
+
+imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesize)
 {
 	int err;
-	IMAGEENUM *imgenum;
+	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	char fnamebuf[256];
 
 	*filesize = -1;
 	memset(&ent, 0, sizeof(ent));
-	ent.fname = fnamebuf;
-	ent.fname_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
+	ent.filename = fnamebuf;
+	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
 	err = img_beginenum(img, &imgenum);
 	if (err)
@@ -232,12 +248,13 @@ imgtoolerr_t img_filesize(IMAGE *img, const char *fname, int *filesize)
 		if (err)
 			goto done;
 
-		if (!strcmpi(fname, ent.fname)) {
+		if (!strcmpi(fname, ent.filename))
+		{
 			*filesize = ent.filesize;
 			goto done;
 		}
 	}
-	while(ent.fname[0]);
+	while(ent.filename[0]);
 
 	err = IMGTOOLERR_FILENOTFOUND;
 
@@ -247,10 +264,12 @@ done:
 	return err;
 }
 
-imgtoolerr_t img_freespace(IMAGE *img, int *sz)
+
+
+imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz)
 {
 	imgtoolerr_t err;
-	size_t size;
+	UINT64 size;
 
 	if (!img->module->free_space)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
@@ -264,9 +283,11 @@ imgtoolerr_t img_freespace(IMAGE *img, int *sz)
 	return IMGTOOLERR_SUCCESS;
 }
 
-static imgtoolerr_t process_filter(STREAM **mainstream, STREAM **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
+
+
+static imgtoolerr_t process_filter(imgtool_stream **mainstream, imgtool_stream **newstream, const struct ImageModule *imgmod, FILTERMODULE filter, int purpose)
 {
-	FILTER *f;
+	imgtool_filter *f;
 
 	if (filter)
 	{
@@ -285,10 +306,10 @@ static imgtoolerr_t process_filter(STREAM **mainstream, STREAM **newstream, cons
 
 
 
-imgtoolerr_t img_readfile(IMAGE *img, const char *fname, STREAM *destf, FILTERMODULE filter)
+imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
-	STREAM *newstream = NULL;
+	imgtool_stream *newstream = NULL;
 
 	if (!img->module->read_file)
 	{
@@ -316,12 +337,12 @@ done:
 
 
 
-imgtoolerr_t img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *opts, FILTERMODULE filter)
+imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
 	char *buf = NULL;
 	char *s;
-	STREAM *newstream = NULL;
+	imgtool_stream *newstream = NULL;
 	option_resolution *alloc_resolution = NULL;
 
 	if (!img->module->write_file)
@@ -385,10 +406,10 @@ done:
 
 
 
-imgtoolerr_t img_getfile(IMAGE *img, const char *fname, const char *dest, FILTERMODULE filter)
+imgtoolerr_t img_getfile(imgtool_image *img, const char *fname, const char *dest, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
-	STREAM *f;
+	imgtool_stream *f;
 
 	if (!dest)
 		dest = fname;
@@ -412,10 +433,10 @@ done:
 
 
 
-imgtoolerr_t img_putfile(IMAGE *img, const char *newfname, const char *source, option_resolution *opts, FILTERMODULE filter)
+imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *source, option_resolution *opts, FILTERMODULE filter)
 {
 	imgtoolerr_t err;
-	STREAM *f;
+	imgtool_stream *f;
 
 	if (!newfname)
 		newfname = (const char *) osd_basename((char *) source);
@@ -431,7 +452,7 @@ imgtoolerr_t img_putfile(IMAGE *img, const char *newfname, const char *source, o
 
 
 
-imgtoolerr_t img_deletefile(IMAGE *img, const char *fname)
+imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 {
 	imgtoolerr_t err;
 
@@ -448,7 +469,7 @@ imgtoolerr_t img_deletefile(IMAGE *img, const char *fname)
 imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, option_resolution *opts)
 {
 	imgtoolerr_t err;
-	STREAM *f;
+	imgtool_stream *f;
 
 	if (!module->create)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;

@@ -46,25 +46,25 @@
 
 
 typedef struct {
-	IMAGE			base; 
+	imgtool_image			base; 
 	char			*file_name;
-	STREAM 			*file_handle;
+	imgtool_stream 			*file_handle;
 	int 			size, format, disks;
 	} DSK_IMAGE;
 
 typedef struct
 	{
-	IMAGEENUM 	base;
+	imgtool_imageenum 	base;
 	DSK_IMAGE	*image;
 	int			index;
 	} DSK_ITERATOR;
 
-static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void msx_dsk_image_exit(IMAGE *img);
-static int msx_dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int msx_dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void msx_dsk_image_closeenum(IMAGEENUM *enumeration);
-static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static int msx_dsk_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void msx_dsk_image_exit(imgtool_image *img);
+static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void msx_dsk_image_closeenum(imgtool_imageenum *enumeration);
+static int msx_dsk_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
 	msx_img,
@@ -171,7 +171,7 @@ IMAGEMODULE(
 #define 	FORMAT_MSX		(2)
 #define 	FORMAT_MULTI	(3)
 
-static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int msx_dsk_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	DSK_IMAGE *image;
 	int size, disks, correct, format;
@@ -238,7 +238,7 @@ static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	image = (DSK_IMAGE*)malloc (sizeof (DSK_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
-	*outimg = (IMAGE*)image;
+	*outimg = (imgtool_image*)image;
 
 	memset(image, 0, sizeof(DSK_IMAGE));
 	image->base.module = mod;
@@ -251,7 +251,7 @@ static int msx_dsk_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	return 0;
 	}
 
-static void msx_dsk_image_exit(IMAGE *img)
+static void msx_dsk_image_exit(imgtool_image *img)
 	{
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
 	stream_close(image->file_handle);
@@ -259,7 +259,7 @@ static void msx_dsk_image_exit(IMAGE *img)
 	free(image);
 	}
 
-static int msx_dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int msx_dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	{
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
 	DSK_ITERATOR *iter;
@@ -274,7 +274,7 @@ static int msx_dsk_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 	}
 
-static int msx_dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int msx_dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	{
 	DSK_ITERATOR *iter=(DSK_ITERATOR*)enumeration;
 
@@ -300,12 +300,12 @@ static int msx_dsk_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 	}
 
-static void msx_dsk_image_closeenum(IMAGEENUM *enumeration)
+static void msx_dsk_image_closeenum(imgtool_imageenum *enumeration)
 	{
 	free(enumeration);
 	}
 
-static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int msx_dsk_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 	{
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
 	UINT8	buf[0x1200];

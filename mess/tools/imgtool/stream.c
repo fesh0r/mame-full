@@ -27,8 +27,8 @@ struct stream_internal
 			size_t pos;
 		} m;
 		struct {
-			STREAM *s;
-			FILTER *f;
+			imgtool_stream *s;
+			imgtool_filter *f;
 			size_t totalread;
 		} filt;
 	} u;
@@ -46,7 +46,7 @@ static size_t fsize(FILE *f)
 	return (size_t) sz;
 }
 
-static STREAM *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
+static imgtool_stream *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
 	struct stream_internal *imgfile = NULL;
 	ZIP *z = NULL;
@@ -92,7 +92,7 @@ static STREAM *stream_open_zip(const char *zipname, const char *subname, int rea
 		goto error;
 
 	closezip(z);
-	return (STREAM *) imgfile;
+	return (imgtool_stream *) imgfile;
 
 error:
 	if (z)
@@ -106,7 +106,7 @@ error:
 	return NULL;
 }
 
-STREAM *stream_open(const char *fname, int read_or_write)
+imgtool_stream *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
 	struct stream_internal *imgfile = NULL;
@@ -114,7 +114,7 @@ STREAM *stream_open(const char *fname, int read_or_write)
 	FILE *f = NULL;
 	char *buf = NULL;
 	int len, i;
-	STREAM *s = NULL;
+	imgtool_stream *s = NULL;
 	char c;
 
 	/* maybe we are just a ZIP? */
@@ -166,7 +166,7 @@ STREAM *stream_open(const char *fname, int read_or_write)
 	imgfile->write_protect = read_or_write ? 0 : 1;
 	imgfile->u.f = f;
 	imgfile->name = fname;
-	return (STREAM *) imgfile;
+	return (imgtool_stream *) imgfile;
 
 error:
 	if (imgfile)
@@ -175,10 +175,10 @@ error:
 		fclose(f);
 	if (buf)
 		free(buf);
-	return (STREAM *) NULL;
+	return (imgtool_stream *) NULL;
 }
 
-STREAM *stream_open_write_stream(int size)
+imgtool_stream *stream_open_write_stream(int size)
 {
 	struct stream_internal *imgfile;
 
@@ -197,10 +197,10 @@ STREAM *stream_open_write_stream(int size)
 		free(imgfile);
 		return NULL;
 	}
-	return (STREAM *) imgfile;
+	return (imgtool_stream *) imgfile;
 }
 
-STREAM *stream_open_mem(void *buf, size_t sz)
+imgtool_stream *stream_open_mem(void *buf, size_t sz)
 {
 	struct stream_internal *imgfile;
 
@@ -214,10 +214,10 @@ STREAM *stream_open_mem(void *buf, size_t sz)
 
 	imgfile->u.m.bufsz = sz;
 	imgfile->u.m.buf = buf;
-	return (STREAM *) imgfile;
+	return (imgtool_stream *) imgfile;
 }
 
-STREAM *stream_open_filter(STREAM *s, FILTER *f)
+imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f)
 {
 	struct stream_internal *imgfile;
 
@@ -229,10 +229,10 @@ STREAM *stream_open_filter(STREAM *s, FILTER *f)
 	imgfile->u.filt.s = s;
 	imgfile->u.filt.f = f;
 	imgfile->u.filt.totalread = 0;
-	return (STREAM *) imgfile;
+	return (imgtool_stream *) imgfile;
 }
 
-void stream_close(STREAM *s)
+void stream_close(imgtool_stream *s)
 {
 	struct stream_internal *si = (struct stream_internal *) s;
 
@@ -256,7 +256,7 @@ void stream_close(STREAM *s)
 	free((void *) si);
 }
 
-size_t stream_read(STREAM *s, void *buf, size_t sz)
+size_t stream_read(imgtool_stream *s, void *buf, size_t sz)
 {
 	size_t result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;
@@ -287,7 +287,7 @@ size_t stream_read(STREAM *s, void *buf, size_t sz)
 	return result;
 }
 
-size_t stream_write(STREAM *s, const void *buf, size_t sz)
+size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
 {
 	size_t result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;
@@ -320,7 +320,7 @@ size_t stream_write(STREAM *s, const void *buf, size_t sz)
 	return result;
 }
 
-size_t stream_size(STREAM *s)
+size_t stream_size(imgtool_stream *s)
 {
 	size_t result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;
@@ -346,7 +346,7 @@ size_t stream_size(STREAM *s)
 	return result;
 }
 
-int stream_seek(STREAM *s, size_t pos, int where)
+int stream_seek(imgtool_stream *s, size_t pos, int where)
 {
 	int result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;
@@ -380,7 +380,7 @@ int stream_seek(STREAM *s, size_t pos, int where)
 	return result;
 }
 
-size_t stream_tell(STREAM *s)
+size_t stream_tell(imgtool_stream *s)
 {
 	int result = 0;
 	struct stream_internal *si = (struct stream_internal *) s;
@@ -401,7 +401,7 @@ size_t stream_tell(STREAM *s)
 	return result;
 }
 
-size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz)
+size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
 {
 	size_t result = 0;
 	size_t readsz;
@@ -415,12 +415,12 @@ size_t stream_transfer(STREAM *dest, STREAM *source, size_t sz)
 	return result;
 }
 
-size_t stream_transfer_all(STREAM *dest, STREAM *source)
+size_t stream_transfer_all(imgtool_stream *dest, imgtool_stream *source)
 {
 	return stream_transfer(dest, source, stream_size(source));
 }
 
-int stream_crc(STREAM *s, unsigned long *result)
+int stream_crc(imgtool_stream *s, unsigned long *result)
 {
 	size_t sz;
 	void *ptr;
@@ -449,7 +449,7 @@ int stream_crc(STREAM *s, unsigned long *result)
 int file_crc(const char *fname,  unsigned long *result)
 {
 	int err;
-	STREAM *f;
+	imgtool_stream *f;
 
 	f = stream_open(fname, OSD_FOPEN_READ);
 	if (!f)
@@ -460,7 +460,7 @@ int file_crc(const char *fname,  unsigned long *result)
 	return err;
 }
 
-size_t stream_fill(STREAM *f, unsigned char b, size_t sz)
+size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz)
 {
 	size_t outsz;
 	char buf[1024];
@@ -475,7 +475,7 @@ size_t stream_fill(STREAM *f, unsigned char b, size_t sz)
 	return outsz;
 }
 
-void stream_clear(STREAM *s)
+void stream_clear(imgtool_stream *s)
 {
 	struct stream_internal *si = (struct stream_internal *) s;
 
@@ -497,7 +497,7 @@ void stream_clear(STREAM *s)
 	}
 }
 
-int stream_isreadonly(STREAM *s)
+int stream_isreadonly(imgtool_stream *s)
 {
 	struct stream_internal *si = (struct stream_internal *) s;
 	return si->write_protect;

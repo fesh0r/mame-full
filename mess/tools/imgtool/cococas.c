@@ -6,10 +6,10 @@
 #include "formats/cococas.h"
 #include "utils.h"
 
-static int cococas_initalt(STREAM *instream, STREAM **outstream, int *basepos,
+static int cococas_initalt(imgtool_stream *instream, imgtool_stream **outstream, int *basepos,
 	int *length, int *channels, int *frequency, int *resolution);
-static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent);
-static int cococas_readfile(IMAGE *img, STREAM *destf);
+static int cococas_nextfile(imgtool_image *img, imgtool_dirent *ent);
+static int cococas_readfile(imgtool_image *img, imgtool_stream *destf);
 
 static UINT8 blockheader[] = { 0x55, 0x3C };
 
@@ -45,7 +45,7 @@ enum {
 	COCOCAS_BLOCKTYPE_EOF = 0xff
 };
 
-static int readblock(IMAGE *img, casblock *blk)
+static int readblock(imgtool_image *img, casblock *blk)
 {
 	int err;
 	int i;
@@ -84,7 +84,7 @@ static int readblock(IMAGE *img, casblock *blk)
 	return 0;
 }
 
-static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
+static int cococas_nextfile(imgtool_image *img, imgtool_dirent *ent)
 {
 	int err, filesize;
 	casblock blk;
@@ -132,7 +132,7 @@ static int cococas_nextfile(IMAGE *img, imgtool_dirent *ent)
 	return 0;
 }
 
-static int cococas_readfile(IMAGE *img, STREAM *destf)
+static int cococas_readfile(imgtool_image *img, imgtool_stream *destf)
 {
 	int err;
 	casblock blk;
@@ -162,7 +162,7 @@ static int cococas_readfile(IMAGE *img, STREAM *destf)
 	return 0;
 }
 
-static int cococas_initalt(STREAM *instream, STREAM **outstream, int *basepos,
+static int cococas_initalt(imgtool_stream *instream, imgtool_stream **outstream, int *basepos,
 	int *length, int *channels, int *frequency, int *resolution)
 {
 	int caslength;

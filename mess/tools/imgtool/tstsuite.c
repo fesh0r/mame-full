@@ -20,8 +20,8 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 	char *s2;
 	const char *directive;
 	const char *directive_value;
-	IMAGE *img = NULL;
-	IMAGEENUM *imgenum;
+	imgtool_image *img = NULL;
+	imgtool_imageenum *imgenum;
 	imgtool_dirent imgdirent;
 	int err = -1, i;
 

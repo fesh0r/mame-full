@@ -15,6 +15,7 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
+#include "osd_cpu.h"
 #include "opresolv.h"
 #include "stream.h"
 
@@ -32,13 +33,15 @@ imgtool_libsort_t;
 
 typedef struct
 {
-	char *fname;
-	size_t fname_len;
+	char *filename;
+	size_t filename_len;
 	char *attr;
 	int attr_len;
-	int filesize;
-	int eof;
-	int corrupt;
+	UINT64 filesize;
+
+	/* flags */
+	unsigned int eof : 1;
+	unsigned int corrupt : 1;
 }
 imgtool_dirent;
 
@@ -53,17 +56,17 @@ struct ImageModule
 	const char *eoln;
 	int flags;
 
-	imgtoolerr_t	(*open)			(const struct ImageModule *mod, STREAM *f, struct tagIMAGE **outimg);
+	imgtoolerr_t	(*open)			(const struct ImageModule *mod, imgtool_stream *f, struct tagIMAGE **outimg);
 	void			(*close)		(struct tagIMAGE *img);
-	void			(*info)			(struct tagIMAGE *img, char *string, const int len);
+	void			(*info)			(struct tagIMAGE *img, char *string, size_t len);
 	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, struct tagIMAGEENUM **outenum);
 	imgtoolerr_t	(*next_enum)	(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(struct tagIMAGEENUM *enumeration);
-	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, size_t *size);
-	imgtoolerr_t	(*read_file)	(struct tagIMAGE *img, const char *fname, STREAM *destf);
-	imgtoolerr_t	(*write_file)	(struct tagIMAGE *img, const char *fname, STREAM *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
 	imgtoolerr_t	(*delete_file)	(struct tagIMAGE *img, const char *fname);
-	imgtoolerr_t	(*create)		(const struct ImageModule *mod, STREAM *f, option_resolution *opts);
+	imgtoolerr_t	(*create)		(const struct ImageModule *mod, imgtool_stream *f, option_resolution *opts);
 
 	const struct OptionGuide *createimage_optguide;
 	const char *createimage_optspec;

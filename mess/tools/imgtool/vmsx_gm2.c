@@ -20,8 +20,8 @@
 #define NewName "gmaster2.mem"
 
 typedef struct {
-	IMAGE			base;
-	STREAM 			*file_handle;
+	imgtool_image			base;
+	imgtool_stream 			*file_handle;
 	int 			size;
 	unsigned char	*data;
 	int 			count;
@@ -29,18 +29,18 @@ typedef struct {
 
 typedef struct
 	{
-	IMAGEENUM 	base;
+	imgtool_imageenum 	base;
 	GM2_IMAGE	*image;
 	int			index;
 	} TAP_ITERATOR;
 
-static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void vmsx_gm2_image_exit(IMAGE *img);
-//static void vmsx_gm2_image_info(IMAGE *img, char *string, const int len);
-static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int vmsx_gm2_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void vmsx_gm2_image_closeenum(IMAGEENUM *enumeration);
-static int vmsx_gm2_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static int vmsx_gm2_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void vmsx_gm2_image_exit(imgtool_image *img);
+//static void vmsx_gm2_image_info(imgtool_image *img, char *string, const int len);
+static int vmsx_gm2_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int vmsx_gm2_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void vmsx_gm2_image_closeenum(imgtool_imageenum *enumeration);
+static int vmsx_gm2_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
 	vmsx_gm2,
@@ -67,14 +67,14 @@ IMAGEMODULE(
 	NULL					/* create options */
 )
 
-static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int vmsx_gm2_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	GM2_IMAGE *image;
 
 	image = (GM2_IMAGE*)malloc (sizeof (GM2_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
-	*outimg = (IMAGE*)image;
+	*outimg = (imgtool_image*)image;
 
 	memset(image, 0, sizeof(GM2_IMAGE));
 	image->base.module = mod;
@@ -99,7 +99,7 @@ static int vmsx_gm2_image_init(const struct ImageModule *mod, STREAM *f, IMAGE *
 	return 0;
 }
 
-static void vmsx_gm2_image_exit(IMAGE *img)
+static void vmsx_gm2_image_exit(imgtool_image *img)
 	{
 	GM2_IMAGE *image=(GM2_IMAGE*)img;
 	stream_close(image->file_handle);
@@ -107,7 +107,7 @@ static void vmsx_gm2_image_exit(IMAGE *img)
 	free(image);
 	}
 
-static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int vmsx_gm2_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	{
 	GM2_IMAGE *image=(GM2_IMAGE*)img;
 	TAP_ITERATOR *iter;
@@ -122,7 +122,7 @@ static int vmsx_gm2_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 	}
 
-static int vmsx_gm2_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int vmsx_gm2_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	{
 	TAP_ITERATOR *iter=(TAP_ITERATOR*)enumeration;
 
@@ -138,12 +138,12 @@ static int vmsx_gm2_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 	}
 
-static void vmsx_gm2_image_closeenum(IMAGEENUM *enumeration)
+static void vmsx_gm2_image_closeenum(imgtool_imageenum *enumeration)
 	{
 	free(enumeration);
 	}
 
-static int vmsx_gm2_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int vmsx_gm2_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 	{
 	GM2_IMAGE *image=(GM2_IMAGE*)img;
 

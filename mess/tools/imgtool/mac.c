@@ -576,15 +576,15 @@ static void mac_strncpy(UINT8 *dest, int n, const UINT8 *src)
 
 	Check a file name.
 
-	fname (I): file name (macintosh string)
+	filename (I): file name (macintosh string)
 
 	Return non-zero if the file name is invalid.
 
 	TODO: how about script codes in HFS???
 */
-static int check_fname(const UINT8 *fname)
+static int check_fname(const UINT8 *filename)
 {
-	size_t len = fname[0];
+	size_t len = filename[0];
 	int i;
 
 #if 0
@@ -596,7 +596,7 @@ static int check_fname(const UINT8 *fname)
 	/* check and copy file name */
 	for (i=0; i<len; i++)
 	{
-		switch (fname[i+1])
+		switch (filename[i+1])
 		{
 		case ':':
 			/* illegal character */
@@ -736,7 +736,7 @@ static UINT32 mac_GetDateTime(void)
 typedef struct MBHeader /* MacBinary header */ 
 {
 	UINT8 version_old;		/* always 0 */
-	mac_str63 fname;		/* file name (31 characters at most for HFS & */
+	mac_str63 filename;		/* file name (31 characters at most for HFS & */
 								/* system 7 compatibility?) */
 	UINT32BE ftype;			/* file type */
 	UINT32BE fcreator;		/* file creator */
@@ -858,7 +858,7 @@ static UINT16 MB_calcCRC(const MBHeader *header)
 
 #if 0
 #pragma mark -
-#pragma mark DISK IMAGE ROUTINES
+#pragma mark DISK imgtool_image ROUTINES
 #endif
 /*
 	Low-level disk routines: the disk is implemented as a succession of
@@ -890,7 +890,7 @@ typedef struct diskcopy_header_t
 */
 typedef struct mac_l1_imgref
 {
-	STREAM *f;					/* imgtool file reference */
+	imgtool_stream *f;					/* imgtool file reference */
 	UINT32 num_blocks;			/* total number of 512-byte blocks */
 	UINT32 tagbytesperblock;	/* number of tag bytes per block */
 	UINT32 tag_offset;			/* file offset to tag data */
@@ -916,7 +916,7 @@ typedef struct mac_l1_imgref
 
 	Return imgtool error code
 */
-static imgtoolerr_t floppy_image_open(STREAM *f, mac_l1_imgref *image)
+static imgtoolerr_t floppy_image_open(imgtool_stream *f, mac_l1_imgref *image)
 {
 	diskcopy_header_t header;
 
@@ -1154,7 +1154,7 @@ typedef struct hfs_fileref
 	hfs_extent_3 extents;			/* first 3 file extents */
 
 	UINT32 parID;					/* CNID of parent directory (undefined for extent & catalog files) */
-	mac_str31 fname;				/* file name (undefined for extent & catalog files) */
+	mac_str31 filename;				/* file name (undefined for extent & catalog files) */
 } hfs_fileref;
 
 /*
@@ -1235,7 +1235,7 @@ typedef struct hfs_l2_imgref
 */
 struct mac_l2_imgref
 {
-	IMAGE base;
+	imgtool_image base;
 
 	mac_l1_imgref l1_img;
 
@@ -1410,10 +1410,10 @@ static imgtoolerr_t hfs_image_open(mac_l2_imgref *l2_img, img_open_buf *buf);
 static void hfs_image_close(mac_l2_imgref *l2_img);
 static imgtoolerr_t mfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
 static imgtoolerr_t hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num, UINT32 *block_address);
-static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 fname, mac_cat_info *cat_info, int create_it);
-static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info);
-static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
-static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref);
+static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 filename, mac_cat_info *cat_info, int create_it);
+static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 filename, mac_cat_info *cat_info);
+static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 filename, mac_forkID fork, mac_fileref *fileref);
+static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 filename, mac_forkID fork, mac_fileref *fileref);
 static imgtoolerr_t mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof);
 static imgtoolerr_t mfs_dir_update(mac_fileref *fileref);
 
@@ -1481,7 +1481,7 @@ static void mac_image_close(mac_l2_imgref *l2_img)
 /*
 	mac_resolve_fpath
 
-	Resolve a file path, and translate it to a parID + fname pair that enables
+	Resolve a file path, and translate it to a parID + filename pair that enables
 	to do an efficient file search on a HFS volume (and an inefficient one on
 	MFS, but it is not an issue as MFS volumes typically have a few dozens
 	files, vs. possibly thousands with HFS volumes).
@@ -1490,7 +1490,7 @@ static void mac_image_close(mac_l2_imgref *l2_img)
 	fpath (I): file path (C string)
 	parID (O): set to the CNID of the parent directory if the volume is in HFS
 		format (reserved for MFS volumes)
-	fname (O): set to the actual name of the file, with capitalization matching
+	filename (O): set to the actual name of the file, with capitalization matching
 		the one on the volume rather than the one in the fpath parameter (Mac
 		string)
 	cat_info (O): catalog info for this file extracted from the catalog file
@@ -1498,16 +1498,16 @@ static void mac_image_close(mac_l2_imgref *l2_img)
 
 	Return imgtool error code
 */
-static imgtoolerr_t mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info, int create_it)
+static imgtoolerr_t mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 filename, mac_cat_info *cat_info, int create_it)
 {
 	switch (l2_img->format)
 	{
 	case L2I_MFS:
 		*parID = 0;
-		return mfs_resolve_fpath(l2_img, fpath, fname, cat_info, create_it);
+		return mfs_resolve_fpath(l2_img, fpath, filename, cat_info, create_it);
 
 	case L2I_HFS:
-		return hfs_resolve_fpath(l2_img, fpath, parID, fname, cat_info);
+		return hfs_resolve_fpath(l2_img, fpath, parID, filename, cat_info);
 	}
 
 	return IMGTOOLERR_UNEXPECTED;
@@ -1521,21 +1521,21 @@ static imgtoolerr_t mac_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, 
 	l2_img (I/O): level-2 image reference
 	parID (I): CNID of the parent directory if the volume is in HFS format
 		(reserved for MFS volumes)
-	fname (I): name of the file (Mac string)
+	filename (I): name of the file (Mac string)
 	mac_forkID (I): tells which fork should be opened
 	fileref (O): mac file reference to open
 
 	Return imgtool error code
 */
-static imgtoolerr_t mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
+static imgtoolerr_t mac_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 filename, mac_forkID fork, mac_fileref *fileref)
 {
 	switch (l2_img->format)
 	{
 	case L2I_MFS:
-		return mfs_file_open(l2_img, fname, fork, fileref);
+		return mfs_file_open(l2_img, filename, fork, fileref);
 
 	case L2I_HFS:
-		return hfs_file_open(l2_img, parID, fname, fork, fileref);
+		return hfs_file_open(l2_img, parID, filename, fork, fileref);
 	}
 
 	return IMGTOOLERR_UNEXPECTED;
@@ -2181,7 +2181,7 @@ static imgtoolerr_t mfs_dir_read(mfs_dirref *dirref, mfs_dir_entry **dir_entry)
 
 	l2_img (I/O): level-2 image reference
 	dirref (I/O): open directory file reference
-	fname (I): name of the file for which an entry is created (Mac string)
+	filename (I): name of the file for which an entry is created (Mac string)
 	dir_entry (O): set to point to the created entry: set to NULL if EOF or
 		error
 
@@ -2343,12 +2343,12 @@ static imgtoolerr_t mfs_dir_update(mac_fileref *fileref)
 	Find a file in an MFS directory
 
 	dirref (I/O): open directory file reference
-	fname (I): file name (Mac string)
+	filename (I): file name (Mac string)
 	dir_entry (O): set to point to the entry read: set to NULL if EOF or error
 
 	Return imgtool error code
 */
-static imgtoolerr_t mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 fname, mfs_dir_entry **dir_entry)
+static imgtoolerr_t mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 filename, mfs_dir_entry **dir_entry)
 {
 	mfs_dir_entry *cur_dir_entry;
 	imgtoolerr_t errorcode;
@@ -2365,7 +2365,7 @@ static imgtoolerr_t mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 fnam
 		if (!cur_dir_entry)
 			/* EOF */
 			break;
-		if ((! mac_stricmp(fname, cur_dir_entry->name)) && (cur_dir_entry->flVersNum == 0))
+		if ((! mac_stricmp(filename, cur_dir_entry->name)) && (cur_dir_entry->flVersNum == 0))
 		{	/* file found */
 
 			if (dir_entry)
@@ -2386,7 +2386,7 @@ static imgtoolerr_t mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 fnam
 
 	l2_img (I/O): level-2 image reference
 	fpath (I): file path (C string)
-	fname (O): set to the actual name of the file, with capitalization matching
+	filename (O): set to the actual name of the file, with capitalization matching
 		the one on the volume rather than the one in the fpath parameter (Mac
 		string)
 	cat_info (I/O): on output, catalog info for this file extracted from the
@@ -2397,7 +2397,7 @@ static imgtoolerr_t mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 fnam
 
 	Return imgtool error code
 */
-static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 fname, mac_cat_info *cat_info, int create_it)
+static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, mac_str255 filename, mac_cat_info *cat_info, int create_it)
 {
 	mfs_dirref dirref;
 	mfs_dir_entry *dir_entry;
@@ -2408,19 +2408,19 @@ static imgtoolerr_t mfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, 
 		return IMGTOOLERR_BADFILENAME;
 
 	/* extract file name */
-	c_to_mac_strncpy(fname, fpath, strlen(fpath));
+	c_to_mac_strncpy(filename, fpath, strlen(fpath));
 
 	/* open dir */
 	mfs_dir_open(l2_img, &dirref);
 
 	/* find file */
-	errorcode = mfs_find_dir_entry(&dirref, fname, &dir_entry);
+	errorcode = mfs_find_dir_entry(&dirref, filename, &dir_entry);
 	if ((errorcode == IMGTOOLERR_FILENOTFOUND) && create_it)
-		errorcode = mfs_dir_insert(l2_img, &dirref, fname, &dir_entry);
+		errorcode = mfs_dir_insert(l2_img, &dirref, filename, &dir_entry);
 	if (errorcode)
 		return errorcode;
 
-	mac_strcpy(fname, dir_entry->name);
+	mac_strcpy(filename, dir_entry->name);
 
 	if (create_it && cat_info)
 	{
@@ -2503,13 +2503,13 @@ static imgtoolerr_t mfs_file_open_internal(mac_l2_imgref *l2_img, const mfs_dir_
 	directly: call mac_file_open instead.
 
 	l2_img (I/O): level-2 image reference
-	fname (I): name of the file (Mac string)
+	filename (I): name of the file (Mac string)
 	mac_forkID (I): tells which fork should be opened
 	fileref (O): mac file reference to open
 
 	Return imgtool error code
 */
-static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
+static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 filename, mac_forkID fork, mac_fileref *fileref)
 {
 	mfs_dirref dirref;
 	mfs_dir_entry *dir_entry;
@@ -2519,7 +2519,7 @@ static imgtoolerr_t mfs_file_open(mac_l2_imgref *l2_img, const mac_str255 fname,
 	mfs_dir_open(l2_img, &dirref);
 
 	/* find file */
-	errorcode = mfs_find_dir_entry(&dirref, fname, &dir_entry);
+	errorcode = mfs_find_dir_entry(&dirref, filename, &dir_entry);
 	if (errorcode)
 		return errorcode;
 
@@ -3604,7 +3604,7 @@ static imgtoolerr_t hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const ma
 	l2_img (I/O): level-2 image reference
 	fpath (I): file path (C string)
 	parID (O): set to the CNID of the file parent directory
-	fname (O): set to the actual name of the file, with capitalization matching
+	filename (O): set to the actual name of the file, with capitalization matching
 		the one on the volume rather than the one in the fpath parameter (Mac
 		string)
 	cat_info (O): catalog info for this file extracted from the catalog file
@@ -3612,7 +3612,7 @@ static imgtoolerr_t hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const ma
 
 	Return imgtool error code
 */
-static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info)
+static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 filename, mac_cat_info *cat_info)
 {
 	const char *element_start, *element_end;
 	int element_len;
@@ -3692,7 +3692,7 @@ static imgtoolerr_t hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, 
 
 	/* save ref */
 	*parID = get_UINT32BE(catrec_key->parID);
-	mac_strcpy(fname, catrec_key->cName);
+	mac_strcpy(filename, catrec_key->cName);
 
 
 	if (cat_info)
@@ -3764,13 +3764,13 @@ static imgtoolerr_t hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catF
 
 	l2_img (I/O): level-2 image reference
 	parID (I): CNID of file parent directory
-	fname (I): name of the file (Mac string)
+	filename (I): name of the file (Mac string)
 	mac_forkID (I): tells which fork should be opened
 	fileref (O): mac file reference to open
 
 	Return imgtool error code
 */
-static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_forkID fork, mac_fileref *fileref)
+static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 filename, mac_forkID fork, mac_fileref *fileref)
 {
 	hfs_catKey *catrec_key;
 	hfs_catData *catrec_data;
@@ -3778,7 +3778,7 @@ static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac
 	imgtoolerr_t errorcode;
 
 	/* lookup file in catalog */
-	errorcode = hfs_cat_search(l2_img, parID, fname, &catrec_key, &catrec_data);
+	errorcode = hfs_cat_search(l2_img, parID, filename, &catrec_key, &catrec_data);
 	if (errorcode)
 		return errorcode;
 
@@ -3789,7 +3789,7 @@ static imgtoolerr_t hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac
 		return IMGTOOLERR_BADFILENAME;
 
 	fileref->u.hfs.parID = get_UINT32BE(catrec_key->parID);
-	mac_strcpy(fileref->u.hfs.fname, catrec_key->cName);
+	mac_strcpy(fileref->u.hfs.filename, catrec_key->cName);
 
 	/* open it */
 	return hfs_file_open_internal(l2_img, &catrec_data->file, fork, fileref);
@@ -5540,17 +5540,17 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 #pragma mark IMGTOOL MODULE IMPLEMENTATION
 #endif
 
-static imgtoolerr_t mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void mac_image_exit(IMAGE *img);
-static void mac_image_info(IMAGE *img, char *string, const int len);
-static imgtoolerr_t mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static imgtoolerr_t mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void mac_image_closeenum(IMAGEENUM *enumeration);
-static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size);
-static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
-/*static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname);
-static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
+static imgtoolerr_t mac_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void mac_image_exit(imgtool_image *img);
+static void mac_image_info(imgtool_image *img, char *string, size_t len);
+static imgtoolerr_t mac_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void mac_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
+static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf);
+static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions);
+/*static imgtoolerr_t mac_image_deletefile(imgtool_image *img, const char *filename);
+static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
 imgtoolerr_t mac_createmodule(imgtool_library *library)
 {
@@ -5589,7 +5589,7 @@ imgtoolerr_t mac_createmodule(imgtool_library *library)
 /*
 	Open a file as a mfs image (common code).
 */
-static imgtoolerr_t mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t mac_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	mac_l2_imgref *image;
 	imgtoolerr_t errorcode;
@@ -5613,7 +5613,7 @@ static imgtoolerr_t mac_image_init(const struct ImageModule *mod, STREAM *f, IMA
 /*
 	close a mfs image
 */
-static void mac_image_exit(IMAGE *img)
+static void mac_image_exit(imgtool_image *img)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 
@@ -5626,7 +5626,7 @@ static void mac_image_exit(IMAGE *img)
 
 	Currently returns the volume name
 */
-static void mac_image_info(IMAGE *img, char *string, const int len)
+static void mac_image_info(imgtool_image *img, char *string, size_t len)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 
@@ -5647,7 +5647,7 @@ static void mac_image_info(IMAGE *img, char *string, const int len)
 */
 typedef struct mac_iterator
 {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	mac_format format;
 	mac_l2_imgref *l2_img;
 	union
@@ -5666,7 +5666,7 @@ typedef struct mac_iterator
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t mac_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	mac_iterator *iter;
@@ -5736,7 +5736,7 @@ static imgtoolerr_t mfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	}
 
 	/* copy info */
-	mac_to_c_strncpy(ent->fname, ent->fname_len, cur_dir_entry->name);
+	mac_to_c_strncpy(ent->filename, ent->filename_len, cur_dir_entry->name);
 	snprintf(ent->attr, ent->attr_len, "%s", "");
 	ent->filesize = get_UINT32BE(cur_dir_entry->dataPhysicalSize)
 						+ get_UINT32BE(cur_dir_entry->rsrcPhysicalSize);
@@ -5833,17 +5833,17 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	}
 
 	/* initialize file path buffer */
-	cur_name_head = ent->fname_len;
+	cur_name_head = ent->filename_len;
 	if (cur_name_head > 0)
 	{
 		cur_name_head--;
-		ent->fname[cur_name_head] = '\0';
+		ent->filename[cur_name_head] = '\0';
 	}
 
 	/* insert folder/file name in buffer */
 	mac_to_c_strncpy(buf, sizeof(buf), catrec_key->cName);
-	if (ent->fname_len > 0)
-		concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, buf);
+	if (ent->filename_len > 0)
+		concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, buf);
 	/* extract parent directory ID */
 	parID = get_UINT32BE(catrec_key->parID);
 
@@ -5856,12 +5856,12 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		if (errorcode)
 		{
 			/* error */
-			if (ent->fname_len > 0)
+			if (ent->filename_len > 0)
 			{
-				concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, ":");
-				concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, "???");
+				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
+				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, "???");
 			}
-			memmove(ent->fname, ent->fname+cur_name_head, ent->fname_len-cur_name_head);
+			memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
 			ent->corrupt = 1;
 			return errorcode;
 		}
@@ -5871,12 +5871,12 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		if (dataRecType != hcrt_FolderThread)
 		{
 			/* error */
-			if (ent->fname_len > 0)
+			if (ent->filename_len > 0)
 			{
-				concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, ":");
-				concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, "???");
+				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
+				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, "???");
 			}
-			memmove(ent->fname, ent->fname+cur_name_head, ent->fname_len-cur_name_head);
+			memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
 			ent->corrupt = 1;
 			return IMGTOOLERR_CORRUPTIMAGE;
 		}
@@ -5884,15 +5884,15 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		/* got folder thread record: insert the folder name at the start of
 		file path, then iterate */
 		mac_to_c_strncpy(buf, sizeof(buf), catrec_data->thread.nodeName);
-		if (ent->fname_len > 0)
+		if (ent->filename_len > 0)
 		{
-			concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, ":");
-			concat_fname(ent->fname, &cur_name_head, ent->fname_len-1, buf);
+			concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
+			concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, buf);
 		}
 		/* extract parent directory ID */
 		parID = get_UINT32BE(catrec_data->thread.parID);
 	}
-	memmove(ent->fname, ent->fname+cur_name_head, ent->fname_len-cur_name_head);
+	memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -5900,7 +5900,7 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	mac_iterator *iter = (mac_iterator *) enumeration;
 
@@ -5921,7 +5921,7 @@ static imgtoolerr_t mac_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *e
 /*
 	Free enumerator
 */
-static void mac_image_closeenum(IMAGEENUM *enumeration)
+static void mac_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -5929,7 +5929,7 @@ static void mac_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image (in allocation blocks?)
 */
-static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size)
+static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 
@@ -5941,11 +5941,11 @@ static imgtoolerr_t mac_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a disk image.  The file is saved in macbinary format.
 */
-static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
+static imgtoolerr_t mac_image_readfile(imgtool_image *img, const char *fpath, imgtool_stream *destf)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	UINT32 parID;
-	mac_str255 fname;
+	mac_str255 filename;
 	mac_cat_info cat_info;
 	mac_fileref fileref;
 	imgtoolerr_t errorcode;
@@ -5956,7 +5956,7 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 	UINT32 i, run_len;
 
 	/* resolve path and fetch file info from directory/catalog */
-	errorcode = mac_resolve_fpath(image, fpath, &parID, fname, &cat_info, FALSE);
+	errorcode = mac_resolve_fpath(image, fpath, &parID, filename, &cat_info, FALSE);
 	if (errorcode)
 		return errorcode;
 
@@ -5968,7 +5968,7 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 	switch (image->format)
 	{
 	case L2I_MFS:
-		commentID = mfs_hashString(fname);
+		commentID = mfs_hashString(filename);
 		errorcode = get_comment(image, commentID, comment);
 		break;
 
@@ -6003,7 +6003,7 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 		MBHeader header;
 
 		header.version_old = 0;
-		mac_strncpy(header.fname, 63, fname);
+		mac_strncpy(header.filename, 63, filename);
 		header.ftype = cat_info.flFinderInfo.type;
 		header.fcreator = cat_info.flFinderInfo.creator;
 		header.flags_MSB = cat_info.flFinderInfo.flags.bytes[0];
@@ -6040,7 +6040,7 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 	}
 
 	/* open file DF */
-	errorcode = mac_file_open(image, parID, fname, data_fork, &fileref);
+	errorcode = mac_file_open(image, parID, filename, data_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -6067,7 +6067,7 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 	}
 
 	/* open file RF */
-	errorcode = mac_file_open(image, parID, fname, rsrc_fork, &fileref);
+	errorcode = mac_file_open(image, parID, filename, rsrc_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -6111,11 +6111,11 @@ static imgtoolerr_t mac_image_readfile(IMAGE *img, const char *fpath, STREAM *de
 /*
 	Add a file to a disk image.  The file must be in macbinary format.
 */
-static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t mac_image_writefile(imgtool_image *img, const char *fpath, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	UINT32 parID;
-	mac_str255 fname;
+	mac_str255 filename;
 	mac_cat_info cat_info;
 	mac_fileref fileref;
 	UINT32 data_len, rsrc_len;
@@ -6177,12 +6177,12 @@ static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *s
 		if (header.compat_version > 130)
 			return IMGTOOLERR_UNIMPLEMENTED;
 
-		if (header.fname[0] > 63)
+		if (header.filename[0] > 63)
 			return IMGTOOLERR_CORRUPTIMAGE;
 
 		/*if (header.version_old != 0)
 			return IMGTOOLERR_UNIMPLEMENTED;*/
-		/*mac_strcpy(fname, header.fname);*/
+		/*mac_strcpy(filename, header.filename);*/
 		cat_info.flFinderInfo.type = header.ftype;
 		cat_info.flFinderInfo.creator = header.fcreator;
 		cat_info.flFinderInfo.flags.bytes[0] = header.flags_MSB;
@@ -6218,12 +6218,12 @@ static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *s
 	set_UINT16BE(&cat_info.flFinderInfo.location.h, 0);
 
 	/* resolve path and create file */
-	errorcode = mac_resolve_fpath(image, fpath, &parID, fname, &cat_info, TRUE);
+	errorcode = mac_resolve_fpath(image, fpath, &parID, filename, &cat_info, TRUE);
 	if (errorcode)
 		return errorcode;
 
 	/* open file DF */
-	errorcode = mac_file_open(image, parID, fname, data_fork, &fileref);
+	errorcode = mac_file_open(image, parID, filename, data_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -6254,7 +6254,7 @@ static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *s
 	}
 
 	/* open file RF */
-	errorcode = mac_file_open(image, parID, fname, rsrc_fork, &fileref);
+	errorcode = mac_file_open(image, parID, filename, rsrc_fork, &fileref);
 	if (errorcode)
 		return errorcode;
 
@@ -6292,7 +6292,7 @@ static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *s
 /*
 	Delete a file from a disk image.
 */
-/*static imgtoolerr_t mac_image_deletefile(IMAGE *img, const char *fname)
+/*static imgtoolerr_t mac_image_deletefile(imgtool_image *img, const char *filename)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
 }*/
@@ -6300,7 +6300,7 @@ static imgtoolerr_t mac_image_writefile(IMAGE *img, const char *fpath, STREAM *s
 /*
 	Create a blank disk image.
 */
-/*static imgtoolerr_t mac_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+/*static imgtoolerr_t mac_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	return IMGTOOLERR_UNIMPLEMENTED;
 }*/

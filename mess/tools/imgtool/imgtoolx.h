@@ -25,9 +25,9 @@ enum {
 
 struct WaveExtra
 {
-	int (*initalt)(STREAM *instream, STREAM **outstream, int *basepos, int *length, int *channels, int *frequency, int *resolution);
-	int (*nextfile)(IMAGE *img, imgtool_dirent *ent);
-	int (*readfile)(IMAGE *img, STREAM *destf);
+	int (*initalt)(imgtool_stream *instream, imgtool_stream **outstream, int *basepos, int *length, int *channels, int *frequency, int *resolution);
+	int (*nextfile)(imgtool_image *img, imgtool_dirent *ent);
+	int (*readfile)(imgtool_image *img, imgtool_stream *destf);
 	int zeropulse;
 	int threshpulse;
 	int onepulse;
@@ -72,17 +72,17 @@ struct WaveExtra
 	}
 
 /* These are called internally */
-int imgwave_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-void imgwave_exit(IMAGE *img);
-int imgwave_beginenum(IMAGE *img, IMAGEENUM **outenum);
-int imgwave_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-void imgwave_closeenum(IMAGEENUM *enumeration);
-int imgwave_readfile(IMAGE *img, const char *fname, STREAM *destf);
+int imgwave_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+void imgwave_exit(imgtool_image *img);
+int imgwave_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+int imgwave_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+void imgwave_closeenum(imgtool_imageenum *enumeration);
+int imgwave_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 /* These are callable from wave modules */
-int imgwave_seek(IMAGE *img, int pos);
-int imgwave_forward(IMAGE *img);
-int imgwave_read(IMAGE *img, UINT8 *buf, int bufsize);
+int imgwave_seek(imgtool_image *img, int pos);
+int imgwave_forward(imgtool_image *img);
+int imgwave_read(imgtool_image *img, UINT8 *buf, int bufsize);
 
 
 #endif /* IMGTOOLX_H */

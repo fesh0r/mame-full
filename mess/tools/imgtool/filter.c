@@ -16,7 +16,7 @@ struct filter_instance
 
 /* ----------------------------------------------------------------------- */
 
-FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose)
+imgtool_filter *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int purpose)
 {
 	int instancesize;
 	struct filter_instance *instance;
@@ -47,10 +47,10 @@ FILTER *filter_init(FILTERMODULE filter, const struct ImageModule *imgmod, int p
 	assert(instance->filterproc);
 
 	instance->module = filter;
-	return (FILTER *) instance;
+	return (imgtool_filter *) instance;
 }
 
-void filter_term(FILTER *f)
+void filter_term(imgtool_filter *f)
 {
 	free(f);
 }
@@ -59,10 +59,10 @@ void filter_term(FILTER *f)
 
 static int filter_writetostream_sendproc(struct filter_info *fi, void *buf, int buflen)
 {
-	return stream_write((STREAM *) fi->internalparam, buf, buflen);
+	return stream_write((imgtool_stream *) fi->internalparam, buf, buflen);
 }
 
-int filter_writetostream(FILTER *f, STREAM *s, const void *buf, int buflen)
+int filter_writetostream(imgtool_filter *f, imgtool_stream *s, const void *buf, int buflen)
 {
 	struct filter_instance *instance = (struct filter_instance *) f;
 	struct filter_info fi;
@@ -123,7 +123,7 @@ static int filter_readfromstream_sendproc(struct filter_info *fi, void *buf, int
 	return result;
 }
 
-int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
+int filter_readfromstream(imgtool_filter *f, imgtool_stream *s, void *buf, int buflen)
 {
 	int sz;
 	int result = 0;
@@ -175,7 +175,7 @@ int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen)
 }
 
 /* This function processes all data, reads it into its buffer, and returns the size of the data */
-int filter_readintobuffer(FILTER *f, STREAM *s)
+int filter_readintobuffer(imgtool_filter *f, imgtool_stream *s)
 {
 	int sz;
 	int result = 0;

@@ -26,10 +26,10 @@ static void *create_buffer(size_t len)
 	return buf;
 }
 
-static imgtoolerr_t get_freespace(const struct ImageModule *module, const char *imagename, int *freespace)
+static imgtoolerr_t get_freespace(const struct ImageModule *module, const char *imagename, UINT64 *freespace)
 {
 	imgtoolerr_t err;
-	IMAGE *img = NULL;
+	imgtool_image *img = NULL;
 
 	err = img_open(module, imagename, OSD_FOPEN_RW, &img);
 	if (err)
@@ -48,8 +48,8 @@ done:
 static imgtoolerr_t create_file_in_image(const struct ImageModule *module, const char *imagename, const char *fname, void *testbuf, size_t filesize)
 {
 	imgtoolerr_t err;
-	IMAGE *img = NULL;
-	STREAM *s = NULL;
+	imgtool_image *img = NULL;
+	imgtool_stream *s = NULL;
 
 	/* Create a test stream */
 	s = stream_open_mem(testbuf, filesize);
@@ -77,8 +77,8 @@ done:
 static int verify_file_in_image(const struct ImageModule *module, const char *imagename, const char *fname, void *testbuf, size_t filesize)
 {
 	int err;
-	IMAGE *img = NULL;
-	STREAM *s = NULL;
+	imgtool_image *img = NULL;
+	imgtool_stream *s = NULL;
 	void *readbuf;
 	int results;
 
@@ -125,7 +125,7 @@ done:
 static int delete_file_in_image(const struct ImageModule *module, const char *imagename, const char *fname)
 {
 	int err;
-	IMAGE *img = NULL;
+	imgtool_image *img = NULL;
 
 	err = img_open(module, imagename, OSD_FOPEN_RW, &img);
 	if (err)
@@ -144,7 +144,7 @@ done:
 static imgtoolerr_t count_files(const struct ImageModule *module, const char *imagename, int *totalfiles)
 {
 	imgtoolerr_t err;
-	IMAGE *img = NULL;
+	imgtool_image *img = NULL;
 
 	err = img_open(module, imagename, OSD_FOPEN_RW, &img);
 	if (err)
@@ -175,9 +175,9 @@ static imgtoolerr_t assert_file_count(const struct ImageModule *module, const ch
 
 static int assert_file_size(const struct ImageModule *module, const char *imagename, const char *fname, int assertedsize)
 {
-	int filesize;
+	UINT64 filesize;
 	int err;
-	IMAGE *img = NULL;
+	imgtool_image *img = NULL;
 
 	err = img_open(module, imagename, OSD_FOPEN_RW, &img);
 	if (err)

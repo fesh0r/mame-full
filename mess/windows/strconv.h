@@ -6,45 +6,76 @@
 //	in ATL (e.g.  A2T, A2W, W2T) etc.  Additionally, UTF-8
 //	string conversion is also supported
 //
+//	Unlike the ATL macros, these macros do some tricks to
+//	eliminate the need for USES_CONVERSION
+//
 //============================================================
 
 #ifndef STRCONV_H
 #define STRCONV_H
 
 #include <windows.h>
+#include <malloc.h>
 
-size_t copy_a2w_len(int codepage, const char *source);
-size_t copy_w2a_len(int codepage, const WCHAR *source);
-void copy_a2w(int codepage, WCHAR *str, const char *source);
-void copy_w2a(int codepage, char *str, const WCHAR *source);
+#ifdef __GNUC__
+#if (__GNUC__ < 3)
+#define UNEXPECTED_(exp)	(exp)
+#else
+#define UNEXPECTED_(exp)	 __builtin_expect((exp), 0)
+#endif
+#else
+#define UNEXPECTED_(exp)	(exp)
+#endif
 
-INLINE WCHAR *copy_a2w_inline(int codepage, WCHAR *str, const char *source)
+// Used to check for 7-bit ASCII string, so that A2U and U2A
+// can short circuit conversion
+int strconv_is_hibit_string(const char *source);
+
+size_t strconv_copy_a2w_len(int codepage, const char *source);
+size_t strconv_copy_w2a_len(int codepage, const WCHAR *source);
+void strconv_copy_a2w(int codepage, WCHAR *str, const char *source);
+void strconv_copy_w2a(int codepage, char *str, const WCHAR *source);
+
+INLINE WCHAR *strconv_copy_a2w_inline(int codepage, WCHAR *str, const char *source)
 {
-	copy_a2w(codepage, str, source);
+	strconv_copy_a2w(codepage, str, source);
 	return str;
 }
 
-INLINE char *copy_w2a_inline(int codepage, char *str, const WCHAR *source)
+INLINE char *strconv_copy_w2a_inline(int codepage, char *str, const WCHAR *source)
 {
-	copy_w2a(codepage, str, source);
+	strconv_copy_w2a(codepage, str, source);
 	return str;
 }
 
-#define A2W_CP(codepage, source)	\
-	((source) ? (copy_a2w_inline((codepage), (WCHAR *) alloca(copy_a2w_len((codepage), (source))), (source))) : NULL)
+#if 0
+#define STRCONV_COPY(codepage, source, chartype, lenfunc, copyfunc)	\
+	({const void *source_ = (source); copyfunc((codepage), (chartype *) alloca(lenfunc((codepage), (source_))), (source_));})
+#else
+#define STRCONV_COPY(codepage, source, chartype, lenfunc, copyfunc)	\
+	(copyfunc((codepage), (chartype *) alloca(lenfunc((codepage), (source))), (source)))
+#endif
 
-#define W2A_CP(codepage, source)	\
-	((source) ? (copy_w2a_inline((codepage), (char *) alloca(copy_w2a_len((codepage), (source))), (source))) : NULL)
+#define A2W_CP(codepage, source, not_null)	\
+	((not_null || (source)) ? STRCONV_COPY(codepage, source, WCHAR, \
+		strconv_copy_a2w_len, strconv_copy_a2w_inline) : NULL)
 
-#define A2W(source)	A2W_CP(CP_ACP, (source))
-#define W2A(source)	W2A_CP(CP_ACP, (source))
-#define U2W(source)	A2W_CP(CP_UTF8, (source))
-#define W2U(source)	W2A_CP(CP_UTF8, (source))
+#define W2A_CP(codepage, source, not_null)	\
+	((not_null || (source)) ? STRCONV_COPY(codepage, source, char, \
+		strconv_copy_w2a_len, strconv_copy_w2a_inline) : NULL)
 
-#define U2A(source)	W2A(U2W(source))
-#define A2U(source)	W2U(A2W(source))
+#define A2W(source)	A2W_CP(CP_ACP, (source), 0)
+#define W2A(source)	W2A_CP(CP_ACP, (source), 0)
+#define U2W(source)	A2W_CP(CP_UTF8, (source), 0)
+#define W2U(source)	W2A_CP(CP_UTF8, (source), 0)
 
-// These macros implement TCHAR conversion in terms of A2W and W2A
+// ANSI <==> UTF8; these can be hairy
+#define U2A(source)	(UNEXPECTED_(strconv_is_hibit_string(source)) \
+	? W2A_CP(CP_ACP,  A2W_CP(CP_UTF8, (source), 1), 1) : (source))
+#define A2U(source)	(UNEXPECTED_(strconv_is_hibit_string(source)) \
+	? W2A_CP(CP_UTF8, A2W_CP(CP_ACP,  (source), 1), 1) : (source))
+
+// These macros implement TCHAR conversion in terms of A2W, W2A, U2W and U2A
 #ifdef UNICODE
 #define A2T(source)	A2W(source)
 #define T2A(source)	W2A(source)

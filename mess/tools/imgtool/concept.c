@@ -95,7 +95,7 @@ typedef struct concept_file_dir_entry
 	UINT16xE	next_block;
 	UINT16xE	ftype;
 
-	unsigned char	fname[16];
+	unsigned char	filename[16];
 	UINT16xE	last_byte;
 	UINT16xE	last_access;
 } concept_file_dir_entry;
@@ -112,8 +112,8 @@ typedef struct concept_dev_dir
 */
 typedef struct concept_image
 {
-	IMAGE base;
-	STREAM *file_handle;		/* imgtool file handle */
+	imgtool_image base;
+	imgtool_stream *file_handle;		/* imgtool file handle */
 	concept_dev_dir dev_dir;	/* cached copy of device directory */
 } concept_image;
 
@@ -122,23 +122,23 @@ typedef struct concept_image
 */
 typedef struct concept_iterator
 {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	concept_image *image;
 	int index;							/* current index */
 } concept_iterator;
 
 
-static imgtoolerr_t concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void concept_image_exit(IMAGE *img);
-static void concept_image_info(IMAGE *img, char *string, const int len);
-static imgtoolerr_t concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void concept_image_closeenum(IMAGEENUM *enumeration);
-static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size);
-static imgtoolerr_t concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-/*static imgtoolerr_t concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions);
-static imgtoolerr_t concept_image_deletefile(IMAGE *img, const char *fname);
-static imgtoolerr_t concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);*/
+static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void concept_image_exit(imgtool_image *img);
+static void concept_image_info(imgtool_image *img, char *string, size_t len);
+static imgtoolerr_t concept_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void concept_image_closeenum(imgtool_imageenum *enumeration);
+static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
+static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf);
+/*static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions);
+static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *filename);
+static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions);*/
 
 imgtoolerr_t concept_createmodule(imgtool_library *library)
 {
@@ -185,7 +185,7 @@ imgtoolerr_t concept_createmodule(imgtool_library *library)
 
 	Return non-zero on error
 */
-static int read_physical_record(STREAM *file_handle, int secnum, void *dest)
+static int read_physical_record(imgtool_stream *file_handle, int secnum, void *dest)
 {
 	int reply;
 
@@ -212,7 +212,7 @@ static int read_physical_record(STREAM *file_handle, int secnum, void *dest)
 
 	Return non-zero on error
 */
-static int write_physical_record(STREAM *file_handle, int secnum, const void *src)
+static int write_physical_record(imgtool_stream *file_handle, int secnum, const void *src)
 {
 	int reply;
 
@@ -232,23 +232,23 @@ static int write_physical_record(STREAM *file_handle, int secnum, const void *sr
 	Search for a file name on a concept_image
 
 	image (I): image reference
-	fname (I): name of the file to search
+	filename (I): name of the file to search
 	entry_index (O): index of file in disk catalog
 
 	Return non-zero on error
 */
-static int get_catalog_entry(concept_image *image, const unsigned char *fname, int *entry_index)
+static int get_catalog_entry(concept_image *image, const unsigned char *filename, int *entry_index)
 {
-	int fname_len = fname[0];
+	int filename_len = filename[0];
 	int i;
 
-	if (fname_len > 15)
+	if (filename_len > 15)
 		/* file name is bad */
 		return 1;
 
 	for (i = 0; i < 77; i++)
 	{
-		if (!memcmp(fname, image->dev_dir.file_dir[i].fname, fname_len+1))
+		if (!memcmp(filename, image->dev_dir.file_dir[i].filename, filename_len+1))
 		{
 			/* file found */
 			*entry_index = i;
@@ -263,7 +263,7 @@ static int get_catalog_entry(concept_image *image, const unsigned char *fname, i
 /*
 	Open a file as a concept_image.
 */
-static imgtoolerr_t concept_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	concept_image *image;
 	int reply;
@@ -308,7 +308,7 @@ static imgtoolerr_t concept_image_init(const struct ImageModule *mod, STREAM *f,
 /*
 	close a concept_image
 */
-static void concept_image_exit(IMAGE *img)
+static void concept_image_exit(imgtool_image *img)
 {
 	concept_image *image = (concept_image *) img;
 
@@ -321,7 +321,7 @@ static void concept_image_exit(IMAGE *img)
 
 	Currently returns the volume name
 */
-static void concept_image_info(IMAGE *img, char *string, const int len)
+static void concept_image_info(imgtool_image *img, char *string, size_t len)
 {
 	concept_image *image = (concept_image *) img;
 	char vol_name[8];
@@ -335,7 +335,7 @@ static void concept_image_info(IMAGE *img, char *string, const int len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static imgtoolerr_t concept_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	concept_image *image = (concept_image*) img;
 	concept_iterator *iter;
@@ -356,7 +356,7 @@ static imgtoolerr_t concept_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 /*
 	Enumerate disk catalog next entry
 */
-static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	concept_iterator *iter = (concept_iterator*) enumeration;
 
@@ -364,23 +364,23 @@ static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_diren
 	ent->corrupt = 0;
 	ent->eof = 0;
 
-	if ((iter->image->dev_dir.file_dir[iter->index].fname[0] == 0) || (iter->index > 77))
+	if ((iter->image->dev_dir.file_dir[iter->index].filename[0] == 0) || (iter->index > 77))
 	{
 		ent->eof = 1;
 	}
-	else if (iter->image->dev_dir.file_dir[iter->index].fname[0] > 15)
+	else if (iter->image->dev_dir.file_dir[iter->index].filename[0] > 15)
 	{
 		ent->corrupt = 1;
 	}
 	else
 	{
-		int len = iter->image->dev_dir.file_dir[iter->index].fname[0];
+		int len = iter->image->dev_dir.file_dir[iter->index].filename[0];
 		const char *type;
 
-		if (len > ent->fname_len)
-			len = ent->fname_len;
-		memcpy(ent->fname, iter->image->dev_dir.file_dir[iter->index].fname + 1, len);
-		ent->fname[len] = 0;
+		if (len > ent->filename_len)
+			len = ent->filename_len;
+		memcpy(ent->filename, iter->image->dev_dir.file_dir[iter->index].filename + 1, len);
+		ent->filename[len] = 0;
 
 		/* parse flags */
 		switch (get_UINT16xE(iter->image->dev_dir.vol_hdr.disk_flipped, iter->image->dev_dir.file_dir[iter->index].ftype) & 0xf)
@@ -417,7 +417,7 @@ static imgtoolerr_t concept_image_nextenum(IMAGEENUM *enumeration, imgtool_diren
 /*
 	Free enumerator
 */
-static void concept_image_closeenum(IMAGEENUM *enumeration)
+static void concept_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
@@ -425,7 +425,7 @@ static void concept_image_closeenum(IMAGEENUM *enumeration)
 /*
 	Compute free space on disk image
 */
-static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size)
+static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size)
 {
 	concept_image *image = (concept_image*) img;
 	int free_blocks;
@@ -436,7 +436,7 @@ static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size)
 					- get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.vol_hdr.next_block);
 
 	/* next substract lenght of each file */
-	for (i=0; (image->dev_dir.file_dir[i].fname[0] != 0) && (i <= 77); i++)
+	for (i=0; (image->dev_dir.file_dir[i].filename[0] != 0) && (i <= 77); i++)
 	{
 		free_blocks -= get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.file_dir[i].next_block)
 						- get_UINT16xE(image->dev_dir.vol_hdr.disk_flipped, image->dev_dir.file_dir[i].first_block);
@@ -450,20 +450,20 @@ static imgtoolerr_t concept_image_freespace(IMAGE *img, size_t *size)
 /*
 	Extract a file from a concept_image.
 */
-static imgtoolerr_t concept_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static imgtoolerr_t concept_image_readfile(imgtool_image *img, const char *filename, imgtool_stream *destf)
 {
 	concept_image *image = (concept_image *) img;
-	size_t fname_len = strlen(fname);
+	size_t filename_len = strlen(filename);
 	unsigned char concept_fname[16];
 	int catalog_index;
 	int i;
 	UINT8 buf[512];
 
-	if (fname_len > 15)
+	if (filename_len > 15)
 		return IMGTOOLERR_BADFILENAME;
 
-	concept_fname[0] = fname_len;
-	memcpy(concept_fname+1, fname, fname_len);
+	concept_fname[0] = filename_len;
+	memcpy(concept_fname+1, filename, filename_len);
 
 	if (get_catalog_entry(image, concept_fname, &catalog_index))
 		return IMGTOOLERR_FILENOTFOUND;
@@ -486,7 +486,7 @@ static imgtoolerr_t concept_image_readfile(IMAGE *img, const char *fname, STREAM
 /*
 	Add a file to a concept_image.
 */
-static imgtoolerr_t concept_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, option_resolution *writeoptions)
+static imgtoolerr_t concept_image_writefile(imgtool_image *img, const char *filename, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	/* ... */
 
@@ -496,7 +496,7 @@ static imgtoolerr_t concept_image_writefile(IMAGE *img, const char *fname, STREA
 /*
 	Delete a file from a concept_image.
 */
-static imgtoolerr_t concept_image_deletefile(IMAGE *img, const char *fname)
+static imgtoolerr_t concept_image_deletefile(imgtool_image *img, const char *filename)
 {
 	/* ... */
 
@@ -506,7 +506,7 @@ static imgtoolerr_t concept_image_deletefile(IMAGE *img, const char *fname)
 /*
 	Create a blank concept_image.
 */
-static imgtoolerr_t concept_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions)
+static imgtoolerr_t concept_image_create(const struct ImageModule *mod, imgtool_stream *f, option_resolution *createoptions)
 {
 	/* ... */
 

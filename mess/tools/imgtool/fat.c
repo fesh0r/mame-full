@@ -260,8 +260,8 @@ typedef struct {
 #define PACK_DATE(day, month, year) ((day)|((month+1)<<5)|((year-1980)<<9))
 
 typedef struct _fat_image{
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 
 	int heads;
 	int sectors;
@@ -369,7 +369,7 @@ static int fat_calc_cluster_pos(fat_image *image,int cluster)
 }
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	fat_image *image;
 	int level; /* directory level */
 	struct {
@@ -409,20 +409,20 @@ static FAT_DIRECTORY *fat_image_findfile (fat_image *image,
 	return NULL;
 }
 
-static int fat_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void fat_image_exit(IMAGE *img);
-static void fat_image_info(IMAGE *img, char *string, const int len);
-static int fat_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void fat_image_closeenum(IMAGEENUM *enumeration);
-static size_t fat_image_freespace(IMAGE *img);
-static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int fat_image_deletefile(IMAGE *img, const char *fname);
-static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static int fat_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void fat_image_exit(imgtool_image *img);
+static void fat_image_info(imgtool_image *img, char *string, const int len);
+static int fat_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int fat_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void fat_image_closeenum(imgtool_imageenum *enumeration);
+static size_t fat_image_freespace(imgtool_image *img);
+static int fat_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int fat_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_);
+static int fat_image_deletefile(imgtool_image *img, const char *fname);
+static int fat_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
 
-static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
-static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
+static int fat_read_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
+static int fat_write_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length);
 
 #if 0
 static struct OptionTemplate fat_createopts[] =
@@ -470,8 +470,8 @@ IMAGEMODULE(
 	fat_createopts							/* create options */
 )
 
-static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
+static int fathd_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static int fathd_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_);
 
 /*static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,16,1024} };*/
 
@@ -516,7 +516,7 @@ IMAGEMODULE(
 	fathd_createopts						/* create options */
 )
 
-static int fat_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int fat_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	fat_image *image;
 	int i;
@@ -577,7 +577,7 @@ static int fat_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	return 0;
 }
 
-static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int fathd_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	fat_image *image;
 	int sectors, heads;
@@ -644,7 +644,7 @@ static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 	return 0;
 }
 
-static void fat_image_exit(IMAGE *img)
+static void fat_image_exit(imgtool_image *img)
 {
 	fat_image *image=(fat_image*)img;
 	if (image->modified) {
@@ -656,7 +656,7 @@ static void fat_image_exit(IMAGE *img)
 	free(image);
 }
 
-static void fat_image_info(IMAGE *img, char *string, const int len)
+static void fat_image_info(imgtool_image *img, char *string, const int len)
 {
 	fat_image *image=(fat_image*)img;
 	char name[12]="          ";
@@ -676,7 +676,7 @@ static void fat_image_info(IMAGE *img, char *string, const int len)
 	string[0]=0;
 }
 
-static int fat_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int fat_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	fat_image *image=(fat_image*)img;
 	fat_iterator *iter;
@@ -696,7 +696,7 @@ static int fat_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int fat_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	fat_iterator *iter=(fat_iterator*)enumeration;
 	FAT_DIRECTORY *entry;
@@ -773,12 +773,12 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void fat_image_closeenum(IMAGEENUM *enumeration)
+static void fat_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
 
-static size_t fat_image_freespace(IMAGE *img)
+static size_t fat_image_freespace(imgtool_image *img)
 {
 	fat_image *image=(fat_image*)img;
 	int i;
@@ -791,7 +791,7 @@ static size_t fat_image_freespace(IMAGE *img)
 	return blocksfree*image->cluster_size;
 }
 
-static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int fat_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	fat_image *image=(fat_image*)img;
 	int size;
@@ -820,7 +820,7 @@ static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_)
+static int fat_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *options_)
 {
 	fat_image *image=(fat_image*)img;
     FAT_DIRECTORY *entry;
@@ -886,7 +886,7 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	return 0;
 }
 
-static int fat_image_deletefile(IMAGE *img, const char *fname)
+static int fat_image_deletefile(imgtool_image *img, const char *fname)
 {
 	fat_image *image=(fat_image*)img;
     FAT_DIRECTORY *entry;
@@ -907,14 +907,14 @@ static int fat_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int fat_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
+static int fat_read_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
 	/* not yet implemented */
 	assert(0);
 	return IMGTOOLERR_UNEXPECTED;
 }
 
-static int fat_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
+static int fat_write_sector(imgtool_image *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
 	/* not yet implemented */
 	assert(0);
@@ -947,7 +947,7 @@ static FAT_FORMAT hd_formats[]={
 	{ 17, 4, 615, 0x200, 2, 0x800, 112, 1, 40 } // standard pc 20mb harddisk
 };
 
-static int fat_create(STREAM *f, FAT_FORMAT *format)
+static int fat_create(imgtool_stream *f, FAT_FORMAT *format)
 {
 	unsigned short fat_fat16[0x100]={ 0xfffd, 0xffff };
 	unsigned char fat_fat12[0x200]={ 0xfd, 0xff, 0xff };
@@ -995,7 +995,7 @@ static int fat_create(STREAM *f, FAT_FORMAT *format)
 	return 0;
 }
 
-static int fat_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
+static int fat_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	FAT_FORMAT format;
 #if 0
@@ -1010,7 +1010,7 @@ static int fat_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 	return fat_create(f, &format);
 }
 
-static int fathd_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_)
+static int fathd_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *options_)
 {
 	FAT_FORMAT format;
 	unsigned char sector[0x200]={ 0 };

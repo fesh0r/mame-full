@@ -341,8 +341,8 @@ typedef struct {
 } crt_packet;
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	int size;
 	int modified;
 	unsigned char *data;
@@ -352,23 +352,23 @@ typedef struct {
 #define PACKET(image, pos) ((crt_packet*)(image->data+pos))
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	crt_image *image;
 	int pos;
 	int number;
 } crt_iterator;
 
-static int crt_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void crt_image_exit(IMAGE *img);
-static void crt_image_info(IMAGE *img, char *string, const int len);
-static int crt_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void crt_image_closeenum(IMAGEENUM *enumeration);
-//static size_t crt_image_freespace(IMAGE *img);
-static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options);
-static int crt_image_deletefile(IMAGE *img, const char *fname);
-static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options);
+static int crt_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void crt_image_exit(imgtool_image *img);
+static void crt_image_info(imgtool_image *img, char *string, const int len);
+static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int crt_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void crt_image_closeenum(imgtool_imageenum *enumeration);
+//static size_t crt_image_freespace(imgtool_image *img);
+static int crt_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int crt_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
+static int crt_image_deletefile(imgtool_image *img, const char *fname);
+static int crt_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options);
 
 /*
 	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
@@ -427,7 +427,7 @@ IMAGEMODULE(
 	c64crt_createopts					/* create options */
 )
 
-static int crt_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int crt_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	crt_image *image;
 
@@ -450,7 +450,7 @@ static int crt_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	return 0;
 }
 
-static void crt_image_exit(IMAGE *img)
+static void crt_image_exit(imgtool_image *img)
 {
 	crt_image *image=(crt_image*)img;
 	if (image->modified) {
@@ -462,7 +462,7 @@ static void crt_image_exit(IMAGE *img)
 	free(image);
 }
 
-static void crt_image_info(IMAGE *img, char *string, const int len)
+static void crt_image_info(imgtool_image *img, char *string, const int len)
 {
 	crt_image *image=(crt_image*)img;
 	sprintf(string, "%-32s\nversion:%.4x type:%d:%s exrom:%d game:%d",
@@ -474,7 +474,7 @@ static void crt_image_info(IMAGE *img, char *string, const int len)
 	return;
 }
 
-static int crt_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int crt_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	crt_image *image=(crt_image*)img;
 	crt_iterator *iter;
@@ -490,7 +490,7 @@ static int crt_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int crt_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	crt_iterator *iter=(crt_iterator*)enumeration;
 
@@ -515,13 +515,13 @@ static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void crt_image_closeenum(IMAGEENUM *enumeration)
+static void crt_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
 
 #if 0
-static size_t crt_image_freespace(IMAGE *img)
+static size_t crt_image_freespace(imgtool_image *img)
 {
 	int i;
 	rsdos_diskimage *rsimg = (rsdos_diskimage *) img;
@@ -549,7 +549,7 @@ static int crt_image_findfile(crt_image *image, const char *fname)
 	return 0;
 }
 
-static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int crt_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	crt_image *image=(crt_image*)img;
 	int size;
@@ -566,7 +566,7 @@ static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
+static int crt_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, 
 							   const ResolvedOption *_options)
 {
 	crt_image *image=(crt_image*)img;
@@ -607,7 +607,7 @@ static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 	return 0;
 }
 
-static int crt_image_deletefile(IMAGE *img, const char *fname)
+static int crt_image_deletefile(imgtool_image *img, const char *fname)
 {
 	crt_image *image=(crt_image*)img;
 	int size;
@@ -625,7 +625,7 @@ static int crt_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int crt_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options)
+static int crt_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options)
 {
 	crt_header header={ "C64 CARTRIDGE   " };
 	SET_ULONG(header.length, sizeof(header));

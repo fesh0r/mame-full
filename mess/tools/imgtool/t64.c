@@ -87,8 +87,8 @@ typedef struct {
 } t64_entry;
 
 typedef struct {
-	IMAGE base;
-	STREAM *file_handle;
+	imgtool_image base;
+	imgtool_stream *file_handle;
 	int size;
 	int modified;
 	unsigned char *data;
@@ -98,22 +98,22 @@ typedef struct {
 #define ENTRY(image, index) ((t64_entry*)(image->data+sizeof(t64_header))+index)
 
 typedef struct {
-	IMAGEENUM base;
+	imgtool_imageenum base;
 	t64_image *image;
 	int index;
 } t64_iterator;
 
-static int t64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void t64_image_exit(IMAGE *img);
-static void t64_image_info(IMAGE *img, char *string, const int len);
-static int t64_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int t64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void t64_image_closeenum(IMAGEENUM *enumeration);
-//static size_t t64_image_freespace(IMAGE *img);
-static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options);
-static int t64_image_deletefile(IMAGE *img, const char *fname);
-static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options);
+static int t64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void t64_image_exit(imgtool_image *img);
+static void t64_image_info(imgtool_image *img, char *string, const int len);
+static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int t64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void t64_image_closeenum(imgtool_imageenum *enumeration);
+//static size_t t64_image_freespace(imgtool_image *img);
+static int t64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
+static int t64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options);
+static int t64_image_deletefile(imgtool_image *img, const char *fname);
+static int t64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options);
 
 static struct OptionTemplate t64_createopts[] =
 {
@@ -150,7 +150,7 @@ IMAGEMODULE(
 	t64_createopts						/* create options */
 )
 
-static int t64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int t64_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 {
 	t64_image *image;
 
@@ -173,7 +173,7 @@ static int t64_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 	return 0;
 }
 
-static void t64_image_exit(IMAGE *img)
+static void t64_image_exit(imgtool_image *img)
 {
 	t64_image *image=(t64_image*)img;
 	if (image->modified) {
@@ -185,7 +185,7 @@ static void t64_image_exit(IMAGE *img)
 	free(image);
 }
 
-static void t64_image_info(IMAGE *img, char *string, const int len)
+static void t64_image_info(imgtool_image *img, char *string, const int len)
 {
 	t64_image *image=(t64_image*)img;
 	char dostext_with_null[33]= { 0 };
@@ -199,7 +199,7 @@ static void t64_image_info(IMAGE *img, char *string, const int len)
 			HEADER(image)->max_entries);
 }
 
-static int t64_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int t64_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 {
 	t64_image *image=(t64_image*)img;
 	t64_iterator *iter;
@@ -214,7 +214,7 @@ static int t64_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 }
 
-static int t64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int t64_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	t64_iterator *iter=(t64_iterator*)enumeration;
 	ent->corrupt=0;
@@ -237,13 +237,13 @@ static int t64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 }
 
-static void t64_image_closeenum(IMAGEENUM *enumeration)
+static void t64_image_closeenum(imgtool_imageenum *enumeration)
 {
 	free(enumeration);
 }
 
 #if 0
-static size_t t64_image_freespace(IMAGE *img)
+static size_t t64_image_freespace(imgtool_image *img)
 {
 	int i;
 	rsdos_diskimage *rsimg = (rsdos_diskimage *) img;
@@ -267,7 +267,7 @@ static int t64_image_findfile(t64_image *image, const char *fname)
 	return -1;
 }
 
-static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int t64_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	t64_image *image=(t64_image*)img;
 	int size;
@@ -287,7 +287,7 @@ static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *_options)
+static int t64_image_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, const ResolvedOption *_options)
 {
 	t64_image *image=(t64_image*)img;
 	int size, fsize;
@@ -352,7 +352,7 @@ static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	return 0;
 }
 
-static int t64_image_deletefile(IMAGE *img, const char *fname)
+static int t64_image_deletefile(imgtool_image *img, const char *fname)
 {
 	t64_image *image=(t64_image*)img;
 	int pos, size;
@@ -391,7 +391,7 @@ static int t64_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int t64_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *_options)
+static int t64_image_create(const struct ImageModule *mod, imgtool_stream *f, const ResolvedOption *_options)
 {
 	int entries;
 	t64_header header={ "T64 Tape archiv created by MESS\x1a" };

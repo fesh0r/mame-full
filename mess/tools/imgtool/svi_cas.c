@@ -14,9 +14,9 @@
 */
 
 typedef struct {
-	IMAGE			base;
+	imgtool_image			base;
 	char			*file_name;
-	STREAM 			*file_handle;
+	imgtool_stream 			*file_handle;
 	int 			size;
 	unsigned char	*data;
 	INT16			*wavdata;
@@ -25,18 +25,18 @@ typedef struct {
 
 typedef struct
 	{
-	IMAGEENUM 	base;
+	imgtool_imageenum 	base;
 	CAS_IMAGE	*image;
 	int			index;
 	} CAS_ITERATOR;
 
-static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
-static void svi_cas_image_exit(IMAGE *img);
-//static void svi_cas_image_info(IMAGE *img, char *string, const int len);
-static int svi_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
-static int svi_cas_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
-static void svi_cas_image_closeenum(IMAGEENUM *enumeration);
-static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
+static int svi_cas_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
+static void svi_cas_image_exit(imgtool_image *img);
+//static void svi_cas_image_info(imgtool_image *img, char *string, const int len);
+static int svi_cas_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static int svi_cas_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
+static void svi_cas_image_closeenum(imgtool_imageenum *enumeration);
+static int svi_cas_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf);
 
 IMAGEMODULE(
 	svi_cas,
@@ -63,7 +63,7 @@ IMAGEMODULE(
 	NULL					/* create options */
 )
 
-static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
+static int svi_cas_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg)
 	{
 	CAS_IMAGE *image;
 	int len, i;
@@ -73,7 +73,7 @@ static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	image = (CAS_IMAGE*)malloc (sizeof (CAS_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
 
-	*outimg = (IMAGE*)image;
+	*outimg = (imgtool_image*)image;
 
 	memset(image, 0, sizeof(CAS_IMAGE));
 	image->base.module = mod;
@@ -131,7 +131,7 @@ static int svi_cas_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **
 	return 0;
 	}
 
-static void svi_cas_image_exit(IMAGE *img)
+static void svi_cas_image_exit(imgtool_image *img)
 	{
 	CAS_IMAGE *image=(CAS_IMAGE*)img;
 	stream_close(image->file_handle);
@@ -141,7 +141,7 @@ static void svi_cas_image_exit(IMAGE *img)
 	free(image);
 	}
 
-static int svi_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
+static int svi_cas_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	{
 	CAS_IMAGE *image=(CAS_IMAGE*)img;
 	CAS_ITERATOR *iter;
@@ -156,7 +156,7 @@ static int svi_cas_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 	return 0;
 	}
 
-static int svi_cas_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
+static int svi_cas_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	{
 	CAS_ITERATOR *iter=(CAS_ITERATOR*)enumeration;
 
@@ -172,12 +172,12 @@ static int svi_cas_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 	return 0;
 	}
 
-static void svi_cas_image_closeenum(IMAGEENUM *enumeration)
+static void svi_cas_image_closeenum(imgtool_imageenum *enumeration)
 	{
 	free(enumeration);
 	}
 
-static int svi_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int svi_cas_image_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 	{
 	CAS_IMAGE *image=(CAS_IMAGE*)img;
 	INT16 *wavdata;
