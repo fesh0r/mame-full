@@ -1501,8 +1501,8 @@ enum
 };
 
 IMAGEMODULE(
-	ti99,
-	"TI99 Diskette (MESS format)",	/* human readable name */
+	ti99_old,
+	"TI99 Diskette (old MESS format)",	/* human readable name */
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */

@@ -49,3 +49,6 @@ Source Changes:
 
 - CRC calculation of hard disk images has been disabled (bug #416).
   [Raphael Nabet]
+
+- [Imgtool] Renamed the ti99 module to ti99_old, since the format it handles
+  has been obsoleted by changes in the ti99 driver.  [Raphael Nabet]

@@ -253,20 +253,22 @@ The file date information is not supported at this time.
 The card filesystem reading/writing in imgtool has not been heavily tested.
 
 
-Ti99 floppy disk images (ti99/v9t9/pc99fm/pc99mfm)
---------------------------------------------------
+Ti99 floppy disk images (v9t9/pc99fm/pc99mfm/ti99_old)
+------------------------------------------------------
 
 These modules enable you to create and catalog ti99 images, to delete
 individual files, and to get and put files in TIFILE format.  Note that you
 cannot create images in pc99 format.
 
-The ti99 module supports MESS disk images, the v9t9 module supports v9t9 disk
-images, the pc99fm module supports FM-encoded pc99 images, and the pc99mfm
-supports MFM-encoded pc99 images.  The MESS ti99 drivers supports the MESS disk
-image format only.  Note that the V9T9 format is identical to the MESS format
-for single-sided disks, but that the track order is completely different for
-double-sided disks, which causes the two formats to be incompatible for
-double-sided disk images.
+The v9t9 module supports the v9t9 disk images that is used by MESS, the pc99fm
+module supports FM-encoded pc99 images, and the pc99mfm supports MFM-encoded
+pc99 images, and the ti99_old module supports the now obsolete image format
+that was used by MESS versions prior to .69.  The MESS ti99 drivers supports
+the v9t9 disk image format only.  (Note that the old MESS was identical to the
+V9T9 format for single-sided disks, but that the track order was completely
+different for double-sided disks, which caused the two formats to be
+incompatible for double-sided disk images.  I have changed the format to v9t9
+to make interexchange with other utilities easier.)
 
 The TIFILE format is a file format that is supported by many ti99 utilities: it
 encodes a TI99 file as a flat stream of bytes, which enables to store it on
@@ -279,8 +281,8 @@ Legal characters for volume and file names are upper case ASCII characters,
 except period ('.') and space (' ').  Lower case characters are not recommended
 because they are not supported by TI99/4.  You had better avoid control
 characters and non-ASCII characters, too.  (Additionally, the NULL character is
-forbidden in file name, but I think nobody in his right sense would even try to
-enter a NULL character in a file name.)  The restriction on the period ('.')
+forbidden in file names, but I think nobody in his right sense would even try
+to enter a NULL character in a file name.)  The restriction on the period ('.')
 character may sound strange to users of other OSes, but this character is used
 as a path separator by TI systems.  (As a matter of fact, no TI99 floppy disk
 DSR (except the HFDC DSR) implements disk directories, but other TI systems
@@ -298,9 +300,11 @@ Parameters for create:
 	original TI floppy disk controller only supports 40-track single density.
 	The BwG disk controller supports 40-track double density as well.  Only the
 	HFDC controller supports 80-track drives and disks correctly.  No emulated
-	disk controller supports HD: AFAIK, the HFDC hardware is actually able to
-	read and write HD, but the software in the DSR ROM is incomplete and does
-	not implement HD support completely.
+	disk controller supports HD on the TI99. On the Geneve, the HFDC disk
+	controller supports HD, except at boot time (this is because the Geneve
+	MDOS operating system replaces the incomplete HFDC DSR with a better DSR:
+	since the MDOS OS is not loaded yet at boot time, you cannot boot from a HD
+	disk).
 --sides=[1|2]: 1 for single-sided, 2 for double-sided
 --tracks=[1-80]: number of track per side.  From 1 to 40 on 40-track disks,
 	from 1 to 80 on 80-track disks.
