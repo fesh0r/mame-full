@@ -656,7 +656,13 @@ TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 	DRIVER( lvivp )		/* PK-01 Lviv (early)								*/
 
 	/* Tesla */
-TESTDRIVER( pmd85 )		/* PMD-85.1											*/
+	DRIVER( pmd851 )	/* PMD-85.1											*/
+	DRIVER( pmd852 )	/* PMD-85.2											*/
+	DRIVER( pmd852a )	/* PMD-85.2A											*/
+	DRIVER( pmd852b )	/* PMD-85.2B											*/
+
+	/* Didaktik */
+	DRIVER( alfa )		/* Alfa (PMD-85.1 clone)											*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
