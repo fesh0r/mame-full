@@ -304,9 +304,11 @@ int trs80_floppy_init(int id)
     if (basicdsk_floppy_init(id) != INIT_OK)
 		return INIT_FAILED;
 
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	if (id != 0)		/* not the first floppy? */
+		return INIT_OK;
 
-	if (file && id == 0)	/* first floppy? */
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	if (file)
 	{
 		int n, i;
 		UINT8 buff[16];
