@@ -1370,7 +1370,7 @@ typedef struct dsk_fdr
 	UINT16BE fphysrecs;		/* file length in physrecs */
 								/* Note that the HFDC defines this field as the */
 								/* number of allocated physrecs in the cluster */
-								/* chain (i.e. rounded on the next AU
+								/* chain (i.e. rounded on the next AU */
 								/* boundary), so level-3 routines should use */
 								/* the fixrecs field instead to determine the */
 								/* logical lenght of field.  IIRC, the HFDC */
@@ -1416,7 +1416,7 @@ typedef struct win_fdr
 	UINT16BE fphysrecs_LSW;	/* eldest FDR: file length in physrecs */
 								/* Note that the HFDC defines this field as the */
 								/* number of allocated physrecs in the cluster */
-								/* chain (i.e. rounded on the next AU
+								/* chain (i.e. rounded on the next AU */
 								/* boundary), so level-3 routines should use */
 								/* the fixrecs field instead to determine the */
 								/* logical lenght of field.  IIRC, the HFDC */
@@ -4890,10 +4890,10 @@ static int win_image_deletefile(IMAGE *img, const char *fname)
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	int parent_ddr_AU, is_dir, catalog_index;
 	win_fdr fdr;
-	int i, cluster_index;
+	int i;
 	unsigned cur_AU, end_AU;
 	unsigned curfdr_aphysrec;
-	unsigned cursibFDR_index, endsibFDR_index;
+	unsigned cursibFDR_index, endsibFDR_index = 0;
 	int errorcode;
 	UINT8 buf[256];
 	ti99_catalog catalog;
