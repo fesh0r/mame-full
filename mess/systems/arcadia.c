@@ -11,9 +11,9 @@
 #include "includes/arcadia.h"
 
 static MEMORY_READ_START( arcadia_readmem )
-	{ 0x0000, 0x0fff, MRA_ROM },
-	{ 0x1800, 0x1aff, arcadia_video_r },
-	{ 0x2000, 0x2fff, MRA_ROM },
+{ 0x0000, 0x0fff, MRA_ROM },
+{ 0x1800, 0x1aff, arcadia_video_r },
+{ 0x2000, 0x2fff, MRA_ROM },
 MEMORY_END
 
 static MEMORY_WRITE_START( arcadia_writemem )
@@ -40,39 +40,45 @@ INPUT_PORTS_START( arcadia )
 	DIPS_HELPER( 0x02, "Option", KEYCODE_F2, CODE_NONE)
 	DIPS_HELPER( 0x04, DEF_STR(Difficulty), KEYCODE_F5, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
 	DIPS_HELPER( 0x02, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
 	DIPS_HELPER( 0x01, "Player 1/Left Clear", KEYCODE_BACKSPACE, KEYCODE_Z)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 1/Left 2/Button", KEYCODE_2, KEYCODE_LCONTROL)
 	DIPS_HELPER( 0x04, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
 	DIPS_HELPER( 0x02, "Player 1/Left 8", KEYCODE_8, KEYCODE_S)
 	DIPS_HELPER( 0x01, "Player 1/Left 0", KEYCODE_0, KEYCODE_X)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
 	DIPS_HELPER( 0x02, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
 	DIPS_HELPER( 0x01, "Player 1/Left Enter", KEYCODE_ENTER, KEYCODE_C)
 	PORT_START
-// used in palladium
+	PORT_BIT ( 0xff, 0xf0,	 IPT_UNUSED ) // used in palladium
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 4", KEYCODE_4_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right Clear", KEYCODE_DEL_PAD, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 2/Button", KEYCODE_2_PAD, KEYCODE_LALT)
 	DIPS_HELPER( 0x04, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 8", KEYCODE_8_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 6", KEYCODE_6_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right ENTER", KEYCODE_ENTER_PAD, CODE_NONE)
 	PORT_START
-// used in palladium
+	PORT_BIT ( 0xff, 0xf0,	 IPT_UNUSED ) // used in palladium
 #if 0
     // shit, auto centering too slow, so only using 5 bits, and scaling at videoside
     PORT_START
@@ -102,41 +108,49 @@ INPUT_PORTS_START( paladium )
 	DIPS_HELPER( 0x02, "Selector A", KEYCODE_F2, CODE_NONE)
 	DIPS_HELPER( 0x04, "Selector B", KEYCODE_F5, CODE_NONE)
 	PORT_START
+PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED ) // some bits must be high
 	DIPS_HELPER( 0x08, "Player 1/Left 1", KEYCODE_1, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 4", KEYCODE_4, KEYCODE_Q)
 	DIPS_HELPER( 0x02, "Player 1/Left 7", KEYCODE_7, KEYCODE_A)
 	DIPS_HELPER( 0x01, "Player 1/Left Clear", KEYCODE_BACKSPACE, KEYCODE_Z)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 1/Left 2/Button", KEYCODE_2, KEYCODE_LCONTROL)
 	DIPS_HELPER( 0x04, "Player 1/Left 5", KEYCODE_5, KEYCODE_W)
 	DIPS_HELPER( 0x02, "Player 1/Left 8", KEYCODE_8, KEYCODE_S)
 	DIPS_HELPER( 0x01, "Player 1/Left 0", KEYCODE_0, KEYCODE_X)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 1/Left 3", KEYCODE_3, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left 6", KEYCODE_6, KEYCODE_E)
 	DIPS_HELPER( 0x02, "Player 1/Left 9", KEYCODE_9, KEYCODE_D)
 	DIPS_HELPER( 0x01, "Player 1/Left Enter", KEYCODE_ENTER, KEYCODE_C)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x01, "Player 1/Left x1", KEYCODE_R, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 1/Left x2", KEYCODE_F, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 1/Left x3", KEYCODE_V, CODE_NONE)
 	DIPS_HELPER( 0x08, "Player 1/Left x4", KEYCODE_G, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 1", KEYCODE_1_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 4", KEYCODE_4_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 7", KEYCODE_7_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right Clear", KEYCODE_DEL_PAD, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 2/Button", KEYCODE_2_PAD, KEYCODE_LALT)
 	DIPS_HELPER( 0x04, "Player 2/Right 5", KEYCODE_5_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 8", KEYCODE_8_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right 0", KEYCODE_0_PAD, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x08, "Player 2/Right 3", KEYCODE_3_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right 6", KEYCODE_6_PAD, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right 9", KEYCODE_9_PAD, CODE_NONE)
 	DIPS_HELPER( 0x01, "Player 2/Right ENTER", KEYCODE_ENTER_PAD, CODE_NONE)
 	PORT_START
+	PORT_BIT ( 0xf0, 0xf0,	 IPT_UNUSED )
 	DIPS_HELPER( 0x01, "Player 2/Right x1", KEYCODE_ASTERISK, CODE_NONE)
 	DIPS_HELPER( 0x02, "Player 2/Right x2", KEYCODE_SLASH_PAD, CODE_NONE)
 	DIPS_HELPER( 0x04, "Player 2/Right x3", KEYCODE_MINUS_PAD, CODE_NONE)
@@ -244,9 +258,9 @@ static struct MachineDriver machine_driver_arcadia =
 	arcadia_machine_init,
 	0,//pc1401_machine_stop,
 #if DEBUG
-	128+2*XPOS+40, 208+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+128-1+40, 0, YPOS+208+YBOTTOM_SIZE-1},
+	128+2*XPOS+40, 262, { 0, 2*XPOS+128-1+40, 0, 262-1},
 #else
-	128+2*XPOS, 208+YPOS+YBOTTOM_SIZE, { 0, 2*XPOS+128-1, 0, YPOS+208+YBOTTOM_SIZE-1},
+	128+2*XPOS, 262, { 0, 2*XPOS+128-1, 0, 262-1},
 #endif
 	arcadia_gfxdecodeinfo,			   /* graphics decode info */
 	sizeof (arcadia_palette) / sizeof (arcadia_palette[0]) ,
@@ -387,7 +401,7 @@ void init_arcadia(void)
 		// fill screen
 		0x04, 0x00, // lodi,0 0
 		0x04|1, 0x00, // lodi,1 0
-		0xcc|1, 0x78, 0x00, //a: stra,0 $1800,r1
+		0xcc|1, 0x78, 0x10, //a: stra,0 $1800,r1
 		0x75,9, //cpsl wc|c
 		0x84,0x41, // addi,0 0x41
 		0x75,9, //cpsl wc|c
@@ -395,17 +409,25 @@ void init_arcadia(void)
 		0xe4|1, 0x40, // comi,1 40
 		0x98, 0x80-15, // bcfr,0 a
 
+		0x04, 0xff, // lodi,0 7
+		0xcc, 0x18, 0xfc, // stra,0 $19f8
+		0x04, 0x00, // lodi,0 7
+		0xcc, 0x18, 0xfd, // stra,0 $18fd
 		0x04, 0x07, // lodi,0 7
-//		0xcc, 0x19, 0xf9, // stra,0 $19f9
+		0xcc, 0x19, 0xf9, // stra,0 $19f9
+				
+		0x04, 0x00, // lodi,0 7
+		0xcc, 0x19, 0xbe, // stra,0 $19bf
+		0x04, 0x00, // lodi,0 7
 		0xcc, 0x19, 0xbf, // stra,0 $19bf
-		
-		//loop: 0x001e
+
+		//loop: 0x0021
 		// print keyboards
 		0x04|1, 0x00, //y:lodi,1 0
 		0x0c|1, 0x79, 0x00, //x: ldra,0 1900,r1
 		0x44|0, 0x0f, //andi,0 0f
 		0x64|0, 0x10, //ori,0  10
-		0xcc|1, 0x78, 0x40, //stra,0 1840,r1
+		0xcc|1, 0x78, 0x01, //stra,0 1840,r1
 		0x75,9, //cpsl wc|c
 		0x84|1, 0x01, //addi,1 1
 		0xe4|1, 0x09, //comi,1 9
@@ -415,38 +437,67 @@ void init_arcadia(void)
 		0x0c|1, 0x19, 0x00, //ldra,1 1900
 		0x44|1, 0xf, //andi,0 0f		
 		0xe4|1, 1, //comi,1 1
-		0x98, +8, //bcfr,0 c
+		0x98, +10, //bcfr,0 c
 		0x0c, 0x19, 0xbf,//ldra,0 19f9,0
 		0x84, 1, //addi,0 1
 		0xcc, 0x19, 0xbf, //stra,0 19f9,0
+		0x18|3, 12, // bctr,a
 		0xe4|1, 2, //c:comi,1 2
-		0x98, +8, //bcfr,0 d
+		0x98, +10, //bcfr,0 d
 		0x0c, 0x19, 0xbf, //ldra,0 19f9,0
 		0x84, 8, //addi,0 8
 		0xcc, 0x19, 0xbf, //stra,0 19f9,0
+		0x18|3, 12, // bctr,a
 
-		0x0c, 0x19, 0xbf, //ldra,0 19bf
-		0xcc, 0x19, 0xf9, //stra,0 19f9
-		0x44|0, 7, //andi,0 7
-		0x64|0, 0x10, //ori,0  10
-		0xcc, 0x18, 0x51, //stra,0 1851
-		0x0c, 0x19, 0xbf, //x: ldra,0 19bf
-		0x50, 0x50, 0x50, //shr,0 3
-		0x44|0, 7, //andi,0 7
-		0x64|0, 0x10, //ori,0  10
-		0xcc, 0x18, 0x50, //stra,0 1850
+		// cycle colors
+		0xe4|1, 4, //comi,1 4
+		0x98, +10, //bcfr,0 c
+		0x0c, 0x19, 0xbe,//ldra,0 19f9,0
+		0x84, 1, //addi,0 1
+		0xcc, 0x19, 0xbe, //stra,0 19f9,0
+		0x18|3, 12, // bctr,a
+		0xe4|1, 8, //c:comi,1 2
+		0x98, +8+9, //bcfr,0 d
+		0x0c, 0x19, 0xbe, //ldra,0 19f9,0
+		0x84, 8, //addi,0 8
+		0xcc, 0x19, 0xbe, //stra,0 19f9,0
 
 		0x0c, 0x19, 0x00, //b: ldra,0 1900
 		0x44|0, 0xf, //andi,0 0f
 		0xe4, 0, //comi,0 0
 		0x98, 0x80-9, //bcfr,0 b
 
+		0x0c, 0x19, 0xbe, //ldra,0 19bf
+		0xcc, 0x19, 0xf8, //stra,0 19f8
+		0x0c, 0x19, 0xbf, //ldra,0 19bf
+		0xcc, 0x19, 0xf9, //stra,0 19f8
+
+		0x0c, 0x19, 0xbe, //ldra,0 17ff
+		0x44|0, 0xf, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x0d, //stra,0 180f
+		0x0c, 0x19, 0xbe, //x: ldra,0 19bf
+		0x50, 0x50, 0x50, 0x50, //shr,0 4
+		0x44|0, 0xf, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x0c, //stra,0 180e
+
+		0x0c, 0x19, 0xbf, //ldra,0 17ff
+		0x44|0, 0xf, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x0f, //stra,0 180f
+		0x0c, 0x19, 0xbf, //x: ldra,0 19bf
+		0x50, 0x50, 0x50, 0x50, //shr,0 4
+		0x44|0, 0xf, //andi,0 7
+		0x64|0, 0x10, //ori,0  10
+		0xcc, 0x18, 0x0e, //stra,0 180e
+
 		0x0c, 0x18, 0x00, //ldra,0 1800
 		0x84, 1, //addi,0 1
 		0xcc, 0x18, 0x00, //stra,0 1800
 
 //		0x1b, 0x80-20-29-26-9-8-2 // bctr,a y
-		0x1c|3, 0, 0x1e, // bcta,3 loop
+		0x1c|3, 0, 0x32, // bcta,3 loop
 
 		// calling too many subdirectories causes cpu to reset!
 		// bxa causes trap
@@ -466,7 +517,7 @@ void init_arcadia(void)
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 // marketed from several firms/names
 
-CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_COLORS|GAME_IMPERFECT_SOUND )
+CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001", GAME_IMPERFECT_SOUND )
 // schmid tvg 2000 (developer? PAL)
 
 // different cartridge connector
@@ -474,7 +525,7 @@ CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001
 
 // different cartridge connector (same size as mpt03, but different pinout!)
 // 16 keys instead of 12
-CONSX( 198?, paladium,	arcadia,arcadia,  paladium,  arcadia,		"Palladium",		"Palladium", GAME_IMPERFECT_COLORS|GAME_IMPERFECT_SOUND )
+CONSX( 198?, paladium,	arcadia,arcadia,  paladium,  arcadia,		"Palladium",		"Palladium", GAME_IMPERFECT_SOUND )
 
 
 #ifdef RUNTIME_LOADER
