@@ -170,7 +170,7 @@ SOUNDS+=SAA1099@
 #SOUNDS+=SP0250@
 #SOUNDS+=SCSP@
 #SOUNDS+=YMF271@
-#SOUNDS+=PSXSPU@
+SOUNDS+=PSXSPU@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
 SOUNDS+=BEEP@
@@ -766,7 +766,6 @@ $(OBJ)/tatung.a:     \
 
 $(OBJ)/sony.a:     \
 	$(OBJ)/mess/systems/psx.o	\
-	$(OBJ)/mess/machine/psx.o \
 	$(OBJ)/machine/psx.o	\
 	$(OBJ)/vidhrdw/psx.o
 
