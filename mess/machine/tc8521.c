@@ -126,8 +126,30 @@ struct tc8521
 	unsigned long thirty_two_hz_counter;
 };
 
-
 static struct tc8521 rtc;
+
+
+/* read tc8521 data from supplied file */
+void	tc8521_load_stream(void *file)
+{
+	if (file)
+	{
+		osd_fread(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
+		osd_fread(file, &rtc.alarm_outputs, sizeof(unsigned long));
+		osd_fread(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
+	}
+}
+
+/* write tc8521 data to supplied file */
+void	tc8521_save_stream(void *file)
+{
+	if (file)
+	{
+		osd_fwrite(file, &rtc.registers[0], sizeof(unsigned char)*16*4);
+		osd_fwrite(file, &rtc.alarm_outputs, sizeof(unsigned long));
+		osd_fwrite(file, &rtc.thirty_two_hz_counter, sizeof(unsigned long));
+	}
+}
 
 static void tc8521_set_alarm_output(void)
 {
