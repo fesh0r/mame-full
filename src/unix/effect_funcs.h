@@ -147,18 +147,21 @@ void FUNC_NAME(effect_rgbscan)(void *dst0, void *dst1, void *dst2, const void *s
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   DEST_PIXEL *mydst2 = (DEST_PIXEL *)dst2;
   SRC_PIXEL  *mysrc  = (SRC_PIXEL  *)src;
+  SRC_PIXEL  *myend  = (SRC_PIXEL  *)src + count;
 
-  while (count) {
-
-    *(mydst0+0) = *(mydst0+1) = RMASK_SEMI(GETPIXEL(*mysrc));
-    *(mydst1+0) = *(mydst1+1) = GMASK_SEMI(GETPIXEL(*mysrc));
-    *(mydst2+0) = *(mydst2+1) = BMASK_SEMI(GETPIXEL(*mysrc));
-
-    ++mysrc;
+  for(mysrc=(SRC_PIXEL*)src; mysrc<myend; mysrc++) {
+    *(mydst0+1) = *(mydst0+0) = RMASK_SEMI(GETPIXEL(*mysrc));
     mydst0 += 2;
+  }
+
+  for(mysrc=(SRC_PIXEL*)src; mysrc<myend; mysrc++) {
+    *(mydst1+1) = *(mydst1+0) = GMASK_SEMI(GETPIXEL(*mysrc));
     mydst1 += 2;
+  }
+
+  for(mysrc=(SRC_PIXEL*)src; mysrc<myend; mysrc++) {
+    *(mydst2+1) = *(mydst2+0) = BMASK_SEMI(GETPIXEL(*mysrc));
     mydst2 += 2;
-    --count;
   }
 }
 
