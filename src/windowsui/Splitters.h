@@ -23,7 +23,7 @@
 enum eSplitterHits
 {
 	SPLITTER_HITNOTHING = 0,
-	SPLITTER_HITITEM,
+	SPLITTER_HITITEM
 };
 
 typedef struct horzSplitter

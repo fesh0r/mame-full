@@ -27,7 +27,6 @@ OSOBJS += \
 	$(OBJ)/windowsui/DirectDraw.o \
 	$(OBJ)/windowsui/file.o \
 	$(OBJ)/windowsui/directories.o \
-	$(OBJ)/windowsui/mzip.o \
 	$(OBJ)/windowsui/audit32.o \
 	$(OBJ)/windowsui/ColumnEdit.o \
 	$(OBJ)/windowsui/Screenshot.o \
@@ -70,6 +69,9 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DDECL_SPEC=__cdecl \
         -DZEXTERN=extern \
         -DMAME32HELP=\"mess.chm\" \
+
+DEFS += -DEXTRA_FOLDER \
+	-DCPUSND_FOLDER
 
 #####################################################################
 # Resources

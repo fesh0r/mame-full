@@ -43,14 +43,14 @@ static void  LoadOptions(void);
 static void  SaveGlobalOptions(BOOL bBackup);
 
 static void  LoadRegGameOptions(HKEY hKey, options_type *o);
-static DWORD GetRegOption(HKEY hKey, char *name);
-static void  GetRegBoolOption(HKEY hKey, char *name, BOOL *value);
-static char  *GetRegStringOption(HKEY hKey, char *name);
+static DWORD GetRegOption(HKEY hKey, const char *name);
+static void  GetRegBoolOption(HKEY hKey, const char *name, BOOL *value);
+static char  *GetRegStringOption(HKEY hKey, const char *name);
 
 static BOOL  SaveRegGameOptions(HKEY hKey, options_type *o);
-static void  PutRegOption(HKEY hKey, char *name, DWORD value);
-static void  PutRegBoolOption(HKEY hKey, char *name, BOOL value);
-static void  PutRegStringOption(HKEY hKey, char *name, char *option);
+static void  PutRegOption(HKEY hKey, const char *name, DWORD value);
+static void  PutRegBoolOption(HKEY hKey, const char *name, BOOL value);
+static void  PutRegStringOption(HKEY hKey, const char *name, char *option);
 
 static void  ColumnEncodeString(void* data, char* str);
 static void  ColumnDecodeString(const char* str, void* data);
@@ -67,7 +67,7 @@ static void  FontEncodeString(void* data, char* str);
 static void  FontDecodeString(const char* str, void* data);
 
 static void  SavePlayCount(int game_index);
-static void  SaveFolderFlags(char *folderName, DWORD dwFlags);
+static void  SaveFolderFlags(const char *folderName, DWORD dwFlags);
 
 static void  PutRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
@@ -283,7 +283,7 @@ static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  
 /* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
 
-static char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Details" };
+static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Details" };
 
 static char oldInfoMsg[400] = 
 MAME32NAME " has detected outdated configuration data.\n\n\
@@ -1353,7 +1353,7 @@ void IncrementPlayCount(int num_game)
 	SavePlayCount(num_game);
 }
 
-void SetFolderFlags(char *folderName, DWORD dwFlags)
+void SetFolderFlags(const char *folderName, DWORD dwFlags)
 {
 	SaveFolderFlags(folderName, dwFlags);
 }
@@ -1564,9 +1564,6 @@ static void LoadOptions(void)
 	if (result == ERROR_SUCCESS)
 	{
 		BOOL bReset = FALSE;
-		char tmp[80];
-
-		strcpy(tmp, GetVersionString());
 
         /* force reset of configuration? */
 		GetRegBoolOption(hKey, "ResetGUI",			&bReset);
@@ -1586,7 +1583,7 @@ static void LoadOptions(void)
                 /* print warning that old MAME configuration detected */
 
 				char msg[400];
-				sprintf( msg, oldInfoMsg, ptr, tmp );
+				sprintf( msg, oldInfoMsg, ptr, GetVersionString() );
 				if ( MessageBox( 0, 
                                  msg, 
                                  "Version Mismatch", 
@@ -1668,7 +1665,7 @@ static void LoadOptions(void)
 	}
 }
 
-static DWORD GetRegOption(HKEY hKey, char *name)
+static DWORD GetRegOption(HKEY hKey, const char *name)
 {
 	DWORD dwType;
 	DWORD dwSize;
@@ -1685,7 +1682,7 @@ static DWORD GetRegOption(HKEY hKey, char *name)
 	return value;
 }
 
-static void GetRegBoolOption(HKEY hKey, char *name, BOOL *value)
+static void GetRegBoolOption(HKEY hKey, const char *name, BOOL *value)
 {
 	char *ptr;
 
@@ -1695,7 +1692,7 @@ static void GetRegBoolOption(HKEY hKey, char *name, BOOL *value)
 	}
 }
 
-static char *GetRegStringOption(HKEY hKey, char *name)
+static char *GetRegStringOption(HKEY hKey, const char *name)
 {
 	DWORD dwType;
 	DWORD dwSize;
@@ -1730,7 +1727,7 @@ static void SavePlayCount(int game_index)
 
 	/* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32 */
 	result = RegCreateKeyEx(HKEY_CURRENT_USER,KEY_BASE,
-							0, "", REG_OPTION_NON_VOLATILE,
+							0, (char *)"", REG_OPTION_NON_VOLATILE,
 							KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition);
 	if (result == ERROR_SUCCESS)
 	{
@@ -1740,7 +1737,7 @@ static void SavePlayCount(int game_index)
         result = RegCreateKeyEx( HKEY_CURRENT_USER, 
                                  keyString,
 								 0, 
-                                 "", 
+                                 (char *)"", 
                                  REG_OPTION_NON_VOLATILE,
 								 KEY_ALL_ACCESS, 
                                  NULL, 
@@ -1755,7 +1752,7 @@ static void SavePlayCount(int game_index)
 	}
 }
 
-DWORD GetFolderFlags(char *folderName)
+DWORD GetFolderFlags(const char *folderName)
 {
 	HKEY  hKey;
 	long  value = 0;
@@ -1774,7 +1771,7 @@ DWORD GetFolderFlags(char *folderName)
 	return (value < 0) ? 0 : (DWORD)value;
 }
 
-static void SaveFolderFlags(char *folderName, DWORD dwFlags)
+static void SaveFolderFlags(const char *folderName, DWORD dwFlags)
 {
 	HKEY  hKey;
 	DWORD dwDisposition = 0;
@@ -1785,7 +1782,7 @@ static void SaveFolderFlags(char *folderName, DWORD dwFlags)
     result = RegCreateKeyEx( HKEY_CURRENT_USER, 
                              KEY_BASE_DOTFOLDERS,
 							 0, 
-                             "", 
+                             (char *)"", 
                              REG_OPTION_NON_VOLATILE,
 							 KEY_ALL_ACCESS, 
                              NULL, 
@@ -1815,7 +1812,7 @@ void SaveOptions(void)
 
 	/* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32 */
 	result = RegCreateKeyEx(HKEY_CURRENT_USER,KEY_BASE,
-							0, "", REG_OPTION_NON_VOLATILE,
+							0, (char *)"", REG_OPTION_NON_VOLATILE,
 							KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition);
 
     strcpy( keyString, KEY_BASE_FMT );
@@ -1825,7 +1822,7 @@ void SaveOptions(void)
 		strcpy( keyString + KEY_BASE_FMT_CCH, drivers[i]->name );
 
 		result = RegCreateKeyEx(HKEY_CURRENT_USER, keyString,
-								0, "", REG_OPTION_NON_VOLATILE,
+								0, (char *)"", REG_OPTION_NON_VOLATILE,
 								KEY_ALL_ACCESS, NULL, &hSubkey, &dwDisposition);
 
 		if (result == ERROR_SUCCESS)
@@ -1850,14 +1847,14 @@ void SaveGameOptions(int game_num)
 
 	/* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32 */
 	result = RegCreateKeyEx(HKEY_CURRENT_USER,KEY_BASE,
-							0, "", REG_OPTION_NON_VOLATILE,
+							0, (char *)"", REG_OPTION_NON_VOLATILE,
 							KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition);
 
     strcpy( keyString, KEY_BASE_FMT );
     strcpy( keyString + KEY_BASE_FMT_CCH, drivers[game_num]->name);
 
 	result = RegCreateKeyEx(HKEY_CURRENT_USER, keyString,
-							0, "", REG_OPTION_NON_VOLATILE,
+							0, (char *)"", REG_OPTION_NON_VOLATILE,
 							KEY_ALL_ACCESS, NULL, &hSubkey, &dwDisposition);
 
 	if (result == ERROR_SUCCESS)
@@ -1878,13 +1875,13 @@ void SaveDefaultOptions(void)
 
 	/* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32 */
 	result = RegCreateKeyEx(HKEY_CURRENT_USER,KEY_BASE,
-							0, "", REG_OPTION_NON_VOLATILE,
+							0, (char *)"", REG_OPTION_NON_VOLATILE,
 							KEY_ALL_ACCESS, NULL, &hKey, &dwDisposition);
 
 	result = RegCreateKeyEx( HKEY_CURRENT_USER, 
                              KEY_BASE_DOTDEFAULTS,
 							 0, 
-                             "", 
+                             (char *)"", 
                              REG_OPTION_NON_VOLATILE,
 							 KEY_ALL_ACCESS, 
                              NULL, 
@@ -1899,12 +1896,12 @@ void SaveDefaultOptions(void)
 	RegCloseKey(hKey);
 }
 
-static void PutRegOption(HKEY hKey, char *name, DWORD value)
+static void PutRegOption(HKEY hKey, const char *name, DWORD value)
 {
 	RegSetValueEx(hKey, name, 0, REG_DWORD, (void *)&value, sizeof(DWORD));
 }
 
-static void PutRegBoolOption(HKEY hKey, char *name, BOOL value)
+static void PutRegBoolOption(HKEY hKey, const char *name, BOOL value)
 {
 	char str[2];
 
@@ -1914,7 +1911,7 @@ static void PutRegBoolOption(HKEY hKey, char *name, BOOL value)
 	RegSetValueEx(hKey, name, 0, REG_SZ, (void *)str, 2);
 }
 
-static void PutRegStringOption(HKEY hKey, char *name, char *option)
+static void PutRegStringOption(HKEY hKey, const char *name, char *option)
 {
 	RegSetValueEx(hKey, name, 0, REG_SZ, (void *)option, strlen(option) + 1);
 }
@@ -1931,7 +1928,7 @@ static void SaveGlobalOptions(BOOL bBackup)
 	result = RegCreateKeyEx( HKEY_CURRENT_USER, 
         bBackup ? KEY_BASE_DOTBACKUP : KEY_BASE,
 							 0, 
-                             "", 
+                             (char *)"", 
                              REG_OPTION_NON_VOLATILE,
 							 KEY_ALL_ACCESS, 
                              NULL, 
@@ -1967,7 +1964,7 @@ static void SaveGlobalOptions(BOOL bBackup)
 	result = RegCreateKeyEx( HKEY_CURRENT_USER, 
         bBackup ? KEY_BACKUP_DOTDEFAULTS : KEY_BASE_DOTDEFAULTS,
 							 0, 
-                             "", 
+                             (char *)"", 
                              REG_OPTION_NON_VOLATILE,
 							 KEY_ALL_ACCESS, 
                              NULL, 

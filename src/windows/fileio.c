@@ -143,10 +143,12 @@ const char *pcrcfile = pcrcfilename;
 //	PROTOTYPES
 //============================================================
 
+#ifndef ZEXPORT
 #ifdef _MSC_VER
 #define ZEXPORT __stdcall
 #else
 #define ZEXPORT
+#endif
 #endif
 
 extern unsigned int ZEXPORT crc32 (unsigned int crc, const UINT8 *buf, unsigned int len);

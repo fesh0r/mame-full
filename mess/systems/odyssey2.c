@@ -169,9 +169,13 @@ static MACHINE_DRIVER_START( odyssey2 )
 	MDRV_MACHINE_INIT( odyssey2 )
 
     /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	
+	/* NPW 23-Nov-2002 - added VIDEO_PIXEL_ASPECT_RATIO_2_1 on behalf of Dopefish
+	 * Justin */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_2_1)
+
 	MDRV_SCREEN_SIZE(320,300)
-	MDRV_VISIBLE_AREA(0,320-1,0,300-1)
+	MDRV_VISIBLE_AREA(0,160-1,0,240-1)
 	MDRV_GFXDECODE( odyssey2_gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(24)
 	MDRV_COLORTABLE_LENGTH(2)
@@ -201,5 +205,5 @@ SYSTEM_CONFIG_START(odyssey2)
 SYSTEM_CONFIG_END
 
 /*	   YEAR  NAME		PARENT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */
-COMPX( 1982, odyssey2,	0,		odyssey2, odyssey2, odyssey2,	odyssey2,	"Magnavox",  "ODYSSEY 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+COMPX( 1982, odyssey2,	0,		odyssey2, odyssey2, odyssey2,	odyssey2,	"Magnavox",  "Odyssey 2", GAME_NOT_WORKING|GAME_NO_SOUND )
 // philips g7000/videopac

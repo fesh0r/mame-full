@@ -34,6 +34,7 @@
 #define IDD_DIRECTX                     114
 #define IDD_AUDIT                       115
 #define IDD_DIRECTORIES                 116
+#define IDD_CUSTOM_FILE                 117
 #define IDR_CONTEXT_MENU                123
 #define IDI_WIN_NOROMS                  124
 #define IDI_WIN_ROMS                    125
@@ -247,6 +248,11 @@
 #define IDC_SSTAB                       1167
 #define IDC_GAME_ICON                   1168
 #define IDC_RANDOM_BG                   1169
+#define IDC_CUSTOM_TREE                 1170
+#define IDC_CUSTOMFILEBROWSE            1171
+#define IDC_CUSTOMFILE_GAME             1172
+#define IDC_LOAD_STATUS                 1173
+#define IDC_ERROR_TEXT                  1174
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -290,6 +296,8 @@
 #define ID_CONTEXT_FILTERS              40054
 #define ID_CONTEXT_ADD_FAVORITE         40055
 #define ID_CONTEXT_DEL_FAVORITE         40056
+#define ID_CONTEXT_ADD_CUSTOM           40057
+#define ID_CONTEXT_REMOVE_CUSTOM        40058
 #define ID_GAME_AUDIT                   40059
 #define ID_CONTEXT_SELECT_RANDOM        40060
 #define ID_OPTIONS_LANGUAGE             40061
@@ -308,7 +316,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         40062
-#define _APS_NEXT_CONTROL_VALUE         1165
+#define _APS_NEXT_CONTROL_VALUE         1176
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

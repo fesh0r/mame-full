@@ -329,7 +329,7 @@ static void MySetColumnInfo(int *order, int *shown)
 static INT_PTR CALLBACK MyColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	return InternalColumnDialogProc(hDlg, Msg, wParam, lParam, MyColumnDialogProc_pListView->pClass->nNumColumns,
-		MyColumnDialogProc_shown, MyColumnDialogProc_order, (char **) MyColumnDialogProc_pListView->pClass->ppColumnNames,
+		MyColumnDialogProc_shown, MyColumnDialogProc_order, MyColumnDialogProc_pListView->pClass->ppColumnNames,
 		MyGetRealColumnOrder, MyGetColumnInfo, MySetColumnInfo);
 }
 

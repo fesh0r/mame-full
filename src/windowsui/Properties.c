@@ -20,10 +20,6 @@
 
 ***************************************************************************/
 
-#ifdef __GNUC__
-#undef bool
-#endif
-
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
 #include <windows.h>
@@ -704,7 +700,7 @@ static char *GameInfoColors(UINT nIndex)
 }
 
 /* Build game status string */
-char *GameInfoStatus(UINT nIndex)
+const char *GameInfoStatus(UINT nIndex)
 {
 	switch (GetHasRoms(nIndex))
 	{

@@ -28,6 +28,6 @@ extern void DisplayTextFile(HWND hWnd, char *cName);
 /* Check for old version of comctl32.dll */
 extern BOOL GetDllVersion(void);
 
-extern char* MyStrStrI(const char* pFirst, const char* pSrch);
-
+extern char * MyStrStrI(const char* pFirst, const char* pSrch);
+extern char * ConvertToWindowsNewlines(const char *source);
 #endif /* MAME32UTIL_H */

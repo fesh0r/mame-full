@@ -110,7 +110,7 @@ void DoMoveItem( HWND hWnd, BOOL bDown)
 
 INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam,
 	int nColumnMax, int *shown, int *order,
-	char **names, void (*pfnGetRealColumnOrder)(int *),
+	const char **names, void (*pfnGetRealColumnOrder)(int *),
 	void (*pfnGetColumnInfo)(int *pnOrder, int *pnShown),
 	void (*pfnSetColumnInfo)(int *pnOrder, int *pnShown))
 {
@@ -153,7 +153,7 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 #endif
 		for (i = 0 ; i < nColumnMax; i++)
 		{		 
-			lvi.pszText = names[order[i]];
+			lvi.pszText = (char *) names[order[i]];
 			lvi.lParam	= order[i];
 
 			if (shown[order[i]])

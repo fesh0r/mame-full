@@ -135,10 +135,14 @@ DEFS += \
 	-Dstricmp=_stricmp \
 	-Dstrnicmp=_strnicmp \
 	-DCLIB_DECL=_cdecl \
-	-DDECL_SPEC=_cdecl
+	-DDECL_SPEC=_cdecl \
+	-DZEXPORT=
 
 ifeq "$(WCEPLAT)" "x86em"
-DEFS += -DX86 -Dx86 -D_X86_ -D_WIN32_WCE_EMULATION
+DEFS += -DX86 -Dx86 -D_X86_
+ifeq "$(PLATFORM)" "ms pocket pc"
+DEFS += -D_WIN32_WCE_EMULATION
+endif
 endif
 ifeq "$(WCEPLAT)" "arm"
 DEFS += -DARM -D_ARM_
@@ -196,7 +200,11 @@ endif
 CFLAGS = -W1 -nologo $(INCLUDES)
 
 ifeq "$(MAMEOS)" "wince"
+ifeq "$(PLATFORM)" "MS Pocket PC"
 CFLAGS += -Gz
+else
+CFLAGS += -Gd
+endif
 endif
 
 ifdef DEBUG
@@ -225,6 +233,7 @@ LIBS = \
 	aygshell.lib \
 	commctrl.lib \
 	uuid.lib \
+	gx.lib
 
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))

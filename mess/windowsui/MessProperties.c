@@ -25,6 +25,10 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 
 static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
 
+#ifdef bool
+#undef bool
+#endif
+
 /* Include the actual Properties.c */
 #include "../../src/windowsui/Properties.c"
 

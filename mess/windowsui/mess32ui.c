@@ -83,6 +83,10 @@ static void MessTestsDoneIdle(void);
 
 #define IsValidListControl(hwnd)    (((hwnd) == hwndList) || ((hwnd) == (s_pSoftwareListView->hwndListView)))
 
+#ifdef bool
+#undef bool
+#endif
+
 #include "windowsui/win32ui.c"
 
 struct deviceentry {

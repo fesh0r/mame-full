@@ -31,6 +31,7 @@
 #include <unzip.h>
 
 #include "win32ui.h"
+#include "m32util.h"
 #include "audit32.h"
 #include "Properties.h"
 
@@ -38,11 +39,12 @@
     function prototypes
  ***************************************************************************/
 
+static DWORD WINAPI AuditThreadProc(LPVOID hDlg);
 static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static void ProcessNextRom(void);
 static void ProcessNextSample(void);
-static void __cdecl DetailsPrintf(char *fmt, ...);
-static char * StatusString(int iStatus);
+static void CLIB_DECL DetailsPrintf(const char *fmt, ...);
+static const char * StatusString(int iStatus);
 
 /***************************************************************************
     Internal variables
@@ -57,6 +59,9 @@ static int roms_incorrect;
 static int sample_index;
 static int samples_correct;
 static int samples_incorrect;
+
+static BOOL bPaused = FALSE;
+static BOOL bCancel = FALSE;
 
 /***************************************************************************
     External functions  
@@ -86,10 +91,48 @@ void InitGameAudit(int gameIndex)
     Internal functions
  ***************************************************************************/
 
-static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+static DWORD WINAPI AuditThreadProc(LPVOID hDlg)
 {
 	char buffer[200];
-	static BOOL bPaused = FALSE;
+
+	while (!bCancel)
+	{
+		if (!bPaused)
+		{
+			if (rom_index != -1)
+			{
+				sprintf(buffer, "Checking Game %s - %s",
+					drivers[rom_index]->name, drivers[rom_index]->description);
+				SetWindowText(hDlg, buffer);
+				ProcessNextRom();
+			}
+			else
+			{
+				if (sample_index != -1)
+				{
+					sprintf(buffer, "Checking Game %s - %s",
+						drivers[sample_index]->name, drivers[sample_index]->description);
+					SetWindowText(hDlg, buffer);
+					ProcessNextSample();
+				}
+				else
+				{
+					sprintf(buffer, "%s", "File Audit");
+					SetWindowText(hDlg, buffer);
+					EnableWindow(GetDlgItem(hDlg, IDPAUSE), FALSE);
+					ExitThread(1);
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	static HANDLE hThread;
+	static DWORD dwThreadID;
+	DWORD dwExitCode;
 
 	switch (Msg)
 	{
@@ -98,43 +141,26 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		SendDlgItemMessage(hDlg, IDC_ROMS_PROGRESS,    PBM_SETRANGE, 0, MAKELPARAM(0, GetNumGames()));
 		SendDlgItemMessage(hDlg, IDC_SAMPLES_PROGRESS, PBM_SETRANGE, 0, MAKELPARAM(0, GetNumGames()));
 		bPaused = FALSE;
+		bCancel = FALSE;
 		rom_index = 0;
 
-		SetTimer(hDlg, 0, 1, NULL);
+		hThread = CreateThread(NULL, 0, AuditThreadProc, hDlg, 0, &dwThreadID);
 		return 1;
 
-	case WM_TIMER:
-		
-		if (rom_index != -1)
-		{
-			sprintf(buffer, "Checking Game %s - %s",
-					drivers[rom_index]->name, drivers[rom_index]->description);
-			SetWindowText(hDlg, buffer);
-			ProcessNextRom();
-		}
-		else
-		{
-			if (sample_index != -1)
-			{
-				sprintf(buffer, "Checking Game %s - %s",
-						drivers[sample_index]->name, drivers[sample_index]->description);
-				SetWindowText(hDlg, buffer);
-				ProcessNextSample();
-			}
-			else
-			{
-				KillTimer(hDlg,0);
-				sprintf(buffer, "%s", "File Audit");
-				SetWindowText(hDlg, buffer);
-				EnableWindow(GetDlgItem(hDlg, IDPAUSE), FALSE);
-			}
-		}
-		break;
-  
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
 		case IDCANCEL:
+			if (hThread)
+			{
+				bCancel = TRUE;
+				if (GetExitCodeThread(hThread, &dwExitCode) && dwExitCode == STILL_ACTIVE)
+				{
+					PostMessage(hDlg, WM_COMMAND, wParam, lParam);
+					return 1;
+				}
+				CloseHandle(hThread);
+			}
 			EndDialog(hDlg,0);
 			break;
 
@@ -142,12 +168,10 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 			if (bPaused)
 			{
 				SendDlgItemMessage(hAudit, IDPAUSE, WM_SETTEXT, 0, (LPARAM)"Pause");
-				SetTimer(hDlg, 0, 1, NULL);
 				bPaused = FALSE;
 			}
 			else
 			{
-				KillTimer(hDlg, 0);
 				SendDlgItemMessage(hAudit, IDPAUSE, WM_SETTEXT, 0, (LPARAM)"Continue");
 				bPaused = TRUE;
 			}
@@ -189,7 +213,7 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 		{
 			int iStatus;
 
-			iStatus = VerifyRomSet(rom_index, DetailsPrintf);
+			iStatus = VerifyRomSet(rom_index, (verify_printf_proc)DetailsPrintf);
 #ifdef MESS
 			SetHasRoms(rom_index, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || !HasRomSet(rom_index)) ? 1 : 0);
 #else
@@ -201,7 +225,7 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 			if (GameUsesSamples(rom_index) == FALSE)
 				iStatus = -1; /* Game doesn't require samples */
 			else
-				iStatus = VerifySampleSet(rom_index, DetailsPrintf);
+				iStatus = VerifySampleSet(rom_index, (verify_printf_proc)DetailsPrintf);
 			SetHasSamples(rom_index, (iStatus == CORRECT) ? 1 : 0);
 			SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES), StatusString(iStatus));
 		}
@@ -216,7 +240,7 @@ static void ProcessNextRom()
 	int retval;
 	char buffer[200];
 
-	retval = VerifyRomSet(rom_index, DetailsPrintf);
+	retval = VerifyRomSet(rom_index, (verify_printf_proc)DetailsPrintf);
 	switch (retval)
 	{
 	case BEST_AVAILABLE: /* correct, incorrect or separate count? */
@@ -264,7 +288,7 @@ static void ProcessNextSample()
 	if (GameUsesSamples(sample_index) == FALSE)
 		retval = NOTFOUND;
 	else
-		retval = VerifySampleSet(sample_index, DetailsPrintf);
+		retval = VerifySampleSet(sample_index, (verify_printf_proc)DetailsPrintf);
 	
 	switch (retval)
 	{
@@ -301,14 +325,12 @@ static void ProcessNextSample()
 	
 }
 
-static void __cdecl DetailsPrintf(char *fmt, ...)
+static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
 {
 	HWND	hEdit;
 	va_list marker;
 	char	buffer[2000];
-	char	buffer2[4000];
-	int 	source;
-	int 	dest;
+	char * s;
 	
 	hEdit = GetDlgItem(hAudit, IDC_AUDIT_DETAILS);
 	
@@ -318,7 +340,10 @@ static void __cdecl DetailsPrintf(char *fmt, ...)
 	
 	va_end(marker);
 	
+	s = ConvertToWindowsNewlines(buffer);
+
 	/* convert \n's to \r\n */
+	/*
 	source = 0;
 	dest = 0;
 	while (buffer[source] != 0)
@@ -333,14 +358,15 @@ static void __cdecl DetailsPrintf(char *fmt, ...)
 		source++;
 	}
 	buffer2[dest] = 0;
+	*/
 	
 	Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
-	Edit_ReplaceSel(hEdit, buffer2);
+	Edit_ReplaceSel(hEdit, s);
 }
 
-static char * StatusString(int iStatus)
+static const char * StatusString(int iStatus)
 {
-	static char* ptr;
+	static const char *ptr;
 
 	ptr = "None required";
 

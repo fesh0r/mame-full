@@ -92,6 +92,7 @@ static void File_SetPaths(tDirPaths* pDirPath, const char* path);
 
 static tDirPaths RomDirPath;
 static tDirPaths SampleDirPath;
+static tDirPaths IniDirPath;
 
 #ifdef MESS
 static tDirPaths SoftwareDirPath;
@@ -199,6 +200,9 @@ BOOL File_Status(const char* gamename, const char* filename, int filetype)
 	else
 	if (filetype == OSD_FILETYPE_SAMPLE)
 		pDirPaths = &SampleDirPath;
+	else
+	if (filetype == OSD_FILETYPE_INI)
+		pDirPaths = &IniDirPath;
 	else
 		return FALSE; /* Only used for ROMS and Samples */
 
@@ -350,6 +354,7 @@ void* osd_fopen2(const char *gamename, const char *filename, int filetype, int o
 				case PICT_FLYER:	sprintf(name, "%s/flyers.zip",	 dirname); break;
 				case PICT_CABINET:	sprintf(name, "%s/cabinets.zip", dirname); break;
 				case PICT_MARQUEE:	sprintf(name, "%s/marquees.zip", dirname); break;
+				case PICT_TITLES:	sprintf(name, "%s/titles.zip", dirname); break;
 				default:
 					assert(FALSE);
 				}
@@ -380,6 +385,7 @@ void* osd_fopen2(const char *gamename, const char *filename, int filetype, int o
 				case PICT_FLYER:	sprintf(name, "%s/flyers.zip/%s.%s",   dirname, gamename, pic_format[i]); break;
 				case PICT_CABINET:	sprintf(name, "%s/cabinets.zip/%s.%s", dirname, gamename, pic_format[i]); break;
 				case PICT_MARQUEE:	sprintf(name, "%s/marquees.zip/%s.%s", dirname, gamename, pic_format[i]); break;
+				case PICT_TITLES:	sprintf(name, "%s/titles.zip/%s.%s",   dirname, gamename, pic_format[i]); break;
 				default:
 					assert(FALSE);
 				}

@@ -77,7 +77,7 @@ void __cdecl ErrorMsg(const char* fmt, ...)
 	if (pFile == NULL)
 		pFile = fopen("debug.txt", "wt");
 	if (pFile != NULL)
-		fprintf(pFile, buf);
+		fprintf(pFile, "%s", buf);
 
 	va_end(va);
 }
@@ -162,7 +162,7 @@ BOOL GetDllVersion()
 void DisplayTextFile(HWND hWnd, char *cName)
 {
 	HINSTANCE hErr;
-	char	  *msg = 0;
+	const char	  *msg = 0;
 
 	hErr = ShellExecute(hWnd, NULL, cName, NULL, NULL, SW_SHOWNORMAL);
 	if ((int)hErr > 32)
@@ -221,6 +221,27 @@ char* MyStrStrI(const char* pFirst, const char* pSrch)
 		cp++;
 	}
 	return NULL;
+}
+
+extern char * ConvertToWindowsNewlines(const char *source)
+{
+	static char buf[4000];
+	char *dest;
+
+	dest = buf;
+	while (*source != 0)
+	{
+		if (*source == '\n')
+		{
+			*dest++ = '\r';
+			*dest++ = '\n';
+		}
+		else
+			*dest++ = *source;
+		source++;
+	}
+	*dest = 0;
+	return buf;
 }
 
 /***************************************************************************

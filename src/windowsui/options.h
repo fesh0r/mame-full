@@ -371,8 +371,8 @@ int  GetSplitterPos(int splitterId);
 void SetListFont(LOGFONT *font);
 void GetListFont(LOGFONT *font);
 
-DWORD GetFolderFlags(char *folderName);
-void  SetFolderFlags(char *folderName, DWORD dwFlags);
+DWORD GetFolderFlags(const char *folderName);
+void  SetFolderFlags(const char *folderName, DWORD dwFlags);
 
 void SetListFontColor(COLORREF uColor);
 COLORREF GetListFontColor(void);

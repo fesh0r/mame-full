@@ -16,6 +16,28 @@
 #include "Bitmask.h"
 #include "Win32ui.h"
 
+/* corrections for commctrl.h */
+
+#if defined(__GNUC__)
+/* fix warning: cast does not match function type */
+#undef  TreeView_InsertItem
+#define TreeView_InsertItem(w,i) (HTREEITEM)(LRESULT)(int)SendMessage((w),TVM_INSERTITEM,0,(LPARAM)(LPTV_INSERTSTRUCT)(i))
+
+#undef  TreeView_SetImageList
+#define TreeView_SetImageList(w,h,i) (HIMAGELIST)(LRESULT)(int)SendMessage((w),TVM_SETIMAGELIST,i,(LPARAM)(HIMAGELIST)(h))
+
+#undef  TreeView_GetNextItem
+#define TreeView_GetNextItem(w,i,c) (HTREEITEM)(LRESULT)(int)SendMessage((w),TVM_GETNEXTITEM,c,(LPARAM)(HTREEITEM)(i))
+
+#undef TreeView_HitTest
+#define TreeView_HitTest(hwnd, lpht) \
+    (HTREEITEM)(LRESULT)(int)SNDMSG((hwnd), TVM_HITTEST, 0, (LPARAM)(LPTV_HITTESTINFO)(lpht))
+
+/* fix wrong return type */
+#undef  TreeView_Select
+#define TreeView_Select(w,i,c) (BOOL)(int)SendMessage((w),TVM_SELECTITEM,c,(LPARAM)(HTREEITEM)(i))
+#endif /* defined(__GNUC__) */
+
 /* TreeView structures */
 enum FolderIds
 {
@@ -24,19 +46,10 @@ enum FolderIds
 	FOLDER_AVAILABLE,
 	FOLDER_UNAVAILABLE,
 	FOLDER_TYPES,
-#if !defined(NEOFREE)
-	FOLDER_NEOGEO,
-#endif
 #ifdef MESS
 	FOLDER_CONSOLE,
 	FOLDER_COMPUTER,
 	FOLDER_MODIFIED,
-#else
-	FOLDER_CPS,
-	FOLDER_SEGASYS,
-	FOLDER_IREMM,
-	FOLDER_NES,
-	FOLDER_DECOCASS,
 #endif
 	FOLDER_MANUFACTURER,
 	FOLDER_YEAR,
@@ -66,27 +79,25 @@ typedef enum
 
 typedef enum
 {
-#ifndef MESS
-	F_NEOGEO        = 0x00000001,
-#endif
-	F_CLONES        = 0x00000002,
-	F_NONWORKING    = 0x00000004,
-	F_UNAVAILABLE   = 0x00000008,
-	F_VECTOR        = 0x00000010,
-	F_RASTER        = 0x00000020,
-	F_ORIGINALS     = 0x00000040,
-	F_WORKING       = 0x00000080,
-	F_AVAILABLE     = 0x00000100,
+	F_CLONES        = 0x00000001,
+	F_NONWORKING    = 0x00000002,
+	F_UNAVAILABLE   = 0x00000004,
+	F_VECTOR        = 0x00000008,
+	F_RASTER        = 0x00000010,
+	F_ORIGINALS     = 0x00000020,
+	F_WORKING       = 0x00000040,
+	F_AVAILABLE     = 0x00000080,
 #ifdef MESS
 	F_COMPUTER      = 0x00000200,
 	F_CONSOLE       = 0x00000400,
 	F_MODIFIED      = 0x00000800,
 	F_NUM_FILTERS   = 11,
 #else
-	F_NUM_FILTERS   = 9,
+	F_NUM_FILTERS   = 8,
 #endif
 	F_MASK          = 0x00000FFF,
-	F_CUSTOM        = 0x01000000
+	F_OLD_CUSTOM    = 0x01000000, /* only used for old played/favorites */
+	F_CUSTOM        = 0x02000000  /* for current .ini custom folders */
 } FOLDERFLAG;
 
 typedef struct
@@ -99,6 +110,18 @@ typedef struct
 	DWORD       m_dwFlags;          /* Misc flags */
 	LPBITS      m_lpGameBits;       /* Game bits, represent game indices */
 } TREEFOLDER, *LPTREEFOLDER;
+
+#ifdef EXTRA_FOLDER
+typedef struct {
+	char        m_szTitle[64];  /* Folder Title */
+	FOLDERTYPE  m_nFolderType;  /* Folder Type */
+	UINT        m_nFolderId;    /* ID */
+	UINT        m_nParent;      /* Parent Folder ID */
+	DWORD       m_dwFlags;      /* Flags - Customizable and Filters */
+	UINT        m_nIconId;      /* Icon index into the ImageList */
+	UINT        m_nSubIconId;   /* Sub folder's Icon index into the ImageList */
+} EXFOLDERDATA, *LPEXFOLDERDATA;
+#endif
 
 extern BOOL InitFolders(UINT nGames);
 extern void FreeFolders(void);
@@ -126,5 +149,11 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 
 extern void SetTreeIconSize(HWND hWnd, BOOL bLarge);
 extern BOOL GetTreeIconSize(void);
+
+extern void GetFolders(TREEFOLDER ***folders,int *num_folders);
+extern void AddToCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
+extern void RemoveFromCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
+
+extern HIMAGELIST GetTreeViewIconList(void);
 
 #endif /* TREEVIEW_H */

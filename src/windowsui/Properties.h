@@ -38,7 +38,7 @@ BOOL    FindSampleSet(int game);
 BOOL    GameUsesSamples(int game);
 
 /* Get Game status text string */
-char*   GameInfoStatus(UINT game);
+const char*   GameInfoStatus(UINT game);
 
 /* Get Game history information */
 char*   GameHistory(int game_index);

@@ -186,7 +186,7 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)						*/
 TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)				*/
 
 	/* MAGNAVOX */
-TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
+	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983					*/
 
 	/* WATARA */
 	DRIVER( svision )	/* Super Vision	Handheld							*/

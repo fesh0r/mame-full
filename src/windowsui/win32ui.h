@@ -27,15 +27,8 @@ enum
 	NUM_TABS
 };
 
-typedef struct
-{
-BOOL neogeo;
-} game_data_type;
-
 /* global variables */
-extern char *column_names[COLUMN_MAX];
-
-extern game_data_type* GetGameData(void);
+extern const char *column_names[COLUMN_MAX];
 
 extern HWND  GetMainWindow(void);
 extern int   GetNumGames(void);
@@ -44,7 +37,6 @@ extern HICON LoadIconFromFile(char *iconname);
 extern BOOL  GameUsesTrackball(int game);
 extern void  UpdateScreenShot(void);
 extern void  ResizePickerControls(HWND hWnd);
-extern int   UpdateLoadProgress(const char* name, int current, int total);
 
 // Move The in "The Title (notes)" to "Title, The (notes)"
 extern char *ModifyThe(const char *str);

@@ -118,7 +118,7 @@ static char treeIconNames[][15] =
 
 typedef struct
 {
-	LPSTR       m_lpTitle;      /* Folder Title */
+	const char *m_lpTitle;      /* Folder Title */
 	FOLDERTYPE  m_nFolderType;  /* Folder Type */
 	UINT        m_nFolderId;    /* ID */
 	UINT        m_nParent;      /* Parent Folder ID */
@@ -150,8 +150,8 @@ FOLDERDATA folderData[] =
 #endif /* CPUSND_FOLDER */
 	{"Working",     IS_ROOT,  FOLDER_WORKING,     FOLDER_NONE,  0,        ICON_WORKING},
 	{"Non-Working", IS_ROOT,  FOLDER_NONWORKING,  FOLDER_NONE,  0,        ICON_NONWORKING},
-	{"Played",      IS_FOLDER,FOLDER_PLAYED,      FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
-	{"Favorites",   IS_FOLDER,FOLDER_FAVORITE,    FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
+	{"Played",        IS_FOLDER, FOLDER_PLAYED,      FOLDER_CUSTOM,F_OLD_CUSTOM, ICON_FOLDER_CUSTOM},
+	{"Favorites",     IS_FOLDER, FOLDER_FAVORITE,    FOLDER_CUSTOM,F_OLD_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Originals",   IS_ROOT,  FOLDER_ORIGINAL,    FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Clones",      IS_ROOT,  FOLDER_CLONES,      FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Raster",      IS_ROOT,  FOLDER_RASTER,      FOLDER_NONE,  0,        ICON_FOLDER},
@@ -163,22 +163,11 @@ FOLDERDATA folderData[] =
 
 #define NUM_FOLDERS (sizeof(folderData) / sizeof(FOLDERDATA))
 
-#ifdef EXTRA_FOLDER
-typedef struct {
-	char        m_szTitle[64];  /* Folder Title */
-	FOLDERTYPE  m_nFolderType;  /* Folder Type */
-	UINT        m_nFolderId;    /* ID */
-	UINT        m_nParent;      /* Parent Folder ID */
-	DWORD       m_dwFlags;      /* Flags - Customizable and Filters */
-	UINT        m_nIconId;      /* Icon index into the ImageList */
-	UINT        m_nSubIconId;   /* Sub folder's Icon index into the ImageList */
-} EXFOLDERDATA, *LPEXFOLDERDATA;
-#endif
-
 /***************************************************************************
     private variables
  ***************************************************************************/
 
+/* this has an entry for every folder eventually in the UI, including subfolders */
 static TREEFOLDER **treeFolders = 0;
 static UINT         numFolders  = 0;        /* Number of folder in the folder array */
 static UINT         folderArrayLength = 0;  /* Size of the folder array */
@@ -189,6 +178,7 @@ static HIMAGELIST   hTreeSmall = 0;         /* TreeView Image list of icons */
 static char         g_FilterText[FILTERTEXT_LEN];
 
 #ifdef EXTRA_FOLDER
+/* this only has an entry for each TOP LEVEL extra folder */
 static LPEXFOLDERDATA ExtraFolderData[MAX_EXTRA_FOLDERS];
 static int            numExtraFolders = 0;
 static int            numExtraIcons = 0;
@@ -200,11 +190,11 @@ static char           *ExtraFolderIcons[MAX_EXTRA_FOLDERS];
  ***************************************************************************/
 
 static BOOL         CreateTreeIcons(HWND hWnd);
-static char *       FixString(char *s);
+static const char *       FixString(char *s);
 static char *       LicenseManufacturer(char *s);
 static BOOL         AddFolder(LPTREEFOLDER lpFolder);
 static BOOL         RemoveFolder(LPTREEFOLDER lpFolder);
-static LPTREEFOLDER NewFolder(LPSTR lpTitle, FOLDERTYPE nFolderType,
+static LPTREEFOLDER NewFolder(const char *lpTitle, FOLDERTYPE nFolderType,
                               UINT nFolderId, int nParent, UINT nIconId,
                               DWORD dwFlags, UINT nBits);
 static void         DeleteFolder(LPTREEFOLDER lpFolder);
@@ -214,10 +204,13 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 #ifdef EXTRA_FOLDER
 static int InitExtraFolders( UINT nGames );
-static void FreeExtraFolder(void);
+static void FreeExtraFolders(void);
 static void SetExtraIcons(char *name, int *id);
 BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId );
 int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 );
+
+void SaveExtraFolder(LPTREEFOLDER lpFolder);
+
 #endif /* EXTRA_FOLDER */
 
 /***************************************************************************
@@ -234,7 +227,7 @@ void FreeFolders(void)
 #ifdef EXTRA_FOLDER
 		if (numExtraFolders)
 		{
-			FreeExtraFolder();
+			FreeExtraFolders();
 			numFolders -= numExtraFolders;
 		}
 #endif /* EXTRA_FOLDER */
@@ -655,12 +648,12 @@ void InitGames(UINT nGames)
 					if (once)
 						fprintf(fp, "NORMAL\t%s\n", FixString((char *)drivers[j]->manufacturer));
 #endif
-					if (tmp != NULL && strncmp(cTmp, tmp, 5) == 0)
+					if (tmp != NULL && strncmp(cTmp, tmp, 20) == 0)
 					{
 						AddGame(lpTemp, j);
 					}
 
-					if (strncmp(cTmp, FixString((char *)drivers[j]->manufacturer), 5) == 0)
+					if (strncmp(cTmp, FixString((char *)drivers[j]->manufacturer), 20) == 0)
 					{
 						done[j] = TRUE;
 						AddGame(lpTemp, j);
@@ -835,7 +828,7 @@ void Tree_Initialize(HWND hWnd)
 {
 	/* this will subclass the listview (where WM_DRAWITEM gets sent for
 	   the header control) */
-	g_lpTreeWndProc = (WNDPROC)(LONG)GetWindowLong(hWnd, GWL_WNDPROC);
+	g_lpTreeWndProc = (WNDPROC)(LONG)(int)GetWindowLong(hWnd, GWL_WNDPROC);
 	SetWindowLong(hWnd, GWL_WNDPROC, (LONG)TreeWndProc);
 }
 
@@ -1089,7 +1082,7 @@ static BOOL RemoveFolder(LPTREEFOLDER lpFolder)
 }
 
 /* Allocate and initialize a NEW TREEFOLDER */
-static LPTREEFOLDER NewFolder(LPSTR lpTitle, FOLDERTYPE nFolderType,
+static LPTREEFOLDER NewFolder(const char *lpTitle, FOLDERTYPE nFolderType,
 					   UINT nFolderId, int nParent, UINT nIconId,
 					   DWORD dwFlags, UINT nBits)
 {
@@ -1217,7 +1210,7 @@ static void BuildTreeFolders(HWND hWnd)
 }
 
 /* Make a reasonable name out of the one found in the driver array */
-static char * FixString(char *s)
+static const char* FixString( char *s )
 {
 	static char tmp[40];
     char* ptmp;
@@ -1888,7 +1881,7 @@ static int InitExtraFolders( UINT nGames )
 						ExtraFolderData[count]->m_nFolderType = IS_ROOT;
 						ExtraFolderData[count]->m_nFolderId   = FOLDER_END + count + 1;
 						ExtraFolderData[count]->m_nParent	  = FOLDER_NONE;
-						ExtraFolderData[count]->m_dwFlags	  = 0;
+						ExtraFolderData[count]->m_dwFlags	  = F_CUSTOM;
 						ExtraFolderData[count]->m_nIconId	  = icon[0] ? icon[0] : ICON_FOLDER;
 						ExtraFolderData[count]->m_nSubIconId  = icon[1] ? icon[1] : ICON_FOLDER;
 						count++;
@@ -1917,7 +1910,7 @@ static int InitExtraFolders( UINT nGames )
 	return count;
 }
 
-void FreeExtraFolder(void)
+void FreeExtraFolders(void)
 {
 	int i;
 
@@ -2043,7 +2036,7 @@ BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId )
                                         (*pnFolderId)++,
                                         lpFolder->m_nFolderId, 
                                         ExtraFolderData[id]->m_nSubIconId,
-                                        GetFolderFlags( name ), 
+                                        GetFolderFlags( name ) | F_CUSTOM, 
                                         nGames );
                     AddFolder( lpTemp );
                 }
@@ -2090,6 +2083,150 @@ int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 )
                    ((EXTRAGAMEDATA*)arg2)->name );
 }
 
+void GetFolders(TREEFOLDER ***folders,int *num_folders)
+{
+	*folders = treeFolders;
+	*num_folders = numFolders;
+}
+
+void AddToCustomFolder(LPTREEFOLDER lpFolder,int driver_index)
+{
+    if ((lpFolder->m_dwFlags & F_CUSTOM) == 0)
+	{
+	    MessageBox(GetMainWindow(),"Unable to add game to non-custom folder",
+				   MAME32NAME,MB_OK | MB_ICONERROR);
+		return;
+	}
+
+    AddGame(lpFolder,driver_index);
+	SaveExtraFolder(lpFolder);
+}
+
+void RemoveFromCustomFolder(LPTREEFOLDER lpFolder,int driver_index)
+{
+    if ((lpFolder->m_dwFlags & F_CUSTOM) == 0)
+	{
+	    MessageBox(GetMainWindow(),"Unable to remove game from non-custom folder",
+				   MAME32NAME,MB_OK | MB_ICONERROR);
+		return;
+	}
+
+    RemoveGame(lpFolder,driver_index);
+	SaveExtraFolder(lpFolder);
+}
+
+void SaveExtraFolder(LPTREEFOLDER lpFolder)
+{
+    char fname[MAX_PATH];
+	FILE *fp;
+	BOOL error = FALSE;
+    int i,j;
+    EXTRAGAMEDATA *pCurrData;
+
+	LPTREEFOLDER root_folder = NULL;
+	LPEXFOLDERDATA extra_folder = NULL;
+
+	for (i=0;i<numExtraFolders;i++)
+	{
+	    if (ExtraFolderData[i]->m_nFolderId == lpFolder->m_nFolderId)
+		{
+		    root_folder = lpFolder;
+		    extra_folder = ExtraFolderData[i];
+			break;
+		}
+
+		if (ExtraFolderData[i]->m_nFolderId == lpFolder->m_nParent)
+		{
+		    for (j=0;j<numFolders;j++)
+			    if (treeFolders[j]->m_nFolderId == lpFolder->m_nParent)
+				{
+				    root_folder = treeFolders[j];
+					break;
+				}
+			extra_folder = ExtraFolderData[i];
+			break;
+		}
+	}
+
+	if (extra_folder == NULL || root_folder == NULL)
+	{
+	   MessageBox(GetMainWindow(), "Error finding custom file name to save", MAME32NAME, MB_OK | MB_ICONERROR);
+	   return;
+	}
+    /* "folder\title.ini" */
+
+    sprintf( fname, "%s\\%s.ini", GetFolderDir(), extra_folder->m_szTitle);
+
+    fp = fopen(fname, "wt");
+    if (fp == NULL)
+	   error = TRUE;
+	else
+	{
+	   TREEFOLDER *folder_data;
+
+
+	   fprintf(fp,"[FOLDER_SETTINGS]\n");
+	   if (extra_folder->m_nIconId != ICON_FOLDER)
+	   {
+		   fprintf(fp,"RootFolderIcon %s\n",ExtraFolderIcons[extra_folder->m_nIconId-ICON_STEREO-1]);
+	   }
+	   if (extra_folder->m_nSubIconId != ICON_FOLDER)
+	   {
+		   fprintf(fp,"SubFolderIcon %s\n",ExtraFolderIcons[extra_folder->m_nSubIconId-ICON_STEREO-1]);
+	   }
+
+	   /* points to the array of sorted game names */
+	   pCurrData = pExtraFolderData;
+
+	   /* need to loop over all our TREEFOLDERs--first the root one, then each child.
+		  start with the root */
+
+	   folder_data = root_folder;
+
+	   fprintf(fp,"\n[ROOT_FOLDER]\n");
+
+	   for (i=0;i<GetNumGames();i++)
+	   {
+		  if (TestBit(folder_data->m_lpGameBits,pCurrData[i].GameIndex))
+		  {
+			  fprintf(fp,"%s\n",pCurrData[i].name);
+		  }
+	   }
+
+	   /* look through the custom folders for ones with our root as parent */
+	   for (j=0;j<numFolders;j++)
+	   {
+		   folder_data = treeFolders[j];
+
+		   if (folder_data->m_nParent == root_folder->m_nFolderId)
+		   {
+			   fprintf(fp,"\n[%s]\n",folder_data->m_lpTitle);
+			   
+			   for (i=0;i<GetNumGames();i++)
+			   {
+				   if (TestBit(folder_data->m_lpGameBits,pCurrData[i].GameIndex))
+				   {
+					  fprintf(fp,"%s\n",pCurrData[i].name);
+				   }
+			   }
+		   }
+	   }
+	   if (fclose(fp) != 0)
+		   error = TRUE;
+    }
+
+	if (error)
+	{
+	   MessageBox(GetMainWindow(), "Error while saving custom file", MAME32NAME, MB_OK | MB_ICONERROR);
+	}
+}
+
+HIMAGELIST GetTreeViewIconList(void)
+{
+    return hTreeSmall;
+}
+
 #endif // #ifdef EXTRA_FOLDER
 
 /* End of source file */
+

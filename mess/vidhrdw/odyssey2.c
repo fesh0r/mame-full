@@ -300,107 +300,123 @@ INLINE void odyssey2_draw_char(struct mame_bitmap *bitmap, UINT8 bg[][320], int 
 
 VIDEO_UPDATE( odyssey2 )
 {
-    int i, j, x, y;
-    int color;
-    UINT8 bg[300][320]= { { 0 } };
+	int i, j, x, y;
+	int color;
+	UINT8 bg[300][320]= { { 0 } };
 
-    assert(bitmap->width<=ARRAY_LENGTH(bg[0])
-	   && bitmap->height<=ARRAY_LENGTH(bg));
+	assert(bitmap->width<=ARRAY_LENGTH(bg[0])
+		&& bitmap->height<=ARRAY_LENGTH(bg));
 
-    plot_box(bitmap, 0, 0, bitmap->width, bitmap->height, Machine->pens[(o2_vdc.s.color>>3)&0x7]);
-    if (o2_vdc.s.control&8) {
-	// grid 8 points right compared to characters, sprites
+	plot_box(bitmap, 0, 0, bitmap->width, bitmap->height, Machine->pens[(o2_vdc.s.color>>3)&0x7]);
+	if (o2_vdc.s.control & 8)
+	{
+		// grid 8 points right compared to characters, sprites
 #define WIDTH 16
 #define HEIGHT 24
-	int w=2;
-	color=o2_vdc.s.color&7;
-	color|=(o2_vdc.s.color>>3)&8;
-	for (i=0, x=0; x<9; x++, i++) {
-	    for (j=1, y=0; y<9; y++, j<<=1) {
-		if ( ((j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j))
-		     ||((j>0x80)&&(o2_vdc.s.hgrid[1][i]&1)) ) {
-		    odyssey2_draw_box(bg,8+x*WIDTH,24+y*HEIGHT, WIDTH,3, 0x20);
-		    plot_box(bitmap,8+x*WIDTH,24+y*HEIGHT,WIDTH,3,Machine->pens[color]);
+		int w=2;
+		color=o2_vdc.s.color&7;
+		color|=(o2_vdc.s.color>>3)&8;
+		for (i=0, x=0; x<9; x++, i++) {
+			for (j=1, y=0; y<9; y++, j<<=1) {
+				if ( ((j<=0x80)&&(o2_vdc.s.hgrid[0][i]&j))
+						||((j>0x80)&&(o2_vdc.s.hgrid[1][i]&1)) )
+				{
+					odyssey2_draw_box(bg,8+x*WIDTH,24+y*HEIGHT, WIDTH,3, 0x20);
+					plot_box(bitmap,8+x*WIDTH,24+y*HEIGHT,WIDTH,3,Machine->pens[color]);
+				}
+		    }
 		}
-	    }
-	}
-	if (o2_vdc.s.control&0x80) w=WIDTH;
-	for (i=0, x=0; x<10; x++, i++) {
-	    for (j=1, y=0; y<8; y++, j<<=1) {
-		if (o2_vdc.s.vgrid[i]&j) {
-		    odyssey2_draw_box(bg,8+x*WIDTH,24+y*HEIGHT,w,HEIGHT, 0x10);
-		    plot_box(bitmap,8+x*WIDTH,24+y*HEIGHT,w,HEIGHT,Machine->pens[color]);
+		if (o2_vdc.s.control&0x80) w=WIDTH;
+		for (i=0, x=0; x<10; x++, i++) {
+			for (j=1, y=0; y<8; y++, j<<=1)
+			{
+				if (o2_vdc.s.vgrid[i]&j) {
+				    odyssey2_draw_box(bg,8+x*WIDTH,24+y*HEIGHT,w,HEIGHT, 0x10);
+				    plot_box(bitmap,8+x*WIDTH,24+y*HEIGHT,w,HEIGHT,Machine->pens[color]);
+				}
+			}
 		}
-	    }
-	}
     }
-    if (o2_vdc.s.control&0x20) {
-	for (i=0; i<ARRAY_LENGTH(o2_vdc.s.foreground); i++) {
-	    odyssey2_draw_char(bitmap,bg,
-			       o2_vdc.s.foreground[i].x, o2_vdc.s.foreground[i].y,
-			       o2_vdc.s.foreground[i].ptr, o2_vdc.s.foreground[i].color);
-	}
-	for (i=0; i<ARRAY_LENGTH(o2_vdc.s.quad); i++) {
-	    x=o2_vdc.s.quad[i].single[0].x;
-	    for (j=0; j<ARRAY_LENGTH(o2_vdc.s.quad[0].single); j++, x+=2*8) {
-		odyssey2_draw_char(bitmap,bg,
-				   x, y=o2_vdc.s.quad[i].single[0].y,
-				   o2_vdc.s.quad[i].single[j].ptr, o2_vdc.s.quad[i].single[j].color);
-	    }
-	}
-	for (i=0; i<ARRAY_LENGTH(o2_vdc.s.sprites); i++) {
-	    Machine->gfx[0]->colortable[1]=Machine->pens[16+((o2_vdc.s.sprites[i].color>>3)&7)];
-	    y=o2_vdc.s.sprites[i].y;
-	    x=o2_vdc.s.sprites[i].x;
-	    for (j=0; j<8; j++) {
-		if (o2_vdc.s.sprites[i].color&4) {
-		    if (y+4*j>=bitmap->height) break;
-		    odyssey2_draw_sprite(bg, o2_vdc.s.shape[i][j], x, y+j*4, 2, 4, 1<<i);
-		    drawgfxzoom(bitmap, Machine->gfx[1], o2_vdc.s.shape[i][j],0,
-				0,0,x,y+j*4,
-				0, TRANSPARENCY_PEN,0,0x20000, 0x40000);
-		} else {
-		    if (y+j*2>=bitmap->height) break;
-		    odyssey2_draw_sprite(bg, o2_vdc.s.shape[i][j], x, y+j*2, 1, 2, 1<<i);
-		    drawgfxzoom(bitmap, Machine->gfx[1], o2_vdc.s.shape[i][j],0,
-				0,0,x,y+j*2,
-				0, TRANSPARENCY_PEN,0, 0x10000, 0x20000);
+    if (o2_vdc.s.control&0x20)
+	{
+		for (i=0; i<ARRAY_LENGTH(o2_vdc.s.foreground); i++) {
+			odyssey2_draw_char(bitmap,bg,
+				o2_vdc.s.foreground[i].x, o2_vdc.s.foreground[i].y,
+				o2_vdc.s.foreground[i].ptr, o2_vdc.s.foreground[i].color);
 		}
-	    }
-	}
-    }
-    collision=0;
-//    for (y=0; y<bitmap->height; y++) {
-//	for (x=0; x<bitmap->width; x++) {
-    for (y=0; y<200; y++) {
-	for (x=0; x<200; x++) {
-	    switch (bg[y][x]) {
-	    case 0: case 1: case 2: case 4: case 8:
-	    case 0x10: case 0x20: case 0x80:
-		break;
-	    default:
-		if (bg[y][x]&o2_vdc.s.collision) {
-		    collision|=bg[y][x];
+		for (i=0; i<ARRAY_LENGTH(o2_vdc.s.quad); i++)
+		{
+			x=o2_vdc.s.quad[i].single[0].x;
+			for (j=0; j<ARRAY_LENGTH(o2_vdc.s.quad[0].single); j++, x+=2*8)
+			{
+				odyssey2_draw_char(bitmap,bg,
+					x, y=o2_vdc.s.quad[i].single[0].y,
+					o2_vdc.s.quad[i].single[j].ptr, o2_vdc.s.quad[i].single[j].color);
+			}
 		}
-	    }
+		for (i=0; i<ARRAY_LENGTH(o2_vdc.s.sprites); i++)
+		{
+			Machine->gfx[0]->colortable[1]=Machine->pens[16+((o2_vdc.s.sprites[i].color>>3)&7)];
+			y=o2_vdc.s.sprites[i].y;
+			x=o2_vdc.s.sprites[i].x;
+			for (j=0; j<8; j++)
+			{
+				if (o2_vdc.s.sprites[i].color&4)
+				{
+					if (y+4*j>=bitmap->height) break;
+					odyssey2_draw_sprite(bg, o2_vdc.s.shape[i][j], x, y+j*4, 2, 4, 1<<i);
+					drawgfxzoom(bitmap, Machine->gfx[1], o2_vdc.s.shape[i][j],0,
+						0,0,x,y+j*4,
+						0, TRANSPARENCY_PEN,0,0x20000, 0x40000);
+				}
+				else
+				{
+					if (y+j*2>=bitmap->height) break;
+					odyssey2_draw_sprite(bg, o2_vdc.s.shape[i][j], x, y+j*2, 1, 2, 1<<i);
+					drawgfxzoom(bitmap, Machine->gfx[1], o2_vdc.s.shape[i][j],0,
+						0,0,x,y+j*2,
+						0, TRANSPARENCY_PEN,0, 0x10000, 0x20000);
+				}
+			}
+		}
 	}
-    }
+	collision=0;
+//	for (y=0; y<bitmap->height; y++) {
+//		for (x=0; x<bitmap->width; x++) {
+	for (y=0; y<200; y++)
+	{
+		for (x=0; x<200; x++)
+		{
+			switch (bg[y][x]) {
+			case 0: case 1: case 2: case 4: case 8:
+			case 0x10: case 0x20: case 0x80:
+				break;
+
+			default:
+				if (bg[y][x]&o2_vdc.s.collision)
+				{
+				    collision|=bg[y][x]-1;	/* NPW 23-Nov-2002 - subtracting by 1 as per
+											 * fix by Dopefish Justin */
+				}
+				break;
+			}
+		}
+	}
 
 #if 0
-    char str[0x40];
-    for (i=0; i<4; i++) {
-	snprintf(str, sizeof(str), "%.2x:%.2x %.2x",
-		 o2_vdc.s.sprites[i].x,
-		 o2_vdc.s.sprites[i].y,
-		 o2_vdc.s.sprites[i].color);
+	char str[0x40];
+	for (i=0; i<4; i++)
+	{
+		snprintf(str, sizeof(str), "%.2x:%.2x %.2x",
+				o2_vdc.s.sprites[i].x,
+				o2_vdc.s.sprites[i].y,
+				o2_vdc.s.sprites[i].color);
+		ui_text(bitmap, str, 160, i*8);
+	}
+	snprintf(str, sizeof(str), "%.2x %.2x",
+			o2_vdc.s.collision,
+			collision);
 	ui_text(bitmap, str, 160, i*8);
-    }
-    snprintf(str, sizeof(str), "%.2x %.2x",
-	     o2_vdc.s.collision,
-	     collision);
-    ui_text(bitmap, str, 160, i*8);
-
-
 #endif
     return;
 }
