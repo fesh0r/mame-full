@@ -355,6 +355,7 @@ void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
 	int x, y;
 	int c[4];
 	int p, b;
+	int crunlen, crunc, thisx, thisy;
 	UINT8 *vidram;
 
 	if (metapalette) {
@@ -373,20 +374,46 @@ void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
 	vidram = vrambase + vrampos;
 
 	for (y = 0; y < sizey; y++) {
+		crunlen = 0;
+		thisy = y * scaley + basey;
 		for (x = 0; x < sizex; x++) {
 			if (!db || *db) {
 				for (b = 0; b < 4; b++) {
-					p = c[(((*vidram) >> (6-(2*b)))) & 3];
-					plot_box(bitmap, (x * 4 + b) * scalex + basex, y * scaley + basey, scalex, scaley, p);
+					p = (((*vidram) >> (6-(2*b)))) & 3;
+
+					if (crunlen == 0) {
+						thisx = (x * 4 + b) * scalex + basex;
+						crunlen = 1;
+						crunc = p;
+					}
+					else if (crunc == p) {
+						crunlen++;
+					}
+					else {
+						plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
+						thisx += scalex * crunlen;
+						crunlen = 1;
+						crunc = p;
+					}
 				}
 				if (db)
 					*(db++) = 0;
 			}
 			else {
+				if (crunlen) {
+					plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
+					crunlen = 0;
+				}
 				db++;
 			}
 			vidram++;
 		}
+
+		if (crunlen) {
+			plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
+			crunlen = 0;
+		}
+
 		vidram += additionalrowbytes;
 		if (db)
 			db += additionalrowbytes;

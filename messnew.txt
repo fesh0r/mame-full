@@ -29,7 +29,8 @@ System Driver Changes:
   the "Tape Control" menu. However the Oric cassette emulation is not working 
   fully yet. [Kev Thacker]
 
-- [COCO/DRAGON] Added support for printer. [Nate Woods]
+- [COCO/DRAGON] Added support for printer.  Optimized graphics emulation. [Nate
+  Woods]
 
 - [Studio II] added cartridge support [PeT]
 
