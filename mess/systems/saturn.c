@@ -77,150 +77,150 @@ static struct osd_bitmap *saturn_bitmap[2];
 #define SATURN_BACK_RAM_BASE    0x00481000
 #define SATURN_BACK_RAM_SIZE    0x00010000
 
-READ_HANDLER( saturn_rom_r )    /* ROM */
+READ32_HANDLER( saturn_rom_r )	  /* ROM */
 {
     return mem[offset & (SATURN_ROM_SIZE-1)];
 }
 
-WRITE_HANDLER( saturn_rom_w )   /* ROM */
+WRITE32_HANDLER( saturn_rom_w )   /* ROM */
 {
     logerror("saturn_rom_w    %07x %02x\n", offset, data);
 }
 
-READ_HANDLER( saturn_workl_ram_r )
+READ32_HANDLER( saturn_workl_ram_r )
 {
     offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_workl_ram_w )
+WRITE32_HANDLER( saturn_workl_ram_w )
 {
     offs_t ea = SATURN_WORKL_RAM_BASE + (offset & (SATURN_WORKL_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_workh_ram_r )
+READ32_HANDLER( saturn_workh_ram_r )
 {
     offs_t ea = SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_workh_ram_w )
+WRITE32_HANDLER( saturn_workh_ram_w )
 {
     offs_t ea = SATURN_WORKH_RAM_BASE + (offset & (SATURN_WORKH_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_sound_ram_r )
+READ32_HANDLER( saturn_sound_ram_r )
 {
     offs_t ea = SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_sound_ram_w )
+WRITE32_HANDLER( saturn_sound_ram_w )
 {
     offs_t ea = SATURN_SOUND_RAM_BASE + (offset & (SATURN_SOUND_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_vdp1_ram_r )
+READ32_HANDLER( saturn_vdp1_ram_r )
 {
     offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_vdp1_ram_w )
+WRITE32_HANDLER( saturn_vdp1_ram_w )
 {
     offs_t ea = SATURN_VDP1_RAM_BASE + (offset & (SATURN_VDP1_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_vdp2_ram_r )
+READ32_HANDLER( saturn_vdp2_ram_r )
 {
     offs_t ea = SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_vdp2_ram_w )
+WRITE32_HANDLER( saturn_vdp2_ram_w )
 {
     offs_t ea = SATURN_VDP2_RAM_BASE + (offset & (SATURN_VDP2_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_fb1_ram_r )
+READ32_HANDLER( saturn_fb1_ram_r )
 {
     offs_t ea = SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_fb1_ram_w )
+WRITE32_HANDLER( saturn_fb1_ram_w )
 {
     offs_t ea = SATURN_FB1_RAM_BASE + (offset & (SATURN_FB1_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_fb2_ram_r )
+READ32_HANDLER( saturn_fb2_ram_r )
 {
     offs_t ea = SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_fb2_ram_w )
+WRITE32_HANDLER( saturn_fb2_ram_w )
 {
     offs_t ea = SATURN_FB2_RAM_BASE + (offset & (SATURN_FB2_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_color_ram_r )
+READ32_HANDLER( saturn_color_ram_r )
 {
     offs_t ea = SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_color_ram_w )
+WRITE32_HANDLER( saturn_color_ram_w )
 {
     offs_t ea = SATURN_COLOR_RAM_BASE + (offset & (SATURN_COLOR_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_back_ram_r )
+READ32_HANDLER( saturn_back_ram_r )
 {
     offs_t ea = SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1));
     return READ_WORD(&mem[ea]);
 }
 
-WRITE_HANDLER( saturn_back_ram_w )
+WRITE32_HANDLER( saturn_back_ram_w )
 {
     offs_t ea = SATURN_BACK_RAM_BASE + (offset & (SATURN_BACK_RAM_SIZE-1));
     data32_t oldword = READ_WORD(&mem[ea]);
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(&mem[ea], newword);
 }
 
-READ_HANDLER( saturn_smpc_r )   /* SMPC */
+READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 {
     data32_t data = 0x0000;
     logerror("saturn_smpc_r   %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
+WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_smpc_w   %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -231,14 +231,14 @@ WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
         logerror("saturn_smpc_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs0_r )    /* CS0 */
+READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
 {
     data32_t data = 0x0000;
     logerror("saturn_cs0_r    %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_cs0_w )   /* CS0 */
+WRITE32_HANDLER( saturn_cs0_w )   /* CS0 */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_cs0_w    %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -249,14 +249,14 @@ WRITE_HANDLER( saturn_cs0_w )   /* CS0 */
         logerror("saturn_cs0_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs1_r )    /* CS1 */
+READ32_HANDLER( saturn_cs1_r )	  /* CS1 */
 {
     data32_t data = 0x0000;
     logerror("saturn_cs1_r    %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_cs1_w )   /* CS1 */
+WRITE32_HANDLER( saturn_cs1_w )   /* CS1 */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_cs1_w    %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -267,14 +267,14 @@ WRITE_HANDLER( saturn_cs1_w )   /* CS1 */
         logerror("saturn_cs1_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
-READ_HANDLER( saturn_cs2_r )    /* CS2 */
+READ32_HANDLER( saturn_cs2_r )	  /* CS2 */
 {
     data32_t data = 0x0000;
     logerror("saturn_cs2_r    %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_cs2_w )   /* CS2 */
+WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_cs2_w    %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -524,7 +524,7 @@ static const char *scu_reg_names[] =
 
 #define SCU_REG_NAME(adr) (((adr) < (SCU_REGS*4)) ? scu_reg_names[(adr)/4] : "n/a")
 
-READ_HANDLER( saturn_scu_r )    /* SCU, DMA/DSP */
+READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
 {
     data32_t data = 0x0000;
     logerror("saturn_scu_r    %07x -> %04x\n", offset, data);
@@ -537,10 +537,10 @@ READ_HANDLER( saturn_scu_r )    /* SCU, DMA/DSP */
 #define BE_DWORD_XOR(p,o) ((UINT8 *)(p) + (o))
 #endif
 
-WRITE_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
+WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
     data32_t oldword = READ_WORD(BE_DWORD_XOR(&scu.reg[offset/4],(offset&2)));
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     WRITE_WORD(BE_DWORD_XOR(&scu.reg[offset/4],(offset&2)), newword);
 
     if ((data & 0xffff0000) == 0)
@@ -884,7 +884,7 @@ void cd_init(void)
     cdblock.hm = 0;
 }
 
-READ_HANDLER( saturn_cd_r )    /* CD */
+READ32_HANDLER( saturn_cd_r )	 /* CD */
 {
     data32_t data = 0x0000;
 
@@ -917,7 +917,7 @@ READ_HANDLER( saturn_cd_r )    /* CD */
     return data;
 }
 
-WRITE_HANDLER( saturn_cd_w )   /* CD */
+WRITE32_HANDLER( saturn_cd_w )	 /* CD */
 {
     switch(offset & 0xfffff)
     {
@@ -951,14 +951,14 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
 /********************************************************
  *  FRT master
  ********************************************************/
-READ_HANDLER( saturn_minit_r )  /* MINIT */
+READ32_HANDLER( saturn_minit_r )  /* MINIT */
 {
     data32_t data = 0x0000;
     logerror("saturn_minit_r  %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_minit_w )  /* MINIT */
+WRITE32_HANDLER( saturn_minit_w )  /* MINIT */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_minit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -973,14 +973,14 @@ WRITE_HANDLER( saturn_minit_w )  /* MINIT */
 /********************************************************
  *  FRT slave
  ********************************************************/
-READ_HANDLER( saturn_sinit_r )  /* SINIT */
+READ32_HANDLER( saturn_sinit_r )  /* SINIT */
 {
     data32_t data = 0x0000;
     logerror("saturn_sinit_r  %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
+WRITE32_HANDLER( saturn_sinit_w )  /* SINIT */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_sinit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -995,14 +995,14 @@ WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
 /********************************************************
  *  DSP
  ********************************************************/
-READ_HANDLER( saturn_dsp_r )   /* DSP */
+READ32_HANDLER( saturn_dsp_r )	 /* DSP */
 {
     data32_t data = 0x0000;
     logerror("saturn_dsp_r    %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_dsp_w )  /* DSP */
+WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
 {
     if ((data & 0xffff0000) == 0)
         logerror("saturn_dsp_w    %07x <- %04x\n", offset, data & 0x0000ffff);
@@ -1364,17 +1364,17 @@ void vdp1_vblout_draw(void)
     vdp1.reg[VDP1_TVMR] &= ~4;
 }
 
-READ_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
+READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 {
     data32_t data = 0x0000;
     logerror("saturn_vdp1_r   %07x -> %04x\n", offset, data);
     return data;
 }
 
-WRITE_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
+WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 {
     data32_t oldword = vdp1.reg[offset >> 1];
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     vdp1.reg[offset >> 1] = newword;
 
     if ((data & 0xffff0000) == 0)
@@ -1883,7 +1883,7 @@ void vdp2_init(void)
     }
 }
 
-READ_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
+READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 {
     data32_t data = 0x0000;
     switch (offset & 0x3ffff)
@@ -1897,10 +1897,10 @@ READ_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
     return data;
 }
 
-WRITE_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
+WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 {
     data32_t oldword = vdp2.reg[offset >> 1];
-    data32_t newword = COMBINE_WORD(oldword, data);
+	data32_t newword = COMBINE_DATA(&oldword);
     vdp2.reg[offset >> 1] = newword;
 
 #if VERBOSE
@@ -1951,67 +1951,67 @@ void saturn_init_machine(void)
 
     for (i = 0; i < 2; i++)
     {
-        install_mem_read_handler (i, 0x00000000, 0x0007ffff, MRA_ROM );
-        install_mem_write_handler(i, 0x00000000, 0x0007ffff, MWA_ROM );
+		install_mem_read32_handler (i, 0x00000000, 0x0007ffff, MRA32_ROM );
+		install_mem_write32_handler(i, 0x00000000, 0x0007ffff, MWA32_ROM );
 
-        install_mem_read_handler (i, 0x00100000, 0x0100007f, saturn_smpc_r );
-        install_mem_write_handler(i, 0x00100000, 0x0100007f, saturn_smpc_w );
+		install_mem_read32_handler (i, 0x00100000, 0x0100007f, saturn_smpc_r );
+		install_mem_write32_handler(i, 0x00100000, 0x0100007f, saturn_smpc_w );
 
-        install_mem_read_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
-        install_mem_write_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
+		install_mem_read32_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
+		install_mem_write32_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
 
-        install_mem_read_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
-        install_mem_write_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
+		install_mem_read32_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
+		install_mem_write32_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
 
-        install_mem_read_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
-        install_mem_write_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
+		install_mem_read32_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
+		install_mem_write32_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
 
-        install_mem_read_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
-        install_mem_write_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
+		install_mem_read32_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
+		install_mem_write32_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
 
-        install_mem_read_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
-        install_mem_write_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
+		install_mem_read32_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
+		install_mem_write32_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
 
-        install_mem_read_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
-        install_mem_write_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
+		install_mem_read32_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
+		install_mem_write32_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
 
-        install_mem_read_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
-        install_mem_write_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
+		install_mem_read32_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
+		install_mem_write32_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
 
-        install_mem_read_handler (i, 0x05800000, 0x058fffff, saturn_cd_r );
-        install_mem_write_handler(i, 0x05800000, 0x058fffff, saturn_cd_w );
+		install_mem_read32_handler (i, 0x05800000, 0x058fffff, saturn_cd_r );
+		install_mem_write32_handler(i, 0x05800000, 0x058fffff, saturn_cd_w );
 
-        install_mem_read_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
-        install_mem_write_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
-        install_mem_read_handler (i, 0x05a80000, 0x05afffff, MRA_NOP );
-        install_mem_write_handler(i, 0x05a80000, 0x05afffff, MWA_NOP );
+		install_mem_read32_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
+		install_mem_write32_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
+		install_mem_read32_handler (i, 0x05a80000, 0x05afffff, MRA32_NOP );
+		install_mem_write32_handler(i, 0x05a80000, 0x05afffff, MWA32_NOP );
 
-        install_mem_read_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
-        install_mem_write_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
+		install_mem_read32_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
+		install_mem_write32_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
 
-        install_mem_read_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
-        install_mem_write_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
+		install_mem_read32_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
+		install_mem_write32_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
 
-        install_mem_read_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
-        install_mem_write_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
+		install_mem_read32_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
+		install_mem_write32_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
 
-        install_mem_read_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
-        install_mem_write_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
+		install_mem_read32_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
+		install_mem_write32_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
 
-        install_mem_read_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
-        install_mem_write_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
+		install_mem_read32_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
+		install_mem_write32_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
 
-        install_mem_read_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
-        install_mem_write_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
+		install_mem_read32_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
+		install_mem_write32_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
 
-        install_mem_read_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
-        install_mem_write_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
+		install_mem_read32_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
+		install_mem_write32_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
 
-        install_mem_read_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
-        install_mem_write_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
+		install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
+		install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
 
-        install_mem_read_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
-        install_mem_write_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
+		install_mem_read32_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
+		install_mem_write32_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
     }
 }
 
