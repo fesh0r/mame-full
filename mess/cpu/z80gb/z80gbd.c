@@ -198,17 +198,6 @@ static z80gbdasm mnemonic_main[256]= {
 	{_0, zDB,"fc"},     {_0, zDB,"fd"},     {_0, zCP,"B"},      {_JP,zRST,"V"}
 };
 
-static char sign(INT8 offset)
-{
-	return (offset < 0)? '-':'+';
-}
-
-static int offs(INT8 offset)
-{
-	if (offset < 0) return -offset;
-	return offset;
-}
-
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/

@@ -781,62 +781,6 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
 	return img_create(module, fname, opts, image);
 }
 
-static char *nextentry(char **s)
-{
-	char *result;
-	char *p;
-	char *beginspace;
-	int parendeep;
-
-	p = *s;
-
-	if (*p)
-	{
-		beginspace = NULL;
-		result = p;
-		parendeep = 0;
-
-		while(*p && ((*p != '|') || parendeep))
-		{
-			switch(*p) {
-			case '(':
-				parendeep++;
-				beginspace = NULL;
-				break;
-
-			case ')':
-				parendeep--;
-				beginspace = NULL;
-				break;
-
-			case ' ':
-				if (!beginspace)
-					beginspace = p;
-				break;
-
-			default:
-				beginspace = NULL;
-				break;
-			}
-			p++;
-		}
-		if (*p)
-		{
-			if (!beginspace)
-				beginspace = p;
-			p++;
-		}
-		*s = p;
-		if (beginspace)
-			*beginspace = '\0';
-	}
-	else
-	{
-		result = NULL;
-	}
-	return result;
-}
-
 
 
 const struct ImageModule *img_module(imgtool_image *img)

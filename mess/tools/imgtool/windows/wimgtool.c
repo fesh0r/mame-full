@@ -44,13 +44,6 @@ struct wimgtool_info
 
 
 
-static void nyi(HWND window)
-{
-	MessageBox(window, TEXT("Not yet implemented"), wimgtool_producttext, MB_OK);
-}
-
-
-
 static struct wimgtool_info *get_wimgtool_info(HWND window)
 {
 	struct wimgtool_info *info;
@@ -58,32 +51,6 @@ static struct wimgtool_info *get_wimgtool_info(HWND window)
 	l = GetWindowLongPtr(window, GWLP_USERDATA);
 	info = (struct wimgtool_info *) l;
 	return info;
-}
-
-
-
-static int get_selected_item(HWND window, int selected_index)
-{
-	struct wimgtool_info *info;
-	LVITEM item;
-
-	info = get_wimgtool_info(window);
-	if (!info->image)
-		return -1;
-
-	do
-	{
-		selected_index = ListView_GetNextItem(info->listview, selected_index, LVIS_SELECTED | LVIS_FOCUSED);
-		if (selected_index < 0)
-			return -1;
-
-		item.mask = LVIF_PARAM;
-		item.iItem = selected_index;
-		ListView_GetItem(info->listview, &item);
-	}
-	while(item.lParam < 0);
-
-	return item.lParam;
 }
 
 

@@ -134,7 +134,7 @@ static char nec765_data_buffer[32*1024];
 nec765_interface nec765_iface;
 
 
-static INT8 nec765_cmd_size[32] =
+static const INT8 nec765_cmd_size[32] =
 {
 	1,1,9,3,2,9,9,2,1,9,2,1,9,6,1,3,
 	1,9,1,1,1,1,9,1,1,9,1,1,1,9,1,1
@@ -144,6 +144,8 @@ static INT8 nec765_cmd_size[32] =
 
 static mess_image *current_image(void)
 {
+	if (fdc.drive >= device_count(IO_FLOPPY))
+		return NULL;
 	return image_from_devtype_and_index(IO_FLOPPY, fdc.drive);
 }
 
@@ -248,6 +250,9 @@ static void nec765_seek_complete(void)
 	*/
 
 	mess_image *img = current_image();
+
+	if (!img)
+		return;
 
 	fdc.pcn[fdc.drive] = fdc.ncn;
 

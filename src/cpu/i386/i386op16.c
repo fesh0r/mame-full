@@ -1563,17 +1563,15 @@ static void I386OP(sbb_rm16_r16)(void)		// Opcode 0x19
 	UINT16 src, dst;
 	UINT8 modrm = FETCH();
 	if( modrm >= 0xc0 ) {
-		src = LOAD_REG16(modrm);
+		src = LOAD_REG16(modrm) + I.CF;
 		dst = LOAD_RM16(modrm);
-		src = SUB16(src, I.CF);
 		dst = SUB16(dst, src);
 		STORE_RM16(modrm, dst);
 		CYCLES(C_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
-		src = LOAD_REG16(modrm);
+		src = LOAD_REG16(modrm) + I.CF;
 		dst = READ16(ea);
-		src = SUB16(src, I.CF);
 		dst = SUB16(dst, src);
 		WRITE16(ea, dst);
 		CYCLES(C_ALU_REG_MEM);
@@ -1585,17 +1583,15 @@ static void I386OP(sbb_r16_rm16)(void)		// Opcode 0x1b
 	UINT16 src, dst;
 	UINT8 modrm = FETCH();
 	if( modrm >= 0xc0 ) {
-		src = LOAD_RM16(modrm);
+		src = LOAD_RM16(modrm) + I.CF;
 		dst = LOAD_REG16(modrm);
-		src = SUB16(src, I.CF);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
 		CYCLES(C_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
-		src = READ16(ea);
+		src = READ16(ea) + I.CF;
 		dst = LOAD_REG16(modrm);
-		src = SUB16(src, I.CF);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
 		CYCLES(C_ALU_MEM_REG);
@@ -1605,9 +1601,8 @@ static void I386OP(sbb_r16_rm16)(void)		// Opcode 0x1b
 static void I386OP(sbb_ax_i16)(void)		// Opcode 0x1d
 {
 	UINT16 src, dst;
-	src = FETCH16();
+	src = FETCH16() + I.CF;
 	dst = REG16(AX);
-	src = SUB16(src, I.CF);
 	dst = SUB16(dst, src);
 	REG16(AX) = dst;
 	CYCLES(C_ALU_I_ACC);
@@ -2066,16 +2061,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 		case 3:		// SBB Rm16, i16
 			if( modrm >= 0xc0 ) {
 				dst = LOAD_RM16(modrm);
-				src = FETCH16();
-				src = SUB16(src, I.CF);
+				src = FETCH16() + I.CF;
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
 				CYCLES(C_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
-				src = FETCH16();
-				src = SUB16(src, I.CF);
+				src = FETCH16() + I.CF;
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
 				CYCLES(C_ALU_REG_MEM);
@@ -2207,16 +2200,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 		case 3:		// SBB Rm16, i16
 			if( modrm >= 0xc0 ) {
 				dst = LOAD_RM16(modrm);
-				src = (UINT16)(INT16)(INT8)FETCH();
-				src = SUB16(src, I.CF);
+				src = ((UINT16)(INT16)(INT8)FETCH()) + I.CF;
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
 				CYCLES(C_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
-				src = (UINT16)(INT16)(INT8)FETCH();
-				src = SUB16(src, I.CF);
+				src = ((UINT16)(INT16)(INT8)FETCH()) + I.CF;
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
 				CYCLES(C_ALU_REG_MEM);

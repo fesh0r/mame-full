@@ -100,86 +100,8 @@ static char oric_keyboard_mask;
 
 static unsigned char oric_via_port_a_data;
 
-#define ORIC_DUMP_RAM
 
 
-#ifdef ORIC_DUMP_RAM
-static int previous_input_port5;
-#endif
-
-
-
-#ifdef ORIC_DUMP_RAM
-/* load image */
-static void oric_dump_ram(void)
-{
-	mame_file *file;
-
-	file = mame_fopen(Machine->gamedrv->name, "oricram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
-
-	if (file)
-	{
-		int i;
-		for (i=0; i<65536; i++)
-		{
-			char data;
-
-			data = program_read_byte(i);
-
-			mame_fwrite(file, &data, 1);
-
-		}
-
-		/* close file */
-		mame_fclose(file);
-	}
-}
-
-static void    oric_dump_video(void)
-{
-        FILE *fh;
-
-        fh = fopen("e:\\oricvid.txt","wb");
-
-        if (fh!=NULL)
-        {
-                int i,j, addr;
-
-                addr = 0x08000;
-                for (j=0; j<1024; j++)
-                {
-
-			fprintf(fh,"%04x: ",addr);
-
-                for (i=0; i<16; i++)
-                {
-                  fprintf(fh,"%02x ",program_read_byte(addr+i));
-                }
-		    fprintf(fh,"   ");
-		    for (i=0; i<16; i++)
-			{
-				int code;
-
-				code = program_read_byte(addr+i);
-
-				if ((code<32) || (code>127))
-				{
-					code = '.';
-				}
-
-				fprintf(fh,"%c",code);
-			}
-			addr+=16;
-                fprintf(fh,"\r\n");
-
-                }
-
-
-                fclose(fh);
-        }
-}
-
-#endif
 /* refresh keyboard sense */
 static void oric_keyboard_sense_refresh(void)
 {

@@ -5,6 +5,9 @@
 	Nathan Woods
 	based on MAME cojag driver by Aaron Giles
 
+	TODO: Quite a bit; only a few games are playable.  Also, this driver
+	lacks the speed up hacks in the MAME cojag driver
+
 ****************************************************************************
 
 	Memory map (TBA)
@@ -127,51 +130,6 @@ static MACHINE_INIT( jaguar )
 	cojag_sound_reset();
 
 	joystick_data = 0xffffffff;
-}
-
-
-
-/*************************************
- *
- *	Misc. control bits
- *
- *************************************/
-
-static READ32_HANDLER( misc_control_r )
-{
-	/*	D7    = board reset (low)
-		D6    = audio must & reset (high)
-		D5    = volume control data (invert on write)
-		D4    = volume control clock
-	 	D0    = shared memory select (0=XBUS) */
-
-	return misc_control_data ^ 0x20;
-}
-
-
-static WRITE32_HANDLER( misc_control_w )
-{
-	logerror("%08X:misc_control_w(%02X)\n", activecpu_get_previouspc(), data);
-
-	/*	D7    = board reset (low)
-		D6    = audio must & reset (high)
-		D5    = volume control data (invert on write)
-		D4    = volume control clock
-	 	D0    = shared memory select (0=XBUS) */
-
-	/* handle resetting the DSPs */
-	if (!(data & 0x80))
-	{
-		/* clear any spinuntil stuff */
-		jaguar_gpu_resume();
-		jaguar_dsp_resume();
-
-		/* halt the CPUs */
-		jaguargpu_ctrl_w(1, G_CTRL, 0, 0);
-		jaguardsp_ctrl_w(2, D_CTRL, 0, 0);
-	}
-
-	COMBINE_DATA(&misc_control_data);
 }
 
 
@@ -310,88 +268,6 @@ static WRITE32_HANDLER( joystick_w )
 	COMBINE_DATA(&joystick_data);
 }
 
-
-
-/*************************************
- *
- *	Output ports
- *
- *************************************/
-
-static WRITE32_HANDLER( latch_w )
-{
-	logerror("%08X:latch_w(%X)\n", activecpu_get_previouspc(), data);
-}
-
-
-
-/*************************************
- *
- *	GPU synchronization & speedup
- *
- *************************************/
-
-/*
-	Explanation:
-
-	The GPU generally sits in a tight loop waiting for the main CPU to store
-	a jump address into a specific memory location. This speedup is designed
-	to catch that loop, which looks like this:
-
-		load    (r28),r21
-		jump    (r21)
-		nop
-
-	When nothing is pending, the GPU keeps the address of the load instruction
-	at (r28) so that it loops back on itself. When the main CPU wants to execute
-	a command, it stores an alternate address to (r28).
-
-	Even if we don't optimize this case, we do need to detect when a command
-	is written to the GPU in order to improve synchronization until the GPU
-	has finished. To do this, we start a temporary high frequency timer and
-	run it until we get back to the spin loop.
-*/
-
-static data32_t *gpu_jump_address;
-static UINT8 gpu_command_pending;
-static data32_t gpu_spin_pc;
-
-static void gpu_sync_timer(int param)
-{
-	/* if a command is still pending, and we haven't maxed out our timer, set a new one */
-	if (gpu_command_pending && param < 1000)
-		timer_set(TIME_IN_USEC(50), ++param, gpu_sync_timer);
-}
-
-
-static WRITE32_HANDLER( gpu_jump_w )
-{
-	/* update the data in memory */
-	COMBINE_DATA(gpu_jump_address);
-	logerror("%08X:GPU jump address = %08X\n", activecpu_get_previouspc(), *gpu_jump_address);
-
-	/* if the GPU is suspended, release it now */
-	jaguar_gpu_resume();
-
-	/* start the sync timer going, and note that there is a command pending */
-	timer_set(TIME_NOW, 0, gpu_sync_timer);
-	gpu_command_pending = 1;
-}
-
-
-static READ32_HANDLER( gpu_jump_r )
-{
-	/* if the current GPU command is just pointing back to the spin loop, and */
-	/* we're reading it from the spin loop, we can optimize */
-	if (*gpu_jump_address == gpu_spin_pc && activecpu_get_previouspc() == gpu_spin_pc)
-	{
-		/* no command is pending */
-		gpu_command_pending = 0;
-	}
-
-	/* return the current value */
-	return *gpu_jump_address;
-}
 
 
 /*************************************

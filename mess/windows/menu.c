@@ -1047,45 +1047,6 @@ static void append_menu(HMENU menu, UINT flags, UINT_PTR id, int uistring)
 
 
 //============================================================
-//	append_category_menus
-//============================================================
-
-static void append_category_menus(HMENU menu)
-{
-	int i, j;
-	HMENU submenu = NULL;
-	const struct InputPort *in;
-	const struct InputPort *in_setting;
-	UINT flags;
-
-	for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
-	{
-		in = &Machine->input_ports[i];
-		if (in->type == IPT_CATEGORY_NAME)
-		{
-			submenu = CreateMenu();
-			if (!submenu)
-				return;
-
-			// append all of the category settings
-			for (j = i + 1; (Machine->input_ports[j].type) == IPT_CATEGORY_SETTING; j++)
-			{
-				in_setting = &Machine->input_ports[j];
-				flags = MF_STRING;
-				if (in_setting->default_value == in->default_value)
-					flags |= MF_CHECKED;
-				AppendMenu(submenu, flags, ID_INPUT_0 + j, A2T(in_setting->name));
-			}
-
-			// finally append the menu item
-			AppendMenu(menu, MF_STRING | MF_POPUP, (UINT_PTR) submenu, A2T(in->name));
-		}
-	}
-}
-
-
-
-//============================================================
 //	remove_menu_items
 //============================================================
 

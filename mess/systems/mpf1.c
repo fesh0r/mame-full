@@ -95,35 +95,7 @@ static INT8 lednum;
 static INT8 keycol;
 static UINT8 kbdlatch;
 
-static void logleds(void)
-{
-	for(lednum = 5; lednum >= 0; lednum--)
-	{
-		if( leddigit[lednum] & 0x08 ) logerror( " _ " );
-		else logerror( "   " );
-	}
-	logerror( "\n" );
-	for(lednum = 5; lednum >= 0; lednum--)
-	{
-		if( leddigit[lednum] & 0x04 ) logerror( "|" );
-		else logerror( " " );
-		if( leddigit[lednum] & 0x02 ) logerror( "_" );
-		else logerror( " " );
-		if( leddigit[lednum] & 0x10 ) logerror( "|" );
-		else logerror( " " );
-	}
-	logerror( "\n" );
-	for(lednum = 5; lednum >= 0; lednum--)
-	{
-		if( leddigit[lednum] & 0x01 ) logerror( "|" );
-		else logerror( " " );
-		if( leddigit[lednum] & 0x80 ) logerror( "_" );
-		else logerror( " " );
-		if( leddigit[lednum] & 0x20 ) logerror( "|" );
-		else logerror( " " );
-	}
-	logerror( "\n" );
-}
+
 
 /* vidhrdw */
 

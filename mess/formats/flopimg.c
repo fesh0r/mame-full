@@ -419,27 +419,6 @@ UINT64 floppy_image_size(floppy_image *floppy)
 	calls for accessing disk image data
 *********************************************************************/
 
-static floperr_t get_max_read_sector(floppy_image *floppy, int head, int track, int sector, UINT32 *sector_length)
-{
-	floperr_t err;
-	const struct FloppyCallbacks *fmt;
-	
-	fmt = floppy_callbacks(floppy);
-	if (fmt->get_sector_length)
-	{
-		err = fmt->get_sector_length(floppy, head, track, sector, sector_length);
-		if (err)
-			return err;
-	}
-	else
-	{
-		*sector_length = (UINT32) -1;
-	}
-	return FLOPPY_ERROR_SUCCESS;
-}
-
-
-
 static floperr_t floppy_readwrite_sector(floppy_image *floppy, int head, int track, int sector, int offset,
 	void *buffer, size_t buffer_len, int writing)
 {

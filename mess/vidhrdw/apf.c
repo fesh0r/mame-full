@@ -15,24 +15,6 @@ static void apf_charproc(UINT8 c)
 	m6847_as_w(0,		(c & 0x080));	
 }
 
-#define APF_DUMP_RAM
-
-#ifdef APF_DUMP_RAM
-static void apf_dump_ram(void)
-{
-	mame_file *file;
-
-	file = mame_fopen(Machine->gamedrv->name, "apfram.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
-
-	if (file)
-	{
-		mame_fwrite(file, apf_video_ram, 0x0400);
-
-		/* close file */
-		mame_fclose(file);
-	}
-}
-#endif
 
 
  READ8_HANDLER(apf_video_r)
