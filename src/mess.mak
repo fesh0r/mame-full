@@ -743,9 +743,14 @@ mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep
 	make -Cmess/makedep
 
 src/$(NAME).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
-	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -DMESS -q -- $(INCLUDE_PATH) -- src/*.c \
-	src/cpu/*/*.c src/sound/*.c mess/systems/*.c* mess/machine/*.c* mess/vidhrdw/*.c* mess/sndhrdw/*.c* \
+	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -DMESS -q -- $(INCLUDE_PATH) -- \
+	src/*.c src/cpu/*/*.c src/sound/*.c \
+	mess/*.c mess/systems/*.c* mess/machine/*.c* mess/vidhrdw/*.c* mess/sndhrdw/*.c* \
 	mess/tools/*.c mess/formats/*.c mess/messroms/*.c >src/$(NAME).dep
+
+# add following to dependancy generation if you want the few files in these
+# directories
+#	src/drivers/*.c src/machine/*.c src/vidhrdw/*.c src/sndhrdw/*.c \
 
 ## uncomment the following line to include dependencies
 ifeq (src/$(NAME).dep,$(wildcard src/$(NAME).dep))
