@@ -192,7 +192,7 @@ endif
 ifdef MESS_EXCLUDE_MISC_GAMES
 COREDEFS += -DMESS_EXCLUDE_MISC_GAMES
 else
-DRVLIBS += $(OBJ)/quelle.a
+DRVLIBS += $(OBJ)/mk1.a $(OBJ)/mk2.a $(OBJ)/ssystem3.a
 endif
 
 ifdef MESS_EXCLUDE_SEGA
@@ -644,11 +644,11 @@ $(OBJ)/teamconc.a: \
 	$(OBJ)/mess/vidhrdw/comquest.o   \
 	$(OBJ)/mess/systems/comquest.o
 
-$(OBJ)/quelle.a: \
-	$(OBJ)/mess/vidhrdw/mk1.o        \
-	$(OBJ)/mess/systems/mk1.o        \
-	$(OBJ)/mess/vidhrdw/mk2.o        \
-	$(OBJ)/mess/systems/mk2.o
+$(OBJ)/mk1.a: $(OBJ)/mess/vidhrdw/mk1.o $(OBJ)/mess/systems/mk1.o
+
+$(OBJ)/mk2.a: $(OBJ)/mess/vidhrdw/mk2.o $(OBJ)/mess/systems/mk2.o
+
+$(OBJ)/ssystem3.a: $(OBJ)/mess/vidhrdw/ssystem3.o $(OBJ)/mess/systems/ssystem3.o
 
 $(OBJ)/motorola.a: \
 	  $(OBJ)/mess/vidhrdw/mekd2.o	 \
