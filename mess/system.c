@@ -567,13 +567,18 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 	/* VIDEO TECHNOLOGY */
 	DRIVER( laser110 )	/* 1983 Laser 110									*/
-	DRIVER( laser200 )	/* 1983 Laser 200									*/
-	DRIVER( laser210 )	/* 1983 Laser 210 (indentical to Laser 200 ?)		*/
-	DRIVER( laser310 )	/* 1983 Laser 310 (210 with diff. keyboard and RAM)	*/
-	DRIVER( vz200 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ200		*/
-	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300		*/
+	DRIVER( las110de )  /* 1983 Sanyo Laser 110 (Germany)                   */
+	DRIVER( laser200 )	/* 1983 Laser 200 (color version of 110)			*/
+	DRIVER( vz200de  )  /* 1983 VZ-200 (Germany)                            */
 	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 					*/
 	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)						*/
+	DRIVER( laser210 )	/* 1984 Laser 210 (200 with more memory)            */
+	DRIVER( las210de )  /* 1984 Sanyo Laser 210 (Germany)                   */
+	DRIVER( vz200 ) 	/* 1984 Dick Smith Electronics VZ-200               */
+	DRIVER( laser310 )	/* 1984 Laser 310 (210 with diff. keyboard and RAM)	*/
+	DRIVER( las31021 )  /* 1984? Laser 310 (Basic V2.1)                     */
+	DRIVER( vz300 ) 	/* 1984 Dick Smith Electronics VZ-300               */
+	DRIVER( vz300_21 ) 	/* 1984 Dick Smith Electronics VZ-300 (Basic V2.1)  */
 	DRIVER( laser350 )	/* 1984? Laser 350									*/
 	DRIVER( laser500 )	/* 1984? Laser 500									*/
 	DRIVER( laser700 )	/* 1984? Laser 700									*/
