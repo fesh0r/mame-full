@@ -172,12 +172,20 @@ int requested_device_type(char *tchar)
 			return(IO_FLOPPY);
 	else if (!stricmp(tchar, "-harddisk")   || !stricmp(tchar, "-hard"))
 			return(IO_HARDDISK);
+	else if (!stricmp(tchar, "-cylinder")   || !stricmp(tchar, "-cyln"))
+			return(IO_CYLINDER);
 	else if (!stricmp(tchar, "-cassette")   || !stricmp(tchar, "-cass"))
 			return(IO_CASSETTE);
+	else if (!stricmp(tchar, "-punchcard")  || !stricmp(tchar, "-pcrd"))
+			return(IO_PUNCHCARD);
+	else if (!stricmp(tchar, "-punchtape")  || !stricmp(tchar, "-ptap"))
+			return(IO_PUNCHTAPE);
 	else if (!stricmp(tchar, "-printer")    || !stricmp(tchar, "-prin"))
 			return(IO_PRINTER);
 	else if (!stricmp(tchar, "-serial")     || !stricmp(tchar, "-serl"))
 			return(IO_SERIAL);
+	else if (!stricmp(tchar, "-parallel")   || !stricmp(tchar, "-parl"))
+			return(IO_PARALLEL);
 	else if (!stricmp(tchar, "-snapshot")   || !stricmp(tchar, "-dump"))
 			return(IO_SNAPSHOT);
 	else if (!stricmp(tchar, "-quickload")  || !stricmp(tchar, "-quik"))
