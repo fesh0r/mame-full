@@ -611,6 +611,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( expert10 )	/* 198? ???											*/
 	DRIVER( expert11 )	/* 198? ???											*/
 	DRIVER( msx2 ) 		/* 1985 MSX2										*/
+	DRIVER( hbf700p )	/* 1985 MSX2 Sony									*/
 	DRIVER( msx2a )		/* 1985 MSX2										*/
 	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
 

@@ -1,35 +1,36 @@
 /*
-** msx.h : part of MSX1 emulation.
+** msx.h : part of MSX emulation.
 **
-** By Sean Young 1999
 */
 
-#define MSX_MAX_CARTS   (2)
+#define MSX_MAX_CARTS	(2)
 
 typedef struct {
-    int type,bank_mask,banks[4];
-    UINT8 *mem;
-    char *sramfile;
-    int pacsram;
-} MSX_CART;
-
-typedef struct {
-    int run; /* set after init_msx () */
-    /* PSG */
-    int psg_b,opll_active;
-    /* memory */
-    UINT8 *empty, *ram, ramp[4];
-    /* memory status */
-    MSX_CART cart[MSX_MAX_CARTS];
+	int run; /* set after init_msx () */
+	/* PSG */
+	int psg_b;
+	int opll_active;
 	/* printer */
 	UINT8 prn_data, prn_strobe;
 	/* mouse */
 	UINT16 mouse[2];
-    int mouse_stat[2];
+	int mouse_stat[2];
 	/* rtc */
 	int rtc_latch;
 	/* disk */
-    UINT8 dsk_stat, *disk;
+	UINT8 dsk_stat;
+	/* memory */
+	msx_slot_layout *layout;
+	slot_state *cart_state[MSX_MAX_CARTS];
+	slot_state *state[4];
+	const msx_slot *slot[4];
+	UINT8 *ram_pages[4];
+	UINT8 *empty, ram_mapper[4];
+	slot_state *all_state[4][4][4];
+	int slot_expanded[4];
+	UINT8 primary_slot;
+	UINT8 secondary_slot[4];
+	UINT8 superloadrunner_bank;
 } MSX;
 
 /* start/stop functions */
@@ -61,14 +62,6 @@ WRITE_HANDLER ( msx_fmpac_w );
 READ_HANDLER ( msx_rtc_reg_r );
 WRITE_HANDLER ( msx_rtc_reg_w );
 WRITE_HANDLER ( msx_rtc_latch_w );
-WRITE_HANDLER ( msx_mapper_w );
-READ_HANDLER ( msx_mapper_r );
-
-/* memory functions */
-WRITE_HANDLER ( msx_writemem0 );
-WRITE_HANDLER ( msx_writemem1 );
-WRITE_HANDLER ( msx_writemem2 );
-WRITE_HANDLER ( msx_writemem3 );
 
 /* cassette functions */
 DEVICE_LOAD( msx_cassette );
@@ -76,4 +69,19 @@ DEVICE_LOAD( msx_cassette );
 /* disk functions */
 DEVICE_LOAD( msx_floppy );
 
+/* new memory emulation */
+WRITE_HANDLER (msx_superloadrunner_w);
+WRITE_HANDLER (msx_page0_w);
+WRITE_HANDLER (msx_page1_w);
+WRITE_HANDLER (msx_page2_w);
+WRITE_HANDLER (msx_page3_w);
+WRITE_HANDLER (msx_sec_slot_w);
+READ_HANDLER (msx_sec_slot_r);
+WRITE_HANDLER (msx_ram_mapper_w);
+READ_HANDLER (msx_ram_mapper_r);
+
+void msx_memory_map_all (void);
+void msx_memory_map_page (int page);
+void msx_memory_init (void);
+void msx_memory_reset (void);
 
