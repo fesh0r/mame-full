@@ -1399,12 +1399,18 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
   {
     	unsigned short *dest=colorBlittedMemory;
     	int y,x;
+    	int max_width;
+    	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+      	   max_width = sysdep_display_params.max_height;
+    	else
+    	   max_width = sysdep_display_params.max_width;
     	for (y=vis_area->min_y;y<=vis_area->max_y;y++)
     	{
     	   for (x=vis_area->min_x; x<=vis_area->max_x; x++, dest++)
     	   {
     	      *dest=palette->lookup[((unsigned short*)(bitmap->line[y]))[x]];
     	   }
+    	   dest += max_width - (vis_area->max_x - vis_area->min_x + 1);
     	}
   }
 
