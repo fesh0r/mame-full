@@ -382,7 +382,7 @@ static void dmkdsk_write_sector_data_from_buffer(int drive, int side, int index1
 {
 	dmkTrack_p	track_data;
 	UINT16		disp, crc;
-	int			i=0, size=0;
+	int			i=0, size;
 	dmkdsk 		*w = &dmkdsk_drives[drive];
 
 	/* Get track */
@@ -597,7 +597,7 @@ static int CheckIDCRC( packedIDData_P pSector )
 
 static int CheckDataCRC( packedIDData_P pSector )
 {
-	UINT16	crc, *crcOnDisk;
+	UINT16	crc, crcOnDisk;
 	int		size;
 
 	size = 128 << pSector->lengthCode;
@@ -611,8 +611,8 @@ static int CheckDataCRC( packedIDData_P pSector )
 
 	calc_crc_buffer( &crc, &(pSector->DM), size+1 );
 
-	crcOnDisk = (UINT16 *)(&(pSector->data[ size ]));
-	if( crc == BIG_ENDIANIZE_INT16( *crcOnDisk ) )
+	crcOnDisk = *((UINT16 *)(&(pSector->data[ size ])));
+	if( crc == BIG_ENDIANIZE_INT16( crcOnDisk ) )
 		return 0;
 	else
 		return -1;
