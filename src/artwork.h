@@ -40,6 +40,7 @@ struct artwork_
 	UINT8 *brightness;                 /* brightness of each palette entry */
 	UINT64 *rgb;
 	UINT8 *pTable;                     /* Conversion table usually used for mixing colors */
+	INT32 x_offset, y_offset;
 };
 
 
