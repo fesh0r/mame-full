@@ -26,10 +26,14 @@
 */
 typedef struct hfdc_t
 {
-	UINT8 status;	/* controller status */
-	UINT8 disk_sel;	/* disk selection state */
-	UINT8 regs[10+2];	/* 11th register ("data") is used for communication with disk? */
+	UINT8 status;		/* command status register */
+	UINT8 disk_sel;		/* disk selection state */
+	UINT8 regs[10+2];	/* 9th and 10th registers are actually 2 distinct
+						registers each (one is r/o and the other w/o).  The
+						11th register ("data") is only used for communication
+						with the drive in non-DMA modes??? */
 	int reg_ptr;
+	int (*select_callback)(int which, select_mode_t select_mode, int select_line, int gpos);
 	data8_t (*dma_read_callback)(int which, offs_t offset);
 	void (*dma_write_callback)(int which, offs_t offset, data8_t data);
 	void (*int_callback)(int which, int state);
@@ -48,12 +52,12 @@ enum
 	hfdc_reg_sector,
 	hfdc_reg_head,
 	hfdc_reg_cyl,
-	hfdc_reg_sector_count,			/* only used in format(?): 1's complement of the number of sectors per tracks */
+	hfdc_reg_sector_count,		/* only used in format(?): 1's complement of the number of sectors per tracks */
 	hfdc_reg_retry_count,
 	hfdc_reg_mode,
 	hfdc_reg_term,
-		hfdc_reg_chip_stat /*= hfdc_reg_mode*/,
-		hfdc_reg_drive_stat /*= hfdc_reg_term*/
+		hfdc_reg_chip_stat,
+		hfdc_reg_drive_stat
 };
 
 /*
@@ -100,41 +104,7 @@ enum
 #define DS_READY	(1<<1)		/* drive ready bit */
 #define DS_WRFAULT	(1<<0)		/* write fault */
 
-typedef struct disk_interface_t
-{
-	int (*read_sector)(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-	int (*write_sector)(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-	void (*seek)(int which, int disk_unit, int direction);
-	UINT8 (*get_disk_status)(int which, int disk_unit);
-} disk_interface_t;
-
 static hfdc_t hfdc[MAX_HFDC];
-
-static int floppy_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-static int floppy_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-static void floppy_seek(int which, int disk_unit, int direction);
-static UINT8 floppy_get_disk_status(int which, int disk_unit);
-
-/*static int hard_disk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-static int hard_disk_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address);
-static UINT8 hard_disk_get_disk_status(int which, int disk_unit);
-*/
-
-static disk_interface_t floppy_disk_interface =
-{
-	floppy_read_sector,
-	floppy_write_sector,
-	floppy_seek,
-	floppy_get_disk_status
-};
-
-static disk_interface_t hard_disk_interface =
-{
-	/*hard_disk_read_sector*/NULL,
-	/*hard_disk_write_sector*/NULL,
-	NULL,
-	/*hard_disk_get_disk_status*/NULL
-};
 
 static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, int sector, int *sector_data_id, int *sector_len/*, int *ddam*/)
 {
@@ -244,29 +214,35 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 	return reply;
 }
 
-/*static int hard_disk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
+static int harddisk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
 {
-}*/
+	hfdc[which].status |= ST_TC_RDIDERR;
+	return FALSE;
+}
 
-/*static int hard_disk_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
+static int harddisk_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
 {
-}*/
+	hfdc[which].status |= ST_TC_RDIDERR;
+	return FALSE;
+}
 
-/*static UINT8 hard_disk_get_disk_status(int which, int disk_unit)
+static UINT8 harddisk_get_disk_status(int which, int disk_unit)
 {
-}*/
+	return 0;
+}
 
 
 
 /*
-	Reset the controller
+	Initialize the controller
 */
-void smc92x4_init(int which, data8_t (*dma_read_callback)(int which, offs_t offset), void (*dma_write_callback)(int which, offs_t offset, data8_t data), void (*int_callback)(int which, int state))
+void smc92x4_init(int which, const smc92x4_intf *intf)
 {
 	memset(& hfdc[which], 0, sizeof(hfdc[which]));
-	hfdc[which].dma_read_callback = dma_read_callback;
-	hfdc[which].dma_write_callback = dma_write_callback;
-	hfdc[which].int_callback = int_callback;
+	hfdc[which].select_callback = intf->select_callback;
+	hfdc[which].dma_read_callback = intf->dma_read_callback;
+	hfdc[which].dma_write_callback = intf->dma_write_callback;
+	hfdc[which].int_callback = intf->int_callback;
 	if (hfdc[which].int_callback)
 		(*hfdc[which].int_callback)(which, 0);
 }
@@ -306,73 +282,34 @@ static void smc92x4_set_interrupt(int which, int state)
 /*
 	Select currently selected drive 
 */
-static int get_selected_drive(int which, disk_interface_t **disk_interface, int *disk_unit)
+static int get_selected_drive(int which, select_mode_t *select_mode, int *disk_unit)
 {
 	if (hfdc[which].disk_sel == disk_sel_none)
 	{
-		* disk_interface = NULL;
+		* select_mode = sm_reserved;
 		* disk_unit = -1;
-		return FALSE;
-	}
-	else if (hfdc[which].disk_sel & 0x8)
-	{
-		/* floppy disk */
-		/* (hfdc[which].disk_sel & 0x4) is floppy type: (1 for 5.25" drive, 0
-		for slower 8" drives???).  Can probably be ignored. */
-
-		/* It seems that these are 4 general purpose output.  Myarc's HFDC card
-		use them as floppy select lines, but other hardware will use them for
-		other purposes. */
-		switch (hfdc[which].regs[hfdc_reg_retry_count] & 0xf)
-		{
-		case 1:
-			*disk_unit = 0;
-			break;
-		case 2:
-			*disk_unit = 1;
-			break;
-		case 4:
-			*disk_unit = 2;
-			break;
-		case 8:
-			*disk_unit = 3;
-			break;
-		default:
-			*disk_unit = -1;
-			break;
-		}
-		if (* disk_unit != -1)
-		{
-			* disk_interface = &floppy_disk_interface;
-			return TRUE;
-		}
-		else
-		{
-			* disk_interface = NULL;
-			return FALSE;
-		}
-	}
-	else if (hfdc[which].disk_sel & 0x4)
-	{
-		if (hfdc[which].disk_sel & 0x3)
-		{
-			* disk_interface = &hard_disk_interface;
-			* disk_unit = (hfdc[which].disk_sel & 0x3) - 1;
-			return TRUE;
-		}
-		else
-		{
-			* disk_interface = NULL;
-			* disk_unit = -1;
-			return FALSE;
-		}
 	}
 	else
 	{
-		* disk_interface = NULL;
-		* disk_unit = -1;
-		return FALSE;
+		* select_mode = (select_mode_t) ((hfdc[which].disk_sel >> 2) & 0x3);
+
+		switch (* select_mode)
+		{
+		case sm_reserved:
+			* disk_unit = -1;
+			break;
+
+		case sm_harddisk:
+		case sm_floppy_slow:
+		case sm_floppy_fast:
+			if (hfdc[which].select_callback)
+				* disk_unit = (* hfdc[which].select_callback)(which, * select_mode, hfdc[which].disk_sel & 0x3, hfdc[which].regs[hfdc_reg_retry_count] & 0xf);
+			else
+				* disk_unit = (hfdc[which].disk_sel & 0x3) - 1;
+		}
 	}
+
+	return (* disk_unit != -1);
 }
 
 /*
@@ -386,22 +323,61 @@ INLINE void set_command_done(int which)
 		smc92x4_set_interrupt(which, 1);
 }
 
+/*
+	Get the status of a drive
+*/
+INLINE UINT8 get_disk_status(int which, select_mode_t select_mode, int disk_unit)
+{
+	UINT8 reply;
+
+	switch (select_mode)
+	{
+	case sm_reserved:
+		reply = 0;
+		break;
+
+	case sm_harddisk:
+		reply = harddisk_get_disk_status(which, disk_unit);
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		reply = floppy_get_disk_status(which, disk_unit);
+		break;
+	}
+
+	return reply;
+}
+
+/*
+	Handle the step command
+*/
 static void do_step(int which, int mode)
 {
-	disk_interface_t *disk_interface;
+	select_mode_t select_mode;
 	int disk_unit;
 
 	hfdc[which].status = 0;
 
-	if (!get_selected_drive(which, & disk_interface, & disk_unit))
+	if (!get_selected_drive(which, & select_mode, & disk_unit))
 	{
 		/* no unit has been selected */
 		//hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
 		goto cleanup;
 	}
 
-	if (disk_interface->seek)
-		(*disk_interface->seek)(which, disk_unit, (mode & 2) ? -1 : +1);
+	switch (select_mode)
+	{
+	case sm_reserved:
+	case sm_harddisk:
+		/* hard disks may ignore programmed seeks */
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		floppy_seek(which, disk_unit, (mode & 2) ? -1 : +1);
+		break;
+	}
 
 cleanup:
 	/* update register state */
@@ -411,29 +387,45 @@ cleanup:
 	hfdc[which].regs[hfdc_reg_chip_stat] = hfdc[which].disk_sel & 0x3;
 
 	/* set drive status */
-	hfdc[which].regs[hfdc_reg_drive_stat] = (disk_interface && disk_interface->get_disk_status)
-												? (*disk_interface->get_disk_status)(which, disk_unit)
-												: 0;
+	hfdc[which].regs[hfdc_reg_drive_stat] = get_disk_status(which, select_mode, disk_unit);
 }
 
+/*
+	Handle the restore command
+*/
 static void do_restore(int which, int mode)
 {
-	disk_interface_t *disk_interface;
+	select_mode_t select_mode;
 	int disk_unit;
+	int seek_count;
 
 	hfdc[which].status = 0;
 
-	if (!get_selected_drive(which, & disk_interface, & disk_unit))
+	if (!get_selected_drive(which, & select_mode, & disk_unit))
 	{
 		/* no unit has been selected */
-		//hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
+		/* the drive status will be 0, therefore the SEEK_COMPLETE bit will be
+		cleared, which what we want */
 		goto cleanup;
 	}
 
-	if (disk_interface->get_disk_status && disk_interface->seek)
+	switch (select_mode)
 	{
-		while (! ((*disk_interface->get_disk_status)(which, disk_unit) & DS_TRK00))
-			(*disk_interface->seek)(which, disk_unit, -1);
+	case sm_reserved:
+	case sm_harddisk:
+		/* TODO... */
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		seek_count = 0;
+		/* limit iterations to 256 to prevent an endless loop if the disc is locked */
+		while ((seek_count < 256) && ! (floppy_get_disk_status(which, disk_unit) & DS_TRK00))
+		{
+			floppy_seek(which, disk_unit, -1);
+			seek_count++;
+		}
+		break;
 	}
 
 cleanup:
@@ -444,14 +436,15 @@ cleanup:
 	hfdc[which].regs[hfdc_reg_chip_stat] = hfdc[which].disk_sel & 0x3;
 
 	/* set drive status */
-	hfdc[which].regs[hfdc_reg_drive_stat] = (disk_interface && disk_interface->get_disk_status)
-												? (*disk_interface->get_disk_status)(which, disk_unit)
-												: 0;
+	hfdc[which].regs[hfdc_reg_drive_stat] = get_disk_status(which, select_mode, disk_unit);
 }
 
+/*
+	Handle the read logical command
+*/
 static void do_read_logical(int which, int mode)
 {
-	disk_interface_t *disk_interface;
+	select_mode_t select_mode;
 	int disk_unit;
 	int dma_address;
 	int cylinder, head, sector;
@@ -467,7 +460,7 @@ static void do_read_logical(int which, int mode)
 	cylinder = (((int) hfdc[which].regs[hfdc_reg_head] << 4) & 0x700)
 				| hfdc[which].regs[hfdc_reg_cyl];
 
-	if (!get_selected_drive(which, & disk_interface, & disk_unit))
+	if (!get_selected_drive(which, & select_mode, & disk_unit))
 	{
 		/* no unit has been selected */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -475,7 +468,7 @@ static void do_read_logical(int which, int mode)
 	}
 
 #if 0
-	if (disk_interface->get_disk_status && ! ((*disk_interface->get_disk_status)(which, disk_unit) & DS_READY))
+	if (! (get_disk_status(which, select_mode, disk_unit) & DS_READY))
 	{
 		/* unit is not ready */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -483,7 +476,8 @@ static void do_read_logical(int which, int mode)
 	}
 #endif
 
-	if (disk_interface->get_disk_status && (hfdc[which].regs[hfdc_reg_term] & TC_TWPROT) && ((*disk_interface->get_disk_status)(which, disk_unit) & DS_WRPROT))
+	if ((hfdc[which].regs[hfdc_reg_term] & TC_TWPROT)
+			&& (get_disk_status(which, select_mode, disk_unit) & DS_WRPROT))
 	{
 		/* unit is write protected */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -491,14 +485,20 @@ static void do_read_logical(int which, int mode)
 	}
 
 	/* do read sector */
-	if (! disk_interface->read_sector)
+	switch (select_mode)
 	{
-		/* read is unimplemented */
-		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
-		goto cleanup;
+	case sm_reserved:
+		break;
+
+	case sm_harddisk:
+		harddisk_read_sector(which, disk_unit, cylinder, head, sector, &dma_address);
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		floppy_read_sector(which, disk_unit, cylinder, head, sector, &dma_address);
+		break;
 	}
-	else
-		(void) (*disk_interface->read_sector)(which, disk_unit, cylinder, head, sector, &dma_address);
 
 cleanup:
 	/* update register state */
@@ -513,14 +513,15 @@ cleanup:
 	hfdc[which].regs[hfdc_reg_chip_stat] = hfdc[which].disk_sel & 0x3;
 
 	/* set drive status */
-	hfdc[which].regs[hfdc_reg_drive_stat] = (disk_interface && disk_interface->get_disk_status)
-												? (*disk_interface->get_disk_status)(which, disk_unit)
-												: 0;
+	hfdc[which].regs[hfdc_reg_drive_stat] = get_disk_status(which, select_mode, disk_unit);
 }
 
+/*
+	Handle the write logical command
+*/
 static void do_write_logical(int which, int mode)
 {
-	disk_interface_t *disk_interface;
+	select_mode_t select_mode;
 	int disk_unit;
 	int dma_address;
 	int cylinder, head, sector;
@@ -536,7 +537,7 @@ static void do_write_logical(int which, int mode)
 	cylinder = ((hfdc[which].regs[hfdc_reg_head] << 4) & 0x700)
 				| hfdc[which].regs[hfdc_reg_cyl];
 
-	if (!get_selected_drive(which, & disk_interface, & disk_unit))
+	if (!get_selected_drive(which, & select_mode, & disk_unit))
 	{
 		/* no unit has been selected */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -544,7 +545,7 @@ static void do_write_logical(int which, int mode)
 	}
 
 #if 0
-	if (disk_interface->get_disk_status && ! ((*disk_interface->get_disk_status)(which, disk_unit) & DS_READY))
+	if (! (get_disk_status(which, select_mode, disk_unit) & DS_READY))
 	{
 		/* unit is not ready */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -552,7 +553,8 @@ static void do_write_logical(int which, int mode)
 	}
 #endif
 
-	if (disk_interface->get_disk_status && (hfdc[which].regs[hfdc_reg_term] & TC_TWPROT) && ((*disk_interface->get_disk_status)(which, disk_unit) & DS_WRPROT))
+	if ((hfdc[which].regs[hfdc_reg_term] & TC_TWPROT)
+			&& (get_disk_status(which, select_mode, disk_unit) & DS_WRPROT))
 	{
 		/* unit is write protected */
 		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
@@ -560,14 +562,20 @@ static void do_write_logical(int which, int mode)
 	}
 
 	/* do write sector */
-	if (! disk_interface->write_sector) 
+	switch (select_mode)
 	{
-		/* write is unimplemented */
-		hfdc[which].status |= ST_TC_RDIDERR;	/* right??? */
-		goto cleanup;
+	case sm_reserved:
+		break;
+
+	case sm_harddisk:
+		harddisk_write_sector(which, disk_unit, cylinder, head, sector, &dma_address);
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		floppy_write_sector(which, disk_unit, cylinder, head, sector, &dma_address);
+		break;
 	}
-	else
-		(void) (*disk_interface->write_sector)(which, disk_unit, cylinder, head, sector, &dma_address);
 
 cleanup:
 	/* update register state */
@@ -582,13 +590,11 @@ cleanup:
 	hfdc[which].regs[hfdc_reg_chip_stat] = hfdc[which].disk_sel & 0x3;
 
 	/* set drive status */
-	hfdc[which].regs[hfdc_reg_drive_stat] = (disk_interface && disk_interface->get_disk_status)
-												? (*disk_interface->get_disk_status)(which, disk_unit)
-												: 0;
+	hfdc[which].regs[hfdc_reg_drive_stat] = get_disk_status(which, select_mode, disk_unit);
 }
 
 /*
-	Process a Command
+	Process a command
 */
 static void smc92x4_process_command(int which, int opcode)
 {
@@ -728,6 +734,9 @@ static void smc92x4_process_command(int which, int opcode)
 	Memory accessors
 */
 
+/*
+	Read a byte of data from a smc99x4 controller
+*/
 int smc92x4_r(int which, int offset)
 {
 	int reply = 0;
@@ -764,6 +773,9 @@ int smc92x4_r(int which, int offset)
 	return reply;
 }
 
+/*
+	Write a byte to a smc99x4 controller
+*/
 void smc92x4_w(int which, int offset, int data)
 {
 	data &= 0xff;

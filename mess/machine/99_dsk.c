@@ -813,18 +813,89 @@ static int cru_sel;
 static UINT8 *hfdc_ram;
 static int hfdc_irq_state;
 
+
+static int hfdc_select_callback(int which, select_mode_t select_mode, int select_line, int gpos);
+static data8_t hfdc_dma_read_callback(int which, offs_t offset);
+static void hfdc_dma_write_callback(int which, offs_t offset, data8_t data);
+static void hfdc_int_callback(int which, int state);
+
+static const smc92x4_intf hfdc_intf =
+{
+	hfdc_select_callback,
+	hfdc_dma_read_callback,
+	hfdc_dma_write_callback,
+	hfdc_int_callback
+};
+
+/*
+	Select the correct HFDC disk units.
+	floppy disks are selected by the 4 gpos instead of the select lines.
+*/
+static int hfdc_select_callback(int which, select_mode_t select_mode, int select_line, int gpos)
+{
+	int disk_unit;
+
+	(void) which;
+
+	assert(select_mode != sm_reserved);
+
+	switch (select_mode)
+	{
+	case sm_harddisk:
+		/* hard disk */
+		disk_unit = select_line - 1;
+		break;
+
+	case sm_floppy_slow:
+	case sm_floppy_fast:
+		/* floppy disk */
+		/* We use the 4 general purpose output as select lines in order to
+		support 4 drives. */
+		switch (gpos & 0xf)
+		{
+		case 1:
+			disk_unit = 0;
+			break;
+		case 2:
+			disk_unit = 1;
+			break;
+		case 4:
+			disk_unit = 2;
+			break;
+		case 8:
+			disk_unit = 3;
+			break;
+		default:
+			disk_unit = -1;
+			break;
+		}
+		break;
+	}
+
+	return disk_unit;
+}
+
+/*
+	Read a byte from buffer in DMA mode
+*/
 static data8_t hfdc_dma_read_callback(int which, offs_t offset)
 {
 	(void) which;
 	return hfdc_ram[offset & 0x7fff];
 }
 
+/*
+	Write a byte to buffer in DMA mode
+*/
 static void hfdc_dma_write_callback(int which, offs_t offset, data8_t data)
 {
 	(void) which;
 	hfdc_ram[offset & 0x7fff] = data;
 }
 
+/*
+	Called whenever the state of the sms9234 interrupt pin changes.
+*/
 static void hfdc_int_callback(int which, int state)
 {
 	assert(which == 0);
@@ -854,7 +925,7 @@ void ti99_hfdc_init(void)
 	ti99_exp_set_card_handlers(0x1100, & hfdc_handlers);
 
 	/* initialize the floppy disk controller */
-	smc92x4_init(0, hfdc_dma_read_callback, hfdc_dma_write_callback, hfdc_int_callback);
+	smc92x4_init(0, & hfdc_intf);
 
 	mm58274c_init();	/* initialize the RTC */
 
@@ -1020,7 +1091,7 @@ static READ_HANDLER(hfdc_mem_r)
 	}
 	else if (offset < 0x1400)
 	{
-		/* ram page >10 */
+		/* ram page >08 (hfdc manual says >10) */
 		reply = hfdc_ram[0x2000+(offset-0x1000)];
 	}
 	else
@@ -1070,7 +1141,7 @@ static WRITE_HANDLER(hfdc_mem_w)
 	}
 	else if (offset < 0x1400)
 	{
-		/* ram page >10 */
+		/* ram page >08 (hfdc manual says >10) */
 		hfdc_ram[0x2000+(offset-0x1000)] = data;
 	}
 	else
