@@ -30,7 +30,7 @@ const char *GetMessSoftwarePath(int i);
 int GetMessSoftwarePathCount(void);
 
 static int requested_device_type(char *tchar);
-static void MessSetupCrc(int game_index);
+
 
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
@@ -181,18 +181,18 @@ static BOOL CreateMessIcons(void)
 
 static int GetMessIcon(int nGame, int nSoftwareType)
 {
-    int index;
+    int the_index;
     int nIconPos = 0;
-    HICON hIcon;
+    HICON hIcon = 0;
     const struct GameDriver *drv;
     char buffer[32];
 	const char *iconname;
 
     if ((nSoftwareType > IO_END) && (nSoftwareType < IO_COUNT)) {
 		iconname = device_brieftypename(nSoftwareType);
-        index = (nGame * IO_COUNT) + nSoftwareType;
+        the_index = (nGame * IO_COUNT) + nSoftwareType;
 
-        nIconPos = mess_icon_index[index];
+        nIconPos = mess_icon_index[the_index];
         if (!nIconPos) {
             for (drv = drivers[nGame]; drv; drv = drv->clone_of) {
                 sprintf(buffer, "%s/%s", drv->name, iconname);
@@ -205,7 +205,7 @@ static int GetMessIcon(int nGame, int nSoftwareType)
                 nIconPos = ImageList_AddIcon(hSmall, hIcon);
                 ImageList_AddIcon(hLarge, hIcon);
                 if (nIconPos != -1)
-                    mess_icon_index[index] = nIconPos;
+                    mess_icon_index[the_index] = nIconPos;
             }
         }
     }
@@ -319,7 +319,7 @@ static void InitMessPicker(void)
  * Open others dialog                                                       *
  * ------------------------------------------------------------------------ */
 
-static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
+static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
 {
     BOOL success;
     OPENFILENAME of;
@@ -535,7 +535,7 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
  * ready for prime time so it isn't enabled by default                      *
  * ------------------------------------------------------------------------ */
 
-static const char *s_pInitialFileName;
+//static const char *s_pInitialFileName;
 static BOOL s_bChosen;
 static struct SmartListView *s_pFileMgrListView;
 static long s_lSelectedItem;
@@ -545,6 +545,7 @@ static void FileMgrListClass_Run(struct SmartListView *pListView)
 	s_bChosen = TRUE;
 }
 
+/*
 static struct SmartListViewClass s_filemgrListClass =
 {
 	sizeof(struct SingleItemSmartListView),
@@ -561,7 +562,7 @@ static struct SmartListViewClass s_filemgrListClass =
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
 	mess_column_names
 };
-
+*/
 static void EndFileManager(HWND hDlg, long lSelectedItem)
 {
 	s_lSelectedItem = lSelectedItem;
@@ -573,6 +574,7 @@ static void EndFileManager(HWND hDlg, long lSelectedItem)
 	}
 }
 
+#ifdef __NOT_USED__
 static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	struct SmartListViewOptions opts;
@@ -643,6 +645,7 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 	}
 	return TRUE;
 }
+#endif
 
 /* osd_select_file allows MESS32 to override the default file manager
  *
