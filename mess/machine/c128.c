@@ -731,6 +731,33 @@ static void c128_common_driver_init (void)
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	int i;
 
+#if 0
+	{0x100000, 0x107fff, MWA_ROM, &c128_basic},	/* maps to 0x4000 */
+	{0x108000, 0x109fff, MWA_ROM, &c64_basic},	/* maps to 0xa000 */
+	{0x10a000, 0x10bfff, MWA_ROM, &c64_kernal},	/* maps to 0xe000 */
+	{0x10c000, 0x10cfff, MWA_ROM, &c128_editor},
+	{0x10d000, 0x10dfff, MWA_ROM, &c128_z80},		/* maps to z80 0 */
+	{0x10e000, 0x10ffff, MWA_ROM, &c128_kernal},
+	{0x110000, 0x117fff, MWA_ROM, &c128_internal_function},
+	{0x118000, 0x11ffff, MWA_ROM, &c128_external_function},
+	{0x120000, 0x120fff, MWA_ROM, &c64_chargen},
+	{0x121000, 0x121fff, MWA_ROM, &c128_chargen},
+	{0x122000, 0x1227ff, MWA_RAM, &c64_colorram},
+	{0x122800, 0x1327ff, MWA_RAM, &c128_vdcram},
+#endif
+		c128_basic=memory_region(REGION_CPU1)+0x100000;
+		c64_basic=memory_region(REGION_CPU1)+0x108000;
+		c64_basic=memory_region(REGION_CPU1)+0x10a000;
+		c128_editor=memory_region(REGION_CPU1)+0x10c000;
+		c128_z80=memory_region(REGION_CPU1)+0x10d000;
+		c128_kernal=memory_region(REGION_CPU1)+0x10e000;
+		c128_internal_function=memory_region(REGION_CPU1)+0x110000;
+		c128_external_function=memory_region(REGION_CPU1)+0x118000;
+		c64_chargen=memory_region(REGION_CPU1)+0x120000;
+		c128_chargen=memory_region(REGION_CPU1)+0x121000;
+		c64_colorram=memory_region(REGION_CPU1)+0x122000;
+		c128_vdcram=memory_region(REGION_CPU1)+0x122800;
+
 	for (i=0; i<0x100; i++) gfx[i]=i;
 
 	memset(c64_memory, 0xff, 0x100000);

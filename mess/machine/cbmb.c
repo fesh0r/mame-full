@@ -31,7 +31,7 @@ static int cbm500=0;
 UINT8 *cbmb_memory;
 UINT8 *cbmb_basic;
 UINT8 *cbmb_kernal;
-UINT8 *cbmb_chargen;
+static UINT8 *cbmb_chargen;
 UINT8 *cbmb_videoram;
 UINT8 *cbmb_colorram;
 
@@ -227,6 +227,7 @@ static void cbmb_change_font(int level)
 
 static void cbmb_common_driver_init (void)
 {
+	cbmb_chargen=memory_region(REGION_CPU1)+0x100000;
 	/*    memset(c64_memory, 0, 0xfd00); */
 
 	cbmb_cia.todin50hz = 0;

@@ -15,8 +15,12 @@
 	read from the MBR (master boot record) at offset 1AD to 1BD is wrong.
 
 ***************************************************************************/
+#include <stdio.h>
+#include "snprintf.h"
+
 #include "includes/pic8259.h"
 #include "includes/dma8237.h"
+#include "includes/state.h"
 
 #include "includes/pc_hdc.h"
 
@@ -101,6 +105,9 @@ static int data_cnt = 0;                /* data count */
 static UINT8 buffer[17*4*512];			/* data buffer */
 static UINT8 *ptr = 0;					/* data pointer */
 
+
+static int display[4]= { 0 };
+
 static void pc_hdc_result(int n)
 {
 	/* dip switch selected INT 5 or 2 */
@@ -138,6 +145,7 @@ static void execute_read(void)
 	int read = 0, first = 1;
 	int no_dma = pc_DMA_mask & (0x10 << HDC_DMA);
 
+	display[idx]|=1;
 	if (f)
 	{
 		if (no_dma)
@@ -234,6 +242,7 @@ static void execute_write(void)
 	int write = 512, first = 1;
 	int no_dma = pc_DMA_mask & (0x10 << HDC_DMA);
 
+	display[idx]|=2;
 	if (f)
 	{
 		if (no_dma)
@@ -702,6 +711,7 @@ void pc_HDC_w(int chip, int offs, int data)
 {
 	if( !(input_port_3_r(0) & (0x08>>chip)) || !pc_hdc_file[chip<<1] )
 		return;
+
 	switch( offs )
 	{
 		case 0: pc_hdc_data_w(chip,data);	 break;
@@ -748,3 +758,17 @@ void pc_harddisk_exit(int id)
     pc_hdc_file[id] = NULL;
 }
 
+void pc_harddisk_state(void)
+{
+	int i;
+	char text[50];
+
+	for (i=0; i<MAX_HARD; i++) {
+		if (display[i]) {
+			snprintf(text, sizeof(text), "HDD:%d track:%-3d head:%-2d sector:%-2d %s",
+					 i,cylinder[i],head[i],sector[i], display[i]&2?"writing":"reading" );
+			state_display_text(text);
+			display[i]=0;
+		}
+	}
+}

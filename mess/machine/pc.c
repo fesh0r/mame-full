@@ -38,8 +38,13 @@
 #include "includes/pclpt.h"
 #include "includes/centroni.h"
 
+#include "includes/pc_hdc.h"
+#include "includes/nec765.h"
 #include "includes/amstr_pc.h"
 #include "includes/pc.h"
+#include "includes/state.h"
+
+
 
 // preliminary machines setup 
 //#define MESS_MENU
@@ -703,6 +708,9 @@ void init_pc_common(void)
 	/* should be in init for DMA controller? */
 	pc_DMA_status &= ~(0x10 << FDC_DMA);	/* reset DMA running flag */
 	pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
+
+	state_add_function(pc_harddisk_state);
+//	state_add_function(nec765_state);
 }
 
 void init_pccga(void)

@@ -297,38 +297,38 @@ WRITE_HANDLER(cbm8096_w)
 		} else {
 			memory_set_bankhandler_r(7, 0, MRA_BANK7);
 			if (!(data&2)) {
-				memory_set_bankhandler_w(7,0, MWA_BANK7);
+				memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			} else {
-				memory_set_bankhandler_w(7,0, MWA_NOP);
+				memory_set_bankhandler_w(7, 0, MWA_NOP);
 			}
 		}
 		if (!(data&2)) {
-			memory_set_bankhandler_w(6,0, MWA_BANK6);
-			memory_set_bankhandler_w(8,0, MWA_BANK8);
-			memory_set_bankhandler_w(9,0, MWA_BANK9);
+			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			memory_set_bankhandler_w(8, 0, MWA_BANK8);
+			memory_set_bankhandler_w(9, 0, MWA_BANK9);
 		} else {
-			memory_set_bankhandler_w(6,0, MWA_NOP);
-			memory_set_bankhandler_w(8,0, MWA_NOP);
-			memory_set_bankhandler_w(9,0, MWA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(8, 0, MWA_NOP);
+			memory_set_bankhandler_w(9, 0, MWA_NOP);
 		}
 		if (data&0x20) {
 			cpu_setbank(1,pet_memory+0x8000);
 			memory_set_bankhandler_w(1, 0, videoram_w);
 		} else {
 			if (!(data&1)) {
-				memory_set_bankhandler_w(1,0, MWA_BANK1);
+				memory_set_bankhandler_w(1, 0, MWA_BANK1);
 			} else {
-				memory_set_bankhandler_w(1,0, MWA_NOP);
+				memory_set_bankhandler_w(1, 0, MWA_NOP);
 			}
 		}
 		if (!(data&1)) {
-			memory_set_bankhandler_w(2,0, MWA_BANK2);
-			memory_set_bankhandler_w(3,0, MWA_BANK3);
-			memory_set_bankhandler_w(4,0, MWA_BANK4);
+			memory_set_bankhandler_w(2, 0, MWA_BANK2);
+			memory_set_bankhandler_w(3, 0, MWA_BANK3);
+			memory_set_bankhandler_w(4, 0, MWA_BANK4);
 		} else {
-			memory_set_bankhandler_w(2,0, MWA_NOP);
-			memory_set_bankhandler_w(3,0, MWA_NOP);
-			memory_set_bankhandler_w(4,0, MWA_NOP);
+			memory_set_bankhandler_w(2, 0, MWA_NOP);
+			memory_set_bankhandler_w(3, 0, MWA_NOP);
+			memory_set_bankhandler_w(4, 0, MWA_NOP);
 		}
 		if (data&4) {
 			if (!(data&0x20)) {
@@ -476,6 +476,8 @@ void superpet_driver_init(void)
 {
 	superpet=1;
 	pet_common_driver_init ();
+
+	superpet_memory=memory_region(REGION_CPU2+0x10000);
 
 	cpu_setbank(3, superpet_memory);
 	memory_set_context(1);

@@ -251,7 +251,7 @@
 
 extern UINT8 *cbmb_basic;
 extern UINT8 *cbmb_kernal;
-extern UINT8 *cbmb_chargen;
+//extern UINT8 *cbmb_chargen;
 extern UINT8 *cbmb_memory;
 extern UINT8 *cbmb_videoram;
 extern UINT8 *cbmb_colorram;

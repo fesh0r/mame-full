@@ -676,6 +676,20 @@ static int c64_dma_read_color (int offset)
 static void c64_common_driver_init (void)
 {
 	/*    memset(c64_memory, 0, 0xfd00); */
+	c64_basic=memory_region(REGION_CPU1)+0x10000;
+	c64_kernal=memory_region(REGION_CPU1)+0x12000;
+	c64_chargen=memory_region(REGION_CPU1)+0x14000;
+	c64_colorram=memory_region(REGION_CPU1)+0x15000;
+	c64_roml=memory_region(REGION_CPU1)+0x15400;
+	c64_romh=memory_region(REGION_CPU1)+0x17400;
+#if 0
+	{0x10000, 0x11fff, MWA_ROM, &c64_basic},	/* basic at 0xa000 */
+	{0x12000, 0x13fff, MWA_ROM, &c64_kernal},	/* kernal at 0xe000 */
+	{0x14000, 0x14fff, MWA_ROM, &c64_chargen},	/* charrom at 0xd000 */
+	{0x15000, 0x153ff, MWA_RAM, &c64_colorram},		/* colorram at 0xd800 */
+	{0x15400, 0x173ff, MWA_ROM, &c64_roml},	/* basic at 0xa000 */
+	{0x17400, 0x193ff, MWA_ROM, &c64_romh},	/* kernal at 0xe000 */
+#endif
 
 	if (c64_tape_on)
 		vc20_tape_open (c64_tape_read);
