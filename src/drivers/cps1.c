@@ -3534,99 +3534,75 @@ INPUT_PORTS_END
 
 ********************************************************************/
 
-#define SPRITE_LAYOUT(LAYOUT, SPRITES, SPRITE_SEP2, PLANE_SEP) \
-static struct GfxLayout LAYOUT = \
-{                                               \
-	16,16,   /* 16*16 sprites */             \
-	SPRITES,  /* ???? sprites */            \
-	4,       /* 4 bits per pixel */            \
-	{ PLANE_SEP+8,PLANE_SEP,8,0 },            \
-	{ SPRITE_SEP2+0,SPRITE_SEP2+1,SPRITE_SEP2+2,SPRITE_SEP2+3, \
-	  SPRITE_SEP2+4,SPRITE_SEP2+5,SPRITE_SEP2+6,SPRITE_SEP2+7,  \
-	  0,1,2,3,4,5,6,7, },\
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8, \
-	   16*8, 18*8, 20*8, 22*8, 24*8, 26*8, 28*8, 30*8, }, \
-	32*8    /* every sprite takes 32*8*2 consecutive bytes */ \
-};
+#define DECODE_GFX 0
 
-#define CHAR_LAYOUT(LAYOUT, CHARS, PLANE_SEP) \
-static struct GfxLayout LAYOUT =        \
-{                                        \
-	8,8,    /* 8*8 chars */             \
-	CHARS,  /* ???? chars */        \
-	4,       /* 4 bits per pixel */     \
-	{ PLANE_SEP+8,PLANE_SEP,8,0 },     \
-	{ 0,1,2,3,4,5,6,7, },                         \
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,}, \
-	16*8    /* every sprite takes 32*8*2 consecutive bytes */\
-};
-
-#define TILE32_LAYOUT(LAYOUT, TILES, SEP, PLANE_SEP) \
-static struct GfxLayout LAYOUT =                                   \
-{                                                                  \
-	32,32,   /* 32*32 tiles */                                 \
-	TILES,   /* ????  tiles */                                 \
-	4,       /* 4 bits per pixel */                            \
-	{ PLANE_SEP+8,PLANE_SEP,8,0},                                        \
-	{                                                          \
-	   SEP+0,SEP+1,SEP+2,SEP+3, SEP+4,SEP+5,SEP+6,SEP+7,       \
-	   0,1,2,3,4,5,6,7,                                        \
-	   16+SEP+0,16+SEP+1,16+SEP+2,                             \
-	   16+SEP+3,16+SEP+4,16+SEP+5,                             \
-	   16+SEP+6,16+SEP+7,                                      \
-	   16+0,16+1,16+2,16+3,16+4,16+5,16+6,16+7                 \
-	},                                                         \
-	{                                                          \
-	   0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,         \
-	   8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,   \
-	   16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32, \
-	   24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32  \
-	},                                                         \
-	4*32*8    /* every sprite takes 32*8*4 consecutive bytes */\
-};
-
-/* Generic layout, no longer needed, but very useful for testing
-   Will need to change this constant to reflect the gfx region size
-   for the game.
-   Also change the number of characters
- */
-#define CPS1_ROM_SIZE 0x00000
-#define CPS1_CHARS (CPS1_ROM_SIZE/32)
-CHAR_LAYOUT(charlayout,     CPS1_CHARS,    CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(spritelayout, CPS1_CHARS/4,  CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(tilelayout,   CPS1_CHARS/4,  CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-TILE32_LAYOUT(tilelayout32, CPS1_CHARS/16, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-
-static struct GfxLayout starlayout =
+static struct GfxLayout tilelayout8 =
 {
-	1,1,
-	0x1000,
-	8,	/* wrong because the games set only 128 colors */
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
-	{ RGN_FRAC(1,4) },
-	{ 0 },
-	16
+	8,8,
+#if DECODE_GFX
+	RGN_FRAC(1,2),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
 };
 
-static struct GfxLayout starlayout1 =
+static struct GfxLayout tilelayout16 =
 {
-	1,1,
-	0x1000,
-	8,	/* wrong because the games set only 128 colors */
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
-	{ 0 },
-	{ 0 },
-	16
+	16,16,
+#if DECODE_GFX
+	RGN_FRAC(1,4),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{ RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
+	  RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
+	  0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	16*16
+};
+
+static struct GfxLayout tilelayout32 =
+{
+	32,32,
+#if DECODE_GFX
+	RGN_FRAC(1,4),
+#else
+	0,
+#endif
+	4,
+	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2)+0, 8, 0 },
+	{
+		RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+1, RGN_FRAC(1,4)+2, RGN_FRAC(1,4)+3,
+		RGN_FRAC(1,4)+4, RGN_FRAC(1,4)+5, RGN_FRAC(1,4)+6, RGN_FRAC(1,4)+7,
+		0, 1, 2, 3, 4, 5, 6, 7,
+		16+RGN_FRAC(1,4)+0, 16+RGN_FRAC(1,4)+1, 16+RGN_FRAC(1,4)+2, 16+RGN_FRAC(1,4)+3,
+		16+RGN_FRAC(1,4)+4, 16+RGN_FRAC(1,4)+5, 16+RGN_FRAC(1,4)+6, 16+RGN_FRAC(1,4)+7,
+		16+0, 16+1, 16+2, 16+3, 16+4, 16+5, 16+6, 16+7
+	},
+	{
+		 0*32,  1*32,  2*32,  3*32,  4*32,  5*32,  6*32,  7*32,
+		 8*32,  9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32,
+		16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32,
+		24*32, 25*32, 26*32, 27*32, 28*32, 29*32, 30*32, 31*32
+	},
+	32*32
 };
 
 static struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0x200, 32 },	/* colors 0x200-0x3ff */
-	{ REGION_GFX1, 0, &spritelayout, 0x000, 32 },	/* colors 0x000-0x1ff */
-	{ REGION_GFX1, 0, &tilelayout,   0x400, 32 },	/* colors 0x400-0x5ff */
-	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* colors 0x600-0x7ff */
-	{ REGION_GFX1, 0, &starlayout,   0x800,  2 },	/* colors 0x800-0x9ff (might be limited to 0x800-0x87f) */
-	{ REGION_GFX1, 0, &starlayout1,  0xa00,  2 },	/* colors 0xa00-0xbff (might be limited to 0xa00-0xa7f) */
+	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32 },	/* sprites */
+	{ REGION_GFX1, 0, &tilelayout8,  0x200, 32 },	/* tiles 8x8 */
+	{ REGION_GFX1, 0, &tilelayout16, 0x400, 32 },	/* tiles 16x16 */
+	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* tiles 32x32 */
+	/* stars use palette banks 0x800-0a9ff and 0xa00-0abff */
 	{ -1 } /* end of array */
 };
 
