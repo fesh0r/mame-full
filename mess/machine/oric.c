@@ -26,10 +26,7 @@
 #include "includes/6551.h"
 #include "includes/centroni.h"
 #include "printer.h"
-
 #include "formats/orictap.h"
-#include "formats/orictap.c"
-
 
 /* timer used to refresh via cb input, which will trigger ints on pulses
 from tape */
@@ -1206,27 +1203,71 @@ int oric_cassette_init(int id)
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if( file )
 	{
-		oric_wave_size = osd_fsize(file);
+		int oric_tap_size;
 
-		logerror("oric wave size: %04x\n",oric_wave_size);
+		/* get size of .tap file */
+		oric_tap_size = osd_fsize(file);
 
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		/* note the length of the data is automatically adjusted for UINT16 size */
-		/* the length of the data is automatically adjusted for file size */
-		wa.chunk_size = 30000; /* each chunk is 1 byte */
-		wa.chunk_samples = 14 * 4; /* each byte takes 14 bits, with max 4 samples per bit */
-		wa.smpfreq = ORIC_WAV_FREQUENCY; 
-		wa.fill_wave = oric_cassette_fill_wave;
-		wa.header_samples = 0;
-		wa.trailer_samples = 0;
-		wa.display = 1;
-		if( device_open(IO_CASSETTE,id,0,&wa) )
+		logerror("oric .tap size: %04x\n",oric_tap_size);
+
+		if (oric_tap_size!=0)
+		{
+			UINT8 *oric_tap_data;
+
+			/* allocate a temporary buffer to hold .tap image */
+			/* this is used to calculate the number of samples that would be filled when this
+			file is converted */
+			oric_tap_data = (UINT8 *)malloc(oric_tap_size);
+
+			if (oric_tap_data!=NULL)
+			{
+				/* number of samples to generate */
+				int size_in_samples;
+		
+				/* read data into temporary buffer */
+				osd_fread(file, oric_tap_data, oric_tap_size);
+
+				/* calculate size in samples */
+				size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
+
+				/* seek back to start */
+				osd_fseek(file, 0, SEEK_SET);
+
+				/* free temporary buffer */
+				free(oric_tap_data);
+
+				/* size of data in samples */
+				logerror("size in samples: %d\n",size_in_samples);
+
+
+				/* 30000, 416 */
+
+				/* internal calculation used in wave.c:
+
+				length =
+					wa->header_samples +
+					((osd_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+					wa->trailer_samples;
+				*/
+
+
+				memset(&wa, 0, sizeof(&wa));
+				wa.file = file;
+				wa.chunk_size = oric_tap_size; 
+				wa.chunk_samples = size_in_samples; 
+				wa.smpfreq = ORIC_WAV_FREQUENCY; 
+				wa.fill_wave = oric_cassette_fill_wave;
+				wa.header_samples = 0;
+				wa.trailer_samples = 0;
+				wa.display = 1;
+				if( device_open(IO_CASSETTE,id,0,&wa) )
+					return INIT_FAILED;
+
+				return INIT_OK;
+			}
+
 			return INIT_FAILED;
-
-		/* immediately inhibit/mute/play the output */
-     //   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
-		return INIT_OK;
+		}
 	}
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
