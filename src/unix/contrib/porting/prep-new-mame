@@ -16,6 +16,7 @@
 if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.txt" -print` 2> /dev/null
   d2u `find . -name "*.mak" -print` 2> /dev/null
+  d2u `find . -name "*.ini" -print` 2> /dev/null
   d2u `find . -name "*.[ch]" -print` 2> /dev/null
 else
   echo "Unable to run d2u.  This may cause build problems on some platforms."
@@ -40,10 +41,6 @@ ln -s src/unix/doc .
 ln -s src/unix/install-sh .
 
 # Move the MAME text files to the doc directory.
-if [ -f mame.txt ]; then
-  mv mame.txt doc/readme.mame
-fi
-
 if [ -f whatsnew.txt ]; then
   mv whatsnew.txt doc/changes.mame
 fi
@@ -52,12 +49,21 @@ if [ -f gamelist.txt ]; then
   mv gamelist.txt doc/gamelist.mame
 fi
 
-if [ -f msdos.txt ]; then
-  mv msdos.txt doc
+if [ -f docs/mame.txt ]; then
+  mv docs/mame.txt doc/readme.mame
 fi
 
-if [ -f windows.txt ]; then
-  mv windows.txt doc
+if [ -f docs/msdos.txt ]; then
+  mv docs/msdos.txt doc
+fi
+
+if [ -f docs/windows.txt ]; then
+  mv docs/windows.txt doc
+fi
+
+if [ -d docs ]; then
+  mv docs/* doc
+  rm -r docs
 fi
 
 # Rename the MAME makefile and fix its line endings.

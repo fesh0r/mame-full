@@ -25,6 +25,7 @@ fi
 if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.txt" -print` 2> /dev/null
   d2u `find . -name "*.mak" -print` 2> /dev/null
+  d2u `find . -name "*.html" -print` 2> /dev/null
   d2u `find . -path './src/unix' -prune -o -name "*.[ch]" -print` 2> /dev/null
   d2u makefile.mes 2> /dev/null
   d2u sysinfo.dat 2> /dev/null
@@ -59,6 +60,10 @@ fi
 
 if [ -f windows.txt ]; then
   mv windows.txt doc/
+fi
+
+if [ -f compilewin.html ]; then
+  mv compilewin.html doc/
 fi
 
 if [ -f sysinfo.dat ]; then
