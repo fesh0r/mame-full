@@ -47,6 +47,9 @@ Imgtool Changes:
 - [FAT] "Tildized" short file names are not generated when file names are
   short enough.  [Nate Woods]
 
+- [FAT] Fixed a bugs that could cause file truncations or deletions to leak
+  clusters.  [Nate Woods]
+
 - [Windows Imgtool] Fixed a bug that prevented read only files from opening.
   (bug #624)  [Nate Woods]
 

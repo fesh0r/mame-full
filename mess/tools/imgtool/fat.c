@@ -1190,6 +1190,7 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	size_t clear_size;
 	void *clear_buffer = NULL;
 	int delete_file = FALSE;
+	int rest_free = FALSE;
 
 	disk_info = fat_get_diskinfo(image);
 
@@ -1276,10 +1277,18 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 				/* write out the entry, if appropriate */
 				if (write_cluster != 0)
 				{
+					/* are we tieing up loose ends? */
+					if (rest_free && (write_cluster == 0xFFFFFFFF))
+						write_cluster = 0;
+
 					if (last_cluster == 0)
 						file->first_cluster = (write_cluster != 0xFFFFFFFF) ? write_cluster : 0;
 					else
 						fat_set_fat_entry(image, fat_table, last_cluster, write_cluster);
+
+					/* did we write the last cluster?  if so, the rest (if any) are free */
+					if (write_cluster == 0xFFFFFFFF)
+						rest_free = TRUE;
 				}
 			}
 			while((++i < new_cluster_count) || (cluster != 0xFFFFFFFF));
