@@ -573,7 +573,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
 
         /* SORD */
-TESTDRIVER( sordm5 )
+	DRIVER( sordm5 )
 
         /* APF Electronics Inc. */
 
