@@ -11,7 +11,8 @@ System Driver Changes:
 - [A5200] Fixed a crash on start regression introduced in 0.82 [Nate Woods]
 
 - [APPLE2] Fixed a bug in high RAM emulation; a number of old MECC games now
-  work.  [Nate Woods]
+  work.  Also enabled nibble disk images with the extension .DSK  [Nate
+  Woods]
 
 - [AMSTRAD] Refined video display and Z80 timings; the Yao demos work
   better now.  Also changed default joystick input definitions.  [Yoann
