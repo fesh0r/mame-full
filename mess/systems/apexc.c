@@ -768,15 +768,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 static MEMORY_READ32_START(readmem)
-	{ 0x0000, 0xfff, MRA32_RAM },
+#ifdef SUPPORT_ODD_WORD_SIZES
+	{ 0x0000, 0x03ff, MRA32_RAM },	/* 1024 32-bit words (expandable to 8192) */
+	{ 0x0400, 0x1fff, MRA32_NOP },
+#else
+	{ 0x0000, 0x0fff, MRA32_RAM },
+	{ 0x1000, 0x7fff, MRA32_NOP },
+#endif
 MEMORY_END
 
 static MEMORY_WRITE32_START(writemem)
-	{ 0x0000, 0xfff, MWA32_RAM },
+#ifdef SUPPORT_ODD_WORD_SIZES
+	{ 0x0000, 0x03ff, MWA32_RAM },	/* 1024 32-bit words (expandable to 8192) */
+	{ 0x0400, 0x1fff, MWA32_NOP },
+#else
+	{ 0x0000, 0x0fff, MWA32_RAM },
+	{ 0x1000, 0x7fff, MWA32_NOP },
+#endif
 MEMORY_END
-
-static READ32_HANDLER(tape_read);
-static WRITE32_HANDLER(tape_write);
 
 static PORT_READ32_START(readport)
 	{0, 0, tape_read},
@@ -883,4 +892,5 @@ ROM_START(apexc)
 ROM_END
 
 /*		YEAR	NAME		PARENT	MACHINE		INPUT	INIT	COMPANY		FULLNAME */
-COMP( 1951(?),	apexc,		0,		apexc,		apexc,	apexc,	"Booth",	"APEXC" )
+/*COMP( c. 1951,	apexc53,	0,		apexc53,	apexc,	apexc,	"Booth",	"APEXC (as described in 1953)" )*/
+COMP( c. 1955,	apexc,		/*apexc53*/0,		apexc,		apexc,	apexc,	"Booth",	"APEXC (as described in 1957)" )

@@ -33,10 +33,21 @@ const char *apexc_info(void *context, int regnum);
 unsigned apexc_dasm(char *buffer, unsigned pc);
 int apexc_execute(int cycles);
 
-#ifdef MAME_DEBUG
-unsigned DasmAPEXC(char *buffer, unsigned pc);
-#define apexc_readop(address)	cpu_readmem18bedw_dword((address) << 2)
+#ifndef SUPPORT_ODD_WORD_SIZES
+#define apexc_readmem(address)	cpu_readmem24bedw_dword((address)<<2)
+#define apexc_writemem(address, data)	cpu_writemem24bedw_dword((address)<<2, (data))
+/* eewww ! - Fortunately, there is no memory mapped I/O, so we can simulate masked write
+without danger */
+#define apexc_writemem_masked(address, data, mask)										\
+	apexc_writemem((address), (apexc_readmem(address) & ~(mask)) | ((data) & (mask)))
+#else
+#define apexc_readmem(address)	cpu_readmem13_32(address)
+#define apexc_writemem(address, data)	cpu_writemem13_32((address), (data))
+#define apexc_writemem_masked(address, data, mask)	cpu_writemem13_32masked((address), (data), (mask))
 #endif
 
-#define apexc_readmem(address)	cpu_readmem18bedw_dword((address) << 2)
-#define apexc_writemem(address, data)	cpu_writemem18bedw_dword((address) << 2, (data))
+#ifdef MAME_DEBUG
+unsigned DasmAPEXC(char *buffer, unsigned pc);
+#define apexc_readop(address)	apexc_readmem(address)
+#endif
+
