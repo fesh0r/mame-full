@@ -129,7 +129,7 @@ static UINT32 KeyStateSave[4];
 
 	I think that I have once read that the geneve GROM emulator does not
 	emulate wrap-around within a GROM, i.e. address >1fff is followed by >2000
-	(instead of >1000 with a real GROM).
+	(instead of >0000 with a real GROM).
 */
 static struct
 {
@@ -380,9 +380,11 @@ READ_HANDLER ( geneve_r )
 			switch (offset)
 			{
 			case 0xf100:
+			case 0xf108:		/* mirror? */
 				return v9938_vram_r(0);
 
 			case 0xf102:
+			case 0xf10a:		/* mirror? */
 				return v9938_status_r(0);
 
 			case 0xf110:
@@ -592,18 +594,22 @@ WRITE_HANDLER ( geneve_w )
 			switch (offset)
 			{
 			case 0xf100:
+			case 0xf108:		/* mirror? */
 				v9938_vram_w(0, data);
 				return;
 
 			case 0xf102:
+			case 0xf10a:		/* mirror? */
 				v9938_command_w(0, data);
 				return;
 
 			case 0xf104:
+			case 0xf10c:		/* mirror? */
 				v9938_palette_w(0, data);
 				return;
 
 			case 0xf106:
+			case 0xf10e:		/* mirror? */
 				v9938_register_w(0, data);
 				return;
 
@@ -621,6 +627,10 @@ WRITE_HANDLER ( geneve_w )
 			/*case 0xf118:	// read-only register???
 				key_buf = data;
 				return*/
+
+			case 0xf120:
+				SN76496_0_w(0, data);
+				break;
 
 			case 0xf130:
 			case 0xf131:

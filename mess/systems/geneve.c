@@ -60,7 +60,7 @@
 	>f102: VDP address/status port (read/write)
 	>f104: VDP port 2
 	>f106: VDP port 3
-	>f108->f10f: ???
+	>f108->f10f: VDP mirror (used by Barry Boone's converted Tomy cartridges)
 	>f110->f117: memory page registers (>f110 for page 0, >f111 for page 1,
 	  etc.)
 	>f118: key buffer
