@@ -153,8 +153,6 @@ void lightgun_event_abs_init(void)
 	}
 }
 
-static int trigger[4] = { 0,0,0,0 };
-
 void lightgun_event_abs_poll(void)
 {
 	int i, fds, rd;
@@ -171,7 +169,7 @@ void lightgun_event_abs_poll(void)
 		fds++;
 	}
 
-	if (! fds)
+	if (!fds)
 		return;
 
 	rd = poll(pfd, fds, 0);
@@ -212,16 +210,18 @@ void lightgun_event_abs_poll(void)
 				lg_devices[i].last[LG_X_AXIS] = ev->value;
 			} else if (ev->type == EV_ABS && ev->code == ABS_Y) {
 				lg_devices[i].last[LG_Y_AXIS] = ev->value;
-			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE ||
-                                                          ev->code == BTN_MOUSE)) {
-				trigger[i] = ev->value;
-			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE  ||
-                                                          ev->code == BTN_RIGHT)) {
+			} else if (ev->type == EV_KEY && (ev->code == BTN_MIDDLE
+						|| ev->code == BTN_MOUSE
+						|| ev->code == BTN_6)) {
+				sysdep_display_mouse_data[i].buttons[0] = ev->value;
+			} else if (ev->type == EV_KEY && (ev->code == BTN_SIDE 
+						|| ev->code == BTN_RIGHT
+						|| ev->code == BTN_7)) {
 				lg_devices[i].last[LG_X_AXIS] =
 					lg_devices[i].min[LG_X_AXIS];
 				lg_devices[i].last[LG_Y_AXIS] =
 					lg_devices[i].min[LG_Y_AXIS];
-                                trigger[i] = ev->value;
+                                sysdep_display_mouse_data[i].buttons[0] = ev->value;
 			}
 		}
 	}
@@ -229,25 +229,22 @@ void lightgun_event_abs_poll(void)
 	return;
 }
 
-int lightgun_event_abs_read(int joynum, int joyindex, int *delta)
+int lightgun_event_abs_read(int joynum, int joyindex, int *val)
 {
-	if (joynum > GUN_MAX || !lg_devices[joynum].device)
+	if (joynum > GUN_MAX || !lg_devices[joynum].device
+			|| joyindex >= LG_MAX_AXIS)
 		return 0;
 
-	/* Map absolute values into -128 -> 128 range */
+	/* Map onto the range ANALOG_VALUE_MIN..ANALOG_VALUE_MAX. */
 	if (joyindex == 0)
-	{
-		*delta = (((lg_devices[joynum].last[LG_X_AXIS] -
-						lg_devices[joynum].min[LG_X_AXIS]) * 256) /
-				(lg_devices[joynum].range[LG_X_AXIS] - 1)) - 128;
-	}
+		*val = (INT64)(lg_devices[joynum].last[LG_X_AXIS] - (lg_devices[joynum].min[LG_X_AXIS] + lg_devices[joynum].range[LG_X_AXIS] / 2)) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)lg_devices[joynum].range[LG_X_AXIS];
 	else
-	{
-		*delta = (((lg_devices[joynum].last[LG_Y_AXIS] -
-						lg_devices[joynum].min[LG_Y_AXIS]) * 256) /
-				(lg_devices[joynum].range[LG_Y_AXIS] - 1)) - 128;
-	}
-        joy_data[joynum].buttons[0] = trigger[joynum];
+		*val = (INT64)(lg_devices[joynum].last[LG_Y_AXIS] - (lg_devices[joynum].min[LG_Y_AXIS] + lg_devices[joynum].range[LG_Y_AXIS] / 2)) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)lg_devices[joynum].range[LG_Y_AXIS];
+
+	if (*val < ANALOG_VALUE_MIN)
+		*val = ANALOG_VALUE_MIN;
+	else if (*val > ANALOG_VALUE_MAX)
+		*val = ANALOG_VALUE_MAX;
 
 	return 1;
 }
