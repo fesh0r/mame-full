@@ -600,10 +600,10 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 				}
 				ent->filesize=GET_ULONG(entry->size);
 				if (ent->attr) {
-					int date=GET_UWORD(entry->date), time=GET_UWORD(entry->date);
+					int date=GET_UWORD(entry->date), _time=GET_UWORD(entry->date);
 					sprintf(ent->attr,"%.4d-%.2d-%.2d %.2d:%.2d:%.2d %s%s%s%s%s%s",
 							DATE_GET_YEAR(date), DATE_GET_MONTH(date)+1, DATE_GET_DAY(date),
-							TIME_GET_HOUR(time), TIME_GET_MINUTE(time), TIME_GET_SECOND(time),
+							TIME_GET_HOUR(_time), TIME_GET_MINUTE(_time), TIME_GET_SECOND(_time),
 							entry->attribut&ATTRIBUT_HIDDEN?"Hidden ":"",
 							entry->attribut&ATTRIBUT_SYSTEM?"System ":"",
 							entry->attribut&ATTRIBUT_SUBDIRECTORY?"Dir ":"",
@@ -721,7 +721,7 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	memset(entry->name, ' ', 11);
 	memcpy(entry->name, fname, i);
 	if ((i<9)&&(fname[i]!=0)) { /* with extension */
-		memcpy(entry->extension, fname+i, strlen(fname+i));
+		memcpy(entry->extension, fname+i+1, strlen(fname+i+1));
 	}
 	SET_ULONG(entry->size, fsize);
 	entry->attribut=0;
