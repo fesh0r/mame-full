@@ -14,11 +14,10 @@
 #include "includes/channelf.h"
 #include "devices/cartslot.h"
 
-/*
 #ifndef VERBOSE
-#define VERBOSE 1
+#define VERBOSE 0
 #endif
-*/
+
 
 #if VERBOSE
 #define LOG(x)	logerror x

@@ -256,6 +256,7 @@ DRVLIBS = \
 	$(OBJ)/mtx.a	  \
 	$(OBJ)/intv.a     \
 	$(OBJ)/rca.a	  \
+	$(OBJ)/multitch.a
 
 
 $(OBJ)/neocd.a:						\
@@ -799,6 +800,9 @@ $(OBJ)/compis.a:					\
 	$(OBJ)/mess/machine/mm58274c.o	\
 	$(OBJ)/mess/formats/cpis_dsk.o	\
 	$(OBJ)/mess/vidhrdw/i82720.o 
+
+$(OBJ)/multitch.a:					\
+	$(OBJ)/mess/systems/mpf1.o		\
 
 
 

@@ -703,6 +703,9 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 	/* Telenova */
 	DRIVER(compis)		/* 1985 Telenova Compis								*/
 
+	/* Multitech */
+	DRIVER(mpf1)		/* 1979 Multitech MPF-1								*/
+
 /****************Games*******************************************************/
 	/* Computer Electronic */
 TESTDRIVER( mk1 )		/* Chess Champion MK I								*/
