@@ -1430,11 +1430,6 @@ static INT_PTR CALLBACK FileManagerProc(HWND hDlg, UINT message, WPARAM wParam, 
 	return TRUE;
 }
 
-static BOOL UseNewFileManager(void)
-{
-	return FALSE;
-}
-
 /* osd_select_file allows MESS32 to override the default file manager
  *
  * sel indexes an entry in options.image_files[]
@@ -1452,7 +1447,7 @@ int osd_select_file(int sel, char *filename)
 	int result;
 	BOOL bDialogDone;
 
-	if (UseNewFileManager()) {
+	if (GetUseNewFileMgr(GetSelectedPickItem())) {
 		s_pInitialFileName = filename;
 
 		ShowCursor(TRUE);

@@ -125,7 +125,15 @@ struct tDisplay_private
     unsigned char       oldpalette_blue[DEBUGGER_TOTAL_COLORS];
     const UINT8         *debug_palette;
 #endif /* MAME_DEBUG */
+
+#if HAVE_MODALDIALOGS
+	BOOL                m_bModalDialog;
+#endif
 };
+
+#ifdef HAVE_MODALDIALOGS
+#define InModalDialog()	(This.m_bModalDialog)
+#endif /* HAVE_MODALDIALOGS */
 
 /***************************************************************************
     Function prototypes
@@ -148,6 +156,9 @@ static BOOL     FindBestDisplayMode(DWORD  dwWidthIn,   DWORD  dwHeightIn, DWORD
                                 DWORD* pdwWidthOut, DWORD* pdwHeightOut);
 static void     AdjustPalette(void);
 static BOOL     OnSetCursor(HWND hWnd, HWND hWndCursor, UINT codeHitTest, UINT msg);
+#if HAVE_MODALDIALOGS
+static BOOL     OnPaint(HWND hWnd);
+#endif
 
 static int                DDraw_init(options_type *options);
 static void               DDraw_exit(void);
@@ -170,7 +181,7 @@ static BOOL               DDraw_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LP
 static void               DDraw_Refresh(void);
 static int                DDraw_GetBlackPen(void);
 static void               DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, int nFrameskip, int nVecUPS);
-#ifdef MESS
+#if HAVE_MODALDIALOGS
 static int                DDraw_AllowModalDialog(BOOL bAllow);
 #endif
 
@@ -205,7 +216,7 @@ struct OSDDisplay DDrawDisplay =
     DDraw_Refresh,              /* Refresh           */
     DDraw_GetBlackPen,          /* GetBlackPen       */
     DDraw_UpdateFPS,            /* UpdateFPS         */
-#ifdef MESS
+#if HAVE_MODALDIALOGS
     DDraw_AllowModalDialog,     /* AllowModalDialog  */
 #endif
 };
@@ -285,6 +296,10 @@ static int DDraw_init(options_type *options)
     This.m_pDDPal            = NULL;
 
     This.Render              = NULL;
+
+#if HAVE_MODALDIALOGS
+	This.m_bModalDialog      = FALSE;
+#endif /* HAVE_MODALDIALOGS */
 
     /* Check for inconsistent parameters. */
     if (This.m_bDouble == FALSE
@@ -515,6 +530,7 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
     {
         ErrorMsg("IDirectDraw.SetCooperativeLevel failed: %s", DirectXDecodeError(hResult));
         goto error;
+
     }
 
     {
@@ -1998,12 +2014,23 @@ static BOOL DDraw_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, L
     switch (Msg)
     {
         HANDLE_MESSAGE(hWnd, WM_SETCURSOR,  OnSetCursor);
+#if HAVE_MODALDIALOGS
+	case WM_PAINT:
+		return OnPaint(hWnd);
+#endif
     }
     return FALSE;
 }
 
 static BOOL OnSetCursor(HWND hWnd, HWND hWndCursor, UINT codeHitTest, UINT msg)
 {
+#if HAVE_MODALDIALOGS
+	if (InModalDialog()) {
+		SetCursor(LoadCursor(0, IDC_ARROW));
+		return TRUE;
+	}
+#endif
+
     SetCursor(NULL);
  
     return TRUE;
@@ -2040,23 +2067,78 @@ static void DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, i
     }
 }
 
-#ifdef MESS
+#if HAVE_MODALDIALOGS
 static int DDraw_AllowModalDialog(BOOL bAllow)
 {
 	HRESULT hResult;
 
 	if (bAllow) {
 		hResult = IDirectDrawSurface_SetPalette(This.m_pDDSPrimary, NULL);
+		SetCursor(LoadCursor(0, IDC_ARROW));
+		InvalidateRect(MAME32App.m_hWnd, NULL, FALSE);
 	}
 	else {
 		hResult = IDirectDrawSurface_SetPalette(This.m_pDDSPrimary, This.m_pDDPal);
 		ClearSurface(This.m_pDDSPrimary);
 		ClearSurface(This.m_pDDSBack);
+		SetCursor(NULL);
 	}
 
+	This.m_bModalDialog = bAllow;
 	return FAILED(hResult) ? 1 : 0;
 }
-#endif
+
+static BOOL OnPaint(HWND hWnd)
+{
+	int i;
+	PAINTSTRUCT ps;
+	BITMAPINFO *pbi;
+	BYTE *pbScreen;
+
+	if (InModalDialog()) {
+	    BeginPaint(hWnd, &ps);
+
+		pbi = (BITMAPINFO *) _alloca(sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * OSD_NUMPENS);
+		pbi->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER); 
+		pbi->bmiHeader.biWidth         = (This.m_pBitmap->line[1] - This.m_pBitmap->line[0]) / (This.m_nDepth / 8);
+		pbi->bmiHeader.biHeight        = -(int)(This.m_nDisplayLines); /* Negative means "top down" */
+		pbi->bmiHeader.biPlanes        = 1;
+		pbi->bmiHeader.biBitCount      = This.m_nDepth;
+		pbi->bmiHeader.biCompression   = BI_RGB;
+		pbi->bmiHeader.biSizeImage     = 0;
+		pbi->bmiHeader.biXPelsPerMeter = 0;
+		pbi->bmiHeader.biYPelsPerMeter = 0;
+		pbi->bmiHeader.biClrUsed       = 0;
+		pbi->bmiHeader.biClrImportant  = 0;
+		for (i = 0; i < This.m_nTotalColors; i++) {
+			pbi->bmiColors[i].rgbRed = This.m_pPalEntries[i].peRed / 3;
+			pbi->bmiColors[i].rgbGreen = This.m_pPalEntries[i].peGreen / 3;
+			pbi->bmiColors[i].rgbBlue = This.m_pPalEntries[i].peBlue / 3;
+			pbi->bmiColors[i].rgbReserved = 0;
+		}
+
+		pbScreen = This.m_pBitmap->line[0];
+
+        StretchDIBits(ps.hdc,
+                      This.m_nSkipColumns,
+					  This.m_nSkipLines,
+                      This.m_nScreenWidth,
+                      This.m_nScreenHeight,
+                      0,
+                      0,
+                      This.m_nDisplayColumns,
+                      This.m_nDisplayLines,
+                      pbScreen,
+                      pbi,
+                      DIB_RGB_COLORS,
+                      SRCCOPY);
+
+        EndPaint(hWnd, &ps);
+		return TRUE;
+	}
+	return FALSE;
+}
+#endif /* HAVE_MODALDIALOGS */
 
 static void AdjustPalette(void)
 {

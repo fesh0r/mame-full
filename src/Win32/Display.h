@@ -15,6 +15,12 @@
 
 #include "osdepend.h"
 
+#ifdef MESS
+#define HAVE_MODALDIALOGS	1
+#else
+#define HAVE_MODALDIALOGS	0
+#endif
+
 typedef struct
 {
     DWORD   m_Top;
@@ -52,9 +58,9 @@ struct OSDDisplay
     void                (*Refresh)(void);
     int                 (*GetBlackPen)(void);
     void                (*UpdateFPS)(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, int nFrameskip, int nVecUPS);
-#ifdef MESS
+#if HAVE_MODALDIALOGS
 	int                 (*AllowModalDialog)(BOOL bAllow);
-#endif
+#endif /* HAVE_MODALDIALOGS */
 };
 
 extern float Display_get_gamma(void);

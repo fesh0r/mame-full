@@ -179,6 +179,7 @@ typedef struct
     int    has_samples;
     BOOL   is_favorite;
 #ifdef MESS
+	BOOL   use_new_filemgr;
 	char   extra_software_paths[MAX_PATH * 10];
 #endif
 } options_type;
@@ -292,6 +293,8 @@ void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
 
 #ifdef MESS
+BOOL GetUseNewFileMgr(int num_game);
+
 void SetDefaultSoftware(const char *name);
 const char *GetDefaultSoftware(void);
 #endif

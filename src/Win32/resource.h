@@ -298,6 +298,7 @@
 #define IDC_FILTER_COMPUTER             2002
 #define IDC_FILTER_CONSOLE              2003
 #define IDC_FILTER_MODIFIED             2004
+#define IDC_NEW_FILEMGR                 2005
 #define IDI_WIN_FLOP                    2100
 #define IDI_WIN_CASS                    2101
 #define IDI_WIN_SERL                    2102

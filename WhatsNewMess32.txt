@@ -4,6 +4,7 @@ Whats new:
 0.37 BETA 14
 ------------
 
+- Added a new MESS32-specific file manager. [Nate Woods]
 - Fixed a bug in "other directory software" selected through a file dialog.
   [Nate Woods]
 

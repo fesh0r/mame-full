@@ -263,6 +263,7 @@ REG_OPTIONS regGameOpts[] = {
     {"Brightness",          RO_INT,     &gOpts.brightness,      0, 0},
 
 #ifdef MESS
+	{"UseNewFileMgr",       RO_BOOL,    &gOpts.use_new_filemgr, 0, 0},
     {"ExtraSoftwarePaths",  RO_STRING,  &gOpts.extra_software_paths, 0, 0},
 #endif
 
@@ -476,6 +477,7 @@ void OptionsInit(int total_games)
     global.is_favorite  = FALSE;
 
 #ifdef MESS
+	global.use_new_filemgr = TRUE;
 	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
 #endif
 

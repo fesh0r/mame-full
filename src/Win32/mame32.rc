@@ -689,7 +689,11 @@ FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_MAME32_ICON,IDC_STATIC,20,10,20,20
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
+#ifdef MESS
+    GROUPBOX        "Miscellaneous",IDC_STATIC,49,50,121,100
+#else /* !MESS */
     GROUPBOX        "Miscellaneous",IDC_STATIC,49,50,121,87
+#endif
     CONTROL         "Use background artwork",IDC_ARTWORK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,62,67,93,10,0,HIDC_ARTWORK
     CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
@@ -698,8 +702,15 @@ BEGIN
                     WS_TABSTOP,62,93,93,10,0,HIDC_AUTO_PAUSE
     CONTROL         "Disable MMX",IDC_DISABLE_MMX,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,62,106,93,10,0,HIDC_DISABLE_MMX
-    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
+#ifdef MESS
+	CONTROL         "Use new file manager",IDC_NEW_FILEMGR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,62,119,93,10,0
+	CONTROL         "Error log (for developers)",IDC_LOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,62,132,93,10,0,HIDC_LOG
+#else /* !MESS */
+	CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,62,119,93,10,0,HIDC_LOG
+#endif /* MESS */
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,HIDC_USE_DEFAULT

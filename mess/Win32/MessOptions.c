@@ -82,3 +82,10 @@ void SetSoftwareDirs(const char* paths)
     if (paths != NULL)
         settings.softwaredirs = strdup(paths);
 }
+
+BOOL GetUseNewFileMgr(int num_game)
+{
+    assert(0 <= num_game && num_game < num_games);
+
+    return game[num_game].use_new_filemgr;
+}

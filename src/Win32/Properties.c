@@ -1490,6 +1490,9 @@ void BuildDataMap(void)
     DataMapAdd(IDC_BRIGHTNESS,    DM_INT,  CT_SLIDER,   &lpGameOpts->brightness,      0, 0, 0);
     DataMapAdd(IDC_FLICKER,       DM_INT,  CT_SLIDER,   &lpGameOpts->flicker,         0, 0, 0);
     DataMapAdd(IDC_TRIPLE_BUFFER, DM_BOOL, CT_BUTTON,   &lpGameOpts->triple_buffer,   0, 0, 0);
+#ifdef MESS
+    DataMapAdd(IDC_NEW_FILEMGR,   DM_BOOL, CT_BUTTON,   &lpGameOpts->use_new_filemgr, 0, 0, 0);
+#endif
 }
 
 static void SetStereoEnabled(HWND hWnd, int index)
