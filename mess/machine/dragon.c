@@ -1593,7 +1593,7 @@ int coco_cassette_init(int id)
 		memset(&wa, 0, sizeof(&wa));
 		wa.file = file;
 		wa.display = 1;
-		wa.smpfreq = 11025;
+		wa.smpfreq = 19200;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
             return INIT_FAILED;
 
