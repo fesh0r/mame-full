@@ -152,7 +152,7 @@ INLINE const struct KeyboardInfo* internal_code_find_keyboard(InputCode code)
 
 	assert( code < code_mac );
 
-        if (code < __code_max)
+	if (code < __code_max)
 	{
 		while (keyinfo->name)
 		{
