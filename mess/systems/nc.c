@@ -796,6 +796,6 @@ static const struct IODevice io_nc100[] =
 };
 
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
-COMP( 19??, nc100,   0,                nc100,  nc100,      0,       "Amstrad plc", "NC100")
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
+COMP( 19??, nc100,	  0,		nc100,	  nc100,	0,	 "Amstrad plc", "NC100")
 
