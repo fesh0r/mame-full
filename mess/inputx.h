@@ -67,4 +67,11 @@ int inputx_orient_ports(struct InputPort *port, struct InputPort **arranged_port
 	PORT_UCHAR(uchar1)												\
 	PORT_UCHAR(uchar2)												\
 
+#define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
+	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
+	PORT_CODE(key1,key2)											\
+	PORT_UCHAR(uchar1)												\
+	PORT_UCHAR(uchar2)												\
+	PORT_UCHAR(uchar3)												\
+
 #endif /* INPUTX_H */
