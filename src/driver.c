@@ -1112,6 +1112,7 @@ TESTDRIVER( arkblock )	/* bootleg */
 	DRIVER( snowbroa )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbrob )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
+	DRIVER( wintbob )	/*			(c) 1990 Toaplan (bootleg?) */
 
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
 	DRIVER( ghox )		/* TP-021 (c) 1991 Toaplan */
