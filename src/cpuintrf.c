@@ -296,7 +296,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
-		nirq, dirq, &##name##_ICount, oc, i0, i1, i2,							   \
+		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							 \
 		cpu_readmem##mem, cpu_writemem##mem, cpu_setOPbase##mem,				   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
@@ -314,7 +314,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,name##_state_save,name##_state_load, name##_info, name##_dasm, 	   \
-		nirq, dirq, &##name##_ICount, oc, i0, i1, i2,							   \
+		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							 \
 		cpu_readmem##mem, cpu_writemem##mem, cpu_setOPbase##mem,				   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
@@ -331,7 +331,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_internal_interrupt,NULL,NULL, name##_info, name##_dasm,			   \
-		nirq, dirq, &##name##_ICount, oc, i0, i1, i2,							   \
+		nirq, dirq, &name##_ICount, oc, i0, i1, i2, 							 \
 		cpu_readmem##mem, cpu_writemem##mem, cpu_setOPbase##mem,				   \
 		shift, bits, CPU_IS_##endian, align, maxinst,							   \
 		ABITS1_##MEM, ABITS2_##MEM, ABITS_MIN_##MEM 							   \
