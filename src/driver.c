@@ -815,14 +815,18 @@ TESTDRIVER( leaguemn )	/* (c) 1993 Irem (Japan) */
 	DRIVER( lethalth )	/* (c) 1991 Irem (World) */
 	DRIVER( thndblst )	/* (c) 1991 Irem (Japan) */
 	DRIVER( psoldier )	/* (c) 1993 Irem (Japan) */
+	/* M90 */
+TESTDRIVER( hasamu )	/* (c) 1991 Irem */
+	DRIVER( bombrman )	/* (c) 1992 Irem (licensed from Hudson Soft) */
+	DRIVER( dynablsb )	/* bootleg	*/
 	/* M97 */
-TESTDRIVER( hasamu )	/* M90, probably doesn't belong here */
+	DRIVER( bbmanw )	/* (c) 1992 Irem (Japan) */
+	DRIVER( bbmanwj )	/* (c) 1992 Irem (Japan) */
+	DRIVER( atompunk )	/* (c) 1992 Irem (Japan) */
+TESTDRIVER( quizf1 )
 TESTDRIVER( riskchal )
 TESTDRIVER( gussun )
 TESTDRIVER( shisen2 )
-TESTDRIVER( quizf1 )
-TESTDRIVER( atompunk )
-TESTDRIVER( bbmanw )
 	/* M107 */
 TESTDRIVER( firebarr )	/* (c) 1993 Irem (Japan) */
 	DRIVER( dsoccr94 )	/* (c) 1994 Irem (Data East Corporation license) */
