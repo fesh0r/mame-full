@@ -781,11 +781,13 @@ static struct {
 	{ 0x4a6c9a47 , 0x2000, "KC85_3 disk" },
 	{ 0x639e4864 , 0x2000, "KC85_3 tape" },
 
-	{ 0x7896a696 , 0x2000, "MBEE" },
-	{ 0xb21d9679 , 0x2000, "MBEE" },
+	{ 0x7896a696 , 0x2000, "MBEE basic 8000" },
+	{ 0xb21d9679 , 0x2000, "MBEE basic a000" },
 	{ 0x0fc21cb5 , 0x2000, "MBEE" },
-	{ 0xb85a9565 , 0x1000, "MBEE char" },
-	{ 0x28211224 , 0x1000, "MBEE56k" },
+	{ 0x47a56a9a , 0x1000, "BAD DUMP? MBEE char" },
+	{ 0x28211224 , 0x1000, "MBEE 56k" },
+	{ 0x1f9fcee4 , 0x1000, "MBEE 128k char" },
+	{ 0x995c53db , 0x2000, "MBEE 128k" },
 
 	{ 0x5f72da5b , 0x1000, "KAYPRO char" },
 	{ 0xd10cd036 , 5632, "REPROGRAMMED? KAYPRO" },
