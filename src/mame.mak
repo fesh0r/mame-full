@@ -1,5 +1,6 @@
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
+CPUS+=Z180@
 #CPUS+=Z80GB@
 CPUS+=8080@
 CPUS+=8085A@
@@ -184,6 +185,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namcos86.o $(OBJ)/drivers/namcos86.o \
 	$(OBJ)/machine/namcos1.o $(OBJ)/vidhrdw/namcos1.o $(OBJ)/drivers/namcos1.o \
 	$(OBJ)/machine/namcos2.o $(OBJ)/vidhrdw/namcos2.o $(OBJ)/drivers/namcos2.o \
+	$(OBJ)/vidhrdw/namcona1.o $(OBJ)/drivers/namcona1.o \
 
 $(OBJ)/univers.a: \
 	$(OBJ)/vidhrdw/cosmic.o $(OBJ)/drivers/cosmic.o \
@@ -708,4 +710,17 @@ gamelist.txt: $(EMULATOR)
 	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
 	@$(EMULATOR) -gamelistfooter >> gamelist.txt
 endif
+
+mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
+	make -Cmess/makedep
+
+src/$(NAME).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
+	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -q -- $(INCLUDE_PATH) -- src/*.c src/$(OS)/*.c \
+	src/cpu/*/*.c src/sound/*.c src/drivers/*.c src/machine/*.c src/vidhrdw/*.c src/sndhrdw/*.c >src/$(NAME).dep
+
+## uncomment the following line to include dependencies
+ifeq (src/$(NAME).dep,$(wildcard src/$(NAME).dep))
+include src/$(NAME).dep
+endif
+
 

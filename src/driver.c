@@ -448,7 +448,19 @@ TESTDRIVER( suzuk8h2 )
 	DRIVER( sws93 ) 	/* (c) 1993 (Japan) */
 	/* 93.6  Super World Stadium '93 */
 
-	/* Universal games */
+	/* Namco NA1 games */
+	DRIVER( bkrtmaq )	/* (c) 1992 Namco */
+	DRIVER( cgangpzl )	/* (c) 1992 Namco */
+	DRIVER( emeralda )	/* (c) 1900 Namco */
+	DRIVER( exbania )	/* (c) 1900 Namco */
+	DRIVER( knckhead )	/* (c) 1900 Namco */
+	DRIVER( numanath )	/* (c) 1993 Namco */
+	DRIVER( quiztou )	/* (c) 1993 Namco */
+	DRIVER( swcourt )	/* (c) 1993 Namco */
+	DRIVER( tinklpit )	/* (c) 1993 Namco */
+	DRIVER( fa )		/* c) 1992 ROT90_ */
+
+    /* Universal games */
 	DRIVER( cosmicg )	/* 7907 (c) 1979 */
 	DRIVER( cosmica )	/* 7910 (c) [1979] */
 	DRIVER( cosmica2 )	/* 7910 (c) 1979 */
