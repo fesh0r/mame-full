@@ -341,7 +341,7 @@ static void irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
-	3579545,	/* 3.579545 MHz ???? */
+	25000000/8,	/* ??? */
 	{ 30 },	/* volume */
 	{ irqhandler },
 };
@@ -368,7 +368,7 @@ static struct MachineDriver machine_driver_deniam16b =
 		},
 		{
 			CPU_Z80,
-			25000000/6,	/* ??? */
+			25000000/4,	/* (makes logicpro music tempo correct) */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* NMI is caused by the main cpu */
 		}

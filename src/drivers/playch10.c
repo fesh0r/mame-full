@@ -6,7 +6,7 @@ Playchoice 10 - (c) 1986 Nintendo of America
 
 	Portions of this code are heavily based on
 	Brad Oliver's MESS implementation of the NES.
-	
+
 	Thanks to people that contributed to this driver, namely:
 	- Brad Oliver, the NES guy.
 	- Aaron Giles, the smart guy.
@@ -81,7 +81,7 @@ Non working games due to mapper/nes emulation issues:
 Non working games due to missing roms:
 --------------------------------------
 	- Double Dragon				(WD) - F board
-	
+
 Non working games due to missing RP5H01 data:
 ---------------------------------------------
 	- 1942						(NF) - Standard board
@@ -198,7 +198,7 @@ static READ_HANDLER( ram_8w_r )
 {
 	if ( offset >= 0x400 && up_8w )
 		return ram_8w[offset];
-	
+
 	return ram_8w[offset & 0x3ff];
 }
 
@@ -230,7 +230,7 @@ static WRITE_HANDLER( mirror_ram_w )
 static WRITE_HANDLER( sprite_dma_w )
 {
 	int source = ( data & 7 ) * 0x100;
-	
+
 	ppu2c03b_spriteram_dma( 0, &work_ram[source] );
 }
 
@@ -328,13 +328,13 @@ static struct MemoryWriteAddress cart_writemem[] =
 
 INPUT_PORTS_START( playch10 )
     PORT_START	/* These are the BIOS buttons */
-    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE1, "Channel Select", KEYCODE_9, IP_JOY_NONE )	/* CHSelect 		*/ 
-    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE2, "Enter", KEYCODE_0, IP_JOY_NONE )				/* Enter button 	*/
-    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE3, "Reset", KEYCODE_MINUS, IP_JOY_NONE ) 		/* Reset button 	*/
+    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE2, "Channel Select", KEYCODE_9, IP_JOY_NONE )	/* CHSelect 		*/
+    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE3, "Enter", KEYCODE_0, IP_JOY_NONE )				/* Enter button 	*/
+    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE4, "Reset", KEYCODE_MINUS, IP_JOY_NONE ) 		/* Reset button 	*/
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )												/* INT Detect		*/
     PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )												/* N/C				*/
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )													/* Coin 2			*/
-    PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )	/* Service button	*/
+    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_SERVICE1 )												/* Service button	*/
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )													/* Coin 1			*/
 
     PORT_START	/* DSW A */
@@ -388,8 +388,8 @@ INPUT_PORTS_START( playch10 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )	/* select button - masked */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )	/* start button - masked */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
@@ -398,15 +398,15 @@ INPUT_PORTS_START( playch10 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )	/* wired to 1p select button */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )	/* wired to 1p start button */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	
+
 	PORT_START	/* IN2 - FAKE - Gun X pos */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 70, 30, 0, 255 )
 
@@ -442,7 +442,7 @@ static int playch10_interrupt( void ) {
 
 	if ( pc10_nmi_enable )
 		return nmi_interrupt();
-	
+
 	return ignore_interrupt();
 }
 
@@ -478,7 +478,7 @@ static struct MachineDriver machine_driver_##name =						\
 			ignore_interrupt, 0											\
 		}																\
 	},																	\
-	60, 2 * DEFAULT_60HZ_VBLANK_DURATION,  /* fps, vblank duration */	\
+	60, ( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ) * 2,  /* fps, vblank duration */				\
 	1,	/* cpus dont talk to each other */								\
 	pc10_init_machine,													\
 																		\
@@ -539,13 +539,13 @@ ROM_START( pc_smb )		/* Super Mario Bros. */
 	BIOS_CPU
 	ROM_LOAD( "u3sm",    0x0c000, 0x2000, 0x4b5f717d ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u1sm",    0x08000, 0x8000, 0x5cf548d3 )
 
     ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u2sm",    0x00000, 0x2000, 0x867b51ad )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xbd82d775 )
 ROM_END
@@ -554,13 +554,13 @@ ROM_START( pc_ebike )	/* Excite Bike */
 	BIOS_CPU
 	ROM_LOAD( "u3eb",    0x0c000, 0x2000, 0x8ff0e787 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u1eb",    0x0c000, 0x4000, 0x3a94fa0b )
 
     ROM_REGION( 0x02000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u2eb",    0x00000, 0x2000, 0xe5f72401 )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xa0263750 )
 ROM_END
@@ -570,13 +570,13 @@ ROM_START( pc_duckh )	/* Duck Hunt */
 	BIOS_CPU
 	ROM_LOAD( "u3",      0x0c000, 0x2000, 0x2f9ec5c6 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u1",      0x0c000, 0x4000, 0x90ca616d )
 
     ROM_REGION( 0x04000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u2",      0x00000, 0x2000, 0x4e049e03 )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x8cd6aad6 )
 ROM_END
@@ -586,13 +586,13 @@ ROM_START( pc_tkfld )	/* Track & Field */
 	BIOS_CPU
 	ROM_LOAD( "u4tr",    0x0c000, 0x2000, 0x70184fd7 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u2tr",    0x08000, 0x8000, 0xd7961e01 )
 
     ROM_REGION( 0x08000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u3tr",    0x00000, 0x8000, 0x03bfbc4b )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x1e2e7f1e )
 ROM_END
@@ -602,7 +602,7 @@ ROM_START( pc_rnatk )	/* Rush N' Attack */
 	BIOS_CPU
 	ROM_LOAD( "ra-u4",   0x0c000, 0x2000, 0xebab7f8c ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "ra-u1",   0x10000, 0x10000, 0x5660b3a6 ) /* banked */
     ROM_LOAD( "ra-u2",   0x20000, 0x10000, 0x2a1bca39 ) /* banked */
@@ -617,7 +617,7 @@ ROM_START( pc_cntra )	/* Contra */
 	BIOS_CPU
 	ROM_LOAD( "u4ct",    0x0c000, 0x2000, 0x431486cf ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u1ct",    0x10000, 0x10000, 0x9fcc91d4 ) /* banked */
     ROM_LOAD( "u2ct",    0x20000, 0x10000, 0x612ad51d ) /* banked */
@@ -632,7 +632,7 @@ ROM_START( pc_pwrst )	/* Pro Wrestling */
 	BIOS_CPU
 	ROM_LOAD( "pw-u4",   0x0c000, 0x2000, 0x0f03d71b ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "pw-u1",   0x10000, 0x08000, 0x6242c2ce ) /* banked */
     ROM_RELOAD(			 0x18000, 0x08000 )
@@ -649,13 +649,13 @@ ROM_START( pc_goons )	/* The Goonies */
 	BIOS_CPU
 	ROM_LOAD( "gn-u3",   0x0c000, 0x2000, 0x33adedd2 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x10000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "gn-u1",   0x08000, 0x8000, 0xefeb0c34 )
 
     ROM_REGION( 0x04000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "gn-u2",   0x00000, 0x4000, 0x0f9c7f49 )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xcdd62d08 )
 ROM_END
@@ -665,13 +665,13 @@ ROM_START( pc_miket )	/* Mike Tyson's Punchout */
 	BIOS_CPU
 	ROM_LOAD( "u5pt",    0x0c000, 0x2000, 0xb434e567 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x30000, REGION_CPU2 )  /* 64k for code */
     ROM_LOAD( "u1pt",    0x10000, 0x20000, 0xdfd9a2ee ) /* banked */
 
     ROM_REGION( 0x20000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u3pt",    0x00000, 0x20000, 0x570b48ea )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0x60f7ea1d )
 ROM_END
@@ -681,14 +681,14 @@ ROM_START( pc_ngaid )	/* Ninja Gaiden */
 	BIOS_CPU
 	ROM_LOAD( "u2ng",    0x0c000, 0x2000, 0x7505de96 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
 	ROM_LOAD( "u4ng",    0x10000, 0x20000, 0x5f1e7b19 )	/* banked */
 	ROM_RELOAD(			 0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u1ng",   0x00000, 0x20000, 0xeccd2dcb )	/* banked */
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xec5641d6 )
 ROM_END
@@ -697,14 +697,14 @@ ROM_START( pc_ddrgn )	/* Double Dragon */
 	BIOS_CPU
 	ROM_LOAD( "wd-u2",   0x0c000, 0x2000, 0xdfca1578 ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
 	ROM_LOAD( "wd-u4",  0x10000, 0x20000, 0x05c97f64 )	/* banked */
 	ROM_RELOAD(			0x30000, 0x20000 )
 
     ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
 	ROM_LOAD( "wd-u1",  0x00000, 0x20000, 0x00000000 )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xf9739d62 )
 ROM_END
@@ -714,14 +714,14 @@ ROM_START( pc_smb3 )	/* Super Mario Bros 3 */
 	BIOS_CPU
 	ROM_LOAD( "u3um",    0x0c000, 0x2000, 0x45e92f7f ) /* extra bios code for this game */
     BIOS_GFX
-	
+
     ROM_REGION( 0x50000, REGION_CPU2 )  /* 64k for code */
 	ROM_LOAD( "u4um",    0x10000, 0x20000, 0x590b4d7c )	/* banked */
 	ROM_LOAD( "u5um",    0x30000, 0x20000, 0xbce25425 )	/* banked */
 
     ROM_REGION( 0x020000, REGION_GFX2 )	/* cart gfx */
     ROM_LOAD( "u1um",    0x00000, 0x20000, 0xc2928c49 )
-    
+
     ROM_REGION( 0x0100,  REGION_USER1 )	/* rp5h01 data */
     ROM_LOAD( "security.prm", 0x00000, 0x10, 0xe48f4945 )
 ROM_END
@@ -748,23 +748,23 @@ GAMEX( 1986, playch10, 0, playch10, playch10, 0, ROT0, "Nintendo of America", "P
 
 /******************************************************************************/
 
-/*    YEAR  NAME     PARENT	   MACHINE	 INPUT     INIT  	 MONITOR  */
-GAME( 1984, pc_ebike,playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
-GAME( 1985, pc_smb,	 playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros." )
+/*    YEAR  NAME      PARENT	   MACHINE	 INPUT     INIT  	 MONITOR  */
+GAME( 1984, pc_ebike, playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Excite Bike" )
+GAME( 1985, pc_smb,	  playch10, playch10, playch10, playch10, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros." )
 
-GAME( 1984, pc_duckh,playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo of America", "PlayChoice-10: Duck Hunt" )
+GAME( 1984, pc_duckh, playch10, playch10, playch10, pc_gun,   ROT0, "Nintendo", "PlayChoice-10: Duck Hunt" )
 
-GAMEX(1987, pc_tkfld,playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Track & Field", GAME_NOT_WORKING )
+GAMEX(1987, pc_tkfld, playch10, playch10, playch10, pcaboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Track & Field", GAME_NOT_WORKING )
 
-GAME( 1986, pc_pwrst,playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
-GAME( 1987, pc_rnatk,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Rush N' Attack" )
-GAME( 1988, pc_cntra,playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Contra" )
+GAME( 1986, pc_pwrst, playch10, playch10, playch10, pcbboard, ROT0, "Nintendo", "PlayChoice-10: Pro Wrestling" )
+GAME( 1987, pc_rnatk, playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Rush N' Attack" )
+GAME( 1988, pc_cntra, playch10, playch10, playch10, pcbboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: Contra" )
 
-GAME( 1986, pc_goons,playch10, playch10, playch10, pccboard, ROT0, "Konami (Nintendo of America License)", "PlayChoice-10: The Goonies" )
+GAME( 1986, pc_goons, playch10, playch10, playch10, pccboard, ROT0, "Konami", "PlayChoice-10: The Goonies" )
 
-GAMEX(1987, pc_miket,playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_NOT_WORKING )
+GAMEX(1987, pc_miket, playch10, playchnv, playch10, pceboard, ROT0, "Nintendo", "PlayChoice-10: Mike Tyson's Punchout", GAME_NOT_WORKING )
 
-GAME( 1989, pc_ngaid,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Ninja Gaiden" )
-GAMEX(198?, pc_ddrgn,playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Double Dragon", GAME_NOT_WORKING )
+GAME( 1989, pc_ngaid, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Ninja Gaiden" )
+GAMEX(198?, pc_ddrgn, playch10, playch10, playch10, pcfboard, ROT0, "Tecmo (Nintendo of America License)", "PlayChoice-10: Double Dragon", GAME_NOT_WORKING )
 
-GAME( 1988, pc_smb3, playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )
+GAME( 1988, pc_smb3,  playch10, playch10, playch10, pcgboard, ROT0, "Nintendo", "PlayChoice-10: Super Mario Bros. 3" )

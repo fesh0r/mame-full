@@ -529,7 +529,7 @@ static struct MachineDriver machine_driver_bagman =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		}
@@ -570,7 +570,7 @@ static struct MachineDriver machine_driver_pickin =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
+			3072000,	/* 3.072 MHz (?) */
 			pickin_readmem,pickin_writemem,readport,writeport,
 			interrupt,1
 		}

@@ -386,7 +386,7 @@ TESTDRIVER( atvga ) 	/*												  */
 	DRIVER( atom )		/* Acorn Atom									  */
 	DRIVER( bbca )		/* BBC Micro									  */
 	DRIVER( bbcb )		/* BBC Micro									  */
-TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
+	DRIVER( a310 )		/* Acorn Archimedes 310 						  */
 #endif
 
 	/* MILES GORDON TECHNOLOGY */

@@ -392,8 +392,15 @@ int readroms(void)
 
 		if (!options.gui_host && !bailing)
 		{
+			int k;
+
 			printf ("Press any key to continue\n");
-			keyboard_read_sync();
+			do
+			{
+				k = code_read_async();
+			}
+			while (k == CODE_NONE || k == KEYCODE_LCONTROL);
+
 			if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
 				return 1;
 		}

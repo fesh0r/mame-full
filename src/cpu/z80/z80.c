@@ -72,7 +72,7 @@
 #include "mamedbg.h"
 #include "z80.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -3939,7 +3939,7 @@ static void take_interrupt(void)
 			RM16( irq_vector, &Z80.PC );
 			LOG(("Z80 #%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, _PCD));
 			/* CALL opcode timing */
-            Z80.extra_cycles += cc[Z80_TABLE_op][0xcd]; 
+            Z80.extra_cycles += cc[Z80_TABLE_op][0xcd];
         }
         else
         /* Interrupt mode 1. RST 38h */

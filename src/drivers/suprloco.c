@@ -90,6 +90,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 } /* end of table */
 };
 
+
+
 INPUT_PORTS_START( suprloco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )

@@ -59,7 +59,16 @@ from RAM.
 1000-1fff BG1
 2000-2fff BG2
 3000-3fff BG3
-4000-bfff unknown/unused?
+4000-41ff BG0 rowscroll ?
+4400-45ff BG1 rowscroll ?
+4800-49ff BG2 rowscroll ?
+4c00-4dff BG3 rowscroll ?
+6000-61ff BG0 colscroll ??
+6400-65ff BG1 colscroll ??
+6800-69ff BG2 colscroll ??
+6c00-6dff BG3 colscroll ??
+[gaps above seem to be unused]
+7000-bfff unknown/unused?
 c000-dfff FG0
 e000-ffff gfx data for FG0 (4bpp)
 
@@ -180,8 +189,8 @@ static UINT8 *TC0100SCN_ram[TC0100SCN_MAX_CHIPS],*TC0100SCN_bg_ram[TC0100SCN_MAX
 		*TC0100SCN_fg_ram[TC0100SCN_MAX_CHIPS],*TC0100SCN_tx_ram[TC0100SCN_MAX_CHIPS],
 		*TC0100SCN_char_ram[TC0100SCN_MAX_CHIPS],
 		*TC0100SCN_bgscroll_ram[TC0100SCN_MAX_CHIPS],*TC0100SCN_fgscroll_ram[TC0100SCN_MAX_CHIPS];
-static int TC0100SCN_bgscrollx,TC0100SCN_bgscrolly;
-static int TC0100SCN_fgscrollx,TC0100SCN_fgscrolly;
+static int TC0100SCN_bgscrollx[TC0100SCN_MAX_CHIPS],TC0100SCN_bgscrolly[TC0100SCN_MAX_CHIPS],
+		TC0100SCN_fgscrollx[TC0100SCN_MAX_CHIPS],TC0100SCN_fgscrolly[TC0100SCN_MAX_CHIPS];
 static struct tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3];
 static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
@@ -443,11 +452,11 @@ static void TC0100SCN_ctrl_word_w(int chip,offs_t offset,data_t data)
 	switch (offset)
 	{
 		case 0x00:
-			TC0100SCN_bgscrollx = -data;
+			TC0100SCN_bgscrollx[chip] = -data;
 			break;
 
 		case 0x02:
-			TC0100SCN_fgscrollx = -data;
+			TC0100SCN_fgscrollx[chip] = -data;
 			break;
 
 		case 0x04:
@@ -455,11 +464,11 @@ static void TC0100SCN_ctrl_word_w(int chip,offs_t offset,data_t data)
 			break;
 
 		case 0x06:
-			TC0100SCN_bgscrolly = -data;
+			TC0100SCN_bgscrolly[chip] = -data;
 			break;
 
 		case 0x08:
-			TC0100SCN_fgscrolly = -data;
+			TC0100SCN_fgscrolly[chip] = -data;
 			break;
 
 		case 0x0a:
@@ -498,17 +507,17 @@ void TC0100SCN_tilemap_update(void)
 
 	for (chip = 0;chip < TC0100SCN_chips;chip++)
 	{
-		tilemap_set_scrolly(TC0100SCN_tilemap[chip][0],0,TC0100SCN_bgscrolly);
-		tilemap_set_scrolly(TC0100SCN_tilemap[chip][1],0,TC0100SCN_fgscrolly);
+		tilemap_set_scrolly(TC0100SCN_tilemap[chip][0],0,TC0100SCN_bgscrolly[chip]);
+		tilemap_set_scrolly(TC0100SCN_tilemap[chip][1],0,TC0100SCN_fgscrolly[chip]);
 
 		for (j = 0;j < 256;j++)
 			tilemap_set_scrollx(TC0100SCN_tilemap[chip][0],
-					(j + TC0100SCN_bgscrolly) & 0x1ff,
-					TC0100SCN_bgscrollx - READ_WORD(&TC0100SCN_bgscroll_ram[chip][2*j]));
+					(j + TC0100SCN_bgscrolly[chip]) & 0x1ff,
+					TC0100SCN_bgscrollx[chip] - READ_WORD(&TC0100SCN_bgscroll_ram[chip][2*j]));
 		for (j = 0;j < 256;j++)
 			tilemap_set_scrollx(TC0100SCN_tilemap[chip][1],
-					(j + TC0100SCN_fgscrolly) & 0x1ff,
-					TC0100SCN_fgscrollx - READ_WORD(&TC0100SCN_fgscroll_ram[chip][2*j]));
+					(j + TC0100SCN_fgscrolly[chip]) & 0x1ff,
+					TC0100SCN_fgscrollx[chip] - READ_WORD(&TC0100SCN_fgscroll_ram[chip][2*j]));
 
 		/* Decode any characters that have changed */
 		if (TC0100SCN_chars_dirty[chip])
@@ -722,7 +731,10 @@ static UINT8 TC0480SCP_ctrl[48];
 static UINT8 *TC0480SCP_ram,
 		*TC0480SCP_bg_ram[4],
 		*TC0480SCP_tx_ram,
-		*TC0480SCP_char_ram;
+		*TC0480SCP_char_ram,
+		*TC0480SCP_bgscroll_ram[4];
+static int TC0480SCP_bgscrollx[4];
+static int TC0480SCP_bgscrolly[4];
 static struct tilemap *TC0480SCP_tilemap[5];
 static char *TC0480SCP_char_dirty;
 static int TC0480SCP_chars_dirty;
@@ -799,10 +811,10 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_b
 		int xd,yd;
 		TC0480SCP_tile_colbase = col_base;
 
-		TC0480SCP_tilemap[0] = tilemap_create(tc480_get_tile_info[0],tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
-		TC0480SCP_tilemap[1] = tilemap_create(tc480_get_tile_info[1],tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
-		TC0480SCP_tilemap[2] = tilemap_create(tc480_get_tile_info[2],tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
-		TC0480SCP_tilemap[3] = tilemap_create(tc480_get_tile_info[3],tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
+		TC0480SCP_tilemap[0] = tilemap_create(tc480_get_tile_info[0],tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		TC0480SCP_tilemap[1] = tilemap_create(tc480_get_tile_info[1],tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		TC0480SCP_tilemap[2] = tilemap_create(tc480_get_tile_info[2],tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+		TC0480SCP_tilemap[3] = tilemap_create(tc480_get_tile_info[3],tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 		TC0480SCP_tilemap[4] = tilemap_create(tc480_get_tile_info[4],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
 		TC0480SCP_ram = malloc(TC0480SCP_RAM_SIZE);
@@ -815,12 +827,16 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_b
 			return 1;
 		}
 
-		TC0480SCP_bg_ram[0]   = TC0480SCP_ram + 0x0000;
-		TC0480SCP_bg_ram[1]   = TC0480SCP_ram + 0x1000;
-		TC0480SCP_bg_ram[2]   = TC0480SCP_ram + 0x2000;
-		TC0480SCP_bg_ram[3]   = TC0480SCP_ram + 0x3000;
-		TC0480SCP_tx_ram      = TC0480SCP_ram + 0xc000;
-		TC0480SCP_char_ram    = TC0480SCP_ram + 0xe000;
+		TC0480SCP_bg_ram[0]	  = TC0480SCP_ram + 0x0000;
+		TC0480SCP_bg_ram[1]	  = TC0480SCP_ram + 0x1000;
+		TC0480SCP_bg_ram[2]	  = TC0480SCP_ram + 0x2000;
+		TC0480SCP_bg_ram[3]	  = TC0480SCP_ram + 0x3000;
+		TC0480SCP_bgscroll_ram[0] = TC0480SCP_ram + 0x4000;
+		TC0480SCP_bgscroll_ram[1] = TC0480SCP_ram + 0x4400;
+		TC0480SCP_bgscroll_ram[2] = TC0480SCP_ram + 0x4800;
+		TC0480SCP_bgscroll_ram[3] = TC0480SCP_ram + 0x4c00;
+		TC0480SCP_tx_ram		  = TC0480SCP_ram + 0xc000;
+		TC0480SCP_char_ram	  = TC0480SCP_ram + 0xe000;
 
 		memset(TC0480SCP_ram,0,TC0480SCP_RAM_SIZE);
 		memset(TC0480SCP_char_dirty,1,TC0480SCP_TOTAL_CHARS);
@@ -850,10 +866,10 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_b
 		/* use the given gfx set for bg tiles */
 		TC0480SCP_bg_gfx = gfxnum;
 
-		tilemap_set_clip(TC0480SCP_tilemap[0],0);
-		tilemap_set_clip(TC0480SCP_tilemap[1],0);
-		tilemap_set_clip(TC0480SCP_tilemap[2],0);
-		tilemap_set_clip(TC0480SCP_tilemap[3],0);
+		TC0480SCP_tilemap[0]->transparent_pen = 0;
+		TC0480SCP_tilemap[1]->transparent_pen = 0;
+		TC0480SCP_tilemap[2]->transparent_pen = 0;
+		TC0480SCP_tilemap[3]->transparent_pen = 0;
 		TC0480SCP_tilemap[4]->transparent_pen = 0;
 
 		TC0480SCP_x_offs = x_offset + pixels;
@@ -872,6 +888,12 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_b
 		tilemap_set_scrolldy(TC0480SCP_tilemap[3], yd,   256-yd);
 		tilemap_set_scrolldx(TC0480SCP_tilemap[4], xd-2, 315-xd);   /* text layer */
 		tilemap_set_scrolldy(TC0480SCP_tilemap[4], yd,   256-yd);   /* text layer */
+
+		/* Make bg tilemaps scrollable per pixel row */
+		tilemap_set_scroll_rows(TC0480SCP_tilemap[0],512);
+		tilemap_set_scroll_rows(TC0480SCP_tilemap[1],512);
+		tilemap_set_scroll_rows(TC0480SCP_tilemap[2],512);
+		tilemap_set_scroll_rows(TC0480SCP_tilemap[3],512);
 
 	return 0;
 }
@@ -974,7 +996,7 @@ New offsets make "film" on skyscraper in round 1 slightly wrong.
 			if (TC0480SCP_tile_colbase) data += 2;   // improves Metalb attract
 
 			if (!flip)  data = -data;
-			tilemap_set_scrollx(TC0480SCP_tilemap[0], 0, data);
+			TC0480SCP_bgscrollx[0] = data;
 			break;
 
 		case 0x02:   /* bg1 x */
@@ -982,7 +1004,7 @@ New offsets make "film" on skyscraper in round 1 slightly wrong.
 
 			data += 4;
 			if (!flip)  data = -data;
-			tilemap_set_scrollx(TC0480SCP_tilemap[1], 0, data);
+			TC0480SCP_bgscrollx[1] = data;
 			break;
 
 		case 0x04:   /* bg2 x */
@@ -990,7 +1012,7 @@ New offsets make "film" on skyscraper in round 1 slightly wrong.
 
 			data += 8;
 			if (!flip)  data = -data;
-			tilemap_set_scrollx(TC0480SCP_tilemap[2], 0, data);
+			TC0480SCP_bgscrollx[2] = data;
 			break;
 
 		case 0x06:   /* bg3 x */
@@ -998,27 +1020,27 @@ New offsets make "film" on skyscraper in round 1 slightly wrong.
 
 			data += 12;
 			if (!flip)  data = -data;
-			tilemap_set_scrollx(TC0480SCP_tilemap[3], 0, data);
+			TC0480SCP_bgscrollx[3] = data;
 			break;
 
 		case 0x08:   /* bg0 y */
 			if (flip)  data = -data;
-			tilemap_set_scrolly(TC0480SCP_tilemap[0], 0, data);
+			TC0480SCP_bgscrolly[0] = data;
 			break;
 
 		case 0x0a:   /* bg1 y */
 			if (flip)  data = -data;
-			tilemap_set_scrolly(TC0480SCP_tilemap[1], 0, data);
+			TC0480SCP_bgscrolly[1] = data;
 			break;
 
 		case 0x0c:   /* bg2 y */
 			if (flip)  data = -data;
-			tilemap_set_scrolly(TC0480SCP_tilemap[2], 0, data);
+			TC0480SCP_bgscrolly[2] = data;
 			break;
 
 		case 0x0e:   /* bg3 y */
 			if (flip)  data = -data;
-			tilemap_set_scrolly(TC0480SCP_tilemap[3], 0, data);
+			TC0480SCP_bgscrolly[3] = data;
 			break;
 
 		case 0x10:   /* bg0 zoom */
@@ -1062,10 +1084,44 @@ WRITE_HANDLER( TC0480SCP_ctrl_word_w )
 
 void TC0480SCP_tilemap_update(void)
 {
+	int layer, zoom, i, j;
+	int flip = TC0480SCP_pri_reg & 0x40;
+
+	for (layer = 0; layer < 4; layer++)
+	{
+		tilemap_set_scrolly(TC0480SCP_tilemap[layer],0,TC0480SCP_bgscrolly[layer]);
+		zoom = 0x10000 + 0x7f - READ_WORD(&TC0480SCP_ctrl[0x10 + 2*layer]);
+
+		if (zoom != 0x10000)	/* currently we can't use scroll rows when zooming */
+		{
+			tilemap_set_scrollx(TC0480SCP_tilemap[layer],
+					0, TC0480SCP_bgscrollx[layer]);
+		}
+		else
+		{
+			for (j = 0;j < 256;j++)
+			{
+				i = READ_WORD(&TC0480SCP_bgscroll_ram[layer][(2*j)]);
+
+// DG: possible issues: check yellow bg layer when you kill metalb round 1 boss.
+// Top part doesn't behave like rest. But these are right for Footchmp+clones.
+
+				if (!flip)
+				tilemap_set_scrollx(TC0480SCP_tilemap[layer],
+						(j + TC0480SCP_bgscrolly[layer] + (16 - TC0480SCP_y_offs)) & 0x1ff,
+						TC0480SCP_bgscrollx[layer] - i);
+				if (flip)
+				tilemap_set_scrollx(TC0480SCP_tilemap[layer],
+						(j + TC0480SCP_bgscrolly[layer] + 0x100 + (16 + TC0480SCP_y_offs)) & 0x1ff,
+						TC0480SCP_bgscrollx[layer] + i);
+			}
+		}
+	}
+
 	/* Decode any characters that have changed */
 	if (TC0480SCP_chars_dirty)
 	{
-		int tile_index,j;
+		int tile_index;
 
 		for (tile_index = 0;tile_index < 64*64;tile_index++)
 		{
@@ -1088,63 +1144,83 @@ void TC0480SCP_tilemap_update(void)
 	tilemap_update(TC0480SCP_tilemap[2]);
 	tilemap_update(TC0480SCP_tilemap[3]);
 	tilemap_update(TC0480SCP_tilemap[4]);
-
 }
 
-static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags)
-{
-	UINT32 startx,starty;
-	int incxx,incxy,incyx,incyy;
-	struct osd_bitmap *srcbitmap = TC0480SCP_tilemap[layer]->pixmap;
-	int priority = flags >> 16;
 
-/*
-Bg layer zoom (still a WIP)
--------------
+/*********************************************************************
+			LAYER ZOOM (still a WIP)
 
 1) bg layers got too far left and down, the greater the magnification.
    Largely fixed by adding offsets (to startx&y) which get bigger as
    we zoom in.
 
 2) Hthero and Footchmp bg layers behaved differently when zoomed.
-   Pretty much fixed by bringing tc0480scp_x&y_offs into calculations.
+   Fixed by bringing tc0480scp_x&y_offs into calculations.
 
 3) Metalb "TAITO" text in attract too far to the right.
+   Fixed(?) by bringing (layer*4) into offset calculations.
+**********************************************************************/
 
-   [Can be improved by reducing offset on x by 1/4.
-   But: in Footchmp/Hthero kickoff point no longer centred in the
-   initial zoom out; the zooming ball after you choose your team is
-   closer to remaining centred. Divergent bg behaviour between
-   Footchmp and Hthero reemerges.]
-*/
-
+static void zoomtilemap_draw(struct osd_bitmap *bitmap,int layer,int flags)
+{
 	/* <0x7f = shrunk e.g. 0x1a in Footchmp hiscore; 0x7f = normal;
 		0xfefe = max(?) zoom e.g. start of game in Metalb */
 
 	int zoom = 0x10000 + 0x7f - READ_WORD(&TC0480SCP_ctrl[0x10 + 2*layer]);
 
-	startx = (-TC0480SCP_tilemap[layer]->rowscroll[0] - (TC0480SCP_x_offs - 16)) << 16;
+	if (zoom == 0x10000)	/* no zoom, so we won't need copyrozbitmap */
+	{
+		tilemap_set_clip(TC0480SCP_tilemap[layer],&Machine->visible_area);	// prevent bad things
+		tilemap_draw(bitmap,TC0480SCP_tilemap[layer],flags);
+	}
+	else	/* zoom */
+	{
+		UINT32 startx,starty;
+		int incxx,incxy,incyx,incyy;
+		struct osd_bitmap *srcbitmap = TC0480SCP_tilemap[layer]->pixmap;
+		int priority = flags >> 16;
+		int flip = TC0480SCP_pri_reg & 0x40;
+
+		tilemap_set_clip(TC0480SCP_tilemap[layer],0);
+
+		if (!flip)
+		{
+			startx = (-TC0480SCP_tilemap[layer]->rowscroll[0] - (TC0480SCP_x_offs - 16 - layer*4)) << 16;
 //			- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte ??
 
-	incxx = zoom;
-	incyx = 0;
+			incxx = zoom;
+			incyx = 0;
 
-	starty = (-TC0480SCP_tilemap[layer]->colscroll[0] + TC0480SCP_y_offs) << 16;
+			starty = (-TC0480SCP_tilemap[layer]->colscroll[0] + TC0480SCP_y_offs) << 16;
 //			- ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte ??
-	incxy = 0;
-	incyy = zoom;
+			incxy = 0;
+			incyy = zoom;
 
-//    old fix (helped footchmp but not hthero)
-//	startx += 16 * incxx;
-//	starty -= 8 * incxx;
+			startx += (TC0480SCP_x_offs - 16 - layer*4) * incxx;
+			starty -= (TC0480SCP_y_offs) * incxx;
+		}
+		else	// flipscreen; this section doesn't work
+		{
+			startx = (-TC0480SCP_tilemap[layer]->rowscroll[0] + (TC0480SCP_x_offs - 16 - layer*4)) << 16;
+//			- ((READ_WORD(&TC0480SCP_ctrl[0x20 + 2*layer]) & 0xff) << 8);	// low order byte ??
 
-	startx += (TC0480SCP_x_offs - 16) * incxx;
-	starty -= (TC0480SCP_y_offs) * incxx;
+			incxx = zoom;
+			incyx = 0;
 
-	copyrozbitmap(bitmap,srcbitmap,startx,starty,
-			incxx,incxy,incyx,incyy,
-			1,	/* copy with wraparound */
-			&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,priority);
+			starty = (-TC0480SCP_tilemap[layer]->colscroll[0] - TC0480SCP_y_offs) << 16;
+//			- ((READ_WORD(&TC0480SCP_ctrl[0x28 + 2*layer]) & 0xff) << 8);	// low order byte ??
+			incxy = 0;
+			incyy = zoom;
+
+			startx -= (TC0480SCP_x_offs - 16 - layer*4) * incxx;
+			starty += (TC0480SCP_y_offs) * incxx;
+		}
+
+		copyrozbitmap(bitmap,srcbitmap,startx,starty,
+				incxx,incxy,incyx,incyy,
+				1,	/* copy with wraparound */
+				&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen,priority);
+	}
 }
 
 void TC0480SCP_tilemap_draw(struct osd_bitmap *bitmap,int layer,int flags)

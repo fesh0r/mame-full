@@ -6,7 +6,7 @@
 
 	-------------------------------------
 
-	To enter service mode in Ataxx and Brute Force, press 1P start and 
+	To enter service mode in Ataxx and Brute Force, press 1P start and
 	then press the service switch (F2).
 
 	For World Soccer Finals, press the 1P button B and then press the

@@ -306,7 +306,7 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
-	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
+	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA_BANK3 },	/* SF2CE executes code from here */
 	{ 0xf00000, 0xf0ffff, qsound_rom_r },		/* Slammasters protection */
@@ -3592,17 +3592,41 @@ static struct GfxLayout LAYOUT =                                   \
  */
 #define CPS1_ROM_SIZE 0x00000
 #define CPS1_CHARS (CPS1_ROM_SIZE/32)
-CHAR_LAYOUT(cps1_charlayout,     CPS1_CHARS, CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(cps1_spritelayout, CPS1_CHARS/4, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-SPRITE_LAYOUT(cps1_tilelayout,   CPS1_CHARS/4, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
-TILE32_LAYOUT(cps1_tilelayout32, CPS1_CHARS/16, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
+CHAR_LAYOUT(charlayout,     CPS1_CHARS,    CPS1_ROM_SIZE/4*16)
+SPRITE_LAYOUT(spritelayout, CPS1_CHARS/4,  CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
+SPRITE_LAYOUT(tilelayout,   CPS1_CHARS/4,  CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
+TILE32_LAYOUT(tilelayout32, CPS1_CHARS/16, CPS1_ROM_SIZE/4*8, CPS1_ROM_SIZE/4*16)
+
+static struct GfxLayout starlayout =
+{
+	1,1,
+	0x1000,
+	8,	/* wrong because the games set only 128 colors */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ RGN_FRAC(1,4) },
+	{ 0 },
+	16
+};
+
+static struct GfxLayout starlayout1 =
+{
+	1,1,
+	0x1000,
+	8,	/* wrong because the games set only 128 colors */
+	{ 7, 6, 5, 4, 3, 2, 1, 0 },
+	{ 0 },
+	{ 0 },
+	16
+};
 
 static struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &cps1_charlayout,    32*16,             32 },
-	{ REGION_GFX1, 0, &cps1_spritelayout,  0,                 32 },
-	{ REGION_GFX1, 0, &cps1_tilelayout,    32*16+32*16,       32 },
-	{ REGION_GFX1, 0, &cps1_tilelayout32,  32*16+32*16+32*16, 32 },
+	{ REGION_GFX1, 0, &charlayout,   0x200, 32 },	/* colors 0x200-0x3ff */
+	{ REGION_GFX1, 0, &spritelayout, 0x000, 32 },	/* colors 0x000-0x1ff */
+	{ REGION_GFX1, 0, &tilelayout,   0x400, 32 },	/* colors 0x400-0x5ff */
+	{ REGION_GFX1, 0, &tilelayout32, 0x600, 32 },	/* colors 0x600-0x7ff */
+	{ REGION_GFX1, 0, &starlayout,   0x800,  2 },	/* colors 0x800-0x9ff (might be limited to 0x800-0x87f) */
+	{ REGION_GFX1, 0, &starlayout1,  0xa00,  2 },	/* colors 0xa00-0xbff (might be limited to 0xa00-0xa7f) */
 	{ -1 } /* end of array */
 };
 
@@ -3674,8 +3698,7 @@ static struct MachineDriver machine_driver_##DRVNAME =						\
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },	\
 																			\
 	cps1_gfxdecodeinfo,														\
-	32*16+32*16+32*16+32*16,   /* lotsa colours */							\
-	32*16+32*16+32*16+32*16,   /* Colour table length */					\
+	4096, 4096,																\
 	0,																		\
 																			\
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,								\
@@ -3716,8 +3739,7 @@ static struct MachineDriver machine_driver_qsound =
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
 
 	cps1_gfxdecodeinfo,
-	32*16+32*16+32*16+32*16,   /* lotsa colours */
-	32*16+32*16+32*16+32*16,   /* Colour table length */
+	4096, 4096,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -3740,7 +3762,7 @@ static struct MachineDriver machine_driver_qsound =
 
 
 MACHINE_DRIVER( forgottn, CPU_M68000,   10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )	/* 10 MHz?? */
+MACHINE_DRIVER( cps1,     CPU_M68000,   10000000, 7576, 0 )	/* 10 MHz should be the "standard" freq */
 MACHINE_DRIVER( sf2,      CPU_M68000,   12000000, 7576, 0 )	/* 12 MHz */
 MACHINE_DRIVER( sf2accp2, CPU_M68EC020, 12000000, 7576, 0 )	/* 12 MHz */
 MACHINE_DRIVER( pang3,    CPU_M68000,   10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
@@ -5023,7 +5045,31 @@ ROM_END
 
 ROM_START( knights )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
-	ROM_LOAD_WIDE_SWAP( "kr_23e.rom",   0x00000, 0x080000, 0x1b3997eb )
+	ROM_LOAD_WIDE_SWAP( "kr_23e.rom",   0x00000, 0x80000, 0x1b3997eb )
+	ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "kr_gfx2.rom",  0x000000, 0x80000, 0xf095be2d )
+	ROM_LOAD( "kr_gfx6.rom",  0x080000, 0x80000, 0x0200bc3d )
+	ROM_LOAD( "kr_gfx1.rom",  0x100000, 0x80000, 0x9e36c1a4 )
+	ROM_LOAD( "kr_gfx5.rom",  0x180000, 0x80000, 0x1f4298d2 )
+	ROM_LOAD( "kr_gfx4.rom",  0x200000, 0x80000, 0x179dfd96 )
+	ROM_LOAD( "kr_gfx8.rom",  0x280000, 0x80000, 0x0bb2b4e7 )
+	ROM_LOAD( "kr_gfx3.rom",  0x300000, 0x80000, 0xc5832cae )
+	ROM_LOAD( "kr_gfx7.rom",  0x380000, 0x80000, 0x37fa8751 )
+
+	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "kr_09.rom",     0x00000, 0x08000, 0x5e44d9ee )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "kr_18.rom",    0x00000, 0x20000, 0xda69d15f )
+	ROM_LOAD( "kr_19.rom",    0x20000, 0x20000, 0xbfc654e9 )
+ROM_END
+
+ROM_START( knightsu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "kru23.rom",    0x00000, 0x80000, 0x252bc2ba )
 	ROM_LOAD_WIDE_SWAP( "kr_22.rom",    0x80000, 0x80000, 0xd0b671a9 )
 
 	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
@@ -5713,6 +5759,48 @@ ROM_START( slammast )
 	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
 ROM_END
 
+ROM_START( slammasu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "mbu-23e.rom",  0x000000, 0x80000, 0x224f0062 )
+	ROM_LOAD_EVEN( "mbe_24b.rom",       0x080000, 0x20000, 0x95d5e729 )
+	ROM_LOAD_ODD ( "mbe_28b.rom",       0x080000, 0x20000, 0xb1c7cbcb )
+	ROM_LOAD_EVEN( "mbe_25b.rom",       0x0c0000, 0x20000, 0xa50d3fd4 )
+	ROM_LOAD_ODD ( "mbe_29b.rom",       0x0c0000, 0x20000, 0x08e32e56 )
+	ROM_LOAD_WIDE_SWAP( "mbe_21a.rom",  0x100000, 0x80000, 0xd5007b05 )
+	ROM_LOAD_WIDE_SWAP( "mbu-20a.rom",  0x180000, 0x80000, 0xfc848af5 )
+
+	ROM_REGION( 0x600000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mb_gfx02.rom",   0x000000, 0x80000, 0x2ffbfea8 )
+	ROM_LOAD( "mb_gfx06.rom",   0x080000, 0x80000, 0xb76c70e9 )
+	ROM_LOAD( "mb_gfx11.rom",   0x100000, 0x80000, 0x8fb94743 )
+	ROM_LOAD( "mb_gfx01.rom",   0x180000, 0x80000, 0x41468e06 )
+	ROM_LOAD( "mb_gfx05.rom",   0x200000, 0x80000, 0x506b9dc9 )
+	ROM_LOAD( "mb_gfx10.rom",   0x280000, 0x80000, 0x97976ff5 )
+	ROM_LOAD( "mb_gfx04.rom",   0x300000, 0x80000, 0x1eb9841d )
+	ROM_LOAD( "mb_gfx08.rom",   0x380000, 0x80000, 0xe60c9556 )
+	ROM_LOAD( "mb_gfx13.rom",   0x400000, 0x80000, 0xda810d5f )
+	ROM_LOAD( "mb_gfx03.rom",   0x480000, 0x80000, 0xf453aa9e )
+	ROM_LOAD( "mb_gfx07.rom",   0x500000, 0x80000, 0xaff8c2fb )
+	ROM_LOAD( "mb_gfx12.rom",   0x580000, 0x80000, 0xb350a840 )
+
+	ROM_REGION( 2*0x28000, REGION_CPU2 ) /* QSound Z80 code + space for decrypted opcodes */
+	ROM_LOAD( "mb_qa.rom",      0x00000, 0x08000, 0xe21a03c4 )
+	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION( 0x8000, REGION_USER1 )
+	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
+
+	ROM_REGION( 0x400000, REGION_SOUND1 ) /* QSound samples */
+	ROM_LOAD( "mb_q1.rom",      0x000000, 0x80000, 0x0630c3ce )
+	ROM_LOAD( "mb_q2.rom",      0x080000, 0x80000, 0x354f9c21 )
+	ROM_LOAD( "mb_q3.rom",      0x100000, 0x80000, 0x7838487c )
+	ROM_LOAD( "mb_q4.rom",      0x180000, 0x80000, 0xab66e087 )
+	ROM_LOAD( "mb_q5.rom",      0x200000, 0x80000, 0xc789fef2 )
+	ROM_LOAD( "mb_q6.rom",      0x280000, 0x80000, 0xecb81b61 )
+	ROM_LOAD( "mb_q7.rom",      0x300000, 0x80000, 0x041e49ba )
+	ROM_LOAD( "mb_q8.rom",      0x380000, 0x80000, 0x59fe702a )
+ROM_END
+
 ROM_START( mbomberj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "mbj23e",       0x000000, 0x80000, 0x0d06036a )
@@ -6175,6 +6263,7 @@ GAME( 1991, captcomm, 0,        cps1,     captcomm, 0,        ROT0_16BIT, "Capco
 GAME( 1991, captcomu, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (US)" )
 GAME( 1991, captcomj, captcomm, cps1,     captcomm, 0,        ROT0_16BIT, "Capcom", "Captain Commando (Japan)" )
 GAME( 1991, knights,  0,        cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (World)" )
+GAME( 1991, knightsu, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (US)" )
 GAME( 1991, knightsj, knights,  cps1,     knights,  0,        ROT0_16BIT, "Capcom", "Knights of the Round (Japan)" )
 GAME( 1992, sf2ce,    0,        sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (World)" )
 GAME( 1992, sf2cea,   sf2ce,    sf2,      sf2,      0,        ROT0,       "Capcom", "Street Fighter II' - Champion Edition (US rev A)" )
@@ -6206,6 +6295,7 @@ GAME( 1993, punisher, 0,        qsound,   punisher, punisher, ROT0,       "Capco
 GAME( 1993, punishru, punisher, qsound,   punisher, punisher, ROT0,       "Capcom", "The Punisher (US)" )
 GAME( 1993, punishrj, punisher, qsound,   punisher, punisher, ROT0,       "Capcom", "The Punisher (Japan)" )
 GAME( 1993, slammast, 0,        qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Saturday Night Slam Masters (World)" )
+GAME( 1993, slammasu, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Saturday Night Slam Masters (US)" )
 GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber - The Body Explosion (Japan)" )
 GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Ultimate Team Battle (World)" )
 GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Heat Up Warriors (Japan)" )

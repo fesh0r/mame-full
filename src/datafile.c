@@ -99,7 +99,7 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 			/* Store away our file position (if given on input) */
 
 			if (pdwPosition)
-                                *pdwPosition = osd_ftell(fp);
+				*pdwPosition = dwFilePos;
 
 			/* If it's a separator, special case it */
 

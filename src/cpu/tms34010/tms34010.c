@@ -73,7 +73,7 @@ static UINT8 tms34010_win_layout[] =
 /* TMS34010 State */
 typedef struct
 {
-#if LSB_FIRST
+#ifdef LSB_FIRST
 	INT16 x;
 	INT16 y;
 #else
@@ -122,7 +122,7 @@ typedef struct tms34010_regs
 
 	/* for the 34010, we only copy 32 of these into the new state */
 	UINT16 IOregs[64];
-	
+
 	/*************************
 	  note: in order to speed things up, we don't copy any data from here
 	  forward on a state transition
@@ -749,7 +749,7 @@ static void check_interrupt(void)
 	if (irq & TMS34010_NMI)
 	{
 		LOG(("TMS34010#%d takes NMI\n", cpu_getactivecpu()));
-		
+
 		/* ack the NMI */
 		IOREG(REG_INTPEND) &= ~TMS34010_NMI;
 
@@ -759,7 +759,7 @@ static void check_interrupt(void)
 			PUSH(PC);
 			PUSH(GET_ST());
 		}
-		
+
 		/* leap to the vector */
 		RESET_ST();
 		PC = RLONG(0xfffffee0);
@@ -778,21 +778,21 @@ static void check_interrupt(void)
 		LOG(("TMS34010#%d takes HI\n", cpu_getactivecpu()));
 		vector = 0xfffffec0;
 	}
-	
+
 	/* display interrupt */
 	else if (irq & TMS34010_DI)
 	{
 		LOG(("TMS34010#%d takes DI\n", cpu_getactivecpu()));
 		vector = 0xfffffea0;
 	}
-	
+
 	/* window violation interrupt */
 	else if (irq & TMS34010_WV)
 	{
 		LOG(("TMS34010#%d takes WV\n", cpu_getactivecpu()));
 		vector = 0xfffffe80;
 	}
-	
+
 	/* external 1 interrupt */
 	else if (irq & TMS34010_INT1)
 	{
@@ -871,11 +871,11 @@ void tms34020_reset(void *param)
 void tms34010_exit(void)
 {
 	int i;
-	
+
 	/* clear out the timers */
 	for (i = 0; i < MAX_CPU; i++)
 		dpyint_timer[i] = vsblnk_timer[i] = NULL;
-	
+
 	/* free memory */
 	if (state.shiftreg)
 		free(state.shiftreg);
@@ -898,7 +898,7 @@ unsigned tms34010_get_context(void *dst)
 	if (dst)
 	{
 		int i;
-		
+
 		for (i = 0; i < 16; i++)
 			state.flat_aregs[i] = AREG(i);
 		for (i = 0; i < 15; i++)
@@ -913,7 +913,7 @@ unsigned tms34020_get_context(void *dst)
 	if (dst)
 	{
 		int i;
-		
+
 		for (i = 0; i < 16; i++)
 			state.flat_aregs[i] = AREG(i);
 		for (i = 0; i < 15; i++)
@@ -934,7 +934,7 @@ void tms34010_set_context(void *src)
 	if (src)
 	{
 		int i;
-		
+
 		memcpy(&state, src, TMS34010_STATE_SIZE);
 		for (i = 0; i < 16; i++)
 			AREG(i) = state.flat_aregs[i];
@@ -950,7 +950,7 @@ void tms34020_set_context(void *src)
 	if (src)
 	{
 		int i;
-		
+
 		memcpy(&state, src, TMS34020_STATE_SIZE);
 		for (i = 0; i < 16; i++)
 			AREG(i) = state.flat_aregs[i];
@@ -1256,7 +1256,7 @@ int tms34010_execute(int cycles)
 		#endif
 		state.op = ROPCODE();
 		(*opcode_table[state.op >> 4])();
-	
+
 		#ifdef	MAME_DEBUG
 		if (mame_debug) { state.st = GET_ST(); MAME_Debug(); }
 		#endif
@@ -1770,24 +1770,24 @@ WRITE_HANDLER( tms34010_io_register_w )
 
 static const char *ioreg020_name[] =
 {
-	"VESYNC", "HESYNC", "VEBLNK", "HEBLNK", 
-	"VSBLNK", "HSBLNK", "VTOTAL", "HTOTAL", 
-	"DPYCTL", "DPYSTRT", "DPYINT", "CONTROL", 
+	"VESYNC", "HESYNC", "VEBLNK", "HEBLNK",
+	"VSBLNK", "HSBLNK", "VTOTAL", "HTOTAL",
+	"DPYCTL", "DPYSTRT", "DPYINT", "CONTROL",
 	"HSTDATA", "HSTADRL", "HSTADRH", "HSTCTLL",
-	
-	"HSTCTLH", "INTENB", "INTPEND", "CONVSP", 
-	"CONVDP", "PSIZE", "PMASKL", "PMASKH", 
-	"CONVMP", "CONTROL2", "CONFIG", "DPYTAP", 
+
+	"HSTCTLH", "INTENB", "INTPEND", "CONVSP",
+	"CONVDP", "PSIZE", "PMASKL", "PMASKH",
+	"CONVMP", "CONTROL2", "CONFIG", "DPYTAP",
 	"VCOUNT", "HCOUNT", "DPYADR", "REFADR",
-	
-	"DPYSTL", "DPYSTH", "DPYNXL", "DPYNXH", 
-	"DINCL", "DINCH", "RES0", "HESERR", 
-	"RES1", "RES2", "RES3", "RES4", 
+
+	"DPYSTL", "DPYSTH", "DPYNXL", "DPYNXH",
+	"DINCL", "DINCH", "RES0", "HESERR",
+	"RES1", "RES2", "RES3", "RES4",
 	"SCOUNT", "BSFLTST", "DPYMSK", "RES5",
-	
-	"SETVCNT", "SETHCNT", "BSFLTDL", "BSFLTDH", 
-	"RES6", "RES7", "RES8", "RES9", 
-	"IHOST1L", "IHOST1H", "IHOST2L", "IHOST2H", 
+
+	"SETVCNT", "SETHCNT", "BSFLTDL", "BSFLTDH",
+	"RES6", "RES7", "RES8", "RES9",
+	"IHOST1L", "IHOST1H", "IHOST2L", "IHOST2H",
 	"IHOST3L", "IHOST3H", "IHOST4L", "IHOST4H"
 };
 

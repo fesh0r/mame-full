@@ -52,15 +52,12 @@ read-only:
 READ_HANDLER( phoenix_paged_ram_r );
 WRITE_HANDLER( phoenix_paged_ram_w );
 WRITE_HANDLER( phoenix_videoreg_w );
-WRITE_HANDLER( pleiads_videoreg_w );
 WRITE_HANDLER( phoenix_scroll_w );
 READ_HANDLER( phoenix_input_port_0_r );
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int  phoenix_vh_start(void);
 void phoenix_vh_stop(void);
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void pleiads_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( phoenix_sound_control_a_w );
 WRITE_HANDLER( phoenix_sound_control_b_w );
@@ -91,7 +88,7 @@ static struct MemoryWriteAddress GAMENAME##_writemem[] =		\
 {																\
 	{ 0x0000, 0x3fff, MWA_ROM },								\
 	{ 0x4000, 0x4fff, phoenix_paged_ram_w },  /* 2 pages selected by Bit 0 of the video register */ \
-	{ 0x5000, 0x53ff, GAMENAME##_videoreg_w },					\
+	{ 0x5000, 0x53ff, phoenix_videoreg_w }, 					\
 	{ 0x5800, 0x5bff, phoenix_scroll_w },	/* the game sometimes writes at mirror addresses */ 	\
 	{ 0x6000, 0x63ff, GAMENAME##_sound_control_a_w },			\
 	{ 0x6800, 0x6bff, GAMENAME##_sound_control_b_w },			\
@@ -286,19 +283,13 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_phoenix[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 16 },
 	{ REGION_GFX2, 0, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_pleiads[] =
-{
-	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
-	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },
-	{ -1 } /* end of array */
-};
 
 
 static struct TMS36XXinterface phoenix_tms36xx_interface =
@@ -340,7 +331,7 @@ static struct CustomSound_interface pleiads_custom_interface =
 	pleiads_sh_update
 };
 
-#define MACHINE_DRIVER(GAMENAME,GAMEPENS)							\
+#define MACHINE_DRIVER(GAMENAME)									\
 																	\
 static struct MachineDriver machine_driver_##GAMENAME = 			\
 {																	\
@@ -348,7 +339,7 @@ static struct MachineDriver machine_driver_##GAMENAME = 			\
 	{																\
 		{															\
 			CPU_8080,												\
-			3072000,	/* 3 Mhz ? */								\
+			3072000,	/* 3 MHz ? */								\
 			readmem,GAMENAME##_writemem,0,0,						\
 			ignore_interrupt,1										\
 		}															\
@@ -359,15 +350,15 @@ static struct MachineDriver machine_driver_##GAMENAME = 			\
 																	\
 	/* video hardware */											\
 	32*8, 32*8, { 0*8, 31*8-1, 0*8, 26*8-1 },						\
-	gfxdecodeinfo_##GAMENAME,										\
-	256,GAMEPENS*4+GAMEPENS*4,										\
-	GAMENAME##_vh_convert_color_prom,								\
+	gfxdecodeinfo,													\
+	256,16*4+16*4,													\
+	phoenix_vh_convert_color_prom,									\
 																	\
 	VIDEO_TYPE_RASTER,												\
 	0,																\
 	phoenix_vh_start,												\
 	phoenix_vh_stop,												\
-	GAMENAME##_vh_screenrefresh,									\
+	phoenix_vh_screenrefresh,										\
 																	\
 	/* sound hardware */											\
 	0,0,0,0,														\
@@ -384,8 +375,8 @@ static struct MachineDriver machine_driver_##GAMENAME = 			\
 };
 
 
-MACHINE_DRIVER(phoenix,16)
-MACHINE_DRIVER(pleiads,32)
+MACHINE_DRIVER(phoenix)
+MACHINE_DRIVER(pleiads)
 
 
 

@@ -34,7 +34,7 @@ To do:
 	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
 	Strangely coloured butterfly on Garyo Retsuden water levels!
 
-  Thanks to Jose Miguel Morales Farreras for Super Real Darwin information!
+  Thanks to José Miguel Morales Farreras for Super Real Darwin information!
 
 ***************************************************************************/
 
@@ -210,7 +210,7 @@ bb63           = Square things again
 (40)           = Grey bird
 (42)           = Crash (end of table)
 
-	The table below is hopefully correct thanks to Jose Miguel Morales Farreras,
+	The table below is hopefully correct thanks to José Miguel Morales Farreras,
 	but Boss #6 is uncomfirmed as correct.
 
 */

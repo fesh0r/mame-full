@@ -163,10 +163,10 @@ int splash_vh_start(void)
 	  0  | xxxxxxxx | sprite number (low 8 bits)
 	  1  | xxxxxxxx | y position
 	  2  | xxxxxxxx | x position (low 8 bits)
-	  3  | ----xxxx | sprite number (high 4 bits)	  
+	  3  | ----xxxx | sprite number (high 4 bits)
 	  3  | --xx---- | unknown
 	  3  | -x------ | flip x
-	  3  | x------- | flip y	  	  	  
+	  3  | x------- | flip y
 	  4  | ----xxxx | sprite color
 	  4  | -xxx---- | unknown
 	  4  | x------- | x position (high bit)
@@ -384,7 +384,7 @@ static void gaelco_sort_sprites(void)
 static void gaelco_draw_sprites(struct osd_bitmap *bitmap, int pri)
 {
 	int j, x, y, ex, ey;
-	const struct GfxElement *gfx = Machine->gfx[0];	
+	const struct GfxElement *gfx = Machine->gfx[0];
 
 	static int x_offset[2] = {0x0,0x2};
 	static int y_offset[2] = {0x0,0x1};
@@ -400,7 +400,7 @@ static void gaelco_draw_sprites(struct osd_bitmap *bitmap, int pri)
 		int xflip = attr & 0x20;
 		int yflip = attr & 0x40;
 		int spr_size;
-		
+
 		if (attr & 0x04){
 			spr_size = 1;
 		}
@@ -448,7 +448,7 @@ void maniacsq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render(ALL_TILEMAPS);
-	
+
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
 
@@ -481,7 +481,7 @@ void bigkarnk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
 	tilemap_render(ALL_TILEMAPS);
-	
+
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
 

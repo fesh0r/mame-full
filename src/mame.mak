@@ -19,7 +19,7 @@ CPUS+=I86@
 #CPUS+=I88@
 CPUS+=I186@
 #CPUS+=I188@
-#CPUS+=I288@
+#CPUS+=I286@
 CPUS+=V20@
 CPUS+=V30@
 CPUS+=V33@
@@ -65,6 +65,7 @@ CPUS+=ADSP2105@
 CPUS+=MIPS@
 #CPUS+=SC61860@
 #CPUS+=ARM@
+#CPUS+=G65816@
 #CPUS+=SPC700@
 
 # uncomment the following lines to include a sound core
@@ -121,15 +122,16 @@ DRVLIBS = \
 	$(OBJ)/midw8080.a $(OBJ)/meadows.a $(OBJ)/midway.a \
 	$(OBJ)/irem.a $(OBJ)/gottlieb.a $(OBJ)/taito.a $(OBJ)/toaplan.a $(OBJ)/cave.a \
 	$(OBJ)/kyugo.a $(OBJ)/williams.a $(OBJ)/gremlin.a $(OBJ)/vicdual.a \
-	$(OBJ)/capcom.a $(OBJ)/capbowl.a $(OBJ)/leland.a \
-	$(OBJ)/sega.a $(OBJ)/deniam.a $(OBJ)/dataeast.a $(OBJ)/tehkan.a $(OBJ)/konami.a \
+	$(OBJ)/capcom.a $(OBJ)/capbowl.a $(OBJ)/leland.a $(OBJ)/sega.a $(OBJ)/deniam.a \
+	$(OBJ)/dataeast.a $(OBJ)/tehkan.a $(OBJ)/konami.a \
 	$(OBJ)/exidy.a $(OBJ)/atari.a $(OBJ)/snk.a $(OBJ)/alpha.a $(OBJ)/technos.a \
 	$(OBJ)/berzerk.a $(OBJ)/gameplan.a $(OBJ)/stratvox.a $(OBJ)/zaccaria.a \
 	$(OBJ)/upl.a $(OBJ)/tms.a $(OBJ)/cinemar.a $(OBJ)/cinemav.a $(OBJ)/thepit.a \
 	$(OBJ)/valadon.a $(OBJ)/seibu.a $(OBJ)/tad.a $(OBJ)/jaleco.a \
 	$(OBJ)/vsystem.a $(OBJ)/psikyo.a $(OBJ)/orca.a $(OBJ)/gaelco.a \
-	$(OBJ)/kaneko.a $(OBJ)/seta.a $(OBJ)/atlus.a $(OBJ)/sun.a \
-	$(OBJ)/dooyong.a $(OBJ)/nmk.a $(OBJ)/other.a $(OBJ)/neogeo.a \
+	$(OBJ)/kaneko.a $(OBJ)/seta.a $(OBJ)/atlus.a \
+	$(OBJ)/sun.a $(OBJ)/suna.a $(OBJ)/dooyong.a $(OBJ)/nmk.a $(OBJ)/comad.a \
+	$(OBJ)/other.a $(OBJ)/neogeo.a \
 
 $(OBJ)/pacman.a: \
 	$(OBJ)/drivers/pacman.o \
@@ -191,8 +193,8 @@ $(OBJ)/nintendo.a: \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
-	$(OBJ)/vidhrdw/playch10.o $(OBJ)/machine/playch10.o $(OBJ)/drivers/playch10.o \
-	$(OBJ)/machine/rp5h01.o $(OBJ)/vidhrdw/ppu2c03b.o
+	$(OBJ)/machine/rp5h01.o $(OBJ)/vidhrdw/ppu2c03b.o \
+	$(OBJ)/machine/playch10.o $(OBJ)/vidhrdw/playch10.o $(OBJ)/drivers/playch10.o \
 
 $(OBJ)/midw8080.a: \
 	$(OBJ)/machine/8080bw.o $(OBJ)/machine/74123.o \
@@ -285,7 +287,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/gng.o $(OBJ)/drivers/gng.o \
 	$(OBJ)/vidhrdw/gunsmoke.o $(OBJ)/drivers/gunsmoke.o \
 	$(OBJ)/vidhrdw/srumbler.o $(OBJ)/drivers/srumbler.o \
-	$(OBJ)/machine/lwings.o $(OBJ)/vidhrdw/lwings.o $(OBJ)/drivers/lwings.o \
+	$(OBJ)/vidhrdw/lwings.o $(OBJ)/drivers/lwings.o \
 	$(OBJ)/vidhrdw/sidearms.o $(OBJ)/drivers/sidearms.o \
 	$(OBJ)/vidhrdw/bionicc.o $(OBJ)/drivers/bionicc.o \
 	$(OBJ)/vidhrdw/1943.o $(OBJ)/drivers/1943.o \
@@ -325,7 +327,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/sndhrdw/system16.o $(OBJ)/drivers/system16.o \
 
 $(OBJ)/deniam.a: \
-	$(OBJ)/drivers/deniam.o $(OBJ)/vidhrdw/deniam.o \
+	$(OBJ)/vidhrdw/deniam.o $(OBJ)/drivers/deniam.o \
 
 $(OBJ)/dataeast.a: \
 	$(OBJ)/machine/btime.o $(OBJ)/vidhrdw/btime.o $(OBJ)/drivers/btime.o \
@@ -460,6 +462,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/machine/subs.o $(OBJ)/vidhrdw/subs.o $(OBJ)/drivers/subs.o \
 	$(OBJ)/vidhrdw/canyon.o $(OBJ)/drivers/canyon.o \
 	$(OBJ)/vidhrdw/skydiver.o $(OBJ)/drivers/skydiver.o \
+	$(OBJ)/machine/videopin.o $(OBJ)/vidhrdw/videopin.o $(OBJ)/drivers/videopin.o \
 	$(OBJ)/vidhrdw/warlord.o $(OBJ)/drivers/warlord.o \
 	$(OBJ)/vidhrdw/centiped.o $(OBJ)/drivers/centiped.o \
 	$(OBJ)/vidhrdw/milliped.o $(OBJ)/drivers/milliped.o \
@@ -584,8 +587,9 @@ $(OBJ)/jaleco.a: \
 	$(OBJ)/vidhrdw/pinbo.o $(OBJ)/drivers/pinbo.o \
 	$(OBJ)/vidhrdw/psychic5.o $(OBJ)/drivers/psychic5.o \
 	$(OBJ)/vidhrdw/ginganin.o $(OBJ)/drivers/ginganin.o \
-	$(OBJ)/vidhrdw/megasys1.o $(OBJ)/drivers/megasys1.o \
+	$(OBJ)/vidhrdw/skyfox.o $(OBJ)/drivers/skyfox.o \
 	$(OBJ)/vidhrdw/cischeat.o $(OBJ)/drivers/cischeat.o \
+	$(OBJ)/vidhrdw/megasys1.o $(OBJ)/drivers/megasys1.o \
 
 $(OBJ)/vsystem.a: \
 	$(OBJ)/vidhrdw/rpunch.o $(OBJ)/drivers/rpunch.o \
@@ -630,12 +634,21 @@ $(OBJ)/sun.a: \
 	$(OBJ)/drivers/shanghai.o \
 	$(OBJ)/vidhrdw/shangha3.o $(OBJ)/drivers/shangha3.o \
 
+$(OBJ)/suna.a: \
+	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
+	$(OBJ)/vidhrdw/bssoccer.o $(OBJ)/drivers/bssoccer.o \
+
 $(OBJ)/dooyong.a: \
 	$(OBJ)/vidhrdw/gundealr.o $(OBJ)/drivers/gundealr.o \
+	$(OBJ)/vidhrdw/dooyong.o $(OBJ)/drivers/dooyong.o \
 
 $(OBJ)/nmk.a: \
 	$(OBJ)/vidhrdw/macross.o $(OBJ)/drivers/macross.o \
 	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
+
+$(OBJ)/comad.a: \
+	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
+	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
@@ -650,12 +663,10 @@ $(OBJ)/other.a: \
 	$(OBJ)/machine/stactics.o $(OBJ)/vidhrdw/stactics.o $(OBJ)/drivers/stactics.o \
 	$(OBJ)/vidhrdw/sharkatt.o $(OBJ)/drivers/sharkatt.o \
 	$(OBJ)/vidhrdw/kingobox.o $(OBJ)/drivers/kingobox.o \
-	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/speedbal.o $(OBJ)/drivers/speedbal.o \
 	$(OBJ)/vidhrdw/sauro.o $(OBJ)/drivers/sauro.o \
 	$(OBJ)/vidhrdw/ambush.o $(OBJ)/drivers/ambush.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
-	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
 	$(OBJ)/drivers/dlair.o \
 	$(OBJ)/vidhrdw/meteor.o $(OBJ)/drivers/meteor.o \
 	$(OBJ)/vidhrdw/aztarac.o $(OBJ)/sndhrdw/aztarac.o $(OBJ)/drivers/aztarac.o \
@@ -666,8 +677,6 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
 	$(OBJ)/drivers/royalmah.o \
-	$(OBJ)/drivers/lastday.o $(OBJ)/vidhrdw/lastday.o \
-	$(OBJ)/drivers/galspnbl.o $(OBJ)/vidhrdw/galspnbl.o \
 
 COREOBJS += $(OBJ)/driver.o
 
@@ -680,13 +689,4 @@ gamelist.txt: $(EMULATOR)
 	@$(EMULATOR) -gamelist -noclones | sort >> gamelist.txt
 	@$(EMULATOR) -gamelistfooter >> gamelist.txt
 
-makedep/makedep$(EXE):
-	make -Cmakedep
 
-depend $(TARGET).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- \
-	src/*.c src/cpu/*/*.c src/sound/*.c src/drivers/*.c src/machine/*.c \
-	src/vidhrdw/*.c src/sndhrdw/*.c >$(TARGET).dep
-
-# uncomment the following line to include dependencies
-include $(TARGET).dep

@@ -317,7 +317,7 @@ static char *get_string (char *section, char *option, char *shortcut, char *def)
 	return res;
 }
 
-void get_rom_sample_path (int argc, char **argv, int game_index)
+void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath)
 {
 	int i;
 
@@ -326,11 +326,19 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	mame_argv = argv;
 	game = game_index;
 
+	rompath = override_default_rompath;
+	if (rompath == NULL || rompath[0] == 0)
+	{
 #ifndef MESS
-	rompath 	= get_string ("directory", "rompath",    NULL, ".;ROMS");
-	samplepath	= get_string ("directory", "samplepath", NULL, ".;SAMPLES");
+		rompath    = get_string ("directory", "rompath",    NULL, ".;ROMS");
 #else
-	rompath 	= get_string ("directory", "biospath",     NULL, ".;BIOS");
+		rompath    = get_string ("directory", "biospath",   NULL, ".;BIOS");
+#endif
+	}
+
+#ifndef MESS
+	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
+#else
 	softwarepath= get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
 #endif
 
@@ -356,7 +364,7 @@ void init_inpdir(void)
 	inpdir = get_string ("directory", "inp",     NULL, "INP");
 }
 
-void parse_cmdline (int argc, char **argv, int game_index)
+void parse_cmdline (int argc, char **argv, int game_index, char *override_default_rompath)
 {
 	static float f_beam, f_flicker;
 	char *resolution;
@@ -541,7 +549,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw640x480arc_v	= get_int ("tweaked", "640x480arc_v",   NULL, 0x09);
 
 	/* this is handled externally cause the audit stuff needs it, too */
-	get_rom_sample_path (argc, argv, game_index);
+	get_rom_sample_path (argc, argv, game_index, override_default_rompath);
 
 	/* get the monitor type */
 	monitorname = get_string ("config", "monitor", NULL, "standard");

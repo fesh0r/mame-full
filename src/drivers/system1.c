@@ -48,19 +48,6 @@ static void system1_init_machine(void)
 //	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
 //	memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
-//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
-	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
-}
-
-static void chplft_init_machine(void)
-{
-	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
-	/* this is not a ROM patch, the game checks a RAM location */
-	/* before doing the test */
-//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
-
-//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
@@ -72,9 +59,9 @@ static void wbml_init_machine(void)
 //	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
 //	memory_region(REGION_CPU1)[0xefff] = 0x4b;
 
-//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 }
+
 
 
 WRITE_HANDLER( hvymetal_videomode_w )
@@ -1681,7 +1668,8 @@ static struct MachineDriver machine_driver_system1 =
 	{
 		{
 			CPU_Z80,
-			4000000,    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
+//			4000000,    /* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
+			3600000,	/* should be 4 MHz but that value makes the Pitfall II title screen disappear */
 			readmem,writemem,readport,writeport,
 			interrupt,1
 		},
@@ -1783,7 +1771,7 @@ static struct MachineDriver machine_driver_hvymetal =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,           /* frames per second, vblank duration */
 	1,        		  /* single CPU, no need for interleaving */
-	chplft_init_machine,
+	system1_init_machine,
 
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
@@ -1827,7 +1815,7 @@ static struct MachineDriver machine_driver_chplft =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,           /* frames per second, vblank duration */
 	1,        		  /* single CPU, no need for interleaving */
-	chplft_init_machine,
+	system1_init_machine,
 
 	/* video hardware */
 	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },

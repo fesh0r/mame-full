@@ -62,7 +62,7 @@ static void unimpl(void)
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
 		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 		debug_key_pressed = 1;
 #endif
 	}
@@ -1831,104 +1831,104 @@ New 34020 ops:
 	0000 1100 000R dddd = ADDXYI IL,Rd
 	iiii iiii iiii iiii
 	iiii iiii iiii iiii
-	
+
 	0000 0000 1111 00SD = BLMOVE S,D
-	
+
 	0000 0110 0000 0000 = CEXEC S,c,ID,L
 	cccc cccc S000 0000
 	iiic cccc cccc cccc
 
 	1101 1000 0ccc cccS = CEXEC S,c,ID
 	iiic cccc cccc cccc
-	
+
 	0000 1000 1111 0010 = CLIP
-	
+
 	0000 0110 011R dddd = CMOVCG Rd1,Rd2,S,c,ID
 	cccc cccc S00R dddd
 	iiic cccc cccc cccc
-	
+
 	0000 0110 101R dddd = CMOVCM *Rd+,n,S,c,ID
 	cccc cccc S00n nnnn
 	iiic cccc cccc cccc
-	
+
 	0000 0110 110R dddd = CMOVCM -*Rd,n,S,c,ID
 	cccc cccc S00n nnnn
 	iiic cccc cccc cccc
-	
+
 	0000 0110 0110 0000 = CMOVCS c,ID
 	cccc cccc 0000 0001
 	iiic cccc cccc cccc
-	
+
 	0000 0110 001R ssss = CMOVGC Rs,c,ID
 	cccc cccc 0000 0000
 	iiic cccc cccc cccc
-	
+
 	0000 0110 010R ssss = CMOVGC Rs1,Rs2,S,c,ID
 	cccc cccc S00R ssss
 	iiic cccc cccc cccc
-	
+
 	0000 0110 100n nnnn = CMOVMC *Rs+,n,S,c,ID
 	cccc cccc S00R ssss
 	iiic cccc cccc cccc
-	
+
 	0000 1000 001n nnnn = CMOVMC -*Rs,n,S,c,ID
 	cccc cccc S00R ssss
 	iiic cccc cccc cccc
-	
+
 	0000 0110 111R dddd = CMOVMC *Rs+,Rd,S,c,ID
 	cccc cccc S00R ssss
 	iiic cccc cccc cccc
-	
+
 	0011 01kk kkkR dddd = CMPK k,Rd
-	
+
 	0000 1010 100R dddd = CVDXYL Rd
-	
+
 	0000 1010 011R dddd = CVMXYL Rd
-	
+
 	1110 101s sssR dddd = CVSXYL Rs,Rd
-	
+
 	0000 0010 101R dddd = EXGPS Rd
-	
+
 	1101 1110 Z001 1010 = FLINE Z
-	
+
 	0000 1010 1011 1011 = FPIXEQ
-	
+
 	0000 1010 1101 1011 = FPIXNE
-	
+
 	0000 0010 110R dddd = GETPS Rd
-	
+
 	0000 0000 0100 0000 = IDLE
-	
+
 	0000 1100 0101 0111 = LINIT
-	
+
 	0000 0000 1000 0000 = MWAIT
-	
+
 	0000 1010 0011 0111 = PFILL XY
-	
+
 	0000 1110 0001 0111 = PIXBLT L,M,L
-	
+
 	0000 1000 0110 0000 = RETM
-	
+
 	0111 101s sssR dddd = RMO Rs,Rd
-	
+
 	0000 0010 100R dddd = RPIX Rd
-	
+
 	0000 0010 0111 0011 = SETCDP
-	
+
 	0000 0010 1111 1011 = SETCMP
-	
+
 	0000 0010 0101 0001 = SETCSP
-	
+
 	0111 111s sssR dddd = SWAPF *Rs,Rd,0
-	
+
 	0000 1110 1111 1010 = TFILL XY
-	
+
 	0000 1000 0000 1111 = TRAPL
-	
+
 	0000 1000 0101 0111 = VBLT B,L
-	
+
 	0000 1010 0101 0111 = VFILL L
-	
+
 	0000 1010 0000 0000 = VLCOL
 
 ************************************/
@@ -1966,7 +1966,7 @@ static void blmove(void)
 	offs_t bits = BREG(BINDEX(7));
 
 	if (!state.is_34020) { unimpl(); return; }
-	
+
 	/* src and dst are aligned */
 	if (!(src & 0x0f) && !(dst & 0x0f))
 	{
@@ -1987,19 +1987,19 @@ static void blmove(void)
 			tms34010_ICount -= 2;
 		}
 	}
-	
+
 	/* src is aligned, dst is not */
 	else if (!(src & 0x0f))
 	{
 		logerror("020:BLMOVE with aligned src and unaligned dst\n");
 	}
-	
+
 	/* dst is aligned, src is not */
 	else if (!(dst & 0x0f))
 	{
 		logerror("020:BLMOVE with unaligned src and aligned dst\n");
 	}
-	
+
 	/* neither are aligned */
 	else
 	{
@@ -2010,7 +2010,7 @@ static void blmove(void)
 	BREG(BINDEX(0)) = src;
 	BREG(BINDEX(2)) = dst;
 	BREG(BINDEX(7)) = bits;
-	
+
 	/* if we're not done yet, back up the PC */
 	if (bits != 0)
 		PC -= 0x10;

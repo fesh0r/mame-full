@@ -103,8 +103,6 @@ extern void mame_debug_exit(void);
 /* This is the main entry into the mame debugger */
 extern void MAME_Debug(void);
 
-extern int debug_key_pressed;	/* set to non zero to break into the debugger */
-extern int debug_key_delay; 	/* set to 0x7ffe to force keyboard check on next update */
 extern int debug_trace_delay;	/* set to 0 to force a screen update */
 
 /***************************************************************************

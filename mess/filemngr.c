@@ -13,9 +13,6 @@ static int enter_filename_mode;
 #define MAX_ENTER_FILENAME_LENGTH 256
 static char entered_filename[MAX_ENTER_FILENAME_LENGTH];
 
-extern void osd_change_directory(const char *);
-extern const char *osd_get_cwd(void);
-
 static void start_enter_string(char *string_buffer, int max_string_size, int filename_mode)
 {
 	enter_string = string_buffer;
@@ -101,7 +98,7 @@ static char valid_filename_char[256] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* c0-cf */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* d0-df */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 	/* e0-ef */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0	/* f0-ff */
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0		/* f0-ff */
 };
 
 static char code_to_ascii(InputCode code)
@@ -211,43 +208,29 @@ enum {
 } FILESELECT_ENTRY_TYPE;
 
 
-
-
-/*
-char *fs_dupe(const char *src, int len)
-{
-        char *dst;
-
-        dst = malloc(len+1);
-	if (dst)
-		strcpy(dst, src);
-	return dst;
-}
-*/
-
 char *fs_dupe(const char *src, int len)
 {
 	char *dst;
- 	int display_length;
- 	int display_width;
+	int display_length;
+	int display_width;
 
- 	display_width = (Machine->uiwidth / Machine->uifontwidth);
- 	display_length = len;
+	display_width = (Machine->uiwidth / Machine->uifontwidth);
+	display_length = len;
 
-    if (display_length>display_width)
+	if (display_length>display_width)
 		display_length = display_width;
 
-    /* malloc space for string + NULL char + extra char.*/
-    dst = malloc(len+2);
-    if (dst)
-    {
-        strcpy(dst, src);
-        /* copy old char to end of string */
-        dst[len+1]=dst[display_length];
-        /* put in NULL to cut string. */
-        dst[len+1]='\0';
-    }
-    return dst;
+	/* malloc space for string + NULL char + extra char.*/
+	dst = malloc(len+2);
+	if (dst)
+	{
+		strcpy(dst, src);
+		/* copy old char to end of string */
+		dst[len+1]=dst[display_length];
+		/* put in NULL to cut string. */
+		dst[len+1]='\0';
+	}
+	return dst;
 
 }
 
@@ -283,7 +266,7 @@ int fs_alloc(void)
 	}
 	if (fs_chunk)
 	{
-		fs_chunk += 50;
+		fs_chunk += 256;
 		logerror("fs_alloc() next chunk (total %d)\n", fs_chunk);
 		fs_item = realloc(fs_item, fs_chunk * sizeof(char **));
 		fs_subitem = realloc(fs_subitem, fs_chunk * sizeof(char **));
@@ -293,7 +276,7 @@ int fs_alloc(void)
 	}
 	else
 	{
-		fs_chunk = 200;
+		fs_chunk = 512;
 		logerror("fs_alloc() first chunk %d\n", fs_chunk);
 		fs_item = malloc(fs_chunk * sizeof(char **));
 		fs_subitem = malloc(fs_chunk * sizeof(char **));
@@ -365,14 +348,14 @@ void fs_generate_filelist(void)
 	fs_types[n] = FILESELECT_NONE;
 	fs_flags[n] = 0;
 
-        /* current directory */
+	/* current directory */
 	n = fs_alloc();
 	fs_item[n] = osd_get_cwd();
 	fs_subitem[n] = 0;
 	fs_types[n] = FILESELECT_NONE;
 	fs_flags[n] = 0;
 
-        /* blank line */
+	/* blank line */
 	n = fs_alloc();
 	fs_item[n] = "-";
 	fs_subitem[n] = 0;
@@ -481,10 +464,10 @@ void fs_generate_filelist(void)
 	free(tmp_types);
 }
 
-#define UI_SHIFT_PRESSED        (keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
-#define UI_CONTROL_PRESSED      (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
+#define UI_SHIFT_PRESSED		(keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
+#define UI_CONTROL_PRESSED		(keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
 /* and mask to get bits */
-#define SEL_BITS_MASK           (~SEL_MASK)
+#define SEL_BITS_MASK			(~SEL_MASK)
 
 int fileselect(struct osd_bitmap *bitmap, int selected)
 {
@@ -623,7 +606,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 					break;
 
 				case FILESELECT_DIRECTORY:
-					/*  fs_chdir(fs_item[sel]); */
+					/*	fs_chdir(fs_item[sel]); */
 					osd_change_directory(fs_item[sel]);
 					fs_free();
 
@@ -631,7 +614,7 @@ int fileselect(struct osd_bitmap *bitmap, int selected)
 					break;
 
 				case FILESELECT_DEVICE:
-					/*   fs_chdir("/"); */
+					/*	 fs_chdir("/"); */
 					osd_change_device(fs_item[sel]);
 					fs_free();
 					need_to_clear_bitmap = 1;
@@ -776,7 +759,7 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 	if (input_ui_pressed(IPT_UI_SELECT))
 	{
 		int os_sel;
-		
+
 		/* Return to main menu? */
 		if (sel == total-1)
 		{

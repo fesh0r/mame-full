@@ -369,13 +369,13 @@ static struct MachineDriver machine_driver_superpac =
 	{
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			superpac_readmem_cpu2,superpac_writemem_cpu2,0,0,
 			ignore_interrupt,1
 		}
@@ -413,13 +413,13 @@ static struct MachineDriver machine_driver_pacnpal =
 	{
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			readmem_cpu1,writemem_cpu1,0,0,
 			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1100000,             /* 1.1 Mhz */
+			1100000,             /* 1.1 MHz */
 			pacnpal_readmem_cpu2,pacnpal_writemem_cpu2,0,0,
 			interrupt,1
 		}

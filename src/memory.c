@@ -34,8 +34,9 @@ static void mem_dump( void );
 #define ABITS2(index)					(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].abits2)
 #define ABITS3(index)					(0)
 #define ABITSMIN(index) 				(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].abitsmin)
+#define ALIGNUNIT(index)				(cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].align_unit)
 
-#if LSB_FIRST
+#ifdef LSB_FIRST
 	#define BYTE_XOR_BE(a) ((a) ^ 1)
 	#define BYTE_XOR_LE(a) (a)
 #else
@@ -295,7 +296,7 @@ static MHELE *get_element( MHELE *element , int ad , int elemask ,
 	/* get next subelement top */
 	subelement	= &subelement[ele<<MH_SBITS];
 	/* initialize new block */
-	for( i = 0 ; i < (1<<MH_SBITS) ; i++ )
+	for( i = 0 ; i < (banks<<MH_SBITS) ; i++ )
 		subelement[i] = hw;
 
 	return subelement;
@@ -399,23 +400,23 @@ static int memory_allocate_ext (void)
 
 				/* find the base of the lowest memory region that extends past the end */
 				for (mra = Machine->drv->cpu[cpu].memory_read; mra->start != -1; mra++)
-					if (mra->start <= end && mra->end > end) end = mra->end + 1;
+					if (mra->start <= end && mra->end > end) end = mra->end;
 				for (mwa = Machine->drv->cpu[cpu].memory_write; mwa->start != -1; mwa++)
-					if (mwa->start <= end && mwa->end > end) end = mwa->end + 1;
+					if (mwa->start <= end && mwa->end > end) end = mwa->end;
 			}
 
 			/* time to allocate */
 			ext->start = lowest;
-			ext->end = end - 1;
+			ext->end = end;
 			ext->region = region;
-			ext->data = malloc (end - lowest);
+			ext->data = malloc (end+1 - lowest);
 
 			/* if that fails, we're through */
 			if (!ext->data)
 				return 0;
 
 			/* reset the memory */
-			memset (ext->data, 0, end - lowest);
+			memset (ext->data, 0, end+1 - lowest);
 			size = ext->end + 1;
 			ext++;
 		}
@@ -1419,6 +1420,7 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
+#if VERBOSE
 	logerror("Install new memory read handler:\n");
 	logerror("             cpu: %d\n", cpu);
 	logerror("           start: 0x%08x\n", start);
@@ -1428,7 +1430,19 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 #else
 	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
 #endif
+#endif
 	abitsmin = ABITSMIN (cpu);
+
+	if (end < start)
+	{
+		printf("fatal: install_mem_read_handler(), start = %08x > end = %08x\n",start,end);
+		exit(1);
+	}
+	if ((start & (ALIGNUNIT(cpu)-1)) != 0 || (end & (ALIGNUNIT(cpu)-1)) != (ALIGNUNIT(cpu)-1))
+	{
+		printf("fatal: install_mem_read_handler(), start = %08x, end = %08x ALIGN = %d\n",start,end,ALIGNUNIT(cpu));
+		exit(1);
+	}
 
 	/* see if this function is already registered */
 	hw_set = 0;
@@ -1438,7 +1452,9 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		if (( memoryreadhandler[i] == handler ) &&
 			(  memoryreadoffset[i] == start))
 		{
+#if VERBOSE
 			logerror("handler match - use old one\n");
+#endif
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1500,9 +1516,11 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , readhardware , &rdelement_max );
+#if VERBOSE
 	logerror("Done installing new memory handler.\n");
 	logerror("used read  elements %d/%d , functions %d/%d\n"
 			,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
+#endif
 	return memory_find_base(cpu, start);
 }
 
@@ -1511,6 +1529,7 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
+#if VERBOSE
 	logerror("Install new memory write handler:\n");
 	logerror("             cpu: %d\n", cpu);
 	logerror("           start: 0x%08x\n", start);
@@ -1520,7 +1539,19 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 #else
 	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
 #endif
+#endif
 	abitsmin = ABITSMIN (cpu);
+
+	if (end < start)
+	{
+		printf("fatal: install_mem_write_handler(), start = %08x > end = %08x\n",start,end);
+		exit(1);
+	}
+	if ((start & (ALIGNUNIT(cpu)-1)) != 0 || (end & (ALIGNUNIT(cpu)-1)) != (ALIGNUNIT(cpu)-1))
+	{
+		printf("fatal: install_mem_write_handler(), start = %08x, end = %08x ALIGN = %d\n",start,end,ALIGNUNIT(cpu));
+		exit(1);
+	}
 
 	/* see if this function is already registered */
 	hw_set = 0;
@@ -1530,7 +1561,9 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		if (( memorywritehandler[i] == handler ) &&
 			(  memorywriteoffset[i] == start))
 		{
+#if VERBOSE
 			logerror("handler match - use old one\n");
+#endif
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1601,9 +1634,11 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , writehardware , &wrelement_max );
+#if VERBOSE
 	logerror("Done installing new memory handler.\n");
 	logerror("used write elements %d/%d , functions %d/%d\n"
 			,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
+#endif
 	return memory_find_base(cpu, start);
 }
 

@@ -45,7 +45,7 @@ int RP5H01_init( struct RP5H01_interface *interface ) {
 		RP5H01_state[i].old_reset = -1;
 		RP5H01_state[i].old_clock = -1;
 	}
-	
+
 	return 0;
 }
 
@@ -53,15 +53,15 @@ int RP5H01_init( struct RP5H01_interface *interface ) {
 
 void RP5H01_enable_w( int which, int data ) {
 	RP5H01	*chip;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
-	
+
 	/* process the /CE signal and enable/disable the IC */
 	chip->enabled = ( data == 0 ) ? 1 : 0;
 }
@@ -69,25 +69,25 @@ void RP5H01_enable_w( int which, int data ) {
 void RP5H01_reset_w( int which, int data ) {
 	RP5H01	*chip;
 	int		newstate = ( data == 0 ) ? 0 : 1;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
-	
+
 	/* if it's not enabled, ignore */
 	if ( !chip->enabled )
 		return;
-	
+
 	/* now look for a 0->1 transition */
 	if ( chip->old_reset == 0 && newstate == 1 ) {
 		/* reset the counter */
 		chip->counter = 0;
 	}
-	
+
 	/* update the pin */
 	chip->old_reset = newstate;
 }
@@ -95,40 +95,40 @@ void RP5H01_reset_w( int which, int data ) {
 void RP5H01_clock_w( int which, int data ) {
 	RP5H01	*chip;
 	int		newstate = ( data == 0 ) ? 0 : 1;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
-	
+
 	/* if it's not enabled, ignore */
 	if ( !chip->enabled )
 		return;
-	
+
 	/* now look for a 1->0 transition */
 	if ( chip->old_clock == 1 && newstate == 0 ) {
 		/* increment the counter, and mask it with the mode */
 		chip->counter++;
 	}
-	
+
 	/* update the pin */
 	chip->old_clock = newstate;
 }
 
 void RP5H01_test_w( int which, int data ) {
 	RP5H01	*chip;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
-	
+
 	/* if it's not enabled, ignore */
 	if ( !chip->enabled )
 		return;
@@ -139,19 +139,19 @@ void RP5H01_test_w( int which, int data ) {
 
 int RP5H01_counter_r( int which ) {
 	RP5H01	*chip;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return 0;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
 
 	/* if it's not enabled, ignore */
 	if ( !chip->enabled )
 		return 0; /* ? (should be high impedance) */
-	
+
 	/* return A5 */
 	return ( chip->counter >> 5 ) & 1;
 }
@@ -159,12 +159,12 @@ int RP5H01_counter_r( int which ) {
 int RP5H01_data_r( int which ) {
 	RP5H01	*chip;
 	int		byte, bit;
-	
+
 	if ( which >= intf->num ) {
 		logerror( "RP5H01_enable: trying to access an unmapped chip\n" );
 		return 0;
 	}
-	
+
 	/* get the chip */
 	chip = &RP5H01_state[which];
 
@@ -175,7 +175,7 @@ int RP5H01_data_r( int which ) {
 	/* get the byte offset and bit offset */
 	byte = ( chip->counter & chip->counter_mode) >> 3;
 	bit = 7 - ( chip->counter & 7 );
-	
+
 	/* return the data */
 	return ( chip->data[byte] >> bit ) & 1;
 }

@@ -3126,7 +3126,7 @@ ROM_END
 
 CPU: HD68000PS8
 SND: YM3812, YM2203C
-OSC: 16Mhz
+OSC: 16MHz
 
 This PCB is loaded with custom SETA chips as follows
 X1-001 (also has written YM3906)

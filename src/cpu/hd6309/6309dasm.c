@@ -1,12 +1,12 @@
 /* this code was hacked out of the fully-featured 6809 disassembler by Sean Riddle */
-/* and then mutliated into a 6309 disassembler by tim lindner                      */
+/* and then mutliated into a 6309 disassembler by tim lindner					   */
 
 /* 6309dasm.c - a 6309 opcode disassembler		*/
 /* Version 1.0 5-AUG-2000						*/
-/* Copyright © 2000 tim lindner					*/
-/* 												*/
+/* Copyright © 2000 tim lindner 				*/
+/*												*/
 /* based on:									*/
-/* 		6809dasm.c - a 6809 opcode disassembler	*/
+/*		6809dasm.c - a 6809 opcode disassembler */
 /*		Version 1.4 1-MAR-95					*/
 /*		Copyright © 1995 Sean Riddle			*/
 /*												*/
@@ -34,7 +34,7 @@
 #define FALSE	0
 #endif
 
-typedef struct {                /* opcode structure */
+typedef struct {				/* opcode structure */
    UINT8	opcode; 			/* 8-bit opcode value */
    UINT8	numoperands;
    char 	name[6];			/* opcode name */
@@ -167,7 +167,7 @@ static opcodeinfo pg1opcodes[] =
 	{ 95,0,"CLRB",    INH, 0,        0,            2},
 
 	{ 96,1,"NEG",     IND, EA_UINT8,  EA_MEM_RDWR,  6},
-	{ 97,2,"OIM",     IND, EA_UINT8,  EA_MEM_RDWR,  7}, 
+	{ 97,2,"OIM",     IND, EA_UINT8,  EA_MEM_RDWR,  7},
 	{ 98,2,"AIM",     IND, EA_UINT8,  EA_MEM_RDWR,  7},
 	{ 99,1,"COM",     IND, EA_UINT8,  EA_MEM_RDWR,  6},
 	{100,1,"LSR",     IND, EA_UINT8,  EA_MEM_RDWR,  6},
@@ -360,14 +360,14 @@ static opcodeinfo pg2opcodes[] =
 	{ 53,2,"ORR",      IMM,        0,        0,    4},
 	{ 54,2,"EORR",     IMM,        0,        0,    4},
 	{ 55,2,"CMPR",     IMM,        0,        0,    4},
-	
+
 	{ 56,0,"PSHSW",    INH,        0,        0,    6},
 	{ 57,0,"PULSW",    INH,        0,        0,    6},
 	{ 58,0,"PSHUW",    INH,        0,        0,    6},
 	{ 59,0,"PULSW",    INH,        0,        0,    6},
-	
+
 	{ 63,2,"SWI2",     INH,        0,        0,   20},
-	
+
 	{ 64,0,"NEGD",     INH,        0,        0,    3},
 	{ 67,0,"COMD",     INH,        0,        0,    3},
 	{ 68,0,"LSRD",     INH,        0,        0,    3},
@@ -375,7 +375,7 @@ static opcodeinfo pg2opcodes[] =
 	{ 71,0,"ASRD",     INH,        0,        0,    3},
 	{ 72,0,"ASLD",     INH,        0,        0,    3},
 	{ 73,0,"ROLD",     INH,        0,        0,    3},
-	
+
 	{ 74,0,"DECD",     INH,        0,        0,    3},
 	{ 76,0,"INCD",     INH,        0,        0,    3},
 	{ 77,0,"TSTD",     INH,        0,        0,    3},
@@ -394,7 +394,7 @@ static opcodeinfo pg2opcodes[] =
 	{130,3,"SBCD",     IMM, EA_UINT16, EA_VALUE,    5},
 
 	{131,3,"CMPD",     IMM, EA_UINT16, EA_VALUE,    5},
-	
+
 	{132,3,"ANDD",     IMM, EA_UINT16, EA_VALUE,    5},
 	{133,3,"BITD",     IMM, EA_UINT16, EA_VALUE,    5},
 	{134,3,"LDW",      IMM, EA_UINT16, EA_VALUE,    5},
@@ -402,14 +402,14 @@ static opcodeinfo pg2opcodes[] =
 	{137,3,"ADCD",     IMM, EA_UINT16, EA_VALUE,    5},
 	{138,3,"ORD",      IMM, EA_UINT16, EA_VALUE,    5},
 	{139,3,"ADDW",     IMM, EA_UINT16, EA_VALUE,    5},
-	
+
 	{140,3,"CMPY",     IMM, EA_UINT16, EA_VALUE,    5},
 	{142,3,"LDY",      IMM, EA_UINT16, EA_VALUE,    4},
-	
+
 	{144,2,"SUBW",     DIR, EA_UINT16, EA_ZPG_RD,   7},
 	{145,2,"CMPW",     DIR, EA_UINT16, EA_ZPG_RD,   7},
 	{146,2,"SBCD",     DIR, EA_UINT16, EA_ZPG_RD,   7},
-	
+
 	{147,2,"CMPD",     DIR, EA_UINT16, EA_ZPG_RD,   7},
 
 	{148,2,"ANDD",     DIR, EA_UINT16, EA_ZPG_RD,   7},
@@ -420,18 +420,18 @@ static opcodeinfo pg2opcodes[] =
 	{153,2,"ADCD",     DIR, EA_UINT16, EA_ZPG_RD,   7},
 	{154,2,"ORD",      DIR, EA_UINT16, EA_ZPG_RD,   7},
 	{155,2,"ADDW",     DIR, EA_UINT16, EA_ZPG_RD,   7},
-	
-	
+
+
 	{156,2,"CMPY",     DIR, EA_UINT16, EA_ZPG_RD,   7},
 	{158,2,"LDY",      DIR, EA_UINT16, EA_ZPG_RD,   6},
 	{159,2,"STY",      DIR, EA_UINT16, EA_ZPG_RD,   6},
-	
+
 	{160,2,"SUBW",     IND, EA_UINT16, EA_MEM_RD,   7},
 	{161,2,"CMPW",     IND, EA_UINT16, EA_MEM_RD,   7},
 	{162,2,"SBCD",     IND, EA_UINT16, EA_MEM_RD,   7},
 
 	{163,2,"CMPD",     IND, EA_UINT16, EA_MEM_RD,   7},
-	
+
 	{164,2,"ANDD",     IND, EA_UINT16, EA_MEM_RD,   7},
 	{165,2,"BITD",     IND, EA_UINT16, EA_MEM_RD,   7},
 
@@ -441,17 +441,17 @@ static opcodeinfo pg2opcodes[] =
 	{169,2,"ADCD",     IND, EA_UINT16, EA_MEM_RD,   7},
 	{170,2,"ORD",      IND, EA_UINT16, EA_MEM_RD,   7},
 	{171,2,"ADDW",     IND, EA_UINT16, EA_MEM_RD,   7},
-	
+
 	{172,2,"CMPY",     IND, EA_UINT16, EA_MEM_RD,   7},
 	{174,2,"LDY",      IND, EA_UINT16, EA_MEM_RD,   6},
 	{175,2,"STY",      IND, EA_UINT16, EA_MEM_RD,   6},
-	
+
 	{176,3,"SUBW",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{177,3,"CMPW",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{178,3,"SBCD",     EXT, EA_UINT16, EA_MEM_RD,   8},
 
 	{179,3,"CMPD",     EXT, EA_UINT16, EA_MEM_RD,   8},
-	
+
 	{180,3,"ANDD",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{181,3,"BITD",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{182,3,"LDW",      EXT, EA_UINT16, EA_MEM_RD,   7},
@@ -460,24 +460,24 @@ static opcodeinfo pg2opcodes[] =
 	{185,3,"ADCD",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{186,3,"ORD",      EXT, EA_UINT16, EA_MEM_RD,   8},
 	{187,3,"ADDW",     EXT, EA_UINT16, EA_MEM_RD,   8},
-	
+
 	{188,3,"CMPY",     EXT, EA_UINT16, EA_MEM_RD,   8},
 	{190,3,"LDY",      EXT, EA_UINT16, EA_MEM_RD,   7},
 	{191,3,"STY",      EXT, EA_UINT16, EA_MEM_RD,   7},
 	{206,3,"LDS",      IMM, EA_UINT16, EA_VALUE,    4},
-	
+
 	{220,2,"LDQ",      DIR, EA_UINT16, EA_ZPG_RD,   8},
 	{221,2,"STQ",      DIR, EA_UINT16, EA_ZPG_RD,   8},
-	
+
 	{222,2,"LDS",      DIR, EA_UINT16, EA_ZPG_RD,   6},
 	{223,2,"STS",      DIR, EA_UINT16, EA_ZPG_WR,   6},
-	
+
 	{236,2,"LDQ",      IND, EA_UINT16, EA_MEM_RD,   8},
 	{238,2,"LDS",      IND, EA_UINT16, EA_MEM_WR,   8},
 
 	{238,2,"LDS",      IND, EA_UINT16, EA_MEM_RD,   6},
 	{239,2,"STS",      IND, EA_UINT16, EA_MEM_WR,   6},
-	
+
 	{252,3,"LDQ",      EXT, EA_UINT16, EA_MEM_RD,   9},
 	{253,3,"STQ",      EXT, EA_UINT16, EA_MEM_WR,   9},
 
@@ -497,7 +497,7 @@ static opcodeinfo pg3opcodes[] =
 
 	{ 54,3,"LDBT",    DIR, EA_UINT8, EA_ZPG_RD,    7},
 	{ 55,3,"STBT",    DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	
+
 	{ 56,2,"TFM",     IMM, 0,        0,            6},
 	{ 57,2,"TFM",     IMM, 0,        0,            6},
 	{ 58,2,"TFM",     IMM, 0,        0,            6},
@@ -505,9 +505,9 @@ static opcodeinfo pg3opcodes[] =
 
 	{ 60,2,"BITMD",   IMM, EA_UINT8, EA_VALUE,     4},
 	{ 61,2,"LDMD",    IMM, EA_UINT8, EA_VALUE,     5},
-	
+
 	{ 63,1,"SWI3",    INH, 0,        0,           20},
-	
+
 	{ 67,1,"COME",    INH, 0,        0,            3},
 	{ 74,1,"DECE",    INH, 0,        0,            3},
 	{ 76,1,"INCE",    INH, 0,        0,            3},
@@ -523,12 +523,12 @@ static opcodeinfo pg3opcodes[] =
 	{129,2,"CMPE",    IMM, EA_UINT8, EA_VALUE,     3},
 
 	{131,3,"CMPU",    IMM, EA_UINT16,EA_VALUE,     5},
-	
+
 	{134,2,"LDE",     IMM, EA_UINT8, EA_VALUE,     3},
 	{0x8b,2,"ADDE",    IMM, EA_UINT8, EA_VALUE,     3},
-	
+
 	{140,3,"CMPS",    IMM, EA_UINT16,EA_VALUE,     5},
-	
+
 	{141,2,"DIVD",    IMM, EA_UINT8, EA_VALUE,    25},
 	{142,3,"DIVQ",    IMM, EA_UINT16,EA_VALUE,    36},
 	{143,3,"MULD",    IMM, EA_UINT16,EA_VALUE,    28},
@@ -536,28 +536,28 @@ static opcodeinfo pg3opcodes[] =
 	{145,2,"CMPE",    DIR, EA_UINT8, EA_ZPG_RD,    5},
 
 	{147,2,"CMPU",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	
+
 	{150,2,"LDE",     DIR, EA_UINT8, EA_ZPG_RD,    5},
 	{151,2,"STE",     DIR, EA_UINT8, EA_ZPG_RD,    5},
 	{155,2,"ADDE",    DIR, EA_UINT8, EA_ZPG_RD,    5},
-	
+
 	{156,2,"CMPS",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	
+
 	{157,2,"DIVD",    DIR, EA_UINT8 ,EA_ZPG_RD,   27},
 	{158,2,"DIVQ",    DIR, EA_UINT16,EA_ZPG_RD,   36},
 	{159,2,"MULD",    DIR, EA_UINT16,EA_ZPG_RD,   30},
-	
+
 	{160,2,"SUBE",    IND, EA_UINT8, EA_MEM_RD,    5},
 	{161,2,"CMPE",    IND, EA_UINT8, EA_MEM_RD,    5},
 
 	{163,2,"CMPU",    IND, EA_UINT16,EA_MEM_RD,    7},
-	
+
 	{166,2,"LDE",     IND, EA_UINT8, EA_MEM_RD,    5},
 	{167,2,"STE",     IND, EA_UINT8, EA_MEM_WR,    5},
 	{171,2,"ADDE",    IND, EA_UINT8, EA_MEM_WR,    5},
-	
+
 	{172,2,"CMPS",    IND, EA_UINT16,EA_MEM_RD,    7},
-	
+
 	{173,2,"DIVD",    IND, EA_UINT8 ,EA_MEM_RD,   27},
 	{174,2,"DIVQ",    IND, EA_UINT16,EA_MEM_RD,   36},
 	{175,2,"MULD",    IND, EA_UINT16,EA_MEM_RD,   30},
@@ -565,10 +565,10 @@ static opcodeinfo pg3opcodes[] =
 	{177,3,"CMPE",    EXT, EA_UINT8, EA_MEM_RD,    6},
 
 	{179,3,"CMPU",    EXT, EA_UINT16,EA_MEM_RD,    8},
-	
+
 	{182,3,"LDE",     EXT, EA_UINT8, EA_MEM_RD,    6},
 	{183,3,"STE",     EXT, EA_UINT8, EA_MEM_WR,    6},
-	
+
 	{187,3,"ADDE",    EXT, EA_UINT8, EA_MEM_RD,    6},
 	{188,3,"CMPS",    EXT, EA_UINT16,EA_MEM_RD,    8},
 
@@ -586,19 +586,19 @@ static opcodeinfo pg3opcodes[] =
 	{214,2,"LDF",     DIR, EA_UINT8, EA_ZPG_RD,    5},
 	{215,2,"STF",     DIR, EA_UINT8, EA_ZPG_WR,    5},
 	{219,2,"ADDF",    DIR, EA_UINT8, EA_ZPG_RD,    5},
-	
+
 	{224,2,"SUBF",    IND, EA_UINT8, EA_MEM_RD,    5},
 	{225,2,"CMPF",    IND, EA_UINT8, EA_MEM_RD,    5},
 	{230,2,"LDF",     IND, EA_UINT8, EA_MEM_RD,    5},
 	{231,2,"STF",     IND, EA_UINT8, EA_MEM_WR,    5},
 	{235,2,"ADDF",    IND, EA_UINT8, EA_MEM_RD,    5},
-	
+
 	{240,3,"SUBF",    EXT, EA_UINT8, EA_MEM_RD,    6},
 	{241,3,"CMPF",    EXT, EA_UINT8, EA_MEM_RD,    6},
 	{246,3,"LDF",     EXT, EA_UINT8, EA_MEM_RD,    6},
 	{247,3,"STF",     EXT, EA_UINT8, EA_MEM_WR,    6},
 	{251,3,"ADDF",    EXT, EA_UINT8, EA_MEM_RD,    6},
-	
+
 };
 
 int numops6309[3] =
@@ -644,16 +644,16 @@ static char *hexstring (int address)
 
 unsigned Dasm6309 (char *buffer, unsigned pc)
 {
-	int i, j, k, page = 0, opcode, numoperands, mode, size, access;
+	int i, j, k, page=0, opcode, numoperands, mode, size, access;
 	UINT8 operandarray[4];
 	const char *sym1, *sym2;
 	int rel, pb, offset, reg, pb2;
 	unsigned ea = 0;
-    int p = 0;
+	int p = 0;
 
 	*buffer = '\0';
 
-    opcode = cpu_readop(pc+(p++));
+	opcode = cpu_readop(pc+(p++));
 	for( i = 0; i < numops6309[0]; i++ )
 		if (pg1opcodes[i].opcode == opcode)
 			break;
@@ -663,7 +663,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		if( pg1opcodes[i].mode >= PG2 )
 		{
 			opcode = cpu_readop(pc+(p++));
-			page = pg1opcodes[i].mode - PG2 + 1;          /* get page # */
+			page = pg1opcodes[i].mode - PG2 + 1;		  /* get page # */
 			for( k = 0; k < numops6309[page]; k++ )
 				if (opcode == pgpointers[page][k].opcode)
 					break;
@@ -704,19 +704,19 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 	pc += p;
 
 	if( opcode != 0x1f &&	// reg <-> reg instructions
-	    opcode != 0x1e &&
-	    opcode != 0x31 &&
-	    opcode != 0x30 &&
-	    opcode != 0x34 &&
-	    opcode != 0x37 &&
-	    opcode != 0x36 &&
-	    opcode != 0x35 &&
-	    opcode != 0x33 &&
-	    opcode != 0x32 &&
-	    opcode != 0x38 &&
-	    opcode != 0x39 &&
-	    opcode != 0x3a &&
-	    opcode != 0x3b )
+		opcode != 0x1e &&
+		opcode != 0x31 &&
+		opcode != 0x30 &&
+		opcode != 0x34 &&
+		opcode != 0x37 &&
+		opcode != 0x36 &&
+		opcode != 0x35 &&
+		opcode != 0x33 &&
+		opcode != 0x32 &&
+		opcode != 0x38 &&
+		opcode != 0x39 &&
+		opcode != 0x3a &&
+		opcode != 0x3b )
 	{
 		if( mode == IMM )
 			buffer += sprintf (buffer, "#");
@@ -737,7 +737,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		break;
 
 	case IND:	  /* indirect- many flavors */
-	
+
 		if (numoperands == 2 )
 		{
 			buffer += sprintf (buffer, "#");
@@ -792,13 +792,13 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			if( pb == 0x8d )
 			{
 				sym1 = set_ea_info(1, pc, (INT16)offset, EA_REL_PC);
-                buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
 				ea = (cpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
-                buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
 			}
 //			  if( pb == 0x8d )
 //				  buffer += sprintf (buffer, " ; ($%04X)", offset + pc);
@@ -820,7 +820,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 
 			sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
 			ea = ((cpu_get_reg(HD6309_E) << 8) + (cpu_get_reg(HD6309_F)) + offset) & 0xffff;
-            buffer += sprintf (buffer, "%s,W", sym1);
+			buffer += sprintf (buffer, "%s,W", sym1);
 		}
 		else
 		if ( pb == 0xcf || pb == 0xd0 )
@@ -849,43 +849,43 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				break;
 			case 0x81:
 				ea = cpu_get_reg(regid_6309[reg]);
-                buffer += sprintf (buffer, ",%s++", regs_6309[reg]);
+				buffer += sprintf (buffer, ",%s++", regs_6309[reg]);
 				break;
 			case 0x82:
 				ea = cpu_get_reg(regid_6309[reg]);
-                buffer += sprintf (buffer, ",-%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",-%s", regs_6309[reg]);
 				break;
 			case 0x83:
 				ea = cpu_get_reg(regid_6309[reg]);
-                buffer += sprintf (buffer, ",--%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",--%s", regs_6309[reg]);
 				break;
 			case 0x84:
 				ea = cpu_get_reg(regid_6309[reg]);
-                buffer += sprintf (buffer, ",%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",%s", regs_6309[reg]);
 				break;
 			case 0x85:
 				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_B)) & 0xffff;
-                buffer += sprintf (buffer, "B,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "B,%s", regs_6309[reg]);
 				break;
 			case 0x86:
 				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_A)) & 0xffff;
-                buffer += sprintf (buffer, "A,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "A,%s", regs_6309[reg]);
 				break;
 			case 0x87:
 				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_E)) & 0xffff;
-                buffer += sprintf (buffer, "E,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "E,%s", regs_6309[reg]);
 				break;
 			case 0x8a:
 				ea = (cpu_get_reg(regid_6309[reg]) + (INT8) cpu_get_reg(HD6309_F)) & 0xffff;
-                buffer += sprintf (buffer, "F,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "F,%s", regs_6309[reg]);
 				break;
 			case 0x8b:
 				ea = (cpu_get_reg(regid_6309[reg]) + (cpu_get_reg(HD6309_A) << 8) + cpu_get_reg(HD6309_B)) & 0xffff;
-                buffer += sprintf (buffer, "D,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "D,%s", regs_6309[reg]);
 				break;
 			case 0x8e:
 				ea = (cpu_get_reg(regid_6309[reg]) + (cpu_get_reg(HD6309_E) << 8) + cpu_get_reg(HD6309_F)) & 0xffff;
-                buffer += sprintf (buffer, "W,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "W,%s", regs_6309[reg]);
 				break;
 			}
 		}
@@ -900,31 +900,31 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		if( (pb & 0x90) == 0x90 )
 		{
 			ea = ( cpu_readmem16( ea ) << 8 ) + cpu_readmem16( (ea+1) & 0xffff );
-            buffer += sprintf (buffer, "]");
+			buffer += sprintf (buffer, "]");
 		}
 		sym2 = set_ea_info(0, ea, size, access);
-        break;
+		break;
 	default:
 		if( page == 2 && ( opcode == 0x30 || opcode == 0x31 || opcode == 0x32 || opcode == 0x33 || opcode == 0x34 || opcode == 0x35 || opcode == 0x36 || opcode == 0x37 ) )
 		{
 			/* BAND, BIAND, BOR, BIOR, BEOR, BIEOR, LDBT, STBT */
-			
+
 			/* Decode register */
-			
+
 			pb = operandarray[0];
 
 			buffer += sprintf (buffer, "%s", btwRegs[ ((pb & 0xc0) >> 6) ]);
-            buffer += sprintf (buffer, ",");
+			buffer += sprintf (buffer, ",");
 			buffer += sprintf (buffer, "%d", ((pb & 0x38) >> 3) );
-            buffer += sprintf (buffer, ",");
+			buffer += sprintf (buffer, ",");
 			buffer += sprintf (buffer, "%d", (pb & 0x07) );
-            buffer += sprintf (buffer, ",");
-            
-            /* print zero page access */
-            
+			buffer += sprintf (buffer, ",");
+
+			/* print zero page access */
+
 			ea = operandarray[1];
 			sym1 = set_ea_info(0, ea, size, access );
-            buffer += sprintf (buffer, "%s", sym1 );
+			buffer += sprintf (buffer, "%s", sym1 );
 		}
 		else
 		if( page == 2 && ( opcode == 0x38 || opcode == 0x39 || opcode == 0x3a || opcode == 0x3b ) )
@@ -934,7 +934,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		}
 		else
 		if( opcode == 0x1f || opcode == 0x1e || ( page == 1 && (opcode == 0x31 || opcode == 0x30 || opcode == 0x34 || opcode == 0x37 || opcode == 0x35 || opcode == 0x33 || opcode == 0x1e || opcode == 0x32 ) ) )
-		{	/* TFR/EXG + new 2nd page reg<->reg instructions*/ 
+		{	/* TFR/EXG + new 2nd page reg<->reg instructions*/
 			buffer += sprintf (buffer, "%s,%s", teregs[ (operandarray[0] >> 4) & 0xf], teregs[operandarray[0] & 0xf]);
 		}
 		else
@@ -948,7 +948,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			if( pb2 & 0x40 )
 			{
 				if( pb2 & 0x80 ) buffer += sprintf (buffer, ",");
-                if( opcode == 0x34 || opcode == 0x35 )
+				if( opcode == 0x34 || opcode == 0x35 )
 				   buffer += sprintf (buffer, "U");
 				else
 				   buffer += sprintf (buffer, "S");
@@ -956,32 +956,32 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			if( pb2 & 0x20 )
 			{
 				if( pb2 & 0xc0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "Y");
+				buffer += sprintf (buffer, "Y");
 			}
 			if( pb2 & 0x10 )
 			{
 				if( pb2 & 0xe0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "X");
+				buffer += sprintf (buffer, "X");
 			}
 			if( pb2 & 0x08 )
 			{
 				if( pb2 & 0xf0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "DP");
+				buffer += sprintf (buffer, "DP");
 			}
 			if( pb2 & 0x04 )
 			{
 				if( pb2 & 0xf8 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "B");
+				buffer += sprintf (buffer, "B");
 			}
 			if( pb2 & 0x02 )
 			{
 				if( pb2 & 0xfc ) buffer += sprintf (buffer, ",");
-                strcat (buffer, "A");
+				strcat (buffer, "A");
 			}
 			if( pb2 & 0x01 )
 			{
 				if( pb2 & 0xfe ) buffer += sprintf (buffer, ",");
-                strcat (buffer, "CC");
+				strcat (buffer, "CC");
 			}
 		}
 		else
@@ -1036,12 +1036,10 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		{
 			if ( numoperands == 4)
 			{
-/* HJB: This looks wrong to me (operandarray[2] used twice?)
- * I only saw it because GCC complains about ambigous + << operators
- *				ea = (((operandarray[1] << 24) + operandarray[2] << 16) + operandarray[2] << 8) + operandarray[3]; */
+/*				ea = (((operandarray[1] << 24) + operandarray[2] << 16) + operandarray[2] << 8) + operandarray[3]; */
 				ea = (operandarray[0] << 24) + (operandarray[1] << 16) + (operandarray[2] << 8) + operandarray[3];
 				sym1 = set_ea_info(0, ea, size, access );
-                buffer += sprintf (buffer, "%s", sym1 );
+				buffer += sprintf (buffer, "%s", sym1 );
 			}
 			else
 			if ( numoperands == 3)
@@ -1050,12 +1048,12 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				ea = operandarray[0];
 				sym1 = set_ea_info(0, ea, EA_INT8, EA_VALUE );
 				buffer += sprintf (buffer, "%s", sym1 );
-				
+
 				buffer += sprintf (buffer, ",");
 
 				ea = (operandarray[1] << 8) + operandarray[2];
 				sym1 = set_ea_info(0, ea, size, access );
-                buffer += sprintf (buffer, "%s", sym1 );
+				buffer += sprintf (buffer, "%s", sym1 );
 			}
 			else
 			if( numoperands == 2 )
@@ -1066,12 +1064,12 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 					ea = operandarray[0];
 					sym1 = set_ea_info(0, ea, EA_INT8, EA_VALUE );
 					buffer += sprintf (buffer, "%s", sym1 );
-					
+
 					buffer += sprintf (buffer, ",");
 
 					ea = operandarray[1];
 					sym1 = set_ea_info(0, ea, size, access );
-	                buffer += sprintf (buffer, "%s", sym1 );
+					buffer += sprintf (buffer, "%s", sym1 );
 				}
 				else
 				{
@@ -1085,7 +1083,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			{
 				ea = operandarray[0];
 				sym1 = set_ea_info(0, ea, size, access );
-                buffer += sprintf (buffer, "%s", sym1 );
+				buffer += sprintf (buffer, "%s", sym1 );
 			}
 		}
 		break;
@@ -1095,3 +1093,4 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 }
 
 #endif
+

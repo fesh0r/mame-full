@@ -401,13 +401,13 @@ static struct MachineDriver machine_driver_tracklfd =
 	{
 		{
 			CPU_M6809,
-			2048000,        /* 1.400 Mhz ??? */
+			2048000,        /* 1.400 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			14318180/4,	/* Z80 Clock is derived from a 14.31818 MHz crystal */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -456,13 +456,13 @@ static struct MachineDriver machine_driver_hyprolyb =
 	{
 		{
 			CPU_M6809,
-			2048000,        /* 1.400 Mhz ??? */
+			2048000,        /* 1.400 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			14318180/4,	/* Z80 Clock is derived from a 14.31818 MHz crystal */
 			hyprolyb_sound_readmem,hyprolyb_sound_writemem,0,0,
 			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
 		}

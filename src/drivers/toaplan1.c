@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1988-1991
 		------------------------------------
 		MAME Driver by: Darren Olafson
-		Technical info: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Technical info: Carl-Henrik Skarstedt  &  Magnus Danielsson
 		Driver updates: Quench
 		Video updates : SUZ
 
@@ -1412,7 +1412,7 @@ static void irqhandler(int linestate)
 static struct YM3812interface ym3812_interface =
 {
 	1,
-	28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+	28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 	{ 255 },
 	{ irqhandler },
 };
@@ -1431,7 +1431,7 @@ static struct MachineDriver machine_driver_rallybik =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,truxton_sound_readport,rallybik_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1474,7 +1474,7 @@ static struct MachineDriver machine_driver_truxton =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,truxton_sound_readport,truxton_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1517,7 +1517,7 @@ static struct MachineDriver machine_driver_hellfire =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,hellfire_sound_readport,hellfire_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1560,7 +1560,7 @@ static struct MachineDriver machine_driver_zerowing =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,zerowing_sound_readport,zerowing_sound_writeport,
 			ignore_interrupt,0
 		}
@@ -1603,7 +1603,7 @@ static struct MachineDriver machine_driver_demonwld =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,demonwld_sound_readport,demonwld_sound_writeport,
 			ignore_interrupt,0
 		},
@@ -1689,7 +1689,7 @@ static struct MachineDriver machine_driver_outzone =
 		},
 		{
 			CPU_Z80,
-			28000000/8,		/* 3.5Mhz (28Mhz Oscillator) */
+			28000000/8,		/* 3.5MHz (28MHz Oscillator) */
 			sound_readmem,sound_writemem,outzone_sound_readport,outzone_sound_writeport,
 			ignore_interrupt,0
 		}

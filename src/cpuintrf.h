@@ -248,17 +248,11 @@ enum {
 #ifndef HAS_ADSP2105
 #define HAS_ADSP2105	0
 #endif
-#ifndef HAS_ADSP2105
-#define HAS_ADSP2105	0
-#endif
 #ifndef HAS_MIPS
 #define HAS_MIPS		0
 #endif
 #ifndef HAS_SC61860
 #define HAS_SC61860		0
-#endif
-#ifndef HAS_ARM
-#define HAS_ARM 		0
 #endif
 #ifndef HAS_ARM
 #define HAS_ARM 		0
@@ -272,7 +266,8 @@ enum {
 
 
 /* ASG 971222 -- added this generic structure */
-struct cpu_interface {
+struct cpu_interface
+{
 	unsigned cpu_num;
 	void (*reset)(void *param);
 	void (*exit)(void);
@@ -347,11 +342,6 @@ void cpu_set_sp(unsigned val);
 unsigned cpu_get_context(void *context);
 /* Set the active CPUs context */
 void cpu_set_context(void *context);
-
-/* Get a pointer to the active CPUs cycle count lookup table */
-void *cpu_get_cycle_table(int which);
-/* Override a pointer to the active CPUs cycle count lookup table */
-void cpu_set_cycle_tbl(int which, void *new_table);
 
 /* Get a pointer to the active CPUs cycle count lookup table */
 void *cpu_get_cycle_table(int which);
@@ -449,9 +439,6 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
 /* use this function to install a driver callback for IRQ acknowledge */
 void cpu_set_irq_callback(int cpunum, int (*callback)(int));
 
-/* use this function to install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int));
-
 /* use these in your write memory/port handles to set an IRQ vector */
 /* offset corresponds to the irq line number here */
 WRITE_HANDLER( cpu_0_irq_line_vector_w );
@@ -472,6 +459,7 @@ WRITE_HANDLER( interrupt_enable_w );
 WRITE_HANDLER( interrupt_vector_w );
 int interrupt(void);
 int nmi_interrupt(void);
+#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 int m68_level1_irq(void);
 int m68_level2_irq(void);
 int m68_level3_irq(void);
@@ -479,6 +467,7 @@ int m68_level4_irq(void);
 int m68_level5_irq(void);
 int m68_level6_irq(void);
 int m68_level7_irq(void);
+#endif
 int ignore_interrupt(void);
 
 /* CPU context access */

@@ -599,7 +599,7 @@ static struct MachineDriver machine_driver_wardner =
 	{
 		{
 			CPU_Z80,
-			24000000/4,			/* 6 MHz ??? - Real board crystal is 24Mhz */
+			24000000/4,			/* 6 MHz ??? - Real board crystal is 24MHz */
 			readmem,writemem,
 			readport,
 			writeport,

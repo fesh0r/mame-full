@@ -3,7 +3,7 @@
   cpuintrf.c
 
   Don't you love MS-DOS 8+3 names? That stands for CPU interface.
-  Functions needed to interface the CPU emulator with the other parts of
+  Functions needed to interface the CPU emulators with the other parts of
   the emulation.
 
 ***************************************************************************/

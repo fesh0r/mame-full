@@ -4,7 +4,7 @@
 	Copyright (C) Tim Lindner 2000
 
 	References:
-		
+
 		HD63B09EP Technical Refrence Guide, by Chet Simpson with addition
 							by Alan Dekok
 		6809 Simulator V09, By L.C. Benschop, Eidnhoven The Netherlands.
@@ -32,7 +32,7 @@
 	byte opcodes is gone, those opcodes now call fetch_effective_address().
 	Got rid of the slow/fast flags for stack (S and U) memory accesses.
 	Minor changes to use 32 bit values as arguments to memory functions
-    and added defines for that purpose (e.g. X = 16bit XD = 32bit).
+	and added defines for that purpose (e.g. X = 16bit XD = 32bit).
 
 990312 HJB:
 	Added bugfixes according to Aaron's findings.
@@ -42,7 +42,7 @@
 	of single statics. Changed the 16 bit registers to use the generic
 	PAIR union. Registers defined using macros. Split the core into
 	four execution loops for M6802, M6803, M6808 and HD63701.
-    TST, TSTA and TSTB opcodes reset carry flag.
+	TST, TSTA and TSTB opcodes reset carry flag.
 	Modified the read/write stack handlers to push LSB first then MSB
 	and pull MSB first then LSB.
 
@@ -73,7 +73,7 @@
 
 00809 TJL:
 	Started converting m6809 into hd6309
-		
+
 *****************************************************************************/
 
 #include <stdio.h>
@@ -122,25 +122,25 @@ typedef struct
 	PAIR	u, s;		/* Stack pointers */
 	PAIR	x, y;		/* Index registers */
 	PAIR	v;			/* New 6309 register */
-    UINT8   cc;
-    UINT8	md;			/* Special mode register */
+	UINT8	cc;
+	UINT8	md; 		/* Special mode register */
 	UINT8	ireg;		/* First opcode */
 	UINT8	irq_state[2];
-    int     extra_cycles; /* cycles used up by interrupts */
-    int     (*irq_callback)(int irqline);
-    UINT8   int_state;  /* SYNC and CWAI flags */
-    UINT8   nmi_state;
+	int 	extra_cycles; /* cycles used up by interrupts */
+	int 	(*irq_callback)(int irqline);
+	UINT8	int_state;	/* SYNC and CWAI flags */
+	UINT8	nmi_state;
 } hd6309_Regs;
 
 /* flag bits in the cc register */
-#define CC_C    0x01        /* Carry */
-#define CC_V    0x02        /* Overflow */
-#define CC_Z    0x04        /* Zero */
-#define CC_N    0x08        /* Negative */
-#define CC_II   0x10        /* Inhibit IRQ */
-#define CC_H    0x20        /* Half (auxiliary) carry */
-#define CC_IF   0x40        /* Inhibit FIRQ */
-#define CC_E    0x80        /* entire state pushed */
+#define CC_C	0x01		/* Carry */
+#define CC_V	0x02		/* Overflow */
+#define CC_Z	0x04		/* Zero */
+#define CC_N	0x08		/* Negative */
+#define CC_II	0x10		/* Inhibit IRQ */
+#define CC_H	0x20		/* Half (auxiliary) carry */
+#define CC_IF	0x40		/* Inhibit FIRQ */
+#define CC_E	0x80		/* entire state pushed */
 
 /* flag bits in the md register */
 #define MD_EM	0x01		/* Execution mode */
@@ -152,7 +152,7 @@ typedef struct
 static hd6309_Regs hd6309;
 int hd6309_slapstic = 0;
 
-#define pPPC    hd6309.ppc
+#define pPPC	hd6309.ppc
 #define pPC 	hd6309.pc
 #define pU		hd6309.u
 #define pS		hd6309.s
@@ -164,10 +164,10 @@ int hd6309_slapstic = 0;
 #define Q		hd6309.q.d
 
 #define pD		hd6309.q		/* Not that these seem to be pointing to the same struct. They are. */
-#define pW		hd6309.q		/* There are two different macros needed to access these registers  */
+#define pW		hd6309.q		/* There are two different macros needed to access these registers	*/
 
-#define	PPC		hd6309.ppc.w.l
-#define PC  	hd6309.pc.w.l
+#define PPC 	hd6309.ppc.w.l
+#define PC		hd6309.pc.w.l
 #define PCD 	hd6309.pc.d
 #define U		hd6309.u.w.l
 #define UD		hd6309.u.d
@@ -179,18 +179,18 @@ int hd6309_slapstic = 0;
 #define YD		hd6309.y.d
 #define V		hd6309.v.w.l
 #define VD		hd6309.v.d
-#define D   	hd6309.q.w.h
-#define A   	hd6309.q.b.h3
+#define D		hd6309.q.w.h
+#define A		hd6309.q.b.h3
 #define B		hd6309.q.b.h2
 #define W		hd6309.q.w.l
 #define E		hd6309.q.b.h
-#define	F		hd6309.q.b.l
+#define F		hd6309.q.b.l
 #define DP		hd6309.dp.b.h
 #define DPD 	hd6309.dp.d
-#define CC  	hd6309.cc
+#define CC		hd6309.cc
 #define MD		hd6309.md
 
-static PAIR ea;         /* effective address */
+static PAIR ea; 		/* effective address */
 #define EA	ea.w.l
 #define EAD ea.d
 
@@ -204,8 +204,8 @@ static PAIR ea;         /* effective address */
 	}
 #endif
 
-#define HD6309_CWAI		8	/* set when CWAI is waiting for an interrupt */
-#define HD6309_SYNC		16	/* set when SYNC is waiting for an interrupt */
+#define HD6309_CWAI 	8	/* set when CWAI is waiting for an interrupt */
+#define HD6309_SYNC 	16	/* set when SYNC is waiting for an interrupt */
 #define HD6309_LDS		32	/* set when LDS occured at least once */
 
 /* public globals */
@@ -213,14 +213,14 @@ int hd6309_ICount=50000;
 
 /* these are re-defined in hd6309.h TO RAM, ROM or functions in cpuintrf.c */
 #define RM(mAddr)		HD6309_RDMEM(mAddr)
-#define WM(mAddr,Value)	HD6309_WRMEM(mAddr,Value)
+#define WM(mAddr,Value) HD6309_WRMEM(mAddr,Value)
 #define ROP(mAddr)		HD6309_RDOP(mAddr)
 #define ROP_ARG(mAddr)	HD6309_RDOP_ARG(mAddr)
 
 /* macros to access memory */
 #define IMMBYTE(b)	b = ROP_ARG(PCD); PC++
 #define IMMWORD(w)	w.d = (ROP_ARG(PCD)<<8) | ROP_ARG((PCD+1)&0xffff); PC+=2
-#define IMMLONG(w)  w.d = (ROP_ARG(PCD)<<24) + (ROP_ARG(PCD+1)<<16) + (ROP_ARG(PCD+2)<<8) + (ROP_ARG(PCD+3)); PC+=4
+#define IMMLONG(w)	w.d = (ROP_ARG(PCD)<<24) + (ROP_ARG(PCD+1)<<16) + (ROP_ARG(PCD+2)<<8) + (ROP_ARG(PCD+3)); PC+=4
 
 #define PUSHBYTE(b) --S; WM(SD,b)
 #define PUSHWORD(w) --S; WM(SD,w.b.l); --S; WM(SD,w.b.h)
@@ -234,7 +234,7 @@ int hd6309_ICount=50000;
 #define PULUBYTE(b) b = RM(UD); U++
 #define PULUWORD(w) w = RM(UD)<<8; U++; w |= RM(UD); U++
 
-#define CLR_HNZVC   CC&=~(CC_H|CC_N|CC_Z|CC_V|CC_C)
+#define CLR_HNZVC	CC&=~(CC_H|CC_N|CC_Z|CC_V|CC_C)
 #define CLR_NZV 	CC&=~(CC_N|CC_Z|CC_V)
 #define CLR_HNZC	CC&=~(CC_H|CC_N|CC_Z|CC_C)
 #define CLR_NZVC	CC&=~(CC_N|CC_Z|CC_V|CC_C)
@@ -298,12 +298,12 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 
 /* combos */
 #define SET_NZ8(a)			{SET_N8(a);SET_Z(a);}
-#define SET_NZ16(a)			{SET_N16(a);SET_Z(a);}
-#define SET_NZ32(a)			{SET_N32(a);SET_Z(a);}
+#define SET_NZ16(a) 		{SET_N16(a);SET_Z(a);}
+#define SET_NZ32(a) 		{SET_N32(a);SET_Z(a);}
 #define SET_FLAGS8(a,b,r)	{SET_N8(r);SET_Z8(r);SET_V8(a,b,r);SET_C8(r);}
 #define SET_FLAGS16(a,b,r)	{SET_N16(r);SET_Z16(r);SET_V16(a,b,r);SET_C16(r);}
 
-#define NXORV  				((CC&CC_N)^((CC&CC_V)<<2))
+#define NXORV				((CC&CC_N)^((CC&CC_V)<<2))
 
 /* for treating an unsigned byte as a signed word */
 #define SIGNED(b) ((UINT16)(b&0x80?b|0xff00:b))
@@ -358,12 +358,12 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	}									\
 }
 
-#define LBRANCH(f) {                    \
+#define LBRANCH(f) {					\
 	PAIR t; 							\
 	IMMWORD(t); 						\
 	if( f ) 							\
 	{									\
-		hd6309_ICount -= 1;				\
+		hd6309_ICount -= 1; 			\
 		PC += t.w.l;					\
 		CHANGE_PC;						\
 	}									\
@@ -422,74 +422,74 @@ void CHECK_IRQ_LINES( void )
 		{
 			hd6309.int_state &= ~HD6309_CWAI;
 			hd6309.extra_cycles += 7;		 /* subtract +7 cycles */
-        }                                                               
-		else															
-		{																
-			if ( hd6309.md & MD_FM )									
-			{															
-				CC |= CC_E; 				/* save entire state */ 	
-				PUSHWORD(pPC);											
-				PUSHWORD(pU);										
-				PUSHWORD(pY);											
-				PUSHWORD(pX);											
-				PUSHBYTE(DP);											
-				if ( hd6309.md & MD_EM )								
-				{														
-					PUSHBYTE(F);										
-					PUSHBYTE(E);										
-					hd6309.extra_cycles += 2; /* subtract +2 cycles */	 
-				}														
-				PUSHBYTE(B);											
-				PUSHBYTE(A);											
-				PUSHBYTE(CC);											
-				hd6309.extra_cycles += 19;	 /* subtract +19 cycles */	 
-			}															
-			else														
-			{															
-				CC &= ~CC_E;				/* save 'short' state */	
-				PUSHWORD(pPC);											
-				PUSHBYTE(CC);											
-				hd6309.extra_cycles += 10;	/* subtract +10 cycles */	
-			}															
-		}																
-		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */		
-		PCD=RM16(0xfff6);												
-		CHANGE_PC;													
-		(void)(*hd6309.irq_callback)(HD6309_FIRQ_LINE);					
-	}																
-	else															
+		}
+		else
+		{
+			if ( hd6309.md & MD_FM )
+			{
+				CC |= CC_E; 				/* save entire state */
+				PUSHWORD(pPC);
+				PUSHWORD(pU);
+				PUSHWORD(pY);
+				PUSHWORD(pX);
+				PUSHBYTE(DP);
+				if ( hd6309.md & MD_EM )
+				{
+					PUSHBYTE(F);
+					PUSHBYTE(E);
+					hd6309.extra_cycles += 2; /* subtract +2 cycles */
+				}
+				PUSHBYTE(B);
+				PUSHBYTE(A);
+				PUSHBYTE(CC);
+				hd6309.extra_cycles += 19;	 /* subtract +19 cycles */
+			}
+			else
+			{
+				CC &= ~CC_E;				/* save 'short' state */
+				PUSHWORD(pPC);
+				PUSHBYTE(CC);
+				hd6309.extra_cycles += 10;	/* subtract +10 cycles */
+			}
+		}
+		CC |= CC_IF | CC_II;			/* inhibit FIRQ and IRQ */
+		PCD=RM16(0xfff6);
+		CHANGE_PC;
+		(void)(*hd6309.irq_callback)(HD6309_FIRQ_LINE);
+	}
+	else
 	if( hd6309.irq_state[HD6309_IRQ_LINE]!=CLEAR_LINE && !(CC & CC_II) )
-	{																	
-		/* standard IRQ */												
-		/* HJB 990225: state already saved by CWAI? */					
-		if( hd6309.int_state & HD6309_CWAI )							
-		{																
-			hd6309.int_state &= ~HD6309_CWAI;  /* clear CWAI flag */	
-			hd6309.extra_cycles += 7;		 /* subtract +7 cycles */	
-		}																
-		else															
-		{																
-			CC |= CC_E; 				/* save entire state */ 		
-			PUSHWORD(pPC);												
-			PUSHWORD(pU);												
-			PUSHWORD(pY);												
-			PUSHWORD(pX);												
-			PUSHBYTE(DP);												
-			if ( MD & MD_EM )											
-			{															
-				PUSHBYTE(F);											
-				PUSHBYTE(E);											
-				hd6309.extra_cycles += 2; /* subtract +2 cycles */		 
-			}															
-			PUSHBYTE(B);												
-			PUSHBYTE(A);												
-			PUSHBYTE(CC);												
-			hd6309.extra_cycles += 19;	 /* subtract +19 cycles */			
-		}																
-		CC |= CC_II;					/* inhibit IRQ */				
-		PCD=RM16(0xfff8);												
-		CHANGE_PC;														
-		(void)(*hd6309.irq_callback)(HD6309_IRQ_LINE);					
+	{
+		/* standard IRQ */
+		/* HJB 990225: state already saved by CWAI? */
+		if( hd6309.int_state & HD6309_CWAI )
+		{
+			hd6309.int_state &= ~HD6309_CWAI;  /* clear CWAI flag */
+			hd6309.extra_cycles += 7;		 /* subtract +7 cycles */
+		}
+		else
+		{
+			CC |= CC_E; 				/* save entire state */
+			PUSHWORD(pPC);
+			PUSHWORD(pU);
+			PUSHWORD(pY);
+			PUSHWORD(pX);
+			PUSHBYTE(DP);
+			if ( MD & MD_EM )
+			{
+				PUSHBYTE(F);
+				PUSHBYTE(E);
+				hd6309.extra_cycles += 2; /* subtract +2 cycles */
+			}
+			PUSHBYTE(B);
+			PUSHBYTE(A);
+			PUSHBYTE(CC);
+			hd6309.extra_cycles += 19;	 /* subtract +19 cycles */
+		}
+		CC |= CC_II;					/* inhibit IRQ */
+		PCD=RM16(0xfff8);
+		CHANGE_PC;
+		(void)(*hd6309.irq_callback)(HD6309_IRQ_LINE);
 	}
 }
 
@@ -512,7 +512,7 @@ void hd6309_set_context(void *src)
 		hd6309 = *(hd6309_Regs*)src;
 	CHANGE_PC;
 
-    CHECK_IRQ_LINES();
+	CHECK_IRQ_LINES();
 }
 
 /****************************************************************************
@@ -553,7 +553,7 @@ void hd6309_set_sp(unsigned val)
 
 
 /****************************************************************************/
-/* Return a specific register                                               */
+/* Return a specific register												*/
 /****************************************************************************/
 unsigned hd6309_get_reg(int regnum)
 {
@@ -589,7 +589,7 @@ unsigned hd6309_get_reg(int regnum)
 
 
 /****************************************************************************/
-/* Set a specific register                                                  */
+/* Set a specific register													*/
 /****************************************************************************/
 void hd6309_set_reg(int regnum, unsigned val)
 {
@@ -621,7 +621,7 @@ void hd6309_set_reg(int regnum, unsigned val)
 					WM( offset+1, val & 0xff );
 				}
 			}
-    }
+	}
 }
 
 
@@ -636,10 +636,10 @@ void hd6309_reset(void *param)
 	hd6309.irq_state[0] = CLEAR_LINE;
 
 	DPD = 0;			/* Reset direct page register */
-	
-	MD = 0;				/* Mode register get reset */
-    CC |= CC_II;        /* IRQ disabled */
-    CC |= CC_IF;        /* FIRQ disabled */
+
+	MD = 0; 			/* Mode register get reset */
+	CC |= CC_II;		/* IRQ disabled */
+	CC |= CC_IF;		/* FIRQ disabled */
 
 	PCD = RM16(0xfffe);
 	CHANGE_PC;
@@ -662,15 +662,15 @@ void hd6309_set_nmi_line(int state)
 	if( state == CLEAR_LINE ) return;
 
 	/* if the stack was not yet initialized */
-    if( !(hd6309.int_state & HD6309_LDS) ) return;
+	if( !(hd6309.int_state & HD6309_LDS) ) return;
 
-    hd6309.int_state &= ~HD6309_SYNC;
+	hd6309.int_state &= ~HD6309_SYNC;
 	/* HJB 990225: state already saved by CWAI? */
 	if( hd6309.int_state & HD6309_CWAI )
 	{
 		hd6309.int_state &= ~HD6309_CWAI;
 		hd6309.extra_cycles += 7;	/* subtract +7 cycles next time */
-    }
+	}
 	else
 	{
 		CC |= CC_E; 				/* save entire state */
@@ -679,17 +679,17 @@ void hd6309_set_nmi_line(int state)
 		PUSHWORD(pY);
 		PUSHWORD(pX);
 		PUSHBYTE(DP);
-		
+
 		/* I am not sure is this really happens on a 6309.
 		   I have this here just in case					*/
-		   
+
 		if ( MD & MD_EM )
 		{
 			PUSHBYTE(F);
 			PUSHBYTE(E);
 			hd6309.extra_cycles += 2; /* subtract +2 cycles */
 		}
-		
+
 		PUSHBYTE(B);
 		PUSHBYTE(A);
 		PUSHBYTE(CC);
@@ -705,7 +705,7 @@ void hd6309_set_nmi_line(int state)
  ****************************************************************************/
 void hd6309_set_irq_line(int irqline, int state)
 {
-    LOG(("HD6309#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+	LOG(("HD6309#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
 	hd6309.irq_state[irqline] = state;
 	if (state == CLEAR_LINE) return;
 	CHECK_IRQ_LINES();
@@ -774,7 +774,7 @@ const char *hd6309_info(void *context, int regnum)
 	hd6309_Regs *r = context;
 
 	which = ++which % 16;
-    buffer[which][0] = '\0';
+	buffer[which][0] = '\0';
 	if( !context )
 		r = &hd6309;
 
@@ -792,22 +792,22 @@ const char *hd6309_info(void *context, int regnum)
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c (MD:%c%c%c%c%c%c%c%c)",
 				r->cc & 0x80 ? 'E':'.',
 				r->cc & 0x40 ? 'F':'.',
-                r->cc & 0x20 ? 'H':'.',
-                r->cc & 0x10 ? 'I':'.',
-                r->cc & 0x08 ? 'N':'.',
-                r->cc & 0x04 ? 'Z':'.',
-                r->cc & 0x02 ? 'V':'.',
-                r->cc & 0x01 ? 'C':'.',
-                
+				r->cc & 0x20 ? 'H':'.',
+				r->cc & 0x10 ? 'I':'.',
+				r->cc & 0x08 ? 'N':'.',
+				r->cc & 0x04 ? 'Z':'.',
+				r->cc & 0x02 ? 'V':'.',
+				r->cc & 0x01 ? 'C':'.',
+
 				r->md & 0x80 ? 'E':'e',
 				r->md & 0x40 ? 'F':'f',
-                r->md & 0x20 ? '.':'.',
-                r->md & 0x10 ? '.':'.',
-                r->md & 0x08 ? '.':'.',
-                r->md & 0x04 ? '.':'.',
-                r->md & 0x02 ? 'I':'i',
-                r->md & 0x01 ? 'Z':'z');
-            break;
+				r->md & 0x20 ? '.':'.',
+				r->md & 0x10 ? '.':'.',
+				r->md & 0x08 ? '.':'.',
+				r->md & 0x04 ? '.':'.',
+				r->md & 0x02 ? 'I':'i',
+				r->md & 0x01 ? 'Z':'z');
+			break;
 		case CPU_INFO_REG+HD6309_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
 		case CPU_INFO_REG+HD6309_S: sprintf(buffer[which], "S:%04X", r->s.w.l); break;
 		case CPU_INFO_REG+HD6309_CC: sprintf(buffer[which], "CC:%02X", r->cc); break;
@@ -831,7 +831,7 @@ const char *hd6309_info(void *context, int regnum)
 unsigned hd6309_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-    return Dasm6309(buffer,pc);
+	return Dasm6309(buffer,pc);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -842,7 +842,7 @@ unsigned hd6309_dasm(char *buffer, unsigned pc)
 #include "6309tbl.c"
 
 #define IlegalInstructionError	{SEII;illegal();}
-#define DivisionByZeroError		{SEDZ;illegal();}
+#define DivisionByZeroError 	{SEDZ;illegal();}
 
 /* includes the actual opcode implementations */
 #include "6309ops.c"
@@ -850,7 +850,7 @@ unsigned hd6309_dasm(char *buffer, unsigned pc)
 /* execute instructions on this CPU until icount expires */
 int hd6309_execute(int cycles)	/* NS 970908 */
 {
-    hd6309_ICount = cycles - hd6309.extra_cycles;
+	hd6309_ICount = cycles - hd6309.extra_cycles;
 	hd6309.extra_cycles = 0;
 
 	if (hd6309.int_state & (HD6309_CWAI | HD6309_SYNC))
@@ -868,7 +868,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			hd6309.ireg = ROP(PCD);
 			PC++;
 
-            switch( hd6309.ireg )
+			switch( hd6309.ireg )
 			{
 			case 0x00: neg_di();   hd6309_ICount-= 6;				break;
 			case 0x01: oim_di();   hd6309_ICount-= 6;				break;
@@ -890,14 +890,14 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0x11: pref11();									break;
 			case 0x12: nop();	   hd6309_ICount-= 2;				break;
 			case 0x13: sync();	   hd6309_ICount-= 4;				break;
-			case 0x14: sexw();     hd6309_ICount-= 4;				break;
-			case 0x15: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x14: sexw();	   hd6309_ICount-= 4;				break;
+			case 0x15: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x16: lbra();	   hd6309_ICount-= 5;				break;
 			case 0x17: lbsr();	   hd6309_ICount-= 9;				break;
-			case 0x18: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x18: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x19: daa();	   hd6309_ICount-= 2;				break;
 			case 0x1a: orcc();	   hd6309_ICount-= 3;				break;
-			case 0x1b: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x1b: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x1c: andcc();    hd6309_ICount-= 3;				break;
 			case 0x1d: sex();	   hd6309_ICount-= 2;				break;
 			case 0x1e: exg();	   hd6309_ICount-= 8;				break;
@@ -926,45 +926,45 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0x35: puls();	   hd6309_ICount-= 5;				break;
 			case 0x36: pshu();	   hd6309_ICount-= 5;				break;
 			case 0x37: pulu();	   hd6309_ICount-= 5;				break;
-			case 0x38: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x38: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x39: rts();	   hd6309_ICount-= 5;				break;
 			case 0x3a: abx();	   hd6309_ICount-= 3;				break;
 			case 0x3b: rti();	   hd6309_ICount-= 6;				break;
 			case 0x3c: cwai();	   hd6309_ICount-=20;				break;
 			case 0x3d: mul();	   hd6309_ICount-=11;				break;
-			case 0x3e: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x3e: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x3f: swi();	   hd6309_ICount-=19;				break;
 			case 0x40: nega();	   hd6309_ICount-= 2;				break;
-			case 0x41: IlegalInstructionError;  hd6309_ICount-= 2;	break;
-			case 0x42: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x41: IlegalInstructionError;	hd6309_ICount-= 2;	break;
+			case 0x42: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x43: coma();	   hd6309_ICount-= 2;				break;
 			case 0x44: lsra();	   hd6309_ICount-= 2;				break;
-			case 0x45: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x45: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x46: rora();	   hd6309_ICount-= 2;				break;
 			case 0x47: asra();	   hd6309_ICount-= 2;				break;
 			case 0x48: asla();	   hd6309_ICount-= 2;				break;
 			case 0x49: rola();	   hd6309_ICount-= 2;				break;
 			case 0x4a: deca();	   hd6309_ICount-= 2;				break;
-			case 0x4b: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x4b: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x4c: inca();	   hd6309_ICount-= 2;				break;
 			case 0x4d: tsta();	   hd6309_ICount-= 2;				break;
-			case 0x4e: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x4e: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x4f: clra();	   hd6309_ICount-= 2;				break;
 			case 0x50: negb();	   hd6309_ICount-= 2;				break;
-			case 0x51: IlegalInstructionError;  hd6309_ICount-= 2;	break;
-			case 0x52: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x51: IlegalInstructionError;	hd6309_ICount-= 2;	break;
+			case 0x52: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x53: comb();	   hd6309_ICount-= 2;				break;
 			case 0x54: lsrb();	   hd6309_ICount-= 2;				break;
-			case 0x55: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x55: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x56: rorb();	   hd6309_ICount-= 2;				break;
 			case 0x57: asrb();	   hd6309_ICount-= 2;				break;
 			case 0x58: aslb();	   hd6309_ICount-= 2;				break;
 			case 0x59: rolb();	   hd6309_ICount-= 2;				break;
 			case 0x5a: decb();	   hd6309_ICount-= 2;				break;
-			case 0x5b: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x5b: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x5c: incb();	   hd6309_ICount-= 2;				break;
 			case 0x5d: tstb();	   hd6309_ICount-= 2;				break;
-			case 0x5e: IlegalInstructionError;  hd6309_ICount-= 2;	break;
+			case 0x5e: IlegalInstructionError;	hd6309_ICount-= 2;	break;
 			case 0x5f: clrb();	   hd6309_ICount-= 2;				break;
 			case 0x60: neg_ix();   hd6309_ICount-= 6;				break;
 			case 0x61: oim_ix();   hd6309_ICount-= 7;				break;
@@ -1005,7 +1005,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0x84: anda_im();  hd6309_ICount-= 2;				break;
 			case 0x85: bita_im();  hd6309_ICount-= 2;				break;
 			case 0x86: lda_im();   hd6309_ICount-= 2;				break;
-			case 0x87: IlegalInstructionError;   hd6309_ICount-= 2;	break;
+			case 0x87: IlegalInstructionError;	 hd6309_ICount-= 2; break;
 			case 0x88: eora_im();  hd6309_ICount-= 2;				break;
 			case 0x89: adca_im();  hd6309_ICount-= 2;				break;
 			case 0x8a: ora_im();   hd6309_ICount-= 2;				break;
@@ -1013,7 +1013,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0x8c: cmpx_im();  hd6309_ICount-= 4;				break;
 			case 0x8d: bsr();	   hd6309_ICount-= 7;				break;
 			case 0x8e: ldx_im();   hd6309_ICount-= 3;				break;
-			case 0x8f: IlegalInstructionError;   hd6309_ICount-= 2; break;
+			case 0x8f: IlegalInstructionError;	 hd6309_ICount-= 2; break;
 			case 0x90: suba_di();  hd6309_ICount-= 4;				break;
 			case 0x91: cmpa_di();  hd6309_ICount-= 4;				break;
 			case 0x92: sbca_di();  hd6309_ICount-= 4;				break;
@@ -1069,7 +1069,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0xc4: andb_im();  hd6309_ICount-= 2;				break;
 			case 0xc5: bitb_im();  hd6309_ICount-= 2;				break;
 			case 0xc6: ldb_im();   hd6309_ICount-= 2;				break;
-			case 0xc7: IlegalInstructionError;   hd6309_ICount-= 2;	break;
+			case 0xc7: IlegalInstructionError;	 hd6309_ICount-= 2; break;
 			case 0xc8: eorb_im();  hd6309_ICount-= 2;				break;
 			case 0xc9: adcb_im();  hd6309_ICount-= 2;				break;
 			case 0xca: orb_im();   hd6309_ICount-= 2;				break;
@@ -1077,7 +1077,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			case 0xcc: ldd_im();   hd6309_ICount-= 3;				break;
 			case 0xcd: ldq_im();   hd6309_ICount-= 5;				break; /* in m6809 was std_im */
 			case 0xce: ldu_im();   hd6309_ICount-= 3;				break;
-			case 0xcf: IlegalInstructionError;   hd6309_ICount-= 3;	break;
+			case 0xcf: IlegalInstructionError;	 hd6309_ICount-= 3; break;
 			case 0xd0: subb_di();  hd6309_ICount-= 4;				break;
 			case 0xd1: cmpb_di();  hd6309_ICount-= 4;				break;
 			case 0xd2: sbcb_di();  hd6309_ICount-= 4;				break;
@@ -1129,11 +1129,11 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			}
 		} while( hd6309_ICount > 0 );
 
-        hd6309_ICount -= hd6309.extra_cycles;
+		hd6309_ICount -= hd6309.extra_cycles;
 		hd6309.extra_cycles = 0;
-    }
+	}
 
-    return cycles - hd6309_ICount;   /* NS 970908 */
+	return cycles - hd6309_ICount;	 /* NS 970908 */
 }
 
 INLINE void fetch_effective_address( void )
@@ -1143,277 +1143,277 @@ INLINE void fetch_effective_address( void )
 
 	switch(postbyte)
 	{
-	case 0x00: EA=X;												hd6309_ICount-=1;   break;
-	case 0x01: EA=X+1;												hd6309_ICount-=1;   break;
-	case 0x02: EA=X+2;												hd6309_ICount-=1;   break;
-	case 0x03: EA=X+3;												hd6309_ICount-=1;   break;
-	case 0x04: EA=X+4;												hd6309_ICount-=1;   break;
-	case 0x05: EA=X+5;												hd6309_ICount-=1;   break;
-	case 0x06: EA=X+6;												hd6309_ICount-=1;   break;
-	case 0x07: EA=X+7;												hd6309_ICount-=1;   break;
-	case 0x08: EA=X+8;												hd6309_ICount-=1;   break;
-	case 0x09: EA=X+9;												hd6309_ICount-=1;   break;
-	case 0x0a: EA=X+10; 											hd6309_ICount-=1;   break;
-	case 0x0b: EA=X+11; 											hd6309_ICount-=1;   break;
-	case 0x0c: EA=X+12; 											hd6309_ICount-=1;   break;
-	case 0x0d: EA=X+13; 											hd6309_ICount-=1;   break;
-	case 0x0e: EA=X+14; 											hd6309_ICount-=1;   break;
-	case 0x0f: EA=X+15; 											hd6309_ICount-=1;   break;
+	case 0x00: EA=X;												hd6309_ICount-=1;	break;
+	case 0x01: EA=X+1;												hd6309_ICount-=1;	break;
+	case 0x02: EA=X+2;												hd6309_ICount-=1;	break;
+	case 0x03: EA=X+3;												hd6309_ICount-=1;	break;
+	case 0x04: EA=X+4;												hd6309_ICount-=1;	break;
+	case 0x05: EA=X+5;												hd6309_ICount-=1;	break;
+	case 0x06: EA=X+6;												hd6309_ICount-=1;	break;
+	case 0x07: EA=X+7;												hd6309_ICount-=1;	break;
+	case 0x08: EA=X+8;												hd6309_ICount-=1;	break;
+	case 0x09: EA=X+9;												hd6309_ICount-=1;	break;
+	case 0x0a: EA=X+10; 											hd6309_ICount-=1;	break;
+	case 0x0b: EA=X+11; 											hd6309_ICount-=1;	break;
+	case 0x0c: EA=X+12; 											hd6309_ICount-=1;	break;
+	case 0x0d: EA=X+13; 											hd6309_ICount-=1;	break;
+	case 0x0e: EA=X+14; 											hd6309_ICount-=1;	break;
+	case 0x0f: EA=X+15; 											hd6309_ICount-=1;	break;
 
-	case 0x10: EA=X-16; 											hd6309_ICount-=1;   break;
-	case 0x11: EA=X-15; 											hd6309_ICount-=1;   break;
-	case 0x12: EA=X-14; 											hd6309_ICount-=1;   break;
-	case 0x13: EA=X-13; 											hd6309_ICount-=1;   break;
-	case 0x14: EA=X-12; 											hd6309_ICount-=1;   break;
-	case 0x15: EA=X-11; 											hd6309_ICount-=1;   break;
-	case 0x16: EA=X-10; 											hd6309_ICount-=1;   break;
-	case 0x17: EA=X-9;												hd6309_ICount-=1;   break;
-	case 0x18: EA=X-8;												hd6309_ICount-=1;   break;
-	case 0x19: EA=X-7;												hd6309_ICount-=1;   break;
-	case 0x1a: EA=X-6;												hd6309_ICount-=1;   break;
-	case 0x1b: EA=X-5;												hd6309_ICount-=1;   break;
-	case 0x1c: EA=X-4;												hd6309_ICount-=1;   break;
-	case 0x1d: EA=X-3;												hd6309_ICount-=1;   break;
-	case 0x1e: EA=X-2;												hd6309_ICount-=1;   break;
-	case 0x1f: EA=X-1;												hd6309_ICount-=1;   break;
+	case 0x10: EA=X-16; 											hd6309_ICount-=1;	break;
+	case 0x11: EA=X-15; 											hd6309_ICount-=1;	break;
+	case 0x12: EA=X-14; 											hd6309_ICount-=1;	break;
+	case 0x13: EA=X-13; 											hd6309_ICount-=1;	break;
+	case 0x14: EA=X-12; 											hd6309_ICount-=1;	break;
+	case 0x15: EA=X-11; 											hd6309_ICount-=1;	break;
+	case 0x16: EA=X-10; 											hd6309_ICount-=1;	break;
+	case 0x17: EA=X-9;												hd6309_ICount-=1;	break;
+	case 0x18: EA=X-8;												hd6309_ICount-=1;	break;
+	case 0x19: EA=X-7;												hd6309_ICount-=1;	break;
+	case 0x1a: EA=X-6;												hd6309_ICount-=1;	break;
+	case 0x1b: EA=X-5;												hd6309_ICount-=1;	break;
+	case 0x1c: EA=X-4;												hd6309_ICount-=1;	break;
+	case 0x1d: EA=X-3;												hd6309_ICount-=1;	break;
+	case 0x1e: EA=X-2;												hd6309_ICount-=1;	break;
+	case 0x1f: EA=X-1;												hd6309_ICount-=1;	break;
 
-	case 0x20: EA=Y;												hd6309_ICount-=1;   break;
-	case 0x21: EA=Y+1;												hd6309_ICount-=1;   break;
-	case 0x22: EA=Y+2;												hd6309_ICount-=1;   break;
-	case 0x23: EA=Y+3;												hd6309_ICount-=1;   break;
-	case 0x24: EA=Y+4;												hd6309_ICount-=1;   break;
-	case 0x25: EA=Y+5;												hd6309_ICount-=1;   break;
-	case 0x26: EA=Y+6;												hd6309_ICount-=1;   break;
-	case 0x27: EA=Y+7;												hd6309_ICount-=1;   break;
-	case 0x28: EA=Y+8;												hd6309_ICount-=1;   break;
-	case 0x29: EA=Y+9;												hd6309_ICount-=1;   break;
-	case 0x2a: EA=Y+10; 											hd6309_ICount-=1;   break;
-	case 0x2b: EA=Y+11; 											hd6309_ICount-=1;   break;
-	case 0x2c: EA=Y+12; 											hd6309_ICount-=1;   break;
-	case 0x2d: EA=Y+13; 											hd6309_ICount-=1;   break;
-	case 0x2e: EA=Y+14; 											hd6309_ICount-=1;   break;
-	case 0x2f: EA=Y+15; 											hd6309_ICount-=1;   break;
+	case 0x20: EA=Y;												hd6309_ICount-=1;	break;
+	case 0x21: EA=Y+1;												hd6309_ICount-=1;	break;
+	case 0x22: EA=Y+2;												hd6309_ICount-=1;	break;
+	case 0x23: EA=Y+3;												hd6309_ICount-=1;	break;
+	case 0x24: EA=Y+4;												hd6309_ICount-=1;	break;
+	case 0x25: EA=Y+5;												hd6309_ICount-=1;	break;
+	case 0x26: EA=Y+6;												hd6309_ICount-=1;	break;
+	case 0x27: EA=Y+7;												hd6309_ICount-=1;	break;
+	case 0x28: EA=Y+8;												hd6309_ICount-=1;	break;
+	case 0x29: EA=Y+9;												hd6309_ICount-=1;	break;
+	case 0x2a: EA=Y+10; 											hd6309_ICount-=1;	break;
+	case 0x2b: EA=Y+11; 											hd6309_ICount-=1;	break;
+	case 0x2c: EA=Y+12; 											hd6309_ICount-=1;	break;
+	case 0x2d: EA=Y+13; 											hd6309_ICount-=1;	break;
+	case 0x2e: EA=Y+14; 											hd6309_ICount-=1;	break;
+	case 0x2f: EA=Y+15; 											hd6309_ICount-=1;	break;
 
-	case 0x30: EA=Y-16; 											hd6309_ICount-=1;   break;
-	case 0x31: EA=Y-15; 											hd6309_ICount-=1;   break;
-	case 0x32: EA=Y-14; 											hd6309_ICount-=1;   break;
-	case 0x33: EA=Y-13; 											hd6309_ICount-=1;   break;
-	case 0x34: EA=Y-12; 											hd6309_ICount-=1;   break;
-	case 0x35: EA=Y-11; 											hd6309_ICount-=1;   break;
-	case 0x36: EA=Y-10; 											hd6309_ICount-=1;   break;
-	case 0x37: EA=Y-9;												hd6309_ICount-=1;   break;
-	case 0x38: EA=Y-8;												hd6309_ICount-=1;   break;
-	case 0x39: EA=Y-7;												hd6309_ICount-=1;   break;
-	case 0x3a: EA=Y-6;												hd6309_ICount-=1;   break;
-	case 0x3b: EA=Y-5;												hd6309_ICount-=1;   break;
-	case 0x3c: EA=Y-4;												hd6309_ICount-=1;   break;
-	case 0x3d: EA=Y-3;												hd6309_ICount-=1;   break;
-	case 0x3e: EA=Y-2;												hd6309_ICount-=1;   break;
-	case 0x3f: EA=Y-1;												hd6309_ICount-=1;   break;
+	case 0x30: EA=Y-16; 											hd6309_ICount-=1;	break;
+	case 0x31: EA=Y-15; 											hd6309_ICount-=1;	break;
+	case 0x32: EA=Y-14; 											hd6309_ICount-=1;	break;
+	case 0x33: EA=Y-13; 											hd6309_ICount-=1;	break;
+	case 0x34: EA=Y-12; 											hd6309_ICount-=1;	break;
+	case 0x35: EA=Y-11; 											hd6309_ICount-=1;	break;
+	case 0x36: EA=Y-10; 											hd6309_ICount-=1;	break;
+	case 0x37: EA=Y-9;												hd6309_ICount-=1;	break;
+	case 0x38: EA=Y-8;												hd6309_ICount-=1;	break;
+	case 0x39: EA=Y-7;												hd6309_ICount-=1;	break;
+	case 0x3a: EA=Y-6;												hd6309_ICount-=1;	break;
+	case 0x3b: EA=Y-5;												hd6309_ICount-=1;	break;
+	case 0x3c: EA=Y-4;												hd6309_ICount-=1;	break;
+	case 0x3d: EA=Y-3;												hd6309_ICount-=1;	break;
+	case 0x3e: EA=Y-2;												hd6309_ICount-=1;	break;
+	case 0x3f: EA=Y-1;												hd6309_ICount-=1;	break;
 
-	case 0x40: EA=U;												hd6309_ICount-=1;   break;
-	case 0x41: EA=U+1;												hd6309_ICount-=1;   break;
-	case 0x42: EA=U+2;												hd6309_ICount-=1;   break;
-	case 0x43: EA=U+3;												hd6309_ICount-=1;   break;
-	case 0x44: EA=U+4;												hd6309_ICount-=1;   break;
-	case 0x45: EA=U+5;												hd6309_ICount-=1;   break;
-	case 0x46: EA=U+6;												hd6309_ICount-=1;   break;
-	case 0x47: EA=U+7;												hd6309_ICount-=1;   break;
-	case 0x48: EA=U+8;												hd6309_ICount-=1;   break;
-	case 0x49: EA=U+9;												hd6309_ICount-=1;   break;
-	case 0x4a: EA=U+10; 											hd6309_ICount-=1;   break;
-	case 0x4b: EA=U+11; 											hd6309_ICount-=1;   break;
-	case 0x4c: EA=U+12; 											hd6309_ICount-=1;   break;
-	case 0x4d: EA=U+13; 											hd6309_ICount-=1;   break;
-	case 0x4e: EA=U+14; 											hd6309_ICount-=1;   break;
-	case 0x4f: EA=U+15; 											hd6309_ICount-=1;   break;
+	case 0x40: EA=U;												hd6309_ICount-=1;	break;
+	case 0x41: EA=U+1;												hd6309_ICount-=1;	break;
+	case 0x42: EA=U+2;												hd6309_ICount-=1;	break;
+	case 0x43: EA=U+3;												hd6309_ICount-=1;	break;
+	case 0x44: EA=U+4;												hd6309_ICount-=1;	break;
+	case 0x45: EA=U+5;												hd6309_ICount-=1;	break;
+	case 0x46: EA=U+6;												hd6309_ICount-=1;	break;
+	case 0x47: EA=U+7;												hd6309_ICount-=1;	break;
+	case 0x48: EA=U+8;												hd6309_ICount-=1;	break;
+	case 0x49: EA=U+9;												hd6309_ICount-=1;	break;
+	case 0x4a: EA=U+10; 											hd6309_ICount-=1;	break;
+	case 0x4b: EA=U+11; 											hd6309_ICount-=1;	break;
+	case 0x4c: EA=U+12; 											hd6309_ICount-=1;	break;
+	case 0x4d: EA=U+13; 											hd6309_ICount-=1;	break;
+	case 0x4e: EA=U+14; 											hd6309_ICount-=1;	break;
+	case 0x4f: EA=U+15; 											hd6309_ICount-=1;	break;
 
-	case 0x50: EA=U-16; 											hd6309_ICount-=1;   break;
-	case 0x51: EA=U-15; 											hd6309_ICount-=1;   break;
-	case 0x52: EA=U-14; 											hd6309_ICount-=1;   break;
-	case 0x53: EA=U-13; 											hd6309_ICount-=1;   break;
-	case 0x54: EA=U-12; 											hd6309_ICount-=1;   break;
-	case 0x55: EA=U-11; 											hd6309_ICount-=1;   break;
-	case 0x56: EA=U-10; 											hd6309_ICount-=1;   break;
-	case 0x57: EA=U-9;												hd6309_ICount-=1;   break;
-	case 0x58: EA=U-8;												hd6309_ICount-=1;   break;
-	case 0x59: EA=U-7;												hd6309_ICount-=1;   break;
-	case 0x5a: EA=U-6;												hd6309_ICount-=1;   break;
-	case 0x5b: EA=U-5;												hd6309_ICount-=1;   break;
-	case 0x5c: EA=U-4;												hd6309_ICount-=1;   break;
-	case 0x5d: EA=U-3;												hd6309_ICount-=1;   break;
-	case 0x5e: EA=U-2;												hd6309_ICount-=1;   break;
-	case 0x5f: EA=U-1;												hd6309_ICount-=1;   break;
+	case 0x50: EA=U-16; 											hd6309_ICount-=1;	break;
+	case 0x51: EA=U-15; 											hd6309_ICount-=1;	break;
+	case 0x52: EA=U-14; 											hd6309_ICount-=1;	break;
+	case 0x53: EA=U-13; 											hd6309_ICount-=1;	break;
+	case 0x54: EA=U-12; 											hd6309_ICount-=1;	break;
+	case 0x55: EA=U-11; 											hd6309_ICount-=1;	break;
+	case 0x56: EA=U-10; 											hd6309_ICount-=1;	break;
+	case 0x57: EA=U-9;												hd6309_ICount-=1;	break;
+	case 0x58: EA=U-8;												hd6309_ICount-=1;	break;
+	case 0x59: EA=U-7;												hd6309_ICount-=1;	break;
+	case 0x5a: EA=U-6;												hd6309_ICount-=1;	break;
+	case 0x5b: EA=U-5;												hd6309_ICount-=1;	break;
+	case 0x5c: EA=U-4;												hd6309_ICount-=1;	break;
+	case 0x5d: EA=U-3;												hd6309_ICount-=1;	break;
+	case 0x5e: EA=U-2;												hd6309_ICount-=1;	break;
+	case 0x5f: EA=U-1;												hd6309_ICount-=1;	break;
 
-	case 0x60: EA=S;												hd6309_ICount-=1;   break;
-	case 0x61: EA=S+1;												hd6309_ICount-=1;   break;
-	case 0x62: EA=S+2;												hd6309_ICount-=1;   break;
-	case 0x63: EA=S+3;												hd6309_ICount-=1;   break;
-	case 0x64: EA=S+4;												hd6309_ICount-=1;   break;
-	case 0x65: EA=S+5;												hd6309_ICount-=1;   break;
-	case 0x66: EA=S+6;												hd6309_ICount-=1;   break;
-	case 0x67: EA=S+7;												hd6309_ICount-=1;   break;
-	case 0x68: EA=S+8;												hd6309_ICount-=1;   break;
-	case 0x69: EA=S+9;												hd6309_ICount-=1;   break;
-	case 0x6a: EA=S+10; 											hd6309_ICount-=1;   break;
-	case 0x6b: EA=S+11; 											hd6309_ICount-=1;   break;
-	case 0x6c: EA=S+12; 											hd6309_ICount-=1;   break;
-	case 0x6d: EA=S+13; 											hd6309_ICount-=1;   break;
-	case 0x6e: EA=S+14; 											hd6309_ICount-=1;   break;
-	case 0x6f: EA=S+15; 											hd6309_ICount-=1;   break;
+	case 0x60: EA=S;												hd6309_ICount-=1;	break;
+	case 0x61: EA=S+1;												hd6309_ICount-=1;	break;
+	case 0x62: EA=S+2;												hd6309_ICount-=1;	break;
+	case 0x63: EA=S+3;												hd6309_ICount-=1;	break;
+	case 0x64: EA=S+4;												hd6309_ICount-=1;	break;
+	case 0x65: EA=S+5;												hd6309_ICount-=1;	break;
+	case 0x66: EA=S+6;												hd6309_ICount-=1;	break;
+	case 0x67: EA=S+7;												hd6309_ICount-=1;	break;
+	case 0x68: EA=S+8;												hd6309_ICount-=1;	break;
+	case 0x69: EA=S+9;												hd6309_ICount-=1;	break;
+	case 0x6a: EA=S+10; 											hd6309_ICount-=1;	break;
+	case 0x6b: EA=S+11; 											hd6309_ICount-=1;	break;
+	case 0x6c: EA=S+12; 											hd6309_ICount-=1;	break;
+	case 0x6d: EA=S+13; 											hd6309_ICount-=1;	break;
+	case 0x6e: EA=S+14; 											hd6309_ICount-=1;	break;
+	case 0x6f: EA=S+15; 											hd6309_ICount-=1;	break;
 
-	case 0x70: EA=S-16; 											hd6309_ICount-=1;   break;
-	case 0x71: EA=S-15; 											hd6309_ICount-=1;   break;
-	case 0x72: EA=S-14; 											hd6309_ICount-=1;   break;
-	case 0x73: EA=S-13; 											hd6309_ICount-=1;   break;
-	case 0x74: EA=S-12; 											hd6309_ICount-=1;   break;
-	case 0x75: EA=S-11; 											hd6309_ICount-=1;   break;
-	case 0x76: EA=S-10; 											hd6309_ICount-=1;   break;
-	case 0x77: EA=S-9;												hd6309_ICount-=1;   break;
-	case 0x78: EA=S-8;												hd6309_ICount-=1;   break;
-	case 0x79: EA=S-7;												hd6309_ICount-=1;   break;
-	case 0x7a: EA=S-6;												hd6309_ICount-=1;   break;
-	case 0x7b: EA=S-5;												hd6309_ICount-=1;   break;
-	case 0x7c: EA=S-4;												hd6309_ICount-=1;   break;
-	case 0x7d: EA=S-3;												hd6309_ICount-=1;   break;
-	case 0x7e: EA=S-2;												hd6309_ICount-=1;   break;
-	case 0x7f: EA=S-1;												hd6309_ICount-=1;   break;
+	case 0x70: EA=S-16; 											hd6309_ICount-=1;	break;
+	case 0x71: EA=S-15; 											hd6309_ICount-=1;	break;
+	case 0x72: EA=S-14; 											hd6309_ICount-=1;	break;
+	case 0x73: EA=S-13; 											hd6309_ICount-=1;	break;
+	case 0x74: EA=S-12; 											hd6309_ICount-=1;	break;
+	case 0x75: EA=S-11; 											hd6309_ICount-=1;	break;
+	case 0x76: EA=S-10; 											hd6309_ICount-=1;	break;
+	case 0x77: EA=S-9;												hd6309_ICount-=1;	break;
+	case 0x78: EA=S-8;												hd6309_ICount-=1;	break;
+	case 0x79: EA=S-7;												hd6309_ICount-=1;	break;
+	case 0x7a: EA=S-6;												hd6309_ICount-=1;	break;
+	case 0x7b: EA=S-5;												hd6309_ICount-=1;	break;
+	case 0x7c: EA=S-4;												hd6309_ICount-=1;	break;
+	case 0x7d: EA=S-3;												hd6309_ICount-=1;	break;
+	case 0x7e: EA=S-2;												hd6309_ICount-=1;	break;
+	case 0x7f: EA=S-1;												hd6309_ICount-=1;	break;
 
-	case 0x80: EA=X;	X++;										hd6309_ICount-=2;   break;
-	case 0x81: EA=X;	X+=2;										hd6309_ICount-=3;   break;
-	case 0x82: X--; 	EA=X;										hd6309_ICount-=2;   break;
-	case 0x83: X-=2;	EA=X;										hd6309_ICount-=3;   break;
+	case 0x80: EA=X;	X++;										hd6309_ICount-=2;	break;
+	case 0x81: EA=X;	X+=2;										hd6309_ICount-=3;	break;
+	case 0x82: X--; 	EA=X;										hd6309_ICount-=2;	break;
+	case 0x83: X-=2;	EA=X;										hd6309_ICount-=3;	break;
 	case 0x84: EA=X;																	break;
-	case 0x85: EA=X+SIGNED(B);										hd6309_ICount-=1;   break;
-	case 0x86: EA=X+SIGNED(A);										hd6309_ICount-=1;   break;
-	case 0x87: EA=X+SIGNED(E);										hd6309_ICount-=1;   break;
-	case 0x88: IMMBYTE(EA); 	EA=X+SIGNED(EA);					hd6309_ICount-=1;   break; /* this is a hack to make Vectrex work. It should be hd6309_ICount-=1. Dunno where the cycle was lost :( */
-	case 0x89: IMMWORD(ea); 	EA+=X;								hd6309_ICount-=4;   break;
-	case 0x8a: EA=X+SIGNED(F);										hd6309_ICount-=1;   break;
-	case 0x8b: EA=X+D;												hd6309_ICount-=4;   break;
-	case 0x8c: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0x8d: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;   break;
-	case 0x8e: EA=X+W;												hd6309_ICount-=4;   break;
-	case 0x8f: IMMWORD(ea); 										hd6309_ICount-=5;   break;
+	case 0x85: EA=X+SIGNED(B);										hd6309_ICount-=1;	break;
+	case 0x86: EA=X+SIGNED(A);										hd6309_ICount-=1;	break;
+	case 0x87: EA=X+SIGNED(E);										hd6309_ICount-=1;	break;
+	case 0x88: IMMBYTE(EA); 	EA=X+SIGNED(EA);					hd6309_ICount-=1;	break; /* this is a hack to make Vectrex work. It should be hd6309_ICount-=1. Dunno where the cycle was lost :( */
+	case 0x89: IMMWORD(ea); 	EA+=X;								hd6309_ICount-=4;	break;
+	case 0x8a: EA=X+SIGNED(F);										hd6309_ICount-=1;	break;
+	case 0x8b: EA=X+D;												hd6309_ICount-=4;	break;
+	case 0x8c: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0x8d: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;	break;
+	case 0x8e: EA=X+W;												hd6309_ICount-=4;	break;
+	case 0x8f: IMMWORD(ea); 										hd6309_ICount-=5;	break;
 
-	case 0x90: EA=W;								EAD=RM16(EAD);	hd6309_ICount-=3;   break;
-	case 0x91: EA=X;	X+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0x92: X--; 	EA=X;						EAD=RM16(EAD);	hd6309_ICount-=5;   break;
-	case 0x93: X-=2;	EA=X;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0x94: EA=X;								EAD=RM16(EAD);	hd6309_ICount-=3;   break;
-	case 0x95: EA=X+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x96: EA=X+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x97: EA=X+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x98: IMMBYTE(EA); 	EA=X+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x99: IMMWORD(ea); 	EA+=X;				EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0x9a: EA=X+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x9b: EA=X+D;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0x9c: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0x9d: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;   break;
-	case 0x9e: EA=X+W;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0x9f: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;   break;
+	case 0x90: EA=W;								EAD=RM16(EAD);	hd6309_ICount-=3;	break;
+	case 0x91: EA=X;	X+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0x92: X--; 	EA=X;						EAD=RM16(EAD);	hd6309_ICount-=5;	break;
+	case 0x93: X-=2;	EA=X;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0x94: EA=X;								EAD=RM16(EAD);	hd6309_ICount-=3;	break;
+	case 0x95: EA=X+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x96: EA=X+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x97: EA=X+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x98: IMMBYTE(EA); 	EA=X+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x99: IMMWORD(ea); 	EA+=X;				EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0x9a: EA=X+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x9b: EA=X+D;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0x9c: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0x9d: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;	break;
+	case 0x9e: EA=X+W;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0x9f: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;	break;
 
-	case 0xa0: EA=Y;	Y++;										hd6309_ICount-=2;   break;
-	case 0xa1: EA=Y;	Y+=2;										hd6309_ICount-=3;   break;
-	case 0xa2: Y--; 	EA=Y;										hd6309_ICount-=2;   break;
-	case 0xa3: Y-=2;	EA=Y;										hd6309_ICount-=3;   break;
+	case 0xa0: EA=Y;	Y++;										hd6309_ICount-=2;	break;
+	case 0xa1: EA=Y;	Y+=2;										hd6309_ICount-=3;	break;
+	case 0xa2: Y--; 	EA=Y;										hd6309_ICount-=2;	break;
+	case 0xa3: Y-=2;	EA=Y;										hd6309_ICount-=3;	break;
 	case 0xa4: EA=Y;																	break;
-	case 0xa5: EA=Y+SIGNED(B);										hd6309_ICount-=1;   break;
-	case 0xa6: EA=Y+SIGNED(A);										hd6309_ICount-=1;   break;
-	case 0xa7: EA=Y+SIGNED(E);										hd6309_ICount-=1;   break;
-	case 0xa8: IMMBYTE(EA); 	EA=Y+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xa9: IMMWORD(ea); 	EA+=Y;								hd6309_ICount-=4;   break;
-	case 0xaa: EA=Y+SIGNED(F);										hd6309_ICount-=1;   break;
-	case 0xab: EA=Y+D;												hd6309_ICount-=4;   break;
-	case 0xac: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xad: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;   break;
-	case 0xae: EA=Y+W;												hd6309_ICount-=4;   break;
-	case 0xaf: IMMWORD(ea); 										hd6309_ICount-=5;   break;
+	case 0xa5: EA=Y+SIGNED(B);										hd6309_ICount-=1;	break;
+	case 0xa6: EA=Y+SIGNED(A);										hd6309_ICount-=1;	break;
+	case 0xa7: EA=Y+SIGNED(E);										hd6309_ICount-=1;	break;
+	case 0xa8: IMMBYTE(EA); 	EA=Y+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xa9: IMMWORD(ea); 	EA+=Y;								hd6309_ICount-=4;	break;
+	case 0xaa: EA=Y+SIGNED(F);										hd6309_ICount-=1;	break;
+	case 0xab: EA=Y+D;												hd6309_ICount-=4;	break;
+	case 0xac: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xad: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;	break;
+	case 0xae: EA=Y+W;												hd6309_ICount-=4;	break;
+	case 0xaf: IMMWORD(ea); 										hd6309_ICount-=5;	break;
 
-	case 0xb0: IMMWORD(ea); 	EA+=W;				EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xb1: EA=Y;	Y+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xb2: Y--; 	EA=Y;						EAD=RM16(EAD);	hd6309_ICount-=5;   break;
-	case 0xb3: Y-=2;	EA=Y;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xb4: EA=Y;								EAD=RM16(EAD);	hd6309_ICount-=3;   break;
-	case 0xb5: EA=Y+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xb6: EA=Y+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xb7: EA=Y+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xb8: IMMBYTE(EA); 	EA=Y+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xb9: IMMWORD(ea); 	EA+=Y;				EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xba: EA=Y+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xbb: EA=Y+D;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xbc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xbd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;   break;
-	case 0xbe: EA=Y+W;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xbf: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;   break;
+	case 0xb0: IMMWORD(ea); 	EA+=W;				EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xb1: EA=Y;	Y+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xb2: Y--; 	EA=Y;						EAD=RM16(EAD);	hd6309_ICount-=5;	break;
+	case 0xb3: Y-=2;	EA=Y;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xb4: EA=Y;								EAD=RM16(EAD);	hd6309_ICount-=3;	break;
+	case 0xb5: EA=Y+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xb6: EA=Y+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xb7: EA=Y+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xb8: IMMBYTE(EA); 	EA=Y+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xb9: IMMWORD(ea); 	EA+=Y;				EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xba: EA=Y+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xbb: EA=Y+D;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xbc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xbd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;	break;
+	case 0xbe: EA=Y+W;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xbf: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;	break;
 
-	case 0xc0: EA=U;			U++;								hd6309_ICount-=2;   break;
-	case 0xc1: EA=U;			U+=2;								hd6309_ICount-=3;   break;
-	case 0xc2: U--; 			EA=U;								hd6309_ICount-=2;   break;
-	case 0xc3: U-=2;			EA=U;								hd6309_ICount-=3;   break;
+	case 0xc0: EA=U;			U++;								hd6309_ICount-=2;	break;
+	case 0xc1: EA=U;			U+=2;								hd6309_ICount-=3;	break;
+	case 0xc2: U--; 			EA=U;								hd6309_ICount-=2;	break;
+	case 0xc3: U-=2;			EA=U;								hd6309_ICount-=3;	break;
 	case 0xc4: EA=U;																	break;
-	case 0xc5: EA=U+SIGNED(B);										hd6309_ICount-=1;   break;
-	case 0xc6: EA=U+SIGNED(A);										hd6309_ICount-=1;   break;
-	case 0xc7: EA=U+SIGNED(E);										hd6309_ICount-=1;   break;
-	case 0xc8: IMMBYTE(EA); 	EA=U+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xc9: IMMWORD(ea); 	EA+=U;								hd6309_ICount-=4;   break;
-	case 0xca: EA=U+SIGNED(F);										hd6309_ICount-=1;   break;
-	case 0xcb: EA=U+D;												hd6309_ICount-=4;   break;
-	case 0xcc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xcd: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;   break;
-	case 0xce: EA=U+W;												hd6309_ICount-=4;   break;
-	case 0xcf: IMMWORD(ea); 										hd6309_ICount-=5;   break;
+	case 0xc5: EA=U+SIGNED(B);										hd6309_ICount-=1;	break;
+	case 0xc6: EA=U+SIGNED(A);										hd6309_ICount-=1;	break;
+	case 0xc7: EA=U+SIGNED(E);										hd6309_ICount-=1;	break;
+	case 0xc8: IMMBYTE(EA); 	EA=U+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xc9: IMMWORD(ea); 	EA+=U;								hd6309_ICount-=4;	break;
+	case 0xca: EA=U+SIGNED(F);										hd6309_ICount-=1;	break;
+	case 0xcb: EA=U+D;												hd6309_ICount-=4;	break;
+	case 0xcc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xcd: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;	break;
+	case 0xce: EA=U+W;												hd6309_ICount-=4;	break;
+	case 0xcf: IMMWORD(ea); 										hd6309_ICount-=5;	break;
 
-	case 0xd0: EA=W;	W+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xd1: EA=U;	U+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xd2: U--; 	EA=U;						EAD=RM16(EAD);	hd6309_ICount-=5;   break;
-	case 0xd3: U-=2;	EA=U;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xd4: EA=U;								EAD=RM16(EAD);	hd6309_ICount-=3;   break;
-	case 0xd5: EA=U+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xd6: EA=U+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xd7: EA=U+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xd8: IMMBYTE(EA); 	EA=U+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xd9: IMMWORD(ea); 	EA+=U;				EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xda: EA=U+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xdb: EA=U+D;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xdc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xdd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;   break;
-	case 0xde: EA=U+W;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xdf: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;   break;
+	case 0xd0: EA=W;	W+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xd1: EA=U;	U+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xd2: U--; 	EA=U;						EAD=RM16(EAD);	hd6309_ICount-=5;	break;
+	case 0xd3: U-=2;	EA=U;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xd4: EA=U;								EAD=RM16(EAD);	hd6309_ICount-=3;	break;
+	case 0xd5: EA=U+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xd6: EA=U+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xd7: EA=U+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xd8: IMMBYTE(EA); 	EA=U+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xd9: IMMWORD(ea); 	EA+=U;				EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xda: EA=U+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xdb: EA=U+D;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xdc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xdd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;	break;
+	case 0xde: EA=U+W;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xdf: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;	break;
 
-	case 0xe0: EA=S;	S++;										hd6309_ICount-=2;   break;
-	case 0xe1: EA=S;	S+=2;										hd6309_ICount-=3;   break;
-	case 0xe2: S--; 	EA=S;										hd6309_ICount-=2;   break;
-	case 0xe3: S-=2;	EA=S;										hd6309_ICount-=3;   break;
+	case 0xe0: EA=S;	S++;										hd6309_ICount-=2;	break;
+	case 0xe1: EA=S;	S+=2;										hd6309_ICount-=3;	break;
+	case 0xe2: S--; 	EA=S;										hd6309_ICount-=2;	break;
+	case 0xe3: S-=2;	EA=S;										hd6309_ICount-=3;	break;
 	case 0xe4: EA=S;																	break;
-	case 0xe5: EA=S+SIGNED(B);										hd6309_ICount-=1;   break;
-	case 0xe6: EA=S+SIGNED(A);										hd6309_ICount-=1;   break;
-	case 0xe7: EA=S+SIGNED(E);										hd6309_ICount-=1;   break;
-	case 0xe8: IMMBYTE(EA); 	EA=S+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xe9: IMMWORD(ea); 	EA+=S;								hd6309_ICount-=4;   break;
-	case 0xea: EA=S+SIGNED(F);										hd6309_ICount-=1;   break;
-	case 0xeb: EA=S+D;												hd6309_ICount-=4;   break;
-	case 0xec: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;   break;
-	case 0xed: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;   break;
-	case 0xee: EA=S+W;												hd6309_ICount-=4;   break;
-	case 0xef: IMMWORD(ea); 										hd6309_ICount-=5;   break;
+	case 0xe5: EA=S+SIGNED(B);										hd6309_ICount-=1;	break;
+	case 0xe6: EA=S+SIGNED(A);										hd6309_ICount-=1;	break;
+	case 0xe7: EA=S+SIGNED(E);										hd6309_ICount-=1;	break;
+	case 0xe8: IMMBYTE(EA); 	EA=S+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xe9: IMMWORD(ea); 	EA+=S;								hd6309_ICount-=4;	break;
+	case 0xea: EA=S+SIGNED(F);										hd6309_ICount-=1;	break;
+	case 0xeb: EA=S+D;												hd6309_ICount-=4;	break;
+	case 0xec: IMMBYTE(EA); 	EA=PC+SIGNED(EA);					hd6309_ICount-=1;	break;
+	case 0xed: IMMWORD(ea); 	EA+=PC; 							hd6309_ICount-=5;	break;
+	case 0xee: EA=S+W;												hd6309_ICount-=4;	break;
+	case 0xef: IMMWORD(ea); 										hd6309_ICount-=5;	break;
 
-	case 0xf0: W-=2;	EA=W;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xf1: EA=S;	S+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xf2: S--; 	EA=S;						EAD=RM16(EAD);	hd6309_ICount-=5;   break;
-	case 0xf3: S-=2;	EA=S;						EAD=RM16(EAD);	hd6309_ICount-=6;   break;
-	case 0xf4: EA=S;								EAD=RM16(EAD);	hd6309_ICount-=3;   break;
-	case 0xf5: EA=S+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xf6: EA=S+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xf7: EA=S+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xf8: IMMBYTE(EA); 	EA=S+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xf9: IMMWORD(ea); 	EA+=S;				EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xfa: EA=S+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xfb: EA=S+D;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xfc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;   break;
-	case 0xfd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;   break;
-	case 0xfe: EA=S+W;								EAD=RM16(EAD);	hd6309_ICount-=7;   break;
-	case 0xff: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;   break;
+	case 0xf0: W-=2;	EA=W;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xf1: EA=S;	S+=2;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xf2: S--; 	EA=S;						EAD=RM16(EAD);	hd6309_ICount-=5;	break;
+	case 0xf3: S-=2;	EA=S;						EAD=RM16(EAD);	hd6309_ICount-=6;	break;
+	case 0xf4: EA=S;								EAD=RM16(EAD);	hd6309_ICount-=3;	break;
+	case 0xf5: EA=S+SIGNED(B);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xf6: EA=S+SIGNED(A);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xf7: EA=S+SIGNED(E);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xf8: IMMBYTE(EA); 	EA=S+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xf9: IMMWORD(ea); 	EA+=S;				EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xfa: EA=S+SIGNED(F);						EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xfb: EA=S+D;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xfc: IMMBYTE(EA); 	EA=PC+SIGNED(EA);	EAD=RM16(EAD);	hd6309_ICount-=4;	break;
+	case 0xfd: IMMWORD(ea); 	EA+=PC; 			EAD=RM16(EAD);	hd6309_ICount-=8;	break;
+	case 0xfe: EA=S+W;								EAD=RM16(EAD);	hd6309_ICount-=7;	break;
+	case 0xff: IMMWORD(ea); 						EAD=RM16(EAD);	hd6309_ICount-=8;	break;
 	}
 }
 

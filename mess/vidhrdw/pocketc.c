@@ -25,7 +25,7 @@
   203d: 0 BUSY, 1 PRINT, 3 JAPAN, 4 SMALL, 5 SHIFT, 6 DEF
   207c: 1 DEF 1 RAD 2 GRAD 5 ERROR 6 FLAG */
 
-static struct artwork_ *backdrop;
+static struct artwork_info *backdrop;
 
 unsigned char pc1401_palette[248][3] =
 {

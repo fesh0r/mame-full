@@ -255,13 +255,13 @@ static struct MachineDriver machine_driver_sbasketb =
 	{
 		{
 			CPU_M6809,
-			1400000,        /* 1.400 Mhz ??? */
+			1400000,        /* 1.400 MHz ??? */
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318000/4,	/* 3.5795 Mhz */
+			14318000/4,	/* 3.5795 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}

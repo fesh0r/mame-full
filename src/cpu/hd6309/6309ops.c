@@ -15,7 +15,7 @@ HNZVC
 INLINE void illegal( void )
 {
 	logerror("HD6309: illegal opcode at %04x\nVectoring to [$fff0]\n",PC);
-		
+
 	CC |= CC_E; 				/* save entire state */
 	PUSHWORD(pPC);
 	PUSHWORD(pU);
@@ -29,12 +29,12 @@ INLINE void illegal( void )
 		PUSHBYTE(E);
 		hd6309.extra_cycles += 2; /* subtract +2 cycles */
 	}
-	
+
 	PUSHBYTE(B);
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
 	hd6309.extra_cycles += 19;	/* subtract +19 cycles next time */
-	
+
 	PCD = RM16(0xfff0);
 	CHANGE_PC;
 }
@@ -350,7 +350,7 @@ INLINE void exg( void )
 	UINT8 tb;
 
 	IMMBYTE(tb);
-	
+
 	switch( tb )
 	{
 		case 0x00:	t = D; D = D; D = t;					break;
@@ -365,8 +365,8 @@ INLINE void exg( void )
 		case 0x09:	t = D; D = D; D = t;					break;
 		case 0x0a:	t = D; D = CC; CC = t;					break;
 		case 0x0b:	t = D; D = DP; DP = t;					break;
-		case 0x0c:	t = D; D = 0; zero = t;					break;
-		case 0x0d:	t = D; D = 0; zero = t;					break;
+		case 0x0c:	t = D; D = 0; zero = t; 				break;
+		case 0x0d:	t = D; D = 0; zero = t; 				break;
 		case 0x0e:	t = D; D = W; W = t;					break;
 		case 0x0f:	t = D; D = W; W = t;					break;
 		case 0x10:	t = X; X = D; D = t;					break;
@@ -381,8 +381,8 @@ INLINE void exg( void )
 		case 0x19:	t = X; X = D; D = t;					break;
 		case 0x1a:	t = X; X = CC; CC = t;					break;
 		case 0x1b:	t = X; X = DP; DP = t;					break;
-		case 0x1c:	t = X; X = 0; zero = t;					break;
-		case 0x1d:	t = X; X = 0; zero = t;					break;
+		case 0x1c:	t = X; X = 0; zero = t; 				break;
+		case 0x1d:	t = X; X = 0; zero = t; 				break;
 		case 0x1e:	t = X; X = W; W = t;					break;
 		case 0x1f:	t = X; X = W; W = t;					break;
 		case 0x20:	t = Y; Y = D; D = t;					break;
@@ -397,8 +397,8 @@ INLINE void exg( void )
 		case 0x29:	t = Y; Y = D; D = t;					break;
 		case 0x2a:	t = Y; Y = CC; CC = t;					break;
 		case 0x2b:	t = Y; Y = DP; DP = t;					break;
-		case 0x2c:	t = Y; Y = 0; zero = t;					break;
-		case 0x2d:	t = Y; Y = 0; zero = t;					break;
+		case 0x2c:	t = Y; Y = 0; zero = t; 				break;
+		case 0x2d:	t = Y; Y = 0; zero = t; 				break;
 		case 0x2e:	t = Y; Y = W; W = t;					break;
 		case 0x2f:	t = Y; Y = W; W = t;					break;
 		case 0x30:	t = U; U = D; D = t;					break;
@@ -413,8 +413,8 @@ INLINE void exg( void )
 		case 0x39:	t = U; U = D; D = t;					break;
 		case 0x3a:	t = U; U = CC; CC = t;					break;
 		case 0x3b:	t = U; U = DP; DP = t;					break;
-		case 0x3c:	t = U; U = 0; zero = t;					break;
-		case 0x3d:	t = U; U = 0; zero = t;					break;
+		case 0x3c:	t = U; U = 0; zero = t; 				break;
+		case 0x3d:	t = U; U = 0; zero = t; 				break;
 		case 0x3e:	t = U; U = W; W = t;					break;
 		case 0x3f:	t = U; U = W; W = t;					break;
 		case 0x40:	t = S; S = D; D = t;					break;
@@ -429,8 +429,8 @@ INLINE void exg( void )
 		case 0x49:	t = S; S = D; D = t;					break;
 		case 0x4a:	t = S; S = CC; CC = t;					break;
 		case 0x4b:	t = S; S = DP; DP = t;					break;
-		case 0x4c:	t = S; S = 0; zero = t;					break;
-		case 0x4d:	t = S; S = 0; zero = t;					break;
+		case 0x4c:	t = S; S = 0; zero = t; 				break;
+		case 0x4d:	t = S; S = 0; zero = t; 				break;
 		case 0x4e:	t = S; S = W; W = t;					break;
 		case 0x4f:	t = S; S = W; W = t;					break;
 		case 0x50:	t = PC; PC = D; D = t; CHANGE_PC;		break;
@@ -438,13 +438,13 @@ INLINE void exg( void )
 		case 0x52:	t = PC; PC = Y; Y = t; CHANGE_PC;		break;
 		case 0x53:	t = PC; PC = U; U = t; CHANGE_PC;		break;
 		case 0x54:	t = PC; PC = S; S = t; CHANGE_PC;		break;
-		case 0x55:	t = PC; PC = PC; PC = t; CHANGE_PC;		break;
+		case 0x55:	t = PC; PC = PC; PC = t; CHANGE_PC; 	break;
 		case 0x56:	t = PC; PC = W; W = t; CHANGE_PC;		break;
 		case 0x57:	t = PC; PC = V; V = t; CHANGE_PC;		break;
 		case 0x58:	t = PC; PC = D; D = t; CHANGE_PC;		break;
 		case 0x59:	t = PC; PC = D; D = t; CHANGE_PC;		break;
-		case 0x5a:	t = PC; PC = CC; CC = t; CHANGE_PC;		break;
-		case 0x5b:	t = PC; PC = DP; DP = t; CHANGE_PC;		break;
+		case 0x5a:	t = PC; PC = CC; CC = t; CHANGE_PC; 	break;
+		case 0x5b:	t = PC; PC = DP; DP = t; CHANGE_PC; 	break;
 		case 0x5c:	t = PC; PC = 0; zero = t; CHANGE_PC;	break;
 		case 0x5d:	t = PC; PC = 0; zero = t; CHANGE_PC;	break;
 		case 0x5e:	t = PC; PC = W; W = t; CHANGE_PC;		break;
@@ -461,8 +461,8 @@ INLINE void exg( void )
 		case 0x69:	t = W; W = D; D = t;					break;
 		case 0x6a:	t = W; W = CC; CC = t;					break;
 		case 0x6b:	t = W; W = DP; DP = t;					break;
-		case 0x6c:	t = W; W = 0; zero = t;					break;
-		case 0x6d:	t = W; W = 0; zero = t;					break;
+		case 0x6c:	t = W; W = 0; zero = t; 				break;
+		case 0x6d:	t = W; W = 0; zero = t; 				break;
 		case 0x6e:	t = W; W = W; W = t;					break;
 		case 0x6f:	t = W; W = W; W = t;					break;
 		case 0x70:	t = V; V = D; D = t;					break;
@@ -477,8 +477,8 @@ INLINE void exg( void )
 		case 0x79:	t = V; V = D; D = t;					break;
 		case 0x7a:	t = V; V = CC; CC = t;					break;
 		case 0x7b:	t = V; V = DP; DP = t;					break;
-		case 0x7c:	t = V; V = 0; zero = t;					break;
-		case 0x7d:	t = V; V = 0; zero = t;					break;
+		case 0x7c:	t = V; V = 0; zero = t; 				break;
+		case 0x7d:	t = V; V = 0; zero = t; 				break;
 		case 0x7e:	t = V; V = W; W = t;					break;
 		case 0x7f:	t = V; V = W; W = t;					break;
 		case 0x80:	t = D; D = D; D = t;					break;
@@ -493,8 +493,8 @@ INLINE void exg( void )
 		case 0x89:	t = A; A = B; B = t;					break;
 		case 0x8a:	t = A; A = CC; CC = t;					break;
 		case 0x8b:	t = A; A = DP; DP = t;					break;
-		case 0x8c:	t = A; A = 0; zero = t;					break;
-		case 0x8d:	t = A; A = 0; zero = t;					break;
+		case 0x8c:	t = A; A = 0; zero = t; 				break;
+		case 0x8d:	t = A; A = 0; zero = t; 				break;
 		case 0x8e:	t = A; A = E; E = t;					break;
 		case 0x8f:	t = A; A = F; F = t;					break;
 		case 0x90:	t = D; D = D; D = t;					break;
@@ -509,8 +509,8 @@ INLINE void exg( void )
 		case 0x99:	t = B; B = B; B = t;					break;
 		case 0x9a:	t = B; B = CC; CC = t;					break;
 		case 0x9b:	t = B; B = DP; DP = t;					break;
-		case 0x9c:	t = B; B = 0; zero = t;					break;
-		case 0x9d:	t = B; B = 0; zero = t;					break;
+		case 0x9c:	t = B; B = 0; zero = t; 				break;
+		case 0x9d:	t = B; B = 0; zero = t; 				break;
 		case 0x9e:	t = B; B = E; E = t;					break;
 		case 0x9f:	t = B; B = F; F = t;					break;
 		case 0xa0:	t = CC; CC = D; D = t;					break;
@@ -518,7 +518,7 @@ INLINE void exg( void )
 		case 0xa2:	t = CC; CC = Y; Y = t;					break;
 		case 0xa3:	t = CC; CC = U; U = t;					break;
 		case 0xa4:	t = CC; CC = S; S = t;					break;
-		case 0xa5:	t = CC; CC = PC; PC = t; CHANGE_PC;		break;
+		case 0xa5:	t = CC; CC = PC; PC = t; CHANGE_PC; 	break;
 		case 0xa6:	t = CC; CC = W; W = t;					break;
 		case 0xa7:	t = CC; CC = V; V = t;					break;
 		case 0xa8:	t = CC; CC = A; A = t;					break;
@@ -534,7 +534,7 @@ INLINE void exg( void )
 		case 0xb2:	t = DP; DP = Y; Y = t;					break;
 		case 0xb3:	t = DP; DP = U; U = t;					break;
 		case 0xb4:	t = DP; DP = S; S = t;					break;
-		case 0xb5:	t = DP; DP = PC; PC = t; CHANGE_PC;		break;
+		case 0xb5:	t = DP; DP = PC; PC = t; CHANGE_PC; 	break;
 		case 0xb6:	t = DP; DP = W; W = t;					break;
 		case 0xb7:	t = DP; DP = V; V = t;					break;
 		case 0xb8:	t = DP; DP = A; A = t;					break;
@@ -545,38 +545,38 @@ INLINE void exg( void )
 		case 0xbd:	t = DP; DP = 0; zero = t;				break;
 		case 0xbe:	t = DP; DP = E; E = t;					break;
 		case 0xbf:	t = DP; DP = F; F = t;					break;
-		case 0xc0:	t = 0; zero = D; D = t;					break;
-		case 0xc1:	t = 0; zero = X; X = t;					break;
-		case 0xc2:	t = 0; zero = Y; Y = t;					break;
-		case 0xc3:	t = 0; zero = U; U = t;					break;
-		case 0xc4:	t = 0; zero = S; S = t;					break;
+		case 0xc0:	t = 0; zero = D; D = t; 				break;
+		case 0xc1:	t = 0; zero = X; X = t; 				break;
+		case 0xc2:	t = 0; zero = Y; Y = t; 				break;
+		case 0xc3:	t = 0; zero = U; U = t; 				break;
+		case 0xc4:	t = 0; zero = S; S = t; 				break;
 		case 0xc5:	t = 0; zero = PC; PC = t; CHANGE_PC;	break;
-		case 0xc6:	t = 0; zero = W; W = t;					break;
-		case 0xc7:	t = 0; zero = V; V = t;					break;
-		case 0xc8:	t = 0; zero = A; A = t;					break;
-		case 0xc9:	t = 0; zero = B; B = t;					break;
+		case 0xc6:	t = 0; zero = W; W = t; 				break;
+		case 0xc7:	t = 0; zero = V; V = t; 				break;
+		case 0xc8:	t = 0; zero = A; A = t; 				break;
+		case 0xc9:	t = 0; zero = B; B = t; 				break;
 		case 0xca:	t = 0; zero = CC; CC = t;				break;
 		case 0xcb:	t = 0; zero = DP; DP = t;				break;
 		case 0xcc:	t = 0; zero = 0; zero = t;				break;
 		case 0xcd:	t = 0; zero = 0; zero = t;				break;
-		case 0xce:	t = 0; zero = E; E = t;					break;
-		case 0xcf:	t = 0; zero = F; F = t;					break;
-		case 0xd0:	t = 0; zero = D; D = t;					break;
-		case 0xd1:	t = 0; zero = X; X = t;					break;
-		case 0xd2:	t = 0; zero = Y; Y = t;					break;
-		case 0xd3:	t = 0; zero = U; U = t;					break;
-		case 0xd4:	t = 0; zero = S; S = t;					break;
+		case 0xce:	t = 0; zero = E; E = t; 				break;
+		case 0xcf:	t = 0; zero = F; F = t; 				break;
+		case 0xd0:	t = 0; zero = D; D = t; 				break;
+		case 0xd1:	t = 0; zero = X; X = t; 				break;
+		case 0xd2:	t = 0; zero = Y; Y = t; 				break;
+		case 0xd3:	t = 0; zero = U; U = t; 				break;
+		case 0xd4:	t = 0; zero = S; S = t; 				break;
 		case 0xd5:	t = 0; zero = PC; PC = t; CHANGE_PC;	break;
-		case 0xd6:	t = 0; zero = W; W = t;					break;
-		case 0xd7:	t = 0; zero = V; V = t;					break;
-		case 0xd8:	t = 0; zero = A; A = t;					break;
-		case 0xd9:	t = 0; zero = B; B = t;					break;
+		case 0xd6:	t = 0; zero = W; W = t; 				break;
+		case 0xd7:	t = 0; zero = V; V = t; 				break;
+		case 0xd8:	t = 0; zero = A; A = t; 				break;
+		case 0xd9:	t = 0; zero = B; B = t; 				break;
 		case 0xda:	t = 0; zero = CC; CC = t;				break;
 		case 0xdb:	t = 0; zero = DP; DP = t;				break;
 		case 0xdc:	t = 0; zero = 0; zero = t;				break;
 		case 0xdd:	t = 0; zero = 0; zero = t;				break;
-		case 0xde:	t = 0; zero = E; E = t;					break;
-		case 0xdf:	t = 0; zero = F; F = t;					break;
+		case 0xde:	t = 0; zero = E; E = t; 				break;
+		case 0xdf:	t = 0; zero = F; F = t; 				break;
 		case 0xe0:	t = W; W = D; D = t;					break;
 		case 0xe1:	t = W; W = X; X = t;					break;
 		case 0xe2:	t = W; W = Y; Y = t;					break;
@@ -589,8 +589,8 @@ INLINE void exg( void )
 		case 0xe9:	t = E; E = B; B = t;					break;
 		case 0xea:	t = E; E = CC; CC = t;					break;
 		case 0xeb:	t = E; E = DP; DP = t;					break;
-		case 0xec:	t = E; E = 0; zero = t;					break;
-		case 0xed:	t = E; E = 0; zero = t;					break;
+		case 0xec:	t = E; E = 0; zero = t; 				break;
+		case 0xed:	t = E; E = 0; zero = t; 				break;
 		case 0xee:	t = E; E = E; E = t;					break;
 		case 0xef:	t = E; E = F; F = t;					break;
 		case 0xf0:	t = W; W = D; D = t;					break;
@@ -605,8 +605,8 @@ INLINE void exg( void )
 		case 0xf9:	t = F; F = B; B = t;					break;
 		case 0xfa:	t = F; F = CC; CC = t;					break;
 		case 0xfb:	t = F; F = DP; DP = t;					break;
-		case 0xfc:	t = F; F = 0; zero = t;					break;
-		case 0xfd:	t = F; F = 0; zero = t;					break;
+		case 0xfc:	t = F; F = 0; zero = t; 				break;
+		case 0xfd:	t = F; F = 0; zero = t; 				break;
 		case 0xfe:	t = F; F = E; E = t;					break;
 		case 0xff:	t = F; F = F; F = t;					break;
 	}
@@ -616,7 +616,7 @@ INLINE void tfr( void )
 {
 	UINT8 tb;
 	UINT16 zero = 0;
-	
+
 	IMMBYTE(tb);
 	switch(tb)
 	{
@@ -632,8 +632,8 @@ INLINE void tfr( void )
 		case 0x09:	D=D;				break;
 		case 0x0a:	CC=D;				break;
 		case 0x0b:	DP=D;				break;
-		case 0x0c:	zero=D;				break;
-		case 0x0d:	zero=D;				break;
+		case 0x0c:	zero=D; 			break;
+		case 0x0d:	zero=D; 			break;
 		case 0x0e:	W=D;				break;
 		case 0x0f:	W=D;				break;
 		case 0x10:	D=X;				break;
@@ -648,8 +648,8 @@ INLINE void tfr( void )
 		case 0x19:	D=X;				break;
 		case 0x1a:	CC=X;				break;
 		case 0x1b:	DP=X;				break;
-		case 0x1c:	zero=X;				break;
-		case 0x1d:	zero=X;				break;
+		case 0x1c:	zero=X; 			break;
+		case 0x1d:	zero=X; 			break;
 		case 0x1e:	W=X;				break;
 		case 0x1f:	W=X;				break;
 		case 0x20:	D=Y;				break;
@@ -664,8 +664,8 @@ INLINE void tfr( void )
 		case 0x29:	D=Y;				break;
 		case 0x2a:	CC=Y;				break;
 		case 0x2b:	DP=Y;				break;
-		case 0x2c:	zero=Y;				break;
-		case 0x2d:	zero=Y;				break;
+		case 0x2c:	zero=Y; 			break;
+		case 0x2d:	zero=Y; 			break;
 		case 0x2e:	W=Y;				break;
 		case 0x2f:	W=Y;				break;
 		case 0x30:	D=U;				break;
@@ -680,8 +680,8 @@ INLINE void tfr( void )
 		case 0x39:	D=U;				break;
 		case 0x3a:	CC=U;				break;
 		case 0x3b:	DP=U;				break;
-		case 0x3c:	zero=U;				break;
-		case 0x3d:	zero=U;				break;
+		case 0x3c:	zero=U; 			break;
+		case 0x3d:	zero=U; 			break;
 		case 0x3e:	W=U;				break;
 		case 0x3f:	W=U;				break;
 		case 0x40:	D=S;				break;
@@ -696,8 +696,8 @@ INLINE void tfr( void )
 		case 0x49:	D=S;				break;
 		case 0x4a:	CC=S;				break;
 		case 0x4b:	DP=S;				break;
-		case 0x4c:	zero=S;				break;
-		case 0x4d:	zero=S;				break;
+		case 0x4c:	zero=S; 			break;
+		case 0x4d:	zero=S; 			break;
 		case 0x4e:	W=S;				break;
 		case 0x4f:	W=S;				break;
 		case 0x50:	D=PC;				break;
@@ -728,8 +728,8 @@ INLINE void tfr( void )
 		case 0x69:	D=W;				break;
 		case 0x6a:	CC=W;				break;
 		case 0x6b:	DP=W;				break;
-		case 0x6c:	zero=W;				break;
-		case 0x6d:	zero=W;				break;
+		case 0x6c:	zero=W; 			break;
+		case 0x6d:	zero=W; 			break;
 		case 0x6e:	W=W;				break;
 		case 0x6f:	W=W;				break;
 		case 0x70:	D=V;				break;
@@ -744,8 +744,8 @@ INLINE void tfr( void )
 		case 0x79:	D=V;				break;
 		case 0x7a:	CC=V;				break;
 		case 0x7b:	DP=V;				break;
-		case 0x7c:	zero=V;				break;
-		case 0x7d:	zero=V;				break;
+		case 0x7c:	zero=V; 			break;
+		case 0x7d:	zero=V; 			break;
 		case 0x7e:	W=V;				break;
 		case 0x7f:	W=V;				break;
 		case 0x80:	D=D;				break;
@@ -760,8 +760,8 @@ INLINE void tfr( void )
 		case 0x89:	B=A;				break;
 		case 0x8a:	CC=A;				break;
 		case 0x8b:	DP=A;				break;
-		case 0x8c:	zero=A;				break;
-		case 0x8d:	zero=A;				break;
+		case 0x8c:	zero=A; 			break;
+		case 0x8d:	zero=A; 			break;
 		case 0x8e:	E=A;				break;
 		case 0x8f:	F=A;				break;
 		case 0x90:	D=D;				break;
@@ -776,8 +776,8 @@ INLINE void tfr( void )
 		case 0x99:	B=B;				break;
 		case 0x9a:	CC=B;				break;
 		case 0x9b:	DP=B;				break;
-		case 0x9c:	zero=B;				break;
-		case 0x9d:	zero=B;				break;
+		case 0x9c:	zero=B; 			break;
+		case 0x9d:	zero=B; 			break;
 		case 0x9e:	E=B;				break;
 		case 0x9f:	F=B;				break;
 		case 0xa0:	D=CC;				break;
@@ -824,8 +824,8 @@ INLINE void tfr( void )
 		case 0xc9:	B=0;				break;
 		case 0xca:	CC=0;				break;
 		case 0xcb:	DP=0;				break;
-		case 0xcc:	zero=0;				break;
-		case 0xcd:	zero=0;				break;
+		case 0xcc:	zero=0; 			break;
+		case 0xcd:	zero=0; 			break;
 		case 0xce:	E=0;				break;
 		case 0xcf:	F=0;				break;
 		case 0xd0:	D=0;				break;
@@ -840,8 +840,8 @@ INLINE void tfr( void )
 		case 0xd9:	B=0;				break;
 		case 0xda:	CC=0;				break;
 		case 0xdb:	DP=0;				break;
-		case 0xdc:	zero=0;				break;
-		case 0xdd:	zero=0;				break;
+		case 0xdc:	zero=0; 			break;
+		case 0xdd:	zero=0; 			break;
 		case 0xde:	E=0;				break;
 		case 0xdf:	F=0;				break;
 		case 0xe0:	D=W;				break;
@@ -856,8 +856,8 @@ INLINE void tfr( void )
 		case 0xe9:	B=E;				break;
 		case 0xea:	CC=E;				break;
 		case 0xeb:	DP=E;				break;
-		case 0xec:	zero=E;				break;
-		case 0xed:	zero=E;				break;
+		case 0xec:	zero=E; 			break;
+		case 0xed:	zero=E; 			break;
 		case 0xee:	E=E;				break;
 		case 0xef:	F=E;				break;
 		case 0xf0:	D=W;				break;
@@ -872,11 +872,11 @@ INLINE void tfr( void )
 		case 0xf9:	B=F;				break;
 		case 0xfa:	CC=F;				break;
 		case 0xfb:	DP=F;				break;
-		case 0xfc:	zero=F;				break;
-		case 0xfd:	zero=F;				break;
+		case 0xfc:	zero=F; 			break;
+		case 0xfd:	zero=F; 			break;
 		case 0xfe:	E=F;				break;
 		case 0xff:	F=F;				break;
-    }
+	}
 }
 
 #if macintosh
@@ -889,7 +889,7 @@ INLINE void bra( void )
 	UINT8 t;
 	IMMBYTE(t);
 	PC += SIGNED(t);
-    CHANGE_PC;
+	CHANGE_PC;
 	/* JB 970823 - speed up busy loops */
 	if( t == 0xfe )
 		if( hd6309_ICount > 0 ) hd6309_ICount = 0;
@@ -1080,9 +1080,9 @@ INLINE void lble( void )
 #pragma mark ____3x____
 #endif
 
-#define REG_TO_REG( immediate )							\
+#define REG_TO_REG( immediate ) 						\
 {														\
-	switch( immediate )									\
+	switch( immediate ) 								\
 	{													\
 		case 0x00:	MATH16(D,D);				break;	\
 		case 0x01:	MATH16(D,X);				break;	\
@@ -1096,8 +1096,8 @@ INLINE void lble( void )
 		case 0x09:	MATH16(D,D);				break;	\
 		case 0x0a:	MATH16(D,CC);				break;	\
 		case 0x0b:	MATH16(D,DP);				break;	\
-		case 0x0c:	MATH16(D,zero);				break;	\
-		case 0x0d:	MATH16(D,zero);				break;	\
+		case 0x0c:	MATH16(D,zero); 			break;	\
+		case 0x0d:	MATH16(D,zero); 			break;	\
 		case 0x0e:	MATH16(D,W);				break;	\
 		case 0x0f:	MATH16(D,W);				break;	\
 		case 0x10:	MATH16(X,D);				break;	\
@@ -1112,8 +1112,8 @@ INLINE void lble( void )
 		case 0x19:	MATH16(X,D);				break;	\
 		case 0x1a:	MATH16(X,CC);				break;	\
 		case 0x1b:	MATH16(X,DP);				break;	\
-		case 0x1c:	MATH16(X,zero);				break;	\
-		case 0x1d:	MATH16(X,zero);				break;	\
+		case 0x1c:	MATH16(X,zero); 			break;	\
+		case 0x1d:	MATH16(X,zero); 			break;	\
 		case 0x1e:	MATH16(X,W);				break;	\
 		case 0x1f:	MATH16(X,W);				break;	\
 		case 0x20:	MATH16(Y,D);				break;	\
@@ -1128,8 +1128,8 @@ INLINE void lble( void )
 		case 0x29:	MATH16(Y,D);				break;	\
 		case 0x2a:	MATH16(Y,CC);				break;	\
 		case 0x2b:	MATH16(Y,DP);				break;	\
-		case 0x2c:	MATH16(Y,zero);				break;	\
-		case 0x2d:	MATH16(Y,zero);				break;	\
+		case 0x2c:	MATH16(Y,zero); 			break;	\
+		case 0x2d:	MATH16(Y,zero); 			break;	\
 		case 0x2e:	MATH16(Y,W);				break;	\
 		case 0x2f:	MATH16(Y,W);				break;	\
 		case 0x30:	MATH16(U,D);				break;	\
@@ -1144,8 +1144,8 @@ INLINE void lble( void )
 		case 0x39:	MATH16(U,D);				break;	\
 		case 0x3a:	MATH16(U,CC);				break;	\
 		case 0x3b:	MATH16(U,DP);				break;	\
-		case 0x3c:	MATH16(U,zero);				break;	\
-		case 0x3d:	MATH16(U,zero);				break;	\
+		case 0x3c:	MATH16(U,zero); 			break;	\
+		case 0x3d:	MATH16(U,zero); 			break;	\
 		case 0x3e:	MATH16(U,W);				break;	\
 		case 0x3f:	MATH16(U,W);				break;	\
 		case 0x40:	MATH16(S,D);				break;	\
@@ -1160,8 +1160,8 @@ INLINE void lble( void )
 		case 0x49:	MATH16(S,D);				break;	\
 		case 0x4a:	MATH16(S,CC);				break;	\
 		case 0x4b:	MATH16(S,DP);				break;	\
-		case 0x4c:	MATH16(S,zero);				break;	\
-		case 0x4d:	MATH16(S,zero);				break;	\
+		case 0x4c:	MATH16(S,zero); 			break;	\
+		case 0x4d:	MATH16(S,zero); 			break;	\
 		case 0x4e:	MATH16(S,W);				break;	\
 		case 0x4f:	MATH16(S,W);				break;	\
 		case 0x50:	MATH16(PC,D);				break;	\
@@ -1192,8 +1192,8 @@ INLINE void lble( void )
 		case 0x69:	MATH16(W,D);				break;	\
 		case 0x6a:	MATH16(W,CC);				break;	\
 		case 0x6b:	MATH16(W,DP);				break;	\
-		case 0x6c:	MATH16(W,zero);				break;	\
-		case 0x6d:	MATH16(W,zero);				break;	\
+		case 0x6c:	MATH16(W,zero); 			break;	\
+		case 0x6d:	MATH16(W,zero); 			break;	\
 		case 0x6e:	MATH16(W,W);				break;	\
 		case 0x6f:	MATH16(W,W);				break;	\
 		case 0x70:	MATH16(V,D);				break;	\
@@ -1208,8 +1208,8 @@ INLINE void lble( void )
 		case 0x79:	MATH16(V,D);				break;	\
 		case 0x7a:	MATH16(V,CC);				break;	\
 		case 0x7b:	MATH16(V,DP);				break;	\
-		case 0x7c:	MATH16(V,zero);				break;	\
-		case 0x7d:	MATH16(V,zero);				break;	\
+		case 0x7c:	MATH16(V,zero); 			break;	\
+		case 0x7d:	MATH16(V,zero); 			break;	\
 		case 0x7e:	MATH16(V,W);				break;	\
 		case 0x7f:	MATH16(V,W);				break;	\
 		case 0x80:	MATH16(D,D);				break;	\
@@ -1220,14 +1220,14 @@ INLINE void lble( void )
 		case 0x85:	MATH16(D,PC); CHANGE_PC;	break;	\
 		case 0x86:	MATH16(D,W);				break;	\
 		case 0x87:	MATH16(D,V);				break;	\
-		case 0x88:	MATH8(A,A);					break;	\
-		case 0x89:	MATH8(A,B);					break;	\
+		case 0x88:	MATH8(A,A); 				break;	\
+		case 0x89:	MATH8(A,B); 				break;	\
 		case 0x8a:	MATH8(A,CC);				break;	\
 		case 0x8b:	MATH8(A,DP);				break;	\
-		case 0x8c:	MATH16(A,zero);				break;	\
-		case 0x8d:	MATH16(A,zero);				break;	\
-		case 0x8e:	MATH8(A,E);					break;	\
-		case 0x8f:	MATH8(A,F);					break;	\
+		case 0x8c:	MATH16(A,zero); 			break;	\
+		case 0x8d:	MATH16(A,zero); 			break;	\
+		case 0x8e:	MATH8(A,E); 				break;	\
+		case 0x8f:	MATH8(A,F); 				break;	\
 		case 0x90:	MATH16(D,D);				break;	\
 		case 0x91:	MATH16(D,X);				break;	\
 		case 0x92:	MATH16(D,Y);				break;	\
@@ -1236,14 +1236,14 @@ INLINE void lble( void )
 		case 0x95:	MATH16(D,PC); CHANGE_PC;	break;	\
 		case 0x96:	MATH16(D,W);				break;	\
 		case 0x97:	MATH16(D,V);				break;	\
-		case 0x98:	MATH8(B,A);					break;	\
-		case 0x99:	MATH8(B,B);					break;	\
+		case 0x98:	MATH8(B,A); 				break;	\
+		case 0x99:	MATH8(B,B); 				break;	\
 		case 0x9a:	MATH8(B,CC);				break;	\
 		case 0x9b:	MATH8(B,DP);				break;	\
-		case 0x9c:	MATH16(B,zero);				break;	\
-		case 0x9d:	MATH16(B,zero);				break;	\
-		case 0x9e:	MATH8(B,E);					break;	\
-		case 0x9f:	MATH8(B,F);					break;	\
+		case 0x9c:	MATH16(B,zero); 			break;	\
+		case 0x9d:	MATH16(B,zero); 			break;	\
+		case 0x9e:	MATH8(B,E); 				break;	\
+		case 0x9f:	MATH8(B,F); 				break;	\
 		case 0xa0:	MATH16(CC,D);				break;	\
 		case 0xa1:	MATH16(CC,X);				break;	\
 		case 0xa2:	MATH16(CC,Y);				break;	\
@@ -1284,14 +1284,14 @@ INLINE void lble( void )
 		case 0xc5:	MATH16(0,PC); CHANGE_PC;	break;	\
 		case 0xc6:	MATH16(0,W);				break;	\
 		case 0xc7:	MATH16(0,V);				break;	\
-		case 0xc8:	MATH8(0,A);					break;	\
-		case 0xc9:	MATH8(0,B);					break;	\
+		case 0xc8:	MATH8(0,A); 				break;	\
+		case 0xc9:	MATH8(0,B); 				break;	\
 		case 0xca:	MATH8(0,CC);				break;	\
 		case 0xcb:	MATH8(0,DP);				break;	\
-		case 0xcc:	MATH16(0,zero);				break;	\
-		case 0xcd:	MATH16(0,zero);				break;	\
-		case 0xce:	MATH8(0,E);					break;	\
-		case 0xcf:	MATH8(0,F);					break;	\
+		case 0xcc:	MATH16(0,zero); 			break;	\
+		case 0xcd:	MATH16(0,zero); 			break;	\
+		case 0xce:	MATH8(0,E); 				break;	\
+		case 0xcf:	MATH8(0,F); 				break;	\
 		case 0xd0:	MATH16(0,D);				break;	\
 		case 0xd1:	MATH16(0,X);				break;	\
 		case 0xd2:	MATH16(0,Y);				break;	\
@@ -1300,14 +1300,14 @@ INLINE void lble( void )
 		case 0xd5:	MATH16(0,PC); CHANGE_PC;	break;	\
 		case 0xd6:	MATH16(0,W);				break;	\
 		case 0xd7:	MATH16(0,V);				break;	\
-		case 0xd8:	MATH8(0,A);					break;	\
-		case 0xd9:	MATH8(0,B);					break;	\
+		case 0xd8:	MATH8(0,A); 				break;	\
+		case 0xd9:	MATH8(0,B); 				break;	\
 		case 0xda:	MATH8(0,CC);				break;	\
 		case 0xdb:	MATH8(0,DP);				break;	\
-		case 0xdc:	MATH16(0,zero);				break;	\
-		case 0xdd:	MATH16(0,zero);				break;	\
-		case 0xde:	MATH8(0,E);					break;	\
-		case 0xdf:	MATH8(0,F);					break;	\
+		case 0xdc:	MATH16(0,zero); 			break;	\
+		case 0xdd:	MATH16(0,zero); 			break;	\
+		case 0xde:	MATH8(0,E); 				break;	\
+		case 0xdf:	MATH8(0,F); 				break;	\
 		case 0xe0:	MATH16(W,D);				break;	\
 		case 0xe1:	MATH16(W,X);				break;	\
 		case 0xe2:	MATH16(W,Y);				break;	\
@@ -1316,14 +1316,14 @@ INLINE void lble( void )
 		case 0xe5:	MATH16(W,PC); CHANGE_PC;	break;	\
 		case 0xe6:	MATH16(W,W);				break;	\
 		case 0xe7:	MATH16(W,V);				break;	\
-		case 0xe8:	MATH8(E,A);					break;	\
-		case 0xe9:	MATH8(E,B);					break;	\
+		case 0xe8:	MATH8(E,A); 				break;	\
+		case 0xe9:	MATH8(E,B); 				break;	\
 		case 0xea:	MATH8(E,CC);				break;	\
 		case 0xeb:	MATH8(E,DP);				break;	\
-		case 0xec:	MATH16(E,zero);				break;	\
-		case 0xed:	MATH16(E,zero);				break;	\
-		case 0xee:	MATH8(E,E);					break;	\
-		case 0xef:	MATH8(E,F);					break;	\
+		case 0xec:	MATH16(E,zero); 			break;	\
+		case 0xed:	MATH16(E,zero); 			break;	\
+		case 0xee:	MATH8(E,E); 				break;	\
+		case 0xef:	MATH8(E,F); 				break;	\
 		case 0xf0:	MATH16(W,D);				break;	\
 		case 0xf1:	MATH16(W,X);				break;	\
 		case 0xf2:	MATH16(W,Y);				break;	\
@@ -1332,14 +1332,14 @@ INLINE void lble( void )
 		case 0xf5:	MATH16(W,PC); CHANGE_PC;	break;	\
 		case 0xf6:	MATH16(W,W);				break;	\
 		case 0xf7:	MATH16(W,V);				break;	\
-		case 0xf8:	MATH8(F,A);					break;	\
-		case 0xf9:	MATH8(F,B);					break;	\
+		case 0xf8:	MATH8(F,A); 				break;	\
+		case 0xf9:	MATH8(F,B); 				break;	\
 		case 0xfa:	MATH8(F,CC);				break;	\
 		case 0xfb:	MATH8(F,DP);				break;	\
-		case 0xfc:	MATH16(F,zero);				break;	\
-		case 0xfd:	MATH16(F,zero);				break;	\
-		case 0xfe:	MATH8(F,E);					break;	\
-		case 0xff:	MATH8(F,F);					break;	\
+		case 0xfc:	MATH16(F,zero); 			break;	\
+		case 0xfd:	MATH16(F,zero); 			break;	\
+		case 0xfe:	MATH8(F,E); 				break;	\
+		case 0xff:	MATH8(F,F); 				break;	\
 		}												\
 }
 
@@ -1348,11 +1348,11 @@ INLINE void lble( void )
 {								\
 	r16 = r1 + r2;				\
 	CLR_HNZVC;					\
-	SET_FLAGS16(r1,r1,r16);		\
+	SET_FLAGS16(r1,r1,r16); 	\
 	r2 = r16;					\
 }
 
-#define MATH8( r1, r2 )			\
+#define MATH8( r1, r2 ) 		\
 {								\
 	r8 = r1 + r2;				\
 	CLR_HNZVC;					\
@@ -1365,7 +1365,7 @@ INLINE void addr_r( void )
 {
 	UINT16 t,r8, zero=0;
 	UINT32	r16;
-	
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1378,13 +1378,13 @@ INLINE void addr_r( void )
 {									\
 	r16 = r1 + r2 + (CC & CC_C);	\
 	CLR_HNZVC;						\
-	SET_FLAGS16(r1,r1,r16);			\
+	SET_FLAGS16(r1,r1,r16); 		\
 	r2 = r16;						\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
-	r8 = r1 + r2 + (CC & CC_C);		\
+	r8 = r1 + r2 + (CC & CC_C); 	\
 	CLR_HNZVC;						\
 	SET_FLAGS8(r1,r2,r8);			\
 	SET_H(r1,r2,r8);				\
@@ -1395,7 +1395,7 @@ INLINE void adcr( void )
 {
 	UINT16 t,r8, zero=0;
 	UINT32	r16;
-	
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1408,11 +1408,11 @@ INLINE void adcr( void )
 {											\
 	r16 = (UINT32)r2 - (UINT32)r1;			\
 	CLR_NZVC;								\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16);	\
+	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); \
 	r2 = r16;								\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
 	r8 = r2 - r1;					\
 	CLR_NZVC;						\
@@ -1424,7 +1424,7 @@ INLINE void subr( void )
 {
 	UINT16 t,r8, zero=0;
 	UINT32	r16;
-	
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1437,13 +1437,13 @@ INLINE void subr( void )
 {													\
 	r16 = (UINT32)r2 - (UINT32)r1 - (CC & CC_C);	\
 	CLR_NZVC;										\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16);			\
+	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); 		\
 	r2 = r16;										\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
-	r8 = r2 - r1 - (CC & CC_C);		\
+	r8 = r2 - r1 - (CC & CC_C); 	\
 	CLR_NZVC;						\
 	SET_FLAGS8(r2,r1,r8);			\
 	r2 = r8;						\
@@ -1453,7 +1453,7 @@ INLINE void sbcr( void )
 {
 	UINT16 t,r8, zero=0;
 	UINT32	r16;
-	
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1464,22 +1464,25 @@ INLINE void sbcr( void )
 /* $1034 ANDR r1 & r2 -> r2 */
 #define MATH16( r1, r2 )			\
 {									\
-	r2 = r1 & r2;					\
+	r16 = r1 & r2;					\
 	CLR_NZV;						\
-	SET_NZ16(r2);					\
+	SET_NZ16(r16);					\
+	r2 = r16;						\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
-	r2 = r1 & r2;					\
+	r8 = r1 & r2;					\
 	CLR_NZV;						\
-	SET_NZ8(r2);					\
+	SET_NZ8(r8);					\
+	r2 = r8;						\
 }
 
 INLINE void andr( void )
 {
-	UINT16 t, zero=0;
-	
+	UINT16 t,r8, zero=0;
+	UINT32	r16;
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1490,22 +1493,25 @@ INLINE void andr( void )
 /* $1035 ORR r1 | r2 -> r2 */
 #define MATH16( r1, r2 )			\
 {									\
-	r2 = r1 | r2;					\
+	r16 = r1 | r2;					\
 	CLR_NZV;						\
-	SET_NZ16(r2);					\
+	SET_NZ16(r16);					\
+	r2 = r16;						\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
-	r2 = r1 | r2;					\
+	r8 = r1 | r2;					\
 	CLR_NZV;						\
-	SET_NZ8(r2);					\
+	SET_NZ8(r8);					\
+	r2 = r8;						\
 }
 
 INLINE void orr( void )
 {
-	UINT16 t, zero=0;
-	
+	UINT16 t,r8, zero=0;
+	UINT32	r16;
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1516,22 +1522,25 @@ INLINE void orr( void )
 /* $1036 EORR r1 ^ r2 -> r2 */
 #define MATH16( r1, r2 )			\
 {									\
-	r2 = r1 ^ r2;					\
+	r16 = r1 ^ r2;					\
 	CLR_NZV;						\
-	SET_NZ16(r2);					\
+	SET_NZ16(r16);					\
+	r2 = r16;						\
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
-	r2 = r1 ^ r2;					\
+	r8 = r1 ^ r2;					\
 	CLR_NZV;						\
-	SET_NZ8(r2);					\
+	SET_NZ8(r8);					\
+	r2 = r8;						\
 }
 
 INLINE void eorr( void )
 {
-	UINT16 t, zero=0;
-	
+	UINT16 t,r8, zero=0;
+	UINT32	r16;
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1544,10 +1553,10 @@ INLINE void eorr( void )
 {											\
 	r16 = (UINT32)r2 - (UINT32)r1;			\
 	CLR_NZVC;								\
-	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16);	\
+	SET_FLAGS16((UINT32)r2,(UINT32)r1,r16); \
 }
 
-#define MATH8( r1, r2 )				\
+#define MATH8( r1, r2 ) 			\
 {									\
 	r8 = r2 - r1;					\
 	CLR_NZVC;						\
@@ -1558,7 +1567,7 @@ INLINE void cmpr( void )
 {
 	UINT16 t,r8, zero=0;
 	UINT32	r16;
-	
+
 	IMMBYTE(t);
 
 	REG_TO_REG( t );
@@ -1598,7 +1607,7 @@ IlegalInstructionError;
 INLINE void leax( void )
 {
 	fetch_effective_address();
-    X = EA;
+	X = EA;
 	CLR_Z;
 	SET_Z(X);
 }
@@ -1607,7 +1616,7 @@ INLINE void leax( void )
 INLINE void leay( void )
 {
 	fetch_effective_address();
-    Y = EA;
+	Y = EA;
 	CLR_Z;
 	SET_Z(Y);
 }
@@ -1616,7 +1625,7 @@ INLINE void leay( void )
 INLINE void leas( void )
 {
 	fetch_effective_address();
-    S = EA;
+	S = EA;
 	hd6309.int_state |= HD6309_LDS;
 }
 
@@ -1624,7 +1633,7 @@ INLINE void leas( void )
 INLINE void leau( void )
 {
 	fetch_effective_address();
-    U = EA;
+	U = EA;
 }
 
 /* $34 PSHS inherent ----- */
@@ -1740,14 +1749,14 @@ INLINE void rti( void )
 	t = CC & CC_E;		/* HJB 990225: entire state saved? */
 	if(t)
 	{
-        hd6309_ICount -= 9;
+		hd6309_ICount -= 9;
 		PULLBYTE(A);
 		PULLBYTE(B);
-		if ( MD & MD_EM )											
-		{															
-			PUSHBYTE(E);											
-			PUSHBYTE(F);											
-		}															
+		if ( MD & MD_EM )
+		{
+			PUSHBYTE(E);
+			PUSHBYTE(F);
+		}
 		PULLBYTE(DP);
 		PULLWORD(XD);
 		PULLWORD(YD);
@@ -1765,26 +1774,26 @@ INLINE void cwai( void )
 	IMMBYTE(t);
 	CC &= t;
 	/*
-     * CWAI stacks the entire machine state on the hardware stack,
-     * then waits for an interrupt; when the interrupt is taken
-     * later, the state is *not* saved again after CWAI.
-     */
+	 * CWAI stacks the entire machine state on the hardware stack,
+	 * then waits for an interrupt; when the interrupt is taken
+	 * later, the state is *not* saved again after CWAI.
+	 */
 	CC |= CC_E; 		/* HJB 990225: save entire state */
 	PUSHWORD(pPC);
 	PUSHWORD(pU);
 	PUSHWORD(pY);
 	PUSHWORD(pX);
 	PUSHBYTE(DP);
-	if ( MD & MD_EM )											
-	{															
-		PUSHBYTE(E);											
-		PUSHBYTE(F);											
-	}															
+	if ( MD & MD_EM )
+	{
+		PUSHBYTE(E);
+		PUSHBYTE(F);
+	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
 	hd6309.int_state |= HD6309_CWAI;	 /* HJB 990228 */
-    CHECK_IRQ_LINES();    /* HJB 990116 */
+	CHECK_IRQ_LINES();	  /* HJB 990116 */
 	if( hd6309.int_state & HD6309_CWAI )
 		if( hd6309_ICount > 0 )
 			hd6309_ICount = 0;
@@ -1810,11 +1819,11 @@ INLINE void swi( void )
 	PUSHWORD(pY);
 	PUSHWORD(pX);
 	PUSHBYTE(DP);
-	if ( MD & MD_EM )											
-	{															
-		PUSHBYTE(F);											
-		PUSHBYTE(E);											
-	}															
+	if ( MD & MD_EM )
+	{
+		PUSHBYTE(F);
+		PUSHBYTE(E);
+	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
 	PUSHBYTE(CC);
@@ -1823,9 +1832,9 @@ INLINE void swi( void )
 	CHANGE_PC;
 }
 
-#define BIT_TRANSFER_MODES( immediate )						\
+#define BIT_TRANSFER_MODES( immediate ) 					\
 {															\
-	switch( immediate )										\
+	switch( immediate ) 									\
 	{														\
 		case 0x00:	LOGICAL_OP( CC, 0x01, 0x01 );	break;	\
 		case 0x01:	LOGICAL_OP( CC, 0x01, 0x02 );	break;	\
@@ -2087,182 +2096,183 @@ INLINE void swi( void )
 }
 
 /* $1130 BAND */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( (( r & m1) & ( db & m2 )) == 1 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void band( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1131 BIAND */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( (( r & m1) & ( db & m2 )) == 0 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void biand( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1132 BOR */
-#define LOGICAL_OP( r, m1, m2 )					\
+#define LOGICAL_OP( r, m1, m2 ) 				\
 {											\
 	if ( (( r & m1) | ( db & m2 )) == 1 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void bor( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1133 BIOR */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( (( r & m1) | ( db & m2 )) == 0 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void bior( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1134 BEOR */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( (( r & m1) ^ ( db & m2 )) == 1 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void beor( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1135 BIEOR */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( (( r & m1) ^ ( db & m2 )) == 0 )	\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void bieor( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1133 LDBT */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
-	if ( ( db & m2 ) == 1 )					\
+	if ( ( db & m2 ) == 1 ) 				\
 		r |= m2;							\
 	else									\
-		r &= ~(m2);							\
+		r &= ~(m2); 						\
 }
 
 INLINE void ldbt( void )
 {
 	UINT8	t;
-	UINT16 db = 0;
+	UINT16	db;
 
 	IMMBYTE(t);
-	
+	DIRBYTE(db);
+
 	BIT_TRANSFER_MODES( t );
 }
 
 #undef LOGICAL_OP
 
 /* $1134 STBT */
-#define LOGICAL_OP( r, m1, m2 )				\
+#define LOGICAL_OP( r, m1, m2 ) 			\
 {											\
 	if ( ( r & m1) == 1 )					\
 		WM(EAD,(db | m2));					\
 	else									\
-		WM(EAD,(db & (~(m2))));				\
+		WM(EAD,(db & (~(m2)))); 			\
 }
 
 INLINE void stbt( void )
 {
 	UINT8	t;
 	UINT16	db;
-	
+
 	IMMBYTE(t);
 	DIRBYTE(db);
-	DIRECT;	
-	
+	DIRECT;
+
 	BIT_TRANSFER_MODES( t );
 }
 
@@ -2277,14 +2287,14 @@ INLINE void swi2( void )
 	PUSHWORD(pY);
 	PUSHWORD(pX);
 	PUSHBYTE(DP);
-	if ( MD & MD_EM )											
-	{															
-		PUSHBYTE(F);											
-		PUSHBYTE(E);											
-	}															
+	if ( MD & MD_EM )
+	{
+		PUSHBYTE(F);
+		PUSHBYTE(E);
+	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
-    PUSHBYTE(CC);
+	PUSHBYTE(CC);
 	PCD = RM16(0xfff4);
 	CHANGE_PC;
 }
@@ -2298,14 +2308,14 @@ INLINE void swi3( void )
 	PUSHWORD(pY);
 	PUSHWORD(pX);
 	PUSHBYTE(DP);
-	if ( MD & MD_EM )											
-	{															
-		PUSHBYTE(F);											
-		PUSHBYTE(E);											
-	}															
+	if ( MD & MD_EM )
+	{
+		PUSHBYTE(F);
+		PUSHBYTE(E);
+	}
 	PUSHBYTE(B);
 	PUSHBYTE(A);
-    PUSHBYTE(CC);
+	PUSHBYTE(CC);
 	PCD = RM16(0xfff2);
 	CHANGE_PC;
 }
@@ -2976,7 +2986,7 @@ INLINE void jmp_ix( void )
 INLINE void clr_ix( void )
 {
 	fetch_effective_address();
-    WM(EAD,0);
+	WM(EAD,0);
 	CLR_NZVC; SEZ;
 }
 
@@ -3382,10 +3392,10 @@ INLINE void ldy_im( void )
 INLINE void muld_im( void )
 {
 	PAIR t;
-	
+
 	IMMWORD( t );
 	Q = (signed short) D * (signed short)t.w.l;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3393,7 +3403,7 @@ INLINE void muld_im( void )
 INLINE void divd_im( void )
 {
 	UINT8 t;
-	
+
 	IMMBYTE( t );
 	if ( t == 0 )
 	{
@@ -3404,7 +3414,7 @@ INLINE void divd_im( void )
 		W = (signed short) D / (signed char) t;
 		D = (signed short) D % (signed char) t;
 	}
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3413,13 +3423,13 @@ INLINE void divq_im( void )
 {
 	PAIR	t;
 	INT16	v;
-	
+
 	IMMWORD( t );
-	
+
 	v = (signed long) Q / (signed short) t.w.l;
 	W = (signed long) Q % (signed short) t.w.l;
 	D = v;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3665,10 +3675,10 @@ INLINE void ldx_di( void )
 INLINE void muld_di( void )
 {
 	PAIR	t;
-	
+
 	DIRWORD(t);
 	Q = (signed short) D * (signed short)t.w.l;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3676,11 +3686,11 @@ INLINE void muld_di( void )
 INLINE void divd_di( void )
 {
 	UINT8	t;
-	
+
 	DIRBYTE(t);
 	W = (signed short) D / (signed char) t;
 	D = (signed short) D % (signed char) t;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3689,12 +3699,12 @@ INLINE void divq_di( void )
 {
 	PAIR	t;
 	INT16	v;
-	
+
 	DIRWORD(t);
 	v = (signed long) Q / (signed short) t.w.l;
 	W = (signed long) Q % (signed short) t.w.l;
 	D = v;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -3787,7 +3797,7 @@ INLINE void subd_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = D;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3801,7 +3811,7 @@ INLINE void subw_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = W;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3815,7 +3825,7 @@ INLINE void cmpd_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = D;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3828,7 +3838,7 @@ INLINE void cmpw_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = W;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3841,7 +3851,7 @@ INLINE void cmpu_ix( void )
 	UINT32 r;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	r = U - b.d;
 	CLR_NZVC;
 	SET_FLAGS16(U,b.d,r);
@@ -3879,7 +3889,7 @@ INLINE void lda_ix( void )
 INLINE void sta_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ8(A);
 	WM(EAD,A);
 }
@@ -3934,7 +3944,7 @@ INLINE void cmpx_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = X;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3947,7 +3957,7 @@ INLINE void cmpy_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = Y;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3960,7 +3970,7 @@ INLINE void cmps_ix( void )
 	UINT32 r,d;
 	PAIR b;
 	fetch_effective_address();
-    b.d=RM16(EAD);
+	b.d=RM16(EAD);
 	d = S;
 	r = d - b.d;
 	CLR_NZVC;
@@ -3971,7 +3981,7 @@ INLINE void cmps_ix( void )
 INLINE void jsr_ix( void )
 {
 	fetch_effective_address();
-    PUSHWORD(pPC);
+	PUSHWORD(pPC);
 	PCD = EAD;
 	CHANGE_PC;
 }
@@ -3980,7 +3990,7 @@ INLINE void jsr_ix( void )
 INLINE void ldx_ix( void )
 {
 	fetch_effective_address();
-    X=RM16(EAD);
+	X=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(X);
 }
@@ -3989,11 +3999,11 @@ INLINE void ldx_ix( void )
 INLINE void muld_ix( void )
 {
 	UINT16	t;
-	
+
 	fetch_effective_address();
-    t=RM16(EAD);
+	t=RM16(EAD);
 	Q = (signed short) D * (signed short)t;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4001,12 +4011,12 @@ INLINE void muld_ix( void )
 INLINE void divd_ix( void )
 {
 	UINT8	t;
-	
+
 	fetch_effective_address();
-    t=RM(EAD);
+	t=RM(EAD);
 	W = (signed short) D / (signed char) t;
 	D = (signed short) D % (signed char) t;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4015,13 +4025,13 @@ INLINE void divq_ix( void )
 {
 	UINT16	t;
 	INT16	v;
-	
+
 	fetch_effective_address();
-    t=RM16(EAD);
+	t=RM16(EAD);
 	v = (signed long) Q / (signed short) t;
 	W = (signed long) Q % (signed short) t;
 	D = v;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4029,7 +4039,7 @@ INLINE void divq_ix( void )
 INLINE void ldq_ix( void )
 {
 	fetch_effective_address();
-    Q=RM32(EAD);
+	Q=RM32(EAD);
 	CLR_NZV;
 	SET_NZ32(Q);
 }
@@ -4038,7 +4048,7 @@ INLINE void ldq_ix( void )
 INLINE void ldy_ix( void )
 {
 	fetch_effective_address();
-    Y=RM16(EAD);
+	Y=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(Y);
 }
@@ -4047,7 +4057,7 @@ INLINE void ldy_ix( void )
 INLINE void stx_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(X);
 	WM16(EAD,&pX);
 }
@@ -4056,7 +4066,7 @@ INLINE void stx_ix( void )
 INLINE void stq_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ32(Q);
 	WM32(EAD,&pQ);
 }
@@ -4065,7 +4075,7 @@ INLINE void stq_ix( void )
 INLINE void sty_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(Y);
 	WM16(EAD,&pY);
 }
@@ -4305,10 +4315,10 @@ INLINE void ldx_ex( void )
 INLINE void muld_ex( void )
 {
 	PAIR	t;
-	
+
 	EXTWORD(t);
 	Q = (signed short) D * (signed short)t.w.l;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4316,11 +4326,11 @@ INLINE void muld_ex( void )
 INLINE void divd_ex( void )
 {
 	UINT8	t;
-	
+
 	EXTBYTE(t);
 	W = (signed short) D / (signed char) t;
 	D = (signed short) D % (signed char) t;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4329,12 +4339,12 @@ INLINE void divq_ex( void )
 {
 	PAIR	t;
 	INT16	v;
-	
+
 	EXTWORD(t);
 	v = (signed long) Q / (signed short) t.w.l;
 	W = (signed long) Q % (signed short) t.w.l;
 	D = v;
-	
+
 	/* Warning: Set CC */
 }
 
@@ -4568,7 +4578,7 @@ INLINE void bitmd_im( void )
 	r = MD & t;
 	CLR_NZV;
 	SET_NZ8(r);
-	
+
 	CLDZ;
 	CLII;
 }
@@ -4586,7 +4596,7 @@ INLINE void ldmd_im( void )
 {
 	IMMBYTE(MD);
 /*	CLR_NZV;	*/
-/*	SET_NZ8(B);	*/
+/*	SET_NZ8(B); */
 }
 
 /* $1186 LDE immediate -**0- */
@@ -4641,7 +4651,7 @@ INLINE void adcb_im( void )
 INLINE void adcd_im( void )
 {
 	PAIR	t;
-	UINT32 	r;
+	UINT32	r;
 	IMMWORD(t);
 	r = D + t.w.l + (CC & CC_C);
 	CLR_HNZVC;
@@ -4685,7 +4695,7 @@ INLINE void addb_im( void )
 INLINE void ldd_im( void )
 {
 	PAIR	t;
-	
+
 	IMMWORD(t);
 	D=t.w.l;
 	CLR_NZV;
@@ -5051,7 +5061,7 @@ INLINE void std_di( void )
 {
 	CLR_NZV;
 	SET_NZ16(D);
-    DIRECT;
+	DIRECT;
 	WM16_D(EAD,&pD);
 }
 
@@ -5060,7 +5070,7 @@ INLINE void stw_di( void )
 {
 	CLR_NZV;
 	SET_NZ16(W);
-    DIRECT;
+	DIRECT;
 	WM16(EAD,&pW);
 }
 
@@ -5201,8 +5211,8 @@ INLINE void sbcd_ix( void )
 INLINE void addd_ix( void )
 {
 	UINT32 r,d;
-    PAIR b;
-    fetch_effective_address();
+	PAIR b;
+	fetch_effective_address();
 	b.d=RM16(EAD);
 	d = D;
 	r = d + b.d;
@@ -5215,8 +5225,8 @@ INLINE void addd_ix( void )
 INLINE void addw_ix( void )
 {
 	UINT32 r,d;
-    PAIR b;
-    fetch_effective_address();
+	PAIR b;
+	fetch_effective_address();
 	b.d=RM16(EAD);
 	d = W;
 	r = d + b.d;
@@ -5320,7 +5330,7 @@ INLINE void ldf_ix( void )
 INLINE void stb_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ8(B);
 	WM(EAD,B);
 }
@@ -5329,7 +5339,7 @@ INLINE void stb_ix( void )
 INLINE void ste_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ8(E);
 	WM(EAD,E);
 }
@@ -5338,7 +5348,7 @@ INLINE void ste_ix( void )
 INLINE void stf_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ8(F);
 	WM(EAD,F);
 }
@@ -5421,7 +5431,7 @@ INLINE void addb_ix( void )
 INLINE void ldd_ix( void )
 {
 	fetch_effective_address();
-    D=RM16(EAD);
+	D=RM16(EAD);
 	CLR_NZV; SET_NZ16(D);
 }
 
@@ -5429,7 +5439,7 @@ INLINE void ldd_ix( void )
 INLINE void ldw_ix( void )
 {
 	fetch_effective_address();
-    W=RM16(EAD);
+	W=RM16(EAD);
 	CLR_NZV; SET_NZ16(W);
 }
 
@@ -5437,7 +5447,7 @@ INLINE void ldw_ix( void )
 INLINE void std_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(D);
 	WM16_D(EAD,&pD);
 }
@@ -5446,7 +5456,7 @@ INLINE void std_ix( void )
 INLINE void stw_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(W);
 	WM16(EAD,&pW);
 }
@@ -5455,7 +5465,7 @@ INLINE void stw_ix( void )
 INLINE void ldu_ix( void )
 {
 	fetch_effective_address();
-    U=RM16(EAD);
+	U=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(U);
 }
@@ -5464,7 +5474,7 @@ INLINE void ldu_ix( void )
 INLINE void lds_ix( void )
 {
 	fetch_effective_address();
-    S=RM16(EAD);
+	S=RM16(EAD);
 	CLR_NZV;
 	SET_NZ16(S);
 	hd6309.int_state |= HD6309_LDS;
@@ -5474,7 +5484,7 @@ INLINE void lds_ix( void )
 INLINE void stu_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(U);
 	WM16(EAD,&pU);
 }
@@ -5483,7 +5493,7 @@ INLINE void stu_ix( void )
 INLINE void sts_ix( void )
 {
 	fetch_effective_address();
-    CLR_NZV;
+	CLR_NZV;
 	SET_NZ16(S);
 	WM16(EAD,&pS);
 }
@@ -5571,7 +5581,7 @@ INLINE void sbcd_ex( void )
 {
 	PAIR	t;
 	UINT32	r;
-	
+
 	EXTWORD(t);
 	r = D - t.w.l - (CC & CC_C);
 	CLR_NZVC;
@@ -5817,7 +5827,7 @@ INLINE void std_ex( void )
 {
 	CLR_NZV;
 	SET_NZ16(D);
-    EXTENDED;
+	EXTENDED;
 	WM16_D(EAD,&pD);
 }
 
@@ -5826,7 +5836,7 @@ INLINE void stw_ex( void )
 {
 	CLR_NZV;
 	SET_NZ16(W);
-    EXTENDED;
+	EXTENDED;
 	WM16(EAD,&pW);
 }
 
@@ -5896,10 +5906,10 @@ INLINE void pref10( void )
 		case 0x35: orr();		hd6309_ICount-=4;	break;
 		case 0x36: eorr();		hd6309_ICount-=4;	break;
 		case 0x37: cmpr();		hd6309_ICount-=4;	break;
-		case 0x38: pshsw();		hd6309_ICount-=6;	break;
-		case 0x39: pulsw();		hd6309_ICount-=6;	break;
-		case 0x3a: pshuw();		hd6309_ICount-=6;	break;
-		case 0x3b: puluw();		hd6309_ICount-=6;	break;
+		case 0x38: pshsw(); 	hd6309_ICount-=6;	break;
+		case 0x39: pulsw(); 	hd6309_ICount-=6;	break;
+		case 0x3a: pshuw(); 	hd6309_ICount-=6;	break;
+		case 0x3b: puluw(); 	hd6309_ICount-=6;	break;
 		case 0x3f: swi2();		hd6309_ICount-=20;	break;
 
 		case 0x40: negd();		hd6309_ICount-=3;	break;
@@ -5986,7 +5996,7 @@ INLINE void pref10( void )
 		case 0xbf: sty_ex();	hd6309_ICount-=7;	break;
 
 		case 0xce: lds_im();	hd6309_ICount-=4;	break;
-		
+
 		case 0xdc: ldq_di();	hd6309_ICount-=8;	break;
 		case 0xdd: stq_di();	hd6309_ICount-=8;	break;
 		case 0xde: lds_di();	hd6309_ICount-=6;	break;
@@ -6014,17 +6024,17 @@ INLINE void pref11( void )
 	switch( ireg2 )
 	{
 		case 0x30: band();		hd6309_ICount-=7;	break;
-		case 0x31: biand();		hd6309_ICount-=7;	break;
+		case 0x31: biand(); 	hd6309_ICount-=7;	break;
 		case 0x32: bor();		hd6309_ICount-=7;	break;
 		case 0x33: bior();		hd6309_ICount-=7;	break;
 		case 0x34: beor();		hd6309_ICount-=7;	break;
-		case 0x35: bieor();		hd6309_ICount-=7;	break;
+		case 0x35: bieor(); 	hd6309_ICount-=7;	break;
 		case 0x36: ldbt();		hd6309_ICount-=7;	break;
 		case 0x37: stbt();		hd6309_ICount-=8;	break;
-		case 0x38: tfmpp();		hd6309_ICount-=6;	break;
-		case 0x39: tfmmm();		hd6309_ICount-=6;	break;
-		case 0x3a: tfmpc();		hd6309_ICount-=6;	break;
-		case 0x3b: tfmcp();		hd6309_ICount-=6;	break;
+		case 0x38: tfmpp(); 	hd6309_ICount-=6;	break;
+		case 0x39: tfmmm(); 	hd6309_ICount-=6;	break;
+		case 0x3a: tfmpc(); 	hd6309_ICount-=6;	break;
+		case 0x3b: tfmcp(); 	hd6309_ICount-=6;	break;
 		case 0x3c: bitmd_im();	hd6309_ICount-=4;	break;
 		case 0x3d: ldmd_im();	hd6309_ICount-=5;	break;
 		case 0x3f: swi3();		hd6309_ICount-=20;	break;
@@ -6088,19 +6098,19 @@ INLINE void pref11( void )
 		case 0xc1: cmpf_im();	hd6309_ICount-=3;	break;
 		case 0xc6: ldf_im();	hd6309_ICount-=3;	break;
 		case 0xcb: addf_im();	hd6309_ICount-=3;	break;
-		
+
 		case 0xd0: subf_di();	hd6309_ICount-=5;	break;
 		case 0xd1: cmpf_di();	hd6309_ICount-=5;	break;
 		case 0xd6: ldf_di();	hd6309_ICount-=5;	break;
 		case 0xd7: stf_di();	hd6309_ICount-=5;	break;
 		case 0xdb: addf_di();	hd6309_ICount-=5;	break;
-		
+
 		case 0xe0: subf_ix();	hd6309_ICount-=5;	break;
 		case 0xe1: cmpf_ix();	hd6309_ICount-=5;	break;
 		case 0xe6: ldf_ix();	hd6309_ICount-=5;	break;
 		case 0xe7: stf_ix();	hd6309_ICount-=5;	break;
 		case 0xeb: addf_ix();	hd6309_ICount-=5;	break;
-		
+
 		case 0xf0: subf_ex();	hd6309_ICount-=6;	break;
 		case 0xf1: cmpf_ex();	hd6309_ICount-=6;	break;
 		case 0xf6: ldf_ex();	hd6309_ICount-=6;	break;

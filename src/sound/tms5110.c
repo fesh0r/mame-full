@@ -234,6 +234,8 @@ void tms5110_process(INT16 *buffer, unsigned int size)
     int buf_count=0;
     int i, interp_period;
 
+/* tryagain: */
+
     /* if we're not speaking, fill with nothingness */
     if (!speaking_now)
         goto empty;
@@ -491,7 +493,7 @@ void tms5110_PDC_set(int data)
 
 static int parse_frame(int removeit)
 {
-	int old_head, old_count;
+    int old_head, old_count;
     int bits, indx, i, rep_flag;
 
     /* remember previous frame */

@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "mamedbg.h"
-#include "arm.h"
 
 const char *cc[] = {
 	"EQ", "NE",
@@ -34,9 +33,9 @@ static char *RS(UINT32 op)
 {
 	static char buff[32];
 	UINT32 m = op & 0x70;
-	UINT32 s = (op>>7) & 31;
-	UINT32 r = op & 15;
-	UINT32 rs = arm_get_reg(ARM_R0+r);
+    UINT32 s = (op >> 7) & 31;
+	UINT32 r = s >> 1;
+	UINT32 rs = op & 15;
 
 	buff[0] = '\0';
 
@@ -45,49 +44,43 @@ static char *RS(UINT32 op)
 	case 0x00:
 		/* LSL (aka ASL) #0 .. 31 */
 		if (s > 0)
-			sprintf(buff, "R%d LSL #%d", r, s);
+			sprintf(buff, "R%d LSL #%d", rs, s);
 		else
-			sprintf(buff, "R%d", r);
+			sprintf(buff, "R%d", rs);
 		break;
 	case 0x10:
 		/* LSL (aka ASL) R0 .. R15 */
-		s >>= 1;
-		sprintf(buff, "R%d LSL R%d", r, s);
+		sprintf(buff, "R%d LSL R%d", rs, r);
 		break;
 	case 0x20:
         /* LSR #1 .. 32 */
-		if (s == 0)
-			s = 32;
-		sprintf(buff, "R%d LSR #%d", r, s);
+		if (s == 0) s = 32;
+		sprintf(buff, "R%d LSR #%d", rs, s);
         break;
 	case 0x30:
 		/* LSR R0 .. R15 */
-		s >>= 1;
-		sprintf(buff, "R%d LSR R%d", r, s);
+		sprintf(buff, "R%d LSR R%d", rs, r);
 		break;
 	case 0x40:
         /* ASR #1 .. 32 */
-		if (s == 0)
-			s = 32;
-		sprintf(buff, "R%d ASR #%d", r, s);
+		if (s == 0) s = 32;
+		sprintf(buff, "R%d ASR #%d", rs, s);
         break;
 	case 0x50:
 		/* ASR R0 .. R15 */
-		s >>= 1;
-		sprintf(buff, "R%d ASR R%d", r, s);
+		sprintf(buff, "R%d ASR R%d", rs, r);
 		break;
 	case 0x60:
 		/* ASR #1 .. 32 */
         if (s == 0)
 			sprintf(buff, "R%d RRX", rs);
         else
-			sprintf(buff, "R%d ROR #%d", r, s);
+			sprintf(buff, "R%d ROR #%d", rs, s);
         break;
 	case 0x70:
 	default:
 		/* ROR R0 .. R15  */
-		s >>= 1;
-		sprintf(buff, "R%d ROR R%d", r, s);
+		sprintf(buff, "R%d ROR R%d", rs, r);
         break;
     }
 	return buff;
@@ -103,10 +96,11 @@ static char *IM(UINT32 op)
 
 static char *RL(UINT32 op)
 {
-	static char buff[128];
-	char *dst = buff;
+	static char buff[64];
+	char *dst;
 	int f, t, n;
 
+	dst = buff;
 	for(f = 0, n = 0; f < 16; f = t)
 	{
 		for (/* */; f < 16; f++)
@@ -966,48 +960,41 @@ unsigned DasmARM(char *buffer, unsigned pc)
 
 	case 0xa0: case 0xa1: case 0xa2: case 0xa3:
 	case 0xa4: case 0xa5: case 0xa6: case 0xa7:
-	case 0xa8: case 0xa9: case 0xaa: case 0xab:
-	case 0xac: case 0xad: case 0xae: case 0xaf:
+	case 0xa8: case 0xa9: case 0xaa: case 0xaf:
 		sprintf(buffer, "B%s      $%x", cc[(op>>28)&15], (pc + 4*(op&0xffffff)) & 0x3ffffffc);
 		break;
 	case 0xb0: case 0xb1: case 0xb2: case 0xb3:
 	case 0xb4: case 0xb5: case 0xb6: case 0xb7:
-	case 0xb8: case 0xb9: case 0xba: case 0xbb:
-	case 0xbc: case 0xbd: case 0xbe: case 0xbf:
-        sprintf(buffer, "BL%s     $%x", cc[(op>>28)&15], (pc + 4*(op&0xffffff)) & 0x3ffffffc);
+	case 0xb8: case 0xb9: case 0xba: case 0xbf:
+		sprintf(buffer, "BL%s     $%x", cc[(op>>28)&15], (pc + 4*(op&0xffffff)) & 0x3ffffffc);
         break;
 	case 0xc0: case 0xc1: case 0xc2: case 0xc3:
 	case 0xc4: case 0xc5: case 0xc6: case 0xc7:
-	case 0xc8: case 0xc9: case 0xca: case 0xcb:
-	case 0xcc: case 0xcd: case 0xce: case 0xcf:
-        sprintf(buffer, "INVC%s   $%08x", cc[(op>>28)&15], op);
+	case 0xc8: case 0xc9: case 0xca: case 0xcf:
+		sprintf(buffer, "INVC%s   $%08x", cc[(op>>28)&15], op);
         break;
-	case 0xd0: case 0xd1: case 0xd2: case 0xd3:
+    case 0xd0: case 0xd1: case 0xd2: case 0xd3:
 	case 0xd4: case 0xd5: case 0xd6: case 0xd7:
-	case 0xd8: case 0xd9: case 0xda: case 0xdb:
-	case 0xdc: case 0xdd: case 0xde: case 0xdf:
-        sprintf(buffer, "INVD%s   $%08x", cc[(op>>28)&15], op);
+	case 0xd8: case 0xd9: case 0xda: case 0xdf:
+		sprintf(buffer, "INVD%s   $%08x", cc[(op>>28)&15], op);
 		break;
 	case 0xe0: case 0xe1: case 0xe2: case 0xe3:
 	case 0xe4: case 0xe5: case 0xe6: case 0xe7:
-	case 0xe8: case 0xe9: case 0xea: case 0xeb:
-	case 0xec: case 0xed: case 0xee: case 0xef:
-        sprintf(buffer, "INVE%s   $%08x", cc[(op>>28)&15], op);
+	case 0xe8: case 0xe9: case 0xea: case 0xef:
+		sprintf(buffer, "INVE%s   $%08x", cc[(op>>28)&15], op);
         break;
-	case 0xf0: case 0xf1: case 0xf2: case 0xf3:
+    case 0xf0: case 0xf1: case 0xf2: case 0xf3:
 	case 0xf4: case 0xf5: case 0xf6: case 0xf7:
-	case 0xf8: case 0xf9: case 0xfa: case 0xfb:
-	case 0xfc: case 0xfd: case 0xfe: case 0xff:
+	case 0xf8: case 0xf9: case 0xfa: case 0xff:
 		for (i = 0; i < sizeof(SWI)/sizeof(SWI[0]); i++)
 		{
 			if (SWI[i].swi == (op & 0xffffff))
-            {
+			{
 				sprintf(buffer, "SWI%s    %s", cc[(op>>28)&15], SWI[i].name);
-				break;
+				return 4;
 			}
         }
-		if (buffer[0] == '\0')
-			sprintf(buffer, "SWI%s    $%08x", cc[(op>>28)&15], op);
+		sprintf(buffer, "SWI%s    $%08x", cc[(op>>28)&15], op);
 		break;
 	default:
 		sprintf(buffer, "???%s    $%08x", cc[(op>>28)&15], op);

@@ -492,7 +492,7 @@ static struct via6522_interface spectrum1_via6522_interface =
 	vectrex_shift_reg_w, vectrex_screen_update
 };
 
-static struct artwork_ *buttons, *led;
+static struct artwork_info *buttons, *led;
 static int transparent_pen;
 
 void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)

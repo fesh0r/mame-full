@@ -1110,7 +1110,7 @@ static struct MachineDriver machine_driver_demon =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 Mhz */
+			3579545,	/* 3.579545 MHz */
 			demon_sound_readmem,demon_sound_writemem,0,demon_sound_writeport,
 			0,0,
 			0,0,&daisy_chain

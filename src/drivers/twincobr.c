@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1987
 		-------------------------------
 		Driver by: Quench
-		Flying Shark details: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
 		Flying Shark bootleg info: Ruben Panossian
 
 
@@ -705,7 +705,7 @@ static struct MachineDriver machine_driver_twincobr =
 	{
 		{
 			CPU_M68000,
-			28000000/4,			/* 7.0 MHz - Main board Crystal is 28Mhz */
+			28000000/4,			/* 7.0 MHz - Main board Crystal is 28MHz */
 			readmem,writemem,0,0,
 			twincobr_interrupt,1
 		},

@@ -14,7 +14,7 @@
 #include "ui_text.h"
 
 #ifdef MESS
-  #include "../mess/mess.h"
+#include "../mess/mess.h"
 #endif
 
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */

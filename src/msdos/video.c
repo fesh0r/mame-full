@@ -59,6 +59,8 @@ void center_mode(Register *pReg);
 /* in msdos/sound.c */
 int msdos_update_audio(void);
 
+/* in msdos/input.c */
+void poll_joysticks(void);
 
 
 /* specialized update_screen functions defined in blit.c */
@@ -90,11 +92,17 @@ void blitscreen_dirty1_vesa_1x_2xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_1x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_1x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3xs_16bpp(struct osd_bitmap *bitmap);
 
 void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
@@ -102,11 +110,17 @@ void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_2x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_3x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty1_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 
 
 /* dirty mode 0 (no osd_mark_dirty calls) */
@@ -136,11 +150,17 @@ void blitscreen_dirty0_vesa_1x_2xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_1x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_1x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3xs_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_2x_16bpp(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_2xs_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3x_16bpp(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3xs_16bpp(struct osd_bitmap *bitmap);
 
 void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
@@ -148,11 +168,17 @@ void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_2x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_3x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(struct osd_bitmap *bitmap);
 void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap);
+void blitscreen_dirty0_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap);
 
 
 
@@ -162,8 +188,6 @@ void (*update_screen_debugger)(struct osd_bitmap *bitmap) = update_screen_dummy;
 
 #define MAX_X_MULTIPLY 4
 #define MAX_Y_MULTIPLY 3
-#define MAX_X_MULTIPLY16 4
-#define MAX_Y_MULTIPLY16 2
 
 static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitmap *bitmap) =
 {			/* 1 x 1 */
@@ -209,13 +233,16 @@ static void (*updaters8[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitmap
 	}
 };
 
-static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(struct osd_bitmap *bitmap) =
-{				/* 1 x 1 */
+static void (*updaters16[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitmap *bitmap) =
+{			/* 1 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp, blitscreen_dirty1_vesa_1x_1x_16bpp }
 		},	/* 1 x 2 */
 		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp,  blitscreen_dirty1_vesa_1x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_1x_2xs_16bpp, blitscreen_dirty1_vesa_1x_2xs_16bpp }
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
 		}
 	},		/* 2 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp,  blitscreen_dirty1_vesa_2x_1x_16bpp },
@@ -223,6 +250,9 @@ static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(struct osd_b
 		},	/* 2 x 2 */
 		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp,  blitscreen_dirty1_vesa_2x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_2x_2xs_16bpp, blitscreen_dirty1_vesa_2x_2xs_16bpp }
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_16bpp,  blitscreen_dirty1_vesa_2x_3x_16bpp },
+			{ blitscreen_dirty0_vesa_2x_3xs_16bpp, blitscreen_dirty1_vesa_2x_3xs_16bpp }
 		}
 	},		/* 3 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp, blitscreen_dirty1_vesa_3x_1x_16bpp },
@@ -230,6 +260,9 @@ static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(struct osd_b
 		},	/* 3 x 2 */
 		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp, blitscreen_dirty1_vesa_3x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_3x_2xs_16bpp, blitscreen_dirty1_vesa_3x_2xs_16bpp }
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_16bpp,  blitscreen_dirty1_vesa_3x_3x_16bpp },
+			{ blitscreen_dirty0_vesa_3x_3xs_16bpp, blitscreen_dirty1_vesa_3x_3xs_16bpp }
 		}
 	},		/* 4 x 1 */
 	{	{	{ update_screen_dummy, update_screen_dummy },
@@ -237,17 +270,23 @@ static void (*updaters16[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(struct osd_b
 		},	/* 4 x 2 */
 		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp,  blitscreen_dirty1_vesa_4x_2x_16bpp },
 			{ blitscreen_dirty0_vesa_4x_2xs_16bpp, blitscreen_dirty1_vesa_4x_2xs_16bpp }
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_16bpp,  blitscreen_dirty1_vesa_4x_3x_16bpp },
+			{ blitscreen_dirty0_vesa_4x_3xs_16bpp, blitscreen_dirty1_vesa_4x_3xs_16bpp }
 		}
 	}
 };
 
-static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(struct osd_bitmap *bitmap) =
-{				/* 1 x 1 */
+static void (*updaters16_palettized[MAX_X_MULTIPLY][MAX_Y_MULTIPLY][2][2])(struct osd_bitmap *bitmap) =
+{			/* 1 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_1x_1x_16bpp_palettized, blitscreen_dirty1_vesa_1x_1x_16bpp_palettized }
 		},	/* 1 x 2 */
 		{	{ blitscreen_dirty0_vesa_1x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_1x_2x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized }
+		},	/* 1 x 3 */
+		{	{ update_screen_dummy, update_screen_dummy },
+			{ update_screen_dummy, update_screen_dummy },
 		}
 	},		/* 2 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_2x_1x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_1x_16bpp_palettized },
@@ -255,6 +294,9 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(s
 		},	/* 2 x 2 */
 		{	{ blitscreen_dirty0_vesa_2x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_2x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized }
+		},	/* 2 x 3 */
+		{	{ blitscreen_dirty0_vesa_2x_3x_16bpp_palettized,  blitscreen_dirty1_vesa_2x_3x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_2x_3xs_16bpp_palettized, blitscreen_dirty1_vesa_2x_3xs_16bpp_palettized }
 		}
 	},		/* 3 x 1 */
 	{	{	{ blitscreen_dirty0_vesa_3x_1x_16bpp_palettized, blitscreen_dirty1_vesa_3x_1x_16bpp_palettized },
@@ -262,6 +304,9 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(s
 		},	/* 3 x 2 */
 		{	{ blitscreen_dirty0_vesa_3x_2x_16bpp_palettized, blitscreen_dirty1_vesa_3x_2x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized }
+		},	/* 3 x 3 */
+		{	{ blitscreen_dirty0_vesa_3x_3x_16bpp_palettized, blitscreen_dirty1_vesa_3x_3x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_3x_3xs_16bpp_palettized, blitscreen_dirty1_vesa_3x_3xs_16bpp_palettized }
 		}
 	},		/* 4 x 1 */
 	{	{	{ update_screen_dummy, update_screen_dummy },
@@ -269,6 +314,9 @@ static void (*updaters16_palettized[MAX_X_MULTIPLY16][MAX_Y_MULTIPLY16][2][2])(s
 		},	/* 4 x 2 */
 		{	{ blitscreen_dirty0_vesa_4x_2x_16bpp_palettized,  blitscreen_dirty1_vesa_4x_2x_16bpp_palettized },
 			{ blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized, blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized }
+		},	/* 4 x 3 */
+		{	{ blitscreen_dirty0_vesa_4x_3x_16bpp_palettized,  blitscreen_dirty1_vesa_4x_3x_16bpp_palettized },
+			{ blitscreen_dirty0_vesa_4x_3xs_16bpp_palettized, blitscreen_dirty1_vesa_4x_3xs_16bpp_palettized }
 		}
 	}
 };
@@ -793,8 +841,8 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 					== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 			{
 				if (orientation & ORIENTATION_SWAP_XY)
-					xm++;
-				else ym++;
+					xm*=2;
+				else ym*=2;
 			}
 
 			if (scanlines && stretch)
@@ -871,7 +919,7 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 
 
 /* center image inside the display based on the visual area */
-static void internal_set_visible_area(int min_x,int max_x,int min_y,int max_y)
+static void internal_set_visible_area(int min_x,int max_x,int min_y,int max_y,int debugger)
 {
 	int act_width;
 
@@ -889,51 +937,73 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 	visheight = max_y - min_y + 1;
 
 
-	/* setup xmultiply to handle SVGA driver's (possible) double width */
-	xmultiply = act_width / gfx_width;
-	ymultiply = 1;
-
-	if (use_vesa && !vector_game)
+	if (debugger)
 	{
-		if (stretch)
+		xmultiply = ymultiply = 1;
+	}
+	else
+	{
+		/* setup xmultiply to handle SVGA driver's (possible) double width */
+		xmultiply = act_width / gfx_width;
+		ymultiply = 1;
+
+		if (use_vesa && !vector_game)
 		{
-			if (!(video_orientation & ORIENTATION_SWAP_XY) &&
-					!(video_attributes & VIDEO_DUAL_MONITOR))
+			if (stretch)
 			{
-				/* horizontal, non dual monitor games may be stretched at will */
-				while ((xmultiply+1) * viswidth <= act_width)
-					xmultiply++;
-				while ((ymultiply+1) * visheight <= gfx_height)
-					ymultiply++;
+				if (!(video_orientation & ORIENTATION_SWAP_XY) &&
+						!(video_attributes & VIDEO_DUAL_MONITOR))
+				{
+					/* horizontal, non dual monitor games may be stretched at will */
+					while ((xmultiply+1) * viswidth <= act_width)
+						xmultiply++;
+					while ((ymultiply+1) * visheight <= gfx_height)
+						ymultiply++;
+				}
+				else
+				{
+					int tw,th;
+
+					tw = act_width;
+					th = gfx_height;
+
+					if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+							== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+					{
+						if (video_orientation & ORIENTATION_SWAP_XY)
+							tw /= 2;
+						else th /= 2;
+					}
+
+					/* Hack for 320x480 and 400x600 "vmame" video modes */
+					if ((gfx_width == 320 && gfx_height == 480) ||
+							(gfx_width == 400 && gfx_height == 600))
+						th /= 2;
+
+					/* maintain aspect ratio for other games */
+					while ((xmultiply+1) * viswidth <= tw &&
+							(ymultiply+1) * visheight <= th)
+					{
+						xmultiply++;
+						ymultiply++;
+					}
+
+					if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
+							== VIDEO_PIXEL_ASPECT_RATIO_1_2)
+					{
+						if (video_orientation & ORIENTATION_SWAP_XY)
+							xmultiply *= 2;
+						else ymultiply *= 2;
+					}
+
+					/* Hack for 320x480 and 400x600 "vmame" video modes */
+					if ((gfx_width == 320 && gfx_height == 480) ||
+							(gfx_width == 400 && gfx_height == 600))
+						ymultiply *= 2;
+				}
 			}
 			else
 			{
-				int tw,th;
-
-				tw = act_width;
-				th = gfx_height;
-
-				if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
-						== VIDEO_PIXEL_ASPECT_RATIO_1_2)
-				{
-					if (video_orientation & ORIENTATION_SWAP_XY)
-						tw /= 2;
-					else th /= 2;
-				}
-
-				/* Hack for 320x480 and 400x600 "vmame" video modes */
-				if ((gfx_width == 320 && gfx_height == 480) ||
-						(gfx_width == 400 && gfx_height == 600))
-					th /= 2;
-
-				/* maintain aspect ratio for other games */
-				while ((xmultiply+1) * viswidth <= tw &&
-						(ymultiply+1) * visheight <= th)
-				{
-					xmultiply++;
-					ymultiply++;
-				}
-
 				if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 						== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 				{
@@ -948,30 +1018,7 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 					ymultiply *= 2;
 			}
 		}
-		else
-		{
-			if ((video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
-					== VIDEO_PIXEL_ASPECT_RATIO_1_2)
-			{
-				if (video_orientation & ORIENTATION_SWAP_XY)
-					xmultiply *= 2;
-				else ymultiply *= 2;
-			}
 
-			/* Hack for 320x480 and 400x600 "vmame" video modes */
-			if ((gfx_width == 320 && gfx_height == 480) ||
-					(gfx_width == 400 && gfx_height == 600))
-				ymultiply *= 2;
-		}
-	}
-
-	if (video_depth == 16)
-	{
-		if (xmultiply > MAX_X_MULTIPLY16) xmultiply = MAX_X_MULTIPLY16;
-		if (ymultiply > MAX_Y_MULTIPLY16) ymultiply = MAX_Y_MULTIPLY16;
-	}
-	else
-	{
 		if (xmultiply > MAX_X_MULTIPLY) xmultiply = MAX_X_MULTIPLY;
 		if (ymultiply > MAX_Y_MULTIPLY) ymultiply = MAX_Y_MULTIPLY;
 	}
@@ -1045,7 +1092,7 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 	vis_max_x = max_x;
 	vis_min_y = min_y;
 	vis_max_y = max_y;
-	internal_set_visible_area(min_x,max_x,min_y,max_y);
+	internal_set_visible_area(min_x,max_x,min_y,max_y,0);
 }
 
 
@@ -1868,13 +1915,13 @@ int osd_allocate_colors(unsigned int totalcolors,
 			{
 				update_screen = updaters16[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
 				update_screen_debugger = updaters16[0][0][0][0];
-            }
+			}
 		}
 		else
 		{
 			update_screen = updaters8[xmultiply-1][ymultiply-1][scanlines?1:0][use_dirty?1:0];
 			update_screen_debugger = updaters8[0][0][0][0];
-        }
+		}
 	}
 
 	return 0;
@@ -2029,10 +2076,12 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 
 	if (debugger_focus_changed)
 	{
+		debugger_focus_changed = 0;
+
 		if (show_debugger)
-			internal_set_visible_area(0,debug_bitmap->width-1,0,debug_bitmap->height-1);
+			internal_set_visible_area(0,debug_bitmap->width-1,0,debug_bitmap->height-1,1);
 		else
-			internal_set_visible_area(vis_min_x,vis_max_x,vis_min_y,vis_max_y);
+			internal_set_visible_area(vis_min_x,vis_max_x,vis_min_y,vis_max_y,0);
 	}
 
 	if (show_debugger && debug_bitmap) bitmap = debug_bitmap;
@@ -2440,6 +2489,8 @@ void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap
 
 
 	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
+
+	poll_joysticks();
 }
 
 

@@ -23,14 +23,12 @@ timer
 
 6502 (used in many designs)
 
-6504
-8 kbyte address space, 28 pin dil
-
 6508
 8 io pins (p0 bis p7)
 
 6509
-1 megabyte memory management
+4 io pins (p0 bis p3)
+1megabyte memory management???
 
 6510/8500 (used in some designs)
 6 io pins (p0 bis p5)
@@ -48,15 +46,14 @@ no nmi
 
 the above series is opcode compatible (including illegal opcodes)
 
-n2a03 (some arcades)
-(nintendo variant without decimal mode)
-m6502 compatible (except decimal mode)
-
 65c02 (used in some designs)
-fixed jmp ind,x opcodes
 no illegal opcodes from the above series
 so not full compatible to 6502 series
 additional commands
+
+n2a03 (some arcades)
+(nintendo variant without decimal mode?)
+m65c02 compatible (except decimal mode)?
 
 65sc02 (where used?)
 65c02 compatible
@@ -75,7 +72,7 @@ huc6280 (nec pcengine)
 (so 2 Megabyte address room!)
 additional commands?
 
-65ce02
+65ce02 (c65 prototype)
 (cpu core to be used in asics)
 65sc02 compatible
 z register
@@ -86,9 +83,7 @@ additional command (some from the 65816)
 
 Commodore C65 CPU (4510)
 65ce02 compatible
-integrated 20 bit memory management (map)
-2 cia6526 integrated
-1 uart integrated
+integrated memory management (not in standard m65ce02!)
 
 Set Overflow Pin
 in 6502 and pin compatibles (65C02 65SC02 65SC802 65CE02), M6509

@@ -9,6 +9,7 @@
 	Sound handler
 ****************************************************************************/
 #include "driver.h"
+#include "sound/beep.h"
 
 struct beep_sound
 {

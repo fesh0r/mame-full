@@ -560,7 +560,7 @@ static Z80_DaisyChain daisy_chain[] =
 static struct SN76496interface sn76496_interface =
 {
 	3,	/* 3 chips */
-	{ 2000000, 2000000, 2000000 },	/* 2 Mhz? */
+	{ 2000000, 2000000, 2000000 },	/* 2 MHz? */
 	{ 50, 50, 50 }
 };
 
@@ -578,13 +578,13 @@ static struct MachineDriver machine_driver_senjyo =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz? */
+			4000000,	/* 4 MHz? */
 			readmem,writemem,0,0,
 			senjyo_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,	/* 2 Mhz? */
+			2000000,	/* 2 MHz? */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			0,0, /* interrupts are made by z80 daisy chain system */
 			0,0,daisy_chain

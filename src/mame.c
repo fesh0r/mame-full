@@ -55,7 +55,7 @@ INLINE int my_stricmp( const char *dst, const char *src)
 
 static int validitychecks(void)
 {
-	int i,j;
+	int i,j,cpu;
 	UINT8 a,b;
 	int error = 0;
 
@@ -199,6 +199,56 @@ static int validitychecks(void)
 				{
 					printf("%s has duplicated ROM_REGION type %x\n",drivers[i]->name,j);
 					error = 1;
+				}
+			}
+
+
+			for (cpu = 0;cpu < MAX_CPU;cpu++)
+			{
+				if (drivers[i]->drv->cpu[cpu].cpu_type)
+				{
+					int alignunit;
+
+
+					alignunit = cpuintf[drivers[i]->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK].align_unit;
+					if (drivers[i]->drv->cpu[cpu].memory_read)
+					{
+						const struct MemoryReadAddress *mra = drivers[i]->drv->cpu[cpu].memory_read;
+
+						while (mra->start != -1)
+						{
+							if (mra->end < mra->start)
+							{
+								printf("%s wrong memory read handler start = %08x > end = %08x\n",drivers[i]->name,mra->start,mra->end);
+								error = 1;
+							}
+							if ((mra->start & (alignunit-1)) != 0 || (mra->end & (alignunit-1)) != (alignunit-1))
+							{
+								printf("%s wrong memory read handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mra->start,mra->end,alignunit);
+								error = 1;
+							}
+							mra++;
+						}
+					}
+					if (drivers[i]->drv->cpu[cpu].memory_write)
+					{
+						const struct MemoryWriteAddress *mwa = drivers[i]->drv->cpu[cpu].memory_write;
+
+						while (mwa->start != -1)
+						{
+							if (mwa->end < mwa->start)
+							{
+								printf("%s wrong memory write handler start = %08x > end = %08x\n",drivers[i]->name,mwa->start,mwa->end);
+								error = 1;
+							}
+							if ((mwa->start & (alignunit-1)) != 0 || (mwa->end & (alignunit-1)) != (alignunit-1))
+							{
+								printf("%s wrong memory write handler start = %08x, end = %08x ALIGN = %d\n",drivers[i]->name,mwa->start,mwa->end,alignunit);
+								error = 1;
+							}
+							mwa++;
+						}
+					}
 				}
 			}
 
@@ -406,38 +456,31 @@ int run_game(int game)
 	err = 1;
 	bailing = 0;
 
-#ifdef MESS
+	#ifdef MESS
 	if (get_filenames())
 		return err;
-#endif
+	#endif
 
 	if (osd_init() == 0)
 	{
-#ifdef MESS
-		do
+		if (init_machine() == 0)
 		{
-			mess_keep_going = 0;
-#endif
-			if (init_machine() == 0)
-			{
-				if (run_machine() == 0)
-					err = 0;
-				else if (!bailing)
-				{
-					bailing = 1;
-					printf("Unable to start machine emulation\n");
-				}
-
-				shutdown_machine();
-			}
+			if (run_machine() == 0)
+				err = 0;
 			else if (!bailing)
 			{
 				bailing = 1;
-				printf("Unable to initialize machine emulation\n");
+				printf("Unable to start machine emulation\n");
 			}
-#ifdef MESS
-		} while (mess_keep_going);
-#endif
+
+			shutdown_machine();
+		}
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf("Unable to initialize machine emulation\n");
+		}
+
 		osd_exit();
 	}
 	else if (!bailing)
@@ -643,7 +686,7 @@ static void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *heigh
 static int vh_open(void)
 {
 	int i;
-	int width,height;
+	int bmwidth,bmheight,viswidth,visheight;
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
@@ -713,18 +756,44 @@ static int vh_open(void)
 	}
 
 
-	width = drv->screen_width;
-	height = drv->screen_height;
+	bmwidth = drv->screen_width;
+	bmheight = drv->screen_height;
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		scale_vectorgames(options.vector_width,options.vector_height,&width,&height);
+		scale_vectorgames(options.vector_width,options.vector_height,&bmwidth,&bmheight);
 
-	Machine->scrbitmap = bitmap_alloc_depth(width,height,Machine->color_depth);
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	{
+		viswidth = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
+		visheight = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
+	}
+	else
+	{
+		viswidth = bmwidth;
+		visheight = bmheight;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+		temp = viswidth; viswidth = visheight; visheight = temp;
+	}
+
+	/* create the display bitmap, and allocate the palette */
+	if (osd_create_display(viswidth,visheight,Machine->color_depth,
+			drv->frames_per_second,drv->video_attributes,Machine->orientation))
+	{
+		vh_close();
+		return 1;
+	}
+
+	Machine->scrbitmap = bitmap_alloc_depth(bmwidth,bmheight,Machine->color_depth);
 	if (!Machine->scrbitmap)
 	{
 		vh_close();
 		return 1;
 	}
+
 	if (mame_debug)
 	{
 		Machine->debug_bitmap = osd_alloc_bitmap(options.debug_width,options.debug_height,Machine->color_depth);
@@ -733,26 +802,6 @@ static int vh_open(void)
 			vh_close();
 			return 1;
 		}
-	}
-
-	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
-	{
-		width = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
-		height = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-		temp = width; width = height; height = temp;
-	}
-
-	/* create the display bitmap, and allocate the palette */
-	if (osd_create_display(width,height,Machine->color_depth,
-			drv->frames_per_second,drv->video_attributes,Machine->orientation))
-	{
-		vh_close();
-		return 1;
 	}
 
 	set_visible_area(
@@ -845,11 +894,6 @@ int updatescreen(void)
 	update_video_and_audio();
 
 	if (drv->vh_eof_callback) (*drv->vh_eof_callback)();
-#ifdef MESS
-	/* leave the driver and start over */
-    if (mess_keep_going)
-		return 1;
-#endif
 
 	return 0;
 }
@@ -884,7 +928,7 @@ void update_video_and_audio(void)
 #ifdef MAME_DEBUG
 	debug_trace_delay = 0;
 #endif
-    osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
+	osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
 }
 
 

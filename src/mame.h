@@ -24,15 +24,15 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	struct rectangle visible_area;
-	unsigned short *pens;	/* remapped palette pen numbers. When you write */
-							/* directly to a bitmap, never use absolute values, */
-							/* use this array to get the pen number. For example, */
-							/* if you want to use color #6 in the palette, use */
-							/* pens[6] instead of just 6. */
-	unsigned short *game_colortable;	/* lookup table used to map gfx pen numbers */
-										/* to color numbers */
-	unsigned short *remapped_colortable;	/* the above, already remapped through */
-											/* Machine->pens */
+	UINT16 *pens;	/* remapped palette pen numbers. When you write */
+					/* directly to a bitmap, never use absolute values, */
+					/* use this array to get the pen number. For example, */
+					/* if you want to use color #6 in the palette, use */
+					/* pens[6] instead of just 6. */
+	UINT16 *game_colortable;	/* lookup table used to map gfx pen numbers */
+								/* to color numbers */
+	UINT16 *remapped_colortable;	/* the above, already remapped through */
+									/* Machine->pens */
 	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
 	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 	int color_depth;	/* video color depth: 8 or 16 */
@@ -56,8 +56,8 @@ struct RunningMachine
 
 	/* stuff for the debugger */
 	struct osd_bitmap *debug_bitmap;
-	unsigned short *debug_pens;
-	unsigned short *debug_remapped_colortable;
+	UINT16 *debug_pens;
+	UINT16 *debug_remapped_colortable;
 	struct GfxElement *debugger_font;
 };
 

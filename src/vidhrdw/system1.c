@@ -168,13 +168,6 @@ READ_HANDLER( system1_videomode_r )
 	return system1_video_mode;
 }
 
-#if 0
-void system1_define_sprite_pixelmode(int mode)
-{
-	system1_pixel_mode = mode;
-}
-#endif
-
 void system1_define_background_memory(int mode)
 {
 	system1_background_memory = mode;
@@ -192,50 +185,26 @@ INLINE void draw_pixel(struct osd_bitmap *bitmap,
 {
 	int xr,yr;
 	int sprite_onscreen;
-	int plot = 0;
 
 
 	if (x < 0 || x >= Machine->scrbitmap->width ||
 		y < 0 || y >= Machine->scrbitmap->height)
 		return;
 
-	if (sprite_onscreen_map[256*y+x] == 255)
-	{
-		plot = 1;
-	}
-	else
+	if (sprite_onscreen_map[256*y+x] != 255)
 	{
 		sprite_onscreen = sprite_onscreen_map[256*y+x];
 		system1_sprites_collisionram[sprite_onscreen + 32 * spr_number] = 0xff;
-#if 0
-		if (system1_pixel_mode==system1_SPRITE_PIXEL_MODE1)
-		{
-			int spr_y1,spr_y2;
-			spr_y1 = get_sprite_bottom_y(spr_number);
-			spr_y2 = get_sprite_bottom_y(sprite_onscreen);
-			if (spr_y1 >= spr_y2)
-			{
-				plot = 1;
-			}
-		}
-		else
-#endif
-		{
-			plot = 1;
-		}
 	}
 
-	if (plot)
-	{
-		sprite_onscreen_map[256*y+x] = spr_number;
+	sprite_onscreen_map[256*y+x] = spr_number;
 
-		if (x_flipped >= Machine->visible_area.min_x ||
-			x_flipped <= Machine->visible_area.max_x ||
-			y_flipped >= Machine->visible_area.min_y ||
-			y_flipped <= Machine->visible_area.max_y)
-		{
-			plot_pixel(bitmap, x_flipped, y_flipped, color);
-		}
+	if (x_flipped >= Machine->visible_area.min_x ||
+		x_flipped <= Machine->visible_area.max_x ||
+		y_flipped >= Machine->visible_area.min_y ||
+		y_flipped <= Machine->visible_area.max_y)
+	{
+		plot_pixel(bitmap, x_flipped, y_flipped, color);
 	}
 
 	xr = ((x - background_scrollx) & 0xff) / 8;
@@ -301,7 +270,7 @@ static void draw_sprite(struct osd_bitmap *bitmap,int spr_number)
 	height = sprite_base[SPR_Y_BOTTOM] - sprite_base[SPR_Y_TOP];
 	sprite_palette = Machine->remapped_colortable + 0x10 * spr_number;
 
-	sy = sprite_base[SPR_Y_TOP];// + 1;
+	sy = sprite_base[SPR_Y_TOP] + 1;
 
 	/* graphics region #2 contains the packed sprite data */
 	gfx = &memory_region(REGION_GFX2)[bank];

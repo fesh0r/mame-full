@@ -188,7 +188,7 @@ WRITE_HANDLER( deniam_coinctrl_w )
 	/* bit 0 is coin counter */
 	coin_counter_w(0,coinctrl & 0x01);
 
-	/* bit 6 is display enable */
+	/* bit 6 is display enable (0 freezes screen) */
 	display_enable = coinctrl & 0x20;
 
 	/* other bits unknown (unused?) */

@@ -93,7 +93,6 @@
   - emulation of other hardware...?
  ******************************************************************************/
 #include "driver.h"
-#include "cpuintrf.h"
 // nec765 interface
 #include "includes/nec765.h"
 #include "includes/dsk.h"
