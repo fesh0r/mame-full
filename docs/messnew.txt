@@ -26,7 +26,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- Added an 'identify' command that can be used to attempt to identify the
+  type of any given image.  [Nate Woods]
 
 
 

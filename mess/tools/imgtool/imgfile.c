@@ -35,6 +35,47 @@ static imgtoolerr_t markerrorsource(imgtoolerr_t err)
 	return err;
 }
 
+
+
+imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
+	ImageModuleConstPtr *modules, size_t count)
+{
+	imgtoolerr_t err;
+	const struct ImageModule *module = NULL;
+	IMAGE *image;
+	size_t i = 0;
+	const char *extension;
+
+	if (count <= 0)
+		return IMGTOOLERR_UNEXPECTED;
+
+	extension = strrchr(fname, '.');
+	if (extension)
+		extension++;
+
+	while((module = imgtool_library_iterate(library, module)) != NULL)
+	{
+		if (!extension || findextension(module->extensions, extension))
+		{
+			image = NULL;
+			err = img_open(module, fname, OSD_FOPEN_READ, &image);
+			if (err && (ERRORSOURCE(err) != IMGTOOLERR_SRC_IMAGEFILE))
+				return err;
+
+			if (image)
+			{
+				if (i < count)
+					modules[i++] = module;
+				img_close(image);
+			}
+		}
+	}
+	modules[i] = NULL;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, IMAGE **outimg)
 {
 	imgtoolerr_t err;

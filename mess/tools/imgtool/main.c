@@ -25,6 +25,8 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 		c->usage ? c->usage : "");
 }
 
+
+
 /* ----------------------------------------------------------------------- */
 
 static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed, option_resolution *resolution, FILTERMODULE *filter)
@@ -101,6 +103,8 @@ error:
 	return -1;
 }
 
+
+
 void reporterror(imgtoolerr_t err, const struct command *c, const char *format, const char *imagename,
 	const char *filename, const char *newname, option_resolution *opts)
 {
@@ -134,11 +138,14 @@ void reporterror(imgtoolerr_t err, const struct command *c, const char *format, 
 	fprintf(stderr, "%s: %s\n", src, err_name);
 }
 
+
+
 /* ----------------------------------------------------------------------- */
 
 static int cmd_dir(const struct command *c, int argc, char *argv[])
 {
-	int err, total_count, total_size, freespace_err;
+	imgtoolerr_t err;
+	int total_count, total_size, freespace_err;
 	int freespace;
 	IMAGE *img;
 	IMAGEENUM *imgenum;
@@ -199,9 +206,11 @@ error:
 	return -1;
 }
 
+
+
 static int cmd_get(const struct command *c, int argc, char *argv[])
 {
-	int err;
+	imgtoolerr_t err;
 	IMAGE *img;
 	char *newfname;
 	int unnamedargs;
@@ -228,9 +237,12 @@ error:
 	return -1;
 }
 
+
+
 static int cmd_put(const struct command *c, int argc, char *argv[])
 {
-	int err, i;
+	imgtoolerr_t err;
+	int i;
 	IMAGE *img;
 	const char *fname = NULL;
 	int unnamedargs;
@@ -287,9 +299,11 @@ error:
 	return -1;
 }
 
+
+
 static int cmd_getall(const struct command *c, int argc, char *argv[])
 {
-	int err;
+	imgtoolerr_t err;
 	IMAGE *img;
 	IMAGEENUM *imgenum;
 	imgtool_dirent ent;
@@ -337,6 +351,8 @@ error:
 	return -1;
 }
 
+
+
 static int cmd_del(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
@@ -357,6 +373,32 @@ error:
 	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
 	return -1;
 }
+
+
+
+static int cmd_identify(const struct command *c, int argc, char *argv[])
+{
+	const struct ImageModule *modules[128];
+	imgtoolerr_t err;
+	int i;
+
+	err = img_identify(library, argv[0], modules, sizeof(modules) / sizeof(modules[0]));
+	if (err)
+		goto error;
+
+	for (i = 0; modules[i]; i++)
+	{
+		printf("%.16s %s\n", modules[i]->name, modules[i]->description);
+	}
+
+	return 0;
+
+error:
+	reporterror(err, c, NULL, argv[0], NULL, NULL, 0);
+	return -1;
+}
+
+
 
 static int cmd_create(const struct command *c, int argc, char *argv[])
 {
@@ -401,6 +443,8 @@ error:
 	return -1;
 }
 
+
+
 static int cmd_listformats(const struct command *c, int argc, char *argv[])
 {
 	const struct ImageModule *mod;
@@ -416,6 +460,8 @@ static int cmd_listformats(const struct command *c, int argc, char *argv[])
 
 	return 0;
 }
+
+
 
 static int cmd_listfilters(const struct command *c, int argc, char *argv[])
 {
@@ -551,12 +597,14 @@ error:
 	return -1;
 }
 
+
+
 /* ----------------------------------------------------------------------- */
 
 #ifdef MAME_DEBUG
 static int cmd_test(const struct command *c, int argc, char *argv[])
 {
-	int err;
+	imgtoolerr_t err;
 	const char *module_name;
 
 	module_name = (argc > 0) ? argv[0] : NULL;
@@ -579,6 +627,8 @@ error:
 }
 #endif
 
+
+
 /* ----------------------------------------------------------------------- */
 
 static struct command cmds[] =
@@ -593,6 +643,7 @@ static struct command cmds[] =
 	{ "put",				cmd_put,				"<format> <imagename> <filename>...[--(fileoption)==value] [--filter=filter]", 3, 0xffff, 0 },
 	{ "getall",				cmd_getall,				"<format> <imagename> [--filter=filter]", 2, 2, 0 },
 	{ "del",				cmd_del,				"<format> <imagename> <filename>...", 3, 3, 1 },
+	{ "identify",			cmd_identify,			"<imagename>", 1, 1 },
 	{ "listformats",		cmd_listformats,		NULL, 0, 0, 0 },
 	{ "listfilters",		cmd_listfilters,		NULL, 0, 0, 0 },
 	{ "listdriveroptions",	cmd_listdriveroptions, "<format>", 1, 1, 0 }
@@ -614,6 +665,8 @@ void win_expand_wildcards(int *argc, char **argv[])
 	*argv = g.gl_pathv;
 }
 #endif
+
+
 
 int CLIB_DECL main(int argc, char *argv[])
 {

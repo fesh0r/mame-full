@@ -30,6 +30,7 @@ struct filter_info
 };
 
 typedef struct ImageModule ImageModule;
+typedef const struct ImageModule *ImageModuleConstPtr;
 
 struct filter_module
 {
@@ -103,6 +104,18 @@ typedef struct tagIMAGEENUM IMAGEENUM;
  * imgtool error codes
  * ---------------------------------------------------------------------------
  */
+
+/* img_identify
+ *
+ * Description:
+ *		Attempts to determine the module for any given image
+ *
+ *	Parameters:
+ *		library:			The imgtool_library to search
+ *		fname:				The file to check
+ */
+imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
+	ImageModuleConstPtr *modules, size_t count);
 
 /* img_open
  * img_open_byname
