@@ -256,9 +256,9 @@ The card filesystem reading/writing in imgtool has not been heavily tested.
 Ti99 floppy disk images (ti99)
 ------------------------------
 
-You can create and catalog these images, you can delete individual files, and
-you can get and put files in TIFILE format.  (The TIFILE format uses a data
-format similar to the one used on ti99 floppies (i.e. logical records are
+This module enables you to create and catalog ti99 images, to delete individual
+files, and to get and put files in TIFILE format.  (The TIFILE format uses a
+data format similar to the one used on ti99 floppies (i.e. logical records are
 grouped in records of 256 bytes matching the sector size of 256 bytes), with
 a custom 128-byte header, and it is supported by many ti99 utilities.)
 
@@ -278,3 +278,121 @@ Parameters for create:
 
 Create can only create 5.25'' floppy images.  Other utilities should support 3.5''
 floppy images fine.
+
+
+TI990 disk images (ti990hd)
+---------------------------
+
+This module supports disk images in DNOS format (which appears to be virtually
+identical to DX10 3.x format).  Although the module is named ti990hd, this
+module will work fine with floppy images as well as hard disk images: just make
+sure that the disks are formatted in the proper format, as neither DX10 2.x nor
+TX990 formats are supported.
+
+
+Parameters for create:
+
+The most interesting command is create, as you cannot create new images within
+emulation.
+
+--cylinders: number of cylinders
+--heads: number of heads
+--sectors: number of sectors per track
+--seclen: bytes per sector
+
+
+Known restrictions on geometry:
+
+256 < bytes per sector < 512 (arbitrary restriction, actual TI990s might
+	accept values out of this range)
+bytes per sector must be even
+3 < # cylinders < 2047
+1 < # heads < 31
+1 < sectors per track < 256
+(sectors per track) * (bytes per sector) < 2^17 = 131072 (which implies
+	(sectors per track) < 255 if sectors are 512-byte long)
+
+(There are probably other restrictions, so you had better stick to values
+similar to the ones used by actual disk units...  According to the Spectra
+126-Plus manual, ADU size limitations prevent most operating systems from
+supporting units larger than 500Mb).
+
+
+Known drive geometries:
+
+(Sources: 946250-9703 p. 3-14, 2270512-9701 p. 11-3, 945250-9701 pp. 5-20
+through 5-28, 946250-9701B pp. 2-1 through 2-3, 2540219A-0001 pp. 4-2 and 4-3,
+2306140-9701 p. 1-15, 223439B-9701 pp. 3-14 and 3-28.  See also "Spectra
+126-Plus Product Reference Manual" by Cipher P/N 8500055 revision A4 page 2-8.)
+
+Disk Type		Units	Size (MB)	Cylinders	Heads	Sectors/Track	Bytes/Sector
+FD800 (min)		1		.240? .256?	  77		 1?		 26?			128?
+FD800 (max)		1		.968? 1.15?	  77		 ?		  ?				  ?
+FD1000			1		  1.15		  77		 2		 26				288
+DS31/DS32		1		  2.81		 203		 2		 24				288
+DS10			2		  4.70		 408		 2(*2)	 20				288
+DS25			1		 22.3		 408		 5		 38				288
+DS50			1		 44.6		 815		 5		 38				288
+DS200			1		169.5		 815		19		 38				288
+CD1400-32		2		 13.5		 821		 1		 64				256
+CD1400-96 (rem)	1		 13.5		 821		 1		 64				256
+CD1400-96 (fix)	1		 67.3		 821		 5		 64				256
+DS80			1		 62.7		 803(c)		 5		 61				256
+DS300			1		238.3		 803(c)		19		 61				256
+WD800-18		1		 18.5		 651(b)		 3		 37				256
+WD800-43		1		 43.2		 651(b)		 7		 37				256
+WD800A/38		1		 38.5		 911(d)		 5		 33				256
+WD800A/69		1		 69.3		 911(d)		 9		 33				256
+WD800A/114		1		114.6		 904(d)		15		 33				256
+WD500			1		  4.92		 150(a)		 4		 32				256
+WD500A			1		 17.1		 694(a)		 3		 32				256
+WD900-138		1		138.1		 805(e)		10		 67				256
+WD900-138/2		2		 69.0		 805(e)		 5(*2)	 67				256
+WD900-425		1		425.8		 693(e)		24		100				256
+WD900-425/2		2		212.9		 693(e)		12(*2)	100				256
+MSU	II			1		158.8		 957(f)		 9		 36				512
+MSU IIA			1		332.9		1204(f)		15		 36				512
+
+a) some extra cylinders are reserved for diagnostics
+b) 6 extra cylinders are reserved for storage system use (including 2 for
+  diagnostics)
+c) some extra cylinders are reserved for diagnostics, and 10 extra cylinders
+  are reserved to replace bad tracks
+d) 4 extra cylinders are reserved for storage system use (including 2 for
+  diagnostics), and 10 extra cylinders are reserved to replace bad tracks
+e) 16 extra cylinders are reserved for bad track relocation
+f) there are extra cylinders, and the way logical addresses relates to physical
+  address is so complex I don't even want to talk about it
+
+Note that 2270512-9701 and 946250-9703 describe more disk units (namely CMD 16,
+CMD 80, WD800A-43 and WD800A-100 for the former, and WD500-10 for the later).
+Since there are no other references anywhere and DX-10 does not seem to know
+about them, I assume that these models were uncommon.
+
+FD800 is a 8'' floppy disc unit that is not emulated, and it is only cited for
+completeness.  (The FD800 controller is connected to the CRU bus instead of the
+TILINE bus, and it is the only disc controller that is supported by non-TILINE
+systems).
+
+FD1000 is a 8'' floppy disc unit.
+
+DS31/DS32 was the first hard disc unit for ti990.  The only difference between
+DS31 and DS32 is that DS32 does not require a screwdriver to change the disc
+cartridge.
+
+DS10 has one 5-mb fixed platter and one 5mb disc cartridge.
+
+CD1400-32 and CD1400-96 have a one-platter 16-mb removable unit, and a fixed
+unit (16 mb for CD1400-32 and 80 mb for CD1400-96).
+
+WDxxx units are Winchester drives that connect to a proprietary PBUS bus
+interface.  This bus is a built-in interface in BS300 and BS300A systems, and
+the TPBI card enables any TILINE 990 system to support it.  WD800s are 8''
+drives with integrated tape backup, WD500s are 5''1/4 drives with integrated
+FD1000 backup, and WD900s are 9'' drives.  The WD900 controller can optionally
+partition the disc into two partitions: the set-up with no partitioning is
+listed as WD900-138 and WD900-425, whereas the set-up with partitioning is
+listed as WD900-138/2 and WD900-425/2.
+
+MSU II and MSU IIa are SCSI units to be connected to the 990/SCSI controller
+board.
