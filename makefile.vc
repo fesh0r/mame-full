@@ -10,7 +10,7 @@ TARGET = mess
 # TARGET=tinyms
 
 # uncomment next line to make a debug version
-DEBUG = 1
+# DEBUG = 1
 
 # build a version for debugging games
 MAME_DEBUG = -DMAME_DEBUG
@@ -37,7 +37,7 @@ MAME_MMX = -DMAME_MMX
 USE_FASTCALL = -DFASTCALL
 
 # Define this to enable MIDAS sound
-MIDAS = 1
+# MIDAS = 1
 
 # uncomment next line to generate help files
 # HELP = 1
