@@ -16,7 +16,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 
-#include "src/includes/cps1.h"       /* External CPS1 definitions */
+#include "cps1.h"       /* External CPS1 definitions */
 
 /* in machine/kabuki.c */
 void wof_decode(void);
