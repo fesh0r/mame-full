@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
-#include "machine/nes.h"
+#include "includes/nes.h"
 #include "machine/nes_mmc.h"
 
 /* Uncomment this to dump reams of ppu state info to the errorlog */
@@ -23,7 +23,7 @@ struct ppu_struct ppu;
 struct nes_struct nes;
 struct fds_struct nes_fds;
 
-static int ppu_scanlines_per_frame;
+int ppu_scanlines_per_frame;
 
 UINT8 *ppu_page[4];
 
@@ -74,20 +74,11 @@ static void init_nes_core (void)
 
 	battery_ram = nes.wram;
 
-	/* Load a battery file, but only if there's no trainer since they share */
-	/* overlapping memory. */
-	if (nes.trainer) return;
-
-	/* We need this because battery ram is loaded before the */
-	/* memory subsystem is set up. When this routine is called */
-	/* everything is ready, so we can just copy over the data */
-	/* we loaded before. */
-	memcpy (battery_ram, battery_data, BATTERY_SIZE);
-
 	/* Set up the memory handlers for the mapper */
 	switch (nes.mapper)
 	{
 		case 20:
+			nes.slow_banking = 0;
 			install_mem_read_handler(0, 0x4030, 0x403f, fds_r);
 			install_mem_read_handler(0, 0x6000, 0xdfff, MRA_RAM);
 			install_mem_read_handler(0, 0xe000, 0xffff, MRA_ROM);
@@ -96,12 +87,27 @@ static void init_nes_core (void)
 			install_mem_write_handler(0, 0x6000, 0xdfff, MWA_RAM);
 			install_mem_write_handler(0, 0xe000, 0xffff, MWA_ROM);
 			break;
+		case 40:
+			nes.slow_banking = 1;
+			/* Game runs code in between banks, so we do things different */
+			install_mem_read_handler(0, 0x6000, 0x7fff, MRA_RAM);
+			install_mem_read_handler(0, 0x8000, 0xffff, MRA_ROM);
+
+			install_mem_write_handler(0, 0x6000, 0x7fff, nes_mid_mapper_w);
+			install_mem_write_handler(0, 0x8000, 0xffff, nes_mapper_w);
+			break;
 		default:
+			nes.slow_banking = 0;
 			install_mem_read_handler(0, 0x6000, 0x7fff, MRA_BANK5);
 			install_mem_read_handler(0, 0x8000, 0x9fff, MRA_BANK1);
 			install_mem_read_handler(0, 0xa000, 0xbfff, MRA_BANK2);
 			install_mem_read_handler(0, 0xc000, 0xdfff, MRA_BANK3);
 			install_mem_read_handler(0, 0xe000, 0xffff, MRA_BANK4);
+			cpu_setbankhandler_r (1, MRA_BANK1);
+			cpu_setbankhandler_r (2, MRA_BANK2);
+			cpu_setbankhandler_r (3, MRA_BANK3);
+			cpu_setbankhandler_r (4, MRA_BANK4);
+			cpu_setbankhandler_r (5, MRA_BANK5);
 
 			install_mem_write_handler(0, 0x6000, 0x7fff, nes_mid_mapper_w);
 			install_mem_write_handler(0, 0x8000, 0xffff, nes_mapper_w);
@@ -136,6 +142,15 @@ static void init_nes_core (void)
 		}
 	}
 
+	/* Load a battery file, but only if there's no trainer since they share */
+	/* overlapping memory. */
+	if (nes.trainer) return;
+
+	/* We need this because battery ram is loaded before the */
+	/* memory subsystem is set up. When this routine is called */
+	/* everything is ready, so we can just copy over the data */
+	/* we loaded before. */
+	memcpy (battery_ram, battery_data, BATTERY_SIZE);
 }
 
 void init_nes (void)
@@ -183,7 +198,7 @@ void nes_stop_machine (void)
 	}
 }
 
-void ppu_reset (struct ppu_struct *in_ppu)
+void ppu_reset (struct ppu_struct *_ppu)
 {
 	/* Reset PPU variables */
 	PPU_Control0 = PPU_Control1 = PPU_Status = 0;
@@ -1134,7 +1149,7 @@ int nes_load_rom (int id)
 		if (skank[i] != 0x00)
 		{
 			logerror("(skank: %d)", i);
-			m = 0;
+//			m = 0;
 		}
 	}
 	logerror("\n");
@@ -1260,17 +1275,6 @@ bad:
 	return 1;
 }
 
-extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
-
-UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
-{
-UINT32 crc;
-if (size < 17) return 0;
-crc = (UINT32) crc32(0L,&buf[16],size-16);
-logerror("NES Partial CRC: %08lx %d\n",crc,size);
-return crc;
-}
-
 int nes_id_rom (int id)
 {
     FILE *romfile;
@@ -1295,6 +1299,7 @@ int nes_load_disk (int id)
 {
 	const char *disk_name = device_filename(IO_FLOPPY,id);
  	FILE *diskfile;
+	unsigned char magic[4];
 
 	if (!disk_name) return INIT_FAILED;
 
@@ -1303,6 +1308,19 @@ int nes_load_disk (int id)
 		logerror("image_fopen failed in nes_load_disk.\n");
 			return 1;
 	}
+
+	/* See if it has a fucking redundant header on it */
+	osd_fread (diskfile, magic, 4);
+	if ((magic[0] == 'F') &&
+		(magic[1] == 'D') &&
+		(magic[2] == 'S'))
+	{
+		/* Skip past the fucking redundant header */
+		osd_fseek (diskfile, 0x10, SEEK_SET);
+	}
+	else
+		/* otherwise, point to the start of the image */
+		osd_fseek (diskfile, 0, SEEK_SET);
 
 	/* clear some of the cart variables we don't use */
 	nes.trainer = 0;
@@ -1313,18 +1331,20 @@ int nes_load_disk (int id)
 	nes.four_screen_vram = 0;
 	nes.hard_mirroring = 0;
 
-	nes_fds.sides = 1;
-	nes_fds.data = malloc (65500);
+	nes_fds.sides = 0;
+	nes_fds.data = NULL;
 
-	osd_fread (diskfile, nes_fds.data, 65500);
-
-	/* read in any extra sides */
+	/* read in all the sides */
 	while (!osd_feof (diskfile))
 	{
 		nes_fds.sides ++;
 		nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);
 		osd_fread (diskfile, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
 	}
+
+	/* adjust for eof */
+	nes_fds.sides --;
+	nes_fds.data = realloc (nes_fds.data, nes_fds.sides * 65500);
 
 	logerror ("Number of sides: %d", nes_fds.sides);
 

@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "machine/nes.h"
+#include "includes/nes.h"
 #include "machine/nes_mmc.h"
 
 //#define BACKGROUND_OFF
@@ -490,18 +490,25 @@ if (videolog) fprintf (videolog, "\n");
 if (colorlog) fprintf (colorlog, "\n");
 #endif
 
-draw_sprites:
-	/* If sprites are on, draw them */
-	if (PPU_Control1 & PPU_c1_sprites)
-	{
-		render_sprites (scanline);
-	}
-
 	/* If the left 8 pixels for the background are off, blank 'em */
 	/* TODO: handle this properly, along with sprite clipping */
 	if (!(PPU_Control1 & PPU_c1_background_L8))
 	{
-		memset (Machine->scrbitmap->line[scanline], Machine->pens[0x3f & color_mask], 0x08);
+		memset (Machine->scrbitmap->line[scanline], Machine->pens[PPU_background_color & color_mask], 0x08);
+	}
+
+draw_sprites:
+	/* If sprites are hidden in the leftmost column, fake a priority flag to mask them */
+	if (!(PPU_Control1 & PPU_c1_sprites_L8))
+	{
+		for (i = 0; i < 8; i ++)
+			line_priority[i] |= 0x01;
+	}
+
+	/* If sprites are on, draw them */
+	if (PPU_Control1 & PPU_c1_sprites)
+	{
+		render_sprites (scanline);
 	}
 
 	/* Does the user not want to see the top/bottom 8 lines? */
