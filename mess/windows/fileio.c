@@ -26,16 +26,32 @@
 #define LOG(x)	/* x */
 #endif
 
+/* CRCs */
+const char *crcdir = NULL;
+static char crcfilename[256] = "";
+const char *crcfile = crcfilename;
+static char pcrcfilename[256] = "";
+const char *pcrcfile = pcrcfilename;
+
+
+/* BIOS */
 static char **rompathv = NULL;
 static int rompathc = 0;
 static int rompath_needs_decomposition = 1;
 extern char *rompath_extra;
 
+/* SAMPLES */
 static char **samplepathv = NULL;
 static int samplepathc = 0;
 static int samplepath_needs_decomposition = 1;
 
+/* SOFTWARE */
+static char **swpathv = NULL;
+static int swpathc = 0;
+static int swpath_needs_decomposition = 1;
+
 static const char *rompath = "bios";
+static const char *swpath = "software";
 static const char *samplepath = "samples";
 static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
 static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
@@ -47,16 +63,17 @@ extern char *cheatfile;
 
 static int request_decompose_rompath(struct rc_option *option, const char *arg, int priority);
 static int request_decompose_samplepath(struct rc_option *option, const char *arg, int priority);
+static int request_decompose_swpath(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option fileio_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-#ifdef MESS
-	{ "biospath", "bp", rc_string, &rompath, "bios", 0, 0, request_decompose_rompath, "path to bios sets" },
-#else
-	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, request_decompose_rompath, "path to romsets" },
-#endif
+	/* BIOS and Software */
+	{ "biospath",      "bp",  rc_string, &rompath,"bios",     0, 0, request_decompose_rompath, "path to bios sets" },
+	{ "softwarepath",  "swp", rc_string, &swpath, "software", 0, 0, request_decompose_swpath,  "path to software" },
+	/* Others */
+	{ "CRC_directory", "crc", rc_string, &crcdir, "crc"     , 0, 0, NULL,                      "path to CRC files" },
 	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, request_decompose_samplepath, "path to samplesets" },
 	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
 	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
@@ -68,7 +85,7 @@ struct rc_option fileio_opts[] =
 	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
 	{ "history_file", NULL, rc_string, &history_filename, "sysinfo.dat", 0, 0, NULL, NULL },
-	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+	{ "messinfo_file", NULL, rc_string, &mameinfo_filename, "messinfo.dat", 0, 0, NULL, NULL },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -325,12 +342,64 @@ static void decompose_samplepath(void)
 	}
 }
 
+
+static int request_decompose_swpath(struct rc_option *option, const char *arg, int priority)
+{
+	swpath_needs_decomposition = 1;
+
+	option->priority = priority;
+	return 0;
+}
+
+/* swpath will be decomposed only once after all configuration
+ * options are parsed */
+static void decompose_swpath(void)
+{
+	char *token;
+	static char *path;
+	LOG(("decomposing swpath\n  swpath = %s\n", swpath));
+
+	/* run only once */
+	swpath_needs_decomposition = 0;
+
+	/* start with zero path components */
+	swpathc = 0;
+
+	if (!path)
+		path = malloc( strlen(swpath) + 1);
+	else
+		path = realloc( path, strlen(swpath) + 1);
+
+	if( !path )
+	{
+		logerror("decompose_swpath: failed to malloc!\n");
+		raise(SIGABRT);
+	}
+
+	strcpy (path, swpath);
+	token = strtok (path, ";");
+	while( token )
+	{
+		if( swpathc )
+			swpathv = realloc (swpathv, (swpathc + 1) * sizeof(char *));
+		else
+			swpathv = malloc (sizeof(char *));
+		if( !swpathv )
+			break;
+		swpathv[swpathc++] = token;
+		token = strtok (NULL, ";");
+	}
+}
+
 static inline void decompose_paths_if_needed(void)
 {
 	if (rompath_needs_decomposition)
 		decompose_rompath();
 	if (samplepath_needs_decomposition)
 		decompose_samplepath();
+	if (swpath_needs_decomposition)
+		decompose_swpath();
+
 }
 
 /*
