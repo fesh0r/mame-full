@@ -597,6 +597,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_TMS5110)
+    {
+		SOUND_TMS5110,
+		"TMS5110",
+		0,
+		TMS5110_clock,
+		tms5110_sh_start,
+		tms5110_sh_stop,
+		tms5110_sh_update,
+		0
+	},
+#endif
 #if (HAS_TMS5220)
     {
 		SOUND_TMS5220,
