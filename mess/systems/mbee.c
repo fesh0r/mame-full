@@ -370,9 +370,20 @@ ROM_START( mbee )
     ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("bas522a.rom",  0x8000, 0x2000, 0x7896a696)
     ROM_LOAD("bas522b.rom",  0xa000, 0x2000, 0xb21d9679)
-//  ROM_LOAD("edasm.rom",    0xc000, 0x2000, 0x1af1b3a9)
+    ROM_LOAD("edasm.rom",    0xc000, 0x2000, 0x1af1b3a9)
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, 0x1f9fcee4)
+
+    ROM_REGION(0x1000,REGION_GFX1,0)
+    /* videoram and colorram are remapped here */
+ROM_END
+
+ROM_START( mbeepc )
+    ROM_REGION(0x10000,REGION_CPU1,0)
+    ROM_LOAD("bas522a.rom",  0x8000, 0x2000, 0x7896a696)
+    ROM_LOAD("bas522b.rom",  0xa000, 0x2000, 0xb21d9679)
     ROM_LOAD("wbee12.rom",   0xc000, 0x2000, 0x0fc21cb5)
-    ROM_LOAD("charrom.bin",     0xf000, 0x1000, 0x1f9fcee4)
+    ROM_LOAD("telc321.rom",  0xe000, 0x2000, 0x15b9d2df)
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, 0x1f9fcee4)
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -381,7 +392,7 @@ ROM_END
 ROM_START( mbee56k )
     ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("56kb.rom",     0xe000, 0x1000, 0x28211224)
-    ROM_LOAD("charrom.bin",     0xf000, 0x1000, 0x1f9fcee4)
+    ROM_LOAD("charrom.bin",  0xf000, 0x1000, 0x1f9fcee4)
 
     ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
@@ -435,9 +446,11 @@ static const struct IODevice io_mbee[] = {
     { IO_END }
 };
 
+#define io_mbeepc  io_mbee
 #define io_mbee56k io_mbee
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP( 1983, mbee,     0,        mbee,     mbee,     0,        "Microbee Systems",  "Microbee 32K" )
+COMP( 1983, mbeepc,   mbee,     mbee,     mbee,     0,        "Microbee Systems",  "Microbee 32K Personal Communicator" )
 COMP( 1983, mbee56k,  mbee,     mbee56k,  mbee,     0,        "Microbee Systems",  "Microbee 56K (CP/M)" )
 

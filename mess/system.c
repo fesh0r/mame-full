@@ -519,6 +519,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 
 	/* MICROBEE SYSTEMS */
 	DRIVER( mbee )		/* Microbee 									  */
+	DRIVER( mbeepc )	/* Microbee (Personal Communicator)				  */
 	DRIVER( mbee56k )	/* Microbee 56K (CP/M)							  */
 
 	/* TANDY RADIO SHACK */
@@ -620,6 +621,7 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318										  */
 	DRIVER( svi328 ) 	/* SVI-328										  */
+	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)						  */
 #endif
 
 /****************Games*******************************************************/

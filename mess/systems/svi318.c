@@ -384,6 +384,11 @@ ROM_END
 
 ROM_START (svi328)
     ROM_REGION (0x10000, REGION_CPU1,0)
+    ROM_LOAD ("svi110.rom", 0x0000, 0x8000, 0x709904e9)
+ROM_END
+
+ROM_START (svi328a)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("svi111.rom", 0x0000, 0x8000, 0xbc433df6)
 ROM_END
 
@@ -433,9 +438,10 @@ static const struct IODevice io_svi318[] = {
 		{ IO_END }
 	};
 
-#define io_svi328 io_svi318
+#define io_svi328  io_svi318
+#define io_svi328a io_svi318
 
-/*   YEAR  NAME   PARENT    MACHINE   INPUT    INIT      COMPANY   FULLNAME */
-COMP( 1983, svi318, 0, svi318, svi318, svi318, "Spectravideo", "SVI-318" )
-COMP( 1983, svi328, svi318, svi318, svi328, svi318, "Spectravideo", "SVI-328" )
-
+/*    YEAR   NAME    PARENT  MACHINE INPUT   INIT    COMPANY FULLNAME */
+COMP( 1983,  svi318, 0,      svi318, svi318, svi318, "Spectravideo", "SVI-318" )
+COMP( 1983,  svi328, svi318, svi318, svi328, svi318, "Spectravideo", "SVI-328" )
+COMP( 1983,  svi328a,svi318, svi318, svi328, svi318, "Spectravideo", "SVI-328 (BASIC 1.11)" )
