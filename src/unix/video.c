@@ -261,7 +261,7 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG
 
 		bitmap->_private = bm;
 
-		osd_clearbitmap(bitmap);
+/*		osd_clearbitmap(bitmap); no longer necessary (0.37b8) */
 	}
 
 	return bitmap;
@@ -290,7 +290,8 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	if (bitmap == scrbitmap)
 	{
 		bitmap_dirty = 1;
-		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
+//		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
+		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1);
 	}
 }
 
@@ -422,7 +423,7 @@ static void osd_change_display_settings(struct my_rectangle *new_visual,
       
       /* mark the current visual area of the bitmap dirty */
       osd_mark_dirty(visual.min_x, visual.min_y,
-         visual.max_x, visual.max_y, 1);
+         visual.max_x, visual.max_y);
       
       /* to stop keys from getting stuck */
       keyboard_clear();

@@ -207,7 +207,7 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
          goto barf;
       
       keyboard_clear();
-      osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1, 1);
+      osd_mark_dirty (0, 0, bitmap->width - 1, bitmap->height - 1);
       sysdep_palette_mark_dirty(current_palette);
       /* poll mouse twice to clear internal vars */
       if (use_mouse)
