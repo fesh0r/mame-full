@@ -24,7 +24,7 @@
 /* callback datatypes */
 typedef void (*ppu2c03b_scanline_cb)( int num, int scanline, int vblank, int blanked );
 typedef void (*ppu2c03b_irq_cb)( int num );
-typedef void (*ppu2c03b_vidaccess_cb)( int num, int address, int data );
+typedef int  (*ppu2c03b_vidaccess_cb)( int num, int address, int data );
 
 struct ppu2c03b_interface
 {

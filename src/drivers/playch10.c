@@ -328,14 +328,14 @@ static struct MemoryWriteAddress cart_writemem[] =
 
 INPUT_PORTS_START( playch10 )
     PORT_START	/* These are the BIOS buttons */
-    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE1, "Channel Select", KEYCODE_9, IP_JOY_NONE )	// CHSelect 
-    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE2, "Enter", KEYCODE_0, IP_JOY_NONE )				// Enter button
-    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE3, "Reset", KEYCODE_MINUS, IP_JOY_NONE ) 		// Reset button
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )												// INT Detect
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )												// N/C
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )													// Coin 2
-    PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )	// Service button
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )													// Coin 1
+    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE1, "Channel Select", KEYCODE_9, IP_JOY_NONE )	/* CHSelect 		*/ 
+    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE2, "Enter", KEYCODE_0, IP_JOY_NONE )				/* Enter button 	*/
+    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE3, "Reset", KEYCODE_MINUS, IP_JOY_NONE ) 		/* Reset button 	*/
+    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )												/* INT Detect		*/
+    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )												/* N/C				*/
+    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )													/* Coin 2			*/
+    PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Button", KEYCODE_F1, IP_JOY_NONE )	/* Service button	*/
+    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )													/* Coin 1			*/
 
     PORT_START	/* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -488,7 +488,7 @@ static struct MachineDriver machine_driver_##name =						\
 	256+4*16, 256+4*8,													\
 	playch10_vh_convert_color_prom,										\
 																		\
-	VIDEO_TYPE_RASTER,													\
+	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR,								\
 	0,																	\
 	playch10_vh_start,													\
 	playch10_vh_stop,													\

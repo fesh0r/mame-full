@@ -1077,7 +1077,7 @@ void ppu2c03b_w( int num, int offset, int data )
 				
 				/* if there's a callback, call it now */
 				if ( chips[num].vidaccess_callback_proc )
-					(*chips[num].vidaccess_callback_proc)( num, tempAddr, data );
+					data = (*chips[num].vidaccess_callback_proc)( num, tempAddr, data );
 				
 				/* see if it's on the chargen portion */
 				if ( tempAddr < 0x2000 )
@@ -1231,7 +1231,7 @@ void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int ban
 	{
 		int vram_start = start_page * 0x400;
 		int count = num_pages * 0x400;
-		int rom_start = bank * bank_size;
+		int rom_start = bank * bank_size * 16;
 
 		memcpy( &chips[num].videoram[vram_start], &memory_region( intf->vrom_region[num] )[rom_start], count );
 	}
