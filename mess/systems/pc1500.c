@@ -36,7 +36,7 @@ static MEMORY_READ_START( pc1500_readmem )
 { 0x07000, 0x071ff, MRA_BANK1 },
 { 0x07200, 0x073ff, MRA_BANK2 },
 { 0x07400, 0x075ff, MRA_BANK3 },
-{ 0x07600, 0x077ff, MRA_RAM }, // maybe mirrored at 0x7000, 0x7200, 0x7400
+{ 0x07600, 0x077ff, MRA_RAM }, 
 { 0x07800, 0x07bff, MRA_RAM }, // maybe mirrored to 7c00
 { 0x07c00, 0x07fff, MRA_BANK4 },
 { 0x0c000, 0x0ffff, MRA_ROM },
@@ -61,14 +61,14 @@ MEMORY_END
 // pc1500a configuration
 static MEMORY_READ_START( pc1500a_readmem )
 { 0x00000, 0x03fff, MRA_NOP },
-{ 0x05000, 0x057ff, MRA_RAM },
+{ 0x04000, 0x057ff, MRA_RAM },
 { 0x07000, 0x071ff, MRA_BANK1 },
 { 0x07200, 0x073ff, MRA_BANK2 },
 { 0x07400, 0x075ff, MRA_BANK3 },
-{ 0x07600, 0x077ff, MRA_RAM }, // maybe mirrored at 0x7000, 0x7200, 0x7400
+{ 0x07600, 0x077ff, MRA_RAM }, 
 { 0x07800, 0x07fff, MRA_RAM },
 { 0x0c000, 0x0ffff, MRA_ROM },
-    { 0x1f000, 0x1f00f, lh5811_r }, // 0x00YY0 not ignored
+{ 0x1f000, 0x1f00f, lh5811_r }, // 0x00YY0 not ignored
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1500a_writemem )
@@ -484,7 +484,6 @@ void init_pc1500a(void)
 }
 
 /*    YEAR	NAME		PARENT  MACHINE   INPUT     INIT		COMPANY			FULLNAME */
-extern const struct GameDriver driver_stub;
 COMPX( 1982, pc1500,		0,		pc1500,	   pc1500,	pc1500,	    "Sharp",			"Pocket Computer 1500", GAME_NOT_WORKING)
 COMPX( 1982, trs80pc2,	pc1500, trs80pc2,  pc1500,	pc1500,	    "Tandy",			"TRS80 PC-2", GAME_NOT_WORKING|GAME_ALIAS)
 COMPX( 1984, pc1500a,	pc1500, pc1500a,   pc1500,	pc1500a,    "Sharp",			"Pocket Computer 1500A", GAME_NOT_WORKING|GAME_ALIAS)
