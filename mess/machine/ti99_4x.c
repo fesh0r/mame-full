@@ -446,7 +446,10 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 	emulator (which is the default in MESS). */
 	cpu_set_reset_line(0, PULSE_LINE);
 	tms9901_reset(0);
-	TMS9928A_reset();
+	if (! has_evpc)
+		TMS9928A_reset();
+	if (has_evpc)
+		v9938_reset();
 
 	ch = strrchr(name, '.');
 	ch2 = (ch-1 >= name) ? ch-1 : "";
@@ -510,7 +513,10 @@ void ti99_rom_unload(int id)
 	emulator (which is the default in MESS). */
 	cpu_set_reset_line(0, PULSE_LINE);
 	tms9901_reset(0);
-	TMS9928A_reset();
+	if (! has_evpc)
+		TMS9928A_reset();
+	if (has_evpc)
+		v9938_reset();
 
 	switch (slot_type[id])
 	{
@@ -3497,31 +3503,92 @@ static void evpc_cru_w(int offset, int data)
 }
 
 
+static struct
+{
+	UINT8 read_index, write_index, mask;
+	bool read;
+	int state;
+	struct { UINT8 red, green, blue; } color[0x100];
+	//int dirty;
+} evpc_palette;
+
 /*
 	read a byte in evpc DSR space
 */
 static READ_HANDLER(evpc_mem_r)
 {
+	UINT8 reply = 0;
+
+
 	if (offset < 0x1f00)
 	{
-		return ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
+		reply = ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
 	}
 	else if (offset < 0x1ff0)
 	{
 		if (RAMEN)
 		{	/* NOVRAM */
-			return 0;
+			reply = 0;
 		}
 		else
 		{
-			return ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
+			reply = ti99_evpc_DSR[offset+evpc_dsr_page*0x2000];
 		}
 	}
 	else
 	{	/* PALETTE */
 		logerror("palette read, offset=%d\n", offset-0x1ff0);
-		return 0;
+		switch (offset - 0x1ff0)
+		{
+		case 0:
+			/* Palette Read Address Register */
+			logerror("EVPC palette address read\n");
+			reply = evpc_palette.write_index;
+			break;
+
+		case 2:
+			/* Palette Read Color Value */
+			logerror("EVPC palette color read\n");
+			if (evpc_palette.read)
+			{
+				switch (evpc_palette.state)
+				{
+				case 0:
+					reply = evpc_palette.color[evpc_palette.read_index].red;
+					break;
+				case 1:
+					reply = evpc_palette.color[evpc_palette.read_index].green;
+					break;
+				case 2:
+					reply = evpc_palette.color[evpc_palette.read_index].blue;
+					break;
+				}
+				evpc_palette.state++;
+				if (evpc_palette.state == 3)
+				{
+					evpc_palette.state = 0;
+					evpc_palette.read_index++;
+				}
+			}
+			break;
+
+		case 4:
+			/* Palette Read Pixel Mask */
+			logerror("EVPC palette mask read\n");
+			reply = evpc_palette.mask;
+			break;
+		case 6:
+			/* Palette Read Address Register for Color Value */
+			logerror("EVPC palette status read\n");
+			if (evpc_palette.read)
+				reply = 0;
+			else
+				reply = 3;
+			break;
+		}
 	}
+
+	return reply;
 }
 
 /*
@@ -3535,5 +3602,56 @@ static WRITE_HANDLER(evpc_mem_w)
 	else if (offset >= 0x1ff0)
 	{	/* PALETTE */
 		logerror("palette write, offset=%d\n, data=%d", offset-0x1ff0, data);
+		switch (offset - 0x1ff0)
+		{
+		case 8:
+			/* Palette Write Address Register */
+			logerror("EVPC palette address write (for write access)\n");
+			evpc_palette.write_index = data;
+			evpc_palette.state = 0;
+			evpc_palette.read = 0;
+			break;
+
+		case 10:
+			/* Palette Write Color Value */
+			logerror("EVPC palette color write\n");
+			if (! evpc_palette.read)
+			{
+				switch (evpc_palette.state)
+				{
+				case 0:
+					evpc_palette.color[evpc_palette.write_index].red = data;
+					break;
+				case 1:
+					evpc_palette.color[evpc_palette.write_index].green = data;
+					break;
+				case 2:
+					evpc_palette.color[evpc_palette.write_index].blue = data;
+					break;
+				}
+				evpc_palette.state++;
+				if (evpc_palette.state == 3)
+				{
+					evpc_palette.state = 0;
+					evpc_palette.write_index++;
+				}
+				//evpc_palette.dirty = 1;
+			}
+			break;
+
+		case 12:
+			/* Palette Write Pixel Mask */
+			logerror("EVPC palette mask write\n");
+			evpc_palette.mask = data;
+			break;
+
+		case 14:
+			/* Palette Write Address Register for Color Value */
+			logerror("EVPC palette address write (for read access)\n");
+			evpc_palette.read_index=data;
+			evpc_palette.state=0;
+			evpc_palette.read=1;
+			break;
+		}
 	}
 }
