@@ -5,7 +5,6 @@
 	Raphael Nabet 2002
 
 TODO:
-	* support localized variants
 	* add more flexibility, so that we can create multiple-terminal configurations.
 	* support test mode???
 */
@@ -365,8 +364,6 @@ void vdt911_cru_w(int offset, int data, int unit)
 			else
 				vdt[unit].cursor_address++;
 			vdt[unit].cursor_address &= vdt[unit].cursor_address_mask;
-
-			//vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 0xb:
@@ -418,8 +415,6 @@ void vdt911_cru_w(int offset, int data, int unit)
 			else
 				vdt[unit].cursor_address &= ~ (1 << offset);
 			vdt[unit].cursor_address &= vdt[unit].cursor_address_mask;
-
-			//vdt[unit].data_reg = vdt[unit].display_RAM[vdt[unit].cursor_address];
 			break;
 
 		case 0xb:
@@ -468,7 +463,9 @@ WRITE16_HANDLER(vdt911_0_cru_w)
 	vdt911_cru_w(offset, data, 0);
 }
 
-
+/*
+	Video refresh
+*/
 void vdt911_refresh(struct mame_bitmap *bitmap, int unit, int x, int y)
 {
 	const struct GfxElement *gfx = Machine->gfx[vdt[unit].model];
@@ -540,7 +537,10 @@ static unsigned char (*key_translate[])[91] =
 	FrenchWP_key_translate
 };
 
-
+/*
+	keyboard handler: should be called regularly by machine code, for instance
+	every Video Blank Interrupt.
+*/
 void vdt911_keyboard(int unit)
 {
 	typedef enum
