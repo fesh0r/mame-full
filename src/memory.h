@@ -22,8 +22,8 @@ extern "C" {
  * GNU compiler.
  */
 
-#ifdef __GNU__
-#if (__GNUC__ == 2) && (__GNUC_MINOR_ <= 7)
+#ifdef __GNUC__
+#if (__GNUC__ < 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
 #define UNUSEDARG
 #else
 #define UNUSEDARG __attribute__((__unused__))
@@ -37,8 +37,6 @@ extern "C" {
 /* obsolete, to be removed */
 #define READ_WORD(a)			(*(UINT16 *)(a))
 #define WRITE_WORD(a,d)			(*(UINT16 *)(a) = (d))
-#define COMBINE_WORD(w,d)		(((w) & ((d) >> 16)) | ((d) & 0xffff))
-#define COMBINE_WORD_MEM(a,d)	(WRITE_WORD((a), (READ_WORD(a) & ((d) >> 16)) | (d)))
 
 
 /***************************************************************************
@@ -734,17 +732,17 @@ void     cpu_writeport16bew_word        (offs_t offset, data16_t data);
 data8_t  cpu_readport16ledw              (offs_t offset);
 void     cpu_writeport16ledw             (offs_t offset, data8_t data);
 data16_t cpu_readport16ledw_word         (offs_t offset);
-void     cpu_writeport16ledw_word         (offs_t offset, data16_t data);
-data32_t cpu_readport16ledw_dword         (offs_t offset);
-void     cpu_writeport16ledw_dword        (offs_t offset, data32_t data);
+void     cpu_writeport16lew_word         (offs_t offset, data16_t data);
+data32_t cpu_readport16lew_dword         (offs_t offset);
+void     cpu_writeport16lew_dword        (offs_t offset, data32_t data);
 
 /* ----- declare 32-bit BE handlers ----- */
 data8_t  cpu_readport16bedw              (offs_t offset);
 void     cpu_writeport16bedw             (offs_t offset, data8_t data);
 data16_t cpu_readport16bedw_word         (offs_t offset);
 void     cpu_writeport16bew_word         (offs_t offset, data16_t data);
-data32_t cpu_readport16bedw_dword         (offs_t offset);
-void     cpu_writeport16bedw_dword        (offs_t offset, data32_t data);
+data32_t cpu_readport16bew_dword         (offs_t offset);
+void     cpu_writeport16bew_dword        (offs_t offset, data32_t data);
 
 /***************************************************************************
 
@@ -766,6 +764,8 @@ opbase_handler memory_set_opbase_handler(int cpu, opbase_handler function);
 
 /* ----- separate opcode/data encryption helpers ---- */
 void		memory_set_opcode_base(int cpu, void *base);
+void		memory_set_encrypted_opcode_range(int cpu, offs_t min_address,offs_t max_address);
+extern offs_t encrypted_opcode_start[],encrypted_opcode_end[];
 
 /* ----- return a base pointer to memory ---- */
 void *		memory_find_base(int cpu, offs_t offset);

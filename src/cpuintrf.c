@@ -66,9 +66,6 @@
 #if (HAS_I8035 || HAS_I8039 || HAS_I8048 || HAS_N7751)
 #include "cpu/i8039/i8039.h"
 #endif
-#if (HAS_I8X41)
-#include "cpu/i8x41/i8x41.h"
-#endif
 #if (HAS_M6800 || HAS_M6801 || HAS_M6802 || HAS_M6803 || HAS_M6808 || HAS_HD63701)
 #include "cpu/m6800/m6800.h"
 #endif
@@ -137,9 +134,6 @@
 #endif
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"
-#endif
-#if (HAS_APEXC)
-#include "cpu/apexc/apexc.h"
 #endif
 
 
@@ -333,7 +327,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 	}
 
 /* CPUs which have _burn, _state_save and _state_load functions */
-#define CPU1(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst)	 \
+#define CPU1(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst)   \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
@@ -352,7 +346,7 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 	}
 
 /* CPUs which have the _internal_interrupt function */
-#define CPU2(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst)	 \
+#define CPU2(cpu,name,nirq,dirq,oc,i0,i1,i2,datawidth,mem,shift,bits,endian,align,maxinst)   \
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
@@ -411,6 +405,9 @@ struct cpu_interface cpuintf[] =
 	CPU0(DUMMY,    Dummy,	 1,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 1	),
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
+#endif
+#if (HAS_SH2)
+    CPU4(SH2,      sh2,     16,  0,1.00,SH2_INT_NONE ,               0,             -1,   32,32bedw,   0,32,BE,2, 2  ),
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
@@ -491,9 +488,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_I8039)
 	CPU0(I8039,    i8039,	 1,  0,1.00,I8039_IGNORE_INT,  I8039_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2	),
 #endif
-#if (HAS_I8X41)
-	CPU0(I8X41,    i8x41,	 1,  0,1.00,I8X41_INT_NONE,    I8X41_INT_IBF,  -1,			   8, 16,	  0,16,LE,1, 2	),
-#endif
 #if (HAS_I8048)
 	CPU0(I8048,    i8048,	 1,  0,1.00,I8048_IGNORE_INT,  I8048_EXT_INT,  -1,			   8, 16,	  0,16,LE,1, 2	),
 #endif
@@ -549,7 +543,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(M68EC020, m68ec020, 8, -1,1.00,MC68EC020_INT_NONE,-1,			   -1,			   32,24bedw, 0,24,BE,4,10	),
 #endif
 #if (HAS_M68020)
-	CPU0(M68020,   m68020,	 8, -1,1.00,MC68020_INT_NONE,	-1, 		   -1,			   32,32bedw, 0,32,BE,4,10	),
+	CPU0(M68020,   m68020,   8, -1,1.00,MC68020_INT_NONE,   -1,			   -1,			   32,32bedw, 0,32,BE,4,10	),
 #endif
 #if (HAS_T11)
 	CPU0(T11,	   t11, 	 4,  0,1.00,T11_INT_NONE,	   -1,			   -1,			   16,16lew,  0,16,LE,2, 6	),
@@ -563,7 +557,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
+    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             8, 16,     0,16,LE,1, 3	),
 #endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   16,29lew,  3,29,LE,2,10	),
@@ -605,8 +599,7 @@ struct cpu_interface cpuintf[] =
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,16bew,  0,15,BE,2, 3	),
 #endif
 #if (HAS_PDP1)
-	/* hack, hack, hack : we have a 18*16 bus, not 32*18... */
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16,17lew, -1,14,LE,2, 4	),
@@ -616,9 +609,6 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew,  0,32,LE,4, 4	),
-#endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,	   0,			   -1,			   32,32bew,  0,27,BE,2, 2	),
 #endif
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
@@ -635,10 +625,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_ASAP)
 	#define asap_ICount asap_icount
-	CPU0(ASAP,	   asap,	 1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
-#endif
-#if (HAS_APEXC)
-	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
+	CPU0(ASAP,     asap,     1,  0,1.00,ASAP_INT_NONE,	   -1,			   -1,			   32,32ledw, 0,32,LE,4, 12 ),
 #endif
 };
 
@@ -890,6 +877,7 @@ logerror("Machine reset\n");
 
 			/* update the timer with how long we actually ran */
 			timer_update_cpu(cpunum, ran);
+
 		}
 
 		profiler_mark(PROFILER_END);
@@ -1864,9 +1852,6 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #if (HAS_I8039)
 			case CPU_I8039: 			irq_line = 0; LOG(("I8039 IRQ\n")); break;
 #endif
-#if (HAS_I8X41)
-			case CPU_I8X41: 			irq_line = 0; LOG(("I8X41 IRQ\n")); break;
-#endif
 #if (HAS_I8048)
 			case CPU_I8048: 			irq_line = 0; LOG(("I8048 IRQ\n")); break;
 #endif
@@ -2320,6 +2305,7 @@ static void cpu_vblankcallback(int param)
 	/* is it a real VBLANK? */
 	if (!--vblank_countdown)
 	{
+
 		/* do we update the screen now? */
 		if (!(Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK))
 			usres = updatescreen();

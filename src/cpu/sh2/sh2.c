@@ -34,7 +34,7 @@
 		reason : when the two high bits of the address are set, access is
 		done directly in the cache data array. The SUPER KANEKO NOVA SYSTEM
 		sets the stack pointer here, using these addresses as usual RAM access.
-		
+
 		No real cache support has been added.
 	- Read/Write memory format correction (_bew to _bedw) (see also SH2
 		definition in cpuintrf.c and DasmSH2(..) in sh2dasm.c )
@@ -130,7 +130,7 @@ INLINE data8_t RB(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r(A);
-		
+
 	if (A >= 0xc0000000)
 		return cpu_readmem32bedw(A);
 
@@ -147,7 +147,7 @@ INLINE data16_t RW(offs_t A)
 
 	if (A >= 0xc0000000)
 		return cpu_readmem32bedw_word(A);
-		
+
 	if (A >= 0x40000000)
 		return 0xa5a5;
 
@@ -167,7 +167,7 @@ INLINE data32_t RL(offs_t A)
 
 	if (A >= 0x40000000)
 		return 0xa5a5a5a5;
-			
+
 	return cpu_readmem32bedw_dword(A & AM);
 }
 
@@ -178,7 +178,7 @@ INLINE void WB(offs_t A, data8_t V)
 		sh2_internal_w(A,V);
 		return;
 	}
-	
+
 	if (A >= 0xc0000000)
 	{
 		cpu_writemem32bedw(A,V);
@@ -228,7 +228,7 @@ INLINE void WL(offs_t A, data32_t V)
 		cpu_writemem32bedw_dword(A,V);
 		return;
 	}
-	
+
 	if (A >= 0x40000000)
 		return;
 
@@ -2216,7 +2216,7 @@ void sh2_reset(void *param)
 		raise( SIGABRT );
 	}
 	memset(sh2.m, 0, 0x200);
-	
+
 	sh2.pc = RL(0);
 	sh2.r[15] = RL(4);
 	sh2.sr = I;

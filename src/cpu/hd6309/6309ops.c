@@ -720,7 +720,7 @@ INLINE void lble( void )
 		case 14: if (promote) dst16Reg = &W; else dst8Reg = &E; break;		\
 		default: if (promote) dst16Reg = &W; else dst8Reg = &F; break;		\
 	}																		\
-	
+
 /* $1030 addr_r r1 + r2 -> r2 */
 
 INLINE void addr_r( void )
@@ -985,9 +985,9 @@ INLINE void tfmpp( void )
 {
 	UINT8	tb, srcValue = 0;
 	int 	done = FALSE;
-	
+
 	IMMBYTE(tb);
-	
+
 	if ( W != 0 )
 	{
 		switch(tb>>4) {
@@ -1008,7 +1008,7 @@ INLINE void tfmpp( void )
 			case 14: /* E  */ done = TRUE; break;
 			default: /* F  */ done = TRUE; break;
 		}
-		
+
 		if ( !done )
 		{
 			switch(tb&15) {
@@ -1029,7 +1029,7 @@ INLINE void tfmpp( void )
 				case 14: /* E  */ done = TRUE; break;
 				default: /* F  */ done = TRUE; break;
 			}
-		
+
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1046,7 +1046,7 @@ INLINE void tfmmm( void )
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
-	
+
 	if ( W != 0 )
 	{
 		switch(tb>>4) {
@@ -1067,7 +1067,7 @@ INLINE void tfmmm( void )
 			case 14: /* E  */ done = TRUE; break;
 			default: /* F  */ done = TRUE; break;
 		}
-		
+
 		if ( !done )
 		{
 			switch(tb&15) {
@@ -1088,7 +1088,7 @@ INLINE void tfmmm( void )
 				case 14: /* E  */ done = TRUE; break;
 				default: /* F  */ done = TRUE; break;
 			}
-		
+
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1105,7 +1105,7 @@ INLINE void tfmpc( void )
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
-	
+
 	if ( W != 0 )
 	{
 		switch(tb>>4) {
@@ -1126,7 +1126,7 @@ INLINE void tfmpc( void )
 			case 14: /* E  */ done = TRUE; break;
 			default: /* F  */ done = TRUE; break;
 		}
-		
+
 		if ( !done )
 		{
 			switch(tb&15) {
@@ -1147,7 +1147,7 @@ INLINE void tfmpc( void )
 				case 14: /* E  */ done = TRUE; break;
 				default: /* F  */ done = TRUE; break;
 			}
-		
+
 			PCD = PCD - 3;
 			CHANGE_PC;
 			W--;
@@ -1164,7 +1164,7 @@ INLINE void tfmcp( void )
 	int 	done = FALSE;
 
 	IMMBYTE(tb);
-	
+
 	if ( W != 0 )
 	{
 		switch(tb>>4) {
@@ -1185,7 +1185,7 @@ INLINE void tfmcp( void )
 			case 14: /* E  */ done = TRUE; break;
 			default: /* F  */ done = TRUE; break;
 		}
-		
+
 		if ( !done )
 		{
 			switch(tb&15) {
@@ -2735,7 +2735,7 @@ INLINE void divd_im( void )
 {
 	UINT8   t;
 	INT16   v;
-	
+
 	IMMBYTE( t );
 
 	if( t != 0 )
@@ -2743,13 +2743,13 @@ INLINE void divd_im( void )
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
-		
+
 		CLR_NZVC;
 		SET_NZ8(B);
-		
+
 		if( B & 0x01 )
 			SEC;
-		
+
 		if ( (v > 127) || (v < -128) )
 			SEV;
 	}
@@ -2769,7 +2769,7 @@ INLINE void divq_im( void )
 	IMMWORD( t );
 	q.w.h = D;
 	q.w.l = W;
-	
+
 	if( t.w.l != 0 )
 	{
 		v = (INT32) q.d / (INT16) t.w.l;
@@ -2778,7 +2778,7 @@ INLINE void divq_im( void )
 
 		CLR_NZVC;
 		SET_NZ16(W);
-		
+
 		if( W & 0x0001 )
 			SEC;
 
@@ -3055,13 +3055,13 @@ INLINE void divd_di( void )
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
-		
+
 		CLR_NZVC;
 		SET_NZ8(B);
-		
+
 		if( B & 0x01 )
 			SEC;
-		
+
 		if ( (v > 127) || (v < -128) )
 			SEV;
 	}
@@ -3091,7 +3091,7 @@ INLINE void divq_di( void )
 
 		CLR_NZVC;
 		SET_NZ16(W);
-		
+
 		if( W & 0x0001 )
 			SEC;
 
@@ -3423,19 +3423,19 @@ INLINE void divd_ix( void )
 
 	fetch_effective_address();
 	t=RM(EAD);
-	
+
 	if( t != 0 )
 	{
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
-		
+
 		CLR_NZVC;
 		SET_NZ8(B);
-		
+
 		if( B & 0x01 )
 			SEC;
-		
+
 		if ( (v > 127) || (v < -128) )
 			SEV;
 	}
@@ -3467,7 +3467,7 @@ INLINE void divq_ix( void )
 
 		CLR_NZVC;
 		SET_NZ16(W);
-		
+
 		if( W & 0x0001 )
 			SEC;
 
@@ -3791,13 +3791,13 @@ INLINE void divd_ex( void )
 		v = (INT16) D / (INT8) t;
 		A = (INT16) D % (INT8) t;
 		B = v;
-		
+
 		CLR_NZVC;
 		SET_NZ8(B);
-		
+
 		if( B & 0x01 )
 			SEC;
-		
+
 		if ( (v > 127) || (v < -128) )
 			SEV;
 	}
@@ -3813,7 +3813,7 @@ INLINE void divq_ex( void )
 {
 	PAIR	t, q;
 	INT32	v;
-	
+
 	q.w.h = D;
 	q.w.l = W;
 
@@ -3827,7 +3827,7 @@ INLINE void divq_ex( void )
 
 		CLR_NZVC;
 		SET_NZ16(W);
-		
+
 		if( W & 0x0001 )
 			SEC;
 

@@ -95,8 +95,8 @@ static UINT8 cdp1802_reg_layout[] = {
 	CDP1802_Rf,
 	-1,
 
-	CDP1802_P, 
-	CDP1802_X, 
+	CDP1802_P,
+	CDP1802_X,
 	CDP1802_D,
 	CDP1802_B,
 	CDP1802_T,
@@ -125,7 +125,7 @@ typedef struct
 	UINT8 d,b,t; // xp after entering interrupt
 
 	UINT16 oldpc;
-	
+
 	bool df,ie,q;
 	bool irq_state;
 
@@ -326,8 +326,8 @@ int cdp1802_execute(int cycles)
 		if (!cdp1802.idle) cdp1802_instruction();
 		else cdp1802_icount--;
 
-		if (cdp1802.config->dma) { 
-			cdp1802.config->dma(ref-cdp1802_icount);ref=cdp1802_icount; 
+		if (cdp1802.config->dma) {
+			cdp1802.config->dma(ref-cdp1802_icount);ref=cdp1802_icount;
 		}
 	} while (cdp1802_icount > 0);
 
@@ -345,7 +345,7 @@ void cdp1802_set_irq_line(int irqline, int state)
 	if (cdp1802.ie) {
 		cdp1802.ie=0;
 		cdp1802.t=(cdp1802.x<<4)|cdp1802.p;
-		cdp1802.p=1; 
+		cdp1802.p=1;
 		cdp1802.x=2;
 		change_pc16(PC);
 	}
@@ -423,7 +423,7 @@ const char *cdp1802_info(void *context, int regnum)
 	case CPU_INFO_REG+CDP1802_DF: sprintf(buffer[which],"DF:%x",r->df);break;
 	case CPU_INFO_REG+CDP1802_IE: sprintf(buffer[which],"IE:%x",r->ie);break;
 	case CPU_INFO_REG+CDP1802_Q: sprintf(buffer[which],"Q:%x",r->q);break;
-	case CPU_INFO_FLAGS: sprintf(buffer[which], "%s%s%s", r->df?"DF":"..", 
+	case CPU_INFO_FLAGS: sprintf(buffer[which], "%s%s%s", r->df?"DF":"..",
 	r->ie ? "IE":"..", r->q?"Q":"."); break;
 	case CPU_INFO_NAME: return "CDP1802";
 	case CPU_INFO_FAMILY: return "CDP1802";

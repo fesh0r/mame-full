@@ -11,6 +11,17 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 CPU=$(strip $(findstring Z80GB@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/z80gb
@@ -296,17 +307,6 @@ else
 CPUDEFS += -DHAS_I8039=0
 endif
 
-CPU=$(strip $(findstring I8X41@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/i8x41
-CPUDEFS += -DHAS_I8X41=1
-CPUOBJS += $(OBJ)/cpu/i8x41/i8x41.o
-DBGOBJS += $(OBJ)/cpu/i8x41/8x41dasm.o
-$(OBJ)/cpu/i8x41/i8x41.o: i8x41.c i8x41.h
-else
-CPUDEFS += -DHAS_I8X41=0
-endif
-
 CPU=$(strip $(findstring I8048@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8039
@@ -476,9 +476,9 @@ CPU=$(strip $(findstring M68000@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68000=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
-ASMDEFS += -DA68KEM
+ifdef X86_ASM_68000
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
+ASMDEFS += -DA68K0
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
 M68000_GENERATED_OBJS = \
@@ -495,9 +495,9 @@ CPU=$(strip $(findstring M68010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68010=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
-ASMDEFS += -DA68KEM
+ifdef X86_ASM_68000
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
+ASMDEFS += -DA68K0
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
 M68000_GENERATED_OBJS = \
@@ -514,8 +514,9 @@ CPU=$(strip $(findstring M68EC020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68EC020=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
+ifdef X86_ASM_68020
+ASMDEFS += -DA68K2
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
 ASMDEFS += -DA68KEM
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
@@ -533,8 +534,9 @@ CPU=$(strip $(findstring M68020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68020=1
-ifdef X86_ASM_68K
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68kem.o
+ifdef X86_ASM_68020
+ASMDEFS += -DA68K2
+CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
 ASMDEFS += -DA68KEM
 $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
 else
@@ -779,17 +781,6 @@ else
 CPUDEFS += -DHAS_PSXCPU=0
 endif
 
-CPU=$(strip $(findstring SH2@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/sh2
-CPUDEFS += -DHAS_SH2=1
-CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
-DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
-$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
-else
-CPUDEFS += -DHAS_SH2=0
-endif
-
 CPU=$(strip $(findstring SC61860@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/sc61860
@@ -856,17 +847,6 @@ else
 CPUDEFS += -DHAS_ASAP=0
 endif
 
-CPU=$(strip $(findstring APEXC@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/apexc
-CPUDEFS += -DHAS_APEXC=1
-CPUOBJS += $(OBJ)/cpu/apexc/apexc.o
-DBGOBJS += $(OBJ)/cpu/apexc/apexcdsm.o
-$(OBJ)/cpu/apexc/apexc.o: apexc.c apexc.h
-else
-CPUDEFS += -DHAS_APEXC=0
-endif
-
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
@@ -895,6 +875,9 @@ SOUND=$(strip $(findstring DISCRETE@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_DISCRETE=1
 SOUNDOBJS += $(OBJ)/sound/discrete.o
+$(OBJ)/sound/discrete.o: src/sound/discrete.c src/sound/discrete.h \
+		src/sound/disc_dev.c src/sound/disc_flt.c src/sound/disc_inp.c \
+		src/sound/disc_mth.c src/sound/disc_out.c src/sound/disc_wav.c
 else
 SOUNDDEFS += -DHAS_DISCRETE=0
 endif
@@ -974,7 +957,7 @@ endif
 SOUND=$(strip $(findstring YM2413@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_YM2413=1
-SOUNDOBJS += $(OBJ)/sound/3812intf.o $(OBJ)/sound/ym2413.o $(OBJ)/sound/fmopl.o
+SOUNDOBJS += $(OBJ)/sound/2413intf.o $(OBJ)/sound/ym2413.o
 else
 SOUNDDEFS += -DHAS_YM2413=0
 endif
