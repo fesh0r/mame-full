@@ -32,7 +32,7 @@
 #include "effect.h"
 #include "sysdep/sysdep_display.h"
 
-static int video_width,video_height;
+static int ggi_video_width,ggi_video_height;
 static int scaled_visual_width,scaled_visual_height;
 static ggi_visual_t vis = NULL;
 static int screen_startx,screen_starty;
@@ -271,23 +271,23 @@ static int set_video_mode(int depth)
     scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
 
     if (force_x == 0)
-        video_width = scaled_visual_width;
+        ggi_video_width = scaled_visual_width;
     else
-        video_width = force_x;
+        ggi_video_width = force_x;
 
     if (force_y == 0)
-        video_height = scaled_visual_height;
+        ggi_video_height = scaled_visual_height;
     else
-        video_height = force_y;
+        ggi_video_height = force_y;
 
-    if (video_height < scaled_visual_height || video_width < scaled_visual_width) {
+    if (ggi_video_height < scaled_visual_height || ggi_video_width < scaled_visual_width) {
         fprintf(stderr_file,"Forced resolution %dx%d < needed resolution %dx%d -- aborting...\n",
-                video_width,video_height,scaled_visual_width,scaled_visual_height);
+                ggi_video_width,ggi_video_height,scaled_visual_width,scaled_visual_height);
         return(FALSE);
     }
 
     if (force_x || force_y)
-        fprintf(stderr_file,"Command line override: setting mode %dx%d\n",video_width,video_height);
+        fprintf(stderr_file,"Command line override: setting mode %dx%d\n",ggi_video_width,ggi_video_height);
 
     /* some GGI stuff */
     vis = ggiOpen(NULL);
@@ -295,7 +295,7 @@ static int set_video_mode(int depth)
     ggiSetEventMask(vis, emKey | emPointer);
 
     /* first try exact game resolution... */
-    if (! ggi_check_mode(vis, video_width, video_height, depth, &best_type) &&
+    if (! ggi_check_mode(vis, ggi_video_width, ggi_video_height, depth, &best_type) &&
         (!force_x && !force_y))
     {
         int w, h, score;
@@ -310,7 +310,7 @@ static int set_video_mode(int depth)
                 if (score && score >= best_score) {
                     best_score = score;
                     best_type  = type;
-                    video_width = w; video_height = h;
+                    ggi_video_width = w; ggi_video_height = h;
                 }
             }
         }
@@ -329,14 +329,14 @@ static int set_video_mode(int depth)
         }
     }
 
-    if (ggiCheckSimpleMode(vis, video_width, video_height, GGI_AUTO,
+    if (ggiCheckSimpleMode(vis, ggi_video_width, ggi_video_height, GGI_AUTO,
                            best_type, &mode) != 0)
        return(FALSE);
 
     if (ggiSetMode(vis, &mode) != 0)
        return(FALSE);
        
-    mode_fix_aspect((double)video_width/video_height);
+    mode_fix_aspect((double)ggi_video_width/ggi_video_height);
 
  mode_set:
     scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
@@ -355,10 +355,10 @@ static int set_video_mode(int depth)
 		"Notice: cannot get ideal mode %dx%d, setting to %dx%d\n",
 		scaled_visual_width,scaled_visual_height,mode.visible.x,mode.visible.y);
     }
-    video_width   = mode.visible.x;
-    video_height  = mode.visible.y;
-    screen_startx = ((video_width - scaled_visual_width) / 2) & ~7;
-    screen_starty = (video_height - scaled_visual_height) / 2;
+    ggi_video_width   = mode.visible.x;
+    ggi_video_height  = mode.visible.y;
+    screen_startx = ((ggi_video_width - scaled_visual_width) / 2) & ~7;
+    screen_starty = (ggi_video_height - scaled_visual_height) / 2;
     
     /* choose the correct updater for this graphtype */
     updater += (GT_SIZE(mode.graphtype) / 8) - 1;
@@ -379,7 +379,7 @@ static int set_video_mode(int depth)
         }
         video_mem = direct_buf->write;
         video_mem += screen_startx * GT_SIZE(mode.graphtype) / 8;
-        video_mem += screen_starty * video_width *
+        video_mem += screen_starty * ggi_video_width *
            GT_SIZE(mode.graphtype) / 8;
 #ifdef GGI_DEBUG
         fprintf(stderr_file,
@@ -464,12 +464,12 @@ int sysdep_create_display(int depth)
         return OSD_NOT_OK;
     }
 
-    fprintf(stderr_file,"GGI: using mode %dx%d\n",video_width,video_height);
+    fprintf(stderr_file,"GGI: using mode %dx%d\n",ggi_video_width,ggi_video_height);
 #ifdef GGI_DEBUG
     fprintf(stderr_file,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
 
-   effect_init2(depth, GT_SIZE(mode.graphtype), video_width);
+   effect_init2(depth, GT_SIZE(mode.graphtype), ggi_video_width);
 
     return OSD_OK;
 }
@@ -526,16 +526,24 @@ static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap)
    }
    else
    {
+#define SRC_PIXEL unsigned short
+#define DEST_PIXEL unsigned short
+#define DEST doublebuffer_buffer
+#define DEST_WIDTH scaled_visual_width
 #define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
     { \
         int _i; \
         for (_i=0; _i<HEIGHT; _i++) { \
             ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,bitmap->line[(Y)+visual.min_y+_i]+(visual.min_x+(X))*2); \
+                        WIDTH,(unsigned short *)bitmap->line[(Y)+visual.min_y+_i]+(visual.min_x+(X))*2); \
         } \
     }
 #include "blit.h"
 #undef PUT_IMAGE
+#undef DEST_WIDTH
+#undef DEST
+#undef DEST_PIXEL
+#undef SRC_PIXEL
    }
 }
 
