@@ -76,7 +76,8 @@ void basicdsk_floppy_unload(int id);
 
 	1,2,3,4,5,6,7,8,9,10
 
-  track_skipping = set to TRUE if a 40-track image has been inserted in a 80-track drive, FALSE otherwise
+  track_skipping = set to TRUE if a 40-track image has been inserted in an
+  80-track drive, FALSE otherwise
 */
 
 void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length/*, UINT16 dir_sector, UINT16 dir_length*/, UINT8 first_sector_id, UINT16 offset_track_zero, int track_skipping);
