@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Odyssey 2 [PeT, Dopefish Justin]
 
 System Driver Changes:
 ----------------------
@@ -19,8 +19,9 @@ Source Changes:
 - Added new snapshot/quickload code, to hide the details about loading
   snapshots and quickloads from the drivers.  [Nate Woods]
   
-- [WIN32] Added the ability to toggle the frames per second view in the new UI.
-  [Nate Woods]
+- [WIN32] Added the ability to toggle the frames per second view, differentiate
+  between soft and hard resets in certain systems, and to save screenshots in
+  the new UI.  [Nate Woods]
 
 System Driver Changes:
 ----------------------

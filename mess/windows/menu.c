@@ -20,6 +20,7 @@
 #include "strconv.h"
 #include "utils.h"
 #include "sound/wave.h"
+#include "artwork.h"
 
 #ifdef UNDER_CE
 #include "invokegx.h"
@@ -757,6 +758,10 @@ static int invoke_command(UINT command)
 		loadsave(LOADSAVE_SAVE);
 		break;
 
+	case ID_FILE_SAVESCREENSHOT:
+		artwork_save_snapshot(artwork_get_ui_bitmap());
+		break;
+
 	case ID_FILE_EXIT:
 		PostMessage(win_video_window, WM_DESTROY, 0, 0);
 		break;
@@ -777,7 +782,11 @@ static int invoke_command(UINT command)
 		pause();
 		break;
 
-	case ID_OPTIONS_RESET:
+	case ID_OPTIONS_HARDRESET:
+		memset(mess_ram, 0xcd, mess_ram_size);
+		/* fall through */
+
+	case ID_OPTIONS_SOFTRESET:
 		machine_reset();
 		break;
 
@@ -880,6 +889,20 @@ static int count_joysticks(void)
 }
 
 //============================================================
+//	set_menu_text
+//============================================================
+
+void set_menu_text(HMENU menu_bar, int command, const char *text)
+{
+	MENUITEMINFO mii;
+	memset(&mii, 0, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	mii.fMask = MIIM_TYPE;
+	mii.dwTypeData = (LPTSTR) A2T(text);
+	SetMenuItemInfo(menu_bar, command, FALSE, &mii);	
+}
+
+//============================================================
 //	win_setup_menus
 //============================================================
 
@@ -889,7 +912,6 @@ int win_setup_menus(HMENU menu_bar)
 	HMENU joystick_menu;
 	char buf[256];
 	int i, joystick_count = 0;
-	MENUITEMINFO mii;
 
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
 	is_paused = 0;
@@ -911,6 +933,13 @@ int win_setup_menus(HMENU menu_bar)
 		AppendMenu(frameskip_menu, MF_STRING, ID_FRAMESKIP_0 + i, A2T(buf));
 	}
 
+	// set up the reset options
+	if (ram_option_count(Machine->gamedrv) == 0)
+	{
+		RemoveMenu(menu_bar, ID_OPTIONS_HARDRESET, MF_BYCOMMAND);
+		set_menu_text(menu_bar, ID_OPTIONS_SOFTRESET, "&Reset");
+	}
+
 	// set up joystick menu
 #ifndef UNDER_CE
 	joystick_count = count_joysticks();
@@ -930,11 +959,7 @@ int win_setup_menus(HMENU menu_bar)
 
 	// set the help menu to refer to this machine
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "About %s (%s)...", Machine->gamedrv->description, Machine->gamedrv->name);
-	memset(&mii, 0, sizeof(mii));
-	mii.cbSize = sizeof(mii);
-	mii.fMask = MIIM_TYPE;
-	mii.dwTypeData = (LPTSTR) A2T(buf);
-	SetMenuItemInfo(menu_bar, ID_HELP_ABOUTSYSTEM, FALSE, &mii);	
+	set_menu_text(menu_bar, ID_HELP_ABOUTSYSTEM, buf);
 
 	win_menu_bar = menu_bar;
 	return 0;
