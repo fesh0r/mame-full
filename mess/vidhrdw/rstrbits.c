@@ -3,6 +3,12 @@
 #include "mame.h"
 #include "driver.h"
 
+#ifdef MAME_DEBUG
+#define LOG_RASTERBITS	0
+#else
+#define LOG_RASTERBITS	0
+#endif
+
 #define myMIN(a, b) ((a) < (b) ? (a) : (b))
 #define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
@@ -345,6 +351,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 	UINT8 *db;
 	int pixtop, pixbottom;
 	int loopbackpos;
+	int loopbackpixels;
 	int visualbytes;
 	int y, r, i;
 	void (*build_scanline)(UINT8 *, UINT8 *, int , int , UINT16 *) = NULL;
@@ -363,9 +370,11 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 	/* Do we need loopback? */
 	if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * mode->depth / 8 + mode->offset) > mode->wrapbytesperrow)) {
 		loopbackpos = mode->wrapbytesperrow - mode->offset;
+		loopbackpixels = loopbackpos * (8 / mode->depth) * scalex;
 	}
 	else {
 		loopbackpos = -1;
+		loopbackpixels = 0;
 	}
 
 	switch(mode->depth) {
@@ -439,11 +448,11 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			/* We have to draw this scanline */
 
 			if (loopbackpos >= 0) {
-				build_scanline(scanline,               vram + mode->offset, loopbackpos,               scalex, pens);
-				build_scanline(scanline + loopbackpos, vram,                visualbytes - loopbackpos, scalex, pens);
+				build_scanline(scanline,                  vram + mode->offset, loopbackpos,               scalex, pens);
+				build_scanline(scanline + loopbackpixels, vram,                visualbytes - loopbackpos, scalex, pens);
 			}
 			else {
-				build_scanline(scanline,               vram + mode->offset, visualbytes,               scalex, pens);
+				build_scanline(scanline,                  vram + mode->offset, visualbytes,               scalex, pens);
 			}
 
 			/* We have the scanline, now draw it */
@@ -681,6 +690,10 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	assert(src);
 	assert(mode);
 	assert(frame);
+
+#if LOG_RASTERBITS
+	logerror("raster_bits(): mode->wrapbytesperrow=%i mode->offset=%i\n", mode->wrapbytesperrow, mode->offset);
+#endif
 
 	/* Get bitmap height and width; accounting for rotation/flipping */
 	if (Machine->orientation & ORIENTATION_SWAP_XY) {
