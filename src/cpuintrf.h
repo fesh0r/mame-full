@@ -38,7 +38,7 @@ enum
 #endif
 #if (HAS_SH2)
 	CPU_SH2,
-#endif
+#endif 
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif
@@ -112,46 +112,46 @@ enum
 	CPU_V33,
 #endif
 #if (HAS_I8035)
-	CPU_I8035,	/* same as CPU_I8039 */
+	CPU_I8035,
 #endif
 #if (HAS_I8039)
 	CPU_I8039,
 #endif
 #if (HAS_I8048)
-	CPU_I8048,	/* same as CPU_I8039 */
+	CPU_I8048,
 #endif
 #if (HAS_N7751)
-	CPU_N7751,	/* same as CPU_I8039 */
+	CPU_N7751,
 #endif
 #if (HAS_M6800)
-	CPU_M6800,	/* same as CPU_M6802/CPU_M6808 */
+	CPU_M6800,
 #endif
 #if (HAS_M6801)
-	CPU_M6801,	/* same as CPU_M6803 */
+	CPU_M6801,
 #endif
 #if (HAS_M6802)
-	CPU_M6802,	/* same as CPU_M6800/CPU_M6808 */
+	CPU_M6802,
 #endif
 #if (HAS_M6803)
-	CPU_M6803,	/* same as CPU_M6801 */
+	CPU_M6803,
 #endif
 #if (HAS_M6808)
-	CPU_M6808,	/* same as CPU_M6800/CPU_M6802 */
+	CPU_M6808,
 #endif
 #if (HAS_HD63701)
-	CPU_HD63701,	/* 6808 with some additional opcodes */
+	CPU_HD63701,
 #endif
 #if (HAS_NSC8105)
-	CPU_NSC8105,	/* same(?) as CPU_M6802(?) with scrambled opcodes. There is at least one new opcode. */
+	CPU_NSC8105,
 #endif
 #if (HAS_M6805)
 	CPU_M6805,
 #endif
 #if (HAS_M68705)
-	CPU_M68705,	/* same as CPU_M6805 */
+	CPU_M68705,
 #endif
 #if (HAS_HD63705)
-	CPU_HD63705,	/* M6805 family but larger address space, different stack size */
+	CPU_HD63705,
 #endif
 #if (HAS_HD6309)
 	CPU_HD6309,
