@@ -6,9 +6,7 @@
 #include "includes/apf.h"
 
 #include "machine/6821pia.h"
-//#include "includes/i8271.h"
 #include "includes/wd179x.h"
-#include "includes/msm8251.h"
 #include "includes/basicdsk.h"
 
  /*
@@ -398,11 +396,15 @@ void apf_imagination_init_machine(void)
 	pia_config(1, PIA_STANDARD_ORDERING,&apf_imagination_pia_interface);
 
 	apf_common_init();
+
+	wd179x_init(WD_TYPE_179X,NULL);
 }
 
 void apf_imagination_stop_machine(void)
 {
 	apf_common_exit();
+
+	wd179x_exit();
 }
 
 void apf_m1000_init_machine(void)
@@ -415,14 +417,16 @@ void apf_m1000_stop_machine(void)
 	apf_common_exit();
 }
 
-READ_HANDLER(disc_r)
-{
-	logerror("disc r %04x\n",offset);
-	return 0x00;
-}
 
-WRITE_HANDLER(disc_w)
+static WRITE_HANDLER(apf_dischw_w)
 {
+	int drive;
+
+	/* bit 3 is index of drive to select */
+	drive = (data>>3) & 0x01;
+
+	wd179x_set_drive(drive);
+
 	logerror("disc w %04x %04x\n",offset,data);
 }
 
@@ -439,7 +443,7 @@ WRITE_HANDLER(serial_w)
 	logerror("serial w %04x %04x\n",offset,data);
 }
 
-
+/* 256 bytes per sector, single sided, single density, 40 track  */
 int apfimag_floppy_init(int id)
 {
 	if (device_filename(IO_FLOPPY, id)==NULL)
@@ -457,6 +461,45 @@ int apfimag_floppy_init(int id)
 	return INIT_FAIL;
 }
 
+static WRITE_HANDLER(apf_wd179x_command_w)
+{
+	wd179x_command_w(offset,~data);
+}
+
+static WRITE_HANDLER(apf_wd179x_track_w)
+{
+	wd179x_track_w(offset,~data);
+}
+
+static WRITE_HANDLER(apf_wd179x_sector_w)
+{
+	wd179x_sector_w(offset,~data);
+}
+
+static WRITE_HANDLER(apf_wd179x_data_w)
+{
+	wd179x_data_w(offset,~data);
+}
+
+static READ_HANDLER(apf_wd179x_status_r)
+{
+	return ~wd179x_status_r(offset);
+}
+
+static READ_HANDLER(apf_wd179x_track_r)
+{
+	return ~wd179x_track_r(offset);
+}
+
+static READ_HANDLER(apf_wd179x_sector_r)
+{
+	return ~wd179x_sector_r(offset);
+}
+
+static READ_HANDLER(apf_wd179x_data_r)
+{
+	return wd179x_data_r(offset);
+}
 
 static MEMORY_READ_START( apf_imagination_readmem )
 	{ 0x00000, 0x003ff, apf_video_r},
@@ -474,8 +517,11 @@ static MEMORY_READ_START( apf_imagination_readmem )
 	{ 0x05000, 0x057ff, MRA_BANK3},
 	{ 0x05800, 0x05fff, MRA_BANK4},
 	{ 0x06000, 0x063ff, apf_pia_1_r},
-{ 0x06400, 0x064ff, serial_r},
-{ 0x06500, 0x067ff, disc_r},
+	{ 0x06400, 0x064ff, serial_r},
+	{ 0x06500, 0x06500, apf_wd179x_status_r},
+	{ 0x06501, 0x06501, apf_wd179x_track_r},
+	{ 0x06502, 0x06502, apf_wd179x_sector_r},
+	{ 0x06503, 0x06503, apf_wd179x_data_r},
 	{ 0x06800, 0x077ff, MRA_ROM},
 	{ 0x07800, 0x07fff, MRA_NOP},
 	{ 0x08000, 0x09fff, MRA_ROM},
@@ -485,6 +531,7 @@ static MEMORY_READ_START( apf_imagination_readmem )
 	{ 0x0f000, 0x0f7ff, MRA_BANK7},
 	{ 0x0f800, 0x0ffff, MRA_BANK8},
 MEMORY_END
+
 
 static MEMORY_WRITE_START( apf_imagination_writemem )
 	{ 0x00000, 0x003ff, apf_video_w},
@@ -500,7 +547,11 @@ static MEMORY_WRITE_START( apf_imagination_writemem )
 	{ 0x04000, 0x05fff, MWA_ROM},
 	{ 0x06000, 0x063ff, apf_pia_1_w},
 	{ 0x06400, 0x064ff, serial_w},
-	{ 0x06500, 0x067ff, disc_w},
+	{ 0x06500, 0x06500, apf_wd179x_command_w},
+	{ 0x06501, 0x06501, apf_wd179x_track_w},
+	{ 0x06502, 0x06502, apf_wd179x_sector_w},
+	{ 0x06503, 0x06503, apf_wd179x_data_w},
+	{ 0x06600, 0x06600, apf_dischw_w},
 	{ 0x0a000, 0x0dfff, MWA_RAM},
 	{ 0x0e000, 0x0ffff, MWA_ROM},
 MEMORY_END
@@ -834,7 +885,7 @@ static const struct IODevice io_apfimag[] =
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,apf_cassette_init,apf_cassette_exit),
 	{
 		IO_FLOPPY,					/* type */
-		4,							/* count */
+		2,							/* count */
 		"apd\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
 		0,
