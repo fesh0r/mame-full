@@ -4926,11 +4926,23 @@ to use basic, you can insert one of 3 basic cartridges:
 "BASIC-I" a integer based basic, "BASIC-G" a basic for graphics, "BASIC-F" a basic
 for floating point operations.
 
-Known Issues:
+
+Cartridges:
+
+The Sord must have a cartridge to start up.
 - some cartridges may not work
-- cassette emulation is working, but may not be perfect.
-- no memory expansion supported
-- no extra peripherals supported
+
+Cassette:
+
+The cassette emulation uses .WAV sample files.
+
+saving:
+save"cmt:<filename>" where <filename> is the name of the file. 
+
+loading:
+old"cmt:" will load the next file on the cassette.
+chan"cmt:" and run"cmt:" can also be used to load and run the next file on the cassette.
+
 
 History and Trivia:
 
@@ -4939,6 +4951,10 @@ The Sord M5 is similar in design to the MSX but not compatible with it.
 a different sound chip and the I/O port assignments are not the same).
 
 In fact some MSX games have been converted to the Sord by enthusiasts.
+
+Known Issues:
+- no memory expansion supported
+
 
 $end
 
