@@ -14,8 +14,8 @@ System Driver Changes:
 - [SNES] Fixed a GDMA bug that was causing graphics corruption. Added support
   for FastROMs. Improved object and background layering priorities. Colour
   addition/subtraction is greatly improved. Added vertical mosaic effect. Fixed
-  Mode 7 rotation and draw outside screen area. Added support for the back
-  colour constant. [Anthony Kruize]
+  Mode 7 rotation and draw outside screen area. Added x/y flip to Mode 7. Added
+  support for the back colour constant. [Anthony Kruize]
 
 - [APPLE2] Fixed keyboard and added color, joystick, and natural keyboard
   support. [Nate Woods]
