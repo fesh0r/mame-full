@@ -717,7 +717,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 static void snes_update_line_mode7( UINT16 curline )
 {
 	UINT32 tilen, tiled;
-	INT16 a,b,c,d;
+	INT16 a,b_,c,d;
 	INT16 xc, yc, tx, ty, sx, sy, hs, vs;
 	register UINT8 colour = 0;
 
@@ -729,7 +729,7 @@ static void snes_update_line_mode7( UINT16 curline )
 #endif
 
 	a = mode7_data[0];
-	b = -mode7_data[1];
+	b_ = -mode7_data[1];
 	c = -mode7_data[2];
 	d = mode7_data[3];
 	xc = mode7_data[4];
@@ -754,7 +754,7 @@ static void snes_update_line_mode7( UINT16 curline )
 	for( sx = 0; sx < 256; sx++ )
 	{
 		tx = (((a * ((sx + hs) - xc)) + (c * ((sy + vs) - yc))) >> 8) + xc;
-		ty = (((b * ((sx + hs) - xc)) + (d * ((sy + vs) - yc))) >> 8) + yc;
+		ty = (((b_ * ((sx + hs) - xc)) + (d * ((sy + vs) - yc))) >> 8) + yc;
 		switch( snes_ram[M7SEL] & 0xc0 )
 		{
 			case 0x00:	/* Repeat if outside screen area */
@@ -805,7 +805,7 @@ static void snes_update_line_mode7( UINT16 curline )
 			for( sx = 0; sx < 256; sx++ )
 			{
 				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc) & 0x3ff;
-				ty = (((b * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc) & 0x3ff;
+				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc) & 0x3ff;
 				tilen = snes_vram[((ty / 8) * 128 * 2) + ((tx / 8) * 2)];
 				tiled = 1 + (tilen * 8 * 8 * 2);
 				colour = snes_vram[tiled + ((ty & 7) * 8 * 2) + ((tx & 7) * 2)];
@@ -820,7 +820,7 @@ static void snes_update_line_mode7( UINT16 curline )
 			for( sx = 0; sx < 256; sx++ )
 			{
 				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc);
-				ty = (((b * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
+				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
 				tilen = snes_vram[(((ty & 0x3ff) / 8) * 128 * 2) + (((tx & 0x3ff) / 8) * 2)];
 				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
 					tiled = 1 + (tilen * 8 * 8 * 2);
@@ -838,7 +838,7 @@ static void snes_update_line_mode7( UINT16 curline )
 			for( sx = 0; sx < 256; sx++ )
 			{
 				tx = (((a * ((sx + hs) - xc) + c * ((sy + vs) - yc)) >> 8) + xc);
-				ty = (((b * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
+				ty = (((b_ * ((sx + hs) - xc) + d * ((sy + vs) - yc)) >> 8) + yc);
 				if( (tx & 0x7fff) < 1024 && (ty & 0x7fff) < 1024 )
 				{
 					tilen = snes_vram[((ty / 8) * 128 * 2) + ((tx / 8) * 2)];
@@ -958,7 +958,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 	}
 }
 
-static void snes_update_backplane()
+static void snes_update_backplane(void)
 {
 	UINT16 ii;
 
