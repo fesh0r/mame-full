@@ -211,31 +211,10 @@ ROM_START( astrocde )
     ROM_LOAD( "astro.bin",  0x0000, 0x2000, 0xebc77f3a )
 ROM_END
 
-static const struct IODevice io_astrocde[] = {
-    {
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"bin\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,   			/* id */
-		astrocade_load_rom, /* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
-	},
-	{ IO_END }
-};
+#define io_astrocde	io_NULL
 
 SYSTEM_CONFIG_START(astrocde)
+	CONFIG_DEVICE_CARTSLOT( "bin\0", 1, astrocade_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

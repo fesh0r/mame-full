@@ -375,57 +375,15 @@ ROM_START (a7800p)
     ROM_LOAD ("7800pal.rom", 0xc000, 0x4000, 0xd5b61170 )
 ROM_END
 
-static const struct IODevice io_a7800[] = {
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "a78\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        a7800_init_cart,	/* init */
-        a7800_exit_rom,		/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,               /* output_chunk */
-        a7800_partialcrc,   /* partial CRC */
-    },
-    { IO_END }
-};
-
-static const struct IODevice io_a7800p[] = {
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "a78\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        a7800p_init_cart,	/* init */
-        a7800_exit_rom,		/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,               /* output_chunk */
-        a7800_partialcrc,   /* partial CRC */
-    },
-    { IO_END }
-};
+#define io_a7800		io_NULL
+#define io_a7800p		io_NULL
 
 SYSTEM_CONFIG_START(a7800)
+	CONFIG_DEVICE_CARTSLOT( "a78\0", 1, a7800_init_cart, NULL, a7800_partialcrc)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(a7800p)
+	CONFIG_DEVICE_CARTSLOT( "a78\0", 1, a7800p_init_cart, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
@@ -436,4 +394,4 @@ SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
 CONS( 1986, a7800,    0,        a7800,    a7800,    0,		a7800,	"Atari",  "Atari 7800 NTSC" )
-CONS( 1986, a7800p,   a7800,    a7800p,   a7800,    0,		a7800,	"Atari",  "Atari 7800 PAL" )
+CONS( 1986, a7800p,   a7800,    a7800p,   a7800,    0,		a7800p,	"Atari",  "Atari 7800 PAL" )

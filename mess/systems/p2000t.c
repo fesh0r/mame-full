@@ -290,15 +290,8 @@ ROM_START(p2000m)
 	ROM_LOAD("p2000.chr", 0x0140, 0x08c0, BADCRC(0x78c17e3e))
 ROM_END
 
-static	const	struct	IODevice	io_p2000t[] =
-{
-	{ IO_END }
-};
-
-static	const	struct	IODevice	io_p2000m[] =
-{
-	{ IO_END }
-};
+#define io_p2000t	io_NULL
+#define io_p2000m	io_NULL
 
 SYSTEM_CONFIG_START(p2000)
 SYSTEM_CONFIG_END

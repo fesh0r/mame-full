@@ -504,9 +504,7 @@ ROM_START (ti86grom)
 	ROM_LOAD ("ti86grom.bin", 0x10000, 0x40000, 0xd2c67280)
 ROM_END
 
-static const struct IODevice io_ti81[] = {
-    { IO_END }
-};
+#define io_ti81	io_NULL
 
 static const struct IODevice io_ti85[] = {
     {

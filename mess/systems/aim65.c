@@ -176,10 +176,7 @@ ROM_START(aim65)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-
-static const struct IODevice io_aim65[] = {
-    { IO_END }
-};
+#define io_aim65		io_NULL
 
 SYSTEM_CONFIG_START(aim65)
 SYSTEM_CONFIG_END

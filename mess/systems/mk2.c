@@ -161,9 +161,7 @@ ROM_START(mk2)
 #endif
 ROM_END
 
-static const struct IODevice io_mk2[] = {
-    { IO_END }
-};
+#define io_mk2	io_NULL
 
 SYSTEM_CONFIG_START(mk2)
 SYSTEM_CONFIG_END

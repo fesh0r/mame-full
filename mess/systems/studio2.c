@@ -324,14 +324,11 @@ static const struct IODevice io_studio2[] = {
     { IO_END }
 };
 
-
-static const struct IODevice io_vip[] = {
-	// maybe quickloader
-	// tape
-    { IO_END }
-};
+#define io_vip	io_NULL
 
 SYSTEM_CONFIG_START(studio2)
+	/* maybe quickloader */
+	/* tape */
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -677,25 +677,21 @@ ROM_END
 
 #define rom_coco3h	rom_coco3
 
-static const struct IODevice io_coco[] = {
-//	IO_FLOPPY_COCO,
-    { IO_END }
-};
-
 static const struct IODevice io_coco3[] = {
 //	IO_FLOPPY_COCO,
 	IO_VHD_PORT,
     { IO_END }
 };
 
-#define io_cocoe io_coco
-#define io_coco2 io_coco
-#define io_coco2b io_coco
-#define io_coco3p io_coco3
-#define io_coco3h io_coco3
-#define io_cp400 io_coco
-#define io_dragon32 io_coco
-#define io_dragon64 io_coco
+#define io_coco		io_NULL
+#define io_cocoe	io_NULL
+#define io_coco2	io_NULL
+#define io_coco2b	io_NULL
+#define io_cp400	io_NULL
+#define io_dragon32	io_NULL
+#define io_dragon64	io_NULL
+#define io_coco3p	io_coco3
+#define io_coco3h	io_coco3
 
 /***************************************************************************
   Bitbanger port

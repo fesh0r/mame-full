@@ -799,32 +799,10 @@ static MACHINE_DRIVER_START( a2600 )
 	MDRV_SOUND_ADD(TIA, tia_interface)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_a2600[] =
-{
-    {
-        IO_CARTSLOT,                    /* type */
-        1,                              /* count */
-        "bin\0",                        /* file extensions */
-        IO_RESET_CPU,                   /* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-        0,
-        a2600_load_rom,                 /* init */
-        NULL,                           /* exit */
-        NULL,                           /* info */
-        NULL,                           /* open */
-        NULL,                           /* close */
-        NULL,                           /* status */
-        NULL,                           /* seek */
-        NULL,                           /* tell */
-        NULL,                           /* input */
-        NULL,                           /* output */
-        NULL,                           /* input_chunk */
-        NULL                            /* output_chunk */
-    },
-    {IO_END}
-};
+#define io_a2600		io_NULL
 
 SYSTEM_CONFIG_START(a2600)
+	CONFIG_DEVICE_CARTSLOT( "bin\0", 1, a2600_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -542,11 +542,7 @@ ROM_START( sfzch )
 ROM_END
 
 
-
-static const struct IODevice io_sfzch[] = {
-
-    { IO_END }
-};
+#define io_sfzch		io_NULL
 
 SYSTEM_CONFIG_START(sfzch)
 SYSTEM_CONFIG_END

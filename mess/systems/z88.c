@@ -925,11 +925,7 @@ ROM_START(z88)
     ROM_LOAD("z88v400.rom", 0x010000, 0x020000, 0x1356d440)
 ROM_END
 
-static const struct IODevice io_z88[] =
-{
-
-	{IO_END}
-};
+#define io_z88	io_NULL
 
 SYSTEM_CONFIG_START(z88)
 SYSTEM_CONFIG_END

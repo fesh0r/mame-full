@@ -213,10 +213,7 @@ static MACHINE_DRIVER_START( raaspec )
 	MDRV_VIDEO_START( raaspec )
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_raaspec[] = {
-	{ IO_END }
-};
+#define io_raaspec	io_NULL
 
 ROM_START(raaspec)
 	ROM_REGION(0x10000,REGION_CPU1, 0)

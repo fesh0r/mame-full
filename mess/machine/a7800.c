@@ -134,18 +134,6 @@ UINT32 a7800_partialcrc(const unsigned char *buf,unsigned int size)
 	return crc;
 }
 
-
-void a7800_exit_rom(int id)
-{
-	if(a7800_bios_bkup)
-		free(a7800_bios_bkup);
-	a7800_bios_bkup = NULL;
-
-	if(a7800_cart_bkup)
-		free(a7800_cart_bkup);
-	a7800_cart_bkup = NULL;
-}
-
 static int a7800_verify_cart(char header[128])
 {
 	char* tag = "ATARI7800";
@@ -167,6 +155,9 @@ static int a7800_init_cart_cmn(int id)
 	unsigned char header[128];
 
 	ROM = memory_region(REGION_CPU1);
+
+	a7800_bios_bkup = NULL;
+	a7800_cart_bkup = NULL;
 
 	/* set banks to default states */
 	cpu_setbank( 1, ROM + 0x4000 );
@@ -193,19 +184,17 @@ static int a7800_init_cart_cmn(int id)
 	}
 
 	/* Allocate memory for BIOS bank switching */
-	a7800_bios_bkup =(UINT8*)malloc( 0x4000 );
-	if(!a7800_bios_bkup)
+	a7800_bios_bkup = (UINT8*) image_malloc(IO_CARTSLOT, id, 0x4000);
+	if (!a7800_bios_bkup)
 	{
 		logerror("Could not allocate ROM memory\n");
 		return INIT_FAIL;
 	}
 
-	a7800_cart_bkup =(UINT8*)malloc( 0x4000 );
-	if(!a7800_cart_bkup)
+	a7800_cart_bkup = (UINT8*) image_malloc(IO_CARTSLOT, id,  0x4000);
+	if (!a7800_cart_bkup)
 	{
 		logerror("Could not allocate ROM memory\n");
-		free(a7800_bios_bkup);
-		a7800_bios_bkup = NULL;
 		return INIT_FAIL;
 	}
 
@@ -388,10 +377,10 @@ WRITE_HANDLER( a7800_TIA_w )
 				a7800_ctrl_lock = data & 0x01;
 				a7800_ctrl_reg = data;
 
-				if(data & 0x04)
-			   	memcpy( ROM + 0xC000, a7800_cart_bkup, 0x4000 );
+				if (data & 0x04)
+					memcpy( ROM + 0xC000, a7800_cart_bkup, 0x4000 );
 				else
-			   	memcpy( ROM + 0xC000, a7800_bios_bkup, 0x4000 );
+					memcpy( ROM + 0xC000, a7800_bios_bkup, 0x4000 );
 			}
 		break;
 	}

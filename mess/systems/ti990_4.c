@@ -246,11 +246,7 @@ static void init_ti990_4(void)
 	vdt911_init();
 }
 
-static const struct IODevice io_ti990_4[] =
-{
-	/* of course, there were I/O devices, but I am not advanced enough... */
-	{ IO_END }
-};
+#define io_ti990_4	io_NULL
 
 INPUT_PORTS_START(ti990_4)
 
@@ -259,6 +255,7 @@ INPUT_PORTS_START(ti990_4)
 INPUT_PORTS_END
 
 SYSTEM_CONFIG_START(ti990_4)
+	/* of course, there were I/O devices, but I am not advanced enough... */
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */

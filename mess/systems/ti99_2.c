@@ -544,19 +544,15 @@ ROM_START(ti99_232)
 	ROM_CONTINUE(0x10000,0x2000)
 ROM_END
 
-static const struct IODevice io_ti99_2[] =
-{
+#define io_ti99_2	io_NULL
+#define io_ti99_224 io_NULL
+#define io_ti99_232 io_NULL
+
+SYSTEM_CONFIG_START(ti99_2)
 	/* one expansion/cartridge port on the back */
 	/* one cassette unit port */
 	/* Hex-bus disk controller: supports up to 4 floppy disk drives */
 	/* None of these is supported (tape should be easy to emulate) */
-    { IO_END }
-};
-
-#define io_ti99_224 io_ti99_2
-#define io_ti99_232 io_ti99_2
-
-SYSTEM_CONFIG_START(ti99_2)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME		PARENT		MACHINE		INPUT	INIT		CONFIG		COMPANY					FULLNAME */

@@ -1033,11 +1033,7 @@ ROM_START(avigo)
         ROM_LOAD("avigo.rom", 0x010000, 0x0150000, 0x160ee4a6)
 ROM_END
 
-
-static const struct IODevice io_avigo[] =
-{
-	{IO_END}
-};
+#define io_avigo		io_NULL
 
 SYSTEM_CONFIG_START(avigo)
 SYSTEM_CONFIG_END

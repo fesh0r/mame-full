@@ -320,33 +320,10 @@ ROM_START(comquest)
 	ROM_LOAD("comquest.bin", 0x00000, 0x80000, 0x2bf4b1a8)
 ROM_END
 
-static const struct IODevice io_comquest[] = {
-#if 0
-	{
-		IO_CARTSLOT,					/* type */
-		1,								/* count */
-		"bin\0",						/* file extensions */
-		IO_RESET_CPU,                   /* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		a2600_load_rom,					/* init */
-		NULL,							/* exit */
-		NULL,							/* info */
-		NULL,							/* open */
-		NULL,							/* close */
-		NULL,							/* status */
-		NULL,							/* seek */
-		NULL,							/* tell */
-		NULL,							/* input */
-		NULL,							/* output */
-		NULL,							/* input_chunk */
-		NULL							/* output_chunk */
-	},
-#endif
-    { IO_END }
-};
+#define io_comquest	io_NULL
 
 SYSTEM_CONFIG_START(comquest)
+	/*CONFIG_DEVICE_CARTSLOT( "bin\0", 1, a2600_load_rom, NULL, NULL)*/
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -168,9 +168,7 @@ ROM_START(ssystem3)
 
 ROM_END
 
-static const struct IODevice io_ssystem3[] = {
-    { IO_END }
-};
+#define io_ssystem3	io_NULL
 
 SYSTEM_CONFIG_START(ssystem3)
 SYSTEM_CONFIG_END

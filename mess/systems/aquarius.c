@@ -267,10 +267,7 @@ ROM_START(aquarius)
 	ROM_LOAD("aq2.chr", 0x0000, 0x0800, BADCRC(0x0b3edeed))
 ROM_END
 
-static	const	struct	IODevice	io_aquarius[] =
-{
-	{ IO_END }
-};
+#define io_aquarius		io_NULL
 
 SYSTEM_CONFIG_START(aquarius)
 SYSTEM_CONFIG_END

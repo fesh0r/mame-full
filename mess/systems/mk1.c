@@ -208,9 +208,7 @@ static DRIVER_INIT( mk1 )
     f3853_init(&config);
 }
 
-static const struct IODevice io_mk1[] = {
-    { IO_END }
-};
+#define io_mk1	io_NULL
 
 SYSTEM_CONFIG_START(mk1)
 SYSTEM_CONFIG_END

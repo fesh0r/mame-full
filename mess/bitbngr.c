@@ -140,7 +140,6 @@ static void bitbanger_output(int id, int value)
 		bi->over_threshhold = 0;
 
 		/* update timeout timer */
-		/* remove timeout timer, if need be */
 		timer_reset(bi->timeout_timer, bi->config->pulse_threshhold);
 	}
 }

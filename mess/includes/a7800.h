@@ -17,7 +17,6 @@ extern MACHINE_INIT( a7800p );
 extern UINT32 a7800_partialcrc(const unsigned char *,unsigned int);
 extern int a7800_init_cart (int id);
 extern int a7800p_init_cart (int id);
-extern void a7800_exit_rom (int id);
 extern READ_HANDLER  ( a7800_TIA_r );
 extern WRITE_HANDLER ( a7800_TIA_w );
 extern READ_HANDLER  ( a7800_RIOT_r );

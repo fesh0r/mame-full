@@ -376,27 +376,6 @@ MACHINE_DRIVER_END
 
 static const struct IODevice io_famicom[] = {
     {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "nes\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        nes_init_cart,      /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,               /* output_chunk */
-	nes_partialcrc
-    },
-    {
         IO_FLOPPY,          /* type */
         1,                  /* count */
         "dsk\0fds\0",       /* file extensions */
@@ -420,57 +399,11 @@ static const struct IODevice io_famicom[] = {
     { IO_END }
 };
 
-static const struct IODevice io_nes[] = {
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "nes\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        nes_init_cart,      /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,                /* output_chunk */
-        nes_partialcrc      /* correct CRC */
-    },
-    { IO_END }
-};
-
-static const struct IODevice io_nespal[] = {
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
-        "nes\0",            /* file extensions */
-        IO_RESET_CPU,       /* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-        nes_init_cart,      /* init */
-        NULL,               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL,                /* output_chunk */
-        nes_partialcrc      /* correct CRC */
-    },
-    { IO_END }
-};
+#define io_nes		io_NULL
+#define	io_nespal	io_NULL
 
 SYSTEM_CONFIG_START(nes)
+	CONFIG_DEVICE_CARTSLOT( "nes\0", 1, nes_init_cart, NULL, nes_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

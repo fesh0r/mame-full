@@ -473,9 +473,7 @@ ROM_START( mac2 )
 	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, 0x00000000)
 ROM_END
 
-static const struct IODevice io_mac2[] = {
-	{ IO_END }
-};
+#define io_mac2	io_NULL
 
 COMPX( 1987, mac2,	   0,		 mac2,	   mac2,	 0/*mac2*/,  "Apple Computer",    "Macintosh II",  GAME_NOT_WORKING )
 

@@ -1917,9 +1917,7 @@ ROM_START(saturn)
      ROM_REGION(0x00080000, REGION_CPU3,0)
 ROM_END
 
-static const struct IODevice io_saturn[] = {
-  { IO_END }
-};
+#define io_saturn	io_NULL
 
 SYSTEM_CONFIG_START(saturn)
 SYSTEM_CONFIG_END

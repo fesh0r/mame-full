@@ -259,35 +259,12 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_PALETTE_INIT(gbc)
 MACHINE_DRIVER_END
 
-static const struct IODevice io_gameboy[] =
-{
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"gb\0gmb\0cgb\0gbc\0sgb\0",		/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		gb_load_rom,		/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
-
-#define io_supergb  io_gameboy
-#define io_gbcolor  io_gameboy
+#define io_gameboy	io_NULL
+#define io_supergb	io_NULL
+#define io_gbcolor	io_NULL
 
 SYSTEM_CONFIG_START(gameboy)
+	CONFIG_DEVICE_CARTSLOT( "gb\0gmb\0cgb\0gbc\0sgb\0", 1, gb_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

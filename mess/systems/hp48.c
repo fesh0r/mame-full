@@ -246,11 +246,8 @@ ROM_START(hp48g)
 	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
-static const struct IODevice io_hp48s[] = {
-    { IO_END }
-};
-
-#define io_hp48g io_hp48s
+#define io_hp48s	io_NULL
+#define io_hp48g	io_NULL
 
 SYSTEM_CONFIG_START(hp48)
 SYSTEM_CONFIG_END
