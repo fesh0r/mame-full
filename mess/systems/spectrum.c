@@ -2761,14 +2761,14 @@ ROM_END
 
 ROM_START(specpl3e)
 		ROM_REGION(0x20000,REGION_CPU1,0)
-		ROM_LOAD("roma-en.rom",0x10000,0x8000, 0x14fddc04)
-		ROM_LOAD("romb-en.rom",0x18000,0x8000, 0xba488ccd)
+		ROM_LOAD("roma-en.rom",0x10000,0x8000, 0x2d533344)
+		ROM_LOAD("romb-en.rom",0x18000,0x8000, 0xef8d5d92)
 ROM_END
 
 ROM_START(specp3es)
 	        ROM_REGION(0x20000,REGION_CPU1,0)
-	        ROM_LOAD("roma-es.rom",0x10000,0x8000, 0x932f1801)
-	        ROM_LOAD("romb-es.rom",0x18000,0x8000, 0xf0a12485)
+	        ROM_LOAD("roma-es.rom",0x10000,0x8000, 0xba694b4b)
+	        ROM_LOAD("romb-es.rom",0x18000,0x8000, 0x61ed94db)
 ROM_END
 
 ROM_START(scorpion)

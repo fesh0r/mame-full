@@ -12,6 +12,9 @@ System Driver Changes:
 - [COCO] The virtual printer should now be responsive to bitbanger output of
   any arbitrary baud. [Nate Woods]
 
+- [SPECPL3E] Updated BIOS to the 1.11 version romset
+  (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.60.  This incorporates all features of the 
