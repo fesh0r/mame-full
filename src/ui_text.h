@@ -41,6 +41,17 @@ enum
 	UI_vectorintensity,
 	UI_overclock,
 	UI_allcpus,
+	UI_palette,
+	UI_clut,
+	UI_gfxset,
+	UI_color,
+	UI_code_up,
+	UI_tilemap,
+	UI_orient_vert,
+	UI_orient_horz,
+	UI_pix_asp_rat,
+	UI_colors,
+	UI_sound_cmd,
 	UI_historymissing,
 
 	/* special characters */
@@ -66,6 +77,13 @@ enum
 #ifdef MESS
 	UI_comp1,
 	UI_comp2,
+	UI_keyb1,
+	UI_keyb2,
+	UI_keyb3,
+	UI_keyb4,
+	UI_keyb5,
+	UI_keyb6,
+	UI_keyb7,
 #endif
 
 	/* main menu */
@@ -163,6 +181,14 @@ enum
 	UI_hex,
 	UI_decimal,
 	UI_binary,
+
+	/* save state stuff */
+	UI_select_save,
+	UI_select_load,
+	UI_save_to,
+	UI_load_from,
+	UI_save_canc,
+	UI_load_canc,
 
 	/* search stuff */
 	UI_search_lives,

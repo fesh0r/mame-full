@@ -955,13 +955,13 @@ static void showcharset(struct mame_bitmap *bitmap)
 				{
 					total_colors = Machine->drv->total_colors;
 					colortable = Machine->pens;
-					strcpy(buf,"PALETTE");
+					strcpy(buf,ui_getstring (UI_palette));
 				}
 				else if (bank == 1)	/* clut */
 				{
 					total_colors = Machine->drv->color_table_len;
 					colortable = Machine->remapped_colortable;
-					strcpy(buf,"CLUT");
+					strcpy(buf,ui_getstring (UI_clut));
 				}
 				else
 				{
@@ -1014,7 +1014,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 						switch_true_orientation(bitmap);
 					}
 					else
-						ui_text(bitmap,"N/A",3*Machine->uifontwidth,2*Machine->uifontheight);
+						ui_text(bitmap,ui_getstring (UI_NA),3*Machine->uifontwidth,2*Machine->uifontheight);
 
 					ui_text(bitmap,buf,0,0);
 					changed = 0;
@@ -1072,7 +1072,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 					switch_true_orientation(bitmap);
 
-					sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
+					sprintf(buf,"%s %d %s %2X %s %X-%X", ui_getstring (UI_gfxset), bank, ui_getstring (UI_color), color, ui_getstring (UI_code_up), firstdrawn, lastdrawn);
 					ui_text(bitmap,buf,0,0);
 					changed = 0;
 				}
@@ -1095,7 +1095,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 					erase_screen(bitmap);
 					tilemap_nb_draw (bitmap, bank, tilemap_xpos, tilemap_ypos);
-					sprintf(buf, "TILEMAP %d (%dx%d)  X:%d  Y:%d", bank, tilemap_width, tilemap_height, tilemap_xpos, tilemap_ypos);
+					sprintf(buf, "%s %d (%dx%d)  X:%d  Y:%d", ui_getstring (UI_tilemap), bank, tilemap_width, tilemap_height, tilemap_xpos, tilemap_ypos);
 					ui_text(bitmap,buf,0,0);
 					changed = 0;
 					skip_tmap = 0;
@@ -2103,12 +2103,12 @@ int showcopyright(struct mame_bitmap *bitmap)
 	char buf[1000];
 	char buf2[256];
 
-	strcpy (buf, ui_getstring(UI_copyright1));
+	strcpy (buf, ui_getstring (UI_copyright1));
 	strcat (buf, "\n\n");
-	sprintf(buf2, ui_getstring(UI_copyright2), Machine->gamedrv->description);
+	sprintf(buf2, ui_getstring (UI_copyright2), Machine->gamedrv->description);
 	strcat (buf, buf2);
 	strcat (buf, "\n\n");
-	strcat (buf, ui_getstring(UI_copyright3));
+	strcat (buf, ui_getstring (UI_copyright3));
 
 	setup_selected = -1;////
 	done = 0;
@@ -2218,7 +2218,7 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 		sprintf(&buf[strlen(buf)],"%d x %d (%s) %f Hz\n",
 				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
 				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
-				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
+				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? ui_getstring (UI_orient_vert) : ui_getstring (UI_orient_horz),
 				Machine->drv->frames_per_second);
 #if 0
 		{
@@ -2248,10 +2248,10 @@ static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
 			pixelx /= tmin;
 			pixely /= tmin;
 
-			sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
-					pixelx,pixely);
+			sprintf(&buf[strlen(buf)],"%s %d:%d\n",
+					ui_getstring (UI_pix_asp_rat),pixelx,pixely);
 		}
-		sprintf(&buf[strlen(buf)],"%d colors ",Machine->drv->total_colors);
+		sprintf(&buf[strlen(buf)],"%d &s ",ui_getstring (UI_colors),Machine->drv->total_colors);
 #endif
 	}
 
@@ -2676,7 +2676,7 @@ static int displayhistory (struct mame_bitmap *bitmap, int selected)
 			char msg[80];
 
 			strcpy(msg,"\t");
-			strcat(msg,ui_getstring(UI_historymissing));
+			strcat(msg,ui_getstring (UI_historymissing));
 			strcat(msg,"\n\n\t");
 			strcat(msg,ui_getstring (UI_lefthilight));
 			strcat(msg," ");
@@ -3504,9 +3504,9 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 		InputCode code;
 
 		if (request_loadsave == LOADSAVE_SAVE)
-			displaymessage(bitmap, "Select position to save to");
+			displaymessage(bitmap, ui_getstring (UI_select_save));
 		else
-			displaymessage(bitmap, "Select position to load from");
+			displaymessage(bitmap, ui_getstring (UI_select_load));
 
 		update_video_and_audio();
 		reset_partial_updates();
@@ -3532,17 +3532,17 @@ void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
 	if (file > 0)
 	{
 		if (request_loadsave == LOADSAVE_SAVE)
-			usrintf_showmessage("Save to position %c", file);
+			usrintf_showmessage("%s %c", ui_getstring (UI_save_to), file);
 		else
-			usrintf_showmessage("Load from position %c", file);
+			usrintf_showmessage("%s %c", ui_getstring (UI_load_from),file);
 		cpu_loadsave_schedule(request_loadsave, file);
 	}
 	else
 	{
 		if (request_loadsave == LOADSAVE_SAVE)
-			usrintf_showmessage("Save cancelled");
+			usrintf_showmessage(ui_getstring (UI_save_canc));
 		else
-			usrintf_showmessage("Load cancelled");
+			usrintf_showmessage(ui_getstring (UI_load_canc));
 	}
 }
 
@@ -3560,7 +3560,7 @@ static void display_fps(struct mame_bitmap *bitmap)
 	char textbuf[256];
 	int done = 0;
 	int y = 0;
-	
+
 	/* if we're not currently displaying, skip it */
 	if (!showfps && !showfpstemp)
 		return;
@@ -3613,6 +3613,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 {
 #ifdef MESS
 	static int mess_pause_for_ui = 0;
+	char buf[2048];
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
 		static int ui_active = 0, ui_toggle_key = 0;
@@ -3637,12 +3638,21 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		{
 			if( HAVE_UI_WARNING && ui_display_count > 0 )
 			{
-					ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
-													"-------------------------\n"\
-													"Mode: PARTIAL Emulation\n"\
-													"UI:   ENABLED\n"\
-													"-------------------------\n"\
-													"**Use SCRLOCK to toggle**\n");
+					buf[0] = 0;
+					strcpy(buf,ui_getstring (UI_keyb1));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb3));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb5));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb7));
+					strcat(buf,"\n");
+					ui_displaymessagewindow(bitmap, buf);
+
 				if( --ui_display_count == 0 )
 					schedule_full_refresh();
 			}
@@ -3651,12 +3661,20 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		{
 			if( HAVE_UI_WARNING && ui_display_count > 0 )
 			{
-					ui_displaymessagewindow(bitmap, "Keyboard Emulation Status\n"\
-													"-------------------------\n"\
-													"Mode: FULL Emulation\n"\
-													"UI:   DISABLED\n"\
-													"-------------------------\n"\
-													"**Use SCRLOCK to toggle**\n");
+					buf[0] = 0;
+					strcpy(buf,ui_getstring (UI_keyb1));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb4));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb6));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb2));
+					strcat(buf,"\n");
+					strcat(buf,ui_getstring (UI_keyb7));
+					strcat(buf,"\n");
+					ui_displaymessagewindow(bitmap, buf);
 
 				if( --ui_display_count == 0 )
 					schedule_full_refresh();
@@ -3748,7 +3766,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		{
 			jukebox_selected = (jukebox_selected - 16) & 0xff;
 		}
-		sprintf(buf,"sound cmd %02x",jukebox_selected);
+		sprintf(buf,"%s %02x",ui_getstring (UI_sound_cmd), jukebox_selected);
 		displaymessage(buf);
 	}
 #endif

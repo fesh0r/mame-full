@@ -34,7 +34,7 @@ const char * default_text[] =
 	"Press Any Key",
 	"On",
 	"Off",
-	"NA",
+	"N/A",
 	"OK",
 	"INVALID",
 	"(none)",
@@ -56,6 +56,17 @@ const char * default_text[] =
 	"Vector Intensity",
 	"Overclock",
 	"ALL CPUS",
+	"PALETTE",
+	"CLUT",
+	"GFXSET",
+	"COLOR",
+	"CODE",
+	"TILEMAP",
+	"V",
+	"H",
+	"pixel aspect ratio",
+	"colors",
+	"sound cmd",
 #ifndef MESS
 	"History not available",
 #else
@@ -93,6 +104,13 @@ const char * default_text[] =
 #ifdef MESS
 	"The emulated system is a computer: ",
 	"The keyboard emulation may not be 100% accurate.",
+	"Keyboard Emulation Status",
+	"-------------------------",
+	"Mode: PARTIAL Emulation",
+	"Mode: FULL Emulation",
+	"UI:   Enabled",
+	"UI:   Disabled",
+	"**Use ScrLock to toggle**",
 #endif
 
 	/* main menu */
@@ -126,7 +144,7 @@ const char * default_text[] =
 	"Record",
 	"Play",
 	"Rewind",
-	"Fast forward",
+	"Fast Forward",
 	"Mount",
 	"Unmount",
 	"[empty slot]",
@@ -156,7 +174,7 @@ const char * default_text[] =
 	"Memory Card Ejected!",
 	"Memory Card Created OK!",
 	"Failed To Create Memory Card!",
-	"(It already exists ?)",
+	"(It already exists?)",
 	"DAMN!! Internal Error!",
 
 	/* cheats */
@@ -197,6 +215,14 @@ const char * default_text[] =
 	"Hex",
 	"Decimal",
 	"Binary",
+
+	/* save state */
+	"Select position to save to",
+	"Select position to load from",
+	"Save to position",
+	"Load from position",
+	"Save cancelled",
+	"Load cancelled",
 
 	/* searching */
 	"Lives (or another value)",
