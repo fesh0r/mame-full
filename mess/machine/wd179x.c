@@ -19,7 +19,8 @@
 #include "includes/wd179x.h"
 #include "includes/flopdrv.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
+#define VERBOSE_DATA 1		/* This turns on and off the recording of each byte during read and write */
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -65,7 +66,7 @@ static UINT8 track_SD[][2] = {
 };
 #endif
 
-static void wd179x_complete_command(WD179X *);
+static void wd179x_complete_command(WD179X *, int);
 static void wd179x_clear_data_request(void);
 static void wd179x_set_data_request(void);
 static void wd179x_timed_data_request(void);
@@ -82,17 +83,21 @@ static UINT8 hd = 0;
 /* use this to determine which drive is controlled by WD */
 void wd179x_set_drive(UINT8 drive)
 {
-//#if VERBOSE
+#if VERBOSE
+	if( drive != drv )
 	logerror("wd179x_set_drive: $%02x\n", drive);
-//#endif
+#endif
+
 	drv = drive;
 }
 
 void wd179x_set_side(UINT8 head)
 {
-//#if VERBOSE
+#if VERBOSE
+	if( head != hd )
 	logerror("wd179x_set_side: $%02x\n", head);
-//#endif
+#endif
+
 	hd = head;
 }
 
@@ -100,9 +105,10 @@ void wd179x_set_density(DENSITY density)
 {
 	WD179X *w = &wd;
 
-//#if VERBOSE
-//	logerror("wd179x_set_density: $%02x\n", density);
-//#endif
+#if VERBOSE
+	if( w->density != density )
+		logerror("wd179x_set_density: $%02x\n", density);
+#endif
 
 	w->density = density;
 }
@@ -147,7 +153,7 @@ static void wd179x_restore(WD179X *w)
 		w->busy_count = 0;
 
 		/* keep stepping until track 0 is received or 255 steps have been done */
-		while ((!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0))) && (step_counter!=0))
+		while (!(floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
 		{
 			/* update time to simulate seek time busy signal */
 			w->busy_count++;
@@ -387,6 +393,18 @@ void	wd179x_exit(void)
 		timer_remove(w->timer);
 		w->timer = NULL;
 	}
+
+	if (w->timer_rs!=NULL)
+	{
+		timer_remove(w->timer_rs);
+		w->timer = NULL;
+	}
+
+	if (w->timer_ws!=NULL)
+	{
+		timer_remove(w->timer_ws);
+		w->timer_ws = NULL;
+	}
 }
 
 #if 0
@@ -475,7 +493,7 @@ static void wd179x_read_id(WD179X * w)
 		//w->sector = w->track_reg;
 		logerror("read id failed\n");
 
-		wd179x_complete_command(w);
+		wd179x_complete_command(w, 1);
 	}
 }
 
@@ -526,7 +544,7 @@ static int wd179x_find_sector(WD179X *w)
 #if VERBOSE
 	logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
 #endif
-	wd179x_complete_command(w);
+	wd179x_complete_command(w, 1);
 
 	return 0;
 }
@@ -573,7 +591,9 @@ static void wd179x_complete_command_callback(int dummy)
 A interrupt occurs after the last byte has been read. If it occurs at the time
 when the last byte has been read it causes problems - same byte read again
 or bytes missed */
-static void wd179x_complete_command(WD179X *w)
+/* TJL - I have add a parameter to allow the emulation to specify the delay
+*/
+static void wd179x_complete_command(WD179X *w, int delay)
 {
 	int usecs;
 
@@ -583,6 +603,7 @@ static void wd179x_complete_command(WD179X *w)
 	w->status &= ~STA_2_BUSY;
 
 	usecs = floppy_drive_get_datarate_in_us(w->density);
+	usecs *= delay;
 
 	/* remove old timer if it exists */
 	if (w->timer!=NULL)
@@ -693,6 +714,72 @@ static void	wd179x_data_timer_callback(int code)
 	timer_reset(w->timer, TIME_NEVER); 
 }
 
+/* callback to initiate read sector */
+
+static void	wd179x_read_sector_callback(int code)
+{
+	WD179X *w = &wd;
+
+	/* ok, start that read! */
+
+#if VERBOSE
+	logerror("wd179x: Read Sector callback.\n");
+#endif
+
+	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+		wd179x_complete_command(w, 1);
+	else
+		wd179x_read_sector(w);
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(w->timer_rs, TIME_NEVER); 
+}
+
+/* callback to initiate write sector */
+
+static void	wd179x_write_sector_callback(int code)
+{
+	WD179X *w = &wd;
+
+	/* ok, start that write! */
+
+#if VERBOSE
+	logerror("wd179x: Write Sector callback.\n");
+#endif
+
+	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+		wd179x_complete_command(w, 1);
+	else
+	{
+
+		/* drive write protected? */
+		if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
+		{
+			w->status |= STA_2_WRITE_PRO;
+
+			wd179x_complete_command(w, 1);
+		}
+		else
+		{
+			/* attempt to find it first before getting data from cpu */
+			if (wd179x_find_sector(w))
+			{
+				/* request data */
+				w->data_offset = 0;
+				w->data_count = w->sector_length;
+
+				wd179x_set_data_request();
+
+				w->status |= STA_2_BUSY;
+				w->busy_count = 0;
+			}
+		}
+	}
+
+	/* stop it, but don't allow it to be free'd */
+	timer_reset(w->timer_ws, TIME_NEVER); 
+}
+
 /* setup a timed data request - data request will be triggered in a few usecs time */
 static void wd179x_timed_data_request(void)
 {
@@ -710,6 +797,44 @@ static void wd179x_timed_data_request(void)
 
 	/* set new timer */
 	w->timer = timer_set(TIME_IN_USEC(usecs), 0, wd179x_data_timer_callback);
+}
+
+/* setup a timed read sector - read sector will be triggered in a few usecs time */
+static void wd179x_timed_read_sector_request(void)
+{
+	int usecs;
+	WD179X *w = &wd;
+
+	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
+
+	/* remove old timer if it exists */
+	if (w->timer_rs !=NULL)
+	{
+		timer_remove(w->timer_rs);
+		w->timer_rs = NULL;
+	}
+
+	/* set new timer */
+	w->timer_rs = timer_set(TIME_IN_USEC(usecs), 0, wd179x_read_sector_callback);
+}
+
+/* setup a timed write sector - write sector will be triggered in a few usecs time */
+static void wd179x_timed_write_sector_request(void)
+{
+	int usecs;
+	WD179X *w = &wd;
+
+	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
+
+	/* remove old timer if it exists */
+	if (w->timer_ws !=NULL)
+	{
+		timer_remove(w->timer_ws);
+		w->timer_ws = NULL;
+	}
+
+	/* set new timer */
+	w->timer_ws = timer_set(TIME_IN_USEC(usecs), 0, wd179x_write_sector_callback);
 }
 
 
@@ -797,7 +922,7 @@ READ_HANDLER ( wd179x_data_r )
 {
 	WD179X *w = &wd;
 
-	if (w->data_count >= 0)
+	if (w->data_count >= 1)
 	{
 		/* clear data request */
 		wd179x_clear_data_request();
@@ -805,7 +930,7 @@ READ_HANDLER ( wd179x_data_r )
 		/* yes */
 		w->data = w->buffer[w->data_offset++];
 
-#if VERBOSE
+#if VERBOSE_DATA
 		logerror("wd179x_data_r: $%02X (data_count %d)\n", w->data, w->data_count);
 #endif
 		/* any bytes remaining? */
@@ -826,7 +951,9 @@ READ_HANDLER ( wd179x_data_r )
 			/* not incremented after each sector - only incremented in multi-sector
 			operation. If this remained as it was oric software would not run! */
 		//	w->sector++;
-			wd179x_complete_command(w);
+			/* Delay the INTRQ 3 byte times becuase we need to read two CRC bytes and
+			   compare them with a calculated CRC */
+			wd179x_complete_command(w, 3);
 		}
 		else
 		{
@@ -897,14 +1024,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->status &= ~STA_2_LOST_DAT;
 			wd179x_clear_data_request();
 
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
-            {
-				wd179x_complete_command(w);
-            }
-            else
-            {
-                wd179x_read_sector(w);
-            }
+			wd179x_timed_read_sector_request();
 
 			return;
 		}
@@ -920,37 +1040,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->status &= ~STA_2_LOST_DAT;
 			wd179x_clear_data_request();
 
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
-            {
-				wd179x_complete_command(w);
-            }
-            else
-            {
-    
-                /* drive write protected? */
-                if (floppy_drive_get_flag_state(drv,FLOPPY_DRIVE_DISK_WRITE_PROTECTED))
-                {
-                    w->status |= STA_2_WRITE_PRO;
-    
-                    wd179x_complete_command(w);
-                }
-                else
-                {
-                    /* attempt to find it first before getting data from cpu */
-                    if (wd179x_find_sector(w))
-                    {
-                        /* request data */
-                        w->data_offset = 0;
-                        w->data_count = w->sector_length;
-                       
-						wd179x_set_data_request();
-
-                        w->status |= STA_2_BUSY;
-                        w->busy_count = 0;
-                    }
-    
-                }
-            }
+			wd179x_timed_write_sector_request();
 
 			return;
 		}
@@ -983,7 +1073,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-				wd179x_complete_command(w);
+				wd179x_complete_command(w, 1);
             }
             else
             {
@@ -994,7 +1084,7 @@ WRITE_HANDLER ( wd179x_command_w )
                     /* yes */
                     w->status |= STA_2_WRITE_PRO;
                     /* quit command */
-                    wd179x_complete_command(w);
+                    wd179x_complete_command(w, 1);
                 }
                 else
                 {
@@ -1021,7 +1111,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-				wd179x_complete_command(w);
+				wd179x_complete_command(w, 1);
             }
             else
             {
@@ -1060,13 +1150,17 @@ WRITE_HANDLER ( wd179x_command_w )
 		/* setup step direction */
 		if (w->track_reg < w->data)
 		{
+			#if VERBOSE
 			logerror("direction: +1\n");
+			#endif
 			w->direction = 1;
 		}
 		else
 		if (w->track_reg > w->data)
         {
+        	#if VERBOSE
 			logerror("direction: -1\n");
+			#endif
 			w->direction = -1;
 		}
 
@@ -1214,7 +1308,7 @@ WRITE_HANDLER ( wd179x_data_w )
 		wd179x_clear_data_request();
 
 		/* put byte into buffer */
-#if VERBOSE
+#if VERBOSE_DATA
 		logerror("WD179X buffered data: $%02X at offset %d.\n", data, w->data_offset);
 #endif
 	
@@ -1229,7 +1323,7 @@ WRITE_HANDLER ( wd179x_data_w )
 			else
 				wd179x_write_sector(w);
 
-			wd179x_complete_command(w);
+			wd179x_complete_command(w, 3);
 		}
 		else
 		{

@@ -116,7 +116,7 @@ typedef struct {
 
 	UINT8	ddam;					/* ddam of sector found - used when reading */
 	UINT8	sector_data_id;
-	void	*timer;
+	void	*timer, *timer_rs, *timer_ws;
 	int		data_direction;
 }	WD179X;
 
