@@ -3181,7 +3181,13 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
             InitPropertyPage(hInst, hwnd, GetSelectedPickItem());
 			SaveGameOptions(GetSelectedPickItem());
 #ifdef MESS
-			MessUpdateSoftwareList();
+			{
+				extern BOOL g_bModifiedSoftwarePaths;
+				if (g_bModifiedSoftwarePaths) {
+					g_bModifiedSoftwarePaths = FALSE;
+					MessUpdateSoftwareList();
+				}
+			}
 #endif
 		}
         /* Just in case the toggle MMX on/off */

@@ -18,6 +18,7 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 #include "Properties.c"
 
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
+BOOL g_bModifiedSoftwarePaths = FALSE;
 
 static void AppendList(HWND hList, LPCSTR lpItem, int nItem)
 {
@@ -117,6 +118,8 @@ static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR l
     HWND hList;
 	LPSTR lpIn;
 
+	g_bModifiedSoftwarePaths = TRUE;
+
     hList = GetDlgItem(hDlg, IDC_DIR_LIST);
     nItem = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
@@ -155,6 +158,8 @@ static BOOL SoftwareDirectories_OnDelete(HWND hDlg)
     int     nSelect;
     int     nItem;
     HWND    hList = GetDlgItem(hDlg, IDC_DIR_LIST);
+
+	g_bModifiedSoftwarePaths = TRUE;
 
     nItem = ListView_GetNextItem(hList, -1, LVNI_SELECTED | LVNI_ALL);
 
