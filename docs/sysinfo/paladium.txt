@@ -6,8 +6,9 @@ Console
 emerson arcadia clone with different cartridge connector/pinout
 and 4 additional keys per controller
 
-
 look into messroms for cartridge pinout
+
+german version known with pal video
 
 controller layout
 -----------------
