@@ -32,32 +32,24 @@ setup serial interface software in driver and let the transfer begin */
 #include "driver.h"
 #include "includes/serial.h"
 
-
 /* number of serial streams supported. This is also the number
 of serial ports supported */
-#define MAX_SERIAL_STREAMS	4
+#define MAX_SERIAL_DEVICES	4
 
 /* the serial streams */
-static struct serial_stream	serial_streams[MAX_SERIAL_STREAMS];
+static struct serial_device	serial_devices[MAX_SERIAL_DEVICES];
+static void	serial_device_baud_rate_callback(int id);
+static void xmodem_update(int id);
+static void xmodem_init(void);
 
-static unsigned char serial_device_parity_table[256];
 
-/***** SERIAL DEVICE ******/
-void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code)
+/*********************************************************/
+
+static unsigned char serial_parity_table[256];
+
+void serial_helper_setup(void)
 {
 	int i;
-
-	/* check id is valid */
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
-		return;
-
-	serial_streams[id].BaudRate = baud_rate;
-	serial_streams[id].DataBitCount = num_data_bits;
-	serial_streams[id].StopBitCount = stop_bit_count;
-	serial_streams[id].parity_code = parity_code;
-
-	/* data is initially high state */
-	set_out_data_bit(serial_streams[id].State, 1);
 
 	/* if sum of all bits in the byte is even, then the data
 	has even parity, otherwise it has odd parity */
@@ -77,34 +69,121 @@ void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_
 			data = data>>1;
 		}
 
-		serial_device_parity_table[i] = sum & 0x01;
+		serial_parity_table[i] = sum & 0x01;
+	}
+}	
+
+unsigned char serial_helper_get_parity(unsigned char data)
+{
+	return serial_parity_table[data & 0x0ff];
+}
+
+static void serial_device_in_callback(int id, unsigned long status)
+{
+	serial_devices[id].connection.input_state = status;
+}
+
+
+/***** SERIAL DEVICE ******/
+void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_count, int parity_code)
+{
+	/* check id is valid */
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
+		return;
+
+	serial_devices[id].BaudRate = baud_rate;
+	serial_devices[id].data_form.word_length = num_data_bits;
+	serial_devices[id].data_form.stop_bit_count = stop_bit_count;
+	serial_devices[id].data_form.parity = parity_code;
+
+	serial_connection_init(&serial_devices[id].connection);
+	serial_connection_set_in_callback(&serial_devices[id].connection, serial_device_in_callback);
+
+	/* signal to other end it is clear to send! */
+	/* data is initially high state */
+	/* set /rts */
+	serial_devices[id].connection.State |= SERIAL_STATE_RTS;
+	/* signal to other end data is ready to be accepted */
+	/* set /dtr */
+	serial_devices[id].connection.State |= SERIAL_STATE_DTR;
+	set_out_data_bit(serial_devices[id].connection.State, 1);
+	serial_connection_out(&serial_devices[id].connection);
+	transmit_register_reset(&serial_devices[id].transmit_reg);
+	receive_register_reset(&serial_devices[id].receive_reg);
+	receive_register_setup(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
+
+	/* temp here */
+	xmodem_init();
+}
+
+
+unsigned long serial_device_get_state(int id)
+{
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
+		return 0;
+	return serial_devices[id].connection.State;
+}
+
+
+static const char *protocol_names[]=
+{
+	"None",
+	"XModem"
+};
+
+/* get name of current protocol */
+const char *serial_device_get_protocol_name(int protocol_id)
+{
+	return protocol_names[protocol_id];
+}
+
+void	serial_device_set_protocol(int id,int protocol_id)
+{
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
+		return;
+
+	serial_devices[id].protocol = protocol_id;
+}
+
+void	serial_device_set_transmit_state(int id, int state)
+{
+	int previous_state;
+
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
+		return;
+
+	previous_state = serial_devices[id].transmit_state;
+	
+	serial_devices[id].transmit_state = state;
+
+	if ((state^previous_state)!=0)
+	{
+		if (state)
+		{
+			/* start timer */
+			serial_devices[id].timer = timer_pulse(TIME_IN_HZ(serial_devices[id].BaudRate), id, serial_device_baud_rate_callback);
+		}
+		else
+		{
+			/* remove timer */
+			if (serial_devices[id].timer)
+			{
+				timer_remove(serial_devices[id].timer);
+				serial_devices[id].timer = NULL;
+			}
+		}
 	}
 
 }
 
-unsigned long serial_device_get_state(int id)
-{
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
-		return 0;
-	return serial_streams[id].State;
-}
 
 
-void	serial_device_notify_driver_updated(int id, unsigned long State)
-{
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
-		return;
-
-
-	if (serial_streams[id].serial_device_updated_callback)
-		serial_streams[id].serial_device_updated_callback(id, State);
-
-}
-
+/* get a bit from input stream */
 static int	data_stream_get_data_bit_from_data_byte(struct data_stream *stream)
 {
 	int data_bit;
 	int data_byte;
+
 	if (stream->ByteCount<stream->DataLength)
 	{
 		/* get data from buffer */
@@ -135,50 +214,237 @@ static int	data_stream_get_data_bit_from_data_byte(struct data_stream *stream)
 	return data_bit;
 }
 
+static int data_stream_get_byte(struct data_stream *stream)
+{
+	int data_byte;
+
+	if (stream->ByteCount>=stream->DataLength)
+	{
+		return 0;
+	}
+
+	data_byte = stream->pData[stream->ByteCount];
+	stream->ByteCount++;
+
+	return data_byte;
+}
+
+/* put a bit to output stream */
+static void data_stream_put_data_bit_to_data_byte(struct data_stream *stream, int bit)
+{
+	/* over end of buffer */
+	if (stream->ByteCount>=stream->DataLength)
+		return;
+
+	/* get data from buffer */
+	stream->pData[stream->ByteCount] &=~(1<<(7-stream->BitCount));
+
+	if (bit)
+	{
+		stream->pData[stream->ByteCount] |= (1<<(7-stream->BitCount));
+	}
+
+	/* update bit count */
+	stream->BitCount++;
+	/* ripple overflow onto byte count */
+	stream->ByteCount+=stream->BitCount>>3;
+	/* lock bit count into range */
+	stream->BitCount &=0x07;
+
+	/* do not let it read over end of data */
+	if (stream->ByteCount>=stream->DataLength)
+	{
+		stream->ByteCount = stream->DataLength-1;
+	}
+}
+
+
+void	receive_register_setup(struct serial_receive_register *receive, struct data_form *data_form)
+{
+	receive->bit_count = data_form->word_length + data_form->stop_bit_count;
+
+	if (data_form->parity != SERIAL_PARITY_NONE)
+	{
+		receive->bit_count++;
+	}
+}
+
+
+/* this is generic code to be used in serial chip implementations */
+/* the majority of serial chips work in the same way and this code will work */
+/* for them */
+
+/* receive a bit */
+void	receive_register_update_bit(struct serial_receive_register *receive, int bit)
+{
+	int previous_bit;
+
+//#ifdef VERBOSE
+//	logerror("receive register receive bit: %1x\n",bit);
+//#endif
+	previous_bit = receive->register_data & 1;
+
+	/* shift previous bit 7 out */
+	receive->register_data = receive->register_data<<1;
+	/* shift new bit in */
+	receive->register_data = (receive->register_data & 0x0fe) | bit;
+	/* update bit count received */
+	receive->bit_count_received++;
+
+	/* asyncrhonouse mode */
+	if (receive->flags & RECEIVE_REGISTER_WAITING_FOR_START_BIT)
+	{
+		/* the previous bit is stored in uart.receive char bit 0 */
+		/* has the bit state changed? */
+		if (((previous_bit ^ bit) & 0x01)!=0)
+		{
+			/* yes */
+			if (bit==0)
+			{
+	//			logerror("receive register saw start bit\n");
+
+				/* seen start bit! */
+				/* not waiting for start bit now! */
+				receive->flags &=~RECEIVE_REGISTER_WAITING_FOR_START_BIT;
+				receive->flags |=RECEIVE_REGISTER_SYNCHRONISED;
+				/* reset bit count received */
+				receive->bit_count_received = 0;
+			}
+		}		
+	}
+	else
+	if (receive->flags & RECEIVE_REGISTER_SYNCHRONISED)
+	{
+		/* received all bits? */
+		if (receive->bit_count_received==receive->bit_count)
+		{
+			receive->flags &=~RECEIVE_REGISTER_SYNCHRONISED;
+			receive->flags |= RECEIVE_REGISTER_WAITING_FOR_START_BIT;
+	//		logerror("receive register full\n");
+			receive->flags |= RECEIVE_REGISTER_FULL;
+		}
+	}
+}
+
+void	receive_register_reset(struct serial_receive_register *receive_reg)
+{
+	receive_reg->flags &=~RECEIVE_REGISTER_FULL;
+	receive_reg->bit_count_received = 0;
+	receive_reg->flags &=~RECEIVE_REGISTER_SYNCHRONISED;
+	receive_reg->flags |= RECEIVE_REGISTER_WAITING_FOR_START_BIT;
+}
+
+void	receive_register_extract(struct serial_receive_register *receive_reg, struct data_form *data_form)
+{
+	unsigned long data_shift;
+	UINT8 data;
+
+	receive_register_reset(receive_reg);
+
+	data_shift = 0;
+
+	/* if parity is even or odd, there should be a parity bit in the stream! */
+	if (data_form->parity!=SERIAL_PARITY_NONE)
+	{
+		data_shift++;
+	}
+
+	data_shift+=data_form->stop_bit_count;
+
+	/* strip off stop bits and parity */
+	data = receive_reg->register_data>>data_shift;
+
+	/* mask off other bits so data byte has 0's in unused bits */
+	data = data & (0x0ff
+		>>
+		(8-(data_form->word_length)));
+	
+	receive_reg->byte_received  = data;
+
+	/* parity enable? */
+	switch (data_form->parity)
+	{
+		case SERIAL_PARITY_NONE:
+			break;
+
+		/* check parity */
+		case SERIAL_PARITY_ODD:
+		case SERIAL_PARITY_EVEN:
+		{
+			unsigned char computed_parity;
+			unsigned char parity_received;
+
+			/* get state of parity bit received */
+			parity_received = (receive_reg->register_data>>data_form->stop_bit_count) & 0x01;
+			
+			/* compute parity for received bits */
+			computed_parity = serial_helper_get_parity(data);
+
+			if (data_form->parity == SERIAL_PARITY_ODD)
+			{
+				/* odd parity */
+
+
+			}
+			else
+			{
+				/* even parity */
+
+
+			}
+
+		}
+		break;
+	}
+}
+
+/***** TRANSMIT REGISTER *****/
+
+void	transmit_register_reset(struct serial_transmit_register *transmit_reg)
+{
+	transmit_reg->flags |=TRANSMIT_REGISTER_EMPTY;
+}
+
 /* used to construct data in stream format */
-static void data_stream_add_bit_to_formatted_byte(struct data_stream *stream, int bit)
+static void transmit_register_add_bit(struct serial_transmit_register *transmit_reg, int bit)
 {
 	/* combine bit */
-	stream->formatted_byte = stream->formatted_byte<<1;
-	stream->formatted_byte |= bit;
-	/* update bit count */
-	stream->formatted_byte_bit_count++;
+	transmit_reg->register_data = transmit_reg->register_data<<1;
+	transmit_reg->register_data &=~1;
+	transmit_reg->register_data|=(bit & 0x01);
+	transmit_reg->bit_count++;
 }
 
 
 /* generate data in stream format ready for transfer */
-static void data_stream_generate_formatted_stream_byte(struct serial_stream *stream)
+void transmit_register_setup(struct serial_transmit_register *transmit_reg, struct data_form *data_form,unsigned char data_byte)
 {
 	int i;
-	unsigned char data;
+	unsigned char transmit_data;
+
+
+	transmit_reg->bit_count_transmitted = 0;
+	transmit_reg->bit_count = 0;
+	transmit_reg->flags &=~TRANSMIT_REGISTER_EMPTY;
 	
-	/* used for generating parity */
-	data = 0;
-
-	/* reset bit count */
-	stream->transmit.formatted_byte_bit_count = 0;
-	/* reset formatted byte format */
-	stream->transmit.formatted_byte = 0;
-
 	/* start bit */
-	data_stream_add_bit_to_formatted_byte(&stream->transmit,0);
+	transmit_register_add_bit(transmit_reg,0);
 	
 	/* data bits */
-	for (i=0; i<stream->DataBitCount; i++)
+	transmit_data = data_byte;
+	for (i=0; i<data_form->word_length; i++)
 	{
 		int databit;
 
 		/* get bit from data */
-		databit = data_stream_get_data_bit_from_data_byte(&stream->transmit);
+		databit = (transmit_data>>(data_form->word_length-1)) & 0x01;
 		/* add bit to formatted byte */
-		data_stream_add_bit_to_formatted_byte(&stream->transmit, databit);
-		/* update data byte read for parity generation */
-		data = data<<1;
-		data = data|databit;
+		transmit_register_add_bit(transmit_reg, databit);
+		transmit_data = transmit_data<<1;
 	}
 
 	/* parity */
-	if (stream->parity_code!=SERIAL_PARITY_NONE)
+	if (data_form->parity!=SERIAL_PARITY_NONE)
 	{
 		/* odd or even parity */
 		unsigned char parity;
@@ -186,64 +452,106 @@ static void data_stream_generate_formatted_stream_byte(struct serial_stream *str
 		/* get parity */
 		/* if parity = 0, data has even parity - i.e. there is an even number of one bits in the data */
 		/* if parity = 1, data has odd parity - i.e. there is an odd number of one bits in the data */
-		parity = serial_device_parity_table[data];
-
-		data_stream_add_bit_to_formatted_byte(&stream->transmit, parity);
+		parity = serial_helper_get_parity(data_byte);
+		
+		transmit_register_add_bit(transmit_reg, parity);
 	}
 
 	/* stop bit(s) */
-	for (i=0; i<stream->StopBitCount; i++)
+	for (i=0; i<data_form->stop_bit_count; i++)
 	{
-		data_stream_add_bit_to_formatted_byte(&stream->transmit,1);
+		transmit_register_add_bit(transmit_reg,1);
 	}
 }
 
-static int data_stream_get_data_bit(struct serial_stream *stream)
+int transmit_register_get_data_bit(struct serial_transmit_register *transmit_reg)
 {
 	int bit;
 
+	bit = (transmit_reg->register_data>>
+		(transmit_reg->bit_count - 1 - 
+		transmit_reg->bit_count_transmitted)) & 0x01;
+
+	transmit_reg->bit_count_transmitted++;
+
 	/* have all bits of this stream formatted byte been sent? */
-	if (stream->transmit.formatted_byte_bit_count_transfered==stream->transmit.formatted_byte_bit_count)
+	if (transmit_reg->bit_count_transmitted==transmit_reg->bit_count)
 	{
 		/* yes - generate a new byte to send */
-		data_stream_generate_formatted_stream_byte(stream);
-		stream->transmit.formatted_byte_bit_count_transfered = 0;
+		transmit_reg->flags |= TRANSMIT_REGISTER_EMPTY;
 	}
-
-	bit = (stream->transmit.formatted_byte>>
-		(stream->transmit.formatted_byte_bit_count - 1 - 
-		stream->transmit.formatted_byte_bit_count_transfered)) & 0x01;
-
-	stream->transmit.formatted_byte_bit_count_transfered++;
 
 	return bit;
 }
 
-
-void	serial_device_baud_rate_callback(int id)
+void	transmit_register_send_bit(struct serial_transmit_register *transmit_reg, struct serial_connection *connection)
 {
 	int data;
-	
-	data = data_stream_get_data_bit(&serial_streams[id]);
 
-	logerror("serial device transmit bit: %01x\n", data);
+	data = transmit_register_get_data_bit(transmit_reg);
 
-	set_out_data_bit(serial_streams[id].State, data);
+	/* set tx data bit */
+	set_out_data_bit(connection->State, data);
+
+	/* state out through connection */
+	serial_connection_out(connection);
 }
 
-
-void	serial_device_begin_transfer(int id)
+static void	serial_device_baud_rate_callback(int id)
 {
-	serial_streams[id].timer = timer_pulse(TIME_IN_HZ(serial_streams[id].BaudRate), id, serial_device_baud_rate_callback);
+	/* receive data into receive register */
+	receive_register_update_bit(&serial_devices[id].receive_reg, get_in_data_bit(serial_devices[id].connection.input_state));
+
+	serial_devices[id].protocol = SERIAL_PROTOCOL_NONE;
+	switch (serial_devices[id].protocol)
+	{
+		case SERIAL_PROTOCOL_NONE:
+		{
+
+			/* is transmit empty? */
+			if (serial_devices[id].transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
+			{
+				int i;
+				int bit;
+				unsigned char data_byte;
+
+				/* generate byte to transmit */
+				data_byte = 0;
+				for (i=0; i<serial_devices[id].data_form.word_length; i++)
+				{
+					data_byte = data_byte<<1;
+					bit = data_stream_get_data_bit_from_data_byte(&serial_devices[id].transmit);
+					data_byte = data_byte|bit;
+				}
+				/* setup register */
+				transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
+			}
+
+			/* other side says it is clear to send? */
+			if (serial_devices[id].connection.input_state & SERIAL_STATE_CTS)
+			{
+				/* send bit */
+				transmit_register_send_bit(&serial_devices[id].transmit_reg, &serial_devices[id].connection);
+			}
+		}
+		break;
+
+		case SERIAL_PROTOCOL_XMODEM:
+		{
+			xmodem_update(id);
+		}
+		break;
+	}
 }
 
-void	serial_device_set_callback(int id, void (*callback)(int, unsigned long))
+/* connect the specified connection to this serial device */
+void	serial_device_connect(int id, struct serial_connection *connection)
 {
 	/* check id is valid */
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
 		return;
 
-	serial_streams[id].serial_device_updated_callback = callback;
+	serial_connection_link(connection, &serial_devices[id].connection);
 }
 
 
@@ -298,13 +606,6 @@ static void data_stream_reset(struct data_stream *stream)
 	stream->ByteCount= 0;
 	/* reset bit count */
 	stream->BitCount = 0;
-
-	/* async mode parameters */
-	/* reset number of bits in formatted byte */
-	stream->formatted_byte_bit_count = 0;
-	stream->formatted_byte_bit_count_transfered = 0;
-
-	/* sync mode parameters */
 }
 
 /* free stream */
@@ -333,16 +634,13 @@ int		serial_device_init(int id)
 	unsigned char *data;
 
 	/* check id is valid */
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
 		return INIT_FAILED;
 
 	/* load file and setup transmit data */
 	if (serial_device_load(IO_SERIAL, id, &data,&data_length))
 	{
-		data_stream_init(&serial_streams[id].transmit, data, data_length);
-
-		serial_device_setup(id, 600, 8, 1,SERIAL_PARITY_NONE);
-		serial_device_begin_transfer(id);
+		data_stream_init(&serial_devices[id].transmit, data, data_length);
 		return INIT_OK;
 	}
 
@@ -352,9 +650,269 @@ int		serial_device_init(int id)
 
 void	serial_device_exit(int id)
 {
-	if ((id<0) || (id>=MAX_SERIAL_STREAMS))
+	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
 		return;
 
-	data_stream_free(&serial_streams[id].transmit);
-	data_stream_free(&serial_streams[id].receive);
+	/* stop transmit */
+	serial_device_set_transmit_state(id,0);
+	/* free streams */
+	data_stream_free(&serial_devices[id].transmit);
+	data_stream_free(&serial_devices[id].receive);
+}
+
+
+/* XMODEM protocol */
+enum
+{
+	XMODEM_STATE_WAITING_FOR_LINK,
+	XMODEM_STATE_SENDING_PACKET,
+	XMODEM_STATE_WAITING_FOR_CONFIRM,
+	XMODEM_WAITING_FOR_END_CONFIRM1,
+	XMODEM_WAITING_FOR_END_CONFIRM2
+};
+
+struct xmodem
+{
+	int state;
+	int packet_id;
+	unsigned char packet[128+4];
+	unsigned long offset_in_packet;
+	unsigned long packet_size;
+};
+
+static struct xmodem xmodem_transfer;
+
+static void xmodem_set_new_state(int);
+
+void	xmodem_init(void)
+{
+	xmodem_set_new_state(XMODEM_STATE_WAITING_FOR_LINK);
+	xmodem_transfer.packet_id = 1;
+}
+
+static void xmodem_setup_packet(int id)
+{
+	int i;
+	int count;
+	int checksum;
+
+	count = 0;
+
+	/* soh */
+	xmodem_transfer.packet[count] = XMODEM_SOH;
+	count++;
+	/* packet id */
+	xmodem_transfer.packet[count] = xmodem_transfer.packet_id & 0x0ff;
+	count++;
+	/* 1's complement of packet id */
+	xmodem_transfer.packet[count] = (xmodem_transfer.packet_id^0x0ff) & 0x0ff;
+	count++;
+
+	checksum = 0;
+	for (i=0; i<128; i++)
+	{
+		xmodem_transfer.packet[count] = data_stream_get_byte(&serial_devices[id].transmit);
+		checksum+=xmodem_transfer.packet[count];
+		count++;
+	}
+
+	xmodem_transfer.packet[count] = checksum & 0x0ff;
+	count++;
+
+	xmodem_transfer.packet_size = count;
+	xmodem_transfer.offset_in_packet = 0;
+
+}
+
+static void xmodem_resend_block(void)
+{
+	xmodem_transfer.offset_in_packet = 0;
+	xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
+}
+
+
+static void xmodem_set_new_state(int state)
+{
+	xmodem_transfer.state = state;
+	xmodem_update(state);
+}
+	
+/* xmodem send! */
+void	xmodem_update(int id)
+{
+	switch (xmodem_transfer.state)
+	{
+		case XMODEM_STATE_WAITING_FOR_LINK:
+		{
+			if (serial_devices[id].receive_reg.flags & RECEIVE_REGISTER_FULL)
+			{
+				receive_register_extract(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
+
+				if (serial_devices[id].receive_reg.byte_received==XMODEM_NAK)
+				{
+					logerror("xmodem nak received\n");
+
+					xmodem_setup_packet(id);
+					xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
+				}
+			}
+		}
+		break;
+
+		case XMODEM_STATE_SENDING_PACKET:
+		{
+			/* assumes 8-data bits */
+			/* is transmit empty? */
+			if (serial_devices[id].transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
+			{
+		//		int i;
+		//		int bit;
+				unsigned char data_byte;
+
+				/* generate byte to transmit */
+				data_byte = xmodem_transfer.packet[xmodem_transfer.offset_in_packet];
+				xmodem_transfer.offset_in_packet++;
+				logerror("packet byte: %02x\n",data_byte);
+
+				//	for (i=0; i<serial_devices[id].data_form.word_length; i++)
+			//	{
+			//		data_byte = data_byte<<1;
+			//		bit = data_stream_get_data_bit_from_data_byte(&serial_devices[id].transmit);
+			//		data_byte = data_byte|bit;
+			//	}
+				/* setup register */
+				transmit_register_setup(&serial_devices[id].transmit_reg,&serial_devices[id].data_form, data_byte);
+			}
+
+			/* other side says it is clear to send? */
+			if (serial_devices[id].connection.input_state & SERIAL_STATE_CTS)
+			{
+				/* send bit */
+				transmit_register_send_bit(&serial_devices[id].transmit_reg, &serial_devices[id].connection);
+			}
+
+			if (xmodem_transfer.offset_in_packet==xmodem_transfer.packet_size)
+			{
+				xmodem_set_new_state(XMODEM_STATE_WAITING_FOR_CONFIRM);
+			}
+		}
+		break;
+
+		case XMODEM_STATE_WAITING_FOR_CONFIRM:
+		{
+			if (serial_devices[id].receive_reg.flags & RECEIVE_REGISTER_FULL)
+			{
+				receive_register_extract(&serial_devices[id].receive_reg, &serial_devices[id].data_form);
+
+				switch (serial_devices[id].receive_reg.byte_received)
+				{		
+					case XMODEM_ACK:
+					{
+						logerror("block accepted\n");
+						xmodem_transfer.packet_id++;
+						xmodem_setup_packet(id);
+						xmodem_set_new_state(XMODEM_STATE_SENDING_PACKET);
+					}
+					break;
+
+					case XMODEM_NAK:
+					{
+						logerror("resend block\n");
+						xmodem_resend_block();
+					}
+					break;
+
+					default:
+					{
+						logerror("unknown response\n");
+					}
+					break;
+				}
+			}
+		}
+		break;
+
+		default:
+			break;
+	}
+}
+
+
+/*******************************************************************************/
+/********* SERIAL CONNECTION ***********/
+
+
+/* this converts state at this end to a state the other end can accept */
+/* e.g. CTS at this end becomes RTS at other end.
+		RTS at this end becomes CTS at other end.
+		TX at this end becomes RX at other end.
+		RX at this end becomes TX at other end.
+		etc 
+
+		The same thing is done inside the serial null-terminal lead */
+
+static unsigned long serial_connection_spin_bits(unsigned long input_status)
+{
+
+	return 
+		/* cts -> rts */
+		(((input_status & 0x01)<<1) |
+		/* rts -> cts */
+		((input_status>>1) & 0x01) |
+		/* dsr -> dtr */
+		(((input_status>>2) & 0x01)<<3) |
+		/* dtr -> dsr */
+		(((input_status>>3) & 0x01)<<2) |
+		/* rx -> tx */
+		(((input_status>>4) & 0x01)<<5) |
+		/* tx -> rx */
+		(((input_status>>5) & 0x01)<<4));
+}
+
+
+/* setup callbacks for connection */
+void	serial_connection_init(struct serial_connection *connection)
+{
+	connection->out_callback = NULL;
+	connection->in_callback = NULL;
+}
+
+/* set callback which will be executed when out status has changed */
+void	serial_connection_set_out_callback(struct serial_connection *connection, void (*out_cb)(int id, unsigned long state))
+{
+	connection->out_callback = out_cb;
+}
+
+/* set callback which will be executed when in status has changed */
+void	serial_connection_set_in_callback(struct serial_connection *connection, void (*in_cb)(int id, unsigned long state))
+{
+	connection->in_callback = in_cb;
+}
+
+/* output new state through connection */
+void	serial_connection_out(struct serial_connection *connection)
+{
+	if (connection->out_callback!=NULL)
+	{
+		unsigned long state_at_other_end;
+
+		state_at_other_end = serial_connection_spin_bits(connection->State);
+
+		connection->out_callback(connection->id, state_at_other_end);
+	}
+}
+
+/* join two serial connections together */
+void	serial_connection_link(struct serial_connection *connection_a, struct serial_connection *connection_b)
+{
+	/* both connections should have their in connection setup! */
+	/* the in connection is the callback they use to update their state based
+	on the output from the other side */
+	connection_a->out_callback = connection_b->in_callback;
+	connection_b->out_callback = connection_a->in_callback;
+
+	/* let b know the state of a */
+	serial_connection_out(connection_a);
+	/* let a know the state of b */
+	serial_connection_out(connection_b);
 }
