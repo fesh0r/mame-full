@@ -33,6 +33,9 @@
 #include "file.h"
 #include "options.h"
 
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
 
 /***************************************************************************
     global variables

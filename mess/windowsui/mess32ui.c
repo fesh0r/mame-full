@@ -15,6 +15,10 @@
 #include "messwin.h"
 #include "rc.h"
 
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
+
 /* from src/mess/win32.c */
 /*
 char *strncatz(char *dest, const char *source, size_t len);

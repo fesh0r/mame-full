@@ -33,6 +33,7 @@ static int s_nGame;
 
 #ifdef _MSC_VER
 #define ZEXPORT WINAPI
+#define alloca _alloca
 #else
 #define ZEXPORT
 #endif
