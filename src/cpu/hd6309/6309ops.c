@@ -2726,8 +2726,8 @@ INLINE void muld_im( void )
 	q.d = (signed short) D * (signed short)t.w.l;
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZV;
+	SET_NZ16(D);
 }
 
 /* $118d DIVD immediate */
@@ -2736,15 +2736,14 @@ INLINE void divd_im( void )
 	UINT8 t;
 
 	IMMBYTE( t );
-	if ( t == 0 )
+
+	if( t != 0 )
 	{
-		DZError();
+		W = (INT16) D % (INT8) t;
+		D = (INT16) D / (INT8) t;
 	}
 	else
-	{
-		W = (signed short) D / (signed char) t;
-		D = (signed short) D % (signed char) t;
-	}
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -2758,11 +2757,16 @@ INLINE void divq_im( void )
 	IMMWORD( t );
 	q.w.h = D;
 	q.w.l = W;
-
-	v = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
-	D = v;
-
+	
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		W = (INT32) q.d % (INT16) t.w.l;
+		D = v;
+	}
+	else
+		DZError();
+		
 	/* Warning: Set CC */
 }
 
@@ -3015,7 +3019,8 @@ INLINE void muld_di( void )
 
 	D = q.w.h;
 	W = q.w.l;
-	/* Warning: Set CC */
+	CLR_NZV;
+	SET_NZ16(D);
 }
 
 /* $119d DIVD direct -**0- */
@@ -3024,8 +3029,14 @@ INLINE void divd_di( void )
 	UINT8	t;
 
 	DIRBYTE(t);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
+
+	if( t != 0 )
+	{
+		W = (INT16) D % (INT8) t;
+		D = (INT16) D / (INT8) t;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -3040,9 +3051,15 @@ INLINE void divq_di( void )
 	q.w.l = W;
 
 	DIRWORD(t);
-	v = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
-	D = v;
+
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		W = (INT32) q.d % (INT16) t.w.l;
+		D = v;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -3356,8 +3373,8 @@ INLINE void muld_ix( void )
 
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZV;
+	SET_NZ16(D);
 }
 
 /* $11ad DIVD indexed -**0- */
@@ -3367,8 +3384,14 @@ INLINE void divd_ix( void )
 
 	fetch_effective_address();
 	t=RM(EAD);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
+	
+	if( t != 0 )
+	{
+		W = (INT16) D % (INT8) t;
+		D = (INT16) D / (INT8) t;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -3376,7 +3399,7 @@ INLINE void divd_ix( void )
 /* $11ae DIVQ indexed -**0- */
 INLINE void divq_ix( void )
 {
-	UINT16	t;
+	UINT16	t, v;
 	PAIR	q;
 
 	q.w.h = D;
@@ -3384,8 +3407,15 @@ INLINE void divq_ix( void )
 
 	fetch_effective_address();
 	t=RM16(EAD);
-	D = (signed long) q.d / (signed short) t;
-	W = (signed long) q.d % (signed short) t;
+
+	if( t != 0 )
+	{
+		v = (INT32) q.d / (INT16) t;
+		W = (INT32) q.d % (INT16) t;
+		D = v;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -3686,8 +3716,8 @@ INLINE void muld_ex( void )
 
 	D = q.w.h;
 	W = q.w.l;
-
-	/* Warning: Set CC */
+	CLR_NZV;
+	SET_NZ16(D);
 }
 
 /* $11bd DIVD extended -**0- */
@@ -3696,8 +3726,14 @@ INLINE void divd_ex( void )
 	UINT8	t;
 
 	EXTBYTE(t);
-	W = (signed short) D / (signed char) t;
-	D = (signed short) D % (signed char) t;
+
+	if( t != 0 )
+	{
+		W = (INT16) D % (INT8) t;
+		D = (INT16) D / (INT8) t;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
@@ -3706,13 +3742,21 @@ INLINE void divd_ex( void )
 INLINE void divq_ex( void )
 {
 	PAIR	t, q;
-
+	INT16	v;
+	
 	q.w.h = D;
 	q.w.l = W;
 
 	EXTWORD(t);
-	D = (signed long) q.d / (signed short) t.w.l;
-	W = (signed long) q.d % (signed short) t.w.l;
+
+	if( t.w.l != 0 )
+	{
+		v = (INT32) q.d / (INT16) t.w.l;
+		W = (INT32) q.d % (INT16) t.w.l;
+		D = v;
+	}
+	else
+		DZError();
 
 	/* Warning: Set CC */
 }
