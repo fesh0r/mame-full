@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "osdepend.h"
-#include "imgtool.h"
-
 /* 
    vMSX tap format
 
@@ -36,6 +30,10 @@
    for example.
 
 */
+
+#include "osdepend.h"
+#include "imgtool.h"
+#include "utils.h"
 
 typedef struct
     {

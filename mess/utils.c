@@ -69,3 +69,52 @@ int strncmpi(const char *dst, const char *src, size_t n)
 	return result;
 }
 #endif /* strncmpi */
+
+/* -----------------------------------------------------------------------
+ * basename
+ *
+ * Like the GNU C version of basename
+ *
+ * What is the best way to do this???
+ * ----------------------------------------------------------------------- */
+
+#ifdef WIN32
+inline const char *basename(const char *name)
+	{
+	int len = strlen (name);
+
+	while (len-- > 0)
+		{
+		if ((name[len] == '\\') || (name[len] == '/'))
+			return name + len + 1;
+		}
+
+	return name;
+	}
+#endif
+
+#ifdef UNIX
+inline const char *basename (const char *name)
+	{
+	const char *p;
+
+	p = strrchr (name, '/');
+	return (p == NULL ? name : p);
+	}
+#endif
+
+#ifdef WIN32
+const char *basename(const char *name)
+        {
+        int len = strlen (name);
+
+        while (len-- > 0)
+                {
+                if ((name[len] == '\\') || (name[len] == '/'))
+                        return name + len + 1;
+                }
+
+        return name;
+        }
+#endif
+

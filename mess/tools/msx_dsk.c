@@ -127,7 +127,7 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 
 	if (format != XSA_2DD)
 		{
-	    if (f->name) pbase = basename (f->name);
+	    if (f->name) pbase = (char*)basename (f->name);
 		else pbase = default_name;
 
    		len = strlen (pbase);
