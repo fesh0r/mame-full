@@ -19,6 +19,10 @@
 
  ******************************************************************************/
 #include "driver.h"
+
+#include "includes/centroni.h"
+#include "printer.h"
+
 /* for 8255 ppi */
 #include "machine/8255ppi.h"
 /* for cycle tables */
@@ -166,7 +170,7 @@ int amstrad_ppi_porta_r( int chip)
 
 /* ppi port b read
  Bit 7 = Cassette tape input
- bit 6 =
+ bit 6 = printer busy/online
  bit 5 =
  bit 4 =
  bit 3,2,1 = PCB links to define computer name.
@@ -175,18 +179,27 @@ In MESS I have used the dipswitch feature.
 
 int amstrad_ppi_portb_r (int chip)
 {
-	int cassette_data;
+	int data;
 
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 		amstrad_update_video();
 #endif
 
-	cassette_data = 0x0;
+	/* cassette read */
+	data = 0x0;
 
 	if (device_input(IO_CASSETTE,0) > 255)
-		cassette_data |=0x080;
+		data |=0x080;
 
-		return ((ppi_port_inputs[1] & 0x07e) | amstrad_vsync | cassette_data);
+	/* printer busy */
+	if (device_status (IO_PRINTER, 0, 0)==0 )
+		data |=0x040;
+
+	/* vsync state from CRTC */
+	data |= amstrad_vsync;
+
+	data |= ppi_port_inputs[1] & 0x03e;
+	return data;
 }
 
 void amstrad_ppi_porta_w (int chip, int data)
@@ -591,6 +604,8 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 
 //static int previous_crtc_write_time = 0;
 
+static unsigned char previous_printer_data_byte;
+
 /* Offset handler for write */
 WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 {
@@ -668,6 +683,26 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		default:
 			break;
 		}
+	}
+
+	
+	if ((offset & 0x01000)==0)
+	{
+		/* on CPC, write to printer through LS chip */
+		/* the amstrad is crippled with a 7-bit port :( */
+		/* bit 7 of the data is the printer /strobe */
+
+		/* strobe state changed? */
+		if (((previous_printer_data_byte^data) & 0x080)!=0)
+		{
+			/* check for only one transition */
+			if ((data & 0x080)==0)
+			{
+				/* output data to printer */
+				device_output (IO_PRINTER, 0, data & 0x07f);	
+			}
+		}
+		previous_printer_data_byte = data;
 	}
 
 	if ((offset & 0x02000) == 0)
@@ -2888,7 +2923,7 @@ static const struct IODevice io_cpc6128[] =
 		NULL						/* output_chunk */
 	},
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit),
-
+	IO_PRINTER_PORT(1,"\0"),
 	{IO_END}
 };
 
