@@ -13,6 +13,10 @@
 
 #define APDISK_DEVTAG	"apdsk_525"
 
+/* -----------------------------------------------------------------------
+ * Softswitch values
+ * ----------------------------------------------------------------------- */
+
 #define VAR_80STORE		0x000001
 #define VAR_RAMRD		0x000002
 #define VAR_RAMWRT		0x000004
@@ -38,8 +42,34 @@
 
 extern UINT32 a2;
 
+/* ----------------------------------------------------------------------- */
+
+#define APPLE2_SLOT_COUNT	8
+
+struct apple2_slotdevice
+{
+	const char *name;
+	const char *description;
+	void *(*init)(int slot);
+	void (*reset)(void *token);
+	data8_t (*read)(void *token, offs_t offset);
+	void (*write)(void *token, offs_t offset, data8_t data);
+};
+
+struct apple2_config
+{
+	int keyboard_type;
+	const struct apple2_slotdevice *slots[APPLE2_SLOT_COUNT];
+};
+
+
+extern const struct apple2_slotdevice apple2_slot_langcard;
+extern const struct apple2_slotdevice apple2_slot_mockingboard;
+extern const struct apple2_slotdevice apple2_slot_floppy525;
+
+
 /* machine/apple2.c */
-void apple2_init_common(int keyboard_type);
+void apple2_init_common(const struct apple2_config *config);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
 MACHINE_STOP( apple2 );
@@ -47,43 +77,11 @@ data8_t apple2_getfloatingbusvalue(void);
 
 void apple2_interrupt(void);
 
-READ8_HANDLER ( apple2_c00x_r );
-WRITE8_HANDLER ( apple2_c00x_w );
+READ8_HANDLER ( apple2_c0xx_r );
+WRITE8_HANDLER ( apple2_c0xx_w );
 
-READ8_HANDLER ( apple2_c01x_r );
-WRITE8_HANDLER ( apple2_c01x_w );
-
-READ8_HANDLER ( apple2_c02x_r );
-WRITE8_HANDLER ( apple2_c02x_w );
-
-READ8_HANDLER ( apple2_c03x_r );
-WRITE8_HANDLER ( apple2_c03x_w );
-
-READ8_HANDLER ( apple2_c05x_r );
-WRITE8_HANDLER ( apple2_c05x_w );
-
-READ8_HANDLER ( apple2_c06x_r );
-
-READ8_HANDLER ( apple2_c07x_r );
-WRITE8_HANDLER ( apple2_c07x_w );
-
-READ8_HANDLER ( apple2_c08x_r );
-WRITE8_HANDLER ( apple2_c08x_w );
-
-READ8_HANDLER ( apple2_c0xx_slot1_r );
-READ8_HANDLER ( apple2_c0xx_slot2_r );
-READ8_HANDLER ( apple2_c0xx_slot3_r );
-READ8_HANDLER ( apple2_c0xx_slot4_r );
-READ8_HANDLER ( apple2_c0xx_slot5_r );
 READ8_HANDLER ( apple2_c0xx_slot6_r );
-READ8_HANDLER ( apple2_c0xx_slot7_r );
-WRITE8_HANDLER ( apple2_c0xx_slot1_w );
-WRITE8_HANDLER ( apple2_c0xx_slot2_w );
-WRITE8_HANDLER ( apple2_c0xx_slot3_w );
-WRITE8_HANDLER ( apple2_c0xx_slot4_w );
-WRITE8_HANDLER ( apple2_c0xx_slot5_w );
 WRITE8_HANDLER ( apple2_c0xx_slot6_w );
-WRITE8_HANDLER ( apple2_c0xx_slot7_w );
 
 void apple2_setvar(UINT32 val, UINT32 mask);
 

@@ -931,25 +931,6 @@ static WRITE8_HANDLER( gssnd_w )
 static READ8_HANDLER( apple2gs_c0xx_r )
 {
 	data8_t result;
-	static const read8_handler inherited_handlers[] =
-	{
-		apple2_c00x_r,
-		apple2_c01x_r,
-		apple2_c02x_r,
-		apple2_c03x_r,
-		NULL,
-		apple2_c05x_r,
-		apple2_c06x_r,
-		apple2_c07x_r,
-		apple2_c08x_r,
-		apple2_c0xx_slot1_r,
-		apple2_c0xx_slot2_r,
-		apple2_c0xx_slot3_r,
-		apple2_c0xx_slot4_r,
-		apple2_c0xx_slot5_r,
-		apple2_c0xx_slot6_r,
-		apple2_c0xx_slot7_r
-	};
 
 	offset &= 0xFF;
 
@@ -1076,10 +1057,7 @@ static READ8_HANDLER( apple2gs_c0xx_r )
 			result = 0x00;
 
 		default:
-			if (inherited_handlers[offset / 0x10])
-				result = inherited_handlers[offset / 0x10](offset % 0x10);
-			else
-				result = 0x00;
+			result = apple2_c0xx_r(offset);
 			break;
 	}
 
@@ -1093,26 +1071,6 @@ static READ8_HANDLER( apple2gs_c0xx_r )
 
 static WRITE8_HANDLER( apple2gs_c0xx_w )
 {
-	static const write8_handler inherited_handlers[] =
-	{
-		apple2_c00x_w,
-		apple2_c01x_w,
-		apple2_c02x_w,
-		apple2_c03x_w,
-		NULL,
-		apple2_c05x_w,
-		NULL,
-		apple2_c07x_w,
-		apple2_c08x_w,
-		apple2_c0xx_slot1_w,
-		apple2_c0xx_slot2_w,
-		apple2_c0xx_slot3_w,
-		apple2_c0xx_slot4_w,
-		apple2_c0xx_slot5_w,
-		apple2_c0xx_slot6_w,
-		apple2_c0xx_slot7_w
-	};
-
 	offset &= 0xFF;
 
 #if LOG_C0XX
@@ -1242,8 +1200,7 @@ static WRITE8_HANDLER( apple2gs_c0xx_w )
 			break;
 
 		default:
-			if (inherited_handlers[offset / 0x10])
-				inherited_handlers[offset / 0x10](offset % 0x10, data);
+			apple2_c0xx_w(offset, data);
 			break;
 	}
 }
@@ -1833,7 +1790,14 @@ static READ8_HANDLER( apple2gs_read_vector )
 
 DRIVER_INIT( apple2gs )
 {
-	apple2_init_common(AP2_KEYBOARD_2GS);
+	struct apple2_config cfg;
+	
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.keyboard_type = AP2_KEYBOARD_2GS;
+	cfg.slots[0] = &apple2_slot_langcard;
+	cfg.slots[4] = &apple2_slot_mockingboard;
+	
+	apple2_init_common(&cfg);
 
 	/* set up Apple IIgs vectoring */
 	cpunum_set_info_fct(0, CPUINFO_PTR_G65816_READVECTOR_CALLBACK, (genf *) apple2gs_read_vector);
