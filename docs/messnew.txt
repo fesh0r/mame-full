@@ -11,6 +11,7 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [MZ700] Fixed a crash on startup. (bug #530) [Nate Woods]
+- [PC8801] Added natural keyboard support.  [Dopefish Justin and Nate Woods]
 - [PCE] Fixed a crash on startup. (bug #531) [Nate Woods]
 
 
