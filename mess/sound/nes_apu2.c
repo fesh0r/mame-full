@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu2.c,v 1.1 2000/11/14 13:49:12 ben Exp $
+** $Id: nes_apu2.c,v 1.1 2001/03/17 01:02:40 ben Exp $
 */
 
 #include <string.h>
@@ -1006,6 +1006,9 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu2.c,v $
+** Revision 1.1  2001/03/17 01:02:40  ben
+** moved sound CPU cores
+**
 ** Revision 1.1  2000/11/14 13:49:12  ben
 ** MAME37b9 files!
 **

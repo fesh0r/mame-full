@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu2.h,v 1.2 2000/12/13 02:07:11 rnabet Exp $
+** $Id: nes_apu2.h,v 1.1 2001/03/17 01:02:40 ben Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -302,6 +302,9 @@ extern void apu_write(uint32 address, uint8 value);
 
 /*
 ** $Log: nes_apu2.h,v $
+** Revision 1.1  2001/03/17 01:02:40  ben
+** moved sound CPU cores
+**
 ** Revision 1.2  2000/12/13 02:07:11  rnabet
 ** conditionalized "#define TRUE 1" and "#define FALSE 0" so that it compiles here.
 **

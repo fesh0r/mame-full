@@ -952,21 +952,13 @@ else
 SOUNDDEFS += -DHAS_POKEY=0
 endif
 
-SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_TIA=1
-SOUNDOBJS += $(OBJ)/sound/tiasound.o $(OBJ)/sound/tiaintf.o
-else
-SOUNDDEFS += -DHAS_TIA=0
-endif
-
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
 ifndef MESS
 SOUNDOBJS += $(OBJ)/sound/nes_apu.o
 else
-SOUNDOBJS += $(OBJ)/sound/nes_apu2.o $(OBJ)/sound/nesintf.o
+SOUNDOBJS += $(OBJ)/mess/sound/nes_apu2.o $(OBJ)/mess/sound/nesintf.o
 endif
 else
 SOUNDDEFS += -DHAS_NES=0
@@ -1172,26 +1164,3 @@ else
 SOUNDDEFS += -DHAS_ES5506=0
 endif
 
-SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_SPEAKER=1
-SOUNDOBJS += $(OBJ)/sound/speaker.o
-else
-SOUNDDEFS += -DHAS_SPEAKER=0
-endif
-
-SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_WAVE=1
-SOUNDOBJS += $(OBJ)/sound/wave.o
-else
-SOUNDDEFS += -DHAS_WAVE=0
-endif
-
-SOUND=$(strip $(findstring BEEP@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_BEEP=1
-SOUNDOBJS += $(OBJ)/sound/beep.o
-else
-SOUNDDEFS += -DHAS_BEEP=0
-endif

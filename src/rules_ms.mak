@@ -139,3 +139,46 @@ else
 CPUDEFS += -DHAS_Z80GB=0
 endif
 
+
+
+
+
+
+
+
+
+
+
+
+SOUND=$(strip $(findstring BEEP@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_BEEP=1
+SOUNDOBJS += $(OBJ)/mess/sound/beep.o
+else
+SOUNDDEFS += -DHAS_BEEP=0
+endif
+
+SOUND=$(strip $(findstring SPEAKER@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SPEAKER=1
+SOUNDOBJS += $(OBJ)/mess/sound/speaker.o
+else
+SOUNDDEFS += -DHAS_SPEAKER=0
+endif
+
+SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_TIA=1
+SOUNDOBJS += $(OBJ)/mess/sound/tiasound.o $(OBJ)/mess/sound/tiaintf.o
+else
+SOUNDDEFS += -DHAS_TIA=0
+endif
+
+SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_WAVE=1
+SOUNDOBJS += $(OBJ)/mess/sound/wave.o
+else
+SOUNDDEFS += -DHAS_WAVE=0
+endif
+
