@@ -28,14 +28,13 @@
 #include "xmame.h"
 #include "driver.h"
 #include "devices.h"
-#include "keyboard.h"
 #include "effect.h"
 
 static int video_width,video_height;
 static int scaled_visual_width,scaled_visual_height;
 static ggi_visual_t vis = NULL;
 static int screen_startx,screen_starty;
-static int lastmouse[MOUSE_AXIS]={0,0,0,0,0,0,0,0};
+static int lastmouse[MOUSE_AXES]={0,0,0,0,0,0,0,0};
 static unsigned char *video_mem;
 static unsigned char *doublebuffer_buffer = NULL; /* also used for scaling */
 static ggi_mode mode;

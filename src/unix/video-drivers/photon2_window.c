@@ -76,7 +76,7 @@ struct ph_func_struct {
 };
 
 extern struct ph_func_struct ph_func[];
-extern int current_mouse[MOUSE_AXIS] ;
+extern int current_mouse[MOUSE_AXES] ;
 struct rc_option ph_window_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Photon-window Related", NULL,		rc_seperator,	NULL,

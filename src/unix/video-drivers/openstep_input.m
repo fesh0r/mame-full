@@ -14,7 +14,6 @@
 #import "xmame.h"
 #import "osdepend.h"
 #import "driver.h"
-#import "keyboard.h"
 #import "devices.h"
 
 /*

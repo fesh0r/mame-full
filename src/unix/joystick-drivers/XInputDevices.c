@@ -128,12 +128,12 @@ XInputProcessEvent(XEvent *ev)
   if (ev->type == motion_type) {
     XDeviceMotionEvent *motion=(XDeviceMotionEvent *) ev;
 
-    for(i = 0; i < MOUSE; i++)
+    for(i = 0; i < MOUSE_MAX; i++)
       if (XIdevices[i].deviceName && motion->deviceid == XIdevices[i].info->id)
 	  break;
 
-    if (i == MOUSE)
-	return 0;
+    if (i == MOUSE_MAX)
+		return 0;
 
     if (XIdevices[i].neverMoved) {
 	XIdevices[i].neverMoved=0;
@@ -152,12 +152,12 @@ XInputProcessEvent(XEvent *ev)
   } else if (ev->type == button_press_type || ev->type == button_release_type) {
     XDeviceButtonEvent *button = (XDeviceButtonEvent *)ev;
 
-    for(i = 0; i < MOUSE; i++)
+    for(i = 0; i < MOUSE_MAX; i++)
 	if (XIdevices[i].deviceName && button->deviceid == XIdevices[i].info->id)
 	    break;
 
-    if (i == MOUSE)
-	return 0;
+    if (i == MOUSE_MAX)
+		return 0;
 
     /* fprintf(stderr_file, "XInput: Player %d: Button %d %s\n",
 	    i + 1, button->button, button->state ? "released" : "pressed"); */
@@ -176,7 +176,7 @@ void
 XInputPollDevices(int player, int *deltax, int *deltay)
 {
 	int i=player;
-	if (player < MOUSE) {
+	if (player < MOUSE_MAX) {
 		*deltax=mouse_data[player].deltas[0];
 		*deltay=mouse_data[player].deltas[1];
 		mouse_data[player].deltas[0] = 0;

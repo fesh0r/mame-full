@@ -159,11 +159,25 @@ endif
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
-ifdef ZLIB
-ZLIB = src/unix/contrib/cutzlib-1.2.1/libz.a
+ifdef BUILD_EXPAT
+CFLAGS += -Isrc/expat
+OBJDIRS += $(OBJ)/expat
+EXPAT = $(OBJ)/libexpat.a
+else
+LIBS += -lexpat
+EXPAT =
 endif
 
-all: maketree $(NAME).$(DISPLAY_METHOD) tools
+ifdef BUILD_ZLIB
+CFLAGS += -Isrc/zlib
+OBJDIRS += $(OBJ)/zlib
+ZLIB = $(OBJ)/libz.a
+else
+LIBS += -lz
+ZLIB =
+endif
+
+all: maketree $(NAME).$(DISPLAY_METHOD) extra
 
 # CPU core include paths
 VPATH = src $(wildcard src/cpu/*)
@@ -209,11 +223,6 @@ ifdef SEPARATE_LIBM
 MY_LIBS += -lm
 endif
 
-ifdef ZLIB
-MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.2.1 -I../../contrib/cutzlib-1.2.1
-LDFLAGS   += -Lsrc/unix/contrib/cutzlib-1.2.1
-endif
-
 ifdef DEBUG
 MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
@@ -225,14 +234,6 @@ endif
 
 ifdef XMAME_NET
 MY_CFLAGS += -DXMAME_NET
-endif
-
-ifdef HAVE_MEMMOVE
-MY_CFLAGS += -DHAVE_MEMMOVE
-endif
-
-ifdef HAVE_BCOPY
-MY_CFLAGS += -DHAVE_BCOPY
 endif
 
 ifdef HAVE_MPROTECT
@@ -249,13 +250,12 @@ endif
 
 # common objs
 COMMON_OBJS  =  \
-	$(OBJDIR)/main.o $(OBJDIR)/sound.o \
-	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
-	$(OBJDIR)/video.o $(OBJDIR)/mode.o \
-	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o \
-	$(OBJDIR)/fronthlp.o $(OBJDIR)/ident.o $(OBJDIR)/network.o \
-	$(OBJDIR)/snprintf.o $(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o \
-	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o $(OBJDIR)/fileio_more.o
+	$(OBJDIR)/main.o $(OBJDIR)/sound.o $(OBJDIR)/devices.o \
+	$(OBJDIR)/video.o $(OBJDIR)/mode.o $(OBJDIR)/fileio.o \
+	$(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
+	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
+	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
+	$(OBJDIR)/parallel.o $(OBJDIR)/fileio_more.o
 
 # sysdep objs
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
@@ -440,16 +440,16 @@ endif
 # Start of the real makefile.
 ##############################################################################
 
-$(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(UNIX_OBJS) $(OSDEPEND)
+$(NAME).$(DISPLAY_METHOD): $(EXPAT) $(ZLIB) $(OBJS) $(UNIX_OBJS) $(OSDEPEND)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(UNIX_OBJS) $(OSDEPEND) $(MY_LIBS)
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(EXPAT) $(ZLIB) $(UNIX_OBJS) $(OSDEPEND) $(MY_LIBS)
 
 maketree: $(sort $(OBJDIRS))
 
 $(sort $(OBJDIRS)):
 	-mkdir -p $@
 
-tools: $(ZLIB) $(TOOLS)
+extra: $(TOOLS)
 
 $(PLATFORM_IMGTOOL_OBJS):
 
@@ -457,15 +457,15 @@ xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
 	$(CC_COMPILE) $(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
 
-romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o
+romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
+chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-xml2info: src/xml2info/xml2info.o
+xml2info: $(OBJ)/xml2info.o $(EXPAT)
 	$(CC_COMMENT) @echo Compiling $@...
 	$(CC_COMPILE) $(CC) -O1 -o $@ $^
 
@@ -498,12 +498,15 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -o $@ -c $<
 
-src/unix/contrib/cutzlib-1.2.1/libz.a:
-	( \
-	cd src/unix/contrib/cutzlib-1.2.1; \
-	./configure; \
-	$(MAKE) libz.a \
-	)
+#secondary libraries
+$(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o \
+	$(OBJ)/expat/xmltok.o
+
+$(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o \
+	$(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o $(OBJ)/zlib/gzio.o \
+	$(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
+	$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o \
+	$(OBJ)/zlib/zutil.o
 
 ifdef MESS
 $(OBJ)/mess/%.o: mess/%.c

@@ -10,7 +10,6 @@
 #include "svgainput.h"
 #include "xmame.h"
 #include "devices.h"
-#include "keyboard.h"
 
 #ifdef __FreeBSD__ 
 #define	SIGUNUSED	SIGUSR2

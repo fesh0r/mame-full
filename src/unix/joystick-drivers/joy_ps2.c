@@ -297,8 +297,8 @@ void joy_ps2_init (void)
 	    /* Sanity check. */
 	    if (joy_data[i].num_buttons > JOY_BUTTONS)
 		joy_data[i].num_buttons = JOY_BUTTONS;
-	    if (joy_data[i].num_axis > JOY_AXIS)
-		joy_data[i].num_axis = JOY_AXIS;
+	    if (joy_data[i].num_axis > JOY_AXES)
+		joy_data[i].num_axis = JOY_AXES;
 
 	    if (PS2PAD_TYPE(pad_data[1]) == PS2PAD_TYPE_DUALSHOCK)
 	    {

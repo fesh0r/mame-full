@@ -9,14 +9,13 @@
 #include "devices.h"
 #include "x11.h"
 #include "xkeyboard.h"
-#include "keyboard.h"
 
 #ifdef xgl
 #include "glmame.h"
 static int xgl_aspect_resize_action = 0;
 #endif
 
-static int current_mouse[MOUSE_AXIS] = {0,0,0,0,0,0,0,0};
+static int current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
 static int x11_use_winkeys = 0;
 
 static int x11_mapkey(struct rc_option *option, const char *arg, int priority);
@@ -276,13 +275,13 @@ static int x11_mapkey(struct rc_option *option, const char *arg, int priority)
 	return OSD_NOT_OK;
 }
 
-void sysdep_mouse_poll (void)
+void sysdep_mouse_poll(void)
 {
 	int i;
 	if(x11_video_mode == X11_DGA)
 	{
-		/* 2 should be MOUSE_AXIS but we don't support more
-		   then 2 axis at the moment so this is faster */
+		/* 2 should be MOUSE_AXES but we don't support more
+		   than 2 axes at the moment so this is faster */
 		for (i=0; i<2; i++)
 		{
 			mouse_data[0].deltas[i] = current_mouse[i];

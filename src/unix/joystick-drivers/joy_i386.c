@@ -55,106 +55,106 @@ static joy_struct my_joy_data;
 
 void joy_i386_init(void)
 {
-   int i, j;
-   char devname[20];
+	int i, j;
+	char devname[20];
 #ifdef I386NEW_JOYSTICK
-   int version;
+	int version;
 #endif
 
-   int first_dev = 0;
-   int last_dev = JOY - 1;
-   
-   /* 
-    * If the device name ends with an in-range digit, then don't 
-    * loop through all possible values below.  Just extract the 
-    * device number and use it.
-    */
-   int pos = strlen(joy_dev) - 1;
-   if (pos >= 0 && isdigit(joy_dev[pos]))
-   {
-      int devnum = joy_dev[pos] - '0';
-      if (devnum < JOY)
-      {
-         first_dev = last_dev = devnum;
-         joy_dev[pos] = 0;
-      }
-   }
+	int first_dev = 0;
+	int last_dev = JOY_MAX - 1;
 
-   fprintf (stderr_file, "I386 joystick interface initialization...\n");
-   for (i = first_dev; i <= last_dev; i++)
-   {
-      sprintf (devname, "%s%d", joy_dev, i);
-      if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
-      {
+	/* 
+	 * If the device name ends with an in-range digit, then don't 
+	 * loop through all possible values below.  Just extract the 
+	 * device number and use it.
+	 */
+	int pos = strlen(joy_dev) - 1;
+	if (pos >= 0 && isdigit(joy_dev[pos]))
+	{
+		int devnum = joy_dev[pos] - '0';
+		if (devnum < JOY_MAX)
+		{
+			first_dev = last_dev = devnum;
+			joy_dev[pos] = 0;
+		}
+	}
 
-	 if(joytype != JOY_I386NEW){
-            if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
-            {
-               close(joy_data[i].fd);
-               joy_data[i].fd = -1;
-               continue;
-            }
-	 }
-         switch(joytype)
-         {
-            case JOY_I386NEW:
+	fprintf (stderr_file, "I386 joystick interface initialization...\n");
+	for (i = first_dev; i <= last_dev; i++)
+	{
+		sprintf (devname, "%s%d", joy_dev, i);
+		if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
+		{
+			if(joytype != JOY_I386NEW)
+			{
+				if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
+				{
+					close(joy_data[i].fd);
+					joy_data[i].fd = -1;
+					continue;
+				}
+			}
+			switch(joytype)
+			{
+				case JOY_I386NEW:
 #ifdef I386NEW_JOYSTICK
-               /* new joystick driver 1.x.x API 
-                  check the running version of driver, if 1.x.x is
-                  not detected fall back to 0.8 API */
+					/* new joystick driver 1.x.x API 
+					   check the running version of driver, if 1.x.x is
+					   not detected fall back to 0.8 API */
 
-               if (ioctl (joy_data[i].fd, JSIOCGVERSION, &version)==0)
-               {
-                  char name[60];
-                  ioctl (joy_data[i].fd, JSIOCGAXES, &joy_data[i].num_axis);
-                  ioctl (joy_data[i].fd, JSIOCGBUTTONS, &joy_data[i].num_buttons);
-                  ioctl (joy_data[i].fd, JSIOCGNAME (sizeof (name)), name);
-                  if (joy_data[i].num_buttons > JOY_BUTTONS)
-                     joy_data[i].num_buttons = JOY_BUTTONS;
-                  if (joy_data[i].num_axis > JOY_AXIS)
-                     joy_data[i].num_axis = JOY_AXIS;
-                  fprintf (stderr_file, "Joystick: %s is %s\n", devname, name);
-                  fprintf (stderr_file, "Joystick: Built in driver version: %d.%d.%d\n", JS_VERSION >> 16, (JS_VERSION >> 8) & 0xff, JS_VERSION & 0xff);
-                  fprintf (stderr_file, "Joystick: Kernel driver version  : %d.%d.%d\n", version >> 16, (version >> 8) & 0xff, version & 0xff);
-                  for (j=0; j<joy_data[i].num_axis; j++)
-                  {
-                     joy_data[i].axis[j].min = -32768;
-                     joy_data[i].axis[j].max =  32768;
-                  }
-                  joy_poll_func = joy_i386new_poll;
-                  break;
-               }
-               /* else we're running on a kernel with 0.8 driver */
-               fprintf (stderr_file, "Joystick: %s unknown type\n", devname);
-               fprintf (stderr_file, "Joystick: Built in driver version: %d.%d.%d\n", JS_VERSION >> 16, (JS_VERSION >> 8) & 0xff, JS_VERSION & 0xff);
-               fprintf (stderr_file, "Joystick: Kernel driver version  : 0.8 ??\n");
-               fprintf (stderr_file, "Joystick: Please update your Joystick driver !\n");
-               fprintf (stderr_file, "Joystick: Using old interface method\n");
+					if (ioctl (joy_data[i].fd, JSIOCGVERSION, &version)==0)
+					{
+						char name[60];
+						ioctl (joy_data[i].fd, JSIOCGAXES, &joy_data[i].num_axis);
+						ioctl (joy_data[i].fd, JSIOCGBUTTONS, &joy_data[i].num_buttons);
+						ioctl (joy_data[i].fd, JSIOCGNAME (sizeof (name)), name);
+						if (joy_data[i].num_buttons > JOY_BUTTONS)
+							joy_data[i].num_buttons = JOY_BUTTONS;
+						if (joy_data[i].num_axis > JOY_AXES)
+							joy_data[i].num_axis = JOY_AXES;
+						fprintf (stderr_file, "Joystick: %s is %s\n", devname, name);
+						fprintf (stderr_file, "Joystick: Built in driver version: %d.%d.%d\n", JS_VERSION >> 16, (JS_VERSION >> 8) & 0xff, JS_VERSION & 0xff);
+						fprintf (stderr_file, "Joystick: Kernel driver version  : %d.%d.%d\n", version >> 16, (version >> 8) & 0xff, version & 0xff);
+						for (j=0; j<joy_data[i].num_axis; j++)
+						{
+							joy_data[i].axis[j].min = -32768;
+							joy_data[i].axis[j].max =  32768;
+						}
+						joy_poll_func = joy_i386new_poll;
+						break;
+					}
+					/* else we're running on a kernel with 0.8 driver */
+					fprintf (stderr_file, "Joystick: %s unknown type\n", devname);
+					fprintf (stderr_file, "Joystick: Built in driver version: %d.%d.%d\n", JS_VERSION >> 16, (JS_VERSION >> 8) & 0xff, JS_VERSION & 0xff);
+					fprintf (stderr_file, "Joystick: Kernel driver version  : 0.8 ??\n");
+					fprintf (stderr_file, "Joystick: Please update your Joystick driver !\n");
+					fprintf (stderr_file, "Joystick: Using old interface method\n");
 #else
-               fprintf (stderr_file, "New joystick driver (1.x.x) support not compiled in.\n");
-               fprintf (stderr_file, "Falling back to 0.8 joystick driver api\n");
+					fprintf (stderr_file, "New joystick driver (1.x.x) support not compiled in.\n");
+					fprintf (stderr_file, "Falling back to 0.8 joystick driver api\n");
 #endif            
-               joytype = JOY_I386;
-            case JOY_I386:
-               joy_data[i].num_axis = 2;
+					joytype = JOY_I386;
+				case JOY_I386:
+					joy_data[i].num_axis = 2;
 #if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
-               joy_data[i].num_buttons = 2;
+					joy_data[i].num_buttons = 2;
 #else
-               joy_data[i].num_buttons = JOY_BUTTONS;
+					joy_data[i].num_buttons = JOY_BUTTONS;
 #endif
-               joy_data[i].axis[0].center = my_joy_data.x;
-               joy_data[i].axis[1].center = my_joy_data.y;
-               joy_data[i].axis[0].min    = my_joy_data.x - 10;
-               joy_data[i].axis[1].min    = my_joy_data.y - 10;
-               joy_data[i].axis[0].max    = my_joy_data.x + 10;
-               joy_data[i].axis[1].max    = my_joy_data.y + 10;
-               
-               joy_poll_func = joy_i386_poll;
-               break;
-         }
-         fcntl (joy_data[i].fd, F_SETFL, O_NONBLOCK);
-      }
-   }
+					joy_data[i].axis[0].center = my_joy_data.x;
+					joy_data[i].axis[1].center = my_joy_data.y;
+					joy_data[i].axis[0].min    = my_joy_data.x - 10;
+					joy_data[i].axis[1].min    = my_joy_data.y - 10;
+					joy_data[i].axis[0].max    = my_joy_data.x + 10;
+					joy_data[i].axis[1].max    = my_joy_data.y + 10;
+
+					joy_poll_func = joy_i386_poll;
+					break;
+			}
+			fcntl (joy_data[i].fd, F_SETFL, O_NONBLOCK);
+		}
+	}
 }
 
 #ifdef I386NEW_JOYSTICK
@@ -163,69 +163,69 @@ void joy_i386_init(void)
  */
 void joy_i386new_poll (void)
 {
-   struct js_event js;
-   int i;
+	struct js_event js;
+	int i;
 
-   for (i=0; i<JOY; i++)
-   {
-      if (joy_data[i].fd < 0)
-         continue;
-      while ((read (joy_data[i].fd, &js, sizeof (struct js_event))) == sizeof (struct js_event))
-      {
-         switch (js.type & ~JS_EVENT_INIT)
-         {
-            case JS_EVENT_BUTTON:
-               if (js.number < JOY_BUTTONS)
-                  joy_data[i].buttons[js.number] = js.value;
+	for (i=0; i<JOY_MAX; i++)
+	{
+		if (joy_data[i].fd < 0)
+			continue;
+		while ((read (joy_data[i].fd, &js, sizeof (struct js_event))) == sizeof (struct js_event))
+		{
+			switch (js.type & ~JS_EVENT_INIT)
+			{
+				case JS_EVENT_BUTTON:
+					if (js.number < JOY_BUTTONS)
+						joy_data[i].buttons[js.number] = js.value;
 #ifdef JDEBUG
-               fprintf (stderr, "Button=%d,value=%d\n", js.number, js.value);
+					fprintf (stderr, "Button=%d,value=%d\n", js.number, js.value);
 #endif
-               break;
+					break;
 
-            case JS_EVENT_AXIS:
-               if (js.number < JOY_AXIS)
-                  joy_data[i].axis[js.number].val = js.value;
+				case JS_EVENT_AXIS:
+					if (js.number < JOY_AXES)
+						joy_data[i].axis[js.number].val = js.value;
 #ifdef JDEBUG
-               fprintf (stderr, "Axis=%d,value=%d\n", js.number, js.value);
+					fprintf (stderr, "Axis=%d,value=%d\n", js.number, js.value);
 #endif
-               break;
-         }
-      }
-   }
-      
-   /* evaluate joystick movements */
-   joy_evaluate_moves ();
+					break;
+			}
+		}
+	}
+
+	/* evaluate joystick movements */
+	joy_evaluate_moves ();
 }
 #endif
 
 /* 
  * Routine to manage PC clones joystick via standard driver 
  */
-void joy_i386_poll (void)
+void joy_i386_poll(void)
 {
-   int i, j;
+	int i, j;
 
-   for (i=0; i<JOY; i++)
-   {
-      if (joy_data[i].fd < 0)
-         continue;
-      if (read (joy_data[i].fd, &my_joy_data, sizeof (joy_struct)) != sizeof (joy_struct))
-         continue;
-      
-      /* get value of buttons */
+	for (i=0; i<JOY_MAX; i++)
+	{
+		if (joy_data[i].fd < 0)
+			continue;
+		if (read (joy_data[i].fd, &my_joy_data, sizeof (joy_struct)) != sizeof (joy_struct))
+			continue;
+
+		/* get value of buttons */
 #if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
-      joy_data[i].buttons[0] = my_joy_data.b1;
-      joy_data[i].buttons[1] = my_joy_data.b2;
+		joy_data[i].buttons[0] = my_joy_data.b1;
+		joy_data[i].buttons[1] = my_joy_data.b2;
 #else
-      for (j = 0; j < JOY_BUTTONS; j++)
-         joy_data[i].buttons[j] = my_joy_data.buttons & (0x01 << j);
+		for (j = 0; j < JOY_BUTTONS; j++)
+			joy_data[i].buttons[j] = my_joy_data.buttons & (0x01 << j);
 #endif
-      joy_data[i].axis[0].val = my_joy_data.x;
-      joy_data[i].axis[1].val = my_joy_data.y;
-   }
+		joy_data[i].axis[0].val = my_joy_data.x;
+		joy_data[i].axis[1].val = my_joy_data.y;
+	}
 
-   /* evaluate joystick movements */
-   joy_evaluate_moves ();
+	/* evaluate joystick movements */
+	joy_evaluate_moves ();
 }
 
 #endif

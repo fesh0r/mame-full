@@ -14,7 +14,6 @@
 #include "profiler.h"
 #include "input.h"
 #include "artwork.h"
-#include "keyboard.h"
 /* for uclock */
 #include "sysdep/misc.h"
 #include "effect.h"

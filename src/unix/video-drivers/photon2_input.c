@@ -16,7 +16,7 @@
 #include "photon2.h"
 #include "phkeyboard.h"
 
-int current_mouse[MOUSE_AXIS] = {0,0,0,0,0,0,0,0};
+int current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
 int update_mouse=FALSE;
 
 static int ph_use_winkeys = 0;

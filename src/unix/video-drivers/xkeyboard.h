@@ -1,4 +1,4 @@
-#include "keyboard.h"
+#include "devices.h"
 
 /* translation table from X11 codes to raw keyboard scan codes */
 /* the idea is make a re-definable lookup table, instead a long case switch */

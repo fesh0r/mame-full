@@ -14,7 +14,7 @@
 #include "xmame.h"
 #include "x11.h"
 #include "input.h"
-#include "keyboard.h"
+#include "devices.h"
 
 #ifdef USE_HWSCALE
 long hwscale_redmask;

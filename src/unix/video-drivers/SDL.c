@@ -38,7 +38,6 @@
 #include <SDL.h>
 #include "xmame.h"
 #include "devices.h"
-#include "keyboard.h"
 #include "driver.h"
 #include "SDL-keytable.h"
 #ifdef DIRECT_HERMES 
@@ -784,7 +783,7 @@ void sysdep_update_keyboard()
                break;
 
     	    case SDL_JOYAXISMOTION:   
-               if (event.jaxis.which < JOY_AXIS)
+               if (event.jaxis.which < JOY_AXES)
                   joy_data[event.jaxis.which].axis[event.jaxis.axis].val = event.jaxis.value;
 #ifdef SDL_DEBUG
                fprintf (stderr,"Axis=%d,value=%d\n",event.jaxis.axis ,event.jaxis.value);

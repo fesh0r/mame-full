@@ -15,7 +15,7 @@ typedef struct {
   char *deviceName;
   XDeviceInfo *info;
   int mameDevice;
-  int previousValue[JOY_AXIS];
+  int previousValue[JOY_AXES];
   int neverMoved;
 } XInputDeviceData;
 

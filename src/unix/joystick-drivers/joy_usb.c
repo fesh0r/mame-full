@@ -62,11 +62,11 @@ struct priv_joydata_struct
   int dlen;
   int offset;
   char *data_buf;
-  struct hid_item *axis_item[JOY_AXIS];
+  struct hid_item *axis_item[JOY_AXES];
   struct hid_item *button_item[JOY_BUTTONS];
   struct hid_item *hat_item;
   int hat_axis;
-} priv_joy_data[JOY];
+} priv_joy_data[JOY_MAX];
 
 static struct hid_item *itemdup(struct hid_item *s);
 static int joy_initialize_hid(int i);
@@ -82,7 +82,7 @@ void joy_usb_init(void)
 
   fprintf(stderr_file, "USB joystick interface initialization...\n");
 
-  for (i = 0; i < JOY; i++)
+  for (i = 0; i < JOY_MAX; i++)
     {
       sprintf(devname, "/dev/uhid%d", i);
       if ((joy_data[i].fd = open(devname, O_RDONLY | O_NONBLOCK)) != -1)
@@ -142,7 +142,7 @@ static int joy_initialize_hid(int i)
   for (j=0; j<axis_max; j++)
     axis_item[j] = NULL;
   priv_joy_data[i].hat_item = NULL;
-  for (j=0; j<JOY_AXIS; j++)
+  for (j=0; j<JOY_AXES; j++)
     priv_joy_data[i].axis_item[j] = NULL;
   for (j=0; j<JOY_BUTTONS; j++)
     priv_joy_data[i].button_item[j] = NULL;
@@ -235,7 +235,7 @@ static int joy_initialize_hid(int i)
       
   if (priv_joy_data[i].hat_item)
     {
-      if (joy_data[i].num_axis < JOY_AXIS-2)
+      if (joy_data[i].num_axis < JOY_AXES-2)
         {
 	  n = joy_data[i].num_axis;
 	  joy_data[i].num_axis += 2;
@@ -311,7 +311,7 @@ static void joy_usb_poll(void)
 {
   int i;
 
-  for (i = 0; i < JOY; i++)
+  for (i = 0; i < JOY_MAX; i++)
     {
       if (joy_data[i].fd >= 0)
 	joy_read(joy_data[i].fd, i);

@@ -3,7 +3,7 @@
  *
  */
 #include "xmame.h"
-#include "devices.h"
+#include "input.h"
 
 #ifdef X11_JOYSTICK
 static char *x11joyname = NULL;
@@ -122,7 +122,7 @@ void joy_x11_init(void)
 			vinfo=(XValuatorInfoPtr) any;
 			if ((joy_data[0].num_axis=vinfo->num_axes)>=2) result |= 0x02;
 			fprintf(stderr_file,"%s: %d axes\n",x11joyname,joy_data[0].num_axis);
-			if (joy_data[0].num_axis > JOY_AXIS) joy_data[0].num_axis = JOY_AXIS;
+			if (joy_data[0].num_axis > JOY_AXES) joy_data[0].num_axis = JOY_AXES;
 			for (i=0; i<joy_data[0].num_axis; i++)
 			{
 			   joy_data[0].axis[i].val = joy_data[0].axis[i].center =
