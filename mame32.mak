@@ -11,7 +11,7 @@ BETA_VERSION = -DBETA_VERSION=5
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
-# MAME_DEBUG = -DMAME_DEBUG
+MAME_DEBUG = -DMAME_DEBUG
 
 # if MAME_MMX is defined, MMX will be compiled in
 MAME_MMX = -DMAME_MMX
@@ -178,6 +178,7 @@ WIN32_OBJS = \
 
 CPUOBJS = \
           $(Z80OBJS) \
+	  $(OBJ)/cpu/cdp1802/cdp1802.o \
           $(OBJ)/cpu/i8085/i8085.o \
           $(OBJ)/cpu/m6502/m6502.o \
           $(OBJ)/cpu/h6280/h6280.o \
@@ -202,6 +203,7 @@ CPUOBJS = \
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
+	  $(OBJ)/cpu/cdp1802/disasm.o \
           $(OBJ)/cpu/i8085/8085dasm.o \
           $(OBJ)/cpu/m6502/6502dasm.o \
           $(OBJ)/cpu/h6280/6280dasm.o \
@@ -772,6 +774,9 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/Win32/dirent.o
 {src/cpu/z80}.c{$(OBJ)/cpu/z80}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/cdp1802}.c{$(OBJ)/cpu/cdp1802}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/cpu/z80gb}.c{$(OBJ)/cpu/z80gb}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -918,6 +923,7 @@ $(OBJ)/cpu/z8000/z8000.o:       src/cpu/z8000/z8000.c src/cpu/z8000/z8000.h src/
 $(OBJ)/cpu/s2650/s2650.o:       src/cpu/s2650/s2650.c src/cpu/s2650/s2650.h src/cpu/s2650/s2650cpu.h
 $(OBJ)/cpu/h6280/h6280.o:       src/cpu/h6280/h6280.c src/cpu/h6280/h6280.h src/cpu/h6280/h6280ops.h src/cpu/h6280/tblh6280.c
 $(OBJ)/cpu/i8039/i8039.o:       src/cpu/i8039/i8039.c src/cpu/i8039/i8039.h
+$(OBJ)/cpu/cdp1802/cdp1802.o:	src/cpu/cdp1802/cdp1802.c src/cpu/cdp1802/cdp1802.h src/cpu/cdp1802/table.c
 $(OBJ)/cpu/i8085/i8085.o:       src/cpu/i8085/i8085.c src/cpu/i8085/i8085.h src/cpu/i8085/i8085cpu.h src/cpu/i8085/i8085daa.h
 $(OBJ)/cpu/i86/i86.o:           src/cpu/i86/i86.c src/cpu/i86/instr86.c src/cpu/i86/i86.h src/cpu/i86/i86intf.h src/cpu/i86/ea.h src/cpu/i86/host.h src/cpu/i86/modrm.h
 $(OBJ)/cpu/nec/nec.o:           src/cpu/nec/nec.c src/cpu/nec/nec.h src/cpu/nec/necintrf.h src/cpu/nec/necea.h src/cpu/nec/nechost.h src/cpu/nec/necinstr.h src/cpu/nec/necmodrm.h
@@ -948,7 +954,8 @@ maketree:
 	md $(OBJ)\cpu\i86
 	md $(OBJ)\cpu\nec
 	md $(OBJ)\cpu\i8039
-	md $(OBJ)\cpu\i8085
+	md $(OBJ)\cpu\cdp1802
+        md $(OBJ)\cpu\i8085
 	md $(OBJ)\cpu\m6800
 	md $(OBJ)\cpu\m6805
 	md $(OBJ)\cpu\m6809
