@@ -22,6 +22,14 @@
  *   v 0.1 Thu, 10 Aug 2000 08:29:00 +0200
  *     - initial release
  *     - TODO: find the best sound card to play sound.
+ *   v 0.2 Wed, 13 Sep 2000    Syouzou Sugitani <shy@debian.or.jp>
+ *     - change from block to stream mode.
+ *   v 0.3 Sat, 16 Sep 2000    Syouzou Sugitani <shy@debian.or.jp>
+ *     - one important bug fix, performance improvements and code cleanup.
+ *   v 0.4 Sun, 15 Apr 2001    Syouzou Sugitani <shy@debian.or.jp>
+ *     - minor cosmetic changes.
+ *     - suppress bogus warnings about underrun.
+ *     - TODO: add support for ALSA 0.9 API.
  * 
  */
 
@@ -106,10 +114,10 @@ static int alsa_dsp_bytes_per_sample[4] = SYSDEP_DSP_BYTES_PER_SAMPLE;
  */
 static int alsa_dsp_init(void)
 {
-  int cards=snd_cards();
-  if (cards<=0)
+  int cards = snd_cards();
+  if (cards <= 0)
    {
-     fprintf(stderr,"No cards detected.\nALSA sound disabled.\n");
+     fprintf(stderr, "No cards detected.\n" "ALSA sound disabled.\n");
      return 1;
    }
   return 0;
@@ -133,7 +141,7 @@ static void *alsa_dsp_create(const void *flags)
   struct sysdep_dsp_struct *dsp = NULL;
   const struct sysdep_dsp_create_params *params = flags;
   char *cardname;
-  struct snd_pcm_channel_info cinfo;
+  snd_pcm_channel_info_t cinfo;
   snd_pcm_format_t format;
 
   /* allocate the dsp struct */
@@ -171,7 +179,7 @@ static void *alsa_dsp_create(const void *flags)
   format.format = (dsp->hw_info.type & SYSDEP_DSP_16BIT)? SND_PCM_SFMT_S16_BE:SND_PCM_SFMT_U8;
 #endif
   format.rate = dsp->hw_info.samplerate;
-  format.voices = (dsp->hw_info.type & SYSDEP_DSP_STEREO)? 2:1;
+  format.voices = (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? 2 : 1;
 
   if ((err = snd_card_get_longname(alsa_card, &cardname)) < 0)
    {
@@ -209,12 +217,12 @@ static void *alsa_dsp_create(const void *flags)
      return NULL;
    }
 
-  if (alsa_dsp_set_format(priv,&format)==0)
+  if (alsa_dsp_set_format(priv, &format) == 0)
     return NULL;
 
   fprintf(stderr_file, "info: set to %dbit linear %s %dHz\n",
-      (dsp->hw_info.type & SYSDEP_DSP_16BIT)? 16:8,
-      (dsp->hw_info.type & SYSDEP_DSP_STEREO)? "stereo":"mono",
+      (dsp->hw_info.type & SYSDEP_DSP_16BIT) ? 16 : 8,
+      (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? "stereo" : "mono",
       dsp->hw_info.samplerate);
 
   return dsp;
@@ -257,7 +265,7 @@ static int alsa_dsp_get_freespace(struct sysdep_dsp_struct *dsp)
 
   memset(&status, 0, sizeof(status));
   status.channel = SND_PCM_CHANNEL_PLAYBACK;
-  if (snd_pcm_channel_status(priv->pcm_handle,&status))
+  if (snd_pcm_channel_status(priv->pcm_handle, &status))
     return -1;
   else
     return status.free / alsa_dsp_bytes_per_sample[dsp->hw_info.type];
@@ -273,26 +281,28 @@ static int alsa_dsp_get_freespace(struct sysdep_dsp_struct *dsp)
 static int alsa_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
     int count)
 {
-  int buffer_size,result;
+  int buffer_size, result;
   struct alsa_dsp_priv_data *priv = dsp->_priv;
 
-  buffer_size=count * alsa_dsp_bytes_per_sample[dsp->hw_info.type];
+  buffer_size = count * alsa_dsp_bytes_per_sample[dsp->hw_info.type];
 
-  if ( (result=snd_pcm_write(priv->pcm_handle,(const void *)data, buffer_size))!=buffer_size)
+  if ( (result=snd_pcm_write(priv->pcm_handle, (const void *)data, buffer_size)) != buffer_size)
    {
      snd_pcm_channel_status_t status;
 
      memset(&status, 0, sizeof(status));
      status.channel = SND_PCM_CHANNEL_PLAYBACK;
-     if (snd_pcm_channel_status(priv->pcm_handle, &status)<0)
+     if (snd_pcm_channel_status(priv->pcm_handle, &status) < 0)
       {
 	fprintf(stderr_file, "Alsa error: playback channel status error\n");
 	return -1;
       }
      if (status.status == SND_PCM_STATUS_UNDERRUN)
       {
+#if 0 /* DEBUG */
 	fprintf(stdout_file,"Alsa warning: underrun at position %u!!!\n", status.scount);
-	if (snd_pcm_plugin_prepare(priv->pcm_handle, SND_PCM_CHANNEL_PLAYBACK)<0)
+#endif
+	if (snd_pcm_channel_prepare(priv->pcm_handle, SND_PCM_CHANNEL_PLAYBACK) < 0)
 	 {
 	   fprintf(stderr_file, "Alsa error: underrun playback channel prepare error\n");
 	   return -1;
@@ -325,7 +335,7 @@ static int alsa_device_list(struct rc_option *option, const char *arg,
      printf("Alsa: no soundcards found...\n");
      return -1;
    }
-  fprintf(stdout,"Alsa Cards:\n");
+  fprintf(stdout, "Alsa Cards:\n");
   for (card = 0; card < SND_CARDS; card++)
    {
      if (!(mask & (1 << card)))
@@ -378,8 +388,8 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
   unsigned int bps;	/* bytes per second */
   unsigned int size;	/* queue size */
   int err;
-  struct snd_pcm_channel_params params;
-  struct snd_pcm_channel_setup setup;
+  snd_pcm_channel_params_t params;
+  snd_pcm_channel_setup_t setup;
 
   bps = format->rate * format->voices;
   switch (format->format)
@@ -416,28 +426,28 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
 
   if ((err = snd_pcm_channel_params(priv->pcm_handle, &params)) < 0)
    {
-     fprintf(stderr_file, "Alsa error: unable to set channel params: %s\n",snd_strerror(err));
+     fprintf(stderr_file, "Alsa error: unable to set channel params: %s\n", snd_strerror(err));
      return 0;
    }
 
-  if ((err = snd_pcm_plugin_prepare(priv->pcm_handle, SND_PCM_CHANNEL_PLAYBACK)) < 0)
+  if ((err = snd_pcm_channel_prepare(priv->pcm_handle, SND_PCM_CHANNEL_PLAYBACK)) < 0)
    {
-     fprintf(stderr_file, "Alsa error: unable to prepare channel: %s\n",snd_strerror(err));
+     fprintf(stderr_file, "Alsa error: unable to prepare channel: %s\n", snd_strerror(err));
      return 0;
    }
 
   /* obtain current PCM setup */
   memset(&setup, 0, sizeof(setup));
-  setup.mode = SND_PCM_MODE_BLOCK;
+  setup.mode = SND_PCM_MODE_STREAM;
   setup.channel = SND_PCM_CHANNEL_PLAYBACK;
 
   if ((err = snd_pcm_channel_setup(priv->pcm_handle, &setup)) < 0)
    {
-     fprintf(stderr_file, "Alsa error: unable to obtain setup: %s\n",snd_strerror(err));
+     fprintf(stderr_file, "Alsa error: unable to obtain setup: %s\n", snd_strerror(err));
      return 0;
    }
 
-  fprintf(stdout_file,"queue_size = %d\n", setup.buf.stream.queue_size);
+  fprintf(stdout_file, "queue_size = %d\n", setup.buf.stream.queue_size);
 
   return 1;
 }
