@@ -388,7 +388,7 @@ void amstrad_Set_HSync(int offset, int data)
 				{
 								/* start of hsync */
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
-//		  amstrad_interrupt_timer_update();
+                amstrad_interrupt_timer_update();
 					
 #endif
 					/* set new render mode */
