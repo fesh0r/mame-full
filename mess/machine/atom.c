@@ -12,6 +12,9 @@
 #include "machine/8255ppi.h"
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"
+#include "includes/i8271.h"
+#include "includes/basicdsk.h"
+#include "includes/flopdrv.h"
 
 static	ppi8255_interface	atom_8255_int =
 {
@@ -31,12 +34,46 @@ static	struct
 	UINT8	atom_8255_portc;
 } atom_8255;
 
+
+
+static int previous_i8271_int_state;
+
+static void atom_8271_interrupt_callback(int state)
+{
+	/* I'm assuming that the nmi is edge triggered */
+	/* a interrupt from the fdc will cause a change in line state, and
+	the nmi will be triggered, but when the state changes because the int
+	is cleared this will not cause another nmi */
+	/* I'll emulate it like this to be sure */
+	
+	if (state!=previous_i8271_int_state)
+	{
+		if (state)
+		{
+			/* I'll pulse it because if I used hold-line I'm not sure
+			it would clear - to be checked */
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+	}
+
+	previous_i8271_int_state = state;
+}
+
+static struct i8271_interface atom_8271_interface=
+{
+	atom_8271_interrupt_callback,
+	NULL
+};
+
 void atom_init_machine(void)
 {
 	ppi8255_init (&atom_8255_int);
 	atom_8255.atom_8255_porta = 0xff;
 	atom_8255.atom_8255_portb = 0xff;
 	atom_8255.atom_8255_portc = 0xff;
+
+	floppy_drives_init();
+	i8271_init(&atom_8271_interface);
 }
 
 void atom_stop_machine(void) { }
@@ -100,6 +137,23 @@ int atom_init_atm (int id)
 	}
 	return (1);
 }
+
+
+/* load floppy */
+int atom_floppy_init(int id)
+{
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		/* sector id's 0-9 */
+		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
+		basicdsk_set_geometry(id,80,1,10,256,12,3,0);
+
+		return INIT_OK;
+	}
+
+	return INIT_FAILED;
+}
+
 
 READ_HANDLER ( atom_8255_porta_r )
 {
@@ -181,5 +235,45 @@ WRITE_HANDLER ( atom_8255_portc_w )
 	atom_8255.atom_8255_portc = data;
 	speaker_level_w(0, (data & 0x04) >> 2);
 	logerror("8255: Write port c, %02x\n", data);
+}
+
+
+/* KT- I've assumed that the atom 8271 is linked in exactly the same way as on the bbc */
+READ_HANDLER(atom_8271_r)
+{
+	switch (offset)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			/* 8271 registers */
+			return i8271_r(offset);
+		case 4:
+			return i8271_data_r(offset);
+		default:
+			break;
+	}
+
+	return 0x0ff;
+}
+
+WRITE_HANDLER(atom_8271_w)
+{
+	switch (offset)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			/* 8271 registers */
+			i8271_w(offset, data);
+			return;
+		case 4:
+			i8271_data_w(offset, data);
+			return;
+		default:
+			break;
+	}
 }
 
