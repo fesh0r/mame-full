@@ -100,7 +100,7 @@ extern void coco_bitbanger_exit (int id);
 extern void coco_bitbanger_output (int id, int data);
 extern READ_HANDLER( coco_pia_1_r );
 extern READ_HANDLER( coco3_pia_1_r );
-extern void sound_update(void);
+extern void coco_sound_update(void);
 
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);
