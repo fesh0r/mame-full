@@ -136,7 +136,7 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(LIBS) $(DRVLIBS) -o $@
 ifndef DEBUG
-	upx $(EMULATOR)
+#	upx $(EMULATOR)
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -160,7 +160,7 @@ $(OBJ)/cpu/m68000/m68kmake$(EXE): src/cpu/m68000/m68kmake.c
 	@echo M68K make $<...
 	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake$(EXE) $<
 	@echo Generating M68K source files...
-	$(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
+	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000 emulator
 $(OBJ)/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
