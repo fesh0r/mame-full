@@ -1602,3 +1602,23 @@ void debug_write_memory(int space, UINT32 offset, int size, UINT64 value)
 	}
 }
 
+
+/*-------------------------------------------------
+	debug_trace_printf - writes text to a given
+	CPU's trace file
+-------------------------------------------------*/
+
+void debug_trace_printf(int cpunum, const char *fmt, ...)
+{
+	va_list va;
+
+	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+
+	if (info->trace.file)
+	{
+		va_start(va, fmt);
+		vfprintf(info->trace.file, fmt, va);
+		va_end(va);
+	}
+}
+
