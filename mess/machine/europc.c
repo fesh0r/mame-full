@@ -1,9 +1,10 @@
+#include <time.h>
 #include "driver.h"
 #include "includes/europc.h"
 #include "includes/pc.h"
 #include "includes/pit8253.h"
 #include "bcd.h"
-#include <time.h>
+#include "julian.h"
 
 /*
   europc
@@ -18,7 +19,8 @@
    fec08 // test of special europc registers 800a rtc time or date error, rtc corrected
     fef66 0xf
     fdb3e 0x8..0xc
-
+	fd7f8
+     fdb5f
   fe172 fecc5 // 801a video setup error
    copyright output
   fe1b7
@@ -55,6 +57,7 @@
    read low 4 nibble at jim 0xa
    read low 4 nibble at jim 0xa
    return first nibble<<4|second nibble in ah
+  ff046 seldom compares ret 
   ffe87 0 -> ds
 
   469:
@@ -73,6 +76,13 @@ static struct {
   252 write 0 b0000 memory activ
   252 write 0x10 b8000 memory activ
 
+  jim 04: 0:4.77 0x40:7.16
+  pio 63: 11,19 4.77 51,59 7.16
+
+  63 bit 6,7 clock select
+  254 bit 6,7 clock select
+  250 bit 0: mouse on
+	  bit 1: joystick on
   254..257 r/w memory ? JIM asic? ram behaviour
 */
 extern WRITE_HANDLER ( europc_jim_w )
@@ -155,6 +165,7 @@ static struct {
 	    bit 0,1: 0 video startup mode: 0=specialadapter, 1=color40, 2=color80, 3=monochrom
 		bit 2: internal video on
 		bit 4: color
+		bit 6,7: clock
 	   reg c:
 	    bit 0,1: language/country
 	   reg d: xor checksum
@@ -190,6 +201,7 @@ void europc_rtc_set_time(void)
 
 static void europc_rtc_timer(int param)
 {
+	int month, year;
 	europc_rtc.data[0]=bcd_adjust(europc_rtc.data[0]+1);
 	if (europc_rtc.data[0]>=0x60) {
 		europc_rtc.data[0]=0;
@@ -197,12 +209,19 @@ static void europc_rtc_timer(int param)
 		if (europc_rtc.data[1]>=0x60) {
 			europc_rtc.data[1]=0;
 			europc_rtc.data[2]=bcd_adjust(europc_rtc.data[2]+1);
-			// different handling of hours
 			if (europc_rtc.data[2]>=0x24) {
 				europc_rtc.data[2]=0;
 				europc_rtc.data[3]=bcd_adjust(europc_rtc.data[3]+1);
-				// day in month overrun
-				// month overrun
+				month=bcd_2_dec(europc_rtc.data[4]);
+				year=bcd_2_dec(europc_rtc.data[5])+2000; // save for julian_days_in_month_calculation
+				if (europc_rtc.data[3]> julian_days_in_month(month, year)) {
+					europc_rtc.data[3]=1;
+					europc_rtc.data[4]=bcd_adjust(europc_rtc.data[4]+1);
+					if (europc_rtc.data[4]>0x12) {
+						europc_rtc.data[4]=1;
+						europc_rtc.data[5]=bcd_adjust(europc_rtc.data[5]+1)&0xff;
+					}
+				}
 			}
 		}
 	}
@@ -226,6 +245,7 @@ READ_HANDLER( europc_rtc_r )
 	case 2:
 		data=europc_rtc.data[europc_rtc.reg]&0xf;
 		europc_rtc.state=0;
+//		logerror("rtc read %x %.2x\n",europc_rtc.reg, europc_rtc.data[europc_rtc.reg]);
 		break;
 	}
 	return data;
@@ -245,6 +265,7 @@ WRITE_HANDLER( europc_rtc_w )
 	case 2:
 		europc_rtc.data[europc_rtc.reg]=(europc_rtc.data[europc_rtc.reg]&~0xf)|(data&0xf);
 		europc_rtc.state=0;
+//		logerror("rtc written %x %.2x\n",europc_rtc.reg, europc_rtc.data[europc_rtc.reg]);
 		break;
 	}
 }
@@ -262,12 +283,13 @@ void europc_rtc_save_stream(void *file)
 void europc_rtc_nvram_handler(void* file, int write)
 {
 	if (file==NULL) {
-//		europc_set_time();
-		// init only
+		// init only 
+//		europc_rtc_set_time();
 	} else if (write) {
 		europc_rtc_save_stream(file);
 	} else {
 		europc_rtc_load_stream(file);
+		europc_rtc_set_time();
 	}
 }
 
