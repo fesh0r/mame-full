@@ -876,10 +876,12 @@ void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, 
 		}
 	}
 
-	char str[50];
-	sprintf( str, "%d : %8X  ", layer, addr );
-	ui_drawbox( bitmap, 2, 225, 87, 12 );
-	ui_text( bitmap, str, 3, 227 );
+	{
+		char str[50];
+		sprintf( str, "%d : %8X  ", layer, addr );
+		ui_drawbox( bitmap, 2, 225, 87, 12 );
+		ui_text( bitmap, str, 3, 227 );
+	}
 }
 
 /*********************************************
@@ -920,10 +922,12 @@ void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8
 		}
 	}
 
-	char str[50];
-	sprintf( str, "  %8X  ", addr );
-	ui_drawbox( bitmap, 2, 225, 75, 12 );
-	ui_text( bitmap, str, 3, 227 );
+	{
+		char str[50];
+		sprintf( str, "  %8X  ", addr );
+		ui_drawbox( bitmap, 2, 225, 75, 12 );
+		ui_text( bitmap, str, 3, 227 );
+	}
 }
 #endif /* MAME_DEBUG */
 
@@ -942,49 +946,52 @@ void snes_refresh_scanline( UINT16 curline )
 
 #ifdef MAME_DEBUG
 	/* Just for testing, draw as many tiles as possible */
-	UINT8 dip = readinputport( 9 );
-	UINT8 dt = 1 << ((dip & 0x3) - 1);
-	UINT8 dm = 1 << (((dip & 0xc) >> 2) - 1);
-	if( dt )
 	{
-		static INT8 tstep = 1;
-		static INT16 pal = 0;
-		static UINT32 addr = 0;
-
-		if( curline == 0 )
+		UINT8 dip = readinputport( 9 );
+		UINT8 dt = 1 << ((dip & 0x3) - 1);
+		UINT8 dm = 1 << (((dip & 0xc) >> 2) - 1);
+		if( dt )
 		{
-			UINT8 adjust = readinputport( 1 );
-			if( adjust & 0x1 ) addr += (dt * 16);
-			if( adjust & 0x2 ) addr -= (dt * 16);
-			if( adjust & 0x1 ) addr += (dt * 16 * 32);
-			if( adjust & 0x2 ) addr -= (dt * 16 * 32);
-			struct rectangle r = Machine->visible_area;
-			fillbitmap(bitmap, Machine->pens[0], &r);
-			snes_dbg_draw_all_tiles( bitmap, addr, dt, pal * 16 );
+			/*static INT8 tstep = 1;*/
+			static INT16 pal = 0;
+			static UINT32 addr = 0;
+	
+			if( curline == 0 )
+			{
+				struct rectangle r_;
+				UINT8 adjust = readinputport( 1 );
+				if( adjust & 0x1 ) addr += (dt * 16);
+				if( adjust & 0x2 ) addr -= (dt * 16);
+				if( adjust & 0x1 ) addr += (dt * 16 * 32);
+				if( adjust & 0x2 ) addr -= (dt * 16 * 32);
+				r_ = Machine->visible_area;
+				fillbitmap(bitmap, Machine->pens[0], &r_);
+				snes_dbg_draw_all_tiles( bitmap, addr, dt, pal * 16 );
+			}
+			return;
 		}
-		return;
-	}
-	if( dm )
-	{
-		static INT8 mstep = 1;
-		static UINT32 tmaddr = 0;
-		static INT8 tmbg = 0;
-		if( curline == 0 )
+		if( dm )
 		{
-			UINT8 adjust = readinputport( 1 );
-			if( adjust & 0x1 ) tmaddr += 2;
-			if( adjust & 0x2 ) tmaddr -= 2;
-			if( adjust & 0x4 ) tmaddr += 64;
-			if( adjust & 0x8 ) tmaddr -= 64;
+			/*static INT8 mstep = 1;*/
+			static UINT32 tmaddr = 0;
+			static INT8 tmbg = 0;
+			if( curline == 0 )
+			{
+				UINT8 adjust = readinputport( 1 );
+				if( adjust & 0x1 ) tmaddr += 2;
+				if( adjust & 0x2 ) tmaddr -= 2;
+				if( adjust & 0x4 ) tmaddr += 64;
+				if( adjust & 0x8 ) tmaddr -= 64;
+			}
+			/* Clear zbuffer */
+			memset( zbuf, 0, SNES_SCR_WIDTH );
+			/* Draw back colour */
+			for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+				scanline[ii] = Machine->pens[0];
+			snes_dbg_draw_maps( bitmap, tmaddr, dm, curline, tmbg );
+			draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanline, Machine->pens, 200 );
+			return;
 		}
-		/* Clear zbuffer */
-		memset( zbuf, 0, SNES_SCR_WIDTH );
-		/* Draw back colour */
-		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
-			scanline[ii] = Machine->pens[0];
-		snes_dbg_draw_maps( bitmap, tmaddr, dm, curline, tmbg );
-		draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanline, Machine->pens, 200 );
-		return;
 	}
 #endif /* MAME_DEBUG */
 
