@@ -38,8 +38,6 @@ static int ti_screen_x_shift;
 static int ti_screen_y_shift;
 static int ti_number_of_frames;
 
-static struct artwork_info *ti85_backdrop;
-
 static UINT8 * ti85_frames;
 
 unsigned char ti85_palette[32*7][3] =
@@ -117,28 +115,19 @@ unsigned short ti85_colortable[32][7] =
 void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
 	char *backdrop_name;
-	int used = 32*7;
+	int used = sizeof (ti85_palette) / 3;
 
 	memcpy (sys_palette, ti85_palette, sizeof (ti85_palette));
 	memcpy (sys_colortable, ti85_colortable, sizeof (ti85_colortable));
 
 	/* try to load a backdrop for the machine */
-	backdrop_name = malloc(strlen(Machine->gamedrv->name)+4+1);
+	backdrop_name = malloc(4+4+1);
 
 	strncpy(backdrop_name, Machine->gamedrv->name, 4);
 	backdrop_name[4] = '\0';
 	strcat(backdrop_name, ".png");
 
-	artwork_load (&ti85_backdrop, backdrop_name, used, Machine->drv->total_colors - used);
-
-	if (ti85_backdrop)
-	{
-		logerror("backdrop %s successfully loaded\n", backdrop_name);
-		memcpy (&sys_palette[used * 3], ti85_backdrop->orig_palette, 
-			ti85_backdrop->num_pens_used * 3 * sizeof (unsigned char));
-	}
-	else
-		logerror("No backdrop loaded\n");
+	backdrop_load (backdrop_name, used);
         free(backdrop_name);
 	backdrop_name = NULL;
 
@@ -177,16 +166,12 @@ void ti85_init_palette (unsigned char *sys_palette, unsigned short *sys_colortab
 
 int ti85_vh_start (void)
 {
-	if (ti85_backdrop)
-		backdrop_refresh(ti85_backdrop);
 	return 0;
 }
 
 void ti85_vh_stop (void)
 {
 	free (ti85_frames);
-	if (ti85_backdrop)
-		artwork_free(&ti85_backdrop);
 }
 
 
@@ -195,9 +180,6 @@ void ti85_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	int x,y,b;
 	int brightnes;
 	int lcdmem;
-
-	if (ti85_backdrop)
-		copybitmap (bitmap, ti85_backdrop->artwork, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
 
 	if (!ti85_LCD_status || !ti85_timer_interrupt_mask)
 	{
