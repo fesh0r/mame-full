@@ -687,10 +687,10 @@ int gb_scanline_interrupt (void)
 		break;
 	case 1:
 		gb_scanline_interrupt_set_mode2 (0);
-		return Z80GB_IGNORE_INT;
+		return ignore_interrupt();
 	case 2:
 		gb_scanline_interrupt_set_mode3 (0);
-		return Z80GB_IGNORE_INT;
+		return ignore_interrupt();
 	}
 
 	/* first lett's draw the current scanline */
