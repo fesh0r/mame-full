@@ -108,6 +108,10 @@ PORT_END
   PORT_DIPNAME( 0x20, 0x20, "Enforce 4/8 sprites/line")    \
    PORT_DIPSETTING( 0, DEF_STR( No ) )    \
    PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )    \
+  PORT_DIPNAME ( 0x03, 0, "Render resolution")	\
+   PORT_DIPSETTING( 0, "High") \
+   PORT_DIPSETTING( 1, "Low") \
+   PORT_DIPSETTING( 2, "Auto") \
     \
  PORT_START /* 9 */    \
   PORT_ANALOGX( 0xff00, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, KEYCODE_NONE, KEYCODE_NONE, JOYCODE_NONE, JOYCODE_NONE)    \

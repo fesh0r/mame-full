@@ -41,6 +41,8 @@ typedef struct {
     int blink, blink_count;
     /* sprites */
     int sprite_limit;
+	/* size */
+	int size, size_old, size_auto, size_now;
 } V9938;
 
 static V9938 vdp;
@@ -58,6 +60,20 @@ static UINT16 pal_ind16[16], pal_ind256[256], *pal_indYJK;
 #define V9938_MODE_GRAPHIC7	(8)
 #define V9938_MODE_TEXT2	(9)
 #define V9938_MODE_UNKNOWN	(10)
+
+enum v9938_mode_t
+{
+	TEXT1,
+	MULTI
+};
+typedef enum v9938_mode_t v9938_mode;
+
+void
+testfunk(v9938_mode mode)
+{
+	printf("mode: %d\n", (int)mode);
+}
+
 
 static const char *v9938_modes[] = {
 	"TEXT 1", "MULTICOLOR", "GRAPHIC 1", "GRAPHIC 2", "GRAPHIC 3",
@@ -437,6 +453,7 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	vdp.model = model;
 	vdp.vram_size = vram_size;
 	vdp.INTCallback = callback;
+	vdp.size_old = -1;
 
 	/* allocate back-buffer */
 	vdp.bmp = osd_alloc_bitmap (512 + 32, (212 + 16) * 2, Machine->scrbitmap->depth);
@@ -477,7 +494,7 @@ void v9938_reset (void)
 	int i;
 
 	/* offset reset */
-	vdp.offset_x = 14;
+	vdp.offset_x = 7;
 	vdp.offset_y = 7 + 10;
 	vdp.visible_y = 192;
 	/* register reset */
@@ -518,6 +535,19 @@ static void v9938_check_int (void)
 void v9938_set_sprite_limit (int i)
 	{
 	vdp.sprite_limit = i;
+	}
+
+void v9938_set_resolution (int i)
+	{
+	if (i == RENDER_AUTO)
+		{
+		vdp.size_auto = 1;
+		}
+	else
+		{
+		vdp.size = i;
+		vdp.size_auto = 0;
+		}	
 	}
 
 /***************************************************************************
@@ -571,7 +601,7 @@ static void v9938_register_write (int reg, int data)
 		case 9:
 			vdp.contReg[reg] = data;
 			/* recalc offset */
-			vdp.offset_x = ( (~vdp.contReg[18] - 8) & 0x0f) * 2;
+			vdp.offset_x = ( (~vdp.contReg[18] - 8) & 0x0f);
 			vdp.offset_y = (~(vdp.contReg[18]>>4) - 8) & 0x0f;
 			if (vdp.contReg[9] & 0x80)
 				vdp.visible_y = 212;
@@ -665,597 +695,20 @@ READ_HANDLER (v9938_status_r)
 
 #define V9938_SECOND_FIELD ( !(vdp.contReg[9] & 0x04) || (!vdp.blink && (vdp.statReg[2] & 2) ) )
 
-static void v9938_default_border_8 (UINT8 *ln)
-	{
-	UINT8 pen;
-
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];
-	memset (ln, pen, 512 + 32);
-	}
-
-static void v9938_default_border_16 (UINT16 *ln)
-	{
-	UINT16 pen;
-	int i;
-
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];
-	i = 512 + 32;
-	while (i--) *ln++ = pen;
-	}
-
-static void v9938_graphic7_border_8 (UINT8 *ln)
-	{
-	UINT8 pen;
-
-	pen = Machine->pens[pal_ind256[vdp.contReg[7]]];
-	memset (ln, pen, 512 + 32);
-	}
-
-static void v9938_graphic7_border_16 (UINT16 *ln)
-	{
-	UINT16 pen;
-	int i;
-
-	pen = Machine->pens[pal_ind256[vdp.contReg[7]]];
-	i = 512 + 32;
-	while (i--) *ln++ = pen;
-	}
-
-static void v9938_graphic5_border_8 (UINT8 *ln)
-	{
-	UINT8 pen0, pen1;
-	int i;
-
-	pen1 = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
-	pen0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
-	i = (512 + 32) / 2;
-	while (i--) { *ln++ = pen0; *ln++ = pen1; }
-	}
-
-static void v9938_graphic5_border_16 (UINT16 *ln)
-	{
-	UINT16 pen0, pen1;
-	int i;
-
-	pen1 = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];
-	pen0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];
-	i = (512 + 32) / 2;
-	while (i--) { *ln++ = pen0; *ln++ = pen1; }
-	}
-
-#define TEXT1(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	int pattern, x, xx, name, xxx;	\
-	pen_type fg, bg, pen;	\
-	UINT8 *nametbl, *patterntbl;	\
-	\
-	patterntbl = vdp.vram + (vdp.contReg[4] << 11);	\
-	nametbl = vdp.vram + (vdp.contReg[2] << 10);	\
-	\
-    fg = Machine->pens[pal_ind16[vdp.contReg[7] >> 4]];	\
-    bg = Machine->pens[pal_ind16[vdp.contReg[7] & 15]];	\
-	\
-	name = (line/8)*40;	\
-	\
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	\
-	xxx = vdp.offset_x + 16;	\
-	while (xxx--) *ln++ = pen;	\
-	\
-	for (x=0;x<40;x++)	\
-		{	\
-		pattern = patterntbl[(nametbl[name] * 8) + 	\
-			((line + vdp.contReg[23]) & 7)];	\
-		for (xx=0;xx<6;xx++)	\
-			{	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			pattern <<= 1;	\
-			}	\
-		/* width height 212, characters start repeating at the bottom */ \
-		name = (name + 1) & 0x3ff;	\
-		}	\
-	\
-	xxx = (32 - vdp.offset_x) + 16;	\
-	while (xxx--) *ln++ = pen;	\
-	}
-
-TEXT1 (v9938_mode_text1, UINT8)
-TEXT1 (v9938_mode_text1_16, UINT16)
-
-#define TEXT2(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	int pattern, x, xx, charcode, name, xxx, patternmask, colourmask;	\
-	pen_type fg, bg, fg0, bg0, pen;	\
-	UINT8 *nametbl, *patterntbl, *colourtbl;	\
-	\
-	patterntbl = vdp.vram + (vdp.contReg[4] << 11);	\
-	colourtbl = vdp.vram + ((vdp.contReg[3] & 0xf8) << 6) + (vdp.contReg[10] << 14);	\
-	colourmask = ((vdp.contReg[3] & 7) << 5) | 0x1f; /* verify! */	\
-	nametbl = vdp.vram + ((vdp.contReg[2] & 0xfc) << 10);	\
-	patternmask = ((vdp.contReg[2] & 3) << 10) | 0x3ff; /* seems correct */	\
-	\
-    fg = Machine->pens[pal_ind16[vdp.contReg[7] >> 4]];	\
-    bg = Machine->pens[pal_ind16[vdp.contReg[7] & 15]];	\
-    fg0 = Machine->pens[pal_ind16[vdp.contReg[13] >> 4]];	\
-    bg0 = Machine->pens[pal_ind16[vdp.contReg[13] & 15]];	\
-	\
-	name = (line/8)*80;	\
-	\
-	xxx = vdp.offset_x + 16;	\
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	while (xxx--) *ln++ = pen;	\
-	\
-	for (x=0;x<80;x++)	\
-		{	\
-		charcode = nametbl[name&patternmask];	\
-		if (vdp.blink)	\
-			{	\
-			pattern = colourtbl[(name/8)&colourmask];	\
-			if (pattern & (1 << (name & 7) ) )	\
-				{	\
-				pattern = patterntbl[(charcode * 8) + 	\
-					((line + vdp.contReg[23]) & 7)];	\
-				for (xx=0;xx<6;xx++)	\
-					{	\
-					*ln++ = (pattern & 0x80) ? fg0 : bg0;	\
-					pattern <<= 1;	\
-					}	\
-				name++;	\
-				continue;	\
-				}	\
-			}	\
-	\
-		pattern = patterntbl[(charcode * 8) + 	\
-			((line + vdp.contReg[23]) & 7)];	\
-		for (xx=0;xx<6;xx++)	\
-			{	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			pattern <<= 1;	\
-			}	\
-		name++;	\
-		}	\
-	\
-	xxx = 32 - vdp.offset_x + 16;	\
-	while (xxx--) *ln++ = pen;	\
-	}
-
-TEXT2 (v9938_mode_text2, UINT8)
-TEXT2 (v9938_mode_text2_16, UINT16)
-
-#define MULTI(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	UINT8 *nametbl, *patterntbl, colour;	\
-	int name, line2, x, xx;	\
-	pen_type pen, pen_bg;	\
-	\
-	nametbl = vdp.vram + (vdp.contReg[2] << 10);	\
-	patterntbl = vdp.vram + (vdp.contReg[4] << 11);	\
-	\
-	line2 = (line - vdp.contReg[23]) & 255;	\
-	name = (line2/8)*32;	\
-	\
-	pen_bg = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	xx = vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	\
-	for (x=0;x<32;x++)	\
-		{	\
-		colour = patterntbl[(nametbl[name] * 8) + ((line2/4)&7)];	\
-		pen = Machine->pens[pal_ind16[colour>>4]];	\
-		/* eight pixels */	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		pen = Machine->pens[pal_ind16[colour&15]];	\
-		/* eight pixels */	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		name++;	\
-		}	\
-		\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	}
-
-MULTI (v9938_mode_multi, UINT8)
-MULTI (v9938_mode_multi_16, UINT16)
-
-#define GRAPH1(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	pen_type fg, bg, pen;	\
-	UINT8 *nametbl, *patterntbl, *colourtbl;	\
-	int pattern, x, xx, line2, name, charcode, colour, xxx;	\
-	\
-	nametbl = vdp.vram + (vdp.contReg[2] << 10);	\
-	colourtbl = vdp.vram + (vdp.contReg[3] << 6) + (vdp.contReg[10] << 14);	\
-	patterntbl = vdp.vram + (vdp.contReg[4] << 11);	\
-	\
-	line2 = (line - vdp.contReg[23]) & 255;	\
-	\
-	name = (line2/8)*32;	\
-	\
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	xxx = vdp.offset_x;	\
-	while (xxx--) *ln++ = pen;	\
-	\
-	for (x=0;x<32;x++)	\
-		{	\
-		charcode = nametbl[name];	\
-		colour = colourtbl[charcode/8];	\
-		fg = Machine->pens[pal_ind16[colour>>4]];	\
-		bg = Machine->pens[pal_ind16[colour&15]];	\
-		pattern = patterntbl[charcode * 8 + (line2 & 7)];	\
-		for (xx=0;xx<8;xx++)	\
-			{	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			pattern <<= 1;	\
-			}	\
-		name++;	\
-		}	\
-	\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) *ln++ = pen;	\
-	}
-
-GRAPH1 (v9938_mode_graphic1, UINT8)
-GRAPH1 (v9938_mode_graphic1_16, UINT16)
-
-#define GRAPH23(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	pen_type fg, bg, pen;	\
-	UINT8 *nametbl, *patterntbl, *colourtbl;	\
-	int pattern, x, xx, line2, name, charcode, 	\
-		colour, colourmask, patternmask, xxx;	\
-	\
-	colourmask = (vdp.contReg[3] & 0x7f) * 8 | 7;	\
-	patternmask = (vdp.contReg[4] & 0x03) * 256 | (colourmask & 255);	\
-	\
-	nametbl = vdp.vram + (vdp.contReg[2] << 10);	\
- 	colourtbl = vdp.vram + ((vdp.contReg[3] & 0x80) << 6) + (vdp.contReg[10] << 14);	\
-	patterntbl = vdp.vram + ((vdp.contReg[4] & 0x3c) << 11);	\
-	\
-	line2 = (line + vdp.contReg[23]) & 255;	\
-	name = (line2/8)*32;	\
-	\
-	pen = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	xxx = vdp.offset_x;	\
-	while (xxx--) *ln++ = pen;	\
-	\
-	for (x=0;x<32;x++)	\
-		{	\
-		charcode = nametbl[name] + (line2&0xc0)*4;	\
-		colour = colourtbl[(charcode&colourmask)*8+(line2&7)];	\
-		pattern = patterntbl[(charcode&patternmask)*8+(line2&7)];	\
-        fg = Machine->pens[pal_ind16[colour>>4]];	\
-        bg = Machine->pens[pal_ind16[colour&15]];	\
-		for (xx=0;xx<8;xx++)	\
-			{	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-			*ln++ = (pattern & 0x80) ? fg : bg;	\
-            pattern <<= 1;	\
-			}	\
-		name++;	\
-		}	\
-	\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) *ln++ = pen;	\
-	}
-
-GRAPH23 (v9938_mode_graphic23, UINT8)
-GRAPH23 (v9938_mode_graphic23_16, UINT16)
-
-#define GRAPH4(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	UINT8 *nametbl, colour;	\
-	int line2, linemask, x, xx;	\
-	pen_type pen, pen_bg;	\
-	\
-	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;	\
-	\
-	line2 = ((line & linemask) + vdp.contReg[23]) & 255;	\
-	\
-	nametbl = vdp.vram + ((vdp.contReg[2] & 0x40) << 10) + line2 * 128;	\
-	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )	\
-		nametbl += 0x8000;	\
-	\
-	pen_bg = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	xx = vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	\
-	for (x=0;x<128;x++)	\
-		{	\
-		colour = *nametbl++;	\
-        pen = Machine->pens[pal_ind16[colour>>4]];	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-        pen = Machine->pens[pal_ind16[colour&15]];	\
-		*ln++ = pen;	\
-		*ln++ = pen;	\
-		}	\
-	\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	}
-
-GRAPH4 (v9938_mode_graphic4, UINT8)
-GRAPH4 (v9938_mode_graphic4_16, UINT16)
-
-#define GRAPH5(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	UINT8 *nametbl, colour;	\
-	int line2, linemask, x, xx;	\
-	pen_type pen_bg0, pen_bg1;	\
-	\
-	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;	\
-	\
-	line2 = ((line & linemask) + vdp.contReg[23]) & 255;	\
-	\
-	nametbl = vdp.vram + ((vdp.contReg[2] & 0x40) << 10) + line2 * 128;	\
-	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )	\
-		nametbl += 0x8000;	\
-	\
-	pen_bg1 = Machine->pens[pal_ind16[(vdp.contReg[7]&0x03)]];	\
-	pen_bg0 = Machine->pens[pal_ind16[((vdp.contReg[7]>>2)&0x03)]];	\
-	xx = vdp.offset_x / 2;	\
-	while (xx--) { *ln++ = pen_bg0; *ln++ = pen_bg1; }	\
-	\
-	for (x=0;x<128;x++)	\
-		{	\
-		colour = *nametbl++;	\
-        *ln++ = Machine->pens[pal_ind16[colour>>6]];	\
-        *ln++ = Machine->pens[pal_ind16[(colour>>4)&3]];	\
-        *ln++ = Machine->pens[pal_ind16[(colour>>2)&3]];	\
-        *ln++ = Machine->pens[pal_ind16[(colour&3)]];	\
-		}	\
-	\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) { *ln++ = pen_bg0; *ln++ = pen_bg1; }	\
-	}
-
-GRAPH5 (v9938_mode_graphic5, UINT8)
-GRAPH5 (v9938_mode_graphic5_16, UINT16)
-
-#define GRAPH6(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-    UINT8 colour;	\
-    int line2, linemask, x, xx, nametbl;	\
-    pen_type pen_bg;	\
-	\
-    linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;	\
-	\
-    line2 = ((line & linemask) + vdp.contReg[23]) & 255;	\
-	\
-    nametbl = line2 << 8 ;	\
-   	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )	\
-        nametbl += 0x10000;	\
-	\
-	pen_bg = Machine->pens[pal_ind16[(vdp.contReg[7]&0x0f)]];	\
-	xx = vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	\
-    for (x=0;x<256;x++)	\
-        {	\
-		colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	\
-        *ln++ = Machine->pens[pal_ind16[colour>>4]];	\
-        *ln++ = Machine->pens[pal_ind16[colour&15]];	\
-		nametbl++;	\
-        }	\
-	\
-	xx = 32 - vdp.offset_x;	\
-	while (xx--) *ln++ = pen_bg;	\
-	}
-
-GRAPH6 (v9938_mode_graphic6, UINT8)
-GRAPH6 (v9938_mode_graphic6_16, UINT16)
-
-#if 0
-
-static void v9938_mode_graphic7_yjk (struct osd_bitmap *bmp, int line)
-	{
-    UINT8 data0, data1, data2, data3;
-    int line2, linemask, x, xx, nametbl, jk;
-    UINT16 pen, pen_bg;
-
-    linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
-
-    line2 = ((line & linemask) - vdp.contReg[23]) & 255;
-
-    nametbl = line2 << 8 ;
-   	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
-        nametbl += 0x10000;
-
-	xx = 0;
-	pen_bg = Machine->pens[pal_ind256[vdp.contReg[7]]];
-	while (xx < vdp.offset_x)
-		plot_pixel (bmp, xx++, vdp.offset_y + line, pen_bg);
-
-    for (x=0;x<64;x++)
-        {
-		data0 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data1 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data2 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data3 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) |
-			((data2 & 7) << 5) | ((data3 & 7) << 8);
-		pen = Machine->pens[pal_indYJK[jk | ((data0 >> 3) & 31)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		pen = Machine->pens[pal_indYJK[jk | ((data1 >> 3) & 31)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		pen = Machine->pens[pal_indYJK[jk | ((data2 >> 3) & 31)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		pen = Machine->pens[pal_indYJK[jk | ((data3 >> 3) & 31)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-        }
-
-	while (xx < (512 + 32) )
-		plot_pixel (bmp, xx++, vdp.offset_y + line, pen_bg);
-	}
-
-static void v9938_mode_graphic7_yae (struct osd_bitmap *bmp, int line)
-	{
-    UINT8 data0, data1, data2, data3;
-    int line2, linemask, x, xx, nametbl, jk;
-    UINT16 pen, pen_bg;
-
-    linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;
-
-    line2 = ((line & linemask) + vdp.contReg[23]) & 255;
-
-	nametbl = line2 << 8 ;
-   	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )
-        nametbl += 0x10000;
-
-	xx = 0;
-	pen_bg = Machine->pens[pal_ind256[vdp.contReg[7]]];
-	while (xx < vdp.offset_x)
-		plot_pixel (bmp, xx++, vdp.offset_y + line, pen_bg);
-
-    for (x=0;x<64;x++)
-        {
-		/* read four bytes */
-		data0 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data1 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data2 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		data3 = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)]; nametbl++;
-		/* extract jk information */
-		jk = ((data0 & 7) << 11) | ((data1 & 7) << 14) |
-			((data2 & 7) << 5) | ((data3 & 7) << 8);
-		/* first pixel */
-		if (data0 & 0x08)
-			pen = Machine->pens[pal_ind16[data0 >> 4]];
-		else
-			pen = Machine->pens[pal_indYJK[jk | ((data0 >> 3) & 30)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		/* second pixel */
-		if (data1 & 0x08)
-			pen = Machine->pens[pal_ind16[data1 >> 4]];
-		else
-			pen = Machine->pens[pal_indYJK[jk | ((data1 >> 3) & 30)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		/* third pixel */
-		if (data2 & 0x08)
-			pen = Machine->pens[pal_ind16[data2 >> 4]];
-		else
-			pen = Machine->pens[pal_indYJK[jk | ((data2 >> 3) & 30)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-		/* fourth pixel */
-		if (data3 & 0x08)
-			pen = Machine->pens[pal_ind16[data3 >> 4]];
-		else
-			pen = Machine->pens[pal_indYJK[jk | ((data3 >> 3) & 30)]];
-        plot_pixel (bmp, xx++, line, pen);
-        plot_pixel (bmp, xx++, line, pen);
-        }
-
-	while (xx < (512 + 32) )
-		plot_pixel (bmp, xx++, vdp.offset_y + line, pen_bg);
-	}
-
-#endif
-
-#define GRAPH7(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-    UINT8 colour;	\
-    int line2, linemask, x, xx, nametbl;	\
-    pen_type pen, pen_bg;	\
-	\
-/* if (vdp.contReg[25] & 0x10)	\
-		{	\
-		if (vdp.contReg[25] & 0x20)	\
-			v9938_mode_graphic7_yae (bmp, line);	\
-		else	\
-			v9938_mode_graphic7_yjk (bmp, line);	\
-		}	\
-	else */	\
-		{	\
-    	linemask = ((vdp.contReg[2] & 0x1f) << 3) | 7;	\
-	\
-    	line2 = ((line & linemask) + vdp.contReg[23]) & 255;	\
-	\
-		nametbl = line2 << 8;	\
-    	if ( (vdp.contReg[2] & 0x20) && (V9938_SECOND_FIELD) )	\
-            nametbl += 0x10000;	\
-	\
-		pen_bg = Machine->pens[pal_ind256[vdp.contReg[7]]];	\
-		xx = vdp.offset_x;	\
-		while (xx--) *ln++ = pen_bg;	\
-	\
-    	for (x=0;x<256;x++)	\
-	        {	\
-			colour = vdp.vram[((nametbl&1) << 16) | (nametbl>>1)];	\
-			pen = Machine->pens[pal_ind256[colour]];	\
-			*ln++ = pen; *ln++ = pen;	\
-			nametbl++;	\
-        	}	\
-	\
-		xx = 32 - vdp.offset_x;	\
-		while (xx--) *ln++ = pen_bg;	\
-		}	\
-	}
-
-GRAPH7 (v9938_mode_graphic7, UINT8)
-GRAPH7 (v9938_mode_graphic7_16, UINT16)
-
-#define UNKNOWN(fnname,pen_type) \
-\
-static void fnname (int line, pen_type *ln)	\
-	{	\
-	pen_type fg, bg;	\
-	int x;	\
-	\
-    fg = Machine->pens[pal_ind16[vdp.contReg[7] >> 4]];	\
-    bg = Machine->pens[pal_ind16[vdp.contReg[7] & 15]];	\
-	\
-	x = vdp.offset_x;	\
-	while (x--) *ln++ = bg;	\
-	\
-	x = 512;	\
-	while (x--) *ln++ = fg;	\
-	\
-	x = 32 - vdp.offset_x;	\
-	while (x--) *ln++ = bg;	\
-	}
-
-UNKNOWN (v9938_mode_unknown, UINT8)
-UNKNOWN (v9938_mode_unknown_16, UINT16)
+#define V9938_WIDTH	(512 + 32)
+#define V9938_BPP	(8)
+#include "v9938mod.c"
+#undef	V9938_BPP
+#define V9938_BPP	(16)
+#include "v9938mod.c"
+#undef 	V9938_WIDTH
+#define V9938_WIDTH	(256 + 16)
+#include "v9938mod.c"
+#undef	V9938_BPP
+#define V9938_BPP	(8)
+#include "v9938mod.c"
+#undef	V9938_BPP
+#undef 	V9938_WIDTH
 
 static void v9938_sprite_mode1 (int line, UINT8 *col)
 	{
@@ -1500,140 +953,112 @@ static void v9938_sprite_mode2 (int line, UINT8 *col)
 		vdp.statReg[0] = (vdp.statReg[0] & 0xa0) | p;
 	}
 
-static void v9938_default_draw_sprite_8 (UINT8 *ln, UINT8 *col)
-	{
-	int i;
-
-	ln += vdp.offset_x;
-
-	for (i=0;i<256;i++)
-		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
-			{
-			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
-			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
-			}
-		else
-			ln += 2;
-		}
-	}
-
-static void v9938_default_draw_sprite_16 (UINT16 *ln, UINT8 *col)
-	{
-	int i;
-
-	ln += vdp.offset_x;
-
-	for (i=0;i<256;i++)
-		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
-			{
-			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
-			*ln++ = Machine->pens[pal_ind16[col[i]&0x0f]];
-			}
-		else
-			ln += 2;
-		}
-	}
-
-static void v9938_graphic7_draw_sprite_8 (UINT8 *ln, UINT8 *col)
-	{
-	static const UINT16 g7_ind16[16] = {
-		0, 2, 192, 194, 48, 50, 240, 242,
-		482, 7, 448, 455, 56, 63, 504, 511  };
-	int i;
-
-	ln += vdp.offset_x;
-
-	for (i=0;i<256;i++)
-		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
-			{
-			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
-			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
-			}
-		else
-			ln += 2;
-		}
-	}
-
-static void v9938_graphic7_draw_sprite_16 (UINT16 *ln, UINT8 *col)
-	{
-	static const UINT16 g7_ind16[16] = {
-		0, 2, 192, 194, 48, 50, 240, 242,
-		482, 7, 448, 455, 56, 63, 504, 511  };
-	int i;
-
-	ln += vdp.offset_x;
-
-	for (i=0;i<256;i++)
-		{
-		if ( (col[i] & 0xc0) && ( (col[i] & 0x0f) || (vdp.contReg[8] & 0x20) ) )
-			{
-			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
-			*ln++ = Machine->pens[g7_ind16[col[i]&0x0f]];
-			}
-		else
-			ln += 2;
-		}
-	}
-
 typedef struct {
 	UINT8 m;
-	void (*visible_8)(int, UINT8*);
-	void (*visible_16)(int, UINT16*);
+	void (*visible_8)(UINT8*, int);
+	void (*visible_16)(UINT16*, int);
+	void (*visible_8s)(UINT8*, int);
+	void (*visible_16s)(UINT16*, int);
 	void (*border_8)(UINT8*);
 	void (*border_16)(UINT16*);
+	void (*border_8s)(UINT8*);
+	void (*border_16s)(UINT16*);
 	void (*sprites)(int, UINT8*);
 	void (*draw_sprite_8)(UINT8*, UINT8*);
 	void (*draw_sprite_16)(UINT16*, UINT8*);
+	void (*draw_sprite_8s)(UINT8*, UINT8*);
+	void (*draw_sprite_16s)(UINT16*, UINT8*);
 } V9938_MODE;
 
 static const V9938_MODE modes[] = {
 	{ 0x02,
-		v9938_mode_text1, v9938_mode_text1_16,
+		v9938_mode_text1_8, v9938_mode_text1_16,
+		v9938_mode_text1_8s, v9938_mode_text1_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		NULL, NULL, NULL },
+		v9938_default_border_8s, v9938_default_border_16s,
+		NULL, 
+		NULL, NULL,
+		NULL, NULL },
 	{ 0x01,
-		v9938_mode_multi, v9938_mode_multi_16,
+		v9938_mode_multi_8, v9938_mode_multi_16,
+		v9938_mode_multi_8s, v9938_mode_multi_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode1, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x00,
-		v9938_mode_graphic1, v9938_mode_graphic1_16,
+		v9938_mode_graphic1_8, v9938_mode_graphic1_16,
+		v9938_mode_graphic1_8s, v9938_mode_graphic1_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode1, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x04,
-		v9938_mode_graphic23, v9938_mode_graphic23_16,
+		v9938_mode_graphic23_8, v9938_mode_graphic23_16,
+		v9938_mode_graphic23_8s, v9938_mode_graphic23_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode1, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode1, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x08,
-		v9938_mode_graphic23, v9938_mode_graphic23_16,
+		v9938_mode_graphic23_8, v9938_mode_graphic23_16,
+		v9938_mode_graphic23_8s, v9938_mode_graphic23_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode2, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x0c,
-		v9938_mode_graphic4, v9938_mode_graphic4_16,
+		v9938_mode_graphic4_8, v9938_mode_graphic4_16,
+		v9938_mode_graphic4_8s, v9938_mode_graphic4_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode2, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x10,
-		v9938_mode_graphic5, v9938_mode_graphic5_16,
+		v9938_mode_graphic5_8, v9938_mode_graphic5_16,
+		v9938_mode_graphic5_8s, v9938_mode_graphic5_16s,
 		v9938_graphic5_border_8, v9938_graphic5_border_16,
-		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_graphic5_border_8s, v9938_graphic5_border_16s,
+		v9938_sprite_mode2, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x14,
-		v9938_mode_graphic6, v9938_mode_graphic6_16,
+		v9938_mode_graphic6_8, v9938_mode_graphic6_16,
+		v9938_mode_graphic6_8s, v9938_mode_graphic6_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		v9938_sprite_mode2, v9938_default_draw_sprite_8, v9938_default_draw_sprite_16 },
+		v9938_default_border_8s, v9938_default_border_16s,
+		v9938_sprite_mode2, 
+		v9938_default_draw_sprite_8, v9938_default_draw_sprite_16,
+		v9938_default_draw_sprite_8s, v9938_default_draw_sprite_16s },
 	{ 0x1c,
-		v9938_mode_graphic7, v9938_mode_graphic7_16,
+		v9938_mode_graphic7_8, v9938_mode_graphic7_16,
+		v9938_mode_graphic7_8s, v9938_mode_graphic7_16s,
 		v9938_graphic7_border_8, v9938_graphic7_border_16,
-		v9938_sprite_mode2, v9938_graphic7_draw_sprite_8, v9938_graphic7_draw_sprite_16 },
+		v9938_graphic7_border_8s, v9938_graphic7_border_16s,
+		v9938_sprite_mode2, 
+		v9938_graphic7_draw_sprite_8, v9938_graphic7_draw_sprite_16,
+		v9938_graphic7_draw_sprite_8s, v9938_graphic7_draw_sprite_16s },
 	{ 0x0a,
-		v9938_mode_text2, v9938_mode_text2_16,
+		v9938_mode_text2_8, v9938_mode_text2_16,
+		v9938_mode_text2_8s, v9938_mode_text2_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		NULL, NULL, NULL },
+		v9938_default_border_8s, v9938_default_border_16s,
+		NULL, 
+		NULL, NULL,
+		NULL, NULL },
 	{ 0xff,
-		v9938_mode_unknown, v9938_mode_unknown_16,
+		v9938_mode_unknown_8, v9938_mode_unknown_16,
+		v9938_mode_unknown_8s, v9938_mode_unknown_16s,
 		v9938_default_border_8, v9938_default_border_16,
-		NULL, NULL, NULL },
+		v9938_default_border_8s, v9938_default_border_16s,
+		NULL, 
+		NULL, NULL,
+		NULL, NULL },
 };
 
 static void v9938_set_mode (void)
@@ -1653,25 +1078,45 @@ static void v9938_refresh_8 (struct osd_bitmap *bmp, int line)
 	int i;
 	UINT8 col[256], *ln, *ln2;
 
-	ln = bmp->line[line*2];
+	if (vdp.size == RENDER_HIGH)
+		ln = bmp->line[line*2];
+	else
+		ln = bmp->line[line];
+
 	ln2 = bmp->line[line*2+1];
 
 	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
 		{
-		modes[vdp.mode].border_8 (ln);
+		if (vdp.size == RENDER_HIGH)
+			modes[vdp.mode].border_8 (ln);
+		else
+			modes[vdp.mode].border_8s (ln);
 		}
 	else
 		{
 		i = (line - vdp.offset_y) & 255;
-		modes[vdp.mode].visible_8 (i, ln);
-		if (modes[vdp.mode].sprites)
+		if (vdp.size == RENDER_HIGH)
 			{
-			modes[vdp.mode].sprites (i, col);
-			modes[vdp.mode].draw_sprite_8(ln, col);
+			modes[vdp.mode].visible_8 (ln, i);
+			if (modes[vdp.mode].sprites)
+				{
+				modes[vdp.mode].sprites (i, col);
+				modes[vdp.mode].draw_sprite_8 (ln, col);
+				}
+			}
+		else
+			{
+			modes[vdp.mode].visible_8s (ln, i);
+			if (modes[vdp.mode].sprites)
+				{
+				modes[vdp.mode].sprites (i, col);
+				modes[vdp.mode].draw_sprite_8s (ln, col);
+				}
 			}
 		}
 
-	memcpy (ln2, ln, (512 + 32) );
+	if (vdp.size == RENDER_HIGH)
+		memcpy (ln2, ln, (512 + 32) );
 	}
 
 static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
@@ -1680,25 +1125,45 @@ static void v9938_refresh_16 (struct osd_bitmap *bmp, int line)
 	UINT8 col[256];
 	UINT16 *ln, *ln2;
 
-	ln = (UINT16*)bmp->line[line*2];
+	if (vdp.size == RENDER_HIGH)
+		ln = (UINT16*)bmp->line[line*2];
+	else
+		ln = (UINT16*)bmp->line[line];
+
 	ln2 = (UINT16*)bmp->line[line*2+1];
 
 	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
 		{
-		modes[vdp.mode].border_16 (ln);
+		if (vdp.size == RENDER_HIGH)
+			modes[vdp.mode].border_16 (ln);
+		else
+			modes[vdp.mode].border_16s (ln);
 		}
 	else
 		{
 		i = (line - vdp.offset_y) & 255;
-		modes[vdp.mode].visible_16 (i, ln);
-		if (modes[vdp.mode].sprites)
+		if (vdp.size == RENDER_HIGH)
 			{
-			modes[vdp.mode].sprites (i, col);
-			modes[vdp.mode].draw_sprite_16 (ln, col);
+			modes[vdp.mode].visible_16 (ln, i);
+			if (modes[vdp.mode].sprites)
+				{
+				modes[vdp.mode].sprites (i, col);
+				modes[vdp.mode].draw_sprite_16 (ln, col);
+				}
+			}
+		else
+			{
+			modes[vdp.mode].visible_16s (ln, i);
+			if (modes[vdp.mode].sprites)
+				{
+				modes[vdp.mode].sprites (i, col);
+				modes[vdp.mode].draw_sprite_16s (ln, col);
+				}
 			}
 		}
 
-	memcpy (ln2, ln, (512 + 32) * 2);
+	if (vdp.size == RENDER_HIGH)
+		memcpy (ln2, ln, (512 + 32) * 2);
 	}
 
 static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
@@ -1728,8 +1193,21 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
 
 void v9938_refresh (struct osd_bitmap *bmp, int fullrefresh)
 	{
-	copybitmap (bmp, vdp.bmp, 0, 0, 0, 0,
-		&Machine->visible_area, TRANSPARENCY_NONE, 0);
+	struct rectangle rc;
+
+	if (vdp.size == RENDER_HIGH)
+		copybitmap (bmp, vdp.bmp, 0, 0, 0, 0,
+			&Machine->visible_area, TRANSPARENCY_NONE, 0);
+	else
+		{
+		rc.min_x = 0;
+		rc.max_x = 256 + 16 - 1;
+		rc.min_y = 0;
+		rc.max_y = 212 + 16 - 1;
+
+		copybitmap (bmp, vdp.bmp, 0, 0, 0, 0,
+			&rc, TRANSPARENCY_NONE, 0);
+		}
 	}
 
 /*
@@ -1881,6 +1359,23 @@ static void v9938_interrupt_bottom (void)
 				vdp.blink_count = (vdp.contReg[12] & 0x0f) * 10;
 			}
 		}
+
+	//printf ("vdp.size = %d, vdp.size_now = %d, vdp.size_old = %d\n", vdp.size, vdp.size_now, vdp.size_old);
+
+	if (vdp.size_auto && (vdp.size_now >= 0) && (vdp.size != vdp.size_now) )
+		vdp.size = vdp.size_now;
+
+	if (vdp.size != vdp.size_old)
+		{
+		if (vdp.size == RENDER_HIGH)
+			osd_set_visible_area (0, 512 + 32 - 1, 0, 424 + 32 - 1);
+		else
+			osd_set_visible_area (0, 256 + 16 - 1, 0, 212 + 16 - 1);
+
+		vdp.size_old = vdp.size;
+		}
+
+	vdp.size_now = -1;
 	}
 
 int v9938_interrupt (void)
@@ -1924,7 +1419,7 @@ int v9938_interrupt (void)
 		v9938_interrupt_bottom ();
 
 	max = (vdp.contReg[9] & 2) ? 313 : 262;
-	if (++vdp.scanline > max)
+	if (++vdp.scanline == max)
 		vdp.scanline = 0;
 
 	v9938_check_int ();
