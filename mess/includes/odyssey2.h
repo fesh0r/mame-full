@@ -27,6 +27,7 @@ extern void odyssey2_vh_write(int data);
 extern void odyssey2_vh_update(int data);
 extern void odyssey2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern READ_HANDLER ( odyssey2_t1_r );
+int odyssey2_line(void);
 
 extern READ_HANDLER ( odyssey2_video_r );
 extern WRITE_HANDLER ( odyssey2_video_w );

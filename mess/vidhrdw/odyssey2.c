@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include "driver.h"
+#include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
 #include "includes/odyssey2.h"
 
@@ -151,6 +152,8 @@ union {
 } o2_vdc= { { 0 } };
 
 static UINT8 collision;
+static int line;
+static double line_time;
 
 /***************************************************************************
 
@@ -190,9 +193,18 @@ void odyssey2_vh_stop(void)
 extern READ_HANDLER ( odyssey2_video_r )
 {
     UINT8 data=0;
+    int h;
     switch (offset) {
+    case 0xa1: 
+	h=(int)((timer_get_time()-line_time)*Machine->drv->cpu[0].cpu_clock);
+	if (h>15) data|=1;
+	if ((line>240)&&(line<260)) data|=8;
+	break;
     case 0xa2: data=collision;break;
-    case 0xa1: data=8;break;
+    case 0xa4: data=line;break;
+    case 0xa5:
+	data=(int)((timer_get_time()-line_time)*Machine->drv->cpu[0].cpu_clock)*8;
+	break;
     default:
 	data=o2_vdc.reg[offset];
     }
@@ -212,6 +224,20 @@ extern READ_HANDLER ( odyssey2_t1_r )
     return t;
 }
 
+int odyssey2_line(void)
+{
+    line_time=timer_get_time();
+    line=(line+1)%262;
+    switch (line) {
+    case 252:
+	cpu_set_irq_line(0, I8048_EXT_INT, ASSERT_LINE); //vsync??
+	break;
+    case 253:
+	cpu_set_irq_line(0, I8048_EXT_INT, CLEAR_LINE); //vsync??
+	break;
+    }
+    return 0;
+}
 
 INLINE void odyssey2_draw_box(UINT8 bg[][320], int x, int y, int width, int height, UINT8 color)
 {

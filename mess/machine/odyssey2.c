@@ -86,7 +86,7 @@ WRITE_HANDLER ( odyssey2_bus_w )
 READ_HANDLER ( odyssey2_getp1 )
 {
     UINT8 data=p1;
-
+    logerror("%.6f p1 read %.2x\n", timer_get_time(), data);
     return data;
 }
 
@@ -95,7 +95,14 @@ WRITE_HANDLER ( odyssey2_putp1 )
 {
     p1=data;
     cpu_setbank(1, memory_region(REGION_USER1)+(((data&3)^3)<<11));
-//    logerror("%.6f p1 written %.2x\n", timer_get_time(), data);
+/* 2kbyte eprom are connected a0..a9 to a0..a9
+   but a10 of the eprom is connected to a11 of the cpu
+   
+   the first 0x400 bytes are internal rom, than comes 0x400 bytes of the eprom
+   and the 2nd 0x400 bytes are mapped 2 times
+*/
+    cpu_setbank(2, memory_region(REGION_USER1)+(((data&3)^3)<<11)+0x400);
+    logerror("%.6f p1 written %.2x\n", timer_get_time(), data);
 }
 
 READ_HANDLER ( odyssey2_getp2 )
@@ -114,6 +121,7 @@ READ_HANDLER ( odyssey2_getp2 )
 	    }
 	}
     }
+    logerror("%.6f p2 read %.2x\n", timer_get_time(), data);
     return data;
 }
 
@@ -126,7 +134,8 @@ WRITE_HANDLER ( odyssey2_putp2 )
 READ_HANDLER ( odyssey2_getbus )
 {
     UINT8 data=0xff;
-    if ((p2&7)==1) data&=readinputport(6);
+    if ((p2&7)!=0) data&=readinputport(6);
+//    if ((p2&7)==1) data&=readinputport(6);
     if ((p2&7)==0) data&=readinputport(7);
     logerror("%.6f bus read %.2x\n", timer_get_time(), data);
     return data;
@@ -134,4 +143,5 @@ READ_HANDLER ( odyssey2_getbus )
 
 WRITE_HANDLER ( odyssey2_putbus )
 {
+    logerror("%.6f bus written %.2x\n", timer_get_time(), data);
 }

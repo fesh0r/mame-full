@@ -13,12 +13,14 @@
 
 MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03FF, MRA_ROM },
-	{ 0x0400, 0x0FFF, MRA_BANK1 },
+	{ 0x0400, 0x0bFF, MRA_BANK1 },
+	{ 0x0c00, 0x0FFF, MRA_BANK2 },
 MEMORY_END
 
 MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03FF, MWA_ROM },
-	{ 0x0400, 0x0FFF, MWA_BANK1 },
+	{ 0x0400, 0x0bFF, MWA_BANK1 },
+	{ 0x0c00, 0x0FFF, MWA_BANK2 },
 MEMORY_END
 
 PORT_READ_START( readport )
@@ -154,14 +156,6 @@ static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-int odyssey2_interrupt(void)
-{
-    static int s=0;
-    s^=1;
-    cpu_set_irq_line(0, I8048_EXT_INT, s); // vsync?
-    return 0;
-}
-
 static struct MachineDriver machine_driver_odyssey2 =
 {
 	/* basic machine hardware */
@@ -171,7 +165,7 @@ static struct MachineDriver machine_driver_odyssey2 =
 			1790000/5,  /* 1.79 MHz */
 			readmem,writemem,readport,writeport,
 			ignore_interrupt,1,
-			odyssey2_interrupt,120
+			odyssey2_line,60*262
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -239,7 +233,7 @@ static const struct IODevice io_odyssey2[] = {
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NO_SOUND )
+COMPX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NOT_WORKING|GAME_NO_SOUND )
 // philips g7000/videopac
 
 
