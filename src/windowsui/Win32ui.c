@@ -97,6 +97,9 @@ typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
     function prototypes
  ***************************************************************************/
 
+//TreeView.c
+extern void DestroyTree(HWND hWnd);
+
 static BOOL             Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow);
 static void             Win32UI_exit(void);
 
@@ -164,7 +167,7 @@ static BOOL             ListCtrlOnPaint(HWND hWnd, UINT uMsg);
 static DWORD            GetShellLargeIconSize(void);
 static BOOL             CreateIcons(HWND hWnd);
 static int              WhichIcon(int nItem);
-static void             AddIcon(int index);
+static void             AddIcon(int the_index);
 
 /* Context Menu handlers */
 static void             UpdateMenu(HWND hWnd, HMENU hMenu);
@@ -278,13 +281,13 @@ typedef struct tagPOPUPSTRING
     Internal variables
  ***************************************************************************/
 
-static HWND   hMain = NULL;
+static HWND   hMain  = NULL;
 static HACCEL hAccel = NULL;
 
-static HWND hPicker = NULL;
-static HWND hwndList = NULL;
+static HWND hPicker   = NULL;
+static HWND hwndList  = NULL;
 static HWND hTreeView = NULL;
-static HWND hProgWnd = NULL;
+static HWND hProgWnd  = NULL;
 
 static BOOL g_bAbortLoading = FALSE; /* doesn't work right */
 
@@ -333,11 +336,11 @@ static UINT    m_uHeaderSortCol  = 0;
 static BOOL    m_fHeaderSortAsc  = TRUE;
 static WNDPROC g_lpHeaderWndProc = NULL;
 
-static POPUPSTRING popstr[MAX_MENUS+1];
+static POPUPSTRING popstr[MAX_MENUS + 1];
 
 /* Tool and Status bar variables */
 static HWND hStatusBar = 0;
-static HWND hToolBar = 0;
+static HWND hToolBar   = 0;
 
 /* Column Order as Displayed */
 static BOOL oldControl = FALSE;
@@ -686,7 +689,7 @@ static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
 						NULL,		  /* Process handle not inheritable. */
 						NULL,		  /* Thread handle not inheritable. */
 						TRUE,		  /* Handle inheritance.  */
-						0,			  /* Creation flags. */
+						DETACHED_PROCESS,			  /* Creation flags. */
 						NULL,		  /* Use parent's environment block.  */
 						NULL,		  /* Use parent's starting directory.  */
 						&si,		  /* STARTUPINFO */
@@ -725,12 +728,14 @@ int WINAPI WinMain(HINSTANCE    hInstance,
 
 	options.gui_host = 1;
 
-	if (__argc != 1)
+	if (__argc != 1 || nCmdShow == SW_SHOWDEFAULT)
 	{
 		/* Rename main because gcc will use it instead of WinMain even with -mwindows */
-		extern int DECL_SPEC main(int, char**);
-		exit(main(__argc, __argv));
+		extern int DECL_SPEC main_(int, char**);
+		exit(main_(__argc, __argv));
 	}
+
+    FreeConsole();
 
 	if (!Win32UI_init(hInstance, lpCmdLine, nCmdShow))
 		return 1;
@@ -1395,7 +1400,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	/* Reset the font */
 	{
-		LOGFONT 	logfont;
+		LOGFONT logfont;
 
 		GetListFont(&logfont);
 		hFont = CreateFontIndirect(&logfont);
@@ -1406,19 +1411,19 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
                 HWND    hwndHeaderCtrl  = NULL;
                 HFONT   hHeaderCtrlFont = NULL;
 
-                hwndHeaderCtrl = GetDlgItem( hwndList, 0 );
-                if ( hwndHeaderCtrl )
-                {
-                    hHeaderCtrlFont = GetWindowFont( hwndHeaderCtrl );
+				hwndHeaderCtrl = GetDlgItem(hwndList, 0);
+				if (hwndHeaderCtrl)
+				{
+					hHeaderCtrlFont = GetWindowFont( hwndHeaderCtrl);
                 }
 
     		    SetWindowFont(hwndList, hFont, FALSE);
 
                 /* Reset header ctrl font back to original font */
 
-                if ( hHeaderCtrlFont )
-                {
-                    SetWindowFont( hwndHeaderCtrl, hHeaderCtrlFont, TRUE );
+				if (hHeaderCtrlFont)
+				{
+					SetWindowFont(hwndHeaderCtrl, hHeaderCtrlFont, TRUE);
                 }
             }
 
@@ -1438,8 +1443,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	nPictType = GetShowPictType();
 
 	bDoGameCheck = GetGameCheck();
-	idle_work = TRUE;
-	game_index = 0;
+	idle_work    = TRUE;
+	game_index   = 0;
 
 	bShowTree	   = GetShowFolderList();
 	bShowToolBar   = GetShowToolBar();
@@ -1829,21 +1834,21 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 	case WM_DESTROY:
         /* Free GDI resources */
 
-	    if ( hBitmap )
-        {
-            DeleteObject( hBitmap );
-            hBitmap = NULL;
-        }
+		if (hBitmap)
+		{
+			DeleteObject(hBitmap);
+			hBitmap = NULL;
+		}
 
-	    if ( hPALbg )
-        {
-		    DeleteObject( hPALbg );
-            hPALbg = NULL;
-        }
+		if (hPALbg)
+		{
+			DeleteObject(hPALbg);
+			hPALbg = NULL;
+		}
 
-	    if ( hFont )
-	    {
-		    DeleteObject( hFont );
+		if (hFont)
+		{
+			DeleteObject(hFont);
 		    hFont = NULL;
 	    }
 
@@ -2088,7 +2093,7 @@ static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
 
 static void ResizeWindow(HWND hParent, Resize *r)
 {
-	int index = 0, dx, dy;
+	int the_index = 0, dx, dy;
 	HWND hControl;
 	RECT parent_rect, rect;
 	ResizeItem *ri;
@@ -2103,9 +2108,9 @@ static void ResizeWindow(HWND hParent, Resize *r)
 	dy = parent_rect.bottom - r->rect.bottom;
 	ClientToScreen(hParent, &p);
 
-	while (r->items[index].type != RA_END)
+	while (r->items[the_index].type != RA_END)
 	{
-		ri = &r->items[index];
+		ri = &r->items[the_index];
 		if (ri->type == RA_ID)
 			hControl = GetDlgItem(hParent, ri->u.id);
 		else
@@ -2113,7 +2118,7 @@ static void ResizeWindow(HWND hParent, Resize *r)
 
 		if (hControl == NULL)
 		{
-			index++;
+			the_index++;
 			continue;
 		}
 
@@ -2141,7 +2146,7 @@ static void ResizeWindow(HWND hParent, Resize *r)
 		if (ri->subwindow != NULL)
 			ResizeWindow(hControl, ri->subwindow);
 
-		index++;
+		the_index++;
 	}
 
 	/* Record parent window's new location */
@@ -2180,7 +2185,7 @@ static void ProgressBarHide()
 	SIZE size;
 	int  numParts = 4;
 
-    if ( hProgWnd == NULL )
+	if (hProgWnd == NULL)
     {
         return;
     }
@@ -2272,7 +2277,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 	LPSTR pString;
 	LPSTR pDest = lpttt->lpszText;
 
-	/* Map command ID to string index */
+	/* Map command ID to string the_index */
 	for (i = 0; CommandToString[i] != -1; i++)
 	{
 		if (CommandToString[i] == iButton)
@@ -2283,7 +2288,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 	}
 
 	/* Check for valid parameter */
-	pString = (iButton > NUM_TOOLTIPS) ? "Invalid Button Index" : szTbStrings[iButton];
+	pString = (iButton > NUM_TOOLTIPS) ? "Invalid Button the_index" : szTbStrings[iButton];
 
 	lstrcpy(pDest, pString);
 }
@@ -2814,7 +2819,7 @@ static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	/* Right button was clicked on header */
 	POINT	pt;
 	RECT	rcCol;
-	int 	index;
+	int 	the_index;
 	int 	i;
 	BOOL	found = FALSE;
 	HWND	hwndHeader;
@@ -2829,12 +2834,12 @@ static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 	ScreenToClient(hwndHeader, &pt);
 
-	/* Determine the column index */
+	/* Determine the column the_index */
 	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++)
 	{
 		if (PtInRect(&rcCol, pt))
 		{
-			index = i;
+			the_index = i;
 			found = TRUE;
 			break;
 		}
@@ -3625,20 +3630,20 @@ static void ResetColumnDisplay(BOOL firstime)
 	SetSelectedPick(i);
 }
 
-static void AddIcon(int index)
+static void AddIcon(int the_index)
 {
 	HICON hIcon = 0;
 
-	if (icon_index[index] != 0)
+	if (icon_index[the_index] != 0)
 		return;
 
-	if ((hIcon = LoadIconFromFile((char *)drivers[index]->name)) == 0)
+	if ((hIcon = LoadIconFromFile((char *)drivers[the_index]->name)) == 0)
 	{
-		if (drivers[index]->clone_of != 0)
+		if (drivers[the_index]->clone_of != 0)
 		{
-			hIcon = LoadIconFromFile((char *)drivers[index]->clone_of->name);
-			if (!hIcon && drivers[index]->clone_of->clone_of)
-				hIcon = LoadIconFromFile((char *)drivers[index]->clone_of->clone_of->name);
+			hIcon = LoadIconFromFile((char *)drivers[the_index]->clone_of->name);
+			if (!hIcon && drivers[the_index]->clone_of->clone_of)
+				hIcon = LoadIconFromFile((char *)drivers[the_index]->clone_of->clone_of->name);
 		}
 	}
 
@@ -3647,10 +3652,10 @@ static void AddIcon(int index)
 		int nIconPos = ImageList_AddIcon(hSmall, hIcon);
 		ImageList_AddIcon(hLarge, hIcon);
 		if (nIconPos != -1)
-			icon_index[index] = nIconPos;
+			icon_index[the_index] = nIconPos;
 	}
-	if (icon_index[index] == 0)
-		icon_index[index] = 1;
+	if (icon_index[the_index] == 0)
+		icon_index[the_index] = 1;
 }
 
 static void ReloadIcons(HWND hWnd)
@@ -3875,14 +3880,14 @@ static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subit
 
 static int GetSelectedPick()
 {
-	/* returns index of listview selected item */
+	/* returns the_index of listview selected item */
 	/* This will return -1 if not found */
 	return ListView_GetNextItem(hwndList, -1, LVIS_SELECTED | LVIS_FOCUSED);
 }
 
 static int GetSelectedPickItem()
 {
-	/*r eturns lParam (game index) of listview selected item */
+	/*r eturns lParam (game the_index) of listview selected item */
 	LV_ITEM lvi;
 
 	lvi.iItem = GetSelectedPick();
@@ -5269,7 +5274,6 @@ int osd_display_loading_rom_message(const char* name, int current, int total)
 	return retval;
 }
 
-
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (Msg)
@@ -5341,6 +5345,5 @@ int UpdateLoadProgress(const char* name, int current, int total)
 
 	return nReturn;
 }
-
 
 /* End of source file */
