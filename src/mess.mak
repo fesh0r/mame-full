@@ -237,7 +237,8 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/a7800.o	 \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
-	  $(OBJ)/mess/systems/a2600.o
+      $(OBJ)/mess/systems/a2600.o   \
+    $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
 	  $(OBJ)/mess/vidhrdw/vectrex.o  \
@@ -566,6 +567,7 @@ $(OBJ)/motorola.a: \
 	  $(OBJ)/mess/vidhrdw/mekd2.o	 \
 	  $(OBJ)/mess/machine/mekd2.o	 \
 	  $(OBJ)/mess/systems/mekd2.o
+
 
 
 
