@@ -82,6 +82,7 @@ static const char*		dial_ini;
 static const char*		ad_stick_ini;
 static const char*		pedal_ini;
 static const char*		lightgun_ini;
+static int			dummy[10];
 
 /* additional key data */
 static INT8			key[KEY_CODES];
@@ -118,30 +119,15 @@ struct rc_option input_opts[] =
 #ifdef USE_XINPUT_DEVICES
 	{ NULL, NULL, rc_link, XInputDevices_opts, NULL, 0, 0, NULL, NULL },
 #endif
-	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "enable mouse input" },
+	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "Enable mouse input" },
 	{ "ugcicoin", NULL, rc_bool, &ugcicoin, "0", 0, 0, NULL, "Enable/disable UGCI(tm) Coin/Play support" },
 #ifdef USE_LIGHTGUN_ABS_EVENT
 	{ NULL, NULL, rc_link, lightgun_abs_event_opts, NULL, 0, 0, NULL, NULL },
 #endif
-	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
-	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
+	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "Enable steadykey support" },
+	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "Minimal analog value for digital input" },
 	{ "rapidfire", "rapidf", rc_bool, &rapidfire_enable, "0", 0, 0, NULL, "Enable rapid-fire support for joysticks" },
-	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "preconfigure for specified controller" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
-struct rc_option *ctrlr_input_opts = NULL;
-
-struct rc_option ctrlr_input_opts2[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
-	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
-	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
-	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
-	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
-	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
-	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ "ctrlr", NULL, rc_string, &ctrlrtype, 0, 0, 0, NULL, "Preconfigure for specified controller" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -581,27 +567,27 @@ int osd_input_initpre(void)
 #ifdef JOY_PS2
 	/* Special mapping for PlayStation2 -- to be removed when 0.60 patch done */
 	/* Add mappings for P1 SELECT, START, P2 SELECT, START */
-	joy_list[JOY_BUTTON_CODE(0,6)] = JOYCODE_1_SELECT;
-	joy_list[JOY_BUTTON_CODE(0,7)] = JOYCODE_1_START;
-	joy_list[JOY_BUTTON_CODE(1,6)] = JOYCODE_2_SELECT;
-	joy_list[JOY_BUTTON_CODE(1,7)] = JOYCODE_2_START;
+	add_joylist_entry("SELECT1", JOYCODE(0, CODETYPE_BUTTON, 6), JOYCODE_1_SELECT);
+	add_joylist_entry("START1", JOYCODE(0, CODETYPE_BUTTON, 7), JOYCODE_1_START);
+	add_joylist_entry("SELECT2", JOYCODE(1, CODETYPE_BUTTON, 6), JOYCODE_2_SELECT);
+	add_joylist_entry("START2", JOYCODE(1, CODETYPE_BUTTON, 7), JOYCODE_2_START);
 	/* For now, L2 is equivalent of TAB, and R2 is equivalent of ESC */
-	joy_list[JOY_BUTTON_CODE(0,8)] = KEYCODE_TAB;
-	joy_list[JOY_BUTTON_CODE(0,9)] = KEYCODE_ESC;
+	add_joylist_entry("L2", JOYCODE(0, CODETYPE_BUTTON, 8), KEYCODE_TAB);
+	add_joylist_entry("R2", JOYCODE(0, CODETYPE_BUTTON, 9), KEYCODE_ESC);
 	/* Remap L3 and R3 to BUTTON7 and BUTTON8 */
-	joy_list[JOY_BUTTON_CODE(0,10)] = JOYCODE_1_BUTTON7;
-	joy_list[JOY_BUTTON_CODE(0,11)] = JOYCODE_1_BUTTON8;
-	joy_list[JOY_BUTTON_CODE(1,10)] = JOYCODE_2_BUTTON7;
-	joy_list[JOY_BUTTON_CODE(1,11)] = JOYCODE_2_BUTTON8;
+	add_joylist_entry("L3", JOYCODE(0, CODETYPE_BUTTON, 10), JOYCODE_1_BUTTON7);
+	add_joylist_entry("R3", JOYCODE(0, CODETYPE_BUTTON, 11), JOYCODE_1_BUTTON8);
+	add_joylist_entry("L4", JOYCODE(1, CODETYPE_BUTTON, 10), JOYCODE_2_BUTTON7);
+	add_joylist_entry("R4", JOYCODE(1, CODETYPE_BUTTON, 11), JOYCODE_2_BUTTON8);
 	/* Map the 4 directional buttons to the four axes. */
-	joy_list[JOY_BUTTON_CODE(0,12)] = JOYCODE_1_LEFT;
-	joy_list[JOY_BUTTON_CODE(0,13)] = JOYCODE_1_RIGHT;
-	joy_list[JOY_BUTTON_CODE(0,14)] = JOYCODE_1_UP;
-	joy_list[JOY_BUTTON_CODE(0,15)] = JOYCODE_1_DOWN;
-	joy_list[JOY_BUTTON_CODE(1,12)] = JOYCODE_2_LEFT;
-	joy_list[JOY_BUTTON_CODE(1,13)] = JOYCODE_2_RIGHT;
-	joy_list[JOY_BUTTON_CODE(1,14)] = JOYCODE_2_UP;
-	joy_list[JOY_BUTTON_CODE(1,15)] = JOYCODE_2_DOWN;
+	add_joylist_entry("LEFT1", JOYCODE(0, CODETYPE_BUTTON, 12), JOYCODE_1_LEFT);
+	add_joylist_entry("RIGHT1", JOYCODE(0, CODETYPE_BUTTON, 13), JOYCODE_1_RIGHT);
+	add_joylist_entry("UP1", JOYCODE(0, CODETYPE_BUTTON, 14), JOYCODE_1_UP);
+	add_joylist_entry("DOWN1", JOYCODE(0, CODETYPE_BUTTON, 15), JOYCODE_1_DOWN);
+	add_joylist_entry("LEFT2", JOYCODE(1, CODETYPE_BUTTON, 12), JOYCODE_2_LEFT);
+	add_joylist_entry("RIGHT2", JOYCODE(1, CODETYPE_BUTTON, 13), JOYCODE_2_RIGHT);
+	add_joylist_entry("UP2", JOYCODE(1, CODETYPE_BUTTON, 14), JOYCODE_2_UP);
+	add_joylist_entry("DOWN2", JOYCODE(1, CODETYPE_BUTTON, 15), JOYCODE_2_DOWN);
 #endif
 
 	return OSD_OK;
@@ -1121,25 +1107,16 @@ static INT32 get_joycode_value(os_code_t joycode)
 		/* analog mouse axis */
 		case CODETYPE_MOUSEAXIS:
 		{
-			int deltax = 0, deltay = 0;
+			int delta = 0;
 #ifdef USE_XINPUT_DEVICES
 			if (joynum < XINPUT_JOYSTICK_1)
-			{
-				XInputPollDevices(joynum, &deltax, &deltay);
-			}
+				XInputPollDevices(joynum, joyindex, &delta);
 #else
-			if (joynum < MOUSE_MAX)
-			{
-				deltax = mouse_data[joynum].deltas[0];
-				deltay = mouse_data[joynum].deltas[1];
-			}
+			if (joynum < MOUSE_MAX && joyindex < 2)
+				delta = mouse_data[joynum].deltas[joyindex];
 #endif
 			/* return the latest mouse info */
-			if (joyindex == 0)
-				return deltax * 512;
-			else if (joyindex == 1)
-				return deltay * 512;
-			return 0;
+			return delta * 512;
 		}
 	}
 

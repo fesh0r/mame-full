@@ -24,7 +24,7 @@ void XInputDevices_init(void);
 int XInputProcessEvent(XEvent *);
 /* <jake> */
 #ifdef USE_XINPUT_DEVICES
-void XInputPollDevices(int, int *, int *);
+void XInputPollDevices(int, int, int *);
 #endif
 /* </jake> */
 
