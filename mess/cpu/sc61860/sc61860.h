@@ -22,10 +22,15 @@
 #ifndef _SC61860_H
 #define _SC61860_H
 
+/*
+  official names seam to be
+  ESR-H, ESR-J
+  (ESR-L SC62015 ist complete different)
+ */
+
 /* unsolved problems
    the processor has 8 kbyte internal rom
    only readable with special instructions and program execution
-   96 byte internal ram (used by most operations)
    64 kb external ram (first 8kbyte not seen for program execution?) */
 
 #include "cpuintrf.h"
@@ -40,13 +45,14 @@ extern "C" {
 #endif
 
 typedef struct {
-	int (*reset)(void);
-	int (*brk)(void);
-	int (*ina)(void);
-	void (*outa)(int);
-	int (*inb)(void);
-	void (*outb)(int);
-	void (*outc)(int);
+    bool (*reset)(void);
+    bool (*brk)(void);
+    bool (*x)(void);
+    int (*ina)(void);
+    void (*outa)(int);
+    int (*inb)(void);
+    void (*outb)(int);
+    void (*outc)(int);
 } SC61860_CONFIG;
 
 extern int sc61860_icount;				/* cycle count */
