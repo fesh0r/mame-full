@@ -56,7 +56,8 @@ Other Changes:
 
 - Imgtool now supports CoCo cassette files (both .CAS and .WAV).  This is done
   through a framework that makes it easy to implement cassette images in
-  general. [Nate Woods]
+  general.  Also, the CoCo RSDOS disk handling is now a bit more tolerant
+  [Nate Woods]
 
 - Updated Intel 8271 floppy disc controller emulation. [Kev Thacker]
 

@@ -5,8 +5,6 @@
 #include "imgtool.h"
 #include "utils.h"
 
-#define GRANULE_COUNT	68
-
 typedef struct {
 	char fname[8];
 	char fext[3];
@@ -21,7 +19,8 @@ typedef struct {
 	IMAGE base;
 	STREAM *f;
 	int granulemap_dirty;
-	unsigned char granulemap[GRANULE_COUNT];
+	unsigned char *granulemap;
+	int granule_count;
 } rsdos_diskimage;
 
 typedef struct {
@@ -133,12 +132,16 @@ static size_t process_rsdos_file(rsdos_dirent *ent, rsdos_diskimage *img, STREAM
 {
 	size_t s, lastgransize;
 	unsigned char i, granule;
+	unsigned char usedmap[256];	/* Used to detect infinite loops */
+
+	memset(usedmap, 0, img->granule_count);
 
 	lastgransize = ent->lastsectorbytes_lsb + (((int) ent->lastsectorbytes_msb) << 8);
 	s = 0;
 	granule = ent->first_granule;
 
-	while((i = img->granulemap[granule]) < GRANULE_COUNT) {
+	while(!usedmap[granule] && ((i = img->granulemap[granule]) < img->granule_count)) {
+		usedmap[granule] = 1;
 		if (destf) {
 			stream_seek(img->f, GOFFSET(granule), SEEK_SET);
 			stream_transfer(destf, img->f, 9*256);
@@ -195,7 +198,7 @@ static int prepare_dirent(rsdos_dirent *ent, const char *fname)
 static unsigned char find_unused_granule(rsdos_diskimage *rsimg, int granule_to_ignore)
 {
 	int i;
-	for (i = 0; i < GRANULE_COUNT; i++)
+	for (i = 0; i < rsimg->granule_count; i++)
 		if ((rsimg->granulemap[i] == 0xff) && (i != granule_to_ignore))
 			return i;
 	return 0xff;
@@ -204,9 +207,13 @@ static unsigned char find_unused_granule(rsdos_diskimage *rsimg, int granule_to_
 static int rsdos_diskimage_init(STREAM *f, IMAGE **outimg)
 {
 	int err;
+	int tracks;
+	size_t sz;
 	rsdos_diskimage *img = NULL;
 
-	if (stream_size(f) != (35*18*256)) {
+	sz = stream_size(f);
+	tracks = sz / (18*256);
+	if ((sz != (sz & ~0xff)) || (tracks <= 17)) {
 		err = IMGTOOLERR_CORRUPTIMAGE;
 		goto error;
 	}
@@ -217,10 +224,18 @@ static int rsdos_diskimage_init(STREAM *f, IMAGE **outimg)
 		goto error;
 	}
 
+	img->granule_count = (tracks - 1) * 2;
+	img->granulemap = malloc(img->granule_count * sizeof(unsigned char));
+	if (!img->granulemap) {
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto error;
+	}
+
 	if (stream_seek(f, OFFSET(17, 2), SEEK_SET)) {
 		err = IMGTOOLERR_READERROR;
 		goto error;
 	}
+
 
 	if (stream_read(f, img->granulemap, sizeof(img->granulemap)) != sizeof(img->granulemap)) {
 		err = IMGTOOLERR_READERROR;
@@ -234,8 +249,11 @@ static int rsdos_diskimage_init(STREAM *f, IMAGE **outimg)
 	return 0;
 
 error:
-	if (img)
+	if (img) {
+		if (img->granulemap)
+			free(img->granulemap);
 		free(img);
+	}
 	*outimg = NULL;
 	return err;
 }
@@ -250,6 +268,7 @@ static void rsdos_diskimage_exit(IMAGE *img)
 	}
 
 	stream_close(rsimg->f);
+	free(rsimg->granulemap);
 	free(img);
 }
 
@@ -335,7 +354,7 @@ static size_t rsdos_diskimage_freespace(IMAGE *img)
 	rsdos_diskimage *rsimg = (rsdos_diskimage *) img;
 	size_t s = 0;
 
-	for (i = 0; i < GRANULE_COUNT; i++)
+	for (i = 0; i < rsimg->granule_count; i++)
 		if (rsimg->granulemap[i] == 0xff)
 			s += (9 * 256);
 	return s;
@@ -444,7 +463,7 @@ static int rsdos_diskimage_deletefile(IMAGE *img, const char *fname)
 
 	/* Now free up the granules */
 	g = ent.first_granule;
-	while (g < GRANULE_COUNT) {
+	while (g < rsimg->granule_count) {
 		i = rsimg->granulemap[g];
 		rsimg->granulemap[g] = 0xff;
 		g = i;
