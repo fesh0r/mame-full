@@ -47,7 +47,6 @@ static int user_heightscale;
 static int user_yarbsize;
 static int user_effect;
 
-static struct rectangle game_vis_area;
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
 
@@ -55,6 +54,13 @@ static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
   0, 0, 16, 0, 0, 0, NAME " debug window", 0, 1, 1, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
+
+/* Visual area override related vars, for dual monitor games hacks */
+static struct rectangle game_vis_area;
+static struct rectangle game_vis_area_override[2] = {
+  {-1,-1,-1,-1},
+  {-1,-1,-1,-1} };
+int game_vis_area_override_index = 0;
 
 /* average FPS calculation */
 static cycles_t start_time = 0;
@@ -531,6 +537,14 @@ int osd_create_display(const struct osd_create_params *params,
 	debug_params.height     = options.debug_height;
 	debug_params.max_width  = options.debug_width;
 	debug_params.max_height = options.debug_height;
+	
+	/* apply vis area override hacks */
+      	if (!strcmp(drivers[game_index]->clone_of->name, "megatech"))
+      	{
+      	  game_vis_area_override[0].min_y = 192;
+      	  game_vis_area_override[1].max_x = 255;
+      	  game_vis_area_override[1].max_y = 191;
+      	}
 
 	return 0;
 }
@@ -762,6 +776,22 @@ static void update_effect(void)
 
 static void update_game_vis_area(void)
 {
+  if (game_vis_area_override[game_vis_area_override_index].min_x != -1)
+    game_vis_area.min_x =
+      game_vis_area_override[game_vis_area_override_index].min_x;
+
+  if (game_vis_area_override[game_vis_area_override_index].min_y != -1)
+    game_vis_area.min_y =
+      game_vis_area_override[game_vis_area_override_index].min_y;
+
+  if (game_vis_area_override[game_vis_area_override_index].max_x != -1)
+    game_vis_area.max_x =
+      game_vis_area_override[game_vis_area_override_index].max_x;
+
+  if (game_vis_area_override[game_vis_area_override_index].max_y != -1)
+    game_vis_area.max_y =
+      game_vis_area_override[game_vis_area_override_index].max_y;
+
   normal_params.width  = (game_vis_area.max_x + 1) - game_vis_area.min_x;
   normal_params.height = (game_vis_area.max_y + 1) - game_vis_area.min_y;
 		   
@@ -825,7 +855,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 	const char *msg = NULL;
 	static int flags = 0;
 	static int palette_changed = 0;
-	static int ysplit = 0;
 	
 	/*** STEP 1 update sound,fps,vis_area,palette and leds ***/
 	if (sound_stream)
@@ -840,13 +869,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
 	  game_vis_area = display->game_visible_area;
-
-       	  if (!strcmp(drivers[game_index]->clone_of->name, "megatech"))
-       	    ysplit = 192;
-       	  else
-       	    ysplit = 0;
-       	    
-   	  game_vis_area.min_y += ysplit;
           update_game_vis_area();
 	}
 	if ((display->changed_flags & GAME_PALETTE_CHANGED))
@@ -885,20 +907,10 @@ void osd_update_video_and_audio(struct mame_display *display)
             else if (code_pressed(KEYCODE_LSHIFT) &&
                      code_pressed(KEYCODE_LCONTROL))
             {
-                if (ysplit && code_pressed_memory(KEYCODE_INSERT))
+                if (code_pressed_memory(KEYCODE_INSERT))
                 {
-                  if (game_vis_area.min_y != display->game_visible_area.min_y)
-                  {
-                    game_vis_area.min_y = display->game_visible_area.min_y;
-                    game_vis_area.max_y = display->game_visible_area.min_y +
-                      ysplit - 1;
-                  }
-                  else
-                  {
-                    game_vis_area.min_y = display->game_visible_area.min_y +
-                      ysplit;
-                    game_vis_area.max_y = display->game_visible_area.max_y;
-                  }
+                  game_vis_area_override_index=1-game_vis_area_override_index;
+	          game_vis_area = display->game_visible_area;
                   update_game_vis_area();
                 }
             }
