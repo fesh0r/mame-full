@@ -777,12 +777,7 @@ static void scanline_callback( int num )
 	}
 
 	/* setup our next stop here */
-#ifdef MESS
-	/* NPW 13-Sep-2004 - This is here because of bug #457 */
-	timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime( (cpu_getscanline() + 1) * chips[num].scan_scale ), num, 0);
-#else
 	timer_adjust(chips[num].scanline_timer, cpu_getscanlinetime( chips[num].scanline * chips[num].scan_scale ), num, 0);
-#endif /* MESS */
 }
 
 /*************************************

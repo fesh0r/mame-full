@@ -302,8 +302,8 @@ static MACHINE_DRIVER_START( nespal )
 
 	/* basic machine hardware */
 	MDRV_CPU_REPLACE("main", N2A03, 26601712/15)        /* 0,894886 Mhz */
-	MDRV_SCREEN_SIZE(32*8, 305)
 	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(114*(PAL_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
     /* sound hardware */
 	MDRV_SOUND_REPLACE("nessound", NES, nespal_interface)
