@@ -52,21 +52,31 @@ CC	= gcc
 # CC	= c89
 
 # *** Choose your compiler flags.
-# Note1:
-# xmame compilation breaks when using egcs-1.1.x or gcc-2.95, use
-# -fno-strict-aliasing to fix it. gcc-2.95.1 does work with -fstrict-aliasing,
+# Note 1:
+# xmame compilation breaks when using egcs-1.1.x or gcc-2.95; use
+# -fno-strict-aliasing to fix it.  gcc-2.95.1 does work with -fstrict-aliasing,
 # and gives a nice speed increase.
 #
-# Note2:
+# Note 2:
 # linux-powerpc needs -fsigned-char
 #
-# Note3:
+# Note 3:
 # OpenStep needs -traditional-cpp
 #
+# Note 4:
+# It has been reported that adding -pipe to the CFLAGS when using gcc will speed
+# up build times a lot and reduce disk activity greatly.  Thanks to Pete French
+# for the tip!
+#
+# Note 5:
+# Pete French has reported that gcc can sometimes produce incorrect code for
+# optimization levels above -O.  If you run into problems using -O2 or higher,
+# try using -O instead. 
+#
 ### for normal optimization, full warnings
-# CFLAGS    = -O -Wall
+CFLAGS    = -O -Wall
 ### for common optimizations, full warnings except unused vars
-CFLAGS    = -O2 -Wall -Wno-unused
+# CFLAGS    = -O2 -Wall -Wno-unused
 ### this should work with all compilers 
 # CFLAGS    =
 ### to get full optimization under gcc/x Intel based OS's..
@@ -74,13 +84,13 @@ CFLAGS    = -O2 -Wall -Wno-unused
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
 #  -malign-jumps=2 -malign-loops=2
 ### for Linux/PowerPC use following opts
-# CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
+# CFLAGS    = -O -Wall  -Wno-unused -funroll-loops\
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 ### for OpenStep/Intel use following opts
-# CFLAGS    = -O4 -Wall -Wno-unused -finline-functions -ffast-math \
+# CFLAGS    = -O -Wall -Wno-unused -finline-functions -ffast-math \
 #  -fstrength-reduce -traditional-cpp
 ### for OpenStep/PPC use following opts
-# CFLAGS    = -O4 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
+# CFLAGS    = -O -Wall  -Wno-unused -funroll-loops -traditional-cpp \
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 ### for IRIX MIPSpro with real serious optimization for R10K O2
 # CFLAGS = -fullwarn -n32 -mips4 -Ofast=ip32_10k -TARG:platform=ip32_10k \
@@ -338,6 +348,8 @@ GLLIBS= -ldl
 # use Mesa's GLU, you may have to add -DGLU_VERSION_1_2 to 
 # the GLCFLAGS below.
 #
+# To get more verbose debugging messages, just add -DGLDEBUG !
+#
 GLCFLAGS= -D_X11_
 
 ##############################################################################
@@ -355,7 +367,7 @@ GLCFLAGS= -D_X11_
 # with the c-core before reporting any problems.
 # uncomment next line to use Assembler 68000 engine
 # X86_ASM_68000 = 1
-# uncomment next line to use Assembler 68020 engine
+# uncomment next line to use Assembler 68020 engine (CURRENTLY BROKEN)
 # X86_ASM_68020 = 1
 #
 # And choose elf / or aout
