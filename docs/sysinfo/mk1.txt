@@ -13,7 +13,17 @@ Features
 plug for external power supply
 
 
+Instructions
+------------
+number with dot means thinking about move?
+4 dots mean ready for input?
+
+power up prompt L asks for level?
+answering with 5 prompts you with bp
+than you can play as white and enter your move (enter is d/play)
+
+
 Mess Emulation State
 --------------------
-not working?
 operating intructions needed!
+not working (cpu core problem?)
