@@ -52,6 +52,7 @@ typedef struct I8271
 	
 	/* drive outputs */
 	int drive;
+	int side;
 
 	/* drive control output special register */
 	int drive_control_output;
