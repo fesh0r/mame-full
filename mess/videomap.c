@@ -37,7 +37,6 @@ static struct videomap_framecallback_info frame_info;
 static struct videomap_linecallback_info line_info;
 
 /* used at draw time */
-static UINT16 *scanline_data;
 static const UINT8 *videoram_pos;
 static int videoram_windowsize;
 static UINT8 *videoram_dirtybuffer;
@@ -617,7 +616,6 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 	params.bytes_per_row = line_info.grid_width * line_info.grid_depth / 8;
 	params.offset = line_info.offset;
 	params.zoomx = (line_info.visible_columns / line_info.grid_width) / (line_info.charproc ? 8 : 1);
-	params.scanline_data = scanline_data;
 	params.pens = pens;
 	params.charproc = line_info.charproc;
 	params.border_value = line_info.border_value;
@@ -652,21 +650,16 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 			/* do we have to render a new scanline? */
 			if (params.charproc || (row != drawn_row))
 			{
-				if (!scanline_data)
-					params.scanline_data = ((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns;
+				params.scanline_data = ((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns;
 				params.row = y - (row * line_info.scanlines_per_row);
 				draw_line(&params);
 				drawn_row = row;
 			}
-			else if (!scanline_data)
+			else
 			{
-				/* instead of using draw_scanline, we can use a straight memcpy */
+				/* use a straight memcpy to copy the original scanline */
 				memcpy(((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns, params.scanline_data, width * sizeof(UINT16));
 			}
-
-			/* if the orientation is off, draw the scanline */
-			if (scanline_data)
-				draw_scanline16(bitmap, line_info.borderleft_columns, screeny, width, scanline_data, NULL, -1);
 		}
 
 		/* time to up the row? */
@@ -798,7 +791,6 @@ int videomap_init(const struct videomap_config *config)
 
 	callbacks = config->intf;
 	flags = FLAG_FIRST_DRAW;
-	scanline_data = (Machine->orientation) ? (UINT16 *) auto_malloc((Machine->drv->screen_width + 32) * sizeof(UINT16)) : NULL;
 	border_scanline = (UINT16 *) auto_malloc(Machine->drv->screen_width * sizeof(UINT16));
 	if (!border_scanline)
 		return 1;

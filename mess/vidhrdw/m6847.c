@@ -35,6 +35,11 @@ struct m6847_state {
 	int latched_videooffset;
 	int rowheight;
 	int fs, hs;
+	void *hs_timer1;
+	void *hs_timer2;
+	void *hs_timer_actual;
+	void *fs_timer;
+	void *fs_timer_actual;
 };
 
 static struct m6847_state the_state;
@@ -1166,6 +1171,11 @@ static struct videomap_interface m6847_videomap_interface =
 	internal_m6847_get_border_color_callback
 };
 
+static void hs_set(int val);
+static void hs_set_actual(int val);
+static void fs_set(int val);
+static void fs_set_actual(int val);
+
 int internal_video_start_m6847(const struct m6847_init_params *params, const struct videomap_interface *videointf, int dirtyramsize)
 {
 	struct videomap_config cfg;
@@ -1177,6 +1187,12 @@ int internal_video_start_m6847(const struct m6847_init_params *params, const str
 	the_state.rowheight = 12;
 	the_state.fs = 1;
 	the_state.hs = 1;
+
+	the_state.hs_timer1 = timer_alloc(hs_set);
+	the_state.hs_timer2 = timer_alloc(hs_set);
+	the_state.hs_timer_actual = timer_alloc(hs_set_actual);
+	the_state.fs_timer = timer_alloc(fs_set);
+	the_state.fs_timer_actual = timer_alloc(fs_set_actual);
 
 	videoram_size = dirtyramsize;
 	if (video_start_generic())
@@ -1277,6 +1293,7 @@ int video_start_m6847(const struct m6847_init_params *params)
  * instructions up, this delay is an attempt to delay the interrupts and allow
  * the program to see fs change before the interrupt handler is invoked
  */
+/*
 struct callback_info {
 	mem_write_handler callback;
 	int value;
@@ -1347,6 +1364,40 @@ static void fs_rise(int dummy)
 	logerror("fs_rise(): fs=1 scanline=%d horzbeampos=%d time=%g\n", cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
 #endif
 }
+*/
+
+static void hs_set_actual(int val)
+{
+	the_state.initparams.hs_func(0, val);
+}
+
+static void hs_set(int val)
+{
+	the_state.hs = val;
+	if (the_state.initparams.hs_func)
+		timer_adjust(the_state.hs_timer_actual, the_state.initparams.callback_delay, val, 0);
+
+#if LOG_HS
+	logerror("hs_set(): hs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
+#endif
+}
+
+static void fs_set_actual(int val)
+{
+	the_state.initparams.fs_func(0, val);
+}
+
+static void fs_set(int val)
+{
+	the_state.fs = val;
+	if (the_state.initparams.fs_func)
+		timer_adjust(the_state.fs_timer_actual, the_state.initparams.callback_delay, val, 0);
+
+#if LOG_FS
+	logerror("fs_set(): fs=%d scanline=%d horzbeampos=%d time=%g\n", val, cpu_getscanline(), cpu_gethorzbeampos(), timer_get_time());
+#endif
+}
+
 
 int internal_m6847_getadjustedscanline(void)
 {
@@ -1395,14 +1446,12 @@ void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanl
 			new_fs = 0;
 	}
 
-	if (new_fs && !the_state.fs)
-		timer_set(DFS_R, 0, fs_rise);
-	else if (!new_fs && the_state.fs)
-		timer_set(DFS_F, 0, fs_fall);
+	if ((new_fs && !the_state.fs) || (!new_fs && the_state.fs))
+		timer_adjust(the_state.fs_timer, DFS_R, new_fs, 0);
 
 	/* hsync interrupt */
-	timer_set(DHS_F, 0, hs_fall);
-	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
+	timer_adjust(the_state.hs_timer1, DHS_F, 0, 0);
+	timer_adjust(the_state.hs_timer2, DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, 0);
 }
 
 INTERRUPT_GEN( m6847_vh_interrupt )
