@@ -297,10 +297,7 @@ int frontend_list(char *gamename)
                        "---- ------------------------------------ --------------------------------\n",
 /* listdetails      */ " romname driver     cpu 1    cpu 2    cpu 3    cpu 4    cpu 5    cpu 6    cpu 7    cpu 8    sound 1     sound 2     sound 3     sound 4     sound 5     name\n"
                        "-------- ---------- -------- -------- -------- -------- -------- -------- -------- -------- ----------- ----------- ----------- ----------- ----------- --------------------------\n",
-/* listgamelist     */ "+----------------------------------+-------+-------+-------+-------+----------+\n"
-                       "|                                  |       |Correct|       |Screen | Internal |\n"
-                       "| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n"
-                       "+----------------------------------+-------+-------+-------+-------+----------+\n",
+/* listgamelist     */ "",
 /* listsourcefile   */ "name     sourcefile\n"
                        "-------- ----------\n",
 /* listcolors       */ "name      colors\n"
