@@ -55,7 +55,7 @@ struct SOUND1
 	INT32 pos;
 	INT32 frequency;
 	INT32 count;
-	INT8 signal;
+	INT16 signal;
 	INT8 mode;
 	INT8 duty;
 	INT32 env_value;
@@ -74,7 +74,7 @@ struct SOUND2
 	INT32 pos;
 	INT32 frequency;
 	INT32 count;
-	INT8 signal;
+	INT16 signal;
 	INT8 mode;
 	INT8 duty;
 	INT32 env_value;
@@ -90,8 +90,9 @@ struct SOUND3
 	INT32 pos;
 	INT32 frequency;
 	INT32 count;
-	INT8 signal;
+	INT16 signal;
 	INT8 mode;
+	INT8 level;
 };
 
 struct SOUND4
@@ -107,7 +108,7 @@ struct SOUND4
 	INT8 env_direction;
 	INT32 env_length;
 	INT32 env_count;
-	INT32 ply_count;
+	INT32 ply_frequency;
 	INT32 ply_step;
 	INT32 ply_ratio;
 };
@@ -124,7 +125,7 @@ void gameboy_init_1(void)
 	snd_1.on = 1;
 	snd_1.count = 0;
 	snd_1.env_count = 0;
-	snd_1.signal = (UINT8)0xff;
+	snd_1.signal = 0xff;
 }
 
 void gameboy_init_2(void)
@@ -134,7 +135,7 @@ void gameboy_init_2(void)
 	snd_2.on = 1;
 	snd_2.count = 0;
 	snd_2.env_count = 0;
-	snd_2.signal = (UINT8)0xff;
+	snd_2.signal = 0xff;
 }
 
 void snd_3_init(void)
@@ -143,13 +144,12 @@ void snd_3_init(void)
 		snd_3.pos = 0;
 	snd_3.on = 1;
 	snd_3.count = 0;
-
+	snd_3.signal = 0;
 }
 
 void snd_4_init(void)
 {
 	snd_4.on = 1;
-	snd_4.pos = 0;
 	snd_4.count = 0;
 	snd_4.env_count = 0;
 }
@@ -160,9 +160,6 @@ void gameboy_sound_w(int offset, int data)
 {
 	/* change in registers so update first */
 	stream_update(channel,0);
-
-	/* copy the data to ram */
-	gb_ram[offset] = data;
 
 	switch( offset )
 	{
@@ -215,13 +212,13 @@ void gameboy_sound_w(int offset, int data)
 
 	/*MODE 3 */
 	case NR30: /* Sound On/Off (R/W) */
-		snd_3.on = (data & 0x80)>>7;
+		snd_3.on = (data & 0x80) >> 7;
 		break;
 	case NR31: /* Sound Length (R/W) */
 		snd_3.length = data;
 		break;
 	case NR32: /* Select Output Level */
-		/* NEED TO FILL THIS IN */
+		snd_3.level = (data & 0x60) >> 5;
 		break;
 	case NR33: /* Frequency lo (W) */
 		snd_3.frequency = GB_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
@@ -246,6 +243,7 @@ void gameboy_sound_w(int offset, int data)
 		/* NEED TO SET POLYNOMIAL STUFF HERE */
 		break;
 	case NR44: /* Counter/Consecutive / Initialize (R/W)  */
+		snd_4.mode = (data & 0x40) >> 6;
 		if( data & 0x80 )
 			snd_4_init();
 		break;
@@ -258,13 +256,9 @@ void gameboy_sound_w(int offset, int data)
 	case NR52: /* Sound On/Off (R/W) */
 		logerror("NR52 - %x\n",data);
 		snd_1.on = (data & 0x01);
-		/* logerror("Sound 1 = %02x\n",snd_1->on); */
 		snd_2.on = (data & 0x02)>>1;
-		/* logerror("Sound 2 = %02x\n",snd_2->on); */
 		snd_3.on = (data & 0x04)>>2;
-		/* logerror("Sound 3 = %02x\n",snd_3->on); */
 		snd_4.on = (data & 0x08)>>3;
-		/* logerror("Sound 4 = %02x\n",snd_4->on); */
 		break;
 
  	/*   0xFF30 - 0xFF3F = Wave Pattern RAM for arbitrary sound data */
@@ -366,7 +360,32 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		if( snd_3.on )
 		{
 			/* TODO: Figure out how to use wave ram samples */
+			clock = snd_3.frequency;
+/*			sample = gb_ram[0xFF30 + snd_3.signal] & 0xF;*/
 			sample = 0;
+			snd_3.pos -= clock;
+			while( snd_3.pos < 0 )
+			{
+				/* This _SO_ doesn't work */
+				snd_3.pos += rate / 6;
+				snd_3.signal++;
+				if( snd_3.signal >= 15 )
+					snd_3.signal = 0;
+			}
+
+			if( !snd_3.level )
+			{
+				sample = 0;
+			}
+
+			if( snd_3.length )
+			{
+				snd_3.count++;
+				if( snd_3.count >= snd_3.length )
+				{
+					snd_3.on = 0;
+				}
+			}
 
 			if( gb_ram[NR51] & 0x4 )
 				right += sample;
@@ -378,7 +397,18 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		if( snd_4.on )
 		{
 			/* TODO: Figure out how to do noise samples */
-			sample = 0;
+
+			/* Hack city, but it kinda sounds ok....for extreme cases of ok */
+			sample = rand() & snd_4.env_value;
+
+			if( snd_4.length )
+			{
+				snd_4.count++;
+				if( snd_4.count >= snd_4.length )
+				{
+					snd_4.on = 0;
+				}
+			}
 
 			if( snd_4.env_length )
 			{
@@ -403,8 +433,8 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		left *= (gb_ram[NR50] & 0x7);
 		right *= ((gb_ram[NR50] & 0x70)>>4);
 
-		left <<= 4;
-		right <<= 4;
+		left <<= 6;
+		right <<= 6;
 
 		/* Update the buffers */
 		*(buffer[0]++) = left;
@@ -417,7 +447,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 int gameboy_sh_start(const struct MachineSound* driver)
 {
 	const char *names[2] = { "Gameboy left", "Gameboy right" };
-	const int volume[2] = { MIXER( 100, MIXER_PAN_LEFT ), MIXER( 100, MIXER_PAN_RIGHT ) };
+	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
 	memset(&snd_1, 0, sizeof(snd_1));
 	memset(&snd_2, 0, sizeof(snd_2));

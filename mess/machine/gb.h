@@ -21,6 +21,22 @@
 #define SIO_INT 3
 #define EXT_INT 4
 
+#define MBC1  1
+#define MBC2  2
+#define MBC3  3
+#define MBC5  4
+#define TAMA5 5
+#define HUC1  6
+#define HUC3  7
+
+#define RAM     0x01  /* Cartridge has RAM */
+#define BATTERY 0x02  /* Cartridge has a battery to save RAM */
+#define TIMER   0x04  /* Cartridge has a real-time-clock (MBC3 only) */
+#define RUMBLE  0x08  /* Cartridge has a rumble motor */
+#define SRAM    0x10  /* Cartridge has SRAM */
+#define UNKNOWN 0x80  /* Unknown cartridge type */
+
+
 extern UINT8 *gb_ram;
 
 #define JOYPAD  gb_ram[0xFF00] /* Joystick: 1.1.P15.P14.P13.P12.P11.P10      */
@@ -72,6 +88,7 @@ extern int gb_vh_start(void);
 extern void gb_vh_stop(void);
 extern void gb_vh_screen_refresh(struct mame_bitmap *bitmap, int full_refresh);
 extern void gb_init_machine(void);
+extern void gb_shutdown_machine(void);
 
 /* from vidhrdw/gb.c */
 void gb_refresh_scanline(void);

@@ -12,7 +12,8 @@
 #include "cpu/z80gb/z80gb.h"
 #include "includes/gb.h"
 
-static UINT8 MBCType;				   /* MBC type: 1 for MBC2, 0 for MBC1            */
+static UINT8 MBCType;				   /* MBC type: 0 for none                        */
+static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
 static UINT8 *ROMMap[256];			   /* Addresses of ROM banks                      */
 static UINT8 ROMBank;				   /* Number of ROM bank currently used           */
 static UINT8 ROMMask;				   /* Mask for the ROM bank number                */
@@ -29,7 +30,7 @@ static UINT32 SIOCount;				   /* Serial I/O counter                     */
 #define CheckCRC 1
 #define LineDelay 0
 #define IFreq 60
-//#define SOUND =0
+/*#define SOUND =0 */
 
 UINT8 *gb_ram;
 
@@ -69,40 +70,91 @@ void gb_init_machine (void)
 	gb_w_io (0x07, gb_ram [0xFF07]);
 
 	/* Initialise the Sound Registers */
-	   gameboy_sound_w(0xFF10,0x80);
-	   gameboy_sound_w(0xFF11,0xBF);
-   	   gameboy_sound_w(0xFF12,0xBF);
-   	   gameboy_sound_w(0xFF14,0xBF);
-   	   gameboy_sound_w(0xFF16,0x3F);
-   	   gameboy_sound_w(0xFF17,0x00);
-   	   gameboy_sound_w(0xFF19,0xBF);
-   	   gameboy_sound_w(0xFF1A,0x7F);
-   	   gameboy_sound_w(0xFF1B,0xFF);
-   	   gameboy_sound_w(0xFF1C,0x9F);
-   	   gameboy_sound_w(0xFF1E,0xBF);
-   	   gameboy_sound_w(0xFF20,0xFF);
-   	   gameboy_sound_w(0xFF21,0x00);
-   	   gameboy_sound_w(0xFF22,0x00);
-   	   gameboy_sound_w(0xFF23,0xBF);
-   	   gameboy_sound_w(0xFF24,0x77);
-   	   gameboy_sound_w(0xFF25,0xF3);
-   	   gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/
+	gameboy_sound_w(0xFF10,0x80);
+	gameboy_sound_w(0xFF11,0xBF);
+	gameboy_sound_w(0xFF12,0xF3);
+	gameboy_sound_w(0xFF14,0xBF);
+	gameboy_sound_w(0xFF16,0x3F);
+	gameboy_sound_w(0xFF17,0x00);
+	gameboy_sound_w(0xFF19,0xBF);
+	gameboy_sound_w(0xFF1A,0x7F);
+	gameboy_sound_w(0xFF1B,0xFF);
+	gameboy_sound_w(0xFF1C,0x9F);
+	gameboy_sound_w(0xFF1E,0xBF);
+	gameboy_sound_w(0xFF20,0xFF);
+	gameboy_sound_w(0xFF21,0x00);
+	gameboy_sound_w(0xFF22,0x00);
+	gameboy_sound_w(0xFF23,0xBF);
+	gameboy_sound_w(0xFF24,0x77);
+	gameboy_sound_w(0xFF25,0xF3);
+	gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/
+}
 
+void gb_shutdown_machine(void)
+{
+	int I;
+	void *f;
+	char filename[19];
+	char cartname[16];
+
+	/* Don't save if there was no battery */
+	if( !(CartType & BATTERY) )
+		return;
+
+	/* NOTE: The reason we save the carts RAM this way instead of using MAME's
+	   built in macros is because they force the filename to be the name of
+	   the machine.  We need to have a separate name for each game.
+	   We'll put "gb_" in front to signify it's a Gameboy NVRAM file. */
+
+	/* FIXME: I don't think this handles MBC2 RAM at all */
+
+	/* Build the filename */
+	strncpy(cartname, (char *)&gb_ram[0x0134], 16);
+	cartname[16] = '\0';
+	sprintf( filename, "gb_%s", cartname );
+
+	/* Save the RAM */
+	if((f = osd_fopen(filename, 0, OSD_FILETYPE_NVRAM, 1)) != 0 )
+	{
+		for( I = 0; I < RAMBanks; I++ )
+		{
+			osd_fwrite( f, RAMMap[I], 0x2000 );
+		}
+		osd_fclose(f);
+	}
 }
 
 WRITE_HANDLER ( gb_rom_bank_select )
 {
-	if (MBCType && ((offset & 0x0100) == 0))
+	/* No need to bank switch if there is no controller */
+	if( !MBCType )
 		return;
+
+	/* MBC2 isn't addressable under 0x2100 */
+	if( MBCType == MBC2 && ((offset & 0x0100) == 0) )
+		return;
+
 	data &= ROMMask;
-	if (!data)
+
+	/* Selecting bank 0 == selecting bank 1 except with an MBC5 */
+	if( !data && MBCType != MBC5 )
 		data = 1;
-	if (ROMMask && (data != ROMBank))
+
+	switch( MBCType )
 	{
-		ROMBank = data;
-		cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x4000);
-		if (Verbose & 0x08)
-			printf ("ROM: Bank %d selected\n", data);
+		case MBC1:
+		case MBC2:
+		case MBC3:
+		case MBC5:
+		{
+			if( ROMMask && (data != ROMBank) )
+			{
+				ROMBank = data;
+				cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x4000);
+				if (Verbose & 0x08)
+					printf ("ROM: Bank %d selected\n", data);
+			}
+		}
 	}
 }
 
@@ -137,7 +189,7 @@ WRITE_HANDLER ( gb_w_io )
 		{
 			switch (data & 0x30)
 			{
-			case 0x00:				   // start condition
+			case 0x00:				   /* start condition */
 				if (start)
 					puts ("SGB: Start condition before end of transfer ??");
 				bit_count = 0;
@@ -146,7 +198,7 @@ WRITE_HANDLER ( gb_w_io )
 				rest = 0;
 				JOYPAD = 0x0F & ((readinputport (0) >> 4) | readinputport (0) | 0xF0);
 				break;
-			case 0x10:				   // data true
+			case 0x10:				   /* data true */
 				if (rest)
 				{
 					if (byte_count == 16)
@@ -166,7 +218,7 @@ WRITE_HANDLER ( gb_w_io )
 				}
 				JOYPAD = 0x1F & ((readinputport (0) >> 4) | 0xF0);
 				break;
-			case 0x20:				   // data false
+			case 0x20:				   /* data false */
 				if (rest)
 				{
 					if (byte_count == 16)
@@ -199,7 +251,7 @@ WRITE_HANDLER ( gb_w_io )
 				}
 				JOYPAD = 0x2F & (readinputport (0) | 0xF0);
 				break;
-			case 0x30:				   // rest condition
+			case 0x30:				   /* rest condition */
 				if (start)
 					rest = 1;
 				if (controller_mode)
@@ -274,7 +326,7 @@ WRITE_HANDLER ( gb_w_io )
 		gb_bpal[3] = Machine->pens[(data & 0xC0) >> 6];
 		break;
 #if 0
-		// only 4 colors in Machine->pens allocated!
+		/* only 4 colors in Machine->pens allocated! */
 	case 0xFF48:
 		gb_spal0[0] = Machine->pens[(data & 0x03) + 4];
 		gb_spal0[1] = Machine->pens[((data & 0x0C) >> 2) + 4];
@@ -306,9 +358,9 @@ WRITE_HANDLER ( gb_w_io )
 		/* Sound Registers */
 		if ((offset >= 0xFF10) && (offset <= 0xFF26))
 		{
-            /*logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);*/
-            gameboy_sound_w(offset,data);
+			/*logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);*/
 			gb_ram [offset] = data;
+			gameboy_sound_w(offset,data);
 			return;
 		}
 
@@ -327,7 +379,6 @@ WRITE_HANDLER ( gb_w_io )
 				gb_ram [0xFF26] = 0;
 			return;
 		}
-
 	}
 	gb_ram [offset] = data;
 }
@@ -374,10 +425,39 @@ int gb_load_rom (int id)
 		"ROM ONLY",
 		"ROM+MBC1",
 		"ROM+MBC1+RAM",
-        "ROM+MBC1+RAM+BATTERY",
+		"ROM+MBC1+RAM+BATTERY",
         "UNKNOWN",
-        "ROM+MBC2",
-        "ROM+MBC2+BATTERY"
+		"ROM+MBC2",
+		"ROM+MBC2+BATTERY",
+        "UNKNOWN",
+		"ROM+RAM",
+		"ROM+RAM+BATTERY",
+        "UNKNOWN",
+		"ROM+MMM01",
+		"ROM+MMM01+SRAM",
+		"ROM+MMM01+SRAM+BATTERY",
+        "UNKNOWN",
+		"ROM+MBC3+TIMER+BATTERY",
+		"ROM+MBC3+TIMER+RAM+BATTERY",
+		"ROM+MBC3",
+		"ROM+MBC3+RAM",
+		"ROM+MBC3+RAM+BATTERY",
+        "UNKNOWN",
+        "UNKNOWN",
+        "UNKNOWN",
+        "UNKNOWN",
+        "UNKNOWN",
+		"ROM+MBC5",
+		"ROM+MBC5+RAM",
+		"ROM+MBC5+RAM+BATTERY",
+		"ROM+MBC5+RUMBLE",
+		"ROM+MBC5+RUMBLE+SRAM",
+		"ROM+MBC5+RUMBLE+SRAM+BATTERY",
+		"Pocket Camera",
+		"Bandai TAMA5",
+		/* Need heaps of unknowns here */
+		"Hudson HuC-3",
+		"Hudson HuC-1"
 	};
 
   /*** Following are some known manufacturer codes *************************/
@@ -530,11 +610,92 @@ int gb_load_rom (int id)
 	ROMBanks = 2 << gb_ram[0x0148];
 	RAMBanks = rambanks[gb_ram[0x0149] & 3];
 	Checksum = ((UINT16) gb_ram[0x014E] << 8) + gb_ram[0x014F];
-	MBCType = gb_ram[0x0147] > 3;
-
-	if ((gb_ram[0x0147] == 4) || (gb_ram[0x0147] > 6))
+	/* File in our cart details */
+	switch( gb_ram[0x0147] )
 	{
-		logerror("Error loading cartridge: Unknown ROM type");
+		case 0x00:
+			MBCType = 0;
+			CartType = 0;
+			break;
+		case 0x01:
+			MBCType = MBC1;
+			CartType = 0;
+			break;
+		case 0x02:
+			MBCType = MBC1;
+			CartType = RAM;
+			break;
+		case 0x03:
+			MBCType = MBC1;
+			CartType = RAM | BATTERY;
+			break;
+		case 0x05:
+			MBCType = MBC2;
+			CartType = 0;
+			break;
+		case 0x06:
+			MBCType = MBC2;
+			CartType = BATTERY;
+			break;
+		case 0x08:
+			MBCType = 0;
+			CartType = RAM;
+		case 0x09:
+			MBCType = 0;
+			CartType = RAM | BATTERY;
+			break;
+		case 0x0F:
+			MBCType = MBC3;
+			CartType = TIMER | BATTERY;
+			break;
+		case 0x10:
+			MBCType = MBC3;
+			CartType = TIMER | RAM | BATTERY;
+			break;
+		case 0x11:
+			MBCType = MBC3;
+			CartType = 0;
+			break;
+		case 0x12:
+			MBCType = MBC3;
+			CartType = RAM;
+			break;
+		case 0x13:
+			MBCType = MBC3;
+			CartType = RAM | BATTERY;
+			break;
+		case 0x19:
+			MBCType = MBC5;
+			CartType = 0;
+			break;
+		case 0x1A:
+			MBCType = MBC5;
+			CartType = RAM;
+			break;
+		case 0x1B:
+			MBCType = MBC5;
+			CartType = RAM | BATTERY;
+			break;
+		case 0x1C:
+			MBCType = MBC5;
+			CartType = RUMBLE;
+			break;
+		case 0x1D:
+			MBCType = MBC5;
+			CartType = RUMBLE | SRAM;
+			break;
+		case 0x1E:
+			MBCType = MBC5;
+			CartType = RUMBLE | SRAM | BATTERY;
+			break;
+		default:
+			MBCType = 0;
+			CartType = UNKNOWN;
+	}
+
+	if ( CartType & UNKNOWN )
+	{
+		logerror("Error loading cartridge: Unknown ROM type\n");
 		osd_fclose (F);
 		return 1;
 	}
@@ -544,12 +705,14 @@ int gb_load_rom (int id)
 		strncpy (S, (char *)&gb_ram[0x0134], 16);
 		S[16] = '\0';
 		logerror("OK\n  Name: %s\n", S);
-		logerror("  Type: %s\n", CartTypes[gb_ram[0x0147]]);
-		logerror("  ROM Size: %d 16kB Banks\n", ROMBanks);
+		logerror("  Type: %s [%Xh]\n", CartTypes[gb_ram[0x0147]], gb_ram[0x0147] );
+		logerror("  Color GB: %s [%Xh]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
+		logerror("  Super GB: %s [%Xh]\n", (gb_ram[0x0146] == 0x03) ? "Yes" : "No", gb_ram[0x0146] );
+		logerror("  ROM Size: %d 16kB Banks [%X]\n", ROMBanks, gb_ram[0x0148]);
 		J = (gb_ram[0x0149] & 0x03) * 2;
 		J = J ? (1 << (J - 1)) : 0;
-		logerror("  RAM Size: %d kB\n", J);
-
+		logerror("  RAM Size: %d kB [%X]\n", J, gb_ram[0x0149]);
+		logerror("  License code %X%Xh\n", gb_ram[0x0145], gb_ram[0x0144] );
 		J = ((UINT16) gb_ram[0x014B] << 8) + gb_ram[0x014A];
 		for (I = 0, P = NULL; !P && Companies[I].Name; I++)
 			if (J == Companies[I].Code)
@@ -589,7 +752,7 @@ int gb_load_rom (int id)
 		}
 		else
 		{
-			logerror("Error alocating memory\n");
+			logerror("Error allocating memory\n");
 			break;
 		}
 	}
@@ -604,7 +767,7 @@ int gb_load_rom (int id)
 		return 1;
 	}
 
-	if (RAMBanks && !MBCType)
+	if (RAMBanks && MBCType)
 	{
 		for (I = 0; I < RAMBanks; I++)
 		{
@@ -618,41 +781,29 @@ int gb_load_rom (int id)
 		}
 	}
 
-
-#if 0	/* FIXME */
-	if ((gb_ram[0x0147] == 3) || (gb_ram[0x0147] == 6))
+	/* Load the saved RAM if this cart has a battery */
+	/* FIXME: I don't think this handles MBC2 RAM at all */
+	if( CartType & BATTERY )
 	{
-		strcpy (TempFileName, BaseCartName);
-		strcat (TempFileName, ".sav");
-		if (Verbose)
-			logerror("Opening %s...", TempFileName);
-		if (F = fopen (TempFileName, "rb"))
+		void * f;
+		char filename[19];
+		char cartname[16];
+
+		/* Build the filename */
+		strncpy(cartname, (char *)&gb_ram[0x0134], 16);
+		cartname[16] = '\0';
+		sprintf( filename, "gb_%s", cartname );
+
+		f = osd_fopen(filename, 0, OSD_FILETYPE_NVRAM, 0);
+		if( f )
 		{
-			if (Verbose)
-				logerror("reading...");
-			if (gb_ram[0x0147] == 3)
+			for( I = 0; I < RAMBanks; I++ )
 			{
-				J = 0;
-				for (I = 0; I < RAMBanks; I++)
-				{
-					J += fread (RAMMap[I], 1, 0x2000, F);
-				}
-				if (Verbose)
-					puts ((J == RAMBanks * 0x2000) ? "OK" : "FAILED");
+				osd_fread( f, RAMMap[I], 0x2000 );
 			}
-			else
-			{
-				J = 0x0200;
-				J = (fread (Page[5], 1, J, F) == J);
-				if (Verbose)
-					puts (J ? "OK" : "FAILED");
-			}
-			fclose (F);
+			osd_fclose(f);
 		}
-		else if (Verbose)
-			puts ("FAILED");
 	}
-#endif
 
 	if (ROMBanks < 3)
 		ROMMask = 0;
@@ -712,7 +863,7 @@ int gb_scanline_interrupt (void)
 
 		CURLINE = (CURLINE + 1) % 154;
 
-		//gb_ram[0xFF44] = CURLINE;
+		/*gb_ram[0xFF44] = CURLINE; */
 
 		if (CURLINE < 144)
 		{
