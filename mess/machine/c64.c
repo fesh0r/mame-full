@@ -1074,7 +1074,7 @@ void c64_rom_load(void)
 		}
 		if (!romh
 		    && (cbm_rom[i].addr==0x8000)
-		    &&(cbm_rom[i].size=0x4000) ){
+		    &&(cbm_rom[i].size==0x4000) ){
 		    romh=cbm_rom[i].chip+0x2000;
 		}
 	    }
