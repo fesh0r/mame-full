@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.8 2001/11/16 05:02:58 npwoods Exp $
+  $Id: pc8801.c,v 1.9 2002/06/13 02:51:43 npwoods Exp $
 
 ***************************************************************************/
 
@@ -25,31 +25,36 @@ static int dmac_FL;
 static UINT16 dmac_addr[3],dmac_size[3];
 static UINT8 dmac_flag,dmac_status;
 
-static enum {
-  noblink_underline,
-  blink_underline,
-  noblink_block,
-  blink_block
+enum
+{
+	noblink_underline,
+	blink_underline,
+	noblink_block,
+	blink_block
 } cursor_mode;
 
-static enum {
-  parameter0,
-  parameter1,
-  parameter2,
-  parameter3,
-  parameter4,
-  cursorx,
-  cursory,
-  lpenx,
-  lpeny,
-  other
+enum
+{
+	parameter0,
+	parameter1,
+	parameter2,
+	parameter3,
+	parameter4,
+	cursorx,
+	cursory,
+	lpenx,
+	lpeny,
+	other
 } crtc_state;
 
-typedef enum {
-  GRAPH_NO,
-  GRAPH_200_COL,
-  GRAPH_200_BW,
-  GRAPH_400_BW} GMODE;
+typedef enum
+{
+	GRAPH_NO,
+	GRAPH_200_COL,
+	GRAPH_200_BW,
+	GRAPH_400_BW
+} GMODE;
+
 static GMODE gmode=GRAPH_NO;
 static int disp_plane[3];
 
@@ -82,73 +87,36 @@ static struct mame_bitmap *wbm1,*wbm2;
 
 void pc8801_video_init (int hireso)
 {
-  if ((wbm1 = bitmap_alloc(Machine->drv->screen_width,
-			   Machine->drv->screen_height)) == 0) return;
-  if ((wbm2 = bitmap_alloc(Machine->drv->screen_width,
-			   Machine->drv->screen_height)) == 0) return;
-  pc8801_is_24KHz=hireso;
-  crtcON=0;
-  textON=1;
+	wbm1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	wbm2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	pc8801_is_24KHz=hireso;
+	crtcON=0;
+	textON=1;
 
-  dmac_FL=0;
-  dmac_addr[0]=dmac_size[0]=0;
-  dmac_addr[1]=dmac_size[1]=0;
-  dmac_addr[2]=dmac_size[2]=0;
-  dmac_flag=dmac_status=0;
+	dmac_FL=0;
+	dmac_addr[0]=dmac_size[0]=0;
+	dmac_addr[1]=dmac_size[1]=0;
+	dmac_addr[2]=dmac_size[2]=0;
+	dmac_flag=dmac_status=0;
 
-  if(gVRAM==NULL) {
-    if((gVRAM = (UINT8*)malloc (0xc000))==NULL) {
-      {
-       	logerror ("pc8801: out of memory!\n");
-	return;
-      }
-    }
-  }
-  memset(gVRAM,0,0xc000);
-  if(pc88sr_textRAM==NULL) {
-    if((pc88sr_textRAM = (UINT8*)malloc (0x1000))==NULL) {
-      {
-	logerror ("pc8801: out of memory!\n");
-        return;
-      }
-    }
-  }
-  memset(pc88sr_textRAM,0,0x1000);
-  if(attr_tmp==NULL) {
-    if((attr_tmp = malloc (sizeof(unsigned short)*80*25))==NULL) {
-      {
-       	logerror ("pc8801: out of memory!\n");
-	return;
-      }
-    }
-  }
-  if(attr_old==NULL) {
-    if((attr_old = malloc (sizeof(unsigned short)*80*100))==NULL) {
-      {
-       	logerror ("pc8801: out of memory!\n");
-	return;
-      }
-    }
-  }
-  if(text_old==NULL) {
-    if((text_old = malloc (sizeof(unsigned short)*80*100))==NULL) {
-      {
-       	logerror ("pc8801: out of memory!\n");
-	return;
-      }
-    }
-  }
-  if(graph_dirty==NULL) {
-    if((graph_dirty = malloc (80*100))==NULL) {
-      {
-       	logerror ("pc8801: out of memory!\n");
-	return;
-      }
-    }
-  }
-  selected_vram=0;
-  ALUON=0;
-  analog_palette=0;
+	gVRAM = (UINT8*) auto_malloc(0xc000);
+	pc88sr_textRAM = (UINT8*) auto_malloc(0x1000);
+	attr_tmp = auto_malloc(sizeof(unsigned short)*80*25);
+	attr_old = auto_malloc(sizeof(unsigned short)*80*100);
+	text_old = auto_malloc(sizeof(unsigned short)*80*100);
+	graph_dirty = auto_malloc(80*100);
+
+	if (!wbm1 || !wbm2 || !gVRAM || !pc88sr_textRAM || !attr_tmp || !attr_old || !text_old || !graph_dirty)
+	{
+		logerror ("pc8801: out of memory!\n");
+		return;
+	}
+
+	memset(gVRAM,0,0xc000);
+	memset(pc88sr_textRAM,0,0x1000);
+	selected_vram=0;
+	ALUON=0;
+	analog_palette=0;
 }
 
 static WRITE_HANDLER(write_gvram)
@@ -358,15 +326,18 @@ READ_HANDLER(pc8801_vramtest)
   }
 }
 
-int pc8801_vh_start(void){return 0;}
-void pc8801_vh_exit(void){}
+VIDEO_START( pc8801 )
+{
+	return 0;
+}
 
 #define BLOCK_YSIZE (pc8801_is_24KHz ? 4 : 2)
 
-void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pc8801 )
 {
   int x,y,attr_new,text_new,i,a,tx,ty,oy,gx,gy,ct,cg;
   static int blink_count;
+  int full_refresh = 1;
 
   blink_count=(blink_count+1)%(blink_period*4);
   /* attribute expand */
@@ -412,7 +383,8 @@ void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh)
   }
 
   /* display draw */
-  for(y=0;y<100;y++) {
+  for(y=0;y<100;y++)
+  {
     ty=y/(100/text_height);
     oy=y%(100/text_height);
     for(x=0;x<80;x++) {
@@ -615,24 +587,29 @@ void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh)
 	     &Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-void pc8801_init_palette (unsigned char *sys_palette,
-			  unsigned short *sys_colortable,
-			  const unsigned char *color_prom)
+PALETTE_INIT( pc8801 )
 {
-  int i;
+	int i;
 
-  memset(sys_palette,0,3*8);	/* for graphics */
-  /* for text */
-  for(i=0;i<8;i++) {
-    sys_palette[(i+8)*3+0] = (i & 2) ? 0xff : 0x00;
-    sys_palette[(i+8)*3+1] = (i & 4) ? 0xff : 0x00;
-    sys_palette[(i+8)*3+2] = (i & 1) ? 0xff : 0x00;
-    sys_colortable[i*2+0] = 0;
-    sys_colortable[i*2+1] = i+8;
-    sys_colortable[(i+8)*2+0] = i+8;
-    sys_colortable[(i+8)*2+1] = 0;
-  }
-  memset(sys_palette+3*16,0,3*2);	/* for background and scanline */
+	for (i = 0; i < 8; i++)
+		palette_set_color(i, 0, 0, 0);	/* for graphics */
+
+	/* for text */
+	for (i = 0; i < 8; i++)
+	{
+		palette_set_color(i+8,
+			(i & 2) ? 0xff : 0x00,
+			(i & 4) ? 0xff : 0x00,
+			(i & 1) ? 0xff : 0x00);
+		colortable[i*2+0] = 0;
+		colortable[i*2+1] = i+8;
+		colortable[(i+8)*2+0] = i+8;
+		colortable[(i+8)*2+1] = 0;
+	}
+
+	/* for background and scanline */
+	palette_set_color(16, 0, 0, 0);
+	palette_set_color(17, 0, 0, 0);
 }
 
 WRITE_HANDLER(pc8801_crtc_write)

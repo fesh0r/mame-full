@@ -212,52 +212,33 @@ int TMS9928A_start (int model, unsigned int vram) {
 
     /* Video RAM */
     tms.vramsize = vram;
-    tms.vMem = (UINT8*) malloc (vram);
-    if (!tms.vMem) return (1);
+    tms.vMem = (UINT8*) auto_malloc (vram);
+    if (!tms.vMem)
+		return 1;
     memset (tms.vMem, 0, vram);
 
     /* Sprite back buffer */
-    tms.dBackMem = (UINT8*)malloc (IMAGE_SIZE);
-    if (!tms.dBackMem) {
-        free (tms.vMem);
+    tms.dBackMem = (UINT8*)auto_malloc (IMAGE_SIZE);
+    if (!tms.dBackMem)
         return 1;
-    }
 
     /* dirty buffers */
-    tms.DirtyName = (char*)malloc (MAX_DIRTY_NAME);
-    if (!tms.DirtyName) {
-        free (tms.vMem);
-        free (tms.dBackMem);
+    tms.DirtyName = (char*)auto_malloc (MAX_DIRTY_NAME);
+    if (!tms.DirtyName)
         return 1;
-    }
 
-    tms.DirtyPattern = (char*)malloc (MAX_DIRTY_PATTERN);
-    if (!tms.DirtyPattern) {
-        free (tms.vMem);
-        free (tms.DirtyName);
-        free (tms.dBackMem);
+    tms.DirtyPattern = (char*)auto_malloc (MAX_DIRTY_PATTERN);
+    if (!tms.DirtyPattern)
         return 1;
-    }
 
-    tms.DirtyColour = (char*)malloc (MAX_DIRTY_COLOUR);
-    if (!tms.DirtyColour) {
-        free (tms.vMem);
-        free (tms.DirtyName);
-        free (tms.DirtyPattern);
-        free (tms.dBackMem);
+    tms.DirtyColour = (char*)auto_malloc (MAX_DIRTY_COLOUR);
+    if (!tms.DirtyColour)
         return 1;
-    }
 
     /* back bitmap */
-    tms.tmpbmp = bitmap_alloc (256, 192);
-    if (!tms.tmpbmp) {
-        free (tms.vMem);
-        free (tms.dBackMem);
-        free (tms.DirtyName);
-        free (tms.DirtyPattern);
-        free (tms.DirtyColour);
+    tms.tmpbmp = auto_bitmap_alloc (256, 192);
+    if (!tms.tmpbmp)
         return 1;
-    }
 
     TMS9928A_reset ();
     tms.LimitSprites = 1;
@@ -296,16 +277,6 @@ void TMS9928A_post_load (void) {
 
 	/* make sure the interrupt request is set properly */
 	if (tms.INTCallback) tms.INTCallback (tms.INT);
-}
-
-void video_stop_tms9928a()
-{
-	free (tms.vMem); tms.vMem = NULL;
-    free (tms.dBackMem); tms.dBackMem = NULL;
-    free (tms.DirtyColour); tms.DirtyColour = NULL;
-    free (tms.DirtyName); tms.DirtyName = NULL;
-    free (tms.DirtyPattern); tms.DirtyPattern = NULL;
-    bitmap_free (tms.tmpbmp); tms.tmpbmp = NULL;
 }
 
 /*
@@ -499,7 +470,7 @@ void TMS9928A_set_spriteslimit (int limit) {
 /*
 ** Updates the screen (the dMem memory area).
 */
-void video_update_tms9928a(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( tms9928a )
 {
     int c;
 

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.6 2001/06/11 17:16:04 PeT Exp $
+  $Id: pc8801.c,v 1.7 2002/06/13 02:51:41 npwoods Exp $
 
 ***************************************************************************/
 
@@ -142,10 +142,9 @@ void pc8801_raise_interrupt(int level)
   pc8801_update_interrupt();
 }
 
-int pc8801_interrupt(void)
+INTERRUPT_GEN( pc8801_interrupt )
 {
-  pc8801_raise_interrupt(1);
-  return ignore_interrupt();
+	pc8801_raise_interrupt(1);
 }
 
 void pc8801_timer_interrupt(int dummy)
@@ -687,14 +686,14 @@ static void pc88sr_ch_reset (int hireso)
   pc88sr_init_fmsound();
 }
 
-void pc88sr_ch_reset_l (void)
+MACHINE_INIT( pc88srl )
 {
   pc88sr_ch_reset(0);
 }
 
-void pc88sr_ch_reset_h (void)
+MACHINE_INIT( pc88srh )
 {
-  pc88sr_ch_reset(1);
+	pc88sr_ch_reset(1);
 }
 
 /*

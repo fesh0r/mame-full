@@ -60,37 +60,24 @@ static const struct rectangle typewriter_window =
 /*
 	video init
 */
-int video_start_pdp1(void)
+VIDEO_START( pdp1 )
 {
 	int i;
 
-
 	/* alloc bitmap for our private fun */
-	tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-	if (! tmpbitmap)
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (!tmpbitmap)
 		return 1;
 
-	typewriter_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height/*typewriter_window_width, typewriter_window_height*/);
-	if (! typewriter_bitmap)
-	{
-		bitmap_free(tmpbitmap);
-		tmpbitmap = NULL;
-
+	typewriter_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height/*typewriter_window_width, typewriter_window_height*/);
+	if (!typewriter_bitmap)
 		return 1;
-	}
 
 	/* alloc the array */
-	list = malloc(crt_window_width * crt_window_height * sizeof(point));
-	if (! list)
-	{
-		bitmap_free(tmpbitmap);
-		tmpbitmap = NULL;
-
-		bitmap_free(typewriter_bitmap);
-		typewriter_bitmap = NULL;
-
+	list = auto_malloc(crt_window_width * crt_window_height * sizeof(point));
+	if (!list)
 		return 1;
-	}
+
 	/* fill with black and set up list as empty */
 	for (i=0; i<(crt_window_width * crt_window_height); i++)
 	{
@@ -105,30 +92,6 @@ int video_start_pdp1(void)
 	return 0;
 }
 
-
-/*
-	video clean-up
-*/
-void video_stop_pdp1(void)
-{
-	if (list)
-	{
-		free(list);
-		list = NULL;
-	}
-	if (tmpbitmap)
-	{
-		bitmap_free(tmpbitmap);
-		tmpbitmap = NULL;
-	}
-	if (typewriter_bitmap)
-	{
-		bitmap_free(typewriter_bitmap);
-		typewriter_bitmap = NULL;
-	}
-
-	return;
-}
 
 /*
 	schedule a pixel to be plotted
@@ -238,7 +201,7 @@ void pdp1_screen_update(void)
 /*
 	pdp1_vh_update: effectively redraw the screen
 */
-void video_update_pdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+VIDEO_UPDATE( pdp1 )
 {
 	set_points(tmpbitmap);
 

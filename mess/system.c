@@ -555,8 +555,8 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* PC-8801 series Z80 based */
 	/* DRIVER( pc8801 ) */	/* PC-8801 */
 	/* DRIVER( pc88mk2 ) */	/* PC-8801mkII */
-//	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
-//	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
+	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
+	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
 	/* DRIVER( pc8801tr ) */	/* PC-8801mkIITR */
 	/* DRIVER( pc8801fr ) */	/* PC-8801mkIIFR */
 	/* DRIVER( pc8801mr ) */	/* PC-8801mkIIMR */

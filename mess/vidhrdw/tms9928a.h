@@ -20,8 +20,7 @@
 */
 int TMS9928A_start (int model, unsigned int vram);
 void TMS9928A_reset (void);
-void video_stop_tms9928a (void);
-void palette_init_tms9928a(unsigned short *colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( tms9928a );
 
 /*
 ** The I/O functions
@@ -34,7 +33,7 @@ WRITE_HANDLER (TMS9928A_register_w);
 /*
 ** Call this function to render the screen.
 */
-void video_update_tms9928a(struct mame_bitmap *bmp, const struct rectangle *cliprect);
+extern VIDEO_UPDATE( tms9928a );
 
 /*
 ** This next function must be called 50 or 60 times per second,

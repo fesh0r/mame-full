@@ -1,12 +1,11 @@
 /***************************************************************************
 
-  $Id: pc8801.h,v 1.4 2001/11/16 05:02:20 npwoods Exp $
+  $Id: pc8801.h,v 1.5 2002/06/13 02:51:41 npwoods Exp $
 
 ***************************************************************************/
 
 WRITE_HANDLER(pc8801_write_interrupt_level);
 WRITE_HANDLER(pc8801_write_interrupt_mask);
-int pc8801_interrupt(void);
 READ_HANDLER(pc88sr_inport_30);
 READ_HANDLER(pc88sr_inport_31);
 READ_HANDLER(pc88sr_inport_32);
@@ -20,8 +19,11 @@ WRITE_HANDLER(pc8801_outport_70);
 WRITE_HANDLER(pc8801_outport_78);
 READ_HANDLER(pc88sr_inport_71);
 WRITE_HANDLER(pc88sr_outport_71);
-void pc88sr_ch_reset_l (void);
-void pc88sr_ch_reset_h (void);
+
+extern INTERRUPT_GEN( pc8801_interrupt );
+extern MACHINE_INIT( pc88srl );
+extern MACHINE_INIT( pc88srh );
+
 void pc8801_update_bank(void);
 extern unsigned char *pc8801_mainRAM;
 extern int pc88sr_is_highspeed;
@@ -42,12 +44,11 @@ int is_pc8801_vram_select(void);
 WRITE_HANDLER(pc8801_vramsel);
 READ_HANDLER(pc8801_vramtest);
 extern unsigned char *pc88sr_textRAM;
-int pc8801_vh_start(void);
-void pc8801_vh_exit(void);
-void pc8801_vh_refresh(struct mame_bitmap *bitmap,int full_refresh);
-void pc8801_init_palette (unsigned char *sys_palette,
-			  unsigned short *sys_colortable,
-			  const unsigned char *color_prom);
+
+extern VIDEO_START( pc8801 );
+extern VIDEO_UPDATE( pc8801 );
+extern PALETTE_INIT( pc8801 );
+
 extern int pc8801_is_24KHz;
 WRITE_HANDLER(pc8801_crtc_write);
 READ_HANDLER(pc8801_crtc_read);

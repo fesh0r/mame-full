@@ -463,7 +463,7 @@ static const struct rectangle teletyper_scroll_clear_window =
 };
 static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
-static void palette_init_apexc(unsigned short *colortable, const unsigned char *dummy)
+static PALETTE_INIT( apexc )
 {
 	int i;
 
@@ -473,28 +473,15 @@ static void palette_init_apexc(unsigned short *colortable, const unsigned char *
 	memcpy(colortable, & apexc_colortable, sizeof(apexc_colortable));
 }
 
-static int video_start_apexc(void)
+static VIDEO_START( apexc )
 {
-	if ((apexc_bitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
+	if ((apexc_bitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
 		return 1;
-	if ((apexc_bitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
-	{
-		bitmap_free(apexc_bitmap1);
-		apexc_bitmap1 = NULL;
+	if ((apexc_bitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
 		return 1;
-	}
 
 	fillbitmap(apexc_bitmap1, Machine->pens[0], &/*Machine->visible_area*/teletyper_window);
-
 	return 0;
-}
-
-static void video_stop_apexc(void)
-{
-	bitmap_free(apexc_bitmap1);
-	apexc_bitmap1 = NULL;
-	bitmap_free(apexc_bitmap2);
-	apexc_bitmap2 = NULL;
 }
 
 /* draw a small 8*8 LED (well, there were no LEDs at the time, so let's call this a lamp ;-) ) */
@@ -846,7 +833,6 @@ static MACHINE_DRIVER_START(apexc)
 
 	MDRV_PALETTE_INIT(apexc)
 	MDRV_VIDEO_START(apexc)
-	MDRV_VIDEO_STOP(apexc)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(apexc)
 

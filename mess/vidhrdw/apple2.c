@@ -66,29 +66,6 @@ VIDEO_START( apple2 )
 }
 
 /***************************************************************************
-  apple2_vh_stop
-***************************************************************************/
-void apple2_vh_stop(void)
-{
-	int i;
-
-	for (i=0; i<2; i++)
-	{
-		if (apple2_text[i]!=0)
-			bitmap_free(apple2_text[i]);
-		if (apple2_lores[i]!=0)
-			bitmap_free(apple2_lores[i]);
-		if (apple2_hires[i]!=0)
-			bitmap_free(apple2_hires[i]);
-
-		apple2_text[i] = apple2_lores[i] = apple2_hires[i] = 0;
-		dirty_text[i]  = dirty_lores[i]  = dirty_hires[i]  = 0;
-	}
-
-	return;
-}
-
-/***************************************************************************
   apple2_text_draw
 ***************************************************************************/
 static void apple2_text_draw(int page)

@@ -276,7 +276,7 @@ static OPBASE_HANDLER(setOPbasefunc)
 	return -1;
 }
 
-void machine_init_pdp1(void)
+MACHINE_INIT( pdp1 )
 {
 	int config;
 
@@ -901,7 +901,7 @@ static void pdp1_keyboard(void)
 /*
 	Not a real interrupt - just handle keyboard input
 */
-void pdp1_interrupt(void)
+INTERRUPT_GEN( pdp1_interrupt )
 {
 	int control_keys;
 	int tw_keys;

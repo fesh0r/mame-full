@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.8 2001/09/01 01:14:59 npwoods Exp $
+  $Id: pc8801.c,v 1.9 2002/06/13 02:51:42 npwoods Exp $
 
 ***************************************************************************/
 
@@ -533,9 +533,8 @@ PORT_WRITE_START( pc88sr_writeport )
     { 0x00, 0xff, pc8801_unknown_out },
 MEMORY_END
 
-int pc8801fd_interrupt(void)
+static INTERRUPT_GEN( pc8801fd_interrupt )
 {
-  return ignore_interrupt();
 }
 
 MEMORY_READ_START( pc8801fd_readmem )
@@ -610,110 +609,61 @@ static struct YM2203interface ym2203_interface =
 	{ pc88sr_sound_interupt }
 };
 
-static struct MachineDriver machine_driver_pc88srl =
-{
+
+static MACHINE_DRIVER_START( pc88srl )
 	/* basic machine hardware */
-	{
-		{
-		  /* main CPU */
-			CPU_Z80,
-			4000000,    /* 4 Mhz */
-			pc8801_readmem,pc8801_writemem,pc88sr_readport,pc88sr_writeport,
-			pc8801_interrupt,1
-		},
-		{
-		  /* sub CPU(5 inch floppy drive) */
-			CPU_Z80,
-			4000000,    /* 4 Mhz */
-			pc8801fd_readmem,pc8801fd_writemem,pc8801fd_readport,pc8801fd_writeport,
-			pc8801fd_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	5000,
-	pc88sr_ch_reset_l,	/* init_machine */
-	0,	/* stop_machine */
 
-	/* video hardware */
-	640, 200, {0, 640-1, 0, 200-1},
-	gfxdecodeinfo,
-        18,
-        32,
-        pc8801_init_palette,
+	/* main CPU */
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        /* 4 Mhz */
+	MDRV_CPU_MEMORY(pc8801_readmem,pc8801_writemem)
+	MDRV_CPU_PORTS(pc88sr_readport,pc88sr_writeport)
+	MDRV_CPU_VBLANK_INT(pc8801_interrupt,1)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY |
-	VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_ASPECT_RATIO(8,5),
-	0,
-	pc8801_vh_start,
-	pc8801_vh_exit,
-	pc8801_vh_refresh,
+	/* sub CPU(5 inch floppy drive) */
+	MDRV_CPU_ADD_TAG("sub", Z80, 4000000)		/* 4 Mhz */
+	MDRV_CPU_MEMORY(pc8801fd_readmem,pc8801fd_writemem)
+	MDRV_CPU_PORTS(pc8801fd_readport,pc8801fd_writeport)
+	MDRV_CPU_VBLANK_INT(pc8801fd_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(5000)
+
+	MDRV_MACHINE_INIT( pc88srl )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY
+		| VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_ASPECT_RATIO(8,5))
+	MDRV_SCREEN_SIZE(640, 200)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 200-1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(18)
+	MDRV_COLORTABLE_LENGTH(32)
+	MDRV_PALETTE_INIT( pc8801 )
+
+	MDRV_VIDEO_START(pc8801)
+	MDRV_VIDEO_UPDATE(pc8801)
 
 	/* sound hardware */
-	0,0,0,0,
-        {
-                {
-                        SOUND_YM2203,
-                        &ym2203_interface
-                },
-                {
-                        SOUND_BEEP,
-                        &pc8801_beep_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(BEEP, pc8801_beep_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_pc88srh =
-{
-	/* basic machine hardware */
-	{
-		{
-		  /* main CPU */
-			CPU_Z80,
-			4000000,    /* 4 Mhz */
-			pc8801_readmem,pc8801_writemem,pc88sr_readport,pc88sr_writeport,
-			pc8801_interrupt,1
-		},
-		{
-		  /* sub CPU(5 inch floppy drive) */
-			CPU_Z80,
-			4000000,    /* 4 Mhz */
-			pc8801fd_readmem,pc8801fd_writemem,pc8801fd_readport,pc8801fd_writeport,
-			pc8801fd_interrupt,1
-		}
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	6000,
-	pc88sr_ch_reset_h,	/* init_machine */
-	0,	/* stop_machine */
 
-	/* video hardware */
-	640, 400, {0, 640-1, 0, 400-1},
-	gfxdecodeinfo,
-        18,
-        32,
-        pc8801_init_palette,
+static MACHINE_DRIVER_START( pc88srh )
+	MDRV_IMPORT_FROM( pc88srl )
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_INTERLEAVE(6000)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY |
-	VIDEO_ASPECT_RATIO(8,5),
-	0,
-	pc8801_vh_start,
-	pc8801_vh_exit,
-	pc8801_vh_refresh,
+	MDRV_MACHINE_INIT( pc88srh )
 
-	/* sound hardware */
-	0,0,0,0,
-        {
-                {
-                        SOUND_YM2203,
-                        &ym2203_interface
-                },
-                {
-                        SOUND_BEEP,
-                        &pc8801_beep_interface
-		}
-	}
-};
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY
+		| VIDEO_ASPECT_RATIO(8,5))
+	MDRV_SCREEN_SIZE(640, 400)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 400-1)
+MACHINE_DRIVER_END
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1985, pc88srl, 0,		pc88srl, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
+
+/*	  YEAR	NAME	  PARENT		MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
+COMPX( 1985, pc88srl, 0,			pc88srl, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
 COMPX( 1985, pc88srh, pc88srl,		pc88srh, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )
