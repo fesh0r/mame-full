@@ -82,7 +82,7 @@ READ_HANDLER( saturn_rom_r )    /* ROM */
 
 WRITE_HANDLER( saturn_rom_w )	/* ROM */
 {
-	logerror("saturn_rom_w   %07x %02x\n", offset, data);
+	logerror("saturn_rom_w    %07x %02x\n", offset, data);
 }
 
 READ_HANDLER( saturn_workl_ram_r )
@@ -213,46 +213,74 @@ WRITE_HANDLER( saturn_back_ram_w )
 
 READ_HANDLER( saturn_smpc_r )   /* SMPC */
 {
-    logerror("saturn_smpc_r  %07x\n", offset);
-	return 0xffff;
+	data_t data = 0x0000;
+	logerror("saturn_smpc_r   %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_smpc_w )  /* SMPC */
 {
-    logerror("saturn_smpc_w  %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_smpc_w   %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_smpc_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_smpc_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 READ_HANDLER( saturn_cs0_r )    /* CS0 */
 {
-	logerror("saturn_cs0_r   %07x\n", offset);
-	return 0xffff;
+	data_t data = 0x0000;
+	logerror("saturn_cs0_r    %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_cs0_w )	/* CS0 */
 {
-	logerror("saturn_cs0_w   %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_cs0_w    %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_cs0_w    %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_cs0_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 READ_HANDLER( saturn_cs1_r )    /* CS1 */
 {
-    logerror("saturn_cs1_r   %07x\n", offset);
-	return 0xffff;
+    data_t data = 0x0000;
+	logerror("saturn_cs1_r    %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_cs1_w )	/* CS1 */
 {
-    logerror("saturn_cs1_w   %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_cs1_w    %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_cs1_w    %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_cs1_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 READ_HANDLER( saturn_cs2_r )    /* CS2 */
 {
-    logerror("saturn_cs2_r   %07x\n", offset);
-	return 0xffff;
+    data_t data = 0x0000;
+	logerror("saturn_cs2_r    %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_cs2_w )	/* CS2 */
 {
-    logerror("saturn_cs2_w   %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_cs2_w    %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_cs2_w    %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_cs2_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 /********************************************************
@@ -285,7 +313,7 @@ enum {
 
 static void hirq_w(data_t data)
 {
-	logerror("            CD: write Hirq %04x (PC=%8X)\n", data, cpu_get_reg(SH2_PC));
+	logerror("  CD:           write hirq %04x (PC=%8X)\n", data, cpu_get_reg(SH2_PC));
 	acdblock.hirq &= (1 | ~data);
 	/* ### irqs */
 }
@@ -295,10 +323,10 @@ static void do_command(void)
 	switch(acdblock.cr1>>8)
 	{
 	case 0x00:
-		logerror("CD: Get status\n");
+		logerror("  CD:           Get status\n");
 		break;
 	case 0x01:
-		logerror("CD: Get hardware info\n");
+		logerror("  CD:           Get hardware info\n");
 		acdblock.cr1 = ST_NODISC << 8;
 		acdblock.cr2 = 0;
 		acdblock.cr3 = 0;
@@ -307,19 +335,19 @@ static void do_command(void)
 		/* acdblock.hirq |= 0xffff; */
 		break;
 	case 0x02:
-		logerror("CD: Get TOC\n");
+		logerror("  CD:           Get TOC\n");
 		break;
 	case 0x03:
-		logerror("CD: Get session info\n");
+		logerror("  CD:           Get session info\n");
 		break;
 	case 0x04:
-		logerror("CD: Initialize, stdby=%d, ecc=%d, rf=%d\n\n");
+		logerror("  CD:           Initialize, stdby=%d, ecc=%d, rf=%d\n\n");
 		break;
 	case 0x05:
-		logerror("CD: Open CD tray\n");
+		logerror("  CD:           Open CD tray\n");
 		break;
 	case 0x06:
-		logerror("CD: End data transfer\n");
+		logerror("  CD:           End data transfer\n");
 		acdblock.cr1 = ST_NODISC<<8;
 		acdblock.cr2 = 0;
 		acdblock.cr3 = 0;
@@ -327,94 +355,94 @@ static void do_command(void)
 		acdblock.hirq |= 0x0001;
 		break;
 	case 0x10:
-		logerror("CD: Play disk\n");
+		logerror("  CD:           play disk\n");
 		break;
 	case 0x11:
-		logerror("CD: Disk seek\n");
+		logerror("  CD:           disk seek\n");
 		break;
 	case 0x12:
-		logerror("CD: CD scan\n");
+		logerror("  CD:           CD scan\n");
 		break;
 	case 0x20:
-		logerror("CD: Get subcode\n");
+		logerror("  CD:           get subcode\n");
 		break;
 	case 0x30:
-		logerror("CD: Set device\n");
+		logerror("  CD:           set device\n");
 		break;
 	case 0x31:
-		logerror("CD: Get device\n");
+		logerror("  CD:           get device\n");
 		break;
 	case 0x32:
-		logerror("CD: Get last destination\n");
+		logerror("  CD:           get last destination\n");
 		break;
 	case 0x40:
-		logerror("CD: Set filter range\n");
+		logerror("  CD:           set filter range\n");
 		break;
 	case 0x41:
-		logerror("CD: Get filter range\n");
+		logerror("  CD:           get filter range\n");
 		break;
 	case 0x42:
-		logerror("CD: Set filter subheader conditions\n");
+		logerror("  CD:           set filter subheader conditions\n");
 		break;
 	case 0x43:
-		logerror("CD: Get filter subheader conditions\n");
+		logerror("  CD:           get filter subheader conditions\n");
 		break;
 	case 0x44:
-		logerror("CD: Set filter mode\n");
+		logerror("  CD:           set filter mode\n");
 		break;
 	case 0x45:
-		logerror("CD: Get filter mode\n");
+		logerror("  CD:           get filter mode\n");
 		break;
 	case 0x46:
-		logerror("CD: Set filter connexion\n");
+		logerror("  CD:           set filter connexion\n");
 		break;
 	case 0x47:
-		logerror("CD: Get filter connexion\n");
+		logerror("  CD:           get filter connexion\n");
 		break;
 	case 0x48:
-		logerror("CD: Reset selector\n");
+		logerror("  CD:           reset selector\n");
 		break;
 	case 0x50:
-		logerror("CD: Get CD block size\n");
+		logerror("  CD:           get CD block size\n");
 		break;
 	case 0x51:
-		logerror("CD: Get buffer size\n");
+		logerror("  CD:           get buffer size\n");
 		break;
 	case 0x52:
-		logerror("CD: Calculate actual size\n");
+		logerror("  CD:           calculate actual size\n");
 		break;
 	case 0x53:
-		logerror("CD: Get actual size\n");
+		logerror("  CD:           get actual size\n");
 		break;
 	case 0x54:
-		logerror("CD: Get sector info\n");
+		logerror("  CD:           get sector info\n");
 		break;
 	case 0x55:
-		logerror("CD: Execute FAD search\n");
+		logerror("  CD:           execute FAD search\n");
 		break;
 	case 0x56:
-		logerror("CD: Get FAD search results\n");
+		logerror("  CD:           get FAD search results\n");
 		break;
 	case 0x60:
-		logerror("CD: Get sector length\n");
+		logerror("  CD:           get sector length\n");
 		break;
 	case 0x61:
-		logerror("CD: Get sector data\n");
+		logerror("  CD:           get sector data\n");
 		break;
 	case 0x62:
-		logerror("CD: Delete sector data\n");
+		logerror("  CD:           delete sector data\n");
 		break;
 	case 0x63:
-		logerror("CD: Get and delete sector data\n");
+		logerror("  CD:           get and delete sector data\n");
 		break;
 	case 0x65:
-		logerror("CD: Copy sector data\n");
+		logerror("  CD:           copy sector data\n");
 		break;
 	case 0x66:
-		logerror("CD: Move sector data\n");
+		logerror("  CD:           move sector data\n");
 		break;
 	case 0x67:
-		logerror("CD: Get copy error\n");
+		logerror("  CD:           get copy error\n");
 		acdblock.cr1 = ST_STANDBY<<8;
 		acdblock.cr2 = 0;
 		acdblock.cr3 = 0;
@@ -422,19 +450,19 @@ static void do_command(void)
 		/* acdblock.hirq |= 0xffff; */
 		break;
 	case 0x70:
-		logerror("CD: Change directory\n");
+		logerror("  CD:           change directory\n");
 		break;
 	case 0x72:
-		logerror("CD: Get file system scope\n");
+		logerror("  CD:           get file system scope\n");
 		break;
 	case 0x73:
-		logerror("CD: Get file info\n");
+		logerror("  CD:           get file info\n");
 		break;
 	case 0x74:
-		logerror("CD: Read file\n");
+		logerror("  CD:           read file\n");
 		break;
 	case 0x75:
-		logerror("CD: Abort file\n");
+		logerror("  CD:           abort file\n");
 		acdblock.cr1 = ST_STANDBY<<8;
 		acdblock.cr2 = 0;
 		acdblock.cr3 = 0;
@@ -442,14 +470,14 @@ static void do_command(void)
 		acdblock.hirq |= 0x0201;
 		break;
 	default:
-		printf("CD: Executing command %02x\n", acdblock.cr1>>8);
+		logerror("  CD:           executing command %02x\n", acdblock.cr1>>8);
+		acdblock.cr1 = ST_STANDBY<<8;
+		/* acdblock.cr2 = 0; */
+		/* acdblock.cr3 = 0; */
+		/* acdblock.cr4 = 0; */
+		acdblock.hirq |= 0x0fe1;
 		break;
 	}
-	acdblock.cr1 = ST_STANDBY<<8;
-	/* acdblock.cr2 = 0; */
-	/* acdblock.cr3 = 0; */
-	/* acdblock.cr4 = 0; */
-	acdblock.hirq |= 0x0fe1;
 }
 
 void cd_init(void)
@@ -465,37 +493,39 @@ void cd_init(void)
 
 READ_HANDLER( saturn_cd_r )    /* CD */
 {
-	data_t data = 0x00;
+	data_t data = 0x0000;
 
     /*  static int tick = 0; */
 	switch(offset & 0xfffff)
     {
     case 0x90008:
-		logerror("            CD: read hirq (PC=%8X)\n", cpu_get_reg(SH2_PC));
 		data = acdblock.hirq;
+		logerror("  CD:           read hirq %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
+		break;
     case 0x90018:
-		logerror("            CD: read cr1 (PC=%8X)\n", cpu_get_reg(SH2_PC));
-		data = acdblock.cr1;
+        data = acdblock.cr1;
+		logerror("  CD:           read cr1  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     case 0x9001c:
-		data = acdblock.cr2;
+        data = acdblock.cr2;
+		logerror("  CD:           read cr2  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     case 0x90020:
-		data = acdblock.cr3;
+        data = acdblock.cr3;
+		logerror("  CD:           read cr3  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
         break;
     case 0x90024:
-		data = acdblock.cr4;
+        data = acdblock.cr4;
+		logerror("  CD:           read cr4  %04x (PC=%08x)\n", data, cpu_get_reg(SH2_PC));
 		break;
     default:
-		printf("            CD: read  %5X (PC=%8X)\n", offset, cpu_get_reg(SH2_PC));
+		logerror("  CD:           read %04x %04x (PC=%08x)\n", offset, data, cpu_get_reg(SH2_PC));
     }
-	logerror("saturn_cd_r   %07x %02x\n", offset, data);
 	return data;
 }
 
 WRITE_HANDLER( saturn_cd_w )   /* CD */
 {
-	logerror("saturn_cd_w   %07x %02x\n", offset, data);
 	switch(offset & 0xfffff)
 	{
     case 0x90008:
@@ -515,7 +545,13 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
         do_command();
         break;
     default:
-		logerror("            CD: write %5X.%c (%X) (PC=%8X)\n", offset, data, cpu_get_reg(SH2_PC));
+		if ((data & 0xffff0000) == 0xffff0000)
+			logerror("  CD:           write %04x %04x (PC=%08x)\n", offset, data & 0x0000ffff, cpu_get_reg(SH2_PC));
+		else
+		if ((data & 0xffff0000) == 0xff000000)
+			logerror("  CD:           write %04x xx%02x (PC=%08x)\n", offset, (data & 0x000000ff), cpu_get_reg(SH2_PC));
+		else
+			logerror("  CD:           write %04x %02xxx (PC=%08x)\n", offset, (data & 0x0000ff00) >> 8, cpu_get_reg(SH2_PC));
 	}
 }
 
@@ -524,14 +560,21 @@ WRITE_HANDLER( saturn_cd_w )   /* CD */
  ********************************************************/
 READ_HANDLER( saturn_minit_r )  /* MINIT */
 {
-	logerror("saturn_minit_r %07x\n", offset);
-	return 0x00;
+	data_t data = 0x0000;
+	logerror("saturn_minit_r  %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_minit_w )  /* MINIT */
 {
-	logerror("saturn_minit_w %07x %02x\n", offset, data);
-	cpu_set_irq_line(0, 1, HOLD_LINE);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_minit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_minit_w  %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_minit_w  %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
+    cpu_set_irq_line(0, 1, HOLD_LINE);
 }
 
 /********************************************************
@@ -539,14 +582,21 @@ WRITE_HANDLER( saturn_minit_w )  /* MINIT */
  ********************************************************/
 READ_HANDLER( saturn_sinit_r )  /* SINIT */
 {
-	logerror("saturn_sinit_r %07x\n", offset);
-	return 0x00;
+	data_t data = 0x0000;
+    logerror("saturn_sinit_r  %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
 {
-	logerror("saturn_sinit_w %07x %02x\n", offset, data);
-	cpu_set_irq_line(1, 1, HOLD_LINE);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_sinit_w  %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_sinit_w  %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_sinit_w  %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
+    cpu_set_irq_line(1, 1, HOLD_LINE);
 }
 
 /********************************************************
@@ -554,13 +604,20 @@ WRITE_HANDLER( saturn_sinit_w )  /* SINIT */
  ********************************************************/
 READ_HANDLER( saturn_dsp_r )   /* DSP */
 {
-	logerror("saturn_dsp_r  %07x\n", offset);
-    return 0xff;
+	data_t data = 0x0000;
+	logerror("saturn_dsp_r    %07x -> %04x\n", offset, data);
+	return data;
 }
 
 WRITE_HANDLER( saturn_dsp_w )  /* DSP */
 {
-	logerror("saturn_dsp_w  %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_dsp_w    %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_dsp_w    %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_dsp_w    %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 /********************************************************
@@ -568,13 +625,20 @@ WRITE_HANDLER( saturn_dsp_w )  /* DSP */
  ********************************************************/
 READ_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 {
-    logerror("saturn_vdp1_r  %07x\n", offset);
-    return 0xff;
+	data_t data = 0x0000;
+	logerror("saturn_vdp1_r   %07x -> %04x\n", offset, data);
+    return data;
 }
 
 WRITE_HANDLER( saturn_vdp1_w )	/* VDP1 registers */
 {
-    logerror("saturn_vdp1_w  %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_vdp1_w   %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_vdp1_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_vdp1_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 /********************************************************
@@ -582,13 +646,20 @@ WRITE_HANDLER( saturn_vdp1_w )	/* VDP1 registers */
  ********************************************************/
 READ_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 {
-    logerror("saturn_vdp2_r  %07x\n", offset);
-    return 0xff;
+	data_t data = 0x0000;
+	logerror("saturn_vdp2_r   %07x -> %04x\n", offset, data);
+    return data;
 }
 
 WRITE_HANDLER( saturn_vdp2_w )	/* VDP2 registers */
 {
-    logerror("saturn_vdp2_w  %07x %02x\n", offset, data);
+	if ((data & 0xffff0000) == 0xffff0000)
+		logerror("saturn_vdp2_w   %07x <- %04x\n", offset, data & 0x0000ffff);
+	else
+	if ((data & 0xffff0000) == 0xff000000)
+		logerror("saturn_vdp2_w   %07x <- xx%02x\n", offset, data & 0x000000ff);
+	else
+		logerror("saturn_vdp2_w   %07x <- %02xxx\n", offset, (data & 0x0000ff00) >> 8);
 }
 
 /********************************************************
@@ -1143,6 +1214,6 @@ static const struct IODevice io_saturn[] = {
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONSX(1992, saturn,   0,		saturn,   saturn,	0,		  "Sega",   "Saturn", GAME_NOT_WORKING )
+CONSX(1992, saturn,   0,		saturn,   saturn,	saturn,   "Sega",   "Saturn", GAME_NOT_WORKING )
 
 
