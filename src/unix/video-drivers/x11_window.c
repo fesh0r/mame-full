@@ -1015,7 +1015,7 @@ void x11_window_close_display (void)
       free (scaled_buffer_ptr);
       scaled_buffer_ptr = NULL;
    }
-   
+#ifdef USE_HWSCALE
    if (hwscale_yv12_rotate_buf0)
    {
       free (hwscale_yv12_rotate_buf0);
@@ -1027,6 +1027,7 @@ void x11_window_close_display (void)
       free (hwscale_yv12_rotate_buf1);
       hwscale_yv12_rotate_buf1 = NULL;
    }
+#endif
 
    XSync (display, True); /* send all events to sync; discard events */
 }
