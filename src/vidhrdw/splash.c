@@ -18,7 +18,6 @@ data16_t *roldfrog_bitmap_mode;
 int splash_bitmap_type;
 static struct tilemap *screen[2];
 
-
 /***************************************************************************
 
 	Callbacks for the TileMap code
@@ -96,24 +95,9 @@ WRITE16_HANDLER( splash_vram_w )
 
 static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	int sx,sy,color,count, colxor;
-	static int testxor = 0;
-	colxor = 0; /* splash */
-
-
-	if ( code_pressed_memory(KEYCODE_W) )
-	{
-		testxor++;
-	//	printf("testxor %04x\n",testxor);
-	}
-	if ( code_pressed_memory(KEYCODE_Q) )
-	{
-		testxor--;
-	//	printf("testxor %04x\n",testxor);
-	}
-
-
-
+	int sx,sy,color,count,colxor,bitswap;
+	colxor = 0; /* splash and some bitmap modes in roldfrog */
+	bitswap = 0;
 
 	if (splash_bitmap_type==1) /* roldfrog */
 	{
@@ -121,10 +105,36 @@ static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle
 		{
 			colxor = 0x7f;
 		}
-		else
+		else if (roldfrog_bitmap_mode[0]==0x0100)
 		{
-		//	usrintf_showmessage("mode %04x",roldfrog_bitmap_mode[0]);
-			colxor = testxor;
+			bitswap = 1;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0200)
+		{
+			colxor = 0x55;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0300)
+		{
+			bitswap = 2;
+			colxor = 0x7f;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0400)
+		{
+			bitswap = 3;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0500)
+		{
+			bitswap = 4;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0600)
+		{
+			bitswap = 5;
+			colxor = 0x7f;
+		}
+		else if (roldfrog_bitmap_mode[0]==0x0700)
+		{
+			bitswap = 6;
+			colxor = 0x55;
 		}
 	}
 
@@ -135,6 +145,28 @@ static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle
 		{
 			color = splash_pixelram[count]&0xff;
 			count++;
+
+			switch( bitswap )
+			{
+			case 1:
+				color = BITSWAP8(color,7,0,1,2,3,4,5,6);
+				break;
+			case 2:
+				color = BITSWAP8(color,7,4,6,5,1,0,3,2);
+				break;
+			case 3:
+				color = BITSWAP8(color,7,3,2,1,0,6,5,4);
+				break;
+			case 4:
+				color = BITSWAP8(color,7,6,4,2,0,5,3,1);
+				break;
+			case 5:
+				color = BITSWAP8(color,7,0,6,5,4,3,2,1);
+				break;
+			case 6:
+				color = BITSWAP8(color,7,4,3,2,1,0,6,5);
+				break;
+			}
 
 			plot_pixel(bitmap, sx-9, sy, Machine->pens[0x300+(color^colxor)]);
 		}

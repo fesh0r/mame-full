@@ -1365,6 +1365,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( kikstart )	/* A20 */
 
 	/* other Taito games */
+	DRIVER( fgoal )		/*     (c) 1979 Taito Corporation */
 	DRIVER( crbaloon )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( crbalon2 )	/* CL  (c) 1980 Taito Corporation */
 	DRIVER( sbowling )	/* KB  (c) 1982 Taito Corporation */
@@ -5492,6 +5493,8 @@ Other Sun games
 	DRIVER( rougien )	/* (c) 1982 Sanritsu */
 	DRIVER( drmicro )	/* (c) 1983 Sanritsu */
 	DRIVER( appoooh )	/* (c) 1984 Sega */	/* made by Sanritsu */
+	DRIVER( robowres )	/* (c) 1986 Sega */
+	DRIVER( robowrb )	/* bootleg */
 	DRIVER( bankp )		/* (c) 1984 Sega */	/* made by Sanritsu */
 	DRIVER( mjkjidai )	/* (c) 1986 Sanritsu */
 	DRIVER( mayumi )	/* (c) 1988 Victory L.L.C. */	/* made by Sanritsu */

@@ -25,10 +25,7 @@ Jonemaan
 BIOS-D
 
 note:
-Sound not hooked up on Return of Lady Frog
-Some backgrounds have wrong colours on Return of Lady Frog
--- i'm not sure why, palette doesn't fit whatever you xor it with, maybe
-   the roms should be mapped in a different way?
+Sound not working on Return of Lady Frog
 
 ***************************************************************************/
 
@@ -59,6 +56,17 @@ static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 		soundlatch_w(0,data & 0xff);
 		cpunum_set_input_line(1,0,HOLD_LINE);
 	}
+}
+
+static WRITE16_HANDLER( roldf_sh_irqtrigger_w )
+{
+	if (ACCESSING_LSB){
+		soundlatch_w(0,data & 0xff);
+		cpunum_set_input_line(1,0,HOLD_LINE);
+	}
+
+	// give the z80 time to see it
+	cpu_spinuntil_time(TIME_IN_USEC(40));
 }
 
 static ADDRESS_MAP_START( splash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -139,6 +147,13 @@ ADDRESS_MAP_END
 /* note, sprite ram has moved, extra protection ram, and extra write for the pixel layer */
 /* sound hardware is also different -- not done yet! */
 
+static READ16_HANDLER( roldfrog_bombs_r )
+{
+	static int ret = 0x100;
+	ret ^= 0x100;
+	return ret;
+}
+
 static ADDRESS_MAP_START( roldfrog_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
 	AM_RANGE(0x400000, 0x407fff) AM_READ(MRA16_ROM)			/* Protection Data */
@@ -152,6 +167,7 @@ static ADDRESS_MAP_START( roldfrog_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x881800, 0x881803) AM_READ(MRA16_RAM)			/* Scroll registers */
 	AM_RANGE(0x881804, 0x881fff) AM_READ(MRA16_RAM)			/* Work RAM */
 	AM_RANGE(0x8c0000, 0x8c0fff) AM_READ(MRA16_RAM)			/* Palette */
+	AM_RANGE(0xa00000, 0xa00001) AM_READ(roldfrog_bombs_r)
 	AM_RANGE(0xd00000, 0xd00fff) AM_READ(MRA16_RAM)			/* Sprite RAM */
 	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)			/* Work RAM */
 ADDRESS_MAP_END
@@ -161,7 +177,7 @@ static ADDRESS_MAP_START( roldfrog_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x407fff) AM_WRITE(MWA16_ROM) AM_BASE(&roldfrog_protdata)			/* Protection Data */
 	AM_RANGE(0x408000, 0x4087ff) AM_WRITE(MWA16_RAM) 										/* Extra Ram */
 	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_pixelram)			/* Pixel Layer */
-//	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)							/* Sound command */
+	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(roldf_sh_irqtrigger_w)							/* Sound command */
 	AM_RANGE(0x84000a, 0x84003b) AM_WRITE(splash_coin_w)									/* Coin Counters + Coin Lockout */
 	AM_RANGE(0x880000, 0x8817ff) AM_WRITE(splash_vram_w) AM_BASE(&splash_videoram)				/* Video RAM */
 	AM_RANGE(0x881800, 0x881803) AM_WRITE(MWA16_RAM) AM_BASE(&splash_vregs)						/* Scroll registers */
@@ -173,7 +189,18 @@ static ADDRESS_MAP_START( roldfrog_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
+static ADDRESS_MAP_START( roldf_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_ROM
+	AM_RANGE(0x7000, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0xffff) AM_REGION(REGION_CPU2, 0x8000)	/* wrong, probably banked somehow */
+ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( roldf_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x12, 0x12) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x13, 0x13) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_NOP	/* NMI ack */
+	AM_RANGE(0x70, 0x70) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( splash )
 	PORT_START	/* DSW #1 */
@@ -325,17 +352,34 @@ static MACHINE_DRIVER_START( splash )
 	MDRV_SOUND_ADD(MSM5205, splash_msm5205_interface)
 MACHINE_DRIVER_END
 
+static void ym_irq(int state)
+{
+	logerror("2203 IRQ: %d\n", state);
+}
+
+static struct YM2203interface ym2203_interface =
+{
+	1,		/* 1 chip */
+	3000000,	/* 3 MHz - verified */
+	{ YM2203_VOL(40,60) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ ym_irq }
+};
 
 static MACHINE_DRIVER_START( roldfrog )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz - not verified */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz - verified */
 	MDRV_CPU_PROGRAM_MAP(roldfrog_readmem,roldfrog_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-//	MDRV_CPU_ADD(Z80,30000000/8)
-//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz? */
-//	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
+	MDRV_CPU_ADD(Z80,30000000)			/* 3 MHz - verified */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(roldf_sound_map,0)
+	MDRV_CPU_IO_MAP(roldf_sound_io_map,0)
 //	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -351,6 +395,8 @@ static MACHINE_DRIVER_START( roldfrog )
 
 	MDRV_VIDEO_START(splash)
 	MDRV_VIDEO_UPDATE(splash)
+
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
 MACHINE_DRIVER_END
 
 
@@ -494,5 +540,5 @@ DRIVER_INIT( roldfrog )
 
 GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
 
-GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
+GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )

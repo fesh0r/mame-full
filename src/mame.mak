@@ -97,8 +97,8 @@ CPUS+=SPC700@
 CPUS+=E132XS@
 CPUS+=I386@
 CPUS+=I960@
-CPUS+=H83002@ 
-CPUS+=V810@ 
+CPUS+=H83002@
+CPUS+=V810@
 CPUS+=M37710@
 
 # uncomment the following lines to include a sound core
@@ -412,6 +412,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_f3.o $(OBJ)/drivers/taito_f3.o \
 	$(OBJ)/vidhrdw/taitoair.o $(OBJ)/drivers/taitoair.o \
 	$(OBJ)/drivers/taitojc.o \
+	$(OBJ)/drivers/fgoal.o $(OBJ)/vidhrdw/fgoal.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
