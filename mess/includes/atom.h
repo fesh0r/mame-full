@@ -19,9 +19,6 @@ WRITE_HANDLER (atom_8271_w);
 
 DEVICE_LOAD( atom_floppy );
 
-READ_HANDLER(atom_via_r);
-WRITE_HANDLER(atom_via_w);
-
 READ_HANDLER(atom_eprom_box_r);
 WRITE_HANDLER(atom_eprom_box_w);
 void atom_eprom_box_init(void);

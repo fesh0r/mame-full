@@ -25,43 +25,13 @@ static MACHINE_INIT( a310 )
 	UINT8 *mem = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&mem[0x00200000]);
-	memory_set_bankhandler_r(1,0,MRA8_BANK1);
-	memory_set_bankhandler_w(1,0,MWA8_ROM);
-
 	cpu_setbank(2,&mem[0x00000000]);
-	memory_set_bankhandler_r(2,0,MRA8_RAM);
-	memory_set_bankhandler_w(2,0,MWA8_RAM);
-
     cpu_setbank(3,&mem[0x00200000]);
-	memory_set_bankhandler_r(3,0,MRA8_BANK3);
-	memory_set_bankhandler_w(3,0,MWA8_ROM);
-
     cpu_setbank(4,&mem[0x00200000]);
-	memory_set_bankhandler_r(4,0,MRA8_BANK4);
-	memory_set_bankhandler_w(4,0,MWA8_ROM);
-
     cpu_setbank(5,&mem[0x00200000]);
-	memory_set_bankhandler_r(5,0,MRA8_BANK5);
-	memory_set_bankhandler_w(5,0,MWA8_ROM);
-
     cpu_setbank(6,&mem[0x00200000]);
-	memory_set_bankhandler_r(6,0,MRA8_BANK6);
-	memory_set_bankhandler_w(6,0,MWA8_ROM);
-
     cpu_setbank(7,&mem[0x00200000]);
-	memory_set_bankhandler_r(7,0,MRA8_BANK7);
-	memory_set_bankhandler_w(7,0,MWA8_ROM);
-
     cpu_setbank(8,&mem[0x00200000]);
-	memory_set_bankhandler_r(8,0,MRA8_BANK8);
-	memory_set_bankhandler_w(8,0,MWA8_ROM);
-}
-
-static VIDEO_START( a310 )
-{
-	if (video_start_generic())
-        return 1;
-	return 0;
 }
 
 static VIDEO_UPDATE( a310 )
@@ -88,18 +58,10 @@ static VIDEO_UPDATE( a310 )
 	}
 }
 
-static MEMORY_READ32_START (readmem)
-	{ 0x00000000, 0x007fffff, MRA32_BANK1 },
-	{ 0x00800000, 0x00ffffff, MRA32_BANK2 },
-	{ 0x01000000, 0x017fffff, MRA32_BANK3 },
-	{ 0x01800000, 0x01ffffff, MRA32_BANK4 },
-	{ 0x02000000, 0x027fffff, MRA32_BANK5 },
-	{ 0x02800000, 0x02ffffff, MRA32_BANK6 },
-	{ 0x03000000, 0x037fffff, MRA32_BANK7 },
-	{ 0x03800000, 0x03ffffff, MRA32_BANK8 },
-MEMORY_END
+
 
 /* R Nabet : no idea what this is supposed to do */
+/* NPW 4-Feb-2004 - This appears to be a 32 bit dirtybuffer update */
 static WRITE32_HANDLER( a310_videoram_w )
 {
 	if (((UINT32 *)videoram)[offset] != data)
@@ -113,17 +75,20 @@ static WRITE32_HANDLER( a310_videoram_w )
 	}
 }
 
-static MEMORY_WRITE32_START (writemem)
-	{ 0x00000000, 0x007fffff, MWA32_BANK1 },
-    { 0x001ff000, 0x001fffff, a310_videoram_w, (data32_t**)&videoram, &videoram_size },
-	{ 0x00800000, 0x00ffffff, MWA32_BANK2 },
-	{ 0x01000000, 0x017fffff, MWA32_BANK3 },
-	{ 0x01800000, 0x01ffffff, MWA32_BANK4 },
-	{ 0x02000000, 0x027fffff, MWA32_BANK5 },
-	{ 0x02800000, 0x02ffffff, MWA32_BANK6 },
-	{ 0x03000000, 0x037fffff, MWA32_BANK7 },
-	{ 0x03800000, 0x03ffffff, MWA32_BANK8 },
-MEMORY_END
+
+static ADDRESS_MAP_START( a310_mem, ADDRESS_SPACE_PROGRAM, 32 )
+    AM_RANGE(0x001ff000, 0x001fffff) AM_WRITE(a310_videoram_w) AM_BASE((data32_t**)&videoram) AM_SIZE(&videoram_size)
+
+	AM_RANGE(0x00000000, 0x007fffff) AM_READWRITE(MRA32_BANK1, MWA32_ROM)
+	AM_RANGE(0x00800000, 0x00ffffff) AM_READWRITE(MRA32_BANK2, MWA32_BANK2)
+	AM_RANGE(0x01000000, 0x017fffff) AM_READWRITE(MRA32_BANK3, MWA32_ROM)
+	AM_RANGE(0x01800000, 0x01ffffff) AM_READWRITE(MRA32_BANK4, MWA32_ROM)
+	AM_RANGE(0x02000000, 0x027fffff) AM_READWRITE(MRA32_BANK5, MWA32_ROM)
+	AM_RANGE(0x02800000, 0x02ffffff) AM_READWRITE(MRA32_BANK6, MWA32_ROM)
+	AM_RANGE(0x03000000, 0x037fffff) AM_READWRITE(MRA32_BANK7, MWA32_ROM)
+	AM_RANGE(0x03800000, 0x03ffffff) AM_READWRITE(MRA32_BANK8, MWA32_ROM)
+ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( a310 )
 	PORT_START /* DIP switches */
@@ -241,7 +206,7 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( a310 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", ARM, 8000000)        /* 8 MHz */
-	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(a310_mem, 0)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
@@ -255,7 +220,7 @@ static MACHINE_DRIVER_START( a310 )
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_COLORTABLE_LENGTH(2)
 
-	MDRV_VIDEO_START(a310)
+	MDRV_VIDEO_START(generic)
 	MDRV_VIDEO_UPDATE(a310)
 MACHINE_DRIVER_END
 

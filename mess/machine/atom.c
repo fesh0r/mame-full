@@ -121,17 +121,6 @@ struct via6522_interface atom_6522_interface=
 	NULL
 };
 
-READ_HANDLER(atom_via_r)
-{
-	return via_0_r(offset & 0x0f);
-}
-
-WRITE_HANDLER(atom_via_w)
-{
-	via_0_w(offset & 0x0f, data);
-
-}
-
 
 
 static	ppi8255_interface	atom_8255_int =
@@ -327,14 +316,14 @@ QUICKLOAD_LOAD(atom)
 	/* copy data into memory */
 	for (i=size-1; i>=0; i--)
 	{
-		cpu_writemem16(addr, data[0]);
+		program_write_byte(addr, data[0]);
 		addr++;
 		data++;
 	}
 
 
 	/* set new pc address */
-	cpunum_set_pc(0,exec);
+	activecpu_set_reg(REG_PC, exec);
 
 	/* free the data */
 	free(quickload_data);
@@ -501,7 +490,6 @@ void atom_eprom_box_init(void)
 	/* set initial eprom */
 	selected_eprom = 0;
 	/* set memory handler */
-    memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	/* init */
 	atom_eprom_box_refresh();
 }

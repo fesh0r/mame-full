@@ -81,8 +81,6 @@
 // IO Expansion, only a little bit for ibm bios self tests
 //#define EXP_ON
 
-static READ_HANDLER( return_0xff ) { return 0xff; }
-
 static ADDRESS_MAP_START( pc_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x9ffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
 	AM_RANGE(0xa0000, 0xbffff) AM_NOP
@@ -110,7 +108,7 @@ static ADDRESS_MAP_START(pc_io, ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
 	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
 	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
-	AM_RANGE(0x0340, 0x0357) AM_READ(return_0xff) /* anonymous bios should not recogniced realtimeclock */
+	AM_RANGE(0x0340, 0x0357) AM_READ(return8_FF) /* anonymous bios should not recogniced realtimeclock */
 	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
 #ifdef ADLIB
 	AM_RANGE(0x0388, 0x0388) AM_READWRITE(YM3812_status_port_0_r,	YM3812_control_port_0_w)

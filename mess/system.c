@@ -196,15 +196,15 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 /****************COMPUTERS***************************************************/
     /* ACORN */
-//	DRIVER( atom )      /* 1979 Acorn Atom									*/
-//	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
-//	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
-//	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
-//	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
-//	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
-//	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
-//TESTDRIVER( bbcb6502 )	/* 198? BBC B WD1770 with a 6502 second processor	*/
-//TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310						*/
+	DRIVER( atom )      /* 1979 Acorn Atom									*/
+	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
+	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
+	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
+	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
+	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
+	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
+TESTDRIVER( bbcb6502 )	/* 198? BBC B WD1770 with a 6502 second processor	*/
+TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310						*/
 
 	/* CAMBRIDGE COMPUTERS */
 //	DRIVER( z88 )		/*													*/

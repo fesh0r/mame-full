@@ -4,21 +4,16 @@
 
         z88 Notepad computer
 
-
         system driver
-
 
         TODO:
         - speaker controlled by constant tone or txd
-
 
         Kevin Thacker [MESS driver]
 
  ******************************************************************************/
 #include "driver.h"
 #include "includes/z88.h"
-
-unsigned char *z88_memory = NULL;
 
 struct blink_hw blink;
 
@@ -30,70 +25,6 @@ static void blink_reset(void)
 	blink.com &=~(1<<2);
 	blink.sbf = 0;
 	blink.z88_state = Z88_AWAKE;
-
-}
-
-/* load image */
-static void z88_dump_ram(void)
-{
-	mame_file *file;
-
-	file = mame_fopen(Machine->gamedrv->name, "z88.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
- 
-	if (file)
-	{
-		int i;
-		for (i=0; i<65536; i++)
-		{
-			char data;
-
-			data = cpu_readmem16(i);
-
-			mame_fwrite(file, &data, 1);
-
-		}
-
-		/* close file */
-		mame_fclose(file);
-	}
-
-	file = mame_fopen(Machine->gamedrv->name, "z88b.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
- 
-	if (file)
-	{
-		int i;
-
-/*		for (i=0; i<(8*16384); i++)
-		{
-			char data;
-
-			data = memory_region(REGION_CPU1)[0x010000+i];
-
-			mame_fwrite(file, &data, 1);
-		}
-
-		for (i=0; i<((32-8)*16384); i++)
-		{
-			char data;
-
-			data = 0;
-			
-			mame_fwrite(file, &data, 1);
-		}
-*/
-		for (i=0; i<(2048*1024); i++)
-		{
-			char data;
-
-			data = z88_memory[i];
-
-			mame_fwrite(file, &data, 1);
-		}
-
-		/* close file */
-		mame_fclose(file);
-	}
-
 
 }
 
@@ -144,11 +75,6 @@ static void z88_update_rtc_interrupt(void)
 static void z88_rtc_timer_callback(int dummy)
 {
 	int refresh_ints = 0;
-
-	if ((readinputport(0) & 0x040)==0)
-	{
-		z88_dump_ram();
-	}
 
 	/* is z88 in snooze state? */
 	if (blink.z88_state == Z88_SNOOZE)
@@ -245,16 +171,6 @@ static void z88_rtc_timer_callback(int dummy)
 	}
 }
 
-static read8_handler z88_read_handler[] =
-{
- MRA8_BANK1, MRA8_BANK2, MRA8_BANK3, MRA8_BANK4, MRA8_BANK5
-};
-
-
-static write8_handler z88_write_handler[] =
-{
- MWA8_BANK6, MWA8_BANK7, MWA8_BANK8, MWA8_BANK9, MWA8_BANK10
-};
 
 /* Assumption:
 
@@ -263,113 +179,78 @@ bank 0 is special. If a bit is set in the com register,
 the lower 8k is replaced with the rom. Bank 0 has been split
 into 2 8k chunks, and all other banks into 16k chunks.
 I wanted to handle all banks in the code below, and this
-explains why the extra checks are done */
+explains why the extra checks are done 
 
-static void z88_refresh_memory_bank(int index1)
+
+	bank 0		0x0000-0x3FFF
+	bank 1		0x4000-0x7FFF
+	bank 2		0x8000-0xBFFF
+	bank 3		0xC000-0xFFFF
+*/
+
+static void z88_refresh_memory_bank(int bank)
 {
-	unsigned char *addr;
+	void *read_addr;
+	void *write_addr;
 	unsigned long block;
-	int read_bank,write_bank;
+	read8_handler read_handler;
+	write8_handler write_handler;
 
-	/* bank index for read's for use with cpu_setbank, etc */
-	read_bank = 2+index1;
-	/* bank index for write's for use with cpu_setbank, etc */
-	write_bank = 7+index1;
+	assert(bank >= 0);
+	assert(bank <= 3);
 
-	logerror("%02x: offset %04x\n",index1, blink.mem[index1]<<14);
+	/* ram? */
+	if (blink.mem[bank]>=0x020)
+	{
+		block = blink.mem[bank]-0x020;
 
-    /* ram? */
-    if (blink.mem[index1]>=0x020)
-    {
-       block = blink.mem[index1]-0x020;
+		if (block >= 128)
+		{	
+			read_addr = NULL;
+			write_addr = NULL;
+		}
+		else
+		{
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+				(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, (read8_handler) (STATIC_BANK1 + (bank * 2 + 0)));
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+				(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, (write8_handler) (STATIC_BANK1 + (bank * 2 + 1)));
 
-	   if (block>=128)
-	   {
-		   
-     //  logerror("%02x: unavailable ram\n",index1);
-
-			memory_set_bankhandler_r(read_bank, 0, MRA8_NOP);
-			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
-
-			if (index1==0)
-			{
-				memory_set_bankhandler_r(read_bank-1, 0, MRA8_NOP);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
-			}
-	   }
-	   else
-	   {
-
-			 //  logerror("%02x: ram\n",index1);
-
-			memory_set_bankhandler_r(read_bank, 0, z88_read_handler[index1+1]);
-			memory_set_bankhandler_w(write_bank, 0, z88_write_handler[index1+1]);
-
-			addr = z88_memory + (block<<14);
-
-			if (index1==0)
-			{
-				memory_set_bankhandler_r(read_bank-1, 0, z88_read_handler[index1]);
-				memory_set_bankhandler_w(write_bank-1, 0, z88_write_handler[index1]);
-
-				cpu_setbank(read_bank, addr+0x02000);
-				cpu_setbank(write_bank, addr+0x02000);
-				cpu_setbank(read_bank-1, addr);
-				cpu_setbank(write_bank-1, addr);
-			}
-			else
-			{
-				cpu_setbank(read_bank, addr);
-				cpu_setbank(write_bank, addr);
-			}
+			read_addr = write_addr = mess_ram + (block<<14);
 		}
 	}
-    else
-    {
-       block = blink.mem[index1];
+	else
+	{
+		block = blink.mem[bank] & 0x07;
 
-	   block = block & 0x07;
+		/* in rom area, but rom not present */
+		if (block>=8)
+		{
+			read_addr = NULL;
+			write_addr = NULL;
+		}
+		else
+		{
+			read_addr = memory_region(REGION_CPU1) + 0x010000 + (block << 14);
+			write_addr = NULL;
+		}
+	}
 
-       /* in rom area, but rom not present */
-       if (block>=8)
-       {
-	//	   logerror("%02x: unmapped rom\n",index1);
+	/* install the banks */
 
-			memory_set_bankhandler_r(read_bank, 0, MRA8_NOP);
-			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
+	read_handler  = read_addr  ? (read8_handler)  (STATIC_BANK1 + (bank * 2 + 0)) : MRA8_ROM;
+	write_handler = write_addr ? (write8_handler) (STATIC_BANK1 + (bank * 2 + 1)) : MWA8_ROM;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, read_handler);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, write_handler);
 
-			if (index1==0)
-			{
-				memory_set_bankhandler_r(read_bank-1, 0, MRA8_NOP);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
-			}
-       }
-       else
-       {
-	//	   logerror("%02x: rom\n",index1);
+	if (read_addr)
+		cpu_setbank(bank * 2 + 1, read_addr);
+	if (write_addr)
+		cpu_setbank(bank * 2 + 2, write_addr);
 
-			addr = memory_region(REGION_CPU1) + 0x010000;
-			memory_set_bankhandler_r(read_bank, 0, z88_read_handler[index1+1]);
-			memory_set_bankhandler_w(write_bank, 0, MWA8_NOP);
-
-			addr = addr + (block<<14);
-
-			if (index1==0)
-			{
-				memory_set_bankhandler_r(read_bank-1, 0, z88_read_handler[index1]);
-				memory_set_bankhandler_w(write_bank-1, 0, MWA8_NOP);
-
-				cpu_setbank(read_bank-1, addr);
-				cpu_setbank(read_bank, addr+0x02000);
-			}
-			else
-			{
-				cpu_setbank(read_bank, addr);
-			}
-       }
-    }
-
-	if (index1==0)
+	if (bank == 0)
 	{
 		/* override setting for lower 8k of bank 0 */
 
@@ -377,51 +258,33 @@ static void z88_refresh_memory_bank(int index1)
 		if ((blink.com & (1<<2))==0)
 		{
 			/* yes */
-			addr = memory_region(REGION_CPU1) + 0x010000;
-
-			cpu_setbank(1, addr);
-			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(6, 0, MWA8_NOP);
-
-			logerror("lower 8k is rom\n");
+			read_addr = memory_region(REGION_CPU1) + 0x010000;
+			write_addr = NULL;
 		}
 		else
 		{
 			/* ram bank 20 */
-			addr = z88_memory;
-
-			cpu_setbank(1, addr);
-			cpu_setbank(6, addr);
-			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-			memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-			
-			logerror("lower 8k is ram\n");
+			read_addr = mess_ram;
+			write_addr = mess_ram;
 		}
+
+		read_handler  = read_addr  ? MRA8_BANK9  : MRA8_ROM;
+		write_handler = write_addr ? MWA8_BANK10 : MWA8_ROM;
+
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
+			0x0000, 0x1fff, 0, read_handler);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
+			0x0000, 0x1fff, 0, write_handler);
 	}
 }
 
 static MACHINE_INIT( z88 )
 {
-	z88_memory = auto_malloc(2048*1024);
-
-	if (z88_memory)
-		memset(z88_memory, 0x0ff, 2048*1024);
+	memset(mess_ram, 0x0ff, mess_ram_size);
 
 	timer_pulse(TIME_IN_MSEC(5), 0, z88_rtc_timer_callback);
 
 	blink_reset();
-
-	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA8_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA8_BANK5);
-
-	memory_set_bankhandler_w(6, 0, MWA8_BANK6);
-	memory_set_bankhandler_w(7, 0, MWA8_BANK7);
-	memory_set_bankhandler_w(8, 0, MWA8_BANK8);
-	memory_set_bankhandler_w(9, 0, MWA8_BANK9);
-	memory_set_bankhandler_w(10, 0, MWA8_BANK10);
 
 	z88_refresh_memory_bank(0);
 	z88_refresh_memory_bank(1);
@@ -429,46 +292,14 @@ static MACHINE_INIT( z88 )
 	z88_refresh_memory_bank(3);
 }
 
-static MEMORY_READ_START (readmem_z88)
-        {0x00000, 0x01fff, MRA8_BANK1},
-        {0x02000, 0x03fff, MRA8_BANK2},
-        {0x04000, 0x07fff, MRA8_BANK3},
-		{0x08000, 0x0bfff, MRA8_BANK4},
-        {0x0c000, 0x0ffff, MRA8_BANK5},
-MEMORY_END
+static ADDRESS_MAP_START(z88_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK6)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK7)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK3, MWA8_BANK8)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK4, MWA8_BANK9)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK5, MWA8_BANK10)
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START (writemem_z88)
-        {0x00000, 0x01fff, MWA8_BANK6},
-		{0x02000, 0x03fff, MWA8_BANK7},
-        {0x04000, 0x07fff, MWA8_BANK8},
-        {0x08000, 0x0bfff, MWA8_BANK9},
-        {0x0c000, 0x0ffff, MWA8_BANK10},
-MEMORY_END
-#if 0
-unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shift)
-{
-	unsigned long offset;
-	unsigned long h,b;
-
-	h = addr_written & 0x01f;
-	b = addr_written & 0x01fe0;
-
-	offset = ((b<<2) | h)<<shift;
-
-	logerror("offset: %04x\n",offset);
-   //     unsigned long offset;
-//
-  //      offset = addr_written & ((unsigned long)0x0ffffffff>>(16-num_bits));
-//
-  //      offset = (
-    //                    ((addr_written & 0x01fe0)<<2) |
-      //                  (addr_written & 0x01f)
-       //                 );
-      //  offset = offset<<shift;
-
-        return offset;
-}
-#endif
 static void blink_pb_w(int offset, int data, int reg_index)
 {
     unsigned short addr_written = (offset & 0x0ff00) | (data & 0x0ff);
@@ -774,13 +605,10 @@ static READ_HANDLER(z88_port_r)
 }
 
 
-static PORT_READ_START (readport_z88)
-	{0x0000, 0x0ffff, z88_port_r},
-PORT_END
+static ADDRESS_MAP_START( z88_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x0ffff) AM_READWRITE(z88_port_r, z88_port_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START (writeport_z88)
-	{0x0000, 0x0ffff, z88_port_w},
-PORT_END
 
 static struct Speaker_interface z88_speaker_interface=
 {
@@ -891,8 +719,8 @@ static MACHINE_DRIVER_START( z88 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3276800)
 	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
-	MDRV_CPU_MEMORY(readmem_z88, writemem_z88)
-	MDRV_CPU_PORTS(readport_z88, writeport_z88)
+	MDRV_CPU_PROGRAM_MAP(z88_mem, 0)
+	MDRV_CPU_IO_MAP(z88_io, 0)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
@@ -926,6 +754,11 @@ ROM_START(z88)
     ROM_LOAD("z88v400.rom", 0x010000, 0x020000, CRC(1356d440))
 ROM_END
 
+SYSTEM_CONFIG_START( z88 )
+	CONFIG_RAM_DEFAULT(2048 * 1024)
+SYSTEM_CONFIG_END
+
+
 /*	   YEAR	    NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY					FULLNAME */
-COMPX( 1988,	z88,	0,		0,		z88,		z88,		0,		NULL,	"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
+COMPX( 1988,	z88,	0,		0,		z88,		z88,		0,		z88,	"Cambridge Computers",	"Z88",GAME_NOT_WORKING)
 

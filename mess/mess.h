@@ -184,6 +184,11 @@ int ram_validate_option(void);
 
 void ram_dump(const char *filename);
 
+/* dummy read handlers */
+READ_HANDLER(return8_00);
+READ_HANDLER(return8_FE);
+READ_HANDLER(return8_FF);
+
 /* gets the path to the MESS executable */
 extern const char *mess_path;
 

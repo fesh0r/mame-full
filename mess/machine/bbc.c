@@ -47,24 +47,6 @@ WRITE_HANDLER ( memory_w )
 }
 
 
-/* functions to return reads to empty hardware addresses */
-
-READ_HANDLER ( BBC_NOP_00_r )
-{
-	return 0x00;
-}
-
-READ_HANDLER ( BBC_NOP_FE_r )
-{
-	return 0xFE;
-}
-
-READ_HANDLER ( BBC_NOP_FF_r )
-{
-	return 0xFF;
-}
-
-
 
 /****************************************/
 /* BBC B Plus memory handling function */
@@ -1168,13 +1150,10 @@ MACHINE_INIT( bbcb1770 )
 
 MACHINE_INIT( bbcbp )
 {
-	memory_set_bankhandler_r(1, 0, memorybp1_r);
-
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x03000); /* BANK 1 points at the screen  from 3000 to 7fff */
 	cpu_setbank(2,memory_region(REGION_USER1)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */
 	cpu_setbank(3,memory_region(REGION_USER1));         /* bank 3 is paged ROM or RAM   from 8000 to afff */
 	cpu_setbank(4,memory_region(REGION_USER1)+0x03000); /* bank 4 is the paged ROMs     from b000 to bfff */
-
 
 	via_config(0, &bbcb_system_via);
 	via_set_clock(0,1000000);
