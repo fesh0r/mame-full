@@ -21,7 +21,7 @@
 		<year>1977</year>
 		<manufacturer>Fairchild</manufacturer>
 	</hash>
-	<hash crc32="bb4c24a2" name="Videocart 06 - Math Quiz 1 (Addition &amp; Subtraction)">
+	<hash crc32="bb4c24a2" name="Videocart 06 - Math Quiz I (Addition &amp; Subtraction)">
 		<year>1976</year>
 		<manufacturer>Fairchild</manufacturer>
 	</hash>
@@ -78,24 +78,31 @@
 		<manufacturer>Fairchild</manufacturer>
 	</hash>
 	<!-- #######= Videocart 19 - Checkers | | Zircon | -->
-	<!-- #######= Videocart 20 - Video Whizball | 197? | Fairchild | -->
+	<hash crc32="65fdfe49" name="Videocart 20 - Video Whizball">
+		<year>197?</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
 	<hash crc32="94322c79" name="Videocart 21 - Bowling">
 		<year>1978</year>
-		<manufacturer>Fairchild (and Zircon?)</manufacturer>
+		<manufacturer>Fairchild/Zircon</manufacturer>
 	</hash>
 	<!-- #######= Videocart 22 - Slot Machine |  | Zircon | -->
 	<!-- #######= Videocart 23 - Galactic Space Wars | | Zircon | -->
 	<hash crc32="a1ae99be" name="Videocart 24 - Pro Football">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
-	<!-- #######= Videocart 25 - Casino Poker | ???? | Zircon | -->
+	<!-- #######= Videocart 25 - Casino Poker | | Zircon | -->
 	<hash crc32="85e00865" name="Videocart 26 - Alien Invasion">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
 	<!-- #######= Democart 1 | 1977 | Fairchild | -->
 	<!-- #######= Democart 2 | ???? | | -->
+	<!-- #######= Keyboard Videocart K-1 - Casino Poker | 1977 | Fairchild | -->
 	<!-- Game list - SABA (Germany) -->
-	<!-- 1 - Muehle &amp; Tontauben-Schiessen &amp; Kreatives Malspiel &amp; Videoscope -->
+	<hash crc32="7124dc59" name="Videocart 01g - Muehle &amp; Tontauben-Schiessen &amp; Kreatives Malspiel &amp; Videoscope ">
+		<year>1978</year>
+		<manufacturer>SABA</manufacturer>
+	</hash>
 	<!-- 2 - Wuestenfuchs &amp; Tontaubenschiessen -->
 	<!-- 3 - Blackjack -->
 	<!-- 4 - Luftkampf -->
@@ -110,11 +117,17 @@
 	<!-- 13 - Memeory (Symbole) &amp; Memory (Ziffern) -->
 	<!-- 14 - Voelkerball -->
 	<!-- 15 - Barriere -->
-	<!-- 16 - Rat' Mal -->
+	<hash crc32="87752425" name="Videocart 16g - Rat' mal">
+		<year>????</year>
+		<manufacturer>SABA</manufacturer>
+	</hash>
 	<!-- 17 - Kickball -->
 	<!-- 18 - Bowling -->
 	<!-- 19 - Odyssee Im Weltraum -->
-	<!-- 20 - Schach -->
+	<hash crc32="04fb6dce" name="Videocart 20g - Schach">
+		<year>????</year>
+		<manufacturer>SABA</manufacturer>
+	</hash>
 	<!-- Game list - Luxor (Sweden) (Just label swap over US releases?) -->
 	<!-- 1 - Lerduveskytte &amp; Luffarschack &amp; Kaleidoskop &amp; Rita Sj&#228;lv -->
 	<!-- 2 - Lerduveskytte &amp; &#214;kenkrig -->
