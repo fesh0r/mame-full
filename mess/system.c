@@ -422,7 +422,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( tk95 )		/* 1986 TK95 Color Computer 					  */
 	DRIVER( tc2048 )	/* 198? TC2048									  */
 	DRIVER( ts2068 )	/* 1983 TS2068									  */
-	DRIVER( uk2068 )	/* 1983 UK2068									  */
+	DRIVER( uk2086 )	/* 1986 UK2086									  */
 
 	DRIVER( spec128 )	/* 1986 ZX Spectrum 128"                          */
 	DRIVER( spec128s )	/* 1985 ZX Spectrum 128 (Spain) 				  */
