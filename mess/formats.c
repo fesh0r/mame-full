@@ -231,7 +231,32 @@ void bdf_close(void *bdf)
 	free(bdffile);
 }
 
-static int bdf_seek(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset)
+int bdf_read(void *bdf, void *buffer, int length)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	return bdffile->procs->readproc(bdffile->file, buffer, length);
+}
+
+int bdf_write(void *bdf, const void *buffer, int length)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	return bdffile->procs->writeproc(bdffile->file, buffer, length);
+}
+
+int bdf_seek(void *bdf, int offset, int whence)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	bdffile->procs->seekproc(bdffile->file, offset, whence);
+	return 0;
+}
+
+const struct disk_geometry *bdf_get_geometry(void *bdf)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	return &bdffile->geometry;
+}
+
+static int default_seek_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset)
 {
 	int pos;
 
@@ -248,31 +273,13 @@ static int bdf_seek(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset
 	pos *= bdffile->geometry.sector_size;
 	pos += bdffile->offset;
 	pos += offset;
-	bdffile->procs->seekproc(bdffile->file, pos, SEEK_SET);
+	bdf_seek(bdf, pos, SEEK_SET);
 	return 0;
-}
-
-const struct disk_geometry *bdf_get_geometry(void *bdf)
-{
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return &bdffile->geometry;
-}
-
-int bdf_read(void *bdf, void *buffer, int length)
-{
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->procs->readproc(bdffile->file, buffer, length);
-}
-
-int bdf_write(void *bdf, const void *buffer, int length)
-{
-	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->procs->writeproc(bdffile->file, buffer, length);
 }
 
 static int default_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
-	if (bdf_seek(bdf, track, head, sector, offset))
+	if (default_seek_sector(bdf, track, head, sector, offset))
 		return -1;
 	bdf_read(bdf, buffer, length);
 	return 0;
@@ -280,7 +287,7 @@ static int default_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector,
 
 static int default_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
-	if (bdf_seek(bdf, track, head, sector, offset))
+	if (default_seek_sector(bdf, track, head, sector, offset))
 		return -1;
 	bdf_write(bdf, buffer, length);
 	return 0;
