@@ -1211,36 +1211,46 @@ void *win_dialog_malloc(dialog_box *dialog, size_t size)
 
 
 //============================================================
-//	win_dialog_runmodal
+//	before_display_dialog
 //============================================================
 
-void win_dialog_runmodal(dialog_box *dialog)
+static void before_display_dialog(void)
 {
-	struct _dialog_box *di;
 	extern void win_timer_enable(int enabled);
-	
-	di = (struct _dialog_box *) dialog;
-	assert(di);
 
-	// finishing touches on the dialog
-	dialog_prime(di);
+#ifdef UNDER_CE
+	// on WinCE, suspend GAPI
+	gx_suspend();
+#else
+	// on Windows, suspend DirectX
+	extern int win_suspend_directx;
+	win_suspend_directx = 1;
+#endif
 
 	// disable sound while in the dialog
 	osd_sound_enable(0);
 
 	// disable the timer while in the dialog
 	win_timer_enable(0);
+}
 
-#ifdef UNDER_CE
-	// on WinCE, suspend GAPI
-	gx_suspend();
-#endif
 
-	DialogBoxIndirectParam(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+
+//============================================================
+//	after_display_dialog
+//============================================================
+
+static void after_display_dialog(void)
+{
+	extern void win_timer_enable(int enabled);
 
 #ifdef UNDER_CE
 	// on WinCE, resume GAPI
 	gx_resume();
+#else
+	// on Windows, suspend DirectX
+	extern int win_suspend_directx;
+	win_suspend_directx = 0;
 #endif
 
 	// reenable timer
@@ -1248,6 +1258,28 @@ void win_dialog_runmodal(dialog_box *dialog)
 
 	// reenable sound
 	osd_sound_enable(1);
+}
+
+
+
+//============================================================
+//	win_dialog_runmodal
+//============================================================
+
+void win_dialog_runmodal(dialog_box *dialog)
+{
+	struct _dialog_box *di;
+	
+	di = (struct _dialog_box *) dialog;
+	assert(di);
+
+	// finishing touches on the dialog
+	dialog_prime(di);
+
+	// show the dialog
+	before_display_dialog();
+	DialogBoxIndirectParam(NULL, di->handle, win_video_window, dialog_proc, (LPARAM) di);
+	after_display_dialog();
 }
 
 
@@ -1313,7 +1345,6 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *custom_dialog, const char *filter,
 	const char *initial_dir, char *filename, size_t filename_len)
 {
-	extern int win_suspend_directx;
 	OPENFILENAME ofn;
 	BOOL result;
 #ifdef UNICODE
@@ -1351,7 +1382,7 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	ofn.nMaxFile = filename_len;
 #endif
 
-	win_suspend_directx = 1;
+	before_display_dialog();
 
 	switch(dlgtype) {
 	case FILE_DIALOG_OPEN:
@@ -1368,7 +1399,7 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 		break;
 	}
 
-	win_suspend_directx = 0;
+	after_display_dialog();
 
 #ifdef UNICODE
 	strcpyz(filename, buf, filename_len);
