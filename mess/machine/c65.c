@@ -62,7 +62,7 @@ static WRITE_HANDLER(c65_write_mem)
 		if (C65_MAIN_MEMORY==C65_4096KB) c64_memory[offset]=data;
 	}
 #if 0
-	if (offset<0x100000) cpu_writemem20(offset,data);
+	if (offset<0x100000) program_write_byte_8(offset,data);
 	else c64_memory[offset]=data;
 #endif
 }
