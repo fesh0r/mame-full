@@ -310,5 +310,5 @@ ROM_END
 /*     YEAR  NAME     PARENT   MACHINE  INPUT    INIT  COMPANY     FULLNAME         FLAGS*/
 CONSX( 1990, gameboy, 0,       gameboy, gameboy, 0,    "Nintendo", "GameBoy",       GAME_IMPERFECT_SOUND )
 CONSX( 1994, supergb, gameboy, supergb, gameboy, 0,    "Nintendo", "Super GameBoy", GAME_IMPERFECT_SOUND )
-CONSX( 1998, gbcolor, gameboy, gbcolor, gameboy, 0,    "Nintendo", "GameBoy Color", GAME_NOT_WORKING     )
+CONSX( 1998, gbcolor, gameboy, gbcolor, gameboy, 0,    "Nintendo", "GameBoy Color", GAME_IMPERFECT_SOUND )
 
