@@ -81,50 +81,6 @@ static void ide_interrupt_callback(int state)
 }
 
 /*
-	ide_bus_0_r()
-
-	Read a 16-bit word from the IDE bus, working around the 'intelligent' code
-	in idectrl.c.
-*/
-static int ide_bus_0_r(int group_select, int offset)
-{
-	int shift;
-
-	offset += group_select ? 0x3f0 : 0x1f0;
-	if (offset == 0x1f0)
-	{
-		return ide_controller32_0_r(offset >> 2, 0xffff0000);
-	}
-	else
-	{
-		shift = (offset & 3) * 8;
-		return (ide_controller32_0_r(offset >> 2, ~ (0xff << shift)) >> shift);
-	}
-}
-
-/*
-	ide_bus_0_w()
-
-	Write a 16-bit word to the IDE bus, working around the 'intelligent' code
-	in idectrl.c.
-*/
-static void ide_bus_0_w(int group_select, int offset, int data)
-{
-	int shift;
-
-	offset += group_select ? 0x3f0 : 0x1f0;
-	if (offset == 0x1f0)
-	{
-		ide_controller32_0_w(offset >> 2, data, 0xffff0000);
-	}
-	else
-	{
-		shift = (offset & 3) * 8;
-		ide_controller32_0_w(offset >> 2, data << shift, ~ (0xff << shift));
-	}
-}
-
-/*
 	Load an IDE image
 */
 int ti99_ide_load(int id, mame_file *fp, int open_mode)
