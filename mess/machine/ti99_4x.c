@@ -406,8 +406,6 @@ void init_ti99_4(void)
 
 	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
-	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
 	console_GROMs.data_ptr = memory_region(region_grom);
 
 	/* Generate missing chunk of each console GROMs */
@@ -426,8 +424,6 @@ void init_ti99_4a(void)
 
 	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
-	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
 	console_GROMs.data_ptr = memory_region(region_grom);
 }
 
@@ -469,6 +465,13 @@ void init_ti99_4p(void)
 	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
 	/*console_GROMs.data_ptr = memory_region(region_grom);*/
+}
+
+DEVICE_INIT( ti99_cart )
+{
+	int id = image_index_in_device(image);
+	cartridge_pages[id] = (UINT16 *) (memory_region(REGION_CPU1) + offset_cart + (id * 0x2000));
+	return INIT_PASS;
 }
 
 /*

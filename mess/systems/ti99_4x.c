@@ -837,6 +837,7 @@ static void ti99_4_cartslot_getinfo(struct IODevice *dev)
 	dev->readable = 1;
 	dev->writeable = 0;
 	dev->creatable = 0;
+	dev->init = device_init_ti99_cart;
 	dev->load = device_load_ti99_cart;
 	dev->unload = device_unload_ti99_cart;
 }

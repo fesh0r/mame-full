@@ -18,9 +18,11 @@ System Driver Changes:
 - [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
   packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
 
-- [GAMEBOY] Fixed regression introduced in 0.93.  [Nate Woods]
+- [GAMEBOY] Fixed crash regression introduced in 0.93.  [Nate Woods]
 
-- [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
+- [TI99] Fixed crash regression introduced in 0.92.  (bug #662) [Nate Woods]
+
+- [VIC20] Fixed crash regression introduced in 0.93.  (bug #659) [Nate Woods]
 
 
 

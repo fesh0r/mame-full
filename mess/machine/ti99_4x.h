@@ -157,6 +157,7 @@ void machine_stop_ti99(void);
 
 DEVICE_LOAD( ti99_cassette );
 
+DEVICE_INIT( ti99_cart );
 DEVICE_LOAD( ti99_cart );
 DEVICE_UNLOAD( ti99_cart );
 
