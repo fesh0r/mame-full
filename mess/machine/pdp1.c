@@ -153,7 +153,7 @@ int pdp1_iot(int *io, int md)
 {
 	int etime=0;
 
-	switch (cpu_get_reg(PDP1_Y) & 077)
+	switch (md & 077)
 	{
 	case 00:
 	{
@@ -177,7 +177,7 @@ int pdp1_iot(int *io, int md)
 		 * TAPE CHANNELS  8  7  6  5  4  3  2  1
 		 */
 		UINT8 read_byte;
-		logerror("\nWarning, RPA instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+		logerror("\nWarning, RPA instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 
 		etime=10;	/* probably some more */
 		/* somehow read a byte... */
@@ -244,7 +244,7 @@ int pdp1_iot(int *io, int md)
 		 */
 		UINT32 read_word;
 		int not_ready;
-		logerror("\nWarning, RPB instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+		logerror("\nWarning, RPB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 
 		etime=10;	/* probably some more */
 		/* somehow read a byte... */
@@ -274,7 +274,7 @@ int pdp1_iot(int *io, int md)
 	}
 	case 030: /* RRB */
 	{
-		logerror("\nWarning, RRB instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+		logerror("\nWarning, RRB instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o",*io, md, cpu_get_reg(PDP1_PC));
 		etime=5;
 		cpu_set_reg(PDP1_F1,0);
 		*io = reader_buffer;
@@ -310,7 +310,7 @@ int pdp1_iot(int *io, int md)
 		 * the type-in status bit.
 		 */
 
-		logerror("\nWarning, TYI instruction not fully emulated: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+		logerror("\nWarning, TYI instruction not fully emulated: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 
 		etime=10; /* probably heaps more */
 		*io=0;
@@ -320,6 +320,8 @@ int pdp1_iot(int *io, int md)
 
 		break;
 	}
+
+	/* CRT display */
 	case 07: /* DPY */
 	{
 		/*
@@ -356,12 +358,17 @@ int pdp1_iot(int *io, int md)
 		 */
 		int x;
 		int y;
-		etime=10; /* probably some more */
-		x=(cpu_get_reg(PDP1_AC)+0400000)&0777777;
-		y=(cpu_get_reg(PDP1_IO)+0400000)&0777777;
+		if (md & 10000)
+			etime = 5;
+		else
+			etime = 50; 	/* found in munching squares */
+		x = ((cpu_get_reg(PDP1_AC)+0400000)&0777777) >> 8;
+		y = ((cpu_get_reg(PDP1_IO)+0400000)&0777777) >> 8;
 		pdp1_plot(x,y);
 		break;
 	}
+
+	/* Spacewar! controllers */
 	case 011: /* IOT 011 (undocumented?), Input... */
 	{
 		int key_state=readinputport(0);
@@ -377,14 +384,17 @@ int pdp1_iot(int *io, int md)
 		if (key_state&ROTATE_RIGHT_PLAYER1) *io |= 010;
 		break;
 	}
+
+	/* check status */
 	case 033: /* CKS */
 	{
 		etime=5;
 	}
+
 	default:
 	{
 		etime=5;
-		logerror("\nNot supported IOT command: io=0%06o, y=0%06o, pc=0%06o",*io,cpu_get_reg(PDP1_Y),cpu_get_reg(PDP1_PC));
+		logerror("\nNot supported IOT command: io=0%06o, mb=0%06o, pc=0%06o", *io, md, cpu_get_reg(PDP1_PC));
 		break;
 	}
 	}

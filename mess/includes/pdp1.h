@@ -29,6 +29,8 @@ void pdp1_vh_stop(void);
 int pdp1_vh_start(void);
 
 void pdp1_plot(int x, int y);
+void pdp1_screen_update(void);
 
 #define VIDEO_BITMAP_WIDTH  512
 #define VIDEO_BITMAP_HEIGHT 512
+#define VIDEO_MAX_INTENSITY 15

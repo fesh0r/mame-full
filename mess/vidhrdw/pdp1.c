@@ -10,141 +10,211 @@
  *
  */
 
+/*
+	Theory of operation:
+
+	What makes the pdp-1 CRT so odd is that there is no video processor, no scan logic,
+	no refresh logic.  The beam position and intensity is controlled by the program completely:
+	in order to draw an object, the program must direct the beam to each point of the object,
+	and in order to refresh it, the program must redraw the object periodically.
+
+	Since the refresh rates are highly variable (completely controlled by the program),
+	I simulate CRT remanence: the intensity of each pixel on display decreases regularly.
+	In order to keep this efficient, I keep a list of non-black pixels.
+
+	However, this was a cause for additional flicker when doing frame skipping.  Basically,
+	a pixel was displayed grey instead of white if it was drawn during a skipped frame.
+	In order to fix this, I keep track of a pixel's maximum intensity since the last redraw,
+	and each pixel is drawn at its maximum, not current, value.
+*/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 #include "includes/pdp1.h"
 
 
+static int bitmap_width;	/* width of machine bitmap */
+static int bitmap_height;	/* height of machine bitmap */
+
 typedef struct
 {
-	unsigned short int x;
-	unsigned short int y;
+	int cur_intensity;		/* current intensity of the pixel */
+	int max_intensity;		/* maximum intensity since the last effective redraw */
+							/* a node is not in the list when (max_intensity = -1) */
+	int next;				/* index of next pixel in list */
 } point;
 
-static int bitmap_width=0;
-static int bitmap_height=0;
+static point *list;			/* array of (bitmap_width*bitmap_height) point */
+static int list_head;		/* head of list in the array */
 
-static point *new_list;
-static point *old_list;
-static int new_index;
-static int old_index;
-#define MAX_POINTS (VIDEO_BITMAP_WIDTH*VIDEO_BITMAP_HEIGHT)
 
+/*
+	video init
+*/
 int pdp1_vh_start(void)
 {
-	videoram_size=(VIDEO_BITMAP_WIDTH*VIDEO_BITMAP_HEIGHT);
-	old_list = malloc (MAX_POINTS * sizeof (point));
-	new_list = malloc (MAX_POINTS * sizeof (point));
-	if (!(old_list && new_list))
+	int i;
+
+
+	bitmap_width = Machine->scrbitmap->height;
+	bitmap_height = Machine->scrbitmap->width;
+
+	/* alloc bitmap for our private fun */
+	tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	if (! tmpbitmap)
+		return 1;
+
+	/* alloc the array */
+	list = malloc(bitmap_width * bitmap_height * sizeof(point));
+	if (! list)
 	{
-		if (old_list)
-			free(old_list);
-		if (new_list)
-			free(new_list);
-		old_list=NULL;
-		new_list=NULL;
+		bitmap_free(tmpbitmap);
+		tmpbitmap = NULL;
+
 		return 1;
 	}
-	new_index = 0;
-	old_index = 0;
-	return generic_vh_start();
+	/* fill with black and set up list as empty */
+	for (i=0; i<(bitmap_width * bitmap_height); i++)
+	{
+		list[i].cur_intensity = 0;
+		list[i].max_intensity = -1;
+	}
+
+	list_head = -1;
+
+	return 0;
 }
 
+
+/*
+	video clean-up
+*/
 void pdp1_vh_stop(void)
 {
-	if (old_list)
-		free(old_list);
-	if (new_list)
-		free(new_list);
-	generic_vh_stop();
-	old_list=NULL;
-	new_list=NULL;
-	bitmap_width=0;
-	bitmap_height=0;
+	if (list)
+	{
+		free(list);
+		list = NULL;
+	}
+	if (tmpbitmap)
+	{
+		bitmap_free(tmpbitmap);
+		tmpbitmap = NULL;
+	}
+
 	return;
 }
 
+/*
+	plot a pixel (this is actually deferred)
+*/
 void pdp1_plot(int x, int y)
 {
-	point *new;
+	point *node;
+	int index;
+	int intensity;
 
-	new = &new_list[new_index];
-	x=(x)*bitmap_width/0777777;
-	y=(y)*bitmap_height/0777777;
+	x = x*bitmap_width/01777;
+	y = y*bitmap_height/01777;
 	if (x<0) x=0;
 	if (y<0) y=0;
 	if ((x>(bitmap_width-1))||((y>bitmap_height-1)))
 		return;
-	y*=-1;
-	y+=(bitmap_height-1);
-	new->x = x;
-	new->y = y;
-	new_index++;
-	if (new_index >= MAX_POINTS)
+	y = (bitmap_height-1) - y;
+	intensity = VIDEO_MAX_INTENSITY;
+
+	index = x + y*bitmap_width;
+
+	node = & list[index];
+
+	if (node->max_intensity == -1)
+	{	/* insert node in list if it is not in it */
+		node->max_intensity = 0;
+		node->next = list_head;
+		list_head = index;
+	}
+	if (intensity > node->cur_intensity)
+		node->cur_intensity = intensity;
+}
+
+
+/*
+	decrease pixel intensity
+*/
+static void update_points(struct mame_bitmap *bitmap)
+{
+	int i, p_i=-1;
+
+	for (i=list_head; (i != -1); i=list[i].next)
 	{
-		new_index--;
-		logerror("*** Warning! PDP1 Point list overflow!\n");
+		point *node = & list[i];
+		int x = i % bitmap_width, y = i / bitmap_width;
+
+		/* remember maximum */
+		if (node->cur_intensity > node->max_intensity)
+			node->max_intensity = node->cur_intensity;
+
+		/* reduce intensity for next update */
+		if (node->cur_intensity > 0)
+			node->cur_intensity--;
+
+		p_i = i;	/* current node will be the previous node */
 	}
 }
 
-static void clear_point_list (void)
-{
-	point *tmp;
 
-	old_index = new_index;
-	tmp = old_list;
-	old_list = new_list;
-	new_list = tmp;
-	new_index = 0;
-}
-
-static void clear_points(struct mame_bitmap *bitmap)
-{
-	unsigned char bg=Machine->pens[0];
-	int i;
-
-	for (i=old_index-1; i>=0; i--)
-	{
-		int x=(&old_list[i])->x;
-		int y=(&old_list[i])->y;
-
-		/*bitmap->line[y][x]=bg;*/
-		plot_pixel(bitmap, x, y, bg);
-		osd_mark_dirty(x,y,x,y);
-	}
-	old_index=0;
-}
-
+/*
+	update the bitmap
+*/
 static void set_points(struct mame_bitmap *bitmap)
 {
-	unsigned char fg=Machine->pens[1];
-	int i;
+	int i, p_i=-1;
 
-	for (i=new_index-1; i>=0; i--)
+	for (i=list_head; (i != -1); i=list[i].next)
 	{
-		int x=(&new_list[i])->x;
-		int y=(&new_list[i])->y;
+		point *node = & list[i];
+		int x = i % bitmap_width, y = i / bitmap_width;
 
-		/*bitmap->line[y][x]=fg;*/
-		plot_pixel(bitmap, x, y, fg);
-		osd_mark_dirty(x,y,x,y);
+		if (node->cur_intensity > node->max_intensity)
+			node->max_intensity = node->cur_intensity;
+
+		plot_pixel(bitmap, x, y, Machine->pens[node->max_intensity]);
+		osd_mark_dirty(x, y, x, y);
+
+		if (/*(node->cur_intensity > 0) ||*/ (node->max_intensity != 0))
+		{
+			/* reset maximum */
+			node->max_intensity = 0;
+			p_i = i;	/* current node will be the previous node */
+		}
+		else
+		{	/* delete current node */
+			node->max_intensity = -1;
+			if (p_i != -1)
+				list[p_i].next = node->next;
+			else
+				list_head = node->next;
+		}
 	}
 }
 
 
+/*
+	pdp1_screen_update: called regularly in simulated CPU time
+*/
+void pdp1_screen_update(void)
+{
+	update_points(tmpbitmap);
+}
+
+
+/*
+	pdp1_vh_update: effectively redraw the screen
+*/
 void pdp1_vh_update (struct mame_bitmap *bitmap, int full_refresh)
 {
-	if (bitmap_width==0)
-	{
-		bitmap_width=bitmap->width;
-		bitmap_height=bitmap->height;
-	}
-	if (full_refresh)
-		fillbitmap(bitmap, Machine->pens[0], /*&Machine->visible_area*/NULL);
-	else
-		clear_points(bitmap);
-	set_points(bitmap);
-	clear_point_list();
+	set_points(tmpbitmap);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 

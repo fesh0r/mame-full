@@ -14,6 +14,7 @@ Driver for a PDP1 emulator.
 	Brian Silverman (original Java Source)
 	Vadim Gerasimov (original Java Source)
 	Chris Salomon (MESS driver)
+	Raphael Nabet (MESS driver)
 
 Preliminary, this is a conversion of a JAVA emulator.
 I have tried contacting the author, but heard as yet nothing of him,
@@ -34,8 +35,6 @@ When I saw the java emulator, running that game I was quite intrigued to
 include a driver for MESS.
 I think the historical value of SPACEWAR! is enormous.
 
-SPACEWAR! is public domain, so I include it with the driver.
-So far only emulated is stuff needed to run SPACEWAR!
 
 Not even the keyboard is fully emulated.
 For more documentation look at the source for the driver,
@@ -127,10 +126,14 @@ MEMORY_END
 /* defines for input port numbers */
 enum
 {
-	pdp1_control = 2
+	pdp1_spacewar_controllers = 0,
+	pdp1_sense_switches = 1,
+	pdp1_control = 2,
+	pdp1_test_switches_MSB = 3,
+	pdp1_test_switches_LSB = 4
 };
 
-/* defines for each bit and mask in input port panel_control */
+/* defines for each bit and mask in input port pdp1_control */
 enum
 {
 	/* bit numbers */
@@ -139,6 +142,8 @@ enum
 	/* masks */
 	pdp1_read_in = (1 << pdp1_read_in_bit)
 };
+
+static int test_switches;
 
 /*
 	Not a real interrupt - just handle keyboard input
@@ -151,16 +156,16 @@ static int pdp1_interrupt(void)
 
 	int control_transitions;
 
-	int sense = readinputport(1);
 
-	cpu_set_reg(PDP1_S1, sense&0x80);
-	cpu_set_reg(PDP1_S2, sense&0x40);
-	cpu_set_reg(PDP1_S3, sense&0x20);
-	cpu_set_reg(PDP1_S4, sense&0x10);
-	cpu_set_reg(PDP1_S5, sense&0x08);
-	cpu_set_reg(PDP1_S6, sense&0x04);
+	/* update display */
+	pdp1_screen_update();
+
+
+	cpu_set_reg(PDP1_S, readinputport(pdp1_sense_switches));
 	cpu_set_reg(PDP1_F1, pdp1_keyboard());
 
+
+	test_switches = (readinputport(pdp1_test_switches_MSB) << 16) | readinputport(pdp1_test_switches_LSB);
 
 	/* read new state of control keys */
 	control_keys = readinputport(pdp1_control);
@@ -171,7 +176,7 @@ static int pdp1_interrupt(void)
 	if (control_transitions & pdp1_read_in)
 	{	/* set cpu to run and read instruction from perforated tape */
 		cpunum_set_reg(0, PDP1_RUN, 1);
-		cpunum_set_reg(0, PDP1_READ_IN_MODE, 1);
+		cpunum_set_reg(0, PDP1_RIM, 1);
 	}
 
 	/* remember new state of control keys */
@@ -180,9 +185,14 @@ static int pdp1_interrupt(void)
 	return ignore_interrupt();
 }
 
+static int get_test_switches(void)
+{
+	return test_switches;
+}
+
 INPUT_PORTS_START( pdp1 )
 
-    PORT_START      /* IN0 */
+    PORT_START		/* 0: spacewar controllers */
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT, "Spin Left Player 1", KEYCODE_A, JOYCODE_1_LEFT )
 	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT, "Spin Right Player 1", KEYCODE_S, JOYCODE_1_RIGHT )
 	PORT_BITX( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1, "Thrust Player 1", KEYCODE_D, JOYCODE_1_BUTTON1 )
@@ -192,28 +202,87 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_PLAYER2, "Thrust Player 2", KEYCODE_UP, JOYCODE_2_BUTTON1 )
 	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2|IPF_PLAYER2, "Fire Player 2", KEYCODE_DOWN, JOYCODE_2_BUTTON2 )
 
-    PORT_START /* IN1 */
-	PORT_BITX(	  0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 1", KEYCODE_1, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x80, DEF_STR( On )	 )
-	PORT_BITX(	  0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 2", KEYCODE_2, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 3", KEYCODE_3, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_BITX(	  0x10, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 4", KEYCODE_4, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 5", KEYCODE_5, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_BITX(	  0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 6", KEYCODE_6, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+    PORT_START		/* 1: controller panel sense switches */
+	PORT_BITX(	  040, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 1", KEYCODE_1, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    040, DEF_STR( On )	 )
+	PORT_BITX(	  020, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 2", KEYCODE_2, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    020, DEF_STR( On ) )
+	PORT_BITX(	  010, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 3", KEYCODE_3, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    010, DEF_STR( On ) )
+	PORT_BITX(	  004, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 4", KEYCODE_4, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    004, DEF_STR( On ) )
+	PORT_BITX(	  002, 002, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 5", KEYCODE_5, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    002, DEF_STR( On ) )
+	PORT_BITX(	  001, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 6", KEYCODE_6, IP_JOY_NONE )
+    PORT_DIPSETTING(    000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    001, DEF_STR( On ) )
 
-	PORT_START	/* 2: pdp1 control */
+	PORT_START		/* 2: various pdp1 controls */
 	PORT_BITX(pdp1_read_in, IP_ACTIVE_HIGH, IPT_KEYBOARD, "read in mode", KEYCODE_ENTER, IP_JOY_NONE)
+
+    PORT_START		/* 3: controller panel test word switches MSB */
+	PORT_BITX(	  0002, 000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 1", KEYCODE_5, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0002, DEF_STR( On ) )
+	PORT_BITX(	  0001, 0000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 2", KEYCODE_6, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0001, DEF_STR( On ) )
+
+    PORT_START		/* 4: controller panel test word switches LSB */
+	PORT_BITX(	  0100000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 3", KEYCODE_1, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0100000, DEF_STR( On )	 )
+	PORT_BITX(	  0040000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 4", KEYCODE_2, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0040000, DEF_STR( On ) )
+	PORT_BITX(	  0020000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 5", KEYCODE_3, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0020000, DEF_STR( On ) )
+	PORT_BITX(	  0010000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 6", KEYCODE_1, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0010000, DEF_STR( On )	 )
+	PORT_BITX(	  0004000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 7", KEYCODE_2, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0004000, DEF_STR( On ) )
+	PORT_BITX(	  0002000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 8", KEYCODE_3, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0002000, DEF_STR( On ) )
+	PORT_BITX(	  0001000, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 9", KEYCODE_4, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0001000, DEF_STR( On ) )
+	PORT_BITX(	  0000400, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 10", KEYCODE_5, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000400, DEF_STR( On ) )
+	PORT_BITX(	  0000200, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 11", KEYCODE_6, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000200, DEF_STR( On ) )
+	PORT_BITX(	  0000100, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 12", KEYCODE_2, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000100, DEF_STR( On ) )
+	PORT_BITX(	  0000040, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 13", KEYCODE_3, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000040, DEF_STR( On ) )
+	PORT_BITX(	  0000020, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 14", KEYCODE_4, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000020, DEF_STR( On ) )
+	PORT_BITX(	  0000010, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 15", KEYCODE_5, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000010, DEF_STR( On ) )
+	PORT_BITX(	  0000004, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 16", KEYCODE_6, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000004, DEF_STR( On ) )
+   	PORT_BITX(	  0000002, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 17", KEYCODE_1, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000002, DEF_STR( On )	 )
+   	PORT_BITX(	  0000001, 0000000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Switch 18", KEYCODE_1, IP_JOY_NONE )
+    PORT_DIPSETTING(    0000000, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0000001, DEF_STR( On )	 )
+
 
 INPUT_PORTS_END
 
@@ -222,33 +291,47 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
+/* palette: grey levels follow an exponential law, so that decreasing the color index periodically
+will simulate the remanence of a cathode ray tube */
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0x55,0x55,0x55, /* DK GREY - for MAME text only */
-	0x80,0x80,0x80, /* LT GREY - for MAME text only */
+	11,11,11,
+	14,14,14,
+	18,18,18,
+	22,22,22,
+	27,27,27,
+	34,34,34,
+	43,43,43,
+	53,53,53,
+	67,67,67,
+	84,84,84,
+	104,104,104,
+	131,131,131,
+	163,163,163,
+	204,204,204,
+	0xFF,0xFF,0xFF  /* WHITE */
 };
 
 static unsigned short colortable[] =
 {
 	0x00, 0x01,
-	0x01, 0x00,
+	//0x01, 0x00,
 };
 
 /* Initialise the palette */
-static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	memcpy(sys_palette, palette, sizeof(palette));
+	memcpy(sys_colortable, colortable, sizeof(colortable));
 }
 
 
 static pdp1_reset_param reset_param =
 {
 	pdp1_iot,
-	pdp1_tape_read_binary
+	pdp1_tape_read_binary,
+	get_test_switches
 };
 
 
@@ -263,7 +346,7 @@ static struct MachineDriver machine_driver_pdp1 =
 	{
 		{
 			CPU_PDP1,
-			2000000,
+			1000000,	/* 5000000 actually, but timings are wrong */
 			pdp1_readmem, pdp1_writemem,0,0,
 			pdp1_interrupt, 1, /* fake interrupt */
 			0, 0,
@@ -284,7 +367,7 @@ static struct MachineDriver machine_driver_pdp1 =
 
 	pdp1_init_palette,
 
-	VIDEO_TYPE_VECTOR,
+	/*VIDEO_TYPE_VECTOR*/VIDEO_TYPE_RASTER,
 	0,
 	pdp1_vh_start,
 	pdp1_vh_stop,
@@ -338,4 +421,4 @@ ROM_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Company",  "PDP-1 (Spacewar!)" )
+COMP( 1961, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Company",  "PDP-1" )
