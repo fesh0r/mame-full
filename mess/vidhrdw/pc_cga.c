@@ -2,6 +2,29 @@
 
   Color Graphics Adapter (CGA) section
 
+
+  Notes on Port 3D8
+  (http://www.clipx.net/ng/interrupts_and_ports/ng2d045.php)
+
+	Port 3D8  -  Color/VGA Mode control register
+
+			xx1x xxxx  Attribute bit 7. 0=blink, 1=Intesity
+			xxx1 xxxx  640x200 mode
+			xxxx 1xxx  Enable video signal
+			xxxx x1xx  Select B/W mode
+			xxxx xx1x  Select graphics
+			xxxx xxx1  80x25 text
+
+
+	The usage of the above control register for various modes is:
+			xx10 1100  40x25 alpha B/W
+			xx10 1000  40x25 alpha color
+			xx10 1101  80x25 alpha B/W
+			xx10 1001  80x25 alpha color
+			xxx0 1110  320x200 graph B/W
+			xxx0 1010  320x200 graph color
+			xxx1 1110  640x200 graph B/W
+
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -135,8 +158,6 @@ static struct {
 		color_select, //wo 0x3d9
 		status; //ro 0x3da
 	
-	int full_refresh;
-
 	int pc_blink;
 	int pc_framecnt;
 } cga= { TYPE_CGA };
@@ -149,14 +170,14 @@ void pc_cga_cursor(CRTC6845_CURSOR *cursor)
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_cga_cursor };
 
-extern void pc_cga_init_video(struct _CRTC6845 *crtc)
+void pc_cga_init_video(struct _CRTC6845 *crtc)
 {
-	cga.crtc=crtc;
+	cga.crtc = crtc;
 }
 
 VIDEO_START( pc_cga )
 {
-	cga.crtc=crtc6845;
+	cga.crtc = crtc6845;
 	crtc6845_init(cga.crtc, &config);
 
     return video_start_generic();
@@ -179,8 +200,10 @@ static void pc_cga_mode_control_w(int data)
 {
 	CGA_LOG(1,"CGA_mode_control_w",(errorlog, "$%02x: colums %d, gfx %d, hires %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
+
 	if ((cga.mode_control ^ data) & 0x3b)    /* text/gfx/width change */
-		cga.full_refresh=1;
+		schedule_full_refresh();
+
     cga.mode_control = data;
 }
 
@@ -193,7 +216,7 @@ static void pc_cga_color_select_w(int data)
 	if( cga.color_select == data )
 		return;
 	cga.color_select = data;
-	cga.full_refresh=1;
+	schedule_full_refresh();
 }
 
 /*	Bitfields for CGA status register:
@@ -464,6 +487,24 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap)
 	}
 }
 
+/***************************************************************************
+  Black and white versions not yet implemented
+***************************************************************************/
+static void cga_text_inten_bw(struct mame_bitmap *bitmap)
+{
+	/* NYI */
+}
+
+static void cga_text_blink_bw(struct mame_bitmap *bitmap)
+{
+	/* NYI */
+}
+
+static void cga_gfx_2bpp_bw(struct mame_bitmap *bitmap)
+{
+	/* NYI */
+}
+
 // amstrad pc1512 video hardware
 // mapping of the 4 planes into videoram
 // (text data should be readable at videoram+0)
@@ -479,8 +520,9 @@ INLINE void pc1512_plot_unit(struct mame_bitmap *bitmap,
 	values[2]=videoram[offs|videoram_offset[2]]<<2; // blue
 	values[3]=videoram[offs|videoram_offset[3]]<<3; // intensity
 
-	for (i=7; i>=0; i--) {
-		color=(values[0]&1)|(values[1]&2)|(values[2]&4)|(values[3]&8);
+	for (i=7; i>=0; i--)
+	{
+		color = (values[0]&1)|(values[1]&2)|(values[2]&4)|(values[3]&8);
 		plot_pixel(bitmap, x+i, y, Machine->pens[color]);
 		values[0]>>=1;
 		values[1]>>=1;
@@ -556,11 +598,52 @@ extern void pc_cga_timer(void)
 VIDEO_UPDATE( pc_cga )
 {
 	static int width=0, height=0;
+	UINT8 mode;
 	int w,h;
+	void (*proc)(struct mame_bitmap *);
+	void (**procarray)(struct mame_bitmap *);
+
+	static void (*videoprocs_cga[])(struct mame_bitmap *) =
+	{
+		/* 0x08 - 0x0f */
+		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_inten_bw,	cga_text_inten_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+
+		/* 0x10 - 0x1f */
+		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,
+
+		/* 0x20 - 0x2f */
+		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_blink_bw,	cga_text_blink_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+
+		/* 0x30 - 0x3f */
+		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp,		cga_gfx_1bpp
+	};
+
+	static void (*videoprocs_pc1512[])(struct mame_bitmap *) =
+	{
+		/* 0x08 - 0x0f */
+		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_inten_bw,	cga_text_inten_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+
+		/* 0x10 - 0x1f */
+		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+
+		/* 0x20 - 0x2f */
+		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_blink_bw,	cga_text_blink_bw,	cga_gfx_2bpp_bw,	cga_gfx_2bpp_bw,
+
+		/* 0x30 - 0x3f */
+		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,
+		pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp,	pc1512_gfx_4bpp
+	};
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	/*if( crtc6845_do_full_refresh(cga.crtc)||full_refresh||cga.full_refresh )
+	/*if( crtc6845_do_full_refresh(cga.crtc)||full_refresh )
 	{
 		cga.full_refresh = 0;
 		memset(dirtybuffer, 1, videoram_size);
@@ -570,31 +653,17 @@ VIDEO_UPDATE( pc_cga )
 	w = crtc6845_get_char_columns(cga.crtc) * 8;
 	h = crtc6845_get_char_height(cga.crtc) * crtc6845_get_char_lines(cga.crtc);
 
-	switch(cga.mode_control & 0x3a) {	/* text and gfx modes */
-	case 0x08:
-		cga_text_inten(bitmap);
-		break;
-	case 0x28:
-		cga_text_blink(bitmap);
-		break;
-    case 0x0a:
-	case 0x2a:
-		cga_gfx_2bpp(bitmap);
-		break;
-	case 0x18:
-	case 0x1a:
-	case 0x38:
-	case 0x3a:
-		if (cga.type==TYPE_PC1512)
-			pc1512_gfx_4bpp(bitmap);
-		else
-			cga_gfx_1bpp(bitmap);w*=2;
-		break;
+	if (cga.mode_control & 0x08)
+	{
+		mode = (cga.mode_control & 0x07) | ((cga.mode_control & 0x30) / 2);
 
-    default:
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-		break;
-    }
+		procarray = (cga.type == TYPE_PC1512) ? videoprocs_pc1512 : videoprocs_cga;
+		proc = procarray[mode];
+
+		proc(bitmap);
+		if (proc == cga_gfx_1bpp)
+			w *= 2;
+	}
 
 	if ((width != w) || (height != h)) 
 	{
