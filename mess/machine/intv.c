@@ -3,6 +3,10 @@
 #include "includes/intv.h"
 #include "cpu/cp1600/cp1600.h"
 
+UINT8 intv_gramdirty;
+UINT8 intv_gram[512];
+UINT8 intv_gramdirtybytes[512];
+
 static unsigned int intvkbd_dualport_ram[0x4000];
 
 READ16_HANDLER ( intvkbd_dualport16_r )
@@ -285,9 +289,6 @@ WRITE_HANDLER ( intvkbd_dualport8_msb_w )
 	}
 }
 
-UINT8 intv_gram[512];
-UINT8 intv_gramdirty[64];
-
 READ16_HANDLER( intv_gram_r )
 {
 	//logerror("read: %d = GRAM(%d)\n",intv_gram[offset],offset);
@@ -296,9 +297,11 @@ READ16_HANDLER( intv_gram_r )
 
 WRITE16_HANDLER( intv_gram_w )
 {
-	intv_gram[offset]=data&0xff;
-	intv_gramdirty[offset>>3] = 1;
-	//logerror("write: GRAM(%d) = %d\n",offset,data);
+    data &= 0xFF;
+
+	intv_gram[offset] = data;
+	intv_gramdirtybytes[offset] = 1;
+    intv_gramdirty = 1;
 }
 
 static unsigned char intv_ram8[256];
@@ -342,7 +345,7 @@ int intv_load_rom_file(int id, int required)
 	UINT8 end_seg;
 
 	UINT16 current_address;
-	UINT16 end_address;
+	UINT32 end_address;
 
 	UINT8 high_byte;
 	UINT8 low_byte;

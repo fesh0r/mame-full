@@ -6,6 +6,8 @@
 
 /* STIC variables */
 struct intv_sprite_type intv_sprite[8];
+UINT8 intv_sprite_buffers[8][16][128];
+int intv_collision_registers[8];
 int intv_stic_handshake;
 int intv_border_color;
 int intv_color_stack[4];
@@ -21,6 +23,15 @@ READ16_HANDLER( stic_r )
 	//logerror("%x = stic_r(%x)\n",0,offset);
 	switch (offset)
 	{
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+            return intv_collision_registers[offset & 0x07];
 		case 0x21:
 			intv_color_stack_mode = 1;
 			//logerror("Setting color stack mode\n");
@@ -45,19 +56,11 @@ WRITE16_HANDLER( stic_w )
 		case 0x05:
 		case 0x06:
 		case 0x07:
-			s =  &intv_sprite[offset%8];
-			s->xsize = 2;
-			if (data&0x400)
-				s->xsize *= 2;
-			if (data&0x200)
-				s->visible = 1;
-			else
-				s->visible = 0;
-			if (data&0x100)
-				s->coll = 1;
-			else
-				s->coll = 0;
-			s->xpos = data&0xff;
+			s =  &intv_sprite[offset & 0x07];
+			s->doublex = !!(data & 0x0400);
+			s->visible = !!(data & 0x0200);
+			s->coll = !!(data & 0x0100);
+			s->xpos = (data & 0xFF);
 			break;
 		/* Y Positions */
 		case 0x08:
@@ -68,25 +71,13 @@ WRITE16_HANDLER( stic_w )
 		case 0x0d:
 		case 0x0e:
 		case 0x0f:
-			s =  &intv_sprite[offset%8];
-			if (data&0x800)
-				s->yflip = 1;
-			else
-				s->yflip = 0;
-			if (data&0x400)
-				s->xflip = 1;
-			else
-				s->xflip = 0;
-			s->ysize = 1;
-			if (data&0x200)
-				s->ysize *= 4;
-			if (data&0x100)
-				s->ysize *= 2;
-			if (data&0x80)
-				s->yres = 2;
-			else
-				s->yres = 1;
-			s->ypos = data&0x7f;
+			s =  &intv_sprite[offset & 0x07];
+			s->yflip = !!(data & 0x0800);
+			s->xflip = !!(data & 0x0400);
+			s->quady = !!(data & 0x0200);
+			s->doubley = !!(data & 0x0100);
+			s->doubleyres = !!(data & 0x0080);
+			s->ypos = (data & 0x7F);
 			break;
 		/* Attributes */
 		case 0x10:
@@ -97,17 +88,11 @@ WRITE16_HANDLER( stic_w )
 		case 0x15:
 		case 0x16:
 		case 0x17:
-			s =  &intv_sprite[offset%8];
-			if (data&0x2000)
-				s->behind_foreground = 1;
-			else
-				s->behind_foreground = 0;
-			if (data&0x0800)
-				s->grom = 0;
-			else
-				s->grom = 1;
-			s->card = (data>>3)&0xff;
-			s->color = ((data>>9)&0x8) | (data&0x7);
+			s =  &intv_sprite[offset & 0x07];
+            s->behind_foreground = !!(data & 0x2000);
+            s->grom = !(data & 0x0800);
+			s->card = ((data >> 3) & 0xFF);
+			s->color = ((data >> 9) & 0x08) | (data & 0x7);
 			break;
 		/* Collision Detection - TBD */
 		case 0x18:
@@ -118,6 +103,10 @@ WRITE16_HANDLER( stic_w )
 		case 0x1d:
 		case 0x1e:
 		case 0x1f:
+            //a MOB's own collision bit is *always* zero, even if a
+            //one is poked into it
+            data &= (~(1 << (offset & 0x07))) & 0x03FF;
+            intv_collision_registers[offset & 0x07] = data;
 			break;
 		/* Display enable */
 		case 0x20:

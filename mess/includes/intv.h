@@ -13,8 +13,9 @@ void intvkbd_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 /* in machine/intv.c */
 
 /*  for the console alone... */
+extern UINT8 intv_gramdirty;
 extern UINT8 intv_gram[];
-extern UINT8 intv_gramdirty[];
+extern UINT8 intv_gramdirtybytes[];
 extern UINT16 intv_ram16[];
 
 void init_intv(void);

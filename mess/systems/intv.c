@@ -2,6 +2,7 @@
  *  Mattel Intellivision + Keyboard Component Drivers
  *
  *  Frank Palazzolo
+ *  Kyle Davis
  *
  *  TBD:
  *		    Map game controllers correctly (right controller + 16 way)
@@ -10,7 +11,6 @@
  *		    Fix memory system workaround
  *            (memory handler stuff in CP1610, debugger, and shared mem)
  *		    STIC
- *            collisions
  *            reenable dirty support
  *		    Cleanup
  *			  Separate stic & vidhrdw better, get rid of *2 for kbd comp
@@ -54,13 +54,26 @@ static void intv_init_palette(unsigned char *sys_palette,
 {
 	int i,j;
 
-    memcpy(sys_palette, intv_palette, sizeof (intv_palette));
+	/* Two copies of the palette */
+    memcpy(sys_palette, intv_palette, sizeof(intv_palette));
+    memcpy(sys_palette+sizeof(intv_palette), intv_palette,
+            sizeof(intv_palette));
+
+    /* Two copies of the color table */
     for(i=0;i<16;i++)
     {
     	for(j=0;j<16;j++)
     	{
     		*sys_colortable++ = i;
     		*sys_colortable++ = j;
+		}
+	}
+    for(i=0;i<16;i++)
+    {
+    	for(j=0;j<16;j++)
+    	{
+    		*sys_colortable++ = i+16;
+    		*sys_colortable++ = j+16;
 		}
 	}
 }
@@ -383,8 +396,8 @@ static struct MachineDriver machine_driver_intv =
 	/* video hardware */
 	40*8, 24*8, { 0, 40*8-1, 0, 24*8-1},
 	intv_gfxdecodeinfo,
-	sizeof (intv_palette) / sizeof (intv_palette[0]) ,
-	2 * 16 * 16,
+	32 ,
+	2 * 2 * 16 * 16,
 	intv_init_palette,					/* convert color prom */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
@@ -432,8 +445,8 @@ static struct MachineDriver machine_driver_intvkbd =
 	/* video hardware */
 	40*8, 24*8, { 0, 40*8-1, 0, 24*8-1},
 	intvkbd_gfxdecodeinfo,
-	sizeof (intv_palette) / sizeof (intv_palette[0]) ,
-	2 * 16 * 16,
+	32 ,
+	2 * 2 * 16 * 16,
 	intv_init_palette,					/* convert color prom */
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */

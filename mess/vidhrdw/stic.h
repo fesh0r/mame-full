@@ -10,19 +10,25 @@ struct intv_sprite_type
 	int xpos;
 	int ypos;
 	int coll;
-	int xsize;
-	int ysize;
+	int collision;
+	int doublex;
+	int doubley;
+	int quady;
 	int xflip;
 	int yflip;
 	int behind_foreground;
 	int grom;
 	int card;
 	int color;
-	int yres;
+	int doubleyres;
+
+    int dirty;
 };
 
 extern struct intv_sprite_type intv_sprite[];
+extern UINT8 intv_sprite_buffers[8][16][128];
 extern int intv_color_stack_mode;
+extern int intv_collision_registers[];
 extern int intv_color_stack_offset;
 extern int intv_color_stack[];
 extern int intv_stic_handshake;
