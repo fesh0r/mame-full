@@ -3435,7 +3435,12 @@ static void h0200(UINT16 opcode)
 		#if (TMS99XX_MODEL == TI990_10_ID)
 			I.error_interrupt_register = 0;
 			I.mapping_on = 0;
-			//I.cur_map = 0;
+
+			I.reset_maperr = 0;
+			I.mapper_cru_read_register = 0;
+			I.latch_control[0] = I.latch_control[1] = I.latch_control[2] = 0;
+
+			I.diaglat = 0;
 		#endif
 
 		#if EXTERNAL_INSTRUCTION_DECODING
