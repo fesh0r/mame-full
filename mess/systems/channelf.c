@@ -51,7 +51,7 @@ static UINT8 port_read_with_latch(UINT8 ext, UINT8 latch_state)
 
 static DEVICE_LOAD( channelf_cart )
 {
-	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x800, 0);
+	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x2000, 0);
 }
 
 static READ_HANDLER( channelf_port_0_r )
@@ -129,7 +129,7 @@ static WRITE_HANDLER( channelf_port_5_w )
 
 static ADDRESS_MAP_START( channelf_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_ROM, MWA8_ROM)
-	AM_RANGE(0x0800, 0x0fff) AM_READ(MRA8_ROM) /* Cartridge Data */
+	AM_RANGE(0x0800, 0x27ff) AM_READ(MRA8_ROM) /* Cartridge Data */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
