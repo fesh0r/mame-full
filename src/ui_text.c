@@ -130,6 +130,8 @@ const char * default_text[] =
 	"Mount",
 	"Unmount",
 	"[empty slot]",
+	"Quit Fileselector",
+	"File Specification",
 #endif
 	"Cheat",
 	"Memory Card",

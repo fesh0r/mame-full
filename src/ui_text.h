@@ -96,6 +96,8 @@ enum
 	UI_mount,
 	UI_unmount,
 	UI_emptyslot,
+	UI_quitfileselector,
+	UI_filespecification,
 #endif
 	UI_cheat,
 	UI_memorycard,

@@ -332,7 +332,7 @@ static void fs_generate_filelist(void)
 
 	/* quit back to main menu option at top */
 	n = fs_alloc();
-	fs_item[n] = "Quit Fileselector";
+	fs_item[n] = ui_getstring(UI_quitfileselector);
 	fs_subitem[n] = 0;
 	fs_types[n] = FILESELECT_QUIT;
 	fs_flags[n] = 0;
@@ -361,7 +361,7 @@ static void fs_generate_filelist(void)
 
 	/* file specification */
 	n = fs_alloc();
-	fs_item[n] = "File Specification";
+	fs_item[n] = ui_getstring(UI_filespecification);
 	fs_subitem[n] = current_filespecification;
 	fs_types[n] = FILESELECT_FILESPEC;
 	fs_flags[n] = 0;
@@ -751,7 +751,7 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 
 	}
 
-	menu_item[total] = "Return to Main Menu";
+	menu_item[total] = ui_getstring(UI_returntomain);
 	menu_subitem[total] = 0;
 	flag[total] = 0;
 	total++;
