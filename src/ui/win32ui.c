@@ -637,7 +637,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sautoframeskip",           pOpts->autoframeskip   ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -frameskip %d",              pOpts->frameskip);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%swaitvsync",               pOpts->wait_vsync      ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%striplebuffer",            pOpts->use_triplebuf   ? "" : "no");
+	if (pOpts->use_triplebuf)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%striplebuffer",pOpts->use_triplebuf ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%swindow",                  pOpts->window_mode     ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sddraw",                   pOpts->use_ddraw       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shwstretch",               pOpts->ddraw_stretch   ? "" : "no");
@@ -667,8 +668,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3dtexmanage",pOpts->d3d_texture_management ? "" : "no");
 		if (pOpts->d3d_effect != D3D_EFFECT_NONE)
 			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3deffect %s",GetD3DEffectShortName(pOpts->d3d_effect));
-		if (pOpts->d3d_prescale)
-			sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dprescale");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -d3dprescale %s",GetD3DPrescaleShortName(pOpts->d3d_prescale));
 
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sd3deffectrotate",pOpts->d3d_rotate_effects ? "" : "no");
 
@@ -692,25 +692,34 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	/* core video */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -brightness %f",             pOpts->f_bright_correct); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -pause_brightness %f",       pOpts->f_pause_bright); 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snorotate",                pOpts->norotate        ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",                     pOpts->ror             ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",                     pOpts->rol             ? "" : "no");
+
+	if (pOpts->norotate)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%snorotate",pOpts->norotate ? "" : "no");
+	if (pOpts->ror)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sror",pOpts->ror ? "" : "no");
+	if (pOpts->rol)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%srol",pOpts->rol ? "" : "no");
 	if (pOpts->auto_ror)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -autoror");
 	if (pOpts->auto_rol)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -autorol");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",                   pOpts->flipx           ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",                   pOpts->flipy           ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -debug_resolution %s",       pOpts->debugres); 
+	if (pOpts->flipx)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipx",pOpts->flipx ? "" : "no");
+	if (pOpts->flipy)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sflipy",pOpts->flipy ? "" : "no");
+	if (strcmp(pOpts->debugres,"auto") != 0)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -debug_resolution %s",       pOpts->debugres); 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -gamma %f",                  pOpts->f_gamma_correct);
 
 	/* vector */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%santialias",               pOpts->antialias       ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%stranslucency",            pOpts->translucency    ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -beam %f",                   pOpts->f_beam);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -flicker %f",                pOpts->f_flicker);
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -intensity %f",              pOpts->f_intensity);
-
+	if (DriverIsVector(nGameIndex))
+	{
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%santialias",               pOpts->antialias       ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%stranslucency",            pOpts->translucency    ? "" : "no");
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -beam %f",                   pOpts->f_beam);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -flicker %f",                pOpts->f_flicker);
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -intensity %f",              pOpts->f_intensity);
+	}
 	/* sound */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -samplerate %d",             pOpts->samplerate);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssamples",                 pOpts->use_samples     ? "" : "no");
@@ -721,7 +730,8 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	/* misc artwork options */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sartwork",                 pOpts->use_artwork     ? "" : "no");
 
-	if (pOpts->use_artwork == TRUE) {
+	if (pOpts->use_artwork == TRUE)
+	{
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbackdrop",            pOpts->backdrops       ? "" : "no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%soverlay",             pOpts->overlays        ? "" : "no");
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sbezel",               pOpts->bezels          ? "" : "no");
@@ -730,8 +740,10 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	}
 
 	/* misc */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%scheat",                   pOpts->cheat           ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdebug",                   pOpts->mame_debug      ? "" : "no");
+	if (pOpts->cheat)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%scheat",pOpts->cheat ? "" : "no");
+	if (pOpts->mame_debug)
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -%sdebug",pOpts->mame_debug ? "" : "no");
 	if (g_pPlayBkName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -playback \"%s\"",       g_pPlayBkName);
 	if (g_pRecordName != NULL)

@@ -224,13 +224,16 @@ static int add_device(struct rc_option *option, const char *arg, int priority)
 
 static int specify_ram(struct rc_option *option, const char *arg, int priority)
 {
-	UINT32 specified_ram;
+	UINT32 specified_ram = 0;
 
-	specified_ram = ram_parse_string(arg);
-	if (specified_ram == 0)
+	if (strcmp(arg, "0"))
 	{
-		fprintf(stderr, "Cannot recognize the RAM option %s; aborting\n", arg);
-		return -1;
+		specified_ram = ram_parse_string(arg);
+		if (specified_ram == 0)
+		{
+			fprintf(stderr, "Cannot recognize the RAM option %s\n", arg);
+			return -1;
+		}
 	}
 	options.ram = specified_ram;
 	return 0;

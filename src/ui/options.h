@@ -122,6 +122,14 @@ enum
 	MAX_D3D_FILTERS = 5,
 };
 
+// d3d prescale types
+enum
+{
+	D3D_PRESCALE_NONE = 0,
+	D3D_PRESCALE_AUTO = 1,
+	MAX_D3D_PRESCALE = 10,
+};
+
 // used to be "registry option", now is just for a game/global option
 typedef struct
 {
@@ -170,7 +178,7 @@ typedef struct
 	int d3d_filter;
 	BOOL d3d_texture_management;
 	int d3d_effect;
-	BOOL d3d_prescale;
+	int d3d_prescale;
 	BOOL d3d_rotate_effects;
 	BOOL d3d_scanlines_enable;
 	int d3d_scanlines;
@@ -380,6 +388,9 @@ const char * GetTabName(int tab_index);
 
 const char * GetD3DEffectLongName(int d3d_effect);
 const char * GetD3DEffectShortName(int d3d_effect);
+
+const char * GetD3DPrescaleLongName(int d3d_prescale);
+const char * GetD3DPrescaleShortName(int d3d_prescale);
 
 const char * GetD3DFilterLongName(int d3d_filter);
 

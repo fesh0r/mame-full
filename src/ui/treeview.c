@@ -648,6 +648,37 @@ void CreateSoundFolders(int parent_index)
 	}
 }
 
+void CreateOrientationFolders(int parent_index)
+{
+	int jj;
+	int nGames = GetNumGames();
+	LPTREEFOLDER lpFolder = treeFolders[parent_index];
+
+	// not sure why this is added separately
+	LPTREEFOLDER lpVert, lpHorz;
+	lpVert = NewFolder("Vertical", next_folder_id++, parent_index, IDI_FOLDER,
+					   GetFolderFlags(numFolders));
+	AddFolder(lpVert);
+	lpHorz = NewFolder("Horizontal", next_folder_id++, parent_index, IDI_FOLDER,
+					   GetFolderFlags(numFolders));
+	AddFolder(lpHorz);
+
+	// no games in top level folder
+	SetAllBits(lpFolder->m_lpGameBits,FALSE);
+
+	for (jj = 0; jj < nGames; jj++)
+	{
+		if (drivers[jj]->flags & ORIENTATION_SWAP_XY)
+		{
+			AddGame(lpVert,jj);
+		}
+		else
+		{
+			AddGame(lpHorz,jj);
+		}
+	}
+}
+
 void CreateYearFolders(int parent_index)
 {
 	int i,jj;

@@ -112,6 +112,7 @@ static void InitializeEffectUI(HWND hWnd);
 static void InitializeArtresUI(HWND hWnd);
 static void InitializeD3DFilterUI(HWND hwnd);
 static void InitializeD3DEffectUI(HWND hwnd);
+static void InitializeD3DPrescaleUI(HWND hwnd);
 static void InitializeBIOSUI(HWND hwnd);
 static void InitializeCleanStretchUI(HWND hwnd);
 static void PropToOptions(HWND hWnd, options_type *o);
@@ -1737,7 +1738,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_D3D_FILTER,    DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_filter,    DM_INT, &pGameOpts->d3d_filter, 0, 0, 0);
 	DataMapAdd(IDC_D3D_TEXTURE_MANAGEMENT,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_texture_management,DM_BOOL,&pGameOpts->d3d_texture_management, 0, 0, 0);
 	DataMapAdd(IDC_D3D_EFFECT,    DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_effect,    DM_INT, &pGameOpts->d3d_effect, 0, 0, 0);
-	DataMapAdd(IDC_D3D_PRESCALE,  DM_BOOL, CT_BUTTON,   &pGameOpts->d3d_prescale,  DM_BOOL, &pGameOpts->d3d_prescale,  0, 0, 0);
+	DataMapAdd(IDC_D3D_PRESCALE,  DM_INT,  CT_COMBOBOX, &pGameOpts->d3d_prescale,  DM_INT, &pGameOpts->d3d_prescale,  0, 0, 0);
 	DataMapAdd(IDC_D3D_ROTATE_EFFECTS,DM_BOOL,CT_BUTTON,&pGameOpts->d3d_rotate_effects,DM_BOOL,&pGameOpts->d3d_rotate_effects, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES_ENABLE,DM_BOOL, CT_BUTTON, &pGameOpts->d3d_scanlines_enable, DM_BOOL, &pGameOpts->d3d_scanlines_enable, 0, 0, 0);
 	DataMapAdd(IDC_D3D_SCANLINES, DM_INT,  CT_SLIDER,   &pGameOpts->d3d_scanlines, DM_INT, &pGameOpts->d3d_scanlines, 0, 0, 0);
@@ -1975,6 +1976,7 @@ static void InitializeOptions(HWND hDlg)
 	InitializeArtresUI(hDlg);
 	InitializeD3DFilterUI(hDlg);
 	InitializeD3DEffectUI(hDlg);
+	InitializeD3DPrescaleUI(hDlg);
 	InitializeBIOSUI(hDlg);
 	InitializeCleanStretchUI(hDlg);
 }
@@ -2690,6 +2692,19 @@ static void InitializeD3DEffectUI(HWND hwnd)
 
 		for (i=0;i<MAX_D3D_EFFECTS;i++)
 			ComboBox_AddString(hCtrl,GetD3DEffectLongName(i));
+	}
+}
+
+static void InitializeD3DPrescaleUI(HWND hwnd)
+{
+	HWND hCtrl = GetDlgItem(hwnd,IDC_D3D_PRESCALE);
+
+	if (hCtrl)
+	{
+		int i;
+
+		for (i=0;i<MAX_D3D_PRESCALE;i++)
+			ComboBox_AddString(hCtrl,GetD3DPrescaleLongName(i));
 	}
 }
 

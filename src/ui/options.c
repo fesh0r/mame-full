@@ -79,6 +79,9 @@ static void  FontDecodeString(const char* str, void* data);
 static void D3DEffectEncodeString(void *data,char *str);
 static void D3DEffectDecodeString(const char *str,void *data);
 
+static void D3DPrescaleEncodeString(void *data,char *str);
+static void D3DPrescaleDecodeString(const char *str,void *data);
+
 static void CleanStretchEncodeString(void *data,char *str);
 static void CleanStretchDecodeString(const char *str,void *data);
 
@@ -207,7 +210,8 @@ static REG_OPTION regGameOpts[] =
 	{ "d3dfilter",              RO_INT,     &gOpts.d3d_filter,        0, 0},
 	{ "d3deffect",              RO_ENCODE,  &gOpts.d3d_effect,
 	  D3DEffectEncodeString, D3DEffectDecodeString },
-	{ "d3dprescale",            RO_BOOL,    &gOpts.d3d_prescale,      0, 0},
+	{ "d3dprescale",            RO_INT,     &gOpts.d3d_prescale,
+	  D3DPrescaleEncodeString, D3DEffectDecodeString },
 	{ "d3deffectrotate",        RO_BOOL,    &gOpts.d3d_rotate_effects,0, 0},
 	{ "*d3dscan_enable",        RO_BOOL,    &gOpts.d3d_scanlines_enable,0,0},
 	{ "*d3dscan",               RO_INT,     &gOpts.d3d_scanlines,     0, 0},
@@ -401,6 +405,35 @@ const char * d3d_effects_short_name[MAX_D3D_EFFECTS] =
 	"scan75",
 };
 
+// must match D3D_PRESCALE_... in options.h, and count must match MAX_D3D_PRESCALE
+const char * d3d_prescale_long_name[MAX_D3D_PRESCALE] =
+{
+	"None",
+	"Auto",
+	"Full",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+};
+
+const char * d3d_prescale_short_name[MAX_D3D_PRESCALE] =
+{
+	"none",
+	"auto",
+	"full",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+};
+
 const char * d3d_filter_long_name[MAX_D3D_FILTERS] =
 {
 	"None",
@@ -434,7 +467,7 @@ static BOOL save_gui_settings = TRUE;
 static BOOL save_default_options = TRUE;
 
 /* Default sizes based on 8pt font w/sort arrow in that column */
-static int default_column_width[] = { 187, 68, 84, 84, 64, 88, 74,108, 60,144, 84 };
+static int default_column_width[] = { 185, 68, 84, 84, 64, 88, 74,108, 60,144, 84 };
 static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  0 };
 /* Hidden columns need to go at the end of the order array */
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
@@ -668,7 +701,7 @@ BOOL OptionsInit()
 	global.d3d_filter = 1;
 	global.d3d_texture_management = TRUE;
 	global.d3d_effect = D3D_EFFECT_AUTO;
-	global.d3d_prescale = FALSE;
+	global.d3d_prescale = D3D_PRESCALE_AUTO;
 	global.d3d_rotate_effects = TRUE;
 	global.d3d_scanlines_enable = FALSE;
 	global.d3d_scanlines = 50;
@@ -938,6 +971,16 @@ const char * GetD3DEffectLongName(int d3d_effect)
 const char * GetD3DEffectShortName(int d3d_effect)
 {
 	return d3d_effects_short_name[d3d_effect];
+}
+
+const char * GetD3DPrescaleLongName(int d3d_prescale)
+{
+	return d3d_prescale_long_name[d3d_prescale];
+}
+
+const char * GetD3DPrescaleShortName(int d3d_prescale)
+{
+	return d3d_prescale_short_name[d3d_prescale];
 }
 
 const char * GetD3DFilterLongName(int d3d_filter)
@@ -2106,6 +2149,30 @@ static void D3DEffectDecodeString(const char *str,void *data)
 		}
 	}
 	dprintf("invalid d3d effect string %s",str);
+}
+
+static void D3DPrescaleEncodeString(void *data,char *str)
+{
+	int d3d_prescale = *(int *)data;
+
+	strcpy(str,GetD3DPrescaleShortName(d3d_prescale));
+}
+
+static void D3DPrescaleDecodeString(const char *str,void *data)
+{
+	int i;
+
+	*(int *)data = D3D_PRESCALE_NONE;
+
+	for (i=0;i<MAX_D3D_PRESCALE;i++)
+	{
+		if (stricmp(GetD3DPrescaleShortName(i),str) == 0)
+		{
+			*(int *)data = i;
+			return;
+		}
+	}
+	dprintf("invalid d3d prescale string %s",str);
 }
 
 static void CleanStretchEncodeString(void *data,char *str)
