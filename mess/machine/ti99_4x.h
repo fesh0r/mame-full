@@ -41,9 +41,10 @@ enum
 	offset_fdc_dsr = 0x0000,		/* TI FDC DSR (8kbytes) */
 	offset_bwg_dsr = 0x2000,		/* BwG FDC DSR (32kbytes) */
 	offset_bwg_ram = 0xa000,		/* BwG FDC RAM (2kbytes) */
-	offset_evpc_dsr= 0xa800,		/* EVPC DSR (64kbytes) */
-	offset_ide_ram = 0x1a800,		/* IDE card RAM (32 to 512kbytes) */
-	region_dsr_len = 0x11a800
+	offset_rs232_dsr = 0xa800,		/* TI RS232 DSR (4kbytes) */
+	offset_evpc_dsr= 0xb800,		/* EVPC DSR (64kbytes) */
+	offset_ide_ram = 0x1b800,		/* IDE card RAM (32 to 512kbytes) */
+	region_dsr_len = 0x11b800
 };
 
 /* enum for RAM config */
@@ -83,7 +84,9 @@ enum
 	config_speech_bit	= 3,
 	config_speech_mask	= 0x1,
 	config_fdc_bit		= 4,
-	config_fdc_mask		= 0x3	/* 2 bits */
+	config_fdc_mask		= 0x3,	/* 2 bits */
+	config_rs232_bit	= 6,
+	config_rs232_mask	= 0x1
 };
 
 
@@ -126,12 +129,69 @@ WRITE16_HANDLER( ti99_ww_wgpl );
 
 extern void tms9901_set_int2(int state);
 
+
+/*
+	TI99 peripheral expansion system support
+*/
+
+/*
+	prototype for CRU handlers in expansion system
+*/
+typedef int (*cru_read_handler)(int offset);
+typedef void (*cru_write_handler)(int offset, int data);
+
+/*
+	Descriptor for TI peripheral expansion cards (8-bit bus)
+*/
+typedef struct ti99_exp_card_handlers_t
+{
+	cru_read_handler cru_read;		/* card CRU read handler */
+	cru_write_handler cru_write;	/* card CRU handler */
+
+	mem_read_handler mem_read;		/* card mem read handler (8 bits) */
+	mem_write_handler mem_write;	/* card mem write handler (8 bits) */
+} ti99_exp_card_handlers_t;
+
+/*
+	Descriptor for 16-bit peripheral expansion cards designed by the SNUG for
+	use with its SGCPU (a.k.a. 99/4p) system.  (These cards were not designed
+	by TI, TI always regarded the TI99 as an 8-bit system.)
+*/
+typedef struct ti99_4p_exp_16bit_card_handlers_t
+{
+	cru_read_handler cru_read;		/* card CRU read handler */
+	cru_write_handler cru_write;	/* card CRU handler */
+
+	mem_read16_handler mem_read;	/* card mem read handler (16 bits) */
+	mem_write16_handler mem_write;	/* card mem write handler (16 bits) */
+} ti99_4p_exp_16bit_card_handlers_t;
+
+/* masks for ila and ilb (from actual ILA and ILB registers) */
+enum
+{
+	inta_rs232_1_bit = 0,
+	inta_rs232_2_bit = 1,
+	inta_rs232_3_bit = 4,
+	inta_rs232_4_bit = 5,
+
+	/*inta_rs232_1_mask = (0x80 >> inta_rs232_1_bit),
+	inta_rs232_2_mask = (0x80 >> inta_rs232_2_bit),
+	inta_rs232_3_mask = (0x80 >> inta_rs232_3_bit),
+	inta_rs232_4_mask = (0x80 >> inta_rs232_4_bit),*/
+
+	intb_fdc_bit     = 0,
+	intb_ieee488_bit = 1
+};
+
+void ti99_exp_set_card_handlers(int cru_base, const ti99_exp_card_handlers_t *handler);
+void ti99_4p_exp_set_16bit_card_handlers(int cru_base, const ti99_4p_exp_16bit_card_handlers_t *handler);
+void ti99_exp_set_ila_bit(int bit, int state);
+void ti99_exp_set_ilb_bit(int bit, int state);
+
 READ16_HANDLER ( ti99_expansion_CRU_r );
 WRITE16_HANDLER ( ti99_expansion_CRU_w );
-
 READ16_HANDLER ( ti99_rw_expansion );
 WRITE16_HANDLER ( ti99_ww_expansion );
-
 
 READ16_HANDLER ( ti99_4p_expansion_CRU_r );
 WRITE16_HANDLER ( ti99_4p_expansion_CRU_w );
