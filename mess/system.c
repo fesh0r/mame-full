@@ -460,8 +460,10 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
     /* MEMOTECH */
     DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
-    /* MATTEL */
-    DRIVER( aquarius )  /* 1983 Aquarius                                  */
+	/* MATTEL */
+TESTDRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
+						/* (Test marketed, later recalled )				  */
+	DRIVER( aquarius )	/* 1983 Aquarius								  */
 
     /* Team Concepts */
     /* CPU not known, else should be easy, look into systems/comquest.c */
