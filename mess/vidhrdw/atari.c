@@ -811,10 +811,10 @@ static void artifacts_gfx(UINT8 *src, UINT8 *dst, int width)
 	UINT8 n, bits = 0;
 	UINT8 b = gtia.w.colbk & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
-	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
-	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
-	UINT8 _C = Machine->remapped_colortable[b+c];
-	UINT8 _D = Machine->remapped_colortable[gtia.w.colbk];
+	UINT8 atari_A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
+	UINT8 atari_B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
+	UINT8 atari_C = Machine->remapped_colortable[b+c];
+	UINT8 atari_D = Machine->remapped_colortable[gtia.w.colbk];
 
 	for( x = 0; x < width * 4; x++ )
 	{
@@ -843,18 +843,18 @@ static void artifacts_gfx(UINT8 *src, UINT8 *dst, int width)
 		case 0: /* 0 0 0 */
 		case 1: /* 0 0 1 */
 		case 4: /* 1 0 0 */
-			*dst++ = _D;
+			*dst++ = atari_D;
 			break;
 		case 3: /* 0 1 1 */
 		case 6: /* 1 1 0 */
 		case 7: /* 1 1 1 */
-			*dst++ = _C;
+			*dst++ = atari_C;
 			break;
 		case 2: /* 0 1 0 */
-			*dst++ = _B;
+			*dst++ = atari_B;
 			break;
 		case 5: /* 1 0 1 */
-			*dst++ = _A;
+			*dst++ = atari_A;
 			break;
 		}
 		switch( bits & 7 )
@@ -862,18 +862,18 @@ static void artifacts_gfx(UINT8 *src, UINT8 *dst, int width)
 		case 0: /* 0 0 0 */
 		case 1: /* 0 0 1 */
 		case 4: /* 1 0 0 */
-			*dst++ = _D;
+			*dst++ = atari_D;
 			break;
 		case 3: /* 0 1 1 */
 		case 6: /* 1 1 0 */
 		case 7: /* 1 1 1 */
-			*dst++ = _C;
+			*dst++ = atari_C;
 			break;
 		case 2: /* 0 1 0 */
-			*dst++ = _A;
+			*dst++ = atari_A;
 			break;
 		case 5: /* 1 0 1 */
-			*dst++ = _B;
+			*dst++ = atari_B;
 			break;
         }
     }
@@ -885,10 +885,10 @@ static void artifacts_txt(UINT8 * src, UINT8 * dst, int width)
 	UINT8 n, bits = 0;
 	UINT8 b = gtia.w.colpf2 & 0xf0;
 	UINT8 c = gtia.w.colpf1 & 0x0f;
-	UINT8 _A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
-	UINT8 _B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
-	UINT8 _C = Machine->remapped_colortable[b+c];
-	UINT8 _D = Machine->remapped_colortable[gtia.w.colpf2];
+	UINT8 atari_A = Machine->remapped_colortable[((b+0x30)&0xf0)+c];
+	UINT8 atari_B = Machine->remapped_colortable[((b+0x70)&0xf0)+c];
+	UINT8 atari_C = Machine->remapped_colortable[b+c];
+	UINT8 atari_D = Machine->remapped_colortable[gtia.w.colpf2];
 
 	for( x = 0; x < width * 4; x++ )
 	{
@@ -917,18 +917,18 @@ static void artifacts_txt(UINT8 * src, UINT8 * dst, int width)
 		case 0: /* 0 0 0 */
 		case 1: /* 0 0 1 */
 		case 4: /* 1 0 0 */
-			*dst++ = _D;
+			*dst++ = atari_D;
 			break;
 		case 3: /* 0 1 1 */
 		case 6: /* 1 1 0 */
 		case 7: /* 1 1 1 */
-			*dst++ = _C;
+			*dst++ = atari_C;
 			break;
 		case 2: /* 0 1 0 */
-			*dst++ = _A;
+			*dst++ = atari_A;
 			break;
 		case 5: /* 1 0 1 */
-			*dst++ = _B;
+			*dst++ = atari_B;
 			break;
 		}
 		switch( bits & 7 )
@@ -936,18 +936,18 @@ static void artifacts_txt(UINT8 * src, UINT8 * dst, int width)
 		case 0:/* 0 0 0 */
 		case 1:/* 0 0 1 */
 		case 4:/* 1 0 0 */
-			*dst++ = _D;
+			*dst++ = atari_D;
 			break;
 		case 3: /* 0 1 1 */
 		case 6: /* 1 1 0 */
 		case 7: /* 1 1 1 */
-			*dst++ = _C;
+			*dst++ = atari_C;
 			break;
 		case 2: /* 0 1 0 */
-			*dst++ = _B;
+			*dst++ = atari_B;
 			break;
 		case 5: /* 1 0 1 */
-			*dst++ = _A;
+			*dst++ = atari_A;
 			break;
         }
     }
