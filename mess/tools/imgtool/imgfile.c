@@ -463,14 +463,18 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
 		goto done;
 	}
 
-	/* Custom filter? */
+	/* custom filter? */
 	err = process_filter(&destf, &newstream, img->module, filter, PURPOSE_READ);
 	if (err)
 		goto done;
 
-	err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
-	if (err)
-		goto done;
+	/* cannonicalize path */
+	if (img->module->path_separator)
+	{
+		err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
+		if (err)
+			goto done;
+	}
 
 	err = img->module->read_file(img, fname, destf);
 	if (err)
@@ -496,6 +500,7 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	char *s;
 	imgtool_stream *newstream = NULL;
 	option_resolution *alloc_resolution = NULL;
+	char *alloc_path = NULL;
 
 	if (!img->module->write_file)
 	{
@@ -523,6 +528,14 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	if (err)
 		goto done;
 
+	/* cannonicalize path */
+	if (img->module->path_separator)
+	{
+		err = cannonicalize_path(img, FALSE, &fname, &alloc_path);
+		if (err)
+			goto done;
+	}
+
 	/* allocate dummy options if necessary */
 	if (!opts && img->module->writefile_optguide)
 	{
@@ -548,6 +561,8 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 done:
 	if (buf)
 		free(buf);
+	if (alloc_path)
+		free(alloc_path);
 	if (newstream)
 		stream_close(newstream);
 	if (alloc_resolution)

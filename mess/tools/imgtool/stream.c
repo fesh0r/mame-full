@@ -15,16 +15,16 @@
 #include "imgtool.h"
 #include "utils.h"
 
-enum
+typedef enum
 {
 	IMG_FILE,
 	IMG_MEM,
 	IMG_FILTER
-};
+} imgtype_t;
 
 struct _imgtool_stream
 {
-	int imgtype;
+	imgtype_t imgtype;
 	int write_protect;
 	const char *name; // needed for clear
 	union {
@@ -371,6 +371,25 @@ UINT64 stream_size(imgtool_stream *s)
 			break;
 	}
 	return result;
+}
+
+
+
+void *stream_getptr(imgtool_stream *f)
+{
+	void *ptr;
+
+	switch(f->imgtype)
+	{
+		case IMG_MEM:
+			ptr = f->u.m.buf;
+			break;
+
+		default:
+			ptr = NULL;
+			break;
+	}
+	return ptr;
 }
 
 

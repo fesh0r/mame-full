@@ -7,6 +7,7 @@
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_vdk">
@@ -16,6 +17,7 @@
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_dmk">
@@ -25,6 +27,7 @@
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
 </imgtooltest>
 
 <imgtooltest name="coco_rs_001">
@@ -35,16 +38,19 @@
 	<checkdirectory>
 		<entry name="FOO.TXT" size="0"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT"/>
 
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="12"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello World!'</checkfile>
 
 	<putfile name="FOO.TXT">'Hello'</putfile>
 	<checkdirectory>
 		<entry name="FOO.TXT" size="5"/>
 	</checkdirectory>
+	<checkfile name="FOO.TXT">'Hello'</checkfile>
 </imgtooltest>
 
 </tests>

@@ -336,9 +336,108 @@ static imgtoolerr_t os9_deallocate_lsn(imgtool_image *image, UINT32 lsn)
 
 
 
+static UINT32 os9_get_free_lsns(imgtool_image *image)
+{
+	const struct os9_diskinfo *disk_info;
+	UINT32 i, free_lsns;
+	UINT8 b;
+
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
+	free_lsns = 0;
+
+	for (i = 0; i < disk_info->total_sectors; i++)
+	{
+		b = disk_info->allocation_bitmap[i / 8];
+		b >>= (7 - (i % 8));
+		free_lsns += ~b & 1;
+	}
+
+	return free_lsns;
+}
+
+	
+
 static imgtoolerr_t os9_set_file_size(imgtool_image *image, struct os9_fileinfo *file_info,
 	UINT32 new_size)
 {
+	imgtoolerr_t err;
+	const struct os9_diskinfo *disk_info;
+	UINT32 new_lsn_count, current_lsn_count, free_lsns;
+	UINT32 lsn;
+	int sector_map_length;
+
+	/* easy way out? */
+	if (file_info->file_size == new_size)
+		return IMGTOOLERR_SUCCESS;
+
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	free_lsns = os9_get_free_lsns(image);
+	current_lsn_count = (file_info->file_size + disk_info->sector_size - 1) / disk_info->sector_size;
+	new_lsn_count = (new_size + disk_info->sector_size - 1) / disk_info->sector_size;
+
+	/* check to see if we are out of space */
+	if (new_lsn_count - current_lsn_count > free_lsns)
+		return IMGTOOLERR_NOSPACE;
+
+	if (current_lsn_count != new_lsn_count)
+	{
+		/* first find out the size of our sector map */
+		sector_map_length = 0;
+		lsn = 0;
+		while((lsn < current_lsn_count) && (sector_map_length < sizeof(file_info->sector_map) / sizeof(file_info->sector_map[0])))
+		{
+			if (file_info->sector_map[sector_map_length].count == 0)
+				return IMGTOOLERR_CORRUPTIMAGE;
+
+			lsn += file_info->sector_map[sector_map_length].count;
+			sector_map_length++;
+		}
+		if (lsn != current_lsn_count)
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		while(current_lsn_count > new_lsn_count)
+		{
+			/* shrink this file */
+			lsn = file_info->sector_map[sector_map_length - 1].lsn +
+				file_info->sector_map[sector_map_length - 1].count - 1;
+
+			err = os9_deallocate_lsn(image, lsn);
+			if (err)
+				return err;
+
+			file_info->sector_map[sector_map_length - 1].count--;
+			while(sector_map_length > 0 && (file_info->sector_map[sector_map_length - 1].count == 0))
+				sector_map_length--;
+			current_lsn_count--;
+		}
+
+		while(current_lsn_count < new_lsn_count)
+		{
+			/* grow this file */
+			err = os9_allocate_lsn(image, &lsn);
+			if (err)
+				return err;
+
+			if ((sector_map_length > 0) && ((file_info->sector_map[sector_map_length - 1].lsn +
+				file_info->sector_map[sector_map_length - 1].count) == lsn))
+			{
+				file_info->sector_map[sector_map_length - 1].count++;
+			}
+			else if (sector_map_length >= sizeof(file_info->sector_map) / sizeof(file_info->sector_map[0]))
+			{
+				return IMGTOOLERR_NOSPACE;
+			}
+			else
+			{
+				file_info->sector_map[sector_map_length].lsn = lsn;
+				file_info->sector_map[sector_map_length].count = 1;
+				sector_map_length++;
+			}
+			current_lsn_count++;
+		}
+	}
+
 	return IMGTOOLERR_UNIMPLEMENTED;
 }
 
@@ -727,18 +826,10 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 static imgtoolerr_t os9_diskimage_freespace(imgtool_image *img, UINT64 *size)
 {
 	const struct os9_diskinfo *disk_info;
-	UINT32 i, free_lsns;
-	UINT8 b;
+	UINT32 free_lsns;
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
-	free_lsns = 0;
-
-	for (i = 0; i < disk_info->total_sectors; i++)
-	{
-		b = disk_info->allocation_bitmap[i / 8];
-		b >>= (7 - (i % 8));
-		free_lsns += ~b & 1;
-	}
+	free_lsns = os9_get_free_lsns(img);
 
 	*size = free_lsns * disk_info->sector_size;
 	return IMGTOOLERR_SUCCESS;

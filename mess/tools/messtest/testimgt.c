@@ -69,7 +69,7 @@ static void createimage_handler(const char **attributes)
 
 
 
-static void putfile_start_handler(const char **attributes)
+static void file_start_handler(const char **attributes)
 {
 	const char *filename;
 
@@ -101,6 +101,40 @@ static void putfile_end_handler(const void *buffer, size_t size)
 	if (err)
 	{
 		report_imgtoolerr(err);
+		return;
+	}
+}
+
+
+
+static void checkfile_end_handler(const void *buffer, size_t size)
+{
+	imgtoolerr_t err;
+	imgtool_stream *stream;
+	UINT64 stream_sz;
+	const void *stream_ptr;
+
+	stream = stream_open_mem((void *) buffer, size);
+	if (!stream)
+	{
+		error_outofmemory();
+		return;
+	}
+
+	err = img_readfile(image, filename_buffer, stream, NULL);
+	if (err)
+	{
+		report_imgtoolerr(err);
+		return;
+	}
+
+	stream_ptr = stream_getptr(stream);
+	stream_sz = stream_size(stream);
+
+	if ((size != stream_sz) || (memcmp(stream_ptr, buffer, size)))
+	{
+		failed = TRUE;
+		report_message(MSG_FAILURE, "Failed file verification");
 		return;
 	}
 }
@@ -273,8 +307,9 @@ static const struct messtest_tagdispatch checkdirectory_dispatch[] =
 const struct messtest_tagdispatch testimgtool_dispatch[] =
 {
 	{ "createimage",	DATA_NONE,		createimage_handler,			NULL },
+	{ "checkfile",		DATA_BINARY,	file_start_handler,				checkfile_end_handler },
 	{ "checkdirectory",	DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
-	{ "putfile",		DATA_BINARY,	putfile_start_handler,			putfile_end_handler },
+	{ "putfile",		DATA_BINARY,	file_start_handler,				putfile_end_handler },
 	{ NULL }
 };
 
