@@ -127,7 +127,7 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 	case WM_INITDIALOG:
 		hShown	   = GetDlgItem(hDlg, IDC_LISTSHOWCOLUMNS);
 		hAvailable = GetDlgItem(hDlg, IDC_LISTAVAILABLECOLUMNS);
-        pfnGetColumnInfo(order, shown);
+		pfnGetColumnInfo(order, shown);
 
 		showMsg = TRUE;
 		nShown	= 0;
@@ -139,7 +139,7 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		lvi.iImage	  = -1;
 
 		/* Get the Column Order and save it */
-        pfnGetRealColumnOrder(order);
+		pfnGetRealColumnOrder(order);
 
 #if 0
         {
@@ -151,9 +151,9 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
             MessageBox(0, tmp, "Column Order", IDOK);
         }
 #endif
-        for (i = 0 ; i < nColumnMax; i++)
+		for (i = 0 ; i < nColumnMax; i++)
 		{		 
-            lvi.pszText = names[order[i]];
+			lvi.pszText = names[order[i]];
 			lvi.lParam	= order[i];
 
 			if (shown[order[i]])
@@ -339,17 +339,17 @@ INT_PTR InternalColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 						char tmp[80];
 						sprintf(tmp,"Shown (%d) - Hidden (%d)",nShown,nAvail);
 						MessageBox(0,tmp,"List Counts",IDOK);
-						sprintf(tmp,"ColumnOrder: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+						sprintf(tmp,"ColumnOrder: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 							order[0], order[1], order[2], order[3], order[4],
-							order[5], order[6], order[7], order[8], order[9]);
+							order[5], order[6], order[7], order[8], order[9], shown[10]);
 						MessageBox(0,tmp,"Column Order", IDOK);
-						sprintf(tmp,"ColumnShown: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+						sprintf(tmp,"ColumnShown: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
 							shown[0], shown[1], shown[2], shown[3], shown[4],
-							shown[5], shown[6], shown[7], shown[8], shown[9]);
+							shown[5], shown[6], shown[7], shown[8], shown[9], shown[10]);
 						MessageBox(0,tmp,"Column Shown", IDOK);
 					}
 #endif
-                    pfnSetColumnInfo(order, shown);
+					pfnSetColumnInfo(order, shown);
 					EndDialog(hDlg, 1);
 					return TRUE;
 
@@ -377,8 +377,8 @@ static void SetColumnInfo(int *order, int *shown)
 
 INT_PTR CALLBACK ColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-    static int shown[COLUMN_MAX];
-    static int order[COLUMN_MAX];
+	static int shown[COLUMN_MAX];
+	static int order[COLUMN_MAX];
 	return InternalColumnDialogProc(hDlg, Msg, wParam, lParam, COLUMN_MAX,
 		shown, order, column_names, GetRealColumnOrder, GetColumnInfo, SetColumnInfo);
 }

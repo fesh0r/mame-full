@@ -19,12 +19,12 @@
 char*   GameInfoTitle(UINT nIndex);
 
 /* Called in win32ui.c to create the property page */
-void    InitPropertyPage(HINSTANCE hInst, HWND hwnd, int game_num);
+void    InitPropertyPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon);
 
 #define PROPERTIES_PAGE 0
 #define AUDIT_PAGE      1   
 
-void    InitPropertyPageToPage(HINSTANCE hInst, HWND hwnd, int game_num, int start_page);
+void    InitPropertyPageToPage(HINSTANCE hInst, HWND hwnd, int game_num, HICON hIcon, int start_page);
 void    InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd);
 
 /* Get Help ID array for WM_HELP and WM_CONTEXTMENU */

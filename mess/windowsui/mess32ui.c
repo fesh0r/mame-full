@@ -505,7 +505,7 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 		if (s)
 			*s = '\0';
 
-		bNewScreenShot = LoadScreenShot(GetSelectedPickItem(), newname, nPictType);
+		bNewScreenShot = LoadScreenShotEx(GetSelectedPickItem(), newname, nPictType);
 		if (bNewScreenShot || bScreenShotAvailable)
         {
             HWND hWnd;

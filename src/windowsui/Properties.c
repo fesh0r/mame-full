@@ -132,6 +132,7 @@ static int  g_nBrightnessIndex = 0;
 static int  g_nEffectIndex     = 0;
 static int  g_nA2DIndex		   = 0;
 
+static HICON g_hIcon = NULL;
 /* Game history variables */
 #define MAX_HISTORY_LEN     (8 * 1024)
 
@@ -189,6 +190,7 @@ static DWORD dwHelpIDs[] =
 	IDC_BRIGHTNESS,         HIDC_BRIGHTNESS,
 	IDC_BRIGHTCORRECT,      HIDC_BRIGHTCORRECT,
 	IDC_BROADCAST,			HIDC_BROADCAST,
+	IDC_RANDOM_BG,          HIDC_RANDOM_BG,
 	IDC_CHEAT,              HIDC_CHEAT,
 	IDC_DDRAW,              HIDC_DDRAW,
 	IDC_DEFAULT_INPUT,      HIDC_DEFAULT_INPUT,
@@ -521,20 +523,21 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	}
 }
 
-void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num)
+void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon)
 {
-	InitPropertyPageToPage(hInst, hWnd, game_num, PROPERTIES_PAGE);
+	InitPropertyPageToPage(hInst, hWnd, game_num, hIcon, PROPERTIES_PAGE);
 }
 
-void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_page)
+void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon, int start_page)
 {
 	PROPSHEETHEADER pshead;
 	PROPSHEETPAGE   pspage[NUM_PROPSHEETS];
 	int             i;
 	int             maxPropSheets;
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[game_num]->drv,&drv);
+	struct InternalMachineDriver drv;
+	expand_machine_driver(drivers[game_num]->drv,&drv);
 
+	g_hIcon = CopyIcon(hIcon);
 	InitGameAudit(game_num);
 	g_nGame = game_num;
 
@@ -773,6 +776,8 @@ static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wPa
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
+		if (g_hIcon)
+			SendMessage(GetDlgItem(hDlg, IDC_GAME_ICON), STM_SETICON, (WPARAM) g_hIcon, 0);
 #if defined(USE_SINGLELINE_TABCONTROL)
 		{
 			HWND hWnd = PropSheet_GetTabControl(GetParent(hDlg));
@@ -1055,10 +1060,10 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 			break;
 
 #ifdef MESS
-        case LVN_ENDLABELEDIT:
-            return SoftwareDirectories_OnEndLabelEdit(hDlg, (NMHDR *) lParam);
+		case LVN_ENDLABELEDIT:
+			return SoftwareDirectories_OnEndLabelEdit(hDlg, (NMHDR *) lParam);
 
-        case LVN_BEGINLABELEDIT:
+		case LVN_BEGINLABELEDIT:
 			return SoftwareDirectories_OnBeginLabelEdit(hDlg, (NMHDR *) lParam);
 #endif
 		}
@@ -1696,6 +1701,7 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_JOYSTICK,      DM_BOOL, CT_BUTTON,   &pGameOpts->use_joystick,  0, 0, 0);
 	DataMapAdd(IDC_A2D,           DM_INT,  CT_SLIDER,   &g_nA2DIndex,              0, 0, AssignA2D);
 	DataMapAdd(IDC_STEADYKEY,     DM_BOOL, CT_BUTTON,   &pGameOpts->steadykey,     0, 0, 0);
+	DataMapAdd(IDC_LIGHTGUN,      DM_BOOL, CT_BUTTON,   &pGameOpts->lightgun,      0, 0, 0);   
 
 	/* core video */
 	DataMapAdd(IDC_BRIGHTCORRECT, DM_INT,  CT_SLIDER,   &g_nBrightCorrectIndex,    0, 0, AssignBrightCorrect);

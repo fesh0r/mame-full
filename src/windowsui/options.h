@@ -30,6 +30,7 @@ enum
 	COLUMN_MANUFACTURER,
 	COLUMN_YEAR,
 	COLUMN_CLONE,
+	COLUMN_SRCDRIVERS,
 	COLUMN_MAX
 };
 
@@ -88,6 +89,7 @@ enum
 	PICT_FLYER,
 	PICT_CABINET,
 	PICT_MARQUEE,
+	PICT_TITLES,
 	MAX_PICT_TYPES
 };
 
@@ -155,6 +157,7 @@ typedef struct
 	BOOL   use_joystick;
 	double f_a2d;
 	BOOL   steadykey;
+	BOOL   lightgun;
 	char   ctrlr[64];
 
 	/* Core video */
@@ -213,11 +216,13 @@ typedef struct
 	BOOL     show_toolbar;
 	BOOL     show_statusbar;
 	BOOL     show_screenshot;
+	BOOL     show_tabctrl;
 	int      show_pict_type;
 	BOOL     game_check;        /* Startup GameCheck */
 	BOOL     version_check;     /* Version mismatch warings */
 	BOOL     use_joygui;
 	BOOL     broadcast;
+	BOOL     random_bg;
 	char     default_game[MAX_GAMEDESC];
 #ifdef MESS
 	char     *default_software;
@@ -233,6 +238,7 @@ typedef struct
 	int      sort_column;
 	BOOL     sort_reverse;
 	AREA     area;
+	UINT     windowstate;
 	int      splitter[SPLITTER_MAX];
 	LOGFONT  list_font;
 	COLORREF list_font_color;
@@ -241,6 +247,7 @@ typedef struct
 	char*    flyerdir;
 	char*    cabinetdir;
 	char*    marqueedir;
+	char*	 titlesdir;
 
 	char*    romdirs;
 	char*    sampledirs;
@@ -259,6 +266,7 @@ typedef struct
 	char*    imgdir;
 	char*    diffdir;
 	char*	 iconsdir;
+	char*    bgdir;
 	char*    cheatdir;
 	char*    cheatfile;
 	char*    history_filename;
@@ -293,6 +301,9 @@ BOOL GetJoyGUI(void);
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
 
+void SetRandomBg(BOOL random_bg);
+BOOL GetRandomBg(void);
+
 void SetSavedFolderID(UINT val);
 UINT GetSavedFolderID(void);
 
@@ -307,6 +318,9 @@ BOOL GetShowStatusBar(void);
 
 void SetShowToolBar(BOOL val);
 BOOL GetShowToolBar(void);
+
+void SetShowTabCtrl(BOOL val);
+BOOL GetShowTabCtrl(void);
 
 void SetShowPictType(int val);
 int  GetShowPictType(void);
@@ -326,6 +340,9 @@ const char *GetCrcDir(void);
 
 void SetWindowArea(AREA *area);
 void GetWindowArea(AREA *area);
+
+void SetWindowState(UINT state);
+UINT GetWindowState(void);
 
 void SetColumnWidths(int widths[]);
 void GetColumnWidths(int widths[]);
@@ -412,11 +429,17 @@ void SetCabinetDir(const char* path);
 const char* GetMarqueeDir(void);
 void SetMarqueeDir(const char* path);
 
+const char* GetTitlesDir(void);
+void SetTitlesDir(const char* path);
+
 const char* GetDiffDir(void);
 void SetDiffDir(const char* path);
 
 const char* GetIconsDir(void);
 void SetIconsDir(const char* path);
+
+const char *GetBgDir(void);
+void SetBgDir(const char *path);
 
 const char* GetCheatDir(void);
 void SetCheatFileDir(const char* path);

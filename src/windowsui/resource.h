@@ -51,10 +51,6 @@
 #define IDI_NONWORKING                  137
 #define IDI_YEAR                        138
 #define IDI_SOUND                       139
-#ifndef MESS
-#define IDI_NEOGEO                      140
-#define IDI_CPS                         141
-#endif
 #define IDR_CONTEXT_HEADER              151
 #define IDD_PROP_GAME                   152
 #define IDD_PROP_AUDIT                  153
@@ -81,6 +77,7 @@
 #define IDD_ROM_ERROR                   177
 #define IDD_LANGUAGE                    178
 #define IDD_ERROR                       179
+#define IDR_CONTEXT_SCREENSHOT          181
 #define IDC_LIST                        1000
 #define IDC_PLAY                        1001
 #define IDC_DISPLAYS                    1002
@@ -246,6 +243,10 @@
 #define IDC_A2DTEXT                     1162
 #define IDC_ARTRESTEXT                  1163
 #define IDC_PLAY_GAME                   1164
+#define IDC_LIGHTGUN                    1165
+#define IDC_SSTAB                       1167
+#define IDC_GAME_ICON                   1168
+#define IDC_RANDOM_BG                   1169
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -259,6 +260,7 @@
 #define ID_OPTIONS_DIR                  40013
 #define ID_OPTIONS_RESET_DEFAULTS       40014
 #define ID_OPTIONS_STARTUP              40015
+#define ID_OPTIONS_BG                   40016
 #define ID_FILE_AUDIT                   40018
 #define ID_FILE_PLAY_RECORD             40019
 #define ID_FILE_PLAY_BACK               40020
@@ -281,6 +283,7 @@
 #define ID_SORT_DESCENDING              40046
 #define ID_CUSTOMIZE_FIELDS             40048
 #define ID_GAME_PROPERTIES              40049
+#define ID_VIEW_PAGETAB                 40050
 #define ID_VIEW_FOLDERS                 40051
 #define ID_VIEW_TOOLBARS                40052
 #define ID_VIEW_STATUS                  40053
@@ -290,6 +293,11 @@
 #define ID_GAME_AUDIT                   40059
 #define ID_CONTEXT_SELECT_RANDOM        40060
 #define ID_OPTIONS_LANGUAGE             40061
+#define ID_VIEW_SCREENSHOT              40062
+#define ID_VIEW_FLYER                   40063
+#define ID_VIEW_CABINET                 40064
+#define ID_VIEW_MARQUEE                 40065
+#define ID_VIEW_TITLE                   40066
 #define IDC_STATIC                      -1
 
 #ifdef MESS

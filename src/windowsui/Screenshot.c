@@ -439,7 +439,7 @@ static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwa
 
 /* Allow us to pre-load the DIB once for future draws */
 #ifdef MESS
-BOOL LoadScreenShot(int nGame, LPCSTR lpSoftwareName, int nType)
+BOOL LoadScreenShotEx(int nGame, LPCSTR lpSoftwareName, int nType)
 #else /* !MESS */
 BOOL LoadScreenShot(int nGame, int nType)
 #endif /* MESS */
@@ -807,5 +807,12 @@ static BOOL LoadPNG(LPVOID mfile, HGLOBAL *phDIB, HPALETTE *pPal)
 		return 0;
 	return 1;
 }
+
+#ifdef MESS
+BOOL LoadScreenShot(int nGame, int nType)
+{
+	return LoadScreenShotEx(nGame, NULL, nType);
+}
+#endif
 
 /* End of source */

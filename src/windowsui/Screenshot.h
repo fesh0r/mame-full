@@ -32,10 +32,9 @@ typedef struct _mybitmapinfo
 } MYBITMAPINFO, *LPMYBITMAPINFO;
 
 #ifdef MESS
-extern BOOL LoadScreenShot(int nGame, LPCSTR lpSoftwareName, int nType);
-#else /* !MESS */
-extern BOOL LoadScreenShot(int nGame, int nType);
+extern BOOL LoadScreenShotEx(int nGame, LPCSTR lpSoftwareName, int nType);
 #endif /* MESS */
+extern BOOL LoadScreenShot(int nGame, int nType);
 extern BOOL DrawScreenShot(HWND hWnd);
 extern void FreeScreenShot(void);
 extern BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict);

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
+#include <stdio.h>
 
 #include "resource.h"
 #include "options.h"
