@@ -203,6 +203,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 			break;
 
 			case 1: /* double y */
+			which &= ~1; //*
 			DRAW_SPRITE(0,sx,sy + dy);
 			DRAW_SPRITE(1,sx,sy);
 			break;

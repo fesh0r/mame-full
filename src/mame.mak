@@ -256,6 +256,7 @@ $(OBJ)/univers.a: \
 
 $(OBJ)/nintendo.a: \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
+	$(OBJ)/machine/strtheat.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
@@ -918,7 +919,8 @@ $(OBJ)/zilec.a: \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
 
 $(OBJ)/fuuki.a: \
-	$(OBJ)/vidhrdw/fuuki16.o $(OBJ)/drivers/fuuki16.o \
+	$(OBJ)/vidhrdw/fuukifg2.o $(OBJ)/drivers/fuukifg2.o \
+	$(OBJ)/vidhrdw/fuukifg3.o $(OBJ)/drivers/fuukifg3.o \
 
 $(OBJ)/unico.a: \
 	$(OBJ)/vidhrdw/drgnmst.o $(OBJ)/drivers/drgnmst.o \

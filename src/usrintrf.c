@@ -3116,7 +3116,28 @@ static void setup_menu_init(void)
 #ifdef MESS
 	menu_item[menu_total] = ui_getstring (UI_configuration); menu_action[menu_total++] = UI_CONFIGURATION;
 #endif /* MESS */
-	menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
+
+	/* Determine if there are any dip switches */
+	{
+		struct InputPort *in;
+		int num;
+
+		in = Machine->input_ports;
+
+		num = 0;
+		while (in->type != IPT_END)
+		{
+			if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && input_port_name(in) != 0 &&
+					(in->type & IPF_UNUSED) == 0 &&	!(!options.cheat && (in->type & IPF_CHEAT)))
+				num++;
+			in++;
+		}
+
+		if (num != 0)
+		{
+			menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
+		}
+	}
 
 #ifdef XMAME
 	{

@@ -819,7 +819,11 @@ void		install_port_write32_handler(int cpunum, offs_t start, offs_t end, port_wr
 
 extern UINT8 			opcode_entry;		/* current entry for opcode fetching */
 extern UINT8 *			OP_ROM;				/* opcode ROM base */
+extern UINT8 *			OP_ROM_MIN;			/* opcode ROM min */
+extern UINT8 *			OP_ROM_MAX;			/* opcode ROM max */
 extern UINT8 *			OP_RAM;				/* opcode RAM base */
+extern UINT8 *			OP_RAM_MIN;			/* opcode RAM min */
+extern UINT8 *			OP_RAM_MAX;			/* opcode RAM base */
 extern UINT8 *			cpu_bankbase[];		/* array of bank bases */
 extern UINT8 *			readmem_lookup;		/* pointer to the readmem lookup table */
 extern offs_t			mem_amask;			/* memory address mask */

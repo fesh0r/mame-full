@@ -794,9 +794,10 @@ TESTDRIVER( timecrsa )
 	DRIVER( spclforc )
 	DRIVER( spcfrcii )
 	DRIVER( 8ballact )
+	DRIVER( 8ballat2 )
 TESTDRIVER( shootgal )
 TESTDRIVER( drakton )
-TESTDRIVER( strtheat )
+	DRIVER( strtheat )
 	DRIVER( hunchbkd )	/* (c) 1983 Century */
 	DRIVER( herbiedk )	/* (c) 1984 CVS */
 	DRIVER( herodk )	/* (c) 1984 Seatongrove + Crown license */
@@ -1825,7 +1826,7 @@ V-V                           TP-027
 	DRIVER( espradeo )	/* (c) 1998 Atlus/Cave (Japan) */
 	DRIVER( uopoko )	/* (c) 1998 Cave + Jaleco license */
 	DRIVER( guwange )	/* (c) 1999 Atlus/Cave */
-TESTDRIVER( gaia )		/* (c) 1999 Noise Factory */
+	DRIVER( gaia )		/* (c) 1999 Noise Factory */
 
 	/* SemiCom games */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
@@ -3160,7 +3161,7 @@ TESTDRIVER( avengrgs )	/* MCG (c) 1995 Data East Corporation (Japan) */
 	DRIVER( raiga )		/* (c) 1991 Tecmo */
 	DRIVER( wc90 )		/* (c) 1989 Tecmo */
 	DRIVER( wc90a )		/* (c) 1989 Tecmo */
-TESTDRIVER( wc90t )		/* (c) 1989 Tecmo */
+	DRIVER( wc90t )		/* (c) 1989 Tecmo */
 	DRIVER( wc90b )		/* bootleg */
 	DRIVER( spbactn )	/* 9002 - (c) 1991 Tecmo */
 	DRIVER( spbactnj )	/* 9002 - (c) 1991 Tecmo */
@@ -4686,10 +4687,13 @@ TESTDRIVER( brickzn3 )
 	DRIVER( blueprnj )	/* (c) 1982 Jaleco (Zilec in ROM 3U, and the programmer names) */
 	DRIVER( saturn )	/* (c) 1983 Jaleco (Zilec in ROM R6, and the programmer names) */
 
-	/* Fuuki games */
+	/* Fuuki FG-2 games */
 	DRIVER( gogomile )	/* (c) 1995 */
 	DRIVER( gogomilj )	/* (c) 1995 (Japan) */
 	DRIVER( pbancho )	/* (c) 1996 (Japan) */
+
+	/* Fuuki FG-3 games */
+	DRIVER( asurabld )	/* (c) 1998 (Japan) */
 
 	/* Unico games */
 	DRIVER( drgnmst )	/* (c) 1994 */

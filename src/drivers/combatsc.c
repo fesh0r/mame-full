@@ -890,6 +890,11 @@ ROM_END
 
 
 
+static DRIVER_INIT( combasct )
+{
+	combasc_YM2203_init();
+}
+
 static DRIVER_INIT( combasc )
 {
 	/* joystick instead of trackball */
@@ -917,7 +922,7 @@ static DRIVER_INIT( combascb )
 
 
 GAME( 1988, combasc,  0,       combasc,  combasc,  combasc,  ROT0, "Konami", "Combat School (joystick)" )
-GAME( 1987, combasct, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (trackball)" )
-GAME( 1987, combascj, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Combat School (Japan trackball)" )
-GAME( 1987, bootcamp, combasc, combasc,  combasct, 0,        ROT0, "Konami", "Boot Camp" )
+GAME( 1987, combasct, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Combat School (trackball)" )
+GAME( 1987, combascj, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Combat School (Japan trackball)" )
+GAME( 1987, bootcamp, combasc, combasc,  combasct, combasct, ROT0, "Konami", "Boot Camp" )
 GAMEX(1988, combascb, combasc, combascb, combascb, combascb, ROT0, "bootleg", "Combat School (bootleg)", GAME_IMPERFECT_COLORS )

@@ -349,5 +349,7 @@ VIDEO_UPDATE( fuuki16 )
 	fuuki16_draw_layer(bitmap,cliprect, foreground,  0, 2);
 	fuuki16_draw_layer(bitmap,cliprect, middleground,0, 2);
 
-	fuuki16_draw_sprites(bitmap,cliprect);
+	// don't do the rasters on the sprites . its very slow and the hw might not anyway.
+	if (cliprect->max_y == Machine->visible_area.max_y)
+		fuuki16_draw_sprites(bitmap,&Machine->visible_area);
 }

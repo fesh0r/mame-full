@@ -236,7 +236,14 @@ DRVLIBS = \
 	$(OBJ)/sony.a     \
 	$(OBJ)/concept.a  \
 	$(OBJ)/dai.a      \
+	$(OBJ)/neocd.a    \
 
+
+$(OBJ)/neocd.a:		\
+	  $(OBJ)/mess/systems/neocd.o	\
+	  $(OBJ)/machine/neogeo.o		\
+	  $(OBJ)/vidhrdw/neogeo.o		\
+	  $(OBJ)/machine/pd4990a.o		\
 
 $(OBJ)/coleco.a:   \
 	  $(OBJ)/mess/machine/coleco.o	 \

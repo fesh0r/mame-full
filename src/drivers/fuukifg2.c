@@ -27,7 +27,8 @@ To Do:
   they involve changing the *vertical* scroll value of the layers
   each scanline (when you are about to die, in the solo game).
   In gogomile they weave the water backgrounds and do some
-  parallactic scrolling on later levels.
+  parallactic scrolling on later levels. *partly done, could do with
+  some tweaking
 
 - ADPCM samples banking in gogomile.
 
@@ -520,10 +521,10 @@ static struct OKIM6295interface fuuki16_m6295_intf =
 			It seems unused by the game.
 	Lev 3:	VBlank.
 	Lev 5:	Programmable to happen on a raster line. Used to do raster
-			effects when you are about to die
-
+			effects when you die and its clearing the blocks
+			also used for water effects on gogomile
 */
-#define INTERRUPTS_NUM	(256)
+#define INTERRUPTS_NUM	(256-1)
 INTERRUPT_GEN( fuuki16_interrupt )
 {
 	if ( cpu_getiloops() == 2 )
@@ -536,7 +537,10 @@ INTERRUPT_GEN( fuuki16_interrupt )
 		cpu_set_irq_line(0, 3, PULSE_LINE);	// VBlank IRQ
 
 	if ( (fuuki16_vregs[0x1c/2] & 0xff) == (INTERRUPTS_NUM-1 - cpu_getiloops()) )
+	{
 		cpu_set_irq_line(0, 5, PULSE_LINE);	// Raster Line IRQ
+		force_partial_update(cpu_getscanline());
+	}
 }
 
 static MACHINE_DRIVER_START( fuuki16 )

@@ -1317,7 +1317,7 @@ if (keyboard_pressed(KEYCODE_D))
 	else	/* all others */
 	{
 		//num = (K007121_ctrlram[chip][0x03] & 0x40) ? 0x80 : 0x40;	/* WRONG!!! (needed by combasc)  */
-		num = 0x40; //* Combasc writes 70 sprites to VRAM at peak but the chip only processes the first 64.
+		num = 0x40; // Combasc writes 70 sprites to VRAM at peak but the chip only processes the first 64.
 
 		inc = 5;
 		offs[0] = 0x00;
@@ -2840,6 +2840,37 @@ WRITE_HANDLER( K052109_051960_w )
 
 /***************************************************************************/
 /*                                                                         */
+/*                      05324x Family Sprite Generators                    */
+/*                                                                         */
+/***************************************************************************/
+
+static int K05324x_z_rejection = -1;
+
+/*
+	In a K053247+K055555 setup objects with Z-code 0x00 should be ignored
+	when PRFLIP is cleared, while objects with Z-code 0xff should be
+	ignored when PRFLIP is set.
+
+	These behaviors can also be seen in older K053245(6)+K053251 setups.
+	Bucky'O Hare, The Simpsons and Sunset Riders rely on their implications
+	to prepare and retire sprites. They probably apply to many other Konami
+	games but it's hard to tell because most artifacts have been filtered
+	by exclusion sort.
+
+	A driver may call K05324x_set_z_rejection() to set which zcode to ignore.
+	Parameter:
+		       -1 = accept all(default)
+		0x00-0xff = zcode to ignore
+*/
+void K05324x_set_z_rejection(int zcode)
+{
+	K05324x_z_rejection = zcode;
+}
+
+
+
+/***************************************************************************/
+/*                                                                         */
 /*                                 053245                                  */
 /*                                                                         */
 /***************************************************************************/
@@ -2911,7 +2942,7 @@ int K053245_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	for (i = 1;i < 15;i++)
 		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
-
+	K05324x_z_rejection = -1;
 	K053245_memory_region = gfx_memory_region;
 	K053245_gfx = Machine->gfx[gfx_index];
 	K053245_callback = callback;
@@ -2954,6 +2985,12 @@ WRITE_HANDLER( K053245_w )
 		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0xff00) | data;
 	else
 		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0x00ff) | (data<<8);
+}
+
+void K053245_clear_buffer(void)
+{
+	int i, e;
+	for (e=K053245_ramsize/2, i=0; i<e; i+=8) K053245_buffer[i] = 0;
 }
 
 INLINE void K053245_update_buffer( void )
@@ -3064,10 +3101,10 @@ void K053244_bankselect(int bank)
  * The rest of the sprite remains normal.
  */
 
-void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect) //*
 {
 #define NUM_SPRITES 128
-	int offs,pri_code;
+	int offs,pri_code,i;
 	int sortedlist[NUM_SPRITES];
 	int flipscreenX, flipscreenY, spriteoffsX, spriteoffsY;
 
@@ -3080,18 +3117,22 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		sortedlist[offs] = -1;
 
 	/* prebuild a sorted table */
-	for (offs = 0;offs < K053245_ramsize / 2;offs += 8)
+	for (i=K053245_ramsize/2, offs=0; offs<i; offs+=8)
 	{
-		if (K053245_buffer[offs] & 0x8000)
+		pri_code = K053245_buffer[offs];
+		if (pri_code & 0x8000)
 		{
-			sortedlist[K053245_buffer[offs] & 0x007f] = offs;
+			pri_code &= 0x007f;
+
+			if (offs && pri_code == K05324x_z_rejection) continue;
+
+			if (sortedlist[pri_code] == -1) sortedlist[pri_code] = offs;
 		}
 	}
 
 	for (pri_code = NUM_SPRITES-1;pri_code >= 0;pri_code--)
 	{
 		int ox,oy,color,code,size,w,h,x,y,flipx,flipy,mirrorx,mirrory,shadow,zoomx,zoomy,pri;
-
 
 		offs = sortedlist[pri_code];
 		if (offs == -1) continue;
@@ -3150,8 +3191,8 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 			zoomx = K053245_buffer[offs+5];
 			if (zoomx > 0x2000) continue;
 			if (zoomx) zoomx = (0x400000+zoomx/2) / zoomx;
-//			else zoomx = 2 * 0x400000;
-else zoomx = zoomy; /* workaround for TMNT2 */
+			else zoomx = 2 * 0x400000;
+//			else zoomx = zoomy; /* workaround for TMNT2 */
 		}
 		else zoomx = zoomy;
 
@@ -3161,6 +3202,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 		flipx = K053245_buffer[offs] & 0x1000;
 		flipy = K053245_buffer[offs] & 0x2000;
 		mirrorx = K053245_buffer[offs+6] & 0x0100;
+		if (mirrorx) flipx = 0; // documented and confirmed
 		mirrory = K053245_buffer[offs+6] & 0x0200;
 		shadow = K053245_buffer[offs+6] & 0x0080;
 
@@ -3290,7 +3332,7 @@ if (keyboard_pressed(KEYCODE_D))
 /*                                                                         */
 /***************************************************************************/
 
-static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound, K053247_z_rejection;
+static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
 static data16_t *K053247_ram=0;
@@ -3392,7 +3434,7 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	K053247_dx = dx;
 	K053247_dy = dy;
 	K053247_wraparound = 1;
-	K053247_z_rejection = -1;
+	K05324x_z_rejection = -1;
 	K053247_memory_region = gfx_memory_region;
 	K053247_gfx = Machine->gfx[gfx_index];
 	K053247_callback = callback;
@@ -3548,7 +3590,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 	K053247_dx = dx;
 	K053247_dy = dy;
 	K053247_wraparound = 1;
-	K053247_z_rejection = -1;
+	K05324x_z_rejection = -1;
 	K053247_memory_region = gfx_memory_region;
 	K053247_gfx = Machine->gfx[gfx_index];
 	K053247_callback = callback;
@@ -3779,23 +3821,8 @@ void K053246_set_OBJCHA_line(int state)
 
 int K053246_is_IRQ_enabled(void)
 {
-	//* This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
+	// This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
 	return K053246_regs[5] & 0x10;
-}
-
-/*
-	In a K053247+K055555 setup objects with Z-code 0x00 should be ignored when PRFLIP is cleared,
-	while objects with Z-code 0xff should be ignored when PRFLIP is set. These behaviors may also
-	apply to the K053246+K053251 combo - Bucky 'O Hare and The Simpsons rely heavily on their
-	subsequent implications to prepare and retire sprites. The issue was not apparent because
-	its nature was largely concealed by the old sort method.
-
-	Z-code rejection has been made configurable by K053247_set_z_rejection() at VIDEO_START().
-	Parameter: -1=accept all(default), 0x00-0xff=zcode to ignore
-*/
-void K053247_set_z_rejection(int zcode)
-{
-	K053247_z_rejection = zcode;
 }
 
 /*
@@ -3827,7 +3854,7 @@ void K053247_set_z_rejection(int zcode)
  * The rest of the sprite remains normal.
  */
 
-void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect) //*
 {
 #define NUM_SPRITES 256
 
@@ -3898,7 +3925,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 	*/
 
 	// Prebuild a sorted table by descending Z-order.
-	zcode = K053247_z_rejection;
+	zcode = K05324x_z_rejection;
 	offs = count = 0;
 
 	if (zcode == -1)
@@ -4001,12 +4028,29 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		}
 		else { zoomx = zoomy; x = y; }
 
-		nozoom = (x == 0x40 && y == 0x40);
+// ************************************************************************************
+//  for Escape Kids (GX975)
+// ************************************************************************************
+//    Escape Kids use 053246 #5 register's UNKNOWN Bit #5, #3 and #2.
+//    Bit #5, #3, #2 always set "1".
+//    Maybe, Bit #5 or #3 or #2 or combination means "FIX SPRITE WIDTH TO HALF" ?????
+//    Below 7 lines supports this 053246's(???) function.
+//    Don't rely on it, Please.  But, Escape Kids works correctly!
+// ************************************************************************************
+		if ( K053246_regs[5] & 0x08 ) // Check only "Bit #3 is '1'?" (NOTE: good guess)
+		{
+			zoomx >>= 1;		// Fix sprite width to HALF size
+			ox = (ox >> 1) + 1;	// Fix sprite draw position
+			if (flipscreenx) ox += screen_width;
+			nozoom = 0;
+		}
+		else
+			nozoom = (x == 0x40 && y == 0x40);
 
 		flipx = temp & 0x1000;
 		flipy = temp & 0x2000;
 		mirrorx = shadow & 0x4000;
-		if (mirrorx) flipx = 0; // only applies to x mirror, proven
+		if (mirrorx) flipx = 0; // documented and confirmed
 		mirrory = shadow & 0x8000;
 
 		if (color == -1)
@@ -5598,7 +5642,7 @@ static void K056832_UpdatePageLayout(void)
 			for (c=0; c<colspan; c++)
 			{
 				pageIndex = (((rowstart + r) & 3) << 2) + ((colstart + c) & 3);
-if (stricmp(Machine->gamedrv->source_file+12, "djmain.c") || K056832_LayerAssociatedWithPage[pageIndex] == -1)
+if (stricmp(Machine->gamedrv->source_file+12, "djmain.c") || K056832_LayerAssociatedWithPage[pageIndex] == -1) //*
 					K056832_LayerAssociatedWithPage[pageIndex] = setlayer;
 			}
 		}
@@ -6632,7 +6676,7 @@ void K056832_tilemap_draw(struct mame_bitmap *bitmap, const struct rectangle *cl
 
 } // end of function
 
-void K056832_tilemap_draw_dj(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int flags, UINT32 priority)
+void K056832_tilemap_draw_dj(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int flags, UINT32 priority) //*
 {
 	static int last_colorbase[K056832_PAGE_COUNT];
 
@@ -7226,7 +7270,7 @@ int K054338_set_alpha_level(int pblend)
 			// source  +  target x alpha (clipped at 255)
 		}
 
-		//* DUMMY
+		// DUMMY
 		if (mixlv && mixlv<0x1f) mixlv = 0x10;
 		mixlv = mixlv<<3 | mixlv>>2;
 		alpha_set_level(mixlv);
@@ -7413,7 +7457,7 @@ READ16_HANDLER( K053250_1_rom_r )
 
 #if 0
 
-//* old code (for reference; do not remove)
+// old code (for reference; do not remove)
 #define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
 	int dy = ((type *)bitmap->line[1]) - ((type *)bitmap->line[0]);			\
 	int dyp = ((UINT8 *)bitmapp->line[1]) - ((UINT8 *)bitmapp->line[0]);	\
@@ -8297,7 +8341,7 @@ WRITE32_HANDLER( K053252_long_w )
 READ16_HANDLER( K054157_word_r ) { return(K054157_regs[offset]); }		// VACSET (legacy)
 READ16_HANDLER( K056832_word_r ) { return(K056832_regs[offset]); }		// VACSET
 READ16_HANDLER( K056832_b_word_r ) { return(K056832_regsb[offset]); }	// VSCCS (board dependent)
-READ16_HANDLER( K053246_reg_word_r ) { return(K053246_regs[offset*2]<<8|K053246_regs[offset*2+1]); } // OBJSET1
+READ16_HANDLER( K053246_reg_word_r ) { return(K053246_regs[offset*2]<<8|K053246_regs[offset*2+1]); }	// OBJSET1
 READ16_HANDLER( K053247_reg_word_r ) { return(K053247_regs[offset]); }	// OBJSET2
 READ16_HANDLER( K054338_word_r ) { return(k54338_regs[offset]); }		// CLTC
 READ16_HANDLER( K053251_lsb_r ) { return(K053251_ram[offset]); }		// PCU1
@@ -8321,3 +8365,5 @@ READ32_HANDLER( K055555_long_r )
 	offset <<= 1;
 	return (K055555_word_r(offset+1, 0xffff) | K055555_word_r(offset, 0xffff)<<16);
 }
+
+READ16_HANDLER( K053244_reg_word_r ) { return(K053244_regs[offset*2]<<8|K053244_regs[offset*2+1]); }

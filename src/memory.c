@@ -90,6 +90,7 @@ struct handler_data
 {
 	void *				handler;			/* function pointer for handler */
 	offs_t				offset;				/* base offset for handler */
+	offs_t				top;				/* maximum offset for handler */
 };
 
 struct table_data
@@ -117,7 +118,11 @@ struct cpu_data
 	opbase_handler 		opbase;				/* opcode base handler */
 
 	void *				op_ram;				/* dynamic ROM base pointer */
+	void *				op_ram_min;			/* dynamic ROM min pointer */
+	void *				op_ram_max;			/* dynamic ROM max pointer */
 	void *				op_rom;				/* dynamic RAM base pointer */
+	void *				op_rom_min;			/* dynamic RAM min pointer */
+	void *				op_rom_max;			/* dynamic RAM max pointer */
 	UINT8		 		opcode_entry;		/* opcode base handler */
 
 	struct memport_data	mem;				/* memory tables */
@@ -139,7 +144,11 @@ struct memory_address_table
 static int					cur_context;					/* current CPU context */
 
 UINT8 *						OP_ROM;							/* opcode ROM base */
+UINT8 *						OP_ROM_MIN;						/* opcode ROM minimum */
+UINT8 *						OP_ROM_MAX;						/* opcode ROM maximum */
 UINT8 *						OP_RAM;							/* opcode RAM base */
+UINT8 *						OP_RAM_MIN;						/* opcode RAM minimum */
+UINT8 *						OP_RAM_MAX;						/* opcode RAM maximum */
 UINT8		 				opcode_entry;					/* opcode readmem entry */
 
 UINT8 *						readmem_lookup;					/* memory read lookup table */
@@ -309,9 +318,17 @@ void memory_shutdown(void)
 void memory_set_opcode_base(int cpunum, void *base)
 {
 	if (cur_context == cpunum)
+	{
 		OP_ROM = base;
+		OP_ROM_MIN = (UINT8 *) 0;
+		OP_ROM_MAX = (UINT8 *) -1;
+	}
 	else
+	{
 		cpudata[cpunum].op_rom = base;
+		cpudata[cpunum].op_rom_min = (UINT8 *) 0;
+		cpudata[cpunum].op_rom_max = (UINT8 *) -1;
+	}
 }
 
 
@@ -332,14 +349,22 @@ void memory_set_context(int activecpu)
 	if (cur_context != -1)
 	{
 		cpudata[cur_context].op_ram = OP_RAM;
+		cpudata[cur_context].op_ram_min = OP_RAM_MIN;
+		cpudata[cur_context].op_ram_max = OP_RAM_MAX;
 		cpudata[cur_context].op_rom = OP_ROM;
+		cpudata[cur_context].op_rom_min = OP_ROM_MIN;
+		cpudata[cur_context].op_rom_max = OP_ROM_MAX;
 		cpudata[cur_context].opcode_entry = opcode_entry;
 	}
 	cur_context = activecpu;
 
 	cpu_bankbase[STATIC_RAM] = cpudata[activecpu].rambase;
 	OP_RAM = cpudata[activecpu].op_ram;
+	OP_RAM_MIN = cpudata[activecpu].op_ram_min;
+	OP_RAM_MAX = cpudata[activecpu].op_ram_max;
 	OP_ROM = cpudata[activecpu].op_rom;
+	OP_ROM_MIN = cpudata[activecpu].op_rom_min;
+	OP_ROM_MAX = cpudata[activecpu].op_rom_max;
 	opcode_entry = opcode_entry;
 
 	readmem_lookup = cpudata[activecpu].mem.read.table;
@@ -886,7 +911,10 @@ void populate_table(struct memport_data *memport, int iswrite, offs_t start, off
 
 	/* set the base for non RAM/ROM cases */
 	if (handler != STATIC_RAM && handler != STATIC_ROM && handler != STATIC_RAMROM)
+	{
 		tabledata->handlers[handler].offset = start;
+		tabledata->handlers[handler].top = stop;
+	}
 
 	/* remember the base for banks */
 	if (handler >= STATIC_BANK1 && handler <= STATIC_BANKMAX)
@@ -2313,7 +2341,11 @@ void name(offs_t pc)																	\
 	}																					\
 																						\
 	/* compute the adjusted base */														\
+	OP_ROM_MIN = base + (OP_ROM - OP_RAM);												\
+	OP_ROM_MAX = base + (OP_ROM - OP_RAM) + (table[entry].top - table[entry].offset);	\
 	OP_ROM = base - table[entry].offset + (OP_ROM - OP_RAM);							\
+	OP_RAM_MIN = base;																	\
+	OP_RAM_MAX = base + (table[entry].top - table[entry].offset);						\
 	OP_RAM = base - table[entry].offset;												\
 }
 
