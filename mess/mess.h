@@ -1,6 +1,16 @@
 #ifndef MESS_H
 #define MESS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if 0
+// artwork struct name causes problems (member causes constructor name clash)
+// this is here to allow mess avoid clash, until mame part changed
+#define artwork_ artwork
+#endif
+
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -330,5 +340,8 @@ struct GameDriver driver_##NAME =			\
 	ROT0|GAME_COMPUTER|(FLAGS)	 			\
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
