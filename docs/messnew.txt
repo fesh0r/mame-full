@@ -19,7 +19,10 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- HOME and DEL now have default natural keyboard bindings, to ASCII values
+  12 and 8 respectively.  For systems that use a key with those values, like
+  the CoCo, this change now enables those keys to be used from the natural
+  keyboard.
   
 
 Imgtool Changes:
