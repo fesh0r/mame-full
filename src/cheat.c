@@ -773,11 +773,6 @@ void cheat_set_status(int cheat_num, int active)
 			CheatTable[cheat_num].subcheat[i].frame_count = 0;
 			CheatTable[cheat_num].subcheat[i].backup = 0;
 
-#ifdef MESS
-			/* Put the original code if it is a code patch */
-			if (CheatTable[cheat_num].patch == 'C')
-				WRITE_OLD_CHEAT;
-#endif
 		}
 
 		/* only add if there's a cheat active already */
@@ -1039,9 +1034,6 @@ void LoadCheatFile(int merge, char * filename)
 #endif
 		offs_t			temp_address;
 		data8_t			temp_data;
-#ifdef MESS
-		data8_t			temp_olddata;
-#endif
 		INT32			temp_code;
 
 		/* Take a few easy-out cases to speed things up */
@@ -1125,16 +1117,6 @@ void LoadCheatFile(int merge, char * filename)
 
 		temp_data &= 0xff;
 
-#ifdef MESS
-		/* old data byte */
-		ptr = strtok(NULL, ":");
-		if(!ptr)
-			continue;
-
-		sscanf(ptr, "%x", &temp_olddata);
-		temp_olddata &= 0xff;
-#endif
-
 		/* special code */
 		ptr = strtok(NULL, ":");
 		if(!ptr)
@@ -1180,10 +1162,6 @@ void LoadCheatFile(int merge, char * filename)
 		subcheat->cpu =					temp_cpu;
 		subcheat->address =				temp_address;
 		subcheat->data =				temp_data;
-
-#ifdef MESS
-		subcheat->olddata =				temp_olddata;
-#endif
 
 		cheat_set_code(subcheat, temp_code, LoadedCheatTotal);
 
