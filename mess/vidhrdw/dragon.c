@@ -36,6 +36,7 @@
  * we only display 240 of them.
  */
 #include <assert.h>
+#include <math.h>
 
 #include "driver.h"
 #include "machine/6821pia.h"
@@ -455,136 +456,123 @@ VIDEO_START( coco3 )
 	return 0;
 }
 
+static void get_composite_color(int color, int *r, int *g, int *b)
+{
+	/* CMP colors
+	 *
+	 * These colors are of the format IICCCC, where II is the intensity and
+	 * CCCC is the base color.  There is some weirdness because intensity
+	 * is often different for each base color.
+	 *
+	 * The code below is based on an algorithm specified in the following
+	 * CoCo BASIC program was used to approximate composite colors.
+	 * (Program by SockMaster):
+	 * 
+	 * 10 POKE65497,0:DIMR(63),G(63),B(63):WIDTH80:PALETTE0,0:PALETTE8,54:CLS1
+	 * 20 SAT=92:CON=70:BRI=-50:L(0)=0:L(1)=47:L(2)=120:L(3)=255
+	 * 30 W=.4195456981879*1.01:A=W*9.2:S=A+W*5:D=S+W*5:P=0:FORH=0TO3:P=P+1
+	 * 40 BRI=BRI+CON:FORG=1TO15:R(P)=COS(A)*SAT+BRI
+	 * 50 G(P)=(COS(S)*SAT)*1+BRI:B(P)=(COS(D)*SAT)*1+BRI:P=P+1
+	 * 55 A=A+W:S=S+W:D=D+W:NEXT:R(P-16)=L(H):G(P-16)=L(H):B(P-16)=L(H)
+	 * 60 NEXT:R(63)=R(48):G(63)=G(48):B(63)=B(48)
+	 * 70 FORH=0TO63STEP1:R=INT(R(H)):G=INT(G(H)):B=INT(B(H)):IFR<0THENR=0
+	 * 80 IFG<0THENG=0
+	 * 90 IFB<0THENB=0
+	 * 91 IFR>255THENR=255
+	 * 92 IFG>255THENG=255
+	 * 93 IFB>255THENB=255
+	 * 100 PRINTRIGHT$(STR$(H),2);" $";:R=R+256:G=G+256:B=B+256
+	 * 110 PRINTRIGHT$(HEX$(R),2);",$";RIGHT$(HEX$(G),2);",$";RIGHT$(HEX$(B),2)
+	 * 115 IF(H AND15)=15 THENIFINKEY$=""THEN115ELSEPRINT
+	 * 120 NEXT
+	 *
+	 *	At one point, we used a different SockMaster program, but the colors
+	 *	produced were too dark for people's taste
+	 *
+	 *	10 POKE65497,0:DIMR(63),G(63),B(63):WIDTH80:PALETTE0,0:PALETTE8,54:CLS1
+	 *	20 SAT=92:CON=53:BRI=-16:L(0)=0:L(1)=47:L(2)=120:L(3)=255
+	 *	30 W=.4195456981879*1.01:A=W*9.2:S=A+W*5:D=S+W*5:P=0:FORH=0TO3:P=P+1
+	 *	40 BRI=BRI+CON:FORG=1TO15:R(P)=COS(A)*SAT+BRI
+	 *	50 G(P)=(COS(S)*SAT)*.50+BRI:B(P)=(COS(D)*SAT)*1.9+BRI:P=P+1
+	 *	55 A=A+W:S=S+W:D=D+W:NEXT:R(P-16)=L(H):G(P-16)=L(H):B(P-16)=L(H)
+	 *	60 NEXT:R(63)=R(48):G(63)=G(48):B(63)=B(48)
+	 *	70 FORH=0TO63STEP1:R=INT(R(H)):G=INT(G(H)):B=INT(B(H)):IFR<0THENR=0
+	 *	80 IFG<0THENG=0
+	 *	90 IFB<0THENB=0
+	 *	91 IFR>255THENR=255
+	 *	92 IFG>255THENG=255
+	 *	93 IFB>255THENB=255
+	 *	100 PRINTRIGHT$(STR$(H),2);" $";:R=R+256:G=G+256:B=B+256
+	 *	110 PRINTRIGHT$(HEX$(R),2);",$";RIGHT$(HEX$(G),2);",$";RIGHT$(HEX$(B),2)
+	 *	115 IF(H AND15)=15 THENIFINKEY$=""THEN115ELSEPRINT
+	 *	120 NEXT
+	 */
+
+	double saturation, brightness, contrast;
+	int offset;
+	double w;
+
+	switch(color) {
+	case 0:
+		*r = *g = *b = 0;
+		break;
+
+	case 16:
+		*r = *g = *b = 47;
+		break;
+
+	case 32:
+		*r = *g = *b = 120;
+		break;
+
+	case 48:
+	case 63:
+		*r = *g = *b = 255;
+		break;
+
+	default:
+		w = .4195456981879*1.01;
+		contrast = 70;
+		saturation = 92;
+		brightness = -50;
+		brightness += ((color / 16) + 1) * contrast;
+		offset = (color % 16) - 1 + (color / 16)*15;
+		*r = cos(w*(offset +  9.2)) * saturation + brightness;
+		*g = cos(w*(offset + 14.2)) * saturation + brightness;
+		*b = cos(w*(offset + 19.2)) * saturation + brightness;
+
+		if (*r < 0)
+			*r = 0;
+		else if (*r > 255)
+			*r = 255;
+
+		if (*g < 0)
+			*g = 0;
+		else if (*g > 255)
+			*g = 255;
+
+		if (*b < 0)
+			*b = 0;
+		else if (*b > 255)
+			*b = 255;
+		break;
+	}
+}
+
 static void coco3_compute_color(int color, int *red, int *green, int *blue)
 {
-	int r, g, b;
-
-	if ((readinputport(COCO3_DIP_MONITORTYPE) & COCO3_DIP_MONITORTYPE_MASK) == 0) {
-		/* CMP colors
-		 *
-		 * These colors are of the format IICCCC, where II is the intensity and
-		 * CCCC is the base color.  There is some weirdness because intensity
-		 * is often different for each base color.
-		 *
-		 * The following CoCo BASIC program was used to approximate composite
-		 * colors.  (Program by SockMaster):
-		 * 
-		 * 10 POKE65497,0:DIMR(63),G(63),B(63):WIDTH80:PALETTE0,0:PALETTE8,54:CLS1
-		 * 20 SAT=92:CON=70:BRI=-50:L(0)=0:L(1)=47:L(2)=120:L(3)=255
-		 * 30 W=.4195456981879*1.01:A=W*9.2:S=A+W*5:D=S+W*5:P=0:FORH=0TO3:P=P+1
-		 * 40 BRI=BRI+CON:FORG=1TO15:R(P)=COS(A)*SAT+BRI
-		 * 50 G(P)=(COS(S)*SAT)*1+BRI:B(P)=(COS(D)*SAT)*1+BRI:P=P+1
-		 * 55 A=A+W:S=S+W:D=D+W:NEXT:R(P-16)=L(H):G(P-16)=L(H):B(P-16)=L(H)
-		 * 60 NEXT:R(63)=R(48):G(63)=G(48):B(63)=B(48)
-		 * 70 FORH=0TO63STEP1:R=INT(R(H)):G=INT(G(H)):B=INT(B(H)):IFR<0THENR=0
-		 * 80 IFG<0THENG=0
-		 * 90 IFB<0THENB=0
-		 * 91 IFR>255THENR=255
-		 * 92 IFG>255THENG=255
-		 * 93 IFB>255THENB=255
-		 * 100 PRINTRIGHT$(STR$(H),2);" $";:R=R+256:G=G+256:B=B+256
-		 * 110 PRINTRIGHT$(HEX$(R),2);",$";RIGHT$(HEX$(G),2);",$";RIGHT$(HEX$(B),2)
-		 * 115 IF(H AND15)=15 THENIFINKEY$=""THEN115ELSEPRINT
-		 * 120 NEXT
-		 *
-		 *	At one point, we used a different SockMaster program, but the colors
-		 *	produced were too dark for people's taste
-		 *
-		 *	10 POKE65497,0:DIMR(63),G(63),B(63):WIDTH80:PALETTE0,0:PALETTE8,54:CLS1
-		 *	20 SAT=92:CON=53:BRI=-16:L(0)=0:L(1)=47:L(2)=120:L(3)=255
-		 *	30 W=.4195456981879*1.01:A=W*9.2:S=A+W*5:D=S+W*5:P=0:FORH=0TO3:P=P+1
-		 *	40 BRI=BRI+CON:FORG=1TO15:R(P)=COS(A)*SAT+BRI
-		 *	50 G(P)=(COS(S)*SAT)*.50+BRI:B(P)=(COS(D)*SAT)*1.9+BRI:P=P+1
-		 *	55 A=A+W:S=S+W:D=D+W:NEXT:R(P-16)=L(H):G(P-16)=L(H):B(P-16)=L(H)
-		 *	60 NEXT:R(63)=R(48):G(63)=G(48):B(63)=B(48)
-		 *	70 FORH=0TO63STEP1:R=INT(R(H)):G=INT(G(H)):B=INT(B(H)):IFR<0THENR=0
-		 *	80 IFG<0THENG=0
-		 *	90 IFB<0THENB=0
-		 *	91 IFR>255THENR=255
-		 *	92 IFG>255THENG=255
-		 *	93 IFB>255THENB=255
-		 *	100 PRINTRIGHT$(STR$(H),2);" $";:R=R+256:G=G+256:B=B+256
-		 *	110 PRINTRIGHT$(HEX$(R),2);",$";RIGHT$(HEX$(G),2);",$";RIGHT$(HEX$(B),2)
-		 *	115 IF(H AND15)=15 THENIFINKEY$=""THEN115ELSEPRINT
-		 *	120 NEXT
-		 */
-		static const UINT8 cmp2rgb[] = {
-			0x00, 0x00, 0x00,	/*  0 */
-			0x00, 0x6C, 0x00,	/*  1 */
-			0x00, 0x6E, 0x00,	/*  2 */
-			0x17, 0x60, 0x00,	/*  3 */
-			0x3C, 0x45, 0x00,	/*  4 */
-			0x5A, 0x21, 0x00,	/*  5 */
-			0x6C, 0x00, 0x00,	/*  6 */
-			0x6E, 0x00, 0x00,	/*  7 */
-			0x60, 0x00, 0x1D,	/*  8 */
-			0x45, 0x00, 0x42,	/*  9 */
-			0x21, 0x00, 0x5F,	/* 10 */
-			0x00, 0x00, 0x6E,	/* 11 */
-			0x00, 0x00, 0x6D,	/* 12 */
-			0x00, 0x1D, 0x5C,	/* 13 */
-			0x00, 0x42, 0x3F,	/* 14 */
-			0x00, 0x5F, 0x1A,	/* 15 */
-			0x2F, 0x2F, 0x2F,	/* 16 */
-			0x1B, 0xB4, 0x3A,	/* 17 */
-			0x3D, 0xB3, 0x19,	/* 18 */
-			0x63, 0xA2, 0x04,	/* 19 */
-			0x88, 0x85, 0x00,	/* 20 */
-			0xA5, 0x60, 0x08,	/* 21 */
-			0xB4, 0x3A, 0x21,	/* 22 */
-			0xB3, 0x19, 0x43,	/* 23 */
-			0xA2, 0x04, 0x6A,	/* 24 */
-			0x85, 0x00, 0x8E,	/* 25 */
-			0x60, 0x08, 0xA8,	/* 26 */
-			0x3A, 0x21, 0xB5,	/* 27 */
-			0x19, 0x43, 0xB1,	/* 28 */
-			0x04, 0x6A, 0x9E,	/* 29 */
-			0x00, 0x8E, 0x7F,	/* 30 */
-			0x08, 0xA8, 0x59,	/* 31 */
-			0x78, 0x78, 0x78,	/* 32 */
-			0x67, 0xFB, 0x79,	/* 33 */
-			0x89, 0xF7, 0x5A,	/* 34 */
-			0xB0, 0xE4, 0x47,	/* 35 */
-			0xD4, 0xC5, 0x44,	/* 36 */
-			0xEE, 0x9F, 0x51,	/* 37 */
-			0xFB, 0x79, 0x6C,	/* 38 */
-			0xF7, 0x5A, 0x90,	/* 39 */
-			0xE4, 0x47, 0xB6,	/* 40 */
-			0xC5, 0x44, 0xD9,	/* 41 */
-			0x9F, 0x51, 0xF1,	/* 42 */
-			0x79, 0x6C, 0xFB,	/* 43 */
-			0x5A, 0x90, 0xF5,	/* 44 */
-			0x47, 0xB6, 0xE0,	/* 45 */
-			0x44, 0xD9, 0xBF,	/* 46 */
-			0x51, 0xF1, 0x98,	/* 47 */
-			0xFF, 0xFF, 0xFF,	/* 48 */
-			0xB2, 0xFF, 0xB9,	/* 49 */
-			0xD6, 0xFF, 0x9C,	/* 50 */
-			0xFC, 0xFF, 0x8C,	/* 51 */
-			0xFF, 0xFF, 0x8B,	/* 52 */
-			0xFF, 0xDE, 0x9B,	/* 53 */
-			0xFF, 0xB9, 0xB8,	/* 54 */
-			0xFF, 0x9C, 0xDC,	/* 55 */
-			0xFF, 0x8C, 0xFF,	/* 56 */
-			0xFF, 0x8B, 0xFF,	/* 57 */
-			0xDE, 0x9B, 0xFF,	/* 58 */
-			0xB9, 0xB8, 0xFF,	/* 59 */
-			0x9C, 0xDC, 0xFF,	/* 60 */
-			0x8C, 0xFF, 0xFF,	/* 61 */
-			0x8B, 0xFF, 0xFE,	/* 62 */
-			0xFF, 0xFF, 0xFF	/* 63 */
-		};
+	if ((readinputport(COCO3_DIP_MONITORTYPE) & COCO3_DIP_MONITORTYPE_MASK) == 0)
+	{
 		color &= 0x3f;
-		r = cmp2rgb[color * 3 + 0];
-		g = cmp2rgb[color * 3 + 1];
-		b = cmp2rgb[color * 3 + 2];
+		get_composite_color(color, red, green, blue);
 
-		if (coco3_gimevhreg[0] & 0x10) {
+		if (coco3_gimevhreg[0] & 0x10)
+		{
 			/* We are on a composite monitor/TV and the monochrome phase invert
 			 * flag is on in the GIME.  This means we have to average out all
 			 * colors
 			 */
-			r = g = b = (r + g + b) / 3;
+			*red = *green = *blue = (*red + *green + *blue) / 3;
 		}
 	}
 	else {
@@ -593,13 +581,10 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 		 * These colors are of the format RGBRGB, where the first 3 bits
 		 * are more significant than the last three bits
 		 */
-		r = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
-		g = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
-		b = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
+		*red = (((color >> 4) & 2) | ((color >> 2) & 1)) * 0x55;
+		*green = (((color >> 3) & 2) | ((color >> 1) & 1)) * 0x55;
+		*blue = (((color >> 2) & 2) | ((color >> 0) & 1)) * 0x55;
 	}
-	*red = r;
-	*green = g;
-	*blue = b;
 }
 
 static int coco3_palette_recalc(int force)
