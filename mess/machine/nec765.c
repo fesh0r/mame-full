@@ -32,7 +32,7 @@ typedef enum
 } NEC765_PHASE;
 
 /* uncomment the following line for verbose information */
-//#define VERBOSE
+#define VERBOSE
 
 /* uncomment this to not allow end of cylinder "error" */
 #define NO_END_OF_CYLINDER
@@ -1605,7 +1605,7 @@ void nec765_update_state(void)
 		fdc.FDC_main |= 0x10;                      /* set BUSY */
 
 #ifdef VERBOSE
-		logerror("NEC765: COMMAND: %02x\n",fdc.nec765_data_reg);
+		logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
 #endif
 		/* seek in progress? */
 		if (fdc.nec765_flags & NEC765_SEEK_ACTIVE)
@@ -1636,7 +1636,7 @@ void nec765_update_state(void)
 
     case NEC765_COMMAND_PHASE_BYTES:
 #ifdef VERBOSE
-		logerror("NEC765: COMMAND: %02x\n",fdc.nec765_data_reg);
+		logerror("nec765(): pc=0x%08x command=0x%02x\n", activecpu_get_pc(), fdc.nec765_data_reg);
 #endif
 		fdc.nec765_command_bytes[fdc.nec765_transfer_bytes_count] = fdc.nec765_data_reg;
 		fdc.nec765_transfer_bytes_count++;

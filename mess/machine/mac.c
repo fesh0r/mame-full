@@ -1733,6 +1733,9 @@ MACHINE_INIT(mac)
 
 	/* setup videoram */
 	mac_set_screen_buffer(1);
+
+	/* setup sound */
+	mac_set_sound_buffer(0);
 }
 
 
