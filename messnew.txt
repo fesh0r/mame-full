@@ -5,7 +5,6 @@ New System Drivers Supported (in no particular order):
 NEC PC8801SR [Shouhei Nishi]
 Emerson Arcadia 2001 (preliminary) [PeT]
 Amiga (re-enabled)
-Odyssey^2 (preliminary) [PeT and others]
 Interton VC4000 (preliminary) [PeT]
 More Nascom1/2 official releases [JoJo]
 Sharp PC1403/1403H (preliminary) [PeT]
