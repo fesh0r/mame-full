@@ -687,16 +687,19 @@ static struct {
 
 
 /* Sinclair ZX-80 Computer and Clones ******************************************/
-	{ 0x4c7fc597 , 0x1000, "Sinclair ZX-80" },
-	{ 0x6c123536 , 0x1000, "ASZMIC" },
+	{ 0x4c7fc597 , 0x1000 , "Sinclair ZX-80" },
+	{ 0x6c123536 , 0x1000 , "ZX Aszmic" },
 
 
 /* Sinclair ZX-81 Computer and Clones ******************************************/
-	{ 0x4b1dd6eb , 0x2000, "Sinclair ZX-81" },
-	{ 0xa350f2b1 , 0x2000, "PC8300" },
-	{ 0x6bd0408c , 0x100, "PC8300 font" },
-	{ 0x8a49b2c3 , 0x2000, "POW3000" },
-	{ 0x1c42fe46 , 0x100, "POW3000 font" },
+	{ 0x4b1dd6eb , 0x2000 , "Sinclair ZX-81" },
+	{ 0x71616238 , 0x2000 , "Sinclair ZX-81 Tree-Forth by Tree Systems" },
+	{ 0x257d5a32 , 0x2000 , "Sinclair ZX-81 Forth by David Husband" },
+	{ 0x4b1dd6eb , 0x2000 , "Timex TS-1000" },
+	{ 0xa350f2b1 , 0x2000 , "Your Computer PC-8300" },
+	{ 0x6bd0408c , 0x0100 , "Your Computer PC-8300 (font)" },
+	{ 0x8a49b2c3 , 0x2000 , "Creon Enterprises Power 3000" },
+	{ 0x1c42fe46 , 0x0100 , "Creon Enterprises Power 3000 (font)" },
 
 
 /* Sinclair ZX Spectrum Computers and Clones ***********************************/
@@ -704,6 +707,7 @@ static struct {
 /* original roms */
 	{ 0xddee531f , 0x4000 , "ZX Spectrum 48K" },
 	{ 0xf051746e , 0x4000 , "ZX Spectrum 48K (spanish)" },
+
 	{ 0xe76799d2 , 0x4000 , "ZX Spectrum 128K (0000h)" },
 	{ 0xb96a36be , 0x4000 , "ZX Spectrum 128K (4000h)" },
 	{ 0x453d86b2 , 0x4000 , "ZX Spectrum 128K (spanish) (0000h)" },
@@ -729,6 +733,10 @@ static struct {
 	{ 0x2cbe8995 , 0x8000 , "MERGED ZX Spectrum 128K" },
 	{ 0x0437b160 , 0x8000 , "MERGED ZX Spectrum 128K (spanish)" },
 	{ 0xe7a517dc , 0x8000 , "MERGED ZX Spectrum 128K Plus 2" },
+	{ 0x8f769de7 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2 (french)" },
+	{ 0x5660f4b4 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2 (spanish)" },
+	{ 0x80808d82 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2A v4.1 (0000h+4000h)" },
+	{ 0x61f2b50c , 0x8000 , "MERGED ZX Spectrum 128K Plus 2A v4.1 (8000h+c000h)" },
 	{ 0xbe0d9ec4 , 0x10000, "MERGED ZX Spectrum 128K Plus 2A v4.1" },
 	{ 0x96e3c17a , 0x10000, "MERGED ZX Spectrum 128K Plus 3 v4.0" },
 	{ 0x0ade13f8 , 0x10000, "MERGED ZX Spectrum 128K Plus 3 v4.0 (spanish)" },
@@ -739,19 +747,29 @@ static struct {
 	{ 0xb8db4c06 , 0x4000 , "ZX Spectrum 48K by Busysoft v3.08 for MB-02 interface" },
 	{ 0xabf18c45 , 0x4000 , "ZX Spectrum 48K by De Groot" },
 	{ 0x56189781 , 0x4000 , "ZX Spectrum 48K Turbo by (c)Rak" },
+	{ 0x3f5c87b1 , 0x4000 , "ZX Spectrum 48K by Pera Putnik for FDD" },
 	{ 0xbd48db54 , 0x4000 , "ZX Spectrum 48K by Pera Putnik for IDE HDD" },
 	{ 0x7e0f47cb , 0x4000 , "ZX Spectrum 48K Plus 4 by Andrew Owen" },
 	{ 0xd1be99ee , 0x4000 , "ZX Spectrum 48K IMC by Ian Collier" },
 	{ 0x5b5c92b1 , 0x4000 , "ZX Spectrum 48K by Lec v1.6 for 80kB" },
 	{ 0xcd60b589 , 0x4000 , "ZX Spectrum 48K Psycho by Maly of Illuson Rules" },
 	{ 0xb81c570c , 0x4000 , "ZX Spectrum 48K HDT" },
+	{ 0xcdb52350 , 0x4000 , "ZX Spectrum 48K back-up ROM by REX" },
+	{ 0xfd3b0413 , 0x4000 , "ZX Spectrum 48K Turbo v2.3" },
+	{ 0x338b6e87 , 0x4000 , "ZX Spectrum 48K Turbo+ v4.4" },
+	{ 0x20634416 , 0x4000 , "ZX Spectrum 128K Plus 2 ZXVGS v0.22 by Yarek (0000h)" },
+	{ 0xf3736047 , 0x4000 , "ZX Spectrum 128K Plus 2 ZXVGS v0.22 by Yarek (4000h)" },
 	{ 0x994acbd9 , 0x4000 , "ZX Spectrum 128K Plus 2c by Namco (0000h)" },
 	{ 0x95eb4751 , 0x4000 , "ZX Spectrum 128K Plus 2c by Namco (4000h)" },
+	{ 0xeea9ac71 , 0x4000 , "ZX Spectrum 128K Plus 2A v4.1 (0000h) modified Cristian Secara" },
+	{ 0x64a2098c , 0x4000 , "ZX Spectrum 128K Plus 2A v4.1 (4000h) modified Cristian Secara" },
+	{ 0xad99380a , 0x8000 , "MERGED ZX Spectrum 128K Plus 2A v4.1 (0000h+4000h) modified by Cristian Secara" },
+	{ 0x07727895 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2A v4.1 (8000h+c000h) modified by Cristian Secara with 4ms head stepper motor timing" },
 	{ 0x72a54e75 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2c by Namco" },
-	{ 0x7c20e2c9 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (0000h)" },
-	{ 0x4a700c7e , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (8000h)" },
-	{ 0xc60852ae , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (0000h)" },
-	{ 0xe73a7797 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (8000h)" },
+	{ 0x7c20e2c9 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (0000h+4000h)" },
+	{ 0x4a700c7e , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (8000h+c000h)" },
+	{ 0xc60852ae , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (0000h+4000h)" },
+	{ 0xe73a7797 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (8000h+c000h)" },
 	{ 0x17c28286 , 0x10000, "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit)" },
 	{ 0xe585879d , 0x10000, "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit)" },
 
@@ -773,7 +791,6 @@ static struct {
 	{ 0x62ab3640 , 0x4000 , "ISO-ROM 48K v2.2" },
 	{ 0x0dbdc78b , 0x4000 , "ISO-ROM 128K (Ramramis 128K) (8000h)" },
 	{ 0x9a06aaaf , 0x4000 , "ISO-ROM 128K (Ramramis 48K) (c000h)" },
-	{ 0xeed3e349 , 0x4000 , "ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
 	{ 0xd43fce83 , 0x8000 , "MERGED ISO-ROM 128K (1993)" },
 	{ 0x1f24cbed , 0x8000 , "MERGED ISO-ROM 128K (1994)" },
 	{ 0xa5b614b9 , 0x8000 , "MERGED ISO-ROM 128K (1994) (alt 1)" },
@@ -799,10 +816,14 @@ static struct {
 	{ 0x124ad9e0 , 0x4000 , "Pentagon 128K (0000h)" },
 	{ 0x08ad241c , 0x4000 , "Pentagon 128K 1993 (0000h)" },
 	{ 0xa41575ba , 0x4000 , "Pentagon 128K 1990 with monitor (4000h)" },
+	{ 0x04e910f5 , 0x4000 , "Pentagon 128K 1991 by (c)RaK with Monitor (0000h)" },
 	{ 0xceb4005d , 0x4000 , "Pentagon 128K 1991 by (c)RaK with Monitor (4000h)" },
 	{ 0x09c9e7e1 , 0x4000 , "Pentagon 128K 1991 SOS89R (4000h)" },
+	{ 0x63041c61 , 0x4000 , "Pentagon 128K ZXVGS v0.22 by Yarek (0000h)" },
+	{ 0xf3736047 , 0x4000 , "Pentagon 128K ZXVGS v0.22 by Yarek (4000h)" },
 	{ 0xaa1ce4bd , 0x8000 , "MERGED Pentagon 128K" },
 	{ 0x34d04bae , 0x8000 , "MERGED Pentagon 128K (spanish)" },
+	{ 0x4e142f83 , 0x8000 , "MERGED Pentagon 128K 1991 by (c)RaK with Monitor" },
 
 	{ 0x0eb40a09 , 0x4000 , "ZS Scorpion 256K with Service Monitor v2.92 (0000h)" },
 	{ 0x9d513013 , 0x4000 , "ZS Scorpion 256K with Service Monitor v2.92 (4000h)" },
@@ -811,6 +832,7 @@ static struct {
 	{ 0xfef73c28 , 0x10000, "MERGED ZS Scorpion 256K with Service Monitor v2.92" },
 	{ 0x99f57ce1 , 0x10000, "MERGED ZS Scorpion 256K with Service Monitor v2.94" },
 	{ 0x9fcf893d , 0x20000, "MERGED ZS Scorpion 256K with Service Monitor and SMUC support v4.02" },
+	{ 0x19a45d83 , 0x20000, "MERGED ZS Scorpion 256K with Service Monitor and SMUC support v4.02 (supplied with z80s)" },
 	{ 0x2bbe25f9 , 0x8000 , "MERGED ZS Scorpion 256K Professional Extension (00000h+04000h)" },
 	{ 0xc704b419 , 0x8000 , "MERGED ZS Scorpion 256K Professional Extension (08000h+0C000h)" },
 	{ 0x0ae7fa29 , 0x8000 , "MERGED ZS Scorpion 256K Professional Extension (10000h+14000h)" },
@@ -861,12 +883,13 @@ static struct {
 	{ 0xf031aed4 , 0x4000 , "Sam Coupe (part 2)" },
 	{ 0x262bd888 , 0x4000 , "Sam Coupe (part 1) (alt)" },
 	{ 0x793b7eb7 , 0x4000 , "Sam Coupe (part 2) (alt)" },
-
+	{ 0xc8310db2 , 0x4000 , "Sam Coupe ZXVGS 0.16 by Yarek" },
 
 /* external devices ************************************************************/
 	{ 0xe72a12ae , 0x2000 , "Interface 1 v1" },
 	{ 0xbb66dd1e , 0x2000 , "Interface 1 v2" },
-	{ 0x85ae5586 , 0x4000 , "Interface 1 modified by Ian Collier 1985" },
+	{ 0x85ae5586 , 0x4000 , "Interface 1 v2 modified by Ian Collier 1985" },
+	{ 0x10f51133 , 0x4000 , "MERGED Interface 1 (v2+v1)" },
 
 	{ 0x4b31a971 , 0x2000 , "Multiface 1 (Romantic Robot)" },
 	{ 0x8d8cfd39 , 0x2000 , "Multiface 128 v3.5 (87.1) (Romantic Robot)" },
@@ -876,10 +899,12 @@ static struct {
 
 	{ 0x3b9bbca3 , 0x4000 , "Genie 128K Disassembler v2.1" },
 
-	{ 0x82047489 , 0x2000 , "Disciple" },
-	{ 0x569f7e55 , 0x2000 , "Disciple +D" },
- 	{ 0x27d4c5f6 , 0x4000 , "Disciple with system files & Epson printer code" },
-	{ 0x4250c4cd , 0x4000 , "Disciple with system files & HP printer code" },
+	{ 0x82047489 , 0x2000 , "Disciple GDOS3 v3.0" },
+	{ 0xff83b282 , 0x4000 , "Disciple GDOS3 v3.0 with System 3b" },
+ 	{ 0x27d4c5f6 , 0x4000 , "Disciple GDOS3 v3.0 with system files & Epson printer code" },
+	{ 0x4250c4cd , 0x4000 , "Disciple GDOS3 v3.0 with system files & HP printer code" },
+	{ 0x569f7e55 , 0x2000 , "Disciple +D G+DOS v1.A" },
+	{ 0x6edbf20a , 0x4000 , "Disciple +D G+DOS v1.A with System 2a" },
 
 	{ 0x619973f9 , 0x2000 , "Opus Discovery v1.2" },
 	{ 0x50f0eae0 , 0x2000 , "Opus Discovery v2.2" },
@@ -897,17 +922,23 @@ static struct {
 	{ 0x27547714 , 0x4000 , "D80 Didaktik Disk Interface" },
 
 	{ 0x3e3cdd4c , 0x4000 , "Beta 128 TR-DOS v5.01" },
+	{ 0x121889b0 , 0x4000 , "Beta 128 TR-DOS v5.03" },
+	{ 0xb90ee684 , 0x4000 , "Beta 128 TR-DOS v5.03 ZXVGS v0.22 by Yaro" },
 	{ 0x10751aba , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with r80)" },
 	{ 0xc43d717f , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with x128)" },
 	{ 0x561662f2 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with speccy)" },
 	{ 0x23dbc387 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with z80)" },
  	{ 0xba310874 , 0x4000 , "Beta 128 TR-DOS v5.04" },
+ 	{ 0xda170c65 , 0x4000 , "Beta 128 TR-DOS v5.04.1 & LPrint-III for Profi by Michael Markowsky" },
 	{ 0x0d3f8b43 , 0x4000 , "Beta 128 TR-DOS v5.04EM by Elsy Corp" },
+	{ 0xab3100d8 , 0x4000 , "Beta 128 TR-DOS v5.04F" },
+	{ 0x2f2cb630 , 0x4000 , "Beta 128 TR-DOS v5.04M" },
 	{ 0x522ebbd6 , 0x4000 , "Beta 128 TR-DOS v5.04S" },
 	{ 0xe212d1e0 , 0x4000 , "Beta 128 TR-DOS v5.04T" },
 	{ 0x8d943e6b , 0x4000 , "Beta 128 TR-DOS v5.04T (supplied with ZX Emulator)" },
 	{ 0x2334b8c6 , 0x4000 , "Beta 128 TR-DOS v5.04TM" },
 	{ 0xfdff3810 , 0x4000 , "Beta 128 TR-DOS v5.05" },
+	{ 0x03b76c8f , 0x4000 , "Beta 128 TR-DOS v5.05 (alt)" },
 	{ 0x9ba15549 , 0x4000 , "Beta 128 TR-DOS v5.05H by Rst7" },
  	{ 0xb615d6c4 , 0x4000 , "Beta 128 TR-DOS v5.12" },
 	{ 0xedb74f8c , 0x4000 , "Beta 128 TR-DOS v5.12F" },
@@ -927,6 +958,16 @@ static struct {
 	{ 0x1431505c , 0x2000 , "Modem Prism VTX 5000 v3.1" },
  	{ 0x7a365ba6 , 0x8000 , "General Sound v1.04" },
  	{ 0xe938a510 , 0x1000 , "ZS Scorpion 256K AT-XT Keyboard & Mouse Interface" },
+
+/* probably useless roms *******************************************************/
+	{ 0xe55b40f8 , 0xc000 , "MERGED ZX Spectrum 48K + ZX Spectrum 128K" },
+	{ 0x545f8520 , 0x4000 , "MODIFIED ZX Spectrum 48K by Lec v1.6 for 80kB (modified for Psim)" },
+	{ 0x996bc458 , 0x4000 , "MODIFIED ZX Spectrum 48K (modified for ZX Spectrum Simulator)" },
+	{ 0x705192c7 , 0x4000 , "MODIFIED ZX Spectrum 128K (4000h) (modified to be use as 48K ROM in SpecEm)" },
+	{ 0x9e5392aa , 0x2000 , "MODIFIED Interface 1 v2 (modified for z80 pre-v4)" },
+	{ 0xeed3e349 , 0x4000 , "MODIFIED ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
+	{ 0x2fa2acbb , 0x4000 , "First quater of unknown ROM supplied with Speccy" },
+	{ 0xe640a642 , 0x10000, "Unknown ROM supplied with Speccy" },
  
 
 /* Sinclair QL Computer ********************************************************/
