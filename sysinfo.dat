@@ -4211,15 +4211,42 @@ Kaypro IIx (kaypro)
 
 Usage/Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
 
-As of 37b4, this driver is once again working. 
+History and Trivia:
 
-  
+The Kaypro II was the first computer released by Non-Linear Systems, in 1982. Non-Linear Systems was founded by Andy Kay in 1952. But they didn't make computers back then, they made digital multimeters. You see, Andy Kay is the inventor of the digital multimeter.
+
+
+The Kaypro II is unusual because the entire case is made out of metal. Kaypro's computers were an extension of their test instrument design philosophy: rugged, reliable, reasonably priced, looking more like instruments than the creative, communications (and business) tools that they really are.
+
+
+The Kaypro II is not the first portable full-size computer, that would be the Osborne 1, with its all-plastic case.
+
+
+With the entire case of the Kaypro II being metal, it is probably heavier than it has to be, and the sharp metal corners are hard on the knees, if you actually decide to carry it anyplace.
+
+
+On the plus side, the 9" screen on the Kaypro is a distinct advantage over the Osborne's tiny 5" screen.
+
+
+In 1983, they split-off the computer division, naming it Kaypro Computers. They were soon shipping 10,000 Kaypro II computers a month.
+
+
+Over the next four years, they released the Kaypro 10, IV, 4, 2, 2X, Robie, 4X, 12X, 16, 2000, and Kaypro 1, in pretty much that order.
+
+
+Most of their computers were based on the Z-80 microprocessor and ran the CP/M operating system up until 1986 or so. By that time, MS-DOS was taking over the world. Kaypro Computers made a few more systems, but couldn't compete. They filed for bankruptcy in 1990.
+
+
+Tidbit:
+
+When Arthur C. Clarke was working on the movie version of the science-fiction novel 2010, he used the Kaypro II computer and a modem, for Clarke was in Sri Lanka and Peter Hyams, his contact, in Los Angeles.
+
 $end
 
 #---------------------------------------------------------------------------------------------#
