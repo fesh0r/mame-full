@@ -465,7 +465,7 @@ if (colorlog) fprintf (colorlog, "%02x ", sd[i]);
 				}
 			}
 
-			if (*ppu_latch)
+			if (ppu_latch)
 			{
 				(*ppu_latch)((PPU_tile_page << 10) | (ppu_page[page][address] << 4));
 			}
@@ -597,7 +597,7 @@ static void render_sprites (int scanline)
 
 //if (priority == 0)
 {
-		if (*ppu_latch)
+		if (ppu_latch)
 		{
 //			if ((tile == 0x1fd) || (tile == 0x1fe)) Debugger ();
 			(*ppu_latch)((PPU_sprite_page << 10) | ((tile & 0xff) << 4));
@@ -748,7 +748,7 @@ if ((i == 0) /*&& (spriteram[i+2] & 0x20)*/)
 	}
 }
 
-void nes_vh_sprite_dma_w (int offset, int data)
+WRITE_HANDLER(nes_vh_sprite_dma_w)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
