@@ -20,4 +20,25 @@
 	<checkdirectory/>
 </imgtooltest>
 
+<imgtooltest name="coco_os9_001">
+	<createimage driver="coco_jvc_os9"/>
+	<checkdirectory/>
+<!--
+	<putfile name="FOO.TXT"/>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="0"/>
+	</checkdirectory>
+
+	<putfile name="FOO.TXT">'Hello World!'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+	</checkdirectory>
+
+	<putfile name="FOO.TXT">'Hello'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="5"/>
+	</checkdirectory>
+-->
+</imgtooltest>
+
 </tests>

@@ -232,6 +232,7 @@ static imgtoolerr_t refresh_image(HWND window)
 	UINT64 filesize;
 	int i;
 	BOOL is_root_directory;
+	struct imgtool_module_features features;
 
 	info = get_wimgtool_info(window);
 	size_buf[0] = '\0';
@@ -240,6 +241,9 @@ static imgtoolerr_t refresh_image(HWND window)
 
 	if (info->image)
 	{
+		memset(&features, 0, sizeof(features));
+		features = img_get_module_features(img_module(info->image));
+
 		is_root_directory = TRUE;
 		if (info->current_directory)
 		{
@@ -290,10 +294,13 @@ static imgtoolerr_t refresh_image(HWND window)
 		}
 		while(!entry.eof);
 
-		err = img_freespace(info->image, &filesize);
-		if (err)
-			goto done;
-		snprintf(size_buf, sizeof(size_buf) / sizeof(size_buf[0]), "%u bytes free", (unsigned) filesize);
+		if (features.supports_freespace)
+		{
+			err = img_freespace(info->image, &filesize);
+			if (err)
+				goto done;
+			snprintf(size_buf, sizeof(size_buf) / sizeof(size_buf[0]), "%u bytes free", (unsigned) filesize);
+		}
 
 	}
 	SendMessage(info->statusbar, SB_SETTEXT, 2, (LPARAM) U2T(size_buf));

@@ -48,7 +48,8 @@ static imgtoolerr_t internal_open(const struct ImageModule *module, const char *
 	imgtool_image *image = NULL;
 	size_t size;
 
-	*outimg = NULL;
+	if (outimg)
+		*outimg = NULL;
 
 	if (createopts ? !module->create : !module->open)
 	{
