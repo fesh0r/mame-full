@@ -266,8 +266,7 @@ void pcw_fdc_interrupt(int state)
   block 3 could be paged into any bank, and this explains the
   setup of the memory below.
  */
-static struct MemoryReadAddress readmem_pcw[] =
-{
+MEMORY_READ_START( readmem_pcw )
 	{0x0000, 0x03fef, MRA_BANK1},
 	{0x3ff0, 0x03fff, MRA_BANK2},
 
@@ -281,19 +280,16 @@ static struct MemoryReadAddress readmem_pcw[] =
 	{0xfff0, 0x0ffff, MRA_BANK8},
 
 	{0x010000, 0x013fff, MRA_ROM},	   /* OS */
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 /* AFAIK the keyboard data is not writeable. So we don't need
 the same memory layout as above */
-static struct MemoryWriteAddress writemem_pcw[] =
-{
+MEMORY_WRITE_START( writemem_pcw )
 	{0x00000, 0x03fff, MWA_BANK9},
 	{0x04000, 0x07fff, MWA_BANK10},
 	{0x08000, 0x0bfff, MWA_BANK11},
 	{0x0c000, 0x0ffff, MWA_BANK12},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 /* PCW keyboard is mapped into memory */
 READ_HANDLER(pcw_keyboard_r)
@@ -781,32 +777,27 @@ WRITE_HANDLER(pcw9512_parallel_w)
 
 
 
-static struct IOReadPort readport_pcw[] =
-{
+PORT_READ_START( readport_pcw )
 	{0x000, 0x07f, pcw_fdc_r},
 	{0x080, 0x0ef, pcw_expansion_r},
 	{0x0f4, 0x0f4, pcw_interrupt_counter_r},
 	{0x0f8, 0x0f8, pcw_system_status_r},
 	{0x0fc, 0x0fc, pcw_printer_data_r},
 	{0x0fd, 0x0fd, pcw_printer_status_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
 
 #if 0 /* unused */
-static struct IOReadPort readport_pcw9512[] =
-{
+PORT_READ_START( readport_pcw9512 )
 	{0x000, 0x07f, pcw_fdc_r},
 	{0x080, 0x0ef, pcw_expansion_r},
 	{0x0f4, 0x0f4, pcw_interrupt_counter_r},
 	{0x0f8, 0x0f8, pcw_system_status_r},
 	{0x0fc, 0x0fd, pcw9512_parallel_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 #endif
 
-static struct IOWritePort writeport_pcw[] =
-{
+PORT_WRITE_START( writeport_pcw )
 	{0x000, 0x07f, pcw_fdc_w},
 	{0x080, 0x0ef, pcw_expansion_w},
 	{0x0f0, 0x0f3, pcw_bank_select_w},
@@ -818,13 +809,11 @@ static struct IOWritePort writeport_pcw[] =
 
 	{0x0fc, 0x0fd, pcw_printer_data_w},
 	{0x0fd, 0x0fd, pcw_printer_command_w},
-	{-1}							   /* end of table */
-};
+PORT_END
 
 
 #if 0 /* unused */
-static struct IOWritePort writeport_pcw9512[] =
-{
+PORT_WRITE_START( writeport_pcw9512 )
 	{0x000, 0x07f, pcw_fdc_w},
 	{0x080, 0x0ef, pcw_expansion_w},
 	{0x0f0, 0x0f3, pcw_bank_select_w},
@@ -835,8 +824,7 @@ static struct IOWritePort writeport_pcw9512[] =
 	{0x0f8, 0x0f8, pcw_system_control_w},
 
 	{0x0fc, 0x0fd, pcw9512_parallel_w},
-	{-1}							   /* end of table */
-};
+PORT_END
 #endif
 
 void pcw_init_machine(void)

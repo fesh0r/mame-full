@@ -23,33 +23,25 @@ T1	Mirror sync pulse
 #include "vidhrdw/generic.h"
 #include "includes/odyssey2.h"
 
-static struct MemoryReadAddress readmem[] =
-{
+MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03FF, MRA_ROM },
 	{ 0x0400, 0x14FF, MRA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x03FF, MWA_ROM },
 	{ 0x0400, 0x14FF, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+PORT_READ_START( readport )
 	{ 0x00, 	0xff,	  odyssey2_MAINRAM_r},
 	{ I8039_p1, I8039_p1, odyssey2_getp1 },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+PORT_WRITE_START( writeport )
 	{ 0x00, 	0xff,	  odyssey2_MAINRAM_w },
 	{ I8039_p1, I8039_p1, odyssey2_putp1 },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 INPUT_PORTS_START( odyssey2 )

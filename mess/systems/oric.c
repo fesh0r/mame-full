@@ -5,25 +5,21 @@
 #include "includes/oric.h"
 #include "includes/flopdrv.h"
 
-static struct MemoryReadAddress oric_readmem[] =
-{
+MEMORY_READ_START( oric_readmem )
     { 0x0000, 0x02FF, MRA_RAM },
     { 0x0300, 0x03ff, oric_IO_r },
     { 0x0400, 0xBFFF, MRA_RAM },
     { 0xc000, 0xdFFF, MRA_BANK1 },
 	{ 0xe000, 0xffff, MRA_BANK2 },
-    { -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress oric_writemem[] =
-{
+MEMORY_WRITE_START( oric_writemem )
     { 0x0000, 0x02FF, MWA_RAM },
     { 0x0300, 0x03ff, oric_IO_w },
     { 0x0400, 0xbFFF, MWA_RAM },
     { 0xc000, 0xdFFF, MWA_BANK5 },
     { 0xe000, 0xffff, MWA_BANK6 },
-	{ -1 }
-};
+MEMORY_END
 
 INPUT_PORTS_START( oric )
 	PORT_START /* IN0 */

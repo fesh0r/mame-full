@@ -43,23 +43,18 @@
  * Bally Astrocade
  ****************************************************************************/
 
-static struct MemoryReadAddress astrocade_readmem[] =
-{
+MEMORY_READ_START( astrocade_readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress astrocade_writemem[] =
-{
+MEMORY_WRITE_START( astrocade_writemem )
 	{ 0x0000, 0x0fff, astrocade_magicram_w },
 	{ 0x1000, 0x3fff, MWA_ROM },  /* Star Fortress writes in here?? */
 	{ 0x4000, 0x4fff, astrocade_videoram_w, &astrocade_videoram, &videoram_size },	/* ASG */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort astrocade_readport[] =
-{
+PORT_READ_START( astrocade_readport )
 	{ 0x08, 0x08, astrocade_intercept_r },
 	{ 0x0e, 0x0e, astrocade_video_retrace_r },
 	/*{ 0x0f, 0x0f, astrocade_horiz_r }, */
@@ -77,11 +72,9 @@ static struct IOReadPort astrocade_readport[] =
 	{ 0x1e, 0x1e, input_port_10_r },
 	{ 0x1f, 0x1f, input_port_11_r },
 
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort astrocade_writeport[] =
-{
+PORT_WRITE_START( astrocade_writeport )
 	{ 0x00, 0x07, astrocade_colour_register_w },
 	{ 0x08, 0x08, astrocade_mode_w },
 	{ 0x09, 0x09, astrocade_colour_split_w },
@@ -94,8 +87,7 @@ static struct IOWritePort astrocade_writeport[] =
 	{ 0x10, 0x18, astrocade_sound1_w }, /* Sound Stuff */
 	{ 0x19, 0x19, astrocade_magic_expand_color_w },
 
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 INPUT_PORTS_START( astrocde )
 	PORT_START /* IN0 */	/* Player 1 Handle */

@@ -393,24 +393,20 @@ void avigo_shutdown_machine(void)
 }
 
 
-static struct MemoryReadAddress readmem_avigo[] =
-{
+MEMORY_READ_START( readmem_avigo )
         {0x00000, 0x03fff, MRA_BANK1},
         {0x04000, 0x07fff, MRA_BANK2},
         {0x08000, 0x0bfff, MRA_BANK3},
         {0x0c000, 0x0ffff, MRA_BANK4},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_avigo[] =
-{
+MEMORY_WRITE_START( writemem_avigo )
         {0x00000, 0x03fff, MWA_BANK4},
         {0x04000, 0x07fff, MWA_BANK5},
         {0x08000, 0x0bfff, MWA_BANK6},
         {0x0c000, 0x0ffff, MWA_BANK7},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 
 
@@ -576,8 +572,7 @@ WRITE_HANDLER(avigo_speaker_w)
 	}
 }
 
-static struct IOReadPort readport_avigo[] =
-{
+PORT_READ_START( readport_avigo )
         {0x001, 0x001, avigo_key_data_read_r},
 	{0x003, 0x003, avigo_irq_r},
 	{0x005, 0x005, avigo_rom_bank_l_r},
@@ -588,11 +583,9 @@ static struct IOReadPort readport_avigo[] =
 	{0x010, 0x01f, tc8521_r},
         {0x02d, 0x02d, avigo_ad_data_r},
 	{0x030, 0x037, uart8250_0_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_avigo[] =
-{
+PORT_WRITE_START( writeport_avigo )
         {0x001, 0x001, avigo_set_key_line_w},
         {0x003, 0x003, avigo_irq_w},
 	{0x005, 0x005, avigo_rom_bank_l_w},
@@ -603,9 +596,8 @@ static struct IOWritePort writeport_avigo[] =
    	{0x010, 0x01f, tc8521_w},
 	{0x028, 0x028, avigo_speaker_w},
 	{0x030, 0x037, uart8250_0_w},
-	{-1}                                                       /* end of table */
+PORT_END
         
-};
 
 INPUT_PORTS_START(avigo)
 	PORT_START

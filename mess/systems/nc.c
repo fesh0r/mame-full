@@ -581,24 +581,20 @@ void	nc200_shutdown_machine(void)
 }
 
 
-static struct MemoryReadAddress readmem_nc[] =
-{
+MEMORY_READ_START( readmem_nc )
         {0x00000, 0x03fff, MRA_BANK1},
         {0x04000, 0x07fff, MRA_BANK2},
         {0x08000, 0x0bfff, MRA_BANK3},
         {0x0c000, 0x0ffff, MRA_BANK4},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_nc[] =
-{
+MEMORY_WRITE_START( writemem_nc )
         {0x00000, 0x03fff, MWA_BANK5},
         {0x04000, 0x07fff, MWA_BANK6},
         {0x08000, 0x0bfff, MWA_BANK7},
         {0x0c000, 0x0ffff, MWA_BANK8},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 
 READ_HANDLER(nc_memory_management_r)
@@ -814,8 +810,7 @@ WRITE_HANDLER(nc_uart_control_w)
 }
 
 
-static struct IOReadPort readport_nc[] =
-{
+PORT_READ_START( readport_nc )
         {0x010, 0x013, nc_memory_management_r},
         {0x0a0, 0x0a0, nc_card_battery_status_r},
         {0x0b0, 0x0b9, nc_key_data_in_r},
@@ -823,11 +818,9 @@ static struct IOReadPort readport_nc[] =
 		{0x0c0, 0x0c0, msm8251_data_r},
 		{0x0c1, 0x0c1, msm8251_status_r},
         {0x0d0, 0x0df, tc8521_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_nc[] =
-{
+PORT_WRITE_START( writeport_nc )
         {0x000, 0x000, nc_display_memory_start_w},
         {0x010, 0x013, nc_memory_management_w},
 		{0x030, 0x030, nc_uart_control_w},
@@ -838,12 +831,10 @@ static struct IOWritePort writeport_nc[] =
 		{0x0c1, 0x0c1, msm8251_control_w},
         {0x0d0, 0x0df, tc8521_w},
         {0x050, 0x053, nc_sound_w},
-        {-1}                                                       /* end of table */
+PORT_END
         
-};
 
-static struct IOReadPort readport_nc200[] =
-{
+PORT_READ_START( readport_nc200 )
         {0x010, 0x013, nc_memory_management_r},
 //        {0x0a0, 0x0a0, nc_card_battery_status_r},
         {0x0b0, 0x0b9, nc_key_data_in_r},
@@ -851,11 +842,9 @@ static struct IOReadPort readport_nc200[] =
 		{0x0d0, 0x0d1, mc146818_port_r },
         {0x0e0, 0x0e0, nec765_status_r},
         {0x0e1, 0x0e1, nec765_data_r},
-        {-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_nc200[] =
-{
+PORT_WRITE_START( writeport_nc200 )
         {0x000, 0x000, nc_display_memory_start_w},
         {0x010, 0x013, nc_memory_management_w},
         {0x060, 0x060, nc_irq_mask_w},
@@ -864,9 +853,8 @@ static struct IOWritePort writeport_nc200[] =
 		{0x0d0, 0x0d1, mc146818_port_w },
         {0x050, 0x053, nc_sound_w},
         {0x0e1, 0x0e1, nec765_data_w},
-        {-1}                                                       /* end of table */
+PORT_END
         
-};
 
 
 INPUT_PORTS_START(nc100)

@@ -724,8 +724,7 @@ static int mtx_interrupt(void)
 	return ignore_interrupt();
 }
 
-static struct MemoryReadAddress mtx_readmem[] =
-{
+MEMORY_READ_START( mtx_readmem )
 	{ 0x0000, 0x1fff, MRA_BANK1 },
 	{ 0x2000, 0x3fff, MRA_BANK2 },
 	{ 0x4000, 0x5fff, MRA_BANK3 },
@@ -734,11 +733,9 @@ static struct MemoryReadAddress mtx_readmem[] =
 	{ 0xa000, 0xbfff, MRA_BANK6 },
 	{ 0xc000, 0xdfff, MRA_BANK7 },
 	{ 0xe000, 0xffff, MRA_BANK8 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mtx_writemem[] =
-{
+MEMORY_WRITE_START( mtx_writemem )
 	{ 0x0000, 0x1fff, MWA_BANK9 },
 	{ 0x2000, 0x3fff, MWA_BANK10 },
         { 0x4000, 0x5fff, MWA_BANK11 },
@@ -747,28 +744,23 @@ static struct MemoryWriteAddress mtx_writemem[] =
         { 0xa000, 0xbfff, MWA_BANK14 },
         { 0xc000, 0xdfff, MWA_BANK15 },
         { 0xe000, 0xffff, MWA_BANK16 },
-	{ -1 }
-};
+MEMORY_END
 
-static struct IOReadPort mtx_readport[] =
-{
+PORT_READ_START( mtx_readport )
 	{ 0x01, 0x02, mtx_vdp_r },
 	{ 0x03, 0x03, mtx_psg_r },
 	{ 0x05, 0x05, mtx_key_lo_r },
 	{ 0x06, 0x06, mtx_key_hi_r },
 	{ 0x08, 0x0b, mtx_ctc_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort mtx_writeport[] =
-{
+PORT_WRITE_START( mtx_writeport )
 	{ 0x00, 0x00, mtx_bankswitch_w },
 	{ 0x01, 0x02, mtx_vdp_w },
 	{ 0x05, 0x05, mtx_sense_w },
 	{ 0x06, 0x06, mtx_psg_w },
 	{ 0x08, 0x0a, mtx_ctc_w },
-	{ -1 }
-};
+PORT_END
 
 INPUT_PORTS_START( mtx512 )
  PORT_START /* 0 */
@@ -892,8 +884,7 @@ static Z80_DaisyChain mtx_daisy_chain[] =
 
 static struct GfxDecodeInfo mtx_gfxdecodeinfo[] =
 {
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 static struct MachineDriver machine_driver_mtx512 =
 {

@@ -55,25 +55,20 @@ Nascom Memory map
 
 /* port i/o functions */
 
-static	struct	IOReadPort	nascom1_readport[] =
-{
+PORT_READ_START( nascom1_readport )
 	{ 0x00, 0x00, nascom1_port_00_r},
 	{ 0x01, 0x01, nascom1_port_01_r},
 	{ 0x02, 0x02, nascom1_port_02_r},
-	{-1}
-};
+PORT_END
 
-static	struct	IOWritePort	nascom1_writeport[] =
-{
+PORT_WRITE_START( nascom1_writeport )
 	{ 0x00, 0x00, nascom1_port_00_w},
 	{ 0x01, 0x01, nascom1_port_01_w},
-	{-1}
-};
+PORT_END
 
 /* Memory w/r functions */
 
-static	struct	MemoryReadAddress	nascom1_readmem[] =
-{
+MEMORY_READ_START( nascom1_readmem )
 	{0x0000, 0x07ff, MRA_ROM},
 	{0x0800, 0x0bff, videoram_r},
 	{0x0c00, 0x0fff, MRA_RAM},
@@ -83,11 +78,9 @@ static	struct	MemoryReadAddress	nascom1_readmem[] =
 	{0x5000, 0x8fff, MRA_RAM},	/* 32Kb */
 	{0x9000, 0xafff, MRA_RAM},	/* 40Kb */
 	{0xb000, 0xffff, MRA_ROM},
-	{-1}
-};
+MEMORY_END
 
-static	struct	MemoryWriteAddress	nascom1_writemem[] =
-{
+MEMORY_WRITE_START( nascom1_writemem )
 	{0x0000, 0x07ff, MWA_ROM},
 	{0x0800, 0x0bff, videoram_w, &videoram, &videoram_size},
 	{0x0c00, 0x0fff, MWA_RAM},
@@ -96,8 +89,7 @@ static	struct	MemoryWriteAddress	nascom1_writemem[] =
 	{0x5000, 0x8fff, MWA_RAM},
 	{0x9000, 0xafff, MWA_RAM},
 	{0xb000, 0xffff, MWA_ROM},
-	{-1}
-};
+MEMORY_END
 
 /* graphics output */
 
@@ -116,8 +108,7 @@ struct	GfxLayout	nascom1_charlayout =
 static	struct	GfxDecodeInfo	nascom1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom1_charlayout, 0, 1},
-	{-1}
-};
+MEMORY_END
 
 struct	GfxLayout	nascom2_charlayout =
 {
@@ -134,8 +125,7 @@ struct	GfxLayout	nascom2_charlayout =
 static	struct	GfxDecodeInfo	nascom2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nascom2_charlayout, 0, 1},
-	{-1}
-};
+MEMORY_END
 
 static	unsigned	char	nascom1_palette[] =
 {

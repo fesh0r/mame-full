@@ -296,24 +296,20 @@ static WRITE_HANDLER (	enterprise_wd177x_write )
 
 /* I've done this because the ram is banked in 16k blocks, and
 the rom can be paged into bank 0 and bank 3. */
-static struct MemoryReadAddress readmem_enterprise[] =
-{
+MEMORY_READ_START( readmem_enterprise )
 	{ 0x00000, 0x03fff, MRA_BANK1 },
 	{ 0x04000, 0x07fff, MRA_BANK2 },
 	{ 0x08000, 0x0bfff, MRA_BANK3 },
 	{ 0x0c000, 0x0ffff, MRA_BANK4 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem_enterprise[] =
-{
+MEMORY_WRITE_START( writemem_enterprise )
 	{ 0x00000, 0x03fff, MWA_BANK5 },
 	{ 0x04000, 0x07fff, MWA_BANK6 },
 	{ 0x08000, 0x0bfff, MWA_BANK7 },
 	{ 0x0c000, 0x0ffff, MWA_BANK8 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 /* bit 0 - select drive 0,
    bit 1 - select drive 1,
@@ -404,25 +400,21 @@ static READ_HANDLER ( exdos_card_r )
 	return EXDOS_CARD_R;
 }
 
-static struct IOReadPort readport_enterprise[] =
-{
+PORT_READ_START( readport_enterprise )
 	{ 0x010, 0x017, enterprise_wd177x_read },
 	{ 0x018, 0x018, exdos_card_r },
 	{ 0x01c, 0x01c, exdos_card_r },
 	{ 0x0a0, 0x0bf, Dave_reg_r },
-	{ -1 } /* end of table */
-};
+PORT_END
 
 
-static struct IOWritePort writeport_enterprise[] =
-{
+PORT_WRITE_START( writeport_enterprise )
 	{ 0x010, 0x017, enterprise_wd177x_write },
 	{ 0x018, 0x018, exdos_card_w },
 	{ 0x01c, 0x01c, exdos_card_w },
 	{ 0x080, 0x08f, Nick_reg_w },
 	{ 0x0a0, 0x0bf, Dave_reg_w },
-	{ -1 } /* end of table */
-};
+PORT_END
 
 /*
 Enterprise Keyboard Matrix

@@ -178,8 +178,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0, &led_layout, 0, 16 },
 	{ 2, 0, &key_layout, 16*2, 2 },
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 static struct DACinterface dac_interface =
 {

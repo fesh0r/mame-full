@@ -71,7 +71,7 @@ READ_HANDLER ( nes_bogus_r )
     return val;
 }
 
-MEMORY_READ_START( nes_readmem )
+MEMORY_READ_START( readmem_nes )
     { 0x0000, 0x07ff, MRA_RAM },                /* RAM */
     { 0x0800, 0x1fff, nes_mirrorram_r },        /* mirrors of RAM */
     { 0x2000, 0x3fff, nes_ppu_r },              /* PPU registers */
@@ -86,7 +86,7 @@ MEMORY_READ_START( nes_readmem )
 //  { 0xe000, 0xffff, MRA_BANK4 },
 MEMORY_END
 
-MEMORY_WRITE_START( nes_writemem )
+MEMORY_WRITE_START( writemem_nes )
     { 0x0000, 0x07ff, MWA_RAM, &main_ram },
     { 0x0800, 0x1fff, nes_mirrorram_w },        /* mirrors of RAM */
     { 0x2000, 0x3fff, nes_ppu_w },              /* PPU registers */
@@ -342,7 +342,7 @@ static struct MachineDriver machine_driver_nes =
         {
             CPU_N2A03,
             N2A03_DEFAULTCLOCK, /* 1.79 Mhz - good timing test is Bayou Billy startup wave */
-            nes_readmem,nes_writemem,0,0,
+            readmem_nes,writemem_nes,0,0,
             nes_interrupt,NTSC_SCANLINES_PER_FRAME /* one for each scanline */
         }
     },
@@ -388,7 +388,7 @@ static struct MachineDriver machine_driver_nespal =
         {
             CPU_N2A03,
             26601712/15,    /* 1.773 Mhz - good timing test is Bayou Billy startup wave */
-            nes_readmem,nes_writemem,0,0,
+            readmem_nes,writemem_nes,0,0,
             nes_interrupt,PAL_SCANLINES_PER_FRAME /* one for each scanline */
         }
     },

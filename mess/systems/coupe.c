@@ -32,21 +32,19 @@ Changes:
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
 
-static struct MemoryReadAddress coupe_readmem[] = {
-	{ 0x0000, 0x3FFF, MRA_BANK1 },
+MEMORY_READ_START( coupe_readmem )	 {
+	 0x0000, 0x3FFF, MRA_BANK1 },
 	{ 0x4000, 0x7FFF, MRA_BANK2 },
 	{ 0x8000, 0xBFFF, MRA_BANK3 },
 	{ 0xC000, 0xFFFF, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress coupe_writemem[] = {
-	{ 0x0000, 0x3FFF, MWA_BANK1 },
+MEMORY_WRITE_START( coupe_writemem )	 {
+	 0x0000, 0x3FFF, MWA_BANK1 },
 	{ 0x4000, 0x7FFF, MWA_BANK2 },
 	{ 0x8000, 0xBFFF, MWA_BANK3 },
 	{ 0xC000, 0xFFFF, MWA_BANK4 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 int coupe_line_interrupt(void)
 {
@@ -271,19 +269,16 @@ WRITE_HANDLER( coupe_port_w )
 	}
 }
 
-static struct IOReadPort coupe_readport[] = {
-	{0x0000, 0x0ffff, coupe_port_r},
-	{ -1 }
-};
+PORT_READ_START( coupe_readport )	 {
+	0x0000, 0x0ffff, coupe_port_r},
+PORT_END
 
-static struct IOWritePort coupe_writeport[] = {
-	{0x0000, 0x0ffff, coupe_port_w},
-	{ -1 }
-};
+PORT_WRITE_START( coupe_writeport )	 {
+	0x0000, 0x0ffff, coupe_port_w},
+PORT_END
 
 static struct GfxDecodeInfo coupe_gfxdecodeinfo[] = {
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 INPUT_PORTS_START( coupe )
 	PORT_START // FE  0

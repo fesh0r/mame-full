@@ -91,8 +91,7 @@ static READ_HANDLER ( pce_psg_r )
     return 0x00;
 }
 
-static struct MemoryReadAddress pce_readmem[] =
-{
+MEMORY_READ_START( pce_readmem )
     { 0x000000, 0x1EDFFF, MRA_ROM },
     { 0x1EE000, 0x1EFFFF, MRA_RAM },
     { 0x1F0000, 0x1F1FFF, MRA_RAM },
@@ -102,11 +101,9 @@ static struct MemoryReadAddress pce_readmem[] =
     { 0x1FEC00, 0x1FEC00, pce_timer_r },
     { 0x1FF000, 0x1FF000, pce_joystick_r },
     { 0x1FF402, 0x1FF403, pce_irq_r },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pce_writemem[] =
-{
+MEMORY_WRITE_START( pce_writemem )
     { 0x000000, 0x1EDFFF, MWA_ROM },
     { 0x1EE000, 0x1EFFFF, MWA_RAM, &pce_save_ram },
     { 0x1F0000, 0x1F1FFF, MWA_RAM, &pce_user_ram },
@@ -116,20 +113,15 @@ static struct MemoryWriteAddress pce_writemem[] =
     { 0x1FEC00, 0x1FEC01, pce_timer_w },
     { 0x1FF000, 0x1FF000, pce_joystick_w },
     { 0x1FF402, 0x1FF403, pce_irq_w },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort pce_readport[] =
-{
+PORT_READ_START( pce_readport )
     { 0x00, 0x03, vdc_r },
-    { -1 } /* end of table */
-};
+PORT_END
 
-static struct IOWritePort pce_writeport[] =
-{
+PORT_WRITE_START( pce_writeport )
     { 0x00, 0x03, vdc_w },
-    { -1 } /* end of table */
-};
+PORT_END
 
 /* todo: alternate forms of input (multitap, mouse, etc.) */
 INPUT_PORTS_START( pce )
@@ -183,8 +175,7 @@ static struct GfxDecodeInfo pce_gfxdecodeinfo[] =
 {
    { 1, 0x0000, &pce_bg_layout, 0, 0x10 },
    { 1, 0x0000, &pce_obj_layout, 0x100, 0x10 },
-   { -1 }
-};
+MEMORY_END
 #endif
 
 static struct MachineDriver machine_driver_pce =

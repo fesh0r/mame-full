@@ -33,25 +33,20 @@ Aquarius Memory map
 
 /* port i/o functions */
 
-static	struct	IOReadPort	aquarius_readport[] =
-{
+PORT_READ_START( aquarius_readport )
 	{0xfe, 0xfe, aquarius_port_fe_r},
 	{0xff, 0xff, aquarius_port_ff_r},
-	{-1}
-};
+PORT_END
 
-static	struct	IOWritePort	aquarius_writeport[] =
-{
+PORT_WRITE_START( aquarius_writeport )
 	{0xfc, 0xfc, aquarius_port_fc_w},
 	{0xfe, 0xfe, aquarius_port_fe_w},
 	{0xff, 0xff, aquarius_port_ff_w},
-	{-1}
-};
+PORT_END
 
 /* Memory w/r functions */
 
-static	struct	MemoryReadAddress	aquarius_readmem[] =
-{
+MEMORY_READ_START( aquarius_readmem )
 	{0x0000, 0x1fff, MRA_ROM},
 	{0x2000, 0x2fff, MRA_NOP},
 	{0x3000, 0x37ff, videoram_r},
@@ -59,19 +54,16 @@ static	struct	MemoryReadAddress	aquarius_readmem[] =
 	{0x4000, 0x7fff, MRA_NOP},
 	{0x8000, 0xffff, MRA_NOP},
 
-	{-1}
-};
+MEMORY_END
 
-static	struct	MemoryWriteAddress	aquarius_writemem[] =
-{
+MEMORY_WRITE_START( aquarius_writemem )
 	{0x0000, 0x1fff, MWA_ROM},
 	{0x2000, 0x2fff, MWA_NOP},
 	{0x3000, 0x37ff, videoram_w, &videoram, &videoram_size},
 	{0x3800, 0x3fff, MWA_RAM},
 	{0x4000, 0x7fff, MWA_NOP},
 	{0x8000, 0xffff, MWA_NOP},
-	{-1}
-};
+MEMORY_END
 
 /* graphics output */
 
@@ -90,8 +82,7 @@ struct	GfxLayout	aquarius_charlayout =
 static	struct	GfxDecodeInfo	aquarius_gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &aquarius_charlayout, 0, 256},
-	{-1}
-};
+MEMORY_END
 
 static	unsigned	char	aquarius_palette[] =
 {

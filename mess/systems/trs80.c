@@ -28,38 +28,29 @@ NMI
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H
 
-static struct MemoryReadAddress readmem_level1[] =
-{
+MEMORY_READ_START( readmem_level1 )
 	{ 0x0000, 0x0fff, MRA_ROM },
 	{ 0x3800, 0x38ff, trs80_keyboard_r },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_level1[] =
-{
+MEMORY_WRITE_START( writemem_level1 )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x7fff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport_level1[] =
-{
+PORT_READ_START( readport_level1 )
 	{ 0xff, 0xfe, trs80_port_xx_r },
 	{ 0xff, 0xff, trs80_port_ff_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport_level1[] =
-{
+PORT_WRITE_START( writeport_level1 )
 	{ 0xff, 0xff, trs80_port_ff_w },
-	{ -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_model1[] =
-{
+MEMORY_READ_START( readmem_model1 )
 	{ 0x0000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x37df, MRA_NOP },
 	{ 0x37e0, 0x37e3, trs80_irq_status_r },
@@ -74,11 +65,9 @@ static struct MemoryReadAddress readmem_model1[] =
 	{ 0x3900, 0x3bff, MRA_NOP },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_model1[] =
-{
+MEMORY_WRITE_START( writemem_model1 )
 	{ 0x0000, 0x2fff, MWA_ROM },
 	{ 0x3000, 0x37df, MWA_NOP },
 	{ 0x37e0, 0x37e3, trs80_motor_w },
@@ -92,53 +81,41 @@ static struct MemoryWriteAddress writemem_model1[] =
 	{ 0x3800, 0x3bff, MWA_NOP },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport_model1[] =
-{
+PORT_READ_START( readport_model1 )
 	{ 0xff, 0xfe, trs80_port_xx_r },
 	{ 0xff, 0xff, trs80_port_ff_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport_model1[] =
-{
+PORT_WRITE_START( writeport_model1 )
 	{ 0xff, 0xff, trs80_port_ff_w },
-	{ -1 }
-};
+PORT_END
 
-static struct MemoryReadAddress readmem_model3[] =
-{
+MEMORY_READ_START( readmem_model3 )
 	{ 0x0000, 0x37ff, MRA_ROM },
 	{ 0x3800, 0x38ff, trs80_keyboard_r },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0xffff, MRA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_model3[] =
-{
+MEMORY_WRITE_START( writemem_model3 )
 	{ 0x0000, 0x37ff, MWA_ROM },
 	{ 0x3800, 0x38ff, MWA_NOP },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport_model3[] =
-{
+PORT_READ_START( readport_model3 )
 	{ 0xe0, 0xe3, trs80_irq_status_r },
 	{ 0xf0, 0xf0, wd179x_status_r },
 	{ 0xf1, 0xf1, wd179x_track_r },
 	{ 0xf2, 0xf2, wd179x_sector_r },
 	{ 0xf3, 0xf3, wd179x_data_r },
 	{ 0xff, 0xff, trs80_port_ff_r },
-	{ -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport_model3[] =
-{
+PORT_WRITE_START( writeport_model3 )
 	{ 0xe0, 0xe3, trs80_irq_mask_w },
 	{ 0xe4, 0xe4, trs80_motor_w },
 	{ 0xf0, 0xf0, wd179x_command_w },
@@ -146,8 +123,7 @@ static struct IOWritePort writeport_model3[] =
 	{ 0xf2, 0xf2, wd179x_sector_w },
 	{ 0xf3, 0xf3, wd179x_data_w },
 	{ 0xff, 0xff, trs80_port_ff_w },
-	{ -1 }
-};
+PORT_END
 
 /**************************************************************************
    w/o SHIFT							 with SHIFT
@@ -307,8 +283,7 @@ static struct GfxDecodeInfo trs80_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &trs80_charlayout_normal_width, 0, 4 },
 	{ REGION_GFX1, 0, &trs80_charlayout_double_width, 0, 4 },
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 static unsigned char palette[] =
 {

@@ -216,14 +216,12 @@ void pcw16_timer_callback(int dummy)
 	}
 }
 
-static struct MemoryReadAddress readmem_pcw16[] =
-{
+MEMORY_READ_START( readmem_pcw16 )
 	{0x0000, 0x03fff, MRA_BANK1},
 	{0x4000, 0x07fff, MRA_BANK2},
 	{0x8000, 0x0Bfff, MRA_BANK3},
 	{0xC000, 0x0ffff, MRA_BANK4},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 extern int pcw16_colour_palette[16];
 
@@ -864,14 +862,12 @@ static void pcw16_keyboard_timer_callback(int dummy)
 	}
 }
 
-static struct MemoryWriteAddress writemem_pcw16[] =
-{
+MEMORY_WRITE_START( writemem_pcw16 )
 	{0x00000, 0x03fff, MWA_BANK5},
 	{0x04000, 0x07fff, MWA_BANK6},
 	{0x08000, 0x0bfff, MWA_BANK7},
 	{0x0c000, 0x0ffff, MWA_BANK8},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
 static unsigned char rtc_seconds;
 static unsigned char rtc_minutes;
@@ -1349,8 +1345,7 @@ static uart8250_interface pcw16_com_interface[2]=
 
 
 
-static struct IOReadPort readport_pcw16[] =
-{
+PORT_READ_START( readport_pcw16 )
 	/* super i/o chip */
 	{0x01c, 0x01c, pcw16_superio_fdc_main_status_register_r},
 	{0x01d, 0x01d, pcw16_superio_fdc_data_r},
@@ -1371,11 +1366,9 @@ static struct IOReadPort readport_pcw16[] =
 	{0x0fd, 0x0fd, rtc_days_r},
 	{0x0fe, 0x0fe, rtc_month_r},
 	{0x0ff, 0x0ff, rtc_year_invalid_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_pcw16[] =
-{
+PORT_WRITE_START( writeport_pcw16 )
 	/* super i/o */
 	{0x01a, 0x01a, pcw16_superio_fdc_digital_output_register_w},
 	{0x01d, 0x01d, pcw16_superio_fdc_data_w},
@@ -1397,8 +1390,7 @@ static struct IOWritePort writeport_pcw16[] =
 	{0x0fd, 0x0fd, rtc_days_w},
 	{0x0fe, 0x0fe, rtc_month_w},
 	{0x0ff, 0x0ff, rtc_year_w},
-	{-1}							   /* end of table */
-};
+PORT_END
 
 void pcw16_reset(void)
 {

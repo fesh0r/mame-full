@@ -32,27 +32,23 @@ Hardware:	PIA6820 DSP for keyboard and screen interface
 
 /* memory w/r functions */
 
-static struct MemoryReadAddress apple1_readmem[] =
-{
+MEMORY_READ_START( apple1_readmem )
 	{0x0000, 0x1fff, MRA_RAM},
 	{0x2000, 0xcfff, MRA_NOP},
 	{0xd000, 0xd00f, MRA_NOP},
 	{0xd010, 0xd013, pia_0_r},
 	{0xd014, 0xfeff, MRA_NOP},
 	{0xff00, 0xffff, MRA_ROM},
-	{-1}
-};
+MEMORY_END
 
-static struct MemoryWriteAddress apple1_writemem[] =
-{
+MEMORY_WRITE_START( apple1_writemem )
 	{0x0000, 0x1fff, MWA_RAM},
 	{0x2000, 0xcfff, MWA_NOP},
 	{0xd000, 0xd00f, MWA_NOP},
 	{0xd010, 0xd013, pia_0_w},
 	{0xd014, 0xfeff, MWA_NOP},
 	{0xff00, 0xffff, MWA_ROM},
-	{-1}
-};
+MEMORY_END
 
 /* graphics output */
 
@@ -70,8 +66,7 @@ struct GfxLayout apple1_charlayout =
 static struct	GfxDecodeInfo apple1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &apple1_charlayout, 0, 1},
-	{ -1 }
-};
+MEMORY_END
 
 static unsigned char apple1_palette[] =
 {

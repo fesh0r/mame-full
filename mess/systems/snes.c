@@ -710,8 +710,7 @@ WRITE_HANDLER ( snes_io_w )
 }
 
 static struct GfxDecodeInfo snes_gfxdecodeinfo[] = {
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 INPUT_PORTS_START( snes )
 
@@ -753,8 +752,8 @@ WRITE_HANDLER (MWA_SRAM)
 	SNES_SRAM[offset]=data;
 }
 
-static struct MemoryReadAddress snes_readmem[] = {
-	{ 0x000000,0x001FFF,MRA_WRAM},
+MEMORY_READ_START( snes_readmem )	 {
+	 0x000000,0x001FFF,MRA_WRAM},
 	{ 0x002000,0x007FFF,snes_io_r},
 	{ 0x008000,0x00FFFF,MRA_ROM},
 	{ 0x010000,0x011FFF,MRA_WRAM},
@@ -852,11 +851,10 @@ static struct MemoryReadAddress snes_readmem[] = {
 	{ 0x1F8000,0x1FFFFF,MRA_ROM},*/
 	{ 0x700000,0x74FFFF,MRA_SRAM},
 	{ 0x7E0000,0x7FFFFF,MRA_WRAM},
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress snes_writemem[] = {
-	{ 0x000000,0x001FFF,MWA_WRAM},
+MEMORY_WRITE_START( snes_writemem )	 {
+	 0x000000,0x001FFF,MWA_WRAM},
 	{ 0x002000,0x007FFF,snes_io_w},
 	{ 0x008000,0x00FFFF,MWA_NOP},
 	{ 0x010000,0x011FFF,MWA_WRAM},
@@ -954,8 +952,7 @@ static struct MemoryWriteAddress snes_writemem[] = {
 	{ 0x1F8000,0x1FFFFF,MWA_NOP},*/
 	{ 0x700000,0x74FFFF,MWA_SRAM},
 	{ 0x7E0000,0x7FFFFF,MWA_WRAM},
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 void snes_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {

@@ -872,8 +872,7 @@ void kc85_4_shutdown_machine(void)
 }
 
 
-static struct IOReadPort readport_kc85_4[] =
-{
+PORT_READ_START( readport_kc85_4 )
 	{0x084, 0x084, kc85_4_84_r},
 	{0x085, 0x085, kc85_4_84_r},
 	{0x086, 0x086, kc85_4_86_r},
@@ -881,11 +880,9 @@ static struct IOReadPort readport_kc85_4[] =
         {0x088, 0x089, kc85_4_pio_data_r},
         {0x08a, 0x08b, kc85_4_pio_control_r},
 	{0x08c, 0x08f, kc85_4_ctc_r},
-	{-1}							   /* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport_kc85_4[] =
-{
+PORT_WRITE_START( writeport_kc85_4 )
         /* D05 decodes io ports on schematic */
 
         /* D08,D09 on schematic handle these ports */
@@ -900,8 +897,7 @@ static struct IOWritePort writeport_kc85_4[] =
 
         /* D07 on schematic handle these ports */
         {0x08c, 0x08f, kc85_4_ctc_w },
-	{-1}							   /* end of table */
-};
+PORT_END
 
 #define KC85_4_PALETTE_SIZE 24
 
@@ -949,26 +945,22 @@ static void kc85_4_init_palette(unsigned char *sys_palette, unsigned short *sys_
 	memcpy(sys_colortable, kc85_4_colour_table, sizeof (kc85_4_colour_table));
 }
 
-static struct MemoryReadAddress readmem_kc85_4[] =
-{
+MEMORY_READ_START( readmem_kc85_4 )
         {0x00000, 0x07fff, MRA_RAM},
 
         {0x08000, 0x0a7ff, MRA_BANK3},
         {0x0a800, 0x0bfff, MRA_RAM},
         {0x0c000, 0x0dfff, MRA_BANK1},
 	{0x0e000, 0x0ffff, MRA_BANK2},
-	{-1}							   /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem_kc85_4[] =
-{
+MEMORY_WRITE_START( writemem_kc85_4 )
         {0x00000, 0x07fff, MWA_RAM},
         {0x08000, 0x0a7ff, MWA_BANK3},
         {0x0a800, 0x0bfff, MWA_RAM},
         {0x0c000, 0x0dfff, MWA_NOP},
         {0x0e000, 0x0ffff, MWA_NOP},
-        {-1}							   /* end of table */
-};
+MEMORY_END
 
 
 
