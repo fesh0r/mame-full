@@ -7,9 +7,11 @@
 #define SRC_DEPTH  16
 #define DEST_DEPTH 15
 #include "blit_defs.h"
+#ifndef DISABLE_EFFECTS
 #include "blit_effect.h"
 #include "blit_6tap.h"
 #include "advance/xq2x.h"
 #define HQ2X
 #include "advance/xq2x.h"
+#endif
 #include "blit_undefs.h"

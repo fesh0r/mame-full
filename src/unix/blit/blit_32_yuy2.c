@@ -8,9 +8,11 @@
 #define GET_YUV_PIXEL(p) lookup[_32TO16_RGB_565(p)]
 #include "blit_defs.h"
 #include "blit_yuy2.h"
+#ifndef DISABLE_EFFECTS
 #include "blit_6tap.h"
 #include "advance/scale2x_yuy2.h"
 #include "advance/xq2x_yuy2.h"
 #define HQ2X
 #include "advance/xq2x_yuy2.h"
+#endif
 #include "blit_undefs.h"

@@ -7,6 +7,7 @@
 #define RENDER_DEPTH 32
 #include "blit_defs.h"
 #include "blit_normal_24.h"
+#ifndef DISABLE_EFFECTS
 #include "blit_undefs.h"
 
 /* effects render to an intermediate 32 bpp sparse buffer and then this buffer
@@ -33,4 +34,5 @@ INLINE void blit_line_32_24(unsigned int *src, unsigned int *end, unsigned int *
 #include "advance/xq2x.h"
 #define HQ2X
 #include "advance/xq2x.h"
+#endif
 #include "blit_undefs.h"

@@ -54,6 +54,7 @@ BLIT_BEGIN(blit_fakescan_h)
   }
 BLIT_END
 
+#ifndef DISABLE_EFFECTS
 
 /* 6tap2x yuy2 render line function, we only need this once! */
 #if SRC_DEPTH == 16
@@ -389,3 +390,5 @@ INLINE void FUNC_NAME(blit_fakescan_v_line)(SRC_PIXEL *src, SRC_PIXEL *end,
 BLIT_BEGIN(blit_fakescan_v)
 BLIT_LOOP(blit_fakescan_v_line, 1);
 BLIT_END
+
+#endif /* DISABLE_EFFECTS */

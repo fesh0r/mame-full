@@ -116,10 +116,13 @@ struct rc_option video_opts[] = {
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
      "Set X- and Y-Scale to the same factor (increase: left-shift + page-up, decrease: left-shift + page-down)" },
-   { "effect",		"ef",			rc_int,		&user_effect,
-     "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_SCAN_V-1,	NULL,
-     "Video effect:\n"
+#ifndef DISABLE_EFFECTS
+   { "effect", "ef", rc_int, &user_effect, "0", SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_SCAN_V - 1, NULL, "Video effect:\n"
+#else
+   { "effect", "ef", rc_int, &user_effect, "0", SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_NONE, NULL, "Video effect:\n"
+#endif
 	     "0 = none     (default)\n"
+#ifndef DISABLE_EFFECTS
 	     "1 = scale2x  (smooth scaling effect)\n"
 	     "2 = lq2x     (low quality filter)\n"
 	     "3 = hq2x     (high quality filter)\n"
@@ -128,6 +131,7 @@ struct rc_option video_opts[] = {
 	     "6 = rgbscan  (rgb scanlines)\n"
 	     "7 = scan3    (deluxe scanlines)\n"
 	     "8 = fakescan (black scanlines)\n"
+#endif
              "(increase: left-ctrl + page-up, decrease: left-ctrl + page-down)" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
@@ -998,10 +1002,12 @@ void osd_update_video_and_audio(struct mame_display *display)
 					flags |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
 				if (code_pressed_memory(KEYCODE_END))
 					flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
+#ifndef DISABLE_EFFECTS
 				if (code_pressed_memory(KEYCODE_PGUP))
 					effect_mod = 1;
 				if (code_pressed_memory(KEYCODE_PGDN))
 					effect_mod = -1;
+#endif
 				if (effect_mod && (sysdep_display_properties.mode_info[
 							normal_params.video_mode] & SYSDEP_DISPLAY_EFFECTS))
 				{

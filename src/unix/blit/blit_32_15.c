@@ -7,6 +7,7 @@
 #define DEST_DEPTH   15
 #include "blit_defs.h"
 #include "blit_normal.h"
+#ifndef DISABLE_EFFECTS
 #include "blit_6tap.h"
 #include "blit_undefs.h"
 
@@ -37,4 +38,5 @@ INLINE void blit_line_32_15(unsigned int *src, unsigned int *end, unsigned short
 #include "advance/xq2x.h"
 #define HQ2X
 #include "advance/xq2x.h"
+#endif
 #include "blit_undefs.h"

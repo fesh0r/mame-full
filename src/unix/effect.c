@@ -90,6 +90,7 @@ static blit_func_p effect_funcs[] = {
    blit_normal_32_32_direct,
    blit_normal_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
+#ifndef DISABLE_EFFECTS
    /* scale 2x */
    blit_scale2x_15_15_direct,
    blit_scale2x_16_16, /* Just use the 16 bpp src versions, since we need */
@@ -318,6 +319,7 @@ static blit_func_p effect_funcs[] = {
    blit_fakescan_v_32_32_direct,
    blit_fakescan_v_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
+#endif
 };
 
 static void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
@@ -402,6 +404,7 @@ blit_func_p sysdep_display_effect_open(void)
     first_time = 0;
   }
   
+#ifndef DISABLE_EFFECTS
   /* patch mmx asm blit functions into the table */
   if (sysdep_cpu_caps & SYSDEP_CPU_MMX)
   {
@@ -438,6 +441,7 @@ blit_func_p sysdep_display_effect_open(void)
     effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+16] =
       blit_6tap_mmx_32_YUY2_direct;
   }
+#endif /* DISABLE_EFFECTS */
 #endif
 
   /* FIXME only allocate if needed and of the right size */
