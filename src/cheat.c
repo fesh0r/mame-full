@@ -922,7 +922,7 @@ void InitCheat(void)
 // append MESS specific cheat database if generic 'cheat' was specified
 // 2000-09-27 Cow and Steph 20000730
 
-	copyofcheat = (char *)malloc(strlen(cheatfile)+strlen(Machine->gamedrv->name)+16);
+	if (cheatfile) copyofcheat = (char *)malloc(strlen(cheatfile)+strlen(Machine->gamedrv->name)+16);
 	oldcheat = cheatfile;
 	if (copyofcheat)
 	{
