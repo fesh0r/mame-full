@@ -61,7 +61,9 @@ data16_t *metro_scroll;
 data16_t *metro_tiletable;
 data16_t *metro_vram_0, *metro_vram_1, *metro_vram_2;
 data16_t *metro_window;
+data16_t *metro_k053936_ram;
 
+static int gfx_8bpp,support_8bpp;
 
 
 /***************************************************************************
@@ -72,7 +74,7 @@ data16_t *metro_window;
 
 ***************************************************************************/
 
-WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w )
+WRITE16_HANDLER( metro_paletteram_w )
 {
 	int r,g,b;
 
@@ -82,7 +84,7 @@ WRITE16_HANDLER( paletteram16_GGGGGRRRRRBBBBBx_word_w )
 	r = (data >>  6) & 0x1f;
 	g = (data >> 11) & 0x1f;
 
-	palette_change_color(offset,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	palette_change_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
 }
 
 
@@ -175,11 +177,32 @@ static void get_tile_info_##_n_( int tile_index ) \
 						 metro_tiletable[table_index + 1]; \
 \
 	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */ \
-		SET_TILE_INFO( 1, code & 0x000f, ((code & 0x0ff0) >> 4) + 0x100) \
+		SET_TILE_INFO( 1, code & 0x000f, (((code & 0x0ff0) >> 4) ^ 0x0f) + 0x100) \
 	else \
-		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), ((tile & 0x0ff00000) >> 20) + 0x100 ); \
+		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), (((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100 ) \
 } \
 \
+static void get_tile_info_##_n_##_8bit( int tile_index ) \
+{ \
+	data16_t code; \
+	int      table_index; \
+	UINT32   tile; \
+\
+	tile_index	=	((tile_index / WIN_NX + metro_window[2 * 2 + 0] / 8) % BIG_NY) * BIG_NX + \
+					((tile_index % WIN_NX + metro_window[2  * 2 + 1] / 8) % BIG_NX); \
+\
+	code			=	metro_vram_##_n_[ tile_index ]; \
+	table_index		=	( (code & 0x1ff0) >> 4 ) * 2; \
+	tile			=	(metro_tiletable[table_index + 0] << 16 ) + \
+						 metro_tiletable[table_index + 1]; \
+\
+	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */ \
+		SET_TILE_INFO( 1, code & 0x000f, (((code & 0x0ff0) >> 4) ^ 0x0f) + 0x100) \
+	else if ((tile & 0x00f00000)==0x00f00000) \
+		SET_TILE_INFO( gfx_8bpp, (tile & 0xfffff)/2 + (code & 0xf), ((tile & 0x0f000000) >> 24) + 0x10 ) \
+	else \
+		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), (((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100 ) \
+} \
 \
 WRITE16_HANDLER( metro_vram_##_n_##_w ) \
 { \
@@ -202,27 +225,6 @@ WRITE16_HANDLER( metro_vram_##_n_##_w ) \
 METRO_TILEMAP(0)
 METRO_TILEMAP(1)
 METRO_TILEMAP(2)
-
-/* PRELIMINARY support for 8 bit layers in balcube */
-static void get_tile_info_2_8bit( int tile_index )
-{
-	data16_t code;
-	int      table_index;
-	UINT32   tile;
-
-	tile_index	=	((tile_index / WIN_NX + metro_window[2 * 2 + 0] / 8) % BIG_NY) * BIG_NX + \
-					((tile_index % WIN_NX + metro_window[2  * 2 + 1] / 8) % BIG_NX); \
-
-	code			=	metro_vram_2[ tile_index ]; \
-	table_index		=	( (code & 0x1ff0) >> 4 ) * 2; \
-	tile			=	(metro_tiletable[table_index + 0] << 16 ) + \
-						 metro_tiletable[table_index + 1]; \
-
-	if (tile & 0x8000)
-		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), ((tile & 0x0ff00000) >> 20) + 0x100 )
-	else
-		SET_TILE_INFO( 2, (tile & 0xfffff)/2 + (code & 0xf), (tile & 0x01f00000) >> 20 )
-}
 
 
 
@@ -278,9 +280,10 @@ static struct GfxLayout sprite_layout =
 };
 
 
-
 int metro_vh_start_14100(void)
 {
+	support_8bpp = 0;
+	gfx_8bpp = -1;
 
 	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
@@ -293,25 +296,24 @@ int metro_vh_start_14100(void)
 
 	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
 
-	if (tilemap_0 && tilemap_1 && tilemap_2 && sprite)
-	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,15);
+	if (!tilemap_0 || !tilemap_1 || !tilemap_2 || !sprite)
+		return 1;
 
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,15);
+	tilemap_set_scroll_rows(tilemap_0,1);
+	tilemap_set_scroll_cols(tilemap_0,1);
+	tilemap_set_transparent_pen(tilemap_0,0);
 
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,15);
+	tilemap_set_scroll_rows(tilemap_1,1);
+	tilemap_set_scroll_cols(tilemap_1,1);
+	tilemap_set_transparent_pen(tilemap_1,0);
 
-		memset(sprite, 0, sizeof(sprite_t) * 0x10000);
+	tilemap_set_scroll_rows(tilemap_2,1);
+	tilemap_set_scroll_cols(tilemap_2,1);
+	tilemap_set_transparent_pen(tilemap_2,0);
 
-		return 0;
-	}
-	else return 1;
+	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
+
+	return 0;
 }
 
 void metro_vh_stop(void)
@@ -323,66 +325,84 @@ void metro_vh_stop(void)
 			freegfx(sprite[i].gfx);
 		free(sprite);
 	}
-}
 
-extern const struct GameDriver driver_balcube;
+	if (gfx_8bpp != -1)
+	{
+		free(Machine->gfx[gfx_8bpp]);
+		Machine->gfx[gfx_8bpp] = NULL;
+		gfx_8bpp = -1;
+	}
+}
 
 int metro_vh_start_14220(void)
 {
+	struct GfxElement *gfx;
 
-	tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
+
+	/* find first empty slot to decode gfx */
+	for (gfx_8bpp = 0; gfx_8bpp < MAX_GFX_ELEMENTS; gfx_8bpp++)
+		if (Machine->gfx[gfx_8bpp] == 0)
+			break;
+	if (gfx_8bpp == MAX_GFX_ELEMENTS)
+	{
+		gfx_8bpp = -1;
+		return 1;
+	}
+
+	support_8bpp = 1;
+
+	tilemap_0 = tilemap_create(	get_tile_info_0_8bit, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
 
-	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
+	tilemap_1 = tilemap_create(	get_tile_info_1_8bit, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
 
-	if (Machine->gamedrv			==	&driver_balcube ||
-		Machine->gamedrv->clone_of	==	&driver_balcube )
-	{
-		/* 8 bit tiles for this layer */
-		tilemap_2 = tilemap_create(	get_tile_info_2_8bit, tilemap_scan_rows,
-									TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
-	}
-	else
-	{
-		tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
-									TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
-	}
+	tilemap_2 = tilemap_create(	get_tile_info_2_8bit, tilemap_scan_rows,
+								TILEMAP_TRANSPARENT, 8,8, WIN_NX,WIN_NY );
 
 	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
 
-	if (tilemap_0 && tilemap_1 && tilemap_2 && sprite)
+	gfx = malloc(sizeof(struct GfxElement));
+
+	if (!gfx || !tilemap_0 || !tilemap_1 || !tilemap_2 || !sprite)
 	{
-		tilemap_set_scroll_rows(tilemap_0,1);
-		tilemap_set_scroll_cols(tilemap_0,1);
-		tilemap_set_transparent_pen(tilemap_0,15);
-
-		tilemap_set_scroll_rows(tilemap_1,1);
-		tilemap_set_scroll_cols(tilemap_1,1);
-		tilemap_set_transparent_pen(tilemap_1,15);
-
-		tilemap_set_scroll_rows(tilemap_2,1);
-		tilemap_set_scroll_cols(tilemap_2,1);
-		tilemap_set_transparent_pen(tilemap_2,15);
-
-		tilemap_set_scrolldx(tilemap_0, -2, 2);
-		tilemap_set_scrolldx(tilemap_1, -2, 2);
-		tilemap_set_scrolldx(tilemap_2, -2, 2);
-
-		memset(sprite, 0, sizeof(sprite_t) * 0x10000);
-
-		return 0;
+		free(gfx);
+		gfx_8bpp = -1;
+		return 1;
 	}
-	else return 1;
-}
 
-void balcube_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
-	int color, pen;
+	tilemap_set_scroll_rows(tilemap_0,1);
+	tilemap_set_scroll_cols(tilemap_0,1);
+	tilemap_set_transparent_pen(tilemap_0,0);
 
-	for( color = 0; color < 0x200; color++ )
-		for( pen = 0; pen < 256; pen++ )
-			colortable[0x2000 + color * 256 + pen] = (color * 16 + pen) % 0x2000;
+	tilemap_set_scroll_rows(tilemap_1,1);
+	tilemap_set_scroll_cols(tilemap_1,1);
+	tilemap_set_transparent_pen(tilemap_1,0);
+
+	tilemap_set_scroll_rows(tilemap_2,1);
+	tilemap_set_scroll_cols(tilemap_2,1);
+	tilemap_set_transparent_pen(tilemap_2,0);
+
+	tilemap_set_scrolldx(tilemap_0, -2, 2);
+	tilemap_set_scrolldx(tilemap_1, -2, 2);
+	tilemap_set_scrolldx(tilemap_2, -2, 2);
+
+	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
+
+	memset(gfx,0,sizeof(struct GfxElement));
+	Machine->gfx[gfx_8bpp] = gfx;
+	gfx->width = 8;
+	gfx->height = 8;
+	gfx->line_modulo = 8;
+	gfx->char_modulo = 64;
+	gfx->gfxdata = memory_region(REGION_GFX1);
+	gfx->total_elements = memory_region_length(REGION_GFX1)/64;
+	gfx->color_granularity = 256;
+	gfx->pen_usage = NULL;
+	gfx->colortable = Machine->remapped_colortable;
+	gfx->total_colors = 0x20;
+
+	return 0;
 }
 
 
@@ -399,7 +419,11 @@ void balcube_vh_init_palette(unsigned char *palette, unsigned short *colortable,
 			6.w					Sprites X Offset
 			8.w					Sprites Color Codes Start
 			-
-			10.w				? always $24 (400x200 tilemap window ?)
+			10.w				Layers order (usually $24 -> 2,1,0)
+								76-- ----
+								--54 ---- Background
+								---- 32-- Middleground
+								---- --10 Foreground
 			12.w				? $fff,$ffe,$e0f
 
 
@@ -459,7 +483,7 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 
 	for ( ; src >= end; src -= 8/2 )
 	{
-		int x,y, attr,code, flipx,flipy, zoom, curr_pri;
+		int x,y, attr,code,color,flipx,flipy, zoom, curr_pri;
 		unsigned char *gfxdata;
 
 		/* Exponential zoom table extracted from daitoride */
@@ -482,14 +506,15 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 
 		flipx				=	attr & 0x8000;
 		flipy				=	attr & 0x4000;
+		color				=   (attr & 0xf0) >> 4;
 
 		zoom				=	zoomtable[(y & 0xfc00) >> 10] << (16-8);
 
 		x					=	(x & 0x07ff) - metro_sprite_xoffs;
 		y					=	(y & 0x03ff) - metro_sprite_yoffs;
 
-		sprite_layout.width			=	(( (attr >> 11) & 0x7 ) + 1 ) * 8;
-		sprite_layout.height		=	(( (attr >>  8) & 0x7 ) + 1 ) * 8;
+		sprite_layout.width  = (( (attr >> 11) & 0x7 ) + 1 ) * 8;
+		sprite_layout.height = (( (attr >>  8) & 0x7 ) + 1 ) * 8;
 
 		gfxdata		=	base_gfx + (8*8*4/8) * (((attr & 0x000f) << 16) + code);
 
@@ -497,35 +522,62 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 		if ( (gfxdata + sprite_layout.width * sprite_layout.height - 1) >= gfx_max )
 			continue;
 
-		/* Decode the sprite's graphics when needed */
-		if ( (sprite[code].gfx == 0) || ((sprite[code].word ^ attr) & 0x3f0f) )
-		{
-			int i,yoffs;
-
-			for (i=0,yoffs=0; i<sprite_layout.height; i++,yoffs+=sprite_layout.width*4)
-				sprite_layout.yoffset[i] = yoffs;
-
-			sprite[code].word	=	attr;
-			freegfx(sprite[code].gfx);
-			sprite[code].gfx	=	decodegfx(gfxdata,&sprite_layout);
-
-			sprite[code].gfx->colortable   = Machine->remapped_colortable;
-			sprite[code].gfx->total_colors = 0x200;
-		}
-
 		if (flip_screen)
 		{
 			flipx = !flipx;		x = max_x - x - sprite_layout.width;
 			flipy = !flipy;		y = max_y - y - sprite_layout.height;
 		}
 
-		drawgfxzoom(	bitmap,sprite[code].gfx,
-						0,
-						((attr & 0xf0)>>4) + color_start,
-						flipx, flipy,
-						x, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 0xf,
-						zoom, zoom	);
+		if (support_8bpp && color == 0xf)	/* 8bpp */
+		{
+			/* prepare GfxElement on the fly */
+			struct GfxElement gfx;
+			gfx.width = sprite_layout.width;
+			gfx.height = sprite_layout.height;
+			gfx.line_modulo = sprite_layout.width;
+			gfx.char_modulo = 0;	/* doesn't matter */
+			gfx.gfxdata = gfxdata;
+			gfx.total_elements = 1;
+			gfx.color_granularity = 256;
+			gfx.pen_usage = NULL;
+			gfx.colortable = Machine->remapped_colortable;
+			gfx.total_colors = 0x20;
+
+			drawgfxzoom(	bitmap,&gfx,
+							0,
+							color_start >> 4,
+							flipx, flipy,
+							x, y,
+							&Machine->visible_area, TRANSPARENCY_PEN, 0,
+							zoom, zoom	);
+		}
+		else
+		{
+			/* Decode the sprite's graphics when needed */
+			if ( (sprite[code].gfx == 0) || ((sprite[code].word ^ attr) & 0x3f0f) )
+			{
+				int i,yoffs;
+
+				sprite[code].word	=	attr;
+				freegfx(sprite[code].gfx);
+
+				for (i=0,yoffs=0; i<sprite_layout.height; i++,yoffs+=sprite_layout.width*4)
+					sprite_layout.yoffset[i] = yoffs;
+				sprite[code].gfx	=	decodegfx(gfxdata,&sprite_layout);
+				sprite[code].gfx->total_colors = 0x200;
+
+				sprite[code].gfx->colortable   = Machine->remapped_colortable;
+			}
+
+			drawgfxzoom(	bitmap,sprite[code].gfx,
+							0,
+							(color ^ 0x0f) + color_start,
+							flipx, flipy,
+							x, y,
+							&Machine->visible_area, TRANSPARENCY_PEN, 0,
+							zoom, zoom	);
+		}
+
 #if 0
 {	/* Display priority + zoom on each sprite */
 	struct DisplayText dt[2];	char buf[80];
@@ -569,7 +621,7 @@ void metro_mark_sprites_colors(void)
 		int n				=	( ( (attr >> 11) & 0x7 ) + 1 ) *
 								( ( (attr >>  8) & 0x7 ) + 1 );
 
-		int color			=	( (attr & 0xf0) >> 4 );
+		int color			=	( (attr & 0xf0) >> 4 ) ^ 0x0f;
 
 		if ((x & 0xf800) == 0xf800)		continue;
 
@@ -585,7 +637,7 @@ void metro_mark_sprites_colors(void)
 	}
 
 	for (col = 0; col < 16; col++)
-	 for (pen = 0; pen < 15; pen++)	// pen 15 is transparent
+	 for (pen = 1; pen < 16; pen++)	// pen 0 is transparent
 	  if (colmask[col] & (1 << pen))
 	  {	palette_used_colors[16 * (col + color_start) + pen] = PALETTE_COLOR_USED;
 		count++;	}
@@ -664,12 +716,8 @@ void metro_tilemap_draw	(struct osd_bitmap *bitmap, struct tilemap *tilemap, UIN
 }
 
 
-void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+static void drawlayer(struct osd_bitmap *bitmap,int layer)
 {
-	int i,layers_ctrl = -1;
-
-	data16_t screenctrl = *metro_screenctrl;
-
 	/* Scrolling */
 	int sy0		=	metro_scroll[0x0/2];
 	int sx0		=	metro_scroll[0x2/2];
@@ -686,12 +734,61 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int wx2		=	metro_window[0xa/2];
 
 
+	switch (layer)
+	{
+		case 0:
+			metro_tilemap_draw(bitmap,tilemap_0, 0, 0, sx0, sy0, wx0, wy0);
+			break;
+		case 1:
+			metro_tilemap_draw(bitmap,tilemap_1, 0, 0, sx1, sy1, wx1, wy1);
+			break;
+		case 2:
+			metro_tilemap_draw(bitmap,tilemap_2, 0, 0, sx2, sy2, wx2, wy2);
+			break;
+	}
+}
+
+
+
+void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int i,layers_ctrl = -1;
+
+	data16_t screenctrl = *metro_screenctrl;
+
 	metro_sprite_xoffs	=	metro_videoregs[0x06/2] - Machine->drv->screen_width  / 2;
 	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen_height / 2;
 
 
 	/* Black background color ? */
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+
+
+#if 0
+{
+	int x,y;
+	static int scrx,scry;
+
+	if (keyboard_pressed(KEYCODE_LEFT)) scrx--;
+	if (keyboard_pressed(KEYCODE_RIGHT)) scrx++;
+	if (keyboard_pressed(KEYCODE_UP)) scry--;
+	if (keyboard_pressed(KEYCODE_DOWN)) scry++;
+	usrintf_showmessage("%d %xd",scrx,scry);
+
+	for (y = 0;y < 256;y++)
+	{
+		for (x = 0;x < 256;x++)
+		{
+			drawgfx(bitmap,Machine->gfx[2],
+					metro_k053936_ram[256*y+x],
+					0x1e,
+					0,0,
+					8*x+scrx,8*y+scry,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+#endif
 
 
 	/*	Screen Control Register:
@@ -757,17 +854,17 @@ if (keyboard_pressed(KEYCODE_Z))
 
 	palette_recalc();
 
-	if (layers_ctrl & 1)	metro_tilemap_draw(bitmap,tilemap_2, 0, 0, sx2, sy2, wx2, wy2);
-	if (layers_ctrl & 2)	metro_tilemap_draw(bitmap,tilemap_1, 0, 0, sx1, sy1, wx1, wy1);
+	if (layers_ctrl & 1)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x30)>>4);
+	if (layers_ctrl & 2)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x0c)>>2);
 	if (metro_videoregs[0x02/2] & 0x0100)	// tilemap 0 over sprites
 	{
 		if (layers_ctrl & 8)
 			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
-		if (layers_ctrl & 4)	metro_tilemap_draw(bitmap,tilemap_0, 0, 0, sx0, sy0, wx0, wy0);
+		if (layers_ctrl & 4)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x03));
 	}
 	else
 	{
-		if (layers_ctrl & 4)	metro_tilemap_draw(bitmap,tilemap_0, 0, 0, sx0, sy0, wx0, wy0);
+		if (layers_ctrl & 4)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x03));
 		if (layers_ctrl & 8)
 			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
 	}

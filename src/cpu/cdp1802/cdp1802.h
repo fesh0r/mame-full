@@ -55,6 +55,7 @@ int cdp1802_dma_read(void);
 
 extern int cdp1802_icount;				/* cycle count */
 
+extern void cdp1802_init(void);
 extern void cdp1802_reset(void *param);
 extern void cdp1802_exit(void);
 extern int cdp1802_execute(int cycles);

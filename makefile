@@ -2,6 +2,7 @@
 TARGET = mame
 # TARGET = mess
 # TARGET = neomame
+# TARGET = cpsmame
 # example for a tiny compile
 # TARGET = tiny
 
@@ -59,7 +60,7 @@ endif
 # some structures and thus they can't be linked against each other.
 # cleantiny isn't needed anymore, because the tiny build has its
 # own object directory too.
-OBJ = $(NAME).obj
+OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
 
@@ -110,13 +111,11 @@ nozlib:
 	@echo Missing zlib library! Get it from http://www.cdrom.com/pub/infozip/zlib/
 endif
 
-OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
+OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
 ifdef MESS
 OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools \
-	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg      \
-	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool      
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 endif
 
 all:	maketree $(EMULATOR) extra

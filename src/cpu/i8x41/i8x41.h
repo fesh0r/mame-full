@@ -42,6 +42,7 @@ enum {
 
 extern int i8x41_ICount;				/* cycle count */
 
+extern void i8x41_init (void);					/* Initialize save states */
 extern void i8x41_reset (void *param);			/* Reset registers to the initial values */
 extern void i8x41_exit	(void); 				/* Shut down CPU core */
 extern int	i8x41_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */

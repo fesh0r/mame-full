@@ -99,6 +99,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0x0020, 0x0020, watchdog_reset_w },
 	{ 0x0030, 0x0031, K053260_w },
 	{ 0x0040, 0x0040, soundirq_w },
+	{ 0x0100, 0x010f, MWA_NOP },	/* 053252? */
 	{ 0x0200, 0x020f, K051316_ctrl_0_w },
 	{ 0x0300, 0x030f, K053244_w },
 	{ 0x0800, 0x0fff, K051316_0_w },

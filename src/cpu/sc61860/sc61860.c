@@ -273,7 +273,7 @@ void sc61860_set_irq_line(int irqline, int state)
 void sc61860_set_irq_callback(int (*callback)(int))
 {
 }
-
+#if (0)
 void sc61860_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
@@ -299,7 +299,7 @@ void sc61860_state_load(void *file)
 //	state_load_UINT8(file,"sc61860",cpu,"Z",&sc61860.zero,1);
 	// internal ram
 }
-
+#endif
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
@@ -355,3 +355,5 @@ unsigned sc61860_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 #endif
+
+void sc61860_init (void) {  }

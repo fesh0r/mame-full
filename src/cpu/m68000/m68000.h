@@ -50,6 +50,7 @@ struct m68k_memory_interface
 #define MC68000_INT_ACK_SPURIOUS      -2
 
 #define m68000_ICount                   M68000_ICount
+extern void m68000_init(void);
 extern void m68000_reset(void *param);
 extern void m68000_exit(void);
 extern int	m68000_execute(int cycles);
@@ -83,6 +84,7 @@ extern unsigned m68000_dasm(char *buffer, unsigned pc);
 #define MC68010_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
 #define m68010_ICount                   M68000_ICount
+extern void m68010_init(void);
 extern void m68010_reset(void *param);
 extern void m68010_exit(void);
 extern int	m68010_execute(int cycles);
@@ -117,6 +119,7 @@ extern unsigned m68010_dasm(char *buffer, unsigned pc);
 #define MC68EC020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
 #define m68ec020_ICount                 M68020_ICount
+extern void m68ec020_init(void);
 extern void m68ec020_reset(void *param);
 extern void m68ec020_exit(void);
 extern int	m68ec020_execute(int cycles);
@@ -151,6 +154,7 @@ extern unsigned m68ec020_dasm(char *buffer, unsigned pc);
 #define MC68020_INT_ACK_SPURIOUS		MC68000_INT_ACK_SPURIOUS
 
 #define m68020_ICount                   M68020_ICount
+extern void m68020_init(void);
 extern void m68020_reset(void *param);
 extern void m68020_exit(void);
 extern int	m68020_execute(int cycles);

@@ -63,11 +63,14 @@ Some registers move from game to game.. following example strider
 0x6a-0x6b	Priority mask |   four priority levels, each one associated with one
 0x6c-0x6d	Priority mask |   of these masks. The masks indicate pens in the tile
 0x6e-0x6f	Priority mask /   that have priority over sprites.
-0x70-0x71	Control register (usually 0x003f). The function of this register
-            is unknown; experiments on the real board show that values
-			different from 0x3f in the low 6 bits cause wrong colors. The
-			other bits seem to be unused.
-			The only place where this register seems to be set to a value
+0x70-0x71	Control register (usually 0x003f). The details of how this register
+			works are unknown, but it definitely affects the palette; experiments
+			on the real board show that values different from 0x3f in the low 6
+			bits cause wrong colors. The other bits seem to be unused.
+			There is one CPS2 game (Slammasters II) setting this to 0x2f: this
+			causes the four layers to use palette banks 2,3,4,5 instead of the
+			usual 0,1,2,3.
+			The only other places where this register seems to be set to a value
 			different from 0x3f is during startup tests. Examples:
 			ghouls  0x02
 			strider 0x02
@@ -88,13 +91,16 @@ The only place I know were this might cause problems is the cave in mtwins,
 which waves to simulate heat. I haven't noticed anything wrong, though.
 
 CPS2:
-* CPS2 can do raster effects, certainly used by ssf2 (Cammy and DeeJay levels)
-  and maybe others (xmcota?). IRQ4 is some sort of scanline interrupt used for
-  that purpose.
+* CPS2 can do raster effects, certainly used by ssf2 (Cammy, DeeJay, T.Hawk levels),
+  msh (lava level, early in attract mode) and maybe others (xmcotaj, vsavj).
+  IRQ4 is some sort of scanline interrupt used for that purpose.
 
 SF2
 * Missing chain in the foreground in Ken's level, and sign in Cun Li's level.
   Those graphics are in the backmost layer.
+
+UN Squadron
+* DOT TEST in service mode shows garbage chars
 
 Magic Sword.
 * during attract mode, characters are shown with a black background. There is
@@ -192,7 +198,6 @@ struct CPS1config
 	int bank_scroll3;
 
 	/* Some characters aren't visible */
-	const int space_scroll1;
 	const int start_scroll2;
 	const int end_scroll2;
 	const int start_scroll3;
@@ -235,100 +240,108 @@ struct CPS1config *cps1_game_config;
 
 static struct CPS1config cps1_config_table[]=
 {
-	/* name       CPSB    banks spacechr      tile limits            kludge */
-	{"forgottn",CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 7},
-	{"lostwrld",CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 7},
-	{"ghouls",  CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 1},
-	{"ghoulsu", CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 1},
-	{"ghoulsj", CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 1},
-	{"strider", CPS_B_01, 1,0,1,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"striderj",CPS_B_01, 1,0,1,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"stridrja",CPS_B_01, 1,0,1,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"dwj",     UNKNW_02, 0,1,1,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"willow",  UNKNW_03, 0,1,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"willowj", UNKNW_03, 0,1,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"unsquad", CPS_B_11, 0,0,0,     -1,0x0000,0xffff,0x0001,0xffff },
-	{"area88",  CPS_B_11, 0,0,0,     -1,0x0000,0xffff,0x0001,0xffff },
-	{"ffight",  CPS_B_04, 0,0,0,     -1,0x0001,0xffff,0x0001,0xffff },
-	{"ffightu", CPS_B_01, 0,0,0,     -1,0x0001,0xffff,0x0001,0xffff },
-	{"ffightj", CPS_B_04, 0,0,0,     -1,0x0001,0xffff,0x0001,0xffff },
-	{"1941",    CPS_B_05, 0,0,0,     -1,0x0000,0xffff,0x0400,0x07ff },
-	{"1941j",   CPS_B_05, 0,0,0,     -1,0x0000,0xffff,0x0400,0x07ff },
-	{"mercs",   CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
-	{"mercsu",  CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
-	{"mercsj",  CPS_B_12, 0,0,0,     -1,0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
-	{"msword",  CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"mswordu", CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"mswordj", CPS_B_13, 0,0,0,     -1,0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
-	{"mtwins",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
-	{"chikij",  CPS_B_14, 0,0,0,     -1,0x0000,0x3fff,0x0e00,0xffff },
-	{"nemo",    CPS_B_15, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"nemoj",   CPS_B_15, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"cawing",  CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
-	{"cawingj", CPS_B_16, 0,0,0, 0x0002,0x0000,0xffff,0x0000,0xffff, 6},
-	{"sf2",     CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2a",    CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2b",    CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2e",    CPS_B_18, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2i",    CPS_B_14, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2j",    CPS_B_13, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2jb",   CPS_B_17, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
+	/* name       CPSB    banks        tile limits            kludge */
+	{"forgottn",CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 7 },
+	{"lostwrld",CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 7 },
+	{"ghouls",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 1 },
+	{"ghoulsu", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 1 },
+	{"ghoulsj", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 1 },
+	{"strider", CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
+	{"striderj",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
+	{"stridrja",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
+	{"dwj",     UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
+	{"willow",  UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
+	{"willowj", UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
+	{"unsquad", CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
+	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
+	{"ffight",  CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
+	{"ffightu", CPS_B_01, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
+	{"ffightj", CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
+	{"1941",    CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
+	{"1941j",   CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
+	{"mercs",   CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
+	{"mercsu",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
+	{"mercsj",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
+	{"msword",  CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mswordu", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mswordj", CPS_B_13, 0,0,0, 0x2800,0x37ff,0x0000,0xffff },	/* CPSB ID not checked, but it's the same as sf2j */
+	{"mtwins",  CPS_B_14, 0,0,0, 0x0000,0x3fff,0x0e00,0xffff },
+	{"chikij",  CPS_B_14, 0,0,0, 0x0000,0x3fff,0x0e00,0xffff },
+	{"nemo",    CPS_B_15, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"nemoj",   CPS_B_15, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"cawing",  CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"cawingj", CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2",     CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2a",    CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2b",    CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2e",    CPS_B_18, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2i",    CPS_B_14, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2j",    CPS_B_13, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2jb",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	/* from here onwards the CPS-B board has suicide battery and multiply protection */
-	{"3wonders",BATTRY_1, 0,1,1,     -1,0x0000,0xffff,0x0000,0xffff, 2},
-	{"wonder3", BATTRY_1, 0,1,1,     -1,0x0000,0xffff,0x0000,0xffff, 2},
-	{"kod",     BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"kodu",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"kodj",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"kodb",    BATTRY_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* bootleg, doesn't use multiply protection */
-	{"captcomm",BATTRY_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"captcomu",BATTRY_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"captcomj",BATTRY_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"knights", BATTRY_4, 0,0,0, 0xf020,0x0000,0xffff,0x0000,0xffff },
-	{"knightsu",BATTRY_4, 0,0,0, 0xf020,0x0000,0xffff,0x0000,0xffff },
-	{"knightsj",BATTRY_4, 0,0,0, 0xf020,0x0000,0xffff,0x0000,0xffff },
-	{"sf2ce",   NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2cea",  NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2ceb",  NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2cej",  NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2rb",   NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2red",  NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2accp2",NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"varth",   BATTRY_5, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
-	{"varthu",  BATTRY_5, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
-	{"varthj",  BATTRY_6, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (72=0001) */
-	{"cworld2j",BATTRY_7, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },  /* The 0x76 priority values are incorrect values */
-	{"wof",     CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
-	{"wofa",    CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
-	{"wofu",    QSOUND_1, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"wofj",    QSOUND_1, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"dino",    QSOUND_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
-	{"dinoj",   QSOUND_2, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
-	{"punisher",QSOUND_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"punishru",QSOUND_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"punishrj",QSOUND_3, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"slammast",QSOUND_4, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"slammasu",QSOUND_4, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbomberj",QSOUND_4, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbombrd", QSOUND_5, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"mbombrdj",QSOUND_5, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2t",    NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"sf2tj",   NOBATTRY, 2,2,2,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"qad",     BATTRY_8, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },	/* TODO: layer enable */
-	{"qadj",    NOBATTRY, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"qtono2",  NOBATTRY, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"megaman", CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"rockmanj",CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"pnickj",  CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff },
-	{"pang3",   CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5},	/* EEPROM port is among the CPS registers */
-	{"pang3j",  CPS_B_01, 0,0,0,     -1,0x0000,0xffff,0x0000,0xffff, 5},	/* EEPROM port is among the CPS registers */
+	{"3wonders",BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"3wonderu",BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"wonder3", BATTRY_1, 0,1,1, 0x0000,0xffff,0x0000,0xffff, 2 },
+	{"kod",     BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"kodu",    BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"kodj",    BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"kodb",    BATTRY_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg, doesn't use multiply protection */
+	{"captcomm",BATTRY_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"captcomu",BATTRY_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"captcomj",BATTRY_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"knights", BATTRY_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 3 },
+	{"knightsu",BATTRY_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 3 },
+	{"knightsj",BATTRY_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 3 },
+	{"sf2ce",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2cea",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2ceb",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2cej",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2rb",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2red",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2accp2",NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"varth",   BATTRY_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
+	{"varthu",  BATTRY_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (60=0008) */
+	{"varthj",  BATTRY_6, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* CPSB test has been patched out (72=0001) */
+	{"cworld2j",BATTRY_7, 0,0,0, 0x0000,0xffff,0x0000,0xffff },  /* The 0x76 priority values are incorrect values */
+	{"wof",     CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
+	{"wofa",    CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* bootleg? */
+	{"wofu",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"wofj",    QSOUND_1, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"dino",    QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
+	{"dinoj",   QSOUND_2, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* layer enable never used */
+	{"punisher",QSOUND_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"punishru",QSOUND_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"punishrj",QSOUND_3, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"slammast",QSOUND_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"slammasu",QSOUND_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"mbomberj",QSOUND_4, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"mbombrd", QSOUND_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"mbombrdj",QSOUND_5, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2t",    NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2tj",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"qad",     BATTRY_8, 0,0,0, 0x0000,0xffff,0x0000,0xffff },	/* TODO: layer enable */
+	{"qadj",    NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"qtono2",  NOBATTRY, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"megaman", CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"rockmanj",CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"pnickj",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"pang3",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
+	{"pang3j",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
 
     /* CPS2 games */
-    {"cps2",    CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff },
-    {"ssf2",    CPS_B_01, 4,4,0,     -1,0x0000,0xffff,0x0000,0xffff },
-    {"xmcota",  CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
-    {"xmcotaj", CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
-    {"xmcotaj1",CPS_B_01, 4,4,4,     -1,0x0000,0xffff,0x0000,0xffff, 8},
-
+	{"cps2",    CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2",    CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2a",   CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2j",   CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2jr1", CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2jr2", CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff },
+	{"ssf2t",   CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
+	{"ssf2tu",  CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
+	{"ssf2ta",  CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
+	{"ssf2xj",  CPS_B_01, 4,4,0, 0x0000,0xffff,0x0000,0xffff, 9 },
+	{"xmcota",  CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
+	{"xmcotaj", CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
+	{"xmcotaj1",CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff, 8 },
 	{0}		/* End of table */
 };
 
@@ -454,7 +467,7 @@ if (offset >= 0x18/2) logerror("PC %06x: read output port %02x\n",cpu_get_pc(),o
 
 	/* Pang 3 EEPROM interface */
 	if (cps1_game_config->kludge == 5 && offset == 0x7a/2)
-		return cps1_eeprom_port_r(0);
+		return cps1_eeprom_port_r(0,mem_mask);
 
 	return cps1_output[offset];
 }
@@ -472,7 +485,7 @@ WRITE16_HANDLER( cps1_output_w )
 
 #ifdef MAME_DEBUG
 if (cps1_game_config->control_reg && offset == cps1_game_config->control_reg/2 && data != 0x3f)
-	usrintf_showmessage("control_reg = %04x",data);
+	logerror("control_reg = %04x",data);
 #endif
 #if VERBOSE
 if (offset > 0x22/2 &&
@@ -503,12 +516,7 @@ size_t cps1_gfxram_size;
 size_t cps1_output_size;
 
 /* Offset of each palette entry */
-const int cps1_obj_palette     = 0*32;
-const int cps1_scroll1_palette = 1*32;
-const int cps1_scroll2_palette = 2*32;
-const int cps1_scroll3_palette = 3*32;
-const int cps1_stars1_palette  = 4*32;
-const int cps1_stars2_palette  = 5*32;
+static int palette_basecolor[6];
 #define cps1_palette_entries (32*8)  /* Number colour schemes in palette */
 
 const int cps1_scroll1_size=0x4000;
@@ -590,12 +598,12 @@ static data16_t *cps2_buffered_obj;
 static int cps2_last_sprite_offset;     /* Offset of the last sprite */
 
 
-#define CPS2_OBJ_BASE           0x00    /* Base address of objects */
-#define CPS2_UK1_BASE           0x02    /* Unknown (nearly always 0x807d) */
-#define CPS2_PRI_BASE           0x04    /* Layers priorities */
-#define CPS2_UK2_BASE           0x06    /* Unknown (always 0x0000) */
-#define CPS2_UK3_START          0x08    /* Unknown (always 0x0040) */
-#define CPS2_UK4_SIZE           0x0a    /* Unknown (always 0x0010)  */
+#define CPS2_OBJ_BASE	0x00	/* Base address of objects? Usually 0x7080, 0x7000 in avsp */
+#define CPS2_OBJ_UK1	0x02	/* Unknown (nearly always 0x807d) */
+#define CPS2_OBJ_PRI	0x04	/* Layers priorities */
+#define CPS2_OBJ_UK2	0x06	/* Unknown (usually 0x0000, 0x1101 in ssf2) */
+#define CPS2_OBJ_XOFFS	0x08	/* X offset (usually 0x0040) */
+#define CPS2_OBJ_UK4	0x0a	/* Unknown (always 0x0010)  */
 
 INLINE int cps2_port(int offset)
 {
@@ -751,7 +759,7 @@ void cps1_gfx_stop(void)
 
 
 void cps1_draw_gfx(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -787,7 +795,7 @@ void cps1_draw_gfx(
 }
 
 void cps1_draw_gfx16(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -822,7 +830,7 @@ void cps1_draw_gfx16(
 }
 
 void cps1_draw_gfx_pri(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -847,7 +855,7 @@ void cps1_draw_gfx_pri(
 }
 
 void cps1_draw_gfx16_pri(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -880,7 +888,7 @@ priority rendering.
 
 */
 void cps1_draw_gfx_opaque(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -904,7 +912,7 @@ void cps1_draw_gfx_opaque(
 }
 
 void cps1_draw_gfx_opaque16(
-	struct osd_bitmap *dest,const struct GfxElement *gfx,
+	struct osd_bitmap *dest,int palette_bank,
 	int code,
 	int color,
 	int flipx,int flipy,
@@ -937,14 +945,14 @@ INLINE void cps1_draw_scroll1(
 	if (dest->depth==16)
 	{
 		cps1_draw_gfx16(dest,
-			Machine->gfx[1],
+			1,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
-			Machine->gfx[1],
+			1,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_char_pen_usage,8, cps1_max_char, 16, 1);
 	}
@@ -952,63 +960,63 @@ INLINE void cps1_draw_scroll1(
 
 
 INLINE void cps1_draw_tile16(struct osd_bitmap *dest,
-	const struct GfxElement *gfx,
+	int palette_bank,
 	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
 	{
 		cps1_draw_gfx16(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
 	}
 }
 
 INLINE void cps1_draw_tile16_pri(struct osd_bitmap *dest,
-	const struct GfxElement *gfx,
+	int palette_bank,
 	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
 	{
 		cps1_draw_gfx16_pri(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
 	}
 	else
 	{
 		cps1_draw_gfx_pri(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0, priority_bitmap);
 	}
 }
 
 INLINE void cps1_draw_tile32(struct osd_bitmap *dest,
-	const struct GfxElement *gfx,
+	int palette_bank,
 	int code, int color,
 	int flipx, int flipy,int sx, int sy, int tpens)
 {
 	if (dest->depth==16)
 	{
 		cps1_draw_gfx16(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
 	}
 	else
 	{
 		cps1_draw_gfx(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			tpens,cps1_tile32_pen_usage,32, cps1_max_tile32, 16*2*4,0);
 	}
@@ -1063,21 +1071,21 @@ INLINE void cps1_draw_blank16(struct osd_bitmap *dest, int sx, int sy )
 
 
 INLINE void cps1_draw_tile16_bmp(struct osd_bitmap *dest,
-	const struct GfxElement *gfx,
+	int palette_bank,
 	int code, int color,
 	int flipx, int flipy,int sx, int sy)
 {
 	if (dest->depth==16)
 	{
 		cps1_draw_gfx_opaque16(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
 	}
 	else
 	{
 		cps1_draw_gfx_opaque(dest,
-			gfx,
+			palette_bank,
 			code,color,flipx,flipy,sx,sy,
 			-1,cps1_tile16_pen_usage,16, cps1_max_tile16, 16*2,0);
 	}
@@ -1210,6 +1218,27 @@ INLINE void cps1_get_video_base(void )
 	cps1_layer_enabled[2]=layercontrol & cps1_game_config->scrl2_enable_mask;
 	cps1_layer_enabled[3]=layercontrol & cps1_game_config->scrl3_enable_mask;
 	cps1_stars_enabled   =layercontrol & cps1_game_config->stars_enable_mask;
+
+	/* get palette banks */
+	if (cps1_port(cps1_game_config->control_reg) == 0x2f)	/* Slammasters II */
+	{
+		palette_basecolor[0] = 2*32;	/* obj */
+		palette_basecolor[1] = 3*32;	/* scroll1 */
+		palette_basecolor[2] = 4*32;	/* scroll2 */
+		palette_basecolor[3] = 5*32;	/* scroll3 */
+		palette_basecolor[4] = 0*32;	/* stars1 - unused */
+		palette_basecolor[5] = 1*32;	/* stars2 - unused */
+	}
+	else	/* everything else */
+	{
+		palette_basecolor[0] = 0*32;	/* obj */
+		palette_basecolor[1] = 1*32;	/* scroll1 */
+		palette_basecolor[2] = 2*32;	/* scroll2 */
+		palette_basecolor[3] = 3*32;	/* scroll3 */
+		palette_basecolor[4] = 4*32;	/* stars1 */
+		palette_basecolor[5] = 5*32;	/* stars2 */
+	}
+
 
 
 #ifdef MAME_DEBUG
@@ -1480,11 +1509,15 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 {
 	int x,y, offs, offsx, sx, sy, ytop;
 
-    int scrlxrough=(scroll1x>>3)+4;
+	int scrlxrough=(scroll1x>>3)+4;
 	int scrlyrough=(scroll1y>>3);
 	int base=cps1_game_config->bank_scroll1*0x08000;
-    const int spacechar=cps1_game_config->space_scroll1;
+	/* 0x0020 appears to never be drawn */
+	int spacechar=0x20;
 
+	/* knights; the real space is 0x8820 */
+	if (cps1_game_config->kludge == 3)
+		spacechar = 0xf020;
 
 	sx=-(scroll1x&0x07);
 	ytop=-(scroll1y&0x07)+32;
@@ -1506,11 +1539,10 @@ void cps1_render_scroll1(struct osd_bitmap *bitmap,int priority)
 			code  =cps1_scroll1[offs/2];
 			colour=cps1_scroll1[(offs+2)/2];
 
-            if (code != 0x20 && code != spacechar)
+			if (code != spacechar)
 			{
 				int transp;
 
-				/* 0x0020 appears to never be drawn */
 				if (priority)
 				{
 					transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
@@ -1595,20 +1627,21 @@ void cps1_find_last_sprite(void)    /* Find the offset of last sprite */
 
 void cps2_find_last_sprite(void)    /* Find the offset of last sprite */
 {
-    int offset=0;
+	int offset=0;
 	/* Locate the end of table marker */
-    while (offset < cps2_obj_size/2)
+	while (offset < cps2_obj_size/2)
 	{
-        if (cps2_buffered_obj[offset+1]==0x8000 )
+		if (cps2_buffered_obj[offset+1]==0x8000
+				|| cps2_buffered_obj[offset+3]==0xff00)
 		{
 			/* Marker found. This is the last sprite. */
-            cps2_last_sprite_offset=offset-4;
+			cps2_last_sprite_offset=offset-4;
 			return;
 		}
-        offset+=4;
+		offset+=4;
 	}
 	/* Sprites must use full sprite RAM */
-    cps2_last_sprite_offset=cps2_obj_size/2-4;
+	cps2_last_sprite_offset=cps2_obj_size/2-4;
 }
 
 
@@ -1769,7 +1802,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+							cps1_draw_tile16_pri(bitmap,0,
 								code+(nx-1)-nxs+0x10*(ny-1-nys),
 								col&0x1f,
 								1,1,
@@ -1786,7 +1819,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+							cps1_draw_tile16_pri(bitmap,0,
 								code+nxs+0x10*(ny-1-nys),
 								col&0x1f,
 								0,1,
@@ -1806,7 +1839,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+							cps1_draw_tile16_pri(bitmap,0,
 								code+(nx-1)-nxs+0x10*nys,
 								col&0x1f,
 								1,0,
@@ -1824,7 +1857,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 							sx = (x+nxs*16) & 0x1ff;
 							sy = (y+nys*16) & 0x1ff;
 
-							cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+							cps1_draw_tile16_pri(bitmap,0,
 								code+nxs+0x10*nys,
 								col&0x1f,
 								0,0,
@@ -1837,7 +1870,7 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 		else
 		{
 			/* Simple case... 1 sprite */
-			cps1_draw_tile16_pri(bitmap,Machine->gfx[0],
+			cps1_draw_tile16_pri(bitmap,0,
 				   code,
 				   col&0x1f,
 				   colour&0x20,colour&0x40,
@@ -1847,17 +1880,18 @@ void cps1_render_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
+void cps2_render_sprites(struct osd_bitmap *bitmap,int minpri,int maxpri)
 {
 	int i;
-	int ret=0;
 	data16_t *base=cps2_buffered_obj;
+	int xoffs = 0x20-cps2_port(CPS2_OBJ_XOFFS);
 
+	if (minpri > maxpri) return;
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_1+drawpriority))
+	if (keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_R))
 	{
-		return 0;
+		return;
 	}
 #endif
 
@@ -1868,14 +1902,12 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 		int y=*(base+1);
 		int priority=(x>>13)&0x07;
 
-		if (priority == drawpriority)
+		if (priority >= minpri && priority <= maxpri)
 		{
 			int code  =*(base+2)+((y & 0x6000) <<3);
 			int colour=*(base+3);
 			int col=colour&0x1f;
-			ret = 1;
 
-			x-=0x20;
 			y+=0x20;
 
 			if (colour & 0xff00 )
@@ -1896,10 +1928,10 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = (x+nxs*16) & 0x3ff;
+								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,0,
 									code+(nx-1)-nxs+0x10*(ny-1-nys),
 									col&0x1f,
 									1,1,
@@ -1913,10 +1945,10 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = (x+nxs*16) & 0x3ff;
+								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,0,
 									code+nxs+0x10*(ny-1-nys),
 									col&0x1f,
 									0,1,
@@ -1933,10 +1965,10 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = (x+nxs*16) & 0x3ff;
+								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,0,
 									code+(nx-1)-nxs+0x10*nys,
 									col&0x1f,
 									1,0,
@@ -1951,10 +1983,10 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 						{
 							for (nxs=0; nxs<nx; nxs++)
 							{
-								sx = (x+nxs*16) & 0x3ff;
+								sx = (x+nxs*16+xoffs) & 0x3ff;
 								sy = (y+nys*16) & 0x3ff;
 
-								cps1_draw_tile16(bitmap,Machine->gfx[0],
+								cps1_draw_tile16(bitmap,0,
 									code+nxs+0x10*nys,
 									col&0x1f,
 									0,0,
@@ -1967,16 +1999,16 @@ int cps2_render_sprites(struct osd_bitmap *bitmap, int drawpriority)
 			else
 			{
 				/* Simple case... 1 sprite */
-				cps1_draw_tile16(bitmap,Machine->gfx[0],
+				cps1_draw_tile16(bitmap,0,
 					   code,
 					   col&0x1f,
 					   colour&0x20,colour&0x40,
-					   x & 0x3ff,y & 0x3ff,mask);
+					   (x+xoffs) & 0x3ff,y & 0x3ff,mask);
 			}
 		}
 		base += 4;
 	}
-	return ret;
+	return;
 }
 
 
@@ -2059,7 +2091,7 @@ void cps1_render_scroll2_bitmap(struct osd_bitmap *bitmap)
 				{
 					code += base;
 					cps1_draw_tile16_bmp(bitmap,
-						Machine->gfx[2],
+						2,
 						code,
 						colour&0x1f,
 						colour&0x20,colour&0x40,
@@ -2118,7 +2150,7 @@ void cps1_render_scroll2_high(struct osd_bitmap *bitmap)
 				transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
 
 				cps1_draw_tile16(priority_bitmap,
-							Machine->gfx[2],
+							2,
 							code+base,
 							colour&0x1f,
 							colour&0x20,colour&0x40,
@@ -2230,6 +2262,10 @@ void cps1_palette_scroll3(unsigned short *base)
 			{
 				code -= 0x4000;
 			}
+			if (cps1_game_config->kludge == 9 && code < 0x05600)
+			{
+				code += 0x4000;
+			}
 			colour=cps1_scroll3[(offs+2)/2];
 			if (code < cps1_max_tile32)
 			{
@@ -2275,12 +2311,16 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 				{
 					code -= 0x4000;
 				}
+				if (cps1_game_config->kludge == 9 && code < 0x05600)
+				{
+					code += 0x4000;
+				}
 
 				colour=cps1_scroll3[(offs+2)/2];
 				if (priority)
 				{
 					transp=cps1_transparency_scroll[(colour & 0x0180)>>7];
-					cps1_draw_tile32(priority_bitmap,Machine->gfx[3],
+					cps1_draw_tile32(priority_bitmap,3,
 							code,
 							colour&0x1f,
 							colour&0x20,colour&0x40,
@@ -2290,7 +2330,7 @@ void cps1_render_scroll3(struct osd_bitmap *bitmap, int priority)
 				else
 				{
 					transp = 0x7fff;
-					cps1_draw_tile32(bitmap,Machine->gfx[3],
+					cps1_draw_tile32(bitmap,3,
 							code,
 							colour&0x1f,
 							colour&0x20,colour&0x40,
@@ -2463,19 +2503,19 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Compute the used portion of the palette */
 	memset (palette_usage, 0, sizeof (palette_usage));
-    cps_palette_sprites (&palette_usage[cps1_obj_palette], cps1_buffered_obj, cps1_last_sprite_offset);
+    cps_palette_sprites (&palette_usage[palette_basecolor[0]], cps1_buffered_obj, cps1_last_sprite_offset);
     if (cps_version == 2)
     {
-        cps_palette_sprites (&palette_usage[cps1_obj_palette], cps2_buffered_obj, cps2_last_sprite_offset);
+        cps_palette_sprites (&palette_usage[palette_basecolor[0]], cps2_buffered_obj, cps2_last_sprite_offset);
     }
     if (cps1_layer_enabled[1])
-		cps1_palette_scroll1 (&palette_usage[cps1_scroll1_palette]);
+		cps1_palette_scroll1 (&palette_usage[palette_basecolor[1]]);
 	if (cps1_layer_enabled[2])
-		cps1_palette_scroll2 (&palette_usage[cps1_scroll2_palette]);
+		cps1_palette_scroll2 (&palette_usage[palette_basecolor[2]]);
 	else
 		memset(cps1_scroll2_old, 0xff, cps1_scroll2_size);
 	if (cps1_layer_enabled[3])
-		cps1_palette_scroll3 (&palette_usage[cps1_scroll3_palette]);
+		cps1_palette_scroll3 (&palette_usage[palette_basecolor[3]]);
 
 	for (i = offset = 0; i < cps1_palette_entries; i++)
 	{
@@ -2503,8 +2543,8 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		for (i = 0;i < 128;i++)
 		{
-			palette_used_colors[0x800+i] = PALETTE_COLOR_VISIBLE;
-			palette_used_colors[0xa00+i] = PALETTE_COLOR_VISIBLE;
+			palette_used_colors[0x10*palette_basecolor[4]+i] = PALETTE_COLOR_VISIBLE;
+			palette_used_colors[0x10*palette_basecolor[5]+i] = PALETTE_COLOR_VISIBLE;
 		}
 	}
 
@@ -2541,7 +2581,7 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		int pri_ctrl = cps2_port(CPS2_PRI_BASE);
+		int pri_ctrl = cps2_port(CPS2_OBJ_PRI);
 		int l0pri,l1pri,l2pri,l3pri;
 
 		l0pri = (pri_ctrl >> 4*l0) & 0x0f;
@@ -2550,6 +2590,16 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		l3pri = (pri_ctrl >> 4*l3) & 0x0f;
 
 #ifdef MAME_DEBUG
+if (	(cps2_port(CPS2_OBJ_BASE) != 0x7080 && cps2_port(CPS2_OBJ_BASE) != 0x7000) ||
+		cps2_port(CPS2_OBJ_UK1) != 0x807d ||
+		(cps2_port(CPS2_OBJ_UK2) != 0x0000 && cps2_port(CPS2_OBJ_UK2) != 0x1101) ||
+		cps2_port(CPS2_OBJ_UK4) != 0x0010)
+	usrintf_showmessage("base %04x uk1 %04x uk2 %04x uk4 %04x",
+			cps2_port(CPS2_OBJ_BASE),
+			cps2_port(CPS2_OBJ_UK1),
+			cps2_port(CPS2_OBJ_UK2),
+			cps2_port(CPS2_OBJ_UK4));
+
 if (keyboard_pressed(KEYCODE_Z))
 	usrintf_showmessage("order: %d (%d) %d (%d) %d (%d) %d (%d)",l0,l0pri,l1,l1pri,l2,l2pri,l3,l3pri);
 #endif
@@ -2562,17 +2612,13 @@ if (keyboard_pressed(KEYCODE_Z))
 //		if (l1pri < l0pri) usrintf_showmessage("l1pri < l0pri!");
 //		if (l2pri < l1pri) usrintf_showmessage("l2pri < l1pri!");
 
-		for (i = 0;i <= l0pri;i++)
-			cps2_render_sprites(bitmap,i);
+		cps2_render_sprites(bitmap,0,l0pri);
 		cps1_render_layer(bitmap,l0,distort_scroll2);
-		for (i = l0pri+1;i <= l1pri;i++)
-			cps2_render_sprites(bitmap,i);
+		cps2_render_sprites(bitmap,l0pri+1,l1pri);
 		cps1_render_layer(bitmap,l1,distort_scroll2);
-		for (i = l1pri+1;i <= l2pri;i++)
-			cps2_render_sprites(bitmap,i);
+		cps2_render_sprites(bitmap,l1pri+1,l2pri);
 		cps1_render_layer(bitmap,l2,distort_scroll2);
-		for (i = l2pri+1;i <= 7;i++)
-			cps2_render_sprites(bitmap,i);
+		cps2_render_sprites(bitmap,l2pri+1,7);
 	}
 
 #if CPS1_DUMP_VIDEO
@@ -2589,13 +2635,13 @@ void cps1_eof_callback(void)
 	cps1_get_video_base();
 
 	/* CPS1 sprites have to be delayed one frame */
-    memcpy(cps1_buffered_obj, cps1_obj, cps1_obj_size);
-    if (cps_version == 2)
-    {
+	memcpy(cps1_buffered_obj, cps1_obj, cps1_obj_size);
+	if (cps_version == 2)
+	{
 		/* CPS2 sprites have to be delayed two frames */
-        memcpy(cps2_buffered_obj, cps2_buffered_obj+cps2_obj_size, cps2_obj_size);
-        memcpy(cps2_buffered_obj+cps2_obj_size, cps2_objram, cps2_obj_size);
-    }
+		memcpy(cps2_buffered_obj, cps2_buffered_obj+cps2_obj_size, cps2_obj_size);
+		memcpy(cps2_buffered_obj+cps2_obj_size, cps2_objram, cps2_obj_size);
+	}
 }
 
 
@@ -2619,7 +2665,10 @@ void cps1_eof_callback(void)
 		/* Do not draw blank object */
 		return;
 	}
-	src = cps1_gfx+code*delta;
+
+	/* 8x8 tiles (srcdelta == 1) are taken from the RIGHT side of the 16x16 tile
+	   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
+	src = cps1_gfx+code*delta + srcdelta;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -2647,7 +2696,7 @@ void cps1_eof_callback(void)
 		return;
 	}
 
-	paldata=&gfx->colortable[gfx->color_granularity * color];
+	paldata=&Machine->remapped_colortable[16 * (color + palette_basecolor[palette_bank])];
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

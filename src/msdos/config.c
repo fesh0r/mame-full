@@ -340,7 +340,7 @@ void get_rom_sample_path (int argc, char **argv, int game_index, char *override_
 #ifndef MESS
 	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
 #else
-	softwarepath = get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
+	softwarepath= get_string ("directory", "softwarepath", NULL, ".;SOFTWARE");
 #endif
 
 	/* handle '-romdir' hack. We should get rid of this BW */
@@ -441,7 +441,7 @@ void parse_cmdline (int argc, char **argv, int game_index, char *override_defaul
 
 	soundcard			= get_int  ("config", "soundcard",  NULL, -1);
 	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
-	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
+	options.samplerate = get_int  ("config", "samplerate", "sr", 44100);
 	if (options.samplerate < 5000) options.samplerate = 5000;
 	if (options.samplerate > 50000) options.samplerate = 50000;
 	usestereo			= get_bool ("config", "stereo",  NULL,  1);

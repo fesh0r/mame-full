@@ -169,7 +169,7 @@ DRVLIBS += \
 		$(OBJ)/magnavox.a \
 		$(OBJ)/svision.a \
 		$(OBJ)/intv.a \
-		$(OBJ)/cpschngr.a
+		#$(OBJ)/cpschngr.a
 endif
 
 ifdef MESS_EXCLUDE_MISC_COMPUTERS

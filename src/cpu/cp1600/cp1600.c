@@ -3375,3 +3375,5 @@ unsigned cp1600_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+
+void cp1600_init (void) { }

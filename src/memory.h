@@ -36,7 +36,7 @@ extern "C" {
 
 /* obsolete, to be removed */
 #define READ_WORD(a)			(*(UINT16 *)(a))
-#define WRITE_WORD(a,d) 		(*(UINT16 *)(a) = (d))
+#define WRITE_WORD(a,d)			(*(UINT16 *)(a) = (d))
 
 
 /***************************************************************************
@@ -54,11 +54,11 @@ typedef UINT32			data32_t;
 typedef UINT32			offs_t;
 
 /* ----- typedefs for the various common memory/port handlers ----- */
-typedef data8_t 		(*read8_handler)  (UNUSEDARG offs_t offset);
+typedef data8_t			(*read8_handler)  (UNUSEDARG offs_t offset);
 typedef void			(*write8_handler) (UNUSEDARG offs_t offset, UNUSEDARG data8_t data);
-typedef data16_t		(*read16_handler) (UNUSEDARG offs_t offset);
+typedef data16_t		(*read16_handler) (UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask);
 typedef void			(*write16_handler)(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask);
-typedef data32_t		(*read32_handler) (UNUSEDARG offs_t offset);
+typedef data32_t		(*read32_handler) (UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask);
 typedef void			(*write32_handler)(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask);
 typedef offs_t			(*opbase_handler) (UNUSEDARG offs_t address);
 
@@ -66,24 +66,24 @@ typedef offs_t			(*opbase_handler) (UNUSEDARG offs_t address);
 typedef read8_handler	mem_read_handler;
 typedef write8_handler	mem_write_handler;
 typedef read16_handler	mem_read16_handler;
-typedef write16_handler mem_write16_handler;
+typedef write16_handler	mem_write16_handler;
 typedef read32_handler	mem_read32_handler;
-typedef write32_handler mem_write32_handler;
+typedef write32_handler	mem_write32_handler;
 
 /* ----- typedefs for the various common port handlers ----- */
 typedef read8_handler	port_read_handler;
 typedef write8_handler	port_write_handler;
 typedef read16_handler	port_read16_handler;
-typedef write16_handler port_write16_handler;
+typedef write16_handler	port_write16_handler;
 typedef read32_handler	port_read32_handler;
-typedef write32_handler port_write32_handler;
+typedef write32_handler	port_write32_handler;
 
 /* ----- typedefs for externally allocated memory ----- */
 struct ExtMemory
 {
-	offs_t			start, end;
+	offs_t 			start, end;
 	UINT8			region;
-	UINT8 * 		data;
+    UINT8 *			data;
 };
 
 
@@ -95,29 +95,29 @@ struct ExtMemory
 ***************************************************************************/
 
 /* ----- macros for declaring the various common memory/port handlers ----- */
-#define READ_HANDLER(name)		data8_t  name(UNUSEDARG offs_t offset)
-#define WRITE_HANDLER(name) 	void	 name(UNUSEDARG offs_t offset, UNUSEDARG data8_t data)
-#define READ16_HANDLER(name)	data16_t name(UNUSEDARG offs_t offset)
-#define WRITE16_HANDLER(name)	void	 name(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
-#define READ32_HANDLER(name)	data32_t name(UNUSEDARG offs_t offset)
-#define WRITE32_HANDLER(name)	void	 name(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask)
-#define OPBASE_HANDLER(name)	offs_t	 name(UNUSEDARG offs_t address)
+#define READ_HANDLER(name) 		data8_t  name(UNUSEDARG offs_t offset)
+#define WRITE_HANDLER(name) 	void     name(UNUSEDARG offs_t offset, UNUSEDARG data8_t data)
+#define READ16_HANDLER(name)	data16_t name(UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask)
+#define WRITE16_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+#define READ32_HANDLER(name)	data32_t name(UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask)
+#define WRITE32_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask)
+#define OPBASE_HANDLER(name)	offs_t   name(UNUSEDARG offs_t address)
 
 /* ----- macros for accessing bytes and words within larger chunks ----- */
 #ifdef LSB_FIRST
-	#define BYTE_XOR_BE(a)		((a) ^ 1)				/* read/write a byte to a 16-bit space */
-	#define BYTE_XOR_LE(a)		(a)
+	#define BYTE_XOR_BE(a)  	((a) ^ 1)				/* read/write a byte to a 16-bit space */
+	#define BYTE_XOR_LE(a)  	(a)
 	#define BYTE4_XOR_BE(a) 	((a) ^ 3)				/* read/write a byte to a 32-bit space */
 	#define BYTE4_XOR_LE(a) 	(a)
-	#define WORD_XOR_BE(a)		((a) ^ 2)				/* read/write a word to a 32-bit space */
-	#define WORD_XOR_LE(a)		(a)
+	#define WORD_XOR_BE(a)  	((a) ^ 2)				/* read/write a word to a 32-bit space */
+	#define WORD_XOR_LE(a)  	(a)
 #else
-	#define BYTE_XOR_BE(a)		(a)
-	#define BYTE_XOR_LE(a)		((a) ^ 1)				/* read/write a byte to a 16-bit space */
+	#define BYTE_XOR_BE(a)  	(a)
+	#define BYTE_XOR_LE(a)  	((a) ^ 1)				/* read/write a byte to a 16-bit space */
 	#define BYTE4_XOR_BE(a) 	(a)
 	#define BYTE4_XOR_LE(a) 	((a) ^ 3)				/* read/write a byte to a 32-bit space */
-	#define WORD_XOR_BE(a)		(a)
-	#define WORD_XOR_LE(a)		((a) ^ 2)				/* read/write a word to a 32-bit space */
+	#define WORD_XOR_BE(a)  	(a)
+	#define WORD_XOR_LE(a)  	((a) ^ 2)				/* read/write a word to a 32-bit space */
 #endif
 
 
@@ -133,19 +133,19 @@ struct ExtMemory
 
 /* ----- memory/port width constants ----- */
 #define MEMPORT_WIDTH_MASK		0x00000003				/* mask to get at the width bits */
-#define MEMPORT_WIDTH_8 		0x00000001				/* this memory/port array is for an 8-bit databus */
-#define MEMPORT_WIDTH_16		0x00000002				/* this memory/port array is for a 16-bit databus */
-#define MEMPORT_WIDTH_32		0x00000003				/* this memory/port array is for a 32-bit databus */
+#define MEMPORT_WIDTH_8			0x00000001				/* this memory/port array is for an 8-bit databus */
+#define MEMPORT_WIDTH_16 		0x00000002				/* this memory/port array is for a 16-bit databus */
+#define MEMPORT_WIDTH_32 		0x00000003				/* this memory/port array is for a 32-bit databus */
 
 /* ----- memory/port type constants ----- */
 #define MEMPORT_TYPE_MASK		0x30000000				/* mask to get at the type bits */
-#define MEMPORT_TYPE_MEM		0x10000000				/* this memory/port array is for memory */
-#define MEMPORT_TYPE_IO 		0x20000000				/* this memory/port array is for ports */
+#define MEMPORT_TYPE_MEM 		0x10000000				/* this memory/port array is for memory */
+#define MEMPORT_TYPE_IO			0x20000000				/* this memory/port array is for ports */
 
 /* ----- memory/port direction constants ----- */
 #define MEMPORT_DIRECTION_MASK	0xc0000000				/* mask to get at the direction bits */
 #define MEMPORT_DIRECTION_READ	0x40000000				/* this memory/port array is for reads */
-#define MEMPORT_DIRECTION_WRITE 0x80000000				/* this memory/port array is for writes */
+#define MEMPORT_DIRECTION_WRITE	0x80000000				/* this memory/port array is for writes */
 
 /* ----- memory/port address bits constants ----- */
 #define MEMPORT_ABITS_MASK		0x08000000				/* set this bit to indicate the entry has address bits */
@@ -231,9 +231,9 @@ struct ExtMemory
 #define MRA_BANK22				((mem_read_handler)STATIC_BANK22)
 #define MRA_BANK23				((mem_read_handler)STATIC_BANK23)
 #define MRA_BANK24				((mem_read_handler)STATIC_BANK24)
-#define MRA_NOP 				((mem_read_handler)STATIC_NOP)
-#define MRA_RAM 				((mem_read_handler)STATIC_RAM)
-#define MRA_ROM 				((mem_read_handler)STATIC_ROM)
+#define MRA_NOP					((mem_read_handler)STATIC_NOP)
+#define MRA_RAM					((mem_read_handler)STATIC_RAM)
+#define MRA_ROM					((mem_read_handler)STATIC_ROM)
 #define MRA_RAMROM				((mem_read_handler)STATIC_RAMROM)
 
 /* 8-bit writes */
@@ -261,21 +261,21 @@ struct ExtMemory
 #define MWA_BANK22				((mem_write_handler)STATIC_BANK22)
 #define MWA_BANK23				((mem_write_handler)STATIC_BANK23)
 #define MWA_BANK24				((mem_write_handler)STATIC_BANK24)
-#define MWA_NOP 				((mem_write_handler)STATIC_NOP)
-#define MWA_RAM 				((mem_write_handler)STATIC_RAM)
-#define MWA_ROM 				((mem_write_handler)STATIC_ROM)
+#define MWA_NOP					((mem_write_handler)STATIC_NOP)
+#define MWA_RAM					((mem_write_handler)STATIC_RAM)
+#define MWA_ROM					((mem_write_handler)STATIC_ROM)
 #define MWA_RAMROM				((mem_write_handler)STATIC_RAMROM)
 
 /* 16-bit reads */
-#define MRA16_BANK1 			((mem_read16_handler)STATIC_BANK1)
-#define MRA16_BANK2 			((mem_read16_handler)STATIC_BANK2)
-#define MRA16_BANK3 			((mem_read16_handler)STATIC_BANK3)
-#define MRA16_BANK4 			((mem_read16_handler)STATIC_BANK4)
-#define MRA16_BANK5 			((mem_read16_handler)STATIC_BANK5)
-#define MRA16_BANK6 			((mem_read16_handler)STATIC_BANK6)
-#define MRA16_BANK7 			((mem_read16_handler)STATIC_BANK7)
-#define MRA16_BANK8 			((mem_read16_handler)STATIC_BANK8)
-#define MRA16_BANK9 			((mem_read16_handler)STATIC_BANK9)
+#define MRA16_BANK1				((mem_read16_handler)STATIC_BANK1)
+#define MRA16_BANK2				((mem_read16_handler)STATIC_BANK2)
+#define MRA16_BANK3				((mem_read16_handler)STATIC_BANK3)
+#define MRA16_BANK4				((mem_read16_handler)STATIC_BANK4)
+#define MRA16_BANK5				((mem_read16_handler)STATIC_BANK5)
+#define MRA16_BANK6				((mem_read16_handler)STATIC_BANK6)
+#define MRA16_BANK7				((mem_read16_handler)STATIC_BANK7)
+#define MRA16_BANK8				((mem_read16_handler)STATIC_BANK8)
+#define MRA16_BANK9				((mem_read16_handler)STATIC_BANK9)
 #define MRA16_BANK10			((mem_read16_handler)STATIC_BANK10)
 #define MRA16_BANK11			((mem_read16_handler)STATIC_BANK11)
 #define MRA16_BANK12			((mem_read16_handler)STATIC_BANK12)
@@ -296,15 +296,15 @@ struct ExtMemory
 #define MRA16_ROM				((mem_read16_handler)STATIC_ROM)
 
 /* 16-bit writes */
-#define MWA16_BANK1 			((mem_write16_handler)STATIC_BANK1)
-#define MWA16_BANK2 			((mem_write16_handler)STATIC_BANK2)
-#define MWA16_BANK3 			((mem_write16_handler)STATIC_BANK3)
-#define MWA16_BANK4 			((mem_write16_handler)STATIC_BANK4)
-#define MWA16_BANK5 			((mem_write16_handler)STATIC_BANK5)
-#define MWA16_BANK6 			((mem_write16_handler)STATIC_BANK6)
-#define MWA16_BANK7 			((mem_write16_handler)STATIC_BANK7)
-#define MWA16_BANK8 			((mem_write16_handler)STATIC_BANK8)
-#define MWA16_BANK9 			((mem_write16_handler)STATIC_BANK9)
+#define MWA16_BANK1				((mem_write16_handler)STATIC_BANK1)
+#define MWA16_BANK2				((mem_write16_handler)STATIC_BANK2)
+#define MWA16_BANK3				((mem_write16_handler)STATIC_BANK3)
+#define MWA16_BANK4				((mem_write16_handler)STATIC_BANK4)
+#define MWA16_BANK5				((mem_write16_handler)STATIC_BANK5)
+#define MWA16_BANK6				((mem_write16_handler)STATIC_BANK6)
+#define MWA16_BANK7				((mem_write16_handler)STATIC_BANK7)
+#define MWA16_BANK8				((mem_write16_handler)STATIC_BANK8)
+#define MWA16_BANK9				((mem_write16_handler)STATIC_BANK9)
 #define MWA16_BANK10			((mem_write16_handler)STATIC_BANK10)
 #define MWA16_BANK11			((mem_write16_handler)STATIC_BANK11)
 #define MWA16_BANK12			((mem_write16_handler)STATIC_BANK12)
@@ -325,15 +325,15 @@ struct ExtMemory
 #define MWA16_ROM				((mem_write16_handler)STATIC_ROM)
 
 /* 32-bit reads */
-#define MRA32_BANK1 			((mem_read32_handler)STATIC_BANK1)
-#define MRA32_BANK2 			((mem_read32_handler)STATIC_BANK2)
-#define MRA32_BANK3 			((mem_read32_handler)STATIC_BANK3)
-#define MRA32_BANK4 			((mem_read32_handler)STATIC_BANK4)
-#define MRA32_BANK5 			((mem_read32_handler)STATIC_BANK5)
-#define MRA32_BANK6 			((mem_read32_handler)STATIC_BANK6)
-#define MRA32_BANK7 			((mem_read32_handler)STATIC_BANK7)
-#define MRA32_BANK8 			((mem_read32_handler)STATIC_BANK8)
-#define MRA32_BANK9 			((mem_read32_handler)STATIC_BANK9)
+#define MRA32_BANK1				((mem_read32_handler)STATIC_BANK1)
+#define MRA32_BANK2				((mem_read32_handler)STATIC_BANK2)
+#define MRA32_BANK3				((mem_read32_handler)STATIC_BANK3)
+#define MRA32_BANK4				((mem_read32_handler)STATIC_BANK4)
+#define MRA32_BANK5				((mem_read32_handler)STATIC_BANK5)
+#define MRA32_BANK6				((mem_read32_handler)STATIC_BANK6)
+#define MRA32_BANK7				((mem_read32_handler)STATIC_BANK7)
+#define MRA32_BANK8				((mem_read32_handler)STATIC_BANK8)
+#define MRA32_BANK9				((mem_read32_handler)STATIC_BANK9)
 #define MRA32_BANK10			((mem_read32_handler)STATIC_BANK10)
 #define MRA32_BANK11			((mem_read32_handler)STATIC_BANK11)
 #define MRA32_BANK12			((mem_read32_handler)STATIC_BANK12)
@@ -354,15 +354,15 @@ struct ExtMemory
 #define MRA32_ROM				((mem_read32_handler)STATIC_ROM)
 
 /* 32-bit writes */
-#define MWA32_BANK1 			((mem_write32_handler)STATIC_BANK1)
-#define MWA32_BANK2 			((mem_write32_handler)STATIC_BANK2)
-#define MWA32_BANK3 			((mem_write32_handler)STATIC_BANK3)
-#define MWA32_BANK4 			((mem_write32_handler)STATIC_BANK4)
-#define MWA32_BANK5 			((mem_write32_handler)STATIC_BANK5)
-#define MWA32_BANK6 			((mem_write32_handler)STATIC_BANK6)
-#define MWA32_BANK7 			((mem_write32_handler)STATIC_BANK7)
-#define MWA32_BANK8 			((mem_write32_handler)STATIC_BANK8)
-#define MWA32_BANK9 			((mem_write32_handler)STATIC_BANK9)
+#define MWA32_BANK1				((mem_write32_handler)STATIC_BANK1)
+#define MWA32_BANK2				((mem_write32_handler)STATIC_BANK2)
+#define MWA32_BANK3				((mem_write32_handler)STATIC_BANK3)
+#define MWA32_BANK4				((mem_write32_handler)STATIC_BANK4)
+#define MWA32_BANK5				((mem_write32_handler)STATIC_BANK5)
+#define MWA32_BANK6				((mem_write32_handler)STATIC_BANK6)
+#define MWA32_BANK7				((mem_write32_handler)STATIC_BANK7)
+#define MWA32_BANK8				((mem_write32_handler)STATIC_BANK8)
+#define MWA32_BANK9				((mem_write32_handler)STATIC_BANK9)
 #define MWA32_BANK10			((mem_write32_handler)STATIC_BANK10)
 #define MWA32_BANK11			((mem_write32_handler)STATIC_BANK11)
 #define MWA32_BANK12			((mem_write32_handler)STATIC_BANK12)
@@ -429,82 +429,82 @@ struct ExtMemory
 /* ----- structs for memory read arrays ----- */
 struct Memory_ReadAddress
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
-	mem_read_handler	handler;		/* handler callback */
+	offs_t				start, end;		/* start, end addresses, inclusive */
+	mem_read_handler 	handler;		/* handler callback */
 };
 
 struct Memory_ReadAddress16
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
-	mem_read16_handler	handler;		/* handler callback */
+	offs_t				start, end;		/* start, end addresses, inclusive */
+	mem_read16_handler 	handler;		/* handler callback */
 };
 
 struct Memory_ReadAddress32
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+	offs_t				start, end;		/* start, end addresses, inclusive */
 	mem_read32_handler	handler;		/* handler callback */
 };
 
 /* ----- structs for memory write arrays ----- */
 struct Memory_WriteAddress
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+    offs_t				start, end;		/* start, end addresses, inclusive */
 	mem_write_handler	handler;		/* handler callback */
 	data8_t **			base;			/* receives pointer to memory (optional) */
-	size_t *			size;			/* receives size of memory in bytes (optional) */
+    size_t *			size;			/* receives size of memory in bytes (optional) */
 };
 
 struct Memory_WriteAddress16
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+    offs_t				start, end;		/* start, end addresses, inclusive */
 	mem_write16_handler handler;		/* handler callback */
-	data16_t ** 		base;			/* receives pointer to memory (optional) */
-	size_t *			size;			/* receives size of memory in bytes (optional) */
+	data16_t **			base;			/* receives pointer to memory (optional) */
+    size_t *			size;			/* receives size of memory in bytes (optional) */
 };
 
 struct Memory_WriteAddress32
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+    offs_t				start, end;		/* start, end addresses, inclusive */
 	mem_write32_handler handler;		/* handler callback */
-	data32_t ** 		base;			/* receives pointer to memory (optional) */
+	data32_t **			base;			/* receives pointer to memory (optional) */
 	size_t *			size;			/* receives size of memory in bytes (optional) */
 };
 
 /* ----- structs for port read arrays ----- */
 struct IO_ReadPort
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
-	port_read_handler	handler;		/* handler callback */
+	offs_t				start, end;		/* start, end addresses, inclusive */
+	port_read_handler 	handler;		/* handler callback */
 };
 
 struct IO_ReadPort16
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
-	port_read16_handler handler;		/* handler callback */
+	offs_t				start, end;		/* start, end addresses, inclusive */
+	port_read16_handler	handler;		/* handler callback */
 };
 
 struct IO_ReadPort32
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
-	port_read32_handler handler;		/* handler callback */
+	offs_t				start, end;		/* start, end addresses, inclusive */
+	port_read32_handler	handler;		/* handler callback */
 };
 
 /* ----- structs for port write arrays ----- */
 struct IO_WritePort
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+	offs_t				start, end;		/* start, end addresses, inclusive */
 	port_write_handler	handler;		/* handler callback */
 };
 
 struct IO_WritePort16
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+	offs_t				start, end;		/* start, end addresses, inclusive */
 	port_write16_handler handler;		/* handler callback */
 };
 
 struct IO_WritePort32
 {
-	offs_t				start, end; 	/* start, end addresses, inclusive */
+	offs_t				start, end;		/* start, end addresses, inclusive */
 	port_write32_handler handler;		/* handler callback */
 };
 
@@ -525,10 +525,10 @@ struct IO_WritePort32
 #define MEMPORT_ARRAY_END			{ MEMPORT_MARKER, 0 } };
 
 /* ----- macros for setting the number of address bits ----- */
-#define MEMPORT_SET_BITS(b) 		{ MEMPORT_MARKER, MEMPORT_ABITS_MASK | (b) },
+#define MEMPORT_SET_BITS(b)			{ MEMPORT_MARKER, MEMPORT_ABITS_MASK | (b) },
 
 /* ----- macros for declaring the start of a memory struct array ----- */
-#define MEMORY_READ_START(name) 	MEMPORT_ARRAY_START(Memory_ReadAddress,    name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_MEM | MEMPORT_WIDTH_8)
+#define MEMORY_READ_START(name)		MEMPORT_ARRAY_START(Memory_ReadAddress,    name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_MEM | MEMPORT_WIDTH_8)
 #define MEMORY_WRITE_START(name)	MEMPORT_ARRAY_START(Memory_WriteAddress,   name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_MEM | MEMPORT_WIDTH_8)
 #define MEMORY_READ16_START(name)	MEMPORT_ARRAY_START(Memory_ReadAddress16,  name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_MEM | MEMPORT_WIDTH_16)
 #define MEMORY_WRITE16_START(name)	MEMPORT_ARRAY_START(Memory_WriteAddress16, name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_MEM | MEMPORT_WIDTH_16)
@@ -539,14 +539,14 @@ struct IO_WritePort32
 #define MEMORY_END					MEMPORT_ARRAY_END
 
 /* ----- macros for declaring the start of a port struct array ----- */
-#define PORT_READ_START(name)		MEMPORT_ARRAY_START(IO_ReadPort,	name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_8)
-#define PORT_WRITE_START(name)		MEMPORT_ARRAY_START(IO_WritePort,	name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_IO | MEMPORT_WIDTH_8)
-#define PORT_READ16_START(name) 	MEMPORT_ARRAY_START(IO_ReadPort16,	name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_16)
+#define PORT_READ_START(name)		MEMPORT_ARRAY_START(IO_ReadPort,    name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_8)
+#define PORT_WRITE_START(name)		MEMPORT_ARRAY_START(IO_WritePort,   name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_IO | MEMPORT_WIDTH_8)
+#define PORT_READ16_START(name)		MEMPORT_ARRAY_START(IO_ReadPort16,  name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_16)
 #define PORT_WRITE16_START(name)	MEMPORT_ARRAY_START(IO_WritePort16, name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_IO | MEMPORT_WIDTH_16)
-#define PORT_READ32_START(name) 	MEMPORT_ARRAY_START(IO_ReadPort32,	name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_32)
+#define PORT_READ32_START(name)		MEMPORT_ARRAY_START(IO_ReadPort32,  name, MEMPORT_DIRECTION_READ  | MEMPORT_TYPE_IO | MEMPORT_WIDTH_32)
 #define PORT_WRITE32_START(name)	MEMPORT_ARRAY_START(IO_WritePort32, name, MEMPORT_DIRECTION_WRITE | MEMPORT_TYPE_IO | MEMPORT_WIDTH_32)
 
-#define PORT_ADDRESS_BITS(bits) 	MEMPORT_SET_BITS(bits)
+#define PORT_ADDRESS_BITS(bits)		MEMPORT_SET_BITS(bits)
 #define PORT_END					MEMPORT_ARRAY_END
 
 
@@ -563,7 +563,7 @@ struct IO_WritePort32
 #define SUBTABLE_COUNT			64						/* number of slots reserved for subtables */
 #define SUBTABLE_MASK			(SUBTABLE_COUNT-1)		/* mask to get at the subtable index */
 #define SUBTABLE_BASE			(256-SUBTABLE_COUNT)	/* first index of a subtable */
-#define ENTRY_COUNT 			(SUBTABLE_BASE) 		/* number of legitimate (non-subtable) entries */
+#define ENTRY_COUNT				(SUBTABLE_BASE)			/* number of legitimate (non-subtable) entries */
 #define SUBTABLE_ALLOC			8						/* number of subtables to allocate at a time */
 
 /* ----- bit counts ----- */
@@ -592,7 +592,7 @@ struct IO_WritePort32
 #define LEVEL2_MASK(x)			((1 << LEVEL2_BITS(x)) - 1)
 
 /* ----- table lookup helpers ----- */
-#define LEVEL1_INDEX(a,b,m) 	((a) >> (LEVEL2_BITS((b)-(m)) + (m)))
+#define LEVEL1_INDEX(a,b,m)		((a) >> (LEVEL2_BITS((b)-(m)) + (m)))
 #define LEVEL2_INDEX(e,a,b,m)	((1 << LEVEL1_BITS((b)-(m))) + (((e) & SUBTABLE_MASK) << LEVEL2_BITS((b)-(m))) + (((a) >> (m)) & LEVEL2_MASK((b)-(m))))
 
 /* ----- sparse memory space detection ----- */
@@ -608,45 +608,45 @@ struct IO_WritePort32
 
 /* ----- for declaring 8-bit handlers ----- */
 #define DECLARE_HANDLERS_8BIT(abits) \
-data8_t  cpu_readmem##abits 			(offs_t offset);				\
-void	 cpu_writemem##abits			(offs_t offset, data8_t data);	\
-void	 cpu_setopbase##abits			(offs_t pc);					\
+data8_t  cpu_readmem##abits             (offs_t offset);				\
+void     cpu_writemem##abits            (offs_t offset, data8_t data);	\
+void     cpu_setopbase##abits           (offs_t pc);					\
 
 /* ----- for declaring 16-bit bigendian handlers ----- */
 #define DECLARE_HANDLERS_16BIT_BE(abits) \
-data8_t  cpu_readmem##abits##bew		(offs_t offset);				\
-data16_t cpu_readmem##abits##bew_word	(offs_t offset);				\
-void	 cpu_writemem##abits##bew		(offs_t offset, data8_t data);	\
-void	 cpu_writemem##abits##bew_word	(offs_t offset, data16_t data); \
-void	 cpu_setopbase##abits##bew		(offs_t pc);					\
+data8_t  cpu_readmem##abits##bew        (offs_t offset);				\
+data16_t cpu_readmem##abits##bew_word   (offs_t offset);				\
+void     cpu_writemem##abits##bew       (offs_t offset, data8_t data);	\
+void     cpu_writemem##abits##bew_word  (offs_t offset, data16_t data);	\
+void     cpu_setopbase##abits##bew      (offs_t pc);					\
 
 /* ----- for declaring 16-bit littleendian handlers ----- */
 #define DECLARE_HANDLERS_16BIT_LE(abits) \
-data8_t  cpu_readmem##abits##lew		(offs_t offset);				\
-data16_t cpu_readmem##abits##lew_word	(offs_t offset);				\
-void	 cpu_writemem##abits##lew		(offs_t offset, data8_t data);	\
-void	 cpu_writemem##abits##lew_word	(offs_t offset, data16_t data); \
-void	 cpu_setopbase##abits##lew		(offs_t pc);					\
+data8_t  cpu_readmem##abits##lew        (offs_t offset);				\
+data16_t cpu_readmem##abits##lew_word   (offs_t offset);				\
+void     cpu_writemem##abits##lew       (offs_t offset, data8_t data);	\
+void     cpu_writemem##abits##lew_word  (offs_t offset, data16_t data);	\
+void     cpu_setopbase##abits##lew      (offs_t pc);					\
 
 /* ----- for declaring 32-bit bigendian handlers ----- */
 #define DECLARE_HANDLERS_32BIT_BE(abits) \
-data8_t  cpu_readmem##abits##bedw		(offs_t offset);				\
-data16_t cpu_readmem##abits##bedw_word	(offs_t offset);				\
+data8_t  cpu_readmem##abits##bedw       (offs_t offset);				\
+data16_t cpu_readmem##abits##bedw_word  (offs_t offset);				\
 data32_t cpu_readmem##abits##bedw_dword (offs_t offset);				\
-void	 cpu_writemem##abits##bedw		(offs_t offset, data8_t data);	\
-void	 cpu_writemem##abits##bedw_word (offs_t offset, data16_t data); \
-void	 cpu_writemem##abits##bedw_dword(offs_t offset, data32_t data); \
-void	 cpu_setopbase##abits##bedw 	(offs_t pc);					\
+void     cpu_writemem##abits##bedw      (offs_t offset, data8_t data);	\
+void     cpu_writemem##abits##bedw_word (offs_t offset, data16_t data);	\
+void     cpu_writemem##abits##bedw_dword(offs_t offset, data32_t data);	\
+void     cpu_setopbase##abits##bedw     (offs_t pc);					\
 
 /* ----- for declaring 32-bit littleendian handlers ----- */
 #define DECLARE_HANDLERS_32BIT_LE(abits) \
-data8_t  cpu_readmem##abits##ledw		(offs_t offset);				\
-data16_t cpu_readmem##abits##ledw_word	(offs_t offset);				\
+data8_t  cpu_readmem##abits##ledw       (offs_t offset);				\
+data16_t cpu_readmem##abits##ledw_word  (offs_t offset);				\
 data32_t cpu_readmem##abits##ledw_dword (offs_t offset);				\
-void	 cpu_writemem##abits##ledw		(offs_t offset, data8_t data);	\
-void	 cpu_writemem##abits##ledw_word (offs_t offset, data16_t data); \
-void	 cpu_writemem##abits##ledw_dword(offs_t offset, data32_t data); \
-void	 cpu_setopbase##abits##ledw 	(offs_t pc);					\
+void     cpu_writemem##abits##ledw      (offs_t offset, data8_t data);	\
+void     cpu_writemem##abits##ledw_word (offs_t offset, data16_t data);	\
+void     cpu_writemem##abits##ledw_dword(offs_t offset, data32_t data);	\
+void     cpu_setopbase##abits##ledw     (offs_t pc);					\
 
 
 
@@ -662,11 +662,11 @@ DECLARE_HANDLERS_8BIT(17)
 DECLARE_HANDLERS_8BIT(20)
 DECLARE_HANDLERS_8BIT(21)
 DECLARE_HANDLERS_8BIT(24)
-#define change_pc16(pc) 		change_pc_generic(pc, 16, 0, cpu_setopbase16)
+#define change_pc16(pc)			change_pc_generic(pc, 16, 0, cpu_setopbase16)
 #define change_pc17(pc) 		change_pc_generic(pc, 17, 0, cpu_setopbase17)
-#define change_pc20(pc) 		change_pc_generic(pc, 20, 0, cpu_setopbase20)
-#define change_pc21(pc) 		change_pc_generic(pc, 21, 0, cpu_setopbase21)
-#define change_pc24(pc) 		change_pc_generic(pc, 24, 0, cpu_setopbase24)
+#define change_pc20(pc)			change_pc_generic(pc, 20, 0, cpu_setopbase20)
+#define change_pc21(pc)			change_pc_generic(pc, 21, 0, cpu_setopbase21)
+#define change_pc24(pc)			change_pc_generic(pc, 24, 0, cpu_setopbase24)
 
 /* ----- declare 16-bit bigendian handlers ----- */
 DECLARE_HANDLERS_16BIT_BE(16)
@@ -690,22 +690,22 @@ DECLARE_HANDLERS_16BIT_LE(32)
 DECLARE_HANDLERS_32BIT_BE(24)
 DECLARE_HANDLERS_32BIT_BE(29)
 DECLARE_HANDLERS_32BIT_BE(32)
-#define change_pc24bedw(pc) 	change_pc_generic(pc, 24, 2, cpu_setopbase24bedw)
-#define change_pc29bedw(pc) 	change_pc_generic(pc, 29, 2, cpu_setopbase29bedw)
-#define change_pc32bedw(pc) 	change_pc_generic(pc, 32, 2, cpu_setopbase32bedw)
+#define change_pc24bedw(pc)		change_pc_generic(pc, 24, 2, cpu_setopbase24bedw)
+#define change_pc29bedw(pc)		change_pc_generic(pc, 29, 2, cpu_setopbase29bedw)
+#define change_pc32bedw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32bedw)
 
 /* ----- declare 32-bit littleendian handlers ----- */
 DECLARE_HANDLERS_32BIT_LE(26)
 DECLARE_HANDLERS_32BIT_LE(29)
 DECLARE_HANDLERS_32BIT_LE(32)
-#define change_pc26ledw(pc) 	change_pc_generic(pc, 26, 2, cpu_setopbase26ledw)
-#define change_pc29ledw(pc) 	change_pc_generic(pc, 29, 2, cpu_setopbase29ledw)
-#define change_pc32ledw(pc) 	change_pc_generic(pc, 32, 2, cpu_setopbase32ledw)
+#define change_pc26ledw(pc)		change_pc_generic(pc, 26, 2, cpu_setopbase26ledw)
+#define change_pc29ledw(pc)		change_pc_generic(pc, 29, 2, cpu_setopbase29ledw)
+#define change_pc32ledw(pc)		change_pc_generic(pc, 32, 2, cpu_setopbase32ledw)
 
 
 /* ----- declare pdp1 handler ----- */
 DECLARE_HANDLERS_32BIT_BE(18)
-#define change_pc28bedw(pc) 	change_pc_generic(pc, 18, 2, cpu_setopbase18bedw)
+#define change_pc28bedw(pc)		change_pc_generic(pc, 18, 2, cpu_setopbase18bedw)
 
 
 /***************************************************************************
@@ -715,33 +715,33 @@ DECLARE_HANDLERS_32BIT_BE(18)
 ***************************************************************************/
 
 /* ----- declare 8-bit handlers ----- */
-data8_t  cpu_readport16 				(offs_t offset);
-void	 cpu_writeport16				(offs_t offset, data8_t data);
+data8_t  cpu_readport16                 (offs_t offset);
+void     cpu_writeport16                (offs_t offset, data8_t data);
 
 /* ----- declare 16-bit LE handlers ----- */
-data8_t  cpu_readport16lew				(offs_t offset);
-void	 cpu_writeport16lew 			(offs_t offset, data8_t data);
-data16_t cpu_readport16lew_word 		(offs_t offset);
-void	 cpu_writeport16lew_word		(offs_t offset, data16_t data);
+data8_t  cpu_readport16lew              (offs_t offset);
+void     cpu_writeport16lew             (offs_t offset, data8_t data);
+data16_t cpu_readport16lew_word         (offs_t offset);
+void     cpu_writeport16lew_word        (offs_t offset, data16_t data);
 
 /* ----- declare 16-bit BE handlers ----- */
-data8_t  cpu_readport16bew				(offs_t offset);
-void	 cpu_writeport16bew 			(offs_t offset, data8_t data);
-data16_t cpu_readport16bew_word 		(offs_t offset);
-void	 cpu_writeport16bew_word		(offs_t offset, data16_t data);
+data8_t  cpu_readport16bew              (offs_t offset);
+void     cpu_writeport16bew             (offs_t offset, data8_t data);
+data16_t cpu_readport16bew_word         (offs_t offset);
+void     cpu_writeport16bew_word        (offs_t offset, data16_t data);
 
 /* ----- declare 32-bit LE handlers ----- */
-data8_t  cpu_readport16ledw 			 (offs_t offset);
-void	 cpu_writeport16ledw			 (offs_t offset, data8_t data);
-data16_t cpu_readport16ledw_word		 (offs_t offset);
-void	 cpu_writeport16lew_word		 (offs_t offset, data16_t data);
-data32_t cpu_readport16lew_dword		 (offs_t offset);
-void	 cpu_writeport16lew_dword		 (offs_t offset, data32_t data);
+data8_t  cpu_readport16ledw              (offs_t offset);
+void     cpu_writeport16ledw             (offs_t offset, data8_t data);
+data16_t cpu_readport16ledw_word         (offs_t offset);
+void     cpu_writeport16lew_word         (offs_t offset, data16_t data);
+data32_t cpu_readport16lew_dword         (offs_t offset);
+void     cpu_writeport16lew_dword        (offs_t offset, data32_t data);
 
 /* ----- declare 32-bit BE handlers ----- */
-data8_t  cpu_readport16bedw 			 (offs_t offset);
-void	 cpu_writeport16bedw			 (offs_t offset, data8_t data);
-data16_t cpu_readport16bedw_word		 (offs_t offset);
+data8_t  cpu_readport16bedw              (offs_t offset);
+void     cpu_writeport16bedw             (offs_t offset, data8_t data);
+data16_t cpu_readport16bedw_word         (offs_t offset);
 void	 cpu_writeport16bedw_word		 (offs_t offset, data16_t data);
 data32_t cpu_readport16bedw_dword		 (offs_t offset);
 void	 cpu_writeport16bedw_dword		 (offs_t offset, data32_t data);
@@ -753,7 +753,7 @@ void	 cpu_writeport16bedw_dword		 (offs_t offset, data32_t data);
 ***************************************************************************/
 
 /* ----- memory setup function ----- */
-int 		memory_init(void);
+int			memory_init(void);
 void		memory_shutdown(void);
 void		memory_set_context(int activecpu);
 
@@ -773,18 +773,18 @@ extern offs_t encrypted_opcode_start[],encrypted_opcode_end[];
 void *		memory_find_base(int cpu, offs_t offset);
 
 /* ----- dynamic memory mapping ----- */
-data8_t *	install_mem_read_handler	(int cpu, offs_t start, offs_t end, mem_read_handler handler);
-data16_t *	install_mem_read16_handler	(int cpu, offs_t start, offs_t end, mem_read16_handler handler);
-data32_t *	install_mem_read32_handler	(int cpu, offs_t start, offs_t end, mem_read32_handler handler);
-data8_t *	install_mem_write_handler	(int cpu, offs_t start, offs_t end, mem_write_handler handler);
+data8_t *	install_mem_read_handler    (int cpu, offs_t start, offs_t end, mem_read_handler handler);
+data16_t *	install_mem_read16_handler  (int cpu, offs_t start, offs_t end, mem_read16_handler handler);
+data32_t *	install_mem_read32_handler  (int cpu, offs_t start, offs_t end, mem_read32_handler handler);
+data8_t *	install_mem_write_handler   (int cpu, offs_t start, offs_t end, mem_write_handler handler);
 data16_t *	install_mem_write16_handler (int cpu, offs_t start, offs_t end, mem_write16_handler handler);
 data32_t *	install_mem_write32_handler (int cpu, offs_t start, offs_t end, mem_write32_handler handler);
 
 /* ----- dynamic port mapping ----- */
-void		install_port_read_handler	(int cpu, offs_t start, offs_t end, port_read_handler handler);
+void		install_port_read_handler   (int cpu, offs_t start, offs_t end, port_read_handler handler);
 void		install_port_read16_handler (int cpu, offs_t start, offs_t end, port_read16_handler handler);
 void		install_port_read32_handler (int cpu, offs_t start, offs_t end, port_read32_handler handler);
-void		install_port_write_handler	(int cpu, offs_t start, offs_t end, port_write_handler handler);
+void		install_port_write_handler  (int cpu, offs_t start, offs_t end, port_write_handler handler);
 void		install_port_write16_handler(int cpu, offs_t start, offs_t end, port_write16_handler handler);
 void		install_port_write32_handler(int cpu, offs_t start, offs_t end, port_write32_handler handler);
 
@@ -796,13 +796,13 @@ void		install_port_write32_handler(int cpu, offs_t start, offs_t end, port_write
 
 ***************************************************************************/
 
-extern UINT8			opcode_entry;		/* current entry for opcode fetching */
-extern UINT8 *			OP_ROM; 			/* opcode ROM base */
-extern UINT8 *			OP_RAM; 			/* opcode RAM base */
-extern UINT8 *			cpu_bankbase[]; 	/* array of bank bases */
-extern UINT8 *			readmem_lookup; 	/* pointer to the readmem lookup table */
+extern UINT8 			opcode_entry;		/* current entry for opcode fetching */
+extern UINT8 *			OP_ROM;				/* opcode ROM base */
+extern UINT8 *			OP_RAM;				/* opcode RAM base */
+extern UINT8 *			cpu_bankbase[];		/* array of bank bases */
+extern UINT8 *			readmem_lookup;		/* pointer to the readmem lookup table */
 extern offs_t			memory_amask;		/* memory address mask */
-extern struct ExtMemory ext_memory[];		/* externally-allocated memory */
+extern struct ExtMemory	ext_memory[];		/* externally-allocated memory */
 
 
 
@@ -816,33 +816,33 @@ extern struct ExtMemory ext_memory[];		/* externally-allocated memory */
 #define COMBINE_DATA(varptr)		(*(varptr) = (*(varptr) & mem_mask) | (data & ~mem_mask))
 
 /* ----- 16-bit memory accessing ----- */
-#define ACCESSING_LSB16 			((mem_mask & 0x00ff) == 0)
-#define ACCESSING_MSB16 			((mem_mask & 0xff00) == 0)
+#define ACCESSING_LSB16				((mem_mask & 0x00ff) == 0)
+#define ACCESSING_MSB16				((mem_mask & 0xff00) == 0)
 #define ACCESSING_LSB				ACCESSING_LSB16
 #define ACCESSING_MSB				ACCESSING_MSB16
 
 /* ----- 32-bit memory accessing ----- */
-#define ACCESSING_LSW32 			((mem_mask & 0x0000ffff) == 0)
-#define ACCESSING_MSW32 			((mem_mask & 0xffff0000) == 0)
-#define ACCESSING_LSB32 			((mem_mask & 0x000000ff) == 0)
-#define ACCESSING_MSB32 			((mem_mask & 0xff000000) == 0)
+#define ACCESSING_LSW32				((mem_mask & 0x0000ffff) == 0)
+#define ACCESSING_MSW32				((mem_mask & 0xffff0000) == 0)
+#define ACCESSING_LSB32				((mem_mask & 0x000000ff) == 0)
+#define ACCESSING_MSB32				((mem_mask & 0xff000000) == 0)
 
 /* ----- opcode reading ----- */
 #define cpu_readop(A)				(OP_ROM[(A) & memory_amask])
-#define cpu_readop16(A) 			(*(data16_t *)&OP_ROM[(A) & memory_amask])
-#define cpu_readop32(A) 			(*(data32_t *)&OP_ROM[(A) & memory_amask])
+#define cpu_readop16(A)				(*(data16_t *)&OP_ROM[(A) & memory_amask])
+#define cpu_readop32(A)				(*(data32_t *)&OP_ROM[(A) & memory_amask])
 
 /* ----- opcode argument reading ----- */
 #define cpu_readop_arg(A)			(OP_RAM[(A) & memory_amask])
-#define cpu_readop_arg16(A) 		(*(data16_t *)&OP_RAM[(A) & memory_amask])
-#define cpu_readop_arg32(A) 		(*(data32_t *)&OP_RAM[(A) & memory_amask])
+#define cpu_readop_arg16(A)			(*(data16_t *)&OP_RAM[(A) & memory_amask])
+#define cpu_readop_arg32(A)			(*(data32_t *)&OP_RAM[(A) & memory_amask])
 
 /* ----- bank switching for CPU cores ----- */
 #define change_pc_generic(pc,abits,minbits,setop)										\
 do {																					\
 	if (readmem_lookup[LEVEL1_INDEX((pc) & memory_amask,abits,minbits)] != opcode_entry)\
 		setop(pc);																		\
-} while (0) 																			\
+} while (0)																				\
 
 
 /* ----- forces the next branch to generate a call to the opbase handler ----- */
@@ -851,13 +851,13 @@ do {																					\
 /* ----- bank switching macro ----- */
 #define cpu_setbank(bank, base) 														\
 do {																					\
-	if (bank >= STATIC_BANK1 && bank <= STATIC_BANKMAX) 								\
+	if (bank >= STATIC_BANK1 && bank <= STATIC_BANKMAX)									\
 	{																					\
 		cpu_bankbase[bank] = (UINT8 *)(base);											\
 		if (opcode_entry == bank)														\
 		{																				\
 			opcode_entry = 0xff;														\
-			cpu_set_op_base(cpu_get_pc_byte()); 										\
+			cpu_set_op_base(cpu_get_pc_byte());											\
 		}																				\
 	}																					\
 } while (0)

@@ -667,18 +667,9 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 				t = scalex; scalex = scaley; scaley = t;
 			}
 
-			if (bitmap->depth == 16)
+			switch (bitmap->depth)
 			{
-				for (y = 0;y < copy->height;y++)
-				{
-					for (x = 0;x < copy->width;x++)
-					{
-						((UINT16 *)copy->line[y])[x] = ((UINT16 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
-					}
-				}
-			}
-			else
-			{
+			case 8:
 				for (y = 0;y < copy->height;y++)
 				{
 					for (x = 0;x < copy->width;x++)
@@ -686,8 +677,30 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 						copy->line[y][x] = bitmap->line[sy+(y/scaley)][sx +(x/scalex)];
 					}
 				}
+				break;
+			case 15:
+			case 16:
+				for (y = 0;y < copy->height;y++)
+				{
+					for (x = 0;x < copy->width;x++)
+					{
+						((UINT16 *)copy->line[y])[x] = ((UINT16 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
+					}
+				}
+				break;
+			case 32:
+				for (y = 0;y < copy->height;y++)
+				{
+					for (x = 0;x < copy->width;x++)
+					{
+						((UINT32 *)copy->line[y])[x] = ((UINT32 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
+					}
+				}
+				break;
+			default:
+				logerror("Unknown color depth\n");
+				break;
 			}
-
 			png_write_bitmap(fp,copy);
 			bitmap_free(copy);
 		}

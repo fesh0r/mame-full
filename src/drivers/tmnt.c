@@ -65,7 +65,7 @@ static READ16_HANDLER( K052109_word_noA12_r )
 	/* some games have the A12 line not connected, so the chip spans */
 	/* twice the memory range, with mirroring */
 	offset = ((offset & 0x3000) >> 1) | (offset & 0x07ff);
-	return K052109_word_r(offset);
+	return K052109_word_r(offset,mem_mask);
 }
 
 static WRITE16_HANDLER( K052109_word_noA12_w )
@@ -86,7 +86,7 @@ static READ16_HANDLER( K053245_scattered_word_r )
 	else
 	{
 		offset = ((offset & 0x000e) >> 1) | ((offset & 0x1fc0) >> 3);
-		return K053245_word_r(offset);
+		return K053245_word_r(offset,mem_mask);
 	}
 }
 
@@ -357,7 +357,7 @@ static READ16_HANDLER( detatwin_coin_r )
 
 	/* bit 3 is service button */
 	/* bit 6 is ??? VBLANK? OBJMPX? */
-	res = input_port_2_word_r(0);
+	res = input_port_2_word_r(0,0);
 	if (init_eeprom_count)
 	{
 		init_eeprom_count--;
@@ -373,7 +373,7 @@ static READ16_HANDLER( detatwin_eeprom_r )
 
 	/* bit 0 is EEPROM data */
 	/* bit 1 is EEPROM ready */
-	res = EEPROM_read_bit() | input_port_3_word_r(0);
+	res = EEPROM_read_bit() | input_port_3_word_r(0,0);
 	return res;
 }
 
@@ -386,7 +386,7 @@ static READ16_HANDLER( ssriders_eeprom_r )
 	/* bit 1 is EEPROM ready */
 	/* bit 2 is VBLANK (???) */
 	/* bit 7 is service button */
-	res = EEPROM_read_bit() | input_port_3_word_r(0);
+	res = EEPROM_read_bit() | input_port_3_word_r(0,0);
 	if (init_eeprom_count)
 	{
 		init_eeprom_count--;
@@ -445,7 +445,7 @@ static READ16_HANDLER( thndrx2_in0_r )
 {
 	int res;
 
-	res = input_port_0_word_r(0);
+	res = input_port_0_word_r(0,0);
 	if (init_eeprom_count)
 	{
 		init_eeprom_count--;
@@ -463,7 +463,7 @@ static READ16_HANDLER( thndrx2_eeprom_r )
 	/* bit 1 is EEPROM ready */
 	/* bit 3 is VBLANK (???) */
 	/* bit 7 is service button */
-	res = (EEPROM_read_bit() << 8) | input_port_1_word_r(0);
+	res = (EEPROM_read_bit() << 8) | input_port_1_word_r(0,0);
 	toggle ^= 0x0800;
 	return (res ^ toggle);
 }
@@ -3513,17 +3513,17 @@ GAME( 1991, detatwin, blswhstl, detatwin, detatwin, gfx,      ROT90, "Konami", "
 GAMEX(1991, glfgreat, 0,        glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats", GAME_NOT_WORKING )
 GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats (Japan)", GAME_NOT_WORKING )
 
-GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (4 Players US)", GAME_IMPERFECT_COLORS )
-GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (2 Players US)", GAME_IMPERFECT_COLORS )
-GAMEX(1991, tmnt2a,   tmnt2,    tmnt2,    tmnt2a,   gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (4 Players Asia)", GAME_IMPERFECT_COLORS )
+GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (4 Players US)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (2 Players US)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, tmnt2a,   tmnt2,    tmnt2,    tmnt2a,   gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (4 Players Asia)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_GRAPHICS )
 
-GAME( 1991, ssriders, 0,        ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (World 4 Players ver. EAC)" )
-GAME( 1991, ssrdrebd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBD)" )
-GAME( 1991, ssrdrebc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBC)" )
-GAME( 1991, ssrdruda, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UDA)" )
-GAME( 1991, ssrdruac, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UAC)" )
-GAME( 1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)" )
-GAME( 1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)" )
-GAME( 1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)" )
+GAMEX(1991, ssriders, 0,        ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (World 4 Players ver. EAC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrebd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrebc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdruda, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UDA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdruac, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UAC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )

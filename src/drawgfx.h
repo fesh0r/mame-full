@@ -47,14 +47,15 @@ struct GfxElement
 							/* (for example, 4 for 2 bitplanes gfx) */
 	UINT32 *colortable;	/* map color codes to screen pens */
 	int total_colors;
-	unsigned int *pen_usage;	/* an array of total_elements ints. */
-								/* It is a table of the pens each character uses */
-								/* (bit 0 = pen 0, and so on). This is used by */
-								/* drawgfgx() to do optimizations like skipping */
-								/* drawing of a totally transparent characters */
-	unsigned char *gfxdata;	/* pixel data */
+	UINT32 *pen_usage;	/* an array of total_elements entries. */
+						/* It is a table of the pens each character uses */
+						/* (bit 0 = pen 0, and so on). This is used by */
+						/* drawgfgx() to do optimizations like skipping */
+						/* drawing of a totally transparent character */
+	UINT8 *gfxdata;		/* pixel data */
 	int line_modulo;	/* amount to add to get to the next line (usually = width) */
 	int char_modulo;	/* = line_modulo * height */
+	int packed;			/* when !0, two 4bpp pixels are packed in one byte of gfxdata */
 };
 
 struct GfxDecodeInfo
@@ -91,8 +92,6 @@ enum
 	TRANSPARENCY_PENS,			/* multiple pen transparency with remapping */
 	TRANSPARENCY_PENS_RAW,		/* multiple pen transparency with no remapping */
 	TRANSPARENCY_COLOR,			/* single remapped pen transparency with remapping */
-	TRANSPARENCY_THROUGH,		/* destination pixel overdraw with remapping */
-	TRANSPARENCY_THROUGH_RAW,	/* destination pixel overdraw with no remapping */
 	TRANSPARENCY_PEN_TABLE,		/* special pen remapping modes (see DRAWMODE_xxx below) with remapping */
 	TRANSPARENCY_PEN_TABLE_RAW,	/* special pen remapping modes (see DRAWMODE_xxx below) with no remapping */
 	TRANSPARENCY_BLEND,			/* blend two bitmaps, shifting the source and ORing to the dest with remapping */

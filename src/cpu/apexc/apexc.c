@@ -510,7 +510,7 @@ static void execute(void)
 	static const char has_operand_table[32] =	/* table for has_operand - one entry for each function code */
 	{
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 
+		1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0,
 	};
 	int delay1;	/* pre-operand-access delay */
 	int delay2;	/* post-operation delay */
@@ -559,14 +559,14 @@ static void execute(void)
 			/* I do not know whether the CPU does an OR or whatever, but since docs say that
 			the 5 bits must be cleared initially, an OR kind of makes sense */
 			apexc.r |= papertape_read() << 27;
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay
 						or as a value in delay2 */
 			break;
 
 		case 4:
 			/* P */
 			papertape_punch((apexc.r >> 27) & 0x1f);
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay 
+			DELAY(32);	/* no idea whether this should be counted as an absolute delay
 						or as a value in delay2 */
 			break;
 
@@ -829,7 +829,7 @@ void apexc_set_pc(unsigned val)
 			apexc.working_store = ((val >> 9) & 0xf);
 		}
 	}
-	
+
 }
 
 /* no SP */
@@ -944,7 +944,7 @@ const char *apexc_info(void *context, int regnum)
 	case CPU_INFO_REG + APEXC_A:
 		sprintf(buffer[which], "A :%08X", r->a);
 		break;
-	case CPU_INFO_REG + APEXC_R: 
+	case CPU_INFO_REG + APEXC_R:
 		sprintf(buffer[which], "R :%08X", r->r);
 		break;
 	case CPU_INFO_REG + APEXC_ML:
@@ -1006,3 +1006,4 @@ int apexc_execute(int cycles)
 	return cycles - apexc_ICount;
 }
 
+void apexc_init (void) {  }

@@ -157,7 +157,7 @@ static const struct m68k_memory_interface interface_a24_d16 =
 	cpu_readmem24bew_word,
 	readlong_a24_d16,
 	cpu_readmem24bew_word,
-	readlong_a24_d16,
+	readlong_a24_d16
 };
 
 #endif // A68k0
@@ -247,7 +247,7 @@ static const struct m68k_memory_interface interface_a24_d32 =
 	readword_a24_d32,
 	readlong_a24_d32,
 	readword_a24_d32,
-	readlong_a24_d32,
+	readlong_a24_d32
 };
 
 
@@ -334,7 +334,7 @@ static const struct m68k_memory_interface interface_a32_d32 =
 	readword_a32_d32,
 	readlong_a32_d32,
 	readword_a32_d32,
-	readlong_a32_d32,
+	readlong_a32_d32
 };
 
 #endif // A68K2
@@ -362,18 +362,62 @@ static void m68k16_reset_common(void)
     M68000_RESET();
 }
 
+static int m68000_memintf_flag[5] = {0,0,0,0,0};
+
+void m68000_memory_interface_set(int entry,void *MemRoutine)
+{
+    // ** Change Entry **
+
+    typedef data8_t(*tdef_memory_read8)(offs_t offset);
+    typedef data16_t(*tdef_memory_read16)(offs_t offset);
+    typedef data32_t(*tdef_memory_read32)(offs_t offset);
+
+    switch( entry )
+    {
+		case  8: a68k_memory_intf.read8pc  = (tdef_memory_read8)MemRoutine;
+				 m68000_memintf_flag[0] = 1;
+                 break;
+
+		case  9: a68k_memory_intf.read16pc = (tdef_memory_read16)MemRoutine;
+				 m68000_memintf_flag[1] = 1;
+                 break;
+
+		case 10: a68k_memory_intf.read32pc = (tdef_memory_read32)MemRoutine;
+				 m68000_memintf_flag[2] = 1;
+                 break;
+
+		case 11: a68k_memory_intf.read16d  = (tdef_memory_read16)MemRoutine;
+				 m68000_memintf_flag[3] = 1;
+                 break;
+
+		case 12: a68k_memory_intf.read32d  = (tdef_memory_read32)MemRoutine;
+				 m68000_memintf_flag[4] = 1;
+                 break;
+
+    }
+}
+
 void m68000_reset(void *param)
 {
-	// Allocate Correct Memory routines
-
-	if (a68k_memory_intf.read8 != cpu_readmem24bew)
-		a68k_memory_intf = interface_a24_d16;
+    // Default Memory Routines
+	a68k_memory_intf.opcode_xor = interface_a24_d16.opcode_xor;
+	a68k_memory_intf.read8 = interface_a24_d16.read8;
+	a68k_memory_intf.read16 = interface_a24_d16.read16;
+	a68k_memory_intf.read32 = interface_a24_d16.read32;
+	a68k_memory_intf.write8 = interface_a24_d16.write8;
+	a68k_memory_intf.write16 = interface_a24_d16.write16;
+	a68k_memory_intf.write32 = interface_a24_d16.write32;
+	a68k_memory_intf.changepc = interface_a24_d16.changepc;
+	if (m68000_memintf_flag[0]) m68000_memintf_flag[0] = 0; else a68k_memory_intf.read8pc = interface_a24_d16.read8pc;
+	if (m68000_memintf_flag[1]) m68000_memintf_flag[1] = 0; else a68k_memory_intf.read16pc = interface_a24_d16.read16pc;
+	if (m68000_memintf_flag[2]) m68000_memintf_flag[2] = 0; else a68k_memory_intf.read32pc = interface_a24_d16.read32pc;
+	if (m68000_memintf_flag[3]) m68000_memintf_flag[3] = 0; else a68k_memory_intf.read16d = interface_a24_d16.read16d;
+	if (m68000_memintf_flag[4]) m68000_memintf_flag[4] = 0; else a68k_memory_intf.read32d = interface_a24_d16.read32d;
 
 	m68k16_reset_common();
 
     M68000_regs.Memory_Interface = a68k_memory_intf;
 }
-
 
 void m68000_exit(void)
 {
@@ -623,6 +667,7 @@ const char *m68000_info(void *context, int regnum)
 #ifdef MAME_DEBUG
 //extern int m68k_disassemble(char* str_buff, int pc, int cputype);
 #endif
+
     static char buffer[32][47+1];
 	static int which;
 	a68k_cpu_context *r = context;
@@ -689,7 +734,7 @@ const char *m68000_info(void *context, int regnum)
 
 unsigned m68000_dasm(char *buffer, unsigned pc)
 {
-	change_pc24bew(pc);
+//	change_pc24bew(pc);
 #ifdef MAME_DEBUG
 	return m68k_disassemble(buffer, pc, M68K_CPU_TYPE_68000);
 #else

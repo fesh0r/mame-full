@@ -56,7 +56,7 @@ endif
 # some structures and thus they can't be linked against each other.
 # cleantiny isn't needed anymore, because the tiny build has its
 # own object directory too.
-OBJ = $(NAME).obj
+OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
 
@@ -110,7 +110,7 @@ endif
 IMGTOOL_OBJS = $(OBJ)/mess/$(OS)/dirio.o
 INCLUDE_PATH = -Isrc -Isrc/msdos -Imess -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
-OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
+OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/msdos \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
 
 # MESS object directories

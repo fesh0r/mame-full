@@ -2129,3 +2129,5 @@ unsigned f8_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+
+void f8_init (void) { }

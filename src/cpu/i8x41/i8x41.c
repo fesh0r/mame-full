@@ -1123,6 +1123,22 @@ INLINE void xrl_i(void)
 	A = A ^ val;
 }
 
+void i8x41_init(void)
+{
+	int cpu = cpu_getactivecpu();
+	state_save_register_UINT16("i8x41", cpu, "PPC",       &i8x41.ppc,    1);
+	state_save_register_UINT16("i8x41", cpu, "PC",        &i8x41.pc,     1);
+	state_save_register_UINT16("i8x41", cpu, "TIMER",     &i8x41.timer,  1);
+	state_save_register_UINT16("i8x41", cpu, "SUBTYPE",   &i8x41.subtype,1);
+	state_save_register_UINT8 ("i8x41", cpu, "A",         &i8x41.a,      1);
+	state_save_register_UINT8 ("i8x41", cpu, "PSW",       &i8x41.psw,    1);
+	state_save_register_UINT8 ("i8x41", cpu, "STATE",     &i8x41.state,  1);
+	state_save_register_UINT8 ("i8x41", cpu, "TOVF",      &i8x41.tovf,   1);
+	state_save_register_UINT8 ("i8x41", cpu, "ENABLE",    &i8x41.enable, 1);
+	state_save_register_UINT8 ("i8x41", cpu, "DBBI",      &i8x41.dbbi,   1);
+	state_save_register_UINT8 ("i8x41", cpu, "DBBO",      &i8x41.dbbo,   1);
+}
+
 /* Reset registers to the initial values */
 void i8x41_reset(void *param)
 {

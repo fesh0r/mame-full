@@ -369,6 +369,7 @@ void z80gb_clear_pending_interrupts (void)
 	CheckInterrupts = 0;
 }
 
+#if (0)
 /****************************************************************************
  * Save CPU state
  ****************************************************************************/
@@ -398,6 +399,7 @@ void z80gb_state_load(void *file)
 	state_load_UINT16(file, "z80gb", cpu, "SP", &Regs.w.SP, 1);
 	state_load_INT32(file, "z80gb", cpu, "irq_state", &Regs.w.irq_state, 1);
 }
+#endif
 
 const char *z80gb_info(void *context, int regnum)
 {
