@@ -15,6 +15,7 @@
 #include "cpu/i8085/i8085.h"
 #include "includes/dai.h"
 #include "includes/pit8253.h"
+#include "machine/random.h"
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"
 
@@ -47,6 +48,7 @@ static OPBASE_HANDLER(dai_opbaseoverride)
 }
 
 /* Memory */
+
 static void dai_update_memory (int dai_rom_bank)
 {
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
@@ -159,7 +161,6 @@ MACHINE_INIT( dai )
 				bit 4	POCM1:	Cassette 1 motor control (0 = run)
 				bit 5	POCM2:	Cassette 2 motor control (0 = run)
 				bit 6-7			ROM bank switching
-
 ***************************************************************************/
 
 READ_HANDLER( dai_io_discrete_devices_r )
@@ -169,14 +170,18 @@ READ_HANDLER( dai_io_discrete_devices_r )
 	switch(offset & 0x000f) {
 	case 0x00:
 		data = readinputport(8);
-		data |= 0x08;	// serial ready
-		logerror ("Discrete devices read 0xfd00: %02x\n", data);
+		data |= 0x08;			// serial ready
+		if (mame_rand()&0x01)
+			data |= 0x40;		// random number generator
 		if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
-			data |= 0x80;
+			data |= 0x80;		// tape input
 		break;
 
 	default:
 		data = 0xff;
+#if LOG_IO_ERRORS
+		logerror ("Discrete devices read unemulated port: %04x %02x\n", offset, data);
+#endif
 		break;
 	}
 	return data;

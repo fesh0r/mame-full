@@ -2,6 +2,14 @@
 
 DAI driver by Krzysztof Strzecha and Nathan Woods
 
+What's new:
+-----------
+05.09.2003      Rundom number generator added. Few video hardware bugs fixed.
+		Fixed few i8080 instructions, making much more BASIC games playable.
+
+Notes on emulation status and to do list:
+-----------------------------------------
+1. A lot to do. Too much to list.
 
 DAI technical information
 ==========================

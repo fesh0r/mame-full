@@ -7,7 +7,7 @@
   Krzysztof Strzecha
 
   All video modes are emulated but not fully tested yet.
-  VIDEO_UPDATE function needs strong cleanup and optimalistaion.
+  VIDEO_UPDATE function needs strong cleanup and optimalisation.
 
 
 ***************************************************************************/
@@ -15,6 +15,14 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/dai.h"
+
+#define DEBUG_DAI_VIDEO	0
+
+#if DEBUG_DAI_VIDEO
+	#define LOG_DAI_VIDEO_LINE(_mode, _unit, _resolution, _repeat, _scan) logerror ("Mode: %02x, Unit: %02x, Resolution: %02x, Repeat: %d, Current line: %d\n", _mode, _unit, _resolution, _repeat, _scan)
+#else
+	#define LOG_DAI_VIDEO_LINE(_mode, _unit, _resolution, _repeat, _scan)
+#endif
 
 unsigned char dai_palette[16*3] =
 {
@@ -59,7 +67,7 @@ VIDEO_UPDATE( dai )
 {
 	int i, j, k, l;
 
-	UINT8 * char_rom = memory_region(REGION_GFX1);
+	UINT8* char_rom = memory_region(REGION_GFX1);
 
 	UINT16 dai_video_memory_start = 0xbfff;
 	UINT16 dai_scan_lines = 604;	/* scan lines of PAL tv */
@@ -108,10 +116,7 @@ VIDEO_UPDATE( dai )
 		unit_mode = (colour & 0x40) >> 6;
 
 		if (colour & 0x80)
-		{
 			dai_4_colours_palette[(colour & 0x30) >> 4] = colour & 0x0f;
-			logerror ("Palette set: %02x, %02x, %02x, %02x\n", dai_4_colours_palette[0], dai_4_colours_palette[1], dai_4_colours_palette[2], dai_4_colours_palette[3]);
-		}
 
 		switch (display_mode)
 		{
@@ -139,8 +144,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_video_memory_address+=2;
-					logerror ("Mode 0 (unit), Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<11; i++)
@@ -157,10 +161,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0, Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x01:	/* 176 pixels */
@@ -181,8 +183,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_video_memory_address+=2;
-					logerror ("Mode 0 (unit), Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<22; i++)
@@ -199,10 +200,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0, Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x02:	/* 352 pixels */
@@ -223,7 +222,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0 (unit), Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
 					for (i=0; i<44; i++)
@@ -240,10 +238,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0, Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x03:	/* 528 pixels */
@@ -264,7 +260,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0 (unit), Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
 					for (i=0; i<66; i++)
@@ -281,10 +276,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 0, Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			}
 			break;
@@ -312,9 +305,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 1 (unit), Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
-					current_video_memory_address+=2;
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<11; i++)
@@ -332,8 +323,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 1, Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					current_video_memory_address-=2;
 					break;
 				}
@@ -357,9 +346,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 1 (unit), Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
-					current_video_memory_address+=2;
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<22; i++)
@@ -377,8 +364,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 1, Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					current_video_memory_address-=2;
 					break;
 				}
@@ -402,7 +387,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 1 (unit), Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
                 			for (i=0; i<44; i++)
@@ -420,10 +404,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 1, Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			case 0x03:	/* 66 chars */
 				switch (unit_mode)
@@ -444,7 +426,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 1 (unit), Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
                 			for (i=0; i<66; i++)
@@ -462,10 +443,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 1, Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			}
 			break;
@@ -492,8 +471,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_video_memory_address+=2;
-					logerror ("Mode 2 (unit), Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<11; i++)
@@ -510,10 +488,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2, Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x01:	/* 176 pixels */
@@ -534,8 +510,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_video_memory_address+=2;
-					logerror ("Mode 2 (unit), Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<22; i++)
@@ -552,10 +527,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2, Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x02:	/* 352 pixels */
@@ -576,7 +549,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2 (unit), Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
 					for (i=0; i<44; i++)
@@ -593,10 +565,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2, Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 
 			case 0x03:	/* 528 pixels */
@@ -617,7 +587,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2 (unit), Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
 					for (i=0; i<66; i++)
@@ -634,10 +603,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 2, Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			}
 			break;
@@ -663,9 +630,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 3 (unit), Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
-					current_video_memory_address+=2;
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<11; i++)
@@ -682,8 +647,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 3, Resolution 0, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					current_video_memory_address-=2;
 					break;
 				}
@@ -706,9 +669,7 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 3 (unit), Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
-					current_video_memory_address+=2;
+					current_video_memory_address-=2;
 					break;
 				case 1:
 					for (i=0; i<22; i++)
@@ -725,8 +686,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					current_scan_line += line_repeat_count*2+2;
-					logerror ("Mode 3, Resolution 1, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					current_video_memory_address-=2;
 					break;
 				}
@@ -749,7 +708,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 3 (unit), Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
                 			for (i=0; i<44; i++)
@@ -766,10 +724,8 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 3, Resolution 2, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			case 0x03:	/* 66 chars */
 				switch (unit_mode)
@@ -789,7 +745,6 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 3 (unit), Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				case 1:
                 			for (i=0; i<66; i++)
@@ -806,13 +761,13 @@ VIDEO_UPDATE( dai )
 							}
 						}
 					}
-					logerror ("Mode 3, Resolution 3, Lines %d, Scan line %d\n", line_repeat_count, current_scan_line);
 					break;
 				}
-				current_scan_line += line_repeat_count*2+2;
 				break;
 			}
 			break;
 		}		
+		current_scan_line += line_repeat_count*2+2;
+		LOG_DAI_VIDEO_LINE(display_mode, unit_mode, horizontal_resolution, line_repeat_count, current_scan_line);
 	}
 }
