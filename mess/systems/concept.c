@@ -33,29 +33,17 @@
 #include "includes/concept.h"
 #include "devices/basicdsk.h"
 
-static MEMORY_READ16_START (concept_readmem)
+static ADDRESS_MAP_START(concept_memmap, ADDRESS_SPACE_PROGRAM, 16)
 
-	{ 0x000000, 0x000007, MRA16_BANK1 },	/* boot ROM mirror */
-	{ 0x000008, 0x000fff, MRA16_RAM },		/* static RAM */
-	{ 0x010000, 0x011fff, MRA16_ROM },		/* boot ROM */
-	{ 0x020000, 0x021fff, MRA16_ROM },		/* macsbugs ROM (optional) */
-	{ 0x030000, 0x03ffff, concept_io_r },	/* I/O space */
+	AM_RANGE(0x000000, 0x000007) AM_READWRITE(MRA16_BANK1, MWA16_ROM)	/* boot ROM mirror */
+	AM_RANGE(0x000008, 0x000fff) AM_READWRITE(MRA16_RAM, MWA16_RAM)		/* static RAM */
+	AM_RANGE(0x010000, 0x011fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* boot ROM */
+	AM_RANGE(0x020000, 0x021fff) AM_READWRITE(MRA16_ROM, MWA16_ROM)		/* macsbugs ROM (optional) */
+	AM_RANGE(0x030000, 0x03ffff) AM_READWRITE(concept_io_r,concept_io_w)/* I/O space */
 
-	{ 0x080000, 0x0fffff, MRA16_BANK2 },	/* DRAM */
+	AM_RANGE(0x080000, 0x0fffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)	/* DRAM */
 
-MEMORY_END
-
-static MEMORY_WRITE16_START (concept_writemem)
-
-	{ 0x000000, 0x000007, MWA16_ROM },		/* boot ROM mirror */
-	{ 0x000008, 0x000fff, MWA16_RAM },		/* static RAM */
-	{ 0x010000, 0x011fff, MWA16_ROM },		/* boot ROM */
-	{ 0x020000, 0x021fff, MWA16_ROM },		/* macsbugs ROM (optional) */
-	{ 0x030000, 0x03ffff, concept_io_w },	/* I/O space */
-
-	{ 0x080000, 0x0fffff, MWA16_BANK2 },	/* DRAM */
-
-MEMORY_END
+ADDRESS_MAP_END
 
 /* init with simple, fixed, B/W palette */
 /* Is the palette black on white or white on black??? */
@@ -69,7 +57,7 @@ static PALETTE_INIT( concept )
 static MACHINE_DRIVER_START( concept )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8182000)        /* 16.364 Mhz / 2 */
-	MDRV_CPU_MEMORY(concept_readmem,concept_writemem)
+	MDRV_CPU_PROGRAM_MAP(concept_memmap, 0)
 	MDRV_CPU_VBLANK_INT(concept_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)			/* 50 or 60, jumper-selectable */
