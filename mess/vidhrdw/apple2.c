@@ -42,7 +42,7 @@ static UINT8 *lores_tiledata;
 #define AQUA	14
 #define	WHITE	15
 
-#define FLASH_PERIOD	TIME_IN_SEC(0.5)
+#define FLASH_PERIOD	TIME_IN_SEC(0.25)
 
 #define PROFILER_VIDEOTOUCH PROFILER_USER3
 
