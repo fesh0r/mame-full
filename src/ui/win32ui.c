@@ -62,6 +62,7 @@
 #include "Splitters.h"
 #include "help.h"
 #include "history.h"
+#include "options.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -784,6 +785,11 @@ static int RunMAME(int nGameIndex)
 		/* Close process and thread handles. */
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
+
+#ifdef MESS
+		LoadGameOptions(nGameIndex);
+		MessReadMountedSoftware(nGameIndex);
+#endif
 	}
 
 	return dwExitCode;

@@ -49,7 +49,6 @@ static void LoadOption(REG_OPTION *option,const char *value_str);
 static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value);
 static void ParseKeyValueStrings(char *buffer,char **key,char **value);
 static void LoadOptionsAndSettings(void);
-static void LoadGameOptions(int driver_index);
 static BOOL LoadOptions(const char *filename,options_type *o,BOOL load_global_game_options);
 static void SaveSettings(void);
 
@@ -2024,7 +2023,7 @@ static void LoadOptionsAndSettings(void)
 
 }
 
-static void LoadGameOptions(int driver_index)
+void LoadGameOptions(int driver_index)
 {
     char    keyString[80];
 	HKEY    hKey;

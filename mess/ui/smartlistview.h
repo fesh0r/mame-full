@@ -99,6 +99,7 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 void SmartListView_ResetColumnDisplay(struct SmartListView *pListView);
 BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount);
 BOOL SmartListView_AppendItem(struct SmartListView *pListView);
+void SmartListView_UnselectAll(struct SmartListView *pListView);
 void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL bFocus);
 void SmartListView_RedrawItem(struct SmartListView *pListView, int nItem);
 void SmartListView_Update(struct SmartListView *pListView, int nItem);

@@ -7,13 +7,19 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
+
 - [C16] Improved TED7360 sound emulation. [Attila Grosz]
+
 - [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
+
 - [COCO] Scaled the joystick port to 64 quanta rather than 256 (bug #340).
   [tim lindner]
+
 - [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
+
 - [A2600/A5200/COLECO/COCO/INTV/MSX/SNES/VECTREX] Added support for new
   GoodTools file extensions (bugs #277, #278, #279, #350). [Nate Woods]
+
 - [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
   16 sec/trk DSDD) [Raphael Nabet]
 
@@ -34,3 +40,6 @@ Source Changes:
 - [Windows] Fixed bug #344. [Nate Woods]
 
 - [Windows UI] Fixed bug #348. [Nate Woods]
+
+- [Windows UI] Changes made to mounted devices at runtime will now be persist
+  between emulation sessions (bug #228). [Nate Woods]

@@ -662,10 +662,41 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 int MessLookupByFilename(const TCHAR *filename)
 {
     int i;
+	const char *this_fullname;
+	size_t this_fullname_len;
+	size_t filename_len = tcslen(filename);
+	ZIP *zipfile;
+	struct zipent *zipentry;
+	BOOL good_zip;
 
-    for (i = 0; i < mess_images_count; i++) {
-        if (!_tcscmp(filename, mess_images_index[i]->fullname))
+    for (i = 0; i < mess_images_count; i++)
+	{
+		this_fullname = mess_images_index[i]->fullname;
+
+		if (!tcsicmp(filename, this_fullname))
             return i;
+
+		this_fullname_len = tcslen(this_fullname);
+		if (this_fullname_len < filename_len)
+		{
+			if (!tcsnicmp(filename, this_fullname, this_fullname_len) && (filename[this_fullname_len] == PATH_SEPARATOR))
+			{
+				good_zip = FALSE;
+				zipfile = openzip(FILETYPE_IMAGE, 0, T2A(this_fullname));
+				if (zipfile)
+				{
+					zipentry = readzip(zipfile);
+					if (zipentry)
+					{
+						if (!tcsicmp(A2T(zipentry->name), &filename[this_fullname_len + 1]))
+							good_zip = TRUE;
+					}
+					closezip(zipfile);
+				}
+				if (good_zip)
+					return i;
+			}
+		}
     }
     return -1;
 }

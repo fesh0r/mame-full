@@ -184,15 +184,14 @@ struct SmartListView *SmartListView_Create(struct SmartListViewOptions *pOptions
 
 void SmartListView_Free(struct SmartListView *pListView)
 {
-	if (pListView->rowMapping)
-		free(pListView->rowMapping);
-	free(pListView->piRealColumns);
-	free(pListView);
-
 #if HAS_EXTRACOLUMNTEXT
 	if (pListView->lpExtraColumnText)
 		free(pListView->lpExtraColumnText);
 #endif
+	if (pListView->rowMapping)
+		free(pListView->rowMapping);
+	free(pListView->piRealColumns);
+	free(pListView);
 }
 
 /* ------------------------------------------------------------------------ *
@@ -995,16 +994,23 @@ BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount
 	return TRUE;
 }
 
+void SmartListView_UnselectAll(struct SmartListView *pListView)
+{
+	ListView_SetItemState(pListView->hwndListView, -1, 0, LVIS_SELECTED);
+}
+
 void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL bFocus)
 {
 	int nVisualRow;
 	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
 
-	if (bFocus) {
+	if (bFocus)
+	{
 		ListView_SetItemState(pListView->hwndListView, nVisualRow, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
 		ListView_EnsureVisible(pListView->hwndListView, nVisualRow, FALSE);
 	}
-	else {
+	else
+	{
 		ListView_SetItemState(pListView->hwndListView, nVisualRow, LVIS_SELECTED, LVIS_SELECTED);
 	}
 }

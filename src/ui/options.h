@@ -282,6 +282,7 @@ options_type* GetDefaultOptions(void);
 options_type * GetGameOptions(int driver_index);
 BOOL GetGameUsesDefaults(int driver_index);
 void SetGameUsesDefaults(int driver_index,BOOL use_defaults);
+void LoadGameOptions(int driver_index);
 
 void SaveOptions(void);
 

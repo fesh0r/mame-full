@@ -133,7 +133,7 @@ static void AssertValidDevice(int d)
 static const struct deviceentry *lookupdevice(int d)
 {
 	AssertValidDevice(d);
-	return &s_devices[d - 1];
+	return &s_devices[d];
 }
 
 /* ------------------------------------------------------------------------ */
@@ -274,6 +274,8 @@ static void MessReadMountedSoftware(int nGame)
 	char *s;
 	int devtype;
 	int i;
+
+	SmartListView_UnselectAll(s_pSoftwareListView);
 
 	for (devtype = 0; devtype < IO_COUNT; devtype++)
 	{
