@@ -626,4 +626,4 @@ int load_driver_history (const struct GameDriver *drv, char *buffer, int bufsize
         return (history == 0 && mameinfo == 0);
 }
 
-
+
