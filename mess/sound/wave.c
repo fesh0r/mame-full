@@ -631,6 +631,12 @@ int wave_open(int id, int mode, void *args)
 	if( w->file )
 		wave_close(id);
 
+	if (! wa->file)
+	{
+		w->file = NULL;
+		return INIT_PASS;
+	}
+
     w->file = wa->file;
 	w->mode = mode;
 	w->fill_wave = wa->fill_wave;

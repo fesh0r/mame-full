@@ -5,6 +5,22 @@ int cassette_init(int id, const struct cassette_args *args)
 	void *file;
 	struct wave_args wa;
 
+	const char *name = device_filename(IO_CASSETTE, id);
+
+	int slot_empty = ! (name && name[0]);
+
+
+	if (slot_empty)
+	{	/* no cassette */
+		memset(&wa, 0, sizeof(&wa));
+
+		if (device_open(IO_CASSETTE, id, 0, &wa))
+			return INIT_FAIL;
+
+        device_status(IO_CASSETTE, id, args->initial_status);
+		return INIT_PASS;
+	}
+
 	/* Try to open existing file */
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file) {
