@@ -53,9 +53,6 @@ TARGET = mame
 # src/unix/doc/multiplayer-readme.txt for more information.
 # XMAME_NET = 1
 
-# Enable rapid-fire support.
-XMAME_RAPIDFIRE = 1
-
 # Uncomment the next lines to use x86-asm cpu cores.  This is only
 # supported for x86 machines with nasm-0.98 or higher available in your
 # path!  The asm 68k core could cause problems with certain games; please 
