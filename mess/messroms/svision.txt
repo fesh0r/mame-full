@@ -43,3 +43,10 @@ cartridge connector (look at the cartridge)
 
 building an adapter:
 connect d0..d7,a0..a18,gnd,+5v,/oe
+
+oe connected to ce on eprommer side caused troubles with
+my original eprommer software with delta hero.
+
+connecting oe to oe could have fixed this.
+(my quick program switched both for short read cycles)
+
