@@ -58,7 +58,7 @@ extern void tms7000_set_irq_line(int irqline, int state);
 extern void tms7000_set_irq_callback(int (*callback)(int irqline));
 extern int tms7000_execute(int cycles);
 extern unsigned tms7000_get_reg(int regnum);
-extern void tms7000_set_mc_line( int value );
+extern void tms7000_A6EC1( void );
 
 extern WRITE_HANDLER( tms70x0_pf_w );
 extern READ_HANDLER( tms70x0_pf_r );

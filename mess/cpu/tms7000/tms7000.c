@@ -34,19 +34,17 @@
 
 /* Private prototypes */
 
-UINT16 bcd_add( UINT16 a, UINT16 b );
-UINT16 bcd_tencomp( UINT16 a );
-UINT16 bcd_sub( UINT16 a, UINT16 b);
+static UINT16 bcd_add( UINT16 a, UINT16 b );
+static UINT16 bcd_tencomp( UINT16 a );
+static UINT16 bcd_sub( UINT16 a, UINT16 b);
+
+void tms7000_starttimer1( void );
+UINT8 tms7000_calculate_timer1_decrementator( void );
+void tms7000_int2_callback( int	param );
 
 /* Public globals */
 
 int tms7000_ICount;
-int	tms7000_MC;
-
-void tms7000_set_mc_line( int value )
-{
-	tms7000_MC = value;
-}
 
 static UINT8 tms7000_reg_layout[] = {
 	TMS7000_PC, TMS7000_SP, TMS7000_ST, 0
@@ -118,6 +116,11 @@ typedef struct
 	UINT8		pf[0x100];		/* Perpherial file */
 	int 		(*irq_callback)(int irqline);
 	UINT8		idle_state;		/* Set after the execution of an idle instruction */
+	void		*timer1;		/* Timer 1 (triggers int 2) */
+	double		time_timer1;	/* Absloute time when timer 1 started */
+	UINT8		timer1_decrementator,
+				timer1_prescaler,
+				timer1_capturelatch;
 } tms7000_Regs;
 
 static tms7000_Regs tms7000;
@@ -155,9 +158,11 @@ static tms7000_Regs tms7000;
 
 #define CHANGE_PC change_pc16(pPC)
 
+
 /****************************************************************************
  * Get all registers in given buffer
  ****************************************************************************/
+
 unsigned tms7000_get_context(void *dst)
 {
 	if( dst )
@@ -203,10 +208,14 @@ void tms7000_set_reg(int regnum, unsigned val)
 void tms7000_init(void)
 {
 	int cpu = cpu_getactivecpu();
+
+	memset(tms7000.pf, 0, 0x100);
+	tms7000.timer1 = timer_set(TIME_NEVER, 0, tms7000_int2_callback);
+	tms7000.timer1_capturelatch = 0;
+
 	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
 	state_save_register_UINT8("tms7000", cpu, "SP", &pSP, 1);
 	state_save_register_UINT8("tms7000", cpu, "SR", &pSR, 1);
-	memset(tms7000.pf, 0, 0x100);
 }
 
 void tms7000_reset(void *param)
@@ -246,7 +255,7 @@ void tms7000_reset(void *param)
 
 void tms7000_exit(void)
 {
-	/* nothing to do ? */
+	timer_remove( tms7000.timer1);
 }
 
 /****************************************************************************
@@ -313,7 +322,22 @@ void tms7000_set_irq_line(int irqline, int state)
 	}
 
 	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set INTx iocntl0 flag */
-
+	
+	if( irqline == TMS7000_IRQ3_LINE )
+	{
+		/* Set capture latch */
+		if( tms7000.pf[ 0x03 ] & 0x40 ) /* Determine timer source */
+		{
+			/* Source A7/EC1 */
+			tms7000.timer1_capturelatch = tms7000.timer1_decrementator;
+		}
+		else
+		{
+			/* Source internal timer */	
+			tms7000.timer1_capturelatch = tms7000_calculate_timer1_decrementator();
+		}
+	}
+	
 	tms7000_check_IRQ_lines();
 }
 
@@ -404,6 +428,75 @@ int tms7000_execute(int cycles)
 }
 
 #pragma mark -
+#pragma mark ¥ Timer functions
+
+/****************************************************************************
+ * Starts/restarts the timer1
+ ****************************************************************************/
+void tms7000_starttimer1( void )
+{
+	if( tms7000.pf[ 0x03 ] & 0x40 ) /* Determine timer source */
+	{
+		/* Source: A7/EC1 */
+		tms7000.timer1_prescaler = tms7000.pf[0x03] & 0x1f;
+		tms7000.timer1_decrementator = tms7000.pf[0x02];
+	}
+	else
+	{
+		/* Source: internal clock */
+		timer_reset(tms7000.timer1, TIME_IN_CYCLES( 16 * ((tms7000.pf[ 0x03 ] & 0x1f)+1) * ((tms7000.pf[ 0x02 ])+1),
+															cpu_getactivecpu() ) );
+		tms7000.time_timer1 = getabsolutetime();
+	}
+}
+
+/****************************************************************************
+ * Trigger the event counter
+ ****************************************************************************/
+void tms7000_A6EC1( void )
+{
+	if( tms7000.pf[0x03] & 0x80 )	/* Only valid is timer enabled */
+	{
+		if( (--(tms7000.timer1_prescaler) ) == 0xff )
+		{
+			tms7000.timer1_prescaler = tms7000.pf[0x03] & 0x1f;
+			if( (--(tms7000.timer1_decrementator)) == 0xff )
+			{
+				tms7000.timer1_decrementator = tms7000.pf[0x02];
+				tms7000_set_irq_line( TMS7000_IRQ2_LINE, ASSERT_LINE);
+			}
+		}
+	}
+}
+
+/****************************************************************************
+ * Call when INT2 timer fires
+ ****************************************************************************/
+
+void tms7000_int2_callback( int	param )
+{
+#pragma unused( param )
+
+	tms7000_set_irq_line( TMS7000_IRQ2_LINE, ASSERT_LINE);
+	tms7000_starttimer1();
+}
+
+/****************************************************************************
+ * Return the value of the decrementator
+ ****************************************************************************/
+
+UINT8 tms7000_calculate_timer1_decrementator( void )
+{
+	UINT8	result;
+	double prescalertimer = TIME_IN_CYCLES(16,cpu_getactivecpu()) * (tms7000.pf[0x03] & 0x1f);
+	
+	result = (tms7000.time_timer1 - getabsolutetime()) / prescalertimer;
+
+	return result;
+}
+
+
+#pragma mark -
 #pragma mark ¥ Perpherial File Handling
 
 WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
@@ -420,16 +513,18 @@ WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 			
 			tms7000.pf[0x00] = temp4;
 			break;
-		
-//		case 0x02:	/* T1DATA, timer 1 data */
-//			/* Lots to implement here */
-//			tms7000.pf[0x02] = data;
-//			break;
 
-//		case 0x03:	/* T1CTL, timer 1 control */
-//			/* Lots to implement here */
-//			tms7000.pf[0x03] = data;
-//			break;
+		case 0x03:	/* T1CTL, timer 1 control */
+			/* stuff data in register */
+			tms7000.pf[0x03] = data;
+			
+			/* Stop current counter */
+			timer_reset( tms7000.timer1, TIME_NEVER );
+			
+			if( data & 0x80 == 0x80 )
+				tms7000_starttimer1();
+
+			break;
 		
 		case 0x04: /* Port A write */
 			/* Port A is read only so this is a NOP */
@@ -470,15 +565,22 @@ READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 //			result = tms7000.pf[0x00];
 //			break;
 		
-//		case 0x02:	/* T1DATA, timer 1 data */
-//			/* Lots to implement here */
-//			result = tms7000.pf[0x02];
-//			break;
+		case 0x02:	/* T1DATA, timer 1 data */
+			if( tms7000.pf[ 0x03 ] & 0x40 )
+			{
+				/* Source A7/EC1 */
+				result = tms7000.timer1_decrementator;
+			}
+			else
+			{
+				/* Source: internal timer */
+				result = tms7000_calculate_timer1_decrementator();
+			}
+			break;
 
-//		case 0x03:	/* T1CTL, timer 1 control */
-//			/* Lots to implement here */
-//			result = tms7000.pf[0x03];
-//			break;
+		case 0x03:	/* T1CTL, timer 1 control */
+			result = tms7000.timer1_capturelatch;
+			break;
 
 		case 0x04: /* Port A read */
 			result = cpu_readport16( TMS7000_PORTA );
@@ -520,7 +622,7 @@ READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 #pragma mark ¥ BCD arthrimetic handling
 
 
-UINT16 bcd_add( UINT16 a, UINT16 b )
+static UINT16 bcd_add( UINT16 a, UINT16 b )
 {
 	UINT16	t1,t2,t3,t4,t5,t6;
 	
@@ -534,7 +636,7 @@ UINT16 bcd_add( UINT16 a, UINT16 b )
 	return t2-t6;
 }
 
-UINT16 bcd_tencomp( UINT16 a )
+static UINT16 bcd_tencomp( UINT16 a )
 {
 	UINT16	t1,t2,t3,t4,t5,t6;
 	
@@ -547,7 +649,7 @@ UINT16 bcd_tencomp( UINT16 a )
 	return t2-t6;
 }
 
-UINT16 bcd_sub( UINT16 a, UINT16 b)
+static UINT16 bcd_sub( UINT16 a, UINT16 b)
 {
 	return bcd_tencomp(b) - bcd_tencomp(a);
 }
