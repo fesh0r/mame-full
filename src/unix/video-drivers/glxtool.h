@@ -16,6 +16,14 @@
     #include <X11/Xlib.h>
   	#include <X11/Xutil.h>
   	#include <X11/Xatom.h>
+
+	#ifndef SYMBOL_PREFIX
+		#ifndef __ELF__
+			#define SYMBOL_PREFIX	"_"
+		#else
+			#define SYMBOL_PREFIX	""
+		#endif
+	#endif
   
 	#include "gltool.h"
 	  

@@ -25,6 +25,7 @@
 /* XK_VoidSymbol	0xFFFFFF	*/ /* void symbol */
 
 static int extended_code_table[512] = {
+#if 0
 /*                      		0xFE00  */ KEY_NONE,
 /* XK_ISO_Lock				0xFE01  */ KEY_NONE,
 /* XK_ISO_Level2_Latch			0xFE02  */ KEY_NONE,
@@ -281,6 +282,7 @@ static int extended_code_table[512] = {
 /* XK_Pointer_Drag5			0xFEFD  */ KEY_NONE,
 /*					0xFEFE  */ KEY_NONE,
 /*					0xFEFF  */ KEY_NONE,
+#endif
 /*					0xFF00  */ KEY_NONE,
 /*					0xFF01  */ KEY_NONE,
 /*					0xFF02  */ KEY_NONE,

@@ -17,6 +17,7 @@ if [ "$1" = "-txt" -o "$1" = "-all" ] ; then
 fi
 
 if [ "$1" = "-html" -o "$1" = "-all" ] ; then
+	rm -f *.html
 	echo sgml2html -s 1 xmame-doc.sgml
 	sgml2html -s 1 xmame-doc.sgml
 fi
@@ -29,7 +30,7 @@ if [ "$1" = "-man" -o "$1" = "-all" ] ; then
 	rm -f xmame-doc.man
 fi
 
-if [ "$1" = "-ps" -o "$1" = "-all" ] ; then
+if [ "$1" = "-ps" ] ; then
 	echo sgml2latex, dvips ...
 	sgml2latex -o ps xmame-doc.sgml
 fi

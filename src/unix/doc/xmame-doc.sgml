@@ -2318,7 +2318,7 @@ A: Are you running KDE? For some reason, I can't get keyboard
 Q: Which graphics cards are usable with xmame.xgl? 
 </p>
 <p>
-A: We have the following experiences (date 20010327):
+A: We have the following experiences (date 20010713):
 </p>
 <p>
 <itemize>
@@ -2329,7 +2329,7 @@ Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line
 Vodoo1 + Mesa 3.4 + Glide, with command line options "
 -glres
  640x480"
- !
+!
  <item>
 GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command
  line options and 16/24bpp X11 server color depth.
@@ -2346,6 +2346,16 @@ Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command
  line options &quot;-bpp 16&quot;, &quot;-noglaa&quot; (???) and 16bpp
  (may be 24bpp also ???) X11 server color depth (OpenGL colortable
  mapping is buggy).
+ <item>
+ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command line
+ options "
+-noglext78 -noglaa"
+ or "
+-bpp 16 -noglaa"
+, where the latter
+ options are a bit slower (about 5 fps). 
+ <item>
+LinuxPPC - Powerbook-Firewire + ATI R128: see above!
 </itemize>
 </p><p>
 All of the above drivers work with the option &quot;-bpp 16&quot;

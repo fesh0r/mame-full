@@ -14,26 +14,31 @@
 # Last modified on 11 April 2001.
 
 # Copy the MESS files over.
-if [ -d $1 ]; then
+if [ -d "$1" ]; then
   cp -R $1/* .
 else
   echo "Cannot find MESS source directory, exiting..."
   exit 1
 fi
 
-# Fix the line endings of the included text and makefiles.
-d2u `find . -name "*.txt" -print`
-d2u `find . -name "*.mak" -print`
-d2u makefile.mes
+# Fix the line endings of the included text files, makefiles, and sources.
+if [ -x "`which d2u 2> /dev/null`" ]; then
+  d2u `find . -name "*.txt" -print` 2> /dev/null
+  d2u `find . -name "*.mak" -print` 2> /dev/null
+  d2u `find . -path './src/unix' -prune -o -name "*.[ch]" -print` 2> /dev/null
+  d2u makefile.mes 2> /dev/null
+  d2u sysinfo.dat 2> /dev/null
+else
+  echo "Unable to run d2u.  This may cause build problems on some platforms."
+fi
 
 # Change // comments to /* */ pairs.  Some C compilers don't like //.  We skip
 # the src/unix directory, though, since fix-comments mangles some of the files.
 # Besides, they should already be fine.
-fix-comments `find . -path './src/unix' -prune -o -name "*.c" -print`
-fix-comments `find . -name './src/unix' -prune -o -name "*.h" -print`
+fix-comments `find . -path './src/unix' -prune -o -name "*.[ch]" -print`
 
 # Do some cleanup.
-rm -rf artwork bios cfg cheat crc memcard nvram snap software tools 
+rm -rf artwork bios cfg cheat crc memcard nvram snap software
 
 # Rename some files.
 if [ -f mess.txt ]; then
@@ -48,25 +53,25 @@ if [ -f messold.txt ]; then
   mv messold.txt doc/old-changes.mess
 fi
 
-if [ -f docs/credits.txt ]; then
-  mv docs/credits.txt doc/credits.mess
+if [ -f credits.txt ]; then
+  mv credits.txt doc/credits.mess
 fi
 
-if [ -f docs/imgtool.txt ]; then
-  mv docs/imgtool.txt doc/
+if [ -f sysinfo.dat ]; then
+  mv sysinfo.dat doc/
 fi
 
-if [ -f docs/messroms.txt ]; then
-  mv docs/messroms.txt doc/
+if [ -f tools/imgtool.txt ]; then
+  mv tools/imgtool.txt doc/
 fi
 
-if [ -d docs/sysinfo ]; then
-  cp -R docs/sysinfo doc/
+if [ -f tools/messroms.txt ]; then
+  mv tools/messroms.txt doc/
 fi
 
-# Delete the MESS docs directory.
-rm -r docs
+# Delete the MESS tools directory.
+rm -r tools
 
 # Clean up the files left over from d2u and fix-comments.
-rm `find . -name "*~" -print`
-rm `find . -name "*.orig" -print`
+rm -f `find . -name "*~" -print`
+rm -f `find . -name "*.orig" -print`

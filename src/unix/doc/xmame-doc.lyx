@@ -64,7 +64,7 @@ Juan Antonio Martinez
 
 \layout Date
 
-v2.1.6, 5 May 2001
+v2.1.7, 4 July 2001
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -2545,6 +2545,13 @@ Are you running a recent version of KDE, such as 2.1.1? It appears that there's
 \layout Verbatim
 
 xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
+\layout Standard
+
+
+\emph on 
+Update: 
+\emph default 
+I have been told that as of KDE 2.2b1, this problem has been fixed.
 \layout Subsection
 
 Where can I get the latest version of xmame/xmess?
@@ -3315,7 +3322,7 @@ A: Are you running KDE? For some reason, I can't get keyboard input under
 Q: Which graphics cards are usable with xmame.xgl? 
 \layout Standard
 
-A: We have the following experiences (date 20010327):
+A: We have the following experiences (date 20010713):
 \layout Itemize
 
 Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line options "-noglaa"
@@ -3330,7 +3337,7 @@ Vodoo1 + Mesa 3.4 + Glide, with command line options
 \begin_inset Quotes erd
 \end_inset 
 
- !
+!
 \layout Itemize
 
 GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command line options
@@ -3350,6 +3357,29 @@ NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
 Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command line options
  "-bpp 16", "-noglaa" (???) and 16bpp (may be 24bpp also ???) X11 server
  color depth (OpenGL colortable mapping is buggy).
+\layout Itemize
+
+ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command line options 
+\begin_inset Quotes eld
+\end_inset 
+
+-noglext78 -noglaa
+\begin_inset Quotes erd
+\end_inset 
+
+ or 
+\begin_inset Quotes eld
+\end_inset 
+
+-bpp 16 -noglaa
+\begin_inset Quotes erd
+\end_inset 
+
+, where the latter options are a bit slower (about 5 fps).
+ 
+\layout Itemize
+
+LinuxPPC - Powerbook-Firewire + ATI R128: see above!
 \layout Standard
 
 All of the above drivers work with the option "-bpp 16" and/or "-noglext78",

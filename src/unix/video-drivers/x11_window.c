@@ -123,8 +123,8 @@ int test_mit_shm (Display * display, XErrorEvent * error)
       use_mit_shm = 0;
       return 0;
    }
-   /* else unexpected error code: notify and exit */
-   fprintf (stderr_file, "Unexpected X Error %d: %s\n", ret, msg);
+   /* else unspected error code: notify and exit */
+   fprintf (stderr_file, "Unspected X Error %d: %s\n", ret, msg);
    exit (1);
    /* to make newer gcc's shut up, grrr */
    return 0;
@@ -385,7 +385,6 @@ int x11_window_create_display (int bitmap_depth)
       {
          root_window_id = RootWindowOfScreen (screen);
       }
-      printf("depth = %d\n", depth);
       window = XCreateWindow (display, root_window_id, hints.x, hints.y,
                               window_width, window_height,
                               0, depth,

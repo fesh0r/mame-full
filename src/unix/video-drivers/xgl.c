@@ -76,7 +76,7 @@ char * libGLUName=0;
 static char *gl_res = NULL;
 
 static const char * xgl_version_str = 
-	"\nGLmame v0.86, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.88, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */

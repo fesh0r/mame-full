@@ -88,9 +88,9 @@ extern int cabview;
 extern int cabload_err;
 extern int drawbitmap;
 extern int dopersist;
-extern GLboolean useGLEXT78; /* paletted texture */
-extern GLboolean useColorIndex; 
-extern GLboolean isGL12;
+extern int useGLEXT78; /* paletted texture */
+extern int useColorIndex; 
+extern int isGL12;
 extern int use_blitter;
 
 extern char *cabname; /* 512 bytes reserved ... */
@@ -136,9 +136,9 @@ void  gl_set_antialias(int new_value);
 void  gl_set_alphablending(int new_value);
 void  xgl_fixaspectratio(int *w, int *h);
 void xgl_resize(int w, int h, int now);
-extern GLboolean glHasEXT78 (void);
-extern void glSetUseEXT78 (GLboolean val);
-extern GLboolean glGetUseEXT78 (void);
+extern int glHasEXT78 (void);
+extern void glSetUseEXT78 (int val);
+extern int glGetUseEXT78 (void);
 
 /* glexport */
 void gl_save_screen_snapshot();

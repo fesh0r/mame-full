@@ -49,7 +49,7 @@ static struct rc_option sysdep_display_opts[] = {
    { "display-plugin", 	"dp",			rc_string,	&sysdep_display_plugin,
      NULL,		0,			0,		NULL,
      "Select which plugin to use for the display" },
-   { "list-display-plugins",  "ldp",		rc_use_function_no_arg, NULL,
+   { "list-display-plugins",  "ldisp",		rc_use_function_no_arg, NULL,
      NULL,		0,			0,		sysdep_display_list_plugins,
      "List available display plugins" },
    { "widthscale",	"ws",			rc_int,		&sysdep_display_widthscale,

@@ -53,7 +53,6 @@ typedef struct
 	unsigned int	length;
 	unsigned int	crc;
  	eFileType	type;
-	int		eof;	// for kRamFiles only
 } FakeFileHandle;
 
 struct rc_option fileio_opts[] = {
@@ -562,7 +561,7 @@ int osd_fread(void *file,void *buffer,int length)
 			/* reading from the uncompressed image of a zipped file */
 			if (f->data)
 			{
-				if ((f->eof=(length + f->offset > f->length)) )
+				if (length + f->offset > f->length)
 					length = f->length - f->offset;
 				memcpy(buffer, f->offset + f->data, length);
 				f->offset += length;
@@ -749,11 +748,6 @@ int osd_feof(void *file)
 
 	if (f->type == kPlainFile && f->file)
 		return feof(f->file);
-	else if (f->type == kRamFile)
-	{
-		if (!f->data) return 1;
-		return f->eof;
-	}
 	else
 		return 1;
 }

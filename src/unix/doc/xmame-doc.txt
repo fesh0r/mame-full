@@ -1965,13 +1965,13 @@ managers.
 
 Q: Which graphics cards are usable with xmame.xgl? 
 
-A: We have the following experiences (date 20010327):
+A: We have the following experiences (date 20010713):
 
 * Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command
   line options "-noglaa" and 16bpp X11 server color depth.
 
 * Vodoo1 + Mesa 3.4 + Glide, with command line options "-glres
-  640x480" !
+  640x480"!
 
 * GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default
   command line options and 16/24bpp X11 server color depth.
@@ -1990,6 +1990,13 @@ A: We have the following experiences (date 20010327):
   command line options "-bpp 16", "-noglaa" (???) and 16bpp
   (may be 24bpp also ???) X11 server color depth (OpenGL
   colortable mapping is buggy).
+
+* ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command
+  line options "-noglext78 -noglaa"
+  or "-bpp 16 -noglaa", where
+  the latter options are a bit slower (about 5 fps). 
+
+* LinuxPPC - Powerbook-Firewire + ATI R128: see above!
 
 All of the above drivers work with the option "-bpp 16" and/or
 "-noglext78", the latter of which is very slow, of course!

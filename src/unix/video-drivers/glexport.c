@@ -70,7 +70,10 @@ int gl_png_write_bitmap(void *fp)
 	if (png_deflate_image(&p)==0)
 		return 0;
 
-	if (png_write_file(fp, &p)==0)
+	if(png_write_sig(fp) == 0)
+		return 0;
+
+	if (png_write_datastream(fp, &p)==0)
 		return 0;
 
 	if (p.palette) free (p.palette);

@@ -213,16 +213,23 @@ static void *alsa_dsp_create(const void *flags)
 	if (dsp->hw_info.type & SYSDEP_DSP_STEREO) bytespersample <<= 1;
 	
 	memset( &(priv->audio_dev.m_Aparams), 0, sizeof(priv->audio_dev.m_Aparams));
-	priv->audio_dev.m_Aparams.mode = SND_PCM_MODE_STREAM;
+	priv->audio_dev.m_Aparams.mode = SND_PCM_MODE_BLOCK;
 	priv->audio_dev.m_Aparams.channel = SND_PCM_CHANNEL_PLAYBACK;
 	priv->audio_dev.m_Aparams.start_mode = SND_PCM_START_FULL;
 	priv->audio_dev.m_Aparams.stop_mode = SND_PCM_STOP_ROLLOVER;
+#if 0
 	priv->audio_dev.m_Aparams.buf.stream.queue_size = 512 * bytespersample;
 	priv->audio_dev.m_Aparams.buf.stream.fill = SND_PCM_FILL_SILENCE;
 	priv->audio_dev.m_Aparams.buf.stream.max_fill = 512 * bytespersample;
+#endif
         priv->audio_dev.m_Aparams.format.interleave = 1;
         priv->audio_dev.m_Aparams.format.rate = dsp->hw_info.samplerate;
         priv->audio_dev.m_Aparams.format.voices = (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? 2 : 1;
+
+	priv->audio_dev.m_Aparams.buf.block.frag_size = 1000;
+	priv->audio_dev.m_Aparams.buf.block.frags_min = 1;
+	priv->audio_dev.m_Aparams.buf.block.frags_max = 5;
+
         priv->audio_dev.m_BytesPerSample = bytespersample;
         priv->audio_dev.m_Aparams.format.format = 
 #ifdef LSB_FIRST
@@ -260,11 +267,12 @@ static void *alsa_dsp_create(const void *flags)
         }
 	dsp->hw_info.bufsize = priv->audio_dev.m_Asetup.buf.stream.queue_size  
 	             		/ alsa_dsp_bytes_per_sample[dsp->hw_info.type];
+#if 0
 	if ((err=snd_pcm_nonblock_mode(priv->audio_dev.m_AudioHandle, 1))<0)
 	{
 		fprintf(stderr, "error: error with non block mode: %s\n", snd_strerror (err));
 	}
-
+#endif
 	return dsp;
 }
 

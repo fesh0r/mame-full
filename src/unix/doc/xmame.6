@@ -73,7 +73,7 @@ emulator.
 is the (M)ulti (A)rcade (M)achine (E)mulator for UNIX-(X).  It emulates
 the hardware of realy many classic arcade game machines.
 XMAME/XMESS DOCUMENTATIONJuan Antonio Martinez \f(CR\fP and Hans de Goede \f(CR\fP and Rene' Herrmann (4 doc/sgml)
-\f(CR\fP and Lawrence Gold (minor editing) \f(CR\fPv2.1.6, 5 May 2001xmame/xmess documentation with an installation guide, the FAQ (frequently
+\f(CR\fP and Lawrence Gold (minor editing) \f(CR\fPv2.1.7, 4 July 2001xmame/xmess documentation with an installation guide, the FAQ (frequently
 asked questions), hints, tips and tricks, the changes on the code and many
 more!Introduction and Links 
 
@@ -1934,6 +1934,27 @@ Xmame/xmess versions newer than 0.35 use zlib for some compression routines.
 Zlib is standard on most Unix versions. For those who don't ship with zlib
 or ship with a version that is too old, xmame/xmess now comes with a stripped-down
 version of zlib. Uncomment the appropriate line in the Makefile to use this.
+.SH When I run xmame.x11, nothing happens---no window pops up or anything.
+Help!
+
+.Pp
+Are you running a recent version of KDE, such as 2.1.1? It appears that
+there's a bug with KDE's window manager that prevents some X11 apps from popping
+up their main window. You can either run the SDL version of xmame, or try the
+following workaround, which several people have reported as being successful:
+.Pp
+.DS
+.sp 
+.ft RR
+.nf
+xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '[lcub  ]print [dollar]4[rcub  ]'`
+.DE
+.fi 
+.ec
+.ft P
+.sp
+.Pp
+\fIUpdate: \fPI have been told that as of KDE 2.2b1, this problem has been fixed.
 .SH Where can I get the latest version of xmame/xmess?
 
 .Pp
@@ -2639,7 +2660,7 @@ KDE. If you have this problem, switch window managers.
 .Pp
 Q: Which graphics cards are usable with xmame.xgl? 
 .Pp
-A: We have the following experiences (date 20010327):
+A: We have the following experiences (date 20010713):
 .Pp
 .nr ll +1
 .nr t\n(ll 0
@@ -2670,6 +2691,14 @@ NVIDIA TNT + NVIDIA OpenGL driver + XFree86 4.0.2 with command line options
 Matrox MGA 400 + DRI OpenGL driver (XFree86 4.0.2) with command line options
 [quot  ]-bpp 16[quot  ], [quot  ]-noglaa[quot  ] (???) and 16bpp (may be 24bpp also
 ???) X11 server color depth (OpenGL colortable mapping is buggy).
+.nr bi 1
+.Pp
+ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command line options
+"-noglext78 -noglaa" or "-bpp 16 -noglaa", where the latter options is a bit slower
+(about 5 fps). 
+.nr bi 1
+.Pp
+LinuxPPC - Powerbook-Firewire + ATI R128: see above !
 .if \n(ll>1 .RE
 .nr ll -1
 .Pp

@@ -5,6 +5,10 @@
 #define __MAIN_C_
 #include "xmame.h"
 
+#ifdef __QNXNTO__
+#include <sys/mman.h>
+#endif
+
 #ifdef xgl
 	#include "driver.h"
 	#include <math.h>
@@ -38,8 +42,15 @@ void osd_exit (void)
 int main (int argc, char **argv)
 {
 	int res;
+
 #ifdef xgl
 	int i, color_depth;
+#endif
+
+#ifdef __QNXNTO__
+	printf("info: Trying to enable swapfile.... ");
+	munlockall();
+	printf("Success!\n");
 #endif
 	
 	/* some display methods need to do some stuff with root rights */

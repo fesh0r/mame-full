@@ -423,7 +423,7 @@ as root. Root privileges are required to access the 3Dfx hardware.
 <P>A: Are you running KDE? For some reason, I can't get keyboard
 input under KDE. If you have this problem, switch window managers.
 <P>Q: Which graphics cards are usable with xmame.xgl? 
-<P>A: We have the following experiences (date 20010327):
+<P>A: We have the following experiences (date 20010713):
 <P>
 <UL>
 <LI>Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line
@@ -444,6 +444,14 @@ X11 server color depth (OpenGL colortable mapping is buggy).</LI>
 line options &quot;-bpp 16&quot;, &quot;-noglaa&quot; (???) and 16bpp
 (may be 24bpp also ???) X11 server color depth (OpenGL colortable
 mapping is buggy).</LI>
+<LI>ATI R128 + DRI OpenGL driver (XFree86 4.1.0) with command line
+options "
+-noglext78 -noglaa"
+or "
+-bpp 16 -noglaa"
+, where the latter
+options are a bit slower (about 5 fps). </LI>
+<LI>LinuxPPC - Powerbook-Firewire + ATI R128: see above!</LI>
 </UL>
 <P>All of the above drivers work with the option &quot;-bpp 16&quot;
 and/or &quot;-noglext78&quot;, the latter of which is very slow,

@@ -15,7 +15,7 @@
 #include <string.h>
 #include "jpeglib.h"
 #include <setjmp.h>
-#include <GL/glut.h>
+#include <GL/glu.h>
 
 extern char *cabname;
 

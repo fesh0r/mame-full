@@ -234,22 +234,22 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 			switch (cbinfo->event->subtype)
 			{
 				case Ph_OFFSCREEN_INVALID :
-				fprintf (stderr,"got offscreen invalid\n");
+				fprintf (stderr,"info: got offscreen invalid\n");
 				if (image != NULL)
 				{
-					fprintf(stderr,"creating new image\n");
+					fprintf(stderr,"info: creating new image\n");
 					PhDCRelease(image);
 					image = PdCreateOffscreenContext(0, view_size.w, view_size.h, Pg_OSC_MEM_PAGE_ALIGN);
 					if (image == NULL)
 					{
-						fprintf(stderr_file, "Error: failed to create offscreen context\n");
+						fprintf(stderr_file, "error: failed to create offscreen context\n");
 						exit(1);
 					}
 
 					scaled_buffer_ptr = PdGetOffscreenContextPtr (image);
 					if (!scaled_buffer_ptr)
 					{
-						fprintf (stderr_file, "Error: failed get a pointer to offscreen context.\n");
+						fprintf (stderr_file, "error: failed get a pointer to offscreen context.\n");
 						PhDCRelease (image);
 						exit(1);
 					}
@@ -315,7 +315,7 @@ int I_GetEvent(PtWidget_t *widget, void *data, PtCallbackInfo_t *cbinfo, int bit
 
 					if (ph_window_update_display_func == NULL)
 					{
-						fprintf(stderr_file, "Error: Unsupported\n");
+						fprintf(stderr_file, "error: Unsupported\n");
 						exit(1);
 					}
 				}
@@ -365,7 +365,7 @@ int ph_window_create_display (int bitmap_depth)
 	
 	PtSetParentWidget(NULL);
 	if((P_mainWindow = PtCreateWidget(PtWindow, NULL, 6, arg)) == NULL)
-		fprintf(stderr,"Could not create main photon window.");
+		fprintf(stderr,"error: could not create main photon window.\n");
 
 	/* add raw callback handler */
 	PtAddEventHandler( P_mainWindow,
@@ -401,14 +401,14 @@ int ph_window_create_display (int bitmap_depth)
 		image = PdCreateOffscreenContext(0, view_size.w, view_size.h, Pg_OSC_MEM_PAGE_ALIGN);
 	 	if (image == NULL)
 	 	{
-			fprintf(stderr_file, "Error: failed to create offscreen context\n");
+			fprintf(stderr_file, "error: failed to create offscreen context\n");
 			return OSD_NOT_OK;
 		}
 
 		scaled_buffer_ptr = PdGetOffscreenContextPtr (image);
 		if (!scaled_buffer_ptr)
 		{
-			fprintf (stderr_file, "Error: failed get a pointer to offscreen context.\n");
+			fprintf (stderr_file, "error: failed get a pointer to offscreen context.\n");
 			PhDCRelease (image);
 			return OSD_NOT_OK;
 		}
@@ -439,7 +439,7 @@ int ph_window_create_display (int bitmap_depth)
 		break;
 	
 		default:
-			fprintf (stderr_file, "Error unknown Photon update method, this shouldn't happen\n");
+			fprintf (stderr_file, "error: unknown photon update method, this shouldn't happen\n");
 		return OSD_NOT_OK;
 	}
 
@@ -447,7 +447,7 @@ int ph_window_create_display (int bitmap_depth)
 	if (ph_init_palette_info() != OSD_OK)
 	return OSD_NOT_OK;
 
-	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
+	fprintf(stderr_file, "Actual bits per pixel = %d...\n", depth);
     if (bitmap_depth == 32)
    {
       if (depth == 32 && Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
@@ -489,7 +489,7 @@ int ph_window_create_display (int bitmap_depth)
 
 	if (ph_window_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "Error: Unsupported\n");
+		fprintf(stderr_file, "error: unsupported\n");
 		return OSD_NOT_OK;
 	}
 
@@ -529,7 +529,7 @@ int ph_window_alloc_palette (int writable_colors)
    
    if(!(pseudo_color_lookup = malloc(writable_colors * sizeof(unsigned long))))
    {
-      fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
+      fprintf(stderr_file, "error: malloc failed for pseudo color lookup table\n");
       return -1;
    }
    
@@ -542,21 +542,21 @@ int ph_window_alloc_palette (int writable_colors)
       writable_colors))
    {
       pseudo_color_use_rw_palette = 1;
-      fprintf (stderr_file, "Using r/w palette entries to speed up, good\n");
+      fprintf (stderr_file, "info: using r/w palette entries to speed up, good\n");
       for (i = 0; i < writable_colors; i++)
          if (pseudo_color_lookup[i] != i) break;
          
       if (i == writable_colors)
       {
-         ph_window_update_display_func = x11_window_update_8_to_8bpp_direct;
-         fprintf (stderr_file, "Using direct copy to speed up, good\n");
+         ph_window_update_display_func = ph_window_update_8_to_8bpp_direct;
+         fprintf (stderr_file, "info: using direct copy to speed up, good\n");
       }
    }
    else
    {
       if (!(pseudo_color_allocated = calloc(writable_colors, sizeof(char))))
       {
-         fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
+         fprintf(stderr_file, "error: malloc failed for pseudo color lookup table\n");
          free(pseudo_color_lookup);
          pseudo_color_lookup=NULL;
          return -1;
@@ -644,9 +644,9 @@ int ph_window_modify_pen (int pen, unsigned char red, unsigned char green,
             {
                pseudo_color_warn_low_on_colors = 0;
                fprintf (stderr_file,
-                  "X11-palette: Warning: Closest color match alloc failed\n"
+                  "warning: Closest color match alloc failed\n"
                   "Couldn't allocate all colors, some parts of the emulation may be black\n"
-                  "Try running xmame with the -privatecmap option\n");
+                  "Try running mame with the -privatecmap option\n");
             }
             
             /* If color allocation failed, use black to ensure the

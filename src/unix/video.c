@@ -28,6 +28,7 @@ static int frameskipper = 0;
 static int brightness = 100;
 static float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
+static int rgb_direct;
 static struct osd_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 /*struct sysdep_palette_struct *debug_palette = NULL;*/
@@ -349,8 +350,9 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 int osd_create_display(int width, int height, int depth,
    int fps, int attributes, int orientation)
 {
-   bitmap_depth = depth;
-   if (bitmap_depth == 15) bitmap_depth = 16;
+   bitmap_depth = (depth != 15) ? depth : 16;
+
+   rgb_direct = (depth == 15) || (depth == 32);
 
    current_palette = normal_palette = NULL;
    debug_visual.min_x = 0;
@@ -543,90 +545,75 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 }
 
 int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
-   unsigned int *pens, int modifiable, const unsigned char *debugger_palette,
-   unsigned int *debugger_pens)
+   unsigned int *rgb_components, const unsigned char *debugger_palette,
+   unsigned int *debug_pens)
 {
-   int i;
-   int writable_colors = 0;
-   int max_colors = (bitmap_depth == 8)? 256:65536;
-   int direct_mapped_15bpp = 0;
+   int i = 0;
+   int r, g, b;
 
-   if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT) 
-      && bitmap_depth == 16)
+   /* if we have debug pens, map them 1:1 */
+   if (debug_pens)
    {
-      direct_mapped_15bpp = 1;
-      totalcolors = 32768;
+      for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+      {
+         debug_pens[i] = i;
+      }
    }
 
-   /* calculate the size of the normal palette */
-   if (totalcolors > max_colors)
+   fprintf(stderr_file, "Game uses %d colors\n", totalcolors);
+
+   if (rgb_direct)
    {
-      fprintf(stderr_file,
-         "Warning: More than %d colors (%d) are needed for this emulation,\n"
-         "some parts of the screen may be corrupted\n", max_colors, 
-         totalcolors);
-      /* fill the remainder of the pens array with 0's to make sure */
-      /* nothing strange happens                                    */
-      for (i=max_colors; i<totalcolors; i++)
-         pens[i] = 0;
-      totalcolors = max_colors;
+      if (bitmap_depth == 16)
+      {
+         video_colors_used = 32768;
+
+         /* create the normal palette */
+         if (!(normal_palette = sysdep_palette_create(bitmap_depth,
+                                                      video_colors_used)))
+            return 1;
+      }
+      else
+      {
+         video_colors_used = 2;
+
+         /* create the normal palette */
+         if (!(normal_palette = sysdep_palette_create(bitmap_depth, 0)))
+            return 1;
+      }
    }
    else
-      fprintf(stderr_file, "Game uses %d colors\n", totalcolors);
-   
-   if ((bitmap_depth == 8) || modifiable || direct_mapped_15bpp)
    {
-      writable_colors = totalcolors + 2;
-      if (writable_colors > max_colors)
-         writable_colors = max_colors;
-   }
-   
-   /* create the normal palette */
-   if(!(normal_palette = sysdep_palette_create(bitmap_depth,
-      writable_colors)))
-      return 1;
-   
-   video_colors_used = writable_colors;
-   
-   /* create the debug palette */
-   if (debugger_pens)
-   {
-      i = (bitmap_depth == 8)? DEBUGGER_TOTAL_COLORS:0;
-      
-      if(!(debug_palette = sysdep_palette_create(bitmap_depth, i)))
-      {
-         osd_free_colors();
+      video_colors_used = totalcolors + 2;
+
+      /* create the normal palette */
+      if (!(normal_palette = sysdep_palette_create(bitmap_depth, 
+                                                   video_colors_used)))
          return 1;
-      }
-      
-      if (i > video_colors_used)
-         video_colors_used = i;
    }
-   
+
    /* now alloc the total number of colors used by both palettes */
-   if(sysdep_display_alloc_palette(video_colors_used))
+   if (sysdep_display_alloc_palette(video_colors_used))
    {
       osd_free_colors();
       return 1;
    }
-      
+   
    sysdep_palette_set_gamma(normal_palette, gamma_correction);
    sysdep_palette_set_brightness(normal_palette, brightness * brightness_paused_adjust);
-   if(debug_palette)
+
+   if (debug_palette)
    {
       sysdep_palette_set_gamma(debug_palette, gamma_correction);
       sysdep_palette_set_brightness(debug_palette, brightness * brightness_paused_adjust);
+      sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
+         debugger_palette[i*3+1], debugger_palette[i*3+2]);
    }
    
    /* init the palette */
-   if (writable_colors)
+   if (rgb_direct) 
    {
-      int color_start = (totalcolors < max_colors)? 1:0;
-      int r, g, b;
-      
-      /* normal palette */
-      if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT) 
-         && bitmap_depth == 16)
+      if (bitmap_depth == 16)
       {
          i = 0;
 
@@ -645,87 +632,75 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
             }
          }
 
-         pens[0] = 0x7c00;
-         pens[1] = 0x03e0;
-         pens[2] = 0x001f;
+         rgb_components[0] = 0x7c00;
+         rgb_components[1] = 0x03e0;
+         rgb_components[2] = 0x001f;
 
          Machine->uifont->colortable[0] = 0x0000;
          Machine->uifont->colortable[1] = 0x7fff;
          Machine->uifont->colortable[2] = 0x7fff;
          Machine->uifont->colortable[3] = 0x0000;
-
-         /* debug palette */
-         if (debugger_pens)
-         {
-            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-            {
-               r = debugger_palette[3*i+0];
-               g = debugger_palette[3*i+1];
-               b = debugger_palette[3*i+2];
-               debugger_pens[i] = r * pens[0] / 0xff + g * pens[1] / 0xff + b * pens[2] / 0xff;
-               sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
-                  debugger_palette[i*3+1], debugger_palette[i*3+2]);
-            }
-         }
       }
       else
       {
-         for (i=0; i<totalcolors; i++)
+         for (i = 0; i < totalcolors; i++)
          {
-            pens[i] = i+color_start;
-            sysdep_palette_set_pen(normal_palette, i+color_start, palette[i*3],
-               palette[i*3+1], palette[i*3+2]);
+            r = palette[3 * i + 0];
+            g = palette[3 * i + 1];
+            b = palette[3 * i + 2];
+            *rgb_components++ = (r << 16) | (g << 8) | b; 
          }
 
          Machine->uifont->colortable[0] = 0;
-         Machine->uifont->colortable[1] = writable_colors - 1;
-         Machine->uifont->colortable[2] = writable_colors - 1;
+         Machine->uifont->colortable[1] = 0xffffff;
+         Machine->uifont->colortable[2] = 0xffffff;
          Machine->uifont->colortable[3] = 0;
-
-         if(color_start)
-            sysdep_palette_set_pen(normal_palette, 0, 0, 0, 0);
-         if( writable_colors > (totalcolors+color_start) )
-            sysdep_palette_set_pen(normal_palette, writable_colors - 1, 0xFF, 0xFF, 0xFF);
-
-         /* debug palette */
-         if (debugger_pens)
-         {
-            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-            {
-               debugger_pens[i] = i;
-               sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
-                  debugger_palette[i*3+1], debugger_palette[i*3+2]);
-            }
-         }
       }
    }
    else
    {
       /* normal palette */
-      for (i=0; i<totalcolors; i++)
-      {
-         pens[i] = sysdep_palette_make_pen(normal_palette, palette[i*3],
-            palette[i*3+1], palette[i*3+2]);
-      }
-      Machine->uifont->colortable[0] = sysdep_palette_make_pen(normal_palette,
-         0, 0, 0);
-      Machine->uifont->colortable[1] = sysdep_palette_make_pen(normal_palette,
-         0xFF, 0xFF, 0xFF);
-      Machine->uifont->colortable[2] = sysdep_palette_make_pen(normal_palette,
-         0xFF, 0xFF, 0xFF);
-      Machine->uifont->colortable[3] = sysdep_palette_make_pen(normal_palette,
-         0, 0, 0);
 
-      /* debug palette */
-      if (debugger_pens)
+      /* initialize the palette to black */
+      for (i = 0; i < video_colors_used; i++)
       {
-         for (i=0; i<DEBUGGER_TOTAL_COLORS; i++)
-         {
-            debugger_pens[i] = sysdep_palette_make_pen(debug_palette,
-               debugger_palette[i*3], debugger_palette[i*3+1],
-               debugger_palette[i*3+2]);
-         }
+         sysdep_palette_set_pen(normal_palette, i, 0, 0, 0);
       }
+
+      /* mark the palette dirty to start */
+      sysdep_palette_mark_dirty(normal_palette);
+
+      /* reserve color totalcolors + 1 for the user interface text */
+      if (totalcolors < 65535)
+      {
+         sysdep_palette_set_pen(normal_palette, totalcolors + 1, 0xFF, 0xFF, 0xFF);
+         Machine->uifont->colortable[0] = totalcolors;
+         Machine->uifont->colortable[1] = totalcolors + 1;
+         Machine->uifont->colortable[2] = totalcolors + 1;
+         Machine->uifont->colortable[3] = totalcolors;
+      }
+      else
+      {
+         Machine->uifont->colortable[0] = 0;
+         Machine->uifont->colortable[1] = 65535;
+         Machine->uifont->colortable[2] = 65535;
+         Machine->uifont->colortable[3] = 0;
+      }
+
+      for (i = 0; i < totalcolors; i++)
+      {
+         sysdep_palette_set_pen(normal_palette, i, palette[i * 3], 
+            palette[i * 3 + 1], palette[i * 3 + 2]);
+      }
+
+      //Machine->uifont->colortable[0] = sysdep_palette_make_pen(normal_palette,
+      //   0, 0, 0);
+      //Machine->uifont->colortable[1] = sysdep_palette_make_pen(normal_palette,
+      //   0xFF, 0xFF, 0xFF);
+      //Machine->uifont->colortable[2] = sysdep_palette_make_pen(normal_palette,
+      //   0xFF, 0xFF, 0xFF);
+      //Machine->uifont->colortable[3] = sysdep_palette_make_pen(normal_palette,
+      //   0, 0, 0);
    }
    
    /* set the current_palette to the normal_palette */

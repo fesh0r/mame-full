@@ -29,7 +29,7 @@ void LIBAPIENTRY fetch_GLX_FUNCS (const char * libGLName,
   if(!_firstRun)
   	return;
 
-  #define GET_GL_PROCADDRESS(a) getGLProcAddressHelper (libGLName, libGLUName, (a), NULL, 1, 0);
+  #define GET_GL_PROCADDRESS(a) getGLProcAddressHelper (libGLName, libGLUName, ( SYMBOL_PREFIX a), NULL, 1, 0);
 
   #include "glx-disp-fetch.hc"
 

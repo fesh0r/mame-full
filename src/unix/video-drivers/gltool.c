@@ -357,7 +357,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
   if (disp__glXGetProcAddress == NULL && __firstAccess)
   {
-      disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, "glXGetProcAddressARB");
+      disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
+        "glXGetProcAddressARB");
 
       if (disp__glXGetProcAddress != NULL && verbose)
       {
@@ -367,7 +368,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
       if (disp__glXGetProcAddress == NULL)
       {
-	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, "glXGetProcAddressEXT");
+	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
+	  "glXGetProcAddressEXT");
 
 	if (disp__glXGetProcAddress != NULL && verbose)
 	{
@@ -378,7 +380,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
       if (disp__glXGetProcAddress == NULL)
       {
-	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, "glXGetProcAddress");
+	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
+	  "glXGetProcAddress");
 
 	if (disp__glXGetProcAddress != NULL && verbose)
 	{
@@ -394,7 +397,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 	fflush (NULL);
 	if (libHandleGLX != NULL)
 	{
-	  disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX, "glXGetProcAddressARB");
+	  disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX, SYMBOL_PREFIX
+	    "glXGetProcAddressARB");
 
 	  if (disp__glXGetProcAddress != NULL && verbose)
 	  {
@@ -404,7 +408,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	  if (disp__glXGetProcAddress == NULL)
 	  {
-	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX, "glXGetProcAddressEXT");
+	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX,
+	      SYMBOL_PREFIX "glXGetProcAddressEXT");
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
@@ -415,7 +420,8 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	  if (disp__glXGetProcAddress == NULL)
 	  {
-	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX, "glXGetProcAddress");
+	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX,
+	      SYMBOL_PREFIX "glXGetProcAddress");
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
@@ -541,7 +547,7 @@ void LIBAPIENTRY fetch_GL_FUNCS (const char * libGLName,
   if(!loadGLLibrary (libGLName, libGLUName))
   	return;
 
-  #define GET_GL_PROCADDRESS(a) getGLProcAddressHelper (libGLName, libGLUName, (a), NULL, 1, 0);
+  #define GET_GL_PROCADDRESS(a) getGLProcAddressHelper (libGLName, libGLUName, (SYMBOL_PREFIX a), NULL, 1, 0);
 
   #include "gl-disp-fetch.hc"
   #include "glu-disp-fetch.hc"

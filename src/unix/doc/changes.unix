@@ -2,6 +2,41 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.54.2
+	- Applied a fix for the Bubble Bobble driver.  (Haze)
+	- Added a couple words to the makefile to indicate that the 68020 asm
+	  core is broken.
+	- Added a.out support (e.g. for OpenBSD) to the dlsym calls in several
+	  GLmame files.  (Claudio Castiglia)
+
+Release 0.54.1
+	- Everything from MAME 0.54.
+	- Fixed a compile error in the xgl target caused by a change in the
+	  core.  (Sven Goethel)
+	- Applied a patch that fixes CPS2 games.  (Aaron Giles)
+
+Release 0.37b15.2
+	- Everything from MESS 0.37b15.  Yay!
+	- Changed the short version of -list-display-plugins from -ldp to
+	  -ldisp.  -ldp was already being used for -list-dsp-plugins.  (Shyouzou
+	  Sugitani)
+	- Fixed prep-new-mess to account for some of the new text file
+	  names/locations.
+
+Release 0.53.1
+	- Everything from MAME 0.53 except for what was missing before.
+	- GLmame now supports LinuxPPC.  (Sven Goethel)
+	- Fixed a problem that could cause an xmame.xgl build to fail when
+	  esound is enabled.
+	- Fixed a bug in src/unix/unix.mak that caused builds using the asm 68k
+	  core to fail.
+	- QNX Neutrino/Photon updates: Added extended keyboard support; support
+	  for a wider range of sound cards; swapfile support.  (Travis Coady and
+	  Julian Kinraid)
+	- Fixed a bug in contrib/porting/prep-new-mess that caused fix-comments
+	  to erroneously run on src/unix when processing .h files; made other
+	  cleanups in this script and prep-new-mame.  (Christopher Stone).
+
 Release 0.37b16.1
 	- Everything from MAME 0.37b16 except for steadykey support and the new
 	  RGB blitters.  These may be appearing in a later release.  :-)

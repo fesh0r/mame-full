@@ -9,14 +9,10 @@
  * Copyright (C) 2000-2001, The PhMAME Developement Team.
 */
 
-/*
- * Include files.
- */
+/* Include files */
 #define __PH_C__
 
 #include <math.h>
-//#include <Ph.h>
-//#include <Pt.h>
 #include "xmame.h"
 #include "photon2.h"
 #include "input.h"
@@ -86,7 +82,7 @@ int sysdep_init (void)
    if(!(ph_ctx= PhAttach (NULL,NULL)))
    {
       /* Don't use stderr_file here it isn't assigned a value yet ! */
-      fprintf (stderr, "Could not open display\n");
+      fprintf (stderr, "error: could not open display\n");
       return OSD_NOT_OK;
    }
   
@@ -118,7 +114,7 @@ int sysdep_display_16bpp_capable(void)
    if (ph_video_mode >= PH_MODE_COUNT)
    {
       fprintf (stderr_file,
-         "photon-mode %d does not exist, falling back to normal window code\n",
+         "info: photon-mode %d does not exist, falling back to normal window code\n",
          ph_video_mode);
       ph_video_mode = PH_WINDOW;
    }
@@ -126,7 +122,7 @@ int sysdep_display_16bpp_capable(void)
    if (!mode_available[ph_video_mode])
    {
       fprintf (stderr_file,
-         "photon-mode %d not available, falling back to normal window code\n",
+         "info: photon-mode %d not available, falling back to normal window code\n",
          ph_video_mode);
       ph_video_mode = PH_WINDOW;
    }
@@ -213,7 +209,7 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
       if ((*ph_func[new_video_mode].create_display)(bitmap_depth) != OSD_OK)
       {
          fprintf(stderr_file,
-            "Photon: Warning: Couldn't create display for new photon-mode\n"
+            "warning: could not create display for new photon-mode\n"
             "   Trying again with the old photon-mode\n");
          (*ph_func[new_video_mode].close_display)();
          if ((*ph_func[ph_video_mode].create_display)(bitmap_depth) != OSD_OK)
@@ -224,7 +220,7 @@ void sysdep_update_display (struct osd_bitmap *bitmap)
             osd_exit();
             sysdep_close();
             fprintf (stderr_file,
-               "Photon: Error: couldn't create new display while switching display modes\n");
+               "error: could not create new photon display while switching display modes\n");
             exit (1);              /* ugly, anyone know a better way ? */
          }
       }
@@ -253,7 +249,7 @@ barf:
    osd_exit();
    sysdep_close();
    fprintf (stderr_file,
-      "Photon: Error: couldn't create new display while switching display modes\n");
+      "error: could not create new display while switching display modes\n");
    exit (1);              /* ugly, anyone know a better way ? */
 }
 
@@ -268,5 +264,3 @@ void sysdep_set_text_mode (void)
 {
 
 }
-
-

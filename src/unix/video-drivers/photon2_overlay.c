@@ -87,9 +87,9 @@ int ph_ovr_16bpp_capable(void)
 
 /* I've commented out the fprintf's in this function.
    It'll keep the compiler quiet. I'm not exacally
-   sure why there even there, but the Raw Drawing &
-   Animation Chapter in the docs gives me a good idea
-   <evil grin at dave>. */
+   sure why there even here (debuggin?), but the Raw
+   Drawing & Animation Chapter in the docs gives me a
+   good idea <evil grin at dave>. */
 void grab_ptrs(PgVideoChannel_t *channel)
 {
 	/* Buffers have moved; re-obtain the pointers */
@@ -102,22 +102,22 @@ void grab_ptrs(PgVideoChannel_t *channel)
 
 	if (channel->yplane1)
 		//fprintf(stderr, "Photon 2 Overlay: ybuf0: %x, stride %d\n", ybuf0, channel->yplane1->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 	if (channel->uplane1)
 		//fprintf(stderr, "Photon 2 Overlay: ubuf0: %x, stride %d\n", ubuf0, channel->uplane1->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 	if (channel->vplane1)
 		//fprintf(stderr, "Photon 2 Overlay: vbuf0: %x, stride %d\n", vbuf0, channel->vplane1->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 	if (channel->yplane2)
 		//fprintf(stderr, "Photon 2 Overlay: ybuf1: %x, stride %d\n", ybuf1, channel->yplane2->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 	if (channel->uplane2)
 		//fprintf(stderr, "Photon 2 Overlay: ubuf1: %x, stride %d\n", ubuf1, channel->uplane2->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 	if (channel->vplane2)
 		//fprintf(stderr, "Photon 2 Overlay: vbuf1: %x, stride %d\n", vbuf1, channel->vplane2->pitch);
-		printf("Photon 2 Overlay: Undefined error.\n");
+		printf("info: photon2 overlay: bleh.\n");
 }
 
 unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int dst_height, int dst_x, int dst_y )
@@ -133,7 +133,7 @@ unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int d
 
         if ((channel = PgCreateVideoChannel(Pg_VIDEO_CHANNEL_SCALER,0)) == NULL) 
 	{
-		fprintf(stderr, "Could not create channel\n");
+		fprintf(stderr, "error: could not create channel!\n");
 		return 0;
 	}
 
@@ -146,13 +146,13 @@ unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int d
         {
 		if(caps.format == Pg_VIDEO_FORMAT_RGB8888)
                 {
-			printf("        Overlay supports RGB8888\n");
+			printf("info: overlay supports RGB8888\n");
 			props.format = Pg_VIDEO_FORMAT_RGB8888;
                         bCont = FALSE;
                 }
                 else if(caps.format  == Pg_VIDEO_FORMAT_RGB565)
                 {
-                        printf("        Overlay supports RGB565\n");
+                        printf("info: overlay supports RGB565\n");
                         props.format = Pg_VIDEO_FORMAT_RGB565;
                         bCont = FALSE;
                 }
@@ -175,7 +175,7 @@ unsigned char *setup_overlay(int src_width, int src_height, int dst_width, int d
 
         if (PgConfigScalerChannel(channel, &props) == -1) 
 	{
-		fprintf(stderr, "Could not configure channel\n");
+		fprintf(stderr, "error: could not configure channel!\n");
                 return 0;
         }
 
@@ -202,22 +202,16 @@ int ph_ovr_create_display (int bitmap_depth)
 	PhWindowQueryVisible( Ph_QUERY_GRAPHICS, 0, 1, &rect );
 	
 	PtSetArg( &arg[0], Pt_ARG_FILL_COLOR, Pg_BLACK, 0 );
-	PtSetArg( &arg[1], Pt_ARG_WINDOW_MANAGED_FLAGS, 0, Ph_WM_MAX | Ph_WM_RESIZE | Ph_WM_MENU);
+	PtSetArg( &arg[1], Pt_ARG_WINDOW_MANAGED_FLAGS, 0, Ph_WM_MAX | Ph_WM_RESIZE | Ph_WM_MENU );
 	PtSetArg( &arg[2], Pt_ARG_DIM, &rect, 0 );
-	PtSetArg( &arg[3], Pt_ARG_WINDOW_NOTIFY_FLAGS, Ph_WM_FOCUS, Ph_WM_FOCUS | Ph_WM_RESIZE);
-	PtSetArg( &arg[4], Pt_ARG_WINDOW_RENDER_FLAGS, Pt_FALSE, ~0);
-	PtSetArg( &arg[5], Pt_ARG_WINDOW_TITLE, title, 0);
-        PtSetArg( &arg[6], Pt_ARG_WINDOW_STATE, Pt_TRUE, Ph_WM_STATE_ISALTKEY |
-							 Ph_WM_STATE_ISFRONT |
-                                                         Ph_WM_STATE_ISMAX |
-                                                         Ph_WM_STATE_ISFOCUS);
-		
-	PtSetArg(&arg[7], Pt_ARG_WINDOW_MANAGED_FLAGS,Pt_TRUE, Ph_WM_FFRONT |
-							       Ph_WM_TOFRONT |
-							       Ph_WM_CONSWITCH);	
+	PtSetArg( &arg[3], Pt_ARG_WINDOW_NOTIFY_FLAGS, Ph_WM_FOCUS, Ph_WM_FOCUS | Ph_WM_RESIZE );
+	PtSetArg( &arg[4], Pt_ARG_WINDOW_RENDER_FLAGS, Pt_FALSE, ~0 );
+	PtSetArg( &arg[5], Pt_ARG_WINDOW_TITLE, title, 0 );
+	PtSetArg( &arg[6], Pt_ARG_WINDOW_STATE, Pt_TRUE, Ph_WM_STATE_ISALTKEY | Ph_WM_STATE_ISFRONT | Ph_WM_STATE_ISMAX | Ph_WM_STATE_ISFOCUS );
+	PtSetArg(&arg[7], Pt_ARG_WINDOW_MANAGED_FLAGS,Pt_TRUE, Ph_WM_FFRONT |Ph_WM_TOFRONT |Ph_WM_CONSWITCH );	
 	PtSetParentWidget(NULL);
 	if((P_mainWindow = PtCreateWidget(PtWindow, NULL, 8, arg)) == NULL)
-		fprintf(stderr,"Could not create main photon window.");
+		fprintf(stderr,"error: could not create main photon window!\n");
 
 	/* add raw callback handler */
 	PtAddEventHandler( P_mainWindow,      Ph_EV_BUT_PRESS |
@@ -282,14 +276,14 @@ int ph_ovr_create_display (int bitmap_depth)
 		image = PdCreateOffscreenContext(0, ((view_size.w+7) & ~7), view_size.h, Pg_OSC_MEM_PAGE_ALIGN);
 	 	if (image == NULL)
 	 	{
-			fprintf(stderr_file, "Error: failed to create offscreen context\n");
+			fprintf(stderr_file, "error: failed to create offscreen context\n");
 			return OSD_NOT_OK;
 		}
 
 		scaled_buffer_ptr = PdGetOffscreenContextPtr (image);
 		if (!scaled_buffer_ptr)
 		{
-			fprintf (stderr_file, "Error: failed get a pointer to offscreen context.\n");
+			fprintf (stderr_file, "error: failed get a pointer to offscreen context.\n");
 			PhDCRelease (image);
 			return OSD_NOT_OK;
 		}
@@ -311,7 +305,7 @@ int ph_ovr_create_display (int bitmap_depth)
 		break;
 	
 		default:
-			fprintf (stderr_file, "Error unknown Photon update method, this shouldn't happen\n");
+			fprintf (stderr_file, "error: unknown photon update method, this shouldn't happen\n");
 		return OSD_NOT_OK;
 	}
 
@@ -319,7 +313,7 @@ int ph_ovr_create_display (int bitmap_depth)
 	if (ph_init_palette_info() != OSD_OK)
 	return OSD_NOT_OK;
 
-	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
+	fprintf(stderr_file, "info: actual bits per pixel = %d...\n", depth);
 	if (bitmap_depth == 16)
 	{
 		switch(depth)
@@ -356,7 +350,7 @@ int ph_ovr_create_display (int bitmap_depth)
 
 	if (ph_ovr_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "Error: Unsupported\n");
+		fprintf(stderr_file, "error: unsupported\n");
 		return OSD_NOT_OK;
 	}
 
@@ -388,7 +382,7 @@ int I_OverlayOff(void)
         props.flags &= ~Pg_SCALER_PROP_SCALER_ENABLE;
         switch(PgConfigScalerChannel(channel, &props)){
 	        case -1:
-	           fprintf(stderr, "Configure channel failed\n");
+	           fprintf(stderr, "error: configure channel failed!\n");
 	           exit(1);
                 break;
 		case 1:

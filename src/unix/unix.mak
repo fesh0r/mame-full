@@ -292,13 +292,13 @@ $(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
 # generate asm source files for the 68000/68020 emulators
 $(OBJ)/cpu/m68000/68000.asm:  src/cpu/m68000/make68k.c
 	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
 	$(CC_COMMENT) @echo Generating $@...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68000tab.asm 00
 
 $(OBJ)/cpu/m68000/68020.asm:  src/cpu/m68000/make68k.c
 	$(CC_COMMENT) @echo Compiling $<...
-	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -o $(OBJ)/cpu/m68000/make68k $<
+	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -O0 -DDOS -o $(OBJ)/cpu/m68000/make68k $<
 	$(CC_COMMENT) @echo Generating $@...
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/make68k $@ $(OBJ)/cpu/m68000/68020tab.asm 20
 

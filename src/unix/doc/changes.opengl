@@ -1,4 +1,4 @@
-GLMame v 0.86 Mame Display Driver
+GLMame v 0.88 Mame Display Driver
 =================================
 
 Sven Goethel
@@ -10,6 +10,25 @@ MAME License
 Based upon GLmame v0.6 driver for xmame, written by Mike Oliphant
 
 peace, sven
+
+  20/August/2001 GLMame OpenGL-Display-Driver Version 0.88
+  =================================================================
+  	o changed to the new png usage
+
+	o INFO: I kept the 8bpp color-table stuff for now,
+	        but the base mame 0.53 does not support it anymore !
+
+  13/July/2001 GLMame   OpenGL-Display-Driver Version 0.87
+  =================================================================
+	o tested xmam.xgl with LinuxPPC 
+         (Powerbook) + ATI-Rage128 + XFree86 4.1 + DRI 
+	  ! SUCCESS !
+
+	  Use options: "-noglext78 -noglaa" or "-bpp 16 -noglaa",
+	  where the latter is a bit slower for me (about 5fps)
+
+	o changed GLboolean -> int,
+	  because of Linux-PPC problems ..
 
   05/May/2001 GLMame   OpenGL-Display-Driver Version 0.86
   =================================================================

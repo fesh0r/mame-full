@@ -21,8 +21,8 @@ static int sortby     = 0;
 enum {
    /* standard list commands */
    LIST_LIST = 1, LIST_FULL, LIST_GAMES, LIST_DETAILS, LIST_GAMELIST,
-   LIST_SOURCEFILE, LIST_COLORS, LIST_DEVICES, LIST_ROMSIZE, LIST_ROMS,
-   LIST_CRC, LIST_SAMPLES, LIST_SAMDIR, VERIFY_ROMS, VERIFY_ROMSETS,
+   LIST_SOURCEFILE, LIST_COLORS, LIST_DEVICES, LIST_ROMSIZE, LIST_PALETTESIZE,
+   LIST_ROMS, LIST_CRC, LIST_SAMPLES, LIST_SAMDIR, VERIFY_ROMS, VERIFY_ROMSETS,
    VERIFY_SAMPLES, VERIFY_SAMPLESETS,
    /* internal verification list commands (developers only) */
    LIST_MISSINGROMS, LIST_DUPCRC, LIST_WRONGORIENTATION, LIST_WRONGMERGE,
@@ -68,6 +68,9 @@ struct rc_option frontend_list_opts[] = {
    { "listromsize",	"lrs",			rc_set_int,	&list,
      NULL,		LIST_ROMSIZE,		0,		NULL,
      "Like -list, with the year and size of the roms used" },
+   { "listpalettesize",	"lps",			rc_set_int,	&list,
+     NULL,		LIST_ROMSIZE,		0,		NULL,
+     "Like -list, with the year and palette size of the roms used" },
    { "listroms",	"lr",			rc_set_int,	&list,
      NULL,		LIST_ROMS,		0,		NULL,
      "Like -list, but lists used ROMS" },
@@ -603,6 +606,11 @@ int frontend_list(char *gamename)
                               printf("%-8s\t%-5s\t%u\n", drivers[i]->name, drivers[i]->year, j);
                   }
                   break;
+
+               case LIST_PALETTESIZE:
+                  {
+                     printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drivers[i]->drv->total_colors); 
+                  }
 
                case LIST_ROMS: /* game roms list */
                   if(!frontend_uses_roms(i))

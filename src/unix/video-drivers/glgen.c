@@ -87,7 +87,7 @@ struct TexSquare
 {
   GLubyte *texture;
   GLuint texobj;
-  GLboolean isTexture;
+  int isTexture;
   GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
   GLfloat fx1, fy1, fx2, fy2, fx3, fy3, fx4, fy4;
   GLfloat xcov, ycov;
@@ -136,9 +136,9 @@ extern int inlist;
 
 int gl_is_initialized;
 
-GLboolean useGLEXT78; /* paletted texture */
-GLboolean useColorIndex; 
-GLboolean isGL12;
+int useGLEXT78; /* paletted texture */
+int useColorIndex; 
+int isGL12;
 
 int use_blitter = 0;
 
@@ -294,21 +294,21 @@ void gl_reset_resources()
 /* ------------ New OpenGL Specials ------------------------------------- */
 /* ---------------------------------------------------------------------- */
 
-GLboolean glHasEXT78 (void)
+int glHasEXT78 (void)
 {
   if (gl_is_initialized)
     fetch_GL_FUNCS (libGLName, libGLUName, 0);
   return disp__glColorTableEXT != NULL;
 }
 
-void glSetUseEXT78 (GLboolean val)
+void glSetUseEXT78 (int val)
 {
   if (gl_is_initialized == 0 || val==GL_FALSE || 
       (disp__glColorTableEXT!=NULL && disp__glColorSubTableEXT!=NULL) )
     useGLEXT78 = val;
 }
 
-GLboolean glGetUseEXT78 (void)
+int glGetUseEXT78 (void)
 { return useGLEXT78; }
 
 void gl_set_bilinear (int new_value)
@@ -539,7 +539,7 @@ int sysdep_display_16bpp_capable (void)
     printf("GLINFO: sysdep_display_16bpp_capable\n");
   #endif
 
-  return 1; /* direct color  JAU*/
+  return 1; /* direct color */
 }
 
 void InitVScreen (int depth)
@@ -548,6 +548,8 @@ void InitVScreen (int depth)
 
   #ifndef NDEBUG
     printf("GLINFO: InitVScreen (glContext=%p)\n", glContext);
+    printf("GLINFO: InitVScreen: useColorIndex=%d, alphablending=%d, doublebuffer=%d\n",
+	   useColorIndex, alphablending, doublebuffer);
   #endif
 
   gl_reset_resources();
