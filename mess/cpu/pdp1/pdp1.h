@@ -6,13 +6,15 @@
 
 
 /* register ids for pdp1_get_reg/pdp1_set_reg */
-enum {
+enum
+{
 	PDP1_PC=1, PDP1_IR, PDP1_MB, PDP1_MA, PDP1_AC, PDP1_IO,
 	PDP1_PF, PDP1_PF1, PDP1_PF2, PDP1_PF3, PDP1_PF4, PDP1_PF5, PDP1_PF6,
 	PDP1_TA, PDP1_TW,
 	PDP1_SS, PDP1_SS1, PDP1_SS2, PDP1_SS3, PDP1_SS4, PDP1_SS5, PDP1_SS6,
 	PDP1_SNGL_STEP, PDP1_SNGL_INST, PDP1_EXTEND_SW,
-	PDP1_RUN, PDP1_CYC, PDP1_DEFER, PDP1_OV, PDP1_RIM, PDP1_EXD, PDP1_IOC, PDP1_IOH, PDP1_IOS,
+	PDP1_RUN, PDP1_CYC, PDP1_DEFER, PDP1_BRK_CTR, PDP1_OV, PDP1_RIM, PDP1_SBM, PDP1_EXD,
+	PDP1_IOC, PDP1_IOH, PDP1_IOS,
 	PDP1_START_CLEAR,	/* hack, do not use directly, use pdp1_pulse_start_clear instead */
 	PDP1_IO_COMPLETE	/* hack, do not use directly, use pdp1_pulse_iot_done instead */
 };
@@ -22,11 +24,11 @@ enum {
 
 typedef struct pdp1_reset_param_t
 {
-	/* callback for the iot instruction (required for CPU I/O) */
-	void (*extern_iot)(int *io, int nac, int mb);
+	/* callbacks for iot instructions (required for any I/O) */
+	void (*extern_iot[64])(int op2, int nac, int mb, int *io, int ac);
 	/* read a word from the perforated tape reader (required for read-in mode) */
 	void (*read_binary_word)(void);
-	/* called when sc is pulsed: IO devices should reset */
+	/* callback called when sc is pulsed: IO devices should reset */
 	void (*io_sc_callback)(void);
 
 	/* 0: no extend support, 1: extend with 15-bit address, 2: extend with 16-bit address */
@@ -34,6 +36,8 @@ typedef struct pdp1_reset_param_t
 	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
 	int hw_multiply;
 	int hw_divide;
+	/* 0: standard sequence break system 1: type 20 sequence break system */
+	int type_20_sbs;
 } pdp1_reset_param_t;
 
 #define IOT_NO_COMPLETION_PULSE -1

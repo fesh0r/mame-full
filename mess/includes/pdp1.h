@@ -71,19 +71,21 @@ enum
 /* defines for each field in input port pdp1_config */
 enum
 {
-	pdp1_config_extend_bit				= 0,
-	pdp1_config_extend_mask				= 0x3,	/* 2 bits */
-	pdp1_config_hw_multiply_bit	= 2,
+	pdp1_config_extend_bit			= 0,
+	pdp1_config_extend_mask			= 0x3,	/* 2 bits */
+	pdp1_config_hw_multiply_bit		= 2,
 	pdp1_config_hw_multiply_mask	= 0x1,
 	pdp1_config_hw_divide_bit		= 3,
-	pdp1_config_hw_divide_mask	= 0x1
+	pdp1_config_hw_divide_mask		= 0x1,
+	pdp1_config_type_20_sbs_bit		= 4,
+	pdp1_config_type_20_sbs_mask	= 0x1
 };
 
 /* defines for our font */
 enum
 {
-	pdp1_charnum = /*96*/128,	/* ASCII set + ??? special characters */
-									/* for whatever reason, 96 breaks some characters */
+	pdp1_charnum = /*104*/128,	/* ASCII set + 8 special characters */
+									/* for whatever reason, 104 breaks some characters */
 
 	pdp1_fontdata_size = 8 * pdp1_charnum
 };
@@ -108,7 +110,7 @@ int pdp1_typewriter_init(int id);
 void pdp1_typewriter_exit(int id);
 
 void pdp1_io_sc_callback(void);
-void pdp1_iot(int *io, int nac, int mb);
+void pdp1_iot(int op2, int nac, int mb, int *io, int ac);
 
 int pdp1_interrupt(void);
 

@@ -455,11 +455,11 @@ static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "brk. ctr. 1", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_BRK_CTR) & 1);
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "brk. ctr. 2", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_BRK_CTR) & 2);
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "overflow", x_panel_col2_offset+8, y, color_panel_caption);
@@ -471,7 +471,7 @@ static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "seq. break", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_SBM));
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "extend", x_panel_col2_offset+8, y, color_panel_caption);

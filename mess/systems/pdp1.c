@@ -8,7 +8,8 @@ Driver for a PDP1 emulator.
 	Chris Salomon (MESS driver)
 	Raphael Nabet (MESS driver)
 
-Initially, this was a conversion of a JAVA emulator.
+Initially, this was a conversion of a JAVA emulator
+(although code has been edited extensively ever since).
 I have tried contacting the author, but heard as yet nothing of him,
 so I don't know if it all right with him, but after all -> he did
 release the source, so hopefully everything will be fine (no his
@@ -27,35 +28,10 @@ When I saw the java emulator, running that game I was quite intrigued to
 include a driver for MESS.
 I think the historical value of SPACEWAR! is enormous.
 
-	Spacewar! was conceived in 1961 by Martin Graetz,
-	Stephen Russell, and Wayne Wiitanen. It was first
-	realized on the PDP-1 in 1962 by Stephen Russell,
-	Peter Samson, Dan Edwards, and Martin Graetz, together
-	with Alan Kotok, Steve Piner, and Robert A Saunders.
-	Spacewar! is in the public domain, but this credit
-	paragraph must accompany all distributed versions
-	of the program.
-
-In SPACEWAR!, meaning of the sense switches
-
-Sense switch 1 On = high momentum           Off = low momentum
-Sense switch 2 On = low gravity             Off = high gravity
-Sense switch 3            something with torpedos?
-Sense switch 4 On = background stars off    Off = background stars on
-Sense switch 5 On = star kills              Off = star teleports
-Sense switch 6 On = big star                Off = no big star
-
-
-Bug fixes...
-
-LISP appears to work.  However, typewriter input/output is not really easy to interpret.
+Two other programs are supported: Munching squares and LISP.
 
 Added Debugging and Disassembler...
 
-Another PDP1 emulator (or simulator) is at:
-ftp://minnie.cs.adfa.oz.au/pub/PDP-11/Sims/Supnik_2.3
-
-It seems to emulate pdp1 I/O more accurately than we do.  However, there is no CRT emulation.
 
 Also:
 ftp://minnie.cs.adfa.oz.au/pub/PDP-11/Sims/Supnik_2.3/software/lispswre.tar.gz
@@ -120,8 +96,6 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( FIRE_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON2|IPF_PLAYER2, "Fire Player 2", KEYCODE_DOWN, JOYCODE_2_BUTTON2 )
 	PORT_BITX( HSPACE_PLAYER1, IP_ACTIVE_HIGH, IPT_BUTTON3, "Hyperspace Player 1", KEYCODE_Z, JOYCODE_1_BUTTON3 )
 	PORT_BITX( HSPACE_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON3|IPF_PLAYER2, "Hyperspace Player 2", KEYCODE_SLASH, JOYCODE_2_BUTTON3 )
-
-
 
 	PORT_START		/* 1: various pdp1 operator control panel switches */
 	PORT_BITX(pdp1_control, IP_ACTIVE_HIGH, IPT_KEYBOARD, "control panel key", KEYCODE_LCONTROL, IP_JOY_NONE)
@@ -273,7 +247,9 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( 0x0008, 0x0000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Hardware divide", KEYCODE_NONE, IP_JOY_NONE )
     PORT_DIPSETTING(   0x0000, DEF_STR( Off ) )
     PORT_DIPSETTING(   0x0008, DEF_STR( On ) )
-
+	PORT_BITX( 0x0010, 0x0000, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Type 20 sequence break system", KEYCODE_NONE, IP_JOY_NONE )
+    PORT_DIPSETTING(   0x0000, DEF_STR( Off ) )
+    PORT_DIPSETTING(   0x0010, DEF_STR( On ) )
 
 INPUT_PORTS_END
 
@@ -300,7 +276,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 will simulate the remanence of a cathode ray tube */
 static unsigned char palette[] =
 {
-	0x00,0x00,0x00, /* BLACK */
+	0x00,0x00,0x00, /* black */
 	11,11,11,
 	14,14,14,
 	18,18,18,
@@ -315,7 +291,7 @@ static unsigned char palette[] =
 	131,131,131,
 	163,163,163,
 	204,204,204,
-	0xFF,0xFF,0xFF,  /* WHITE */
+	0xFF,0xFF,0xFF,  /* white */
 	0x00,0xFF,0x00,  /* green */
 	0x00,0x40,0x00,  /* dark green */
 	0xFF,0x00,0x00   /* red */
@@ -338,12 +314,34 @@ static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 
 pdp1_reset_param_t pdp1_reset_param =
 {
-	pdp1_iot,
+	{	/* external iot handlers.  NULL means that the iot is unimplemented, unless there are
+		parentheses around the iot name, in which case the iot is internal to the cpu core. */
+		/* I put a ? when the source is the handbook, since a) I have used the maintainance manual
+		as the primary source (as it goes more into details) b) the handbook and the maintainance
+		manual occasionnally contradict each other. */
+	/*	(iot)		rpa			rpb			tyo			tyi			ppa			ppb			dpy */
+		NULL,		pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,	pdp1_iot,
+	/*				spacewar																 */
+		NULL,		pdp1_iot,	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*							lag												glf?/jsp?	gpl?/gpr?/gcf? */
+		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*	rrb			rcb?		rcc?		cks			mcs			mes			mel			 */
+		pdp1_iot,	NULL,		NULL,		pdp1_iot,	NULL,		NULL,		NULL,		NULL,
+	/*	cad?		rac?		rbc?		pac						lpr/lfb/lsp swc/sci/sdf?/shr?	scv? */
+		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*	(dsc)		(asc)		(isb)		(cac)		(lsm)		(esm)		(cbs)		 */
+		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*	icv?																	mri|rlc?	mrf/inr?/ccr? */
+		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	/*	mcb|dur?	mwc|mtf?	mrc|sfc?...	msm|cgo?	(eem/lem)	mic			muf			 */
+		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,
+	},
 	pdp1_tape_read_binary,
 	pdp1_io_sc_callback,
 	0,	/* extend mode support defined in input ports and pdp1_init_machine */
 	0,	/* hardware multiply support defined in input ports and pdp1_init_machine */
-	0	/* hardware divide support defined in input ports and pdp1_init_machine */
+	0,	/* hardware divide support defined in input ports and pdp1_init_machine */
+	0	/* type 20 sequence break system support defined in input ports and pdp1_init_machine */
 };
 
 

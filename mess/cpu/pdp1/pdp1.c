@@ -3,14 +3,19 @@
  *
  * Barry Silverman mailto:barry@disus.com or mailto:bss@media.mit.edu
  * Vadim Gerasimov mailto:vadim@media.mit.edu
- * (not much was changed, only the IOT stuff and the 64 bit integer shifts)
  *
- * Note: I removed the IOT function to be external, it is
- * set at emulation initiation, the IOT function is part of
- * the machine emulation...
+ * Basically, it has been rewritten entirely in order to perform cycle-level simulation
+ * (with only a few flip-flops being set one cycle too early or too late).  I don't know if
+ * it is a good thing or a bad thing (it makes emulation more accurate, but slower, and
+ * code is more complex and less readable), but it appears to be the only way we could emulate
+ * mid-instruction sequence break.  And it enables us to emulate the control panel fairly
+ * accurately.
+ *
+ * Additionnally, IOT functions have been modified to be external: IOT callback pointers are set
+ * at emulation initiation, and most IOT callback functions are part of the machine emulation.
  *
  *
- * for the runnable java applet go to:
+ * for the runnable java applet, with applet and Spacewar! source, go to:
  * http://lcs.www.media.mit.edu/groups/el/projects/spacewar/
  *
  * for a complete html version of the pdp1 handbook go to:
@@ -20,15 +25,21 @@
  * original pdp1 LISP interpreter, go to:
  * http://lcs.www.media.mit.edu/groups/el/projects/pdp1
  *
+ * Another PDP1 emulator (or simulator) is at:
+ * ftp://minnie.cs.adfa.oz.au/pub/PDP-11/Sims/Supnik_2.3
+ * It seems to emulate pdp1 I/O more accurately than we do.
+ * However, there is no CRT emulation.
+ *
  * and finally, there is a nice article about SPACEWAR!, go to:
  * http://ars-www.uchicago.edu/~eric/lore/spacewar/spacewar.html
  *
  * some extra documentation is available on spies:
  * http://www.spies.com/~aek/pdf/dec/pdp1/
  * The file "F17_PDP1Maint.pdf" explains operation procedures and much of the internals of pdp-1.
+ * It was the main reference for this emulator.
  * The file "F25_PDP1_IO.pdf" has interesting information on the I/O system, too.
  *
- * following is an extract from the handbook:
+ * Following is an extract from the handbook:
  *
  * INTRODUCTION
  *
@@ -320,7 +331,6 @@
 
 /*
 	TODO:
-	* support sequence break
 	* support other extensions as time permits
 */
 
@@ -331,6 +341,8 @@
 #include "mamedbg.h"
 #include "pdp1.h"
 
+#define LOG 0
+#define LOG_EXTRA 0
 
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
@@ -351,7 +363,10 @@ static UINT8 pdp1_win_layout[] =
 };
 
 static void execute_instruction(void);
-static void intern_iot (int *io, int nac, int md);
+static void null_iot (int op2, int nac, int mb, int *io, int ac);
+static void lem_eem_iot(int op2, int nac, int mb, int *io, int ac);
+static void sbs_iot(int op2, int nac, int mb, int *io, int ac);
+static void type_20_sbs_iot(int op2, int nac, int mb, int *io, int ac);
 static void pulse_start_clear(void);
 
 
@@ -379,25 +394,34 @@ typedef struct
 	unsigned int run : 1;		/* processor is running */
 	unsigned int cycle : 1;		/* processor is in the midst of an instruction */
 	unsigned int defer : 1;		/* processor is handling deferred (i.e. indirect) addressing */
+	unsigned int brk_ctr : 2;	/* break counter */
 	unsigned int ov;			/* overflow flip-flop */
 	unsigned int rim : 1;		/* processor is in read-in mode */
-#if 0
+
 	unsigned int sbm : 1;		/* processor is in sequence break mode (i.e. interrupts are enabled) */
-	unsigned int irq_state : 1;	/* mirrors the state of the interrupt pin */
-	unsigned int b2: 1;			/* interrupt pending */
-	unsigned int b4: 1;			/* interrupt in progress */
-#endif
+
 	unsigned int exd : 1;		/* extend mode: processor is in extend mode */
 	unsigned int exc : 1;		/* extend-mode cycle: current instruction cycle is done in extend mode */
 	unsigned int ioc : 1;		/* i-o commands: seems to be equivalent to (! ioh) */
 	unsigned int ioh : 1;		/* i-o halt: processor is executing an Input-Output Transfer wait */
 	unsigned int ios : 1;		/* i-o synchronizer: set on i-o operation completion */
 
+	/* sequence break system */
+	unsigned int irq_state : 16;	/* mirrors the state of the interrupt pins */
+	unsigned int b1 : 16;			/* interrupt enable */
+	unsigned int b2 : 16;			/* interrupt pulse request pending - asynchronous with computer operation (set by pulses on irq_state, cleared when interrupt is taken) */
+	/*unsigned int b3 : 16;*/			/* interrupt request pending - synchronous with computer operation (logical or of irq_state and b2???) */
+	unsigned int b4 : 16;			/* interrupt in progress */
+
 	/* additional emulator state variables */
-	int rim_step;	/* current step in rim execution */
+	int rim_step;			/* current step in rim execution */
+	int sbs_request;		/* interrupt request (i.e. (b3 & (~ b4)) && (! sbm)) */
+	int sbs_level;			/* interrupt request level (first bit in (b3 & (~ b4)) */
+	int sbs_restore;		/* set when a jump instruction is an interrupt return */
+	int no_sequence_break;	/* disable sequence break recognition for one cycle */
 
 	/* callback for the iot instruction */
-	void (*extern_iot)(int *io, int nac, int mb);
+	void (*extern_iot[64])(int op2, int nac, int mb, int *io, int ac);
 	/* read a word from the perforated tape reader */
 	void (*read_binary_word)(void);
 	/* called when sc is pulsed: IO devices should reset */
@@ -412,6 +436,9 @@ typedef struct
 	/* 1 to use hardware multiply/divide (MUL, DIV) instead of MUS, DIS */
 	int hw_multiply;
 	int hw_divide;
+
+	/* 1 for 16-line sequence break system, 0 for default break system */
+	int type_20_sbs;
 }
 pdp1_Regs;
 
@@ -449,12 +476,59 @@ signed int pdp1_ICount;
 
 
 /*
-	interrupts are called "sequence break", and they do exist.
-
-	we do not emulate them, which is sad
+	interrupts are called "sequence break" in pdp1, but it does not make a big difference.
 */
+/*
+	This function MUST be called every time pdp1.sbm, pdp1.b4, pdp1.irq_state or pdp1.b2 change.
+*/
+static void field_interrupt(void)
+{
+	/* current_irq: 1 bit for each active pending interrupt request
+	Pending interrupts are in b3 (simulated by (pdp1.irq_state & pdp1.b1) | pdp1.b2)), but they
+	are only honored if no higher priority interrupt routine is in execution (one bit set in b4
+	for each routine in execution).  The revelant mask is created with (pdp1.b4 | (- pdp1.b4)),
+	as the carry chain does precisely what we want.
+	b4:    0001001001000
+	-b4:   1110110111000
+	b4|-b4:1111111111000
+	Neat, uh?
+	 */
+	int current_irq = ((pdp1.irq_state & pdp1.b1) | pdp1.b2) & ~ (pdp1.b4 | (- pdp1.b4));
+	int i;
+
+	if (pdp1.sbm && current_irq)
+	{
+		pdp1.sbs_request = 1;
+		for (i=0; i<16 && (! ((current_irq >> i) & 1)); i++)
+			;
+		pdp1.sbs_level = i;
+	}
+	else
+		pdp1.sbs_request = 0;
+}
+
 void pdp1_set_irq_line (int irqline, int state)
 {
+	if (irqline == IRQ_LINE_NMI)
+	{
+		/* no specific NMI line */
+	}
+	else if ((irqline >= 0) && (irqline < (pdp1.type_20_sbs ? 1 : 16)))
+	{
+		unsigned int new_state = state ? 1 : 0;
+
+		if (((pdp1.irq_state >> irqline) & 1) != new_state)
+		{
+			pdp1.irq_state = (pdp1.irq_state & ~ (1 << irqline)) | (new_state << irqline);
+
+			if ((new_state) && ((pdp1.b1 >> irqline) & 1))
+				pdp1.b2 |= (new_state << irqline);
+
+			/*pdp1.b3 = pdp1.irq_state | pdp1.b2;*/
+
+			field_interrupt();  /* interrupt state has changed */
+		}
+	}
 }
 
 void pdp1_set_irq_callback (int (*callback) (int irqline))
@@ -470,19 +544,24 @@ void pdp1_init(void)
 void pdp1_reset (void *untyped_param)
 {
 	pdp1_reset_param_t *param = untyped_param;
+	int i;
 
 	/* clean-up */
 	memset (&pdp1, 0, sizeof (pdp1));
 
 	/* set up params and callbacks */
+	for (i=0; i<64; i++)
+	{
+		pdp1.extern_iot[i] = (param && param->extern_iot[i])
+										? param->extern_iot[i]
+										: null_iot;
+	}
 	pdp1.read_binary_word = (param) ? param->read_binary_word : NULL;
-	pdp1.extern_iot = (param && param->extern_iot)
-									? param->extern_iot
-									: intern_iot;
-	pdp1.io_sc_callback = (param) ? param->io_sc_callback : 0;
+	pdp1.io_sc_callback = (param) ? param->io_sc_callback : NULL;
 	pdp1.extend_support = (param) ? param->extend_support : 0;
 	pdp1.hw_multiply = (param) ? param->hw_multiply : 0;
 	pdp1.hw_divide = (param) ? param->hw_divide : 0;
+	pdp1.type_20_sbs = (param) ? param->type_20_sbs : 0;
 
 	switch (pdp1.extend_support)
 	{
@@ -500,6 +579,17 @@ void pdp1_reset (void *untyped_param)
 		pdp1.extended_address_mask = 0177777;
 		pdp1.address_extension_mask = 0170000;
 		break;
+	}
+
+	if (pdp1.extend_support)
+	{
+		pdp1.extern_iot[074] = lem_eem_iot;
+	}
+	pdp1.extern_iot[054] = pdp1.extern_iot[055] = pdp1.extern_iot[056] = sbs_iot;
+	if (pdp1.type_20_sbs)
+	{
+		pdp1.extern_iot[050] = pdp1.extern_iot[051] = pdp1.extern_iot[052] = pdp1.extern_iot[053]
+				= type_20_sbs_iot;
 	}
 
 	/* reset CPU flip-flops */
@@ -560,7 +650,9 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_RUN: return pdp1.run;
 	case PDP1_CYC: return pdp1.cycle;
 	case PDP1_DEFER: return pdp1.defer;
+	case PDP1_BRK_CTR: return pdp1.brk_ctr;
 	case PDP1_RIM: return pdp1.rim;
+	case PDP1_SBM: return pdp1.sbm;
 	case PDP1_EXD: return EXD;
 	case PDP1_IOC: return pdp1.ioc;
 	case PDP1_IOH: return pdp1.ioh;
@@ -602,13 +694,19 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_SNGL_INST: pdp1.sngl_inst = val ? 1 : 0; break;
 	case PDP1_EXTEND_SW: pdp1.extend_sw = val ? 1 : 0; break;
 	case PDP1_RUN: pdp1.run = val ? 1 : 0; break;
-	case PDP1_CYC: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
-	case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
+	#if LOG
+		case PDP1_CYC: logerror("pdp1_set_reg to cycle flip-flop ignored\n");/* no way!*/ break;
+		case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
+		case PDP1_BRK_CTR: logerror("pdp1_set_reg to break counter ignored\n");/* no way!*/ break;
+	#endif
 	case PDP1_RIM: pdp1.rim = val ? 1 : 0; break;
+	case PDP1_SBM: pdp1.sbm = val ? 1 : 0; break;
 	case PDP1_EXD: EXD = (pdp1.extend_support && val) ? 1 : 0; break;
-	case PDP1_IOC: logerror("pdp1_set_reg to ioc flip-flop ignored\n");/* no way!*/ break;
-	case PDP1_IOH: logerror("pdp1_set_reg to ioh flip-flop ignored\n");/* no way!*/ break;
-	case PDP1_IOS: logerror("pdp1_set_reg to ios flip-flop ignored\n");/* no way!*/ break;
+	#if LOG
+		case PDP1_IOC: logerror("pdp1_set_reg to ioc flip-flop ignored\n");/* no way!*/ break;
+		case PDP1_IOH: logerror("pdp1_set_reg to ioh flip-flop ignored\n");/* no way!*/ break;
+		case PDP1_IOS: logerror("pdp1_set_reg to ios flip-flop ignored\n");/* no way!*/ break;
+	#endif
 	case REG_SP:  break;
 	case PDP1_START_CLEAR: pulse_start_clear(); break;
 	case PDP1_IO_COMPLETE: pdp1.ios = 1; break;
@@ -645,9 +743,6 @@ int pdp1_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 
-		/* I guess this is done at the start of each instruction cycle */
-		pdp1.ioc = ! pdp1.ioh;
-
 		/* ioh should be cleared at the end of the instruction cycle, and ios at the
 		start of next instruction cycle, but who cares? */
 		if (pdp1.ioh && pdp1.ios)
@@ -661,28 +756,24 @@ int pdp1_execute(int cycles)
 			pdp1_ICount = 0;	/* if processor is stopped, just burn cycles */
 		else if (pdp1.rim)
 		{
-			if (! pdp1.read_binary_word)
-				pdp1.rim = 0;	/* what else can we do ??? */
-			else
+			switch (pdp1.rim_step)
 			{
-				switch (pdp1.rim_step)
-				{
-				case 0:
-					/* read first word as instruction */
-					(*pdp1.read_binary_word)();		/* data is transferred to IO register */
-					pdp1.rim_step = 1;
-					break;
+			case 0:
+				/* read first word as instruction */
+				if (pdp1.read_binary_word)
+					(*pdp1.read_binary_word)();		/* data will be transferred to IO register */
+				pdp1.rim_step = 1;
+				break;
 
-				case 1:
-					if (pdp1.ios)
-					{
-						pdp1.ios = 0;
-					}
-					else
-					{
-						pdp1_ICount -= 100;
-						break;
-					}
+			case 1:
+				if (! pdp1.ios)
+				{	/* transfer incomplete: wait some more */
+					pdp1_ICount = 0;
+				}
+				else
+				{	/* data transfer complete */
+					pdp1.ios = 0;
+
 					MB = IO;
 					IR = MB >> 13;		/* basic opcode */
 					if (IR == JMP)		/* jmp instruction ? */
@@ -702,100 +793,184 @@ int pdp1_execute(int cycles)
 					else
 					{
 						/* what the heck? */
-						logerror("It seems this tape should not be operated in read-in mode\n");
+						#if LOG
+							logerror("It seems this tape should not be operated in read-in mode\n");
+						#endif
 						pdp1.rim = 0;		/* exit read-in mode (right???) */
 						pdp1.rim_step = 0;
 					}
-					break;
+				}
+				break;
 
-				case 2:
-					/* read second word as data */
-					(*pdp1.read_binary_word)();		/* data is transferred to IO register */
-					pdp1.rim_step = 3;
-					break;
+			case 2:
+				/* read second word as data */
+				if (pdp1.read_binary_word)
+					(*pdp1.read_binary_word)();		/* data will be transferred to IO register */
+				pdp1.rim_step = 3;
+				break;
 
-				case 3:
-					if (pdp1.ios)
-					{
-						pdp1.ios = 0;
-					}
-					else
-					{
-						pdp1_ICount -= 100;
-						break;
-					}
+			case 3:
+				if (! pdp1.ios)
+				{	/* transfer incomplete: wait some more */
+					pdp1_ICount = 0;
+				}
+				else
+				{	/* data transfer complete */
+					pdp1.ios = 0;
+
 					MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 
 					MB = IO;
 					WRITE_PDP_18BIT(MA, MB);
 
 					pdp1.rim_step = 0;
-					break;
 				}
+				break;
 			}
 		}
 		else
 		{
-			/* no instruction in progress: time to fetch a new instruction, I guess */
-			if (! pdp1.cycle)
-			{
-				MB = READ_PDP_18BIT(MA = PC);
-				INCREMENT_PC;
-				IR = MB >> 13;		/* basic opcode */
-
-				if ((instruction_kind[IR] & 1) && (MB & 010000))
-				{
-					pdp1.defer = 1;
-					pdp1.cycle = 1;			/* instruction shall be executed later */
-				}
-				else if (instruction_kind[IR] & 2)
-					pdp1.cycle = 1;			/* instruction shall be executed later */
-				else
-					execute_instruction();	/* execute instruction at once */
-
-				pdp1_ICount -= 5;
+			/* yes, interrupt can occur in the midst of an instruction (impressing, huh?) */
+			/* Note that break cannot occur during a one-cycle jump that is deferred only once,
+			or another break cycle.  Also, it cannot interrupt the long cycle 1 of automatic
+			multiply/divide.  (maintainance manual 6-19) */
+			if (pdp1.sbs_request && (! pdp1.no_sequence_break) && (! pdp1.brk_ctr))
+			{	/* begin sequence break */
+				pdp1.brk_ctr = 1;
 			}
-			else if (pdp1.defer)
-			{	/* defer cycle : handle indirect addressing */
-				MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
-
-				MB = READ_PDP_18BIT(MA);
-
-				/* determinate new value of pdp1.defer */
-				if (EXD)
+			if (pdp1.brk_ctr)
+			{	/* sequence break in progress */
+				switch (pdp1.brk_ctr)
 				{
-					pdp1.defer = 0;
-					pdp1.exc = 1;
-				}
-				else
-					pdp1.defer = (MB & 010000) ? 1 : 0;
+				case 1:
+					if (pdp1.cycle)
+						DECREMENT_PC;	/* set PC to point to aborted instruction, so that it can be re-run */
 
-				/* execute JMP and JSP immediately if applicable */
-				if ((! pdp1.defer) && (! instruction_kind[IR] & 2))
-				{
-					execute_instruction();	/* execute instruction at once */
-					/*pdp1.cycle = 0;*/
-					pdp1.exc = 0;
-				}
+					pdp1.b4 |= (1 << pdp1.sbs_level);	/* set "interrupt in progress" flag */
+					pdp1.b2 &= ~(1 << pdp1.sbs_level);	/* clear interrupt request */
+					field_interrupt();
+					MA = 0;				/* not true in type 120 sequence break system */
+					MB = AC;			/* save AC to MB */
+					AC = (OV << 17) | (EXD << 16) | PC;	/* save OV/EXD/PC to AC */
+					EXD = OV = 0;		/* according to maintainance manual p. 8-17 and ?-?? */
+					pdp1.cycle = pdp1.defer = pdp1.exc = 0;	/* mere guess */
+					WRITE_PDP_18BIT(MA, MB);	/* save former AC to memory */
+					INCREMENT_MA;
+					pdp1_ICount -= 5;
+					pdp1.brk_ctr++;
+					break;
 
-				pdp1_ICount -= 5;
+				case 2:
+					WRITE_PDP_18BIT(MA, MB = AC);	/* save former OV/EXD/PC to memory */
+					INCREMENT_MA;
+					pdp1_ICount -= 5;
+					pdp1.brk_ctr++;
+					break;
+
+				case 3:
+					WRITE_PDP_18BIT(MA, MB = IO);	/* save IO to memory */
+					INCREMENT_MA;
+					PC = MA;
+					pdp1_ICount -= 5;
+					pdp1.brk_ctr = 0;
+					break;
+				}
 			}
 			else
-			{	/* memory reference instruction in cycle 1 */
-				if (pdp1.exc)
-				{
-					MA = MB & EXTENDED_ADDRESS_MASK;
-					pdp1.exc = 0;
+			{
+				if (pdp1.no_sequence_break)
+					pdp1.no_sequence_break = 0;
+
+				if (! pdp1.cycle)
+				{	/* no instruction in progress: time to fetch a new instruction, I guess */
+					MB = READ_PDP_18BIT(MA = PC);
+					INCREMENT_PC;
+					IR = MB >> 13;		/* basic opcode */
+
+					if ((instruction_kind[IR] & 1) && (MB & 010000))
+					{
+						pdp1.defer = 1;
+						pdp1.cycle = 1;			/* instruction shall be executed later */
+
+						/* detect deferred one-cycle jumps */
+						if ((IR == JMP) || (IR == JSP))
+						{
+							pdp1.no_sequence_break = 1;
+							/* detect JMP *(4*n+1) to memory module 0 if in sequence break mode */
+							if (((MB & 0777703) == 0610001) && (pdp1.sbm) && ! (MA & 0170000))
+							{
+								int level = (MB & 0000074) >> 2;
+
+								if ((pdp1.type_20_sbs) || (level == 0))
+								{
+									pdp1.b4 &= ~(1 << level);
+									field_interrupt();
+									if (pdp1.extend_support)
+										EXD = 1;	/* according to maintainance manual p. 6-33 */
+									pdp1.sbs_restore = 1;
+								}
+							}
+						}
+					}
+					else if (instruction_kind[IR] & 2)
+						pdp1.cycle = 1;			/* instruction shall be executed later */
+					else
+						execute_instruction();	/* execute instruction at once */
+
+					pdp1_ICount -= 5;
 				}
-				else
+				else if (pdp1.defer)
+				{	/* defer cycle : handle indirect addressing */
 					MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 
-				execute_instruction();	/* execute instruction */
+					MB = READ_PDP_18BIT(MA);
 
-				pdp1_ICount -= 5;
+					/* determinate new value of pdp1.defer */
+					if (EXD)
+					{
+						pdp1.defer = 0;
+						pdp1.exc = 1;
+					}
+					else
+						pdp1.defer = (MB & 010000) ? 1 : 0;
+
+					/* execute JMP and JSP immediately if applicable */
+					if ((! pdp1.defer) && (! (instruction_kind[IR] & 2)))
+					{
+						execute_instruction();	/* execute instruction at once */
+						/*pdp1.cycle = 0;*/
+						pdp1.exc = 0;
+
+						if (pdp1.sbs_restore)
+						{	/* interrupt return: according to maintainance manual p. 6-33 */
+							if (pdp1.extend_support)
+								EXD = (MB >> 16) & 1;
+							OV = (MB >> 17) & 1;
+							pdp1.sbs_restore = 0;
+						}
+					}
+
+					pdp1_ICount -= 5;
+				}
+				else
+				{	/* memory reference instruction in cycle 1 */
+					if (pdp1.exc)
+					{
+						MA = MB & EXTENDED_ADDRESS_MASK;
+						pdp1.exc = 0;
+					}
+					else
+						MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
+
+					execute_instruction();	/* execute instruction */
+
+					pdp1_ICount -= 5;
+				}
+
+				if ((pdp1.sngl_inst) && (! pdp1.cycle))
+					pdp1.run = 0;
 			}
-
-			if ((pdp1.sngl_step) || ((pdp1.sngl_inst) && (! pdp1.cycle)))
+			if (pdp1.sngl_step)
 				pdp1.run = 0;
 		}
 	}
@@ -844,9 +1019,9 @@ const char *pdp1_info (void *context, int regnum)
 	case CPU_INFO_REG + PDP1_PF3: sprintf (buffer[which], "FLAG3:%X", (r->pf >> 3) & 1); break;
 	case CPU_INFO_REG + PDP1_PF4: sprintf (buffer[which], "FLAG4:%X", (r->pf >> 2) & 1); break;
 	case CPU_INFO_REG + PDP1_PF5: sprintf (buffer[which], "FLAG5:%X", (r->pf >> 1) & 1); break;
+	case CPU_INFO_REG + PDP1_PF6: sprintf (buffer[which], "FLAG6:%X", r->pf & 1); break;
 	case CPU_INFO_REG + PDP1_TA: sprintf (buffer[which], "TA:0%06o", r->ta);  break;
 	case CPU_INFO_REG + PDP1_TW: sprintf (buffer[which], "TW:0%06o", r->tw); break;
-	case CPU_INFO_REG + PDP1_PF6: sprintf (buffer[which], "FLAG6:%X", r->pf & 1); break;
 	case CPU_INFO_REG + PDP1_SS:  sprintf (buffer[which], "SS:0%02o", r->ss);  break;
 	case CPU_INFO_REG + PDP1_SS1: sprintf (buffer[which], "SENSE1:%X", (r->ss >> 5) & 1); break;
 	case CPU_INFO_REG + PDP1_SS2: sprintf (buffer[which], "SENSE2:%X", (r->ss >> 4) & 1); break;
@@ -860,7 +1035,9 @@ const char *pdp1_info (void *context, int regnum)
 	case CPU_INFO_REG + PDP1_RUN: sprintf (buffer[which], "RUN:%X", r->run); break;
 	case CPU_INFO_REG + PDP1_CYC: sprintf (buffer[which], "CYC:%X", r->cycle); break;
 	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DF:%X", r->defer); break;
+	case CPU_INFO_REG + PDP1_BRK_CTR: sprintf (buffer[which], "BRKCTR:%X", r->brk_ctr); break;
 	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", r->rim); break;
+	case CPU_INFO_REG + PDP1_SBM: sprintf (buffer[which], "SBM:%X", r->sbm); break;
 	case CPU_INFO_REG + PDP1_EXD: sprintf (buffer[which], "EXD:%X", r->exd); break;
 	case CPU_INFO_REG + PDP1_IOC: sprintf (buffer[which], "IOC:%X", r->ioc); break;
 	case CPU_INFO_REG + PDP1_IOH: sprintf (buffer[which], "IOH:%X", r->ioh); break;
@@ -933,7 +1110,11 @@ static void execute_instruction(void)
 			MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 		else
 			/* CAL: equivalent to JDA 100 */
-			MA = 0100;	/* or is it "(PC & ADDRESS_EXTENSION_MASK) | 0100" ??? */
+			/* Note that I cannot tell for sure what happens to extension bits, but I did notice
+			that setting the extension bits to 0 would make cal basically useless, since
+			there would be no simple way the call routine could return to the callee
+			if it were located in another module with extend mode off (i.e. exd == 0). */
+			MA = (PC & ADDRESS_EXTENSION_MASK) | 0100;
 
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		INCREMENT_MA;
@@ -950,10 +1131,10 @@ static void execute_instruction(void)
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		break;
 	case DAP:		/* Deposit Address Part */
-		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 0770000) | (AC & 07777))));
+		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 0770000) | (AC & 0007777))));
 		break;
 	case DIP:		/* Deposit Instruction Part */
-		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 07777) | (AC & 0770000))));
+		WRITE_PDP_18BIT(MA, (MB = ((READ_PDP_18BIT(MA) & 0007777) | (AC & 0770000))));
 		break;
 	case DIO:		/* Deposit I/O Register */
 		WRITE_PDP_18BIT(MA, (MB = IO));
@@ -962,39 +1143,88 @@ static void execute_instruction(void)
 		WRITE_PDP_18BIT(MA, (MB = 0));
 		break;
 	case ADD:		/* Add */
-	{
-		int new_ov;
-		AC = AC + (MB = READ_PDP_18BIT(MA));
-		OV |= new_ov = AC >> 18;
-		AC = (AC + new_ov) & 0777777;
-		if (AC == 0777777)
-			AC = 0;
-		break;
-	}
-	case SUB:		/* Subtract */
 		{
-			int diffsigns;
+			/* overflow is set if the 2 operands have the same sign and the final result has another */
+			/* As a side node, the order of -0 detection and overflow checking does not matter,
+			because the sum of two positive number cannot give 0777777 (since positive
+			numbers are 0377777 at most, their sum is 0777776 at most).
+			Additionnally, we cannot have carry set and a result equal to 0777777  (since numbers
+			are 0777777 at most, their sum is 01777776 at most): this is nice, because it makes
+			the sequence:
+				AC = (AC + (AC >> 18)) & 0777777;	// propagate carry around
+				if (AC == 0777777)			// check for -0
+					AC = 0;
+			equivalent to:
+				if (AC >= 0777777)
+					AC = (AC + (AC + 1)) & 0777777;
+			which is a bit more efficient. */
+			int ov2;	/* 1 if the operands have the same sign*/
 
 			MB = READ_PDP_18BIT(MA);
-			diffsigns = ((AC >> 17) ^ (MB >> 17)) == 1;
-			AC = AC + (MB ^ 0777777);
-			AC = (AC + (AC >> 18)) & 0777777;
-			if (AC == 0777777)
+
+			ov2 = ((AC & 0400000) == (MB & 0400000));
+
+			AC = AC + MB;
+#if 0
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+			if (AC == 0777777)		/* check for -0 */
 				AC = 0;
-			if (diffsigns && ((MB >> 17) == (AC >> 17)))
+#else
+			if (AC >= 0777777)
+				AC = (AC + 1) & 0777777;
+#endif
+
+			if (ov2 && ((AC & 0400000) != (MB & 0400000)))
 				OV = 1;
+
+			break;
+		}
+	case SUB:		/* Subtract */
+		{	/* maintainance manual 7-14 seems to imply that substract does not test for -0.
+			  The sim 2.3 source says so explicitely, though they do not give a reference.
+			  It sounds a bit weird, but the reason is probably that doing so would
+			  require additionnal logic that does not exist. */
+			/* overflow is set if the 2 operands have the same sign and the final result has another */
+			int ov2;	/* 1 if the operands have the same sign*/
+
+			AC ^= 0777777;
+
+			MB = READ_PDP_18BIT(MA);
+
+			ov2 = ((AC & 0400000) == (MB & 0400000));
+
+			AC = AC + MB;
+			AC = (AC + (AC >> 18)) & 0777777;
+
+			if (ov2 && ((AC & 0400000) != (MB & 0400000)))
+				OV = 1;
+
+			AC ^= 0777777;
+
 			break;
 		}
 	case IDX:		/* Index */
 		AC = READ_PDP_18BIT(MA) + 1;
-		if (AC == 0777777)
+#if 0
+		AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+		if (AC == 0777777)		/* check for -0 */
 			AC = 0;
+#else
+		if (AC >= 0777777)
+			AC = (AC + 1) & 0777777;
+#endif
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		break;
 	case ISP:		/* Index and Skip if Positive */
 		AC = READ_PDP_18BIT(MA) + 1;
-		if (AC == 0777777)
+#if 0
+		AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+		if (AC == 0777777)		/* check for -0 */
 			AC = 0;
+#else
+		if (AC >= 0777777)
+			AC = (AC + 1) & 0777777;
+#endif
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		if ((AC & 0400000) == 0)
 			INCREMENT_PC;
@@ -1059,12 +1289,21 @@ static void execute_instruction(void)
 		}
 		else
 		{	/* MUS */
+			/* should we check for -0??? (Maintainance manual 7-14 seems to imply we should not:
+			as a matter of fact, since the MUS instruction is supposed to have positive operands,
+			there is no need to check for -0, therefore such a simplification does not sound
+			absurd.) */
 			if ((IO & 1) == 1)
 			{
 				AC = AC + (MB = READ_PDP_18BIT(MA));
-				AC = (AC + (AC >> 18)) & 0777777;
-				if (AC == 0777777)
+#if 0
+				AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+				if (AC == 0777777)		/* check for -0 (right???) */
 					AC = 0;
+#else
+				if (AC >= 0777777)
+					AC = (AC + 1) & 0777777;
+#endif
 			}
 			IO = (IO >> 1 | AC << 17) & 0777777;
 			AC >>= 1;
@@ -1100,9 +1339,14 @@ static void execute_instruction(void)
 			while (1)
 			{
 				AC = (AC + MB);
-				AC = (AC + (AC >> 18)) & 0777777;
-				if (AC == 0777777)
+#if 0
+				AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+				if (AC == 0777777)		/* check for -0 */
 					AC = 0;
+#else
+				if (AC >= 0777777)
+					AC = (AC + 1) & 0777777;
+#endif
 				if (MB & 0400000)
 					MB = MB ^ 0777777;
 
@@ -1127,9 +1371,14 @@ static void execute_instruction(void)
 			}
 
 			AC = (AC + MB);
-			AC = (AC + (AC >> 18)) & 0777777;
-			if (AC == 0777777)
+#if 0
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+			if (AC == 0777777)		/* check for -0 */
 				AC = 0;
+#else
+			if (AC >= 0777777)
+				AC = (AC + 1) & 0777777;
+#endif
 
 			if (scr)
 			{
@@ -1173,8 +1422,10 @@ static void execute_instruction(void)
 			{
 				AC += MB + 1;
 			}
-			AC = (AC + (AC >> 18)) & 0777777;
-			if (AC == 0777777)
+			/* note that the hack described in ADD does not work here:
+			0777777+0777777+1 = 01777777 !!! */
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+			if (AC == 0777777)		/* check for -0 */
 				AC = 0;
 		}
 		break;
@@ -1193,16 +1444,15 @@ static void execute_instruction(void)
 		break;
 	case SKP:		/* Skip Instruction Group */
 		{
-			int mb = MB;
-			int cond = ((mb & 0100) && (AC == 0))	/* ZERO Accumulator */
-				|| ((mb & 0200) && (AC >> 17 == 0))	/* Plus Accumulator */
-				|| ((mb & 0400) && (AC >> 17 == 1))	/* Minus Accumulator */
-				|| ((mb & 01000) && (OV == 0))		/* ZERO Overflow */
-				|| ((mb & 02000) && (IO >> 17 == 0))	/* Plus I/O Register */
-				|| (((mb & 7) != 0) && (((mb & 7) == 7) ? ! FLAGS : ! READFLAG(mb & 7)))	/* ZERO Flag (deleted by mistake in PDP-1 handbook) */
-				|| (((mb & 070) != 0) && (((mb & 070) == 070) ? ! SENSE_SW : ! READSENSE((mb & 070) >> 3)));	/* ZERO Switch */
+			int cond = ((MB & 0100) && (AC == 0))	/* ZERO Accumulator */
+				|| ((MB & 0200) && (AC >> 17 == 0))	/* Plus Accumulator */
+				|| ((MB & 0400) && (AC >> 17 == 1))	/* Minus Accumulator */
+				|| ((MB & 01000) && (OV == 0))		/* ZERO Overflow */
+				|| ((MB & 02000) && (IO >> 17 == 0))	/* Plus I/O Register */
+				|| (((MB & 7) != 0) && (((MB & 7) == 7) ? ! FLAGS : ! READFLAG(MB & 7)))	/* ZERO Flag (deleted by mistake in PDP-1 handbook) */
+				|| (((MB & 070) != 0) && (((MB & 070) == 070) ? ! SENSE_SW : ! READSENSE((MB & 070) >> 3)));	/* ZERO Switch */
 
-			if (! (mb & 010000))
+			if (! (MB & 010000))
 			{
 				if (cond)
 					INCREMENT_PC;
@@ -1212,7 +1462,7 @@ static void execute_instruction(void)
 				if (!cond)
 					INCREMENT_PC;
 			}
-			if (mb & 01000)
+			if (MB & 01000)
 				OV = 0;
 			break;
 		}
@@ -1221,16 +1471,15 @@ static void execute_instruction(void)
 			/* Bit 5 specifies direction of shift, Bit 6 specifies the character of the shift
 			(arithmetic or logical), Bits 7 and 8 enable the registers (01 = AC, 10 = IO,
 			and 11 = both) and Bits 9 through 17 specify the number of steps. */
-			int mb = MB;
 			int nshift = 0;
-			int mask = mb & 0777;
+			int mask = MB & 0777;
 
 			while (mask != 0)
 			{
 				nshift += mask & 1;
 				mask >>= 1;
 			}
-			switch ((mb >> 9) & 017)
+			switch ((MB >> 9) & 017)
 			{
 				int i;
 
@@ -1303,7 +1552,9 @@ static void execute_instruction(void)
 				}
 				break;
 			default:
-				logerror("Undefined shift: 0%06o at 0%06o\n", mb, PREVIOUS_PC);
+				#if LOG
+					logerror("Undefined shift: 0%06o at 0%06o\n", MB, PREVIOUS_PC);
+				#endif
 				break;
 			}
 			break;
@@ -1346,14 +1597,27 @@ static void execute_instruction(void)
 			such as forward, backward etc.  If a large number of specialized devices are to
 			be attached, these bits may be used to further the in-out transfer instruction
 			to perform totally distinct functions. 
+
+			Note that ioc is supposed to be set at the beggining of the memory cycle after
+			ioh is cleared.
+			However, we cannot set ioc et the beggining of every memory cycle as we
+			did before, because it breaks in the following case:
+			a) IOT instruction enables IO wait
+			b) sequence break in the middle of IO-halt
+			c) ioh is cleared in middle of sequence break routine
+			d) re-execute IOT instruction.  Unfortunately, ioc has been cleared, therefore
+			  we perform an IOT command pulse and IO wait again, which is completely WRONG.
+			Therefore ioc is cleared only after a IOT with wait is executed.
 		*/
 		if (MB & 010000)
-		{
+		{	/* IOT with IO wait */
 			if (pdp1.ioc)
 			{	/* the iot command line is pulsed only if ioc is asserted */
-				pdp1.extern_iot(&IO, (MB & 04000) == 0, MB);
+				(*pdp1.extern_iot[MB & 0000077])(MB & 0000077, (MB & 0004000) == 0, MB, &IO, AC);
 
 				pdp1.ioh = 1;	/* enable io wait */
+
+				pdp1.ioc = 0;	/* actually happens at the start of next memory cycle */
 
 				/* test ios now in case the IOT callback has sent a completion pulse immediately */
 				if (pdp1.ioh && pdp1.ios)
@@ -1367,44 +1631,49 @@ static void execute_instruction(void)
 
 			if (pdp1.ioh)
 				DECREMENT_PC;
+			else
+				pdp1.ioc = 1;	/* actually happens at the start of next memory cycle */
 		}
 		else
-		{
-			pdp1.extern_iot (&IO, (MB & 04000) != 0, MB);
+		{	/* IOT with no IO wait */
+			(*pdp1.extern_iot[MB & 0000077])(MB & 0000077, (MB & 0004000) != 0, MB, &IO, AC);
 		}
 		break;
 	case OPR:		/* Operate Instruction Group */
 		{
-			int mb = MB;
 			int nflag;
 
-			if (mb & 00200)		/* clear AC */
+			if (MB & 00200)		/* clear AC */
 				AC = 0;
-			if (mb & 04000)		/* clear I/O register */
+			if (MB & 04000)		/* clear I/O register */
 				IO = 0;
-			if (mb & 02000)		/* load Accumulator from Test Word */
+			if (MB & 02000)		/* load Accumulator from Test Word */
 				AC |= pdp1.tw;
-			if (mb & 00100)		/* load Accumulator with Program Counter */
+			if (MB & 00100)		/* load Accumulator with Program Counter */
 				AC |= (OV << 17) | (EXD << 16) | PC;
-			nflag = mb & 7;
+			nflag = MB & 7;
 			if (nflag)
 			{
 				if (nflag == 7)
-					FLAGS = (mb & 010) ? 077 : 000;
+					FLAGS = (MB & 010) ? 077 : 000;
 				else
-					WRITEFLAG(nflag, (mb & 010) ? 1 : 0);
+					WRITEFLAG(nflag, (MB & 010) ? 1 : 0);
 			}
-			if (mb & 01000)		/* Complement AC */
+			if (MB & 01000)		/* Complement AC */
 				AC ^= 0777777;
-			if (mb & 00400)		/* Halt */
+			if (MB & 00400)		/* Halt */
 			{
-				logerror("PDP1 Program executed HALT: at 0%06o\n", PREVIOUS_PC);
+				#if LOG_EXTRA
+					logerror("PDP1 Program executed HALT: at 0%06o\n", PREVIOUS_PC);
+				#endif
 				pdp1.run = 0;
 			}
 			break;
 		}
 	default:
-		logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PREVIOUS_PC);
+		#if LOG
+			logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PREVIOUS_PC);
+		#endif
 		/* let us stop the CPU, like a real pdp-1 */
 		pdp1.run = 0;
 
@@ -1416,12 +1685,151 @@ no_fetch:
 }
 
 
-static void intern_iot (int *io, int nac, int mb)
+/*
+	Handle unimplemented IOT
+*/
+static void null_iot(int op2, int nac, int mb, int *io, int ac)
 {
-	logerror("No external IOT function given at 0%06o\n", PREVIOUS_PC);
+	/* Note that the dummy IOT 0 is used to wait for the completion pulse
+	generated by the a pending IOT (IOT with completion pulse but no IO wait) */
+	#if LOG_IOT_EXTRA
+		if (op2 == 000)
+			logerror("IOT sync instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+	#endif
+	#if LOG
+		if (op2 != 000)
+			logerror("Not supported IOT command (no external IOT function given) 0%06o at 0%06o\n", mb, PREVIOUS_PC);
+	#endif
 }
 
 
+/*
+	Memory expansion control (type 15)
+
+	IOT 74: LEM/EEM
+*/
+static void lem_eem_iot(int op2, int nac, int mb, int *io, int ac)
+{
+	if (! pdp1.extend_support)	/* extend mode supported? */
+	{
+		#if LOG
+			logerror("Ignoring internal error in file " __FILE__ " line %d.\n", __LINE__);
+		#endif
+		return;
+	}
+	#if LOG_EXTRA
+		logerror("EEM/LEM instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+	#endif
+	EXD = (mb & 0004000) ? 1 : 0;
+}
+
+
+/*
+	Standard sequence break system
+
+	IOT 54: lsm
+	IOT 55: esm
+	IOT 56: cbs
+*/
+static void sbs_iot(int op2, int nac, int mb, int *io, int ac)
+{
+	switch (op2)
+	{
+	case 054:	/* LSM */
+		#if LOG_EXTRA
+			logerror("LSM instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.sbm = 0;
+		field_interrupt();
+		break;
+	case 055:	/* ESM */
+		#if LOG_EXTRA
+			logerror("ESM instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.sbm = 1;
+		field_interrupt();
+		break;
+	case 056:	/* CBS */
+		#if LOG_EXTRA
+			logerror("CBS instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		/*pdp1.b3 = 0;*/
+		pdp1.b4 = 0;
+		field_interrupt();
+		break;
+	default:
+		#if LOG
+			logerror("Ignoring internal error in file " __FILE__ " line %d.\n", __LINE__);
+		#endif
+		break;
+	}
+}
+
+
+/*
+	type 20 sequence break system
+
+	IOT 50: dsc
+	IOT 51: asc
+	IOT 52: isb
+	IOT 53: cac
+*/
+static void type_20_sbs_iot(int op2, int nac, int mb, int *io, int ac)
+{
+	int channel, mask;
+	if (! pdp1.type_20_sbs)	/* type 20 sequence break system supported? */
+	{
+		#if LOG
+			logerror("Ignoring internal error in file " __FILE__ " line %d.\n", __LINE__);
+		#endif
+		return;
+	}
+	channel = (mb >> 6) & 017;
+	mask = 1 << channel;
+	switch (op2)
+	{
+	case 050:	/* DSC */
+		#if LOG_EXTRA
+			logerror("DSC instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.b1 &= ~mask;
+		field_interrupt();
+		break;
+	case 051:	/* ASC */
+		#if LOG_EXTRA
+			logerror("ASC instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.b1 |= mask;
+		field_interrupt();
+		break;
+	case 052:	/* ISB */
+		#if LOG_EXTRA
+			logerror("ISB instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.b2 |= mask;
+		field_interrupt();
+		break;
+	case 053:	/* CAC */
+		#if LOG_EXTRA
+			logerror("CAC instruction: mb=0%06o, pc=0%06o\n", mb, pdp1.pc);
+		#endif
+		pdp1.b1 = 0;
+		field_interrupt();
+		break;
+	default:
+		#if LOG
+			logerror("Ignoring internal error in file " __FILE__ " line %d.\n", __LINE__);
+		#endif
+		break;
+	}
+
+}
+
+
+/*
+	Simulate a pulse on start/clear line:
+	reset most registers and flip-flops, and intialize a few emulator state variables.
+*/
 static void pulse_start_clear(void)
 {
 	/* processor registers */
@@ -1437,21 +1845,26 @@ static void pulse_start_clear(void)
 	pdp1.run = 0;		/* ??? */
 	pdp1.cycle = 0;		/* mere guess */
 	pdp1.defer = 0;		/* mere guess */
-	/*pdp1.ov = 0;*/	/* ??? */
+	pdp1.brk_ctr = 0;	/* mere guess */
+	pdp1.ov = 0;		/* according to maintainance manual p. 7-18 */
 	pdp1.rim = 0;		/* ??? */
-#if 0
 	pdp1.sbm = 0;		/* ??? */
-	pdp1.b2 = 0;		/* ??? */
-	pdp1.b4 = 0;		/* ??? */
-#endif
 	EXD = 0;			/* according to maintainance manual p. 8-16 */
 	pdp1.exc = 0;		/* according to maintainance manual p. 8-16 */
-
 	pdp1.ioc = 1;		/* according to maintainance manual p. 6-10 */
 	pdp1.ioh = 0;		/* according to maintainance manual p. 6-10 */
 	pdp1.ios = 0;		/* according to maintainance manual p. 6-10 */
 
+	pdp1.b1 = pdp1.type_20_sbs ? 0 : 1;	/* mere guess */
+	pdp1.b2 = 0;		/* mere guess */
+	pdp1.b4 = 0;		/* mere guess */
+
+
 	pdp1.rim_step = 0;
+	pdp1.sbs_restore = 0;		/* mere guess */
+	pdp1.no_sequence_break = 0;	/* mere guess */
+
+	field_interrupt();
 
 	/* now, we kindly ask IO devices to reset, too */
 	if (pdp1.io_sc_callback)
