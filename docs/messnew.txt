@@ -32,7 +32,7 @@ Source Changes:
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- [TI99] Enabled a new, incomplete TI-99/8 driver.
 
 
 System Driver Changes:
