@@ -134,7 +134,8 @@ TESTDRIVER( vip )		/* Cosmac VIP						*/
 	/* schmid tvg 2000 */
 	/* eduscho tele fever */
 	/* hanimex fever 1 (hmg 2650) */
-	DRIVER( paladium )/* Palladium different cartridge connector, more keys */
+	DRIVER( vcg )		/* Palladium Video-Computer-Game */
+				/* different cartridge connector, more keys */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */

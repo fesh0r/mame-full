@@ -102,7 +102,7 @@ PORT_ANALOGX(0x1ff,0x10,IPT_AD_STICK_Y|IPF_CENTER|IPF_PLAYER2,100,10,0,0x1f,KEYC
 #endif
 INPUT_PORTS_END
 
-INPUT_PORTS_START( paladium )
+INPUT_PORTS_START( vcg )
 	PORT_START
 	DIPS_HELPER( 0x01, "Start", KEYCODE_F1, CODE_NONE)
 	DIPS_HELPER( 0x02, "Selector A", KEYCODE_F2, CODE_NONE)
@@ -285,7 +285,7 @@ ROM_START(arcadia)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-ROM_START(paladium)
+ROM_START(vcg)
 	ROM_REGION(0x8000,REGION_CPU1, 0)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
@@ -372,7 +372,7 @@ static const struct IODevice io_arcadia[] = {
     { IO_END }
 };
 
-#define io_paladium io_arcadia
+#define io_vcg io_arcadia
 
 void init_arcadia(void)
 {
@@ -519,7 +519,7 @@ CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001
 
 // different cartridge connector (same size as mpt03, but different pinout!)
 // 16 keys instead of 12
-CONSX( 198?, paladium,	arcadia,arcadia,  paladium,  arcadia,		"Palladium",		"Palladium", GAME_IMPERFECT_SOUND )
+CONSX( 198?, vcg,	arcadia,arcadia,  vcg,  arcadia,		"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )
 
 
 #ifdef RUNTIME_LOADER
@@ -528,7 +528,7 @@ extern void arcadia_runtime_loader_init(void)
 	int i;
 	for (i=0; drivers[i]; i++) {
 		if ( strcmp(drivers[i]->name,"arcadia")==0) drivers[i]=&driver_arcadia;
-		if ( strcmp(drivers[i]->name,"paladium")==0) drivers[i]=&driver_paladium;
+		if ( strcmp(drivers[i]->name,"vcg")==0) drivers[i]=&driver_vcg;
 	}
 }
 #endif
