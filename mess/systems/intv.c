@@ -25,55 +25,56 @@
 #include "includes/intv.h"
 
 #ifndef VERBOSE
+#ifdef MAME_DEBUG
 #define VERBOSE 1
+#else
+#define VERBOSE 0
+#endif
 #endif
 
-static unsigned char intv_palette[16][3] =
+static unsigned char intv_palette[] =
 {
-	{0x00, 0x00, 0x00}, /* BLACK */
-	{0x00, 0x2D, 0xFF}, /* BLUE */
-	{0xFF, 0x3D, 0x10}, /* RED */
-	{0xC9, 0xCF, 0xAB}, /* TAN */
-	{0x38, 0x6B, 0x3F}, /* DARK GREEN */
-	{0x00, 0xA7, 0x56}, /* GREEN */
-	{0xFA, 0xEA, 0x50}, /* YELLOW */
-	{0xFF, 0xFC, 0xFF}, /* WHITE */
-	{0xBD, 0xAC, 0xC8}, /* GRAY */
-	{0x24, 0xB8, 0xFF}, /* CYAN */
-	{0xFF, 0xB4, 0x1F}, /* ORANGE */
-	{0x54, 0x6E, 0x00}, /* BROWN */
-	{0xFF, 0x4E, 0x57}, /* PINK */
-	{0xA4, 0x96, 0xFF}, /* LIGHT BLUE */
-	{0x75, 0xCC, 0x80}, /* YELLOW GREEN */
-	{0xB5, 0x1A, 0x58}  /* PURPLE */
+	0x00, 0x00, 0x00, /* BLACK */
+	0x00, 0x2D, 0xFF, /* BLUE */
+	0xFF, 0x3D, 0x10, /* RED */
+	0xC9, 0xCF, 0xAB, /* TAN */
+	0x38, 0x6B, 0x3F, /* DARK GREEN */
+	0x00, 0xA7, 0x56, /* GREEN */
+	0xFA, 0xEA, 0x50, /* YELLOW */
+	0xFF, 0xFC, 0xFF, /* WHITE */
+	0xBD, 0xAC, 0xC8, /* GRAY */
+	0x24, 0xB8, 0xFF, /* CYAN */
+	0xFF, 0xB4, 0x1F, /* ORANGE */
+	0x54, 0x6E, 0x00, /* BROWN */
+	0xFF, 0x4E, 0x57, /* PINK */
+	0xA4, 0x96, 0xFF, /* LIGHT BLUE */
+	0x75, 0xCC, 0x80, /* YELLOW GREEN */
+	0xB5, 0x1A, 0x58  /* PURPLE */
 };
 
-static void intv_init_palette(unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+static PALETTE_INIT( intv )
 {
 	int i,j;
 
 	/* Two copies of the palette */
-    memcpy(sys_palette, intv_palette, sizeof(intv_palette));
-    memcpy(sys_palette+sizeof(intv_palette), intv_palette,
-            sizeof(intv_palette));
+	palette_set_colors(0, intv_palette, sizeof(intv_palette) / 3);
+	palette_set_colors(sizeof(intv_palette) / 3, intv_palette, sizeof(intv_palette) / 3);
 
     /* Two copies of the color table */
     for(i=0;i<16;i++)
     {
     	for(j=0;j<16;j++)
     	{
-    		*sys_colortable++ = i;
-    		*sys_colortable++ = j;
+    		*colortable++ = i;
+    		*colortable++ = j;
 		}
 	}
     for(i=0;i<16;i++)
     {
     	for(j=0;j<16;j++)
     	{
-    		*sys_colortable++ = i+16;
-    		*sys_colortable++ = j+16;
+    		*colortable++ = i+16;
+    		*colortable++ = j+16;
 		}
 	}
 }
@@ -375,96 +376,55 @@ static MEMORY_WRITE_START( writemem2 )
 	{ 0xc000, 0xffff, MWA_ROM },
 MEMORY_END
 
-static struct MachineDriver machine_driver_intv =
+static INTERRUPT_GEN( intv_interrupt2 )
 {
+	cpu_set_irq_line(1, 0, PULSE_LINE);
+}
+
+static MACHINE_DRIVER_START( intv )
 	/* basic machine hardware */
-	{
-		/* Main CPU (in Master System) */
-		{
-			CPU_CP1600,
-			3579545/4,  /* Colorburst/4 */
-			readmem,writemem,0,0,
-			intv_interrupt,1
-		}
-	},
-	/* frames per second, VBL duration */
-	59.92, DEFAULT_60HZ_VBLANK_DURATION,
-	1,						/* slices per frame */
-	intv_machine_init,		/* init machine */
-	NULL,					/* stop machine */
+	MDRV_CPU_ADD_TAG("main", CP1600, 3579545/4)        /* Colorburst/4 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(intv_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(59.92)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	40*8, 24*8, { 0, 40*8-1, 0, 24*8-1},
-	intv_gfxdecodeinfo,
-	32 ,
-	2 * 2 * 16 * 16,
-	intv_init_palette,					/* convert color prom */
+	MDRV_MACHINE_INIT( intv )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(40*8, 24*8)
+	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 24*8-1)
+	MDRV_GFXDECODE( intv_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(2 * 2 * 16 * 16)
+	MDRV_PALETTE_INIT( intv )
 
-	intv_vh_start,
-	intv_vh_stop,
-	intv_vh_screenrefresh,
+	MDRV_VIDEO_START( intv )
+	MDRV_VIDEO_UPDATE( intv )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_intvkbd =
-{
-	/* basic machine hardware */
-	{
-		/* Main CPU (in Master System) */
-		{
-			CPU_CP1600,
-			3579545/4,  /* Colorburst/4 */
-			readmem_kbd,writemem_kbd,0,0,
-			intv_interrupt,1
-		},
-		/* Slave CPU - runs tape drive, text display */
-		{
-			CPU_M6502,
-			3579545/2,	/* Colorburst/2 */
-			readmem2,writemem2,0,0,
-			interrupt,1
-        }
-	},
-	/* frames per second, VBL duration */
-	59.92, DEFAULT_60HZ_VBLANK_DURATION,
-	100,						/* slices per frame */
-	intv_machine_init,		/* init machine */
-	NULL,					/* stop machine */
 
-	/* video hardware */
-	40*8, 24*8, { 0, 40*8-1, 0, 24*8-1},
-	intvkbd_gfxdecodeinfo,
-	32 ,
-	2 * 2 * 16 * 16,
-	intv_init_palette,					/* convert color prom */
+static MACHINE_DRIVER_START( intvkbd )
+	MDRV_IMPORT_FROM( intv )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(readmem_kbd,writemem_kbd)
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
+	MDRV_CPU_ADD(M6502, 3579545/2)	/* Colorburst/2 */
+	MDRV_CPU_MEMORY(readmem2,writemem2)
+	MDRV_CPU_VBLANK_INT(intv_interrupt2,1)
 
-	intvkbd_vh_start,
-	intvkbd_vh_stop,
-	intvkbd_vh_screenrefresh,
+	MDRV_INTERLEAVE(100)
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+    /* video hardware */
+	MDRV_GFXDECODE( intvkbd_gfxdecodeinfo )
+	MDRV_VIDEO_START( intvkbd )
+	MDRV_VIDEO_UPDATE( intvkbd )
+MACHINE_DRIVER_END
 
 ROM_START(intv)
 	ROM_REGION(0x10000<<1,REGION_CPU1,0)

@@ -151,8 +151,8 @@ const struct GameDriver *drivers[] =
 ////	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
 
 	/* MATTEL */
-////	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV           */
-////	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??           */
+	DRIVER( intv )      /* Mattel Intellivision - 1979 AKA INTV           */
+	DRIVER( intvsrs )   /* Intellivision (Sears License) - 19??           */
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision								  */
@@ -665,7 +665,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
 	/* MATTEL */
-//	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
+	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
 						/* (Test marketed, later recalled )				  */
 	DRIVER( aquarius )	/* 1983 Aquarius								  */
 

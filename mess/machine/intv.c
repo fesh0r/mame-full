@@ -431,11 +431,11 @@ int intv_load_rom(int id)
 }
 
 /* Set Reset and INTR/INTRM Vector */
-void init_intv(void)
+DRIVER_INIT( intv )
 {
 }
 
-void intv_machine_init(void)
+MACHINE_INIT( intv )
 {
 	cpu_irq_line_vector_w(0, CP1600_RESET, 0x1000);
 
@@ -452,13 +452,12 @@ void intv_interrupt_complete(int x)
 	cpu_set_irq_line(0, CP1600_INT_INTRM, CLEAR_LINE);
 }
 
-int intv_interrupt(void)
+INTERRUPT_GEN( intv_interrupt )
 {
 	cpu_set_irq_line(0, CP1600_INT_INTRM, ASSERT_LINE);
 	sr1_int_pending = 1;
 	timer_set(TIME_NOW+TIME_IN_CYCLES(3791, 0), 0, intv_interrupt_complete);
 	stic_screenrefresh();
-	return 0;
 }
 
 static UINT8 controller_table[] =

@@ -2,13 +2,10 @@
 #define __INTV_H
 
 /* in vidhrdw/intv.c */
-int intv_vh_start(void);
-void intv_vh_stop(void);
-void intv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-int intvkbd_vh_start(void);
-void intvkbd_vh_stop(void);
-void intvkbd_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( intv );
+extern VIDEO_UPDATE( intv );
+extern VIDEO_START( intvkbd );
+extern VIDEO_UPDATE( intvkbd );
 
 /* in machine/intv.c */
 
@@ -18,11 +15,11 @@ extern UINT8 intv_gram[];
 extern UINT8 intv_gramdirtybytes[];
 extern UINT16 intv_ram16[];
 
-void init_intv(void);
+extern DRIVER_INIT( intv );
 int intv_load_rom (int id);
 
-void intv_machine_init(void);
-int intv_interrupt(void);
+extern MACHINE_INIT( intv );
+extern INTERRUPT_GEN( intv_interrupt );
 
 READ16_HANDLER( intv_gram_r );
 WRITE16_HANDLER( intv_gram_w );
@@ -40,7 +37,7 @@ READ_HANDLER( intv_left_control_r );
 /* for the console + keyboard component... */
 extern int intvkbd_text_blanked;
 
-void init_intvkbd(void);
+extern DRIVER_INIT( intvkbd );
 int intvkbd_load_rom (int id);
 
 READ16_HANDLER ( intvkbd_dualport16_r );

@@ -5,11 +5,11 @@
 
 #define FOREGROUND_BIT 0x0010
 
-int intv_vh_start(void)
+VIDEO_START( intv )
 {
 	//int i,j,k;
 
-	if (generic_bitmapped_vh_start())
+	if (video_start_generic_bitmapped())
 		return 1;
 
 /*
@@ -58,11 +58,6 @@ int intv_vh_start(void)
 */
 
     return 0;
-}
-
-void intv_vh_stop(void)
-{
-	generic_bitmapped_vh_stop();
 }
 
 /* NPW 20-Apr-2002 - Changing this to fix compilation errors with MSVC */
@@ -767,14 +762,14 @@ void stic_screenrefresh()
 	row_delay = intv_row_delay;
 }
 
-void intv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( intv )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,
 	           col_delay*2,row_delay*2,
 			   &Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-int intvkbd_vh_start(void)
+VIDEO_START( intvkbd )
 {
 	videoram_size = 0x0800;
 	videoram = auto_malloc(videoram_size);
@@ -782,13 +777,7 @@ int intvkbd_vh_start(void)
     if (video_start_generic())
         return 1;
 
-	return intv_vh_start();
-    return 0;
-}
-
-void intvkbd_vh_stop(void)
-{
-	intv_vh_stop();
+	return video_start_intv();
 }
 
 /* very rudimentary support for the tms9927 character generator IC */
@@ -844,14 +833,14 @@ WRITE_HANDLER( intvkbd_tms9927_w )
 	}
 }
 
-void intvkbd_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( intvkbd )
 {
 	int x,y,offs;
 	int current_row;
 //	char c;
 
 	/* Draw the underlying INTV screen first */
-	intv_vh_screenrefresh(bitmap, full_refresh);
+	video_update_intv(bitmap, cliprect);
 
 	/* if the intvkbd text is not blanked, overlay it */
 	if (!intvkbd_text_blanked)
