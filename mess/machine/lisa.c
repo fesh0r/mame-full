@@ -40,6 +40,7 @@
 UINT8 *lisa_ram_ptr;
 UINT8 *lisa_rom_ptr;
 
+/* offsets in REGION_CPU1 */
 #define RAM_OFFSET 0x004000
 #define ROM_OFFSET 0x000000
 
@@ -48,6 +49,7 @@ actually, but only one 4kb bank is selected, according to the drive type (TWIGGY
 static UINT8 *fdc_ram;
 static UINT8 *fdc_rom;
 
+/* offsets in REGION_CPU2 */
 #define FDC_RAM_OFFSET 0x0000
 #define FDC_ROM_OFFSET 0x1000
 
@@ -581,6 +583,7 @@ static void read_COPS_command(int unused)
 	}
 }
 
+/* this timer callback raises the COPS Ready line, which tells the COPS is about to read a command */
 static void set_COPS_ready(int unused)
 {
 	COPS_Ready = TRUE;
@@ -932,12 +935,12 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 
 int lisa_floppy_init(int id)
 {
-	return iwm_floppy_init(id, IWM_FLOPPY_ALLOW400K /*| IWM_FLOPPY_ALLOW800K*/);
+	return iwm_lisa_floppy_init(id, IWM_FLOPPY_ALLOW400K /*| IWM_FLOPPY_ALLOW800K*/);
 }
 
 void lisa_floppy_exit(int id)
 {
-	iwm_floppy_exit(id);
+	iwm_lisa_floppy_exit(id);
 }
 
 
@@ -991,7 +994,7 @@ void lisa_init_machine()
 	COPS_via_out_ca2(0, 0);	/* VIA core forgets to do so */
 
 	/* initialize floppy */
-	iwm_init();
+	iwm_lisa_init();
 }
 
 int lisa_interrupt(void)
@@ -1088,7 +1091,7 @@ READ_HANDLER ( lisa_fdc_io_r )
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		answer = iwm_r(offset);
+		answer = iwm_lisa_r(offset);
 		break;
 
 	case 1:	/* TTL glue */
@@ -1107,7 +1110,8 @@ READ_HANDLER ( lisa_fdc_io_r )
 			/*DIS = offset & 1;*/	/* ???? */
 			break;
 		case 5:
-			/*HDs = offset & 1;*/	/* ???? */
+			/*HDS = offset & 1;*/		/* head select (-> disk side) */
+			iwm_lisa_set_head_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
@@ -1137,7 +1141,7 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 	switch ((offset & 0x0030) >> 4)
 	{
 	case 0:	/* IWM */
-		iwm_w(offset, data);
+		iwm_lisa_w(offset, data);
 		break;
 
 	case 1:	/* TTL glue */
@@ -1156,7 +1160,8 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 			/*DIS = offset & 1;*/	/* ???? */
 			break;
 		case 5:
-			/*HDs = offset & 1;*/	/* ???? */
+			/*HDS = offset & 1;*/		/* head select (-> disk side) */
+			iwm_lisa_set_head_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
