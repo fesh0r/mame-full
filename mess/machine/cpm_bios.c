@@ -132,8 +132,7 @@ static void fdd_set_track(int t)
 
 static int fdd_access_sector(int * record_offset)
 {
-#if 0
-        dsk_fmt *f;
+	dsk_fmt *f;
 	UINT8 cyl, head, side, sec, n = 0;
 	int recofs, o;
 
@@ -209,24 +208,10 @@ static int fdd_access_sector(int * record_offset)
 			/* put the sector back */
 			do
 			{
-				n = osd_fdc_put_sector(dsk[curdisk].cyl, dsk[curdisk].side, dsk[curdisk].head, dsk[curdisk].sec, dsk[curdisk].buffer, 0);
-				if (n & STA_2_ERROR)
-				{
-
-					logerror("cpm_access_sector: (put) status 0x%02x:", n);
-					if (n & STA_2_LOST_DAT)
-					  logerror(" LOST_DAT");
-					if (n & STA_2_CRC_ERR)
-					  logerror(" CRC_ERR");
-					if (n & STA_2_REC_N_FND)
-					  logerror(" REC_N_FND");
-					if (n & STA_2_REC_TYPE)
-					  logerror("REC_TYPE");
-					if (n & STA_2_NOT_READY)
-					  logerror(" NOT_READY");
-					logerror(" (try #%d)\n", tries);
-
-				}
+				osd_fdc_put_sector(curdisk, dsk[curdisk].side, dsk[curdisk].cyl, dsk[curdisk].head, dsk[curdisk].sec, 1, dsk[curdisk].buffer, 0);
+				n = osd_fdc_get_status(curdisk);
+				if (n)
+					logerror("cpm_access_sector: (put) status 0x%02x\n", n);
 			} while ((tries++ < 10) && (n & STA_2_ERROR));
 			logerror("DISK %d flush  CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
 				  curdisk, cyl, side, head, sec, n);
@@ -239,28 +224,15 @@ static int fdd_access_sector(int * record_offset)
 		dsk[curdisk].cyl = cyl;
 		dsk[curdisk].side = side;
 		dsk[curdisk].head = head;
-		dsk[curdisk].sec = sec; /* set track number
-					   (ie. seek) */
+		dsk[curdisk].sec = sec; /* set track number (ie. seek) */
 		fdd_set_track(cyl);
 		tries = 0;
-		do {
-		  n = osd_fdc_get_sector(cyl, side, head,
-					 sec, dsk[curdisk].buffer);
-		  if (n & STA_2_ERROR)
-		  {
-				logerror("cpm_access_sector: (get) status 0x%02x:", n);
-				if (n & STA_2_LOST_DAT)
-					logerror(" LOST_DAT");
-				if (n & STA_2_CRC_ERR)
-					logerror("CRC_ERR");
-				if (n & STA_2_REC_N_FND)
-					logerror(" REC_N_FND");
-				if (n & STA_2_REC_TYPE)
-					logerror("REC_TYPE");
-				if (n & STA_2_NOT_READY)
-					logerror(" NOT_READY");
-				logerror(" (try #%d)\n", tries);
-			}
+		do
+		{
+			osd_fdc_get_sector(curdisk, side, cyl, head, sec, 1, dsk[curdisk].buffer, 0);
+			n = osd_fdc_get_status(curdisk);
+			if (n)
+				logerror("cpm_access_sector: (get) status 0x%02x\n", n);
 		} while ((tries++ < 10) && (n & STA_2_ERROR));
 
 		logerror("DISK #%d read   CYL:%d SIDE:%d HEAD:%d SEC:%d -> 0x%02X\n",
@@ -269,8 +241,7 @@ static int fdd_access_sector(int * record_offset)
 	*record_offset = recofs;
 	/* mask DRQ and BUSY bits */
 	return (n & 0xfc);
-#endif
-        return 0;
+	return 0;
 }
 
 #define CP(n) ((n)<32?'.':(n))
@@ -382,9 +353,9 @@ int cpm_init(int n, const char *ids[])
 		RAM[i] = zeropage0[i];
 
 #if VERBOSE
-		logerror("CPM CCP     %04X\n", CCP);
-		logerror("CPM BDOS    %04X\n", BDOS);
-		logerror("CPM BIOS    %04X\n", BIOS);
+	logerror("CPM CCP     %04X\n", CCP);
+	logerror("CPM BDOS    %04X\n", BDOS);
+	logerror("CPM BIOS    %04X\n", BIOS);
 #endif
 	/* Start allocating CSV & ALV */
 	i = DATA_START;
@@ -663,57 +634,57 @@ static void cpm_disk_image_seek(void)
 
 	switch (f->order)
 	{
-/* TRACK  0   1   2 	   n/2-1	   n/2	   n/2+1	 n/2+2	  n-1 */
-/* F/B	 f0, f1, f2 ... f(n/2)-1, b(n/2)-1, b(n/2)-2, b(n/2)-3 ... b0 */
-		case ORD_CYLINDERS:
-			offs = (bdos_trk[curdisk] % f->cylinders) * 2;
-			offs *= f->dpb.spt * RECL;
-			o = bdos_sec[curdisk] * RECL;
-			r = (o % f->seclen) / RECL;
-			s = o / f->seclen;
-			h = (s >= f->spt) ? f->side2[0] : f->side1[0];
-			s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
-			s -= f->side1[1];		/* subtract first sector number */
-			offs += (h * f->spt + s) * f->seclen + r * RECL;
-			if (bdos_trk[curdisk] >= f->cylinders)
-				offs += (int)f->cylinders * f->sides * f->spt * f->seclen / 2;
+	/* TRACK  0   1   2 	   n/2-1	   n/2	   n/2+1	 n/2+2	  n-1 */
+	/* F/B	 f0, f1, f2 ... f(n/2)-1, b(n/2)-1, b(n/2)-2, b(n/2)-3 ... b0 */
+	case ORD_CYLINDERS:
+		offs = (bdos_trk[curdisk] % f->cylinders) * 2;
+		offs *= f->dpb.spt * RECL;
+		o = bdos_sec[curdisk] * RECL;
+		r = (o % f->seclen) / RECL;
+		s = o / f->seclen;
+		h = (s >= f->spt) ? f->side2[0] : f->side1[0];
+		s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
+		s -= f->side1[1];		/* subtract first sector number */
+		offs += (h * f->spt + s) * f->seclen + r * RECL;
+		if (bdos_trk[curdisk] >= f->cylinders)
+			offs += (int)f->cylinders * f->sides * f->spt * f->seclen / 2;
 #if VERBOSE_FDD
-			logerror("CPM image #%d ord_cylinders C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs * RECL);
+		logerror("CPM image #%d ord_cylinders C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs * RECL);
 #endif
 		break;
 
-/* TRACK  0   1   2 	   n/2-1 n/2  n/2+1  n/2+3	   n-1		*/
-/* F/B	 f0, f1, f2 ... f(n/2)-1, b0,	 b1,	b2 ... b(n/2)-1 */
+	/* TRACK  0   1   2 	   n/2-1 n/2  n/2+1  n/2+3	   n-1		*/
+	/* F/B	 f0, f1, f2 ... f(n/2)-1, b0,	 b1,	b2 ... b(n/2)-1 */
 	case ORD_EAGLE:
-			offs = (bdos_trk[curdisk] % f->cylinders) * 2;
-			if (bdos_trk[curdisk] >= f->cylinders)
-				offs = f->cylinders * 2 - 1 - offs;
-			offs *= f->dpb.spt * RECL;
-			o = bdos_sec[curdisk] * RECL;
-			r = (o % f->seclen) / RECL;
-			s = o / f->seclen;
-			h = (s >= f->spt) ? f->side2[0] : f->side1[0];
-			s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
-			s -= f->side1[1];		/* subtract first sector number */
-			offs += (h * f->spt + s) * f->seclen + r * RECL;
+		offs = (bdos_trk[curdisk] % f->cylinders) * 2;
+		if (bdos_trk[curdisk] >= f->cylinders)
+			offs = f->cylinders * 2 - 1 - offs;
+		offs *= f->dpb.spt * RECL;
+		o = bdos_sec[curdisk] * RECL;
+		r = (o % f->seclen) / RECL;
+		s = o / f->seclen;
+		h = (s >= f->spt) ? f->side2[0] : f->side1[0];
+		s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
+		s -= f->side1[1];		/* subtract first sector number */
+		offs += (h * f->spt + s) * f->seclen + r * RECL;
 #if VERBOSE_FDD
 		logerror("CPM image #%d ord_eagle     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
 #endif
 		break;
 
-/* TRACK	 0		1	  2 		  n-1 */
-/* F/B	 f0/b0, f1/b1 f2/b2 ... fn-1/bn-1 */
-		case ORD_SIDES:
-		default:
-			offs = bdos_trk[curdisk];
-			offs *= f->dpb.spt * RECL;
-			o = bdos_sec[curdisk] * RECL;
-			r = (o % f->seclen) / RECL;
-			s = o / f->seclen;
-			h = (s >= f->spt) ? f->side2[0] : f->side1[0];
-			s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
-			s -= f->side1[1];		/* subtract first sector number */
-			offs += (h * f->spt + s) * f->seclen + r * RECL;
+	/* TRACK	 0		1	  2 		  n-1 */
+	/* F/B	 f0/b0, f1/b1 f2/b2 ... fn-1/bn-1 */
+	case ORD_SIDES:
+	default:
+		offs = bdos_trk[curdisk];
+		offs *= f->dpb.spt * RECL;
+		o = bdos_sec[curdisk] * RECL;
+		r = (o % f->seclen) / RECL;
+		s = o / f->seclen;
+		h = (s >= f->spt) ? f->side2[0] : f->side1[0];
+		s = (s >= f->spt) ? f->side2[s+1] : f->side1[s+1];
+		s -= f->side1[1];		/* subtract first sector number */
+		offs += (h * f->spt + s) * f->seclen + r * RECL;
 #if VERBOSE_FDD
 		logerror("CPM image #%d ord_sides     C:%2d H:%d S:%2d REC:%d -> 0x%08X\n", curdisk, bdos_trk[curdisk], h, s, r, offs);
 #endif
@@ -739,22 +710,18 @@ static int cpm_disk_select(int d)
 		case 0:
 			if (num_disks > 0)
 				return_dph = DPH0;
-
 			break;
 		case 1:
 			if (num_disks > 1)
 				return_dph	= DPH1;
-
 			break;
 		case 2:
 			if (num_disks > 2)
 				return_dph	= DPH2;
-
 			break;
 		case 3:
 			if (num_disks > 3)
 				return_dph	= DPH3;
-
 			break;
 	}
 	if (fp[curdisk] == REAL_FDD)

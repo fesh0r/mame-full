@@ -439,7 +439,7 @@ void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBu
                 logerror("real floppy read\r\n");
 
                 /* track, head, sector */
-                osd_fdc_get_sector(pDrive->fdd_unit,side, id->C, id->H, id->R, id->N,(unsigned char *)pBuffer);
+				osd_fdc_get_sector(pDrive->fdd_unit,side, id->C, id->H, id->R, id->N,(unsigned char *)pBuffer, 0);
 	}
 	else
 	{

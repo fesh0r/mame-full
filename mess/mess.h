@@ -5,12 +5,6 @@
 extern "C" {
 #endif
 
-#if 0
-// artwork struct name causes problems (member causes constructor name clash)
-// this is here to allow mess avoid clash, until mame part changed
-#define artwork_ artwork
-#endif
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -138,19 +132,19 @@ int parse_image_types(char *arg);
 
 int  osd_fdc_init(void);
 void osd_fdc_exit(void);
-void osd_fdc_motors(unsigned char unit, unsigned char state);
-void osd_fdc_density(unsigned char unit, unsigned char density, unsigned char tracks, unsigned char spt, unsigned char eot, unsigned char secl);
+void osd_fdc_motors(int unit, int state);
+void osd_fdc_density(int unit, int density, int tracks, int spt, int eot, int secl);
 
-void osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt);
-void osd_fdc_put_sector(unsigned char unit, unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff, unsigned char ddam);
-void osd_fdc_get_sector(unsigned char unit,unsigned char side, unsigned char C, unsigned char H, unsigned char R, unsigned char N,unsigned char *buff);
+void osd_fdc_format(int t, int h, int spt, UINT8 *fmt);
+void osd_fdc_put_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddam);
+void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddma);
 
 /* perform a seek on physical drive 'unit'. dir will be -ve or +ve.
 For a single step this will be -1 or +1. */
-void osd_fdc_seek(unsigned char unit, signed int dir);
+void osd_fdc_seek(int unit, int dir);
 
 /* get status of physical drive 'unit' */
-unsigned char osd_fdc_get_status(unsigned char unit);
+int osd_fdc_get_status(int unit);
 
 #ifdef MAX_KEYS
  #undef MAX_KEYS
