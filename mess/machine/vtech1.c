@@ -176,15 +176,15 @@ int vtech1_cassette_id(int id)
         if( buff[128+5] == 0xf0 )
         {
 			logerror("vtech1_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-            return 0;
+			return ID_OK;
         }
 		if( buff[128+5] == 0xf1 )
         {
 			logerror("vtech1_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-            return 0;
+			return ID_OK;
         }
     }
-    return 1;
+	return ID_FAILED;
 }
 
 #define LO	-32768
@@ -365,15 +365,15 @@ int vtech1_snapshot_id(int id)
 		if( memcmp(buff, "  \0\0", 4) == 0 && buff[21] == 0xf1 )
         {
 			logerror("vtech1_snapshot_id: MCODE magic found '%s'\n", buff+4);
-            return 0;
+			return ID_OK;
         }
 		if( memcmp(buff, "VZF0", 4) == 0 && buff[21] == 0xf0 )
         {
 			logerror("vtech1_snapshot_id: BASIC magic found %s\n", buff+4);
-            return 0;
+			return ID_OK;
         }
     }
-    return 1;
+	return ID_FAILED;
 }
 
 int vtech1_snapshot_init(int id)
