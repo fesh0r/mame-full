@@ -1581,7 +1581,7 @@ unsigned spc700_dasm(char *buffer, unsigned pc)
 #ifdef MAME_DEBUG
 	return spc700_disassemble(buffer, pc);
 #else
-	sprintf(buffer, "$%02X", read_8_instruction(pc));
+//	sprintf(buffer, "$%02X", read_8_instruction(pc));
 	return 1;
 #endif
 }
