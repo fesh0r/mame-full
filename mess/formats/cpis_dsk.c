@@ -69,7 +69,6 @@ static FLOPPY_CONSTRUCT(compis_dsk_construct)
 	if (params)
 	{
 		/* create */
-		memset(&geometry, 0, sizeof(geometry));
 		geometry.tracks = option_resolution_lookup_int(params, PARAM_TRACKS);
 		geometry.sectors = option_resolution_lookup_int(params, PARAM_SECTORS);
 	}

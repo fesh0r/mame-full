@@ -247,7 +247,11 @@ $(OBJ)/neocd.a:						\
 
 $(OBJ)/coleco.a:   \
 	$(OBJ)/mess/machine/coleco.o	\
-	$(OBJ)/mess/systems/coleco.o
+	$(OBJ)/mess/systems/coleco.o	\
+	$(OBJ)/mess/machine/adam.o		\
+	$(OBJ)/mess/systems/adam.o		\
+	$(OBJ)/mess/formats/adam_dsk.o	\
+	
 
 $(OBJ)/arcadia.a:  \
 	$(OBJ)/mess/sndhrdw/arcadia.o	\
