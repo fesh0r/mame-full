@@ -145,6 +145,7 @@ DRVLIBS = \
 	$(OBJ)/magnavox.a \
 	$(OBJ)/svision.a  \
 	$(OBJ)/intv.a     \
+	$(OBJ)/vc4000.a   \
 	$(OBJ)/cpschngr.a \
 	$(OBJ)/necpc.a	  \
 	$(OBJ)/veb.a	  \
@@ -494,6 +495,11 @@ $(OBJ)/aim65.a :    \
 	  $(OBJ)/mess/vidhrdw/aim65.o	 \
 	  $(OBJ)/mess/machine/aim65.o	 \
 	  $(OBJ)/mess/systems/aim65.o
+
+$(OBJ)/vc4000.a :   \
+	  $(OBJ)/mess/vidhrdw/vc4000.o   \
+	  $(OBJ)/mess/sndhrdw/vc4000.o   \
+	  $(OBJ)/mess/systems/vc4000.o
 
 $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/mfmdisk.o  \
