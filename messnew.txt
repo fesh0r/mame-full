@@ -22,6 +22,9 @@ System Driver Changes:
 - [JUPITER] Cartridge and Cassette Initialisation fixed 
   (Bug #126) [Ben Bruscella]
 
+- [NASCOM]  Cassette Initialisation fixed
+  (Bug #183) [Ben Bruscella]
+
 - [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
 
 - [SPECTRUM] 48k machines are now able to run code in screen memory (Bug #46).
