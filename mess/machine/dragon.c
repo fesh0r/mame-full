@@ -66,6 +66,7 @@
 #include "includes/dragon.h"
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
+#include "includes/6883sam.h"
 #include "includes/basicdsk.h"
 #include "includes/rstrtrck.h"
 
@@ -81,7 +82,6 @@ static int cart_inserted;
 static UINT8 pia0_pb, soundmux_status, tape_motor;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
-static int d_sam_memory_size;
 
 static WRITE_HANDLER ( d_pia1_pb_w );
 static WRITE_HANDLER ( coco3_pia1_pb_w );
@@ -106,6 +106,11 @@ static void coco3_pia0_irq_b(int state);
 static void coco3_pia1_firq_a(int state);
 static void coco3_pia1_firq_b(int state);
 static void coco_cartridge_enablesound(int enable);
+static void d_sam_set_pageonemode(int val);
+static void d_sam_set_mpurate(int val);
+static void d_sam_set_memorysize(int val);
+static void d_sam_set_maptype(int val);
+static void coco3_sam_set_maptype(int val);
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
@@ -183,6 +188,36 @@ static struct pia6821_interface coco3_pia_intf[] =
 	}
 };
 
+static struct sam6883_interface dragon_sam_intf =
+{
+	m6847_set_row_height,
+	m6847_set_video_offset,
+	d_sam_set_pageonemode,
+	d_sam_set_mpurate,
+	d_sam_set_memorysize,
+	NULL
+};
+
+static struct sam6883_interface dragon64_sam_intf =
+{
+	m6847_set_row_height,
+	m6847_set_video_offset,
+	d_sam_set_pageonemode,
+	d_sam_set_mpurate,
+	d_sam_set_memorysize,
+	d_sam_set_maptype
+};
+
+static struct sam6883_interface coco3_sam_intf =
+{
+	NULL,
+	m6847_set_video_offset,
+	NULL,
+	d_sam_set_mpurate,
+	NULL,
+	coco3_sam_set_maptype
+};
+
 /***************************************************************************
   PAK files
 
@@ -232,7 +267,7 @@ static int load_pak_into_region(void *fp, int *pakbase, int *paklen, UINT8 *mem,
 
 static void pak_load_trailer(const pak_decodedtrailer *trailer)
 {
-	int i, value;
+	int value;
 
 	cpu_set_reg(M6809_PC, trailer->reg_pc);
 	cpu_set_reg(M6809_X, trailer->reg_x);
@@ -249,26 +284,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	 * following PIA writes are the same thing that the CoCo ROM does on
 	 * startup. I wish I had a better solution
 	 */
-#if 0
-	cpu_writemem16(0xff1d, 0x00);
-	cpu_writemem16(0xff1f, 0x00);
-	cpu_writemem16(0xff1c, 0x00);
-	cpu_writemem16(0xff1e, 0xff);
-	cpu_writemem16(0xff1d, 0x34);
-	cpu_writemem16(0xff1f, 0x34);
-	cpu_writemem16(0xff21, 0x00);
-	cpu_writemem16(0xff23, 0x00);
-	cpu_writemem16(0xff20, 0xfe);
-	cpu_writemem16(0xff22, 0xf8);
-	cpu_writemem16(0xff21, 0x34);
-	cpu_writemem16(0xff23, 0x34);
-	cpu_writemem16(0xff22, 0x00);
-	cpu_writemem16(0xff20, 0x02);
 
-	cpu_writemem16(0xff03, trailer->io_ff03);	/* d_pia0_cb2_w */
-	cpu_writemem16(0xff02, trailer->io_ff02);	/* d_pia0_pb_w */
-	cpu_writemem16(0xff22, trailer->io_ff22);	/* d_pia1_pb_w */
-#else
 	pia_write(0, 1, 0x00);
 	pia_write(0, 3, 0x00);
 	pia_write(0, 0, 0x00);
@@ -287,7 +303,6 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	pia_write(1, 0, trailer->io_pia[4]);
 	pia_write(1, 3, trailer->io_pia[7]);
 	pia_write(1, 2, trailer->io_pia[6]);
-#endif
 
 	/* For some reason, this seems to screw things up; I'm not sure whether it
 	 * is because I'm using the wrong method to get access
@@ -296,10 +311,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 	/* cpu_writemem16(0xffde + trailer->enable_hiram, 0); */
 
 	value = trailer->video_base >> 9;
-	for (i = 0; i < 6; i++) {
-		dragon_sam_display_offset(i * 2 + (value & 1), 0);
-		value >>= 1;
-	}
+	sam_setstate(value << 3, 0x03F8);
 
 	switch(trailer->video_end - trailer->video_base) {
 	case 512:
@@ -321,10 +333,7 @@ static void pak_load_trailer(const pak_decodedtrailer *trailer)
 		break;
 	}
 
-	for (i = 0; i < 3; i++) {
-		dragon_sam_vdg_mode(i * 2 + (value & 1), 0);
-		value >>= 1;
-	}
+	sam_setstate(value, 0x0007);
 }
 
 static int trailer_load = 0;
@@ -1017,7 +1026,7 @@ READ_HANDLER(coco3_mapped_irq_r)
 	return coco_rom[0x7ff0 + offset];
 }
 
-WRITE_HANDLER(dragon_sam_speedctrl)
+static void d_sam_set_mpurate(int val)
 {
 	/* The infamous speed up poke.
 	 *
@@ -1041,16 +1050,10 @@ WRITE_HANDLER(dragon_sam_speedctrl)
 	 * TODO:  Make the overclock more accurate.  In dual speed, ROM was a fast
 	 * access but RAM was not.  I don't know how to simulate this.
 	 */
-    timer_set_overclock(0, 1+(offset&1));
+    timer_set_overclock(0, val ? 2 : 1);
 }
 
-WRITE_HANDLER(coco3_sam_speedctrl)
-{
-	/* The CoCo 3 only had $FFD8-$FFD9 */
-	dragon_sam_speedctrl(offset + 2, data);
-}
-
-WRITE_HANDLER(dragon_sam_page_mode)
+static void d_sam_set_pageonemode(int val)
 {
 	/* Page mode - allowed switching between the low 32k and the high 32k,
 	 * assuming that 64k wasn't enabled
@@ -1060,14 +1063,7 @@ WRITE_HANDLER(dragon_sam_page_mode)
 	 */
 }
 
-static void recalc_vram_size(void)
-{
-	static int vram_sizes[] = { 0x1000, 0x4000, 0x10000, 0x10000 };
-
-	m6847_set_ram_size(vram_sizes[d_sam_memory_size % 4]);
-}
-
-WRITE_HANDLER(dragon_sam_memory_size)
+static void d_sam_set_memorysize(int val)
 {
 	/* Memory size - allowed restricting memory accesses to something less than
 	 * 32k
@@ -1092,12 +1088,9 @@ WRITE_HANDLER(dragon_sam_memory_size)
 	 * TODO:  This should affect _all_ memory accesses, not just video ram
 	 * TODO:  Verify that the CoCo 3 ignored this
 	 */
-	if (offset & 1)
-		d_sam_memory_size &= ~(1 << (offset / 2));
-	else
-		d_sam_memory_size |= 1 << (offset / 2);
 
-	recalc_vram_size();
+	static int vram_sizes[] = { 0x1000, 0x4000, 0x10000, 0x10000 };
+	m6847_set_ram_size(vram_sizes[val % 4]);
 }
 
 /***************************************************************************
@@ -1295,10 +1288,10 @@ WRITE_HANDLER ( dragon64_ram_w )
 	coco_ram_w(offset + 0x8000, data);
 }
 
-WRITE_HANDLER(dragon64_sam_himemmap)
+static void d_sam_set_maptype(int val)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	if (offset) {
+	if (val) {
 		cpu_setbank(1, &RAM[0x8000]);
 		memory_set_bankhandler_w(1, 0, dragon64_ram_w);
 	}
@@ -1365,94 +1358,6 @@ int coco3_mmu_translate(int block, int offset)
 	}
 	return (coco3_mmu_lookup(block, forceram) * 0x2000) + offset;
 }
-
-#if 0
-/* We don't need this code for now */
-
-int coco3_mmu_translatelogicaladdr(int logicaladdr)
-{
-	int block;;
-
-	if (logicaladdr >= 0xfe00) {
-		block = 8;
-		logicaladdr -= 0xfe00;
-	}
-	else {
-		block = logicaladdr / 0x2000;
-		logicaladdr %= 0x2000;
-	}
-
-	return coco3_mmu_translate(block, logicaladdr);
-}
-
-static int calc_nextlogicaladdr(int logicaladdr, int len)
-{
-	int nextlogicaladdr;
-
-	if (logicaladdr < 0xe000)
-		nextlogicaladdr = logicaladdr - (logicaladdr % 0x2000) + 0x2000;
-	else if (logicaladdr < 0xfe00)
-		nextlogicaladdr = 0xfe00;
-	else
-		nextlogicaladdr = 0xffff;
-
-	if (nextlogicaladdr > (logicaladdr + len))
-		nextlogicaladdr = logicaladdr + len;
-
-	return nextlogicaladdr;
-}
-
-int coco3_mmu_ismemorycontiguous(int logicaladdr, int len)
-{
-	int physicalbase;
-	int nextlogicaladdr;
-	int nextphysicalbase;
-	int difference;
-
-	if ((logicaladdr + len) > 0xff00)
-		len -= (logicaladdr + len) - 0xff00;
-
-	physicalbase = coco3_mmu_translatelogicaladdr(logicaladdr);
-
-	while(len) {
-		nextlogicaladdr = calc_nextlogicaladdr(logicaladdr, len);
-
-		nextphysicalbase = coco3_mmu_translatelogicaladdr(nextlogicaladdr - 1);
-		if (nextphysicalbase != (physicalbase + nextlogicaladdr - logicaladdr - 1))
-			return 0;
-
-		difference = nextphysicalbase - physicalbase;
-		len -= difference;
-		logicaladdr += difference;
-		physicalbase = nextphysicalbase;
-	}
-	return 1;
-}
-
-void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
-{
-	UINT8 *RAM = memory_region(REGION_CPU1);
-	int physicalbase;
-	int nextlogicaladdr;
-	int difference;
-
-	if ((logicaladdr + len) > 0xff00)
-		len -= (logicaladdr + len) - 0xff00;
-
-	while(len) {
-		physicalbase = coco3_mmu_translatelogicaladdr(logicaladdr);
-
-		nextlogicaladdr = calc_nextlogicaladdr(logicaladdr, len);
-
-		difference = nextlogicaladdr - logicaladdr;
-
-		memcpy(buffer, &RAM[physicalbase], difference);
-		buffer += difference;
-		len -= difference;
-		logicaladdr += difference;
-	}
-}
-#endif /* 0 */
 
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
@@ -1639,9 +1544,9 @@ WRITE_HANDLER(coco3_gime_w)
 	}
 }
 
-WRITE_HANDLER(coco3_sam_himemmap)
+static void coco3_sam_set_maptype(int val)
 {
-	coco3_enable_64k = offset;
+	coco3_enable_64k = val;
 	coco3_mmu_update(4, 8);
 }
 
@@ -2177,7 +2082,7 @@ static const struct cartridge_callback coco3_cartcallbacks =
 	coco3_setcartline
 };
 
-static void generic_init_machine(struct pia6821_interface *piaintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
+static void generic_init_machine(struct pia6821_interface *piaintf, struct sam6883_interface *samintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallback)
 {
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
@@ -2192,6 +2097,8 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const struct
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_reset();
 
+	sam_init(samintf);
+
 	if (trailer_load) {
 		trailer_load = 0;
 		timer_set(0, 0, pak_load_trailer_callback);
@@ -2205,28 +2112,14 @@ static void generic_init_machine(struct pia6821_interface *piaintf, const struct
 
 void dragon32_init_machine(void)
 {
-	d_sam_memory_size = 0;
-	generic_init_machine(dragon_pia_intf, &dragon_disk_cartridge, &coco_cartcallbacks);
-
 	coco_rom = memory_region(REGION_CPU1) + 0x8000;
+	generic_init_machine(dragon_pia_intf, &dragon_sam_intf, &dragon_disk_cartridge, &coco_cartcallbacks);
 }
 
 void coco_init_machine(void)
 {
-	d_sam_memory_size = 0;
-	generic_init_machine(dragon_pia_intf, &coco_disk_cartridge, &coco_cartcallbacks);
-
 	coco_rom = memory_region(REGION_CPU1) + 0x10000;
-
-	dragon64_sam_himemmap(0, 0);
-}
-
-
-void dragon64_init_machine(void)
-{
-	dragon32_init_machine();
-	coco_rom = memory_region(REGION_CPU1) + 0x10000;
-	dragon64_sam_himemmap(0, 0);
+	generic_init_machine(dragon_pia_intf, &dragon64_sam_intf, &coco_disk_cartridge, &coco_cartcallbacks);
 }
 
 void coco3_init_machine(void)
@@ -2243,9 +2136,8 @@ void coco3_init_machine(void)
 		coco3_gimereg[i] = 0;
 	}
 
-	generic_init_machine(coco3_pia_intf, &coco_disk_cartridge, &coco3_cartcallbacks);
-
 	coco_rom = memory_region(REGION_CPU1) + 0x80000;
+	generic_init_machine(coco3_pia_intf, &coco3_sam_intf, &coco_disk_cartridge, &coco3_cartcallbacks);
 
 	coco3_mmu_update(0, 8);
 	coco3_timer_init();
@@ -2259,9 +2151,7 @@ void coco3_init_machine(void)
 void dragon_stop_machine(void)
 {
 	wd179x_exit();
-
-	/* Turn off overclock (i.e. - reverse the speed up poke) */
-    timer_set_overclock(0, 1);
+	sam_reset();
 }
 
 /***************************************************************************

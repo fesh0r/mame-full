@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
+#include "includes/6883sam.h"
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
 #include "printer.h"
@@ -25,6 +26,7 @@ static MEMORY_READ_START( dragon32_readmem )
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
 	{ 0xff40, 0xff5f, coco_cartridge_r },
+	{ 0xffc0, 0xffdf, MRA_NOP },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -35,11 +37,7 @@ static MEMORY_WRITE_START( dragon32_writemem )
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_cartridge_w },
-	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
-	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
-	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
-	{ 0xffda, 0xffdd, dragon_sam_memory_size },
+	{ 0xffc0, 0xffdf, sam_w },
 MEMORY_END
 
 static MEMORY_READ_START( d64_readmem )
@@ -48,6 +46,7 @@ static MEMORY_READ_START( d64_readmem )
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
 	{ 0xff40, 0xff5f, coco_cartridge_r },
+	{ 0xffc0, 0xffdf, MRA_NOP },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -57,12 +56,7 @@ static MEMORY_WRITE_START( d64_writemem )
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
 	{ 0xff40, 0xff5f, coco_cartridge_w },
-	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
-	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
-	{ 0xffd6, 0xffd9, dragon_sam_speedctrl },
-	{ 0xffda, 0xffdd, dragon_sam_memory_size },
-	{ 0xffde, 0xffdf, dragon64_sam_himemmap },
+	{ 0xffc0, 0xffdf, sam_w },
 MEMORY_END
 
 static MEMORY_READ_START( coco3_readmem )
@@ -82,6 +76,7 @@ static MEMORY_READ_START( coco3_readmem )
 	{ 0xff98, 0xff9f, coco3_gimevh_r },
 	{ 0xffa0, 0xffaf, coco3_mmu_r },
 	{ 0xffb0, 0xffbf, paletteram_r },
+	{ 0xffc0, 0xffdf, MRA_NOP },
 	{ 0xfff0, 0xffff, coco3_mapped_irq_r },
 MEMORY_END
 
@@ -110,13 +105,7 @@ static MEMORY_WRITE_START( coco3_writemem )
 	{ 0xff98, 0xff9f, coco3_gimevh_w },
 	{ 0xffa0, 0xffaf, coco3_mmu_w },
 	{ 0xffb0, 0xffbf, coco3_palette_w },
-	{ 0xffc0, 0xffc5, MWA_NOP },
-	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
-	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
-	{ 0xffd6, 0xffd7, MWA_NOP },
-	{ 0xffd8, 0xffd9, coco3_sam_speedctrl },
-	{ 0xffda, 0xffdd, dragon_sam_memory_size },
-	{ 0xffde, 0xffdf, coco3_sam_himemmap },
+	{ 0xffc0, 0xffdf, sam_w },
 MEMORY_END
 
 /* Dragon keyboard

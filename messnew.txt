@@ -13,6 +13,7 @@ System Driver Changes:
 ----------------------
 - Sfz (cps changer) fixed to work with the new MAME code [Ben]
 
+- [DRAGON/COCO1-2] Basic save state support added. [Nate Woods]
 
 Other Changes:
 --------------

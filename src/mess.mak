@@ -391,7 +391,7 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/machine/c128.o
 
 $(OBJ)/dragon.a:   \
-	  $(OBJ)/mess/machine/counter.o  \
+	  $(OBJ)/mess/machine/6883sam.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/machine/mc10.o	 \

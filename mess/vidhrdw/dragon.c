@@ -152,51 +152,6 @@ WRITE_HANDLER(coco_ram_w)
 	}
 }
 
-WRITE_HANDLER(dragon_sam_display_offset)
-{
-	UINT16 d_offset = m6847_get_video_offset();
-
-	if (offset & 0x01)
-		d_offset |= 0x01 << (offset/2 + 9);
-	else
-		d_offset &= ~(0x01 << (offset/2 + 9));
-
-	m6847_set_video_offset(d_offset);
-}
-
-WRITE_HANDLER(dragon_sam_vdg_mode)
-{
-	/* SAM Video modes:
-	 *
-	 * 000	Text
-	 * 001	G1C/G1R
-	 * 010	G2C
-	 * 011	G2R
-	 * 100	G3C
-	 * 101	G3R
-	 * 110	G4C/G4R
-	 * 111	Reserved/Invalid
-	 */
-
-	static int sammode2rowheight[] = {
-		12,	/* 0 */
-		3,	/* 1 */
-		3,	/* 2 */
-		2,	/* 3 */
-		2,	/* 4 */
-		1,	/* 5 */
-		1,	/* 6 */
-		1	/* 7 */
-	};
-
-	if (offset & 0x01)
-		sam_videomode |= 0x01 << (offset/2);
-	else
-		sam_videomode &= ~(0x01 << (offset/2));
-
-	m6847_set_row_height(sammode2rowheight[sam_videomode]);
-}
-
 /* --------------------------------------------------
  * CoCo 3 Stuff
  * -------------------------------------------------- */
