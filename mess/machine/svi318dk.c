@@ -333,11 +333,12 @@ unsigned long offset;
 #endif
 
 
-
+#if 0
 void    svi318dsk_step_callback(svi318dsk *w, int drive, int direction)
 {
 			w->track += direction;
 }
+#endif
 
 #if 0
 /* write a sector */
