@@ -7,6 +7,32 @@
 #define ALLOCATE_BLOCK    (1024*8)
 static const UINT8 CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0x74 };
 
+int fmsx_cas_to_wav_size (UINT8 *casdata, int caslen)
+	{
+	int 	pos, size;
+
+	if (caslen < 8) return -1;
+	if (memcmp (casdata, CasHeader, sizeof (CasHeader) ) ) return -1;
+
+	pos = size = 0;
+	 
+	while (pos < caslen)
+		{
+		if ( (pos + 8) < caslen)
+			if (!memcmp (casdata + pos, CasHeader, 8) ) 
+				{
+				size += (CAS_EMPTY_PERIODS + CAS_HEADER_PERIODS) * CAS_PERIOD;
+				pos += 8;
+				continue;
+				}
+
+		size += CAS_PERIOD * 12;
+		pos++;
+		}
+
+	return size;
+	}
+
 int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 {
 	int cas_pos, samples_size, bit, state = 1, samples_pos, size, n, i, p;
