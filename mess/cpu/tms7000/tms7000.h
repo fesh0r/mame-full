@@ -25,6 +25,8 @@
 
 enum { TMS7000_PC=1, TMS7000_SP, TMS7000_ST };
 
+enum { TMS7000_VCC, TMS7000_VSS };
+
 extern int tms7000_icount;
 
 /* PUBLIC FUNCTIONS */
@@ -47,6 +49,7 @@ extern WRITE_HANDLER( tms7000_internal_w );
 extern READ_HANDLER( tms7000_internal_r );
 extern int tms7000_execute(int cycles);
 extern unsigned tms7000_get_reg(int regnum);
+extern void tms7000_set_mc_line( int value );
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm7000 (char *buffer, unsigned pc);

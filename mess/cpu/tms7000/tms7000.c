@@ -34,6 +34,12 @@
 
 /* public globals */
 int tms7000_icount;
+int	tms7000_MC;
+
+void tms7000_set_mc_line( int value )
+{
+	tms7000_MC = value;
+}
 
 static UINT8 tms7000_reg_layout[] = {
 	TMS7000_PC, TMS7000_SP, TMS7000_ST, 0
@@ -130,7 +136,7 @@ typedef struct
 {
 	PAIR		pc; 		/* Program counter */
 	UINT8		sp;			/* Stack Pointer */
-	UINT8		st;			/* Status Register */
+	UINT8		sr;			/* Status Register */
 } tms7000_Regs;
 
 static tms7000_Regs tms7000;
@@ -138,33 +144,33 @@ static tms7000_Regs tms7000;
 #define pPC		tms7000.pc.w.l
 #define PC		tms7000.pc
 #define pSP		tms7000.sp
-#define pST		tms7000.st
+#define pSR		tms7000.sr
 
 #define RDA		RM(0x0000)
 #define RDB		RM(0x0001)
 #define WRA(Value) (cpu_writemem16(0x0000,Value))
 #define WRB(Value) (cpu_writemem16(0x0001,Value))
 
-#define ST_C	0x80		/* Carry */
-#define ST_N	0x40		/* Negative */
-#define ST_Z	0x20		/* Zero */
-#define ST_I	0x10		/* Interrupt */
+#define SR_C	0x80		/* Carry */
+#define SR_N	0x40		/* Negative */
+#define SR_Z	0x20		/* Zero */
+#define SR_I	0x10		/* Interrupt */
 
-#define CLR_NZC 	pST&=~(ST_N|ST_Z|ST_C)
-#define CLR_NZCI 	pST&=~(ST_N|ST_Z|ST_C|ST_I)
-#define SET_C8(a)	pST|=((a&0x0100)>>1)
-#define SET_N8(a)	pST|=((a&0x0080)>>1)
-#define SET_Z(a)	if(!a)pST|=ST_Z
+#define CLR_NZC 	pSR&=~(SR_N|SR_Z|SR_C)
+#define CLR_NZCI 	pSR&=~(SR_N|SR_Z|SR_C|SR_I)
+#define SET_C8(a)	pSR|=((a&0x0100)>>1)
+#define SET_N8(a)	pSR|=((a&0x0080)>>1)
+#define SET_Z(a)	if(!a)pSR|=SR_Z
 #define SET_Z8(a)	SET_Z((UINT8)a)
 #define SET_Z16(a)	SET_Z((UINT8)a>>8)
-#define GET_C		(pST >> 7)
+#define GET_C		(pSR >> 7)
 
 /* Not working */
-#define SET_C16(a)	pST|=((a&0x010000)>>9)
+#define SET_C16(a)	pSR|=((a&0x010000)>>9)
 
-#define SETC		pST |= ST_C
-#define SETZ		pST |= ST_Z
-#define SETN		pST |= ST_N
+#define SETC		pSR |= SR_C
+#define SETZ		pSR |= SR_Z
+#define SETN		pSR |= SR_N
 
 /****************************************************************************
  * Get all registers in given buffer
@@ -226,7 +232,7 @@ unsigned tms7000_get_reg(int regnum)
 	{
 		case TMS7000_PC: return pPC;
 		case TMS7000_SP: return pSP;
-		case TMS7000_ST: return pST;
+		case TMS7000_ST: return pSR;
 	}
 	return 0;
 }
@@ -237,7 +243,7 @@ void tms7000_set_reg(int regnum, unsigned val)
 	{
 		case TMS7000_PC: pPC = val; break;
 		case TMS7000_SP: pSP = val; break;
-		case TMS7000_ST: pST = val; break;
+		case TMS7000_ST: pSR = val; break;
 	}
 }
 
@@ -246,7 +252,7 @@ void tms7000_init(void)
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("tms7000", cpu, "PC", &pPC, 1);
 	state_save_register_UINT8("tms7000", cpu, "SP", &pSP, 1);
-	state_save_register_UINT8("tms7000", cpu, "SR", &pST, 1);
+	state_save_register_UINT8("tms7000", cpu, "SR", &pSR, 1);
 }
 
 void tms7000_reset(void *param)
@@ -284,18 +290,18 @@ const char *tms7000_info(void *context, int regnum)
 		case CPU_INFO_WIN_LAYOUT: return (const char*)tms7000_win_layout;
 		case CPU_INFO_FLAGS:
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
-				r->st & 0x80 ? 'C':'c',
-				r->st & 0x40 ? 'N':'n',
-				r->st & 0x20 ? 'Z':'z',
-				r->st & 0x10 ? 'I':'i',
-				r->st & 0x08 ? '?':'.',
-				r->st & 0x04 ? '?':'.',
-				r->st & 0x02 ? '?':'.',
-				r->st & 0x01 ? '?':'.' );
+				r->sr & 0x80 ? 'C':'c',
+				r->sr & 0x40 ? 'N':'n',
+				r->sr & 0x20 ? 'Z':'z',
+				r->sr & 0x10 ? 'I':'i',
+				r->sr & 0x08 ? '?':'.',
+				r->sr & 0x04 ? '?':'.',
+				r->sr & 0x02 ? '?':'.',
+				r->sr & 0x01 ? '?':'.' );
 			break;
 		case CPU_INFO_REG+TMS7000_PC: sprintf(buffer[which], "PC:%04X", r->pc); break;
 		case CPU_INFO_REG+TMS7000_SP: sprintf(buffer[which], "SP:%02X", r->sp); break;
-		case CPU_INFO_REG+TMS7000_ST: sprintf(buffer[which], "ST:%02X", r->st); break;
+		case CPU_INFO_REG+TMS7000_ST: sprintf(buffer[which], "ST:%02X", r->sr); break;
 	}
 	return buffer[which];
 }

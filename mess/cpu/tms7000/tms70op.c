@@ -1338,7 +1338,7 @@ void dac_b2a( void )
 	
 	t = bcd_add( RDA, RDB );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WRA(t);
@@ -1361,7 +1361,7 @@ void dac_r2a( void )
 	
 	t = bcd_add( RDA, RM(r) );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WRA(t);
@@ -1384,7 +1384,7 @@ void dac_r2b( void )
 	
 	t = bcd_add( RDB, RM(r) );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WRB(t);
@@ -1408,7 +1408,7 @@ void dac_r2r( void )
 	
 	t = bcd_add( RM(s), RM(r) );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WM(r,t);
@@ -1431,7 +1431,7 @@ void dac_i2a( void )
 	
 	t = bcd_add( i, RDA );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WRA(t);
@@ -1454,7 +1454,7 @@ void dac_i2b( void )
 	
 	t = bcd_add( i, RDB );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WRB(t);
@@ -1478,7 +1478,7 @@ void dac_i2r( void )
 	
 	t = bcd_add( i, RM(r) );
 	
-	if (pST & ST_C)
+	if (pSR & SR_C)
 		t = bcd_add( t, 1 );
 
 	WM(r,t);
@@ -1680,7 +1680,7 @@ void dsb_b2a( void )
 
 	t = bcd_sub( RDA, RDB );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WRA(t);
@@ -1703,7 +1703,7 @@ void dsb_r2a( void )
 
 	t = bcd_sub( RDA, RM(r) );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WRA(t);
@@ -1726,7 +1726,7 @@ void dsb_r2b( void )
 
 	t = bcd_sub( RDB, RM(r) );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WRB(t);
@@ -1750,7 +1750,7 @@ void dsb_r2r( void )
 
 	t = bcd_sub( RM(s), RM(r) );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WM(r,t);
@@ -1773,7 +1773,7 @@ void dsb_i2a( void )
 
 	t = bcd_sub( RDA, i );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WRA(t);
@@ -1796,7 +1796,7 @@ void dsb_i2b( void )
 
 	t = bcd_sub( RDB, i );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WRB(t);
@@ -1820,7 +1820,7 @@ void dsb_i2r( void )
 
 	t = bcd_sub( RM(r), i );
 	
-	if( !(pST & ST_C) )
+	if( !(pSR & SR_C) )
 		t = bcd_sub( t, 1 );
 
 	WM(r,t);
@@ -1836,7 +1836,7 @@ void dsb_i2r( void )
 void eint( void );
 void eint( void )
 {
-	pST |= (ST_N|ST_Z|ST_C|ST_I);
+	pSR |= (SR_N|SR_Z|SR_C|SR_I);
 	tms7000_icount -= 5;
 }
 
@@ -1953,7 +1953,7 @@ void inv_r( void )
 void jc( void );
 void jc( void )
 {
-	if( pST & ST_C )
+	if( pSR & SR_C )
 	{
 		INT8 s;
 		
@@ -1971,7 +1971,7 @@ void jc( void )
 void jeq( void );
 void jeq( void )
 {
-	if( pST & ST_Z )
+	if( pSR & SR_Z )
 	{
 		INT8 s;
 		
@@ -1989,7 +1989,7 @@ void jeq( void )
 void jl( void );
 void jl( void )
 {
-	if( pST & ST_C )
+	if( pSR & SR_C )
 	{
 		pPC++;
 		tms7000_icount -= 5;
@@ -2017,7 +2017,7 @@ void jmp( void )
 void jn( void );
 void jn( void )
 {
-	if( pST & ST_N )
+	if( pSR & SR_N )
 	{
 		pPC++;
 		tms7000_icount -= 5;
@@ -2035,7 +2035,7 @@ void jn( void )
 void jne( void );
 void jne( void )
 {
-	if( pST & ST_Z )
+	if( pSR & SR_Z )
 	{
 		pPC++;
 		tms7000_icount -= 5;
@@ -2053,7 +2053,7 @@ void jne( void )
 void jp( void );
 void jp( void )
 {
-	if( pST & (ST_Z|ST_N) )
+	if( pSR & (SR_Z|SR_N) )
 	{
 		pPC++;
 		tms7000_icount -= 5;
@@ -2071,7 +2071,7 @@ void jp( void )
 void jpz( void );
 void jpz( void )
 {
-	if( pST & ST_N )
+	if( pSR & SR_N )
 	{
 		pPC++;
 		tms7000_icount -= 5;
@@ -2828,7 +2828,7 @@ void pop_st( void )
 	UINT16	t;
 	
 	PULLBYTE(t);
-	pST = t;
+	pSR = t;
 
 	tms7000_icount -= 6;
 }	
@@ -2884,7 +2884,7 @@ void push_st( void );
 void push_st( void )
 {
 	UINT16	t;
-	t = pST;
+	t = pSR;
 	PUSHBYTE(t);
 
 	tms7000_icount -= 6;
@@ -2894,7 +2894,7 @@ void reti( void );
 void reti( void )
 {
 	PULLWORD( PC );
-	PULLBYTE( pST );
+	PULLBYTE( pSR );
 	
 	tms7000_icount -= 9;
 }
@@ -2916,7 +2916,7 @@ void rl_a( void )
 	CLR_NZC;
 	SET_C8(t);
 	
-	if( pST & ST_C )
+	if( pSR & SR_C )
 		t |= 0x01;
 
 	SET_N8(t);
@@ -2936,7 +2936,7 @@ void rl_b( void )
 	CLR_NZC;
 	SET_C8(t);
 	
-	if( pST & ST_C )
+	if( pSR & SR_C )
 		t |= 0x01;
 
 	SET_N8(t);
@@ -2958,7 +2958,7 @@ void rl_r( void )
 	CLR_NZC;
 	SET_C8(t);
 	
-	if( pST & ST_C )
+	if( pSR & SR_C )
 		t |= 0x01;
 
 	SET_N8(t);
@@ -2974,7 +2974,7 @@ void rlc_a( void )
 	UINT16	t;
 	int		old_carry;
 	
-	old_carry = (pST & ST_C);
+	old_carry = (pSR & SR_C);
 	
 	t = RDA << 1;
 	
@@ -2997,7 +2997,7 @@ void rlc_b( void )
 	UINT16	t;
 	int		old_carry;
 	
-	old_carry = (pST & ST_C);
+	old_carry = (pSR & SR_C);
 	
 	t = RDB << 1;
 	
@@ -3021,7 +3021,7 @@ void rlc_r( void )
 	UINT8	r;
 	int		old_carry;
 	
-	old_carry = (pST & ST_C);
+	old_carry = (pSR & SR_C);
 	
 	IMMBYTE(r);
 	t = RM(r) << 1;
@@ -3133,7 +3133,7 @@ void rrc_a( void )
 	
 	old_bit0 = t & 0x0001;
 	/* Place carry bit in 9th position */
-	t |= ((pST & ST_C) << 1);
+	t |= ((pSR & SR_C) << 1);
 	t = t >> 1;
 	
 	CLR_NZC;
@@ -3158,7 +3158,7 @@ void rrc_b( void )
 	
 	old_bit0 = t & 0x0001;
 	/* Place carry bit in 9th position */
-	t |= ((pST & ST_C) << 1);
+	t |= ((pSR & SR_C) << 1);
 	t = t >> 1;
 	
 	CLR_NZC;
@@ -3185,7 +3185,7 @@ void rrc_r( void )
 	
 	old_bit0 = t & 0x0001;
 	/* Place carry bit in 9th position */
-	t |= ((pST & ST_C) << 1);
+	t |= ((pSR & SR_C) << 1);
 	t = t >> 1;
 	
 	CLR_NZC;
@@ -3205,7 +3205,7 @@ void sbb_ba( void )
 {
 	UINT16	t;
 	
-	t = RDB - RDA - (pST & ST_C ? 1 : 0);
+	t = RDB - RDA - (pSR & SR_C ? 1 : 0);
 	WRA(t);
 
 	CLR_NZC;
@@ -3223,7 +3223,7 @@ void sbb_ra( void )
 	UINT8	r;
 	
 	IMMBYTE(r);
-	t = RM(r) - RDA - (pST & ST_C ? 1 : 0);
+	t = RM(r) - RDA - (pSR & SR_C ? 1 : 0);
 	WRA(t);
 
 	CLR_NZC;
@@ -3241,7 +3241,7 @@ void sbb_rb( void )
 	UINT8	r;
 	
 	IMMBYTE(r);
-	t = RM(r) - RDB - (pST & ST_C ? 1 : 0);
+	t = RM(r) - RDB - (pSR & SR_C ? 1 : 0);
 	WRB(t);
 
 	CLR_NZC;
@@ -3260,7 +3260,7 @@ void sbb_rr( void )
 	
 	IMMBYTE(s);
 	IMMBYTE(r);
-	t = RM(s) - RM(r) - (pST & ST_C ? 1 : 0);
+	t = RM(s) - RM(r) - (pSR & SR_C ? 1 : 0);
 	WM(r,t);
 
 	CLR_NZC;
@@ -3278,7 +3278,7 @@ void sbb_ia( void )
 	UINT8	i;
 	
 	IMMBYTE(i);
-	t = i - RDA - (pST & ST_C ? 1 : 0);
+	t = i - RDA - (pSR & SR_C ? 1 : 0);
 	WRA(t);
 
 	CLR_NZC;
@@ -3296,7 +3296,7 @@ void sbb_ib( void )
 	UINT8	i;
 	
 	IMMBYTE(i);
-	t = i - RDB - (pST & ST_C ? 1 : 0);
+	t = i - RDB - (pSR & SR_C ? 1 : 0);
 	WRB(t);
 
 	CLR_NZC;
@@ -3315,7 +3315,7 @@ void sbb_ir( void )
 	
 	IMMBYTE(i);
 	IMMBYTE(r);
-	t = i - RM(r) - (pST & ST_C ? 1 : 0);
+	t = i - RM(r) - (pSR & SR_C ? 1 : 0);
 	WM(r,t);
 
 	CLR_NZC;
@@ -3330,7 +3330,7 @@ void setc( void );
 void setc( void )
 {
 	CLR_NZC;
-	pST |= (ST_C|ST_Z);
+	pSR |= (SR_C|SR_Z);
 	
 	tms7000_icount -= 5;
 }
@@ -3731,7 +3731,7 @@ void swap_a( void )
 	
 	CLR_NZC;
 	
-	pST|=((t&0x0001)<<7);
+	pSR|=((t&0x0001)<<7);
 	SET_N8(t);
 	SET_Z8(t);
 	
@@ -3754,7 +3754,7 @@ void swap_b( void )
 	
 	CLR_NZC;
 	
-	pST|=((t&0x0001)<<7);
+	pSR|=((t&0x0001)<<7);
 	SET_N8(t);
 	SET_Z8(t);
 	
@@ -3778,7 +3778,7 @@ void swap_r( void )
 	
 	CLR_NZC;
 	
-	pST|=((t&0x0001)<<7);
+	pSR|=((t&0x0001)<<7);
 	SET_N8(t);
 	SET_Z8(t);
 	
