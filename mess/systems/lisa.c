@@ -109,7 +109,7 @@ static struct MachineDriver machine_driver_lisa =
 	lisa_exit_machine,
 
 	/* video hardware */
-	720, 364, /* screen width, screen height */
+	880, 380/* ??? */,	/* screen width, screen height (including Hblank and Vblank) */
 	{ 0, 720-1, 0, 364-1 },			/* visible_area */
 
 	0,					/* graphics decode info */
@@ -158,7 +158,7 @@ static struct MachineDriver machine_driver_lisa210 =
 	lisa_exit_machine,
 
 	/* video hardware */
-	720, 364, /* screen width, screen height */
+	880, 380/* ??? */,	/* screen width, screen height (including Hblank and Vblank) */
 	{ 0, 720-1, 0, 364-1 },			/* visible_area */
 
 	0,					/* graphics decode info */
@@ -207,7 +207,7 @@ static struct MachineDriver machine_driver_macxl =
 	lisa_exit_machine,
 
 	/* video hardware */
-	608, 431, /* screen width, screen height */
+	768/* ???? */, 447/* ???? */,	/* screen width, screen height (including Hblank and Vblank) */
 	{ 0, 608-1, 0, 431-1 },			/* visible_area */
 
 	0,					/* graphics decode info */

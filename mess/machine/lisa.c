@@ -937,6 +937,10 @@ void lisa_vh_stop(void)
 	free(old_display);
 }
 
+/*
+	TODO : use draw_scanline()...
+	"draw_scanline(bitmap, 0, y, (lisa_features.has_mac_xl_video) ? 608 : 720, buf, NULL, -1)"
+*/
 void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	UINT16	data;
@@ -1689,19 +1693,59 @@ READ16_HANDLER ( lisa_r )
 #else
 				/* kludge */
 				/* this code assumes the program always tries to read consecutive bytes */
+#if 0
 				int time_in_frame = cpu_getcurrentcycles();
 				static int videoROM_address = 0;
 
 				videoROM_address = (videoROM_address + 1) & 0x7f;
-				/* the BOOT test ROM only reads 56 bits, so there must be some wrap-around for
+				/* the BOOT ROM only reads 56 bits, so there must be some wrap-around for
 				videoROM_address <= 56 */
-				if (videoROM_address == 56)
+				/* pixel clock 20MHz, memory access rate 1.25MHz, horizontal clock 22.7kHz
+				according to Apple, which must stand for 1.25MHz/55 = 22727kHz, vertical
+				clock approximately 60Hz, which means there are about 380 lines, including VBlank */
+				if (videoROM_address == 55)
 					videoROM_address = 0;
 
 				if ((time_in_frame >= 70000) && (time_in_frame <= 74000))	/* these values are approximative */
 				{	/* if VSyncing, read ROM 2nd half ? */
 					videoROM_address |= 0x80;
 				}
+#else
+				int time_in_frame = cpu_getscanline();
+				static int videoROM_address = 0;
+
+				videoROM_address = (videoROM_address + 1) & 0x7f;
+				/* the BOOT ROM only reads 56 bits, so there must be some wrap-around for
+				videoROM_address <= 56 */
+				/* pixel clock 20MHz, memory access rate 1.25MHz, horizontal clock 22.7kHz
+				according to Apple, which must stand for 1.25MHz/55 = 22727kHz, vertical
+				clock approximately 60Hz, which means there are about 380 lines, including VBlank */
+				/* The values are different on the Mac XL, and I don't know the correct values
+				for sure. */
+				if (videoROM_address == ((lisa_features.has_mac_xl_video) ? 48/* ??? */ : 55))
+					videoROM_address = 0;
+
+				/* Something appears to be wrong with the timings, since we expect to read the
+				2nd half when v-syncing, i.e. for lines beyond the 431th or 364th one (provided
+				there are no additionnal margins).
+				This is caused by the fact that 68k timings are wrong (memory accesses are
+				interlaced with the video hardware, which is not emulated). */
+				if (lisa_features.has_mac_xl_video)
+				{
+					if ((time_in_frame >= 374) && (time_in_frame <= 392))	/* these values have not been tested */
+					{	/* if VSyncing, read ROM 2nd half ? */
+						videoROM_address |= 0x80;
+					}
+				}
+				else
+				{
+					if ((time_in_frame >= 319) && (time_in_frame <= 338))	/* these values are approximative */
+					{	/* if VSyncing, read ROM 2nd half ? */
+						videoROM_address |= 0x80;
+					}
+				}
+#endif
+
 #endif
 
 				answer = videoROM_ptr[videoROM_address] << 8;
