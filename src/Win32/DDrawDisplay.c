@@ -762,10 +762,15 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
     BOOL            bPalette16;
 
 #ifdef MAME_DEBUG
-	modifiable = TRUE;
-	This.debug_palette = debug_palette;
-	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++) {
-		debug_pens[i] = i+2;
+	if (debug_pens) {
+		modifiable = TRUE;
+		This.debug_palette = debug_palette;
+		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++) {
+			debug_pens[i] = i+2;
+		}
+	}
+	else {
+		This.debug_palette = NULL;
 	}
 #endif /* MAME_DEBUG */
 
@@ -778,7 +783,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
         This.m_nTotalColors = OSD_NUMPENS;
 
 #ifdef MAME_DEBUG
-	if (This.m_nTotalColors < (DEBUGGER_TOTAL_COLORS+2))
+	if (debug_pens &&This.m_nTotalColors < (DEBUGGER_TOTAL_COLORS+2))
 		This.m_nTotalColors = DEBUGGER_TOTAL_COLORS+2;
 #endif /* MAME_DEBUG */
 
@@ -1059,6 +1064,9 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
         return;
 
 #ifdef MAME_DEBUG
+	if (debug_bitmap && input_ui_pressed(IPT_UI_TOGGLE_DEBUG))
+		osd_debugger_focus(This.debugger_has_focus ^ 1);
+
     This.m_pBitmap = This.debugger_has_focus ? debug_bitmap : game_bitmap;
 #else /* !MAME_DEBUG */
 	This.m_pBitmap = game_bitmap;
@@ -1256,9 +1264,6 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
 		DebugRect.m_Left = nSkipColumns;
 		DebugRect.m_Height = nDisplayLines;
 		DebugRect.m_Width = nDisplayColumns;
-
-		logerror("nSkipLines=%i nSkipColumsn=%i nDisplayLines=%i nDisplayColumns=%i\n", nSkipLines, nSkipColumns, nDisplayLines, nDisplayColumns);
-		logerror("m_nScreenHeight=%i m_nScreenWidth=%i\n", This.m_nScreenHeight, This.m_nScreenWidth);
 	}
 	else
 #endif
