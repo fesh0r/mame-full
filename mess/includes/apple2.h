@@ -37,6 +37,8 @@
 #define VAR_LCWRITE		0x040000
 #define VAR_ROMSWITCH	0x080000
 
+#define VAR_DHIRES		VAR_AN3
+
 extern UINT32 a2;
 
 typedef struct

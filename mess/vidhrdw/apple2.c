@@ -17,16 +17,27 @@ static struct tilemap *lores_tilemap;
 static int text_videobase;
 static int dbltext_videobase;
 static int lores_videobase;
-static UINT16 *artifact_map;
+static UINT16 *hires_artifact_map;
+static UINT16 *dhires_artifact_map;
 static UINT8 *lores_tiledata;
 static UINT8 *text_tiledata;
 static UINT8 *dbltext_tiledata;
 
 #define	BLACK	0
+#define DKRED	1
+#define	DKBLUE	2
 #define PURPLE	3
+#define DKGREEN	4
+#define DKGRAY	5
 #define	BLUE	6
+#define LTBLUE	7
+#define BROWN	8
 #define ORANGE	9
+#define	GRAY	10
+#define PINK	11
 #define GREEN	12
+#define YELLOW	13
+#define AQUA	14
 #define	WHITE	15
 
 #define PROFILER_VIDEOTOUCH PROFILER_USER3
@@ -438,6 +449,7 @@ struct drawtask_params
 	UINT8 *vram;
 	int beginrow;
 	int rowcount;
+	int columns;
 };
 
 static void apple2_hires_draw_task(void *param, int task_num, int task_count)
@@ -449,7 +461,8 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 	int endrow;
 	int row, col, b;
 	int offset;
-	UINT8 vram_row[42];
+	int columns;
+	UINT8 vram_row[82];
 	UINT16 v;
 	UINT16 *p;
 	UINT32 w;
@@ -457,37 +470,65 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 
 	dtparams = (struct drawtask_params *) param;
 
-	bitmap = dtparams->bitmap;
-	vram = dtparams->vram;
+	bitmap		= dtparams->bitmap;
+	vram		= dtparams->vram;
 	beginrow	= dtparams->beginrow + (dtparams->rowcount * task_num     / task_count);
 	endrow		= dtparams->beginrow + (dtparams->rowcount * (task_num+1) / task_count) - 1;
+	columns		= dtparams->columns;
 
 	vram_row[0] = 0;
-	vram_row[41] = 0;
+	vram_row[columns + 1] = 0;
+
+	assert((columns == 40) || (columns == 80));
 
 	for (row = beginrow; row <= endrow; row++)
 	{
 		for (col = 0; col < 40; col++)
 		{
 			offset = apple2_hires_getmemoryoffset(col, row, 0, 0);
-			vram_row[1+col] = vram[offset];
+
+			switch(columns) {
+			case 40:
+				vram_row[1+col] = vram[offset];
+				break;
+
+			case 80:
+				vram_row[1+(col*2)+0] = vram[offset + 0x10000];
+				vram_row[1+(col*2)+1] = vram[offset + 0x00000];
+				break;
+			}
 		}
 
 		p = (UINT16 *) bitmap->line[row];
 
-		for (col = 0; col < 40; col++)
+		for (col = 0; col < columns; col++)
 		{
 			w =		(((UINT32) vram_row[col+0] & 0x7f) <<  0)
 				|	(((UINT32) vram_row[col+1] & 0x7f) <<  7)
 				|	(((UINT32) vram_row[col+2] & 0x7f) << 14);
+	
+			switch(columns) {
+			case 40:
+				artifact_map_ptr = &hires_artifact_map[((vram_row[col+1] & 0x80) >> 7) * 16];
+				for (b = 0; b < 7; b++)
+				{
+					v = artifact_map_ptr[((w >> (b + 7-1)) & 0x07) | (((b ^ col) & 0x01) << 3)];
+					*(p++) = v;
+					*(p++) = v;
+				}
+				break;
 
-			artifact_map_ptr = &artifact_map[((vram_row[col+1] & 0x80) >> 7) * 16];
-			
-			for (b = 0; b < 7; b++)
-			{
-				v = artifact_map_ptr[((w >> (b + 7-1)) & 0x07) | (((b ^ col) & 0x01) << 3)];
-				*(p++) = v;
-				*(p++) = v;
+			case 80:
+				for (b = 0; b < 7; b++)
+				{
+					v = dhires_artifact_map[((((w >> (b + 7-1)) & 0x0F) * 0x11) >> (((2-(col*7+b))) & 0x03)) & 0x0F];
+					*(p++) = v;
+				}
+				break;
+
+			default:
+				assert(0);
+				break;
 			}
 		}
 	}
@@ -505,12 +546,10 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 		return;
 
 	dtparams.vram = mess_ram + (page ? 0x4000 : 0x2000);
-	if (a2 & VAR_RAMRD)
-		dtparams.vram += 0x10000;
-
 	dtparams.bitmap = bitmap;
 	dtparams.beginrow = beginrow;
 	dtparams.rowcount = (endrow + 1) - beginrow;
+	dtparams.columns = ((a2 & (VAR_DHIRES|VAR_80COL)) == (VAR_DHIRES|VAR_80COL)) ? 80 : 40;
 
 	osd_parallelize(apple2_hires_draw_task, &dtparams, dtparams.rowcount);
 }
@@ -527,10 +566,18 @@ static int video_start_apple_common(int is_apple2c)
 	UINT8 *fontchar;
 	UINT8 b, p;
 
-	static UINT16 artifact_color_table[] =
+	static UINT16 hires_artifact_color_table[] =
 	{
 		BLACK,	PURPLE,	GREEN,	WHITE,
 		BLACK,	BLUE,	ORANGE,	WHITE
+	};
+
+	static UINT16 dhires_artifact_color_table[] =
+	{
+		BLACK,		DKRED,		BROWN,	ORANGE,
+		DKGREEN,	DKGRAY,		GREEN,	YELLOW,
+		DKBLUE,		PURPLE,		GRAY,	PINK,
+		BLUE,		LTBLUE,		AQUA,	WHITE
 	};
 
 	text_tilemap = tilemap_create(
@@ -555,7 +602,10 @@ static int video_start_apple_common(int is_apple2c)
 		40, 24);
 
 	/* 2^3 dependent pixels * 2 color sets * 2 offsets */
-	artifact_map = auto_malloc(sizeof(UINT16) * 8 * 2 * 2);
+	hires_artifact_map = auto_malloc(sizeof(UINT16) * 8 * 2 * 2);
+
+	/* 2^4 dependent pixels */
+	dhires_artifact_map = auto_malloc(sizeof(UINT16) * 16);
 
 	/* 14x8 */
 	lores_tiledata = auto_malloc(sizeof(UINT8) * 14 * 8);
@@ -566,7 +616,7 @@ static int video_start_apple_common(int is_apple2c)
 	/* 14x8x256 */
 	dbltext_tiledata = auto_malloc(sizeof(UINT8) * 7 * 8 * 256);
 
-	if (!text_tilemap || !lores_tilemap || !text_tiledata || !dbltext_tiledata || !artifact_map)
+	if (!text_tilemap || !lores_tilemap || !text_tiledata || !dbltext_tiledata || !hires_artifact_map || !dhires_artifact_map)
 		return 1;
 	
 	/* build lores_tiledata */
@@ -594,7 +644,7 @@ static int video_start_apple_common(int is_apple2c)
 		}
 	}
 
-	/* build artifact map */
+	/* build hires artifact map */
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 2; j++)
@@ -613,9 +663,15 @@ static int video_start_apple_common(int is_apple2c)
 				else
 					c = 0;
 			}
-			artifact_map[ 0 + j*8 + i] = artifact_color_table[c];
-			artifact_map[16 + j*8 + i] = artifact_color_table[c+4];
+			hires_artifact_map[ 0 + j*8 + i] = hires_artifact_color_table[c];
+			hires_artifact_map[16 + j*8 + i] = hires_artifact_color_table[c+4];
 		}
+	}
+
+	/* build double hires artifact map */
+	for (i = 0; i < 16; i++)
+	{
+		dhires_artifact_map[i] = dhires_artifact_color_table[i];
 	}
 
 	memset(&old_a2, 0, sizeof(old_a2));
@@ -642,7 +698,7 @@ VIDEO_UPDATE( apple2 )
 	new_a2 = a2;
 	if (new_a2 & VAR_80STORE)
 		new_a2 &= ~VAR_PAGE2;
-	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_80COL | VAR_PAGE2;
+	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2;
 
 	if (new_a2 != old_a2)
 	{

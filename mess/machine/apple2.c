@@ -668,21 +668,7 @@ READ_HANDLER ( apple2_c05x_r )
 ***************************************************************************/
 WRITE_HANDLER ( apple2_c05x_w )
 {
-	UINT32 mask;
-
-	switch (offset) {
-	case 0x00:	/* VAR_TEXT		= 0 */
-	case 0x01:	/* VAR_TEXT		= 1 */
-	case 0x02:	/* VAR_MIXED	= 0 */
-	case 0x03:	/* VAR_MIXED	= 1 */
-	case 0x04:	/* VAR_PAGE2	= 0 */
-	case 0x05:	/* VAR_PAGE2	= 1 */
-	case 0x06:	/* VAR_HIRES	= 0 */
-	case 0x07:	/* VAR_HIRES	= 1 */
-		mask = 0x100 << (offset / 2);
-		apple2_setvar((offset & 1) ? mask : 0, mask);
-		break;
-	}
+	apple2_c05x_r(offset);
 }
 
 /***************************************************************************
