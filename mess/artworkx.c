@@ -82,7 +82,7 @@ static mame_file *mess_load_artwork_file(const struct GameDriver *driver)
 	{
 		if (driver->name)
 		{
-			s = override_artfile;
+			s = override_artfile ? override_artfile : "";
 			do
 			{
 				sprintf(filename, "%s.art", *s ? s : driver->name);
