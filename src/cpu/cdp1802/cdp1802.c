@@ -32,6 +32,18 @@ typedef int bool;
 #define LOG(x)
 #endif
 
+#ifdef RUNTIME_LOADER
+#define cdp1802_ICount cdp1802_icount
+struct cpu_interface
+cdp1802_interface=
+CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,             8, 16,     0,16,BE,1, 3);
+
+extern void cdp1802_runtime_loader_init(void)
+{
+	cpuintf[CPU_CDP1802]=cdp1802_interface;
+}
+#endif
+
 enum {
 	CDP1802_P=1,
 	CDP1802_X,
