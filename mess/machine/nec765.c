@@ -676,7 +676,12 @@ void	nec765_set_tc_state(int state)
 					fdc.timer = 0;
 				}
 			}
+
+#ifdef NO_END_OF_CYLINDER
+                        nec765_continue_command();
+#else
                         nec765_update_state();
+#endif
 		}
 	}
 }
