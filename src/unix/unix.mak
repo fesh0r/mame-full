@@ -154,7 +154,7 @@ include src/core.mak
 ifeq ($(TARGET), mess)
 include mess/mess.mak
 else
-include src/mame.mak
+include src/$(TARGET).mak
 endif
 
 include src/rules.mak
@@ -247,21 +247,13 @@ CONFIG += -DLIN_FM_TOWNS
 endif
 ifdef JOY_USB
 CONFIG += -DUSB_JOYSTICK
-ifeq ($(ARCH), netbsd)
 ifeq ($(shell test -f /usr/include/usbhid.h && echo have_usbhid), have_usbhid)
 CONFIG += -DHAVE_USBHID_H
 MY_LIBS += -lusbhid
 else
-MY_LIBS += -lusb
-endif
-else
-ifeq ($(ARCH), freebsd)
-ifeq ($(shell test -f /usr/include/libusbhid.h && echo have_usbhid), have_usbhid)
-CONFIG += -DHAVE_USBHID_H
+ifeq ($(shell test -f /usr/include/libusbhid.h && echo have_libusbhid), have_libusbhid)
+CONFIG += -DHAVE_LIBUSBHID_H
 MY_LIBS += -lusbhid
-else
-MY_LIBS += -lusb
-endif
 else
 MY_LIBS += -lusb
 endif

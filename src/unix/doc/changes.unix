@@ -2,6 +2,34 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.67.2, 12 April 2003
+	- Fixed a bug in unix.mak that caused libusb to be linked in when the 
+	  USB joystick driver was not enabled.
+	- The makefile should now handle the CC variable correctly if it's some
+	  variation of 'gcc', such as 'gcc-2.95.3'.
+	- The MIPS x86 dynamic recompiling core now builds with GCC 2.95.x.
+	- Fixed several other warnings and errors that occurred when building 
+	  with GCC 2.95.x.
+	- INSTALL_MAN_DIR in the makefile now uses INSTALL_GROUP for the gid 
+	  instead of 0.
+	- Fixed several C++-style comments and a couple of warnings in the 
+	  OpenGL code.
+	- Fixed a build error in the xmess.xgl target.
+	- Merged the latest MESS CVS changes.
+
+Release 0.67.1, 9 April 2003
+	- Almost everything from MAME 0.67 and MESS CVS.
+	- Added support for konamigx to info.c.  (David Haywood) 
+	- Building the neomame target now works.  (Steve Behling)
+	- Using XFree86 3.3.6 fbdev in 32bpp now works.  (Steve Behling)
+	- USB patches to take recent FreeBSD changes into account.  (Matthew 
+	  N. Dodd)
+
+Release 0.66.2, 19 March 2003
+	- Fixed several C89 errors and warnings, mostly caused by C++-style 
+	  comments.
+	- Merged the latest MESS CVS code.
+
 Release 0.66.1, 17 March 2003
 	- Amost everything from MAME 0.66 and MESS CVS.
 	- Enabling X11_DGA in the makefile causes "make install" to set the 

@@ -189,24 +189,24 @@ GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
  *	
  * 	these are the cabinet-screen's width/height in the cabinet's world-coord !!
  */
-GLdouble  vx_cscr_dw, vy_cscr_dw, vz_cscr_dw; // the width (world-coord) , p1-p2
-GLdouble  vx_cscr_dh, vy_cscr_dh, vz_cscr_dh; // the height (world-coord), p1-p4
+GLdouble  vx_cscr_dw, vy_cscr_dw, vz_cscr_dw; /* the width (world-coord) , p1-p2 */
+GLdouble  vx_cscr_dh, vy_cscr_dh, vz_cscr_dh; /* the height (world-coord), p1-p4 */
 
-GLdouble  s__cscr_w,  s__cscr_h;              // scalar width/height (world-coord)
-GLdouble  s__cscr_w_view, s__cscr_h_view;     // scalar width/height (view-coord)
+GLdouble  s__cscr_w,  s__cscr_h;              /* scalar width/height (world-coord) */
+GLdouble  s__cscr_w_view, s__cscr_h_view;     /* scalar width/height (view-coord) */
 
-// screen x-axis (world-coord), normalized v__cscr_dw
+/* screen x-axis (world-coord), normalized v__cscr_dw */
 GLdouble vx_scr_nx, vy_scr_nx, vz_scr_nx; 
 
-// screen y-axis (world-coord), normalized v__cscr_dh
+/* screen y-axis (world-coord), normalized v__cscr_dh */
 GLdouble vx_scr_ny, vy_scr_ny, vz_scr_ny; 
 
-// screen z-axis (world-coord), the normalized cross product of v__cscr_dw,v__cscr_dh
+/* screen z-axis (world-coord), the normalized cross product of v__cscr_dw,v__cscr_dh */
 GLdouble vx_scr_nz, vy_scr_nz, vz_scr_nz; 
 
-// x/y-factor for view/world coord translation
-GLdouble cab_vpw_fx; // s__cscr_w_view / s__cscr_w
-GLdouble cab_vpw_fy; // s__cscr_h_view / s__cscr_h
+/* x/y-factor for view/world coord translation */
+GLdouble cab_vpw_fx; /* s__cscr_w_view / s__cscr_w */
+GLdouble cab_vpw_fy; /* s__cscr_h_view / s__cscr_h */
 
 /**
  * gscr..: game screen dimension vectors
@@ -217,15 +217,15 @@ GLdouble cab_vpw_fy; // s__cscr_h_view / s__cscr_h
  *	gscr[wh]d[xyz] <= cscr[wh]d[xyz]
  */
 
-GLdouble vx_gscr_dw, vy_gscr_dw, vz_gscr_dw; // the width (world-coord)
-GLdouble vx_gscr_dh, vy_gscr_dh, vz_gscr_dh; // the height (world-coord)
+GLdouble vx_gscr_dw, vy_gscr_dw, vz_gscr_dw; /* the width (world-coord) */
+GLdouble vx_gscr_dh, vy_gscr_dh, vz_gscr_dh; /* the height (world-coord) */
 
-GLdouble  s__gscr_w, s__gscr_h;              // scalar width/height (world-coord)
-GLdouble  s__gscr_w_view, s__gscr_h_view;    // scalar width/height (view-coord)
+GLdouble  s__gscr_w, s__gscr_h;              /* scalar width/height (world-coord) */
+GLdouble  s__gscr_w_view, s__gscr_h_view;    /* scalar width/height (view-coord) */
 
-GLdouble  s__gscr_offx, s__gscr_offy;          // delta game start (world-coord)
+GLdouble  s__gscr_offx, s__gscr_offy;          /* delta game start (world-coord) */
 
-GLdouble  s__gscr_offx_view, s__gscr_offy_view;// delta game-start (view-coord)
+GLdouble  s__gscr_offx_view, s__gscr_offy_view;/* delta game-start (view-coord) */
 
 /**
 *
@@ -287,7 +287,7 @@ void gl_bootstrap_resources()
     printf("GLINFO: gl_bootstrap_resources\n");
   #endif
 
-  blit_hardware_rotation=1; // no rotation by the blitter macro, or else !!
+  blit_hardware_rotation=1; /* no rotation by the blitter macro, or else !! */
 
   cabspecified = 0;
   if(cabname!=NULL) cabname[0]=0;
@@ -989,7 +989,7 @@ void InitVScreen (int depth)
 	  	display_palette_info.depth, display_palette_info.writable_colors);
           fflush(NULL);
   } else {
-	  useColorBlitter = useColorIndex || vecgame; // JAU vecgames ..
+	  useColorBlitter = useColorIndex || vecgame; /* JAU vecgames .. */
 
 	  useColorIndex = 0;
 
@@ -1119,7 +1119,7 @@ int sysdep_display_alloc_palette (int writable_colors)
   if (glContext == 0)
     return 1;
 
-  //totalcolors = writable_colors;
+  /*totalcolors = writable_colors; */
   totalcolors = Machine->drv->total_colors;
 
   if (totalcolors > 256)
@@ -1127,7 +1127,7 @@ int sysdep_display_alloc_palette (int writable_colors)
     if(useColorIndex)
     {
         printf("GLERROR: OpenGL color index mode not supported for colors == %d / only for depth == 8 (<= 256 colors) !\n", totalcolors);
-        exit(1); // JAU
+        exit(1); /* JAU */
     }
   }
 
@@ -1163,7 +1163,7 @@ int sysdep_display_alloc_palette (int writable_colors)
 	    disp__glColorTableEXT (GL_TEXTURE_2D,
 			       gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
-			       gl_ctable_type, ctable); // JAU COLOR
+			       gl_ctable_type, ctable); /* JAU COLOR */
 
 	    err = disp__glGetError ();
 	    if(err!=GL_NO_ERROR) 
@@ -1392,9 +1392,10 @@ void InitTextures (struct mame_bitmap *bitmap)
 		 (int) texnumx, (int) text_width, (int) texnumy,
 		 (int) text_height);
 
-  // JAU vecgames: hw-access error, while using Machine bitmap (e.g. tac-scan) !!
-  // vegames only ... ?!?!?!?!
-  //
+  /*
+   * JAU vecgames: hw-access error, while using Machine bitmap (e.g. tac-scan) !!
+   * vegames only ... ?!?!?!?!
+   */
   if(useColorBlitter) 
   {
     colorBlittedMemory = malloc( (text_width+2*BITMAP_SAFETY)*texnumx*
@@ -1539,7 +1540,7 @@ void InitTextures (struct mame_bitmap *bitmap)
 		  disp__glColorTableEXT (GL_TEXTURE_2D,
 				     gl_ctable_format,
 				     ctable_size, gl_ctable_format, 
-				     //gl_ctable_type, ctable); JAU COLOR
+				     /*gl_ctable_type, ctable); JAU COLOR */
 				     gl_ctable_type, current_palette->lookup);
 
 		  CHECK_GL_ERROR ();
@@ -1839,9 +1840,9 @@ void SetupOrtho (void)
 
   if(!do_snapshot)
   {
-	  disp__glOrtho (-0.5,  0.5, -0.5,  0.5,  1.0,  -1.0); // normal display !
+	  disp__glOrtho (-0.5,  0.5, -0.5,  0.5,  1.0,  -1.0); /* normal display ! */
   } else {
-	  disp__glOrtho (-0.5,  0.5,  0.5, -0.5,  1.0,  -1.0); // normal display !
+	  disp__glOrtho (-0.5,  0.5,  0.5, -0.5,  1.0,  -1.0); /* normal display ! */
   }
 
   disp__glMatrixMode (GL_MODELVIEW);
@@ -2127,13 +2128,13 @@ void cabinetTextureRotationTranslation ()
 
 	/** END  READING ... TRANSLATION / ROTATION **/
 
-	// go back on screen
+	/* go back on screen */
 	disp__glTranslated ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1); 
 
-	// x-border -> I. Q
+	/* x-border -> I. Q */
 	disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
 
-	// y-border -> I. Q
+	/* y-border -> I. Q */
 	disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
 
 	/********* CENTERED AT ORIGIN END  ****************/
@@ -2152,26 +2153,26 @@ void cabinetTextureRotationTranslation ()
 	{
 		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
 
-		// x-center
+		/* x-center */
 		disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
 
-		// y-center
+		/* y-center */
 		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
 
-		// swap -> III. Q
+		/* swap -> III. Q */
 		disp__glRotated ( -90.0 , vx_scr_nz, vy_scr_nz, vz_scr_nz);
 	} else {
-		// x-center
+		/* x-center */
 		disp__glTranslated ( -vx_gscr_dw/2.0, -vy_gscr_dw/2.0, -vz_gscr_dw/2.0);
 
-		// y-center
+		/* y-center */
 		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
 	}
 
-	// re-flip -> IV. Q     (normal)
+	/* re-flip -> IV. Q     (normal) */
 	disp__glRotated ( 180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
 
-	// go to origin -> I. Q (flipx)
+	/* go to origin -> I. Q (flipx) */
 	disp__glTranslated ( -vx_gscr_p1, -vy_gscr_p1, -vz_gscr_p1); 
 
 	/** START READING ... TRANSLATION / ROTATION **/
@@ -2198,7 +2199,7 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet, int updateTextur
     if (!useGLEXT78 && useColorIndex)
     	disp__glPixelTransferi (GL_MAP_COLOR, GL_TRUE);
 
-    if(useColorBlitter)  // JAU vecgames .. hw_access error ..
+    if(useColorBlitter)  /* JAU vecgames .. hw_access error .. */
     {
 	if(bytes_per_pixel==2)
 		gl_update_16_to_16bpp(bitmap);
@@ -2254,7 +2255,7 @@ drawTextureDisplay (struct mame_bitmap *bitmap, int useCabinet, int updateTextur
 	{
 	    disp__glColorTableEXT (GL_TEXTURE_2D, gl_ctable_format,
 			       ctable_size, gl_ctable_format, 
-			       //gl_ctable_type, ctable); JAU COLOR
+			       /*gl_ctable_type, ctable); JAU COLOR */
 			       gl_ctable_type, current_palette->lookup);
 	}
 	else
@@ -2607,7 +2608,11 @@ void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
 
   if (vecgame)
   {
+#ifdef MESS
+    video_update_vector (NULL, NULL, NULL);
+#else
     video_update_vector (NULL, NULL);
+#endif
     CHECK_GL_BEGINEND();
 
     /**

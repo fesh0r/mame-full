@@ -45,6 +45,8 @@ static int video_flipy = 0;
 static int video_flipx = 0;
 static int video_ror = 0;
 static int video_rol = 0;
+static int video_autoror = 0;
+static int video_autorol = 0;
 
 /* average FPS calculation */
 static cycles_t start_time = 0;
@@ -178,6 +180,12 @@ struct rc_option video_opts[] = {
    { "rol",		"rl",			rc_bool,	&video_rol,
      "0",		0,			0,		NULL,
      "Rotate screen counter-clockwise" },
+   { "autoror",		NULL,			rc_bool,	&video_autoror,
+     "0",		0,			0,		NULL,
+     "Automatically rotate screen clockwise for vertical games" },
+   { "autorol",		NULL,			rc_bool,	&video_autorol,
+     "0",		0,			0,		NULL,
+     "Automatically rotate screen counter-clockwise for vertical games" },
    { "flipx",		"fx",			rc_bool,	&video_flipx,
      "0",		0,			0,		NULL,
      "Flip screen left-right" },
@@ -319,6 +327,28 @@ void osd_video_initpre()
 
 	/* rotate left */
 	if (video_rol)
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT270;
+	}
+
+	/* auto-rotate right (e.g. for rotating lcds), based on original orientation */
+	if (video_autoror && (drivers[game_index]->flags & ORIENTATION_SWAP_XY))
+	{
+		/* if only one of the components is inverted, switch them */
+		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
+				(orientation & ROT180) == ORIENTATION_FLIP_Y)
+			orientation ^= ROT180;
+
+		orientation ^= ROT90;
+	}
+
+	/* auto-rotate left (e.g. for rotating lcds), based on original orientation */
+	if (video_autorol && (drivers[game_index]->flags & ORIENTATION_SWAP_XY))
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
@@ -692,7 +722,7 @@ static void update_palette(struct mame_display *display, int force_dirty)
 			display->game_palette_dirty[i / 32] = 0;
 
 			/* loop over all 32 bits and update dirty entries */
-			for (j = 0; j < 32; j++, dirtyflags >>= 1)
+			for (j = 0; (j < 32) && (i + j < display->game_palette_entries); j++, dirtyflags >>= 1)
 				if (((dirtyflags & 1) || force_dirty) && (i + j < display->game_palette_entries))
 				{
 					/* extract the RGB values */

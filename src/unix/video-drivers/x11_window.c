@@ -379,6 +379,13 @@ static int x11_find_best_visual(int bitmap_depth)
    XVisualInfo visualinfo;
    int screen_no = DefaultScreen (display);
 
+   if (XMatchVisualInfo (display, screen_no, 32, TrueColor, &visualinfo))
+   {
+      xvisual = visualinfo.visual;
+      depth   = 32;
+      return 0;
+   }
+
    if (XMatchVisualInfo (display, screen_no, 24, TrueColor, &visualinfo))
    {
       xvisual = visualinfo.visual;

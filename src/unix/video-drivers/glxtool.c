@@ -84,12 +84,12 @@ int LIBAPIENTRY get_GC( Display *display, Window win, XVisualInfo *visual,
 	    disp__glXDestroyContext( display, *gc );
             if(verbose)
 	    {
-	      fprintf(stderr, "GLINFO: glXCreateContext/glXDestroyContext trial(%d) %p\n", trial, *gc);
+	      fprintf(stderr, "GLINFO: glXCreateContext/glXDestroyContext trial(%d) %p\n", trial, (void *)*gc);
 	    }
 	    continue;
         } else {
 	    if(verbose)
-		fprintf(stderr, "GLINFO: glXCreateContext trial (%d) sure %p\n", trial, *gc);
+		fprintf(stderr, "GLINFO: glXCreateContext trial (%d) sure %p\n", trial, (void *)*gc);
 	    return 0;
         }
     }

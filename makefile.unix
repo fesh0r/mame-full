@@ -60,6 +60,9 @@ TARGET = mame
 # Uncomment to use assembler 68020 engine (CURRENTLY BROKEN).
 # X86_ASM_68020 = 1
 
+# Uncomment to use DRC MIPS3 engine
+# X86_MIPS3_DRC = 1
+
 
 ###########################################################################
 # Development environment options 
@@ -136,7 +139,7 @@ CFLAGS = -O -Wall -Wno-unused
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char -pipe \
 #  -malign-loops=2 -malign-jumps=2 -funroll-loops
 
-ifeq ($(CC),gcc)
+ifneq (,$(findstring gcc,$(CC)))
 
   #########################################################################
   # Special cases
@@ -166,7 +169,7 @@ ifeq ($(CC),gcc)
 
   # Detect non-ANSI C code.
   # CFLAGS += -pedantic -ansi -D_XOPEN_SOURCE -D_BSD_SOURCE \
-  # -Wno-long-long -Wno-trigraphs -Wp,-Wno-paste -Dasm=__asm__
+  # -Wno-long-long -Wno-trigraphs -Dasm=__asm__
  
   # Check for C89 compliance.
   # CFLAGS += -std=c89
@@ -335,7 +338,7 @@ INSTALL_USER =         root
 INSTALL_GROUP =        bin
 
 INSTALL_PROGRAM_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
-INSTALL_MAN_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g 0   -m  755
+INSTALL_MAN_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
 INSTALL_DATA_DIR =	$(INSTALL) -d    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  755
 INSTALL_PROGRAM =	$(INSTALL) -c -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  555
 INSTALL_PROGRAM_SUID =	$(INSTALL) -c -s -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m 4555
@@ -488,9 +491,6 @@ ARCH  = linux
 
 # NetBSD/FreeBSD USB joystick support.
 # JOY_USB = 1
-
-# PlayStation2-linux native pad support.
-# JOY_PS2 = 1
 
 
 ###########################################################################
