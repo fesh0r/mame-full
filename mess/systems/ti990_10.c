@@ -308,6 +308,12 @@ ti990_10reset_param reset_params =
 	set_int2
 };
 
+static struct beep_interface vdt_911_beep_interface =
+{
+	1,
+	{ 50 }
+};
+
 static struct MachineDriver machine_driver_ti990_10 =
 {
 	/* basic machine hardware */
@@ -344,11 +350,12 @@ static struct MachineDriver machine_driver_ti990_10 =
 	/* sound hardware */
 	0,
 	0,0,0,
-
-#if 0
-	{ /* no sound ! */
+	{ /* 911 VDT has a beep tone generator */
+		{
+			SOUND_BEEP,
+			&vdt_911_beep_interface
+        }
 	}
-#endif
 };
 
 
