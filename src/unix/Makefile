@@ -10,7 +10,7 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/main.o $(OBJDIR)/sound.o \
 	$(OBJDIR)/keyboard.o $(OBJDIR)/devices.o \
 	$(OBJDIR)/video.o $(OBJDIR)/dirty.o $(OBJDIR)/mode.o \
-	$(OBJDIR)/fileio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
+	$(OBJDIR)/fileio.o $(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
 	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
 	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/debug.o
 

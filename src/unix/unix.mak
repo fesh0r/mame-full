@@ -108,6 +108,7 @@ OBJDIRS = $(OBJ) \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
+IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
@@ -177,7 +178,6 @@ endif
 #build rules for this object because it is display dependent.
 OBJS  += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS) \
  $(OBJ)/unix.$(DISPLAY_METHOD)/osdepend.a $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o
-
 
 ##############################################################################
 # Begin of the real makefile.
@@ -261,6 +261,9 @@ $(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm
 	$(CC_COMPILE) $(ASM_STRIP) $<
 	$(CC_COMPILE) nasm $(NASM_FMT) -o $@ $<
 
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 #some tricks, since vector.o these days is display-method dependent:
 $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o: src/vidhrdw/vector.c

@@ -12,6 +12,7 @@ $(OBJ)/msdos/asmblit.o: src/msdos/asmblit.asm
 # check if this is a MESS build
 ifdef MESS
 # additional OS specific object files
-OSOBJS += $(OBJ)/mess/msdos.o $(OBJ)/mess/msdos/nec765.o
-endif
+OSOBJS += $(OBJ)/mess/msdos.o $(OBJ)/mess/msdos/nec765.o $(OBJ)/mess/msdos/dirio.o
 
+IMGTOOL_OBJS = $(OBJ)/mess/msdos/dirio.o
+endif
