@@ -263,7 +263,7 @@ COREDEFS += -DMESS_EXCLUDE_CBM
 endif
 
 ifndef MESS_EXCLUDE_IBMPC
-DRVLIBS += $(OBJ)/pc.a
+DRVLIBS += $(OBJ)/pc.a $(OBJ)/at.a $(OBJ)/pcshare.a
 else
 COREDEFS += -DMESS_EXCLUDE_IBMPC
 endif
@@ -475,26 +475,34 @@ $(OBJ)/bally.a:    \
 	  $(OBJ)/mess/machine/astrocde.o \
 	  $(OBJ)/mess/systems/astrocde.o
 
+$(OBJ)/pcshare.a:	   \
+	  $(OBJ)/mess/machine/dma8237.o  \
+	  $(OBJ)/mess/machine/pic8259.o  \
+	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
+	  $(OBJ)/mess/vidhrdw/vga.o	 \
+	  $(OBJ)/mess/sndhrdw/pc.o	 \
+	  $(OBJ)/mess/sndhrdw/sblaster.o \
+	  $(OBJ)/mess/machine/pc_fdc.o	 \
+	  $(OBJ)/mess/machine/pc_hdc.o	 \
+	  $(OBJ)/mess/machine/pcshare.o	 
+
 $(OBJ)/pc.a:	   \
+	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
 	  $(OBJ)/mess/machine/ibmpc.o	 \
 	  $(OBJ)/mess/machine/tandy1t.o  \
 	  $(OBJ)/mess/machine/amstr_pc.o \
 	  $(OBJ)/mess/machine/europc.o   \
-	  $(OBJ)/mess/machine/at.o	 \
-	  $(OBJ)/mess/machine/dma8237.o  \
-	  $(OBJ)/mess/machine/pic8259.o  \
-	  $(OBJ)/mess/vidhrdw/vga.o	 \
-	  $(OBJ)/mess/sndhrdw/pc.o	 \
-	  $(OBJ)/mess/sndhrdw/sblaster.o \
-	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
-	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
-	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
-	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
-	  $(OBJ)/mess/machine/pc.o	 \
-	  $(OBJ)/mess/machine/pc_fdc.o	 \
-	  $(OBJ)/mess/machine/pc_hdc.o	 \
-	  $(OBJ)/mess/machine/pc_ide.o	 \
+	  $(OBJ)/mess/machine/pc.o \
 	  $(OBJ)/mess/systems/pc.o
+
+$(OBJ)/at.a:	   \
+	  $(OBJ)/mess/machine/pc_ide.o \
+	  $(OBJ)/mess/machine/ibmat.o \
+	  $(OBJ)/mess/machine/ps2.o	\
+	  $(OBJ)/mess/machine/at.o \
+	  $(OBJ)/mess/systems/at.o
 
 $(OBJ)/p2000.a:    \
 	  $(OBJ)/mess/vidhrdw/saa5050.o  \
