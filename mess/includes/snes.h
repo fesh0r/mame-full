@@ -341,8 +341,8 @@ extern READ_HANDLER ( spc_r_io );
 extern WRITE_HANDLER ( spc_w_io );
 extern int snes_sh_start( const struct MachineSound *driver );
 extern void snes_sh_update( int param, INT16 **buffer, int length );
-
 /* Just until we get sound working */
-extern UINT8 SPCSkipper(void);
+extern void snes_fakeapu_w_port( UINT8 port, UINT8 data );
+extern UINT8 snes_fakeapu_r_port( UINT8 port );
 
 #endif /* _SNES_H_ */
