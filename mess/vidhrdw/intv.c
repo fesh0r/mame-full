@@ -65,11 +65,22 @@ void intv_vh_stop(void)
 	generic_bitmapped_vh_stop();
 }
 
-int max(int v1, int v2) {
+/* NPW 20-Apr-2002 - Changing this to fix compilation errors with MSVC */
+#ifdef max
+#undef max
+#endif
+#define max	my_max
+
+#ifdef min
+#undef min
+#endif
+#define min	my_min
+
+static int max(int v1, int v2) {
     return (v1 > v2 ? v1 : v2);
 }
 
-int min(int v1, int v2) {
+static int min(int v1, int v2) {
     return (v1 < v2 ? v1 : v2);
 }
 
