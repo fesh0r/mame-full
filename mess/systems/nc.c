@@ -561,7 +561,7 @@ static void dummy_timer_callback(int dummy)
 
 static void nc_serial_timer_callback(int dummy);
 
-void nc_common_init_machine(void)
+static void nc_common_init_machine(void)
 {
 	/* setup reset state */
 	nc_display_memory_start = 0;
@@ -622,12 +622,12 @@ MEMORY_WRITE_START( writemem_nc )
 MEMORY_END
 
 
-READ_HANDLER(nc_memory_management_r)
+static READ_HANDLER(nc_memory_management_r)
 {
         return nc_memory_config[offset];
 }
 
-WRITE_HANDLER(nc_memory_management_w)
+static WRITE_HANDLER(nc_memory_management_w)
 {
 #ifdef VERBOSE
 	logerror("Memory management W: %02x %02x\n",offset,data);
@@ -637,7 +637,7 @@ WRITE_HANDLER(nc_memory_management_w)
         nc_refresh_memory_config();
 }
 
-WRITE_HANDLER(nc_irq_mask_w)
+static WRITE_HANDLER(nc_irq_mask_w)
 {
 #ifdef VERBOSE
 	logerror("irq mask w: %02x\n", data);
@@ -653,7 +653,7 @@ WRITE_HANDLER(nc_irq_mask_w)
         nc_update_interrupts();
 }
 
-WRITE_HANDLER(nc_irq_status_w)
+static WRITE_HANDLER(nc_irq_status_w)
 {
 #ifdef VERBOSE
 	logerror("irq status w: %02x\n", data);
@@ -692,13 +692,13 @@ WRITE_HANDLER(nc_irq_status_w)
         nc_update_interrupts();
 }
 
-READ_HANDLER(nc_irq_status_r)
+static READ_HANDLER(nc_irq_status_r)
 {
         return ~((nc_irq_status & (~nc_irq_latch_mask)) | nc_irq_latch);
 }
 
 
-READ_HANDLER(nc_key_data_in_r)
+static READ_HANDLER(nc_key_data_in_r)
 {
 	if (offset==9)
 	{
@@ -734,7 +734,7 @@ static void nc_sound_update(int channel)
         beep_set_frequency(channel, frequency);
 }
 
-WRITE_HANDLER(nc_sound_w)
+static WRITE_HANDLER(nc_sound_w)
 {
 #ifdef VERBOSE
 	logerror("sound w: %04x %02x\n", offset, data);
@@ -802,7 +802,7 @@ static void nc_serial_timer_callback(int dummy)
 	msm8251_receive_clock();
 }
 
-WRITE_HANDLER(nc_uart_control_w)
+static WRITE_HANDLER(nc_uart_control_w)
 {
 	/* update printer state */
 	nc_printer_update(data);
@@ -861,7 +861,7 @@ static READ_HANDLER(nc_unmapped_io_r)
 static int previous_alarm_state;
 
 
-WRITE_HANDLER(nc100_display_memory_start_w)
+static WRITE_HANDLER(nc100_display_memory_start_w)
 {
         /* bit 7: A15 */
         /* bit 6: A14 */
@@ -877,7 +877,7 @@ WRITE_HANDLER(nc100_display_memory_start_w)
 }
 
 
-WRITE_HANDLER(nc100_uart_control_w)
+static WRITE_HANDLER(nc100_uart_control_w)
 {
 	nc_uart_control_w(offset,data);
 
@@ -891,7 +891,7 @@ WRITE_HANDLER(nc100_uart_control_w)
 }
 
 
-void	nc100_tc8521_alarm_callback(int state)
+static void	nc100_tc8521_alarm_callback(int state)
 {
 	/* I'm assuming that the nmi is edge triggered */
 	/* a interrupt from the fdc will cause a change in line state, and
@@ -1017,7 +1017,7 @@ static MACHINE_INIT( nc100 )
 
 }
 
-MACHINE_STOP( nc100 )
+static MACHINE_STOP( nc100 )
 {
 	nc_common_open_stream_for_writing();
 	tc8521_save_stream(file);
@@ -1026,7 +1026,7 @@ MACHINE_STOP( nc100 )
 }
 
 
-WRITE_HANDLER(nc100_poweroff_control_w)
+static WRITE_HANDLER(nc100_poweroff_control_w)
 {
         /* bits 7-1: not used */
         /* bit 0: 1 = no effect, 0 = power off */
@@ -1038,7 +1038,7 @@ WRITE_HANDLER(nc100_poweroff_control_w)
 
 
 /* nc100 version of card/battery status */
-READ_HANDLER(nc100_card_battery_status_r)
+static READ_HANDLER(nc100_card_battery_status_r)
 {
 	int nc_card_battery_status = 0x0ff;
 
@@ -1085,7 +1085,7 @@ READ_HANDLER(nc100_card_battery_status_r)
     return nc_card_battery_status;
 }
 
-WRITE_HANDLER(nc100_memory_card_wait_state_w)
+static WRITE_HANDLER(nc100_memory_card_wait_state_w)
 {
 #ifdef VERBOSE
 	logerror("nc100 memory card wait state: %02x\n",data);
@@ -1263,7 +1263,7 @@ void nc150_init_machine(void)
 /* NC200 hardware */
 
 
-WRITE_HANDLER(nc200_display_memory_start_w)
+static WRITE_HANDLER(nc200_display_memory_start_w)
 {
         /* bit 7: A15 */
         /* bit 6: A14 */
@@ -1388,7 +1388,7 @@ static void nc200_floppy_drive_index_callback(int drive_id)
 //	nc_update_interrupts();
 }
 
-MACHINE_INIT( nc200 )
+static MACHINE_INIT( nc200 )
 {
     nc_type = NC_TYPE_200;
 
@@ -1455,7 +1455,7 @@ NC200:
 
 
 /* nc200 version of card/battery status */
-READ_HANDLER(nc200_card_battery_status_r)
+static READ_HANDLER(nc200_card_battery_status_r)
 {
 	int nc_card_battery_status = 0x0ff;
 
@@ -1488,7 +1488,7 @@ READ_HANDLER(nc200_card_battery_status_r)
   bit 0: Parallel interface BUSY
  */
 
-READ_HANDLER(nc200_printer_status_r)
+static READ_HANDLER(nc200_printer_status_r)
 {
 	unsigned char nc200_printer_status = 0x0ff;
 
@@ -1511,7 +1511,7 @@ READ_HANDLER(nc200_printer_status_r)
 }
 
 
-WRITE_HANDLER(nc200_uart_control_w)
+static WRITE_HANDLER(nc200_uart_control_w)
 {
 	int reset_fdc;
 
@@ -1545,7 +1545,7 @@ WRITE_HANDLER(nc200_uart_control_w)
 /* bit 1: disk motor??  */
 /* bit 0: NEC765 Terminal Count input */
 
-WRITE_HANDLER(nc200_memory_card_wait_state_w)
+static WRITE_HANDLER(nc200_memory_card_wait_state_w)
 {
 #ifdef NC200_DEBUG
 	logerror("nc200 memory card wait state: PC: %04x %02x\n",activecpu_get_pc(),data);
@@ -1559,7 +1559,7 @@ WRITE_HANDLER(nc200_memory_card_wait_state_w)
 /* bit 2: backlight: 1=off, 0=on */
 /* bit 1 cleared to zero in disk code */
 /* bit 0 seems to be the same as nc100 */
-WRITE_HANDLER(nc200_poweroff_control_w)
+static WRITE_HANDLER(nc200_poweroff_control_w)
 {
 #ifdef NC200_DEBUG
 	logerror("nc200 power off: PC: %04x %02x\n", activecpu_get_pc(),data);
@@ -1860,7 +1860,7 @@ static const struct IODevice io_nc200[] =
 			1,
 			"dsk\0",
 			IO_RESET_NONE,
-			OSD_FOPEN_DUMMY,		/* open mode */
+			OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 			NULL,
 			pc_floppy_init,
 			pc_floppy_exit,

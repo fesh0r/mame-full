@@ -523,7 +523,7 @@ static const struct IODevice io_trs80l2[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		trs80_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
