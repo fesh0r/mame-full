@@ -250,7 +250,7 @@ ROM_END
 
 ROM_START( famicom )
     ROM_REGION( 0x10000, REGION_CPU1,0 )  /* Main RAM + program banks */
-    ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, CRC(5e607dcf))
+    ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, CRC(5e607dcf) SHA1(57fe1bdee955bb48d357e463ccbf129496930b62))
 
     ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
 

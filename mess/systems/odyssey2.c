@@ -192,7 +192,7 @@ MACHINE_DRIVER_END
 
 ROM_START (odyssey2)
     ROM_REGION(0x10000,REGION_CPU1,0)    /* safer for the memory handler/bankswitching??? */
-    ROM_LOAD ("o2bios.rom", 0x0000, 0x0400, CRC(8016a315))
+    ROM_LOAD ("o2bios.rom", 0x0000, 0x0400, CRC(8016a315) SHA1(b2e1955d957a475de2411770452eff4ea19f4cee))
     ROM_REGION(0x100, REGION_GFX1, 0)
     ROM_REGION(0x2000, REGION_USER1, 0)
 ROM_END
