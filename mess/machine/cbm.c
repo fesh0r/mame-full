@@ -16,7 +16,7 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	if (!file_type)
 		goto error;
 
-	if (stricmp(file_type, "prg"))
+	if (!stricmp(file_type, "prg"))
 	{
 		/* prg files */
 	}
