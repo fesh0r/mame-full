@@ -39,6 +39,11 @@ static UINT8 dai_paddle_select;
 static UINT8 dai_paddle_enable;
 static UINT8 dai_cassette_motor[2];
 
+
+INTERRUPT_GEN( dai_vblank_int )
+{
+}
+
 /* Memory */
 static void dai_update_memory (int dai_rom_bank)
 {
@@ -58,7 +63,7 @@ static UINT8 dai_keyboard_handler (UINT8 scan)
 	UINT8 data = 0x00;
 	int i;
 
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < 8; i++)
 	{
 		if (scan & (1 << i))
 			data |= readinputport(i);
@@ -69,14 +74,9 @@ static UINT8 dai_keyboard_handler (UINT8 scan)
 static void dai_interrupt_callback(int intreq, UINT8 vector)
 {
 	if (intreq)
-	{
 		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
-//		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, vector);
-	}
 	else
-	{
 		cpu_set_irq_line(0, 0, CLEAR_LINE);
-	}
 }
 
 static const tms5501_init_param tms5501_init_param_dai =
@@ -125,24 +125,28 @@ MACHINE_INIT( dai )
 	Discrete Devices IO
 
 	FD00	POR1:	IN	bit 0	-
-						bit 1	-
-						bit 2	PIPGE: Page signal
-						bit 3	PIDTR: Serial output ready
-						bit 4	PIBU1: Button on paddle 1 (1 = closed)
-						bit 5	PIBU1: Button on paddle 2 (1 = closed)
-						bit 6	PIRPI: Random data
-						bit 7	PICAI: Cassette input data
+				bit 1	-
+				bit 2	PIPGE: Page signal
+				bit 3	PIDTR: Serial output ready
+				bit 4	PIBU1: Button on paddle 1 (1 = closed)
+				bit 5	PIBU1: Button on paddle 2 (1 = closed)
+				bit 6	PIRPI: Random data
+				bit 7	PICAI: Cassette input data
+
 	FD01	PDLST:	IN	Single pulse used to trigger paddle timer circuit
+
 	FD04	POR1:	OUT	bit 0-3	Volume oscillator channel 0
-						bit 4-7	Volume oscillator channel 1
+				bit 4-7	Volume oscillator channel 1
+
 	FD05	POR1:	OUT	bit 0-3	Volume oscillator channel 2
-						bit 4-7	Volume random noise generator
+				bit 4-7	Volume random noise generator
+
 	FD06	POR0:	OUT	bit 0	POCAS: Cassette data output
-						bit 1-2	PDLMSK: Paddle select
-						bit 3	PDPNA:	Paddle enable
-						bit 4	POCM1:	Cassette 1 motor control (0 = run)
-						bit 5	POCM2:	Cassette 2 motor control (0 = run)
-						bit 6-7			ROM bank switching
+				bit 1-2	PDLMSK: Paddle select
+				bit 3	PDPNA:	Paddle enable
+				bit 4	POCM1:	Cassette 1 motor control (0 = run)
+				bit 5	POCM2:	Cassette 2 motor control (0 = run)
+				bit 6-7			ROM bank switching
 
 ***************************************************************************/
 
@@ -152,7 +156,7 @@ READ_HANDLER( dai_io_discrete_devices_r )
 
 	switch(offset & 0x000f) {
 	case 0x00:
-		data = readinputport(7);
+		data = readinputport(8);
 		data |= 0x08;	// serial ready
 		logerror ("Discrete devices read 0xfd00: %02x\n", data);
 		break;
@@ -211,8 +215,6 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 		break;
 	}
 }
-
-
 
 /***************************************************************************
 

@@ -9,6 +9,7 @@ READ_HANDLER( dai_io_discrete_devices_r );
 WRITE_HANDLER( dai_io_discrete_devices_w );
 READ_HANDLER( amd9511_r );
 WRITE_HANDLER( amd9511_w );
+INTERRUPT_GEN( dai_vblank_int );
 
 /* vidhrdw/dai.c */
 extern unsigned char dai_palette[16*3];

@@ -133,7 +133,7 @@ VIDEO_UPDATE( dai )
 								}
 								break;
 						}
-						logerror ("Mode 0, Resolution 3, Lines %d\n", line_repeat_count);
+//						logerror ("Mode 0, Resolution 3, Lines %d\n", line_repeat_count);
 						current_scan_line += line_repeat_count*2+2;
 						break;
 				}
@@ -160,7 +160,7 @@ VIDEO_UPDATE( dai )
 								}
 							}
 						}
-						logerror ("Mode 1, Resolution 1, Lines %d\n", line_repeat_count);
+//						logerror ("Mode 1, Resolution 1, Lines %d\n", line_repeat_count);
 						current_scan_line += line_repeat_count*2+2;
 						current_video_memory_address-=2;
 						break;
@@ -200,7 +200,7 @@ VIDEO_UPDATE( dai )
 								break;
 						}
 						current_scan_line += line_repeat_count*2+2;
-						logerror ("Mode 1, Resolution 3, Lines %d\n", line_repeat_count);
+//						logerror ("Mode 1, Resolution 3, Lines %d\n", line_repeat_count);
 						break;
 				}
 				break;
