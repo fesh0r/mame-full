@@ -33,6 +33,7 @@
 #include "win32ui.h"
 #include "bitmask.h"
 #include "options.h"
+#include "m32util.h"
 
 
 #if defined(__GNUC__)
@@ -430,6 +431,7 @@ static void Picker_InternalResetColumnDisplay(HWND hWnd, BOOL bFirstTime)
 	int         *order;
 	int         *shown;
 	int shown_columns;
+	LVCOLUMN col;
 	struct PickerInfo *pPickerInfo;
 
 	pPickerInfo = GetPickerInfo(hWnd);
@@ -440,6 +442,9 @@ static void Picker_InternalResetColumnDisplay(HWND hWnd, BOOL bFirstTime)
 	if (!widths || !order || !shown)
 		goto done;
 
+	memset(widths, 0, pPickerInfo->nColumnCount * sizeof(*widths));
+	memset(order, 0, pPickerInfo->nColumnCount * sizeof(*order));
+	memset(shown, 0, pPickerInfo->nColumnCount * sizeof(*shown));
 	pPickerInfo->pCallbacks->pfnGetColumnWidths(widths);
 	pPickerInfo->pCallbacks->pfnGetColumnOrder(order);
 	pPickerInfo->pCallbacks->pfnGetColumnShown(shown);
@@ -452,23 +457,21 @@ static void Picker_InternalResetColumnDisplay(HWND hWnd, BOOL bFirstTime)
 		SetWindowLong(hWnd, GWL_STYLE,
 					  (GetWindowLong(hWnd, GWL_STYLE) & ~LVS_TYPEMASK) | LVS_REPORT);
 
-		nColumn = Picker_GetNumColumns(hWnd);
-
-		// The first time thru this won't happen, on purpose
-		// because the column widths will be in the negative millions,
-		// since it's been created but not setup properly yet
-		for (i = 0; i < nColumn; i++)
+		// Retrieve each of the column widths
+		i = 0;
+		memset(&col, 0, sizeof(col));
+		col.mask = LVCF_WIDTH;
+		while(ListView_GetColumn(hWnd, 0, &col))
 		{
-			widths[Picker_GetRealColumnFromViewColumn(hWnd, i)] =
-				ListView_GetColumnWidth(hWnd, i);
+			nColumn = Picker_GetRealColumnFromViewColumn(hWnd, i++);
+			widths[nColumn] = col.cx;
+			ListView_DeleteColumn(hWnd, 0);
 		}
 
 		pPickerInfo->pCallbacks->pfnSetColumnWidths(widths);
 
+		// restore old style
 		SetWindowLong(hWnd, GWL_STYLE, style);
-
-		while(ListView_DeleteColumn(hWnd, 0))
-			;
 	}
 
 	nColumn = 0;
@@ -483,6 +486,9 @@ static void Picker_InternalResetColumnDisplay(HWND hWnd, BOOL bFirstTime)
 			lvc.fmt = LVCFMT_LEFT;
 			ListView_InsertColumn(hWnd, nColumn, &lvc);
 			pPickerInfo->pnColumnsOrder[nColumn] = order[i];
+
+			dprintf("Visible column %d: Logical column %d; Width=%d\n", nColumn, order[i], widths[order[i]]);
+
 			nColumn++;
 		}
 	}
