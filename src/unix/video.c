@@ -20,7 +20,7 @@
 #define FRAMESKIP_DRIVER_COUNT 2
 
 static const int safety = 16;
-static float beam_f, flicker_f;
+static float beam_f;
 static int normal_widthscale = 1, normal_heightscale = 1;
 static char *vector_res = NULL;
 static int use_auto_double = 1;
@@ -30,7 +30,7 @@ static float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static struct osd_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
-static struct sysdep_palette_struct *debug_palette = NULL;
+/*struct sysdep_palette_struct *debug_palette = NULL;*/
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
 
@@ -130,7 +130,7 @@ struct rc_option video_opts[] = {
    { "beam",		"B",			rc_float,	&beam_f,
      "1.0",		1.0,			16.0,		video_verify_beam,
      "Set the beam size for vector games" },
-   { "flicker",		"f",			rc_float,	&flicker_f,
+   { "flicker",		"f",			rc_float,	&options.vector_flicker,
      "0.0",		0.0,			100.0,		video_verify_flicker,
      "Set the flicker for vector games" },
    { "antialias",	"aa",			rc_bool,	&options.antialias,
@@ -177,11 +177,10 @@ static int video_verify_beam(struct rc_option *option, const char *arg,
 static int video_verify_flicker(struct rc_option *option, const char *arg,
    int priority)
 {
-   options.flicker = (int)(flicker_f * 2.55);
-   if (options.flicker < 0)
-      options.flicker = 0;
-   else if (options.flicker > 255)
-      options.flicker = 255;
+   if (options.vector_flicker < 0.0)
+      options.vector_flicker = 0.0;
+   else if (options.vector_flicker > 100.0)
+      options.vector_flicker = 100.0;
 
    option->priority = priority;
    

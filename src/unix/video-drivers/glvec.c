@@ -53,6 +53,10 @@ static GLfloat vecoldx,vecoldy;
 
 float gl_beam=1.0;
 
+static int vector_orientation;
+
+static float flicker_correction = 0.0;
+
 /*
  * multiply and divide routines for drawing lines
  * can be be replaced by an assembly routine in osinline.h
@@ -410,6 +414,41 @@ void vector_set_intensity(float _intensity)
 float vector_get_intensity(void)
 {
 	return intensity_correction;
+}
+
+void vector_set_flip_x (int flip)
+{
+	if (flip)
+		vector_orientation |= ORIENTATION_FLIP_X;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_X;
+}
+
+void vector_set_flip_y (int flip)
+{
+	if (flip)
+		vector_orientation |= ORIENTATION_FLIP_Y;
+	else
+		vector_orientation &= ~ORIENTATION_FLIP_Y;
+}
+
+void vector_set_swap_xy (int swap)
+{
+	if (swap)
+		vector_orientation |= ORIENTATION_SWAP_XY;
+	else
+		vector_orientation &= ~ORIENTATION_SWAP_XY;
+}
+
+void vector_set_flicker(float _flicker)
+{
+	flicker_correction = _flicker;
+	/* flicker = (int)(flicker_correction * 2.55); */
+}
+
+float vector_get_flicker(void)
+{
+	return flicker_correction;
 }
 
 #endif /* ifdef xgl */

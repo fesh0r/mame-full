@@ -54,10 +54,10 @@ SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
 SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
 SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
 SOUND_OBJS.nto     = $(DSP_DIR)/io-audio.o
+SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
+SOUND_OBJS.irix_al = $(DSP_DIR)/irix_al.o
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
-#SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
-#SOUND_OBJS.irix_al = $(DSP_DIR)/irix_al.o
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
 SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o
 
@@ -93,10 +93,10 @@ CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
 CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
 CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
+CFLAGS.irix       = -DSYSDEP_DSP_IRIX
+CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX
 CFLAGS.generic    =
 #these need to be converted to plugins first
-#CFLAGS.irix       = -DSYSDEP_DSP_IRIX
-#CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
 
 #all cflags
