@@ -19,7 +19,8 @@
 
 #include <ggi/ggi.h>
 #include <signal.h>
-#include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*#define KEY_DEBUG*/
 /*#define GGI_DEBUG*/
@@ -29,20 +30,20 @@
 #include "devices.h"
 #include "keycodes.h"
 #include "effect.h"
-#include "sysdep/sysdep_display.h"
+#include "sysdep/sysdep_display_priv.h"
 
 static int ggi_video_width,ggi_video_height;
 static int scaled_visual_width,scaled_visual_height;
 static ggi_visual_t vis = NULL;
 static int screen_startx,screen_starty;
-static int lastmouse[MOUSE_AXES]={0,0,0,0,0,0,0,0};
+static int lastmouse[SYSDEP_DISPLAY_MOUSE_AXES]={0,0,0,0,0,0,0,0};
 static unsigned char *video_mem;
 static unsigned char *doublebuffer_buffer = NULL; /* also used for scaling */
 static ggi_mode mode;
 static int use_linear = 0;
 static int force_x,force_y;
 
-struct rc_option display_opts[] = {
+struct rc_option sysdep_display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "GGI Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
@@ -60,6 +61,7 @@ struct rc_option display_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
+
 
 struct mode_list {
     int width;
@@ -87,7 +89,7 @@ static struct mode_list ggimodes[] = {
 };
 #define ML_ANZ (sizeof(ggimodes) / sizeof(struct mode_list))   /* # of entries in table */
 
-static int first_call=TRUE;
+static int first_call=1;
 /* do we need this? It makes debugging crashes sorta hard without a core file */
 #ifdef CATCH_SIGNALS
 static void (*oldsigsegvh)(int) = NULL;
@@ -96,14 +98,7 @@ static void (*oldsigquith)(int) = NULL;
 #endif
 
 static void ggi_cleanup(void);
-static void (*update_function)(struct mame_bitmap *bitmap);
-static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap);
-static void ggi_update_16_to_16bpp_scaled(struct mame_bitmap *bitmap);
-static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap);
-static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_16_to_16bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_16_to_24bpp(struct mame_bitmap *bitmap);
-static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap);
+static blit_func_p blit_func;
 
 
 /* do we need this? It makes debugging crashes sorta hard without a core file */
@@ -134,7 +129,7 @@ static void myhandler(int signum)
     }
     fprintf(stderr,"%s: aborting...\n",signam);
     if (first_call) {
-        first_call=FALSE;
+        first_call=0;
         ggi_cleanup(); /* try again once */
     }
     if (orgh) orgh(signum);
@@ -142,23 +137,30 @@ static void myhandler(int signum)
 }
 #endif
 
-int sysdep_init(void)
+int sysdep_display_init(void)
 {
+	memset(sysdep_display_properties.mode_info, 0,
+			SYSDEP_DISPLAY_VIDEO_MODES * sizeof(int));
+	sysdep_display_properties.mode_info[0] =
+		SYSDEP_DISPLAY_WINDOWED | SYSDEP_DISPLAY_EFFECTS;
+	memset(sysdep_display_properties.mode_name, 0,
+			SYSDEP_DISPLAY_VIDEO_MODES * sizeof(const char *));
+	sysdep_display_properties.mode_name[0] = "GGI";
+
 #ifdef GGI_DEBUG
-   if (stderr)
-      fprintf(stderr,"sysdep_init called\n");
+	fprintf(stderr,"sysdep_init called\n");
 #endif
 
-   if (ggiInit())
-   {
-      fprintf(stderr, "Unable to initialize GGI subsystem!\n"); /* sounds good, doesn't it? */
-      return OSD_NOT_OK;
-   }
+	if (ggiInit())
+	{
+		fprintf(stderr, "Unable to initialize GGI subsystem!\n"); /* sounds good, doesn't it? */
+		return 1;
+	}
 
-   return OSD_OK;
+	return 0;
 }
 
-void sysdep_close(void)
+void sysdep_display_exit(void)
 {
 #ifdef GGI_DEBUG
     fprintf(stderr,"sysdep_close called\n");
@@ -182,36 +184,36 @@ static int ggi_check_mode(ggi_visual_t vis, int w, int h, int depth,
     memset(&mode,0xff,sizeof(mode));
     /* try 8bit color depth */
     if ((depth == 8) &&
-        (! ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_8BIT, &mode)))
+        (!ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_8BIT, &mode)))
     {
        *type = GT_8BIT;
-       return(TRUE);
+       return 1;
     }
     /* try 16bit color depth */
-    if (! ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_16BIT, &mode))
+    if (!ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_16BIT, &mode))
     {
        *type = GT_16BIT;
-       return(TRUE);
+       return 1;
     }
     /* try 15bit color depth */
-    if (! ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_15BIT, &mode))
+    if (!ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_15BIT, &mode))
     {
        *type = GT_15BIT;
-       return(TRUE);
+       return 1;
     }
     /* try 24bit color depth */
-    if (! ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_24BIT, &mode))
+    if (!ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_24BIT, &mode))
     {
        *type = GT_24BIT;
-       return(TRUE);
+       return 1;
     }
     /* try 32bit color depth */
-    if (! ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_32BIT, &mode))
+    if (!ggiCheckSimpleMode(vis, w, h, GGI_AUTO, GT_32BIT, &mode))
     {
        *type = GT_32BIT;
-       return(TRUE);
+       return 1;
     }
-    return(FALSE);
+    return 0;
 }
 
 /*
@@ -223,226 +225,230 @@ static int ggi_check_mode(ggi_visual_t vis, int w, int h, int depth,
  */
 static int set_video_mode(int depth)
 {
-    int i, best_score = 0;
-    ggi_graphtype type, best_type;
-    const ggi_directbuffer *direct_buf;
-    typedef void(*updater_t)(struct mame_bitmap *bitmap);
-    updater_t updaters[] = {
-        /* linear updaters */
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        ggi_update_linear_16_to_16bpp,
-        ggi_update_linear_16_to_24bpp,
-        ggi_update_linear_16_to_32bpp,
-        /* non-linear updaters */
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        ggi_update_16_to_16bpp,
-        ggi_update_16_to_24bpp,
-        ggi_update_16_to_32bpp,
-        /* scaled non-linear updaters */
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        ggi_update_16_to_16bpp_scaled,
-        ggi_update_16_to_24bpp,
-        ggi_update_16_to_32bpp
-    };
-    int updater = 0;
+	int i, best_score = 0;
+	ggi_graphtype type, best_type;
+	const ggi_directbuffer *direct_buf;
+	int updater = 0;
 
 #ifdef GGI_DEBUG
-    fprintf(stderr,"set_video_mode called\n");
+	fprintf(stderr,"set_video_mode called\n");
 #endif
-    scaled_visual_width = visual_width  * widthscale;
-    scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
+	scaled_visual_width = sysdep_display_params.width 
+		* sysdep_display_params.widthscale;
+	scaled_visual_height = sysdep_display_params.yarbsize 
+		? sysdep_display_params.yarbsize : sysdep_display_params.height 
+		* sysdep_display_params.heightscale;
 
-    if (force_x == 0)
-        ggi_video_width = scaled_visual_width;
-    else
-        ggi_video_width = force_x;
+	if (force_x == 0)
+		ggi_video_width = scaled_visual_width;
+	else
+		ggi_video_width = force_x;
 
-    if (force_y == 0)
-        ggi_video_height = scaled_visual_height;
-    else
-        ggi_video_height = force_y;
+	if (force_y == 0)
+		ggi_video_height = scaled_visual_height;
+	else
+		ggi_video_height = force_y;
 
-    if (ggi_video_height < scaled_visual_height || ggi_video_width < scaled_visual_width) {
-        fprintf(stderr,"Forced resolution %dx%d < needed resolution %dx%d -- aborting...\n",
-                ggi_video_width,ggi_video_height,scaled_visual_width,scaled_visual_height);
-        return(FALSE);
-    }
+	if (ggi_video_height < scaled_visual_height || ggi_video_width < scaled_visual_width) {
+		fprintf(stderr,"Forced resolution %dx%d < needed resolution %dx%d -- aborting...\n",
+				ggi_video_width,ggi_video_height,scaled_visual_width,scaled_visual_height);
+		return 0;
+	}
 
-    if (force_x || force_y)
-        fprintf(stderr,"Command line override: setting mode %dx%d\n",ggi_video_width,ggi_video_height);
+	if (force_x || force_y)
+		fprintf(stderr,"Command line override: setting mode %dx%d\n",ggi_video_width,ggi_video_height);
 
-    /* some GGI stuff */
-    vis = ggiOpen(NULL);
-    ggiSetFlags(vis, GGIFLAG_ASYNC);
-    ggiSetEventMask(vis, emKey | emPointer);
+	/* some GGI stuff */
+	vis = ggiOpen(NULL);
+	ggiSetFlags(vis, GGIFLAG_ASYNC);
+	ggiSetEventMask(vis, emKey | emPointer);
 
-    /* first try exact game resolution... */
-    if (! ggi_check_mode(vis, ggi_video_width, ggi_video_height, depth, &best_type) &&
-        (!force_x && !force_y))
-    {
-        int w, h, score;
-        /* now try from my [just hacked] list of modes */
-        /* (grrr -- isn't there a way to get all supported modes from GGI?) */
-        for (i=0; i<ML_ANZ; i++)
-        {
-            w = ggimodes[i].width;
-            h = ggimodes[i].height;
-            if (ggi_check_mode(vis, w, h, depth, &type)) {
-                score = mode_match(w,h);
-                if (score && score >= best_score) {
-                    best_score = score;
-                    best_type  = type;
-                    ggi_video_width = w; ggi_video_height = h;
-                }
-            }
-        }
-        
-        if (! best_score) {
-            fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n"
-                    "Trying to get any mode....\n",
-                    scaled_visual_width,scaled_visual_height);
-            /* trying to get any mode from GGI */
-            if (ggiSetSimpleMode(vis,GGI_AUTO,GGI_AUTO,GGI_AUTO,GT_AUTO) != 0) {
-                fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n",
-                        scaled_visual_width,scaled_visual_height);
-                return(FALSE);
-            }
-            goto mode_set;
-        }
-    }
+	/* first try exact game resolution... */
+	if (! ggi_check_mode(vis, ggi_video_width, ggi_video_height, depth, &best_type) &&
+			(!force_x && !force_y))
+	{
+		int w, h, score;
+		/* now try from my [just hacked] list of modes */
+		/* (grrr -- isn't there a way to get all supported modes from GGI?) */
+		for (i=0; i<ML_ANZ; i++)
+		{
+			w = ggimodes[i].width;
+			h = ggimodes[i].height;
+			if (ggi_check_mode(vis, w, h, depth, &type)) {
+				score = mode_match(w, h, depth, depth, 0);
+				if (score && score >= best_score) {
+					best_score = score;
+					best_type  = type;
+					ggi_video_width = w;
+					ggi_video_height = h;
+				}
+			}
+		}
 
-    if (ggiCheckSimpleMode(vis, ggi_video_width, ggi_video_height, GGI_AUTO,
-                           best_type, &mode) != 0)
-       return(FALSE);
+		if (! best_score) {
+			fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n"
+					"Trying to get any mode....\n",
+					scaled_visual_width,scaled_visual_height);
+			/* trying to get any mode from GGI */
+			if (ggiSetSimpleMode(vis,GGI_AUTO,GGI_AUTO,GGI_AUTO,GT_AUTO) != 0) {
+				fprintf(stderr, "GGI: Couldn't find a suitable mode for a resolution of %dx%d\n",
+						scaled_visual_width,scaled_visual_height);
+				return 0;
+			}
+			goto mode_set;
+		}
+	}
 
-    if (ggiSetMode(vis, &mode) != 0)
-       return(FALSE);
-       
-    mode_fix_aspect((double)ggi_video_width/ggi_video_height);
+	if (ggiCheckSimpleMode(vis, ggi_video_width, ggi_video_height, GGI_AUTO,
+				best_type, &mode) != 0)
+		return 0;
 
- mode_set:
-    scaled_visual_height = yarbsize? yarbsize:visual_height * heightscale;
+	if (ggiSetMode(vis, &mode) != 0)
+		return 0;
 
-    ggiGetMode(vis, &mode); /* Maybe we did not get what we asked for */
-    if ((mode.visible.x < scaled_visual_width)||
-	(mode.visible.y < scaled_visual_height)) {
-	fprintf(stderr,
-		"Fatal: cannot get big enough mode %dx%d\n",
-		scaled_visual_width,scaled_visual_height);
-        return(FALSE);
-    }
-    if ((mode.visible.x != scaled_visual_width)||
-	(mode.visible.y != scaled_visual_height)) {
-	fprintf(stderr,
-		"Notice: cannot get ideal mode %dx%d, setting to %dx%d\n",
-		scaled_visual_width,scaled_visual_height,mode.visible.x,mode.visible.y);
-    }
-    ggi_video_width   = mode.visible.x;
-    ggi_video_height  = mode.visible.y;
-    screen_startx = ((ggi_video_width - scaled_visual_width) / 2) & ~7;
-    screen_starty = (ggi_video_height - scaled_visual_height) / 2;
-    
-    /* choose the correct updater for this graphtype */
-    updater += (GT_SIZE(mode.graphtype) / 8) - 1;
-    
-    /* can we do linear ? */
-    if (use_linear && (direct_buf = ggiDBGetBuffer(vis,0)) &&
-        (direct_buf->type & GGI_DB_SIMPLE_PLB) )
-    {
-        if ((widthscale > 1 || heightscale > 2))
-        {
-           doublebuffer_buffer = malloc(scaled_visual_width * 
-              GT_SIZE(mode.graphtype) / 8);
-           if (!doublebuffer_buffer)
-           {
-              fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
-              return FALSE;
-           }
-        }
-        video_mem = direct_buf->write;
-        video_mem += screen_startx * GT_SIZE(mode.graphtype) / 8;
-        video_mem += screen_starty * ggi_video_width *
-           GT_SIZE(mode.graphtype) / 8;
+	mode_set_aspect_ratio((double)ggi_video_width/ggi_video_height);
+
+mode_set:
+	scaled_visual_height = sysdep_display_params.yarbsize 
+		? sysdep_display_params.yarbsize 
+		: sysdep_display_params.height 
+		* sysdep_display_params.heightscale;
+
+	ggiGetMode(vis, &mode); /* Maybe we did not get what we asked for */
+	if ((mode.visible.x < scaled_visual_width)||
+			(mode.visible.y < scaled_visual_height)) {
+		fprintf(stderr,
+				"Fatal: cannot get big enough mode %dx%d\n",
+				scaled_visual_width,scaled_visual_height);
+		return 0;
+	}
+	if ((mode.visible.x != scaled_visual_width)||
+			(mode.visible.y != scaled_visual_height)) {
+		fprintf(stderr,
+				"Notice: cannot get ideal mode %dx%d, setting to %dx%d\n",
+				scaled_visual_width,scaled_visual_height,mode.visible.x,mode.visible.y);
+	}
+	ggi_video_width   = mode.visible.x;
+	ggi_video_height  = mode.visible.y;
+
+	if (ggi_video_width > sysdep_display_properties.max_width)
+		sysdep_display_properties.max_width  = ggi_video_width;
+	if (ggi_video_height > sysdep_display_properties.max_height)
+		sysdep_display_properties.max_height = ggi_video_height;
+
+	screen_startx = ((ggi_video_width - scaled_visual_width) / 2) & ~7;
+	screen_starty = (ggi_video_height - scaled_visual_height) / 2;
+
+	/* choose the correct updater for this graphtype */
+	updater += (GT_SIZE(mode.graphtype) / 8) - 1;
+
+	/* can we do linear ? */
+	if (use_linear && (direct_buf = ggiDBGetBuffer(vis,0)) &&
+			(direct_buf->type & GGI_DB_SIMPLE_PLB) )
+	{
+		if ((sysdep_display_params.widthscale > 1 
+					|| sysdep_display_params.heightscale > 2))
+		{
+			doublebuffer_buffer = malloc(scaled_visual_width * 
+					GT_SIZE(mode.graphtype) / 8);
+			if (!doublebuffer_buffer)
+			{
+				fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
+				return 0;
+			}
+		}
+		video_mem = direct_buf->write;
+		video_mem += screen_startx * GT_SIZE(mode.graphtype) / 8;
+		video_mem += screen_starty * ggi_video_width *
+			GT_SIZE(mode.graphtype) / 8;
 #ifdef GGI_DEBUG
-        fprintf(stderr,
-           "ggi.c: set_video_mode: using %d bit linear update\n",
-           GT_SIZE(mode.graphtype));
+		fprintf(stderr,
+				"ggi.c: set_video_mode: using %d bit linear update\n",
+				GT_SIZE(mode.graphtype));
 #endif
-    }
-    else
-    {
-        if((widthscale == 1) && (heightscale == 1))
-           updater += 8;
-        else
-           updater += 16;
-        /* we need the doublebuffer_buffer in the following scenarios:
-           -scale != 1x1
-           -16bpp modes, since it could be paletised
-           -if the depths don't match */
-        if( (widthscale > 1) || (heightscale > 1) || (depth == 16) ||
-            (depth != GT_SIZE(mode.graphtype)) )
-        {
-           doublebuffer_buffer = malloc(scaled_visual_width*scaled_visual_height*
-              GT_SIZE(mode.graphtype) / 8);
-           if (!doublebuffer_buffer)
-           {
-              fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
-              return FALSE;
-           }
-        }
-    }
-    
-    if (depth == 16)
-       updater+=4;
-       
-    update_function = updaters[updater];
-    
-    /* fill the display_palette_info */
-    memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-    switch (GT_SIZE(mode.graphtype))
-    {
-       case 15:
-          display_palette_info.red_mask   = 0x001F;
-          display_palette_info.green_mask = 0x03E0;
-          display_palette_info.blue_mask  = 0xEC00;
-          break;
-       case 16:
-          display_palette_info.red_mask   = 0xF800;
-          display_palette_info.green_mask = 0x07E0;
-          display_palette_info.blue_mask  = 0x001F;
-          break;
-       case 24:
-       case 32:
-          display_palette_info.red_mask   = 0xFF0000;
-          display_palette_info.green_mask = 0x00FF00;
-          display_palette_info.blue_mask  = 0x0000FF;
-          break;
-    }
-    
-    return TRUE;
+	}
+	else
+	{
+		if((sysdep_display_params.widthscale == 1) 
+				&& (sysdep_display_params.heightscale == 1))
+			updater += 8;
+		else
+			updater += 16;
+		/* we need the doublebuffer_buffer in the following scenarios:
+		   -scale != 1x1
+		   -16bpp modes, since it could be paletised
+		   -if the depths don't match */
+		if( (sysdep_display_params.widthscale > 1) 
+				|| (sysdep_display_params.heightscale > 1) 
+				|| (depth == 16) 
+				|| (depth != GT_SIZE(mode.graphtype)) )
+		{
+			doublebuffer_buffer = malloc(scaled_visual_width*scaled_visual_height*
+					GT_SIZE(mode.graphtype) / 8);
+			if (!doublebuffer_buffer)
+			{
+				fprintf(stderr, "GGI: Error: Couldn't allocate doublebuffer buffer\n");
+				return 0;
+			}
+		}
+	}
+
+	if (depth == 16)
+		updater+=4;
+
+	/* fill the sysdep_display_properties struct */
+	sysdep_display_properties.palette_info.fourcc_format = 0;
+	switch (GT_SIZE(mode.graphtype))
+	{
+		case 15:
+			sysdep_display_properties.palette_info.red_mask   = 0x001F;
+			sysdep_display_properties.palette_info.green_mask = 0x03E0;
+			sysdep_display_properties.palette_info.blue_mask  = 0xEC00;
+			sysdep_display_properties.palette_info.depth = 15;
+			sysdep_display_properties.palette_info.bpp = 16;
+			break;
+		case 16:
+			sysdep_display_properties.palette_info.red_mask   = 0xF800;
+			sysdep_display_properties.palette_info.green_mask = 0x07E0;
+			sysdep_display_properties.palette_info.blue_mask  = 0x001F;
+			sysdep_display_properties.palette_info.depth = 16;
+			sysdep_display_properties.palette_info.bpp = 16;
+			break;
+		case 24:
+		case 32:
+			sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
+			sysdep_display_properties.palette_info.green_mask = 0x00FF00;
+			sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
+			sysdep_display_properties.palette_info.depth = 24;
+			sysdep_display_properties.palette_info.bpp = GT_SIZE(mode.graphtype);
+			break;
+	}
+	sysdep_display_properties.vector_renderer = NULL;
+
+	/* get a blit func */
+	blit_func = sysdep_display_get_blitfunc();
+	if (blit_func == NULL)
+	{
+		fprintf(stderr, "Error: unsupported depth/bpp: %d/%dbpp\n",
+				sysdep_display_properties.palette_info.depth,
+				sysdep_display_properties.palette_info.bpp);
+		return 0;
+	}
+
+	return 1;
 }
 
 
 /*
  * parts from svgalib.c version
  */
-int sysdep_create_display(int depth)
+int sysdep_display_driver_open(int reopen)
 {
 #ifdef GGI_DEBUG
-    fprintf(stderr,"sysdep_create_display called\n");
+    fprintf(stderr,"sysdep_display_driver_open called\n");
 #endif
+    if (reopen)
+    {
 /* do we need this? It makes debugging crashes sorta hard without a core file */
 #ifdef CATCH_SIGNALS
     oldsigsegvh=signal(SIGSEGV,myhandler);
@@ -450,12 +456,15 @@ int sysdep_create_display(int depth)
     oldsigquith=signal(SIGQUIT,myhandler);
     if (oldsigsegvh == SIG_ERR || oldsigbush == SIG_ERR || oldsigquith == SIG_ERR) {
 	fprintf (stderr, "Cannot install signal handler. Exiting\n");
-	return OSD_NOT_OK;
+	return 1;
     }
 #endif
-    if (! set_video_mode(depth)) {
+    }
+
+    if (!set_video_mode(sysdep_display_params.depth))
+    {
         fprintf(stderr,"cannot find a mode to use :-(\n");
-        return OSD_NOT_OK;
+        return 1;
     }
 
     fprintf(stderr,"GGI: using mode %dx%d\n",ggi_video_width,ggi_video_height);
@@ -463,10 +472,7 @@ int sysdep_create_display(int depth)
     fprintf(stderr,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
 
-    if(effect_open())
-        return OSD_NOT_OK;
-
-    return OSD_OK;
+    return sysdep_display_effect_open();
 }
 
 
@@ -478,12 +484,15 @@ void sysdep_display_close(void)
 #ifdef GGI_DEBUG
     fprintf(stderr,"sysdep_display_close called\n");
 #endif
-    effect_close();
+    sysdep_display_effect_close();
 /* do we need this? It makes debugging crashes sorta hard without a core file */
 #ifdef CATCH_SIGNALS
-    if (oldsigsegvh) signal(SIGSEGV,oldsigsegvh);
-    if (oldsigbush) signal(SIGBUS,oldsigbush);
-    if (oldsigquith) signal(SIGBUS,oldsigquith);
+    if (oldsigsegvh)
+	    signal(SIGSEGV,oldsigsegvh);
+    if (oldsigbush)
+	    signal(SIGBUS,oldsigbush);
+    if (oldsigquith)
+	    signal(SIGBUS,oldsigquith);
 #endif
     ggi_cleanup();
 #ifdef GGI_DEBUG
@@ -504,90 +513,20 @@ static void ggi_cleanup(void)
     if (doublebuffer_buffer) free(doublebuffer_buffer);
 }
 
+
 /*
- * low-level update routines
- * for different color depths
- * (04-Nov-99, they are working, but could
- *  be improved: move calculations of
- *  e.g. "X+screen_startx" out of the loops...)
+ * Update the display.
  */
-
-static void ggi_update_16_to_16bpp(struct mame_bitmap *bitmap)
+const char *sysdep_display_update(struct mame_bitmap *bitmap,
+		struct rectangle *vis_in_dest_out,
+		struct rectangle *dirty_area,
+		struct sysdep_palette_struct *palette, int keyb_leds,
+		int flags)
 {
-   if (current_palette->lookup)
-   {
-      /* since we need todo the lookups we need to go through an extra buffer,
-         just like ggi_update_16_to_16bpp_scaled() does */
-      ggi_update_16_to_16bpp_scaled(bitmap);
-   }
-   else
-   {
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,(unsigned short *)bitmap->line[(Y)+visual.min_y+_i]+(visual.min_x+(X))*2); \
-        } \
-    }
-#include "blit.h"
-#undef PUT_IMAGE
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-   }
-}
-
-/*---------*/
-
-void ggi_update_16_to_16bpp_scaled(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned short
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,DEST + (X) * sizeof(DEST_PIXEL) + DEST_WIDTH * sizeof(DEST_PIXEL) * (_i + (Y)) ); \
-        } \
-    }
-    
-    if (current_palette->lookup)
-    {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-    }
-    else
-    {
-#include "blit.h"
-    }
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-}
-
-/*---------*/
-
-static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned int
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PACK_BITS
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
+	blit_func(bitmap, vis_in_dest_out, dirty_area, palette, video_mem,
+			ggi_video_width);
+    /*update_function(bitmap);*/
+	/*
     do { \
         int _i; \
         for (_i=0; _i<HEIGHT; _i++) { \
@@ -595,116 +534,13 @@ static void ggi_update_16_to_24bpp(struct mame_bitmap *bitmap)
                         WIDTH,DEST + (X) * 3 + DEST_WIDTH * 3 * (_i + (Y)) ); \
         } \
     } while(0);
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-#undef PACK_BITS
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_16_to_32bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned int
-#define DEST doublebuffer_buffer
-#define DEST_WIDTH scaled_visual_width
-#define PUT_IMAGE(X, Y, WIDTH, HEIGHT) \
-    do { \
-        int _i; \
-        for (_i=0; _i<HEIGHT; _i++) { \
-            ggiPutHLine(vis,screen_startx+(X),screen_starty+(Y)+_i, \
-                        WIDTH,DEST + (X) * sizeof(DEST_PIXEL) + DEST_WIDTH * sizeof(DEST_PIXEL) * (_i + (Y)) ); \
-        } \
-    } while(0);
-#include "blit.h"
-#undef DEST_WIDTH
-#undef DEST
-#undef DEST_PIXEL
-#undef SRC_PIXEL
-#undef PUT_IMAGE
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_linear_16_to_16bpp(struct mame_bitmap *bitmap)
-{
-#define DEST_PIXEL unsigned short
-#define SRC_PIXEL unsigned short
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-    if (current_palette->lookup)
-    {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef INDIRECT
-    }
-    else
-    {
-#include "blit.h"
-    }
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-}
-
-/*---------*/
-
-static void ggi_update_linear_16_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define DEST_PIXEL unsigned int
-#define SRC_PIXEL unsigned short
-#define PACK_BITS
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#include "blit.h"
-#undef DEST
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef PACK_BITS
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-}
-
-/*---------*/
-
-static void ggi_update_linear_16_to_32bpp(struct mame_bitmap *bitmap)
-{
-#define INDIRECT current_palette->lookup
-#define DEST_PIXEL unsigned int
-#define SRC_PIXEL unsigned short
-#define DEST video_mem
-#define DEST_WIDTH mode.virt.x
-#define DOUBLEBUFFER
-#include "blit.h"
-#undef PACK_BITS
-#undef DEST_WIDTH
-#undef DOUBLEBUFFER
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-}
-
-
-/*
- * Update the display.
- */
-void sysdep_update_display(struct mame_bitmap *bitmap) {
-
-    update_function(bitmap);
+    */
     ggiFlush(vis);
+    return NULL;
+}
+
+void sysdep_display_driver_clear_buffer(void)
+{
 }
 
 int ggi_key(ggi_event *ev)
@@ -936,12 +772,12 @@ int ggi_key(ggi_event *ev)
     return(keycode);
 }
 
-void sysdep_update_keyboard(void)
+int sysdep_display_driver_update_keyboard(void)
 {
     ggi_event_mask em = emAll; /*emKeyPress | emKeyRelease;*/
     ggi_event ev;
     struct timeval to = { 0 , 0 };
-    struct xmame_keyboard_event event;
+    struct sysdep_display_keyboard_event event;
 
     if (vis) {
         while(ggiEventPoll(vis,em,&to)) {
@@ -962,14 +798,14 @@ void sysdep_update_keyboard(void)
             to.tv_sec=to.tv_usec=0;
         }
     }
-    return;
+    return 0;
 }
 
 
 /*
  * mouse not really tested
  */
-void sysdep_mouse_poll(void)
+void sysdep_display_update_mouse(void)
 {
     ggi_event_mask em = emPtrButtonPress | emPtrButtonRelease | emPtrMove;
     ggi_event ev;
@@ -986,18 +822,18 @@ void sysdep_mouse_poll(void)
               case evPtrButtonPress:
                   bi = 1;
               case evPtrButtonRelease:
-                  if (ev.pbutton.button < MOUSE_BUTTONS)
-                     mouse_data[0].buttons[ev.pbutton.button] = bi;
+                  if (ev.pbutton.button < SYSDEP_DISPLAY_MOUSE_BUTTONS)
+                     sysdep_display_mouse_data[0].buttons[ev.pbutton.button] = bi;
                   break;
               case evPtrAbsolute:
-                  mouse_data[0].deltas[0] = lastmouse[0] - ev.pmove.x;
-                  mouse_data[0].deltas[1] = lastmouse[1] - ev.pmove.y;
+                  sysdep_display_mouse_data[0].deltas[0] = lastmouse[0] - ev.pmove.x;
+                  sysdep_display_mouse_data[0].deltas[1] = lastmouse[1] - ev.pmove.y;
                   lastmouse[0] = ev.pmove.x;
                   lastmouse[1] = ev.pmove.y;
                   break;
               case evPtrRelative:
-                  mouse_data[0].deltas[0] = ev.pmove.x;
-                  mouse_data[0].deltas[1] = ev.pmove.y;
+                  sysdep_display_mouse_data[0].deltas[0] = ev.pmove.x;
+                  sysdep_display_mouse_data[0].deltas[1] = ev.pmove.y;
                   lastmouse[0] += ev.pmove.x;
                   lastmouse[1] += ev.pmove.y;
                   break;
@@ -1005,6 +841,7 @@ void sysdep_mouse_poll(void)
             to.tv_sec=to.tv_usec=0;
         }
     }
+    return;
 }
 
 void sysdep_set_leds(int leds)
