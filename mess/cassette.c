@@ -36,7 +36,7 @@ int cassette_init(int id, const struct cassette_args *args)
 			}
 
 			wa.file = file;
-			wa.smpfreq = args->input_smpfreq;
+			wa.smpfreq = args->input_smpfreq ? args->input_smpfreq : Machine->sample_rate;
 			wa.fill_wave = args->fill_wave;
 			wa.header_samples = args->header_samples;
 			wa.trailer_samples = args->trailer_samples;
@@ -54,7 +54,7 @@ int cassette_init(int id, const struct cassette_args *args)
 
 			wa.file = file;
 			wa.display = 1;
-			wa.smpfreq = args->create_smpfreq;
+			wa.smpfreq = args->create_smpfreq ? args->create_smpfreq : Machine->sample_rate;
 			if (device_open(IO_CASSETTE, id, 1, &wa))
 				return INIT_FAIL;
 

@@ -835,27 +835,8 @@ ROM_START (msxkra)
 ROM_END
 */
 
-static const struct IODevice io_msx[] = {
+static const struct IODevice io_msx[] =
 {
-    IO_CARTSLOT,                /* type */
-    MSX_MAX_CARTS,              /* count */
-    "rom\0",                    /* file extensions */
-	IO_RESET_NONE,				/* reset if file changed */
-	OSD_FOPEN_READ,				/* open mode */
-    0,
-    msx_load_rom,               /* init */
-    msx_exit_rom,               /* exit */
-    NULL,                       /* info */
-    NULL,                       /* open */
-    NULL,                       /* close */
-    NULL,                       /* status */
-    NULL,                       /* seek */
-    NULL,                       /* tell */
-    NULL,                       /* input */
-    NULL,                       /* output */
-    NULL,                       /* input_chunk */
-    NULL                        /* output_chunk */
-},
     {
         IO_FLOPPY,              /* type */
         2,                      /* count */
@@ -894,6 +875,7 @@ static const struct IODevice io_msx[] = {
 SYSTEM_CONFIG_START(msx)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", msx_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_CARTSLOT(MSX_MAX_CARTS, "rom\0", msx_load_rom, msx_exit_rom, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT  MACHINE  INPUT     INIT   CONFIG  COMPANY              FULLNAME */

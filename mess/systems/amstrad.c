@@ -2840,44 +2840,28 @@ static const struct IODevice io_cpcplus[] =
 {
 	AMSTRAD_IO_SNAPSHOT,
 	AMSTRAD_IO_DISK,
-	{
-		IO_CARTSLOT,				/* type */
-		1,							/* count */
-		"cpr\0",                    /* file extensions */
-		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_DUMMY,			/* open mode */
-		0,
-		amstrad_plus_cartridge_init,	/* init */
-		amstrad_plus_cartridge_exit,	/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		NULL,                       /* status */
-		NULL,                       /* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
-	},
 	{ IO_END }
 };
 
 #define io_cpc6128p io_cpcplus
 #define io_cpc464p io_cpcplus
 
-SYSTEM_CONFIG_START(amstrad)
+SYSTEM_CONFIG_START(cpc6128)
 	CONFIG_RAM_DEFAULT(128 * 1024)
 	CONFIG_DEVICE_CASSETTE(1, "", amstrad_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
+SYSTEM_CONFIG_START(cpcplus)
+	CONFIG_IMPORT_FROM(cpc6128)
+	CONFIG_DEVICE_CARTSLOT(1, "cpr\0", amstrad_plus_cartridge_init, amstrad_plus_cartridge_exit, NULL)
+SYSTEM_CONFIG_END
 
 /*      YEAR  NAME       PARENT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */
-COMPX( 1984, cpc464,   0,		amstrad,  amstrad,	0,		amstrad, "Amstrad plc", "Amstrad/Schneider CPC464", GAME_NOT_WORKING)
-COMPX( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC664", GAME_NOT_WORKING)
-COMPX( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC6128", GAME_NOT_WORKING)
-COMPX( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 464plus", GAME_NOT_WORKING)
-COMPX( 1990, cpc6128p, 0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
-COMPX( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    amstrad, "VEB Mikroelektronik", "KC Compact", GAME_NOT_WORKING)
+COMPX( 1984, cpc464,   0,		amstrad,  amstrad,	0,		cpc6128, "Amstrad plc", "Amstrad/Schneider CPC464", GAME_NOT_WORKING)
+COMPX( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC664", GAME_NOT_WORKING)
+COMPX( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    cpc6128, "Amstrad plc", "Amstrad/Schneider CPC6128", GAME_NOT_WORKING)
+COMPX( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 464plus", GAME_NOT_WORKING)
+COMPX( 1990, cpc6128p, 0,		cpcplus,  amstrad,	0,	    cpcplus, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
+COMPX( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    cpc6128, "VEB Mikroelektronik", "KC Compact", GAME_NOT_WORKING)
 

@@ -10,6 +10,7 @@
  *****************************************************************************/
 
 #include "includes/mz700.h"
+#include "cassette.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1
@@ -782,58 +783,36 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
     return count;
 }
 
+#define MZ700_WAVESAMPLES_HEADER	(	\
+		LGAP * SHORT_PULSE +			\
+		LTM_1 * LONG_PULSE +			\
+		LTM_0 * SHORT_PULSE +			\
+		LTM_L * LONG_PULSE +			\
+		2 * 2 * BYTE_SAMPLES +			\
+	SILENCE +							\
+	SGAP * SHORT_PULSE +				\
+		STM_1 * LONG_PULSE +			\
+		STM_0 * SHORT_PULSE +			\
+		STM_L * LONG_PULSE +			\
+		2 * 2 * BYTE_SAMPLES)
 
+
+static struct cassette_args mz700_cassette_args =
+{
+	0,												/* initial_status */
+	fill_wave,										/* fill_wave */
+	NULL,											/* calc_chunk_info */
+	5120,											/* input_smpfreq */
+	MZ700_WAVESAMPLES_HEADER,						/* header_samples */
+	1,												/* trailer_samples */
+	1,												/* chunk_size */
+	2 * BYTE_SAMPLES,								/* chunk_samples */
+	0												/* create_smpfreq */
+};
 
 int mz700_cassette_init(int id)
 {
-	void *file;
-	int effective_mode;
-
-
-	file = image_fopen_new(IO_CASSETTE, id, & effective_mode);
-	if( file )
-	{
-		if (! is_effective_mode_create(effective_mode))
-		{
-			struct wave_args wa = {0,};
-			wa.file = file;
-			wa.display = 1;
-			wa.fill_wave = fill_wave;
-			wa.smpfreq = 5120;
-			wa.header_samples =
-				LGAP * SHORT_PULSE +
-					LTM_1 * LONG_PULSE +
-					LTM_0 * SHORT_PULSE +
-					LTM_L * LONG_PULSE +
-					2 * 2 * BYTE_SAMPLES +
-				SILENCE +
-				SGAP * SHORT_PULSE +
-					STM_1 * LONG_PULSE +
-					STM_0 * SHORT_PULSE +
-					STM_L * LONG_PULSE +
-					2 * 2 * BYTE_SAMPLES;
-			wa.trailer_samples = 1;
-			wa.chunk_size = 1;
-			wa.chunk_samples = 2 * BYTE_SAMPLES;
-			if( device_open(IO_CASSETTE,id,0,&wa) )
-				return INIT_FAIL;
-
-			return INIT_PASS;
-		}
-		else
-		{
-			struct wave_args wa = {0,};
-			wa.file = file;
-			wa.display = 1;
-			wa.fill_wave = NULL;
-			wa.smpfreq = Machine->sample_rate;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
-				return INIT_FAIL;
-
-			return INIT_PASS;
-		}
-	}
-	return INIT_PASS;
+	return cassette_init(id, &mz700_cassette_args);
 }
 
 /******************************************************************************

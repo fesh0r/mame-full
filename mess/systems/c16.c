@@ -878,25 +878,6 @@ static const struct IODevice io_c16[] =
 static const struct IODevice io_c16c[] =
 {
 	IODEVICE_CBM_QUICK,
-	{
-		IO_CARTSLOT,				   /* type */
-		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",                  /* file extensions */
-		IO_RESET_CPU,				   /* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		c16_rom_init,				   /* init */
-		NULL,						   /* exit */
-		NULL,						   /* info */
-		NULL,						   /* open */
-		NULL,						   /* close */
-		NULL,						   /* status */
-		NULL,						   /* seek */
-		NULL,						   /* input */
-		NULL,						   /* output */
-		NULL,						   /* input_chunk */
-		NULL						   /* output_chunk */
-	},
 	IODEVICE_VC20TAPE,
 	IODEVICE_C1551,
 	{IO_END}
@@ -905,25 +886,6 @@ static const struct IODevice io_c16c[] =
 static const struct IODevice io_c16v[] =
 {
 	IODEVICE_CBM_QUICK,
-	{
-		IO_CARTSLOT,				   /* type */
-		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",                  /* file extensions */
-		IO_RESET_CPU,				   /* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		c16_rom_init,				   /* init */
-		NULL,						   /* exit */
-		NULL,						   /* info */
-		NULL,						   /* open */
-		NULL,						   /* close */
-		NULL,						   /* status */
-		NULL,						   /* seek */
-		NULL,						   /* input */
-		NULL,						   /* output */
-		NULL,						   /* input_chunk */
-		NULL						   /* output_chunk */
-	},
 	IODEVICE_VC20TAPE,
 	IODEVICE_VC1541,
 	{IO_END}
@@ -945,15 +907,24 @@ static const struct IODevice io_c16v[] =
 #define init_c364		c16_driver_init
 
 SYSTEM_CONFIG_START(c16)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(c16c)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(c16v)
+	CONFIG_DEVICE_CARTSLOT(2, "bin\0rom\0", c16_rom_init, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */
 COMP ( 1984,	c16,	0,		c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)")
 COMP ( 1984,	c16hun, c16,	c16,	c16,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16 Novotrade (PAL, Hungarian Character Set)")
-COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
+COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	c16c,    "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING)
 COMP ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC)")
-COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
+COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	c16c,    "Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING)
 COMPX ( 1984,	c364,	c16,	c364,	plus4,	plus4,	c16,     "Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
-COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	c16,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
-COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	c16,     "Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)
+COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	c16v,     "Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_NOT_WORKING)
+COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	c16v,    "Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_NOT_WORKING)

@@ -952,27 +952,8 @@ ROM_START(a5200)
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, 0x4248d3e3)
 ROM_END
 
-static const struct IODevice io_a400[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"rom\0bin\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-		a800_rom_init,		/* init */
-		a800_rom_exit,		/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
+static const struct IODevice io_a400[] =
+{
 	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
@@ -999,26 +980,6 @@ static const struct IODevice io_a400[] = {
 
 static const struct IODevice io_a800[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		2,					/* count */
-		"rom\0bin\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-		a800_rom_init,		/* init */
-        a800_rom_exit,      /* exit */
-        NULL,               /* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-	{
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"atr\0dsk\0xfd\0",  /* file extensions */
@@ -1043,32 +1004,19 @@ static const struct IODevice io_a800[] = {
 #define io_a800pal	io_a800
 #define io_a800xl	io_a800
 
-static const struct IODevice io_a5200[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"rom\0bin\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-		a5200_rom_init, 	/* init */
-		a5200_rom_exit, 	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-    { IO_END }
-};
+SYSTEM_CONFIG_START(a400)
+	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
+SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a800)
+	CONFIG_DEVICE_CARTSLOT(2, "rom\0bin\0", a800_rom_init, a800_rom_exit, NULL)
 SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(a5200)
+	CONFIG_DEVICE_CARTSLOT(1, "rom\0bin\0", a5200_rom_init, a5200_rom_exit, NULL)
+SYSTEM_CONFIG_END
+
+#define io_a5200	io_NULL
 
 /***************************************************************************
 
@@ -1077,9 +1025,9 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */
-COMP ( 1979, a400,	   0,		 a400,	   a800,	 0, 	a800,	"Atari",  "Atari 400 (NTSC)" )
-COMP ( 1979, a400pal,  a400,	 a400pal,  a800,	 0, 	a800,	"Atari",  "Atari 400 (PAL)" )
+COMP ( 1979, a400,	   0,		 a400,	   a800,	 0, 	a400,	"Atari",  "Atari 400 (NTSC)" )
+COMP ( 1979, a400pal,  a400,	 a400pal,  a800,	 0, 	a400,	"Atari",  "Atari 400 (PAL)" )
 COMP ( 1979, a800,	   0,		 a800,	   a800,	 0, 	a800,	"Atari",  "Atari 800 (NTSC)" )
 COMP ( 1979, a800pal,  a800,	 a800pal,  a800,	 0,		a800,	"Atari",  "Atari 800 (PAL)" )
 COMPX( 1983, a800xl,   a800,	 a800xl,   a800xl,	 0, 	a800,	"Atari",  "Atari 800XL", GAME_NOT_WORKING )
-CONS ( 1982, a5200,    0,		 a5200,    a5200,	 0, 	a800,	"Atari",  "Atari 5200")
+CONS ( 1982, a5200,    0,		 a5200,    a5200,	 0, 	a5200,	"Atari",  "Atari 5200")

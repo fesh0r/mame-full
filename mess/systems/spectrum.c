@@ -2489,25 +2489,6 @@ static const struct IODevice io_spectrum[] = {
 	},
 		IODEVICE_SPEC_QUICK,
 		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"rom\0",			/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		spectrum_cart_load,	/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
 	{ IO_END }
 };
 
@@ -2577,25 +2558,6 @@ static const struct IODevice io_ts2068[] = {
 	},
 		IODEVICE_SPEC_QUICK,
 		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
-	{
-		IO_CARTSLOT,			/* type */
-		1,					/* count */
-		"dck\0",			/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		timex_cart_load,	/* init */
-		timex_cart_exit,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
 		{ IO_END }
 };
 
@@ -2623,6 +2585,14 @@ static const struct IODevice io_ts2068[] = {
 #define io_pentagon	io_specpls3
 
 SYSTEM_CONFIG_START(spectrum)
+	CONFIG_DEVICE_CARTSLOT(1, "rom\0", spectrum_cart_load, NULL, NULL)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(specpls3)
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(ts2068)
+	CONFIG_DEVICE_CARTSLOT(1, "dck\0", timex_cart_load, timex_cart_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */
@@ -2637,20 +2607,20 @@ COMP ( 1986, inves,    spectrum, spectrum,		spectrum,	0,		spectrum,	"Investronic
 COMP ( 1985, tk90x,    spectrum, spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-90x Color Computer" )
 COMP ( 1986, tk95,     spectrum, spectrum,		spectrum,	0,		spectrum,	"Micro Digital",	"TK-95 Color Computer" )
 COMP ( 1984, tc2048,   spectrum, tc2048,		spectrum,	0,		spectrum,	"Timex of Portugal",	"TC-2048" )
-COMP ( 1983, ts2068,   spectrum, ts2068,		spectrum,	0,		spectrum,	"Timex Sinclair",	"TS-2068" )
-COMP ( 1986, uk2086,   spectrum, uk2086,		spectrum,	0,		spectrum,	"Unipolbrit",	"UK-2086 ver. 1.2" )
+COMP ( 1983, ts2068,   spectrum, ts2068,		spectrum,	0,		ts2068,		"Timex Sinclair",	"TS-2068" )
+COMP ( 1986, uk2086,   spectrum, uk2086,		spectrum,	0,		ts2068,		"Unipolbrit",	"UK-2086 ver. 1.2" )
 
 COMPX( 1986, spec128,  0,		 spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
 COMPX( 1985, spec128s, spec128,  spectrum_128,	spectrum,	0,		spectrum,	"Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1986, specpls2, spec128,  spectrum_128,	spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +2" ,GAME_NOT_WORKING)
-COMPX( 1987, specpl2a, spec128,  spectrum_plus3,spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +2a" ,GAME_NOT_WORKING)
-COMPX( 1987, specpls3, spec128,  spectrum_plus3,spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +3" ,GAME_NOT_WORKING)
+COMPX( 1987, specpl2a, spec128,  spectrum_plus3,spectrum,	0,		specpls3,	"Amstrad plc",          "ZX Spectrum +2a" ,GAME_NOT_WORKING)
+COMPX( 1987, specpls3, spec128,  spectrum_plus3,spectrum,	0,		specpls3,	"Amstrad plc",          "ZX Spectrum +3" ,GAME_NOT_WORKING)
 
 COMPX( 1986, specp2fr, spec128,  spectrum_128,	spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +2 (France)" ,GAME_NOT_WORKING)
 COMPX( 1986, specp2sp, spec128,  spectrum_128,	spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +2 (Spain)" ,GAME_NOT_WORKING)
-COMPX( 1987, specp3sp, spec128,  spectrum_plus3,spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
-COMPX( 2000, specpl3e, spec128,  spectrum_plus3,spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +3e" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
-COMPX( 2000, specp3es, spec128,  spectrum_plus3,spectrum,	0,		spectrum,	"Amstrad plc",          "ZX Spectrum +3e (Spain)" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
+COMPX( 1987, specp3sp, spec128,  spectrum_plus3,spectrum,	0,		specpls3,	"Amstrad plc",          "ZX Spectrum +3 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 2000, specpl3e, spec128,  spectrum_plus3,spectrum,	0,		specpls3,	"Amstrad plc",          "ZX Spectrum +3e" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
+COMPX( 2000, specp3es, spec128,  spectrum_plus3,spectrum,	0,		specpls3,	"Amstrad plc",          "ZX Spectrum +3e (Spain)" , GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED )
 
-COMPX( ????, scorpion, 0,		 scorpion,		spectrum,	0,		spectrum,	"Zonov and Co.",		"Zs Scorpion 256", GAME_NOT_WORKING)
-COMPX( ????, pentagon, spectrum, pentagon,		spectrum,	0,		spectrum,	"???",		"Pentagon", GAME_NOT_WORKING)
+COMPX( ????, scorpion, 0,		 scorpion,		spectrum,	0,		specpls3,	"Zonov and Co.",		"Zs Scorpion 256", GAME_NOT_WORKING)
+COMPX( ????, pentagon, spectrum, pentagon,		spectrum,	0,		specpls3,	"???",		"Pentagon", GAME_NOT_WORKING)

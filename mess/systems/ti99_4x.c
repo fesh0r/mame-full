@@ -674,31 +674,11 @@ ROM_END
  * a headered format.
  * Note that there sometimes was a speech ROM slot in the speech synthesizer,
  * and you could plug up to 16 additonnal DSR roms and quite a lot of GROMs
- * in the side port.  None of these is emulated.
+ * in the side port.  None of these are emulated.
  */
 
 static const struct IODevice io_ti99_4[] =
 {
-	{
-		IO_CARTSLOT,		/* type */
-		3,					/* count */
-		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,	/* open mode */
-		0,
-		ti99_load_rom,		/* init */
-		ti99_rom_cleanup,	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
 	{
 		IO_FLOPPY,				/* type */
 		3,						/* count */
@@ -735,6 +715,7 @@ static const struct IODevice io_ti99_4[] =
 
 SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_CASSETTE(2, "", ti99_cassette_init)
+	CONFIG_DEVICE_CARTSLOT(3, "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0", ti99_load_rom, ti99_rom_cleanup, NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */
