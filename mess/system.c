@@ -456,9 +456,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 //	DRIVER( pc1403 )	/* Pocket Computer 1403 						  */
 //	DRIVER( pc1403h )	/* Pocket Computer 1403H 						  */
 
-//	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
-//	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
-//TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
+TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 
 /*//	DRIVER( x68000 )*/	/* X68000										  */
 
@@ -544,7 +544,7 @@ TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
 
 	/* Tatung */
 	DRIVER( einstein )
-TESTDRIVER( einstein2 )
+TESTDRIVER( einstei2 )
 
 	/* INTELLIGENT SOFTWARE */
 	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
