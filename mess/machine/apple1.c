@@ -112,7 +112,7 @@ int apple1_interrupt(void)
 		}
 	}
 
-	return (0);
+	return ignore_interrupt();
 }
 
 /* || */
