@@ -270,20 +270,24 @@ INPUT_PORTS_END
 INPUT_PORTS_START(ti99_4)
 
 	PORT_START	/* config */
-		PORT_BITX( 0x0007, 0x0001, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
-		    PORT_DIPSETTING( xRAM_kind_none,			"none" )
-		    PORT_DIPSETTING( xRAM_kind_TI,				"Texas Instrument 32kb")
-		    PORT_DIPSETTING( xRAM_kind_super_AMS,		"Super AMS 1Mb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_128k,	"Foundation 128kb")
-		    PORT_DIPSETTING( xRAM_kind_foundation_512k,	"Foundation 512kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_128k,		"Myarc look-alike 128kb")
-		    PORT_DIPSETTING( xRAM_kind_myarc_512k,		"Myarc look-alike 512kb")
-		PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_xRAM_mask << config_xRAM_bit, xRAM_kind_TI << config_xRAM_bit, IPT_DIPSWITCH_NAME, "RAM extension", KEYCODE_NONE, IP_JOY_NONE )
+		    PORT_DIPSETTING( xRAM_kind_none << config_xRAM_bit,				"none" )
+		    PORT_DIPSETTING( xRAM_kind_TI << config_xRAM_bit,				"Texas Instruments 32kb")
+		    PORT_DIPSETTING( xRAM_kind_super_AMS << config_xRAM_bit,		"Super AMS 1Mb")
+		    PORT_DIPSETTING( xRAM_kind_foundation_128k << config_xRAM_bit,	"Foundation 128kb")
+		    PORT_DIPSETTING( xRAM_kind_foundation_512k << config_xRAM_bit,	"Foundation 512kb")
+		    PORT_DIPSETTING( xRAM_kind_myarc_128k << config_xRAM_bit,		"Myarc look-alike 128kb")
+		    PORT_DIPSETTING( xRAM_kind_myarc_512k << config_xRAM_bit,		"Myarc look-alike 512kb")
+		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
-			PORT_DIPSETTING( 0x0008, DEF_STR( On ) )
-		PORT_BITX( 0x0010, 0x0010, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
+		PORT_BITX( config_fdc_mask << config_fdc_bit, fdc_kind_BwG << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
+			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
+			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
-			PORT_DIPSETTING( 0x0010, DEF_STR( On ) )
+			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_KEY2(0x80, IP_ACTIVE_LOW, "1 !", KEYCODE_1, IP_JOY_NONE,			'1',	'!')
@@ -619,6 +623,8 @@ ROM_START(ti99_4)
 	/* Used for disk DSR */
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
@@ -638,6 +644,7 @@ ROM_START(ti99_4a)
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
@@ -658,6 +665,7 @@ ROM_START(ti99_4ev)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
 	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000, 0xa062b75d) /* evpc DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
