@@ -173,7 +173,7 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, void *disk
 	memset(ide, 0, sizeof(*ide));
 	ide->intf = intf;
 
-	/* we only support one hard disk right now; get a handle to it */
+	/* set MAME harddisk handle */
 	ide->disk = diskhandle;
 
 	/* get and copy the geometry */
@@ -199,7 +199,7 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, void *disk
 int ide_controller_init(int which, struct ide_interface *intf)
 {
 	/* we only support one hard disk right now; get a handle to it */
-	ide_controller_init_custom(which, intf, get_disk_handle(0));
+	return ide_controller_init_custom(which, intf, get_disk_handle(0));
 }
 
 
@@ -557,7 +557,7 @@ static void write_cur_sector(struct ide_state *ide)
  *
  *************************************/
 
-void handle_command(struct ide_state *ide, UINT8 command)
+static void handle_command(struct ide_state *ide, UINT8 command)
 {
 	/* implicitly clear interrupts here */
 	clear_interrupt(ide);
