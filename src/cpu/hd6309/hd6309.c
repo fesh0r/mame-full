@@ -106,6 +106,12 @@
 #define false 0
 #endif
 
+/* #define BIG_SWITCH */
+
+#ifdef MAME_DEBUG
+extern int debug_key_pressed;
+#endif
+
 void CHECK_IRQ_LINES( void );
 static void IIError(void);
 static void DZError(void);
@@ -597,6 +603,7 @@ void hd6309_init(void)
 	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
 	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
 	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
+	state_save_register_func_postload( UpdateState );
 	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);
@@ -639,7 +646,7 @@ void hd6309_set_irq_line(int irqline, int state)
 	{
 		if (hd6309.nmi_state == state) return;
 		hd6309.nmi_state = state;
-		LOG(("HD6309#%d set_irq_line (NMI) %d\n", cpu_getactivecpu(), state));
+		LOG(("HD6309#%d set_irq_line (NMI) %d (PC=%4.4X)\n", cpu_getactivecpu(), state, pPC));
 		if( state == CLEAR_LINE ) return;
 
 		/* if the stack was not yet initialized */
@@ -678,7 +685,7 @@ void hd6309_set_irq_line(int irqline, int state)
 	}
 	else if (irqline < 2)
 	{
-		LOG(("HD6309#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+		LOG(("HD6309#%d set_irq_line %d, %d (PC=%4.4X)\n", cpu_getactivecpu(), irqline, state, pPC));
 		hd6309.irq_state[irqline] = state;
 		if (state == CLEAR_LINE) return;
 		CHECK_IRQ_LINES();

@@ -440,6 +440,8 @@ INLINE void sts_ex( void );
 INLINE void pref10( void );
 INLINE void pref11( void );
 
+INLINE void emu_dbg( void );
+
 static UINT8 flags8i[256]=	 /* increment */
 {
 CC_Z,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -512,13 +514,13 @@ static UINT8 index_cycle_na[256] = {         /* Index Loopup cycle counts, nativ
 /* 0x6X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
 /* 0x7X */      1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
 /* 0x8X */      1,    2,    1,    3,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    0,
-/* 0x9X */      3,    5,    4,    5,    3,    4,    4,    4,    4,    5,    4,    7,    4,    6,    5,    5,
+/* 0x9X */      3,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    4,
 /* 0xAX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    2,
-/* 0xBX */      5,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
+/* 0xBX */      5,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    4,
 /* 0xCX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xDX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7,
+/* 0xDX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    4,
 /* 0xEX */      1,    2,    1,    2,    0,    1,    1,    1,    1,    3,    1,    2,    1,    3,    1,    1,
-/* 0xFX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    7
+/* 0xFX */      4,    5,    4,    5,    3,    4,    4,    4,    4,    7,    4,    5,    4,    6,    4,    4
 };
 
 #define IIP0	19			/* Illegal instruction cycle count page 0 */
@@ -534,7 +536,7 @@ static UINT8 ccounts_page0_em[256] =    /* Cycle Counts Page zero, Emulated 6809
 /* 0x4X */     2, IIP0, IIP0,    2,    2, IIP0,    2,    2,    2,    2,    2, IIP0,    2,    2, IIP0,    2,
 /* 0x5X */     2, IIP0, IIP0,    2,    2, IIP0,    2,    2,    2,    2,    2, IIP0,    2,    2, IIP0,    2,
 /* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    6,    3,    6,
-/* 0x7X */     7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    4,    7,
+/* 0x7X */     7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    7,    5,    7,    7,    4,    7,
 /* 0x8X */     2,    2,    2,    4,    2,    2,    2, IIP0,    2,    2,    2,    2,    4,    7,    3, IIP0,
 /* 0x9X */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
 /* 0xAX */     4,    4,    4,    6,    4,    4,    4,    4,    4,    4,    4,    4,    6,    7,    5,    5,
@@ -555,7 +557,7 @@ static UINT8 ccounts_page0_na[256] =   /* Cycle Counts Page zero, Native 6309 */
 /* 0x4X */     1, IIP0, IIP0,    1,    1, IIP0,    1,    1,    1,    1,    1, IIP0,    1,    1, IIP0,    1,
 /* 0x5X */     1, IIP0, IIP0,    1,    1, IIP0,    1,    1,    1,    1,    1, IIP0,    1,    1, IIP0,    1,
 /* 0x6X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
-/* 0x7X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    7,    6,    5,    3,    6,
+/* 0x7X */     6,    7,    7,    6,    6,    7,    6,    6,    6,    6,    6,    5,    6,    5,    3,    6,
 /* 0x8X */     2,    2,    2,    3,    2,    2,    2, IIP0,    2,    2,    2,    2,    3,    6,    3, IIP0,
 /* 0x9X */     3,    3,    3,    4,    3,    3,    3,    3,    3,    3,    3,    3,    4,    6,    4,    4,
 /* 0xAX */     4,    4,    4,    5,    4,    4,    4,    4,    4,    4,    4,    4,    5,    6,    5,    5,
@@ -807,7 +809,7 @@ static void (*hd6309_page11[0x100])(void) = {
 			IIError, IIError, IIError, addf_ix, IIError, IIError, IIError, IIError,
 
 /* 0xFX */  subf_ex, cmpf_ex, IIError, IIError, IIError, IIError, ldf_ex,  stf_ex,
-			IIError, IIError, IIError, addf_ex, IIError, IIError, IIError, IIError
+			IIError, IIError, IIError, addf_ex, emu_dbg, IIError, IIError, IIError
 
 };
 
