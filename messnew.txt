@@ -50,9 +50,13 @@ System Driver Changes:
 - [PDP1] Added support for perforated tape and read-in mode.  Removed the
   current image load hack, since the use of the perforated tape reader in
   read-in mode enables the user to enter programs in an historically-correct
-  way.  Various additionnal bug-fixes and some code clean-up.
+  way.  Various additional bug-fixes and some code clean-up.
+  Added control panel, variuos memory sizes, automatic multiply/divide,
+  interactive typewriter display and Spacewar! supports hyperspace controls
+  now. IO code has been rewrote and timings are greatly improved.
+  Teletyper output can be logged to a file (via -printer switch).
   Simulation of CRT remanence. WARNING: .rim files must be run pressing
-  ENTER to switch into read-in mode! [Raphael Nabet]
+  LCTRL+ENTER to switch into read-in mode! [Raphael Nabet]
 
 Source Changes:
 ---------------
