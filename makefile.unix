@@ -477,7 +477,7 @@ INSTALL_DATA =		$(INSTALL) -c    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
 ###########################################################################
 
 # Uncomment next line to build expat as part of the build.
-BUILD_EXPAT = 1
+# BUILD_EXPAT = 1
 
 # Uncomment next line to build zlib as part of the build.
 # BUILD_ZLIB = 1
