@@ -45,7 +45,7 @@ static MEMORY_READ_START( mk2_readmem )
 	{ 0x0000, 0x01ff, MRA_RAM }, // 2 2111, should be mirrored
 	{ 0x8009, 0x8009, MRA_NOP },// bit $8009 (ora #$80) causes false accesses
 	{ 0x8b00, 0x8b0f, rriot_0_r },
-//	{ 0x8b80, 0x8bbf, MRA_RAM }, // rriot ram
+	{ 0x8b80, 0x8bbf, MRA_RAM }, // rriot ram
 	{ 0x8c00, 0x8fff, MRA_ROM }, // rriot rom
 	{ 0xf000, 0xffff, MRA_ROM },
 MEMORY_END
@@ -53,8 +53,8 @@ MEMORY_END
 static MEMORY_WRITE_START( mk2_writemem )
 	{ 0x0000, 0x01ff, MWA_RAM },
 	{ 0x8b00, 0x8b0f, rriot_0_w },
-//	{ 0x8b80, 0x8bbf, MWA_RAM },
-//	{ 0x8c00, 0x8fff, MWA_ROM },
+	{ 0x8b80, 0x8bbf, MWA_RAM },
+	{ 0x8c00, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
@@ -84,15 +84,17 @@ DIPS_HELPER( 0x001, "NEW GAME", KEYCODE_F3, CODE_NONE) // seams to be direct wir
 	DIPS_HELPER( 0x020, "White 6", KEYCODE_6, CODE_NONE)
 	DIPS_HELPER( 0x040, "White 7", KEYCODE_7, CODE_NONE)
 	DIPS_HELPER( 0x080, "White 8", KEYCODE_8, CODE_NONE)
+#if 0
 	PORT_START
-	DIPS_HELPER( 0x001, "White 1", KEYCODE_1_PAD, CODE_NONE)
-	DIPS_HELPER( 0x002, "White 2", KEYCODE_2_PAD, CODE_NONE)
-	DIPS_HELPER( 0x004, "White 3", KEYCODE_3_PAD, CODE_NONE)
-	DIPS_HELPER( 0x008, "White 4", KEYCODE_4_PAD, CODE_NONE)
-	DIPS_HELPER( 0x010, "White 5", KEYCODE_5_PAD, CODE_NONE)
-	DIPS_HELPER( 0x020, "White 6", KEYCODE_6_PAD, CODE_NONE)
-	DIPS_HELPER( 0x040, "White 7", KEYCODE_7_PAD, CODE_NONE)
-	DIPS_HELPER( 0x080, "White 8", KEYCODE_8_PAD, CODE_NONE)
+	DIPS_HELPER( 0x001, "Test 1", KEYCODE_1_PAD, CODE_NONE)
+	DIPS_HELPER( 0x002, "Test 2", KEYCODE_2_PAD, CODE_NONE)
+	DIPS_HELPER( 0x004, "Test 3", KEYCODE_3_PAD, CODE_NONE)
+	DIPS_HELPER( 0x008, "Test 4", KEYCODE_4_PAD, CODE_NONE)
+	DIPS_HELPER( 0x010, "Test 5", KEYCODE_5_PAD, CODE_NONE)
+	DIPS_HELPER( 0x020, "Test 6", KEYCODE_6_PAD, CODE_NONE)
+	DIPS_HELPER( 0x040, "Test 7", KEYCODE_7_PAD, CODE_NONE)
+	DIPS_HELPER( 0x080, "Test 8", KEYCODE_8_PAD, CODE_NONE)
+#endif
 INPUT_PORTS_END
 
 static int mk2_frame_int(void)
@@ -174,7 +176,6 @@ static int mk2_read_a(int chip)
 	int data=0xff;
 	int help=input_port_1_r(0)|input_port_2_r(0); // looks like white and black keys are the same!
 
-//	switch (rriot_0_b_r(0)&0xf) {
 	switch (rriot_0_b_r(0)&0x7) {
 	case 4:
 		if (help&0x20) data&=~0x1; //F
@@ -183,34 +184,11 @@ static int mk2_read_a(int chip)
 		if (help&4) data&=~0x8; // C
 		if (help&2) data&=~0x10; // B
 		if (help&1) data&=~0x20; // A
-#if 1
+#if 0
 		if (input_port_3_r(0)&1) data&=~0x40; //?
 #endif
 		break;
 	case 5:
-#if 1
-		if (input_port_3_r(0)&2) data&=~0x1; //?
-		if (input_port_3_r(0)&4) data&=~0x2; //?
-		if (input_port_3_r(0)&8) data&=~0x4; //?
-#endif
-		if (input_port_0_r(0)&4) data&=~0x8; // Enter
-		if (input_port_0_r(0)&2) data&=~0x10; // Clear
-		if (help&0x80) data&=~0x20; // H
-		if (help&0x40) data&=~0x40; // G
-		break;
-#if 0
-	case 0xc:
-		if (help&0x20) data&=~0x1; //F
-		if (help&0x10) data&=~0x2; //E
-		if (help&8) data&=~0x4; //D
-		if (help&4) data&=~0x8; // C
-		if (help&2) data&=~0x10; // B
-		if (help&1) data&=~0x20; // A
-#if 0
-		if (input_port_3_r(0)&1) data&=~0x40; //?
-#endif
-		break;
-	case 0xd:
 #if 0
 		if (input_port_3_r(0)&2) data&=~0x1; //?
 		if (input_port_3_r(0)&4) data&=~0x2; //?
@@ -221,7 +199,6 @@ static int mk2_read_a(int chip)
 		if (help&0x80) data&=~0x20; // H
 		if (help&0x40) data&=~0x40; // G
 		break;
-#endif
 	}
 	return data;
 }
