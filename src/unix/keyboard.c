@@ -325,3 +325,8 @@ int osd_readkey_unicode(int flush)
    else
       return 0;
 }
+
+int osd_keyboard_disabled()
+{
+	return 0;
+}
