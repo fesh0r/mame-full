@@ -12,7 +12,7 @@
 #include "harddisk.h"
 
 /* created a new hard disk */
-imgtoolerr_t imghd_create_base_v1_v2(imgtool_stream *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen);
+imgtoolerr_t imghd_create(imgtool_stream *stream, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen);
 
 /* opens a hard disk given an Imgtool stream */
 imgtoolerr_t imghd_open(imgtool_stream *stream, struct hard_disk_file **hard_disk);

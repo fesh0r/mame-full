@@ -250,7 +250,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	column_index = 1;
 	ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 
-	if (features.supports_creation_time)
+	if (features.supports_creation_time && (entry->creation_time != 0))
 	{
 		local_time = localtime(&entry->creation_time);
 		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));
@@ -258,7 +258,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 		ListView_SetItemText(info->listview, new_index, column_index++, buffer);
 	}
 
-	if (features.supports_lastmodified_time)
+	if (features.supports_lastmodified_time && (entry->lastmodified_time != 0))
 	{
 		local_time = localtime(&entry->lastmodified_time);
 		_sntprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), _tasctime(local_time));

@@ -1,5 +1,41 @@
 <tests>
 
+<imgtooltest name="fat_dsk">
+	<!-- Testing the underlying disk -->
+	<createimage driver="pc_dsk_fat"/>
+	<checkdirectory/>
+
+	<putfile name="1.TXT">'Hello World!'</putfile>
+	<putfile name="2.TXT">'1234567' * 1321</putfile>
+	<putfile name="3.TXT">'Hello World!' * 13223</putfile>
+	<checkdirectory>
+		<entry name="1.TXT" size="12"/>
+		<entry name="2.TXT" size="9247"/>
+		<entry name="3.TXT" size="158676"/>
+	</checkdirectory>
+	<checkfile name="1.TXT">'Hello World!'</checkfile>
+	<checkfile name="2.TXT">'1234567' * 1321</checkfile>
+	<checkfile name="3.TXT">'Hello World!' * 13223</checkfile>
+</imgtooltest>
+
+<imgtooltest name="fat_chd">
+	<!-- Testing the underlying disk -->
+	<createimage driver="pc_chd_fat"/>
+	<checkdirectory/>
+
+	<putfile name="1.TXT">'Hello World!'</putfile>
+	<putfile name="2.TXT">'1234567' * 1321</putfile>
+	<putfile name="3.TXT">'Hello World!' * 13223</putfile>
+	<checkdirectory>
+		<entry name="1.TXT" size="12"/>
+		<entry name="2.TXT" size="9247"/>
+		<entry name="3.TXT" size="158676"/>
+	</checkdirectory>
+	<checkfile name="1.TXT">'Hello World!'</checkfile>
+	<checkfile name="2.TXT">'1234567' * 1321</checkfile>
+	<checkfile name="3.TXT">'Hello World!' * 13223</checkfile>
+</imgtooltest>
+
 <imgtooltest name="fat_001">
 	<!-- Basic FAT tests -->
 	<createimage driver="pc_dsk_fat"/>

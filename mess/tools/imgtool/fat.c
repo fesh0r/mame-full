@@ -137,12 +137,12 @@
 #include "imghd.h"
 
 #define FAT_DIRENT_SIZE	32
+#define FAT_SECLEN		512
 #define LOG(x)
 
 struct fat_diskinfo
 {
 	UINT32 fat_bits;
-	UINT32 sector_size;
 	UINT32 sectors_per_cluster;
 	UINT32 cluster_size;
 	UINT32 reserved_sectors;
@@ -346,7 +346,7 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 {
 	floperr_t ferr;
 	int head, track, sector;
-	UINT8 data[512];
+	UINT8 data[FAT_SECLEN];
 	size_t len;
 
 	if (fat_is_harddisk(image))
@@ -380,7 +380,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 {
 	floperr_t ferr;
 	int head, track, sector;
-	UINT8 data[512];
+	UINT8 data[FAT_SECLEN];
 	const void *write_data;
 	size_t len;
 
@@ -422,7 +422,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 
 static imgtoolerr_t fat_clear_sector(imgtool_image *image, UINT32 sector_index, UINT8 data)
 {
-	char buf[512];
+	char buf[FAT_SECLEN];
 	memset(buf, data, sizeof(buf));
 	return fat_write_sector(image, sector_index, 0, buf, sizeof(buf));
 }
@@ -434,7 +434,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	UINT8 header[62];
 	imgtoolerr_t err;
 	struct fat_diskinfo *info;
-	UINT32 fat_bits, total_sectors_l, total_sectors_h;
+	UINT32 fat_bits, total_sectors_l, total_sectors_h, sector_size;
 
 	err = fat_read_sector(image, 0, 0, header, sizeof(header));
 	if (err)
@@ -454,7 +454,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	
 	info = fat_get_diskinfo(image);
 	info->fat_bits				= fat_bits;
-	info->sector_size			= pick_integer(header, 11, 2);
+	sector_size					= pick_integer(header, 11, 2);
 	info->sectors_per_cluster	= pick_integer(header, 13, 1);
 	info->reserved_sectors		= pick_integer(header, 14, 2);
 	info->fat_count				= pick_integer(header, 16, 1);
@@ -468,14 +468,14 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
 	info->total_clusters = info->total_sectors - info->reserved_sectors
 		- (info->sectors_per_fat * info->fat_count)
-		- (info->root_entries * FAT_DIRENT_SIZE + info->sector_size - 1) / info->sector_size;
-	info->cluster_size = info->sector_size * info->sectors_per_cluster;
+		- (info->root_entries * FAT_DIRENT_SIZE + FAT_SECLEN - 1) / FAT_SECLEN;
+	info->cluster_size = FAT_SECLEN * info->sectors_per_cluster;
 
 	if (info->fat_count == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
-	if (info->sectors_per_fat == 0)
+	if (sector_size != FAT_SECLEN)
 		return IMGTOOLERR_CORRUPTIMAGE;
-	if (info->sector_size == 0)
+	if (info->sectors_per_fat == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->sectors_per_cluster == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
@@ -487,7 +487,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->total_sectors < info->heads * info->sectors_per_track)
 		return IMGTOOLERR_CORRUPTIMAGE;
-	if (info->total_clusters * info->fat_bits > info->sectors_per_fat * info->sector_size * 8)
+	if (info->total_clusters * info->fat_bits > info->sectors_per_fat * FAT_SECLEN * 8)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	return IMGTOOLERR_SUCCESS;
@@ -499,7 +499,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 {
 	imgtoolerr_t err;
 	struct fat_diskinfo *disk_info;
-	UINT32 heads, tracks, sectors, sector_bytes, first_sector_id;
+	UINT32 heads, tracks, sectors;
 	UINT32 fat_bits, sectors_per_cluster, reserved_sectors, hidden_sectors;
 	UINT32 root_dir_count, root_dir_sectors;
 	UINT32 sectors_per_fat, fat_count, i;
@@ -508,14 +508,12 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	UINT8 media_descriptor;
 	const char *title;
 	const char *fat_bits_string;
-	UINT8 header[512];
+	UINT8 header[FAT_SECLEN];
 	UINT64 first_fat_entries;
 
 	heads = option_resolution_lookup_int(opts, 'H');
 	tracks = option_resolution_lookup_int(opts, 'T');
 	sectors = option_resolution_lookup_int(opts, 'S');
-	sector_bytes = 512;
-	first_sector_id = 1;
 	
 	total_sectors = ((UINT64) heads) * tracks * sectors;
 
@@ -557,11 +555,11 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	reserved_sectors = 1;
 
 	/* calculated settings */
-	root_dir_sectors = (root_dir_count * FAT_DIRENT_SIZE + sector_bytes - 1) / sector_bytes;
+	root_dir_sectors = (root_dir_count * FAT_DIRENT_SIZE + FAT_SECLEN - 1) / FAT_SECLEN;
 	total_clusters = (total_sectors - reserved_sectors - hidden_sectors - root_dir_sectors)
 		/ sectors_per_cluster;
-	sectors_per_fat = (total_clusters * fat_bits + (sector_bytes * 8) - 1)
-		/ (sector_bytes * 8);
+	sectors_per_fat = (total_clusters * fat_bits + (FAT_SECLEN * 8) - 1)
+		/ (FAT_SECLEN * 8);
 
 	/* write just enough info to disk_info to get going */
 	disk_info = fat_get_diskinfo(image);
@@ -571,7 +569,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	/* prepare the header */
 	memset(header, 0, sizeof(header));
 	memcpy(&header[3], "IMGTOOL ", 8);
-	place_integer(header, 11, 2, sector_bytes);
+	place_integer(header, 11, 2, FAT_SECLEN);
 	place_integer(header, 13, 1, sectors_per_cluster);
 	place_integer(header, 14, 1, reserved_sectors);
 	place_integer(header, 16, 1, fat_count);
@@ -652,7 +650,7 @@ static imgtoolerr_t fat_load_fat(imgtool_image *image, UINT8 **fat_table)
 
 	disk_info = fat_get_diskinfo(image);
 
-	table_size = disk_info->sectors_per_fat * disk_info->fat_count * disk_info->sector_size;
+	table_size = disk_info->sectors_per_fat * disk_info->fat_count * FAT_SECLEN;
 
 	/* allocate the table with extra bytes, in case we "overextend" our reads */
 	table = malloc(table_size + sizeof(UINT64));
@@ -668,13 +666,13 @@ static imgtoolerr_t fat_load_fat(imgtool_image *image, UINT8 **fat_table)
 
 	while(pos < table_size)
 	{
-		len = MIN(table_size - pos, disk_info->sector_size);
+		len = MIN(table_size - pos, FAT_SECLEN);
 
 		err = fat_read_sector(image, sector_index++, 0, &table[pos], len);
 		if (err)
 			goto done;
 
-		pos += disk_info->sector_size;
+		pos += FAT_SECLEN;
 	}
 
 done:
@@ -699,20 +697,20 @@ static imgtoolerr_t fat_save_fat(imgtool_image *image, const UINT8 *fat_table)
 
 	disk_info = fat_get_diskinfo(image);
 
-	table_size = disk_info->sectors_per_fat * disk_info->fat_count * disk_info->sector_size;
+	table_size = disk_info->sectors_per_fat * disk_info->fat_count * FAT_SECLEN;
 
 	pos = 0;
 	sector_index = disk_info->reserved_sectors;
 
 	while(pos < table_size)
 	{
-		len = MIN(table_size - pos, disk_info->sector_size);
+		len = MIN(table_size - pos, FAT_SECLEN);
 
 		err = fat_write_sector(image, sector_index++, 0, &fat_table[pos], len);
 		if (err)
 			goto done;
 
-		pos += disk_info->sector_size;
+		pos += FAT_SECLEN;
 	}
 
 done:
@@ -742,7 +740,7 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 	/* make sure that the cluster is free in all fats */
 	for (i = 0; i < disk_info->fat_count; i++)
 	{
-		memcpy(&entry, fat_table + (i * disk_info->sector_size
+		memcpy(&entry, fat_table + (i * FAT_SECLEN
 			* disk_info->sectors_per_fat) + (bit_index / 8), sizeof(entry));
 
 		/* we've extracted the bytes; we now need to normalize it */
@@ -780,7 +778,7 @@ static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat
 
 	for (i = 0; i < disk_info->fat_count; i++)
 	{
-		memcpy(&entry, fat_table + (i * disk_info->sector_size
+		memcpy(&entry, fat_table + (i * FAT_SECLEN
 			* disk_info->sectors_per_fat) + (bit_index / 8), sizeof(entry));
 
 		entry = LITTLE_ENDIANIZE_INT64(entry);
@@ -788,7 +786,7 @@ static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat
 		entry |= ((UINT64) value) << (bit_index % 8);
 		entry = LITTLE_ENDIANIZE_INT64(entry);
 
-		memcpy(fat_table + (i * disk_info->sector_size
+		memcpy(fat_table + (i * FAT_SECLEN
 			* disk_info->sectors_per_fat) + (bit_index / 8), &entry, sizeof(entry));
 	}
 }
@@ -890,7 +888,7 @@ static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file
 	if (file->root)
 	{
 		/* special case for the root file */
-		sector_index += file->index / disk_info->sector_size;
+		sector_index += file->index / FAT_SECLEN;
 	}
 	else
 	{
@@ -898,7 +896,7 @@ static UINT32 fat_get_filepos_sector_index(imgtool_image *image, struct fat_file
 		if ((file->cluster < 2) || (file->cluster >= disk_info->total_clusters))
 			return 0;
 
-		sector_index += (disk_info->root_entries * FAT_DIRENT_SIZE + disk_info->sector_size - 1) / disk_info->sector_size;
+		sector_index += (disk_info->root_entries * FAT_DIRENT_SIZE + FAT_SECLEN - 1) / FAT_SECLEN;
 		sector_index += (file->cluster - 2) * disk_info->sectors_per_cluster;
 	}
 	return sector_index;
@@ -941,8 +939,8 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 		if (sector_index == 0)
 			return fat_corrupt_file_error(file);
 
-		offset = file->index % disk_info->sector_size;
-		len = MIN(buffer_len, disk_info->sector_size - offset);
+		offset = file->index % FAT_SECLEN;
+		len = MIN(buffer_len, FAT_SECLEN - offset);
 
 		/* read or write the data from the disk */
 		if (read_or_write)
@@ -1348,7 +1346,7 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	{
 		entry_index = file->index;
 		entry_sector_index = fat_get_filepos_sector_index(image, file);
-		entry_sector_offset = file->index % disk_info->sector_size;
+		entry_sector_offset = file->index % FAT_SECLEN;
 
 		err = fat_read_file(image, file, entry, sizeof(entry), &bytes_read);
 		if (err)
@@ -1789,7 +1787,7 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			if (err)
 				goto done;
 			entry_sector_index = fat_get_filepos_sector_index(image, file);
-			entry_sector_offset = file->index % disk_info->sector_size;
+			entry_sector_offset = file->index % FAT_SECLEN;
 
 			/* build the file struct for the newly created file/directory */
 			memset(file, 0, sizeof(*file));
@@ -2070,6 +2068,16 @@ FLOPPYMODULE(fat, "FAT format", pc, fat_module_populate)
  * CHD disk images                                                         *
  * ----------------------------------------------------------------------- */
 
+OPTION_GUIDE_START( fat_chd_create_optionguide )
+	OPTION_INT('T', "cylinders",	"Cylinders" )
+	OPTION_INT('H', "heads",		"Heads" )
+	OPTION_INT('S', "sectors",		"Sectors" )
+OPTION_GUIDE_END
+
+static const char fat_chd_create_optionspec[] = "H1-[16]S1-[32]-63T10/20/30/40/50/60/70/80/90/[100]/110/120/130/140/150/160/170/180/190/200";
+
+
+
 static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream *f)
 {
 	imgtoolerr_t err;
@@ -2078,9 +2086,59 @@ static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream 
 	disk_info = fat_get_diskinfo(image);
 	err = imghd_open(f, &disk_info->harddisk);
 	if (err)
-		return err;
+		goto done;
 
-	return fat_diskimage_open(image);
+	err = fat_diskimage_open(image);
+	if (err)
+		goto done;
+
+done:
+	if (err && disk_info->harddisk)
+	{
+		imghd_close(disk_info->harddisk);
+		disk_info->harddisk = NULL;
+	}
+	return err;
+}
+
+
+
+static imgtoolerr_t fat_chd_diskimage_create(imgtool_image *image, imgtool_stream *f, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	UINT32 cylinders, heads, sectors;
+	struct fat_diskinfo *disk_info;
+
+	cylinders = option_resolution_lookup_int(opts, 'T');
+	heads = option_resolution_lookup_int(opts, 'H');
+	sectors = option_resolution_lookup_int(opts, 'S');
+
+	disk_info = fat_get_diskinfo(image);
+
+	/* create the hard disk image */
+	err = imghd_create(f, 0, cylinders, heads, sectors, FAT_SECLEN);
+	if (err)
+		goto done;
+
+	err = imghd_open(f, &disk_info->harddisk);
+	if (err)
+		goto done;
+
+	err = fat_diskimage_create(image, opts);
+	if (err)
+		goto done;
+
+	err = fat_diskimage_open(image);
+	if (err)
+		goto done;
+
+done:
+	if (err && disk_info->harddisk)
+	{
+		imghd_close(disk_info->harddisk);
+		disk_info->harddisk = NULL;
+	}
+	return err;
 }
 
 
@@ -2117,6 +2175,7 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 	module->imageenum_extra_bytes		+= sizeof(struct fat_file);
 	module->open						= fat_chd_diskimage_open;
 	module->close						= fat_chd_diskimage_close;
+	module->create						= fat_chd_diskimage_create;
 	module->begin_enum					= fat_diskimage_beginenum;
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
@@ -2125,5 +2184,7 @@ imgtoolerr_t pc_chd_createmodule(imgtool_library *library)
 	module->free_space					= fat_diskimage_freespace;
 	module->create_dir					= fat_diskimage_createdir;
 	module->delete_dir					= fat_diskimage_deletedir;
+	module->createimage_optguide		= fat_chd_create_optionguide;
+	module->createimage_optspec			= fat_chd_create_optionspec;
 	return IMGTOOLERR_SUCCESS;
 }
