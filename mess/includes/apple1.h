@@ -3,6 +3,7 @@
 extern void apple1_init_machine (void);
 extern void apple1_stop_machine (void);
 extern int apple1_interrupt (void);
+extern int apple1_load_snap (int id);
 extern READ_HANDLER( apple1_pia0_kbdin );
 extern READ_HANDLER( apple1_pia0_dsprdy );
 extern READ_HANDLER( apple1_pia0_kbdrdy );
