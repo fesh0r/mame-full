@@ -265,7 +265,7 @@ void xgl_close_display (void)
    XSync (display, True); /* send all events to sync; discard events */
 
 #ifndef NDEBUG
-   printf("GLINFO: xgl display closed !\n");
+   fprintf(stderr, "GLINFO: xgl display closed !\n");
 #endif
 }
 

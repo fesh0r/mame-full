@@ -302,7 +302,7 @@ static int gl_set_beam(float new_value)
         RETURN_IF_GL_ERROR ();
 	disp__glPointSize(gl_beam);
         RETURN_IF_GL_ERROR ();
-	printf("GLINFO (vec): beamer size %f\n", gl_beam);
+	fprintf(stderr, "GLINFO (vec): beamer size %f\n", gl_beam);
 	return 0;
 }
 
@@ -320,8 +320,8 @@ int gl_open_display (void)
   glVersion = disp__glGetString(GL_VERSION);
   RETURN_IF_GL_ERROR ();
 
-  printf("\nGLINFO: OpenGL Driver Information:\n");
-  printf("\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
+  fprintf(stderr, "\nGLINFO: OpenGL Driver Information:\n");
+  fprintf(stderr, "\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
   	disp__glGetString(GL_VENDOR), 
 	disp__glGetString(GL_RENDERER),
 	glVersion);
@@ -329,12 +329,12 @@ int gl_open_display (void)
   if(!(glVersion[0]>'1' ||
        (glVersion[0]=='1' && glVersion[2]>='2') ) )
   {
-       printf("error: an OpenGL >= 1.2 capable driver is required!\n");
+       fprintf(stderr, "error: an OpenGL >= 1.2 capable driver is required!\n");
        return 1;
   }
 
-  printf("GLINFO: GLU Driver Information:\n");
-  printf("\tversion %s\n",
+  fprintf(stderr, "GLINFO: GLU Driver Information:\n");
+  fprintf(stderr, "\tversion %s\n",
         disp__gluGetString(GLU_VERSION));
   
   cab_loaded = LoadCabinet (cabname);
@@ -397,10 +397,10 @@ int gl_open_display (void)
                   &t1x, &t1y, &t1z);
     t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
 
-    printf("GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
-    printf("\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-    printf("\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-    printf("\t s__cscr_w  = %f \n", s__cscr_w);
+    fprintf(stderr, "GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
+    fprintf(stderr, "\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+    fprintf(stderr, "\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+    fprintf(stderr, "\t s__cscr_w  = %f \n", s__cscr_w);
 
     CopyVec( &t1x, &t1y, &t1z,
              vx_scr_ny, vy_scr_ny, vz_scr_ny);
@@ -408,10 +408,10 @@ int gl_open_display (void)
                   &t1x, &t1y, &t1z);
     t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
 
-    printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-    printf("\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-    printf("\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-    printf("\t s__cscr_h   = %f \n", s__cscr_h);
+    fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+    fprintf(stderr, "\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+    fprintf(stderr, "\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+    fprintf(stderr, "\t s__cscr_h   = %f \n", s__cscr_h);
 #endif
 
   }
@@ -615,12 +615,12 @@ int gl_open_display (void)
       fprintf(stderr, "GLERROR: couldn't allocate memory\n");
       return 1;
     }
-    printf("GLINFO: Using bit blit to map color indices !!\n");
+    fprintf(stderr, "GLINFO: Using bit blit to map color indices !!\n");
   } else {
-    printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
+    fprintf(stderr, "GLINFO: Using true color mode (no color indices, but direct color)!!\n");
   }
 
-  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
+  fprintf(stderr, "GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
 		sysdep_display_params.depth, 
 		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
 		sysdep_display_properties.palette_info.blue_mask);
@@ -838,40 +838,40 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
               &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
 
 #ifndef NDEBUG
-    printf("GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-    printf("GLINFO: cabinet vectors\n");
-    printf("\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
-    printf("\t cab p2     : %f / %f / %f \n", vx_cscr_p2, vy_cscr_p2, vz_cscr_p2);
-    printf("\t cab p3     : %f / %f / %f \n", vx_cscr_p3, vy_cscr_p3, vz_cscr_p3);
-    printf("\t cab p4     : %f / %f / %f \n", vx_cscr_p4, vy_cscr_p4, vz_cscr_p4);
-    printf("\n") ;
-    printf("\t cab width  : %f / %f / %f \n", vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
-    printf("\t cab height : %f / %f / %f \n", vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
-    printf("\n");
-    printf("\t x axis : %f / %f / %f \n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-    printf("\t y axis : %f / %f / %f \n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-    printf("\t z axis : %f / %f / %f \n", vx_scr_nz, vy_scr_nz, vz_scr_nz);
-    printf("\n");
-    printf("\n");
-    printf("\t cab wxh scal wd: %f x %f \n", s__cscr_w, s__cscr_h);
-    printf("\t cab wxh scal vw: %f x %f \n", s__cscr_w_view, s__cscr_h_view);
-    printf("\n");
-    printf("\t gam p1     : %f / %f / %f \n", vx_gscr_p1, vy_gscr_p1, vz_gscr_p1);
-    printf("\t gam p2     : %f / %f / %f \n", vx_gscr_p2, vy_gscr_p2, vz_gscr_p2);
-    printf("\t gam p3     : %f / %f / %f \n", vx_gscr_p3, vy_gscr_p3, vz_gscr_p3);
-    printf("\t gam p4     : %f / %f / %f \n", vx_gscr_p4, vy_gscr_p4, vz_gscr_p4);
-    printf("\t gam p4b    : %f / %f / %f \n", vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
-    printf("\t gam p4-p4b : %f\n", t1);
-    printf("\n");
-    printf("\t gam width  : %f / %f / %f \n", vx_gscr_dw, vy_gscr_dw, vz_gscr_dw);
-    printf("\t gam height : %f / %f / %f \n", vx_gscr_dh, vy_gscr_dh, vz_gscr_dh);
-    printf("\n");
-    printf("\t gam wxh scal wd: %f x %f \n", s__gscr_w, s__gscr_h);
-    printf("\t gam wxh scal vw: %f x %f \n", s__gscr_w_view, s__gscr_h_view);
-    printf("\n");
-    printf("\t gam off  wd: %f / %f\n", s__gscr_offx, s__gscr_offy);
-    printf("\t gam off  vw: %f / %f\n", s__gscr_offx_view, s__gscr_offy_view);
-    printf("\n");
+    fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+    fprintf(stderr, "GLINFO: cabinet vectors\n");
+    fprintf(stderr, "\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
+    fprintf(stderr, "\t cab p2     : %f / %f / %f \n", vx_cscr_p2, vy_cscr_p2, vz_cscr_p2);
+    fprintf(stderr, "\t cab p3     : %f / %f / %f \n", vx_cscr_p3, vy_cscr_p3, vz_cscr_p3);
+    fprintf(stderr, "\t cab p4     : %f / %f / %f \n", vx_cscr_p4, vy_cscr_p4, vz_cscr_p4);
+    fprintf(stderr, "\n") ;
+    fprintf(stderr, "\t cab width  : %f / %f / %f \n", vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+    fprintf(stderr, "\t cab height : %f / %f / %f \n", vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t x axis : %f / %f / %f \n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+    fprintf(stderr, "\t y axis : %f / %f / %f \n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+    fprintf(stderr, "\t z axis : %f / %f / %f \n", vx_scr_nz, vy_scr_nz, vz_scr_nz);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t cab wxh scal wd: %f x %f \n", s__cscr_w, s__cscr_h);
+    fprintf(stderr, "\t cab wxh scal vw: %f x %f \n", s__cscr_w_view, s__cscr_h_view);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t gam p1     : %f / %f / %f \n", vx_gscr_p1, vy_gscr_p1, vz_gscr_p1);
+    fprintf(stderr, "\t gam p2     : %f / %f / %f \n", vx_gscr_p2, vy_gscr_p2, vz_gscr_p2);
+    fprintf(stderr, "\t gam p3     : %f / %f / %f \n", vx_gscr_p3, vy_gscr_p3, vz_gscr_p3);
+    fprintf(stderr, "\t gam p4     : %f / %f / %f \n", vx_gscr_p4, vy_gscr_p4, vz_gscr_p4);
+    fprintf(stderr, "\t gam p4b    : %f / %f / %f \n", vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b);
+    fprintf(stderr, "\t gam p4-p4b : %f\n", t1);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t gam width  : %f / %f / %f \n", vx_gscr_dw, vy_gscr_dw, vz_gscr_dw);
+    fprintf(stderr, "\t gam height : %f / %f / %f \n", vx_gscr_dh, vy_gscr_dh, vz_gscr_dh);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t gam wxh scal wd: %f x %f \n", s__gscr_w, s__gscr_h);
+    fprintf(stderr, "\t gam wxh scal vw: %f x %f \n", s__gscr_w_view, s__gscr_h_view);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "\t gam off  wd: %f / %f\n", s__gscr_offx, s__gscr_offy);
+    fprintf(stderr, "\t gam off  vw: %f / %f\n", s__gscr_offx_view, s__gscr_offy_view);
+    fprintf(stderr, "\n");
 #endif
   }
 
@@ -1538,7 +1538,7 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
     pan = cpan + currentpan;
 
 /*
-    printf("GLINFO (glcab): pan %d/%d panframe %d/%d\n", 
+    fprintf(stderr, "GLINFO (glcab): pan %d/%d panframe %d/%d\n", 
     	currentpan, numpans, panframe, pan->frames);
 */
 
@@ -1549,7 +1549,7 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
       if(currentpan>=numpans) currentpan=1;
       panframe = 0;
 /*
-      printf("GLINFO (glcab): finished pan %d/%d\n", currentpan, numpans);
+      fprintf(stderr, "GLINFO (glcab): finished pan %d/%d\n", currentpan, numpans);
 */
     }
 
@@ -1651,17 +1651,17 @@ void gl_update_display(struct mame_bitmap *bitmap,
     if (code_pressed_memory (KEYCODE_A))
     {
 	  gl_set_antialias (1-antialias);
-	  printf("GLINFO: switched antialias := %d\n", antialias);
+	  fprintf(stderr, "GLINFO: switched antialias := %d\n", antialias);
     }
     else if (code_pressed_memory (KEYCODE_B))
     {
       gl_set_bilinear (1 - bilinear);
-      printf("GLINFO: switched bilinear := %d\n", bilinear);
+      fprintf(stderr, "GLINFO: switched bilinear := %d\n", bilinear);
     }
     else if (code_pressed_memory (KEYCODE_C))
     {
       gl_set_cabview (1-cabview);
-      printf("GLINFO: switched cabinet := %d\n", cabview);
+      fprintf(stderr, "GLINFO: switched cabinet := %d\n", cabview);
     }
     else if (code_pressed_memory (KEYCODE_PLUS_PAD))
     {
