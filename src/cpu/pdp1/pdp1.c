@@ -318,8 +318,8 @@
 #include "mamedbg.h"
 #include "pdp1.h"
 
-#define READ_PDP_18BIT(A) ((signed)cpu_readmem16(A))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem16(A,V))
+#define READ_PDP_18BIT(A) ((signed)cpu_readmem16_18_dword(A<<2))
+#define WRITE_PDP_18BIT(A,V) (cpu_writemem16_18_dword(A<<2,V))
 
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
