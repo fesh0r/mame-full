@@ -30,6 +30,7 @@
 /* #define V_HDMA*/			/* Display HDMA debug information */
 /* #define V_REGISTERS*/	/* Display register debug information */
 #endif
+#define USE_SPCSKIPPER		/* Use the SPCSkipper instead of the SPC700 */
 
 /* -- Globals -- */
 UINT8  *snes_ram;		/* 65816 ram */
@@ -239,7 +240,14 @@ READ_HANDLER( snes_r_io )
 		case MPYL:		/* Multiplication result (low) */
 		case MPYM:		/* Multiplication result (mid) */
 		case MPYH:		/* Multiplication result (high) */
-			return snes_ram[offset];
+			{
+				/* Perform 16bit * 8bit multiply */
+				UINT32 c = mode7_data[0] * (mode7_data[1] >> 8);
+				snes_ram[MPYL] = c & 0xff;
+				snes_ram[MPYM] = (c >> 8) & 0xff;
+				snes_ram[MPYH] = (c >> 16) & 0xff;
+				return snes_ram[offset];
+			}
 		case SLHV:		/* Software latch for H/V counter */
 			/* FIXME: horizontal latch is a major fudge!!! */
 			ppu_vlatch = cur_vline;
@@ -345,8 +353,11 @@ READ_HANDLER( snes_r_io )
 		case APU01:		/* Audio port register */
 		case APU02:		/* Audio port register */
 		case APU03:		/* Audio port register */
-			/* return spc_port_out[offset & 0x3]; */
+#ifndef USE_SPCSKIPPER
+			return spc_port_out[offset & 0x3];
+#else
 			return snes_fakeapu_r_port( offset & 0x3 );
+#endif /* USE_SPCSKIPPER */
 		case WMDATA:	/* Data to read from WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
@@ -368,7 +379,8 @@ READ_HANDLER( snes_r_io )
 			value <<= joypad_oldrol;
 			joypad_oldrol++;
 			joypad_oldrol &= 0x15;
-			return (value & 0x1);
+/*			return (value & 0x1);*/
+			return 0xff;	/* FIXME: Returning 0xff for now, this is not correct though */
 		case HTIMEL:
 		case HTIMEH:
 		case VTIMEL:
@@ -505,7 +517,6 @@ WRITE_HANDLER( snes_w_io )
 				return;
 			}
 		case BGMODE:	/* BG mode and character size settings */
-			/* FIXME: we don't support bg sizes of 16x16 */
 #ifdef V_REGISTERS
 			if( ((data & 0xf0) != (snes_ram[BGMODE] & 0xf0)) )
 				printf( "BG tile sizes: 4:%d 3:%d 2:%d 1:%d\n", data & 0x80, data & 0x40, data & 0x20, data & 0x10 );
@@ -513,7 +524,7 @@ WRITE_HANDLER( snes_w_io )
 				printf( "BG mode: %d\n", data & 0x7  );
 #endif
 		case MOSAIC:	/* Size and screen designation for mosaic */
-			/* FIXME: We don't support mosaic yet */
+			/* FIXME: We don't support horizontal mosaic yet */
 		case BG1SC:		/* Address for storing SC data BG1 SC size designation */
 		case BG2SC:		/* Address for storing SC data BG2 SC size designation  */
 		case BG3SC:		/* Address for storing SC data BG3 SC size designation  */
@@ -594,15 +605,8 @@ WRITE_HANDLER( snes_w_io )
 		case M7SEL:		/* Mode 7 initial settings */
 			/* FIXME: We don't support flipping yet */
 			break;
-		case M7B:		/* Mode 7 SIN angle/ x expansion (DW) */
-			{
-				/* Perform 16bit * 8bit multiply */
-				UINT32 c = mode7_data[0] * data;
-				snes_ram[MPYL] = c & 0xff;
-				snes_ram[MPYM] = (c >> 8) & 0xff;
-				snes_ram[MPYH] = (c >> 16) & 0xff;
-			} /* Intentional fallthrough */
 		case M7A:		/* Mode 7 COS angle/x expansion (DW) */
+		case M7B:		/* Mode 7 SIN angle/ x expansion (DW) */
 		case M7C:		/* Mode 7 SIN angle/y expansion (DW) */
 		case M7D:		/* Mode 7 COS angle/y expansion (DW) */
 		case M7X:		/* Mode 7 x center position (DW) */
@@ -638,7 +642,7 @@ WRITE_HANDLER( snes_w_io )
 			 * whether add/sub is to fixed colour or sub screen */
 #ifdef V_REGISTERS
 			if( (data & 0x2) != (snes_ram[CGWSEL] & 0x2) )
-				printf( "Add/Sub mode: %s\n", ((data & 0x2) >> 1) ? "Subscreen" : "Fixed colour" );
+				printf( "Add/Sub Layer: %s\n", ((data & 0x2) >> 1) ? "Subscreen" : "Fixed colour" );
 #endif
 		case CGADSUB:	/* Addition/Subtraction designation for each screen */
 			break;
@@ -673,8 +677,11 @@ WRITE_HANDLER( snes_w_io )
 		case APU01:
 		case APU02:
 		case APU03:
+#ifndef USE_SPCSKIPPER
 			spc_port_in[offset & 0x3] = data;
+#else
 			snes_fakeapu_w_port( offset & 0x3, data );
+#endif /* USE_SPCSKIPPER */
 			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{
@@ -731,7 +738,15 @@ WRITE_HANDLER( snes_w_io )
 			data = 0;	/* Once DMA is done we need to reset all bits to 0 */
 			break;
 		case HDMAEN:	/* HDMA channel designation */
+			break;
 		case MEMSEL:	/* Access cycle designation in memory (2) area */
+			/* FIXME: Need to adjust the speed only during access of banks 0x80+
+			 * Currently we are just increasing it no matter what */
+			timer_set_overclock( 0, (data & 0x1) ? 1.335820896 : 1.0 );
+#ifdef V_REGISTERS
+			if( (data & 0x1) != (snes_ram[MEMSEL] & 0x1) )
+				printf( "CPU speed: %f Mhz\n", (data & 0x1) ? 3.58 : 2.68 );
+#endif
 			break;
 	/* Following are read-only */
 		case HVBJOY:	/* H/V blank and joypad enable */
@@ -1122,11 +1137,11 @@ void snes_scanline_interrupt(void)
 	/* Let's draw the current line */
 	if( cur_vline < max_lines )
 	{
+		snes_refresh_scanline( cur_vline );
+
 		/* If HDMA is enabled, then do that first */
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
-
-		snes_refresh_scanline( cur_vline );
 	}
 
 	/* Vertical IRQ timer */
@@ -1433,6 +1448,10 @@ void snes_gdma( UINT8 channels )
 #endif
 					break;
 			}
+			/* We're done so write the new abus back to the registers */
+			snes_ram[DMA_BASE + dma + 2] = abus & 0xff;
+			snes_ram[DMA_BASE + dma + 3] = (abus >> 8) & 0xff;
+			snes_ram[DMA_BASE + dma + 4] = (abus >> 16) & 0xff;
 		}
 		dma += 0x10;
 		mask <<= 1;
