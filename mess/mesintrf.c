@@ -3,8 +3,6 @@
 #include "ui_text.h"
 #include "input.h"
 
-extern void display_fps(struct mame_bitmap *bitmap);
-
 int mess_pause_for_ui = 0;
 
 int handle_mess_user_interface(struct mame_bitmap *bitmap)
@@ -22,12 +20,14 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 	{
 		if (options.disable_normal_ui)
 		{
+			/* we are using the new UI; just do the minimal stuff here */
 			if (ui_show_profiler_get())
 				profiler_show(bitmap);
-			display_fps(bitmap);
+			ui_display_fps(bitmap);
 		}
 		else
 		{
+			/* traditional MESS interface */
 			if (Machine->gamedrv->flags & GAME_COMPUTER)
 			{
 				if( input_ui_pressed(IPT_UI_TOGGLE_UI) )

@@ -349,6 +349,25 @@ static REG_OPTION global_game_options[] =
 };
 #define NUM_GLOBAL_GAME_OPTIONS (sizeof(global_game_options) / sizeof(global_game_options[0]))
 
+typedef struct
+{
+	const char *name;
+	int m_iType;
+	size_t m_iOffset;
+	BOOL (*m_pfnQualifier)(int driver_index);
+	const void *m_vpDefault;
+} GAMEVARIABLE_OPTION;
+
+static GAMEVARIABLE_OPTION gamevariable_options[] =
+{
+	{ "play_count",		RO_INT,		offsetof(game_variables_type, play_count),				NULL,				(const void *) 0},
+	{ "have_roms",		RO_BOOL,	offsetof(game_variables_type, has_roms),				NULL,				(const void *) UNKNOWN },
+	{ "have_samples",	RO_BOOL,	offsetof(game_variables_type, has_samples),				DriverUsesSamples,	(const void *) UNKNOWN },
+#ifdef MESS
+	{ "extra_software",	RO_STRING,	offsetof(game_variables_type, extra_software_paths),	NULL,				(const void *) "" }
+#endif
+};
+
 // Screen shot Page tab control text
 // these must match the order of the options flags in options.h
 // (SHOW_TAB_...)
@@ -2267,67 +2286,30 @@ static void LoadOption(REG_OPTION *option,const char *value_str)
 static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 {
 	REG_OPTION fake_option;
-
+	int i;
+	int driver_index;
 	const char *suffix;
 
-	suffix = "_play_count";
-	if (StringIsSuffixedBy(key, suffix))
+	for (i = 0; i < sizeof(gamevariable_options) / sizeof(gamevariable_options[0]); i++)
 	{
-		int driver_index;
+		snprintf(fake_option.ini_name, sizeof(fake_option.ini_name), "drivername_%s", gamevariable_options[i].name);
+		suffix = strchr(fake_option.ini_name, '_');
 
-		key[strlen(key) - strlen(suffix)] = '\0';
-		driver_index = GetGameNameIndex(key);
-		if (driver_index < 0)
+		if (StringIsSuffixedBy(key, suffix))
 		{
-			dprintf("error loading game variable for invalid game %s",key);
+			key[strlen(key) - strlen(suffix)] = '\0';
+			driver_index = GetGameNameIndex(key);
+			if (driver_index < 0)
+			{
+				dprintf("error loading game variable for invalid game %s",key);
+				return TRUE;
+			}
+
+			fake_option.m_iType = gamevariable_options[i].m_iType;
+			fake_option.m_vpData = (void *) (((UINT8 *) &game_variables[driver_index]) + gamevariable_options[i].m_iOffset);
+			LoadOption(&fake_option,value);
 			return TRUE;
 		}
-
-		strcpy(fake_option.ini_name,"drivername_play_count");
-		fake_option.m_iType = RO_INT;
-		fake_option.m_vpData = &game_variables[driver_index].play_count;
-		LoadOption(&fake_option,value);
-		return TRUE;
-	}
-
-	suffix = "_have_roms";
-	if (StringIsSuffixedBy(key, suffix))
-	{
-		int driver_index;
-
-		key[strlen(key) - strlen(suffix)] = '\0';
-		driver_index = GetGameNameIndex(key);
-		if (driver_index < 0)
-		{
-			dprintf("error loading game variable for invalid game %s",key);
-			return TRUE;
-		}
-
-		strcpy(fake_option.ini_name,"drivername_have_roms");
-		fake_option.m_iType = RO_BOOL;
-		fake_option.m_vpData = &game_variables[driver_index].has_roms;
-		LoadOption(&fake_option,value);
-		return TRUE;
-	}
-
-	suffix = "_have_samples";
-	if (StringIsSuffixedBy(key, suffix))
-	{
-		int driver_index;
-
-		key[strlen(key) - strlen(suffix)] = '\0';
-		driver_index = GetGameNameIndex(key);
-		if (driver_index < 0)
-		{
-			dprintf("error loading game variable for invalid game %s",key);
-			return TRUE;
-		}
-
-		strcpy(fake_option.ini_name,"drivername_have_samples");
-		fake_option.m_iType = RO_BOOL;
-		fake_option.m_vpData = &game_variables[driver_index].has_samples;
-		LoadOption(&fake_option,value);
-		return TRUE;
 	}
 
 	suffix = "_filters";
@@ -2351,29 +2333,6 @@ static BOOL LoadGameVariableOrFolderFilter(char *key,const char *value)
 		LoadFolderFilter(folder_index,filters);
 		return TRUE;
 	}
-
-#ifdef MESS
-	suffix = "_extra_software";
-	if (StringIsSuffixedBy(key, suffix))
-	{
-		int driver_index;
-
-		key[strlen(key) - strlen(suffix)] = '\0';
-		driver_index = GetGameNameIndex(key);
-		if (driver_index < 0)
-		{
-			dprintf("error loading game variable for invalid game %s",key);
-			return TRUE;
-		}
-
-		strcpy(fake_option.ini_name,"drivername_extra_software");
-		fake_option.m_iType = RO_STRING;
-		fake_option.m_vpData = &game_variables[driver_index].extra_software_paths;
-		LoadOption(&fake_option, value);
-		return TRUE;
-	}
-#endif
-
 	return FALSE;
 }
 
@@ -2608,32 +2567,52 @@ void SaveOptions(void)
 		fprintf(fptr,"### game variables ###\n\n");
 		for (i=0;i<num_games;i++)
 		{
+			int j;
+			int nValue;
+			const char *pValue;
+			void *pv;
 			int driver_index = GetIndexFromSortedIndex(i); 
+
 			// need to improve this to not save too many
-			if (game_variables[driver_index].play_count != 0)
+			for (j = 0; j < sizeof(gamevariable_options) / sizeof(gamevariable_options[0]); j++)
 			{
-				fprintf(fptr,"%s_play_count %i\n",
-						drivers[driver_index]->name,game_variables[driver_index].play_count);
+				if (!gamevariable_options[j].m_pfnQualifier || gamevariable_options[j].m_pfnQualifier(driver_index))
+				{
+					pv = ((UINT8 *) &game_variables[driver_index]) + gamevariable_options[j].m_iOffset;
+
+					switch(gamevariable_options[j].m_iType) {
+					case RO_INT:
+					case RO_BOOL:
+						nValue = *((int *) pv);
+						if (nValue != (int) gamevariable_options[j].m_vpDefault)
+						{
+							fprintf(fptr, "%s_%s %i\n",
+								drivers[driver_index]->name,
+								gamevariable_options[j].name,
+								nValue);
+						}
+						break;
+
+					case RO_STRING:
+						pValue = *((const char **) pv);
+						if (!pValue)
+							pValue = "";
+
+						if (strcmp(pValue, (const char *) gamevariable_options[j].m_vpDefault))
+						{
+							fprintf(fptr, "%s_%s \"%s\"\n",
+								drivers[driver_index]->name,
+								gamevariable_options[j].name,
+								pValue);
+						}
+						break;
+
+					default:
+						assert(0);
+						break;
+					}
+				}
 			}
-			
-			if (game_variables[driver_index].has_roms != UNKNOWN)
-			{
-				fprintf(fptr,"%s_have_roms %i\n",
-						drivers[driver_index]->name,game_variables[driver_index].has_roms);
-			}
-			if (DriverUsesSamples(driver_index) && 
-				game_variables[driver_index].has_samples != UNKNOWN)
-			{
-				fprintf(fptr,"%s_have_samples %i\n",
-						drivers[driver_index]->name,game_variables[driver_index].has_samples);
-			}
-#ifdef MESS
-			if (game_variables[driver_index].extra_software_paths && game_variables[driver_index].extra_software_paths[0])
-			{
-				fprintf(fptr,"%s_extra_software \"%s\"\n",
-						drivers[driver_index]->name,game_variables[driver_index].extra_software_paths);
-			}
-#endif
 		}
 		fclose(fptr);
 	}

@@ -3921,7 +3921,7 @@ int ui_show_profiler_get(void)
 	return show_profiler;
 }
 
-void display_fps(struct mame_bitmap *bitmap)
+void ui_display_fps(struct mame_bitmap *bitmap)
 {
 	const char *text, *end;
 	char textbuf[256];
@@ -4219,7 +4219,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	}
 
 	/* add the FPS counter */
-	display_fps(bitmap);
+	ui_display_fps(bitmap);
 
 	return 0;
 }

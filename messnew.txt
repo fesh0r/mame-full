@@ -10,7 +10,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [WIN32 FE] Fixed a bug whereby refreshing would reset the current system to
+  the last saved one (bug #384). [Nate Woods]
 
 Imgtool Changes:
 ----------------

@@ -2333,8 +2333,6 @@ static void OnIdle()
 		return;
 	}
 
-	driver_index = GetGameNameIndex(GetDefaultGame());
-	SetSelectedPickItem(driver_index);
 	// in case it's not found, get it back
 	driver_index = GetSelectedPickItem();
 
