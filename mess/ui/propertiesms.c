@@ -31,6 +31,15 @@ static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 extern BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
 BOOL g_bModifiedSoftwarePaths = FALSE;
 
+static void MarkChanged(HWND hDlg)
+{
+	HWND hCtrl;
+
+	/* fake a CBN_SELCHANGE event from IDC_SIZES to force it to be changed */
+	hCtrl = GetDlgItem(hDlg, IDC_SIZES);
+	PostMessage(hDlg, WM_COMMAND, (CBN_SELCHANGE << 16) | IDC_SIZES, (LPARAM) hCtrl);
+}
+
 static void AppendList(HWND hList, LPCSTR lpItem, int nItem)
 {
     LV_ITEM Item;
@@ -80,6 +89,7 @@ static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR l
 	AppendList(hList, lpItem, nItem);
 	if (bBrowse)
 		ListView_DeleteItem(hList, nItem+1);
+	MarkChanged(hDlg);
 	return TRUE;
 }
 
@@ -114,6 +124,7 @@ static BOOL SoftwareDirectories_OnDelete(HWND hDlg)
         nSelect = nItem;
 
     ListView_SetItemState(hList, nSelect, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+	MarkChanged(hDlg);
 	return TRUE;
 }
 
@@ -248,6 +259,10 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 		LVCol.cx      = rectClient.right - rectClient.left - GetSystemMetrics(SM_CXHSCROLL);
 		ListView_InsertColumn(hList, 0, &LVCol);
 
+#ifdef MAME_DEBUG
+		dprintf("CMSG_OPTIONSTOPROP: o->extra_software_paths='%s'\n", o->extra_software_paths);
+#endif
+
 		lpList = o->extra_software_paths;
 
 		nItem = 0;
@@ -296,6 +311,10 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 		}
 		FreeIfAllocated(&o->extra_software_paths);
 		o->extra_software_paths = strdup(buf);
+
+#ifdef MAME_DEBUG
+		dprintf("CMSG_PROPTOOPTIONS: o->extra_software_paths='%s'\n", o->extra_software_paths);
+#endif
 		break;
 
 	case CMSG_COMMAND:
@@ -390,6 +409,11 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 		break;
 
 	case CMSG_COMMAND:
+		switch(params->wID) {
+		case IDC_RAM_COMBOBOX:
+			*(params->changed) = TRUE;
+			break;
+		}
 		return FALSE;
 
 	default:

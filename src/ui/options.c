@@ -2214,7 +2214,7 @@ void SaveGameOptions(int driver_index)
 	{
 		if (DeleteFile(buffer) == 0)
 		{
-			dprintf("error deleting %s",buffer);
+			dprintf("error deleting %s; error %d\n",buffer, GetLastError());
 		}
 	}
 }
