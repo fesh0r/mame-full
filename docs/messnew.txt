@@ -8,7 +8,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [VTECH1] Fixed '*' and '+' keys on natural keyboard.  [Nate Woods]
 
 
 
