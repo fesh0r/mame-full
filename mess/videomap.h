@@ -35,6 +35,7 @@ struct videomap_linecallback_info
 	int scanlines_per_row;	/* number of scanlines per pixel/char */
 	int grid_width;			/* number of horizonal emulated pixels/chars in a screen */
 	int grid_depth;			/* bits per gridsquare (pixel) */
+	int text_modulo;		/* in text modes; specifes what modulo row indexes should have; if zero, the row is absolute */
 	const UINT16 *metapalette;
 	charproc_callback charproc;
 	UINT8 border_value;

@@ -1040,6 +1040,7 @@ void internal_m6847_line_callback(struct videomap_linecallback_info *info, const
 	info->scanlines_per_row = the_state.rowheight;
 	info->borderleft_columns = (Machine->scrbitmap->width - info->visible_columns) / 2;
 	info->border_value = 0xff;
+	info->text_modulo = 12;
 
 	if (the_state.modebits & M6847_MODEBIT_AG)
 	{

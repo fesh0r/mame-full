@@ -126,7 +126,7 @@ void bitbanger_output(int id, int value)
 		current_time = timer_get_time();
 		pulse_width = current_time - bi->last_pulse_time;
 
-		assert(pulse_width > 0);
+		assert(pulse_width >= 0);
 
 		if (!bi->over_threshhold && ((bi->recorded_pulses > 0) || (bi->value == bi->config->initial_value)))
 			bitbanger_addpulse(id, bi, pulse_width);

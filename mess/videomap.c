@@ -651,7 +651,10 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 			if (params.charproc || (row != drawn_row))
 			{
 				params.scanline_data = ((UINT16 *) bitmap->line[screeny]) + line_info.borderleft_columns;
-				params.row = y - (row * line_info.scanlines_per_row);
+				if (line_info.text_modulo)
+					params.row = y % line_info.text_modulo;
+				else
+					params.row = y - (row * line_info.scanlines_per_row);
 				draw_line(&params);
 				drawn_row = row;
 			}
