@@ -87,6 +87,17 @@ static void apexc_cylinder_exit(int id)
 	{	/* save RAM contents */
 		/* rewind file */
 		osd_fseek(apexc_cylinder.fd, 0, SEEK_SET);
+#ifdef LSB_FIRST
+		{	/* fix endianness */
+			UINT32 *RAM;
+			int i;
+
+			RAM = (UINT32 *) memory_region(REGION_CPU1);
+
+			for (i=0; i < 0x2000; i++)
+				RAM[i] = BIG_ENDIANIZE_INT32(RAM[i]);
+		}
+#endif
 		/* write */
 		osd_fwrite(apexc_cylinder.fd, memory_region(REGION_CPU1), 0x8000);
 	}
@@ -210,7 +221,7 @@ static WRITE32_HANDLER(tape_write)
 	* There is no trace mode (Booth, p. 213)
 
 	Since the control panel is necessary for the operation of the APEXC, I tried to
-	implement an commonplace control panel.  I cannot tell how close the feature set and
+	implement a commonplace control panel.  I cannot tell how close the feature set and
 	operation of this control panel is to the original APEXC control panel, but it
 	cannot be too different in the basic principles.
 */
@@ -328,7 +339,7 @@ static int apexc_interrupt(void)
 	old_edit_keys = edit_keys;
 
 
-	/* read new state of edit keys */
+	/* read new state of control keys */
 	control_keys = readinputport(panel_control);
 
 	/* compute transitions */
@@ -410,7 +421,7 @@ static int apexc_interrupt(void)
 
 	Since the APEXC has no video display, we display the control panel.
 
-	We could display the teletyper output, too.
+	Additionnally, We display one page of teletyper output.
 */
 
 static unsigned char apexc_palette[] =
@@ -451,7 +462,7 @@ static const struct rectangle teletyper_scroll_clear_window =
 	0,	256-1,	/* min_x, max_x */
 	192-teletyper_scroll_step,	192-1,	/* min_y, max_y */
 };
-static const int the_teletyper_scroll_step = - teletyper_scroll_step;
+static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
 static void apexc_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *dummy)
 {
@@ -461,9 +472,12 @@ static void apexc_init_palette(unsigned char *palette, unsigned short *colortabl
 
 static int apexc_vh_start(void)
 {
-	if (((apexc_bitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
-		|| ((apexc_bitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL))
+	if ((apexc_bitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
+		return 1;
+	if ((apexc_bitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == NULL)
 	{
+		bitmap_free(apexc_bitmap1);
+		apexc_bitmap1 = NULL;
 		return 1;
 	}
 
@@ -482,6 +496,7 @@ static void apexc_vh_stop(void)
 	apexc_bitmap2 = NULL;
 }
 
+/* draw a small 8*8 LED (well, there were no LEDs at the time, so let's call this a lamp ;-) ) */
 static void apexc_draw_led(struct osd_bitmap *bitmap, int x, int y, int state)
 {
 	int xx, yy;
@@ -557,7 +572,7 @@ static void apexc_teletyper_linefeed(void)
 {
 	struct osd_bitmap *tmp;
 
-	copyscrollbitmap(apexc_bitmap2, apexc_bitmap1, 0, NULL, 1, &the_teletyper_scroll_step,
+	copyscrollbitmap(apexc_bitmap2, apexc_bitmap1, 0, NULL, 1, &var_teletyper_scroll_step,
 						&Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	fillbitmap(apexc_bitmap2, Machine->pens[0], &teletyper_scroll_clear_window);
