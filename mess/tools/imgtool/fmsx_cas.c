@@ -265,7 +265,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align (size of one `sample') */
-	temp16 = LITTLE_ENDIANIZE_INT32 (2);
+	temp16 = LITTLE_ENDIANIZE_INT16 (2);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 30 )
     	{
@@ -274,7 +274,7 @@ static int fmsx_cas_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		}
 
 	/* block align */
-	temp16 = LITTLE_ENDIANIZE_INT32 (16);
+	temp16 = LITTLE_ENDIANIZE_INT16 (16);
 	offset += stream_write(destf, &temp16, 2);
 	if( offset < 32 )
     	{
