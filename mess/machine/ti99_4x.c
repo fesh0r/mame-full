@@ -160,7 +160,7 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 	/* interrupt handler */
 	tms9901_interrupt_callback,
 
-	/* clock rate = 3MHz */	
+	/* clock rate = 3MHz */
 	3000000.
 };
 
@@ -1498,6 +1498,8 @@ static void ti99_myarcxram_init(void)
 	case xRAM_kind_myarc_512k:		/* 512kb myarc clone */
 		myarc_page_offset_mask = 0x78000;
 		break;
+	default:
+		break;
 	}
 
 	switch (xRAM_kind)
@@ -1510,6 +1512,8 @@ static void ti99_myarcxram_init(void)
 	case xRAM_kind_myarc_512k:		/* 512kb myarc clone */
 		ti99_set_expansion_card_handlers(0, & myarc_expansion_handlers);
 		ti99_set_expansion_card_handlers(9, & myarc_expansion_handlers);
+		break;
+	default:
 		break;
 	}
 
