@@ -9,6 +9,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A7800] Remapped Select and Reset keys. [Nate Woods]
+
 - [AMIGA] Fixed the Amiga's BIOS length.  (bug #649) [Nate Woods]
 
 - [APPLE2] Fixed modifier keys.  (bug #637) [Nate Woods]

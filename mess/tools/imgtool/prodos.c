@@ -747,36 +747,39 @@ static imgtoolerr_t prodos_put_dirent(imgtool_image *image,
 
 
 static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
-	creation_policy_t create, struct prodos_dirent *ent)
+	creation_policy_t create, struct prodos_direnum *direnum, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
-	struct prodos_direnum direnum;
+	struct prodos_direnum my_direnum;
 	UINT32 block = ROOTDIR_BLOCK;
 	const char *old_path;
 	UINT32 free_block = 0;
 	UINT32 free_index = 0;
 
+	if (!direnum)
+		direnum = &my_direnum;
+
 	while(*path)
 	{
-		memset(&direnum, 0, sizeof(direnum));
-		err = prodos_enum_seek(image, &direnum, block, 0);
+		memset(direnum, 0, sizeof(*direnum));
+		err = prodos_enum_seek(image, direnum, block, 0);
 		if (err)
 			return err;
 
 		do
 		{
-			err = prodos_get_next_dirent(image, &direnum, ent);
+			err = prodos_get_next_dirent(image, direnum, ent);
 			if (err)
 				return err;
 
 			/* if we need to create a file entry and this is free, track it */
-			if (create && direnum.block && !free_block && !ent->storage_type)
+			if (create && direnum->block && !free_block && !ent->storage_type)
 			{
-				free_block = direnum.block;
-				free_index = direnum.index;
+				free_block = direnum->block;
+				free_index = direnum->index;
 			}
 		}
-		while(direnum.block && (strcmp(path, ent->filename) || (
+		while(direnum->block && (strcmp(path, ent->filename) || (
 			!is_file_storagetype(ent->storage_type) &&
 			!is_dir_storagetype(ent->storage_type))));
 
@@ -789,7 +792,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 				return IMGTOOLERR_FILENOTFOUND;
 			block = ent->key_pointer;
 		}
-		else if (!direnum.block)
+		else if (!direnum->block)
 		{
 			/* did not find file; maybe we need to create it */
 			if (create == CREATE_NONE)
@@ -800,7 +803,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 				return IMGTOOLERR_UNIMPLEMENTED;
 
 			/* seek back to the free space */
-			err = prodos_enum_seek(image, &direnum, free_block, free_index);
+			err = prodos_enum_seek(image, direnum, free_block, free_index);
 			if (err)
 				return err;
 
@@ -811,11 +814,40 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 			strncpy(ent->filename, old_path, sizeof(ent->filename) / sizeof(ent->filename[0]));
 
 			/* and place it */
-			err = prodos_put_dirent(image, &direnum, ent);
+			err = prodos_put_dirent(image, direnum, ent);
 			if (err)
 				return err;
 		}
 	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_set_file_size(imgtool_image *image, struct prodos_direnum *direnum,
+	struct prodos_dirent *ent, UINT32 new_size)
+{
+	imgtoolerr_t err;
+	UINT32 blockcount, new_blockcount;
+
+	if (ent->filesize == new_size)
+		return IMGTOOLERR_SUCCESS;
+
+	blockcount = (ent->filesize + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	new_blockcount = (new_size + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+	if (blockcount != new_blockcount)
+	{
+		/* NYI: do the dirty work of changing the blocks */
+		return IMGTOOLERR_UNIMPLEMENTED;
+	}
+
+
+	ent->filesize = new_size;
+	err = prodos_put_dirent(image, direnum, ent);
+	if (err)
+		return err;
+
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -960,7 +992,7 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
 
-	err = prodos_lookup_path(image, filename, CREATE_NONE, &ent);
+	err = prodos_lookup_path(image, filename, CREATE_NONE, NULL, &ent);
 	if (err)
 		return err;
 
@@ -981,16 +1013,21 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
+	struct prodos_direnum direnum;
 
 	if (stream_size(sourcef) != 0)
 		return IMGTOOLERR_UNIMPLEMENTED;
 
-	err = prodos_lookup_path(image, filename, CREATE_FILE, &ent);
+	err = prodos_lookup_path(image, filename, CREATE_FILE, &direnum, &ent);
 	if (err)
 		return err;
 
 	if (is_dir_storagetype(ent.storage_type))
 		return IMGTOOLERR_FILENOTFOUND;
+
+	err = prodos_set_file_size(image, &direnum, &ent, stream_size(sourcef));
+	if (err)
+		return err;
 
 	return IMGTOOLERR_SUCCESS;
 }
