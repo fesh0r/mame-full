@@ -576,7 +576,8 @@ static const struct IODevice io_cgenie[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	{
+#if 0	/* not yet working */
+    {
 		IO_QUICKLOAD,			/* type */
 		1,						/* count */
 		"cmd\0",                /* file extensions */
@@ -595,7 +596,8 @@ static const struct IODevice io_cgenie[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	{
+#endif
+    {
 		IO_FLOPPY,				/* type */
 		4,						/* count */
 		"dsk\0",                /* file extensions */
