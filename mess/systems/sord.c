@@ -29,6 +29,8 @@
 #include "machine/8255ppi.h"
 
 
+#define SORD_DEBUG
+
 /*********************************************************************************************/
 /* FD5 disk interface */
 /* - Z80 CPU */
@@ -65,8 +67,9 @@ WRITE_HANDLER(fd5_communication_w)
 	cpu_yield();
 
 	fd5_port_0x020_data = data;
-
+#ifdef SORD_DEBUG
 	logerror("fd5 0x020: %02x %04x\n",data,activecpu_get_pc());
+#endif
 }
 
 READ_HANDLER(fd5_communication_r)
@@ -76,8 +79,9 @@ READ_HANDLER(fd5_communication_r)
 	cpu_yield();
 
 	data = (obfa<<3)|(ibfa<<2)|2;		
-
+#ifdef SORD_DEBUG
 	logerror("fd5 0x030: %02x %04x\n",data, activecpu_get_pc());
+#endif
 
 	return data;
 }
@@ -86,8 +90,11 @@ READ_HANDLER(fd5_data_r)
 {
 	cpu_yield();
 
+#ifdef SORD_DEBUG
 	logerror("fd5 0x010 r: %02x %04x\n",fd5_databus,activecpu_get_pc());
+#endif
 	
+	ppi8255_set_input_acka(0,1);
 	ppi8255_set_input_acka(0,0);
 	ppi8255_set_input_acka(0,1);
 
@@ -96,10 +103,14 @@ READ_HANDLER(fd5_data_r)
 
 WRITE_HANDLER(fd5_data_w)
 {
+#ifdef SORD_DEBUG
 	logerror("fd5 0x010 w: %02x %04x\n",data,activecpu_get_pc());
+#endif
+
 	fd5_databus = data;
 
 	/* set stb on data write */
+	ppi8255_set_input_stba(0,1);
 	ppi8255_set_input_stba(0,0);
 	ppi8255_set_input_stba(0,1);
 
@@ -108,9 +119,19 @@ WRITE_HANDLER(fd5_data_w)
 
 WRITE_HANDLER(fd5_drive_control_w)
 {
-	logerror("fd5 drive control w: %02x\n",data);
-	floppy_drive_set_motor_state(0,data & 0x01);
-	floppy_drive_set_motor_state(1,data & 0x01);
+	int state;
+	
+	if (data==0)
+		state = 0;
+	else
+		state = 1;
+
+#ifdef SORD_DEBUG
+	logerror("fd5 drive state w: %02x\n",state);
+#endif
+	
+	floppy_drive_set_motor_state(0,state);
+	floppy_drive_set_motor_state(1,state);
 	floppy_drive_set_ready_state(0,1,1);
 	floppy_drive_set_ready_state(1,1,1);
 }
@@ -137,6 +158,7 @@ PORT_WRITE_START( writeport_sord_fd5 )
 	{ 0x001, 0x001, nec765_data_w},
 	{ 0x010, 0x010, fd5_data_w},	
 	{ 0x020, 0x020, fd5_communication_w},
+	{ 0x040, 0x040, fd5_drive_control_w},
 	{ 0x050, 0x050, fd5_tc_w},
 PORT_END
 
@@ -197,8 +219,7 @@ static void sord_m5_fd5_shutdown_machine(void)
 
 READ_HANDLER(sord_ppi_porta_r)
 {
-/*	cpu_yield(); */
-	logerror("m5 read from fd5 databus through pi5 %02x %04x\n",fd5_databus,activecpu_get_pc());
+	cpu_yield(); 
 
 	return fd5_databus;
 }
@@ -207,7 +228,9 @@ READ_HANDLER(sord_ppi_portb_r)
 {
 	cpu_yield();
 
+#ifdef SORD_DEBUG
 	logerror("m5 read from pi5 port b %04x\n",activecpu_get_pc());
+#endif
 
 	return 0x0ff;
 }
@@ -216,22 +239,39 @@ READ_HANDLER(sord_ppi_portc_r)
 {
 	cpu_yield();
 
+#ifdef SORD_DEBUG
 	logerror("m5 read from pi5 port c %04x\n",activecpu_get_pc());
+#endif
 
-	
-	/* bit 0 from 0x020 is set before data transfer, this appears as bit 2 of ppi port C */
-	/* bit 2 is 1 for reading, 0 for writing? */
+/* from fd5 */
+/* 00 = 0000 = write */
+/* 02 = 0010 = write */
+/* 06 = 0110 = read */
+/* 04 = 0100 = read */
 
-	/* what are these bits for? */
-	return ((fd5_port_0x020_data & 0x01)<<2) | (fd5_port_0x020_data & 0x02) | ((fd5_port_0x020_data & 0x04)>>2);
+/* m5 expects */
+/*00 = READ */
+/*01 = POTENTIAL TO READ BUT ALSO RESET */
+/*10 = WRITE */
+/*11 = FORCE RESET AND WRITE */
+
+	/* FD5 bit 0 -> M5 bit 2 */
+	/* FD5 bit 2 -> M5 bit 1 */
+	/* FD5 bit 1 -> M5 bit 0 */
+	return (
+			/* FD5 bit 0-> M5 bit 2 */
+			((fd5_port_0x020_data & 0x01)<<2) |
+			/* FD5 bit 2-> M5 bit 1 */
+			((fd5_port_0x020_data & 0x04)>>1) |
+			/* FD5 bit 1-> M5 bit 0 */
+			((fd5_port_0x020_data & 0x02)>>1)
+			);
 }
-
 
 WRITE_HANDLER(sord_ppi_porta_w)
 {
-/*	cpu_yield(); */
+	cpu_yield(); 
 
-	logerror("m5 write to fd5 databus: %02x %04x\n",data,activecpu_get_pc());
 	fd5_databus = data;
 }
 
@@ -248,8 +288,9 @@ WRITE_HANDLER(sord_ppi_portb_w)
 		cpu_set_reset_line(1,ASSERT_LINE);
 		cpu_set_reset_line(1,CLEAR_LINE);
 	}
-
+#ifdef SORD_DEBUG
 	logerror("m5 write to pi5 port b: %02x %04x\n",data,activecpu_get_pc());
+#endif
 }
 
 /* A,  B,  C,  D,  E,   F,  G,  H,  I,  J, K,  L,  M,   N, O, P, Q, R,   */
@@ -261,9 +302,9 @@ WRITE_HANDLER(sord_ppi_portb_w)
 WRITE_HANDLER(sord_ppi_portc_w)
 {
 	cpu_yield();
-
+#ifdef SORD_DEBUG
 	logerror("m5 write to pi5 port c: %02x %04x\n",data,activecpu_get_pc());
-
+#endif
 }
 
 WRITE_HANDLER(sord_ppi_obfa_write)
@@ -488,7 +529,6 @@ static READ_HANDLER(sord_sys_r)
 	/* cassette read */
 	if (device_input(IO_CASSETTE,0) > 255)
 		data |=(1<<0);
-
 
 	/* reset from keyboard */
 	data |= ((readinputport(16) & 0x01)<<7);
@@ -846,7 +886,7 @@ static struct MachineDriver machine_driver_sord_m5_fd5 =
 	{
 		/* MachineCPU */
 		{
-			CPU_Z80,  /* type */
+			CPU_Z80_MSX,  /* type */
 			3800000,
 			readmem_sord_m5,		   /* MemoryReadAddress */
 			writemem_sord_m5,		   /* MemoryWriteAddress */
@@ -857,7 +897,7 @@ static struct MachineDriver machine_driver_sord_m5_fd5 =
 			sord_m5_daisy_chain
 		},
 		{
-			CPU_Z80,
+			CPU_Z80_MSX,
 			4000000,
 			readmem_sord_fd5,
 			writemem_sord_fd5,
