@@ -117,6 +117,8 @@ extern READ_HANDLER  ( a2600_TIA_r );
 extern WRITE_HANDLER ( a2600_TIA_w );
 extern READ_HANDLER  ( a2600_riot_r );
 extern WRITE_HANDLER ( a2600_riot_w );
+extern READ_HANDLER  ( a2600_bs_r );
+
 extern void a2600_init_machine(void);
 extern void a2600_stop_machine(void);
 extern int	a2600_id_rom (int id);
@@ -139,25 +141,21 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0200, 0x023F, a2600_TIA_r },
 	{ 0x0240, 0x027F, a2600_TIA_r },
 
-	//{ 0x0280, 0x0297, riot_0_r    },	/* RIOT reads for a2600 */
-	//{ 0x0280, 0x0284, riot_0_r    },	/* RIOT reads for a2600 */
-	//{ 0x0294, 0x0297, riot_0_r    },	/* RIOT reads for a2600 */
 	{ 0x0280, 0x0297, a2600_riot_r },	/* RIOT reads for a2600 */
 
 
 	{ 0x0300, 0x033F, a2600_TIA_r },
 	{ 0x0340, 0x037F, a2600_TIA_r },
-
-	//{ 0x0380, 0x0397, riot_0_r    },	/* RIOT reads for a2600 */
-	//{ 0x0380, 0x0384, riot_0_r    },	/* RIOT reads for a2600 */
-	//{ 0x0394, 0x0397, riot_0_r    },	/* RIOT reads for a2600 */
 	{ 0x0280, 0x0297, a2600_riot_r },	/* RIOT reads for a2600 */
 
 
 	{ 0x1000, 0x17FF, MRA_ROM     },
-	{ 0x1800, 0x1FFF, MRA_ROM     },	/* ROM mirror for 2k images */
+	{ 0x1800, 0x1FDF, MRA_ROM	  },
+	{ 0x1FE0, 0x1FFF, a2600_bs_r  },	/* for bankswitching */
 	{ 0xF000, 0xF7FF, MRA_ROM     },
-	{ 0xF800, 0xFFFF, MRA_ROM     },	/* ROM mirror for 2k images */
+	{ 0xF800, 0xFFDF, MRA_ROM     },
+	{ 0xFFE0, 0xFFF9, a2600_bs_r  },
+	{ 0xFFFA, 0xFFFF, MRA_ROM	  },
     { -1 }  /* end of table */
 };
 
@@ -174,18 +172,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0200, 0x023F, a2600_TIA_w },
 	{ 0x0240, 0x027F, a2600_TIA_w },
 
-	//{ 0x0280, 0x0297, riot_0_w    },	/* RIOT writes for a2600 */
-	//{ 0x0280, 0x0284, riot_0_w    },	/* RIOT writes for a2600 */
-	//{ 0x0294, 0x0297, riot_0_w    },	/* RIOT writes for a2600 */
 	{ 0x0280, 0x0297, a2600_riot_w },	/* RIOT writes for a2600 */
 
 
 	{ 0x0300, 0x033F, a2600_TIA_w },
 	{ 0x0340, 0x037F, a2600_TIA_w },
 
-	//{ 0x0380, 0x0397, riot_0_w    },	/* RIOT writes for a2600 */
-	//{ 0x0380, 0x0384, riot_0_w    },	/* RIOT writes for a2600 */
-	//{ 0x0394, 0x0397, riot_0_w    },	/* RIOT writes for a2600 */
 	{ 0x0280, 0x0297, a2600_riot_w },	/* RIOT writes for a2600 */
 
 	{ 0x1000, 0x17FF, MWA_ROM  },
@@ -223,6 +215,8 @@ INPUT_PORTS_END
 
 
 /* these are *so* wrong for now */
+/* Not anymore they're not :) */
+
 static unsigned char palette[] =
 {
 	/* Grey */
@@ -923,21 +917,12 @@ static struct MachineDriver machine_driver_a2600 =
 
 ***************************************************************************/
 
-/* setup a 8bit pattern from 0x00 to 0xff into the REGION_GFX1 memory */
 static void init_a2600(void)
 {
-	//  UINT8 *gfx = memory_region(REGION_GFX1);
-
-	//  int i;
-	//  for( i = 0; i < 256; i++ )
-	//          gfx[i] = i;
 }
 
 ROM_START(a2600)
-ROM_REGION(0x10000, REGION_CPU1)		/* 6502 memory */
-	// ROM_REGION( 0x10000, REGION_CPU2 ) /* Fake CPU */
-	// ROM_LOAD( "fake.bin", 0x0000, 0x10000, 0 )
-	// ROM_REGION( 0x00100, REGION_GFX1 ) /* memory for bit patterns */
+	ROM_REGION(0x20000, REGION_CPU1)		/* 6502 memory */
 ROM_END
 
 static const struct IODevice io_a2600[] =
