@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.5 2001/05/27 09:29:58 ben Exp $
+  $Id: pc8801.c,v 1.6 2001/06/11 17:16:04 PeT Exp $
 
 ***************************************************************************/
 
@@ -700,44 +700,50 @@ void pc88sr_ch_reset_h (void)
 /*
   5 inch floppy drive
   */
-static char save_8255A[2];
-static char save_8255B[2];
-static char save_8255C[2];
+static UINT8 reg_8255_main_A, reg_8255_main_B, reg_8255_main_C;
+static UINT8 reg_8255_sub_A, reg_8255_sub_B, reg_8255_sub_C;
 
-static WRITE_HANDLER(save_8255_A)
-{
-  save_8255A[offset]=data;
-}
-static READ_HANDLER (load_8255_A )
-{
-  return use_5FD ? save_8255B[1-offset] : 0xff;
-}
-
-static WRITE_HANDLER( save_8255_B )
-{
-  save_8255B[offset]=data;
-}
-static READ_HANDLER(load_8255_B)
-{
-  return use_5FD ? save_8255A[1-offset] : 0xff;
+#define AAA(sn,on,sh,oh) \
+static WRITE_HANDLER(save_8255_##sh##_##sn) \
+{ \
+  reg_8255_##sh##_##sn=data; \
+} \
+static READ_HANDLER(load_8255_##sh##_##sn) \
+{ \
+  return use_5FD ? reg_8255_##oh##_##on : 0xff; \
 }
 
-static WRITE_HANDLER (save_8255_C ) {
-  save_8255C[offset]=data;
+AAA(A,B,main,sub)
+AAA(A,B,sub,main)
+AAA(B,A,main,sub)
+AAA(B,A,sub,main)
+
+#undef AAA
+
+#define AAA(s,o) \
+static WRITE_HANDLER(save_8255_##s##_C) \
+{ \
+  reg_8255_##s##_C=data; \
+} \
+static READ_HANDLER(load_8255_##s##_C) \
+{ \
+  return use_5FD ? (((reg_8255_##o##_C>>4)&0x0f)| \
+		    ((reg_8255_##o##_C<<4)&0xf0)) : 0xff; \
 }
-static READ_HANDLER (load_8255_C) {
-  return use_5FD ? (((save_8255C[1-offset]>>4)&0x0f)|
-		    ((save_8255C[1-offset]<<4)&0xf0)) : 0xff;
-}
+
+AAA(main,sub)
+AAA(sub,main)
+
+#undef AAA
 
 ppi8255_interface pc8801_8255_config = {
   2,
-  {load_8255_A},
-  {load_8255_B},
-  {load_8255_C},
-  {save_8255_A},
-  {save_8255_B},
-  {save_8255_C},
+  {load_8255_main_A,load_8255_sub_A},
+  {load_8255_main_B,load_8255_sub_B},
+  {load_8255_main_C,load_8255_sub_C},
+  {save_8255_main_A,save_8255_sub_A},
+  {save_8255_main_B,save_8255_sub_B},
+  {save_8255_main_C,save_8255_sub_C},
 };
 
 READ_HANDLER(pc8801fd_nec765_tc)
