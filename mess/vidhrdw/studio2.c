@@ -20,15 +20,6 @@ static struct {
 	int count;
 } studio2_video={ { {0} } };
 
-int studio2_vh_start(void)
-{
-    return 0;
-}
-
-void studio2_vh_stop(void)
-{
-}
-
 int studio2_get_vsync(void)
 {
 	return !studio2_video.dma_activ;
@@ -94,17 +85,13 @@ void studio2_video_dma(int cycles)
 	}
 }
 
-void studio2_video_start(void)
+VIDEO_START( studio2 )
 {
 	studio2_video.state=1;
+	return 0;
 }
 
-void studio2_video_stop(void)
-{
-	studio2_video.state=0;
-}
-
-void studio2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( studio2 )
 {
 	int x, y, j;
 
@@ -115,3 +102,11 @@ void studio2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 					0, TRANSPARENCY_NONE,0);
 	}
 }
+
+int studio2_in_n(int n)
+{
+	if (n==1)
+		studio2_video.state=1;
+	return 0; //?
+}
+

@@ -51,7 +51,7 @@ static unsigned short fake_colortable[] =
 	FAKE_BLK,FAKE_WHT,FAKE_BLK,FAKE_RED   /* not used by the game, here only for the dip switch menu */
 };
 
-void astrocade_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( astrocade )
 {
 	/* This routine builds a palette using a transformation from */
 	/* the YUV (Y, B-Y, R-Y) to the RGB color space */
@@ -112,13 +112,7 @@ void astrocade_init_palette(unsigned char *palette, unsigned short *colortable,c
 				B = 255;
 
 			/* Round, and set the value */
-
-			*palette = floor(R+.5);
-			palette++;
-			*palette = floor(G+.5);
-			palette++;
-			*palette = floor(B+.5);
-			palette++;
+			palette_set_color(i*8+j, floor(R+.5), floor(G+.5),  floor(B+.5));
 		}
 	}
 
@@ -366,10 +360,9 @@ WRITE_HANDLER ( astrocade_magicram_w )
 	magic_expand_flipflop ^= 1;
 }
 
-void astrocade_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( astrocade )
 {
 	/* copy the character mapped graphics */
-
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 

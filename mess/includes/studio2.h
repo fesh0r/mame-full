@@ -1,17 +1,7 @@
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void studio2_runtime_loader_init(void);
-# else
-	extern void studio2_runtime_loader_init(void);
-# endif
-#endif
+extern int studio2_get_vsync(void);
+extern void studio2_video_dma(int cycles);
 
+extern int studio2_in_n(int n);
 
-int studio2_get_vsync(void);
-void studio2_video_start(void);
-void studio2_video_stop(void);
-void studio2_video_dma(int cycles);
-
-int studio2_vh_start(void);
-void studio2_vh_stop(void);
-void studio2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( studio2 );
+extern VIDEO_UPDATE( studio2 );

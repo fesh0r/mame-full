@@ -2,7 +2,7 @@
 
   apple1.c
 
-  Functions to emulate the video hardware of the Jupiter Ace.
+  Functions to emulate the video hardware of the Apple 1.
 
 ***************************************************************************/
 
@@ -12,10 +12,10 @@
 
 static	int	dsp_pntr;
 
-int	apple1_vh_start (void)
+VIDEO_START( apple1 )
 {
 	dsp_pntr = 0;
-	if (!(videoram = malloc (videoram_size = 40 * 24)))
+	if (!(videoram = auto_malloc (videoram_size = 40 * 24)))
 		return (1);;
 	if (video_start_generic ())
 		return (1);
@@ -23,10 +23,6 @@ int	apple1_vh_start (void)
 	memset (videoram, 0, videoram_size);
 	memset (dirtybuffer, 1, videoram_size);
 	return (0);
-}
-
-void	apple1_vh_stop (void)
-{
 }
 
 void	apple1_vh_dsp_w (int data)
@@ -107,11 +103,12 @@ void	apple1_vh_dsp_clr (void)
 	}
 }
 
-void	apple1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( apple1 )
 {
 	int offs;
 	int code;
 	int sx, sy;
+	int full_refresh = 1;
 
 	/* do we need a full refresh? */
 

@@ -188,8 +188,8 @@ DRVLIBS = \
 	$(OBJ)/svision.a  \
 	$(OBJ)/coleco.a   \
 	$(OBJ)/apf.a      \
-#	$(OBJ)/bally.a	  \
-#	$(OBJ)/rca.a	  \
+	$(OBJ)/bally.a	  \
+	$(OBJ)/rca.a	  \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/svi.a      \
@@ -219,7 +219,7 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-#	  $(OBJ)/mess/systems/saturn.o	 \
+	  $(OBJ)/mess/systems/saturn.o	 \
 #	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
 #	  $(OBJ)/mess/machine/sms.o	 \
 #	  $(OBJ)/mess/systems/sms.o
@@ -367,9 +367,9 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/vidhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/mac.o	 \
 	  $(OBJ)/mess/systems/mac.o      \
-#	  $(OBJ)/mess/vidhrdw/apple1.o	 \
-#	  $(OBJ)/mess/machine/apple1.o	 \
-#	  $(OBJ)/mess/systems/apple1.o   \
+	  $(OBJ)/mess/vidhrdw/apple1.o	 \
+	  $(OBJ)/mess/machine/apple1.o	 \
+	  $(OBJ)/mess/systems/apple1.o   \
 
 
 $(OBJ)/avigo.a: \

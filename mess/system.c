@@ -92,7 +92,6 @@ const struct GameDriver *drivers[] =
 	DRIVER( lynx )		/* Atari Lynx Handheld					*/
 	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
 	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions      */
-//	DRIVER( jaguar )	/* Atari Jaguar 					*/
 
 	/* NINTENDO */
 	DRIVER( nes )		/* Nintendo Entertainment System			*/
@@ -108,14 +107,14 @@ const struct GameDriver *drivers[] =
 ////	DRIVER( gamegear )	/* Sega Game Gear Handheld				*/
 ////	DRIVER( sms )		/* Sega Sega Master System				*/
 	DRIVER( genesis )	/* Sega Genesis/MegaDrive				*/
-////	DRIVER( saturn )	/* Sega Saturn							*/
+	DRIVER( saturn )	/* Sega Saturn							*/
 
 	/* BALLY */
-////	DRIVER( astrocde )	/* Bally Astrocade					*/
+	DRIVER( astrocde )	/* Bally Astrocade					*/
 
 	/* RCA */
-//TESTDRIVER( vip )		/* Cosmac VIP						*/
-////	DRIVER( studio2 )	/* Studio II						*/
+TESTDRIVER( vip )		/* Cosmac VIP						*/
+	DRIVER( studio2 )	/* Studio II						*/
 	/* hanimex mpt-02 */
 //  ////	DRIVER( cstudio2 )      /* Colour Studio II				        */
 
@@ -238,7 +237,7 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
  * Apple IIc Plus		 September			 1988
  * Apple IIgs ROM 3 	 August 			 1989
  */
-//	DRIVER( apple1 )	/* 1976 Apple 1 								  */
+	DRIVER( apple1 )	/* 1976 Apple 1 								  */
 	DRIVER( apple2c )	/* 1984 Apple //c								  */
 	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 					  */
 	DRIVER( apple2cp )	/* 1988 Apple //c+								  */

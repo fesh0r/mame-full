@@ -107,9 +107,8 @@ static struct GfxDecodeInfo studio2_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static int studio2_frame_int(void)
+static INTERRUPT_GEN( studio2_frame_int )
 {
-	return ignore_interrupt();
 }
 
 /* studio 2
@@ -130,12 +129,6 @@ static int studio2_frame_int(void)
    f2 tape input (high when tone read)
    f3 keyboard in
  */
-
-static int studio2_in_n(int n)
-{
-	if (n==1) studio2_video_start();
-	return 0; //?
-}
 
 static UINT8 studio2_keyboard_select;
 
@@ -194,33 +187,28 @@ static CDP1802_CONFIG vip_config={
 	vip_in_ef
 };
 
-static unsigned char studio2_palette[2][3] =
+static unsigned char studio2_palette[] =
 {
-	{ 0, 0, 0 },
-	{ 255,255,255 }
+	0, 0, 0,
+	255,255,255
 };
 
 static unsigned short studio2_colortable[1][2] = {
 	{ 0, 1 },
 };
 
-static void studio2_init_colors (unsigned char *sys_palette,
-						  unsigned short *sys_colortable,
-						  const unsigned char *color_prom)
+static PALETTE_INIT( studio2 )
 {
-	memcpy (sys_palette, studio2_palette, sizeof (studio2_palette));
-	memcpy(sys_colortable,studio2_colortable,sizeof(studio2_colortable));
+	palette_set_colors(0, studio2_palette, sizeof(studio2_palette) / 3);
+	memcpy(colortable,studio2_colortable,sizeof(studio2_colortable));
 }
 
-static void studio2_machine_init(void)
+static MACHINE_INIT( studio2 )
 {
-	studio2_video_stop();
 }
 
-static void vip_machine_init(void)
+static MACHINE_INIT( vip )
 {
-	studio2_video_stop();
-
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x8000);
 }
 
@@ -230,87 +218,44 @@ static struct beep_interface studio2_sound=
 	{100}
 };
 
-static struct MachineDriver machine_driver_studio2 =
-{
+
+static MACHINE_DRIVER_START( studio2 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_CDP1802,
-			1780000/8,
-			studio2_readmem,studio2_writemem,0,0,
-			studio2_frame_int, 1,
-			0,0,
-			&studio2_config
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	studio2_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD_TAG("main", CDP1802, 1780000/8)
+	MDRV_CPU_MEMORY(studio2_readmem,studio2_writemem)
+	MDRV_CPU_VBLANK_INT(studio2_frame_int, 1)
+	MDRV_CPU_CONFIG(studio2_config)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	// ntsc tv display with 15720 line frequency!
-	// good width, but only 128 lines height
-	64*4, 128, { 0, 64*4 - 1, 0, 128 - 1},
-	studio2_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (studio2_palette) / sizeof (studio2_palette[0]) ,
-	sizeof (studio2_colortable) / sizeof(studio2_colortable[0][0]),
-	studio2_init_colors,		/* convert color prom */
+	MDRV_MACHINE_INIT( studio2 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    studio2_vh_start,
-	studio2_vh_stop,
-	studio2_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*4, 128)
+	MDRV_VISIBLE_AREA(0, 64*4-1, 0, 128-1)
+	MDRV_GFXDECODE( studio2_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (studio2_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (studio2_colortable) / sizeof(studio2_colortable[0][0]))
+	MDRV_PALETTE_INIT( studio2 )
+
+	MDRV_VIDEO_START( studio2 )
+	MDRV_VIDEO_UPDATE( studio2 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		// 300 hertz beeper
-        { SOUND_BEEP, &studio2_sound }
-    }
-};
+	MDRV_SOUND_ADD(BEEP, studio2_sound)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_vip =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_CDP1802,
-			1780000/8,
-			vip_readmem,vip_writemem,0,0,
-			studio2_frame_int, 1,
-			0,0,
-			&vip_config
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	vip_machine_init,
-	0,//pc1401_machine_stop,
 
-	// ntsc tv display with 15720 line frequency!
-	// good width, but only 128 lines height
-	64*4, 128, { 0, 64*4 - 1, 0, 128 - 1},
-	studio2_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (studio2_palette) / sizeof (studio2_palette[0]) ,
-	sizeof (studio2_colortable) / sizeof(studio2_colortable[0][0]),
-	studio2_init_colors,		/* convert color prom */
+static MACHINE_DRIVER_START( vip )
+	MDRV_IMPORT_FROM( studio2 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( vip_readmem,vip_writemem )
+	MDRV_CPU_CONFIG( vip_config )
+	MDRV_MACHINE_INIT( vip )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    studio2_vh_start,
-	studio2_vh_stop,
-	studio2_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		// 300 hertz beeper
-        { SOUND_BEEP, &studio2_sound }
-    }
-};
 
 ROM_START(studio2)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
@@ -384,7 +329,7 @@ static const struct IODevice io_vip[] = {
     { IO_END }
 };
 
-void init_studio2(void)
+static DRIVER_INIT( studio2 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -393,7 +338,7 @@ void init_studio2(void)
 	beep_set_frequency(0, 300);
 }
 
-void init_vip(void)
+static DRIVER_INIT( vip )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
@@ -409,17 +354,6 @@ void init_vip(void)
 // rca cosmac elf development board (2 7segment leds, some switches/keys)
 // rca cosmac elf2 16 key keyblock
 CONSX( 1977, vip,		0,		vip,		vip,		vip,		"RCA",		"COSMAC VIP", GAME_NOT_WORKING )
-CONS( 1976, studio2,	0,		studio2,	studio2, 	studio2,	"RCA",		"Studio II")
+CONSX( 1976, studio2,	0,		studio2,	studio2, 	studio2,	"RCA",		"Studio II", GAME_NOT_WORKING )
 // hanimex mpt-02
 // colour studio 2 (m1200) with little color capability
-
-#ifdef RUNTIME_LOADER
-extern void studio2_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"studio2")==0) drivers[i]=&driver_studio2;
-		if ( strcmp(drivers[i]->name,"vip")==0) drivers[i]=&driver_vip;
-	}
-}
-#endif

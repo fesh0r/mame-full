@@ -191,7 +191,7 @@ READ32_HANDLER( saturn_sound_ram_r )
 {
 
 #if DISP_MEM
-  logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
 #endif
 
   return ((sound_base[(offset<<1)] << 16) | (sound_base[(offset<<1)+1])) & (~mem_mask);
@@ -203,7 +203,7 @@ WRITE32_HANDLER( saturn_sound_ram_w )
 
   UINT16 *sb_temp = &sound_base[(offset<<1)];
 #if DISP_MEM
-  logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
 #endif
 
   *sb_temp = (*sb_temp & (mem_mask >> 16)) | (data >> 16);
@@ -238,7 +238,7 @@ READ32_HANDLER( saturn_vdp2_ram_r )
   /*offs_t ea;*/
 
 #if DISP_MEM
-  logerror("vdp2ram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("vdp2ram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
 #endif
 
   /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
@@ -250,7 +250,7 @@ WRITE32_HANDLER( saturn_vdp2_ram_w )
   /* offs_t ea;*/
 
 #if DISP_MEM
-  logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
 #endif
 
   /*ea = (SATURN_VDP2_RAM_BASE / 4) + offset;*/
@@ -301,7 +301,7 @@ WRITE32_HANDLER( saturn_fb2_ram_w )
 READ32_HANDLER( saturn_color_ram_r )
 
 {
-  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("colorram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,activecpu_get_reg(SH2_PC));
 
   return color_ram_base[offset] & (~mem_mask);
 }
@@ -311,7 +311,7 @@ WRITE32_HANDLER( saturn_color_ram_w )
   /* offs_t ea;*/
 
 #if DISP_MEM
-  logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
+  logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,activecpu_get_reg(SH2_PC));
 #endif
 
   /*ea = (SATURN_COLOR_RAM_BASE / 4) + offset;*/
@@ -479,36 +479,36 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 
 	  if((ea >= IREG(0)) && (ea <= IREG(7)))
 	    {
-	      logerror("smpc_r IREG%01d -> %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,cpu_get_reg(SH2_PC));
+	      logerror("smpc_r IREG%01d -> %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,activecpu_get_reg(SH2_PC));
 	    }
 	  else
 	    if((ea >= OREG(0)) && (ea <= OREG(31)))
 		{
-		  logerror("smpc_r OREG%01d -> %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,cpu_get_reg(SH2_PC));
+		  logerror("smpc_r OREG%01d -> %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,activecpu_get_reg(SH2_PC));
 		}
 	    else
 	      {
 		switch(ea) /* See if the write is significant */
 		  {
-		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_r SR      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_r SF      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_r PDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_r DDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_r PDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_r DDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_r IOSEL   - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_r EXEL    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n",ea,d,cpu_get_reg(SH2_PC));
+		  default      : logerror("smpc_r offset=%08lX data=%02lX - PC=%08lX\n",ea,d,activecpu_get_reg(SH2_PC));
 		  }
 	      }
 	}
@@ -549,36 +549,36 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 
 	  if((ea >= IREG(0)) && (ea <= IREG(7)))
 	    {
-	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,cpu_get_reg(SH2_PC));
+	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,activecpu_get_reg(SH2_PC));
 	    }
 	  else
 	    if((ea >= OREG(0)) && (ea <= OREG(31)))
 		{
-		  logerror("smpc_w OREG%01d <- %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,cpu_get_reg(SH2_PC));
+		  logerror("smpc_w OREG%01d <- %02lX - PC=%08lX\n",(ea-OREG(0))/2,d,activecpu_get_reg(SH2_PC));
 		}
 	    else
 	      {
 		switch(ea) /* See if the write is significant */
 		  {
-		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case COMMREG : logerror("smpc_w COMMREG - command = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSR : logerror("smpc_w SR      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case STATUSF : logerror("smpc_w SF      - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR1    : logerror("smpc_w PDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR1    : logerror("smpc_w DDR1    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case PDR2    : logerror("smpc_w PDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case DDR2    : logerror("smpc_w DDR2    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case IOSEL   : logerror("smpc_w IOSEL   - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
+		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n",d,activecpu_get_reg(SH2_PC));
 		    break;
-		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d,cpu_get_reg(SH2_PC));
+		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d,activecpu_get_reg(SH2_PC));
 		  }
 	      }
 	}
@@ -709,7 +709,7 @@ void reset_scu(void)
 READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
 
 {
-  // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],cpu_get_reg(SH2_PC));
+  // logerror("scu_r %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],scu_regs[offset],activecpu_get_reg(SH2_PC));
   return scu_regs[offset] & ~mem_mask;
 }
  
@@ -764,7 +764,7 @@ void scu_pulse_interrupt(int irq)
 
 WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
-  logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
+  logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,activecpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
   if (offset == 0x28) scu_set_imask();
 }
@@ -833,11 +833,11 @@ READ32_HANDLER( saturn_cd_r )	 /* CD */
 {
   if(offset < 0xA)
     {
-      logerror("cd_r %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],cd_regs[offset] >> 16,cpu_get_reg(SH2_PC));
+      logerror("cd_r %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],cd_regs[offset] >> 16,activecpu_get_reg(SH2_PC));
     }
   else
     {
-      logerror("cd_r offset=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,mem_mask,cpu_get_reg(SH2_PC));
+      logerror("cd_r offset=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,mem_mask,activecpu_get_reg(SH2_PC));
     }
 
   if(offset < 0xA)
@@ -864,11 +864,11 @@ WRITE32_HANDLER( saturn_cd_w )	 /* CD */
 {
   if(offset < 0xA)
     {
-      logerror("cd_w %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],data >> 16,cpu_get_reg(SH2_PC));
+      logerror("cd_w %s - data = %04lX - PC=%08lX\n",cd_regnames[offset],data >> 16,activecpu_get_reg(SH2_PC));
     }
   else
     {
-      logerror("cd_w offset=%08lX data=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,data,mem_mask,cpu_get_reg(SH2_PC));
+      logerror("cd_w offset=%08lX data=%08lX mem_mask=%08lX - PC=%08lX\n",offset*4,data,mem_mask,activecpu_get_reg(SH2_PC));
     }
 
   if(offset < 0xA)
@@ -968,109 +968,106 @@ void reset_vdp1(void)
 }
 
 void cmd0(UINT32 comm, unsigned short *fb)
-
 {
-  UINT32 *vram;
-  short x,y;
-  UINT32 color_mode;
-  UINT32 color_bank;
-  UINT32 char_addr;
-  UINT32 width,height;
-  int loopx,loopy;
+	UINT32 *vram;
+	short x,y;
+	UINT32 color_mode;
+	UINT32 color_bank;
+	UINT32 char_addr;
+	UINT32 width,height;
+	int loopx,loopy;
 
-  vram = vdp1_ram_base;
-  comm = comm * 8;
+	vram = vdp1_ram_base;
+	comm = comm * 8;
 
-  color_mode = (vram[comm + 1] >> 19) & 0x7; /* Pull out parameter infomation */
-  color_bank = (vram[comm + 1] & 0xFFFF);
-  char_addr  = (vram[comm + 2] >> 16) * 8;
-  width      = ((vram[comm + 2] & 0xFFFF) >> 8) * 8;
-  height     = ((vram[comm + 2] & 0xFFFF) & 0xFF);
-  x = (short) (vram[comm + 3] >> 16); /* Cast as short to preserve sign */
-  y = (short) (vram[comm + 3] & 0xFFFF);
+	color_mode = (vram[comm + 1] >> 19) & 0x7; /* Pull out parameter infomation */
+	color_bank = (vram[comm + 1] & 0xFFFF);
+	char_addr  = (vram[comm + 2] >> 16) * 8;
+	width      = ((vram[comm + 2] & 0xFFFF) >> 8) * 8;
+	height     = ((vram[comm + 2] & 0xFFFF) & 0xFF);
+	x = (short) (vram[comm + 3] >> 16); /* Cast as short to preserve sign */
+	y = (short) (vram[comm + 3] & 0xFFFF);
 
-  logerror("Colour Mode  = %d\n",color_mode);
-  logerror("Colour Bank  = %08lX\n",color_bank);
-  logerror("Char Addr    = %08lX\n",char_addr);
-  logerror("Width,Height = %ld,%ld\n",width,height);
-  logerror("X,Y = %d,%d\n",x,y);
+	logerror("Colour Mode  = %d\n",color_mode);
+	logerror("Colour Bank  = %08lX\n",color_bank);
+	logerror("Char Addr    = %08lX\n",char_addr);
+	logerror("Width,Height = %ld,%ld\n",width,height);
+	logerror("X,Y = %d,%d\n",x,y);
 
-  vram = vram + (char_addr / 4);
-  x = x + vdp1_state.localx;
-  y = y + vdp1_state.localy;
+	vram = vram + (char_addr / 4);
+	x = x + vdp1_state.localx;
+	y = y + vdp1_state.localy;
 
-  height += y;
-  width += x;
+	height += y;
+	width += x;
 
-  if (color_mode == 5) {
-      for(loopy = y;loopy < height;loopy++)	{
-    	  for(loopx = x;loopx < width;loopx+=2) {
+	if (color_mode == 5) {
+		for(loopy = y;loopy < height;loopy++)	{
+    		for(loopx = x;loopx < width;loopx+=2) {
 
-	        UINT32 colour;
+			UINT32 colour;
 
-	        colour = *vram++;
-	        if(colour >> 16) {
- 		   	  plot_pixel(saturn_bitmap[video_w],loopx,
-			     loopy,Machine->pens[(colour>>16) & 0x7FFF]);
-		    }
-	        if(colour & 0xFFFF) {
-		      plot_pixel(saturn_bitmap[video_w],loopx+1,
-			     loopy,Machine->pens[colour&0x7FFF]);
-		    }
-	     }
-	  }
-  }
+			colour = *vram++;
+			if(colour >> 16) {
+ 		   		plot_pixel(saturn_bitmap[video_w],loopx,
+					loopy,Machine->pens[(colour>>16) & 0x7FFF]);
+			}
+			if(colour & 0xFFFF) {
+				plot_pixel(saturn_bitmap[video_w],loopx+1,
+					loopy,Machine->pens[colour&0x7FFF]);
+			}
+			}
+		}
+	}
 }
 
 void execute_vdp1(void)
-
-     /* Execute the vdp1 command set */
-
 {
-  UINT32 *base;
-  UINT32 command;
-  UINT32 temp;
-  unsigned short fb[512*256];
+	/* Execute the vdp1 command set */
+	UINT32 *base;
+	UINT32 command;
+	UINT32 temp;
+	unsigned short fb[512*256];
 
-  logerror("vdp1 execute command\n");
+	logerror("vdp1 execute command\n");
 
-  base = vdp1_ram_base;
-  command = 0;
+	base = vdp1_ram_base;
+	command = 0;
 
-  while(!(*base & 0x80000000))
-    {
-      switch((*base >> 16) & 0xF) /* Select command code */
+	while(!(*base & 0x80000000))
+	{
+		switch((*base >> 16) & 0xF) /* Select command code */
 	{
 	case 0 : logerror("%08lX - Normal Sprite Draw\n",command);
-	  cmd0(command,fb);
-	  break;
+		cmd0(command,fb);
+		break;
 	case 1 : logerror("%08lX - Scaled Sprite Draw\n",command);
-	  break;
+		break;
 	case 2 : logerror("%08lX - Distorted Sprite Draw\n",command);
-	  break;
+		break;
 	case 4 : logerror("%08lX - Polygon Draw\n",command);
-	  break;
+		break;
 	case 5 : logerror("%08lX - Polyline Draw\n",command);
-	  break;
+		break;
 	case 6 : logerror("%08lX - Line Draw\n",command);
-	  break;
+		break;
 	case 8 : logerror("%08lX - Set User Clip\n",command);
-	  break;
+		break;
 	case 9 :
-	  temp = *(base + 5);
-	  logerror("%08lX - Set System Clip (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
-	  break;
+		temp = *(base + 5);
+		logerror("%08lX - Set System Clip (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+		break;
 	case 10:
-	  temp = *(base + 3);
-	  logerror("%08lX - Local Coordinates (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
-	  vdp1_state.localx = temp >> 16;
-	  vdp1_state.localy = temp & 0xFFFF;
-	  break;
+		temp = *(base + 3);
+		logerror("%08lX - Local Coordinates (%ld,%ld)\n",command,temp>>16,temp&0xFFFF);
+		vdp1_state.localx = temp >> 16;
+		vdp1_state.localy = temp & 0xFFFF;
+		break;
 	}
-      base += (0x20/4);
-      command++;
-    }
-  logerror("vdp1 execute end\n");
+		base += (0x20/4);
+		command++;
+	}
+	logerror("vdp1 execute end\n");
 }
 
 READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
@@ -1083,11 +1080,11 @@ READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
   /* logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
   if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
     {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],ret_val & 0xFFFF,cpu_get_reg(SH2_PC));
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],ret_val & 0xFFFF,activecpu_get_reg(SH2_PC));
     }
   if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
     {
-      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],ret_val >> 16,cpu_get_reg(SH2_PC));
+      logerror("vdp1_r %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],ret_val >> 16,activecpu_get_reg(SH2_PC));
     }
 
   return SWAP_WORDS(ret_val);
@@ -1100,11 +1097,11 @@ WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
   /*  logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
   if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
     {
-      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],data >> 16,cpu_get_reg(SH2_PC));
+      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[offset<<1],data >> 16,activecpu_get_reg(SH2_PC));
     }
   if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
     {
-      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],data & 0xFFFF,cpu_get_reg(SH2_PC));
+      logerror("vdp1_w %s data=%04lX : PC=%08lX\n",vdp1_regnames[(offset<<1)+1],data & 0xFFFF,activecpu_get_reg(SH2_PC));
     }
 
   olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
@@ -1129,7 +1126,6 @@ struct _vdp2_state
   UINT16 vdp2_regs[0x90];
 } vdp2_state;
 
-void *HBlankTimer;
 UINT32 HBlankCount;
 UINT32 InVBlank;   /* Are we in vertical blanking ? */
 void timer_hblank(int param);
@@ -1284,12 +1280,11 @@ static const char *vdp2_regnames[] =
 };
 
 void reset_vdp2(void)
-
 {
-  HBlankCount = 0;
-  HBlankTimer = timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
-  InVBlank = 0;
-  memset(vdp2_state.vdp2_regs,0,0x90*2);
+	HBlankCount = 0;
+	timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
+	InVBlank = 0;
+	memset(vdp2_state.vdp2_regs,0,0x90*2);
 }
 
 void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
@@ -1477,7 +1472,7 @@ void timer_hblank(int param)
 
 {
   //  logerror("HBlank Interrupt %ld\n",HBlankCount); /* Logging hblanks is abit of a waste :) */
-  HBlankTimer = timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank); /* Reset timer */
+  timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank); /* Reset timer */
   HBlankCount++;
   if((HBlankCount > SCREEN_LINES) && (!InVBlank))
     {
@@ -1609,11 +1604,11 @@ READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
   /*  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);*/
   if((mem_mask & 0xFFFF0000) == 0) /* If we are reading from first word in dword */
     {
-      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],ret_val & 0xFFFF,cpu_get_reg(SH2_PC));
+      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],ret_val & 0xFFFF,activecpu_get_reg(SH2_PC));
     }
   if((mem_mask & 0xFFFF) == 0) /* If we are reading from 2nd word in dword */
     {
-      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],ret_val >> 16,cpu_get_reg(SH2_PC));
+      logerror("vdp2_r %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],ret_val >> 16,activecpu_get_reg(SH2_PC));
     }
 
   return SWAP_WORDS(ret_val);
@@ -1626,11 +1621,11 @@ WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
   /* logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);*/
   if((mem_mask & 0xFFFF0000) == 0) /* If we are writing to first word in dword */
     {
-      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],data >> 16,cpu_get_reg(SH2_PC));
+      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[offset<<1],data >> 16,activecpu_get_reg(SH2_PC));
     }
   if((mem_mask & 0xFFFF) == 0) /* If we are writing to 2nd word in dword */
     {
-      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],data & 0xFFFF,cpu_get_reg(SH2_PC));
+      logerror("vdp2_w %s data=%04lX : PC=%08lX\n",vdp2_regnames[(offset<<1)+1],data & 0xFFFF,activecpu_get_reg(SH2_PC));
     }
 
   olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
@@ -1677,171 +1672,158 @@ WRITE16_HANDLER( dsp_68k_w )
  *  Main Machine Code                                   *
  ********************************************************/
 
-void saturn_init_machine(void)
+static MACHINE_INIT( saturn )
 {
-  int i;
-  UINT32 *mem2;
-  int mem_length;
+	int i;
+	UINT32 *mem2;
+	int mem_length;
 
-  mem = (UINT32 *) memory_region(REGION_CPU1);
-  mem2 = (UINT32 *) memory_region(REGION_CPU2);
-  fb1_ram_base = (UINT32 *) &mem[SATURN_FB1_RAM_BASE/4];
-  workl_ram_base = (UINT32 *) &mem[SATURN_WORKL_RAM_BASE/4];
-  vdp1_ram_base = (UINT32 *) &mem[SATURN_VDP1_RAM_BASE/4];
-  color_ram_base = (UINT32 *) &mem[SATURN_COLOR_RAM_BASE/4];
-  workh_ram_base = (UINT32 *) &mem[SATURN_WORKH_RAM_BASE/4];
-  vdp2_ram_base = (UINT32 *) &mem[SATURN_VDP2_RAM_BASE/4];
-  back_ram_base = (UINT32 *) &mem[SATURN_BACK_RAM_BASE/4];
+	mem = (UINT32 *) memory_region(REGION_CPU1);
+	mem2 = (UINT32 *) memory_region(REGION_CPU2);
+	fb1_ram_base = (UINT32 *) &mem[SATURN_FB1_RAM_BASE/4];
+	workl_ram_base = (UINT32 *) &mem[SATURN_WORKL_RAM_BASE/4];
+	vdp1_ram_base = (UINT32 *) &mem[SATURN_VDP1_RAM_BASE/4];
+	color_ram_base = (UINT32 *) &mem[SATURN_COLOR_RAM_BASE/4];
+	workh_ram_base = (UINT32 *) &mem[SATURN_WORKH_RAM_BASE/4];
+	vdp2_ram_base = (UINT32 *) &mem[SATURN_VDP2_RAM_BASE/4];
+	back_ram_base = (UINT32 *) &mem[SATURN_BACK_RAM_BASE/4];
 
- /* Copy bios rom into second cpu area */
- memcpy(mem2,mem,SATURN_ROM_SIZE);
+	/* Copy bios rom into second cpu area */
+	memcpy(mem2,mem,SATURN_ROM_SIZE);
 
-  mem_length = (memory_region_length(REGION_CPU1) - SATURN_ROM_SIZE) / 4;
+	mem_length = (memory_region_length(REGION_CPU1) - SATURN_ROM_SIZE) / 4;
 
-  for (i = (SATURN_ROM_SIZE/4);i < mem_length; i++)
-    {
-      mem[i] = 0; /* Clear RAM */
-    }
+	for (i = (SATURN_ROM_SIZE/4);i < mem_length; i++)
+	{
+		mem[i] = 0; /* Clear RAM */
+	}
 
-  sound_base = (UINT16 *) memory_region(REGION_CPU3); /*
-  Setup reset vector
-  for 68k stupidity */
+	sound_base = (UINT16 *) memory_region(REGION_CPU3); /*
+	Setup reset vector
+	for 68k stupidity */
 
-  *(sound_base + 0) = 0;
-  *(sound_base + 1) = 0x1000;
-  *(sound_base + 2) = 0;
-  *(sound_base + 3) = 8;
-  *(sound_base + 4) = 0x60fe;
+	*(sound_base + 0) = 0;
+	*(sound_base + 1) = 0x1000;
+	*(sound_base + 2) = 0;
+	*(sound_base + 3) = 8;
+	*(sound_base + 4) = 0x60fe;
 
-  /* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
+	/* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
 
-  for (i = 0; i < 2; i++)
-    {
-      install_mem_read32_handler (i, 0x00000000, 0x0007ffff, MRA32_ROM );
-      install_mem_write32_handler(i, 0x00000000, 0x0007ffff, MWA32_ROM );
+	for (i = 0; i < 2; i++)
+	{
+		install_mem_read32_handler (i, 0x00000000, 0x0007ffff, MRA32_ROM );
+		install_mem_write32_handler(i, 0x00000000, 0x0007ffff, MWA32_ROM );
 
-      install_mem_read32_handler (i, 0x00100000, 0x0010007f, saturn_smpc_r );
-      install_mem_write32_handler(i, 0x00100000, 0x0010007f, saturn_smpc_w );
+		install_mem_read32_handler (i, 0x00100000, 0x0010007f, saturn_smpc_r );
+		install_mem_write32_handler(i, 0x00100000, 0x0010007f, saturn_smpc_w );
 
-      install_mem_read32_handler (i, 0x00180000, 0x0019ffff, saturn_back_ram_r );
-      install_mem_write32_handler(i, 0x00180000, 0x0019ffff, saturn_back_ram_w );
+		install_mem_read32_handler (i, 0x00180000, 0x0019ffff, saturn_back_ram_r );
+		install_mem_write32_handler(i, 0x00180000, 0x0019ffff, saturn_back_ram_w );
 
-      install_mem_read32_handler (i, 0x00200000, 0x002fffff, MRA32_BANK1 /*saturn_workl_ram_r*/ );
-      install_mem_write32_handler(i, 0x00200000, 0x002fffff, MWA32_BANK1 /*saturn_workl_ram_w*/ );
+		install_mem_read32_handler (i, 0x00200000, 0x002fffff, MRA32_BANK1 /*saturn_workl_ram_r*/ );
+		install_mem_write32_handler(i, 0x00200000, 0x002fffff, MWA32_BANK1 /*saturn_workl_ram_w*/ );
 
-      install_mem_read32_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
-      install_mem_write32_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
+		install_mem_read32_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
+		install_mem_write32_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
 
-      install_mem_read32_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
-      install_mem_write32_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
+		install_mem_read32_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
+		install_mem_write32_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
 
-      install_mem_read32_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
-      install_mem_write32_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
+		install_mem_read32_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
+		install_mem_write32_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
 
-      install_mem_read32_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
-      install_mem_write32_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
+		install_mem_read32_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
+		install_mem_write32_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
 
-      install_mem_read32_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
-      install_mem_write32_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
+		install_mem_read32_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
+		install_mem_write32_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
 
-      install_mem_read32_handler (i, 0x05890000, 0x0589ffff, saturn_cd_r );
-      install_mem_write32_handler(i, 0x05890000, 0x0589ffff, saturn_cd_w );
+		install_mem_read32_handler (i, 0x05890000, 0x0589ffff, saturn_cd_r );
+		install_mem_write32_handler(i, 0x05890000, 0x0589ffff, saturn_cd_w );
 
-      install_mem_read32_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
-      install_mem_write32_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
-      install_mem_read32_handler (i, 0x05a80000, 0x05afffff, MRA32_NOP );
-      install_mem_write32_handler(i, 0x05a80000, 0x05afffff, MWA32_NOP );
+		install_mem_read32_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
+		install_mem_write32_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
+		install_mem_read32_handler (i, 0x05a80000, 0x05afffff, MRA32_NOP );
+		install_mem_write32_handler(i, 0x05a80000, 0x05afffff, MWA32_NOP );
 
-      install_mem_read32_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
-      install_mem_write32_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
+		install_mem_read32_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
+		install_mem_write32_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
 
-      install_mem_read32_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
-      install_mem_write32_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
+		install_mem_read32_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
+		install_mem_write32_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
 
-      install_mem_read32_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
-      install_mem_write32_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
+		install_mem_read32_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
+		install_mem_write32_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
 
-      install_mem_read32_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
-      install_mem_write32_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
+		install_mem_read32_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
+		install_mem_write32_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
 
-      install_mem_read32_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
-      install_mem_write32_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
+		install_mem_read32_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
+		install_mem_write32_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
 
-      install_mem_read32_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
-      install_mem_write32_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
+		install_mem_read32_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
+		install_mem_write32_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
 
-      install_mem_read32_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
-      install_mem_write32_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
+		install_mem_read32_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
+		install_mem_write32_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
 
-      install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
-      install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
+		install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
+		install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
 
-      install_mem_read32_handler (i, 0x06000000, 0x060fffff, MRA32_BANK2 );
-      install_mem_write32_handler(i, 0x06000000, 0x060fffff, MWA32_BANK2 );
-    }
+		install_mem_read32_handler (i, 0x06000000, 0x060fffff, MRA32_BANK2 );
+		install_mem_write32_handler(i, 0x06000000, 0x060fffff, MWA32_BANK2 );
+	}
 
-  install_mem_read16_handler(2, 0x000000, 0x07ffff, MRA16_BANK3);
-  install_mem_write16_handler(2, 0x000000, 0x07ffff, MWA16_BANK3);
-  install_mem_read16_handler(2, 0x100000, 0x100ee3, dsp_68k_r);
-  install_mem_write16_handler(2, 0x100000, 0x100ee3, dsp_68k_w);
+	install_mem_read16_handler(2, 0x000000, 0x07ffff, MRA16_BANK3);
+	install_mem_write16_handler(2, 0x000000, 0x07ffff, MWA16_BANK3);
+	install_mem_read16_handler(2, 0x100000, 0x100ee3, dsp_68k_r);
+	install_mem_write16_handler(2, 0x100000, 0x100ee3, dsp_68k_w);
 
-  cpu_setbank(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
-  cpu_setbank(2, (UINT8 *) workh_ram_base);
-  cpu_setbank(3, (UINT8 *) sound_base);
+	cpu_setbank(1, (UINT8 *) workl_ram_base); /* Setup banking (for???) */
+	cpu_setbank(2, (UINT8 *) workh_ram_base);
+	cpu_setbank(3, (UINT8 *) sound_base);
 /*  cpu_setbank(4, (UINT8 *) &mem[SATURN_VDP1_RAM_BASE/4]);
   cpu_setbank(5, (UINT8 *) &mem[SATURN_VDP2_RAM_BASE/4]);
   cpu_setbank(6, (UINT8 *) &mem[SATURN_FB1_RAM_BASE/4]);
   cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
   cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
   cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);*/
-
 }
 
-void init_saturn(void)
+static DRIVER_INIT( saturn )
 {
-  reset_smpc();
-  reset_cd();
-  reset_scu();
-  reset_vdp1();
-  reset_vdp2();
+	reset_smpc();
+	reset_cd();
+	reset_scu();
+	reset_vdp1();
+	reset_vdp2();
 }
 
-int saturn_vh_start(void)
+static VIDEO_START( saturn )
 {
-  logerror("saturn_vh_start\n");
-  saturn_bitmap[0] = bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
-  saturn_bitmap[1] = bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+	logerror("saturn_vh_start\n");
+	saturn_bitmap[0] = auto_bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
+	saturn_bitmap[1] = auto_bitmap_alloc_depth(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT, 16);
 
-  if((!saturn_bitmap[0]) || (!saturn_bitmap[1]))
-    return 1;
+	if((!saturn_bitmap[0]) || (!saturn_bitmap[1]))
+		return 1;
 
-  fillbitmap(saturn_bitmap[0],Machine->pens[0x7FFF],NULL);
-  fillbitmap(saturn_bitmap[1],Machine->pens[0],NULL);
-  video_w = 0;
+	fillbitmap(saturn_bitmap[0],Machine->pens[0x7FFF],NULL);
+	fillbitmap(saturn_bitmap[1],Machine->pens[0],NULL);
+	video_w = 0;
 
-  return 0;
+	return 0;
 }
 
-void saturn_vh_stop(void)
+
+static VIDEO_UPDATE( saturn )
 {
-  if(saturn_bitmap[0])
-    bitmap_free(saturn_bitmap[0]);
-  saturn_bitmap[0] = NULL;
-
-  if(saturn_bitmap[1])
-    bitmap_free(saturn_bitmap[1]);
-  saturn_bitmap[1] = NULL;
-
-  logerror("saturn_vh_stop\n");
-}
-
-void saturn_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-  //  logerror("saturn_vh_screenrefresh\n");
-  if(saturn_bitmap[video_w])
-    {
-      copybitmap(bitmap, saturn_bitmap[video_w], 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
-    }
+	//  logerror("saturn_vh_screenrefresh\n");
+	if(saturn_bitmap[video_w])
+	{
+		copybitmap(bitmap, saturn_bitmap[video_w], 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
+	}
 }
 
 /*
@@ -1868,79 +1850,56 @@ MEMORY_END
 static MEMORY_WRITE16_START( writemem_68k )
 MEMORY_END
 
-void saturn_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-
-     /*Setup the internal palette to 15bit colour */
-
+static PALETTE_INIT( saturn )
 {
-  int i;
+	/*Setup the internal palette to 15bit colour */
+	int i;
 
-  for ( i = 0; i < 0x8000; i++ )
-    {
-      int r, g, b;
+	for ( i = 0; i < 0x8000; i++ )
+	{
+		int r, g, b;
 
-      r = (( i >> 10 ) & 0x1f) << 3;
-      g = (( i >> 5 ) & 0x1f) << 3;
-      b = (i & 0x1f) << 3;
+		r = (( i >> 10 ) & 0x1f) << 3;
+		g = (( i >> 5 ) & 0x1f) << 3;
+		b = (i & 0x1f) << 3;
 
-      *palette++ = b;
-      *palette++ = g;
-      *palette++ = r;
+		palette_set_color(i, b, g, r);
 
-      colortable[i] = i;
-    }
+		colortable[i] = i;
+	}
 
-  logerror("saturn_init_palette\n");
+	logerror("saturn_init_palette\n");
 }
 
-static struct MachineDriver machine_driver_saturn =
-{
-  /* basic machine hardware */
-  {
-    {
-      CPU_SH2,
-      28636400,   /* NTSC Clock speed at 352/704 Pixel/line dot clock */
-      saturn_readmem, saturn_writemem,
-      0,0,
-      ignore_interrupt, 1
-    },
-    {
-      CPU_SH2,
-      28636400,
-      saturn_readmem,saturn_writemem,
-      0,0,
-      ignore_interrupt, 1
-    },
-    {
-      CPU_M68000 | CPU_AUDIO_CPU,               /* Sound CPU */
-      11300000,	        /* 11.3mhz (MC68000-12)*/
-      readmem_68k,writemem_68k,
-      0,0,                      /* zeros are ioport read/write */
-      ignore_interrupt,1
-    }
-  },
-  /* frames per second, VBL duration */
-  60, DEFAULT_60HZ_VBLANK_DURATION,
-  1,                      /* dual CPU */
-  saturn_init_machine,
-  NULL,                   /* stop machine */
 
-  /* video hardware */
-  SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT,
-  { 0, SATURN_SCR_WIDTH - 1, 0, SATURN_SCR_HEIGHT - 1},
-  NULL,
-  32768, 32768,
-  saturn_init_palette,    /* convert color prom */
+static MACHINE_DRIVER_START( saturn )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
+	MDRV_CPU_MEMORY(saturn_readmem, saturn_writemem)
+	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
+	MDRV_CPU_MEMORY(saturn_readmem, saturn_writemem)
+	MDRV_CPU_ADD(M68000, 11300000)		/* Sound CPU; 11.3mhz (MC68000-12)*/
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_68k,writemem_68k)
 
-  VIDEO_TYPE_RASTER,      /* video flags */
-  0,                      /* obsolete */
-  saturn_vh_start,
-  saturn_vh_stop,
-  saturn_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-  /* sound hardware */
-  0,0,0,0
-};
+	MDRV_MACHINE_INIT( saturn )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(SATURN_SCR_WIDTH, SATURN_SCR_HEIGHT)
+	MDRV_VISIBLE_AREA(0, SATURN_SCR_WIDTH-1, 0, SATURN_SCR_HEIGHT-1)
+	MDRV_PALETTE_LENGTH(32768)
+	MDRV_COLORTABLE_LENGTH(32768)
+	MDRV_PALETTE_INIT( saturn )
+
+	MDRV_VIDEO_START( saturn )
+	MDRV_VIDEO_UPDATE( saturn )
+MACHINE_DRIVER_END
+
 
 ROM_START(saturn)
      ROM_REGION(0x00421000, REGION_CPU1,0)

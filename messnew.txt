@@ -11,6 +11,7 @@ Regressions:
 - [Amstrad] Crashes on startup
 - [MK1] Fails to boot
 - [ZX] Doesn't boot up anymore
+- [STUDIO2] ???
 
 System Driver Changes:
 ----------------------

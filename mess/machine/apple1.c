@@ -62,7 +62,7 @@ static int apple1_kbd_data;
 /*****************************************************************************
 **	apple1_init_machine
 *****************************************************************************/
-void apple1_init_machine(void)
+MACHINE_INIT( apple1 )
 {
 	logerror("apple1_init\r\n");
 

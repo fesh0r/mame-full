@@ -180,46 +180,31 @@ static struct astrocade_interface astrocade_1chip_interface =
 };
 
 
-static struct MachineDriver machine_driver_astrocde =
-{
+static MACHINE_DRIVER_START( astrocde )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1789000,	/* 1.789 Mhz */
-			astrocade_readmem,astrocade_writemem,astrocade_readport,astrocade_writeport,
-			astrocade_interrupt,256
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-	0,
+	MDRV_CPU_ADD(Z80, 1789000)        /* 1.789 Mhz */
+	MDRV_CPU_MEMORY(astrocade_readmem,astrocade_writemem)
+	MDRV_CPU_PORTS(astrocade_readport,astrocade_writeport)
+	MDRV_CPU_VBLANK_INT(astrocade_interrupt,256)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	320, 204, { 0, 320-1, 0, 204-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
-	8*32,8,
-	astrocade_init_palette,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 204)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 204-1)
+	MDRV_PALETTE_LENGTH(8*32)
+	MDRV_COLORTABLE_LENGTH(8)
+	MDRV_PALETTE_INIT( astrocade )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	video_start_generic,
-	NULL,
-	astrocade_vh_screenrefresh,
+	MDRV_VIDEO_START( generic )
+	MDRV_VIDEO_UPDATE( astrocade )
 
 	/* sound hardware */
-	0,             	/* Initialise audio hardware */
-	0,   			/* Start audio  */
-	0,     			/* Stop audio   */
-	0,               /* Update audio */
-	{
-		{
-			SOUND_ASTROCADE,
-			&astrocade_1chip_interface
-		}
- 	}
-};
+	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START( astrocde )
     ROM_REGION( 0x10000, REGION_CPU1, 0 )

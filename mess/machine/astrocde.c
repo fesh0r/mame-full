@@ -61,25 +61,17 @@ WRITE_HANDLER ( astrocade_interrupt_w )
     NextScanInt = data;
 }
 
-int astrocade_interrupt(void)
+INTERRUPT_GEN( astrocade_interrupt )
 {
-	int res=ignore_interrupt();
-//    int Direction;
-
     CurrentScan++;
 
     if (CurrentScan == Machine->drv->cpu[0].vblank_interrupts_per_frame)
-	{
 		CurrentScan = 0;
-    }
 
     if (CurrentScan < 204) astrocade_copy_line(CurrentScan);
 
     /* Scanline interrupt enabled ? */
-
     if ((screen_interrupts_enabled) && (screen_interrupt_mode == 0)
 	                                && (CurrentScan == NextScanInt))
-		res = interrupt();
-
-    return res;
+		cpu_set_irq_line(0, 0, PULSE_LINE);
 }
