@@ -143,6 +143,15 @@ void floppy_drive_set_real_fdd_unit(int id, UINT8 unit_id)
 	drives[id].fdd_unit = unit_id;
 }
 
+/* set interface for image interface */
+void floppy_drive_set_disk_image_interface(int id, floppy_interface *iface)
+{
+	assert(id >= 0);
+	assert(id < MAX_DRIVES);
+	assert(iface);
+	memcpy(&drives[id].interface, iface, sizeof(floppy_interface));
+}
+
 /* set flag state */
 void floppy_drive_set_flag_state(int id, int flag, int state)
 {

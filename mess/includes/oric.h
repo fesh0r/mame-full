@@ -11,8 +11,8 @@ extern VIDEO_UPDATE( oric );
 
 extern WRITE_HANDLER(oric_psg_porta_write);
 
-int	oric_floppy_init(int id, mame_file *fp, int open_mode);
-void oric_floppy_exit(int id);
+int	oric_floppy_load(int id, mame_file *fp, int open_mode);
+void oric_floppy_unload(int id);
 
 extern int oric_cassette_init(int id, mame_file *fp, int open_mode);
 

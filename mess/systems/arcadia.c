@@ -270,25 +270,23 @@ ROM_START(vcg)
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
-static int arcadia_init_cart(int id, mame_file *cartfile, int open_mode)
+static int arcadia_cart_load(int id, mame_file *cartfile, int open_mode)
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (cartfile == NULL)
-	{
-		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
-		return INIT_FAIL;
-	}
-
 	memset(rom, 0, 0x8000);
-	size=mame_fsize(cartfile);
+	size = mame_fsize(cartfile);
 
-	if (mame_fread(cartfile, rom, size)!=size) {
-		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
+	if (size > memory_region_length(REGION_CPU1))
+		size = memory_region_length(REGION_CPU1);
+
+	if (mame_fread(cartfile, rom, size) != size)
 		return INIT_FAIL;
-	}
-	if (size>0x1000) memmove(rom+0x2000, rom+0x1000, size-0x1000);
+
+	if (size > 0x1000)
+		memmove(rom + 0x2000, rom + 0x1000, size - 0x1000);
+
 #if 1
 	// golf cartridge support
 	// 4kbyte at 0x0000
@@ -322,7 +320,7 @@ static int arcadia_init_cart(int id, mame_file *cartfile, int open_mode)
 }
 
 SYSTEM_CONFIG_START(arcadia)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", arcadia_init_cart, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, arcadia_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

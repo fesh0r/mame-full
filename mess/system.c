@@ -160,8 +160,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	/* NEC */
 //	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
-//	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
-//TESTDRIVER( vcg )	/* Palladium Video-Computer-Game					*/
+	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
+TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984	*/
@@ -564,14 +564,14 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* Creativision console */
 
 	/* TANGERINE */
-//	DRIVER( microtan )	/* 1979 Microtan 65 								*/
+	DRIVER( microtan )	/* 1979 Microtan 65 								*/
 
-//	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
-//	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
-//	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
-//	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
-//	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
-//	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
+	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
+	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
+	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
+	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
+	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
+	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
 //	DRIVER( p2000t )	/* 1980 P2000T										*/

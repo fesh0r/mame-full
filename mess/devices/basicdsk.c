@@ -52,7 +52,9 @@ int basicdsk_floppy_load(int id, mame_file *fp, int open_mode)
 	so we need to reflect this */
 	w->track = 0;
 
-	return  INIT_PASS;
+	floppy_drive_set_disk_image_interface(id, &basicdsk_floppy_interface);
+
+	return INIT_PASS;
 }
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will

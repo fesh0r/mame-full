@@ -136,12 +136,14 @@ void floppy_drive_set_ready_state(int drive, int state, int flag);
 
 void floppy_drive_set_motor_state(int drive, int state);
 
+/* set interface for disk image functions */
+void floppy_drive_set_disk_image_interface(int, floppy_interface *);
+
 /* set real fdd unit */
 void floppy_drive_set_real_fdd_unit(int, unsigned char);
 
 /* seek up or down */
 void floppy_drive_seek(int drive, signed int signed_tracks);
-
 
 void	floppy_drive_read_track_data_info_buffer(int drive, int side, char *ptr, int *length );
 void	floppy_drive_format_sector(int drive, int side, int sector_index, int c, int h, int r, int n, int filler);

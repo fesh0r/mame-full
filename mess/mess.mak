@@ -170,8 +170,8 @@ DRVLIBS = \
 	$(OBJ)/jupiter.a  \
 	$(OBJ)/trs80.a	  \
 	$(OBJ)/gce.a	  \
-#	$(OBJ)/arcadia.a  \
-#	$(OBJ)/tangerin.a \
+	$(OBJ)/arcadia.a  \
+	$(OBJ)/tangerin.a \
 #	$(OBJ)/kaypro.a   \
 #	$(OBJ)/cgenie.a   \
 #	$(OBJ)/aquarius.a \
@@ -528,7 +528,7 @@ $(OBJ)/vc4000.a :   \
 	  $(OBJ)/mess/systems/vc4000.o
 
 $(OBJ)/tangerin.a :\
-	  $(OBJ)/mess/machine/mfmdisk.o  \
+	  $(OBJ)/mess/devices/mfmdisk.o  \
 	  $(OBJ)/mess/vidhrdw/microtan.o \
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \

@@ -21,12 +21,12 @@
 #include "driver.h"
 #include "includes/oric.h"
 #include "devices/basicdsk.h"
+#include "devices/mfmdisk.h"
+#include "devices/printer.h"
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
-#include "includes/mfmdisk.h"
 #include "includes/6551.h"
 #include "includes/centroni.h"
-#include "devices/printer.h"
 #include "formats/orictap.h"
 #include "image.h"
 
@@ -1210,57 +1210,28 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
-int oric_floppy_init(int id, mame_file *fp, int open_mode)
+int oric_floppy_load(int id, mame_file *fp, int open_mode)
 {
-	int result;
-
-	if (fp == NULL)
-		return INIT_PASS;
-
 	/* attempt to open mfm disk */
-	result = mfm_disk_floppy_init(id, fp);
-
-	if (result==INIT_PASS)
+	if (mfm_disk_load(id, fp, open_mode) == INIT_PASS)
 	{
 		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
-
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_load(id, fp, open_mode))
+	if (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0);
-
 		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
-
 		return INIT_PASS;
 	}
-
 	return INIT_FAIL;
 }
 
-void	oric_floppy_exit(int id)
+void oric_floppy_unload(int id)
 {
-	switch (oric_floppy_type[id])
-	{
-		case ORIC_FLOPPY_MFM_DISK:
-		{
-			mfm_disk_floppy_exit(id);
-		}
-		break;
-
-		case ORIC_FLOPPY_BASIC_DISK:
-		{
-			basicdsk_floppy_unload(id);
-		}
-		break;
-
-		default:
-			break;
-	}
-
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 

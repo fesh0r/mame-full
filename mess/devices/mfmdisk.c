@@ -8,7 +8,7 @@
 	- clever write and read which correctly setup the raw mfm
 */
 #include "driver.h"
-#include "includes/mfmdisk.h"
+#include "devices/mfmdisk.h"
 #include "devices/flopdrv.h"
 
 static void mfm_disk_seek_callback(int,int);
@@ -229,7 +229,7 @@ static unsigned long mfm_get_long(unsigned char *addr)
 
 #if 0
 /* check a mfm_disk image is valid */
-int	mfm_disk_floppy_id(int id)
+int	mfm_disk_id(int id)
 {
 	mame_file *file;
 	int result = 0;
@@ -294,79 +294,32 @@ int	mfm_disk_floppy_id(int id)
 
 
 /* load image */
-static int mfm_disk_load(int type, int id, mame_file *file, unsigned char **ptr)
+int mfm_disk_load(int id, mame_file *fp, int open_mode)
 {
-	if (file)
-	{
-		int datasize;
-		unsigned char *data;
+	UINT64 datasize;
 
-		/* get file size */
-		datasize = mame_fsize(file);
-
-		if (datasize!=0)
-		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
-
-			if (data!=NULL)
-			{
-				/* read whole file */
-				mame_fread(file, data, datasize);
-
-				*ptr = data;
-
-				logerror("File loaded!\r\n");
-
-				/* ok! */
-				return 1;
-			}
-		}
-	}
-
-	return 0;
-}
-
-int mfm_disk_floppy_init(int id, mame_file *fp)
-{
-	if ((id<0) || (id>=MAX_MFM_DISK))
+	datasize = mame_fsize(fp);
+	if (datasize <= 0)
 		return INIT_FAIL;
 
-	/* load data */
-	if (mfm_disk_load(IO_FLOPPY, id, fp, &mfm_disks[id].pData))
-	{
-		mfm_disks[id].NumTracks = mfm_get_long(&mfm_disks[id].pData[12]);
-		mfm_disks[id].NumSides = mfm_get_long(&mfm_disks[id].pData[16]);
-		mfm_disks[id].Density = mfm_get_long(&mfm_disks[id].pData[8]);
-		mfm_disks[id].CachedTrack = -1;
-		mfm_disks[id].CachedSide = -1;
-		mfm_disks[id].NumSectors = 0;
+	mfm_disks[id].pData = image_malloc(IO_FLOPPY, id, datasize);
+	if (!mfm_disks[id].pData)
+		return INIT_FAIL;
 
-		floppy_drive_set_disk_image_interface(id, &mfm_disk_floppy_interface);
+	if (mame_fread(fp, mfm_disks[id].pData, datasize) != datasize)
+		return INIT_FAIL;
 
-		logerror("mfm disk inserted!\n");
+	mfm_disks[id].NumTracks = mfm_get_long(&mfm_disks[id].pData[12]);
+	mfm_disks[id].NumSides = mfm_get_long(&mfm_disks[id].pData[16]);
+	mfm_disks[id].Density = mfm_get_long(&mfm_disks[id].pData[8]);
+	mfm_disks[id].CachedTrack = -1;
+	mfm_disks[id].CachedSide = -1;
+	mfm_disks[id].NumSectors = 0;
 
-		return INIT_PASS;
-	}
+	floppy_drive_set_disk_image_interface(id, &mfm_disk_floppy_interface);
 
-
-	return INIT_FAIL;
-}
-
-
-void	mfm_disk_floppy_exit(int id)
-{
-	if ((id<0) || (id>=MAX_MFM_DISK))
-		return;
-
-	/* free data */
-	if (mfm_disks[id].pData!=NULL)
-	{
-		free(mfm_disks[id].pData);
-		mfm_disks[id].pData = NULL;
-	}
-
-
+	logerror("mfm disk inserted!\n");
+	return INIT_PASS;
 }
 
 /* cache info about track */
