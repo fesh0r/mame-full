@@ -3,6 +3,10 @@
 
 #define MAX_BEEP	4
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int beep_sh_start(const struct MachineSound *msound);
 void beep_sh_stop(void);
 void beep_sh_update(void);
@@ -15,4 +19,9 @@ struct beep_interface
 	int num;
 	int mixing_level[MAX_BEEP];
 };
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

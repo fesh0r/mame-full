@@ -7,6 +7,10 @@
  *	CassetteWave interface
  *****************************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct Wave_interface {
 	int num;
 	int mixing_level[MAX_WAVE];
@@ -98,5 +102,10 @@ struct wave_args {
 #define WAVE_STATUS_MOTOR_ENABLE	1
 #define WAVE_STATUS_MUTED			2
 #define WAVE_STATUS_MOTOR_INHIBIT	4
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 
