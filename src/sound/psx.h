@@ -18,8 +18,7 @@ WRITE32_HANDLER( psx_spu_w );
 
 struct PSXSPUinterface
 {
-	int num;
-	int baseclock;
+	int mixing_level;
 };
 
 #define PSX_SPU_H ( 1 )
