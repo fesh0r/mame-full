@@ -1128,8 +1128,6 @@ static int read_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *addr
 		track_offset = (address->side*l1_img->geometry.cylinders + address->cylinder)*track_len;
 		sector_offset = l1_img->pc99_data_offset_array[(address->side*l1_img->geometry.cylinders + address->cylinder)*l1_img->geometry.secspertrack + address->sector];
 
-		if (sector_offset + 256)
-
 		if ((sector_offset + 256) <= track_len)
 		{
 			/* seek to sector */
@@ -1207,8 +1205,6 @@ static int write_sector(ti99_lvl1_imgref *l1_img, const ti99_sector_address *add
 		track_len = l1_img->pc99_track_len;
 		track_offset = (address->side*l1_img->geometry.cylinders + address->cylinder)*track_len;
 		sector_offset = l1_img->pc99_data_offset_array[(address->side*l1_img->geometry.cylinders + address->cylinder)*l1_img->geometry.secspertrack + address->sector];
-
-		if (sector_offset + 256)
 
 		if ((sector_offset + 256) <= track_len)
 		{
