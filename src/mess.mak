@@ -702,7 +702,7 @@ COREOBJS += \
 
 
 # additional tools
-TOOLS +=  tools/dat2html$(EXE) \
+TOOLS +=  dat2html$(EXE)       \
 	  tools/mkhdimg$(EXE)  \
 	  tools/imgtool$(EXE)  \
 	  tools/messroms$(EXE) \
@@ -715,7 +715,7 @@ else
 OUTOPT = -o $@
 endif
 
-tools/dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
+dat2html$(EXE): $(OBJ)/mess/tools/dat2html/dat2html.o $(OBJ)/mess/utils.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
@@ -772,11 +772,14 @@ tools/imgtool$(EXE):	     \
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 # text files
-TEXTS = mess.txt
+TEXTS = mess.txt sysinfo.htm
 mess.txt: $(EMULATOR)
 	@echo Generating $@...
 	@$(CURPATH)$(EMULATOR) -listtext -noclones -sortname > mess.txt
 
+sysinfo.htm: dat2html$(EXE)
+	@echo Generating $@...
+	@$(CURPATH)dat2html$(EXE) sysinfo.dat
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep

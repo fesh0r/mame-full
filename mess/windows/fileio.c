@@ -173,7 +173,7 @@ void	decompose(char *dest_path, int *pathc, char *new_path, char ***ppathv)
 	char **pathv = *ppathv;
 
 	path_count = 0;
-	
+
 	/* if path passed in is invalid, make it valid! */
 	if (new_path==0)
 	{
@@ -298,7 +298,7 @@ int osd_faccess (const char *newfilename, int filetype)
 		pathc = softpathc;
 	}
 	else
-#endif 
+#endif
 	if( filetype == OSD_FILETYPE_SCREENSHOT )
 	{
 		void *f;
@@ -939,8 +939,8 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int openfo
 			break;
 		}
 		f->type = kPlainFile;
-		/* open as ASCII files, not binary like the others */
-		f->file = fopen(filename, openforwrite ? "w" : "r");
+		/* open as BINARY file to avoid platform problems */
+		f->file = fopen(filename, "rb");
 		found = f->file != 0;
 		break;
 

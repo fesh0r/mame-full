@@ -278,8 +278,10 @@ static struct rc_option opts[] = {
 	{ "artwork", "art", rc_bool, &options.use_artwork, "0", 0, 0, NULL, "use additional game artwork" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
+#ifndef MESS
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
+#endif
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, NULL, "generate error.log" },
 #ifdef MESS
 	/* FIXME - these option->names should NOT be hardcoded! */
