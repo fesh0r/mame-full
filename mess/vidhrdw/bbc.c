@@ -508,14 +508,17 @@ void BBC_ula_drawpixel(int col,int number_of_pixels)
 {
 	int pixel_count;
 	int pixel_temp;
-	if ((BBC_display>=BBC_display_left) && ((BBC_display+number_of_pixels)<BBC_display_right))
+	if ((BBC_display>=BBC_display_left) && ((BBC_display+(number_of_pixels<<1))<BBC_display_right))
 	{
 
 		pixel_temp=Machine->pens[col^cursor_state];
 		for(pixel_count=0;pixel_count<number_of_pixels;pixel_count++)
+		{
 			(BBC_display++)[0]=pixel_temp;
+			BBC_display++;
+		}
 	} else {
-		BBC_display+=number_of_pixels;
+		BBC_display+=number_of_pixels<<1;
 	}
 }
 
@@ -548,7 +551,7 @@ void BBC_draw_hi_res(void)
 				i=(i<<1)|1;
 			}
 		} else {
-			BBC_display+=emulation_pixels_per_byte;
+			BBC_display+=emulation_pixels_per_byte<<1;
 		}
 	} else {
 		if (video_refresh)
@@ -556,7 +559,7 @@ void BBC_draw_hi_res(void)
 			// if the display is not enable, just draw a blank area.
 			BBC_ula_drawpixel(0,emulation_pixels_per_byte);
 		} else {
-			BBC_display+=emulation_pixels_per_byte;
+			BBC_display+=emulation_pixels_per_byte<<1;
 		}
 	}
 }
@@ -606,14 +609,14 @@ void BBC_Set_HSync(int offset, int data)
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
 			BBC_display_left=BBC_bitmap->line[y_screen_pos];
-			BBC_display_right=BBC_display_left+800;
+			BBC_display_right=BBC_display_left+1600;
 
 		} else {
 			BBC_display_left=BBC_bitmap->line[0];
 			BBC_display_right=BBC_display_left;
 		}
 
-		BBC_display=BBC_display_left+x_screen_offset;
+		BBC_display=BBC_display_left+(x_screen_offset<<1);
 
 	}
 	BBC_HSync=data;
@@ -630,14 +633,14 @@ void BBC_Set_VSync(int offset, int data)
 		if ((y_screen_pos>=0) && (y_screen_pos<300))
 		{
 			BBC_display_left=BBC_bitmap->line[y_screen_pos];
-			BBC_display_right=BBC_display_left+800;
+			BBC_display_right=BBC_display_left+1600;
 
 		} else {
 			BBC_display_left=BBC_bitmap->line[0];
 			BBC_display_right=BBC_display_left;
 		}
 
-		BBC_display=BBC_display_left+x_screen_offset;
+		BBC_display=BBC_display_left+(x_screen_offset<<1);
 
 		teletext_DEW();
 	}
