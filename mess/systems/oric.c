@@ -1,4 +1,8 @@
+
 /* Oric 1, Oric Atmos and Oric Telestrat Machine Drivers ..... */
+
+/* Pravetz is a Bulgarian copy of the Oric Atmos */
+/* it uses Apple disc drives */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -126,13 +130,37 @@ INPUT_PORTS_START(oric)
 	INPUT_PORT_ORIC
 	PORT_START
 	/* microdisc interface on/off */
-	PORT_BITX(0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Microdisc Interface", IP_KEY_NONE, IP_JOY_NONE)
+    PORT_BITX(0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Microdisc Interface", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
 	PORT_DIPSETTING(0x1, DEF_STR( On) )
+	/* vsync cable hardware. This is a simple cable connected to the video output
+	to the monitor/television. The sync signal is connected to the cassette input
+	allowing interrupts to be generated from the vsync signal. */
+    PORT_BITX(0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPSETTING(0x0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x2, DEF_STR( On) )	
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK)
 INPUT_PORTS_END
+
+
+INPUT_PORTS_START(prav8d)
+	INPUT_PORT_ORIC
+	PORT_START
+	PORT_BIT (0x07, 0x00, IPT_UNUSED)
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START(telstrat)
 	INPUT_PORT_ORIC
+	PORT_START
+	/* vsync cable hardware. This is a simple cable connected to the video output
+	to the monitor/television. The sync signal is connected to the cassette input
+	allowing interrupts to be generated from the vsync signal. */
+	PORT_BIT (0x01, 0x00, IPT_UNUSED)
+	PORT_BITX(0x02, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Vsync cable hardware", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPSETTING(0x0, DEF_STR( Off) )
+	PORT_DIPSETTING(0x2, DEF_STR( On) )	
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_VBLANK)	
 	/* left joystick port */
 	PORT_START
 	PORT_BITX(0x001, IP_ACTIVE_LOW, IPT_KEYBOARD, "JOYSTICK 0 UP", IP_KEY_NONE, JOYCODE_1_RIGHT)
@@ -151,11 +179,6 @@ INPUT_PORTS_START(telstrat)
 INPUT_PORTS_END
 
 static unsigned char oric_palette[8*3] = {
-//	0x00, 0x00, 0x00, 0xcf, 0x00, 0x00,
-//	0x00, 0xcf, 0x00, 0xcf, 0xcf, 0x00,
-//	0x00, 0x00, 0xcf, 0xcf, 0x00, 0xcf,
-//	0x00, 0xcf, 0xcf, 0xcf, 0xcf, 0xcf,
-
 	0x00, 0x00, 0x00, 0xff, 0x00, 0x00,
 	0x00, 0xff, 0x00, 0xff, 0xff, 0x00,
 	0x00, 0x00, 0xff, 0xff, 0x00, 0xff,
@@ -164,25 +187,7 @@ static unsigned char oric_palette[8*3] = {
 
 static unsigned short oric_colortable[8] = {
 	 0,1,2,3,4,5,6,7
-/*
-		 0,0,  0,1,  0, 2,	0, 3,  0, 4,  0, 5,  0, 6,	0, 7,
-	 1,0,  2,1,  2, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 2,0,  4,1,  4, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 3,0,  6,1,  6, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 4,0,  1,1,  1, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 5,0,  3,1,  3, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 6,0,  6,1,  6, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-	 7,0,  7,1,  7, 2,	1, 3,  1, 4,  1, 5,  1, 6,	1, 7,
-
-	 8,8,  8,9,  8,10,	8,11,  8,12,  8,13,  8,14,	8,15,
-	 9,8,  9,9,  9,10,	9,11,  9,12,  9,13,  9,14,	9,15,
-	10,8, 10,9, 10,10, 10,11, 10,12, 10,13, 10,14, 10,15,
-	11,8, 11,9, 11,10, 11,11, 11,12, 11,13, 11,14, 11,15,
-	12,8, 12,9, 12,10, 12,11, 12,12, 12,13, 12,14, 12,15,
-	13,8, 13,9, 13,10, 13,11, 13,12, 13,13, 13,14, 13,15,
-	14,8, 14,9, 14,10, 14,11, 14,12, 14,13, 14,14, 14,15,
-	15,8, 15,9, 15,10, 15,11, 15,12, 15,13, 15,14, 15,15
-*/};
+};
 
 /* Initialise the palette */
 static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
@@ -343,7 +348,8 @@ ROM_END
 static const struct IODevice io_oric1[] =
 {
 	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
- 	{
+ 	IO_PRINTER_PORT(1,"prn\0"),
+	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
 		"dsk\0",                /* file extensions */
@@ -362,23 +368,26 @@ static const struct IODevice io_oric1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	IO_PRINTER_PORT(1,"prn\0"),
 	{ IO_END }
 };
 
-#define io_prav8d io_oric1
-#define io_prav8dd io_oric1
-#define io_prav8dda io_oric1
+static const struct IODevice io_prav8[] =
+{
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,oric_cassette_init,oric_cassette_exit),
+ 	IO_PRINTER_PORT(1,"prn\0"),
+	{ IO_END }
+};
+
+#define io_prav8d io_prav8
+#define io_prav8dd io_prav8
+#define io_prav8dda io_prav8
 #define io_orica io_oric1
 #define io_telstrat io_oric1
 
 /*    YEAR   NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1983,  oric1,    0,	 oric,	   oric,	0,	"Tangerine", "Oric 1" )
 COMP( 1984,  orica,    oric1,	 oric,	   oric,	0,	"Tangerine", "Oric Atmos" )
-COMPX( 1985,  prav8d,   oric1,   oric,   oric,   0,  "Pravetz",  "Pravetz 8D", 
-GAME_NOT_WORKING )
-COMPX( 1989, prav8dd,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED
-|GAME_NOT_WORKING )
-COMPX( 1989, prav8dda,   oric1,  oric,   oric,   0,  "Pravetz",  "Pravetz 8D (Disk ROM, alternate)", GAME_COMPUTER_MODIFIED
-|GAME_NOT_WORKING )
+COMP( 1985,  prav8d,   oric1,   oric,   prav8d,   0,  "Pravetz",  "Pravetz 8D")
+COMPX( 1989, prav8dd,   oric1,  oric,   prav8d,   0,  "Pravetz",  "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
+COMPX( 1989, prav8dda,   oric1,  oric,   prav8d,   0,  "Pravetz",  "Pravetz 8D (Disk ROM, alternate)", GAME_COMPUTER_MODIFIED)
 COMP( 198?,  telstrat,oric1,    telstrat,telstrat,   0,      "Tangerine", "Oric Telestrat" )
