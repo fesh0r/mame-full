@@ -446,6 +446,24 @@ READ_HANDLER ( geneve_r )
 			case 0x8008:
 				return KeyInBuf ? KeyQueue[KeyQueueHead] : 0;
 
+			case 0x8010:
+			case 0x8011:
+			case 0x8012:
+			case 0x8013:
+			case 0x8014:
+			case 0x8015:
+			case 0x8016:
+			case 0x8017:
+			case 0x8018:
+			case 0x8019:
+			case 0x801a:
+			case 0x801b:
+			case 0x801c:
+			case 0x801d:
+			case 0x801e:
+			case 0x801f:
+				return mm58274c_r(0, offset-0xf130);
+
 			default:
 				logerror("unmapped read offs=%d\n", (int) offset);
 				return 0;
@@ -680,6 +698,25 @@ WRITE_HANDLER ( geneve_w )
 			/*case 0x8008:	// read-only register???
 				key_buf = data;
 				return*/
+
+			case 0x8010:
+			case 0x8011:
+			case 0x8012:
+			case 0x8013:
+			case 0x8014:
+			case 0x8015:
+			case 0x8016:
+			case 0x8017:
+			case 0x8018:
+			case 0x8019:
+			case 0x801a:
+			case 0x801b:
+			case 0x801c:
+			case 0x801d:
+			case 0x801e:
+			case 0x801f:
+				mm58274c_w(0, offset-0xf130, data);
+				return;
 
 			default:
 				logerror("unmapped write offs=%d data=%d\n", (int) offset, (int) data);
