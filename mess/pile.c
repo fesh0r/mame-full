@@ -73,6 +73,21 @@ int pile_write(mess_pile *pile, const void *ptr, size_t size)
 
 
 
+int pile_writebyte(mess_pile *pile, char byte, size_t size)
+{
+	int rc = 0;
+
+	while(size--)
+	{
+		rc = pile_write(pile, &byte, 1);
+		if (rc)
+			return rc;
+	}
+	return rc;
+}
+
+
+
 int pile_vprintf(mess_pile *pile, const char *fmt, va_list args)
 {
 	int count;

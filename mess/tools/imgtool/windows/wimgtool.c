@@ -11,6 +11,7 @@
 #include "wimgtool.h"
 #include "wimgres.h"
 #include "pile.h"
+#include "pool.h"
 #include "strconv.h"
 
 const TCHAR wimgtool_class[] = TEXT("wimgtoolclass");
@@ -218,26 +219,19 @@ done:
 
 
 
-static void menu_open(HWND window)
+static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, HWND window, memory_pool *pool)
 {
-	OPENFILENAME ofn;
-	const struct ImageModule *module = NULL;
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	mess_pile pile;
+	const struct ImageModule *module = NULL;
 	const char *s;
-	imgtoolerr_t err = 0;
-	IMAGE *image;
-	TCHAR buffer[MAX_PATH] = { 0 };
-	struct wimgtool_info *info;
+	TCHAR *filename;
+	TCHAR *filter;
 
-	info = get_wimgtool_info(window);
+	memset(ofn, 0, sizeof(*ofn));
 	pile_init(&pile);
 
-	memset(&ofn, 0, sizeof(ofn));
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = window;
-	ofn.lpstrFile = buffer;
-	ofn.nMaxFile = sizeof(buffer) / sizeof(buffer[0]);
-
+	// write out library modules
 	while((module = imgtool_library_iterate(library, module)) != NULL)
 	{
 		pile_puts(&pile, module->description);
@@ -268,8 +262,74 @@ static void menu_open(HWND window)
 	pile_putc(&pile, '\0');
 	pile_putc(&pile, '\0');
 
-	ofn.lpstrFilter = pile_detach(&pile);
+	filename = pool_malloc(pool, sizeof(TCHAR) * MAX_PATH);
+	if (!filename)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	filename[0] = '\0';
 
+	filter = pool_malloc(pool, pile_size(&pile));
+	if (!filter)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memcpy(filter, pile_getptr(&pile), pile_size(&pile));
+
+	ofn->lStructSize = sizeof(*ofn);
+	ofn->hwndOwner = window;
+	ofn->lpstrFile = filename;
+	ofn->nMaxFile = MAX_PATH;
+	ofn->lpstrFilter = filter;
+
+done:
+	pile_delete(&pile);
+	return err;
+}
+
+
+
+static void menu_new(HWND window)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	memory_pool pool;
+	OPENFILENAME ofn;
+
+	pool_init(&pool);
+
+	err = setup_openfilename_struct(&ofn, window, &pool);
+	if (err)
+		goto done;
+	if (!GetSaveFileName(&ofn))
+		goto done;
+
+	nyi(window);
+
+done:
+	if (err)
+		report_error(window, err);
+	pool_exit(&pool);
+}
+
+
+
+static void menu_open(HWND window)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	memory_pool pool;
+	OPENFILENAME ofn;
+	const struct ImageModule *module = NULL;
+	IMAGE *image;
+	struct wimgtool_info *info;
+
+	info = get_wimgtool_info(window);
+	pool_init(&pool);
+
+	err = setup_openfilename_struct(&ofn, window, &pool);
+	if (err)
+		goto done;
 	if (!GetOpenFileName(&ofn))
 		goto done;
 
@@ -289,7 +349,7 @@ static void menu_open(HWND window)
 done:
 	if (err)
 		report_error(window, err);
-	pile_delete(&pile);
+	pool_exit(&pool);
 }
 
 
@@ -501,7 +561,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			switch(LOWORD(wparam))
 			{
 				case ID_FILE_NEW:
-					nyi(window);
+					menu_new(window);
 					break;
 
 				case ID_FILE_OPEN:
