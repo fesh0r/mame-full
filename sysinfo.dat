@@ -7340,7 +7340,16 @@ If this is an issue, you may revert to the TI disk controller.
 
 Usage:
 
-See sysinfo for the ti99/4a driver.
+See the sysinfo entry for the ti99/4a driver.
+
+The only extra feature is the IR remote handsets.  This feature was abandoned
+by TI at the last minute, but the support was seemingly not deleted from the
+ti99/4 ROMs until the release of the ti99/4a.  This feature is disabled by
+default because some programs are incompatible with it, but it can be enabled
+by setting the IR remote handsets dip-switch on and resetting the emulator
+(press F3 in so-called partial keyboard emulation mode to reset the emulator).
+A few programs can use the improved joystick (TI-Invaders seems to be one of
+them).
 
 
 History and Trivia:
