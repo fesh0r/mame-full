@@ -60,7 +60,7 @@ static int vectrex_verify_cart (char *data)
 /*********************************************************************
   ROM load and id functions
  *********************************************************************/
-int vectrex_init_cart (int id, mame_file *cartfile, int open_mode)
+int vectrex_cart_load (int id, mame_file *cartfile, int open_mode)
 {
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
 	 * in Minestorm where the exec-rom attempts to access a vector list here.
