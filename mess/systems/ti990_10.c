@@ -1,14 +1,16 @@
 /*
 	TI990/10 driver
 
-	This driver boots the DX10 build tape.  However, it appears I do not have a correct backup tape
-	for step 3 of build process to complete successfully.
+	This driver boots the DX10 build tape and build a bootable system disk.
+	I have been able to run a few programs (including most games from the
+	"fun and games" tape), but I have been unable to perform system generation
+	and install BASIC/COBOL/PASCAL.
 
 TODO :
 * programmer panel
 * emulate TILINE fully: timings, tiline timeout, possibly memory error
 * finish tape emulation (write support)
-* add additionnal devices as need appears (931 VDT, FD800, card reader, ASR/KSR, printer)
+* add additional devices as need appears (931 VDT, FD800, card reader, ASR/KSR, printer)
 * emulate 990/10A and 990/12 CPUs?
 * find out why the computer locks when executing ALGS and BASIC/COBOL/PASCAL installation
 */
@@ -311,7 +313,7 @@ static const struct IODevice io_ti990_10[] =
 		4,						/* count */
 		"hd\0",					/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_OR_READ,	/* open mode */
 		0,
 		ti990_hd_init,			/* init */
 		ti990_hd_exit,			/* exit */
@@ -332,7 +334,7 @@ static const struct IODevice io_ti990_10[] =
 		4,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_OR_READ,	/* open mode */
 		0,
 		ti990_tape_init,		/* init */
 		ti990_tape_exit,		/* exit */
