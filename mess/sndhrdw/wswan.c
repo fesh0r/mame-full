@@ -9,7 +9,7 @@
 
 void wswan_sh_update(int param, INT16 **buffer, int length)
 {
-	INT16 sample, left, right, mode4_mask;
+	INT16 left, right;
 
 	while( length-- > 0 )
 	{
