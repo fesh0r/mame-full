@@ -6,7 +6,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include <artwork.h>
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "includes/ti85.h"
 
