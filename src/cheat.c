@@ -887,6 +887,22 @@ void InitCheat(void)
 #endif
 	int i;
 
+	if (!cheatfile)
+	{
+		cheatfile = malloc(16); // long enough for 'cheat.???'
+		if (cheatfile)
+		{
+#ifdef MESS
+			strcpy(cheatfile,"cheat.cdb");
+#else
+			strcpy(cheatfile,"cheat.dat");
+#endif
+		} else 
+		{
+			return;
+		}
+	}
+
 	he_did_cheat = 0;
 	CheatEnabled = 1;
 
