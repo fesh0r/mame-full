@@ -807,7 +807,7 @@ void a2600_stop_machine(void)
 
 int a2600_id_rom(int id)
 {
-	return 0;							/* no id possible */
+	return ID_OK;	/* no id possible */
 
 }
 
