@@ -26,16 +26,16 @@ Version 0.1, April 15, 2001
 - initial release
 Version 0.2, April 15, 2001
 - added sample frequency code so that a sample frequency other than the
-	system default is usable
+  system default is usable
+Version 0.3, August 25, 2004
+- fixed 8-bit output and updated rate setup to deal with unsupported
+  audio hardware rates
 */
 
 /* Notes/Future
-1) I've only compiled this with MIPSPro, although it should work with gcc.
-	If someone could test that and email me, I'd appreciate it.
-2) Will add mixer support for the next version
-3) Use IRIX_DEBUG and IRIX_DEBUG_VERBOSE for Extra Info
-4) Use FORCEMONO to force MONO output
-5) Use FORCE8BIT to force 8 Bit output
+1) No mixer support
+2) Use IRIX_DEBUG for Extra Info
+3) Use FORCEMONO to force MONO output
 
 Email: brandon@blackboxcentral.com
 */
@@ -43,7 +43,6 @@ Email: brandon@blackboxcentral.com
 /* #define IRIX_DEBUG */
 /* #define IRIX_DEBUG_VERBOSE */
 /* #define FORCEMONO */
-/* #define FORCE8BIT */
 /* #define SYSDEP_DSP_IRIX */
 
 #ifdef SYSDEP_DSP_IRIX
@@ -57,21 +56,23 @@ Email: brandon@blackboxcentral.com
 
 /* our per instance private data struct */
 struct irix_dsp_priv_data {
-	ALport devAudio;
-	ALconfig devAudioConfig;	
-	unsigned int buffer_samples;
-	int sampwidth;
-	int sampchan;
-	int port_status;
+    ALport devAudio;
+    unsigned int buffer_samples;
+    int sampwidth;
+    int sampchan;
+    int port_status;
 };
 
-/* public methods prototypes (static but exported through the sysdep_dsp or
-   plugin struct) */
+/*
+ * public methods prototypes (static but exported through the sysdep_dsp or
+ * plugin struct)
+ */
 static void *irix_dsp_create(const void *flags);
 static void irix_dsp_destroy(struct sysdep_dsp_struct *dsp);
 static int irix_dsp_get_freespace(struct sysdep_dsp_struct *dsp);
 static int irix_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
-   int count);
+                          int count);
+static int RateSupported(int device, float streamrate);
 
 /* public variables */
 const struct plugin_struct sysdep_dsp_irix = {
@@ -86,209 +87,243 @@ const struct plugin_struct sysdep_dsp_irix = {
 };
 
 
-/* public methods (static but exported through the sysdep_dsp or plugin
-   struct) */
-static void *irix_dsp_create(const void *flags)
+/*
+ * public methods (static but exported through the sysdep_dsp or plugin struct)
+ */
+static void *
+irix_dsp_create(const void *flags)
 {
-	ALpv pvs[4];
-	long tempbits, tempchan;
-	long oldrate;
-	long ratechange = 0;
-	struct irix_dsp_priv_data *priv = NULL;
-	struct sysdep_dsp_struct *dsp = NULL;
-	const struct sysdep_dsp_create_params *params = flags;
+   ALpv pvs[4];
+   long tempbits, tempchan;
+   int oldrate;
+   struct irix_dsp_priv_data *priv = NULL;
+   struct sysdep_dsp_struct *dsp = NULL;
+   const struct sysdep_dsp_create_params *params = flags;
+   ALconfig devAudioConfig;	
    
    /* allocate the dsp struct */
    if (!(dsp = calloc(1, sizeof(struct sysdep_dsp_struct))))
    {
-      fprintf(stderr, "Error: malloc failed for struct sysdep_dsp_struct.\n"); 
+      fprintf(stderr, "Error: malloc failed for struct sysdep_dsp_struct\n"); 
       return NULL;
    }
    
-   /* alloc private data */
+   /* allocate private data */
    if(!(priv = calloc(1, sizeof(struct irix_dsp_priv_data))))
    {
-      fprintf(stderr, "Error: malloc failed for struct irix_dsp_priv_data.\n");
+      fprintf(stderr, "Error: malloc failed for struct irix_dsp_priv_data\n");
+      free(dsp);
+      return NULL;
+   }
+   
+   /* fill in the functions and some data */
+   priv->port_status = -1;
+   dsp->_priv = priv;
+   dsp->get_freespace = irix_dsp_get_freespace;
+   dsp->write = irix_dsp_write;
+   dsp->destroy = irix_dsp_destroy;
+   dsp->hw_info.type = params->type;
+   dsp->hw_info.samplerate = params->samplerate;
+
+   tempchan = (dsp->hw_info.type & SYSDEP_DSP_STEREO) ? 2 : 1;
+   tempbits = (dsp->hw_info.type & SYSDEP_DSP_16BIT) ? 2 : 1;
+
+#ifdef IRIX_DEBUG
+   fprintf(stderr, "Source Format is %dHz, %d bit, %s, with bufsize %f\n",
+           dsp->hw_info.samplerate, 
+           tempbits * 8, (tempchan == 2) ? "stereo" : "mono",
+           params->bufsize);
+#endif
+
+   /*
+    * Since AL wants signed data in either case, and 8-bit data from
+    * core xmame is unsigned, let the core xmame convert everything
+    * to 16-bit signed.
+    */
+   if (tempbits == 1)
+   {
+      dsp->hw_info.type |= SYSDEP_DSP_16BIT;
+      tempbits = 2;
+   }
+
+   /*
+    * Get the current hardware sampling rate
+    */
+   pvs[0].param = AL_RATE;
+   if (alGetParams(AL_DEFAULT_OUTPUT, pvs, 1) < 0)
+   {
+      fprintf(stderr, "alGetParams failed: %s\n", alGetErrorString(oserror()));
       irix_dsp_destroy(dsp);
       return NULL;
    }
-   
-	/* fill in the functions and some data */
-	priv->port_status = -1;
-   	dsp->_priv = priv;
-	dsp->get_freespace = irix_dsp_get_freespace;
-   	dsp->write = irix_dsp_write;
-   	dsp->destroy = irix_dsp_destroy;
-   	dsp->hw_info.type = params->type;
-   	dsp->hw_info.samplerate = params->samplerate;
 
-   	/* open the sound device */
-	pvs[0].param = AL_MAX_PORTS;
-	pvs[1].param = AL_UNUSED_PORTS;
-	if (alGetParams(AL_SYSTEM,pvs,2) < 0) {
-		fprintf(stderr, "alGetParams failed: %s\n", alGetErrorString(oserror()));
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}  
+   oldrate = pvs[0].value.i;
 
-	if (pvs[1].value.i < 1) {
-		fprintf(stderr, "No available audio ports.\n");
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}
+   /*
+    * If requested samplerate is different than current hardware rate,
+    * set it.
+    */
+   if (oldrate != dsp->hw_info.samplerate)
+   {
+      int audioHardwareRate = oldrate;
 
-	pvs[0].param = AL_RATE;
-	if (alGetParams(AL_DEFAULT_OUTPUT,pvs,1) < 0) {
-		fprintf(stderr, "alGetParams failed: %s\n", alGetErrorString(oserror()));
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}
+      fprintf(stderr, "System sample rate was %dHz, forcing %dHz instead.\n",
+              oldrate, dsp->hw_info.samplerate);
 
-    /* If samplerate is different than systems, override */
-	oldrate = pvs[0].value.i;
-	if (pvs[0].value.i != dsp->hw_info.samplerate)
-	{
-		ratechange = 1;
-		fprintf(stderr, "System sample rate was %dHz, forcing %dHz instead.\n",
-			pvs[0].value.i, dsp->hw_info.samplerate);
-	}
+      /*
+       * If the desired rate is unsupported, most devices (such as RAD) will
+       * force the device rate to be as close as possible to the desired rate.
+       * Since close isn't going to help us here, we avoid the call entirely,
+       * and let core xmame audio convert to our rate.
+       */
+      if (RateSupported(AL_DEFAULT_OUTPUT, (float) dsp->hw_info.samplerate))
+      {
+         /* Set desired sample rate */
+         pvs[0].param = AL_MASTER_CLOCK;
+         pvs[0].value.i = AL_CRYSTAL_MCLK_TYPE;
+         pvs[1].param = AL_RATE;
+         pvs[1].value.i = dsp->hw_info.samplerate;
+         alSetParams(AL_DEFAULT_OUTPUT, pvs, 2);
 
-	/* create a clean config descriptor */
-	if ( (priv->devAudioConfig = alNewConfig() ) == (ALconfig) NULL ) {
-		fprintf(stderr, "Cannot get a Descriptor. Exiting..\n");
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}
+         /* Get the new sample rate */
+         pvs[0].param = AL_RATE;
+         if (alGetParams(AL_DEFAULT_OUTPUT, pvs, 1) < 0)
+         {
+            fprintf(stderr, "alGetParams failed: %s\n",
+                    alGetErrorString(oserror()));
+            irix_dsp_destroy(dsp);
+            return NULL;
+         }
 
-#ifdef FORCE8BIT
-	dsp->hw_info.type &= ~SYSDEP_DSP_16BIT;
-#endif
+         audioHardwareRate = pvs[0].value.i;
+      }
+
+      if (audioHardwareRate != dsp->hw_info.samplerate)
+      {
+         fprintf(stderr, "Requested rate of %dHz is not supported by "
+                 "the audio hardware, so forcing\n"
+                 "playback at %dHz.\n",
+                 dsp->hw_info.samplerate, audioHardwareRate);
+         dsp->hw_info.samplerate = audioHardwareRate;
+      }
+   }
+
+   /* create a config descriptor */
+   devAudioConfig = alNewConfig();
+   if (devAudioConfig == NULL) {
+      fprintf(stderr, "Cannot get a Descriptor. Exiting..\n");
+      irix_dsp_destroy(dsp);
+      return NULL;
+   }
+
 #ifdef FORCEMONO
-	dsp->hw_info.type &= ~SYSDEP_DSP_STEREO;
+   dsp->hw_info.type &= ~SYSDEP_DSP_STEREO;
+   tempchan = 1;
 #endif
 
-	priv->buffer_samples = dsp->hw_info.samplerate * params->bufsize;
+   priv->buffer_samples = dsp->hw_info.samplerate * params->bufsize;
 
-	tempchan = (dsp->hw_info.type & SYSDEP_DSP_STEREO)? 2:1;
-	tempbits = (dsp->hw_info.type & SYSDEP_DSP_16BIT)? 2:1;
-	
-	priv->buffer_samples = priv->buffer_samples * tempchan;
+   priv->buffer_samples *= tempchan;
 
-	priv->sampwidth = tempbits;
-	priv->sampchan = tempchan;
+   priv->sampwidth = tempbits;
+   priv->sampchan = tempchan;
 
-#ifdef IRIX_DEBUG
-	fprintf(stderr, "Sample Rate Requested: %d\n", dsp->hw_info.samplerate);
-	fprintf(stderr, "Buffer Size Requested: %d\n", priv->buffer_samples);
-#endif
+   fprintf(stderr, "Setting sound to %dHz, %d bit, %s\n",
+           dsp->hw_info.samplerate,
+           tempbits * 8, (tempchan == 2) ? "stereo" : "mono");
 
-	fprintf(stderr, "Setting sound to %dHz, %d bit, %s\n",dsp->hw_info.samplerate,
-		tempbits * 8, (tempchan == 2) ? "stereo" : "mono");
+   /* source specific audio parameters */
+   alSetChannels(devAudioConfig, tempchan);
+   alSetQueueSize(devAudioConfig, priv->buffer_samples);
+   alSetWidth(devAudioConfig, tempbits);
+   alSetSampFmt(devAudioConfig, AL_SAMPFMT_TWOSCOMP);
 
-	/* channel specific audio parameters */
-	alSetChannels(priv->devAudioConfig, tempchan);						/* channels */
-	alSetQueueSize(priv->devAudioConfig,(long) priv->buffer_samples);	/* buffer size */
-	alSetSampFmt(priv->devAudioConfig, AL_SAMPFMT_TWOSCOMP);			/* BTC */
-	alSetWidth(priv->devAudioConfig, tempbits);							/* bitrate */
+   /* Open the audio port with the parameters we setup */
+   priv->devAudio = alOpenPort("audio_fd", "w", devAudioConfig);
+   if (priv->devAudio == NULL)
+   {
+       fprintf(stderr, "Error: Cannot get an audio channel descriptor.\n");
+       irix_dsp_destroy(dsp);
+       return NULL;
+   }
 
-	/* global audio parameters */
-	pvs[0].param = AL_MASTER_CLOCK;
-	pvs[0].value.i = AL_CRYSTAL_MCLK_TYPE;
-	pvs[1].param = AL_RATE;
-	pvs[1].value.i = dsp->hw_info.samplerate;
-	if (alSetParams(AL_DEFAULT_OUTPUT,pvs,2) < 0) {
-		fprintf(stderr, "Error: Cannot configure the sound system.\n");
-		irix_dsp_destroy(dsp);
-		return(NULL);
-	}
+   alFreeConfig(devAudioConfig);
 
-	/* Get new sample rate */
-	pvs[0].param = AL_RATE;
-	if (alGetParams(AL_DEFAULT_OUTPUT,pvs,1) < 0) {
-		fprintf(stderr, "failed\n");
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}
-
-    /* Verify rate was changed */
-	if ((ratechange == 1) && (oldrate == pvs[0].value.i)) 
-	  fprintf(stderr, "Error changing sample rate, using default of: %dHz.\n",
-		pvs[0].value.i);
-
-	/* Open the audio port with the parameters we setup */
-	if ( (priv->devAudio=alOpenPort("audio_fd","w",priv->devAudioConfig) ) == (ALport) NULL ) {
-		fprintf(stderr, "Error: Cannot get an audio channel descriptor.\n");
-		irix_dsp_destroy(dsp);
-		return NULL;
-	}
-
-	/* since we don't have FD's with DMEDIA, we use this to inform us of success */
-	priv->port_status = 0;
+   /*
+    * Since we don't use FD's with AL, we use this to inform us
+    * of success
+    */
+   priv->port_status = 0;
 
    return dsp;
 }
 
-static void irix_dsp_destroy(struct sysdep_dsp_struct *dsp)
+static void
+irix_dsp_destroy(struct sysdep_dsp_struct *dsp)
 {
    struct irix_dsp_priv_data *priv = dsp->_priv;
  
 #ifdef IRIX_DEBUG 
-	fprintf(stderr, "Destroying sound channel.\n");
+   fprintf(stderr, "Destroying sound channel.\n");
 #endif
  
-   if(priv)
+   if (priv)
    {
-	  if(priv->port_status >= 0) alClosePort(priv->devAudio);
-	  alFreeConfig(priv->devAudioConfig);
-      
+      if (priv->port_status >= 0)
+         alClosePort(priv->devAudio);
+
       free(priv);
    }
+
    free(dsp);
 }
 
 
-static int irix_dsp_get_freespace(struct sysdep_dsp_struct *dsp)
+static int
+irix_dsp_get_freespace(struct sysdep_dsp_struct *dsp)
 {
-	struct irix_dsp_priv_data *priv = dsp->_priv;
+   struct irix_dsp_priv_data *priv = dsp->_priv;
 
-	return alGetFillable(priv->devAudio);
+   return alGetFillable(priv->devAudio);;
 }
 
    
-static int irix_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
-   int count)
+static int
+irix_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data, int count)
 {
-	unsigned char *outbuf=data;
-   int result;
    struct irix_dsp_priv_data *priv = dsp->_priv;
-	int playcnt;
-	int maxsize;
+   int playcnt;
+   int maxsize;
 
-	maxsize = alGetFillable(priv->devAudio);
+   /*
+    * We write as many samples as possible (up to count) without blocking
+    */
+   maxsize = alGetFillable(priv->devAudio);
 
-/*	count = count * priv->sampchan; */
+   playcnt = (count <= maxsize) ? count : maxsize;
 
-	if (count <= maxsize) playcnt = count;
-		else playcnt = maxsize;
+   alWriteFrames(priv->devAudio, data, playcnt);
 
-	outbuf += (priv->sampwidth - 1);	
-
-	for (;outbuf<(data+count);outbuf+=priv->sampwidth) *outbuf ^= 0x80;
-
-	result = alWriteFrames(priv->devAudio, (void *)data, playcnt);
-
-	if (result < 0) {
-		fprintf(stderr, "Error %d: failure writing to irix stream\n",oserror());
-		return -1;
-	}
+   return playcnt;
+}
 
 
-#ifdef IRIX_DEBUG_VERBOSE
-	fprintf(stderr, "Wrote %d samples OK.\n",playcnt);
-#endif
+static int
+RateSupported(int device, float streamrate)
+{
+   ALparamInfo pinfo;
+   float minrate, maxrate;
 
-/*	return playcnt / priv->sampchan; */
-	return playcnt;
+   /* Find rate range for specified device */
+   alGetParamInfo(device, AL_RATE, &pinfo);
+
+   minrate = (float) alFixedToDouble(pinfo.min.ll);
+   maxrate = (float) alFixedToDouble(pinfo.max.ll);
+
+   if ((streamrate >= minrate) && (streamrate <= maxrate))
+      return 1;
+
+   return 0;
 }
 
 #endif /* ifdef SYSDEP_DSP_IRIX */
