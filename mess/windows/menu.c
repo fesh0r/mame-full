@@ -14,6 +14,7 @@
 #include "video.h"
 #include "snprintf.h"
 #include "dialog.h"
+#include "ui_text.h"
 
 //============================================================
 //	IMPORTS
@@ -57,7 +58,7 @@ static void dipswitches(void)
 	struct InputPort *in;
 	const char *dipswitch_name = NULL;
 	
-	dlg = win_dialog_init("DIP Switches");
+	dlg = win_dialog_init(ui_getstring(UI_dipswitches));
 	if (!dlg)
 		goto done;
 
@@ -68,7 +69,8 @@ static void dipswitches(void)
 			if ((in->type & IPF_UNUSED) == 0 && !(!options.cheat && (in->type & IPF_CHEAT)))
 			{
 				dipswitch_name = input_port_name(in);
-				win_dialog_add_combobox(dlg, dipswitch_name, in->default_value);
+				if (win_dialog_add_combobox(dlg, dipswitch_name, &in->default_value))
+					goto done;
 			}
 			else
 			{
@@ -78,10 +80,16 @@ static void dipswitches(void)
 
 		case IPT_DIPSWITCH_SETTING:
 			if (dipswitch_name)
-				win_dialog_add_combobox_item(dlg, input_port_name(in), in->default_value);
+			{
+				if (win_dialog_add_combobox_item(dlg, input_port_name(in), in->default_value))
+					goto done;
+			}
 			break;
 		}
 	}
+
+	if (win_dialog_add_standard_buttons(dlg))
+		goto done;
 
 	win_dialog_runmodal(dlg);
 

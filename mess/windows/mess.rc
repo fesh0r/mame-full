@@ -50,7 +50,6 @@ BEGIN
         END
         MENUITEM "Joysticks",                   ID_Menu, GRAYED
         MENUITEM "DIP Switches...",             ID_OPTIONS_DIPSWITCHES
-        , GRAYED
         MENUITEM SEPARATOR
         POPUP "&Frameskip"
         BEGIN

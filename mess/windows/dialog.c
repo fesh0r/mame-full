@@ -1,21 +1,54 @@
+//============================================================
+//
+//	dialog.c - Win32 MESS dialogs handling
+//
+//============================================================
+
+#include <windows.h>
+
 #include "dialog.h"
 #include "mame.h"
 #include "../windows/window.h"
+#include "ui_text.h"
 
-struct dialog_info_setupmsg
+//============================================================
+//	These defines are necessary because the MinGW headers do
+//	not have the latest definitions
+//============================================================
+
+#ifdef __GNUC__
+#define GetWindowLongPtr(hwnd, idx)			((LONG_PTR) GetWindowLong((hwnd), (idx)))
+#define SetWindowLongPtr(hwnd, idx, val)	((LONG_PTR) SetWindowLong((hwnd), (idx), (val)))
+#define GWLP_USERDATA						GWL_USERDATA
+#endif
+
+//============================================================
+
+enum
 {
-	struct dialog_info_setupmsg *next;
-	int dialog_item;
+	TRIGGER_INITDIALOG	= 1,
+	TRIGGER_APPLY		= 2
+};
+
+typedef LRESULT (*trigger_function)(HWND dlgwnd, UINT message, WPARAM wparam, LPARAM lparam);
+
+struct dialog_info_trigger
+{
+	struct dialog_info_trigger *next;
+	WORD dialog_item;
+	WORD trigger_flags;
 	UINT message;
 	WPARAM wparam;
 	LPARAM lparam;
+	UINT16 *result;
+	trigger_function trigger_proc;
 };
 
 struct dialog_info
 {
 	HGLOBAL handle;
-	struct dialog_info_setupmsg *setup_messages;
-	struct dialog_info_setupmsg *setup_messages_last;
+	struct dialog_info_trigger *trigger_first;
+	struct dialog_info_trigger *trigger_last;
 	WORD item_count;
 	WORD cx, cy;
 	int combo_string_count;
@@ -23,12 +56,60 @@ struct dialog_info
 };
 
 //============================================================
+//	PARAMETERS
+//============================================================
 
 #define DIM_VERTICAL_SPACING	2
 #define DIM_HORIZONTAL_SPACING	2
 #define DIM_ROW_HEIGHT			12
 #define DIM_LABEL_WIDTH			80
 #define DIM_COMBO_WIDTH			140
+#define DIM_BUTTON_WIDTH		50
+
+#define WNDLONG_DIALOG			GWLP_USERDATA
+
+#define DLGITEM_BUTTON			0x0080
+#define DLGITEM_EDIT			0x0081
+#define DLGITEM_STATIC			0x0082
+#define DLGITEM_LISTBOX			0x0083
+#define DLGITEM_SCROLLBAR		0x0084
+#define DLGITEM_COMBOBOX		0x0085
+
+#define DLGTEXT_OK				ui_getstring(UI_OK)
+#define DLGTEXT_APPLY			"Apply"
+#define DLGTEXT_CANCEL			"Cancel"
+
+//============================================================
+//	dialog_trigger
+//============================================================
+
+static void dialog_trigger(HWND dlgwnd, WORD trigger_flags)
+{
+	LRESULT result;
+	HWND dialog_item;
+	struct dialog_info *di;
+	struct dialog_info_trigger *trigger;
+
+	di = (struct dialog_info *) GetWindowLongPtr(dlgwnd, WNDLONG_DIALOG);
+	assert(di);
+	for (trigger = di->trigger_first; trigger; trigger = trigger->next)
+	{
+		if (trigger->trigger_flags & trigger_flags)
+		{
+			dialog_item = GetDlgItem(dlgwnd, trigger->dialog_item);
+			assert(dialog_item);
+			result = 0;
+
+			if (trigger->message)
+				result = SendMessage(dialog_item, trigger->message, trigger->wparam, trigger->lparam);
+			if (trigger->trigger_proc)
+				result = trigger->trigger_proc(dialog_item, trigger->message, trigger->wparam, trigger->lparam);
+
+			if (trigger->result)
+				*(trigger->result) = result;
+		}
+	}
+}
 
 //============================================================
 //	dialog_proc
@@ -36,21 +117,37 @@ struct dialog_info
 
 static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	HWND dialog_item;
 	INT_PTR handled = TRUE;
-	struct dialog_info *di;
-	struct dialog_info_setupmsg *setup_msg;
+	TCHAR buf[32];
+	const char *str;
 
 	switch(msg) {
 	case WM_INITDIALOG:
-		di = (struct dialog_info *) lparam;
-		SetWindowLong(dlgwnd, 0, (LONG_PTR) di);
+		SetWindowLongPtr(dlgwnd, WNDLONG_DIALOG, (LONG_PTR) lparam);
+		dialog_trigger(dlgwnd, TRIGGER_INITDIALOG);
+		break;
 
-		for (setup_msg = di->setup_messages; setup_msg; setup_msg = setup_msg->next)
+	case WM_COMMAND:
+		GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
+
+		str = buf;
+		if (!strcmp(str, DLGTEXT_OK))
 		{
-			dialog_item = GetDlgItem(dlgwnd, setup_msg->dialog_item);
-			SendMessage(dialog_item, setup_msg->message, setup_msg->wparam, setup_msg->lparam);
+			dialog_trigger(dlgwnd, TRIGGER_APPLY);
+			EndDialog(dlgwnd, 0);
 		}
+		else if (!strcmp(str, DLGTEXT_CANCEL))
+		{
+			EndDialog(dlgwnd, 0);
+		}
+		else
+		{
+			handled = FALSE;
+		}
+		break;
+
+	case WM_DESTROY:
+		EndDialog(dlgwnd, 0);
 		break;
 
 	default:
@@ -161,29 +258,36 @@ static int dialog_write_item(struct dialog_info *di, DWORD style, short x, short
 }
 
 //============================================================
-//	dialog_add_setup_message
+//	dialog_add_trigger
 //============================================================
 
-static int dialog_add_setup_message(struct dialog_info *di, WORD dialog_item,
-	UINT message, WPARAM wparam, LPARAM lparam)
+static int dialog_add_trigger(struct dialog_info *di, WORD dialog_item,
+	WORD trigger_flags, UINT message, trigger_function trigger_proc,
+	WPARAM wparam, LPARAM lparam, UINT16 *result)
 {
-	struct dialog_info_setupmsg *setupmsg;
+	struct dialog_info_trigger *trigger;
 
-	setupmsg = malloc(sizeof(struct dialog_info_setupmsg));
-	if (!setupmsg)
+	assert(di);
+	assert(trigger_flags);
+
+	trigger = (struct dialog_info_trigger *) malloc(sizeof(struct dialog_info_trigger));
+	if (!trigger)
 		return 1;
 
-	setupmsg->next = NULL;
-	setupmsg->dialog_item = dialog_item;
-	setupmsg->message = message;
-	setupmsg->wparam = wparam;
-	setupmsg->lparam = lparam;
+	trigger->next = NULL;
+	trigger->trigger_flags = trigger_flags;
+	trigger->dialog_item = dialog_item;
+	trigger->message = message;
+	trigger->trigger_proc = trigger_proc;
+	trigger->wparam = wparam;
+	trigger->lparam = lparam;
+	trigger->result = result;
 
-	if (di->setup_messages_last)
-		di->setup_messages_last->next = setupmsg;
+	if (di->trigger_last)
+		di->trigger_last->next = trigger;
 	else
-		di->setup_messages = setupmsg;
-	di->setup_messages_last = setupmsg;
+		di->trigger_first = trigger;
+	di->trigger_last = trigger;
 	return 0;
 }
 
@@ -200,6 +304,19 @@ static void dialog_prime(struct dialog_info *di)
 	dlg_template->cx = di->cx;
 	dlg_template->cy = di->cy;
 	GlobalUnlock(di->handle);
+}
+
+//============================================================
+//	dialog_get_combo_value
+//============================================================
+
+static LRESULT dialog_get_combo_value(HWND dialog_item, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	int idx;
+	idx = SendMessage(dialog_item, CB_GETCURSEL, 0, 0);
+	if (idx == CB_ERR)
+		return 0;
+	return SendMessage(dialog_item, CB_GETITEMDATA, idx, 0);
 }
 
 //============================================================
@@ -249,7 +366,7 @@ error:
 //	win_dialog_add_combobox
 //============================================================
 
-int win_dialog_add_combobox(void *dialog, const char *label, int default_value)
+int win_dialog_add_combobox(void *dialog, const char *label, UINT16 *value)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
@@ -259,15 +376,18 @@ int win_dialog_add_combobox(void *dialog, const char *label, int default_value)
 	y = di->cy + DIM_VERTICAL_SPACING;
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
-			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, label, 0x0082))
+			x, y, DIM_LABEL_WIDTH, DIM_ROW_HEIGHT, label, DLGITEM_STATIC))
 		return 1;
 
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP,
-			x, y, DIM_COMBO_WIDTH, DIM_ROW_HEIGHT * 8, "", 0x0085))
+			x, y, DIM_COMBO_WIDTH, DIM_ROW_HEIGHT * 8, "", DLGITEM_COMBOBOX))
 		return 1;
 	di->combo_string_count = 0;
-	di->combo_default_value = default_value;
+	di->combo_default_value = *value;
+
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, dialog_get_combo_value, 0, 0, value))
+		return 1;
 
 	x += DIM_COMBO_WIDTH + DIM_HORIZONTAL_SPACING;
 
@@ -284,19 +404,43 @@ int win_dialog_add_combobox(void *dialog, const char *label, int default_value)
 int win_dialog_add_combobox_item(void *dialog, const char *item_label, int item_data)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
-	if (dialog_add_setup_message(di, di->item_count, CB_ADDSTRING, 0, (LPARAM) item_label))
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_ADDSTRING, NULL, 0, (LPARAM) item_label, NULL))
 		return 1;
 	di->combo_string_count++;
-	if (dialog_add_setup_message(di, di->item_count, CB_SETITEMDATA, di->combo_string_count-1, (LPARAM) item_data))
+	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_SETITEMDATA, NULL, di->combo_string_count-1, (LPARAM) item_data, NULL))
 		return 1;
 	if (item_data == di->combo_default_value)
 	{
-		if (dialog_add_setup_message(di, di->item_count, CB_SETCURSEL, di->combo_string_count-1, 0))
+		if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, CB_SETCURSEL, NULL, di->combo_string_count-1, 0, NULL))
 			return 1;
 	}
 	return 0;
 }
 
+//============================================================
+//	win_dialog_add_standard_buttons
+//============================================================
+
+int win_dialog_add_standard_buttons(void *dialog)
+{
+	struct dialog_info *di = (struct dialog_info *) dialog;
+	short x;
+	short y;
+
+	x = di->cx - DIM_HORIZONTAL_SPACING - DIM_BUTTON_WIDTH;
+	y = di->cy + DIM_VERTICAL_SPACING;
+
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, DIM_BUTTON_WIDTH, DIM_ROW_HEIGHT, DLGTEXT_CANCEL, DLGITEM_BUTTON))
+		return 1;
+
+	x -= DIM_HORIZONTAL_SPACING + DIM_BUTTON_WIDTH;
+	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
+			x, y, DIM_BUTTON_WIDTH, DIM_ROW_HEIGHT, DLGTEXT_OK, DLGITEM_BUTTON))
+		return 1;
+	di->cy += DIM_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+	return 0;
+}
 
 //============================================================
 //	win_dialog_exit
@@ -305,19 +449,19 @@ int win_dialog_add_combobox_item(void *dialog, const char *item_label, int item_
 void win_dialog_exit(void *dialog)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
-	struct dialog_info_setupmsg *setupmsg;
-	struct dialog_info_setupmsg *next;
+	struct dialog_info_trigger *trigger;
+	struct dialog_info_trigger *next;
 
 	assert(di);
 	if (di->handle)
 		GlobalFree(di->handle);
 
-	setupmsg = di->setup_messages;
-	while(setupmsg)
+	trigger = di->trigger_first;
+	while(trigger)
 	{
-		next = setupmsg->next;
-		free(setupmsg);
-		setupmsg = next;
+		next = trigger->next;
+		free(trigger);
+		trigger = next;
 	}
 	free(di);
 }
