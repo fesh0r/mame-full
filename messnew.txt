@@ -18,6 +18,9 @@ System Driver Changes:
   Lock to delete back a char. Now you can press backspace).
   [Kev Thacker]
 
+- [ORIC1/ORICA/TELSTRAT] Fixed .tap loading. (Conversion from .tap to internal .wav form was completely
+  broken). [Kev Thacker]
+  
 - [COCO 3] More work on improving video timing for mid frame video register
   modification. [Nate Woods]
 
@@ -26,6 +29,9 @@ Other Changes:
 
 - The core is based on MAME 0.37b12. This incorporates all 
   features of the update to this core.  [MAME team] 
+
+- [IMGTOOL] Added support for NC100/NC200 PCMCIA Ram Card images. Card can be formatted and files
+  can be transfered to and from card filesystem. [Kev Thacker] 
 
 - [machine/z80fmly] The Zero count/Timeout output pulse was very short. Now the pulse is
   active for longer. Required for KC85/4 colour flash to work! [Kev Thacker]
