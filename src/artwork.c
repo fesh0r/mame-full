@@ -618,10 +618,12 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 		return 1;
 	if (!artwork_list)
 #ifdef MESS
+	{
 		if ((params->width < 200) && (params->height < 200))
 		{
 			options.artwork_res = 2;
 		}
+	}
 		else
 #endif
 		return osd_create_display(params, rgb_components);
