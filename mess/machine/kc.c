@@ -6,6 +6,8 @@
 
 #define KC_DEBUG
 
+static int kc85_boot = 0;
+
 static int kc85_pio_data[2];
 
 static void kc85_4_update_0x0c000(void);
@@ -187,7 +189,7 @@ int kc85_floppy_init(int id)
 
 static void kc85_disc_hw_ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(1, Z80_VECTOR(1, state));
+	cpu_cause_interrupt(1, Z80_VECTOR(0, state));
 }
 
 READ_HANDLER(kc85_disk_hw_ctc_r)
@@ -1376,53 +1378,63 @@ static void kc85_4_update_0x08000(void)
 /* update status of memory area 0x0000-0x03fff */
 static void kc85_4_update_0x00000(void)
 {
-	/* access ram? */
-	if (kc85_pio_data[0] & (1<<1))
+	if (kc85_boot)
 	{
-#ifdef KC_DEBUG
-		logerror("ram0 enabled\n");
-#endif
-
-		/* yes */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		/* set address of bank */
-		cpu_setbank(1, kc85_ram);
-
-		/* write protect ram? */
-		if ((kc85_pio_data[0] & (1<<3))==0)
-		{
-			/* yes */
-#ifdef KC_DEBUG
-			logerror("ram0 write protected\n");
-#endif
-
-			/* ram is enabled and write protected */
-			memory_set_bankhandler_w(7, 0, MWA_NOP);
-		}
-		else
-		{
-#ifdef KC_DEBUG
-			logerror("ram0 write enabled\n");
-#endif
-
-			/* ram is enabled and write enabled */
-			memory_set_bankhandler_w(7, 0, MWA_BANK7);
-			/* set address of bank */
-			cpu_setbank(7, kc85_ram);
-		}
+		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000+0x01000);
+		memory_set_bankhandler_r(1,0, MRA_BANK1);
+		memory_set_bankhandler_w(7,0, MWA_NOP);
+		kc85_boot = 0;
 	}
 	else
 	{
-#ifdef KC_DEBUG
-		logerror("no memory at ram0!\n");
-#endif
+		/* access ram? */
+		if (kc85_pio_data[0] & (1<<1))
+		{
+	#ifdef KC_DEBUG
+			logerror("ram0 enabled\n");
+	#endif
 
-//		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
-		/* ram is disabled */
-		memory_set_bankhandler_r(1, 0, MRA_NOP);
+			/* yes */
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			/* set address of bank */
+			cpu_setbank(1, kc85_ram);
+
+			/* write protect ram? */
+			if ((kc85_pio_data[0] & (1<<3))==0)
+			{
+				/* yes */
+	#ifdef KC_DEBUG
+				logerror("ram0 write protected\n");
+	#endif
+
+				/* ram is enabled and write protected */
+				memory_set_bankhandler_w(7, 0, MWA_NOP);
+			}
+			else
+			{
+	#ifdef KC_DEBUG
+				logerror("ram0 write enabled\n");
+	#endif
+
+				/* ram is enabled and write enabled */
+				memory_set_bankhandler_w(7, 0, MWA_BANK7);
+				/* set address of bank */
+				cpu_setbank(7, kc85_ram);
+			}
+		}
+		else
+		{
+	#ifdef KC_DEBUG
+			logerror("no memory at ram0!\n");
+	#endif
+
+	//		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
+			/* ram is disabled */
+			memory_set_bankhandler_r(1, 0, MRA_NOP);
 
 
-		memory_set_bankhandler_w(7, 0, MWA_NOP);
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
+		}
 	}
 }
 
@@ -1648,15 +1660,15 @@ static void kc85_3_update_0x0c000(void)
 		/* BASIC takes next priority */
 		logerror("BASIC rom 0x0c000\n");
 #endif
-		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	}
 	else
 	{
 #ifdef KC_DEBUG
 		logerror("No roms 0x0c000\n");
 #endif
-		memory_set_bankhandler_r(3, 0, MRA_NOP);
+		memory_set_bankhandler_r(4, 0, MRA_NOP);
 	}
 }
 
@@ -1669,15 +1681,15 @@ static void kc85_3_update_0x0e000(void)
 		/* enable CAOS rom in memory range 0x0e000-0x0ffff */
 		logerror("CAOS rom 0x0e000\n");
 #endif
-		cpu_setbank(4,memory_region(REGION_CPU1) + 0x012000);
-        memory_set_bankhandler_r(4, 0, MRA_BANK4);
+		cpu_setbank(5,memory_region(REGION_CPU1) + 0x012000);
+        memory_set_bankhandler_r(5, 0, MRA_BANK5);
 	}
 	else
 	{
 #ifdef KC_DEBUG
 		logerror("no rom 0x0e000\n");
 #endif
-		memory_set_bankhandler_r(4, 0, MRA_NOP);
+		memory_set_bankhandler_r(5, 0, MRA_NOP);
 	}
 }
 
@@ -1686,49 +1698,62 @@ static void kc85_3_update_0x0e000(void)
 for write operations */
 static void kc85_3_update_0x00000(void)
 {
-	/* access ram? */
-	if (kc85_pio_data[0] & (1<<1))
+	if (kc85_boot)
 	{
-#ifdef KC_DEBUG
-		logerror("ram0 enabled\n");
-#endif
-		/* yes */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		/* set address of bank */
-		cpu_setbank(1, kc85_ram);
-
-		/* write protect ram? */
-		if ((kc85_pio_data[0] & (1<<3))==0)
-		{
-			/* yes */
-#ifdef KC_DEBUG
-			logerror("ram0 write protected\n");
-#endif
-
-			/* ram is enabled and write protected */
-			memory_set_bankhandler_w(5, 0, MWA_NOP);
-		}
-		else
-		{
-#ifdef KC_DEBUG
-		logerror("ram0 write enabled\n");
-#endif
-
-			/* ram is enabled and write enabled */
-			memory_set_bankhandler_w(5, 0, MWA_BANK5);
-			/* set address of bank */
-			cpu_setbank(5, kc85_ram);
-		}
+		/* the real hardware changes the first few opcode fetches */
+		/* I can't do that with MESS */
+		/* CAOS rom 0x0f000 to 0x0000 */
+		cpu_setbank(1, memory_region(REGION_CPU1)+0x012000+0x01000);
+		memory_set_bankhandler_r(1, 0,MRA_BANK1);
+		memory_set_bankhandler_w(6, 0,MWA_NOP);
+		kc85_boot = 0;
 	}
 	else
 	{
-#ifdef KC_DEBUG
-		logerror("no memory at ram0!\n");
-#endif
+		/* access ram? */
+		if (kc85_pio_data[0] & (1<<1))
+		{
+	#ifdef KC_DEBUG
+			logerror("ram0 enabled\n");
+	#endif
+			/* yes */
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			/* set address of bank */
+			cpu_setbank(1, kc85_ram);
 
-		/* ram is disabled */
-		memory_set_bankhandler_r(1, 0, MRA_NOP);
-		memory_set_bankhandler_w(5, 0, MWA_NOP);
+			/* write protect ram? */
+			if ((kc85_pio_data[0] & (1<<3))==0)
+			{
+				/* yes */
+	#ifdef KC_DEBUG
+				logerror("ram0 write protected\n");
+	#endif
+
+				/* ram is enabled and write protected */
+				memory_set_bankhandler_w(6, 0, MWA_NOP);
+			}
+			else
+			{
+	#ifdef KC_DEBUG
+			logerror("ram0 write enabled\n");
+	#endif
+
+				/* ram is enabled and write enabled */
+				memory_set_bankhandler_w(6, 0, MWA_BANK6);
+				/* set address of bank */
+				cpu_setbank(6, kc85_ram);
+			}
+		}
+		else
+		{
+	#ifdef KC_DEBUG
+			logerror("no memory at ram0!\n");
+	#endif
+
+			/* ram is disabled */
+			memory_set_bankhandler_r(1, 0, MRA_NOP);
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
+		}
 	}
 }
 
@@ -1746,11 +1771,11 @@ static void kc85_3_update_0x08000(void)
 #endif
 		ram_page = kc85_ram+0x08000;
 
-		cpu_setbank(2, ram_page);
-		cpu_setbank(6, ram_page);
+		cpu_setbank(3, ram_page);
+		cpu_setbank(8, ram_page);
 
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_w(8, 0, MWA_BANK8);
     }
     else
     if (kc85_pio_data[1] & (1<<5))
@@ -1761,8 +1786,8 @@ static void kc85_3_update_0x08000(void)
 #endif
 		ram_page = kc85_ram + 0x04000;
 
-		cpu_setbank(2, ram_page);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		cpu_setbank(3, ram_page);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
 
 		/* write protect RAM8 ? */
 		if ((kc85_pio_data[1] & (1<<6))==0)
@@ -1771,7 +1796,7 @@ static void kc85_3_update_0x08000(void)
 			logerror("RAM8 write protected\n");
 #endif
 			/* ram8 is enabled and write protected */
-			memory_set_bankhandler_w(6, 0, MWA_NOP);
+			memory_set_bankhandler_w(8, 0, MWA_NOP);
 		}
 		else
 		{
@@ -1779,8 +1804,8 @@ static void kc85_3_update_0x08000(void)
 			logerror("RAM8 write enabled\n");
 #endif
 			/* ram8 is enabled and write enabled */
-			memory_set_bankhandler_w(6, 0, MWA_BANK6);
-			cpu_setbank(6,ram_page);
+			memory_set_bankhandler_w(8, 0, MWA_BANK8);
+			cpu_setbank(8,ram_page);
 		}
     }
     else
@@ -1788,8 +1813,8 @@ static void kc85_3_update_0x08000(void)
 #ifdef KC_DEBUG
 		logerror("no memory at ram8!\n");
 #endif
-		memory_set_bankhandler_r(2, 0, MRA_NOP);
-		memory_set_bankhandler_w(6, 0, MWA_NOP);
+		memory_set_bankhandler_r(3, 0, MRA_NOP);
+		memory_set_bankhandler_w(8, 0, MWA_NOP);
     }
 }
 
@@ -1865,14 +1890,23 @@ READ_HANDLER ( kc85_unmapped_r )
 	return 0x0ff;
 }
 
-static OPBASE_HANDLER( kc85_opbaseoverride )
+static OPBASE_HANDLER( kc85_3_opbaseoverride )
 {
 	memory_set_opbase_handler(0,0);
 
-	cpunum_set_pc(0,0x0f000);
-//	cpu_set_reg(Z80_PC, 0x0f000);
+	kc85_3_update_0x00000();
 
-	return (cpu_get_pc() & 0x0ffff);
+	return (cpunum_get_pc(0) & 0x0ffff);
+}
+
+
+static OPBASE_HANDLER( kc85_4_opbaseoverride )
+{
+	memory_set_opbase_handler(0,0);
+	
+	kc85_4_update_0x00000();
+
+	return (cpunum_get_pc(0) & 0x0ffff);
 }
 
 
@@ -1920,7 +1954,7 @@ static void kc85_pio_interrupt(int state)
 
 static void kc85_ctc_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_cause_interrupt(0, Z80_VECTOR(1, state));
 }
 
 /* callback for ardy output from PIO */
@@ -2030,13 +2064,6 @@ static void	kc85_common_init(void)
 	kc_cassette_init();
 	kc_keyboard_init();
 
-	/* this is temporary. Normally when a Z80 is reset, it will
-	execute address 0. It appears the KC85 series pages the rom
-	at address 0x0000-0x01000 which has a single jump in it,
-	can't see yet where it disables it later!!!! so for now
-	here will be a override */
-	memory_set_opbase_handler(0, kc85_opbaseoverride);
-
 	/* kc85 has a 50hz input to the ctc channel 2 and 3 */
 	/* channel 2 this controls the video colour flash */
 	/* kc85 has a 15khz (?) input to the ctc channel 0 and 1 */
@@ -2078,13 +2105,23 @@ void kc85_4_init_machine(void)
 	kc85_pio_data[0] = 0x0f;
 	kc85_pio_data[1] = 0x0f1;
 
-	kc85_4_update_0x00000();
 	kc85_4_update_0x04000();
 	kc85_4_update_0x08000();
 	kc85_4_update_0x0c000();
 	kc85_4_update_0x0e000();
 
 	kc85_common_init();
+
+	kc85_boot = 1;
+	kc85_4_update_0x00000();
+
+	/* this is temporary. Normally when a Z80 is reset, it will
+	execute address 0. It appears the KC85 series pages the rom
+	at address 0x0000-0x01000 which has a single jump in it,
+	can't see yet where it disables it later!!!! so for now
+	here will be a override */
+	memory_set_opbase_handler(0, kc85_4_opbaseoverride);
+
 }
 
 void kc85_4_shutdown_machine(void)
@@ -2117,12 +2154,25 @@ void kc85_3_init_machine(void)
 	kc85_pio_data[0] = 0x0f;
 	kc85_pio_data[1] = 0x0f1;
 
-	kc85_3_update_0x00000();
+	cpu_setbank(2,kc85_ram+0x0c000);
+	cpu_setbank(7,kc85_ram+0x0c000);
+
 	kc85_3_update_0x08000();
 	kc85_3_update_0x0c000();
 	kc85_3_update_0x0e000();
 
 	kc85_common_init();
+
+	kc85_boot = 1;
+	kc85_3_update_0x00000();
+
+	/* this is temporary. Normally when a Z80 is reset, it will
+	execute address 0. It appears the KC85 series pages the rom
+	at address 0x0000-0x01000 which has a single jump in it,
+	can't see yet where it disables it later!!!! so for now
+	here will be a override */
+	memory_set_opbase_handler(0, kc85_3_opbaseoverride);
+
 }
 
 void kc85_3_shutdown_machine(void)
