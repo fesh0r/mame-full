@@ -29,6 +29,9 @@ Other Changes:
 - The core is based on MAME 0.37b9. This incorporates all 
   features of the update to this core.  [MAME team] 
 
+- The M6847 interfaces were given a facelift, and now more correctly mimic the signals on the chip.
+[Nate Woods]
+
 -------------------------------------------------------------------------------
 0.37b8 
 ---------

@@ -411,30 +411,16 @@ int atom_8255_portc_r (int offset )
 
 */
 
-static int atom_mode_trans[] =
-{
-	M6847_MODE_G1C,
-	M6847_MODE_G1R,
-	M6847_MODE_G2C,
-	M6847_MODE_G2R,
-	M6847_MODE_G3C,
-	M6847_MODE_G3R,
-	M6847_MODE_G4C,
-	M6847_MODE_G4R
-};
-
 void atom_8255_porta_w (int offset, int data)
 {
 	if ((data & 0xf0) != (atom_8255_porta & 0xf0))
 	{
-		if (!(data & 0x10))
-		{
-			m6847_set_mode (M6847_MODE_TEXT);
-		}
-		else
-		{
-			m6847_set_mode (atom_mode_trans[data >> 5]);
-		}
+		m6847_gm2_w(0,	data & 0x80);
+		m6847_gm1_w(0,	data & 0x40);
+		m6847_gm0_w(0,	data & 0x20);
+		m6847_ag_w(0,	data & 0x10);
+		m6847_set_cannonical_row_height();
+		schedule_full_refresh();
 	}
 	atom_8255_porta = data;
 /*	logerror("8255: Write port a, %02x\n", data); */

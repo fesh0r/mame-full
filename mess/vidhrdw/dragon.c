@@ -70,20 +70,30 @@ static const struct rastertrack_info coco3_ri = {
  * CoCo 1/2 Stuff
  * -------------------------------------------------- */
 
-static void dragon_vblank(void)
+void dragon_charproc(UINT8 c)
 {
-	/* clear vblank */
-	pia_0_cb1_w (0, 0);
+	int inv;
+
+	inv = (c & 0x40) ? 1 : 0;
+	if (m6847_gm1_r(0))
+		inv ^= 1;
+
+	m6847_as_w(0,	(c & 0x80) || (m6847_intext_r(0)));
+	m6847_inv_w(0,	inv);
 }
 
 static int internal_dragon_vh_start(int m6847_version)
 {
-	if (m6847_vh_start(m6847_version))
+	struct m6847_init_params p;
+	p.version = m6847_version;
+	p.artifactdipswitch = 12;
+	p.ram = memory_region(REGION_CPU1);
+	p.ramsize = 0x10000;
+	p.charproc = dragon_charproc;
+
+	if (m6847_vh_start(&p))
 		return 1;
 
-	m6847_set_vram(memory_region(REGION_CPU1), 0xffff);
-	m6847_set_vblank_proc(dragon_vblank);
-	m6847_set_artifact_dipswitch(12);
 	sam_videomode = 0;
 	return 0;
 }
@@ -134,15 +144,15 @@ WRITE_HANDLER(dragon_sam_vdg_mode)
 	 * 111	Reserved/Invalid
 	 */
 
-	static int sammode2vmode[] = {
-		M6847_MODE_TEXT,	/* 0 */
-		M6847_MODE_G1C,		/* 1 */
-		M6847_MODE_G2C,		/* 2 */
-		M6847_MODE_G2R,		/* 3 */
-		M6847_MODE_G3C,		/* 4 */
-		M6847_MODE_G3R,		/* 5 */
-		M6847_MODE_G4R,		/* 6 */
-		M6847_MODE_G4R		/* 7 */
+	static int sammode2rowheight[] = {
+		12,	/* 0 */
+		3,	/* 1 */
+		3,	/* 2 */
+		2,	/* 3 */
+		2,	/* 4 */
+		1,	/* 5 */
+		1,	/* 6 */
+		1	/* 7 */
 	};
 
 	if (offset & 0x01)
@@ -150,7 +160,7 @@ WRITE_HANDLER(dragon_sam_vdg_mode)
 	else
 		sam_videomode &= ~(0x01 << (offset/2));
 
-	m6847_set_vmode(sammode2vmode[sam_videomode]);
+	m6847_set_row_height(sammode2rowheight[sam_videomode]);
 }
 
 /* --------------------------------------------------
@@ -160,14 +170,18 @@ WRITE_HANDLER(dragon_sam_vdg_mode)
 int coco3_vh_start(void)
 {
     int i;
+	struct m6847_init_params p;
 
-	if (internal_m6847_vh_start(M6847_VERSION_M6847T1, MAX_HIRES_VRAM)) {
+	p.version = M6847_VERSION_M6847T1;
+	p.artifactdipswitch = 12;
+	p.ram = memory_region(REGION_CPU1);
+	p.ramsize = 0x10000;
+	p.charproc = dragon_charproc;
+
+	if (internal_m6847_vh_start(&p, MAX_HIRES_VRAM)) {
 		paletteram = NULL;
 		return 1;
 	}
-
-	m6847_set_vram(memory_region(REGION_CPU1) + 0x70000, 0xffff);
-	m6847_set_artifact_dipswitch(12);
 
 	paletteram = malloc(16 * sizeof(int));
 	if (!paletteram)
@@ -726,7 +740,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_metapalette,
-			&RAM[coco3_lores_vidbase()], &the_state,
+			&RAM[coco3_lores_vidbase()],
 			TRUE, 1, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}

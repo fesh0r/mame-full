@@ -12,10 +12,25 @@
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
-struct m6847_state the_state;
-static m6847_vblank_proc vblankproc;
-static int artifact_dipswitch;
-static int chip_version;
+struct m6847_state {
+	struct m6847_init_params initparams;
+	int modebits;
+	int videooffset;
+	int rowsize;
+};
+
+static struct m6847_state the_state;
+
+enum {
+	M6847_MODEBIT_AG		= 0x80,
+	M6847_MODEBIT_AS		= 0x40,
+	M6847_MODEBIT_INTEXT	= 0x20,
+	M6847_MODEBIT_INV		= 0x10,
+	M6847_MODEBIT_CSS		= 0x08,
+	M6847_MODEBIT_GM2		= 0x04,
+	M6847_MODEBIT_GM1		= 0x02,
+	M6847_MODEBIT_GM0		= 0x01
+};
 
 #define MAX_VRAM 6144
 
@@ -227,15 +242,6 @@ static unsigned char fontdata8x12[] =
 	0xff,0xff,0xff,0xff,0xff,0xff, 0xff,0xff,0xff,0xff,0xff,0xff
 };
 
-static void calc_videoram_size(void)
-{
-	static int videoramsizes[] = {
-		512,	512,	512,	512,	512,	512,	512,	512,
-		1024,	1024,	2048,	1536,	3072,	3072,	6144,	6144
-	};
-	videoram_size = videoramsizes[the_state.video_vmode >> 1];
-}
-
 /* --------------------------------------------------
  * Initialization and termination
  * -------------------------------------------------- */
@@ -245,128 +251,111 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 	memcpy(sys_palette,palette,sizeof(palette));
 }
 
-int internal_m6847_vh_start(int version, int maxvram)
+int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyramsize)
 {
-	the_state.vram_mask = 0;
-	the_state.video_offset = 0;
-	the_state.video_gmode = 0;
-	the_state.video_vmode = 0;
-	vblankproc = NULL;
-	artifact_dipswitch = -1;
-	chip_version = version;
+	the_state.initparams = *params;
+	the_state.modebits = 0;
+	the_state.videooffset = 0;
+	the_state.rowsize = 12;
 
-	calc_videoram_size();
-
-	videoram_size = maxvram;
+	videoram_size = dirtyramsize;
 	if (generic_vh_start())
 		return 1;
 
 	return 0;
 }
 
-int m6847_vh_start(int version)
+int m6847_vh_start(const struct m6847_init_params *params)
 {
-	return internal_m6847_vh_start(version, MAX_VRAM);
+	return internal_m6847_vh_start(params, MAX_VRAM);
 }
 
-void m6847_set_vram(void *ram, int rammask)
+void m6847_set_ram_size(int ramsize)
 {
-	videoram = ram;
-	the_state.vram_mask = rammask;
+	the_state.initparams.ramsize = ramsize;
 }
 
-void m6847_set_vram_mask(int rammask)
-{
-	the_state.vram_mask = rammask;
-}
-
-void m6847_set_vblank_proc(m6847_vblank_proc proc)
-{
-	vblankproc = proc;
-}
-
-void m6847_set_artifact_dipswitch(int sw)
-{
-	artifact_dipswitch = sw;
-}
-
-static UINT8 *mapper_semigraphics6(UINT8 *mem, int param, int *fg, int *bg, int *attr)
+static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *attr)
 {
 	UINT8 b;
-
-	b = *mem;
-	*bg = 8;
-	*fg = ((b >> 6) & 0x3) + param;
-	return &fontdata8x12[(96 + (b & 0x3f)) * 12];
-}
-
-static UINT8 *mapper_text(UINT8 *mem, int param, int *fg, int *bg, int *attr)
-{
-	int fgc = 0, bgc = 0;
-	int b;
-	UINT8 *result;
+	UINT8 *character;
+	int bgc, fgc;
+	int lowercase_hack = 0;
 
 	b = *mem;
 
-	if (b >= 0x80) {
-		/* Semigraphics 4 */
-		switch(b & 0x0f) {
-		case 0:
-			bgc = 8;
-			result = NULL;
-			break;
-		case 15:
-			bgc = (b >> 4) & 0x7;
-			result = NULL;
-			break;
-		default:
-			bgc = 8;
-			fgc = (b >> 4) & 0x7;
-			result = &fontdata8x12[(160 + (b & 0x0f)) * 12];
-			break;
+	/* Give the host machine a chance to pull our strings */
+	the_state.initparams.charproc(b);
+
+	/* HACKHACK - Need to know more about the M6847T1 to be accurate! */
+	if (the_state.initparams.version == M6847_VERSION_M6847T1) {
+		if (the_state.modebits & M6847_MODEBIT_INTEXT) {
+			if (b < 0x80)
+				lowercase_hack = 1;
 		}
+	}
+
+	if (!lowercase_hack && (the_state.modebits & M6847_MODEBIT_AS)) {
+		/* Semigraphics */
+		bgc = 8;
+
+		if ((the_state.modebits & M6847_MODEBIT_INTEXT) && (the_state.initparams.version != M6847_VERSION_M6847T1)) {
+			/* Semigraphics 6 */
+			character = &fontdata8x12[(96 + (b & 0x3f)) * 12];
+			fgc = ((b >> 6) & 0x3);
+			if (the_state.modebits & M6847_MODEBIT_CSS)
+				fgc += 4;
+		}
+		else {
+			/* Semigraphics 4 */
+			switch(b & 0x0f) {
+			case 0:
+				bgc = 8;
+				character = NULL;
+				break;
+			case 15:
+				bgc = (b >> 4) & 0x7;
+				character = NULL;
+				break;
+			default:
+				bgc = 8;
+				fgc = (b >> 4) & 0x7;
+				character = &fontdata8x12[(160 + (b & 0x0f)) * 12];
+				break;
+			}
+		}
+
 	}
 	else {
 		/* Text */
-		bgc = (param & 0x01) ? 14 : 12;
+		fgc = (the_state.modebits & M6847_MODEBIT_CSS) ? 15 : 13;
 
-		/* On the M6847T1 and the CoCo 3 GIME chip, bit 2 of video_gmode
-		 * reversed the colors
-		 *
-		 * TODO: Find out what the normal M6847 did with bit 2
-		 */
-		if (param & 0x04)
-			bgc ^= 1;
+		/* Inverse the character, if appropriate */
+		if (the_state.modebits & M6847_MODEBIT_INV)
+			fgc ^= 1;
 
-		/* Is this character lowercase or inverse? */
-		if ((param & 0x02) && (b < 0x20)) {
-			/* This character is lowercase */
-			b += 64;
-		}
-		else if (b < 0x40) {
-			/* This character is inverse */
-			bgc ^= 1;
+		if (lowercase_hack && (b < 0x20)) {
+			b += 0x40;
+			fgc ^= 1;
 		}
 		else {
-			/* This character is normal */
 			b &= 0x3f;
 		}
 
-		fgc = bgc;
-		bgc ^= 1;
-		if ((b & 0x3f) == 0x20) {
-			result = NULL;
+		if (b == 0x20) {
+			character = NULL;
 		}
 		else {
-			result = &fontdata8x12[b * 12];
-			if (param & 0x08)
-				result += 1;	/* Skew up */
+			character = &fontdata8x12[b * 12];
+			if (param)
+				character += 1;	/* Skew up */
 		}
+		bgc = fgc ^ 1;
 	}
 
-	*fg = fgc;
 	*bg = bgc;
-	return result;
+	*fg = fgc;
+	return character;
 }
 
 /* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
@@ -382,7 +371,7 @@ static UINT8 *mapper_text(UINT8 *mem, int param, int *fg, int *bg, int *attr)
  */
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
+	const int *metapalette, UINT8 *vrambase,
 	int has_lowercase, int skew_up, int border_color, int wf, artifactproc artifact)
 {
 	static int rowheights[] = {
@@ -391,10 +380,10 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	};
 
 	rs->videoram = vrambase;
-	rs->size = currentstate->vram_mask + 1;
-	rs->position = currentstate->video_offset;
+	rs->size = the_state.initparams.ramsize;
+	rs->position = the_state.videooffset;
 	rs->db = full_refresh ? NULL : dirtybuffer;
-	rvm->height = 192 / rowheights[currentstate->video_vmode >> 1];
+	rvm->height = 192 / the_state.rowsize;
 	rvm->offset = 0;
 	rf->width = 256 * wf;
 	rf->height = 192;
@@ -407,19 +396,19 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		memset(dirtybuffer, 0, videoram_size);
 	}
 
-	if (currentstate->video_gmode & 0x10)
+	if (the_state.modebits & M6847_MODEBIT_AG)
 	{
 		rvm->flags = RASTERBITS_FLAG_GRAPHICS;
 
-		if (currentstate->video_gmode & 0x02)
+		if (the_state.modebits & M6847_MODEBIT_GM0)
 		{
 			/* Resolution modes */
-			rvm->bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
+			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 8;
 			rvm->depth = 1;
-			rvm->metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
+			rvm->metapalette = &metapalette[the_state.modebits & M6847_MODEBIT_CSS ? 10 : 8];
 
-			if (artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)) {
+			if (artifact && (rvm->bytesperrow == 32)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
 				rvm->flags |= RASTERBITS_FLAG_ARTIFACT;
 				rvm->u.artifact = artifact;
@@ -428,10 +417,10 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		else
 		{
 			/* Color modes */
-			rvm->bytesperrow = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
+			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 4;
 			rvm->depth = 2;
-			rvm->metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
+			rvm->metapalette = &metapalette[the_state.modebits & M6847_MODEBIT_CSS ? 4: 0];
 		}
 	}
 	else
@@ -441,19 +430,8 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		rvm->width = 32;
 		rvm->depth = 8;
 		rvm->metapalette = metapalette;
-
-		if (!has_lowercase && (currentstate->video_gmode & 0x02)) {
-			/* Semigraphics 6 */
-			rvm->u.text.mapper = mapper_semigraphics6;
-			rvm->u.text.mapper_param = (currentstate->video_gmode & 0x1) ? 4 : 0;
-		}
-		else {
-			/* Text (or Semigraphics 4) */
-			rvm->u.text.mapper = mapper_text;
-			rvm->u.text.mapper_param = currentstate->video_gmode & 0x7;
-			if (skew_up)
-				rvm->u.text.mapper_param |= 0x08;
-		}
+		rvm->u.text.mapper = mapper_alphanumeric;
+		rvm->u.text.mapper_param = skew_up;
 		rvm->u.text.fontheight = 12;
 		rvm->u.text.underlinepos = -1;
 	}
@@ -488,7 +466,33 @@ static void m6847_artifact_blue(int *artifactcolors)
 	}
 }
 
-static int m6847_bordercolor(void)
+int m6847_get_bordercolor(void)
+{
+	int bordercolor;
+
+	if (the_state.modebits & M6847_MODEBIT_AG) {
+		if (the_state.modebits & M6847_MODEBIT_CSS)
+			bordercolor = M6847_BORDERCOLOR_WHITE;
+		else
+			bordercolor = M6847_BORDERCOLOR_GREEN;
+	}
+	else {
+		if ((the_state.initparams.version == M6847_VERSION_M6847T1)
+				&& ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == M6847_MODEBIT_GM2)) {
+			/* We are on the new VDG; and we have a colored border */
+			if (the_state.modebits & M6847_MODEBIT_CSS)
+				bordercolor = M6847_BORDERCOLOR_ORANGE;
+			else
+				bordercolor = M6847_BORDERCOLOR_GREEN;
+		}
+		else {
+			bordercolor = M6847_BORDERCOLOR_BLACK;
+		}
+	}
+	return bordercolor;
+}
+
+static m6847_bordercolor(void)
 {
 	int pen = 0;
 
@@ -524,14 +528,11 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 	struct rasterbits_frame rf;
 	int artifact_value;
 
-	if (vblankproc)
-		vblankproc();
-
-	artifact_value = (artifact_dipswitch == -1) ? 0 : readinputport(artifact_dipswitch);
+	artifact_value = (the_state.initparams.artifactdipswitch == -1) ? 0 : readinputport(the_state.initparams.artifactdipswitch);
 
 	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
-		full_refresh, m6847_metapalette, videoram,
-		&the_state, (chip_version == M6847_VERSION_M6847T1), 0,
+		full_refresh, m6847_metapalette, the_state.initparams.ram,
+		(the_state.initparams.version == M6847_VERSION_M6847T1), 0,
 		(full_refresh ? m6847_bordercolor() : -1),
 		1, artifacts[artifact_value & 3]);
 
@@ -542,104 +543,85 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
  * Petty accessors
  * -------------------------------------------------- */
 
-void m6847_set_gmode(int mode)
-{
-#if LOG_M6847
-	logerror("m6847_set_gmode(): offset=$%02x\n", mode);
-#endif
-
-	mode &= 0x1f;
-
-	if (mode != the_state.video_gmode) {
-		the_state.video_gmode = mode;
-		schedule_full_refresh();
-	}
-}
-
-void m6847_set_vmode(int mode)
-{
-#if LOG_M6847
-	logerror("m6847_set_vmode(): offset=$%02x\n", mode);
-#endif
-
-	mode &= 0x1f;
-
-	if (mode != the_state.video_vmode) {
-		the_state.video_vmode = mode;
-		calc_videoram_size();
-		schedule_full_refresh();
-	}
-}
-
-int m6847_get_gmode(void)
-{
-	return the_state.video_gmode;
-}
-
-int m6847_get_vmode(void)
-{
-	return the_state.video_vmode;
-}
-
 void m6847_set_video_offset(int offset)
 {
 #if LOG_M6847
 	logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
 #endif
 
-	offset &= the_state.vram_mask;
-	if (offset != the_state.video_offset) {
-		the_state.video_offset = offset;
+	offset %= the_state.initparams.ramsize;
+	if (offset != the_state.videooffset) {
+		the_state.videooffset = offset;
 		schedule_full_refresh();
 	}
 }
 
 int m6847_get_video_offset(void)
 {
-	return the_state.video_offset;
+	return the_state.videooffset;
 }
 
 void m6847_touch_vram(int offset)
 {
-	offset -= the_state.video_offset;
-	offset &= the_state.vram_mask;
+	offset -= the_state.videooffset;
+	offset %= the_state.initparams.ramsize;
 
 	if (offset < videoram_size)
 		dirtybuffer[offset] = 1;
 }
 
-int m6847_get_bordercolor(void)
+void m6847_set_row_height(int rowheight)
 {
-	/* TODO: Verify this table.  I am pretty sure that it is true
-	 * for the CoCo 3 and M6847T1, but I'm not sure if it is true
-	 * for plain M6847
-	 */
-	static int bordercolortable[] = {
-		/* Text modes */
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_ORANGE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_ORANGE,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-		M6847_BORDERCOLOR_BLACK,	M6847_BORDERCOLOR_BLACK,
-
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
-		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE
-	};
-	return bordercolortable[the_state.video_gmode];
+	if (rowheight != the_state.rowsize) {
+		the_state.rowsize = rowheight;
+		schedule_full_refresh();
+	}
 }
 
-int m6847_get_vram_size(void)
+void m6847_set_cannonical_row_height(void)
 {
-	calc_videoram_size();
-	return videoram_size;
+	static const int graphics_rowheights[] = { 3, 3, 3, 2, 2, 1, 1, 1 };
+	int rowheight;
+
+	if (the_state.modebits & M6847_MODEBIT_AG) {
+		rowheight = graphics_rowheights[the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1|M6847_MODEBIT_GM0)];
+	}
+	else {
+		rowheight = 12;
+	}
+	m6847_set_row_height(rowheight);
 }
 
+READ_HANDLER( m6847_ag_r )		{ return (the_state.modebits & M6847_MODEBIT_AG) ? 1 : 0; }
+READ_HANDLER( m6847_as_r )		{ return (the_state.modebits & M6847_MODEBIT_AS) ? 1 : 0; }
+READ_HANDLER( m6847_intext_r )	{ return (the_state.modebits & M6847_MODEBIT_INTEXT) ? 1 : 0; }
+READ_HANDLER( m6847_inv_r )		{ return (the_state.modebits & M6847_MODEBIT_INV) ? 1 : 0; }
+READ_HANDLER( m6847_css_r )		{ return (the_state.modebits & M6847_MODEBIT_CSS) ? 1 : 0; }
+READ_HANDLER( m6847_gm2_r )		{ return (the_state.modebits & M6847_MODEBIT_GM2) ? 1 : 0; }
+READ_HANDLER( m6847_gm1_r )		{ return (the_state.modebits & M6847_MODEBIT_GM1) ? 1 : 0; }
+READ_HANDLER( m6847_gm0_r )		{ return (the_state.modebits & M6847_MODEBIT_GM0) ? 1 : 0; }
+
+static void write_modebits(int data, int mask, int causesrefresh)
+{
+	int newmodebits;
+
+	if (data)
+		newmodebits = the_state.modebits | mask;
+	else
+		newmodebits = the_state.modebits & ~mask;
+
+	if (newmodebits != the_state.modebits) {
+		the_state.modebits = newmodebits;
+		if (causesrefresh)
+			schedule_full_refresh();
+	}
+}
+
+WRITE_HANDLER( m6847_ag_w )		{ write_modebits(data, M6847_MODEBIT_AG, 1); }
+WRITE_HANDLER( m6847_as_w )		{ write_modebits(data, M6847_MODEBIT_AS, 0); }
+WRITE_HANDLER( m6847_intext_w )	{ write_modebits(data, M6847_MODEBIT_INTEXT, 0); }
+WRITE_HANDLER( m6847_inv_w )	{ write_modebits(data, M6847_MODEBIT_INV, 0); }
+WRITE_HANDLER( m6847_css_w )	{ write_modebits(data, M6847_MODEBIT_CSS, 1); }
+WRITE_HANDLER( m6847_gm2_w )	{ write_modebits(data, M6847_MODEBIT_GM2, 1); }
+WRITE_HANDLER( m6847_gm1_w )	{ write_modebits(data, M6847_MODEBIT_GM1, 1); }
+WRITE_HANDLER( m6847_gm0_w )	{ write_modebits(data, M6847_MODEBIT_GM0, 1); }

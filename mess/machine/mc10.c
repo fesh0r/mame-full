@@ -134,12 +134,19 @@ WRITE_HANDLER ( mc10_port2_w )
 
 int mc10_vh_start(void)
 {
-	if (m6847_vh_start(M6847_VERSION_ORIGINAL))
+	extern void dragon_charproc(UINT8 c);
+	struct m6847_init_params p;
+
+	p.version = M6847_VERSION_ORIGINAL;
+	p.artifactdipswitch = 7;
+	p.ram = memory_region(REGION_CPU1);
+	p.ramsize = 0x8000;
+	p.charproc = dragon_charproc;
+
+	if (m6847_vh_start(&p))
 		return 1;
 
-	m6847_set_vram(memory_region(REGION_CPU1), 0x7fff);
 	m6847_set_video_offset(0x4000);
-	m6847_set_artifact_dipswitch(7);
 	return 0;
 }
 
@@ -153,31 +160,15 @@ WRITE_HANDLER ( mc10_bfff_w )
 	 *   BIT 7 SOUND OUTPUT BIT
 	 */
 
-	int video_mode = 0;
-
-	/* The following code merely maps the MC-10 video mode registers
-	 * onto the CoCo/Dragon registers
-	 *
-	 * GM2 --> video_mode bit 3
-	 * GM1 --> video_mode bit 2
-	 * GM0 --> video_mode bit 1
-	 * A/G --> video_mode bit 4
-	 * CSS --> video_mode bit 0
-	 */
-
-	if (data & 0x04)
-		video_mode |= 0x08;
-	if (data & 0x08)
-		video_mode |= 0x04;
-	if (data & 0x10)
-		video_mode |= 0x02;
-	if (data & 0x20)
-		video_mode |= 0x10;
-	if (data & 0x40)
-		video_mode |= 0x01;
-
-	m6847_set_mode(video_mode);
+	m6847_gm2_w(0,	data & 0x04);
+	m6847_gm1_w(0,	data & 0x08);
+	m6847_gm0_w(0,	data & 0x10);
+	m6847_ag_w(0,	data & 0x20);
+	m6847_css_w(0,	data & 0x40);
 	DAC_data_w(0, data & 0x80);
+
+	m6847_set_cannonical_row_height();
+	schedule_full_refresh();
 }
 
 WRITE_HANDLER ( mc10_ram_w )

@@ -501,6 +501,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	int dirtychars = 0;
 #endif
 
+	assert(src->videoram);
 	assert((mode->depth == 8) || (mode->depth == 16));
 	assert(scalex >= 8);
 

@@ -596,6 +596,7 @@ static void coco3_raise_interrupt(int mask, int state)
 
 int dragon_interrupt(void)
 {
+	pia_0_cb1_w (0, 0);
 	pia_0_cb1_w (0, 1);
 	return ignore_interrupt();
 }
@@ -655,12 +656,19 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 
 static WRITE_HANDLER( d_pia1_pb_w )
 {
-	m6847_set_gmode(data >> 3);
+	m6847_ag_w(0,		data & 0x80);
+	m6847_gm2_w(0,		data & 0x40);
+	m6847_gm1_w(0,		data & 0x20);
+	m6847_gm0_w(0,		data & 0x10);
+	m6847_intext_w(0,	data & 0x10);
+	m6847_css_w(0,		data & 0x08);
+	schedule_full_refresh();
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
 {
-	m6847_set_mode(data >> 3);
+	d_pia1_pb_w(0, data);
+	m6847_set_cannonical_row_height();
 }
 
 static WRITE_HANDLER ( d_pia0_cb2_w )
@@ -800,9 +808,9 @@ WRITE_HANDLER(dragon_sam_page_mode)
 
 static void recalc_vram_size(void)
 {
-	static int vram_masks[] = { 0xfff, 0x3fff, 0xffff, 0xffff };
+	static int vram_sizes[] = { 0x1000, 0x4000, 0x10000, 0x10000 };
 
-	m6847_set_vram_mask(vram_masks[d_sam_memory_size % 4]);
+	m6847_set_ram_size(vram_sizes[d_sam_memory_size % 4]);
 }
 
 WRITE_HANDLER(dragon_sam_memory_size)
