@@ -504,6 +504,7 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 	int reply = 0;
 
 
+	/* find insertion point in catalog */
 	i = 0;
 	if (image->catalog[0].fdr_secnum == 0)
 		i = 1;		/* skip in case it is a non-listable catalog */
@@ -524,9 +525,19 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 		if (reply)
 			return reply;
 
-		for (i=127; i>catalog_index; i--)
+		/* look for first free entry in catalog */
+		for (i=catalog_index; (fdr_secnum = image->catalog[i].fdr_secnum) != 0; i++)
+			;
+
+		if (i == 128)
+			/* catalog is full */
+				return IMGTOOLERR_NOSPACE;
+
+		/* shift catalog entries until the insertion point */
+		for (/*i=127*/; i>catalog_index; i--)
 			image->catalog[i] = image->catalog[i-1];
 
+		/* write new catalog entry */
 		image->catalog[catalog_index].fdr_secnum = fdr_secnum;
 		memcpy(image->catalog[catalog_index].fname, fname, 10);
 		if (out_fdr_secnum)
