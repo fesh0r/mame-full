@@ -12,6 +12,7 @@
 #include "idedrive.h"
 
 static mame_file *ide_fp;
+static void *ide_hard_disk_handle;
 static int ide_fp_wp;
 
 static void *mess_hard_disk_open(const char *filename, const char *mode);
@@ -89,8 +90,6 @@ static UINT32 mess_hard_disk_write(void *file, UINT64 offset, UINT32 count, cons
 */
 int ide_hd_load(int id, mame_file *fp, int open_mode, int which_bus, int which_address, struct ide_interface *intf)
 {
-	void *handle;
-
 	assert(which_address == 0);
 
 	hard_disk_set_interface(& mess_hard_disk_interface);
@@ -98,10 +97,10 @@ int ide_hd_load(int id, mame_file *fp, int open_mode, int which_bus, int which_a
 	ide_fp = fp;
 	ide_fp_wp = ! is_effective_mode_writable(open_mode);
 
-	handle = hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL);
-	if (handle != NULL)
+	ide_hard_disk_handle = hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL);
+	if (ide_hard_disk_handle != NULL)
 	{
-		ide_controller_init_custom(which_bus, intf, handle);
+		ide_controller_init_custom(which_bus, intf, ide_hard_disk_handle);
 		ide_controller_reset(which_bus);
 		return INIT_PASS;
 	}
@@ -124,7 +123,11 @@ void ide_hd_unload(int id, int which_bus, int which_address, struct ide_interfac
 {
 	assert(which_address == 0);
 
-	hard_disk_close(ide_fp);
+	if (ide_hard_disk_handle)
+	{
+		hard_disk_close(ide_hard_disk_handle);
+		ide_hard_disk_handle = NULL;
+	}
 	ide_fp = NULL;
 	ide_controller_init_custom(which_bus, intf, NULL);
 	ide_controller_reset(which_bus);
