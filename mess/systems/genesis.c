@@ -62,7 +62,7 @@ unsigned int	z80_68000_latch			= 0;
 unsigned int	z80_latch_bitcount		= 0;
 
 #define EASPORTS_HACK
-unsigned char cartridge_ram[0x10000]; /* any cartridge RAM */
+UINT16 cartridge_ram[0x10000]; /* any cartridge RAM */
 
 
 #if LSB_FIRST
@@ -173,7 +173,8 @@ WRITE16_HANDLER(cartridge_ram_w)
 #endif
 
 static MEMORY_READ16_START(genesis_readmem)
-	{ 0x000000, 0x3fffff, MRA16_ROM },
+	// { 0x000000, 0x3fffff, MRA16_ROM },
+	{ 0x000000, 0x1fffff, MRA16_ROM },
 	{ 0xff0000, 0xffffff, MRA16_BANK2}, /* RAM */
 	{ 0xc00014, 0xfeffff, MRA16_NOP },
 
@@ -189,7 +190,7 @@ static MEMORY_READ16_START(genesis_readmem)
 	{ 0xa04000, 0xa04003, YM2612_68000_r },
 
 #ifdef EASPORTS_HACK
-	{ 0x400000, 0x4fffff, cartridge_ram_r},
+	{ 0x200000, 0x20ffff, MRA16_ROM},
 #endif
 MEMORY_END
 
@@ -210,11 +211,12 @@ static MEMORY_WRITE16_START(genesis_writemem)
 	{ 0xa00000, 0xa01fff, genesis_soundram_w },
 	{ 0xa04000, 0xa04003, YM2612_68000_w },
 #ifdef EASPORTS_HACK
-	{ 0x200000, 0x20ffff, cartridge_ram_w },
+	{ 0x200000, 0x20ffff, MWA16_RAM /*cartridge_ram_w*/ },
 	{ 0x000000, 0x1fffff, MWA16_ROM },
 #endif
 #ifndef EASPORT_HACK
-	{ 0x000000, 0x3fffff, MWA16_ROM },
+	// { 0x000000, 0x3fffff, MWA16_ROM },
+	{ 0x000000, 0x1fffff, MWA16_ROM },
 #endif
 MEMORY_END
 
@@ -359,7 +361,7 @@ static struct MachineDriver machine_driver_genesis =
 
 
 ROM_START(genesis)
-	ROM_REGION(0x405000,REGION_CPU1,0)
+	ROM_REGION(0x415000,REGION_CPU1,0)
 ROM_END
 
 static const struct IODevice io_genesis[] = {
