@@ -64,7 +64,7 @@ struct MachineSound
  #ifndef MESS
 #include "sound/nes_apu.h"
  #else
-#include "mess/sound/nesintf.h"
+#include "sound/nesintf.h"
  #endif
 #endif
 #if (HAS_ASTROCADE)
