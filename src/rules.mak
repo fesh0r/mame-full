@@ -1112,6 +1112,14 @@ else
 SOUNDDEFS += -DHAS_DAC=0
 endif
 
+SOUND=$(strip $(findstring DMADAC@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_DMADAC=1
+SOUNDOBJS += $(OBJ)/sound/dmadac.o
+else
+SOUNDDEFS += -DHAS_DMADAC=0
+endif
+
 SOUND=$(strip $(findstring DISCRETE@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_DISCRETE=1

@@ -35,18 +35,6 @@ READ_HANDLER( jackal_zram_r )
 }
 
 
-READ_HANDLER( jackal_commonram_r )
-{
-	return jackal_rambank[0x0060+offset];
-}
-
-
-READ_HANDLER( jackal_commonram1_r )
-{
-	return (memory_region(REGION_CPU1))[0x0060+offset];
-}
-
-
 READ_HANDLER( jackal_voram_r )
 {
 	return jackal_rambank[0x2000+offset];
@@ -73,19 +61,6 @@ if (data & 0xc4) usrintf_showmessage("jackal_rambank_w %02x",data);
 WRITE_HANDLER( jackal_zram_w )
 {
 	jackal_rambank[0x0020+offset] = data;
-}
-
-
-WRITE_HANDLER( jackal_commonram_w )
-{
-	jackal_rambank[0x0060+offset] = data;
-}
-
-
-WRITE_HANDLER( jackal_commonram1_w )
-{
-	(memory_region(REGION_CPU1))[0x0060+offset] = data;
-	(memory_region(REGION_CPU2))[0x6060+offset] = data;
 }
 
 

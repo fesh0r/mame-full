@@ -255,6 +255,7 @@ int cpu_init(void)
 		memset(&cpu[cpunum], 0, sizeof(cpu[cpunum]));
 		cpu[cpunum].suspend = SUSPEND_REASON_RESET;
 		cpu[cpunum].clockscale = 1.0;
+		cpu[cpunum].localtime = time_zero;
 
 		/* compute the cycle times */
 		sec_to_cycles[cpunum] = cpu[cpunum].clockscale * Machine->drv->cpu[cpunum].cpu_clock;
@@ -322,7 +323,6 @@ static void cpu_pre_run(void)
 
 		/* reset the total number of cycles */
 		cpu[cpunum].totalcycles = 0;
-		cpu[cpunum].localtime = time_zero;
 	}
 
 	vblank = 0;

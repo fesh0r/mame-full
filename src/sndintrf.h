@@ -19,6 +19,9 @@ struct MachineSound
 #if (HAS_DAC)
 #include "sound/dac.h"
 #endif
+#if (HAS_DMADAC)
+#include "sound/dmadac.h"
+#endif
 #if (HAS_DISCRETE)
 #include "sound/discrete.h"
 #endif
@@ -216,6 +219,9 @@ enum
 #endif
 #if (HAS_DAC)
 	SOUND_DAC,
+#endif
+#if (HAS_DMADAC)
+	SOUND_DMADAC,
 #endif
 #if (HAS_DISCRETE)
 	SOUND_DISCRETE,

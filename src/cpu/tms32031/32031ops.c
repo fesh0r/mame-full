@@ -1760,7 +1760,14 @@ static void float_imm(void)
 
 /*-----------------------------------------------------*/
 
-static void idle(void) { unimplemented(); }
+static void idle(void)
+{
+	tms32031.is_idling = 1;
+	IREG(TMR_ST) |= GIEFLAG;
+	check_irqs();
+	if (tms32031.is_idling)
+		tms32031_icount = 0;
+}
 
 /*-----------------------------------------------------*/
 
@@ -2908,8 +2915,25 @@ static void xor_imm(void)
 
 /*-----------------------------------------------------*/
 
-static void iack_dir(void) { unimplemented(); }
-static void iack_ind(void) { unimplemented(); }
+static void iack_dir(void)
+{
+	offs_t addr = DIRECT();
+	if (tms32031.iack_w)
+		(*tms32031.iack_w)(ASSERT_LINE, addr);
+	RMEM(addr);
+	if (tms32031.iack_w)
+		(*tms32031.iack_w)(CLEAR_LINE, addr);
+}
+
+static void iack_ind(void)
+{
+	offs_t addr = INDIRECT_D(OP >> 8);
+	if (tms32031.iack_w)
+		(*tms32031.iack_w)(ASSERT_LINE, addr);
+	RMEM(addr);
+	if (tms32031.iack_w)
+		(*tms32031.iack_w)(CLEAR_LINE, addr);
+}
 
 
 #if 0
@@ -3011,8 +3035,9 @@ static void addi3_indreg(void)
 
 static void addi3_regind(void)
 {
-	UINT32 src1 = IREG((OP >> 8) & 31);
+	/* Radikal Bikers confirms via ADDI3 AR3,*AR3++(1),R2 / SUB $0001,R2 sequence */
 	UINT32 src2 = RMEM(INDIRECT_1(OP));
+	UINT32 src1 = IREG((OP >> 8) & 31);
 	int dreg = (OP >> 16) & 31;
 	ADDI(dreg, src1, src2);
 }

@@ -10,8 +10,20 @@
 
 ***************************************************************************/
 
+/*
+ * Modified For OpenVMS By:  Robert Alan Byer
+ *                           byer@mail.ourservers.net
+ *                           Jun. 15, 2004
+ */
+
 #include "driver.h"
-#include "includes/psx.h"
+
+#if defined(__DECC) && defined(VMS)
+#  include "../src/includes/psx.h"
+#else
+#  include "includes/psx.h"
+#endif
+
 #include "state.h"
 
 #define VERBOSE_LEVEL ( 0 )

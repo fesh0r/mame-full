@@ -228,6 +228,7 @@ enum
 	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
 	CPUINFO_PTR_WINDOW_LAYOUT,							/* R/O: struct debug_window_layout *layout */
 	CPUINFO_PTR_INTERNAL_MEMORY_MAP,					/* R/O: construct_map_t map */
+	CPUINFO_PTR_INTERNAL_MEMORY_MAP_LAST = CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACES - 1,
 
 	CPUINFO_PTR_CPU_SPECIFIC = 0x18000,					/* R/W: CPU-specific values start here */
 
@@ -565,7 +566,7 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
 /* return a pointer to the interface struct for a given CPU type */
 INLINE const struct cpu_interface *cputype_get_interface(int cputype)
 {
-	extern const struct cpu_interface cpuintrf[];
+	extern struct cpu_interface cpuintrf[];
 	return &cpuintrf[cputype];
 }
 

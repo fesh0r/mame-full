@@ -61,6 +61,7 @@ static sound_channel channel_list[MAX_VOICES];
 static sound_channel *last_channel;
 
 /* global sound parameters */
+static int wave_size;
 static int num_voices;
 static int sound_enable;
 static int stream;
@@ -73,18 +74,29 @@ static INT16 *waveform[MAX_VOLUME];
 
 
 /* update the decoded waveform data */
-static void update_namcos1_waveform(int offset, data8_t data)
+static void update_namco_waveform(int offset, data8_t data)
 {
-	INT16 wdata;
-	int v;
-
-	/* use full byte, first 4 high bits, then low 4 bits */
-	for (v = 0; v < MAX_VOLUME; v++)
+	if (wave_size == 1)
 	{
-		wdata = ((data >> 4) & 0x0f) - 8;
-		waveform[v][offset * 2] = OUTPUT_LEVEL(wdata * v);
-		wdata = (data & 0x0f) - 8;
-		waveform[v][offset * 2 + 1] = OUTPUT_LEVEL(wdata * v);
+		INT16 wdata;
+		int v;
+
+		/* use full byte, first 4 high bits, then low 4 bits */
+		for (v = 0; v < MAX_VOLUME; v++)
+		{
+			wdata = ((data >> 4) & 0x0f) - 8;
+			waveform[v][offset * 2] = OUTPUT_LEVEL(wdata * v);
+			wdata = (data & 0x0f) - 8;
+			waveform[v][offset * 2 + 1] = OUTPUT_LEVEL(wdata * v);
+		}
+	}
+	else
+	{
+		int v;
+
+		/* use only low 4 bits */
+		for (v = 0; v < MAX_VOLUME; v++)
+			waveform[v][offset] = OUTPUT_LEVEL(((data & 0x0f) - 8) * v);
 	}
 }
 
@@ -97,10 +109,17 @@ static int build_decoded_waveform(int region)
 	int offset;
 	int v;
 
-	if (region == -1)
+	/* 20pacgal has waves in RAM but old sound system */
+	if (region == -1 && num_voices != 3)
+	{
+		wave_size = 1;
 		size = 32 * 16;		/* 32 samples, 16 waveforms */
+	}
 	else
+	{
+		wave_size = 0;
 		size = 32 * 8;		/* 32 samples, 8 waveforms */
+	}
 
 	if ((p = (INT16 *)auto_malloc(size * MAX_VOLUME * sizeof (INT16))) == NULL)
 		return 1;
@@ -111,24 +130,14 @@ static int build_decoded_waveform(int region)
 		p += size;
 	}
 
-	if (region == -1)
-	{
-		/* We need waveform data. It fails if region is not specified. */
-		if (namco_wavedata)
-		{
-			/* use full byte, first 4 high bits, then low 4 bits, 256 bytes */
-			for (offset = 0; offset < 256; offset++)
-				update_namcos1_waveform(offset, namco_wavedata[offset]);
-		}
-	}
-	else
-	{
-		const unsigned char *sound_prom = memory_region(region);
+	if (region != -1)
+		namco_wavedata = memory_region(region);
 
-		/* use only low 4 bits, 256 bytes */
+	/* We need waveform data. It fails if region is not specified. */
+	if (namco_wavedata)
+	{
 		for (offset = 0; offset < 256; offset++)
-			for (v = 0; v < MAX_VOLUME; v++)
-				waveform[v][offset] = OUTPUT_LEVEL(((sound_prom[offset] & 0x0f) - 8) * v);
+			update_namco_waveform(offset, namco_wavedata[offset]);
 	}
 
 	return 0;
@@ -725,7 +734,7 @@ WRITE_HANDLER( namcos1_wavedata_w )
 		namco_wavedata[offset] = data;
 
 		/* update the decoded waveform table */
-		update_namcos1_waveform(offset, data);
+		update_namco_waveform(offset, data);
 	}
 }
 

@@ -720,6 +720,11 @@ VIDEO_UPDATE( psx )
 			n_x = m_n_displaystartx;
 		}
 
+		if( ( m_n_gpustatus & ( 1 << 0x15 ) ) != 0 )
+		{
+			usrintf_showmessage_secs( 1, "24bit mode not supported" );
+		}
+
 		for( n_y = 0; n_y < m_n_screenheight; n_y++ )
 		{
 			draw_scanline16( bitmap, 0, n_y, m_n_screenwidth, m_p_p_vram[ n_y + m_n_displaystarty ] + n_x, Machine->pens, -1 );
@@ -3042,6 +3047,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			}
 			break;
 		case 0x74:
+		case 0x75:
 		case 0x77:
 			if( m_n_gpu_buffer_offset < 2 )
 			{
@@ -3056,6 +3062,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			}
 			break;
 		case 0x7c:
+		case 0x7d:
 		case 0x7f:
 			if( m_n_gpu_buffer_offset < 2 )
 			{

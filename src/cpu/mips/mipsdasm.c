@@ -7,10 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "psx.h"
-
-#ifndef STANDALONE
 #include "memory.h"
-#endif
 
 static char *make_signed_hex_str_16( UINT32 value )
 {
@@ -118,14 +115,7 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 	UINT32 pc, op;
 
 	pc = oldpc;
-#ifndef STANDALONE
 	op = cpu_readop32( pc );
-#else
-	op = ( filebuf[ pc + order[ 0 ] - offset ] << 24 ) |
-		( filebuf[ pc + order[ 1 ] - offset ] << 16 ) |
-		( filebuf[ pc + order[ 2 ] - offset ] << 8 ) |
-		( filebuf[ pc + order[ 3 ] - offset ] );
-#endif
 	pc += 4;
 
 	sprintf( buffer, "dw      $%08x", op );

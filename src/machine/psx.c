@@ -10,7 +10,7 @@
 #include "state.h"
 #include "includes/psx.h"
 
-#define VERBOSE_LEVEL ( 0 )
+#define VERBOSE_LEVEL ( 1 )
 
 INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
@@ -62,10 +62,12 @@ WRITE32_HANDLER( psx_irq_w )
 	switch( offset )
 	{
 	case 0x00:
+		verboselog( 2, "psx irq data ( %08x, %08x ) %08x -> %08x\n", data, mem_mask, m_n_irqdata, ( m_n_irqdata & mem_mask ) | ( m_n_irqdata & m_n_irqmask & data ) );
 		m_n_irqdata = ( m_n_irqdata & mem_mask ) | ( m_n_irqdata & m_n_irqmask & data );
 		psx_irq_update();
 		break;
 	case 0x01:
+		verboselog( 2, "psx irq mask ( %08x, %08x ) %08x -> %08x\n", data, mem_mask, m_n_irqmask, ( m_n_irqmask & mem_mask ) | data );
 		m_n_irqmask = ( m_n_irqmask & mem_mask ) | data;
 		if( ( m_n_irqmask & ~( 0x1 | 0x08 | 0x10 | 0x20 | 0x40 | 0x200 | 0x400 ) ) != 0 )
 		{
@@ -475,7 +477,7 @@ void psx_sio_send( int n_port, data8_t n_data )
 		m_p_p_n_sio_buf[ n_port ][ m_p_n_sio_rx[ n_port ]++ ] = n_data;
 		if( ( m_p_n_sio_control[ n_port ] & ( 1 << 11 ) ) != 0 )
 		{
-			sio_interrupt( n_port );
+			timer_set( TIME_IN_CYCLES( 200.0, 0 ), n_port, sio_interrupt );
 		}
 	}
 	else
@@ -496,11 +498,11 @@ WRITE32_HANDLER( psx_sio_w )
 		verboselog( 1, "psx_sio_w %d data %08x, %08x\n", n_port, data, mem_mask );
 		if( ( m_p_n_sio_control[ n_port ] & ( 1 << 10 ) ) != 0 )
 		{
-			sio_interrupt( n_port );
+			timer_set( TIME_IN_CYCLES( 200.0, 0 ), n_port, sio_interrupt );
 		}
 		if( m_p_f_sio_write[ n_port ] != NULL )
 		{
-			m_p_f_sio_write[ n_port ]( data );
+			m_p_f_sio_write[ n_port ]( PSX_SIO_DATA, data );
 		}
 		else
 		{
@@ -518,6 +520,20 @@ WRITE32_HANDLER( psx_sio_w )
 		}
 		if( ACCESSING_MSW32 )
 		{
+			if( ( ( ( data >> 16 ) ^ m_p_n_sio_control[ n_port ] ) & ( 1 << 6 ) ) != 0 )
+			{
+				if( m_p_f_sio_write[ n_port ] != NULL )
+				{
+					m_p_f_sio_write[ n_port ]( PSX_SIO_RESET, ( data >> 16 ) & ( 1 << 6 ) );
+				}
+			}
+			if( ( ( ( data >> 16 ) ^ m_p_n_sio_control[ n_port ] ) & ( 1 << 13 ) ) != 0 )
+			{
+				if( m_p_f_sio_write[ n_port ] != NULL )
+				{
+					m_p_f_sio_write[ n_port ]( PSX_SIO_SEL, ( data >> 16 ) & ( 1 << 13 ) );
+				}
+			}
 			m_p_n_sio_control[ n_port ] = data >> 16;
 			verboselog( 1, "psx_sio_w %d control %04x\n", n_port, data >> 16 );
 			if( ( m_p_n_sio_control[ n_port ] & ( 1 << 4 ) ) != 0 )

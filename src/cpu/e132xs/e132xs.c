@@ -171,7 +171,7 @@ CPUS+=E132XS@
 
 #define VERBOSE_LEVEL ( 0 )
 
-static inline void verboselog( int n_level, const char *s_fmt, ... )
+INLINE void verboselog( int n_level, const char *s_fmt, ... )
 {
 	if( VERBOSE_LEVEL >= n_level )
 	{
@@ -320,7 +320,7 @@ enum
 	E132XS_L0,  E132XS_L1,  E132XS_L2,  E132XS_L3,
 	E132XS_L4,  E132XS_L5,  E132XS_L6,  E132XS_L7,
 	E132XS_L8,  E132XS_L9,  E132XS_L10, E132XS_L11,
-	E132XS_L12, E132XS_L13, E132XS_L14, E132XS_L15,
+	E132XS_L12, E132XS_L13, E132XS_L14, E132XS_L15
 };
 
 /* Internal registers */
@@ -2206,7 +2206,7 @@ void e132xs_shrdi(void)
 
 	val >>= N_VALUE;
 
-	high_order = (val & 0xffffffff00000000) >> 32;
+	high_order = (val & 0xffffffff00000000ULL) >> 32;
 	low_order = val & 0x00000000ffffffff;
 
 	SET_RD(high_order, NOINC);
@@ -2234,7 +2234,7 @@ void e132xs_shrd(void)
 
 		val >>= n;
 
-		high_order = (val & 0xffffffff00000000) >> 32;
+		high_order = (val & 0xffffffff00000000ULL) >> 32;
 		low_order = val & 0x00000000ffffffff;
 
 		SET_RD(high_order, NOINC);
@@ -2274,7 +2274,7 @@ void e132xs_sardi(void)
 
 	val = (INT64) COMBINE_64_32_32(high_order, low_order);
 
-	sign_bit = (val & 0x8000000000000000) >> 63;
+	sign_bit = (val & 0x8000000000000000LL) >> 63;
 	val >>= N_VALUE;
 
 	if( sign_bit )
@@ -2282,11 +2282,11 @@ void e132xs_sardi(void)
 		int i;
 		for( i = 0; i < N_VALUE; i++ )
 		{
-			val |= (0x8000000000000000 >> i);
+			val |= (0x8000000000000000LL >> i);
 		}
 	}
 
-	high_order = (val & 0xffffffff00000000) >> 32;
+	high_order = (val & 0xffffffff00000000ULL) >> 32;
 	low_order = val & 0x00000000ffffffff;
 
 	SET_RD(high_order, NOINC);
@@ -2312,7 +2312,7 @@ void e132xs_sard(void)
 		low_order = GET_L_REG(D_CODE + INC);
 
 		val = (INT64) COMBINE_64_32_32(high_order, low_order);
-		sign_bit = (val & 0x8000000000000000) >> 63;
+		sign_bit = (val & 0x8000000000000000LL) >> 63;
 
 		val >>= n;
 
@@ -2321,11 +2321,11 @@ void e132xs_sard(void)
 			int i;
 			for( i = 0; i < n; i++ )
 			{
-				val |= (0x8000000000000000 >> i);
+				val |= (0x8000000000000000LL >> i);
 			}
 		}
 
-		high_order = (val & 0xffffffff00000000) >> 32;
+		high_order = (val & 0xffffffff00000000ULL) >> 32;
 		low_order = val & 0x00000000ffffffff;
 
 		SET_RD(high_order, NOINC);
@@ -2378,7 +2378,7 @@ void e132xs_shldi(void)
 
 	val <<= N_VALUE;
 
-	high_order = (val & 0xffffffff00000000) >> 32;
+	high_order = (val & 0xffffffff00000000ULL) >> 32;
 	low_order = val & 0x00000000ffffffff;
 
 	SET_RD(high_order, NOINC);
@@ -2407,7 +2407,7 @@ void e132xs_shld(void)
 
 		val <<= n;
 
-		high_order = (val & 0xffffffff00000000) >> 32;
+		high_order = (val & 0xffffffff00000000ULL) >> 32;
 		low_order = val & 0x00000000ffffffff;
 
 		SET_RD(high_order, NOINC);
@@ -3347,7 +3347,7 @@ void e132xs_mulu(void)
 
 		double_word = (op1 * op2);
 		low_order = double_word & 0x00000000ffffffff;
-		high_order = (double_word & 0xffffffff00000000) >> 32;
+		high_order = (double_word & 0xffffffff00000000ULL) >> 32;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -3397,7 +3397,7 @@ void e132xs_muls(void)
 
 		double_word = (op1 * op2);
 		low_order = double_word & 0x00000000ffffffff;
-		high_order = (double_word & 0xffffffff00000000) >> 32;
+		high_order = (double_word & 0xffffffff00000000ULL) >> 32;
 
 		SET_RD(high_order, NOINC);
 		SET_RD(low_order, INC);
@@ -3896,7 +3896,7 @@ void e132xs_extend(void)
 			UINT64 result;
 
 			result = vals * vald;
-			vals = (result & 0xffffffff00000000) >> 32;
+			vals = (result & 0xffffffff00000000ULL) >> 32;
 			vald = result & 0x00000000ffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
@@ -3909,7 +3909,7 @@ void e132xs_extend(void)
 			INT64 result;
 
 			result = (INT32)vals * (INT32)vald;
-			vals = (result & 0xffffffff00000000) >> 32;
+			vals = (result & 0xffffffff00000000ULL) >> 32;
 			vald = result & 0x00000000ffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
@@ -3933,7 +3933,7 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + ((INT32)vals * (INT32)vald);
 
-			vals = (result & 0xffffffff00000000) >> 32;
+			vals = (result & 0xffffffff00000000ULL) >> 32;
 			vald = result & 0x00000000ffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
@@ -3957,7 +3957,7 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) - ((INT32)vals * (INT32)vald);
 
-			vals = (result & 0xffffffff00000000) >> 32;
+			vals = (result & 0xffffffff00000000ULL) >> 32;
 			vald = result & 0x00000000ffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);
@@ -3981,7 +3981,7 @@ void e132xs_extend(void)
 
 			result = COMBINE_64_32_32(GET_G_REG(14), GET_G_REG(15)) + (((vald & 0xffff0000) >> 16) * ((vals & 0xffff0000) >> 16)) + ((vald & 0xffff) * (vals & 0xffff));
 
-			vals = (result & 0xffffffff00000000) >> 32;
+			vals = (result & 0xffffffff00000000ULL) >> 32;
 			vald = result & 0x00000000ffffffff;
 			SET_G_REG(14, vals);
 			SET_G_REG(15, vald);

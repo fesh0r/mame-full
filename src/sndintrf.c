@@ -240,6 +240,9 @@ void custom_sh_update(void)
 #if (HAS_DAC)
 int DAC_num(const struct MachineSound *msound) { return ((struct DACinterface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_DMADAC)
+int DMADAC_num(const struct MachineSound *msound) { return ((struct dmadac_interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_ADPCM)
 int ADPCM_num(const struct MachineSound *msound) { return ((struct ADPCMinterface*)msound->sound_interface)->num; }
 #endif
@@ -458,6 +461,18 @@ struct snd_interface sndintf[] =
 		DAC_num,
 		0,
 		DAC_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_DMADAC)
+    {
+		SOUND_DMADAC,
+		"DMA-driven DAC",
+		DMADAC_num,
+		0,
+		dmadac_sh_start,
 		0,
 		0,
 		0
