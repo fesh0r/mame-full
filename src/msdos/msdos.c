@@ -1,6 +1,3 @@
-/* Modified for MESS!!! */
-/* (Built from the 8/09/98 version of msdos.c) */
-
 /***************************************************************************
 
   osdepend.c
@@ -30,9 +27,6 @@ void init_inpdir(void);
 
 
 int  ignorecfg;
-
-static int num_roms = 0;
-static int num_floppies = 0;
 
 /* avoid wild card expansion on the command line (DJGPP feature) */
 char **__crt0_glob_function(void)
@@ -109,35 +103,6 @@ int fuzzycmp (const char *s, const char *l)
 	return gaps;
 }
 
-static int parse_image_types(char *arg)
-{
-	/* Is it a floppy or a rom? */
-	if (strstr(arg,".dsk") || strstr(arg,".DSK") ||
-		strstr(arg,".atr") || strstr(arg,".ATR") ||
-		strstr(arg,".xfd") || strstr(arg,".XFD"))
-	{
-		if (num_floppies >= MAX_FLOPPY)
-		{
-			printf("Too many floppy names specified!\n");
-			return 1;
-		}
-		strcpy(options.floppy_name[num_floppies++], arg);
-		if (errorlog) fprintf(errorlog,"Using floppy image %s\n",arg);
-	}
-	else
-	{
-		if (num_roms >= MAX_ROM)
-		{
-			printf("Too many image names specified!\n");
-			return 1;
-		}
-		strcpy(options.rom_name[num_roms++], arg);
-		if (errorlog) fprintf(errorlog,"Using image %s\n",arg);
-	}
-	return 0;
-}
-
-
 int main (int argc, char **argv)
 {
 	int res, i, j, game_index;
@@ -147,7 +112,7 @@ int main (int argc, char **argv)
       j=0; /* hack????? */
    #endif
 
-	/* these two are not available in mess.cfg */
+	/* these two are not available in mame.cfg */
 	ignorecfg = 0;
 	errorlog = options.errorlog = 0;
 

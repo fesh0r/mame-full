@@ -1,6 +1,3 @@
-/* Modified for MESS!!! */
-/* (Based on the 8/09/98 version of fronthlp.c) */
-
 #include "driver.h"
 #include "info.h"
 #include "audit.h"
@@ -24,7 +21,7 @@ int silentident,knownstatus;
 extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 
-void get_rom_path (int argc, char **argv, int game_index);
+void get_rom_sample_path (int argc, char **argv, int game_index);
 
 static const struct GameDriver *gamedrv;
 
@@ -382,13 +379,17 @@ int frontend_help (int argc, char **argv)
 
 	if (help)  /* brief help - useful to get current version info */
 	{
+		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
 				"Copyright (C) 1997-99 by Nicola Salmoria and the MAME Team\n\n",build_version);
 		showdisclaimer();
-		printf("Usage:  MESS machine [image] [options]\n\n"
-				"        MESS -list      for a brief list of supported systems\n"
-				"        MESS -listfull  for a full list of supported systems\n\n"
+		printf("Usage:  MAME gamename [options]\n\n"
+				"        MAME -list      for a brief list of supported games\n"
+				"        MAME -listfull  for a full list of supported games\n\n"
 				"See readme.txt for a complete list of options.\n");
+		#else
+		showmessinfo();
+		#endif
 		return 0;
 	}
 
@@ -916,7 +917,7 @@ int frontend_help (int argc, char **argv)
 				continue;
 
 			/* set rom and sample path correctly */
-			get_rom_path (argc, argv, i);
+			get_rom_sample_path (argc, argv, i);
 
 			/* if using wildcards, ignore games we don't have romsets for. */
 			if (!osd_faccess (drivers[i]->name, OSD_FILETYPE_ROM))

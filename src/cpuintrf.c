@@ -6,8 +6,6 @@
   Functions needed to interface the CPU emulator with the other parts of
   the emulation.
 
-  MESS changes
-  . added code to call (Machine->drv->stop_machine)()
 ***************************************************************************/
 
 #include <signal.h>

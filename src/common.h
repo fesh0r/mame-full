@@ -4,10 +4,6 @@
 
   Generic functions, mostly ROM related.
 
-  MESS changes:
-	. prototype for drawgfx_line
-	. Added MAX_ROM/FLOPPY/HARD/CASSETTE
-	
 *********************************************************************/
 
 #ifndef COMMON_H
@@ -135,23 +131,5 @@ struct GameSamples *readsamples(const char **samplenames,const char *name);
 void freesamples(struct GameSamples *samples);
 
 void save_screen_snapshot(void);
-
-
-/* MESS - begin */
-#define MAX_ROM 2        /* MAX_ROM is the maximum number of cartridge slots a driver supports */
-#define MAX_FLOPPY 4     /* MAX_FLOPPY is the maximum number of floppy drives a driver supports */
-#define MAX_HARD 2       /* MAX_HARD is the maximum number of hard drives a driver supports */
-#define MAX_CASSETTE 2   /* MAX_CASSETTE is the maximum number of cassette drives a driver supports */
-
-extern char rom_name[MAX_ROM][32];
-extern char floppy_name[MAX_FLOPPY][32];
-extern char hard_name[MAX_HARD][32];
-extern char cassette_name[MAX_CASSETTE][32];
-
-void drawgfx_line(struct osd_bitmap *dest,const struct GfxElement *gfx,
-		unsigned int code,unsigned int color,int flipx,int start,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color);
-
-/* MESS - end */
 
 #endif

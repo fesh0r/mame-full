@@ -1,1 +1,1 @@
-High score files will be placed here
+hi files will be stored here.

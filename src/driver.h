@@ -340,9 +340,6 @@ struct GameDriver
 						/* returns nonzero */
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
-
-	int (*state_load)(void);
-	void (*state_save)(void);
 };
 
 

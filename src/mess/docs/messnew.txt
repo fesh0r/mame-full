@@ -1,0 +1,184 @@
+0.36b6
+
+PLEASE NOTE: MESS is now developed and distributed as a MAME source 
+override, hence the MESS version number leap ;-) There are many 
+advantages to developing MESS this way, however, one major downside was 
+that *all* the previous MESS system drivers had to be modified for the 
+new MAME cores. So, as a consequence, not all systems work properly in 
+this release, and THERE ARE SYSTEMS IN THIS RELEASE WHICH *MAY* HAVE 
+PROBLEMS THAT DIDN'T HAVE BEFORE. We have tried our best to ensure that 
+all the drivers from the last release are working as good as before (in 
+most cases better), but there is no guarantee.
+
+Enjoy!  Please report all problems to the message board at:
+
+http://mess.emuverse.com/
+
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+
+Amstrad CPC [Kevin Thacker]
+Atari 7800 [Dan Boris]
+Commodore Amiga [Ernesto Corvi]
+Dragon 32 [Mathis Rosenhauer]
+EACA Colour Genie 2000 [Mathis Rosenhauer]
+Enterprise 128K [Kevin Thacker]
+KC Compact [Kevin Thacker]
+PC-Engine / Turbo Graphics-16 [Charles Mac Donald]
+PC-compatible (MDA, CGA) [Juergen Buchmueller]
+RA+A Spectrum I+ [Mathis Rosenhauer]
+TI-994a [Raphael Nabet]
+ZX-Spectrum 48k [Allard van der Bas]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+- Misc. mapper and PPU fixes for the NES. [Brad Oliver, Firebug, Fx3]
+
+- Rewrite of Sega MasterSystem/GameGear code. It is now much more playable
+  than before. [Charles Mac Donald]
+
+- Better color imager support for the Vectrex. [Mathis Rosenhauer]
+
+- Vectrex Driver overlay support. [Mathis Rosenhauer]
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+
+- Adjusted timing of NES clock to be accurate. [Brad Oliver]
+
+- Sound in the Astrocade driver. [Frank Palazzolo]
+
+- Preliminary Mockingboard support for the Apple II. [Brad Oliver]
+
+- Genesis sound improvements. [Gareth Long]
+
+Other drivers changes:
+----------------------
+
+- Several drivers have had compatibility improved (eg. NES, Genesis and Coleco)
+
+- The Apple II drivers have been fleshed out a little more. The //e
+  family now works. The disk emulation is significantly faster as well.
+  There is still plenty of work to be done though. [Brad Oliver]
+
+- Bug fixes to the TI9928a video code. This affects the ColecoVision and the
+  TI-994a drivers. [Raphael Nabet, Sean Young]
+
+- There are major keyboard problems with most of the emulated computer
+  systems (eg apple2, kaypro, ti99).  This is known, and we are looking 
+  into it.  
+
+
+Changes to the main program:
+----------------------------
+
+- The core is based on MAME 0.36b6. [MAME team]
+
+- Zipped cart and image support added. To use, make sure that the zip has the
+  same name as the file in the zip. (eg) for a coleco CART called
+  "venture.rom", zip to "venture.zip".  When running MESS, type "mess coleco
+  venture.rom".  MESS will then load "venture.rom" from "venture.zip".  Any
+  system roms can also be zipped and placed anywhere in you ROMPATH. (eg)
+  coleco.rom in coleco.zip.
+  [Ben Bruscella]
+
+- GAME_COMPUTER flag added.  Use this to specify that the system requires
+  full keyboard emulation.  Emulated Computer systems now use the 
+  scroll_lock key to toggle the keyboard emulation.  When on, MAME keys 
+  (such as "P" for pause) are disabled, until toggled with the scroll_lock.
+  [Juergen Buchmueller]
+
+
+Source:
+-------
+
+- [DOS] MAKEFILE/compilation changes. To compile MESS, simply make sure you
+  can compile MAME. Then, apply the MESS source over-ride and:
+
+   1. Rename MAKEFILE to MAKEFILE.mm
+   2. Rename MAKEFILE.MES MAKEFILE
+   3. Type MAKE
+
+  The goal is to have no MAME files over-written to compile MESS, although
+  this may not be possible for every release.
+
+- Basically, theres too much to keep track of here since the last release!   
+  Documentation will return to normal next release ;-)
+
+
+==========================================================================
+
+
+0.2b4
+
+Note that this is the first public beta - not all features are working 
+yet.
+
+New drivers supported (in no particular order):
+-----------------------------------------------
+
+Vectrex [Mathis Rosenhauer, Chris Salomon]
+Atari 800/5200 [Juergen Buchmueller]
+Apple II Family [Mike Balfour]
+PDP/1 [Chris Salomon]
+Sega Master System [Mathis Rosenhauer, Brad Oliver]
+Sega GameGear [Mathis Rosenhauer, Brad Oliver]
+Kaypro CP/M [Juergen Buchmueller, Benjamin C. W. Sittler]
+Bally Astrocade [Frank Palazzolo]
+
+
+These drivers have improved GRAPHICS:
+-------------------------------------
+
+- The TRS-80 now uses the real character prom data. [Mike Balfour]
+
+
+
+These drivers have new or improved SOUND:
+-----------------------------------------
+
+- NES psg frequency is now correct. [Brad Oliver]
+
+- Genesis now features preliminary FM sound. [Gareth Long, Tatsuyuki Satoh]
+
+
+
+Other drivers changes:
+----------------------
+
+- General bug fixes to the TRS-80, Colour Genie. [Juergen Buchmueller]
+
+- Increased Genesis compatibility. [Gareth Long]
+
+
+
+Changes to the main program:
+----------------------------
+
+- Code is in sync with MAME 0.33 final + some extras. All bug fixes to the core
+  are incorporated.
+
+- New 6502 core with support for the 65c02 and 6510 variants. [Juergen Buchmueller]
+
+- The 6809 core has been tweaked to increase cycle counting accuracy, needed
+  for the Vectrex. [Mathis Rosenhauer]
+
+- The core key functions have been abstraced to make better use of the
+  keyboard. This is especially handy for computer emulations. [Aaron Giles]
+
+
+
+Source:
+-------
+
+- The DOS version is now compiled with GCC 2.8.1 and using Allegro 3.0 + WIP
+  (30th May).
+
+- [DOS] To improve portability, the makefile is more conservative, using the
+  -pedantic and -Wshadow switches. Note that to compile with these switches,
+  several changes had to be made to allegro.h, which is included.
+

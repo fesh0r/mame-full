@@ -174,38 +174,6 @@ void pokey2_kbcode_w (int kbcode, int make);
 void pokey3_kbcode_w (int kbcode, int make);
 void pokey4_kbcode_w (int kbcode, int make);
 
-int pokey_sh_start (struct POKEYinterface *interface);
-void pokey_sh_stop (void);
-
-int pokey1_r (int offset);
-int pokey2_r (int offset);
-int pokey3_r (int offset);
-int pokey4_r (int offset);
-int quad_pokey_r (int offset);
-
-void pokey1_w (int offset,int data);
-void pokey2_w (int offset,int data);
-void pokey3_w (int offset,int data);
-void pokey4_w (int offset,int data);
-void quad_pokey_w (int offset,int data);
-
-void pokey1_serin_ready (int after);
-void pokey2_serin_ready (int after);
-void pokey3_serin_ready (int after);
-void pokey4_serin_ready (int after);
-
-void pokey1_break_w (int shift);
-void pokey2_break_w (int shift);
-void pokey3_break_w (int shift);
-void pokey4_break_w (int shift);
-
-void pokey1_kbcode_w (int kbcode, int make);
-void pokey2_kbcode_w (int kbcode, int make);
-void pokey3_kbcode_w (int kbcode, int make);
-void pokey4_kbcode_w (int kbcode, int make);
-
-void pokey_sh_update (void);
-
 #ifdef __cplusplus
 }
 #endif

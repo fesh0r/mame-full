@@ -3,8 +3,8 @@
      Copyright (C) 1997, 1998, 1999  by Nicola Salmoria and the MAME team
 
 Please note that many people helped with this project, either directly or by
-releasing source code which was used to write the drivers. We are not trying to
-appropriate merit which isn't ours. See the acknowledgemnts section for a list
+releasing source code that was used to write the drivers. We are not trying to
+appropriate merit that isn't ours. See the acknowledgments section for a list
 of contributors, however please note that the list is largely incomplete. See
 also the CREDITS section in the emulator to see the people who contributed to a
 specific driver. Again, that list might be incomplete. We apologize in advance
@@ -13,22 +13,22 @@ for any omission.
 All trademarks cited in this document are property of their respective owners.
 
 
-Usage and Distribution Licence
+Usage and Distribution License
 ------------------------------
 
 I. Purpose
 ----------
-   MESS is strictly a no profit project. Its main purpose is to be a reference
-   to the inner workings of the many existing console and computer systems.
-   This is done for educational purposes and to preserve them from the oblivion
+   MAME is strictly a no profit project. Its main purpose is to be a reference
+   to the inner workings of the emulated arcade machines. This is done for
+   educational purposes and to preserve many historical games from the oblivion
    they would sink into when the hardware they run on will stop working.
-   Of course to preserve the systems you must also be able to actually use them;
+   Of course to preserve the games you must also be able to actually play them;
    you can see that as a nice side effect.
-   It is not our intention to infringe any copyrights or patents (pending or active)
-   on the original games. All of the source code is either our own or freely
-   available. To work, the emulator often requires ROMs, cartridges, disk images,
-   and/or tape images for the original systems. No portion of the code of the
-   original systems is included in the executable.
+   It is not our intention to infringe any copyrights or patents pending on the
+   original games. All of the source code is either our own or freely
+   available. To work, the emulator requires ROMs of the original arcade
+   machines, which must be provided by the user. No portion of the code of the
+   original ROMs is included in the executable.
 
 II. Cost
 --------
@@ -47,15 +47,8 @@ III. ROM Images
    make it clear that they must not download the ROMs unless they are entitled
    to do so.
 
-IV. Distribution Integrity
---------------------------
-   MESS must be distributed only in the original archives. You are not allowed
-   to distribute a modified version, nor to remove and/or add files to the
-   archive. Adding one text file to advertise your web site is tolerated only
-   if your site contributes original material to the emulation scene.
-
-V. Source Code Distribution
----------------------------
+IV. Source Code Distribution
+----------------------------
    If you distribute the binary, you should also distribute the source code. If
    you can't do that, you must provide a pointer to a place where the source
    can be obtained.
@@ -74,7 +67,7 @@ VI. Reuse of Source Code
    emulators) which bear different copyright notices.
    The source code cannot be used in a commercial product without a written
    authorization of the authors. Use in non commercial products is allowed and
-   indeed encouraged; however if you use portions of the MESS source code in
+   indeed encouraged; however if you use portions of the MAME source code in
    your program, you must make the full source code freely available as well.
    Usage of the _information_ contained in the source code is free for any use.
    However, given the amount of time and energy it took to collect this
@@ -84,7 +77,7 @@ VI. Reuse of Source Code
 VII. Derivative Works
 ---------------------
    Derivative works are allowed (provided source code is available), but
-   discouraged: MESS is a project continuously evolving, and you should, in
+   discouraged: MAME is a project continuously evolving, and you should, in
    your best interest, submit your contributions to the development team, so
    that they are integrated in the main distribution.
    There are a certain number of drivers in the source which are disabled in
@@ -136,18 +129,23 @@ For help in compiling MAME, check these pages:
 http://zan.emuunlim.com/mame/compile/compilemame.html
 http://zan.emuunlim.com/mame/compile/compilemamebeta.html
 
-Thanks:
-	Special thanks to Keith Wilkins and Chris Salomon for their work on DVE
-	and their help,	without which this driver would have taken much longer.
+Also, DO NOT SEND REQUESTS FOR NEW GAMES TO ADD, unless you have some original
+info on the game hardware or, even better, own the board and have the technical
+expertise needed to help us.
+Please don't send us information widely available on the Internet - we are
+perfectly capable of finding it ourselves, thank you.
 
 
 
 Acknowledgments
 ---------------
 
-First off, we'd like to thank Nicola Salmoria and the MAME team for letting us
-play with their code. Without it, MESS would be substantially less than what
-it is right now.
+First of all, thanks to Allard van der Bas (avdbas@wi.leidenuniv.nl) for
+starting the Arcade Emulation Programming Repository at
+http://valhalla.ph.tn.tudelft.nl/emul8
+Without the Repository, I would never have even tried to write an emulator.
+Unfortunately, the original Repository is now closed, but its spirit lives
+on in MAME.
 
 Z80 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
 M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
@@ -170,7 +168,7 @@ AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
 YM-2203 and YM-2151 emulation by Tatsuyuki Satoh.
 POKEY emulator by Ron Fries (rfries@aol.com).
-Many thanks to Eric Smith, Hedley Rainne and Sean Trowbridge for information
+Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
 NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
 YM3812 and YM3526 emulation by Carl-Henrik Skårstedt.

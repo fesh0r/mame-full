@@ -8,11 +8,14 @@
 #define MAXPATHL 2048 /* at most 2048 character path length */
 
 char buf1[MAXPATHL];
+char buf2[MAXPATHL];
 
 char *rompathv[MAXPATHC];
+char *samplepathv[MAXPATHC];
 int rompathc;
 int samplepathc;
 char *cfgdir, *hidir, *inpdir, *stadir, *memcarddir, *artworkdir, *screenshotdir;
+
 
 char *alternate_name; /* for "-romdir" */
 
@@ -163,7 +166,7 @@ int path2vector (char *path, char *buf, char **pathv)
 	return i;
 }
 
-void decompose_rom_path (char *rompath)
+void decompose_rom_sample_path (char *rompath, char *samplepath)
 {
 	rompathc    = path2vector (rompath,    buf1, rompathv);
 	samplepathc = path2vector (samplepath, buf2, samplepathv);
@@ -184,8 +187,8 @@ void decompose_rom_path (char *rompath)
  * file handling routines
  *
  * gamename holds the driver name, filename is only used for ROMs and samples.
- * if 'write' is not 0, the file is opened for write.
- * Otherwise it is opened for read.
+ * if 'write' is not 0, the file is opened for write. Otherwise it is opened
+ * for read.
  */
 
 /*
@@ -194,7 +197,7 @@ void decompose_rom_path (char *rompath)
  */
 int osd_faccess(const char *newfilename, int filetype)
 {
-	char name[MAXPATHL];
+	char name[256];
 	char **pathv;
 	int  pathc;
 	static int indx;
@@ -202,7 +205,7 @@ int osd_faccess(const char *newfilename, int filetype)
 	char *dir_name;
 
 	/* if filename == NULL, continue the search */
-	if (newfilename)
+	if (newfilename != NULL)
 	{
 		indx = 0;
 		filename = newfilename;
@@ -261,7 +264,7 @@ int osd_faccess(const char *newfilename, int filetype)
 		sprintf(name,"%s/%s.zif", dir_name, filename);
 		if (cache_stat(name, &stat_buffer) == 0)
 			return indx+1;
-    }
+	}
 
 	/* no match */
 	return 0;
@@ -289,18 +292,11 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 		return 0;
     memset(f,0,sizeof(FakeFileHandle));
 
-	/* game = driver name, filename = file to load */
 	gamename = (char *)game;
 
-    switch (filetype)
-	{
-		case OSD_FILETYPE_ROM_CART:
-			if (errorlog) fprintf(errorlog,"Opening ROM '%s' for driver %s...\n", filename, gamename);
-			if (wrmode)
-			{
-				if (errorlog) fprintf(errorlog, "ROMs cannot be openend other than read-only!\n");
-				break;
-			}
+	/* Support "-romdir" yuck. */
+	if (alternate_name)
+		gamename = alternate_name;
 
 	switch (filetype)
 	{
@@ -348,6 +344,28 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 						}
 					}
 				}
+
+#ifdef MESS
+				/* Zip cart support for MESS */
+				if (!found && filetype == OSD_FILETYPE_ROM_CART)
+				{
+					extension = strrchr(name, '.');		/* find extension       */
+					if (extension) *extension = '\0';	/* drop extension       */
+					sprintf(name,"%s.zip", name);		/* add .zip for zipfile */
+					if (cache_stat(name,&stat_buffer)==0) {
+						if (load_zipped_file(name, filename, &f->data, &f->length)==0) {
+							if (errorlog)
+								fprintf(errorlog,"Using (osd_fopen) zip file for %s\n", filename);
+							f->type = kZippedFile;
+							f->offset = 0;
+							f->crc = crc32 (0L, f->data, f->length);
+							found = 1;
+						}
+					}
+				}
+
+#endif
+
 
 				if (!found) {
 					/* try with a .zip extension */
@@ -429,6 +447,26 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 							found = f->file!=0;
 						}
 					}
+
+ /******************************************************/
+ 				/* Zip IMAGE support for MESS */
+ 				if (filetype == OSD_FILETYPE_IMAGE && !_write) {
+ 					extension = strrchr(name, '.');		/* find extension       */
+ 					if (extension) *extension = '\0';	/* drop extension       */
+ 					sprintf(name,"%s.zip", name);		/* add .zip for zipfile */
+ 					if (cache_stat(name,&stat_buffer)==0) {
+ 						if (load_zipped_file(name, filename, &f->data, &f->length)==0) {
+ 							if (errorlog)
+ 								fprintf(errorlog,"Using (osd_fopen) zip file for %s\n", filename);
+ 							f->type = kZippedFile;
+ 							f->offset = 0;
+ 							f->crc = crc32 (0L, f->data, f->length);
+ 							found = 1;
+ 						}
+ 					}
+ 				}
+
+/******************************************************/
 
 					if (!found && !_write) {
 						/* try with a .zip extension */
@@ -584,28 +622,27 @@ void *osd_fopen(const char *game,const char *filename,int filetype,int _write)
 int osd_fread(void *file,void *buffer,int length)
 {
 	FakeFileHandle *f = (FakeFileHandle *)file;
-	int gotbytes = 0;
 
 	switch (f->type)
 	{
 		case kPlainFile:
-			gotbytes = fread(buffer,1,length,f->file);
+			return fread(buffer,1,length,f->file);
 			break;
 		case kZippedFile:
 		case kRAMFile:
 			/* reading from the RAM image of a file */
 			if (f->data)
 			{
-				gotbytes = length;
-                if (length + f->offset > f->length)
-					gotbytes = f->length - f->offset;
-				memcpy(buffer, f->offset + f->data, gotbytes);
-				f->offset += gotbytes;
+				if (length + f->offset > f->length)
+					length = f->length - f->offset;
+				memcpy(buffer, f->offset + f->data, length);
+				f->offset += length;
+				return length;
 			}
 			break;
 	}
 
-	return gotbytes;
+	return 0;
 }
 
 int osd_fread_swap(void *file,void *buffer,int length)

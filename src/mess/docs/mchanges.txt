@@ -1,0 +1,28 @@
+==================================================================
+MESS info - modified/added MAME core files (see below for details)
+==================================================================
+
+[general]
+-> MAKEFILE changes:
+1.  EMULATOR_EXE = mess.exe
+2.  DEBUG = 1 (optional)
+3.  NEOFREE = 1
+4.  uncomment all the required CPU cores (use all is ok)
+5.  COREOBJS firstline is obj/version.o obj/mess/system.o obj/mame.o obj/mess/mess.o \
+6.  DRVLIBS replace with MESS ones
+7.  MSDOSOBJS += obj/msdos/nec765.o
+8.  version....  after $(TINYFLAGS) -DMESS
+9.  next #(TINYFLAGS) -DMESS
+10. replace archive definitions
+11. add MAKE MESSDIR to the bottom of MAKE MAKEDIR ;-)
+12. add MAKE CLEANMESS to the bottom of MAKE CLEAN
+13. add messdir:
+14. add cleanmess: 
+
+
+[MAME file mods]
+1.  MAME.C   		(modified)
+2.  TIASOUND.C		(modified)
+3.  USRINTRF.C		(modified)
+4.  FILEIO.C		(modified)
+5.  FRONTHLP.C		(modified)

@@ -1,1 +1,1 @@
-Memory card files will be placed here
+memcard files will be stored here (not used in MESS).

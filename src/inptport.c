@@ -8,10 +8,6 @@ TODO:	remove the 1 analog device per port limitation
 		support for inputports producing interrupts
 		support for extra "real" hardware (PC throttle's, spinners etc)
 
-	MESS Changes
-	. Some of the default keys are changed - COIN changed to START, 1p & 2p start changed
-	. Changed MAMECFGSTRING to MESSCFGSTRING
-	
 ***************************************************************************/
 
 #include "driver.h"
@@ -490,7 +486,7 @@ int load_input_port_settings(void)
 		/* read header */
 		if (osd_fread(f,buf,8) != 8)
 			goto getout;
-		if (memcmp(buf,MESSCFGSTRING,8) != 0)	/* MESS */
+		if (memcmp(buf,MAMECFGSTRING,8) != 0)
 			goto getout;	/* header invalid */
 
 		/* read array size */
@@ -826,7 +822,7 @@ void save_input_port_settings(void)
 		}
 
 		/* write header */
-		osd_fwrite(f,MESSCFGSTRING,8);	/* MESS */
+		osd_fwrite(f,MAMECFGSTRING,8);
 		/* write array size */
 		writeint(f,total);
 		/* write the original settings as defined in the driver */

@@ -291,7 +291,6 @@ static void set_element( int cpu , MHELE *celement , int sp , int ep , MHELE typ
 }
 
 
-#ifndef MESS
 /* ASG 980121 -- allocate all the external memory */
 static int memory_allocate_ext (void)
 {
@@ -375,7 +374,7 @@ static int memory_allocate_ext (void)
 
 	return 1;
 }
-#endif
+
 
 unsigned char *memory_find_base (int cpu, int offset)
 {
@@ -417,12 +416,9 @@ int initmemoryhandlers(void)
 	for( cpu = 0 ; cpu < MAX_CPU ; cpu++ )
 		cur_mr_element[cpu] = cur_mw_element[cpu] = 0;
 
-#ifndef MESS
 	/* ASG 980121 -- allocate external memory */
 	if (!memory_allocate_ext ())
 		return 0;
-#endif
-
 	setOPbasefunc = NULL;
 
 	for( cpu = 0 ; cpu < cpu_gettotalcpu() ; cpu++ )

@@ -711,17 +711,6 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 		{
 			gfx_width = 640;
 			gfx_height = 480;
-			/* but if the graphics won't fit... */
-			if (width > 640 || height > 480)
-			{
-				gfx_width = 800;
-				gfx_height = 600;
-				if (width > 800 || height > 600)
-				{
-					gfx_width = 1024;
-					gfx_height = 768;
-                }
-			}
 		}
 		else
 		{
@@ -1671,11 +1660,7 @@ void osd_close_display(void)
 	}
 }
 
-/* skip a frame */
-int osd_skip_this_frame (int skipme)
-{
-	return skipme;
-}
+
 
 
 /* palette is an array of 'totalcolors' R,G,B triplets. The function returns */

@@ -159,46 +159,7 @@ int osd_wait_keypress(void)
 	return readkey() >> 8;
 }
 
-static int key_to_pseudo_code(int k)
-{
-    switch (k)
-    {
-        case OSD_KEY_F5:
-            return OSD_KEY_SHOW_GFX;
 
-        case OSD_KEY_F8:
-            return OSD_KEY_FRAMESKIP;
-
-        case OSD_KEY_F9:
-            return OSD_KEY_RESET_MACHINE;
-
-        case OSD_KEY_F10:
-            return OSD_KEY_THROTTLE;
-
-        case OSD_KEY_F11:
-            return OSD_KEY_SHOW_FPS;
-
-        case OSD_KEY_F12:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_FAST_EXIT;
-            return OSD_KEY_CONFIGURE;
-
-        case OSD_KEY_MINUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_DOWN;
-            return OSD_KEY_VOLUME_DOWN;
-
-        case OSD_KEY_PLUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_UP;
-            return OSD_KEY_VOLUME_UP;
-
-        case OSD_KEY_SCRLOCK:
-            return OSD_KEY_PAUSE;
-
-    }
-    return k;
-}
 
 
 /*

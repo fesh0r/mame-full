@@ -82,7 +82,7 @@ extern int wait_interlace;
 static int mame_argc;
 static char **mame_argv;
 static int game;
-char *rompath;
+char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
@@ -137,7 +137,7 @@ static int get_bool (char *section, char *option, char *shortcut, int def)
 
 	if (ignorecfg) goto cmdline;
 
-	/* look into mess.cfg, [section] */
+	/* look into mame.cfg, [section] */
 	if (def == 0)
 		yesnoauto = get_config_string(section, option, "no");
 	else if (def > 0)
@@ -149,7 +149,7 @@ static int get_bool (char *section, char *option, char *shortcut, int def)
 	if (get_config_string(section, option, "#") == "#")
 		set_config_string(section, option, yesnoauto);
 
-	/* look into mess.cfg, [gamename] */
+	/* look into mame.cfg, [gamename] */
 	yesnoauto = get_config_string((char *)drivers[game]->name, option, yesnoauto);
 
 	/* also take numerical values instead of "yes", "no" and "auto" */
@@ -201,10 +201,10 @@ static int get_int (char *section, char *option, char *shortcut, int def)
 		if (get_config_int (section, option, -777) == -777)
 			set_config_int (section, option, def);
 
-		/* look into mess.cfg, [section] */
+		/* look into mame.cfg, [section] */
 		res = get_config_int (section, option, def);
 
-		/* look into mess.cfg, [gamename] */
+		/* look into mame.cfg, [gamename] */
 		res = get_config_int ((char *)drivers[game]->name, option, res);
 	}
 
@@ -236,10 +236,10 @@ static float get_float (char *section, char *option, char *shortcut, float def)
 		if (get_config_float (section, option, 9999.0) == 9999.0)
 			set_config_float (section, option, def);
 
-		/* look into mess.cfg, [section] */
+		/* look into mame.cfg, [section] */
 		res = get_config_float (section, option, def);
 
-		/* look into mess.cfg, [gamename] */
+		/* look into mame.cfg, [gamename] */
 		res = get_config_float ((char *)drivers[game]->name, option, res);
 	}
 
@@ -271,10 +271,10 @@ static char *get_string (char *section, char *option, char *shortcut, char *def)
 		if (get_config_string (section, option, "#") == "#" )
 			set_config_string (section, option, def);
 
-		/* look into mess.cfg, [section] */
+		/* look into mame.cfg, [section] */
 		res = get_config_string(section, option, def);
 
-		/* look into mess.cfg, [gamename] */
+		/* look into mame.cfg, [gamename] */
 		res = get_config_string((char*)drivers[game]->name, option, res);
 	}
 
@@ -294,7 +294,7 @@ static char *get_string (char *section, char *option, char *shortcut, char *def)
 	return res;
 }
 
-void get_rom_path (int argc, char **argv, int game_index)
+void get_rom_sample_path (int argc, char **argv, int game_index)
 {
 	int i;
 
@@ -303,7 +303,8 @@ void get_rom_path (int argc, char **argv, int game_index)
 	mame_argv = argv;
 	game = game_index;
 
-	rompath    = get_string ("directory", "imagepath", NULL, ".;IMAGES");
+	rompath    = get_string ("directory", "rompath",    NULL, ".;ROMS");
+	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
 
 	/* handle '-romdir' hack. We should get rid of this BW */
 	alternate_name = 0;
@@ -317,7 +318,7 @@ void get_rom_path (int argc, char **argv, int game_index)
 	}
 
 	/* decompose paths into components (handled by fileio.c) */
-	decompose_rom_path (rompath);
+	decompose_rom_sample_path (rompath, samplepath);
 }
 
 /* for playback of .inp files */
@@ -483,7 +484,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
 
 	/* this is handled externally cause the audit stuff needs it, too */
-	get_rom_path (argc, argv, game_index);
+	get_rom_sample_path (argc, argv, game_index);
 
 	/* get the monitor type */
 	monitorname = get_string ("config", "monitor", NULL, "standard");

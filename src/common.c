@@ -4,11 +4,6 @@
 
   Generic functions, mostly ROM and graphics related.
 
-  MESS Changes
-  	. Added drawgfx_line
-	. Changed disclaimer to make sense for MESS
-	. changed "MAME" in strings to "MESS"
-  	
 *********************************************************************/
 
 #include "driver.h"
@@ -21,18 +16,17 @@ unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 
 
-/* MESS */
+
 void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
 {
-	printf("MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
-		 "several computer and console systems. But hardware is useless without software\n"
-		 "so an image of the ROMs, cartridges, discs, and cassettes which run on that\n"
-		 "hardware is required. Such images, like any other commercial software, are\n"
-		 "copyrighted material and it is therefore illegal to use them if you don't own\n"
-		 "the original media from which the images are derived. Needless to say, these\n"
-		 "images are not distributed together with MESS. Distribution of MESS together\n"
-		 "with these images is a violation of copyright law and should be promptly\n"
-		 "reported to the authors so that appropriate legal action can be taken.\n\n");
+	printf("MAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
+		 "several arcade machines. But hardware is useless without software, so an image\n"
+		 "of the ROMs which run on that hardware is required. Such ROMs, like any other\n"
+		 "commercial software, are copyrighted material and it is therefore illegal to\n"
+		 "use them if you don't own the original arcade machine. Needless to say, ROMs\n"
+		 "are not distributed together with MAME. Distribution of MAME together with ROM\n"
+		 "images is a violation of copyright law and should be promptly reported to the\n"
+		 "authors so that appropriate legal action can be taken.\n\n");
 }                           /* MAURY_END: dichiarazione */
 
 
@@ -136,13 +130,9 @@ int readroms(void)
                goto getout;
 
 			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
-#else
-			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_IMAGE,0);
-#endif
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
 				/* if the game is a clone, try loading the ROM from the main version */
-#ifndef MESS
 				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
 
 				if (f == 0 && Machine->gamedrv->clone_of->clone_of)

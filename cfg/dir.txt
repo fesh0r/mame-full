@@ -1,1 +1,1 @@
-Game configuration files will be placed here
+cfg files will be stored here.
