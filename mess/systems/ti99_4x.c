@@ -15,10 +15,7 @@
 	#if 0	// 1 with new tms5220 core
 		spchroms_read,				// speech ROM read handler
 		spchroms_load_address,		// speech ROM load address handler
-		spchroms_read_and_branch,	// speech ROM read and branch handler
-	#endif
-	#if 0
-		tms5220_ready_callback
+		spchroms_read_and_branch	// speech ROM read and branch handler
 	#endif
 	};
 */
@@ -180,6 +177,9 @@ INPUT_PORTS_START(ti99_4a)
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -367,11 +367,6 @@ static struct SN76496interface tms9919interface =
 	{ 75 }			/* Volume.  I don't know the best value. */
 };
 
-/*static void tms5220_ready_callback(int state)
-{
-	cpu_set_halt_line(0, state ? CLEAR_LINE : ASSERT_LINE);
-}*/
-
 static struct TMS5220interface tms5220interface =
 {
 	680000L,					/* 640kHz -> 8kHz output */
@@ -380,10 +375,7 @@ static struct TMS5220interface tms5220interface =
 #if 1
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
-	spchroms_read_and_branch/*,*/	/* speech ROM read and branch handler */
-#endif
-#if 0
-	tms5220_ready_callback
+	spchroms_read_and_branch	/* speech ROM read and branch handler */
 #endif
 };
 

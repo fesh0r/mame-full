@@ -1,10 +1,11 @@
 /*
-	TI99/4p (preliminary)
+	SNUG SGCPU (a.k.a. 99/4p) system (preliminary)
 
-	TI99/4p ("peripheral box", since the system is a card to insert in the peripheral box,
-	instead of a self contained console), a.k.a. SGCPU ("Second Generation CPU", which was
-	originally the name used in TI documentation to refer to either (or both) TI99/5 and
-	TI99/8 projects), is a reimplementation of the old ti99/4a console.
+	SNUG 99/4p ("peripheral box", since the system is a card to be inserted in
+	the peripheral box, instead of a self contained console), a.k.a. SGCPU
+	("Second Generation CPU", which was originally the name used in TI
+	documentation to refer to either (or both) TI99/5 and TI99/8 projects),
+	is a reimplementation of the old ti99/4a console.
 
 	It was designed by Michael Becker for the hardware part and Harald Glaab for
 	the software part.  It has no relationship with TI.
@@ -103,12 +104,16 @@ PORT_END
 INPUT_PORTS_START(ti99_4p)
 
 	PORT_START	/* config */
-		PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
-			PORT_DIPSETTING( 0x0008, DEF_STR( On ) )
-		PORT_BITX( 0x0010, 0x0010, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
+		PORT_BITX( config_fdc_mask << config_fdc_bit, fdc_kind_BwG << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
+			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
+			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
-			PORT_DIPSETTING( 0x0010, DEF_STR( On ) )
+			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 0 */
 		PORT_BITX(0x88, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
@@ -218,10 +223,7 @@ static struct TMS5220interface tms5220interface =
 #if 1
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
-	spchroms_read_and_branch/*,*/	/* speech ROM read and branch handler */
-#endif
-#if 0
-	tms5220_ready_callback
+	spchroms_read_and_branch	/* speech ROM read and branch handler */
 #endif
 };
 
