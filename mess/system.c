@@ -18,7 +18,6 @@
 #ifndef DRIVER_RECURSIVE
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-/* The "root" driver, defined so we can have &driver_##NAME in macros. */
 const struct GameDriver driver_0 =
 {
   __FILE__,
@@ -77,6 +76,15 @@ const struct GameDriver *drivers[] =
 #ifndef NEOMAME
 
 /****************CONSOLES****************************************************/
+
+/*
+  pong games
+  first done in discret logic
+  later pong in a chip by several firms (atari, ge, ...)
+
+  ay-3-8500-7 6(7) games in this chip
+  nothing known about its internal design
+ */
 
 	/* ATARI */
 	DRIVER( a2600 ) 	/* Atari 2600									  */
@@ -337,8 +345,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
 
 	/* TEXAS INSTRUMENTS */
-/*DRIVER( ti99_2_24 )*/ /* 1983 TI 99/2 								  */
-/*DRIVER( ti99_2_32 )*/ /* 1983 TI 99/2 								  */
+TESTDRIVER( ti990_4 )	/* 197? TI 990/4								*/
+TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 								  */
+TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4 )	/* 1978 TI 99/4 								  */
 	DRIVER( ti99_4e )	/* 1980 TI 99/4E								  */
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
@@ -352,7 +361,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr) 		  */
 
-	DRIVER( pc1512 )	/* 1987 Amstrad PC1512 (XT, CGA compatible) 	  */
+	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (XT, CGA compatible) 	  */
 	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (XT, EGA compatible) 	  */
 
 TESTDRIVER( xtcga ) 	/* 1983 PC-XT (CGA, MF2 Keyboard)				  */
@@ -442,7 +451,7 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 #endif
 
 	/* MOTOROLA */
-/*	DRIVER( mekd2 )*/	/* 1977 Motorola Evaluation Kit 				  */
+TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit 				  */
 
 	/* DEC */
 	DRIVER( pdp1 )		/* 1962 DEC PDP1 for SPACEWAR! - 1962			  */
@@ -468,10 +477,18 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 /****************Games*******************************************************/
 
-#if 0
 	/* The Ideal Game Corp. */
-	DRIVER( maniac )	/* Maniac, PIC1655A dumping problems              */
-#endif
+	/* distributed by ARXON in Germany/Austria */
+	/* PIC1655A (NMOS, not CMOS 16C55) dumping problems */
+/*	DRIVER( maniac )*/	/* Maniac										  */
+
+	/* Quelle International */
+TESTDRIVER( mk1 )		/* Chess Champion MK I							  */
+TESTDRIVER( mk2 )		/* Chess Champion MK II							  */
+
+	/* tchibo */
+	/* single chip with ram, rom, io without label, how to dump? */
+/*	DRIVER( partner3)*/	/* Chess Partner 3 - Kasparov					  */
 
 #endif /* NEOMAME */
 
