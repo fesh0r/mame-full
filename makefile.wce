@@ -83,7 +83,7 @@ ifeq "$(OS)" "wince"
 ifeq "$(WCEPLAT)" "x86em"
 WINDOWS_PROGRAM = -subsystem:windows -windowsce:emulation
 else
-WINDOWS_PROGRAM = -subsystem:windowsce
+WINDOWS_PROGRAM = -subsystem:windowsce,3.00
 endif
 else
 WINDOWS_PROGRAM = -subsystem:windows
