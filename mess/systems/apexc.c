@@ -514,9 +514,9 @@ static void video_update_apexc(struct mame_bitmap *bitmap, const struct rectangl
 {
 	int i;
 	char the_char;
-	/*int full_refresh = get_vh_global_attribute_changed();
 
-	if (full_refresh)*/
+
+	/*if (full_refresh)*/
 	{
 		fillbitmap(bitmap, Machine->pens[0], &/*Machine->visible_area*/panel_window);
 		apexc_draw_string(bitmap, "power", 8, 0, 0);
@@ -557,8 +557,7 @@ static void apexc_teletyper_linefeed(void)
 {
 	struct mame_bitmap *tmp;
 
-	copyscrollbitmap(apexc_bitmap2, apexc_bitmap1, 0, NULL, 1, &var_teletyper_scroll_step,
-						&Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(apexc_bitmap2, apexc_bitmap1, 0, 0, 0, -teletyper_scroll_step, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	fillbitmap(apexc_bitmap2, Machine->pens[0], &teletyper_scroll_clear_window);
 
