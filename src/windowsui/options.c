@@ -127,7 +127,8 @@ static REG_OPTIONS regSettings[] =
 	{"MarqueeDir",         RO_PSTRING, &settings.marqueedir,       0, 0},
 
 #ifdef MESS
-    {"SoftwareDirs",    RO_PSTRING, &settings.softwaredirs,     0, 0},
+    {"SoftwareDirs",       RO_PSTRING, &settings.softwaredirs,     0, 0},
+	{"crc_directory",      RO_PSTRING, &settings.crcdir,           0, 0},
 #endif
 
 	{"rompath",            RO_PSTRING, &settings.romdirs,          0, 0},
@@ -317,7 +318,8 @@ void OptionsInit(int total_games)
 #endif
 	settings.sampledirs        = strdup("samples");
 #ifdef MESS
-    settings.softwaredirs = strdup("software");
+    settings.softwaredirs      = strdup("software");
+	settings.crcdir            = strdup("crc");
 #endif
 	settings.cfgdir            = strdup("cfg");
 	settings.nvramdir          = strdup("nvram");

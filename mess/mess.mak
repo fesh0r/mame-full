@@ -305,6 +305,7 @@ $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/machine/cococart.o \
+	  $(OBJ)/mess/machine/ds1315.o \
 	  $(OBJ)/mess/formats/dmkdsk.o   \
 	  $(OBJ)/mess/machine/ds1315.o   \
 	  $(OBJ)/mess/machine/m6242b.o   \

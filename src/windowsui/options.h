@@ -233,6 +233,7 @@ typedef struct
 	char*    sampledirs;
 #ifdef MESS
 	char*    softwaredirs;
+	char*    crcdir;	
 #endif
 	char*    cfgdir;
 	char*    nvramdir;
@@ -300,6 +301,9 @@ BOOL GetUseNewFileMgr(int num_game);
 
 void SetDefaultSoftware(const char *name);
 const char *GetDefaultSoftware(void);
+
+void SetCrcDir(const char *dir);
+const char *GetCrcDir(void);
 #endif
 
 void SetWindowArea(AREA *area);

@@ -110,6 +110,23 @@ void SetSoftwareDirs(const char* paths)
         settings.softwaredirs = strdup(paths);
 }
 
+const char *GetCrcDir(void)
+{
+	return settings.crcdir;
+}
+
+void SetCrcDir(const char *crcdir)
+{
+    if (settings.crcdir != NULL)
+    {
+        free(settings.crcdir);
+        settings.crcdir = NULL;
+    }
+
+    if (crcdir != NULL)
+        settings.crcdir = strdup(crcdir);
+}
+
 BOOL GetUseNewFileMgr(int num_game)
 {
     assert(0 <= num_game && num_game < num_games);

@@ -247,6 +247,8 @@ void File_UpdatePaths(void)
 
 #ifdef MESS
 	rc_set_option2(fileio_opts, "biospath",			  GetRomDirs(), 		 MAXINT_PTR);
+	rc_set_option2(fileio_opts, "softwarepath",       GetSoftwareDirs(),     MAXINT_PTR);
+	rc_set_option2(fileio_opts, "CRC_directory",      GetCrcDir(),           MAXINT_PTR);
 #else
 	rc_set_option2(fileio_opts, "rompath",			  GetRomDirs(), 		 MAXINT_PTR);
 #endif

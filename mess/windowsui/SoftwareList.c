@@ -497,9 +497,10 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
 #if HAS_CRC
 static void *OpenCrcFile(const struct GameDriver *drv, char *outname)
 {
-	char buffer[32];
+	extern const char *crcdir;
+	char buffer[MAX_PATH];
 	strcpy(outname, drv->name);
-	snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "crc\\%s.crc", drv->name);
+	snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s.crc", crcdir, drv->name);
 	return config_open(buffer);
 }
 #endif /* HAS_CRC */

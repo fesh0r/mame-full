@@ -38,6 +38,8 @@ Source Changes:
   combined into one distribution.  [Ben Bruscella, Nate Woods, with a Huge
   thanks to MAME32 team, especially: Michael Soderstrom, Mike Haaland, and
   Chris Kirmse]
+
+- [Windows GUI] CRC directory now configurable from MESS GUI [Nate Woods]
   
 - MESSRoms now recognizes more ROMs. [Krzysztof Strzecha]
 

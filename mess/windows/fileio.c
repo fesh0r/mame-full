@@ -27,8 +27,7 @@
 #endif
 
 /* CRCs */
-static char crcdirbuf[256] = "";
-const char *crcdir = crcdirbuf;
+const char *crcdir;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 static char pcrcfilename[256] = "";
@@ -50,9 +49,9 @@ static char **swpathv = NULL;
 static int swpathc = 0;
 static int swpath_needs_decomposition = 1;
 
-static const char *rompath = "bios";
-static const char *swpath = "software";
-static const char *samplepath = "samples";
+static const char *rompath;
+static const char *swpath;
+static const char *samplepath;
 static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
 static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
 /* from datafile.c */
