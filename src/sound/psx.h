@@ -10,7 +10,6 @@
 
 extern int PSX_sh_start( const struct MachineSound *msound );
 extern void PSX_sh_stop( void );
-extern void PSX_sh_update( void );
 extern void PSX_sh_reset( void );
 READ32_HANDLER( psx_spu_r );
 READ32_HANDLER( psx_spu_delay_r );
