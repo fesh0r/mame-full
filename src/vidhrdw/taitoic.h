@@ -31,6 +31,8 @@ WRITE_HANDLER( TC0430GRW_ctrl_word_w );
 void TC0430GRW_tilemap_update(int base_color);
 void TC0430GRW_zoom_draw(struct osd_bitmap *bitmap,int xoffset,int yoffset,UINT32 priority);
 
+int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int col_base);
+void TC0480SCP_vh_stop(void);
 
 int TC0110PCR_vh_start(void);
 void TC0110PCR_vh_stop(void);
