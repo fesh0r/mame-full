@@ -99,8 +99,6 @@ static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0};
 /*static UINT16 dbg_pty_colours[12] = { 0x1084, 0x18c6, 0x2529, 0x2d6b, 0x39ce, 0x4210, 0x4e73, 0x56b5, 0x6318, 0x6b5a, 0x77bd, 0x7fff };*/
 #endif
 
-UINT8 ppu_obj_size[2];				/* Object sizes */
-
 /* Lookup tables */
 static const UINT8  table_bgd_pty[4][2] = { {7,10}, {6,9}, {1,4}, {0,3} };
 static const UINT8  table_obj_pty[4]    = { 2, 5, 8, 11 };
@@ -120,8 +118,8 @@ static const UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x8
 
 struct SCANLINE
 {
-	UINT16 buffer[SNES_SCR_WIDTH + 8];
-	UINT8  zbuf[SNES_SCR_WIDTH + 8];
+	UINT16 buffer[SNES_SCR_WIDTH + 16];
+	UINT8  zbuf[SNES_SCR_WIDTH + 16];
 };
 
 static struct SCANLINE scanlines[2];
@@ -489,10 +487,10 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
+	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
+	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -522,7 +520,7 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= 0x20000 )
+		if( tilemap >= SNES_VRAM_SIZE )
 			continue;
 
 		/* Have we scrolled into the next map? */
@@ -591,10 +589,10 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
+	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
+	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -624,7 +622,7 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= 0x20000 )
+		if( tilemap >= SNES_VRAM_SIZE )
 			continue;
 
 		/* Have we scrolled into the next map? */
@@ -689,10 +687,10 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 	/* Find the size of the tiles (8x8 or 16x16) */
 	tile_size = snes_ppu.layer[layer].tile_size;
 	/* Find scroll info */
-	vscroll = (bg_voffset[layer] & 0x3ff) >> (3 + tile_size);
-	vshift = bg_voffset[layer] & ((8 << tile_size) - 1);
-	hscroll = (bg_hoffset[layer] & 0x3ff) >> (3 + tile_size);
-	hshift = bg_hoffset[layer] & ((8 << tile_size) - 1);
+	vscroll = (snes_ppu.bgd_offset.vertical[layer] & 0x3ff) >> (3 + tile_size);
+	vshift = snes_ppu.bgd_offset.vertical[layer] & ((8 << tile_size) - 1);
+	hscroll = (snes_ppu.bgd_offset.horizontal[layer] & 0x3ff) >> (3 + tile_size);
+	hshift = snes_ppu.bgd_offset.horizontal[layer] & ((8 << tile_size) - 1);
 
 	/* Find vertical scroll amount */
 	vtilescroll = vscroll + (curline >> (3 + tile_size));
@@ -722,7 +720,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
 		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= 0x20000 )
+		if( tilemap >= SNES_VRAM_SIZE )
 			continue;
 
 		/* Have we scrolled into the next map? */
@@ -782,8 +780,8 @@ static void snes_update_line_mode7( UINT8 screen, UINT16 curline )
 	md = mode7_data[3];
 	xc = mode7_data[4];
 	yc = mode7_data[5];
-	hs = bg_hoffset[0];
-	vs = bg_voffset[0];
+	hs = snes_ppu.bgd_offset.horizontal[0];
+	vs = snes_ppu.bgd_offset.vertical[0];
 
 	/* Sign extend */
 	xc <<= 3;
@@ -921,13 +919,13 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 		blend = (pal < 192) ? 0 : 1;
 
 		/* Draw sprite if it intersects the current line */
-		if( curline >= y && curline < (y + (ppu_obj_size[size] << 3)) )
+		if( curline >= y && curline < (y + (snes_ppu.oam.size[size] << 3)) )
 		{
 			ys = (curline - y) >> 3;
 			line = (curline - y) % 8;
 			if( vflip )
 			{
-				ys = ppu_obj_size[size] - ys - 1;
+				ys = snes_ppu.oam.size[size] - ys - 1;
 				line = (-1 * line) + 7;
 			}
 			line <<= 1;
@@ -935,7 +933,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 			if( hflip )
 			{
 				UINT8 count = 0;
-				for( xs = (ppu_obj_size[size] - 1); xs >= 0; xs-- )
+				for( xs = (snes_ppu.oam.size[size] - 1); xs >= 0; xs-- )
 				{
 					if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
 						snes_draw_tile_object( screen, snes_ppu.layer[4].data + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
@@ -944,7 +942,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 			}
 			else
 			{
-				for( xs = 0; xs < ppu_obj_size[size]; xs++ )
+				for( xs = 0; xs < snes_ppu.oam.size[size]; xs++ )
 				{
 					if( (x + (xs << 3) < SNES_SCR_WIDTH + 8) )
 						snes_draw_tile_object( screen, snes_ppu.layer[4].data + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
@@ -1088,7 +1086,7 @@ static void snes_update_windowmasks(void)
 				case 0x4:	/* AND */
 					snes_ppu.clipmasks[1][ii] = w1 & w2 ? 0x00 : 0xff;
 					break;
-				case 0x2:	/* XOR */
+				case 0x8:	/* XOR */
 					snes_ppu.clipmasks[1][ii] = w1 ^ w2 ? 0x00 : 0xff;
 					break;
 				case 0xc:	/* XNOR */
@@ -1422,7 +1420,7 @@ void snes_refresh_scanline( UINT16 curline )
 	/* Check if the user has enabled or disabled stuff */
 	if( curline == 0 )
 	{
-		UINT16 y = 0;
+		UINT16 y = 1;
 		char t[100];
 		static char WINLOGIC[4] = { '|', '&', '^', '!' };
 
@@ -1444,9 +1442,8 @@ void snes_refresh_scanline( UINT16 curline )
 			debug_options.input_count = 5;
 		}
 		/* Display some debug info on the screen */
-		sprintf( t, "%s%s%s%s%s%s", debug_options.bg_disabled[0]?" ":"1", debug_options.bg_disabled[1]?" ":"2", debug_options.bg_disabled[2]?" ":"3", debug_options.bg_disabled[3]?" ":"4", debug_options.bg_disabled[4]?" ":"O", debug_options.draw_subscreen?"S":"M" );
-		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "1 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+		sprintf( t, "%s1 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+				debug_options.bg_disabled[0]?" ":"*",
 				(snes_ram[TM] & 0x1)?"M":" ",
 				(snes_ram[TS] & 0x1)?"S":" ",
 				(snes_ram[CGADSUB] & 0x1)?"B":" ",
@@ -1456,10 +1453,11 @@ void snes_refresh_scanline( UINT16 curline )
 				(snes_ram[W12SEL] & 0x2)?((snes_ram[W12SEL] & 0x1)?"o":"i"):" ",
 				(snes_ram[W12SEL] & 0x8)?((snes_ram[W12SEL] & 0x4)?"o":"i"):" ",
 				(snes_ram[BG1SC] & 0xfc) << 9,
-				(bg_hoffset[0] & 0x3ff) >> 3,
-				(bg_voffset[0] & 0x3ff) >> 3 );
+				(snes_ppu.bgd_offset.horizontal[0] & 0x3ff) >> 3,
+				(snes_ppu.bgd_offset.vertical[0] & 0x3ff) >> 3 );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "2 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+		sprintf( t, "%s2 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+				debug_options.bg_disabled[1]?" ":"*",
 				(snes_ram[TM] & 0x2)?"M":" ",
 				(snes_ram[TS] & 0x2)?"S":" ",
 				(snes_ram[CGADSUB] & 0x2)?"B":" ",
@@ -1469,10 +1467,11 @@ void snes_refresh_scanline( UINT16 curline )
 				(snes_ram[W12SEL] & 0x20)?((snes_ram[W12SEL] & 0x10)?"o":"i"):" ",
 				(snes_ram[W12SEL] & 0x80)?((snes_ram[W12SEL] & 0x40)?"o":"i"):" ",
 				(snes_ram[BG2SC] & 0xfc) << 9,
-				(bg_hoffset[1] & 0x3ff) >> 3,
-				(bg_voffset[1] & 0x3ff) >> 3 );
+				(snes_ppu.bgd_offset.horizontal[1] & 0x3ff) >> 3,
+				(snes_ppu.bgd_offset.vertical[1] & 0x3ff) >> 3 );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "3 %s%s%s%s%s%c%s%s%s %4X h%3d v%3d",
+		sprintf( t, "%s3 %s%s%s%s%s%c%s%s%s %4X h%3d v%3d",
+				debug_options.bg_disabled[2]?" ":"*",
 				(snes_ram[TM] & 0x4)?"M":" ",
 				(snes_ram[TS] & 0x4)?"S":" ",
 				(snes_ram[CGADSUB] & 0x4)?"B":" ",
@@ -1483,10 +1482,11 @@ void snes_refresh_scanline( UINT16 curline )
 				(snes_ram[W34SEL] & 0x8)?((snes_ram[W34SEL] & 0x4)?"o":"i"):" ",
 				(snes_ram[BGMODE] & 0x8)?"P":" ",
 				(snes_ram[BG3SC] & 0xfc) << 9,
-				(bg_hoffset[2] & 0x3ff) >> 3,
-				(bg_voffset[2] & 0x3ff) >> 3 );
+				(snes_ppu.bgd_offset.horizontal[2] & 0x3ff) >> 3,
+				(snes_ppu.bgd_offset.vertical[2] & 0x3ff) >> 3 );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "4 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+		sprintf( t, "%s4 %s%s%s%s%s%c%s%s  %4X h%3d v%3d",
+				debug_options.bg_disabled[3]?" ":"*",
 				(snes_ram[TM] & 0x8)?"M":" ",
 				(snes_ram[TS] & 0x8)?"S":" ",
 				(snes_ram[CGADSUB] & 0x8)?"B":" ",
@@ -1496,10 +1496,11 @@ void snes_refresh_scanline( UINT16 curline )
 				(snes_ram[W34SEL] & 0x20)?((snes_ram[W34SEL] & 0x10)?"o":"i"):" ",
 				(snes_ram[W34SEL] & 0x80)?((snes_ram[W34SEL] & 0x40)?"o":"i"):" ",
 				(snes_ram[BG4SC] & 0xfc) << 9,
-				(bg_hoffset[3] & 0x3ff) >> 3,
-				(bg_voffset[3] & 0x3ff) >> 3 );
+				(snes_ppu.bgd_offset.horizontal[3] & 0x3ff) >> 3,
+				(snes_ppu.bgd_offset.vertical[3] & 0x3ff) >> 3 );
 		ui_text( Machine->scrbitmap, t, 300, y++ * 9 );
-		sprintf( t, "O %s%s%s%s%s%c%s%s  %4X",
+		sprintf( t, "%sO %s%s%s%s%s%c%s%s  %4X",
+				debug_options.bg_disabled[4]?" ":"*",
 				(snes_ram[TM] & 0x10)?"M":" ",
 				(snes_ram[TS] & 0x10)?"S":" ",
 				(snes_ram[CGADSUB] & 0x10)?"B":" ",
