@@ -71,7 +71,11 @@ enum {
 
 static int iwm_mode;		/* 0-31 */
 
+static void *motor_off_timer;
+
 iwm_interface iwm_intf;
+
+static void iwm_turnmotoroff(int dummy);
 
 /*
 	IWM code
@@ -81,6 +85,7 @@ void iwm_init(const iwm_interface *intf)
 {
 	iwm_lines = 0;
 	iwm_mode = 0x1f;	/* default value needed by Lisa 2 - no, I don't know if it is true */
+	motor_off_timer = timer_alloc(iwm_turnmotoroff);
 	iwm_intf = * intf;
 }
 
@@ -253,13 +258,15 @@ static void iwm_access(int offset)
 		else
 		{
 			/* One second delay */
-			timer_set(TIME_IN_SEC(1), 0, iwm_turnmotoroff);
+			timer_adjust(motor_off_timer, TIME_IN_SEC(1), 0, 0.);
 		}
 		break;
 
 	case 0x09:
 		/* Turn on motor */
 		iwm_lines |= IWM_MOTOR;
+
+		timer_enable(motor_off_timer, 0);
 
 		(*iwm_intf.set_enable_lines)((iwm_lines & IWM_DRIVE) ? 2 : 1);
 
