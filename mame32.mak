@@ -695,7 +695,7 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
 	$(OBJ)/vidhrdw/zerozone.o $(OBJ)/drivers/zerozone.o \
 	$(OBJ)/vidhrdw/galspnbl.o $(OBJ)/drivers/galspnbl.o \
-	$(OBJ)/vidhrdw/bigtwin.o $(OBJ)/drivers/bigtwin.o \
+	$(OBJ)/vidhrdw/playmark.o $(OBJ)/drivers/playmark.o \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
 	$(OBJ)/drivers/omegrace.o \
