@@ -13,7 +13,10 @@ System Driver Changes:
   Flagged sound as being stereo. Improved input ports. [Anthony Kruize]
 
 - [SUPERGB] Fixed certain areas of the border image being left blank instead of
-  being filled in.(bug #264) [Anthony Kruize]
+  being filled in. (bug #264) [Anthony Kruize]
+
+- [COCO3] Fixed a bug that caused a few display glitches when switching between
+  40 column and 80 column mode. (bug #271) [Nate Woods]
 
 Source Changes:
 ---------------

@@ -901,8 +901,10 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		! Bit 3 H50 1 = 50 Hz power, 0 = 60 Hz power
 		 *		  Bits 0-2 LPR Lines per row
 		 */
-		if (xorval & 0xB7) {
+		if (xorval & 0xB7)
+		{
 			videomap_invalidate_frameinfo();
+			videomap_invalidate_lineinfo();
 #if LOG_GIME
 			logerror("CoCo3 GIME: $ff98 forcing refresh\n");
 #endif
@@ -917,6 +919,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *		  Bits 0-1 CRES Color Resolution
 		 */
 		videomap_invalidate_frameinfo();
+		videomap_invalidate_lineinfo();
 		break;
 
 	case 2:
