@@ -45,10 +45,6 @@ static int a2_speaker_state;
 static void mockingboard_init (int slot);
 static int mockingboard_r (int offset);
 static void mockingboard_w (int offset, int data);
-static WRITE8_HANDLER ( apple2_mainram0400_w );
-static WRITE8_HANDLER ( apple2_mainram2000_w );
-static WRITE8_HANDLER ( apple2_auxram0400_w );
-static WRITE8_HANDLER ( apple2_auxram2000_w );
 
 static double joystick_x1_time;
 static double joystick_y1_time;
@@ -83,7 +79,7 @@ void apple2_setup_memory(const struct apple2_memmap_entry *memmap)
 
 void apple2_update_memory(void)
 {
-	int i, rbank, wbank;
+	int i, bank, rbank, wbank;
 	int full_update = 0;
 	struct apple2_meminfo meminfo;
 	read8_handler rh;
@@ -91,6 +87,7 @@ void apple2_update_memory(void)
 	offs_t begin, end_r, end_w;
 	UINT8 *rbase, *wbase, *rom, *slot_ram;
 	UINT32 rom_length, slot_length, offset;
+	bank_disposition_t bank_disposition;
 
 	/* need to build list of current info? */
 	if (!apple2_current_meminfo)
@@ -108,11 +105,14 @@ void apple2_update_memory(void)
 	slot_ram = (slot_length > 0) ? &rom[rom_length] : NULL;
 
 	/* loop through the entire memory map */
+	bank = 1;
 	for (i = 0; apple2_cur_memory_map[i].get_meminfo; i++)
 	{
 		/* retrieve information on this entry */
 		memset(&meminfo, 0, sizeof(meminfo));
 		apple2_cur_memory_map[i].get_meminfo(apple2_cur_memory_map[i].begin, apple2_cur_memory_map[i].end, &meminfo);
+
+		bank_disposition = apple2_cur_memory_map[i].bank_disposition;
 
 		/* do we need to memory reading? */
 		if (full_update
@@ -120,7 +120,7 @@ void apple2_update_memory(void)
 			|| (meminfo.read_handler != apple2_current_meminfo[i].read_handler))
 		{
 			rbase = NULL;
-			rbank = i * 2 + 1;
+			rbank = (bank_disposition != A2MEM_IO) ? bank : 0;
 			begin = apple2_cur_memory_map[i].begin;
 			end_r = apple2_cur_memory_map[i].end;
 			rh = (read8_handler) (STATIC_BANK1 + rbank - 1);
@@ -187,7 +187,12 @@ void apple2_update_memory(void)
 			|| (meminfo.write_handler != apple2_current_meminfo[i].write_handler))
 		{
 			wbase = NULL;
-			wbank = i * 2 + 2;
+			if (bank_disposition == A2MEM_MONO)
+				wbank = bank + 0;
+			else if (bank_disposition == A2MEM_DUAL)
+				wbank = bank + 1;
+			else
+				wbank = 0;
 			begin = apple2_cur_memory_map[i].begin;
 			end_w = apple2_cur_memory_map[i].end;
 			wh = (write8_handler) (STATIC_BANK1 + wbank - 1);
@@ -242,6 +247,7 @@ void apple2_update_memory(void)
 			apple2_current_meminfo[i].write_mem = meminfo.write_mem;
 			apple2_current_meminfo[i].write_handler = meminfo.write_handler;
 		}
+		bank += bank_disposition;
 	}
 }
 
@@ -463,19 +469,19 @@ static void apple2_mem_E000(offs_t begin, offs_t end, struct apple2_meminfo *mem
 
 static const struct apple2_memmap_entry apple2_memory_map[] =
 {
-	{ 0x0000, 0x01FF, apple2_mem_0000, A2MEM_NORMAL },
-	{ 0x0200, 0x03FF, apple2_mem_0200, A2MEM_NORMAL },
-	{ 0x0400, 0x07FF, apple2_mem_0400, A2MEM_NORMAL },
-	{ 0x0800, 0x1FFF, apple2_mem_0800, A2MEM_NORMAL },
-	{ 0x2000, 0x3FFF, apple2_mem_2000, A2MEM_NORMAL },
-	{ 0x4000, 0xBFFF, apple2_mem_4000, A2MEM_NORMAL },
-	{ 0xC000, 0xC0FF, apple2_mem_C000, A2MEM_NORMAL },
-	{ 0xC100, 0xC2FF, apple2_mem_Cx00, A2MEM_NORMAL },
-	{ 0xC300, 0xC3FF, apple2_mem_C300, A2MEM_NORMAL },
-	{ 0xC400, 0xC7FF, apple2_mem_Cx00, A2MEM_NORMAL },
-	{ 0xC800, 0xCFFF, apple2_mem_C800, A2MEM_NORMAL },
-	{ 0xD000, 0xDFFF, apple2_mem_D000, A2MEM_NORMAL },
-	{ 0xE000, 0xFFFF, apple2_mem_E000, A2MEM_NORMAL },
+	{ 0x0000, 0x01FF, apple2_mem_0000, A2MEM_MONO },
+	{ 0x0200, 0x03FF, apple2_mem_0200, A2MEM_DUAL },
+	{ 0x0400, 0x07FF, apple2_mem_0400, A2MEM_DUAL },
+	{ 0x0800, 0x1FFF, apple2_mem_0800, A2MEM_DUAL },
+	{ 0x2000, 0x3FFF, apple2_mem_2000, A2MEM_DUAL },
+	{ 0x4000, 0xBFFF, apple2_mem_4000, A2MEM_DUAL },
+	{ 0xC000, 0xC0FF, apple2_mem_C000, A2MEM_IO },
+	{ 0xC100, 0xC2FF, apple2_mem_Cx00, A2MEM_MONO },
+	{ 0xC300, 0xC3FF, apple2_mem_C300, A2MEM_MONO },
+	{ 0xC400, 0xC7FF, apple2_mem_Cx00, A2MEM_MONO },
+	{ 0xC800, 0xCFFF, apple2_mem_C800, A2MEM_MONO },
+	{ 0xD000, 0xDFFF, apple2_mem_D000, A2MEM_DUAL },
+	{ 0xE000, 0xFFFF, apple2_mem_E000, A2MEM_DUAL },
 	{ 0 }
 };
 
@@ -761,28 +767,28 @@ void apple2_interrupt(void)
 	apple2_auxram2000_w
 ***************************************************************************/
 
-static WRITE8_HANDLER ( apple2_mainram0400_w )
+WRITE8_HANDLER ( apple2_mainram0400_w )
 {
 	offset += 0x400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE8_HANDLER ( apple2_mainram2000_w )
+WRITE8_HANDLER ( apple2_mainram2000_w )
 {
 	offset += 0x2000;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE8_HANDLER ( apple2_auxram0400_w )
+WRITE8_HANDLER ( apple2_auxram0400_w )
 {
 	offset += 0x10400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE8_HANDLER ( apple2_auxram2000_w )
+WRITE8_HANDLER ( apple2_auxram2000_w )
 {
 	offset += 0x12000;
 	mess_ram[offset] = data;

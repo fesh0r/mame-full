@@ -137,9 +137,9 @@ int apple2_get_bgcolor(void);
 
 typedef enum
 {
-	A2MEM_NORMAL = 2,	/* this is a bank where read and write can go different places */
-	A2MEM_UNISON = 1,	/* this is a bank where read and write are always in unison */
-	A2MEM_IO = 0		/* this is always handlers; never banked memory */
+	A2MEM_IO		= 0,	/* this is always handlers; never banked memory */
+	A2MEM_MONO		= 1,	/* this is a bank where read and write are always in unison */
+	A2MEM_DUAL		= 2		/* this is a bank where read and write can go different places */
 } bank_disposition_t;
 
 struct apple2_meminfo
@@ -161,5 +161,9 @@ struct apple2_memmap_entry
 void apple2_setup_memory(const struct apple2_memmap_entry *memmap);
 void apple2_update_memory(void);
 
+WRITE8_HANDLER( apple2_mainram0400_w );
+WRITE8_HANDLER( apple2_auxram0400_w );
+WRITE8_HANDLER( apple2_mainram2000_w );
+WRITE8_HANDLER( apple2_auxram2000_w );
 
 #endif /* APPLE2_H */
