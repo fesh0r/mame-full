@@ -3149,6 +3149,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		{
             InitPropertyPage(hInst, hwnd, GetSelectedPickItem());
 			SaveGameOptions(GetSelectedPickItem());
+#ifdef MESS
+			MessUpdateSoftwareList();
+#endif
 		}
         /* Just in case the toggle MMX on/off */
         UpdateStatusBar();
