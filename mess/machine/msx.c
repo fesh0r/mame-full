@@ -213,7 +213,7 @@ int msx_load_rom (int id)
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-    strcpy (msx1.cart[id].sramfile, basename (device_filename (IO_CARTSLOT, id) ) );
+    strcpy (msx1.cart[id].sramfile, osd_basename (device_filename (IO_CARTSLOT, id) ) );
     pext = strrchr (msx1.cart[id].sramfile, '.');
     if (pext) *pext = 0;
     /* do some stuff for some types :)) */

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "imgtool.h"
-#include "osdtools.h"
+#include "utils.h"
 
 struct command {
 	const char *name;
@@ -19,7 +19,7 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 {
 	fprintf(f, "%s %s %s %s\n",
 		(write_word_usage ? "Usage:" : "      "),
-		basename(argv[0]),
+		osd_basename(argv[0]),
 		c->name,
 		c->usage ? c->usage : "");
 }
@@ -340,7 +340,7 @@ static int cmd_crc(struct command *c, int argc, char *argv[])
 
 	fprintf(stdout, "%08x = %s | %s | %s | %s\n",
 		(int) info.crc,
-                info.longname ? info.longname : basename(argv[1]),
+                info.longname ? info.longname : osd_basename(argv[1]),
 		info.year ? yearbuf : "",
 		info.manufacturer ? info.manufacturer : "",
 		info.playable ? info.playable : "");
@@ -361,13 +361,16 @@ static int cmd_good(struct command *c, int argc, char *argv[])
 	STREAM *input;
 	STREAM *output;
 	char gooddir[32];
+	int len;
 
 	memset(gooddir, 0, sizeof(gooddir));
 	strcpy(gooddir, GOOD_DIR);
 	s = gooddir + strlen(gooddir);
 
 	strncpy(s, argv[0], sizeof(gooddir) - strlen(gooddir) - 2);
-	strcat(s, PATH_SEPARATOR);
+	len = strlen(s);
+	s[len] = PATH_SEPARATOR;
+	s[len+1] = '\0';
 	s[0] = toupper(s[0]);
 
 	osd_mkdir(gooddir);
@@ -555,11 +558,11 @@ int CLIB_DECL main(int argc, char *argv[])
 	fprintf(stderr, "<imagename> is the image filename; can specify a ZIP file for image name\n");
 
 	fprintf(stderr, "\nExample usage:\n");
-	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", basename(argv[0]));
-	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", basename(argv[0]));
-	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", basename(argv[0]));
-	fprintf(stderr, "\t%s info nes myimage.dsk\n", basename(argv[0]));
-	fprintf(stderr, "\t%s good nes mynescart.zip\n", basename(argv[0]));
+	fprintf(stderr, "\t%s dir rsdos myimageinazip.zip\n", osd_basename(argv[0]));
+	fprintf(stderr, "\t%s get rsdos myimage.dsk myfile.bin mynewfile.txt\n", osd_basename(argv[0]));
+	fprintf(stderr, "\t%s getall rsdos myimage.dsk\n", osd_basename(argv[0]));
+	fprintf(stderr, "\t%s info nes myimage.dsk\n", osd_basename(argv[0]));
+	fprintf(stderr, "\t%s good nes mynescart.zip\n", osd_basename(argv[0]));
 	return 0;
 
 cmderror:

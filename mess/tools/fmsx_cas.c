@@ -4,7 +4,6 @@
 #include "osdepend.h"
 #include "formats/fmsx_cas.h"
 #include "imgtool.h"
-#include "osdtools.h"
 #include "utils.h"
 
 /*
@@ -116,7 +115,7 @@ static int fmsx_cas_image_init(STREAM *f, IMAGE **outimg)
 		return IMGTOOLERR_CORRUPTIMAGE;
 		}
 
-    if (f->name) pbase = (char*)basename (f->name);
+    if (f->name) pbase = (char*)osd_basename (f->name);
 	else pbase = NULL;
     if (pbase) len = strlen (pbase);
     else len = strlen (default_name);

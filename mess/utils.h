@@ -3,10 +3,13 @@
 
 #include <string.h>
 
-#ifdef WIN32
-#define strcmpi		stricmp
-#define strncmpi	strnicmp
-#endif
+/* -----------------------------------------------------------------------
+ * osdutils.h is a header file that gives overrides for functions we
+ * define below, so if a native implementation is available, we can use
+ * it
+ * ----------------------------------------------------------------------- */
+
+#include "osdutils.h"
 
 /* -----------------------------------------------------------------------
  * strncpyz
@@ -29,7 +32,7 @@ void rtrim(char *buf);
  * strncmpi
  *
  * Case insensitive compares.  If your platform has this function then
- * #define it above and our implementation will be ignored
+ * #define it in "osdutils.h"
  * ----------------------------------------------------------------------- */
 
 #ifndef strcmpi
@@ -40,12 +43,33 @@ int strcmpi(const char *dst, const char *src);
 int strncmpi(const char *dst, const char *src, size_t n);
 #endif /* strcmpi */
 
-#ifdef WIN32 
-const char *basename (const char *name);
-#endif
+/* -----------------------------------------------------------------------
+ * osd_basename
+ *
+ * Given a pathname, returns the partially qualified path.  If your
+ * platform has this function then #define it in "osdutils.h"
+ * ----------------------------------------------------------------------- */
 
-#ifdef UNIX
-const char *basename (const char *name);
+#ifndef osd_basename
+char *osd_basename (const char *name);
+#endif /* osd_basename */
+
+/* -----------------------------------------------------------------------
+ * osd_mkdir
+ *
+ * A platform independant mkdir().  No default implementation exists, but
+ * so far, only imgtool uses this.  Either way, a 'prototype' is given here
+ * for informational purposes.
+ * ----------------------------------------------------------------------- */
+
+/* void osd_mkdir(const char *dir); */
+
+/* -----------------------------------------------------------------------
+ * Miscellaneous
+ * ----------------------------------------------------------------------- */
+
+#ifndef PATH_SEPARATOR
+#define PATH_SEPARATOR	'/'
 #endif
 
 #endif /* UTILS_H */

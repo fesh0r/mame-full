@@ -71,34 +71,26 @@ int strncmpi(const char *dst, const char *src, size_t n)
 #endif /* strncmpi */
 
 /* -----------------------------------------------------------------------
- * basename
+ * osd_basename
  *
  * Like the GNU C version of basename
- *
- * What is the best way to do this???
  * ----------------------------------------------------------------------- */
 
-#ifdef UNIX
-const char *basename (const char *name)
-	{
-	const char *p;
-
-	p = strrchr (name, '/');
-	return (p == NULL ? name : p);
-	}
-#endif
-
-#ifdef WIN32
-const char *basename(const char *name)
+#ifndef osd_basename
+char *osd_basename(const char *name)
 {
-	int len = strlen (name);
+	int len;
+	
+	len = strlen (name);
 
 	while (len-- > 0)
 	{
-		if ((name[len] == '\\') || (name[len] == '/'))
-			return name + len + 1;
+		/* Presumably, if PATH_SEPARATOR == '/', then the resulting weirdness
+		 * would optimize out
+		 */
+		if ((name[len] == '\\') || (name[len] == PATH_SEPARATOR))
+			return (char *) (name + len + 1);
 	}
-	return name;
+	return (char *) name;
 }
-#endif
-
+#endif /* osd_basename */

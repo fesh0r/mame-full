@@ -5,7 +5,7 @@
 #include "imgtool.h"
 #include "osd_cpu.h"
 #include "config.h"
-#include "osdtools.h"
+#include "utils.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -321,7 +321,7 @@ int img_putfile(IMAGE *img, const char *newfname, const char *source, const file
 	STREAM *f;
 
 	if (!newfname)
-		newfname = basename(source);
+		newfname = osd_basename(source);
 
 	f = stream_open(source, OSD_FOPEN_READ);
 	if (!f)

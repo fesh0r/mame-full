@@ -104,7 +104,7 @@ AUDIOLIBS  = $(AUDIOLIBS) MIDAS/MIDASDLL.lib
 AUDIOFLAGS = $(AUDIOFLAGS) -DNOMIDAS
 !endif
 
-CFLAGSGLOBAL = -Gr -I. -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/Win32 -Imess/includes -Imess \
+CFLAGSGLOBAL = -Gr -I. -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/Win32 -Imess/Win32 -Imess/includes -Imess \
                -IZLIB $(AUDIOFLAGS) -W3 -nologo -MT \
                $(MAME_DEBUG) $(RELEASE_CANDIDATE) $(BETA_VERSION) $(VERSION) \
                $(MAME_NET) $(MAME_MMX) $(HAS_CPUS) $(HAS_SOUND) $(M68KDEF) \
