@@ -1059,11 +1059,25 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 	joysticks), according to which was currently active.
 */
 
+/*
+	ti99_handset_poll_bus()
+
+	Poll the current state of the 4-bit data bus that goes from the I/R
+	receiver to the tms9901.
+*/
 static int ti99_handset_poll_bus(void)
 {
 	return (has_handset) ? (handset_buf & 0xf) : 0;
 }
 
+/*
+	ti99_handset_ack_callback()
+
+	Handle data acknowledge sent by the ti-99/4 handset ISR (through tms9901
+	line P0).  This function is called by a delayed timer 30ms after the state
+	of P0 is changed, because, in one occasion, the ISR asserts the line before
+	it reads the data, so we need to delay the acknowledge process.
+*/
 static void ti99_handset_ack_callback(int dummy)
 {
 	handset_clock = ! handset_clock;
@@ -1086,6 +1100,11 @@ static void ti99_handset_ack_callback(int dummy)
 		ti99_handset_task();
 }
 
+/*
+	ti99_handset_set_ack()
+
+	Handler for tms9901 P0 pin (handset data acknowledge)
+*/
 static void ti99_handset_set_ack(int offset, int data)
 {
 	if (has_handset && handset_buflen && (data != handset_ack))
@@ -1097,6 +1116,15 @@ static void ti99_handset_set_ack(int offset, int data)
 	}
 }
 
+/*
+	ti99_handset_post_message()
+
+	Post a 12-bit message: trigger an interrupt on the tms9901, and store the
+	message in the I/R receiver buffer so that the handset ISR will read this
+	message.
+
+	message: 12-bit message to post (only the 12 LSBits are meaningful)
+*/
 static void ti99_handset_post_message(int message)
 {
 	/* post message and assert interrupt */
@@ -1106,6 +1134,15 @@ static void ti99_handset_post_message(int message)
 	tms9901_set_single_int(0, 12, 1);
 }
 
+/*
+	ti99_handset_poll_keyboard()
+
+	Poll the current state of one given handset keypad.
+
+	num: number of the keypad to poll (0-3)
+
+	Returns TRUE if the handset state has changed and a message was posted.
+*/
 static int ti99_handset_poll_keyboard(int num)
 {
 	static UINT8 previous_key[max_handsets];
@@ -1178,6 +1215,15 @@ static int ti99_handset_poll_keyboard(int num)
 	return FALSE;
 }
 
+/*
+	ti99_handset_poll_joystick()
+
+	Poll the current state of one given handset joystick.
+
+	num: number of the joystick to poll (0-3)
+
+	Returns TRUE if the handset state has changed and a message was posted.
+*/
 static int ti99_handset_poll_joystick(int num)
 {
 	static UINT8 previous_joy[max_handsets];
@@ -1241,6 +1287,11 @@ static int ti99_handset_poll_joystick(int num)
 	return FALSE;
 }
 
+/*
+	ti99_handset_task()
+
+	Manage handsets, posting an event if the state of any handset has changed.
+*/
 static void ti99_handset_task(void)
 {
 	int i;
@@ -1294,10 +1345,13 @@ KNOWN PROBLEMS:
 	INT1: external interrupt (used by RS232 controller, for instance)
 	INT2: VDP interrupt
 	TMS9901 timer interrupt (overrides INT3)
+	INT12: handset interrupt (only on a TI-99/4 with the handset prototypes)
 
-	Three interrupts are used by the system (INT1, INT2, and timer), out of 15/16 possible
-	interrupt.  Keyboard pins can be used as interrupt pins, too, but this is not emulated
-	(it's a trick, anyway, and I don't know of any program which uses it).
+	Three (occasionally four) interrupts are used by the system (INT1, INT2,
+	timer, and INT12 on a TI-99/4 with remote handset prototypes), out of 15/16
+	possible interrupts.  Keyboard pins can be used as interrupt pins, too, but
+	this is not emulated (it's a trick, anyway, and I don't know any program
+	which uses it).
 
 	When an interrupt line is set (and the corresponding bit in the interrupt mask is set),
 	a level 1 interrupt is requested from the TMS9900.  This interrupt request lasts as long as
@@ -2203,7 +2257,7 @@ static void ti99_sAMSxram_init(void)
 	sAMS_mapper_on = 0;
 
 	for (i=0; i<16; i++)
-		sAMSlookup[i] = i << 1;
+		sAMSlookup[i] = i << 11;
 }
 
 /* write CRU bit:
@@ -2235,7 +2289,7 @@ static READ16_HANDLER ( ti99_rw_sAMSxramlow )
 	if (sAMS_mapper_on)
 		return xRAM_ptr[(offset&0x7ff)+sAMSlookup[(0x1000+offset)>>11]];
 	else
-		return xRAM_ptr[offset];
+		return xRAM_ptr[offset+0x1000];
 }
 
 static WRITE16_HANDLER ( ti99_ww_sAMSxramlow )
@@ -2245,7 +2299,7 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramlow )
 	if (sAMS_mapper_on)
 		COMBINE_DATA(xRAM_ptr + (offset&0x7ff)+sAMSlookup[(0x1000+offset)>>11]);
 	else
-		COMBINE_DATA(xRAM_ptr + offset);
+		COMBINE_DATA(xRAM_ptr + offset+0x1000);
 }
 
 /* high 24 kb: 0xa000-0xffff */
@@ -2256,7 +2310,7 @@ static READ16_HANDLER ( ti99_rw_sAMSxramhigh )
 	if (sAMS_mapper_on)
 		return xRAM_ptr[(offset&0x7ff)+sAMSlookup[(0x5000+offset)>>11]];
 	else
-		return xRAM_ptr[offset+0x1000];
+		return xRAM_ptr[offset+0x5000];
 }
 
 static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
@@ -2266,7 +2320,7 @@ static WRITE16_HANDLER ( ti99_ww_sAMSxramhigh )
 	if (sAMS_mapper_on)
 		COMBINE_DATA(xRAM_ptr + (offset&0x7ff)+sAMSlookup[(0x5000+offset)>>11]);
 	else
-		COMBINE_DATA(xRAM_ptr + offset+0x1000);
+		COMBINE_DATA(xRAM_ptr + offset+0x5000);
 }
 
 
