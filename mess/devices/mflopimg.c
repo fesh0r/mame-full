@@ -1,3 +1,11 @@
+/*********************************************************************
+
+	mflopimg.c
+
+	MESS interface to the floppy disk image abstraction code
+
+*********************************************************************/
+
 #include "mflopimg.h"
 #include "utils.h"
 #include "image.h"
@@ -21,7 +29,7 @@ struct floppy_error_map
 	const char *message;
 };
 
-static struct floppy_error_map errmap[] =
+static const struct floppy_error_map errmap[] =
 {
 	{ FLOPPY_ERROR_SUCCESS,			IMAGE_ERROR_SUCCESS },
 	{ FLOPPY_ERROR_INTERNAL,		IMAGE_ERROR_INTERNAL },
@@ -34,6 +42,13 @@ static struct floppy_error_map errmap[] =
 static struct mess_flopimg *get_flopimg(mess_image *image)
 {
 	return (struct mess_flopimg *) image_lookuptag(image, FLOPPY_TAG);
+}
+
+
+
+floppy_image *flopimg_get_image(mess_image *image)
+{
+	return get_flopimg(image)->floppy;
 }
 
 

@@ -12,6 +12,8 @@
 #include "devices/flopdrv.h"
 #include "formats/flopimg.h"
 
+floppy_image *flopimg_get_image(mess_image *image);
+
 void floppy_device_getinfo(struct IODevice *dev, const struct FloppyFormat *floppy_options);
 
 /* hack for apple II; replace this when we think of something better */
