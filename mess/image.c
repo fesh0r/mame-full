@@ -403,6 +403,7 @@ static int image_checkcrc(mess_image *img)
 	UINT32 imgsize;
 	UINT32 chunksize;
 	const struct IODevice *dev;
+	const struct GameDriver *drv;
 	mame_file *file;
 	UINT32 crc;
 	int rc;
@@ -460,9 +461,18 @@ static int image_checkcrc(mess_image *img)
 		mame_fseek(file, 0, SEEK_SET);
 
 		/* now read the CRC file */
-		rc = read_crc_config(Machine->gamedrv->name, img);
-		if (rc && Machine->gamedrv->clone_of)
-			rc = read_crc_config(Machine->gamedrv->clone_of->name, img);
+		drv = Machine->gamedrv;
+		do
+		{
+			rc = read_crc_config(drv->name, img);
+			if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
+				drv = drv->clone_of;
+			else if (drv->compatible_with && !(drv->compatible_with->flags & NOT_A_DRIVER))
+				drv = drv->compatible_with;
+			else
+				drv = NULL;
+		}
+		while(rc && drv);
 		
 		img->status |= IMAGE_STATUS_CRCCALCULATED;
 	}

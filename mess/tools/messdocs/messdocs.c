@@ -2,6 +2,7 @@
 #include "pool.h"
 #include "sys/stat.h"
 #include "utils.h"
+#include "osdepend.h"
 
 #ifdef _MSC_VER
 #include "ui/dirent.h"
@@ -431,10 +432,10 @@ int messdocs(const char *toc_filename, const char *dest_dir)
 	}
 
 	fprintf(chm_hhp, "[OPTIONS]\n");
-	fprintf(chm_hhp, "Compiled file=NYI.chm");
-	fprintf(chm_hhp, "Contents file=%s", help_contents_filename);
+	fprintf(chm_hhp, "Compiled file=NYI.chm\n");
+	fprintf(chm_hhp, "Contents file=%s\n", help_contents_filename);
 	fprintf(chm_hhp, "Default topic=NYI\n");
-	fprintf(chm_hhp, "Language=0x409 English (United States)");
+	fprintf(chm_hhp, "Language=0x409 English (United States)\n");
 	fprintf(chm_hhp, "Title=NYI\n");
 	fprintf(chm_hhp, "\n");
 	fclose(chm_hhp);
@@ -515,3 +516,6 @@ int main(int argc, char *argv[])
 
 
 
+void CLIB_DECL logerror(const char *text,...)
+{
+}

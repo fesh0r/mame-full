@@ -864,6 +864,7 @@ tools/messdocs$(EXE):						\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
+	$(OBJ)/mess/windows/dirutils.o			\
 	$(OBJ)/xml2info/xmlrole.o				\
 	$(OBJ)/xml2info/xmltok.o				\
 	$(OBJ)/xml2info/xmlparse.o
@@ -871,41 +872,41 @@ tools/messdocs$(EXE):						\
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
 tools/imgtool$(EXE):	                   \
-	  $(PLATFORM_IMGTOOL_OBJS)	           \
-	  $(OBJ)/unzip.o	                   \
-	  $(OBJ)/harddisk.o	                   \
-	  $(OBJ)/md5.o					       \
-	  $(OBJ)/mess/crcfile.o	               \
-	  $(OBJ)/mess/utils.o	               \
-	  $(OBJ)/mess/pool.o	               \
-	  $(OBJ)/mess/opresolv.o	           \
-	  $(OBJ)/mess/snprintf.o				\
-	  $(OBJ)/mess/formats/ioprocs.o			\
-	  $(OBJ)/mess/formats/flopimg.o			\
-	  $(OBJ)/mess/formats/cassimg.o			\
-	  $(OBJ)/mess/formats/basicdsk.o		\
-	  $(OBJ)/mess/formats/coco_dsk.o		\
-	  $(OBJ)/mess/formats/coco_cas.o		\
-	  $(OBJ)/mess/formats/wavfile.o			\
-	  $(OBJ)/mess/tools/imgtool/stubs.o    \
-	  $(OBJ)/mess/tools/imgtool/main.o     \
-	  $(OBJ)/mess/tools/imgtool/stream.o   \
-	  $(OBJ)/mess/tools/imgtool/library.o  \
-	  $(OBJ)/mess/tools/imgtool/modules.o  \
-	  $(OBJ)/mess/tools/imgtool/iflopimg.o \
-	  $(OBJ)/mess/tools/imgtool/filter.o   \
-	  $(OBJ)/mess/tools/imgtool/filteoln.o \
-	  $(OBJ)/mess/tools/imgtool/filtbas.o  \
-	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
-	  $(OBJ)/mess/tools/imgtool/imgfile.o  \
-	  $(OBJ)/mess/tools/imgtool/imgterrs.o \
-	  $(OBJ)/mess/tools/imgtool/rsdos.o    \
-	  $(OBJ)/mess/tools/imgtool/imgtest.o  \
-	  $(OBJ)/mess/tools/imgtool/imghd.o    \
-	  $(OBJ)/mess/tools/imgtool/mac.o      \
-	  $(OBJ)/mess/tools/imgtool/ti99.o     \
-	  $(OBJ)/mess/tools/imgtool/ti990hd.o  \
-	  $(OBJ)/mess/tools/imgtool/concept.o  \
+	$(PLATFORM_IMGTOOL_OBJS)	           \
+	$(OBJ)/unzip.o	                   \
+	$(OBJ)/harddisk.o	                   \
+	$(OBJ)/md5.o					       \
+	$(OBJ)/mess/crcfile.o	               \
+	$(OBJ)/mess/utils.o						\
+	$(OBJ)/mess/pool.o						\
+	$(OBJ)/mess/opresolv.o					\
+	$(OBJ)/mess/snprintf.o					\
+	$(OBJ)/mess/formats/ioprocs.o			\
+	$(OBJ)/mess/formats/flopimg.o			\
+	$(OBJ)/mess/formats/cassimg.o			\
+	$(OBJ)/mess/formats/basicdsk.o			\
+	$(OBJ)/mess/formats/coco_dsk.o			\
+	$(OBJ)/mess/formats/coco_cas.o			\
+	$(OBJ)/mess/formats/wavfile.o			\
+	$(OBJ)/mess/tools/imgtool/stubs.o    \
+	$(OBJ)/mess/tools/imgtool/main.o     \
+	$(OBJ)/mess/tools/imgtool/stream.o   \
+	$(OBJ)/mess/tools/imgtool/library.o  \
+	$(OBJ)/mess/tools/imgtool/modules.o  \
+	$(OBJ)/mess/tools/imgtool/iflopimg.o \
+	$(OBJ)/mess/tools/imgtool/filter.o   \
+	$(OBJ)/mess/tools/imgtool/filteoln.o \
+	$(OBJ)/mess/tools/imgtool/filtbas.o  \
+	$(OBJ)/mess/tools/imgtool/imgtool.o  \
+	$(OBJ)/mess/tools/imgtool/imgfile.o  \
+	$(OBJ)/mess/tools/imgtool/imgterrs.o \
+	$(OBJ)/mess/tools/imgtool/rsdos.o    \
+	$(OBJ)/mess/tools/imgtool/imgtest.o  \
+	$(OBJ)/mess/tools/imgtool/imghd.o    \
+	$(OBJ)/mess/tools/imgtool/mac.o      \
+	$(OBJ)/mess/tools/imgtool/ti99.o     \
+	$(OBJ)/mess/tools/imgtool/ti990hd.o  \
+	$(OBJ)/mess/tools/imgtool/concept.o  \
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \

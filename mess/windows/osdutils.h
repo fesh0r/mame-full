@@ -19,11 +19,6 @@
 #define osd_copyfile(dest, src)	CopyFile((src), (dest), TRUE)
 #endif
 
-INLINE int osd_is_path_separator(char c)
-{
-	return ((c) == '\\') || ((c) == '/');
-}
-
 /* some irritating redefinitions */
 #define read	read_
 #define write	write_

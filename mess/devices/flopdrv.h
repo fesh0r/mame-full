@@ -101,7 +101,7 @@ struct floppy_drive
 	int id_index;
     chrn_id ids[32];
 
-	floppy_interface interface;
+	floppy_interface interface_;
 };
 
 /* a callback which will be executed if the ready state of the drive changes e.g. not ready->ready, ready->not ready */

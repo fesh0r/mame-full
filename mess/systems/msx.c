@@ -855,7 +855,7 @@ COMP( 1985, hotbit11, msx,		0,		msx,     hotbit,   msx,	msx,	"Sharp / Epcom",   
 COMP( 1985, hotbit12, msx,		0,		msx,     hotbit,   msx,	msx,	"Sharp / Epcom",     "HB-8000 Hotbit 1.2" )
 COMP( 1985, expert10, msx,		0,		msx,     expert10, msx,	msx,	"Gradiente",         "XP-800 Expert 1.0" )
 COMP( 1985, expert11, msx,		0,		msx,     expert11, msx,	msx,	"Gradiente",         "XP-800 Expert 1.1" )
-COMPX(1985, msx2,     msx,		0,		msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
-COMPX(1985, msx2a,    msx,		0,		msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
-COMPX(1985, msx2j,    msx,		0,		msx2,     msx2j,   msx2,	msx,	"ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
+COMPX(1985, msx2,     0,		msx,	msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2", GAME_NOT_WORKING )
+COMPX(1985, msx2a,    msx2,		0,		msx2,    msx2,     msx2,	msx,	"ASCII & Microsoft", "MSX 2 (BASIC 2.1)", GAME_NOT_WORKING )
+COMPX(1985, msx2j,    msx2,		0,		msx2,     msx2j,   msx2,	msx,	"ASCII & Microsoft", "MSX 2 (Japan)", GAME_NOT_WORKING )
 

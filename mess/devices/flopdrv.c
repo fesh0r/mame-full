@@ -117,9 +117,9 @@ void floppy_drive_set_disk_image_interface(mess_image *img, const floppy_interfa
 {
 	struct floppy_drive *pDrive = get_drive(img);
 	if (iface)
-		memcpy(&pDrive->interface, iface, sizeof(floppy_interface));
+		memcpy(&pDrive->interface_, iface, sizeof(floppy_interface));
 	else
-		memset(&pDrive->interface, 0, sizeof(floppy_interface));
+		memset(&pDrive->interface_, 0, sizeof(floppy_interface));
 }
 
 /* set flag state */
@@ -350,8 +350,8 @@ void floppy_drive_seek(mess_image *img, signed int signed_tracks)
 	}
 
 	/* inform disk image of step operation so it can cache information */
-	if (image_exists(img) && pDrive->interface.seek_callback)
-		pDrive->interface.seek_callback(img, pDrive->current_track);
+	if (image_exists(img) && pDrive->interface_.seek_callback)
+		pDrive->interface_.seek_callback(img, pDrive->current_track);
         
         pDrive->id_index = 0;
 }
@@ -367,8 +367,8 @@ int	floppy_drive_get_next_id(mess_image *img, int side, chrn_id *id)
 
 	/* get sectors per track */
 	spt = 0;
-	if (pDrive->interface.get_sectors_per_track)
-		spt = pDrive->interface.get_sectors_per_track(img, side);
+	if (pDrive->interface_.get_sectors_per_track)
+		spt = pDrive->interface_.get_sectors_per_track(img, side);
 
 	/* set index */
 	if ((pDrive->id_index==(spt-1)) || (spt==0))
@@ -383,8 +383,8 @@ int	floppy_drive_get_next_id(mess_image *img, int side, chrn_id *id)
 	/* get id */
 	if (spt!=0)
 	{
-		if (pDrive->interface.get_id_callback)
-			pDrive->interface.get_id_callback(img, id, pDrive->id_index, side);
+		if (pDrive->interface_.get_id_callback)
+			pDrive->interface_.get_id_callback(img, id, pDrive->id_index, side);
 	}
 
 	pDrive->id_index++;
@@ -407,8 +407,8 @@ void floppy_drive_read_track_data_info_buffer(mess_image *img, int side, void *p
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
-		if (drv->interface.read_track_data_info_buffer)
-			drv->interface.read_track_data_info_buffer(img, side, ptr, length);
+		if (drv->interface_.read_track_data_info_buffer)
+			drv->interface_.read_track_data_info_buffer(img, side, ptr, length);
 	}
 }
 
@@ -417,8 +417,8 @@ void floppy_drive_write_track_data_info_buffer(mess_image *img, int side, const 
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
-		if (drv->interface.write_track_data_info_buffer)
-			drv->interface.write_track_data_info_buffer(img, side, ptr, length);
+		if (drv->interface_.write_track_data_info_buffer)
+			drv->interface_.write_track_data_info_buffer(img, side, ptr, length);
 	}
 }
 
@@ -427,8 +427,8 @@ void floppy_drive_format_sector(mess_image *img, int side, int sector_index,int 
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
-		if (drv->interface.format_sector)
-			drv->interface.format_sector(img, side, sector_index,c, h, r, n, filler);
+		if (drv->interface_.format_sector)
+			drv->interface_.format_sector(img, side, sector_index,c, h, r, n, filler);
 	}
 }
 
@@ -437,8 +437,8 @@ void floppy_drive_read_sector_data(mess_image *img, int side, int index1, void *
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
-		if (drv->interface.read_sector_data_into_buffer)
-			drv->interface.read_sector_data_into_buffer(img, side, index1, pBuffer,length);
+		if (drv->interface_.read_sector_data_into_buffer)
+			drv->interface_.read_sector_data_into_buffer(img, side, index1, pBuffer,length);
 	}
 }
 
@@ -447,8 +447,8 @@ void floppy_drive_write_sector_data(mess_image *img, int side, int index1, const
 	if (image_exists(img))
 	{
 		struct floppy_drive *drv = get_drive(img);
-		if (drv->interface.write_sector_data_from_buffer)
-			drv->interface.write_sector_data_from_buffer(img, side, index1, pBuffer,length,ddam);
+		if (drv->interface_.write_sector_data_from_buffer)
+			drv->interface_.write_sector_data_from_buffer(img, side, index1, pBuffer,length,ddam);
 	}
 }
 

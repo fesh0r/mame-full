@@ -61,6 +61,7 @@ CC = @gcc
 LD = @gcc
 ASM = @nasm
 DASM = @gcc -S
+HHC = @hhc
 ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
@@ -133,29 +134,22 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/$(MAMEOS) -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/$(MAMEOS) \
+	-Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
-CFLAGS += -O0 -Wall -Werror -Wno-unused -g
+CFLAGS_BASE += -O0 -g
+CFLAGS_WARNINGS = -Wall -Werror -Wno-unused
 else
-CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
-	-Werror -Wall -Wno-sign-compare -Wunused \
+CFLAGS_BASE += -DNDEBUG $(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing
+CFLAGS_WARNINGS = -Werror -Wall -Wno-sign-compare -Wunused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
 	-Wshadow -Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
-	-Wdisabled-optimization \
-#	-Wredundant-decls
-#	-Wfloat-equal
-#	-Wunreachable-code -Wpadded
-#	-W had to remove because of the "missing initializer" warning
-#	-Wlarger-than-262144  \
-#	-Wcast-qual \
-#	-Wwrite-strings \
-#	-Wconversion \
-#	-Wmissing-prototypes \
-#	-Wmissing-declarations
+	-Wdisabled-optimization
 endif
+
+CFLAGS = $(CFLAGS_BASE) $(CFLAGS_WARNINGS)
 
 CFLAGSPEDANTIC = $(CFLAGS) -pedantic
 
@@ -176,7 +170,8 @@ endif
 LIBS = -lz
 
 OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/xml2info
+
 OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)			\
 		$(OBJ)/mess/systems $(OBJ)/mess/machine					\
 		$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw					\
@@ -262,6 +257,10 @@ hdcomp$(EXE): $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
+xml2info$(EXE): src/xml2info/xml2info.c
+	@echo Compiling $@...
+	$(CC) -O1 -o xml2info$(EXE) $<
+
 ifdef PERL
 $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(PERL) src/makelist.pl
@@ -284,6 +283,20 @@ ifdef DISASSEMBLY
 	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
 endif
 
+$(OBJ)/xml2info/%.o: src/xml2info/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+endif
+
+$(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS_BASE) -c $< -o $@
+ifdef DISASSEMBLY
+	$(DASM) $(CDEFS) $(CFLAGS_BASE) $< -o $(@:%.o=%.S)
+endif
+
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
@@ -296,13 +309,6 @@ $(OBJ)/mess/%.o: mess/%.c
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 ifdef DISASSEMBLY
 	$(DASM) $(CDEFS) $(CFLAGSPEDANTIC) $< -o $(@:%.o=%.S)
-endif
-
-$(OBJ)/mess/tools/messdocs/%.o: mess/tools/messdocs/%.c
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -Wnone -o $@
-ifdef DISASSEMBLY
-	$(DASM) $(CDEFS) $(CFLAGS) $< -o $(@:%.o=%.S)
 endif
 
 # compile generated C files for the 68000 emulator
@@ -350,9 +356,12 @@ $(OBJ)/%.a:
 	$(RM) $@
 	$(AR) cr $@ $^
 
-mess.chm::
+mess.chm:	tools/messdocs.exe
 	cscript docs\\makehelp.vbs docs\\wintoc.xml
 
+#	tools/messdocs.exe docs/wintoc.xml obj/help
+#	$(HHC) obj\\help\\help.hhp
+	
 makedir:
 	@echo make makedir is no longer necessary, just type make
 
