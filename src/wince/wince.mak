@@ -3,19 +3,22 @@ OSOBJS = \
 		$(OBJ)/wince/crtsuppl.o \
 		$(OBJ)/wince/cesound.o \
 		$(OBJ)/wince/ceinput.o \
-		$(OBJ)/wince/cemenu.o \
 		$(OBJ)/wince/video.o \
 		$(OBJ)/wince/window.o \
 		$(OBJ)/wince/cemain.o \
-		$(OBJ)/wince/snprintf.o \
+		$(OBJ)/wince/cemenu.o \
 		$(OBJ)/wince/misc.o \
 		$(OBJ)/wince/dirent.o \
 		$(OBJ)/wince/playgame.o \
 		$(OBJ)/wince/invokegx.o \
 		$(OBJ)/wince/rc.o \
+		$(OBJ)/wince/ticker.o \
 		$(OBJ)/wince/fronthlp.o \
 		$(OBJ)/windows/fileio.o \
-		$(OBJ)/windows/ticker.o \
+		$(OBJ)/windows/snprintf.o \
+		$(OBJ)/mess/windows/menu.o \
+		$(OBJ)/mess/windows/dialog.o \
+		$(OBJ)/mess/windows/strconv.o \
 		$(OBJ)/mess/windowsui/SmartListView.o \
 		$(OBJ)/mess/windowsui/SoftwareList.o \
 		$(OBJ)/zlib/crc32.o \
@@ -38,4 +41,4 @@ OSOBJS += \
 		$(OBJ)/mess/windows/messwin.o
 endif
 
-RES = $(OBJ)/wince/mamece.res
+RES = $(OBJ)/wince/mamece.res $(OBJ)/mess/windows/mess.res

@@ -33,6 +33,9 @@
 #ifdef UNDER_CE
 #include "mamece.h"
 #include "cemenu.h"
+#include "messres.h"
+#include <aygshell.h>
+#define GetMenu(wnd)	(0xffffffff)
 #endif // UNDER_CE
 
 #ifndef WMSZ_LEFT
@@ -64,16 +67,10 @@ extern UINT8 win_trying_to_quit;
 // window styles
 #ifdef UNDER_CE
 #define WINDOW_STYLE			0
-#define WINDOW_STYLE_EX			WS_EX_TOPMOST
-#else // !UNDER_CE
-#define WINDOW_STYLE			WS_OVERLAPPEDWINDOW
-#define WINDOW_STYLE_EX			0
-#endif // UNDER_CE
-#ifndef MESS
-#define WINDOW_HAS_MENU			FALSE
 #else
-#define WINDOW_HAS_MENU			TRUE
+#define WINDOW_STYLE			WS_OVERLAPPEDWINDOW
 #endif
+#define WINDOW_STYLE_EX			0
 
 // debugger window styles
 #define DEBUG_WINDOW_STYLE		WS_OVERLAPPED
@@ -81,13 +78,8 @@ extern UINT8 win_trying_to_quit;
 #define DEBUG_WINDOW_HAS_MENU	FALSE
 
 // full screen window styles
-#ifdef UNDER_CE
-#define FULLSCREEN_STYLE		0
+#define FULLSCREEN_STYLE		WS_POPUP
 #define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
-#else
-#define FULLSCREEN_STYLE		WS_OVERLAPPED
-#define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
-#endif
 
 // menu items
 #define MENU_FULLSCREEN			1000
@@ -228,7 +220,7 @@ INLINE int wnd_extra_width(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
 
@@ -243,7 +235,8 @@ INLINE int wnd_extra_height(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window),
+		win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
 
@@ -258,7 +251,7 @@ INLINE int wnd_extra_left(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return 100 - window.left;
 }
 
@@ -412,20 +405,7 @@ INLINE void get_work_area(RECT *maximum)
 	}
 }
 
-//============================================================
-//	wince_add_button
-//============================================================
 
-int wince_add_button(LPCTSTR text, int x, int y, int width, int height, int keycode)
-{
-	HWND button;
-	
-	button = CreateWindowEx(0, TEXT("BUTTON"), text, WS_VISIBLE | WS_CHILD, x, y, width, height, win_video_window, (HMENU)keycode, GetModuleHandle(NULL), NULL);
-	if (!button)
-		return 1;
-
-	return 0;
-}
 
 //============================================================
 //	win_init_window
@@ -492,20 +472,18 @@ int win_init_window(void)
 	sprintf(title, "MESS: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 	#endif
 #endif
-#ifdef MESS
-	menu = win_create_menus();
-	if (!menu)
-		return 1;
-#endif
 
 	// create the window, but don't show it yet
 	win_video_window = CreateWindowEx(win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX,
 			TEXT("MAME"), title, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE,
-			20, 20, 100, 100, NULL, NULL, GetModuleHandle(NULL), NULL);
+			20, 20, 100, 100, NULL, menu, GetModuleHandle(NULL), NULL);
 	if (!win_video_window)
 		return 1;
 
-	//wince_add_button(TEXT("Exit"), 0, 300, 80, 20, IPT_UI_CANCEL);
+#ifdef UNDER_CE
+	if (wince_create_menus(win_video_window))
+		return 1;
+#endif
 
 	// possibly create the debug window, but don't show it yet
 	if (options.mame_debug)
@@ -523,15 +501,19 @@ int win_init_window(void)
 	return 0;
 }
 
+//============================================================
+//	win_shutdown_window
+//============================================================
+
 void win_shutdown_window(void)
 {
 	UnregisterClass(TEXT("MAME"), NULL);
 
 #ifdef UNDER_CE
-	wince_destroy_menus();
 	gx_close_display();
 #endif
 }
+
 
 //============================================================
 //	win_create_window
@@ -646,7 +628,7 @@ void win_destroy_window(void)
 void win_update_cursor_state(void)
 {
 #ifndef UNDER_CE
-	if (win_window_mode && !win_is_mouse_captured())
+	if ((win_window_mode || GetMenu(win_video_window)) && !win_is_mouse_captured())
 		while (ShowCursor(TRUE) < 0) ;
 	else
 		while (ShowCursor(FALSE) >= 0) ;
@@ -659,14 +641,9 @@ void win_update_cursor_state(void)
 //	update_system_menu
 //============================================================
 
-#ifdef UNDER_CE
 static void update_system_menu(void)
 {
-	wince_create_menus(win_video_window);
-}
-#else
-static void update_system_menu(void)
-{
+#ifndef UNDER_CE
 	HMENU menu;
 
 	// revert the system menu
@@ -676,8 +653,8 @@ static void update_system_menu(void)
 	menu = GetSystemMenu(win_video_window, FALSE);
 	if (menu)
 		AppendMenu(menu, MF_ENABLED | MF_STRING, MENU_FULLSCREEN, "Full Screen\tAlt+Enter");
-}
 #endif
+}
 
 
 
@@ -754,19 +731,17 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-#ifdef UNDER_CE
-	wince_update_menus();
-#endif
-
 	// handle a few messages
 	switch (message)
 	{
-#ifndef UNDER_CE
 		// non-client paint: punt if full screen
+#ifndef UNDER_CE
+#if !WINDOW_HAS_MENU
 		case WM_NCPAINT:
 			if (win_window_mode)
 				return DefWindowProc(wnd, message, wparam, lparam);
 			break;
+#endif
 #endif
 	
 		// paint: redraw the last bitmap
@@ -776,6 +751,10 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			HDC hdc = BeginPaint(wnd, &pstruct);
 			if (win_video_window)
 				draw_video_contents(hdc, NULL, NULL, NULL, 1);
+#if WINDOW_HAS_MENU
+			if (GetMenu(win_video_window))
+				DrawMenuBar(win_video_window);
+#endif
 			EndPaint(wnd, &pstruct);
 			break;
 		}
@@ -829,9 +808,10 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			win_video_window = 0;
 			break;
 
-#ifdef UNDER_CE
-		case WM_COMMAND:
-			wince_menu_command(LOWORD(wparam));
+		// track whether we are in the foreground
+#ifndef UNDER_CE
+		case WM_ACTIVATEAPP:
+			in_background = !wparam;
 			break;
 #endif
 
@@ -1351,7 +1331,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 #ifdef UNDER_CE
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	if (win_video_window)
 		gx_blit(bitmap, update, 0, palette_16bit_lookup, palette_32bit_lookup);

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <unistd.h>
 #include "mamece.h"
+#include "strconv.h"
 
 void abort(void)
 {
@@ -26,28 +27,9 @@ int _kbhit(void)
 	return 0;
 }
 
-// --------------------------------------------------------------------------
-
-int __wide2asciilen(const WCHAR *widestr)
+void mkdir(const char *dir)
 {
-	return WideCharToMultiByte(CP_ACP, 0, widestr, -1, NULL, 0, NULL, NULL);
-}
-
-char *__wide2ascii(char *dest, const WCHAR *widestr)
-{
-	WideCharToMultiByte(CP_ACP, 0, widestr, -1, dest, __wide2asciilen(widestr), NULL, NULL);
-	return dest;
-}
-
-int __ascii2widelen(const char *asciistr)
-{
-	return MultiByteToWideChar(CP_ACP, 0, asciistr, -1, NULL, 0);
-}
-
-WCHAR *__ascii2wide(WCHAR *dest, const char *asciistr)
-{
-	MultiByteToWideChar(CP_ACP, 0, asciistr, -1, dest, __ascii2widelen(asciistr));
-	return dest;
+	CreateDirectory(A2T(dir));
 }
 
 // --------------------------------------------------------------------------

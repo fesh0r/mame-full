@@ -399,3 +399,12 @@ int osd_is_joystick_axis_code(int joycode)
 	return 0;
 }
 
+void osd_set_leds(int state)
+{
+}
+
+int osd_get_leds(void)
+{
+	return 0;
+}
+

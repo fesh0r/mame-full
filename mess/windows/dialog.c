@@ -12,6 +12,7 @@
 #include "ui_text.h"
 #include "inputx.h"
 #include "utils.h"
+#include "strconv.h"
 
 //============================================================
 //	These defines are necessary because the MinGW headers do
@@ -158,7 +159,7 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		command = LOWORD(wparam);
 
 		GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
-		str = buf;
+		str = T2A(buf);
 		if (!strcmp(str, DLGTEXT_OK))
 			command = IDOK;
 		else if (!strcmp(str, DLGTEXT_CANCEL))
@@ -243,13 +244,9 @@ static int dialog_write(struct dialog_info *di, const void *ptr, size_t sz, int 
 
 static int dialog_write_string(struct dialog_info *di, const char *str)
 {
-	int sz;
-	WCHAR *wstr;
-	
-	sz = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-	wstr = alloca(sz * sizeof(WCHAR));
-	MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, sz);
-	return dialog_write(di, wstr, sz * sizeof(WCHAR), 2);
+	const WCHAR *wstr;
+	wstr = A2W(str);	
+	return dialog_write(di, wstr, (wcslen(wstr) + 1) * sizeof(WCHAR), 2);
 }
 
 //============================================================
@@ -496,7 +493,7 @@ static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam,
 			if (code != CODE_NONE)
 			{
 				seq_set_1(&stuff->newcode, code);
-				SetWindowText(editwnd, code_name(code));
+				SetWindowText(editwnd, A2T(code_name(code)));
 
 				dlgwnd = GetParent(editwnd);
 
@@ -566,7 +563,7 @@ static LRESULT seqselect_setup(HWND editwnd, UINT message, WPARAM wparam, LPARAM
 
 	memcpy(stuff->newcode, *(stuff->code), sizeof(stuff->newcode));
 	seq_name(stuff->code, buf, sizeof(buf) / sizeof(buf[0]));
-	SetWindowText(editwnd, buf);
+	SetWindowText(editwnd, A2T(buf));
 	stuff->oldwndproc = (WNDPROC) SetWindowLongPtr(editwnd, GWLP_WNDPROC, (LONG) seqselect_wndproc);
 	SetWindowLongPtr(editwnd, GWLP_USERDATA, lparam);
 	return 0;

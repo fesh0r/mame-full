@@ -129,7 +129,10 @@ DEFS += \
 	-DUNDER_CE=300 \
 	-D_WIN32_WCE=0300 \
 	-DSTRICT \
-	-Dstricmp=_stricmp
+	-Dstricmp=_stricmp \
+	-Dstrnicmp=_strnicmp \
+	-DCLIB_DECL=_cdecl \
+	-DDECL_SPEC=_cdecl
 
 ifeq "$(WCEPLAT)" "x86em"
 DEFS += -DX86 -D_X86_ -D_WIN32_WCE_EMULATION
@@ -190,7 +193,7 @@ endif
 CFLAGS = -W1 -nologo $(INCLUDES)
 
 ifeq "$(MAMEOS)" "wince"
-CFLAGS += -Gd
+CFLAGS += -Gz
 endif
 
 ifdef DEBUG
@@ -371,6 +374,10 @@ $(OBJ)/wince/%.res: src/wince/%.rc
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
 $(OBJ)/windowsui/%.res: windowsui/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
+
+$(OBJ)/mess/windows/%.res: mess/windows/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

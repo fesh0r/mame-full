@@ -4,12 +4,13 @@
 #include "driver.h"
 #include "rc.h"
 #include "..\windows\window.h"
+#include "strconv.h"
 
 /* ------------------------------------------------------------------------*/
 #ifdef MESS
 LPTSTR messages = NULL;
 
-static int DECL_SPEC wince_mess_vprintf(char *fmt, va_list arg)
+static int wince_mess_vprintf(char *fmt, va_list arg)
 {
 	int length;
 	int old_length;
@@ -80,7 +81,7 @@ void setup_paths()
 	char *rootpath;
 
 	get_mame_root(rootpath_buffer, sizeof(rootpath_buffer) / sizeof(rootpath_buffer[0]));
-	rootpath = T2A(rootpath_buffer);
+	rootpath = (char *) T2A(rootpath_buffer);
 
 #ifdef MESS
 	set_fileio_opt(rootpath, "biospath",			"\\Bios");
@@ -103,9 +104,7 @@ void setup_paths()
 
 int play_game(int game_index, struct ui_options *opts)
 {
-	extern int use_dirty;
 	extern int throttle;
-	extern float gamma_correct;
 	extern int attenuation;
 	int original_leds;
 	int err;
@@ -136,9 +135,7 @@ int play_game(int game_index, struct ui_options *opts)
 	options.mess_printf_output = wince_mess_vprintf;
 #endif
 
-	gamma_correct = 1;
 	attenuation = 0;
-	use_dirty = opts->enable_dirtyline;
 	throttle = opts->enable_throttle;
 	win_window_mode = 0;
 
@@ -202,15 +199,6 @@ void osd_exit(void)
 	osd_set_leds(0);
 }
 
-
-//============================================================
-//	osd_display_loading_rom_message
-//============================================================
-
-int osd_display_loading_rom_message (const char *name, int current, int total)
-{
-	return 0;
-}
 
 //============================================================
 //	logerror

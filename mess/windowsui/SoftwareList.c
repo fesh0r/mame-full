@@ -8,17 +8,11 @@
 #include "unzip.h"
 #include "osd_cpu.h"
 #include "windowsui/mame32.h"
+#include "strconv.h"
+#include "snprintf.h"
 
 #if HAS_CRC
 #include "config.h"
-#endif /* HAS_CRC */
-
-#ifdef UNDER_CE
-#include "mamece.h"
-#else /* !UNDER_CE */
-#define A2T(str)	(str)
-#define T2A(str)	(str)
-#define snprintf	_snprintf
 #endif /* HAS_CRC */
 
 /* from src/mess/win32.c */
@@ -891,10 +885,6 @@ void SoftwareList_Idle(struct SmartListView *pListView)
  * ------------------------------------------------------------------------ */
 
 #ifdef MAME_DEBUG
-
-#ifndef T2A
-#define T2A(str)	str
-#endif
 
 static const char *MessGui_getfodderimage(unsigned int i, int *foddertype)
 {

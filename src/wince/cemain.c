@@ -6,6 +6,7 @@
 #include "mamece.h"
 #include "../windowsui/SmartListView.h"
 #include "../windowsui/SoftwareList.h"
+#include "strconv.h"
 
 struct status_of_data
 {
@@ -125,7 +126,6 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	opts.enable_flicker			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEFLICKER);
 	opts.enable_translucency	= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLETRANSLUCENCY);
 	opts.enable_antialias		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEANTIALIASING);
-	opts.enable_dirtyline		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLEDIRTYLINE);
 	opts.enable_throttle		= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLETHROTTLE);
 	opts.rotate_left			= GetMenuOption(s_hwndMain, ID_OPTIONS_ROTATESCREENLEFT);
 	opts.rotate_right			= GetMenuOption(s_hwndMain, ID_OPTIONS_ROTATESCREENRIGHT);
@@ -212,7 +212,7 @@ static void GameList_Run(struct SmartListView *pListView)
 	/* compute software path (based on where the executable is) */
 	get_mame_root(software_path, sizeof(software_path) / sizeof(software_path[0]));
 	tcscat(software_path, TEXT("\\Software"));
-	software_path_ptr = T2A(software_path);
+	software_path_ptr = (char *) T2A(software_path);
 
 	FillSoftwareList(s_pSoftwareListView, nGame, 1, &software_path_ptr, NULL);
 }
@@ -716,11 +716,6 @@ void osd_parallelize(void (*task)(void *param, int task_num, int
 	task_count), void *param, int max_tasks)
 {
 	task(param, 0, 1);
-}
-
-int osd_keyboard_disabled(void)
-{
-	return 0;
 }
 
 

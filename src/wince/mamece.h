@@ -38,24 +38,6 @@ void *mamece_realloc(void *ptr, size_t sz);
 #define realloc	mamece_realloc
 
 // --------------------------------------------------------------------------
-// Utility functions
-
-int __ascii2widelen(const char *asciistr);
-WCHAR *__ascii2wide(WCHAR *dest, const char *asciistr);
-int __wide2asciilen(const WCHAR *widestr);
-char *__wide2ascii(char *dest, const WCHAR *widestr);
-
-#define A2W(asciistr)	__ascii2wide(_alloca(__ascii2widelen(asciistr) * sizeof(WCHAR)), (asciistr))
-#define W2A(widestr)	__wide2ascii(_alloca(__wide2asciilen(widestr) * sizeof(char)), (widestr))
-
-#ifdef UNICODE
-#define A2T(asciistr)	A2W(asciistr)
-#define T2A(widestr)	W2A(widestr)
-#else
-#error Non-Unicode not supported
-#endif
-
-// --------------------------------------------------------------------------
 // Key options
 
 struct ui_options
@@ -68,7 +50,6 @@ struct ui_options
 	BOOL		enable_flicker;		// Enable Flicker
 	BOOL		enable_translucency;// Enable Translucency
 	BOOL		enable_antialias;	// Enable AntiAlias
-	BOOL		enable_dirtyline;	// Enable Dirty Line Drawing
 	BOOL		enable_throttle;	// Enable Throttling
 	BOOL		rotate_left;		// Rotate the Screen to the Left
 	BOOL		rotate_right;		// Rotate the Screen to the Right

@@ -2700,7 +2700,7 @@ static struct artwork_piece *create_new_piece(const char *tag)
 	to sort pieces by priority
 -------------------------------------------------*/
 
-static int artwork_sort_compare(const void *item1, const void *item2)
+static int CLIB_DECL artwork_sort_compare(const void *item1, const void *item2)
 {
 	const struct artwork_piece *piece1 = *((const struct artwork_piece **)item1);
 	const struct artwork_piece *piece2 = *((const struct artwork_piece **)item2);

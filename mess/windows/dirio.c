@@ -6,10 +6,7 @@
 #include "osdepend.h"
 #include "utils.h"
 #include "messwin.h"
-
-#ifdef UNDER_CE
-#include "mamece.h"
-#endif
+#include "strconv.h"
 
 /* ************************************************************************ */
 /* Directories                                                              */
