@@ -2842,6 +2842,7 @@ TESTDRIVER( dlair )
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
 	DRIVER( lastday )	/* (c) 1990 Dooyong */
 	DRIVER( lastdaya )	/* (c) 1990 Dooyong */
+	DRIVER( galspnbl )	/* (c) 1996 Comad */
 
 #endif /* NEOMAME */
 
