@@ -7,10 +7,10 @@
 #define ALLOCATE_BLOCK    (1024*8)
 static const UINT8 CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0x74 };
 
-int fmsx_cas_to_wav (UINT8 *casdata, int caslen, UINT16 **wavdata, int *wavlen)
+int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 {
 	int cas_pos, samples_size, bit, state = 1, samples_pos, size, n, i, p;
-	UINT16 *samples, *nsamples;
+	INT16 *samples, *nsamples;
 
 	if (caslen < 8) return 1;
 	if (memcmp (casdata, CasHeader, sizeof (CasHeader) ) ) return 1;
@@ -21,7 +21,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, UINT16 **wavdata, int *wavlen)
 	if (!samples)
 		{
 		logerror ("cas2wav: out of memory.\n");
-		return 0;
+		return 1;
 		}
 	samples_pos = 0;
 
