@@ -136,6 +136,8 @@ static LH5801_Regs lh5801= { 0 };
  ***************************************************************/
 #include "5801tbl.c"
 
+extern void lh5801_init(void) {}
+
 void lh5801_reset(void *param)
 {
 	if (param) {

@@ -82,6 +82,7 @@ typedef struct {
 
 extern int lh5801_icount;				/* cycle count */
 
+    extern void lh5801_init(void);
 extern void lh5801_reset(void *param);
 extern void lh5801_exit(void);
 extern int lh5801_execute(int cycles);

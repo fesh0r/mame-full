@@ -37,6 +37,8 @@ enum
 /* implementation APIs below.                                       */
 
 
+void spc700_init(void);
+
 /* Pulse the RESET pin on the CPU */
 void spc700_reset(void* param);
 
