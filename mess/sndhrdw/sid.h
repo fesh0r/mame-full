@@ -12,10 +12,16 @@
 
 /* private area */
 typedef struct _SID6581 {
-	int on;
-	int (*ad_read) (int which);
-	SIDTYPE type;
-	udword sidtuneClockSpeed;
+    int on;
+
+    int mixer_channel; // mame stream/ mixer channel
+
+    int (*ad_read) (int which);
+    SIDTYPE type;
+    udword clock;
+
+    uword PCMfreq; // samplerate of the current systems soundcard/DAC
+    udword PCMsid, PCMsidNoise;
 
 #if 0
 	/* following depends on type */
@@ -29,9 +35,7 @@ typedef struct _SID6581 {
 #endif
 	int reg[0x20];
 
-	int mixer_channel;
-
-	bool sidKeysOn[0x20], sidKeysOff[0x20];
+//	bool sidKeysOn[0x20], sidKeysOff[0x20];
 
 	ubyte masterVolume;
 	uword masterVolumeAmplIndex;
@@ -44,23 +48,8 @@ typedef struct _SID6581 {
 		UINT16 Value;
 	} filter;
 
-	uword PCMfreq;
-	udword PCMsid, PCMsidNoise;
-
-	uword toFill;
-
-#if defined(DIRECT_FIXPOINT)
-    cpuLword VALUES, VALUESadd, VALUESorg;
-#else
-    uword VALUES, VALUESorg;
-    udword VALUESadd, VALUEScomma;
-#endif
-
-	uword calls;               /* calls per second (here a default) */
-	uword fastForwardFactor;  /* normal speed */
-
 	sidOperator optr1, optr2, optr3;
-
+    int optr3_outputmask;
 } SID6581;
 
 void sid6581_init (SID6581 *This);

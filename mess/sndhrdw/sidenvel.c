@@ -182,7 +182,7 @@ void enveEmuResetOperator(sidOperator* pVoice)
 {
 	/* mute, end of R-phase */
 	pVoice->ADSRctrl = ENVE_MUTE;
-	pVoice->gateOnCtrl = (pVoice->gateOffCtrl = false);
+//	pVoice->gateOnCtrl = (pVoice->gateOffCtrl = false);
 
 #ifdef SID_FPUENVE
 	pVoice->fenveStep = (pVoice->fenveStepAdd = 0);

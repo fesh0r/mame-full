@@ -5,6 +5,7 @@
   approximation of the sid6581 chip
   this part is for 1 (of the 3) voices of a chip
 */
+#include "includes/sid6581.h"
 
 struct sw_storage
 {
@@ -36,7 +37,7 @@ typedef struct _sidOperator
 	uword curSIDfreq;
 	uword curNoiseFreq;
 	
-	ubyte output, outputMask;
+    ubyte output;//, outputMask;
 	
 	char filtVoiceMask;
 	bool filtEnabled;
@@ -75,7 +76,7 @@ typedef struct _sidOperator
 	bool noiseIsLocked;
 
 	ubyte ADSRctrl;
-	bool gateOnCtrl, gateOffCtrl;
+//	bool gateOnCtrl, gateOffCtrl;
 	uword (*ADSRproc)(struct _sidOperator *);
 	
 #ifdef SID_FPUENVE
@@ -101,8 +102,7 @@ void sidEmuSet(sidOperator* pVoice);
 void sidEmuSet2(sidOperator* pVoice);
 sbyte sidWaveCalcNormal(sidOperator* pVoice);
 
-void sidInitWaveformTables(bool isNewSID);
-//void sidInitWaveformTables(void);
+void sidInitWaveformTables(SIDTYPE type);
 void sidInitMixerEngine(void);
 
 #if 0

@@ -27,7 +27,8 @@ SID6581 sid6581[MAX_SID6581]= {{0}};
 
 void sid6581_set_type (int number, SIDTYPE type)
 {
-	sid_set_type(sid6581+number, type);
+    sid6581[number].type=type;
+    sidInitWaveformTables(type);
 }
 
 void sid6581_reset(int number)
@@ -74,15 +75,16 @@ int sid6581_custom_start (const struct MachineSound *driver)
 	const SID6581_interface *iface=(const SID6581_interface*)
 		driver->sound_interface;
 	int i;
-	
+
 	for (i=0; i< iface->count; i++) {
 		char name[10];
 		if (iface->count!=1) sprintf(name,"SID%d",i);
 		else sprintf(name,"SID");
 		sid6581[i].mixer_channel = stream_init (name, iface->chips[i].default_mixer_level, options.samplerate, i, sid6581_sh_update);
 
+		sid6581[i].PCMfreq = options.samplerate;	
 		sid6581[i].type=iface->chips[i].type;
-		sid6581[i].sidtuneClockSpeed=iface->chips[i].clock;
+		sid6581[i].clock=iface->chips[i].clock;
 		sid6581[i].ad_read=iface->chips[i].ad_read;
 		sid6581[i].on=1;
 		sid6581_init(sid6581+i);
