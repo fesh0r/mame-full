@@ -72,9 +72,6 @@ void joy_SDL_poll (void)
 		for (j=0; j<joy_data[i].num_buttons; j++)
 			joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick, j);
 	}
-
-	joy_evaluate_moves ();
-
 #endif
 }
 

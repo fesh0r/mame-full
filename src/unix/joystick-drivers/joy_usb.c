@@ -316,9 +316,6 @@ static void joy_usb_poll(void)
       if (joy_data[i].fd >= 0)
 	joy_read(joy_data[i].fd, i);
     }
-
-   /* Evaluate joystick movements. */
-   joy_evaluate_moves ();
 }
 
 

@@ -192,9 +192,6 @@ void joy_i386new_poll (void)
 			}
 		}
 	}
-
-	/* evaluate joystick movements */
-	joy_evaluate_moves ();
 }
 #endif
 
@@ -223,9 +220,6 @@ void joy_i386_poll(void)
 		joy_data[i].axis[0].val = my_joy_data.x;
 		joy_data[i].axis[1].val = my_joy_data.y;
 	}
-
-	/* evaluate joystick movements */
-	joy_evaluate_moves ();
 }
 
 #endif

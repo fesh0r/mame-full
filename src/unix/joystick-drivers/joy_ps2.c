@@ -412,9 +412,6 @@ void joy_ps2_poll (void)
 	}
 
     }
-
-    /* evaluate joystick movements */
-   joy_evaluate_moves ();
 }
 
 

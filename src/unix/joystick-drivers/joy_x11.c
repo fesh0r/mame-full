@@ -242,7 +242,6 @@ void joy_x11_poll(void)
 	}
 	XFreeDeviceState(xstate);
 #endif 
-	joy_evaluate_moves();
 }
 
 #endif /* ifdef X11_JOYSTICK */
