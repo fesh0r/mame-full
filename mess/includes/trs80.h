@@ -5,7 +5,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/wd179x.h"
+#include "includes/wd179x.h"
 
 #define TRS80_FONT_W 6
 #define TRS80_FONT_H 12
@@ -21,7 +21,6 @@ extern int trs80_cmd_init(int id);
 extern void trs80_cmd_exit(int id);
 
 extern int trs80_floppy_init(int id);
-extern void trs80_floppy_exit(int id);
 
 extern int trs80_vh_start(void);
 extern void trs80_vh_stop(void);
