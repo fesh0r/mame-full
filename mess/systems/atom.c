@@ -81,11 +81,8 @@ static MEMORY_READ_START (atom_readmem)
 	{ 0x0a05, 0x07fff, MRA_RAM},
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
 	{ 0x9800, 0x9fff, MRA_RAM },
-//    { 0xa000, 0xafff, MRA_ROM },
     { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
 	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
-//    { 0xbc04, 0xbfdf,  MWA_NOP },
-//    { 0xbfe0, 0xbfff, MRA_NOP },        // MOUSE
     { 0xc000, 0xcfff, MRA_ROM },
     { 0xd000, 0xdfff, MRA_ROM },
     { 0xe000, 0xefff, MRA_ROM },
@@ -99,17 +96,47 @@ static MEMORY_WRITE_START (atom_writemem)
 	{ 0x0a05, 0x07fff, MWA_RAM},
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
 	{ 0x9800, 0x9fff, MWA_RAM },
-//    { 0xa000, 0xafff, MWA_ROM },
     { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
 	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
-//    { 0xbc04, 0xbfdf,  MWA_NOP },
-//    { 0xbfe0, 0xbfff, MWA_NOP },        // MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
     { 0xd000, 0xdfff, MWA_ROM },
     { 0xe000, 0xefff, MWA_ROM },
     { 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
+
+static MEMORY_READ_START (atomeb_readmem)
+	{ 0x0000, 0x09ff, MRA_RAM },
+    { 0x0a00, 0x0a04, atom_8271_r},
+	{ 0x0a05, 0x07fff, MRA_RAM},
+	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
+	{ 0x9800, 0x9fff, MRA_RAM },
+    { 0xa000, 0xafff, MRA_BANK1 },		// eprom data from eprom box
+    { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
+	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
+    { 0xbfff, 0xbfff, atom_eprom_box_r},
+	{ 0xc000, 0xcfff, MRA_ROM },
+    { 0xd000, 0xdfff, MRA_ROM },
+    { 0xe000, 0xefff, MRA_ROM },
+    { 0xf000, 0xffff, MRA_ROM },
+
+MEMORY_END
+
+static MEMORY_WRITE_START (atomeb_writemem)
+	{ 0x0000, 0x09ff, MWA_RAM },
+    { 0x0a00, 0x0a04, atom_8271_w},
+	{ 0x0a05, 0x07fff, MWA_RAM},
+	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
+	{ 0x9800, 0x9fff, MWA_RAM },
+    { 0xa000, 0xafff, MWA_NOP },
+    { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
+	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
+    { 0xbfff, 0xbfff, atom_eprom_box_w},
+	{ 0xc000, 0xffff, MWA_ROM },
+    { 0xd000, 0xdfff, MWA_ROM },
+    { 0xe000, 0xefff, MWA_ROM },
+    { 0xf000, 0xffff, MWA_ROM },
+MEMORY_END
 /* graphics output */
 
 /* keyboard input */
@@ -275,6 +302,24 @@ ROM_START (atom)
 	//ROM_LOAD ("atom.chr", 0x0000, 0x0300, 0x0)
 ROM_END
 
+ROM_START (atomeb)
+	ROM_REGION (0x10000+0x09000, REGION_CPU1,0)
+	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
+	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
+    ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
+	ROM_LOAD ("abasic.rom", 0xc000, 0x1000, 0x43798b9b)
+	/* roms from another oric emulator */
+	ROM_LOAD ("axr1.rom",0x010000,0x1000, 0x0)
+	ROM_LOAD ("pcharme.rom",0x011000,0x1000,0x0)
+	ROM_LOAD ("gags.rom",0x012000,0x1000,0x0)
+	ROM_LOAD ("werom.rom",0x013000,0x1000,0x0)
+	ROM_LOAD ("unknown.rom",0x014000,0x1000,0x0)
+	ROM_LOAD ("combox.rom",0x015000,0x1000,0x0)
+	ROM_LOAD ("salfaa.rom",0x016000,0x1000,0x0)
+	ROM_LOAD ("mousebox.rom",0x017000,0x01000,0x0)
+	ROM_LOAD ("atomicw.rom",0x018000,0x1000,0x0)
+ROM_END
+
 static const struct IODevice io_atom[] =
 {
 	{
@@ -321,5 +366,8 @@ static const struct IODevice io_atom[] =
 	{ IO_END }
 };
 
+#define io_atomeb io_atom
+
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP( 1979, atom,     0,        atom,     atom,     0,        "Acorn",  "Atom" )
+COMP( 1979, atomeb,   atom,     atom,     atom,     0,        "Acorn",  "Atom with Eprom Box" )

@@ -27,4 +27,6 @@ extern WRITE_HANDLER(atom_via_w);
 extern int atom_cassette_init(int);
 extern void atom_cassette_exit(int);
 
-
+extern READ_HANDLER(atom_eprom_box_r);
+extern WRITE_HANDLER(atom_eprom_box_w);
+extern void atom_eprom_box_init(void);

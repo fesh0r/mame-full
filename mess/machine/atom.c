@@ -520,3 +520,42 @@ void atom_cassette_exit(int id)
 	device_close(IO_CASSETTE, id);
 }
 
+
+
+/*********************************************/
+/* emulates a 16-slot eprom box for the Atom */
+static unsigned char selected_eprom = 0;
+
+static void atom_eprom_box_refresh(void)
+{
+    unsigned char *eprom_data;
+
+	/* get address of eprom data */
+	eprom_data = memory_region(REGION_CPU1) + (selected_eprom<<12);
+	/* set bank address */
+	cpu_setbank(1, eprom_data);
+}
+
+void atom_eprom_box_init(void)
+{
+	/* set initial eprom */
+	selected_eprom = 0;
+	/* set memory handler */
+    memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	/* init */
+	atom_eprom_box_refresh();
+}
+
+/* write to eprom box, changes eprom selected */
+WRITE_HANDLER(atom_eprom_box_w)
+{
+	selected_eprom = data & 0x0f;
+
+	atom_eprom_box_refresh();
+}
+
+/* read from eprom box register, can this be done in the real hardware */
+READ_HANDLER(atom_eprom_box_r)
+{
+	return selected_eprom;
+}
