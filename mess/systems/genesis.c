@@ -348,7 +348,7 @@ static struct MachineDriver machine_driver_genesis =
 
 
 ROM_START(genesis)
-	ROM_REGION(0x405000,REGION_CPU1)
+	ROM_REGION(0x405000,REGION_CPU1,0)
 ROM_END
 
 static const struct IODevice io_genesis[] = {

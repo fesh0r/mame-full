@@ -15,7 +15,7 @@
 			(he's written a CP/M implementation for the PCW16)
 			(www.seasip.deomon.co.uk)
 	- and others who offered their help (Richard Fairhurst, Richard Wildey)
-	
+
 	Hardware:
 		- 2mb dram max,
 		- 2mb flash-file memory max (in 2 1mb chips),
@@ -43,9 +43,9 @@
 		- extract hard-drive code from PC driver and use in this driver
 		- implement printer
 		- .. anything else that requires implementing
-	
+
 	 Info:
-	   - to use this driver you need a OS rescue disc. 
+	   - to use this driver you need a OS rescue disc.
 	   (HINT: This also contains the boot-rom)
 	  - the OS will be installed from the OS rescue disc into the Flash-ROM
 
@@ -75,14 +75,14 @@
   processor (to 16MHz) etc. which meant that it could not be kept
   compatible with the previous models (though documents ARE compatible)"
 
-  
+
 
 
  ******************************************************************************/
-/* PeT 19.October 2000 
+/* PeT 19.October 2000
    added/changed printer support
-   not working reliable, seams to expect parallelport in epp/ecp mode 
-   epp/ecp modes in parallel port not supported yet 
+   not working reliable, seams to expect parallelport in epp/ecp mode
+   epp/ecp modes in parallel port not supported yet
    so ui disabled */
 
 #include "driver.h"
@@ -158,7 +158,7 @@ void pcw16_dump_ram(void)
 			{
 				osd_fwrite(file, &pcw16_ram[i], 1);
 			}
-		
+
 //			osd_fwrite(file, pcw16_ram, 2048*1024);
 			osd_fclose(file);
 		}
@@ -240,7 +240,7 @@ WRITE_HANDLER(pcw16_palette_w)
 
 static char *pcw16_mem_ptr[4];
 
-const mem_write_handler pcw16_write_handler_dram[4] = 
+const mem_write_handler pcw16_write_handler_dram[4] =
 {
 	MWA_BANK5,
 	MWA_BANK6,
@@ -248,7 +248,7 @@ const mem_write_handler pcw16_write_handler_dram[4] =
 	MWA_BANK8
 };
 
-const mem_read_handler pcw16_read_handler_dram[4] = 
+const mem_read_handler pcw16_read_handler_dram[4] =
 {
 	MRA_BANK1,
 	MRA_BANK2,
@@ -438,8 +438,8 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 		/* rom */
 		case PCW16_MEM_ROM:
 		{
-			cpu_setbankhandler_r(bank+1, pcw16_read_handler_dram[bank]);
-			cpu_setbankhandler_w(bank+5, MWA_NOP);
+			memory_set_bankhandler_r(bank+1, 0, pcw16_read_handler_dram[bank]);
+			memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
 		}
 		break;
 
@@ -447,22 +447,22 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 		/* sram */
 		case PCW16_MEM_FLASH_1:
 		{
-			cpu_setbankhandler_r(bank+1, pcw16_flash0_bank_handlers_r[bank]);
-			cpu_setbankhandler_w(bank+5, pcw16_flash0_bank_handlers_w[bank]);
+			memory_set_bankhandler_r(bank+1, 0, pcw16_flash0_bank_handlers_r[bank]);
+			memory_set_bankhandler_w(bank+5, 0, pcw16_flash0_bank_handlers_w[bank]);
 		}
 		break;
 
 		case PCW16_MEM_FLASH_2:
 		{
-			cpu_setbankhandler_r(bank+1, pcw16_flash1_bank_handlers_r[bank]);
-			cpu_setbankhandler_w(bank+5, pcw16_flash1_bank_handlers_w[bank]);
+			memory_set_bankhandler_r(bank+1, 0, pcw16_flash1_bank_handlers_r[bank]);
+			memory_set_bankhandler_w(bank+5, 0, pcw16_flash1_bank_handlers_w[bank]);
 		}
 		break;
 
 		case PCW16_MEM_NONE:
 		{
-			cpu_setbankhandler_r(bank+1, pcw16_no_mem_r);
-			cpu_setbankhandler_w(bank+5, MWA_NOP);
+			memory_set_bankhandler_r(bank+1, 0, pcw16_no_mem_r);
+			memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
 		}
 		break;
 
@@ -470,8 +470,8 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 		default:
 		case PCW16_MEM_DRAM:
 		{
-			cpu_setbankhandler_r(bank+1, pcw16_read_handler_dram[bank]);
-			cpu_setbankhandler_w(bank+5, pcw16_write_handler_dram[bank]);
+			memory_set_bankhandler_r(bank+1, 0, pcw16_read_handler_dram[bank]);
+			memory_set_bankhandler_w(bank+5, 0, pcw16_write_handler_dram[bank]);
 
 		}
 		break;
@@ -649,7 +649,7 @@ static void pcw16_keyboard_init(void)
 		pcw16_keyboard_parity_table[i] = sum & 0x01;
 	}
 
-	
+
 	/* clear int */
 	pcw16_keyboard_int(0);
 	/* reset state */
@@ -709,7 +709,7 @@ READ_HANDLER(pcw16_keyboard_data_shift_r)
 	pcw16_keyboard_int(0);
 	/* reset for reception */
 	pcw16_keyboard_reset();
-	
+
 	/* read byte */
 	return pcw16_keyboard_data_shift;
 }
@@ -743,9 +743,9 @@ void	pcw16_keyboard_signal_byte_received(int data)
 	/* initialise start, stop and parity bits */
 	pcw16_keyboard_state &= ~PCW16_KEYBOARD_START_BIT_MASK;
 	pcw16_keyboard_state |=PCW16_KEYBOARD_STOP_BIT_MASK;
-		
-	/* "Keyboard data has odd parity, so the parity bit in the 
-	status register should only be set when the shift register 
+
+	/* "Keyboard data has odd parity, so the parity bit in the
+	status register should only be set when the shift register
 	data itself has even parity. */
 
 	pcw16_keyboard_state &= ~PCW16_KEYBOARD_PARITY_MASK;
@@ -753,7 +753,7 @@ void	pcw16_keyboard_signal_byte_received(int data)
 	/* if data has even parity, set parity bit */
 	if ((pcw16_keyboard_parity_table[data])==0)
 		pcw16_keyboard_state |= PCW16_KEYBOARD_PARITY_MASK;
-	
+
 	pcw16_keyboard_int(1);
 }
 
@@ -777,7 +777,7 @@ WRITE_HANDLER(pcw16_keyboard_data_shift_w)
 READ_HANDLER(pcw16_keyboard_status_r)
 {
 	/* bit 2,3 are bits 8 and 9 of vdu pointer */
-	return (pcw16_keyboard_state & 
+	return (pcw16_keyboard_state &
 		(PCW16_KEYBOARD_PARITY_MASK |
 		 PCW16_KEYBOARD_STOP_BIT_MASK |
 		 PCW16_KEYBOARD_START_BIT_MASK |
@@ -799,7 +799,7 @@ WRITE_HANDLER(pcw16_keyboard_control_w)
 	}
 
 	/* clear read/write bits */
-	pcw16_keyboard_state &= 
+	pcw16_keyboard_state &=
 		~(PCW16_KEYBOARD_FORCE_KEYBOARD_CLOCK |
 			PCW16_KEYBOARD_TRANSMIT_MODE);
 	/* set read/write bits from data */
@@ -1084,7 +1084,7 @@ static void pcw16_trigger_fdc_int(void)
 			the nmi will be triggered, but when the state changes because the int
 			is cleared this will not cause another nmi */
 			/* I'll emulate it like this to be sure */
-		
+
 			if (state!=previous_fdc_int_state)
 			{
 				if (state)
@@ -1224,8 +1224,8 @@ WRITE_HANDLER(pcw16_system_control_w)
 			/* bit 4 - monitor on/off (1==on) */
 
 			pcw16_4_bit_port = data>>4;
-			
-			
+
+
 		}
 		break;
 	}
@@ -1324,7 +1324,7 @@ static void pcw16_com_refresh_connected(int serial_port_id)
 			{
 				new_inputs = UART8250_INPUTS_RING_INDICATOR;
 			}
-			
+
 			uart8250_handshake_in(1, new_inputs);
 		}
 		break;
@@ -1343,7 +1343,7 @@ static uart8250_interface pcw16_com_interface[2]=
 	},
 	{
 		TYPE16550,
-		1843200,        
+		1843200,
 		pcw16_com_interrupt,
 		NULL,
 		NULL,
@@ -1438,21 +1438,21 @@ static CENTRONICS_CONFIG cent_config={
 	PRINTER_CENTRONICS,
 	pc_lpt_handshake_in
 };
-	
+
 
 void pcw16_init_machine(void)
 {
 	pcw16_ram = NULL;
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-	cpu_setbankhandler_w(5, MWA_BANK5);
-	cpu_setbankhandler_w(6, MWA_BANK6);
-	cpu_setbankhandler_w(7, MWA_BANK7);
-	cpu_setbankhandler_w(8, MWA_BANK8);
+	memory_set_bankhandler_w(5, 0, MWA_BANK5);
+	memory_set_bankhandler_w(6, 0, MWA_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 
 
@@ -1470,13 +1470,13 @@ void pcw16_init_machine(void)
 	pcw16_system_status = 0;
 	pcw16_interrupt_counter = 0;
 
-	/* video ints */	
+	/* video ints */
 	pcw16_timer = timer_pulse(TIME_IN_MSEC(5.83), 0,pcw16_timer_callback);
 	/* rtc timer */
 	pcw16_rtc_timer = timer_pulse(TIME_IN_SEC(1.0f/256.0f), 0, rtc_timer_callback);
 
 	pcw16_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, pcw16_keyboard_timer_callback);
-	
+
 
 	pc_fdc_init(&pcw16_fdc_interface);
 	uart8250_init(0, pcw16_com_interface);
@@ -1497,7 +1497,7 @@ void pcw16_init_machine(void)
 	at_keyboard_set_scan_code_set(3);
 	at_keyboard_set_input_port_base(4);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
-	
+
 	pcw16_reset();
 
 	beep_set_state(0,0);
@@ -1550,7 +1550,7 @@ INPUT_PORTS_START(pcw16)
 	PORT_BITX(0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Power Switch/Suspend", IP_KEY_NONE, IP_JOY_NONE)
 	PORT_DIPSETTING(0x0, DEF_STR( Off) )
 	PORT_DIPSETTING(0x40, DEF_STR( On) )
-	
+
 	INPUT_MOUSE_SYSTEMS
 
 	AT_KEYBOARD
@@ -1622,7 +1622,7 @@ static struct MachineDriver machine_driver_pcw16 =
 /* the lower 64k of the flash-file memory is write protected. This contains the boot
 	rom. The boot rom is also on the OS rescue disc. Handy! */
 ROM_START(pcw16)
-	ROM_REGION((0x010000+524288), REGION_CPU1)
+	ROM_REGION((0x010000+524288), REGION_CPU1,0)
 	ROM_LOAD("pcw045.sys",0x10000, 524288, 0xc642f498)
 ROM_END
 

@@ -1074,37 +1074,37 @@ static struct MachineDriver machine_driver_a5200 =
 };
 
 ROM_START(a400)
-	ROM_REGION(0x14000,REGION_CPU1) /* 64K for the CPU + 2 * 8K for cartridges */
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 2 * 8K for cartridges */
 	ROM_LOAD("floatpnt.rom", 0xd800, 0x0800, 0x6a5d766e)
 	ROM_LOAD("atari400.rom", 0xe000, 0x2000, 0xcb4db9af)
 ROM_END
 
 ROM_START(a400pal)
-	ROM_REGION(0x14000,REGION_CPU1) /* 64K for the CPU + 2 * 8K for cartridges */
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 2 * 8K for cartridges */
 	ROM_LOAD("floatpnt.rom", 0xd800, 0x0800, 0x6a5d766e)
 	ROM_LOAD("atari400.rom", 0xe000, 0x2000, 0xcb4db9af)
 ROM_END
 
 ROM_START(a800)
-	ROM_REGION(0x14000,REGION_CPU1) /* 64K for the CPU + 2 * 8K for cartridges */
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 2 * 8K for cartridges */
 	ROM_LOAD("floatpnt.rom", 0xd800, 0x0800, 0x6a5d766e)
 	ROM_LOAD("atari800.rom", 0xe000, 0x2000, 0xcb4db9af)
 ROM_END
 
 ROM_START(a800pal)
-	ROM_REGION(0x14000,REGION_CPU1) /* 64K for the CPU + 2 * 8K for cartridges */
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 2 * 8K for cartridges */
 	ROM_LOAD("floatpnt.rom", 0xd800, 0x0800, 0x6a5d766e)
 	ROM_LOAD("atari800.rom", 0xe000, 0x2000, 0xcb4db9af)
 ROM_END
 
 ROM_START(a800xl)
-	ROM_REGION(0x18000,REGION_CPU1) /* 64K for the CPU + 16K + 2 * 8K for cartridges */
+	ROM_REGION(0x18000,REGION_CPU1,0) /* 64K for the CPU + 16K + 2 * 8K for cartridges */
 	ROM_LOAD("basic.rom",   0x10000, 0x2000, 0x7d684184)
     ROM_LOAD("atarixl.rom", 0x14000, 0x4000, 0x1f9cd270)
 ROM_END
 
 ROM_START(a5200)
-	ROM_REGION(0x14000,REGION_CPU1) /* 64K for the CPU + 16K for cartridges */
+	ROM_REGION(0x14000,REGION_CPU1,0) /* 64K for the CPU + 16K for cartridges */
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, 0x4248d3e3)
 ROM_END
 

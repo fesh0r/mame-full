@@ -223,15 +223,15 @@ void Enterprise_Initialise()
 
 	Dave_SetIFace(&enterprise_dave_interface);
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-	cpu_setbankhandler_w(5, MWA_BANK5);
-	cpu_setbankhandler_w(6, MWA_BANK6);
-	cpu_setbankhandler_w(7, MWA_BANK7);
-	cpu_setbankhandler_w(8, MWA_BANK8);
+	memory_set_bankhandler_w(5, 0, MWA_BANK5);
+	memory_set_bankhandler_w(6, 0, MWA_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 	Dave_reg_w(0x010,0);
 	Dave_reg_w(0x011,0);
@@ -640,7 +640,7 @@ static struct MachineDriver machine_driver_ep128 =
 
 ROM_START( ep128 )
 		/* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
-		ROM_REGION(0x24000,REGION_CPU1)
+		ROM_REGION(0x24000,REGION_CPU1,0)
 		ROM_LOAD("exos.rom",0x10000,0x8000,  0xd421795f)
 		ROM_LOAD("exbas.rom",0x18000,0x4000, 0x683cf455)
 		ROM_LOAD("exdos.rom",0x1c000,0x8000, 0xd1d7e157)
@@ -648,7 +648,7 @@ ROM_END
 
 ROM_START( ep128a )
 		/* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
-		ROM_REGION(0x24000,REGION_CPU1)
+		ROM_REGION(0x24000,REGION_CPU1,0)
 		ROM_LOAD("exos21.rom",0x10000,0x8000,  0x982a3b44)
 		ROM_LOAD("exbas.rom",0x18000,0x4000, 0x683cf455)
 		ROM_LOAD("exdos.rom",0x1c000,0x8000, 0xd1d7e157)

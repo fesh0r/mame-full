@@ -7,7 +7,7 @@ CPU: 65C02
 		0000-00ff Zero page
 		0100-01ff Stack
 		0200-1fff RAM (expansion)
-		0a00-0a04 FDC 8271			
+		0a00-0a04 FDC 8271
 		2000-21ff RAM (dos catalogue buffer)
 		2200-27ff RAM (dos seq file buffer)
 		2800-28ff RAM (float buffer)
@@ -266,7 +266,7 @@ static struct MachineDriver machine_driver_atom =
 };
 
 ROM_START (atom)
-	ROM_REGION (0x10000, REGION_CPU1)
+	ROM_REGION (0x10000, REGION_CPU1,0)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
 	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
     ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
@@ -317,7 +317,7 @@ static const struct IODevice io_atom[] =
 	},
     /* these are not working properly yet! */
 /*	IO_CASSETTE_WAVE(1,"wav\0",NULL,atom_cassette_init,atom_cassette_exit), */
-    IO_PRINTER_PORT (1, "prn\0"), 
+    IO_PRINTER_PORT (1, "prn\0"),
 	{ IO_END }
 };
 

@@ -4,7 +4,7 @@
 
 #include "driver.h"
 #include "nesintf.h"
-#include "nes_apu.h"
+#include "nes_apu2.h"
 
 static apu_t *apu[MAX_NESPSG];
 static int channel[MAX_NESPSG];

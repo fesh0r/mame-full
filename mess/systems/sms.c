@@ -239,12 +239,12 @@ static struct MachineDriver machine_driver_gamegear =
 };
 
 ROM_START(sms)
-	ROM_REGION(SMS_ROM_MAXSIZE, REGION_CPU1)
+	ROM_REGION(SMS_ROM_MAXSIZE, REGION_CPU1,0)
 /*	ROM_LOAD ("bios.rom", 0x0000, 0x2000, 0x5AD6EDAC) */
 ROM_END
 
 ROM_START(gamegear)
-	ROM_REGION(SMS_ROM_MAXSIZE, REGION_CPU1)
+	ROM_REGION(SMS_ROM_MAXSIZE, REGION_CPU1,0)
 ROM_END
 
 static const struct IODevice io_sms[] = {

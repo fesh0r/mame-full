@@ -97,7 +97,7 @@ static struct MachineDriver machine_driver_advision =
 
 
 ROM_START (advision)
-	ROM_REGION(0x2800,REGION_CPU1)
+	ROM_REGION(0x2800,REGION_CPU1, 0)
     ROM_LOAD ("avbios.rom", 0x1000, 0x400, 0x279e33d1)
 ROM_END
 

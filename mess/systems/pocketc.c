@@ -462,13 +462,13 @@ static struct GfxLayout pc1401_charlayout =
         /* x offsets */
         { 0,0 },
         /* y offsets */
-        { 
+        {
 			7, 7, 7,
-			6, 6, 6, 
-			5, 5, 5, 
-			4, 4, 4, 
-			3, 3, 3, 
-			2, 2, 2, 
+			6, 6, 6,
+			5, 5, 5,
+			4, 4, 4,
+			3, 3, 3,
+			2, 2, 2,
 			1, 1, 1
         },
         1*8
@@ -483,13 +483,13 @@ static struct GfxLayout pc1251_charlayout =
         /* x offsets */
         { 0,0,0 },
         /* y offsets */
-        { 
+        {
 			7, 7, 7,
-			6, 6, 6, 
-			5, 5, 5, 
-			4, 4, 4, 
-			3, 3, 3, 
-			2, 2, 2, 
+			6, 6, 6,
+			5, 5, 5,
+			4, 4, 4,
+			3, 3, 3,
+			2, 2, 2,
 			1, 1, 1
         },
         1*8
@@ -504,7 +504,7 @@ static struct GfxLayout pc1350_charlayout =
         /* x offsets */
         { 0 },
         /* y offsets */
-        { 
+        {
 			7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0
         },
         1*8
@@ -594,7 +594,7 @@ static struct MachineDriver machine_driver_pc1401 =
 	/*
 	   aim: show sharp with keyboard
 	   resolution depends on the dots of the lcd
-	   (lcd dot displayed as 2x3 pixel) 
+	   (lcd dot displayed as 2x3 pixel)
 	   it seams to have 3/4 ratio in the real pc1401 */
 
 	594, 273, { 0, 594 - 1, 0, 273 - 1},
@@ -721,31 +721,31 @@ static struct MachineDriver machine_driver_pc1350 =
 };
 
 ROM_START(pc1401)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	/* SC61860A08 5H 13LD cpu with integrated rom*/
 	ROM_LOAD("sc61860.a08", 0x0000, 0x2000, 0x44bee438)
 /* 5S1 SC613256 D30
    or SC43536LD 5G 13 (LCD chip?) */
 	ROM_LOAD("sc613256.d30", 0x8000, 0x8000, 0x69b9d587)
-	ROM_REGION(0x80,REGION_GFX1)
+	ROM_REGION(0x80,REGION_GFX1,0)
 ROM_END
 
 #define rom_pc1402 rom_pc1401
 
 ROM_START(pc1251)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	/* sc61860a13 6c 13 ld */
 	ROM_LOAD("cpu1251.rom", 0x0000, 0x2000, 0xf7287aca)
 	ROM_LOAD("bas1251.rom", 0x4000, 0x4000, 0x93ecb629)
-	ROM_REGION(0x80,REGION_GFX1)
+	ROM_REGION(0x80,REGION_GFX1,0)
 ROM_END
 
 ROM_START(pc1350)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	/* sc61860a13 6c 13 ld */
 	ROM_LOAD("cpu.rom", 0x0000, 0x2000, 0x79a924bc)
 	ROM_LOAD("basic.rom", 0x8000, 0x8000, 0x158b28e2)
-	ROM_REGION(0x100,REGION_GFX1)
+	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
 

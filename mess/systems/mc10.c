@@ -183,7 +183,7 @@ static struct MachineDriver machine_driver_mc10 =
 };
 
 ROM_START(mc10)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("mc10.rom", 0xE000, 0x2000, 0x11fda97e)
 ROM_END
 

@@ -25,36 +25,36 @@ void a310_init_machine(void)
 	UINT8 *mem = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&mem[0x00200000]);
-	cpu_setbankhandler_r(1,MRA_BANK1);
-	cpu_setbankhandler_w(1,MWA_ROM);
+	memory_set_bankhandler_r(1,0,MRA_BANK1);
+	memory_set_bankhandler_w(1,0,MWA_ROM);
 
 	cpu_setbank(2,&mem[0x00000000]);
-	cpu_setbankhandler_r(2,MRA_RAM);
-	cpu_setbankhandler_w(2,MWA_RAM);
+	memory_set_bankhandler_r(2,0,MRA_RAM);
+	memory_set_bankhandler_w(2,0,MWA_RAM);
 
     cpu_setbank(3,&mem[0x00200000]);
-	cpu_setbankhandler_r(3,MRA_BANK3);
-	cpu_setbankhandler_w(3,MWA_ROM);
+	memory_set_bankhandler_r(3,0,MRA_BANK3);
+	memory_set_bankhandler_w(3,0,MWA_ROM);
 
     cpu_setbank(4,&mem[0x00200000]);
-	cpu_setbankhandler_r(4,MRA_BANK4);
-	cpu_setbankhandler_w(4,MWA_ROM);
+	memory_set_bankhandler_r(4,0,MRA_BANK4);
+	memory_set_bankhandler_w(4,0,MWA_ROM);
 
     cpu_setbank(5,&mem[0x00200000]);
-	cpu_setbankhandler_r(5,MRA_BANK5);
-	cpu_setbankhandler_w(5,MWA_ROM);
+	memory_set_bankhandler_r(5,0,MRA_BANK5);
+	memory_set_bankhandler_w(5,0,MWA_ROM);
 
     cpu_setbank(6,&mem[0x00200000]);
-	cpu_setbankhandler_r(6,MRA_BANK6);
-	cpu_setbankhandler_w(6,MWA_ROM);
+	memory_set_bankhandler_r(6,0,MRA_BANK6);
+	memory_set_bankhandler_w(6,0,MWA_ROM);
 
     cpu_setbank(7,&mem[0x00200000]);
-	cpu_setbankhandler_r(7,MRA_BANK7);
-	cpu_setbankhandler_w(7,MWA_ROM);
+	memory_set_bankhandler_r(7,0,MRA_BANK7);
+	memory_set_bankhandler_w(7,0,MWA_ROM);
 
     cpu_setbank(8,&mem[0x00200000]);
-	cpu_setbankhandler_r(8,MRA_BANK8);
-	cpu_setbankhandler_w(8,MWA_ROM);
+	memory_set_bankhandler_r(8,0,MRA_BANK8);
+	memory_set_bankhandler_w(8,0,MWA_ROM);
 }
 
 void init_a310(void)
@@ -280,12 +280,12 @@ static struct MachineDriver machine_driver_a310 =
 };
 
 ROM_START(a310)
-	ROM_REGION(0x00400000,REGION_CPU1)
+	ROM_REGION(0x00400000,REGION_CPU1,0)
 		ROM_LOAD("ic24.rom", 0x00200000, 0x00080000, 0xc1adde84)
 		ROM_LOAD("ic25.rom", 0x00280000, 0x00080000, 0x15d89664)
 		ROM_LOAD("ic26.rom", 0x00300000, 0x00080000, 0xa81ceb7c)
 		ROM_LOAD("ic27.rom", 0x00380000, 0x00080000, 0x707b0c6c)
-	ROM_REGION(0x00800,REGION_GFX1)
+	ROM_REGION(0x00800,REGION_GFX1,0)
 
 ROM_END
 

@@ -435,7 +435,7 @@ int gb_load_rom (int id)
 		printf("Cartridge name not specified!\n");
 		return INIT_FAILED;
 	}
-	if( new_memory_region(REGION_CPU1, 0x10000) )
+	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{
 		logerror("Memory allocation failed reading roms!\n");
         return 1;

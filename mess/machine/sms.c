@@ -174,7 +174,7 @@ int sms_load_rom(int id)
     }
 
     /* Allocate memory */
-    ret = new_memory_region(REGION_CPU1, size);
+    ret = new_memory_region(REGION_CPU1, size,0);
 
     /* Oops.. couldn't do it */
     if(ret)

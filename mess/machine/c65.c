@@ -453,9 +453,9 @@ static WRITE_HANDLER(c65_ram_expansion_w)
 
 #if 0
 	if ( (data==0)&&(C65_MAIN_MEMORY==C65_512KB) ) {
-		cpu_setbankhandler_w (16, MWA_BANK16);
+		memory_set_bankhandler_w (16, MWA_BANK16);
 	} else {
-		cpu_setbankhandler_w (16, MWA_NOP);
+		memory_set_bankhandler_w (16, MWA_NOP);
 	}
 #endif
 }
@@ -581,11 +581,11 @@ static void c65_bankswitch_interface(int value)
 		if (value&1) {
 			cpu_setbank (8, c64_colorram+0x400);
 			cpu_setbank (9, c64_colorram+0x400);
-			cpu_setbankhandler_r (8, MRA_BANK8);
-			cpu_setbankhandler_w (9, MWA_BANK9);
+			memory_set_bankhandler_r (8, 0, MRA_BANK8);
+			memory_set_bankhandler_w (9, 0, MWA_BANK9);
 		} else {
-			cpu_setbankhandler_r (8, c65_read_io_dc00);
-			cpu_setbankhandler_w (9, c65_write_io_dc00);
+			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
+			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
 		}
 	}
 	c65_io_dc00_on=!(value&1);
@@ -650,17 +650,17 @@ void c65_bankswitch (void)
 		|| (charen && (loram || hiram)))
 	{
 		c65_io_on=1;
-		cpu_setbankhandler_r (4, c65_read_io);
-		cpu_setbankhandler_w (5, c65_write_io);
+		memory_set_bankhandler_r (4, 0, c65_read_io);
+		memory_set_bankhandler_w (5, 0, c65_write_io);
 		cpu_setbank (6, c64_colorram);
 		cpu_setbank (7, c64_colorram);
 
 		if (c65_io_dc00_on) {
-			cpu_setbankhandler_r (8, c65_read_io_dc00);
-			cpu_setbankhandler_w (9, c65_write_io_dc00);
+			memory_set_bankhandler_r (8, 0, c65_read_io_dc00);
+			memory_set_bankhandler_w (9, 0, c65_write_io_dc00);
 		} else {
-			cpu_setbankhandler_r (8, MRA_BANK8);
-			cpu_setbankhandler_w (9, MWA_BANK9);
+			memory_set_bankhandler_r (8, 0, MRA_BANK8);
+			memory_set_bankhandler_w (9, 0, MWA_BANK9);
 			cpu_setbank (8, c64_colorram+0x400);
 			cpu_setbank (9, c64_colorram+0x400);
 		}
@@ -668,8 +668,8 @@ void c65_bankswitch (void)
 	else
 	{
 		c65_io_on=0;
-		cpu_setbankhandler_r (4, MRA_BANK4);
-		cpu_setbankhandler_w (5, MWA_BANK5);
+		memory_set_bankhandler_r (4, 0, MRA_BANK4);
+		memory_set_bankhandler_w (5, 0, MWA_BANK5);
 		cpu_setbank(5, c64_memory+0xd000);
 		cpu_setbank(7, c64_memory+0xd800);
 		cpu_setbank(9, c64_memory+0xdc00);

@@ -685,7 +685,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		}
 	}
 
-	
+
 	if ((offset & 0x01000)==0)
 	{
 		/* on CPC, write to printer through LS chip */
@@ -699,7 +699,7 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 			if ((data & 0x080)==0)
 			{
 				/* output data to printer */
-				device_output (IO_PRINTER, 0, data & 0x07f);	
+				device_output (IO_PRINTER, 0, data & 0x07f);
 			}
 		}
 		previous_printer_data_byte = data;
@@ -812,7 +812,7 @@ OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
 		  multiface_flags &= ~(MULTIFACE_VISIBLE|MULTIFACE_STOP_BUTTON_PRESSED);
 
 		 /* clear op base override */
-				cpu_setOPbaseoverride(0,0);
+				memory_set_opbase_handler(0,0);
 		}
 
 		return pc;
@@ -889,7 +889,7 @@ void	multiface_stop(void)
 		cpu_set_nmi_line(0, PULSE_LINE);
 
 		/* initialise 0065 override to monitor calls to 0065 */
-		cpu_setOPbaseoverride(0,amstrad_multiface_opbaseoverride);
+		memory_set_opbase_handler(0,amstrad_multiface_opbaseoverride);
 	}
 
 }
@@ -2275,23 +2275,23 @@ void amstrad_common_init(void)
 	amstrad_52_divider = 0;
 	amstrad_52_divider_vsync_reset = 0;
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_r(5, MRA_BANK5);
-	cpu_setbankhandler_r(6, MRA_BANK6);
-	cpu_setbankhandler_r(7, MRA_BANK7);
-	cpu_setbankhandler_r(8, MRA_BANK8);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_r(8, 0, MRA_BANK8);
 
-	cpu_setbankhandler_w(9, MWA_BANK9);
-	cpu_setbankhandler_w(10, MWA_BANK10);
-	cpu_setbankhandler_w(11, MWA_BANK11);
-	cpu_setbankhandler_w(12, MWA_BANK12);
-	cpu_setbankhandler_w(13, MWA_BANK13);
-	cpu_setbankhandler_w(14, MWA_BANK14);
-	cpu_setbankhandler_w(15, MWA_BANK15);
-	cpu_setbankhandler_w(16, MWA_BANK16);
+	memory_set_bankhandler_w(9, 0, MWA_BANK9);
+	memory_set_bankhandler_w(10, 0, MWA_BANK10);
+	memory_set_bankhandler_w(11, 0, MWA_BANK11);
+	memory_set_bankhandler_w(12, 0, MWA_BANK12);
+	memory_set_bankhandler_w(13, 0, MWA_BANK13);
+	memory_set_bankhandler_w(14, 0, MWA_BANK14);
+	memory_set_bankhandler_w(15, 0, MWA_BANK15);
+	memory_set_bankhandler_w(16, 0, MWA_BANK16);
 
 	amstrad_cycles_at_frame_end = 0;
 	amstrad_cycles_last_write = 0;
@@ -2838,7 +2838,7 @@ static struct MachineDriver machine_driver_kccomp =
 are banked. */
 ROM_START(cpc6128)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGION(0x020000, REGION_CPU1)
+	ROM_REGION(0x020000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc6128.rom", 0x10000, 0x8000, 0x9e827fe1)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
@@ -2852,7 +2852,7 @@ ROM_END
 
 ROM_START(cpc464)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGION(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc464.rom", 0x10000, 0x8000, 0x040852f25)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
@@ -2863,7 +2863,7 @@ ROM_END
 
 ROM_START(cpc664)
 	/* this defines the total memory size - 64k ram, 16k OS, 16k BASIC, 16k DOS */
-	ROM_REGION(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1,0)
 	/* load the os to offset 0x01000 from memory base */
 	ROM_LOAD("cpc664.rom", 0x10000, 0x8000, 0x09AB5A036)
 	ROM_LOAD("cpcados.rom", 0x18000, 0x4000, 0x1fe22ecd)
@@ -2874,7 +2874,7 @@ ROM_END
 
 
 ROM_START(kccomp)
-	ROM_REGION(0x01c000, REGION_CPU1)
+	ROM_REGION(0x01c000, REGION_CPU1,0)
 	ROM_LOAD("kccos.rom", 0x10000, 0x04000, 0x7f9ab3f7)
 	ROM_LOAD("kccbas.rom", 0x14000, 0x04000, 0xca6af63d)
 

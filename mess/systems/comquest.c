@@ -11,7 +11,7 @@ laptop for childs
 
 language german
 
-lcd black/white, about 128x64, manual contrast control 
+lcd black/white, about 128x64, manual contrast control
 keyboard and 2 button joypad
 speaker 2, manual volume control:2 levels
 cartridge slot, serial port
@@ -178,14 +178,14 @@ static struct GfxLayout comquest_charlayout =
         1,                      /* 1 bits per pixel */
         { 0 },                  /* no bitplanes; 1 bit per pixel */
         /* x offsets */
-        { 
+        {
 			0, 0, 0, 0,
-			1, 1, 1, 1, 
-			2, 2, 2, 2, 
-			3, 3, 3, 3, 
-			4, 4, 4, 4, 
-			5, 5, 5, 5, 
-			6, 6, 6, 6, 
+			1, 1, 1, 1,
+			2, 2, 2, 2,
+			3, 3, 3, 3,
+			4, 4, 4, 4,
+			5, 5, 5, 5,
+			6, 6, 6, 6,
 			7, 7, 7, 7
         },
         /* y offsets */
@@ -286,16 +286,16 @@ static struct MachineDriver machine_driver_comquest =
 };
 
 ROM_START(comquest)
-//	ROM_REGION(0x10000,REGION_CPU1)
-//	ROM_REGION(0x80000,REGION_USER1)
-	ROM_REGION(0x100000,REGION_CPU1)
+//	ROM_REGION(0x10000,REGION_CPU1,0)
+//	ROM_REGION(0x80000,REGION_USER1,0)
+	ROM_REGION(0x100000,REGION_CPU1,0)
 	ROM_LOAD("comquest.bin", 0x00000, 0x80000, 0x2bf4b1a8)
 /*
-000 +16kbyte code 
+000 +16kbyte code
 040 16kbyte code
 080 8kbyte code
 0a0 8kbyte code
-0c0 16kbyte code 
+0c0 16kbyte code
 100 16kbyte code
 140 16kbyte code
 180 16kbyte code
@@ -314,7 +314,7 @@ ROM_START(comquest)
 7c0 16kb
  */
 
-	ROM_REGION(0x100,REGION_GFX1)
+	ROM_REGION(0x100,REGION_GFX1,0)
 ROM_END
 
 static const struct IODevice io_comquest[] = {

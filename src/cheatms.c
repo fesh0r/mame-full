@@ -112,8 +112,6 @@ extern struct GameDriver driver_neogeo;
 #endif
 #endif
 
-extern unsigned char *memory_find_base (int cpu, int offset);
-
 /******************************************
  *
  * Cheats
@@ -506,7 +504,7 @@ void cheat_set_status (int cheat_num, int active)
 #ifdef MESS
             struct subcheat_struct *subcheat = &CheatTable[cheat_num].subcheat[i];  /* Steph */
 #endif
-        
+
             /* Reset the active variables */
             CheatTable[cheat_num].subcheat[i].frame_count = 0;
             CheatTable[cheat_num].subcheat[i].backup = 0;
@@ -1638,9 +1636,9 @@ static int build_tables (int cpu)
 #endif
 
     NoMemArea = 0;
-    while (!IS_MEMORY_END(mwa))
+    while (!IS_MEMPORT_END(mwa))
     {
-        if (!IS_MEMORY_MARKER(mwa))
+        if (!IS_MEMPORT_MARKER(mwa))
         {
             /* int (*handler)(int) = mra->handler; */
             mem_write_handler handler = mwa->handler;

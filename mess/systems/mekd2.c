@@ -210,11 +210,11 @@ static struct MachineDriver machine_driver_mekd2 =
 };
 
 ROM_START(mekd2)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("jbug.rom",    0xe000, 0x0400, 0xa2a56502)
-	ROM_REGION(128 * 24 * 3,REGION_GFX1)
+	ROM_REGION(128 * 24 * 3,REGION_GFX1,0)
 		/* space filled with 7segement graphics by mekd2_init_driver */
-	ROM_REGION( 24 * 18 * 3 * 2,REGION_GFX2)
+	ROM_REGION( 24 * 18 * 3 * 2,REGION_GFX2,0)
 		/* space filled with key icons by mekd2_init_driver */
 ROM_END
 

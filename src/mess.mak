@@ -85,7 +85,7 @@ CPUS+=TMS9995@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=TMS320C10@
-CPUS+=PDP1@
+#################################CPUS+=PDP1@
 #CPUS+=ADSP2100@
 #CPUS+=ADSP2105@
 #CPUS+=MIPS@
@@ -392,7 +392,7 @@ $(OBJ)/cgenie.a:   \
 	  $(OBJ)/mess/systems/cgenie.o
 
 $(OBJ)/pdp1.a:	   \
-	  $(OBJ)/mess/vidhrdw/pdp1.o	 \
+#	  $(OBJ)/mess/vidhrdw/pdp1.o	 \
 	  $(OBJ)/mess/machine/pdp1.o	 \
 	  $(OBJ)/mess/systems/pdp1.o
 

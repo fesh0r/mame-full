@@ -367,23 +367,23 @@ static struct MachineDriver machine_driver_mbee56k =
 };
 
 ROM_START( mbee )
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("bas522a.rom",  0x8000, 0x2000, 0x7896a696)
     ROM_LOAD("bas522b.rom",  0xa000, 0x2000, 0xb21d9679)
 //  ROM_LOAD("edasm.rom",    0xc000, 0x2000, 0x1af1b3a9)
     ROM_LOAD("wbee12.rom",   0xc000, 0x2000, 0x0fc21cb5)
     ROM_LOAD("8x16.fnt",     0xf000, 0x1000, BADCRC(0x47a56a9a))
 
-    ROM_REGION(0x1000,REGION_GFX1)
+    ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
 ROM_END
 
 ROM_START( mbee56k )
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("56kb.rom",     0xe000, 0x1000, 0x28211224)
     ROM_LOAD("8x16.fnt",     0xf000, 0x1000, BADCRC(0x47a56a9a))
 
-    ROM_REGION(0x1000,REGION_GFX1)
+    ROM_REGION(0x1000,REGION_GFX1,0)
     /* videoram and colorram are remapped here */
 ROM_END
 

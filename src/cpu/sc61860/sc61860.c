@@ -42,22 +42,22 @@ static UINT8 sc61860_reg_layout[] = {
 	SC61860_P,
 	SC61860_Q,
 	SC61860_R,
-	SC61860_DP, 
-	SC61860_PC, 
+	SC61860_DP,
+	SC61860_PC,
 	-1,
 
-	SC61860_I, 
-	SC61860_K, 
-	SC61860_V, 
-	SC61860_X, 
-	SC61860_H, 
+	SC61860_I,
+	SC61860_K,
+	SC61860_V,
+	SC61860_X,
+	SC61860_H,
 	-1,
 
-	SC61860_J, 
-	SC61860_L, 
+	SC61860_J,
+	SC61860_L,
 	SC61860_W,
 	SC61860_Y,
-	SC61860_BA, 
+	SC61860_BA,
 	0
 };
 
@@ -80,7 +80,7 @@ typedef struct
 	UINT8 p, q, r; //6 bits only?
 
 	UINT16 oldpc, pc, dp;
-	
+
 	bool carry, zero;
 
 	struct { bool t2ms, t512ms; int count;} timer;
@@ -127,7 +127,7 @@ void sc61860_reset(void *param)
 	sc61860.timer.t512ms=0;
 	sc61860.timer.count=256;
 	sc61860.pc=0;
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 }
 
 void sc61860_exit(void)
@@ -147,7 +147,7 @@ void sc61860_set_context (void *src)
 	if( src )
 	{
 		sc61860 = *(SC61860_Regs*)src;
-		change_pc(sc61860.pc);
+		change_pc16(sc61860.pc);
 	}
 }
 
@@ -159,7 +159,7 @@ unsigned sc61860_get_pc (void)
 void sc61860_set_pc (unsigned val)
 {
 	sc61860.pc = val;
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 }
 
 unsigned sc61860_get_sp (void)
@@ -235,7 +235,7 @@ int sc61860_execute(int cycles)
 {
 	sc61860_icount = cycles;
 
-	change_pc(sc61860.pc);
+	change_pc16(sc61860.pc);
 
 	do
 	{
@@ -316,11 +316,11 @@ const char *sc61860_info(void *context, int regnum)
 	case CPU_INFO_REG+SC61860_V: sprintf(buffer[which],"V:%.2x",r->ram[V]);break;
 	case CPU_INFO_REG+SC61860_W: sprintf(buffer[which],"W:%.2x",r->ram[W]);break;
 	case CPU_INFO_REG+SC61860_H: sprintf(buffer[which],"H:%.2x",r->ram[H]);break;
-	case CPU_INFO_REG+SC61860_BA: 
+	case CPU_INFO_REG+SC61860_BA:
 		sprintf(buffer[which],"BA:%.2x%.2x",r->ram[B],r->ram[A]);break;
-	case CPU_INFO_REG+SC61860_X: 
+	case CPU_INFO_REG+SC61860_X:
 		sprintf(buffer[which],"X: %.2x%.2x",r->ram[XH],r->ram[XL]);break;
-	case CPU_INFO_REG+SC61860_Y: 
+	case CPU_INFO_REG+SC61860_Y:
 		sprintf(buffer[which],"Y: %.2x%.2x",r->ram[YH],r->ram[YL]);break;
 	case CPU_INFO_REG+SC61860_CARRY: sprintf(buffer[which],"Carry: %d",r->carry);break;
 	case CPU_INFO_REG+SC61860_ZERO: sprintf(buffer[which],"Carry: %d",r->zero);break;

@@ -1037,9 +1037,9 @@ static struct MachineDriver machine_driver_snes =
 ***************************************************************************/
 
 ROM_START(snes)
-    ROM_REGION(0x408000,REGION_CPU1)            // SNES RAM/ROM
+    ROM_REGION(0x408000,REGION_CPU1,0)            // SNES RAM/ROM
 #ifdef EMULATE_SPC700
-    ROM_REGION(0x10000,REGION_CPU2)             // SPC RAM/ROM
+    ROM_REGION(0x10000,REGION_CPU2,0)             // SPC RAM/ROM
     ROM_LOAD ("spc700.rom", 0xFFC0, 0x0040, 0x38000B6B)
 #endif
 ROM_END

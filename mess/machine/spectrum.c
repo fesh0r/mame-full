@@ -69,10 +69,10 @@ void spectrum_init_machine(void)
 		if (spectrum_snapshot_type == SPECTRUM_TAPEFILE_TAP)
 		{
 			logerror(".TAP file support enabled\n");
-			cpu_setOPbaseoverride(0, spectrum_tape_opbaseoverride);
+			memory_set_opbase_handler(0, spectrum_tape_opbaseoverride);
 		}
 		else
-			cpu_setOPbaseoverride(0, spectrum_opbaseoverride);
+			memory_set_opbase_handler(0, spectrum_opbaseoverride);
 	}
 }
 
@@ -136,7 +136,7 @@ void spectrum_rom_exit(int id)
 		pSnapshotData = NULL;
 
 		/* ensure op base is cleared */
-		cpu_setOPbaseoverride(0, 0);
+		memory_set_opbase_handler(0, 0);
 	}
 
 	/* reset type to none */
@@ -147,7 +147,7 @@ void spectrum_rom_exit(int id)
 static OPBASE_HANDLER(spectrum_opbaseoverride)
 {
 	/* clear op base override */
-	cpu_setOPbaseoverride(0, 0);
+	memory_set_opbase_handler(0, 0);
 
 	if (pSnapshotData)
 	{
@@ -308,13 +308,13 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 			else
 			{
 				/* Disable .TAP support if no files were loaded to avoid getting caught in infinite loop */
-				cpu_setOPbaseoverride(0, 0);
+				memory_set_opbase_handler(0, 0);
 				logerror("No valid data loaded! - disabling .TAP support\n");
 			}
 		}
 		else
 		{
-			cpu_setOPbaseoverride(0, 0);
+			memory_set_opbase_handler(0, 0);
 			logerror("All tape blocks used! - disabling .TAP support\n");
 		}
 	}
@@ -953,7 +953,7 @@ int spectrum_cassette_init(int id)
 
 				/* Always reset tape position when loading new tapes */
 				TapePosition = 0;
-				cpu_setOPbaseoverride(0, spectrum_tape_opbaseoverride);
+				memory_set_opbase_handler(0, spectrum_tape_opbaseoverride);
 				spectrum_snapshot_type = SPECTRUM_TAPEFILE_TAP;
 				logerror(".TAP file successfully loaded\n");
 				return INIT_OK;

@@ -20,7 +20,7 @@
 
 		Hardware:
 			- Z80 CPU
-            - 16c500c UART  
+            - 16c500c UART
 			-  28f008sa flash-file memory x 3 (3mb)
 			- 128k ram
 			- stylus pen
@@ -39,7 +39,7 @@
 #include "includes/uart8250.h"
 
 static UINT8 avigo_key_line;
-/* 
+/*
 	bit 7:						?? high priority. When it occurs, clear this bit.
 	bit 6: pen int				pen or power
 	bit 5:						port 1d,1f
@@ -71,7 +71,7 @@ static READ_HANDLER(avigo_flash_0x0000_read_handler)
 {
 
         int flash_offset = offset;
-        
+
 	return flash_bank_handler_r(0, flash_offset);
 }
 
@@ -89,7 +89,7 @@ static WRITE_HANDLER(avigo_flash_0x0000_write_handler)
 {
 
 	int flash_offset = offset;
-        
+
 	flash_bank_handler_w(0, flash_offset, data);
 }
 
@@ -98,7 +98,7 @@ static WRITE_HANDLER(avigo_flash_0x4000_write_handler)
 {
 
         int flash_offset = (avigo_rom_bank_l<<14) | offset;
-       
+
         flash_bank_handler_w(avigo_flash_at_0x4000, flash_offset, data);
 }
 
@@ -167,7 +167,7 @@ static void avigo_16hz_int(int state)
 }
 #endif
 
-static struct tc8521_interface avigo_tc8521_interface = 
+static struct tc8521_interface avigo_tc8521_interface =
 {
 	NULL,	//avigo_alarm_int
 };
@@ -200,16 +200,16 @@ static void avigo_refresh_memory(void)
         cpu_setbank(2, addr);
         cpu_setbank(6, addr);
 
-        cpu_setbankhandler_r(2, avigo_flash_0x4000_read_handler);
-        cpu_setbankhandler_w(6, avigo_flash_0x4000_write_handler);
+        memory_set_bankhandler_r(2, 0, avigo_flash_0x4000_read_handler);
+        memory_set_bankhandler_w(6, 0, avigo_flash_0x4000_write_handler);
 
         switch (avigo_ram_bank_h)
         {
                 /* screen */
                 case 0x06:
                 {
-                        cpu_setbankhandler_w(7, avigo_vid_memory_w);
-                        cpu_setbankhandler_r(3, avigo_vid_memory_r);
+                        memory_set_bankhandler_w(7, 0, avigo_vid_memory_w);
+                        memory_set_bankhandler_r(3, 0, avigo_vid_memory_r);
                 }
                 break;
 
@@ -221,8 +221,8 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
 
-                        cpu_setbankhandler_w(7, MWA_BANK7);
-                        cpu_setbankhandler_r(3, MRA_BANK3);
+                        memory_set_bankhandler_w(7, 0, MWA_BANK7);
+                        memory_set_bankhandler_r(3, 0, MRA_BANK3);
                 }
                 break;
 
@@ -236,8 +236,8 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
 
-                        cpu_setbankhandler_r(3, avigo_flash_0x8000_read_handler);
-                        cpu_setbankhandler_w(7, avigo_flash_0x8000_write_handler);
+                        memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
+                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
 
 
 
@@ -254,8 +254,8 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(3, addr);
                         cpu_setbank(7, addr);
 
-                        cpu_setbankhandler_r(3, avigo_flash_0x8000_read_handler);
-                        cpu_setbankhandler_w(7, avigo_flash_0x8000_write_handler);
+                        memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
+                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
 
 
                 }
@@ -294,7 +294,7 @@ static uart8250_interface avigo_com_interface[1]=
 		NULL,
 		NULL
 	},
-};     
+};
 
 
 void avigo_init_machine(void)
@@ -314,15 +314,15 @@ void avigo_init_machine(void)
         flash_restore(2, "avigof3.nv");
         flash_reset(2);
 
-        cpu_setbankhandler_r(1, MRA_BANK1);
-        cpu_setbankhandler_r(2, MRA_BANK2);
-        cpu_setbankhandler_r(3, MRA_BANK3);
-        cpu_setbankhandler_r(4, MRA_BANK4);
+        memory_set_bankhandler_r(1, 0, MRA_BANK1);
+        memory_set_bankhandler_r(2, 0, MRA_BANK2);
+        memory_set_bankhandler_r(3, 0, MRA_BANK3);
+        memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-        cpu_setbankhandler_w(5, MWA_BANK5);
-        cpu_setbankhandler_w(6, MWA_BANK6);
-        cpu_setbankhandler_w(7, MWA_BANK7);
-        cpu_setbankhandler_w(8, MWA_BANK8);
+        memory_set_bankhandler_w(5, 0, MWA_BANK5);
+        memory_set_bankhandler_w(6, 0, MWA_BANK6);
+        memory_set_bankhandler_w(7, 0, MWA_BANK7);
+        memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
         avigo_irq = 0;
         avigo_rom_bank_l = 0;
@@ -350,15 +350,15 @@ void avigo_init_machine(void)
         cpu_setbank(5, addr);
 
         /* initialise fixed settings */
-	cpu_setbankhandler_r(1, avigo_flash_0x0000_read_handler);
-	cpu_setbankhandler_w(5, avigo_flash_0x0000_write_handler);
+	memory_set_bankhandler_r(1, 0, avigo_flash_0x0000_read_handler);
+	memory_set_bankhandler_w(5, 0, avigo_flash_0x0000_write_handler);
 
         addr = avigo_memory;
         cpu_setbank(4, addr);
         cpu_setbank(8, addr);
 
-	cpu_setbankhandler_r(4, avigo_ram_0xc000_read_handler);
-        cpu_setbankhandler_w(8, avigo_ram_0xc000_write_handler);
+	memory_set_bankhandler_r(4, 0, avigo_ram_0xc000_read_handler);
+        memory_set_bankhandler_w(8, 0, avigo_ram_0xc000_write_handler);
 
 
 	/* 0x08000 is specially banked! */
@@ -503,7 +503,7 @@ WRITE_HANDLER(avigo_rom_bank_h_w)
            110 = screen select?
            111 = flash 0 (rom at ram?)
 
-       
+
         */
 	avigo_rom_bank_h = data;
 
@@ -525,7 +525,7 @@ WRITE_HANDLER(avigo_ram_bank_h_w)
 	logerror("ram bank h w: %04x\r\n", data);
 
 	avigo_ram_bank_h = data;
-                     
+
         avigo_refresh_memory();
 }
 
@@ -583,7 +583,7 @@ WRITE_HANDLER(avigo_speaker_w)
 READ_HANDLER(avigo_unmapped_r)
 {
 	logerror("read unmapped port\n",offset);
-	
+
 	return 0x0ff;
 }
 
@@ -631,7 +631,7 @@ PORT_WRITE_START( writeport_avigo )
 	{0x028, 0x028, avigo_speaker_w},
 	{0x030, 0x037, uart8250_0_w},
 PORT_END
-        
+
 
 INPUT_PORTS_START(avigo)
 	PORT_START
@@ -639,7 +639,7 @@ INPUT_PORTS_START(avigo)
         PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "PAGE DOWN", KEYCODE_PGDN, IP_JOY_NONE)
         PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "LIGHT", KEYCODE_L, IP_JOY_NONE)
         PORT_BIT (0x0f7, 0xf7, IPT_UNUSED)
-	
+
 	PORT_START
         PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "TO DO", KEYCODE_T, IP_JOY_NONE)
         PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "ADDRESS", KEYCODE_A, IP_JOY_NONE)

@@ -178,31 +178,31 @@ WRITE_HANDLER( laser_bank_select_w )
         /* memory mapped I/O bank selected? */
 		if (data == 2)
 		{
-			cpu_setbankhandler_r(1+offset,mra_bank_soft[offset]);
-			cpu_setbankhandler_w(1+offset,mwa_bank_soft[offset]);
+			memory_set_bankhandler_r(1+offset,0,mra_bank_soft[offset]);
+			memory_set_bankhandler_w(1+offset,0,mwa_bank_soft[offset]);
 		}
 		else
 		{
 			cpu_setbank(offset+1, &mem[0x4000*laser_bank[offset]]);
 			if( laser_bank_mask & (1 << data) )
 			{
-				cpu_setbankhandler_r(1+offset,mra_bank_hard[offset]);
+				memory_set_bankhandler_r(1+offset,0,mra_bank_hard[offset]);
 				/* video RAM bank selected? */
 				if( data == laser_video_bank )
 				{
 					logerror("select bank #%d VIDEO!\n", offset+1);
-                    cpu_setbankhandler_w(1+offset,mwa_bank_soft[offset]);
+                    memory_set_bankhandler_w(1+offset,0,mwa_bank_soft[offset]);
 				}
 				else
 				{
-					cpu_setbankhandler_w(1+offset,mwa_bank_hard[offset]);
+					memory_set_bankhandler_w(1+offset,0,mwa_bank_hard[offset]);
 				}
 			}
 			else
 			{
 				logerror("select bank #%d MASKED!\n", offset+1);
-				cpu_setbankhandler_r(1+offset,mra_empty);
-				cpu_setbankhandler_w(1+offset,mwa_empty);
+				memory_set_bankhandler_r(1+offset,0,mra_empty);
+				memory_set_bankhandler_w(1+offset,0,mwa_empty);
 			}
 		}
     }

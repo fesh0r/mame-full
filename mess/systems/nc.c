@@ -2,13 +2,13 @@
 
         nc.c
 
-        NC100/NC150/NC200 Notepad computer 
+        NC100/NC150/NC200 Notepad computer
 
         system driver
 
 
         Documentation:
-        
+
 		NC100:
 			NC100 I/O Specification by Cliff Lawson,
 			NC100EM by Russell Marks
@@ -125,7 +125,7 @@ extern unsigned char    *nc_card_ram;
 
 
 
-/* 
+/*
   bit 7     select card register 1=common, 0=attribute
         bit 6     parallel interface Strobe signal
         bit 5     Not Used
@@ -167,7 +167,7 @@ static void nc_update_interrupts(void)
 {
         /* any ints set and they are not masked? */
         if (
-                (((nc_irq_status & nc_irq_mask) & 0x3f)!=0) 
+                (((nc_irq_status & nc_irq_mask) & 0x3f)!=0)
                 )
         {
                 /* set int */
@@ -234,7 +234,7 @@ static void nc_refresh_memory_bank_config(int bank)
         mem_type = (nc_memory_config[bank]>>6) & 0x03;
         mem_bank = nc_memory_config[bank] & 0x03f;
 
-        cpu_setbankhandler_r(bank+1, nc_bankhandler_r[bank]);
+        memory_set_bankhandler_r(bank+1, 0, nc_bankhandler_r[bank]);
 
         switch (mem_type)
         {
@@ -249,7 +249,7 @@ static void nc_refresh_memory_bank_config(int bank)
 
                    cpu_setbank(bank+1, addr);
 
-                   cpu_setbankhandler_w(bank+5, MWA_NOP);
+                   memory_set_bankhandler_w(bank+5, 0, MWA_NOP);
 #ifdef VERBOSE
                    logerror("BANK %d: ROM %d\n",bank,mem_bank);
 #endif
@@ -268,7 +268,7 @@ static void nc_refresh_memory_bank_config(int bank)
                    cpu_setbank(bank+1, addr);
                    cpu_setbank(bank+5, addr);
 
-                   cpu_setbankhandler_w(bank+5, nc_bankhandler_w[bank]);
+                   memory_set_bankhandler_w(bank+5, 0, nc_bankhandler_w[bank]);
 #ifdef VERBOSE
                    logerror("BANK %d: RAM\n",bank);
 #endif
@@ -281,24 +281,24 @@ static void nc_refresh_memory_bank_config(int bank)
                    /* card connected? */
                    if (((nc_card_battery_status & (1<<7))==0) && (nc_card_ram!=NULL))
                    {
-        
+
                            unsigned char *addr;
-        
+
                            addr = nc_card_ram + (mem_bank<<14);
-        
+
                            cpu_setbank(bank+1, addr);
                            cpu_setbank(bank+5, addr);
-        
-                           cpu_setbankhandler_w(bank+5, nc_bankhandler_w[bank]);
-#ifdef VERBOSE        
+
+                           memory_set_bankhandler_w(bank+5, 0, nc_bankhandler_w[bank]);
+#ifdef VERBOSE
                            logerror("BANK %d: CARD-RAM\n",bank);
 #endif
 				   }
                     else
                     {
                         /* if no card connected, then writes fail */
-                           cpu_setbankhandler_r(bank+1, MRA_NOP);
-                           cpu_setbankhandler_w(bank+1, MWA_NOP);
+                           memory_set_bankhandler_r(bank+1, 0, MRA_NOP);
+                           memory_set_bankhandler_w(bank+1, 0, MWA_NOP);
                     }
                 }
                 break;
@@ -313,7 +313,7 @@ static void nc_refresh_memory_bank_config(int bank)
                 }
                 break;
 
-                
+
         }
 
 
@@ -339,7 +339,7 @@ void	nc_tc8521_alarm_callback(int state)
 	the nmi will be triggered, but when the state changes because the int
 	is cleared this will not cause another nmi */
 	/* I'll emulate it like this to be sure */
-	
+
 	if (state!=previous_alarm_state)
 	{
 		if (state)
@@ -393,7 +393,7 @@ static struct msm8251_interface nc100_uart_interface=
 
 void nc_common_init_machine(void)
 {
-        
+
         void *file;
 
         nc_display_memory_start = 0;
@@ -416,7 +416,7 @@ void nc_common_init_machine(void)
         nc_poweroff_control = 1;
 
         nc_refresh_memory_config();
-                                            
+
         /* enough power - see bit assignments where
         nc card battery status is defined */
         /* keep card status bits in case card has been inserted and
@@ -426,7 +426,7 @@ void nc_common_init_machine(void)
         nc_card_battery_status |= (1<<5) | (1<<4);
 
 /*        nc_set_card_present_state(0); */
-        
+
         nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
 
         dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, dummy_timer_callback);
@@ -442,7 +442,7 @@ void nc_common_init_machine(void)
 
                 /* restore nc memory from file */
                 file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_MEMCARD, OSD_FOPEN_READ);
-        
+
                 if (file!=NULL)
                 {
 #ifdef VERBOSE
@@ -527,7 +527,7 @@ void nc200_init_machine(void)
 
 void nc_common_shutdown_machine(void)
 {
-        
+
 		msm8251_stop();
 
         if (nc_memory!=NULL)
@@ -648,7 +648,7 @@ WRITE_HANDLER(nc_irq_status_w)
         }
 
         nc_irq_status &=~data;
-         
+
         nc_update_interrupts();
 }
 
@@ -802,7 +802,7 @@ WRITE_HANDLER(nc_uart_control_w)
 			msm8251_reset();
 		}
 	}
-	
+
 	nc_uart_control = data;
 
 	msm8251_set_baud_rate(baud_rate_table[(data & 0x03)]);
@@ -832,7 +832,7 @@ PORT_WRITE_START( writeport_nc )
         {0x0d0, 0x0df, tc8521_w},
         {0x050, 0x053, nc_sound_w},
 PORT_END
-        
+
 
 PORT_READ_START( readport_nc200 )
         {0x010, 0x013, nc_memory_management_r},
@@ -854,7 +854,7 @@ PORT_WRITE_START( writeport_nc200 )
         {0x050, 0x053, nc_sound_w},
         {0x0e1, 0x0e1, nec765_data_w},
 PORT_END
-        
+
 
 
 INPUT_PORTS_START(nc100)
@@ -961,7 +961,7 @@ INPUT_PORTS_START(nc100)
         PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
         PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP,IP_JOY_NONE)
 
-        /* these are not part of the nc100 keyboard */ 
+        /* these are not part of the nc100 keyboard */
         /* extra */
         PORT_START
         PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ON BUTTON", KEYCODE_END, IP_JOY_NONE)
@@ -1199,17 +1199,17 @@ static struct MachineDriver machine_driver_nc200 =
 ***************************************************************************/
 
 ROM_START(nc100)
-        ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1)
+        ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1,0)
         ROM_LOAD("nc100.rom", 0x010000, 0x040000, 0x0849884f9)
 ROM_END
 
 ROM_START(nc100a)
-        ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1)
+        ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1,0)
         ROM_LOAD("nc100a.rom", 0x010000, 0x040000, 0x0a699eca3)
 ROM_END
 
 ROM_START(nc200)
-        ROM_REGION(((64*1024)+(512*1024)), REGION_CPU1)
+        ROM_REGION(((64*1024)+(512*1024)), REGION_CPU1,0)
         ROM_LOAD("nc200.rom", 0x010000, 0x080000, 0x0bb8180e7)
 ROM_END
 
@@ -1287,5 +1287,5 @@ static const struct IODevice io_nc200[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 1992, nc100,   0,                nc100,  nc100,      0,       "Amstrad plc", "NC100 Rom version v1.09")
-COMP( 1992, nc100a,  nc100,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00") 
+COMP( 1992, nc100a,  nc100,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00")
 COMP( 1993, nc200,   0,                nc200, nc200,      0,   "Amstrad plc", "NC200")

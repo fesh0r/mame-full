@@ -221,17 +221,17 @@ INPUT_PORTS_END
 
 
 ROM_START( lisa2 )
-	ROM_REGION(0x204000,REGION_CPU1)	/* 68k rom and ram */
-	ROM_LOAD_EVEN( "booth.hi", 0x000000, 0x2000, 0xadfd4516)
-	ROM_LOAD_ODD( "booth.lo", 0x000000, 0x2000, 0x546d6603)
+	ROM_REGION(0x204000,REGION_CPU1,0)	/* 68k rom and ram */
+	ROM_LOAD16_BYTE( "booth.hi", 0x000000, 0x2000, 0xadfd4516)
+	ROM_LOAD16_BYTE( "booth.lo", 0x000000, 0x2000, 0x546d6603)
 
-	ROM_REGION(0x2000,REGION_CPU2)		/* 6504 RAM and ROM */
+	ROM_REGION(0x2000,REGION_CPU2,0)		/* 6504 RAM and ROM */
 	ROM_LOAD( "ioa8.rom", 0x1000, 0x1000, 0xbc6364f1)
 
-	ROM_REGION(0x100,REGION_GFX1)		/* video ROM (includes S/N) */
+	ROM_REGION(0x100,REGION_GFX1,0)		/* video ROM (includes S/N) */
 	ROM_LOAD( "vidstate.rom", 0x00, 0x100, 0x75904783)
 
-	ROM_REGION(0x040000, REGION_USER1)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
+	ROM_REGION(0x040000, REGION_USER1,0)	/* 1 bit per byte of CPU RAM - used for parity check emulation */
 
 ROM_END
 

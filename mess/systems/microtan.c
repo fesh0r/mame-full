@@ -298,7 +298,7 @@ static struct MachineDriver machine_driver_microtan =
 };
 
 ROM_START(microtan)
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
         ROM_LOAD("tanex_j2.rom", 0xc000, 0x1000, 0x3e09d384)
         ROM_LOAD("tanex_h2.rom", 0xd000, 0x1000, 0x75105113)
         ROM_LOAD("tanex_d3.rom", 0xe000, 0x0800, 0xee6e8412)
@@ -306,9 +306,9 @@ ROM_START(microtan)
         ROM_LOAD("tanex_g2.rom", 0xf000, 0x0800, 0x9fd233ee)
         ROM_LOAD("tanbug_2.rom", 0xf800, 0x0400, 0x7e215313)
         ROM_LOAD("tanbug.rom",   0xfc00, 0x0400, 0xc8221d9e)
-    ROM_REGION(0x00800,REGION_GFX1)
+    ROM_REGION(0x00800,REGION_GFX1,0)
         ROM_LOAD("charset.rom",  0x0000, 0x0800, 0x3b3c5360)
-    ROM_REGION(0x01000,REGION_GFX2)
+    ROM_REGION(0x01000,REGION_GFX2,0)
         /* initialized in init_microtan */
 ROM_END
 

@@ -851,7 +851,7 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-static OPBASE16_HANDLER (lisa_OPbaseoverride)
+static OPBASE_HANDLER (lisa_OPbaseoverride)
 {
 	offs_t answer;
 
@@ -956,8 +956,8 @@ void lisa_init_machine()
 
 	videoROM_ptr = memory_region(REGION_GFX1);
 
-	cpu_setOPbaseoverride(0, lisa_OPbaseoverride);
-	cpu_setOPbaseoverride(1, lisa_fdc_OPbaseoverride);
+	memory_set_opbase_handler(0, lisa_OPbaseoverride);
+	memory_set_opbase_handler(1, lisa_fdc_OPbaseoverride);
 
 	/* int MMU */
 

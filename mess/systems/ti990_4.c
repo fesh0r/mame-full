@@ -227,7 +227,7 @@ ROM_START(ti990_4)
 
 #if 0
 
-	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1,0)
 
 	/* TI990/10 ROMs set 1 */
 	ROM_LOAD_EVEN("975383.31", 0xFC00, 0x100, 0x64fcd040)
@@ -237,7 +237,7 @@ ROM_START(ti990_4)
 
 #elif 1
 
-	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1,0)
 
 	/* TI990/10 ROMs set 2 */
 	ROM_LOAD_EVEN("975383.45", 0xFC00, 0x100, 0x391943c7)
@@ -247,7 +247,7 @@ ROM_START(ti990_4)
 
 #else
 
-	ROM_REGION(0x12000, REGION_CPU1)
+	ROM_REGION(0x12000, REGION_CPU1,0)
 
 	/* TI990/12 ROMs - actually incompatible with TI990/4, but I just wanted to disassemble them. */
 	ROM_LOAD_EVEN("ti2025-7", 0xFC00, 0x1000, 0x4824f89c)
@@ -258,10 +258,10 @@ ROM_START(ti990_4)
 
 #else
 
-	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1,0)
 
 
-	ROM_REGION(0x800, REGION_USER1 | REGIONFLAG_DISPOSE)
+	ROM_REGION(0x800, REGION_USER1, ROMREGION_DISPOSE)
 	/* boot ROMs */
 	/* since there is no support for nibble-wide ROMs on a 16-bit bus, we use a trick */
 

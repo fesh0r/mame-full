@@ -368,8 +368,8 @@ INPUT_PORTS_END
 #if 1
 
 ROM_START( mac512ke )
-	ROM_REGION(0x420000,REGION_CPU1) /* for ram, etc */
-	ROM_LOAD_WIDE( "macplus.rom",  0x400000, 0x20000, 0xb2102e8e)
+	ROM_REGION(0x420000,REGION_CPU1,0) /* for ram, etc */
+	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000, 0xb2102e8e)
 ROM_END
 
 #else
@@ -379,8 +379,8 @@ ROM_END
 #endif
 
 ROM_START( macplus )
-	ROM_REGION(0x420000,REGION_CPU1) /* for ram, etc */
-	ROM_LOAD_WIDE( "macplus.rom",  0x400000, 0x20000, 0xb2102e8e)
+	ROM_REGION(0x420000,REGION_CPU1,0) /* for ram, etc */
+	ROM_LOAD16_WORD( "macplus.rom",  0x400000, 0x20000, 0xb2102e8e)
 ROM_END
 
 static const struct IODevice io_mac512ke[] = {
@@ -506,7 +506,7 @@ INPUT_PORTS_START( mac2 )
 INPUT_PORTS_END
 
 ROM_START( mac2 )
-	ROM_REGION(0x00900000,REGION_CPU1) /* for ram, etc */
+	ROM_REGION(0x00900000,REGION_CPU1,0) /* for ram, etc */
 	ROM_LOAD_WIDE( "256k.rom",  0x800000, 0x40000, 0x00000000)
 ROM_END
 

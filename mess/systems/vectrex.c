@@ -170,7 +170,7 @@ static const struct IODevice io_vectrex[] = {
 
 
 ROM_START(vectrex)
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1, 0)
     ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END
 
@@ -276,7 +276,7 @@ static const struct IODevice io_raaspec[] = {
 };
 
 ROM_START(raaspec)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1, 0)
 	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, 0x20af7f3f)
 	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
 ROM_END

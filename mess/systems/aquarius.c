@@ -264,9 +264,9 @@ static	struct	MachineDriver	machine_driver_aquarius =
 };
 
 ROM_START(aquarius)
-	ROM_REGION(0x10000, REGION_CPU1)
+	ROM_REGION(0x10000, REGION_CPU1,0)
 	ROM_LOAD("aq2.rom", 0x0000, 0x2000, 0xa2d15bcf)
-	ROM_REGION(0x0800, REGION_GFX1)
+	ROM_REGION(0x0800, REGION_GFX1,0)
 	ROM_LOAD("aq2.chr", 0x0000, 0x0800, BADCRC(0x0b3edeed))
 ROM_END
 

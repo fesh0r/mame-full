@@ -2133,9 +2133,9 @@ static struct MachineDriver machine_driver_saturn =
 };
 
 ROM_START(saturn)
-    ROM_REGION(0x00491000, REGION_CPU1)
+    ROM_REGION(0x00491000, REGION_CPU1,0)
     ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c)
-    ROM_REGION(0x00080000, REGION_CPU2)
+    ROM_REGION(0x00080000, REGION_CPU2,0)
 ROM_END
 
 static const struct IODevice io_saturn[] = {

@@ -134,7 +134,7 @@ static struct MachineDriver machine_driver_mk1 =
 };
 
 ROM_START(mk1)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("82c210-1", 0x0000, 0x800, 0x278f7bf3)
 ROM_END
 
@@ -142,7 +142,7 @@ static const struct IODevice io_mk1[] = {
     { IO_END }
 };
 
-// seams to be developed by mostek (MK) 
+// seams to be developed by mostek (MK)
 /*    YEAR  NAME    PARENT  MACHINE INPUT   INIT      COMPANY   FULLNAME */
 CONS( 1979,	mk1,	0, 		mk1,	mk1,	0,	"Computer Electronic",  "Chess Champion MK I")
 

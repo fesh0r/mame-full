@@ -197,16 +197,16 @@ static struct MachineDriver machine_driver_intvkbd =
 };
 
 ROM_START(intvkbd)
-	ROM_REGION(0x10000<<1,REGION_CPU1)
-		ROM_LOAD_WIDE( "exec.bin", 0x1000<<1, 0x2000, 0xcbce86f7 )
-		ROM_LOAD_ODD ( "grom.bin", 0x3000<<1, 0x2000, 0xcbce86f7 )
-	ROM_REGION(0x10000,REGION_CPU2)
+	ROM_REGION(0x10000<<1,REGION_CPU1,0)
+		ROM_LOAD16_WORD( "exec.bin", 0x1000<<1, 0x2000, 0xcbce86f7 )
+		ROM_LOAD16_BYTE ( "grom.bin", 0x3000<<1, 0x2000, 0xcbce86f7 )
+	ROM_REGION(0x10000,REGION_CPU2,0)
 		ROM_LOAD( "0104.u20",  0xc000, 0x1000, 0x5c6f1256)
 		ROM_LOAD("cpu2d.u21",  0xd000, 0x1000, 0x2c2dba33)
 		/* temporarily requiring the BASIC as well */
 		ROM_LOAD( "0106.u1",   0xe000, 0x1000, 0x5ae9546a)
 		ROM_LOAD( "0107.u2",   0xf000, 0x1000, 0x72ea3d34)
-	ROM_REGION(0x00800,REGION_GFX1)
+	ROM_REGION(0x00800,REGION_GFX1,0)
 		ROM_LOAD( "4c52.u34",  0x0000, 0x0800, 0xcbeb2e96)
 ROM_END
 

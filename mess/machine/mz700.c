@@ -279,22 +279,22 @@ WRITE_HANDLER ( mz700_mmio_w )
 static void bank1_RAM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x00000]);
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_w(1, MWA_BANK1);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_w(1, 0, MWA_BANK1);
 }
 
 static void bank1_NOP(UINT8 *mem)
 {
     cpu_setbank(1, &mem[0x00000]);
-	cpu_setbankhandler_r(1, MRA_NOP);
-	cpu_setbankhandler_w(1, MWA_NOP);
+	memory_set_bankhandler_r(1, 0, MRA_NOP);
+	memory_set_bankhandler_w(1, 0, MWA_NOP);
 }
 
 static void bank1_ROM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x10000]);
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_w(1, MWA_ROM);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_w(1, 0, MWA_ROM);
 }
 
 
@@ -302,15 +302,15 @@ static void bank1_ROM(UINT8 *mem)
 static void bank2_RAM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x01000]);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_w(2, MWA_BANK2);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_w(2, 0, MWA_BANK2);
 }
 
 static void bank2_ROM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x11000]);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_w(2, MWA_ROM);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_w(2, 0, MWA_ROM);
 }
 
 
@@ -318,15 +318,15 @@ static void bank2_ROM(UINT8 *mem)
 static void bank3_RAM(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x08000]);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_w(3, MWA_BANK3);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_w(3, 0, MWA_BANK3);
 }
 
 static void bank3_VID(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x12000]);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_w(3, videoram0_w);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_w(3, 0, videoram0_w);
 }
 
 
@@ -334,15 +334,15 @@ static void bank3_VID(UINT8 *mem)
 static void bank4_RAM(UINT8 *mem)
 {
 	cpu_setbank(4, &mem[0x0a000]);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_w(4, MWA_BANK4);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_w(4, 0, MWA_BANK4);
 }
 
 static void bank4_VID(UINT8 *mem)
 {
 	cpu_setbank(4, &mem[0x14000]);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_w(4, videoram2_w);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_w(4, 0, videoram2_w);
 }
 
 
@@ -350,15 +350,15 @@ static void bank4_VID(UINT8 *mem)
 static void bank5_RAM(UINT8 *mem)
 {
 	cpu_setbank(5, &mem[0x0c000]);
-	cpu_setbankhandler_r(5, MRA_BANK5);
-	cpu_setbankhandler_w(5, MWA_BANK5);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_w(5, 0, MWA_BANK5);
 }
 
 static void bank5_VID(UINT8 *mem)
 {
 	cpu_setbank(5, &mem[0x11000]);
-	cpu_setbankhandler_r(5, MRA_BANK5);
-	cpu_setbankhandler_w(5, pcgram_w);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_w(5, 0, pcgram_w);
 }
 
 
@@ -366,22 +366,22 @@ static void bank5_VID(UINT8 *mem)
 static void bank6_NOP(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x0d000]);
-	cpu_setbankhandler_r(6, MRA_NOP);
-	cpu_setbankhandler_w(6, MWA_NOP);
+	memory_set_bankhandler_r(6, 0, MRA_NOP);
+	memory_set_bankhandler_w(6, 0, MWA_NOP);
 }
 
 static void bank6_RAM(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x0d000]);
-	cpu_setbankhandler_r(6, MRA_BANK6);
-	cpu_setbankhandler_w(6, MWA_BANK6);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_w(6, 0, MWA_BANK6);
 }
 
 static void bank6_VIO(UINT8 *mem)
 {
 	cpu_setbank(6, &mem[0x12000]);
-	cpu_setbankhandler_r(6, MRA_BANK6);
-	cpu_setbankhandler_w(6, videoram_w);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_w(6, 0, videoram_w);
 }
 
 
@@ -389,22 +389,22 @@ static void bank6_VIO(UINT8 *mem)
 static void bank7_NOP(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x0d800]);
-	cpu_setbankhandler_r(7, MRA_NOP);
-	cpu_setbankhandler_w(7, MWA_NOP);
+	memory_set_bankhandler_r(7, 0, MRA_NOP);
+	memory_set_bankhandler_w(7, 0, MWA_NOP);
 }
 
 static void bank7_RAM(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x0d800]);
-	cpu_setbankhandler_r(7, MRA_BANK7);
-	cpu_setbankhandler_w(7, MWA_BANK7);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_w(7, 0, MWA_BANK7);
 }
 
 static void bank7_VIO(UINT8 *mem)
 {
 	cpu_setbank(7, &mem[0x12800]);
-	cpu_setbankhandler_r(7, MRA_BANK7);
-	cpu_setbankhandler_w(7, colorram_w);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_w(7, 0, colorram_w);
 }
 
 
@@ -412,23 +412,23 @@ static void bank7_VIO(UINT8 *mem)
 static void bank8_NOP(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x0e000]);
-	cpu_setbankhandler_r(8, MRA_NOP);
-	cpu_setbankhandler_w(8, MWA_NOP);
+	memory_set_bankhandler_r(8, 0, MRA_NOP);
+	memory_set_bankhandler_w(8, 0, MWA_NOP);
 
 }
 
 static void bank8_RAM(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x0e000]);
-	cpu_setbankhandler_r(8, MRA_BANK8);
-	cpu_setbankhandler_w(8, MWA_BANK8);
+	memory_set_bankhandler_r(8, 0, MRA_BANK8);
+	memory_set_bankhandler_w(8, 0, MWA_BANK8);
 }
 
 static void bank8_VIO(UINT8 *mem)
 {
 	cpu_setbank(8, &mem[0x16000]);
-	cpu_setbankhandler_r(8, mz700_mmio_r);
-	cpu_setbankhandler_w(8, mz700_mmio_w);
+	memory_set_bankhandler_r(8, 0, mz700_mmio_r);
+	memory_set_bankhandler_w(8, 0, mz700_mmio_w);
 }
 
 

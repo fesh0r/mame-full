@@ -12,7 +12,7 @@
 
    under the black keys are operations to be added as first sign
    black and white box are only changing the player
-   
+
    for the computer to start as white
     switch to black (h enter)
 	swap players (g enter)
@@ -146,7 +146,7 @@ static struct MachineDriver machine_driver_mk2 =
 };
 
 ROM_START(mk2)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("024_1879", 0x8c00, 0x0400, 0x4f28c443)
 	ROM_LOAD("005_2179", 0xf000, 0x1000, 0x6f10991b) // chess mate 7.5
 ROM_END
@@ -207,7 +207,7 @@ static void mk2_write_a(int chip, int value)
 {
 	int temp=rriot_0_b_r(0);
 
-	
+
 	switch(temp&0x3) {
 	case 0: case 1: case 2: case 3:
 		mk2_led[temp&3]|=value;

@@ -647,24 +647,24 @@ void mtx_init_machine(void)
 
 	z80ctc_init(&mtx_ctc_intf);
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_r(5, MRA_BANK5);
-	cpu_setbankhandler_r(6, MRA_BANK6);
-	cpu_setbankhandler_r(7, MRA_BANK7);
-	cpu_setbankhandler_r(8, MRA_BANK8);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_r(8, 0, MRA_BANK8);
 
 
-	cpu_setbankhandler_w(9, mtx_trap_write);
-	cpu_setbankhandler_w(10, MWA_NOP);
-	cpu_setbankhandler_w(11, MWA_BANK11);
-	cpu_setbankhandler_w(12, MWA_BANK12);
-	cpu_setbankhandler_w(13, MWA_BANK13);
-	cpu_setbankhandler_w(14, MWA_BANK14);
-	cpu_setbankhandler_w(15, MWA_BANK15);
-	cpu_setbankhandler_w(16, MWA_BANK16);
+	memory_set_bankhandler_w(9, 0, mtx_trap_write);
+	memory_set_bankhandler_w(10, 0, MWA_NOP);
+	memory_set_bankhandler_w(11, 0, MWA_BANK11);
+	memory_set_bankhandler_w(12, 0, MWA_BANK12);
+	memory_set_bankhandler_w(13, 0, MWA_BANK13);
+	memory_set_bankhandler_w(14, 0, MWA_BANK14);
+	memory_set_bankhandler_w(15, 0, MWA_BANK15);
+	memory_set_bankhandler_w(16, 0, MWA_BANK16);
 
 	// set up memory configuration
 
@@ -929,7 +929,7 @@ static struct MachineDriver machine_driver_mtx512 =
 };
 
 ROM_START (mtx512)
-	ROM_REGION (0x20000, REGION_CPU1)
+	ROM_REGION (0x20000, REGION_CPU1,0)
 	ROM_LOAD ("osrom", 0x10000, 0x2000, 0x9ca858cc)
 	ROM_LOAD ("basicrom", 0x12000, 0x2000, 0x87b4e59c)
 	ROM_LOAD ("assemrom", 0x14000, 0x2000, 0x9d7538c3)

@@ -273,7 +273,7 @@ static struct MachineDriver machine_driver_a7800 =
 ***************************************************************************/
 
 ROM_START (a7800)
-    ROM_REGION(0x30000,REGION_CPU1)
+    ROM_REGION(0x30000,REGION_CPU1,0)
     ROM_LOAD ("7800.rom", 0xf000, 0x1000, 0x649913e5)
 //      ROM_LOAD ("7800a.rom", 0xc000, 0x4000, 0x649913e5)
 

@@ -144,7 +144,7 @@ MEMORY_WRITE_START( writemem_laser310 )
     { 0x7000, 0x77ff, videoram_w, &videoram, &videoram_size },
     { 0x7800, 0xb7ff, MWA_RAM },
 //  { 0xb800, 0xf7ff, MWA_RAM },    /* opt. installed */
-    { 0xf800, 0xffff, MRA_NOP },
+    { 0xf800, 0xffff, MWA_NOP },
 MEMORY_END
 
 PORT_READ_START( readport_vtech1 )
@@ -524,32 +524,32 @@ static struct MachineDriver machine_driver_laser310 =
 };
 
 ROM_START( laser110 )
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("vtechv12.lo",  0x0000, 0x2000, 0x99412d43)
     ROM_LOAD("vtechv12.hi",  0x2000, 0x2000, 0xe4c24e8b)
 
-    ROM_REGION(0x0d00,REGION_GFX1)
+    ROM_REGION(0x0d00,REGION_GFX1,0)
     ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
 ROM_END
 #define rom_laser200    rom_laser110
 #define rom_tx8000      rom_laser110
 
 ROM_START( laser210 )
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("vtechv20.lo",  0x0000, 0x2000, 0xcc854fe9)
     ROM_LOAD("vtechv20.hi",  0x2000, 0x2000, 0x7060f91a)
 
-    ROM_REGION(0x0d00,REGION_GFX1)
+    ROM_REGION(0x0d00,REGION_GFX1,0)
     ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
 ROM_END
 #define rom_vz200       rom_laser210
 #define rom_fellow      rom_laser210
 
 ROM_START( laser310 )
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD("vtechv20.rom", 0x0000, 0x4000, 0x613de12c)
 
-    ROM_REGION(0x0d00,REGION_GFX1)
+    ROM_REGION(0x0d00,REGION_GFX1,0)
     ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
 ROM_END
 #define rom_vz300       rom_laser310

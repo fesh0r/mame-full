@@ -187,7 +187,7 @@ static struct MachineDriver machine_driver_coleco =
 ***************************************************************************/
 
 ROM_START (coleco)
-    ROM_REGION(0x10000,REGION_CPU1)
+    ROM_REGION(0x10000,REGION_CPU1,0)
     ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x3aa93ef3)
 ROM_END
 

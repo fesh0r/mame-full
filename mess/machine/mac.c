@@ -194,7 +194,7 @@ static void set_memory_overlay(int overlay)
 		cpu_setbank(RAM_BANK1, rom_ptr);
 
 		install_mem_read16_handler(0, rom_size, 0x3fffff, mac_ROM_r);
-		install_mem_write16_handler(0, rom_size, 0x3fffff, MWA_NOP);
+		install_mem_write16_handler(0, rom_size, 0x3fffff, MWA_RAM_BANK1);
 
 		/* HACK! - copy in the initial reset/stack */
 		memcpy(mac_ram_ptr, rom_ptr, 8);
@@ -1751,7 +1751,7 @@ void init_macplus(void)
 }
 
 /* will not work with 2.5Mb RAM config */
-static OPBASE16_HANDLER (mac_OPbaseoverride)
+static OPBASE_HANDLER (mac_OPbaseoverride)
 {
 	if (address < 0x400000)
 		return address & (mac_overlay ? rom_size - 1 : mac_ram_size -1);
@@ -1778,7 +1778,7 @@ static WRITE16_HANDLER (mac_RAM_w)
 }
 
 /* for 2.5Mb RAM config only */
-static OPBASE16_HANDLER (mac_OPbaseoverride2)
+static OPBASE_HANDLER (mac_OPbaseoverride2)
 {
 	if (address < 0x200000)
 		return mac_overlay ? (address & (rom_size - 1)) : address;
@@ -1820,7 +1820,7 @@ void mac_init_machine(void)
 	mac_ram_ptr = memory_region(REGION_CPU1);
 	rom_ptr = memory_region(REGION_CPU1) + 0x400000;
 
-	cpu_setOPbaseoverride(0, (mac_ram_size != 0x280000) ? mac_OPbaseoverride : mac_OPbaseoverride2);
+	memory_set_opbase_handler(0, (mac_ram_size != 0x280000) ? mac_OPbaseoverride : mac_OPbaseoverride2);
 
 	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
 	install_mem_read16_handler(0, 0x600000, (mac_ram_size > 0x10000) ? 0x6fffff : (0x600000 + mac_ram_size-1),

@@ -499,7 +499,7 @@ OPBASE_HANDLER( kc85_opbaseoverride )
         //{
         //    opbase_reset_done = 1;
 
-            cpu_setOPbaseoverride(0,0);
+            memory_set_opbase_handler(0,0);
 
             cpu_set_reg(Z80_PC, 0x0f000);
 
@@ -667,8 +667,8 @@ static void kc85_4_update_0x08000(void)
                cpu_setbank(3, ram_page);
 
 
-               cpu_setbankhandler_r(3, MRA_BANK3);
-               cpu_setbankhandler_w(3, MWA_BANK3);
+               memory_set_bankhandler_r(3, 0, MRA_BANK3);
+               memory_set_bankhandler_w(3, 0, MWA_BANK3);
 
 
         }
@@ -683,23 +683,23 @@ static void kc85_4_update_0x08000(void)
                 cpu_setbank(3, ram_page);
 
 
-                cpu_setbankhandler_r(3, MRA_BANK3);
+                memory_set_bankhandler_r(3, 0, MRA_BANK3);
 
                 /* write protect RAM8 ? */
                 if (kc85_4_pio_data[1] & 0x040)
                 {
-                        cpu_setbankhandler_w(3,MWA_NOP);
+                        memory_set_bankhandler_w(3, 0, MWA_NOP);
                 }
                 else
                 {
-                        cpu_setbankhandler_w(3, MWA_BANK3);
+                        memory_set_bankhandler_w(3, 0, MWA_BANK3);
                 }
 
         }
         else
         {
-                cpu_setbankhandler_r(3, MRA_NOP);
-                cpu_setbankhandler_w(3, MWA_NOP);
+                memory_set_bankhandler_r(3, 0, MRA_NOP);
+                memory_set_bankhandler_w(3, 0, MWA_NOP);
         }
 }
 
@@ -836,7 +836,7 @@ void    kc85_4_reset(void)
         at address 0x0000-0x01000 which has a single jump in it,
         can't see yet where it disables it later!!!! so for now
         here will be a override */
-        cpu_setOPbaseoverride(0, kc85_opbaseoverride);
+        memory_set_opbase_handler(0, kc85_opbaseoverride);
 
 }
 
@@ -845,10 +845,10 @@ void kc85_4_init_machine(void)
 	z80pio_init(&kc85_4_pio_intf);
 	z80ctc_init(&kc85_4_ctc_intf);
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-        cpu_setbankhandler_r(3, MRA_BANK3);
-        cpu_setbankhandler_w(3, MWA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+        memory_set_bankhandler_r(3, 0, MRA_BANK3);
+        memory_set_bankhandler_w(3, 0, MWA_BANK3);
 
         kc85_ram = malloc(64*1024);
 		if (!kc85_ram) return;
@@ -1093,7 +1093,7 @@ static struct MachineDriver machine_driver_kc85_4 =
 
 
 ROM_START(kc85_4)
-	ROM_REGION(0x016000, REGION_CPU1)
+	ROM_REGION(0x016000, REGION_CPU1,0)
 
         ROM_LOAD("basic_c0.rom", 0x10000, 0x2000, 0x0dfe34b08)
         ROM_LOAD("caos__c0.rom", 0x12000, 0x1000, 0x057d9ab02)

@@ -309,28 +309,28 @@ static struct NESinterface nespal_interface =
 };
 
 ROM_START( nes )
-    ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
-    ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
-    ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
-    ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
+    ROM_REGION( 0x10000, REGION_CPU1,0 )  /* Main RAM + program banks */
+    ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
+    ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
+    ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
 ROM_START( nespal )
-    ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
-    ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
-    ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
-    ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
+    ROM_REGION( 0x10000, REGION_CPU1,0 )  /* Main RAM + program banks */
+    ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
+    ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
+    ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
 ROM_START( famicom )
-    ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
+    ROM_REGION( 0x10000, REGION_CPU1,0 )  /* Main RAM + program banks */
     ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, 0x5e607dcf)
 
-    ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
+    ROM_REGION( 0x2000,  REGION_GFX1,0 )  /* VROM */
 
-    ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
+    ROM_REGION( 0x2000,  REGION_GFX2,0 )  /* VRAM */
 
-    ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
+    ROM_REGION( 0x10000, REGION_USER1,0 ) /* WRAM */
 ROM_END
 
 

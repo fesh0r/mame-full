@@ -153,16 +153,16 @@ void spectrum_128_init_machine(void)
 		if(!spectrum_128_ram) return;
 		memset(spectrum_128_ram, 0, 128*1024);
 
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_r(3, MRA_BANK3);
-		cpu_setbankhandler_r(4, MRA_BANK4);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 		/* 0x0000-0x3fff always holds ROM */
-		cpu_setbankhandler_w(5, MWA_ROM);
-		cpu_setbankhandler_w(6, MWA_BANK6);
-		cpu_setbankhandler_w(7, MWA_BANK7);
-		cpu_setbankhandler_w(8, MWA_BANK8);
+		memory_set_bankhandler_w(5, 0, MWA_ROM);
+		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+		memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 
 		/* Bank 5 is always in 0x4000 - 0x7fff */
@@ -187,15 +187,15 @@ void spectrum_plus3_init_machine(void)
 		if(!spectrum_128_ram) return;
 		memset(spectrum_128_ram, 0, 128*1024);
 
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_r(3, MRA_BANK3);
-		cpu_setbankhandler_r(4, MRA_BANK4);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-		cpu_setbankhandler_w(5, MWA_BANK5);
-		cpu_setbankhandler_w(6, MWA_BANK6);
-		cpu_setbankhandler_w(7, MWA_BANK7);
-		cpu_setbankhandler_w(8, MWA_BANK8);
+		memory_set_bankhandler_w(5, 0, MWA_BANK5);
+		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+		memory_set_bankhandler_w(7, 0, MWA_BANK7);
+		memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 		nec765_init(&spectrum_plus3_nec765_interface, NEC765A);
 
@@ -231,24 +231,24 @@ void ts2068_init_machine(void)
 		if(!ts2068_ram) return;
 		memset(ts2068_ram, 0, 48*1024);
 
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_r(3, MRA_BANK3);
-		cpu_setbankhandler_r(4, MRA_BANK4);
-		cpu_setbankhandler_r(5, MRA_BANK5);
-		cpu_setbankhandler_r(6, MRA_BANK6);
-		cpu_setbankhandler_r(7, MRA_BANK7);
-		cpu_setbankhandler_r(8, MRA_BANK8);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+		memory_set_bankhandler_r(5, 0, MRA_BANK5);
+		memory_set_bankhandler_r(6, 0, MRA_BANK6);
+		memory_set_bankhandler_r(7, 0, MRA_BANK7);
+		memory_set_bankhandler_r(8, 0, MRA_BANK8);
 
 		/* 0x0000-0x3fff always holds ROM */
-		cpu_setbankhandler_w(9, MWA_ROM);
-		cpu_setbankhandler_w(10, MWA_ROM);
-		cpu_setbankhandler_w(11, MWA_BANK11);
-		cpu_setbankhandler_w(12, MWA_BANK12);
-		cpu_setbankhandler_w(13, MWA_BANK13);
-		cpu_setbankhandler_w(14, MWA_BANK14);
-		cpu_setbankhandler_w(15, MWA_BANK15);
-		cpu_setbankhandler_w(16, MWA_BANK16);
+		memory_set_bankhandler_w(9, 0, MWA_ROM);
+		memory_set_bankhandler_w(10, 0, MWA_ROM);
+		memory_set_bankhandler_w(11, 0, MWA_BANK11);
+		memory_set_bankhandler_w(12, 0, MWA_BANK12);
+		memory_set_bankhandler_w(13, 0, MWA_BANK13);
+		memory_set_bankhandler_w(14, 0, MWA_BANK14);
+		memory_set_bankhandler_w(15, 0, MWA_BANK15);
+		memory_set_bankhandler_w(16, 0, MWA_BANK16);
 
 		ts2068_port_ff_data = 0;
 		ts2068_port_f4_data = 0;
@@ -263,8 +263,8 @@ void tc2048_init_machine(void)
 		if(!ts2068_ram) return;
 		memset(ts2068_ram, 0, 48*1024);
 
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_w(2, MWA_BANK2);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_w(2, 0, MWA_BANK2);
 		cpu_setbank(1, ts2068_ram);
 		cpu_setbank(2, ts2068_ram);
 		ts2068_port_ff_data = 0;
@@ -477,7 +477,7 @@ extern void spectrum_plus3_update_memory(void)
 				ChosenROM = memory_region(REGION_CPU1) + 0x010000 + (ROMSelection<<14);
 
 				cpu_setbank(1, ChosenROM);
-				cpu_setbankhandler_w(5, MWA_ROM);
+				memory_set_bankhandler_w(5, 0, MWA_ROM);
 
 				logerror("rom switch: %02x\n", ROMSelection);
 		}
@@ -497,7 +497,7 @@ extern void spectrum_plus3_update_memory(void)
 				cpu_setbank(1, ram_data);
 				cpu_setbank(5, ram_data);
 				/* allow writes to 0x0000-0x03fff */
-				cpu_setbankhandler_w(5, MWA_BANK5);
+				memory_set_bankhandler_w(5, 0, MWA_BANK5);
 
 				ram_data = spectrum_128_ram + (memory_selection[1]<<14);
 				cpu_setbank(2, ram_data);
@@ -544,13 +544,13 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(1, ExROM);
-						cpu_setbankhandler_r(1, MRA_BANK1);
+						memory_set_bankhandler_r(1, 0, MRA_BANK1);
 						logerror("0000-1fff EXROM\n");
 				}
 				else
 				{
 						/* Cartridges not implemented so assume absent */
-						cpu_setbankhandler_r(1, MRA_NOP);
+						memory_set_bankhandler_r(1, 0, MRA_NOP);
 						logerror("0000-1fff Cartridge\n");
 				}
 		}
@@ -558,7 +558,7 @@ extern void ts2068_update_memory(void)
 		{
 				ChosenROM = memory_region(REGION_CPU1) + 0x010000;
 				cpu_setbank(1, ChosenROM);
-				cpu_setbankhandler_r(1, MRA_BANK1);
+				memory_set_bankhandler_r(1, 0, MRA_BANK1);
 				logerror("0000-1fff HOME\n");
 		}
 
@@ -567,12 +567,12 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(2, ExROM);
-						cpu_setbankhandler_r(2, MRA_BANK2);
+						memory_set_bankhandler_r(2, 0, MRA_BANK2);
 						logerror("2000-3fff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(2, MRA_NOP);
+						memory_set_bankhandler_r(2, 0, MRA_NOP);
 						logerror("2000-3fff Cartridge\n");
 				}
 		}
@@ -580,7 +580,7 @@ extern void ts2068_update_memory(void)
 		{
 				ChosenROM = memory_region(REGION_CPU1) + 0x012000;
 				cpu_setbank(2, ChosenROM);
-				cpu_setbankhandler_r(2, MRA_BANK2);
+				memory_set_bankhandler_r(2, 0, MRA_BANK2);
 				logerror("2000-3fff HOME\n");
 		}
 
@@ -589,14 +589,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(3, ExROM);
-						cpu_setbankhandler_r(3, MRA_BANK3);
-						cpu_setbankhandler_w(11, MWA_ROM);
+						memory_set_bankhandler_r(3, 0, MRA_BANK3);
+						memory_set_bankhandler_w(11, 0, MWA_ROM);
 						logerror("4000-5fff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(3, MRA_NOP);
-						cpu_setbankhandler_w(11, MWA_ROM);
+						memory_set_bankhandler_r(3, 0, MRA_NOP);
+						memory_set_bankhandler_w(11, 0, MWA_ROM);
 						logerror("4000-5fff Cartridge\n");
 				}
 		}
@@ -604,8 +604,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(3, ts2068_ram);
 				cpu_setbank(11, ts2068_ram);
-				cpu_setbankhandler_r(3, MRA_BANK3);
-				cpu_setbankhandler_w(11, MWA_BANK11);
+				memory_set_bankhandler_r(3, 0, MRA_BANK3);
+				memory_set_bankhandler_w(11, 0, MWA_BANK11);
 				logerror("4000-5fff RAM\n");
 		}
 
@@ -614,14 +614,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(4, ExROM);
-						cpu_setbankhandler_r(4, MRA_BANK4);
-						cpu_setbankhandler_w(12, MWA_ROM);
+						memory_set_bankhandler_r(4, 0, MRA_BANK4);
+						memory_set_bankhandler_w(12, 0, MWA_ROM);
 						logerror("6000-7fff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(4, MRA_NOP);
-						cpu_setbankhandler_w(12, MWA_ROM);
+						memory_set_bankhandler_r(4, 0, MRA_NOP);
+						memory_set_bankhandler_w(12, 0, MWA_ROM);
 						logerror("6000-7fff Cartridge\n");
 				}
 		}
@@ -629,8 +629,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(4, ts2068_ram + 0x2000);
 				cpu_setbank(12, ts2068_ram + 0x2000);
-				cpu_setbankhandler_r(4, MRA_BANK4);
-				cpu_setbankhandler_w(12, MWA_BANK12);
+				memory_set_bankhandler_r(4, 0, MRA_BANK4);
+				memory_set_bankhandler_w(12, 0, MWA_BANK12);
 				logerror("6000-7fff RAM\n");
 		}
 
@@ -639,14 +639,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(5, ExROM);
-						cpu_setbankhandler_r(5, MRA_BANK5);
-						cpu_setbankhandler_w(13, MWA_ROM);
+						memory_set_bankhandler_r(5, 0, MRA_BANK5);
+						memory_set_bankhandler_w(13, 0, MWA_ROM);
 						logerror("8000-9fff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(5, MRA_NOP);
-						cpu_setbankhandler_w(13, MWA_ROM);
+						memory_set_bankhandler_r(5, 0, MRA_NOP);
+						memory_set_bankhandler_w(13, 0, MWA_ROM);
 						logerror("8000-9fff Cartridge\n");
 				}
 		}
@@ -654,8 +654,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(5, ts2068_ram + 0x4000);
 				cpu_setbank(13, ts2068_ram + 0x4000);
-				cpu_setbankhandler_r(5, MRA_BANK5);
-				cpu_setbankhandler_w(13, MWA_BANK13);
+				memory_set_bankhandler_r(5, 0, MRA_BANK5);
+				memory_set_bankhandler_w(13, 0, MWA_BANK13);
 				logerror("8000-9fff RAM\n");
 		}
 
@@ -664,14 +664,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(6, ExROM);
-						cpu_setbankhandler_r(6, MRA_BANK6);
-						cpu_setbankhandler_w(14, MWA_ROM);
+						memory_set_bankhandler_r(6, 0, MRA_BANK6);
+						memory_set_bankhandler_w(14, 0, MWA_ROM);
 						logerror("a000-bfff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(6, MRA_NOP);
-						cpu_setbankhandler_w(14, MWA_ROM);
+						memory_set_bankhandler_r(6, 0, MRA_NOP);
+						memory_set_bankhandler_w(14, 0, MWA_ROM);
 						logerror("a000-bfff Cartridge\n");
 				}
 		}
@@ -679,8 +679,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(6, ts2068_ram + 0x6000);
 				cpu_setbank(14, ts2068_ram + 0x6000);
-				cpu_setbankhandler_r(6, MRA_BANK6);
-				cpu_setbankhandler_w(14, MWA_BANK14);
+				memory_set_bankhandler_r(6, 0, MRA_BANK6);
+				memory_set_bankhandler_w(14, 0, MWA_BANK14);
 				logerror("a000-bfff RAM\n");
 		}
 
@@ -689,14 +689,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(7, ExROM);
-						cpu_setbankhandler_r(7, MRA_BANK7);
-						cpu_setbankhandler_w(15, MWA_ROM);
+						memory_set_bankhandler_r(7, 0, MRA_BANK7);
+						memory_set_bankhandler_w(15, 0, MWA_ROM);
 						logerror("c000-dfff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(7, MRA_NOP);
-						cpu_setbankhandler_w(15, MWA_ROM);
+						memory_set_bankhandler_r(7, 0, MRA_NOP);
+						memory_set_bankhandler_w(15, 0, MWA_ROM);
 						logerror("c000-dfff Cartridge\n");
 				}
 		}
@@ -704,8 +704,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(7, ts2068_ram + 0x8000);
 				cpu_setbank(15, ts2068_ram + 0x8000);
-				cpu_setbankhandler_r(7, MRA_BANK7);
-				cpu_setbankhandler_w(15, MWA_BANK15);
+				memory_set_bankhandler_r(7, 0, MRA_BANK7);
+				memory_set_bankhandler_w(15, 0, MWA_BANK15);
 				logerror("c000-dfff RAM\n");
 		}
 
@@ -714,14 +714,14 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(8, ExROM);
-						cpu_setbankhandler_r(8, MRA_BANK8);
-						cpu_setbankhandler_w(16, MWA_ROM);
+						memory_set_bankhandler_r(8, 0, MRA_BANK8);
+						memory_set_bankhandler_w(16, 0, MWA_ROM);
 						logerror("e000-ffff EXROM\n");
 				}
 				else
 				{
-						cpu_setbankhandler_r(8, MRA_NOP);
-						cpu_setbankhandler_w(16, MWA_ROM);
+						memory_set_bankhandler_r(8, 0, MRA_NOP);
+						memory_set_bankhandler_w(16, 0, MWA_ROM);
 						logerror("e000-ffff Cartridge\n");
 				}
 		}
@@ -729,8 +729,8 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(8, ts2068_ram + 0xa000);
 				cpu_setbank(16, ts2068_ram + 0xa000);
-				cpu_setbankhandler_r(8, MRA_BANK8);
-				cpu_setbankhandler_w(16, MWA_BANK16);
+				memory_set_bankhandler_r(8, 0, MRA_BANK8);
+				memory_set_bankhandler_w(16, 0, MWA_BANK16);
 				logerror("e000-ffff RAM\n");
 		}
 }
@@ -1710,50 +1710,50 @@ static struct MachineDriver machine_driver_tc2048 =
 ***************************************************************************/
 
 ROM_START(spectrum)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("spectrum.rom", 0x0000, 0x4000, 0xddee531f)
 ROM_END
 
 ROM_START(specbusy)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-busy.rom", 0x0000, 0x4000, 0x1511cddb)
 ROM_END
 
 ROM_START(specgrot)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-groot.rom", 0x0000, 0x4000, 0xabf18c45)
 ROM_END
 
 ROM_START(specimc)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("48-imc.rom", 0x0000, 0x4000, 0xd1be99ee)
 ROM_END
 
 ROM_START(speclec)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("80-lec.rom", 0x0000, 0x4000, 0x5b5c92b1)
 ROM_END
 
 ROM_START(spec128)
-		ROM_REGION(0x18000,REGION_CPU1)
+		ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zx128_0.rom",0x10000,0x4000, 0xe76799d2)
 	ROM_LOAD("zx128_1.rom",0x14000,0x4000, 0xb96a36be)
 ROM_END
 
 ROM_START(spec128s)
-		ROM_REGION(0x18000,REGION_CPU1)
+		ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zx128s0.rom",0x10000,0x4000, 0x453d86b2)
 	ROM_LOAD("zx128s1.rom",0x14000,0x4000, 0x6010e796)
 ROM_END
 
 ROM_START(specpls2)
-		ROM_REGION(0x18000,REGION_CPU1)
+		ROM_REGION(0x18000,REGION_CPU1,0)
 	ROM_LOAD("zxp2_0.rom",0x10000,0x4000, 0x5d2e8c66)
 	ROM_LOAD("zxp2_1.rom",0x14000,0x4000, 0x98b1320b)
 ROM_END
 
 ROM_START(specpl2a)
-		ROM_REGION(0x20000,REGION_CPU1)
+		ROM_REGION(0x20000,REGION_CPU1,0)
 		ROM_LOAD("p2a41_0.rom",0x10000,0x4000, 0x30c9f490)
 		ROM_LOAD("p2a41_1.rom",0x14000,0x4000, 0xa7916b3f)
 		ROM_LOAD("p2a41_2.rom",0x18000,0x4000, 0xc9a0b748)
@@ -1761,7 +1761,7 @@ ROM_START(specpl2a)
 ROM_END
 
 ROM_START(specpls3)
-		ROM_REGION(0x20000,REGION_CPU1)
+		ROM_REGION(0x20000,REGION_CPU1,0)
 	ROM_LOAD("pl3-0.rom",0x10000,0x4000, 0x17373da2)
 	ROM_LOAD("pl3-1.rom",0x14000,0x4000, 0xf1d1d99e)
 	ROM_LOAD("pl3-2.rom",0x18000,0x4000, 0x3dbf351d)
@@ -1769,50 +1769,50 @@ ROM_START(specpls3)
 ROM_END
 
 ROM_START(specpls4)
-		ROM_REGION(0x10000,REGION_CPU1)
+		ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("plus4.rom",0x0000,0x4000, 0x7e0f47cb)
 ROM_END
 
 ROM_START(tk90x)
-		ROM_REGION(0x10000,REGION_CPU1)
+		ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("tk90x.rom",0x0000,0x4000, 0x3e785f6f)
 ROM_END
 
 ROM_START(tk95)
-		ROM_REGION(0x10000,REGION_CPU1)
+		ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("tk95.rom",0x0000,0x4000, 0x17368e07)
 ROM_END
 
 ROM_START(inves)
-		ROM_REGION(0x10000,REGION_CPU1)
+		ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("inves.rom",0x0000,0x4000, 0x8ff7a4d1)
 ROM_END
 
 ROM_START(tc2048)
-		ROM_REGION(0x10000,REGION_CPU1)
+		ROM_REGION(0x10000,REGION_CPU1,0)
 		ROM_LOAD("tc2048.rom",0x0000,0x4000, 0xf1b5fa67)
 ROM_END
 
 ROM_START(ts2068)
-		ROM_REGION(0x16000,REGION_CPU1)
+		ROM_REGION(0x16000,REGION_CPU1,0)
 		ROM_LOAD("ts2068_h.rom",0x10000,0x4000, 0xbf44ec3f)
 		ROM_LOAD("ts2068_x.rom",0x14000,0x2000, 0xae16233a)
 ROM_END
 
 ROM_START(specp2fr)
-		ROM_REGION(0x18000,REGION_CPU1)
+		ROM_REGION(0x18000,REGION_CPU1,0)
 		ROM_LOAD("plus2fr0.rom",0x10000,0x4000, 0xc684c535)
 		ROM_LOAD("plus2fr1.rom",0x14000,0x4000, 0xf5e509c5)
 ROM_END
 
 ROM_START(specp2sp)
-		ROM_REGION(0x18000,REGION_CPU1)
+		ROM_REGION(0x18000,REGION_CPU1,0)
 		ROM_LOAD("plus2sp0.rom",0x10000,0x4000, 0xe807d06e)
 		ROM_LOAD("plus2sp1.rom",0x14000,0x4000, 0x41981d4b)
 ROM_END
 
 ROM_START(specp3sp)
-		ROM_REGION(0x20000,REGION_CPU1)
+		ROM_REGION(0x20000,REGION_CPU1,0)
 		ROM_LOAD("plus3sp0.rom",0x10000,0x4000, 0x1f86147a)
 		ROM_LOAD("plus3sp1.rom",0x14000,0x4000, 0xa8ac4966)
 		ROM_LOAD("plus3sp2.rom",0x18000,0x4000, 0xf6bb0296)
@@ -1820,7 +1820,7 @@ ROM_START(specp3sp)
 ROM_END
 
 ROM_START(specpl3e)
-		ROM_REGION(0x20000,REGION_CPU1)
+		ROM_REGION(0x20000,REGION_CPU1,0)
 		ROM_LOAD("roma.bin",0x10000,0x8000, 0x7c20e2c9)
 		ROM_LOAD("romb.bin",0x18000,0x8000, 0x4a700c7e)
 ROM_END

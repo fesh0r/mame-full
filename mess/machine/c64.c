@@ -471,12 +471,12 @@ static void c64_bankswitch (int reset)
 		|| (loram && hiram && !c64_exrom))
 	{
 		cpu_setbank (1, roml);
-		cpu_setbankhandler_w (2, MWA_NOP);
+		memory_set_bankhandler_w (2, 0, MWA_NOP);
 	}
 	else
 	{
 		cpu_setbank (1, c64_memory + 0x8000);
-		cpu_setbankhandler_w (2, MWA_RAM);
+		memory_set_bankhandler_w (2, 0, MWA_RAM);
 	}
 
 	if ((!c64_game && c64_exrom && hiram)
@@ -496,13 +496,13 @@ static void c64_bankswitch (int reset)
 	if ((!c64_game && c64_exrom)
 		|| (charen && (loram || hiram)))
 	{
-		cpu_setbankhandler_r (5, c64_read_io);
-		cpu_setbankhandler_w (6, c64_write_io);
+		memory_set_bankhandler_r (5, 0, c64_read_io);
+		memory_set_bankhandler_w (6, 0, c64_write_io);
 	}
 	else
 	{
-		cpu_setbankhandler_r (5, MRA_BANK5);
-		cpu_setbankhandler_w (6, MWA_BANK6);
+		memory_set_bankhandler_r (5, 0, MRA_BANK5);
+		memory_set_bankhandler_w (6, 0, MWA_BANK6);
 		cpu_setbank (6, c64_memory + 0xd000);
 		if (!charen && (loram || hiram))
 		{
@@ -517,11 +517,11 @@ static void c64_bankswitch (int reset)
 	if (!c64_game && c64_exrom)
 	{
 		cpu_setbank (7, romh);
-		cpu_setbankhandler_w (8, MWA_NOP);
+		memory_set_bankhandler_w (8, 0, MWA_NOP);
 	}
 	else
 	{
-		cpu_setbankhandler_w (8, MWA_RAM);
+		memory_set_bankhandler_w (8, 0, MWA_RAM);
 		if (hiram)
 		{
 			cpu_setbank (7, c64_kernal);

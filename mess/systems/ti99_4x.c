@@ -594,32 +594,32 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 ROM_START(ti99_4)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
-	ROM_REGION(0x14000,REGION_CPU1)
-	ROM_LOAD_WIDE("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+	ROM_REGION(0x14000,REGION_CPU1,0)
+	ROM_LOAD16_WORD("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
+	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
 
 	/*GPL memory space*/
-	ROM_REGION(0x10000,REGION_USER1)
+	ROM_REGION(0x10000,REGION_USER1,0)
 	ROM_LOAD("994grom.bin",     0x0000, 0x8000, 0x00000000) /* system GROMs */
 
 	/*TMS5220 ROM space*/
-	ROM_REGION(0x8000,REGION_SOUND1)
+	ROM_REGION(0x8000,REGION_SOUND1,0)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
 ROM_START(ti99_4a)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
-	ROM_REGION(0x14000,REGION_CPU1)
-	ROM_LOAD_WIDE("994arom.bin",0x0000, 0x2000, 0xdb8f33e5) /* system ROMs */
-	ROM_LOAD_WIDE("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+	ROM_REGION(0x14000,REGION_CPU1,0)
+	ROM_LOAD16_WORD("994arom.bin",0x0000, 0x2000, 0xdb8f33e5) /* system ROMs */
+	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
 
 	/*GPL memory space*/
-	ROM_REGION(0x10000,REGION_USER1)
+	ROM_REGION(0x10000,REGION_USER1,0)
 	ROM_LOAD("994agrom.bin",    0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
 
 	/*TMS5220 ROM space*/
-	ROM_REGION(0x8000,REGION_SOUND1)
+	ROM_REGION(0x8000,REGION_SOUND1,0)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 

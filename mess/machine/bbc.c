@@ -930,7 +930,7 @@ void stop_machine_bbcb1770(void)
 
 void init_machine_bbcbp(void)
 {
-	cpu_setbankhandler_r(1, memorybp1_r);
+	memory_set_bankhandler_r(1, 0, memorybp1_r);
 
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x03000); /* BANK 1 points at the screen  from 3000 to 7fff */
 	cpu_setbank(2,memory_region(REGION_CPU2)+0x40000); /* bank 2 points at the OS rom  from c000 to ffff */

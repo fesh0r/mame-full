@@ -61,7 +61,11 @@ struct MachineSound
 #include "sound/tiaintf.h"
 #endif
 #if (HAS_NES)
+ #ifndef MESS
 #include "sound/nes_apu.h"
+ #else
+#include "sound/nesintf.h"
+ #endif
 #endif
 #if (HAS_ASTROCADE)
 #include "sound/astrocde.h"
@@ -180,22 +184,22 @@ enum
 	SOUND_YM2612,
 #endif
 #if (HAS_YM3438)
-	SOUND_YM3438,
+	SOUND_YM3438,	/* same as YM2612 */
 #endif
 #if (HAS_YM2413)
-	SOUND_YM2413,
+	SOUND_YM2413,	/* YM3812 with predefined instruments */
 #endif
 #if (HAS_YM3812)
 	SOUND_YM3812,
 #endif
 #if (HAS_YM3526)
-	SOUND_YM3526,
+	SOUND_YM3526,	/* 100% YM3812 compatible, less features */
 #endif
 #if (HAS_YMZ280B)
 	SOUND_YMZ280B,
 #endif
 #if (HAS_Y8950)
-	SOUND_Y8950,
+	SOUND_Y8950,	/* YM3526 compatible with delta-T ADPCM */
 #endif
 #if (HAS_SN76477)
 	SOUND_SN76477,
@@ -207,19 +211,19 @@ enum
 	SOUND_POKEY,
 #endif
 #if (HAS_TIA)
-	SOUND_TIA,
+	SOUND_TIA,	/* stripped down Pokey */
 #endif
 #if (HAS_NES)
 	SOUND_NES,
 #endif
 #if (HAS_ASTROCADE)
-	SOUND_ASTROCADE,
+	SOUND_ASTROCADE,	/* Custom I/O chip from Bally/Midway */
 #endif
 #if (HAS_NAMCO)
 	SOUND_NAMCO,
 #endif
 #if (HAS_TMS36XX)
-	SOUND_TMS36XX,
+	SOUND_TMS36XX,	/* currently TMS3615 and TMS3617 */
 #endif
 #if (HAS_TMS5110)
 	SOUND_TMS5110,
@@ -234,28 +238,28 @@ enum
 	SOUND_ADPCM,
 #endif
 #if (HAS_OKIM6295)
-	SOUND_OKIM6295,
+	SOUND_OKIM6295,	/* ROM-based ADPCM system */
 #endif
 #if (HAS_MSM5205)
-	SOUND_MSM5205,
+	SOUND_MSM5205,	/* CPU-based ADPCM system */
 #endif
 #if (HAS_UPD7759)
-	SOUND_UPD7759,
+	SOUND_UPD7759,	/* ROM-based ADPCM system */
 #endif
 #if (HAS_HC55516)
-	SOUND_HC55516,
+	SOUND_HC55516,	/* Harris family of CVSD CODECs */
 #endif
 #if (HAS_K005289)
-	SOUND_K005289,
+	SOUND_K005289,	/* Konami 005289 */
 #endif
 #if (HAS_K007232)
-	SOUND_K007232,
+	SOUND_K007232,	/* Konami 007232 */
 #endif
 #if (HAS_K051649)
-	SOUND_K051649,
+	SOUND_K051649,	/* Konami 051649 */
 #endif
 #if (HAS_K053260)
-	SOUND_K053260,
+	SOUND_K053260,	/* Konami 053260 */
 #endif
 #if (HAS_K054539)
 	SOUND_K054539,
@@ -288,6 +292,7 @@ enum
 	SOUND_WAVE,
 #endif
 #if (HAS_BEEP)
+/* !!! This entry does not have a build rule in src/rules.mak !!! */
 	SOUND_BEEP,
 #endif
 	SOUND_COUNT

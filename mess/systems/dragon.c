@@ -645,25 +645,25 @@ static struct MachineDriver machine_driver_coco3h =
 ***************************************************************************/
 
 ROM_START(dragon32)
-	ROM_REGION(0x10000,REGION_CPU1)
+	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("d32.rom",    0x8000,  0x4000, 0xe3879310)
 ROM_END
 
 ROM_START(coco)
-     ROM_REGION(0x18000,REGION_CPU1)
+     ROM_REGION(0x18000,REGION_CPU1,0)
      ROM_LOAD(			"bas12.rom",	0x12000, 0x2000, 0x54368805)
      ROM_LOAD_OPTIONAL(	"extbas11.rom",	0x10000, 0x2000, 0xa82a6254)
      ROM_LOAD_OPTIONAL(	"disk11.rom",	0x14000, 0x2000, 0x0b9c5415)
 ROM_END
 
 ROM_START(coco3)
-     ROM_REGION(0x90000,REGION_CPU1)
+     ROM_REGION(0x90000,REGION_CPU1,0)
 	 ROM_LOAD(			"coco3.rom",	0x80000, 0x8000, 0xb4c88d6c)
      ROM_LOAD_OPTIONAL(	"disk11.rom",	0x8C000, 0x2000, 0x0b9c5415)
 ROM_END
 
 ROM_START(cp400)
-     ROM_REGION(0x18000,REGION_CPU1)
+     ROM_REGION(0x18000,REGION_CPU1,0)
      ROM_LOAD("cp400bas.rom",  0x10000, 0x4000, 0x878396a5)
      ROM_LOAD("cp400dsk.rom",  0x14000, 0x2000, 0xe9ad60a0)
 ROM_END

@@ -50,16 +50,16 @@ void apple2e_init_machine(void)
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	/* Init our language card banks to initially point to ROM */
-	cpu_setbankhandler_w (1, MWA_ROM);
+	memory_set_bankhandler_w (1, 0, MWA_ROM);
 	cpu_setbank (1, &RAM[0x21000]);
-	cpu_setbankhandler_w (2, MWA_ROM);
+	memory_set_bankhandler_w (2, 0, MWA_ROM);
 	cpu_setbank (2, &RAM[0x22000]);
 	/* Use built-in slot ROM ($c100-$c7ff) */
 	cpu_setbank (3, &RAM[0x20100]);
 	/* Use main zp/stack */
 	cpu_setbank (4, &RAM[0x0000]);
 	/* Use main RAM */
-	cpu_setbankhandler_w (5, apple2_mainram_w);
+	memory_set_bankhandler_w (5, 0, apple2_mainram_w);
 	cpu_setbank (5, &RAM[0x0200]);
 	/* Use built-in slot ROM ($c800) */
 	cpu_setbank (6, &RAM[0x20800]);
@@ -253,12 +253,12 @@ WRITE_HANDLER ( apple2_c00x_w )
 		/* RAMWRTOFF */
 		case 0x04:
 			a2.RAMWRT = 0x00;
-			cpu_setbankhandler_w (5, apple2_mainram_w);
+			memory_set_bankhandler_w (5, 0, apple2_mainram_w);
 			break;
 		/* RAMWRTON - write to aux 48k */
 		case 0x05:
 			a2.RAMWRT = 0x80;
-			cpu_setbankhandler_w (5, apple2_auxram_w);
+			memory_set_bankhandler_w (5, 0, apple2_auxram_w);
 			break;
 		/* INTCXROMOFF */
 		case 0x06:
@@ -910,18 +910,18 @@ READ_HANDLER ( apple2_c08x_r )
 
 	if ((offset & 0x01)==0x00)
 	{
-		cpu_setbankhandler_w (1, MWA_ROM);
-		cpu_setbankhandler_w (2, MWA_ROM);
+		memory_set_bankhandler_w (1, 0, MWA_ROM);
+		memory_set_bankhandler_w (2, 0, MWA_ROM);
 		a2.LC_WRITE = 0x00;
 	}
 	else
 	{
-		cpu_setbankhandler_w (2, apple2_LC_ram_w);
+		memory_set_bankhandler_w (2, 0, apple2_LC_ram_w);
 
 		if ((offset & 0x08)==0x00)
-			cpu_setbankhandler_w (1, apple2_LC_ram2_w);
+			memory_set_bankhandler_w (1, 0, apple2_LC_ram2_w);
 		else
-			cpu_setbankhandler_w (1, apple2_LC_ram1_w);
+			memory_set_bankhandler_w (1, 0, apple2_LC_ram1_w);
 		a2.LC_WRITE = 0x80;
 	}
 

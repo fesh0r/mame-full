@@ -897,7 +897,7 @@ static void init_a2600(void)
 }
 
 ROM_START(a2600)
-    ROM_REGION(0x20000, REGION_CPU1)        /* 6502 memory */
+    ROM_REGION(0x20000, REGION_CPU1,0)        /* 6502 memory */
 ROM_END
 
 static const struct IODevice io_a2600[] =

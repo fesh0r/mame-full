@@ -119,7 +119,7 @@ static struct MachineDriver machine_driver_ntsc =
 ***************************************************************************/
 
 ROM_START( amiga )
-    ROM_REGION(0x200000,REGION_CPU1) /* for ram, etc */
+    ROM_REGION(0x200000,REGION_CPU1,0) /* for ram, etc */
     ROM_LOAD_WIDE( "kick13.rom",  0x180000, 0x80000, 0xf6290043)
 ROM_END
 
@@ -150,7 +150,7 @@ static const struct IODevice io_amiga[] = {
 COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
 
 ROM_START( cdtv )
-    ROM_REGION(0x200000,REGION_CPU1) /* for ram, etc */
+    ROM_REGION(0x200000,REGION_CPU1,0) /* for ram, etc */
     ROM_LOAD_WIDE( "cdtv13.rom",  0x180000, 0x80000, 0x42BAA124)
 ROM_END
 

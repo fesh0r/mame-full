@@ -43,7 +43,7 @@ static int snapshot_loaded;
 OPBASE_HANDLER( amstrad_opbaseoverride )
 {
 	/* clear op base override */
-	cpu_setOPbaseoverride(0,0);
+	memory_set_opbase_handler(0,0);
 
 	if (snapshot_loaded)
 	{
@@ -71,7 +71,7 @@ void amstrad_setup_machine(void)
 	if (snapshot_loaded)
 	{
 		/* setup for snapshot */
-		cpu_setOPbaseoverride(0,amstrad_opbaseoverride);
+		memory_set_opbase_handler(0,amstrad_opbaseoverride);
 	}
 
 

@@ -2,7 +2,7 @@
 
         z88.c
 
-        z88 Notepad computer 
+        z88 Notepad computer
 
 
         system driver
@@ -53,7 +53,7 @@ static void z88_interrupt_refresh(void)
 			((blink.sta & blink.ints)!=0)
 			)
 			)
-	
+
 		{
 			cpu_set_irq_line(0,0,HOLD_LINE);
                         return;
@@ -151,7 +151,7 @@ static void z88_refresh_memory_bank(int index1)
         read_bank = 2+index1;
         /* bank index for write's for use with cpu_setbank, cpu_setbankhandler */
         write_bank = 7+index1;
-        
+
         /* ram? */
         if (blink.mem[index1] & 0x020)
         {
@@ -160,13 +160,13 @@ static void z88_refresh_memory_bank(int index1)
            logerror("ram selected\r\n");
 
            addr = z88_memory;
-           cpu_setbankhandler_r(read_bank, z88_read_handler[index1+1]);
-           cpu_setbankhandler_w(write_bank, z88_write_handler[index1+1]);
+           memory_set_bankhandler_r(read_bank, 0, z88_read_handler[index1+1]);
+           memory_set_bankhandler_w(write_bank, 0, z88_write_handler[index1+1]);
 
            if (index1==0)
            {
-                cpu_setbankhandler_r(read_bank-1, z88_read_handler[index1]);
-                cpu_setbankhandler_w(write_bank-1, z88_write_handler[index1]);
+                memory_set_bankhandler_r(read_bank-1, 0, z88_read_handler[index1]);
+                memory_set_bankhandler_w(write_bank-1, 0, z88_write_handler[index1]);
            }
 
            addr = addr + (block<<14);
@@ -189,13 +189,13 @@ static void z88_refresh_memory_bank(int index1)
            {
                 logerror("unmapped rom selected\r\n");
 
-                cpu_setbankhandler_r(read_bank, MRA_NOP);
-                cpu_setbankhandler_w(write_bank, MRA_NOP);
+                memory_set_bankhandler_r(read_bank, 0, MRA_NOP);
+                memory_set_bankhandler_w(write_bank, 0, MWA_NOP);
 
                 if (index1==0)
                 {
-                        cpu_setbankhandler_r(read_bank-1, MRA_NOP);
-                        cpu_setbankhandler_w(write_bank-1, MRA_NOP);
+                        memory_set_bankhandler_r(read_bank-1, 0, MRA_NOP);
+                        memory_set_bankhandler_w(write_bank-1, 0, MWA_NOP);
                 }
            }
            else
@@ -203,13 +203,13 @@ static void z88_refresh_memory_bank(int index1)
                 logerror("rom selected\r\n");
 
                 addr = memory_region(REGION_CPU1) + 0x010000;
-                cpu_setbankhandler_r(read_bank, z88_read_handler[index1+1]);
-                cpu_setbankhandler_w(write_bank, MWA_NOP);
+                memory_set_bankhandler_r(read_bank, 0, z88_read_handler[index1+1]);
+                memory_set_bankhandler_w(write_bank, 0, MWA_NOP);
 
                 if (index1==0)
                 {
-                        cpu_setbankhandler_r(read_bank-1, z88_read_handler[index1]);
-                        cpu_setbankhandler_w(write_bank-1, z88_write_handler[index1]);
+                        memory_set_bankhandler_r(read_bank-1, 0, z88_read_handler[index1]);
+                        memory_set_bankhandler_w(write_bank-1, 0, z88_write_handler[index1]);
                 }
 
                 addr = addr + (block<<14);
@@ -242,8 +242,8 @@ static void z88_refresh_memory(void)
 		addr = memory_region(REGION_CPU1) + 0x010000;
 
 		cpu_setbank(1, addr);
-                cpu_setbankhandler_r(1, MRA_BANK1);
-                cpu_setbankhandler_w(6, MWA_NOP);
+                memory_set_bankhandler_r(1, 0, MRA_BANK1);
+                memory_set_bankhandler_w(6, 0, MWA_NOP);
 	}
         else
         {
@@ -254,8 +254,8 @@ static void z88_refresh_memory(void)
 
                 cpu_setbank(1, addr);
                 cpu_setbank(6, addr);
-                cpu_setbankhandler_r(1, MRA_BANK1);
-                cpu_setbankhandler_w(6, MWA_BANK6);
+                memory_set_bankhandler_r(1, 0, MRA_BANK1);
+                memory_set_bankhandler_w(6, 0, MWA_BANK6);
         }
 
         z88_refresh_memory_bank(1);
@@ -271,17 +271,17 @@ void z88_init_machine(void)
 
         blink_reset();
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_r(5, MRA_BANK5);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
 
-	cpu_setbankhandler_w(6, MWA_BANK6);
-	cpu_setbankhandler_w(7, MWA_BANK7);
-	cpu_setbankhandler_w(8, MWA_BANK8);
-	cpu_setbankhandler_w(9, MWA_BANK9);
-	cpu_setbankhandler_w(10, MWA_BANK10);
+	memory_set_bankhandler_w(6, 0, MWA_BANK6);
+	memory_set_bankhandler_w(7, 0, MWA_BANK7);
+	memory_set_bankhandler_w(8, 0, MWA_BANK8);
+	memory_set_bankhandler_w(9, 0, MWA_BANK9);
+	memory_set_bankhandler_w(10, 0, MWA_BANK10);
 
 	z88_refresh_memory();
 
@@ -303,7 +303,7 @@ void z88_shutdown_machine(void)
 	}
 
 }
- 
+
 
 static MEMORY_READ_START (readmem_z88)
         {0x00000, 0x01fff, MRA_BANK1},
@@ -339,7 +339,7 @@ unsigned long blink_pb_offset(int num_bits, unsigned long addr_written, int shif
 static void blink_pb_w(int offset, int data, int reg_index)
 {
         unsigned short addr_written = (offset & 0x0ff00) | (data & 0x0ff);
- 
+
         switch (reg_index)
 	{
 		case 0x00:
@@ -366,7 +366,7 @@ static void blink_pb_w(int offset, int data, int reg_index)
                 }
 		break;
 
-	
+
 		case 0x03:
 		{
                         blink.pb[3] = addr_written;
@@ -384,7 +384,7 @@ static void blink_pb_w(int offset, int data, int reg_index)
 
                 }
 		break;
-	
+
 		default:
 			break;
 	}
@@ -427,7 +427,7 @@ WRITE_HANDLER(z88_port_w)
 			blink.tack = data & 0x07;
 			/* clear ints that have occured */
 			blink.tsta &= ~blink.tack;
-	
+
 			/* refresh ints */
 			z88_interrupt_refresh();
 		}
@@ -439,7 +439,7 @@ WRITE_HANDLER(z88_port_w)
 
 			/* set new int mask */
 			blink.tmk = data & 0x07;
-			
+
 			/* refresh ints */
 			z88_interrupt_refresh();
 		}
@@ -485,7 +485,7 @@ WRITE_HANDLER(z88_port_w)
 		case 0x0b1:
 		{
 			/* set int enables */
-			
+
 			blink.ints = data;
 
 			z88_interrupt_refresh();
@@ -497,7 +497,7 @@ WRITE_HANDLER(z88_port_w)
 		{
 			/* acknowledge ints */
                         blink.ack = data & ((1<<6) | (1<<5) | (1<<3) | (1<<2));
-		
+
 			blink.ints &= ~blink.ack;
 
 			z88_interrupt_refresh();
@@ -548,16 +548,16 @@ READ_HANDLER(z88_port_r)
 
 			if ((lines & 0x080)==0)
 				data &=readinputport(7);
-			
+
 			if ((lines & 0x040)==0)
 				data &=readinputport(6);
 
 			if ((lines & 0x020)==0)
 				data &=readinputport(5);
-			
+
 			if ((lines & 0x010)==0)
 				data &=readinputport(4);
-			
+
 			if ((lines & 0x008)==0)
 				data &=readinputport(3);
 
@@ -566,15 +566,15 @@ READ_HANDLER(z88_port_r)
 
 			if ((lines & 0x002)==0)
 				data &=readinputport(1);
-			
+
 			if ((lines & 0x001)==0)
 				data &=readinputport(0);
-			
+
 			return data;
 		}
 		break;
 
-	
+
 		/* read int status */
 		case 0x0b5:
 		{
@@ -620,18 +620,18 @@ static struct Speaker_interface z88_speaker_interface=
 };
 
 /*
-------------------------------------------------------------------------- 
-         | D7     D6      D5      D4      D3      D2      D1      D0 
-------------------------------------------------------------------------- 
-A15 (#7) | RSH    SQR     ESC     INDEX   CAPS    .       /       £ 
-A14 (#6) | HELP   LSH     TAB     DIA     MENU    ,       ;       ' 
-A13 (#5) | [      SPACE   1       Q       A       Z       L       0 
-A12 (#4) | ]      LFT     2       W       S       X       M       P 
-A11 (#3) | -      RGT     3       E       D       C       K       9 
-A10 (#2) | =      DWN     4       R       F       V       J       O 
-A9  (#1) | \      UP      5       T       G       B       U       I 
-A8  (#0) | DEL    ENTER   6       Y       H       N       7       8 
-------------------------------------------------------------------------- 
+-------------------------------------------------------------------------
+         | D7     D6      D5      D4      D3      D2      D1      D0
+-------------------------------------------------------------------------
+A15 (#7) | RSH    SQR     ESC     INDEX   CAPS    .       /       £
+A14 (#6) | HELP   LSH     TAB     DIA     MENU    ,       ;       '
+A13 (#5) | [      SPACE   1       Q       A       Z       L       0
+A12 (#4) | ]      LFT     2       W       S       X       M       P
+A11 (#3) | -      RGT     3       E       D       C       K       9
+A10 (#2) | =      DWN     4       R       F       V       J       O
+A9  (#1) | \      UP      5       T       G       B       U       I
+A8  (#0) | DEL    ENTER   6       Y       H       N       7       8
+-------------------------------------------------------------------------
 */
 
 INPUT_PORTS_START(z88)
@@ -782,7 +782,7 @@ static struct MachineDriver machine_driver_z88 =
 ***************************************************************************/
 
 ROM_START(z88)
-        ROM_REGION(((64*1024)+(128*1024)), REGION_CPU1)
+        ROM_REGION(((64*1024)+(128*1024)), REGION_CPU1,0)
         ROM_LOAD("z88v400.rom", 0x010000, 0x020000, 0x1356d440)
 ROM_END
 

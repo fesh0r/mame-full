@@ -182,12 +182,12 @@ void c128_bankswitch_64 (int reset)
 	if ((!c64_game && c64_exrom)
 		|| (charen && (loram || hiram)))
 	{
-		cpu_setbankhandler_r (13, c128_read_io);
+		memory_set_bankhandler_r (13, 0, c128_read_io);
 		c128_write_io = 1;
 	}
 	else
 	{
-		cpu_setbankhandler_r (13, MRA_BANK5);
+		memory_set_bankhandler_r (13, 0, MRA_BANK5);
 		c128_write_io = 0;
 		if ((!charen && (loram || hiram)))
 		{
@@ -391,17 +391,17 @@ static int mmu_page0, mmu_page1;
 		else
 			c128_ram_top = 0x10000;
 
-		cpu_setbankhandler_r (15, c128_mmu8722_ff00_r);
+		memory_set_bankhandler_r (15, 0, c128_mmu8722_ff00_r);
 
 		if (MMU_IO_ON)
 			{
-				cpu_setbankhandler_r (13, c128_read_io);
+				memory_set_bankhandler_r (13, 0, c128_read_io);
 				c128_write_io = 1;
 			}
 		else
 			{
 				c128_write_io = 0;
-				cpu_setbankhandler_r (13, MRA_BANK13);
+				memory_set_bankhandler_r (13, 0, MRA_BANK13);
 			}
 
 		if (MMU_RAM_HI)
@@ -483,9 +483,9 @@ static void c128_bankswitch (int reset)
 				{
 					DBG_LOG (1, "switching to z80",
 							 ("active %d\n",cpu_getactivecpu()) );
-					memorycontextswap(0);
+					memory_set_context(0);
 					c128_bankswitch_z80();
-					memorycontextswap(1);
+					memory_set_context(1);
 					cpu_set_halt_line (0, 0);
 					cpu_set_halt_line (1, 1);
 				}
@@ -494,9 +494,9 @@ static void c128_bankswitch (int reset)
 			{
 				DBG_LOG (1, "switching to m6502",
 						 ("active %d\n",cpu_getactivecpu()) );
-				memorycontextswap(1);
+				memory_set_context(1);
 				c128_bankswitch_128(reset);
-				memorycontextswap(0);
+				memory_set_context(0);
 				cpu_set_halt_line (1, 0);
 				cpu_set_halt_line (0, 1);
 			}

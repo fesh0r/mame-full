@@ -949,11 +949,11 @@ WRITE_HANDLER(dragon64_sam_himemmap)
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	if (offset) {
 		cpu_setbank(1, &RAM[0x8000]);
-		cpu_setbankhandler_w(1, dragon64_ram_w);
+		memory_set_bankhandler_w(1, 0, dragon64_ram_w);
 	}
 	else {
 		cpu_setbank(1, coco_rom);
-		cpu_setbankhandler_w(1, MWA_ROM);
+		memory_set_bankhandler_w(1, 0, MWA_ROM);
 	}
 }
 
@@ -1121,7 +1121,7 @@ static void coco3_mmu_update(int lowblock, int hiblock)
 	for (i = lowblock; i <= hiblock; i++) {
 		p = &RAM[coco3_mmu_translate(i, 0)];
 		cpu_setbank(i + 1, p);
-		cpu_setbankhandler_w(i + 1, ((p - RAM) >= 0x80000) ? MWA_ROM : handlers[i]);
+		memory_set_bankhandler_w(i + 1, 0, ((p - RAM) >= 0x80000) ? MWA_ROM : handlers[i]);
 #if LOG_MMU
 		logerror("CoCo3 GIME MMU: Logical $%04x ==> Physical $%05x\n",
 			(i == 8) ? 0xfe00 : i * 0x2000,

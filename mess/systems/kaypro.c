@@ -274,13 +274,13 @@ static struct MachineDriver machine_driver_kaypro =
 };
 
 ROM_START (kaypro)
-    ROM_REGION(0x10000,REGION_CPU1) /* 64K for the Z80 */
+    ROM_REGION(0x10000,REGION_CPU1,0) /* 64K for the Z80 */
     /* totally empty :) */
 
-    ROM_REGION(0x04000,REGION_GFX1)  /* 4 * 4K font ram */
+    ROM_REGION(0x04000,REGION_GFX1,0)  /* 4 * 4K font ram */
     ROM_LOAD ("kaypro2x.fnt", 0x0000, 0x1000, 0x5f72da5b)
 
-    ROM_REGION(0x01600,REGION_CPU2)  /* 5,5K for CCP and BDOS buffer */
+    ROM_REGION(0x01600,REGION_CPU2,0)  /* 5,5K for CCP and BDOS buffer */
     ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, 0xd10cd036)
 ROM_END
 

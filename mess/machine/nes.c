@@ -104,11 +104,11 @@ static void init_nes_core (void)
 			install_mem_read_handler(0, 0xa000, 0xbfff, MRA_BANK2);
 			install_mem_read_handler(0, 0xc000, 0xdfff, MRA_BANK3);
 			install_mem_read_handler(0, 0xe000, 0xffff, MRA_BANK4);
-			cpu_setbankhandler_r (1, MRA_BANK1);
-			cpu_setbankhandler_r (2, MRA_BANK2);
-			cpu_setbankhandler_r (3, MRA_BANK3);
-			cpu_setbankhandler_r (4, MRA_BANK4);
-			cpu_setbankhandler_r (5, MRA_BANK5);
+			memory_set_bankhandler_r (1, 0, MRA_BANK1);
+			memory_set_bankhandler_r (2, 0, MRA_BANK2);
+			memory_set_bankhandler_r (3, 0, MRA_BANK3);
+			memory_set_bankhandler_r (4, 0, MRA_BANK4);
+			memory_set_bankhandler_r (5, 0, MRA_BANK5);
 
 			install_mem_write_handler(0, 0x6000, 0x7fff, nes_mid_mapper_w);
 			install_mem_write_handler(0, 0x8000, 0xffff, nes_mapper_w);
@@ -1195,8 +1195,8 @@ int nes_load_rom (int id)
     free_memory_region (REGION_GFX1);
 
     /* Allocate them again with the proper size */
-    if( new_memory_region(REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000) ||
-        new_memory_region(REGION_GFX1, (nes.chr_chunks+1) * 0x2000) )
+    if( new_memory_region(REGION_CPU1, 0x10000 + (nes.prg_chunks+1) * 0x4000,0) ||
+        new_memory_region(REGION_GFX1, (nes.chr_chunks+1) * 0x2000,0) )
     {
         printf ("Memory allocation failed reading roms!\n");
         goto bad;

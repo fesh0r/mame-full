@@ -136,41 +136,41 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
 #define C1571_CPU VC1541_CPU
 
 #define VC1540_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("325302.01",  0xc000, 0x2000, 0x29ae9752) \
 	ROM_LOAD("325303.01",  0xe000, 0x2000, 0x10b39158)
 
 #define C2031_ROM(cpu) \
-		ROM_REGION(0x10000,cpu) \
+		ROM_REGION(0x10000,cpu,0) \
 		ROM_LOAD("dos2031",  0xc000, 0x4000, 0x21b80fdf)
 
 #if 1
 #define VC1541_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("325302.01",  0xc000, 0x2000, 0x29ae9752) \
 	ROM_LOAD("901229.05",  0xe000, 0x2000, 0x361c9f37)
 #else
 /* for this I have the documented rom listing in german */
 #define VC1541_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("325302.01",  0xc000, 0x2000, 0x29ae9752) \
 	ROM_LOAD("901229.03",  0xe000, 0x2000, 0x9126e74a)
 #endif
 
 #define DOLPHIN_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("c1541.rom",  0xa000, 0x6000, 0xbd8e42b2)
 
 #define C1551_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("318008.01",  0xc000, 0x4000, 0x6d16d024)
 
 #define C1570_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("315090.01",  0x8000, 0x8000, 0x5a0c7937)
 
 #define C1571_ROM(cpu) \
-	ROM_REGION(0x10000,cpu) \
+	ROM_REGION(0x10000,cpu,0) \
 	ROM_LOAD("310654.03",  0x8000, 0x8000, 0x3889b8b8)
 
 #if 0

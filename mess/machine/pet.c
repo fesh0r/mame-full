@@ -292,43 +292,43 @@ WRITE_HANDLER(cbm8096_w)
 {
 	if (data&0x80) {
 		if (data&0x40) {
-			cpu_setbankhandler_r(7, cbm8096_io_r);
-			cpu_setbankhandler_w(7, cbm8096_io_w);
+			memory_set_bankhandler_r(7, 0, cbm8096_io_r);
+			memory_set_bankhandler_w(7, 0, cbm8096_io_w);
 		} else {
-			cpu_setbankhandler_r(7, MRA_BANK7);
+			memory_set_bankhandler_r(7, 0, MRA_BANK7);
 			if (!(data&2)) {
-				cpu_setbankhandler_w(7,MWA_BANK7);
+				memory_set_bankhandler_w(7,0, MWA_BANK7);
 			} else {
-				cpu_setbankhandler_w(7,MWA_NOP);
+				memory_set_bankhandler_w(7,0, MWA_NOP);
 			}
 		}
 		if (!(data&2)) {
-			cpu_setbankhandler_w(6,MWA_BANK6);
-			cpu_setbankhandler_w(8,MWA_BANK8);
-			cpu_setbankhandler_w(9,MWA_BANK9);
+			memory_set_bankhandler_w(6,0, MWA_BANK6);
+			memory_set_bankhandler_w(8,0, MWA_BANK8);
+			memory_set_bankhandler_w(9,0, MWA_BANK9);
 		} else {
-			cpu_setbankhandler_w(6,MWA_NOP);
-			cpu_setbankhandler_w(8,MWA_NOP);
-			cpu_setbankhandler_w(9,MWA_NOP);
+			memory_set_bankhandler_w(6,0, MWA_NOP);
+			memory_set_bankhandler_w(8,0, MWA_NOP);
+			memory_set_bankhandler_w(9,0, MWA_NOP);
 		}
 		if (data&0x20) {
 			cpu_setbank(1,pet_memory+0x8000);
-			cpu_setbankhandler_w(1, videoram_w);
+			memory_set_bankhandler_w(1, 0, videoram_w);
 		} else {
 			if (!(data&1)) {
-				cpu_setbankhandler_w(1,MWA_BANK1);
+				memory_set_bankhandler_w(1,0, MWA_BANK1);
 			} else {
-				cpu_setbankhandler_w(1,MWA_NOP);
+				memory_set_bankhandler_w(1,0, MWA_NOP);
 			}
 		}
 		if (!(data&1)) {
-			cpu_setbankhandler_w(2,MWA_BANK2);
-			cpu_setbankhandler_w(3,MWA_BANK3);
-			cpu_setbankhandler_w(4,MWA_BANK4);
+			memory_set_bankhandler_w(2,0, MWA_BANK2);
+			memory_set_bankhandler_w(3,0, MWA_BANK3);
+			memory_set_bankhandler_w(4,0, MWA_BANK4);
 		} else {
-			cpu_setbankhandler_w(2,MWA_NOP);
-			cpu_setbankhandler_w(3,MWA_NOP);
-			cpu_setbankhandler_w(4,MWA_NOP);
+			memory_set_bankhandler_w(2,0, MWA_NOP);
+			memory_set_bankhandler_w(3,0, MWA_NOP);
+			memory_set_bankhandler_w(4,0, MWA_NOP);
 		}
 		if (data&4) {
 			if (!(data&0x20)) {
@@ -362,22 +362,22 @@ WRITE_HANDLER(cbm8096_w)
 		}
 	} else {
 		cpu_setbank(1,pet_memory+0x8000);
-		cpu_setbankhandler_w(1, videoram_w);
+		memory_set_bankhandler_w(1, 0, videoram_w);
 		cpu_setbank(2,pet_memory+0x9000);
-		cpu_setbankhandler_w(2, MWA_ROM);
+		memory_set_bankhandler_w(2, 0, MWA_ROM);
 		cpu_setbank(3,pet_memory+0xa000);
-		cpu_setbankhandler_w(3, MWA_ROM);
+		memory_set_bankhandler_w(3, 0, MWA_ROM);
 		cpu_setbank(4,pet_memory+0xb000);
-		cpu_setbankhandler_w(4, MWA_ROM);
+		memory_set_bankhandler_w(4, 0, MWA_ROM);
 
 		cpu_setbank(6,pet_memory+0xc000);
-		cpu_setbankhandler_w(6, MWA_ROM);
-		cpu_setbankhandler_r(7, cbm8096_io_r);
-		cpu_setbankhandler_w(7, cbm8096_io_w);
+		memory_set_bankhandler_w(6, 0, MWA_ROM);
+		memory_set_bankhandler_r(7, 0, cbm8096_io_r);
+		memory_set_bankhandler_w(7, 0, cbm8096_io_w);
 		cpu_setbank(8,pet_memory+0xf000);
-		cpu_setbankhandler_w(8, MWA_ROM);
+		memory_set_bankhandler_w(8, 0, MWA_ROM);
 		cpu_setbank(9,pet_memory+0xfff1);
-		cpu_setbankhandler_w(9, MWA_ROM);
+		memory_set_bankhandler_w(9, 0, MWA_ROM);
 	}
 }
 
@@ -478,11 +478,11 @@ void superpet_driver_init(void)
 	pet_common_driver_init ();
 
 	cpu_setbank(3, superpet_memory);
-	memorycontextswap(1);
+	memory_set_context(1);
 	cpu_setbank(1, pet_memory);
 	cpu_setbank(2, pet_memory+0x8000);
 	cpu_setbank(3, superpet_memory);
-	memorycontextswap(0);
+	memory_set_context(0);
 
 	superpet_vh_init();
 	crtc6845_init(crtc6845, &crtc_pet);

@@ -627,13 +627,13 @@ static struct MachineDriver machine_driver_sfzch =
 
 
 ROM_START( sfzch )
-	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
-	ROM_LOAD_WIDE_SWAP( "sfzch23",        0x000000, 0x80000, 0x1140743f )
-	ROM_LOAD_WIDE_SWAP( "sfza22",         0x080000, 0x80000, 0x8d9b2480 )
-	ROM_LOAD_WIDE_SWAP( "sfzch21",        0x100000, 0x80000, 0x5435225d )
-	ROM_LOAD_WIDE_SWAP( "sfza20",         0x180000, 0x80000, 0x806e8f38 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1,0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "sfzch23",        0x000000, 0x80000, 0x1140743f )
+	ROM_LOAD16_WORD_SWAP( "sfza22",         0x080000, 0x80000, 0x8d9b2480 )
+	ROM_LOAD16_WORD_SWAP( "sfzch21",        0x100000, 0x80000, 0x5435225d )
+	ROM_LOAD16_WORD_SWAP( "sfza20",         0x180000, 0x80000, 0x806e8f38 )
 
-	ROM_REGION( 0x800000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sfz03",         0x000000, 0x80000, 0x9584ac85 )
 	ROM_LOAD( "sfz07",         0x080000, 0x80000, 0xbb2c734d )
 	ROM_LOAD( "sfz12",         0x100000, 0x80000, 0xf122693a )
@@ -651,11 +651,11 @@ ROM_START( sfzch )
 	ROM_LOAD( "sfz11",         0x700000, 0x80000, 0xe35546c8 )
 	ROM_LOAD( "sfz15",         0x780000, 0x80000, 0x1aa17391 )
 
-	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+	ROM_REGION( 0x18000, REGION_CPU2,0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "sfz09",         0x00000, 0x08000, 0xc772628b )
 	ROM_CONTINUE(              0x10000, 0x08000 )
 
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1,0 )	/* Samples */
 	ROM_LOAD( "sfz18",         0x00000, 0x20000, 0x61022b2d )
 	ROM_LOAD( "sfz19",         0x20000, 0x20000, 0x3b5886d5 )
 ROM_END

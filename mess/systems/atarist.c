@@ -10,7 +10,7 @@
 		Floppy Drive B
 		Hard disk emu
 		Load complete disk image at once to avoid frameskip problems
-		
+
 
 	Keyboard Notes, due to differences between ST & PC keyboards:
 		Caps Lock is mapped to Right ALT
@@ -20,7 +20,7 @@
 		Keypad ( is mapped to F11
 		Keypad ) is mapped to F12
 		@ is mapped to tilde (~)
-		
+
 	Issues:
 		gau_658 (or 668?) Dungeon Master - keyboard doesn't work on menu screen
 		pp_35 - Castle Master hangs (timer A related?)
@@ -45,8 +45,8 @@ Machine:
 Vidhrdw:
 	Shifter chip emulation
 	Blitter chip emulation
-	
-	
+
+
 *******************************************************************************/
 
 #include "driver.h"
@@ -73,7 +73,7 @@ unsigned char *atarist_fakehdc_ram;
 static int atarist_options;
 
 static int atarist_vidram_base;
- 
+
 static int wd1772_active=0;
 
 // move to struct
@@ -89,7 +89,7 @@ struct MFP {
 	UINT8 ieb,ipb,imb,isb;
 	UINT8 tacr,tbcr,tcdcr;
 	UINT8 taty,tbty;
-	UINT8 tarl,tbrl,tcrl,tdrl; 
+	UINT8 tarl,tbrl,tcrl,tdrl;
 	int tadr,tbdr,tcdr,tddr;
 	int timer_c_cycles;
 	void *timer_a,*timer_b,*timer_c,*timer_d;
@@ -111,7 +111,7 @@ static void mfp_init(void)
 int atarist_vh_start(void)
 {
 	int i;
-	
+
 	for (i=0; i<512; i++)
 		palette_change_color(i,((i>>6)&7)*0x24,((i>>3)&7)*0x24,(i&7)*0x24);
 
@@ -146,14 +146,14 @@ void atarist_drawline(int line, int start, int end)
 
 	if (line<60) return;
 	if (line>304) return;
-	
+
 //	if (resolution==0) line=line*2; /* Pixel doubling in low-res */
 
 if (current_pixel!=96) return; //hmm
 
 	bm = (unsigned short *)Machine->scrbitmap->line[line]+start*2;
-//	for (x=0; x<640; x+=32) {	
-	for (x=0; x<(end-start)*2; x+=16) {		
+//	for (x=0; x<640; x+=32) {
+	for (x=0; x<(end-start)*2; x+=16) {
 		p1 = READ_WORD(&atarist_ram[d+0]);
 		p2 = READ_WORD(&atarist_ram[d+2]);
 		p3 = READ_WORD(&atarist_ram[d+4]);
@@ -243,7 +243,7 @@ if (current_pixel!=96) return; //hmm
 //	if (resolution==0) {
 //		bm = Machine->scrbitmap->line[line+1];
 //		bn = Machine->scrbitmap->line[line];
-//		for (x=0; x<640; x++) 		
+//		for (x=0; x<640; x++)
 //			bm[x]=bn[x];
 //	}
 
@@ -253,10 +253,10 @@ if (current_pixel!=96) return; //hmm
 void atarist_pixel_update(void)
 {
 	int c=512-cpu_geticount(); /* 512 cycles per line */
-	
+
 	/* Are in left border? If so we don't need to update this line */
 	if (c<96) return;
-		
+
 	/* Are we in right border?  If so, we can draw entire line */
 //	if (c>415) {
 		atarist_drawline(current_line,96/*current_pixel*/,(320+96)*2);
@@ -277,15 +277,15 @@ void atarist_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /***************************************************************************/
 
-static READ_HANDLER( atarist_psg_r ) 
-{ 
-	return AY8910_read_port_0_r(0)<<8; 
+static READ_HANDLER( atarist_psg_r )
+{
+	return AY8910_read_port_0_r(0)<<8;
 }
 
-static WRITE_HANDLER( atarist_psg_w ) 
+static WRITE_HANDLER( atarist_psg_w )
 {
 	offset&=3; /* Mirror addresses */
-	if (offset) 
+	if (offset)
 		AY8910_write_port_0_w(0,(data>>8)&0xff);
 	else
 		AY8910_control_port_0_w(0,(data>>8)&0xff);
@@ -334,23 +334,23 @@ static void timer_c_callback(int param)
 }
 
 static void timer_d_callback(int param)
-{	
+{
 	if (mfp.ieb&0x10) { /* Interrupt enabled */
 		mfp.ipb=mfp.ipb|0x10; /* Set pending interrupt bit */
-		logerror("Timer D IRQ fired!\n");	
+		logerror("Timer D IRQ fired!\n");
 		if (mfp.imb&0x10)
 			atarist_mfp_interrupt(4);
-	} 
+	}
 }
 
 
 /* MFP Master Clock is 2,457,600 cycles/second */
-static READ_HANDLER( atarist_mfp_r ) 
-{ 
+static READ_HANDLER( atarist_mfp_r )
+{
 	switch (offset) {
 	case 0x00: /* General purpose IO */
 //		logerror("%06x: MFP 00 read\n", cpu_get_pc());
-		return 0x80 | mfp.genr | wd1772_active; //wd1772_active=0x20 for BUSY 	
+		return 0x80 | mfp.genr | wd1772_active; //wd1772_active=0x20 for BUSY
 	case 0x02: /* Active Edge Register */
 //		logerror("%06x: MFP 02 read\n", cpu_get_pc());
 		return mfp.aer;
@@ -414,16 +414,16 @@ if (mfp.timer_c)
 		return mfp.tcdr&0xff;
 	case 0x24: /* Timer D data register (TDDR) */
 		logerror("Timer D read - unsupported\n");
-		return mfp.tddr&0xff; 
+		return mfp.tddr&0xff;
 	}
 
 	logerror("%06x:  Unmapped mfp read %02x\n",cpu_get_pc(),offset);
 
-	return 0; 
+	return 0;
 }
 
-static WRITE_HANDLER( atarist_mfp_w ) 
-{ 
+static WRITE_HANDLER( atarist_mfp_w )
+{
 	switch (offset) {
 
 	case 0x02: /* Active edge register */
@@ -432,7 +432,7 @@ static WRITE_HANDLER( atarist_mfp_w )
 	case 0x04: /* Data direction register */
 		mfp.ddr=data&0xff;
 		return;
-		
+
 	case 0x06: /* Interrupt Enable A */
 		mfp.iea=data&0xff;
 		return;
@@ -444,11 +444,11 @@ static WRITE_HANDLER( atarist_mfp_w )
 		return;
 	case 0x12: /* Interrupt Mask A */
 		mfp.ima=data&0xff;
-		return;		
+		return;
 
 	case 0x08: /* Interrupt Enable B */
 		mfp.ieb=data&0xff;
-		return; 
+		return;
 	case 0x0c: /* Interrupt Pending B */
 		mfp.ipb=data&0xff;
 		return;
@@ -482,7 +482,7 @@ static WRITE_HANDLER( atarist_mfp_w )
 			logerror("Timer A event count enabled\n");
 			mfp.taty=EVENT;
 		}
-		
+
 		/* Not implemented : Pulse-width timer (nothing uses it anyway) */
 		if ((data&0xf)>0x8) {
 			logerror("Timer A set to pulse width mode...\n");
@@ -503,7 +503,7 @@ static WRITE_HANDLER( atarist_mfp_w )
 			if (((MASTER_CLOCK/MK68901_CLOCK)*mfp.tbrl*precounter[data&7])>511) /* Dont fire less than this */
 				mfp.timer_b=timer_pulse(TIME_IN_CYCLES((MASTER_CLOCK/MK68901_CLOCK)*mfp.tbrl*precounter[data&7],0), 0, timer_b_callback);
 			else logerror("Pulse period too high - timer not set\n");
-			
+
 			mfp.tbty=DELAY;
 		}
 		if ((data&0x8)!=0 && mfp.timer_b==NULL) { /* Timer B started, from stopped state */
@@ -603,23 +603,23 @@ static void atarist_fake_ikbd_w(int data)
 			bufpos=0;
 			switch (current_command) {
 				case 0x07: /* Set mouse button mode */
-					logerror("IKBD: Mouse keycode button mode (%d) (default)\n",input_buffer[0]);	
+					logerror("IKBD: Mouse keycode button mode (%d) (default)\n",input_buffer[0]);
 					break;
 				case 0x09: /* Set mouse max */
 					mouse_max[0]=(input_buffer[0]<<8)|input_buffer[1];
-					mouse_max[1]=(input_buffer[2]<<8)|input_buffer[3];	
-					logerror("IKBD: Mouse maximum set to %d %d\n",mouse_max[0],mouse_max[1]);				
+					mouse_max[1]=(input_buffer[2]<<8)|input_buffer[3];
+					logerror("IKBD: Mouse maximum set to %d %d\n",mouse_max[0],mouse_max[1]);
 					break;
 				case 0x0a: /* Set mouse keycode mode */
-					logerror("IKBD: Mouse keycode mode set (%d %d) (unimplemented)\n",input_buffer[0],input_buffer[1]);	
+					logerror("IKBD: Mouse keycode mode set (%d %d) (unimplemented)\n",input_buffer[0],input_buffer[1]);
 					break;
 				case 0x0b: /* Set mouse threshold */
-					logerror("IKBD: Mouse threshold set to %d %d (unimplemented)\n",input_buffer[0],input_buffer[1]);	
+					logerror("IKBD: Mouse threshold set to %d %d (unimplemented)\n",input_buffer[0],input_buffer[1]);
 					break;
 				case 0x0e: /* Set mouse position */
 					mouse_position[0]=(input_buffer[1]<<8)|input_buffer[2];
-					mouse_position[1]=(input_buffer[3]<<8)|input_buffer[4];	
-					logerror("IKBD: Mouse position set to %d %d\n",mouse_position[0],mouse_position[1]);				
+					mouse_position[1]=(input_buffer[3]<<8)|input_buffer[4];
+					logerror("IKBD: Mouse position set to %d %d\n",mouse_position[0],mouse_position[1]);
 					break;
 				case 0x80:
 					logerror("IKBD: Reset\n");
@@ -673,7 +673,7 @@ static void atarist_fake_ikbd_w(int data)
 			acia_buffer[(acia_bufpos++)&0x3f]=mouse_position[1]>>8;
 			acia_buffer[(acia_bufpos++)&0x3f]=mouse_position[1]&0xff;
 			last_mouse_fire=mouse_fire;
-			acia_bufptr+=6;	
+			acia_bufptr+=6;
 			break;
 		case 0x0e: /* Load mouse position - requires 5 bytes */
 			current_command=data;
@@ -694,11 +694,11 @@ static void atarist_fake_ikbd_w(int data)
 		case 0x13:
 			logerror("IKBD: Output paused (unsupported)\n");
 			break;
-		case 0x14: 
+		case 0x14:
 			acia_joystick_event_mode=1;
 			logerror("IKBD: Joystick event mode enabled\n");
 			break;
-		case 0x15: 
+		case 0x15:
 			acia_joystick_event_mode=0;
 			logerror("IKBD: Joystick interrogation mode enabled\n");
 			break;
@@ -706,7 +706,7 @@ static void atarist_fake_ikbd_w(int data)
 			acia_buffer[(acia_bufpos++)&0x3f]=0xfd;
 			acia_buffer[(acia_bufpos++)&0x3f]=(readinputport(4)>>7) | (readinputport(5)>>6);
 			acia_buffer[(acia_bufpos++)&0x3f]=(readinputport(4)&0xf) | ((readinputport(5)<<4)&0xf0);
-			acia_bufptr+=3;	
+			acia_bufptr+=3;
 			break;
 		case 0x80: /* Reset */
 			current_command=data;
@@ -720,8 +720,8 @@ static void atarist_fake_ikbd_w(int data)
 	last_frame[1]=new_frame[1];
 }
 
-static READ_HANDLER( atarist_acia_r ) 
-{ 
+static READ_HANDLER( atarist_acia_r )
+{
 	int a;
 
 //	logerror("%06x: ikbd read %02x\n", cpu_get_pc(),offset);
@@ -738,13 +738,13 @@ static READ_HANDLER( atarist_acia_r )
 		return a<<8;
 	case 4: return (0xe)<<8;
 	case 6: return 0;
-	
+
 	}
-	return 0; 
+	return 0;
 }
 
-static WRITE_HANDLER( atarist_acia_w ) 
-{ 
+static WRITE_HANDLER( atarist_acia_w )
+{
 logerror("%06x: ikbd write %02x %04x\n", cpu_get_pc(),offset,data);
 
 	if (offset==2) atarist_fake_ikbd_w((data>>8)&0xff);
@@ -767,14 +767,14 @@ static void atarist_keyboard_update(void)
 		if (acia_joystick_event_mode && diff[5]) {
 			acia_buffer[(acia_bufpos++)&0x3f]=0xfe;
 			acia_buffer[(acia_bufpos++)&0x3f]=new_frame[5];
-			acia_bufptr+=2;	
+			acia_bufptr+=2;
 		}
 	} else { /* Return values only if event mode is turned on */
-		if (acia_mouse_event_mode && (diff[1] || diff[2] || diff[3])) { 
+		if (acia_mouse_event_mode && (diff[1] || diff[2] || diff[3])) {
 			acia_buffer[(acia_bufpos++)&0x3f]=0xf8 | new_frame[3];
 			acia_buffer[(acia_bufpos++)&0x3f]=(new_frame[1]-last_frame[1])&0xff;
 			acia_buffer[(acia_bufpos++)&0x3f]=(new_frame[2]-last_frame[2])&0xff;
-			acia_bufptr+=3;	
+			acia_bufptr+=3;
 		}
 	}
 
@@ -782,7 +782,7 @@ static void atarist_keyboard_update(void)
 	if (acia_joystick_event_mode && diff[4] && atarist_options&0x20) {
 		acia_buffer[(acia_bufpos++)&0x3f]=0xff;
 		acia_buffer[(acia_bufpos++)&0x3f]=new_frame[4];
-		acia_bufptr+=2;	
+		acia_bufptr+=2;
 	}
 
 	/* Keyboard inputs */
@@ -793,11 +793,11 @@ static void atarist_keyboard_update(void)
 
 			if (a==1 && b==0) { /* Key pressed */
 				acia_buffer[(acia_bufpos++)&0x3f]=key_ptr;
-				acia_bufptr++;	
+				acia_bufptr++;
 			}
 			if (a==0 && b==1) { /* Key released */
 				acia_buffer[(acia_bufpos++)&0x3f]=key_ptr | 0x80;
-				acia_bufptr++;	
+				acia_bufptr++;
 			}
 
 			key_ptr++; /* Step through scancodes */
@@ -830,7 +830,7 @@ struct FDC {
 	UINT8 dma_select;
 	UINT8 dma_direction;
 	int dma_base;
-	int dma_bytes_remaining;	
+	int dma_bytes_remaining;
 } fdc;
 
 void atarist_dma_transfer(void)
@@ -885,8 +885,8 @@ void atarist_fdc_callback(int event)
 	}
 }
 
-static READ_HANDLER( atarist_fdc_r ) 
-{ 
+static READ_HANDLER( atarist_fdc_r )
+{
 	switch (offset) {
 		case 0: /* Reserved (unused) */
 		case 2:
@@ -896,19 +896,19 @@ static READ_HANDLER( atarist_fdc_r )
 			switch (fdc.reg_select&0xf) {
 				/* A0/A1 pins on wd179x controller */
 				case 0: fdc.dma_status=1; return wd179x_status_r(0);
-				case 1: fdc.dma_status=1; return wd179x_track_r(0); 
-				case 2: fdc.dma_status=1; return wd179x_sector_r(0); 
+				case 1: fdc.dma_status=1; return wd179x_track_r(0);
+				case 2: fdc.dma_status=1; return wd179x_sector_r(0);
 				case 3: fdc.dma_status=1; return wd179x_data_r(0);
-				
+
 				/* HDC register select - Unimplemented */
 				case 4: case 5: case 6: case 7:
 					fdc.dma_status=0; /* Force DMA error on hard-disk accesses */
 					break;
-					
+
 				/* DMA sector count register */
 				default: /* cases 8-15 */
 					logerror("Sector count register read %02x\n",fdc.dma_sector_count);
-					fdc.dma_status=1; 
+					fdc.dma_status=1;
 					return fdc.dma_sector_count;
 			}
 			break;
@@ -920,8 +920,8 @@ static READ_HANDLER( atarist_fdc_r )
 	return 0xff;
 }
 
-static WRITE_HANDLER( atarist_fdc_w ) 
-{ 
+static WRITE_HANDLER( atarist_fdc_w )
+{
 	switch (offset) {
 		case 0: /* Unused */
 		case 2:
@@ -933,7 +933,7 @@ static WRITE_HANDLER( atarist_fdc_w )
 				case 1: wd179x_track_w(0, data&0xff); break;
 				case 2: wd179x_sector_w(0, data&0xff); break;
 				case 3: wd179x_data_w(0, data&0xff); break;
-				
+
 				/* HDC register select - Unimplemented */
 				case 4: case 5: case 6: case 7:
 					break;
@@ -1004,7 +1004,7 @@ static char *get_hdc_string(int param)
 			filebuf[i+2]=READ_WORD(&ram_ptr[(addr+i+2)&0x3fffff])&0xff;
 			if (!filebuf[i] || !filebuf[i+1])
 				break;
-		}		
+		}
 	} else {
 		for (i=0; i<254; i+=2) {
 			filebuf[i]=READ_WORD(&ram_ptr[(addr+i)&0x3fffff])>>8;
@@ -1055,7 +1055,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 			case 0x0e: /* Set default drive, we want to hook all Drive C commands */
 				atarist_current_drive=READ_WORD(&atarist_fakehdc_ram[HDC_PARAM0]);
 				logerror("Default drive is %04x\n",atarist_current_drive);
-				if (atarist_current_drive==0x0002) 
+				if (atarist_current_drive==0x0002)
 					ok_to_go=1; /* Drive C selected - we are ok to process commands */
 				else
 					ok_to_go=0; /* Not Drive C - we want to ignore any commands until Drive C is selected again */
@@ -1066,17 +1066,17 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 				logerror("Filemask %s requested\n",str_ptr);
 
 				/* Always allow drive C queries */
-				if ((str_ptr[0]=='C' || str_ptr[0]=='c') 
+				if ((str_ptr[0]=='C' || str_ptr[0]=='c')
 				&& (str_ptr[1]==':' && str_ptr[2]=='\\')) {
 				 	ok_to_go=1;
-				 	str_ptr+=3; 
+				 	str_ptr+=3;
 				}
-				
+
 				/* Strip leading slashes */
 				if (str_ptr[0]=='\\' && ok_to_go) {
-					str_ptr++;	
+					str_ptr++;
 				}
-				
+
 				if (ok_to_go) {
 					if (osd_findfirst(str_ptr,0)==0) {
 						char *ptr=osd_getfindfilename();
@@ -1084,7 +1084,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 						int d=osd_getfinddate();
 						int t=osd_getfindtime();
 						int a=osd_getfindattributes();
-						
+
 						if (ptr) {
 							WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+30],((ptr[0]<<8)|ptr[1])); /* Filename */
 							WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+32],((ptr[2]<<8)|ptr[3])); /* Filename */
@@ -1099,8 +1099,8 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 						WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+26],   s>>16); /* Filesize */
 						WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+28],s&0xffff); /* Filesize */
 
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0); /* F_SNEXT is ok to run */	
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0); 
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0); /* F_SNEXT is ok to run */
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0);
 
 						logerror("Found mask %s ok. (cpu %06x)\n",str_ptr,cpu_get_pc());
 
@@ -1110,11 +1110,11 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 					else {
 						logerror("Found mask %s failed.\n",str_ptr);
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0);
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],1); /* Flag F_SNEXT to fail also */					
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],1); /* Flag F_SNEXT to fail also */
 					}
 				}
 				break;
-				
+
 			case 0x4f: /* F_SNEXT - Find next file after a Ffirst */
 				if (ok_to_go) {
 					if (osd_findnext()==0) {
@@ -1123,7 +1123,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 						int d=osd_getfinddate();
 						int t=osd_getfindtime();
 						int a=osd_getfindattributes();
-	
+
 						if (ptr) {
 							WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+30],((ptr[0]<<8)|ptr[1])); /* Filename */
 							WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+32],((ptr[2]<<8)|ptr[3])); /* Filename */
@@ -1137,17 +1137,17 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 						WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+24],d&0xffff); /* Date */
 						WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+26],   s>>16); /* Filesize */
 						WRITE_WORD(&atarist_ram[(dta_low|(dta_high<<16))+28],s&0xffff); /* Filesize */
-	
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0); /* F_SNEXT is ok to run */	
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0); 
+
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0); /* F_SNEXT is ok to run */
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0);
 					} else {
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0);
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],1);
- 					} 
+ 					}
  					return;
 				}
 				break;
-				
+
 			case 0x1a: /* Set Disk transfer address */
 				dta_high=READ_WORD(&atarist_fakehdc_ram[HDC_PARAM0]);
 				dta_low =READ_WORD(&atarist_fakehdc_ram[HDC_PARAM1]);
@@ -1155,7 +1155,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 
 			case 0x36: /* Free disk space */
 				logerror("Free disk space\n");
-				break;			
+				break;
 
 			case 0x39: /* Create Directory */
 				logerror("Create Directory\n");
@@ -1168,7 +1168,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 			case 0x3b: /* Set current directory */
 /* defined but not used */
 /*				str_ptr=get_hdc_string(HDC_PARAM0); */
-				logerror("Change directory to %s requested\n",str_ptr);	
+				logerror("Change directory to %s requested\n",str_ptr);
 				break;
 
 			case 0x3d: /* Open file */
@@ -1203,27 +1203,27 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 
 						addr=((READ_WORD(&atarist_fakehdc_ram[HDC_PARAM3])<<16)|READ_WORD(&atarist_fakehdc_ram[HDC_PARAM4]))&0xffffff;
 						buf2=atarist_ram+(addr&0x3fffff);
-						
+
 						if (addr&1) logerror("WARNING - LOAD TO ODD ADDRESS!!!\n");
 						if (bufsize&1) logerror("WARNING - LOAD WITH ODD SIZE!!!\n");
 
 						do {
-							if (todo<16384)			
+							if (todo<16384)
 								len=osd_fread(file0,buf,todo);
-							else 
+							else
 								len=osd_fread(file0,buf,16384);
 
-							for (i=0; i<len; i+=2) 
+							for (i=0; i<len; i+=2)
 								WRITE_WORD(&buf2[i+count],(buf[i]<<8)|buf[i+1]);
 				//TODO!! Odd address loading..
 							count+=len;
-						
+
 						} while (count<bufsize && len);
-					
+
 						logerror("Read file (handle %04x) to addr %06x, size %d bytes, read %d ok\n",READ_WORD(&atarist_fakehdc_ram[HDC_PARAM0]),addr,bufsize,count);
-			
+
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],count>>16); /* Number of bytes read */
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],count&0xffff);		
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],count&0xffff);
 						free(buf);
 					} else {
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0xffff); /* Error (Negative) */
@@ -1232,7 +1232,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 					return;
 				}
 				break;
-				
+
 			case 0x3e: /* Close file */
 				logerror("Close file (handle %04x)\n",READ_WORD(&atarist_fakehdc_ram[HDC_PARAM0]));
 				if (ok_to_go) {
@@ -1242,11 +1242,11 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 						osd_fclose(file0);
 					} else {
 						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN],0xffff); /* Error (Negative) */
-						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0xffff);	
+						WRITE_WORD(&atarist_fakehdc_ram[HDC_RETURN+2],0xffff);
 					}
 					return;
 				}
-				break;				
+				break;
 
 			case 0x40: /* Write file */
 				logerror("Write file\n");
@@ -1255,7 +1255,7 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 			case 0x42: /* Seek file position */
 				logerror("Seek file\n");
 				break;
-				
+
 			case 0x4b: /* Load/Execute a process */
 				str_ptr=get_hdc_string(HDC_PARAM1);
 				if (*str_ptr) {
@@ -1288,26 +1288,26 @@ static WRITE_HANDLER(atarist_fakehdc_w)
 					/* Load the header */
 					len=osd_fread(file0,buf,0x1c);
 					buf2=atarist_ram+(addr&0x3fffff);
-					for (i=0; i<len; i+=2) 
+					for (i=0; i<len; i+=2)
 						WRITE_WORD(&buf2[i+228],(buf[i]<<8)|buf[i+1]);
 
 					/* Load the main program */
 					do {
 						len=osd_fread(file0,buf,65536);
-						for (i=0; i<len; i+=2) 
+						for (i=0; i<len; i+=2)
 							WRITE_WORD(&buf2[i+256+count],(buf[i]<<8)|buf[i+1]);
 						count+=len;
 					} while (len);
-					
+
 					free(buf);
 				}
 				osd_fclose(file0);
-				
+
 				return;
 			}
-		
+
 		/* If we didn't handle this Trap command, let TOS handle it by flagging the status */
-		WRITE_WORD(&atarist_fakehdc_ram[HDC_STATUS],1); 
+		WRITE_WORD(&atarist_fakehdc_ram[HDC_STATUS],1);
 	}
 #endif
 }
@@ -1402,7 +1402,7 @@ logerror("Doing blit\n");
 	blitter.hop=(READ_WORD(&atarist_blitter_ram[0x3a])>>8)&3;
 	blitter.op=READ_WORD(&atarist_blitter_ram[0x3a])&0xf;
 	blitter.skew=READ_WORD(&atarist_blitter_ram[0x3c])&0xf;
-		
+
 	/* Each blitter line is in 3 parts, according to the 3 masks (start, middle, end) */
 	while (y_count>0) {
 		if (blitter.fxsr) {
@@ -1426,7 +1426,7 @@ logerror("Doing blit\n");
 			dst_data=READ_WORD(&atarist_ram[dest_addr]);
 			blitter_op(blitter.op,dest_addr,src_data,dst_data,end_mask2);
 		}
-	
+
 		/* End */
 		if (x_count>2) {
 			dest_addr+=dst_x_inc;
@@ -1435,7 +1435,7 @@ logerror("Doing blit\n");
 				source_addr += src_x_inc;
 				BLITTER_DO_SOURCE;
 			} else if (src_x_inc<0) source_buffer >>=16; else source_buffer <<=16;
-			
+
 			BLITTER_DO_HOP;
 			dst_data=READ_WORD(&atarist_ram[dest_addr]);
 			blitter_op(blitter.op,dest_addr,src_data,dst_data,end_mask3);
@@ -1449,13 +1449,13 @@ logerror("Doing blit\n");
 		y_count--;
 	}
 	WRITE_WORD(&atarist_blitter_ram[0x24],source_addr>>16);
-	WRITE_WORD(&atarist_blitter_ram[0x26],source_addr&0xffff);	
+	WRITE_WORD(&atarist_blitter_ram[0x26],source_addr&0xffff);
 	WRITE_WORD(&atarist_blitter_ram[0x32],dest_addr>>16);
-	WRITE_WORD(&atarist_blitter_ram[0x34],dest_addr&0xffff);	
+	WRITE_WORD(&atarist_blitter_ram[0x34],dest_addr&0xffff);
 	WRITE_WORD(&atarist_blitter_ram[0x38],0); /* Y count */
 }
 
-static READ_HANDLER( atarist_blitter_r ) 
+static READ_HANDLER( atarist_blitter_r )
 {
 //	logerror("%06x:  blitter read %02x\n",cpu_get_pc(),offset);
 	if (offset==0x3c) return READ_WORD(&atarist_blitter_ram[0x3c])&0x3fff;
@@ -1471,12 +1471,12 @@ if (offset==0x3c) logerror("%06x:  blitter write %02x %04x\n",cpu_get_pc(),offse
 //if (offset==0x22) logerror("%06x:  blitter write yinc %02x %04x\n",cpu_get_pc(),offset,data);
 
 	if (offset==0x3c) {
-		if ((data&0xffff8000)==0x8000) do_blit();	
+		if ((data&0xffff8000)==0x8000) do_blit();
 	}
 }
 
-static READ_HANDLER( atarist_shifter_r ) 
-{ 
+static READ_HANDLER( atarist_shifter_r )
+{
 	/* Video ram base: $ffff8200 and $ffff8202 */
 	if (offset==0x0)
 		return (atarist_vidram_base>>16)&0xff;
@@ -1490,7 +1490,7 @@ static READ_HANDLER( atarist_shifter_r )
 
 		/* Are in left border? If so we haven't yet started drawing this line */
 		if (c<96) return ((atarist_vidram_base+atarist_shifter_offset)>>8)&0xff;
-		
+
 		/* Are we in right border?  If so, we have drawn 320 pixels (160 bytes) */
 		if (c>415) return ((atarist_vidram_base+atarist_shifter_offset+160)>>8)&0xff;
 
@@ -1499,11 +1499,11 @@ static READ_HANDLER( atarist_shifter_r )
 	if (offset==0x8) { /* Current screen address being rendered by shifter (low byte) */
 		int c=512-cpu_geticount(); /* 512 cycles per line */
 
-	logerror("%06x: render read low byte\n",cpu_get_pc());			
+	logerror("%06x: render read low byte\n",cpu_get_pc());
 
 		/* Are in left border? If so we haven't yet started drawing this line */
 		if (c<96) return (atarist_vidram_base+atarist_shifter_offset)&0xfe;
-		
+
 		/* Are we in right border?  If so, we have drawn 320 pixels (160 bytes) */
 		if (c>415) return (atarist_vidram_base+atarist_shifter_offset+160)&0xfe;
 
@@ -1519,26 +1519,26 @@ static READ_HANDLER( atarist_shifter_r )
 		return READ_WORD(&paletteram[offset&0x1e]);
 
 	/* Shifter resolution */
-	if (offset==0x60) 
+	if (offset==0x60)
 		return resolution<<8;
 
 
 	logerror("%06x:  Unmapped video read %02x\n",cpu_get_pc(),offset);
 
-	
-	return 0; 
+
+	return 0;
 }
 
-static WRITE_HANDLER( atarist_shifter_w ) 
+static WRITE_HANDLER( atarist_shifter_w )
 {
 	if (offset==0) { /* Video ram base: $ffff8200 and $ffff8202 */
 		logerror("Switched screen base at line %d\n",current_line);
-		atarist_pixel_update(); /* Update line for all pixels already drawn */ 
+		atarist_pixel_update(); /* Update line for all pixels already drawn */
 		atarist_vidram_base=(atarist_vidram_base&0xff00)|((data&0xff)<<16);
 		return;
 	}
 	if (offset==2) {
-		atarist_pixel_update(); /* Update line for all pixels already drawn */ 
+		atarist_pixel_update(); /* Update line for all pixels already drawn */
 		atarist_vidram_base=(atarist_vidram_base&0xff0000)|((data&0xff)<<8);
 		return;
 	}
@@ -1552,7 +1552,7 @@ static WRITE_HANDLER( atarist_shifter_w )
 			end_line=start_line+200;
 			logerror("%06x: Sync changed to %s (line %d)\n",cpu_get_pc(),t[(data>>9)&1],current_line);
 		}
-	
+
 		shifter_sync=data&0x200;
 		return;
 	}
@@ -1562,7 +1562,7 @@ static WRITE_HANDLER( atarist_shifter_w )
 		int d;
 
 //		atarist_pixel_update(); /* Update line for all pixels already drawn */
-		
+
 		COMBINE_WORD_MEM(&paletteram[offset&0x1f],data);
 		d=READ_WORD(&paletteram[offset&0x1f]);
 		pal_lookup[(offset&0x1f)/2]=(d&7) | ((d&0x70)>>1) | ((d&0x700)>>2);
@@ -1605,7 +1605,7 @@ static struct MemoryReadAddress atarist_readmem[] =
 	{ 0x000008, 0x3fffff, MRA_RAM },	/* User RAM */
 	{ 0xfa0000, 0xfbffff, MRA_BANK1 },	/* User ROM */
 	{ 0xfc0000, 0xfeffff, MRA_BANK2 },	/* System ROM */
-	{ 0xef0000, 0xef01ff, atarist_fakehdc_r },	
+	{ 0xef0000, 0xef01ff, atarist_fakehdc_r },
 	{ 0xff8000, 0xff8007, atarist_mmu_r },
 	{ 0xff8200, 0xff82ff, atarist_shifter_r },
 	{ 0xff8600, 0xff860f, atarist_fdc_r },
@@ -1630,7 +1630,7 @@ static struct MemoryWriteAddress atarist_writemem[] =
 	{ 0xfa0000, 0xfbffff, MWA_BANK1 },	/* User ROM */ //todo!
 	{ 0xfc0000, 0xfeffff, MWA_ROM },	/* System ROM */
 
-	{ 0xef0000, 0xef01ff, atarist_fakehdc_w, &atarist_fakehdc_ram },		 
+	{ 0xef0000, 0xef01ff, atarist_fakehdc_w, &atarist_fakehdc_ram },
 	{ 0xff8000, 0xff8001, atarist_mmu_w },
 	{ 0xff8200, 0xff82ff, atarist_shifter_w, &paletteram },
 	{ 0xff8600, 0xff860f, atarist_fdc_w },
@@ -1735,7 +1735,7 @@ INPUT_PORTS_START( atarist )
 	PORT_BITX(0x2000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A,  IP_JOY_NONE )
 	PORT_BITX(0x4000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "S", KEYCODE_S,  IP_JOY_NONE )
 	PORT_BITX(0x8000, IP_ACTIVE_HIGH, IPT_KEYBOARD, "D", KEYCODE_D,  IP_JOY_NONE )
-	
+
 	PORT_START
 	PORT_BITX(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F,  IP_JOY_NONE )
 	PORT_BITX(0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G,  IP_JOY_NONE )
@@ -1854,22 +1854,22 @@ static int atarist_basic_floppy_init(int id)
 			int table[][4]={
 				{ 808960, 10, 2, 79 }, /* 79 tracks, 2 sides, 10 sectors */
 				{ 819200, 10, 2, 80 }, /* 80 tracks, 2 sides, 10 sectors */
-				{ 829440, 10, 2, 81 }, 
-				{ 839680, 10, 2, 82 }, 
-				{ 849920, 10, 2, 83 }, 
+				{ 829440, 10, 2, 81 },
+				{ 839680, 10, 2, 82 },
+				{ 849920, 10, 2, 83 },
 
 				{ 728064, 9, 2, 79 }, /* 79 tracks, 2 sides, 9 sectors */
-				{ 737280, 9, 2, 80 }, 
-				{ 746496, 9, 2, 81 }, 
-				{ 755712, 9, 2, 82 }, 
-				{ 764928, 9, 2, 83 }, 
+				{ 737280, 9, 2, 80 },
+				{ 746496, 9, 2, 81 },
+				{ 755712, 9, 2, 82 },
+				{ 764928, 9, 2, 83 },
 
 				};
 
 			for (i=0; i<10; i++)
 				if (s==table[i][0]) {
 					f=1;
-					basicdsk_set_geometry(id, table[i][3], table[i][2], table[i][1], 512, 1 );	
+					basicdsk_set_geometry(id, table[i][3], table[i][2], table[i][1], 512, 1 );
 				}
 
 			if (f==0) { /* No standard format found - take data from the bootsector */
@@ -1877,27 +1877,27 @@ static int atarist_basic_floppy_init(int id)
 
 				osd_fseek(file, 0, SEEK_SET);
 
-				if (osd_fread(file, bootsector, 512)) 
+				if (osd_fread(file, bootsector, 512))
 				{
 					int sectors, head, tracks;
 
 					sectors=bootsector[0x18];
 					head=bootsector[0x1a];
 					tracks=(bootsector[0x13]|(bootsector[0x14]<<8))/sectors/head;
-				
+
 					/* set geometry so disk image can be read */
 					basicdsk_set_geometry(id, tracks, head, sectors, 512, 1);
 
 					logerror("Drive %c: Using %d tracks, %d sectors, %d sides for disk image (values from bootsector).\n",'A'+id, tracks, sectors, head );
 				}
 			}
-	
+
 			osd_fclose(file);
 
 			atari_st_image_type[id] = ATARI_ST_IMAGE_TYPE_RAW;
 			return INIT_OK;
 		}
-		else logerror("Disk open failed\n");	
+		else logerror("Disk open failed\n");
 	}
 
 	return INIT_FAILED;
@@ -1954,25 +1954,25 @@ static void atarist_eof_callback(void)
 {
 	static int last_mem=-1;
 	int mid,new_mem=readinputport(0)&6;
-	
-	
+
+
 	/* Check if the user has changed memory configuration */
 	if (new_mem!=last_mem) {
 		switch (new_mem) {
 			case 0x02: logerror("Memory set to 512k\n"); mid=0x80000; break;
 			case 0x04: logerror("Memory set to 1 Meg\n"); mid=0x100000; break;
 			case 0x06: logerror("Memory set to 2 Meg\n"); mid=0x200000; break;
-			case 0x00: logerror("Memory set to 4 Meg\n"); mid=0x400000; break;	
+			case 0x00: logerror("Memory set to 4 Meg\n"); mid=0x400000; break;
 			default: mid=0x100000; break;
 		}
-		
+
 		/* Turn unavailable memory areas into a NOP region */
 		install_mem_write_handler(0, 0x8,mid-1, MWA_RAM);
 		install_mem_read_handler (0, 0x8,mid-1, MRA_RAM);
 		install_mem_write_handler(0, mid,0x3fffff, MWA_NOP);
 		install_mem_read_handler (0, mid,0x3fffff, MRA_NOP);
 		last_mem=new_mem;
-	}	
+	}
 }
 
 static void atarist_init_machine(void)
@@ -2014,12 +2014,12 @@ static int atarist_interrupt(void)
 		keyboard_line=(keyboard_line+517)%311;
 	}
 
-	/* Start and end lines can change according to overscan effects */	
+	/* Start and end lines can change according to overscan effects */
 	if (current_line>=start_line && current_line<end_line) {
 		atarist_drawline(current_line,current_pixel,320+96);
 		atarist_shifter_offset+=160; /* Offset to next line to draw */
 		current_pixel=96;
-		
+
 		/* Timer B event counter pin is connected to shifter pin DE (toggles every bitmap line [NOT borders]) */
 		if (mfp.tbty==EVENT) {
 			mfp.tbdr-=1;
@@ -2031,7 +2031,7 @@ static int atarist_interrupt(void)
 	}
 	else
 		atarist_drawborder(current_line);
-	 
+
 	if (current_line==306) { /* Actual Vblank position unknown, this must be close though */
 		start_line=63; /* Reset shifter values to draw 200 lines, no overscan */
 		end_line=start_line+200;
@@ -2059,7 +2059,7 @@ static READ_HANDLER( ym2149_port_b_r )
 static WRITE_HANDLER( ym2149_port_a_w )
 {
 	static int strobe=-1;
-	
+
 	ym2149_port_a=data&0xff;
 
 	/* info from "Atari ST Internals" by my friend James Boulton ;) */
@@ -2072,7 +2072,7 @@ static WRITE_HANDLER( ym2149_port_a_w )
 //	logerror("PSG port a %02x\n",data);
 	/* BIT 8 RTS */
 	/* BIT 10 DTR */
-	
+
 	/* BIT 20 Centronics Strobe */
 	if (data&0x20 && strobe==0) { /* 0 -> 1 causes transition */
 		logerror("Parallel port output byte %02x (%c)\n",ym2149_port_b,ym2149_port_b);
@@ -2091,7 +2091,7 @@ static WRITE_HANDLER( ym2149_port_b_w )
 
 static struct AY8910interface ay8910_interface =
 {
-	1, 
+	1,
 	2000000, /* 2 MHz */
 	{ 100 },
 	{ ym2149_port_a_r },
@@ -2190,18 +2190,18 @@ static struct MachineDriver machine_driver_stmono =
 /***************************************************************************/
 
 ROM_START( atarist )
-	ROM_REGION(0x400000, REGION_CPU1)
+	ROM_REGION(0x400000, REGION_CPU1,0)
 	/* Up to 4 Meg Main RAM */
 
-	ROM_REGION(0x40000, REGION_USER1) /* System rom */
+	ROM_REGION(0x40000, REGION_USER1,0) /* System rom */
 //	ROM_LOAD_WIDE( "tos_206.img", 0x00000, 0x30000,  0x3b5cd0c5 )
 
 	ROM_LOAD_WIDE( "tos_104.img", 0x00000, 0x30000,  0x3b5cd0c5 )
 //	ROM_LOAD_WIDE( "tos102uk.rom", 0x00000, 0x30000,  0x3b5cd0c5 )
 //	ROM_LOAD_WIDE( "tos100.img", 0x00000, 0x30000,  0xd331af30 )
 
-	ROM_REGION(0x40000, REGION_USER2) /* Cartridge rom */
-	//ROM_LOAD_WIDE( "cart.exe", 0x00000, 0x30000,  0xb997f9cb )   
+	ROM_REGION(0x40000, REGION_USER2,0) /* Cartridge rom */
+	//ROM_LOAD_WIDE( "cart.exe", 0x00000, 0x30000,  0xb997f9cb )
 ROM_END
 
 /***************************************************************************/
@@ -2223,7 +2223,7 @@ floppy_interface msa_floppy_interface=
 	NULL
 };
 
-struct msa_image 
+struct msa_image
 {
 	int sectors_per_track;
 	int current_track;
@@ -2272,7 +2272,7 @@ unsigned char *msa_get_data_ptr(int drive, int track, int side, int sector_index
 		(unsigned long)msa_images_data[drive] + (unsigned long)
 		(
 		/* header */
-		12 + 
+		12 +
 		/* skip to track start */
 		(((track*2)+side)*(w->sectors_per_track*512+2)) +
 		/* skip to sector */
@@ -2286,7 +2286,7 @@ void msa_write_sector_data_from_buffer(int drive, int side, int index1, char *pt
 	unsigned char *pDataPtr;
 
 	pDataPtr = msa_get_data_ptr(drive, w->current_track, side, index1);
-	
+
 	memcpy(pDataPtr, ptr, length);
 }
 
@@ -2305,9 +2305,9 @@ int atarist_msa_floppy_init(int id)
 	/* load whole file into memory */
 	if (atarist_load(IO_FLOPPY, id, &msa_images_data[id])!=NULL)
 	{
-		if (msa_images_data[id][0]!=0xe && msa_images_data[id][1]!=0xf) 
+		if (msa_images_data[id][0]!=0xe && msa_images_data[id][1]!=0xf)
 			logerror("MSA Warning:  Header doesn't match\n");
-		
+
 		msa_images[id].sectors_per_track = msa_images_data[id][3];
 
 		/* set type */
@@ -2343,12 +2343,12 @@ int atarist_floppy_init(int id)
 		return INIT_OK; /* Emulation can continue even with no floppy */
 
 	/* msa file? */
-	if (!strcmp(".msa",name+strlen(name)-4)) 
+	if (!strcmp(".msa",name+strlen(name)-4))
 	{
 		/* yes - setup msa access */
 		return atarist_msa_floppy_init(id);
 	}
-	
+
 	/* no, assume basic (e.g. ".st"), setup basic access */
 	return atarist_basic_floppy_init(id);
 }

@@ -58,14 +58,14 @@ int coupe_line_interrupt(void)
 		if (CURLINE == LINE_INT)
 		{
 			/* No other interrupts can occur - NOT CORRECT!!! */
-            STAT=0x1E;  
+            STAT=0x1E;
 			cpu_cause_interrupt(0, Z80_IRQ_INT);
 			interrupted=1;
 		}
 	}
 
 	/* scan line on screen so draw last scan line (may need to alter this slightly!!) */
-    if (CURLINE && (CURLINE-1) < 192) 
+    if (CURLINE && (CURLINE-1) < 192)
 	{
 		switch ((VMPR & 0x60)>>5)
 		{
@@ -533,13 +533,13 @@ static struct MachineDriver machine_driver_coupe512 =
 ***************************************************************************/
 
 ROM_START(coupe)
-	ROM_REGION(0x48000,REGION_CPU1)
+	ROM_REGION(0x48000,REGION_CPU1,0)
 	ROM_LOAD("sam_rom0.rom", 0x40000, 0x4000, 0x9954CF1A)
 	ROM_LOAD("sam_rom1.rom", 0x44000, 0x4000, 0xF031AED4)
 ROM_END
 
 ROM_START(coupe512)
-	ROM_REGION(0x88000,REGION_CPU1)
+	ROM_REGION(0x88000,REGION_CPU1,0)
 	ROM_LOAD("sam_rom0.rom", 0x80000, 0x4000, 0x9954CF1A)
 	ROM_LOAD("sam_rom1.rom", 0x84000, 0x4000, 0xF031AED4)
 ROM_END
@@ -550,7 +550,7 @@ static const struct IODevice io_coupe[] =
 		IO_FLOPPY,				/* type */
 		2,						/* count */
 /* Only .DSK (raw dump images) are supported at present */
-        "dsk\0",                /* file extensions */       
+        "dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		NULL,					/* id */
 		coupe_floppy_init,		/* init */

@@ -35,7 +35,7 @@
 	run on it!!!!!!!!!!!!!!
 
     Later systems had:
-		- black/white monitor, 
+		- black/white monitor,
 		- dedicated printer was removed, and support for any printer was added
 		- 3" internal drive replaced by a 3.5" drive
 
@@ -86,7 +86,7 @@
   compatible with the previous models (though documents ARE compatible)"
 
 
-  TODO: 
+  TODO:
   - Printer hardware emulation (8256 etc)
   - Parallel port emulation (9512, 9512+, 10)
   - emulation of serial hardware
@@ -214,7 +214,7 @@ void	pcw_trigger_fdc_int(void)
 			the nmi will be triggered, but when the state changes because the int
 			is cleared this will not cause another nmi */
 			/* I'll emulate it like this to be sure */
-		
+
 			if (state!=previous_fdc_int_state)
 			{
 				if (state)
@@ -307,7 +307,7 @@ static void pcw_update_memory_block(int block, int bank)
 	{
 		/* when upper 16 bytes are accessed use keyboard read
 		handler */
-		cpu_setbankhandler_r((block<<1)+2, pcw_keyboard_r);
+		memory_set_bankhandler_r((block<<1)+2, 0, pcw_keyboard_r);
 	}
 	else
 	{
@@ -338,7 +338,7 @@ static void pcw_update_memory_block(int block, int bank)
 			break;
 		}
 
-		cpu_setbankhandler_r((block<<1)+2, mra);
+		memory_set_bankhandler_r((block<<1)+2, 0, mra);
 	}
 }
 
@@ -832,19 +832,19 @@ void pcw_init_machine(void)
 
 	pcw_boot = 1;
 
-	cpu_setbankhandler_r(1, MRA_BANK1);
-	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_r(3, MRA_BANK3);
-	cpu_setbankhandler_r(4, MRA_BANK4);
-	cpu_setbankhandler_r(5, MRA_BANK5);
-	cpu_setbankhandler_r(6, MRA_BANK6);
-	cpu_setbankhandler_r(7, MRA_BANK7);
-	cpu_setbankhandler_r(8, MRA_BANK8);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	memory_set_bankhandler_r(6, 0, MRA_BANK6);
+	memory_set_bankhandler_r(7, 0, MRA_BANK7);
+	memory_set_bankhandler_r(8, 0, MRA_BANK8);
 
-	cpu_setbankhandler_w(9, MWA_BANK9);
-	cpu_setbankhandler_w(10, MWA_BANK10);
-	cpu_setbankhandler_w(11, MWA_BANK11);
-	cpu_setbankhandler_w(12, MWA_BANK12);
+	memory_set_bankhandler_w(9, 0, MWA_BANK9);
+	memory_set_bankhandler_w(10, 0, MWA_BANK10);
+	memory_set_bankhandler_w(11, 0, MWA_BANK11);
+	memory_set_bankhandler_w(12, 0, MWA_BANK12);
 
 
 	cpu_0_irq_line_vector_w(0, 0x0ff);
@@ -892,7 +892,7 @@ void pcw_init_memory(int size)
 			pcw_ram = malloc(256*1024);
 		}
 		break;
-	
+
 		case 512:
 		{
 			pcw_ram_size = 2;
@@ -1253,13 +1253,13 @@ static struct MachineDriver machine_driver_pcw9512 =
 
 ***************************************************************************/
 
-/* I am loading the boot-program outside of the Z80 memory area, because it 
+/* I am loading the boot-program outside of the Z80 memory area, because it
 is banked. */
 
 // for now all models use the same rom
 #define ROM_PCW(model) \
 ROM_START(model) \
-	ROM_REGION(0x014000, REGION_CPU1) \
+	ROM_REGION(0x014000, REGION_CPU1,0) \
 	ROM_LOAD("pcwboot.bin", 0x010000, 608, BADCRC(0x679b0287)) \
 ROM_END \
 

@@ -15,7 +15,7 @@
 
 extern MSX msx1;
 
-static MEMORY_READ_START (readmem) 
+static MEMORY_READ_START (readmem)
     { 0x0000, 0x1fff, MRA_BANK1 },
     { 0x2000, 0x3fff, MRA_BANK2 },
     { 0x4000, 0x5fff, MRA_BANK3 },
@@ -569,28 +569,28 @@ static struct MachineDriver machine_driver_msx_pal =
 ***************************************************************************/
 
 ROM_START (msx)
-    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msx.rom", 0x0000, 0x8000, 0x94ee12f3)
 ROM_END
 
 ROM_START (msxj)
-    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msxj.rom", 0x0000, 0x8000, 0xee229390)
 ROM_END
 
 ROM_START (msxuk)
-    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msxuk.rom", 0x0000, 0x8000, 0xe9ccd789)
 ROM_END
 
 ROM_START (msxkr)
-    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msxkr.rom", 0x0000, 0x8000, 0x3ab0cd3b)
     ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
 
 ROM_START (msxkra)
-    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_REGION (0x10000, REGION_CPU1,0)
     ROM_LOAD ("msxkra.rom", 0x0000, 0x8000, 0xa781f7ca)
     ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
@@ -619,7 +619,7 @@ static const struct IODevice io_msx[] = {
     IO_FLOPPY,                	/* type */
     2,              		 	/* count */
     "dsk\0",                    /* file extensions */
-    IO_RESET_NONE,              /* reset if file changed */ 
+    IO_RESET_NONE,              /* reset if file changed */
     msx_dsk_id,                 /* id */
 	msx_dsk_init,               /* init */
     msx_dsk_exit,               /* exit */

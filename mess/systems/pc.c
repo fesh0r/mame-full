@@ -52,7 +52,7 @@
   adlib (YM3812/OPL2 chip), part of many many soundcards (soundblaster)
   soundblaster: YM3812 also accessible at 0x228/9 (address jumperable)
   soundblaster pro version 1: 2 YM3812 chips
-   at 0x388 both accessed, 
+   at 0x388 both accessed,
    at 0x220/1 left?, 0x222/3 right? (jumperable)
   soundblaster pro version 2: 1 OPL3 chip
 
@@ -959,7 +959,7 @@ INPUT_PORTS_START( pc1512 )
 	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x00, "English/512k only/less checks" )
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
+	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
 	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
@@ -1024,26 +1024,26 @@ INPUT_PORTS_START( pc1640 )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 5", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 6", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 7", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Paradise EGA 8", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
 	PORT_BITX( 0x07, 0x07, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Name/Language", KEYCODE_NONE, IP_JOY_NONE )
 //	PORT_DIPSETTING(	0x00, "PC 512k" ) // machine crashes with ega bios at 0xc0000
 	PORT_DIPSETTING(	0x01, "Italian/Italiano" ) //prego attendere
-	PORT_DIPSETTING(	0x02, "V.g. vänta" ) 
+	PORT_DIPSETTING(	0x02, "V.g. vänta" )
 	PORT_DIPSETTING(	0x03, "Vent et cjeblik" ) // seldom c
 	PORT_DIPSETTING(	0x04, "Spanish/Español" ) //Por favor tilde n
 	PORT_DIPSETTING(	0x05, "French/Francais" ) //patientez cedilla c
@@ -1145,7 +1145,7 @@ INPUT_PORTS_START( xtvga )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
@@ -1310,7 +1310,7 @@ INPUT_PORTS_START( atvga )
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BITX( 0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "VGA 4", KEYCODE_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )	
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
     PORT_START /* IN1 */
@@ -1396,7 +1396,7 @@ static struct CustomSound_interface pc_sound_interface = {
 
 #if defined(GAMEBLASTER)
 static struct SAA1099_interface cms_interface = {
-	2, 
+	2,
 	{
 		{ 50, 50 },
 		{ 50, 50 }
@@ -2225,7 +2225,7 @@ static struct MachineDriver machine_driver_atvga =
 
 #if 0
 	//pcjr roms? (incomplete dump, most likely 64 kbyte)
-	// basic c1.20 
+	// basic c1.20
     ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
 	// ???
     ROM_LOAD("bios.rom", 0x??000, 0x2000, 0x98463f95)
@@ -2268,27 +2268,27 @@ static struct MachineDriver machine_driver_atvga =
     ROM_LOAD("xthdd.c8", 0xc8000, 0x2000, 0xa96317da)
     ROM_LOAD("biosxt.bin", 0xf0000, 0x10000, 0x36c32fde) // BASIC C1.1, hangs
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("ibmxt.0", 0xf0000, 0x8000, 0x83727c42)
-    ROM_LOAD_ODD("ibmxt.1", 0xf0000, 0x8000, 0x2a629953)
+    ROM_LOAD16_BYTE("ibmxt.0", 0xf0000, 0x8000, 0x83727c42)
+    ROM_LOAD16_BYTE("ibmxt.1", 0xf0000, 0x8000, 0x2a629953)
 
 	// ibm at
 	// most likely 2 32 kbyte chips for 16 bit access
     ROM_LOAD("atbios.bin", 0xf0000, 0x10000, 0x674426be) // BASIC C1.1, beeps
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("ibmat.0", 0xf0000, 0x8000, 0x4995be7a)
-    ROM_LOAD_ODD("ibmat.1", 0xf0000, 0x8000, 0xc32713e4)
+    ROM_LOAD16_BYTE("ibmat.0", 0xf0000, 0x8000, 0x4995be7a)
+    ROM_LOAD16_BYTE("ibmat.1", 0xf0000, 0x8000, 0xc32713e4)
 
 	/* I know about a 1984 version in 2 32kb roms */
 
 	/* at, ami bios and diagnostics */
-    ROM_LOAD_EVEN("rom01.bin", 0xf0000, 0x8000, 0x679296a7)
-    ROM_LOAD_ODD("rom02.bin", 0xf0000, 0x8000, 0x65ae1f97)
+    ROM_LOAD16_BYTE("rom01.bin", 0xf0000, 0x8000, 0x679296a7)
+    ROM_LOAD16_BYTE("rom02.bin", 0xf0000, 0x8000, 0x65ae1f97)
 
 	/* */
     ROM_LOAD("neat286.bin", 0xf0000, 0x10000, 0x07985d9b)
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("neat.0", 0xf0000, 0x8000, 0x4c36e61d)
-    ROM_LOAD_ODD("neat.1", 0xf0000, 0x8000, 0x4e90f294)
+    ROM_LOAD16_BYTE("neat.0", 0xf0000, 0x8000, 0x4c36e61d)
+    ROM_LOAD16_BYTE("neat.1", 0xf0000, 0x8000, 0x4e90f294)
 
 	/* most likely 1 chip!, for lower costs */
     ROM_LOAD("at386.bin", 0xf0000, 0x10000, 0x3df9732a)
@@ -2326,168 +2326,168 @@ static struct MachineDriver machine_driver_atvga =
     ROM_LOAD("aga.chr",     0x00000, 0x02000, 0xaca81498)
 	// hercules font of above
     ROM_LOAD("hercules.chr", 0x00000, 0x1000, 0x7e8c9d76)
-	
+
 	/* oti 037 chip */
     ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
 	/* tseng labs famous et4000 isa vga card (oem) */
-    ROM_LOAD("et4000b.bin", 0xc0000, 0x8000, 0xa903540d)	
+    ROM_LOAD("et4000b.bin", 0xc0000, 0x8000, 0xa903540d)
 	/* tseng labs famous et4000 isa vga card */
     ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
 #endif
 
 ROM_START( ibmpc )
-	ROM_REGION(0x100000,REGION_CPU1)
+	ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("basicc11.f6", 0xf6000, 0x2000, 0x80d3cf5d)
     ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
     ROM_LOAD("basicc11.fa", 0xfa000, 0x2000, 0xaac3fc37)
     ROM_LOAD("basicc11.fc", 0xfc000, 0x2000, 0x3062b3fc)
     ROM_LOAD("pc102782.bin", 0xfe000, 0x2000, 0xe88792b3) //beepcode
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( ibmpca )
-	ROM_REGION(0x100000,REGION_CPU1)
+	ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("basicc11.f6", 0xf6000, 0x2000, 0x80d3cf5d)
     ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
     ROM_LOAD("basicc11.fa", 0xfa000, 0x2000, 0xaac3fc37)
     ROM_LOAD("basicc11.fc", 0xfc000, 0x2000, 0x3062b3fc)
     ROM_LOAD("pc081682.bin", 0xfe000, 0x2000, 0x5c3f0256)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( bondwell )
-	ROM_REGION(0x100000,REGION_CPU1)
+	ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4) // taken from other machine
 	ROM_LOAD("bondwell.bin", 0xfe000, 0x2000, 0xd435a405)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069) // taken from cga
 ROM_END
 
 
 ROM_START( pcmda )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
 ROM_END
 
 ROM_START( pc )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( europc )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
 	// hdd bios integrated!
     ROM_LOAD("50145", 0xf8000, 0x8000, 0x1775a11d) // V2.07
-	ROM_REGION(0x02100,REGION_GFX1)
+	ROM_REGION(0x02100,REGION_GFX1,0)
     ROM_LOAD("50146", 0x00000, 0x02000, 0x1305dcf5) //D1.0
 ROM_END
 
 
 ROM_START( ibmpcjr )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
 #ifndef MESS_DEBUG
 	ROM_LOAD("bios.rom", 0xf0000, 0x10000, 0)
 #else
     ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
     ROM_LOAD("bios.rom", 0xfe000, 0x2000, 0x98463f95)
 #endif
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( t1000hx )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( ibmxt )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
 //    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da) //this was inside
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_ODD("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
-    ROM_LOAD_EVEN("xt050986.1", 0xf0000, 0x8000, 0x2a629953) // BASIC C1.1, hangs
-	ROM_REGION(0x01100,REGION_GFX1)
+    ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42)
+    ROM_LOAD16_BYTE("xt050986.1", 0xf0000, 0x8000, 0x2a629953) // BASIC C1.1, hangs
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( xtcga )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
-	ROM_REGION(0x01100,REGION_GFX1)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( xtvga )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
 ROM_END
 
 ROM_START( pc1512 )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_EVEN("40044.v1", 0xfc000, 0x2000, 0x668fcc94) // v1
-    ROM_LOAD_ODD("40043.v1", 0xfc000, 0x2000, 0xf72f1582) // v1
-	ROM_REGION(0x01100,REGION_GFX1)
+    ROM_LOAD16_BYTE("40044.v1", 0xfc000, 0x2000, 0x668fcc94) // v1
+    ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000, 0xf72f1582) // v1
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069) // taken from cga
 ROM_END
 
 ROM_START( pc1640 )
-    ROM_REGION(0x100000,REGION_CPU1)
+    ROM_REGION(0x100000,REGION_CPU1,0)
 	// this bios seams to be made for the amstrad pc
     ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_EVEN("40043.v3", 0xfc000, 0x2000, 0xe40a1513) // v3
-    ROM_LOAD_ODD("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
+    ROM_LOAD16_BYTE("40043.v3", 0xfc000, 0x2000, 0xe40a1513) // v3
+    ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
 ROM_END
 
 ROM_START( ibmat )
-    ROM_REGION(0x1000000,REGION_CPU1)
+    ROM_REGION(0x1000000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_ODD("at111585.0", 0xf0000, 0x8000, 0x4995be7a)
-    ROM_LOAD_EVEN("at111585.1", 0xf0000, 0x8000, 0xc32713e4) // BASIC C1.1, beeps
-	ROM_REGION(0x01100,REGION_GFX1)
+    ROM_LOAD16_BYTE("at111585.0", 0xf0000, 0x8000, 0x4995be7a)
+    ROM_LOAD16_BYTE("at111585.1", 0xf0000, 0x8000, 0xc32713e4) // BASIC C1.1, beeps
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( at )
-    ROM_REGION(0x1000000,REGION_CPU1)
+    ROM_REGION(0x1000000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_EVEN("at110387.1", 0xf0000, 0x8000, 0x679296a7)
-    ROM_LOAD_ODD("at110387.0", 0xf0000, 0x8000, 0x65ae1f97)
-	ROM_REGION(0x01100,REGION_GFX1)
+    ROM_LOAD16_BYTE("at110387.1", 0xf0000, 0x8000, 0x679296a7)
+    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000, 0x65ae1f97)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 
 ROM_START( atvga )
-    ROM_REGION(0x1000000,REGION_CPU1)
+    ROM_REGION(0x1000000,REGION_CPU1,0)
     ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_EVEN("at110387.1", 0xf0000, 0x8000, 0x679296a7)
-    ROM_LOAD_ODD("at110387.0", 0xf0000, 0x8000, 0x65ae1f97)
+    ROM_LOAD16_BYTE("at110387.1", 0xf0000, 0x8000, 0x679296a7)
+    ROM_LOAD16_BYTE("at110387.0", 0xf0000, 0x8000, 0x65ae1f97)
 ROM_END
 
 ROM_START( neat )
-    ROM_REGION(0x1000000,REGION_CPU1)
+    ROM_REGION(0x1000000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD_ODD("at030389.0", 0xf0000, 0x8000, 0x4c36e61d)
-    ROM_LOAD_EVEN("at030389.1", 0xf0000, 0x8000, 0x4e90f294)
-	ROM_REGION(0x01100,REGION_GFX1)
+    ROM_LOAD16_BYTE("at030389.0", 0xf0000, 0x8000, 0x4c36e61d)
+    ROM_LOAD16_BYTE("at030389.1", 0xf0000, 0x8000, 0x4e90f294)
+	ROM_REGION(0x01100,REGION_GFX1,0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
 

@@ -64,7 +64,7 @@ int genesis_load_rom(int id)
 	logerror("ROM load/init regions\n");
 
     /* Allocate memory and set up memory regions */
-	if (new_memory_region(REGION_CPU1, 0x405000))
+	if (new_memory_region(REGION_CPU1, 0x405000,0))
 	{
 		logerror("new_memory_region failed!\n");
 		return INIT_FAILED;
@@ -72,7 +72,7 @@ int genesis_load_rom(int id)
 	rawROM = memory_region(REGION_CPU1);
     ROM = rawROM /*+ 512 */;
 
-    if (new_memory_region(REGION_CPU2, 0x10000))    /* Z80 region */
+    if (new_memory_region(REGION_CPU2, 0x10000,0))    /* Z80 region */
     {
         logerror("Memory allocation failed creating Z80 RAM region!\n");
         goto bad;

@@ -3,7 +3,7 @@
 /* By:
 
 
-  - Paul Cook 
+  - Paul Cook
   - Kev Thacker
 
   Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver
@@ -283,7 +283,7 @@ WRITE_HANDLER ( oric_via_out_b_func )
 
 
 READ_HANDLER ( oric_via_in_ca1_func)
-{	
+{
 	/* printer on-line? */
 	if (device_status(IO_PRINTER, 0,0))
 	{
@@ -564,8 +564,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	{
 /*		logerror("&c000-&dfff is ram\n"); */
 		/* rom disabled enable ram */
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_w(5, MWA_BANK5);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_w(5, 0, MWA_BANK5);
 		cpu_setbank(1, oric_ram_0x0c000);
 		cpu_setbank(5, oric_ram_0x0c000);
 	}
@@ -574,8 +574,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		unsigned char *rom_ptr;
 /*		logerror("&c000-&dfff is os rom\n"); */
 		/* basic rom */
-		cpu_setbankhandler_r(1, MRA_BANK1);
-		cpu_setbankhandler_w(5, MWA_NOP);
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_w(5, 0, MWA_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(1, rom_ptr);
 		cpu_setbank(5, rom_ptr);
@@ -588,8 +588,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		unsigned char *rom_ptr;
 /*		logerror("&e000-&ffff is os rom\n"); */
 		/* basic rom */
-		cpu_setbankhandler_r(2, MRA_BANK2);
-		cpu_setbankhandler_w(6, MWA_NOP);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_w(6, 0, MWA_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(2, rom_ptr+0x02000);
 		cpu_setbank(6, rom_ptr+0x02000);
@@ -601,8 +601,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		{
 			unsigned char *rom_ptr;
 /*			logerror("&e000-&ffff is disk rom\n"); */
-			cpu_setbankhandler_r(2, MRA_BANK2);
-			cpu_setbankhandler_w(6, MWA_NOP);
+			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
 
 			/* enable rom of microdisc interface */
 			rom_ptr = memory_region(REGION_CPU1) + 0x014000;
@@ -612,8 +612,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		{
 /*			logerror("&e000-&ffff is ram\n"); */
 			/* rom disabled enable ram */
-			cpu_setbankhandler_r(2, MRA_BANK2);
-			cpu_setbankhandler_w(6, MWA_BANK6);
+			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 			cpu_setbank(1, oric_ram_0x0c000+0x02000);
 			cpu_setbank(5, oric_ram_0x0c000+0x02000);
 		}
@@ -626,7 +626,7 @@ void oric_common_init_machine(void)
 	oric_irqs = 0;
 
 	oric_ram_0x0c000 = NULL;
-	
+
 	/* disable os rom, enable microdisc rom */
 	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
     port_314_w = 0x0ff^((1<<7) | (1<<1));
@@ -823,12 +823,12 @@ WRITE_HANDLER(oric_microdisc_w)
 			}
 
 			wd179x_set_density(density);
-	
+
 			oric_microdisc_set_mem_0x0c000();
 			oric_microdisc_refresh_wd179x_ints();
 		}
-		break;		
-	
+		break;
+
 		default:
 			via_0_w(offset & 0x0f, data);
 			break;
@@ -1172,50 +1172,50 @@ void oric_cassette_exit(int id)
 /*
 VIA lines
  Telestrat usage
- 
+
 PA0..PA2
  Memory bank selection
- 
+
 PA3
  "Midi" port pin 3
- 
+
 PA4
  RS232/Minitel selection
- 
+
 PA5
  Third mouse button (right joystick port pin 5)
- 
+
 PA6
  "Midi" port pin 5
- 
+
 PA7
  Second mouse button (right joystick port pin 9)
- 
+
 CA1
  "Midi" port pin 1
- 
+
 CA2
  not used ?
- 
+
 PB0..PB4
  Joystick ports
- 
+
 PB5
  Joystick doubler switch
- 
+
 PB6
  Select Left Joystick port
- 
+
 PB7
  Select Right Joystick port
- 
+
 CB1
  Phone Ring detection
- 
+
 CB2
  "Midi" port pin 4
- 
-*/ 
+
+*/
 
 static unsigned char telestrat_bank_selection;
 static unsigned char telestrat_via2_port_b_data;
@@ -1244,8 +1244,8 @@ static void	telestrat_refresh_mem(void)
 	{
 		case TELESTRAT_MEM_BLOCK_RAM:
 		{
-			cpu_setbankhandler_r(1,MRA_BANK1);
-			cpu_setbankhandler_w(2,MWA_BANK2);
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_w(2, 0, MWA_BANK2);
 			cpu_setbank(1, mem_block->ptr);
 			cpu_setbank(2, mem_block->ptr);
 		}
@@ -1253,8 +1253,8 @@ static void	telestrat_refresh_mem(void)
 
 		case TELESTRAT_MEM_BLOCK_ROM:
 		{
-			cpu_setbankhandler_r(1,MRA_BANK1);
-			cpu_setbankhandler_w(2,MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_w(2, 0, MWA_NOP);
 			cpu_setbank(1, mem_block->ptr);
 		}
 		break;
@@ -1262,8 +1262,8 @@ static void	telestrat_refresh_mem(void)
 		default:
 		case TELESTRAT_MEM_BLOCK_UNDEFINED:
 		{
-			cpu_setbankhandler_r(1, MRA_NOP);
-			cpu_setbankhandler_w(2, MWA_NOP);
+			memory_set_bankhandler_r(1, 0, MRA_NOP);
+			memory_set_bankhandler_w(2, 0, MWA_NOP);
 		}
 		break;
 	}
@@ -1311,7 +1311,7 @@ void	telestrat_via2_irq_func(int state)
 	if (state)
 	{
         logerror("telestrat via2 interrupt\n");
-        
+
         oric_irqs |=(1<<2);
 	}
 
@@ -1321,7 +1321,7 @@ struct via6522_interface telestrat_via2_interface=
 {
 	NULL,
 	telestrat_via2_in_b_func,
-	NULL,				
+	NULL,
 	NULL,
 	NULL,
 	NULL,
@@ -1349,13 +1349,13 @@ void telestrat_init_machine(void)
 
 	telestrat_blocks[1].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
 	telestrat_blocks[2].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
-	
+
 	/* initialise default cartridge */
 	telestrat_blocks[3].MemType = TELESTRAT_MEM_BLOCK_ROM;
 	telestrat_blocks[3].ptr = memory_region(REGION_CPU1)+0x010000;
 
 	telestrat_blocks[4].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
-	
+
 	/* initialise default cartridge */
 	telestrat_blocks[5].MemType = TELESTRAT_MEM_BLOCK_ROM;
 	telestrat_blocks[5].ptr = memory_region(REGION_CPU1)+0x014000;
@@ -1409,7 +1409,7 @@ WRITE_HANDLER(telestrat_IO_w)
 		return;
 	}
 
-	if ((offset>=0x020) && (offset<=0x02f)) 
+	if ((offset>=0x020) && (offset<=0x02f))
 	{
 		via_1_w(offset,data);
 		return;

@@ -41,7 +41,7 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 
 	if (address == 0x059d)
 	{
-		cpu_setOPbaseoverride(0, 0);
+		memory_set_bankhandler_w(0, 0,0);
 		if (jupiter_data_type == JUPITER_ACE)
 		{
 			for (loop = 0; loop < 0x6000; loop++)
@@ -121,7 +121,7 @@ void jupiter_init_machine(void)
 	{
 		logerror("data: %08X. type: %d.\n", jupiter_data,
 											jupiter_data_type);
-		cpu_setOPbaseoverride(0, jupiter_opbaseoverride);
+		memory_set_opbase_handler(0, jupiter_opbaseoverride);
 	}
 }
 

@@ -220,7 +220,7 @@ static OPBASE_HANDLER (opbaseoverride)
 			}
 			free(buff);
 		}
-		cpu_setOPbaseoverride(0,NULL);
+		memory_set_opbase_handler(0,NULL);
 	}
 	return address;
 }
@@ -332,7 +332,7 @@ void cgenie_init_machine(void)
 	}
 
 	cgenie_load_cas = 1;
-	cpu_setOPbaseoverride(0, opbaseoverride);
+	memory_set_opbase_handler(0, opbaseoverride);
 }
 
 void cgenie_stop_machine(void)

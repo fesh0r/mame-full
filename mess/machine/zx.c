@@ -89,7 +89,7 @@ static OPBASE_HANDLER(pow3000_setopbase)
 
 static void common_init_machine(void)
 {
-	cpu_setOPbaseoverride(0, zx_setopbase);
+	memory_set_opbase_handler(0, zx_setopbase);
 }
 
 void zx80_init_machine(void)
@@ -124,12 +124,12 @@ void zx81_init_machine(void)
 
 void pc8300_init_machine(void)
 {
-	cpu_setOPbaseoverride(0, pc8300_setopbase);
+	memory_set_opbase_handler(0, pc8300_setopbase);
 }
 
 void pow3000_init_machine(void)
 {
-	cpu_setOPbaseoverride(0, pow3000_setopbase);
+	memory_set_opbase_handler(0, pow3000_setopbase);
 }
 
 void zx_shutdown_machine(void)
