@@ -340,7 +340,11 @@ static void external_instruction_notify(int ext_op_ID);
 static UINT16 decipheraddr(UINT16 opcode);
 static UINT16 decipheraddrbyte(UINT16 opcode);
 static void contextswitch(UINT16 addr);
-
+#if HAS_MAPPING || HAS_PRIVILEGE
+static void contextswitchX(UINT16 addr);
+#else
+#define contextswitchX(addr) contextswitch(addr)
+#endif
 static void field_interrupt(void);
 
 /***************************/
@@ -1112,8 +1116,8 @@ WRITE_HANDLER(tms9995_internal2_w)
 	#define writebyteX(addr, data, map_file) writebyte((addr), (data))
 #endif
 
-#define READREG(reg)          readword(I.WP+reg)
-#define WRITEREG(reg,data)    writeword(I.WP+reg,data)
+#define READREG(reg)         readword((I.WP+(reg)) & 0xffff)
+#define WRITEREG(reg, data)  writeword((I.WP+(reg)) & 0xffff, (data))
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 	#warning "Todo..."
@@ -1206,7 +1210,7 @@ void TMS99XX_RESET(void *p)
 		I.ckon_ckof_callback = param ? param->ckon_ckof_callback : NULL;
 	#endif
 
-	contextswitch(0x0000);
+	contextswitchX(0x0000);
 
 	I.STATUS = 0; /* TMS9980 and TMS9995 Data Books say so */
 	getstat();
@@ -1316,7 +1320,7 @@ int TMS99XX_EXECUTE(int cycles)
 			if (I.load_state)
 			{	/* LOAD has the highest priority */
 
-				contextswitch(0xFFFC);  /* load vector, save PC, WP and ST */
+				contextswitchX(0xFFFC);  /* load vector, save PC, WP and ST */
 
 				I.STATUS &= ~ST_IM;     /* clear interrupt mask */
 
@@ -1333,7 +1337,7 @@ int TMS99XX_EXECUTE(int cycles)
 			else if (level <= IMASK)
 			{	/* a maskable interrupt is honored only if its level isn't greater than IMASK */
 
-				contextswitch(level*4); /* load vector, save PC, WP and ST */
+				contextswitchX(level*4); /* load vector, save PC, WP and ST */
 
 				/* change interrupt mask */
 				if (level)
@@ -2581,6 +2585,36 @@ static void contextswitch(UINT16 addr)
 	WRITEREG(R15, I.STATUS);
 }
 
+#if HAS_MAPPING || HAS_PRIVILEGE
+
+static void contextswitchX(UINT16 addr)
+{
+	UINT16 oldWP, oldpc, oldST;
+
+	/* save old state */
+	oldWP = I.WP;
+	oldpc = I.PC;
+	setstat();
+	oldST = I.STATUS;
+
+	/* load vector */
+	#if HAS_MAPPING || HAS_PRIVILEGE
+		I.STATUS = oldST & ~ (ST_PR | ST_MF);
+	#else
+		#warning "Todo..."
+	#endif
+	getstat();
+	I.WP = readword(addr) & ~1;
+	I.PC = readword(addr+2) & ~1;
+
+	/* write old state to regs */
+	WRITEREG(R13, oldWP);
+	WRITEREG(R14, oldpc);
+	WRITEREG(R15, oldST);
+}
+
+#endif
+
 /*
  * decipheraddr : compute and return the effective adress in word instructions.
  *
@@ -2695,7 +2729,7 @@ static UINT16 decipheraddrbyte(UINT16 opcode)
 	#define HANDLE_ILLEGAL \
 	{ \
 		I.MID_flag = 1; \
-		contextswitch(0x0008); \
+		contextswitchX(0x0008); \
 		I.STATUS = (I.STATUS & 0xFE00) | 0x1; \
 		I.disable_interrupt_recognition = 1; \
 	}
@@ -3153,17 +3187,21 @@ static void h0200(UINT16 opcode)
 	case 12:  /* RTWP */
 		/* RTWP -- Return with Workspace Pointer */
 		/* WP = R13, PC = R14, ST = R15 */
+		addr = (I.WP + R13) & ~1;
+		I.WP = readword(addr);
+		addr += 2;
+		I.PC = readword(addr);
+		addr += 2;
 		#if HAS_PRIVILEGE
 			if (I.STATUS & ST_PR)
-				I.STATUS = (I.STATUS & 0x01DF) | (READREG(R15) & 0xFE20);
+				I.STATUS = (I.STATUS & 0x01DF) | (readword(addr) & 0xFE20);
 			else
-				I.STATUS = READREG(R15);
+				I.STATUS = readword(addr);
 		#else
-			I.STATUS = READREG(R15);
+			I.STATUS = readword(addr);
 		#endif
 		getstat();  /* set last_parity */
-		I.PC = READREG(R14);
-		I.WP = READREG(R13);
+
 		field_interrupt();  /*IM has been modified.*/
 		CYCLES(3, 14, 6);
 		break;
@@ -3567,7 +3605,7 @@ static void h0800(UINT16 opcode)
 	{
 		CYCLES(2, 8, 2);
 
-		cnt = READREG(0) & 0xF;
+		cnt = READREG(R0) & 0xF;
 
 		if (cnt == 0)
 			cnt = 16;
@@ -4214,7 +4252,7 @@ static void xop(UINT16 opcode)
 		(void)readword(operand & ~1); /*dummy read (personnal guess)*/
 	#endif
 
-	contextswitch(0x40 + (immediate << 2));
+	contextswitchX(0x40 + (immediate << 2));
 
 	#if ! ((TMS99XX_MODEL == TMS9940_ID) || (TMS99XX_MODEL == TMS9985_ID))
 		/* The bit is not set on tms9940 */
