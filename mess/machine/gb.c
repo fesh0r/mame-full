@@ -14,8 +14,8 @@
 
 static UINT8 MBCType;				   /* MBC type: 0 for none                        */
 static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
-static UINT8 *ROMMap[256];			   /* Addresses of ROM banks                      */
-static UINT8 ROMBank;				   /* Number of ROM bank currently used           */
+static UINT8 *ROMMap[512];			   /* Addresses of ROM banks                      */
+static UINT16 ROMBank;				   /* Number of ROM bank currently used           */
 static UINT8 ROMMask;				   /* Mask for the ROM bank number                */
 static int ROMBanks;				   /* Total number of ROM banks                   */
 static UINT8 *RAMMap[256];			   /* Addresses of RAM banks                      */
@@ -30,7 +30,6 @@ static UINT32 SIOCount;				   /* Serial I/O counter                     */
 #define CheckCRC 1
 #define LineDelay 0
 #define IFreq 60
-/*#define SOUND =0 */
 
 UINT8 *gb_ram;
 
@@ -40,8 +39,10 @@ void gb_init_machine (void)
 
 	gb_ram = memory_region (REGION_CPU1);
 
-	cpu_setbank (1, ROMMap[1] ? ROMMap[1] : gb_ram + 0x4000);
-	cpu_setbank (2, RAMMap[0] ? RAMMap[0] : gb_ram + 0xA000);
+	ROMBank = 1;
+	RAMBank = 0;
+	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 
 	TStep = 32768;
 	TCount = 0;
@@ -50,18 +51,22 @@ void gb_init_machine (void)
 	gb_bgdtab = gb_wndtab = gb_ram + 0x9800;
 	LCDCONT = 0x81;
 	LCDSTAT = 0x00;
+	SCROLLX = SCROLLY = 0x00;
+	WNDPOSX = WNDPOSY = 0x00;
 	CURLINE = 0x00;
 	CMPLINE = 0x00;
+	BGRDPAL = 0xFC;
+	SPR0PAL = SPR1PAL = 0xFF;
 	IFLAGS = ISWITCH = 0x00;
-	TIMECNT = TIMEMOD = 0x01;
-	TIMEFRQ = 0xF8;
+	TIMECNT = TIMEMOD = TIMEFRQ = 0x00;
 	SIODATA = 0x00;
 	SIOCONT = 0x7E;
 
 	for (I = 0; I < 4; I++)
 	{
-		gb_spal0[I] = gb_bpal[I] = I;
-		gb_spal1[I] = I + 4;
+		gb_bpal[I] = gb_wpal[I] = I;
+		gb_spal0[I] = I + 4;
+		gb_spal1[I] = I + 8;
 	}
 
 	BGRDPAL = SPR0PAL = SPR1PAL = 0xE4;
@@ -70,6 +75,7 @@ void gb_init_machine (void)
 	gb_w_io (0x07, gb_ram [0xFF07]);
 
 	/* Initialise the Sound Registers */
+	gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/ /* set this first */
 	gameboy_sound_w(0xFF10,0x80);
 	gameboy_sound_w(0xFF11,0xBF);
 	gameboy_sound_w(0xFF12,0xF3);
@@ -87,7 +93,6 @@ void gb_init_machine (void)
 	gameboy_sound_w(0xFF23,0xBF);
 	gameboy_sound_w(0xFF24,0x77);
 	gameboy_sound_w(0xFF25,0xF3);
-	gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/
 }
 
 void gb_shutdown_machine(void)
@@ -128,61 +133,69 @@ WRITE_HANDLER ( gb_rom_bank_select )
 	if( !MBCType )
 		return;
 
-	/* MBC2 isn't addressable under 0x2100 */
-	if( MBCType == MBC2 && ((offset & 0x0100) == 0) )
-		return;
-
 	data &= ROMMask;
 
 	/* Selecting bank 0 == selecting bank 1 except with an MBC5 */
 	if( !data && MBCType != MBC5 )
 		data = 1;
 
-	switch( MBCType )
+	if( ROMMask )
 	{
-		case MBC1:
-		case MBC2:
+		switch( MBCType )
+		{
+		case MBC1:	/* Need to handle different modes */
 		case MBC3:
-		{
-			if( ROMMask && (data != ROMBank) )
-			{
+		case HUC1:	/* Probably wrong */
+		case HUC3:	/* Probably wrong */
+			ROMBank = data;
+			break;
+		case MBC2:
+			/* The least significant bit of the upper address byte must be 1 */
+			if( offset & 0x0100 )
 				ROMBank = data;
-				cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x4000);
-				if (Verbose & 0x08)
-					printf ("ROM: Bank %d selected\n", data);
-			}
-		}
+			break;
 		case MBC5:
-		{
-			if( ROMMask && (data != ROMBank) )
+			/* MBC5 has a 9 bit bank select */
+			if( offset < 0x1000 )
 			{
-				if( offset < 0x1000 )
-				{
-					ROMBank = data;
-					cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x0000);
-				}
-				else
-				{
-					UINT16 edata = (INT16)((data & 0x1) << 8) | ROMBank;
-					cpu_setbank (1, ROMMap[edata] ? ROMMap[edata] : gb_ram + 0x4000);
-				}
-
-				if (Verbose & 0x08)
-					printf ("ROM: Bank %d selected\n", data);
+				ROMBank = (ROMBank & 0x100 ) | data;
 			}
+			else
+			{
+				ROMBank = (ROMBank & 0xFF ) | (((INT16)data & 0x1) << 8);
+			}
+			break;
 		}
+
+		/* Switch banks */
+		cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
+		if (Verbose & 0x08)
+			printf ("ROM: Bank %d selected\n", ROMBank);
 	}
 }
 
 WRITE_HANDLER ( gb_ram_bank_select )
 {
+	/* No need to bank switch if there is no controller */
+	if( !MBCType )
+		return;
+
 	data &= RAMMask;
-	if (RAMMask && !MBCType && (RAMBank != data))
+	if( RAMMask )
 	{
-		RAMBank = data;
-		cpu_setbank (2, RAMMap[data] ? RAMMap[data] : gb_ram + 0xA000);
+		switch( MBCType )
+		{
+		case MBC1:	/* Need to handle different modes */
+		case MBC3:	/* Need to handle RTC */
+		case MBC5:
+			RAMBank = data;
+			break;
+		}
+
+		/* Switch banks */
+		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 		if (Verbose & 0x08)
-			printf ("RAM: Bank %d selected\n", data);
+			printf ("RAM: Bank %d selected\n", RAMBank);
 	}
 }
 
@@ -302,10 +315,12 @@ WRITE_HANDLER ( gb_w_io )
 		break;
 	case 0xFF02:						/* SC - SIO control */
 		if ((data & 0x81) == 0x81)	   /* internal clock && enable */
+		{
+			SIODATA = 0xFF;
 			SIOCount = 8;
+		}
 		else						   /* external clock || disable */
 			SIOCount = 0;
-		data |= 0x7E;
 		break;
 	case 0xFF04:						/* DIV - Divider register */
 		gb_divcount = 0;
@@ -337,27 +352,39 @@ WRITE_HANDLER ( gb_w_io )
 		for (data = 0; data < 0xA0; data++)
 			*P++ = cpu_readmem16 (offset++);
 		return;
+#if 1
+	case 0xFF47:
+		gb_bpal[0] = Machine->remapped_colortable[(data & 0x03)];
+		gb_bpal[1] = Machine->remapped_colortable[(data & 0x0C) >> 2];
+		gb_bpal[2] = Machine->remapped_colortable[(data & 0x30) >> 4];
+		gb_bpal[3] = Machine->remapped_colortable[(data & 0xC0) >> 6];
+		/* This is so we can assign different colours to window tiles,
+		   even though the window shares the same palette data as the
+		   background */
+		gb_wpal[0] = Machine->remapped_colortable[(data & 0x03) + 12];
+		gb_wpal[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 12];
+		gb_wpal[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 12];
+		gb_wpal[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 12];
+		break;
+	case 0xFF48:
+		gb_spal0[0] = Machine->remapped_colortable[(data & 0x03) + 4];
+		gb_spal0[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 4];
+		gb_spal0[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 4];
+		gb_spal0[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 4];
+		break;
+	case 0xFF49:
+		gb_spal1[0] = Machine->remapped_colortable[(data & 0x03) + 8];
+		gb_spal1[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 8];
+		gb_spal1[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 8];
+		gb_spal1[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 8];
+		break;
+#else
 	case 0xFF47:
 		gb_bpal[0] = Machine->pens[(data & 0x03)];
 		gb_bpal[1] = Machine->pens[(data & 0x0C) >> 2];
 		gb_bpal[2] = Machine->pens[(data & 0x30) >> 4];
 		gb_bpal[3] = Machine->pens[(data & 0xC0) >> 6];
 		break;
-#if 0
-		/* only 4 colors in Machine->pens allocated! */
-	case 0xFF48:
-		gb_spal0[0] = Machine->pens[(data & 0x03) + 4];
-		gb_spal0[1] = Machine->pens[((data & 0x0C) >> 2) + 4];
-		gb_spal0[2] = Machine->pens[((data & 0x30) >> 4) + 4];
-		gb_spal0[3] = Machine->pens[((data & 0xC0) >> 6) + 4];
-		break;
-	case 0xFF49:
-		gb_spal1[0] = Machine->pens[(data & 0x03) + 8];
-		gb_spal1[1] = Machine->pens[((data & 0x0C) >> 2) + 8];
-		gb_spal1[2] = Machine->pens[((data & 0x30) >> 4) + 8];
-		gb_spal1[3] = Machine->pens[((data & 0xC0) >> 6) + 8];
-		break;
-#else
 	case 0xFF48:
 		gb_spal0[0] = Machine->pens[(data & 0x03) ];
 		gb_spal0[1] = Machine->pens[((data & 0x0C) >> 2) ];
@@ -379,9 +406,8 @@ WRITE_HANDLER ( gb_w_io )
 		/* Sound Registers */
 		if ((offset >= 0xFF10) && (offset <= 0xFF26))
 		{
-			/*logerror("SOUND WRITE offset: %x  data: %x\n",offset,data);*/
 			gb_ram [offset] = data;
-			gameboy_sound_w(offset,data);
+			gameboy_sound_w(offset, data);
 			return;
 		}
 
@@ -389,15 +415,6 @@ WRITE_HANDLER ( gb_w_io )
 		if ((offset >= 0xFF30) && (offset <= 0xFF3F))
 		{
 			gb_ram [offset] = data;
-			return;
-		}
-
-		if (offset == 0xFF26)
-		{
-			if (data & 0x80)
-				gb_ram [0xFF26] = 0xFF;
-			else
-				gb_ram [0xFF26] = 0;
 			return;
 		}
 	}
@@ -708,6 +725,14 @@ int gb_load_rom (int id)
 			MBCType = MBC5;
 			CartType = RUMBLE | SRAM | BATTERY;
 			break;
+		case 0xFE:
+			MBCType = HUC3;
+			CartType = 0;
+			break;
+		case 0xFF:
+			MBCType = HUC1;
+			CartType = 0;
+			break;
 		default:
 			MBCType = 0;
 			CartType = UNKNOWN;
@@ -753,12 +778,6 @@ int gb_load_rom (int id)
 
 	if (Verbose)
 		logerror("Loading %dx16kB ROM banks:.", ROMBanks);
-	/* Fill in ROMBank 0 with data from 0x0000-0x3fff */
-/*	if( (ROMMap[0] = malloc(0x4000)) )
-	{
-		printf( "Allocating ROM Bank 0\n" );
-		memcpy( ROMMap[0], gb_ram, 0x4000 );
-	}*/
 	for (I = 1; I < ROMBanks; I++)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
@@ -840,7 +859,6 @@ int gb_load_rom (int id)
 	{
 		for (I = 1; I < ROMBanks; I <<= 1) ;
 		ROMMask = I - 1;
-		ROMBank = 1;
 	}
 	if (!RAMMap[0])
 		RAMMask = 0;
@@ -848,7 +866,6 @@ int gb_load_rom (int id)
 	{
 		for (I = 1; I < RAMBanks; I <<= 1) ;
 		RAMMask = I - 1;
-		RAMBank = 0;
 	}
 
 	return 0;
@@ -873,7 +890,7 @@ int gb_scanline_interrupt (void)
 		return ignore_interrupt();
 	}
 
-	/* first lett's draw the current scanline */
+	/* first let's draw the current scanline */
 	if (CURLINE < 144)
 		gb_refresh_scanline ();
 
@@ -888,8 +905,7 @@ int gb_scanline_interrupt (void)
 				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
 		}
 		else
-//			LCDSTAT = 0xFB;
-			LCDSTAT &= ~0x04;
+			LCDSTAT &= 0xFB;
 
 		CURLINE = (CURLINE + 1) % 154;
 
@@ -898,20 +914,20 @@ int gb_scanline_interrupt (void)
 		if (CURLINE < 144)
 		{
 			/* first  lcdstate change after aprox 49 uS */
-			timer_set (49.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode2);
+			timer_set (48.6 / 1000000.0, 0, gb_scanline_interrupt_set_mode2);
 
 			/* second lcdstate change after aprox 69 uS */
-			timer_set (69.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
+			timer_set (67.6 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
 
 			/* modify lcdstate */
 			LCDSTAT = LCDSTAT & 0xFC;
 
 			/* generate lcd interrupt if requested */
 			if( LCDSTAT & 0x08 )
-				{
-					/*logerror("generating lcd interrupt\n");*/
-					cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
-				}
+			{
+				/*logerror("generating lcd interrupt\n");*/
+				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+			}
 		}
 		else
 		{
@@ -935,8 +951,7 @@ int gb_scanline_interrupt (void)
 			if (!--SIOCount)
 			{
 				SIOCONT &= 0x7F;
-				if( LCDSTAT & 0x10 )
-					cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
+				cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
 			}
 		}
 	}
