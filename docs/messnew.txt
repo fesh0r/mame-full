@@ -10,7 +10,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-- [PCE] Fixed bug #531 [Nate Woods]
+- [MZ700] Fixed a crash on startup. (bug #530) [Nate Woods]
+- [PCE] Fixed a crash on startup. (bug #531) [Nate Woods]
 
 
 
