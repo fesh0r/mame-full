@@ -70,7 +70,10 @@ typedef enum
 {
 	fdc_kind_none = 0,
 	fdc_kind_TI,				/* TI fdc */
-	fdc_kind_BwG				/* SNUG's BwG fdc */
+	fdc_kind_BwG,				/* SNUG's BwG fdc */
+	fdc_kind_hfdc				/* Myarc's HFDC (handles SD and DD floppies (I
+									think an HD update existed) and prehistoric
+									MFM hard disks) */
 } fdc_kind_t;
 
 /* defines for input ports */

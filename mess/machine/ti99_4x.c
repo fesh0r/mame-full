@@ -88,6 +88,7 @@ static void ti99_4p_mapper_init(void);
 static void ti99_myarcxram_init(void);
 static void ti99_fdc_init(void);
 static void ti99_bwg_init(void);
+static void ti99_hfdc_init(void);
 static void ti99_evpc_init(void);
 
 /*
@@ -708,6 +709,9 @@ void machine_init_ti99(void)
 	case fdc_kind_BwG:
 		ti99_bwg_init();
 		break;
+	case fdc_kind_hfdc:
+		ti99_hfdc_init();
+		break;
 	case fdc_kind_none:
 		break;
 	}
@@ -1207,8 +1211,7 @@ static int ti99_handset_poll_keyboard(int num)
 					| (readinputport(input_port_IR_keypads+num+1) << 16) ) >> (4*num);
 
 	/* If a key was previously pressed, this key was not shift, and this key is
-	still down, then don't change
-	the current key press. */
+	still down, then don't change the current key press. */
 	if (previous_key[num] && (previous_key[num] != 0x24)
 			&& (key_buf & (1 << (previous_key[num] & 0x1f))))
 	{
@@ -1677,8 +1680,6 @@ static void ti99_CS_output(int offset, int data)
 	Note that I use 8-bit handlers.  Obviously, using 16-bit handlers would be equivalent and
 	quite faster, but I wanted to be able to interface the extension cards to a future 99/8
 	emulator (which was possible with several PEB boards).
-
-	Only the floppy disk controller card is supported for now.
 */
 
 /* handlers for each of 16 slots */
@@ -3205,12 +3206,14 @@ static WRITE_HANDLER(bwg_mem_w)
 }
 
 /*
-	Alternate fdc: Myarc HFDC
+	Alternate fdc: HFDC card built by Myarc
 
 	Advantages: same as BwG, plus:
-	* high density support
+	* high density support (only on upgraded cards, I think)
 	* hard disk support (only prehistoric mfm hard disks are supported, though)
-	* this card includes a MM58274C RTC.
+
+	This card includes a MM58274C RTC and a 9234 HFDC with its various support
+	chips.  I have found about nothing about the 9234 or its cousin the 9224.
 
 	Reference:
 	* hfdc manual
