@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "includes/avigo.h"
 
@@ -14,6 +15,8 @@
   Start the video hardware emulation.
 ***************************************************************************/
 
+/* backdrop */
+struct artwork_info *avigo_backdrop;
 
 /* mem size = 0x017c0 */
 
@@ -81,22 +84,29 @@ WRITE_HANDLER(avigo_vid_memory_w)
 
 int avigo_vh_start(void)
 {
-        /* current selected column to read/write */
-        avigo_screen_column = 0;
+    /* current selected column to read/write */
+    avigo_screen_column = 0;
 
-        /* allocate video memory */
-        avigo_video_memory = malloc(((AVIGO_SCREEN_WIDTH>>3)*AVIGO_SCREEN_HEIGHT));
+    /* allocate video memory */
+    avigo_video_memory = malloc(((AVIGO_SCREEN_WIDTH>>3)*AVIGO_SCREEN_HEIGHT));
+
+	if (avigo_backdrop)
+		backdrop_refresh(avigo_backdrop);
 
 	return 0;
 }
 
 void    avigo_vh_stop(void)
 {
-        if (avigo_video_memory!=NULL)
-        {
-                free(avigo_video_memory);
-                avigo_video_memory = NULL;
-        }
+    if (avigo_video_memory!=NULL)
+    {
+            free(avigo_video_memory);
+            avigo_video_memory = NULL;
+    }
+
+	if (avigo_backdrop)
+		artwork_free(&avigo_backdrop);
+
 }
 
 /* two colours */
@@ -116,8 +126,36 @@ static unsigned char avigo_palette[AVIGO_NUM_COLOURS * 3] =
 /* Initialise the palette */
 void avigo_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
 {
-        memcpy(sys_palette, avigo_palette, sizeof (avigo_palette));
-        memcpy(sys_colortable, avigo_colour_table, sizeof (avigo_colour_table));
+	char *backdrop_name;
+    int used = 2;
+    memcpy(sys_palette, avigo_palette, sizeof (avigo_palette));
+    memcpy(sys_colortable, avigo_colour_table, sizeof (avigo_colour_table));
+
+	/* load backdrop */
+	backdrop_name = malloc(strlen(Machine->gamedrv->name)+4+1);
+
+    if (backdrop_name!=NULL)
+	{
+		strcpy(backdrop_name, Machine->gamedrv->name);
+		strcat(backdrop_name, ".png");
+
+        artwork_load(&avigo_backdrop, backdrop_name, used,Machine->drv->total_colors-used);
+
+		if (avigo_backdrop)
+		{
+			logerror("backdrop %s successfully loaded\n", backdrop_name);
+            memcpy (&sys_palette[used * 3], avigo_backdrop->orig_palette, 
+                    avigo_backdrop->num_pens_used * 3 * sizeof (unsigned char));
+		}
+		else
+		{
+			logerror("no backdrop loaded\n");
+		}
+
+        free(backdrop_name);
+		backdrop_name = NULL;
+	}
+
 }
 
 
