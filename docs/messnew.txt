@@ -34,7 +34,11 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - [Windows] Fixed a bug in which if the "About MESS" menu item was selected, 
-  the help file would come up but be set to an invalid pate.  (bug #537) [Nate
+  the help file would come up but be set to an invalid page.  (bug #537) [Nate
+  Woods]
+  
+- [Windows] Fixed a bug in the new UI input dialogs that could cause the
+  scrolling to malfunction if the mouse wheel was used.  (bug #539) [Nate
   Woods]
 
 
