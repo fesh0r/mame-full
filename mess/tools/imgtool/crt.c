@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "zlib.h"
 #include "osdepend.h"
 #include "imgtool.h"
-#include "zlib.h"
 
 #ifdef LSB_FIRST
 typedef struct { 
