@@ -3,7 +3,7 @@
 #include "includes/oric.h"
 #include "includes/basicdsk.h"
 #include "includes/wd179x.h"
-
+#include "machine/6522via.h"
 /*
 
 TODO's / BUGLIST
@@ -33,6 +33,7 @@ loading tape image to update MESS GUI settings for current image
 
   KT:
 	Added preliminary floppy disc support from Fabrice Frances document.
+	rewrote code to use 6522 via.
 
   TODO:
   - Microdisc interface: ROMDIS and Eprom select 
@@ -40,54 +41,311 @@ loading tape image to update MESS GUI settings for current image
 
 */
 
+
+/* index of keyboard line to scan */
+static char oric_keyboard_line;
+/* sense result */
+static char oric_key_sense_bit;
+/* mask to read keys */
+static char oric_keyboard_mask;
+
+
+/* refresh keyboard sense */
+static void oric_keyboard_sense_refresh(void)
+{
+	/* The following assumes that if a 0 is written, it can be used to detect if any key
+	has been pressed.. */
+	/* for each bit that is 0, it combines it's pressed state with the pressed state so far */
+	
+	int i;
+	unsigned char key_bit = 0;
+
+	/* what if data is 0, can it sense if any of the keys on a line are pressed? */
+	int input_port_data = readinputport(1+oric_keyboard_line);
+
+	/* go through all bits in line */
+	for (i=0; i<8; i++)
+	{
+		/* sense this bit? */
+		if (((~oric_keyboard_mask) & (1<<i))!=0)
+		{
+			/* is key pressed? */
+			if (input_port_data & (1<<i))
+			{
+				/* yes */
+				key_bit |= 1;
+			}
+		}
+	}
+
+	/* clear sense result */
+	oric_key_sense_bit = 0;
+	/* any keys pressed on this line? */
+	if (key_bit!=0)
+	{
+		/* set sense result */
+		oric_key_sense_bit = (1<<3);
+	}
+}
+
+
+/* this is executed when a write to psg port a is done */
+WRITE_HANDLER (oric_psg_porta_write)
+{
+	oric_keyboard_mask = data;
+
+	oric_keyboard_sense_refresh();
+
+}
+
+
+/* PSG control pins */
+/* bit 1 = BDIR state */
+/* bit 0 = BC1 state */
+static char oric_psg_control;
+
+/* this port is also used to read printer data */
+int oric_via_in_a_func(int offset)
+{
+	logerror("port a read\r\n");
+
+	/* access psg? */
+	if (oric_psg_control!=0)
+	{
+		/* if psg is in read register state return reg data */
+		if (oric_psg_control==0x01)
+		{
+			return AY8910_read_port_0_r(0);
+		}
+
+		/* return high-impedance */
+		return 0x0ff;
+	}
+	
+	/* return printer data?? */
+	return 0x0ff;
+}
+ 
+int oric_via_in_b_func(int offset)
+{
+	int data;
+
+	data = oric_key_sense_bit;
+	data |= oric_keyboard_line & 0x07;
+
+	return data;
+}
+
+
+static unsigned char oric_via_port_a_data;
+
+/* read/write data depending on state of bdir, bc1 pins and data output to psg */
+static void oric_psg_connection_refresh(void)
+{
+	if (oric_psg_control!=0)
+	{
+		switch (oric_psg_control)
+		{
+			/* write register data */
+			case 2:
+			{
+				AY8910_write_port_0_w (0, oric_via_port_a_data);
+			}
+			break;
+			/* write register index */
+			case 3:
+			{
+				AY8910_control_port_0_w (0, oric_via_port_a_data);
+			}
+			break;
+
+			default:
+				break;
+		}
+	
+		return;
+	}
+}
+
+void oric_via_out_a_func(int offset, int data)
+{
+	oric_via_port_a_data = data;
+
+	/* access printer? */
+}
+
+/*
+PB0..PB2
+ keyboard lines-demultiplexer
+ 
+PB3
+ keyboard sense line
+ 
+PB4
+ printer strobe line
+ 
+PB5
+ (not connected)
+ 
+PB6
+ tape connector motor control
+ 
+PB7
+ tape connector output
+
+ */
+
+int oric_via_in_cb1_func(int offset)
+{
+	int data;
+
+	data = 0;
+
+	if (device_input(IO_CASSETTE,0) > 255)
+		data |=1;
+
+	return data;
+}
+
+
+
+void oric_via_out_b_func(int offset, int data)
+{
+	oric_keyboard_line = data & 0x07;
+
+	/* cassette motor control */
+	device_status(IO_CASSETTE, 0, ((data>>6) & 0x01));
+
+	/* cassette data out */
+	device_output(IO_CASSETTE, 0, (data & (1<<7)) ? -32768 : 32767);
+
+	oric_psg_connection_refresh();
+	oric_keyboard_sense_refresh();
+}
+
+int oric_via_in_ca2_func(int offset)
+{
+	return oric_psg_control & 1;
+}
+
+int oric_via_in_cb2_func(int offset)
+{
+	return (oric_psg_control>>1) & 1;
+}
+
+void oric_via_out_ca2_func(int offset, int val)
+{
+	oric_psg_control &=~1;
+
+	if (val)
+	{
+		oric_psg_control |=1;
+	}
+
+	oric_psg_connection_refresh();
+}
+
+void oric_via_out_cb2_func(int offset, int val)
+{
+	oric_psg_control &=~2;
+
+	if (val)
+	{
+		oric_psg_control |=2;
+	}
+
+	oric_psg_connection_refresh();
+}
+
+void	oric_via_irq_func(int state)
+{
+	if (state)
+	{
+		cpu_set_irq_line(0,0, HOLD_LINE);
+	}
+	else
+	{
+		cpu_set_irq_line(0,0, CLEAR_LINE);
+	}
+}
+
+
+/*
+VIA Lines
+ Oric usage
+ 
+PA0..PA7
+ PSG data bus, printer data lines
+ 
+CA1
+ printer acknowledge line
+ 
+CA2
+ PSG BC1 line
+ 
+PB0..PB2
+ keyboard lines-demultiplexer
+ 
+PB3
+ keyboard sense line
+ 
+PB4
+ printer strobe line
+ 
+PB5
+ (not connected)
+ 
+PB6
+ tape connector motor control
+ 
+PB7
+ tape connector output
+ 
+CB1
+ tape connector input
+ 
+CB2
+ PSG BDIR line
+ 
+*/
+
+struct via6522_interface oric_6522_interface=
+{
+	oric_via_in_a_func,
+	oric_via_in_b_func,
+	NULL,				/* printer acknowledge */
+	oric_via_in_cb1_func,
+	oric_via_in_ca2_func,
+	oric_via_in_cb2_func,
+	oric_via_out_a_func,
+	oric_via_out_b_func,
+	oric_via_out_ca2_func,
+	oric_via_out_cb2_func,
+	oric_via_irq_func,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+
 /* if defined, enable microdisc floppy disc interface */
 /* if not defined, enable Jasmin floppy disc interface */
 #define MICRODISC_FLOPPY_DISC_INTERFACE	
 
-unsigned char *oric_ram;
-int oric_load_rom (int id);
 
-unsigned char *oric_IO;
-unsigned char *oric_tape_data;
-
-int oric_countdown_1;
-int oric_countdown_2;
-int oric_countdown_3;
-
-int oric_flashcount;
-
+/* following are used for tape and need cleaning up */
 int oric_interrupt_counter;
-
-unsigned char oric_portmask_a;
-unsigned char oric_portmask_b;
-unsigned char oric_porta;
-unsigned char oric_portb;
-unsigned char oric_porta_r;
-unsigned char oric_portb_r;
-unsigned char oric_last_porta;
-unsigned char oric_last_portb;
-unsigned char oric_CA1;
-unsigned char oric_CA2;
-unsigned char oric_CB1;
-unsigned char oric_CB2;
-unsigned char oric_sound_reg;
-unsigned char oric_sound_data;
-unsigned char oric_8910_porta;
-unsigned char oric_6522_control_lines;
-
+int oric_countdown_1;
+unsigned char *oric_tape_data;
 unsigned short oric_runadd;
-
 char oric_checkfor_filename[20];
 char oric_tape_filename[20];
 int oric_tape_datasize;
 int oric_tape_from_rom_patch;
-
 int oric_tape_position;
-
 char oric_rom_version[40];
-
-static const char *rom_name = NULL;
-
+/*static const char *rom_name = NULL; */
 
 
 #ifdef MICRODISC_FLOPPY_DISC_INTERFACE
@@ -179,9 +437,6 @@ void oric_init_machine (void)
 	//int found,f2;
 	unsigned char *RAM;
 
-	oric_IO = malloc (0x10);
-	if (!oric_IO) return;
-	memset (oric_IO, 0, sizeof (oric_IO));
 	RAM = memory_region(REGION_CPU1);
 	/*
 	 * gives those delightfull pages of 'U's when programms go belly-up!
@@ -208,37 +463,6 @@ void oric_init_machine (void)
 	//RAM[0xedb9] = 0xea;
 	//RAM[0xedba] = 0xea;
 
-	oric_countdown_1 = 100 * 4;
-	oric_countdown_2 = 50 * 5;
-	oric_countdown_3 = 60 * 4;
-
-	oric_set_powerscreen_mode (1);
-	oric_set_flash_show (1);
-	oric_flashcount = 0;
-
-	oric_portmask_a = 0;
-	oric_portmask_b = 0;
-	oric_porta = 0;
-	oric_portb = 0;
-	oric_porta_r = 0;
-	oric_portb_r = 0;
-	oric_last_porta = 0;
-	oric_last_portb = 0;
-
-	oric_6522_control_lines = 0;
-	oric_CA1 = 0;
-	oric_CA2 = 0;
-	oric_CB1 = 0;
-	oric_CB2 = 0;
-
-	oric_sound_reg = 0;
-	oric_sound_data = 0;
-
-	oric_8910_porta = 0;
-
-	oric_interrupt_counter = 0;
-
-	interrupt_enable_w (0, 0);
 
 	// oric_load_rom(); # do this after a few seconds on a timer ..
 
@@ -288,128 +512,72 @@ void oric_init_machine (void)
 						if (RAM[0xedaf] == 0x0a)
 							strcpy (oric_rom_version, "1.1");
 
-	/*
-	 * // temp
-	 *
-	 * found = 0;
-	 * f2 = 0x4000;
-	 * for (i = 0xc000; i < 0xffff;i++) {
-	 * if (RAM[i] == 0xa8)
-	 * if (RAM[i+1] == 0xe4)
-	 * {
-	 * found = i;
-	 * RAM[f2++] = (found/256);
-	 * RAM[f2++] = (found&255);
-	 * }
-	 * }
-	 */
+
+	via_config(0, &oric_6522_interface);
+	via_set_clock(0,1000000);
+	via_reset();
+
 
 	wd179x_init(oric_wd179x_callback);
 }
 
 void oric_shutdown_machine (void)
 {
-	/* Not a Lot happens here yet ... */
-	free (oric_IO);
-	if (oric_tape_data != NULL)
-		free (oric_tape_data);
-
 	wd179x_exit();
 }
 
-#if 0
-int oric_ram_r (int offset)
-{
-	return (oric_ram[offset]);
-}
-
-void oric_ram_w (int offset, int data)
-{
-	oric_ram[offset] = data;
-}
-#endif
 
 READ_HANDLER ( oric_IO_r )
 {
-	switch( offset & 0x0f )
-	{
-		case 0x00:
-			// return (oric_portb_r & ( oric_portmask_b ^ 0xff ) );
-			return (oric_portb_r);
-		case 0x01:
-			return (oric_porta_r & (oric_portmask_a ^ 0xff));
-		case 0x02:
-			return oric_portmask_b;
-		case 0x03:
-			return oric_portmask_a;
-		case 0x0c:
-			return oric_6522_control_lines;
-		case 0x0f:
-			return (oric_porta_r & (oric_portmask_a ^ 0xff));
-    }
+	unsigned char data;
+
+	/* it is repeated 16 times */
+	data = via_0_r(offset & 0x0f);
+	
+#if 0
 
 	switch (offset & 0x0ff)
 	{
 #ifdef MICRODISC_FLOPPY_DISC_INTERFACE
 		/* microdisc floppy disc interface */
 		case 0x010:
-			return	wd179x_status_r(0);
+			data = wd179x_status_r(0);
 		case 0x011:
-			return	wd179x_track_r(0);
+			data =wd179x_track_r(0);
 		case 0x012:
-			return	wd179x_sector_r(0);
+			data = wd179x_sector_r(0);
 		case 0x013:
-			return	wd179x_data_r(0);
+			data = wd179x_data_r(0);
 		case 0x014:
-			return	port_314_r;
+			data = port_314_r;
 		case 0x018:
-			return	port_318_r;
+			data = port_318_r;
 #else
 		/* Jasmin floppy disc interface */
 		case 0x0f4:
-			return wd179x_status_r(0);
+			data = wd179x_status_r(0);
 		case 0x0f5:
-			return wd179x_track_r(0);
+			data = wd179x_track_r(0);
 		case 0x0f6:
-			return wd179x_sector_r(0);
+			data = wd179x_sector_r(0);
 		case 0x0f7:
-			return wd179x_data_r(0);
+			data = wd179x_data_r(0);
 #endif
 	}
+#endif
 
-	return (oric_IO[(offset & 0x0f)]);
+	return data;
 }
-
-/*  guesswork ..
-
-0x01 CA1
-0x02 CA2
-0x10 CB1
-0x20 CB2
-
-*/
 
 WRITE_HANDLER ( oric_IO_w )
 {
-//	int keypressed;
-//	int kbrow, kbcol;
-	int porta_write;
-	unsigned char *RAM;
-
-	RAM = memory_region(REGION_CPU1);
-	oric_IO[offset & 0x0f] = data;
-	porta_write = 0;
-	//RAM[offset] = data; UHh?? what *WAS* i thinking!?!?!?!
-
-	/* todo .. Bosh the appropriate bits towards the appropriate
-	 * IO reg's, fire off soundchip and stuff like that ...
-	 */
-
-
 	/* Trap Bogus write to IO to load Tape Image!! */
 
 	if ((offset & 0xff) == 0xfa)
 	{
+		unsigned char *RAM;
+	
+		RAM = memory_region(REGION_CPU1);
 
 		if (data == 0x69)
 		{
@@ -450,66 +618,8 @@ WRITE_HANDLER ( oric_IO_w )
 		}
 	}
 
-
-	if ((offset & 0x0f) == 0x02)
-	{
-		oric_portmask_b = data;
-	}
-	if ((offset & 0x0f) == 0x03)
-	{
-		oric_portmask_a = data;
-	}
-
-	if (((offset & 0x0f) == 0x01) || ((offset & 0x01) == 0x01))
-	{
-		oric_porta = data;
-		oric_porta_r = data;
-		porta_write = 1;
-	}
-
-	// if ( (offset&0x0f) == 0x0f) { oric_porta = data; oric_porta_r = data; }
-
-	if ((offset & 0x0f) == 0x00)
-	{
-		// write to 6522 portb
-		oric_portb = data;
-		if( readinputport (1 + (data & 7)) & ~oric_8910_porta )
-			oric_portb_r = data | 8;
-		else
-			oric_portb_r = data & ~8;
-	}
-
-	if (((offset & 0x0f) == 0x0c) || porta_write == 1)
-	{
-		// set 6522 control lines
-		if ((offset & 0x0f) == 0x0c)
-			oric_6522_control_lines = data;
-		oric_CA1 = (unsigned char) 0;
-		oric_CA2 = (unsigned char) 0;
-		oric_CB1 = (unsigned char) 0;
-		oric_CB2 = (unsigned char) 0;
-		if ((oric_6522_control_lines & 0x01) != 0)
-			oric_CA1 = 1;
-		if ((oric_6522_control_lines & 0x02) != 0)
-			oric_CA2 = 1;
-		if ((oric_6522_control_lines & 0x10) != 0)
-			oric_CB1 = 1;
-		if ((oric_6522_control_lines & 0x20) != 0)
-			oric_CB2 = 1;
-		if (oric_CA2 && oric_CB2)
-			oric_sound_reg = oric_porta;
-		if ((oric_CB2) && !(oric_CA2))
-		{
-			oric_sound_data = oric_porta;
-			AY8910_control_port_0_w (0, oric_sound_reg);
-			AY8910_write_port_0_w (0, oric_sound_data);
-			if (oric_sound_reg == 14)
-			{
-				// Keyboard through Port A on 8912
-				oric_8910_porta = oric_sound_data;
-			}
-		}
-	}
+	/* it is repeated 16 times, but for now only use first few entries */
+	via_0_w(offset & 0x0f,data);
 
 	switch (offset & 0x0ff)
 	{
@@ -584,6 +694,7 @@ WRITE_HANDLER ( oric_IO_w )
 	}
 }
 
+#if 0
 int oric_interrupt (void)
 {
 
@@ -629,8 +740,6 @@ int oric_interrupt (void)
 
 	if (exec_irq == 1)
 	{
-		// do internal timers against 100hz Clock ...
-
 		/* once this timer has dec'd we can splosh the tape image in
 		 * once the kernal has set up memory the way it likes it ...
 		 * saves patching the kernal too much ... */
@@ -651,13 +760,6 @@ int oric_interrupt (void)
 			}
 		}
 
-		// here, we shall draw a funky screen for power up
-		if (oric_countdown_2 != 0)
-		{
-			oric_countdown_2--;
-			if (oric_countdown_2 == 0)
-				oric_set_powerscreen_mode (0);
-		}
 		// kick Interrupts back in
 		// nasty hack .. will hang this off some 6522 stuff later
 		//if (oric_countdown_3 != 0) {
@@ -678,49 +780,9 @@ int oric_interrupt (void)
 		 */
 	}
 
-
-	// Flash Attrs
-	oric_flashcount++;
-	if (oric_flashcount == 30)
-		oric_set_flash_show (0);
-	if (oric_flashcount >= 60)
-	{
-		oric_set_flash_show (1);
-		oric_flashcount = 0;
-	}
-
-	/*
-	 * set bit 0x40 in 0x030d in 6522, Interrupt enable flag,
-	 * IRQ routine in rom checks this and clears it .. (Fast IRQ)
-	 */
-
-
-	x = oric_IO_r (0x030e);
-	// x &= 0x40;
-	x &= 0xf0;
-	if (x == 0)
-		exec_irq = 0;
-	y = x;
-
-	if (exec_irq == 1)
-	{
-		interrupt_enable_w (0, 1);
-	}
-	else
-	{
-		interrupt_enable_w (0, 1);
-	}
-
-	x = oric_IO_r (0x030d);
-	x |= 0x40;
-	x |= y;
-
-	// x = 0x40;
-	//if (oric_countdown_1 > 0) { x = 0x00; return 0; }
-	//x &= 0xbf;
-	oric_IO_w (0x030d, x);
-	return interrupt ();
+	return ignore_interrupt();
 }
+#endif
 
 int oric_extract_file_from_tape (int filenum)
 {
@@ -850,4 +912,44 @@ int oric_load_rom(int id)
 
 	return 1;
 
+}
+
+
+int oric_cassette_init(int id)
+{
+	void *file;
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+
+		if (device_open(IO_CASSETTE, id, 0, &wa))
+			return INIT_FAILED;
+
+		return INIT_OK;
+	}
+
+	/* HJB 02/18: no file, create a new file instead */
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+		/* open in write mode */
+        if (device_open(IO_CASSETTE, id, 1, &wa))
+            return INIT_FAILED;
+		return INIT_OK;
+    }
+
+	return INIT_FAILED;
+}
+
+void oric_cassette_exit(int id)
+{
+	device_close(IO_CASSETTE, id);
 }
