@@ -31,9 +31,7 @@ static	UINT8			irq_status = 0;
 /* this indicates whether the floppy images geometry shall be calculated */
 static UINT8 motor_drive = 0;				/* currently running drive */
 static short motor_count = 0;				/* time out for motor in frames */
-static UINT8 tracks[4] = {0, };                         /* total tracks count per drive */
-static UINT8 heads[4] = {0, };                          /* total heads count per drive */
-static UINT8 spt[4] = {0, };                            /* sector per track count per drive */
+
 #if USE_TRACK
 static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
@@ -41,8 +39,6 @@ static UINT8 head;                           /* current head per drive */
 #if USE_SECTOR
 static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 #endif
-static short dir_sector[4] = {0, }; 		/* first directory sector (aka DDSL) */
-static short dir_length[4] = {0, }; 		/* length of directory in sectors (aka DDGA) */
 static UINT8 irq_mask = 0;
 
 static UINT8 *cas_buff = NULL;
@@ -312,14 +308,16 @@ int trs80_floppy_init(int id)
 		if (file)
 		{
 			int n;
+			int i;
 			int buff[16];
+			UINT8 tracks = 0;							/* total tracks count per drive */
+			UINT8 heads = 0;							/* total heads count per drive */
+			UINT8 spt = 0;								/* sector per track count per drive */
+			short dir_sector = 0; 						/* first directory sector (aka DDSL) */
+			short dir_length = 0; 						/* length of directory in sectors (aka DDGA) */
 
-
-            /* KT:: I'm scared, what is happening here?? */
-
-            /* read first bytes from boot sector */
-            for (n = 0; n < 4; n++)
-            {
+			for (n=0; n<4; n++)
+			{
 #if 0
 		if (file1 == REAL_FDD)
 		{
@@ -333,30 +331,59 @@ int trs80_floppy_init(int id)
 		}
 		else
 #endif
-				osd_fseek(file, 0, SEEK_SET);
-				osd_fread(file, buff, 2);
+			osd_fseek(file, 0, SEEK_SET);
+			osd_fread(file, buff, 2);
 
 				if (buff[0] != 0x00 || buff[1] != 0xfe)
 				{
-					//                basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
+	//                basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
 				}
 				else
 				{
 					osd_fseek(file, 2 * 256 + n * 16, SEEK_SET);
 					osd_fread(file, buff, 16);
-					tracks[n] = buff[3] + 1;
-					heads[n] = (buff[7] & 0x40) ? 2 : 1;
-					spt[n] = buff[4] / heads[n];
-					dir_sector[n] = 5 * buff[0] * buff[5];
-					dir_length[n] = 5 * buff[9];
-				}
-            }
+					tracks = buff[3] + 1;
+					heads = (buff[7] & 0x40) ? 2 : 1;
+					spt = buff[4] / heads;
+					dir_sector = 5 * buff[0] * buff[5];
+					dir_length = 5 * buff[9];
 
-            basicdsk_set_geometry(id, tracks[id], heads[id], spt[id], 256, dir_sector[id], dir_length[id], 0);
-        
-			osd_fclose(file);
-			return INIT_OK;
+					/* set geometry so disk image can be read */
+					basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+
+					/* mark directory sectors with deleted data address mark */
+					/* assumption dir_sector is a sector offset */
+					for (i=0; i<dir_length; i++)
+					{
+						UINT8 track;
+						UINT8 side;
+						UINT8 sector_id;
+						UINT16 track_offset;
+						UINT16 sector_offset;
+
+						/* calc sector offset */
+						sector_offset = dir_sector + i;
+
+						/* get track offset */
+						track_offset = sector_offset/spt;
+
+						/* calc track */
+						track = track_offset/heads;
+
+						/* calc side */
+						side = track_offset % heads;
+
+						/* calc sector id - first sector id is 0! */
+						sector_id = dir_sector % spt;
+						
+						/* set deleted data address mark for sector specified */
+						basicdsk_set_ddam(id, track, side, sector_id,1);
+					}
+				}
+			}
 		}
+		osd_fclose(file);
+		return INIT_OK;
 	}
 
 	return INIT_FAILED;
