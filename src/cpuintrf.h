@@ -252,6 +252,9 @@ enum
 #if (HAS_ASAP)
 	CPU_ASAP,
 #endif
+#if (HAS_APEXC)
+	CPU_APEXC,
+#endif
 	CPU_COUNT
 };
 
