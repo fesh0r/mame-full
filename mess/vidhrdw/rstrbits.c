@@ -696,6 +696,11 @@ int raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struct
 	assert(mode);
 	assert(frame);
 
+	assert(mode->width);
+	assert(mode->height);
+	assert(mode->depth);
+	assert(mode->bytesperrow);
+
 #if LOG_RASTERBITS
 	logerror("raster_bits(): mode->wrapbytesperrow=%i mode->offset=%i\n", mode->wrapbytesperrow, mode->offset);
 #endif
