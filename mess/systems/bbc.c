@@ -117,8 +117,8 @@ static struct MemoryReadAddress readmem_bbcb[] =
 	{ 0xfe30, 0xfe3f, MRA_NOP		   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-//	{ 0xfe80, 0xfe9f, bbc_i8271_read   },
+//	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
+	{ 0xfe80, 0xfe9f, bbc_i8271_read   },
 	{ 0xfea0, 0xfebf, MRA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, MRA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MRA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -140,8 +140,8 @@ static struct MemoryWriteAddress writemem_bbcb[] =
 	{ 0xfe30, 0xfe3f, page_selectb_w   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_w		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
-	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
-//	{ 0xfe80, 0xfe9f, bbc_i8271_write  },
+//	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
+	{ 0xfe80, 0xfe9f, bbc_i8271_write  },
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
@@ -504,7 +504,7 @@ static const struct IODevice io_bbcb[] = {
 		NULL					/* output_chunk */
 	},	{
 		IO_FLOPPY,				/* type */
-		4,						/* count */
+		2,						/* count */
 		"ssd\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
