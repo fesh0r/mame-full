@@ -54,7 +54,7 @@ void setup_xil_images( int xsize, int ysize )
   window_width = xsize;
   window_height = ysize;
 
-  draw_image = xil_create( state, xsize, ysize, 1, XIL_BYTE );
+  draw_image = xil_create( state, xsize, ysize, 1, XIL_SHORT );
   xil_export( draw_image );
   xil_get_memory_storage( draw_image, &storage_info );
   scaled_buffer_ptr = (char *)storage_info.byte.data;

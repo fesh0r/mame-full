@@ -563,8 +563,8 @@ int x11_window_create_display (int bitmap_depth)
    /* verify the number of bits per pixel and choose the correct update method */
 #ifdef USE_XIL
    if (use_xil)
-      /* XIL uses 8 bit visuals and does any conversion it self */
-      depth = 8;
+      /* XIL uses 16 bit visuals and does any conversion it self */
+      depth = 16;
    else
 #endif
       depth = image->bits_per_pixel;
