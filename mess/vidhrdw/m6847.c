@@ -21,6 +21,8 @@ static int artifact_dipswitch;
 
 #define MAX_VRAM 6144
 
+#define LOG_M6847 0
+
 static unsigned char palette[] = {
 	0x00,0x00,0x00, /* BLACK */
 	0x00,0xff,0x00, /* GREEN */
@@ -849,6 +851,10 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 
 void m6847_set_gmode(int mode)
 {
+#if LOG_M6847
+	logerror("m6847_set_gmode(): offset=$%02x\n", mode);
+#endif
+
 	mode &= 0x1f;
 
 	if (mode != video_gmode) {
@@ -859,6 +865,10 @@ void m6847_set_gmode(int mode)
 
 void m6847_set_vmode(int mode)
 {
+#if LOG_M6847
+	logerror("m6847_set_vmode(): offset=$%02x\n", mode);
+#endif
+
 	mode &= 0x1f;
 
 	if (mode != video_vmode) {
@@ -880,6 +890,10 @@ int m6847_get_vmode(void)
 
 void m6847_set_video_offset(int offset)
 {
+#if LOG_M6847
+	logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
+#endif
+
 	offset &= vram_mask;
 	if (offset != video_offset) {
 		video_offset = offset;
