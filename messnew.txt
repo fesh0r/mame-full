@@ -31,7 +31,8 @@ heavily on tap2wav by Fabrice Frances [Kev Thacker, Fabrice Frances]
 - [COCO 1/2/3] Reworked m6847 synchronization and sound mux signals to make
 them much more accurate.  Fixed a bug that caused the joystick to max out all
 the time. Added a new abstraction layer for cartridge IO interfaces.  Optimized
-graphics emulation a bit.  [Nate Woods]
+graphics emulation a bit.  Adjusted default controls so that joystick buttons
+will work by default.  [Nate Woods]
 
 - [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
 

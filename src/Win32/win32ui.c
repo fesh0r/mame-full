@@ -1136,7 +1136,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 #ifdef MESS
 	{
 		extern char *history_filename;
+		extern char *mameinfo_filename;
 		history_filename = "sysinfo.dat";
+		mameinfo_filename = "sysbug.dat";
 	}
 #endif /* MESS */
 
