@@ -235,6 +235,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 	int count;
 	struct distributed_images images;
 	const struct IODevice *dev;
+	const char *imagename;
 
 	/* normalize ispreload */
 	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
@@ -260,14 +261,18 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 		{
 			if ((dev->flags & DEVICE_LOAD_AT_INIT) == ispreload)
 			{
-				/* load this image */
-				result = image_load(dev->type, id, images.names[dev->type][id]);
-
-				if (result != INIT_PASS)
+				imagename = images.names[dev->type][id];
+				if (imagename)
 				{
-					mess_printf("Driver reports load for %s device failed\n", device_typename(dev->type));
-					mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
-					return 1;
+					/* load this image */
+					result = image_load(dev->type, id, images.names[dev->type][id]);
+
+					if (result != INIT_PASS)
+					{
+						mess_printf("Driver reports load for %s device failed\n", device_typename(dev->type));
+						mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
+						return 1;
+					}
 				}
 			}
 		}

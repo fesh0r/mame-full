@@ -384,4 +384,6 @@ int osd_select_file(int sel, char *filename)
 	return 0;
 }
 
-
+void osd_image_load_status_changed(int type, int id)
+{
+}

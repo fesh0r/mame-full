@@ -181,6 +181,7 @@ int image_load(int type, int id, const char *name)
 
 	img->status &= ~IMAGE_STATUS_ISLOADING;
 	img->status |= IMAGE_STATUS_ISLOADED;
+	osd_image_load_status_changed(type, id);
 	return INIT_PASS;
 
 error:
@@ -214,6 +215,8 @@ void image_unload(int type, int id)
 
 	image_free_resources(img);
 	memset(img, 0, sizeof(*img));
+
+	osd_image_load_status_changed(type, id);
 }
 
 void image_unload_all(void)

@@ -50,6 +50,15 @@
 #include "help.h"
 #include "resource.hm"
 
+#ifdef MESS
+/* done like this until I figure out a better idea */
+#include "ui/resourcems.h"
+
+void MessOptionsToProp(int nGame, HWND hWnd, options_type *o);
+BOOL MessPropertiesCommand(int nGame, HWND hWnd, WORD wNotifyCode, WORD wID, BOOL *changed);
+void MessPropToOptions(int nGame, HWND hWnd, options_type *o);
+#endif
+
 // missing win32 api defines
 #ifndef TBCD_TICS
 #define TBCD_TICS 1
@@ -68,10 +77,6 @@
 /**************************************************************
  * Local function prototypes
  **************************************************************/
-
-static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 static void SetStereoEnabled(HWND hWnd, int nIndex);
 static void SetYM3812Enabled(HWND hWnd, int nIndex);
@@ -138,40 +143,15 @@ static int  g_nA2DIndex		   = 0;
 static HICON g_hIcon = NULL;
 
 /* Property sheets */
-struct PropertySheetInfo
-{
-	BOOL bOnDefaultPage;
-	BOOL (*pfnFilterProc)(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
-	DWORD dwDlgID;
-	DLGPROC pfnDlgProc;
-};
 
 #define HIGHLIGHT_COLOR RGB(0,196,0)
 HBRUSH highlight_brush = NULL;
 HBRUSH background_brush = NULL;
 
-static BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
+BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
 {
 	return (drv->video_attributes & VIDEO_TYPE_VECTOR) != 0;
 }
-
-static struct PropertySheetInfo s_propSheets[] =
-{
-	{ FALSE,	NULL,						IDD_PROP_GAME,			GamePropertiesDialogProc },
-	{ FALSE,	NULL,						IDD_PROP_AUDIT,			GameAuditDialogProc },
-	{ TRUE,		NULL,						IDD_PROP_DISPLAY,		GameDisplayOptionsProc },
-	{ TRUE,		NULL,						IDD_PROP_ADVANCED,		GameOptionsProc },
-	{ TRUE,		NULL,						IDD_PROP_SOUND,			GameOptionsProc },
-	{ TRUE,		NULL,						IDD_PROP_INPUT,			GameOptionsProc },
-	{ TRUE,		NULL,						IDD_PROP_MISC,			GameOptionsProc },
-#ifdef MESS
-	{ TRUE,		NULL,						IDD_PROP_SOFTWARE,		GameOptionsProc },
-	{ FALSE,	PropSheetFilter_Config,	IDD_PROP_CONFIGURATION,	GameOptionsProc },
-#endif
-	{ TRUE,		PropSheetFilter_Vector,	IDD_PROP_VECTOR,		GameOptionsProc }
-};
-
-#define NUM_PROPSHEETS (sizeof(s_propSheets) / sizeof(s_propSheets[0]))
 
 /* Help IDs */
 static DWORD dwHelpIDs[] =
@@ -317,12 +297,57 @@ BOOL FindSampleSet(int game)
 	return (audit == CORRECT) || (audit == BEST_AVAILABLE);
 }
 
+static PROPSHEETPAGE *CreatePropSheetPages(HINSTANCE hInst, BOOL bOnlyDefault,
+	const struct GameDriver *gamedrv, UINT *pnMaxPropSheets)
+{
+	PROPSHEETPAGE *pspages;
+	int maxPropSheets;
+	int possiblePropSheets;
+	int i;
+    struct InternalMachineDriver drv;
+
+	if (gamedrv)
+	    expand_machine_driver(gamedrv->drv, &drv);
+
+	for (i = 0; g_propSheets[i].pfnDlgProc; i++)
+		;
+
+	possiblePropSheets = i + 1;
+
+	pspages = malloc(sizeof(PROPSHEETPAGE) * possiblePropSheets);
+	if (!pspages)
+		return NULL;
+	memset(pspages, 0, sizeof(PROPSHEETPAGE) * possiblePropSheets);
+
+	maxPropSheets = 0;
+	for (i = 0; g_propSheets[i].pfnDlgProc; i++)
+	{
+		if (!bOnlyDefault || g_propSheets[i].bOnDefaultPage)
+		{
+			if (!gamedrv || !g_propSheets[i].pfnFilterProc || g_propSheets[i].pfnFilterProc(&drv, gamedrv))
+			{
+				pspages[maxPropSheets].dwSize                     = sizeof(PROPSHEETPAGE);
+				pspages[maxPropSheets].dwFlags                    = 0;
+				pspages[maxPropSheets].hInstance                  = hInst;
+				pspages[maxPropSheets].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(g_propSheets[i].dwDlgID);
+				pspages[maxPropSheets].pfnCallback                = NULL;
+				pspages[maxPropSheets].lParam                     = 0;
+				pspages[maxPropSheets].pfnDlgProc                 = g_propSheets[i].pfnDlgProc;
+				maxPropSheets++;
+			}
+		}
+	}
+	
+	if (pnMaxPropSheets)
+		*pnMaxPropSheets = maxPropSheets;
+
+	return pspages;
+}
+
 void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 {
 	PROPSHEETHEADER pshead;
-	PROPSHEETPAGE   pspage[NUM_PROPSHEETS];
-	int             i;
-	int             maxPropSheets;
+	PROPSHEETPAGE   *pspage;
 
 	g_nGame = -1;
 
@@ -336,7 +361,10 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	BuildDataMap();
 
 	ZeroMemory(&pshead, sizeof(pshead));
-	ZeroMemory(pspage, sizeof(pspage));
+
+	pspage = CreatePropSheetPages(hInst, TRUE, NULL, &pshead.nPages);
+	if (!pspage)
+		return;
 
 	/* Fill in the property sheet header */
 	pshead.hwndParent                 = hWnd;
@@ -348,24 +376,6 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
 
-	/* Fill out the property page templates */
-	maxPropSheets = 0;
-	for (i = 0; i < NUM_PROPSHEETS; i++)
-	{
-		if (s_propSheets[i].bOnDefaultPage)
-		{
-			pspage[maxPropSheets].dwSize                     = sizeof(PROPSHEETPAGE);
-			pspage[maxPropSheets].dwFlags                    = 0;
-			pspage[maxPropSheets].hInstance                  = hInst;
-			pspage[maxPropSheets].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(s_propSheets[i].dwDlgID);
-			pspage[maxPropSheets].pfnCallback                = NULL;
-			pspage[maxPropSheets].lParam                     = 0;
-			pspage[maxPropSheets].pfnDlgProc                 = s_propSheets[i].pfnDlgProc;
-			maxPropSheets++;
-		}
-	}
-	pshead.nPages = maxPropSheets;
-
 	/* Create the Property sheet and display it */
 	if (PropertySheet(&pshead) == -1)
 	{
@@ -374,6 +384,8 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 		sprintf(temp, "Propery Sheet Error %d %X", (int)dwError, (int)dwError);
 		MessageBox(0, temp, "Error", IDOK);
 	}
+
+	free(pspage);
 }
 
 void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon)
@@ -384,11 +396,7 @@ void InitPropertyPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon)
 void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIcon, int start_page)
 {
 	PROPSHEETHEADER pshead;
-	PROPSHEETPAGE   pspage[NUM_PROPSHEETS];
-	int             i;
-	int             maxPropSheets;
-    struct InternalMachineDriver drv;
-    expand_machine_driver(drivers[game_num]->drv,&drv);
+	PROPSHEETPAGE   *pspage;
 
 	if (highlight_brush == NULL)
 		highlight_brush = CreateSolidBrush(HIGHLIGHT_COLOR);
@@ -410,7 +418,10 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	BuildDataMap();
 
 	ZeroMemory(&pshead, sizeof(PROPSHEETHEADER));
-	maxPropSheets = 0;
+
+	pspage = CreatePropSheetPages(hInst, FALSE, drivers[game_num], &pshead.nPages);
+	if (!pspage)
+		return;
 
 	/* Fill in the property sheet header */
 	pshead.hwndParent                 = hWnd;
@@ -422,24 +433,6 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
 
-	/* Fill out the property page templates */
-	for (i = 0; i < NUM_PROPSHEETS; i++)
-	{
-		if (!s_propSheets[i].pfnFilterProc || s_propSheets[i].pfnFilterProc(&drv, drivers[game_num]))
-		{
-			memset(&pspage[maxPropSheets], 0, sizeof(pspage[i]));
-			pspage[maxPropSheets].dwSize                     = sizeof(PROPSHEETPAGE);
-			pspage[maxPropSheets].dwFlags                    = 0;
-			pspage[maxPropSheets].hInstance                  = hInst;
-			pspage[maxPropSheets].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(s_propSheets[i].dwDlgID);
-			pspage[maxPropSheets].pfnCallback                = NULL;
-			pspage[maxPropSheets].lParam                     = 0;
-			pspage[maxPropSheets].pfnDlgProc				 = s_propSheets[i].pfnDlgProc;
-			maxPropSheets++;
-		}
-	}
-	pshead.nPages = maxPropSheets;
-
 	/* Create the Property sheet and display it */
 	if (PropertySheet(&pshead) == -1)
 	{
@@ -448,6 +441,8 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, HICON hIco
 		sprintf(temp, "Propery Sheet Error %d %X", (int)dwError, (int)dwError);
 		MessageBox(0, temp, "Error", IDOK);
 	}
+
+	free(pspage);
 }
 
 /*********************************************************************
@@ -635,7 +630,7 @@ static const char * GameInfoSource(UINT nIndex)
 }
 
 /* Handle the information property page */
-static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (Msg)
 	{
@@ -695,7 +690,7 @@ static BOOL ReadSkipCtrl(HWND hWnd, UINT nCtrlID, int *value)
 }
 
 /* Handle all options property pages */
-static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (Msg)
 	{
@@ -839,7 +834,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 
 			default:
 #ifdef MESS
-				if (MessPropertiesCommand(hDlg, wNotifyCode, wID, &changed))
+				if (MessPropertiesCommand(g_nGame, hDlg, wNotifyCode, wID, &changed))
 					break;
 #endif
 
@@ -882,7 +877,8 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 			ReadControls(hDlg);
 
 			// redraw it, it might be a new color now
-			InvalidateRect(GetDlgItem(hDlg,wID),NULL,FALSE);
+			if (GetDlgItem(hDlg,wID))
+				InvalidateRect(GetDlgItem(hDlg,wID),NULL,FALSE);
 
 		}
 		break;
@@ -946,14 +942,6 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		case PSN_HELP:
 			// User wants help for this property page
 			break;
-
-#ifdef MESS
-		case LVN_ENDLABELEDIT:
-			return SoftwareDirectories_OnEndLabelEdit(hDlg, (NMHDR *) lParam);
-
-		case LVN_BEGINLABELEDIT:
-			return SoftwareDirectories_OnBeginLabelEdit(hDlg, (NMHDR *) lParam);
-#endif
 		}
 		break;
 
@@ -981,18 +969,6 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 	EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), g_bReset);
 
 	return 0;
-}
-
-static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		{
-		}
-	}
-
-	return GameOptionsProc(hDlg, Msg, wParam, lParam);
 }
 
 /* Read controls that are not handled in the DataMap */
@@ -1091,7 +1067,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 		o->aspect = strdup(buffer);
 	}
 #ifdef MESS
-	MessPropToOptions(hWnd, o);
+	MessPropToOptions(g_nGame, hWnd, o);
 #endif
 }
 
@@ -1351,7 +1327,7 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 	}
 
 #ifdef MESS
-	MessOptionsToProp(hWnd, o);
+	MessOptionsToProp(g_nGame, hWnd, o);
 #endif
 }
 

@@ -67,14 +67,8 @@ void osd_dir_close(void *dir);
 void osd_change_directory(const char *path);
 const char *osd_get_cwd(void);
 
-/* ask the osd code to eject a device image (e.g. floppy image with the Mac		*/
-/* and Lisa drivers, as implemented in machine/sonydrive.c), so that it can,	*/
-/* in addition to calling "device_filename_change(type, id, NULL);", update its	*/
-/* internal osd caches as needed.												*/
-/* NPW 22-Jan-2003 - Is this really needed anymore?  If so, only image.c should
- * be calling it
-	void osd_device_eject(int type, int id);
-*/
+/* used to notify osd code of the load status of an image */
+void osd_image_load_status_changed(int type, int id);
 
 char *osd_dirname(const char *filename);
 char *osd_basename(char *filename);

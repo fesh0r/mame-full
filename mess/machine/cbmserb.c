@@ -104,20 +104,24 @@ static int d64_open (int id, mame_file *in)
 {
 	int size;
 
-	memset (&(cbm_drive[id]), 0, sizeof (cbm_drive[id]));
+	cbm_drive[id].drive = 0;
+	cbm_drive[id].image = NULL;
+	cbm_drive[id].image_type = 0;
+	cbm_drive[id].image_id = 0;
+	memset(&cbm_drive[id].filename, 0, sizeof(cbm_drive[id].filename));
 
 	cbm_drive[id].image_type = IO_FLOPPY;
 	cbm_drive[id].image_id = id;
-	if (in == NULL)
-		return 0;
 	size = mame_fsize (in);
-	if (!(cbm_drive[id].image = (UINT8*)malloc (size)))
-		return 1;
+
+	cbm_drive[id].image = (UINT8*) malloc (size);
+	if (!cbm_drive[id].image)
+		return INIT_FAIL;
 
 	if (size != mame_fread (in, cbm_drive[id].image, size))
 	{
 		free (cbm_drive[id].image);
-		return 1;
+		return INIT_FAIL;
 	}
 
 	logerror("floppy image %s loaded\n",

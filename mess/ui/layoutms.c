@@ -24,6 +24,9 @@
 #include "ui/options.h"
 #include "ui/splitters.h"
 #include "ui/help.h"
+#include "ui/properties.h"
+#include "ui/audit32.h"
+#include "ui/propertiesms.h"
 
 static BOOL FilterAvailable(int driver_index);
 
@@ -109,6 +112,21 @@ const MAMEHELPINFO g_helpInfo[] =
 	{ ID_HELP_RELEASE,		FALSE,	"docs\\Mess.txt" },
 	{ ID_HELP_WHATS_NEW,	TRUE,	MAME32HELP "::/messnew.txt" },
 	{ -1 }
+};
+
+PROPERTYSHEETINFO g_propSheets[] =
+{
+	{ FALSE,	NULL,					IDD_PROP_GAME,			GamePropertiesDialogProc },
+	{ FALSE,	NULL,					IDD_PROP_AUDIT,			GameAuditDialogProc },
+	{ TRUE,		NULL,					IDD_PROP_DISPLAY,		GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_ADVANCED,		GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_SOUND,			GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_INPUT,			GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_MISC,			GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_SOFTWARE,		GameMessOptionsProc },
+	{ FALSE,	PropSheetFilter_Config,	IDD_PROP_CONFIGURATION,	GameMessOptionsProc },
+	{ TRUE,		PropSheetFilter_Vector,	IDD_PROP_VECTOR,		GameOptionsProc },
+	{ FALSE }
 };
 
 const char g_szDefaultGame[] = "nes";

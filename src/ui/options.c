@@ -288,10 +288,10 @@ static REG_OPTION regGameOpts[] =
 #ifdef MESS
 	/* mess options */
 	,
-	{ "extra_software",	"extra_software",	RO_STRING,	&gOpts.extra_software_paths,	0, 0},
-	{ "printer",		"printer",		RO_STRING,	&gOpts.printer,					0, 0},
-	{ "use_new_ui",		"newui",		RO_BOOL,	&gOpts.use_new_ui,				0, 0},
-	{ "ram_size",		"ramsize",		RO_INT,		&gOpts.ram_size,				0, 0}
+	{ "extra_software",	"extra_software",             RO_STRING,  &gOpts.extra_software_paths,	0, 0},
+	{ "printer",		"printer",                    RO_STRING,  &gOpts.printer,			0, 0},
+	{ "use_new_ui",		"newui",                      RO_BOOL,    &gOpts.use_new_ui,		0, 0},
+	{ "ram_size",		"ramsize",                    RO_INT,     &gOpts.ram_size,			0, 0}
 #endif
 };
 #define NUM_GAME_OPTIONS (sizeof(regGameOpts) / sizeof(regGameOpts[0]))

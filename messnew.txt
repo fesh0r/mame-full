@@ -29,6 +29,9 @@ Source Changes:
 
 - Moved CRC handling to use the core fileio functions. [Nate Woods]
 
+- Added a osd_image_load_status_changed() call, so that front ends can get
+  notified when the load status of an image changes. [Nate Woods]
+
 - [Win32 GUI] Fixed a bug where screenshots with periods in them would not be
   loaded properly. [Nate Woods]
 

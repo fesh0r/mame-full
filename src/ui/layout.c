@@ -34,6 +34,8 @@
 #include "options.h"
 #include "splitters.h"
 #include "help.h"
+#include "properties.h"
+#include "audit32.h"
 
 static BOOL FilterAvailable(int driver_index);
 
@@ -114,6 +116,19 @@ const MAMEHELPINFO g_helpInfo[] =
 	{ ID_HELP_RELEASE,		FALSE,	"windows.txt" },
 	{ ID_HELP_WHATS_NEW,	TRUE,	MAME32HELP "::/docs/whatsnew.txt" },
 	{ -1 }
+};
+
+PROPERTYSHEETINFO g_propSheets[] =
+{
+	{ FALSE,	NULL,					IDD_PROP_GAME,			GamePropertiesDialogProc },
+	{ FALSE,	NULL,					IDD_PROP_AUDIT,			GameAuditDialogProc },
+	{ TRUE,		NULL,					IDD_PROP_DISPLAY,		GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_ADVANCED,		GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_SOUND,			GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_INPUT,			GameOptionsProc },
+	{ TRUE,		NULL,					IDD_PROP_MISC,			GameOptionsProc },
+	{ TRUE,		PropSheetFilter_Vector,	IDD_PROP_VECTOR,		GameOptionsProc },
+	{ FALSE }
 };
 
 const char g_szDefaultGame[] = "pacman";

@@ -37,4 +37,20 @@ BOOL    FindSampleSet(int game);
 /* Get Game status text string */
 const char *GameInfoStatus(int driver_index);
 
+/* Property sheet info for layout.c */
+typedef struct
+{
+	BOOL bOnDefaultPage;
+	BOOL (*pfnFilterProc)(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+	DWORD dwDlgID;
+	DLGPROC pfnDlgProc;
+} PROPERTYSHEETINFO;
+
+extern PROPERTYSHEETINFO g_propSheets[];
+
+BOOL PropSheetFilter_Vector(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+
+INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
+
 #endif

@@ -34,7 +34,8 @@ OSOBJS += \
         $(OBJ)/ui/datamap.o \
         $(OBJ)/ui/dxdecode.o \
 		$(OBJ)/ui/help.o \
-	$(OBJ)/ui/history.o \
+		$(OBJ)/ui/history.o \
+		$(OBJ)/ui/properties.o \
 		$(OBJ)/mess/ui/layoutms.o \
 		$(OBJ)/mess/ui/mess32ui.o \
 		$(OBJ)/mess/ui/ms32util.o \
@@ -44,7 +45,6 @@ OSOBJS += \
 		$(OBJ)/mess/ui/softwarelist.o
 
         #$(OBJ)/ui/Win32ui.o \ 		<<--- included from MESS' version
-        #$(OBJ)/ui/Properties.o \	<<--- included from MESS' version
         #$(OBJ)/ui/options.o \		<<--- included from MESS' version
 
 # add resource file
