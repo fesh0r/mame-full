@@ -8,6 +8,12 @@ struct TMS5220interface
 								/* usually 800000 for 10000 Hz sample rate.  */
 	int mixing_level;
 	void (*irq)(int state);		/* IRQ callback function */
+
+	int (*read)(int count);			/* speech ROM read callback */
+	void (*load_address)(int data);	/* speech ROM load address callback */
+	void (*read_and_branch)(void);	/* speech ROM read and branch callback */
+
+	/*void (*ready_func)(int state);*/	/* CPU halt callback function - if NULL, Atari hardware interface */
 };
 
 int tms5220_sh_start(const struct MachineSound *msound);

@@ -11,5 +11,10 @@ int tms5220_int_read(void);
 
 void tms5220_process(INT16 *buffer, unsigned int size);
 
+/* three variables added by R Nabet */
+void tms5220_set_read(int (*func)(int));
+void tms5220_set_load_address(void (*func)(int));
+void tms5220_set_read_and_branch(void (*func)(void));
+
 #endif
 
