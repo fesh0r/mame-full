@@ -56,7 +56,7 @@ struct ARM {
 static struct ARM arm;
 int arm_ICount;
 
-#define AMASK	0x03fffffcL
+#define AMASK	0x03fffffc
 
 /****************************************************************************
  * Read a byte from given memory location
@@ -557,6 +557,7 @@ INLINE void shift_queue(void)
 	arm.queue[2] = ARM_RDMEM_32(PC);
 	/* PC is now 8 ahead of the current instruction in queue[0] */
 	PC = (PC + 4) & AMASK;
+    CALL_MAME_DEBUG;
 }
 
 INLINE void PUT_PC(UINT32 val, int link)
@@ -638,7 +639,7 @@ INLINE void PUT_PC(UINT32 val, int link)
 	PSW = val & (N|Z|C|V|I|F|S01);
 
 	/* only store the address part of val into r[15] */
-	PC = val & ~(N|Z|C|V|I|F|S01);
+	PC = val ^ PSW;
 
     fill_queue();
 }
@@ -2524,7 +2525,7 @@ static void b(void)
 {
 	UINT32 offs = OP & 0x00ffffff;
 
-	PC = (arm.ppc + (offs << 2)) & AMASK;
+	PC = (arm.ppc + 4 * offs) & AMASK;
 	fill_queue();
 }
 
@@ -2536,10 +2537,10 @@ static void bl(void)
 {
 	UINT32 offs = OP & 0x00ffffff;
 
-	/* save PC */
+	/* save PC and the status flags */
 	arm.reg[14] = PC | PSW;
 
-	PC = (arm.ppc + (offs << 2)) & AMASK;
+	PC = (arm.ppc + 4 * offs) & AMASK;
 	fill_queue();
 }
 
@@ -2632,7 +2633,7 @@ void (*func[256])(void) =
 void arm_reset(void *param)
 {
 	memset(&arm, 0, sizeof(struct ARM));
-	fill_queue();
+	PUT_PC(0,0);
 }
 
 void arm_exit(void)
@@ -2649,8 +2650,6 @@ int arm_execute(int cycles)
 		int cond;
 
         shift_queue();
-
-		CALL_MAME_DEBUG;
 
         /* conditionally execute _every_ opcode (yes, the ARM is like this) */
 		switch (OP >> 28)
@@ -2731,22 +2730,23 @@ void arm_set_context(void *src)
 
 unsigned arm_get_pc(void)
 {
-	return (PC - 4) & AMASK;
+	return (PC - 8) & AMASK;
 }
 
 void arm_set_pc(unsigned val)
 {
+	val = (val - 8) & AMASK;
     PUT_PC(val, 0);
 }
 
 unsigned arm_get_sp(void)
 {
-	return arm.reg[14];
+	return arm.reg[13];
 }
 
 void arm_set_sp(unsigned val)
 {
-	arm.reg[14] = val;
+	arm.reg[13] = val;
 }
 
 unsigned arm_get_reg(int regnum)
@@ -2928,13 +2928,8 @@ const char *arm_info(void *context, int regnum)
 
 unsigned arm_dasm(char *buffer, unsigned pc)
 {
-#if 0
 #ifdef MAME_DEBUG
 	return DasmARM(buffer,pc);
-#else
-	sprintf(buffer, "$%08x", ARM_RDMEM_32(pc));
-	return 4;
-#endif
 #else
 	sprintf(buffer, "$%08x", ARM_RDMEM_32(pc));
 	return 4;
