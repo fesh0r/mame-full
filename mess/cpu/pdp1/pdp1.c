@@ -1162,19 +1162,6 @@ static void execute_instruction(void)
 	case ADD:		/* Add */
 		{
 			/* overflow is set if the 2 operands have the same sign and the final result has another */
-			/* As a side note, the order of -0 detection and overflow checking does not matter,
-			because the sum of two positive number cannot give 0777777 (since positive
-			numbers are 0377777 at most, their sum is 0777776 at most).
-			Additionnally, we cannot have carry set and a result equal to 0777777  (since numbers
-			are 0777777 at most, their sum is 01777776 at most): this is nice, because it makes
-			the sequence:
-				AC = (AC + (AC >> 18)) & 0777777;	// propagate carry around
-				if (AC == 0777777)			// check for -0
-					AC = 0;
-			equivalent to:
-				if (AC >= 0777777)
-					AC = (AC + 1) & 0777777;
-			which is a bit more efficient. */
 			int ov2;	/* 1 if the operands have the same sign*/
 
 			MB = READ_PDP_18BIT(MA);
@@ -1182,17 +1169,16 @@ static void execute_instruction(void)
 			ov2 = ((AC & 0400000) == (MB & 0400000));
 
 			AC = AC + MB;
-#if 0
 			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-			if (AC == 0777777)		/* check for -0 */
-				AC = 0;
-#else
-			if (AC >= 0777777)
-				AC = (AC + 1) & 0777777;
-#endif
 
+			/* I think we need to check for overflow before checking for -0,
+			because the sum -0+-0 = -0 = +0 would generate an overflow
+			otherwise. */
 			if (ov2 && ((AC & 0400000) != (MB & 0400000)))
 				OV = 1;
+
+			if (AC == 0777777)		/* check for -0 */
+				AC = 0;
 
 			break;
 		}
@@ -1211,7 +1197,7 @@ static void execute_instruction(void)
 			ov2 = ((AC & 0400000) == (MB & 0400000));
 
 			AC = AC + MB;
-			AC = (AC + (AC >> 18)) & 0777777;
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
 
 			if (ov2 && ((AC & 0400000) != (MB & 0400000)))
 				OV = 1;
@@ -1222,26 +1208,30 @@ static void execute_instruction(void)
 		}
 	case IDX:		/* Index */
 		AC = READ_PDP_18BIT(MA) + 1;
-#if 0
-		AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-		if (AC == 0777777)		/* check for -0 */
-			AC = 0;
-#else
-		if (AC >= 0777777)
-			AC = (AC + 1) & 0777777;
-#endif
+
+		#if 0
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+			if (AC == 0777777)		/* check for -0 */
+				AC = 0;
+		#else
+			if (AC >= 0777777)
+				AC = (AC + 1) & 0777777;
+		#endif
+
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		break;
 	case ISP:		/* Index and Skip if Positive */
 		AC = READ_PDP_18BIT(MA) + 1;
-#if 0
-		AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-		if (AC == 0777777)		/* check for -0 */
-			AC = 0;
-#else
-		if (AC >= 0777777)
-			AC = (AC + 1) & 0777777;
-#endif
+
+		#if 0
+			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+			if (AC == 0777777)		/* check for -0 */
+				AC = 0;
+		#else
+			if (AC >= 0777777)
+				AC = (AC + 1) & 0777777;
+		#endif
+
 		WRITE_PDP_18BIT(MA, (MB = AC));
 		if ((AC & 0400000) == 0)
 			INCREMENT_PC;
@@ -1284,12 +1274,10 @@ static void execute_instruction(void)
 			{
 				if (IO & 1)
 				{
-#if 0
-					AC = (AC + MB);
-					AC = (AC + (AC >> 18)) & 0777777;
-#else
-					AC = (AC + MB) & 0777777;	/* we can save correction since both numbers are positive */
-#endif
+					/*assert(! (AC & 0400000));*/
+					AC = AC + MB;
+					/* we can save carry around since both numbers are positive */
+					/*AC = (AC + (AC >> 18)) & 0777777;*/
 					etime += .65;		/* approximative */
 				}
 				IO = (IO >> 1) | ((AC & 1) << 17);
@@ -1313,14 +1301,7 @@ static void execute_instruction(void)
 			if ((IO & 1) == 1)
 			{
 				AC = AC + (MB = READ_PDP_18BIT(MA));
-#if 0
 				AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-				if (AC == 0777777)		/* check for -0 (right???) */
-					AC = 0;
-#else
-				if (AC >= 0777777)
-					AC = (AC + 1) & 0777777;
-#endif
 			}
 			IO = (IO >> 1 | AC << 17) & 0777777;
 			AC >>= 1;
@@ -1329,6 +1310,19 @@ static void execute_instruction(void)
 	case DIS_DIV:	/* Divide Step or Divide */
 		if (pdp1.hw_divide)
 		{	/* DIV */
+			/* As a side note, the order of -0 detection and overflow checking does not matter,
+			because the sum of two positive number cannot give 0777777 (since positive
+			numbers are 0377777 at most, their sum is 0777776 at most).
+			Additionnally, we cannot have carry set and a result equal to 0777777  (since numbers
+			are 0777777 at most, their sum is 01777776 at most): this is nice, because it makes
+			the sequence:
+				AC = (AC + (AC >> 18)) & 0777777;	// propagate carry around
+				if (AC == 0777777)			// check for -0
+					AC = 0;
+			equivalent to:
+				if (AC >= 0777777)
+					AC = (AC + 1) & 0777777;
+			which is a bit more efficient. */
 			int acl;
 			int scr;
 			int smb, srm;
@@ -1356,14 +1350,14 @@ static void execute_instruction(void)
 			while (1)
 			{
 				AC = (AC + MB);
-#if 0
-				AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-				if (AC == 0777777)		/* check for -0 */
-					AC = 0;
-#else
-				if (AC >= 0777777)
-					AC = (AC + 1) & 0777777;
-#endif
+				#if 1
+					AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+					if (AC == 0777777)		/* check for -0 */
+						AC = 0;
+				#else
+					if (AC >= 0777777)
+						AC = (AC + 1) & 0777777;
+				#endif
 				if (MB & 0400000)
 					MB = MB ^ 0777777;
 
@@ -1388,14 +1382,14 @@ static void execute_instruction(void)
 			}
 
 			AC = (AC + MB);
-#if 0
-			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
-			if (AC == 0777777)		/* check for -0 */
-				AC = 0;
-#else
-			if (AC >= 0777777)
-				AC = (AC + 1) & 0777777;
-#endif
+			#if 1
+				AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
+				if (AC == 0777777)		/* check for -0 */
+					AC = 0;
+			#else
+				if (AC >= 0777777)
+					AC = (AC + 1) & 0777777;
+			#endif
 
 			if (scr)
 			{
@@ -1432,15 +1426,11 @@ static void execute_instruction(void)
 			IO = ((IO << 1 | acl) & 0777777) ^ 1;
 			MB = READ_PDP_18BIT(MA);
 			if (IO & 1)
-			{
 				AC += (MB ^ 0777777);
-			}
 			else
-			{
+				/* Note that if AC+MB = 0777777, we are in trouble.  I don't
+				know how a real PDP-1 behaves in this case. */
 				AC += MB + 1;
-			}
-			/* note that the hack described in ADD does not work here:
-			0777777+0777777+1 = 01777777 !!! */
 			AC = (AC + (AC >> 18)) & 0777777;	/* propagate carry around */
 			if (AC == 0777777)		/* check for -0 */
 				AC = 0;
