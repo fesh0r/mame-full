@@ -532,16 +532,17 @@ READ16_HANDLER(genesis_io_r)
 		return returnval;				/* was just NTSC, overseas (USA) no FDD, now auto */
 		break;
 	case 1:							/* joystick port a */
-		if (port_a_io == 0x00)
-			return readinputport(1);
-		else
+		/* Pin 7 is the select signal */
+		if ( port_a_io & 0x40 )
 			return readinputport(0);
+		else
+			return readinputport(1);
 		break;
 	case 2:							/* joystick port b */
-		if (port_b_io == 0x00)
-			return readinputport(3);
-		else
+		if ( port_b_io & 0x40 )
 			return readinputport(2);
+		else
+			return readinputport(3);
 		break;
 	}
 	return 0x00;
