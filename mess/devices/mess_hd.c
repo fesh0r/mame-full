@@ -187,8 +187,8 @@ DEVICE_UNLOAD(mess_hd)
 /*
 	mess_hd_get_hard_disk_handle()
 
-	Get the MESS hard drive handle after an image has been opened with the
-	mess_hd core
+	Get the MESS/MAME hard disk handle (from the src/harddisk.c core) after an
+	image has been opened with the mess_hd core
 */
 void *mess_hd_get_hard_disk_handle(mess_image *image)
 {
