@@ -179,7 +179,7 @@ static data8_t pic8259_read(int which, offs_t offset)
 static void pic8259_write(int which, offs_t offset, data8_t data )
 {
 	struct pic8259 *this = &pic[which];
-	switch( offset & 0x01 )
+	switch( offset )
 	{
     case 0:    /* PIC acknowledge IRQ */
 		if( data & 0x10 )	/* write ICW1 ? */

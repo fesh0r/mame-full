@@ -8,6 +8,7 @@
 #include "mamedbg.h"
 #include "osd_cpu.h"
 #include "i386.h"
+#include "state.h"
 
 /*************************************************************************/
 
@@ -21,8 +22,8 @@ UINT32 i386_translate(int segment, UINT32 ip)
 		r = I.sreg[segment].base + ip;
 	} else {
 		r = (I.sreg[segment].selector << 4) + (ip & 0xffff);
-		/* TODO: A20 lines are initially set, but zeroed after first intra-segment jump */
-		if( segment == CS )
+		/* A20 lines are initially set, but zeroed after first intra-segment jump */
+		if( segment == CS && !I.performed_intersegment_jump )
 			r |= 0xfff00000;
 	}
 
@@ -322,12 +323,22 @@ static void I386OP(decode_two_byte)(void)
 
 /*************************************************************************/
 
+static void i386_postload(void)
+{
+	int i;
+	for (i = 0; i < 6; i++)
+		i386_load_segment_descriptor(i);
+	CHANGE_PC(I.eip);
+}
+
 void i386_init(void)
 {
 	int i, j;
 	int regs8[8] = {AL,CL,DL,BL,AH,CH,DH,BH};
 	int regs16[8] = {AX,CX,DX,BX,SP,BP,SI,DI};
 	int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
+	int cpu = cpu_getactivecpu();
+	const char *state_type = "I386";
 
 	for( i=0; i < 256; i++ ) {
 		int c=0;
@@ -347,6 +358,34 @@ void i386_init(void)
 		MODRM_table[i].rm.w = regs16[i & 0x7];
 		MODRM_table[i].rm.d = regs32[i & 0x7];
 	}
+
+	state_save_register_UINT32(state_type, cpu,	"REGS",			I.reg.d, 8);
+	state_save_register_UINT16(state_type, cpu,	"ES",			&I.sreg[ES].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"CS",			&I.sreg[CS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"SS",			&I.sreg[SS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"DS",			&I.sreg[DS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"FS",			&I.sreg[FS].selector, 1);
+	state_save_register_UINT16(state_type, cpu,	"GS",			&I.sreg[GS].selector, 1);
+	state_save_register_UINT32(state_type, cpu,	"EIP",			&I.eip, 1);
+	state_save_register_UINT32(state_type, cpu,	"PREV_EIP",		&I.prev_eip, 1);
+	state_save_register_UINT8(state_type, cpu,	"CF",			&I.CF, 1);
+	state_save_register_UINT8(state_type, cpu,	"DF",			&I.DF, 1);
+	state_save_register_UINT8(state_type, cpu,	"SF",			&I.SF, 1);
+	state_save_register_UINT8(state_type, cpu,	"OF",			&I.OF, 1);
+	state_save_register_UINT8(state_type, cpu,	"ZF",			&I.ZF, 1);
+	state_save_register_UINT8(state_type, cpu,	"PF",			&I.PF, 1);
+	state_save_register_UINT8(state_type, cpu,	"AF",			&I.AF, 1);
+	state_save_register_UINT8(state_type, cpu,	"IF",			&I.IF, 1);
+	state_save_register_UINT8(state_type, cpu,	"TF",			&I.TF, 1);
+	state_save_register_UINT32(state_type, cpu,	"CR",			I.cr, 4);
+	state_save_register_UINT32(state_type, cpu,	"DR",			I.dr, 8);
+	state_save_register_UINT32(state_type, cpu,	"TR",			I.tr, 8);
+	state_save_register_UINT32(state_type, cpu,	"IDTR_BASE",	&I.idtr.base, 1);
+	state_save_register_UINT16(state_type, cpu,	"IDTR_LIMIT",	&I.idtr.limit, 1);
+	state_save_register_UINT32(state_type, cpu,	"GDTR_BASE",	&I.gdtr.base, 1);
+	state_save_register_UINT16(state_type, cpu,	"GDTR_LIMIT",	&I.gdtr.limit, 1);
+	state_save_register_UINT8(state_type, cpu,	"ISEGJMP",		&I.performed_intersegment_jump, 1);
+	state_save_register_func_postload(i386_postload);
 }
 
 void i386_reset(void *param)

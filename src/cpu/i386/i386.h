@@ -134,6 +134,8 @@ typedef struct {
 	UINT8 IF;
 	UINT8 TF;
 
+	UINT8 performed_intersegment_jump;
+
 	UINT32 cr[4];		// Control registers
 	UINT32 dr[8];		// Debug registers
 	UINT32 tr[8];		// Test registers
