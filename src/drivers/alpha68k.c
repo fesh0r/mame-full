@@ -2056,9 +2056,9 @@ ROM_END
 
 ROM_START( skyadvnt )
 	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
-	ROM_LOAD_ODD ( "sa_v3.2",   0x00000,  0x20000, 0xfa7a14d1 )
- 
+	ROM_LOAD_EVEN( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
+	ROM_LOAD_ODD ( "sa2.bin",   0x00000,  0x20000, 0x06074e72 )
+
 	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
 	ROM_CONTINUE(               0x18000,  0x08000 )
@@ -2076,10 +2076,10 @@ ROM_START( skyadvnt )
 	ROM_LOAD( "sachr0",         0x1e0000, 0x80000, 0xe281b204 )
 ROM_END
 
-ROM_START( skyadvnj )
+ROM_START( skyadvnu )
 	ROM_REGION( 0x40000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "sa1.bin",   0x00000,  0x20000, 0xc2b23080 )
-	ROM_LOAD_ODD ( "sa2.bin",   0x00000,  0x20000, 0x06074e72 )
+	ROM_LOAD_EVEN( "sa_v3.1",   0x00000,  0x20000, 0x862393b5 )
+	ROM_LOAD_ODD ( "sa_v3.2",   0x00000,  0x20000, 0xfa7a14d1 )
 
 	ROM_REGION( 0x90000, REGION_CPU2 )	/* Sound CPU */
 	ROM_LOAD( "sa.3",           0x00000,  0x08000, 0x3d0b32e0 )
@@ -2345,14 +2345,14 @@ static void init_skyadvnt(void)
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
-	coin_id=0x23|(0x24<<8);
+	coin_id=0x22|(0x22<<8);
 }
 
-static void init_skyadvnj(void)
+static void init_skyadvnu(void)
 {
 	microcontroller_id=0x8814;
 	invert_controls=0;
-	coin_id=0x22|(0x22<<8);
+	coin_id=0x23|(0x24<<8);
 }
 
 static void init_kyros(void)
@@ -2382,11 +2382,11 @@ GAME( 1987, btlfield, timesold, alpha68k_II,   btlfield, btlfield, ROT90,      "
 GAME( 1988, skysoldr, 0,        alpha68k_II,   skysoldr, skysoldr, ROT90,      "SNK / Romstar", "Sky Soldiers (US)" )
 GAMEX(1988, goldmedl, 0,        alpha68k_II,   goldmedl, goldmedl, ROT0,       "SNK", "Gold Medalist", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1988, goldmedb, goldmedl, alpha68k_II,   goldmedl, goldmedb, ROT0,       "bootleg", "Gold Medalist (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "SNK of America (licensed from Alpha)", "Sky Adventure (US)" )
-GAME( 1989, skyadvnj, skyadvnt, alpha68k_V,    skyadvnt, skyadvnj, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
+GAME( 1989, skyadvnt, 0,        alpha68k_V,    skyadvnt, skyadvnt, ROT90,      "Alpha Denshi Co.", "Sky Adventure (Japan)" )
+GAME( 1989, skyadvnu, skyadvnt, alpha68k_V,    skyadvnt, skyadvnu, ROT90,      "Alpha Denshi Co. (SNK of America license)", "Sky Adventure (US)" )
 GAME( 1989, gangwars, 0,        alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "Alpha Denshi Co.", "Gang Wars (US)" )
 GAME( 1989, gangwarb, gangwars, alpha68k_V,    gangwars, gangwars, ROT0_16BIT, "bootleg", "Gang Wars (bootleg)" )
-GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "SNK of America (licensed from Alpha)", "Super Champion Baseball", GAME_NO_COCKTAIL )
+GAMEX(1989, sbasebal, 0,        alpha68k_V_sb, sbasebal, sbasebal, ROT0,       "Alpha Denshi Co. (SNK of America license)", "Super Champion Baseball", GAME_NO_COCKTAIL )
 
 /*
  Super Baseball and Sky Adventure don't write to their flipscreen ports - I'm not yet sure if this
