@@ -54,6 +54,12 @@ static void  PutRegOption(HKEY hKey, const char *name, DWORD value);
 static void  PutRegBoolOption(HKEY hKey, const char *name, BOOL value);
 static void  PutRegStringOption(HKEY hKey, const char *name, char *option);
 
+static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value);
+static void WriteIntOptionToFile(FILE *fptr,const char *key,int value);
+static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value);
+
+static void WriteOptionToFile(FILE *fptr,REG_OPTION *regOpt);
+
 static void  ColumnEncodeString(void* data, char* str);
 static void  ColumnDecodeString(const char* str, void* data);
 
@@ -71,8 +77,8 @@ static void  FontDecodeString(const char* str, void* data);
 static void  SavePlayCount(int game_index);
 static void  SaveFolderFlags(const char *folderName, DWORD dwFlags);
 
-static void  PutRegObj(HKEY hKey, REG_OPTIONS *regOpt);
-static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
+static void  PutRegObj(HKEY hKey, REG_OPTION *regOpt);
+static void  GetRegObj(HKEY hKey, REG_OPTION *regOpt);
 
 /***************************************************************************
     Internal defines
@@ -98,6 +104,8 @@ static void  GetRegObj(HKEY hKey, REG_OPTIONS *regOpt);
 #define KEY_BASE_DOTFOLDERS     KEY_BASE_FMT DOTFOLDERS
 #define KEY_BACKUP_DOTDEFAULTS      KEY_BACKUP DOTDEFAULTS
 
+// #define MAME32UI_INI
+
 /***************************************************************************
     Internal structures
  ***************************************************************************/
@@ -114,7 +122,7 @@ static options_type *game_options;  // Array of Game specific options
 static game_variables_type *game_variables;  // Array of game specific extra data
 
 /* Global UI options */
-static REG_OPTIONS regSettings[] =
+static REG_OPTION regSettings[] =
 {
 	{"DefaultGame",        RO_STRING,  &settings.default_game,      0, 0},
 #ifdef MESS
@@ -190,7 +198,7 @@ static REG_OPTIONS regSettings[] =
 };
 
 /* Game Options */
-static REG_OPTIONS regGameOpts[] =
+static REG_OPTION regGameOpts[] =
 {
 	/* video */
 	{ "autoframeskip",          RO_BOOL,    &gOpts.autoframeskip,     0, 0},
@@ -1852,11 +1860,109 @@ static void PutRegStringOption(HKEY hKey, const char *name, char *option)
 	RegSetValueEx(hKey, name, 0, REG_SZ, (void *)option, strlen(option) + 1);
 }
 
+static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value)
+{
+	fprintf(fptr,"%s \"%s\"\n",key,value);
+}
+
+static void WriteIntOptionToFile(FILE *fptr,const char *key,int value)
+{
+	fprintf(fptr,"%s %i\n",key,value);
+}
+
+static void WriteBoolOptionToFile(FILE *fptr,const char *key,BOOL value)
+{
+	fprintf(fptr,"%s %i\n",key,value ? 1 : 0);
+}
+
+static void WriteOptionToFile(FILE *fptr,REG_OPTION *regOpt)
+{
+	BOOL*	pBool;
+	int*	pInt;
+	char*	pString;
+	double* pDouble;
+	char*	cName = regOpt->m_cName;
+	char	cTemp[80];
+	
+	switch (regOpt->m_iType)
+	{
+	case RO_DOUBLE:
+		pDouble = (double*)regOpt->m_vpData;
+        _gcvt( *pDouble, 10, cTemp );
+		WriteStringOptionToFile(fptr, cName, cTemp);
+		break;
+
+	case RO_STRING:
+		pString = (char*)regOpt->m_vpData;
+		if (pString)
+			WriteStringOptionToFile(fptr, cName, pString);
+		break;
+
+	case RO_PSTRING:
+		pString = *(char**)regOpt->m_vpData;
+		if (pString)
+		    WriteStringOptionToFile(fptr, cName, pString);
+		break;
+
+	case RO_BOOL:
+		pBool = (BOOL*)regOpt->m_vpData;
+		WriteBoolOptionToFile(fptr, cName, *pBool);
+		break;
+
+	case RO_INT:
+		pInt = (int*)regOpt->m_vpData;
+		WriteIntOptionToFile(fptr, cName, *pInt);
+		break;
+
+	case RO_ENCODE:
+		regOpt->encode(regOpt->m_vpData, cTemp);
+		WriteStringOptionToFile(fptr, cName, cTemp);
+		break;
+
+	default:
+		break;
+	}
+
+}
+
 static void SaveGlobalOptions(BOOL bBackup)
 {
 	HKEY  hKey, hSubkey;
 	DWORD dwDisposition = 0;
 	LONG  result;
+
+	int i;
+
+#ifdef MAME32UI_INI
+	FILE *fptr;
+
+	fptr = fopen("mame32ui.ini","wt");
+	fprintf(fptr,"### mame32ui.ini ###\n\n");
+	fprintf(fptr,"%s\n",GetVersionString());
+	// do something for fontcolor, clonecolor
+	fprintf(fptr,"\n");
+
+	fprintf(fptr,"### interface ###\n\n");
+	for (i=0;i<NUM_SETTINGS;i++)
+	{
+		WriteOptionToFile(fptr,&regSettings[i]);
+	}
+
+	fprintf(fptr,"### game variables ###\n\n");
+	for (i=0;i<num_games;i++)
+	{
+		// need to improve this to not save too many
+		if (game_variables[i].play_count != 0 ||
+			game_variables[i].has_roms != UNKNOWN ||
+			game_variables[i].has_samples != UNKNOWN)
+		{
+			fprintf(fptr,"%s_playcount %i\n",drivers[i]->name,game_variables[i].play_count);
+			fprintf(fptr,"%s_have_roms %i\n",drivers[i]->name,game_variables[i].has_roms);
+			fprintf(fptr,"%s_have_samples %i\n",drivers[i]->name,game_variables[i].has_samples);
+		}
+	}
+	fclose(fptr);
+#endif
 
     /* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32\.Backup or */
 	/* Get to HKEY_CURRENT_USER\Software\Freeware\Mame32 */
@@ -1872,8 +1978,6 @@ static void SaveGlobalOptions(BOOL bBackup)
                              &dwDisposition );
 	if (result == ERROR_SUCCESS)
 	{
-		int i;
-
 		PutRegStringOption(hKey, "SaveVersion", GetVersionString());
 
 		if (settings.list_font_color != (COLORREF)-1 )
@@ -1985,7 +2089,7 @@ static void LoadRegGameOptions(HKEY hKey, options_type *o, int driver_index)
 	*o = gOpts;
 }
 
-static void PutRegObj(HKEY hKey, REG_OPTIONS* regOpt)
+static void PutRegObj(HKEY hKey, REG_OPTION * regOpt)
 {
 	BOOL*	pBool;
 	int*	pInt;
@@ -2034,7 +2138,7 @@ static void PutRegObj(HKEY hKey, REG_OPTIONS* regOpt)
 	}
 }
 
-static void GetRegObj(HKEY hKey, REG_OPTIONS* regOpts)
+static void GetRegObj(HKEY hKey, REG_OPTION * regOpts)
 {
 	char*	cName = regOpts->m_cName;
 	char*	pString;

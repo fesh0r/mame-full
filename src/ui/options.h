@@ -1,7 +1,7 @@
 /***************************************************************************
 
   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2003 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
   distributed under the terms of the MAME license, in "readme.txt".
@@ -100,7 +100,7 @@ typedef struct
 	void *m_vpData;                               /* reg key data     */
 	void (*encode)(void *data, char *str);        /* encode function  */
 	void (*decode)(const char *str, void *data);  /* decode function  */
-} REG_OPTIONS;
+} REG_OPTION;
 
 typedef struct
 {

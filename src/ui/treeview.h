@@ -180,5 +180,6 @@ extern void AddToCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
 extern void RemoveFromCustomFolder(LPTREEFOLDER lpFolder,int driver_index);
 
 extern HIMAGELIST GetTreeViewIconList(void);
+extern int GetTreeViewIconIndex(int icon_id);
 
 #endif /* TREEVIEW_H */

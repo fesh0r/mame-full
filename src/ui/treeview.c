@@ -140,8 +140,6 @@ static BOOL TryAddExtraFolderAndChildren(int parent_index);
 
 static BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder);
 
-static int FindIconIndex(int nResourceID);
-
 /***************************************************************************
     public functions
  ***************************************************************************/
@@ -799,7 +797,7 @@ static void AddTreeFolders(int start_index,int end_index)
 			tvs.hParent = TVI_ROOT;
 			tvi.pszText = lpFolder->m_lpTitle;
 			tvi.lParam	= (LPARAM)lpFolder;
-			tvi.iImage	= FindIconIndex(lpFolder->m_nIconId);
+			tvi.iImage	= GetTreeViewIconIndex(lpFolder->m_nIconId);
 			tvi.iSelectedImage = 0;
 
 #if defined(__GNUC__) /* bug in commctrl.h */
@@ -839,7 +837,7 @@ static void AddTreeFolders(int start_index,int end_index)
 
 		tvi.mask	= TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
 		tvs.hParent = hti_parent;
-		tvi.iImage	= FindIconIndex(treeFolders[i]->m_nIconId);
+		tvi.iImage	= GetTreeViewIconIndex(treeFolders[i]->m_nIconId);
 		tvi.iSelectedImage = 0;
 		tvi.pszText = treeFolders[i]->m_lpTitle;
 		tvi.lParam	= (LPARAM)treeFolders[i];
@@ -1978,21 +1976,21 @@ HIMAGELIST GetTreeViewIconList(void)
     return hTreeSmall;
 }
 
-static int FindIconIndex(int nResourceID)
+int GetTreeViewIconIndex(int icon_id)
 {
 	int i;
 
-	if (nResourceID < 0)
-		return -nResourceID;
+	if (icon_id < 0)
+		return -icon_id;
 
 	for (i = 0; i < sizeof(treeIconNames) / sizeof(treeIconNames[0]); i++)
 	{
-		if (treeIconNames[i].nResourceID == nResourceID)
+		if (icon_id == treeIconNames[i].nResourceID)
 			return i;
 	}
+
 	return -1;
 }
-
 
 /* End of source file */
 

@@ -97,11 +97,6 @@ static void bdf_write_sector_data_from_buffer(int drive, int side, int index1, c
 
 /* ----------------------------------------------------------------------- */
 
-static void mame_fclose_thunk(void *file)
-{
-	mame_fclose((mame_file *) file);
-}
-
 static int mame_fseek_thunk(void *file, INT64 offset, int whence)
 {
 	return mame_fseek((mame_file *) file, offset, whence);
@@ -126,7 +121,7 @@ static UINT64 mame_fsize_thunk(void *file)
 
 static struct bdf_procs mess_bdf_procs =
 {
-	mame_fclose_thunk,
+	NULL,
 	mame_fseek_thunk,
 	mame_fread_thunk,
 	mame_fwrite_thunk,

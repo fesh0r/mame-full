@@ -124,8 +124,9 @@ static const GUID guidNULL = {0, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0}};
 */
 static int DIJoystick_init(void)
 {
-	DWORD	i;
+	DWORD i;
 	HRESULT hr;
+	LPDIRECTINPUT di = GetDirectInput();
 
 	This.use_count++;
 
@@ -322,6 +323,7 @@ static BOOL DIJoystick_Available(void)
 	GUID		guidDevice = guidNULL;
 	LPDIRECTINPUTDEVICE didTemp;
 	LPDIRECTINPUTDEVICE didJoystick;
+	LPDIRECTINPUT di = GetDirectInput();
 
 	if (di == NULL)
 	{
@@ -509,6 +511,7 @@ static void InitJoystick(joystick_type *joystick)
 {
 	LPDIRECTINPUTDEVICE didTemp;
 	HRESULT hr;
+	LPDIRECTINPUT di = GetDirectInput();
 
 	joystick->use_joystick = FALSE;
 

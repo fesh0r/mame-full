@@ -32,8 +32,6 @@
 	External variables
  ***************************************************************************/
 
-LPDIRECTINPUT di = NULL;
-
 /***************************************************************************
 	Internal structures
  ***************************************************************************/
@@ -41,6 +39,8 @@ LPDIRECTINPUT di = NULL;
 /***************************************************************************
 	Internal variables
  ***************************************************************************/
+
+static LPDIRECTINPUT di = NULL;
 
 static HANDLE hDLL = NULL;
 
@@ -150,6 +150,10 @@ HRESULT SetDIDwordProperty(LPDIRECTINPUTDEVICE2 pdev, REFGUID guidProperty,
 	return IDirectInputDevice2_SetProperty(pdev, guidProperty, &dipdw.diph);
 }
 
+LPDIRECTINPUT GetDirectInput(void)
+{
+	return di;
+}
 /***************************************************************************
 	Internal functions
  ***************************************************************************/
