@@ -163,14 +163,14 @@ void osd_change_directory(const char *directory)
 
 const char *osd_get_cwd(void)
 {
-   static char cwd[MAXPATHL];
+   static char cwd[MAXPATHL + 1];
    
 #ifdef BSD43
    getwd(cwd);
 #else
    getcwd(cwd, MAXPATHL);
 #endif
-
+   strcat(cwd, "/");
    return cwd;
 }
 
