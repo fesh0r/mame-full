@@ -1,5 +1,14 @@
 #include "driver.h"
+
+#ifndef RUNTIME_LOADER
+// support for old i86 core, until new one is in mame
 #include "cpu/i86/i286.h"
+#else
+# include "cpu/i86/i286intf.h"
+# ifdef HAS_I386
+# include "cpu/i86/i386intf.h"
+# endif
+#endif
 
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
@@ -10,6 +19,7 @@
 #include "includes/pc.h"
 #include "includes/at.h"
 #include "includes/pckeybrd.h"
+#include "includes/sblaster.h"
 
 #define PS2_MOUSE_ON 1
 #define KEYBOARD_ON 1
@@ -35,7 +45,33 @@
    f059f 0x11 timing of 0x10 bit tested
  */
 
+/*
+  at post
+  f81d2 01
+  f82e6 05
+  f8356 07
+  f83e5 0a
+  f847e 0e
+  f8e7c 10
+  f8f3a 13
+  f9058 1a
+  f913a 1e
+  fa8ba 30
+  fa96c 36
+  fa9d3 3c
+  fa9f4 3e
+  ff122 50
+  ff226 5b
+  ff29f 5f
+  f9228 70
+  f92b2 74 ide?
+   fb377 
+ */
+
+static void (*set_address_mask)(unsigned mask)=i286_set_address_mask;
+
 static DMA8237_CONFIG dma= { DMA8237_AT };
+static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
 void init_atcga(void)
 {
@@ -50,7 +86,17 @@ void init_atcga(void)
 	at_keyboard_set_scan_code_set(1);
 	at_keyboard_set_input_port_base(4);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
+
+	soundblaster_config(&soundblaster);
 }
+
+#ifdef HAS_I386
+void init_at386(void)
+{
+	set_address_mask=i386_set_address_mask;
+	init_atcga();
+}
+#endif
 
 void init_at_vga(void)
 {
@@ -68,6 +114,7 @@ void init_at_vga(void)
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
 
 	vga_init(input_port_0_r);
+	soundblaster_config(&soundblaster);
 }
 
 void at_machine_init(void)
@@ -99,13 +146,17 @@ static struct {
 
 	// temporary hack
 	int offset1;
-} at_8042={ 0x80 };
+} at_8042={ 
+//	0x80 
+	0xa0 // ibmat bios wants 0x20 set! (keyboard locked when not set)
+};
 
 static void at_8042_receive(UINT8 data)
 {
+	logerror("at8042 %.2x received\n",data);
 	at_8042.data=data;
 	at_8042.keyboard.received=1;
-	if( !pic8259_0_irq_pending(1)) {
+	if( !pic8259_0_irq_pending(1)) { // this forgets some interrupts
 		pic8259_0_issue_irq(1);
 	}
 }
@@ -113,7 +164,7 @@ static void at_8042_receive(UINT8 data)
 
 void at_8042_time(void)
 {
-#if 1
+#if 0
 	if( !pic8259_0_irq_pending(1)
 		&&!at_8042.keyboard.received )
 #else
@@ -167,6 +218,10 @@ READ_HANDLER(at_8042_r)
 		data=at_8042.speaker;
 		data&=~0xc0; // at bios don't likes this being set
 
+// needed for ami bios, maybe only some keyboard controller revisions!
+		at_8042.keyboard.received=0; 
+		at_8042.mouse.received=0;
+
 		/* polled for changes in ibmat bios */
 		if (--poll_delay<0) {
 			poll_delay=4;
@@ -204,11 +259,13 @@ READ_HANDLER(at_8042_r)
 		//DBG_LOG(1,"AT 8042 read",("%.2x %02x\n",offset, data) );
 		break;
 	}
+//	logerror("at_8042 read %.2x %.2x\n",offset,data);
 	return data;
 }
 
 WRITE_HANDLER(at_8042_w)
 {
+	logerror("at_8042 write %.2x %.2x\n",offset,data);
 	switch (offset) {
 	case 0:
 		DBG_LOG(1,"AT 8042 write",("%.2x %02x\n",offset, data) );
@@ -227,7 +284,7 @@ WRITE_HANDLER(at_8042_w)
 #if 0
 			logerror("addressmask %.6x\n",data&2?0xffffff:0xfffff);
 #endif
-			i286_set_address_mask(data&2?0xffffff:0xfffff);
+			set_address_mask(data&2?0xffffff:0xfffff);
 			break;
 		case 2:
 			at_8042.operation_write_state=0;
@@ -271,7 +328,8 @@ WRITE_HANDLER(at_8042_w)
 				at_8042_receive(0xff);
 			break;
 		case 0xad: at_8042.keyboard.on=false;break;
-		case 0xae: at_8042.keyboard.on=true;break;
+		case 0xae: //at_8042.keyboard.received=0;
+			at_8042.keyboard.on=true;break;
 		case 0xc0: at_8042_receive(at_8042.inport);break;
 		case 0xc1: /* read inputport 3..0 until write to 0x60 */
 			at_8042.status_read_mode=1;break;
@@ -295,6 +353,7 @@ WRITE_HANDLER(at_8042_w)
 			at_8042.operation_write_state=4;
 			break;
 			/* 0xf0 .. 0xff bit 0..3 0 means low pulse of 6ms in outputport */
+//		case 0xe0: // ibmat bios
 		case 0xf0:
 		case 0xf2:
 		case 0xf4:
@@ -304,6 +363,7 @@ WRITE_HANDLER(at_8042_w)
 		case 0xfc:
 		case 0xfe:
 			cpu_set_reset_line(0, PULSE_LINE);
+			set_address_mask(0xffffff);
 			break;
 		}
 		at_8042.sending=1;
