@@ -91,7 +91,7 @@ int xgl_init(void)
   
   if (!loadGLLibrary(libGLName, libGLUName))
   {
-    fprintf(stderr_file, "Use of OpenGL mode disabled\n");
+    fprintf(stderr, "Use of OpenGL mode disabled\n");
     return 1;
   }
 

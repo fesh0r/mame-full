@@ -207,13 +207,13 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   if(envGLName!=NULL)
   {
   	libGLName = envGLName;
-	fprintf(stderr_file, "GLTOOL: using env's GLTOOL_USE_GLLIB = %s\n", libGLName);
+	fprintf(stderr, "GLTOOL: using env's GLTOOL_USE_GLLIB = %s\n", libGLName);
   }
 
   if(envGLUName!=NULL)
   {
   	libGLUName = envGLUName;
-	fprintf(stderr_file, "GLTOOL: using env's GLTOOL_USE_GLULIB = %s\n", libGLUName);
+	fprintf(stderr, "GLTOOL: using env's GLTOOL_USE_GLULIB = %s\n", libGLUName);
   }
 
 #ifdef _WIN32_
@@ -224,14 +224,14 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
 
   if (hDLL_OPENGL32 == NULL)
   {
-      fprintf (stderr_file, "GLERROR: cannot access OpenGL library %s\n", libGLName);
+      fprintf (stderr, "GLERROR: cannot access OpenGL library %s\n", libGLName);
       fflush (NULL);
       return 0;
   }
 
   if (hDLL_OPENGLU32 == NULL)
   {
-      fprintf (stderr_file, "GLERROR: cannot access GLU library %s\n", libGLUName);
+      fprintf (stderr, "GLERROR: cannot access GLU library %s\n", libGLUName);
       fflush (NULL);
       return 0;
   }
@@ -248,8 +248,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
      libcrun = dlopen (SUN_FORTE_DLOPEN_LIBCRUN, RTLD_LAZY | RTLD_GLOBAL);
      if (libcrun == NULL)
      {
-        fprintf (stderr_file, "GLERROR: cannot access library %s\n", SUN_FORTE_DLOPEN_LIBCRUN);
-        fprintf (stderr_file, "GLERROR: dlerror() returns [%s]\n", dlerror());
+        fprintf (stderr, "GLERROR: cannot access library %s\n", SUN_FORTE_DLOPEN_LIBCRUN);
+        fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
         fflush (NULL);
         return 0;
      }
@@ -259,8 +259,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   libHandleGL = dlopen (libGLName, RTLD_LAZY | RTLD_GLOBAL);
   if (libHandleGL == NULL)
   {
-      fprintf (stderr_file, "GLERROR: cannot access OpenGL library %s\n", libGLName);
-      fprintf (stderr_file, "GLERROR: dlerror() returns [%s]\n", dlerror());
+      fprintf (stderr, "GLERROR: cannot access OpenGL library %s\n", libGLName);
+      fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
       return 0;
   }
@@ -268,8 +268,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   libHandleGLU = dlopen (libGLUName, RTLD_LAZY | RTLD_GLOBAL);
   if (libHandleGLU == NULL)
   {
-      fprintf (stderr_file, "GLERROR: cannot access GLU library %s\n", libGLUName);
-      fprintf (stderr_file, "GLERROR: dlerror() returns [%s]\n", dlerror());
+      fprintf (stderr, "GLERROR: cannot access GLU library %s\n", libGLUName);
+      fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
       return 0;
   }
@@ -277,8 +277,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   libHandleGLX = dlopen (GLXLIB_NAME, RTLD_LAZY | RTLD_GLOBAL);
   if (libHandleGLX == NULL)
   {
-      fprintf (stderr_file, "GLINFO: cannot access GLX library %s directly ...\n", GLXLIB_NAME);
-      fprintf (stderr_file, "GLERROR: dlerror() returns [%s]\n", dlerror());
+      fprintf (stderr, "GLINFO: cannot access GLX library %s directly ...\n", GLXLIB_NAME);
+      fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
       fflush (NULL);
   }
 
@@ -302,10 +302,10 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
 #endif
 
 #ifdef _MAC_OSX_
-  fprintf (stderr_file, "GLINFO: loadGLLibrary - no special code implemented !\n");
+  fprintf (stderr, "GLINFO: loadGLLibrary - no special code implemented !\n");
 #else
-  fprintf (stderr_file, "GLINFO: loaded OpenGL library %s!\n", libGLName);
-  fprintf (stderr_file, "GLINFO: loaded GLU    library %s!\n", libGLUName);
+  fprintf (stderr, "GLINFO: loaded OpenGL library %s!\n", libGLName);
+  fprintf (stderr, "GLINFO: loaded GLU    library %s!\n", libGLUName);
 #endif
   fflush (NULL);
   
@@ -334,13 +334,13 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
       if (disp__wglGetProcAddress != NULL /* && verbose */)
       {
-			fprintf (stderr_file, "GLINFO: found wglGetProcAddress in %s\n", libGLName);
+			fprintf (stderr, "GLINFO: found wglGetProcAddress in %s\n", libGLName);
 			fflush (NULL);
       }
 
       if (disp__wglGetProcAddress == NULL)
       {
-	fprintf (stderr_file, "GLINFO: can't find wglGetProcAddress in %s\n", libGLName);
+	fprintf (stderr, "GLINFO: can't find wglGetProcAddress in %s\n", libGLName);
       }
   }
   __firstAccess = 0;
@@ -384,7 +384,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
       if (disp__glXGetProcAddress != NULL && verbose)
       {
-	fprintf (stderr_file, "GLINFO: found glXGetProcAddressARB in %s\n", libGLName);
+	fprintf (stderr, "GLINFO: found glXGetProcAddressARB in %s\n", libGLName);
 	fflush (NULL);
       }
 
@@ -395,7 +395,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	if (disp__glXGetProcAddress != NULL && verbose)
 	{
-	  fprintf (stderr_file, "GLINFO: found glXGetProcAddressEXT in %s\n", libGLName);
+	  fprintf (stderr, "GLINFO: found glXGetProcAddressEXT in %s\n", libGLName);
 	  fflush (NULL);
 	}
       }
@@ -407,7 +407,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	if (disp__glXGetProcAddress != NULL && verbose)
 	{
-	  fprintf (stderr_file, "GLINFO: found glXGetProcAddress in %s\n", libGLName);
+	  fprintf (stderr, "GLINFO: found glXGetProcAddress in %s\n", libGLName);
 	  fflush (NULL);
 	}
       }
@@ -415,7 +415,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
       if (disp__glXGetProcAddress == NULL)
       {
 	fprintf
-	  (stderr_file, "GLINFO: cannot find glXGetProcAddress* in OpenGL library %s\n", libGLName);
+	  (stderr, "GLINFO: cannot find glXGetProcAddress* in OpenGL library %s\n", libGLName);
 	fflush (NULL);
 	if (libHandleGLX != NULL)
 	{
@@ -424,7 +424,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	  if (disp__glXGetProcAddress != NULL && verbose)
 	  {
-	    fprintf (stderr_file, "GLINFO: found glXGetProcAddressARB in %s\n", GLXLIB_NAME);
+	    fprintf (stderr, "GLINFO: found glXGetProcAddressARB in %s\n", GLXLIB_NAME);
 	    fflush (NULL);
 	  }
 
@@ -435,7 +435,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
-	      fprintf (stderr_file, "GLINFO: found glXGetProcAddressEXT in %s\n", GLXLIB_NAME);
+	      fprintf (stderr, "GLINFO: found glXGetProcAddressEXT in %s\n", GLXLIB_NAME);
 	      fflush (NULL);
 	    }
 	  }
@@ -447,13 +447,13 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	    if (disp__glXGetProcAddress != NULL && verbose)
 	    {
-	      fprintf (stderr_file, "GLINFO: found glXGetProcAddress in %s\n", GLXLIB_NAME);
+	      fprintf (stderr, "GLINFO: found glXGetProcAddress in %s\n", GLXLIB_NAME);
 	      fflush (NULL);
 	    }
 	  }
 	  if (disp__glXGetProcAddress == NULL)
 	  {
-	    fprintf (stderr_file, "GLINFO: cannot find glXGetProcAddress* in GLX library %s\n", GLXLIB_NAME);
+	    fprintf (stderr, "GLINFO: cannot find glXGetProcAddress* in GLX library %s\n", GLXLIB_NAME);
 	    fflush (NULL);
 	  }
 	}
@@ -518,7 +518,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	if (returnError != fragNoErr)
 	{
-	  fprintf (stderr_file, "GetSharedLibrary Err(%d): Ahhh!  Didn't find SYMBOL: %s !\n",
+	  fprintf (stderr, "GetSharedLibrary Err(%d): Ahhh!  Didn't find SYMBOL: %s !\n",
 		returnError, func);
 	}
 #endif
@@ -539,13 +539,13 @@ void * LIBAPIENTRY getGLProcAddressHelper
   {
     if (debug || verbose)
     {
-      fprintf (stderr_file, "GLINFO: %s (%d): not implemented !\n", func, lmethod);
+      fprintf (stderr, "GLINFO: %s (%d): not implemented !\n", func, lmethod);
       fflush (NULL);
     }
   }
   else if (verbose)
   {
-    fprintf (stderr_file, "GLINFO: %s (%d): loaded !\n", func, lmethod);
+    fprintf (stderr, "GLINFO: %s (%d): loaded !\n", func, lmethod);
     fflush (NULL);
   }
   if (method != NULL)
