@@ -2689,7 +2689,7 @@ static void bwg_cru_w(int offset, int data)
 */
 static READ_HANDLER(bwg_mem_r)
 {
-	int reply;
+	int reply = 0;
 
 	if (offset < 0x1c00)
 		reply = ti99_disk_DSR[bwg_rom_offset+offset];
@@ -2781,7 +2781,7 @@ static READ_HANDLER(ide_mem_r);
 static WRITE_HANDLER(ide_mem_w);
 
 /* pointer to the IDE SRAM area */
-static UINT8 *ti99_ide_SRAM;
+/*static UINT8 *ti99_ide_SRAM;*/
 
 static const expansion_port_t ide_handlers =
 {
@@ -2802,12 +2802,12 @@ static int input_latch, output_latch;
 /*
 	Reset ide card, set up handlers
 */
-static void ti99_ide_init(void)
+/*static void ti99_ide_init(void)
 {
 	ti99_ide_SRAM = memory_region(region_dsr) + offset_ide_ram;
 
 	ti99_set_expansion_card_handlers(0x1000, & ide_handlers);
-}
+}*/
 
 /*
 	Read ide CRU interface

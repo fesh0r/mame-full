@@ -402,6 +402,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/vidhrdw/911_vdt.o  \
 	  $(OBJ)/mess/systems/ti990_10.o \
 	  $(OBJ)/mess/machine/ti990.o \
+	  $(OBJ)/mess/machine/mm58274c.o \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 
