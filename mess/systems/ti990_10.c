@@ -1,7 +1,7 @@
 /*
-  Experimental ti990/10 driver
+	Experimental ti990/10 driver
 
-	This driver boots the DX10 build tape. However, this will not help much until a terminal is
+	This driver boots the DX10 build tape.  However, this will not help much until a terminal is
 	emulated.
 
 TODO :
@@ -9,15 +9,46 @@ TODO :
 * finish tape emulation
 * write disk emulation
 * emulate a 911 or 913 VDT terminal
-* add additionnal bells and whistle as need appears
+* add additionnal bells and whistles as need appears
 */
 
 /*
 	CRU map:
 
+	990/10 CPU board:
 	1fa0-1fbe: map file CRU interface
 	1fc0-1fde: error interrupt register
 	1fe0-1ffe: control panel
+
+	optional hardware (default configuration):
+	0000-001e: 733 ASR
+	0020-003e: PROM programmer
+	0040-005e: card reader
+	0060-007e: line printer
+	0080-00be: FD800 floppy disc
+	00c0-00ee: 913 VDT
+	0100-013e: 913 VDT #2
+	0140-017e: 913 VDT #3
+
+
+	TPCS map:
+	1ff800: hard disk
+	(1ff810: FD1000 floppy)
+	1ff880: tape unit
+
+
+	interrupt map (default configuration):
+	0,1,2: CPU board
+	4: card reader
+	5: line clock
+	6: 733 ASR
+	7: FD800 floppy (or FD1000 floppy)
+	9: 913 VDT #3
+	10: 913 VDT #2
+	11: 913 VDT
+	13: hard disk
+	14 line printer
+	15: PROM programmer (actually not used)
 */
 
 #include "driver.h"
@@ -145,9 +176,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static MEMORY_READ16_START (ti990_10_readmem)
 
-	{ 0x000000, 0x00ffff, MRA16_RAM },		/* 64kb RAM board */
-	{ 0x010000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, MRA16_NOP },		/* disk controller TPCS */
+	{ 0x000000, 0x0fffff, MRA16_RAM },		/* let's say we have 1MB of RAM */
+	{ 0x100000, 0x1ff7ff, MRA16_NOP },		/* free TILINE space */
+	{ 0x1ff800, 0x1ff81f, MRA16_NOP },		/* disk controller TPCS - not implemented yet */
 	{ 0x1ff820, 0x1ff87f, MRA16_NOP },		/* free TPCS */
 	{ 0x1ff880, 0x1ff89f, mt3200_r },		/* tape controller TPCS */
 	{ 0x1ff8a0, 0x1ffbff, MRA16_NOP },		/* free TPCS */
@@ -157,9 +188,9 @@ MEMORY_END
 
 static MEMORY_WRITE16_START (ti990_10_writemem)
 
-	{ 0x000000, 0x00ffff, MWA16_RAM },		/* 64kb RAM board */
-	{ 0x010000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
-	{ 0x1ff800, 0x1ff81f, MWA16_NOP },		/* disk controller TPCS */
+	{ 0x000000, 0x0fffff, MWA16_RAM },		/* let's say we have 1MB of RAM */
+	{ 0x100000, 0x1ff7ff, MWA16_NOP },		/* free TILINE space */
+	{ 0x1ff800, 0x1ff81f, MWA16_NOP },		/* disk controller TPCS - not implemented yet */
 	{ 0x1ff820, 0x1ff87f, MWA16_NOP },		/* free TPCS */
 	{ 0x1ff880, 0x1ff89f, mt3200_w },		/* tape controller TPCS */
 	{ 0x1ff8a0, 0x1ffbff, MWA16_NOP },		/* free TPCS */
@@ -174,11 +205,15 @@ MEMORY_END
 
 static PORT_WRITE16_START ( ti990_10_writeport )
 
+	{ 0xfd0 << 1, 0xfdf << 1, ti990_10_mapper_cru_w },
+
 	{ 0xff0 << 1, 0xfff << 1, ti990_10_panel_write },
 
 PORT_END
 
 static PORT_READ16_START ( ti990_10_readport )
+
+	{ 0x1fa << 1, 0x1fb << 1, ti990_10_mapper_cru_r },
 
 	{ 0x1fe << 1, 0x1ff << 1, ti990_10_panel_read },
 
