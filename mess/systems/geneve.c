@@ -47,7 +47,8 @@
 	Unpaged locations (ti99 mode):
 	>8000->8007: memory page registers (>8000 for page 0, >8001 for page 1,
 	  etc.  register >8003 is ignored (this page is hard-wired to >36->37).
-	>8008->801f: ???
+	>8008: key buffer
+	>8009->801f: ???
 	>8400->9fff: sound, VDP, speech, and GROM registers (according to one
 	  source, the GROM and sound registers are only available if page >3
 	  is mapped in at location >c000 (register 6).  I am not sure the Speech
@@ -103,17 +104,21 @@
 
 	Base >1EE0 (>0F70): tms9995 flags and geneve mode register
 	bits 0-1: tms9995 flags
-	Bits 2-4: unused?
+	Bits 2-4: tms9995 interrupt state register
 	Bits 5-15: tms9995 user flags - overlaps geneve mode, but hopefully the
 	  geneve registers are write-only, so no real conflict happens
 	Bit 5: 0 if NTSC, 1 if PAL video
+	Bit 6: unused???
 	Bit 7: some keyboard flag, set to 1 if caps is on
 	Bit 8: 1 = allow keyboard clock
 	Bit 9: 0 = clear keyboard input buffer, 1 = allow keyboard buffer to be
 	  loaded
 	Bit 10: 1 = geneve mode, 0 = ti99 mode
 	Bit 11: 1 = ROM mode, 0 = map mode
-	bit 15: 1 = add 1 extra wait state when accessing 0-wait-state SRAM
+	Bit 12: 0 = Enable cartridge paging
+	Bit 13: 0 = protect cartridge range >6000->6fff
+	Bit 14: 0 = protect cartridge range >7000->7fff
+	bit 15: 1 = add 1 extra wait state when accessing 0-wait-state SRAM???
 */
 
 #include "driver.h"
@@ -178,10 +183,10 @@ PORT_END
 INPUT_PORTS_START(geneve)
 
 	PORT_START	/* config */
-		PORT_BITX( config_speech_mask << config_speech_bit, /*1 << config_speech_bit*/0, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_speech_mask << config_speech_bit, 1 << config_speech_bit, IPT_DIPSWITCH_NAME, "Speech synthesis", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_speech_bit, DEF_STR( On ) )
-		PORT_BITX( config_fdc_mask << config_fdc_bit, /*fdc_kind_BwG*/fdc_kind_hfdc << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
+		PORT_BITX( config_fdc_mask << config_fdc_bit, fdc_kind_hfdc << config_fdc_bit, IPT_DIPSWITCH_NAME, "Floppy disk controller", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments SD" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
