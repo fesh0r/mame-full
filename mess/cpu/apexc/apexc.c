@@ -1,5 +1,5 @@
 /*
-	cpu/apexc/apexc.c : APE(X)C CPU emulation
+	cpu/apexc/apexc.c: APE(X)C CPU emulation
 
 	By Raphael Nabet
 
@@ -9,96 +9,98 @@
 
 	It was one of the APEC series of computer, which were simple electronic computers
 	built in the early 1950s for various British Universities.  Known members of this series
-	are :
-	* APE(X)C : Birkbeck College, London (before 1953 (1951 ?))
-	* APE(N)C : Board of Mathematical Machines, Oslo
-	* APE(H)C : British Tabulating Machine Company
-	* APE(R)C : British Rayon Research Association
-	* UCC : University College, London (circa january 1956)
-	* MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories"
+	are:
+	* APE(X)C: Birkbeck College, London (before 1953 (1951?))
+	* APE(N)C: Board of Mathematical Machines, Oslo
+	* APE(H)C: British Tabulating Machine Company
+	* APE(R)C: British Rayon Research Association
+	* UCC: University College, London (circa january 1956)
+	* MAC (Magnetic Automatic Calculator): "built by Wharf Engineering Laboratories"
 	(february 1955), which used some germanium diodes
 	* The HEC (built by the British Tabulating Machine Company), a commercial machine sold
 	in two models at least (HEC 2M and HEC 4) (before 1955)
 
-	References :
-	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
+	References:
+	* Andrew D. Booth & Kathleen H. V. Booth: Automatic Digital Calculators, 2nd edition
 	(Buttersworth Scientific Publications, 1956)  (referred to as 'Booth&Booth')
-	* Kathleen H. V. Booth : Programming for an Automatic Digital Calculator
+	* Kathleen H. V. Booth: Programming for an Automatic Digital Calculator
 	(Buttersworth Scientific Publications, 1958)  (referred to as 'Booth')
 	* Digital Engineering Newsletter vol 7 nb 1 p 60 and vol 8 nb 1 p 60-61 provided some
 	dates
 */
 
 /*
-	Generals specs :
-	* 32-bit data word size (10-bit addresses) : uses fixed-point, 2's complement arithmetic
+	Generals specs:
+	* 32-bit data word size (10-bit addresses): uses fixed-point, 2's complement arithmetic
 	* CPU has one accumulator (A) and one register (R), plus a Control Register (this is
 	  what we would call an "instruction register" nowadays).  No Program Counter, each
 	  instruction contains the address of the next instruction (!).
 	* memory is composed of 256 (maximal value only found on the UCC - APE(X)C only has
-	  32 tracks) circular magnetic tracks of 32 words : only 32 tracks can
+	  32 tracks) circular magnetic tracks of 32 words: only 32 tracks can
 	  be accessed at a time (the 16 first ones, plus 16 others chosen by the programmer),
 	  and the rotation rate is 3750rpm (62.5 rotations per second).
-	* two I/O units : tape reader and tape puncher.  A teletyper was designed to read
+	* two I/O units: tape reader and tape puncher.  A teletyper was designed to read
 	  specially-encoded punched tapes and print decoded text.  (See /systems/apexc.c)
 	* machine code has 15 instructions (!), including add, substract, shift, multiply (!),
 	  test and branch, input and punch.  A so-called vector mode allow to repeat the same
 	  operation 32 times with 32 successive memory locations.  Note the lack of bitwise
 	  and/or/xor (!) .
 	* 1 kIPS, although memory access times make this figure fairly theorical (drum rotation
-	  time : 16ms, which would allow about 60IPS when no optimization is made)
+	  time: 16ms, which would allow about 60IPS when no optimization is made)
 	* there is no indirect addressing whatever, although dynamic modification of opcodes (!)
 	  allows to simulate it...
 	* a control panel allows operation and debugging of the machine.  (See /systems/apexc.c)
 
-	Conventions :
-	Bits are numbered in big-endian order, starting with 1 (!) : bit #1 is the MSB,
-	and bit #32 is the LSB
+	Conventions:
+	Bits are numbered in big-endian order, starting with 1: bit #1 is the
+	MSBit, and bit #32 is the LSBit.
 
-	References :
-	* Andrew D. Booth & Kathleen H. V. Booth : Automatic Digital Calculators, 2nd edition
+	References:
+	* Andrew D. Booth & Kathleen H. V. Booth: Automatic Digital Calculators, 2nd edition
 	(Buttersworth Scientific Publications, 1956)
-	* Kathleen H. V. Booth : Programming for an Automatic Digital Calculator
+	* Kathleen H. V. Booth: Programming for an Automatic Digital Calculator
 	(Buttersworth Scientific Publications, 1958)
 */
 
 /*
-	Machine code (reference : Booth) :
+	Machine code (reference: Booth):
 
-	Format of a machine instruction :
+	Format of a machine instruction:
 bits:		1-5			6-10		11-15		16-20		21-25		26-31		32
 field:		X address	X address	Y address	Y address	Function	C6			Vector
 			(track)		(location)	(track)		(location)
 
-	Meaning of fields :
-	X : address of an operand, or immediate, or meaningless, depending on Function
+	Meaning of fields:
+	X: address of an operand, or immediate, or meaningless, depending on Function
 		(When X is meaningless, it should be a duplicate of Y.  Maybe this is because
 		X is unintentionnally loaded into the memory address register, and if track # is
 		different, we add unneeded track switch delays (this theory is either wrong or
 		incomplete, since it cannot be true for B or X))
-	Y : address of the next instruction
-	Function : code for the actual instruction executed
-	C6 : immediate value used by shift, multiply and store operations
-	Vector : repeat operation 32 times (on all 32 consecutive locations of a track,
+	Y: address of the next instruction
+	Function: code for the actual instruction executed
+	C6: immediate value used by shift, multiply and store operations
+	Vector: repeat operation 32 times (on all 32 consecutive locations of a track,
 		starting with the location given by the X field)
 
-	Function code :
+	Function code:
 	#	Mnemonic	C6		Description
 
 	0	Stop
 
-	2	I(y)				Input.  5 digits from tape are moved to the 5 MSBits of R (which
-							must be cleared initially).
+	2	I(y)				Input.  A 5-bit word is read from tape and loaded
+							into the 5 MSBits of R.  (These bits of R must be
+							cleared initially.)
 
-	4	P(y)				Punch.  5 MSBits of R are punched on tape.
+	4	P(y)				Punch.  The 5 MSBits of R are punched onto the
+							output tape.
 
-	6	B<(x)>=(y)			Branch.  If A<0, next instruction is read from @x, whereas
-							if A>=0, next instruction is read from @y
+	6	B<(x)>=(y)			Branch.  If A<0, next instruction is fetched from @x, whereas
+							if A>=0, next instruction is fetched from @y
 
-	8	l (y)		n		Shift left : the 64 bits of A and R are rotated left n times.
+	8	l (y)		n		Shift left: the 64 bits of A and R are rotated left n times.
 		 n
 
-	10	r (y)		64-n	Shift right : the 64 bits of A and R are shifted right n times.
+	10	r (y)		64-n	Shift right: the 64 bits of A and R are shifted right n times.
 		 n					The sign bit of A is duplicated.
 
 	14	X (x)(y)	33-n	Multiply the contents of *track* x by the last n digits of the
@@ -114,14 +116,14 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 
 	24	T(x)(y)				R <- (x)
 
-	26	R   (x)(y)	32+n	record first or last bits of R in (x).  The remaining bits of x
-		 1-n				are unaffected, but "the contents of R are filled with 0s or 1s
+	26	R   (x)(y)	32+n	Store first or last bits of R into (x).  The remaining bits of (x)
+		 1-n				are unaffected.  "The contents of R are filled with 0s or 1s
 							according as the original contents were positive or negative".
 		R    (x)(y)	n-1
 		 n-32
 
 	28	A   (x)(y)	32+n	Same as 26, except that source is A, and the contents of A are
-		 1-n				not affected.
+		 1-n				not modified.
 
 		A    (x)(y)	n-1
 		 n-32
@@ -129,16 +131,16 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	30	S(x)(y)				Block Head switch.  This enables the block of heads specified
 							in x to be loaded into the working store.
 
-	Note : Mnemonics use subscripts (!), which I tried to render the best I could.  Also,
+	Note: Mnemonics use subscripts (!), which I tried to render the best I could.  Also,
 	  ">=" is actually one single character.  Last, "1-n" and "n-32" in store mnemonics
 	  are the actual sequences "1 *DASH* <number n>" and "<number n> *DASH* 32"
 	  (these are NOT formulas with substract signs).
 
-	Note2 : Short-hand notations : X stands for X  , A for A    , and R for R    .
-	                                             32         1-32             1-32
+	Note2: Short-hand notations: X stands for X  , A for A    , and R for R    .
+	                                           32         1-32             1-32
 
-	Note3 : Vectors instruction are notated with a subscript 'v' following the basic
-	  mnemonic.  For instance :
+	Note3: Vectors instruction are notated with a subscript 'v' following the basic
+	  mnemonic.  For instance:
 
 		A (x)(y), + (x)(y)
 		 v         v
@@ -149,23 +151,23 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 
 
 	Note that the code has been presented so far as it was in 1957.  It appears that
-	it was somewhat different in 1953 (Booth&Booth) :
+	it was somewhat different in 1953 (Booth&Booth):
 
-	Format of a machine instruction :
-	Format for r, l, A :
+	Format of a machine instruction:
+	Format for r, l, A:
 bits:		1-9			10-15		16-17	18-21		22-30		31-32
 field:		X address	C6			spare	Function	Y address	spare
-	Format for other instructions :
+	Format for other instructions:
 bits:		1-9			10-17		18-21		22-30		31-32
 field:		X address	D			Function	Y address	D (part 2)
 
-	Meaning of fields :
-	D (i.e. drum #) : MSBs for the address of the X operand.  I don't know whether this feature
+	Meaning of fields:
+	D (i.e. drum #): MSBs for the address of the X operand.  I don't know whether this feature
 		was actually implemented, since it is said in Booth&Booth that the APE(X)C does
 		not use this feature (it had only one drum of 16 tracks at the time, hence the 9
 		address bits).
 
-	Function code :
+	Function code:
 	#	Mnemonic	C6		Description
 
 	1	A   (x)(y)	32+n(?)	record first bits of A in (x).  The remaining bits of x
@@ -184,10 +186,10 @@ field:		X address	D			Function	Y address	D (part 2)
 	7	X (x)(y)			Multiply the contents of (x) by the number in R,
 							sending the 32 MSBs to A and 31 LSBs to R
 
-	8	r (y)		64-n(?)	Shift right : the 64 bits of A and R are shifted right n times.
+	8	r (y)		64-n(?)	Shift right: the 64 bits of A and R are shifted right n times.
 		 n					The sign bit of A is duplicated.
 
-	9	l (y)		n(?)	Shift left : the 64 bits of A and R are rotated left n times.
+	9	l (y)		n(?)	Shift left: the 64 bits of A and R are rotated left n times.
 		 n
 
 	10	R   (x)(y)	32+n	record R into (x).
@@ -212,7 +214,7 @@ field:		X address	D			Function	Y address	D (part 2)
 */
 
 /*
-	memory interface :
+	memory interface:
 
 	Data is exchanged on a 1-bit (!) data bus, 10-bit address bus.
 
@@ -225,9 +227,9 @@ field:		X address	D			Function	Y address	D (part 2)
 	operand, and it would be probably slower, since the operation could only
 	take place after all the data has been transfered.
 
-	Memory operations are synchronous with 2 clocks found on the memory controller :
-	* word clock : a pulse on each word boundary (3750rpm*32 -> 2kHz)
-	* bit clock : a pulse when a bit is present on the bus (word clock * 32 -> 64kHz)
+	Memory operations are synchronous with 2 clocks found on the memory controller:
+	* word clock: a pulse on each word boundary (3750rpm*32 -> 2kHz)
+	* bit clock: a pulse when a bit is present on the bus (word clock * 32 -> 64kHz)
 
 	CPU operation is synchronous with these clocks, too.  For instance, the AU does bit-per-bit
 	addition and substraction with a memory operand, synchronously with bit clock,
@@ -240,10 +242,10 @@ field:		X address	D			Function	Y address	D (part 2)
 */
 
 /*
-	Instruction timings :
+	Instruction timings:
 
 
-	References : Booth p. 14 for the table below
+	References: Booth p. 14 for the table below
 
 
 	Mnemonic					delay in word clock cycles
@@ -279,7 +281,7 @@ field:		X address	D			Function	Y address	D (part 2)
 	operand read/write delay (at least 1 cycle).
 
 
-	Notes :
+	Notes:
 
 	1.  The delay is applied after the store is done (from the analysis of the example
 	 in Booth p.52)
@@ -298,14 +300,14 @@ field:		X address	D			Function	Y address	D (part 2)
 
 	3.  This is an ambiguous statement.  Analysis of Booth p. 55 shows that
 	  an instance of an Av instruction with its destination on another track takes no more
-	  than 45 cycles, as follow :
+	  than 45 cycles, as follow:
 	    * 1 cycle for fetch
 	    * 6-cycle delay (at most) before write starts (-> track switch)
 	    * 32 memory cycles
 	    * 6-cycle delay (at most) after write completion (-> track switch)
 	  It appears that the delay associated with the vector mode is not distinguishable from
 	  the delay caused by track switch and even the delay associated to the Av instruction.
-	    Is there really a specific delay associated with the vector mode ? To know this, we
+	    Is there really a specific delay associated with the vector mode? To know this, we
 	  would need to see a vector instruction on the same track as its operands, which is
 	  unlikely to be seen (the only reasonnable application I can see is running a '+_v'
 	  to compute the checksum of the current track).
@@ -343,8 +345,8 @@ typedef struct
 	int working_store;	/* current working store (group of 16 tracks) (1-15) */
 	int current_word;	/* current word position within track (0-31) */
 
-	int running;	/* 1 flag : */
-				/* running : flag implied by the existence of the stop instruction */
+	int running;	/* 1 flag: */
+				/* running: flag implied by the existence of the stop instruction */
 } apexc_regs;
 
 static apexc_regs apexc;
@@ -359,12 +361,12 @@ int apexc_ICount;
 	word accessor functions
 
 	take a 10-bit word address
-		5 bits (MSBs) : track address within working store
-		5 bits (LSBs) : word position within track
+		5 bits (MSBs): track address within working store
+		5 bits (LSBs): word position within track
 
-	'special' flag : if true, read first word found in track (used by X instruction only)
+	'special' flag: if true, read first word found in track (used by X instruction only)
 
-	'mask' : one bit is set for each bit to write (used by store instructions)
+	'mask': one bit is set for each bit to write (used by store instructions)
 
 	memory latency delays are taken into account, but not track switching delays
 */
@@ -486,10 +488,10 @@ INLINE int load_ml(int address, int vector)
 /*
 	execute one instruction
 
-	TODO :
-	* test !!!
+	TODO:
+	* test!!!
 
-	NOTE :
+	NOTE:
 	* I do not know whether we should fetch instructions at the beginning or the end of the
 	instruction cycle.  Either solution is roughly equivalent to the other, but changes
 	the control panel operation (and I know virtually nothing on the control panel).
@@ -555,15 +557,15 @@ static void execute(void)
 			/* I do not know whether the CPU does an OR or whatever, but since docs say that
 			the 5 bits must be cleared initially, an OR kind of makes sense */
 			apexc.r |= papertape_read() << 27;
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay
-						or as a value in delay2 */
+			delay2 = 32;	/* no idea whether this should be counted as an absolute delay
+							or as a value in delay2 */
 			break;
 
 		case 4:
 			/* P */
 			papertape_punch((apexc.r >> 27) & 0x1f);
-			DELAY(32);	/* no idea whether this should be counted as an absolute delay
-						or as a value in delay2 */
+			delay2 = 32;	/* no idea whether this should be counted as an absolute delay
+							or as a value in delay2 */
 			break;
 
 		case 6:
@@ -636,42 +638,45 @@ static void execute(void)
 
 			/* Yes, this code is inefficient, but this must be the way the APEXC does it ;-) */
 			/* algorithm found in Booth&Booth, p. 45-48 */
-			apexc.a = 0;
-			while (1)
 			{
-				int shifted_bit = 0;
+				int shifted_bit;
 
-				/* note we read word at current word position */
-				if (shifted_bit && ! (apexc.r & 1))
-					apexc.a += word_read(x, 1);
-				else if ((! shifted_bit) && (apexc.r & 1))
-					apexc.a -= word_read(x, 1);
-				else
-					/* Even if we do not read anything, the loop still takes 1 cycle of
-					the memory word clock. */
-					/* Anyway, maybe we still read the data even if we do not use it. */
-					DELAY(1);
+				apexc.a = 0;
+				shifted_bit = 0;
+				while (1)
+				{
+					/* note we read word at current word position */
+					if (shifted_bit && ! (apexc.r & 1))
+						apexc.a += word_read(x, 1);
+					else if ((! shifted_bit) && (apexc.r & 1))
+						apexc.a -= word_read(x, 1);
+					else
+						/* Even if we do not read anything, the loop still takes 1 cycle of
+						the memory word clock. */
+						/* Anyway, maybe we still read the data even if we do not use it. */
+						DELAY(1);
 
-				/* exit if c6 reached 32 ("c6 & 0x20" is simpler to implement and
-				essentially equivalent, so this is most likely the actual implementation) */
-				if (c6 & 0x20)
-					break;
+					/* exit if c6 reached 32 ("c6 & 0x20" is simpler to implement and
+					essentially equivalent, so this is most likely the actual implementation) */
+					if (c6 & 0x20)
+						break;
 
-				/* else increment c6 and  shift */
-				c6 = (c6+1) & 0x3f;
+					/* else increment c6 and  shift */
+					c6 = (c6+1) & 0x3f;
 
-				/* shift */
-				shifted_bit = apexc.r & 1;
-				apexc.r >>= 1;
-				if (apexc.a & 1)
-					apexc.r |= 0x80000000UL;
-				apexc.a = ((INT32) apexc.a) >> 1;
+					/* shift */
+					shifted_bit = apexc.r & 1;
+					apexc.r >>= 1;
+					if (apexc.a & 1)
+						apexc.r |= 0x80000000UL;
+					apexc.a = ((INT32) apexc.a) >> 1;
+				}
 			}
 
 			//DELAY(32);	/* mmmh... we have already counted 32 wait states */
 			/* actually, if (n < 32) (which is an untypical case), we do not have 32 wait
-			states.  Question is : do we really have 32 wait states if (n < 32), or is
-			the timing table incomplete ? */
+			states.  Question is: do we really have 32 wait states if (n < 32), or is
+			the timing table incomplete? */
 			break;
 
 		case 16:
@@ -737,7 +742,7 @@ static void execute(void)
 
 		case 30:
 			/* S(x) */
-			apexc.working_store = (x >> 5) & 0xf;	/* or is it (x >> 6) ? */
+			apexc.working_store = (x >> 5) & 0xf;	/* or is it (x >> 6)? */
 			DELAY(32);	/* no idea what the value is...  All I know is that it takes much
 						more time than track switching (which takes 6 cycles) */
 			break;
