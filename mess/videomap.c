@@ -445,7 +445,7 @@ static void general_invalidate(UINT8 inval_flags_mask, void (*callback)(int), in
 
 	if (scanline <= cpu_getscanline())
 	{
-		flags |= inval_flags_mask | FLAG_FULL_REFRESH;
+		flags |= inval_flags_mask;
 		callback(scanline);
 	}
 	else if (!(flags & inval_flags_mask))
@@ -454,6 +454,7 @@ static void general_invalidate(UINT8 inval_flags_mask, void (*callback)(int), in
 		timer_set(delay, scanline, callback);
 		flags |= inval_flags_mask;
 	}
+	flags |= FLAG_FULL_REFRESH;
 	schedule_full_refresh();
 }
 
