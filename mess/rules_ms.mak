@@ -152,7 +152,7 @@ DBGOBJS += $(OBJ)/$(TX0D)/tx0dasm.o
 $(OBJ)/$(TX0D)/tx0.o:		$(TX0D)/tx0.h $(TX0D)/tx0.c
 $(OBJ)/$(TX0D)/tx0dasm.o:	$(TX0D)/tx0.h $(TX0D)/tx0dasm.c
 else
-CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_64KW=0
+CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_8KW=0
 endif
 
 

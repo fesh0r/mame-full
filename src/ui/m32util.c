@@ -340,32 +340,37 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 					break; 
 				}
 			gameinfo->usesSamples = FALSE;
-#if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
-			for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
+			
+			if (HAS_SAMPLES || HAS_VLM5030)
 			{
-				const char **samplenames = NULL;
-#if (HAS_SAMPLES == 1)
-				/*
-				  // cmk 2005-02-27, not sure what to look for here
-				if (drv.sound[i].sound_type == SOUND_SAMPLES)
-					samplenames = ((struct Samplesinterface
-									*)drv.sound[i].sound_interface)->samplenames;
-									*/
-#endif
-				/*
-				  #if (HAS_VLM5030 == 1)
-				  if (drv.sound[i].sound_type == SOUND_VLM5030)
-				  samplenames = ((struct VLM5030interface
-				  *)drv.sound[i].sound_interface)->samplenames;
-				  #endif
-				*/
-				if (samplenames != 0 && samplenames[0] != 0)
+				for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
 				{
-					gameinfo->usesSamples = TRUE;
-					break;
+					const char **samplenames = NULL;
+					
+					if (HAS_SAMPLES)
+					{
+						/*
+						// cmk 2005-02-27, not sure what to look for here
+						if (drv.sound[i].sound_type == SOUND_SAMPLES)
+							samplenames = ((struct Samplesinterface
+											*)drv.sound[i].sound_interface)->samplenames;
+											*/
+					}
+					/*
+					#if (HAS_VLM5030 == 1)
+					if (drv.sound[i].sound_type == SOUND_VLM5030)
+					samplenames = ((struct VLM5030interface
+					*)drv.sound[i].sound_interface)->samplenames;
+					#endif
+					*/
+					if (samplenames != 0 && samplenames[0] != 0)
+					{
+						gameinfo->usesSamples = TRUE;
+						break;
+					}
 				}
 			}
-#endif
+
 			gameinfo->usesTrackball = FALSE;
 			gameinfo->usesLightGun = FALSE;
 			if (gamedrv->construct_ipt != NULL)
