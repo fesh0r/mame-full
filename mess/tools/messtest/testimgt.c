@@ -166,7 +166,7 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 
 		if (ent.eof || strcmp(ent.filename, entries[i].filename))
 		{
-			error_report("Misnamed file entry");
+			error_report("Attempt to verify directory listing failed");
 			goto done;
 		}
 	}
@@ -229,9 +229,9 @@ static const struct messtest_tagdispatch checkdirectory_dispatch[] =
 
 const struct messtest_tagdispatch testimgtool_dispatch[] =
 {
-	{ "createimage",	DATA_NONE,		createimage_handler,	NULL },
-	{ "checkdirectory",	DATA_NONE,		NULL,					checkdirectory_end_handler, checkdirectory_dispatch },
-	{ "putfile",		DATA_BINARY,	putfile_start_handler,	putfile_end_handler },
+	{ "createimage",	DATA_NONE,		createimage_handler,			NULL },
+	{ "checkdirectory",	DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
+	{ "putfile",		DATA_BINARY,	putfile_start_handler,			putfile_end_handler },
 	{ NULL }
 };
 

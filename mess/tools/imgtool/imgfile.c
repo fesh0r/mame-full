@@ -455,7 +455,7 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 		goto done;
 
 	/* allocate dummy options if necessary */
-	if (!opts)
+	if (!opts && img->module->writefile_optguide)
 	{
 		alloc_resolution = option_resolution_create(img->module->writefile_optguide, img->module->writefile_optspec);
 		if (!alloc_resolution)
@@ -465,7 +465,8 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 		}
 		opts = alloc_resolution;
 	}
-	option_resolution_finish(opts);
+	if (opts)
+		option_resolution_finish(opts);
 
 	/* actually invoke the write file handler */
 	err = img->module->write_file(img, fname, sourcef, opts);
@@ -551,22 +552,50 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, opt
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;
+	option_resolution *alloc_resolution = NULL;
 
 	if (!module->create)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
 
 	/* The mess_hd imgtool module needs to read back the file it creates */
 	f = stream_open(fname, OSD_FOPEN_RW_CREATE);
 	if (!f)
-		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+	{
+		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+		goto done;
+	}
+
+	/* allocate dummy options if necessary */
+	if (!opts)
+	{
+		alloc_resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
+		if (!alloc_resolution)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+		opts = alloc_resolution;
+	}
+	option_resolution_finish(opts);
 
 	err = module->create(module, f, opts);
 	stream_close(f);
 	if (err)
-		return markerrorsource(err);
+	{
+		err = markerrorsource(err);
+		goto done;
+	}
 
-	return IMGTOOLERR_SUCCESS;
+done:
+	if (alloc_resolution)
+		option_resolution_close(alloc_resolution);
+	return err;
 }
+
+
 
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts)
 {

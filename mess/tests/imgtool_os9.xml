@@ -1,0 +1,25 @@
+<tests>
+
+<!--
+<imgtooltest name="coco_jvc_os9">
+	<createimage driver="coco_jvc_os9"/>
+	<checkdirectory/>
+</imgtooltest>
+
+<imgtooltest name="coco_vdk_os9">
+	<createimage driver="coco_vdk_os9"/>
+	<checkdirectory/>
+</imgtooltest>
+
+<imgtooltest name="coco_dmk_os9">
+	<createimage driver="coco_dmk_os9"/>
+	<checkdirectory/>
+</imgtooltest>
+
+<imgtooltest name="coco_os9_os9">
+	<createimage driver="coco_os9_os9"/>
+	<checkdirectory/>
+</imgtooltest>
+-->
+
+</tests>

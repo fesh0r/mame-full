@@ -1,7 +1,25 @@
 <tests>
 
-<imgtooltest name="coco">
+<imgtooltest name="coco_jvc">
 	<createimage driver="coco_jvc_rsdos"/>
+	<checkdirectory/>
+	<putfile name="FOO.TXT">'Hello World!'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+	</checkdirectory>
+</imgtooltest>
+
+<imgtooltest name="coco_vdk">
+	<createimage driver="coco_vdk_rsdos"/>
+	<checkdirectory/>
+	<putfile name="FOO.TXT">'Hello World!'</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="12"/>
+	</checkdirectory>
+</imgtooltest>
+
+<imgtooltest name="coco_dmk">
+	<createimage driver="coco_dmk_rsdos"/>
 	<checkdirectory/>
 	<putfile name="FOO.TXT">'Hello World!'</putfile>
 	<checkdirectory>
