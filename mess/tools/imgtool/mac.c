@@ -5543,7 +5543,7 @@ static imgtoolerr_t get_comment(mac_l2_imgref *l2_img, UINT16 id, mac_str255 com
 static imgtoolerr_t mac_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
 static void mac_image_exit(imgtool_image *img);
 static void mac_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t mac_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t mac_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 static imgtoolerr_t mac_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void mac_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t mac_image_freespace(imgtool_image *img, UINT64 *size);
@@ -5666,7 +5666,7 @@ typedef struct mac_iterator
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t mac_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static imgtoolerr_t mac_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	mac_l2_imgref *image = (mac_l2_imgref *) img;
 	mac_iterator *iter;

@@ -3835,10 +3835,10 @@ static imgtoolerr_t dsk_image_init_pc99_mfm(const struct ImageModule *mod, imgto
 static imgtoolerr_t win_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
 static void ti99_image_exit(imgtool_image *img);
 static void ti99_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 static imgtoolerr_t dsk_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void dsk_image_closeenum(imgtool_imageenum *enumeration);
-static imgtoolerr_t win_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t win_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 static imgtoolerr_t win_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void win_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t ti99_image_freespace(imgtool_image *img, UINT64 *size);
@@ -4246,7 +4246,7 @@ static void ti99_image_info(imgtool_image *img, char *string, size_t len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static imgtoolerr_t dsk_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	dsk_iterator *iter;
@@ -4385,7 +4385,7 @@ static void dsk_image_closeenum(imgtool_imageenum *enumeration)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t win_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static imgtoolerr_t win_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	ti99_lvl2_imgref *image = (ti99_lvl2_imgref *) img;
 	win_iterator *iter;

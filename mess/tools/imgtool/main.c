@@ -147,22 +147,23 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	imgtoolerr_t err;
 	int total_count, total_size, freespace_err;
 	UINT64 freespace;
-	imgtool_image *img;
-	imgtool_imageenum *imgenum;
+	imgtool_image *img = NULL;
+	imgtool_imageenum *imgenum = NULL;
 	imgtool_dirent ent;
 	char buf[512];
 	char attrbuf[50];
+	const char *path;
 
 	/* attempt to open image */
 	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
-		goto error;
+		goto done;
 
-	err = img_beginenum(img, &imgenum);
-	if (err) {
-		img_close(img);
-		goto error;
-	}
+	path = argc > 2 ? argv[2] : NULL;
+
+	err = img_beginenum(img, path, &imgenum);
+	if (err)
+		goto done;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.filename = buf;
@@ -189,21 +190,22 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 
 	freespace_err = img_freespace(img, &freespace);
 
-	img_closeenum(imgenum);
-	img_close(img);
-
 	if (err)
-		goto error;
+		goto done;
 
 	fprintf(stdout, "------------------------  ------ ---------------\n");
 	fprintf(stdout, "%8i File(s)        %8i bytes\n", total_count, total_size);
 	if (!freespace_err)
 		fprintf(stdout, "                        %8u bytes free\n", (unsigned int) freespace);
-	return 0;
 
-error:
-	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
-	return -1;
+done:
+	if (imgenum)
+		img_closeenum(imgenum);
+	if (img)
+		img_close(img);
+	if (err)
+		reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
+	return err ? -1 : 0;
 }
 
 
@@ -304,26 +306,32 @@ error:
 static int cmd_getall(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
-	imgtool_image *img;
+	imgtool_image *img = NULL;
 	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	FILTERMODULE filter;
 	int unnamedargs;
 	char buf[128];
+	const char *path = NULL;
+	int arg;
 
 	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
-		goto error;
+		goto done;
 
-	unnamedargs = parse_options(argc, argv, 2, 2, NULL, &filter);
-	if (unnamedargs < 0)
-		return -1;
-
-	err = img_beginenum(img, &imgenum);
-	if (err) {
-		img_close(img);
-		goto error;
+	arg = 2;
+	if ((argc > 2) && (argv[2][0] != '-'))
+	{
+		path = argv[arg++];
 	}
+
+	unnamedargs = parse_options(argc, argv, arg, arg, NULL, &filter);
+	if (unnamedargs < 0)
+		goto done;
+
+	err = img_beginenum(img, path, &imgenum);
+	if (err)
+		goto done;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.filename = buf;
@@ -335,20 +343,17 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 
 		err = img_getfile(img, ent.filename, NULL, filter);
 		if (err)
-			break;
+			goto done;
 	}
 
-	img_closeenum(imgenum);
-	img_close(img);
-
+done:
+	if (imgenum)
+		img_closeenum(imgenum);
+	if (img)
+		img_close(img);
 	if (err)
-		goto error;
-
-	return 0;
-
-error:
-	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
-	return -1;
+		reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
+	return err ? -1 : 0;
 }
 
 
@@ -638,10 +643,10 @@ static struct command cmds[] =
 //	{ "testsuite",			cmd_testsuite,			"<testsuitefile>", 1, 1, 0 },
 #endif
 	{ "create",				cmd_create,				"<format> <imagename>", 2, 8, 0},
-	{ "dir",				cmd_dir,				"<format> <imagename>...", 2, 2, 1 },
+	{ "dir",				cmd_dir,				"<format> <imagename> [path]", 2, 3, 0 },
 	{ "get",				cmd_get,				"<format> <imagename> <filename> [newname] [--filter=filter]", 3, 4, 0 },
 	{ "put",				cmd_put,				"<format> <imagename> <filename>...[--(fileoption)==value] [--filter=filter]", 3, 0xffff, 0 },
-	{ "getall",				cmd_getall,				"<format> <imagename> [--filter=filter]", 2, 2, 0 },
+	{ "getall",				cmd_getall,				"<format> <imagename> [path] [--filter=filter]", 2, 3, 0 },
 	{ "del",				cmd_del,				"<format> <imagename> <filename>...", 3, 3, 1 },
 	{ "identify",			cmd_identify,			"<imagename>", 1, 1 },
 	{ "listformats",		cmd_listformats,		NULL, 0, 0, 0 },

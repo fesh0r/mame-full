@@ -154,9 +154,10 @@ imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len);
  *
  * Parameters:
  *		img:				The image to enumerate
+ *		path:				The directory path to enumerate
  *		outenum:			The resulting enumeration
  */
-imgtoolerr_t img_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 
 /* img_nextenum
  *

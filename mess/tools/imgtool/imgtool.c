@@ -33,6 +33,8 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 		features.supports_writing = 1;
 	if (module->delete_file)
 		features.supports_deleting = 1;
+	if (module->path_separator)
+		features.supports_directories = 1;
 	return features;
 }
 

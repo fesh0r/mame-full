@@ -144,9 +144,10 @@ imgtoolerr_t img_info(imgtool_image *img, char *string, size_t len)
 
 
 
-imgtoolerr_t img_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+imgtoolerr_t img_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	imgtoolerr_t err;
+	char buf[2];
 
 	assert(img);
 	assert(outenum);
@@ -156,11 +157,32 @@ imgtoolerr_t img_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
 	if (!img->module->begin_enum)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = img->module->begin_enum(img, outenum);
+	if (!img->module->path_separator)
+	{
+		/* do we specify a path when paths are not supported? */
+		if (path)
+			return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+	}
+	else if (!path)
+	{
+		/* must set up default path */
+		if (img->module->initial_path_separator)
+		{
+			buf[0] = img->module->path_separator;
+			buf[1] = '\0';
+			path = buf;
+		}
+		else
+		{
+			path = "";
+		}
+	}
+
+	err = img->module->begin_enum(img, path, outenum);
 	if (err)
 		return markerrorsource(err);
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -179,7 +201,7 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	if (err)
 		return markerrorsource(err);
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -204,7 +226,7 @@ imgtoolerr_t img_countfiles(imgtool_image *img, int *totalfiles)
 	ent.filename = fnamebuf;
 	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
-	err = img_beginenum(img, &imgenum);
+	err = img_beginenum(img, NULL, &imgenum);
 	if (err)
 		goto done;
 
@@ -232,13 +254,16 @@ imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesiz
 	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
 	char fnamebuf[256];
+	const char *path;
+
+	path = NULL;	/* TODO: Need to parse off the path */
 
 	*filesize = -1;
 	memset(&ent, 0, sizeof(ent));
 	ent.filename = fnamebuf;
 	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
-	err = img_beginenum(img, &imgenum);
+	err = img_beginenum(img, path, &imgenum);
 	if (err)
 		goto done;
 
@@ -301,7 +326,7 @@ static imgtoolerr_t process_filter(imgtool_stream **mainstream, imgtool_stream *
 
 		*mainstream = *newstream;
 	}
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -332,7 +357,7 @@ imgtoolerr_t img_readfile(imgtool_image *img, const char *fname, imgtool_stream 
 done:
 	if (newstream)
 		stream_close(newstream);
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -461,7 +486,7 @@ imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 	if (err)
 		return markerrorsource(err);
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, option_resolution *opts)
@@ -482,7 +507,7 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, opt
 	if (err)
 		return markerrorsource(err);
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts)

@@ -28,7 +28,7 @@ struct rsdos_direnum
 	int eof;
 };
 
-static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void rsdos_diskimage_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t rsdos_diskimage_freespace(imgtool_image *img, UINT64 *size);
@@ -302,7 +302,7 @@ static imgtoolerr_t prepare_dirent(struct rsdos_dirent *ent, const char *fname)
 
 
 
-static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static imgtoolerr_t rsdos_diskimage_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	struct rsdos_direnum *rsenum;
 

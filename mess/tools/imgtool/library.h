@@ -55,14 +55,17 @@ struct ImageModule
 	const char *description;
 	const char *extensions;
 	const char *eoln;
+
+	char path_separator;
 	
 	/* flags */
 	unsigned int prefer_ucase : 1;
+	unsigned int initial_path_separator : 1;
 
 	imgtoolerr_t	(*open)			(const struct ImageModule *mod, imgtool_stream *f, struct tagIMAGE **outimg);
 	void			(*close)		(struct tagIMAGE *img);
 	void			(*info)			(struct tagIMAGE *img, char *string, size_t len);
-	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, struct tagIMAGEENUM **outenum);
+	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, const char *path, struct tagIMAGEENUM **outenum);
 	imgtoolerr_t	(*next_enum)	(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
 	void			(*close_enum)	(struct tagIMAGEENUM *enumeration);
 	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, UINT64 *size);

@@ -131,7 +131,7 @@ typedef struct concept_iterator
 static imgtoolerr_t concept_image_init(const struct ImageModule *mod, imgtool_stream *f, imgtool_image **outimg);
 static void concept_image_exit(imgtool_image *img);
 static void concept_image_info(imgtool_image *img, char *string, size_t len);
-static imgtoolerr_t concept_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum);
+static imgtoolerr_t concept_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum);
 static imgtoolerr_t concept_image_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent);
 static void concept_image_closeenum(imgtool_imageenum *enumeration);
 static imgtoolerr_t concept_image_freespace(imgtool_image *img, UINT64 *size);
@@ -335,7 +335,7 @@ static void concept_image_info(imgtool_image *img, char *string, size_t len)
 /*
 	Open the disk catalog for enumeration 
 */
-static imgtoolerr_t concept_image_beginenum(imgtool_image *img, imgtool_imageenum **outenum)
+static imgtoolerr_t concept_image_beginenum(imgtool_image *img, const char *path, imgtool_imageenum **outenum)
 {
 	concept_image *image = (concept_image*) img;
 	concept_iterator *iter;

@@ -76,7 +76,7 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 		goto done;
 	}
 
-	err = img_beginenum(info->image, &imageenum);
+	err = img_beginenum(info->image, NULL, &imageenum);
 	if (err)
 		goto done;
 	do
@@ -221,7 +221,7 @@ static imgtoolerr_t refresh_image(HWND window)
 
 	if (info->image)
 	{
-		err = img_beginenum(info->image, &imageenum);
+		err = img_beginenum(info->image, NULL, &imageenum);
 		if (err)
 			goto done;
 
