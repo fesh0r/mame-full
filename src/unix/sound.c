@@ -10,8 +10,7 @@
 
 /* #define SOUND_DEBUG */
 
-static int sound_fake = 0;
-static int sound_samplerate = 22050;
+static int sound_samplerate = 44100;
 static float sound_bufsize = 3.0;
 static int sound_attenuation = -3;
 static char *sound_dsp_device = NULL;
@@ -26,10 +25,8 @@ static int sound_set_options(struct rc_option *option, const char *arg,
 {
 	if(sound_enabled)
 		options.samplerate = sound_samplerate;
-	else if(sound_fake)
-		options.samplerate = 8000;
 	else
-		options.samplerate = 0;
+		options.samplerate = 8000;
 
 	option->priority = priority;
 
@@ -41,8 +38,7 @@ struct rc_option sound_opts[] = {
 	{ "Sound Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "sound", "snd", rc_bool, &sound_enabled, "1", 0, 0, sound_set_options, "Enable/disable sound (if available)" },
 	{ "samples", "sam", rc_bool, &options.use_samples, "1", 0, 0, NULL, "Use/don't use samples (if available)" },
-	{ "fakesound", "fsnd", rc_set_int, &sound_fake, NULL, 1, 0, sound_set_options, "Generate sound even when sound is disabled, this is needed for some games which won't run without sound" },
-	{ "samplefreq", "sf", rc_int, &sound_samplerate, "22050", 8000, 48000, sound_set_options, "Set the playback sample-frequency/rate" },
+	{ "samplefreq", "sf", rc_int, &sound_samplerate, "44100", 8000, 48000, sound_set_options, "Set the playback sample-frequency/rate" },
 	{ "bufsize",  "bs", rc_float, &sound_bufsize, "3.0", 1.0, 30.0, NULL, "Number of frames of sound to buffer" },
 	{ "volume", "v", rc_int, &sound_attenuation, "-3", -32, 0, NULL, "Set volume to <int> db, (-32 (soft) - 0(loud) )" },
 	{ "audiodevice", "ad", rc_string, &sound_dsp_device, NULL, 0, 0, NULL, "Use an alternative audiodevice" },
@@ -98,29 +94,36 @@ int osd_get_mastervolume(void)
 
 void osd_sound_enable(int enable_it)
 {
-	if (sound_stream && enable_it)
+	if (!sound_enabled)
+		return;
+		
+	if (enable_it)
 	{
-		sound_enabled = 1;
-		if (!sound_dsp)
+		/* in case we get called twice with enable_it true */
+		if (sound_dsp) 
+			return;
+		
+		if(!(sound_dsp = sysdep_dsp_create(NULL,
+						sound_dsp_device,
+						&(Machine->sample_rate),
+						&type,
+						sound_bufsize * (1 / Machine->refresh_rate),
+						SYSDEP_DSP_EMULATE_TYPE | SYSDEP_DSP_O_NONBLOCK)))
 		{
-			if (!(sound_dsp = sysdep_dsp_create(NULL,
-							sound_dsp_device,
-							&options.samplerate,
-							&type,
-							sound_bufsize * (1 / Machine->refresh_rate),
-							SYSDEP_DSP_EMULATE_TYPE | SYSDEP_DSP_O_NONBLOCK)))
-				sound_enabled = 0;
-			else
-			{
-				sound_stream_destroy(sound_stream);
-				if (!(sound_stream = sound_stream_create(sound_dsp, type,
-								sound_samples_per_frame, 3)))
-				{
-					osd_stop_audio_stream();
-					sound_enabled = 0;
-				}
-			}
+			Machine->sample_rate = 8000;
 		}
+
+		/* calculate samples_per_frame */
+		sound_samples_per_frame = Machine->sample_rate /
+			Machine->refresh_rate;
+
+		if(sound_dsp && !(sound_stream = sound_stream_create(sound_dsp,
+						type, sound_samples_per_frame, 3)))
+		{
+			sysdep_dsp_destroy(sound_dsp);
+			sound_dsp = NULL;
+		}
+
 	}
 	else
 	{
@@ -129,7 +132,11 @@ void osd_sound_enable(int enable_it)
 			sysdep_dsp_destroy(sound_dsp);
 			sound_dsp = NULL;
 		}
-		sound_enabled = 0;
+		if (sound_stream)
+		{
+			sound_stream_destroy(sound_stream);
+			sound_stream = NULL;
+		}
 	}
 }
 
@@ -137,74 +144,29 @@ int osd_start_audio_stream(int stereo)
 {
 	type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
 
+	sound_dsp    = NULL;
 	sound_stream = NULL;
+	sound_mixer  = NULL;
 
-	/* create dsp */
-	if(sound_enabled)
+	osd_sound_enable(1);
+	
+	if (sound_dsp)
 	{
-		if(!(sound_dsp = sysdep_dsp_create(NULL,
-						sound_dsp_device,
-						&options.samplerate,
-						&type,
-						sound_bufsize * (1 / Machine->refresh_rate),
-						SYSDEP_DSP_EMULATE_TYPE | SYSDEP_DSP_O_NONBLOCK)))
-		{
-			osd_stop_audio_stream();
-			sound_enabled = 0;
-		}
-	}
-
-	/* create sound_stream */
-	if(sound_enabled)
-	{
-		/* sysdep_dsp_open may have changed the samplerate */
-		Machine->sample_rate = options.samplerate;
-
-		/* calculate samples_per_frame */
-		sound_samples_per_frame = Machine->sample_rate /
-			Machine->refresh_rate;
-#ifdef SOUND_DEBUG
-		fprintf(stderr, "debug: sound: samples_per_frame = %d\n",
-				sound_samples_per_frame);
-#endif
-		if(!(sound_stream = sound_stream_create(sound_dsp, type,
-						sound_samples_per_frame, 3)))
-		{
-			osd_stop_audio_stream();
-			sound_enabled = 0;
-		}
-	}
-
-	/* if sound is not enabled, set the samplerate of the core to 0 */
-	if(!sound_enabled)
-	{
-		if(sound_fake)
-			Machine->sample_rate = options.samplerate = 8000;
-		else
-			Machine->sample_rate = options.samplerate = 0;
-
-		/* calculate samples_per_frame */
-		sound_samples_per_frame = Machine->sample_rate /
-			Machine->refresh_rate;
-
-		return sound_samples_per_frame;
-	}
-
-	/* create a mixer instance */
-	sound_mixer = sysdep_mixer_create(NULL, sound_mixer_device,
+		/* create a mixer instance */
+		sound_mixer = sysdep_mixer_create(NULL, sound_mixer_device,
 			SYSDEP_MIXER_RESTORE_SETTINS_ON_EXIT);
 
-	/* check if the user specified a volume, and ifso set it */
-	if(sound_mixer && rc_get_priority2(sound_opts, "volume"))
-		osd_set_mastervolume(sound_attenuation);
+		/* check if the user specified a volume, and ifso set it */
+		if(sound_mixer && rc_get_priority2(sound_opts, "volume"))
+			osd_set_mastervolume(sound_attenuation);
+	}
 
 	return sound_samples_per_frame;
 }
 
 int osd_update_audio_stream(INT16 *buffer)
 {
-	/* sound enabled ? */
-	if (sound_enabled)
+	if (sound_stream)
 		sound_stream_write(sound_stream, (unsigned char *)buffer,
 				sound_samples_per_frame);
 
@@ -213,12 +175,11 @@ int osd_update_audio_stream(INT16 *buffer)
 
 void osd_stop_audio_stream(void)
 {
-	if(sound_stream)
-		sound_stream_destroy(sound_stream);
-
-	if(sound_dsp)
-		sysdep_dsp_destroy(sound_dsp);
-
 	if(sound_mixer)
+	{
 		sysdep_mixer_destroy(sound_mixer);
+		sound_mixer = NULL;
+	}
+	
+	osd_sound_enable(0);
 }

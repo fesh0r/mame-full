@@ -115,7 +115,7 @@ void sysdep_update_keyboard (void)
 					/* check for multiple events and ignore them */
 					if (!xinput_focus) break;
 					xinput_focus = FALSE;
-					if (xinput_mouse_grabbed)
+					if (xinput_mouse_grabbed && !xinput_force_grab)
 					{
 						XUngrabPointer(display, CurrentTime);
 						if (xinput_cursors_allocated && xinput_show_cursor)
@@ -237,7 +237,7 @@ void sysdep_mouse_poll(void)
 		int root_x, root_y, pos_x, pos_y;
 		unsigned int keys_buttons;
 
-		if (!XQueryPointer(display,window, &root,&child, &root_x,&root_y,
+		if (!XQueryPointer(display, window, &root,&child, &root_x,&root_y,
 					&pos_x,&pos_y,&keys_buttons) )
 		{
 			mouse_data[0].deltas[0] = 0;

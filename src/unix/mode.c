@@ -19,7 +19,7 @@ struct rc_option mode_opts[] = {
      "0",		0,			0,		NULL,
      "Automaticly set yarbsize to get the perfect aspect ratio" },
    { "displayaspectratio", "dar",		rc_float,	&display_aspect_ratio,
-     "1.33",		0.5,			2.0,		NULL,
+     "1.3333333333333",	0.5,			2.0,		NULL,
      "Set the display aspect ratio of your monitor. This is used for -keepaspect The default = 1.33 (4/3). Use 0.75 (3/4) for a portrait monitor" },
    { "disablemode",	"dm",			rc_use_function, NULL,
      NULL,		0,			0,		mode_disable,
