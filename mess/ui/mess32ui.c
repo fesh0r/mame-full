@@ -716,25 +716,28 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 
 	while(pDevice->type < IO_COUNT)
 	{
-		pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
-		if (pszSoftware && *pszSoftware)
+		if (!pDevice->not_working)
 		{
-			pszMySoftware = (LPTSTR) alloca((_tcslen(pszSoftware) + 1) * sizeof(TCHAR));
-			_tcscpy(pszMySoftware, pszSoftware);
-
-			pszOptionName = A2T(device_brieftypename(pDevice->type));
-
-			while(*pszMySoftware)
+			pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
+			if (pszSoftware && *pszSoftware)
 			{
-				s = _tcschr(pszMySoftware, '|');
-				if (s)
-					*s = '\0';
+				pszMySoftware = (LPTSTR) alloca((_tcslen(pszSoftware) + 1) * sizeof(TCHAR));
+				_tcscpy(pszMySoftware, pszSoftware);
 
-				sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", 
-					pszOptionName,
-					pszMySoftware);
+				pszOptionName = A2T(device_brieftypename(pDevice->type));
 
-				pszMySoftware = s ? s + 1 : szNull;
+				while(*pszMySoftware)
+				{
+					s = _tcschr(pszMySoftware, '|');
+					if (s)
+						*s = '\0';
+
+					sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", 
+						pszOptionName,
+						pszMySoftware);
+
+					pszMySoftware = s ? s + 1 : szNull;
+				}
 			}
 		}
 		pDevice++;

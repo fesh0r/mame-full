@@ -20,7 +20,12 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] Improved error reporting if the emulation fails at runtime.
+  [Nate Woods]
+
+- [Windows GUI] Stopgap measure to fix image loading on the Apple IIgs; this
+  will not work if the Apple IIgs 5.25" disk is ever enabled; in the long run
+  the INI and CFG system must be merged for a real fix. (bug #686) [Nate Woods]
 
 
 
