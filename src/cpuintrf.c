@@ -144,11 +144,17 @@
 #if (HAS_SATURN)
 #include "cpu/saturn/saturn.h"
 #endif
-#if (HAS_APEXC)
-#include "cpu/apexc/apexc.h"
-#endif
 #if (HAS_UPD7810)
 #include "cpu/upd7810/upd7810.h"
+#endif
+
+
+#ifdef MESS
+
+ #if (HAS_APEXC)
+ #include "mess/cpu/apexc/apexc.h"
+ #endif
+
 #endif
 
 
@@ -661,12 +667,15 @@ struct cpu_interface cpuintf[] =
 #define saturn_ICount saturn_icount
 	CPU0(SATURN,   saturn,	 1,  0,1.00,SATURN_INT_NONE,   SATURN_INT_IRQ, SATURN_INT_NMI,	8,20,	  0,20,LE,1, 21 ),
 #endif
-#if (HAS_APEXC)
-	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
-#endif
 #if (HAS_UPD7810)
 #define upd7810_ICount upd7810_icount
 	CPU0(UPD7810,  upd7810,  2,  0,1.00,UPD7810_INT_NONE,  UPD7810_INTF1,  UPD7810_INTNMI, 8, 16,	  0,16,LE,1, 4	),
+#endif
+
+#ifdef MESS
+#if (HAS_APEXC)
+	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
+#endif
 #endif
 };
 

@@ -261,11 +261,14 @@ enum
 #if (HAS_SATURN)
 	CPU_SATURN,
 #endif
-#if (HAS_APEXC)
-	CPU_APEXC,
-#endif
 #if (HAS_UPD7810)
 	CPU_UPD7810,
+#endif
+
+#ifdef MESS
+ #if (HAS_APEXC)
+	CPU_APEXC,
+ #endif
 #endif
     CPU_COUNT
 };
