@@ -94,4 +94,6 @@ typedef union {
 	UINT32 d;
 }	PAIR;
 
+#define isunordered(x, y) __builtin_isunordered(x, y)
+
 #endif	/* defined OSD_CPU_H */

@@ -1,3 +1,17 @@
+0.87
+
+- Changes for MESS 0.87 [smf].
+
+
+==========================================================================
+
+0.86
+
+- Added missing isunordered() implementation [smf].
+
+
+==========================================================================
+
 0.85
 
 - More input port changes, joystick and second mouse support is not
