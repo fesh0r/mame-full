@@ -512,9 +512,15 @@ static void v9938_check_int (void)
 	if (n != vdp.INT)
 		{
 		vdp.INT = n;
-		vdp.INTCallback (n);
 		logerror ("V9938: IRQ line %s\n", n ? "up" : "down");
 		}
+
+	/* 
+    ** Somehow the IRQ request is going down without cpu_irq_line () being
+    ** called; because of this Mr. Ghost, Xevious and SD Snatcher don't
+    ** run. As a patch it's called every scanline 
+    */
+	vdp.INTCallback (n);
 	}
 
 void v9938_set_sprite_limit (int i)
