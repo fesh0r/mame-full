@@ -2,7 +2,7 @@
 
 	Motorola 6850 ACIA interface and emulation
 
-	This function is a simple emulation of up to 4 MC6850 
+	This function is a simple emulation of up to 4 MC6850
 	Asynchronous Communications Interface Adapter.
 
 **********************************************************************/
@@ -49,3 +49,28 @@ WRITE8_HANDLER( acia6850_2_w );
 WRITE8_HANDLER( acia6850_3_w );
 
 #endif /* ACIA_6850 */
+
+
+
+/***** coded added by GJ to emulate the core of a 6850 */
+
+
+
+struct MC6850_interface
+{
+	void (*out_transmit_data_func)(int offset, int data);
+	void (*out_RTS_func)(int offset, int data);
+	void (*out_IRQ_func)(int level);
+};
+
+void MC6850_Receive_Clock(int Receive_Data);
+
+
+void MC6850_data_w(int offset, int data);
+int MC6850_data_r(int offset);
+
+void MC6850_control_w(int offset, int data);
+int MC6850_status_r(int offset);
+
+void MC6850_config(const struct MC6850_interface *intf);
+

@@ -54,7 +54,6 @@ static struct mame_bitmap *BBC_bitmap;
 // this is the X and Y screen location in emulation pixels of the next pixels to be drawn
 static int y_screen_pos;
 
-
 /************************************************************************
  * video memory lookup arrays.
  * this is a set of quick lookup arrays that stores the logic for the following:
@@ -428,6 +427,15 @@ WRITE8_HANDLER ( videoULA_w )
 
 	int tpal,tcol;
 
+
+	// emulation refresh optimisation
+	video_refresh=1;
+	force_partial_update(cpu_getscanline() - 1);
+
+//	logerror("setting videoULA %s at %.4x size:%.4x\n",image_filename(image), addr, size);
+	logerror("setting videoULA %.4x to:%.4x   at :%d \n",data,offset,cpu_getscanline() );
+
+
 	switch (offset&0x01)
 	{
 	// Set the control register in the Video ULA
@@ -460,7 +468,7 @@ WRITE8_HANDLER ( videoULA_w )
 			emulation_pixels_per_byte=videoULA_6845_clock_rate?8:16;
 			emulation_pixels_per_real_pixel=emulation_pixels_per_real_pixel_set[videoULA_characters_per_line];
 			x_screen_offset=-96;
-			y_screen_offset=-8;
+			y_screen_offset=-11;
 			draw_function=*BBC_draw_hi_res;
 		}
 
@@ -473,7 +481,6 @@ WRITE8_HANDLER ( videoULA_w )
 		videoULA_pallet1[tpal]=tcol<8?tcol^7:tcol;
 		break;
 	}
-
 
 	// emulation refresh optimisation
 	video_refresh=1;
@@ -730,6 +737,9 @@ WRITE8_HANDLER ( BBC_6845_w )
 
 VIDEO_UPDATE( bbc )
 {
+
+logerror ("Box %d by %d \n",cliprect->min_y,cliprect->max_y);
+
 	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
 	int full_refresh = 1;
 
@@ -761,7 +771,7 @@ VIDEO_UPDATE( bbc )
 	// or until a timeout (this catches the 6845 with silly register values that would not give a VSYNC signal)
 	while((!BBC_VSync)&&(c<60000))
 	{
-		(draw_function)();
+		if ((y_screen_pos>=cliprect->min_y) && (y_screen_pos<=cliprect->max_y)) (draw_function)();
 
 		// and check the cursor
 		if (VideoULA_CR) BBC_Clock_CR();
@@ -825,6 +835,19 @@ VIDEO_START( bbcb )
 }
 
 VIDEO_START( bbcbp )
+{
+	/* need to set up the lookups to work with the BBC B plus memory */
+	set_pixel_lookup();
+	set_video_memory_lookups(32);
+	crtc6845_config(&BBC6845);
+
+	BBC_Video_RAM= memory_region(REGION_CPU1);
+	vidmem_RAM=vidmem;
+	draw_function=*BBC_draw_hi_res;
+	return 0;
+}
+
+VIDEO_START( bbcm )
 {
 	/* need to set up the lookups to work with the BBC B plus memory */
 	set_pixel_lookup();
