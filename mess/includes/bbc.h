@@ -27,3 +27,20 @@ WRITE_HANDLER ( bbc_wd1770_write );
 READ_HANDLER(bbc_i8271_read);
 WRITE_HANDLER(bbc_i8271_write);
 
+
+
+
+int bbc_vh_starta(void);
+int bbc_vh_startb(void);
+void bbc_vh_stop(void);
+void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+WRITE_HANDLER ( videoULA_w );
+READ_HANDLER ( videoULA_r );
+
+void setscreenstart(int b4,int b5);
+
+WRITE_HANDLER ( BBC_6845_w );
+READ_HANDLER (BBC_6845_r);
+
+extern unsigned char vidmem[0x8000];
