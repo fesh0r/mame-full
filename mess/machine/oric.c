@@ -3,7 +3,7 @@
 /* By:
 
 
-  - (add previous author here)
+  - Paul Cook 
   - Kev Thacker
 
   Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver
@@ -98,6 +98,8 @@ static char oric_key_sense_bit;
 static char oric_keyboard_mask;
 
 
+static unsigned char oric_via_port_a_data;
+
 /* refresh keyboard sense */
 static void oric_keyboard_sense_refresh(void)
 {
@@ -170,8 +172,8 @@ READ_HANDLER ( oric_via_in_a_func )
 		return 0x0ff;
 	}
 
-	/* return printer data?? */
-	return 0x0ff;
+	/* correct?? */
+	return oric_via_port_a_data;
 }
 
 READ_HANDLER ( oric_via_in_b_func )
@@ -184,8 +186,6 @@ READ_HANDLER ( oric_via_in_b_func )
 	return data;
 }
 
-
-static unsigned char oric_via_port_a_data;
 
 /* read/write data depending on state of bdir, bc1 pins and data output to psg */
 static void oric_psg_connection_refresh(void)
@@ -218,8 +218,6 @@ static void oric_psg_connection_refresh(void)
 WRITE_HANDLER ( oric_via_out_a_func )
 {
 	oric_via_port_a_data = data;
-
-	/* access printer? */
 }
 
 /*
@@ -257,6 +255,8 @@ void    oric_refresh_tape(void)
     via_set_input_cb1(0, data);
 }
 
+static unsigned char previous_portb_data = 0;
+
 WRITE_HANDLER ( oric_via_out_b_func )
 {
 	oric_keyboard_line = data & 0x07;
@@ -267,9 +267,33 @@ WRITE_HANDLER ( oric_via_out_b_func )
 	/* cassette data out */
 	device_output(IO_CASSETTE, 0, (data & (1<<7)) ? -32768 : 32767);
 
+	if (((previous_portb_data ^ data) & (1<<4))!=0)
+	{
+		if (data & (1<<4))
+		{
+			/* port a is also used for printer */
+			device_output(IO_PRINTER, 0,oric_via_port_a_data);
+		}
+	}
+
 	oric_psg_connection_refresh();
 	oric_keyboard_sense_refresh();
+	previous_portb_data = data;
 }
+
+
+READ_HANDLER ( oric_via_in_ca1_func)
+{	
+	/* printer on-line? */
+	if (device_status(IO_PRINTER, 0,0))
+	{
+		/* return on-line status */
+		return 0;
+	}
+
+	return 1;
+}
+
 
 READ_HANDLER ( oric_via_in_ca2_func )
 {
@@ -364,7 +388,7 @@ struct via6522_interface oric_6522_interface=
 {
 	oric_via_in_a_func,
 	oric_via_in_b_func,
-	NULL,				/* printer acknowledge */
+	oric_via_in_ca1_func,				/* printer acknowledge */
 	NULL,				/* tape input */
 	oric_via_in_ca2_func,
 	oric_via_in_cb2_func,
