@@ -13,7 +13,7 @@
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "cpu\m68000\m68000.h"
+#include "cpu/m68000/m68000.h"
 
 #include "cps1.h"       /* External CPS1 definitions */
 
