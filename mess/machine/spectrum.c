@@ -287,7 +287,7 @@ static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot
 				logerror("No valid data loaded! - disabling .TAP support\n");
 				cassette_snapshot = NULL;
 				cassette_snapshot_size = 0;
-				
+
 			}
 		}
 		else
@@ -304,7 +304,7 @@ static int spectrum_setup_tap(offs_t address, UINT8 *snapshot_data, int snapshot
 	 */
 	do
 	{
-		return_addr = cpu_geturnpc();
+		return_addr = cpunum_get_reg(0, REG_SP_CONTENTS);
 		cpunum_set_reg(0, Z80_PC, (return_addr & 0x0ffff));
 
 		sp_reg = cpunum_get_reg(0, Z80_SP);
@@ -643,7 +643,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	if (SnapshotSize == 49179)
 	{
 		/* get pc from stack */
-		addr = cpu_geturnpc();
+		addr = cpunum_get_reg(0, REG_SP_CONTENTS);
 		cpunum_set_reg(0, Z80_PC, (addr & 0x0ffff));
 
 		addr = cpunum_get_reg(0, Z80_SP);
@@ -788,7 +788,7 @@ static SPECTRUM_Z80_SNAPSHOT_TYPE spectrum_identify_z80 (unsigned char *pSnapsho
 			case 0:
 			case 1:	return SPECTRUM_Z80_SNAPSHOT_48K;
 			case 2:	return SPECTRUM_Z80_SNAPSHOT_SAMRAM;
-			case 3:	
+			case 3:
 			case 4:	return SPECTRUM_Z80_SNAPSHOT_128K;
 			case 128: return SPECTRUM_Z80_SNAPSHOT_TS2068;
 		}
@@ -919,12 +919,12 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	if (pSnapshot[27] == 0)
 	{
 		cpunum_set_reg(0, Z80_IFF1, 0);
-		//cpunum_set_reg(0, Z80_IRQ_STATE, 0);
+		/* cpunum_set_reg(0, Z80_IRQ_STATE, 0); */
 	}
 	else
 	{
 		cpunum_set_reg(0, Z80_IFF1, 1);
-		//cpunum_set_reg(0, Z80_IRQ_STATE, 1);
+		/* cpunum_set_reg(0, Z80_IRQ_STATE, 1); */
 	}
 
 	cpunum_set_reg(0, Z80_NMI_STATE, 0);
@@ -952,7 +952,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		cpunum_set_reg(0, Z80_PC, (hi << 8) | lo);
 
 		spectrum_page_basicrom();
-                
+
 		if ((pSnapshot[12] & 0x020) == 0)
 		{
 			logerror("Not compressed\n");	/* not compressed */
