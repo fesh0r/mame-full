@@ -22,8 +22,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
 
-static struct MemoryReadAddress readmem[] =
-{
+MEMORY_READ_START( readmem )
     { 0x0000, 0x1fff, MRA_ROM },  /* COLECO.ROM */
     { 0x6000, 0x63ff, coleco_ram_r },
     { 0x6400, 0x67ff, coleco_ram_r },
@@ -34,14 +33,12 @@ static struct MemoryReadAddress readmem[] =
     { 0x7800, 0x7bff, coleco_ram_r },
     { 0x7c00, 0x7fff, coleco_ram_r },
     { 0x8000, 0xffff, MRA_ROM },  /* Cartridge */
-	{ -1 }	 /* end of table */
-};
+MEMORY_END
 
 
-static struct MemoryWriteAddress writemem[] =
-{
+MEMORY_WRITE_START( writemem )
     { 0x0000, 0x1fff, MWA_ROM }, /* COLECO.ROM */
-    { 0x6000, 0x63ff, coleco_ram_w, &coleco_ram },
+	{ 0x6000, 0x63ff, coleco_ram_w, &coleco_ram },
     { 0x6400, 0x67ff, coleco_ram_w },
     { 0x6800, 0x6bff, coleco_ram_w },
     { 0x6c00, 0x6fff, coleco_ram_w },
@@ -49,10 +46,8 @@ static struct MemoryWriteAddress writemem[] =
     { 0x7400, 0x77ff, coleco_ram_w },
     { 0x7800, 0x7bff, coleco_ram_w },
     { 0x7c00, 0x7fff, coleco_ram_w },
-    { 0x8000, 0xffff, MWA_ROM, &coleco_cartridge_rom }, /* Cartridge */
-	{ -1 }	/* end of table */
-};
-
+	{ 0x8000, 0xffff, MWA_ROM, &coleco_cartridge_rom }, /* Cartridge */
+MEMORY_END
 
 static struct IOReadPort readport[] =
 {
