@@ -185,17 +185,20 @@ int osd_fdc_get_status(int unit);
  ******************************************************************************/
 
 enum {
-	IO_END = 0,
-	IO_CARTSLOT,
-	IO_FLOPPY,
-	IO_HARDDISK,
-	IO_CASSETTE,
-	IO_PUNCHCARD,
-	IO_PUNCHTAPE,
-	IO_PRINTER,
-	IO_SERIAL,
-	IO_SNAPSHOT,
-	IO_QUICKLOAD,
+	IO_END = 0,	/* dummy type to end IODevice enumerations */
+	IO_CARTSLOT,	/* cartidge port, as found on most console and on some computers */
+	IO_FLOPPY,		/* floppy disk unit */
+	IO_HARDDISK,	/* hard disk unit */
+	IO_CYLINDER,	/* magnetically-coated cylinder */
+	IO_CASSETTE,	/* cassette recorder (common on home computers a while ago) */
+	IO_PUNCHCARD,	/* card puncher/reader */
+	IO_PUNCHTAPE,	/* tape puncher/reader (similar to a card puncher/reader, except that it uses
+					reels instead of cards) */
+	IO_PRINTER,		/* printer device */
+	IO_SERIAL,		/* some serial port */
+	IO_SNAPSHOT,	/* complete 'snapshot' of the state of the computer */
+	IO_QUICKLOAD,	/* some image which allow to load program/data into memory, without matching
+					any actual device */
 	IO_ALIAS,  /* dummy type for alias names from mess.cfg */
 	IO_COUNT
 };
