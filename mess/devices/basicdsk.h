@@ -11,9 +11,9 @@ extern "C" {
 #endif
 
 /* init */
-int basicdsk_floppy_init(mess_image *image);
-int basicdsk_floppy_load(mess_image *image, mame_file *file, int open_mode);
-void basicdsk_floppy_unload(mess_image *image);
+DEVICE_INIT(basicdsk_floppy);
+DEVICE_LOAD(basicdsk_floppy);
+DEVICE_UNLOAD(basicdsk_floppy);
 
 /* set the disk image geometry for the specified drive */
 /* this is required to read the disc image correct */

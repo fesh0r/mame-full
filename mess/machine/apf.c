@@ -112,7 +112,7 @@ DEVICE_LOAD( apf_cassette )
 /* 256 bytes per sector, single sided, single density, 40 track  */
 DEVICE_LOAD( apfimag_floppy )
 {
-	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 40, 1, 8, 256, 1, 0, FALSE);
 		return INIT_PASS;
