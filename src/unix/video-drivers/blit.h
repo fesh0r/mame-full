@@ -5,8 +5,6 @@
    DEST_PIXEL	 type of the buffer to which is blitted
    DEST_WIDTH    Width of the destination buffer in pixels!
    SRC_PIXEL     type of the buffer from which is blitted
-   PUT_IMAGE     This function is called to update the parts of the screen
-		 which need updating. This is only called if defined.
    INDIRECT      Define this if you want SRC_PIXELs to be an index to a lookup
                  table, the contents of this define is used as the lookuptable.
    CONVERT_PIXEL If defined then the blit core will call CONVERT_PIXEL on each
@@ -35,7 +33,7 @@
                  in scenarios where there are reads from the destination,
                  in other scenarios it is ignored.
 
-   These routines assume visual_ height, width, min_x, min_y, max_x and max_y
+   These routines assume sysdep_display_params. height, width, min_x, min_y, max_x and max_y
    are all a multiple off 8 !
 
 ChangeLog:
@@ -88,7 +86,7 @@ ChangeLog:
 #endif
 
 /* arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
-#define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
+#define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*sysdep_display_params.yarbsize)/(YMAX) - ((YV)*sysdep_display_params.yarbsize)/(YMAX)))
 
 #ifdef DOUBLEBUFFER
 
@@ -98,8 +96,8 @@ ChangeLog:
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      COPY_LINE2(SRC, END, (DEST_PIXEL *)effect_dbbuf); \
-     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), effect_dbbuf, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
-     } while (reps-- > use_scanlines); \
+     do { memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), effect_dbbuf, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
+     } while (reps-- > sysdep_display_params.scanlines); \
    } \
 }
 #else /* speedup hack for GETPIXEL(src) == (src) */
@@ -108,7 +106,7 @@ ChangeLog:
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      do { COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH))); \
-     } while (reps-- > use_scanlines); \
+     } while (reps-- > sysdep_display_params.scanlines); \
    } \
 }
 #endif
@@ -119,28 +117,27 @@ ChangeLog:
    int reps = REPS_FOR_Y(1, YV, YMAX); \
    if (reps >0) { \
      COPY_LINE2(SRC, END, DST); \
-     while (reps-- > (1+use_scanlines)) \
-       memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*widthscale); \
+     while (reps-- > (1+sysdep_display_params.scanlines)) \
+       memcpy((DST)+(reps*(CORRECTED_DEST_WIDTH)), DST, ((END)-(SRC))*DEST_PIXEL_SIZE*sysdep_display_params.widthscale); \
   } \
 }
 #endif
 
 #define LOOP() \
-if (!blit_hardware_rotation && current_palette != debug_palette \
-                 && (blit_flipx || blit_flipy || blit_swapxy)) { \
-  for (y = visual.min_y; y <= visual.max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,visual_height), y++) { \
-           rotate_func(rotate_dbbuf0, bitmap, y); \
-           line_src = (SRC_PIXEL *)rotate_dbbuf0; \
-           line_end = (SRC_PIXEL *)rotate_dbbuf0 + visual_width; \
-           COPY_LINE_FOR_Y(y, visual_height, line_src, line_end, line_dest); \
+if (sysdep_display_params.orientation) { \
+  line_src = (SRC_PIXEL *)rotate_dbbuf0; \
+  line_end = (SRC_PIXEL *)rotate_dbbuf0 + bounds_width; \
+  for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), y++) { \
+           rotate_func(rotate_dbbuf0, bitmap, y, src_bounds); \
+           COPY_LINE_FOR_Y(y, sysdep_display_params.height, line_src, line_end, line_dest); \
   } \
 } else { \
-y = visual.min_y; \
-for (;line_src < line_end; \
-        line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,visual_height), \
+  y = src_bounds->min_y; \
+  for (;line_src < line_end; \
+        line_dest+=REPS_FOR_Y(CORRECTED_DEST_WIDTH,y,sysdep_display_params.height), \
                 line_src+=src_width, y++) \
-           COPY_LINE_FOR_Y(y,visual_height, \
-                           line_src, line_src+visual_width, line_dest); \
+           COPY_LINE_FOR_Y(y,sysdep_display_params.height, \
+                           line_src, line_src+bounds_width, line_dest); \
 }
 
 #ifdef CONVERT_PIXEL
@@ -164,22 +161,27 @@ for (;line_src < line_end; \
 #  endif
 #endif
 
-/* begin actual blit code */
-{
-  int org_yarbsize = yarbsize;
-  int y;
-  int src_width = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
-  SRC_PIXEL *line_src = (SRC_PIXEL *)bitmap->line[visual.min_y] + visual.min_x;
-  SRC_PIXEL *line_end = (SRC_PIXEL *)bitmap->line[visual.max_y+1] + visual.min_x;
-  DEST_PIXEL *line_dest = (DEST_PIXEL *)(DEST);
+#define RMASK 0xff0000
+#define GMASK 0x00ff00
+#define BMASK 0x0000ff
 
-  if (yarbsize==0) 
-    yarbsize = heightscale * visual_height;
+  /* begin actual blit code */
+  int y, src_width, bounds_width;
+  SRC_PIXEL *line_src, *line_end;
+  DEST_PIXEL *line_dest;
 
-  switch(effect)
+  sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+
+  src_width    = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
+  bounds_width = (src_bounds->max_x+1) - src_bounds->min_x;
+  line_src     = (SRC_PIXEL *)bitmap->line[src_bounds->min_y] + src_bounds->min_x;
+  line_end     = (SRC_PIXEL *)bitmap->line[src_bounds->max_y+1] + src_bounds->min_x;
+  line_dest    = (DEST_PIXEL *)((unsigned char *)(DEST) + (dest_bounds->min_y*DEST_WIDTH + dest_bounds->min_x)*DEST_PIXEL_SIZE);
+
+  switch(sysdep_display_params.effect)
   {
     case 0:
-      switch(widthscale)
+      switch(sysdep_display_params.widthscale)
       {
 
 case 1:
@@ -276,19 +278,15 @@ case 1:
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
-   for(;src<end;src+=8,dst+=8) \
+   for(;src<end;src+=4,dst+=4) \
    { \
       *(dst  ) = GETPIXEL(*(src  )); \
       *(dst+1) = GETPIXEL(*(src+1)); \
       *(dst+2) = GETPIXEL(*(src+2)); \
       *(dst+3) = GETPIXEL(*(src+3)); \
-      *(dst+4) = GETPIXEL(*(src+4)); \
-      *(dst+5) = GETPIXEL(*(src+5)); \
-      *(dst+6) = GETPIXEL(*(src+6)); \
-      *(dst+7) = GETPIXEL(*(src+7)); \
    }\
       }
-#endif /* speedup hack for 1x widthscale and GETPIXEL(src) == (src) */
+#endif /* speedup hack for 1x sysdep_display_params.widthscale and GETPIXEL(src) == (src) */
 #endif /* packed / yuv / normal */
 
 LOOP()
@@ -353,16 +351,12 @@ case 2:
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=16) \
+   for(;src<end; src+=4, dst+=8) \
    { \
       *(dst   ) = *(dst+ 1) = GETPIXEL(*(src  )); \
       *(dst+ 2) = *(dst+ 3) = GETPIXEL(*(src+1)); \
       *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+2)); \
       *(dst+ 6) = *(dst+ 7) = GETPIXEL(*(src+3)); \
-      *(dst+ 8) = *(dst+ 9) = GETPIXEL(*(src+4)); \
-      *(dst+10) = *(dst+11) = GETPIXEL(*(src+5)); \
-      *(dst+12) = *(dst+13) = GETPIXEL(*(src+6)); \
-      *(dst+14) = *(dst+15) = GETPIXEL(*(src+7)); \
    } \
 }
 #endif /* pack bits */
@@ -382,16 +376,12 @@ case 3:
    SRC_PIXEL  *src = SRC; \
    SRC_PIXEL  *end = END; \
    DEST_PIXEL *dst = DST; \
-   for(;src<end; src+=8, dst+=24) \
+   for(;src<end; src+=4, dst+=12) \
    { \
       *(dst   ) = *(dst+ 1) = *(dst+ 2) = GETPIXEL(*(src  )); \
       *(dst+ 3) = *(dst+ 4) = *(dst+ 5) = GETPIXEL(*(src+1)); \
       *(dst+ 6) = *(dst+ 7) = *(dst+ 8) = GETPIXEL(*(src+2)); \
       *(dst+ 9) = *(dst+10) = *(dst+11) = GETPIXEL(*(src+3)); \
-      *(dst+12) = *(dst+13) = *(dst+14) = GETPIXEL(*(src+4)); \
-      *(dst+15) = *(dst+16) = *(dst+17) = GETPIXEL(*(src+5)); \
-      *(dst+18) = *(dst+19) = *(dst+20) = GETPIXEL(*(src+6)); \
-      *(dst+21) = *(dst+22) = *(dst+23) = GETPIXEL(*(src+7)); \
    } \
 }
 
@@ -414,7 +404,7 @@ default:
    for(;src<end;src++) \
    { \
       pixel = GETPIXEL(*src); \
-      for(i=0; i<widthscale; i++,step=(step+1)&3) \
+      for(i=0; i<sysdep_display_params.widthscale; i++,step=(step+1)&3) \
       { \
          switch(step) \
          { \
@@ -447,9 +437,9 @@ default:
    for(;src<end;src++) \
    { \
       const DEST_PIXEL v = GETPIXEL(*(src)); \
-      i=(widthscale+7)/8; \
-      dst+=widthscale&7; \
-      switch (widthscale&7) \
+      i=(sysdep_display_params.widthscale+7)/8; \
+      dst+=sysdep_display_params.widthscale&7; \
+      switch (sysdep_display_params.widthscale&7) \
       { \
          case 0: do{  dst+=8; \
                       *(dst-8) = v; \
@@ -486,13 +476,6 @@ break;
 #include "blit_effect.h"
 
   } /* end switch(effect) */
-
-#ifdef PUT_IMAGE
-  PUT_IMAGE(0, 0, widthscale*visual_width, yarbsize)
-#endif
-
-  yarbsize=org_yarbsize;
-}
 
 /* clean up */
 #undef CORRECTED_DEST_WIDTH

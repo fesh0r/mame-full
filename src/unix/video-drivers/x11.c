@@ -9,74 +9,73 @@
  * Include files.
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <X11/Xlib.h>
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
-#include "input.h"
-#include "devices.h"
-#include "sysdep/sysdep_display.h"
 
-#ifdef USE_HWSCALE
-long hwscale_redmask;
-long hwscale_greenmask;
-long hwscale_bluemask;
-#endif
-
-extern int force_dirty_palette;
-
-int x11_grab_keyboard;
-
-struct rc_option display_opts[] = {
+struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-1, NULL, "Select x11 video mode: (if compiled in)\n0 Normal windowed (hotkey left-alt + insert)\n1 DGA fullscreen (hotkey left-alt + home)\n2 Xv windowed\n3 Xv fullscreen" },
+	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, NULL, "Select x11 video mode: (if compiled in)\n0 Normal windowed (hotkey left-alt + insert)\n1 Xv windowed (hotkey left-alt + home)" },
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
-#if defined DGA
+	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
+   	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
+#ifdef USE_DGA
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 #endif
-	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
+#ifdef USE_GLIDE
+	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
+#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-struct sysdep_display_prop_struct sysdep_display_properties = { NULL, 0 };
-
 struct x_func_struct {
 	int  (*init)(void);
-	int  (*create_display)(int depth);
+	int  (*open_display)(void);
 	void (*close_display)(void);
-	void (*update_display)(struct mame_bitmap *bitmap);
+	void (*update_display)(struct mame_bitmap *bitmap,
+	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct sysdep_palette_struct *palette);
 };
 
 static struct x_func_struct x_func[X11_MODE_COUNT] = {
 { NULL,
-  x11_window_create_display,
+  x11_window_open_display,
   x11_window_close_display,
   x11_window_update_display },
-#ifdef USE_DGA
-{ xf86_dga_init,
-  xf86_dga_create_display,
-  xf86_dga_close_display,
-  xf86_dga_update_display },
-#else
-{ NULL, NULL, NULL, NULL, NULL, NULL, NULL },
-#endif
 #ifdef USE_XV
 { NULL,
-  x11_window_create_display,
+  x11_window_open_display,
   x11_window_close_display,
   x11_window_update_display },
-{ NULL,
-  x11_window_create_display,
-  x11_window_close_display,
-  x11_window_update_display }
 #else
 { NULL, NULL, NULL, NULL },
+#endif
+#ifdef USE_GLIDE
+{ xfx_init,
+  xfx_open_display,
+  xfx_close_display,
+  xfx_update_display },
+#else
+{ NULL, NULL, NULL, NULL },
+#endif
+#ifdef USE_DGA
+{ xf86_dga_init,
+  xf86_dga_open_display,
+  xf86_dga_close_display,
+  xf86_dga_update_display }
+#else
 { NULL, NULL, NULL, NULL }
 #endif
 };
 
-int sysdep_init (void)
+static int mode_available[X11_MODE_COUNT];
+static struct sysdep_display_open_params orig_params;
+
+int sysdep_display_init (void)
 {
 	int i;
 
@@ -84,50 +83,57 @@ int sysdep_init (void)
 	{
 		/* Don't use stderr_file here it isn't assigned a value yet ! */
 		fprintf (stderr, "Could not open display\n");
-		return OSD_NOT_OK;
+		return 1;
 	}
+	screen=DefaultScreenOfDisplay(display);
 
 	for (i=0;i<X11_MODE_COUNT;i++)
 	{
-		if(x_func[i].create_display)
-			mode_available[i] = TRUE;
+		if(x_func[i].init)
+			mode_available[i] = !x_func[i].init();
+		else if(x_func[i].open_display)
+			mode_available[i] = 1;
 		else
-			mode_available[i] = FALSE;
-
-		if(x_func[i].init && (*x_func[i].init)() != OSD_OK)
-			return OSD_NOT_OK;
+			mode_available[i] = 0;
 	}
 
-	return OSD_OK;
+	return 0;
 }
 
-void sysdep_close(void)
+void sysdep_display_exit(void)
 {
 	if(display)
 		XCloseDisplay (display);
+#ifdef USE_GLIDE
+	xfx_exit();
+#endif
+}
+
+static void x11_check_mode(int *mode)
+{
+	if ((*mode == X11_WINDOW) && mode_available[X11_DGA] &&
+	    sysdep_display_params.fullscreen)
+	  *mode = X11_DGA;
+	if ((*mode == X11_DGA) && !sysdep_display_params.fullscreen)
+	  *mode = X11_WINDOW;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display (int depth)
+int sysdep_display_open (const struct sysdep_display_open_params *params)
 {
-	if (x11_video_mode >= X11_MODE_COUNT)
+	orig_params = sysdep_display_params = *params;
+
+	if (!mode_available[x11_video_mode])
 	{
-		fprintf (stderr_file,
-				"X11-mode %d does not exist, falling back to normal window code\n",
+		fprintf (stderr, "X11-mode %d not available, falling back to normal window code\n",
 				x11_video_mode);
 		x11_video_mode = X11_WINDOW;
 	}
 
-	if (!mode_available[x11_video_mode])
-	{
-		fprintf (stderr_file,
-				"X11-mode %d not available, falling back to normal window code\n",
-				x11_video_mode);
-		x11_video_mode = X11_WINDOW;
-	}
-	return (*x_func[x11_video_mode].create_display)(depth);
+	x11_check_mode(&x11_video_mode);
+	return (*x_func[x11_video_mode].open_display)();
 }
 
 void sysdep_display_close(void)
@@ -137,106 +143,67 @@ void sysdep_display_close(void)
 
 int x11_init_palette_info(Visual *xvisual)
 {
-	memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
+	memset(&sysdep_display_palette_info, 0, sizeof(struct sysdep_palette_info));
 
 	if (xvisual->class != TrueColor)
 	{
-		fprintf(stderr_file, "X11: Error: only TrueColor visuals are supported\n");
-		return OSD_NOT_OK;
+		fprintf(stderr, "X11-Error: only TrueColor visuals are supported\n");
+		return 1;
 	}
-	display_palette_info.red_mask   = xvisual->red_mask;
-	display_palette_info.green_mask = xvisual->green_mask;
-	display_palette_info.blue_mask  = xvisual->blue_mask;
+	sysdep_display_palette_info.red_mask   = xvisual->red_mask;
+	sysdep_display_palette_info.green_mask = xvisual->green_mask;
+	sysdep_display_palette_info.blue_mask  = xvisual->blue_mask;
 
-	return OSD_OK;
+	return 0;
 }
 
-void sysdep_update_display (struct mame_bitmap *bitmap)
+int sysdep_display_update(struct mame_bitmap *bitmap,
+  struct rectangle *vis_area, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned int hotkeys)
 {
 	int new_video_mode = x11_video_mode;
-	int current_palette_normal = (current_palette == normal_palette);
 
-	int bitmap_depth = bitmap->depth;
-	if (bitmap_depth == 15)
-	{
-		bitmap_depth = 16;
-	}
+	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE0)
+		new_video_mode = X11_WINDOW;
 
-	if (code_pressed(KEYCODE_LALT))
-	{
-		if (code_pressed_memory(KEYCODE_INSERT))
-			new_video_mode = X11_WINDOW;
+	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE1)
+		new_video_mode = X11_XV;
 
-		if (code_pressed_memory(KEYCODE_HOME))
-			new_video_mode = X11_DGA;
+	if (hotkeys & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
+		new_video_mode = X11_GLIDE;
 
-		if (code_pressed_memory(KEYCODE_DEL))
-			new_video_mode = X11_XV_WINDOW;
-
-		if (code_pressed_memory(KEYCODE_END))
-			new_video_mode = X11_XV_FULLSCREEN;
-	}
-
+	x11_check_mode(&new_video_mode);
 	if (new_video_mode != x11_video_mode && mode_available[new_video_mode])
 	{
-		int old_video_mode = x11_video_mode;	
+		int old_video_mode = x11_video_mode;
+
+		(*x_func[x11_video_mode].close_display)();
 		x11_video_mode = new_video_mode;
-
-		/* Close sound, my guess is DGA somehow (perhaps fork/exec?) makes
-		   the filehandle open twice, so closing it here and re-openeing after
-		   the transition should fix that.  Fixed it for me anyways.
-		   -- Steve bpk@hoopajoo.net */
-		osd_sound_enable( 0 );
-
-		(*x_func[old_video_mode].close_display)();
-		if ((*x_func[x11_video_mode].create_display)(bitmap_depth) != OSD_OK)
+		sysdep_display_params = orig_params;
+		if ((*x_func[x11_video_mode].open_display)())
 		{
-			fprintf(stderr_file,
-					"X11: Warning: Couldn't create display for new x11-mode\n"
+			fprintf(stderr,
+					"X11-Warning: Couldn't create display for new x11-mode\n"
 					"   Trying again with the old x11-mode\n");
 			(*x_func[x11_video_mode].close_display)();
-			if ((*x_func[old_video_mode].create_display)(bitmap_depth) != OSD_OK)
-				goto barf;
-			else
-				x11_video_mode = old_video_mode;
+			x11_video_mode = old_video_mode;
+			sysdep_display_params = orig_params;
+			if ((*x_func[x11_video_mode].open_display)())
+			{
+				(*x_func[x11_video_mode].close_display)();
+				fprintf (stderr, "X11-Error: couldn't create new display while switching display modes\n");
+				exit (1); /* ugly, anyone know a better way ? */
+			}
 		}
 		
-		sysdep_palette_destroy(normal_palette);
-		if (!(normal_palette = sysdep_palette_create(&display_palette_info, video_real_depth)))
-		   goto barf;
-		   
-		if (debug_palette)
-		{
- 			sysdep_palette_destroy(debug_palette);
- 			if (!(debug_palette = sysdep_palette_create(&display_palette_info, 16)))
- 			   goto barf;
-		}
-
-		if (current_palette_normal)
-			current_palette = normal_palette;
-		else
-			current_palette = debug_palette;
-
-		/* Force the palette lookup table to be updated. This is necessary 
-		 * because switching to/from fullscreen mode could cause the screen 
-		 * depth to change. */
-		force_dirty_palette = 1;  
-
-		xmame_keyboard_clear();
-
-		/* Re-enable sound */
-		osd_sound_enable( 1 );
+		return 1;
 	}
-
-	(*x_func[x11_video_mode].update_display) (bitmap);
-	return;
-
-barf:
-	sysdep_display_close();   /* This cleans up and must be called to
-				     restore the videomode with dga */
-	fprintf (stderr_file,
-			"X11: Error: couldn't create new display while switching display modes\n");
-	exit (1);              /* ugly, anyone know a better way ? */
+	
+	/* dirty_area gives the src_bounds and sysdep_display_check_params
+	   will convert vis_area to the dest bounds */
+	(*x_func[x11_video_mode].update_display) (bitmap, dirty_area, vis_area, palette);
+	xinput_check_hotkeys(hotkeys);
+	return 0;
 }
 
 #endif /* ifdef x11 */

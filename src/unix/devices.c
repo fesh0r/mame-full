@@ -26,7 +26,7 @@
 #include "ui_text.h"
 #include "sysdep/rc.h"
 #include "sysdep/fifo.h"
-
+#include "sysdep/sysdep_display.h"
 
 /*============================================================ */
 /*	MACROS */
@@ -144,7 +144,7 @@ static int coin_pressed[MAX_PLAYERS];
 
 static void ugci_callback(int id, enum ugci_event_type type, int value)
 {
-	struct xmame_keyboard_event event;
+	struct sysdep_display_keyboard_event event;
 
 	if (id >= MAX_PLAYERS)
 		return;
@@ -229,7 +229,7 @@ void save_rapidfire_settings(void)
 /*============================================================ */
 
 /* private methods */
-FIFO(INLINE, kbd, struct xmame_keyboard_event)
+FIFO(INLINE, kbd, struct sysdep_display_keyboard_event)
 
 static void updatekeyboard(void);
 static void update_joystick_axes(void);
@@ -518,7 +518,6 @@ int osd_input_initpre(void)
 	joy_poll_func = NULL;
 
 	memset(joy_data,   0, sizeof(joy_data));
-	memset(mouse_data, 0, sizeof(mouse_data));
 
 	if(rapidfire_enable)
 	{
@@ -753,7 +752,8 @@ static int is_key_pressed(int keycode)
 		return dummy_state ^= 1;
 	}
 
-	sysdep_update_keyboard();
+	if(sysdep_display_update_keyboard())
+		xmame_keyboard_clear();
 	updatekeyboard();
 
 	if (steadykey)
@@ -770,7 +770,7 @@ static int is_key_pressed(int keycode)
 
 int osd_readkey_unicode(int flush)
 {
-	struct xmame_keyboard_event event;
+	struct sysdep_display_keyboard_event event;
 
 	/* blames to the dos-people who want to check key states before
 	   the display (and under X thus the keyboard) is initialised */
@@ -780,7 +780,8 @@ int osd_readkey_unicode(int flush)
 	if (flush)
 		xmame_keyboard_clear();
 
-	sysdep_update_keyboard();
+	if(sysdep_display_update_keyboard())
+		xmame_keyboard_clear();
 	updatekeyboard();
 
 	if (!kbd_fifo_get(kbd_fifo, &event) && event.press)
@@ -788,7 +789,6 @@ int osd_readkey_unicode(int flush)
 	else
 		return 0;
 }
-
 
 static void update_joystick_axes(void)
 {
@@ -849,12 +849,10 @@ static void update_joystick_axes(void)
 			/* if the type doesn't match, switch it */
 			if (joystick_type[joynum][axis] != newtype)
 			{
-				static const char *axistypes[] = { "invalid", "digital", "analog" };
 				joystick_type[joynum][axis] = newtype;
 			}
 		}
 }
-
 
 static void add_joylist_entry(const char *name, os_code_t code,
 		input_code_t standardcode)
@@ -1031,7 +1029,7 @@ void xmame_keyboard_exit()
 		kbd_fifo_destroy(kbd_fifo);
 }
 
-void xmame_keyboard_register_event(struct xmame_keyboard_event *event)
+void xmame_keyboard_register_event(struct sysdep_display_keyboard_event *event)
 {
 	/* register the event in our event fifo */
 	kbd_fifo_put(kbd_fifo, *event);
@@ -1058,7 +1056,7 @@ static void init_joycodes(void)
 	char tempname[JOY_NAME_LEN + 1];
 
 	/* map mice first */
-	for (mouse = 0; mouse < MOUSE_MAX; mouse++)
+	for (mouse = 0; mouse < SYSDEP_DISPLAY_MOUSE_MAX; mouse++)
 	{
 		/* add analog axes (fix me -- should enumerate these) */
 		snprintf(tempname, JOY_NAME_LEN, "Mouse %d X", mouse + 1);
@@ -1067,7 +1065,7 @@ static void init_joycodes(void)
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
 
 		/* add mouse buttons */
-		for (button = 0; button < MOUSE_BUTTONS; button++)
+		for (button = 0; button < SYSDEP_DISPLAY_MOUSE_BUTTONS; button++)
 		{
 			snprintf(tempname, JOY_NAME_LEN, "Mouse %d button %d", mouse + 1, button + 1);
 			add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
@@ -1179,7 +1177,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 	switch (codetype)
 	{
 		case CODETYPE_MOUSEBUTTON:
-			return mouse_data[joynum].buttons[joyindex];
+			return sysdep_display_mouse_data[joynum].buttons[joyindex];
 
 		case CODETYPE_BUTTON:
 			return joy_data[joynum].buttons[joyindex];
@@ -1226,8 +1224,8 @@ static INT32 get_joycode_value(os_code_t joycode)
 		{
 			int delta = 0;
 
-			if (joynum < MOUSE_MAX && joyindex < 2)
-				delta = mouse_data[joynum].deltas[joyindex];
+			if (joynum < SYSDEP_DISPLAY_MOUSE_MAX && joyindex < 2)
+				delta = sysdep_display_mouse_data[joynum].deltas[joyindex];
 
 			/* return the latest mouse info */
 			return delta * 512;
@@ -1591,7 +1589,7 @@ void restore_button_state(void)
 
 void osd_poll_joysticks(void)
 {
-	sysdep_mouse_poll();
+	sysdep_display_update_mouse();
 
 	if (joy_poll_func)
 	{
@@ -1622,7 +1620,7 @@ void osd_poll_joysticks(void)
 		{
 			if (coin_pressed[id] && coin_pressed[id]++ > MIN_COIN_WAIT)
 			{
-				struct xmame_keyboard_event event;
+				struct sysdep_display_keyboard_event event;
 
 				event.press = coin_pressed[id] = 0;
 				event.scancode = COIN_KEYCODE_BASE + id;

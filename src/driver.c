@@ -3541,7 +3541,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( trackflc )	/* GX361 (c) 1983 + Centuri license */
 	DRIVER( hyprolym )	/* GX361 (c) 1983 */
 	DRIVER( hyprolyb )	/* bootleg */
-	DRIVER( whizquiz )	/* (c) 1985 Zilec-Zenitone */
+/*	DRIVER( whizquiz ) */	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( mastkin )	/* (c) 1988 Du Tech */
 	DRIVER( rocnrope )	/* GX364 (c) 1983 */
 	DRIVER( rocnropk )	/* GX364 (c) 1983 + Kosuka */

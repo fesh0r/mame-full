@@ -20,17 +20,10 @@
 #include "sysdep/sysdep_display.h"
 
 #define FRAMESKIP_DRIVER_COUNT 2
-static const int safety = 16;
-static int current_widthscale = 1, current_heightscale = 1;
-int normal_widthscale = 1, normal_heightscale = 1;
-int current_yarbsize = 0, normal_yarbsize = 0;
-static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
-static int bitmap_depth;
 static int debugger_has_focus = 0;
-static struct rectangle normal_visual;
-static struct rectangle debug_visual;
+static int led_state = 0;
 
 static float f_beam;
 static float f_flicker;
@@ -49,18 +42,21 @@ static int video_rol = 0;
 static int video_autoror = 0;
 static int video_autorol = 0;
 
+static struct sysdep_palette_struct *normal_palette = NULL;
+static struct sysdep_palette_struct *debug_palette  = NULL;
+
+static struct sysdep_display_open_params current_params;
+static struct sysdep_display_open_params normal_params;
+static struct sysdep_display_open_params debug_params = {
+  0, 0, 16, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0, xmame_keyboard_register_event };
+
+static struct rectangle debug_bounds;
+
 /* average FPS calculation */
 static cycles_t start_time = 0;
 static cycles_t end_time;
 static int frames_displayed;
 static int frames_to_display;
-
-#if (defined svgafx) || (defined xfx)
-UINT16 *color_values;
-#endif
-
-int force_dirty_palette = 0;
-int emulation_paused = 0;
 
 extern UINT8 trying_to_quit;
 
@@ -75,37 +71,38 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_bpp(struct rc_option *option, const char *arg,
 		int priority);
-static int video_verify_vectorres(struct rc_option *option, const char *arg,
+static int video_handle_vectorres(struct rc_option *option, const char *arg,
 		int priority);
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
 static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
-static void round_rectangle_to_8(struct rectangle *rect);
 static void update_visible_area(struct mame_display *display);
-static void update_palette(struct mame_display *display);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Video Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
+   { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
+     "0",           	0,       		0,		NULL,
+     "Start in fullscreen mode (default: false)" },
    { "bpp",		"b",			rc_int,		&options.color_depth,
      "0",		0,			0,		video_verify_bpp,
      "Specify the colordepth the core should render, one of: auto(0), 15, 32" },
-   { "arbheight",	"ah",			rc_int,		&normal_yarbsize,
+   { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable)" },
-   { "heightscale",	"hs",			rc_int,		&normal_heightscale,
+   { "heightscale",	"hs",			rc_int,		&normal_params.heightscale,
      "1",		1,			8,		NULL,
      "Set Y-Scale aspect ratio" },
-   { "widthscale",	"ws",			rc_int,		&normal_widthscale,
+   { "widthscale",	"ws",			rc_int,		&normal_params.widthscale,
      "1",		1,			8,		NULL,
      "Set X-Scale aspect ratio" },
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
      "Set X-Y Scale to the same aspect ratio. For vector games scale (and also width- and heightscale) may have value's like 1.5 and even 0.5. For scaling of regular games this will be rounded to an int" },
-   { "effect",		"ef",			rc_int,		&effect,
+   { "effect",		"ef",			rc_int,		&normal_params.effect,
      EFFECT_NONE,	EFFECT_NONE,		EFFECT_LAST,	NULL,
      "Video effect:\n"
 	     "0 = none (default)\n"
@@ -120,7 +117,7 @@ struct rc_option video_opts[] = {
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },
-   { "scanlines",	"sl",			rc_bool,	&use_scanlines,
+   { "scanlines",	"sl",			rc_bool,	&normal_params.scanlines,
      "0",		0,			0,		NULL,
      "Enable/disable displaying simulated scanlines" },
    { "artwork",		"art",			rc_bool,	&use_artwork,
@@ -195,8 +192,8 @@ struct rc_option video_opts[] = {
    { "Vector Games Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "vectorres",	"vres",			rc_string,	&vector_res,
-     NULL,		0,			0,		video_verify_vectorres,
+   { "vectorres",	"vres",			rc_use_function, NULL,
+     NULL,		0,			0,		video_handle_vectorres,
      "Always scale vectorgames to XresxYres, keeping their aspect ratio. This overrides the scale options" },
 	{ "beam", "B", rc_float, &f_beam, "1.0", 1.0, 16.0, video_verify_beam, "Set the beam size for vector games" },
 	{ "flicker", "f", rc_float, &f_flicker, "0.0", 0.0, 100.0, video_verify_flicker, "Set the flicker for vector games" },
@@ -207,10 +204,7 @@ struct rc_option video_opts[] = {
    { "translucency",	"t",			rc_bool,	&options.translucency,
      "1",		0,			0,		NULL,
      "Enable/disable tranlucency" },
-   { NULL,		NULL,			rc_link,	aspect_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_link,	display_opts,
+   { NULL,		NULL,			rc_link,	sysdep_display_opts,
      NULL,		0,			0,		NULL,
      NULL },
    { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
@@ -282,7 +276,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 	return 0;
 }
 
-static int video_verify_vectorres(struct rc_option *option, const char *arg,
+static int video_handle_vectorres(struct rc_option *option, const char *arg,
    int priority)
 {
 	if (sscanf(arg, "%dx%d", &options.vector_width, &options.vector_height) != 2)
@@ -392,9 +386,13 @@ void osd_video_initpre()
 	if (video_flipy)
 		orientation ^= ORIENTATION_FLIP_Y;
 
-	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
-	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
-	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
+	normal_params.orientation = 0;
+	if (orientation & ORIENTATION_FLIP_X)
+	   normal_params.orientation |= SYSDEP_DISPLAY_FLIPX;
+	if (orientation & ORIENTATION_FLIP_Y)
+	   normal_params.orientation |= SYSDEP_DISPLAY_FLIPY;
+	if (orientation & ORIENTATION_SWAP_XY)
+	   normal_params.orientation |= SYSDEP_DISPLAY_SWAPXY;
 
 	/* setup vector specific stuff */
 	if (options.vector_width == 0 && options.vector_height == 0)
@@ -403,14 +401,7 @@ void osd_video_initpre()
 		options.vector_height = 480;
 	}
 
-	if (blit_swapxy)
-	{
-		int temp;
-		temp = options.vector_width;
-		options.vector_width = options.vector_height;
-		options.vector_height = temp;
-	}
-	
+#if 0 /* FIXME */	
 	if (sysdep_display_properties.vector_aux_renderer)
 	{
 		/* HACK to find out if this is a vector game before calling
@@ -428,6 +419,7 @@ void osd_video_initpre()
 			options.artwork_crop = 1;
 		}
 	}
+#endif
 
 	/* set the artwork options */
 	options.use_artwork = ARTWORK_USE_ALL;
@@ -439,133 +431,66 @@ void osd_video_initpre()
 		options.use_artwork &= ~ARTWORK_USE_BEZELS;
 	if (!use_artwork)
 		options.use_artwork = ARTWORK_USE_NONE;
-}
-
-static void orient_rect(struct rectangle *rect)
-{
-	int temp;
-	
-	if (blit_hardware_rotation)
-		return;
-
-	/* apply X/Y swap first */
-	if (blit_swapxy)
-	{
-		temp = rect->min_x;
-		rect->min_x = rect->min_y;
-		rect->min_y = temp;
-
-		temp = rect->max_x;
-		rect->max_x = rect->max_y;
-		rect->max_y = temp;
-	}
-
-	/* apply X flip */
-	if (blit_flipx)
-	{
-		temp = video_width - rect->min_x - 1;
-		rect->min_x = video_width - rect->max_x - 1;
-		rect->max_x = temp;
-	}
-
-	/* apply Y flip */
-	if (blit_flipy)
-	{
-		temp = video_height - rect->min_y - 1;
-		rect->min_y = video_height - rect->max_y - 1;
-		rect->max_y = temp;
-	}
+		
+	/* setup debugger related stuff */
+	debug_params.width   = options.debug_width;
+	debug_params.height  = options.debug_height;
+	debug_bounds.min_x    = 0;
+	debug_bounds.max_x    = options.debug_width - 1;
+	debug_bounds.min_y    = 0;
+	debug_bounds.max_y    = options.debug_height - 1;
 }
 
 int osd_create_display(const struct osd_create_params *params,
 		UINT32 *rgb_components)
 {
-	bitmap_depth = (params->depth == 15) ? 16 : params->depth;
-
-	current_palette = normal_palette = NULL;
-	debug_visual.min_x = 0;
-	debug_visual.max_x = options.debug_width - 1;
-	debug_visual.min_y = 0;
-	debug_visual.max_y = options.debug_height - 1;
-
+	video_fps            = params->fps;
+	normal_params.width  = params->width;
+	normal_params.height = params->height;
+	normal_params.depth  = params->depth;
+	normal_params.aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
+	normal_params.title  = title;
+	normal_params.keyboard_handler = xmame_keyboard_register_event;
+	normal_params.vecgame = params->video_attributes & VIDEO_TYPE_VECTOR;
+	
 	if (use_auto_double)
 	{
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		{
-			if (blit_swapxy)
-				normal_widthscale *= 2;
+			if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+				normal_params.widthscale *= 2;
 			else
-				normal_heightscale *= 2;
+				normal_params.heightscale *= 2;
 		}
 
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		{
-			if (blit_swapxy)
-				normal_heightscale *= 2;
+			if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+				normal_params.heightscale *= 2;
 			else
-				normal_widthscale *= 2;
+				normal_params.widthscale *= 2;
 		}
 	}
 
-	normal_visual.min_x = 0;
-	normal_visual.min_y = 0;
-	if (blit_swapxy && !blit_hardware_rotation)
-	{
-		normal_visual.max_x = params->height - 1;
-		normal_visual.max_y = params->width - 1;
-	}
-	else
-	{
-		normal_visual.max_x = params->width - 1;
-		normal_visual.max_y = params->height - 1;
-	}
-
-	/* Round to 8.  This is necessary for the blitting code. */
-	round_rectangle_to_8(&normal_visual);
-
-	visual_width	= video_width	= normal_visual.max_x - normal_visual.min_x + 1;
-	visual_height	= video_height	= normal_visual.max_y - normal_visual.min_y + 1;
-	video_depth = (params->depth == 15) ? 16 : params->depth;
-	video_real_depth = params->depth;
-
-	if (!blit_swapxy)
-		aspect_ratio = (double)params->aspect_x
-			/ (double)params->aspect_y;
-	else
-		aspect_ratio = (double)params->aspect_y
-			/ (double)params->aspect_x;
-
-	widthscale		= current_widthscale  = normal_widthscale;
-	heightscale		= current_heightscale = normal_heightscale;
-	yarbsize		= current_yarbsize    = normal_yarbsize;
-	use_aspect_ratio	= normal_use_aspect_ratio;
-	video_fps		= params->fps;
-
-	if (sysdep_create_display(bitmap_depth) != OSD_OK)
+	if (sysdep_display_open(&normal_params) != OSD_OK)
 		return -1;
 
-#if 0 /* DEBUG */
-	fprintf(stderr_file, "viswidth = %d, visheight = %d, visstartx= %d,"
-			"visstarty= %d\n", visual_width, visual_height,
-			visual.min_x, visual.min_y);
-#endif
+	current_params = normal_params;
 
+	if (!(normal_palette = sysdep_palette_create(&sysdep_display_palette_info, normal_params.depth)))
+		return -1;
+	
 	/* a lot of display_targets need to have the display initialised before
 	   initialising any input devices */
 	if (osd_input_initpost() != OSD_OK)
 		return -1;
 
-	if (!(normal_palette = sysdep_palette_create(&display_palette_info, params->depth)))
-		return 1;
-
-	current_palette = normal_palette;
-
 	/* fill in the resulting RGB components */
 	if (rgb_components)
 	{
-		if (bitmap_depth == 32)
+		if (params->depth == 32)
 		{
 			rgb_components[0] = (0xff << 16) | (0x00 << 8) | 0x00;
 			rgb_components[1] = (0x00 << 16) | (0xff << 8) | 0x00;
@@ -595,116 +520,58 @@ void osd_close_display(void)
 	}
 }
 
-static void change_display_settings(struct rectangle *new_visual,
-		struct sysdep_palette_struct *new_palette, int new_widthscale,
-		int new_heightscale, int new_yarbsize,
-		int new_use_aspect_ratio, int force_new_visual)
+static int change_display_settings(struct sysdep_display_open_params *new_params, int force)
 {
-	int new_visual_width, new_visual_height;
-
-	/* always update the visual info */
-	visual = *new_visual;
-
-	/* calculate the new visual width / height */
-	new_visual_width  = visual.max_x - visual.min_x + 1;
-	new_visual_height = visual.max_y - visual.min_y + 1;
-
-	if (current_palette != new_palette)
-		current_palette = new_palette;
-
-	if (force_new_visual
-			|| visual_width != new_visual_width
-			|| visual_height != new_visual_height
-			|| current_widthscale != new_widthscale
-			|| current_heightscale != new_heightscale
-			|| current_yarbsize != new_yarbsize
-			|| use_aspect_ratio != new_use_aspect_ratio)
+	if (force || memcmp(new_params, &current_params, sizeof(current_params)))
 	{
-		int new_depth = bitmap_depth;
-		if (current_palette == debug_palette)
-			new_depth = 16;
-
 		sysdep_display_close();
+		xmame_keyboard_clear();
+		osd_free_colors();
+		/* Close sound, my guess is DGA somehow (perhaps fork/exec?) makes
+		   the filehandle open twice, so closing it here and re-openeing after
+		   the transition should fix that.  Fixed it for me anyways.
+		   -- Steve bpk@hoopajoo.net */
+		osd_sound_enable( 0 );
 
-		visual_width     = new_visual_width;
-		visual_height    = new_visual_height;
-		/* keep our own copy of the scaling stuff, since the
-		   display driver might change these */
-		widthscale	 = current_widthscale  = new_widthscale;
-		heightscale	 = current_heightscale = new_heightscale;
-		yarbsize         = current_yarbsize    = new_yarbsize;
-		use_aspect_ratio = new_use_aspect_ratio;
-
-		if (sysdep_create_display(new_depth) != OSD_OK)
+		if (sysdep_display_open(new_params) != OSD_OK)
 		{
+			/* try again with old settings */
+			if (!force && (sysdep_display_open(&current_params) == OSD_OK))
+			{
+				*new_params = current_params;
+				/* Re-enable sound */
+				osd_sound_enable( 1 );
+				return 1;
+			}
 			/* oops this sorta sucks */
 			fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
 			exit(1);
 		}
-
-		/* to stop keys from getting stuck */
-		xmame_keyboard_clear();
-
-#if 0 /* DEBUG */
-		fprintf(stderr_file, "viswidth = %d, visheight = %d,"
-				"visstartx= %d, visstarty= %d\n",
-				visual_width, visual_height, visual.min_x,
-				visual.min_y);
-#endif
+		current_params = *new_params;
+		/* Re-enable sound */
+		osd_sound_enable( 1 );
+		return 1;
 	}
-}
-
-static void round_rectangle_to_8(struct rectangle *rect)
-{
-	int orig_width = rect->max_x - rect->min_x + 1;
-	if (rect->min_x & 7)
-	{
-		if ((rect->min_x - (rect->min_x & ~7)) < 4)
-			rect->min_x &= ~7;
-		else
-			rect->min_x = (rect->min_x + 7) & ~7;
-	}
-
-	if ((rect->max_x + 1) & 7)
-	{
-		if (((rect->max_x + 1) - ((rect->max_x + 1) & ~7)) > 4)
-			rect->max_x = ((rect->max_x + 1 + 7) & ~7) - 1;
-		else
-			rect->max_x = ((rect->max_x + 1) & ~7) - 1;
-	}
-
-	/*
-	 * Make sure the rounded rectangle is at least as big as
-	 * the original.
-	 */
-	if (rect->max_x - rect->min_x + 1 < orig_width)
-		rect->max_x += 8;
+	return 0;
 }
 
 static void update_visible_area(struct mame_display *display)
 {
-	normal_visual = display->game_visible_area;
+	int old_width  = normal_params.width;
+	int old_height = normal_params.height;
+	
+	normal_params.width  = (display->game_visible_area.max_x + 1) -
+	   display->game_visible_area.min_x;
+	normal_params.height = (display->game_visible_area.max_y + 1) -
+	   display->game_visible_area.min_y;
 
-	if (blit_swapxy && !blit_hardware_rotation)
+	if (((normal_params.width  != old_width) ||
+	     (normal_params.height != old_height)) &&
+	    !debugger_has_focus)
 	{
-		video_width = display->game_bitmap->height;
-		video_height = display->game_bitmap->width;
+		change_display_settings(&normal_params, 1);
+		sysdep_display_set_keybleds(led_state);
 	}
-	else
-	{
-		video_width = display->game_bitmap->width;
-		video_height = display->game_bitmap->height;
-	}
-
-	orient_rect(&normal_visual);
-
-	/* Round to 8.  This is necessary for the blitting code. */
-	round_rectangle_to_8(&normal_visual);
-
-	if (!debugger_has_focus)
-		change_display_settings(&normal_visual, normal_palette,
-				normal_widthscale, normal_heightscale,
-				normal_yarbsize, normal_use_aspect_ratio, 0);
 
 	set_ui_visarea(display->game_visible_area.min_x,
 			display->game_visible_area.min_y,
@@ -712,7 +579,7 @@ static void update_visible_area(struct mame_display *display)
 			display->game_visible_area.max_y);
 }
 
-static void update_palette(struct mame_display *display)
+static void update_palette(struct mame_display *display, int force_dirty)
 {
 	int i, j;
 
@@ -720,13 +587,13 @@ static void update_palette(struct mame_display *display)
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
-		if (dirtyflags || force_dirty_palette)
+		if (dirtyflags || force_dirty)
 		{
 			display->game_palette_dirty[i / 32] = 0;
 
 			/* loop over all 32 bits and update dirty entries */
 			for (j = 0; (j < 32) && (i + j < display->game_palette_entries); j++, dirtyflags >>= 1)
-				if (((dirtyflags & 1) || force_dirty_palette) && (i + j < display->game_palette_entries))
+				if (((dirtyflags & 1) || force_dirty) && (i + j < display->game_palette_entries))
 				{
 					/* extract the RGB values */
 					rgb_t rgbvalue = display->game_palette[i + j];
@@ -734,7 +601,7 @@ static void update_palette(struct mame_display *display)
 					int g = RGB_GREEN(rgbvalue);
 					int b = RGB_BLUE(rgbvalue);
 
-					sysdep_palette_set_pen(current_palette,
+					sysdep_palette_set_pen(normal_palette,
 							i + j, r, g, b);
 				}
 		}
@@ -743,14 +610,19 @@ static void update_palette(struct mame_display *display)
 
 static void update_debug_display(struct mame_display *display)
 {
-	struct sysdep_palette_struct *backup_palette = current_palette;
-
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
-		debug_palette = sysdep_palette_create(&display_palette_info, 16);
-		/* Initialize the lookup table for the debug palette. */
+		debug_palette = sysdep_palette_create(&sysdep_display_palette_info, 16);
+		if (!debug_palette)
+		{
+			/* oops this sorta sucks */
+			fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
+			sysdep_display_close();
+			exit(1);
+		}
 
+		/* Initialize the lookup table for the debug palette. */
 		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
 		{
 			/* extract the RGB values */
@@ -763,10 +635,12 @@ static void update_debug_display(struct mame_display *display)
 					i, r, g, b);
 		}
 	}
-
-	current_palette = debug_palette;
-	sysdep_update_display(display->debug_bitmap);
-	current_palette = backup_palette;
+	if(sysdep_display_update(display->debug_bitmap, &debug_bounds,
+	   &debug_bounds, debug_palette, 0))
+	{
+	  xmame_keyboard_clear();
+	  osd_free_colors();
+	}
 }
 
 static void osd_free_colors(void)
@@ -816,13 +690,14 @@ void change_debugger_focus(int new_debugger_focus)
 			|| (debugger_has_focus && !new_debugger_focus))
 	{
 		if (new_debugger_focus)
-			change_display_settings(&debug_visual, debug_palette,
-					1, 1, 0, 0, 1);
+		{
+			change_display_settings(&debug_params, 1);
+		}
 		else
-			change_display_settings(&normal_visual, normal_palette,
-					normal_widthscale, normal_heightscale,
-					normal_yarbsize, normal_use_aspect_ratio, 1);
-
+		{
+			change_display_settings(&normal_params, 1);
+			sysdep_display_set_keybleds(led_state);
+		}
 		debugger_has_focus = new_debugger_focus;
 	}
 }
@@ -832,10 +707,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 {
 	int skip_this_frame;
 	cycles_t curr;
-
-	updatebounds = display->game_bitmap_update;
-
-	/* increment frameskip? */
+	/* lsbyte contains one bit set starting with the lsbit for each of
+	   insert, home, page up, delete, end and page down when pressed in
+	   combination with left-alt. The second byte identical when pressed
+	   in combination with left-control, except for locally used keys,
+	   the third the same for left-shift. */
+	unsigned int hotkeys = 0;
+	int normal_params_changed = 0;
+	
+	/*** STEP 1: handle frameskip ***/
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
 		/* if autoframeskip, disable auto and go to 0 */
@@ -862,8 +742,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		/* reset the frame counter so we'll measure the average FPS on a consistent status */
 		frames_displayed = 0;
 	}
-
-	/* decrement frameskip? */
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
 	{
 		/* if autoframeskip, disable auto and go to max */
@@ -887,7 +765,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		/* reset the frame counter so we'll measure the average FPS on a consistent status */
 		frames_displayed = 0;
 	}
-
 	if (input_ui_pressed(IPT_UI_THROTTLE))
 	{
 		if (!code_pressed(KEYCODE_LSHIFT) && !code_pressed(KEYCODE_RSHIFT))
@@ -903,7 +780,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		else
 			sleep_idle ^= 1;
 	}
-
 	if (code_pressed(KEYCODE_LCONTROL))
 	{
 		if (code_pressed_memory(KEYCODE_INSERT))
@@ -911,8 +787,52 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (code_pressed_memory(KEYCODE_HOME))
 			frameskipper = 1;
 	}
+	skip_this_frame = skip_next_frame;
+	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
+	
+	/*** STEP 2: determine if the debugger or the normal game window
+	     should be shown ***/
+	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
+		change_debugger_focus(display->debug_focus);
+	/* If the user presses the F5 key, toggle the debugger's focus */
+	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
+		change_debugger_focus(!debugger_has_focus);
 
-	if (!effect && code_pressed(KEYCODE_LSHIFT))
+	/*** STEP 3: handle visual area changes, do this before handling any
+	     of the display_params hotkeys, because this can *force* changes
+	     to the normal display if focussed ***/
+	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
+		update_visible_area(display);
+
+	/*** STEP 4: now handle display_params hotkeys, but only if the normal
+	     display has focus */
+	if (!debugger_has_focus && code_pressed(KEYCODE_LALT))
+	{
+		if (code_pressed_memory(KEYCODE_INSERT))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE0;
+		if (code_pressed_memory(KEYCODE_HOME))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE1;
+		if (code_pressed_memory(KEYCODE_PGUP))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE2;
+		if (code_pressed_memory(KEYCODE_DEL))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE3;
+		if (code_pressed_memory(KEYCODE_END))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_VIDMODE4;
+		if (code_pressed_memory(KEYCODE_PGDN))
+		{
+			normal_params.fullscreen = 1 - normal_params.fullscreen;
+			normal_params_changed = 1;
+		}
+	}
+	if (!debugger_has_focus && code_pressed(KEYCODE_LCONTROL))
+	{
+		if (code_pressed_memory(KEYCODE_PGUP))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
+		if (code_pressed_memory(KEYCODE_PGDN))
+			hotkeys |= SYSDEP_DISPLAY_HOTKEY_GRABMOUSE;
+	}
+	if (!debugger_has_focus && !normal_params.effect && 
+	     code_pressed(KEYCODE_LSHIFT))
 	{
 		int widthscale_mod  = 0;
 		int heightscale_mod = 0;
@@ -937,71 +857,72 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 		if (widthscale_mod || heightscale_mod)
 		{
-			normal_widthscale  += widthscale_mod;
-			normal_heightscale += heightscale_mod;
-			
-			if (normal_yarbsize && heightscale_mod)
-			   normal_yarbsize += heightscale_mod * visual_height;
+			normal_params.widthscale  += widthscale_mod;
+			normal_params.heightscale += heightscale_mod;
 
-			if (normal_widthscale > 8)
-				normal_widthscale = 8;
-			else if (normal_widthscale < 1)
-				normal_widthscale = 1;
+			if (normal_params.widthscale > 8)
+				normal_params.widthscale = 8;
+			else if (normal_params.widthscale < 1)
+				normal_params.widthscale = 1;
 
-			if (normal_heightscale > 8)
-				normal_heightscale = 8;
-			else if (normal_heightscale < 1)
-				normal_heightscale = 1;
+			if (normal_params.heightscale > 8)
+				normal_params.heightscale = 8;
+			else if (normal_params.heightscale < 1)
+				normal_params.heightscale = 1;
 				
-			if (!debugger_has_focus)
-				change_display_settings(&normal_visual,
-						normal_palette,
-						normal_widthscale,
-						normal_heightscale,
-						normal_yarbsize,
-						normal_use_aspect_ratio, 0);
+			normal_params_changed = 1;
+		}
+	}
+	if (normal_params_changed)
+	{
+		if (change_display_settings(&normal_params, 0))
+		{
+			sysdep_display_set_keybleds(led_state);
 		}
 	}
 
-	skip_this_frame = skip_next_frame;
-	skip_next_frame = (*skip_next_frame_functions[frameskipper])();
-
+	/*** STEP 5 update sound,fps and leds ***/
 	if (sound_stream)
+	{
 		sound_stream_update(sound_stream);
-
-	/* if the visible area has changed, update it */
-	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
-		update_visible_area(display);
-
+	}
 	if (display->changed_flags & GAME_REFRESH_RATE_CHANGED)
 	{
 		video_fps = display->game_refresh_rate;
 		sound_update_refresh_rate(display->game_refresh_rate);
 	}
+	if (display->changed_flags & LED_STATE_CHANGED)
+	{
+		led_state = display->led_state;
+		if (!debugger_has_focus)
+			sysdep_display_set_keybleds(led_state);
+	}
+	
+	/*** STEP 6 update the palette ***/
+	if (!normal_palette)
+	{
+		/* the palette had been destroyed because of display changes */
+		normal_palette = sysdep_palette_create(&sysdep_display_palette_info, normal_params.depth);
+		if (!normal_palette)
+		{
+			/* oops this sorta sucks */
+			fprintf(stderr_file, "Argh, creating the palette failed (out of memory?) aborting\n");
+			sysdep_display_close();
+			exit(1);
+		}
+		update_palette(display, 1);
+	}
+	else if ((display->changed_flags & GAME_PALETTE_CHANGED))
+		update_palette(display, 0);
 
-	/* if the debugger focus changed, update it */
-	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-		change_debugger_focus(display->debug_focus);
-
-	/*
-	 * If the user presses the F5 key, toggle the debugger's
-	 * focus.  Eventually I'd like to just display both the
-	 * debug and regular windows at the same time.
-	 */
-	else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
-		change_debugger_focus(!debugger_has_focus);
-
-	/* update the debugger */
-	if ((display->changed_flags & DEBUG_BITMAP_CHANGED)
-			&& debugger_has_focus)
-		update_debug_display(display);
-
-	if ((display->changed_flags & GAME_PALETTE_CHANGED) || force_dirty_palette)
-		update_palette(display);
-
-	if (skip_this_frame == 0
-			&& (display->changed_flags & GAME_BITMAP_CHANGED)
-			&& !debugger_has_focus)
+	/*** STEP 7: update the focussed display ***/
+	if (debugger_has_focus)
+	{
+		if (display->changed_flags & DEBUG_BITMAP_CHANGED)
+			update_debug_display(display);
+	}
+	else if ((skip_this_frame == 0) &&
+		 (display->changed_flags & GAME_BITMAP_CHANGED))
 	{
 		/* at the end, we need the current time */
 		curr = osd_cycles();
@@ -1034,18 +955,21 @@ void osd_update_video_and_audio(struct mame_display *display)
 			}
 			end_time = curr;
 		}
-
-		orient_rect(&updatebounds);
-
+		
 		profiler_mark(PROFILER_BLIT);
-		sysdep_update_display(display->game_bitmap);
+		/* udpate and check if the display properties were changed */
+		if(sysdep_display_update(display->game_bitmap,
+		   &(display->game_visible_area),
+		   &(display->game_bitmap_update),
+		   normal_palette, hotkeys))
+		{
+		  xmame_keyboard_clear();
+		  osd_free_colors();
+		}
 		profiler_mark(PROFILER_END);
 	}
 
-	/* if the LEDs have changed, update them */
-	if (display->changed_flags & LED_STATE_CHANGED)
-		sysdep_set_leds(display->led_state);
-
+	/* this needs to be called every frame, so do this here */
 	osd_poll_joysticks();
 }
 
@@ -1058,13 +982,12 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	int x, y, w, h, t;
 
 	/* if we can send it in raw, no need to override anything */
-	if (blit_hardware_rotation ||
-	    (!blit_swapxy && !blit_flipx && !blit_flipy))
+	if (!(normal_params.orientation & SYSDEP_DISPLAY_SWAPXY) && !(normal_params.orientation & SYSDEP_DISPLAY_FLIPX) && !(normal_params.orientation & SYSDEP_DISPLAY_FLIPY))
 		return NULL;
 
 	/* allocate a copy */
-	w = blit_swapxy ? bitmap->height : bitmap->width;
-	h = blit_swapxy ? bitmap->width : bitmap->height;
+	w = (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY) ? bitmap->height : bitmap->width;
+	h = (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY) ? bitmap->width : bitmap->height;
 	copy = bitmap_alloc_depth(w, h, bitmap->depth);
 	if (!copy)
 		return NULL;
@@ -1076,13 +999,13 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 			int tx = x, ty = y;
 
 			/* apply the rotation/flipping */
-			if (blit_swapxy)
+			if ((normal_params.orientation & SYSDEP_DISPLAY_SWAPXY))
 			{
 				t = tx; tx = ty; ty = t;
 			}
-			if (blit_flipx)
+			if ((normal_params.orientation & SYSDEP_DISPLAY_FLIPX))
 				tx = copy->width - tx - 1;
-			if (blit_flipy)
+			if ((normal_params.orientation & SYSDEP_DISPLAY_FLIPY))
 				ty = copy->height - ty - 1;
 
 			/* read the old pixel and copy to the new location */
@@ -1105,14 +1028,14 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	newbounds = *bounds;
 
 	/* apply X/Y swap first */
-	if (blit_swapxy)
+	if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
 	{
 		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
 		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
 	}
 
 	/* apply X flip */
-	if (blit_flipx)
+	if (normal_params.orientation & SYSDEP_DISPLAY_FLIPX)
 	{
 		t = copy->width - newbounds.min_x - 1;
 		newbounds.min_x = copy->width - newbounds.max_x - 1;
@@ -1120,7 +1043,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 	}
 
 	/* apply Y flip */
-	if (blit_flipy)
+	if (normal_params.orientation & SYSDEP_DISPLAY_FLIPY)
 	{
 		t = copy->height - newbounds.min_y - 1;
 		newbounds.min_y = copy->height - newbounds.max_y - 1;
@@ -1134,7 +1057,6 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,
 
 void osd_pause(int paused)
 {
-	emulation_paused = paused;
 }
 
 const char *osd_get_fps_text(const struct performance_info *performance)

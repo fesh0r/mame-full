@@ -1,12 +1,15 @@
 /*
  *	XFree86 VidMode and DGA support by Jens Vaasjo <jvaasjo@iname.com>
  *      Modified for DGA 2.0 native API support
- *                                      by Shyouzou Sugitani <shy@debian.or.jp>
- *                                         Stea Greene <stea@cs.binghamton.edu>
+ *      by Shyouzou Sugitani <shy@debian.or.jp>
+ *      Stea Greene <stea@cs.binghamton.edu>
  */
 #ifdef USE_DGA
 #define __XF86_DGA_C
 
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <X11/Xlib.h>
@@ -14,18 +17,12 @@
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
 #endif
-#include "driver.h"
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
 #ifdef X_XDGASetMode
 
 #ifdef USE_DGA
-
-static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_16_to_24bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_16_to_32bpp(struct mame_bitmap *bitmap);
-static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitmap);
 
 static struct
 {
@@ -33,11 +30,11 @@ static struct
 	unsigned char *addr;
 	int width;
 	Colormap cmap;
-	void (*xf86_dga_update_display_func)(struct mame_bitmap *bitmap);
+	blit_func_p update_display_func;
 	XDGADevice *device;
 	XDGAMode *modes;
 	int vidmode_changed;
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,FALSE};
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0};
 	
 
 #ifdef TDFX_DGA_WORKAROUND
@@ -47,17 +44,10 @@ static int current_X11_mode = 0;
 int xf86_dga2_init(void)
 {
 	int i,j ;
-	char *s;
 	
-	mode_available[X11_DGA] = FALSE;
 	xf86ctx.screen          = DefaultScreen(display);
 	
-	
-	if(geteuid())
-		fprintf(stderr,"DGA requires root rights\n");
-	else if (!(s = getenv("DISPLAY")) || (s[0] != ':'))
-		fprintf(stderr,"DGA only works on a local display\n");
-	else if(!XDGAQueryVersion(display, &i, &j))
+	if(!XDGAQueryVersion(display, &i, &j))
 		fprintf(stderr,"XDGAQueryVersion failed\n");
 	else if (i < 2)
 		fprintf(stderr,"This driver requires DGA 2.0 or newer\n");
@@ -66,15 +56,13 @@ int xf86_dga2_init(void)
 	else if(!XDGAOpenFramebuffer(display,xf86ctx.screen))
 		fprintf(stderr,"XDGAOpenFramebuffer failed\n");
 	else
-		mode_available[X11_DGA] = TRUE; 
+		return 0; 
 		
-	if (!mode_available[X11_DGA])
-		fprintf(stderr,"Use of DGA-modes is disabled\n");
-
-	return OSD_OK;
+	fprintf(stderr,"Use of DGA-modes is disabled\n");
+	return 1;
 }
 
-static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
+static int xf86_dga_vidmode_find_best_vidmode(void)
 {
 	int bestmode = 0;
 	int score, best_score = 0;
@@ -92,22 +80,11 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 
 	for(i=0;i<modecount;i++)
 	{
-
 #ifdef TDFX_DGA_WORKAROUND
 		if (xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
 			xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
 			current_X11_mode = xf86ctx.modes[i].num;
 #endif
-		
-		if (mode_disabled(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight, bitmap_depth))
-			continue;
-		if (bitmap_depth == 32)
-		{
-			if (xf86ctx.modes[i].bitsPerPixel != 32)
-				continue;
-		}
-		else if (xf86ctx.modes[i].depth < bitmap_depth)
-			continue;
 #if 0 /* DEBUG */
 		fprintf(stderr, "XDGA: info: (%d) %s\n",
 		   xf86ctx.modes[i].num, xf86ctx.modes[i].name);
@@ -143,12 +120,11 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 			xf86ctx.modes[i].maxViewportX, xf86ctx.modes[i].maxViewportY);
 		/* viewportFlags */
 #endif
-		/* ignore modes with a width which is not 64 bit aligned */
-		if(xf86ctx.modes[i].viewportWidth & 7) continue;
-		
-		score = mode_match(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight);
-		if (xf86ctx.modes[i].depth != bitmap_depth)
-			score -= 10;
+		score = mode_match(xf86ctx.modes[i].viewportWidth,
+			xf86ctx.modes[i].viewportHeight,
+			(xf86ctx.modes[i].depth==24)?
+			xf86ctx.modes[i].bitsPerPixel:
+			xf86ctx.modes[i].depth, 1);
 		if(score > best_score)
 		{
 			best_score = score;
@@ -179,72 +155,37 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	if (pid < 0)
 	{
 		perror("fork");
-		return OSD_NOT_OK;
+		return 1;
 	}
 
-	return OSD_OK;
+	return 0;
 }
 
-static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth, int dest_depth)
+static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 {
-	int sizeof_pixel;
-
-	if (bitmap_depth == 32)
+	xf86ctx.update_display_func = sysdep_display_get_blitfunc_doublebuffer(modeinfo.bitsPerPixel);
+	if (xf86ctx.update_display_func == NULL)
 	{
-	    if (dest_depth == 32)
-	    {
-		xf86ctx.xf86_dga_update_display_func =
-			xf86_dga_update_display_32_to_32bpp_direct;
-	    }
-	}
-	else if (bitmap_depth == 16)
-	{
-	    switch(dest_depth)
-	    {
-		case 16:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_16_to_16bpp;
-			break;
-		case 24:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_16_to_24bpp;
-			break;
-		case 32:
-			xf86ctx.xf86_dga_update_display_func =
-				xf86_dga_update_display_16_to_32bpp;
-			break;
-	    }
+		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, modeinfo.bitsPerPixel);
+		return 1;
 	}
 	
-	if (xf86ctx.xf86_dga_update_display_func == NULL)
-	{
-		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, dest_depth);
-		return OSD_NOT_OK;
-	}
+	fprintf(stderr, "XF86-DGA2 color depth: %d, %dbpp\n", modeinfo.depth, modeinfo.bitsPerPixel);
 	
-	fprintf(stderr_file, "XF86-DGA2 running at: %dbpp\n", dest_depth);
-	
-	sizeof_pixel  = dest_depth / 8;
-
 	xf86ctx.addr  = (unsigned char*)xf86ctx.device->data;
-#if 1
-	xf86ctx.addr += (((modeinfo.viewportWidth - visual_width*widthscale) / 2) & ~7)
-						* sizeof_pixel;
-	if (yarbsize)
-	  xf86ctx.addr += ((modeinfo.viewportHeight - yarbsize) / 2)
-	    * modeinfo.bytesPerScanline;
-	else
-	  xf86ctx.addr += ((modeinfo.viewportHeight - visual_height*heightscale) / 2)
-	    * modeinfo.bytesPerScanline;
-#endif
+	xf86ctx.addr += (((modeinfo.viewportWidth - sysdep_display_params.width*
+		sysdep_display_params.widthscale) / 2) &
+		~sysdep_display_params.x_align) * modeinfo.bitsPerPixel / 8;
+	xf86ctx.addr += ((modeinfo.viewportHeight - sysdep_display_params.yarbsize)
+		/ 2) * modeinfo.bytesPerScanline;
 
-	return OSD_OK;
+	return 0;
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int xf86_dga2_create_display(int bitmap_depth)
+int xf86_dga2_open_display(void)
 {
 	int i,bestmode;
 	Visual dga_xvisual;
@@ -254,12 +195,14 @@ int xf86_dga2_create_display(int bitmap_depth)
 	static int first_time  = 1;
 	xf86_dga_first_click   = 0;
 	
+	sysdep_display_check_params();
+
 	window  = RootWindow(display,xf86ctx.screen);
 	
 	if (first_time)
 	{
 		if(xf86_dga_vidmode_setup_mode_restore())
-			return OSD_NOT_OK;
+			return 1;
 		first_time = 0;
 	}
 
@@ -271,29 +214,29 @@ int xf86_dga2_create_display(int bitmap_depth)
 	  for (i=0; (i<32) && (keys[i]==0); i++) {}
 	} while(i<32);
 
-	bestmode = xf86_dga_vidmode_find_best_vidmode(bitmap_depth);
+	bestmode = xf86_dga_vidmode_find_best_vidmode();
 	if (!bestmode)
 	{
-		fprintf(stderr_file,"no suitable mode found\n");
-		return OSD_NOT_OK;
+		fprintf(stderr,"no suitable mode found\n");
+		return 1;
 	}
 	xf86ctx.device = XDGASetMode(display,xf86ctx.screen,bestmode);
 	if (xf86ctx.device == NULL) {
-		fprintf(stderr_file,"XDGASetMode failed\n");
-		return OSD_NOT_OK;
+		fprintf(stderr,"XDGASetMode failed\n");
+		return 1;
 	}
 	xf86ctx.width = xf86ctx.device->mode.bytesPerScanline * 8
 		/ xf86ctx.device->mode.bitsPerPixel;
-	xf86ctx.vidmode_changed = TRUE;
+	xf86ctx.vidmode_changed = 1;
 
 #if 0 /* DEBUG */
-	fprintf(stderr_file, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
+	fprintf(stderr, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
 			"   mode.depth = %d\n", bitmap_depth, 
 			xf86ctx.device->mode.bitsPerPixel, 
 			xf86ctx.device->mode.depth);
 #endif
 
-	fprintf(stderr_file,"XF86DGA2 switched To Mode: %d x %d\n",
+	fprintf(stderr,"XF86DGA2 switched To Mode: %d x %d\n",
 		xf86ctx.device->mode.viewportWidth,
 		xf86ctx.device->mode.viewportHeight);
 
@@ -302,20 +245,20 @@ int xf86_dga2_create_display(int bitmap_depth)
 	dga_xvisual.red_mask = xf86ctx.device->mode.redMask;
 	dga_xvisual.green_mask = xf86ctx.device->mode.greenMask;
 	dga_xvisual.blue_mask = xf86ctx.device->mode.blueMask;
-	if (x11_init_palette_info(&dga_xvisual) != OSD_OK)
-	    return OSD_NOT_OK;
+	if (x11_init_palette_info(&dga_xvisual) != 0)
+	    return 1;
         
-	mode_fix_aspect((double)(xf86ctx.device->mode.viewportWidth)/
+	mode_check_params((double)xf86ctx.device->mode.viewportWidth/
 		xf86ctx.device->mode.viewportHeight);
 
-	if(xf86_dga_setup_graphics(xf86ctx.device->mode, bitmap_depth, xf86ctx.device->mode.bitsPerPixel))
-	    return OSD_NOT_OK;
+	if(xf86_dga_setup_graphics(xf86ctx.device->mode))
+	    return 1;
 	
         /* 2 means grab keyb and mouse ! */
 	if(xinput_open(2, 0))
 	{
-	    fprintf(stderr_file,"XGrabKeyboard failed\n");
-	    return OSD_NOT_OK;
+	    fprintf(stderr,"XGrabKeyboard failed\n");
+	    return 1;
 	}
 
 	XDGASetViewport(display,xf86ctx.screen,0,0,0);
@@ -340,63 +283,17 @@ int xf86_dga2_create_display(int bitmap_depth)
 	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
 
 	if(effect_open())
-	    return OSD_NOT_OK;
+	    return 1;
 	
-	return OSD_OK;
+	return 0;
 }
 
-#define DEST xf86ctx.addr
-#define DEST_WIDTH xf86ctx.width
-#define SRC_PIXEL unsigned short
-/* Use double buffering where it speeds things up */
-#define DOUBLEBUFFER
-
-#define INDIRECT current_palette->lookup
-
-static void xf86_dga_update_display_16_to_16bpp(struct mame_bitmap *bitmap)
+void xf86_dga2_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+	  struct sysdep_palette_struct *palette)
 {
-#define DEST_PIXEL unsigned short
-   if (current_palette->lookup)
-   {
-#include "blit.h"
-   }
-   else
-   {
-#undef  INDIRECT
-#include "blit.h"
-#define INDIRECT current_palette->lookup
-   }
-#undef DEST_PIXEL
-}
-
-#define DEST_PIXEL unsigned int
-
-static void xf86_dga_update_display_16_to_24bpp(struct mame_bitmap *bitmap)
-{
-#define PACK_BITS
-#include "blit.h"
-#undef PACK_BITS
-}
-
-static void xf86_dga_update_display_16_to_32bpp(struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef  INDIRECT
-#undef  SRC_PIXEL
-#define SRC_PIXEL unsigned int
-
-static void xf86_dga_update_display_32_to_32bpp_direct(struct mame_bitmap *bitmap)
-{
-#include "blit.h"
-}
-
-#undef DEST_PIXEL
-
-void xf86_dga2_update_display(struct mame_bitmap *bitmap)
-{
-	(*xf86ctx.xf86_dga_update_display_func)(bitmap);
+	xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
+		palette, xf86ctx.addr, xf86ctx.width);
 	XDGASync(display,xf86ctx.screen);
 }
 
@@ -430,7 +327,7 @@ void xf86_dga2_close_display(void)
 #endif
 
 		XDGASetMode(display, xf86ctx.screen, 0);
-		xf86ctx.vidmode_changed = FALSE;
+		xf86ctx.vidmode_changed = 0;
 	}
 	XSync(display, True);
 }

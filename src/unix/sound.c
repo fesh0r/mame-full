@@ -17,7 +17,7 @@ static char *sound_mixer_device = NULL;
 static struct sysdep_dsp_struct *sound_dsp = NULL;
 static struct sysdep_mixer_struct *sound_mixer = NULL;
 static int sound_samples_per_frame = 0;
-static int type;
+static int type = -1;
 
 struct rc_option sound_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -81,8 +81,10 @@ void osd_sound_enable(int enable_it)
 {
 	if (enable_it)
 	{
-		/* in case we get called twice with enable_it true */
-		if (sound_dsp) 
+		/* in case we get called twice with enable_it true
+		   OR we get called when osd_start_audio stream
+		   has never been called */
+		if (sound_dsp || (type==-1))
 			return;
 		
 		if(!(sound_dsp = sysdep_dsp_create(NULL,

@@ -26,6 +26,7 @@ Version 0.1, November 1999
 #include <driver.h>
 #include <math.h>
 #include "sysdep_palette.h"
+#include "video-drivers/pixel_convert.h"
 
 static unsigned int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
    *info, unsigned char red, unsigned char green, unsigned char blue)
@@ -122,11 +123,6 @@ void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
       free(palette->lookup);
    free(palette);
 }
-
-#define RGB2YUV(r,g,b,y,u,v) \
-    (y) = ((  9836*(r) + 19310*(g) +  3750*(b)          ) >> 15); \
-    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 15); \
-    (v) = (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 15)
 
 /* set a pen for 16 bpp palettised mode */   
 void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,

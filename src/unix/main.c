@@ -4,7 +4,7 @@
 
 #define __MAIN_C_
 #include "xmame.h"
-#include "effect.h"
+#include "sysdep/sysdep_display.h"
 
 #if defined HAVE_MPROTECT || defined __QNXNTO__
 #include <sys/mman.h>
@@ -62,14 +62,14 @@ int main(int argc, char **argv)
 #endif
 
 	/* some display methods need to do some stuff with root rights */
-	res2 = sysdep_init();
+	res2 = sysdep_display_init();
 
 	/* to be absolutely safe force giving up root rights here in case
 	   a display method doesn't */
 	if (setuid(getuid()))
 	{
 		perror("setuid");
-		sysdep_close();
+		sysdep_display_close();
 		return OSD_NOT_OK;
 	}
 
@@ -81,10 +81,6 @@ int main(int argc, char **argv)
 	if ((res = config_init(argc, argv)) != 1234 || res2 == OSD_NOT_OK)
 		goto leave;
 
-	/* the effect code might want to change the scaling options
-	   to match the chosen effect */
-	effect_init();
-
 	/* 
 	 * Initialize whatever is needed before the display is actually 
 	 * opened, e.g., artwork setup.
@@ -95,7 +91,7 @@ int main(int argc, char **argv)
 	res = run_game (game_index);
 
 leave:
-	sysdep_close();
+	sysdep_display_close();
 	/* should be done last since this also closes stdout and stderr */
 	config_exit();
 

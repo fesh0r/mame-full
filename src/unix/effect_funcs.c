@@ -1,69 +1,68 @@
-#include "xmame.h"
+#include <string.h>
 #include "osd_cpu.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
 /**********************************
  * rotate
  **********************************/
 
-
-void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y)
+void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds)
 {
   int x;
   UINT16 * u16dst = (UINT16 *)dst;
 
-  if (blit_swapxy) {
-    if (blit_flipx && blit_flipy)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
-    else if (blit_flipx)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[y];
-    else if (blit_flipy)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[x])[bitmap->width - y - 1];
+  if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)) {
+    if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) && (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
+    else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[y];
+    else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[x])[bitmap->width - y - 1];
     else
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[x])[y];
-  } else if (blit_flipx && blit_flipy)
-    for (x = visual.min_x; x <= visual.max_x; x++)
-      u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
-       else if (blit_flipx)
-         for (x = visual.min_x; x <= visual.max_x; x++)
-           u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[y])[bitmap->width - x - 1];
-       else if (blit_flipy)
-         for (x = visual.min_x; x <= visual.max_x; x++)
-           u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - y -1])[x];
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[x])[y];
+  } else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) && (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+    for (x = bounds->min_x; x <= bounds->max_x; x++)
+      u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
+       else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX))
+         for (x = bounds->min_x; x <= bounds->max_x; x++)
+           u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[y])[bitmap->width - x - 1];
+       else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+         for (x = bounds->min_x; x <= bounds->max_x; x++)
+           u16dst[x-bounds->min_x] = ((UINT16 *)bitmap->line[bitmap->height - y -1])[x];
 }
 
-
-void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y)
+void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds)
 {
   int x;
   UINT32 * u32dst = (UINT32 *)dst;
 
-  if (blit_swapxy) {
-    if (blit_flipx && blit_flipy)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
-    else if (blit_flipx)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[y];
-    else if (blit_flipy)
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[x])[bitmap->width - y - 1];
+  if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)) {
+    if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) && (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
+    else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[y];
+    else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[x])[bitmap->width - y - 1];
     else
-      for (x = visual.min_x; x <= visual.max_x; x++)
-        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[x])[y];
-  } else if (blit_flipx && blit_flipy)
-    for (x = visual.min_x; x <= visual.max_x; x++)
-      u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
-       else if (blit_flipx)
-         for (x = visual.min_x; x <= visual.max_x; x++)
-           u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[y])[bitmap->width - x - 1];
-       else if (blit_flipy)
-         for (x = visual.min_x; x <= visual.max_x; x++)
-           u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - y -1])[x];
+      for (x = bounds->min_x; x <= bounds->max_x; x++)
+        u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[x])[y];
+  } else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) && (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+    for (x = bounds->min_x; x <= bounds->max_x; x++)
+      u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
+       else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX))
+         for (x = bounds->min_x; x <= bounds->max_x; x++)
+           u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[y])[bitmap->width - x - 1];
+       else if ((sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY))
+         for (x = bounds->min_x; x <= bounds->max_x; x++)
+           u32dst[x-bounds->min_x] = ((UINT32 *)bitmap->line[bitmap->height - y -1])[x];
 }
 
 /* below are the YUY2 versions of most effects, the rgb code is generated for
@@ -94,14 +93,14 @@ void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y)
 void effect_scale2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   unsigned int *u32dst0 = (unsigned int *)dst0;
   unsigned int *u32dst1 = (unsigned int *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,uv1,uv2;
   UINT32 p1,p2,p3,p4;
   while (count) {
@@ -148,7 +147,7 @@ void effect_scale2x_16_YUY2
 void effect_scale2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   unsigned char *u8dst0 = (unsigned char *)dst0;
   unsigned char *u8dst1 = (unsigned char *)dst1;
@@ -223,12 +222,12 @@ void effect_scale2x_32_YUY2_direct
  * scan2: light 2x2 scanlines
  **********************************/
 
-void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count)
+void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   UINT32 r,y,u,v;
 
   while (count) {
@@ -246,7 +245,7 @@ void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned cou
 }
 
 
-void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count)
+void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -274,12 +273,12 @@ void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsign
  * rgbstripe
  **********************************/
 
-void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count)
+void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   UINT32 r,g,b,y,u,v,y2,u2,v2,s;
   INT32 us,vs;
 
@@ -359,7 +358,7 @@ void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned
 }
 
 
-void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count)
+void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -436,13 +435,13 @@ void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, un
  * rgbscan
  **********************************/
 
-void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   UINT32 r,g,b,y,u,v;
   INT32 us,vs;
 
@@ -477,7 +476,7 @@ void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src
 }
 
 
-void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -527,13 +526,13 @@ void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const voi
  * the third line is darkened by 50%.
  */
 
-void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   UINT32 p1,p2,y1,uv1,uv2,y2,s;
 
   s = 1;
@@ -637,7 +636,7 @@ void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, 
 }
 
 
-void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;

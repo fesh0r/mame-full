@@ -43,10 +43,16 @@
  */
 
 #define __EFFECT_C_
-#include "xmame.h"
+#include <stdlib.h>
+#include <string.h>
 #include "osd_cpu.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
+char *effect_dbbuf  = NULL;
+char *rotate_dbbuf0 = NULL;
+char *rotate_dbbuf1 = NULL;
+char *rotate_dbbuf2 = NULL;
 /* for the 6tap filter, used by effect_funcs.c */
 char *_6tap2x_buf0 = NULL;
 char *_6tap2x_buf1 = NULL;
@@ -117,46 +123,41 @@ static void init_rgb2yuv(int display_mode)
 }
 
 
-/* called from config.c to set scale parameters */
-void effect_init(void)
+/* called from sysdep_display_open to update scale parameters */
+void effect_check_params(void)
 {
   int disable_arbscale = 0;
 
-  effect_dbbuf = NULL;
-  rotate_dbbuf0 = NULL;
-  rotate_dbbuf1 = NULL;
-  rotate_dbbuf2 = NULL;
-
-  switch (effect) {
+  switch (sysdep_display_params.effect) {
     case EFFECT_SCALE2X:
     case EFFECT_HQ2X:
     case EFFECT_LQ2X:
     case EFFECT_SCAN2:
     case EFFECT_6TAP2X:
-      normal_widthscale = 2;
-      normal_heightscale = 2;
+      sysdep_display_params.widthscale = 2;
+      sysdep_display_params.heightscale = 2;
       disable_arbscale = 1;
       break;
     case EFFECT_RGBSTRIPE:
-      normal_widthscale = 3;
-      normal_heightscale = 2;
+      sysdep_display_params.widthscale = 3;
+      sysdep_display_params.heightscale = 2;
       disable_arbscale = 1;
       break;
     case EFFECT_RGBSCAN:
-      normal_widthscale = 2;
-      normal_heightscale = 3;
+      sysdep_display_params.widthscale = 2;
+      sysdep_display_params.heightscale = 3;
       disable_arbscale = 1;
       break;
     case EFFECT_SCAN3:
-      normal_widthscale = 3;
-      normal_heightscale = 3;
+      sysdep_display_params.widthscale = 3;
+      sysdep_display_params.heightscale = 3;
       disable_arbscale = 1;
       break;
   }
 
-  if (normal_yarbsize && disable_arbscale) {
+  if (sysdep_display_params.yarbsize && disable_arbscale) {
     printf("Using effects -- disabling arbitrary scaling\n");
-    normal_yarbsize = 0;
+    sysdep_display_params.yarbsize = 0;
   }
 }
 
@@ -372,11 +373,11 @@ int effect_open(void)
 {
   int i = -1;
 
-  if (!(effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*4)))
+  if (!(effect_dbbuf = malloc(sysdep_display_params.aligned_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
     return 1;
-  memset(effect_dbbuf, visual_width*normal_widthscale*normal_heightscale*4, 0);
+  memset(effect_dbbuf, sysdep_display_params.aligned_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
 
-  switch(display_palette_info.fourcc_format)
+  switch(sysdep_display_palette_info.fourcc_format)
   {
     case FOURCC_YUY2:
       i = 3;
@@ -385,35 +386,35 @@ int effect_open(void)
       i = 4;
       break;
     default:
-      if ( (display_palette_info.red_mask   == (0x1F << 10)) &&
-           (display_palette_info.green_mask == (0x1F <<  5)) &&
-           (display_palette_info.blue_mask  == (0x1F      )))
+      if ( (sysdep_display_palette_info.red_mask   == (0x1F << 10)) &&
+           (sysdep_display_palette_info.green_mask == (0x1F <<  5)) &&
+           (sysdep_display_palette_info.blue_mask  == (0x1F      )))
         i = 0;
-      if ( (display_palette_info.red_mask   == (0x1F << 11)) &&
-           (display_palette_info.green_mask == (0x3F <<  5)) &&
-           (display_palette_info.blue_mask  == (0x1F      )))
+      if ( (sysdep_display_palette_info.red_mask   == (0x1F << 11)) &&
+           (sysdep_display_palette_info.green_mask == (0x3F <<  5)) &&
+           (sysdep_display_palette_info.blue_mask  == (0x1F      )))
         i = 1;
-      if ( (display_palette_info.red_mask   == (0xFF << 16)) &&
-           (display_palette_info.green_mask == (0xFF <<  8)) &&
-           (display_palette_info.blue_mask  == (0xFF      )))
+      if ( (sysdep_display_palette_info.red_mask   == (0xFF << 16)) &&
+           (sysdep_display_palette_info.green_mask == (0xFF <<  8)) &&
+           (sysdep_display_palette_info.blue_mask  == (0xFF      )))
         i = 2;
   }
 
-  if (effect)
+  if (sysdep_display_params.effect)
   {
     if (i == -1)
     {
       fprintf(stderr, "Warning your current videomode is not supported by the effect code, disabling effects\n");
-      effect = 0;
+      sysdep_display_params.effect = 0;
     }
     else
     {
-      fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display type = %d\n", effect, video_real_depth, i);
-      i += (video_real_depth / 16) * DISPLAY_MODES;
+      fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display type = %d\n", sysdep_display_params.effect, sysdep_display_params.depth, i);
+      i += (sysdep_display_params.depth / 16) * DISPLAY_MODES;
     }
   }
 
-  switch (effect)
+  switch (sysdep_display_params.effect)
   {
     case EFFECT_SCAN2:
       effect_func = effect_funcs[i];
@@ -439,7 +440,7 @@ int effect_open(void)
       effect_scale3x_func = effect_scale3x_funcs[i+EFFECT_MODES];
       break;
     case EFFECT_6TAP2X:
-      effect_6tap_addline_func = effect_6tap_addline_funcs[video_real_depth/16];
+      effect_6tap_addline_func = effect_6tap_addline_funcs[sysdep_display_params.depth/16];
       effect_6tap_render_func  = effect_6tap_render_funcs[i%DISPLAY_MODES];
       effect_6tap_clear_func   = effect_6tap_clear;
       break;
@@ -447,7 +448,7 @@ int effect_open(void)
   
   /* check if we've got a valid implementation */
   i = -1;
-  switch(effect)
+  switch(sysdep_display_params.effect)
   {
     case EFFECT_NONE:
       i = 0;
@@ -472,12 +473,12 @@ int effect_open(void)
   if (i == -1)
   {
     fprintf(stderr, "Warning the choisen effect in combination with your current videomode is not supported by the effect code, disabling effects\n");
-    effect = 0;
+    sysdep_display_params.effect = 0;
   }
 
-  if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy))
+  if (sysdep_display_params.orientation)
   {
-    switch (video_real_depth) {
+    switch (sysdep_display_params.depth) {
     case 15:
     case 16:
       rotate_func = rotate_16_16;
@@ -487,18 +488,18 @@ int effect_open(void)
       break;
     }
 
-    /* add safety of +- 16 pixels, since some effects assume that this
+    /* add safety of +- 16 bytes, since some effects assume that this
        is present and otherwise segfault */
-    if (!(rotate_dbbuf0 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+    if (!(rotate_dbbuf0 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
       return 1;
     rotate_dbbuf0 += 16;
 
-    if ((effect == EFFECT_SCALE2X) ||
-        (effect == EFFECT_HQ2X)    ||
-        (effect == EFFECT_LQ2X)) {
-      if (!(rotate_dbbuf1 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+    if ((sysdep_display_params.effect == EFFECT_SCALE2X) ||
+        (sysdep_display_params.effect == EFFECT_HQ2X)    ||
+        (sysdep_display_params.effect == EFFECT_LQ2X)) {
+      if (!(rotate_dbbuf1 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
         return 1;
-      if (!(rotate_dbbuf2 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+      if (!(rotate_dbbuf2 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
         return 1;
       rotate_dbbuf1 += 16;
       rotate_dbbuf2 += 16;
@@ -506,29 +507,29 @@ int effect_open(void)
   }
 
   /* I need these buffers */
-  if (effect == EFFECT_6TAP2X)
+  if (sysdep_display_params.effect == EFFECT_6TAP2X)
   {
-    if (!(_6tap2x_buf0 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf0 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf1 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf1 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf2 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf2 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf3 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf3 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf4 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf4 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf5 = calloc(visual_width*8, sizeof(char))))
+    if (!(_6tap2x_buf5 = calloc(sysdep_display_params.width*8, sizeof(char))))
       return 1;
-    if(video_real_depth == 16)
+    if(sysdep_display_params.depth == 16)
     {
        /* HACK: we need the palette lookup table to be 888 rgb, this means
           that the lookup table won't be usable for normal blitting anymore
           but that is not a problem, since we're not doing normal blitting */
-       display_palette_info.fourcc_format = 0;
-       display_palette_info.red_mask   = 0x00FF0000;
-       display_palette_info.green_mask = 0x0000FF00;
-       display_palette_info.blue_mask  = 0x000000FF;
+       sysdep_display_palette_info.fourcc_format = 0;
+       sysdep_display_palette_info.red_mask   = 0x00FF0000;
+       sysdep_display_palette_info.green_mask = 0x0000FF00;
+       sysdep_display_palette_info.blue_mask  = 0x000000FF;
     }
   }
   return 0;
@@ -542,7 +543,7 @@ void effect_close(void)
     effect_dbbuf = NULL;
   }
 
-  /* there is a safety of +- 16 pixels, since some effects assume that this
+  /* there is a safety of +- 16 bytes, since some effects assume that this
      is present and otherwise segfault */
   if (rotate_dbbuf0)
   {
@@ -604,14 +605,14 @@ void effect_close(void)
 void effect_hq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -686,7 +687,7 @@ void effect_hq2x_16_YUY2
 void effect_hq2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
@@ -811,14 +812,14 @@ void effect_hq2x_32_YUY2_direct
 void effect_lq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -892,7 +893,7 @@ void effect_lq2x_16_YUY2
 void effect_lq2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count)
+    unsigned count, struct sysdep_palette_struct *palette)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;

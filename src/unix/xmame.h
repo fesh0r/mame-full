@@ -39,7 +39,6 @@
 #include "driver.h"
 #include "mame.h"
 #include "common.h"
-#include "sysdep/sysdep_palette.h"
 #include "sysdep/rc.h"
 #include "sysdep/sound_stream.h"
 
@@ -69,84 +68,36 @@
 /* Used for the rc handling. */
 EXTERN struct rc_struct *rc;
 
-/* Used for artwork games. */
-EXTERN struct rectangle updatebounds;
-
-/* Orientation */
-EXTERN int		blit_hardware_rotation; /* e.g. by the xgl driver */
-EXTERN int		blit_flipx;
-EXTERN int		blit_flipy;
-EXTERN int		blit_swapxy;
-
-EXTERN int		doublebuffer;
-EXTERN void		*indirect;
-
-/* Aspect ratio */
-EXTERN double		aspect_ratio;
+EXTERN int		doublebuffer; /* xgl */
 
 /* global variables and miscellaneous flags */
 
-EXTERN int	 	widthscale;        /* X scale */
-EXTERN int	 	heightscale;       /* Y scale */
-EXTERN int		yarbsize;          /* arbitrary height */
-EXTERN int		video_colors_used; /* max colors used by any palette */
 EXTERN float		video_fps;
-EXTERN int		video_width;
-EXTERN int		video_height;
-EXTERN int		video_depth;
-EXTERN int		video_real_depth;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		throttle;
 EXTERN int		autoframeskip;
 EXTERN int		frameskip;
 EXTERN int		game_index;
-EXTERN int		use_scanlines;
-EXTERN int		cabview;
-EXTERN char		*cabname;
-EXTERN float		display_aspect_ratio;
+EXTERN int		cabview; /* xgl */
+EXTERN char		*cabname; /* xgl */
 EXTERN int 		sleep_idle;
 EXTERN int 		max_autoframeskip;
-EXTERN int		use_aspect_ratio;
-EXTERN int		normal_use_aspect_ratio;
-EXTERN struct sysdep_palette_info display_palette_info;
-EXTERN struct sysdep_palette_struct *current_palette;
-EXTERN struct sysdep_palette_struct *normal_palette;
-EXTERN struct sysdep_palette_struct *debug_palette;
 EXTERN struct sound_stream_struct *sound_stream;
 #ifdef MESS
 extern char		crcdir[];
 #endif
-
-/* visual is the visual part of the bitmap */
-EXTERN int 		visual_width;
-EXTERN int		visual_height;
-EXTERN struct rectangle visual;
 
 /* File descripters for stdout / stderr redirection, without svgalib inter
    fering */
 extern FILE *stdout_file;
 extern FILE *stderr_file;
 
-/* system dependent functions */
-int  sysdep_init(void);
-void sysdep_close(void);
-int  sysdep_create_display(int depth);
-void sysdep_display_close(void);
-void sysdep_update_display(struct mame_bitmap *bitmap);
-void sysdep_set_leds(int leds);
-
 /* input related */
 int  osd_input_initpre(void);
 int  osd_input_initpost(void);
 void osd_input_close(void);
 void osd_poll_joysticks(void);
-void sysdep_update_keyboard (void);
-void sysdep_mouse_poll(void);
-
-/* dirty functions */
-int  osd_dirty_init(void);
-void osd_dirty_close(void);
 
 /* Directory functions that used to be in the rc files. */
 int check_and_create_dir(const char *name);
@@ -160,15 +111,6 @@ void osd_net_close(void);
 /* debug functions */
 int  osd_debug_init(void);
 void osd_debug_close(void);
-
-/* mode handling functions */
-int mode_disabled(int width, int height, int depth);
-int mode_match(int width, int height);
-void mode_clip_aspect(int width, int height, int *corr_width, int *corr_height,
-  double display_resolution_aspect_ratio);
-void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_height,
-  double display_resolution_aspect_ratio);
-void mode_fix_aspect(double display_resolution_aspect_ratio);
 
 /* frameskip functions */
 int dos_skip_next_frame();
@@ -191,9 +133,6 @@ int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 
 /* option structs */
 extern struct rc_option video_opts[];
-extern struct rc_option display_opts[];
-extern struct rc_option aspect_opts[];
-extern struct rc_option mode_opts[];
 extern struct rc_option sound_opts[];
 extern struct rc_option input_opts[];
 extern struct rc_option network_opts[];

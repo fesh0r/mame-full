@@ -665,9 +665,6 @@ DISPLAY_METHOD = x11
 # OpenGL under X11
 # DISPLAY_METHOD = xgl
 
-# Glide under X11
-# DISPLAY_METHOD = xfx
-
 # Glide in console mode
 # DISPLAY_METHOD = svgafx
 
@@ -697,6 +694,9 @@ X11_XV = 1
 # Work around a bug in the XFree86 tdfx driver that prevents the original 
 # mode from being restored when leaving DGA2 mode.
 # TDFX_DGA_WORKAROUND = 1
+
+# Build support for rendering through Glide into the X-Window version
+# X11_GLIDE = 1
 
 # The XIL library (Solaris 2.5.1 and higher)
 # X11_XIL = 1

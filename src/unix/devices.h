@@ -1,6 +1,8 @@
 #ifndef __DEVICES_H_
 #define __DEVICES_H_
 
+#include "sysdep/sysdep_display.h"
+
 #ifdef __DEVICES_C_
 #define EXTERN
 #else
@@ -14,22 +16,11 @@
 #define JOY_DIRS		2
 #define JOY_NAME_LEN		20
 #define HISTORY_LENGTH		16
-
-#ifndef USE_XINPUT_DEVICES
-/* only one mouse for now */
-#	define MOUSE_MAX	1
-#else
-/* now we have 4 */
-#	define MOUSE_MAX	5
-#endif
-#define MOUSE_BUTTONS		8
-#define MOUSE_AXES		8
-
 #define GUN_MAX			4
 
 /* now axis entries in the mouse_list, these are get through another way,
    like the analog joy-values */
-#define MOUSE_LIST_TOTAL_ENTRIES MOUSE_BUTTONS
+#define MOUSE_LIST_TOTAL_ENTRIES SYSDEP_DISPLAY_MOUSE_BUTTONS
 #define MOUSE_LIST_LEN (MOUSE * MOUSE_LIST_TOTAL_ENTRIES)
 
 enum
@@ -51,16 +42,9 @@ enum
 	AXIS_TYPE_ANALOG
 };
 
-struct xmame_keyboard_event
-{
-	unsigned char press;
-	unsigned char scancode;
-	unsigned short unicode;
-};
-
 int xmame_keyboard_init(void);
 void xmame_keyboard_exit();
-void xmame_keyboard_register_event(struct xmame_keyboard_event *event);
+void xmame_keyboard_register_event(struct sysdep_display_keyboard_event *event);
 void xmame_keyboard_clear(void);
 
 struct axisdata_struct
@@ -84,12 +68,6 @@ struct joydata_struct
 	int buttons[JOY_BUTTONS];
 };
 
-struct mousedata_struct
-{
-	int buttons[MOUSE_BUTTONS];
-	int deltas[MOUSE_AXES];
-};
-
 struct rapidfire_struct
 {
 	int setting[10];
@@ -100,7 +78,6 @@ struct rapidfire_struct
 };
 
 EXTERN struct joydata_struct joy_data[JOY_MAX];
-EXTERN struct mousedata_struct mouse_data[MOUSE_MAX];
 EXTERN struct rapidfire_struct rapidfire_data[4];
 EXTERN void (*joy_poll_func)(void);
 EXTERN int joytype;

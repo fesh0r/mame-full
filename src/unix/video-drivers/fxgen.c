@@ -11,29 +11,34 @@
   Mame license
   
 *****************************************************************/
-
-#if defined xfx || defined svgafx
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <signal.h>
-#include "driver.h"
-#include "usrintrf.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "osd_cpu.h"
 #include "fxcompat.h"
-#include "xmame.h"
-#include "vidhrdw/vector.h"
-#include "pixel_convert.h"
-#include "sysdep/sysdep_display.h"
+#include "sysdep/sysdep_display_priv.h"
+
+/* FIXME */
+extern UINT8 ui_dirty;
 
 void CalcPoint(GrVertex *vert,int x,int y);
 int  InitTextures(void);
 int  InitVScreen(void);
 void CloseVScreen(void);
-void UpdateTexture(struct mame_bitmap *bitmap);
+void UpdateTexture(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette);
 void DrawFlatBitmap(void);
-void UpdateFXDisplay(struct mame_bitmap *bitmap);
+void UpdateFXDisplay(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette);
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
-int fxvec_renderer(point *pt, int num_points);
 
 int fxwidth = 640;
 int fxheight = 480;
@@ -67,7 +72,6 @@ static int texdestwidth;
 static int texdestheight;
 static int firsttexdestwidth;
 static int firsttexdestheight;
-static int vecgame=0;
 static struct sigaction orig_sigaction[32];
 static struct sigaction vscreen_sa;  
 static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
@@ -86,8 +90,6 @@ struct rc_option fx_opts[] = {
      NULL,		0,			0,		NULL,
      NULL }
 };
-
-struct sysdep_display_prop_struct sysdep_display_properties = { fxvec_renderer, 1 };
 
 void CalcPoint(GrVertex *vert,int x,int y)
 {
@@ -114,16 +116,14 @@ int InitGlide(void)
   if ((fd < 0) && geteuid())
   {
      fprintf(stderr, "Glide error: couldn't open /dev/3dfx and not running as root\n");
-     return OSD_NOT_OK;
+     return 1;
   }
   if (fd >= 0)
      close(fd);
   putenv("FX_GLIDE_NO_SPLASH=");
   grGlideInit();
   grSetupVertexLayout();
-
-  blit_hardware_rotation = 1;
-  return OSD_OK;
+  return 0;
 }
 
 void ExitGlide(void)
@@ -180,7 +180,7 @@ int InitTextures(void)
 
   texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
 
-  if(vecgame)
+  if(sysdep_display_params.vecgame)
   {
     grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
                                        GR_COMBINE_FACTOR_LOCAL,
@@ -222,20 +222,20 @@ int InitTextures(void)
 
   /* Allocate the texture memory */
   
-  texnumx=visual_width/texsize;
-  if(texnumx*texsize!=visual_width) texnumx++;
-  texnumy=visual_height/texsize;
-  if(texnumy*texsize!=visual_height) texnumy++;
+  texnumx=sysdep_display_params.orig_width/texsize;
+  if(texnumx*texsize!=sysdep_display_params.orig_width) texnumx++;
+  texnumy=sysdep_display_params.orig_height/texsize;
+  if(texnumy*texsize!=sysdep_display_params.orig_height) texnumy++;
   
-  if (blit_swapxy)
+  if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
   {
-    texpercx=(float)texsize/(float)visual_height;
-    texpercy=(float)texsize/(float)visual_width;
+    texpercx=(float)texsize/(float)sysdep_display_params.orig_height;
+    texpercy=(float)texsize/(float)sysdep_display_params.orig_width;
   }
   else
   {
-    texpercx=(float)texsize/(float)visual_width;
-    texpercy=(float)texsize/(float)visual_height;
+    texpercx=(float)texsize/(float)sysdep_display_params.orig_width;
+    texpercy=(float)texsize/(float)sysdep_display_params.orig_height;
   }
 
   if(texpercx>1.0) texpercx=1.0;
@@ -255,32 +255,32 @@ int InitTextures(void)
 	  tsq->texadd=memaddr;
 	  memaddr+=texmem;
 
-	  if(j==(texnumx-1) && visual_width%texsize)
-		tsq->xcov=(float)((visual_width)%texsize)/(float)texsize;
+	  if(j==(texnumx-1) && sysdep_display_params.orig_width%texsize)
+		tsq->xcov=(float)((sysdep_display_params.orig_width)%texsize)/(float)texsize;
 	  else tsq->xcov=1.0;
 	  
-	  if(i==(texnumy-1) && visual_height%texsize)
-		tsq->ycov=(float)((visual_height)%texsize)/(float)texsize;
+	  if(i==(texnumy-1) && sysdep_display_params.orig_height%texsize)
+		tsq->ycov=(float)((sysdep_display_params.orig_height)%texsize)/(float)texsize;
 	  else tsq->ycov=1.0;
 
 	  tsq->vtxA.oow=1.0;
 	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
 
-          if(blit_flipy)
+          if((sysdep_display_params.orientation&SYSDEP_DISPLAY_FLIPY))
           {
             tsq->vtxA.tmuvtx[0].tow=256.0;
             tsq->vtxB.tmuvtx[0].tow=256.0;
             tsq->vtxC.tmuvtx[0].tow=0.0;
             tsq->vtxD.tmuvtx[0].tow=0.0;
-            if (blit_swapxy)
+            if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               y = (texnumx-1) - j;
-              firsttexdestheightfac = (visual_width%texsize)/(float)texsize;
+              firsttexdestheightfac = (sysdep_display_params.orig_width%texsize)/(float)texsize;
             }
             else
             {
               y = (texnumy-1) - i;
-              firsttexdestheightfac = (visual_height%texsize)/(float)texsize;
+              firsttexdestheightfac = (sysdep_display_params.orig_height%texsize)/(float)texsize;
             }
           }
           else
@@ -289,7 +289,7 @@ int InitTextures(void)
             tsq->vtxB.tmuvtx[0].tow=0.0;
             tsq->vtxC.tmuvtx[0].tow=256.0;
             tsq->vtxD.tmuvtx[0].tow=256.0;
-            if (blit_swapxy)
+            if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               y = j;
               firsttexdestheightfac = 1.0;
@@ -301,21 +301,21 @@ int InitTextures(void)
             }
           }
 
-          if(blit_flipx)
+          if((sysdep_display_params.orientation&SYSDEP_DISPLAY_FLIPX))
           {
             tsq->vtxA.tmuvtx[0].sow=256.0;
             tsq->vtxB.tmuvtx[0].sow=0.0;
             tsq->vtxC.tmuvtx[0].sow=0.0;
             tsq->vtxD.tmuvtx[0].sow=256.0;
-            if (blit_swapxy)
+            if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               x = (texnumy-1) - i;
-              firsttexdestwidthfac = (visual_height%texsize)/(float)texsize;
+              firsttexdestwidthfac = (sysdep_display_params.orig_height%texsize)/(float)texsize;
             }
             else
             {
               x = (texnumx-1) - j;
-              firsttexdestwidthfac = (visual_width%texsize)/(float)texsize;
+              firsttexdestwidthfac = (sysdep_display_params.orig_width%texsize)/(float)texsize;
             }
           }
           else
@@ -324,7 +324,7 @@ int InitTextures(void)
             tsq->vtxB.tmuvtx[0].sow=256.0;
             tsq->vtxC.tmuvtx[0].sow=256.0;
             tsq->vtxD.tmuvtx[0].sow=0.0;
-            if (blit_swapxy)
+            if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               x = i;
               firsttexdestwidthfac = 1.0;
@@ -336,7 +336,7 @@ int InitTextures(void)
             }
           }
           
-          if(blit_swapxy)
+          if((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
           {
             float temp;
             
@@ -432,10 +432,10 @@ static int SetResolution(struct rc_option *option, const char *arg,
       "   Valid resolutions are:\n", arg);
   for( match = 0; match < resTableSize; match++ )
   {
-     fprintf(stderr_file, "   \"%dx%d\"", resTable[match].width,
+     fprintf(stderr, "   \"%dx%d\"", resTable[match].width,
         resTable[match].height);
      if (match && (match % 5) == 0)
-        fprintf(stderr_file, "\n");
+        fprintf(stderr, "\n");
   }
   return -1;
 }
@@ -445,45 +445,41 @@ static int SetResolution(struct rc_option *option, const char *arg,
 int InitVScreen(void)
 {
   grGlideGetVersion(version);
-
-  if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	vecgame=1;
-
-  fprintf(stderr_file, "info: using Glide version %s\n", version);
+  fprintf(stderr, "info: using Glide version %s\n", version);
   
   grSstSelect(0);
-
   if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
      GR_ORIGIN_LOWER_LEFT,2,1)))
   {
-     fprintf(stderr_file, "error opening Glide window, do you have enough memory on your 3dfx for the selected mode?\n");
-     return OSD_NOT_OK;
+     fprintf(stderr, "error opening Glide window, do you have enough memory on your 3dfx for the selected mode?\n");
+     return 1;
   }
-  fprintf(stderr_file,
+  fprintf(stderr,
      "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
 
   /* clear the buffer */
   grBufferClear(0,0,0);
   
   /* calculate the vscreen boundaries */
-  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight,
-     (double)fxwidth/fxheight);
+  sysdep_display_check_params();
+  mode_check_params((double)fxwidth/fxheight);
+  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
   vscrntlx=(fxwidth -vscrnwidth )/2;
   vscrntly=(fxheight-vscrnheight)/2;
   
-  /* fill the display_palette_info struct */
-  memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-  switch(video_real_depth) {
+  /* fill the sysdep_display_palette_info struct */
+  memset(&sysdep_display_palette_info, 0, sizeof(struct sysdep_palette_info));
+  switch(sysdep_display_params.depth) {
     case 15:
     case 16:
-      display_palette_info.red_mask   = 0x7C00;
-      display_palette_info.green_mask = 0x03E0;
-      display_palette_info.blue_mask  = 0x001F;
+      sysdep_display_palette_info.red_mask   = 0x7C00;
+      sysdep_display_palette_info.green_mask = 0x03E0;
+      sysdep_display_palette_info.blue_mask  = 0x001F;
       break;
     case 32:
-      display_palette_info.red_mask   = 0xFF0000;
-      display_palette_info.green_mask = 0x00FF00;
-      display_palette_info.blue_mask  = 0x0000FF;
+      sysdep_display_palette_info.red_mask   = 0xFF0000;
+      sysdep_display_palette_info.green_mask = 0x00FF00;
+      sysdep_display_palette_info.blue_mask  = 0x0000FF;
       break;
   }
    
@@ -519,35 +515,37 @@ void CloseVScreen(void)
 
 
 /* Update the texture with the contents of the game screen */
-
-void UpdateTexture(struct mame_bitmap *bitmap)
+/* FIXME: do partial updates */
+void UpdateTexture(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette)
 {
 	int y,rline,texline,xsquare,ysquare,ofs,width, i;
 	struct TexSquare *square;
 
-	if(visual_width<=texsize) width=visual_width;
+	if(sysdep_display_params.orig_width<=texsize) width=sysdep_display_params.orig_width;
 	else width=texsize;
 
-	switch (video_real_depth) {
+	switch (sysdep_display_params.depth) {
 
 
 	case 15:
-		for(y=visual.min_y;y<=visual.max_y;y++) {
-			rline=y-visual.min_y;
+		for(y=vis_area->min_y;y<=vis_area->max_y;y++) {
+			rline=y-vis_area->min_y;
 			ysquare=rline/texsize;
 			texline=rline%texsize;
 			
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
 					width=texsize;
-				else width=visual_width%texsize;
+				else width=sysdep_display_params.orig_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
                                 memcpy(square->texture+texline*texsize,
-                                       (UINT16*)(bitmap->line[y])+visual.min_x+ofs,
+                                       (UINT16*)(bitmap->line[y])+vis_area->min_x+ofs,
                                        width*2);
 			}
 		} 
@@ -555,46 +553,45 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 
 	case 16:
 		
-		for(y=visual.min_y;y<=visual.max_y;y++) {
-			rline=y-visual.min_y;
+		for(y=vis_area->min_y;y<=vis_area->max_y;y++) {
+			rline=y-vis_area->min_y;
 			ysquare=rline/texsize;
 			texline=rline%texsize;
 			
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
 					width=texsize;
-				else width=visual_width%texsize;
+				else width=sysdep_display_params.orig_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 				for(i = 0;i < width;i++) {
 					square->texture[texline*texsize+i] = 
-						current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
+						palette->lookup[(((UINT16*)(bitmap->line[y]))[vis_area->min_x+ofs+i])];
 				}
 			}
 		}
 		break;
 
-	case 24:
 	case 32:
-		for(y=visual.min_y;y<=visual.max_y;y++) {
-			rline=y-visual.min_y;
+		for(y=vis_area->min_y;y<=vis_area->max_y;y++) {
+			rline=y-vis_area->min_y;
 			ysquare=rline/texsize;
 			texline=rline%texsize;
 			
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(visual_width%texsize))
+				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
 					width=texsize;
-				else width=visual_width%texsize;
+				else width=sysdep_display_params.orig_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 					
 				for(i = 0;i < width;i++) {
 					square->texture[texline*texsize+i] = 
-						_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
+						_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[vis_area->min_x+ofs+i]));
 				}
 			}
 		}
@@ -631,12 +628,14 @@ void DrawFlatBitmap(void)
   }
 }
 
-void UpdateFXDisplay(struct mame_bitmap *bitmap)
+void UpdateFXDisplay(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette)
 {
   static int ui_was_dirty=0;
   
-  if(bitmap && (!vecgame || ui_dirty || ui_was_dirty))
-    UpdateTexture(bitmap);
+  if(bitmap && (!sysdep_display_params.vecgame || ui_dirty || ui_was_dirty))
+    UpdateTexture(bitmap, dirty_area, vis_area, palette);
 
   DrawFlatBitmap();
   grBufferSwap(1);
@@ -645,9 +644,8 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap)
   ui_was_dirty=ui_dirty;
 }
 
-
+#if 0
 /* invoked by main tree code to update bitmap into screen */
-
 void sysdep_update_display(struct mame_bitmap *bitmap)
 {
   if(code_pressed(KEYCODE_RCONTROL)) {
@@ -668,5 +666,4 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
 
   UpdateFXDisplay(bitmap);
 }
-
-#endif /* if defined xfx || defined svgafx */
+#endif

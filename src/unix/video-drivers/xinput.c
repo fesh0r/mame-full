@@ -2,14 +2,16 @@
  * X-Mame x11 input code
  *
  */
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
-#include "xmame.h"
-#include "devices.h"
 #include "x11.h"
 #include "xkeyboard.h"
+#include "sysdep/sysdep_display_priv.h"
 
 #ifdef USE_XINPUT_DEVICES
 #include <X11/extensions/XInput.h>
@@ -24,7 +26,7 @@ typedef struct {
   char *deviceName;
   XDeviceInfo *info;
   int mameDevice;
-  int previousValue[JOY_AXES];
+  int previousValue[SYSDEP_DISPLAY_MOUSE_MAX];
   int neverMoved;
 } XInputDeviceData;
 
@@ -50,6 +52,7 @@ static int xinput_use_winkeys = 0;
 static int xinput_grab_mouse = 0;
 static int xinput_grab_keyboard = 0;
 static int xinput_show_cursor = 1;
+static int xinput_always_use_mouse = 0;
 static XSizeHints x11_init_hints;
 /* not static because xgl needs these for its own window creation */
 int root_window_id; /* root window id (for swallowing the mame window) */
@@ -81,6 +84,7 @@ struct rc_option x11_input_opts[] = {
 	{ "X11-input related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "grabmouse", "gm", rc_bool, &xinput_grab_mouse, "0", 0, 0, NULL, "Enable/disable mousegrabbing (also alt + pagedown)" },
 	{ "grabkeyboard", "gkb", rc_bool, &xinput_grab_keyboard, "0", 0, 0, NULL, "Enable/disable keyboardgrabbing (also alt + pageup)" },
+	{ "alwaysusemouse", "aum", rc_bool, &xinput_always_use_mouse, "0", 0, 0, NULL, "Always use mouse movements as input, even when not grabbed and not fullscreen (default disabled)" },
 	{ "cursor", "cu", rc_bool, &xinput_show_cursor, "1", 0, 0, NULL, "Show/don't show the cursor" },
 	{ "winkeys", "wk", rc_bool, &xinput_use_winkeys, "0", 0, 0, NULL, "Enable/disable mapping of windowskeys under X" },
 	{ "mapkey", "mk", rc_use_function, NULL, NULL, 0, 0, xinput_mapkey, "Set a specific key mapping, see xmamerc.dist" },
@@ -117,13 +121,14 @@ typedef struct {
 /*
  * Parse keyboard (and other) events
  */
-void sysdep_update_keyboard (void)
+int sysdep_display_update_keyboard (void)
 {
-	XEvent				E;
-	KeySym				keysym;
-	char				keyname[16+1];
-	int				mask;
-	struct xmame_keyboard_event	event;
+	XEvent	E;
+	KeySym	keysym;
+	char	keyname[16+1];
+	int	mask;
+	struct	sysdep_display_keyboard_event event;
+	int	ret_val = 0;
 	
 #ifdef USE_XINPUT_DEVICES
 	XInputClearDeltas();
@@ -156,11 +161,11 @@ void sysdep_update_keyboard (void)
 		/* query all events that we have previously requested */
 		while ( XPending(display) )
 		{
-			mask = FALSE;
-			event.press = FALSE;
+			mask = 0;
+			event.press = 0;
 
 			XNextEvent(display,&E);
-			/*  fprintf(stderr_file,"Event: %d\n",E.type); */
+			/*  fprintf(stderr,"Event: %d\n",E.type); */
 
 			/* we don't have to check x11_video_mode or extensions like xil here,
 			   since our eventmask should make sure that we only get the event's matching
@@ -168,13 +173,17 @@ void sysdep_update_keyboard (void)
 			switch (E.type)
 			{
 				/* display events */
+				case Expose:
+					if ( E.xexpose.count == 0 )
+						x11_exposed = 1;
+					break;
 				case FocusIn:
 					/* check for multiple events and ignore them */
 					if (xinput_focus) break;
-					xinput_focus = TRUE;
+					xinput_focus = 1;
 					/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 					   perform a key reset whenever we retrieve keyboard focus */
-					xmame_keyboard_clear();
+					ret_val = 1;
 					if ((xinput_force_grab || xinput_grab_mouse || xinput_old_mouse_grab) &&
 					    !XGrabPointer(display, window, True,
 					      PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
@@ -184,13 +193,15 @@ void sysdep_update_keyboard (void)
                                                 xinput_old_mouse_grab = 0;
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_invisible_cursor);
+						XWarpPointer(display, None, window, 0, 0, 0, 0,
+						  window_width/2, window_height/2);
 					}
 					xinput_set_leds(xinput_keyb_leds);
 					break;
 				case FocusOut:
 					/* check for multiple events and ignore them */
 					if (!xinput_focus) break;
-					xinput_focus = FALSE;
+					xinput_focus = 0;
 					if (xinput_mouse_grabbed)
 					{
 						XUngrabPointer(display, CurrentTime);
@@ -212,17 +223,17 @@ void sysdep_update_keyboard (void)
 					xinput_mouse_motion[1] += E.xmotion.y_root;
 					break;
 				case ButtonPress:
-					mask = TRUE;
+					mask = 1;
 #ifdef USE_DGA
 					/* Some buggy combination of XFree and virge screwup the viewport
 					   on the first mouseclick */
 					if(xf86_dga_first_click) { xf86_dga_first_click = 0; xf86_dga_fix_viewport = 1; }
 #endif          
 				case ButtonRelease:
-					mouse_data[0].buttons[E.xbutton.button-1] = mask;
+					sysdep_display_mouse_data[0].buttons[E.xbutton.button-1] = mask;
 					break;
 				case KeyPress:
-					event.press = TRUE;
+					event.press = 1;
 				case KeyRelease:
 					/* get bare keysym, for the scancode */
 					keysym = XLookupKeysym ((XKeyEvent *) &E, 0);
@@ -242,7 +253,7 @@ void sysdep_update_keyboard (void)
 
 					event.unicode = keyname[0];
 
-					xmame_keyboard_register_event(&event);
+					sysdep_display_params.keyboard_handler(&event);
 					break;
 				default:
 					/* grrr we can't use case here since the event types for XInput devices
@@ -257,6 +268,7 @@ void sysdep_update_keyboard (void)
 					break;
 			} /* switch */
 		} /* while */
+	return ret_val;
 }
 
 /*
@@ -276,17 +288,17 @@ static int xinput_mapkey(struct rc_option *option, const char *arg, int priority
 		{
 			if ( from <= 0x00ff ) 
 			{
-				code_table[from]=to; return OSD_OK;
+				code_table[from]=to; return 0;
 			}
 			else if ( (from>=0xfe00) && (from<=0xffff) ) 
 			{
-				extended_code_table[from&0x01ff]=to; return OSD_OK;
+				extended_code_table[from&0x01ff]=to; return 0;
 			}
 		}
-		/* stderr_file isn't defined yet when we're called. */
-		fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
+		/* stderr isn't defined yet when we're called. */
+		fprintf(stderr,"Invalid keymapping %s.\n", arg);
 	}
-	return OSD_NOT_OK;
+	return 1;
 }
 
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority)
@@ -324,7 +336,7 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 		}
 		else
 		{
-		  /* stderr_file isn't defined yet when we're called. */
+		  /* stderr isn't defined yet when we're called. */
 		  fprintf(stderr,"Invalid geometry: %s.\n", arg);
 		  return 1;
 		}
@@ -332,7 +344,7 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 	return 0;
 }
 
-void sysdep_mouse_poll(void)
+void sysdep_display_update_mouse(void)
 {
 	int i;
 	if(x11_video_mode == X11_DGA)
@@ -341,7 +353,7 @@ void sysdep_mouse_poll(void)
 		   than 2 axes at the moment so this is faster */
 		for (i=0; i<2; i++)
 		{
-			mouse_data[0].deltas[i] = xinput_mouse_motion[i];
+			sysdep_display_mouse_data[0].deltas[i] = xinput_mouse_motion[i];
 			xinput_mouse_motion[i] = 0;
 		}
 	}
@@ -354,22 +366,27 @@ void sysdep_mouse_poll(void)
 		if (!XQueryPointer(display, window, &root,&child, &root_x,&root_y,
 					&pos_x,&pos_y,&keys_buttons) )
 		{
-			mouse_data[0].deltas[0] = 0;
-			mouse_data[0].deltas[1] = 0;
+			sysdep_display_mouse_data[0].deltas[0] = 0;
+			sysdep_display_mouse_data[0].deltas[1] = 0;
 			return;
 		}
 
 		if ( xinput_mouse_grabbed )
 		{
 			XWarpPointer(display, None, window, 0, 0, 0, 0,
-					visual_width/2, visual_height/2);
-			mouse_data[0].deltas[0] = pos_x - visual_width/2;
-			mouse_data[0].deltas[1] = pos_y - visual_height/2;
+					window_width/2, window_height/2);
+			sysdep_display_mouse_data[0].deltas[0] = pos_x - window_width/2;
+			sysdep_display_mouse_data[0].deltas[1] = pos_y - window_height/2;
+		}
+		else if ( xinput_always_use_mouse )
+		{
+			sysdep_display_mouse_data[0].deltas[0] = pos_x - xinput_current_mouse[0];
+			sysdep_display_mouse_data[0].deltas[1] = pos_y - xinput_current_mouse[1];
 		}
 		else
 		{
-			mouse_data[0].deltas[0] = pos_x - xinput_current_mouse[0];
-			mouse_data[0].deltas[1] = pos_y - xinput_current_mouse[1];
+			sysdep_display_mouse_data[0].deltas[0] = 0;
+			sysdep_display_mouse_data[0].deltas[1] = 0;
 		}
 		xinput_current_mouse[0] = pos_x;
 		xinput_current_mouse[1] = pos_y;
@@ -443,7 +460,7 @@ static void xinput_set_leds(int leds)
    xinput_old_leds = leds;
 }
 
-void sysdep_set_leds(int leds)
+void sysdep_display_set_keybleds(int leds)
 {
    xinput_keyb_leds = leds;
    if (xinput_focus)
@@ -453,6 +470,8 @@ void sysdep_set_leds(int leds)
 int xinput_open(int force_grab, int event_mask)
 {
   xinput_force_grab = force_grab;
+  x11_exposed  = 1;
+  xinput_focus = 1;
   
   /* handle winkey mappings */
   if (xinput_use_winkeys)
@@ -471,15 +490,15 @@ int xinput_open(int force_grab, int event_mask)
     if(XGrabPointer (display, window, True,
          PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
          GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
-      fprintf(stderr_file, "Warning mouse grab failed\n");
+      fprintf(stderr, "Warning mouse grab failed\n");
     else
       xinput_mouse_grabbed = 1;
   }
   
-  /* Call sysdep_mouse_poll to get the current mouse position.
+  /* Call update_mouse to get the current mouse position.
      Do this twice to make the mouse[0].deltas[x] == 0 */
-  sysdep_mouse_poll();
-  sysdep_mouse_poll();
+  sysdep_display_update_mouse();
+  sysdep_display_update_mouse();
   
   if (window != DefaultRootWindow(display))
   {
@@ -514,7 +533,7 @@ int xinput_open(int force_grab, int event_mask)
 
 void xinput_close(void)
 {
-  sysdep_set_leds(0);
+  sysdep_display_set_keybleds(0);
 
   if (xinput_mouse_grabbed)
   {
@@ -536,11 +555,9 @@ void xinput_close(void)
   }
 }
 
-void xinput_check_hotkeys(void)
+void xinput_check_hotkeys(unsigned int hotkeys)
 {
-  if (!xinput_force_grab &&
-      code_pressed (KEYCODE_LALT) &&
-      code_pressed_memory (KEYCODE_PGDN))
+  if (!xinput_force_grab && (hotkeys & SYSDEP_DISPLAY_HOTKEY_GRABMOUSE))
   {
      if (xinput_mouse_grabbed)
      {
@@ -556,14 +573,15 @@ void xinput_check_hotkeys(void)
      {
         if (xinput_cursors_allocated && xinput_show_cursor)
            XDefineCursor (display, window, xinput_invisible_cursor);
+	XWarpPointer(display, None, window, 0, 0, 0, 0,
+	  window_width/2, window_height/2);
         xinput_mouse_grabbed = 1;
         xinput_grab_mouse = 1;
      }
   }
 
   /* toggle keyboard grabbing */
-  if ((xinput_force_grab!=2) && code_pressed (KEYCODE_LALT) &&
-      code_pressed_memory (KEYCODE_PGUP))
+  if ((xinput_force_grab!=2) && (hotkeys & SYSDEP_DISPLAY_HOTKEY_GRABKEYB))
   {
     if (xinput_keyboard_grabbed)
     {
@@ -586,7 +604,7 @@ void xinput_check_hotkeys(void)
    0: Fixed size of width and height
    1: Resizable initial size is width and height
    2: Fullscreen return width and height in width and height */
-int x11_create_window(int *width, int *height, int type)
+int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
 	XEvent event;
@@ -630,7 +648,7 @@ int x11_create_window(int *width, int *height, int type)
                         &winattr);
         if (!window)
         {
-                fprintf (stderr_file, "OSD ERROR: failed in XCreateWindow().\n");
+                fprintf (stderr, "OSD ERROR: failed in XCreateWindow().\n");
                 return 1;
         }
         
@@ -649,13 +667,13 @@ int x11_create_window(int *width, int *height, int type)
    0: Fixed size of width and height
    1: Resizable initial size is width and height
    2: Fullscreen of width and height */
-void x11_set_window_hints(int width, int height, int type)
+void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 {
         XWMHints wm_hints;
 	XSizeHints hints = x11_init_hints;
 
 	/* WM hints */
-        wm_hints.input    = TRUE;
+        wm_hints.input    = True;
         wm_hints.flags    = InputHint;
         XSetWMHints (display, window, &wm_hints);
 
@@ -708,7 +726,7 @@ void x11_set_window_hints(int width, int height, int type)
 }
 #endif
         
-        XStoreName (display, window, title);
+        XStoreName (display, window, sysdep_display_params.title);
 }
 
 
@@ -741,10 +759,10 @@ XInputDevices_init(void)
 {
 	int i,j,k;
 
-	fprintf(stderr_file, "XInput: Initialization...\n");
+	fprintf(stderr, "XInput: Initialization...\n");
 
 	if (!XQueryExtension(display,"XInputExtension",&i,&j,&k)) {
-		fprintf(stderr_file,"XInput: Your Xserver doesn't support XInput Extensions\n");
+		fprintf(stderr,"XInput: Your Xserver doesn't support XInput Extensions\n");
 		return;
 	}
 
@@ -754,7 +772,7 @@ XInputDevices_init(void)
 			/* if not NULL, check for an existing device */
 			XIdevices[i].info=find_device_info(display,XIdevices[i].deviceName,True);
 			if (! XIdevices[i].info) {
-				fprintf(stderr_file,"XInput: Unable to find device `%s'. Ignoring it!\n",
+				fprintf(stderr,"XInput: Unable to find device `%s'. Ignoring it!\n",
 						XIdevices[i].deviceName);
 				XIdevices[i].deviceName=NULL;
 			} else {
@@ -767,7 +785,7 @@ XInputDevices_init(void)
 					   */
 				}
 				if (! register_events(i, display,XIdevices[i].info,XIdevices[i].deviceName)) {
-					fprintf(stderr_file,"XInput: Couldn't register device `%s' for events. Ignoring it\n",
+					fprintf(stderr,"XInput: Couldn't register device `%s' for events. Ignoring it\n",
 							XIdevices[i].deviceName);
 					XIdevices[i].deviceName=NULL;
 				}
@@ -779,10 +797,10 @@ XInputDevices_init(void)
 static void XInputClearDeltas(void)
 {
    int i;
-   for(i = 1; i < MOUSE_MAX; i++)
+   for(i = 1; i < SYSDEP_DISPLAY_MOUSE_MAX; i++)
    {
-      mouse_data[i].deltas[0] = 0;
-      mouse_data[i].deltas[1] = 0;
+      sysdep_display_mouse_data[i].deltas[0] = 0;
+      sysdep_display_mouse_data[i].deltas[1] = 0;
    }
 }
 
@@ -795,11 +813,11 @@ XInputProcessEvent(XEvent *ev)
 	if (ev->type == motion_type) {
 		XDeviceMotionEvent *motion=(XDeviceMotionEvent *) ev;
 
-		for(i = 1; i < MOUSE_MAX; i++)
+		for(i = 1; i < SYSDEP_DISPLAY_MOUSE_MAX; i++)
 			if (XIdevices[i-1].deviceName && motion->deviceid == XIdevices[i-1].info->id)
 				break;
 
-		if (i == MOUSE_MAX)
+		if (i == SYSDEP_DISPLAY_MOUSE_MAX)
 			return 0;
 
 		if (XIdevices[i-1].neverMoved) {
@@ -808,8 +826,8 @@ XInputProcessEvent(XEvent *ev)
 			XIdevices[i-1].previousValue[1] = motion->axis_data[1];
 		}
 
-		mouse_data[i].deltas[0] += motion->axis_data[0] - XIdevices[i-1].previousValue[0];
-		mouse_data[i].deltas[1] += motion->axis_data[1] - XIdevices[i-1].previousValue[1];
+		sysdep_display_mouse_data[i].deltas[0] += motion->axis_data[0] - XIdevices[i-1].previousValue[0];
+		sysdep_display_mouse_data[i].deltas[1] += motion->axis_data[1] - XIdevices[i-1].previousValue[1];
 
 		XIdevices[i-1].previousValue[0] = motion->axis_data[0];
 		XIdevices[i-1].previousValue[1] = motion->axis_data[1];
@@ -818,17 +836,17 @@ XInputProcessEvent(XEvent *ev)
 	} else if (ev->type == button_press_type || ev->type == button_release_type) {
 		XDeviceButtonEvent *button = (XDeviceButtonEvent *)ev;
 
-		for(i = 1; i < MOUSE_MAX; i++)
+		for(i = 1; i < SYSDEP_DISPLAY_MOUSE_MAX; i++)
 			if (XIdevices[i-1].deviceName && button->deviceid == XIdevices[i-1].info->id)
 				break;
 
-		if (i == MOUSE_MAX)
+		if (i == SYSDEP_DISPLAY_MOUSE_MAX)
 			return 0;
 
-		/* fprintf(stderr_file, "XInput: Player %d: Button %d %s\n",
+		/* fprintf(stderr, "XInput: Player %d: Button %d %s\n",
 		   i + 1, button->button, button->state ? "released" : "pressed"); */
 
-		mouse_data[i].buttons[button->button - 1] = (ev->type == button_press_type) ? 1 : 0;
+		sysdep_display_mouse_data[i].buttons[button->button - 1] = (ev->type == button_press_type) ? 1 : 0;
 
 		return 1;
 	}
@@ -896,11 +914,11 @@ register_events(int		player_id,
 	device = XOpenDevice(dpy, info->id);
 
 	if (!device) {
-		fprintf(stderr_file, "XInput: Unable to open XInput device `%s'\n", dev_name);
+		fprintf(stderr, "XInput: Unable to open XInput device `%s'\n", dev_name);
 		return 0;
 	}
 
-	fprintf(stderr_file, "XInput: Player %d using Device `%s'", player_id + 1, dev_name);
+	fprintf(stderr, "XInput: Player %d using Device `%s'", player_id + 1, dev_name);
 
 	if (device->num_classes > 0) {
 		any = (XAnyClassPtr)(info->inputclassinfo);
@@ -916,13 +934,13 @@ register_events(int		player_id,
 					binfo = (XButtonInfoPtr) any;
 					DeviceButtonPress(device, button_press_type, event_list[number]); number++;
 					DeviceButtonRelease(device, button_release_type, event_list[number]); number++;
-					fprintf(stderr_file, ", %d buttons", binfo->num_buttons);
+					fprintf(stderr, ", %d buttons", binfo->num_buttons);
 					break;
 
 				case ValuatorClass:
 					vinfo=(XValuatorInfoPtr) any;
 					DeviceMotionNotify(device, motion_type, event_list[number]); number++;
-					fprintf(stderr_file, ", %d axis", vinfo->num_axes);
+					fprintf(stderr, ", %d axis", vinfo->num_axes);
 					break;
 
 				default:
@@ -932,13 +950,13 @@ register_events(int		player_id,
 		}
 
 		if (XSelectExtensionEvent(dpy, root_win, event_list, number)) {
-			fprintf(stderr_file, ": Could not select extended events, not using");
+			fprintf(stderr, ": Could not select extended events, not using");
 			number = 0;
 		}
 	} else
-		fprintf(stderr_file, " contains no classes, not using");
+		fprintf(stderr, " contains no classes, not using");
 
-	fprintf(stderr_file, "\n");
+	fprintf(stderr, "\n");
 
 	return number;
 }

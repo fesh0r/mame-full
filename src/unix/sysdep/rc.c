@@ -270,12 +270,14 @@ int rc_real_read(struct rc_struct *rc, void *f, const char *description,
    return 0;
 }
 
+#if 0 /* osd_rc_ functions are no longer used */
 int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
    int priority, int continue_on_errors)
 {
    return rc_real_read(rc, f, description, priority,
              continue_on_errors, (fgets_func)mame_fgets);
 }
+#endif
 
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors)
@@ -339,11 +341,13 @@ static int rc_real_write(struct rc_option *option, void *f,
 	return 0;
 }
 
+#if 0 /* osd_rc_ functions are no longer used */
 int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description)
 {
    return rc_real_write(rc->option, f, description,
       (fprintf_func)mame_fprintf);
 }
+#endif
 
 int rc_write(struct rc_struct *rc, FILE *f, const char *description)
 {

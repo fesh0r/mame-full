@@ -2,6 +2,163 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.86.1
+	- Setting the display method to SDL again implies JOY_SDL.  It now also 
+	  implies SOUND_SDL.
+	- Reworked the video mode functions (Hans de Goede):
+	  * Unified and moved the aspect ratio calculations from xgl, fx, and 
+	    x11_window to mode.c since all display targets that support 
+	    arbitrary scaling through hardware make use of this.
+	  * Modified the code to use the aspect ratio supplied by the game 
+	    driver instead of doing all kinds of magic.  This corrects, for 
+	    example, the aspect ratio of 1942.
+	  * Added a new option, "-perfectaspect (-pa)", which automatically 
+	    sets yarbsize to honor the aspect ratio provided by the game 
+	    driver.  This is disabled by default because it can cause scaling 
+	    artifacts.
+	  * When video modes are matched, the aspect ratio is now taken into 
+	    account.
+	- Made changes to the OpenGL target (Hans de Goede):
+	  * Fixed a double-free bug that caused a segfault on exit.
+	  * Disabled the hotkey for switching between fullscreen and windowed 
+	    mode, since this is broken.
+	  * Fixed the resizing code to always detect resizes: The old code 
+	    sometimes missed a resize event, which caused the display and the 
+	    window size to mismatch.
+	  * Modified to use the unified aspect ratio code: Keep the correct 
+	    aspect ratio when "-glres" or "-fullscreen" is used; honor 
+	    "-keepaspect" and "-displayaspectratio"; calculate the correct 
+	    aspect ratio for games with non-square pixels.
+	  * When Mesa is used on a Voodoo 1 or 2, '-glres "640x480"' is 
+	    automatically added to the command line.
+	  * The mouse can be grabbed when it is requested by the user or when 
+	    fullscreen mode is used.
+	  * The keyboard can now be grabbed.
+	  * The mouse and keyboard are always grabbed when OpenGL on GLIDE is 
+	    used.
+	- Made changes to the X11 targets (Hans de Goede):
+	  * Restored widthscale == 2 yuy2 code for perfect yuy2 blitting. 
+	  * Fixed a bug introduced by the aspect ratio patches which caused the 
+	    Xv fallback code to not detect an error case and crash later on 
+	    instead of falling back to MITSHM.
+	  * The Xv window is now resized with the correct aspect ratio after a 
+	    user resize; this prevents black borders from appearing.
+	  * Renamed "-perfect-yv12" to "-perfect-yuv"
+	  * Enabled perfect blitting by default for yuy2, since it fixes the 
+	    ugly color bleeding in, for example, pacman.
+	  * Removed unused SGI pause map/unmap code.
+	  * Don't resize the window when testing Xv during image creation.
+	  * Unified keyboard and mouse grabbing and cursor setup.
+	  * Fixed colors being way off in Xv for 15bpp direct games, e.g., 
+	    vector games with artwork disabled.
+	  * Current mouse values are now initialized in xinput_open, which 
+	    should fix the problem of the visor going to the lower right corner
+	    in starwars when the video mode is switched from windowed X11 to 
+	    DGA fullscreen while the mouse is grabbed.
+	  * Undid a change from 0.86 that caused the display to be closed twice 
+	    when there was a creation failure.
+	  * Fixed the display of a 32bpp source on a 24bpp packed pixel window.
+	  * Fixed a bug in the DGA2 target which caused it to throw an XError 
+	    when it failed to find a suitable mode, causing xmame to abort.
+	  * XInput now maps controls to mice 2 - 5 and leaves mouse 1 free for 
+	    the default mouse.  (Hans de Goede)
+	  * Moved the XInput code from joystick-drivers/XInputDevices.[ch] to 
+	    video-drivers/xinput.c.  (Hans de Goede)
+	  * Unified window creation and window hints code.
+	  * Did a major cleanup of the xfx target, which now uses the unified 
+	    window code.
+	  * The xfx target now also always grabs the mouse and keyboard, since 
+	    losing focus when the Voodoo is controlling the monitor is not 
+	    good.
+	- Fixed a crash in the svgalib and svgafx targets that occurred when 
+	  the mouse couldn't be opened.  (Hans de Goede)
+	- Arbitrary Y scaling is now disabled when the debugger is used.  (Hans 
+	  de Goede)
+	- Added a missing "Rapid Fire" string to the configuration menu.  This 
+	  fixes problems with the configuration of player controls.  (Sylvain 
+	  Trosset)
+	- The two aRts sound plugins can now co-exist; their names for the 
+	  "-dsp_plugin (-dp)" option are "arts_smotek" and "arts_teira".  Fixes 
+	  Bugzilla bug 591.
+	- Added a flag (LIGHTGUN_DEFINE_INPUT_ABSINFO) to the makefile to 
+	  determine whether struct input_absinfo needs to be defined, since we 
+	  can't seem to decide this based on the version of the Linux headers.
+	- Cleaned up the sound code (Hans de Goede):
+	  * Cleaned up the ALSA driver.
+	  * The ALSA driver now reports the actual sample rate to the caller 
+	    rather than the requested one.
+	  * Removed the "-alsa-pcm" command line option; the ALSA driver now 
+	    supports "-auviodevice (-ad)".  (Hans de Goede)
+	  * Removed "-fakesound (-fsnd)".  Now sound is always faked since 
+	    certain games won't run without it.
+	  * Changed the default sample rate to 44100, moving us into the 
+	    Third Millennium.
+	  * Removed the "-[no]sound" option; if you really want to disable 
+	    sound, specify a bogus device with "-audiodevice".
+	- Cleaned up some of the rc-parsing code.  (Hans de Goede)
+	- Removed the "-[no]mouse" option.  (Hans de Goede)
+	- Fixed problems with building when GLIDE2 is enabled in the makefile.
+	  (Mark Nipper)
+	- When fullscreen mode is enabled, the event queue is first emptied.  
+	  (Hans de Goede)
+	- Added support for setting the keyboard LEDs.  For this to work, you 
+	  need to edit /usr/X11R6/lib/X11/xkb/compat/basic and change the 
+	  value of indicator.allowExplicit from False to True and then restart
+	  your X server.  Note that apps can only force the LEDs on, not off, 
+	  so make sure all the LEDs are off before you run xmame.  (Hans de 
+	  Goede)
+	- Remember if the grabbed mouse or keyboard state was changed with 
+	  hotkeys so that it can be restored when switching to fullscreen mode 
+	  and back.  (Hans de Goede)
+	- Removed a lot of cruft from the palette code, which now also 
+	  creates the yuyv lookup table when necessary.  (Hans de Goede)
+	- Catch fatal signals (abort, segfault, etc.) in the xfx and svgafx 
+	  targets and restore the Voodoo passthrough display before crashing.  
+	  (Hans de Goede)
+	- The GGI target builds again.
+	- Cleaned up and otherwise modified the blit and effect code (Hans de 
+	  Goede):
+	  * Removed a lot of 8bpp cruft.
+	  * Cleaned up and pared down the effects code.
+	  * Fixed a bug in blit_effect.h where each third line of 3x effects 
+	    never got drawn when double buffering was not being used.
+	  * When double buffering is used and the destination screen is wider 
+	    than the scaled game (DGA), only render and copy the visible part, 
+	    not the black areas.
+	  * Fixed a bug in effect 5 which showed up in palettized games.
+	  * Fixed effects with SVGAlib.
+	  * The effects code should compile more easily on machines with low 
+	    memory.
+	  * The effects now support 15bpp for X11 and SVGAlib.
+	  * Added YUY2 support to the 6-tap effect.
+	  * Trying to use an effect that isn't supported on a particular 
+	    display now reports a message and disabled the effect.
+	  * The effects now check for failed mallocs.
+	  * Switched off double buffering for effects, since this was just a 
+	    source of slowdown.
+	- The X11 target builds again when X11_XV isn't set in the makefile.  
+	  Fixes Bugzilla bug 598.  (alito)
+	- The OpenGL target's "-glaa" option is now disabled by default since 
+	  it's terribly slow when it's not supported in hardware.  (Hans de 
+	  Goede)
+	- Split aspect and mode settings so that all targets can use the 
+	  aspect settings.  (Hans de Goede)
+	- Ported the following change from Windows MAME: 'Added the ability for 
+	  analog axes to return "invalid" as a value from the OSD layer, 
+	  allowing them to dynamically disable themselves.  Using this feature, 
+	  the Windows version now autodetects analog versus digital axes and 
+	  dynamically disables the analog values if it thinks you are using a 
+	  digital axis.  Note that this even works if you have a "switchable" 
+	  gamepad.  [Aaron Giles]'
+	- Fixed the mapping of analog sticks' min..max ranges to the core's 
+	  range.  This fixes games that use analog controls, such as Out Run, 
+	  as well as the jittery movement of the mouse cursor in games such as 
+	  Missile Command.
+	- Audio should work much better on Mac OS X.  (anonymous)
+
+
+	*** broken MMX code
+
 Release 0.86, 25 August 2004
 	- Everything from MAME 0.86 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.86 (http://x.mame.net/changes-mess.html).

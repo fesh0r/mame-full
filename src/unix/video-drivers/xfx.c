@@ -10,9 +10,6 @@
   Mame license
 
 *****************************************************************/
-/* pretend we're x11.c otherwise display and a few other crucial things don't
-   get declared */
-#define __X11_C_   
 #define __XFX_C_
 
 
@@ -20,72 +17,52 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
+/* from fxgen.c */
 int  InitVScreen(void);
 void CloseVScreen(void);
 int  InitGlide(void);
 void ExitGlide(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
+void UpdateFXDisplay(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette);
 
 extern int fxwidth;
 extern int fxheight;
-extern struct rc_option fx_opts[];
 
-struct rc_option display_opts[] = {
-   /* name, shortname, type, dest, deflt, min, max, func, help */
-   { NULL, 		NULL,			rc_link,	fx_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL, 		NULL,			rc_link,	x11_input_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
-   { NULL,		NULL,			rc_end,		NULL,
-     NULL,		0,			0,		NULL,
-     NULL }
-};
-
-int sysdep_init(void)
+int xfx_init(void)
 {
   fprintf(stderr,
      "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
   
-  /* Open the display. */
-  display=XOpenDisplay(NULL);
-  screen=DefaultScreenOfDisplay(display);
-
-  if(!display) {
-	fprintf (stderr,"OSD ERROR: failed to open the display.\n");
-	return OSD_NOT_OK; 
-  }
-
   return InitGlide();
 }
 
-void sysdep_close(void)
+void xfx_exit(void)
 {
-   ExitGlide();
-   XCloseDisplay(display);
+  ExitGlide();
 }
 
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int sysdep_create_display(int depth)
+int xfx_open_display(void)
 {
   if (x11_create_window(&fxwidth, &fxheight, 0))
     return 1;
     
   xinput_open(2, 0);
   
-  if (InitVScreen() != OSD_OK)
-     return OSD_NOT_OK;
+  if (InitVScreen() != 0)
+     return 1;
 
   VScreenCatchSignals();
   
-  return OSD_OK;
+  return 0;
 }
 
 /*
@@ -93,7 +70,7 @@ int sysdep_create_display(int depth)
  * when creating the display
  */
 
-void sysdep_display_close (void)
+void xfx_close_display (void)
 {
    VScreenRestoreSignals();
 
@@ -107,4 +84,11 @@ void sysdep_display_close (void)
    }
 
    XSync(display, True); /* send all events to sync; */
+}
+
+void xfx_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *dirty_area,  struct rectangle *vis_area,
+	  struct sysdep_palette_struct *palette)
+{
+   UpdateFXDisplay(bitmap, dirty_area, vis_area, palette);
 }

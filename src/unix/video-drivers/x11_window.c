@@ -17,6 +17,8 @@
 
 /* for FLT_MAX */
 #include <float.h>
+#include <stdlib.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -40,10 +42,8 @@
 #include <X11/extensions/Xvlib.h>
 #endif
 
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
-#include "driver.h"
-#include "pixel_convert.h"
 
 /* for xscreensaver support */
 /* Commented out for now since it causes problems with some 
@@ -52,22 +52,20 @@
 /* #include "vroot.h" */
 
 #ifdef USE_HWSCALE
-static void x11_window_update_16_to_YUY2 (struct mame_bitmap *bitmap);
-static void x11_window_update_16_to_YV12 (struct mame_bitmap *bitmap);
-static void x11_window_update_16_to_YV12_perfect (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_YUY2_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap);
+static void x11_window_update_16_to_YV12 (struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+static void x11_window_update_16_to_YV12_perfect (struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 #endif
-static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_24bpp_direct (struct mame_bitmap *bitmap);
-static void x11_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
-static void (*x11_window_update_display_func) (struct mame_bitmap *bitmap) = NULL;
+static blit_func_p x11_window_update_display_func;
 
 /* we need these to do the clean up correctly */
 #ifdef USE_MITSHM
@@ -85,41 +83,27 @@ static int hwscale_yv12=0;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
 static int hwscale_perfect_yuv=1;
-static int hwscale_fullscreen=0;
 static Visual hwscale_visual;
-#define FOURCC_YUY2 0x32595559
-#define FOURCC_YV12 0x32315659
-#define FOURCC_I420 0x30323449
-#define FOURCC_UYVY 0x59565955
-
 #endif
 
 #ifdef USE_XV
 static XvImage *xvimage = NULL;
 static int xv_port=-1;
 static int use_xv=0;
-#define HWSCALE_WIDTH (xvimage->width)
-#define HWSCALE_HEIGHT (xvimage->height)
-#define HWSCALE_YPLANE (xvimage->data+xvimage->offsets[0])
-#define HWSCALE_UPLANE (xvimage->data+xvimage->offsets[1])
-#define HWSCALE_VPLANE (xvimage->data+xvimage->offsets[2])
 #endif
 
 static XImage *image = NULL;
 static GC gc;
-static int orig_widthscale, orig_heightscale, orig_yarbsize;
 static int image_width;
-enum { X11_NORMAL, X11_MITSHM, X11_XV, X11_XIL };
+enum { X11_NORMAL, X11_MITSHM, X11_XVSHM, X11_XIL };
 static int x11_window_update_method;
 static int startx = 0;
 static int starty = 0;
 static int use_xsync = 0;
-static double x11_resolution_aspect=0.0;
 
 struct rc_option x11_window_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "X11-window Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL,
- NULL },
+	{ "X11-window Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL,  NULL },
 #ifdef USE_MITSHM
 	{ "mitshm", "ms", rc_bool, &use_mit_shm, "1", 0, 0, NULL, "Use/don't use MIT Shared Mem (if available and compiled in)" },
 #endif
@@ -158,7 +142,7 @@ int test_mit_shm (Display * display, XErrorEvent * error)
 		return 0;
 	}
 	/* else unspected error code: notify and exit */
-	fprintf (stderr_file, "Unspected X Error %d: %s\n", ret, msg);
+	fprintf (stderr, "Unspected X Error %d: %s\n", ret, msg);
 	exit(1);
 	/* to make newer gcc's shut up, grrr */
 	return 0;
@@ -267,13 +251,13 @@ int FindRGBXvFormat(Display *dpy, int *port,long *format,int *bpp)
 void ClearYUY2()
 {
   int i,j;
-  char *yuv=HWSCALE_YPLANE;
+  char *yuv=(xvimage->data+xvimage->offsets[0]);
   fprintf(stderr,"Clearing YUY2\n");
-  for (i = 0; i < HWSCALE_HEIGHT; i++)
+  for (i = 0; i < xvimage->height; i++)
   {
-    for (j = 0; j < HWSCALE_WIDTH; j++)
+    for (j = 0; j < xvimage->width; j++)
     {
-      int offset=(HWSCALE_WIDTH*i+j)*2;
+      int offset=(xvimage->width*i+j)*2;
       yuv[offset] = 0;
       yuv[offset+1]=-128;
     }
@@ -283,17 +267,17 @@ void ClearYUY2()
 void ClearYV12()
 {
   int i,j;
-  char *y=HWSCALE_YPLANE;
-  char *u=HWSCALE_UPLANE;
-  char *v=HWSCALE_VPLANE;
+  char *y=(xvimage->data+xvimage->offsets[0]);
+  char *u=(xvimage->data+xvimage->offsets[1]);
+  char *v=(xvimage->data+xvimage->offsets[2]);
   fprintf(stderr,"Clearing YV12\n");
-  for (i = 0; i < HWSCALE_HEIGHT; i++) {
-    for (j = 0; j < HWSCALE_WIDTH; j++) {
-      int offset=(HWSCALE_WIDTH*i+j);
+  for (i = 0; i < xvimage->height; i++) {
+    for (j = 0; j < xvimage->width; j++) {
+      int offset=(xvimage->width*i+j);
       y[offset] = 0;
       if((i&1) && (j&1))
       {
-        offset = (HWSCALE_WIDTH/2)*(i/2) + (j/2);
+        offset = (xvimage->width/2)*(i/2) + (j/2);
         u[offset] = -128;
         v[offset] = -128;
       }
@@ -305,15 +289,15 @@ void ClearYV12()
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
-int x11_window_create_display (int bitmap_depth)
+int x11_window_open_display(void)
 {
         Visual *xvisual;
 	XGCValues xgcv;
 	int i;
 	int image_height;
-	int window_width, window_height;
-	int event_mask = 0;
-	int dest_depth;
+	int event_mask = ExposureMask;
+	int dest_bpp;
+	int orig_widthscale, orig_yarbsize;
 
 	/* set all the default values */
 	window = 0;
@@ -325,20 +309,19 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_MITSHM
 	mit_shm_attached = 0;
 #endif
-	screen           = DefaultScreenOfDisplay (display);
+        /* check the params, do this here since
+           this can change width and height settings */
+        sysdep_display_check_params();
+        mode_check_params((double)screen->width/screen->height);
 
-        /* fix the aspect ratio, do this here since
-           this can change yarbsize */
-        x11_resolution_aspect = (float)screen->width/screen->height;
-        mode_fix_aspect(x11_resolution_aspect);
-
-	window_width     = widthscale  * visual_width;
-	window_height    = yarbsize ? yarbsize : (heightscale * visual_height);
-	image_width      = widthscale  * visual_width;
-	image_height     = yarbsize ? yarbsize : (heightscale * visual_height);
-	orig_widthscale  = widthscale;
-	orig_heightscale = heightscale;
-	orig_yarbsize    = yarbsize;
+	orig_widthscale  = sysdep_display_params.widthscale;
+	orig_yarbsize    = sysdep_display_params.yarbsize;
+	window_width     = sysdep_display_params.widthscale * 
+	  sysdep_display_params.width;
+	window_height    = sysdep_display_params.yarbsize;
+	image_width      = sysdep_display_params.widthscale *
+	  sysdep_display_params.aligned_width;
+	image_height     = sysdep_display_params.yarbsize;
 #ifdef USE_HWSCALE
         use_hwscale	 = 0;
 
@@ -346,10 +329,7 @@ int x11_window_create_display (int bitmap_depth)
 		hwscale_yuv=1;
 #endif
 #ifdef USE_XV
-	use_xv = (x11_video_mode == X11_XV_WINDOW
-			|| x11_video_mode == X11_XV_FULLSCREEN);
-
-	hwscale_fullscreen = (x11_video_mode == X11_XV_FULLSCREEN);
+	use_xv = (x11_video_mode == X11_XV);
 
         /* we need MIT-SHM ! */
         if (use_xv)
@@ -367,7 +347,7 @@ int x11_window_create_display (int bitmap_depth)
                 }
                 else
                 {
-                        fprintf (stderr_file, "X-Server Doesn't support MIT-SHM extension\n");
+                        fprintf (stderr, "X-Server Doesn't support MIT-SHM extension\n");
                         use_mit_shm = 0;
                 }
         }
@@ -384,13 +364,12 @@ int x11_window_create_display (int bitmap_depth)
 	if (use_xil)
 	{
 	    /* xil does normal scaling for us */
-            if (effect == 0)
+            if (sysdep_display_params.effect == 0)
             {
-		image_width  = visual_width;
-		image_height = visual_height;
-		widthscale   = 1;
-		heightscale  = 1;
-		yarbsize     = 0;
+		image_width  = sysdep_display_params.aligned_width;
+		image_height = sysdep_display_params.height;
+		sysdep_display_params.widthscale = 1;
+		sysdep_display_params.yarbsize   = image_height;
             }
             x11_window_update_method = X11_XIL;
 	}
@@ -403,22 +382,29 @@ int x11_window_create_display (int bitmap_depth)
 					&p_event_base, &p_error_base)==Success)
 		{
 	            /* Xv does normal scaling for us */
-		    if(effect==0)
+		    if(sysdep_display_params.effect==0)
 		    {
-                        image_width  = visual_width;
-                        image_height = visual_height;
-                        widthscale   = 1;
-                        heightscale  = 1;
-                        yarbsize     = 0;
+                        if (hwscale_perfect_yuv)
+                        {
+                          image_width = 2*sysdep_display_params.aligned_width;
+                          sysdep_display_params.widthscale = 2;
+                        }
+                        else
+                        {
+                          image_width = sysdep_display_params.aligned_width;
+                          sysdep_display_params.widthscale = 1;
+                        }
+                        image_height = sysdep_display_params.height;
+                        sysdep_display_params.yarbsize = sysdep_display_params.height;
                     }
 #ifdef USE_XIL
                     use_xil = 0;
 #endif
-                    x11_window_update_method = X11_XV;
+                    x11_window_update_method = X11_XVSHM;
 		}
 		else
 		{
-			fprintf (stderr_file, "X-Server Doesn't support Xv extension\n");
+			fprintf (stderr, "X-Server Doesn't support Xv extension\n");
 			use_xv = 0;
 		}
 	}
@@ -428,7 +414,7 @@ int x11_window_create_display (int bitmap_depth)
 
         /* get a visual */
 	xvisual = screen->root_visual;
-	fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", screen->root_depth);
+	fprintf(stderr, "Using a Visual with a depth of %dbpp.\n", screen->root_depth);
 
 	/* create a window */
 	if (run_in_root_window)
@@ -437,9 +423,9 @@ int x11_window_create_display (int bitmap_depth)
 		int height = screen->height;
 		if (window_width > width || window_height > height)
 		{
-			fprintf (stderr_file, "OSD ERROR: Root window is to small: %dx%d, needed %dx%d\n",
+			fprintf (stderr, "OSD ERROR: Root window is to small: %dx%d, needed %dx%d\n",
 					width, height, window_width, window_height);
-			return OSD_NOT_OK;
+			return 1;
 		}
 
 		startx        = ((width  - window_width)  / 2) & ~0x07;
@@ -470,9 +456,9 @@ int x11_window_create_display (int bitmap_depth)
 			break;
 #endif
 #ifdef USE_XV
-		case X11_XV:
+		case X11_XVSHM:
 			/* Create an XV MITSHM image. */
-                        fprintf (stderr_file, "MIT-SHM & XV Extensions Available. trying to use... ");
+                        fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
                         /* find a suitable format */
                         if(!hwscale_yuv)
                         {
@@ -490,11 +476,6 @@ int x11_window_create_display (int bitmap_depth)
                                         fprintf(stderr,"\nYUY2 not available - trying YV12... ");
                                         hwscale_yv12=1;
                                 }
-                                else if (!effect && hwscale_perfect_yuv)
-                                {
-                                        image_width  = 2*visual_width;
-                                        widthscale   = 2;
-                                }
                         }
                         if(hwscale_yv12)
                         {
@@ -508,25 +489,31 @@ int x11_window_create_display (int bitmap_depth)
                                 }
                                 else
                                 {
-                                        fprintf(stderr,"\nWarning: YV12 support is incomplete... ");
-                                        if (effect)
+                                        /* YV12 always does normal scaling, no effects! */
+                                        if (sysdep_display_params.effect)
                                           fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
+                                        /* setup the image size and scaling params for YV12:
+                                           -always make yarbsize the normal height, since
+                                            although perfect blitting does 2x heightscaling,
+                                            the YV12 blit code wants unscaled Y-dest_bounds
+                                           -align image_width and x-coordinates to 8, I don't know why,
+                                            this is needed, but it is.
+                                           -align height and y-coodinates to 2 when not using perfect
+                                            blit */
                                         if (hwscale_perfect_yuv)
                                         {
-                                          /* hack */
-                                          image_width  = 2*visual_width;
-                                          image_height = 2*visual_height;
-                                          widthscale   = 2;
-                                          heightscale  = 2;
-                                          yarbsize     = 0;
+                                          image_width  = 2*sysdep_display_params.aligned_width;
+                                          image_height = 2*sysdep_display_params.height;
+                                          sysdep_display_params.widthscale = 2;
+                                          sysdep_display_params.yarbsize   = 2*sysdep_display_params.height;
                                         }
-                                        else /* we don't do effects! */
+                                        else 
                                         {
-                                          image_width  = visual_width;
-                                          image_height = visual_height;
-                                          widthscale   = 1;
-                                          heightscale  = 1;
-                                          yarbsize     = 0;
+                                          image_width  = (sysdep_display_params.width+7)&~7;
+                                          image_height = (sysdep_display_params.height+1)&~1;
+                                          sysdep_display_params.widthscale = 1;
+                                          sysdep_display_params.yarbsize   = sysdep_display_params.height;
+                                          sysdep_display_params.x_align    = 7;
                                         }
                                 }
                         }
@@ -560,20 +547,24 @@ int x11_window_create_display (int bitmap_depth)
                             if ((xvimage->width  < image_width) ||
                                 (xvimage->height < image_height))
                             {
-                                fprintf (stderr_file, "\nError: XVimage smaller then requested size. ");
+                                fprintf (stderr, "\nError: XVimage is smaller then the requested size. ");
                                 XFree(xvimage);
                                 xvimage = NULL;
                             }
                         }
                         if (xvimage)
                         {
+                        	/* this might differ from what we requested! */
+                        	printf("ximage size: %dx%d\n", xvimage->width, xvimage->height);
+                        	image_width = xvimage->width;
+                        	
                                 shm_info.shmid = shmget (IPC_PRIVATE,
                                                 xvimage->data_size,
                                                 (IPC_CREAT | 0777));
                                 if (shm_info.shmid < 0)
                                 {
-                                        fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
-                                        return OSD_NOT_OK;
+                                        fprintf (stderr, "\nError: failed to create MITSHM block.\n");
+                                        return 1;
                                 }
 
                                 /* And allocate the bitmap buffer. */
@@ -584,18 +575,18 @@ int x11_window_create_display (int bitmap_depth)
                                 scaled_buffer_ptr = (unsigned char *) xvimage->data;
                                 if (!scaled_buffer_ptr)
                                 {
-                                        fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-                                        return OSD_NOT_OK;
+                                        fprintf (stderr, "\nError: failed to allocate MITSHM bitmap buffer.\n");
+                                        return 1;
                                 }
 
-                                shm_info.readOnly = FALSE;
+                                shm_info.readOnly = False;
 
                                 /* Attach the MITSHM block. this will cause an exception if */
                                 /* MIT-SHM is not available. so trap it and process         */
                                 if (!XShmAttach (display, &shm_info))
                                 {
-                                        fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
-                                        return OSD_NOT_OK;
+                                        fprintf (stderr, "\nError: failed to attach MITSHM block.\n");
+                                        return 1;
                                 }
                                 XSync (display, False);  /* be sure to get request processed */
                                 /* sleep (2);          enought time to notify error if any */
@@ -613,28 +604,24 @@ int x11_window_create_display (int bitmap_depth)
                                 {
                                   if (hwscale_yuv)
                                   {
-                                    int orig_fullscreen = hwscale_fullscreen;
-                                    
                                     if (hwscale_yv12)
                                       ClearYV12();
                                     else
                                       ClearYUY2();
-                                    
-                                    /* set fullscreen to stop refresh_screen
-                                       resizing the window */
-                                    hwscale_fullscreen = 1;
-                                    x11_window_refresh_screen();
-                                    hwscale_fullscreen = orig_fullscreen;
-                                    
-                                    XSync (display, False);  /* be sure to get request processed */
-                                    /* sleep (1);          enought time to notify error if any */
                                   }
+                                    
+                                  XvShmPutImage (display, xv_port, window, gc, xvimage,
+                                    0, 0, xvimage->width, xvimage->height,
+                                    0, 0, window_width, window_height, True);
+                                    
+                                  XSync (display, False);  /* be sure to get request processed */
+                                  /* sleep (1);          enought time to notify error if any */
                                 }
                                 
                                 /* if use_mit_shm is still set we've succeeded */
                                 if (use_mit_shm)
                                 {
-                                        fprintf (stderr_file, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
+                                        fprintf (stderr, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
                                         XSetErrorHandler (None);  /* Restore error handler to default */
                                         mit_shm_attached = 1;
                                         use_hwscale = 1;
@@ -646,22 +633,21 @@ int x11_window_create_display (int bitmap_depth)
                                 XFree(xvimage);
                                 xvimage = NULL;
                         }
-			if (use_xv)
-			        XSetErrorHandler (None);  /* Restore error handler to default */
-                        widthscale  = orig_widthscale;
-                        heightscale = orig_heightscale;
-                        yarbsize    = orig_yarbsize;
-                        image_width  = widthscale  * visual_width;
-                        image_height = yarbsize ? yarbsize : (heightscale * visual_height);
+		        XSetErrorHandler (None);  /* Restore error handler to default */
+                        sysdep_display_params.widthscale  = orig_widthscale;
+                        sysdep_display_params.yarbsize    = orig_yarbsize;
+                        sysdep_display_params.x_align     = 3;
+                        image_width  = sysdep_display_params.widthscale  * sysdep_display_params.aligned_width;
+                        image_height = sysdep_display_params.yarbsize;
 			use_xv = 0;
 			use_mit_shm = 1;
-		        fprintf (stderr_file, "Failed\nReverting to MIT-SHM mode\n");
+		        fprintf (stderr, "Failed\nReverting to MIT-SHM mode\n");
 			x11_window_update_method = X11_MITSHM;
 #endif
 #ifdef USE_MITSHM
 		case X11_MITSHM:
 			/* Create a MITSHM image. */
-			fprintf (stderr_file, "MIT-SHM Extension Available. trying to use... ");
+			fprintf (stderr, "MIT-SHM Extension Available. trying to use... ");
 			XSetErrorHandler (test_mit_shm);
 
 			image = XShmCreateImage (display,
@@ -679,8 +665,8 @@ int x11_window_create_display (int bitmap_depth)
 						(IPC_CREAT | 0777));
 				if (shm_info.shmid < 0)
 				{
-					fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
-					return OSD_NOT_OK;
+					fprintf (stderr, "\nError: failed to create MITSHM block.\n");
+					return 1;
 				}
 
 				/* And allocate the bitmap buffer. */
@@ -691,18 +677,18 @@ int x11_window_create_display (int bitmap_depth)
 				scaled_buffer_ptr = (unsigned char *) image->data;
 				if (!scaled_buffer_ptr)
 				{
-					fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-					return OSD_NOT_OK;
+					fprintf (stderr, "\nError: failed to allocate MITSHM bitmap buffer.\n");
+					return 1;
 				}
 
-				shm_info.readOnly = FALSE;
+				shm_info.readOnly = False;
 
 				/* Attach the MITSHM block. this will cause an exception if */
 				/* MIT-SHM is not available. so trap it and process         */
 				if (!XShmAttach (display, &shm_info))
 				{
-					fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
-					return OSD_NOT_OK;
+					fprintf (stderr, "\nError: failed to attach MITSHM block.\n");
+					return 1;
 				}
 				XSync (display, False);  /* be sure to get request processed */
 				/* sleep (2);          enought time to notify error if any */
@@ -716,7 +702,7 @@ int x11_window_create_display (int bitmap_depth)
 				/* if use_mit_shm is still set we've succeeded */
 				if (use_mit_shm)
 				{
-					fprintf (stderr_file, "Success.\nUsing Shared Memory Features to speed up\n");
+					fprintf (stderr, "Success.\nUsing Shared Memory Features to speed up\n");
 					XSetErrorHandler (None);  /* Restore error handler to default */
 					mit_shm_attached = 1;
 					break;
@@ -729,15 +715,15 @@ int x11_window_create_display (int bitmap_depth)
 			}
 			XSetErrorHandler (None);  /* Restore error handler to default */
 			use_mit_shm = 0;
-			fprintf (stderr_file, "Failed\nReverting to normal XPutImage() mode\n");
+			fprintf (stderr, "Failed\nReverting to normal XPutImage() mode\n");
 			x11_window_update_method = X11_NORMAL;
 #endif
 		case X11_NORMAL:
 			scaled_buffer_ptr = malloc (4 * image_width * image_height);
 			if (!scaled_buffer_ptr)
 			{
-				fprintf (stderr_file, "Error: failed to allocate bitmap buffer.\n");
-				return OSD_NOT_OK;
+				fprintf (stderr, "Error: failed to allocate bitmap buffer.\n");
+				return 1;
 			}
 			image = XCreateImage (display,
 					xvisual,
@@ -751,13 +737,13 @@ int x11_window_create_display (int bitmap_depth)
 
 			if (!image)
 			{
-				fprintf (stderr_file, "OSD ERROR: could not create image.\n");
-				return OSD_NOT_OK;
+				fprintf (stderr, "OSD ERROR: could not create image.\n");
+				return 1;
 			}
 			break;
 		default:
-			fprintf (stderr_file, "Error unknown X11 update method, this shouldn't happen\n");
-			return OSD_NOT_OK;
+			fprintf (stderr, "Error unknown X11 update method, this shouldn't happen\n");
+			return 1;
 	}
 
 	/* Now we know if we have XIL/ Xv / MIT-SHM / Normal:
@@ -772,17 +758,17 @@ int x11_window_create_display (int bitmap_depth)
 		 */
 		if (use_xil)
 		{
-			event_mask  = StructureNotifyMask;
+			event_mask |= StructureNotifyMask;
 			x11_set_window_hints(window_width, window_height, 1);
 		}
 #endif
 #ifdef USE_HWSCALE
 		if(use_hwscale)
 		{
-			if(!hwscale_fullscreen)
+			if(!sysdep_display_params.fullscreen)
 			{
 			        x11_set_window_hints(window_width, window_height, 1);
-                                mode_stretch_aspect(window_width, window_height, &window_width, &window_height, x11_resolution_aspect);
+                                mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
                                 XResizeWindow(display, window, window_width, window_height);
                         }
                         else    
@@ -803,7 +789,7 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_HWSCALE
 	if (use_hwscale)
 	{
-		dest_depth = hwscale_bpp;
+		dest_bpp = hwscale_bpp;
 		hwscale_visual.class = TrueColor;
 		xvisual = &hwscale_visual;
         }
@@ -812,146 +798,77 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_XIL
 	if (use_xil)
 		/* XIL uses 16 bit visuals and does any conversion it self */
-		dest_depth = 16;
+		dest_bpp = 16;
         else
 #endif
-	        dest_depth = image->bits_per_pixel;
+	        dest_bpp = image->bits_per_pixel;
 
 	/* setup the palette_info struct now we have the visual */
-	if (x11_init_palette_info(xvisual) != OSD_OK)
-	{
-		return OSD_NOT_OK;
-	}
-
-	fprintf(stderr_file, "Actual bits per pixel = %d... ", dest_depth);
-	if (bitmap_depth == 32)
-	{
+	if (x11_init_palette_info(xvisual) != 0)
+		return 1;
+	
+	/* get a blit function */
+	fprintf(stderr, "Bits per pixel = %d... ", dest_bpp);
 #ifdef USE_HWSCALE
-		if(use_hwscale && hwscale_yuv)
-		{
-			display_palette_info.fourcc_format = hwscale_format;
-			switch(hwscale_format)
-			{
-				case FOURCC_YUY2:
-					x11_window_update_display_func = x11_window_update_32_to_YUY2_direct;
-					break;
-				case FOURCC_YV12:
-					if (blit_flipx || blit_flipy || blit_swapxy)
-                                        {
-                                                hwscale_yv12_rotate_buf0=malloc(
-                                                  2*visual_width);
-                                                hwscale_yv12_rotate_buf1=malloc(
-                                                  2*visual_width);
-                                                if (!hwscale_yv12_rotate_buf0 ||
-                                                    !hwscale_yv12_rotate_buf1)
-                                                {
-                                                  fprintf (stderr_file, "Error: failed to allocate rotate buffer.\n");
-                                                  return OSD_NOT_OK;
-                                                }
-                                        }
-					if (hwscale_perfect_yuv)
-						x11_window_update_display_func
-							= x11_window_update_32_to_YV12_direct_perfect;
-					else
-						x11_window_update_display_func
-							= x11_window_update_32_to_YV12_direct;
-					break;
-			}
-		}
-		else
-#endif
-			switch(dest_depth)
-			{
-                            case 16:
-                                if ((xvisual->red_mask   == (0x1F << 11)) &&
-                                    (xvisual->green_mask == (0x3F <<  5)) &&
-                                    (xvisual->blue_mask  == (0x1F      )))
-				  x11_window_update_display_func = x11_window_update_32_to_16bpp_rgb_565_direct;
-                                else if ((xvisual->red_mask   == (0x1F << 10)) &&
-                                         (xvisual->green_mask == (0x1F <<  5)) &&
-                                         (xvisual->blue_mask  == (0x1F      )))
-				  x11_window_update_display_func = x11_window_update_32_to_16bpp_rgb_555_direct;
-                                else
-                                {
-				  x11_window_update_display_func = x11_window_update_32_to_16bpp_direct;
-				  fprintf(stderr_file, "\n Using generic (slow) 32 bpp to 16 bpp downsampling... ");
-                                }
-                                break;
-			    case 24:
-				x11_window_update_display_func = x11_window_update_32_to_24bpp_direct;
-				break;
-			    case 32:
-				x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
-                                break;
-                        }
-	}
-	else if (bitmap_depth == 16)
+	if(use_hwscale && hwscale_yuv)
+		sysdep_display_palette_info.fourcc_format = hwscale_format;
+	if(use_hwscale && hwscale_yv12)
 	{
-#ifdef USE_HWSCALE
-		if(use_hwscale && hwscale_yuv)
-		{
-			display_palette_info.fourcc_format = hwscale_format;
-			switch(hwscale_format)
-			{
-				case FOURCC_YUY2:
-					x11_window_update_display_func = x11_window_update_16_to_YUY2;
-					break;
-				case FOURCC_YV12:
-					if (blit_flipx || blit_flipy || blit_swapxy)
-                                        {
-                                                hwscale_yv12_rotate_buf0=malloc(
-                                                  4*visual_width);
-                                                hwscale_yv12_rotate_buf1=malloc(
-                                                  4*visual_width);
-                                                if (!hwscale_yv12_rotate_buf0 ||
-                                                    !hwscale_yv12_rotate_buf1)
-                                                {
-                                                  fprintf (stderr_file, "Error: failed to allocate rotate buffer.\n");
-                                                  return OSD_NOT_OK;
-                                                }
-                                        }
-					if (hwscale_perfect_yuv)
-						x11_window_update_display_func
-							= x11_window_update_16_to_YV12_perfect;
-					else
-						x11_window_update_display_func
-							= x11_window_update_16_to_YV12;
-					break;
-			}
-		}
-		else
-#endif
-			switch (dest_depth)
-			{
-				case 16:
-					x11_window_update_display_func = x11_window_update_16_to_16bpp;
-					break;
-				case 24:
-					x11_window_update_display_func = x11_window_update_16_to_24bpp;
-					break;
-				case 32:
-					x11_window_update_display_func = x11_window_update_16_to_32bpp;
-					break;
-			}
+	    if (sysdep_display_params.orientation)
+            {
+                    hwscale_yv12_rotate_buf0=malloc(
+                      ((sysdep_display_params.depth+1)/8)*
+                      sysdep_display_params.width);
+                    hwscale_yv12_rotate_buf1=malloc(
+                      ((sysdep_display_params.depth+1)/8)*
+                      sysdep_display_params.width);
+                    if (!hwscale_yv12_rotate_buf0 ||
+                        !hwscale_yv12_rotate_buf1)
+                    {
+                      fprintf (stderr, "\nError: failed to allocate rotate buffer.\n");
+                      return 1;
+                    }
+            }
+            if (sysdep_display_params.depth == 32)
+            {
+    		if (hwscale_perfect_yuv)
+    			x11_window_update_display_func
+    				= x11_window_update_32_to_YV12_direct_perfect;
+    		else
+    			x11_window_update_display_func
+    				= x11_window_update_32_to_YV12_direct;
+    	    }
+    	    else
+    	    {
+    		if (hwscale_perfect_yuv)
+    			x11_window_update_display_func
+    				= x11_window_update_16_to_YV12_perfect;
+    		else
+    			x11_window_update_display_func
+    				= x11_window_update_16_to_YV12;
+    	    }
 	}
+	else
+#endif
+	x11_window_update_display_func = sysdep_display_get_blitfunc(dest_bpp);
 
 	if (x11_window_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, dest_depth);
-		return OSD_NOT_OK;
+		fprintf(stderr, "\nError: bitmap depth %d isnot supported on %dbpp displays\n", sysdep_display_params.depth, dest_bpp);
+		return 1;
 	}
-	fprintf(stderr_file, "Ok\n");
+	fprintf(stderr, "Ok\n");
 
 	if (effect_open())
-		return OSD_NOT_OK;
+		return 1;
 
 #ifdef USE_HWSCALE
-	xinput_open((use_hwscale && hwscale_fullscreen)? 1:0, event_mask);
+	xinput_open((use_hwscale && sysdep_display_params.fullscreen)? 1:0, event_mask);
 #else
 	xinput_open(0, event_mask);
 #endif
 
-	return OSD_OK;
+	return 0;
 }
 
 /*
@@ -960,10 +877,6 @@ int x11_window_create_display (int bitmap_depth)
  */
 void x11_window_close_display (void)
 {
-   widthscale  = orig_widthscale;
-   heightscale = orig_heightscale;
-   yarbsize    = orig_yarbsize;
-
    /* Restore error handler to default */
    XSetErrorHandler (None);
 
@@ -1033,23 +946,19 @@ void x11_window_close_display (void)
 }
 
 /* invoked by main tree code to update bitmap into screen */
-void x11_window_update_display (struct mame_bitmap *bitmap)
+void x11_window_update_display (struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette)
 {
-   (*x11_window_update_display_func) (bitmap);
-
-   x11_window_refresh_screen();
+   if(x11_exposed)
+   {
+      *src_bounds = *dest_bounds;
+      x11_exposed = 0;
+   }
    
-   xinput_check_hotkeys();
-
-   /* some games "flickers" with XFlush, so command line option is provided */
-   if (use_xsync)
-      XSync (display, False);   /* be sure to get request processed */
-   else
-      XFlush (display);         /* flush buffer to server */
-}
-
-void x11_window_refresh_screen (void)
-{
+   (*x11_window_update_display_func) (bitmap, src_bounds, dest_bounds, palette,
+      scaled_buffer_ptr, image_width);
+   
    switch (x11_window_update_method)
    {
       case X11_XIL:
@@ -1059,117 +968,122 @@ void x11_window_refresh_screen (void)
          break;
       case X11_MITSHM:
 #ifdef USE_MITSHM
-         XShmPutImage (display, window, gc, image, 0, 0, startx, starty,
-                       image->width, image->height, FALSE);
+         XShmPutImage (display, window, gc, image, dest_bounds->min_x, dest_bounds->min_y,
+            startx+dest_bounds->min_x, starty+dest_bounds->min_y, ((dest_bounds->max_x + 1) - dest_bounds->min_x) , ((dest_bounds->max_y + 1) - dest_bounds->min_y),
+            False);
 #endif
          break;
-      case X11_XV:
+      case X11_XVSHM:
 #ifdef USE_XV
          {
             Window _dw;
             int _dint;
-	    unsigned int _w,_h,_duint;
+	    unsigned int _duint;
             int pw,ph;
 
-            XGetGeometry(display, window, &_dw, &_dint, &_dint, &_w, &_h, &_duint, &_duint);
-            mode_clip_aspect(_w, _h, &pw, &ph, x11_resolution_aspect);
-            if (!hwscale_fullscreen && (pw!=_w || ph!=_h))
+            XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width, &window_height, &_duint, &_duint);
+            mode_clip_aspect(window_width, window_height, &pw, &ph);
+            if (!sysdep_display_params.fullscreen && (pw!=window_width || ph!=window_height))
             {
                XResizeWindow(display, window, pw, ph);
-               _w = pw;
-               _h = ph;
+               window_width  = pw;
+               window_height = ph;
             }
-            XvShmPutImage (display, xv_port, window, gc, xvimage,
-              0, 0, HWSCALE_WIDTH, HWSCALE_HEIGHT,
-              (_w-pw)/2, (_h-ph)/2, pw, ph, True);
+            /* Xv can't do partial updates! */
+            XvShmPutImage (display, xv_port, window, gc, xvimage, 0, 0,
+              sysdep_display_params.width*sysdep_display_params.widthscale,
+              sysdep_display_params.yarbsize,
+              (window_width-pw)/2, (window_height-ph)/2, pw, ph, True);
          }
 #endif
          break;
       case X11_NORMAL:
-         XPutImage (display, window, gc, image, 0, 0, startx, starty,
-                    image->width, image->height);
+         XPutImage (display, window, gc, image, dest_bounds->min_x, dest_bounds->min_y,
+            startx+dest_bounds->min_x, starty+dest_bounds->min_y, ((dest_bounds->max_x + 1) - dest_bounds->min_x) , ((dest_bounds->max_y + 1) - dest_bounds->min_y));
          break;
    }
-}
 
-#define DEST_WIDTH image_width
-#define DEST scaled_buffer_ptr
+   /* some games "flickers" with XFlush, so command line option is provided */
+   if (use_xsync)
+      XSync (display, False);   /* be sure to get request processed */
+   else
+      XFlush (display);         /* flush buffer to server */
+}
 
 #ifdef USE_HWSCALE
 #define RMASK 0xff0000
 #define GMASK 0x00ff00
 #define BMASK 0x0000ff
 
-#define RGB2YUV(r,g,b,y,u,v) \
-    (y) = ((  9836*(r) + 19310*(g) +  3750*(b)          ) >> 15); \
-    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 15); \
-    (v) = (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 15)
-
 /* Hacked into place, until I integrate YV12 support into the blit core... */
-static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
+static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y;
    char *dest_y;
    char *dest_u;
    char *dest_v;
-   unsigned short *src;
+   unsigned short *src; 
    unsigned short *src2;
-   int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
-   char rotate = 0;
+   int u1,v1,y1,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
+   
+   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
+   
+   _y = dest_bounds->min_y;
+   dest_bounds->min_y &= ~1;
+   src_bounds->min_y -= _y - dest_bounds->min_y;
 
-   if (current_palette != debug_palette &&
-       (blit_flipx || blit_flipy || blit_swapxy))
-      rotate = 1;
-
-   for(_y=visual.min_y;_y<visual.max_y;_y+=2)
+   for(_y=src_bounds->min_y;_y<src_bounds->max_y;_y+=2)
    {
-      if (rotate)
+      if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y);
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1);
-         src  = (unsigned short*)hwscale_yv12_rotate_buf0;
-         src2 = (unsigned short*)hwscale_yv12_rotate_buf1;
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, src_bounds);
+	 src  = (unsigned short*)hwscale_yv12_rotate_buf0;
+	 src2 = (unsigned short*)hwscale_yv12_rotate_buf1;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= visual.min_x;
+         src+= src_bounds->min_x;
          src2=bitmap->line[_y+1];
-         src2+= visual.min_x;
+         src2+= src_bounds->min_x;
       }
 
-      dest_y=HWSCALE_YPLANE+(HWSCALE_WIDTH*(_y-visual.min_y));
-      dest_v=HWSCALE_UPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)/2));
-      dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)/2));
-      for(_x=visual.min_x;_x<visual.max_x;_x+=2)
-      {
-            v = current_palette->lookup[*src++];
-            y = (v)  & 0xff;
-            u = (v>>8) & 0xff;
-            v = (v>>24)     & 0xff;
+      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y)    + dest_bounds->min_x;
+      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
+      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
 
-            v2 = current_palette->lookup[*src++];
+      for(_x=src_bounds->min_x;_x<src_bounds->max_x;_x+=2)
+      {
+            v1 = palette->lookup[*src++];
+            y1 = (v1)  & 0xff;
+            u1 = (v1>>8) & 0xff;
+            v1 = (v1>>24)     & 0xff;
+
+            v2 = palette->lookup[*src++];
             y2 = (v2)  & 0xff;
             u2 = (v2>>8) & 0xff;
             v2 = (v2>>24)     & 0xff;
 
-            v3 = current_palette->lookup[*src2++];
+            v3 = palette->lookup[*src2++];
             y3 = (v3)  & 0xff;
             u3 = (v3>>8) & 0xff;
             v3 = (v3>>24)     & 0xff;
 
-            v4 = current_palette->lookup[*src2++];
+            v4 = palette->lookup[*src2++];
             y4 = (v4)  & 0xff;
             u4 = (v4>>8) & 0xff;
             v4 = (v4>>24)     & 0xff;
 
-         *dest_y = y;
-         *(dest_y++ + HWSCALE_WIDTH) = y3;
+         *dest_y = y1;
+         *(dest_y++ + xvimage->width) = y3;
          *dest_y = y2;
-         *(dest_y++ + HWSCALE_WIDTH) = y4;
+         *(dest_y++ + xvimage->width) = y4;
 
-         *dest_u++ = (u+u2+u3+u4)/4;
-         *dest_v++ = (v+v2+v3+v4)/4;
+         *dest_u++ = (u1+u2+u3+u4)/4;
+         *dest_v++ = (v1+v2+v3+v4)/4;
 
          /* I thought that the following would be better, but it is not
           * the case. The color gets blurred
@@ -1186,65 +1100,55 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 }
 
 
-static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
+static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {      /* this one is used when scale==2 */
    unsigned int _x,_y;
    char *dest_y;
    char *dest_u;
    char *dest_v;
    unsigned short *src;
-   unsigned short *src2;
-   int u,v,y;
-   char rotate = 0;
-   char *tmp;
+   int u1,v1,y1;
 
-   if (current_palette != debug_palette &&
-       (blit_flipx || blit_flipy || blit_swapxy))
-   {
-      rotate = 1;
-      rotate_func(hwscale_yv12_rotate_buf1, bitmap, visual.min_y);
-   }
+   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
 
-   for(_y=visual.min_y;_y<=visual.max_y;_y++)
+   for(_y=src_bounds->min_y;_y<=src_bounds->max_y;_y++)
    {
-      if (rotate)
+      if (sysdep_display_params.orientation)
       {
-         tmp = hwscale_yv12_rotate_buf0;
-         hwscale_yv12_rotate_buf0 = hwscale_yv12_rotate_buf1;
-         hwscale_yv12_rotate_buf1 = tmp;
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1);
-         src  = (unsigned short*)hwscale_yv12_rotate_buf0;
-         src2 = (unsigned short*)hwscale_yv12_rotate_buf1;
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
+         src = (unsigned short*)hwscale_yv12_rotate_buf0;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= visual.min_x;
-         src2=bitmap->line[_y+1];
-         src2+= visual.min_x;
+         src+= src_bounds->min_x;
       }
 
-      dest_y=HWSCALE_YPLANE+2*(HWSCALE_WIDTH*(_y-visual.min_y));
-      dest_v=HWSCALE_UPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)));
-      dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)));
-      for(_x=visual.min_x;_x<=visual.max_x;_x++)
+      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x;
+      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
+      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
+      for(_x=src_bounds->min_x;_x<=src_bounds->max_x;_x++)
       {
-            v= current_palette->lookup[*src++];
-            y = (v)  & 0xff;
-            u = (v>>8) & 0xff;
-            v = (v>>24)     & 0xff;
+            v1 = palette->lookup[*src++];
+            y1 = (v1)  & 0xff;
+            u1 = (v1>>8) & 0xff;
+            v1 = (v1>>24)     & 0xff;
 
-         *(dest_y+HWSCALE_WIDTH)=y;
-         *dest_y++=y;
-         *(dest_y+HWSCALE_WIDTH)=y;
-         *dest_y++=y;
-         *dest_u++ = u;
-         *dest_v++ = v;
+         *(dest_y+xvimage->width)=y1;
+         *dest_y++=y1;
+         *(dest_y+xvimage->width)=y1;
+         *dest_y++=y1;
+         *dest_u++ = u1;
+         *dest_v++ = v1;
       }
    }
 }
 
-static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
+static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 {
    int _x,_y,r,g,b;
    char *dest_y;
@@ -1252,41 +1156,42 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
    char *dest_v;
    unsigned int *src;
    unsigned int *src2;
-   int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
-   char rotate = 0;                          /* 34 */
+   int u1,v1,y1,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12  34 */
 
-   if (current_palette != debug_palette &&
-       (blit_flipx || blit_flipy || blit_swapxy))
-      rotate = 1;
+   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
 
-   for(_y=visual.min_y;_y<visual.max_y;_y+=2)
+   _y = dest_bounds->min_y;
+   dest_bounds->min_y &= ~1;
+   src_bounds->min_y -= _y - dest_bounds->min_y;
+
+   for(_y=src_bounds->min_y;_y<src_bounds->max_y;_y+=2)
    {
-      if (rotate)
+      if (sysdep_display_params.orientation)
       {
-         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y);
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
+         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1, src_bounds);
          src  = (unsigned int*)hwscale_yv12_rotate_buf0;
          src2 = (unsigned int*)hwscale_yv12_rotate_buf1;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= visual.min_x;
+         src+= src_bounds->min_x;
          src2=bitmap->line[_y+1];
-         src2+= visual.min_x;
+         src2+= src_bounds->min_x;
       }
 
-      dest_y=HWSCALE_YPLANE+(HWSCALE_WIDTH*(_y-visual.min_y));
-      dest_v=HWSCALE_UPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)/2));
-      dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)/2));
+      dest_y = (xvimage->data+xvimage->offsets[0]) +  xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y)    + dest_bounds->min_x;
+      dest_u = (xvimage->data+xvimage->offsets[2]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
+      dest_v = (xvimage->data+xvimage->offsets[1]) + (xvimage->width*((_y-src_bounds->min_y)+dest_bounds->min_y))/4 + dest_bounds->min_x/2;
 
-      for(_x=visual.min_x;_x<visual.max_x;_x+=2)
+      for(_x=src_bounds->min_x;_x<src_bounds->max_x;_x+=2)
       {
          b = *src++;
          r = (b>>16) & 0xFF;
          g = (b>>8)  & 0xFF;
          b = (b)     & 0xFF;
-         RGB2YUV(r,g,b,y,u,v);
+         RGB2YUV(r,g,b,y1,u1,v1);
 
          b = *src++;
          r = (b>>16) & 0xFF;
@@ -1306,203 +1211,67 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
          b = (b)     & 0xFF;
          RGB2YUV(r,g,b,y4,u4,v4);
 
-         *dest_y = y;
-         *(dest_y++ + HWSCALE_WIDTH) = y3;
+         *dest_y = y1;
+         *(dest_y++ + xvimage->width) = y3;
          *dest_y = y2;
-         *(dest_y++ + HWSCALE_WIDTH) = y4;
+         *(dest_y++ + xvimage->width) = y4;
 
          r&=RMASK;  r>>=16;
          g&=GMASK;  g>>=8;
          b&=BMASK;  b>>=0;
-         *dest_u++ = (u+u2+u3+u4)/4;
-         *dest_v++ = (v+v2+v3+v4)/4;
+         *dest_u++ = (u1+u2+u3+u4)/4;
+         *dest_v++ = (v1+v2+v3+v4)/4;
       }
    }
 }
 
-static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap)
+static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
+  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width)
 { /* This one is used when scale == 2 */
    int _x,_y,r,g,b;
    char *dest_y;
    char *dest_u;
    char *dest_v;
    unsigned int *src;
-   unsigned int *src2;
-   int u,v,y;
-   char rotate = 0;
-   char *tmp;
+   int u1,v1,y1;
 
-   if (current_palette != debug_palette &&
-       (blit_flipx || blit_flipy || blit_swapxy))
-   {
-      rotate = 1;
-      rotate_func(hwscale_yv12_rotate_buf1, bitmap, visual.min_y);
-   }
+   sysdep_display_check_bounds(bitmap, src_bounds, dest_bounds);
 
-   for(_y=visual.min_y;_y<=visual.max_y;_y++)
+   for(_y=src_bounds->min_y;_y<=src_bounds->max_y;_y++)
    {
-      if (rotate)
+      if (sysdep_display_params.orientation)
       {
-         tmp = hwscale_yv12_rotate_buf0;
-         hwscale_yv12_rotate_buf0 = hwscale_yv12_rotate_buf1;
-         hwscale_yv12_rotate_buf1 = tmp;
-         rotate_func(hwscale_yv12_rotate_buf1, bitmap, _y+1);
+         rotate_func(hwscale_yv12_rotate_buf0, bitmap, _y, src_bounds);
          src  = (unsigned int*)hwscale_yv12_rotate_buf0;
-         src2 = (unsigned int*)hwscale_yv12_rotate_buf1;
       }
       else
       {
          src=bitmap->line[_y] ;
-         src+= visual.min_x;
-         src2=bitmap->line[_y+1];
-         src2+= visual.min_x;
+         src+= src_bounds->min_x;
       }
 
-      dest_y=HWSCALE_YPLANE+2*(HWSCALE_WIDTH*(_y-visual.min_y));
-      dest_v=HWSCALE_UPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)));
-      dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)));
-      for(_x=visual.min_x;_x<=visual.max_x;_x++)
+      dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x;
+      dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
+      dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-src_bounds->min_y)+(dest_bounds->min_y/2))+dest_bounds->min_x)/2;
+      for(_x=src_bounds->min_x;_x<=src_bounds->max_x;_x++)
       {
          b = *src++;
          r = (b>>16) & 0xFF;
          g = (b>>8)  & 0xFF;
          b = (b)     & 0xFF;
-         RGB2YUV(r,g,b,y,u,v);
+         RGB2YUV(r,g,b,y1,u1,v1);
 
-         *(dest_y+HWSCALE_WIDTH) = y;
-         *dest_y++ = y;
-         *(dest_y+HWSCALE_WIDTH) = y;
-         *dest_y++ = y;
-         *dest_u++ = u;
-         *dest_v++ = v;
+         *(dest_y+xvimage->width) = y1;
+         *dest_y++ = y1;
+         *(dest_y+xvimage->width) = y1;
+         *dest_y++ = y1;
+         *dest_u++ = u1;
+         *dest_v++ = v1;
       }
    }
 }
 
-static void x11_window_update_16_to_YUY2(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned short
-#define BLIT_HWSCALE_YUY2
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef BLIT_HWSCALE_YUY2
-#undef INDIRECT
-}
-
-static void x11_window_update_32_to_YUY2_direct(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned short
-#define BLIT_HWSCALE_YUY2
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef BLIT_HWSCALE_YUY2
-}
-
-#undef RMASK
-#undef GMASK
-#undef BMASK
-
 #endif
-
-static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned short
-   if (current_palette->lookup)
-   {
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef  INDIRECT
-   }
-   else
-   {
-#include "blit.h"
-   }
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-}
-
-static void x11_window_update_16_to_24bpp (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned int
-#define INDIRECT current_palette->lookup
-#define PACK_BITS
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-#undef PACK_BITS
-}
-
-static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned short
-#define DEST_PIXEL unsigned int
-#define INDIRECT current_palette->lookup
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef INDIRECT
-}
-
-static void x11_window_update_32_to_16bpp_rgb_565_direct (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned short
-#define CONVERT_PIXEL(p) _32TO16_RGB_565(p)
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef CONVERT_PIXEL
-}
-
-static void x11_window_update_32_to_16bpp_rgb_555_direct (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned short
-#define CONVERT_PIXEL(p) _32TO16_RGB_555(p)
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef CONVERT_PIXEL
-}
-
-static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned short
-#define CONVERT_PIXEL(p) \
-   sysdep_palette_make_pen(current_palette, p)
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef CONVERT_PIXEL
-}
-
-static void x11_window_update_32_to_24bpp_direct (struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned int
-#define PACK_BITS
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-#undef PACK_BITS
-}
-
-static void x11_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)
-{
-#define SRC_PIXEL unsigned int
-#define DEST_PIXEL unsigned int
-#include "blit.h"
-#undef SRC_PIXEL
-#undef DEST_PIXEL
-}
 
 #endif /* ifdef x11 */

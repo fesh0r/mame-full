@@ -21,8 +21,10 @@
 #define __RC_H
 
 #include <stdio.h>
-#include "begin_code.h"
+#if 0 /* osd_rc_ functions are no longer used */
 #include "fileio.h"
+#endif
+#include "begin_code.h"
 
 struct rc_struct;
 struct rc_option;
@@ -67,9 +69,11 @@ int rc_unregister(struct rc_struct *rc, struct rc_option *option);
 int rc_load(struct rc_struct *rc, const char *name, int priority,
    int continue_on_errors);
 int rc_save(struct rc_struct *rc, const char *name, int append);
+#if 0 /* osd_rc_ functions are no longer used */
 int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
    int priority, int continue_on_errors);
 int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description);
+#endif
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors);
 int rc_write(struct rc_struct *rc, FILE *f, const char *description);

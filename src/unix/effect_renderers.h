@@ -2,7 +2,7 @@
 # define FUNC_NAME(name) name##_15
 # define PIXEL UINT16
 # define HQ2XPIXEL PIXEL
-# define RGB2YUV(p) rgb2yuv[p]
+# define YUVLOOKUP(p) rgb2yuv[p]
 # define RGB2PIXEL(r,g,b) ((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
 # define RGB32_2PIXEL(rgb) ((((rgb)&0xf80000)>>9)|(((rgb)&0xf800)>>6)|(((rgb)&0xf8)>>3))
 # define PIXEL2RGB32(p) (((UINT32)RMASK15(p)<<9)|((UINT32)GMASK15(p)<<6)|((UINT32)BMASK15(p)<<3))
@@ -23,7 +23,7 @@
 # define FUNC_NAME(name) name##_16
 # define PIXEL UINT16
 # define HQ2XPIXEL PIXEL
-# define RGB2YUV(p) rgb2yuv[p]
+# define YUVLOOKUP(p) rgb2yuv[p]
 # define RGB2PIXEL(r,g,b) ((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
 # define RGB32_2PIXEL(rgb) ((((rgb)&0xf80000)>>8)|(((rgb)&0x00fc00)>>5)|(((rgb)&0x0000f8)>>3))
 # define PIXEL2RGB32(p) u32lookup[p]
@@ -59,7 +59,7 @@
 # define FUNC_NAME(name) name##_YUY2
 # define PIXEL UINT16
 # define HQ2XPIXEL UINT32 /* hq2x YUY2 hack */
-# define RGB2YUV(p) (p)
+# define YUVLOOKUP(p) (p)
 # define RGB2PIXEL(r,g,b) ( \
 /* y */ ((  9836*(r) + 19310*(g) +  3750*(b)) >> 15) | (((!(i&0x01))? \
 /* u */ (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 7): \
@@ -127,7 +127,7 @@ INLINE void FUNC_NAME(hq2x)( HQ2XPIXEL *mydst0, HQ2XPIXEL *mydst1, HQ2XPIXEL w[9
   v1 = -r1+2*g1-b1;
 #else
   int    yuv1, yuv2;
-  yuv1 = RGB2YUV(w[4]);
+  yuv1 = YUVLOOKUP(w[4]);
 #endif
 
   for ( c = 0; c <= 8; c++ )
@@ -142,7 +142,7 @@ INLINE void FUNC_NAME(hq2x)( HQ2XPIXEL *mydst0, HQ2XPIXEL *mydst1, HQ2XPIXEL w[9
          ( abs( u1 - (r2-b2)    )    > trU32 ) ||
          ( abs( v1 - (-r2+2*g2-b2) ) > trV32 ) ) 
 #else
-    yuv2 = RGB2YUV(w[c]);
+    yuv2 = YUVLOOKUP(w[c]);
     if ( ( abs((yuv1 & Ymask) - (yuv2 & Ymask)) > trY ) ||
          ( abs((yuv1 & Umask) - (yuv2 & Umask)) > trU ) ||
          ( abs((yuv1 & Vmask) - (yuv2 & Vmask)) > trV ) )
@@ -3793,7 +3793,7 @@ INLINE void FUNC_NAME(lq2x)(PIXEL *mydst0, PIXEL *mydst1, PIXEL w[9] )
 /* we also use this header file to generate the addline funcs, but those
    don't have yuv variants */
 #if DEST_DEPTH != YUY2 
-void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count)
+void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count, struct sysdep_palette_struct *palette)
 {
   PIXEL *mysrc = (PIXEL *)src0;
   UINT32 *u32dest;
@@ -3802,7 +3802,7 @@ void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count)
   UINT32 i;
   char *tmp;
 #if DEST_DEPTH == 16
-  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 *u32lookup = palette->lookup;
 #endif
 
   /* first, move the existing lines up by one */
@@ -3930,7 +3930,7 @@ void FUNC_NAME(effect_6tap_render)(void *dst0, void *dst1, unsigned count)
 #undef FUNC_NAME
 #undef PIXEL
 #undef HQ2XPIXEL
-#undef RGB2YUV
+#undef YUVLOOKUP
 #undef RGB2PIXEL
 #undef RGB32_2PIXEL
 #undef PIXEL2RGB32

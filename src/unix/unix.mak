@@ -29,7 +29,7 @@ LIBS.irix          = -laudio
 LIBS.irix_al       = -laudio
 LIBS.aix           = -lUMSobj
 LIBS.next	   = -framework SoundKit
-LIBS.macosx	   = -framework CoreAudio
+LIBS.macosx	   = -framework AudioUnit -framework CoreServices
 #LIBS.openbsd       = -lossaudio
 LIBS.nto	   = -lsocket -lasound
 LIBS.beos          = `$(SDL_CONFIG) --libs`
@@ -55,10 +55,8 @@ LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
 LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
 ifdef GLIDE2
-LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
 else
-LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide3
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide3
 endif
 LIBS.openstep	= -framework AppKit
@@ -68,10 +66,8 @@ LIBS.photon2	= -L/usr/lib -lph -lphrender
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
 CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS) $(GLCFLAGS)
 ifdef GLIDE2
-CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
 CFLAGS.svgafx   = -I/usr/include/glide
 else
-CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide3
 CFLAGS.svgafx   = -I/usr/include/glide3
 endif
 CFLAGS.SDL      = $(X11INC) `$(SDL_CONFIG) --cflags` -D_REENTRANT
@@ -85,7 +81,6 @@ endif
 INST.ggi        = doinstall
 INST.svgalib    = doinstallsuid
 INST.xgl        = doinstallsuid copycab
-INST.xfx        = doinstallsuid
 INST.svgafx     = doinstallsuid
 INST.SDL	= doinstall
 INST.photon2	= doinstall
@@ -104,6 +99,15 @@ LIBS.x11   += -lXxf86dga -lXxf86vm
 endif
 ifdef TDFX_DGA_WORKAROUND
 CFLAGS.x11 +=  -DTDFX_DGA_WORKAROUND 
+endif
+ifdef X11_GLIDE
+ifdef GLIDE2
+CFLAGS.x11     += -DUSE_GLIDE -I/usr/include/glide
+LIBS.x11       += -lglide2x
+else
+CFLAGS.x11     += -DUSE_GLIDE -I/usr/include/glide3
+LIBS.x11       += -lglide3
+endif
 endif
 ifdef X11_XIL
 CFLAGS.x11 += -DUSE_XIL
@@ -286,7 +290,7 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
 	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
 	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/effect_funcs.o \
-	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o
+	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o $(VID_DIR)/blit_funcs.o
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
@@ -296,17 +300,19 @@ endif
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
    $(SYSDEP_DIR)/plugin_manager.o $(SYSDEP_DIR)/sound_stream.o \
    $(SYSDEP_DIR)/sysdep_palette.o $(SYSDEP_DIR)/sysdep_dsp.o \
-   $(SYSDEP_DIR)/sysdep_mixer.o
+   $(SYSDEP_DIR)/sysdep_mixer.o $(SYSDEP_DIR)/sysdep_display.o
 
 # video driver objs per display method
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/x11_window.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
+ifdef X11_GLIDE
+VID_OBJS.x11   += $(VID_DIR)/fxgen.o $(VID_DIR)/xfx.o $(VID_DIR)/fxvec.o
+endif
 VID_OBJS.xgl    = $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o \
 		  $(VID_DIR)/xinput.o
-VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/xinput.o $(VID_DIR)/fxvec.o
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
 VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o
 VID_OBJS.openstep = $(VID_DIR)/openstep_input.o
