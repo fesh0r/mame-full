@@ -320,7 +320,8 @@ int x11_init_palette_info(void)
 	}
 
 	/* fill the sysdep_display_properties struct */
-	sysdep_display_properties.palette_info.fourcc_format = 0;
+	memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
+	  sysdep_palette_info));
 	sysdep_display_properties.palette_info.red_mask      = screen->root_visual->red_mask;
 	sysdep_display_properties.palette_info.green_mask    = screen->root_visual->green_mask;
 	sysdep_display_properties.palette_info.blue_mask     = screen->root_visual->blue_mask;

@@ -257,7 +257,10 @@ int xf86_dga1_open_display(int reopen)
 
 	window  = RootWindow(display,xf86ctx.screen);
 
-	/* detect bpp */
+	/* setup the palette_info struct & detect bpp */
+	if (x11_init_palette_info())
+		return 1;
+
 	pixmaps = XListPixmapFormats(display, &count);
 	if (!pixmaps)
 	{
@@ -281,10 +284,6 @@ int xf86_dga1_open_display(int reopen)
 	}
 	XFree(pixmaps);
 
-	/* setup the palette_info struct */
-	if (x11_init_palette_info())
-		return 1;
-		
 	/* HACK HACK HACK, keys get stuck when they are pressed when
 	   XDGASetMode is called, so wait for all keys to be released */
 	do {

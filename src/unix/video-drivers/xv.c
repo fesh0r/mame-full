@@ -138,7 +138,6 @@ static int FindRGBXvFormat(void)
 					{
 						xv_port=p;
 						xv_format=fo[j].id;
-						sysdep_display_properties.palette_info.fourcc_format=0;
 						sysdep_display_properties.palette_info.red_mask  =fo[j].red_mask;
 						sysdep_display_properties.palette_info.green_mask=fo[j].green_mask;
 						sysdep_display_properties.palette_info.blue_mask =fo[j].blue_mask;
@@ -234,6 +233,8 @@ int xv_open_display(int reopen)
              the FindXvXXX fucntions will fill in the palette part */
           sysdep_display_properties.max_width  = -1;
           sysdep_display_properties.max_height = -1;
+          memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
+            sysdep_palette_info));
 	  sysdep_display_properties.vector_renderer = NULL;
 
 	  /* create a window */

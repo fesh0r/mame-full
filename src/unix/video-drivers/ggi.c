@@ -286,7 +286,8 @@ int sysdep_display_driver_open(int reopen)
   }
 
   /* fill the sysdep_display_properties struct */
-  sysdep_display_properties.palette_info.fourcc_format = 0;
+  memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
+    sysdep_palette_info));
   if (pixel_format)
   {
     sysdep_display_properties.palette_info.red_mask  =pixel_format->red_mask;

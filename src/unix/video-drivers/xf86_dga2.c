@@ -373,7 +373,8 @@ static int xf86_dga2_set_mode(void)
             xf86ctx.max_page = 0;
             
           /* fill the sysdep_display_properties struct */
-	  sysdep_display_properties.palette_info.fourcc_format = 0;
+          memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
+            sysdep_palette_info));
           sysdep_display_properties.palette_info.red_mask   = xf86ctx.device->mode.redMask;
           sysdep_display_properties.palette_info.green_mask = xf86ctx.device->mode.greenMask;
           sysdep_display_properties.palette_info.blue_mask  = xf86ctx.device->mode.blueMask;

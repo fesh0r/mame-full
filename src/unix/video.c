@@ -854,7 +854,8 @@ void osd_update_video_and_audio(struct mame_display *display)
                         effect_mod = 1;
                 if (code_pressed_memory(KEYCODE_PGDN))
                         effect_mod = -1;
-                if (effect_mod)
+                if (effect_mod && (sysdep_display_properties.mode_info[
+                     normal_params.video_mode] & SYSDEP_DISPLAY_EFFECTS))
                 {
                   int i=0, scaled_width, scaled_height;
 

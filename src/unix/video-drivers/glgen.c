@@ -446,7 +446,8 @@ int gl_open_display (int reopen)
   /* fill the sysdep_display_properties struct & determine bitmap format */
   sysdep_display_properties.max_width  = -1;
   sysdep_display_properties.max_height = -1;
-  sysdep_display_properties.palette_info.fourcc_format = 0;
+  memset(&sysdep_display_properties.palette_info, 0, sizeof(struct
+    sysdep_palette_info));
   switch(sysdep_display_params.depth)
   {
     case 15:
