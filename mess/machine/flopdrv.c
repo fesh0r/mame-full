@@ -8,14 +8,15 @@ static floppy_drive	drives[MAX_DRIVES];
 /* init all floppy drives */
 void	floppy_drives_init(void)
 {
-	memset(&drives[0], 0, sizeof(floppy_drive));
-	memset(&drives[1], 0, sizeof(floppy_drive));
-	memset(&drives[2], 0, sizeof(floppy_drive));
-	memset(&drives[3], 0, sizeof(floppy_drive));
-	drives[0].current_track = 10;
-	drives[1].current_track = 10;
-	drives[2].current_track = 10;
-	drives[3].current_track = 10;
+/* KT - caused problems with disk missing etc */
+//        memset(&drives[0], 0, sizeof(floppy_drive));
+//        memset(&drives[1], 0, sizeof(floppy_drive));
+//        memset(&drives[2], 0, sizeof(floppy_drive));
+//        memset(&drives[3], 0, sizeof(floppy_drive));
+//        drives[0].current_track = 10;
+//        drives[1].current_track = 10;
+//        drives[2].current_track = 10;
+//        drives[3].current_track = 10;
 }
 
 void	floppy_drive_set_interface(int index1, floppy_interface *iface)
