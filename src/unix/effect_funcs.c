@@ -2,6 +2,73 @@
 #include "osd_cpu.h"
 #include "effect.h"
 
+/**********************************
+ * rotate
+ **********************************/
+
+
+void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y)
+{
+  int x;
+  UINT16 * u16dst = (UINT16 *)dst;
+
+  if (blit_swapxy) {
+    if (blit_flipx && blit_flipy)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
+    else if (blit_flipx)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - x - 1])[y];
+    else if (blit_flipy)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[x])[bitmap->width - y - 1];
+    else
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[x])[y];
+  } else if (blit_flipx && blit_flipy)
+    for (x = visual.min_x; x <= visual.max_x; x++)
+      u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
+       else if (blit_flipx)
+         for (x = visual.min_x; x <= visual.max_x; x++)
+           u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[y])[bitmap->width - x - 1];
+       else if (blit_flipy)
+         for (x = visual.min_x; x <= visual.max_x; x++)
+           u16dst[x-visual.min_x] = ((UINT16 *)bitmap->line[bitmap->height - y -1])[x];
+}
+
+
+void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y)
+{
+  int x;
+  UINT32 * u32dst = (UINT32 *)dst;
+
+  if (blit_swapxy) {
+    if (blit_flipx && blit_flipy)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[bitmap->width - y - 1];
+    else if (blit_flipx)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - x - 1])[y];
+    else if (blit_flipy)
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[x])[bitmap->width - y - 1];
+    else
+      for (x = visual.min_x; x <= visual.max_x; x++)
+        u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[x])[y];
+  } else if (blit_flipx && blit_flipy)
+    for (x = visual.min_x; x <= visual.max_x; x++)
+      u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - y - 1])[bitmap->width - x - 1];
+       else if (blit_flipx)
+         for (x = visual.min_x; x <= visual.max_x; x++)
+           u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[y])[bitmap->width - x - 1];
+       else if (blit_flipy)
+         for (x = visual.min_x; x <= visual.max_x; x++)
+           u32dst[x-visual.min_x] = ((UINT32 *)bitmap->line[bitmap->height - y -1])[x];
+}
+
+/* below are the YUY2 versions of most effects, the rgb code is generated for
+   different colordepths from the generic rgb functions in effect_funcs.h */
+
 /* scale2x algorithm (Andrea Mazzoleni, http://advancemame.sourceforge.net):
  *
  * A 9-pixel rectangle is taken from the source bitmap:
@@ -366,10 +433,370 @@ void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, un
 }
 
 /**********************************
- * 6tap2x: 6-tap sinc filter with light scanlines
+ * rgbscan
  **********************************/
 
-#define Clip(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
+void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+{
+  UINT32 *u32dst0 = (UINT32 *)dst0;
+  UINT32 *u32dst1 = (UINT32 *)dst1;
+  UINT32 *u32dst2 = (UINT32 *)dst2;
+  UINT16 *u16src = (UINT16 *)src;
+  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 r,g,b,y,u,v;
+  INT32 us,vs;
+
+  while (count) {
+    r = u32lookup[*u16src];
+    y = r&255;
+    u = (r>>8)&255;
+    v = (r>>24);
+    us = u - 128;
+    vs = v - 128;
+    r = ((512*y + 718*vs) >> 9);
+    g = ((512*y - 176*us - 366*vs) >> 9);
+    b = ((512*y + 907*us) >> 9);
+    y = (( 9836*r + 19310*(g&0x7f) + 3750*(b&0x7f) ) >> 15);
+    u = (( -5527*r - 10921*(g&0x7f) + 16448*(b&0x7f) ) >> 15) + 128;
+    v = (( 16448*r - 13783*(g&0x7f) - 2665*(b&0x7f) ) >> 15) + 128;
+    *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+    y = (( 9836*(r&0x7f) + 19310*g + 3750*(b&0x7f) ) >> 15);
+    u = (( -5527*(r&0x7f) - 10921*g + 16448*(b&0x7f) ) >> 15) + 128;
+    v = (( 16448*(r&0x7f) - 13783*g - 2665*(b&0x7f) ) >> 15) + 128;
+    *u32dst1 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+    y = (( 9836*(r&0x7f) + 19310*(g&0x7f) + 3750*b ) >> 15);
+    u = (( -5527*(r&0x7f) - 10921*(g&0x7f) + 16448*b ) >> 15) + 128;
+    v = (( 16448*(r&0x7f) - 13783*(g&0x7f) - 2665*b ) >> 15) + 128;
+    *u32dst2 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+    ++u16src;
+    u32dst0++;
+    u32dst1++;
+    u32dst2++;
+    --count;
+  }
+}
+
+
+void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+{
+  UINT32 *u32dst0 = (UINT32 *)dst0;
+  UINT32 *u32dst1 = (UINT32 *)dst1;
+  UINT32 *u32dst2 = (UINT32 *)dst2;
+  UINT32 *u32src = (UINT32 *)src;
+  UINT32 r,g,b,y,u,v;
+
+  while (count) {
+    r = RMASK32( RMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( RMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( RMASK32_SEMI(*u32src)); b>>=0;
+    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+    u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+    v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+    *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+    r = RMASK32( GMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( GMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( GMASK32_SEMI(*u32src)); b>>=0;
+    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+    u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+    v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+    *u32dst1 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+    r = RMASK32( BMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( BMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( BMASK32_SEMI(*u32src)); b>>=0;
+    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+    u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+    v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+    *u32dst2 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+
+    ++u32src;
+    u32dst0++;
+    u32dst1++;
+    u32dst2++;
+    --count;
+  }
+}
+
+/**********************************
+ * scan3
+ **********************************/
+
+/* All 3 lines are horizontally blurred a little
+ * (the last pixel of each three in a line is averaged with the next pixel).
+ * The first line is darkened by 25%,
+ * the second line is full brightness, and
+ * the third line is darkened by 50%.
+ */
+
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+{
+  UINT32 *u32dst0 = (UINT32 *)dst0;
+  UINT32 *u32dst1 = (UINT32 *)dst1;
+  UINT32 *u32dst2 = (UINT32 *)dst2;
+  UINT16 *u16src = (UINT16 *)src;
+  UINT32 *u32lookup = current_palette->lookup;
+  UINT32 p1,p2,y1,uv1,uv2,y2,s;
+
+  s = 1;
+  while (count) {
+    if (s) {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      *u32dst0 = ((y1*3/4)&255)|(((y1*3/4)&255)<<16)|uv1;
+      if (count != 1) {
+        p2 = u32lookup[*(u16src+1)];
+        y2 = p2&255;
+        y1 = ((y1>>1) + (y2>>1))&0x000000ff;
+        uv2 = p2&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        *(u32dst0+1) = ((y1*3/4)&255)|(((y2*3/4)&255)<<16)|uv1;
+      }
+    } else {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      p2 = u32lookup[*(u16src+1)];
+      y2 = p2&255;
+      y2 = ((y1>>1) + (y2>>1))&0x000000ff;
+      uv2 = p2&0xff00ff00;
+      uv2 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      *u32dst0 = ((y1*3/4)&255)|(((y2*3/4)&255)<<16)|uv1;
+    }
+    if (s) {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      *u32dst1 = (y1&255)|((y1&255)<<16)|uv1;
+      if (count != 1) {
+#if 0
+        p2 = u32lookup[*(u16src+1)];
+        y2 = p2&255;
+        y1 = ((y1>>1) + (y2>>1))&0x000000ff;
+        uv2 = p2&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        *(u32dst1+1) = (y1&255)|((y2&255)<<16)|uv1;
+#endif
+      }
+    } else {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      p2 = u32lookup[*(u16src+1)];
+      y2 = p2&255;
+      y2 = ((y1>>1) + (y2>>1))&0x000000ff;
+      uv2 = p2&0xff00ff00;
+      uv2 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      *u32dst1 = (y1&255)|((y2&255)<<16)|uv1;
+    }
+    if (s) {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      *u32dst2 = ((y1/2)&255)|(((y1/2)&255)<<16)|uv1;
+      if (count != 1) {
+#if 0
+        p2 = u32lookup[*(u16src+1)];
+        y2 = p2&255;
+        y1 = ((y1>>1) + (y2>>1))&0x000000ff;
+        uv2 = p2&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+        *(u32dst2+1) = ((y1/2)&255)|(((y2/2)&255)<<16)|uv1;
+#endif
+      }
+    } else {
+      p1 = u32lookup[*u16src];
+      y1 = p1&255;
+      uv1 = p1&0xff00ff00;
+      p2 = u32lookup[*(u16src+1)];
+      y2 = p2&255;
+      y2 = ((y1>>1) + (y2>>1))&0x000000ff;
+      uv2 = p2&0xff00ff00;
+      uv2 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      uv1 = ((uv1>>1)+(uv2>>1))&0xff00ff00;
+      *u32dst2 = ((y1/2)&255)|(((y2/2)&255)<<16)|uv1;
+    }
+
+    ++u16src;
+    if (s) {
+      u32dst0 += 2;
+      u32dst1 += 2;
+      u32dst2 += 2;
+    } else {
+      u32dst0++;
+      u32dst1++;
+      u32dst2++;
+    }
+    --count;
+    s = !s;
+  }
+}
+
+
+void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
+{
+  UINT32 *u32dst0 = (UINT32 *)dst0;
+  UINT32 *u32dst1 = (UINT32 *)dst1;
+  UINT32 *u32dst2 = (UINT32 *)dst2;
+  UINT32 *u32src = (UINT32 *)src;
+  UINT32 t,r,g,b,y,u,v,y2,s;
+
+  s = 1;
+  while (count) {
+    if (s) {
+      t = SHADE32_HALF(*u32src) + SHADE32_FOURTH(*u32src);
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+      if (count != 1) {
+        t =
+          SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) )
+          +
+          SHADE32_FOURTH( MEAN32( *u32src, *(u32src+1) ) );
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
+        y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+        v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+        t = SHADE32_HALF(*(u32src+1)) + SHADE32_FOURTH(*(u32src+1));
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
+        y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+        v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+        *(u32dst0+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+      }
+    } else {
+      t = SHADE32_HALF(*u32src) + SHADE32_FOURTH(*u32src);
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      t =
+        SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) )
+        +
+        SHADE32_FOURTH( MEAN32( *u32src, *(u32src+1) ) );
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+      v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+      *u32dst0 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+    }
+    if (s) {
+      r = RMASK32( *u32src); r>>=16;
+      g = GMASK32( *u32src); g>>=8;
+      b = BMASK32( *u32src); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      *u32dst1 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+      if (count != 1) {
+        t = MEAN32( *u32src, *(u32src+1) );
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
+        y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+        v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+        r = RMASK32( *(u32src+1)); r>>=16;
+        g = GMASK32( *(u32src+1)); g>>=8;
+        b = BMASK32( *(u32src+1)); b>>=0;
+        y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+        v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+        *(u32dst1+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+      }
+    } else {
+      r = RMASK32( *u32src); r>>=16;
+      g = GMASK32( *u32src); g>>=8;
+      b = BMASK32( *u32src); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      t = MEAN32( *u32src, *(u32src+1) );
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+      v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+      *u32dst1 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+    }
+    if (s) {
+      t = SHADE32_HALF(*u32src);
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      *u32dst2 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
+      if (count != 1) {
+        t = SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) );
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
+        y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+        v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+        t = SHADE32_HALF(*(u32src+1));
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
+        y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+        u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+        v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+        *(u32dst1+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+      }
+    } else {
+      t = SHADE32_HALF(*u32src);
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
+      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
+      t = SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) );
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
+      y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
+      u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
+      v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
+      *u32dst2 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
+    }
+    ++u32src;
+    if (s) {
+      u32dst0 += 2;
+      u32dst1 += 2;
+      u32dst2 += 2;
+    } else {
+      u32dst0++;
+      u32dst1++;
+      u32dst2++;
+    }
+    --count;
+    s = !s;
+  }
+}
+
+/**********************************
+ * 6tap2x: 6-tap sinc filter with light scanlines
+ **********************************/
 
 void effect_6tap_clear(unsigned count)
 {
@@ -381,277 +808,7 @@ void effect_6tap_clear(unsigned count)
   memset(_6tap2x_buf5, 0, count << 3);
 }
 
-INLINE void effect_6tap_addline_filter(UINT32 *u32dest, unsigned count)
-{
-  UINT8 *u8dest;
-  INT32 pixel;
-  UINT32 i;
-
-  /* just replicate the first 2 and last 3 pixels */
-  u32dest[-1] = u32dest[-2];
-  u32dest[-3] = u32dest[-4];
-  u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  u32dest[1] = u32dest[0];
-  u32dest[3] = u32dest[2];
-
-  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
-  for (i = 2; i < count - 3; i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* next, do the green part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* last, do the red part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	u8dest += 4;
-    }
-}
-
-void effect_6tap_addline_15(const void *src0, unsigned count)
-{
-  UINT16 *u16src = (UINT16 *)src0;
-  UINT32 *u32dest;
-  UINT32 i;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = ((UINT32) RMASK15(*u16src) << 9) |
-                 ((UINT32) GMASK15(*u16src) << 6) |
-                 ((UINT32) BMASK15(*u16src) << 3);
-    u16src++;
-    u32dest++;
-    }
-
-  /* and apply the filter */
-  effect_6tap_addline_filter(u32dest, count);
-}
-
-void effect_6tap_addline_16(const void *src0, unsigned count)
-{
-  UINT16 *u16src = (UINT16 *)src0;
-  UINT32 *u32lookup = current_palette->lookup;
-  UINT32 *u32dest;
-  UINT32 i;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = u32lookup[*u16src++];
-    u32dest++;
-    }
-
-  /* and apply the filter */
-  effect_6tap_addline_filter(u32dest, count);
-}
-
-void effect_6tap_addline_32(const void *src0, unsigned count)
-{
-  UINT32 *u32src = (UINT32 *)src0;
-  UINT32 *u32dest;
-  UINT32 i;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = *u32src++;
-    u32dest++;
-    }
-
-  /* and apply the filter */
-  effect_6tap_addline_filter(u32dest, count);
-}
-
-void effect_6tap_render_15(void *dst0, void *dst1, unsigned count)
-{
-  UINT16 *u16dest0 = (UINT16 *) dst0;
-  UINT16 *u16dest1 = (UINT16 *) dst1;
-  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
-  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
-  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
-  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
-  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
-  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
-  UINT32 *src32 = (UINT32 *) _6tap2x_buf2;
-  UINT32 i;
-  INT32 red, green, blue;
-
-  /* first we need to just copy the 3rd line into the first destination line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	*u16dest0++ = (UINT16) ((*src32 & 0xf80000) >> 9) |
-	                       ((*src32 & 0x00f800) >> 6) |
-	                       ((*src32 & 0x0000f8) >> 3);
-	src32++;
-	}
-
-  /* then we need to vertically filter for the second line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	/* first, do the blue part */
-	blue = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	        ((INT32) *src1++ + (INT32) *src4++);
-	blue += blue << 2;
-	blue += ((INT32) *src0++ + (INT32) *src5++);
-	blue = (blue + 0x10) >> 5;
-	blue = Clip(blue);
-	blue = blue - (blue >> 2);
-	/* next, do the green part */
-	green = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	green += green << 2;
-	green += ((INT32) *src0++ + (INT32) *src5++);
-	green = (green + 0x10) >> 5;
-	green = Clip(green);
-	green = green - (green >> 2);
-	/* last, do the red part */
-	red = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	       ((INT32) *src1++ + (INT32) *src4++);
-	red += red << 2;
-	red += ((INT32) *src0++ + (INT32) *src5++);
-	red = (red + 0x10) >> 5;
-	red = Clip(red);
-	red = red - (red >> 2);
-	/* write the 15-bit color pixel */
-	*u16dest1++ = (UINT16) ((red   & 0xf8) << 7) |
-	                       ((green & 0xf8) << 2) |
-	                       ((blue  & 0xf8) >> 3);
-	src0++; src1++; src2++; src3++; src4++; src5++;
-    }
-
-}
-
-void effect_6tap_render_16(void *dst0, void *dst1, unsigned count)
-{
-  UINT16 *u16dest0 = (UINT16 *) dst0;
-  UINT16 *u16dest1 = (UINT16 *) dst1;
-  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
-  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
-  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
-  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
-  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
-  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
-  UINT32 *src32 = (UINT32 *) _6tap2x_buf2;
-  UINT32 i;
-  INT32 red, green, blue;
-
-  /* first we need to just copy the 3rd line into the first destination line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	*u16dest0++ = (UINT16) ((*src32 & 0xf80000) >> 8) |
-	                       ((*src32 & 0x00fc00) >> 5) |
-	                       ((*src32 & 0x0000f8) >> 3);
-	src32++;
-	}
-
-  /* then we need to vertically filter for the second line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	/* first, do the blue part */
-	blue = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	        ((INT32) *src1++ + (INT32) *src4++);
-	blue += blue << 2;
-	blue += ((INT32) *src0++ + (INT32) *src5++);
-	blue = (blue + 0x10) >> 5;
-	blue = Clip(blue);
-	blue = blue - (blue >> 2);
-	/* next, do the green part */
-	green = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	green += green << 2;
-	green += ((INT32) *src0++ + (INT32) *src5++);
-	green = (green + 0x10) >> 5;
-	green = Clip(green);
-	green = green - (green >> 2);
-	/* last, do the red part */
-	red = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	       ((INT32) *src1++ + (INT32) *src4++);
-	red += red << 2;
-	red += ((INT32) *src0++ + (INT32) *src5++);
-	red = (red + 0x10) >> 5;
-	red = Clip(red);
-	red = red - (red >> 2);
-	/* write the 16-bit color pixel */
-	*u16dest1++ = (UINT16) ((red   & 0xf8) << 8) |
-	                       ((green & 0xfc) << 3) |
-	                       ((blue  & 0xf8) >> 3);
-	src0++; src1++; src2++; src3++; src4++; src5++;
-    }
-
-}
+#define Clip(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
 
 void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
 {
@@ -701,5 +858,3 @@ void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
     }
 
 }
-
-#undef Clip

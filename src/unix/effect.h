@@ -153,12 +153,7 @@ void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, un
 
 /*****************************/
 
-void effect_rgbscan_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
-void effect_rgbscan_16_16_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
-void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
-void effect_rgbscan_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
-void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
-void effect_rgbscan_32_32_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
+void effect_rgbscan_16_YUY2(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count);
 
 /*****************************/
@@ -221,5 +216,18 @@ void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y);
 #define RMASK32_SEMI(P) ( RMASK32(P) | RMASK32_INV_HALF(P) )
 #define GMASK32_SEMI(P) ( GMASK32(P) | GMASK32_INV_HALF(P) )
 #define BMASK32_SEMI(P) ( BMASK32(P) | BMASK32_INV_HALF(P) )
+
+/* divide R, G, and B to darken pixels */
+#define SHADE15_HALF(P)   (((P)>>1) & 0x3def)
+#define SHADE15_FOURTH(P) (((P)>>2) & 0x1ce7)
+#define SHADE16_HALF(P)   (((P)>>1) & 0x7bef)
+#define SHADE16_FOURTH(P) (((P)>>2) & 0x39e7)
+#define SHADE32_HALF(P)   (((P)>>1) & 0x007f7f7f)
+#define SHADE32_FOURTH(P) (((P)>>2) & 0x003f3f3f)
+
+/* average two pixels */
+#define MEAN15(P,Q) ( RMASK15((RMASK15(P)+RMASK15(Q))/2) | GMASK15((GMASK15(P)+GMASK15(Q))/2) | BMASK15((BMASK15(P)+BMASK15(Q))/2) )
+#define MEAN16(P,Q) ( RMASK16((RMASK16(P)+RMASK16(Q))/2) | GMASK16((GMASK16(P)+GMASK16(Q))/2) | BMASK16((BMASK16(P)+BMASK16(Q))/2) )
+#define MEAN32(P,Q) ( RMASK32((RMASK32(P)+RMASK32(Q))/2) | GMASK32((GMASK32(P)+GMASK32(Q))/2) | BMASK32((BMASK32(P)+BMASK32(Q))/2) )
 
 #endif /* __EFFECT_H */
