@@ -285,8 +285,8 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/video.o $(OBJDIR)/mode.o $(OBJDIR)/fileio.o \
 	$(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
 	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
-	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
-	$(OBJDIR)/parallel.o
+	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/effect_funcs.o \
+	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o

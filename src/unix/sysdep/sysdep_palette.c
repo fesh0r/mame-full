@@ -132,6 +132,9 @@ void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
 void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
    unsigned char red, unsigned char green, unsigned char blue)
 {
+   if (!palette->lookup)
+      return;
+   
    if (palette->display_palette->fourcc_format == 0)
       palette->lookup[pen] = sysdep_palette_make_pen_from_info(
                              palette->display_palette, red, green, blue);

@@ -7,8 +7,6 @@
  * There's one for every bitmap depth / display depth combination,
  * and for direct/non-pallettized where needed.
  *
- *  FIXME: 24-bit, video drivers
- *
  * HISTORY:
  *
  *  2001-10-06:
@@ -47,26 +45,21 @@
 #include "osd_cpu.h"
 #include "effect.h"
 
-static char *_6tap2x_buf0 = NULL;
-static char *_6tap2x_buf1 = NULL;
-static char *_6tap2x_buf2 = NULL;
-static char *_6tap2x_buf3 = NULL;
-static char *_6tap2x_buf4 = NULL;
-static char *_6tap2x_buf5 = NULL;
+/* for the 6tap filter, used by effect_funcs.c */
+char *_6tap2x_buf0 = NULL;
+char *_6tap2x_buf1 = NULL;
+char *_6tap2x_buf2 = NULL;
+char *_6tap2x_buf3 = NULL;
+char *_6tap2x_buf4 = NULL;
+char *_6tap2x_buf5 = NULL;
 
 /* divide R, G, and B to darken pixels */
+#define SHADE15_HALF(P)   (((P)>>1) & 0x3def)
+#define SHADE15_FOURTH(P) (((P)>>2) & 0x1ce7)
 #define SHADE16_HALF(P)   (((P)>>1) & 0x7bef)
 #define SHADE16_FOURTH(P) (((P)>>2) & 0x39e7)
 #define SHADE32_HALF(P)   (((P)>>1) & 0x007f7f7f)
 #define SHADE32_FOURTH(P) (((P)>>2) & 0x003f3f3f)
-
-/* straight RGB masks */
-#define RMASK16(P) ((P) & 0xf800)
-#define GMASK16(P) ((P) & 0x07e0)
-#define BMASK16(P) ((P) & 0x001f)
-#define RMASK32(P) ((P) & 0x00ff0000)
-#define GMASK32(P) ((P) & 0x0000ff00)
-#define BMASK32(P) ((P) & 0x000000ff)
 
 /* inverse RGB masks */
 #define RMASK16_INV(P) ((P) & 0x07ff)
@@ -76,30 +69,13 @@ static char *_6tap2x_buf5 = NULL;
 #define GMASK32_INV(P) ((P) & 0x00ff00ff)
 #define BMASK32_INV(P) ((P) & 0x00ffff00)
 
-/* inverse RGB masks, darkened*/
-#define RMASK16_INV_HALF(P) (((P)>>1) & 0x03ef)
-#define GMASK16_INV_HALF(P) (((P)>>1) & 0x780f)
-#define BMASK16_INV_HALF(P) (((P)>>1) & 0xebe0)
-#define RMASK32_INV_HALF(P) (((P)>>1) & 0x00007f7f)
-#define GMASK32_INV_HALF(P) (((P)>>1) & 0x007f007f)
-#define BMASK32_INV_HALF(P) (((P)>>1) & 0x007f7f00)
-
-/* RGB semi-masks */
-#define RMASK16_SEMI(P) ( RMASK16(P) | RMASK16_INV_HALF(P) )
-#define GMASK16_SEMI(P) ( GMASK16(P) | GMASK16_INV_HALF(P) )
-#define BMASK16_SEMI(P) ( BMASK16(P) | BMASK16_INV_HALF(P) )
-#define RMASK32_SEMI(P) ( RMASK32(P) | RMASK32_INV_HALF(P) )
-#define GMASK32_SEMI(P) ( GMASK32(P) | GMASK32_INV_HALF(P) )
-#define BMASK32_SEMI(P) ( BMASK32(P) | BMASK32_INV_HALF(P) )
-
 /* average two pixels */
+#define MEAN15(P,Q) ( RMASK15((RMASK15(P)+RMASK15(Q))/2) | GMASK15((GMASK15(P)+GMASK15(Q))/2) | BMASK15((BMASK15(P)+BMASK15(Q))/2) )
 #define MEAN16(P,Q) ( RMASK16((RMASK16(P)+RMASK16(Q))/2) | GMASK16((GMASK16(P)+GMASK16(Q))/2) | BMASK16((BMASK16(P)+BMASK16(Q))/2) )
 #define MEAN32(P,Q) ( RMASK32((RMASK32(P)+RMASK32(Q))/2) | GMASK32((GMASK32(P)+GMASK32(Q))/2) | BMASK32((BMASK32(P)+BMASK32(Q))/2) )
 
-#ifdef USE_HWSCALE
 #define FOURCC_YUY2 0x32595559
 #define FOURCC_YV12 0x32315659
-#endif
 
 
 /* RGB16 to YUV like conversion, used for lq2x/hq2x calculations */
@@ -179,152 +155,305 @@ void effect_init1()
   }
 }
 
+/* Generate most effect variants automagilcy, do this before
+   building the effect funcs tables, so that we don't have to declare
+   prototypes for all these variants (me lazy) */
+
+/* first the indirect versions */
+#define INDIRECT
+#define GETPIXEL(p) u32lookup[p]
+
+#define FUNC_NAME(name) name##_16_15
+#define SRC_PIXEL  UINT16
+#define DEST_DEPTH 15
+#include "effect_funcs.h"
+
+#define FUNC_NAME(name) name##_16_16
+#define SRC_PIXEL  UINT16
+#define DEST_DEPTH 16
+#include "effect_funcs.h"
+
+#define FUNC_NAME(name) name##_16_32
+#define SRC_PIXEL  UINT16
+#define DEST_DEPTH 32
+#include "effect_funcs.h"
+
+/* and now the direct versions */
+#undef  INDIRECT
+#undef  GETPIXEL
+#define GETPIXEL(p) (p)
+
+#define FUNC_NAME(name) name##_15_15_direct
+#define SRC_PIXEL  UINT16
+#define DEST_DEPTH 15
+#include "effect_funcs.h"
+
+#define FUNC_NAME(name) name##_32_32_direct
+#define SRC_PIXEL  UINT32
+#define DEST_DEPTH 32
+#include "effect_funcs.h"
+
+/* done */
+#undef GETPIXEL
+
+
+#define DISPLAY_MODES 5 /* 15,16,32,YUY2,YV12 */
+#define EFFECT_MODES (DISPLAY_MODES*3) /* 15,16,32 */
+/* arrays with all the effect functions:
+   5x 15 to ... + 5x 16 to ... + 5x 32 to ...
+   15
+   16
+   32
+   YUY2
+   YV12
+   For each effect ! */
+static effect_func_p effect_funcs[] = {
+   /* scan2 */
+   effect_scan2_15_15_direct,
+   effect_scan2_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_scan2_16_32, /* to go through the lookup anyways */
+   effect_scan2_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_scan2_16_15,
+   effect_scan2_16_16,
+   effect_scan2_16_32,
+   effect_scan2_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_scan2_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_scan2_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_scan2_32_32_direct, /* blitting from the buffer to the surface */
+   effect_scan2_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* rgbstripe */
+   effect_rgbstripe_15_15_direct,
+   effect_rgbstripe_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_rgbstripe_16_32, /* to go through the lookup anyways */
+   effect_rgbstripe_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_rgbstripe_16_15,
+   effect_rgbstripe_16_16,
+   effect_rgbstripe_16_32,
+   effect_rgbstripe_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_rgbstripe_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_rgbstripe_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_rgbstripe_32_32_direct, /* blitting from the buffer to the surface */
+   effect_rgbstripe_32_YUY2_direct,
+   NULL /* reserved for 32_YV12_direct */
+};
+
+static effect_scale2x_func_p effect_scale2x_funcs[] = {
+   /* scale 2x */
+   effect_scale2x_15_15_direct,
+   effect_scale2x_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_scale2x_16_32, /* to go through the lookup anyways */
+   effect_scale2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_scale2x_16_15,
+   effect_scale2x_16_16,
+   effect_scale2x_16_32,
+   effect_scale2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_scale2x_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_scale2x_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_scale2x_32_32_direct, /* blitting from the buffer to the surface */
+   effect_scale2x_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* lq2x */
+   NULL, /* effect_lq2x_15_15_direct, */
+   effect_lq2x_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_lq2x_16_32, /* to go through the lookup anyways */
+   effect_lq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   NULL, /* effect_lq2x_16_15, */
+   effect_lq2x_16_16,
+   effect_lq2x_16_32,
+   effect_lq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_lq2x_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_lq2x_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_lq2x_32_32_direct, /* blitting from the buffer to the surface */
+   effect_lq2x_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* hq2x */
+   NULL, /* effect_hq2x_15_15_direct, */
+   effect_hq2x_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_hq2x_16_32, /* to go through the lookup anyways */
+   effect_hq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   NULL, /* effect_hq2x_16_15, */
+   effect_hq2x_16_16,
+   effect_hq2x_16_32,
+   effect_hq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_hq2x_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_hq2x_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_hq2x_32_32_direct, /* blitting from the buffer to the surface */
+   effect_hq2x_32_YUY2_direct,
+   NULL /* reserved for 32_YV12_direct */
+};
+
+static effect_scale3x_func_p effect_scale3x_funcs[] = {
+   /* rgbscan */
+   NULL, /* effect_rgbscan_15_15_direct, */
+   effect_rgbscan_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_rgbscan_16_32, /* to go through the lookup anyways */
+   effect_rgbscan_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   NULL, /* effect_rgbscan_16_15, */
+   effect_rgbscan_16_16,
+   effect_rgbscan_16_32,
+   effect_rgbscan_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_rgbscan_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_rgbscan_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_rgbscan_32_32_direct, /* blitting from the buffer to the surface */
+   effect_rgbscan_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* scan3 */
+   NULL, /* effect_scan3_15_15_direct, */
+   effect_scan3_16_16, /* just use the 16 bpp src versions, since we need */
+   effect_scan3_16_32, /* to go through the lookup anyways */
+   effect_scan3_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   NULL, /* effect_scan3_16_15, */
+   effect_scan3_16_16,
+   effect_scan3_16_32,
+   effect_scan3_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   effect_scan3_32_32_direct, /* just render in 32 bpp, the blit core will */
+   effect_scan3_32_32_direct, /* use doublebuffering and do down sampling */
+   effect_scan3_32_32_direct, /* blitting from the buffer to the surface */
+   effect_scan3_32_YUY2_direct,
+   NULL /* reserved for 32_YV12_direct */
+};
+
+static effect_6tap_addline_func_p effect_6tap_addline_funcs[] = {
+   effect_6tap_addline_15,
+   effect_6tap_addline_16,
+   effect_6tap_addline_32
+};
+
+static effect_6tap_render_func_p effect_6tap_render_funcs[] = {
+   effect_6tap_render_15,
+   effect_6tap_render_16,
+   effect_6tap_render_32,
+   NULL,
+   NULL
+};
+
 /* called from <driver>_create_display by each video driver;
  * initializes function pointers to correct depths
  * and allocates buffer for doublebuffering */
 void effect_init2(int src_depth, int dst_depth, int dst_width)
 {
-  int rddepth;
-
-  switch(dst_depth) {
-#ifdef USE_HWSCALE
-    case FOURCC_YUY2:
-    case FOURCC_YV12:
-      rddepth=16;
-      break;
-#endif
-    default:
-      rddepth=dst_depth;
-      break;
-  }
+  int i = -1;
 
   free(effect_dbbuf);
-  effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*rddepth/8);
-  memset(effect_dbbuf, visual_width*normal_widthscale*normal_heightscale*rddepth/8, 0);
+  effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*4);
+  memset(effect_dbbuf, visual_width*normal_widthscale*normal_heightscale*4, 0);
 
-  if (effect) {
-    fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
-    switch (dst_depth) {
-      case 15:
-      case 16:
-        switch (src_depth) {
-          case 16:
-            effect_scale2x_func           = effect_scale2x_16_16;
-            effect_scale2x_direct_func    = effect_scale2x_16_16_direct;
-            effect_hq2x_func              = effect_hq2x_16_16;
-            effect_hq2x_direct_func       = effect_hq2x_16_16_direct;
-            effect_lq2x_func              = effect_lq2x_16_16;
-            effect_lq2x_direct_func       = effect_lq2x_16_16_direct;
-            effect_scan2_func             = effect_scan2_16_16;
-            effect_scan2_direct_func      = effect_scan2_16_16_direct;
-            effect_rgbstripe_func         = effect_rgbstripe_16_16;
-            effect_rgbstripe_direct_func  = effect_rgbstripe_16_16_direct;
-            effect_rgbscan_func           = effect_rgbscan_16_16;
-            effect_rgbscan_direct_func    = effect_rgbscan_16_16_direct;
-            effect_scan3_func             = effect_scan3_16_16;
-            effect_scan3_direct_func      = effect_scan3_16_16_direct;
-            effect_6tap_clear_func          = effect_6tap_clear;
-            effect_6tap_addline_func        = effect_6tap_addline_16_16;
-            effect_6tap_addline_direct_func = effect_6tap_addline_16_16_direct;
-            effect_6tap_render_func         = effect_6tap_render_16;
-            break;
-          case 32:
-            break;
-        }
-        break;
-      case 24:
-        switch (src_depth) {
-          case 16:
-            effect_scale2x_func   = effect_scale2x_16_24;
-            effect_hq2x_func      = effect_hq2x_16_24;
-            effect_lq2x_func      = effect_lq2x_16_24;
-            effect_scan2_func     = effect_scan2_16_24;
-            effect_rgbstripe_func = effect_rgbstripe_16_24;
-            effect_rgbscan_func   = effect_rgbscan_16_24;
-            effect_scan3_func     = effect_scan3_16_24;
-            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap 24-bit */
-            effect_6tap_addline_direct_func = 0;
-            effect_6tap_render_func         = 0;
-            effect_6tap_clear_func          = 0;
-            break;
-          case 32:
-            break;
-        }
-        break;
-      case 32:
-        switch (src_depth) {
-          case 16:
-            effect_scale2x_func   = effect_scale2x_16_32;
-            effect_hq2x_func      = effect_hq2x_16_32;
-            effect_lq2x_func      = effect_lq2x_16_32;
-            effect_scan2_func     = effect_scan2_16_32;
-            effect_rgbstripe_func = effect_rgbstripe_16_32;
-            effect_rgbscan_func   = effect_rgbscan_16_32;
-            effect_scan3_func     = effect_scan3_16_32;
-#ifdef EFFECT_MMX_ASM
-            effect_6tap_clear_func          = effect_6tap_clear_asm;
-#else
-            effect_6tap_clear_func          = effect_6tap_clear;
-#endif
-            effect_6tap_addline_func        = effect_6tap_addline_16_32;
-            effect_6tap_render_func         = effect_6tap_render_32;
-            break;
-          case 32:
-            effect_scale2x_direct_func    = effect_scale2x_32_32_direct;
-            effect_hq2x_direct_func       = effect_hq2x_32_32_direct;
-            effect_lq2x_direct_func       = effect_lq2x_32_32_direct;
-            effect_scan2_direct_func      = effect_scan2_32_32_direct;
-            effect_rgbstripe_direct_func  = effect_rgbstripe_32_32_direct;
-            effect_rgbscan_direct_func    = effect_rgbscan_32_32_direct;
-            effect_scan3_direct_func      = effect_scan3_32_32_direct;
-#ifdef EFFECT_MMX_ASM
-            effect_6tap_clear_func          = effect_6tap_clear_asm;
-#else
-            effect_6tap_clear_func          = effect_6tap_clear;
-#endif
-            effect_6tap_addline_direct_func = effect_6tap_addline_32_32_direct;
-            effect_6tap_render_func         = effect_6tap_render_32;
-            break;
-        }
-        break;
-#ifdef USE_HWSCALE
-      case FOURCC_YUY2:
-        switch(src_depth) {
-          case 16:
-            effect_scale2x_func   = effect_scale2x_16_YUY2;
-            effect_hq2x_func      = effect_hq2x_16_YUY2;
-            effect_lq2x_func      = effect_lq2x_16_YUY2;
-            effect_scan2_func     = effect_scan2_16_YUY2;
-            effect_rgbstripe_func = effect_rgbstripe_16_YUY2;
-            effect_rgbscan_func   = effect_rgbscan_16_YUY2;
-            effect_scan3_func     = effect_scan3_16_YUY2;
-            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap YUY2 */
-            effect_6tap_addline_direct_func = 0;
-            effect_6tap_render_func         = 0;
-            effect_6tap_clear_func          = 0;
-            break;
-          case 32:
-            effect_scale2x_direct_func    = effect_scale2x_32_YUY2_direct;
-            effect_hq2x_direct_func       = effect_hq2x_32_YUY2_direct;
-            effect_lq2x_direct_func       = effect_lq2x_32_YUY2_direct;
-            effect_scan2_direct_func      = effect_scan2_32_YUY2_direct;
-            effect_rgbstripe_direct_func  = effect_rgbstripe_32_YUY2_direct;
-            effect_rgbscan_direct_func    = effect_rgbscan_32_YUY2_direct;
-            effect_scan3_direct_func      = effect_scan3_32_YUY2_direct;
-            effect_6tap_addline_func        = 0;   /* fixme no routines for 6-tap YUY2 */
-            effect_6tap_addline_direct_func = 0;
-            effect_6tap_render_func         = 0;
-            effect_6tap_clear_func          = 0;
-            break;
-               }
-        break;
-#endif
+  switch(display_palette_info.fourcc_format)
+  {
+    case FOURCC_YUY2:
+      i = 3;
+      break;
+    case FOURCC_YV12:
+      i = 4;
+      break;
+    default:
+      if ( (display_palette_info.red_mask   == (0x1F << 10)) &&
+           (display_palette_info.green_mask == (0x1F <<  5)) &&
+           (display_palette_info.blue_mask  == (0x1F      )))
+        i = 0;
+      if ( (display_palette_info.red_mask   == (0x1F << 11)) &&
+           (display_palette_info.green_mask == (0x3F <<  5)) &&
+           (display_palette_info.blue_mask  == (0x1F      )))
+        i = 1;
+      if ( (display_palette_info.red_mask   == (0xFF << 16)) &&
+           (display_palette_info.green_mask == (0xFF <<  8)) &&
+           (display_palette_info.blue_mask  == (0xFF      )))
+        i = 2;
+  }
+
+  if (effect)
+  {
+    if (i == -1)
+    {
+      fprintf(stderr, "Warning your current videomode is not supported by the effect code, disabling effects\n");
+      effect = 0;
     }
+    else
+    {
+      fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display type = %d\n", effect, video_real_depth, i);
+      i += (video_real_depth / 16) * DISPLAY_MODES;
+    }
+  }
+
+  switch (effect)
+  {
+    case EFFECT_SCAN2:
+      effect_func = effect_funcs[i];
+      break;
+    case EFFECT_RGBSTRIPE:
+      effect_func = effect_funcs[i+EFFECT_MODES];
+      break;
+    case EFFECT_SCALE2X:
+      effect_scale2x_func = effect_scale2x_funcs[i];
+      break;
+    case EFFECT_LQ2X:
+      effect_scale2x_func = effect_scale2x_funcs[i+EFFECT_MODES];
+      break;
+    case EFFECT_HQ2X:
+      effect_scale2x_func = effect_scale2x_funcs[i+2*EFFECT_MODES];
+      break;
+    case EFFECT_RGBSCAN:
+      effect_scale3x_func = effect_scale3x_funcs[i];
+      break;
+    case EFFECT_SCAN3:
+      effect_scale3x_func = effect_scale3x_funcs[i+EFFECT_MODES];
+      break;
+    case EFFECT_6TAP2X:
+      effect_6tap_addline_func = effect_6tap_addline_funcs[video_real_depth/16];
+      effect_6tap_render_func  = effect_6tap_render_funcs[i%DISPLAY_MODES];
+      effect_6tap_clear_func   = effect_6tap_clear;
+      break;
+  }
+  
+  /* check if we've got a valid implementation */
+  i = -1;
+  switch(effect)
+  {
+    case EFFECT_NONE:
+      i = 0;
+      break;
+    case EFFECT_SCAN2:
+    case EFFECT_RGBSTRIPE:
+      if(effect_func) i = 0;
+      break;
+    case EFFECT_SCALE2X:
+    case EFFECT_LQ2X:
+    case EFFECT_HQ2X:
+      if (effect_scale2x_func) i = 0;
+      break;
+    case EFFECT_RGBSCAN:
+    case EFFECT_SCAN3:
+      if (effect_scale3x_func) i = 0;
+      break;
+    case EFFECT_6TAP2X:
+      if (effect_6tap_render_func) i = 0;
+      break;
+  }
+  if (i == -1)
+  {
+    fprintf(stderr, "Warning the choisen effect in combination with your current videomode is not supported by the effect code, disabling effects\n");
+    effect = 0;
   }
 
   if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy))
   {
-    switch (src_depth) {
+    switch (video_real_depth) {
+    case 15:
     case 16:
       rotate_func = rotate_16_16;
       break;
@@ -333,7 +462,7 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
       break;
     }
 
-    /* add safety if +- 16 pixels, since some effects assume that this
+    /* add safety of +- 16 pixels, since some effects assume that this
        is present and otherwise segfault */
     if (rotate_dbbuf0)
     {
@@ -360,9 +489,9 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
     }
   }
 
-  /* I need these buffers regardless of whether the display is rotated or not */
+  /* I need these buffers */
   if (effect == EFFECT_6TAP2X)
-    {
+  {
     free(_6tap2x_buf0);
     free(_6tap2x_buf1);
     free(_6tap2x_buf2);
@@ -375,1236 +504,17 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
     _6tap2x_buf3 = calloc(visual_width*8, sizeof(char));
     _6tap2x_buf4 = calloc(visual_width*8, sizeof(char));
     _6tap2x_buf5 = calloc(visual_width*8, sizeof(char));
-    }
-}
-
-
-/* scale2x algorithm (Andrea Mazzoleni, http://advancemame.sourceforge.net):
- *
- * A 9-pixel rectangle is taken from the source bitmap:
- *
- *  a b c
- *  d e f
- *  g h i
- *
- * The central pixel e is expanded into four new pixels,
- *
- *  e0 e1
- *  e2 e3
- *
- * where
- *
- *  e0 = (d == b && b != f && d != h) ? d : e;
- *  e1 = (b == f && b != d && f != h) ? f : e;
- *  e2 = (d == h && d != b && h != f) ? d : e;
- *  e3 = (h == f && d != h && b != f) ? f : e;
- *
- */
-
-
-void effect_scale2x_16_16
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src0 = (UINT16 *)src0;
-  UINT16 *u16src1 = (UINT16 *)src1;
-  UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  
-  while (count) {
-
-    if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
-      *u16dst0 = u32lookup[u16src0[0]];
-    else  *u16dst0 = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
-      *(u16dst0+1) = u32lookup[u16src0[0]];
-    else  *(u16dst0+1) = u32lookup[u16src1[0]];
-
-    if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
-      *u16dst1 = u32lookup[u16src2[0]];
-    else  *u16dst1 = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
-      *(u16dst1+1) = u32lookup[u16src2[0]];
-    else  *(u16dst1+1) = u32lookup[u16src1[0]];
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    u16dst0 += 2;
-    u16dst1 += 2;
-    --count;
-  }
-}
-
-
-void effect_scale2x_16_16_direct
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src0 = (UINT16 *)src0;
-  UINT16 *u16src1 = (UINT16 *)src1;
-  UINT16 *u16src2 = (UINT16 *)src2;
-
-  while (count) {
-
-    if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
-      *u16dst0 = u16src0[0];
-    else  *u16dst0 = u16src1[0];
-
-    if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
-      *(u16dst0+1) = u16src0[0];
-    else  *(u16dst0+1) = u16src1[0];
-
-    if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
-      *u16dst1 = u16src2[0];
-    else  *u16dst1 = u16src1[0];
-
-    if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
-      *(u16dst1+1) = u16src2[0];
-    else  *(u16dst1+1) = u16src1[0];
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    u16dst0 += 2;
-    u16dst1 += 2;
-    --count;
-  }
-}
-
-
-#ifdef USE_HWSCALE
-#define RMASK 0xff0000
-#define GMASK 0xff00
-#define BMASK 0xff
-void effect_scale2x_16_YUY2
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
-{
-  unsigned int *u32dst0 = (unsigned int *)dst0;
-  unsigned int *u32dst1 = (unsigned int *)dst1;
-  UINT16 *u16src0 = (UINT16 *)src0;
-  UINT16 *u16src1 = (UINT16 *)src1;
-  UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  INT32 y,y2,uv1,uv2;
-  UINT32 p1,p2,p3,p4;
-  while (count) {
-
-    if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
-      p1 = u32lookup[u16src0[0]];
-    else  p1 = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
-      p2 = u32lookup[u16src0[0]];
-    else  p2 = u32lookup[u16src1[0]];
-
-    if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
-      p3 = u32lookup[u16src2[0]];
-    else  p3 = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
-      p4 = u32lookup[u16src2[0]];
-    else  p4 = u32lookup[u16src1[0]];
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-
-    y=p1&0x000000ff;
-    uv1=(p1&0xff00ff00)>>1;
-    y2=p2&0x00ff0000;
-    uv2=(p2&0xff00ff00)>>1;
-    uv1=(uv1+uv2)&0xff00ff00;
-    *u32dst0++=y|y2|uv1;
-
-    y=p3&0x000000ff;
-    uv1=(p3&0xff00ff00)>>1;
-    y2=p4&0x00ff0000;
-    uv2=(p4&0xff00ff00)>>1;
-    uv1=(uv1+uv2)&0xff00ff00;
-    *u32dst1++=y|y2|uv1;    y=p1>>24;
-
-    --count;
-  }
-}
-
-
-void effect_scale2x_32_YUY2_direct
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count)
-{
-  unsigned char *u8dst0 = (unsigned char *)dst0;
-  unsigned char *u8dst1 = (unsigned char *)dst1;
-  UINT32 *u32src0 = (UINT32 *)src0;
-  UINT32 *u32src1 = (UINT32 *)src1;
-  UINT32 *u32src2 = (UINT32 *)src2;
-  INT32 r,g,b,r2,g2,b2,y,y2,u,v;
-  UINT32 p1,p2,p3,p4;
-  while (count) {
-
-    if (u32src1[-1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[1] != u32src0[0])
-      p1 = u32src0[0];
-    else  p1 = u32src1[0];
-
-    if (u32src1[1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[-1] != u32src0[0])
-      p2 = u32src0[0];
-    else  p2 = u32src1[0];
-
-    if (u32src1[-1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[1] != u32src2[0])
-      p3 = u32src2[0];
-    else  p3 = u32src1[0];
-
-    if (u32src1[1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[-1] != u32src2[0])
-      p4 = u32src2[0];
-    else  p4 = u32src1[0];
-
-    ++u32src0;
-    ++u32src1;
-    ++u32src2;
-
-    r=p1&RMASK;  r>>=16; \
-    g=p1&GMASK;  g>>=8; \
-    b=p1&BMASK;  b>>=0; \
-
-    r2=p2&RMASK;  r2>>=16; \
-    g2=p2&GMASK;  g2>>=8; \
-    b2=p2&BMASK;  b2>>=0; \
-
-    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-    y2 = (( 9836*r2 + 19310*g2 + 3750*b2 ) >> 15);
-    r+=r2; g+=g2; b+=b2; \
-    *u8dst0++=y;
-    u = (( -5527*r - 10921*g + 16448*b ) >> 16) + 128; \
-    *u8dst0++=u;
-    v = (( 16448*r - 13783*g - 2665*b ) >> 16) + 128; \
-    *u8dst0++=y2;
-    *u8dst0++=v;
-
-    r=p3&RMASK;  r>>=16; \
-    g=p3&GMASK;  g>>=8; \
-    b=p3&BMASK;  b>>=0; \
-
-    r2=p4&RMASK;  r2>>=16; \
-    g2=p4&GMASK;  g2>>=8; \
-    b2=p4&BMASK;  b2>>=0; \
-
-    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-    y2 = (( 9836*r2 + 19310*g2 + 3750*b2 ) >> 15);
-    r+=r2; g+=g2; b+=b2; \
-    *u8dst1++=y;
-    u = (( -5527*r - 10921*g + 16448*b ) >> 16) + 128; \
-    *u8dst1++=u;
-    v = (( 16448*r - 13783*g - 2665*b ) >> 16) + 128; \
-    *u8dst1++=y2;
-    *u8dst1++=v;
-
-    --count;
-  }
-}
-
-#undef RMASK
-#undef GMASK
-#undef BMASK
-#endif
-
-
-/* FIXME: this probably doesn't work right for 24 bit */
-void effect_scale2x_16_24
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src0 = (UINT16 *)src0;
-  UINT16 *u16src1 = (UINT16 *)src1;
-  UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
-      *(u32dst0) = u32lookup[u16src0[0]];
-    else  *(u32dst0) = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
-      *(u32dst0+1) = u32lookup[u16src0[0]];
-    else  *(u32dst0+1) = u32lookup[u16src1[0]];
-
-    if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
-      *(u32dst1) = u32lookup[u16src2[0]];
-    else  *(u32dst1) = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
-      *(u32dst1+1) = u32lookup[u16src2[0]];
-    else  *(u32dst1+1) = u32lookup[u16src1[0]];
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-
-void effect_scale2x_16_32
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src0 = (UINT16 *)src0;
-  UINT16 *u16src1 = (UINT16 *)src1;
-  UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    if (u16src1[-1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[1] != u16src0[0])
-      *(u32dst0) = u32lookup[u16src0[0]];
-    else  *(u32dst0) = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src0[0] && u16src2[0] != u16src0[0] && u16src1[-1] != u16src0[0])
-      *(u32dst0+1) = u32lookup[u16src0[0]];
-    else  *(u32dst0+1) = u32lookup[u16src1[0]];
-
-    if (u16src1[-1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[1] != u16src2[0])
-      *(u32dst1) = u32lookup[u16src2[0]];
-    else  *(u32dst1) = u32lookup[u16src1[0]];
-
-    if (u16src1[1] == u16src2[0] && u16src0[0] != u16src2[0] && u16src1[-1] != u16src2[0])
-      *(u32dst1+1) = u32lookup[u16src2[0]];
-    else  *(u32dst1+1) = u32lookup[u16src1[0]];
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-
-void effect_scale2x_32_32_direct
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT32 *u32src0 = (UINT32 *)src0;
-  UINT32 *u32src1 = (UINT32 *)src1;
-  UINT32 *u32src2 = (UINT32 *)src2;
-
-  while (count) {
-
-    if (u32src1[-1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[1] != u32src0[0])
-      *u32dst0 = u32src0[0];
-    else  *u32dst0 = u32src1[0];
-
-    if (u32src1[1] == u32src0[0] && u32src2[0] != u32src0[0] && u32src1[-1] != u32src0[0])
-      *(u32dst0+1) = u32src0[0];
-    else  *(u32dst0+1) = u32src1[0];
-
-    if (u32src1[-1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[1] != u32src2[0])
-      *u32dst1 = u32src2[0];
-    else  *u32dst1 = u32src1[0];
-
-    if (u32src1[1] == u32src2[0] && u32src0[0] != u32src2[0] && u32src1[-1] != u32src2[0])
-      *(u32dst1+1) = u32src2[0];
-    else  *(u32dst1+1) = u32src1[0];
-
-    ++u32src0;
-    ++u32src1;
-    ++u32src2;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-/**********************************
- * 6tap2x: 6-tap sinc filter with light scanlines
- **********************************/
-
-#define Clip(a) (((a) < 0) ? 0 : (((a) > 0xff) ? 0xff : (a)))
-
-void effect_6tap_clear(unsigned count)
-{
-  memset(_6tap2x_buf0, 0, count << 3);
-  memset(_6tap2x_buf1, 0, count << 3);
-  memset(_6tap2x_buf2, 0, count << 3);
-  memset(_6tap2x_buf3, 0, count << 3);
-  memset(_6tap2x_buf4, 0, count << 3);
-  memset(_6tap2x_buf5, 0, count << 3);
-}
-
-#ifndef EFFECT_MMX_ASM
-void effect_6tap_addline_16_32(const void *src0, unsigned count, const void *lookup)
-{
-  UINT16 *u16src = (UINT16 *)src0;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  UINT32 *u32dest;
-  UINT8 *u8dest;
-  UINT32 i;
-  INT32 pixel;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
+    if(video_real_depth == 16)
     {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
+       /* HACK: we need the palette lookup table to be 888 rgb, this means
+          that the lookup table won't be usable for normal blitting anymore
+          but that is not a problem, since we're not doing normal blitting */
+       display_palette_info.red_mask   = 0x00FF0000;
+       display_palette_info.green_mask = 0x0000FF00;
+       display_palette_info.blue_mask  = 0x000000FF;
     }
-
-  /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = u32lookup[*u16src++];
-    u32dest++;
-    }
-
-  /* just replicate the first 2 and last 3 pixels */
-  u32dest[-1] = u32dest[-2];
-  u32dest[-3] = u32dest[-4];
-  u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  u32dest[1] = u32dest[0];
-  u32dest[3] = u32dest[2];
-
-  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
-  for (i = 2; i < count - 3; i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* next, do the green part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* last, do the red part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	u8dest += 4;
-    }
-
-}
-
-void effect_6tap_addline_32_32_direct(const void *src0, unsigned count)
-{
-  UINT32 *u32src = (UINT32 *)src0;
-  UINT32 *u32dest;
-  UINT8 *u8dest;
-  UINT32 i;
-  INT32 pixel;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = *u32src++;
-    u32dest++;
-    }
-
-  /* just replicate the first 2 and last 3 pixels */
-  u32dest[-1] = u32dest[-2];
-  u32dest[-3] = u32dest[-4];
-  u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  u32dest[1] = u32dest[0];
-  u32dest[3] = u32dest[2];
-
-  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
-  for (i = 2; i < count - 3; i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* next, do the green part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* last, do the red part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	u8dest += 4;
-    }
-
-}
-
-void effect_6tap_render_32(void *dst0, void *dst1, unsigned count)
-{
-  UINT8 *u8dest = (UINT8 *) dst1;
-  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
-  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
-  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
-  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
-  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
-  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
-  UINT32 i;
-  INT32 pixel;
-
-  /* first we need to just copy the 3rd line into the first destination line */
-  memcpy(dst0, _6tap2x_buf2, count << 3);
-
-  /* then we need to vertically filter for the second line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	pixel += pixel << 2;
-	pixel += ((INT32) *src0++ + (INT32) *src5++);
-	pixel = (pixel + 0x10) >> 5;
-	pixel = Clip(pixel);
-	*u8dest++ = pixel - (pixel >> 2);
-	/* next, do the green part */
-	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	pixel += pixel << 2;
-	pixel += ((INT32) *src0++ + (INT32) *src5++);
-	pixel = (pixel + 0x10) >> 5;
-	pixel = Clip(pixel);
-	*u8dest++ = pixel - (pixel >> 2);
-	/* last, do the red part */
-	pixel = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	pixel += pixel << 2;
-	pixel += ((INT32) *src0++ + (INT32) *src5++);
-	pixel = (pixel + 0x10) >> 5;
-	pixel = Clip(pixel);
-	*u8dest++ = pixel - (pixel >> 2);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	src0++; src1++; src2++; src3++; src4++; src5++;
-    }
-
-}
-#endif
-
-void effect_6tap_addline_16_16(const void *src0, unsigned count, const void *lookup)
-{
-  UINT16 *u16src = (UINT16 *) src0;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  UINT32 *u32dest;
-  UINT8 *u8dest;
-  UINT32 i;
-  INT32 pixel;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = (RMASK16(u32lookup[*u16src]) << 8) |
-                 (GMASK16(u32lookup[*u16src]) << 5) |
-                 (BMASK16(u32lookup[*u16src]) << 3);
-    u16src++;
-    u32dest++;
-    }
-
-  /* just replicate the first 2 and last 3 pixels */
-  u32dest[-1] = u32dest[-2];
-  u32dest[-3] = u32dest[-4];
-  u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  u32dest[1] = u32dest[0];
-  u32dest[3] = u32dest[2];
-
-  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
-  for (i = 2; i < count - 3; i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* next, do the green part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* last, do the red part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	u8dest += 4;
-    }
-}
-
-void effect_6tap_addline_16_16_direct(const void *src0, unsigned count)
-{
-  UINT16 *u16src = (UINT16 *)src0;
-  UINT32 *u32dest;
-  UINT8 *u8dest;
-  UINT32 i;
-  INT32 pixel;
-  char *tmp;
-
-  /* first, move the existing lines up by one */
-  tmp = _6tap2x_buf0;
-  _6tap2x_buf0 = _6tap2x_buf1;
-  _6tap2x_buf1 = _6tap2x_buf2;
-  _6tap2x_buf2 = _6tap2x_buf3;
-  _6tap2x_buf3 = _6tap2x_buf4;
-  _6tap2x_buf4 = _6tap2x_buf5;
-  _6tap2x_buf5 = tmp;
-
-  /* if there's no new line, clear the last one and return */
-  if (!src0)
-    {
-	memset(_6tap2x_buf5, 0, count << 3);
-	return;
-    }
-
-  /* we have a new line, so first do the palette lookup and zoom by 2 */
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  for (i = 0; i < count; i++)
-    {
-    *u32dest++ = ((UINT32) RMASK16(*u16src) << 8) |
-                 ((UINT32) GMASK16(*u16src) << 5) |
-                 ((UINT32) BMASK16(*u16src) << 3);
-    u16src++;
-    u32dest++;
-    }
-
-  /* just replicate the first 2 and last 3 pixels */
-  u32dest[-1] = u32dest[-2];
-  u32dest[-3] = u32dest[-4];
-  u32dest[-5] = u32dest[-6];
-  u32dest = (UINT32 *) _6tap2x_buf5;
-  u32dest[1] = u32dest[0];
-  u32dest[3] = u32dest[2];
-
-  /* finally, do the horizontal 6-tap filter for the remaining half-pixels */
-  u8dest = ((UINT8 *) _6tap2x_buf5) + 20;
-  for (i = 2; i < count - 3; i++)
-    {
-	/* first, do the blue part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* next, do the green part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* last, do the red part */
-	pixel = (((INT32)  u8dest[-4] + (INT32) u8dest[4]) << 2) -
-	         ((INT32) u8dest[-12] + (INT32) u8dest[12]);
-	pixel += pixel << 2;
-	pixel += ((INT32) u8dest[-20] + (INT32) u8dest[20]);
-	pixel = (pixel + 0x10) >> 5;
-	*u8dest++ = Clip(pixel);
-	/* clear the last byte */
-	*u8dest++ = 0;
-	u8dest += 4;
-    }
-}
-
-void effect_6tap_render_16(void *dst0, void *dst1, unsigned count)
-{
-  UINT16 *u16dest0 = (UINT16 *) dst0;
-  UINT16 *u16dest1 = (UINT16 *) dst1;
-  UINT8 *src0 = (UINT8 *) _6tap2x_buf0;
-  UINT8 *src1 = (UINT8 *) _6tap2x_buf1;
-  UINT8 *src2 = (UINT8 *) _6tap2x_buf2;
-  UINT8 *src3 = (UINT8 *) _6tap2x_buf3;
-  UINT8 *src4 = (UINT8 *) _6tap2x_buf4;
-  UINT8 *src5 = (UINT8 *) _6tap2x_buf5;
-  UINT32 *src32 = (UINT32 *) _6tap2x_buf2;
-  UINT32 i;
-  INT32 red, green, blue;
-
-  /* first we need to just copy the 3rd line into the first destination line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	*u16dest0++ = (UINT16) ((*src32 & 0xf80000) >> 8) |
-	                       ((*src32 & 0x00fc00) >> 5) |
-	                       ((*src32 & 0x0000f8) >> 3);
-	src32++;
-	}
-
-  /* then we need to vertically filter for the second line */
-  for (i = 0; i < (count << 1); i++)
-    {
-	/* first, do the blue part */
-	blue = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	        ((INT32) *src1++ + (INT32) *src4++);
-	blue += blue << 2;
-	blue += ((INT32) *src0++ + (INT32) *src5++);
-	blue = (blue + 0x10) >> 5;
-	blue = Clip(blue);
-	blue = blue - (blue >> 2);
-	/* next, do the green part */
-	green = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	         ((INT32) *src1++ + (INT32) *src4++);
-	green += green << 2;
-	green += ((INT32) *src0++ + (INT32) *src5++);
-	green = (green + 0x10) >> 5;
-	green = Clip(green);
-	green = green - (green >> 2);
-	/* last, do the red part */
-	red = (((INT32) *src2++ + (INT32) *src3++) << 2) -
-	       ((INT32) *src1++ + (INT32) *src4++);
-	red += red << 2;
-	red += ((INT32) *src0++ + (INT32) *src5++);
-	red = (red + 0x10) >> 5;
-	red = Clip(red);
-	red = red - (red >> 2);
-	/* write the 16-bit color pixel */
-	*u16dest1++ = (UINT16) ((red   & 0xf8) << 8) |
-	                       ((green & 0xfc) << 3) |
-	                       ((blue  & 0xf8) >> 3);
-	src0++; src1++; src2++; src3++; src4++; src5++;
-    }
-
-}
-
-/**********************************
- * scan2: light 2x2 scanlines
- **********************************/
-
-#ifdef EFFECT_MMX_ASM
-extern void effect_scan2_16_16(void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
-extern void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count);
-extern void effect_scan2_16_32(void *dst0, void *dst1, const void *src, unsigned count, const void *lookup);
-extern void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count);
-#else
-
-void effect_scan2_16_16 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *u16dst0 = *(u16dst0+1) = u32lookup[*u16src];
-
-    *u16dst1 = *(u16dst1+1) = SHADE16_HALF( u32lookup[*u16src] ) + SHADE16_FOURTH( u32lookup[*u16src] );
-
-    ++u16src;
-    u16dst0 += 2;
-    u16dst1 += 2;
-    --count;
   }
 }
-
-
-void effect_scan2_16_16_direct (void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-
-  while (count) {
-
-    *u16dst0 = *(u16dst0+1) = *u16src;
-
-    *u16dst1 = *(u16dst1+1) = SHADE16_HALF( *u16src ) + SHADE16_FOURTH( *u16src );
-
-    ++u16src;
-    u16dst0 += 2;
-    u16dst1 += 2;
-    --count;
-  }
-}
-
-void effect_scan2_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
-
-    *u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
-
-    ++u16src;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-void effect_scan2_32_32_direct (void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT32 *u32src = (UINT32 *)src;
-
-  while (count) {
-
-    *u32dst0 = *(u32dst0+1) = *u32src;
-
-    *u32dst1 = *(u32dst1+1) = SHADE32_HALF( *u32src ) +  SHADE32_FOURTH( *u32src );
-
-    ++u32src;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-#endif
-
-void effect_scan2_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *u32dst0 = *(u32dst0+1) = u32lookup[*u16src];
-
-    *u32dst1 = *(u32dst1+1) = SHADE32_HALF( u32lookup[*u16src] ) + SHADE32_FOURTH( u32lookup[*u16src] );
-
-    ++u16src;
-    u32dst0 += 2;
-    u32dst1 += 2;
-    --count;
-  }
-}
-
-
-#ifdef USE_HWSCALE
-#define RMASK 0xff0000
-#define GMASK 0xff00
-#define BMASK 0xff
-void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  UINT32 r,y,u,v;
-
-  while (count) {
-    r=u32lookup[*u16src];
-    y=r&255;
-    u=(r>>8)&255;
-    v=(r>>24);
-    *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
-    *u32dst1 = ((y*3/4)&255)|((u&255)<<8)|(((y*3/4)&255)<<16)|((v&255)<<24);
-    ++u16src;
-    u32dst0++;
-    u32dst1++;
-    --count;
-  }
-}
-
-
-void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT32 *u32src = (UINT32 *)src;
-  UINT32 r,g,b,y,u,v;
-
-  while (count) {
-    r=*u32src&RMASK;  r>>=16;
-    g=*u32src&GMASK;  g>>=8;
-    b=*u32src&BMASK;  b>>=0;
-    y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-    u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
-    v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
-
-    *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
-    *u32dst1 = ((y*3/4)&255)|((u&255)<<8)|(((y*3/4)&255)<<16)|((v&255)<<24);
-    ++u32src;
-    u32dst0++;
-    u32dst1++;
-    --count;
-  }
-}
-
-#undef RMASK
-#undef GMASK
-#undef BMASK
-#endif
-
-
-/**********************************
- * rgbstripe
- **********************************/
-
-void effect_rgbstripe_16_16 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *(u16dst0+0) = *(u16dst1+0) = RMASK16_SEMI(u32lookup[*u16src]);
-    *(u16dst0+1) = *(u16dst1+1) = GMASK16_SEMI(u32lookup[*u16src]);
-    *(u16dst0+2) = *(u16dst1+2) = BMASK16_SEMI(u32lookup[*u16src]);
-
-    ++u16src;
-    u16dst0 += 3;
-    u16dst1 += 3;
-    --count;
-  }
-}
-
-
-void effect_rgbstripe_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT16 *u16dst0 = (UINT16 *)dst0;
-  UINT16 *u16dst1 = (UINT16 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-
-  while (count) {
-
-    *(u16dst0+0) = *(u16dst1+0) = RMASK16_SEMI(*u16src);
-    *(u16dst0+1) = *(u16dst1+1) = GMASK16_SEMI(*u16src);
-    *(u16dst0+2) = *(u16dst1+2) = BMASK16_SEMI(*u16src);
-
-    ++u16src;
-    u16dst0 += 3;
-    u16dst1 += 3;
-    --count;
-  }
-}
-
-
-void effect_rgbstripe_16_24 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(u32lookup[*u16src]);
-    *(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
-    *(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(u32lookup[*u16src]);
-
-    ++u16src;
-    u32dst0 += 3;
-    u32dst1 += 3;
-    --count;
-  }
-}
-
-
-void effect_rgbstripe_16_32 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-
-  while (count) {
-
-    *(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(u32lookup[*u16src]);
-    *(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(u32lookup[*u16src]);
-    *(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(u32lookup[*u16src]);
-
-    ++u16src;
-    u32dst0 += 3;
-    u32dst1 += 3;
-    --count;
-  }
-}
-
-
-void effect_rgbstripe_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT32 *u32src = (UINT32 *)src;
-
-  while (count) {
-
-    *(u32dst0+0) = *(u32dst1+0) = RMASK32_SEMI(*u32src);
-    *(u32dst0+1) = *(u32dst1+1) = GMASK32_SEMI(*u32src);
-    *(u32dst0+2) = *(u32dst1+2) = BMASK32_SEMI(*u32src);
-
-    ++u32src;
-    u32dst0 += 3;
-    u32dst1 += 3;
-    --count;
-  }
-}
-
-
-#ifdef USE_HWSCALE
-#define RMASK 0xff0000
-#define GMASK 0xff00
-#define BMASK 0xff
-
-void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, const void *lookup)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
-  UINT32 r,g,b,y,u,v,y2,u2,v2,s;
-  INT32 us,vs;
-
-  s = 1;
-  while (count) {
-    if (s) {
-      r = u32lookup[*u16src];
-      y = r&255;
-      u = (r>>8)&255;
-      v = (r>>24);
-      us = u - 128;
-      vs = v - 128;
-      r = ((512*y + 718*vs) >> 9);
-      g = ((512*y - 176*us - 366*vs) >> 9);
-      b = ((512*y + 907*us) >> 9);
-      y = (( 9836*r + 19310*(g&0x7f) + 3750*(b&0x7f) ) >> 15);
-      u = (( -5527*r - 10921*(g&0x7f) + 16448*(b&0x7f) ) >> 15) + 128;
-      v = (( 16448*r - 13783*(g&0x7f) - 2665*(b&0x7f) ) >> 15) + 128;
-      y2 = (( 9836*(r&0x7f) + 19310*g + 3750*(b&0x7f) ) >> 15);
-      u2 = (( -5527*(r&0x7f) - 10921*g + 16448*(b&0x7f) ) >> 15) + 128;
-      v2 = (( 16448*(r&0x7f) - 13783*g - 2665*(b&0x7f) ) >> 15) + 128;
-      u = (((u&255)+(u2&255))>>1);
-      v = (((v&255)+(v2&255))>>1);
-      *u32dst0 = *u32dst1 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-      if (count != 1) {
-        y = (( 9836*(r&0x7f) + 19310*(g&0x7f) + 3750*b ) >> 15);
-        u = (( -5527*(r&0x7f) - 10921*(g&0x7f) + 16448*b ) >> 15) + 128;
-        v = (( 16448*(r&0x7f) - 13783*(g&0x7f) - 2665*b ) >> 15) + 128;
-        r = u32lookup[*(u16src+1)];
-        y2 = r&255;
-        u2 = (r>>8)&255;
-        v2 = (r>>24);
-        us = u2 - 128;
-        vs = v2 - 128;
-        r = ((512*y2 + 718*vs) >> 9);
-        g = ((512*y2 - 176*us - 366*vs) >> 9);
-        b = ((512*y2 + 907*us) >> 9);
-        y2 = (( 9836*r + 19310*(g&0x7f) + 3750*(b&0x7f) ) >> 15);
-        u2 = (( -5527*r - 10921*(g&0x7f) + 16448*(b&0x7f) ) >> 15) + 128;
-        v2 = (( 16448*r - 13783*(g&0x7f) - 2665*(b&0x7f) ) >> 15) + 128;
-        u = (((u&255)+(u2&255))>>1);
-        v = (((v&255)+(v2&255))>>1);
-        *(u32dst0+1) = *(u32dst1+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-      }
-    } else {
-      r = u32lookup[*u16src];
-      y = r&255;
-      u = (r>>8)&255;
-      v = (r>>24);
-      us = u - 128;
-      vs = v - 128;
-      r = ((512*y + 718*vs) >> 9);
-      g = ((512*y - 176*us - 366*vs) >> 9);
-      b = ((512*y + 907*us) >> 9);
-      y = (( 9836*(r&0x7f) + 19310*g + 3750*(b&0x7f) ) >> 15);
-      u = (( -5527*(r&0x7f) - 10921*g + 16448*(b&0x7f) ) >> 15) + 128;
-      v = (( 16448*(r&0x7f) - 13783*g - 2665*(b&0x7f) ) >> 15) + 128;
-      y2 = (( 9836*(r&0x7f) + 19310*(g&0x7f) + 3750*b ) >> 15);
-      u2 = (( -5527*(r&0x7f) - 10921*(g&0x7f) + 16448*b ) >> 15) + 128;
-      v2 = (( 16448*(r&0x7f) - 13783*(g&0x7f) - 2665*b ) >> 15) + 128;
-      u = (((u&255)+(u2&255))>>1);
-      v = (((v&255)+(v2&255))>>1);
-      *u32dst0 = *u32dst1 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-    }
-
-    ++u16src;
-    if (s) {
-      u32dst0 += 2;
-      u32dst1 += 2;
-    } else {
-      u32dst0++;
-      u32dst1++;
-    }
-    --count;
-    s = !s;
-  }
-}
-
-
-void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count)
-{
-  UINT32 *u32dst0 = (UINT32 *)dst0;
-  UINT32 *u32dst1 = (UINT32 *)dst1;
-  UINT32 *u32src = (UINT32 *)src;
-  UINT32 t,r,g,b,y,u,v,y2,s;
-
-  s = 1;
-  while (count) {
-    if (s) {
-      t = RMASK32_SEMI(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
-      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
-      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
-      t = GMASK32_SEMI(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
-      y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
-      u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
-      v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
-      *u32dst0 = *u32dst1 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-      if (count != 1) {
-        t = BMASK32_SEMI(*u32src);
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
-        y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-        u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
-        v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
-        t = BMASK32_SEMI(*(u32src+1));
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
-        y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
-        u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
-        v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
-        *(u32dst0+1) = *(u32dst1+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-      }
-    } else {
-      t = GMASK32_SEMI(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
-      y = (( 9836*r + 19310*g + 3750*b ) >> 15);
-      u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
-      v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
-      t = BMASK32_SEMI(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
-      y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
-      u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
-      v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
-      *u32dst0 = *u32dst1 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
-    }
-
-    ++u32src;
-    if (s) {
-      u32dst0 += 2;
-      u32dst1 += 2;
-    } else {
-      u32dst0++;
-      u32dst1++;
-    }
-    --count;
-    s = !s;
-  }
-}
-
-#undef RMASK
-#undef GMASK
-#undef BMASK
-#endif
 
 
 /**********************************
@@ -1612,13 +522,13 @@ void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, un
  **********************************/
 
 
-void effect_rgbscan_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_rgbscan_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT16 *u16dst0 = (UINT16 *)dst0;
   UINT16 *u16dst1 = (UINT16 *)dst1;
   UINT16 *u16dst2 = (UINT16 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -1657,13 +567,13 @@ void effect_rgbscan_16_16_direct(void *dst0, void *dst1, void *dst2, const void 
 }
 
 
-void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -1680,13 +590,13 @@ void effect_rgbscan_16_24 (void *dst0, void *dst1, void *dst2, const void *src, 
 }
 
 
-void effect_rgbscan_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_rgbscan_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -1730,13 +640,13 @@ void effect_rgbscan_32_32_direct(void *dst0, void *dst1, void *dst2, const void 
 #define GMASK 0xff00
 #define BMASK 0xff
 
-void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32 r,g,b,y,u,v;
   INT32 us,vs;
 
@@ -1780,23 +690,23 @@ void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const voi
   UINT32 r,g,b,y,u,v;
 
   while (count) {
-    r = RMASK32_SEMI(*u32src)&RMASK; r>>=16;
-    g = RMASK32_SEMI(*u32src)&GMASK; g>>=8;
-    b = RMASK32_SEMI(*u32src)&BMASK; b>>=0;
+    r = RMASK32( RMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( RMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( RMASK32_SEMI(*u32src)); b>>=0;
     y = (( 9836*r + 19310*g + 3750*b ) >> 15);
     u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
     v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
     *u32dst0 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
-    r = GMASK32_SEMI(*u32src)&RMASK; r>>=16;
-    g = GMASK32_SEMI(*u32src)&GMASK; g>>=8;
-    b = GMASK32_SEMI(*u32src)&BMASK; b>>=0;
+    r = RMASK32( GMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( GMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( GMASK32_SEMI(*u32src)); b>>=0;
     y = (( 9836*r + 19310*g + 3750*b ) >> 15);
     u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
     v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
     *u32dst1 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
-    r = BMASK32_SEMI(*u32src)&RMASK; r>>=16;
-    g = BMASK32_SEMI(*u32src)&GMASK; g>>=8;
-    b = BMASK32_SEMI(*u32src)&BMASK; b>>=0;
+    r = RMASK32( BMASK32_SEMI(*u32src)); r>>=16;
+    g = GMASK32( BMASK32_SEMI(*u32src)); g>>=8;
+    b = BMASK32( BMASK32_SEMI(*u32src)); b>>=0;
     y = (( 9836*r + 19310*g + 3750*b ) >> 15);
     u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
     v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
@@ -1828,13 +738,13 @@ void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const voi
  */
 
 
-void effect_scan3_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_scan3_16_16 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT16 *u16dst0 = (UINT16 *)dst0;
   UINT16 *u16dst1 = (UINT16 *)dst1;
   UINT16 *u16dst2 = (UINT16 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -1895,13 +805,13 @@ void effect_scan3_16_16_direct(void *dst0, void *dst1, void *dst2, const void *s
 }
 
 
-void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -1929,13 +839,13 @@ void effect_scan3_16_24 (void *dst0, void *dst1, void *dst2, const void *src, un
 }
 
 
-void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_scan3_16_32 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
 
   while (count) {
 
@@ -2001,13 +911,13 @@ void effect_scan3_32_32_direct(void *dst0, void *dst1, void *dst2, const void *s
 #define GMASK 0xff00
 #define BMASK 0xff
 
-void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, const void *lookup)
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32 p1,p2,y1,uv1,uv2,y2,s;
 
   s = 1;
@@ -2123,9 +1033,9 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
   while (count) {
     if (s) {
       t = SHADE32_HALF(*u32src) + SHADE32_FOURTH(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
@@ -2135,16 +1045,16 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
           SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) )
           +
           SHADE32_FOURTH( MEAN32( *u32src, *(u32src+1) ) );
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
         y = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
         v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
         t = SHADE32_HALF(*(u32src+1)) + SHADE32_FOURTH(*(u32src+1));
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
         y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
         v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
@@ -2152,9 +1062,9 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
       }
     } else {
       t = SHADE32_HALF(*u32src) + SHADE32_FOURTH(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
@@ -2162,49 +1072,49 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
         SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) )
         +
         SHADE32_FOURTH( MEAN32( *u32src, *(u32src+1) ) );
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
       v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
       *u32dst0 = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
     }
     if (s) {
-      r = *u32src&RMASK; r>>=16;
-      g = *u32src&GMASK; g>>=8;
-      b = *u32src&BMASK; b>>=0;
+      r = RMASK32( *u32src); r>>=16;
+      g = GMASK32( *u32src); g>>=8;
+      b = BMASK32( *u32src); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
       *u32dst1 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
       if (count != 1) {
         t = MEAN32( *u32src, *(u32src+1) );
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
         y = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
         v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
-        r = *(u32src+1)&RMASK; r>>=16;
-        g = *(u32src+1)&GMASK; g>>=8;
-        b = *(u32src+1)&BMASK; b>>=0;
+        r = RMASK32( *(u32src+1)); r>>=16;
+        g = GMASK32( *(u32src+1)); g>>=8;
+        b = BMASK32( *(u32src+1)); b>>=0;
         y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
         v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
         *(u32dst1+1) = (y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24);
       }
     } else {
-      r = *u32src&RMASK; r>>=16;
-      g = *u32src&GMASK; g>>=8;
-      b = *u32src&BMASK; b>>=0;
+      r = RMASK32( *u32src); r>>=16;
+      g = GMASK32( *u32src); g>>=8;
+      b = BMASK32( *u32src); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
       t = MEAN32( *u32src, *(u32src+1) );
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
       v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
@@ -2212,25 +1122,25 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
     }
     if (s) {
       t = SHADE32_HALF(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
       *u32dst2 = (y&255)|((u&255)<<8)|((y&255)<<16)|((v&255)<<24);
       if (count != 1) {
         t = SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) );
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
         y = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
         v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
         t = SHADE32_HALF(*(u32src+1));
-        r = t&RMASK; r>>=16;
-        g = t&GMASK; g>>=8;
-        b = t&BMASK; b>>=0;
+        r = RMASK32( t); r>>=16;
+        g = GMASK32( t); g>>=8;
+        b = BMASK32( t); b>>=0;
         y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
         u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
         v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
@@ -2238,16 +1148,16 @@ void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void 
       }
     } else {
       t = SHADE32_HALF(*u32src);
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128;
       v = (( 16448*r - 13783*g - 2665*b ) >> 15) + 128;
       t = SHADE32_HALF( MEAN32( *u32src, *(u32src+1) ) );
-      r = t&RMASK; r>>=16;
-      g = t&GMASK; g>>=8;
-      b = t&BMASK; b>>=0;
+      r = RMASK32( t); r>>=16;
+      g = GMASK32( t); g>>=8;
+      b = BMASK32( t); b>>=0;
       y2 = (( 9836*r + 19310*g + 3750*b ) >> 15);
       u = (u + (( -5527*r - 10921*g + 16448*b ) >> 15) + 128)/2;
       v = (v + (( 16448*r - 13783*g - 2665*b ) >> 15) + 128)/2;
@@ -9370,14 +8280,14 @@ void hq2x_YUY2( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
 void effect_hq2x_16_16
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT16 *u16dst0   = (UINT16 *)dst0;
   UINT16 *u16dst1   = (UINT16 *)dst1;
   UINT16 *u16src0   = (UINT16 *)src0;
   UINT16 *u16src1   = (UINT16 *)src1;
   UINT16 *u16src2   = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT16  w[9];
 
   w[1] = u32lookup[u16src0[-1]];
@@ -9487,14 +8397,14 @@ void effect_hq2x_16_16_direct
 void effect_hq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -9581,42 +8491,42 @@ void effect_hq2x_32_YUY2_direct
   UINT32 w[9];
 
   w[1]=u32src0[-1];
-  r=w[1]&RMASK; r>>=16; g=w[1]&GMASK;  g>>=8; b=w[1]&BMASK;
+  r=RMASK32(w[1]); r>>=16; g=GMASK32(w[1]);  g>>=8; b=BMASK32(w[1]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[1]=y|u|v;
 
   w[2]=u32src0[0];
-  r=w[2]&RMASK; r>>=16; g=w[2]&GMASK;  g>>=8; b=w[2]&BMASK;
+  r=RMASK32(w[2]); r>>=16; g=GMASK32(w[2]);  g>>=8; b=BMASK32(w[2]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[2]=y|u|v;
 
   w[4]=u32src1[-1];
-  r=w[4]&RMASK; r>>=16; g=w[4]&GMASK;  g>>=8; b=w[4]&BMASK;
+  r=RMASK32(w[4]); r>>=16; g=GMASK32(w[4]);  g>>=8; b=BMASK32(w[4]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[4]=y|u|v;
 
   w[5]=u32src1[0];
-  r=w[5]&RMASK; r>>=16; g=w[5]&GMASK;  g>>=8; b=w[5]&BMASK;
+  r=RMASK32(w[5]); r>>=16; g=GMASK32(w[5]);  g>>=8; b=BMASK32(w[5]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[5]=y|u|v;
 
   w[7]=u32src2[-1];
-  r=w[7]&RMASK; r>>=16; g=w[7]&GMASK;  g>>=8; b=w[7]&BMASK;
+  r=RMASK32(w[7]); r>>=16; g=GMASK32(w[7]);  g>>=8; b=BMASK32(w[7]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[7]=y|u|v;
 
   w[8]=u32src2[0];
-  r=w[8]&RMASK; r>>=16; g=w[8]&GMASK;  g>>=8; b=w[8]&BMASK;
+  r=RMASK32(w[8]); r>>=16; g=GMASK32(w[8]);  g>>=8; b=BMASK32(w[8]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -9641,7 +8551,7 @@ void effect_hq2x_32_YUY2_direct
     w[0] = w[1];
     w[1] = w[2];
     w[2] = u32src0[ 1];
-    r=w[2]&RMASK; r>>=16; g=w[2]&GMASK;  g>>=8; b=w[2]&BMASK;
+    r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -9650,7 +8560,7 @@ void effect_hq2x_32_YUY2_direct
     w[3] = w[4];
     w[4] = w[5];
     w[5] = u32src1[ 1];
-    r=w[5]&RMASK; r>>=16; g=w[5]&GMASK;  g>>=8; b=w[5]&BMASK;
+    r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -9659,7 +8569,7 @@ void effect_hq2x_32_YUY2_direct
     w[6] = w[7];
     w[7] = w[8];
     w[8] = u32src2[ 1];
-    r=w[8]&RMASK; r>>=16; g=w[8]&GMASK;  g>>=8; b=w[8]&BMASK;
+    r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -9699,14 +8609,14 @@ void effect_hq2x_32_YUY2_direct
 void effect_hq2x_16_24
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0   = (UINT16 *)src0;
   UINT16 *u16src1   = (UINT16 *)src1;
   UINT16 *u16src2   = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32  w[9];
 
   w[1] = u32lookup[u16src0[-1]];
@@ -9756,14 +8666,14 @@ void effect_hq2x_16_24
 void effect_hq2x_16_32
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0   = (UINT16 *)src0;
   UINT16 *u16src1   = (UINT16 *)src1;
   UINT16 *u16src2   = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32  w[9];
 
   w[1] = u32lookup[u16src0[-1]];
@@ -12510,14 +11420,14 @@ void lq2x_32( UINT32 *u32dst0, UINT32 *u32dst1, UINT32 w[9] )
 void effect_lq2x_16_16
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT16 *u16dst0 = (UINT16 *)dst0;
   UINT16 *u16dst1 = (UINT16 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT16  w[9];
 
   w[1] = u32lookup[u16src0[-1]];
@@ -12627,14 +11537,14 @@ void effect_lq2x_16_16_direct
 void effect_lq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -12721,42 +11631,42 @@ void effect_lq2x_32_YUY2_direct
   UINT32 w[9];
 
   w[1]=u32src0[-1];
-  r=w[1]&RMASK; r>>=16; g=w[1]&GMASK;  g>>=8; b=w[1]&BMASK;
+  r = RMASK32(w[1]); r>>=16; g = GMASK32(w[1]);  g>>=8; b = BMASK32(w[1]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[1]=y|u|v;
 
   w[2]=u32src0[0];
-  r=w[2]&RMASK; r>>=16; g=w[2]&GMASK;  g>>=8; b=w[2]&BMASK;
+  r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[2]=y|u|v;
 
   w[4]=u32src1[-1];
-  r=w[4]&RMASK; r>>=16; g=w[4]&GMASK;  g>>=8; b=w[4]&BMASK;
+  r = RMASK32(w[4]); r>>=16; g = GMASK32(w[4]);  g>>=8; b = BMASK32(w[4]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[4]=y|u|v;
 
   w[5]=u32src1[0];
-  r=w[5]&RMASK; r>>=16; g=w[5]&GMASK;  g>>=8; b=w[5]&BMASK;
+  r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[5]=y|u|v;
 
   w[7]=u32src2[-1];
-  r=w[7]&RMASK; r>>=16; g=w[7]&GMASK;  g>>=8; b=w[7]&BMASK;
+  r = RMASK32(w[7]); r>>=16; g = GMASK32(w[7]);  g>>=8; b = BMASK32(w[7]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
   w[7]=y|u|v;
 
   w[8]=u32src2[0];
-  r=w[8]&RMASK; r>>=16; g=w[8]&GMASK;  g>>=8; b=w[8]&BMASK;
+  r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
   y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
   u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
   v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -12781,7 +11691,7 @@ void effect_lq2x_32_YUY2_direct
     w[0] = w[1];
     w[1] = w[2];
     w[2] = u32src0[ 1];
-    r=w[2]&RMASK; r>>=16; g=w[2]&GMASK;  g>>=8; b=w[2]&BMASK;
+    r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -12790,7 +11700,7 @@ void effect_lq2x_32_YUY2_direct
     w[3] = w[4];
     w[4] = w[5];
     w[5] = u32src1[ 1];
-    r=w[5]&RMASK; r>>=16; g=w[5]&GMASK;  g>>=8; b=w[5]&BMASK;
+    r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -12799,7 +11709,7 @@ void effect_lq2x_32_YUY2_direct
     w[6] = w[7];
     w[7] = w[8];
     w[8] = u32src2[ 1];
-    r=w[8]&RMASK; r>>=16; g=w[8]&GMASK;  g>>=8; b=w[8]&BMASK;
+    r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
     y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
     u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
     v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
@@ -12839,14 +11749,14 @@ void effect_lq2x_32_YUY2_direct
 void effect_lq2x_16_24
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0   = (UINT16 *)src0;
   UINT16 *u16src1   = (UINT16 *)src1;
   UINT16 *u16src2   = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32 w[9];
 
   w[1] = u32lookup[u16src0[-1]];
@@ -12895,14 +11805,14 @@ void effect_lq2x_16_24
 void effect_lq2x_16_32
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, const void *lookup)
+    unsigned count)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0   = (UINT16 *)src0;
   UINT16 *u16src1   = (UINT16 *)src1;
   UINT16 *u16src2   = (UINT16 *)src2;
-  UINT32 *u32lookup = (UINT32 *)lookup;
+  UINT32 *u32lookup = current_palette->lookup;
   UINT32 w[9];
 
   w[1] = u32lookup[u16src0[-1]];
