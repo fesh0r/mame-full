@@ -686,6 +686,15 @@ static MACHINE_DRIVER_START( ace100 )
 	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
+ROM_START(las3000)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6) SHA1(f9d312f128c9557d9d6ac03bfad6c3ddf83e5659))
+
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "l3kmbasic.rom", 0x1000, 0x3000, CRC(8EC45E7C) SHA1(06FEDA6C1F7F30E9F1290C94AE8ADC3059EA6DAC))
+	ROM_LOAD ( "l3kdisk.rom", 0x0500, 0x0100, CRC(2D4B1584) SHA1(989780B77E100598124DF7B72663E5A31A3339C0))
+ROM_END
+
 MACHINE_DRIVER_START( apple2e )
 	MDRV_IMPORT_FROM( apple2_common )
 	MDRV_VIDEO_START(apple2e)
@@ -885,6 +894,7 @@ COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2e,  apple2,   apple2e,	
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2ep, apple2,   apple2e,	"Apple Computer", "Apple //e (Platinum)" )
 COMP ( 1984, apple2c,  0,        apple2,	apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c" )
+COMPX( 1983, las3000,  apple2,   0,			apple2p,  apple2p,  apple2,   apple2p,	"Video Technology", "Laser 3000",		GAME_NOT_WORKING )
 COMPX( 1987, laser128, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128 (rev 4)",		GAME_NOT_WORKING )
 COMPX( 1987, las128ex, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Video Technology", "Laser 128ex (rev 4a)",		GAME_NOT_WORKING )
 COMPX( 1985, apple2c0, apple2c,  0,			apple2c,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //c (UniDisk 3.5)",	GAME_NOT_WORKING )
