@@ -135,102 +135,61 @@ static struct SCANLINE scanlines[2];
 static struct LAYER layers[5];
 
 /* Routine for additive/subtractive blending between the main and sub screens */
-/* FIXME: Need to support fixed colour blending */
-#define SNES_DRAW_BLEND( offset, colour, mode )															\
-	{																									\
-		UINT16 r, g, b;																					\
-		if( mode == SNES_BLEND_ADD )																	\
-		{																								\
-			if( snes_ram[CGWSEL] & 0x2 ) /* Subscreen*/													\
-			{																							\
-				r = (colour & 0x1f) + (scanlines[SUBSCREEN].buffer[offset] & 0x1f);						\
-				g = ((colour & 0x3e0) >> 5) + ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);		\
-				b = ((colour & 0x7c00) >> 10) + ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);	\
-			}																							\
-			else /* Fixed colour */																		\
-			{																							\
-				r = (colour & 0x1f) + (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);				\
-				g = ((colour & 0x3e0) >> 5) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);	\
-				b = ((colour & 0x7c00) >> 10) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);	\
-			}																							\
-			if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */			\
-			{																							\
-				r >>= 1;																				\
-				g >>= 1;																				\
-				b >>= 1;																				\
-			}																							\
-			if( r > 0x1f ) r = 0x1f;																	\
-			if( g > 0x1f ) g = 0x1f;																	\
-			if( b > 0x1f ) b = 0x1f;																	\
-			colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));								\
-		}																								\
-		else if( mode == SNES_BLEND_SUB )																\
-		{																								\
-			if( snes_ram[CGWSEL] & 0x2 ) /* Subscreen */												\
-			{																							\
-				r = (colour & 0x1f) - (scanlines[SUBSCREEN].buffer[offset] & 0x1f);						\
-				g = ((colour & 0x3e0) >> 5) - ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);		\
-				b = ((colour & 0x7c00) >> 10) - ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);	\
-			}																							\
-			else /* Fixed colour */																		\
-			{																							\
-				r = (colour & 0x1f) - (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);				\
-				g = ((colour & 0x3e0) >> 5) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);	\
-				b = ((colour & 0x7c00) >> 10) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);	\
-			}																							\
-			if( r > 0x1f ) r = 0;																		\
-			if( g > 0x1f ) g = 0;																		\
-			if( b > 0x1f ) b = 0;																		\
-			if( snes_ram[CGADSUB] & 0x40 )																\
-			{																							\
-				r >>= 1;																				\
-				g >>= 1;																				\
-				b >>= 1;																				\
-			}																							\
-			colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));								\
-		}																								\
-	}
+INLINE void snes_draw_blend( UINT16 offset, UINT16 *colour, UINT8 mode )
+{
+	UINT16 r, g, b;
 
-/* Routine for clipping to the windows */
-/* FIXME: Only supports OR mode, needs to handle AND/XOR/XNOR modes etc */
-/* FIXME: Needs to differentiate between main and sub screens */
-#define SNES_DRAW_CLIP( offset, colour, clip )								\
-	{																		\
-		if( clip & SNES_CLIP_1 )											\
-		{																	\
-			if( clip & SNES_CLIP_1_OUT )									\
-			{																\
-				if( offset <= snes_ram[WH0] || offset >= snes_ram[WH1] )	\
-				{															\
-					colour = 0;												\
-				}															\
-			}																\
-			else															\
-			{																\
-				if( offset >= snes_ram[WH0] && offset <= snes_ram[WH1] )	\
-				{															\
-					colour = 0;												\
-				}															\
-			}																\
-		}																	\
-		if( clip & SNES_CLIP_2 )											\
-		{																	\
-			if( clip & SNES_CLIP_2_OUT )									\
-			{																\
-				if( offset <= snes_ram[WH2] || offset >= snes_ram[WH3] )	\
-				{															\
-					colour = 0;												\
-				}															\
-			}																\
-			else															\
-			{																\
-				if( offset >= snes_ram[WH2] && offset <= snes_ram[WH3] )	\
-				{															\
-					colour = 0;												\
-				}															\
-			}																\
-		}																	\
+	if( mode == SNES_BLEND_ADD )
+	{
+		if( snes_ram[CGWSEL] & 0x2 ) /* Subscreen*/
+		{
+			r = (*colour & 0x1f) + (scanlines[SUBSCREEN].buffer[offset] & 0x1f);
+			g = ((*colour & 0x3e0) >> 5) + ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);
+			b = ((*colour & 0x7c00) >> 10) + ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);
+		}
+		else /* Fixed colour */
+		{
+			r = (*colour & 0x1f) + (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);
+			g = ((*colour & 0x3e0) >> 5) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);
+			b = ((*colour & 0x7c00) >> 10) + ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);
+		}
+		if( snes_ram[CGADSUB] & 0x40 ) /* FIXME: We shouldn't half for the back colour */
+		{
+			r >>= 1;
+			g >>= 1;
+			b >>= 1;
+		}
+		if( r > 0x1f ) r = 0x1f;
+		if( g > 0x1f ) g = 0x1f;
+		if( b > 0x1f ) b = 0x1f;
+		*colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));
 	}
+	else if( mode == SNES_BLEND_SUB )
+	{
+		if( snes_ram[CGWSEL] & 0x2 ) /* Subscreen */
+		{
+			r = (*colour & 0x1f) - (scanlines[SUBSCREEN].buffer[offset] & 0x1f);
+			g = ((*colour & 0x3e0) >> 5) - ((scanlines[SUBSCREEN].buffer[offset] & 0x3e0) >> 5);
+			b = ((*colour & 0x7c00) >> 10) - ((scanlines[SUBSCREEN].buffer[offset] & 0x7c00) >> 10);
+		}
+		else /* Fixed colour */
+		{
+			r = (*colour & 0x1f) - (Machine->remapped_colortable[FIXED_COLOUR] & 0x1f);
+			g = ((*colour & 0x3e0) >> 5) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x3e0) >> 5);
+			b = ((*colour & 0x7c00) >> 10) - ((Machine->remapped_colortable[FIXED_COLOUR] & 0x7c00) >> 10);
+		}
+		if( r > 0x1f ) r = 0;
+		if( g > 0x1f ) g = 0;
+		if( b > 0x1f ) b = 0;
+		if( snes_ram[CGADSUB] & 0x40 )
+		{
+			r >>= 1;
+			g >>= 1;
+			b >>= 1;
+		}
+		*colour = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));
+	}
+}
 
 VIDEO_UPDATE( snes )
 {
@@ -277,7 +236,8 @@ INLINE void snes_draw_tile_2( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
 				c = Machine->remapped_colortable[pal + colour];
-				SNES_DRAW_BLEND( x+ii, c, blend );
+				if( screen == MAINSCREEN )	/* Only blend main screens */
+					snes_draw_blend( x+ii, &c, blend );
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
@@ -330,7 +290,8 @@ INLINE void snes_draw_tile_4( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
 				c = Machine->remapped_colortable[pal + colour];
-				SNES_DRAW_BLEND( x+ii, c, blend );	/* Blend with the subscreen */
+				if( screen == MAINSCREEN )	/* Only blend main screens */
+					snes_draw_blend( x+ii, &c, blend );
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
@@ -391,7 +352,8 @@ INLINE void snes_draw_tile_8( UINT8 screen, UINT16 tileaddr, INT16 x, UINT8 prio
 			if( scanlines[screen].zbuf[x+ii] <= priority )
 			{
 				c = Machine->remapped_colortable[colour];
-				SNES_DRAW_BLEND( x+ii, c, blend );
+				if( screen == MAINSCREEN )	/* Only blend main screens */
+					snes_draw_blend( x+ii, &c, blend );
 				scanlines[screen].buffer[x+ii] = c;
 				scanlines[screen].zbuf[x+ii] = priority;
 			}
@@ -495,7 +457,7 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline, UINT8
 
 		/* Special case for bg3 */
 		if( layer == 2 && bg3_pty && (snes_vram[tilemap + ii + 1] & 0x20) )
-			priority = 12;
+			priority = table_obj_pty[3] + 1;		/* We want to have the highest priority here */
 
 		snes_draw_tile_2( screen, layers[layer].data + (tile << 4) + tile_line, ((ii >> 1) * (8 << tile_size)) - hshift, priority, hflip, pal, layers[layer].blend, layers[layer].clip );
 		if( tile_size )
@@ -708,7 +670,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
  *
  * Update an entire line of mode7 tiles.
  *********************************************/
-static void snes_update_line_mode7( UINT16 curline )
+static void snes_update_line_mode7( UINT8 screen, UINT16 curline )
 {
 	UINT32 tiled;
 	INT16 ma,mb,mc,md;
@@ -798,12 +760,13 @@ static void snes_update_line_mode7( UINT16 curline )
 		}
 
 		/* Draw pixel if appropriate */
-		if( scanlines[MAINSCREEN].zbuf[xpos] < table_bgd_pty[0][0] && colour > 0 )
+		if( scanlines[screen].zbuf[xpos] < table_bgd_pty[0][0] && colour > 0 )
 		{
 			UINT16 clr = Machine->remapped_colortable[colour];
-			SNES_DRAW_BLEND( xpos, clr, layers[0].blend );
-			scanlines[MAINSCREEN].buffer[xpos] = clr;
-			scanlines[MAINSCREEN].zbuf[xpos] = table_bgd_pty[0][0];
+			if( screen == MAINSCREEN )	/* Only blend main screens */
+				snes_draw_blend( xpos, &clr, layers[0].blend );
+			scanlines[screen].buffer[xpos] = clr;
+			scanlines[screen].zbuf[xpos] = table_bgd_pty[0][0];
 		}
 	}
 }
@@ -918,7 +881,7 @@ static void snes_update_backplane(void)
 	{
 		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
 		{
-			SNES_DRAW_BLEND( ii, scanlines[MAINSCREEN].buffer[ii], (snes_ram[CGADSUB] & 0x80)?SNES_BLEND_SUB:SNES_BLEND_ADD );
+			snes_draw_blend( ii, &scanlines[MAINSCREEN].buffer[ii], (snes_ram[CGADSUB] & 0x80)?SNES_BLEND_SUB:SNES_BLEND_ADD );
 		}
 	}
 }
@@ -1375,9 +1338,12 @@ void snes_refresh_scanline( UINT16 curline )
 				if( snes_ram[TM] & 0x1 ) snes_update_line_4( MAINSCREEN, 0, curline );
 				break;
 			case 7:			/* Mode 7 - 1 layer - 256 colours - matrix math stuff */
+				/* Draw the subscreen */
+				if( snes_ram[TS] & 0x1 ) snes_update_line_mode7( SUBSCREEN, curline );
 				/* Draw the back plane */
 				snes_update_backplane();
-				snes_update_line_mode7( curline );
+				/* Draw Mainscreen */
+				if( snes_ram[TM] & 0x1 ) snes_update_line_mode7( MAINSCREEN, curline );
 				break;
 		}
 
