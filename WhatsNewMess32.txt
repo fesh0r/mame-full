@@ -37,8 +37,6 @@ Whats new:
 
 - Added driver-specific software paths to the properties window [Nate Woods]
 
-- New help file for MESS32 [Juan Rivera]
-
 ----------
 0.37 BETA 5
 ------------
