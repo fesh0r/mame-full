@@ -9,6 +9,7 @@ static float display_aspect_ratio = 4.0 / 3.0;
 static double display_resolution_aspect_ratio = 4.0 / 3.0;
 
 static int mode_disable(struct rc_option *option, const char *s, int priority);
+static int mode_force(struct rc_option *option, const char *s, int priority);
 
 struct rc_option aspect_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -37,6 +38,9 @@ struct rc_option mode_opts[] = {
    { "disablemode",	"dm",			rc_use_function, NULL,
      NULL,		0,			0,		mode_disable,
      "Don't use mode XRESxYRESxDEPTH this can be used to disable specific video modes which don't work on your system. The xDEPTH part of the string is optional and can be set to 15,16,24 and 32. This option may be used more then once" },
+   { "forcemode",	"fm",			rc_use_function, NULL,
+     NULL,		0,			0,		mode_force,
+     "Force use of mode XRESxYRESxDEPTH The DEPTH can be to 15,16,24 and 32." },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
@@ -44,12 +48,15 @@ struct rc_option mode_opts[] = {
 
 #define MODE_DISABLED_MAX 32
 
-static struct 
+struct mode
 {
    int width;
    int height;
    int depth;
-} disabled_modes[MODE_DISABLED_MAX];
+};
+
+static struct mode disabled_modes[MODE_DISABLED_MAX];
+static struct mode forced_mode;
 
 static int mode_disable(struct rc_option *option, const char *s, int priority)
 {
@@ -81,6 +88,20 @@ static int mode_disable(struct rc_option *option, const char *s, int priority)
          return 1;
    }
    disabled_modes_count++;
+   return 0;
+}
+
+static int mode_force(struct rc_option *option, const char *s, int priority)
+{
+   if (sscanf(s, "%dx%dx%d",
+       &forced_mode.width,
+       &forced_mode.height,
+       &forced_mode.depth) != 3)
+   {
+      fprintf(stderr, "Error: %s is not a valid mode\n", s);
+      return 1;
+   }
+   option->priority = priority;
    return 0;
 }
 
@@ -156,6 +177,12 @@ int mode_match(int width, int height, int depth, int dga)
       viswidth) ||
      height < visheight)
     return 0;
+    
+  /* is this mode forced? */
+  if ((width  == forced_mode.width) &&
+      (height == forced_mode.height) &&
+      (depth  == forced_mode.depth))
+    return 200;
    
   if (use_aspect_ratio && (sysdep_display_params.aspect_ratio != 0.0))
   {
@@ -202,8 +229,9 @@ int mode_match(int width, int height, int depth, int dga)
         case 16:
           return score + 10;
         case 24:
-        case 32:
           return score;
+        case 32:
+          return score + 5;
       }
       break;
     case 16:
@@ -214,16 +242,18 @@ int mode_match(int width, int height, int depth, int dga)
         case 16:
           return score + 15; /* is this really the best for 16 bpp palettised ? */
         case 24:
-        case 32:
           return score;
+        case 32:
+          return score + 5;
       }
       break;
     case 32:
       switch(depth)
       {
         case 15:
-        case 16:
           return score;
+        case 16:
+          return score + 5;
         case 24:
           return score + 10;
         case 32:

@@ -67,10 +67,10 @@ void sysdep_display_set_params(const struct sysdep_display_open_params *params)
       sysdep_display_params.heightscale;
 }
 
-static void sysdep_display_orient_bounds(struct mame_bitmap *bitmap, struct rectangle *bounds)
+void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)
 {
-	int temp, width, height;
-	
+        int temp;
+        
 	/* apply X/Y swap first */
 	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
 	{
@@ -81,13 +81,10 @@ static void sysdep_display_orient_bounds(struct mame_bitmap *bitmap, struct rect
 		temp = bounds->max_x;
 		bounds->max_x = bounds->max_y;
 		bounds->max_y = temp;
-		width  = bitmap->height;
-		height = bitmap->width;
-	}
-	else
-	{
-		width  = bitmap->width;
-		height = bitmap->height;
+
+		temp   = height;
+		height = width;
+		width  = temp;
 	}
 
 	/* apply X flip */
@@ -112,8 +109,8 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *d
 	int old_bound;
 
 	/* orient the bounds */	
-	sysdep_display_orient_bounds(bitmap, dirty_area);
-	sysdep_display_orient_bounds(bitmap, vis_in_dest_out);
+	sysdep_display_orient_bounds(dirty_area, bitmap->width, bitmap->height);
+	sysdep_display_orient_bounds(vis_in_dest_out, bitmap->width, bitmap->height);
 	
 	/* change vis_area to destbounds */
         vis_in_dest_out->max_x = dirty_area->max_x - vis_in_dest_out->min_x;

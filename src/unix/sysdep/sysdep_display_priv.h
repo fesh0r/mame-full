@@ -30,6 +30,7 @@
 extern struct sysdep_display_open_params sysdep_display_params;
 
 void sysdep_display_set_params(const struct sysdep_display_open_params *params);
+void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height);
 void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *dirty_area, struct rectangle *vis_in_dest_out);
 
 #include "end_code.h"

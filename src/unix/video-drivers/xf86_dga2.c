@@ -20,9 +20,8 @@
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-#ifdef X_XDGASetMode
-
 #ifdef USE_DGA
+#ifdef X_XDGASetMode
 
 static struct
 {
@@ -34,8 +33,17 @@ static struct
 	XDGADevice *device;
 	XDGAMode *modes;
 	int vidmode_changed;
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0};
+	int aligned_viewport_height;
+	int page;
+	int max_page;
+	int max_page_limit;
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,2};
 	
+struct rc_option xf86_dga2_opts[] = {
+  /* name, shortname, type, dest, deflt, min, max, func, help */
+  { "vsync-pagelimit", "vspl", rc_int, &(xf86ctx.max_page_limit), "2", 0, 16, NULL, "Maximum number of pages (frames) to queue in videomemory for display after vsync" },
+  { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+};
 
 #ifdef TDFX_DGA_WORKAROUND
 static int current_X11_mode = 0;
@@ -179,6 +187,22 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	xf86ctx.addr += ((modeinfo.viewportHeight - sysdep_display_params.yarbsize)
 		/ 2) * modeinfo.bytesPerScanline;
 
+	/* setup page flipping */
+	if(modeinfo.viewportFlags & XDGAFlipRetrace)
+	{
+	  xf86ctx.aligned_viewport_height = (modeinfo.viewportHeight+
+	    modeinfo.yViewportStep-1) & ~(modeinfo.yViewportStep-1);
+	  xf86ctx.page = 0;
+	  xf86ctx.max_page = modeinfo.maxViewportY /
+	    xf86ctx.aligned_viewport_height;
+	  if (xf86ctx.max_page > xf86ctx.max_page_limit)
+	    xf86ctx.max_page = xf86ctx.max_page_limit;
+	  if (xf86ctx.max_page)
+	    fprintf(stderr, "DGA using vsynced page flipping, hw-buffering max %d frames\n", xf86ctx.max_page);
+	}
+	else
+	  xf86ctx.max_page = 0;
+
 	return 0;
 }
 
@@ -259,21 +283,15 @@ int xf86_dga2_open_display(void)
 	    return 1;
 	}
 
+	/* setup the viewport */
 	XDGASetViewport(display,xf86ctx.screen,0,0,0);
 	while(XDGAGetViewportStatus(display, xf86ctx.screen))
 		;
 
-	if (xf86ctx.device->mode.flags & XDGASolidFillRect) {
-		XDGAFillRectangle(display, xf86ctx.screen, 0, 0,
-			DisplayWidth(display, xf86ctx.screen),
-			DisplayHeight(display, xf86ctx.screen),
-			BlackPixel(display, xf86ctx.screen));
-		XDGASync(display, xf86ctx.screen);
-	} else {
-		memset(xf86ctx.device->data, 0,
-		       xf86ctx.device->mode.bytesPerScanline
-		       * xf86ctx.device->mode.imageHeight);
-	}
+	/* clear the screen */
+	memset(xf86ctx.device->data, 0,
+	       xf86ctx.device->mode.bytesPerScanline
+	       * xf86ctx.device->mode.imageHeight);
 
 	/* setup the colormap */
 	xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
@@ -290,9 +308,22 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
-	xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
-		palette, xf86ctx.addr, xf86ctx.width);
-	XDGASync(display,xf86ctx.screen);
+  if (xf86ctx.max_page)
+    while(XDGAGetViewportStatus(display, xf86ctx.screen) & (0x01 <<
+          (xf86ctx.max_page - 1)))
+    {
+    }
+
+  xf86ctx.page = (xf86ctx.page + 1) % (xf86ctx.max_page + 1);
+  xf86ctx.update_display_func(bitmap, src_bounds, dest_bounds,
+        palette, xf86ctx.addr + xf86ctx.aligned_viewport_height *
+	xf86ctx.page * xf86ctx.device->mode.bytesPerScanline, xf86ctx.width);
+
+  if (xf86ctx.max_page)
+    XDGASetViewport(display, xf86ctx. screen, 0, xf86ctx.page *
+      xf86ctx.aligned_viewport_height, XDGAFlipRetrace);
+
+  XDGASync(display,xf86ctx.screen);
 }
 
 void xf86_dga2_close_display(void)

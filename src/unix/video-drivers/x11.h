@@ -14,7 +14,6 @@ enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_DGA, X11_MODE_COUNT };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
-extern struct rc_option	xgl_opts[];
 
 EXTERN Display 		*display;
 EXTERN Window		window;
@@ -34,6 +33,11 @@ EXTERN int		use_mt_xil;
 #ifdef USE_DGA
 EXTERN int		xf86_dga_fix_viewport;
 EXTERN int		xf86_dga_first_click;
+extern struct rc_option xf86_dga_opts[];
+extern struct rc_option xf86_dga2_opts[];
+#endif
+#ifdef USE_OPENGL
+extern struct rc_option	xgl_opts[];
 #endif
 #ifdef X11_JOYSTICK
 EXTERN int devicebuttonpress;

@@ -28,6 +28,16 @@ static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
 
+struct rc_option xf86_dga_opts[] = {
+  /* name, shortname, type, dest, deflt, min, max, func, help */
+#ifdef X_XDGASetMode
+  { "DGA Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+  { NULL, NULL, rc_link, xf86_dga2_opts, NULL, 0, 0, NULL, NULL },
+#endif  
+  { NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
+  { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+};
+
 int xf86_dga_init(void)
 {
 	int i, j;

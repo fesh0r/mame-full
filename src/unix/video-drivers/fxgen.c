@@ -461,14 +461,17 @@ int InitVScreen(void)
   vscrntly=(window_height-vscrnheight)/2;
   if(sysdep_display_params.vec_dest_bounds)
   {
-    vecvscrnwidth  = ((sysdep_display_params.vec_dest_bounds->max_x+1)-sysdep_display_params.vec_dest_bounds->min_x) *
+    struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
+    sysdep_display_orient_bounds(&vec_bounds, sysdep_display_params.orig_width,
+      sysdep_display_params.orig_height);
+    vecvscrnwidth  = ((vec_bounds.max_x+1)-vec_bounds.min_x) *
       ((double)vscrnwidth/sysdep_display_params.width);
-    vecvscrnheight = ((sysdep_display_params.vec_dest_bounds->max_y+1)-sysdep_display_params.vec_dest_bounds->min_y) *
+    vecvscrnheight = ((vec_bounds.max_y+1)-vec_bounds.min_y) *
       ((double)vscrnheight/sysdep_display_params.height);
     vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
-      * sysdep_display_params.vec_dest_bounds->min_x;
+      * vec_bounds.min_x;
     vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
-      * sysdep_display_params.vec_dest_bounds->min_y;
+      * vec_bounds.min_y;
     fprintf(stderr, "vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
       vecvscrnwidth, vecvscrnheight);
   }

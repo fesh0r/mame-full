@@ -956,12 +956,6 @@ void x11_window_update_display (struct mame_bitmap *bitmap,
   struct rectangle *src_bounds,  struct rectangle *dest_bounds,
   struct sysdep_palette_struct *palette, unsigned int flags)
 {
-   if(x11_exposed)
-   {
-      *src_bounds = *dest_bounds;
-      x11_exposed = 0;
-   }
-   
    (*x11_window_update_display_func) (bitmap, src_bounds, dest_bounds, palette,
       scaled_buffer_ptr, image_width);
    

@@ -24,7 +24,7 @@ struct rc_option sysdep_display_opts[] = {
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
    	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 #ifdef USE_DGA
-	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
+	{ NULL, NULL, rc_link, xf86_dga_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef USE_OPENGL
 	{ NULL, NULL, rc_link, xgl_opts, NULL, 0, 0, NULL, NULL },
@@ -212,6 +212,13 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 		return 1;
 	}
 	
+	/* when exposed (and for the first frame) force a full update */
+	if(x11_exposed)
+	{
+	 	*dirty_area = *vis_area;
+	 	x11_exposed = 0;
+	}
+   
 	/* dirty_area gives the src_bounds and sysdep_display_check_params
 	   will convert vis_area to the dest bounds */
 	(*x_func[x11_video_mode].update_display) (bitmap, dirty_area, vis_area, palette, flags);
