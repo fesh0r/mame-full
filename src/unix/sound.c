@@ -19,6 +19,7 @@ static char *sound_mixer_device = NULL;
 static struct sysdep_dsp_struct *sound_dsp = NULL;
 static struct sysdep_mixer_struct *sound_mixer = NULL;
 static int sound_samples_per_frame = 0;
+static int type;
 
 static int sound_set_options(struct rc_option *option, const char *arg,
    int priority)
@@ -117,9 +118,38 @@ int osd_get_mastervolume (void)
 void osd_sound_enable (int enable_it)
 {
    if (sound_stream && enable_it)
+   {
       sound_enabled = 1;
+      if (!sound_dsp)
+      {
+	 if (!(sound_dsp = sysdep_dsp_create(NULL,
+	    sound_dsp_device,
+	    &options.samplerate,
+	    &type,
+	    sound_bufsize * (1 / Machine->drv->frames_per_second),
+	    SYSDEP_DSP_EMULATE_TYPE | SYSDEP_DSP_O_NONBLOCK)))
+	    sound_enabled = 0;
+	 else
+	 {
+	    sound_stream_destroy(sound_stream);
+	    if (!(sound_stream = sound_stream_create(sound_dsp, type,
+	       sound_samples_per_frame, 3)))
+	    {
+	       osd_stop_audio_stream();
+	       sound_enabled = 0;
+	    }
+	 }
+      }
+   }
    else
+   {
+      if (sound_dsp)
+      {
+	 sysdep_dsp_destroy(sound_dsp);
+	 sound_dsp = NULL;
+      }
       sound_enabled = 0;
+   }
 }
 
 /* handle ugly dos fm-stuff */
@@ -133,7 +163,7 @@ void osd_opl_write (int chip, int data)
 
 int osd_start_audio_stream(int stereo)
 {
-   int type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
+   type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
    
    sound_stream = NULL;
 
