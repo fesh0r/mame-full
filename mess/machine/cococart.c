@@ -179,7 +179,7 @@ int dragon_floppy_init(int id)
 		diskKind[ id ] = DSK_DMK;
 		return INIT_PASS;
 	}
-	
+
 	if(cocovdk_floppy_init(id)==INIT_PASS)
 	{
 		diskKind[ id ] = DSK_BASIC;
@@ -202,10 +202,10 @@ int dragon_floppy_init(int id)
 					attributeFlag,
 					tracks;
 			UINT8	*buffer = malloc( headerSize+1 );
-			
+
 			if( buffer == NULL )
 				return INIT_FAIL;
-				
+
 			osd_fread(file, buffer, headerSize);
 
 			if( headerSize > 0 )
@@ -223,7 +223,7 @@ int dragon_floppy_init(int id)
 			if( headerSize > 4 )
 			{
 				attributeFlag = buffer[4];
-				
+
 				if( attributeFlag != 0 )
 				{
 					osd_fclose(file);
@@ -244,7 +244,7 @@ int dragon_floppy_init(int id)
 			}
 
 			basicdsk_set_geometry(id, tracks, sideCount, sectorPerTrack, (128 << sectorSizeCode), firstSectorID, headerSize);
-			
+
 			free( buffer );
 			osd_fclose(file);
 		}
@@ -258,7 +258,7 @@ static void set_coco_dskreg(int data)
 	UINT8 head = 0;
 	int motor_mask = 0;
 
-	LOG(("set_coco_dskreg(): %c%c%c%c%c%c%c%c ($%02x)\n",  
+	LOG(("set_coco_dskreg(): %c%c%c%c%c%c%c%c ($%02x)\n",
 									data & 0x80 ? 'H' : 'h',
 									data & 0x40 ? '3' : '.',
 									data & 0x20 ? 'D' : 'S',
@@ -275,7 +275,7 @@ static void set_coco_dskreg(int data)
 		 * selected in other situations, then both drives are selected, and any
 		 * read signals get yucky.
 		 */
-	 
+
 		motor_mask = 0x08;
 
 		if (data & 0x04)
@@ -298,7 +298,7 @@ static void set_coco_dskreg(int data)
 /*		cpu_set_halt_line(0, ASSERT_LINE);*/
 	else
 		cpu_set_halt_line(0, CLEAR_LINE);
-	
+
 	if( COCO_NMIENABLE  && (intrq_state == ASSERT_LINE) )
 	{
 		CLEAR_COCO_HALTENABLE;
@@ -315,7 +315,7 @@ static void set_coco_dskreg(int data)
 
 static void set_dragon_dskreg(int data)
 {
-	LOG(("set_dragon_dskreg(): %c%c%c%c%c%c%c%c ($%02x)\n",  
+	LOG(("set_dragon_dskreg(): %c%c%c%c%c%c%c%c ($%02x)\n",
 								data & 0x80 ? 'X' : 'x',
 								data & 0x40 ? 'X' : 'x',
 								data & 0x20 ? 'N' : 'n',
@@ -369,16 +369,16 @@ READ_HANDLER(coco_floppy_r)
 
 		if( offset == ( 0xff79-0xff40 ) )
 			ds1315_r_1( offset );
-			
+
 		if( offset == ( 0xff78-0xff40 ) )
 			ds1315_r_0( offset );
-			
+
 		if( offset == ( 0xff7c-0xff40 ) )
 			result = ds1315_r_data( offset );
 	}
 
 /*	logerror("SCS read:  address %4.4X, data %2.2X\n", 0xff40+offset, result );*/
-	
+
 	return result;
 }
 
@@ -416,13 +416,13 @@ WRITE_HANDLER(coco_floppy_w)
 
 		if( offset == ( 0xff50-0xff40 ) )
 			m6242_data_w( m6242_address, data );
-			
+
 		if( offset == ( 0xff51-0xff40 ) )
 			m6242_address = data & 0x0f;
 	}
-	
+
 	coco_vhd_io_w( offset, data );
-	
+
 /*	logerror("SCS write: address %4.4X, data %2.2X\n", 0xff40+offset, data );*/
 }
 
@@ -519,10 +519,10 @@ static WRITE_HANDLER(cartridge_Orch90_io_w)
 {
 	if( offset == 58 )
 		DAC_data_w(0, data);
-	
+
 	if( offset == 59 )
 		DAC_data_w(0, data);
-		
+
 }
 
 const struct cartridge_slot cartridge_standard =
@@ -595,21 +595,21 @@ int coco_vhd_init(int id)
 {
 	vhdFile = NULL;
 	vhdStatus = 0xff; /* -1, Power on state */
-	
+
 	if( id != 0 )
 		return INIT_FAIL;
-		
+
 	vhdFile = image_fopen(IO_VHD, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-	
+
 	logicalRecordNumber = 0;
 	bufferAddress = 0;
-	
+
 	if( vhdFile == NULL )
 	{
 		vhdStatus = 2; /* No VHD attached */
 		return INIT_PASS;
 	}
-		
+
 	return INIT_PASS;
 
 }
@@ -618,10 +618,10 @@ void coco_vhd_exit(int id)
 {
 	if( vhdFile != NULL )
 		osd_fclose( vhdFile );
-		
+
 }
 
-static READ_HANDLER(coco_vhd_io_r)
+READ_HANDLER(coco_vhd_io_r)
 {
 	switch( offset )
 	{
@@ -630,11 +630,11 @@ static READ_HANDLER(coco_vhd_io_r)
 			return vhdStatus;
 			break;
 	}
-	
+
 	return 0;
 }
 
-static WRITE_HANDLER(coco_vhd_io_w)
+WRITE_HANDLER(coco_vhd_io_w)
 {
 	switch( offset )
 	{
@@ -655,12 +655,12 @@ static WRITE_HANDLER(coco_vhd_io_w)
 			logicalRecordNumber += data;
 			LOG(( "vhd: LRN write: %d (....%2.2X)\n", logicalRecordNumber, data ));
 			break;
-			
+
 		case 0xff83 - 0xff40:
 			coco_vhd_readwrite( data );
 			LOG(( "vhd: Command: %d\n", data ));
 			break;
-			
+
 		case 0xff84 - 0xff40:
 			bufferAddress &= 0xFFFF00FF;
 			bufferAddress += data << 8;
@@ -680,34 +680,34 @@ void coco_vhd_readwrite( UINT8 data )
 	int		result;
 	int		phyOffset;
 	long	nBA = BIG_ENDIANIZE_INT32(bufferAddress);
-	
+
 	if( vhdFile == NULL )
 	{
 		vhdStatus = 2; /* No VHD attached */
 		return;
 	}
-	
+
 	result = osd_fseek(vhdFile, ((BIG_ENDIANIZE_INT32(logicalRecordNumber))) * 256, SEEK_SET);
-	
+
 	if( result < 0 )
 	{
 		vhdStatus = 5; /* access denied */
 		return;
 	}
-	
+
 	phyOffset = coco3_mmu_translate( (nBA >> 12 ) / 2, nBA % 8192 );
-	
+
 	switch( data )
 	{
 		case 0: /* Read sector */
 			result = osd_fread(vhdFile, &(mess_ram[phyOffset]), 256);
-			
+
 			if( result != 256 )
 			{
 				vhdStatus = 5; /* access denied */
 				return;
 			}
-			
+
 			vhdStatus = 0; /* Aok */
 			break;
 
@@ -719,26 +719,26 @@ void coco_vhd_readwrite( UINT8 data )
 				vhdStatus = 5; /* access denied */
 				return;
 			}
-			
+
 			vhdStatus = 0; /* Aok */
 			break;
-		
+
 		case 2: /* Flush file cache */
 			osd_fclose( vhdFile );
 			vhdFile = NULL;
 			vhdFile = image_fopen(IO_VHD, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-			
+
 			if( vhdFile == NULL )
 				vhdStatus = 2; /* Unable to open image */
 			else
 				vhdStatus = 0; /* Aok */
 			break;
-			
+
 		default:
 			vhdStatus = 0xfe; /* -2, Unknown command */
 			break;
 	}
-	
+
 	return;
 }
 
