@@ -111,9 +111,9 @@ TESTDRIVER( atarist )
 #endif
 
 	/* NINTENDO */
-//!!	DRIVER( nes )		/* Nintendo Entertainment System				  */
-//!!	DRIVER( nespal )	/* Nintendo Entertainment System				  */
-//!!	DRIVER( famicom )
+	DRIVER( nes )		/* Nintendo Entertainment System				  */
+	DRIVER( nespal )	/* Nintendo Entertainment System				  */
+	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
 	DRIVER (snes)		/* Nintendo Super Nintendo						  */
 /*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy 						  */

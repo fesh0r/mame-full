@@ -254,7 +254,7 @@ $(OBJ)/nintendo.a: \
 	  $(OBJ)/mess/vidhrdw/snes.o	 \
 	  $(OBJ)/mess/machine/snes.o	 \
 	  $(OBJ)/mess/systems/snes.o     \
-#	  $(OBJ)/mess/machine/nes_mmc.o  \
+	  $(OBJ)/mess/machine/nes_mmc.o  \
 	  $(OBJ)/mess/vidhrdw/nes.o	 \
 	  $(OBJ)/mess/machine/nes.o	 \
 	  $(OBJ)/mess/systems/nes.o	 \

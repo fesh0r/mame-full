@@ -514,7 +514,7 @@ int nes_interrupt (void)
 	return ret;
 }
 
-data_t nes_ppu_r (int offset)
+int nes_ppu_r (int offset)
 {
 	UINT8 retVal=0;
 /*
@@ -1139,7 +1139,7 @@ int nes_load_rom (int id)
 			nes.chr_chunks = mapint4;
 			logerror("NES.CRC info: %d %d %d %d\n",mapint1,mapint2,mapint3,mapint4);
 			goodcrcinfo = 1;
-		} else 
+		} else
 		{
 			logerror("NES: [%s], Invalid mapinfo found\n",mapinfo);
 		}
@@ -1147,7 +1147,7 @@ int nes_load_rom (int id)
 	{
 		logerror("NES: No extrainfo found\n");
 	}
-	if (!goodcrcinfo) 
+	if (!goodcrcinfo)
 	{
 		osd_fread (romfile, &nes.prg_chunks, 1);
 		osd_fread (romfile, &nes.chr_chunks, 1);

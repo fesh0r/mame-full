@@ -2029,7 +2029,7 @@ int fds_irq (int scanline)
 
 READ_HANDLER ( fds_r )
 {
-	data_t ret = 0x00;
+	int ret = 0x00;
 	static int last_side = 0;
 	static int count = 0;
 

@@ -296,7 +296,7 @@ static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 static struct NESinterface nes_interface =
 {
 	1,
-    N2A03_DEFAULTCLOCK,
+    N2A03_DEFAULTCLOCK ,
 	{ 100 },
 	{ 0 },
 	{ nes_vh_sprite_dma_w },
