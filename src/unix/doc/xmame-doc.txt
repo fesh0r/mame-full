@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.37, 19 February 2004
+v2.1.38, 13 March 2004
 
 Abstract
 
@@ -119,6 +119,7 @@ Some Links
     Unix binaries
     Xmame/xmess download mirrors
     (X)Mame front-ends
+    Utilities
     Some other links
 ChangeLogs
     The MAME/MESS ChangeLogs
@@ -2687,7 +2688,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.79.1.tar.bz2||xmame/xmess-0.79.1 sources]
+  [download/xmame-0.80.1.tar.bz2||xmame/xmess-0.80.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2699,7 +2700,7 @@ maintainer. --Lawrence Gold)
 
  Unix binaries
 
-* [http://www.forte-intl.com/~ronald/xmame/||xmame RPMs]
+* [http://shrike.freshrpms.net/rpm.html?id=1529||xmame RPMs]
 
 * [http://www.beimborn.com/cps2/linux/rpms||xmame+CPS2 RPMs]
 
@@ -2768,6 +2769,14 @@ maintainer. --Lawrence Gold)
 
 * [http://tkmame.retrogames.com/icons||Mamu_'s Icons for X]
 
+ Utilities
+
+* [http://advancemame.sourceforge.net/||Advance Projects], including AdvanceSCAN and AdvanceCOMP
+
+* [http://mamory.sourceforge.net/||Mamory], a ROM management library
+
+* [http://www.mameworld.net/setcleaner/||SetCleaner], a utility for xmame and other emulators
+
  Some other links
 
 * The official M.A.M.E home is at [http://www.mame.net||http://www.mame.net]
@@ -2776,7 +2785,7 @@ maintainer. --Lawrence Gold)
 
 * Some other emulation sites are [http://www.vg-network.com||http://www.vg-network.com] and [http://www.retrogames.com||http://www.retrogames.com]
 
-* The very best ROM site on this planet is at [http://www.mame.dk/||http://www.mame.dk/]
+* For ROM information, see [http://mamerominfo.retrogames.com/||Gordon's MAME ROMs Info Page]
 
 * A couple of sites with CPS2 and other patches [http://www.beimborn.com/cps2/linux/||Dan Beimborn's Linux CPS2Mame page] and [http://www.win.tue.nl/~stijn/xmame/||Stijn Hoop's xmame patches ]
 

@@ -2,6 +2,13 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.80.2
+	- Tweaked the support for GNU make's -j option so that it doesn't 
+	  crash on an SMP machine and also supports the -f option for an 
+	  alternate makefile.  (Arnaud G. Gibert)
+	- Fixed a problem with the lightgun offscreen reloading that caused a 
+	  random shot every fourth or fifth shot.  (Joe Inkenbrandt)
+
 Release 0.80.1, 13 March 2004
 	- Everything from MAME 0.80 (http://x.mame.net/changes-mame.html) and 
 	  MESS 0.80 (http://x.mame.net/changes-mess.html).
@@ -36,7 +43,7 @@ Release 0.79.1, 19 February 2004
 	- Removed "neomame" and "cpsmame" as targets from the makefile since the
 	  core no longer supports them.
 	- The trigger for the ACT LABS TV light gun now works; reloading now 
-	  requires only one offscreen shot instead of two.  (Joe)
+	  requires only one offscreen shot instead of two.  (Joe Inkenbrandt)
 
 Release 0.78.1, 13 January 2004
 	- Everything from MAME 0.78 and MESS 0.78.

@@ -66,7 +66,7 @@ Juan Antonio Martinez
  and David Heremans (minor editing)
 \layout Date
 
-v2.1.37, 19 February 2004
+v2.1.38, 13 March 2004
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -4432,7 +4432,7 @@ The xmame/xmess sources
 \layout Standard
 
 
-\begin_inset LatexCommand \url[xmame/xmess-0.79.1 sources]{download/xmame-0.79.1.tar.bz2}
+\begin_inset LatexCommand \htmlurl[xmame/xmess-0.80.1 sources]{download/xmame-0.80.1.tar.bz2}
 
 \end_inset 
 
@@ -4470,7 +4470,7 @@ Unix binaries
 \layout Itemize
 
 
-\begin_inset LatexCommand \url[xmame RPMs]{http://www.forte-intl.com/~ronald/xmame/}
+\begin_inset LatexCommand \url[xmame RPMs]{http://shrike.freshrpms.net/rpm.html?id=1529}
 
 \end_inset 
 
@@ -4731,6 +4731,33 @@ Xmame/xmess download mirrors
 
 \layout Subsection
 
+Utilities
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Advance Projects]{http://advancemame.sourceforge.net/}
+
+\end_inset 
+
+, including AdvanceSCAN and AdvanceCOMP
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[Mamory]{http://mamory.sourceforge.net/}
+
+\end_inset 
+
+, a ROM management library
+\layout Itemize
+
+
+\begin_inset LatexCommand \url[SetCleaner]{http://www.mameworld.net/setcleaner/}
+
+\end_inset 
+
+, a utility for xmame and other emulators
+\layout Subsection
+
 Some other links
 \layout Itemize
 
@@ -4763,8 +4790,8 @@ Some other emulation sites are
 
 \layout Itemize
 
-The very best ROM site on this planet is at 
-\begin_inset LatexCommand \url[http://www.mame.dk/]{http://www.mame.dk/}
+For ROM information, see 
+\begin_inset LatexCommand \url[Gordon's MAME ROMs Info Page]{http://mamerominfo.retrogames.com/}
 
 \end_inset 
 
