@@ -406,80 +406,70 @@ int ti99_cassette_load(int id, mame_file *fp, int open_mode)
 */
 int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 {
+	/* Trick - we identify file types according to their extension */
+	/* Note that if we do not recognize the extension, we revert to the slot location <-> type
+	scheme.  I do this because the extension concept is quite unfamiliar to mac people
+	(I am dead serious). */
+	/* Original idea by Norberto Bensa */
 	const char *name = image_filename(IO_CARTSLOT,id);
+	const char *ch, *ch2;
+	slot_type_t type = (slot_type_t) id;
 
+	/* There is a circuitry in the TI99/4a that resets the tms9900 when a
+	cartridge is inserted or removed.  We emulate this instead of resetting the
+	emulator (which is the default in MESS). */
+	cpu_set_reset_line(0, PULSE_LINE);
 
-	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
-	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
+	ch = strrchr(name, '.');
+	ch2 = (ch-1 >= name) ? ch-1 : "";
 
-
-	if (cartfile == NULL)
-		slot_type[id] = SLOT_EMPTY;
-	else
+	if (ch)
 	{
-		/* Trick - we identify file types according to their extension */
-		/* Note that if we do not recognize the extension, we revert to the slot location <-> type
-		scheme.  I do this because the extension concept is quite unfamiliar to mac people
-		(I am dead serious). */
-		/* Original idea by Norberto Bensa */
+		if ((! stricmp(ch2, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
 		{
-
-		const char *ch, *ch2;
-		slot_type_t type = (slot_type_t) id;
-
-		ch = strrchr(name, '.');
-		ch2 = (ch-1 >= name) ? ch-1 : "";
-
-		if (ch)
+			/* grom */
+			type = SLOT_GROM;
+		}
+		else if ((! stricmp(ch2, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
 		{
-			if ((! stricmp(ch2, "g.bin")) || (! stricmp(ch, ".grom")) || (! stricmp(ch, ".g")))
-			{
-				/* grom */
-				type = SLOT_GROM;
-			}
-			else if ((! stricmp(ch2, "c.bin")) || (! stricmp(ch, ".crom")) || (! stricmp(ch, ".c")))
-			{
-				/* rom first page */
-				type = SLOT_CROM;
-			}
-			else if ((! stricmp(ch2, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
-			{
-				/* rom second page */
-				type = SLOT_DROM;
-			}
-			else if ((! stricmp(ch2, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
-			{
-				/* rom minimemory  */
-				type = SLOT_MINIMEM;
-			}
+			/* rom first page */
+			type = SLOT_CROM;
 		}
-
-		slot_type[id] = type;
-
-		switch (type)
+		else if ((! stricmp(ch2, "d.bin")) || (! stricmp(ch, ".drom")) || (! stricmp(ch, ".d")))
 		{
-		case SLOT_EMPTY:
-			break;
-
-		case SLOT_GROM:
-			mame_fread(cartfile, memory_region(region_grom) + 0x6000, 0xA000);
-			break;
-
-		case SLOT_MINIMEM:
-			cartridge_minimemory = TRUE;
-		case SLOT_CROM:
-			mame_fread_msbfirst(cartfile, cartridge_pages[0], 0x2000);
-			current_page_ptr = cartridge_pages[0];
-			break;
-
-		case SLOT_DROM:
-			cartridge_paged = TRUE;
-			mame_fread_msbfirst(cartfile, cartridge_pages[1], 0x2000);
-			current_page_ptr = cartridge_pages[0];
-			break;
+			/* rom second page */
+			type = SLOT_DROM;
 		}
-
+		else if ((! stricmp(ch2, "m.bin")) || (! stricmp(ch, ".mrom")) || (! stricmp(ch, ".m")))
+		{
+			/* rom minimemory  */
+			type = SLOT_MINIMEM;
 		}
+	}
+
+	slot_type[id] = type;
+
+	switch (type)
+	{
+	case SLOT_EMPTY:
+		break;
+
+	case SLOT_GROM:
+		mame_fread(cartfile, memory_region(region_grom) + 0x6000, 0xA000);
+		break;
+
+	case SLOT_MINIMEM:
+		cartridge_minimemory = TRUE;
+	case SLOT_CROM:
+		mame_fread_msbfirst(cartfile, cartridge_pages[0], 0x2000);
+		current_page_ptr = cartridge_pages[0];
+		break;
+
+	case SLOT_DROM:
+		cartridge_paged = TRUE;
+		mame_fread_msbfirst(cartfile, cartridge_pages[1], 0x2000);
+		current_page_ptr = cartridge_pages[0];
+		break;
 	}
 
 	return INIT_PASS;
@@ -487,6 +477,11 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 
 void ti99_rom_unload(int id)
 {
+	/* There is a circuitry in the TI99/4a that resets the tms9900 when a
+	cartridge is inserted or removed.  We emulate this instead of resetting the
+	emulator (which is the default in MESS). */
+	cpu_set_reset_line(0, PULSE_LINE);
+
 	switch (slot_type[id])
 	{
 	case SLOT_EMPTY:
@@ -508,6 +503,8 @@ void ti99_rom_unload(int id)
 		current_page_ptr = cartridge_pages[0];
 		break;
 	}
+
+	slot_type[id] = SLOT_EMPTY;
 }
 
 
@@ -556,6 +553,8 @@ void machine_init_ti99(void)
 		cpu_setbank(4, sRAM_ptr);
 	}
 
+	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
+	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
 	/* reset cartridge mapper */
 	current_page_ptr = cartridge_pages[0];
 
