@@ -7,6 +7,7 @@ CPU: 65C02
 		0000-00ff Zero page
 		0100-01ff Stack
 		0200-1fff RAM (expansion)
+		0a00-0a04 FDC 8271			
 		2000-21ff RAM (dos catalogue buffer)
 		2200-27ff RAM (dos seq file buffer)
 		2800-28ff RAM (float buffer)
@@ -16,11 +17,9 @@ CPU: 65C02
 		a000-afff ROM (extension)
 		b000-b003 PPIA 8255
 		b003-b7ff NOP
-		b800-b80f VIA 6522
-		b810-b9ff NOP
-		ba00-ba04 FDC 8271
+		b800-bbff VIA 6522
 		bc00-bfdf NOP
-		bfe0-bfe2 MOUSE
+		bfe0-bfe2 MOUSE	- extension??
 		bfe3-bfff NOP
 		c000-cfff ROM (basic)
 		d000-dfff ROM (float)
@@ -42,6 +41,21 @@ Hardware:	PPIA 8255
 			b002	4 2.4kHz input, 5 cas input, 6 REPT key, 7 60 Hz input
 
 			VIA 6522
+
+
+	DOS:
+
+	The original location of the 8271 memory mapped registers is 0xa00-0x0a04.
+	(This is the memory range assigned by Acorn in their design.)
+
+	This is in the middle of the area for expansion RAM. Many Atom owners
+	thought this was a bad design and have modified their Atom's and dos rom
+	to use a different memory area.
+
+	The atom driver in MESS uses the original memory area.
+
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -52,6 +66,9 @@ Hardware:	PPIA 8255
 #include "includes/i8271.h"
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
+#include "machine/6522via.h"
+#include "printer.h"
+#include "includes/centroni.h"
 
 /* functions */
 
@@ -60,30 +77,38 @@ Hardware:	PPIA 8255
 /* memory w/r functions */
 
 static MEMORY_READ_START (atom_readmem)
-	{ 0x0000, 0x7fff, MRA_RAM },
+	{ 0x0000, 0x09ff, MRA_RAM },
+    { 0x0a00, 0x0a04, atom_8271_r},
+	{ 0x0a05, 0x07fff, MRA_RAM},
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
 	{ 0x9800, 0x9fff, MRA_RAM },
-	{ 0xa000, 0xafff, MRA_ROM },
-	{ 0xb000, 0xb7ff, ppi8255_0_r },	// PPIA 8255
-	{ 0xb800, 0xb9ff, MRA_NOP },		// VIA 6522
-    { 0xba00, 0xba04, atom_8271_r },    // FDC 8271
-    { 0xbc04, 0xbfdf,  MWA_NOP },
-    { 0xbfe0, 0xbfff, MRA_NOP },		// MOUSE
-	{ 0xc000, 0xffff, MRA_ROM },
+//    { 0xa000, 0xafff, MRA_ROM },
+    { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
+	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
+//    { 0xbc04, 0xbfdf,  MWA_NOP },
+//    { 0xbfe0, 0xbfff, MRA_NOP },        // MOUSE
+    { 0xc000, 0xcfff, MRA_ROM },
+//    { 0xd000, 0xdfff, MRA_ROM },
+    { 0xe000, 0xefff, MRA_ROM },
+    { 0xf000, 0xffff, MRA_ROM },
+
 MEMORY_END
 
 static MEMORY_WRITE_START (atom_writemem)
-	{ 0x0000, 0x7fff, MWA_RAM },
+	{ 0x0000, 0x09ff, MWA_RAM },
+    { 0x0a00, 0x0a04, atom_8271_w},
+	{ 0x0a05, 0x07fff, MWA_RAM},
 	{ 0x8000, 0x97ff, videoram_w, &videoram, &videoram_size}, // VDG 6847
 	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa000, 0xafff, MWA_ROM },
-	{ 0xb000, 0xb7ff, ppi8255_0_w },	// PIA 8255
-
-	{ 0xb800, 0xb9ff, MWA_NOP },		// VIA 6522
-    { 0xba00, 0xba04, atom_8271_w },    // FDC 8271
-    { 0xbc04, 0xbfdf,  MWA_NOP },
-    { 0xbfe0, 0xbfff, MWA_NOP },		// MOUSE
+//    { 0xa000, 0xafff, MWA_ROM },
+    { 0xb000, 0xb003, ppi8255_0_w },    // PIA 8255
+	{ 0xb800, 0xbbff, atom_via_w},		// VIA 6522
+//    { 0xbc04, 0xbfdf,  MWA_NOP },
+//    { 0xbfe0, 0xbfff, MWA_NOP },        // MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
+//    { 0xd000, 0xdfff, MWA_ROM },
+    { 0xe000, 0xefff, MWA_ROM },
+    { 0xf000, 0xffff, MWA_ROM },
 MEMORY_END
 
 /* graphics output */
@@ -94,7 +119,7 @@ MEMORY_END
 
 INPUT_PORTS_START (atom)
 	PORT_START /* 0 VBLANK */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START /* 1 */
 	PORT_BITX( 0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "deadkey", KEYCODE_NONE, IP_JOY_NONE)
@@ -205,7 +230,7 @@ static struct MachineDriver machine_driver_atom =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M65C02,
+            CPU_M65C02,
 			1000000,
 			atom_readmem, atom_writemem,
 			0, 0,
@@ -244,8 +269,8 @@ static struct MachineDriver machine_driver_atom =
 ROM_START (atom)
 	ROM_REGION (0x10000, REGION_CPU1)
 	ROM_LOAD ("akernel.rom", 0xf000, 0x1000, 0xc604db3d)
-	// ROM_LOAD ("ados.rom", 0xe000, 0x1000, 0xe5b1f5f6)
-	ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
+	ROM_LOAD ("dosrom.rom", 0xe000, 0x1000, 0xe5b1f5f6)
+//    ROM_LOAD ("afloat.rom", 0xd000, 0x1000, 0x81d86af7)
 	ROM_LOAD ("abasic.rom", 0xc000, 0x1000, 0x43798b9b)
 	//ROM_REGION (0x300, REGION_GFX1)
 	//ROM_LOAD ("atom.chr", 0x0000, 0x0300, 0x0)
@@ -291,6 +316,9 @@ static const struct IODevice io_atom[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+    /* these are not working properly yet! */
+/*	IO_CASSETTE_WAVE(1,"wav\0",NULL,atom_cassette_init,atom_cassette_exit), */
+/*    IO_PRINTER_PORT (1, "prn\0"), */
 	{ IO_END }
 };
 
