@@ -1026,10 +1026,11 @@ WRITE_HANDLER ( msx_writemem3 )
 static UINT16* cas_samples;
 static int cas_len;
 
-int msx_cassette_fill_wave (UINT16* samples, int wavlen, UINT8* casdata)
+int msx_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
 {
-	int cas_pos, samples_size, bit, state = 1, samples_pos, size, n, i, p;
-
+/* HJB: these are (currently?) unused
+ *	int cas_pos, samples_size, bit, state = 1, samples_pos, size, n, i, p;
+ */
 	if (casdata == CODE_HEADER || casdata == CODE_TRAILER)
 		return 0;
 
