@@ -181,6 +181,7 @@ DRVLIBS = \
 	$(OBJ)/galaxy.a   \
 	$(OBJ)/vc4000.a   \
 	$(OBJ)/lviv.a   \
+	$(OBJ)/pmd85.a   \
 	$(OBJ)/sinclair.a \
 	$(OBJ)/lynx.a     \
 	$(OBJ)/intv.a     \
@@ -613,6 +614,11 @@ $(OBJ)/lviv.a:   \
 	  $(OBJ)/mess/vidhrdw/lviv.o   \
 	  $(OBJ)/mess/systems/lviv.o   \
 	  $(OBJ)/mess/formats/lviv_lvt.o
+
+$(OBJ)/pmd85.a:   \
+	  $(OBJ)/mess/machine/pmd85.o   \
+	  $(OBJ)/mess/vidhrdw/pmd85.o   \
+	  $(OBJ)/mess/systems/pmd85.o   
 
 $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/machine/odyssey2.o \

@@ -659,6 +659,9 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 	DRIVER( lviva )		/* PK-01 Lviv (alternate) */
 	DRIVER( lvive )		/* PK-01 Lviv (early)*/
 
+	/* Tesla */
+	TESTDRIVER( pmd85 )		/* PMD-85.1 */
+
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/
