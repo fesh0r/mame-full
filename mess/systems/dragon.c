@@ -703,6 +703,13 @@ ROM_START(coco)
      ROM_LOAD_OPTIONAL(	"disk11.rom",	0x14000, 0x2000, 0x0b9c5415)
 ROM_END
 
+ROM_START(coco2b)
+     ROM_REGION(0x18000,REGION_CPU1,0)
+     ROM_LOAD(			"bas13.rom",	0x12000, 0x2000, 0xd8f4d15e)
+     ROM_LOAD_OPTIONAL(	"extbas11.rom",	0x10000, 0x2000, 0xa82a6254)
+     ROM_LOAD_OPTIONAL(	"disk11.rom",	0x14000, 0x2000, 0x0b9c5415)
+ROM_END
+
 ROM_START(coco3)
      ROM_REGION(0x90000,REGION_CPU1,0)
 	 ROM_LOAD(			"coco3.rom",	0x80000, 0x8000, 0xb4c88d6c)
@@ -716,7 +723,6 @@ ROM_START(cp400)
 ROM_END
 
 #define rom_coco3h	rom_coco3
-#define rom_coco2b	rom_coco
 
 static const struct IODevice io_coco[] = {
 	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
@@ -755,7 +761,7 @@ static const struct IODevice io_coco3[] = {
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
 COMP(  1982, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Color Computer" )
-COMPX(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B (M6847T1 video chip)",
+COMPX(  198?, coco2b,    coco,	coco2b,    coco,     0,		  "Tandy Radio Shack",  "Color Computer 2B",
  GAME_ALIAS )
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
