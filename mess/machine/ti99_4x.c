@@ -678,9 +678,11 @@ DEVICE_UNLOAD( ti99_hd )
 	case 1:
 	case 2:
 		smc92x4_hd_unload(image, id);
+		break;
 
 	case 3:
 		device_unload_ti99_ide(image);
+		break;
 	}
 }
 
@@ -1153,7 +1155,7 @@ WRITE16_HANDLER ( ti99_wv38_w )
 */
 static READ16_HANDLER ( ti99_rspeech_r )
 {
-	activecpu_adjust_icount(-18+3);		/* this is just a minimum, it can be more */
+	activecpu_adjust_icount(-(18+3));		/* this is just a minimum, it can be more */
 
 	return ((int) tms5220_status_r(offset)) << 8;
 }
@@ -1179,7 +1181,7 @@ static void speech_kludge_callback(int dummy)
 */
 static WRITE16_HANDLER ( ti99_wspeech_w )
 {
-	activecpu_adjust_icount(-54+3);		/* this is just an approx. minimum, it can be much more */
+	activecpu_adjust_icount(-(54+3));		/* this is just an approx. minimum, it can be much more */
 
 #if 1
 	/* the stupid design of the tms5220 core means that ready is cleared when
