@@ -1035,7 +1035,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 
 		/* Adjust if past maximum position */
 		if( y >= snes_ppu.beam.last_visible_line )
-			y -= 257;
+			y -= 256;
 		if( x > 255 )
 			x -= 512;
 
