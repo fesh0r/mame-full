@@ -48,12 +48,6 @@ void galaxy_init_machine(void)
 void galaxy_stop_machine(void)
 {
 	logerror("galaxy_stop_machine\n");
-	if (galaxy_data)
-	{
-		free(galaxy_data);
-		galaxy_data = NULL;
-		galaxy_data_type = galaxy_NONE;
-	}
 }
 
 READ_HANDLER( galaxy_kbd_r )
@@ -163,10 +157,7 @@ static OPBASE_HANDLER( galaxy_opbaseoverride )
 	memory_set_opbase_handler(0, 0);
 
 	if (galaxy_data_type == galaxy_GAL)
-	{
 		galaxy_setup_gal(galaxy_data,galaxy_data_size);
-		galaxy_exit_snap(0);
-	}
 	logerror("Snapshot loaded - new PC = %04x\n", cpu_get_reg(Z80_PC) & 0x0ffff);
 
 	return (cpu_get_reg(Z80_PC) & 0x0ffff);
