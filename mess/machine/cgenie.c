@@ -399,6 +399,7 @@ int cgenie_floppy_init(int id)
 				/* find an entry with matching DDSL */
 				if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
 					continue;
+				logerror("cgenie: checking format #%d\n", i);
 
 				dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
 				dir_length = pd_list[i].DDGA * pd_list[i].GPL;
@@ -428,9 +429,10 @@ int cgenie_floppy_init(int id)
 				/* set geometry so disk image can be read */
 				basicdsk_set_geometry(id, tracks, heads, s_p_t, 256, 0);
 
-				/* mark directory sectors with deleted data address mark */
+				logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
+                /* mark directory sectors with deleted data address mark */
 				/* assumption dir_sector is a sector offset */
-				for (i=0; i<dir_length; i++)
+				for (j = 0; j < dir_length; j++)
 				{
 					UINT8 track;
 					UINT8 side;
@@ -439,7 +441,7 @@ int cgenie_floppy_init(int id)
 					UINT16 sector_offset;
 
 					/* calc sector offset */
-					sector_offset = dir_sector + i;
+					sector_offset = dir_sector + j;
 
 					/* get track offset */
 					track_offset = sector_offset/s_p_t;
@@ -451,10 +453,10 @@ int cgenie_floppy_init(int id)
 					side = track_offset % heads;
 
 					/* calc sector id - first sector id is 0! */
-					sector_id = dir_sector % s_p_t;
+					sector_id = sector_offset % s_p_t;
 					
 					/* set deleted data address mark for sector specified */
-					basicdsk_set_ddam(id, track, side, sector_id,1);
+					basicdsk_set_ddam(id, track, side, sector_id, 1);
 				}
 
 			}
@@ -762,9 +764,11 @@ static void tape_get_open(void)
 		p = strchr(tape_name, ' ');
 		if( p ) *p = '\0';
 		strcat(tape_name, ".cas");
-
-        logerror("tape_get_open '%s'\n", tape_name);
-		tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		if (tape_name[0] != ' ')
+		{
+			logerror("tape_get_open '%s'\n", tape_name);
+			tape_get_file = osd_fopen(Machine->gamedrv->name, tape_name, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+		}
 		if( tape_get_file )
 		{
 			cgenie_frame_time = 30;
@@ -881,26 +885,26 @@ void cgenie_port_ff_w(int offset, int data)
 			{
 				switch( data & (FF_BGD1 + FF_BGD2) )
 				{
-					case FF_BGD1:
-						r = 112;
-						g = 40;
-						b = 32;
-						break;
-					case FF_BGD2:
-						r = 40;
-						g = 112;
-						b = 32;
-						break;
-					case FF_BGD1 + FF_BGD2:
-						r = 72;
-						g = 72;
-						b = 72;
-						break;
-					default:
-						r = 0;
-						g = 0;
-						b = 0;
-						break;
+				case FF_BGD1:
+					r = 112;
+					g = 40;
+					b = 32;
+					break;
+				case FF_BGD2:
+					r = 40;
+					g = 112;
+					b = 32;
+					break;
+				case FF_BGD1 + FF_BGD2:
+					r = 72;
+					g = 72;
+					b = 72;
+					break;
+				default:
+					r = 0;
+					g = 0;
+					b = 0;
+					break;
 				}
 			}
 			else
@@ -1110,18 +1114,18 @@ int cgenie_fdc_interrupt(void)
 
 void cgenie_fdc_callback(int event)
 {
-        /* if disc hardware is not enabled, do not cause an int */
-        if (!( readinputport(0) & 0x80 ))
-                return;
+	/* if disc hardware is not enabled, do not cause an int */
+	if (!( readinputport(0) & 0x80 ))
+		return;
 
 	switch( event )
 	{
-		case WD179X_IRQ_CLR:
-			irq_status &= ~IRQ_FDC;
-			break;
-		case WD179X_IRQ_SET:
-			cgenie_fdc_interrupt();
-			break;
+	case WD179X_IRQ_CLR:
+		irq_status &= ~IRQ_FDC;
+		break;
+	case WD179X_IRQ_SET:
+		cgenie_fdc_interrupt();
+		break;
 	}
 }
 
@@ -1153,7 +1157,7 @@ void cgenie_motor_w(int offset, int data)
 	motor_count = 5 * 60;
 
 	wd179x_set_drive(drive);
-        wd179x_set_side(head);
+	wd179x_set_side(head);
 }
 
 /*************************************

@@ -31,8 +31,8 @@ floppy_interface basicdsk_floppy_interface=
 #if 0
 void basicdsk_read_sectormap(basicdsk *w, UINT8 drive, UINT8 * tracks, UINT8 * heads, UINT8 * sec_per_track)
 {
-SECMAP *p;
-UINT8 head;
+	SECMAP *p;
+	UINT8 head;
 
     if (!w->secmap)
 		w->secmap = malloc(0x2200);
@@ -153,7 +153,9 @@ void	basicdsk_set_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side, UINT
 	if (!pDisk->ddam_map)
 		return;
 
-	/* calculate bit-offset into map */
+	logerror("basicdsk_set_ddam: #%d T:$%02x H:%d S:$%02x = %d\n",id, physical_track, physical_side, sector_id,ddam);
+
+    /* calculate bit-offset into map */
 	ddam_bit_offset = (((physical_track * pDisk->heads) + physical_side)*pDisk->sec_per_track) + 
 					sector_id - pDisk->first_sector_id;
 
@@ -253,7 +255,7 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per
 
 	if (pDisk->ddam_map!=NULL)
 	{
-		memset(pDisk->ddam_map, 0, sizeof(pDisk->ddam_map_size));
+		memset(pDisk->ddam_map, 0, pDisk->ddam_map_size);
 	}
 
 
@@ -596,7 +598,7 @@ void    basicdsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	id->H = side;
 	id->R = w->first_sector_id + id_index;
     id->N = w->N;
-    id->data_id = id_index + w->first_sector_id;
+	id->data_id = w->first_sector_id + id_index;
 	id->flags = 0;
 
 	/* get dam */

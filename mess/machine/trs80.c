@@ -20,13 +20,13 @@
 
 UINT8 trs80_port_ff = 0;
 
-#define IRQ_TIMER       0x80
-#define IRQ_FDC         0x40
+#define IRQ_TIMER		0x80
+#define IRQ_FDC 		0x40
 static	UINT8			irq_status = 0;
 
-#define MAX_LUMPS       192     /* crude storage units - don't now much about it */
-#define MAX_GRANULES    8       /* lumps consisted of granules.. aha */
-#define MAX_SECTORS     5       /* and granules of sectors */
+#define MAX_LUMPS		192 	/* crude storage units - don't now much about it */
+#define MAX_GRANULES	8		/* lumps consisted of granules.. aha */
+#define MAX_SECTORS 	5		/* and granules of sectors */
 
 /* this indicates whether the floppy images geometry shall be calculated */
 static UINT8 motor_drive = 0;				/* currently running drive */
@@ -35,7 +35,7 @@ static short motor_count = 0;				/* time out for motor in frames */
 #if USE_TRACK
 static UINT8 track[4] = {0, };				/* current track per drive */
 #endif
-static UINT8 head;                           /* current head per drive */
+static UINT8 head;							 /* current head per drive */
 #if USE_SECTOR
 static UINT8 sector[4] = {0, }; 			/* current sector per drive */
 #endif
@@ -54,14 +54,14 @@ static void *tape_get_file = NULL;
 /* tape buffer for the first eight bytes at write (to extract a filename) */
 static UINT8 tape_buffer[8];
 
-static int tape_count = 0;      /* file offset within tape file */
-static int put_bit_count = 0;   /* number of sync and data bits that were written */
-static int get_bit_count = 0;   /* number of sync and data bits to read */
-static int tape_bits = 0;       /* sync and data bits mask */
-static int tape_time = 0;       /* time in cycles for the next bit at read */
-static int in_sync = 0;         /* flag if writing to tape detected the sync header A5 already */
-static int put_cycles = 0;      /* cycle count at last output port change */
-static int get_cycles = 0;      /* cycle count at last input port read */
+static int tape_count = 0;		/* file offset within tape file */
+static int put_bit_count = 0;	/* number of sync and data bits that were written */
+static int get_bit_count = 0;	/* number of sync and data bits to read */
+static int tape_bits = 0;		/* sync and data bits mask */
+static int tape_time = 0;		/* time in cycles for the next bit at read */
+static int in_sync = 0; 		/* flag if writing to tape detected the sync header A5 already */
+static int put_cycles = 0;		/* cycle count at last output port change */
+static int get_cycles = 0;		/* cycle count at last input port read */
 
 int trs80_videoram_r(int offset);
 void trs80_videoram_w(int offset, int data);
@@ -77,32 +77,32 @@ static void tape_put_close(void);
 void init_trs80(void)
 {
 	UINT8 *FNT = memory_region(REGION_GFX1);
-    int i, y;
+	int i, y;
 
-    for( i = 0x000; i < 0x080; i++ )
-    {
+	for( i = 0x000; i < 0x080; i++ )
+	{
 		/* copy eight lines from the character generator */
-        for (y = 0; y < 8; y++)
+		for (y = 0; y < 8; y++)
 			FNT[i*FH+y] = FNT[0x0800+i*8+y] << 3;
 		/* wipe out the lower lines (no descenders!) */
 		for (y = 8; y < FH; y++)
 			FNT[i*FH+y] = 0;
-    }
+	}
 	/* setup the 2x3 chunky block graphics (two times 64 characters) */
 	for( i = 0x080; i < 0x100; i++ )
-    {
-        UINT8 b0, b1, b2, b3, b4, b5;
-        b0 = (i & 0x01) ? 0xe0 : 0x00;
-        b1 = (i & 0x02) ? 0x1c : 0x00;
-        b2 = (i & 0x04) ? 0xe0 : 0x00;
-        b3 = (i & 0x08) ? 0x1c : 0x00;
-        b4 = (i & 0x10) ? 0xe0 : 0x00;
-        b5 = (i & 0x20) ? 0x1c : 0x00;
+	{
+		UINT8 b0, b1, b2, b3, b4, b5;
+		b0 = (i & 0x01) ? 0xe0 : 0x00;
+		b1 = (i & 0x02) ? 0x1c : 0x00;
+		b2 = (i & 0x04) ? 0xe0 : 0x00;
+		b3 = (i & 0x08) ? 0x1c : 0x00;
+		b4 = (i & 0x10) ? 0xe0 : 0x00;
+		b5 = (i & 0x20) ? 0x1c : 0x00;
 
 		FNT[i*FH+ 0] = FNT[i*FH+ 1] = FNT[i*FH+ 2] = FNT[i*FH+ 3] = b0 | b1;
 		FNT[i*FH+ 4] = FNT[i*FH+ 5] = FNT[i*FH+ 6] = FNT[i*FH+ 7] = b2 | b3;
 		FNT[i*FH+ 8] = FNT[i*FH+ 9] = FNT[i*FH+10] = FNT[i*FH+11] = b4 | b5;
-    }
+	}
 }
 
 static void cas_copy_callback(int param)
@@ -161,7 +161,7 @@ int trs80_cas_id(int id)
 		if (buffer[1] == 0x55)	/* SYSTEM tape */
 			return 1;
 	}
-    return 0;
+	return 0;
 }
 
 int trs80_cas_init(int id)
@@ -193,7 +193,7 @@ int trs80_cas_init(int id)
 			cas_size = 0;
 		}
 	}
-    return 0;
+	return 0;
 }
 
 void trs80_cas_exit(int id)
@@ -252,7 +252,7 @@ static void cmd_copy_callback(int param)
 				temp = cmd_buff[offs++];
 				temp += 256 * cmd_buff[offs++];
 				LOG(("trs80_cmd_load 2nd entry ($%02X) at $%04X ignored\n", data, temp));
-            }
+			}
 			cmd_size -= 3;
 			break;
 		default:
@@ -265,7 +265,7 @@ static void cmd_copy_callback(int param)
 
 int trs80_cmd_id(int id)
 {
-    return 0;
+	return 0;
 }
 
 int trs80_cmd_init(int id)
@@ -286,7 +286,7 @@ int trs80_cmd_init(int id)
 			cmd_size = 0;
 		}
 	}
-    return 0;
+	return 0;
 }
 
 void trs80_cmd_exit(int id)
@@ -299,114 +299,105 @@ void trs80_cmd_exit(int id)
 
 int trs80_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	void *file;
+
+    if (basicdsk_floppy_init(id) != INIT_OK)
+		return INIT_FAILED;
+
+	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+
+	if (file && id == 0)	/* first floppy? */
 	{
-		void *file;
+		int n, i;
+		UINT8 buff[16];
+		UINT8 tracks = 0;	/* total tracks count per drive */
+		UINT8 heads = 0;	/* total heads count per drive */
+		UINT8 spt = 0;		/* sector per track count per drive */
+		int dir_sector = 0; /* first directory sector (aka DDSL) */
+		int dir_length = 0; /* length of directory in sectors (aka DDGA) */
 
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
-
-		if (file)
+		/* get PDRIVER parameters for drives 0-3 */
+        for (n = 0; n < 4; n++)
 		{
-			int n;
-			int i;
-			int buff[16];
-			UINT8 tracks = 0;							/* total tracks count per drive */
-			UINT8 heads = 0;							/* total heads count per drive */
-			UINT8 spt = 0;								/* sector per track count per drive */
-			short dir_sector = 0; 						/* first directory sector (aka DDSL) */
-			short dir_length = 0; 						/* length of directory in sectors (aka DDGA) */
-
-			for (n=0; n<4; n++)
-			{
-#if 0
-		if (file1 == REAL_FDD)
-		{
-			osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
-			osd_fread(file0, buff, 16);
-			tracks[n] = buff[3] + 1;
-			heads[n] = (buff[7] & 0x40) ? 2 : 1;
-			spt[n] = buff[4] / heads[n];
-			dir_sector[n] = 5 * buff[0] * buff[5];
-			dir_length[n] = 5 * buff[9];
-		}
-		else
-#endif
 			osd_fseek(file, 0, SEEK_SET);
 			osd_fread(file, buff, 2);
+#if 0
+			if (buff[0] != 0x00 || buff[1] != 0xfe)
+			{
+				basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
+			}
+			else
+#endif
+			{
+				osd_fseek(file, 2 * 256 + n * 16, SEEK_SET);
+				osd_fread(file, buff, 16);
+				logerror("trs80 disk #%d: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+					n, buff[0], buff[1], buff[2], buff[3],
+					buff[4], buff[5], buff[6], buff[7],
+					buff[8], buff[9], buff[10], buff[11],
+					buff[12], buff[13], buff[14], buff[15]);
+				tracks = buff[3] + 1;
+				heads = (buff[7] & 0x40) ? 2 : 1;
+				spt = buff[4] / heads;
+				dir_sector = 5 * buff[0] * buff[5];
+				dir_length = 5 * buff[9];
 
-				if (buff[0] != 0x00 || buff[1] != 0xfe)
+                /* set geometry so disk image can be read */
+				basicdsk_set_geometry(n, tracks, heads, spt, 256, 0);
+
+				/* mark directory sectors with deleted data address mark */
+				/* assumption dir_sector is a sector offset */
+				for (i = 0; i < dir_length; i++)
 				{
-	//                basicdsk_read_sectormap(n, &tracks[n], &heads[n], &spt[n]);
-				}
-				else
-				{
-					osd_fseek(file, 2 * 256 + n * 16, SEEK_SET);
-					osd_fread(file, buff, 16);
-					tracks = buff[3] + 1;
-					heads = (buff[7] & 0x40) ? 2 : 1;
-					spt = buff[4] / heads;
-					dir_sector = 5 * buff[0] * buff[5];
-					dir_length = 5 * buff[9];
+					UINT8 track;
+					UINT8 side;
+					UINT8 sector_id;
+					UINT16 track_offset;
+					UINT16 sector_offset;
 
-					/* set geometry so disk image can be read */
-					basicdsk_set_geometry(id, tracks, heads, spt, 256, 0);
+					/* calc sector offset */
+					sector_offset = dir_sector + i;
 
-					/* mark directory sectors with deleted data address mark */
-					/* assumption dir_sector is a sector offset */
-					for (i=0; i<dir_length; i++)
-					{
-						UINT8 track;
-						UINT8 side;
-						UINT8 sector_id;
-						UINT16 track_offset;
-						UINT16 sector_offset;
+					/* get track offset */
+					track_offset = sector_offset / spt;
 
-						/* calc sector offset */
-						sector_offset = dir_sector + i;
+					/* calc track */
+					track = track_offset / heads;
 
-						/* get track offset */
-						track_offset = sector_offset/spt;
+					/* calc side */
+					side = track_offset % heads;
 
-						/* calc track */
-						track = track_offset/heads;
+					/* calc sector id - first sector id is 0! */
+					sector_id = sector_offset % spt;
 
-						/* calc side */
-						side = track_offset % heads;
-
-						/* calc sector id - first sector id is 0! */
-						sector_id = dir_sector % spt;
-						
-						/* set deleted data address mark for sector specified */
-						basicdsk_set_ddam(id, track, side, sector_id,1);
-					}
+					/* set deleted data address mark for sector specified */
+					basicdsk_set_ddam(n, track, side, sector_id, 1);
 				}
 			}
 		}
 		osd_fclose(file);
-		return INIT_OK;
 	}
-
-	return INIT_FAILED;
+	return INIT_OK;
 }
 
 static void trs80_fdc_callback(int);
 
 void trs80_init_machine(void)
 {
-    floppy_drives_init();
+	floppy_drives_init();
 	wd179x_init(trs80_fdc_callback);
 
-    if (cas_size)
+	if (cas_size)
 	{
 		LOG(("trs80_init_machine: schedule cas_copy_callback (%d)\n", cas_size));
 		timer_set(0.5, 0, cas_copy_callback);
 	}
 
-    if (cmd_size)
+	if (cmd_size)
 	{
 		LOG(("trs80_init_machine: schedule cmd_copy_callback (%d)\n", cmd_size));
 		timer_set(0.5, 0, cmd_copy_callback);
-    }
+	}
 }
 
 void trs80_shutdown_machine(void)
@@ -417,7 +408,7 @@ void trs80_shutdown_machine(void)
 
 /*************************************
  *
- *              Tape emulation.
+ *				Tape emulation.
  *
  *************************************/
 
@@ -434,7 +425,7 @@ static void tape_put_byte(UINT8 value)
 				char filename[12+1];
 				UINT8 zeroes[256] = {0,};
 
-                sprintf(filename, "basic%c.cas", tape_buffer[4]);
+				sprintf(filename, "basic%c.cas", tape_buffer[4]);
 				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
@@ -446,7 +437,7 @@ static void tape_put_byte(UINT8 value)
 				char filename[12+1];
 				UINT8 zeroes[256] = {0,};
 
-                sprintf(filename, "%-6.6s.cas", tape_buffer+2);
+				sprintf(filename, "%-6.6s.cas", tape_buffer+2);
 				tape_put_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 				osd_fwrite(tape_put_file, zeroes, 256);
 				osd_fwrite(tape_put_file, tape_buffer, 8);
@@ -524,9 +515,9 @@ static void tape_get_open(void)
 
 	if (!tape_get_file)
 	{
-        char filename[12+1];
+		char filename[12+1];
 
-        sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
+		sprintf(filename, "%-6.6s.cas", RAM + 0x41e8);
 		logerror("filename %s\n", filename);
 		tape_get_file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 		tape_count = 0;
@@ -535,7 +526,7 @@ static void tape_get_open(void)
 
 /*************************************
  *
- *              Port handlers.
+ *				Port handlers.
  *
  *************************************/
 
@@ -691,7 +682,7 @@ READ_HANDLER( trs80_port_ff_r )
 
 /*************************************
  *
- *      Interrupt handlers.
+ *		Interrupt handlers.
  *
  *************************************/
 
@@ -712,7 +703,7 @@ int trs80_fdc_interrupt(void)
 	{
 		irq_status |= IRQ_FDC;
 		cpu_set_irq_line (0, 0, HOLD_LINE);
-        return 0;
+		return 0;
 	}
 	return ignore_interrupt ();
 }
@@ -743,9 +734,9 @@ void trs80_nmi_generate (int param)
 }
 
 /*************************************
- *                                   *
- *      Memory handlers              *
- *                                   *
+ *									 *
+ *		Memory handlers 			 *
+ *									 *
  *************************************/
 
 READ_HANDLER ( trs80_printer_r )
@@ -773,10 +764,10 @@ WRITE_HANDLER( trs80_irq_mask_w )
 
 WRITE_HANDLER( trs80_motor_w )
 {
-        /*UINT8 buff[16];*/
+		/*UINT8 buff[16];*/
 	UINT8 drive = 255;
-        /*int n;*/
-        /*void *file0, *file1;*/
+		/*int n;*/
+		/*void *file0, *file1;*/
 
 	LOG(("trs80 motor_w $%02X\n", data));
 
@@ -784,31 +775,31 @@ WRITE_HANDLER( trs80_motor_w )
 	{
 		case 1:
 			drive = 0;
-                        head = 0;
+						head = 0;
 			break;
 		case 2:
 			drive = 1;
-                        head = 0;
+						head = 0;
 			break;
 		case 4:
 			drive = 2;
-                        head = 0;
+						head = 0;
 			break;
 		case 8:
 			drive = 3;
-                        head = 0;
+						head = 0;
 			break;
 		case 9:
 			drive = 0;
-                        head = 1;
+						head = 1;
 			break;
 		case 10:
 			drive = 1;
-                        head = 1;
+						head = 1;
 			break;
 		case 12:
 			drive = 2;
-                        head = 1;
+						head = 1;
 			break;
 	}
 
@@ -822,21 +813,21 @@ WRITE_HANDLER( trs80_motor_w )
 	motor_count = 5 * 60;
 
 	wd179x_set_drive(drive);
-        wd179x_set_side(head);
+		wd179x_set_side(head);
 
 }
 
 /*************************************
- *      Keyboard                     *
+ *		Keyboard					 *
  *************************************/
 READ_HANDLER( trs80_keyboard_r )
 {
 	int result = 0;
 
-    if( setup_active() || onscrd_active() )
+	if( setup_active() || onscrd_active() )
 		return result;
 
-    if (offset & 1)
+	if (offset & 1)
 		result |= input_port_1_r(0);
 	if (offset & 2)
 		result |= input_port_2_r(0);

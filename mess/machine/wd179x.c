@@ -78,7 +78,7 @@ static UINT8 hd = 0;
 void wd179x_set_drive(UINT8 drive)
 {
 #if VERBOSE
-	logerror("wd179x_set_drive: %02x\n", drive);
+	logerror("wd179x_set_drive: $%02x\n", drive);
 #endif
 	drv = drive;
 }
@@ -86,7 +86,7 @@ void wd179x_set_drive(UINT8 drive)
 void wd179x_set_side(UINT8 head)
 {
 #if VERBOSE
-	logerror("wd179x_set_side: %02x\n", head);
+	logerror("wd179x_set_side: $%02x\n", head);
 #endif
 	hd = head;
 }
@@ -96,7 +96,7 @@ void wd179x_set_density(DENSITY density)
 	WD179X *w = &wd;
 
 #if VERBOSE
-	logerror("wd179x_set_density: %02x\n", density);
+	logerror("wd179x_set_density: $%02x\n", density);
 #endif
 
 	w->density = density;
@@ -106,6 +106,7 @@ void wd179x_set_density(DENSITY density)
 void wd179x_init(void (*callback)(int))
 {
 	memset(&wd, 0, sizeof(WD179X));
+	wd.status = STA_1_TRACK0;
 
 	wd.callback = callback;
 	wd.status_ipl = STA_1_IPL;
@@ -130,7 +131,7 @@ void wd179x_init(void (*callback)(int))
 		wd[i]->heads = 1;
 		wd[i]->density = DEN_MFM_LO;
 		wd[i]->offset = 0;
-				wd[i]->first_sector_id = 0;
+		wd[i]->first_sector_id = 0;
 		wd[i]->sec_per_track = 18;
 		wd[i]->sector_length = 256;
 		wd[i]->head = 0;
@@ -398,7 +399,7 @@ static int wd179x_find_sector(WD179X *w)
 					w->ddam = id.flags & ID_FLAG_DELETED_DATA;
 					/* got record type here */
 #if VERBOSE
-	logerror("sector found! C: %02x H: %02x R: %02x N: %02x\r\n", id.C, id.H, id.R, id.N);
+	logerror("sector found! C:$%02x H:$%02x R:$%02x N:$%02x%s\n", id.C, id.H, id.R, id.N, w->ddam ? " DDAM" : "");
 #endif
 					return 1;
 				}
@@ -417,7 +418,7 @@ static int wd179x_find_sector(WD179X *w)
 	w->status |= STA_2_REC_N_FND;
 
 #if VERBOSE
-	logerror("sector not found!\r\n");
+	logerror("track %d sector %d not found!\n", w->track_reg, w->sector);
 #endif
 	wd179x_complete_command(w);
 
@@ -495,7 +496,7 @@ static void wd179x_verify_seek(WD179X *w)
 			/* compare track */
 			if (id.C == w->track_reg)
 			{
-				logerror("seek verify succeeded!\r\n");
+				logerror("seek verify succeeded!\n");
 				return;
 			}
 		}
@@ -561,7 +562,7 @@ READ_HANDLER ( wd179x_sector_r )
 	WD179X *w = &wd;
 
 #if VERBOSE
-	logerror("wd179x_sector_r: %02X\n", w->sector);
+	logerror("wd179x_sector_r: $%02X\n", w->sector);
 #endif
 	return w->sector;
 }
@@ -579,7 +580,7 @@ READ_HANDLER ( wd179x_data_r )
 			/* clear ddam type */
 			w->status &=~STA_2_REC_TYPE;
 			/* read a sector with ddam set? */
-			if (w->ddam!=0)
+			if (w->command_type == TYPE_II && w->ddam != 0)
 			{
 				/* set it */
 				w->status |= STA_2_REC_TYPE;
@@ -627,7 +628,8 @@ WRITE_HANDLER ( wd179x_command_w )
 		if (w->callback)
 			(*w->callback) (WD179X_IRQ_CLR);
 		w->busy_count = 0;
-		return;
+		w->command_type = TYPE_IV;
+        return;
 	}
 
 	if (data & 0x80)
@@ -641,6 +643,7 @@ WRITE_HANDLER ( wd179x_command_w )
 #endif
 			w->read_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
+			w->command_type = TYPE_II;
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -661,6 +664,7 @@ WRITE_HANDLER ( wd179x_command_w )
 #endif
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
+			w->command_type = TYPE_II;
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -703,6 +707,7 @@ WRITE_HANDLER ( wd179x_command_w )
 			logerror("wd179x_command_w $%02X READ_TRK\n", data);
 #endif
 			w->command = data & ~FDC_MASK_TYPE_III;
+			w->command_type = TYPE_III;
 #if 0
 			w->status = seek(w, w->track, w->head, w->sector);
 			if (w->status == 0)
@@ -716,6 +721,7 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
 #endif
+			w->command_type = TYPE_III;
 
 			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
@@ -752,7 +758,8 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 			logerror("wd179x_command_w $%02X READ_DAM\n", data);
 #endif
-			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
+			w->command_type = TYPE_III;
+            if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
 				wd179x_complete_command(w);
             }
@@ -780,6 +787,7 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 		logerror("wd179x_command_w $%02X RESTORE\n", data);
 #endif
+		w->command_type = TYPE_I;
 
 		/* reset busy count */
 		w->busy_count = 0;
@@ -804,17 +812,19 @@ WRITE_HANDLER ( wd179x_command_w )
 	{
 		UINT8 newtrack;
 
-		logerror("old new track: %02x %02x\r\n", w->track_reg, w->data);
+		logerror("old track: $%02x new track: $%02x\n", w->track_reg, w->data);
+		w->command_type = TYPE_I;
 
 		/* setup step direction */
-		if (w->track_reg<w->data)
+		if (w->track_reg < w->data)
 		{
-			logerror("direction: 1\r\n");
+			logerror("direction: +1\n");
 			w->direction = 1;
 		}
 		else
-		{
-			logerror("direction: -1\r\n");
+		if (w->track_reg > w->data)
+        {
+			logerror("direction: -1\n");
 			w->direction = -1;
 		}
 
@@ -827,7 +837,7 @@ WRITE_HANDLER ( wd179x_command_w )
 		w->busy_count = 0;
 
 		/* keep stepping until reached track programmed */
-		while (w->track_reg!=newtrack)
+		while (w->track_reg != newtrack)
 		{
 			/* update time to simulate seek time busy signal */
 			w->busy_count++;
@@ -847,7 +857,8 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 		logerror("wd179x_command_w $%02X STEP dir %+d\n", data, w->direction);
 #endif
-		/* if it is a real floppy, issue a step command */
+		w->command_type = TYPE_I;
+        /* if it is a real floppy, issue a step command */
 		/* simulate seek time busy signal */
 		w->busy_count = ((data & FDC_STEP_RATE) + 1);
 
@@ -862,7 +873,8 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 		logerror("wd179x_command_w $%02X STEP_IN\n", data);
 #endif
-		w->direction = +1;
+		w->command_type = TYPE_I;
+        w->direction = +1;
 		/* simulate seek time busy signal */
 		w->busy_count = ((data & FDC_STEP_RATE) + 1);
 
@@ -877,7 +889,8 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 		logerror("wd179x_command_w $%02X STEP_OUT\n", data);
 #endif
-		w->direction = -1;
+		w->command_type = TYPE_I;
+        w->direction = -1;
 		/* simulate seek time busy signal */
 		w->busy_count = ((data & FDC_STEP_RATE) + 1);
 

@@ -11,7 +11,12 @@
 #define WD179X_DRQ_SET	3
 
 
-#define FDC_STEP_RATE	0x03	/* Type I additional flags */
+#define TYPE_I			1
+#define TYPE_II 		2
+#define TYPE_III		3
+#define TYPE_IV 		4
+
+#define FDC_STEP_RATE   0x03    /* Type I additional flags */
 #define FDC_STEP_VERIFY 0x04	/* verify track number */
 #define FDC_STEP_HDLOAD 0x08	/* load head */
 #define FDC_STEP_UPDATE 0x10	/* update track register */
@@ -82,6 +87,7 @@ typedef struct {
 	UINT8	track_reg;				/* value of track register */
 	UINT8	data;					/* value of data register */
 	UINT8	command;				/* last command written */
+	UINT8	command_type;			/* last command type */
 	UINT8	sector; 				/* current sector # */
 
 	UINT8	read_cmd;				/* last read command issued */
