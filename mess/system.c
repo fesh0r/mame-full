@@ -122,8 +122,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( a2600 ) 	/* Atari 2600									  */
 	DRIVER( a5200 ) 	/* Atari 5200									  */
 	DRIVER( a7800 ) 	/* Atari 7800									  */
+TESTDRIVER( lynx )		/* Atari Lynx Handheld							  */
+TESTDRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		  */
+TESTDRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions*/
 /*	DRIVER( jaguar )*/	/* Atari Jaguar 								  */
-/*	DRIVER( lynx )*/	/* Atari Lynx Handheld							  */
 #endif
 
 #ifndef MESS_EXCLUDE_NINTENDO
@@ -151,10 +153,17 @@ TESTDRIVER( saturn )	/* Sega Saturn									  */
 	/* RCA */
 TESTDRIVER( vip )		/* Cosmac VIP									  */
 	DRIVER( studio2 )	/* Studio II									  */
+	/* hanimex mpt-02 */
 /*	DRIVER( cstudio2 )*//* Colour Studio II								  */
 
 	/* FAIRCHILD */
 	DRIVER( channelf )  /* Fairchild Channel F VES - 1976                 */
+	/* checkers cartridge, additional processor in it */
+	/* saba videoplay */
+	/* itt telematch */
+	/* nordmende teleplay */
+	/* channelf system 2, redesigned, no additions */
+	/* saba videoplay 2 */
 
 	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
@@ -166,8 +175,14 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
+	/* pc6601 series z80 based */
+	/* pc8801 series z80 based */
+	/* pc9801 series i8086 based (v30, i386, ..) */
 
-/*  DRIVER( arcadia )*/ /* Arcadia 2001                                   */
+/*  DRIVER( arcadia )*/ /* Emerson Arcadia 2001                           */
+	/* schmid tvg 2000 */
+	/* eduscho tele fever */
+	/* hanimex fever 1 (hmg 2650) */
 
 	/* GCE */
 	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
@@ -189,6 +204,15 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	/* Watara */
 	DRIVER( svision )	/* Super Vision	Handheld						  */
 
+	/* 1992 epoch barcode battler handheld*/
+
+	/* tiger game.com handheld*/
+
+	/* interton vc4000 */
+
+	/* bandai wonderswan handheld*/
+
+	/* 1979 mb microvision handheld*/
 #endif
 
 /****************COMPUTERS****************************************************/
@@ -201,6 +225,7 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
     DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
     DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K                    */
     DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K                   */
+/*	DRIVER( electron )*//* 198? Acorn Electron							  */
 
 TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
@@ -371,7 +396,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 
-/*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype						  */
+/*	DRIVER( cbm900 )*/	/* Commodore 900 Prototype (z8000)				  */
 
 //!!	DRIVER( amiga ) 	/* Commodore Amiga								  */
 
@@ -408,6 +433,8 @@ TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
+
+/*	DRIVER( at386)*/	/*												  */
 #endif
 
 #ifndef MESS_EXCLUDE_SINCLAIR
@@ -484,6 +511,11 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
 	DRIVER( kc85_4 )	/* VEB KC 85/4									  */
+	/* pc1715 z80/u880 based */
+	/* pc1715w z80/u880 based */
+	/* a5105 z80/u880 based */
+	/* a5120 z80/u880 based */
+	/* a7100 i8086 based */
 
 	/* MICROBEE SYSTEMS */
 	DRIVER( mbee )		/* Microbee 									  */
@@ -526,20 +558,22 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( laser350 )	/* 1984? Laser 350								  */
 	DRIVER( laser500 )	/* 1984? Laser 500								  */
 	DRIVER( laser700 )	/* 1984? Laser 700								  */
+	/* Creativision console */
 
 	/* TANGERINE */
 	DRIVER( microtan )	/* 1979 Microtan 65 							  */
 
 	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
-    DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
-    DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
-    DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
-    DRIVER( telstrat ) /* ??? Oric Telestrat/Stratos                       */
+	DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
+	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
+	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
+	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T									  */
 	DRIVER( p2000m )	/* 1980 P2000M									  */
+	/* philips g7000 odyssey2 compatible */
 
 	/* COMPUKIT */
 	DRIVER( uk101 ) 	/* 1979 UK101									  */
@@ -564,10 +598,10 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	/* MOTOROLA */
 TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
-    /* DEC */
+	/* DEC */
 	DRIVER( pdp1 )      /* 1962 DEC PDP1 for SPACEWAR! - 1962             */
 
-    /* MEMOTECH */
+	/* MEMOTECH */
 	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
 	/* MATTEL */
