@@ -238,7 +238,9 @@ SNDOBJS = \
          $(OBJ)/sound/ymz280b.o \
          $(OBJ)/sound/fmopl.o \
          $(OBJ)/sound/tms36xx.o \
+         $(OBJ)/sound/tms5110.o \
          $(OBJ)/sound/tms5220.o \
+         $(OBJ)/sound/5110intf.o \
          $(OBJ)/sound/5220intf.o \
          $(OBJ)/sound/vlm5030.o \
          $(OBJ)/sound/pokey.o \
