@@ -1,3 +1,6 @@
+#ifndef AQUARIUS_H
+#define AQUARIUS_H
+
 /* machine/aquarius.c */
 extern MACHINE_INIT( aquarius );
 extern READ_HANDLER( aquarius_port_ff_r );
@@ -9,6 +12,6 @@ extern WRITE_HANDLER( aquarius_port_ff_w );
 /* vidhrdw/aquarius.c */
 extern VIDEO_START( aquarius );
 extern VIDEO_UPDATE( aquarius );
+extern WRITE_HANDLER( aquarius_videoram_w );
 
-/* systems/aquarius.c */
-
+#endif /* AQUARIUS_H */

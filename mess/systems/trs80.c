@@ -37,7 +37,7 @@ MEMORY_END
 
 MEMORY_WRITE_START( writemem_level1 )
 	{ 0x0000, 0x0fff, MWA_ROM },
-	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0x7fff, MWA_RAM },
 MEMORY_END
 
@@ -79,7 +79,7 @@ MEMORY_WRITE_START( writemem_model1 )
 	{ 0x37ef, 0x37ef, wd179x_data_w },
 	{ 0x37f0, 0x37ff, MWA_NOP },
 	{ 0x3800, 0x3bff, MWA_NOP },
-	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
 MEMORY_END
 
@@ -102,7 +102,7 @@ MEMORY_END
 MEMORY_WRITE_START( writemem_model3 )
 	{ 0x0000, 0x37ff, MWA_ROM },
 	{ 0x3800, 0x38ff, MWA_NOP },
-	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
+	{ 0x3c00, 0x3fff, trs80_videoram_w, &videoram, &videoram_size },
 	{ 0x4000, 0xffff, MWA_RAM },
 MEMORY_END
 

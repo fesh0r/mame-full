@@ -59,7 +59,7 @@ MEMORY_END
 MEMORY_WRITE_START( aquarius_writemem )
 	{0x0000, 0x1fff, MWA_ROM},
 	{0x2000, 0x2fff, MWA_NOP},
-	{0x3000, 0x37ff, videoram_w, &videoram, &videoram_size},
+	{0x3000, 0x37ff, aquarius_videoram_w, &videoram, &videoram_size},
 	{0x3800, 0x3fff, MWA_RAM},
 	{0x4000, 0x7fff, MWA_NOP},
 	{0x8000, 0xffff, MWA_NOP},

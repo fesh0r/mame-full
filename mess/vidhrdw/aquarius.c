@@ -10,32 +10,46 @@
 #include "vidhrdw/generic.h"
 #include "includes/aquarius.h"
 
+static struct tilemap *aquarius_tilemap;
+
+/**************************************************************************/
+
+static void aquarius_gettileinfo(int memory_offset)
+{
+	SET_TILE_INFO(
+		0,									/* gfx */
+		videoram[memory_offset +    40],	/* character */
+		videoram[memory_offset + 0x400],	/* color */
+		0)									/* flags */
+}
+
 VIDEO_START( aquarius )
 {
-	return video_start_generic();
+	aquarius_tilemap = tilemap_create(
+		aquarius_gettileinfo,
+		tilemap_scan_rows,
+		TILEMAP_OPAQUE,
+		8, 8,
+		40, 24);
+	if (!aquarius_tilemap)
+		return 1;
+
+	return 0;
 }
 
 VIDEO_UPDATE( aquarius )
 {
-	int	sy, sx;
-	int full_refresh = 1;
-
-	if (full_refresh)
-		memset (dirtybuffer, 1, videoram_size);
-
-	for (sy = 0; sy < 24; sy++)
-	{
-		for (sx = 0; sx < 40; sx++)
-		{
-			if (dirtybuffer[sy * 40 + sx + 40] || dirtybuffer[sy * 40 + sx + 0x400])
-			{
-				drawgfx (bitmap, Machine->gfx[0], videoram[sy * 40 + sx + 40],
-						videoram[sy * 40 + sx + 0x400], 0, 0, sx * 8,
-						sy * 8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-				dirtybuffer[sy * 40 + sx + 40] = 0;
-				dirtybuffer[sy * 40 + sx + 0x400] = 0;
-			}
-		}
-	}
+	tilemap_draw(bitmap, NULL, aquarius_tilemap, 0, 0);
 }
 
+WRITE_HANDLER( aquarius_videoram_w )
+{
+	if (videoram[offset] != data)
+	{
+		if ((offset >= 40) && (offset < 40+960))
+			tilemap_mark_tile_dirty(aquarius_tilemap, offset - 40);
+		else if ((offset >= 0x400) && (offset < 0x400+960))
+			tilemap_mark_tile_dirty(aquarius_tilemap, offset - 0x400);
+		videoram[offset] = data;
+	}
+}

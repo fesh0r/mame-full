@@ -10,22 +10,50 @@
 #include "vidhrdw/generic.h"
 #include "includes/apple1.h"
 
-static	int	dsp_pntr;
+static struct tilemap *apple1_tilemap;
+static int dsp_pntr;
+
+/**************************************************************************/
+
+static void apple1_gettileinfo(int memory_offset)
+{
+	int code;	
+	if (memory_offset == dsp_pntr)
+		code = 1;
+	else
+		code = videoram[memory_offset];
+
+	SET_TILE_INFO(
+		0,		/* gfx */
+		code,	/* character */
+		0,		/* color */
+		0)		/* flags */
+}
+
+/**************************************************************************/
 
 VIDEO_START( apple1 )
 {
 	dsp_pntr = 0;
-	if (!(videoram = auto_malloc (videoram_size = 40 * 24)))
-		return (1);;
-	if (video_start_generic ())
-		return (1);
+	videoram_size = 40 * 24;
 
-	memset (videoram, 0, videoram_size);
-	memset (dirtybuffer, 1, videoram_size);
-	return (0);
+	videoram = auto_malloc(videoram_size);
+
+	apple1_tilemap = tilemap_create(
+		apple1_gettileinfo,
+		tilemap_scan_rows,
+		TILEMAP_OPAQUE,
+		7, 8,
+		40, 24);
+	
+	if (!videoram || !apple1_tilemap)
+		return 1;
+
+	memset(videoram, 0, videoram_size);
+	return 0;
 }
 
-void	apple1_vh_dsp_w (int data)
+void apple1_vh_dsp_w (int data)
 {
 	int	loop;
 
@@ -34,16 +62,17 @@ void	apple1_vh_dsp_w (int data)
 	switch (data) {
 	case 0x0a:
 	case 0x0d:
-		dirtybuffer[dsp_pntr] = 1;
+		tilemap_mark_tile_dirty(apple1_tilemap, dsp_pntr);
 		dsp_pntr += 40 - (dsp_pntr % 40);
 		break;
 	case 0x5f:
-		dirtybuffer[dsp_pntr] = 1;
-		if (dsp_pntr) dsp_pntr--;
+		tilemap_mark_tile_dirty(apple1_tilemap, dsp_pntr);
+		if (dsp_pntr)
+			dsp_pntr--;
 		videoram[dsp_pntr] = 0;
 		break;
 	default:
-		dirtybuffer[dsp_pntr] = 1;
+		tilemap_mark_tile_dirty(apple1_tilemap, dsp_pntr);
 		videoram[dsp_pntr] = data;
 		dsp_pntr++;
 		break;
@@ -64,13 +93,13 @@ void	apple1_vh_dsp_w (int data)
 										(videoram[loop] > 96)))
 				{
 					videoram[loop - 40] = videoram[loop];
-					dirtybuffer[loop - 40] = 1;
+					tilemap_mark_tile_dirty(apple1_tilemap, loop - 40);
 				}
 			}
 			else if (videoram[loop - 40] != videoram[loop])
 			{
 				videoram[loop - 40] = videoram[loop];
-				dirtybuffer[loop - 40] = 1;
+				tilemap_mark_tile_dirty(apple1_tilemap, loop - 40);
 			}
 		}
 		for (loop = 920; loop < 960; loop++)
@@ -79,25 +108,26 @@ void	apple1_vh_dsp_w (int data)
 						(videoram[loop] <= 32)) || (videoram[loop] > 96)))
 			{
 				videoram[loop] = 0;
-				dirtybuffer[loop] = 1;
+				tilemap_mark_tile_dirty(apple1_tilemap, loop);
 			}
 		}
 		dsp_pntr -= 40;
 	}
 }
 
-void	apple1_vh_dsp_clr (void)
+void apple1_vh_dsp_clr (void)
 {
 	int	loop;
 
-	dirtybuffer[dsp_pntr] = 1;
+	tilemap_mark_tile_dirty(apple1_tilemap, dsp_pntr);
 	dsp_pntr = 0;
+
 	for (loop = 0; loop < 960; loop++)
 	{
 		if (!(!videoram[loop] || ((videoram[loop] > 1) &&
 						(videoram[loop] <= 32)) || (videoram[loop] > 96)))
 		{
-			dirtybuffer[loop] = 1;
+			tilemap_mark_tile_dirty(apple1_tilemap, loop);
 		}
 		videoram[loop] = 0;
 	}
@@ -105,28 +135,6 @@ void	apple1_vh_dsp_clr (void)
 
 VIDEO_UPDATE( apple1 )
 {
-	int offs;
-	int code;
-	int sx, sy;
-	int full_refresh = 1;
-
-	/* do we need a full refresh? */
-
-	if (full_refresh) memset (dirtybuffer, 1, videoram_size);
-
-	for (offs = 0; offs < videoram_size; offs++ )
-	{
-		if (dirtybuffer[offs] || (offs == dsp_pntr))
-		{
-			if (offs == dsp_pntr) code = 1;
-			else code = videoram[offs];
-			sy = (offs / 40) * 8;
-			sx = (offs % 40) * 7;
-
-			drawgfx (bitmap, Machine->gfx[0], code, 1,
-			  0, 0, sx,sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-
-			dirtybuffer[offs] = 0;
-		}
-	}
+	tilemap_mark_tile_dirty(apple1_tilemap, dsp_pntr);
+	tilemap_draw(bitmap, NULL, apple1_tilemap, 0, 0);
 }

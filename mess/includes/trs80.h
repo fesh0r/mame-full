@@ -38,15 +38,17 @@ extern INTERRUPT_GEN( trs80_frame_interrupt );
 extern INTERRUPT_GEN( trs80_timer_interrupt );
 extern INTERRUPT_GEN( trs80_fdc_interrupt );
 
-extern READ_HANDLER ( trs80_irq_status_r );
-extern WRITE_HANDLER ( trs80_irq_mask_w );
+extern READ_HANDLER( trs80_irq_status_r );
+extern WRITE_HANDLER( trs80_irq_mask_w );
 
-extern READ_HANDLER ( trs80_printer_r );
-extern WRITE_HANDLER ( trs80_printer_w );
+extern READ_HANDLER( trs80_printer_r );
+extern WRITE_HANDLER( trs80_printer_w );
 
-extern WRITE_HANDLER ( trs80_motor_w );
+extern WRITE_HANDLER( trs80_motor_w );
 
-extern READ_HANDLER ( trs80_keyboard_r );
+extern READ_HANDLER( trs80_keyboard_r );
+
+extern WRITE_HANDLER( trs80_videoram_w );
 
 #endif	/* TRS80_H */
 
