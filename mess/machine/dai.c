@@ -19,21 +19,15 @@
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"
 
-#define DAI_DEBUG	1
+#define DEBUG_DAI_PORTS	0
 
-#if DAI_DEBUG
-#define LOG_SOUND	1
-#define LOG_PADDLE	0
-#define LOG_TAPE	0
-#define LOG_MEMORY	0
-#define LOG_IO_ERRORS	1
-#else /* !DAI_DEBUG */
-#define LOG_SOUND	0
-#define LOG_PADDLE	0
-#define LOG_TAPE	0
-#define LOG_MEMORY	0
-#define LOG_IO_ERRORS	0
-#endif /* DAI_DEBUG */
+#if DEBUG_DAI_PORTS
+	#define LOG_DAI_PORT_R(_port, _data, _comment) logerror ("DAI port read : %04x, Data: %02x (%s)\n", _port, _data, _comment)
+	#define LOG_DAI_PORT_W(_port, _data, _comment) logerror ("DAI port write: %04x, Data: %02x (%s)\n", _port, _data, _comment)
+#else
+	#define LOG_DAI_PORT_R(_port, _data, _comment)
+	#define LOG_DAI_PORT_W(_port, _data, _comment)
+#endif
 
 /* Discrete I/O devices */
 UINT8 dai_noise_volume;
@@ -197,9 +191,8 @@ READ_HANDLER( dai_io_discrete_devices_r )
 
 	default:
 		data = 0xff;
-#if LOG_IO_ERRORS
-		logerror ("Discrete devices read unemulated port: %04x %02x\n", offset, data);
-#endif
+		LOG_DAI_PORT_R (offset, data, "discrete devices - unmapped");
+
 		break;
 	}
 	return data;
@@ -211,45 +204,34 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 	case 0x04:
 		dai_osc_volume[0] = data&0x0f;
 		dai_osc_volume[1] = (data&0xf0)>>4;
-#if LOG_SOUND
-		logerror ("Osc. 0 volume: %02x\n", dai_osc_volume[0]);
-		logerror ("Osc. 1 volume: %02x\n", dai_osc_volume[1]);
-#endif
+		LOG_DAI_PORT_W (offset, data&0x0f, "discrete devices - osc. 0 volume");
+		LOG_DAI_PORT_W (offset, (data&0xf0)>>4, "discrete devices - osc. 1 volume");
 		break;
 
 	case 0x05:
 		dai_osc_volume[2] = data&0x0f;
 		dai_noise_volume = (data&0xf0)>>4;
-#if LOG_SOUND
-		logerror ("Osc. 2 volume: %02x\n", dai_osc_volume[0]);
-		logerror ("Osc. noise generator volume: %02x\n", dai_noise_volume);
-#endif
+		LOG_DAI_PORT_W (offset, data&0x0f, "discrete devices - osc. 2 volume");
+		LOG_DAI_PORT_W (offset, (data&0xf0)>>4, "discrete devices - noise volume");
 		break;
 
 	case 0x06:
 		dai_paddle_select = (data&0x06)>>2;
 		dai_paddle_enable = (data&0x08)>>3;
-#if LOG_PADDLE
-		logerror ("Paddle select: %02x\n", dai_paddle_select);
-		logerror ("Paddle enable: %02x\n", dai_paddle_enable);
-#endif
 		dai_cassette_motor[0] = (data&0x10)>>4;
 		dai_cassette_motor[1] = (data&0x20)>>5;
 		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0), dai_cassette_motor[0]?CASSETTE_MOTOR_DISABLED:CASSETTE_MOTOR_ENABLED, CASSETTE_MASK_MOTOR);
 		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -1.0 : 1.0);
-#if LOG_TAPE
-		logerror ("Cassette: motor 1: %02x motor 2: %02x\n", dai_cassette_motor[0], dai_cassette_motor[1]);
-#endif
 		dai_update_memory ((data&0xc0)>>6);
-#if LOG_MEMORY
-		logerror ("ROM bank: %02x\n", (data&0xc0)>>6);
-#endif
+		LOG_DAI_PORT_W (offset, (data&0x06)>>2, "discrete devices - paddle select");
+		LOG_DAI_PORT_W (offset, (data&0x08)>>3, "discrete devices - paddle enable");
+		LOG_DAI_PORT_W (offset, (data&0x10)>>4, "discrete devices - cassette motor 1");
+		LOG_DAI_PORT_W (offset, (data&0x20)>>5, "discrete devices - cassette motor 2");
+		LOG_DAI_PORT_W (offset, (data&0xc0)>>6, "discrete devices - ROM bank");
 		break;
 
 	default:
-#if LOG_IO_ERRORS
-		logerror("Writing to discrete port: %04x, %02x\n", offset, data);
-#endif
+		LOG_DAI_PORT_W (offset, data, "discrete devices - unmapped");
 		break;
 	}
 }
@@ -268,5 +250,6 @@ READ_HANDLER( amd9511_r )
 
 WRITE_HANDLER( amd9511_w )
 {
+	logerror ("Writing to AMD9511 math chip, %04x, %02x\n", offset, data);
 }
 
