@@ -1534,7 +1534,7 @@ DRIVER_INIT( atari )
 	offs_t ram_top;
 	
 	/* install RAM */
-	ram_top = MAX(mess_ram_size, 0x8000) - 1;
+	ram_top = MIN(mess_ram_size, 0x8000) - 1;
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
 		0x0000, ram_top, 0, 0, MRA8_BANK2);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
