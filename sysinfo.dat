@@ -8951,14 +8951,27 @@ you must edit the source code to run the programs interactively: for instance,
 to play the brick-wall game, you must type 'LOAD 2', then enter '5 SP=0' to
 disable demonstration mode, then 'RUN'.
 
-There is one undocumented built-in Basic function that can be used if you have
-the demonstration EPROMs installed: JOY.  This instruction is not fully
-implemented in University Basic, and it relies on an assembly language
-subroutine located on the Demonstration EPROMs.  "JOY 0" reads the analog
+There are two undocumented built-in Basic instructions that can be used if you
+have the demonstration EPROMs installed: PLOT and JOY.  These instructions are
+not fully implemented in University Basic, and they rely on assembly language
+subroutines located on the Demonstration EPROMs.
+
+The PLOT instruction draws lines in multicolor mode (which is entered by "MODE
+8" through "MODE 15").  "PLOT 0,n" sets up the screen for multicolor mode, and
+must be executed before any other PLOT instruction (n is ignored).  "PLOT
+1,c[,x,y]" sets the pen color to c, and sets the coordinates of the lower left
+corner to (x,y).  "PLOT 5,x,y" sets the pen position absolutely, and "PLOT
+3,x,y" sets the pen position relatively to the current pen position.  "PLOT
+6,x,y" draws a line from the current pen position to a new pen position
+expressed absolutely, and "PLOT 4,x,y" draws a line from the current pen
+position to a new pen position expressed relatively to the current pen
+position.  "PLOT 2,x,y" and "PLOT 7,x,y" do not do anything.
+
+The JOY function reads the state of either joystick.  "JOY 0" reads the analog
 X-axis for joystick 1, "JOY 1" reads the analog Y-axis for joystick 1, "JOY 2"
-reads the button state for joystick 1, "JOY 2" reads the analog X-axis for
-joystick 2, "JOY 3" reads the analog Y-axis for joystick 2, "JOY 4" reads the
-button state for joystick 2.
+reads the button state for joystick 1, "JOY 3" reads the analog X-axis for
+joystick 2, "JOY 4" reads the analog Y-axis for joystick 2, and "JOY 5" reads
+the button state for joystick 2.
 
 
 History and Trivia:
