@@ -28,8 +28,8 @@
 
 #include "driver.h"
 #include "machine/6522via.h"
-/*#include "iwm_lisa.h"*/
 #include "machine/iwm.h"
+#include "machine/sonydriv.h"
 #include "machine/lisa.h"
 #include "m68k.h"
 
@@ -162,6 +162,17 @@ static struct via6522_interface lisa_via6522_intf[2] =
 
 static int FDIR;
 static int DISK_DIAG;
+
+/*
+	lisa model identification
+*/
+enum
+{
+	/*lisa1,*/		/* twiggy floppy drive */
+	lisa2,		/* 3.5'' Sony floppy drive */
+	lisa210,	/* modified I/O board, and internal 10Meg drive */
+	mac_xl		/* same as above with modified video */
+} lisa_model;
 
 
 /*
@@ -817,13 +828,17 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	UINT8	*v;
 	int		fg, bg, x, y;
 
+	/* resolution is 720/360 on lisa, vs 608/431 on mac XL */
+	int resx = (lisa_model == mac_xl) ? 38 : 45;
+	int resy = (lisa_model == mac_xl) ? 431 : 360;
+
 	v = videoram_ptr;
 	bg = Machine->pens[0];
 	fg = Machine->pens[1];
 	old = old_display;
 
-	for (y = 0; y < 360; y++) {
-		for ( x = 0; x < 45; x++ ) {
+	for (y = 0; y < resy; y++) {
+		for ( x = 0; x < resx; x++ ) {
 			data = READ_WORD( v );
 			if (full_refresh || (data != *old)) {
 				plot_pixel( bitmap, ( x << 4 ) + 0x00, y, ( data & 0x8000 ) ? fg : bg );
@@ -937,16 +952,38 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 
 int lisa_floppy_init(int id)
 {
-	return /*iwm_lisa_floppy_init*/iwm_floppy_init(id, IWM_FLOPPY_ALLOW400K /*| IWM_FLOPPY_ALLOW800K*/);
+	if (lisa_model == lisa2)
+		sony_set_enable_lines(1);	/* on lisa2, drive unit 1 is always selected (?) */
+	return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K /*| SONY_FLOPPY_ALLOW800K*/);
 }
 
 void lisa_floppy_exit(int id)
 {
-	/*iwm_lisa_floppy_exit*/iwm_floppy_exit(id);
+	sony_floppy_exit(id);
 }
 
+void init_lisa2(void)
+{
+	lisa_model = lisa2;
+}
 
-void lisa_init_machine()
+void init_lisa210(void)
+{
+	lisa_model = lisa210;
+}
+
+void init_mac_xl(void)
+{
+	lisa_model = mac_xl;
+}
+
+static void lisa2_set_enable_lines(int enable_mask)
+{
+	/* E1 line is connected to the Sony SEL line */
+	sony_set_sel_line((enable_mask & 1) ^ 1);
+}
+
+void lisa_init_machine(void)
 {
 	lisa_ram_ptr = memory_region(REGION_CPU1) + RAM_OFFSET;
 	lisa_rom_ptr = memory_region(REGION_CPU1) + ROM_OFFSET;
@@ -996,7 +1033,22 @@ void lisa_init_machine()
 	COPS_via_out_ca2(0, 0);	/* VIA core forgets to do so */
 
 	/* initialize floppy */
-	/*iwm_lisa_init*/iwm_init();
+	{
+		iwm_interface intf =
+		{
+			sony_set_lines,
+			sony_set_enable_lines,
+
+			sony_read_data,
+			sony_write_data,
+			sony_read_status
+		};
+
+		if (lisa_model == lisa2)
+			intf.set_enable_lines = lisa2_set_enable_lines;
+
+		iwm_init(& intf);
+	}
 }
 
 int lisa_interrupt(void)
@@ -1085,6 +1137,12 @@ int lisa_interrupt(void)
 	return 0;
 }
 
+/*
+	Lots of fun with the Lisa fdc hardware
+
+	The iwm floppy select line is connected to the IWM select line in Lisa2 (which is why Lisa 2
+	cannot support 2 floppy drives) and to the IWM 
+*/
 
 READ_HANDLER ( lisa_fdc_io_r )
 {
@@ -1115,7 +1173,8 @@ READ_HANDLER ( lisa_fdc_io_r )
 			break;
 		case 5:
 			/*HDS = offset & 1;*/		/* head select (-> disk side) on twiggy */
-			/*iwm_lisa_set_head_line*/iwm_set_sel_line(offset & 1);
+			/*twiggy_set_head_line(offset & 1);*/
+			sony_set_sel_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
@@ -1167,7 +1226,10 @@ WRITE_HANDLER ( lisa_fdc_io_w )
 			break;
 		case 5:
 			/*HDS = offset & 1;*/		/* head select (-> disk side) on twiggy */
-			/*iwm_lisa_set_head_line*/iwm_set_sel_line(offset & 1);
+			/*if (lisa_model == lisa1)
+				twiggy_set_head_line(offset & 1);*/
+			if ((lisa_model == lisa210) || (lisa_model == mac_xl))
+				sony_set_sel_line(offset & 1);
 			break;
 		case 6:
 			DISK_DIAG = offset & 1;
@@ -1204,6 +1266,22 @@ READ_HANDLER ( lisa_fdc_r )
 		return fdc_rom[offset & 0x0fff];
 }
 
+READ_HANDLER ( lisa210_fdc_r )
+{
+	if (! (offset & 0x1000))
+	{
+		if (! (offset & 0x0400))
+			if (! (offset & 0x0800))
+				return fdc_ram[offset & 0x03ff];
+			else
+				return lisa_fdc_io_r(offset & 0x03ff);
+		else
+			return 0;	/* ??? */
+	}
+	else
+		return fdc_rom[offset & 0x0fff];
+}
+
 WRITE_HANDLER ( lisa_fdc_w )
 {
 	if (! (offset & 0x1000))
@@ -1211,14 +1289,26 @@ WRITE_HANDLER ( lisa_fdc_w )
 		if (! (offset & 0x0800))
 		{
 			if (! (offset & 0x0400))
-				fdc_ram[offset & 0x0fff] = data;
+				fdc_ram[offset & 0x03ff] = data;
 			else
 				lisa_fdc_io_w(offset & 0x03ff, data);
 		}
-
 	}
 }
 
+WRITE_HANDLER ( lisa210_fdc_w )
+{
+	if (! (offset & 0x1000))
+	{
+		if (! (offset & 0x0400))
+		{
+			if (! (offset & 0x0800))
+				fdc_ram[offset & 0x03ff] = data;
+			else
+				lisa_fdc_io_w(offset & 0x03ff, data);
+		}
+	}
+}
 
 READ16_HANDLER ( lisa_r )
 {
