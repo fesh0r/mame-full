@@ -217,7 +217,6 @@ WRITE_HANDLER ( astrocade_videoram_w )
 	if ((offset < 0x1000) && (astrocade_videoram[offset] != data))
 	{
 		astrocade_videoram[offset] = data;
-        dirtybuffer[offset / 40] = 1;
     }
 }
 
@@ -374,94 +373,47 @@ void astrocade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-void AstrocadeCopyLine(int Line)
+void astrocade_copy_line(int line)
 {
 	/* Copy one line to bitmap, using current colour register settings */
 
     int memloc;
     int i,x,num_bytes;
-    int data,color/*,mask*/;
-   	int ey;
+    int data,color;
 
-    /* Redraw line if anything changed */
+	if (astrocade_mode == 0)
+	{
+		memloc = line/2 * 40;
+		num_bytes = 40;
+	}
+	else
+	{
+		num_bytes = 80;
+		memloc = line * 80;
+	}
 
+	LeftLineColour[line]  = LeftColourCheck;
+	RightLineColour[line]  = RightColourCheck;
 
-
-	//if (dirtybuffer[Line] || (LeftLineColour[Line] != LeftColourCheck) ||
-	//						   (RightLineColour[Line] != RightColourCheck))
-    //{
-
-		if (astrocade_mode == 0)
-		{
-			memloc = Line/2 * 40;
-			num_bytes = 40;
-		}
+	for(i=0;i<num_bytes;i++,memloc++)
+	{
+		if (line < VerticalBlank)
+			data = astrocade_videoram[memloc];
 		else
+			data = BackgroundData;
+
+		for(x=i*4+3;x>=i*4;x--)
 		{
-			num_bytes = 80;
-			memloc = Line * 80;
+			color = data & 03;
+
+			if (i<ColourSplit)
+				color += 4;
+
+			plot_pixel(tmpbitmap,x,line,Machine->pens[Colour[color]]);
+
+			data >>= 2;
 		}
 
-		LeftLineColour[Line]  = LeftColourCheck;
-		RightLineColour[Line]  = RightColourCheck;
-        dirtybuffer[Line] = 0;
-
-        /* Handle Line swaps outside of loop */
-
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
-        {
-  		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-  			    ey = Line;
-            else
-                ey = 203 - Line;
-
-        	osd_mark_dirty(ey,0,ey,319,0);
-		}
-        else
-        {
-  		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-                ey = 203 - Line;
-            else
-  			    ey = Line;
-
-	        osd_mark_dirty(0,ey,319,ey,0);
-		}
-
-        for(i=0;i<num_bytes;i++,memloc++)
-        {
-			if (Line < VerticalBlank)
-				data = astrocade_videoram[memloc];
-			else
-				data = BackgroundData;
-
-            for(x=i*4+3;x>=i*4;x--)
-            {
-				color = data & 03;
-
-            	if (i<ColourSplit)
-					color += 4;
-
-                if (Machine->orientation & ORIENTATION_SWAP_XY)
-                {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-						tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
-                    else
-	                    tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
-                }
-                else
-                {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-                        tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
-                    else
-					{
-						tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
-					}
-                }
-
-                data >>= 2;
-            }
-
-        }
-    //}
+	}
 }
 

@@ -79,7 +79,7 @@ int astrocade_interrupt(void)
 		CurrentScan = 0;
     }
 
-    if (CurrentScan < 204) AstrocadeCopyLine(CurrentScan);
+    if (CurrentScan < 204) astrocade_copy_line(CurrentScan);
 
     /* Scanline interrupt enabled ? */
 

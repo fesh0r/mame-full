@@ -210,7 +210,7 @@ static struct MachineDriver machine_driver_astrocde =
 	8*32,8,
 	astrocade_init_palette,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
