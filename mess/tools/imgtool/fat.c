@@ -107,6 +107,7 @@ struct fat_file
 	UINT32 index;
 	UINT32 filesize;
 	UINT32 first_cluster;
+	UINT32 parent_first_cluster;
 	UINT32 cluster;
 	UINT32 cluster_index;
 	UINT32 dirent_sector_index;
@@ -339,6 +340,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	const char *fat_bits_string;
 	UINT8 header[512];
 	UINT64 first_fat_entries;
+	int head, track, sector;
 
 	heads = option_resolution_lookup_int(opts, 'H');
 	tracks = option_resolution_lookup_int(opts, 'T');
@@ -386,7 +388,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	reserved_sectors = 1;
 
 	/* calculated settings */
-	root_dir_sectors = (root_dir_count + sector_bytes - 1) / sector_bytes;
+	root_dir_sectors = (root_dir_count * FAT_DIRENT_SIZE + sector_bytes - 1) / sector_bytes;
 	total_clusters = (total_sectors - reserved_sectors - hidden_sectors - root_dir_sectors)
 		/ sectors_per_cluster;
 	sectors_per_fat = (total_clusters * fat_bits + (sector_bytes * 8) - 1)
@@ -439,9 +441,12 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 		return imgtool_floppy_error(ferr);
 
 	/* clear out file allocation table */
-	for (i = 0; i < (sectors_per_fat * fat_count + root_dir_sectors); i++)
+	for (i = reserved_sectors; i < (reserved_sectors + sectors_per_fat * fat_count + root_dir_sectors); i++)
 	{
-		ferr = floppy_clear_sector(imgtool_floppy(image), 0, 0, first_sector_id + 1 + i, 0);
+		head = (i / sectors) % heads;
+		track = i / sectors / heads;
+		sector = 1 + (i % sectors);
+		ferr = floppy_clear_sector(imgtool_floppy(image), head, track, sector, 0);
 		if (ferr)
 			return imgtool_floppy_error(ferr);
 	}
@@ -602,7 +607,11 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 	bit_index = fat_entry * disk_info->fat_bits;
 	bit_mask = 0xFFFFFFFF >> (32 - disk_info->fat_bits);
 
-	assert(fat_entry < disk_info->total_clusters);
+	if (fat_entry >= disk_info->total_clusters)
+	{
+		assert(0);
+		return 1;
+	}
 
 	/* make sure that the cluster is free in all fats */
 	for (i = 0; i < disk_info->fat_count; i++)
@@ -852,9 +861,11 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	const struct fat_diskinfo *disk_info;
 	UINT32 new_cluster_count;
 	UINT32 old_cluster_count;
-	UINT32 cluster, write_cluster, last_cluster, pos, i;
+	UINT32 cluster, write_cluster, last_cluster, new_pos, i;
 	UINT8 *fat_table = NULL;
 	UINT8 dirent[32];
+	size_t clear_size;
+	void *clear_buffer = NULL;
 	int delete_file = FALSE;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
@@ -872,6 +883,9 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 		err = IMGTOOLERR_SUCCESS;
 		goto done;
 	}
+
+	/* what is the new position? */
+	new_pos = MIN(file->index, new_size);
 
 	if (file->root)
 	{
@@ -967,19 +981,51 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 				goto done;
 		}
 
-		pos = MIN(file->index, new_size);
-		file->filesize = new_size;
+		/* update the file structure */
+		if (!file->directory)
+			file->filesize = new_size;
 		file->cluster = file->first_cluster;
 		file->index = 0;
-
-		err = fat_seek_file(image, file, pos);
-		if (err)
-			goto done;
 	}
+
+	/* special case; clear out stale bytes on non-root directories */
+	if (file->directory)
+	{
+		if (file->root)
+			clear_size = MIN(file->filesize - new_size, FAT_DIRENT_SIZE);
+		else
+			clear_size = disk_info->cluster_size - (new_size % disk_info->cluster_size);
+
+		if (clear_size > 0)
+		{
+			err = fat_seek_file(image, file, new_size);
+			if (err)
+				goto done;
+
+			clear_buffer = malloc(clear_size);
+			if (!clear_buffer)
+			{
+				err = IMGTOOLERR_OUTOFMEMORY;
+				goto done;
+			}
+			memset(clear_buffer, '\0', clear_size);
+
+			err = fat_write_file(image, file, clear_buffer, clear_size, NULL);
+			if (err)
+				goto done;
+		}
+	}
+
+	/* seek back to original pos */
+	err = fat_seek_file(image, file, new_pos);
+	if (err)
+		goto done;
 
 done:
 	if (fat_table)
 		free(fat_table);
+	if (clear_buffer)
+		free(clear_buffer);
 	return err;
 }
 
@@ -1110,7 +1156,7 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 				if (freeent->candidate_position > entry_index)
 					freeent->candidate_position = entry_index;
 
-				if (freeent->candidate_position + freeent->required_size < (entry[0] ? file->index : file->filesize))
+				if ((entry[0] == '\0') || (freeent->candidate_position + freeent->required_size < file->filesize))
 					freeent->position = freeent->candidate_position;
 			}
 		}
@@ -1316,8 +1362,12 @@ static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t
 	{
 		/* need to do finishing touches on the LFN */
 		created_entry[0] |= 0x40;
-		created_entry[created_entry_len - FAT_DIRENT_SIZE + 6] = '~';
-		created_entry[created_entry_len - FAT_DIRENT_SIZE + 7] = '1';
+
+		i = 6;
+		while((i > 0) && isspace(created_entry[created_entry_len - FAT_DIRENT_SIZE + i - 1]))
+			i--;
+		created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 0] = '~';
+		created_entry[created_entry_len - FAT_DIRENT_SIZE + i + 1] = '1';
 		fat_calc_dirent_lfnchecksum(created_entry, created_entry_len);
 	}
 
@@ -1345,6 +1395,7 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 	UINT8 *created_entry = NULL;
 	size_t created_entry_len = 0;
 	UINT32 entry_sector_index, entry_sector_offset;
+	UINT32 parent_first_cluster;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -1382,6 +1433,8 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 		}
 		while(!ent.eof && stricmp(path, ent.short_filename) && stricmp(path, ent.long_filename));
 
+		parent_first_cluster = file->first_cluster;
+
 		if (ent.eof)
 		{
 			/* it seems that we have reached the end of this directory */
@@ -1391,38 +1444,36 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 				err = IMGTOOLERR_FILENOTFOUND;
 				goto done;
 			}
-			else
+
+			if (created_entry_len > FAT_DIRENT_SIZE)
 			{
-				if (created_entry_len > FAT_DIRENT_SIZE)
-				{
-					/* TODO: ensure uniqueness of the short filename */
-				}
-
-				err = fat_set_file_size(image, file, MAX(file->filesize, freeent.position + created_entry_len));
-				if (err)
-					goto done;
-
-				err = fat_seek_file(image, file, freeent.position);
-				if (err)
-					goto done;
-				
-				err = fat_write_file(image, file, created_entry, created_entry_len, NULL);
-				if (err)
-					goto done;
-
-				/* we have to do a special seek operation to get the main dirent */
-				err = fat_seek_file(image, file, freeent.position + created_entry_len - FAT_DIRENT_SIZE);
-				if (err)
-					goto done;
-				entry_sector_index = fat_get_filepos_sector_index(image, file);
-				entry_sector_offset = file->index % disk_info->sector_size;
-
-				/* build the file struct for the newly created file/directory */
-				memset(file, 0, sizeof(*file));
-				file->directory = (created_entry[created_entry_len - FAT_DIRENT_SIZE + 11] & 0x10) ? 1 : 0;
-				file->dirent_sector_index = entry_sector_index;
-				file->dirent_sector_offset = entry_sector_offset;
+				/* TODO: ensure uniqueness of the short filename */
 			}
+
+			err = fat_set_file_size(image, file, MAX(file->filesize, freeent.position + created_entry_len));
+			if (err)
+				goto done;
+
+			err = fat_seek_file(image, file, freeent.position);
+			if (err)
+				goto done;
+			
+			err = fat_write_file(image, file, created_entry, created_entry_len, NULL);
+			if (err)
+				goto done;
+
+			/* we have to do a special seek operation to get the main dirent */
+			err = fat_seek_file(image, file, freeent.position + created_entry_len - FAT_DIRENT_SIZE);
+			if (err)
+				goto done;
+			entry_sector_index = fat_get_filepos_sector_index(image, file);
+			entry_sector_offset = file->index % disk_info->sector_size;
+
+			/* build the file struct for the newly created file/directory */
+			memset(file, 0, sizeof(*file));
+			file->directory = (created_entry[created_entry_len - FAT_DIRENT_SIZE + 11] & 0x10) ? 1 : 0;
+			file->dirent_sector_index = entry_sector_index;
+			file->dirent_sector_offset = entry_sector_offset;
 		}
 		else
 		{
@@ -1435,7 +1486,9 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			file->dirent_sector_index = ent.dirent_sector_index;
 			file->dirent_sector_offset = ent.dirent_sector_offset;
 		}
+
 		path = next_path_part;
+		file->parent_first_cluster = parent_first_cluster;
 	}
 
 	err = IMGTOOLERR_SUCCESS;
@@ -1550,20 +1603,39 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 
 
 
-static imgtoolerr_t fat_diskimage_deletefile(imgtool_image *image, const char *filename)
+static imgtoolerr_t fat_diskimage_delete(imgtool_image *image, const char *filename, unsigned int dir)
 {
 	imgtoolerr_t err;
 	struct fat_file file;
+	struct fat_dirent ent;
 
 	err = fat_lookup_path(image, filename, CREATE_NONE, &file);
 	if (err)
 		return err;
+	if (file.directory != dir)
+		return IMGTOOLERR_FILENOTFOUND;
+
+	if (dir)
+	{
+		err = fat_read_dirent(image, &file, &ent, NULL);
+		if (err)
+			return err;
+		if (!ent.eof)
+			return IMGTOOLERR_DIRNOTEMPTY;
+	}
 
 	err = fat_set_file_size(image, &file, 0xFFFFFFFF);
 	if (err)
 		return err;
 
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_diskimage_deletefile(imgtool_image *image, const char *filename)
+{
+	return fat_diskimage_delete(image, filename, 0);
 }
 
 
@@ -1596,6 +1668,46 @@ done:
 
 
 
+static imgtoolerr_t fat_diskimage_createdir(imgtool_image *image, const char *path)
+{
+	imgtoolerr_t err;
+	struct fat_file file;
+	UINT8 initial_data[64];
+
+	err = fat_lookup_path(image, path, CREATE_DIR, &file);
+	if (err)
+		return err;
+	if (!file.directory)
+		return IMGTOOLERR_FILENOTFOUND;
+
+	err = fat_set_file_size(image, &file, sizeof(initial_data));
+	if (err)
+		return err;
+
+	memset(initial_data, 0, sizeof(initial_data));
+	memcpy(&initial_data[0], ".          ", 11);
+	place_integer(initial_data, 11, 1, 0x10);
+	place_integer(initial_data, 26, 2, file.first_cluster);
+	memcpy(&initial_data[32], ".          ", 11);
+	place_integer(initial_data, 43, 1, 0x10);
+	place_integer(initial_data, 58, 2, file.parent_first_cluster);
+
+	err = fat_write_file(image, &file, initial_data, sizeof(initial_data), NULL);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_diskimage_deletedir(imgtool_image *image, const char *path)
+{
+	return fat_diskimage_delete(image, path, 1);
+}
+
+
+
 /*********************************************************************
 	Imgtool module declaration
 *********************************************************************/
@@ -1617,6 +1729,8 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->write_file					= fat_diskimage_writefile;
 	module->delete_file					= fat_diskimage_deletefile;
 	module->free_space					= fat_diskimage_freespace;
+	module->create_dir					= fat_diskimage_createdir;
+	module->delete_dir					= fat_diskimage_deletedir;
 	return IMGTOOLERR_SUCCESS;
 }
 

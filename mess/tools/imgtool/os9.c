@@ -358,13 +358,25 @@ static UINT32 os9_get_free_lsns(imgtool_image *image)
 
 	
 
+static imgtoolerr_t os9_corrupt_file_error(const struct os9_fileinfo *file_info)
+{
+	imgtoolerr_t err;
+	if (file_info->directory)
+		err = IMGTOOLERR_CORRUPTDIR;
+	else
+		err = IMGTOOLERR_CORRUPTFILE;
+	return err;
+}
+
+
+
 static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 	struct os9_fileinfo *file_info, UINT32 new_size)
 {
 	imgtoolerr_t err;
 	const struct os9_diskinfo *disk_info;
-	UINT32 new_lsn_count, current_lsn_count, free_lsns;
-	UINT32 lsn, i;
+	UINT32 new_lsn_count, current_lsn_count;
+	UINT32 free_lsns, lsn, i;
 	int sector_map_length = -1;
 	UINT8 header[256];
 
@@ -390,13 +402,15 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 		while((lsn < current_lsn_count) && (sector_map_length < sizeof(file_info->sector_map) / sizeof(file_info->sector_map[0])))
 		{
 			if (file_info->sector_map[sector_map_length].count == 0)
-				return IMGTOOLERR_CORRUPTIMAGE;
+				return os9_corrupt_file_error(file_info);
 
 			lsn += file_info->sector_map[sector_map_length].count;
 			sector_map_length++;
 		}
-		if (lsn != current_lsn_count)
-			return IMGTOOLERR_CORRUPTIMAGE;
+
+		/* keep in mind that the sector_map might not parallel our expected
+		 * current LSN count; we should tolerate this abnormality */
+		current_lsn_count = lsn;
 
 		while(current_lsn_count > new_lsn_count)
 		{

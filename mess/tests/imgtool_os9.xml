@@ -56,8 +56,60 @@
 	</checkdirectory>
 </imgtooltest>
 
-
 <imgtooltest name="coco_os9_002">
+	<!-- Testing larger files -->
+	<createimage driver="coco_jvc_os9"/>
+
+	<putfile name="FOO.TXT">'Abcdefg' * 111</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="777"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Abcdefg' * 111</checkfile>
+
+	<putfile name="FOO.TXT">'Abcdefghijk' * 2010</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="22110"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Abcdefghijk' * 2010</checkfile>
+
+	<putfile name="FOO.TXT">'Abcdefg' * 111</putfile>
+	<checkdirectory>
+		<entry name="FOO.TXT" size="777"/>
+	</checkdirectory>
+	<checkfile name="FOO.TXT">'Abcdefg' * 111</checkfile>
+
+	<deletefile name="FOO.TXT"/>
+	<checkdirectory/>
+</imgtooltest>
+
+<imgtooltest name="coco_os9_003">
+	<!-- Testing many files -->
+	<createimage driver="coco_jvc_os9"/>
+
+	<putfile name="1.TXT"/>
+	<putfile name="2.TXT"/>
+	<putfile name="3.TXT"/>
+	<putfile name="4.TXT"/>
+	<putfile name="5.TXT"/>
+	<putfile name="6.TXT"/>
+	<putfile name="7.TXT"/>
+	<putfile name="8.TXT"/>
+	<putfile name="9.TXT"/>
+	<checkdirectory>
+		<entry name="1.TXT"/>
+		<entry name="2.TXT"/>
+		<entry name="3.TXT"/>
+		<entry name="4.TXT"/>
+		<entry name="5.TXT"/>
+		<entry name="6.TXT"/>
+		<entry name="7.TXT"/>
+		<entry name="8.TXT"/>
+		<entry name="9.TXT"/>
+	</checkdirectory>
+</imgtooltest>
+
+<imgtooltest name="coco_os9_004">
+	<!-- Testing directories -->
 	<createimage driver="coco_jvc_os9"/>
 	
 	<createdirectory path="FOO"/>
