@@ -216,6 +216,8 @@ maketree:
 	@md $(OBJ)\cpu\mips
 	@md $(OBJ)\cpu\sc61860
 	@md $(OBJ)\cpu\arm
+	@md $(OBJ)\cpu\g65816
+	@md $(OBJ)\cpu\spc700
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -268,6 +270,8 @@ cleandebug:
 	@del $(OBJ)\cpu\pdp1\*.o
 	@del $(OBJ)\cpu\mips\*.o
 	@del $(OBJ)\cpu\arm\*.o
+	@del $(OBJ)\cpu\g65816\*.o
+	@del $(OBJ)\cpu\spc700\*.o
 	@del $(EMULATOR)
 
 

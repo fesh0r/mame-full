@@ -256,6 +256,13 @@ enum {
 #ifndef HAS_ARM
 #define HAS_ARM 		0
 #endif
+#ifndef HAS_G65816
+#define HAS_G65816		0
+#endif
+#ifndef HAS_SPC700
+#define HAS_SPC700		0
+#endif
+
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface

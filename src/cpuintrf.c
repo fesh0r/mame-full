@@ -112,6 +112,12 @@
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
+#if (HAS_G65816)
+#include "cpu/g65816/g65816.h"
+#endif
+#if (HAS_SPC700)
+#include "cpu/spc700/spc700.h"
+#endif
 
 
 /* these are triggers sent to the timer system for various interrupt events */
@@ -542,6 +548,12 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   26lew, 0,26,LE,4, 4,26LEW),
+#endif
+#if (HAS_G65816)
+	CPU0(G65C816,   g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 24_8bit,	  0,24,BE,1, 3,24	),
+#endif
+#if (HAS_SPC700)
+	CPU0(SPC700,   spc700,	 0,  0,1.00,0,                 -1,             -1,             16,	  0,16,LE,1, 3,16	),
 #endif
 };
 

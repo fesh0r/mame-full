@@ -240,6 +240,12 @@ enum
 #if (HAS_ARM)
 	CPU_ARM,
 #endif
+#if (HAS_G65816)
+	CPU_G65C816,
+#endif
+#if (HAS_SPC700)
+	CPU_SPC700,
+#endif
     CPU_COUNT
 };
 

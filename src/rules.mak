@@ -552,6 +552,32 @@ DBGOBJS += $(OBJ)/cpu/arm/dasm.o
 $(OBJ)/cpu/arm/arm.o: src/cpu/arm/arm.h
 endif
 
+CPU=$(strip $(findstring G65816@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_G65816=1
+CPUOBJS += $(OBJ)/cpu/g65816/g65816.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o0.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o1.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o2.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o3.o
+CPUOBJS += $(OBJ)/cpu/g65816/g65816o4.o
+DBGOBJS += $(OBJ)/cpu/g65816/g65816ds.o
+$(OBJ)/cpu/g65816/g65816.o: g65816.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o0.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o1.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o2.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o3.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o4.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+endif
+
+CPU=$(strip $(findstring SPC700@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_SPC700=1
+CPUOBJS += $(OBJ)/cpu/spc700/spc700.o
+DBGOBJS += $(OBJ)/cpu/spc700/spc700ds.o
+$(OBJ)/cpu/spc700/spc700.o: spc700.c spc700.h
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)

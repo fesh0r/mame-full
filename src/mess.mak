@@ -46,6 +46,8 @@ CPUS+=TMS9995@
 CPUS+=PDP1@
 CPUS+=SC61860@
 CPUS+=ARM@
+CPUS+=G65816@
+#CPUS+=SPC700@
 
 # SOUND cores used in MESS
 SOUNDS+=CUSTOM@
@@ -178,7 +180,12 @@ $(OBJ)/nintendo.a: \
           $(OBJ)/mess/systems/nes.o      \
           $(OBJ)/mess/vidhrdw/gb.o       \
           $(OBJ)/mess/machine/gb.o       \
-          $(OBJ)/mess/systems/gb.o
+          $(OBJ)/mess/systems/gb.o       \
+          $(OBJ)/mess/sndhrdw/snes.o     \
+          $(OBJ)/mess/vidhrdw/snes.o     \
+          $(OBJ)/mess/machine/snes.o     \
+          $(OBJ)/mess/systems/snes.o
+
 
 $(OBJ)/cbm.a:      \
           $(OBJ)/mess/vidhrdw/amiga.o    \

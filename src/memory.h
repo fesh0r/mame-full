@@ -257,18 +257,19 @@ extern unsigned char *cpu_bankbase[];	/* array of bank bases */
 	if (cur_mrhard[(pc)>>(abits2+abitsmin+shift)] != ophw)	\
 		setop(pc);											\
 }
-#define change_pc(pc)		change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
-#define change_pc16(pc) 	change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
-#define change_pc16bew(pc)	change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
-#define change_pc16lew(pc)	change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
-#define change_pc20(pc) 	change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
-#define change_pc21(pc) 	change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
-#define change_pc24(pc) 	change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
-#define change_pc24bew(pc)	change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
-#define change_pc26lew(pc)	change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
-#define change_pc29(pc)     change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
-#define change_pc32(pc) 	change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
-#define change_pc32lew(pc)	change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
+#define change_pc(pc)		 change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16(pc) 	 change_pc_generic(pc, ABITS2_16, ABITS_MIN_16, 0, cpu_setOPbase16)
+#define change_pc16bew(pc)	 change_pc_generic(pc, ABITS2_16BEW, ABITS_MIN_16BEW, 0, cpu_setOPbase16bew)
+#define change_pc16lew(pc)	 change_pc_generic(pc, ABITS2_16LEW, ABITS_MIN_16LEW, 0, cpu_setOPbase16lew)
+#define change_pc20(pc) 	 change_pc_generic(pc, ABITS2_20, ABITS_MIN_20, 0, cpu_setOPbase20)
+#define change_pc21(pc) 	 change_pc_generic(pc, ABITS2_21, ABITS_MIN_21, 0, cpu_setOPbase21)
+#define change_pc24(pc) 	 change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
+#define change_pc24_8bit(pc) change_pc_generic(pc, ABITS2_24, ABITS_MIN_24, 0, cpu_setOPbase24)
+#define change_pc24bew(pc)	 change_pc_generic(pc, ABITS2_24BEW, ABITS_MIN_24BEW, 0, cpu_setOPbase24bew)
+#define change_pc26lew(pc)	 change_pc_generic(pc, ABITS2_26LEW, ABITS_MIN_26LEW, 0, cpu_setOPbase26lew)
+#define change_pc29(pc)      change_pc_generic(pc, ABITS2_29, ABITS_MIN_29, 3, cpu_setOPbase29)
+#define change_pc32(pc) 	 change_pc_generic(pc, ABITS2_32, ABITS_MIN_32, 0, cpu_setOPbase32)
+#define change_pc32lew(pc)	 change_pc_generic(pc, ABITS2_32LEW, ABITS_MIN_32LEW, 0, cpu_setOPbase32lew)
 
 /* ----- for use OPbaseOverride driver, request override callback to next cpu_setOPbase ----- */
 #define catch_nextBranch()	(ophw = 0xff)
@@ -308,6 +309,7 @@ READ_HANDLER(cpu_readmem16lew_word);
 READ_HANDLER(cpu_readmem20);
 READ_HANDLER(cpu_readmem21);
 READ_HANDLER(cpu_readmem24);
+READ_HANDLER(cpu_readmem24_8bit);
 READ_HANDLER(cpu_readmem24bew);
 READ_HANDLER(cpu_readmem24bew_word);
 READ_HANDLER(cpu_readmem24bew_dword);
@@ -334,6 +336,7 @@ WRITE_HANDLER(cpu_writemem20);
 WRITE_HANDLER(cpu_writemem21);
 WRITE_HANDLER(cpu_writemem24);
 WRITE_HANDLER(cpu_writemem24bew);
+WRITE_HANDLER(cpu_writemem24_8bit);
 WRITE_HANDLER(cpu_writemem24bew_word);
 WRITE_HANDLER(cpu_writemem24bew_dword);
 WRITE_HANDLER(cpu_writemem26lew);
@@ -370,6 +373,7 @@ void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
 void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
+void cpu_setOPbase24_8bit(int pc);
 void cpu_setOPbase24bew(int pc);
 void cpu_setOPbase26lew(int pc);
 void cpu_setOPbase29(int pc);

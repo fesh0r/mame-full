@@ -3,12 +3,12 @@
   memory.c
 
   Functions which handle the CPU memory and I/O port access.
-  
+
   Caveats:
-  
+
   * The install_mem/port_*_handler functions are only intended to be
     called at driver init time. Do not call them after this time.
-  
+
   * If your driver executes an opcode which crosses a bank-switched
     boundary, it will pull the wrong data out of memory. Although not
     a common case, you may need to revert to memcpy to work around this.
@@ -945,7 +945,8 @@ READWORD(cpu_readmem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW)
 READWORD(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-READBYTE(cpu_readmem24,    TYPE_8BIT,	  24)
+READBYTE(cpu_readmem24,     TYPE_8BIT,	  24)
+READBYTE(cpu_readmem24_8bit,TYPE_8BIT,	  24)
 
 READBYTE(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW)
 READWORD(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -1166,7 +1167,8 @@ WRITEWORD(cpu_writemem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW)
 WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-WRITEBYTE(cpu_writemem24,	 TYPE_8BIT, 	24)
+WRITEBYTE(cpu_writemem24,	  TYPE_8BIT, 	24)
+WRITEBYTE(cpu_writemem24_8bit,TYPE_8BIT, 	24)
 
 WRITEBYTE(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW)
 WRITEWORD(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -1240,6 +1242,7 @@ SETOPBASE(cpu_setOPbase16lew, 16LEW, 0)
 SETOPBASE(cpu_setOPbase20,	  20,	 0)
 SETOPBASE(cpu_setOPbase21,	  21,	 0)
 SETOPBASE(cpu_setOPbase24,	  24,	 0)
+SETOPBASE(cpu_setOPbase24_8bit, 24,	 0)
 SETOPBASE(cpu_setOPbase24bew, 24BEW, 0)
 SETOPBASE(cpu_setOPbase26lew, 26LEW, 0)
 SETOPBASE(cpu_setOPbase29,	  29,	 3)

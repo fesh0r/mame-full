@@ -93,7 +93,7 @@ TESTDRIVER( coleconb )	/* ColecoVision (No BIOS load)					  */
 	DRIVER( nespal )	/* Nintendo Entertainment System				  */
 	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
-TESTDRIVER (snes)		/* Nintendo Super Nintendo                        */
+    DRIVER (snes)		/* Nintendo Super Nintendo                        */
 TESTDRIVER (vboy)		/* Nintendo Virtual Boy                           */
 
 	/* NEC */
