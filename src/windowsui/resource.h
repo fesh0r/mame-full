@@ -51,7 +51,9 @@
 #define IDI_NONWORKING                  137
 #define IDI_YEAR                        138
 #define IDI_SOUND                       139
+#ifndef MESS
 #define IDI_NEOGEO                      140
+#endif
 #define IDR_CONTEXT_HEADER              151
 #define IDD_PROP_GAME                   152
 #define IDD_PROP_AUDIT                  153
@@ -272,6 +274,26 @@
 #define ID_CONTEXT_SELECT_RANDOM        40060
 #define ID_OPTIONS_LANGUAGE             40061
 #define IDC_STATIC                      -1
+
+#ifdef MESS
+#define IDC_SPLITTER3				    2000
+#define IDC_LIST2                       2001
+#define IDC_FILTER_COMPUTER             2002
+#define IDC_FILTER_CONSOLE              2003
+#define IDC_FILTER_MODIFIED             2004
+#define IDC_NEW_FILEMGR                 2005
+#define IDI_WIN_FLOP                    2100
+#define IDI_WIN_CASS                    2101
+#define IDI_WIN_SERL                    2102
+#define IDI_WIN_SNAP                    2103
+#define IDI_WIN_PRIN                    2104
+#define IDI_WIN_HARD                    2105
+#define ID_MESS_OPEN_SOFTWARE           2200
+#define ID_MESS_CREATE_SOFTWARE         2201
+#define ID_MESS_RUN_TESTS				2299
+#define IDD_PROP_SOFTWARE               2202
+#define IDD_FILEMGR                     2203
+#endif
 
 // Next default values for new objects
 // 

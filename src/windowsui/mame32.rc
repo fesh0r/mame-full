@@ -46,7 +46,11 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
+#ifdef MESS
+        MENUITEM "&About MESS32",               ID_ABOUT
+#else
         MENUITEM "&About MAME32",               ID_ABOUT
+#endif
     END
 END
 
@@ -59,7 +63,18 @@ BEGIN
         MENUITEM "Play and &Record Input...",   ID_FILE_PLAY_RECORD
         MENUITEM "P&layback Input...",          ID_FILE_PLAY_BACK
         MENUITEM SEPARATOR
+#ifdef MESS
+        MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
+        MENUITEM SEPARATOR
+		MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
+		MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
+#ifdef MAME_DEBUG
+        MENUITEM SEPARATOR
+		MENUITEM "Run Tests",					ID_MESS_RUN_TESTS
+#endif
+#else /* !MESS */
         MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
+#endif /* MESS */
         MENUITEM SEPARATOR
         MENUITEM "A&dd to 'Favorites'",         ID_CONTEXT_ADD_FAVORITE
         MENUITEM "R&emove from 'Favorites'",    ID_CONTEXT_DEL_FAVORITE
@@ -107,12 +122,17 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
+#ifdef MESS
+        MENUITEM "&Mess Release Notes",         ID_HELP_RELEASE
+        MENUITEM "&New Mess Features",          ID_HELP_WHATS_NEW
+#else
         MENUITEM "&Contents\tF1",               ID_HELP_CONTENTS
         MENUITEM "&What's New",                 ID_HELP_WHATS_NEW32
         MENUITEM "&Quickstart Guide",           ID_HELP_QUICKSTART
         MENUITEM SEPARATOR
         MENUITEM "&Mame Release Notes",         ID_HELP_RELEASE
         MENUITEM "&New Mame Features",          ID_HELP_WHATS_NEW
+#endif
         MENUITEM SEPARATOR
         MENUITEM "&About",                      ID_HELP_ABOUT
     END
@@ -196,8 +216,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,53,0,0
- PRODUCTVERSION 0,53,0,0
+ FILEVERSION 0,MAME_VERSION,0,0
+ PRODUCTVERSION 0,MAME_VERSION,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -212,6 +232,12 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
+#ifdef MESS
+            VALUE "Author", "Michael Soderstrom and Christopher Kirmse\0"
+            VALUE "Comments", "Multiple Emulation Super System for Win32\0"
+            VALUE "CompanyName", "MESS Team\0"
+            VALUE "FileDescription", "Multiple Emulation Super System for Win32\0"
+#else
             VALUE "Author", "Michael Soderstrom and Christopher Kirmse\0"
             VALUE "Comments", "Multiple Arcade Machine Emulator for Win32\0"
             VALUE "CompanyName", "MAME Team\0"
@@ -219,9 +245,15 @@ BEGIN
             VALUE "FileVersion", "0, 53, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright © 1997-2001 Nicola Salmoria and the MAME team\0"
+#endif
             VALUE "LegalTrademarks", "\0"
+#ifdef MESS
+            VALUE "OriginalFilename", "MESS32.exe\0"
+            VALUE "ProductName", "MESS32\0"
+#else
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
+#endif
             VALUE "ProductVersion", "0, 53, 0, 0\0"
         END
     END
@@ -241,7 +273,11 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+#ifdef MESS
+IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mess32.ico"
+#else
 IDI_MAME32_ICON         ICON    DISCARDABLE     "res/mame32.ico"
+#endif
 IDI_WIN_ROMS            ICON    DISCARDABLE     "res/win_roms.ico"
 IDI_WIN_NOROMS          ICON    DISCARDABLE     "res/win_noro.ico"
 IDI_WIN_UNKNOWN         ICON    DISCARDABLE     "res/win_unkn.ico"
@@ -257,7 +293,9 @@ IDI_FOLDER_YEAR         ICON    DISCARDABLE     "res\\foldyear.ico"
 IDI_WORKING             ICON    DISCARDABLE     "res\\working.ico"
 IDI_NONWORKING          ICON    DISCARDABLE     "res\\nonwork.ico"
 IDI_YEAR                ICON    DISCARDABLE     "res\\year.ico"
+#ifndef MESS
 IDI_NEOGEO              ICON    DISCARDABLE     "res\\neogeo.ico"
+#endif
 IDI_KEYBOARD            ICON    DISCARDABLE     "Res\\keyboard.ico"
 IDI_JOYSTICK            ICON    DISCARDABLE     "Res\\joystick.ico"
 IDI_SOUND               ICON    DISCARDABLE     "Res\\samples.ico"
@@ -271,10 +309,38 @@ IDI_CHECKMARK           ICON    DISCARDABLE     "Res\\checkmark.ico"
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 296, 129
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+#ifdef MESS
+CAPTION "About MESS32"
+#else
 CAPTION "About MAME32"
+#endif
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "&OK",IDOK,200,109,50,14,WS_GROUP
+#ifdef MESS
+    CTEXT           "Multi Emulator Super System for Win32",IDC_STATIC,
+                    153,7,142,11,NOT WS_GROUP
+    CTEXT           "Version 0.35 BETA",IDC_VERSION,153,18,142,11,NOT 
+                    WS_GROUP
+    CTEXT           "Copyright (C) 1998-2001",IDC_STATIC,153,29,142,10,NOT 
+                    WS_GROUP
+    CTEXT           "Win32 version based on MAME32 by",IDC_STATIC,153,62,142,10,NOT WS_GROUP
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,55,142,1
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,153,87,142,1
+    CONTROL         113,IDC_STATIC,"Static",SS_BITMAP | SS_SUNKEN,7,7,135,
+                    124
+    CTEXT           "Additional Win32 code by",IDC_STATIC,153,93,142,9
+    CTEXT           "Mohammad Rezaei, Robert Schlabbach",IDC_STATIC,153,115,
+                    142,9
+    CTEXT           "by the MESS team",IDC_STATIC,153,40,
+                    142,10,NOT WS_GROUP
+    CTEXT           "Michael Soderstrom and Christopher Kirmse",IDC_STATIC,
+                    153,73,142,9,NOT WS_GROUP
+    CTEXT           "Mike Haaland, Andrew Kirmse, Jeff Miller",IDC_STATIC,
+                    153,104,142,9
+    CTEXT           "John Zissopoulos, Dan Miller (Help file)",IDC_STATIC,
+                    153,127,142,9
+#else
     CTEXT           "Multiple Arcade Machine Emulator",IDC_STATIC,147,7,142,
                     11,NOT WS_GROUP
     CTEXT           "Version 0",IDC_VERSION,147,18,142,11,NOT WS_GROUP
@@ -291,11 +357,16 @@ BEGIN
     CTEXT           "Mike Haaland, Andrew Kirmse, Jeff Miller",IDC_STATIC,
                     147,85,142,9
     CONTROL         "",IDC_ABOUT,"Static",SS_BITMAP | SS_SUNKEN,7,7,16,14
+#endif
 END
 
 IDD_HELP DIALOG DISCARDABLE  0, 0, 336, 178
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+#ifdef MESS
+CAPTION "MESS32"
+#else
 CAPTION "MAME32"
+#endif
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,143,163,50,14
@@ -304,7 +375,11 @@ END
 
 IDD_DIRECTX DIALOG DISCARDABLE  0, 0, 236, 69
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+#ifdef MESS
+CAPTION "MESS32"
+#else
 CAPTION "MAME32"
+#endif
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "Go to Microsoft's DirectX Web Page",IDB_WEB_PAGE,48,52,
@@ -652,7 +727,11 @@ IDD_MAIN DIALOGEX 0, 0, 304, 206
 STYLE DS_3DLOOK | DS_NOFAILCREATE | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | 
     WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_CONTROLPARENT
+#ifdef MESS
+CAPTION "MESS32"
+#else
 CAPTION "MAME32"
+#endif
 CLASS MAMECLASSNAME
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -664,6 +743,20 @@ BEGIN
                     TVS_FULLROWSELECT | WS_BORDER | WS_TABSTOP,5,28,48,172
     GROUPBOX        "",IDC_SPLITTER,55,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
     GROUPBOX        "",IDC_SPLITTER2,109,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
+#ifdef MESS
+    CONTROL         "List2",IDC_LIST2,"SysListView32",LVS_REPORT | 
+                    LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED | WS_BORDER |
+					WS_TABSTOP,119,28,42,172
+    GROUPBOX        "",IDC_SPLITTER3,163,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
+    CONTROL         "",IDC_SSFRAME,"Static",SS_ETCHEDFRAME,175,11,181,194
+    CONTROL         "",IDC_SSPICTURE,"Static",SS_BITMAP | SS_NOTIFY | 
+                    SS_CENTERIMAGE | NOT WS_VISIBLE,195,18,141,127
+    CONTROL         113,IDC_SSDEFPIC,"Static",SS_BITMAP | SS_NOTIFY | 
+                    SS_SUNKEN,199,19,135,124,WS_EX_STATICEDGE
+    CONTROL         "",IDC_DIVIDER,"Static",SS_ETCHEDHORZ,0,5,358,1
+    EDITTEXT        IDC_HISTORY,183,150,167,49,ES_MULTILINE | ES_READONLY | 
+                    WS_VSCROLL,WS_EX_STATICEDGE,HIDC_HISTORY
+#else
     CONTROL         "",IDC_SSFRAME,"Static",SS_ETCHEDFRAME,121,11,181,194
     CONTROL         "",IDC_SSPICTURE,"Static",SS_BITMAP | SS_NOTIFY | 
                     SS_CENTERIMAGE | NOT WS_VISIBLE,141,18,141,127
@@ -672,6 +765,7 @@ BEGIN
     CONTROL         "",IDC_DIVIDER,"Static",SS_ETCHEDHORZ,0,5,304,1
     EDITTEXT        IDC_HISTORY,129,150,167,49,ES_MULTILINE | ES_READONLY | 
                     WS_VSCROLL,WS_EX_STATICEDGE,HIDC_HISTORY
+#endif
 END
 
 IDD_FILTERS DIALOGEX 0, 0, 205, 185
@@ -700,9 +794,16 @@ BEGIN
     CONTROL         "&Unavailable",IDC_FILTER_UNAVAILABLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,91,76,10,0,
                     HIDC_FILTER_UNAVAILABLE
+#ifdef MESS
+    CONTROL         "&Computers",IDC_FILTER_COMPUTER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,104,76,10,0
+    CONTROL         "C&onsoles",IDC_FILTER_CONSOLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,104,76,10,0
+#else
     CONTROL         "&Neo-Geo Games",IDC_FILTER_NEOGEO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,104,76,10,0,
                     HIDC_FILTER_NEOGEO
+#endif
     GROUPBOX        "&Description filter",IDC_STATIC,13,123,179,33
     EDITTEXT        IDC_FILTER_EDIT,23,136,159,12,ES_AUTOHSCROLL,0,
                     HIDC_FILTER_EDIT
@@ -731,7 +832,11 @@ BEGIN
     CONTROL         "&Folder 'filters'",IDC_RESET_FILTERS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,62,146,10,0,
                     HIDC_RESET_FILTERS
+#ifdef MESS
+    CTEXT           "Select the options to be restored to the default settings.  The options will be restored when MESS32 is run next.",
+#else
     CTEXT           "Select the options to be restored to the default settings.  The options will be restored when MAME32 is run next.",
+#endif
                     IDC_STATIC,26,92,129,27
     PUSHBUTTON      "&OK",IDOK,37,133,50,14
     DEFPUSHBUTTON   "&Cancel",IDCANCEL,94,133,50,14
@@ -1043,7 +1148,11 @@ BEGIN
     ID_FILE_PLAY_BACK       "Playback a recorded game"
     ID_VIEW_SCREEN_SHOT     "Show or hide the screen shot"
     ID_HELP_CONTENTS        "Display help contents"
+#ifdef MESS
+    ID_HELP_WHATS_NEW32     "What's new in MESS32"
+#else
     ID_HELP_WHATS_NEW32     "What's new in MAME32"
+#endif
     ID_HELP_QUICKSTART      "Quickstart guide"
     ID_HELP_RELEASE         "MAME release notes"
     ID_HELP_WHATS_NEW       "What's new in MAME"

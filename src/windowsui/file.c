@@ -92,6 +92,20 @@ static void File_SetPaths(tDirPaths* pDirPath, const char* path);
 static tDirPaths RomDirPath;
 static tDirPaths SampleDirPath;
 
+#ifdef MESS
+static tDirPaths SoftwareDirPath;
+
+int GetMessSoftwarePathCount(void)
+{
+	return SoftwareDirPath.m_NumPaths;
+}
+
+const char *GetMessSoftwarePath(int i)
+{
+	return SoftwareDirPath.m_Paths[i];
+}
+#endif
+
 /**************************************************************************
  External functions
 ***************************************************************************/
@@ -100,6 +114,9 @@ int File_Init(void)
 {
 	memset(&RomDirPath,    0, sizeof(RomDirPath));
 	memset(&SampleDirPath, 0, sizeof(SampleDirPath));
+#ifdef MESS
+	memset(&SoftwareDirPath, 0, sizeof(SampleDirPath));
+#endif
 
 	File_UpdatePaths();
 
@@ -118,6 +135,13 @@ void File_Exit(void)
 		free(SampleDirPath.m_Buf);
 		SampleDirPath.m_Buf = NULL;
 	}
+#ifdef MESS
+	if (SoftwareDirPath.m_Buf != NULL)
+	{
+		free(SoftwareDirPath.m_Buf);
+		SoftwareDirPath.m_Buf = NULL;
+	}
+#endif
 }
 
 /* Only checks for a .zip file */
@@ -217,6 +241,9 @@ void File_UpdatePaths(void)
 
 	File_SetPaths(&RomDirPath,	  GetRomDirs());
 	File_SetPaths(&SampleDirPath, GetSampleDirs());
+#ifdef MESS
+	File_SetPaths(&SoftwareDirPath, GetSoftwareDirs());
+#endif
 
 #ifdef MESS
 	rc_set_option2(fileio_opts, "biospath",			  GetRomDirs(), 		 MAXINT_PTR);

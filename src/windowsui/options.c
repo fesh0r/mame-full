@@ -234,7 +234,11 @@ The current version is %s. It is recommended that the\n\
 configuration is set to the new defaults.\n\n\
 Would you like to use the new configuration?";
 
+#ifdef MESS
+#define DEFAULT_GAME "nes"
+#else
 #define DEFAULT_GAME "pacman"
+#endif
 
 /***************************************************************************
     External functions  
@@ -247,6 +251,9 @@ void OptionsInit(int total_games)
 	num_games = total_games;
 
 	strcpy(settings.default_game, DEFAULT_GAME);
+#ifdef MESS
+	settings.default_software = NULL;
+#endif
 	settings.folder_id       = 0;
 	settings.view            = VIEW_REPORT;
 	settings.show_folderlist = TRUE;
@@ -263,6 +270,14 @@ void OptionsInit(int total_games)
 		settings.column_shown[i] = default_column_shown[i];
 	}
 
+#ifdef MESS
+    for (i = 0; i < MESS_COLUMN_MAX; i++)
+    {
+        settings.mess_column_width[i] = default_mess_column_width[i];
+        settings.mess_column_order[i] = default_mess_column_order[i];
+        settings.mess_column_shown[i] = default_mess_column_shown[i];
+    }
+#endif
 	settings.sort_column = 0;
 	settings.sort_reverse= FALSE;
 	settings.area.x      = 0;
@@ -283,6 +298,9 @@ void OptionsInit(int total_games)
 	settings.romdirs           = strdup("roms");
 #endif
 	settings.sampledirs        = strdup("samples");
+#ifdef MESS
+    settings.softwaredirs = strdup("software");
+#endif
 	settings.cfgdir            = strdup("cfg");
 	settings.nvramdir          = strdup("nvram");
 	settings.memcarddir        = strdup("memcard");
@@ -384,6 +402,11 @@ void OptionsInit(int total_games)
 	global.playbackname      = NULL;
 	global.recordname        = NULL;
 	global.errorlog          = FALSE;
+
+#ifdef MESS
+	global.use_new_filemgr = TRUE;
+	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
+#endif
 
 	/* This allocation should be checked */
 	game = (options_type *)malloc(num_games * sizeof(options_type));
@@ -1079,7 +1102,7 @@ int GetPlayCount(int num_game)
     Internal functions
  ***************************************************************************/
 
-static void ColumnEncodeString(void* data, char *str)
+static void ColumnEncodeStringWithCount(void* data, char *str, int count)
 {
 	int* value = (int*)data;
 	int  i;
@@ -1089,14 +1112,14 @@ static void ColumnEncodeString(void* data, char *str)
 	
 	strcpy(str, tmpStr);
 
-	for (i = 1; i < COLUMN_MAX; i++)
+    for (i = 1; i < count; i++)
 	{
 		sprintf(tmpStr, ",%d", value[i]);
 		strcat(str, tmpStr);
 	}
 }
 
-static void ColumnDecodeString(const char* str, void* data)
+static void ColumnDecodeStringWithCount(const char* str, void* data, int count)
 {
 	int* value = (int*)data;
 	int  i;
@@ -1109,7 +1132,7 @@ static void ColumnDecodeString(const char* str, void* data)
 	strcpy(tmpStr, str);
 	p = tmpStr;
 	
-	for (i = 0; p && i < COLUMN_MAX; i++)
+    for (i = 0; p && i < count; i++)
 	{
 		s = p;
 		
@@ -1119,7 +1142,17 @@ static void ColumnDecodeString(const char* str, void* data)
 			p++;
 		}
 		value[i] = atoi(s);
+    }
 	}
+
+static void ColumnEncodeString(void* data, char *str)
+{
+	ColumnEncodeStringWithCount(data, str, COLUMN_MAX);
+}
+
+static void ColumnDecodeString(const char* str, void* data)
+{
+	ColumnDecodeStringWithCount(str, data, COLUMN_MAX);
 }
 
 static void ColumnDecodeWidths(const char* str, void* data)

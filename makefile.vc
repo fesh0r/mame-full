@@ -43,9 +43,8 @@ MIDAS = 1
 # HELP = 1
 
 # set this the operating system you're building for
-# OS = win32
-# OS = wince
 OS = windows
+# OS = wince
 
 # extension for executables
 EXE = .exe
@@ -138,7 +137,7 @@ INCLUDES = \
         -I. \
         -Isrc \
 		-Isrc/windows \
-        -Isrc/Win32 \
+		-Isrc/windowsui \
         -Isrc/cpu/m68000 \
         -I$(OBJ)/cpu/m68000
 
@@ -187,10 +186,10 @@ MAMEOS = $(OS)
 
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
-RCFLAGS = -l 0x409 -I./Win32 $(MAME_DEBUG)
+RCFLAGS = -l 0x409 -I./windowsui $(MAME_DEBUG)
 
 ifdef MESS
-RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32
+RCFLAGS += -DMESS -Imess/windowsui -Isrc/windowsui
 endif
 
 #####################################################################
@@ -260,9 +259,7 @@ OBJDIRS = \
         $(OBJ)/sndhrdw \
         $(OBJ)/windows \
         $(OBJ)/wince \
-		$(OBJ)/windowsui \
-        $(OBJ)/Win32 \
-        $(OBJ)/Win32/hlp \
+		$(OBJ)/windowsui
 
 ifdef MESS
 # MESS object directories
@@ -282,7 +279,7 @@ OBJDIRS += \
         $(OBJ)/mess/tools/mkimage \
         $(OBJ)/mess/formats \
         $(OBJ)/mess/windows \
-        $(OBJ)/mess/Win32
+        $(OBJ)/mess/windowsui
 endif
 
 #####################################################################
@@ -324,12 +321,25 @@ GUIOBJS = \
         $(OBJ)/windowsui/Bitmask.o \
         $(OBJ)/windowsui/DataMap.o \
         $(OBJ)/windowsui/dxdecode.o \
-        $(OBJ)/windowsui/Win32ui.o \
         $(OBJ)/windowsui/Properties.o \
         $(OBJ)/windowsui/ChildOutputStream.o \
-        $(OBJ)/windowsui/options.o \
-        $(OBJ)/windowsui/help.o \
-		$(OBJ)/windowsui/mame32.res
+        $(OBJ)/windowsui/help.o
+
+ifdef MESS
+GUIOBJS += \
+		$(OBJ)/mess/windowsui/mess32ui.o \
+		$(OBJ)/mess/windowsui/MessOptions.o \
+		$(OBJ)/mess/windowsui/SmartListView.o \
+		$(OBJ)/mess/windowsui/SoftwareList.o
+
+GUIRES = $(OBJ)/mess/windowsui/mess32.res
+else
+GUIOBJS += \
+		$(OBJ)/windowsui/Win32ui.o \
+		$(OBJ)/windowsui/options.o
+
+GUIRES = $(OBJ)/windowsui/mame32.res
+endif
 
 extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 
@@ -352,8 +362,8 @@ ifdef UPX
 endif
 endif
 
-$(GUIEMULATOR):	$(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(DRVLIBS)
-	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$@ $(LIBS) $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(DRVLIBS)
+$(GUIEMULATOR):	$(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(GUIRES) $(DRVLIBS)
+	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$@ $(LIBS) $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(GUIRES) $(DRVLIBS)
 ifdef BSCMAKE
 	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(GUIOBJS:%.o=%.sbr)
 endif
@@ -405,10 +415,6 @@ $(OBJ)/mess/%.o: mess/%.c
 	@echo [MESS] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
-$(OBJ)/Win32/%.res: src/Win32/%.rc
-	@echo Compiling resources $<...
-	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
-
 $(OBJ)/windowsui/%.res: src/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
@@ -417,7 +423,7 @@ $(OBJ)/wince/%.res: src/wince/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
-$(OBJ)/mess/Win32/%.res: mess/Win32/%.rc
+$(OBJ)/mess/windowsui/%.res: mess/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

@@ -33,8 +33,19 @@ enum
 	COLUMN_MAX
 };
 
-enum
-{
+#ifdef MESS
+enum {
+	MESS_COLUMN_IMAGES,
+	MESS_COLUMN_GOODNAME,
+	MESS_COLUMN_MANUFACTURER,
+	MESS_COLUMN_YEAR,
+	MESS_COLUMN_PLAYABLE,
+	MESS_COLUMN_CRC,
+	MESS_COLUMN_MAX
+};
+#endif
+
+enum {
 	VIEW_LARGE_ICONS = 0,
 	VIEW_SMALL_ICONS,
 	VIEW_INLIST,
@@ -46,6 +57,9 @@ enum
 {
 	SPLITTER_LEFT = 0,
 	SPLITTER_RIGHT,
+#ifdef MESS
+	SPLITTER_FARRIGHT,
+#endif
 	SPLITTER_MAX
 };
 
@@ -172,6 +186,10 @@ typedef struct
 	char*  recordname; // ?
 	BOOL   errorlog;
 
+#ifdef MESS
+	BOOL   use_new_filemgr;
+	char   extra_software_paths[MAX_PATH * 10];
+#endif
 } options_type;
 
 typedef struct
@@ -186,9 +204,17 @@ typedef struct
 	BOOL     game_check;        /* Startup GameCheck */
 	BOOL     version_check;     /* Version mismatch warings */
 	char     default_game[MAX_GAMEDESC];
+#ifdef MESS
+	char     *default_software;
+#endif
 	int      column_width[COLUMN_MAX];
 	int      column_order[COLUMN_MAX];
 	int      column_shown[COLUMN_MAX];
+#ifdef MESS
+    int      mess_column_width[MESS_COLUMN_MAX];
+    int      mess_column_order[MESS_COLUMN_MAX];
+    int      mess_column_shown[MESS_COLUMN_MAX];
+#endif
 	int      sort_column;
 	BOOL     sort_reverse;
 	AREA     area;
@@ -203,6 +229,9 @@ typedef struct
 
 	char*    romdirs;
 	char*    sampledirs;
+#ifdef MESS
+	char*    softwaredirs;
+#endif
 	char*    cfgdir;
 	char*    nvramdir;
 	char*    memcarddir;
@@ -258,6 +287,13 @@ int  GetShowPictType(void);
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
 
+#ifdef MESS
+BOOL GetUseNewFileMgr(int num_game);
+
+void SetDefaultSoftware(const char *name);
+const char *GetDefaultSoftware(void);
+#endif
+
 void SetWindowArea(AREA *area);
 void GetWindowArea(AREA *area);
 
@@ -269,6 +305,17 @@ void GetColumnOrder(int order[]);
 
 void SetColumnShown(int shown[]);
 void GetColumnShown(int shown[]);
+
+#ifdef MESS
+void SetMessColumnWidths(int widths[]);
+void GetMessColumnWidths(int widths[]);
+
+void SetMessColumnOrder(int order[]);
+void GetMessColumnOrder(int order[]);
+
+void SetMessColumnShown(int shown[]);
+void GetMessColumnShown(int shown[]);
+#endif
 
 void SetSplitterPos(int splitterId, int pos);
 int  GetSplitterPos(int splitterId);
@@ -293,6 +340,11 @@ void SetRomDirs(const char* paths);
 
 const char* GetSampleDirs(void);
 void  SetSampleDirs(const char* paths);
+
+#ifdef MESS
+const char* GetSoftwareDirs(void);
+void  SetSoftwareDirs(const char* paths);
+#endif
 
 const char* GetCfgDir(void);
 void SetCfgDir(const char* path);

@@ -377,6 +377,15 @@ static char* icon_names[] =
 	"roms",
 	"unknown",
 	"warning"
+#ifdef MESS
+	,
+	"floppy",
+	"cassette",
+	"serial",
+	"snapshot",
+	"printer",
+	"hard"
+#endif
 };
 
 #define NUM_ICONS (sizeof(icon_names) / sizeof(icon_names[0]))
@@ -438,6 +447,10 @@ static ResizeItem main_resize_items[] =
 	{ RA_ID,   { IDC_SSPICTURE },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_HISTORY },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_SSDEFPIC }, RA_RIGHT | RA_TOP,                 NULL },
+#ifdef MESS
+	{ RA_ID,   { IDC_LIST2 },    RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+	{ RA_ID,   { IDC_SPLITTER3 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+#endif /* MESS */
 	{ RA_END,  { 0 },            0,                                 NULL }
 };
 
@@ -470,8 +483,13 @@ MYBITMAPINFO     bmDesc;
 /* List view Column text */
 char* column_names[COLUMN_MAX] =
 {
+#ifdef MESS
+	"System",
+	"Bios",
+#else
 	"Game",
 	"ROMs",
+#endif
 	"Samples",
 	"Directory",
 	"Type",
@@ -496,6 +514,9 @@ struct GameDriver driver_neogeo =
 	0,
 	0,
 	0,
+#ifdef MESS
+	0,
+#endif
 	NOT_A_DRIVER,
 };
 #else
@@ -725,7 +746,18 @@ int WINAPI WinMain(HINSTANCE    hInstance,
 		{
 			/* call OnIdle while idle_work */
 			OnIdle();
+        }
+
+#ifdef MESS
+		if (!idle_work) {
+			BOOL bDoneIdling;
+			bDoneIdling = SmartListView_IdleUntilMsg(s_pSoftwareListView);
+#ifdef MAME_DEBUG
+			if (bDoneIdling)
+				MessTestsDoneIdle();
+#endif /* MAME_DEBUG */
 		}
+#endif /* MESS */
 
 		/* phase2: pump messages while available */
 		do
@@ -1035,9 +1067,23 @@ void UpdateScreenShot(void)
 	MoveWindow(GetDlgItem(hParent, IDC_SPLITTER2), nSplitterOffset[1],
 		rect.top + 2, 4, (rect.bottom - rect.top) - 2, FALSE);
 
+#ifdef MESS
+    /* Splitter window #2 */
+    MoveWindow(GetDlgItem(hParent, IDC_SPLITTER3), nSplitterOffset[2],
+        rect.top + 2, 4, (rect.bottom - rect.top) - 2, FALSE);
+
+    /* List control */
+    MoveWindow(hList, 2 + nTreeWidth, rect.top + 2,
+        (nSplitterOffset[1] - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
+
+    /* List control 2 */
+    MoveWindow(GetDlgItem(hParent, IDC_LIST2), 2 + nSplitterOffset[1], rect.top + 2,
+        (nWidth - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
+#else
 	/* List control */
 	MoveWindow(hList, 2 + nTreeWidth, rect.top + 2,
 		(nWidth - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
+#endif
 
 	if (GetShowScreenShot())
 		ShowWindow(GetDlgItem(hParent, IDC_SSFRAME), SW_SHOW);
@@ -1056,6 +1102,10 @@ void ResizePickerControls(HWND hWnd)
 	int  nListWidth, nScreenShotWidth, picX, picY, nTreeWidth;
 	static BOOL firstTime = TRUE;
 	int  doSSControls = TRUE;
+#ifdef MESS
+	int nListWidth2;
+#endif
+
 
 	/* Size the List Control in the Picker */
 	GetClientRect(hWnd, &rect);
@@ -1065,9 +1115,16 @@ void ResizePickerControls(HWND hWnd)
 	{
 		RECT rWindow;
 
+#ifdef MESS
+		/* In MESS32, screenshot gets 2/5, and the treecontrol gets 1/5 */
+        nSplitterOffset[0] = rect.right / 5;
+		nListWidth = nSplitterOffset[1] = nSplitterOffset[0] * 2;
+		nListWidth2 = nSplitterOffset[2] = nSplitterOffset[0] * 3;
+#else
 		nListWidth = rect.right / 2;
 		nSplitterOffset[1] = nListWidth;
 		nSplitterOffset[0] = nListWidth / 2;
+#endif
 		GetWindowRect(hStatusBar, &rWindow);
 		bottomMargin = rWindow.bottom - rWindow.top;
 		GetWindowRect(hToolBar, &rWindow);
@@ -1080,6 +1137,10 @@ void ResizePickerControls(HWND hWnd)
 	{
 		doSSControls = GetShowScreenShot();
 		nListWidth = nSplitterOffset[1];
+
+#ifdef MESS
+		nListWidth2 = nSplitterOffset[2];
+#endif
 	}
 
 	if (bShowStatusBar)
@@ -1090,7 +1151,11 @@ void ResizePickerControls(HWND hWnd)
 
 	MoveWindow(GetDlgItem(hWnd, IDC_DIVIDER), rect.left, rect.top - 4, rect.right, 2, TRUE);
 
+#ifdef MESS
+    nScreenShotWidth = (rect.right - nListWidth2) - 4;
+#else
 	nScreenShotWidth = (rect.right - nListWidth) - 4;
+#endif
 
 	/* Tree Control */
 	nTreeWidth = nSplitterOffset[0];
@@ -1108,6 +1173,18 @@ void ResizePickerControls(HWND hWnd)
 	/* Splitter window #2 */
 	MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER2), nListWidth, rect.top + 2,
 		4, (rect.bottom - rect.top) - 2, doSSControls);
+
+#ifdef MESS
+    /* Image list control */
+    MoveWindow(GetDlgItem(hWnd, IDC_LIST2), 4 + nListWidth, rect.top + 2,
+        (nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
+
+    /* Splitter window #3 */
+    MoveWindow(GetDlgItem(hWnd, IDC_SPLITTER3), nListWidth2, rect.top + 2,
+        4, (rect.bottom - rect.top) - 2, doSSControls);
+
+	nListWidth = nListWidth2;
+#endif
 
 	/* resize the Screen shot frame */
 	MoveWindow(GetDlgItem(hWnd, IDC_SSFRAME), nListWidth + 4, rect.top + 2,
@@ -1185,6 +1262,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	WNDCLASS	wndclass;
 	RECT		rect;
 	int 		i;
+#ifdef MESS
+	HWND hwndSoftware;
+#endif /* MESS */
 
 	mame32_message = RegisterWindowMessage("MAME32");
 	bDoBroadcast = FALSE;
@@ -1294,14 +1374,25 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	hTreeView = GetDlgItem(hPicker, IDC_TREE);
 	hwndList  = GetDlgItem(hPicker, IDC_LIST);
+#ifdef MESS
+	hwndSoftware	= GetDlgItem(hPicker, IDC_LIST2);
+	assert(hwndSoftware);
+#endif
 
 	InitSplitters();
 
 
 	AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER), hTreeView, hwndList,
 				AdjustSplitter1Rect);
+#ifdef MESS
 	AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
+                hwndSoftware,AdjustSplitter1Rect);
+    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER3), hwndSoftware,
 				GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
+#else
+    AddSplitter(GetDlgItem(hPicker, IDC_SPLITTER2), hwndList,
+                GetDlgItem(hPicker,IDC_SSFRAME),AdjustSplitter2Rect);
+#endif
 
 	/* Initial adjustment of controls on the Picker window */
 	ResizePickerControls(hPicker);
@@ -1406,6 +1497,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	/* Initialize listview columns */
 	InitPicker();
+#ifdef MESS
+	InitMessPicker();
+#endif
 	SetFocus(hwndList);
 
 	/* Init Intellimouse */
@@ -1503,6 +1597,12 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 	MINMAXINFO	*mminfo;
 	int 		i;
 
+#ifdef MESS
+	if (s_pSoftwareListView && SmartListView_IsEvent(s_pSoftwareListView, message, wParam, lParam)) {
+		return SmartListView_HandleEvent(s_pSoftwareListView, message, wParam, lParam);
+	}
+#endif /* MESS */
+
 	switch (message)
 	{
 	case WM_INITDIALOG:
@@ -1598,6 +1698,10 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			SetColumnWidths(widths);
 			SetColumnOrder(order);
 
+#ifdef MESS
+			SmartListView_SaveColumnSettings(s_pSoftwareListView);
+#endif /* MESS */
+
 			for (i = 0; i < SPLITTER_MAX; i++)
 				SetSplitterPos(i, nSplitterOffset[i]);
 
@@ -1611,6 +1715,13 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			/* Save the users current game options and default game */
 			nItem = GetSelectedPickItem();
 			SetDefaultGame(ModifyThe(drivers[nItem]->description));
+
+#ifdef MESS
+			/* Set the default software in the pane */
+			MessSetPickerDefaults();
+			SmartListView_Free(s_pSoftwareListView);
+			s_pSoftwareListView = NULL;
+#endif /* MESS */
 
 			/* hide window to prevent orphan empty rectangles on the taskbar */
 			/* ShowWindow(hWnd,SW_HIDE); */
@@ -2348,6 +2459,10 @@ static void EnableSelection(int nGame)
 	MENUITEMINFO	mmi;
 	HMENU			hMenu = GetMenu(hMain);
 
+#ifdef MESS
+	MyFillSoftwareList(nGame);
+#endif
+
 	sprintf(buf, "&Play %s", ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
 	mmi.cbSize	   = sizeof(mmi);
 	mmi.fMask	   = MIIM_TYPE;
@@ -2624,7 +2739,11 @@ static BOOL MamePickerNotify(NMHDR *nm)
 			/* We load the screen shot DIB here, instead
 			 * of loading everytime we want to display it.
 			 */
+#ifdef MESS
+			nState = LoadScreenShot(pnmv->lParam, NULL, nPictType);
+#else
 			nState = LoadScreenShot(pnmv->lParam, nPictType);
+#endif
 			bScreenShotAvailable = nState;
 			if (nState == TRUE || nState != nLastState)
 			{
@@ -2842,6 +2961,10 @@ static void SetView(int menu_id, int listview_style)
 	ToolBar_CheckButton(hToolBar, menu_id, MF_CHECKED);
 	SetWindowLong(hwndList, GWL_STYLE,
 				  (GetWindowLong(hwndList, GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
+#ifdef MESS
+	SetWindowLong(GetDlgItem(hPicker, IDC_LIST2),GWL_STYLE,
+		(GetWindowLong(GetDlgItem(hPicker, IDC_LIST2),GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
+#endif
 
 	current_view_id = menu_id;
 	SetViewMode(menu_id - ID_VIEW_ICON);
@@ -2854,6 +2977,9 @@ static void SetView(int menu_id, int listview_style)
 
 	case ID_VIEW_SMALL_ICON:
 		ListView_Arrange(hwndList, LVA_ALIGNTOP);
+#ifdef MESS
+		ListView_Arrange(s_pSoftwareListView->hwndListView, LVA_ALIGNTOP);
+#endif
 		break;
 	}
 }
@@ -3009,6 +3135,10 @@ static void PickFont(void)
 
 		ListView_SetTextColor(hwndList, textColor);
 		TreeView_SetTextColor(hTreeView,textColor);
+#ifdef MESS
+		SetWindowFont(s_pSoftwareListView->hwndListView, hFont, TRUE);
+	    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
+#endif
 		SetListFontColor(cf.rgbColors);
 		SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
 		ResetListView();
@@ -3299,7 +3429,11 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case IDC_SSDEFPIC:
 		nPictType = (nPictType + 1) % MAX_PICT_TYPES;
 		SetShowPictType(nPictType);
+#ifdef MESS
+        bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), NULL, nPictType);
+#else
 		bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), nPictType);
+#endif
 		UpdateScreenShot();
 		SendMessage(hPicker, WM_PAINT, 0, 0);
 		break;
@@ -3564,6 +3698,17 @@ static BOOL CreateIcons(HWND hWnd)
 		||	(ImageList_AddIcon(hLarge, hIcon) == -1))
 			return FALSE;
 	}
+#ifdef MESS
+	for (i = IDI_WIN_FLOP; i <= IDI_WIN_HARD; i++)
+	{
+		if ((hIcon = LoadIconFromFile(icon_names[i - IDI_WIN_FLOP + IDI_WIN_REDX - IDI_WIN_NOROMS + 1])) == 0)
+			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
+
+		if ((ImageList_AddIcon (hSmall, hIcon) == -1)
+			|| (ImageList_AddIcon (hLarge, hIcon) == -1))
+			return FALSE;
+	}
+#endif
 
 	/* Be sure that all the small icons were added. */
 	if (ImageList_GetImageCount(hSmall) < NUM_ICONS)
@@ -3578,6 +3723,10 @@ static BOOL CreateIcons(HWND hWnd)
 
 	ListView_SetImageList(hWnd, hLarge, LVSIL_NORMAL);
 
+#ifdef MESS
+	if (!CreateMessIcons())
+		return FALSE;
+#endif
 	return TRUE;
 }
 
@@ -4357,6 +4506,10 @@ static void AdjustMetrics(void)
 		textColor = RGB(240, 240, 240);
 
 	ListView_SetTextColor(hwndList, textColor);
+#ifdef MESS
+    ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
+    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
+#endif
 	TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
 	TreeView_SetTextColor(hTreeView, textColor);
 	GetWindowArea(&area);

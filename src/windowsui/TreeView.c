@@ -112,10 +112,19 @@ typedef struct
 
 FOLDERDATA folderData[] =
 {
+#ifdef MESS
+    {"All Systems", IS_ROOT,  FOLDER_ALLGAMES,    FOLDER_NONE,  0,        ICON_FOLDER},
+#else
 	{"All Games",   IS_ROOT,  FOLDER_ALLGAMES,    FOLDER_NONE,  0,        ICON_FOLDER},
+#endif
 	{"Available",   IS_ROOT,  FOLDER_AVAILABLE,   FOLDER_NONE,  0,        ICON_FOLDER_AVAILABLE},
 #if !defined(NEOFREE)
 	{"Neo-Geo",     IS_ROOT,  FOLDER_NEOGEO,      FOLDER_NONE,  0,        ICON_NEOGEO},
+#endif
+#ifdef MESS
+    {"Console",     IS_ROOT,  FOLDER_CONSOLE,     FOLDER_NONE,  0,        ICON_FOLDER},
+    {"Computer",    IS_ROOT,  FOLDER_COMPUTER,    FOLDER_NONE,  0,        ICON_FOLDER},
+    {"Modified/Hacked",IS_ROOT,FOLDER_MODIFIED,   FOLDER_NONE,  0,        ICON_FOLDER},
 #endif
 	{"Manufacturer",IS_ROOT,  FOLDER_MANUFACTURER,FOLDER_NONE,  0,        ICON_FOLDER_MANUFACTURER},
 	{"Year",        IS_ROOT,  FOLDER_YEAR,        FOLDER_NONE,  0,        ICON_FOLDER_YEAR},
@@ -557,9 +566,38 @@ void InitGames(UINT nGames)
 			for (jj = 0; jj < nGames; jj++)
 			{
 				if (GameUsesTrackball(jj))
+                    AddGame(lpFolder, jj);
+            }
+            break;
+
+#ifdef MESS
+		case FOLDER_COMPUTER:
+            SetAllBits( lpFolder->m_lpGameBits, FALSE);
+            for (jj = 0; jj < nGames; jj++)
+            {
+                if (drivers[jj]->flags & GAME_COMPUTER)
+                    AddGame(lpFolder, jj);
+            }
+            break;
+
+		case FOLDER_CONSOLE:
+            SetAllBits( lpFolder->m_lpGameBits, FALSE);
+            for (jj = 0; jj < nGames; jj++)
+            {
+                if (!(drivers[jj]->flags & GAME_COMPUTER))
+                    AddGame(lpFolder, jj);
+            }
+            break;
+
+		case FOLDER_MODIFIED:
+            SetAllBits( lpFolder->m_lpGameBits, FALSE);
+            for (jj = 0; jj < nGames; jj++)
+            {
+                if (drivers[jj]->flags & GAME_COMPUTER_MODIFIED)
 					AddGame(lpFolder, jj);
 			}
 			break;
+#endif
 
 		case FOLDER_PLAYED:
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
@@ -627,7 +665,21 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	/* Filter non working games */
 	if (dwMask & F_NONWORKING
 	&& (drivers[nGame]->flags & GAME_BROKEN))
+        return TRUE;
+
+#ifdef MESS
+    /* Filter computer games */
+    if (dwMask & F_COMPUTER && drivers[nGame]->flags & GAME_COMPUTER)
+        return TRUE;
+
+    /* Filter console games */
+    if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
 		return TRUE;
+
+    /* Filter modified games */
+    if (dwMask & F_MODIFIED && !(drivers[nGame]->flags & GAME_COMPUTER_MODIFIED))
+        return TRUE;
+#endif
 
 #ifndef NEOFREE
 	/* Filter neo-geo games */
@@ -1032,7 +1084,11 @@ static BOOL CreateTreeIcons(HWND hWnd)
 
 	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, 11, 11);
 
+#ifdef MESS
+    for (i = IDI_FOLDER_OPEN; i <= IDI_SOUND; i++)
+#else
 	for (i = IDI_FOLDER_OPEN; i <= IDI_NEOGEO; i++)
+#endif
 	{
 		if ((hIcon = LoadIconFromFile(treeIconNames[i - IDI_FOLDER_OPEN])) == 0)
 			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
@@ -1237,6 +1293,10 @@ static FILTER_RECORD filterRecord[NUM_FOLDERS] =
 #if !defined(NEOFREE)
 	{FOLDER_NEOGEO,      F_NEOGEO,      0               },
 #endif
+#ifdef MESS
+    {FOLDER_CONSOLE,     0,             0               },
+    {FOLDER_COMPUTER,    0,             0               },
+#endif
 	{FOLDER_MANUFACTURER,0,             0               },
 	{FOLDER_YEAR,        0,             0               },
 	{FOLDER_WORKING,     F_WORKING,     F_NONWORKING    },
@@ -1266,7 +1326,14 @@ DWORD filterExclusion[NUM_EXCLUSIONS] =
 /* list of filter/control Id pairs */
 FILTER_ITEM filterList[F_NUM_FILTERS] =
 {
+#ifdef MESS
+    {F_COMPUTER,     IDC_FILTER_COMPUTER},
+    {F_CONSOLE,      IDC_FILTER_CONSOLE},
+	{F_MODIFIED,     IDC_FILTER_MODIFIED},
+#endif
+#ifndef NEOFREE
 	{ F_NEOGEO,       IDC_FILTER_NEOGEO      },
+#endif
 	{ F_CLONES,       IDC_FILTER_CLONES      },
 	{ F_NONWORKING,   IDC_FILTER_NONWORKING  },
 	{ F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE },
