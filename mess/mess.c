@@ -28,51 +28,6 @@ UINT32 mess_ram_size;
 data8_t *mess_ram;
 data8_t mess_ram_default_value = 0xCD;
 
-struct distributed_images
-{
-	const char *names[IO_COUNT][MAX_DEV_INSTANCES];
-	int count[IO_COUNT];
-};
-
-
-
-/*****************************************************************************
- *  --Distribute images to their respective Devices--
- *  Copy the Images specified at the CLI from options.image_files[] to the
- *  array of filenames we keep here, depending on the Device type identifier
- *  of each image.  Multiple instances of the same device are allowed
- *  RETURNS 0 on success, 1 if failed
- ****************************************************************************/
-
-static int distribute_images(struct distributed_images *images)
-{
-	int i;
-
-	logerror("Distributing Images to Devices...\n");
-	/* Set names to NULL */
-
-	for( i = 0; i < options.image_count; i++ )
-	{
-		int type = options.image_files[i].type;
-
-		assert(type < IO_COUNT);
-
-		/* Do we have too many devices? */
-		if (images->count[type] >= MAX_DEV_INSTANCES)
-		{
-			printf(" Too many devices of type %d\n", type);
-			return 1;
-		}
-
-		/* Add a filename to the arrays of names */
-		images->names[type][images->count[type]] = options.image_files[i].name;
-		images->count[type]++;
-	}
-
-	/* everything was fine */
-	return 0;
-}
-
 
 
 static int ram_init(const struct GameDriver *gamedrv)
@@ -138,8 +93,7 @@ static int ram_init(const struct GameDriver *gamedrv)
 
 int devices_init(const struct GameDriver *gamedrv)
 {
-	const struct IODevice *dev;
-	int i, id;
+	int i;
 
 	/* convienient place to call this */
 	{
@@ -165,7 +119,7 @@ int devices_init(const struct GameDriver *gamedrv)
 	/* Check that the driver supports all devices requested (options struct)*/
 	for( i = 0; i < options.image_count; i++ )
 	{
-		if (!device_find(Machine->devices	, options.image_files[i].type))
+		if (!device_find(Machine->devices, options.image_files[i].type))
 		{
 			printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
 			return 1;
@@ -177,19 +131,8 @@ int devices_init(const struct GameDriver *gamedrv)
 		return 1;
 
 	/* init all devices */
-	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
-	{
-		dev = &Machine->devices[i];
-
-		/* all instances */
-		for (id = 0; id < dev->count; id++)
-		{
-			mess_image *img = image_from_device_and_index(dev, id);
-			image_init(img);
-		}
-	}
+	image_init();
 	devices_inited = TRUE;
-
 	return 0;
 }
 
@@ -199,59 +142,97 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 {
 	int i;
 	int id;
-	int result;
-	int count;
-	struct distributed_images images;
+	int result = INIT_FAIL;
+	int devcount;
+	int *allocated_slots;
 	const struct IODevice *dev;
-	const char *imagename;
-	mess_image *img;
+	const char *image_name;
+	mess_image *image;
+	iodevice_t devtype;
 
 	/* normalize ispreload */
 	ispreload = ispreload ? 1 : 0;
 
+	/* wrong time to preload? */
+	if (ispreload != devices_inited)
+		return 0;
+
+	/* count number of devices, and record a list of allocated slots */
+	devcount = 0;
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+		devcount++;
+	allocated_slots = malloc(devcount * sizeof(*allocated_slots));
+	if (!allocated_slots)
+		goto error;
+	memset(allocated_slots, 0, devcount * sizeof(*allocated_slots));
+
 	/* distribute images to appropriate devices */
-	memset(&images, 0, sizeof(images));
-	if (distribute_images(&images))
-		return 1;
-
-	/* load all devices with matching preload */
-	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	for (i = 0; i < options.image_count; i++)
 	{
-		dev = &Machine->devices[i];
-		count = images.count[dev->type];
+		/* get the image type and filename */
+		image_name = options.image_files[i].name;
+		image_name = (image_name && image_name[0]) ? image_name : NULL;
+		devtype = options.image_files[i].type;
+		assert(devtype >= 0);
+		assert(devtype < IO_COUNT);
 
-		if (dev->must_be_loaded && (count != dev->count))
-		{
-			printf("Driver requires that device %s must have an image to load\n", device_typename(dev->type));
-			return 1;
-		}
+		image = NULL;
 
-		/* all instances */
-		for (id = 0; id < count; id++)
+		for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 		{
-			if (dev->load_at_init == ispreload)
+			if (dev->type == devtype)
 			{
-				imagename = images.names[dev->type][id];
-				if (imagename)
+				id = allocated_slots[dev - Machine->devices];
+				if (id < MAX_DEV_INSTANCES)
 				{
-					img = image_from_devtype_and_index(dev->type, id);
-
-					/* load this image */
-					result = image_load(img, images.names[dev->type][id]);
-
-					if (result != INIT_PASS)
+					result = INIT_PASS;
+					if (image_name)
 					{
-						printf("Device %s load (%s) failed: %s\n",
-							device_typename(dev->type),
-							osd_basename((char *) images.names[dev->type][id]),
-							image_error(img));
-						return 1;
+						/* try to load this image */
+						image = image_from_device_and_index(dev, id);
+						result = image_load(image, image_name);
+					}
+					if (result == INIT_PASS)
+					{
+						allocated_slots[dev - Machine->devices]++;
+						break;
 					}
 				}
 			}
 		}
+		if (dev->type >= IO_COUNT)
+		{
+			if (image)
+			{
+				printf("Device %s load (%s) failed: %s\n",
+					device_typename(devtype),
+					osd_basename((char *) image_name),
+					image_error(image));
+			}
+			else
+			{
+				printf("Too many devices of type %d\n", devtype);
+			}
+			goto error;
+		}
 	}
+
+	/* make sure that any required devices have been allocated */
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	{
+		if (dev->must_be_loaded && (allocated_slots[dev - Machine->devices] != dev->count))
+		{
+			printf("Driver requires that device %s must have an image to load\n", device_typename(dev->type));
+			goto error;
+		}
+	}
+	free(allocated_slots);
 	return 0;
+
+error:
+	if (allocated_slots)
+		free(allocated_slots);
+	return 1;
 }
 
 
@@ -262,27 +243,12 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
  */
 void devices_exit(void)
 {
-	const struct IODevice *dev;
-	int i, id;
-	mess_image *img;
-
 	/* unload all devices */
 	image_unload_all(FALSE);
 	image_unload_all(TRUE);
 
 	/* exit all devices */
-	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
-	{
-		dev = &Machine->devices[i];
-
-		/* all instances */
-		for( id = 0; id < dev->count; id++ )
-		{
-			img = image_from_devtype_and_index(dev->type, id);
-			image_exit(img);
-		}
-	}
-
+	image_exit();
 	devices_inited = FALSE;
 }
 
@@ -497,7 +463,6 @@ int mess_validitychecks(void)
 	int error = 0;
 	struct IODevice *devices;
 	const struct IODevice *dev;
-	long used_devices;
 	const char *s1;
 	const char *s2;
 	extern int device_valididtychecks(void);
@@ -545,7 +510,6 @@ int mess_validitychecks(void)
 		}
 
 		/* check device array */
-		used_devices = 0;
 		for (j = 0; devices[j].type < IO_COUNT; j++)
 		{
 			dev = &devices[j];
@@ -555,14 +519,6 @@ int mess_validitychecks(void)
 				printf("%s: invalid device type %i\n", drivers[i]->name, dev->type);
 				error = 1;
 			}
-
-			/* make sure that we can't duplicate devices */
-			if (used_devices & (1 << dev->type))
-			{
-				printf("%s: device type '%s' is specified multiple times\n", drivers[i]->name, device_typename(dev->type));
-				error = 1;
-			}
-			used_devices |= (1 << dev->type);
 
 			/* File Extensions Checks
 			 * 

@@ -120,7 +120,7 @@ static void load_track_data(int floppy_select)
 	floppy *f;
 
 	f = &sony_floppy[floppy_select];
-	cur_image = image_from_devtype_and_index(IO_FLOPPY, floppy_select);
+	cur_image = image_from_devtag_and_index("sonydriv", floppy_select);
 
 	track_size = floppy_get_track_size(flopimg_get_image(cur_image), f->head, floppy_drive_get_current_track(cur_image));
 	new_data = image_realloc(cur_image, f->loadedtrack_data, track_size);
@@ -144,7 +144,7 @@ static void save_track_data(int floppy_select)
 	int len;
 
 	f = &sony_floppy[floppy_select];
-	cur_image = image_from_devtype_and_index(IO_FLOPPY, floppy_select);
+	cur_image = image_from_devtag_and_index("sonydriv", floppy_select);
 
 	if (f->loadedtrack_dirty)
 	{
@@ -166,7 +166,7 @@ data8_t sony_read_data(void)
 		return 0xFF;			/* right ??? */
 
 	f = &sony_floppy[sony_floppy_select];
-	cur_image = image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select);
+	cur_image = image_from_devtag_and_index("sonydriv", sony_floppy_select);
 	if (!image_exists(cur_image))
 		return 0xFF;
 
@@ -185,7 +185,7 @@ void sony_write_data(data8_t data)
 	floppy *f;
 
 	f = &sony_floppy[sony_floppy_select];
-	cur_image = image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select);
+	cur_image = image_from_devtag_and_index("sonydriv", sony_floppy_select);
 	if (!image_exists(cur_image))
 		return;
 
@@ -261,7 +261,7 @@ int sony_read_status(void)
 	if ((! sony_enable2()) && sony_floppy_enable)
 	{
 		f = &sony_floppy[sony_floppy_select];
-		cur_image = image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select);
+		cur_image = image_from_devtag_and_index("sonydriv", sony_floppy_select);
 		if (!image_exists(cur_image))
 			cur_image = NULL;
 
@@ -372,7 +372,7 @@ static void sony_doaction(void)
 	if (sony_floppy_enable)
 	{
 		f = &sony_floppy[sony_floppy_select];
-		cur_image = image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select);
+		cur_image = image_from_devtag_and_index("sonydriv", sony_floppy_select);
 		if (!image_exists(cur_image))
 			cur_image = NULL;
 
@@ -502,6 +502,8 @@ void sonydriv_device_getinfo(struct IODevice *dev, int allowablesizes)
 	/* floppy */
 	floppy_device_getinfo(dev, (allowablesizes & SONY_FLOPPY_SUPPORT2IMG)
 		? floppyoptions_apple35_iigs : floppyoptions_apple35_mac);
+
+	dev->tag = "sonydriv";
 	dev->type = IO_FLOPPY;
 	dev->count = 2;
 	dev->user4 = (void *) allowablesizes;

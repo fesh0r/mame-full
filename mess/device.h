@@ -60,6 +60,7 @@ struct CreateImageOptions
 struct IODevice
 {
 	/* the basics */
+	const char *tag;
 	iodevice_t type;
 	int count;
 	const char *file_extensions;

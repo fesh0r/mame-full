@@ -77,7 +77,7 @@ void apple2_slot6_init(void)
 
 	for (i = 0; i < floppy_count; i++)
 	{
-		image = image_from_devtype_and_index(IO_FLOPPY, i);
+		image = image_from_devtag_and_index(APDISK_DEVTAG, i);
 		floppy_install_unload_proc(image, apple2_floppy_unload);
 	}
 }
@@ -185,7 +185,7 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
   apple2_c0xx_slot6_r
 ***************************************************************************/
 
- READ8_HANDLER ( apple2_c0xx_slot6_r )
+READ8_HANDLER ( apple2_c0xx_slot6_r )
 {
 	struct apple2_drive *cur_disk;
 	mess_image *cur_image;
@@ -194,7 +194,7 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
 
 	profiler_mark(PROFILER_SLOT6);
 
-	cur_image = image_from_devtype_and_index(IO_FLOPPY, a2_drives_num);
+	cur_image = image_from_devtag_and_index(APDISK_DEVTAG, a2_drives_num);
 	cur_disk = &apple2_drives[a2_drives_num];
 
 	switch (offset) {

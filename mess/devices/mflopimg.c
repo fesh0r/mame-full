@@ -256,7 +256,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	flopimg = get_flopimg(image);
 
 	/* figure out the floppy options */
-	dev = device_find(Machine->devices, IO_FLOPPY);
+	dev = image_device(image);
 	assert(dev);
 	floppy_options = dev->user1;
 

@@ -9,6 +9,10 @@
 #ifndef APPLE2_H
 #define APPLE2_H
 
+#include <mame.h>
+
+#define APDISK_DEVTAG	"apdsk_525"
+
 #define VAR_80STORE		0x000001
 #define VAR_RAMRD		0x000002
 #define VAR_RAMWRT		0x000004
@@ -38,11 +42,6 @@ extern UINT32 a2;
 void apple2_init_common(void);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
-
-int  apple2_id_rom(int id);
-
-int	apple2e_load_rom(int id);
-int	apple2ee_load_rom(int id);
 
 void apple2_interrupt(void);
 

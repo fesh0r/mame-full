@@ -27,6 +27,8 @@ typedef enum
 	IMAGE_ERROR_UNSPECIFIED
 } image_error_t;
 
+
+
 /****************************************************************************
   A mess_image pointer represents one device entry; this could be an instance
   of a floppy drive or a printer.  The defining property is that either at
@@ -46,8 +48,8 @@ typedef enum
 ****************************************************************************/
 
 /* not to be called by anything other than core */
-int image_init(mess_image *img);
-void image_exit(mess_image *img);
+int image_init(void);
+void image_exit(void);
 
 
 
@@ -93,6 +95,8 @@ void image_seterror(mess_image *img, image_error_t err, const char *message);
 void *image_alloctag(mess_image *img, const char *tag, size_t size);
 void *image_lookuptag(mess_image *img, const char *tag);
 
+
+
 /****************************************************************************
   Accessor functions
 
@@ -119,6 +123,8 @@ int image_has_been_created(mess_image *img);
 int image_get_open_mode(mess_image *img);
 void image_make_readonly(mess_image *img);
 
+
+
 /****************************************************************************
   Memory allocators
 
@@ -131,6 +137,8 @@ void *image_malloc(mess_image *img, size_t size) FUNCATTR_MALLOC;
 char *image_strdup(mess_image *img, const char *src) FUNCATTR_MALLOC;
 void *image_realloc(mess_image *img, void *ptr, size_t size);
 void image_freeptr(mess_image *img, void *ptr);
+
+
 
 /****************************************************************************
   CRC Accessor functions
@@ -145,6 +153,8 @@ const char *image_year(mess_image *img);
 const char *image_playable(mess_image *img);
 const char *image_extrainfo(mess_image *img);
 
+
+
 /****************************************************************************
   Battery functions
 
@@ -155,6 +165,8 @@ const char *image_extrainfo(mess_image *img);
 int image_battery_load(mess_image *img, void *buffer, int length);
 int image_battery_save(mess_image *img, const void *buffer, int length);
 
+
+
 /****************************************************************************
   Indexing functions
 
@@ -164,6 +176,8 @@ int image_battery_save(mess_image *img, const void *buffer, int length);
 int image_absolute_index(mess_image *image);
 mess_image *image_from_absolute_index(int absolute_index);
 
+
+
 /****************************************************************************
   Deprecated functions
 
@@ -172,16 +186,16 @@ mess_image *image_from_absolute_index(int absolute_index);
   type/id.
 ****************************************************************************/
 
-/* given a choice between image_from_device_and_index() and
- * image_from_devtype_and_index(), image_from_device_and_index() is preferred
- */
-/* image_device is defined above */
 int image_index_in_device(mess_image *img);
 mess_image *image_from_device_and_index(const struct IODevice *dev, int id);
+mess_image *image_from_devtag_and_index(const char *devtag, int id);
 
-int image_devtype(mess_image *img);
-int image_index_in_devtype(mess_image *img);
-mess_image *image_from_devtype_and_index(int type, int id);
+/* deprecated; as there can be multiple devices of a certain type */
+iodevice_t image_devtype(mess_image *img);
+mess_image *image_from_devtype_and_index(iodevice_t type, int id);
+
+
+
 
 /****************************************************************************
   Macros for declaring device callbacks

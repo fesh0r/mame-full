@@ -747,7 +747,7 @@ MACHINE_INIT( apple2 )
 	/* seek middle sector */
 	for (i = 0; i < device_count(IO_FLOPPY); i++)
 	{
-		image = image_from_devtype_and_index(IO_FLOPPY, i);
+		image = image_from_devtag_and_index(APDISK_DEVTAG, i);
 		if (image_exists(image))
 		{
 			floppy_drive_seek(image, -999);

@@ -1383,6 +1383,9 @@ static void device_command(mess_image *img, int devoption)
 			}
 			break;
 #endif /* HAS_WAVE */
+
+		default:
+			break;
 		}
 	}
 }

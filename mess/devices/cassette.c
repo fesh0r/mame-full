@@ -347,7 +347,7 @@ static void device_display_cassette(mess_image *image, struct mame_bitmap *bitma
 	uistate = cassette_get_state(image) & CASSETTE_MASK_UISTATE;
 
 	/* choose a location on the screen */
-	x = image_index_in_devtype(image) * Machine->uifontwidth * 16 + 1;
+	x = image_index_in_device(image) * Machine->uifontwidth * 16 + 1;
 	y = Machine->uiheight - 9;
 
 	/* choose which frame of the animation we are at */

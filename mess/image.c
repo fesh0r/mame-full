@@ -19,6 +19,7 @@ struct _mess_image
 	/* variables that persist across image mounts */
 	tag_pool tagpool;
 	memory_pool mempool;
+	const struct IODevice *dev;
 
 	/* error related info */
 	image_error_t err;
@@ -45,9 +46,12 @@ struct _mess_image
 	char *extrainfo;
 };
 
-static struct _mess_image images[IO_COUNT][MAX_DEV_INSTANCES];
+static struct _mess_image *images;
+static UINT32 multiple_dev_mask;
 
 static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write);
+
+
 
 #ifdef _MSC_VER
 #define ZEXPORT __stdcall
@@ -57,36 +61,87 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 
 extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
+
+
 /* ----------------------------------------------------------------------- */
 
-int image_init(mess_image *img)
+int image_init(void)
 {
 	int err;
-	const struct IODevice *iodev;
-	
-	memset(img, 0, sizeof(*img));
+	int count, indx, i, j;
+	UINT32 mask, dev_mask = 0;
 
-	tagpool_init(&img->tagpool);
+	/* setup the globals */
+	images = NULL;
+	multiple_dev_mask = 0;
 
-	iodev = image_device(img);
-	if (iodev->init)
+	/* first count all images, and identify multiply defined devices */
+	count = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
 	{
-		err = iodev->init(img);
-		if (err != INIT_PASS)
-			return err;
+		/* check to see if this device type is used multiple times */
+		mask = 1 << Machine->devices[i].type;
+		if (dev_mask & mask)
+			multiple_dev_mask |= mask;
+		else
+			dev_mask |= mask;
+
+		/* increment the count */
+		count += Machine->devices[i].count;
+	}
+
+	/* allocate the array */
+	if (count > 0)
+	{
+		images = auto_malloc(count * sizeof(*images));
+		if (!images)
+			return INIT_FAIL;
+		memset(images, 0, count * sizeof(*images));
+	}
+
+
+	/* initialize the devices */
+	indx = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	{
+		for (j = 0; j < Machine->devices[i].count; j++)
+		{
+			/* setup the device */
+			tagpool_init(&images[indx + j].tagpool);
+			images[indx + j].dev = &Machine->devices[i];
+
+			if (Machine->devices[i].init)
+			{
+				err = Machine->devices[i].init(&images[indx + j]);
+				if (err != INIT_PASS)
+					return err;
+			}
+
+		}
+		indx += Machine->devices[i].count;
 	}
 	return INIT_PASS;
 }
 
-void image_exit(mess_image *img)
+
+
+void image_exit(void)
 {
-	const struct IODevice *iodev;	
+	int i, j, indx;
 
-	iodev = image_device(img);
-	if (iodev->exit)
-		iodev->exit(img);
+	indx = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	{
+		for (j = 0; j < Machine->devices[i].count; j++)
+		{
+			/* call the exit handler if appropriate */
+			if (Machine->devices[i].exit)
+				Machine->devices[i].exit(&images[indx + j]);
 
-	tagpool_exit(&img->tagpool);
+			tagpool_exit(&images[indx + j].tagpool);
+		}
+		indx += Machine->devices[i].count;
+	}
 }
 
 
@@ -108,6 +163,8 @@ static void image_clear_error(mess_image *img)
 		img->err_message = NULL;
 	}
 }
+
+
 
 static int image_load_internal(mess_image *img, const char *name, int is_create, int create_format, option_resolution *create_args)
 {
@@ -342,10 +399,13 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 }
 
 
+
 void image_unload(mess_image *img)
 {
 	image_unload_internal(img, FALSE);
 }
+
+
 
 void image_unload_all(int ispreload)
 {
@@ -433,10 +493,13 @@ void *image_alloctag(mess_image *img, const char *tag, size_t size)
 	return tagpool_alloc(&img->tagpool, tag, size);
 }
 
+
+
 void *image_lookuptag(mess_image *img, const char *tag)
 {
 	return tagpool_lookup(&img->tagpool, tag);
 }
+
 
 
 /****************************************************************************
@@ -555,30 +618,42 @@ mame_file *image_fp(mess_image *img)
 	return img->fp;
 }
 
+
+
 const struct IODevice *image_device(mess_image *img)
 {
-	return device_find(Machine->devices, image_devtype(img));
+	return img->dev;
 }
+
+
 
 int image_exists(mess_image *img)
 {
 	return image_filename(img) != NULL;
 }
 
+
+
 int image_slotexists(mess_image *img)
 {
-	return image_index_in_devtype(img) < device_count(image_devtype(img));
+	return image_index_in_device(img) < image_device(img)->count;
 }
+
+
 
 const char *image_filename(mess_image *img)
 {
 	return img->name;
 }
 
+
+
 const char *image_basename(mess_image *img)
 {
 	return osd_basename((char *) image_filename(img));
 }
+
+
 
 const char *image_basename_noext(mess_image *img)
 {
@@ -599,6 +674,8 @@ const char *image_basename_noext(mess_image *img)
 	return img->basename_noext;
 }
 
+
+
 const char *image_filetype(mess_image *img)
 {
 	const char *s;
@@ -607,6 +684,8 @@ const char *image_filetype(mess_image *img)
 		s = strrchr(s, '.');
 	return s ? s+1 : NULL;
 }
+
+
 
 const char *image_filedir(mess_image *img)
 {
@@ -711,11 +790,15 @@ void *image_malloc(mess_image *img, size_t size)
 	return pool_malloc(&img->mempool, size);
 }
 
+
+
 void *image_realloc(mess_image *img, void *ptr, size_t size)
 {
 	assert(img->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 	return pool_realloc(&img->mempool, ptr, size);
 }
+
+
 
 char *image_strdup(mess_image *img, const char *src)
 {
@@ -723,10 +806,14 @@ char *image_strdup(mess_image *img, const char *src)
 	return pool_strdup(&img->mempool, src);
 }
 
+
+
 void image_freeptr(mess_image *img, void *ptr)
 {
 	pool_freeptr(&img->mempool, ptr);
 }
+
+
 
 /****************************************************************************
   CRC Accessor functions
@@ -741,17 +828,23 @@ const char *image_longname(mess_image *img)
 	return img->longname;
 }
 
+
+
 const char *image_manufacturer(mess_image *img)
 {
 	image_checkhash(img);
 	return img->manufacturer;
 }
 
+
+
 const char *image_year(mess_image *img)
 {
 	image_checkhash(img);
 	return img->year;
 }
+
+
 
 const char *image_playable(mess_image *img)
 {
@@ -852,14 +945,14 @@ int image_battery_save(mess_image *img, const void *buffer, int length)
 
 int image_absolute_index(mess_image *image)
 {
-	return image - &images[0][0];
+	return image - images;
 }
 
 
 
 mess_image *image_from_absolute_index(int absolute_index)
 {
-	return &images[0][absolute_index];
+	return &images[absolute_index];
 }
 
 
@@ -872,39 +965,94 @@ mess_image *image_from_absolute_index(int absolute_index)
   type/id.
 ****************************************************************************/
 
-int image_index_in_device(mess_image *img)
-{
-	return image_index_in_devtype(img);
-}
-
-
-
 mess_image *image_from_device_and_index(const struct IODevice *dev, int id)
 {
-	return image_from_devtype_and_index(dev->type, id);
+	int indx, i;
+	mess_image *image = NULL;
+
+	assert(id < dev->count);
+
+	indx = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	{
+		if (dev == &Machine->devices[i])
+		{
+			image = &images[indx + id];
+			break;
+		}
+		indx += Machine->devices[i].count;
+	}
+
+	assert(image);
+	return image;
 }
 
 
 
-mess_image *image_from_devtype_and_index(int type, int id)
+mess_image *image_from_devtag_and_index(const char *devtag, int id)
 {
+	int indx, i;
+	mess_image *image = NULL;
+
+	indx = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	{
+		if (Machine->devices[i].tag && !strcmp(Machine->devices[i].tag, devtag))
+		{
+			image = &images[indx + id];
+			break;
+		}
+		indx += Machine->devices[i].count;
+	}
+
+	assert(image);
+	return image;
+}
+
+
+
+mess_image *image_from_devtype_and_index(iodevice_t type, int id)
+{
+	int indx, i;
+	mess_image *image = NULL;
+
+	assert((multiple_dev_mask & (1 << type)) == 0);
 	assert(id < device_count(type));
-	return &images[type][id];
+
+	indx = 0;
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
+	{
+		if (type == Machine->devices[i].type)
+		{
+			image = &images[indx + id];
+			break;
+		}
+		indx += Machine->devices[i].count;
+	}
+
+	assert(image);
+	return image;
 }
 
 
 
-int image_devtype(mess_image *img)
+iodevice_t image_devtype(mess_image *img)
 {
-	return (img - &images[0][0]) / MAX_DEV_INSTANCES;
+	return img->dev->type;
 }
 
 
 
-int image_index_in_devtype(mess_image *img)
+int image_index_in_device(mess_image *img)
 {
+	int indx;
+
 	assert(img);
-	return (img - &images[0][0]) % MAX_DEV_INSTANCES;
+	indx = img - image_from_device_and_index(img->dev, 0);
+
+	assert(indx >= 0);
+	assert(indx < img->dev->count);
+	return indx;
 }
 
 

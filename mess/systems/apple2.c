@@ -621,6 +621,7 @@ static void apple2_floppy_getinfo(struct IODevice *dev)
 	floppy_device_getinfo(dev, floppyoptions_apple2);
 	dev->count = 2;
 	dev->name = apple2_floppy_getname;
+	dev->tag = APDISK_DEVTAG;
 }
 
 SYSTEM_CONFIG_START(apple2_common)

@@ -44,6 +44,11 @@ Source Changes:
 - The core is based on MAME 0.91u2.  This incorporates all features of the
   update to this core.  [MAME team]
   
+- Changed core to support multiple devices of the same IO_* enum value.  Note
+  that when this is the case, indexing devices with calls that assume a one
+  to one mapping like image_from_devtype_and_index() are no longer legal.
+  [Nate Woods]
+
 - [Windows GUI] Fixed a regression that could cause INI files to be
   erroneously written to the main directory.
 
