@@ -741,8 +741,12 @@ int device_filename_change(int type, int id, const char *name)
 		if( name )
 		{
 			img->name = dupe(name);
+			/* Check the name */
 			if( !img->name )
 				return 1;
+			/* check the count - if it was 0, add new! */
+			if (!device_count(type))
+				count[type]++;
 		}
 
 		if( dev->reset_depth == IO_RESET_CPU )
@@ -755,7 +759,7 @@ int device_filename_change(int type, int id, const char *name)
 		}
 
 		result = (*dev->init)(id);
-		if( result != INIT_PASS && name )
+		if( result != INIT_PASS)
 			return 1;
 
 		/* init succeeded */

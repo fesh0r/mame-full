@@ -655,30 +655,35 @@ int filemanager(struct osd_bitmap *bitmap, int selected)
 
 	int sel, total, arrowize, type, id;
 
+	const struct IODevice *dev = Machine->gamedrv->dev;
+
 	sel = selected - 1;
 
 
 	total = 0;
-	for (type = 0; type < IO_COUNT; type++)
+
+	/* Cycle through all devices for this system */
+	while(dev->type != IO_END)
 	{
-		for (id = 0; id < device_count(type); id++)
+		type = dev->type;
+		for (id = 0; id < dev->count; id++)
 		{
 			name = device_typename_id(type, id);
 
-			if (name)
-			{
-				menu_item[total] = name;
+			menu_item[total] = (name) ? name : "---";
 
-				name = device_filename(type, id);
-				menu_subitem[total] = (name) ? name : "---";
+			name = device_filename(type, id);
 
-				flag[total] = 0;
-				types[total] = type;
-				ids[total] = id;
+			menu_subitem[total] = (name) ? name : "---";
 
-				total++;
-			}
+			flag[total] = 0;
+			types[total] = type;
+			ids[total] = id;
+
+			total++;
+
 		}
+		dev++;
 	}
 
 
