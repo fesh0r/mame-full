@@ -40,16 +40,17 @@ struct messdocs_state
 
 static void process_error(struct messdocs_state *state, const char *tag, const char *msgfmt, ...)
 {
-	va_list va;
+	/*va_list va;*/
 	char buf[512];
 	const char *msg;
 
 	if (msgfmt)
 	{
-		va_start(va, msgfmt);
-		vsprintf(buf, msgfmt, va);
-		va_end(va);
-		msg = buf;
+		//va_start(va, msgfmt);
+		//vsprintf(buf, msgfmt, va);
+		//va_end(va);
+		//msg = buf;
+		msg = "";
 	}
 	else
 	{
