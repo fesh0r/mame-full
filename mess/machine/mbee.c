@@ -208,17 +208,3 @@ int mbee_rom_load(int id)
 	return INIT_PASS;
 }
 
-#ifdef VERIFY_IMAGE
-int mbee_rom_id(int id)
-{
-    void *file;
-
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
-    if( file )
-    {
-		osd_fclose(file);
-    }
-    return 1;
-}
-#endif
-
