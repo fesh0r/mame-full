@@ -485,6 +485,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( pleiads )	/* (c) 1981 Tehkan */
 	DRIVER( pleiadbl )	/* bootleg */
 	DRIVER( pleiadce )	/* (c) 1981 Centuri + Tehkan */
+	DRIVER( capitol )	/* bootleg? */
 	DRIVER( survival )	/* (c) 1982 Rock-ola */
 	DRIVER( naughtyb )	/* (c) 1982 Jaleco */
 	DRIVER( naughtya )	/* bootleg */
@@ -602,6 +603,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( wndrmomo )	/* (c) 1987 */
 
 	/* Thunder Ceptor HW */
+	DRIVER( tceptor )
 	DRIVER( tceptor2 )
 
 	/* Namco System 1 games */
@@ -1482,6 +1484,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( twinhwku )	/* B87 (c) 1989 Taito America Corporation (US) */
 	DRIVER( daisenpu )	/* B87 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( gigandes )	/* (c) 1989 East Technology */
+	DRIVER( kyustrkr )	/* (c) 1989 East Technology */
 	DRIVER( ballbros )	/* no copyright notice */
 
 	/* Taito "tnzs" hardware */
@@ -1767,7 +1770,15 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( snowbrob )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
 	DRIVER( wintbob )	/* bootleg */
+	/* SemiCom games on snowbros like hardware */
+	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
+	DRIVER( hyperpcb )	/* bootleg */
+	DRIVER( moremorp )
+	DRIVER( 3in1semi )
+	DRIVER( 4in1boot )	/* bootleg? */
+	DRIVER( cookbib2 )
 
+	/* More Toaplan Games */
 	DRIVER( tekipaki )	/* TP-020 (c) 1991 Toaplan */
 	DRIVER( ghox )		/* TP-021 (c) 1991 Toaplan */
 	DRIVER( dogyuun )	/* TP-022 (c) 1992 Toaplan */
@@ -1861,15 +1872,6 @@ V-V                           TP-027
 	DRIVER( uopoko )	/* (c) 1998 Cave + Jaleco license */
 	DRIVER( guwange )	/* (c) 1999 Atlus/Cave */
 	DRIVER( gaia )		/* (c) 1999 Noise Factory */
-
-	/* SemiCom games */
-	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
-	DRIVER( hyperpcb )	/* bootleg */
-	DRIVER( moremorp )
-	DRIVER( 3in1semi )
-	DRIVER( 4in1boot )	/* bootleg? */
-	DRIVER( cookbib2 )
-	DRIVER( htchctch )
 
 	/* Kyugo games */
 	/* Kyugo only made four games: Repulse, Flash Gal, SRD Mission and Air Wolf. */
@@ -2946,7 +2948,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_revsh )	/* 28 */
 	DRIVER( mt_parlg )	/* 29 */
 						/* 30 */
-						/* 31 */
+	DRIVER( mt_tgolf )  /* 31 */
 						/* 32 */
 						/* 33 */
 						/* 34 */
@@ -3192,6 +3194,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tumblep2 )	/* bootleg */
 	DRIVER( jumpkids )	/* (c) 1993 Comad */
 	DRIVER( fncywld )	/* (c) 1996 Unico */
+	DRIVER( htchctch )	/* (c) 1995 SemiCom */
+	DRIVER( bcstry )	/* (c) 199? SemiCom */
 	DRIVER( lemmings )	/* prototype (c) 1991 Data East USA (US) */
 	/* MAQ ?? */
 	DRIVER( dragngun )	/* MAR (c) 1992 Data East Corporation (US) */
@@ -3588,10 +3592,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* DJ Main */
 	DRIVER( bm1stmix )
+	DRIVER( bm2ndmix )
+	DRIVER( bm2ndmxa )
 	DRIVER( bmcompmx )
 	DRIVER( hmcompmx )
 	DRIVER( bm4thmix )
 	DRIVER( hmcompm2 )
+	DRIVER( bmdct )
 	DRIVER( bmcorerm )
 
 	/* Exidy games */
@@ -3735,7 +3742,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( millpac )	/* Valadon */
 	DRIVER( magworm )	/* (bootleg) */
 	DRIVER( milliped )	/* 136013			(c) 1982 */
-	DRIVER( qwakprot )	/* (proto)			(c) 1982 */
+	DRIVER( qwak )	 	/* (proto)			(c) 1982 */
+	DRIVER( runaway )	/* (proto)          (c) 1982 */
 
 	/* misc Atari games */
 	DRIVER( tunhunt )	/* 136000			(c) 1979 */
@@ -4363,7 +4371,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER ( sfrush )	/* (c) 1996 Atari Games */
 	DRIVER ( calspeed )	/* (c) 1996 Atari Games */
 	DRIVER ( carnevil )	/* (c) 1998 Midway Games */
+	DRIVER ( biofreak )	/* (c) 1997 Midway Games */
+	DRIVER ( blitz )	/* (c) 1997 Midway Games */
 	DRIVER ( blitz99 )	/* (c) 1998 Midway Games */
+	DRIVER ( blitz2k )	/* (c) 1999 Midway Games */
 
 	/* Cinematronics raster games */
 	DRIVER( embargo )
@@ -4524,6 +4535,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( scudhamm )	/* (c) 1994 Jaleco */
 	DRIVER( tetrisp2 )	/* (c) 1997 Jaleco */
 	DRIVER( teplus2j )	/* (c) 1997 Jaleco */
+	DRIVER( rockn )		/* (c) 1999 Jaleco */
 
 	/* Jaleco Mega System 1 games */
 	DRIVER( lomakai )	/* (c) 1988 (World) */
@@ -4564,6 +4576,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gametngk )	/* (c) 1995 */
 	DRIVER( tetrisp )	/* (c) 1995 Jaleco / BPS */
 	DRIVER( p47aces )	/* (c) 1995 */
+	DRIVER( akiss )		/* (c) 1995 */
 	DRIVER( gratia )	/* (c) 1996 */
 	DRIVER( gratiaa )	/* (c) 1996 */
 	DRIVER( kirarast )	/* (c) 1996 */
@@ -4728,6 +4741,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
 	DRIVER( galpanib )	/* (c) 1990 Kaneko */
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
+	DRIVER( jchan )		/* (c) 199? Kaneko */
 
 	/* Kaneko "AX System" games */
 	DRIVER( berlwall )	/* (c) 1991 Kaneko */
@@ -4816,6 +4830,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sokonuke )	/* (c) 1995 Sammy Industries */
 	DRIVER( zombraid )	/* (c) 1995 American Sammy */
 
+	DRIVER( gundamex )	/* (c) 1994 Banpresto */
 	DRIVER( grdians )	/* (c) 1995 Banpresto */
 	DRIVER( mj4simai )	/* (c) 1996 Maboroshi Ware */
 	DRIVER( myangel )	/* (c) 1996 Namco */
@@ -4999,6 +5014,7 @@ Other Sun games
 	DRIVER( gakusai )	/* (c) 1997 MakeSoft */
 	DRIVER( gakusai2 )	/* (c) 1998 MakeSoft */
 	DRIVER( blzntrnd )	/* (c) 1994 Human Amusement */
+	DRIVER( gstrik2 )	/* (c) 1996 Human Amusement */
 	DRIVER( hyprduel )	/* (c) 1993 Technosoft (World) */
 	DRIVER( hyprdelj )	/* (c) 1993 Technosoft (Japan) */
 
@@ -5083,6 +5099,7 @@ Other Sun games
 	DRIVER( quizchql )	/* "73" (c) 1993 Laxan */
 	DRIVER( quiz365 )	/* "78" (c) 1994 Nakanihon */
 	DRIVER( rongrong )	/* "80" (c) 1994 Nakanihon */
+	DRIVER( nettoqc )	/* "??" (c) 1995 Nakanihon */
 	DRIVER( ddenlovr )	/* "113" (c) 1996 Dynax */
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
 						/* "510" Hana Kagerou 1996 Nakanihon */
@@ -5313,6 +5330,8 @@ Other Sun games
 	DRIVER( strvmstr )	/* (c) 1986 Enerdyne Technologies Inc */
 	DRIVER( dorachan )	/* (c) 1980 Craul Denshi */
 	DRIVER( ladyfrog )	/* (c) 1990 Mondial Games */
+	DRIVER( rabbit )	/* (c) 1997 Electronic Arts */
+	DRIVER( tmmjprd )	/* (c) 1997 Media / Sonnet */
 
 #endif /* CPSMAME */
 #endif /* NEOMAME */

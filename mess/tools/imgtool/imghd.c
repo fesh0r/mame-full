@@ -82,17 +82,17 @@ static STREAM *decode_image_ref(const char *encoded_image_ref)
 }
 
 
-static void *imgtool_hard_disk_open(const char *filename, const char *mode);
-static void imgtool_hard_disk_close(void *file);
-static UINT32 imgtool_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 imgtool_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer);
+static struct chd_interface_file *imgtool_chd_open(const char *filename, const char *mode);
+static void imgtool_chd_close(struct chd_interface_file *file);
+static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
 
-static struct hard_disk_interface imgtool_hard_disk_interface =
+static struct chd_interface imgtool_chd_interface =
 {
-	imgtool_hard_disk_open,
-	imgtool_hard_disk_close,
-	imgtool_hard_disk_read,
-	imgtool_hard_disk_write
+	imgtool_chd_open,
+	imgtool_chd_close,
+	imgtool_chd_read,
+	imgtool_chd_write
 };
 
 /*
@@ -100,9 +100,9 @@ static struct hard_disk_interface imgtool_hard_disk_interface =
 */
 
 /*
-	imgtool_hard_disk_open - interface for opening a hard disk image
+	imgtool_chd_open - interface for opening a hard disk image
 */
-static void *imgtool_hard_disk_open(const char *filename, const char *mode)
+static struct chd_interface_file *imgtool_chd_open(const char *filename, const char *mode)
 {
 	STREAM *img = decode_image_ref(filename);
 
@@ -116,30 +116,30 @@ static void *imgtool_hard_disk_open(const char *filename, const char *mode)
 		return NULL;
 
 	/* otherwise return file pointer */
-	return img;
+	return (struct chd_interface_file *) img;
 }
 
 /*
-	imgtool_hard_disk_close - interface for closing a hard disk image
+	imgtool_chd_close - interface for closing a hard disk image
 */
-static void imgtool_hard_disk_close(void *file)
+static void imgtool_chd_close(struct chd_interface_file *file)
 {
 	(void) file;
 }
 
 /*
-	imgtool_hard_disk_read - interface for reading from a hard disk image
+	imgtool_chd_read - interface for reading from a hard disk image
 */
-static UINT32 imgtool_hard_disk_read(void *file, UINT64 offset, UINT32 count, void *buffer)
+static UINT32 imgtool_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	stream_seek((STREAM *)file, offset, SEEK_SET);
 	return stream_read((STREAM *)file, buffer, count);
 }
 
 /*
-	imgtool_hard_disk_write - interface for writing to a hard disk image
+	imgtool_chd_write - interface for writing to a hard disk image
 */
-static UINT32 imgtool_hard_disk_write(void *file, UINT64 offset, UINT32 count, const void *buffer)
+static UINT32 imgtool_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	stream_seek((STREAM *)file, offset, SEEK_SET);
 	return stream_write((STREAM *)file, buffer, count);
@@ -150,10 +150,10 @@ static UINT32 imgtool_hard_disk_write(void *file, UINT64 offset, UINT32 count, c
 
 	Create a MAME HD image
 */
-static int imghd_create(STREAM *stream, const struct hard_disk_header *header)
+static int imghd_create(STREAM *stream, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression)
 {
 	char encoded_image_ref[encoded_image_ref_max_len];
-	struct hard_disk_interface interface_save;
+	struct chd_interface interface_save;
 	int reply;
 
 	if (stream_isreadonly(stream))
@@ -161,17 +161,16 @@ static int imghd_create(STREAM *stream, const struct hard_disk_header *header)
 
 	encode_image_ref(stream, encoded_image_ref);
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
-	reply = hard_disk_create(encoded_image_ref, header);
-	hard_disk_set_interface(&interface_save);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
+	reply = chd_create(encoded_image_ref, logicalbytes, hunkbytes, compression, NULL);
+	chd_set_interface(&interface_save);
 
 	return reply ? IMGTOOLERR_UNEXPECTED : 0;
 }
 
 int imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UINT32 cylinders, UINT32 heads, UINT32 sectors, UINT32 seclen)
 {
-	struct hard_disk_header header;
 	int errorcode;
 	char *buf;
 	void *disk;
@@ -188,17 +187,7 @@ int imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UI
 	if ((blocksize == 0)|| (blocksize >= 2048))
 		return IMGTOOLERR_PARAMCORRUPT;
 
-	memset(&header, 0, sizeof(header));
-	header.version = version;
-	header.flags = HDFLAGS_IS_WRITEABLE;
-	header.compression = HDCOMPRESSION_NONE;
-	header.blocksize = blocksize;
-	header.cylinders = cylinders;
-	header.heads = heads;
-	header.sectors = sectors;
-	header.seclen = seclen;
-
-	errorcode = imghd_create(stream, &header);
+	errorcode = imghd_create(stream, cylinders * heads * sectors * seclen, blocksize, CHDCOMPRESSION_NONE);
 	if (errorcode)
 		return errorcode;
 
@@ -232,16 +221,18 @@ int imghd_create_base_v1_v2(STREAM *stream, UINT32 version, UINT32 blocksize, UI
 */
 void *imghd_open(STREAM *stream)
 {
+	struct chd_file *chd;
 	char encoded_image_ref[encoded_image_ref_max_len];
-	struct hard_disk_interface interface_save;
+	struct chd_interface interface_save;
 	void *hard_disk_handle;
 
 	encode_image_ref(stream, encoded_image_ref);
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
-	hard_disk_handle = hard_disk_open(encoded_image_ref, ! stream_isreadonly(stream), NULL);
-	hard_disk_set_interface(&interface_save);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
+	chd = chd_open(encoded_image_ref, !stream_isreadonly(stream), NULL);
+	hard_disk_handle = hard_disk_open(chd);
+	chd_set_interface(&interface_save);
 
 	return hard_disk_handle;
 }
@@ -253,12 +244,12 @@ void *imghd_open(STREAM *stream)
 */
 void imghd_close(void *disk)
 {
-	struct hard_disk_interface interface_save;
+	struct chd_interface interface_save;
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
 	hard_disk_close(disk);
-	hard_disk_set_interface(&interface_save);
+	chd_set_interface(&interface_save);
 }
 
 /*
@@ -268,13 +259,13 @@ void imghd_close(void *disk)
 */
 UINT32 imghd_read(void *disk, UINT32 lbasector, UINT32 numsectors, void *buffer)
 {
-	struct hard_disk_interface interface_save;
+	struct chd_interface interface_save;
 	UINT32 reply;
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
 	reply = hard_disk_read(disk, lbasector, numsectors, buffer);
-	hard_disk_set_interface(&interface_save);
+	chd_set_interface(&interface_save);
 
 	return reply;
 }
@@ -286,13 +277,13 @@ UINT32 imghd_read(void *disk, UINT32 lbasector, UINT32 numsectors, void *buffer)
 */
 UINT32 imghd_write(void *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer)
 {
-	struct hard_disk_interface interface_save;
+	struct chd_interface interface_save;
 	UINT32 reply;
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
 	reply = hard_disk_write(disk, lbasector, numsectors, buffer);
-	hard_disk_set_interface(&interface_save);
+	chd_set_interface(&interface_save);
 
 	return reply;
 }
@@ -302,24 +293,19 @@ UINT32 imghd_write(void *disk, UINT32 lbasector, UINT32 numsectors, const void *
 
 	Return pointer to the header of MAME HD image
 */
-const struct hard_disk_header *imghd_get_header(void *disk)
+const struct hard_disk_info *imghd_get_header(struct hard_disk_file *disk)
 {
-	struct hard_disk_interface interface_save;
-	const struct hard_disk_header *reply;
+	struct chd_interface interface_save;
+	const struct hard_disk_info *reply;
 
-	hard_disk_save_interface(&interface_save);
-	hard_disk_set_interface(&imgtool_hard_disk_interface);
-	reply = hard_disk_get_header(disk);
-	hard_disk_set_interface(&interface_save);
+	chd_save_interface(&interface_save);
+	chd_set_interface(&imgtool_chd_interface);
+	reply = hard_disk_get_info(disk);
+	chd_set_interface(&interface_save);
 
 	return reply;
 }
 
-
-#if 0
-#pragma mark -
-#pragma mark IMGTOOL MODULE IMPLEMENTATION
-#endif
 
 static int mess_hd_image_create(const struct ImageModule *mod, STREAM *f, option_resolution *createoptions);
 

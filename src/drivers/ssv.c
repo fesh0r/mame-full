@@ -2952,9 +2952,6 @@ AC1804M01.U10   32M Mask
 AC1807M01.U41   32M Mask
 AC1810E01.U32   27C160
 
-Developers:
-           More Info Reqd? Redump needed? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 

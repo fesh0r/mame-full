@@ -126,8 +126,6 @@ c13_u12.u12     HN624116 - GFX
 
               Screenshots and board pics are available here...
               http://unemulated.emuunlim.com/shopraid/index.html
-              More info reqd? Email me...
-              theguru@emuunlim.com
 
 *** ROMSET: vgoalsca
 

@@ -55,7 +55,7 @@ VIDEO_UPDATE( snowbros )
 		int attr = spriteram16[offs+7];
 		int flipx =   attr & 0x80;
 		int flipy =  (attr & 0x40) << 1;
-		int tile  = ((attr & 0x1f) << 8) + (spriteram16[offs+6] & 0xff);
+		int tile  = ((attr & 0x3f) << 8) + (spriteram16[offs+6] & 0xff);
 
 		if (tilecolour & 1) dx = -1 - (dx ^ 0xff);
 		if (tilecolour & 2) dy = -1 - (dy ^ 0xff);

@@ -440,7 +440,7 @@ enum
 	IOASIC_PICOUT,		/* c: PIC output port */
 	IOASIC_PICIN,		/* d: PIC input port */
 	IOASIC_INTSTAT,		/* e: interrupt status */
-	IOASIC_INTCTL,		/* f: interrupt control */
+	IOASIC_INTCTL		/* f: interrupt control */
 };
 
 

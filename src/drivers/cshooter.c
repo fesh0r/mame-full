@@ -468,8 +468,6 @@ Note, all ROMs have official sticker, "(C) SEIBU KAIHATSU INC." and a number.
 4.g8   TMM24256 Mask   Sound (Samples?)
 5.g6   TMM2764         Sound program
 
-any more info needed, email me
-theguru@emuunlim.com
 
 */
 

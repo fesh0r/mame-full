@@ -886,11 +886,13 @@ tools/messdocs$(EXE):						\
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-tools/imgtool$(EXE):	                   \
-	$(PLATFORM_IMGTOOL_OBJS)	           \
+tools/imgtool$(EXE):						\
+	$(PLATFORM_IMGTOOL_OBJS)				\
 	$(OBJ)/unzip.o							\
-	$(OBJ)/harddisk.o	                   \
-	$(OBJ)/md5.o					       \
+	$(OBJ)/chd.o							\
+	$(OBJ)/harddisk.o						\
+	$(OBJ)/md5.o							\
+	$(OBJ)/sha1.o							\
 	$(OBJ)/mess/crcfile.o	               \
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\

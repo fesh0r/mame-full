@@ -277,7 +277,7 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 
 static struct
 {
-	void *hd_handle;
+	struct hard_disk_file *hd_handle;
 	unsigned int wp : 1;		/* TRUE if disk is write-protected */
 	int current_cylinder;
 
@@ -287,18 +287,18 @@ static struct
 
 int smc92x4_hd_load(mess_image *image, int disk_unit)
 {
-	const struct hard_disk_header *header;
+	const struct hard_disk_info *info;
 
 	if (device_load_mess_hd(image, image_fp(image)) == INIT_PASS)
 	{
-		hd[disk_unit].hd_handle = mess_hd_get_hard_disk_handle(image);
+		hd[disk_unit].hd_handle = mess_hd_get_hard_disk_file(image);
 		hd[disk_unit].wp = ! mess_hd_is_writable(image);
 		hd[disk_unit].current_cylinder = 0;
-		header = hard_disk_get_header(hd[disk_unit].hd_handle);
-		hd[disk_unit].cylinders = header->cylinders;
-		hd[disk_unit].heads = header->heads;
-		hd[disk_unit].sectors_per_track = header->sectors;
-		hd[disk_unit].bytes_per_sector = header->seclen;
+		info = hard_disk_get_info(hd[disk_unit].hd_handle);
+		hd[disk_unit].cylinders = info->cylinders;
+		hd[disk_unit].heads = info->heads;
+		hd[disk_unit].sectors_per_track = info->sectors;
+		hd[disk_unit].bytes_per_sector = info->sectorbytes;
 
 		if ((hd[disk_unit].cylinders > 2048) || (hd[disk_unit].heads > 16)
 				|| (hd[disk_unit].sectors_per_track > 256)

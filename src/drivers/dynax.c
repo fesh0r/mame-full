@@ -1634,9 +1634,6 @@ Notes:
     Vertical Sync = 60Hz
       Horiz. Sync = 15.56kHz
 
-Developers:
-           More info reqd? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 
@@ -1746,9 +1743,6 @@ Notes:
           HSync: 15.925 kHz
           VSync: 60Hz
 
-Developers:
-           More info reqd? Email me...
-           theguru@emuunlim.com
 
 ***************************************************************************/
 

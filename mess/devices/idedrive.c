@@ -4,7 +4,6 @@
 	Raphael Nabet 2003
 */
 
-/*#include "harddisk.h"*/
 #include "machine/idectrl.h"
 #include "mess_hd.h"
 #include "idedrive.h"
@@ -50,7 +49,7 @@ int ide_hd_load(mess_image *img, int which_bus, int which_address, struct ide_in
 
 	if (device_load_mess_hd(img, image_fp(img)) == INIT_PASS)
 	{
-		ide_controller_init_custom(which_bus, intf, mess_hd_get_hard_disk_handle(img));
+		ide_controller_init_custom(which_bus, intf, mess_hd_get_chd_file(img));
 		ide_controller_reset(which_bus);
 		return INIT_PASS;
 	}	

@@ -150,7 +150,7 @@ struct ide_state
 	UINT8	config_register_num;
 
 	struct ide_interface *intf;
-	void *	disk;
+	struct hard_disk_file *	disk;
 	void *	last_status_timer;
 	void *	reset_timer;
 
@@ -228,10 +228,10 @@ INLINE void clear_interrupt(struct ide_state *ide)
  *
  *************************************/
 
-int ide_controller_init_custom(int which, struct ide_interface *intf, void *diskhandle)
+int ide_controller_init_custom(int which, struct ide_interface *intf, struct chd_file *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
-	const struct hard_disk_header *header;
+	const struct hard_disk_info *hdinfo;
 
 	/* NULL interface is immediate failure */
 	if (!intf)
@@ -242,20 +242,20 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, void *disk
 	ide->intf = intf;
 
 	/* set MAME harddisk handle */
-	ide->disk = diskhandle;
+	ide->disk = hard_disk_open(diskhandle);
 
 	/* get and copy the geometry */
 	if (ide->disk)
 	{
-		header = hard_disk_get_header(ide->disk);
-		ide->num_cylinders = header->cylinders;
-		ide->num_sectors = header->sectors;
-		ide->num_heads = header->heads;
-		if (header->seclen != IDE_DISK_SECTOR_SIZE)
+		hdinfo = hard_disk_get_info(ide->disk);
+		ide->num_cylinders = hdinfo->cylinders;
+		ide->num_sectors = hdinfo->sectors;
+		ide->num_heads = hdinfo->heads;
+		if (hdinfo->sectorbytes != IDE_DISK_SECTOR_SIZE)
 			/* wrong sector len */
 			return 1;
 #if PRINTF_IDE_COMMANDS
-		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_sectors, ide->num_heads);
+		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_heads, ide->num_sectors);
 #endif
 	}
 

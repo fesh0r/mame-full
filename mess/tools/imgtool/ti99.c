@@ -973,7 +973,7 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 
 	if (img_format == if_harddisk)
 	{
-		const struct hard_disk_header *info; 
+		const struct hard_disk_info *info; 
 
 		l1_img->harddisk_handle = imghd_open(file_handle);
 		if (!l1_img->harddisk_handle)
@@ -983,7 +983,7 @@ static int open_image_lvl1(STREAM *file_handle, ti99_img_format img_format, ti99
 		l1_img->geometry.cylinders = info->cylinders;
 		l1_img->geometry.heads = info->heads;
 		l1_img->geometry.secspertrack = info->sectors;
-		if (info->seclen != 256)
+		if (info->sectorbytes != 256)
 		{
 			imghd_close(l1_img->harddisk_handle);
 			l1_img->harddisk_handle = NULL;

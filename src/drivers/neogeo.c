@@ -528,8 +528,9 @@ static READ16_HANDLER( timer16_r )
 
 static WRITE16_HANDLER( neo_z80_w )
 {
-	if (ACCESSING_LSB)
-		return;
+	/* tpgold uses 16-bit writes, this can't be correct */
+//	if (ACCESSING_LSB)
+//		return;
 
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;

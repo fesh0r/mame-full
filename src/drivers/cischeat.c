@@ -875,12 +875,7 @@ MEMORY_END
    implement the shift using 2 buttons, and the accelerator in
    f1gpstar */
 
-#define BUTTONS_STATUS \
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON5 )
+//Trust me, this macro doesn't work properly, Big Run inputs do NOT equal Cisco Heat inputs. (EC)
 
 /**************************************************************************
 								Big Run
@@ -892,7 +887,9 @@ MEMORY_END
 
 INPUT_PORTS_START( bigrun )
 	PORT_START	// IN0 - Fake input port - Buttons status
-	BUTTONS_STATUS
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
 
 	PORT_START	// IN1 - Coins - $80000.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
@@ -1013,7 +1010,8 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( cischeat )
 	PORT_START	// IN0 - Fake input port - Buttons status
-	BUTTONS_STATUS
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
 
 	PORT_START	// IN1 - Coins - $80000.w
 	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_COIN1    )
@@ -1114,7 +1112,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( f1gpstar )
 	PORT_START	// IN0 - Fake input port - Buttons status
-	BUTTONS_STATUS
+    PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON4 ) \
 
 /*	[Country]
 	Japan		"race together" in Test Mode, Always Choose Race
@@ -2315,9 +2315,6 @@ PROMs :
         PR90015B.153   type 82s135, near 9188A-26.124
         PR88004Q.105   type 82s147, near GS90015-01
 
-Developers:
-           More info reqd? Redump needed? Email me....
-           theguru@emuunlim.com
 
 ***************************************************************************/
 

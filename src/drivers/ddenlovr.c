@@ -19,6 +19,7 @@ Year + Game					Board			CPU		Sound						Custom				Notes
 94 Quiz 365									68000	AY8910 + YM2413 + M6295
 94 Rong Rong								Z80		         YM2413 + M6295		NAKANIHON NL-002
 95 Don Den Lover Vol 1		D11309208L1		68000	AY8910 + YM2413 + M6295		NAKANIHON NL-005
+95 Nettoh Quiz Champion						68000	AY8910 + YM2413 + M6295
 
 the following use a different blitter, will probably go in a separate driver
 96 Hanakanzashi								Z80		         YM2413 + M6295
@@ -1007,6 +1008,97 @@ static MEMORY_WRITE16_START( ddenlovr_writemem )
 MEMORY_END
 
 
+static READ16_HANDLER( nettoqc_special_r )
+{
+	return readinputport(2) | (dynax_blitter_irq_flag ? 0x60 : 0x00 );
+}
+
+static data16_t nettoqc_select;
+
+static WRITE16_HANDLER( nettoqc_select_w )
+{
+	COMBINE_DATA(&nettoqc_select);
+}
+
+static READ16_HANDLER( nettoqc_input_r )
+{
+	if (!(nettoqc_select & 0x01))	return readinputport(3);
+	if (!(nettoqc_select & 0x02))	return readinputport(4);
+	if (!(nettoqc_select & 0x04))	return readinputport(5);
+	return 0xffff;
+}
+
+/*
+	Protection:
+
+	Writes 37 28 12 to 200e0b then 11 to 200e0d. Expects to read 88 from 200c03
+	Writes 67 4c 3a to 200e0b then 19 to 200e0d. Expects to read 51 from 200c03
+*/
+
+static data16_t *nettoqc_protection_val;
+
+static READ16_HANDLER( nettoqc_protection_r )
+{
+	switch( nettoqc_protection_val[0] & 0xff )
+	{
+		case 0x3a:	return 0x0051;
+		default:	return 0x0088;
+	}
+}
+
+static WRITE16_HANDLER( nettoqc_coincounter_w )
+{
+	if (ACCESSING_LSB)
+	{
+		coin_counter_w(0, data & 0x01);
+		coin_counter_w(1, data & 0x04);
+		//                data & 0x80 ?
+	}
+}
+
+static WRITE16_HANDLER( nettoqc_oki_bank_w )
+{
+	if (ACCESSING_LSB)
+		OKIM6295_set_bank_base(0, (data & 3) * 0x40000);
+}
+
+static MEMORY_READ16_START( nettoqc_readmem )
+	{ 0x000000, 0x17ffff, MRA16_ROM					},	// ROM
+	{ 0x200c02, 0x200c03, nettoqc_protection_r		},	//
+	{ 0x300070, 0x300071, unk16_r					},	// ? must be 78 on startup (not necessary in ddlover)
+	{ 0x300086, 0x300087, ddenlovr_gfxrom_r			},	// Video Chip
+	{ 0x300100, 0x30011f, rtc16_r					},	// 6242RTC
+	{ 0x300180, 0x300181, input_port_0_word_r		},	//
+	{ 0x300182, 0x300183, input_port_1_word_r		},	//
+	{ 0x300184, 0x300185, nettoqc_special_r			},	// Coins + ?
+	{ 0x300186, 0x300187, nettoqc_input_r			},	// DSW's
+	{ 0x300240, 0x300241, OKIM6295_status_0_lsb_r	},	// Sound
+	{ 0xff0000, 0xffffff, MRA16_RAM					},	// RAM
+MEMORY_END
+
+static MEMORY_WRITE16_START( nettoqc_writemem )
+	{ 0x000000, 0x17ffff, MWA16_ROM								},	// ROM
+	{ 0x200000, 0x2003ff, ddenlovr_palette_w					},	// Palette
+	{ 0x200e0a, 0x200e0d, MWA16_RAM, &nettoqc_protection_val	},	//
+	{ 0x201000, 0x2017ff, MWA16_RAM 							},	// ?
+	{ 0x300040, 0x300047, ddenlovr_palette_base_w				},	// palette base for the 4 layers
+	{ 0x300068, 0x300069, ddenlovr_bgcolor_w					},
+	{ 0x30006a, 0x30006b, ddenlovr_priority_w					},
+	{ 0x30006c, 0x30006d, ddenlovr_layer_enable_w				},
+	{ 0x300080, 0x300083, ddenlovr_blitter_w					},
+	{ 0x3000c0, 0x3000c1, YM2413_register_port_0_lsb_w			},	// Sound
+	{ 0x3000c2, 0x3000c3, YM2413_data_port_0_lsb_w				},	//
+	{ 0x300140, 0x300141, AY8910_control_port_0_lsb_w			},	//
+	{ 0x300142, 0x300143, AY8910_write_port_0_lsb_w				},	//
+	{ 0x300188, 0x300189, nettoqc_coincounter_w					},	// Coin Counters
+	{ 0x30018a, 0x30018b, nettoqc_select_w						},	//
+	{ 0x30018c, 0x30018d, nettoqc_oki_bank_w					},
+	{ 0x300240, 0x300241, OKIM6295_data_0_lsb_w 				},	//
+	{ 0x3001ca, 0x3001cb, ddenlovr_blitter_irq_ack_w			},	// Blitter irq acknowledge
+	{ 0xff0000, 0xffffff, MWA16_RAM								},	// RAM
+MEMORY_END
+
+
 /***************************************************************************
 								Rong Rong
 ***************************************************************************/
@@ -1181,6 +1273,104 @@ INPUT_PORTS_START( ddenlovr )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Unknown 1-7*" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( nettoqc )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON1  | IPF_PLAYER1 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2  | IPF_PLAYER1 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON3  | IPF_PLAYER1 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER1 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_BUTTON1  | IPF_PLAYER2 )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2  | IPF_PLAYER2 )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON3  | IPF_PLAYER2 )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_BUTTON4  | IPF_PLAYER2 )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Coins + ?
+	PORT_BIT(  0x01, IP_ACTIVE_LOW,  IPT_COIN1    )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW,  IPT_COIN2    )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BITX( 0x08, IP_ACTIVE_LOW,  IPT_SERVICE, "Test", KEYCODE_F1, IP_JOY_NONE )	/* Test */
+	PORT_BIT(  0x10, IP_ACTIVE_HIGH, IPT_SPECIAL  )	// blitter busy flag
+	PORT_BIT(  0x20, IP_ACTIVE_HIGH, IPT_SPECIAL  )	// ?
+	PORT_BIT(  0x40, IP_ACTIVE_HIGH, IPT_SPECIAL  )	// blitter irq flag
+	PORT_BIT(  0x80, IP_ACTIVE_HIGH, IPT_SPECIAL  )
+
+	PORT_START	// IN3 - DSW
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 1-6*" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 1-7*" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN4 - DSW
+	PORT_DIPNAME( 0x03, 0x03, "Unknown 2-0&1*" )
+	PORT_DIPSETTING(    0x02, "0" )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3*" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4*" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5*" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6*" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7*" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN5 - DSW
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 1-8*" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-8*" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-9*" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x00, "Detailed Tests" )	// menu "8 OPTION" in service mode
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1449,6 +1639,14 @@ static MACHINE_DRIVER_START( quiz365 )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( nettoqc )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(ddenlovr)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(nettoqc_readmem,nettoqc_writemem)
+MACHINE_DRIVER_END
+
 /***************************************************************************
 								Rong Rong
 ***************************************************************************/
@@ -1675,6 +1873,41 @@ ROM_END
 
 /***************************************************************************
 
+Netto Quiz Champion (c) Nakanihon
+
+CPU: 68HC000
+Sound: OKI6295
+Other: HN46505, unknown 68 pin, unknown 100 pin (x2), unknown 64 pin (part numbers scratched off).
+PLDs: GAL16L8B (x2, protected)
+RAM: TC524258BZ-10 (x5), TC55257BSPL-10 (x2), TC5588P-35
+XTAL1: 16 MHz
+XTAL2: 28.63636 MHz
+
+***************************************************************************/
+
+ROM_START( nettoqc )
+	ROM_REGION( 0x180000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "10305.rom", 0x000000, 0x080000, CRC(ebb14a1f) SHA1(5e4511a878d0bcede79a287fb184e912c9eb7dc5) )
+	ROM_LOAD16_BYTE( "10303.rom", 0x000001, 0x080000, CRC(30c114c3) SHA1(fa9c26d465d2d919e141bbc080a04ac0f87c7010) )
+	ROM_LOAD16_BYTE( "10306.rom", 0x100000, 0x040000, CRC(f19fe827) SHA1(37907bf3206af5f4613dc80b6bd91c87dd6645ab) )
+	ROM_LOAD16_BYTE( "10304.rom", 0x100001, 0x040000, CRC(da1f56e5) SHA1(76c865927ee8392dd77476a248816e04e60c784a) )
+	ROM_CONTINUE(                 0x100001, 0x040000 )	// 1ST AND 2ND HALF IDENTICAL
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_LOAD( "10307.rom", 0x000000, 0x100000, CRC(c7a3b05f) SHA1(c931670c5d14f8446404ad00d785fa73d97dedfc) )
+	ROM_LOAD( "10308.rom", 0x100000, 0x100000, CRC(416807a1) SHA1(bccf746ddc9750e3956299fec5b3737a53b24c36) )
+	ROM_LOAD( "10309.rom", 0x200000, 0x100000, CRC(81841272) SHA1(659c009c41ae54d330da41922c8afd1fb293d854) )
+	ROM_LOAD( "10310.rom", 0x300000, 0x080000, CRC(0f790cda) SHA1(97c79b02ba95551514f8dee701bd71b53e41abf4) )
+	ROM_LOAD( "10311.rom", 0x380000, 0x080000, CRC(41109231) SHA1(5e2f4684fd65dcdfb61a94099e0600c23a4740b2) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "10301.rom", 0x000000, 0x080000, CRC(52afd952) SHA1(3ed6d92b78552d390ee305bb216648dbf6d63daf) )
+	ROM_LOAD( "10302.rom", 0x080000, 0x080000, CRC(6e2d4660) SHA1(d7924af8807f7238a7885b204a8c352ff75298b7) )
+ROM_END
+
+
+/***************************************************************************
+
 Don Den Lover Vol 1
 (C) Dynax Inc 1995
 
@@ -1759,11 +1992,12 @@ static DRIVER_INIT( rongrong )
 }
 
 
-GAMEX(1992, mmpanic,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon (Taito license)", "Monkey Mole Panic", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1993, quizchq,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon", "Quiz Channel Question (Ver 1.00) (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1993, quizchql, quizchq, quizchq,  rongrong, 0,        ROT0, "[Nakanihon] (Laxan license)", "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon", "Quiz 365 (Hong Kong & Taiwan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL  | GAME_NOT_WORKING )
-GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon", "Rong Rong (Germany)", GAME_NO_COCKTAIL )
-GAMEX(1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",     "Don Den Lover Vol. 1 (Hong Kong)", GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX(1992, mmpanic,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon (Taito license)", "Monkey Mole Panic",                          GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX(1993, quizchq,  0,       quizchq,  rongrong, 0,        ROT0, "Nakanihon",                 "Quiz Channel Question (Ver 1.00) (Japan)",   GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX(1993, quizchql, quizchq, quizchq,  rongrong, 0,        ROT0, "Nakanihon (Laxan license)", "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX(1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon",                 "Quiz 365 (Hong Kong & Taiwan)",              GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL  | GAME_NOT_WORKING )
+GAMEX(1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon",                 "Rong Rong (Germany)",                        GAME_NO_COCKTAIL )
+GAMEX(1995, nettoqc,  0,       nettoqc,  nettoqc,  0,        ROT0, "Nakanihon",                 "Nettoh Quiz Champion (Japan)",               GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX(1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",                     "Don Den Lover Vol. 1 (Hong Kong)",           GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
 
 GAMEX(1996, hanakanz, 0,       rongrong, rongrong, 0,        ROT0, "Dynax",     "Hanakanzashi (Japan)", GAME_NOT_WORKING )

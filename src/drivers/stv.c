@@ -53,20 +53,21 @@ Preliminary Memory map:
 (Main issues)
 -complete the Master/Slave communication.
 -fix properly the IC13 issue,some games still fails their booting.
--NVRAM needs emulating.
--clock utility in main menu of the bios is (again) broken :(.
 -SMPC:I don't know what the last three commands(NMI request/NMI disable/NMI enable)
  are really for.I suppose that they disable/enable the reset for the Slave and the
  sound CPU,but I'm not sure. -AS
 -Clean-ups and split the various chips(SCU,SMPC)into their respective files.
--CD block:complete it & add proper CD support into MAME.
+-CD block:complete it & add proper CD image support into MAME.
+-the Cart-Dev mode...why it hangs?
+-some games increments *intentionally* the credit counter by two at every start-up.
+ missing/wrong irq I guess,possibly HBLANK or a sound cpu issue.
+-finish the DSP core.
 
 (per-game issues)
 -groovef: hangs soon after loaded.
 -various: find idle skip if possible.
--some games increments *intentionally* the credit counter by two at every start-up.
- missing/wrong irq I guess,possibly HBLANK.
--vmahjong:locks up the emulation due to wrong DMA/irq issues.
+-vmahjong:locks up the emulation due to DMA/irq issues.
+-vmahjong:hook-up the map register for bitmaps,they are used by this in service mode.
 -hanagumi: why do we get 2 credits on startup with sound enabled (game doesn't work
  with sound disabled but thats known, we removed the hacks)
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
@@ -79,14 +80,13 @@ Preliminary Memory map:
 -vfremix: game seems to start then waits for an address to change, another interrupt /
  stv timers issue?
 -most: static for sounds
--some games (rsgun,myfairld) are currently broken,they don't pass the master/slave
- communication test again...
--grdforce: missing backgrounds.
--ejihon: we need somebody who can read japanese & can play this game,I (AS)
- believe that the game works fine but I don't know how to play...
- * according to Yasu it is playable, just missing an alpha effect on the magifying glass
+-some games (rsgun,myfairld) don't pass the master/slave communication check if you
+ enter then exit from the BIOS test mode,it is a recent issue as before wasn't like this...
+-grdforce: missing backgrounds(map issue? -AS)
+-ejihon: alpha effect is missing on the magifying glass.
 -kiwames: locks up after one match.
 -suikoenb: why the color RAM format doesn't change when you exit the test menu?
+
 
 */
 
@@ -179,6 +179,7 @@ static struct stv_scu_dsp_internal_registers {
 	   UINT16 ach;									   /*ALU external high register*/
 	   UINT32 acl;									   /*ALU external low register*/
 	   UINT32 ra0,wa0;								   /*DSP DMA registers*/
+	   UINT8  t0;								       /*DSP DMA flag*/
 	   UINT32 internal_prg[0x100];
 } dsp_reg;
 static void dsp_prg_ctrl(UINT32 data);
@@ -207,6 +208,8 @@ static void dsp_execute_program(void);
 #define ZF_0 if(stv_scu[32] & 0x00200000) stv_scu[32]^=0x00200000
 #define CF_0 if(stv_scu[32] & 0x00100000) stv_scu[32]^=0x00100000
 #define VF_0 if(stv_scu[32] & 0x00080000) stv_scu[32]^=0x00080000
+#define T0_1 if(!(dsp_reg.t0 & 1))	dsp_reg.t0^=1
+#define T0_0 if(dsp_reg.t0 & 1)		dsp_reg.t0^=1
 
 static int scanline;
 
@@ -333,10 +336,10 @@ void cdb_reset(void){
 
 		// reset filter conditions
 		CD_filt[i].true		= i;
-		CD_filt[i].false		= 0xff;
+		CD_filt[i].false	= 0xff;
 		CD_filt[i].mode		= 0;
 		CD_filt[i].fad		= 0;
-		CD_filt[i].range		= 0;
+		CD_filt[i].range	= 0;
 		CD_filt[i].chan		= 0;
 		CD_filt[i].fid		= 0;
 		CD_filt[i].sub_val	= 0;
@@ -355,6 +358,15 @@ void cdb_reset(void){
 void do_cd_command(void){
 
 	UINT32 fid,pn, sp, sn;
+	UINT32 count;
+	UINT8 pm; /* play mode */
+	UINT32 rf;
+	int ii;
+	sect_t * s;
+	UINT32  fad;
+	UINT32 i, j, nearest = 0, fad2 = 0;
+	UINT32 size;
+	UINT32 off;
 	//based on sthief SSE source code
 	switch (CR1 >> 8){
 
@@ -524,26 +536,21 @@ void do_cd_command(void){
 				//end data transfer
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				
-				{
-					UINT32 count;
-
-					switch(CD_trans_type){
-					case -1:	count = 0xffffff; break;			// no transfer
-					case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
-					default:	count = (CD_info_count + 1) >> 1; break;	// info transfer
-					}
-
-					CD_hirq |= HIRQ_CMOK;
-
-					if(count && count != 0xffffff) // not sure ...
-						CD_hirq |= HIRQ_DRDY;
-
-					CR1 = (CD_status << 8) | (count >> 16);
-					CR2 = count;
-					CR3 = 0;
-					CR4 = 0;
+				switch(CD_trans_type){
+				case -1:	count = 0xffffff; break;			// no transfer
+				case 0:	count = (CD_data_count + 1) >> 1; break;	// data transfer
+				default:	count = (CD_info_count + 1) >> 1; break;	// info transfer
 				}
+
+				CD_hirq |= HIRQ_CMOK;
+
+				if(count && count != 0xffffff) // not sure ...
+					CD_hirq |= HIRQ_DRDY;
+
+				CR1 = (CD_status << 8) | (count >> 16);
+				CR2 = count;
+				CR3 = 0;
+				CR4 = 0;
 
 				break;
 		case 0x10:
@@ -552,154 +559,150 @@ void do_cd_command(void){
 
 				// sthief: must be rewritten!
 
-				{
-					UINT8 pm; // play mode
+				pm = (CR3 >> 8);
 
-					pm = (CR3 >> 8);
+				if((CR1 & 0x80) != (CR3 & 0x80)){
 
-					if((CR1 & 0x80) != (CR3 & 0x80)){
+				}
 
+				if((CR1 & 0xff) == 0xff){
+
+					// resume
+					// bad!
+
+					logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
+
+					CD_status = CDB_STAT_PLAY;
+					CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
+
+					CD_hirq |= HIRQ_CMOK;
+
+					CD_hirq &= ~HIRQ_SCDQ;
+					CD_hirq &= ~HIRQ_CSCT;
+					CD_hirq &= ~HIRQ_PEND;
+					CD_hirq &= ~HIRQ_DRDY;
+
+					if((CD_cur_fad < CD_play_fad) &&
+					   (CD_cur_fad >= (CD_play_fad + CD_play_range))){
+
+						// already out of range
+						// lacks repeat
+
+						CD_status = CDB_STAT_PAUSE;
+						CD_flag = 0;
+
+						CD_hirq |= HIRQ_PEND;
+
+					}else{
+
+						CD_play_range = (CD_toc.track[CD_cur_track].fad - CD_toc.track[CD_cur_track-1].fad);
+						CD_play_range -= 150; // 2 sec gap
 					}
 
-					if((CR1 & 0xff) == 0xff){
+				}else
+				if((CR1 & 0xff) == 0x00){
 
-						// resume
-						// bad!
+					if(CR2 == 0){
 
-						logerror("play : resume , track=%i fad=%i\n", CD_cur_track, CD_cur_fad);
+						// play default
+
+						logerror("play default\n");
+						exit(1);
+
+					}else{
+
+						// play track
+
+						UINT32 tn0, idx0;
+						UINT32 tn1, idx1;
+
+						tn0 = CR2 >> 8;
+						tn1 = CR4 >> 8;
+						idx0 = CR2 & 0xff;
+						idx1 = CR4 & 0xff;
+
+						logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
+
+						if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
+							logerror("ERROR: play track negative range\n");
+							exit(1);
+						}
+
+						if((pm & 0x80) == 0){
+
+							// rewind track
+
+							CD_cur_track	= tn0;
+							CD_cur_ctrl	= CD_toc.track[tn0-1].ctrl;
+							CD_cur_idx		= idx0;
+							CD_cur_fad		= CD_toc.track[tn0-1].fad;
+							CD_cur_fid		= 0;
+						}
+
+						if(CD_cur_ctrl & 0x40){
+							logerror("ERROR: play data track\n");
+							exit(1);
+						}
+
+						CD_play_fad	= CD_toc.track[CD_cur_track-1].fad;
+						CD_play_range	= CD_toc.track[tn1-1].fad - CD_toc.track[CD_cur_track-1].fad;
 
 						CD_status = CDB_STAT_PLAY;
-						CD_flag = (CD_cur_ctrl & 0x40) ? CDB_FLAG_CDROM : 0;
-
-						CD_hirq |= HIRQ_CMOK;
+						CD_flag = 0;
 
 						CD_hirq &= ~HIRQ_SCDQ;
 						CD_hirq &= ~HIRQ_CSCT;
 						CD_hirq &= ~HIRQ_PEND;
 						CD_hirq &= ~HIRQ_DRDY;
+						CD_hirq |= HIRQ_CMOK;
+					}
 
-						if((CD_cur_fad < CD_play_fad) &&
-						   (CD_cur_fad >= (CD_play_fad + CD_play_range))){
+				}else
+				if(CR1 & 0x80){
 
-							// already out of range
-							// lacks repeat
+					// play fad
 
-							CD_status = CDB_STAT_PAUSE;
-							CD_flag = 0;
+					CD_play_fad	= ((CR1 & 0x7f) << 16) | CR2; // position
+					CD_play_range	= ((CR3 & 0x7f) << 16) | CR4; // length
 
-							CD_hirq |= HIRQ_PEND;
+					if(CD_play_range == 0){
 
-						}else{
+						// <PAUSE>
 
-							CD_play_range = (CD_toc.track[CD_cur_track].fad - CD_toc.track[CD_cur_track-1].fad);
-							CD_play_range -= 150; // 2 sec gap
-						}
+						CD_status = CDB_STAT_PAUSE;
+						CD_flag = 0;
 
-					}else
-					if((CR1 & 0xff) == 0x00){
-
-						if(CR2 == 0){
-
-							// play default
-
-							logerror("play default\n");
-							exit(1);
-
-						}else{
-
-							// play track
-
-							UINT32 tn0, idx0;
-							UINT32 tn1, idx1;
-
-							tn0 = CR2 >> 8;
-							tn1 = CR4 >> 8;
-							idx0 = CR2 & 0xff;
-							idx1 = CR4 & 0xff;
-
-							logerror("play : pm=%02x track=%i idx=%i -> track=%i idx=%i\n", pm, tn0, idx0, tn1, idx1);
-
-							if(tn1 < tn0 || (tn1 == tn0 && idx1 < idx0)){
-								logerror("ERROR: play track negative range\n");
-								exit(1);
-							}
-
-							if((pm & 0x80) == 0){
-
-								// rewind track
-
-								CD_cur_track	= tn0;
-								CD_cur_ctrl	= CD_toc.track[tn0-1].ctrl;
-								CD_cur_idx		= idx0;
-								CD_cur_fad		= CD_toc.track[tn0-1].fad;
-								CD_cur_fid		= 0;
-							}
-
-							if(CD_cur_ctrl & 0x40){
-								logerror("ERROR: play data track\n");
-								exit(1);
-							}
-
-							CD_play_fad	= CD_toc.track[CD_cur_track-1].fad;
-							CD_play_range	= CD_toc.track[tn1-1].fad - CD_toc.track[CD_cur_track-1].fad;
-
-							CD_status = CDB_STAT_PLAY;
-							CD_flag = 0;
-
-							CD_hirq &= ~HIRQ_SCDQ;
-							CD_hirq &= ~HIRQ_CSCT;
-							CD_hirq &= ~HIRQ_PEND;
-							CD_hirq &= ~HIRQ_DRDY;
-							CD_hirq |= HIRQ_CMOK;
-						}
-
-					}else
-					if(CR1 & 0x80){
-
-						// play fad
-
-						CD_play_fad	= ((CR1 & 0x7f) << 16) | CR2; // position
-						CD_play_range	= ((CR3 & 0x7f) << 16) | CR4; // length
-
-						if(CD_play_range == 0){
-
-							// <PAUSE>
-
-							CD_status = CDB_STAT_PAUSE;
-							CD_flag = 0;
-
-							CD_hirq &= ~HIRQ_SCDQ;
-							CD_hirq &= ~HIRQ_CSCT;
-							CD_hirq |= HIRQ_PEND;
-							CD_hirq |= HIRQ_CMOK;
-
-						}else{
-
-							// <PLAY>
-
-							CD_stat = CDB_STAT_PLAY;
-							CD_flag = CDB_FLAG_CDROM;
-
-							CD_hirq &= ~HIRQ_SCDQ;
-							CD_hirq &= ~HIRQ_CSCT;
-							CD_hirq &= ~HIRQ_PEND;
-							CD_hirq &= ~HIRQ_DRDY; // this must be set on PEND
-							CD_hirq |= HIRQ_CMOK;
-
-							CD_cur_fad		= CD_play_fad;
-							CD_cur_track	= cdb_find_track(CD_cur_fad);
-							CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
-							CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
-							CD_cur_fid		= cdb_find_file(CD_cur_fad);
-
-							CD_repeat = 0;
-						}
+						CD_hirq &= ~HIRQ_SCDQ;
+						CD_hirq &= ~HIRQ_CSCT;
+						CD_hirq |= HIRQ_PEND;
+						CD_hirq |= HIRQ_CMOK;
 
 					}else{
 
-						logerror("ERROR: invalid play command\n");
-						exit(1);
+						// <PLAY>
+
+						CD_stat = CDB_STAT_PLAY;
+						CD_flag = CDB_FLAG_CDROM;
+
+						CD_hirq &= ~HIRQ_SCDQ;
+						CD_hirq &= ~HIRQ_CSCT;
+						CD_hirq &= ~HIRQ_PEND;
+						CD_hirq &= ~HIRQ_DRDY; // this must be set on PEND
+						CD_hirq |= HIRQ_CMOK;
+
+						CD_cur_fad		= CD_play_fad;
+						CD_cur_track	= cdb_find_track(CD_cur_fad);
+						CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+						CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+						CD_cur_fid		= cdb_find_file(CD_cur_fad);
+
+						CD_repeat = 0;
 					}
+
+				}else{
+
+					logerror("ERROR: invalid play command\n");
+					exit(1);
 				}
 
 				CD_com_play = CD_com;
@@ -1050,85 +1053,80 @@ void do_cd_command(void){
 				// b1,0	unused
 				//
 				// if reset flag is zero, all selectors are completely reset
-				{
-					UINT32 rf;
 
-					rf = CR1 & 0xff;
+				rf = CR1 & 0xff;
 
-					if(rf == 0){
+				if(rf == 0){
 
-					// all partitions are reset
+				// all partitions are reset
 
-					int i;
-
-					for(i = 0; i < CDB_SEL_NUM; i++){
-						if(rf & 0x80){ CD_filt[i].false = 0xff; }
-						if(rf & 0x40){ CD_filt[i].true = i; }
-						if(rf & 0x20){
-							CD_filt_num = 0xff;
-							CD_mpeg_filt_num = 0xff;
-						}
-						if(rf & 0x10){
-							CD_filt[i].mode = 0x00;
-							CD_filt[i].fad = 0;
-							CD_filt[i].range = 0;
-							CD_filt[i].chan = 0;
-							CD_filt[i].fid = 0;
-							CD_filt[i].sub_val = 0;
-							CD_filt[i].sub_mask = 0;
-							CD_filt[i].cod_val = 0;
-							CD_filt[i].cod_mask = 0;
-						}
-						if(rf & 0x08){ } // ?
-							if(rf & 0x04){
-								/*
-								int j;
-								for(j = 0; j < 200; j++){
-									if(CD_part[pn].sect[j] != NULL){ size?
-										memset(CD_part[pn].sect[j].data, 0xff, 2352);
-										CD_part[pn].sect[j].size = 0;
-									}
-									CD_part[pn].sect[j] = NULL;
+				for(i = 0; i < CDB_SEL_NUM; i++){
+					if(rf & 0x80){ CD_filt[i].false = 0xff; }
+					if(rf & 0x40){ CD_filt[i].true = i; }
+					if(rf & 0x20){
+						CD_filt_num = 0xff;
+						CD_mpeg_filt_num = 0xff;
+					}
+					if(rf & 0x10){
+						CD_filt[i].mode = 0x00;
+						CD_filt[i].fad = 0;
+						CD_filt[i].range = 0;
+						CD_filt[i].chan = 0;
+						CD_filt[i].fid = 0;
+						CD_filt[i].sub_val = 0;
+						CD_filt[i].sub_mask = 0;
+						CD_filt[i].cod_val = 0;
+						CD_filt[i].cod_mask = 0;
+					}
+					if(rf & 0x08){ } // ?
+						if(rf & 0x04){
+							/*
+							int j;
+							for(j = 0; j < 200; j++){
+								if(CD_part[pn].sect[j] != NULL){ size?
+									memset(CD_part[pn].sect[j].data, 0xff, 2352);
+									CD_part[pn].sect[j].size = 0;
 								}
-								*/
+								CD_part[pn].sect[j] = NULL;
 							}
+							*/
+						}
+					}
+
+				}else{
+
+					pn = CR3 >> 8;
+
+					if(pn != 0xff){
+
+						if(pn >= CDB_SEL_NUM){
+							logerror("ERROR: invalid selector\n");
+							//exit(1);
+						}
+
+						if(rf & 0x80){ CD_filt[pn].false = 0xff; }
+						if(rf & 0x40){ CD_filt[pn].true = pn; }
+						if(rf & 0x20){ }
+						if(rf & 0x10){
+							CD_filt[pn].mode = 0x00;
+							CD_filt[pn].fad = 0;
+							CD_filt[pn].range = 0;
+							CD_filt[pn].chan = 0;
+							CD_filt[pn].fid = 0;
+							CD_filt[pn].sub_val = 0;
+							CD_filt[pn].sub_mask = 0;
+							CD_filt[pn].cod_val = 0;
+							CD_filt[pn].cod_mask = 0;
+						}
+						if(rf & 0x08){ }
+						if(rf & 0x04){
+							/*
+							*/
 						}
 
 					}else{
 
-						pn = CR3 >> 8;
-
-						if(pn != 0xff){
-
-							if(pn >= CDB_SEL_NUM){
-								logerror("ERROR: invalid selector\n");
-								//exit(1);
-							}
-
-							if(rf & 0x80){ CD_filt[pn].false = 0xff; }
-							if(rf & 0x40){ CD_filt[pn].true = pn; }
-							if(rf & 0x20){ }
-							if(rf & 0x10){
-								CD_filt[pn].mode = 0x00;
-								CD_filt[pn].fad = 0;
-								CD_filt[pn].range = 0;
-								CD_filt[pn].chan = 0;
-								CD_filt[pn].fid = 0;
-								CD_filt[pn].sub_val = 0;
-								CD_filt[pn].sub_mask = 0;
-								CD_filt[pn].cod_val = 0;
-								CD_filt[pn].cod_mask = 0;
-							}
-							if(rf & 0x08){ }
-							if(rf & 0x04){
-								/*
-								*/
-							}
-
-						}else{
-
-							// NUL_SEL, dunno what should happen here ...
-						}
+						// NUL_SEL, dunno what should happen here ...
 					}
 				}
 
@@ -1174,28 +1172,24 @@ void do_cd_command(void){
 				//calc actual size
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				{
-					int ii;
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
-					CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+				pn = (CR3 >> 8);
+				sp = CR2;
+				sn = CR4;
 
-					pn = (CR3 >> 8);
-					sp = CR2;
-					sn = CR4;
-
-					if(pn >= CDB_SEL_NUM){
-						logerror("ERROR: invalid selector\n");
-						exit(1);
-					}
-
-					if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
-					if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
-
-					CD_actual_size = 0;
-
-					for(ii = sp; ii < (sp+sn); ii++)
-						CD_actual_size += CD_sect[ii].size;
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
 				}
+
+				if(sp == 0xffff){ logerror("ERROR: SPOS_END on calcactualsize\n"); exit(1); }
+				if(sn == 0xffff){ logerror("ERROR: SNUM_END on calcactualsize\n"); exit(1); }
+
+				CD_actual_size = 0;
+
+				for(ii = sp; ii < (sp+sn); ii++)
+					CD_actual_size += CD_sect[ii].size;
 
 				CD_actual_size = (CD_actual_size + 1) >> 1;
 
@@ -1222,83 +1216,76 @@ void do_cd_command(void){
 				//get sector info
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				{
-					sect_t * s;
 
-					pn = CR3 >> 8;
-					sn = CR2 & 0xff;
+				pn = CR3 >> 8;
+				sn = CR2 & 0xff;
 
-					if(pn >= CDB_SEL_NUM){
-						logerror("ERROR: invalid selector\n");
-						exit(1);
-					}
-
-					s = CD_part[pn].sect[sn];
-
-					CR1 = (CD_status << 8) | (s->fad >> 16);
-					CR2 = s->fad;
-					CR3 = (s->fid << 8) | s->chan;
-					CR4 = (s->sub << 8) | s->cod;
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
 				}
+
+				s = CD_part[pn].sect[sn];
+
+				CR1 = (CD_status << 8) | (s->fad >> 16);
+				CR2 = s->fad;
+				CR3 = (s->fid << 8) | s->chan;
+				CR4 = (s->sub << 8) | s->cod;
 
 				break;
 		case 0x55:
 				//execute fad search
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				{
-					UINT32  fad;
-					UINT32 i, j, nearest = 0, fad2 = 0;
+				CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
 
-					CD_hirq |= HIRQ_CMOK | HIRQ_ESEL;
+				pn = CR3 >> 8;
+				sp = CR2;
+				fad = ((CR3 & 0xff) << 8) | CR4;
 
-					pn = CR3 >> 8;
-					sp = CR2;
-					fad = ((CR3 & 0xff) << 8) | CR4;
-
-					if(pn >= CDB_SEL_NUM){
-						logerror("ERROR: invalid selector\n");
-						exit(1);
-					}
-
-					if(sp >= CD_part[pn].size){
-						// SECT_SPOS_END or something ...
-						logerror("ERROR: invalid sector\n");
-						exit(1);
-					}
-
-					CDB_SEND_REPORT();
-
-					i = sp;
-					j = (sp - 1) % CD_part[pn].size;
-					while(i != j){
-
-						if(CD_part[pn].sect[i]->fad == fad){
-
-							// matching sector fad found!
-
-							nearest = i;
-							fad2 = fad;
-
-							break;
-
-						}else
-						if((CD_part[pn].sect[i]->fad < fad) &&
-						   (CD_part[pn].sect[i]->fad > nearest)){
-
-							// adjusting to nearest sector
-
-							nearest = i;
-							fad2 = CD_part[pn].sect[i]->fad;
-						}
-
-						i = (i + 1) % CD_part[pn].size;
-					}
-
-					CD_search_pn = pn;
-					CD_search_sp = nearest;
-					CD_search_fad = fad2;
+				if(pn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
 				}
+
+				if(sp >= CD_part[pn].size){
+					// SECT_SPOS_END or something ...
+					logerror("ERROR: invalid sector\n");
+					exit(1);
+				}
+
+				CDB_SEND_REPORT();
+
+				i = sp;
+				j = (sp - 1) % CD_part[pn].size;
+				while(i != j){
+
+					if(CD_part[pn].sect[i]->fad == fad){
+
+						// matching sector fad found!
+
+						nearest = i;
+						fad2 = fad;
+
+						break;
+
+					}else
+					if((CD_part[pn].sect[i]->fad < fad) &&
+					   (CD_part[pn].sect[i]->fad > nearest)){
+
+						// adjusting to nearest sector
+
+						nearest = i;
+						fad2 = CD_part[pn].sect[i]->fad;
+					}
+
+					i = (i + 1) % CD_part[pn].size;
+				}
+
+				CD_search_pn = pn;
+				CD_search_sp = nearest;
+				CD_search_fad = fad2;
+
 
 				break;
 		case 0x56:
@@ -1492,94 +1479,87 @@ void do_cd_command(void){
 				//get file info
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				{
-					UINT32 size;
-					// check if out of scope
+				// check if out of scope
 
-					fid = (CR3 << 16) | CR4;
+				fid = (CR3 << 16) | CR4;
 
-					if(fid >= 254){
+				if(fid >= 254){
 
-						size = 254 * 12;
+					size = 254 * 12;
 
-						// obtain "all-files-in-scope" 's info (queued)
-						// needs file-scope emulation though
+					// obtain "all-files-in-scope" 's info (queued)
+					// needs file-scope emulation though
 
-						logerror("ERROR: getfileinfo all-files-in-scope\n");
-						exit(1);
+					logerror("ERROR: getfileinfo all-files-in-scope\n");
+					exit(1);
 
-					}else{
+				}else{
 
-						cdb_inject_file_info(fid, cdb_sat_file_info);
+					cdb_inject_file_info(fid, cdb_sat_file_info);
 
-						size = 12;
-					}
-
-					CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
-
-					CR1 = (CD_status << 8);
-					CR2 = (size + 1) >> 1;
-					CR3 = 0;
-					CR4 = 0;
-
-					CD_info_ptr	= cdb_sat_file_info;
-					CD_info_size	= size;
-					CD_info_count	= 0;
-
-					CD_trans_type	= 1; // INFO
+					size = 12;
 				}
+
+				CD_hirq |= HIRQ_CMOK | HIRQ_DRDY;
+
+				CR1 = (CD_status << 8);
+				CR2 = (size + 1) >> 1;
+				CR3 = 0;
+				CR4 = 0;
+
+				CD_info_ptr	= cdb_sat_file_info;
+				CD_info_size	= size;
+				CD_info_count	= 0;
+
+				CD_trans_type	= 1; // INFO
 
 				break;
 		case 0x74:
 				//read file
 				logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 
-				{
-					UINT32 off;
+				CD_com_play = CD_com;
 
-					CD_com_play = CD_com;
+				fn = (CR3 >> 8);
+				fid = ((CR3 & 0xff) << 16) | CR4;
+				off = ((CR1 & 0xff) << 16) | CR2;
 
-					fn = (CR3 >> 8);
-					fid = ((CR3 & 0xff) << 16) | CR4;
-					off = ((CR1 & 0xff) << 16) | CR2;
-
-					if(fn >= CDB_SEL_NUM){
-						logerror("ERROR: invalid selector\n");
-						exit(1);
-					}
-
-					if(fid >= CD_file_num+1){
-						logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
-						exit(1);
-					}
-
-					if(CD_file[fid].attr & 0x02){
-						logerror("ERROR: file id %i is a directory\n", fid);
-						exit(1);
-					}
-
-					CD_play_fad	= CD_file[fid].fad + off;
-					CD_play_range	= ((CD_file[fid].size + 2047) / 2048) - off;
-
-					CD_stat = CDB_STAT_PLAY;
-					CD_flag = CD_FLAG_CDROM;
-
-					CD_hirq &= ~HIRQ_SCDQ;
-					CD_hirq &= ~HIRQ_CSCT;
-					CD_hirq &= ~HIRQ_PEND;
-					CD_hirq |= HIRQ_EFLS;
-					CD_hirq |= HIRQ_CMOK;
-
-					CD_cur_fad		= CD_play_fad;
-					CD_cur_track	= cdb_find_track(CD_play_fad);
-					CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
-					CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
-					CD_cur_fid		= fid;
-
-					CD_repeat = 0;
-
-					CDB_SEND_REPORT();
+				if(fn >= CDB_SEL_NUM){
+					logerror("ERROR: invalid selector\n");
+					exit(1);
 				}
+
+				if(fid >= CD_file_num+1){
+					logerror("ERROR: invalid file id (fid=%i file num=%i)\n", fid, CD_file_num);
+					exit(1);
+				}
+
+				if(CD_file[fid].attr & 0x02){
+					logerror("ERROR: file id %i is a directory\n", fid);
+					exit(1);
+				}
+
+				CD_play_fad	= CD_file[fid].fad + off;
+				CD_play_range	= ((CD_file[fid].size + 2047) / 2048) - off;
+
+				CD_stat = CDB_STAT_PLAY;
+				CD_flag = CD_FLAG_CDROM;
+
+				CD_hirq &= ~HIRQ_SCDQ;
+				CD_hirq &= ~HIRQ_CSCT;
+				CD_hirq &= ~HIRQ_PEND;
+				CD_hirq |= HIRQ_EFLS;
+				CD_hirq |= HIRQ_CMOK;
+
+				CD_cur_fad		= CD_play_fad;
+				CD_cur_track	= cdb_find_track(CD_play_fad);
+				CD_cur_ctrl	= CD_toc.track[CD_cur_track-1].ctrl;
+				CD_cur_idx		= CD_toc.track[CD_cur_track-1].idx;
+				CD_cur_fid		= fid;
+
+				CD_repeat = 0;
+
+				CDB_SEND_REPORT();
 
 				break;
 		case 0x75:
@@ -1641,6 +1621,7 @@ void do_cd_command(void){
 static READ32_HANDLER ( cdregister_r ){
 
 	UINT16 d;
+
 	offset=offset*4;
 
 	//logerror("read from cd block offset=%08x\n", offset);
@@ -1931,12 +1912,14 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 static void stv_SMPC_w8 (int offset, UINT8 data)
 {
-//	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
 	time_t ltime;
 	struct tm *today;
-	smpc_ram[offset] = data;
 	time(&ltime);
 	today = localtime(&ltime);
+
+//	logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
+	smpc_ram[offset] = data;
+
 	if(offset == 0x75)
 	{
 		EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
@@ -2545,6 +2528,7 @@ READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
 	//usrintf_showmessage("%02x",DMA_STATUS);
+	logerror("SCU reg read at %d = %08x\n",offset,stv_scu[offset]);
 	return stv_scu[offset];
 }
 
@@ -2691,6 +2675,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			logerror("Start factor chosen for lv 2 = %d\n",stv_scu[21] & 7);
 		break;
 		case 31: logerror("Warning: DMA status WRITE! Offset %02x(%d)\n",offset*4,offset); break;
+		/*DSP section*/
 		/*Use functions so it is easier to work out*/
 		case 32:
 		dsp_prg_ctrl(data);
@@ -2739,7 +2724,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 		}
 		break;
 		case 41:
-		/*This is never triggered...*/
+		/*This is r/w by introdon...*/
 		logerror("IRQ status reg set:%08x\n",stv_scu[41]);
 		break;
 		case 42: /*A-Bus IRQ ACK*/ break;
@@ -3039,10 +3024,11 @@ static void dma_indirect_lv2()
 }
 
 /*SCU DSP functions*/
-/*V0.01*/
+/*V0.02*/
 /*
 DSP TODO:
 \-Jump commands:
+ -Fix the interface.
  -How the jumps really works?7 or 8-bits?Are the jumps relative or absolute?
  -Add proper JMP T0/JMP NT0/LOP/BTM support.
 
@@ -3116,13 +3102,22 @@ static void dsp_ram_addr_w(UINT32 data)
 
 #define OP_CTRL    ((dsp_reg.internal_prg[dsp_reg.pc] & 0xc0000000) >> 30)
 
-#define ALU_OP   ((dsp_reg.internal_prg[dsp_reg.pc] & 0x3c000000) >> 26)
-#define XBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f00000) >> 20)
-#define YBUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x000fc000) >> 14)
-#define D1BUS_OP ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00003fff) >> 0)
+#define ALU_OP    ((dsp_reg.internal_prg[dsp_reg.pc] & 0x3c000000) >> 26)
+#define XBUS_OP   ((dsp_reg.internal_prg[dsp_reg.pc] & 0x03f00000) >> 20)
+#define YBUS_OP   ((dsp_reg.internal_prg[dsp_reg.pc] & 0x000fc000) >> 14)
+#define D1BUS_OP  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00003fff) >> 0)
+#define I_DATA32  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x01ffffff) >> 0)
+#define IMM_OP    ((dsp_reg.internal_prg[dsp_reg.pc] & 0x01f80000) >> 19)
+#define I_DATA16  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x0007ffff) >> 0)
+#define DMA_OP    ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00007c00) >> 10)
+#define DMA_ADDR  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00038000) >> 15)
+#define DMA_CTRL  ((dsp_reg.internal_prg[dsp_reg.pc] & 0x00000300) >> 8)
+#define DMA_COUNT ((dsp_reg.internal_prg[dsp_reg.pc] & 0x000000ff) >> 0)
 UINT8 dsp_debug = 1;
 static FILE *f;
 static UINT32 dsp_tmp;
+static UINT32 dsp_src,dsp_dst,dsp_size;
+static UINT16  dsp_addr;
 
 static void dsp_execute_program()
 {
@@ -3136,7 +3131,13 @@ static void dsp_execute_program()
 	do{
 		dsp_reg.top = dsp_reg.pc + 1;
 		/*I guess that this mustn't happen...*/
-		if(dsp_reg.top >= 0x100) dsp_reg.top = 0;
+		if(dsp_reg.top >= 0xff)
+		{
+//			dsp_reg.top = 0;
+			/*ENDI*/
+			if(!EF) stv_scu[32]^=0x00040000;
+			if(EXF) stv_scu[32]^=0x00100000;
+		}
 
 		if(1)
 		{
@@ -3151,506 +3152,1046 @@ static void dsp_execute_program()
 		switch(OP_CTRL)
 		{
 			/*Operation Commands*/
-			case 0: {
-			/*Jump commands*/
-			switch(JMP_CTRL)
+			case 0:
 			{
-				case 0xd:
+				/*ALU commands*/
+				switch(ALU_OP)
 				{
-					switch(JMP_OP)
-					{
-						/*JMP*/
-						case 0x00:
-							dsp_reg.top = (D1BUS_OP & 0xff);
+					/*NOP*/
+					case 0x00:
+						if(dsp_debug) fprintf(f,"%02x: ALU NOP\n",dsp_reg.pc);
+						break;
+					/*AND*/
+					case 0x01:
+						dsp_reg.acl &= dsp_reg.pl;
+						if(dsp_debug) fprintf(f,"%02x: AND PL,ACL\n",dsp_reg.pc);
+						break;
+					/*OR*/
+					case 0x02:
+						dsp_reg.acl |= dsp_reg.pl;
+						if(dsp_debug) fprintf(f,"%02x: OR PL,ACL\n",dsp_reg.pc);
+						break;
+					/*XOR*/
+					case 0x03:
+						dsp_reg.acl ^= dsp_reg.pl;
+						if(dsp_debug) fprintf(f,"%02x: XOR PL,ACL\n",dsp_reg.pc);
+						break;
+					/*ADD*/
+					case 0x04:
+						dsp_reg.acl += dsp_reg.pl;
+						if(dsp_debug) fprintf(f,"%02x: ADD PL,ACL\n",dsp_reg.pc);
+						break;
+					/*SUB*/
+					case 0x05:
+						dsp_reg.acl -= dsp_reg.pl;
+						if(dsp_debug) fprintf(f,"%02x: SUB PL,ACL\n",dsp_reg.pc);
+						break;
+					/*AD2*/
+					case 0x06:
+						dsp_reg.acl += dsp_reg.pl;
+						dsp_reg.ach += dsp_reg.ph;
+						if(dsp_reg.acl < dsp_reg.pl) dsp_reg.ach++;//carry
 
-							if(dsp_debug) fprintf(f,"%02x: JMP %02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP Z*/
-						case 0x61:
-							if(ZF) dsp_reg.top = (D1BUS_OP & 0xff);
+						if(dsp_debug) fprintf(f,"%02x: AD2 P,AC\n",dsp_reg.pc);
+						break;
+					/*0x07 "SB2"?*/
+					/*SR*/
+					case 0x08:
+						if(dsp_reg.acl & 0x00000001) CF_1;
+						/*TODO:Is there a better way for doing this?*/
+						if(dsp_reg.acl & 0x80000000)
+						{
+							dsp_reg.acl>>=1;
+							dsp_reg.acl|=0x80000000;
+						}
+						else
+							dsp_reg.acl>>=1;
 
-							if(dsp_debug) fprintf(f,"%02x: JMP Z,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NZ*/
-						case 0x41:
-							if(!ZF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NZ,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP S*/
-						case 0x62:
-							if(SF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP S,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NS*/
-						case 0x42:
-							if(!SF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP C*/
-						case 0x64:
-							if(CF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP C,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NC*/
-						case 0x44:
-							if(!CF)	dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NC,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP T0*/
-						case 0x68:
-
-							//...
-
-							if(dsp_debug) fprintf(f,"%02x: JMP T0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NT0*/
-						case 0x48:
-
-							//...
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NT0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP ZS*/
-						case 0x63:
-							if(ZF || SF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP ZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-						/*JMP NZS*/
-						case 0x43:
-							if(!ZF && !SF) dsp_reg.top = (D1BUS_OP & 0xff);
-
-							if(dsp_debug) fprintf(f,"%02x: JMP NZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
-							break;
-					}
-				}
-				break;
-				case 0xe:
-				{
-					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
-					{
-						/*LOP*/
-						if(dsp_debug) fprintf(f,"%02x: LOP\n",dsp_reg.pc);
-					}
-					else
-					{
-						/*BTM*/
-						if(dsp_debug) fprintf(f,"%02x: BTM\n",dsp_reg.pc);
-					}
-				}
-				break;
-				case 0xf:
-				{
-					if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
-					{
-						/*ENDI*/
-						if(!EF) stv_scu[32]^=0x00040000;
-						if(EXF) stv_scu[32]^=0x00100000;
-						if(dsp_debug) fprintf(f,"%02x: ENDI\n",dsp_reg.pc);
-					}
-					else
-					{
-						/*END*/
-					  	if(EXF) stv_scu[32]^=0x00100000;
-						if(dsp_debug) fprintf(f,"%02x: END\n",dsp_reg.pc);
-					}
-				}
-				break;
-			}
-
-			/*ALU commands*/
-			switch(ALU_OP)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: ALU NOP\n",dsp_reg.pc);
-					break;
-				/*AND*/
-				case 0x01:
-					dsp_reg.acl &= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: AND PL,ACL\n",dsp_reg.pc);
-					break;
-				/*OR*/
-				case 0x02:
-					dsp_reg.acl |= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: OR PL,ACL\n",dsp_reg.pc);
-					break;
-				/*XOR*/
-				case 0x03:
-					dsp_reg.acl ^= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: XOR PL,ACL\n",dsp_reg.pc);
-					break;
-				/*ADD*/
-				case 0x04:
-					dsp_reg.acl += dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: ADD PL,ACL\n",dsp_reg.pc);
-					break;
-				/*SUB*/
-				case 0x05:
-					dsp_reg.acl -= dsp_reg.pl;
-					if(dsp_debug) fprintf(f,"%02x: SUB PL,ACL\n",dsp_reg.pc);
-					break;
-				/*AD2*/
-				case 0x06:
-					dsp_reg.acl += dsp_reg.pl;
-					dsp_reg.ach += dsp_reg.ph;
-					if(dsp_reg.acl < dsp_reg.pl) dsp_reg.ach++;//carry
-
-					if(dsp_debug) fprintf(f,"%02x: AD2 P,AC\n",dsp_reg.pc);
-					break;
-				/*0x07 "SB2"?*/
-				/*SR*/
-				case 0x08:
-					if(dsp_reg.acl & 0x00000001) CF_1;
-					/*TODO:Is there a better way for doing this?*/
-					if(dsp_reg.acl & 0x80000000)
-					{
+						if(dsp_reg.acl & 0x80000000) SF_1;
+						//if(SF) dsp_reg.acl|=0x80000000;//unneeded
+						if(dsp_debug) fprintf(f,"%02x: SR \n",dsp_reg.pc);
+						break;
+					/*RR*/
+					case 0x09:
+						if(dsp_reg.acl & 0x00000001) { CF_1; } else { CF_0; }
 						dsp_reg.acl>>=1;
-						dsp_reg.acl|=0x80000000;
-					}
-					else
-						dsp_reg.acl>>=1;
+						if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+						if(CF) dsp_reg.acl|=0x80000000;
+						if(dsp_debug) fprintf(f,"%02x: RR \n",dsp_reg.pc);
+						break;
+					/*SL*/
+					case 0x0a:
+						if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
+						dsp_reg.acl<<=1;
+						if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+						if(dsp_debug) fprintf(f,"%02x: SL \n",dsp_reg.pc);
+						break;
+					/*RL*/
+					case 0x0b:
+						if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
+						dsp_reg.acl<<=1;
+						if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+						if(CF) dsp_reg.acl|=1;
+						if(dsp_debug) fprintf(f,"%02x: RL \n",dsp_reg.pc);
+						break;
+					/*RL8*/
+					case 0x0f:
+						if(dsp_reg.acl & 0x01000000) { CF_1; } else { CF_0; }
+						dsp_reg.acl>>=8;
+						if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
+						if(dsp_debug) fprintf(f,"%02x: RL8 \n",dsp_reg.pc);
+						break;
+					default:
+						if(dsp_debug) fprintf(f,"%02x: ALU invalid %02x \n",dsp_reg.pc,ALU_OP);
+				}
 
-					if(dsp_reg.acl & 0x80000000) SF_1;
-					//if(SF) dsp_reg.acl|=0x80000000;//unneeded
-					if(dsp_debug) fprintf(f,"%02x: SR \n",dsp_reg.pc);
-					break;
-				/*RR*/
-				case 0x09:
-					if(dsp_reg.acl & 0x00000001) { CF_1; } else { CF_0; }
-					dsp_reg.acl>>=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(CF) dsp_reg.acl|=0x80000000;
-					if(dsp_debug) fprintf(f,"%02x: RR \n",dsp_reg.pc);
-					break;
-				/*SL*/
-				case 0x0a:
-					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl<<=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(dsp_debug) fprintf(f,"%02x: SL \n",dsp_reg.pc);
-					break;
-				/*RL*/
-				case 0x0b:
-					if(dsp_reg.acl & 0x80000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl<<=1;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(CF) dsp_reg.acl|=1;
-					if(dsp_debug) fprintf(f,"%02x: RL \n",dsp_reg.pc);
-					break;
-				/*RL8*/
-				case 0x0f:
-					if(dsp_reg.acl & 0x01000000) { CF_1; } else { CF_0; }
-					dsp_reg.acl>>=8;
-					if(dsp_reg.acl & 0x80000000) { SF_1; } else { SF_0; }
-					if(dsp_debug) fprintf(f,"%02x: RL8 \n",dsp_reg.pc);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: ALU invalid %02x \n",dsp_reg.pc,ALU_OP);
+				/*X-Bus commands*/
+				switch((XBUS_OP & 0x38) >> 3)
+				{
+					/*NOP*/
+					case 0x00:
+						if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
+						break;
+					/*MOV [s],RX */
+					case 0x04:
+						switch(XBUS_OP & 7)
+						{
+							case 0:
+								dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
+								break;
+							case 1:
+								dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
+								break;
+							case 2:
+								dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
+								break;
+							case 3:
+								dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
+								break;
+							case 4:
+								dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct0++;
+								break;
+							case 5:
+								dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
+								dsp_reg.ct1++;
+								break;
+							case 6:
+								dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
+								dsp_reg.ct2++;
+								break;
+							case 7:
+								dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
+								dsp_reg.ct3++;
+								break;
+						}
+						if(dsp_debug) fprintf(f,"%02x: MOV [s],X (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
+						break;
+					/*MOV MUL,P */
+					case 0x02:
+						dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000) >> 32);
+						dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
+						if(dsp_debug) fprintf(f,"%02x: MOV MUL,P\n",dsp_reg.pc);
+						break;
+					/*MOV [s],P*/
+					case 0x03:
+						/*TODO:
+						From the docs:
+						"PH: changed by sign extension"
+						but exactly WHAT is changed?*/
+						switch(XBUS_OP & 7)
+						{
+							case 0:
+								dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
+								break;
+							case 1:
+								dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
+								break;
+							case 2:
+								dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
+								break;
+							case 3:
+								dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
+								break;
+							case 4:
+								dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct0++;
+								break;
+							case 5:
+								dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
+								dsp_reg.ct1++;
+								break;
+							case 6:
+								dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
+								dsp_reg.ct2++;
+								break;
+							case 7:
+								dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
+								dsp_reg.ct3++;
+								break;
+						}
+						if(dsp_debug) fprintf(f,"%02x: MOV [s],P (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
+						break;
+					default:
+						if(dsp_debug) fprintf(f,"%02x: X-BUS invalid %02x \n",dsp_reg.pc,XBUS_OP);
+				}
+
+				/*Y-Bus commands*/
+				switch((YBUS_OP & 0x38) >> 3)
+				{
+					/*NOP*/
+					case 0x00:
+						if(dsp_debug) fprintf(f,"%02x: Y-BUS NOP \n",dsp_reg.pc);
+						break;
+					/*MOV [s],RY */
+					case 0x04:
+						switch(YBUS_OP & 7)
+						{
+							case 0:
+								dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
+								break;
+							case 1:
+								dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
+								break;
+							case 2:
+								dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
+								break;
+							case 3:
+								dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
+								break;
+							case 4:
+								dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct0++;
+								break;
+							case 5:
+								dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
+								dsp_reg.ct1++;
+								break;
+							case 6:
+								dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
+								dsp_reg.ct2++;
+								break;
+							case 7:
+								dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
+								dsp_reg.ct3++;
+								break;
+						}
+						if(dsp_debug) fprintf(f,"%02x: MOV [s],Y (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
+						break;
+					/*CLR A*/
+					case 0x01:
+						dsp_reg.ach = 0;
+						dsp_reg.acl = 0;
+						if(dsp_debug) fprintf(f,"%02x: CLR A\n",dsp_reg.pc);
+					/*MOV ALU,A*/
+					case 0x02:
+						dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000) >> 32);
+						dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
+						if(dsp_debug) fprintf(f,"%02x: MOV ALU,A\n",dsp_reg.pc);
+						break;
+					/*MOV [s],A*/
+					case 0x03:
+						/*TODO:
+						From the docs:
+						"ACH: changed by sign extension"
+						but exactly WHAT is changed?*/
+						switch(YBUS_OP & 7)
+						{
+							case 0:
+								dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
+								break;
+							case 1:
+								dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
+								break;
+							case 2:
+								dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
+								break;
+							case 3:
+								dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
+								break;
+							case 4:
+								dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct0++;
+								break;
+							case 5:
+								dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
+								dsp_reg.ct1++;
+								break;
+							case 6:
+								dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
+								dsp_reg.ct2++;
+								break;
+							case 7:
+								dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
+								dsp_reg.ct3++;
+								break;
+						}
+						if(dsp_debug) fprintf(f,"%02x: MOV [s],A (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
+						break;
+					default:
+						if(dsp_debug) fprintf(f,"%02x: Y-BUS invalid %02x \n",dsp_reg.pc,YBUS_OP);
+				}
+
+				/*D1-Bus commands*/
+				switch((D1BUS_OP & 0x3000) >> 12)
+				{
+					/*NOP*/
+					case 0x00:
+						if(dsp_debug) fprintf(f,"%02x: D1-BUS NOP \n",dsp_reg.pc);
+						break;
+					/*MOV SImm,[d]*/
+					/*TODO: implement 8 to 16/32 bit sign extensions.*/
+					case 0x01:
+						switch((D1BUS_OP & 0xf00) >> 8)
+						{
+							case 0x0:
+								dsp_reg.md0[dsp_reg.ct0] = D1BUS_OP & 0xff;
+								dsp_reg.ct0++;
+								break;
+							case 0x1:
+								dsp_reg.md1[dsp_reg.ct1] = D1BUS_OP & 0xff;
+								dsp_reg.ct1++;
+								break;
+							case 0x2:
+								dsp_reg.md2[dsp_reg.ct2] = D1BUS_OP & 0xff;
+								dsp_reg.ct2++;
+								break;
+							case 0x3:
+								dsp_reg.md3[dsp_reg.ct3] = D1BUS_OP & 0xff;
+								dsp_reg.ct3++;
+								break;
+							case 0x4: dsp_reg.rx = D1BUS_OP & 0xff; break;
+							case 0x5: dsp_reg.pl = D1BUS_OP & 0xff; break;
+							case 0x6: dsp_reg.ra0 = D1BUS_OP & 0xff; break;
+							case 0x7: dsp_reg.wa0 = D1BUS_OP & 0xff; break;
+							case 0x8: break;
+							case 0x9: break;
+							case 0xa: dsp_reg.lop = D1BUS_OP & 0xff; break;
+							/*TODO:like this it causes an unconditional jump,is it right?*/
+							case 0xb: dsp_reg.top = D1BUS_OP & 0xff; break;
+							case 0xc: dsp_reg.ct0 = D1BUS_OP & 0x3f; break;
+							case 0xd: dsp_reg.ct1 = D1BUS_OP & 0x3f; break;
+							case 0xe: dsp_reg.ct2 = D1BUS_OP & 0x3f; break;
+							case 0xf: dsp_reg.ct3 = D1BUS_OP & 0x3f; break;
+						}
+						if(dsp_debug) fprintf(f,"%02x: MOV SImm,[d] (data %02x type %01x)\n",dsp_reg.pc,D1BUS_OP & 0xff,(D1BUS_OP & 0xf00) >> 8);
+						break;
+					/*MOV [s],[d]*/
+					case 0x3:
+						switch((D1BUS_OP & 0xf00) >> 8)
+						{
+							case 0x0:
+								dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct0++;// <- I suspect that this might be a doc typo...
+								break;
+							case 0x1:
+								dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
+								dsp_reg.ct1++;
+								break;
+							case 0x2:
+								dsp_tmp = dsp_reg.md2[dsp_reg.ct2];
+								dsp_reg.ct2++;
+								break;
+							case 0x3:
+								dsp_tmp = dsp_reg.md3[dsp_reg.ct3];
+								dsp_reg.ct3++;
+								break;
+							case 0x4: dsp_tmp = dsp_reg.rx; break;
+							case 0x5: dsp_tmp = dsp_reg.pl; break;
+							case 0x6: dsp_tmp = dsp_reg.ra0; break;
+							case 0x7: dsp_tmp = dsp_reg.wa0; break;
+							case 0x8: break;
+							case 0x9: break;
+							case 0xa: dsp_tmp = dsp_reg.lop; break;
+							case 0xb: dsp_tmp = dsp_reg.top; break;
+							case 0xc: dsp_tmp = dsp_reg.ct0; break;
+							case 0xd: dsp_tmp = dsp_reg.ct1; break;
+							case 0xe: dsp_tmp = dsp_reg.ct2; break;
+							case 0xf: dsp_tmp = dsp_reg.ct3; break;
+						}
+						switch(D1BUS_OP & 0xf)
+						{
+							case 0x0: dsp_reg.md0[dsp_reg.ct0] = dsp_tmp; break;
+							case 0x1: dsp_reg.md1[dsp_reg.ct1] = dsp_tmp; break;
+							case 0x2: dsp_reg.md2[dsp_reg.ct2] = dsp_tmp; break;
+							case 0x3: dsp_reg.md3[dsp_reg.ct3] = dsp_tmp; break;
+							case 0x4:
+								dsp_reg.md0[dsp_reg.ct0] = dsp_tmp;
+								dsp_reg.ct0++;
+								break;
+							case 0x5:
+								dsp_reg.md1[dsp_reg.ct1] = dsp_tmp;
+								dsp_reg.ct1++;
+								break;
+							case 0x6:
+								dsp_reg.md2[dsp_reg.ct2] = dsp_tmp;
+								dsp_reg.ct2++;
+								break;
+							case 0x7:
+								dsp_reg.md3[dsp_reg.ct3] = dsp_tmp;
+								dsp_reg.ct3++;
+								break;
+							case 0x8: break;
+							case 0x9: dsp_reg.alu = dsp_tmp; break;
+							case 0xa: dsp_reg.alu = dsp_tmp * 0x100000000; break;
+						}
+						dsp_tmp = 0; //free the temporary storage
+						if(dsp_debug) fprintf(f,"%02x: MOV [s],[d] (s = %01x  d =%01x)\n",dsp_reg.pc,(D1BUS_OP & 0xf00) >> 8,D1BUS_OP & 0xf);
+						break;
+				}
 			}
+			break; /*Operation Commands*/
 
-			/*X-Bus commands*/
-			switch((XBUS_OP & 0x38) >> 3)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV [s],RX */
-				case 0x04:
-					switch(XBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.rx = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.rx = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.rx = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.rx = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],X (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
-					break;
-				/*MOV MUL,P */
-				case 0x02:
-					dsp_reg.ph = ((dsp_reg.mul & 0x0000ffff00000000) >> 32);
-					dsp_reg.pl = ((dsp_reg.mul & 0x00000000ffffffff) >> 0);
-					if(dsp_debug) fprintf(f,"%02x: MOV MUL,P\n",dsp_reg.pc);
-					break;
-				/*MOV [s],P*/
-				case 0x03:
-					/*TODO:
-					From the docs:
-					"PH: changed by sign extension"
-					but exactly WHAT is changed?*/
-					switch(XBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.pl = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.pl = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.pl = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.pl = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],P (type %01x)\n",dsp_reg.pc,XBUS_OP & 7);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS invalid %02x \n",dsp_reg.pc,XBUS_OP);
-			}
-
-			/*Y-Bus commands*/
-			switch((YBUS_OP & 0x38) >> 3)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: X-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV [s],RY */
-				case 0x04:
-					switch(YBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.ry = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.ry = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.ry = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.ry = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],Y (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
-					break;
-				/*CLR A*/
-				case 0x01:
-					dsp_reg.ach = 0;
-					dsp_reg.acl = 0;
-					if(dsp_debug) fprintf(f,"%02x: CLR A\n",dsp_reg.pc);
-				/*MOV ALU,A*/
-				case 0x02:
-					dsp_reg.ach = ((dsp_reg.alu & 0x0000ffff00000000) >> 32);
-					dsp_reg.acl = ((dsp_reg.alu & 0x00000000ffffffff) >> 0);
-					if(dsp_debug) fprintf(f,"%02x: MOV ALU,A\n",dsp_reg.pc);
-					break;
-				/*MOV [s],A*/
-				case 0x03:
-					/*TODO:
-					From the docs:
-					"ACH: changed by sign extension"
-					but exactly WHAT is changed?*/
-					switch(YBUS_OP & 7)
-					{
-						case 0:
-							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
-							break;
-						case 1:
-							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
-							break;
-						case 2:
-							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
-							break;
-						case 3:
-							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
-							break;
-						case 4:
-							dsp_reg.acl = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;
-							break;
-						case 5:
-							dsp_reg.acl = dsp_reg.md1[dsp_reg.ct1];
-							dsp_reg.ct1++;
-							break;
-						case 6:
-							dsp_reg.acl = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 7:
-							dsp_reg.acl = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-					}
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],A (type %01x)\n",dsp_reg.pc,YBUS_OP & 7);
-					break;
-				default:
-					if(dsp_debug) fprintf(f,"%02x: Y-BUS invalid %02x \n",dsp_reg.pc,YBUS_OP);
-			}
-
-			/*D1-Bus commands*/
-			switch((D1BUS_OP & 0x3000) >> 12)
-			{
-				/*NOP*/
-				case 0x00:
-					if(dsp_debug) fprintf(f,"%02x: D1-BUS NOP \n",dsp_reg.pc);
-					break;
-				/*MOV SImm,[d]*/
-				/*TODO: implement 8 to 16/8 to 32 bit sign extensions.*/
-				case 0x01:
-					switch((D1BUS_OP & 0xf00) >> 8)
+			/*Load Immediate Commands*/
+			case 0x2:
+				if(!(dsp_reg.internal_prg[dsp_reg.pc] & 0x02000000))
+				{
+					/*MVI Imm,[d]*/
+					switch(ALU_OP)
 					{
 						case 0x0:
-							dsp_reg.md0[dsp_reg.ct0] = D1BUS_OP & 0xff;
+							dsp_reg.md0[dsp_reg.ct0] = I_DATA32;
 							dsp_reg.ct0++;
 							break;
 						case 0x1:
-							dsp_reg.md1[dsp_reg.ct1] = D1BUS_OP & 0xff;
+							dsp_reg.md0[dsp_reg.ct0] = I_DATA32;
 							dsp_reg.ct1++;
 							break;
 						case 0x2:
-							dsp_reg.md2[dsp_reg.ct2] = D1BUS_OP & 0xff;
+							dsp_reg.md2[dsp_reg.ct2] = I_DATA32;
 							dsp_reg.ct2++;
 							break;
 						case 0x3:
-							dsp_reg.md3[dsp_reg.ct3] = D1BUS_OP & 0xff;
+							dsp_reg.md3[dsp_reg.ct3] = I_DATA32;
 							dsp_reg.ct3++;
 							break;
-						case 0x4: dsp_reg.rx = D1BUS_OP & 0xff; break;
-						case 0x5: dsp_reg.pl = D1BUS_OP & 0xff; break;
-						case 0x6: dsp_reg.ra0 = D1BUS_OP & 0xff; break;
-						case 0x7: dsp_reg.wa0 = D1BUS_OP & 0xff; break;
+						case 0x4: dsp_reg.rx = I_DATA32;  break;
+						case 0x5: dsp_reg.ry = I_DATA32;  break;
+						case 0x6: dsp_reg.ra0 = I_DATA32; break;
+						case 0x7: dsp_reg.wa0 = I_DATA32; break;
 						case 0x8: break;
 						case 0x9: break;
-						case 0xa: dsp_reg.lop = D1BUS_OP & 0xff; break;
-						/*TODO:like this it causes an unconditional jump,is it right?*/
-						case 0xb: dsp_reg.top = D1BUS_OP & 0xff; break;
-						case 0xc: dsp_reg.ct0 = D1BUS_OP & 0x3f; break;
-						case 0xd: dsp_reg.ct1 = D1BUS_OP & 0x3f; break;
-						case 0xe: dsp_reg.ct2 = D1BUS_OP & 0x3f; break;
-						case 0xf: dsp_reg.ct3 = D1BUS_OP & 0x3f; break;
+						case 0xa: dsp_reg.lop = I_DATA32; break;
+						case 0xb: break;
+						case 0xc: dsp_reg.top = I_DATA32; break;
+						case 0xd: break;
+						case 0xe: break;
+						case 0xf: break;
 					}
-					if(dsp_debug) fprintf(f,"%02x: MOV SImm,[d] (data %02x type %01x)\n",dsp_reg.pc,D1BUS_OP & 0xff,(D1BUS_OP & 0xf00) >> 8);
+					if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d] (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA32,ALU_OP);
+				}
+				else
+				{
+					/*TODO: I suspect there are various typos in the docs,*/
+					/*check if this is right...*/
+					switch(IMM_OP)
+					{
+						/*MVI Imm,[d]Z*/
+						case 0x20:
+							if(ZF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]Z (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]NZ*/
+						case 0x21:
+							if(!ZF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]NZ (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]S*/
+						case 0x22:
+							if(SF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]S (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]NS*/
+						case 0x23:
+							if(!SF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]NS (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]C*/
+						case 0x24:
+							if(CF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]C (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]NC*/
+						case 0x25:
+							if(!CF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]NC (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						/*MVI Imm,[d]T0*/
+						case 0x08:
+							//...
+							break;
+						/*MVI Imm,[d]NT0*/
+						case 0x09:
+							//...
+							break;
+						/*MVI Imm,[d]ZS*/
+						case 0x02://?
+							if(ZF || SF)
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]ZS (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						case 0x03://?
+							if(!(ZF && SF))
+								switch(ALU_OP)
+								{
+									case 0x0:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct0++;
+										break;
+									case 0x1:
+										dsp_reg.md0[dsp_reg.ct0] = I_DATA16;
+										dsp_reg.ct1++;
+										break;
+									case 0x2:
+										dsp_reg.md2[dsp_reg.ct2] = I_DATA16;
+										dsp_reg.ct2++;
+										break;
+									case 0x3:
+										dsp_reg.md3[dsp_reg.ct3] = I_DATA16;
+										dsp_reg.ct3++;
+										break;
+									case 0x4: dsp_reg.rx = I_DATA16;  break;
+									case 0x5: dsp_reg.ry = I_DATA16;  break;
+									case 0x6: dsp_reg.ra0 = I_DATA16; break;
+									case 0x7: dsp_reg.wa0 = I_DATA16; break;
+									case 0x8: break;
+									case 0x9: break;
+									case 0xa: dsp_reg.lop = I_DATA16; break;
+									case 0xb: break;
+									case 0xc: dsp_reg.top = I_DATA16; break;
+									case 0xd: break;
+									case 0xe: break;
+									case 0xf: break;
+								}
+							if(dsp_debug) fprintf(f,"%02x: MVI Imm,[d]NZS (imm = %01x  d =%01x)\n",dsp_reg.pc,I_DATA16,ALU_OP);
+							break;
+						default:
+							if(dsp_debug) fprintf(f,"%02x: 'Invalid'  Imm,[d] %02x (imm = %01x  d =%01x)\n",IMM_OP,dsp_reg.pc,I_DATA16,ALU_OP);
+					}
+				}
+			break;/*Load Immediate Commands*/
+			/*DMA/Jump commands*/
+			case 0x3:
+				switch(JMP_CTRL)
+				{
+					/*DMA commands*/
+					case 0xc:
+					{
+						switch(DMA_OP)
+						{
+							/*DMA D0,[RAM]*/
+							case 0x00:
+								T0_1;
+								dsp_src = dsp_reg.ra0;
+								//dsp_dst
+								dsp_size = DMA_COUNT;
+								/*TODO:Knowing Sega it's unlikely that the table
+								they give is correct,check if my assumption is right...*/
+								switch(DMA_ADDR)
+								{
+									case 0: dsp_addr = 2; break;
+									case 1: dsp_addr = 4; break;
+									case 2: dsp_addr = 8; break;
+									case 3: dsp_addr = 16; break;
+									case 4: dsp_addr = 32; break;
+									case 5: dsp_addr = 64; break;
+									case 6: dsp_addr = 128; break;
+									case 7: dsp_addr = 256; break;
+								}
+								for(;dsp_size > 0;dsp_size--)
+								{
+									switch(DMA_CTRL)
+									{
+										case 0:
+											dsp_reg.md0[dsp_reg.ct0] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct0++;
+											break;
+										case 1:
+											dsp_reg.md1[dsp_reg.ct1] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct1++;
+											break;
+										case 2:
+											dsp_reg.md2[dsp_reg.ct2] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct2++;
+											break;
+										case 3:
+											dsp_reg.md3[dsp_reg.ct3] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct3++;
+											break;
+									}
+									dsp_src+=dsp_addr;
+								}
+								T0_0;
+								if(dsp_debug) fprintf(f,"%02x: DMA D0,[RAM],%02x\n",dsp_reg.pc,DMA_COUNT);
+								break;
+							/*DMA [RAM],D0*/
+							case 0x04:
+								T0_1;
+								//dsp_src = dsp_reg.ra0;
+								dsp_dst = dsp_reg.wa0;
+								dsp_size = DMA_COUNT;
+								switch(DMA_ADDR)
+								{
+									case 0: dsp_addr = 2; break;
+									case 1: dsp_addr = 4; break;
+									case 2: dsp_addr = 8; break;
+									case 3: dsp_addr = 16; break;
+									case 4: dsp_addr = 32; break;
+									case 5: dsp_addr = 64; break;
+									case 6: dsp_addr = 128; break;
+									case 7: dsp_addr = 256; break;
+								}
+								for(;dsp_size > 0;dsp_size--)
+								{
+									switch(DMA_CTRL)
+									{
+										case 0:
+											if(dsp_addr == 2)
+												cpu_writemem16bew_word(dsp_dst,cpu_readmem16bew_word(dsp_reg.md0[dsp_reg.ct0]));
+											else
+												cpu_writemem32bedw_dword(dsp_dst,cpu_readmem32bew_word(dsp_reg.md0[dsp_reg.ct0]));
+
+											dsp_reg.ct0++;
+											break;
+										case 1:
+											if(dsp_addr == 2)
+												cpu_writemem16bew_word(dsp_dst,cpu_readmem16bew_word(dsp_reg.md1[dsp_reg.ct1]));
+											else
+												cpu_writemem32bedw_dword(dsp_dst,cpu_readmem32bew_word(dsp_reg.md1[dsp_reg.ct1]));
+
+											dsp_reg.ct1++;
+											break;
+										case 2:
+											if(dsp_addr == 2)
+												cpu_writemem16bew_word(dsp_dst,cpu_readmem16bew_word(dsp_reg.md2[dsp_reg.ct2]));
+											else
+												cpu_writemem32bedw_dword(dsp_dst,cpu_readmem32bew_word(dsp_reg.md2[dsp_reg.ct2]));
+
+											dsp_reg.ct2++;
+											break;
+										case 3:
+											if(dsp_addr == 2)
+												cpu_writemem16bew_word(dsp_dst,cpu_readmem16bew_word(dsp_reg.md3[dsp_reg.ct3]));
+											else
+												cpu_writemem32bedw_dword(dsp_dst,cpu_readmem32bew_word(dsp_reg.md3[dsp_reg.ct3]));
+
+											dsp_reg.ct3++;
+											break;
+									}
+									dsp_dst+=dsp_addr;
+								}
+								T0_0;
+								if(dsp_debug) fprintf(f,"%02x: DMA [RAM],D0,%02x\n",dsp_reg.pc,DMA_COUNT);
+								break;
+							/*DMA D0,[RAM],[s]*/
+							case 0x8:
+								T0_1;
+								dsp_src = dsp_reg.ra0;
+								//dsp_dst
+								switch(DMA_COUNT & 3)
+								{
+									case 0: dsp_size = dsp_reg.md0[dsp_reg.ct0]; break;
+									case 1: dsp_size = dsp_reg.md1[dsp_reg.ct1]; break;
+									case 2: dsp_size = dsp_reg.md2[dsp_reg.ct2]; break;
+									case 3: dsp_size = dsp_reg.md3[dsp_reg.ct3]; break;
+								}
+								/*TODO:Knowing Sega it's unlikely that the table
+								they give is correct,check if my assumption is right...*/
+								switch(DMA_ADDR & 1)
+								{
+									case 0: dsp_addr = 2; break;
+									case 1: dsp_addr = 4; break;
+								}
+								for(;dsp_size > 0;dsp_size--)
+								{
+									switch(DMA_CTRL)
+									{
+										case 0:
+											dsp_reg.md0[dsp_reg.ct0] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct0++;
+											break;
+										case 1:
+											dsp_reg.md1[dsp_reg.ct1] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct1++;
+											break;
+										case 2:
+											dsp_reg.md2[dsp_reg.ct2] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct2++;
+											break;
+										case 3:
+											dsp_reg.md3[dsp_reg.ct3] = cpu_readmem32bedw_dword(dsp_src);
+											dsp_reg.ct3++;
+											break;
+									}
+									dsp_src+=dsp_addr;
+								}
+								if(DMA_COUNT & 7)
+									switch(DMA_COUNT & 3)
+									{
+										case 0: dsp_reg.ct0++; break;
+										case 1: dsp_reg.ct1++; break;
+										case 2: dsp_reg.ct2++; break;
+										case 3: dsp_reg.ct3++; break;
+									}
+								T0_0;
+								if(dsp_debug) fprintf(f,"%02x: DMA D0,[RAM],[s]\n",dsp_reg.pc);
+								break;
+							/*DMA D0,[PRG RAM],[s]*/
+							case 0x9:
+								T0_1;
+								dsp_src = dsp_reg.ra0;
+								dsp_dst = dsp_reg.pc;
+								switch(DMA_COUNT & 3)
+								{
+									case 0: dsp_size = dsp_reg.md0[dsp_reg.ct0]; break;
+									case 1: dsp_size = dsp_reg.md1[dsp_reg.ct1]; break;
+									case 2: dsp_size = dsp_reg.md2[dsp_reg.ct2]; break;
+									case 3: dsp_size = dsp_reg.md3[dsp_reg.ct3]; break;
+								}
+								/*TODO:Knowing Sega it's unlikely that the table they
+								give is correct,check if my assumption is correct...*/
+								switch(DMA_ADDR & 1)
+								{
+									case 0: dsp_addr = 2; break;
+									case 1: dsp_addr = 4; break;
+								}
+								for(;dsp_size > 0;dsp_size--)
+								{
+								/*TODO:the destination index is a guess,the docs doesn't
+								       say anything about it...*/
+									dsp_reg.internal_prg[dsp_dst] = cpu_readmem32bedw_dword(dsp_src);
+
+									dsp_dst++;
+									dsp_src+=dsp_addr;
+								}
+								T0_0;
+								if(dsp_debug) fprintf(f,"%02x: DMA D0,[RAM],[s]\n",dsp_reg.pc);
+								break;
+						}
+					}
 					break;
-				/*MOV [s],[d]*/
-				case 0x3:
-					switch((D1BUS_OP & 0xf00) >> 8)
+					/*Jump commands*/
+					case 0xd:
 					{
-						case 0x0:
-							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct0++;// <- I suspect that this might be a doc typo...
-							break;
-						case 0x1:
-							dsp_tmp = dsp_reg.md0[dsp_reg.ct0];
-							dsp_reg.ct1++;
-							break;
-						case 0x2:
-							dsp_tmp = dsp_reg.md2[dsp_reg.ct2];
-							dsp_reg.ct2++;
-							break;
-						case 0x3:
-							dsp_tmp = dsp_reg.md3[dsp_reg.ct3];
-							dsp_reg.ct3++;
-							break;
-						case 0x4: dsp_tmp = dsp_reg.rx; break;
-						case 0x5: dsp_tmp = dsp_reg.pl; break;
-						case 0x6: dsp_tmp = dsp_reg.ra0; break;
-						case 0x7: dsp_tmp = dsp_reg.wa0; break;
-						case 0x8: break;
-						case 0x9: break;
-						case 0xa: dsp_tmp = dsp_reg.lop; break;
-						case 0xb: dsp_tmp = dsp_reg.top; break;
-						case 0xc: dsp_tmp = dsp_reg.ct0; break;
-						case 0xd: dsp_tmp = dsp_reg.ct1; break;
-						case 0xe: dsp_tmp = dsp_reg.ct2; break;
-						case 0xf: dsp_tmp = dsp_reg.ct3; break;
+						switch(JMP_OP)
+						{
+							/*JMP*/
+//							case 0x00:
+//								dsp_reg.top = (D1BUS_OP & 0xff);
+//								if(dsp_debug) fprintf(f,"%02x: JMP %02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+//								break;
+							/*JMP Z*/
+							case 0x61:
+								if(ZF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP Z,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP NZ*/
+							case 0x41:
+								if(!ZF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP NZ,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP S*/
+							case 0x62:
+								if(SF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP S,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP NS*/
+							case 0x42:
+								if(!SF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP NS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP C*/
+							case 0x64:
+								if(CF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP C,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP NC*/
+							case 0x44:
+								if(!CF)	dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP NC,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP T0*/
+							case 0x68:
+
+								//...
+
+								if(dsp_debug) fprintf(f,"%02x: JMP T0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP NT0*/
+							case 0x48:
+
+								//...
+
+								if(dsp_debug) fprintf(f,"%02x: JMP NT0,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP ZS*/
+							case 0x63:
+								if(ZF || SF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP ZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							/*JMP NZS*/
+							case 0x43:
+								if(!ZF && !SF) dsp_reg.top = (D1BUS_OP & 0xff);
+
+								if(dsp_debug) fprintf(f,"%02x: JMP NZS,%02x \n",dsp_reg.pc,(D1BUS_OP & 0xff));
+								break;
+							}
 					}
-					switch(D1BUS_OP & 0xf)
-					{
-						case 0x0: dsp_reg.md0[dsp_reg.ct0] = dsp_tmp; break;
-						case 0x1: dsp_reg.md1[dsp_reg.ct1] = dsp_tmp; break;
-						case 0x2: dsp_reg.md2[dsp_reg.ct2] = dsp_tmp; break;
-						case 0x3: dsp_reg.md3[dsp_reg.ct3] = dsp_tmp; break;
-						case 0x4:
-							dsp_reg.md0[dsp_reg.ct0] = dsp_tmp;
-							dsp_reg.ct0++;
-							break;
-						case 0x5:
-							dsp_reg.md1[dsp_reg.ct1] = dsp_tmp;
-							dsp_reg.ct1++;
-							break;
-						case 0x6:
-							dsp_reg.md2[dsp_reg.ct2] = dsp_tmp;
-							dsp_reg.ct2++;
-							break;
-						case 0x7:
-							dsp_reg.md3[dsp_reg.ct3] = dsp_tmp;
-							dsp_reg.ct3++;
-							break;
-						case 0x8: break;
-						case 0x9: dsp_reg.alu = dsp_tmp; break;
-						case 0xa: dsp_reg.alu = dsp_tmp * 0x100000000; break;
-					}
-					dsp_tmp = 0; //free the temporary storage
-					if(dsp_debug) fprintf(f,"%02x: MOV [s],[d] (s = %01x  d =%01x)\n",dsp_reg.pc,(D1BUS_OP & 0xf00) >> 8,D1BUS_OP & 0xf);
+					break;
+					case 0xe:
+						if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
+						{
+							/*LOP*/
+							if(dsp_debug) fprintf(f,"%02x: LOP\n",dsp_reg.pc);
+						}
+						else
+						{
+							/*BTM*/
+							if(dsp_debug) fprintf(f,"%02x: BTM\n",dsp_reg.pc);
+						}
+					break;
+					case 0xf:
+						if(dsp_reg.internal_prg[dsp_reg.pc] & 0x08000000)
+						{
+							/*ENDI*/
+							if(!EF) stv_scu[32]^=0x00040000;
+							if(EXF) stv_scu[32]^=0x00100000;
+							if(dsp_debug) fprintf(f,"%02x: ENDI\n",dsp_reg.pc);
+						}
+						else
+						{
+							/*END*/
+						  	if(EXF) stv_scu[32]^=0x00100000;
+							if(dsp_debug) fprintf(f,"%02x: END\n",dsp_reg.pc);
+						}
 					break;
 			}
-
-			}break;
+			break; /*Jump Commands*/
 		}
+
 		dsp_reg.pc = dsp_reg.top;//I don't think that this is right though...
 	}while(EXF);
 	if(dsp_debug)
@@ -4196,10 +4737,10 @@ DRIVER_INIT ( stv )
 {
 	time_t ltime;
 	struct tm *today;
-	unsigned char *ROM = memory_region(REGION_USER1);
 	time(&ltime);
 	today = localtime(&ltime);
 
+	unsigned char *ROM = memory_region(REGION_USER1);
 	cpu_setbank(1,&ROM[0x000000]);
 
 	/* we allocate the memory here so its easier to share between cpus */

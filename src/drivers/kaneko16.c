@@ -4128,8 +4128,6 @@ RB-020.U2	4M mask   \
 RB-025.U4	27C040	   |	GFX (located on a plug-in ROM PCB)
 RB-026.U5	27C040    /
 
-More info reqd? Problems with the archive? Email me....
-theguru@emuunlim.com
 
 -----
 
@@ -4214,7 +4212,7 @@ Notes:
       M6295 clock: 2.000MHz, Sample Rate: /165 (both)
       VSync: 60Hz
       HSync: 15.625kHz
-      
+
       PC100-PC500: 16M MASK
       PC601-PC604: 8M MASK
       PC600-PC700: 27C4001
@@ -4242,7 +4240,7 @@ ROM_START( bonkadv )
 	ROM_LOAD( "pc500105.55",		 0x000000, 0x200000, CRC(edd0da94) SHA1(17a1ad957bb12a07010beec74c3e1b59cc0ab397) )
 
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_COPY( REGION_GFX2, 0x00000, 0x00000, 0x200000 )
+	ROM_LOAD( "pc400104.51",		 0x000000, 0x200000, CRC(3ad3af0f) SHA1(5ac4def8b1a42c13369d3505fa8e1f52f9451cd4) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "pc601106.99",		 0x000000, 0x100000, CRC(a893651c) SHA1(d221ce89f19a76be497724f6c16fab82c8a52661) )

@@ -80,12 +80,12 @@ enum
 /* disk drive unit descriptor */
 typedef struct hd_unit_t
 {
-	mess_image *img;			/* image descriptor */
+	mess_image *img;						/* image descriptor */
 	enum { format_mame, format_old } format;
-	void *hd_handle;			/* mame hard disk descriptor - only if format == format_mame */
-	mame_file *fd;				/* file descriptor - only if format == format_old */
-	unsigned int wp : 1;		/* TRUE if disk is write-protected */
-	unsigned int unsafe : 1;	/* TRUE when a disk has just been connected */
+	struct hard_disk_file *hd_handle;		/* mame hard disk descriptor - only if format == format_mame */
+	mame_file *fd;							/* file descriptor - only if format == format_old */
+	unsigned int wp : 1;					/* TRUE if disk is write-protected */
+	unsigned int unsafe : 1;				/* TRUE when a disk has just been connected */
 
 	/* disk geometry */
 	unsigned int cylinders, heads, sectors_per_track, bytes_per_sector;
@@ -206,7 +206,7 @@ DEVICE_LOAD( ti990_hd )
 	int id = image_index_in_device(image);
 	hd_unit_t *d;
 	char tag[8];
-	const struct hard_disk_header *standard_header;
+	const struct hard_disk_info *standard_header;
 	disk_image_header custom_header;
 	int bytes_read;
 
@@ -229,7 +229,7 @@ DEVICE_LOAD( ti990_hd )
 
 		/* set file descriptor */
 		d->format = format_mame;
-		d->hd_handle = mess_hd_get_hard_disk_handle(image);
+		d->hd_handle = mess_hd_get_hard_disk_file(image);
 		d->fd = NULL;
 		/* tell whether the image is writable */
 		d->wp = ! mess_hd_is_writable(image);
@@ -255,12 +255,12 @@ DEVICE_LOAD( ti990_hd )
 	{
 	case format_mame:
 		/* use standard hard disk image header. */
-		standard_header = hard_disk_get_header(d->hd_handle);
+		standard_header = hard_disk_get_info(d->hd_handle);
 
 		d->cylinders = standard_header->cylinders;
 		d->heads = standard_header->heads;
 		d->sectors_per_track = standard_header->sectors;
-		d->bytes_per_sector = standard_header->seclen;
+		d->bytes_per_sector = standard_header->sectorbytes;
 		break;
 
 	case format_old:
