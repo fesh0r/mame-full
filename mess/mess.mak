@@ -771,6 +771,7 @@ $(OBJ)/compis.a:					\
 	$(OBJ)/mess/systems/compis.o	\
 	$(OBJ)/mess/machine/compis.o	\
 	$(OBJ)/mess/machine/mm58274c.o	\
+	$(OBJ)/mess/formats/cpis_dsk.o	\
 	$(OBJ)/mess/vidhrdw/i82720.o 
 
 # MESS specific core $(OBJ)s

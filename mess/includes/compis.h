@@ -41,7 +41,6 @@ WRITE_HANDLER (i186_internal_port_w);
 READ_HANDLER (compis_fdc_dack_r);
 READ_HANDLER (compis_fdc_r);
 WRITE_HANDLER (compis_fdc_w);
-DEVICE_LOAD (compis_floppy);
 
 /* RTC 58174 */
 READ_HANDLER (compis_rtc_r);

@@ -34,9 +34,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/i82720.h"
-#include "devices/basicdsk.h"
 #include "includes/compis.h"
+#include "devices/mflopimg.h"
 #include "devices/printer.h"
+#include "formats/cpis_dsk.h"
 #include "cpuintrf.h"
 
 static MEMORY_READ_START( compis_readmem )
@@ -259,8 +260,8 @@ ROM_START (compis)
 ROM_END
 
 SYSTEM_CONFIG_START(compis)
-	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2,	"dsk\0",	device_load_compis_floppy)
+	CONFIG_DEVICE_PRINTER	(1)
+	CONFIG_DEVICE_FLOPPY	(2,	compis)
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	COMPAT MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */

@@ -684,7 +684,10 @@ TESTDRIVER( psxe41 )
 	DRIVER(concept)		/* 1982 Corvus Concept								*/
 
 	/* DAI */
-	DRIVER(dai)			/* DAI									*/
+	DRIVER(dai)			/* DAI												*/
+
+	/* Telenova */
+	DRIVER(compis)		/* 1985 Telenova Compis								*/
 
 /****************Games*******************************************************/
 	/* Computer Electronic */

@@ -362,50 +362,7 @@ READ_HANDLER (compis_fdc_r)
 	return data;
 }
 
-DEVICE_LOAD( compis_floppy )
-{
-	UINT8 sectors, tracks;
-	int size;
 
-	if (!image_has_been_created(image))
-	{
-		size = mame_fsize (file);
-		switch (size)
-		{
-			case 0x50000:	/* 320 KB */
-				tracks = 40;
-				sectors = 8;
-				break;
-			case 0x5a000:	/* 360 KB */
-				tracks = 40;
-				sectors = 9;
-				break;
-			case 0xa0000:	/* 640 KB */
-				tracks = 80;
-				sectors = 8;
-				break;
-			case 0xb4000:	/* 720 KB */
-				tracks = 80;
-				sectors = 9;
-				break;
-			case 0x12c000:	/* 1200 KB */
-				tracks = 80;
-				sectors = 15;
-				break;
-			default:
-				return INIT_FAIL;
-		}
-	}
-	else
-		return INIT_FAIL;
-
-	if (device_load_basicdsk_floppy(image, file)!=INIT_PASS)
-		return INIT_FAIL;
-
-	basicdsk_set_geometry(image, tracks, 2, sectors, 512, 1, 0, 0);
-
-	return INIT_PASS;
-}
 
 /*-------------------------------------------------------------------------*/
 /*  PPI 8255                                                               */
