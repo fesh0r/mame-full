@@ -48,6 +48,13 @@ extern int neogeo_memcard_create(int);
 
 
 
+static int setup_selected;
+static int osd_selected;
+static int jukebox_selected;
+static int single_step;
+
+
+
 void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 {
 	int temp,w,h;
@@ -2280,13 +2287,17 @@ int showcopyright(void)
 			Machine->gamedrv->description);
 	displaymessagewindow(buf);
 
+	setup_selected = -1;////
 	done = 0;
 	do
 	{
 		osd_update_video_and_audio();
 		osd_poll_joysticks();
 		if (input_ui_pressed(IPT_UI_CANCEL))
+		{
+			setup_selected = 0;////
 			return 1;
+		}
 		if (keyboard_pressed_memory(KEYCODE_O) ||
 				input_ui_pressed(IPT_UI_LEFT))
 			done = 1;
@@ -2295,6 +2306,7 @@ int showcopyright(void)
 			done = 2;
 	} while (done < 2);
 
+	setup_selected = 0;////
 	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_video_and_audio();
 
@@ -2463,39 +2475,23 @@ static int displaygameinfo(int selected)
 #ifdef MESS
 static int displayimageinfo(int selected)
 {
+	char buf[2048], *dst = buf;
+	const struct IODevice *dev = Machine->gamedrv->dev;
+	int id, sel = selected - 1;
 
-	char buf[2048];
-	int sel;
-	int num_of_peripherals = 0;
+	dst += sprintf(dst,"%s\n\n",Machine->gamedrv->description);
 
-	sel = selected - 1;
-
+	while (dev->type)
 	{
-	   int i;
-		for (i = 0; i < MAX_ROM; i ++)
-			if (strlen(rom_name[i])>0) num_of_peripherals++;
-		for (i = 0; i < MAX_FLOPPY; i ++)
-			if (strlen(floppy_name[i])>0) num_of_peripherals++;
-		for (i = 0; i < MAX_HARD; i ++)
-			if (strlen(hard_name[i])>0) num_of_peripherals++;
-		for (i = 0; i < MAX_CASSETTE; i ++)
-			if (strlen(cassette_name[i])>0) num_of_peripherals++;
-	}
+		dst += sprintf(dst,"%d %s:\n", device_count(dev->type), device_typename(dev->type));
+		for (id = 0; id < device_count(dev->type); id++)
+			dst += sprintf(dst,"%s\n", device_filename(dev->type,id));
+		dev++;
+    }
 
-	//if (errorlog) fprintf(errorlog,"Num of per = %d", num_of_peripherals);
-	/* Only display this screen if there is one image loaded, exit if more */
-	/* Also, if the image is not loaded 'properly', dont display this item */
-	if (num_of_peripherals>1 || image.length==0) return sel;
+/* image stuff removed for now */
 
-
-	sprintf(buf,"%s\n\n",Machine->gamedrv->description);
-
-	sprintf(&buf[strlen(buf)],"Image Name:\n%s \n\nImage CRC:\n%-8x\n\nImage Length:\n%d bytes\n",	image.name,
-																			image.crc,
-																			image.length);
-
-
-	if (sel == -1)
+    if (sel == -1)
 	{
 		/* startup info, print MAME version and ask for any key */
 
@@ -3722,11 +3718,6 @@ void CLIB_DECL usrintf_showmessage(const char *text,...)
 
 
 
-
-static int setup_selected;
-static int osd_selected;
-static int jukebox_selected;
-static int single_step;
 
 int handle_user_interface(void)
 {

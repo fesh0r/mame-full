@@ -285,16 +285,27 @@ enum {
 	STR_5C_1C,
 	STR_4C_1C,
 	STR_3C_1C,
+	STR_8C_3C,
+	STR_4C_2C,
 	STR_2C_1C,
+	STR_5C_3C,
 	STR_3C_2C,
 	STR_4C_3C,
+	STR_4C_4C,
+	STR_3C_3C,
+	STR_2C_2C,
 	STR_1C_1C,
 	STR_4C_5C,
 	STR_3C_4C,
 	STR_2C_3C,
+	STR_4C_7C,
+	STR_2C_4C,
 	STR_1C_2C,
 	STR_2C_5C,
+	STR_2C_6C,
 	STR_1C_3C,
+	STR_2C_7C,
+	STR_2C_8C,
 	STR_1C_4C,
 	STR_1C_5C,
 	STR_1C_6C,
@@ -314,11 +325,7 @@ enum {
 
 #define DEF_STR(str_num) (ipdn_defaultstrings[STR_##str_num])
 
-#ifndef MESS
-#define MAX_INPUT_PORTS 16
-#else
-#define MAX_INPUT_PORTS 18
-#endif
+#define MAX_INPUT_PORTS 20
 
 
 int load_input_port_settings(void);
@@ -330,7 +337,7 @@ InputJoySeq* input_port_type_joy_multi(int type);
 InputKeySeq* input_port_key_multi(const struct InputPort *in);
 InputJoySeq* input_port_joy_multi(const struct InputPort *in);
 
-struct InputPort* input_port_allocate(struct InputPortTiny* src);
+struct InputPort* input_port_allocate(const struct InputPortTiny *src);
 void input_port_free(struct InputPort* dst);
 
 #ifdef MAME_NET

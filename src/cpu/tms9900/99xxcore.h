@@ -74,7 +74,6 @@ Tons of thanks to the guy who posted these, whoever he is...
 #include <math.h>
 
 
-
 #if (TMS99XX_MODEL == TMS9900_ID)
 
 	#define TMS99XX_ICOUNT tms9900_ICount
