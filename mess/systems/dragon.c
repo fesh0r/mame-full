@@ -714,7 +714,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_CASSETTE	(1, "cas\0", coco_cassette_init)
 
 	/* floppy */
-	CONFIG_DEVICE_FLOPPY	(1, coco, coco_jvc )
+	CONFIG_DEVICE_FLOPPY	(4, coco, coco_jvc )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )
