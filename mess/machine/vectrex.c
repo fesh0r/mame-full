@@ -57,7 +57,7 @@ static int vectrex_verify_cart (char *data)
  *********************************************************************/
 int vectrex_init_cart (int id)
 {
-	const char *name;
+	/*const char *name;*/
 	FILE *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
