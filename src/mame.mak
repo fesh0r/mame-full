@@ -80,7 +80,10 @@ CPUS+=ARM@
 CPUS+=JAGUAR@
 CPUS+=R3000@
 CPUS+=R4600@
+CPUS+=R4700@
 CPUS+=R5000@
+CPUS+=QED5271@
+CPUS+=RM7000@
 CPUS+=SH2@
 CPUS+=DSP32C@
 #CPUS+=PIC16C54@
@@ -274,7 +277,7 @@ $(OBJ)/univers.a: \
 	$(OBJ)/machine/docastle.o $(OBJ)/vidhrdw/docastle.o $(OBJ)/drivers/docastle.o \
 
 $(OBJ)/nintendo.a: \
-	$(OBJ)/drivers/n8080.o \
+	$(OBJ)/drivers/n8080.o $(OBJ)/vidhrdw/n8080.o $(OBJ)/sndhrdw/n8080.o \
 	$(OBJ)/vidhrdw/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/drivers/dkong.o \
 	$(OBJ)/machine/strtheat.o \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
@@ -309,7 +312,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
-	$(OBJ)/drivers/seattle.o $(OBJ)/vidhrdw/voodoo.o \
+	$(OBJ)/drivers/seattle.o $(OBJ)/vidhrdw/voodoo.o $(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
 	$(OBJ)/machine/midwayic.o $(OBJ)/sndhrdw/dcs.o \
 	$(OBJ)/machine/midyunit.o $(OBJ)/vidhrdw/midyunit.o $(OBJ)/drivers/midyunit.o \
@@ -620,6 +623,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
 	$(OBJ)/vidhrdw/bishi.o $(OBJ)/drivers/bishi.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
+	$(OBJ)/vidhrdw/qdrmfgp.o $(OBJ)/drivers/qdrmfgp.o \
 	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
 	$(OBJ)/drivers/mogura.o \

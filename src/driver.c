@@ -204,6 +204,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( checkman )	/* (c) 1982 Zilec-Zenitone */
 	DRIVER( checkmaj )	/* (c) 1982 Jaleco (Zenitone/Zilec in ROM CM4, and the programmer names) */
 	DRIVER( dingo )		/* (c) 1983 Ashby Computers and Graphics LTD. + Jaleco license */
+	DRIVER( dingoe )	/* (c) 1983 Ashby Computers and Graphics LTD. + Jaleco license */
 	DRIVER( blkhole )	/* TDS (Tokyo Denshi Sekkei) */
 	DRIVER( kingball )	/* (c) 1980 Namco */
 	DRIVER( kingbalj )	/* (c) 1980 Namco */
@@ -1395,6 +1396,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( flstoryj )	/* A45 (c) 1985 Taito Corporation (Japan) */
 	DRIVER( onna34ro )	/* A52 (c) 1985 Taito Corporation (Japan) */
 	DRIVER( onna34ra )	/* A52 (c) 1985 Taito Corporation (Japan) */
+	DRIVER( victnine )	/* A16 (c) 1985 Taito Corporation (Japan) */
 	DRIVER( gladiatr )	/* ??? (c) 1986 Taito America Corporation (US) */
 	DRIVER( ogonsiro )	/* ??? (c) 1986 Taito Corporation (Japan) */
 	DRIVER( nycaptor )	/* A50 (c) 1985 Taito Corporation */
@@ -2331,6 +2333,7 @@ V-V                           TP-027
 	DRIVER( sfiii )		/* 02/1997 Street Fighter III - New Generation */
 	DRIVER( jojo )		/* ??/???? Jojo's Venture */
 	DRIVER( jojoba )	/* ??/???? Jojo's Bizarre Adventure */
+	DRIVER( jojobaa )	/* ??/???? Jojo's Bizarre Adventure */
 	DRIVER( sfiii2 )	/* ??/???? Street Fighter 3: Second Impact ~giant attack~ */
 	DRIVER( sfiii3 )	/* ??/???? Street Fighter 3: Third Strike ~fight to the finish~ */
 
@@ -2348,7 +2351,6 @@ V-V                           TP-027
 	/* Capcom ZN2 */
 	DRIVER( rvschool )	/* Rival Schools (ASIA 971117) */
 	DRIVER( jgakuen )	/* Justice Gakuen (JAPAN 971117) */
-	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
 	DRIVER( sfex2 )		/* Street Fighter EX 2 (JAPAN 980312) */
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
@@ -2387,8 +2389,8 @@ V-V                           TP-027
 	DRIVER( sncwgltd )	/* Sonic Wings Limited (JAPAN) */
 
 	/* Taito FX1a */
-	DRIVER( psyfrcex )	/* Psychic Force EX (?) */
-	DRIVER( psyforce )	/* Psychic Force (JAPAN) */
+	DRIVER( psyforce )	/* Psychic Force (WORLD) */
+	DRIVER( psyforcj )	/* Psychic Force (JAPAN) */
 	DRIVER( sfchamp )	/* Super Football Champ (JAPAN) */
 	DRIVER( mgcldate )	/* Magical Date (JAPAN) */
 	DRIVER( mgcldtea )	/* Magical Date (JAPAN) */
@@ -2497,6 +2499,7 @@ V-V                           TP-027
 	DRIVER( rimrck16 )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( rimrck12 )	/* (c) 1991 Strata/Incredible Technologies */
 	DRIVER( ninclown )	/* (c) 1991 Strata/Incredible Technologies */
+	DRIVER( gpgolf )	/* (c) 1992 Strata/Incredible Technologies */
 	DRIVER( gtg2 )		/* (c) 1992 Strata/Incredible Technologies */
 	DRIVER( gtg2t )		/* (c) 1989 Strata/Incredible Technologies */
 	DRIVER( gtg2j )		/* (c) 1991 Strata/Incredible Technologies */
@@ -3659,6 +3662,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( viostrmu )	/* GX168 (c) 1993 (US) */
 	DRIVER( viostrmj )	/* GX168 (c) 1993 (Japan) */
 	DRIVER( viostrma )	/* GX168 (c) 1993 (Asia) */
+	DRIVER( mmaulers )	/* GX170 (c) 1993 (Europe) */
 	DRIVER( dadandrn )	/* GX170 (c) 1993 (Japan) */
 	DRIVER( metamrph )	/* GX224 (c) 1993 (US) */
 	DRIVER( metamrpj )	/* GX224 (c) 1993 (Japan) */
@@ -3717,6 +3721,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rungun2 )	/* GX505 */
 	DRIVER( slamdnk2 )	/* GX505 */
 	DRIVER( rushhero )	/* GX605 */
+
+	/* 68k + HD */
+	DRIVER( qdrmfgp )
+	DRIVER( qdrmfgp2 )
 
 	/* DJ Main */
 	DRIVER( bm1stmix )	/* GQ753 (c) 1997 (Japan) */
@@ -4916,6 +4924,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
 	DRIVER( galpanib )	/* (c) 1990 Kaneko */
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
+	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
 	DRIVER( jchan )		/* (c) 199? Kaneko */
 
 	/* Kaneko "AX System" games */

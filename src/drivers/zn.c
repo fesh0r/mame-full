@@ -145,28 +145,37 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
+INLINE UINT8 psxreadbyte( UINT32 n_address )
+{
+	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
+}
+
+INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
+{
+	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
+}
+
 #define NODUMP 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
 
 static const unsigned char ac01[ 8 ] = { 0x80, 0x1c, 0xe2, 0xfa, 0xf9, 0xf1, 0x30, 0xc0 };
 static const unsigned char ac02[ 8 ] = { 0xfc, 0x60, 0xe2, 0xfa, 0xf9, 0xf1, 0x30, 0xc0 };
 static const unsigned char tw01[ 8 ] = { 0xc0, 0x18, 0xf9, 0x81, 0x82, 0xfe, 0x0c, 0xf0 };
 static const unsigned char tw02[ 8 ] = { 0xf0, 0x81, 0x03, 0xfa, 0x18, 0x1c, 0x3c, 0xc0 };
-static const unsigned char at01[ 8 ] = { NODUMP };
-static const unsigned char at02[ 8 ] = { NODUMP };
+static const unsigned char at01[ 8 ] = { 0xf8, 0xe1, 0xe2, 0xfe, 0x3c, 0x40, 0x70, 0xf0 };
+static const unsigned char at02[ 8 ] = { 0xc0, 0x70, 0x78, 0xfa, 0xfe, 0x1c, 0xe1, 0x01 };
 static const unsigned char cp01[ 8 ] = { 0xf0, 0x81, 0xc1, 0x20, 0xe2, 0xfe, 0x04, 0xf8 };
-static const unsigned char cp02[ 8 ] = { NODUMP };
+static const unsigned char cp02[ 8 ] = { 0xfc, 0xf1, 0x08, 0x18, 0xe2, 0xc2, 0x40, 0x80 };
 static const unsigned char cp03[ 8 ] = { 0xc0, 0x10, 0x60, 0x7c, 0x04, 0xfa, 0x03, 0x01 };
 static const unsigned char cp04[ 8 ] = { 0xf8, 0xe2, 0xe1, 0x81, 0x7c, 0x0c, 0x30, 0xc0 };
 static const unsigned char cp05[ 8 ] = { 0x80, 0x08, 0x30, 0xc2, 0xfe, 0xfd, 0xe1, 0xe0 };
 static const unsigned char cp06[ 8 ] = { 0xf0, 0x20, 0x3c, 0xfd, 0x81, 0x78, 0xfa, 0x02 };
-static const unsigned char cp07[ 8 ] = { NODUMP };
+static const unsigned char cp07[ 8 ] = { 0xf8, 0x60, 0x20, 0x3c, 0xfd, 0x03, 0xf2, 0xf0 };
 static const unsigned char cp08[ 8 ] = { 0xe0, 0xf2, 0x70, 0x81, 0xc1, 0x3c, 0x04, 0xf8 };
-static const unsigned char cp09[ 8 ] = { NODUMP };
+static const unsigned char cp09[ 8 ] = { 0xfc, 0x20, 0x38, 0x08, 0xf1, 0x03, 0x82, 0x80 };
 static const unsigned char cp10[ 8 ] = { 0xe0, 0x40, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
 static const unsigned char cp11[ 8 ] = { NODUMP };
-static const unsigned char cp12[ 8 ] = { NODUMP };
 static const unsigned char cp13[ 8 ] = { 0x02, 0x70, 0x08, 0x04, 0x3c, 0x20, 0xe1, 0x01 };
-static const unsigned char cp14[ 8 ] = { NODUMP };
+static const unsigned char cp14[ 8 ] = { 0xfc, 0x82, 0x60, 0xe1, 0xf9, 0x38, 0x30, 0xf0 };
 static const unsigned char et01[ 8 ] = { 0x02, 0x08, 0x18, 0x1c, 0xfd, 0xc1, 0x40, 0x80 };
 static const unsigned char et02[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfe, 0x7c, 0x70, 0x08, 0xf8 };
 static const unsigned char et03[ 8 ] = { 0xc0, 0x08, 0xfa, 0xe2, 0xe1, 0xfd, 0x7c, 0x80 };
@@ -174,20 +183,20 @@ static const unsigned char mg01[ 8 ] = { 0x80, 0xf2, 0x30, 0x38, 0xf9, 0xfd, 0x1
 static const unsigned char mg02[ 8 ] = { 0xe0, 0x7c, 0x40, 0xc1, 0xf9, 0xfa, 0xf2, 0xf0 };
 static const unsigned char mg03[ 8 ] = { 0xc0, 0x04, 0x78, 0x82, 0x03, 0xf1, 0x10, 0xe0 };
 static const unsigned char mg04[ 8 ] = { 0xf0, 0xe1, 0x81, 0x82, 0xfa, 0x04, 0x3c, 0xc0 };
-static const unsigned char mg05[ 8 ] = { NODUMP };
-static const unsigned char mg09[ 8 ] = { NODUMP };
+static const unsigned char mg05[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x0c, 0x10, 0xe0 };
+static const unsigned char mg09[ 8 ] = { 0xf0, 0x03, 0xe2, 0x18, 0x78, 0x7c, 0x3c, 0xc0 };
 static const unsigned char mg11[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x1c, 0x10, 0xf0 };
 static const unsigned char tt01[ 8 ] = { 0xe0, 0xf9, 0xfd, 0x7c, 0x70, 0x30, 0xc2, 0x02 };
-static const unsigned char tt02[ 8 ] = { NODUMP };
-static const unsigned char tt03[ 8 ] = { NODUMP };
+static const unsigned char tt02[ 8 ] = { 0xfc, 0x60, 0xe1, 0xc1, 0x30, 0x08, 0xfa, 0x02 };
+static const unsigned char tt03[ 8 ] = { 0xf0, 0x20, 0xe2, 0xfa, 0x78, 0x81, 0xfd, 0xfc };
 static const unsigned char tt04[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfa, 0x78, 0x7c, 0x0c, 0xf0 };
-static const unsigned char tt05[ 8 ] = { NODUMP };
-static const unsigned char tt06[ 8 ] = { NODUMP };
-static const unsigned char tt07[ 8 ] = { NODUMP };
+static const unsigned char tt05[ 8 ] = { 0xc0, 0xf1, 0xf2, 0xe2, 0x60, 0x7c, 0x04, 0xf8 };
+static const unsigned char tt06[ 8 ] = { 0xfc, 0x38, 0xfa, 0xf2, 0xf1, 0xe1, 0x60, 0x80 };
+static const unsigned char tt07[ 8 ] = { 0x80, 0x10, 0xf1, 0x03, 0xfa, 0x38, 0x3c, 0xfc };
 static const unsigned char tt10[ 8 ] = { 0x80, 0x20, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
 static const unsigned char tt16[ 8 ] = { 0xc0, 0x04, 0xf9, 0xe1, 0x60, 0x70, 0xf2, 0x02 };
-static const unsigned char kn01[ 8 ] = { NODUMP };
-static const unsigned char kn02[ 8 ] = { NODUMP };
+static const unsigned char kn01[ 8 ] = { 0xf8, 0xe1, 0xe2, 0xfe, 0x3c, 0x30, 0x70, 0x80 };
+static const unsigned char kn02[ 8 ] = { 0x01, 0x18, 0xe2, 0xfe, 0x3c, 0x30, 0x70, 0x80 };
 
 static struct
 {
@@ -200,9 +209,9 @@ static struct
 	{ "jdredd",   ac01, ac02 }, /* OK ( missing guns ) */
 	{ "jdreddb",  ac01, ac02 }, /* OK ( missing guns ) */
 	{ "primrag2", tw01, tw02 }, /* boots */
-/*	{ "hvnsgate", at01, at02 }, */
-	{ "ts2",      cp01, cp02 }, /* system error C930 */
-	{ "ts2j",     cp01, cp02 }, /* system error C930 */
+	{ "hvnsgate", at01, at02 }, /* boots, no gfx, possible bad dump */
+	{ "ts2",      cp01, cp02 }, /* OK */
+	{ "ts2j",     cp01, cp02 }, /* OK */
 	{ "starglad", cp01, cp03 }, /* OK */
 	{ "sfex",     cp01, cp04 }, /* OK */
 	{ "sfexa",    cp01, cp04 }, /* OK */
@@ -210,18 +219,17 @@ static struct
 	{ "glpracr",  cp01, cp05 }, /* OK */
 	{ "rvschool", cp10, cp06 }, /* OK */
 	{ "jgakuen",  cp10, cp06 }, /* OK */
-	{ "plsmaswd", cp10, cp07 }, /* system error D094 */
-	{ "stargld2", cp10, cp07 }, /* system error D094 */
+	{ "plsmaswd", cp10, cp07 }, /* OK */
+	{ "stargld2", cp10, cp07 }, /* OK */
 	{ "sfex2",    cp10, cp08 }, /* OK ( random crashes on garuda ) */
-	{ "techromn", cp10, cp09 }, /* system error D094 */
-	{ "kikaioh",  cp10, cp09 }, /* system error D094 */
-	{ "tgmj",     cp10, cp11 }, /* system error D094 */ /* ? */
-	{ "sfexp",    cp10, cp12 }, /* system error C094 */
-	{ "sfexpj",   cp10, cp12 }, /* system error C094 */
+	{ "techromn", cp10, cp09 }, /* OK */
+	{ "kikaioh",  cp10, cp09 }, /* OK */
+	{ "sfexp",    cp01, cp04 }, /* OK */
+	{ "sfexpj",   cp01, cp04 }, /* OK */
 	{ "strider2", cp10, cp13 }, /* OK ( random crashes on bosses ) */
 	{ "shiryu2",  cp10, cp13 }, /* OK ( random crashes on bosses ) */
-	{ "sfex2p",   cp10, cp14 }, /* system error D094 */ /* ? */
-	{ "sfex2pj",  cp10, cp14 }, /* system error D094 */ /* ? */
+	{ "sfex2p",   cp10, cp14 }, /* red screen */
+	{ "sfex2pj",  cp10, cp14 }, /* OK */
 	{ "beastrzr", et01, et02 }, /* OK */
 	{ "beastrza", et01, et02 }, /* OK */
 	{ "beastrzb", et01, et02 }, /* OK */
@@ -231,20 +239,20 @@ static struct
 	{ "glprac2l", mg01, mg02 }, /* locks up when starting a game/entering test mode */
 	{ "cbaj",     mg01, mg03 }, /* OK */
 	{ "shngmtkb", mg01, mg04 }, /* OK */
-	{ "doapp",    mg01, mg05 }, /* system error D094 */
-	{ "tondemo",  mg01, mg09 }, /* system error D094 */
+	{ "doapp",    mg01, mg05 }, /* OK */
+	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
-	{ "sfchamp",  tt01, tt02 }, /* red screen */
-	{ "psyfrcex", tt01, tt03 }, /* red screen */
-	{ "psyforce", tt01, tt03 }, /* red screen */
+	{ "sfchamp",  tt01, tt02 }, /* test menu */
+	{ "psyforce", tt01, tt03 }, /* OK */
+	{ "psyforcj", tt01, tt03 }, /* OK */
 	{ "raystorm", tt01, tt04 }, /* OK */
-	{ "ftimpcta", tt01, tt05 }, /* red screen */
-	{ "mgcldate", tt01, tt06 }, /* red screen */
-	{ "mgcldtea", tt01, tt06 }, /* red screen */
-	{ "gdarius",  tt01, tt07 }, /* red screen */
-	{ "gdarius2", tt01, tt07 }, /* red screen */
+	{ "ftimpcta", tt01, tt05 }, /* test menu */
+	{ "mgcldate", tt01, tt06 }, /* OK */
+	{ "mgcldtea", tt01, tt06 }, /* BAD DUMP */
+	{ "gdarius",  tt01, tt07 }, /* OK (input problems) */
+	{ "gdarius2", tt01, tt07 }, /* OK */
 	{ "taitogn",  tt10, tt16 }, /* error B930 */
-	{ "sncwgltd", kn01, kn02 }, /* red screen */
+	{ "sncwgltd", kn01, kn02 }, /* OK (always goes into test menu at first, freezes if left in attract - both symptoms same as Zinc) */
 	{ NULL, NULL, NULL }
 };
 
@@ -438,6 +446,7 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1fa10200, 0x1fa10203) AM_READ(jamma_6_r)
 	AM_RANGE(0x1fa10300, 0x1fa10303) AM_READWRITE(znsecsel_r, znsecsel_w)
 	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* eeprom */
+	AM_RANGE(0x1fb00000, 0x1fb001ff) AM_RAM
 	AM_RANGE(0x1fb20000, 0x1fb20007) AM_READ(unknown_r)
 	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
 	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
@@ -554,8 +563,8 @@ static void player_reset( void )
 
 	if( strcmp( Machine->gamedrv->name, "sfex2" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "sfex2p" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex2pj" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "tgmj" ) == 0 )
+		strcmp( Machine->gamedrv->name, "sfex2pj" ) == 0 )
+
 	{
 		scode = 0x0400;
 	}
@@ -687,34 +696,6 @@ static INTERRUPT_GEN( qsound_interrupt )
 	else
 	{
 		cpu_set_irq_line(1, 0, HOLD_LINE);
-	}
-}
-
-static INTERRUPT_GEN( fx1a_sound_interrupt )
-{
-	if( queue_len == 4 )
-	{
-		taitosound_port_w( 0, 0 );
-		taitosound_comm_w( 0, ( queue_data >> 0 ) & 0x0f );
-		queue_len--;
-	}
-	else if( queue_len == 3 )
-	{
-		taitosound_port_w( 0, 1 );
-		taitosound_comm_w( 0, ( queue_data >> 4 ) & 0x0f );
-		queue_len--;
-	}
-	if( queue_len == 2 )
-	{
-		taitosound_port_w( 0, 2 );
-		taitosound_comm_w( 0, ( queue_data >> 8 ) & 0x0f );
-		queue_len--;
-	}
-	else if( queue_len == 1 )
-	{
-		taitosound_port_w( 0, 3 );
-		taitosound_comm_w( 0, ( queue_data >> 12 ) & 0x0f );
-		queue_len--;
 	}
 }
 
@@ -900,12 +881,16 @@ static READ32_HANDLER( taitofx1_sound_r )
 
 DRIVER_INIT( coh1000t )
 {
+	int i;
+
 	taitofx1_eeprom_size = 0x200; taitofx1_eeprom = auto_malloc( taitofx1_eeprom_size );
 
 	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );     /* banked game rom */
 	install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, MRA32_NOP );
 	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, MWA32_NOP );
 	install_mem_write32_handler( 0, 0x1fa30000, 0x1fa30003, MWA32_NOP );
+//	install_mem_read32_handler ( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size - 1 ), MRA32_BANK2 );
+//	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size - 1 ), MWA32_BANK2 );
 	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
 	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1_volume_w );
 	install_mem_write32_handler( 0, 0x1fba0000, 0x1fba0003, taitofx1_sound_w );
@@ -914,6 +899,11 @@ DRIVER_INIT( coh1000t )
 	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MWA32_BANK2 );
 
 	init_znsec();
+
+	for (i = 0; i < 0x400000; i++)
+	{
+		psxwritebyte(i, 0xff);
+	}
 }
 
 MACHINE_INIT( coh1000t )
@@ -922,6 +912,78 @@ MACHINE_INIT( coh1000t )
 	cpu_setbank( 2, taitofx1_eeprom );
 	zn_machine_init();
 	player_init();
+}
+
+static READ32_HANDLER( taitofx1_ymsound_r )
+{
+	return taitosound_comm_r(0)<<16;
+}
+
+static WRITE32_HANDLER( taitofx1_ymsound_w )
+{
+	if (mem_mask == 0xffff0000)
+	{
+		taitosound_port_w(0, data&0xff);
+	}
+	else
+	{
+		taitosound_comm_w(0, (data>>16)&0xff);
+	}
+}
+
+DRIVER_INIT( coh1000ta )
+{
+	taitofx1_eeprom_size = 0x200; taitofx1_eeprom = auto_malloc( taitofx1_eeprom_size );
+
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f1fffff, MRA32_BANK1 );     /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1f200000, 0x1f7fffff, MRA32_BANK3 );     /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, MRA32_NOP );
+	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, MWA32_NOP );
+	install_mem_write32_handler( 0, 0x1fa30000, 0x1fa30003, MWA32_NOP );
+	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
+	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fb80003, taitofx1_ymsound_r );
+	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1_ymsound_w );
+	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MWA32_BANK2 );
+
+	init_znsec();
+}
+
+DRIVER_INIT( coh1000td )
+{
+	taitofx1_eeprom_size = 0x200; taitofx1_eeprom = auto_malloc( taitofx1_eeprom_size );
+
+	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );     /* banked game rom */
+	install_mem_read32_handler ( 0, 0x1fb00000, 0x1fb0000f, MRA32_BANK3 );     /* phony bank so we can recycle the 1000ta machine def */
+	install_mem_read32_handler ( 0, 0x1fa40000, 0x1fa40003, MRA32_NOP );
+	install_mem_write32_handler( 0, 0x1fa20000, 0x1fa20003, MWA32_NOP );
+	install_mem_write32_handler( 0, 0x1fa30000, 0x1fa30003, MWA32_NOP );
+	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
+	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fb80003, taitofx1_ymsound_r );
+	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1_ymsound_w );
+	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size - 1 ), MWA32_BANK2 );
+
+	init_znsec();
+}
+
+MACHINE_INIT( coh1000ta )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
+	cpu_setbank( 3, memory_region( REGION_USER2 ) + 0x200000); /* fixed game rom */
+	cpu_setbank( 2, taitofx1_eeprom );
+	zn_machine_init();
+	player_init();
+
+	// patch to make psyforce boot
+	if ((!strcmp(Machine->gamedrv->name, "psyforce")) ||
+	    (!strcmp(Machine->gamedrv->name, "psyforcj")))
+	{
+		// note: these values can be anything non-zero
+		// perhaps Taito expects RAM to be initialized to 0xff on power-up?
+		psxwritebyte(0x3fffda, 0xb5);
+		psxwritebyte(0x3fffdb, 0x6b);
+	}
 }
 
 static NVRAM_HANDLER( coh1000t )
@@ -949,12 +1011,11 @@ static MACHINE_DRIVER_START( coh1000ta )
 	MDRV_CPU_ADD( Z80, 16000000 / 4 )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP( fx1a_sound_readmem, fx1a_sound_writemem )
-	MDRV_CPU_VBLANK_INT( fx1a_sound_interrupt, 1 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( coh1000t )
+	MDRV_MACHINE_INIT( coh1000ta )
 	MDRV_NVRAM_HANDLER( coh1000t )
 
 	/* video hardware */
@@ -976,17 +1037,31 @@ static MACHINE_DRIVER_START( coh1000ta )
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
-	MDRV_SOUND_ADD( YM2610, ym2610_interface )
+	MDRV_SOUND_ADD( YM2610B, ym2610_interface )
 MACHINE_DRIVER_END
 
 INTERRUPT_GEN( coh1000tb_vblank )
 {
 	/* kludge: stop dropping into test mode on bootup */
-	if( strcmp( Machine->gamedrv->name, "raystorm" ) == 0 )
+	if(strcmp( Machine->gamedrv->name, "raystorm" ) == 0 )
 	{
 		if( g_p_n_psxram[ 0x1b358 / 4 ] == 0x34020001 )
 		{
 			g_p_n_psxram[ 0x1b358 / 4 ] = 0x34020000;
+		}
+	}
+	if(strcmp( Machine->gamedrv->name, "gdarius" ) == 0 )
+	{
+		if (psxreadbyte(0x165d53) == 0)
+		{
+			psxwritebyte(0x165d53, 1);
+		}
+	}
+	if(strcmp( Machine->gamedrv->name, "gdarius2" ) == 0 )
+	{
+		if (psxreadbyte(0x16be3b) == 0)
+		{
+			psxwritebyte(0x16be3b, 1);
 		}
 	}
 	psx_vblank();
@@ -1016,7 +1091,7 @@ static MACHINE_DRIVER_START( coh1000tb )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
+	MDRV_VIDEO_START( psx_type2_1024x1024 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1106,11 +1181,6 @@ static struct ide_interface atpsx_intf =
 {
 	atpsx_interrupt
 };
-
-INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
-{
-	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
-}
 
 static void atpsx_dma_read( UINT32 n_address, INT32 n_size )
 {
@@ -1484,9 +1554,71 @@ static MACHINE_DRIVER_START( coh1000a )
 	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
+static WRITE32_HANDLER( coh1002l_bnk_w )
+{
+	logerror("coh1002l banks: %x\n", (data>>16)&3);
+
+	// this bank is at least correct for the first 4 megs - the game will
+	// crash badly otherwise
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + (0x800000 * ((data>>16) & 3)));
+}
+
+DRIVER_INIT( coh1002l )
+{
+	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1002l_bnk_w );
+	init_znsec();
+}
+
+MACHINE_INIT( coh1002l )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* game rom */
+	zn_machine_init();
+}
+
+static MACHINE_DRIVER_START( coh1002l )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( coh1002l )
+	MDRV_NVRAM_HANDLER(generic_0fill)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+#if defined( MAME_DEBUG )
+	MDRV_SCREEN_SIZE( 1024, 1024 )
+	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
+#else
+	MDRV_SCREEN_SIZE( 640, 480 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+#endif
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+MACHINE_DRIVER_END
+
+static WRITE32_HANDLER( coh1002v_bnk_w )
+{
+	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000 + (data * 0x100000));
+}
+
 DRIVER_INIT( coh1002v )
 {
 	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+	install_mem_read32_handler( 0, 0x1fb00000, 0x1fbfffff, MRA32_BANK2 );
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1002v_bnk_w );
 
 	init_znsec();
 }
@@ -1494,6 +1626,7 @@ DRIVER_INIT( coh1002v )
 MACHINE_INIT( coh1002v )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
+	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000); /* banked rom */
 	zn_machine_init();
 }
 
@@ -1939,6 +2072,53 @@ ROM_START( sfexj )
 	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
 ROM_END
 
+
+ROM_START( sfexp )
+	CPZN1_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "sfpe-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
+
+	ROM_REGION32_LE( 0x1880000, REGION_USER2, 0 )
+	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
+	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
+	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
+	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
+	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
+	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
+ROM_END
+
+ROM_START( sfexpj )
+	CPZN1_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "sfpj-04", 0x0000000, 0x080000, CRC(18d043f5) SHA1(9e6e24a722d13888fbfd391ddb1a5045b162488c) )
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
+	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
+	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
+	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
+	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
+	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
+	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
+ROM_END
+
 ROM_START( starglad )
 	CPZN1_BIOS
 
@@ -2064,24 +2244,6 @@ ROM_START( jgakuen )
 	ROM_LOAD( "jst-01m", 0x0000000, 0x400000, CRC(9a7c98f9) SHA1(764c6c4f41047e1f36d2dceac4aa9b943a9d529a) )
 ROM_END
 
-ROM_START( tgmj )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "atej-04", 0x0000000, 0x080000, CRC(bb4bbb96) SHA1(808f4b29493e74efd661d561d11cbec2f4afd1c8) )
-
-	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 )
-	ROM_LOAD( "ate-05",  0x0000000, 0x400000, CRC(50977f5a) SHA1(78c2b1965957ff1756c25b76e549f11fc0001153) )
-	ROM_LOAD( "ate-06",  0x0400000, 0x400000, CRC(05973f16) SHA1(c9262e8de14c4a9489f7050316012913c1caf0ff) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "ate-02",  0x00000, 0x08000, CRC(f4f6e82f) SHA1(ad6c49197a60f456367c9f78353741fb847819a1) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "ate-01",  0x0000000, 0x400000, CRC(a21c6521) SHA1(560e4855f6e00def5277bdd12064b49e55c3b46b) )
-ROM_END
-
 ROM_START( techromn )
 	CPZN2_BIOS
 
@@ -2126,52 +2288,6 @@ ROM_START( kikaioh )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
 	ROM_LOAD( "kio-01m.bin", 0x0000000, 0x400000, CRC(6dc5bd07) SHA1(e1755a48465f741691ea0fa1166cb2dc09210ed9) )
-ROM_END
-
-ROM_START( sfexp )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sfpe-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
-
-	ROM_REGION32_LE( 0x1880000, REGION_USER2, 0 )
-	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
-	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
-	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
-	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
-	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
-	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
-ROM_END
-
-ROM_START( sfexpj )
-	CPZN2_BIOS
-
-	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sfpj-04", 0x0000000, 0x080000, CRC(18d043f5) SHA1(9e6e24a722d13888fbfd391ddb1a5045b162488c) )
-
-	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
-	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
-	ROM_LOAD( "sfp-06",  0x0400000, 0x400000, CRC(1d504758) SHA1(bd56141aba35dbb5b318445ba5db12eff7442221) )
-	ROM_LOAD( "sfp-07",  0x0800000, 0x400000, CRC(0f585f30) SHA1(24ffdbc360f8eddb702905c99d315614327861a7) )
-	ROM_LOAD( "sfp-08",  0x0c00000, 0x400000, CRC(65eabc61) SHA1(bbeb3bcd8dd8f7f88ed82412a81134a3d6f6ffd9) )
-	ROM_LOAD( "sfp-09",  0x1000000, 0x400000, CRC(15f8b71e) SHA1(efb28fbe750f443550ee9718385355aae7e858c9) )
-	ROM_LOAD( "sfp-10",  0x1400000, 0x400000, CRC(c1ecf652) SHA1(616e14ff63d38272730c810b933a6b3412e2da17) )
-
-	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "sfe-02",  0x00000, 0x08000, CRC(1908475c) SHA1(99f68cff2d92f5697eec0846201f6fb317d5dc08) )
-	ROM_CONTINUE(        0x10000, 0x18000 )
-	ROM_LOAD( "sfe-03",  0x28000, 0x20000, CRC(95c1e2e0) SHA1(383bbe9613798a3ac6944d18768280a840994e40) )
-
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
-	ROM_LOAD( "sfe-01m", 0x0000000, 0x400000, CRC(f5afff0d) SHA1(7f9ac32ba0a3d9c6fef367e36a92d47c9ac1feb3) )
 ROM_END
 
 ROM_START( sfex2 )
@@ -2500,12 +2616,12 @@ ROM_END
 ROM_START( ftimpcta )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e25-13.4",     0x0000001, 0x100000, CRC(7f078d7b) SHA1(df9800dd6885dbc33736c5143d877b0847221061) )
 	ROM_LOAD16_BYTE( "e25-14.3",     0x0000000, 0x100000, CRC(0c5f474f) SHA1(ce7031ba860297b99cddd6d0177f07e03520faeb) )
-	ROM_LOAD( "e25-01.1",            0x0200000, 0x400000, CRC(8cc4be0c) SHA1(9ca15558a83b7e332e50accf1f7852444a7ce730) )
-	ROM_LOAD( "e25-02.2",            0x0600000, 0x400000, CRC(8e8b4c82) SHA1(55c9d4d3a08fc3226a75ab3a674be433af83e289) )
-	ROM_LOAD( "e25-03.12",           0x0a00000, 0x400000, CRC(43b1c085) SHA1(6e53550e9be0d2f415fc6b4f3b8a71185c5370b2) )
+	ROM_LOAD( "e25-01.1",            0x0400000, 0x400000, CRC(8cc4be0c) SHA1(9ca15558a83b7e332e50accf1f7852444a7ce730) )
+	ROM_LOAD( "e25-02.2",            0x0800000, 0x400000, CRC(8e8b4c82) SHA1(55c9d4d3a08fc3226a75ab3a674be433af83e289) )
+	ROM_LOAD( "e25-03.12",           0x0c00000, 0x400000, CRC(43b1c085) SHA1(6e53550e9be0d2f415fc6b4f3b8a71185c5370b2) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e25-10.14",    0x0000000, 0x080000, CRC(2b2ad1b1) SHA1(6d064d0b6805d43ce42929ac8f5645b56384f53c) )
@@ -2518,12 +2634,12 @@ ROM_END
 ROM_START( gdarius )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e39-06.4",     0x0000001, 0x100000, CRC(2980c30d) SHA1(597321642125c3ae37581c2d9abc2723c7909996) )
 	ROM_LOAD16_BYTE( "e39-05.3",     0x0000000, 0x100000, CRC(750e5b13) SHA1(68fe9cbd7d506cfd587dccc40b6ae0b0b6ee7c29) )
-	ROM_LOAD( "e39-01.1",            0x0200000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
-	ROM_LOAD( "e39-02.2",            0x0600000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
-	ROM_LOAD( "e39-03.12",           0x0a00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
+	ROM_LOAD( "e39-01.1",            0x0400000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
+	ROM_LOAD( "e39-02.2",            0x0800000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
+	ROM_LOAD( "e39-03.12",           0x0c00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e39-07.14",    0x0000000, 0x080000, CRC(2252c7c1) SHA1(92b9908e0d87cad6587f1acc0eef69eaae8c6a98) )
@@ -2535,12 +2651,12 @@ ROM_END
 ROM_START( gdarius2 )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e39-12.4",     0x0000001, 0x100000, CRC(b23266c3) SHA1(80aaddaaf10e40280ade4c7d11f45ddab47ee9a6) )
 	ROM_LOAD16_BYTE( "e39-11.3",     0x0000000, 0x100000, CRC(766f73df) SHA1(9ce24c153920d259bc7fdef0778083eb6d639be3) )
-	ROM_LOAD( "e39-01.1",            0x0200000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
-	ROM_LOAD( "e39-02.2",            0x0600000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
-	ROM_LOAD( "e39-03.12",           0x0a00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
+	ROM_LOAD( "e39-01.1",            0x0400000, 0x400000, CRC(bdaaa251) SHA1(a42daa706ee859c2b66be179e08c0ad7990f919e) )
+	ROM_LOAD( "e39-02.2",            0x0800000, 0x400000, CRC(a47aab5d) SHA1(64b58e47035ad9d8d6dcaf475cbcc3ad85f4d82f) )
+	ROM_LOAD( "e39-03.12",           0x0c00000, 0x400000, CRC(a883b6a5) SHA1(b8d00d944c90f8cd9c2b076688f4c68b2e6d557a) )
 
 	ROM_REGION( 0x080000, REGION_CPU2, 0 )
 	ROM_LOAD( "e39-07.14",    0x0000000, 0x080000, CRC(2252c7c1) SHA1(92b9908e0d87cad6587f1acc0eef69eaae8c6a98) )
@@ -2552,12 +2668,12 @@ ROM_END
 ROM_START( mgcldate )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00c00000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e32-08.2",     0x0000001, 0x100000, CRC(3d42cd28) SHA1(9017922e835a359ba5126c8a9e8c27380a5ce081) )
 	ROM_LOAD16_BYTE( "e32-09.7",     0x0000000, 0x100000, CRC(db7ec115) SHA1(fa6f18de71ba997389d887d7ffe745aa25e24c20) )
-	ROM_LOAD( "e32-01.1",            0x0200000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
-	ROM_LOAD( "e32-02.6",            0x0600000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
-	ROM_LOAD( "e32-03.12",           0x0a00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
+	ROM_LOAD( "e32-01.1",            0x0400000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
+	ROM_LOAD( "e32-02.6",            0x0800000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
+	ROM_LOAD( "e32-03.12",           0x0c00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e32-10.22",           0x0000000, 0x004000, CRC(adf3feb5) SHA1(bae5bc3fad99a92a3492be1b775dab861007eb3b) )
@@ -2570,12 +2686,12 @@ ROM_END
 ROM_START( mgcldtea )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00c00000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "e32-05.2",     0x0000001, 0x080000, CRC(72fc7f7b) SHA1(50d9e84bc74fb63ec1900ab149051888bc3d03a5) )
-	ROM_LOAD16_BYTE( "e32-06.7",     0x0000000, 0x080000, CRC(d11c3881) SHA1(f7046c5bed4818152edcf697a49664b0bcf12a1b) )
-	ROM_LOAD( "e32-01.1",            0x0200000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
-	ROM_LOAD( "e32-02.6",            0x0600000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
-	ROM_LOAD( "e32-03.12",           0x0a00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e32-05.2",     0x0000001, 0x080000, BAD_DUMP CRC(72fc7f7b) SHA1(50d9e84bc74fb63ec1900ab149051888bc3d03a5) )
+	ROM_LOAD16_BYTE( "e32-06.7",     0x0000000, 0x080000, BAD_DUMP CRC(d11c3881) SHA1(f7046c5bed4818152edcf697a49664b0bcf12a1b) )
+	ROM_LOAD( "e32-01.1",            0x0400000, 0x400000, CRC(cf5f1d01) SHA1(5417f8aef5c8d0e9e63ba8c68efb5b3ef37b4693) )
+	ROM_LOAD( "e32-02.6",            0x0800000, 0x400000, CRC(61c8438c) SHA1(bdbe6079cc634c0cd6580f76619eb2944c9a31d9) )
+	ROM_LOAD( "e32-03.12",           0x0c00000, 0x200000, CRC(190d1618) SHA1(838a651d32752015baa7e8caea62fd739631b8be) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e32-10.22",           0x0000000, 0x004000, CRC(adf3feb5) SHA1(bae5bc3fad99a92a3492be1b775dab861007eb3b) )
@@ -2585,15 +2701,15 @@ ROM_START( mgcldtea )
 	ROM_LOAD( "e32-04.15",           0x0000000, 0x400000, CRC(c72f9eea) SHA1(7ab8b412a8ed00a42016acb7d13d3b074155780a) )
 ROM_END
 
-ROM_START( psyfrcex )
+ROM_START( psyforce )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x00a00000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "pfexic2.bin",  0x0000001, 0x080000, CRC(997e4500) SHA1(4a90b452c9a877ccec55a11f36c4cbc6df1f1f41) )
 	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
-	ROM_LOAD( "e22-02.16",           0x0100000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0300000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
-	ROM_LOAD( "e22-04.21",           0x0500000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD( "e22-03.1",            0x0200000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-04.21",           0x0400000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e22-07.22",           0x0000000, 0x004000, CRC(739af589) SHA1(dbb4d1c6d824a99ccf27168e2c21644e19811523) )
@@ -2603,15 +2719,15 @@ ROM_START( psyfrcex )
 	ROM_LOAD( "e22-01.15",           0x000000,  0x200000, CRC(808b8340) SHA1(d8bde850dd9b5b71e94ea707d2d728754f907977) )
 ROM_END
 
-ROM_START( psyforce )
+ROM_START( psyforcj )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "e22-05.2",     0x0000001, 0x080000, CRC(7770242c) SHA1(dd37575d3d9ffdef60fe0e4cab6c9e42d087f714) )
+	ROM_REGION32_LE( 0x00a00000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
-	ROM_LOAD( "e22-02.16",           0x0100000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0300000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
-	ROM_LOAD( "e22-04.21",           0x0500000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD16_BYTE( "e22-05.2",     0x0000001, 0x080000, CRC(7770242c) SHA1(dd37575d3d9ffdef60fe0e4cab6c9e42d087f714) )
+	ROM_LOAD( "e22-03.1",            0x0200000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-04.21",           0x0400000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e22-07.22",           0x0000000, 0x004000, CRC(739af589) SHA1(dbb4d1c6d824a99ccf27168e2c21644e19811523) )
@@ -2640,13 +2756,13 @@ ROM_END
 ROM_START( sfchamp )
 	TAITOFX1_BIOS
 
-	ROM_REGION32_LE( 0x00900000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e18-07.2",     0x0000001, 0x080000, CRC(1b484e1c) SHA1(f29f40a9988475d8abbb126095b0716133c087a0) )
 	ROM_LOAD16_BYTE( "e18-08.7",     0x0000000, 0x080000, CRC(6a5558cd) SHA1(75b26bcaaa213283e7e0dace69ee58f305b4572d) )
-	ROM_LOAD( "e18-02.12",           0x0100000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
-	ROM_LOAD( "e18-03.16",           0x0300000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
-	ROM_LOAD( "e18-04.19",           0x0500000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
-	ROM_LOAD( "e18-05.21",           0x0700000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+	ROM_LOAD( "e18-04.19",           0x0200000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
+	ROM_LOAD( "e18-05.21",           0x0400000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+	ROM_LOAD( "e18-02.12",           0x0600000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
+	ROM_LOAD( "e18-03.16",           0x0800000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e18-09.22",           0x0000000, 0x004000, CRC(bb5a5319) SHA1(0bb700cafc157d3af663cc9bebb8167487ff2852) )
@@ -2836,6 +2952,32 @@ ROM_START( jdreddb )
 	DISK_IMAGE( "jdreddb", 0, MD5(0da1d048d7223df74fca4f349473cefa) SHA1(9b810e3a16de62cabfc8271b6606574c7034cf41) )
 ROM_END
 
+/* Atlus */
+
+#define ATLUS_BIOS \
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) \
+	ROM_LOAD( "coh-1002l.353", 0x0000000, 0x080000, CRC(6721146b) SHA1(9511d24bfe25eb180fb2db0835b131cb4a12730e) )
+
+ROM_START( hvnsgate )
+	ATLUS_BIOS
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 )
+        ROM_LOAD16_BYTE( "athg-01b.18",  0x000001, 0x080000, CRC(e820136f) SHA1(2bc3465928dd08060736a2a67d98864d634275d6) )
+        ROM_LOAD16_BYTE( "athg-02b.17",  0x000000, 0x080000, CRC(11bfa89b) SHA1(f23e4c9d8eb90bd3bb3327d9950edd7a467ce8da) )
+        ROM_LOAD( "athg-07.027",  0x0400000, 0x400000, CRC(46411f67) SHA1(2e8f37c3d9d7f5f3c79fca8ffeaf4c2fd1634b91) )
+        ROM_LOAD( "athg-08.028",  0x0800000, 0x400000, CRC(85289345) SHA1(6385fe27451b80f97e7bad823b3b59eff3efa541) )
+        ROM_LOAD( "athg-09.210",  0x0c00000, 0x400000, CRC(19e558b5) SHA1(c195bc7dc3cfe4f099d27afdebd6f9cfe064e1df) )
+        ROM_LOAD( "athg-10.029",  0x1000000, 0x400000, CRC(748f936e) SHA1(134e78ea71bb9646f36cc503c704496a2b622ee9) )
+        ROM_LOAD( "athg-11.215",  0x1400000, 0x400000, CRC(f623e59c) SHA1(52ad88209ba5fa8e9002be03aee8fb777e60f256) )
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )	/* 68000 code */
+        ROM_LOAD16_BYTE( "athg-03.22",   0x000001, 0x020000, CRC(7eef7e68) SHA1(65b8ae18ef4ff636c548326a360b481aeb316869) )
+        ROM_LOAD16_BYTE( "athg-04.21",   0x000000, 0x020000, CRC(18523e85) SHA1(0ecc2116760f05fca8e5366b0a97dfe26fa9bc0c) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* YMZ280B samples */
+        ROM_LOAD( "athg-05.4136", 0x000000, 0x200000, CRC(74469a15) SHA1(0faa883900d7fd2e5240f486db33b3d868f1f05f) )
+        ROM_LOAD( "athg-06.4134", 0x200000, 0x200000, CRC(443ade73) SHA1(6ef6aa68c525b9749833125dcab929d1d65d3b90) )
+ROM_END
+
 /* Capcom ZN1 */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
@@ -2843,12 +2985,14 @@ ROM_END
 /* it in every zip file */
 GAMEX( 1995, cpzn1,    0,        coh1000c, zn, coh1000c, ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
 
-GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, starglad, cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfex,     cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (USA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfexa,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfexj,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, sfexp,    cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, sfexpj,   sfexp,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1996, glpracr,  cpzn1,    coh1000c, zn, coh1000c, ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Capcom ZN2 */
@@ -2858,20 +3002,17 @@ GAMEX( 1996, glpracr,  cpzn1,    coh1000c, zn, coh1000c, ROT0, "Tecmo", "Gallop 
 /* it in every zip file */
 GAMEX( 1997, cpzn2,    0,        coh3002c, zn, coh3002c, ROT0, "Sony/Capcom", "ZN2", NOT_A_DRIVER )
 
-GAMEX( 1997, sfexp,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, sfexpj,   sfexp,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_NOT_WORKING ) // ?? bad??
+GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Atari */
 
@@ -2879,7 +3020,6 @@ GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Stride
 /* parent for the coh-1000w.353 file, so that we do not have to include */
 /* it in every zip file */
 GAMEX( 1996, atpsx,    0,        coh1000w, zn, coh1000w, ROT0, "Atari", "Atari PSX", NOT_A_DRIVER )
-
 GAMEX( 1996, primrag2, atpsx,    coh1000w, zn, coh1000w, ROT0, "Atari", "Primal Rage 2 (Ver 0.36a)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* Acclaim */
@@ -2903,15 +3043,20 @@ GAMEX( 1997, tps,      0,        coh1002m, zn, coh1002m, ROT0, "Sony/Tecmo", "TP
 GAMEX( 1997, glpracr2, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_NOT_WORKING )
 GAMEX( 1997, glprac2j, glpracr2, coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_NOT_WORKING )
 GAMEX( 1997, glprac2l, glpracr2, coh1002ml,zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_NOT_WORKING )
-GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool Boarders Arcade Jam", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Video System */
 
 /* only one game dumped on this system, so coh-1002v.353 is included in the game zip file */
-GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT270, "Video System", "Sonic Wings Limited (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+
+/* Atlus */
+
+/* only one game dumped on this system, so coh-1002l.353 is included in the game zip file */
+GAMEX( 1996, hvnsgate, 0,        coh1002l, zn, coh1002l, ROT0, "Atlus", "Heaven's Gate", GAME_NOT_WORKING )
 
 /* Taito */
 
@@ -2920,15 +3065,15 @@ GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT0, "Video System", "
 /* it in every zip file */
 GAMEX( 1995, taitofx1, 0,        coh1000ta,zn, coh1000t, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
-GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, psyfrcex, taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Psychic Force EX (?)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, psyforce, psyfrcex, coh1000ta,zn, coh1000t, ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldate, taitofx1, coh1000ta,zn, coh1000t, ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldtea, mgcldate, coh1000ta,zn, coh1000t, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, psyforce, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, psyforcj, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, mgcldate, taitofx1, coh1000ta,zn, coh1000td, ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, mgcldtea, mgcldate, coh1000ta,zn, coh1000td, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_NOT_WORKING ) // BAD DUMP!
 GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000t, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh-3002t.353 file, so that we do not have to include */

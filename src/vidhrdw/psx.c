@@ -3156,6 +3156,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			}
 			break;
 		case 0x48:
+		case 0x4a:
 		case 0x4c:
 			if( m_n_gpu_buffer_offset < 3 )
 			{

@@ -2185,6 +2185,8 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 		case 3: xlinesize = xsize * 4; xpixelsize = 4; break;
 	}
 
+	if(stv2_current_tilemap.colour_depth == 0)
+		stv2_current_tilemap.scrollx /= 2;
 	if(stv2_current_tilemap.colour_depth == 2)
 		stv2_current_tilemap.scrollx*=2;
 	if(stv2_current_tilemap.colour_depth == 3)
@@ -2192,7 +2194,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 
 	gfxdatalow = gfxdata + stv2_current_tilemap.bitmap_map * 0x20000;
 	gfxdata+=(
-	(stv2_current_tilemap.scrollx & (xsize-1)) +
+	(stv2_current_tilemap.scrollx & (xlinesize-1)) +
 	((stv2_current_tilemap.scrolly & (ysize-1)) * (xlinesize)) +
 	(stv2_current_tilemap.bitmap_map * 0x20000)
 	);
@@ -3712,7 +3714,7 @@ extern int		 stv_framebuffer_double_interlace;
 
 void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 pri)
 {
-	int x,y;
+	int x,y,r,g,b;
 	int i;
 	UINT16 pix;
 	UINT16 *framebuffer_line;
@@ -3780,7 +3782,7 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	else
 		interlace_framebuffer = 0;
 
-	for ( y = cliprect->min_y; y < cliprect->max_y; y++ )
+	for ( y = cliprect->min_y; y <= cliprect->max_y; y++ )
 	{
 		framebuffer_line = stv_framebuffer_lines[y];
 		if ( interlace_framebuffer == 0 )
@@ -3793,14 +3795,21 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 			bitmap_line2 = (UINT16*)bitmap->line[2*y + 1];
 		}
 
-		for ( x = cliprect->min_x; x < cliprect->max_x; x++ )
+		for ( x = cliprect->min_x; x <= cliprect->max_x; x++ )
 		{
 			pix = framebuffer_line[x];
 			if ( pix & 0x8000 )
 			{
 				if ( sprite_priorities[0] != pri ) continue;
-				bitmap_line[x] = pix & 0x7fff;
-				if ( interlace_framebuffer == 1 ) bitmap_line2[x] = pix & 0x7fff;
+				b = (pix & 0x7c00) >> 10;
+				g = (pix & 0x03e0) >> 5;
+				r = (pix & 0x1f);
+				if ( color_offset_pal )
+				{
+					stv_vdp2_compute_color_offset_RGB555( &r, &g, &b, STV_VDP2_SPCOSL );
+				}
+				bitmap_line[x] = b | g << 5 | r << 10;
+				if ( interlace_framebuffer == 1 ) bitmap_line2[x] = b | g << 5 | r << 10;
 			}
 			else
 			{

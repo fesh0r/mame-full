@@ -1045,18 +1045,14 @@ static DRIVER_INIT( area51a )
 
 static DRIVER_INIT( area51 )
 {
-	common_init(1, 0x0c0, 0x09e);
-
-	/* patch the protection */
-	rom_base[0x220/4] = 0x03e00008;
+ common_init(1, 0x0c0, 0x09e);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
 	main_speedup_max_cycles = 120;
-	main_speedup = install_mem_read32_handler(0, 0x10006f0c, 0x10006f0f, cojagr3k_main_speedup_r); /* Need to find correct speedup */
+	main_speedup = install_mem_read32_handler(0, 0x100062e8, 0x100062eb, cojagr3k_main_speedup_r);
 #endif
 }
-
 
 static DRIVER_INIT( maxforce )
 {
