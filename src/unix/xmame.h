@@ -73,10 +73,8 @@ struct my_rectangle
  */
 
 /* dirty stuff */
-#if !defined xgl
 EXTERN unsigned char *dirty_lines;
 EXTERN unsigned char **dirty_blocks;
-#endif
 
 /* global variables and miscellaneous flags */
 

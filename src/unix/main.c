@@ -5,6 +5,11 @@
 #define __MAIN_C_
 #include "xmame.h"
 
+#ifdef xgl
+	#include "driver.h"
+	#include <math.h>
+#endif
+
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
 int osd_init(void)
@@ -33,6 +38,9 @@ void osd_exit (void)
 int main (int argc, char **argv)
 {
 	int res;
+#ifdef xgl
+	int i, color_deepth;
+#endif
 	
 	/* some display methods need to do some stuff with root rights */
 	if (sysdep_init()!= OSD_OK) exit(OSD_NOT_OK);
@@ -56,7 +64,60 @@ int main (int argc, char **argv)
         /* Check the colordepth we're requesting */
         if (!options.color_depth && !sysdep_display_16bpp_capable())
            options.color_depth = 8;
-	
+#ifdef xgl
+
+	/**
+	 * this hack is just to offer the
+	 * game's true color as the default,
+	 * if -bpp does not tell us otherwise ...
+	 *
+	 * just the options.color_depth is written,
+	 * if not set by the user ...
+	 *
+	 * diff's to mame.c:
+	 * the usage of the video attribute 'VIDEO_NEEDS_6BITS_PER_GUN'
+	 * is not logical for me (the opengl display) .. ??
+	 */
+	Machine->gamedrv = drivers[game_index];
+	Machine->drv = Machine->gamedrv->drv;
+
+	i=0; 
+	color_deepth=1;
+	while(i<Machine->drv->color_table_len)
+	{
+		color_deepth*=2;
+		i=(int)pow(2,color_deepth);
+	}
+
+	fprintf(stderr,"**** machine orig. color number: %d\n", 
+		Machine->drv->color_table_len);
+
+	fprintf(stderr,"**** machine's orig. color_deepth: %d\n", color_deepth);
+
+	if( (Machine->drv->video_attributes & VIDEO_RGB_DIRECT) >0 )
+	{
+		if(color_deepth==16) color_deepth=15;
+		else color_deepth=32;
+	} else {
+		if(Machine->drv->color_table_len>256)
+			color_deepth=16;
+	}
+
+	fprintf(stderr,"**** color_deepth regarding video attr.: %d\n", color_deepth);
+
+	if(  options.color_depth==0 ||
+	    (options.color_depth==16 && color_deepth==15)
+	  )
+	{
+		options.color_depth = color_deepth;
+		fprintf(stderr,"****  setting options.color_deepth := %d\n",
+			options.color_depth);
+	} else {
+		fprintf(stderr,"****  given options.color_deepth := %d\n",
+			options.color_depth);
+	}
+#endif
+
 	/* go for it */
 	res = run_game (game_index);
 

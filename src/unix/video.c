@@ -194,7 +194,8 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    if( (options.color_depth != 0) &&
        (options.color_depth != 8) &&
        (options.color_depth != 15) &&
-       (options.color_depth != 16) )
+       (options.color_depth != 16) &&
+       (options.color_depth != 32) )
    {
       options.color_depth = 0;
       fprintf(stderr, "error: invalid value for bpp: %s\n", arg);
@@ -228,7 +229,9 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG 980209 */
 {
 	struct osd_bitmap *bitmap;
-
+#ifdef xgl
+	int w,h;
+#endif
 
 	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
 	{
@@ -382,9 +385,9 @@ int osd_create_display(int width, int height, int depth,
       }
    }
   
-#if !defined xgl
    if (osd_dirty_init()!=OSD_OK) return -1;
-#else
+
+#ifdef xgl
    /* yes create a OpenGL-Texture compatible bitmap this time ... 
       the next call to alloc_bitmap uses this information ...
     */
@@ -415,9 +418,7 @@ void osd_close_display (void)
 {
    osd_free_colors();
    sysdep_display_close();
-#if !defined xgl
    osd_dirty_close ();
-#endif
 }
 
 static void osd_change_display_settings(struct my_rectangle *new_visual,
@@ -982,10 +983,12 @@ int osd_get_brightness(void)
    return brightness;
 }
 
+#ifndef xgl
 void osd_save_snapshot(struct osd_bitmap *bitmap)
 {
    save_screen_snapshot(bitmap);
 }
+#endif
 
 void osd_pause(int paused)
 {
