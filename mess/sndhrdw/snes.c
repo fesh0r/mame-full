@@ -400,23 +400,21 @@ WRITE_HANDLER ( spc_io_w )		// Not very many ports to deal with on the spc (than
 	logerror("SPC Write To Unhandled Address : %04X\n",offset+0x00F0);
 }
 
-struct MemoryReadAddress spc_readmem[] = {
+MEMORY_READ_START( spc_readmem )
 	{ 0x0000,0x00EF,MRA_RAM},							// lower 32k ram
 	{ 0x00F0,0x00FF,spc_io_r},							// i/o
 	{ 0x0100,0x7FFF,MRA_RAM},							// lower 32k ram
 	{ 0x8000,0xFFBF,MRA_NOP},							// upper 32k unmapped on snes (except for switchable rom)
 	{ 0xFFC0,0xFFFF,MRA_ROM},							// will need switching to BANK
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-struct MemoryWriteAddress spc_writemem[] = {
+MEMORY_WRITE_START( spc_writemem )
 	{ 0x0000,0x00EF,MWA_RAM},							// lower 32k ram
 	{ 0x00F0,0x00FF,spc_io_w},							// i/o
 	{ 0x0100,0x7FFF,MWA_RAM},							// lower 32k ram
 	{ 0x8000,0xFFBF,MWA_NOP},							// upper 32k unmapped on snes (except for switchable rom)
 	{ 0xFFC0,0xFFFF,MWA_ROM},
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 #endif
 
