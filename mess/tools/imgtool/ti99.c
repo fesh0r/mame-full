@@ -239,6 +239,35 @@ static void str_to_fname(char dst[10], const char *src)
 }
 
 /*
+	Convert a 10-character file name to a C string (removing trailing spaces if necessary)
+*/
+static void fname_to_str(char *dst, const char src[10], int n)
+{
+	int i;
+	int last_nonspace;
+
+
+	/* copy 10 characters at most */
+	if (--n > 10)
+		n = 10;
+
+	/* copy filename */
+	i = 0;
+	last_nonspace = -1;
+
+	while (i<n)
+	{
+		dst[i] = src[i];
+		if (src[i] != ' ')
+			last_nonspace = i;
+		i++;
+	}
+
+	/* terminate with '\0' */
+	dst[last_nonspace+1] = '\0';
+}
+
+/*
 	Convert physical sector address to offset
 */
 static int phys_address_to_offset(const ti99_phys_sec_address *address, const ti99_geometry *geometry)
@@ -808,8 +837,7 @@ static void ti99_image_info(IMAGE *img, char *string, const int len)
 	ti99_image *image = (ti99_image *) img;
 	char vol_name[11];
 
-	memcpy(vol_name, image->sec0.name, 10);
-	vol_name[10] = '\0';
+	fname_to_str(vol_name, image->sec0.name, 11);
 
 	snprintf(string, len, "%s", vol_name);
 }
@@ -866,8 +894,7 @@ static int ti99_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 			reply = read_sector_logical(iter->image->file_handle, fdr_secnum, & iter->image->geometry, & fdr);
 			if (reply)
 				return IMGTOOLERR_READERROR;
-			memcpy(ent->fname, fdr.name, (ent->fname_len < 11) ? (ent->fname_len-1) : 10);
-			ent->fname[(ent->fname_len < 11) ? (ent->fname_len-1) : 10] = '\0';
+			fname_to_str(ent->fname, fdr.name, ent->fname_len);
 
 			/* parse flags */
 			if (fdr.flags & fdr99_f_program)
