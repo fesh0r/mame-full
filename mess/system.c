@@ -723,6 +723,10 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 	/* GALAKSIJA */
 	DRIVER( galaxy )
 
+	/* PK-01 Lviv */
+	DRIVER( lviv )		/* PK-01 Lviv */
+	DRIVER( lviv2 )		/* PK-01 Lviv rev. 2 */
+
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/

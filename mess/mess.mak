@@ -9,7 +9,7 @@ CPUS+=Z80@
 CPUS+=Z180@
 CPUS+=Z80GB@
 CPUS+=CDP1802@
-#CPUS+=8080@
+CPUS+=8080@
 #CPUS+=8085A@
 CPUS+=M6502@
 CPUS+=M65C02@
@@ -156,6 +156,7 @@ DRVLIBS = \
 	$(OBJ)/aquarius.a \
 	$(OBJ)/exidy.a    \
 	$(OBJ)/galaxy.a   \
+	$(OBJ)/lviv.a   \
 	$(OBJ)/teamconc.a \
 	$(OBJ)/exidy.a    \
 	$(OBJ)/nintendo.a \
@@ -611,6 +612,11 @@ $(OBJ)/galaxy.a:   \
 	  $(OBJ)/mess/machine/galaxy.o   \
 	  $(OBJ)/mess/vidhrdw/galaxy.o   \
 	  $(OBJ)/mess/systems/galaxy.o
+
+$(OBJ)/lviv.a:   \
+	  $(OBJ)/mess/machine/lviv.o   \
+	  $(OBJ)/mess/vidhrdw/lviv.o   \
+	  $(OBJ)/mess/systems/lviv.o
 
 $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/machine/odyssey2.o \
