@@ -222,7 +222,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # above, this is automatically turned on by -O2 and above.
   # CFLAGS += -fstrict-aliasing
 
-  # Use with egcs-1.1.x and GCC 2.95; otherwise, xmame compilation will 
+  # Use with EGCS 1.1.x and GCC 2.95; otherwise, xmame compilation will 
   # break.
   # CFLAGS += -fno-strict-aliasing
  
@@ -496,6 +496,7 @@ MANDIR = $(PREFIX)/man/man6
 XMAMEROOT = $(PREFIX)/share/x$(TARGET)
 # This is the default path for system-wide configuration files.
 SYSCONFDIR = $(XMAMEROOT)
+
 
 ###########################################################################
 # Architecture; choose your CPU (only one!!) 
