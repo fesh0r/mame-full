@@ -12,6 +12,9 @@ static struct {
 	{ 0xebc77f3a , 0x2000, "ASTROCADE" },
 
 	{ 0x3aa93ef3 , 0x2000, "COLECO" },
+	{ 0x39bb16fc , 0x2000, "COLECO alternate" },
+	{ 0x05a37a34, 0x2000, "ADAM eos" },
+	{ 0x58d86a2a, 0x8000, "ADAM wp" },
 
 	{ 0xba13fb57 , 0x2000, "VECTREX" },
 	{ 0x20af7f3f , 0x8000, "RAASPEC" },
@@ -19,18 +22,78 @@ static struct {
 	{ 0x8016a315 , 0x400, "ODYSSEY2" },
 
 	{ 0x5e607dcf, 0x2000, "FAMICOM disk" },
+	{ 0x38000b6b, 0x40, "SNES" },
 
-	/* apple */
+	{ 0x3b601fc8, 0x80000, "PSX scph1000" },
+	{ 0x318178bf, 0x80000, "PSX 41A" },
+
+	{ 0xcbce86f7, 0x2000, "INTV" },
+	{ 0x683a4158, 0x800, "INTV" },
+
+/* Sega ***********************************************************************/
+	{ 0xf691f9c7, 0x8000, "SC3000 basic 2j" },
+	{ 0x155fd01f, 0x8000, "SC3000 basic 31" },
+
+	{ 0x5c12eae8, 0x100, "SYS32X" },
+	{ 0xdd9c46b8, 0x800, "SYS32X" },
+	{ 0xbfda1fe5, 0x400, "SYS32X" },
+
+	{ 0x2aba43c2, 0x80000, "SATURN 100" },
+	{ 0x224b752c, 0x80000, "SATURN 101" },
+
+/* NEC ***********************************************************************/
+	{ 0xf82771f1, 0x2000, "PCEngine cdrom bios" },
+
+	{ 0xe983ad21, 0x8000, "BAD DUMP PC6001 (2nd half 0xff)" },
+	{ 0x1a63a57a, 0x2000, "BAD DUMP PC6001 (1st and 2nd half equal)" },
+	{ 0x950ac401, 0x8000, "PC6001 basic" }, //62?
+	{ 0xb5364f8b, 0x2000, "PC6001 char" },
+	{ 0x20c8f3eb, 0x8000, "PC6001 kanji" },
+	{ 0x49b4f917, 0x4000, "PC6001 voice" },
+
+	{ 0xc0b01772, 0x8000, "PC6601 basic" },
+	{ 0xd2434f29, 0x2000, "PC6601 char" },
+	{ 0x3ce48c33, 0x2000, "PC6601 char" },
+	{ 0xf952b567, 0x8000, "PC6601 kanji" },
+	{ 0x91d078c1, 0x4000, "PC6601 voice" },
+
+	{ 0x516b1be3, 0x8000, "PC6601 basic" }, //68??
+	{ 0x331473a9, 0x2000, "PC6601 char" },
+	{ 0x03ba2cf1, 0x2000, "PC6601 char" },
+	{ 0x07318218, 0x2000, "PC6601 system2" },
+	{ 0x37ff3829, 0x4000, "PC6601 voice" },
+
+	{ 0xeb1d90ca, 0x1c000, "PC8801" },
+	{ 0x7a6edb47, 0x1800, "PC8801 char" },
+	{ 0x0f60c51f, 0x20000, "PC8801 kanji1" },
+	{ 0x8e67a330, 0x20000, "PC8801 kanji2" },
+
+	{ 0x6e299128 , 0x8000, "BAD DUMP/ROM? PC9821 00000" },
+	{ 0xf2a262b0 , 0x8000, "BAD DUMP/ROM? PC9821 c8000" },
+	{ 0x5dda57cc , 0x8000, "BAD DUMP/ROM? PC9821 d8000" },
+	{ 0x4e32081e , 0x8000, "PC9821 e8000" },
+	{ 0x4da85a6c , 0x8000, "PC9821 f0000" },
+	{ 0x2b1e45b1 , 0x8000, "MODIFIED? PC9821 f8000" },
+
+/* apple ******************************************************************************/
 	{ 0xa30b6af5 , 0x100, "APPLE1 bios" },
 	{ 0xbe70bb85 , 0x400, "APPLE1 characterset" },
+
+	{ 0x24d73c7b, 0x1000, "APPLE2? d000" },
+	{ 0x0d494efd, 0x1000, "APPLE2? e000" },
+	{ 0xb58f1ca1, 0x1000, "APPLE2? f000" },
+	{ 0xf66f9c26 , 0x3000, "MERGED APPLE2? (0x24d73c7b+0x0d494efd+0xb58f1ca1)" },
 
 	{ 0xf0edaa1b , 0x4000, "APPLE2C bios" },
 	{ 0xc8b979b3 , 0x8000, "APPLE2C0 bios" },
 	{ 0x0b996420 , 0x8000, "APPLE2CP bios" },
-	{ 0xe248835e , 0x2000, "APPLE2E bios c000" },
-	{ 0xfc3d59d8 , 0x2000, "APPLE2E bios e000" },
+	{ 0xe248835e , 0x2000, "APPLE2E bios c000 (?+0x24d73c7b)" },
+	{ 0xfc3d59d8 , 0x2000, "APPLE2E bios e000 (0x0d494efd+?)" },
 	{ 0x443aa7c4 , 0x2000, "APPLE2EE bios c000" },
 	{ 0x95e10034 , 0x2000, "APPLE2EE bios e000" },
+
+	{ 0x65989942, 0x4000, "BAD DUMP APPLE2E (0x?+0x95e10034!+0x443aa7c4+0x95e10034!)" },
+
 	{ 0x02b648c8 , 0x4000, "APPLE2EP bios c000" },
 	{ 0xce7144f6 , 0x100, "APPLE2E disk" },
 	{ 0x816a86f1 , 0x1000, "APPLE2E characterset" },
@@ -38,10 +101,8 @@ static struct {
 
 	{ 0x42f124b0 , 0x20000, "APPLE2GS" },
 
-	{ 0xf66f9c26 , 0x3000, "MERGED APPLE ???" },
-
-	{ 0xecfceb45 , 0x800, "APPLE characterset ???" },
-	{ 0xc506efb9 , 0x800, "APPLE characterset ???" },
+	{ 0xecfceb45 , 0x800, "INCOMPLETE? APPLE characterset ???" },
+	{ 0xc506efb9 , 0x800, "INCOMPLETE? APPLE characterset ???" },
 	{ 0x2b6da315 , 0x1000, "BAD DUMP? APPLE characterset 0xc506efb9+0xc506efb9!" },
 	{ 0x0b0759cc , 0x1000, "BAD DUMP? APPLE characterset (first half 0xff)+0xc506efb9" },
 
@@ -79,11 +140,13 @@ static struct {
 	{ 0x88ea2081 , 0x100000, "MAC 1M 420DBFF3" },
 	{ 0xa893cb0f , 0x100000, "MAC 1M EDE66CBD" },
 	{ 0xb8514689 , 0x100000, "MAC 1M FF7439EE" },
+	{ 0x4e70e3c0 , 0x100000, "MAC Quad 650" },
 
-	/* acorn */
+/* acorn **********************************************************************/
 	{ 0xc604db3d , 0x1000, "ATOM kernel" },
 	{ 0x81d86af7 , 0x1000, "ATOM floating point" },
 	{ 0x43798b9b , 0x1000, "ATOM basic" },
+	{ 0xc431a9b7 , 0x1000, "ATOM dos" },
 	{ 0x3c14fc70 , 0x4000, "PROTON kernel" },
 	{ 0x79434781 , 0x4000, "PROTON basic" },
 	{ 0xe7e2a294 , 0x4000, "PROTON advromm" },
@@ -102,7 +165,7 @@ static struct {
 	{ 0xa81ceb7c , 0x80000, "ARCHIMEDES 310 bios 30000" },
 	{ 0x707b0c6c , 0x80000, "ARCHIMEDES 310 bios 38000" },
 
-	/* atari */
+/* atari ******************************************************************************/
 	{ 0x649913e5 , 0x1000, "ATARI7800 bios" },
 
 	{ 0x6a5d766e , 0x800, "CO12399B? A800 floating point d800" },
@@ -136,7 +199,12 @@ static struct {
 	{ 0x3b5cd0c5, 0x30000, "ATARIST TOS 104" },
 	{ 0x08538e39, 0x40000, "ATARIST TOS 206" },
 
-	// amstrad
+	{ 0xe1ffecb6, 0x200, "LYNX I or II?" },
+	{ 0x0d973c9d, 0x200, "LYNX I or II? alternate" },
+
+	{ 0xfb731aaa, 0x20000, "JAGUAR" },
+
+/* amstrad *********************************************************************/
 	{ 0x0219bb74 , 0x4000, "CPC6128 os" },
 	{ 0xcdb86700 , 0x4000, "CPC6128 os french" },
 	{ 0xa9937f75 , 0x4000, "CPC6128 os spanish" },
@@ -159,6 +227,7 @@ static struct {
 	{ 0xdf31eb22, 480, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
 	{ 0x621d58a7, 589, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
 	{ 0xb3140dcb, 608, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
+	{ 0x679b0287, 608, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
 	{ 0x9864fd78, 608, "REPROGRAMMED PCW8256" },
 	{ 0xc642f498 , 0x80000, "PCW16 045" },
 
@@ -166,7 +235,7 @@ static struct {
 	{ 0xa699eca3, 0x40000, "NC100a" },
 	{ 0xbb8180e7, 0x80000, "NC200" },
 
-	/* commodore pet series */
+/* commodore pet series *******************************************************************/
 	{ 0xa055e33a, 0x800, "901447-01, 901439-01, maybe 6540-011 PET basic1 c000" },	
 	{ 0x03cf16d0, 0x800, "901447-09, 901439-09, 6540-019 PET basic1 c000 newer revision" },
 	{ 0x69fd8a8f, 0x800, "901447-02, 901439-05, 6540-012 PET basic1 c800" },
@@ -221,7 +290,7 @@ static struct {
 	{ 0xee8229c4, 0x1000, "901640-01 SUPERPET 8x8chars 256 PETSCII, 256 ASCII" },
 	{ 0xda1cd630, 0x1000, "? SUPERPET 8x8chars 256 PETSCII Swedish, 256 ASCII\n9014147-14+256 chars ascii from above)" },
 
-	// Commodore C16/C116/Plus4/1551
+/* Commodore C16/C116/Plus4/1551 *************************************************************/
 	{ 0x74eaae87, 0x4000, "318006.01 PLUS4 Basic 8000" },
 	{ 0x77bab934, 0x4000, "318004.03 PLUS4 Kernel Pal R3 c000" },
 	{ 0xbe54ed79, 0x4000, "318004.04 PLUS4 Kernel Pal R4 c000" },
@@ -239,7 +308,7 @@ static struct {
 	{ 0xf284199b, 0x800, "UNUSEABLE PART PLUS4 character set d000" },
 	{ 0x5b6a2b88, 0x800, "UNUSEABLE PART PLUS4 hungarian character set d000" },
 
-	// Commodore VIC20
+/* Commodore VIC20 **************************************************************************/
 	{ 0xdb4c43c1, 0x2000, "901486.01 VIC20 Basic c000" },
 	{ 0xe5e7c174, 0x2000, "901486.06 VIC20 Kernel NTSC e000" },
 	{ 0x4be07cb4, 0x2000, "901486.07 VIC20 Kernel PAL e000" },
@@ -248,7 +317,7 @@ static struct {
 	{ 0xb2a60662, 0x2000, "nec22081.206 VIC20 swedish Kernel e0000" },
 	{ 0xd37b6335, 0x800, "325329-04 VIC20 IEEE Cartridge b000" },
 
-	// Commodore 65 Prototype
+/* Commodore 65 Prototype ******************************************************************/
 	{ 0x0888b50f, 0x20000, "C65 911001" },
 	{ 0x3ee40b06, 0x20000, "C65 910828" },
 	{ 0x12527742, 0x20000, "C65 910626" },
@@ -256,7 +325,7 @@ static struct {
 	{ 0xb025805c, 0x20000, "C65 910429 German" },
 	{ 0xc5d8d32e, 0x20000, "C65 910111" },
 
-	// commodore b series
+/* commodore b series *********************************************************************/
 	{ 0x9d0366f9, 0x2000, "901243-02b CBMB basic 128kb f8000" },
 	{ 0x837978b5, 0x2000, "901242-02b CBMB basic 128kb fa000" },
 	{ 0xb0dcb56d, 0x2000, "901243-04a CBMB basic 128kb f8000" },
@@ -282,7 +351,7 @@ static struct {
 	{ 0xa8ff9372, 0x4000, "MERGED! CBMB 901243-04a + 901242-04a" },
 	{ 0x5db15870, 0x4000, "MERGED! CBMB 901241-03 + 901240-03" },
 
-	// commodore 64
+/* commodore 64 ********************************************************************/
 	{ 0xf833d117 , 0x2000, "901226.01 C64 basic a000" },
 	{ 0x2b1b7381 , 0x2000, "SCRAP? C64 kernel e000" }, // modified for alec 64 
 	{ 0xb8f49365 , 0x2000, "SCRAP C64 kernel speeddos, unique copyright" },
@@ -314,7 +383,7 @@ static struct {
 	{ 0xec4272ee , 0x1000, "901225.01 C64 8x8 character set d000" },
 	{ 0xbee9b3fd , 0x1000, "? C64 swedish character set d000" },
 
-	// commodore 128
+/* commodore 128 *************************************************************************/
 	{ 0x2ee6e2fa , 0x4000, "318018-02 C128 basic r0 4000" },
 	{ 0xd551fce0 , 0x4000, "318019-02 C128 basic r0 8000" },
 	{ 0xe857df90 , 0x8000, "318022-01 C128 basic r0 4000 (318018-02 + 318019-02)" },
@@ -351,7 +420,7 @@ static struct {
 	{ 0x7a70d9b8 , 0x1000, "325181-01 C128 8x8 character set c64, c128 swedish" },
 	{ 0xbad36b88 , 0x1000, "325167-01 I/F/B C128 8x8 characters sets" }, //italian and french verified to be the same
 
-	// commodore ieee bus devices
+/* commodore ieee bus devices ******************************************************/
 	{ 0x0ab338dc, 0x400, "901466-04 CBM2040 dos 2 6530" },
 	{ 0x25b5eed5, 0x1000, "901468-06 CBM2040 dos 1 e000" },
 	{ 0x9b09ae83, 0x1000, "901468-07 CBM2040 dos 1 f000" },
@@ -399,7 +468,7 @@ static struct {
 	{ 0x209e70a1 , 0x800, "? CBM8028 printer german car" },
 	{ 0x05d30d5f , 0x800, "? CBM8028 printer german dsy" },
 
-	// commodore serial bus devices
+/* commodore serial bus devices ************************************************/
 	{ 0x29ae9752 , 0x2000, "325302-01 CBM1540 c000" },
 	{ 0x10b39158 , 0x2000, "325303-01 CBM1540 e000" },
 	{ 0x9a48d3f0 , 0x2000, "901229-01 CBM1541 e000" },
@@ -435,7 +504,7 @@ static struct {
 
 	{ 0xf6290043 , 0x80000, "AMIGA kickstart 1.3" },
 
-	// ibm pc and compatibles
+/* ibm pc and compatibles ******************************************************/
 	{ 0x80d3cf5d , 0x2000, "IBM PC basic c1.10 f6000" },
 	{ 0x673a4acc , 0x2000, "IBM PC basic c1.10 f8000" },
 	{ 0xaac3fc37 , 0x2000, "IBM PC basic c1.10 fa000" },
@@ -476,7 +545,7 @@ static struct {
 	{ 0xa362ffe6 , 0x800, "AUTHENTIC? PC cga character set" },
 	{ 0x42009069 , 0x1000, "AUTHENTIC? PC cga character set" },
 
-	// sinclair
+/* sinclair **********************************************************************/
 	{ 0x4c7fc597 , 0x1000, "ZX80" },
 	{ 0x6c123536 , 0x1000, "ASZMIC" },
 
@@ -524,6 +593,12 @@ static struct {
 	{ 0x7c20e2c9 , 0x8000, "ZX128 plus3e" },
 	{ 0x4a700c7e , 0x8000, "ZX128 plus3e" },
 
+	{ 0x5cc6b3ac, 0xc000, "QL" },
+	{ 0x54e93572, 0xc000, "QL" },
+	{ 0xe2b94296, 0xc000, "QL" },
+	{ 0x0f95aab5, 0xc000, "QL" },
+
+/* tandy *************************************************************************/
 	{ 0x54368805 , 0x2000, "COCO basic" },
 	{ 0xa82a6254 , 0x2000, "COCO extbasic" },
 	{ 0x2ea0fb7f , 0x4000, "MERGED! 0xa82a6254+0x54368805" },
@@ -539,6 +614,32 @@ static struct {
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
 	{ 0x11fda97e , 0x2000, "MC10" },
 
+	{ 0x70d06dff , 0x1000, "TRS80 Level1 0000" },
+	{ 0x83dbbbe2 , 0x1000, "TRS80 0000" },
+	{ 0x05818718 , 0x1000, "TRS80 1000" },
+	{ 0x306e5d66 , 0x1000, "TRS80 2000" },
+	{ 0xd6fd9041 , 0x3000, "MERGED! 0x83dbbbe2+0x05818718+0x306e5d66" },
+	{ 0xbe46faf5 , 0x1000, "TRS80 alternate 0000" },
+	{ 0x6c791c2d , 0x1000, "TRS80 alternate 1000" },
+	{ 0x55b3ad13 , 0x1000, "TRS80 alternate 2000" },
+	{ 0xa8e60d9a , 0x3000, "MERGED! 0xbe46faf5+0x6c791c2d+0x55b3ad13" },
+	{ 0x8f5214de , 0x1000, "SYS80 0000" },
+	{ 0x46e88fbf , 0x1000, "SYS80 1000" },
+	{ 0x2bfef8f7 , 0x3000, "MERGED! 0x8f5214de+0x46e88fbf+0x306e5d66" },
+	{ 0x37c59db2 , 0x1000, "TRS80 level 2 (7 differences to 0x83dbbbe2)" },
+	{ 0x0d8a132e , 0x3000, "MERGED TRS80 level 2 (0x37c59db2+0x05818718+306e5d66)" },
+	{ 0xbddbf843 , 0x3800, "MERGED! trs80 model 3" },
+	{ 0x1a92d54d , 0x3800, "TRS80 model 4 (first 0x3000 byte same as 0xbddbf843" },
+	{ 0x7ff336f4 , 504, "SCRAP? TRS80 disk?" },
+	{ 0x0033f2b9 , 0x400, "TRS80 char 128 6x8 char Arrows (should be the same as 0xac21c5a2)" },
+	{ 0x2d9b8d3d , 0xc00, "MODIFIED? 256 TRS81 6x12 char [/]" },
+	{ 0xac21c5a2 , 0xc00, "MODIFIED? 256 TRS81 6x12 char Arrows" },
+	{ 0xacfc3200 , 0xc00, "MODIFIED? 256 TRS81 6x12 char real lower case letters, 0-31 are also big letters" },
+	{ 0xc7039103 , 0x1500, "TRS80 448 8x12 char" },
+	{ 0xddd8f7b2 , 0x1500, "TRS80 448 8x12 char international" },
+	{ 0x9820d71a , 0x1500, "TRS80 448 8x12 char linegraphics" },
+
+/* msx ***************************************************************************/
 	{ 0xd9ec9db7 , 0x4000, "MSX basic" },
 	{ 0x2f74e2c5 , 0x4000, "MSX basic 0xd9ec9db7 with some modifications" },
 	{ 0x86f11f42 , 0x4007, "MODIFIED MSX 0x2f74e2c5 with 7 byte header" },
@@ -556,6 +657,7 @@ static struct {
 	{ 0xaf445c3d , 0x4000, "MSX shrpdisk" },
 	{ 0x6704ef81 , 0x4000, "MSX gradisk" },
 	{ 0xeb8e1d5b , 0x4000, "MSX fmsxdisk" },
+	{ 0x71162b96 , 0x4000, "MSX disk" },
 
 	{ 0x77b94ae0,0x8000, "MSXTR" },
 	{ 0x937c8dbb,0x8000, "MSXTR" },
@@ -574,6 +676,40 @@ static struct {
 	{ 0x00870134,0x8000, "MSX2+" },
 	{ 0xb8ba44d3,0x4000, "MSX2+ ext" },
 	{ 0xc9651b32,0x20000, "MSX2+ kanji 128k" },
+
+/* sharp ***************************************************************************/
+	{ 0x4c6c6b7b , 0x1000, "MZ700" },
+	{ 0x42b9e8fb , 0x1000, "MZ700 font" },
+	{ 0x425eedf5 , 0x1000, "MZ700 font japan" },
+	{ 0x0c281675 , 0x2000, "MZ800" },
+
+	{ 0x44bee438 , 0x2000, "SC61860A08 5H 13LD PC1401 cpu rom" },
+	{ 0x69b9d587 , 0x8000, "5S1 SC613256 D30 PC1401" },
+	{ 0xf7287aca , 0x2000, "PC1251 cpu rom" },
+	{ 0x93ecb629 , 0x4000, "PC1251 basic rom" },
+	{ 0x79a924bc , 0x2000, "PC1350 cpu rom" },
+	{ 0x158b28e2 , 0x8000, "PC1350 basic rom" },
+
+	{ 0x9f3195f1 ,0xc0000, "X68000 charset" },
+	{ 0x72bdf532 ,0x20000, "X68000 1.00 1987/05/07" },
+
+/* texas instruments ****************************************************************/
+	{ 0xdb8f33e5 , 0x2000, "TI99_4A arom" },
+	{ 0x8f7df93f , 0x2000, "TI99_4A disk" },
+	{ 0xaf5c2449 , 0x6000, "TI99_4A agrom" },
+	{ 0x58b155f7 , 0x8000, "TI99_4A speech" },
+	{ 0x0a0b0c42 , 0x100, "94519209 TI990_4" },
+	{ 0xd078af61 , 0x100, "94519210 TI990_4" },
+	{ 0x6cf7d4a0 , 0x100, "94519211 TI990_4" },
+	{ 0xd9522458 , 0x100, "94519212 TI990_4" },
+	{ 0x8719b04e , 0x100, "94519113 TI990_4" },
+	{ 0x72a040e0 , 0x100, "94519114 TI990_4" },
+	{ 0x9ccf8cca , 0x100, "94519115 TI990_4" },
+	{ 0xfa387bf3 , 0x100, "94519116 TI990_4" },
+
+	{ 0x6a320f03 , 0x20000, "TI82" },
+	{ 0x4bf05697 , 0x40000, "TI83 1?" },
+	{ 0x6a0a94d0 , 0x20000, "TI85" },
 
 	{ 0xd359ead7 , 0x4000, "CGENIE bios" },
 	{ 0x2a96cf74 , 0x2000, "CGENIE dos" },
@@ -621,21 +757,6 @@ static struct {
 	{ 0x4a6c9a47 , 0x2000, "KC85_3 disk" },
 	{ 0x639e4864 , 0x2000, "KC85_3 tape" },
 
-	{ 0x70d06dff , 0x1000, "TRS80 Level1 0000" },
-	{ 0x83dbbbe2 , 0x1000, "TRS80 0000" },
-	{ 0x05818718 , 0x1000, "TRS80 1000" },
-	{ 0x306e5d66 , 0x1000, "TRS80 2000" },
-	{ 0xd6fd9041 , 0x3000, "MERGED! 0x83dbbbe2+0x05818718+0x306e5d66" },
-	{ 0x0033f2b9 , 0x400, "TRS80 char" },
-	{ 0xbe46faf5 , 0x1000, "TRS80 alternate 0000" },
-	{ 0x6c791c2d , 0x1000, "TRS80 alternate 1000" },
-	{ 0x55b3ad13 , 0x1000, "TRS80 alternate 2000" },
-	{ 0xa8e60d9a , 0x3000, "MERGED! 0xbe46faf5+0x6c791c2d+0x55b3ad13" },
-	{ 0x8f5214de , 0x1000, "SYS80 0000" },
-	{ 0x46e88fbf , 0x1000, "SYS80 1000" },
-	{ 0x2bfef8f7 , 0x3000, "MERGED! 0x8f5214de+0x46e88fbf+0x306e5d66" },
-	{ 0xbddbf843 , 0x3800, "MERGED! trs80 model 3" },
-
 	{ 0x7896a696 , 0x2000, "MBEE" },
 	{ 0xb21d9679 , 0x2000, "MBEE" },
 	{ 0x0fc21cb5 , 0x2000, "MBEE" },
@@ -654,24 +775,6 @@ static struct {
 	{ 0x4009f636 , 0x1000, "JUPITER" },
 	{ 0xe5b1f5f6 , 0x2000, "MERGED! JUPITER 0xdc8438a5+0x4009f636" },
 
-	{ 0x4c6c6b7b , 0x1000, "MZ700" },
-	{ 0x42b9e8fb , 0x1000, "MZ700 font" },
-	{ 0x425eedf5 , 0x1000, "MZ700 font japan" },
-	{ 0x0c281675 , 0x2000, "MZ800" },
-
-	{ 0xdb8f33e5 , 0x2000, "TI99_4A arom" },
-	{ 0x8f7df93f , 0x2000, "TI99_4A disk" },
-	{ 0xaf5c2449 , 0x6000, "TI99_4A agrom" },
-	{ 0x58b155f7 , 0x8000, "TI99_4A speech" },
-	{ 0x0a0b0c42 , 0x100, "94519209 TI990_4" },
-	{ 0xd078af61 , 0x100, "94519210 TI990_4" },
-	{ 0x6cf7d4a0 , 0x100, "94519211 TI990_4" },
-	{ 0xd9522458 , 0x100, "94519212 TI990_4" },
-	{ 0x8719b04e , 0x100, "94519113 TI990_4" },
-	{ 0x72a040e0 , 0x100, "94519114 TI990_4" },
-	{ 0x9ccf8cca , 0x100, "94519115 TI990_4" },
-	{ 0xfa387bf3 , 0x100, "94519116 TI990_4" },
-
 	{ 0x650784a3 , 0x1000, "P2000 bios" },
 	{ 0x9d9d38f9 , 0x4000, "P2000 basic" },
 	{ 0x873e81c1 , 2240, "BAD DUMP P2000 character" },
@@ -687,12 +790,16 @@ static struct {
 	{ 0xf18710b4 , 0x4000, "ORIC1" },
 	{ 0xc3a92bef , 0x4000, "ORICA" },
 
-	{ 0x44bee438 , 0x2000, "SC61860A08 5H 13LD PC1401 cpu rom" },
-	{ 0x69b9d587 , 0x8000, "5S1 SC613256 D30 PC1401" },
-	{ 0xf7287aca , 0x2000, "PC1251 cpu rom" },
-	{ 0x93ecb629 , 0x4000, "PC1251 basic rom" },
-	{ 0x79a924bc , 0x2000, "PC1350 cpu rom" },
-	{ 0x158b28e2 , 0x8000, "PC1350 basic rom" },
+	{ 0x32f0d1ef , 0x4000, "MODIFIED? Einstein" },
+
+	{ 0x5c3b5bb5, 0x800, "BAD DUMP? Galaxy char" },
+	{ 0x365f3e24, 0x1000, "Galaxy" },
+	{ 0x5dc5a100, 0x1000, "Galaxy" },
+
+	{ 0xe6ea96dc ,0x1000, "ZRT80" },
+	{ 0x4dbdc60f ,0x800, "ZRT80 char" },
+
+	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
 
 	{ 0x5619ccaf , 0x40000, "HP48S" },
 	{ 0xd6bb68c5 , 0x80000, "HP48G" },
@@ -702,6 +809,12 @@ static struct {
 
 	{ 0x075b0bbd , 0x2000, "SYM1 basic ???" },
 	{ 0x7a4b1e12 , 0x1000, "SYM1 ???" },
+
+	{ 0x0878b399 , 0x1000, "AIM65" },
+	{ 0xd7b42d2a , 0x1000, "AIM65" },
+	{ 0x36a61f39 , 0x1000, "AIM65" },
+	{ 0xd01914b0 , 0x1000, "AIM65" },
+	{ 0x90e44afe , 0x1000, "AIM65" },
 
 	{ 0xa2a56502 , 0x400, "MEKD" },
 
@@ -716,7 +829,6 @@ static struct {
 	{ 0x8ee6030e , 0x800, "SUPERBRD" },
 	{ 0xe5b7028d , 0x800, "SUPERBRD" },
 	{ 0xec94afe7 , 0x800, "SUPERBRD" },
-
 
 	{ 0x278f7bf3 , 0x800, "7916E C48091 82c210-1 Chess Champion MK1 (2716 compatible)" },
 	{ 0x4f28c443 , 0x400, "MOS6530 024 1879 Chess Champion MK2" },
