@@ -11,6 +11,9 @@ System Driver Changes:
   some NitrOS-9 programs to crash when allocating too much memory (bug #352).
   [Nate Woods]
 
+- [COCO3] Added '_' to the supported keys for the natural keyboard.  '_' is
+  specific to OS-9. [Nate Woods]
+
 - [JAGUAR] Some enhancements to the blitter; most games are still not
   playable however. [Nate Woods]
 
