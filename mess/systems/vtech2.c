@@ -109,38 +109,30 @@ extern void laser_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 extern WRITE_HANDLER ( laser_bg_mode_w );
 extern WRITE_HANDLER ( laser_two_color_w );
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START( readmem )
 	{ 0x00000, 0x03fff, MRA_BANK1 },
 	{ 0x04000, 0x07fff, MRA_BANK2 },
 	{ 0x08000, 0x0bfff, MRA_BANK3 },
 	{ 0x0c000, 0x0ffff, MRA_BANK4 },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START( writemem )
 	{ 0x00000, 0x03fff, MWA_BANK1 },
 	{ 0x04000, 0x07fff, MWA_BANK2 },
 	{ 0x08000, 0x0bfff, MWA_BANK3 },
 	{ 0x0c000, 0x0ffff, MWA_BANK4 },
-    { -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START( readport )
 	{ 0x10, 0x1f, laser_fdc_r },
-    { -1 }
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START( writeport )
 	{ 0x10, 0x1f, laser_fdc_w },
 	{ 0x40, 0x43, laser_bank_select_w },
 	{ 0x44, 0x44, laser_bg_mode_w },
 	{ 0x45, 0x45, laser_two_color_w },
-    { -1 }
-};
+PORT_END
 
 INPUT_PORTS_START( laser350 )
 	PORT_START /* IN0 KEY ROW 0 */

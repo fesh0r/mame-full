@@ -7,8 +7,7 @@
 extern int coco_cassette_init(int id);
 extern void coco_cassette_exit(int id);
 
-static struct MemoryReadAddress mc10_readmem[] =
-{
+static MEMORY_READ_START( mc10_readmem )
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
 	{ 0x0020, 0x007f, MRA_NOP }, /* unused */
 	{ 0x0080, 0x00ff, MRA_RAM }, /* 6803 internal RAM */
@@ -18,11 +17,9 @@ static struct MemoryReadAddress mc10_readmem[] =
 	{ 0xbfff, 0xbfff, mc10_bfff_r },
 //	{ 0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
 	{ 0xe000, 0xffff, MRA_ROM }, /* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress mc10_writemem[] =
-{
+static MEMORY_WRITE_START( mc10_writemem )
 	{ 0x0000, 0x001f, m6803_internal_registers_w },
 	{ 0x0020, 0x007f, MWA_NOP }, /* unused */
 	{ 0x0080, 0x00ff, MWA_RAM }, /* 6803 internal RAM */
@@ -32,22 +29,17 @@ static struct MemoryWriteAddress mc10_writemem[] =
 	{ 0xbfff, 0xbfff, mc10_bfff_w },
 //	{ 0xc000, 0xdfff, MWA_ROM }, /* expansion ROM */
 	{ 0xe000, 0xffff, MWA_ROM }, /* ROM */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct IOReadPort mc10_readport[] =
-{
+static PORT_READ_START( mc10_readport )
 	{ M6803_PORT1, M6803_PORT1, mc10_port1_r },
 	{ M6803_PORT2, M6803_PORT2, mc10_port2_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort mc10_writeport[] =
-{
+static PORT_WRITE_START( mc10_writeport )
 	{ M6803_PORT1, M6803_PORT1, mc10_port1_w },
 	{ M6803_PORT2, M6803_PORT2, mc10_port2_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 /* MC-10 keyboard
 
