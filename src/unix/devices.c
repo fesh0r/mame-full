@@ -420,7 +420,7 @@ int osd_input_initpost(void)
 			joy_ps2_init();
 			break;
 #endif
-#ifdef SDL
+#if defined SDL || defined SDL_JOYSTICK
 		case JOY_SDL:
 			joy_SDL_init();
 			break;

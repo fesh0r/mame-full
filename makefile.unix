@@ -560,7 +560,9 @@ ARCH  = linux
 # X Input Extensions-based joystick.  This is known to not work right now.
 # JOY_X11 = 1
 
-# On x86-based OSes, if supported, you can use standard joystick driver.
+# If supported, you can use the standard joystick driver.  Note that this 
+# can work on non-x86 platforms.  I just haven't come up with a good 
+# replacement name for it.
 # JOY_I386 = 1
 
 # Linux FM-TOWNS game pad joystick emulation support.  Thanks to Osamu 
@@ -572,6 +574,9 @@ ARCH  = linux
 
 # PlayStation2-linux native pad support.
 # JOY_PS2 = 1
+
+# SDL joystick support.
+# JOY_SDL = 1
 
 # This will enable the use of the Happ Controls UGCI(tm) USB devices'
 # Coin/Start inputs using the libugci library available from

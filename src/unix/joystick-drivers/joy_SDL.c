@@ -8,7 +8,7 @@ struct rc_option joy_SDL_opts[] = {
 };
 
 
-#ifdef SDL
+#if defined SDL || defined SDL_JOYSTICK
 
 #include <SDL.h>
 

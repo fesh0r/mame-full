@@ -276,6 +276,11 @@ endif
 endif
 endif
 
+ifdef JOY_SDL
+CONFIG  += -DSDL_JOYSTICK `$(SDL_CONFIG) --cflags`
+MY_LIBS += `$(SDL_CONFIG) --libs`
+endif
+
 # Happ UGCI config
 ifdef UGCICOIN
 CONFIG += -DUGCICOIN
