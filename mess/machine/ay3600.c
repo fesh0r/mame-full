@@ -13,6 +13,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/ay3600.h"
 
 static unsigned char a2_key_remap[7*8][4] = {
 /*	  norm ctrl shft both */

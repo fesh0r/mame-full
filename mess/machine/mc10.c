@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "vidhrdw/m6847.h"
+#include "includes/mc10.h"
 
 static int mc10_keyboard_strobe;
 
@@ -53,7 +54,7 @@ int mc10_interrupt(void)
 	return ignore_interrupt();
 }
 
-int mc10_bfff_r(int offset)
+READ_HANDLER ( mc10_bfff_r )
 {
 	/*   BIT 0 KEYBOARD ROW 1
 	 *   BIT 1 KEYBOARD ROW 2
@@ -81,12 +82,12 @@ int mc10_bfff_r(int offset)
 	return val;
 }
 
-int mc10_port1_r(int offset)
+READ_HANDLER ( mc10_port1_r )
 {
 	return mc10_keyboard_strobe;
 }
 
-void mc10_port1_w(int offset, int data)
+WRITE_HANDLER ( mc10_port1_w )
 {
 	/*   BIT 0  KEYBOARD COLUMN 1 STROBE
 	 *   BIT 1  KEYBOARD COLUMN 2 STROBE
@@ -100,7 +101,7 @@ void mc10_port1_w(int offset, int data)
 	mc10_keyboard_strobe = data;
 }
 
-int mc10_port2_r(int offset)
+READ_HANDLER ( mc10_port2_r )
 {
 	/*   BIT 1 KEYBOARD SHIFT/CONTROL KEYS INPUT
 	 * ! BIT 2 PRINTER OTS INPUT
@@ -119,7 +120,7 @@ int mc10_port2_r(int offset)
 	return val;
 }
 
-void mc10_port2_w(int offset, int data)
+WRITE_HANDLER ( mc10_port2_w )
 {
 	/*   BIT 0 PRINTER OUTFUT & CASS OUTPUT
 	 */
@@ -142,7 +143,7 @@ int mc10_vh_start(void)
 	return 0;
 }
 
-void mc10_bfff_w(int offset, int data)
+WRITE_HANDLER ( mc10_bfff_w )
 {
 	/*   BIT 2 GM2 6847 CONTROL & INT/EXT CONTROL
 	 *   BIT 3 GM1 6847 CONTROL
@@ -179,7 +180,7 @@ void mc10_bfff_w(int offset, int data)
 	DAC_data_w(0, data & 0x80);
 }
 
-void mc10_ram_w (int offset, int data)
+WRITE_HANDLER ( mc10_ram_w )
 {
 	/* from vidhrdw/dragon.c */
 	extern void coco_ram_w (int offset_loc, int data_loc);

@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "includes/astrocde.h"
 
 #include <math.h> /* for sin() and cos() */
 
@@ -126,12 +127,12 @@ void astrocade_init_palette(unsigned char *palette, unsigned short *colortable,c
 	colortable = fake_colortable;
 }
 
-void astrocade_vertical_blank_w(int offset, int data)
+WRITE_HANDLER ( astrocade_vertical_blank_w )
 {
 	VerticalBlank = data;
 }
 
-int astrocade_intercept_r(int offset)
+READ_HANDLER ( astrocade_intercept_r )
 {
 	int res;
 
@@ -142,7 +143,7 @@ int astrocade_intercept_r(int offset)
 }
 
 
-int astrocade_video_retrace_r(int offset)
+READ_HANDLER ( astrocade_video_retrace_r )
 {
 	extern int CurrentScan;
 
@@ -152,7 +153,7 @@ int astrocade_video_retrace_r(int offset)
 /* Switches colour registers at this zone - 40 zones */
 /* Also sets the background colors */
 
-void astrocade_colour_split_w(int offset, int data)
+WRITE_HANDLER ( astrocade_colour_split_w )
 {
 	ColourSplit = data&0x3f;
 
@@ -169,12 +170,12 @@ void astrocade_colour_split_w(int offset, int data)
 /* This selects commercial (high res, arcade) or
                   consumer (low res, astrocade) mode */
 
-void astrocade_mode_w(int offset, int data)
+WRITE_HANDLER ( astrocade_mode_w )
 {
 	astrocade_mode = data & 0x01;
 }
 
-void astrocade_colour_register_w(int offset, int data)
+WRITE_HANDLER ( astrocade_colour_register_w )
 {
 	if(Colour[offset] != data)
     {
@@ -191,7 +192,7 @@ void astrocade_colour_register_w(int offset, int data)
 #endif
 }
 
-void astrocade_colour_block_w(int offset, int data)
+WRITE_HANDLER ( astrocade_colour_block_w )
 {
 	static int color_reg_num = 7;
 
@@ -211,7 +212,7 @@ void astrocade_colour_block_w(int offset, int data)
 
 }
 
-void astrocade_videoram_w(int offset,int data)
+WRITE_HANDLER ( astrocade_videoram_w )
 {
 	if ((offset < 0x1000) && (astrocade_videoram[offset] != data))
 	{
@@ -221,7 +222,7 @@ void astrocade_videoram_w(int offset,int data)
 }
 
 
-void astrocade_magic_expand_color_w(int offset,int data)
+WRITE_HANDLER ( astrocade_magic_expand_color_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
@@ -231,7 +232,7 @@ void astrocade_magic_expand_color_w(int offset,int data)
 }
 
 
-void astrocade_magic_control_w(int offset,int data)
+WRITE_HANDLER ( astrocade_magic_control_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_control = %02x\n",cpu_getpc(),data);
@@ -242,7 +243,7 @@ void astrocade_magic_control_w(int offset,int data)
 	magic_control = data;
 }
 
-void astrocade_magicram_w(int offset,int data)
+WRITE_HANDLER ( astrocade_magicram_w )
 {
 	unsigned int data1,shift,bits,bibits,stib,k,old_data;
 

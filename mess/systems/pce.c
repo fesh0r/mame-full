@@ -12,31 +12,9 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
+#include "includes/pce.h"
 
-/* from machine\pce.c */
-
-extern unsigned char *pce_user_ram; /* scratch RAM at F8 */
-extern unsigned char *pce_save_ram; /* battery backed RAM at F7 */
-extern int pce_load_rom(int id);
-extern int pce_id_rom (int id);
-extern void pce_init_machine(void);
-extern void pce_stop_machine(void);
-extern WRITE_HANDLER ( pce_joystick_w );
-extern READ_HANDLER ( pce_joystick_r );
-
-/* from vidhrdw\vdc.c */
-
-extern VDC vdc;
-extern int pce_vh_start(void);
-extern void pce_vh_stop(void);
-extern void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-extern WRITE_HANDLER ( vdc_w );
-extern READ_HANDLER ( vdc_r );
-extern WRITE_HANDLER ( vce_w );
-extern READ_HANDLER ( vce_r );
-extern void pce_refresh_line(int line);
-
-int pce_interrupt(void)
+static int pce_interrupt(void)
 {
     int ret = H6280_INT_NONE;
 
@@ -86,29 +64,29 @@ int pce_interrupt(void)
 
 /* stubs for the irq/psg/timer code */
 
-WRITE_HANDLER ( pce_irq_w)
+static WRITE_HANDLER ( pce_irq_w)
 {
 }
 
-READ_HANDLER ( pce_irq_r )
-{
-    return 0x00;
-}
-
-WRITE_HANDLER ( pce_timer_w )
-{
-}
-
-READ_HANDLER ( pce_timer_r )
+static READ_HANDLER ( pce_irq_r )
 {
     return 0x00;
 }
 
-WRITE_HANDLER ( pce_psg_w )
+static WRITE_HANDLER ( pce_timer_w )
 {
 }
 
-READ_HANDLER ( pce_psg_r )
+static READ_HANDLER ( pce_timer_r )
+{
+    return 0x00;
+}
+
+static WRITE_HANDLER ( pce_psg_w )
+{
+}
+
+static READ_HANDLER ( pce_psg_r )
 {
     return 0x00;
 }

@@ -37,7 +37,7 @@ typedef struct {
 
 static PIC8259 pic8259[2]= { { 0xff }, { 0xff }};
 
-void pic8259_issue_irq(PIC8259 *this, int irq)
+static void pic8259_issue_irq(PIC8259 *this, int irq)
 {
 	UINT8 mask = 1 << irq;
 	DBG_LOG(1,"PIC_issue_irq",("IRQ%d: ", irq));

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "driver.h"
+#include "includes/oric.h"
 
 /*
 
@@ -29,12 +30,6 @@ add Inport_ports structures so key info menu in mess GUI shows keys
 loading tape image to update MESS GUI settings for current image
 
 */
-
-/* from vidhrdw */
-void oric_set_powerscreen_mode (int mode);
-void oric_set_flash_show (int mode);
-
-int oric_extract_file_from_tape (int filenum);
 
 unsigned char *oric_ram;
 int oric_load_rom (int id);
@@ -221,6 +216,7 @@ void oric_shutdown_machine (void)
 		free (oric_tape_data);
 }
 
+#if 0
 int oric_ram_r (int offset)
 {
 	return (oric_ram[offset]);
@@ -230,8 +226,9 @@ void oric_ram_w (int offset, int data)
 {
 	oric_ram[offset] = data;
 }
+#endif
 
-int oric_IO_r (int offset)
+READ_HANDLER ( oric_IO_r )
 {
 	switch( offset & 0x0f )
 	{
@@ -261,7 +258,7 @@ int oric_IO_r (int offset)
 
 */
 
-void oric_IO_w (int offset, int data)
+WRITE_HANDLER ( oric_IO_w )
 {
 //	int keypressed;
 //	int kbrow, kbcol;

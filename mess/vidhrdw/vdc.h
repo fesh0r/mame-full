@@ -79,3 +79,17 @@ typedef struct
     struct osd_bitmap *bmp;
 }VDC;
 
+
+
+
+/* from vidhrdw\vdc.c */
+
+extern VDC vdc;
+extern int pce_vh_start(void);
+extern void pce_vh_stop(void);
+extern void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern WRITE_HANDLER ( vdc_w );
+extern READ_HANDLER ( vdc_r );
+extern WRITE_HANDLER ( vce_w );
+extern READ_HANDLER ( vce_r );
+extern void pce_refresh_line(int line);

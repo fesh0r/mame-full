@@ -8,9 +8,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "includes/oric.h"
 
-void oric_vh_stop(void);
-void oric_init_char_attrs(void);
 int oric_powerup_screen;
 
 typedef struct{

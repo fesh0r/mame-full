@@ -13,22 +13,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-
-
-extern char zx_frame_message[128];
-extern int zx_frame_time;
-
-/* from vidhrdw/zx.c */
-extern void zx_ula_bkgnd(int color);
-extern int zx_ula_r(int offs, int region);
-extern void zx_ula_nmi(int param);
-extern void zx_ula_irq(int param);
-
-extern void *ula_nmi;
-extern void *ula_irq;
-extern int ula_frame_vsync;
-extern int ula_scanline_count;
-extern int ula_scancode_count;
+#include "includes/zx.h"
 
 /* statics */
 #define TAPE_PULSE		348
@@ -325,7 +310,7 @@ static void extract_name(void)
 	}
 }
 
-int zx_tape_get_bit(void)
+static int zx_tape_get_bit(void)
 {
 	if (tape_file || tape_header || tape_trailer)
 	{
@@ -388,17 +373,17 @@ int zx_tape_get_bit(void)
 	return tape_mask;
 }
 
-void zx_io_w(int offs, int data)
+WRITE_HANDLER ( zx_io_w )
 {
-	logerror("IOW %3d $%04X", cpu_getscanline(), offs);
-	if ((offs & 2) == 0)
+	logerror("IOW %3d $%04X", cpu_getscanline(), offset);
+	if ((offset & 2) == 0)
 	{
 		logerror(" ULA NMIs off\n");
 		if (ula_nmi)
 			timer_remove(ula_nmi);
 		ula_nmi = NULL;
 	}
-	else if ((offs & 1) == 0)
+	else if ((offset & 1) == 0)
 	{
 		logerror(" ULA NMIs on\n");
 		ula_nmi = timer_pulse(TIME_IN_CYCLES(207, 0), 0, zx_ula_nmi);
@@ -421,43 +406,43 @@ void zx_io_w(int offs, int data)
 	}
 }
 
-int zx_io_r(int offs)
+READ_HANDLER ( zx_io_r )
 {
 	int data = 0xff;
 
-	if ((offs & 1) == 0)
+	if ((offset & 1) == 0)
 	{
 		int extra1 = readinputport(9);
 		int extra2 = readinputport(10);
 
 		ula_scancode_count = 0;
-		if ((offs & 0x0100) == 0)
+		if ((offset & 0x0100) == 0)
 		{
 			data &= readinputport(1);
 			/* SHIFT for extra keys */
 			if (extra1 != 0xff || extra2 != 0xff)
 				data &= ~0x01;
 		}
-		if ((offs & 0x0200) == 0)
+		if ((offset & 0x0200) == 0)
 			data &= readinputport(2);
-		if ((offs & 0x0400) == 0)
+		if ((offset & 0x0400) == 0)
 			data &= readinputport(3);
-		if ((offs & 0x0800) == 0)
+		if ((offset & 0x0800) == 0)
 			data &= readinputport(4) & extra1;
-		if ((offs & 0x1000) == 0)
+		if ((offset & 0x1000) == 0)
 			data &= readinputport(5) & extra2;
-		if ((offs & 0x2000) == 0)
+		if ((offset & 0x2000) == 0)
 			data &= readinputport(6);
-		if ((offs & 0x4000) == 0)
+		if ((offset & 0x4000) == 0)
 			data &= readinputport(7);
-		if ((offs & 0x8000) == 0)
+		if ((offset & 0x8000) == 0)
 			data &= readinputport(8);
 		if (Machine->drv->frames_per_second > 55)
 			data &= ~0x40;
 
 		if (ula_irq)
 		{
-			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data);
+			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
 			timer_remove(ula_irq);
 			ula_irq = NULL;
@@ -465,7 +450,7 @@ int zx_io_r(int offs)
 		else
 		{
 			data &= ~zx_tape_get_bit();
-			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data);
+			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offset, data);
 		}
 		if (ula_frame_vsync == 3)
 		{
@@ -475,48 +460,48 @@ int zx_io_r(int offs)
 	}
 	else
 	{
-		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data);
+		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offset, data);
 	}
 	return data;
 }
 
-int pow3000_io_r(int offs)
+READ_HANDLER ( pow3000_io_r )
 {
 	int data = 0xff;
 
-	if ((offs & 1) == 0)
+	if ((offset & 1) == 0)
 	{
 		int extra1 = readinputport(9);
 		int extra2 = readinputport(10);
 
 		ula_scancode_count = 0;
-		if ((offs & 0x0100) == 0)
+		if ((offset & 0x0100) == 0)
 		{
 			data &= readinputport(1) & extra1;
 			/* SHIFT for extra keys */
 			if (extra1 != 0xff || extra2 != 0xff)
 				data &= ~0x01;
 		}
-		if ((offs & 0x0200) == 0)
+		if ((offset & 0x0200) == 0)
 			data &= readinputport(2) & extra2;
-		if ((offs & 0x0400) == 0)
+		if ((offset & 0x0400) == 0)
 			data &= readinputport(3);
-		if ((offs & 0x0800) == 0)
+		if ((offset & 0x0800) == 0)
 			data &= readinputport(4);
-		if ((offs & 0x1000) == 0)
+		if ((offset & 0x1000) == 0)
 			data &= readinputport(5);
-		if ((offs & 0x2000) == 0)
+		if ((offset & 0x2000) == 0)
 			data &= readinputport(6);
-		if ((offs & 0x4000) == 0)
+		if ((offset & 0x4000) == 0)
 			data &= readinputport(7);
-		if ((offs & 0x8000) == 0)
+		if ((offset & 0x8000) == 0)
 			data &= readinputport(8);
 		if (Machine->drv->frames_per_second > 55)
 			data &= ~0x40;
 
 		if (ula_irq)
 		{
-			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offs, data);
+			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
 			timer_remove(ula_irq);
 			ula_irq = 0;
@@ -524,7 +509,7 @@ int pow3000_io_r(int offs)
 		else
 		{
 			data &= ~zx_tape_get_bit();
-			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offs, data);
+			logerror("IOR %3d $%04X data $%02X (tape)\n", cpu_getscanline(), offset, data);
 		}
 		if (ula_frame_vsync == 3)
 		{
@@ -534,7 +519,7 @@ int pow3000_io_r(int offs)
 	}
 	else
 	{
-		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offs, data);
+		logerror("IOR %3d $%04X data $%02X\n", cpu_getscanline(), offset, data);
 	}
 	return data;
 }

@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
+#include "includes/zx.h"
 
 #define VERBOSE 0
 
@@ -22,28 +23,6 @@
 #else
 #define LOG(x)						   /* x */
 #endif
-
-/* from machine/zx80.c */
-
-extern void init_zx(void);
-extern void zx80_init_machine(void);
-extern void zx81_init_machine(void);
-extern void pc8300_init_machine(void);
-extern void pow3000_init_machine(void);
-extern void zx_shutdown_machine(void);
-
-extern int zx_cassette_init(int id);
-extern void zx_cassette_exit(int id);
-
-extern READ_HANDLER ( zx_io_r );
-extern WRITE_HANDLER ( zx_io_w );
-
-extern READ_HANDLER ( pow3000_io_r );
-extern WRITE_HANDLER ( pow3000_io_w );
-
-/* from vidhrdw/zx80.c */
-extern int zx_ula_scanline(void);
-extern void zx_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 static struct MemoryReadAddress readmem_zx80[] =
 {

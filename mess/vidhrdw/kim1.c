@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "vidhrdw/generic.h"
-
+#include "includes/kim1.h"
 
 static struct artwork_ *kim1_backdrop;
 

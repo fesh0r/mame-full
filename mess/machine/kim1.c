@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
+#include "includes/kim1.h"
 
 typedef struct
 {
@@ -802,21 +803,21 @@ INLINE int m6530_r(int chip, int offset)
 	return data;
 }
 
-int m6530_003_r(int offset)
+READ_HANDLER ( m6530_003_r )
 {
 	return m6530_r(0, offset);
 }
-int m6530_002_r(int offset)
+READ_HANDLER ( m6530_002_r )
 {
 	return m6530_r(1, offset);
 }
 
-int kim1_mirror_r(int offset)
+READ_HANDLER ( kim1_mirror_r )
 {
 	return cpu_readmem16(offset & 0x1fff);
 }
 
-void m6530_w(int chip, int offset, int data)
+static void m6530_w(int chip, int offset, int data)
 {
 	switch (offset)
 	{
@@ -931,16 +932,16 @@ void m6530_w(int chip, int offset, int data)
 	}
 }
 
-void m6530_003_w(int offset, int data)
+WRITE_HANDLER ( m6530_003_w )
 {
 	m6530_w(0, offset, data);
 }
-void m6530_002_w(int offset, int data)
+WRITE_HANDLER ( m6530_002_w )
 {
 	m6530_w(1, offset, data);
 }
 
-void kim1_mirror_w(int offset, int data)
+WRITE_HANDLER ( kim1_mirror_w )
 {
 	cpu_writemem16(offset & 0x1fff, data);
 }
