@@ -18,8 +18,8 @@ int port_b_io = 0;
 
 #define HALT		0
 #define RESUME		1
-static int genesis_isSMD(unsigned char *);
-static int genesis_isBIN(unsigned char *buf);
+static int genesis_isSMD(unsigned char *,unsigned int);
+static int genesis_isBIN(unsigned char *,unsigned int);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
 
@@ -51,16 +51,16 @@ void genesis_init_machine(void)
 	logerror("Machine init\n");
 }
 
-static int genesis_verify_cart(unsigned char *temp)
+static int genesis_verify_cart(unsigned char *temp,unsigned int len)
 {
 	int retval = IMAGE_VERIFY_FAIL;
 
 	/* is this an SMD file..? */
-	if (genesis_isSMD(&temp[0x200]))
+	if (genesis_isSMD(&temp[0x200],len))
 		retval = IMAGE_VERIFY_PASS;
 
 	/* How about a BIN file..? */
-	if ((retval == IMAGE_VERIFY_FAIL) && genesis_isBIN(&temp[0]))
+	if ((retval == IMAGE_VERIFY_FAIL) && genesis_isBIN(&temp[0],len))
 		retval = IMAGE_VERIFY_PASS;
 
 	/* maybe a .md file? (rare) */
@@ -113,10 +113,10 @@ int genesis_init_cart (int id)
 	if (length < 1024 + 512)
 		goto bad;						/* smallest known rom is 1.7K */
 
-	if (genesis_verify_cart(&rawROM[0x2000]) == IMAGE_VERIFY_FAIL)
+	if (genesis_verify_cart(&rawROM[0x2000],(unsigned)length) == IMAGE_VERIFY_FAIL)
 		goto bad;
 
-	if (genesis_isSMD(&rawROM[0x2200]))	/* is this a SMD file..? */
+	if (genesis_isSMD(&rawROM[0x2200],(unsigned)length))	/* is this a SMD file..? */
 	{
 
 		tmpROMnew = ROM;
@@ -195,7 +195,7 @@ bad:
 
 /* code taken directly from GoodGEN by Cowering */
 
-static int genesis_isfunkySMD(unsigned char *buf)
+static int genesis_isfunkySMD(unsigned char *buf,unsigned int len)
 {
 
 	/* aq quiz */
@@ -225,7 +225,7 @@ static int genesis_isfunkySMD(unsigned char *buf)
 		return 1;
 
     /* budokan beta */
-	if (!strncmp(" NTEBDKN", (const char *) &buf[0x6708], 8))
+	if ((len >= 0x6708+8) && !strncmp(" NTEBDKN", (const char *) &buf[0x6708], 8))
 		return 1;
 
     /* cdx pro 1.8 bios */
@@ -241,7 +241,7 @@ static int genesis_isfunkySMD(unsigned char *buf)
 		return 1;
 
     /* tram terror pirate */
-	if (!strncmp("SG NEPIE", (const char *) &buf[0x3648], 8))
+	if ((len >= 0x3648 + 8) && !strncmp("SG NEPIE", (const char *) &buf[0x3648], 8))
 		return 1;
 
     /* breath of fire 3 chinese */
@@ -249,21 +249,21 @@ static int genesis_isfunkySMD(unsigned char *buf)
 		return 1;
 
     /*tetris pirate */
-	if (!strncmp("@TTI>", (const char *) &buf[0x1cbe], 5))
+	if ((len >= 0x1cbe + 5) && !strncmp("@TTI>", (const char *) &buf[0x1cbe], 5))
 		return 1;
 
 	return 0;
 }
 
 /* code taken directly from GoodGEN by Cowering */
-int genesis_isSMD(unsigned char *buf)
+int genesis_isSMD(unsigned char *buf,unsigned int len)
 {
 	if (buf[0x2080] == 'S' && buf[0x80] == 'E' && buf[0x2081] == 'G' && buf[0x81] == 'A')
 		return 1;
-	return genesis_isfunkySMD(buf);
+	return genesis_isfunkySMD(buf,len);
 }
 
-static int genesis_isfunkyBIN(unsigned char *buf)
+static int genesis_isfunkyBIN(unsigned char *buf,unsigned int len)
 {
 	/* all the special cases for crappy headered roms */
 	/* aq quiz */
@@ -285,7 +285,7 @@ static int genesis_isfunkyBIN(unsigned char *buf)
 		return 1;
 
     /* golden axe 2 beta */
-	if (!strncmp("SEGA", (const char *) &buf[0xe40a], 4))
+	if ((len >= 0xe40a+4) && !strncmp("SEGA", (const char *) &buf[0xe40a], 4))
 		return 1;
 
     /* omega race */
@@ -293,11 +293,11 @@ static int genesis_isfunkyBIN(unsigned char *buf)
 		return 1;
 
     /* budokan beta */
-	if (!strncmp("BUDOKAN.", (const char *) &buf[0x4e18], 8))
+	if ((len >= 0x4e18+8) && !strncmp("BUDOKAN.", (const char *) &buf[0x4e18], 8))
 		return 1;
 
     /* cdx 1.8 bios */
-	if (!strncmp(" CDX PRO", (const char *) &buf[0x588], 8))
+	if ((len >= 0x588+8) && !strncmp(" CDX PRO", (const char *) &buf[0x588], 8))
 		return 1;
 
     /* ishido (hacked) */
@@ -308,8 +308,8 @@ static int genesis_isfunkyBIN(unsigned char *buf)
 	if (!strncmp("(C)ACLD 1991", (const char *) &buf[0x118], 12))
 		return 1;
 
-    /* tram terror pirate */
-	if (!strncmp("DREAMWORK", (const char *) &buf[0x2c70], 9))
+    /* trampoline terror pirate */
+	if ((len >= 0x2c70+9) && !strncmp("DREAMWORK", (const char *) &buf[0x2c70], 9))
 		return 1;
 
     /* breath of fire 3 chinese */
@@ -317,17 +317,17 @@ static int genesis_isfunkyBIN(unsigned char *buf)
 		return 1;
 
     /* tetris pirate */
-	if (!strncmp("TETRIS", (const char *) &buf[0x397f], 6))
+	if ((len >= 0x397f+6) && !strncmp("TETRIS", (const char *) &buf[0x397f], 6))
 		return 1;
 
     return 0;
 }
 
-static int genesis_isBIN(unsigned char *buf)
+static int genesis_isBIN(unsigned char *buf,unsigned int len)
 {
 	if (buf[0x0100] == 'S' && buf[0x0101] == 'E' && buf[0x0102] == 'G' && buf[0x0103] == 'A')
 		return 1;
-	return genesis_isfunkyBIN(buf);
+	return genesis_isfunkyBIN(buf,len);
 }
 
 /* code taken directly from GoodGEN by Cowering
@@ -338,7 +338,7 @@ static int genesis_isBIN(unsigned char *buf)
 static int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 {
 	unsigned long i, j, offset = 0;
-	unsigned char *tbuf = NULL;
+	unsigned char *tbuf;
 
 	if (len < 16384)
 		return 0;
@@ -367,10 +367,10 @@ static int genesis_smd2bin(unsigned char *inbuf, unsigned int len)
 	}
 }
 
-static int genesis_md2bin(unsigned char *inbuf, unsigned long len)
+static int genesis_md2bin(unsigned char *inbuf, unsigned int len)
 {
 	unsigned long i, j, offset = 0;
-	unsigned char *tbuf = NULL;
+	unsigned char *tbuf;
 
 	if (len < 16384)
 		return 0;
@@ -398,19 +398,16 @@ UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
 {
 	UINT32 crc = 0;
 
-	/* FIXME!! This function falls over! */
-	return 0;
-
 	if (len < 1700)
 		return 0;						/* smallest known working ROM */
-	if (genesis_isSMD((unsigned char *) &buf[0x200]))
+	if ((len >= 0x2081 + 1700) && genesis_isSMD((unsigned char *) &buf[0x200],len))
 	{
 		if (genesis_smd2bin((unsigned char *) &buf[0x200], len - 0x200))
 		{
 			crc = (UINT32) crc32(0L, &buf[0x200], len - 0x200);
 		}
 	}
-	else if (genesis_isBIN((unsigned char *) buf))
+	else if (genesis_isBIN((unsigned char *) buf,len))
 	{
 		crc = (UINT32) crc32(0L, buf, len);
 	}
