@@ -2,34 +2,54 @@
 
 /* from machine/vtech1.c */
 
-/* #define OLD_VIDEO */
-
 extern char vtech1_frame_message[64+1];
 extern int vtech1_frame_time;
 
 extern int vtech1_latch;
 
+
+#define LASER310_MAIN_OSCILLATOR 17734000 /* 17.734MHz */
+
+
+/******************************************************************************
+ Machine Initialisations
+******************************************************************************/
+
 MACHINE_INIT( laser110 );
+MACHINE_INIT( laser200 );
 MACHINE_INIT( laser210 );
 MACHINE_INIT( laser310 );
 
-DEVICE_LOAD( vtech1_floppy );
 
+/******************************************************************************
+ Devices
+******************************************************************************/
+
+DEVICE_LOAD( vtech1_floppy );
 SNAPSHOT_LOAD( vtech1 );
 
-READ_HANDLER ( vtech1_fdc_r );
-WRITE_HANDLER ( vtech1_fdc_w );
 
-READ_HANDLER ( vtech1_joystick_r );
-READ_HANDLER ( vtech1_keyboard_r );
-WRITE_HANDLER ( vtech1_latch_w );
+/******************************************************************************
+ Read/Write Handlers
+******************************************************************************/
+
+READ8_HANDLER ( vtech1_printer_r );
+WRITE8_HANDLER( vtech1_printer_w );
+READ8_HANDLER ( vtech1_fdc_r );
+WRITE8_HANDLER( vtech1_fdc_w );
+READ8_HANDLER ( vtech1_joystick_r );
+READ8_HANDLER ( vtech1_lightpen_r );
+READ8_HANDLER ( vtech1_keyboard_r );
+WRITE8_HANDLER( vtech1_latch_w );
+READ8_HANDLER ( vtech1_serial_r );
+WRITE8_HANDLER( vtech1_serial_w );
+WRITE8_HANDLER( vtech1_memory_bank_w );
+
+
+/******************************************************************************
+ Interrup & Video
+******************************************************************************/
 
 void vtech1_interrupt(void);
 
-#ifdef OLD_VIDEO
-/* from vidhrdw/vtech1.c */
-VIDEO_UPDATE( vtech1 );
-#else
 VIDEO_START( vtech1 );
-#endif
-

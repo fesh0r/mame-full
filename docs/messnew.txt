@@ -12,6 +12,11 @@ New System Drivers Supported (in no particular order):
 - Your Computer - PC8300 (fixed & readded) [Krzysztof Strzecha]
 - Creon Enterprises - Power 3000 (fixed & readded) [Krzysztof Strzecha]
 - Lambda 8300 (fixed & readded) [Krzysztof Strzecha]
+- Sanyo Laser 110 (Germany) [Dirk Best]
+- VZ-200 (Germany) [Dirk Best]
+- Sanyo Laser 210 (Germany) [Dirk Best]
+- Laser 310 (Basic V2.1) [Dirk Best]
+- Dick Smith Electronics VZ-300 (Basic V2.1) [Dirk Best]
 
 
 
@@ -34,6 +39,8 @@ Source Changes:
 - [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
   for different countries.  Also fixed a bug that caused sound to be gone in
   certain games, and fixed Raiden Trad and Wani Wani World  [Anonymous]
+
+- [VTECH1] Fixed graphics and added printer support.  [Dirk Best]
 
 
 

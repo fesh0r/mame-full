@@ -1,17 +1,21 @@
-/***************************************************************************
-	vtech1.c
+/******************************************************************************
 
-	Video Technology Models (series 1)
-	Laser 110 monochrome
-	Laser 210
-		Laser 200 (same hardware?)
-		aka VZ 200 (Australia)
-		aka Salora Fellow (Finland)
-		aka Texet8000 (UK)
-	Laser 310
-        aka VZ 300 (Australia)
+Video Technology Laser 110-310 computers:
 
-    video hardware
+    Video Technology Laser 110
+      Sanyo Laser 110
+    Video Technology Laser 200
+      Salora Fellow
+      Texet TX-8000
+      Video Technology VZ-200
+    Video Technology Laser 210
+      Dick Smith Electronics VZ-200
+      Sanyo Laser 210
+    Video Technology Laser 310
+      Dick Smith Electronics VZ-300
+
+Video hardware:
+
 	Juergen Buchmueller <pullmoll@t-online.de>, Dec 1999
 
 	Thanks go to:
@@ -21,15 +25,17 @@
 	- and anybody else on the vzemu list :)
     - Davide Moretti for the detailed description of the colors.
 
-****************************************************************************/
+******************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/vtech1.h"
 #include "vidhrdw/m6847.h"
 
-/* bit 3 of cassette/speaker/vdp control latch defines if the mode is text or
-graphics */
+/*
+bit 3 of cassette/speaker/vdp control latch defines if the mode is text or
+graphics
+*/
 
 static void vtech1_charproc(UINT8 c)
 {
