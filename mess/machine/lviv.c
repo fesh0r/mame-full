@@ -20,7 +20,7 @@
 unsigned char * lviv_ram;
 unsigned char * lviv_video_ram;
 
-static UINT8 lviv_ppi_port_outputs[2][3];
+UINT8 lviv_ppi_port_outputs[2][3];
 
 void lviv_update_memory (void)
 {
@@ -77,12 +77,14 @@ WRITE_HANDLER ( lviv_ppi_0_porta_w )
 WRITE_HANDLER ( lviv_ppi_0_portb_w )
 {
 	lviv_ppi_port_outputs[0][1] = data;
+	lviv_update_palette (data&0x7f);
 }
 
 WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off */
 {
 	lviv_ppi_port_outputs[0][2] = data;
-	speaker_level_w(0, data&0x01);
+	if (lviv_ppi_port_outputs[0][1]&0x80)
+		speaker_level_w(0, data&0x01);
 	device_output(IO_CASSETTE, 0, (data & 0x01) ? -32768 : 32767);
 	lviv_update_memory();
 }
