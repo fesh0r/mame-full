@@ -257,6 +257,11 @@ void tms7000_init(void)
 
 void tms7000_reset(void *param)
 {
+	
+	pSP = 0x01;
+	pSR = 0x00;
+	WRA( tms7000.pc.b.h );
+	WRB( tms7000.pc.b.l );
 	pPC = RM16(0xfffe);
 }
 
