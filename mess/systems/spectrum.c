@@ -1954,7 +1954,7 @@ COMP ( 198?, tc2048,   spectrum, tc2048,         spectrum, 0,            "Timex 
 COMP ( 1983, ts2068,   spectrum, ts2068,         spectrum, 0,            "Timex Sinclair",       "TS2068" )
 
 COMPX( 1986, spec128,  0,        spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128" ,GAME_NOT_WORKING)
-COMPX( 1986, spec128s, spec128,  spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
+COMPX( 1985, spec128s, spec128,  spectrum_128,   spectrum, 0,            "Sinclair Research",    "ZX Spectrum 128 (Spain)" ,GAME_NOT_WORKING)
 COMPX( 1986, specpls2, spec128,  spectrum_128,   spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2" ,GAME_NOT_WORKING)
 COMPX( 1987, specpl2a, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +2a" ,GAME_NOT_WORKING)
 COMPX( 1987, specpls3, spec128,  spectrum_plus3, spectrum, 0,            "Amstrad plc",          "ZX Spectrum +3" ,GAME_NOT_WORKING)
