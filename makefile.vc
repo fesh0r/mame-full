@@ -329,16 +329,16 @@ endif
 ifndef DEBUG
 # Workarounds for VC6 optimization bugs
 $(OBJ)/input.o: src/input.c
-	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
+	$(CC) $(CDEFS) $(FFLAGS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
 
 $(OBJ)/mess/cpu/g65816/g65816o0.o: mess/cpu/g65816/g65816o0.c
-	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Gs -G5 -Gr -Fo$@ -c $<
+	$(CC) $(CDEFS) $(FFLAGS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Gs -G5 -Gr -Fo$@ -c $<
 
 $(OBJ)/mess/machine/msx.o: mess/machine/msx.c
-	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
+	$(CC) $(CDEFS) $(FFLAGS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
 
 $(OBJ)/cpu/tms9900/%.o:	src/cpu/tms9900/%.c
-	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
+	$(CC) $(CDEFS) $(FFLAGS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
 endif
 
 $(OBJ)/%.o: src/%.asm

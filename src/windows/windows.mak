@@ -30,7 +30,8 @@ LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
 endif
 
 ifdef MSVC
-CFLAGS += /FI"src/windows/winprefix.h"
+FFLAGS += /FI"src/windows/winprefix.h"
+CFLAGS += $(FFLAGS)
 endif
 
 ifndef MSVC
