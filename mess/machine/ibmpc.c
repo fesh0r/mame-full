@@ -125,7 +125,7 @@ READ_HANDLER (pc_ppi_porta_r)
 		 *      01 - color 40x25  
 		 * 6-7  The number of floppy disk drives  
 		 */
-		data = 0;	/* TODO: need to return real value */
+		data = readinputport(1);
 	}
 	else
 	{

@@ -422,7 +422,7 @@ static void cga_text_blink(struct mame_bitmap *bitmap)
 					}
 				}
 
-				if (!dirtybuffer)
+				if (dirtybuffer)
 					dirtybuffer[offs]=dirtybuffer[offs+1]=0;
 			}
 		}
