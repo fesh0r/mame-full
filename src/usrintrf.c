@@ -16,6 +16,9 @@
   #include "mess/mess.h"
 #endif
 
+#define SEL_BITS 12
+#define SEL_MASK ((1<<SEL_BITS)-1)
+
 extern int mame_debug;
 
 extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
@@ -1067,6 +1070,12 @@ static void showcharset(void)
 #ifndef PREROTATE_GFX
 					flipx = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_X;
 					flipy = (Machine->orientation ^ trueorientation) & ORIENTATION_FLIP_Y;
+
+					if (Machine->orientation & ORIENTATION_SWAP_XY)
+					{
+						int t;
+						t = flipx; flipx = flipy; flipy = t;
+					}
 #else
 					flipx = 0;
 					flipy = 0;
@@ -1121,7 +1130,7 @@ static void showcharset(void)
 						sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
 						for (y = 0;y < Machine->uifontheight;y++)
 						{
-							for (x = 0;x < Machine->uifontwidth*3/2;x++)
+							for (x = 0;x < Machine->uifontwidth*4/3;x++)
 							{
 								int tx,ty;
 								if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
@@ -1323,14 +1332,15 @@ static void showtotalcolors(void)
 {
 	char *used;
 	int i,l,x,y,total;
+	unsigned char r,g,b;
 	char buf[40];
 	int trueorientation;
 
 
-	used = malloc(0x10000);
+	used = malloc(64*64*64);
 	if (!used) return;
 
-	for (i = 0;i < 0x10000;i++)
+	for (i = 0;i < 64*64*64;i++)
 		used[i] = 0;
 
 	if (Machine->scrbitmap->depth == 16)
@@ -1339,7 +1349,11 @@ static void showtotalcolors(void)
 		{
 			for (x = 0;x < Machine->scrbitmap->width;x++)
 			{
-				used[((unsigned short *)Machine->scrbitmap->line[y])[x]] = 1;
+				osd_get_pen(((unsigned short *)Machine->scrbitmap->line[y])[x],&r,&g,&b);
+				r >>= 2;
+				g >>= 2;
+				b >>= 2;
+				used[64*64*r+64*g+b] = 1;
 			}
 		}
 	}
@@ -1349,13 +1363,17 @@ static void showtotalcolors(void)
 		{
 			for (x = 0;x < Machine->scrbitmap->width;x++)
 			{
-				used[Machine->scrbitmap->line[y][x]] = 1;
+				osd_get_pen(Machine->scrbitmap->line[y][x],&r,&g,&b);
+				r >>= 2;
+				g >>= 2;
+				b >>= 2;
+				used[64*64*r+64*g+b] = 1;
 			}
 		}
 	}
 
 	total = 0;
-	for (i = 0;i < 0x10000;i++)
+	for (i = 0;i < 64*64*64;i++)
 		if (used[i]) total++;
 
 	/* hack: force the display into standard orientation to avoid */
@@ -1377,9 +1395,9 @@ static void showtotalcolors(void)
 
 static int setdipswitches(int selected)
 {
-	const char *menu_item[40];
-	const char *menu_subitem[40];
-	struct InputPort *entry[40];
+	const char *menu_item[128];
+	const char *menu_subitem[128];
+	struct InputPort *entry[128];
 	char flag[40];
 	int i,sel;
 	struct InputPort *in;
@@ -2065,13 +2083,13 @@ static int mame_stats(int selected)
 
 	sel = selected - 1;
 
-	strcpy(buf, "Tickets dispensed: ");
-	if (!dispensed_tickets)
-		strcat (buf, "NA\n\n");
-	else
+	buf[0] = 0;
+
+	if (dispensed_tickets)
 	{
-		sprintf (temp, "%d\n\n", dispensed_tickets);
-		strcat (buf, temp);
+		strcat(buf, "Tickets dispensed: ");
+		sprintf(temp, "%d\n\n", dispensed_tickets);
+		strcat(buf, temp);
 	}
 
 	for (i=0;  i<COIN_COUNTERS; i++)
@@ -2327,7 +2345,7 @@ int showgamewarnings(void)
 
 	if (Machine->gamedrv->flags &
 			(GAME_NOT_WORKING | GAME_WRONG_COLORS | GAME_IMPERFECT_COLORS |
-			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND))
+			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL))
 	{
 		int done;
 
@@ -2364,6 +2382,11 @@ int showgamewarnings(void)
 		if (Machine->gamedrv->flags & GAME_NO_SOUND)
 		{
 			strcat(buf, "The game lacks sound.\n");
+		}
+
+		if (Machine->gamedrv->flags & GAME_NO_COCKTAIL)
+		{
+			strcat(buf, "Screen flipping in cocktail mode is not supported.\n");
 		}
 
 		if (Machine->gamedrv->flags & GAME_NOT_WORKING)
@@ -3339,7 +3362,7 @@ static void onscrd_vector_intensity(int increment,int arg)
 	intensity_correction = vector_get_intensity();
 
 	sprintf(buf,"Vector intensity %1.2f",intensity_correction);
-	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.0-0.5)/(3.0-0.5));
+	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.5-0.5)/(3.0-0.5));
 }
 
 

@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 /*
-  2000 February 10 PeT added SO input line 
+  2000 March 10 PeT added SO input line
 
 The basic difference is the amount of RAM these machines have been supplied with. The B128 and the CBM *10
 models had 128k RAM, the others 256k. This implies some banking scheme, as the 6502 can only address 64k. And
@@ -340,8 +340,10 @@ void m6509_set_nmi_line(int state)
 
 void m6509_set_irq_line(int irqline, int state)
 {
-	if (irqline==M6509_SET_OVERFLOW) {
-		if (m6509.so_state&&!state) {
+	if( irqline == M6509_SET_OVERFLOW )
+	{
+		if( m6509.so_state && !state )
+		{
 			LOG((errorlog, "M6509#%d set overflow\n", cpu_getactivecpu()));
 			P|=F_V;
 		}

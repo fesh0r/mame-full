@@ -20,7 +20,7 @@
  *
  *****************************************************************************/
 /* 2.February 2000 PeT added 65sc02 subtype */
-/* 10.February 2000 PeT added 6502 set overflow input line */
+/* 10.March   2000 PeT added 6502 set overflow input line */
 
 #include <stdio.h>
 #include "driver.h"
@@ -312,8 +312,10 @@ void m6502_set_nmi_line(int state)
 
 void m6502_set_irq_line(int irqline, int state)
 {
-	if (irqline==M6502_SET_OVERFLOW) {
-		if (m6502.so_state&&!state) {
+	if( irqline == M6502_SET_OVERFLOW )
+	{
+		if( m6502.so_state && !state )
+		{
 			LOG((errorlog, "M6502#%d set overflow\n", cpu_getactivecpu()));
 			P|=F_V;
 		}
