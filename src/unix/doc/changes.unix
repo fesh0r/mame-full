@@ -2,6 +2,33 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.60.1 (xmame only)
+	- Everything from MAME 0.60, except for the new special controllers 
+	  support.
+	- Updated the SNK driver to fix sound for games that couldn't use Y8950
+	  together with YM326/YM3812.  (Nicola Salmoria)
+	- Fixed the leg of the tiger in namcos86.  (SUZ of the MAME E2J board)
+	- Updated the Moo Mesa driver to the latest version.  (R. Belmont)
+	- Fixed a stereo output bug in sound/2612intf.c; fixed a sample loop 
+	  timing bug in sound/k007232.c.  (Hiromitsu Shioya)
+	- The '-diffdir' setting might actually work now.
+	- Fixed the Mortal Kombat 3 level select screen.  (Aaron Giles)
+	- Updated the description of the new '-ctrlr' option in changes.mame 
+	  and windows.txt.  (Ron Fries, et al)
+	- Updated the V60 core to handle unaligned memory accesses, which 
+	  should fix some SSV games.  (Nicola Salmoria)
+	- Updated 8080bw to fix the dip switches for Ozma Wars and its clones, 
+	  and to add the offscreen bonus display to 4-Player Bowling.  
+	  (Nephrite, Zsolt Vasvari)
+	- Updated drivers/psikyosh.c and vidhrdw/psikyosh.c to allow Lode 
+	  Runner and Hot Gimmick to run through their attract modes.  (David 
+	  Haywood)
+	- Fixed a crashing bug in vidhrdw/shaolins.c.  (David Haywood)
+	- Modified sound/ay8910.c to fix sound in some M62 games.  (Nicola 
+	  Salmoria)
+	- Updated drivers/wecleman.c to make the car in wecleman controllable.  
+	  (David Haywood)
+	
 Release 0.59.2 (xmame only)
 	- Updated the included zlib library to 1.1.4, which fixes a "double 
 	  free" security vulnerability.

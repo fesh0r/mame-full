@@ -185,14 +185,6 @@ Options:
               Screen Display (see Keys section). The volume is an attenuation
               in dB: e.g., "-volume -12" will start with -12dB attenuation.
 
--ym3812opl/-noym3812opl (default: -noym3812opl)
-              Uses the SoundBlaster OPL chip for music emulation of the YM3812
-              chip. This is faster, and is reasonably accurate, since the chips
-              are 100% compatible. There is no control on the volume, however,
-              and you need a real OPL chip for it to work  (If you are using an
-              SB-compatible card that emulates the OPL in software, the built-in
-              digital emulation will probably sound better).
-
 -joy name (default: none)
               Allows joystick input. 'name' can be:
               none         - no joystick

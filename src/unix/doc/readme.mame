@@ -1,6 +1,6 @@
 
                  M.A.M.E.  -  Multiple Arcade Machine Emulator
-          Copyright (C) 1997-2001 by Nicola Salmoria and The MAME Team
+          Copyright (C) 1997-2002 by Nicola Salmoria and The MAME Team
 
 Many people have helped with this project--directly, or by releasing the source
 code for the drivers they have written. We are not trying to take credit that
@@ -184,10 +184,10 @@ TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
 YM-2203, YM-2151, YM3812 emulation by Tatsuyuki Satoh.
-POKEY emulator by Ron Fries (rfries@aol.com).
+POKEY emulator by Ron Fries.
 Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
-NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
+NES sound hardware info by Matthew Conte.
 YM2610 emulation by Hiromitsu Shioya.
 
 Background art by Peter Hirschberg (PeterH@cronuscom.com).

@@ -110,6 +110,10 @@ ARTWORK.
 * -snapshot_directory
 Screenshots will go here. The default is SNAP.
 
+* -ctrlr_directory
+Parent directory for controller-specific input port mapping .ini files.  The
+default is CTRLR.
+
 * -history_file
 The default is HISTORY.DAT. Modifying the default may not work at the moment.
 
@@ -345,9 +349,13 @@ will be merged. The default is ON (-translucency).
 Input device options
 --------------------
 
-* -[no]hotrod / -[no]hotrodse
-Autoconfigures MAMEW for using the Hotrod/Hotrod SE. Default is OFF for both
-(-nohotrod -nohotrodse).
+* -ctrlr
+Enables support for special controllers. Configuration files are provided
+for:
+hotrod    HotRod
+hotrodse  HotRod SE
+slikstik  SlikStik
+xarcade   X-Arcade
 
 * -[no]mouse
 Controls whether or not MAMEW looks for a mouse controller to use. When this

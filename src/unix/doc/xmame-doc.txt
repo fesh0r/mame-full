@@ -8,7 +8,7 @@ and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@b
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 and David Heremans (minor editing)
 
-v2.1.15, 17 April 2002
+v2.1.16, 5 May 2002
 
 Abstract
 
@@ -2553,7 +2553,7 @@ Gold)
 
   [download/xmame-0.56.2.tar.bz2||xmame 0.56.2 sources (xmame & xmess)]
 
-  [download/xmame-0.59.2.tar.bz2||xmame 0.59.2 sources (xmame only)]
+  [download/xmame-0.60.1.tar.bz2||xmame 0.60.1 sources (xmame only)]
 
 * xmame/xmess FAQ & Installation Guide:
 
