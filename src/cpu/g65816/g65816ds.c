@@ -237,7 +237,7 @@ unsigned g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_
 			sprintf(ptr, "A");
 			break;
 		case RELB:
-			var = read_8(address+1);
+			var = (INT8) read_8(address+1);
 			length++;
 			sprintf(ptr, " %06x (%s)", pb | ((pc + length + var)&0xffff), int_8_str(var));
 			break;
