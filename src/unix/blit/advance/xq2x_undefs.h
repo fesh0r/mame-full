@@ -6,6 +6,7 @@
 #undef MUL
 
 #undef XQ2X_LINE_LOOP_BEGIN 
+#undef XQ2X_LINE_LOOP_BEGIN_SWAP_XY
 #undef XQ2X_LINE_LOOP_END
 
 #undef XQ2X_NAME

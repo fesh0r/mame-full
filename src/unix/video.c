@@ -969,6 +969,7 @@ void osd_update_video_and_audio(struct mame_display *display)
             {
                 int widthscale_mod  = 0;
                 int heightscale_mod = 0;
+                int scale_mod = 0;
 
                 if (code_pressed_memory(KEYCODE_INSERT))
                         widthscale_mod = 1;
@@ -979,14 +980,37 @@ void osd_update_video_and_audio(struct mame_display *display)
                 if (code_pressed_memory(KEYCODE_END))
                         heightscale_mod = -1;
                 if (code_pressed_memory(KEYCODE_PGUP))
-                {
-                        widthscale_mod  = 1;
-                        heightscale_mod = 1;
-                }
+                        scale_mod = 1;
                 if (code_pressed_memory(KEYCODE_PGDN))
+                        scale_mod = -1;
+                if (scale_mod)
                 {
-                        widthscale_mod  = -1;
-                        heightscale_mod = -1;
+                  if (normal_params.widthscale == normal_params.heightscale)
+                  {
+                        normal_params.widthscale  += scale_mod;
+                        normal_params.heightscale += scale_mod;
+                  }
+                  else if (normal_params.widthscale == 
+                           (2*normal_params.heightscale))
+                  {
+                        normal_params.widthscale  += 2*scale_mod;
+                        normal_params.heightscale += scale_mod;
+                  }
+                  else if (normal_params.heightscale == 
+                           (2*normal_params.widthscale))
+                  {
+                        normal_params.widthscale  += scale_mod;
+                        normal_params.heightscale += 2*scale_mod;
+                  }
+                  else
+                  {
+                        normal_params.widthscale  += scale_mod *
+                          normal_params.widthscale;
+                        normal_params.heightscale += scale_mod *
+                          normal_params.heightscale;
+                  }
+                  normal_params_changed |= X_SCALING_CHANGED|Y_SCALING_CHANGED;
+                  sysdep_display_check_effect_params(&normal_params);
                 }
                 if (widthscale_mod)
                 {

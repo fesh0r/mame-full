@@ -42,8 +42,8 @@ char *_6tap2x_buf5 = NULL;
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
   { 1, 8, 1, 8, 0,                                  "no effect" },
   { 2, 3, 2, 6, 0,                                  "smooth scaling" },
-  { 2, 2, 2, 2, 0,                                  "low quality filter" },
-  { 2, 2, 2, 2, 0,                                  "high quality filter" },
+  { 2, 3, 2, 3, 0,                                  "low quality filter" },
+  { 2, 3, 2, 3, 0,                                  "high quality filter" },
   { 2, 2, 2, 2, 0,                                  "6-tap filter & scanlines (h)" },
   { 1, 4, 2, 2, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "light scanlines (h)" },
   { 1, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "rgb scanlines (h)" }, 

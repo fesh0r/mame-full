@@ -51,25 +51,25 @@
 #define XQ2X_LINE_LOOP_BEGIN_SWAP_XY \
   interp_uint16 c[9]; \
   \
-  c[1] = XQ2X_GETPIXEL(src0[-1]); \
-  c[2] = XQ2X_GETPIXEL(src1[-1]); \
-  c[4] = XQ2X_GETPIXEL(src0[ 0]); \
-  c[5] = XQ2X_GETPIXEL(src1[ 0]); \
-  c[7] = XQ2X_GETPIXEL(src2[-1]); \
-  c[8] = XQ2X_GETPIXEL(src2[ 0]); \
+  c[3] = XQ2X_GETPIXEL(src0[-1]); \
+  c[4] = XQ2X_GETPIXEL(src1[-1]); \
+  c[5] = XQ2X_GETPIXEL(src2[-1]); \
+  c[6] = XQ2X_GETPIXEL(src0[0]); \
+  c[7] = XQ2X_GETPIXEL(src1[0]); \
+  c[8] = XQ2X_GETPIXEL(src2[0]); \
   \
   while(src1 < end1) \
   { \
     unsigned char mask = 0; \
     \
-    c[0] = c[1]; \
-    c[1] = c[2]; \
-    c[2] = XQ2X_GETPIXEL(src0[1]); \
-    c[3] = c[4]; \
-    c[4] = c[5]; \
-    c[5] = XQ2X_GETPIXEL(src1[1]); \
-    c[6] = c[7]; \
-    c[7] = c[8]; \
+    c[0] = c[3]; \
+    c[1] = c[4]; \
+    c[2] = c[5]; \
+    c[3] = c[6]; \
+    c[4] = c[7]; \
+    c[5] = c[8]; \
+    c[6] = XQ2X_GETPIXEL(src0[1]); \
+    c[7] = XQ2X_GETPIXEL(src1[1]); \
     c[8] = XQ2X_GETPIXEL(src2[1]); \
     \
     if (c[0] != c[4]) \
