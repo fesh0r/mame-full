@@ -109,82 +109,31 @@ static HMENU win_menu_bar;
 static int is_paused;
 
 
-//============================================================
-//	is_controller_input_type
-//============================================================
-
-int is_controller_input_type(UINT32 type)
-{
-	int result;
-	switch(type & ~IPF_MASK) {
-	case IPT_JOYSTICK_UP:
-	case IPT_JOYSTICK_DOWN:
-	case IPT_JOYSTICK_LEFT:
-	case IPT_JOYSTICK_RIGHT:
-	case IPT_JOYSTICKLEFT_UP:
-	case IPT_JOYSTICKLEFT_DOWN:
-	case IPT_JOYSTICKLEFT_LEFT:
-	case IPT_JOYSTICKLEFT_RIGHT:
-	case IPT_JOYSTICKRIGHT_UP:
-	case IPT_JOYSTICKRIGHT_DOWN:
-	case IPT_JOYSTICKRIGHT_LEFT:
-	case IPT_JOYSTICKRIGHT_RIGHT:
-	case IPT_BUTTON1:
-	case IPT_BUTTON2:
-	case IPT_BUTTON3:
-	case IPT_BUTTON4:
-	case IPT_BUTTON5:
-	case IPT_BUTTON6:
-	case IPT_BUTTON7:
-	case IPT_BUTTON8:
-	case IPT_BUTTON9:
-	case IPT_BUTTON10:
-	case IPT_AD_STICK_X:
-	case IPT_AD_STICK_Y:
-	case IPT_AD_STICK_Z:
-	case IPT_TRACKBALL_X:
-	case IPT_TRACKBALL_Y:
-	case IPT_LIGHTGUN_X:
-	case IPT_LIGHTGUN_Y:
-	case IPT_MOUSE_X:
-	case IPT_MOUSE_Y:
-		result = 1;
-		break;
-
-	default:
-		result = 0;
-		break;
-	}
-	return result;
-}
 
 //============================================================
-//	setjoystick
+//	customize_input
 //============================================================
 
-static void setjoystick(int joystick_num)
+static void customize_input(const char *title, int player, int category)
 {
 	void *dlg;
-	int player;
 	struct InputPort *in;
-	int increment;
 
-	player = joystick_num * IPF_PLAYER2;
+	player *= IPF_PLAYER2;
 	
-	dlg = win_dialog_init("Joysticks/Controllers");
+	dlg = win_dialog_init(title);
 	if (!dlg)
 		goto done;
 
 	in = Machine->input_ports;
 	while(in->type != IPT_END)
 	{
-		increment = 1;
-		if (((in->type & IPF_PLAYERMASK) == player) && is_controller_input_type(in->type))
+		if (((in->type & IPF_PLAYERMASK) == player) && (inputx_categorize_port(in) == category))
 		{
-			if (win_dialog_add_portselect(dlg, in, &increment))
+			if (win_dialog_add_portselect(dlg, in))
 				goto done;
 		}
-		in += increment;
+		in++;
 	}
 
 	if (win_dialog_add_standard_buttons(dlg))
@@ -197,41 +146,26 @@ done:
 		win_dialog_exit(dlg);
 }
 
+
+
 //============================================================
-//	hasswitches
+//	setjoystick
 //============================================================
 
-static int hasswitches(UINT32 ipt_name)
+static void setjoystick(int joystick_num)
 {
-	struct InputPort *in;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
-		if ((in->type & ~IPF_MASK) == ipt_name)
-			return TRUE;
-	}
-	return FALSE;
+	customize_input("Joysticks/Controllers", joystick_num, INPUT_CATEGORY_CONTROLLER);
 }
 
 
 
 //============================================================
-//	hasdipswitches
+//	setkeyboard
 //============================================================
 
-static int hasdipswitches(void)
+static void setkeyboard(void)
 {
-	return hasswitches(IPT_DIPSWITCH_NAME);
-}
-
-
-
-//============================================================
-//	hasconfiguration
-//============================================================
-
-static int hasconfiguration(void)
-{
-	return hasswitches(IPT_CONFIG_NAME);
+	customize_input("Emulated Keyboard", 0, INPUT_CATEGORY_KEYBOARD);
 }
 
 
@@ -634,32 +568,40 @@ static void prepare_menus(void)
 	UINT_PTR new_item;
 	UINT flags_for_exists;
 	mess_image *img;
+	int has_config, has_dipswitch, has_keyboard;
 
 	if (!win_menu_bar)
 		return;
 
-	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
+	has_config		= inputx_has_input_category(INPUT_CATEGORY_CONFIG);
+	has_dipswitch	= inputx_has_input_category(INPUT_CATEGORY_DIPSWITCH);
+	has_keyboard	= inputx_has_input_category(INPUT_CATEGORY_KEYBOARD);
 
-	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			is_paused					? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle					? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	hasconfiguration()			? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		hasdipswitches()			? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
+
+	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			is_paused									? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle									? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	has_config									? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		has_dipswitch								? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode							? MFS_CHECKED : MFS_ENABLED);
 #endif
-	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_show_fps_get()			? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_show_fps_get()							? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
-	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_show_profiler_get()		? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_show_profiler_get()						? MFS_CHECKED : MFS_ENABLED);
 #endif
 
-	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,		!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,		inputx_can_post() ?
-																(win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED)
-																						: MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,		(has_keyboard) ?
+																(!win_use_natural_keyboard					? MFS_CHECKED : MFS_ENABLED)
+																												: MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,		(has_keyboard && inputx_can_post()) ?
+																(win_use_natural_keyboard					? MFS_CHECKED : MFS_ENABLED)
+																												: MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			autoframeskip				? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			autoframeskip								? MFS_CHECKED : MFS_ENABLED);
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
-		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i)) ? MFS_CHECKED : MFS_ENABLED);
+		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i))			? MFS_CHECKED : MFS_ENABLED);
 
 	// set up device menu
 	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
@@ -896,6 +838,10 @@ static int invoke_command(UINT command)
 		win_use_natural_keyboard = 0;
 		break;
 
+	case ID_KEYBOARD_CUSTOMIZE:
+		setkeyboard();
+		break;
+
 	case ID_OPTIONS_PAUSE:
 		pause();
 		break;
@@ -985,30 +931,6 @@ static int invoke_command(UINT command)
 }
 
 //============================================================
-//	count_joysticks
-//============================================================
-
-static int count_joysticks(void)
-{
-	const struct InputPortTiny *in;
-	int joystick_count;
-
-	assert(MAX_JOYSTICKS > 0);
-	assert(MAX_JOYSTICKS < 8);
-
-	joystick_count = 0;
-	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
-	{
-		if (is_controller_input_type(in->type))
-		{
-			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
-				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
-		}
-	}
-	return joystick_count;
-}
-
-//============================================================
 //	set_menu_text
 //============================================================
 
@@ -1073,7 +995,7 @@ int win_setup_menus(HMENU menu_bar)
 
 	// set up joystick menu
 #ifndef UNDER_CE
-	joystick_count = count_joysticks();
+	joystick_count = inputx_count_players();
 #endif
 	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, joystick_count ? MFS_ENABLED : MFS_GRAYED);
 	if (joystick_count > 0)

@@ -11,31 +11,28 @@
 
 #include "mame.h"
 
-/* these are called by the core; they should not be called from FEs */
-void inputx_init(void);
-void inputx_update(unsigned short *ports);
+/***************************************************************************
 
-#ifdef MAME_DEBUG
-int inputx_validitycheck(const struct GameDriver *gamedrv);
-#endif
+	Constants
 
-/* these can be called from FEs */
-int inputx_can_post(void);
-int inputx_can_post_key(unicode_char_t ch);
+***************************************************************************/
 
-void inputx_post(const unicode_char_t *text);
-void inputx_postc(unicode_char_t ch);
-void inputx_postn(const unicode_char_t *text, size_t text_len);
-void inputx_post_utf16(const utf16_char_t *text);
-void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
-void inputx_post_utf8(const char *text);
-void inputx_postn_utf8(const char *text, size_t text_len);
+/* input categorizations */
+enum
+{
+	INPUT_CATEGORY_INTERNAL,
+	INPUT_CATEGORY_KEYBOARD,
+	INPUT_CATEGORY_CONTROLLER,
+	INPUT_CATEGORY_CONFIG,
+	INPUT_CATEGORY_DIPSWITCH,
+	INPUT_CATEGORY_MISC
+};
 
-/* given an InputPort; figure out if it and the adjacent ports refer to the
- * same control, and arrange them in arranged_ports (left/right/up/down).
- * returns the total control count (1 or 2 or 4)
- */
-int inputx_orient_ports(struct InputPort *port, struct InputPort **arranged_ports);
+/***************************************************************************
+
+	Macros
+
+***************************************************************************/
 
 #define UCHAR_SHIFT_1		(0xf700)
 #define UCHAR_SHIFT_2		(0xf701)
@@ -77,5 +74,37 @@ int inputx_orient_ports(struct InputPort *port, struct InputPort **arranged_port
 
 #define PORT_CONFSETTING(default,name) \
 	PORT_BIT_NAME(0, default, IPT_CONFIG_SETTING, name)
+
+
+
+/***************************************************************************
+
+	Prototypes
+
+***************************************************************************/
+
+/* these are called by the core; they should not be called from FEs */
+void inputx_init(void);
+void inputx_update(unsigned short *ports);
+
+#ifdef MAME_DEBUG
+int inputx_validitycheck(const struct GameDriver *gamedrv);
+#endif
+
+/* these can be called from FEs */
+int inputx_can_post(void);
+int inputx_can_post_key(unicode_char_t ch);
+
+void inputx_post(const unicode_char_t *text);
+void inputx_postc(unicode_char_t ch);
+void inputx_postn(const unicode_char_t *text, size_t text_len);
+void inputx_post_utf16(const utf16_char_t *text);
+void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
+void inputx_post_utf8(const char *text);
+void inputx_postn_utf8(const char *text, size_t text_len);
+
+int inputx_categorize_port(const struct InputPort *in);
+int inputx_has_input_category(int category);
+int inputx_count_players(void);
 
 #endif /* INPUTX_H */

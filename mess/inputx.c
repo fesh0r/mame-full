@@ -843,80 +843,99 @@ void inputx_post_utf8(const char *text)
 	This stuff is here more out of convienience than anything else
 ***************************************************************************/
 
-int inputx_orient_ports(struct InputPort *port, struct InputPort **arranged_ports)
+static int categorize_port_type(UINT32 type)
 {
-	int i, j, span;
-	struct InputPort *port0;
-	struct InputPort *port1;
-	struct InputPort *port2;
-	struct InputPort *port3;
+	int result;
+	switch(type & ~IPF_MASK) {
+	case IPT_JOYSTICK_UP:
+	case IPT_JOYSTICK_DOWN:
+	case IPT_JOYSTICK_LEFT:
+	case IPT_JOYSTICK_RIGHT:
+	case IPT_JOYSTICKLEFT_UP:
+	case IPT_JOYSTICKLEFT_DOWN:
+	case IPT_JOYSTICKLEFT_LEFT:
+	case IPT_JOYSTICKLEFT_RIGHT:
+	case IPT_JOYSTICKRIGHT_UP:
+	case IPT_JOYSTICKRIGHT_DOWN:
+	case IPT_JOYSTICKRIGHT_LEFT:
+	case IPT_JOYSTICKRIGHT_RIGHT:
+	case IPT_BUTTON1:
+	case IPT_BUTTON2:
+	case IPT_BUTTON3:
+	case IPT_BUTTON4:
+	case IPT_BUTTON5:
+	case IPT_BUTTON6:
+	case IPT_BUTTON7:
+	case IPT_BUTTON8:
+	case IPT_BUTTON9:
+	case IPT_BUTTON10:
+	case IPT_AD_STICK_X:
+	case IPT_AD_STICK_Y:
+	case IPT_AD_STICK_Z:
+	case IPT_TRACKBALL_X:
+	case IPT_TRACKBALL_Y:
+	case IPT_LIGHTGUN_X:
+	case IPT_LIGHTGUN_Y:
+	case IPT_MOUSE_X:
+	case IPT_MOUSE_Y:
+		result = INPUT_CATEGORY_CONTROLLER;
+		break;
 
-	static UINT32 port_formations[][4] =
-	{
-		{ IPT_AD_STICK_X,			IPT_EXTENSION,				IPT_AD_STICK_Y,			IPT_EXTENSION },
-		{ IPT_JOYSTICK_LEFT,		IPT_JOYSTICK_RIGHT,			IPT_JOYSTICK_UP,		IPT_JOYSTICK_DOWN },
-		{ IPT_JOYSTICKLEFT_LEFT,	IPT_JOYSTICKLEFT_RIGHT,		IPT_JOYSTICKLEFT_UP,	IPT_JOYSTICKLEFT_DOWN },
-		{ IPT_JOYSTICKRIGHT_LEFT,	IPT_JOYSTICKRIGHT_RIGHT,	IPT_JOYSTICKRIGHT_UP,	IPT_JOYSTICKRIGHT_DOWN },
-		{ IPT_TRACKBALL_X,			IPT_EXTENSION,				IPT_TRACKBALL_Y,		IPT_EXTENSION },
-		{ IPT_LIGHTGUN_X,			IPT_EXTENSION,				IPT_LIGHTGUN_Y,			IPT_EXTENSION }
-	};
+	case IPT_KEYBOARD:
+		result = INPUT_CATEGORY_KEYBOARD;
+		break;
 
-	arranged_ports[0] = NULL;
-	arranged_ports[1] = NULL;
-	arranged_ports[2] = NULL;
-	arranged_ports[3] = NULL;
+	case IPT_CONFIG_NAME:
+		result = INPUT_CATEGORY_CONFIG;
+		break;
 
-	for(i = 0; i < sizeof(port_formations) / sizeof(port_formations[0]); i++)
-	{
-		for (j = 0; j < 4; j++)
-		{
-			if ((port->type & ~IPF_MASK) == port_formations[i][j])
-			{
-				span = 1;
+	case IPT_DIPSWITCH_NAME:
+		result = INPUT_CATEGORY_DIPSWITCH;
+		break;
 
-				port0 = port;
-				port1 = (++port);
-				if ((port1->type & ~IPF_MASK) == IPT_PORT)
-					port1 = ++port;
-
-				if ((port1->type & ~IPF_MASK) == port_formations[i][j^1])
-				{
-					arranged_ports[j^0] = port0;
-					arranged_ports[j^1] = port1;
-					span = 2;
-
-					port2 = ++port;
-					if ((port2->type & ~IPF_MASK) == IPT_PORT)
-						port2 = (++port);
-					if (port2->type != IPT_END)
-					{
-						port3 = ++port;
-						if ((port3->type & ~IPF_MASK) == IPT_PORT)
-							port3 = ++port;
-
-
-						if (((port2->type & ~IPF_MASK) == port_formations[i][j^2])
-								&& ((port3->type & ~IPF_MASK) == port_formations[i][j^3]))
-						{
-							arranged_ports[j^2] = port2;
-							arranged_ports[j^3] = port3;
-							span = 4;
-						}
-						else if (((port2->type & ~IPF_MASK) == port_formations[i][j^3])
-								&& ((port3->type & ~IPF_MASK) == port_formations[i][j^2]))
-						{
-							arranged_ports[j^3] = port2;
-							arranged_ports[j^2] = port3;
-							span = 4;
-						}
-					}
-				}
-				return span;
-			}
-		}
+	default:
+		result = INPUT_CATEGORY_INTERNAL;
+		break;
 	}
-	return 1;
+	return result;
 }
 
 
+
+int inputx_categorize_port(const struct InputPort *port)
+{
+	return categorize_port_type(port->type);
+}
+
+
+
+int inputx_has_input_category(int category)
+{
+	struct InputPort *in;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if (inputx_categorize_port(in) == category)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
+
+int inputx_count_players(void)
+{
+	const struct InputPortTiny *in;
+	int joystick_count;
+
+	joystick_count = 0;
+	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
+	{
+		if (categorize_port_type(in->type) == INPUT_CATEGORY_CONTROLLER)
+		{
+			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
+				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
+		}
+	}
+	return joystick_count;
+}
 

@@ -50,6 +50,8 @@ BEGIN
         BEGIN
             MENUITEM "Emulated",                    ID_KEYBOARD_EMULATED
             MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
+            MENUITEM SEPARATOR
+            MENUITEM "Customize Emulated Keyboard...",     ID_KEYBOARD_CUSTOMIZE
         END
         MENUITEM "&Joysticks",                  ID_OPTIONS_JOYSTICKS, GRAYED
         MENUITEM "&Configuration...",           ID_OPTIONS_CONFIGURATION

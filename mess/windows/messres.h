@@ -24,11 +24,12 @@
 #define ID_OPTIONS_DEBUGGER             120	
 #define ID_KEYBOARD_EMULATED            121
 #define ID_KEYBOARD_NATURAL             122
-#define ID_FRAMESKIP_AUTO               123
-#define ID_DEVICES                      124
-#define ID_HELP_ABOUT                   125
-#define ID_HELP_ABOUTSYSTEM             126
-#define IDD_TAPEDIALOG                  127
+#define ID_KEYBOARD_CUSTOMIZE           123
+#define ID_FRAMESKIP_AUTO               124
+#define ID_DEVICES                      125
+#define ID_HELP_ABOUT                   126
+#define ID_HELP_ABOUTSYSTEM             127
+#define IDD_TAPEDIALOG                  128
 #define IDR_RUNTIME_MENU                6000
 #define IDC_SLIDER                      6000
 #define IDC_PLAY                        6001
@@ -41,7 +42,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        128
+#define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         6006
 #define _APS_NEXT_SYMED_VALUE           101

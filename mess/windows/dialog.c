@@ -72,6 +72,7 @@ struct dialog_info
 	struct dialog_info_trigger *trigger_last;
 	WORD item_count;
 	WORD cx, cy;
+	WORD pos_x, pos_y;
 	int combo_string_count;
 	int combo_default_value;
 	memory_pool mempool;
@@ -98,6 +99,8 @@ extern void win_poll_input(void);
 #define DIM_SEQ_WIDTH			120
 #define DIM_COMBO_WIDTH			140
 #define DIM_BUTTON_WIDTH		50
+
+#define MAX_DIALOG_HEIGHT		480
 
 #define WNDLONG_DIALOG			GWLP_USERDATA
 
@@ -381,6 +384,8 @@ void *win_dialog_init(const char *title)
 
 	di->cx = 0;
 	di->cy = 0;
+	di->pos_x = 0;
+	di->pos_y = 0;
 
 	memset(&dlg_template, 0, sizeof(dlg_template));
 	dlg_template.style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
@@ -412,6 +417,42 @@ error:
 }
 
 
+
+//============================================================
+//	dialog_new_control
+//============================================================
+
+static void dialog_new_control(struct dialog_info *di, short *x, short *y)
+{
+	if (di->pos_y >= MAX_DIALOG_HEIGHT)
+	{
+		di->pos_x = di->cx;
+		di->pos_y = 0;
+	}
+
+	*x = di->pos_x + DIM_HORIZONTAL_SPACING;
+	*y = di->pos_y + DIM_VERTICAL_SPACING;
+}
+
+
+
+//============================================================
+//	dialog_finish_control
+//============================================================
+
+static void dialog_finish_control(struct dialog_info *di, short x, short y)
+{
+	di->pos_y = y;
+
+	/* update dialog size */
+	if (x > di->cx)
+		di->cx = x;
+	if (y > di->cy)
+		di->cy = y;
+}
+
+
+
 //============================================================
 //	win_dialog_add_combobox
 //============================================================
@@ -424,8 +465,7 @@ int win_dialog_add_combobox(void *dialog, const char *item_label, UINT16 *value)
 
 	assert(item_label);
 
-	x = DIM_HORIZONTAL_SPACING;
-	y = di->cy + DIM_VERTICAL_SPACING;
+	dialog_new_control(di, &x, &y);
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y, DIM_LABEL_WIDTH, DIM_COMBO_ROW_HEIGHT, item_label, DLGITEM_STATIC))
@@ -442,10 +482,9 @@ int win_dialog_add_combobox(void *dialog, const char *item_label, UINT16 *value)
 		return 1;
 
 	x += DIM_COMBO_WIDTH + DIM_HORIZONTAL_SPACING;
+	y += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
 
-	if (x > di->cx)
-		di->cx = x;
-	di->cy += DIM_COMBO_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2;
+	dialog_finish_control(di, x, y);
 	return 0;
 }
 
@@ -637,52 +676,18 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 //	win_dialog_add_seqselect
 //============================================================
 
-int win_dialog_add_portselect(void *dialog, struct InputPort *port, int *span)
+int win_dialog_add_portselect(void *dialog, struct InputPort *port)
 {
 	struct dialog_info *di = (struct dialog_info *) dialog;
 	short x;
 	short y;
-	struct InputPort *arranged_ports[4];
-	char buf[256];
-	int i;
 	int rows;
 	const char *port_name;
-	const char *last_port_name = NULL;
 
-	*span = inputx_orient_ports(port, arranged_ports);
+	port_name = input_port_name(port);
+	rows = 1;
 
-	// Come up with 
-	if (*span == 1)
-	{
-		port_name = input_port_name(port);
-	}
-	else
-	{
-		for (i = 0; i < sizeof(arranged_ports) / sizeof(arranged_ports[0]); i++)
-		{
-			if (arranged_ports[i])
-			{
-				port_name = input_port_name(arranged_ports[i]);
-				if (i == 0)
-				{
-					strncpyz(buf, port_name, sizeof(buf) / sizeof(buf[0]));
-					last_port_name = port_name;
-				}
-				else if (strcmp(port_name, last_port_name))
-				{
-					strncatz(buf, " / ", sizeof(buf) / sizeof(buf[0]));
-					strncatz(buf, port_name, sizeof(buf) / sizeof(buf[0]));
-					last_port_name = port_name;
-				}
-			}
-		}
-		port_name = buf;
-	}
-
-	rows = arranged_ports[2] ? (arranged_ports[0] ? 3 : 2) : 1;
-
-	x = DIM_HORIZONTAL_SPACING;
-	y = di->cy + DIM_VERTICAL_SPACING;
+	dialog_new_control(di, &x, &y);
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT,
 			x, y + (rows - 1) * (DIM_NORMAL_ROW_HEIGHT + DIM_VERTICAL_SPACING * 2)/2,
@@ -690,85 +695,14 @@ int win_dialog_add_portselect(void *dialog, struct InputPort *port, int *span)
 		return 1;
 	x += DIM_LABEL_WIDTH + DIM_HORIZONTAL_SPACING;
 
-	switch(*span) {
-	case 1:
-		if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
-			return 1;
-		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-		x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
-		break;
-
-	case 2:
-		switch(rows) {
-		case 1:
-			/* left */
-			if (dialog_add_single_seqselect(di, x, y,
-					DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[0]))
-				return 1;
-
-			/* right */
-			if (dialog_add_single_seqselect(di, x, y,
-					DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[1]))
-				return 1;
-			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-			x += DIM_SEQ_WIDTH*2 + DIM_HORIZONTAL_SPACING*2;
-			break;
-
-		case 2:
-			/* up */
-			if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[2]))
-				return 1;
-			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-
-			/* down */
-			if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[3]))
-				return 1;
-			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-			x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
-			break;
-
-		default:
-			assert(0);
-			return 1;
-		}
-		break;
-
-	case 4:
-		/* up */
-		if (dialog_add_single_seqselect(di, x + (DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING) / 2, y,
-				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[2]))
-			return 1;
-		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-
-		/* left */
-		if (dialog_add_single_seqselect(di, x, y,
-				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[0]))
-			return 1;
-
-		/* right */
-		if (dialog_add_single_seqselect(di, x + DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING, y,
-				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[1]))
-			return 1;
-		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-
-		/* down */
-		if (dialog_add_single_seqselect(di, x + (DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING) / 2, y,
-				DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, arranged_ports[3]))
-			return 1;
-		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-		x += DIM_SEQ_WIDTH*2 + DIM_HORIZONTAL_SPACING*2;
-		break;
-
-	default:
-		assert(0);
+	if (dialog_add_single_seqselect(di, x, y, DIM_SEQ_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
 		return 1;
-	}
+	y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+	x += DIM_SEQ_WIDTH + DIM_HORIZONTAL_SPACING;
+
 	port++;
 
-	/* update dialog size */
-	if (x > di->cx)
-		di->cx = x;
-	di->cy = y;
+	dialog_finish_control(di, x, y);
 	return 0;
 }
 

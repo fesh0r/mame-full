@@ -17,7 +17,10 @@ System Driver Changes:
 User Interface Changes:
 -----------------------
 - Added separate configuration menu, to be used for configuration items that
-  were formerly represented with DIP switches. [Nate Woods]
+  were formerly represented with DIP switches.  [Nate Woods]
+  
+- [Windows] Revamped options menu, and added a keyboard customization menu.
+  [Nate Woods]
 
 Imgtool Changes:
 ----------------
