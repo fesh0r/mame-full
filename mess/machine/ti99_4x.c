@@ -85,7 +85,7 @@ In short :
 	a TI99/4x CPU ROMs).  They can used to store large pieces of data, too.
 
 	TI99/4a includes three GROMs, with some start-up code and TI-Basic.
-	TI99/4 reportedly includes an extra GROM, with Equation Editor.  Maybe a part of the Hand Held
+	TI99/4 reportedly includes an additionnal Equation Editor.  Maybe a part of the Hand Held
 	Unit DSR lurks there, too (this is only a supposition).
 
 The simple way :
@@ -119,7 +119,7 @@ GPL ports :
 	consequence, we can theorically have up to 16 independant GPL ports, with 64kb of address space
 	in each.
 
-	Note however, that, AFAIK, the console GROMs on TI99/4a do not decode the page number, so they
+	Note however, that, the console GROMs on TI99/4(a) do not decode the page number, so they
 	occupy the first 24kb of EVERY port, and only 40kb of address space are really available (which
 	actually makes 30kb with 6kb GROMs).  (However, some hackers found that the systems GROM
 	drivers did not burn when another chip imposed another value on the data bus, so you could
@@ -127,9 +127,6 @@ GPL ports :
 
 	The question is : which pieces of hardware do use this ? I can only make guesses :
 	* p-code card (-> UCSD Pascal system) contains 8 GROMs, so it must use two ports.
-	* TI99/4 reportedly has 4 GROMs, whereas 1979's Statistics module has 5 GROMs.  So either
-	  the console or the module uses an extra port.  I suspect Equation Editor is located in GPL
-	  port 1.
 	* Also, I know that some hackers did use the extra ports.
 */
 /*
