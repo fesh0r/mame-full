@@ -65,6 +65,7 @@
 
 #include "imgtool.h"
 #include "formats/ap2_dsk.h"
+#include "formats/ap_dsk35.h"
 #include "iflopimg.h"
 
 #define BLOCK_SIZE				512
@@ -72,9 +73,7 @@
 
 struct prodos_diskinfo
 {
-	UINT32 tracks;
-	UINT32 heads;
-	UINT32 sectors;
+	imgtoolerr_t (*load_block)(imgtool_image *image, int block, void *buffer);
 };
 
 struct prodos_direnum
@@ -159,21 +158,7 @@ static struct prodos_diskinfo *get_prodos_info(imgtool_image *image)
 
 
 
-static imgtoolerr_t prodos_diskimage_open(imgtool_image *image)
-{
-	struct prodos_diskinfo *info;
-
-	info = get_prodos_info(image);
-	info->tracks = APPLE2_TRACK_COUNT;
-	info->heads = 1;
-	info->sectors = APPLE2_SECTOR_COUNT;
-
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-static imgtoolerr_t prodos_load_block(imgtool_image *image,
+static imgtoolerr_t prodos_load_block_525(imgtool_image *image,
 	int block, void *buffer)
 {
 	static const UINT8 skewing[] =
@@ -190,9 +175,9 @@ static imgtoolerr_t prodos_load_block(imgtool_image *image,
 
 	block *= 2;
 
-	track = block / (diskinfo->heads * diskinfo->sectors);
-	head = (block / diskinfo->sectors) % diskinfo->heads;
-	sector = block % diskinfo->sectors;
+	track = block / APPLE2_SECTOR_COUNT;
+	head = 0;
+	sector = block % APPLE2_SECTOR_COUNT;
 
 	ferr = floppy_read_sector(imgtool_floppy(image), head, track, 
 		skewing[sector + 0], 0, ((UINT8 *) buffer) + 0, 256);
@@ -205,6 +190,63 @@ static imgtoolerr_t prodos_load_block(imgtool_image *image,
 		return imgtool_floppy_error(ferr);
 
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_load_block_35(imgtool_image *image,
+	int block, void *buffer)
+{
+	floperr_t ferr;
+	int track, head, sector;
+	int sides = 2;
+
+	track = 0;
+	while(block >= (apple35_tracklen_800kb[track] * sides))
+	{
+		block -= (apple35_tracklen_800kb[track++] * sides);
+		if (track >= 80)
+			return IMGTOOLERR_SEEKERROR;
+	}
+
+	head = block / apple35_tracklen_800kb[track];
+	sector = block % apple35_tracklen_800kb[track];
+
+	ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, 0, buffer, 512);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image)
+{
+	struct prodos_diskinfo *info;
+	info = get_prodos_info(image);
+	info->load_block = prodos_load_block_525;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
+{
+	struct prodos_diskinfo *info;
+	info = get_prodos_info(image);
+	info->load_block = prodos_load_block_35;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_load_block(imgtool_image *image,
+	int block, void *buffer)
+{
+	struct prodos_diskinfo *diskinfo;
+	diskinfo = get_prodos_info(image);
+	return diskinfo->load_block(image, block, buffer);
 }
 
 
@@ -472,7 +514,6 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->imageenum_extra_bytes		+= sizeof(struct prodos_direnum);
 	module->eoln						= EOLN_CR;
 	module->path_separator				= '/';
-	module->open						= prodos_diskimage_open;
 	module->begin_enum					= prodos_diskimage_beginenum;
 	module->next_enum					= prodos_diskimage_nextenum;
 	module->read_file					= prodos_diskimage_readfile;
@@ -481,4 +522,23 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 
 
 
-FLOPPYMODULE(prodos, "ProDOS format", apple2, apple2_prodos_module_populate)
+static imgtoolerr_t apple2_prodos_module_populate_525(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+{
+	apple2_prodos_module_populate(library, module);
+	module->open = prodos_diskimage_open_525;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t apple2_prodos_module_populate_35(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
+{
+	apple2_prodos_module_populate(library, module);
+	module->open = prodos_diskimage_open_35;
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+FLOPPYMODULE(prodos_525, "ProDOS format", apple2,       apple2_prodos_module_populate_525)
+FLOPPYMODULE(prodos_35,  "ProDOS format", apple35_iigs, apple2_prodos_module_populate_35)

@@ -16,7 +16,10 @@ UINT8 sony_fetchtrack(const UINT8 *buffer, size_t buffer_len, size_t *pos);
 
 /**************************************************************************/
 
-FLOPPY_OPTIONS_EXTERN(apple35);
+extern const UINT8 apple35_tracklen_800kb[];
+
+FLOPPY_OPTIONS_EXTERN(apple35_mac);
+FLOPPY_OPTIONS_EXTERN(apple35_iigs);
 
 
 #endif /* AP_DSK35_H */

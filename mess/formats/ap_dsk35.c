@@ -91,7 +91,7 @@ struct apple35_tag
 
 
 /* normal number of sector for each track */
-static const UINT8 apple35_tracklen_800kb[80] =
+const UINT8 apple35_tracklen_800kb[80] =
 {
 	12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
 	11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
@@ -1040,9 +1040,13 @@ static FLOPPY_CONSTRUCT(apple35_2img_construct)
 
 
 
-FLOPPY_OPTIONS_START( apple35 )
+FLOPPY_OPTIONS_START( apple35_mac )
 	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,	NULL )
 	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	NULL )
-//	FLOPPY_OPTION( apple35_2img, "2img\0002mg\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,	NULL )
 FLOPPY_OPTIONS_END
 
+FLOPPY_OPTIONS_START( apple35_iigs )
+	FLOPPY_OPTION( apple35_raw, "dsk\0img\0image\0",	"Apple raw 3.5\" disk image",	apple35_raw_identify,		apple35_raw_construct,	NULL )
+	FLOPPY_OPTION( apple35_dc, "dc\0dsk\0img\0image\0",	"Apple DiskCopy disk image",	apple35_diskcopy_identify,	apple35_diskcopy_construct,	NULL )
+	FLOPPY_OPTION( apple35_2img, "2img\0002mg\0",		"Apple ][gs 2IMG disk image",	apple35_2img_identify,		apple35_2img_construct,	NULL )
+FLOPPY_OPTIONS_END

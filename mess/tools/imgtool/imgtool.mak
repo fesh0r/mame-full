@@ -17,6 +17,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/formats/coco_cas.o			\
 	$(OBJ)/mess/formats/pc_dsk.o			\
 	$(OBJ)/mess/formats/ap2_dsk.o			\
+	$(OBJ)/mess/formats/ap_dsk35.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
 	$(OBJ)/mess/tools/imgtool/stream.o		\
 	$(OBJ)/mess/tools/imgtool/library.o		\

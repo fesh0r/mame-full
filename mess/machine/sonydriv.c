@@ -500,7 +500,8 @@ static DEVICE_UNLOAD(sonydriv_floppy)
 void sonydriv_device_getinfo(struct IODevice *dev, int allowablesizes)
 {
 	/* floppy */
-	floppy_device_getinfo(dev, floppyoptions_apple35);
+	floppy_device_getinfo(dev, (allowablesizes & SONY_FLOPPY_SUPPORT2IMG)
+		? floppyoptions_apple35_iigs : floppyoptions_apple35_mac);
 	dev->type = IO_FLOPPY;
 	dev->count = 2;
 	dev->user4 = (void *) allowablesizes;
