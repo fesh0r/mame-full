@@ -44,6 +44,7 @@ void wd177x_type_1_step_1( int param );
 void wd177x_type_1_step_2( int param );
 void wd177x_intrq( int param );
 void wd177x_step_read_write_head( wd177x_t *wd );
+void wd177x_update_track_register( wd177x_t *wd );
 double wd177x_get_step_rate( wd177x_t *wd );
 void wd177x_write_back_current_track( wd177x_t *wd );
 void wd177x_read_current_track( wd177x_t *wd );
@@ -90,7 +91,7 @@ void wd177x_set_drive( offs_t wd177x_index, UINT8 drive)
     
     if( wd->current_drive != drive )
     {
-        /* Setup floppy disk call backs */
+        /* Remove floppy disk call backs */
         floppy_drive_set_index_pulse_callback(image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), NULL);
         floppy_drive_set_ready_state_change_callback(image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), NULL);
 
@@ -100,6 +101,7 @@ void wd177x_set_drive( offs_t wd177x_index, UINT8 drive)
         wd->current_drive = drive;
         wd177x_read_current_track( wd );
 
+        /* Install floppy disk call backs */
         floppy_drive_set_index_pulse_callback(image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), wd177x_index_pulse_callback);
         floppy_drive_set_ready_state_change_callback(image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), wd177x_ready_state_change);
     }
@@ -298,7 +300,7 @@ READ_HANDLER ( wd177x_data_r )
 
 void wd177x_type_1_command( wd177x_t *wd )
 {
-    double wait = TIME_IN_USEC(5);
+    double wait = TIME_IN_MSEC(5);
     
     wd->mode = wd177x_type_1;
     
@@ -335,7 +337,7 @@ void wd177x_type_1_command( wd177x_t *wd )
 void wd177x_type_1_step_1( int param )
 {
     int i = 255;
-    double wait = TIME_IN_USEC(5);
+    double wait = TIME_IN_MSEC(5);
     wd177x_t *wd = (wd177x_t *)param;
     
     timer_reset(wd->timer_Type1_1, TIME_NEVER);
@@ -347,17 +349,20 @@ void wd177x_type_1_step_1( int param )
     {
         wd->step_direction = 1;
         wd177x_step_read_write_head( wd );
+        wd177x_update_track_register( wd );
         wait += wd177x_get_step_rate( wd ); /* Extend wait per Step Rate */
     }
     else if( (wd->command_reg & 0x60) == 0x60 ) /* Test for step out command */
     {
         wd->step_direction = -1;
         wd177x_step_read_write_head( wd );
+        wd177x_update_track_register( wd );
         wait += wd177x_get_step_rate( wd ); /* Extend wait per Step Rate */
     }
     else if( (wd->command_reg & 0x60) == 0x20 ) /* Test for step command */
     {
         wd177x_step_read_write_head( wd );
+        wd177x_update_track_register( wd );
         wait += wd177x_get_step_rate( wd ); /* Extend wait per Step Rate */
     }
     else /* command is seek or restore */
@@ -416,7 +421,7 @@ void wd177x_type_1_step_1( int param )
 
 void wd177x_type_1_step_2( int param )
 {
-    double wait = TIME_IN_USEC(5);
+    double wait = TIME_IN_MSEC(5);
     wd177x_t *wd = (wd177x_t *)param;
     int	found_sector = 0;
     UINT16 crc;
@@ -429,29 +434,29 @@ void wd177x_type_1_step_2( int param )
     if( (wd->command_reg & 0x04) == 0x04 )	/* Test for V bit */
     {
         /* Verify new track */
-        int i;
+        wait += TIME_IN_MSEC(30); /* 30 millisecond head settling time */
         
-        for( i=0; i<wd->track_length; i++ )
+        for( wd->track_position = 0, wd->address_mark = wd177x_NoMark, wd->address_mark_detected = 0; wd->track_position < wd->track_length; )
         {
             wd177x_read_byte_from_track( wd );
             
             if( wd->address_mark == wd177x_IDAddressMark )
             {
                 /* Found ID Field */
-                wd177x_read_byte_from_track( wd ); i++; /* Track number? */
+                wd177x_read_byte_from_track( wd ); /* Track number? */
                 
                 if( wd->track_reg == wd->data_shift_reg )
                 {
                     /* Track number matches, read thru remaining ID field */
-                    wd177x_read_byte_from_track( wd ); i++; /* Side number */
-                    wd177x_read_byte_from_track( wd ); i++; /* Sector number */
-                    wd177x_read_byte_from_track( wd ); i++; /* Sector length */
-                    wd177x_read_byte_from_track( wd ); i++; /* MSB CRC byte */
+                    wd177x_read_byte_from_track( wd ); /* Side number */
+                    wd177x_read_byte_from_track( wd ); /* Sector number */
+                    wd177x_read_byte_from_track( wd ); /* Sector length */
+                    wd177x_read_byte_from_track( wd ); /* MSB CRC byte */
                     crc = wd->data_shift_reg << 8;
-                    wd177x_read_byte_from_track( wd ); i++; /* LSB CRC byte */
+                    wd177x_read_byte_from_track( wd ); /* LSB CRC byte */
                     crc &= wd->data_shift_reg;
                     
-                    /* Does CRCs match? */
+                    /* Do CRCs match? */
                     if ( crc == wd->crc_reg )
                     {
                         /* Yes */
@@ -459,7 +464,7 @@ void wd177x_type_1_step_2( int param )
                         found_sector = 1;
                         
                         /* Add time it took to find this sector */
-                        wait += TIME_IN_HZ(300) * ( (double)i / (double)wd->track_length );
+                        wait += TIME_IN_HZ(300) * ( (double)wd->track_position / (double)wd->track_length );
                         
                         exit;
                     }
@@ -471,18 +476,18 @@ void wd177x_type_1_step_2( int param )
                 else
                 {
                     /* Track didn't match, forward thru ID field then try again */
-                    wd177x_read_byte_from_track( wd ); i++; /* Side number */
-                    wd177x_read_byte_from_track( wd ); i++; /* Sector number */
-                    wd177x_read_byte_from_track( wd ); i++; /* Sector length */
-                    wd177x_read_byte_from_track( wd ); i++; /* MSB CRC byte */
-                    wd177x_read_byte_from_track( wd ); i++; /* LSB CRC byte */
+                    wd177x_read_byte_from_track( wd ); /* Side number */
+                    wd177x_read_byte_from_track( wd ); /* Sector number */
+                    wd177x_read_byte_from_track( wd ); /* Sector length */
+                    wd177x_read_byte_from_track( wd ); /* MSB CRC byte */
+                    wd177x_read_byte_from_track( wd ); /* LSB CRC byte */
                 }
             }
         }
         
         if( found_sector == 0 )
         {
-            /* Sector not found, add five revloutions of search time */
+            /* Sector not found, add simulated five revloutions of search time */
             wait += TIME_IN_HZ(300) * 5;
         }
     }
@@ -497,7 +502,7 @@ void wd177x_intrq( int param )
     timer_reset(wd->timer_INTRQ, TIME_NEVER);
     
     if( wd->chip_type == wd177x_wd1770 || wd->chip_type == wd177x_wd1772 )
-        wd->motor_on = 9; /* Spin for at least 9 more revolutions */
+        wd->motor_on = 9; /* Spin disk for at least 9 more revolutions */
 
     wd->status_reg &= ~0x01; /* Reset busy */
     wd->callback( wd->wd177x_index, wd177x_IRQ_SET ); /* Set INTRQ */
@@ -505,12 +510,15 @@ void wd177x_intrq( int param )
 
 void wd177x_step_read_write_head( wd177x_t *wd )
 {
-    int	track_reg;
-    
     wd177x_write_back_current_track( wd );
     floppy_drive_seek(image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), wd->step_direction);
     wd177x_read_current_track( wd );
+}
 
+void wd177x_update_track_register( wd177x_t *wd )
+{
+    int	track_reg;
+    
     /* Update Track Register if U = 1 */
     if( (wd->command_reg & 0x10) == 0x10 )
     {
@@ -529,14 +537,15 @@ void wd177x_step_read_write_head( wd177x_t *wd )
 
 double wd177x_get_step_rate( wd177x_t *wd )
 {
-    const int WD1772_stepRates[] = { 6, 12, 2, 3 };
+    const int wd1772_stepRates[] = { 6, 12, 2, 3 };
     const int wd177x_get_step_rates[] = { 6, 12, 20, 30 };
     
     if( wd->chip_type == wd177x_wd1772 )
-        return TIME_IN_USEC( WD1772_stepRates[ wd->command_reg & 0x03 ] );
+        return TIME_IN_MSEC( wd1772_stepRates[ wd->command_reg & 0x03 ] );
     else
-        return TIME_IN_USEC( wd177x_get_step_rates[ wd->command_reg & 0x03 ] );
+        return TIME_IN_MSEC( wd177x_get_step_rates[ wd->command_reg & 0x03 ] );
 }
+
 void wd177x_write_back_current_track( wd177x_t *wd )
 {
     if( wd->track_dirty )
@@ -553,8 +562,6 @@ void wd177x_read_current_track( wd177x_t *wd )
     floppy_drive_read_track_data_info_buffer( image_from_devtype_and_index(IO_FLOPPY, wd->current_drive), wd->current_side, wd->track_data, &(wd->track_length));
     wd->track_dirty = 0;
 }
-
-/* Used for pattern matching */
 
 void wd177x_read_byte_from_track( wd177x_t *wd )
 {
@@ -594,7 +601,7 @@ void wd177x_read_byte_from_track( wd177x_t *wd )
             {
                 if( wd->address_mark == wd177x_IDAddressMark)
                 {
-                    wd->address_mark = wd177x_GAPII; /*Yes, done with Index data fields */
+                    wd->address_mark = wd177x_GAPII; /*Yes, done with ID data fields */
                     wd->address_mark_detected = 30;  /* Switch two GAP II */
                 }
                 else
