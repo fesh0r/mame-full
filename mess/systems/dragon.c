@@ -709,13 +709,13 @@ ROM_END
 
 ROM_START(coco)
      ROM_REGION(0x18000,REGION_CPU1,0)
-     ROM_LOAD(			"bas10.rom",	0x12000, 0x2000, 0x0)
+     ROM_LOAD(			"bas10.rom",	0x12000, 0x2000, 0x73316e3e)
 ROM_END
 
 ROM_START(cocoe)
      ROM_REGION(0x18000,REGION_CPU1,0)
      ROM_LOAD(			"bas11.rom",	0x12000, 0x2000, 0x6270955a)
-     ROM_LOAD(	        "extbas10.rom",	0x10000, 0x2000, 0x0)
+     ROM_LOAD(	        "extbas10.rom",	0x10000, 0x2000, 0x6111a086)
      ROM_LOAD_OPTIONAL(	"disk10.rom",	0x14000, 0x2000, 0xb4f9968e)
 ROM_END
 
