@@ -118,6 +118,8 @@ System Driver Changes:
   register writes.  This means support for multi-modes on the same screen, colour changing 
   effects, and demos. [Kev Thacker]
 
+- ZX: Fixed ZX80 palette: it's black on white, and not viceversa. [Stefano Priore]
+
 
 
 Other Changes:
