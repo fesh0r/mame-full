@@ -21,6 +21,9 @@ User Interface Changes:
 - Fixed a bug that prevented keyboard inputs from being customizable in the
   classic UI.  [Nate Woods]
 
+- [Windows GUI] Fixed a bug that caused problems when trying to mount three or
+  more images of the same type.  (bug #622) [Nate Woods]
+
 
 
 Imgtool Changes:
