@@ -2150,7 +2150,7 @@ void nec765_reset(int offset)
 		are checked or only the drive selected with the drive select bits?? */
 
 		a_drive_is_ready = 0;
-		for (i=0; i<4; i++)
+		for (i = 0; i < device_count(IO_FLOPPY); i++)
 		{
 			if (image_exists(image_from_devtype_and_index(IO_FLOPPY, i)))
 			{
