@@ -128,7 +128,7 @@ static void             SetView(int menu_id,int listview_style);
 static void             ResetListView(void);
 static void             UpdateGameList(void);
 static void             DestroyIcons(void);
-static void             ReloadIcons(HWND hWnd);
+static void             ReloadIcons(void);
 static void             PollGUIJoystick(void);
 static void             PressKey(HWND hwnd,UINT vk);
 static BOOL             MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
@@ -189,7 +189,7 @@ static void ResetHeaderSortIcon(void);
 
 /* Icon routines */
 static DWORD            GetShellLargeIconSize(void);
-static void             CreateIcons(HWND hWnd);
+static void             CreateIcons(void);
 static int              GetIconForDriver(int nItem);
 static void             AddDriverIcon(int nItem,int default_icon_index);
 
@@ -1533,7 +1533,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	wndclass.hCursor	   = NULL;
 	wndclass.hbrBackground = (HBRUSH)(COLOR_3DFACE + 1);
 	wndclass.lpszMenuName  = MAKEINTRESOURCE(IDR_UI_MENU);
-	wndclass.lpszClassName = "MAME32";
+	wndclass.lpszClassName = "MainClass";
 
 	RegisterClass(&wndclass);
 
@@ -2165,7 +2165,6 @@ static BOOL GameCheck(void)
 {
 	LV_FINDINFO lvfi;
 	int 		i;
-	BOOL		success;
 	BOOL		changed = FALSE;
 
 	if (game_index == 0)
@@ -2181,25 +2180,10 @@ static BOOL GameCheck(void)
 
 	if (GetHasRoms(game_index) == UNKNOWN)
 	{
-		if (IsGameRomless(game_index))
-		{
-			success = TRUE;
-		}
-		else
-		{
-			/* Only check for the ZIP file once */
-			//success = File_ExistZip(drivers[game_index]->name, FILETYPE_ROM);
-			success = mame_faccess(drivers[game_index]->name, FILETYPE_ROM);
-		}
-
-		if (!success)
-			success = FindRomSet(game_index);
-
-		SetHasRoms(game_index, success);
+		SetHasRoms(game_index,FindRomSet(game_index));
 		changed = TRUE;
 	}
 
-	/* Check for SAMPLES */
 	if (GetHasSamples(game_index) == UNKNOWN)
 	{
 		SetHasSamples(game_index, FindSampleSet(game_index));
@@ -3242,8 +3226,6 @@ static void ResetListView()
 			lvi.iItem	 = i;
 			lvi.iSubItem = 0;
 			lvi.lParam	 = i;
-			// Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
-			// because we do our own sort as needed
 			lvi.pszText  = LPSTR_TEXTCALLBACK;
 			lvi.iImage	 = I_IMAGECALLBACK;
 			ListView_InsertItem(hwndList, &lvi);
@@ -3268,7 +3250,6 @@ static void ResetListView()
 		SetView(ID_VIEW_SMALL_ICON,LVS_SMALLICON);
 
 	SetWindowRedraw(hwndList, TRUE);
-    InvalidateRect(hwndList, NULL, FALSE);
 
 	UpdateStatusBar();
 
@@ -3288,12 +3269,13 @@ static void UpdateGameList()
 	bDoGameCheck = TRUE;
 	game_index	 = 0;
 
+	ReloadIcons();
+
 	// Let REFRESH also load new background if found
 	LoadBackgroundBitmap();
 	InvalidateRect(hMain,NULL,TRUE);
 
 	ResetListView();
-	ReloadIcons(hwndList);
 }
 
 static void PickFont(void)
@@ -3863,13 +3845,12 @@ static void InitListView()
 		SetColumnShown(shown);
 	}
 
-	/* Create IconsList for ListView Control */
-	CreateIcons(hwndList);
+	CreateIcons();
 	GetColumnOrder(realColumn);
 
 	ResetColumnDisplay(TRUE);
 
-	/* Allow selection to change the default saved game */
+	// Allow selection to change the default saved game
 	bListReady = TRUE;
 }
 
@@ -4039,13 +4020,45 @@ static void DestroyIcons(void)
 
 }
 
-static void ReloadIcons(HWND hWnd)
+static void ReloadIcons(void)
 {
-	DestroyIcons();
+	HICON hIcon;
+	INT i;
 
-	CreateIcons(hWnd);
+	// clear out all the images
+	ImageList_Remove(hSmall,-1);
+	ImageList_Remove(hLarge,-1);
+
+	if (icon_index != NULL)
+	{
+		for (i=0;i<game_count;i++)
+			icon_index[i] = 0; // these are indices into hSmall
+	}
+
+	for (i = IDI_WIN_NOROMS; i <= IDI_WIN_REDX; i++)
+	{
+		hIcon = LoadIconFromFile((char *)icon_names[i - IDI_WIN_NOROMS]);
+		if (hIcon == NULL)
+			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(i));
+
+		ImageList_AddIcon(hSmall, hIcon);
+		ImageList_AddIcon(hLarge, hIcon);
+	}
+#ifdef MESS
+	for (i = IDI_WIN_NOROMSNEEDED; i <= IDI_WIN_HARD; i++)
+	{
+		INT icon_name_index;
+		icon_name_index = i - IDI_WIN_NOROMSNEEDED + IDI_WIN_REDX - IDI_WIN_NOROMS + 1;
+		assert(icon_name_index >= 0);
+		assert(icon_name_index < sizeof(icon_names) / sizeof(icon_names[0]));
+		if ((hIcon = LoadIconFromFile((char *) icon_names[icon_name_index])) == 0)
+			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
+
+		ImageList_AddIcon (hSmall, hIcon);
+		ImageList_AddIcon (hLarge, hIcon);
+	}
+#endif
 }
-
 static DWORD GetShellLargeIconSize(void)
 {
 	DWORD  dwSize, dwLength = 512, dwType = REG_SZ;
@@ -4070,54 +4083,36 @@ static DWORD GetShellLargeIconSize(void)
 }
 
 // create iconlist for Listview control
-static void CreateIcons(HWND hWnd)
+static void CreateIcons(void)
 {
-	HICON	hIcon;
-	INT 	i;
 	HWND header;
-	DWORD	dwLargeIconSize = GetShellLargeIconSize();
+	DWORD dwLargeIconSize = GetShellLargeIconSize();
+	HICON hIcon;
 
-	//cmk 0.64 I don't think this style setting is needed, and it makes us lose
-	// our horizontal scrollbar
-	/* the current window style affects the sizing of the rows, so put
-     * it in icon mode temporarily while we associate our image list
-     */
-	//DWORD dwStyle = GetWindowLong(hWnd,GWL_STYLE);
-	//SetWindowLong(hWnd,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
+	// the current window style affects the sizing of the rows when changing
+	// between list views, so put it in small icon mode temporarily while we associate
+	// our image list
+	//
+	// using large icon mode instead kills the horizontal scrollbar when doing
+	// full refresh, which seems odd (it should recreate the scrollbar when
+	// set back to report mode, for example, but it doesn't).
+
+	DWORD dwStyle = GetWindowLong(hwndList,GWL_STYLE);
+	SetWindowLong(hwndList,GWL_STYLE,(dwStyle & ~LVS_TYPEMASK) | LVS_ICON);
 
 	hSmall = ImageList_Create(ICONMAP_WIDTH, ICONMAP_HEIGHT,
-		ILC_COLORDDB | ILC_MASK, NUM_ICONS, NUM_ICONS + game_count);
-
+							  ILC_COLORDDB | ILC_MASK, NUM_ICONS, 500);
 	hLarge = ImageList_Create(dwLargeIconSize, dwLargeIconSize,
-		ILC_COLORDDB | ILC_MASK, NUM_ICONS, NUM_ICONS + game_count);
+							  ILC_COLORDDB | ILC_MASK, NUM_ICONS, 500);
 
-	for (i = IDI_WIN_NOROMS; i <= IDI_WIN_REDX; i++)
-	{
-		if ((hIcon = LoadIconFromFile((char *)icon_names[i - IDI_WIN_NOROMS])) == 0)
-			hIcon = LoadIcon(hInst, MAKEINTRESOURCE(i));
+	ReloadIcons();
 
-		ImageList_AddIcon(hSmall, hIcon);
-		ImageList_AddIcon(hLarge, hIcon);
-	}
-#ifdef MESS
-	for (i = IDI_WIN_NOROMSNEEDED; i <= IDI_WIN_HARD; i++)
-	{
-		INT icon_name_index;
-		icon_name_index = i - IDI_WIN_NOROMSNEEDED + IDI_WIN_REDX - IDI_WIN_NOROMS + 1;
-		assert(icon_name_index >= 0);
-		assert(icon_name_index < sizeof(icon_names) / sizeof(icon_names[0]));
-		if ((hIcon = LoadIconFromFile((char *) icon_names[icon_name_index])) == 0)
-			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
+	// Associate the image lists with the list view control.
+	ListView_SetImageList(hwndList, hSmall, LVSIL_SMALL);
+	ListView_SetImageList(hwndList, hLarge, LVSIL_NORMAL);
 
-		ImageList_AddIcon (hSmall, hIcon);
-		ImageList_AddIcon (hLarge, hIcon);
-	}
-#endif
-
-
-	/* Associate the image lists with the list view control. */
-	ListView_SetImageList(hWnd, hSmall, LVSIL_SMALL);
-	ListView_SetImageList(hWnd, hLarge, LVSIL_NORMAL);
+	// restore our view
+	SetWindowLong(hwndList,GWL_STYLE,dwStyle);
 
 	hHeaderImages = ImageList_Create(8,8,ILC_COLORDDB | ILC_MASK,2,2);
 	hIcon = LoadIcon(hInst,MAKEINTRESOURCE(IDI_HEADER_UP));
@@ -4128,7 +4123,6 @@ static void CreateIcons(HWND hWnd)
 	header = ListView_GetHeader(hwndList);
 	Header_SetImageList(header,hHeaderImages);
 
-	//SetWindowLong(hWnd,GWL_STYLE,dwStyle);
 #ifdef MESS
 	CreateMessIcons();
 #endif
@@ -5291,11 +5285,6 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 	rcAllLabels.left += indent_space;
 
-	SetTextColor(hDC, GetListFontColor());
-
-	if (draw_as_clone)
-		SetTextColor(hDC, GetListCloneColor());
-
 	if (bSelected)
 	{
 		HBRUSH hBrush;
@@ -5320,18 +5309,24 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		DeleteObject(hBrush);
 	}
 	else
-	if (hBackground == NULL)
 	{
-		HBRUSH hBrush;
+		if (hBackground == NULL)
+		{
+			HBRUSH hBrush;
+			
+			hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
+			FillRect(hDC, &rcAllLabels, hBrush);
+			DeleteObject(hBrush);
+		}
+		
+		if (draw_as_clone)
+			clrTextSave = SetTextColor(hDC,GetListCloneColor());
+		else
+			clrTextSave = SetTextColor(hDC,GetListFontColor());
 
-		hBrush = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
-		FillRect(hDC, &rcAllLabels, hBrush);
-		DeleteObject(hBrush);
-
-		clrTextSave = SetTextColor(hDC, GetSysColor(COLOR_BTNTEXT));
 		clrBkSave = SetBkColor(hDC,GetSysColor(COLOR_WINDOW));
-
 	}
+
 
 	if (lvi.state & LVIS_CUT)
 	{

@@ -2,10 +2,8 @@
 // Microsoft Developer Studio generated include file.
 // Used by mame32.rc
 //
-#define IDR_MANIFEST                    1
 #define IDPAUSE                         3
 #define IDAPPLY                         4
-#define RT_MANIFEST                     24
 #define IDS_UI_FILE                     71
 #define IDS_UI_VIEW                     72
 #define IDS_UI_OPTIONS                  73
@@ -25,7 +23,6 @@
 #define IDS_UI_REFRESH                  93
 #define IDS_UI_CUSTOMIZE                94
 #define IDD_MAIN                        101
-#define IDD_HELP                        104
 #define IDA_TAB_KEYS                    106
 #define IDI_MAME32_ICON                 107
 #define IDD_ABOUT                       108

@@ -108,6 +108,7 @@ static int            numExtraFolders = 0;
 static int            numExtraIcons = 0;
 static char           *ExtraFolderIcons[MAX_EXTRA_FOLDERS];
 
+// built in folders and filters
 static LPFOLDERDATA  g_lpFolderData;
 static LPFILTER_ITEM g_lpFilterList;	
 
@@ -671,21 +672,27 @@ void CreateAllChildFolders(void)
 			}
 		}
 
-		if (lpFolderData && lpFolderData->m_pfnCreateFolders)
+		if (lpFolderData != NULL)
 		{
-			lpFolderData->m_pfnCreateFolders(i);
+			//dprintf("Found built-in-folder id %i %i",i,lpFolder->m_nFolderId);
+			if (lpFolderData->m_pfnCreateFolders != NULL)
+				lpFolderData->m_pfnCreateFolders(i);
 		}
 		else
 		{
-			if (lpFolder->m_dwFlags & F_CUSTOM)
-            {
-				// load the extra folder files, which also adds children
-				if (TryAddExtraFolderAndChildren(i) == FALSE)
-				{
-					lpFolder->m_nFolderId = FOLDER_NONE;
-				}
-                break;
-            }
+			if ((lpFolder->m_dwFlags & F_CUSTOM) == 0)
+			{
+				dprintf("Internal inconsistency with non-built-in folder, but not custom");
+				continue;
+			}
+
+			//dprintf("Loading custom folder %i %i",i,lpFolder->m_nFolderId);
+
+			// load the extra folder files, which also adds children
+			if (TryAddExtraFolderAndChildren(i) == FALSE)
+			{
+				lpFolder->m_nFolderId = FOLDER_NONE;
+			}
 		}
 	}
 }
@@ -779,6 +786,8 @@ static void AddTreeFolders(int start_index,int end_index)
 	// currently "cached" parent
 	HTREEITEM hti_parent = NULL;
 	int index_parent = -1;			
+
+	//dprintf("Adding folders to tree ui indices %i to %i",start_index,end_index);
 
 	tvs.hInsertAfter = TVI_SORT;
 
@@ -1018,8 +1027,9 @@ BOOL InitFolders(void)
 		if (treeFolders[numFolders])
 			numFolders++;
 	}
-
+	
 	numExtraFolders = InitExtraFolders();
+
 	for (i = 0; i < numExtraFolders; i++)
 	{
 		LPEXFOLDERDATA  fExData = ExtraFolderData[i];
