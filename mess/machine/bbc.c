@@ -127,10 +127,11 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
-#include "machine/wd179x.h"
+#include "includes/wd179x.h"
 #include "machine/bbc.h"
 #include "vidhrdw/bbc.h"
 #include "i8271.h"
+#include "includes/basicdsk.h"
 
 static int b0_sound;
 static int b1_speech_read;
@@ -458,13 +459,12 @@ bbcb_user_via= {
 };
 
 
-static UINT8 first_fdc_access = 1;
 static UINT8 motor_drive = 0;
 static short motor_count = 0;
-static UINT8 head[4]={0,};
+static UINT8 head=0;
 
 
-static int flop_specified[4] = {0,};
+static void bbc_fdc_callback(int);
 
 
 void	bbc_i8271_interrupt(int state)
@@ -517,11 +517,8 @@ void init_machine_bbcb(void)
 	via_reset();
 	bbcb_IC32_initialise();
 
-	if( flop_specified[0] )
-		wd179x_init(1);
-	else
-		wd179x_init(0);
-	first_fdc_access=1;
+    floppy_drives_init();
+	wd179x_init(bbc_fdc_callback);
 
 	i8271_init(&bbc_i8271_interface);
 	i8271_reset();
@@ -533,21 +530,17 @@ void stop_machine_bbcb(void)
 	wd179x_stop_drive();
 }
 
-
 /* load floppy */
 int bbc_floppy_init(int id)
 {
-	/* load disk image */
-    flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
-    return 0;
-}
+    if (basicdsk_floppy_init(id)==INIT_OK)
+    {
+      basicdsk_set_geometry(id,80,1,10,256,0,2,0);
 
+      return INIT_OK;
+    }
 
-void bbc_floppy_exit(int id)
-{
-	wd179x_stop_drive();
-	flop_specified[id] = 0;
-	first_fdc_access=1;
+    return INIT_FAILED;
 }
 
 void check_disc_status(void)
@@ -559,29 +552,16 @@ void check_disc_status(void)
 void bbc_wd179x_status_w(int offset,int data)
 {
 	UINT8 drive = 255;
-	void *file0;
 
 	drive = 0;
-	head[drive]=0;
-	if (!flop_specified[drive])
-		return;
+        head=0;
 
 	motor_drive=drive;
 	motor_count=5*60;
 
-	file0=wd179x_select_drive(drive,head[drive],bbc_fdc_callback,device_filename(IO_FLOPPY,drive));
+	wd179x_set_drive(drive);
+        wd179x_set_side(head);
 
-	if (!file0)
-		return;
-
-	first_fdc_access=0;
-
-	if (file0 == REAL_FDD)
-		return;
-
-	wd179x_set_geometry(drive,80,1,10,256,0,2,0);
-
-	wd179x_select_drive(drive,head[drive],bbc_fdc_callback,device_filename(IO_FLOPPY,drive));
 }
 
 READ_HANDLER ( bbc_wd1770_read)
