@@ -608,11 +608,16 @@ static struct {
 	{ 0x953f8f51, 0xc000, "QL js-4," },
 
 /* tandy *************************************************************************/
+	{ 0x73316e3e , 0x2000, "NOT AUTHENTIC COCO basic 1.0" },
+	{ 0x6270955a , 0x2000, "COCO basic 1.1" },
 	{ 0x54368805 , 0x2000, "COCO basic 1.2" },
 	{ 0xd8f4d15e , 0x2000, "COCO basic 1.3" },
-	{ 0xa82a6254 , 0x2000, "COCO extbasic" },
+	{ 0xa04a8732 , 0x2000, "COCO basic 1.3 (1byte different to 0xd8f4d15e" },
+	{ 0x6111a086 , 0x2000, "NOT AUTHENTIC COCO extbasic 1.0" },
+	{ 0xa82a6254 , 0x2000, "COCO extbasic 1.1" },
 	{ 0x2ea0fb7f , 0x4000, "MERGED! 0xa82a6254+0x54368805" },
-	{ 0x0b9c5415 , 0x2000, "COCO disk" },
+	{ 0xb4f9968e , 0x2000, "COCO disk 1.0" },
+	{ 0x0b9c5415 , 0x2000, "COCO disk 1.1" },
 	{ 0x7eaa44e3 , 0x2000, "COCO disk (2bytes different to 0x0b9c5415" },
 	{ 0x5fb295a7 , 0x6000, "MERGED! 0xa82a6254+0x54368805+0x7eaa44e3" },
 	{ 0xb4c88d6c , 0x8000, "COCO3" },
@@ -720,6 +725,8 @@ static struct {
 	{ 0x72a040e0 , 0x100, "94519114 TI990_4" },
 	{ 0x9ccf8cca , 0x100, "94519115 TI990_4" },
 	{ 0xfa387bf3 , 0x100, "94519116 TI990_4" },
+
+	{ 0x160ee4a6 , 0x150000, "AVIGO english 1.004" },
 
 	{ 0x6a320f03 , 0x20000, "TI82" },
 	{ 0x4bf05697 , 0x40000, "TI83 1?" },
