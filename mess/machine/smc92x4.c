@@ -143,14 +143,12 @@ static int floppy_find_sector(int which, int disk_unit, int cylinder, int head, 
 
 	revolution_count = 0;
 
-	//w->status &= ~STA_2_REC_N_FND;
-
 	while (revolution_count!=4)
 	{
 		if (floppy_drive_get_next_id(disk_unit, head, &id))
 		{
 			/* compare id values */
-			if (/*(id.C == cylinder) && (id.H == head) &&*/ (id.R == sector))
+			if (/*(id.C == cylinder) &&*/ (id.H == head) && (id.R == sector))
 			{
 				* sector_data_id = id.data_id;
 				* sector_len = 1 << (id.N+7);
@@ -466,7 +464,7 @@ static void do_read_logical(int which, int mode)
 
 	sector = hfdc[which].regs[hfdc_reg_sector];
 	head = hfdc[which].regs[hfdc_reg_head] & 0xf;
-	cylinder = ((hfdc[which].regs[hfdc_reg_head] << 4) & 0x700)
+	cylinder = (((int) hfdc[which].regs[hfdc_reg_head] << 4) & 0x700)
 				| hfdc[which].regs[hfdc_reg_sector];
 
 	if (!get_selected_drive(which, & disk_interface, & disk_unit))
