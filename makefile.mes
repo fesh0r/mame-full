@@ -9,7 +9,7 @@ TARGET = mess
 DEBUG = 1
 
 # uncomment next line to include the symbols for symify
-# SYMBOLS = 1
+SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
 # X86_ASM_68K = 1
