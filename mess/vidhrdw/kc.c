@@ -247,7 +247,7 @@ static int vertical_graphics_state_lines[]=
 	KC85_NUM_RETRACE_LINES*KC85_CYCLES_PER_LINE
 };
 
-static int kc85_blink_state;
+/*static int kc85_blink_state;*/
 
 struct video_state
 {
