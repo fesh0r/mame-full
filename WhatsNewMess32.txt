@@ -1,6 +1,13 @@
 Whats new:
 
 ----------
+0.37 BETA ??
+------------
+
+- Fixed a bug that could cause software to be improperly selected if it was
+  selected, unselected, and MESS32 restarted. [Nate Woods]
+
+----------
 0.37 BETA 10
 ------------
 

@@ -671,8 +671,7 @@ void SetDefaultSoftware(const char *name)
         settings.default_software = NULL;
     }
 
-    if (name != NULL)
-        settings.default_software = strdup(name);
+    settings.default_software = strdup(name ? name : "");
 }
 
 const char *GetDefaultSoftware(void)
