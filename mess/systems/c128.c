@@ -294,13 +294,13 @@ U102 23256 (read compatible 27256?) 32kB 1571 system rom
 */
 
 #include "driver.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/cia6526.h"
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
-#include "includes/sid6581.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
@@ -1250,29 +1250,11 @@ ROM_START (c128nor)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
-static SID6581_interface pal_sound_interface =
+static SID6581_interface sound_interface =
 {
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		VIC6569_CLOCK,
-		c64_paddle_read
-	}
+	c64_paddle_read
 };
 
-static SID6581_interface ntsc_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		VIC6567_CLOCK,
-		c64_paddle_read
-	}
-};
 
 
 static MACHINE_DRIVER_START( c128 )
@@ -1310,8 +1292,8 @@ static MACHINE_DRIVER_START( c128 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(ntsc_sound_interface)
+	MDRV_SOUND_ADD_TAG("sid6581", SID6581, VIC6567_CLOCK)
+	MDRV_SOUND_CONFIG(sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
@@ -1332,8 +1314,8 @@ static MACHINE_DRIVER_START( c128pal )
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
 
 	/* sound hardware */
-	MDRV_SOUND_MODIFY("custom")
-	MDRV_SOUND_CONFIG(pal_sound_interface)
+	MDRV_SOUND_REPLACE("sid6581", SID6581, VIC6569_CLOCK)
+	MDRV_SOUND_CONFIG(sound_interface)
 MACHINE_DRIVER_END
 
 #define init_c128 c128_driver_init

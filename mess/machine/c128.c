@@ -11,6 +11,8 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/sid6581.h"
+#include "mscommon.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -20,8 +22,6 @@
 #include "includes/vc20tape.h"
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
-#include "includes/sid6581.h"
-#include "mscommon.h"
 
 #include "includes/c128.h"
 
@@ -795,7 +795,7 @@ MACHINE_INIT( c128 )
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;
 
-	sid6581_reset(0);
+	sndti_reset(SOUND_SID6581, 0);
 
 	c64_rom_recognition ();
 	c64_rom_load();

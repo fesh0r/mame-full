@@ -190,12 +190,12 @@ when problems start with -log and look into error.log file
 
 #include "driver.h"
 #include "inputx.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/cia6526.h"
 #include "includes/vic6567.h"
-#include "includes/sid6581.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
@@ -756,40 +756,9 @@ ROM_END
 	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, CRC(e801dadc ))
 #endif
 
-static SID6581_interface ultimax_sound_interface =
+static SID6581_interface sound_interface =
 {
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		1000000,
-		c64_paddle_read
-	}
-};
-
-static SID6581_interface pal_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		VIC6569_CLOCK,
-		c64_paddle_read
-	}
-};
-
-static SID6581_interface ntsc_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		VIC6567_CLOCK,
-		c64_paddle_read
-	}
+	c64_paddle_read
 };
 
 static MACHINE_DRIVER_START( c64 )
@@ -809,8 +778,8 @@ static MACHINE_DRIVER_START( c64 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(ntsc_sound_interface)
+	MDRV_SOUND_ADD_TAG("sid", SID6581, VIC6567_CLOCK)
+	MDRV_SOUND_CONFIG(sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
@@ -823,8 +792,8 @@ static MACHINE_DRIVER_START( ultimax )
 	MDRV_CPU_REPLACE( "main", M6510, 1000000)
 	MDRV_CPU_PROGRAM_MAP( ultimax_readmem, ultimax_writemem )
 
-	MDRV_SOUND_REPLACE( "custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(ultimax_sound_interface)
+	MDRV_SOUND_REPLACE("sid", SID6581, 1000000)
+	MDRV_SOUND_CONFIG(sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
@@ -840,8 +809,8 @@ static MACHINE_DRIVER_START( c64pal )
 	MDRV_CPU_REPLACE( "main", M6510, VIC6569_CLOCK)
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
 
-	MDRV_SOUND_REPLACE( "custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(pal_sound_interface)
+	MDRV_SOUND_REPLACE("sid", SID6581, VIC6569_CLOCK)
+	MDRV_SOUND_CONFIG(sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 

@@ -224,6 +224,8 @@ SOUNDS+=PSXSPU@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
 SOUNDS+=BEEP@
+SOUNDS+=SID6581@
+SOUNDS+=SID8580@
 
 # Archive definitions
 DRVLIBS = \
@@ -380,10 +382,6 @@ $(OBJ)/cbmshare.a: \
 	$(OBJ)/mess/machine/tpi6525.o	\
 	$(OBJ)/mess/machine/cia6526.o	\
 	$(OBJ)/mess/machine/cbm.o		\
-	$(OBJ)/mess/sndhrdw/sid.o		\
-	$(OBJ)/mess/sndhrdw/sidenvel.o	\
-	$(OBJ)/mess/sndhrdw/sidvoice.o	\
-	$(OBJ)/mess/sndhrdw/sid6581.o	\
 	$(OBJ)/mess/machine/cbmdrive.o	\
 	$(OBJ)/mess/machine/vc1541.o	 \
 	$(OBJ)/mess/machine/cbmieeeb.o \

@@ -101,23 +101,23 @@ INLINE void syncEm(SID6581 *This)
 }
 
 
-void sidEmuFillBuffer(SID6581 *This, void* buffer, udword bufferLen )
+void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, udword bufferLen )
 {
 //void* fill16bitMono( SID6581 *This, void* buffer, udword numberOfSamples )
-    sword* buffer16bit = (sword*)buffer;
-    for ( ; bufferLen > 0; bufferLen-- )
-    {
-	*buffer16bit++ = mix16mono[(unsigned)(mix16monoMiddleIndex
-					      +(*This->optr1.outProc)(&This->optr1)
-					      +(*This->optr2.outProc)(&This->optr2)
-					      +(This->optr3.outProc(&This->optr3)&This->optr3_outputmask)
+
+	for ( ; bufferLen > 0; bufferLen-- )
+	{
+		*buffer++ = (INT16) mix16mono[(unsigned)(mix16monoMiddleIndex
+								+(*This->optr1.outProc)(&This->optr1)
+								+(*This->optr2.outProc)(&This->optr2)
+								+(This->optr3.outProc(&This->optr3)&This->optr3_outputmask)
 /* hack for digi sounds
    does n't seam to come from a tone operator
    ghostbusters and goldrunner everything except volume zeroed */
 					      +(This->masterVolume<<2)
 //						  +(*sampleEmuRout)()
-	    )];
-	syncEm(This);
+		)];
+		syncEm(This);
     }
 }
 

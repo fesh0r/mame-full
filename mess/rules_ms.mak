@@ -190,3 +190,18 @@ else
 SOUNDDEFS += -DHAS_WAVE=0
 endif
 
+SOUND=$(strip $(findstring SID6581@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SID6581=1
+SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sound/sidenvel.o $(OBJ)/mess/sound/sidvoice.o
+else
+SOUNDDEFS += -DHAS_SID6581=0
+endif
+
+SOUND=$(strip $(findstring SID8580@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SID8580=1
+SOUNDOBJS += $(OBJ)/mess/sound/sid6581.o $(OBJ)/mess/sound/sid.o $(OBJ)/mess/sound/sidenvel.o $(OBJ)/mess/sound/sidvoice.o
+else
+SOUNDDEFS += -DHAS_SID8580=0
+endif

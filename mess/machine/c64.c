@@ -16,6 +16,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/z80/z80.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -25,7 +26,6 @@
 #include "includes/vc20tape.h"
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
-#include "includes/sid6581.h"
 #include "mscommon.h"
 
 #include "includes/c128.h"
@@ -897,8 +897,8 @@ void c64_common_init_machine (void)
 #ifdef VC1541
 	vc1541_reset ();
 #endif
-	sid6581_reset(0);
-	sid6581_set_type(0, SID8580);
+	sndti_reset(SOUND_SID6581, 0);
+
 	if (c64_cia1_on)
 	{
 		cbm_serial_reset_write (0);
@@ -1057,8 +1057,6 @@ INTERRUPT_GEN( c64_frame_interrupt )
 {
 	static int monitor=-1;
 	int value, value2;
-
-	sid6581_update();
 
 	c64_nmi();
 

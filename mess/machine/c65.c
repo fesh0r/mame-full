@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -15,7 +16,6 @@
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vic4567.h"
-#include "includes/sid6581.h"
 #include "mscommon.h"
 
 #include "includes/c65.h"
@@ -813,8 +813,8 @@ MACHINE_INIT( c65 )
 {
 	memset(c64_memory+0x40000, 0xff, 0xc0000);
 
-	sid6581_reset(0);
-	sid6581_reset(1);
+	sndti_reset(SOUND_SID8580, 0);
+	sndti_reset(SOUND_SID8580, 1);
 
 	cbm_serial_reset_write (0);
 	cbm_drive_0_config (SERIAL8ON ? SERIAL : 0, 10);

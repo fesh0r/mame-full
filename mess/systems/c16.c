@@ -154,6 +154,7 @@ when problems start with -log and look into error.log file
 
 
 #include "driver.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
@@ -162,7 +163,6 @@ when problems start with -log and look into error.log file
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 #include "includes/ted7360.h"
-#include "includes/sid6581.h"
 #include "devices/cartslot.h"
 #include "inputx.h"
 
@@ -709,29 +709,6 @@ ROM_START (c364)
 	 ROM_LOAD ("spk3cc4.bin", 0x28000, 0x4000, CRC(5227c2ee) SHA1(59af401cbb2194f689898271c6e8aafa28a7af11))
 ROM_END
 
-static SID6581_interface sidc16_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS8580,
-		TED7360PAL_CLOCK/4,
-		NULL
-	}
-};
-
-static SID6581_interface sidplus4_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS8580,
-		TED7360NTSC_CLOCK/4,
-		NULL
-	}
-};
 
 
 static MACHINE_DRIVER_START( c16 )
@@ -762,8 +739,7 @@ static MACHINE_DRIVER_START( c16 )
 	MDRV_SOUND_ADD_TAG("ted7360", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(ted7360_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-	MDRV_SOUND_ADD_TAG("sid", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(sidc16_sound_interface)
+	MDRV_SOUND_ADD_TAG("sid", SID8580, TED7360PAL_CLOCK/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
@@ -796,8 +772,7 @@ static MACHINE_DRIVER_START( plus4 )
 	MDRV_CPU_PROGRAM_MAP( plus4_readmem, plus4_writemem )
 	MDRV_FRAMES_PER_SECOND(TED7360NTSC_VRETRACERATE)
 
-	MDRV_SOUND_MODIFY("sid")
-	MDRV_SOUND_CONFIG(sidplus4_sound_interface)
+	MDRV_SOUND_REPLACE("sid", SID8580, TED7360NTSC_CLOCK/4)
 MACHINE_DRIVER_END
 
 

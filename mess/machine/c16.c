@@ -12,6 +12,7 @@
 #include "driver.h"
 #include "image.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -20,7 +21,6 @@
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 #include "includes/ted7360.h"
-#include "includes/sid6581.h"
 
 #include "includes/c16.h"
 
@@ -563,14 +563,17 @@ MACHINE_INIT( c16 )
 	tpi6525_3_reset();
 	c364_speech_init();
 
-	sid6581_reset(0);
-	if (SIDCARD) {
-		sid6581_set_type(0, MOS8580);
+	sndti_reset(SOUND_SID8580, 0);
+
+	if (SIDCARD)
+	{
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xfd40, 0xfd5f, 0, 0, sid6581_0_port_r);
 		memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xfd40, 0xfd5f, 0, 0, sid6581_0_port_w);
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xfe80, 0xfe9f, 0, 0, sid6581_0_port_r);
 		memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xfe80, 0xfe9f, 0, 0, sid6581_0_port_w);
-	} else {
+	}
+	else
+	{
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xfd40, 0xfd5f, 0, 0, MRA8_NOP);
 		memory_install_write8_handler (0, ADDRESS_SPACE_PROGRAM,  0xfd40, 0xfd5f, 0, 0, MWA8_NOP);
 		memory_install_read8_handler (0, ADDRESS_SPACE_PROGRAM, 0xfe80, 0xfe9f, 0, 0, MRA8_NOP);
@@ -781,8 +784,6 @@ static int c16_rom_load(mess_image *img)
 INTERRUPT_GEN( c16_frame_interrupt )
 {
 	int value;
-
-	sid6581_update();
 
 	value = 0xff;
 	if (KEY_ATSIGN)

@@ -6,15 +6,13 @@
   this part is for one chip,
 */
 
-#include "includes/sid6581.h"
+#include "sound/sid6581.h"
 #include "sidtypes.h"
 #include "sidvoice.h"
 
 /* private area */
 typedef struct _SID6581
 {
-    int on;
-
     sound_stream *mixer_channel; // mame stream/ mixer channel
 
     int (*ad_read) (int which);
@@ -42,7 +40,8 @@ typedef struct _SID6581
 	uword masterVolumeAmplIndex;
 
 
-	struct {
+	struct
+	{
 		bool Enabled;
 		UINT8 Type, CurType;
 		filterfloat Dy, ResDy;
@@ -66,7 +65,7 @@ void initMixerEngine(void);
 void filterTableInit(void);
 extern void MixerInit(bool threeVoiceAmplify);
 
-void sidEmuFillBuffer(SID6581 *This, void* buffer, udword bufferLen );
+void sidEmuFillBuffer(SID6581 *This, stream_sample_t *buffer, udword bufferLen );
 
 #if 0
 void sidFilterTableInit(void);

@@ -9,12 +9,12 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/cia6526.h"
 #include "includes/vic4567.h"
-#include "includes/sid6581.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 
@@ -346,44 +346,9 @@ ROM_START (c65a)
 ROM_END
 
 
-static SID6581_interface ntsc_sound_interface =
+static SID6581_interface sound_interface =
 {
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS8580,
-		985248,
-		c64_paddle_read
-	}
-/*		{
-			MIXER(50, MIXER_PAN_LEFT),
-			MOS8580,
-			985248,
-			NULL
-		}
-	}
-*/
-};
-
-static SID6581_interface pal_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS8580,
-		1022727,
-		c64_paddle_read
-	}
-/*		{
-			MIXER(50, MIXER_PAN_LEFT),
-			MOS8580,
-			1022727,
-			NULL
-		}
-	}
-*/
+	c64_paddle_read
 };
 
 static MACHINE_DRIVER_START( c65 )
@@ -406,18 +371,23 @@ static MACHINE_DRIVER_START( c65 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(ntsc_sound_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.50)
-	MDRV_SOUND_ROUTE(1, "right", 0.50)
+	MDRV_SOUND_ADD_TAG("sid_r", SID8580, 985248)
+	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+	MDRV_SOUND_ADD_TAG("sid_l", SID8580, 985248)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( c65pal )
 	MDRV_IMPORT_FROM( c65 )
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
-	MDRV_SOUND_MODIFY("custom")
-	MDRV_SOUND_CONFIG(pal_sound_interface)
+
+	MDRV_SOUND_REPLACE("sid_r", SID8580, 1022727)
+	MDRV_SOUND_CONFIG(sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+	MDRV_SOUND_ADD_TAG("sid_l", SID8580, 1022727)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 MACHINE_DRIVER_END
 
 #define init_c65 c65_driver_init

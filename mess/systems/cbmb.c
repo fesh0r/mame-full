@@ -160,6 +160,7 @@ when problems start with -log and look into error.log file
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6509.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
@@ -167,7 +168,6 @@ when problems start with -log and look into error.log file
 #include "includes/tpi6525.h"
 #include "includes/vic6567.h"
 #include "includes/crtc6845.h"
-#include "includes/sid6581.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
@@ -863,18 +863,6 @@ ROM_END
 
 #endif
 
-static SID6581_interface sid_sound_interface =
-{
-	{
-		sid6581_custom_start
-	},
-	{
-		MOS6581,
-		1000000,
-		NULL
-	}
-};
-
 
 static MACHINE_DRIVER_START( cbm600 )
 	/* basic machine hardware */
@@ -904,8 +892,7 @@ static MACHINE_DRIVER_START( cbm600 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD(CUSTOM, 0)
-	MDRV_SOUND_CONFIG(sid_sound_interface)
+	MDRV_SOUND_ADD(SID6581, 1000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
@@ -941,8 +928,7 @@ static MACHINE_DRIVER_START( cbm500 )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
-	MDRV_SOUND_CONFIG(sid_sound_interface)
+	MDRV_SOUND_ADD(SID6581, 1000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 

@@ -99,6 +99,8 @@ enum
 	SOUND_BEEP,
 	SOUND_SPEAKER,
 	SOUND_WAVE,
+	SOUND_SID6581,
+	SOUND_SID8580,
 #endif
 
 	/* filters start here */

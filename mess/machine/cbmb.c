@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include "driver.h"
 #include "cpu/m6502/m6509.h"
+#include "sound/sid6581.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -17,7 +18,6 @@
 #include "includes/cbmieeeb.h"
 #include "includes/vic6567.h"
 #include "includes/crtc6845.h"
-#include "includes/sid6581.h"
 #include "mscommon.h"
 
 #include "includes/cbmb.h"
@@ -295,7 +295,7 @@ void cbm500_driver_init (void)
 
 MACHINE_INIT( cbmb )
 {
-	sid6581_reset(0);
+	sndti_reset(SOUND_SID6581, 0);
 	cia6526_reset ();
 	tpi6525_0_reset();
 	tpi6525_1_reset();
@@ -323,8 +323,6 @@ void cbmb_frame_interrupt (int param)
 	tpi6525_0_irq0_level(level);
 	level=!level;
 	if (level) return ;
-
-	sid6581_update();
 
 	value = 0;
 	if (KEY_STOP)

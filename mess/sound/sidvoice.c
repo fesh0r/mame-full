@@ -466,37 +466,37 @@ static sbyte waveCalcRangeCheck(sidOperator* pVoice)
 
 void sidEmuSet(sidOperator* pVoice)
 {
-    ubyte enveTemp, newWave, oldWave;
-    ubyte ADtemp;
-    ubyte SRtemp;
-    ubyte tmpSusVol;
-    
-    pVoice->SIDfreq = pVoice->reg[0]|(pVoice->reg[1]<<8);
-    
-    pVoice->SIDpulseWidth = (pVoice->reg[2]|(pVoice->reg[3]<<8)) & 0x0FFF;
-    pVoice->newPulseIndex = 4096 - pVoice->SIDpulseWidth;
+	ubyte enveTemp, newWave, oldWave;
+	ubyte ADtemp;
+	ubyte SRtemp;
+	ubyte tmpSusVol;
+
+	pVoice->SIDfreq = pVoice->reg[0]|(pVoice->reg[1]<<8);
+
+	pVoice->SIDpulseWidth = (pVoice->reg[2]|(pVoice->reg[3]<<8)) & 0x0FFF;
+	pVoice->newPulseIndex = 4096 - pVoice->SIDpulseWidth;
 #if defined(DIRECT_FIXPOINT)
-    if ( ((pVoice->waveStep.w[HI] + pVoice->pulseIndex) >= 0x1000)
-	 && ((pVoice->waveStep.w[HI] + pVoice->newPulseIndex) >= 0x1000) )
-    {
-	pVoice->pulseIndex = pVoice->newPulseIndex;
-    }
-    else if ( ((pVoice->waveStep.w[HI] + pVoice->pulseIndex) < 0x1000)
-	      && ((pVoice->waveStep.w[HI] + pVoice->newPulseIndex) < 0x1000) )
-    {
-	pVoice->pulseIndex = pVoice->newPulseIndex;
-    }
+	if ( ((pVoice->waveStep.w[HI] + pVoice->pulseIndex) >= 0x1000)
+		&& ((pVoice->waveStep.w[HI] + pVoice->newPulseIndex) >= 0x1000) )
+	{
+		pVoice->pulseIndex = pVoice->newPulseIndex;
+	}
+	else if ( ((pVoice->waveStep.w[HI] + pVoice->pulseIndex) < 0x1000)
+			&& ((pVoice->waveStep.w[HI] + pVoice->newPulseIndex) < 0x1000) )
+	{
+		pVoice->pulseIndex = pVoice->newPulseIndex;
+	}
 #else
-    if ( ((pVoice->waveStep + pVoice->pulseIndex) >= 0x1000)
-	 && ((pVoice->waveStep + pVoice->newPulseIndex) >= 0x1000) )
-    {
-	pVoice->pulseIndex = pVoice->newPulseIndex;
-    }
-    else if ( ((pVoice->waveStep + pVoice->pulseIndex) < 0x1000)
-	      && ((pVoice->waveStep + pVoice->newPulseIndex) < 0x1000) )
-    {
-	pVoice->pulseIndex = pVoice->newPulseIndex;
-    }
+	if ( ((pVoice->waveStep + pVoice->pulseIndex) >= 0x1000)
+		&& ((pVoice->waveStep + pVoice->newPulseIndex) >= 0x1000) )
+	{
+		pVoice->pulseIndex = pVoice->newPulseIndex;
+	}
+	else if ( ((pVoice->waveStep + pVoice->pulseIndex) < 0x1000)
+			&& ((pVoice->waveStep + pVoice->newPulseIndex) < 0x1000) )
+	{
+		pVoice->pulseIndex = pVoice->newPulseIndex;
+	}
 #endif
 
 
@@ -506,53 +506,53 @@ void sidEmuSet(sidOperator* pVoice)
     
     if (( newWave & 1 ) ==0 )
     {
-	if (( oldWave & 1 ) !=0 )
-	    enveTemp = ENVE_STARTRELEASE;
+		if (( oldWave & 1 ) !=0 )
+		  enveTemp = ENVE_STARTRELEASE;
 /*		else if ( pVoice->gateOnCtrl ) */
 /*		{ */
 /*			enveTemp = ENVE_STARTSHORTATTACK; */
 /*		} */
     }
-    else if ( /*pVoice->gateOffCtrl || */((oldWave&1)==0) )
-    {
-	enveTemp = ENVE_STARTATTACK;
-    }
-    
-    if ((( oldWave ^ newWave ) & 0xF0 ) != 0 )
-    {
-	pVoice->cycleLenCount = 0;
-    }
-    
-    ADtemp = pVoice->reg[5];
-    SRtemp = pVoice->reg[6];
-    if ( pVoice->SIDAD != ADtemp )
-    {
-	enveTemp |= ENVE_ALTER;
-    }
-    else if ( pVoice->SIDSR != SRtemp )
-    {
-	enveTemp |= ENVE_ALTER;
-    }
-    pVoice->SIDAD = ADtemp;
-    pVoice->SIDSR = SRtemp;
-    tmpSusVol = masterVolumeLevels[SRtemp >> 4];
-    if (pVoice->ADSRctrl != ENVE_SUSTAIN)  /* !!! */
-    {
-	pVoice->enveSusVol = tmpSusVol;
-    }
-    else
-    {
-	if ( pVoice->enveSusVol > pVoice->enveVol )
-	    pVoice->enveSusVol = 0;
+	else if ( /*pVoice->gateOffCtrl || */((oldWave&1)==0) )
+	{
+		enveTemp = ENVE_STARTATTACK;
+	}
+
+	if ((( oldWave ^ newWave ) & 0xF0 ) != 0 )
+	{
+		pVoice->cycleLenCount = 0;
+	}
+
+	ADtemp = pVoice->reg[5];
+	SRtemp = pVoice->reg[6];
+	if ( pVoice->SIDAD != ADtemp )
+	{
+		enveTemp |= ENVE_ALTER;
+	}
+	else if ( pVoice->SIDSR != SRtemp )
+	{
+		enveTemp |= ENVE_ALTER;
+	}
+	pVoice->SIDAD = ADtemp;
+	pVoice->SIDSR = SRtemp;
+	tmpSusVol = masterVolumeLevels[SRtemp >> 4];
+	if (pVoice->ADSRctrl != ENVE_SUSTAIN)  /* !!! */
+	{
+		pVoice->enveSusVol = tmpSusVol;
+	}
 	else
-	    pVoice->enveSusVol = tmpSusVol;
-    }
-    
-    pVoice->ADSRproc = enveModeTable[enveTemp>>1];  /* shifting out the KEY-bit */
-    pVoice->ADSRctrl = enveTemp & (255-ENVE_ALTER-1);
-    
-    pVoice->filtEnabled = pVoice->sid->filter.Enabled &&
-        ((pVoice->sid->reg[0x17] & pVoice->filtVoiceMask)!=0);
+	{
+		if ( pVoice->enveSusVol > pVoice->enveVol )
+			pVoice->enveSusVol = 0;
+		else
+			pVoice->enveSusVol = tmpSusVol;
+	}
+
+	pVoice->ADSRproc = enveModeTable[enveTemp>>1];  /* shifting out the KEY-bit */
+	pVoice->ADSRctrl = enveTemp & (255-ENVE_ALTER-1);
+
+	pVoice->filtEnabled = pVoice->sid->filter.Enabled &&
+		((pVoice->sid->reg[0x17] & pVoice->filtVoiceMask)!=0);
 }
 
 /* -------------------------------------------------- Operator frame set-up 2 */
