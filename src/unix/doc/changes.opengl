@@ -128,7 +128,7 @@ peace, sven
 
 	o Added a startup "hack" within unix/main.c,
 	  where i try to find the games nicest 
-	  full color - low color deepth size.
+	  full color - low color depth size.
 	  Be aware, the games do not start at 8bpp now,
 	  if they are colorfull.
 
