@@ -18,10 +18,10 @@ Amiga [re-enabled]
 
 System Driver Changes:
 ----------------------
-- [COLECO] Changed MEMORY handlers which allows some extra carts to work (like 
-  aqua attack and tutankham - appears remaining carts have similar issues.  Let 
-  us know of any breakages).  Also, keys now configurable from OSD for both 
-  controllers [Ben]
+- [COLECO] Changed MEMORY handlers, which allows some of the broken carts to work 
+  (like aqua attack and tutankham).  Small fix to input handling which means Defender 
+  and Centipede now work!  Also, keys now configurable from OSD for both controllers.
+  (As usual, let us know of any breakages).  [Ben]
 
 - [DRAGON/COCO1-2-3] Totally reworked ROM support; cartridge IO is now modular,
   the CART signal is handled better, and ROMs that don't take up the full
