@@ -887,11 +887,13 @@ static struct {
 
 	{ 0x9954cf1a , 0x4000 , "Sam Coupe (part 1)" },
 	{ 0xf031aed4 , 0x4000 , "Sam Coupe (part 2)" },
-	{ 0x262bd888 , 0x4000 , "Sam Coupe (part 1) (alt)" },
-	{ 0x793b7eb7 , 0x4000 , "Sam Coupe (part 2) (alt)" },
 	{ 0xc8310db2 , 0x4000 , "Sam Coupe ZXVGS 0.16 by Yarek" },
 
 /* external devices ************************************************************/
+	{ 0x262bd888 , 0x4000 , "SamRam (part 1)" },
+	{ 0x793b7eb7 , 0x4000 , "SamRam (part 2)" },
+	{ 0x60efaf07 , 0x4000 , "SamRam (part 2) (alt)" },
+
 	{ 0xe72a12ae , 0x2000 , "Interface 1 v1" },
 	{ 0xbb66dd1e , 0x2000 , "Interface 1 v2" },
 	{ 0x85ae5586 , 0x4000 , "Interface 1 v2 modified by Ian Collier 1985" },
@@ -907,8 +909,10 @@ static struct {
 
 	{ 0x82047489 , 0x2000 , "Disciple GDOS3 v3.0" },
 	{ 0xff83b282 , 0x4000 , "Disciple GDOS3 v3.0 with System 3b" },
- 	{ 0x27d4c5f6 , 0x4000 , "Disciple GDOS3 v3.0 with system files & Epson printer code" },
-	{ 0x4250c4cd , 0x4000 , "Disciple GDOS3 v3.0 with system files & HP printer code" },
+ 	{ 0x27d4c5f6 , 0x4000 , "Disciple GDOS3 v3.0 with System 3b & Epson printer code" },
+	{ 0x4250c4cd , 0x4000 , "Disciple GDOS3 v3.0 with System 3b & HP printer code" },
+ 	{ 0xdd6f66ca , 0x4000 , "Disciple GDOS3 v3.0 with System 3b & Epson printer code (alt)" },
+	{ 0x05b041fc , 0x4000 , "Disciple GDOS3 v3.0 with System 3b & HP printer code (alt)" },
 	{ 0x569f7e55 , 0x2000 , "Disciple +D G+DOS v1.A" },
 	{ 0x6edbf20a , 0x4000 , "Disciple +D G+DOS v1.A with System 2a" },
 
@@ -966,14 +970,17 @@ static struct {
  	{ 0xe938a510 , 0x1000 , "ZS Scorpion 256K AT-XT Keyboard & Mouse Interface" },
 
 /* probably useless roms *******************************************************/
-	{ 0xe55b40f8 , 0xc000 , "MERGED ZX Spectrum 48K + ZX Spectrum 128K" },
-	{ 0x545f8520 , 0x4000 , "MODIFIED ZX Spectrum 48K by Lec v1.6 for 80kB (modified for Psim)" },
-	{ 0x996bc458 , 0x4000 , "MODIFIED ZX Spectrum 48K (modified for ZX Spectrum Simulator)" },
-	{ 0x705192c7 , 0x4000 , "MODIFIED ZX Spectrum 128K (4000h) (modified to be use as 48K ROM in SpecEm)" },
-	{ 0x9e5392aa , 0x2000 , "MODIFIED Interface 1 v2 (modified for z80 pre-v4)" },
-	{ 0xeed3e349 , 0x4000 , "MODIFIED ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
-	{ 0x2fa2acbb , 0x4000 , "First quater of unknown ROM supplied with Speccy" },
-	{ 0xe640a642 , 0x10000, "Unknown ROM supplied with Speccy" },
+	{ 0x05ad8750 , 0x0a000 , "MERGED ZX Spectrum roms (262bd888+60efaf07+9e5392aa)" },
+	{ 0x9f54a710 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2+dd6f66ca+05b041fc+78ec8cfd)" },
+	{ 0xad99f054 , 0x20000 , "MERGED ZX Spectrum roms (ddee531f+9e5392aa+262bd888+793b7eb7+b96a36be+e76799d2+27d4c5f6+4250c4cd+78ec8cfd)" },
+	{ 0xe55b40f8 , 0x0c000 , "MERGED ZX Spectrum 48K + ZX Spectrum 128K" },
+	{ 0x545f8520 , 0x04000 , "MODIFIED ZX Spectrum 48K by Lec v1.6 for 80kB (modified for Psim)" },
+	{ 0x996bc458 , 0x04000 , "MODIFIED ZX Spectrum 48K (modified for ZX Spectrum Simulator)" },
+	{ 0x705192c7 , 0x04000 , "MODIFIED ZX Spectrum 128K (4000h) (modified to be use as 48K ROM in SpecEm)" },
+	{ 0x9e5392aa , 0x02000 , "MODIFIED Interface 1 v2 (modified for z80 pre-v4)" },
+	{ 0xeed3e349 , 0x04000 , "MODIFIED ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
+	{ 0x2fa2acbb , 0x04000 , "First quater of unknown ROM supplied with Speccy" },
+	{ 0xe640a642 , 0x10000 , "Unknown ROM supplied with Speccy" },
  
 
 /* Sinclair QL Computer ********************************************************/
@@ -988,6 +995,7 @@ static struct {
 	{ 0x7cba78d3, 0xc000 , "Sinclair QL mguk (mg with new facilites by John Alexander)" },
 	{ 0x54e93572, 0xc000 , "Sinclair QL mf (german)" },
 	{ 0x930befe3, 0xc000 , "Sinclair QL Minerva 1.89 (QDOS replacement)" },
+
 
 /* Cambridge Computer Z88 Personal Organiser *********************************************/
 	{ 0x0ae7d0fc, 0x20000, "Cambridge Computer Z88 v2.2" },
