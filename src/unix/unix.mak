@@ -362,3 +362,9 @@ copycab:
 clean: 
 	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.1.3/libz.a src/unix/contrib/cutzlib-1.1.3/*.o $(TOOLS)
 #	cd makedep; make clean
+
+clean68k:
+	@echo Deleting 68k files...
+	rm -f $(OBJ)/cpuintrf.o
+	rm -f $(OBJ)/drivers/cps2.o
+	rm -rf $(OBJ)/cpu/m68000
