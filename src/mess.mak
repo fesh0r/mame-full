@@ -172,6 +172,7 @@ DRVLIBS = \
 		$(OBJ)/quelle.a \
 		$(OBJ)/teamconc.a \
 		$(OBJ)/motorola.a \
+		$(OBJ)/intv.a \
 
 ifndef MESS_EXCLUDE_ACORN
 DRVLIBS += $(OBJ)/acorn.a    
@@ -571,8 +572,8 @@ $(OBJ)/motorola.a: \
 	  $(OBJ)/mess/machine/mekd2.o	 \
 	  $(OBJ)/mess/systems/mekd2.o
 
-
-
+$(OBJ)/intv.a:	\
+	$(OBJ)/mess/systems/intv.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \

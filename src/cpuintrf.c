@@ -559,7 +559,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-    CPU0(CP1600,   cp1600,   0,  0,1.00,CP1600_INT_NONE,   -1,             -1,             8, 16,    0,16,LE,1, 3,16   ),
+    CPU0(CP1600,   cp1600,   2,  0,1.00,CP1600_INT_NONE,   CP1600_INT_INTRM,CP1600_INT_INTR,16,24bew, 0,24,BE,2,10,24W),
 #endif
 #if (HAS_TMS34010)
     CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,             16,29lew,  3,29,LE,2,10,29W),
