@@ -2612,6 +2612,8 @@ static struct AY8910interface amstrad_ay_interface =
 
 
 
+/* Steph 2000-10-27	I remapped the 'Machine Name' Dip Switches (easier to understand) */
+
 INPUT_PORTS_START(amstrad)
 
 	KEYBOARD_PORTS
@@ -2620,19 +2622,24 @@ INPUT_PORTS_START(amstrad)
 	 * curcuit board. The links are open or closed when the PCB is made, and are set depending on which country
 	 * the Amstrad system was to go to */
 
-	PORT_START
-	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 0)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x02, DEF_STR( On) )
-	PORT_BITX(0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 1)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x04, DEF_STR( On) )
-	PORT_BITX(0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Machine Name (bit 2)", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0, DEF_STR( Off) )
-	PORT_DIPSETTING(0x08, DEF_STR( On) )
-	PORT_BITX(0x010, 0x010, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "TV Refresh Rate", IP_KEY_NONE, IP_JOY_NONE)
-	PORT_DIPSETTING(0x00, "60hz")
-	PORT_DIPSETTING(0x010, "50hz")
+	PORT_DIPNAME( 0x07, 0x07, "Machine Name" )
+	PORT_DIPSETTING(    0x00, "Isp" )
+	PORT_DIPSETTING(    0x01, "Triumph" )
+	PORT_DIPSETTING(    0x02, "Saisho" )
+	PORT_DIPSETTING(    0x03, "Solavox" )
+	PORT_DIPSETTING(    0x04, "Awa" )
+	PORT_DIPSETTING(    0x05, "Schneider" )
+	PORT_DIPSETTING(    0x06, "Orion" )
+	PORT_DIPSETTING(    0x07, "Amstrad" )
+
+	/* Steph's comment/question :
+		I don't understand why there is a IPF_TOGGLE here ...
+		Couldn't we use a standard PORT_DIPNAME instead ?
+		PORT_DIPNAME( 0x10, 0x10, "TV Refresh Rate" ) */
+
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "TV Refresh Rate", IP_KEY_NONE, IP_JOY_NONE)
+	PORT_DIPSETTING(    0x00, "60hz" )
+	PORT_DIPSETTING(    0x10, "50hz" )
 
 	MULTIFACE_PORTS
 
