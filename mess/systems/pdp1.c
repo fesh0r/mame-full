@@ -312,7 +312,6 @@ static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned cha
 	for (i=0; i<(sizeof(palette)/3); i++)
 		palette_set_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
 
-	//memcpy(sys_palette, palette, sizeof(palette));
 	memcpy(sys_colortable, colortable, sizeof(colortable));
 }
 
@@ -350,58 +349,11 @@ pdp1_reset_param_t pdp1_reset_param =
 };
 
 
-/* note I don't know about the speed of the machine, I only know
- * how long each instruction takes in micro seconds
- * below speed should therefore also be read in something like
- * microseconds of instructions
- */
-
-#if 0
-
-static struct MachineDriver machine_driver_pdp1 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_PDP1,
-			1000000,	/* should be 200000, but this makes little sense as there is no master clock */
-			pdp1_readmem, pdp1_writemem,0,0,
-			pdp1_interrupt, 1, /* fake interrupt */
-			0, 0,
-			& pdp1_reset_param
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,
-	pdp1_init_machine,
-	0,
-
-	/* video hardware */
-	virtual_width, virtual_height, { 0, virtual_width-1, 0, virtual_height-1 },
-
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3,
-	sizeof(colortable) / sizeof(colortable[0]),
-
-	pdp1_init_palette,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pdp1_vh_start,
-	pdp1_vh_stop,
-	pdp1_vh_update,
-
-	/* sound hardware */
-	0,0,0,0
-};
-
-#else
-
 static MACHINE_DRIVER_START(pdp1)
 
 	/* basic machine hardware */
-	/* PDP1 CPU @ 200 kHz (no master clock) */
-	MDRV_CPU_ADD(PDP1, 1000000)
+	/* PDP1 CPU @ 200 kHz (no master clock, but the instruction and memory rate is 200 kHz) */
+	MDRV_CPU_ADD(PDP1, 1000000/*the CPU core uses microsecond counts*/)
 	/*MDRV_CPU_FLAGS(0)*/
 	MDRV_CPU_CONFIG(pdp1_reset_param)
 	MDRV_CPU_MEMORY(pdp1_readmem, pdp1_writemem)
@@ -410,7 +362,6 @@ static MACHINE_DRIVER_START(pdp1)
 	MDRV_CPU_VBLANK_INT(pdp1_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
-	/* video hardware does not exist, but display control panel and typewriter output */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	/*MDRV_INTERLEAVE(interleave)*/
@@ -419,6 +370,7 @@ static MACHINE_DRIVER_START(pdp1)
 	/*MDRV_MACHINE_STOP( NULL )*/
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
+	/* video hardware (includes the control panel and typewriter output) */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(virtual_width, virtual_height)
@@ -434,9 +386,9 @@ static MACHINE_DRIVER_START(pdp1)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(pdp1)
 
-MACHINE_DRIVER_END
+	/* no sound */
 
-#endif
+MACHINE_DRIVER_END
 
 static const struct IODevice io_pdp1[] =
 {
