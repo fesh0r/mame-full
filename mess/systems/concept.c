@@ -267,9 +267,16 @@ static FLOPPY_OPTIONS_START(concept)
 #endif
 FLOPPY_OPTIONS_END
 
+static void concept_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_concept);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(concept)
 	/* The concept should eventually support floppies, hard disks, etc. */
-	CONFIG_DEVICE_FLOPPY(4,	concept)
+	CONFIG_DEVICE(concept_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

@@ -258,8 +258,18 @@ ROM_START (colecoa)
     ROM_LOAD( "colecoa.rom", 0x0000, 0x2000, CRC(39bb16fc) SHA1(99ba9be24ada3e86e5c17aeecb7a2d68c5edfe59) )
 ROM_END
 
+static void coleco_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0col\0bin\0";
+	dev->load = device_load_coleco_cart;
+	dev->imgverify = coleco_cart_verify;
+}
+
 SYSTEM_CONFIG_START(coleco)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "rom\0col\0bin\0", NULL, NULL, device_load_coleco_cart, NULL, coleco_cart_verify, NULL)
+	CONFIG_DEVICE(coleco_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 //    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME

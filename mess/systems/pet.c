@@ -976,22 +976,46 @@ MACHINE_DRIVER_END
 #define rom_cbm80 rom_pet80
 #define rom_cbm80pal rom_pet80pal
 
+static void pet_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\0a0\0b0\0";
+}
+
+static void pet_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_pet, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
+static void pet1_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_pet1, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(pet)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0b0\0")
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_CBMPET1QUICK
+	CONFIG_DEVICE(pet_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(pet1_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(pet2)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0b0\0")
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_CBMPETQUICK
+	CONFIG_DEVICE(pet_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(pet_quickload_getinfo)
 SYSTEM_CONFIG_END
 
+static void pet4_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\0a0\0";
+}
+
 SYSTEM_CONFIG_START(pet4)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\0a0\0")
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_CBMPETQUICK
+	CONFIG_DEVICE(pet4_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(pet_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /*	   YEAR 	NAME		COMPAT	PARENT	MACHINE 	INPUT	 INIT	  CONFIG	COMPANY							  FULLNAME */

@@ -76,11 +76,15 @@ static void differing_ram_test(void)
 
 		/* do not test drivers that require certain devices to be specified */
 		requires_device = FALSE;
-		for (dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
+		begin_resource_tracking();
+		dev = devices_allocate(drivers[i]);
+		while(dev->type < IO_COUNT)
 		{
-			if (dev->flags & DEVICE_MUST_BE_LOADED)
+			if (dev->must_be_loaded)
 				requires_device = TRUE;
+			dev++;
 		}
+		end_resource_tracking();
 		if (requires_device)
 			continue;
 

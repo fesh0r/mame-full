@@ -693,9 +693,26 @@ ROM_START (adam)
     //ROM_LOAD ("master68.rom", 0x0100, 0x0E4, CRC(619a47b8)) /* Replacement 6801 Master ROM */
 ROM_END
 
+static void adam_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0col\0bin\0";
+	dev->load = device_load_adam_cart;
+	dev->imgverify = adam_cart_verify;
+}
+
+static void adam_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_adam);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(adam)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "rom\0col\0bin\0", NULL, NULL, device_load_adam_cart, NULL, adam_cart_verify, NULL)
-	CONFIG_DEVICE_FLOPPY( 4, adam )
+	CONFIG_DEVICE(adam_cartslot_getinfo)
+	CONFIG_DEVICE(adam_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

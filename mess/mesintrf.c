@@ -99,7 +99,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 		/* run display routine for device */
 		if (devices_inited)
 		{
-			for (dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+			for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 			{
 				if (dev->display)
 				{
@@ -144,7 +144,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 				base_filename_noextension = strip_extension((char *) base_filename);
 
 				/* display device type and filename */
-				dst += sprintf(dst,"%s: %s\n", device_typename_id(img), base_filename);
+				dst += sprintf(dst,"%s: %s\n", image_typename_id(img), base_filename);
 
 				/* display long filename, if present and doesn't correspond to name */
 				info = image_longname(img);
@@ -177,7 +177,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 			}
 			else
 			{
-				dst += sprintf(dst,"%s: ---\n", device_typename_id(img));
+				dst += sprintf(dst,"%s: ---\n", image_typename_id(img));
 			}
 		}
 	}

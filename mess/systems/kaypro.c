@@ -274,8 +274,17 @@ ROM_START (kaypro)
     ROM_LOAD ("cpm62k.sys",   0x0000, 0x1600, CRC(d10cd036) SHA1(68c04701711fcb5ac1586eb8f060f3f0e02ba3dd))
 ROM_END
 
+static void kaypro_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_cpm_floppy;
+}
+
 SYSTEM_CONFIG_START(kaypro)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_cpm_floppy)
+	CONFIG_DEVICE(kaypro_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY   FULLNAME */

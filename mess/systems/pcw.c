@@ -1031,8 +1031,15 @@ ROM_PCW(pcw9256)
 ROM_PCW(pcw9512)
 ROM_PCW(pcw10)
 
+static void generic_pcw_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacydsk_device_getinfo(dev);
+	dev->count = 2;
+}
+
 SYSTEM_CONFIG_START(generic_pcw)
-	CONFIG_DEVICE_LEGACY_DSK(2)
+	CONFIG_DEVICE(generic_pcw_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(pcw_256k)

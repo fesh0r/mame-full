@@ -378,9 +378,26 @@ static QUICKLOAD_LOAD( lynx )
 	return 0;
 }
 
+static void lynx_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "lnx\0";
+	dev->load = device_load_lynx_cart;
+	dev->partialhash = lynx_partialhash;
+}
+
+static void lynx_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_lynx, 0.0);
+	dev->file_extensions = "o\0";
+}
+
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "lnx\0", NULL, NULL, device_load_lynx_cart, NULL, NULL, lynx_partialhash)
-	CONFIG_DEVICE_QUICKLOAD(  "o\0", lynx )
+	CONFIG_DEVICE(lynx_cartslot_getinfo)
+	CONFIG_DEVICE(lynx_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

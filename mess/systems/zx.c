@@ -613,12 +613,26 @@ static struct CassetteOptions zx81_cassette_options = {
 	44100		/* sample frequency */
 };
 
+static void zx80_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, zx80_o_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(zx80)
-	CONFIG_DEVICE_CASSETTEX(1, zx80_o_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
+	CONFIG_DEVICE(zx80_cassette_getinfo)
 SYSTEM_CONFIG_END
 
+static void zx81_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, zx81_p_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(zx81)
-	CONFIG_DEVICE_CASSETTEX(1, zx81_p_format, &zx81_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
+	CONFIG_DEVICE(zx81_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /* Game Drivers */

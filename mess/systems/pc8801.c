@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.34 2004/08/12 12:03:18 npwoods Exp $
+  $Id: pc8801.c,v 1.35 2004/09/06 01:17:39 npwoods Exp $
 
 ***************************************************************************/
 
@@ -629,8 +629,22 @@ static MACHINE_DRIVER_START( pc88srh )
 	MDRV_VISIBLE_AREA(0, 640-1, 0, 400-1)
 MACHINE_DRIVER_END
 
+static void pc88_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "d88\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_d88image_floppy;
+	dev->load = device_load_d88image_floppy;
+	/*dev->status = floppy_status;*/
+}
+
 SYSTEM_CONFIG_START(pc88)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_d88image_floppy, NULL, device_load_d88image_floppy, NULL, floppy_status)
+	CONFIG_DEVICE(pc88_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

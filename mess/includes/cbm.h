@@ -67,21 +67,6 @@ QUICKLOAD_LOAD( cbm_c65 );
 
 #define CBM_QUICKLOAD_DELAY 3.0
 
-#define CONFIG_DEVICE_CBMPETQUICK	CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_pet,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_CBMPET1QUICK	CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_pet1,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_C16QUICK		CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_c16,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_C64QUICK		CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_c64,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_VC20QUICK		CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_vc20,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_CBMBQUICK		CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbmb,		CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_CBM500QUICK	CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm500,	CBM_QUICKLOAD_DELAY)
-#define CONFIG_DEVICE_C65QUICK		CONFIG_DEVICE_QUICKLOAD_DELAY( "p00\0prg\0", cbm_c65,	CBM_QUICKLOAD_DELAY)
-
-/* use to functions to parse, load the rom images into memory
-   and then use the cbm_rom var */
-DEVICE_INIT(cbm_rom);
-DEVICE_LOAD(cbm_rom);
-DEVICE_UNLOAD(cbm_rom);
-
 typedef struct {
 #define CBM_ROM_ADDR_UNKNOWN 0
 #define CBM_ROM_ADDR_LO -1
@@ -94,12 +79,6 @@ typedef struct {
 extern INT8 cbm_c64_game;
 extern INT8 cbm_c64_exrom;
 extern CBM_ROM cbm_rom[0x20];
-
-#define CONFIG_DEVICE_CBM_CARTSLOT(file_extensions) \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, (file_extensions), device_init_cbm_rom, NULL, device_load_cbm_rom, device_unload_cbm_rom, NULL, NULL)
-
-#define CONFIG_DEVICE_CBM_CARTSLOT_REQ(file_extensions) \
-	CONFIG_DEVICE_CARTSLOT_REQ(2, (file_extensions), device_init_cbm_rom, NULL, device_load_cbm_rom, device_unload_cbm_rom, NULL, NULL)
 
 /* prg file format
  * sfx file format

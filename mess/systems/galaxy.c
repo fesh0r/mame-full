@@ -188,8 +188,15 @@ ROM_START (galaxy)
 	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, CRC(5c3b5bb5) SHA1(19429a61dc5e55ddec3242a8f695e06dd7961f88))
 ROM_END
 
+static void galaxy_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_galaxy, 0.0);
+	dev->file_extensions = "gal\0";
+}
+
 SYSTEM_CONFIG_START(galaxy)
-	CONFIG_DEVICE_SNAPSHOT( "gal\0", galaxy )
+	CONFIG_DEVICE(galaxy_snapshot_getinfo)
 SYSTEM_CONFIG_END
 
 

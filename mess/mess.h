@@ -92,61 +92,6 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 #define IMAGE_VERIFY_PASS 0
 #define IMAGE_VERIFY_FAIL 1
 
-/* possible values for mame_fopen() last argument:
- * OSD_FOPEN_READ
- *	open existing file in read only mode.
- *	ZIP images can be opened only in this mode, unless
- *	we add support for writing into ZIP files.
- * OSD_FOPEN_WRITE
- *	open new file in write only mode (truncate existing file).
- *	used for output images (eg. a cassette being written).
- * OSD_FOPEN_RW
- *	open existing(!) file in read/write mode.
- *	used for floppy/harddisk images. if it fails, a driver
- *	might try to open the image with OSD_FOPEN_READ and set
- *	an internal 'write protect' flag for the FDC/HDC emulation.
- * OSD_FOPEN_RW_CREATE
- *	open existing file or create new file in read/write mode.
- *	used for floppy/harddisk images. if a file doesn't exist,
- *	it shall be created. Used to 'format' new floppy or harddisk
- *	images from within the emulation. A driver might use this
- *	if both, OSD_FOPEN_RW and OSD_FOPEN_READ modes, failed.
- *
- * extra values for IODevice openmode field (modes are not supported by
- * mame_fopen() yet):
- * OSD_FOPEN_RW_OR_READ
- *  open existing file in read/write mode.  If it fails, try to open it as
- *  read-only.
- * OSD_FOPEN_RW_CREATE_OR_READ
- *  open existing file in read/write mode.  If it fails, try to open it as
- *  read-only.  If it fails, try to create a new R/W image
- * OSD_FOPEN_READ_OR_WRITE
- *  open existing file in read-only mode if it exists.  If it does not, open
- *  the file as write-only.  (used by wave.c)
- * OSD_FOPEN_NONE
- *  Leaves the open mode undefined: implies that image_fopen_custom() will be
- *  called with the proper open mode (this style is deprecated and not
- *  recommended, though it may still prove useful in some rare cases).
- */
-enum
-{
-	OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE,
-	OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE,
-
-	OSD_FOPEN_NONE = -1
-};
-
-#define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
-#define is_effective_mode_create(mode) (((mode) == OSD_FOPEN_RW_CREATE) || ((mode) == OSD_FOPEN_WRITE))
-
-enum
-{
-	DEVICE_LOAD_RESETS_NONE	= 0,	/* changing the device file doesn't reset anything */
-	DEVICE_LOAD_RESETS_CPU	= 1,	/* changing the device file resets the CPU */
-	DEVICE_MUST_BE_LOADED	= 2,
-	DEVICE_LOAD_AT_INIT		= 4
-};
-
 /* runs checks to see if device code is proper */
 int mess_validitychecks(void);
 
@@ -162,23 +107,15 @@ void devices_exit(void);
 
 char *auto_strlistdup(char *strlist);
 
-struct IODevice;
+int register_device(iodevice_t type, const char *arg);
 
-/* access mess.c internal fields for a device type (instance id) */
-extern int			device_count(int type);
-extern const char  *device_typename(int type);
-extern const char  *device_brieftypename(int type);
-extern int          device_typeid(const char *name);
-extern const char  *device_typename_id(mess_image *img);
-extern const char  *device_file_extension(int type, int extnum);
-extern const char *device_typename_devtypeid(const struct GameDriver *drv, const struct IODevice *dev, int id);
-
-/* access functions from the struct IODevice arrays of a driver */
-extern const void *device_info(int type, int id);
-
-const struct IODevice *device_first(const struct GameDriver *gamedrv);
-const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev);
-const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
+enum
+{
+	OSD_FOPEN_READ,
+	OSD_FOPEN_WRITE,
+	OSD_FOPEN_RW,
+	OSD_FOPEN_RW_CREATE
+};
 
 /* --------------------------------------------------------------------------------------------- */
 

@@ -507,20 +507,56 @@ ROM_START (ti86grom)
 	ROM_LOAD ("ti86grom.bin", 0x10000, 0x40000, CRC(d2c67280))
 ROM_END
 
+static void ti85_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_ti8x, 0.0);
+	dev->file_extensions = "sav\0";
+}
+
+static void ti85_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->count = 1;
+	dev->file_extensions = "85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = device_init_ti85_serial;
+	dev->load = device_load_ti85_serial;
+	dev->unload = device_unload_ti85_serial;
+}
+
 SYSTEM_CONFIG_START(ti85)
-	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
-			"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
-			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_ti85_serial, NULL, device_load_ti85_serial, device_unload_ti85_serial,
-			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
+	CONFIG_DEVICE(ti85_serial_getinfo)
+	CONFIG_DEVICE(ti85_snapshot_getinfo)
 SYSTEM_CONFIG_END
 
+static void ti86_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_ti8x, 0.0);
+	dev->file_extensions = "sav\0";
+}
+
+static void ti86_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->count = 1;
+	dev->file_extensions = "86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = device_init_ti85_serial;
+	dev->load = device_load_ti85_serial;
+	dev->unload = device_unload_ti85_serial;
+}
+
 SYSTEM_CONFIG_START(ti86)
-	CONFIG_DEVICE_BASE ( IO_SERIAL, 1,
-			"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
-			DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_ti85_serial, NULL, device_load_ti85_serial, device_unload_ti85_serial,
-			NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT( "sav\0", ti8x )
+	CONFIG_DEVICE(ti86_serial_getinfo)
+	CONFIG_DEVICE(ti86_snapshot_getinfo)
 SYSTEM_CONFIG_END
                             
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE INPUT	INIT	CONFIG	COMPANY        FULLNAME */

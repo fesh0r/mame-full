@@ -97,13 +97,16 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 }
 
 
-DEVICE_INIT(dsk_floppy)
+
+static DEVICE_INIT(dsk_floppy)
 {
 	return floppy_drive_init(image, NULL);
 }
 
+
+
 /* load floppy */
-DEVICE_LOAD(dsk_floppy)
+static DEVICE_LOAD(dsk_floppy)
 {
 	int id = image_index_in_device(image);
 	dsk_drive *thedrive = &drives[id];
@@ -155,7 +158,7 @@ static int dsk_save(mess_image *img, unsigned char **ptr)
 }
 
 
-DEVICE_UNLOAD(dsk_floppy)
+static DEVICE_UNLOAD(dsk_floppy)
 {
 	int id = image_index_in_device(image);
 	dsk_drive *thedrive = &drives[id];
@@ -562,5 +565,20 @@ static int dsk_get_sectors_per_track(mess_image *img, int side)
 	track_header = data  + track_offset;
 
 	return track_header[0x015];
+}
+
+
+
+void legacydsk_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_FLOPPY;
+	dev->file_extensions = "dsk\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_dsk_floppy;
+	dev->load = device_load_dsk_floppy;
+	dev->unload = device_unload_dsk_floppy;
+	/*dev->status = floppy_status;*/
 }
 

@@ -194,7 +194,7 @@ static READ8_HANDLER (amstrad_ppi_portb_r)
 		data |= (1<<7);
   }
 /* Set b6 with Parallel/Printer port ready */
-	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 ) {
+	if (printer_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 ) {
 		data |= (1<<6);
   }
 /* Set b4-b1 50hz/60hz state and manufacturer name defined by links on PCB */
@@ -1652,17 +1652,55 @@ MACHINE_DRIVER_END
 /* cpcados.rom contains Amstrad DOS */
 
 
+static void cpc6128_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacydsk_device_getinfo(dev);
+	dev->count = 2;
+}
+
+static void cpc6128_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void cpc6128_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(cpc6128)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_LEGACY_DSK(2)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
-	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE(cpc6128_floppy_getinfo)
+	CONFIG_DEVICE(cpc6128_cassette_getinfo)
+	CONFIG_DEVICE(cpc6128_printer_getinfo)
 SYSTEM_CONFIG_END
+
+static void cpcplus_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "cpr\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_amstrad_plus_cartridge;
+}
+
+static void cpcplus_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_amstrad, 0.0);
+	dev->file_extensions = "sna\0";
+}
 
 SYSTEM_CONFIG_START(cpcplus)
 	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, device_load_amstrad_plus_cartridge, NULL, NULL, NULL)
-	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
+	CONFIG_DEVICE(cpcplus_cartslot_getinfo)
+	CONFIG_DEVICE(cpcplus_snapshot_getinfo)
 SYSTEM_CONFIG_END
 
 

@@ -235,9 +235,32 @@ ROM_START (jupiter)
 	ROM_LOAD ("jupiter.hi", 0x1000, 0x1000, CRC(4009f636) SHA1(98c5d4bcd74bcf014268cf4c00b2007ea5cc21f3))
 ROM_END
 
+static void jupiter_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "ace\0";
+	dev->load = device_load_jupiter_ace;
+}
+
+static void jupiter_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "tap\0";
+	dev->reset_on_load = 1;
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_jupiter_tap;
+	dev->unload = device_unload_jupiter_tap;
+}
+
 SYSTEM_CONFIG_START(jupiter)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "ace\0", NULL, NULL, device_load_jupiter_ace, NULL, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_jupiter_tap, device_unload_jupiter_tap, NULL)
+	CONFIG_DEVICE(jupiter_cartslot_getinfo)
+	CONFIG_DEVICE(jupiter_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

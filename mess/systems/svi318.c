@@ -374,12 +374,45 @@ ROM_START (svi328a)
     ROM_LOAD ("svi111.rom", 0x0000, 0x8000, CRC(bc433df6))
 ROM_END
 
+static void svi318_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void svi318_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, svi_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void svi318_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_svi318_cart;
+	dev->unload = device_unload_svi318_cart;
+}
+
+static void svi318_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_svi318_floppy;
+}
+
 SYSTEM_CONFIG_START(svi318)
-	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_CASSETTE			(1,	svi_cassette_formats)
-	CONFIG_DEVICE_CARTSLOT_OPT		(1,	"rom\0",	NULL, NULL, device_load_svi318_cart, device_unload_svi318_cart, NULL, NULL)
+	CONFIG_DEVICE(svi318_printer_getinfo)
+	CONFIG_DEVICE(svi318_cassette_getinfo)
+	CONFIG_DEVICE(svi318_cartslot_getinfo)
 #ifdef SVI_DISK
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2,	"dsk\0",	device_load_svi318_floppy)
+	CONFIG_DEVICE(svi318_floppy_getinfo)
 #endif
 SYSTEM_CONFIG_END
 

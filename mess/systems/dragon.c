@@ -672,80 +672,140 @@ static const struct bitbanger_config coco_bitbanger_config =
 
 /* ----------------------------------------------------------------------- */
 
-static GET_CUSTOM_DEVICENAME( coco )
+static const char *coco_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
-	const char *name = NULL;
-	switch(devtype) {
-	case IO_VHD:
-		name = "Virtual Hard Disk";
-		break;
-
-	case IO_FLOPPY:
-		/* CoCo people like their floppy drives zero counted */
-		snprintf(buf, bufsize, "Floppy #%d", id);
-		name = buf;
-		break;
-	}
-	return name;
+	/* CoCo people like their floppy drives zero counted */
+	snprintf(buf, bufsize, "Floppy #%d", id);
+	return buf;
 }
 
-/* ----------------------------------------------------------------------- */
+/*************************************
+ *
+ *	CoCo device getinfo functions
+ *
+ *************************************/
+
+static void coco_bitbanger_getinfo(struct IODevice *dev)
+{
+	/* bitbanger port */
+	bitbanger_device_getinfo(dev, &coco_bitbanger_config);
+	dev->count = 1;
+}
+
+
+
+static void coco_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, coco_cassette_formats, NULL,
+		CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_MUTED);
+	dev->count = 1;
+}
+
+
+
+static void coco_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_coco);
+	dev->count = 4;
+	dev->name = coco_floppy_getname;
+}
+
+
+
+static void coco_cartslot_getinfo(struct IODevice *dev)
+{
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "ccc\0rom\0";
+	dev->load = device_load_coco_rom;
+	dev->unload = device_unload_coco_rom;
+}
+
+
+
+static void coco3_cartslot_getinfo(struct IODevice *dev)
+{
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "ccc\0rom\0";
+	dev->load = device_load_coco3_rom;
+	dev->unload = device_unload_coco3_rom;
+}
+
+
+
+static void coco_snapshot_getinfo(struct IODevice *dev)
+{
+	snapshot_device_getinfo(dev, snapshot_load_coco_pak, 0.00);
+	dev->file_extensions = "pak\0";
+}
+
+
+
+static void coco3_snapshot_getinfo(struct IODevice *dev)
+{
+	snapshot_device_getinfo(dev, snapshot_load_coco3_pak, 0.00);
+	dev->file_extensions = "pak\0";
+}
+
+
+
+/*************************************
+ *
+ *	CoCo sysconfig structures
+ *
+ *************************************/
+
 
 SYSTEM_CONFIG_START( generic_coco )
-	/* bitbanger port */
-	CONFIG_DEVICE_BITBANGER (1, &coco_bitbanger_config )
-
-	/* cassette */
-	CONFIG_DEVICE_CASSETTEX	(1, coco_cassette_formats, NULL, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_MUTED )
-
-	/* floppy */
-	CONFIG_DEVICE_FLOPPY	(4, coco )
-
-	/* custom devicename */
-	CONFIG_GET_CUSTOM_DEVICENAME( coco )
+	CONFIG_DEVICE( coco_bitbanger_getinfo )
+	CONFIG_DEVICE( coco_cassette_getinfo )
+	CONFIG_DEVICE( coco_floppy_getinfo )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )
-	CONFIG_IMPORT_FROM			( generic_coco )
-	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, device_load_coco_rom, device_unload_coco_rom, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco_pak )
+	CONFIG_IMPORT_FROM( generic_coco )
+	CONFIG_DEVICE( coco_cartslot_getinfo )
+	CONFIG_DEVICE( coco_snapshot_getinfo )
 SYSTEM_CONFIG_END
 
 /* ----------------------------------------------------------------------- */
 
 SYSTEM_CONFIG_START( coco )
-	CONFIG_IMPORT_FROM		( generic_coco12 )
-	CONFIG_RAM				(4 * 1024)
-	CONFIG_RAM				(16 * 1024)
-	CONFIG_RAM				(32 * 1024)
-	CONFIG_RAM_DEFAULT		(64 * 1024)
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM			(4 * 1024)
+	CONFIG_RAM			(16 * 1024)
+	CONFIG_RAM			(32 * 1024)
+	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco2)
-	CONFIG_IMPORT_FROM		( generic_coco12 )
-	CONFIG_RAM				(16 * 1024)
-	CONFIG_RAM_DEFAULT		(64 * 1024)
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM			(16 * 1024)
+	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
-	CONFIG_IMPORT_FROM			( generic_coco )
-	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, device_load_coco3_rom, device_unload_coco3_rom, NULL, NULL )
-	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco3_pak )
-	CONFIG_DEVICE_COCOVHD
-	CONFIG_RAM					(128 * 1024)
-	CONFIG_RAM_DEFAULT			(512 * 1024)
-	CONFIG_RAM					(2048 * 1024)
-	CONFIG_RAM					(8192 * 1024)
+	CONFIG_IMPORT_FROM	( generic_coco )
+	CONFIG_DEVICE( coco3_cartslot_getinfo )
+	CONFIG_DEVICE( coco3_snapshot_getinfo )
+	CONFIG_DEVICE( coco_vhd_device_getinfo )
+	CONFIG_RAM			(128 * 1024)
+	CONFIG_RAM_DEFAULT	(512 * 1024)
+	CONFIG_RAM			(2048 * 1024)
+	CONFIG_RAM			(8192 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon32)
-	CONFIG_IMPORT_FROM		( generic_coco12 )
-	CONFIG_RAM_DEFAULT		(32 * 1024)
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM_DEFAULT	(32 * 1024)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(dragon64)
-	CONFIG_IMPORT_FROM		( generic_coco12 )
-	CONFIG_RAM_DEFAULT		(64 * 1024)
+	CONFIG_IMPORT_FROM	( generic_coco12 )
+	CONFIG_RAM_DEFAULT	(64 * 1024)
 SYSTEM_CONFIG_END
 
 /*     YEAR		NAME		PARENT	COMPAT	MACHINE    INPUT		INIT     CONFIG	COMPANY					FULLNAME */

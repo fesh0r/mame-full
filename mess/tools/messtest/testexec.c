@@ -376,7 +376,7 @@ static void command_image_loadcreate(void)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
 			current_testcase->name,
-			device_find(Machine->gamedrv, device_type)->file_extensions);
+			device_find(Machine->devices, device_type)->file_extensions);
 		filename = buf;
 	}
 

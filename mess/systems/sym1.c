@@ -126,10 +126,16 @@ ROM_START(sym1)
 	ROM_RELOAD(0xf000, 0x1000)
 ROM_END
 
+static void sym1_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "60\00080\0c0\0";
+}
+
 SYSTEM_CONFIG_START(sym1)
-	CONFIG_DEVICE_CBM_CARTSLOT("60\00080\0c0\0")
+	CONFIG_DEVICE(sym1_cbmcartslot_getinfo)
 #if 0
-	CONFIG_DEVICE_KIM1_CASSETTE
+	CONFIG_DEVICE(kim1_cassette_getinfo)
 #endif
 SYSTEM_CONFIG_END
 

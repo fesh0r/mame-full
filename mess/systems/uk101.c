@@ -382,8 +382,21 @@ ROM_START(superbrd)
 	ROM_LOAD("chgsup2.rom", 0x0000, 0x0800, CRC(735f5e0a))
 ROM_END
 
+static void uk101_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "bas\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_uk101_cassette;
+	dev->unload = device_unload_uk101_cassette;
+}
+
 SYSTEM_CONFIG_START(uk101)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "bas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_uk101_cassette, device_unload_uk101_cassette, NULL)
+	CONFIG_DEVICE(uk101_cassette_getinfo)
 	CONFIG_RAM_DEFAULT(4 * 1024)
 	CONFIG_RAM(8 * 1024)
 	CONFIG_RAM(40 * 1024)

@@ -19,10 +19,7 @@ extern "C" {
 int printer_status(mess_image *img, int newstatus);
 void printer_output(mess_image *img, int data);
 
-#define CONFIG_DEVICE_PRINTER(count)												\
-	CONFIG_DEVICE_BASE(IO_PRINTER, (count), "prn\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_WRITE,		\
-		NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, printer_status, NULL, NULL,	\
-		NULL, printer_output, NULL, NULL)	\
+void printer_device_getinfo(struct IODevice *iodev);
 
 #ifdef __cplusplus
 }

@@ -178,6 +178,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 {
 	struct DevViewInfo *pDevViewInfo;
 	const struct GameDriver *drv;
+	const struct IODevice *devices;
 	const struct IODevice *dev;
 	struct DevViewEntry *pEnt;
 	int i, id;
@@ -187,6 +188,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 	LPTSTR *ppszDevices;
 	LPCTSTR s;
 	SIZE sz;
+	char buf[128];
 
 	pDevViewInfo = GetDevViewInfo(hwndDevView);
 
@@ -194,93 +196,95 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 	if (nGame == pDevViewInfo->nGame)
 		return TRUE;
 
-	DevView_Clear(hwndDevView);
+	begin_resource_tracking();
 
+	DevView_Clear(hwndDevView);
 	drv = drivers[nGame];
+	devices = devices_allocate(drv);
 
 	// Count total amount of devices
 	nDevCount = 0;
-	for (dev = device_first(drv); dev; dev = device_next(drv, dev))
+	for (dev = devices; dev->count < IO_COUNT; dev++)
 		nDevCount += dev->count;
 
-	if (!nDevCount)
-		return TRUE;
-
-	// Get the names of all of the devices
-	ppszDevices = (LPTSTR *) alloca(nDevCount * sizeof(*ppszDevices));
-	i = 0;
-	for (dev = device_first(drv); dev; dev = device_next(drv, dev))
-	{
-		for (id = 0; id < dev->count; id++)
-		{
-			s = device_typename_devtypeid(drv, dev, id);
-			ppszDevices[i] = alloca(strlen(s) + 1);
-			strcpy(ppszDevices[i], s);
-			i++;
-		}
-	}
-
-	// Calculate the requisite size for the device column
-	pDevViewInfo->nWidth = 0;
 	if (nDevCount > 0)
 	{
-		hDc = GetDC(hwndDevView);
-		for (i = 0; i < nDevCount; i++)
+		// Get the names of all of the devices
+		ppszDevices = (LPTSTR *) alloca(nDevCount * sizeof(*ppszDevices));
+		i = 0;
+		for (dev = devices; dev->count < IO_COUNT; dev++)
 		{
-			GetTextExtentPoint32(hDc, ppszDevices[i], _tcslen(ppszDevices[i]), &sz);
-			if (sz.cx > pDevViewInfo->nWidth)
-				pDevViewInfo->nWidth = sz.cx;
+			for (id = 0; id < dev->count; id++)
+			{
+				s = dev->name(dev, id, buf, sizeof(buf) / sizeof(buf[0]));
+				ppszDevices[i] = alloca(strlen(s) + 1);
+				strcpy(ppszDevices[i], s);
+				i++;
+			}
 		}
-		ReleaseDC(hwndDevView, hDc);
-	}
 
-	pEnt = (struct DevViewEntry *) malloc(sizeof(struct DevViewEntry) * (nDevCount + 1));
-	if (!pEnt)
-		return FALSE;
-	memset(pEnt, 0, sizeof(struct DevViewEntry) * (nDevCount + 1));
-	pDevViewInfo->pEntries = pEnt;
-
-	y = 10;
-	nHeight = 21;
-	DevView_GetColumns(hwndDevView, &nStaticPos, &nStaticWidth,
-		&nEditPos, &nEditWidth, &nButtonPos, &nButtonWidth);
-
-	for (dev = device_first(drv); dev; dev = device_next(drv, dev))
-	{
-		for (id = 0; id < dev->count; id++)
+		// Calculate the requisite size for the device column
+		pDevViewInfo->nWidth = 0;
+		if (nDevCount > 0)
 		{
-			pEnt->dev = dev;
-			pEnt->id = id;
-
-			pEnt->hwndStatic = CreateWindow(TEXT("STATIC"), device_typename_devtypeid(drv, dev, id),
-				WS_VISIBLE | WS_CHILD, nStaticPos, y, nStaticWidth, nHeight,
-				hwndDevView, NULL, NULL, NULL);
-
-			pEnt->hwndEdit = CreateWindow(TEXT("EDIT"), TEXT(""),
-				WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, nEditPos, y, nEditWidth, nHeight,
-				hwndDevView, NULL, NULL, NULL);
-
-			pEnt->hwndBrowseButton = CreateWindow(TEXT("BUTTON"), TEXT("..."),
-				WS_VISIBLE | WS_CHILD, nButtonPos, y, nButtonWidth, nHeight,
-				hwndDevView, NULL, NULL, NULL);
-
-			if (pEnt->hwndStatic)
+			hDc = GetDC(hwndDevView);
+			for (i = 0; i < nDevCount; i++)
 			{
-				SendMessage(pEnt->hwndStatic, WM_SETFONT, (WPARAM) pDevViewInfo->hFont, TRUE);
+				GetTextExtentPoint32(hDc, ppszDevices[i], _tcslen(ppszDevices[i]), &sz);
+				if (sz.cx > pDevViewInfo->nWidth)
+					pDevViewInfo->nWidth = sz.cx;
 			}
-			if (pEnt->hwndEdit)
-			{
-				SendMessage(pEnt->hwndEdit, WM_SETFONT, (WPARAM) pDevViewInfo->hFont, TRUE);
-				pEnt->pfnEditWndProc = (WNDPROC) SetWindowLongPtr(pEnt->hwndEdit, GWLP_WNDPROC, (LONG_PTR) DevView_EditWndProc);
-				SetWindowLongPtr(pEnt->hwndEdit, GWLP_USERDATA, (LONG_PTR) pEnt);
-			}
-			if (pEnt->hwndBrowseButton)
-			{
-				SetWindowLongPtr(pEnt->hwndBrowseButton, GWLP_USERDATA, (LONG_PTR) pEnt);
-			}
+			ReleaseDC(hwndDevView, hDc);
+		}
 
-			y += nHeight;
-			pEnt++;
+		pEnt = (struct DevViewEntry *) malloc(sizeof(struct DevViewEntry) * (nDevCount + 1));
+		if (!pEnt)
+			return FALSE;
+		memset(pEnt, 0, sizeof(struct DevViewEntry) * (nDevCount + 1));
+		pDevViewInfo->pEntries = pEnt;
+
+		y = 10;
+		nHeight = 21;
+		DevView_GetColumns(hwndDevView, &nStaticPos, &nStaticWidth,
+			&nEditPos, &nEditWidth, &nButtonPos, &nButtonWidth);
+
+		for (dev = devices; dev->count < IO_COUNT; dev++)
+		{
+			for (id = 0; id < dev->count; id++)
+			{
+				pEnt->dev = dev;
+				pEnt->id = id;
+
+				pEnt->hwndStatic = CreateWindow(TEXT("STATIC"), dev->name(dev, id, buf, sizeof(buf) / sizeof(buf[0])),
+					WS_VISIBLE | WS_CHILD, nStaticPos, y, nStaticWidth, nHeight,
+					hwndDevView, NULL, NULL, NULL);
+
+				pEnt->hwndEdit = CreateWindow(TEXT("EDIT"), TEXT(""),
+					WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOHSCROLL, nEditPos, y, nEditWidth, nHeight,
+					hwndDevView, NULL, NULL, NULL);
+
+				pEnt->hwndBrowseButton = CreateWindow(TEXT("BUTTON"), TEXT("..."),
+					WS_VISIBLE | WS_CHILD, nButtonPos, y, nButtonWidth, nHeight,
+					hwndDevView, NULL, NULL, NULL);
+
+				if (pEnt->hwndStatic)
+				{
+					SendMessage(pEnt->hwndStatic, WM_SETFONT, (WPARAM) pDevViewInfo->hFont, TRUE);
+				}
+				if (pEnt->hwndEdit)
+				{
+					SendMessage(pEnt->hwndEdit, WM_SETFONT, (WPARAM) pDevViewInfo->hFont, TRUE);
+					pEnt->pfnEditWndProc = (WNDPROC) SetWindowLongPtr(pEnt->hwndEdit, GWLP_WNDPROC, (LONG_PTR) DevView_EditWndProc);
+					SetWindowLongPtr(pEnt->hwndEdit, GWLP_USERDATA, (LONG_PTR) pEnt);
+				}
+				if (pEnt->hwndBrowseButton)
+				{
+					SetWindowLongPtr(pEnt->hwndBrowseButton, GWLP_USERDATA, (LONG_PTR) pEnt);
+				}
+
+				y += nHeight;
+				pEnt++;
+			}
 		}
 	}
 
@@ -307,14 +311,10 @@ static void DevView_ButtonClick(HWND hwndDevView, struct DevViewEntry *pEnt, HWN
 	if (pDevViewInfo->pCallbacks->pfnGetOpenFileName)
 		AppendMenu(hMenu, MF_STRING, 1, ui_getstring(UI_mount));
 
-	switch(pEnt->dev->open_mode)
+	if (pEnt->dev->creatable)
 	{
-		case OSD_FOPEN_WRITE:
-		case OSD_FOPEN_RW_CREATE:
-		case OSD_FOPEN_RW_CREATE_OR_READ:
-			if (pDevViewInfo->pCallbacks->pfnGetCreateFileName)
-				AppendMenu(hMenu, MF_STRING, 2, ui_getstring(UI_create));
-			break;
+		if (pDevViewInfo->pCallbacks->pfnGetCreateFileName)
+			AppendMenu(hMenu, MF_STRING, 2, ui_getstring(UI_create));
 	}
 
 	AppendMenu(hMenu, MF_STRING, 3, ui_getstring(UI_unmount));

@@ -1315,7 +1315,9 @@ static void prepare_menus(void)
 	// set up device menu; first remove all existing menu items
 	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
 	remove_menu_items(device_menu);
-	for (dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+
+
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
 		for (i = 0; i < dev->count; i++)
 		{
@@ -1334,13 +1336,8 @@ static void prepare_menus(void)
 			sub_menu = CreateMenu();
 			append_menu(sub_menu, MF_STRING,		new_item + DEVOPTION_OPEN,		UI_mount);
 
-			switch(dev->open_mode) {
-			case OSD_FOPEN_WRITE:
-			case OSD_FOPEN_RW_CREATE:
-			case OSD_FOPEN_RW_CREATE_OR_READ:
+			if (dev->creatable)
 				append_menu(sub_menu, MF_STRING,	new_item + DEVOPTION_CREATE,	UI_create);
-				break;
-			}
 
 			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_CLOSE,		UI_unmount);
 
@@ -1363,7 +1360,7 @@ static void prepare_menus(void)
 #endif /* HAS_WAVE */
 			s = image_exists(img) ? image_filename(img) : ui_getstring(UI_emptyslot);
 
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", device_typename_id(img), s);
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s: %s", image_typename_id(img), s);
 			AppendMenu(device_menu, MF_POPUP, (UINT_PTR) sub_menu, A2T(buf));
 		}
 	}
@@ -1442,11 +1439,11 @@ static void device_command(mess_image *img, int devoption)
 				break;
 #else
 			case DEVOPTION_CASSETTE_REWIND:
-				device_seek(img, +11025, SEEK_CUR);
+				cassette_seek(img, +1.0, SEEK_CUR);
 				break;
 
 			case DEVOPTION_CASSETTE_FASTFORWARD:
-				device_seek(img, +11025, SEEK_CUR);
+				cassette_seek(img, +1.0, SEEK_CUR);
 				break;
 #endif
 			}

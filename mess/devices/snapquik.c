@@ -14,6 +14,8 @@ struct snapquick_info
 
 static struct snapquick_info *snapquick_infolist;
 
+
+
 static void snapquick_processsnapshot(int arg)
 {
 	struct snapquick_info *si;
@@ -26,6 +28,8 @@ static void snapquick_processsnapshot(int arg)
 	loadproc(si->fp, file_type, si->file_size);
 	image_unload(si->img);
 }
+
+
 
 static DEVICE_LOAD(snapquick)
 {
@@ -58,6 +62,8 @@ static DEVICE_LOAD(snapquick)
 	return INIT_PASS;
 }
 
+
+
 static DEVICE_UNLOAD(snapquick)
 {
 	struct snapquick_info **si = &snapquick_infolist;
@@ -68,21 +74,38 @@ static DEVICE_UNLOAD(snapquick)
 		*si = (*si)->next;
 }
 
+
+
 /* ----------------------------------------------------------------------- */
 
-const struct IODevice *snapquick_specify(struct IODevice *iodev, int type,
-	const char *file_extensions, snapquick_loadproc loadproc, double delay)
+static void snapquick_device_getinfo(struct IODevice *iodev, int type,
+	snapquick_loadproc loadproc, double delay)
 {
-	memset(iodev, 0, sizeof(*iodev));
 	iodev->type = type;
 	iodev->count = 1;
-	iodev->file_extensions = file_extensions;
-	iodev->flags = DEVICE_LOAD_RESETS_NONE;
-	iodev->open_mode = OSD_FOPEN_READ;
+	iodev->readable = 1;
+	iodev->writeable = 0;
+	iodev->creatable = 0;
 	iodev->load = device_load_snapquick;
 	iodev->unload = device_unload_snapquick;
 	iodev->user1 = (void *) loadproc;
 	iodev->user2 = (void *) (UINT32) (delay * 65536);
-	return iodev;
 }
+
+
+
+void snapshot_device_getinfo(struct IODevice *iodev,
+	snapquick_loadproc loadproc, double delay)
+{
+	snapquick_device_getinfo(iodev, IO_SNAPSHOT, loadproc, delay);
+}
+
+
+
+void quickload_device_getinfo(struct IODevice *iodev,
+	snapquick_loadproc loadproc, double delay)
+{
+	snapquick_device_getinfo(iodev, IO_QUICKLOAD, loadproc, delay);
+}
+
 

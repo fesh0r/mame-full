@@ -456,14 +456,46 @@ ROM_START(intvkbd)
 
 ROM_END
 
+static void intv_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "int\0rom\0";
+	dev->must_be_loaded = 1;
+	dev->init = device_init_intv_cart;
+	dev->load = device_load_intv_cart;
+}
+
 SYSTEM_CONFIG_START(intv)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "int\0rom\0", device_init_intv_cart, NULL, device_load_intv_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(intv_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
+static void intvkbd_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "int\0rom\0bin\0";
+	dev->load = device_load_intvkbd_cart;
+}
+
+static void intvkbd_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "tap\0";
+	dev->reset_on_load = 1;
+	dev->readable = 0;	/* INVALID */
+	dev->writeable = 0;	/* INVALID */
+	dev->creatable = 0;	/* INVALID */
+}
+
 SYSTEM_CONFIG_START(intvkbd)
-	CONFIG_DEVICE_CARTSLOT_OPT( 2, "int\0rom\0bin\0", NULL, NULL, device_load_intvkbd_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(intvkbd_cartslot_getinfo)
 #if 0
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "tap\0", DEVICE_LOAD_RESETS_CPU, 0, NULL, NULL, NULL, NULL, NULL)
+	CONFIG_DEVICE(intvkbd_cassette_getinfo)
 #endif
 SYSTEM_CONFIG_END
 

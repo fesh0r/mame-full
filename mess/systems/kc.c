@@ -453,15 +453,38 @@ ROM_START(kc85_3)
 	ROM_LOAD("caos__e0.853", 0x12000, 0x2000, CRC(52bc2199) SHA1(207d3e1c4ebf82ac7553ed0a0850b627b9796d4b))
 ROM_END
 
+static void kc85_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void kc85_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_kc, 0.0);
+	dev->file_extensions = "kcc\0";
+}
+
 SYSTEM_CONFIG_START(kc85)
 	CONFIG_RAM_DEFAULT		(64 * 1024)
-	CONFIG_DEVICE_CASSETTE	(1, NULL)
-	CONFIG_DEVICE_QUICKLOAD	(	"kcc\0",	kc)
+	CONFIG_DEVICE(kc85_cassette_getinfo)
+	CONFIG_DEVICE(kc85_quickload_getinfo)
 SYSTEM_CONFIG_END
+
+static void kc85d_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_kc85_floppy;
+}
 
 SYSTEM_CONFIG_START(kc85d)
 	CONFIG_IMPORT_FROM(kc85)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_kc85_floppy)
+	CONFIG_DEVICE(kc85d_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE  INPUT     INIT  CONFIG  COMPANY   FULLNAME */

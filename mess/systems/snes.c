@@ -501,8 +501,18 @@ static MACHINE_DRIVER_START( snespal )
 	MDRV_FRAMES_PER_SECOND(50)
 MACHINE_DRIVER_END
 
+static void snes_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "smc\0sfc\0fig\0swc\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_snes_cart;
+}
+
 SYSTEM_CONFIG_START(snes)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "smc\0sfc\0fig\0swc\0", NULL, NULL, device_load_snes_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(snes_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

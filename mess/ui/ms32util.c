@@ -48,7 +48,14 @@ BOOL DriverUsesMouse(int driver_index)
 
 BOOL DriverHasDevice(const struct GameDriver *gamedrv, iodevice_t type)
 {
-	return device_find(gamedrv, type) ? TRUE : FALSE;
+	BOOL b;
+	const struct IODevice *devices;
+
+	begin_resource_tracking();
+	devices = devices_allocate(gamedrv);
+	b = device_find(devices, IO_PRINTER) ? TRUE : FALSE;
+	end_resource_tracking();
+	return b;
 }
 
 

@@ -308,13 +308,47 @@ static MACHINE_DRIVER_START( nespal )
 	MDRV_SOUND_REPLACE("nessound", NES, nespal_interface)
 MACHINE_DRIVER_END
 
+static void nes_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "nes\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_nes_cart;
+	dev->partialhash = nes_partialhash;
+}
+
 SYSTEM_CONFIG_START(nes)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "nes\0", NULL, NULL, device_load_nes_cart, NULL, NULL, nes_partialhash)
+	CONFIG_DEVICE(nes_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
+static void famicom_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "nes\0";
+	dev->load = device_load_nes_cart;
+	dev->partialhash = nes_partialhash;
+}
+
+static void famicom_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 1;
+	dev->file_extensions = "dsk\0fds\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_nes_disk;
+	dev->unload = device_unload_nes_disk;
+}
+
 SYSTEM_CONFIG_START(famicom)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "nes\0", NULL, NULL, device_load_nes_cart, NULL, NULL, nes_partialhash)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_nes_disk, device_unload_nes_disk, NULL)
+	CONFIG_DEVICE(famicom_cartslot_getinfo)
+	CONFIG_DEVICE(famicom_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

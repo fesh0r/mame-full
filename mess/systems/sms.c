@@ -330,20 +330,58 @@ ROM_END
 
 #define rom_gamgj rom_gamg
 
+static void sms_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "sms\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_sms_cart;
+}
+
 SYSTEM_CONFIG_START(sms)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "sms\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(sms_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void smso_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "sms\0";
+	dev->load = device_load_sms_cart;
+}
 
 SYSTEM_CONFIG_START(smso)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "sms\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(smso_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void gamegear_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "gg\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_sms_cart;
+}
 
 SYSTEM_CONFIG_START(gamegear)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "gg\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(gamegear_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
+static void gamegearo_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "gg\0";
+	dev->load = device_load_sms_cart;
+}
+
 SYSTEM_CONFIG_START(gamegearo)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "gg\0", NULL, NULL, device_load_sms_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(gamegearo_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

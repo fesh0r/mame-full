@@ -316,7 +316,7 @@ DEVICE_LOAD(mess_hd)
 
 
 
-DEVICE_CREATE(mess_hd)
+static DEVICE_CREATE(mess_hd)
 {
 	int err;
 	char metadata[256];
@@ -398,25 +398,29 @@ struct chd_file *mess_hd_get_chd_file(mess_image *image)
  *
  *************************************/
 
-const struct IODevice *mess_hd_device_specify(struct IODevice *iodev, int count)
+void harddisk_device_getinfo(struct IODevice *iodev)
 {
-	assert(count);
-	if (iodev->count == 0)
+	iodev->createimage_options = auto_malloc(sizeof(*iodev->createimage_options) * 2);
+	if (!iodev->createimage_options)
 	{
-		memset(iodev, 0, sizeof(*iodev));
-		iodev->type = IO_HARDDISK;
-		iodev->count = count;
-		iodev->file_extensions = "chd\0hd\0";
-		iodev->flags = DEVICE_LOAD_RESETS_NONE;
-		iodev->open_mode = OSD_FOPEN_RW_CREATE_OR_READ;
-		iodev->init = device_init_mess_hd;
-		iodev->load = device_load_mess_hd;
-		iodev->create = device_create_mess_hd;
-		iodev->unload = device_unload_mess_hd;
-		iodev->createimage_optguide = mess_hd_option_guide;
-		iodev->createimage_options[0].extensions = iodev->file_extensions;
-		iodev->createimage_options[0].description = "MAME/MESS CHD Hard drive";
-		iodev->createimage_options[0].optspec = mess_hd_option_spec;
+		iodev->error = 1;
+		return;
 	}
-	return iodev;
+
+	iodev->type = IO_HARDDISK;
+	iodev->file_extensions = "chd\0hd\0";
+	iodev->readable = 1;
+	iodev->writeable = 1;
+	iodev->creatable = 1;
+	iodev->init = device_init_mess_hd;
+	iodev->load = device_load_mess_hd;
+	iodev->create = device_create_mess_hd;
+	iodev->unload = device_unload_mess_hd;
+	iodev->createimage_optguide = mess_hd_option_guide;
+	iodev->createimage_options[0].extensions = iodev->file_extensions;
+	iodev->createimage_options[0].description = "MAME/MESS CHD Hard drive";
+	iodev->createimage_options[0].optspec = mess_hd_option_spec;
+	iodev->createimage_options[1].extensions = NULL;
+	iodev->createimage_options[1].description = NULL;
+	iodev->createimage_options[1].optspec = NULL;
 }

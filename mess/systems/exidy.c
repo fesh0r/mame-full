@@ -589,7 +589,7 @@ static  READ8_HANDLER(exidy_ff_port_r)
 	/* bit 7 = printer busy */
 	/* 0 = printer is not busy */
 
-	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 )
+	if (printer_status(image_from_devtype_and_index(IO_PRINTER, 0), 0)==0 )
 		data |= 0x080;
 	
 	logerror("exidy ff r: %04x %02x\n",offset,data);
@@ -802,10 +802,33 @@ ROM_START(exidy)
 	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19) SHA1(75fffd897aec8c3dbe1a918f5a29485e603004cb))	
 ROM_END
 
+static void exidy_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void exidy_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_exidy_floppy;
+}
+
+static void exidy_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 2;
+}
+
 SYSTEM_CONFIG_START(exidy)
-	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_exidy_floppy)
-	//CONFIG_DEVICE_CASSETTE		(2,	NULL)
+	CONFIG_DEVICE(exidy_printer_getinfo)
+	CONFIG_DEVICE(exidy_floppy_getinfo)
+	/*CONFIG_DEVICE(exidy_cassette_getinfo)*/
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

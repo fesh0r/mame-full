@@ -545,7 +545,7 @@ WRITE8_HANDLER ( msx_printer_w )
  READ8_HANDLER ( msx_printer_r )
 {
 	if (offset == 0 && ! (readinputport (8) & 0x80) &&
-			device_status(printer_image(), 0) )
+			printer_status(printer_image(), 0) )
 		return 253;
 
 	return 0xff;

@@ -584,3 +584,16 @@ static void basicdsk_read_sector_data_into_buffer(mess_image *img, int side, int
 }
 
 
+
+void legacybasicdsk_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_FLOPPY;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->init = device_init_basicdsk_floppy;
+	dev->unload = device_unload_basicdsk_floppy;
+	/*dev->status = floppy_status;*/
+}
+
+

@@ -909,27 +909,68 @@ ROM_START(a5200)
 	ROM_LOAD("5200.rom", 0xf800, 0x0800, CRC(4248d3e3) SHA1(6ad7a1e8c9fad486fbec9498cb48bf5bc3adc530))
 ROM_END
 
+static void atari_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 4;
+	dev->file_extensions = "atr\0dsk\0xfd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_a800_floppy;
+}
+
 SYSTEM_CONFIG_START(atari)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "atr\0dsk\0xfd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ,
-		NULL, NULL, device_load_a800_floppy, NULL, NULL)
+	CONFIG_DEVICE(atari_floppy_getinfo)
 SYSTEM_CONFIG_END
+
+static void a400_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0bin\0";
+	dev->load = device_load_a800_cart;
+	dev->unload = device_unload_a800_cart;
+}
 
 SYSTEM_CONFIG_START(a400)
 	CONFIG_IMPORT_FROM(atari)
 	CONFIG_RAM_DEFAULT(16 * 1024)
 	CONFIG_RAM        (40 * 1024)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
+	CONFIG_DEVICE(a400_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void a800_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "rom\0bin\0";
+	dev->load = device_load_a800_cart;
+	dev->unload = device_unload_a800_cart;
+}
 
 SYSTEM_CONFIG_START(a800)
 	CONFIG_IMPORT_FROM(atari)
 	CONFIG_RAM_DEFAULT(40 * 1024)
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "rom\0bin\0", NULL, NULL, device_load_a800_cart, device_unload_a800_cart, NULL, NULL)
+	CONFIG_DEVICE(a800_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void a5200_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0bin\0a52\0";
+	dev->load = device_load_a5200_cart;
+	dev->unload = device_unload_a5200_cart;
+}
 
 SYSTEM_CONFIG_START(a5200)
 	CONFIG_RAM_DEFAULT(16 * 1024)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0bin\0a52\0", NULL, NULL, device_load_a5200_cart, device_unload_a5200_cart, NULL, NULL)
+	CONFIG_DEVICE(a5200_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

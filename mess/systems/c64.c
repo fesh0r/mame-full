@@ -879,27 +879,46 @@ MACHINE_DRIVER_END
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
 
+static void c64_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\080\0";
+}
+
+static void c64_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_c64, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(c64)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_C64QUICK
-	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE(c64_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(c64_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(sx64)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
-	CONFIG_DEVICE_C64QUICK
-	CONFIG_DEVICE_VC1541
+	CONFIG_DEVICE(c64_cbmcartslot_getinfo)
+	CONFIG_DEVICE(c64_quickload_getinfo)
+	CONFIG_DEVICE(vc1541_device_getinfo)
 SYSTEM_CONFIG_END
 
+static void ultimax_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->must_be_loaded = 1;
+	dev->file_extensions = "crt\0e0\0f0\0";
+}
+
 SYSTEM_CONFIG_START(ultimax)
-	CONFIG_DEVICE_CBM_CARTSLOT_REQ("crt\0e0\0f0\0")
-	CONFIG_DEVICE_C64QUICK
-	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE(ultimax_cbmcartslot_getinfo)
+	CONFIG_DEVICE(c64_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c64gs)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
+	CONFIG_DEVICE(c64_cbmcartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

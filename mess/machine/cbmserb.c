@@ -396,3 +396,15 @@ void cbm_drive_1_status (char *text, int size)
 {
 	cbm_drive_status (cbm_drive + 1, text, size);
 }
+
+void cbmfloppy_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "d64\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_cbm_drive;
+}
+

@@ -204,8 +204,17 @@ ROM_START(mekd2)
 		/* space filled with key icons by mekd2_init_driver */
 ROM_END
 
+static void mekd2_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "d2\0";
+	dev->load = device_load_mekd2_cart;
+}
+
 SYSTEM_CONFIG_START(mekd2)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "d2\0", NULL, NULL, device_load_mekd2_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(mekd2_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

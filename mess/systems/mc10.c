@@ -153,8 +153,16 @@ ROM_START(mc10)
 	ROM_LOAD("mc10.rom", 0xE000, 0x2000, CRC(11fda97e) SHA1(4afff2b4c120334481aab7b02c3552bf76f1bc43))
 ROM_END
 
+static void mc10_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, coco_cassette_formats, NULL,
+		CASSETTE_PLAY);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(mc10)
-	CONFIG_DEVICE_CASSETTEX	(1, coco_cassette_formats, NULL, CASSETTE_PLAY )
+	CONFIG_DEVICE( mc10_cassette_getinfo )
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */

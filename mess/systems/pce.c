@@ -194,8 +194,18 @@ static MACHINE_DRIVER_START( pce )
 	MDRV_NVRAM_HANDLER( pce )
 MACHINE_DRIVER_END
 
+static void pce_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "pce\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_pce_cart;
+}
+
 SYSTEM_CONFIG_START(pce)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "pce\0", NULL, NULL, device_load_pce_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(pce_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

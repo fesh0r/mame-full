@@ -7,11 +7,15 @@
 #include "devices/printer.h"
 #include "image.h"
 
+
+
 int printer_status(mess_image *img, int newstatus)
 {
 	/* if there is a file attached to it, it's online */
 	return image_exists(img) != 0;
 }
+
+
 
 void printer_output(mess_image *img, int data)
 {
@@ -22,3 +26,16 @@ void printer_output(mess_image *img, int data)
 	if (fp)
 		mame_fwrite(fp, &d, 1);
 }
+
+
+
+void printer_device_getinfo(struct IODevice *iodev)
+{
+	iodev->type = IO_PRINTER;
+	iodev->file_extensions = "prn\0";
+	iodev->readable = 0;
+	iodev->writeable = 1;
+	iodev->creatable = 1;
+}
+
+

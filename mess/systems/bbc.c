@@ -1034,13 +1034,40 @@ static MACHINE_DRIVER_START( bbcb6502 )
 	MDRV_CPU_PROGRAM_MAP( bbc6502_mem, 0 )
 MACHINE_DRIVER_END
 
+static void bbc_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_bbcb_cart;
+}
+
+static void bbc_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "ssd\0bbc\0img\0";
+	dev->load = device_load_bbc_floppy;
+}
+
 SYSTEM_CONFIG_START(bbc)
-	CONFIG_DEVICE_CARTSLOT_OPT		(4, "rom\0",			NULL, NULL, device_load_bbcb_cart, NULL, NULL, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	device_load_bbc_floppy )
+	CONFIG_DEVICE(bbc_cartslot_getinfo)
+	CONFIG_DEVICE(bbc_floppy_getinfo)
 SYSTEM_CONFIG_END
 
+static void bbc6502_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "ssd\0bbc\0img\0";
+	dev->load = device_load_bbc_floppy;
+}
+
 SYSTEM_CONFIG_START(bbc6502)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0bbc\0img\0",	device_load_bbc_floppy )
+	CONFIG_DEVICE(bbc6502_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*	   YEAR  NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */

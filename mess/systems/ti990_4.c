@@ -337,8 +337,15 @@ INPUT_PORTS_START(ti990_4)
 #endif
 INPUT_PORTS_END
 
+static void ti990_4_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_fd800);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(ti990_4)
-	CONFIG_DEVICE_FLOPPY(4,	fd800)
+	CONFIG_DEVICE(ti990_4_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */

@@ -195,8 +195,15 @@ ROM_START(apple1)
 	ROM_LOAD("apple1.vid", 0x0000, 0x0400, CRC(a3f2d66f) SHA1(3047082bf401032d97f4b9f60eeed51e19203c18))
 ROM_END
 
+static void apple1_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_apple1, 0.0);
+	dev->file_extensions = "snp\0";
+}
+
 SYSTEM_CONFIG_START(apple1)
-	CONFIG_DEVICE_SNAPSHOT("snp\0", apple1)
+	CONFIG_DEVICE(apple1_snapshot_getinfo)
 	CONFIG_RAM_DEFAULT	(0x2000)
 	CONFIG_RAM			(0xD000)
 SYSTEM_CONFIG_END

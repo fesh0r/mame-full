@@ -274,11 +274,41 @@ ROM_START (atomeb)
 	ROM_LOAD ("atomicw.rom",0x018000,0x1000, CRC(a3fd737d) SHA1(d418d9322c69c49106ed2c268ad0864c0f2c4c1b))
 ROM_END
 
+static void atom_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void atom_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "ssd\0";
+	dev->load = device_load_atom_floppy;
+}
+
+static void atom_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void atom_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_atom, 0.0);
+	dev->file_extensions = "atm\0";
+}
+
 SYSTEM_CONFIG_START(atom)
-	CONFIG_DEVICE_CASSETTE			(1, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0",	device_load_atom_floppy)
-	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_QUICKLOAD			(	"atm\0",	atom)
+	CONFIG_DEVICE(atom_cassette_getinfo)
+	CONFIG_DEVICE(atom_floppy_getinfo)
+	CONFIG_DEVICE(atom_printer_getinfo)
+	CONFIG_DEVICE(atom_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG   COMPANY   FULLNAME */

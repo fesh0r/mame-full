@@ -428,9 +428,15 @@ MACHINE_DRIVER_END
 #define init_c65_alpha1 c65_driver_init
 #define init_c65pal c65pal_driver_init
 
+static void c65_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_c65, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(c65)
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_C65QUICK
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(c65_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT		CONFIG  COMPANY 							FULLNAME */

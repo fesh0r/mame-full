@@ -227,8 +227,18 @@ static DEVICE_LOAD( vc4000_cart )
 	return cartslot_load_generic(file, REGION_CPU1, 0, 0x0001, memory_region_length(REGION_CPU1), 0);
 }
 
+static void vc4000_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_vc4000_cart;
+}
+
 SYSTEM_CONFIG_START(vc4000)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, device_load_vc4000_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(vc4000_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

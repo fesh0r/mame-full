@@ -444,16 +444,10 @@ static PALETTE_INIT( apple2 )
     memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
 }
 
-static GET_CUSTOM_DEVICENAME( apple2 )
+static const char *apple2_floppy_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
 {
-	const char *name = NULL;
-	switch(devtype) {
-	case IO_FLOPPY:
-		snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
-		name = buf;
-		break;
-	}
-	return name;
+	snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
+	return buf;
 }
 
 static struct DACinterface apple2_DAC_interface =
@@ -624,9 +618,16 @@ ROM_START(apple2cp)
 	ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, CRC(0b996420) SHA1(1a27ae26966bbafd825d08ad1a24742d3e33557c))
 ROM_END
 
+static void apple2_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_apple2);
+	dev->count = 2;
+	dev->name = apple2_floppy_getname;
+}
+
 SYSTEM_CONFIG_START(apple2_common)
-	CONFIG_DEVICE_FLOPPY( 2, apple2 )
-	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
+	CONFIG_DEVICE(apple2_floppy_getinfo)
 	CONFIG_QUEUE_CHARS			( AY3600 )
 	CONFIG_ACCEPT_CHAR			( AY3600 )
 SYSTEM_CONFIG_END

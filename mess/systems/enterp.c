@@ -590,11 +590,29 @@ ROM_END
 
 ***************************************************************************/
 
+static void ep128_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacydsk_device_getinfo(dev);
+	dev->count = 4;
+}
+
+#if 0
+static void ep128_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = enterprise_floppy_init;
+}
+#endif
+
 SYSTEM_CONFIG_START(ep128)
 	CONFIG_RAM_DEFAULT((128*1024)+32768)
-	CONFIG_DEVICE_LEGACY_DSK(4)
+	CONFIG_DEVICE(ep128_floppy_getinfo)
 #if 0
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	enterprise_floppy_init)
+	CONFIG_DEVICE(ep128_floppy_getinfo)
 #endif
 SYSTEM_CONFIG_END
 

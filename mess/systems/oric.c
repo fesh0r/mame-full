@@ -524,19 +524,54 @@ ROM_START(prav8dda)
     ROM_LOAD_OPTIONAL ("8ddoshi.rom",0x014100, 0x0200, CRC(66309641) SHA1(9c2e82b3c4d385ade6215fcb89f8b92e6fd2bf4b))
 ROM_END
 
+static void oric_common_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, oric_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void oric_common_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(oric_common)
-	CONFIG_DEVICE_CASSETTE(1, oric_cassette_formats)
-	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE(oric_common_cassette_getinfo)
+	CONFIG_DEVICE(oric_common_printer_getinfo)
 SYSTEM_CONFIG_END
+
+static void oric1_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->init = device_init_oric_floppy;
+	dev->load = device_load_oric_floppy;
+	/*dev->status = floppy_status;*/
+}
 
 SYSTEM_CONFIG_START(oric1)
 	CONFIG_IMPORT_FROM(oric_common)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, device_init_oric_floppy, NULL, device_load_oric_floppy, NULL, floppy_status)
+	CONFIG_DEVICE(oric1_floppy_getinfo)
 SYSTEM_CONFIG_END
+
+static void prav8_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_apple2);
+	dev->count = 1;
+}
 
 SYSTEM_CONFIG_START(prav8)
 	CONFIG_IMPORT_FROM(oric_common)
-	CONFIG_DEVICE_FLOPPY( 1, apple2 )
+	CONFIG_DEVICE(prav8_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

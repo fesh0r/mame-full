@@ -116,8 +116,17 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
+static void vectrex_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0gam\0vec\0";
+	dev->load = device_load_vectrex_cart;
+}
+
 SYSTEM_CONFIG_START(vectrex)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0gam\0vec\0", NULL, NULL, device_load_vectrex_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(vectrex_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 ROM_START(vectrex)

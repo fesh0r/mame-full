@@ -741,16 +741,47 @@ static FLOPPY_OPTIONS_START( sordm5 )
 		FIRST_SECTOR_ID([1]))
 FLOPPY_OPTIONS_END
 
+static void sordm5_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void sordm5_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, sordm5_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void sordm5_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_sord_cartslot;
+}
+
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_CASSETTE			(1, sordm5_cassette_formats)
-	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	NULL, NULL, device_load_sord_cartslot, NULL, NULL, NULL)
+	CONFIG_DEVICE(sordm5_printer_getinfo)
+	CONFIG_DEVICE(sordm5_cassette_getinfo)
+	CONFIG_DEVICE(sordm5_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void srdm5fd5_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_sordm5);
+	dev->count = 4;
+}
 
 SYSTEM_CONFIG_START(srdm5fd5)
 	CONFIG_IMPORT_FROM(sordm5)
-	CONFIG_DEVICE_FLOPPY(4, sordm5)
+	CONFIG_DEVICE(srdm5fd5_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME		PARENT	COMPAT	MACHINE			INPUT		INIT	CONFIG		COMPANY		FULLNAME */

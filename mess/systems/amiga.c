@@ -116,8 +116,21 @@ ROM_START( cdtv )
     ROM_LOAD ( "cdtv13.rom",  0x180000, 0x80000, CRC(42BAA124))
 ROM_END
 
+static void amiga_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 4;
+	dev->file_extensions = "adf\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = device_init_amiga_fdc;
+	dev->load = device_load_amiga_fdc;
+}
+
 SYSTEM_CONFIG_START(amiga)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "adf\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, device_init_amiga_fdc, NULL, device_load_amiga_fdc, NULL, NULL)
+	CONFIG_DEVICE(amiga_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY	FULLNAME */

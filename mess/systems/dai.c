@@ -238,9 +238,16 @@ ROM_START(dai)
 ROM_END
 
 
+static void dai_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, &dai_cassette_options, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(dai)
 	CONFIG_RAM_DEFAULT(48 * 1024)
-	CONFIG_DEVICE_CASSETTEX(1, NULL, &dai_cassette_options, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_ENABLED )
+	CONFIG_DEVICE(dai_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 

@@ -1084,3 +1084,40 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( cpu_c1571 )
 	MDRV_IMPORT_FROM( cpu_vc1541 )
 MACHINE_DRIVER_END
+
+
+void vc1541_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_FLOPPY;
+	dev->file_extensions = "d64\0";
+	dev->count = 1;
+	dev->reset_on_load = 1;
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_vc1541;
+	dev->unload = device_unload_vc1541;
+	dev->user1 = (void *) vc1541_config;
+}
+
+
+
+void c2031_device_getinfo(struct IODevice *dev)
+{
+	vc1541_device_getinfo(dev);
+}
+
+
+
+void c1551_device_getinfo(struct IODevice *dev)
+{
+	vc1541_device_getinfo(dev);
+	dev->user1 = (void *) c1551_config;
+}
+
+
+
+void c1571_device_getinfo(struct IODevice *dev)
+{
+	vc1541_device_getinfo(dev);
+}

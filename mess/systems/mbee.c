@@ -337,10 +337,35 @@ ROM_END
 
 ***************************************************************************/
 
+static void mbee_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void mbee_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_mbee_cart;
+}
+
+static void mbee_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_basicdsk_floppy;
+}
+
 SYSTEM_CONFIG_START(mbee)
-	CONFIG_DEVICE_CASSETTE			(1, NULL)
-	CONFIG_DEVICE_CARTSLOT_OPT		(1, "rom\0",	NULL, NULL, device_load_mbee_cart, NULL, NULL, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_basicdsk_floppy)
+	CONFIG_DEVICE(mbee_cassette_getinfo)
+	CONFIG_DEVICE(mbee_cartslot_getinfo)
+	CONFIG_DEVICE(mbee_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

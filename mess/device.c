@@ -7,9 +7,7 @@
 ***************************************************************************/
 
 #include <assert.h>
-#include "driver.h"
 #include "device.h"
-#include "osdutils.h"
 #include "ui_text.h"
 
 
@@ -28,297 +26,225 @@ struct Devices
 
 /* The List of Devices, with Associated Names - Be careful to ensure that   *
  * this list matches the ENUM from device.h, so searches can use IO_COUNT	*/
-static const struct Devices devices[] =
+static const struct Devices device_info_array[] =
 {
-	{IO_CARTSLOT,	"cartridge",	"cart"}, /*  0 */
-	{IO_FLOPPY,		"floppydisk",	"flop"}, /*  1 */
-	{IO_HARDDISK,	"harddisk",		"hard"}, /*  2 */
-	{IO_CYLINDER,	"cylinder",		"cyln"}, /*  3 */
-	{IO_CASSETTE,	"cassette",		"cass"}, /*  4 */
-	{IO_PUNCHCARD,	"punchcard",	"pcrd"}, /*  5 */
-	{IO_PUNCHTAPE,	"punchtape",	"ptap"}, /*  6 */
-	{IO_PRINTER,	"printer",		"prin"}, /*  7 */
-	{IO_SERIAL,		"serial",		"serl"}, /*  8 */
-	{IO_PARALLEL,   "parallel",		"parl"}, /*  9 */
-	{IO_SNAPSHOT,	"snapshot",		"dump"}, /* 10 */
-	{IO_QUICKLOAD,	"quickload",	"quik"}, /* 11 */
-	{IO_MEMCARD,	"memcard",		"memc"}, /* 12 */
-	{IO_COUNT,		NULL,			NULL  }, /* 13 Always at end of this array! */
+	{ IO_CARTSLOT,	"cartridge",	"cart" }, /*  0 */
+	{ IO_FLOPPY,	"floppydisk",	"flop" }, /*  1 */
+	{ IO_HARDDISK,	"harddisk",		"hard" }, /*  2 */
+	{ IO_CYLINDER,	"cylinder",		"cyln" }, /*  3 */
+	{ IO_CASSETTE,	"cassette",		"cass" }, /*  4 */
+	{ IO_PUNCHCARD,	"punchcard",	"pcrd" }, /*  5 */
+	{ IO_PUNCHTAPE,	"punchtape",	"ptap" }, /*  6 */
+	{ IO_PRINTER,	"printer",		"prin" }, /*  7 */
+	{ IO_SERIAL,	"serial",		"serl" }, /*  8 */
+	{ IO_PARALLEL,	"parallel",		"parl" }, /*  9 */
+	{ IO_SNAPSHOT,	"snapshot",		"dump" }, /* 10 */
+	{ IO_QUICKLOAD,	"quickload",	"quik" }, /* 11 */
+	{ IO_MEMCARD,	"memcard",		"memc" }, /* 12 */
 };
 
-
-/* register_device() - used to register the device in the options struct...	*/
-/* Call this from the CLI or UI to add a DEVICE (with its arg) to the 		*/
-/* options struct.  Return 0 for success, -1 for error 						*/
-int register_device (const int type, const char *arg)
+const char *device_typename(iodevice_t type)
 {
-	extern struct GameOptions options;
-
-	/* Check the the device type is valid, otherwise this lookup will be bad*/
-	if (type < 0 || type >= IO_COUNT)
-	{
-		printf("register_device() failed! - device type [%d] is not valid\n",type);
-		return -1;
-	}
-
-	/* Next, check that we havent loaded too many images					*/
-	if (options.image_count >= MAX_IMAGES)
-	{
-		printf("Too many image names specified!\n");
-		return -1;
-	}
-
-	/* All seems ok to add device and argument to options{} struct			*/
-	logerror("Image [%s] Registered for Device [%s]\n", arg, device_typename(type));
-
-	/* the user specified a device type */
-	options.image_files[options.image_count].type = type;
-	options.image_files[options.image_count].name = strdup(arg);
-	options.image_count++;
-	return 0;
-
+	assert(type >= 0);
+	assert(type < IO_COUNT);
+	return device_info_array[type].name;
 }
 
-int device_open(mess_image *img, int mode, void *args)
+
+
+const char *device_brieftypename(iodevice_t type)
 {
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->open)
-		return dev->open(img, mode, args);
-
-	return 1;
+	assert(type >= 0);
+	assert(type < IO_COUNT);
+	return device_info_array[type].shortname;
 }
 
-void device_close(mess_image *img)
-{
-	const struct IODevice *dev;
 
-	dev = image_device(img);
-	if (dev->close)
-		dev->close(img);
-}
-
-int device_seek(mess_image *img, int offset, int whence)
-{
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->seek)
-		return dev->seek(img, offset, whence);
-
-	return 0;
-}
-
-int device_tell(mess_image *img)
-{
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->tell)
-		return dev->tell(img);
-
-	return 0;
-}
-
-int device_status(mess_image *img, int newstatus)
-{
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->status)
-		return dev->status(img, newstatus);
-
-	return 0;
-}
-
-static const struct IODevice *get_sysconfig_device(const struct GameDriver *gamedrv, int device_num)
-{
-	struct SystemConfigurationParamBlock params;
-	memset(&params, 0, sizeof(params));
-	params.device_num = device_num;
-	if (gamedrv->sysconfig_ctor)
-		gamedrv->sysconfig_ctor(&params);
-	return params.dev;
-}
-
-const struct IODevice *device_first(const struct GameDriver *gamedrv)
-{
-	assert(gamedrv);
-	return get_sysconfig_device(gamedrv, 0);
-}
-
-const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev)
-{
-	int i;
-	const struct IODevice *dev2;
-
-	assert(gamedrv);
-	assert(dev);
-
-	i = 0;
-	do
-	{
-		dev2 = get_sysconfig_device(gamedrv, i++);
-	}
-	while(dev2 && (dev2 != dev));
-	if (dev2 == dev)
-		dev2 = get_sysconfig_device(gamedrv, i);
-	return dev2;
-}
-
-const struct IODevice *device_find(const struct GameDriver *gamedrv, int type)
-{
-    const struct IODevice *dev;
-	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
-	{
-		if (dev->type == type)
-			return dev;
-	}
-	return NULL;
-}
-
-int device_count(int type)
-{
-	const struct IODevice *dev;
-	dev = device_find(Machine->gamedrv, type);
-	return dev ? dev->count : 0;
-}
 
 int device_typeid(const char *name)
 {
 	int i;
-	for(i = 0; i < sizeof(devices) / sizeof(devices[0]); i++)
+	for (i = 0; i < sizeof(device_info_array) / sizeof(device_info_array[0]); i++)
 	{
-		if (devices[i].name && (!strcmpi(name, devices[i].name) || !strcmpi(name, devices[i].shortname)))
+		if (!strcmpi(name, device_info_array[i].name) || !strcmpi(name, device_info_array[i].shortname))
 			return i;
 	}
 	return -1;
 }
 
-/*
- * Return a name for the device type (to be used for UI functions)
- */
-const char *device_typename(int type)
+
+
+/*************************************
+ *
+ *	Device structure construction and destruction
+ *
+ *************************************/
+
+static const char *default_device_name(const struct IODevice *dev, int id,
+	char *buf, size_t bufsize)
 {
-	if (type < IO_COUNT)
-		return devices[type].name;
-	return "UNKNOWN";
-}
+	const char *name;
 
-const char *device_brieftypename(int type)
-{
-	if (type < IO_COUNT)
-		return devices[type].shortname;
-	return "UNKNOWN";
-}
-
-
-/* Return a name for a device of type 'type' with id 'id' */
-const char *device_typename_devtypeid(const struct GameDriver *drv, const struct IODevice *dev, int id)
-{
-	static char typename_id[40][31+1];
-	static int which = 0;
-	const char *name = "UNKNOWN";
-	const char *newname;
-	struct SystemConfigurationParamBlock cfg;
-
-	if (dev)
+	name = ui_getstring((UI_cartridge - IO_CARTSLOT) + dev->type);
+	if (dev->count > 1)
 	{
-		newname = NULL;
-		memset(&cfg, 0, sizeof(cfg));
-		drv->sysconfig_ctor(&cfg);
-		if (cfg.get_custom_devicename)
-		{
-			/* use a custom devicename */
-			newname = cfg.get_custom_devicename(dev->type, id, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
-			if (newname)
-				name = newname;
-		}
-		if (!newname)
-		{
-			name = ui_getstring((UI_cartridge - IO_CARTSLOT) + dev->type);
-			if (dev->count > 1)
-			{
-				/* for the average user counting starts at #1 ;-) */
-				sprintf(typename_id[which], "%s #%d", name, id+1);
-				name = typename_id[which];
-			}
-		}
+		/* for the average user counting starts at #1 ;-) */
+		snprintf(buf, bufsize, "%s #%d", name, id + 1);
+		name = buf;
 	}
-
-	if ((name >= typename_id[which]) && (name < typename_id[which] + sizeof(typename_id[which])))
-		which = (which + 1) % (sizeof(typename_id) / sizeof(typename_id[which]));
 	return name;
 }
 
-const char *device_typename_id(mess_image *img)
+
+
+static void default_device_getdispositions(const struct IODevice *dev, int id,
+	unsigned int *readable, unsigned int *writeable, unsigned int *creatable)
 {
-	return device_typename_devtypeid(
-		Machine->gamedrv,
-		image_device(img),
-		image_index_in_device(img));
+	*readable = dev->readable;
+	*writeable = dev->writeable;
+	*creatable = dev->creatable;
 }
 
-/*
- * Return the 'num'th file extension for a device of type 'type',
- * NULL if no file extensions of that type are available.
- */
-const char *device_file_extension(int type, int extnum)
-{
-	const struct IODevice *dev;
-	const char *ext;
 
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+
+struct IODevice *devices_allocate(const struct GameDriver *gamedrv)
+{
+	struct SystemConfigurationParamBlock params;
+	device_getinfo_handler handlers[64];
+	int count_overrides[sizeof(handlers) / sizeof(handlers[0])];
+	int count, i;
+	struct IODevice *devices = NULL;
+
+	memset(handlers, 0, sizeof(handlers));
+	memset(count_overrides, 0, sizeof(count_overrides));
+
+	if (gamedrv->sysconfig_ctor)
 	{
-		if( type == dev->type )
+		memset(&params, 0, sizeof(params));
+		params.device_slotcount = sizeof(handlers) / sizeof(handlers[0]);
+		params.device_handlers = handlers;
+		params.device_countoverrides = count_overrides;
+		gamedrv->sysconfig_ctor(&params);
+	}
+
+	/* count the amount of handlers that we have available */
+	for (count = 0; handlers[count]; count++)
+		;
+	count++; /* for our purposes, include the tailing empty device */
+
+	devices = (struct IODevice *) malloc(count * sizeof(struct IODevice));
+	if (!devices)
+		goto error;
+	memset(devices, 0, count * sizeof(struct IODevice));
+
+	for (i = 0; i < count; i++)
+	{
+		devices[i].type = IO_COUNT;
+
+		if (handlers[i])
 		{
-			ext = dev->file_extensions;
-			while( ext && *ext && extnum-- > 0 )
-				ext = ext + strlen(ext) + 1;
-			if( ext && !*ext )
-				ext = NULL;
-			return ext;
+			handlers[i](&devices[i]);
+			
+			/* overriding the count? */
+			if (count_overrides[i])
+				devices[i].count = count_overrides[i];
+
+			/* any problems? */
+			if ((devices[i].type < 0) || (devices[i].type >= IO_COUNT))
+				goto error;
+			if ((devices[i].count < 0) || (devices[i].count > MAX_DEV_INSTANCES))
+				goto error;
+			if (devices[i].error)
+				goto error;
+
+			/* fill in defaults */
+			if (!devices[i].name)
+				devices[i].name = default_device_name;
+			if (!devices[i].name)
+				devices[i].getdispositions = default_device_getdispositions;
 		}
+	}
+
+	return devices;
+
+error:
+	if (devices)
+		free(devices);
+	return NULL;
+}
+
+
+
+/*************************************
+ *
+ *	Diagnostics
+ *
+ *************************************/
+
+const struct IODevice *device_find(const struct IODevice *devices, iodevice_t type)
+{
+	int i;
+	for (i = 0; devices[i].type != IO_COUNT; i++)
+	{
+		if (devices[i].type == type)
+			return &devices[i];
 	}
 	return NULL;
 }
 
 
+
+/* this function is deprecated */
+int device_count(iodevice_t type)
+{
+	const struct IODevice *dev;
+
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	{
+		if (dev->type == type)
+			return dev->count;
+	}
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Diagnostics
+ *
+ *************************************/
 
 int device_valididtychecks(void)
 {
 	int error = 0;
 	int i;
 
-	if ((sizeof(devices) / sizeof(devices[0])) != IO_COUNT+1)
+	if ((sizeof(device_info_array) / sizeof(device_info_array[0])) != IO_COUNT)
 	{
-		printf("devices array should match size of IO_* enum\n");
+		printf("device_info_array array should match size of IO_* enum\n");
 		error = 1;
 	}
 
 	/* Check the device struct array */
-	i=0;
-	while(devices[i].type != IO_COUNT)
+	for (i = 0; i < sizeof(device_info_array) / sizeof(device_info_array[0]); i++)
 	{
-		if (devices[i].type != i)
+		if (device_info_array[i].type != i)
 		{
-			printf("MESS Validity Error - Device struct array order mismatch\n");
+			printf("Device struct array order mismatch\n");
+			error = 1;
+			break;
+		}
+
+		if (!device_info_array[i].name)
+		{
+			printf("device_info_array[%d].name appears to be NULL\n", i);
 			error = 1;
 		}
-		i++;
-	}
-	if (i < IO_COUNT)
-	{
-		printf("MESS Validity Error - Device struct entry missing\n");
-		error = 1;
-	}
 
-	for(i = 0; i < sizeof(devices) / sizeof(devices[0]); i++)
-	{
-		if (devices[i].type != i)
+		if (!device_info_array[i].shortname)
 		{
-			printf("devices[%d].id should equal %d, but instead is %d\n", i, i, devices[i].type);
+			printf("device_info_array[%d].shortname appears to be NULL\n", i);
 			error = 1;
 		}
 	}

@@ -594,11 +594,32 @@ ROM_START( at486 )
     ROM_LOAD("cga.chr",     0x00000, 0x01000, CRC(42009069) SHA1(ed08559ce2d7f97f68b9f540bddad5b6295294dd))
 ROM_END
 
+static void ibmat_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 3;
+}
+
+static void ibmat_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_pc);
+	dev->count = 2;
+}
+
+static void ibmat_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	harddisk_device_getinfo(dev);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(ibmat)
 	CONFIG_RAM_DEFAULT( (640+1024) * 1024 )
-	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_FLOPPY(2, pc)
-	CONFIG_DEVICE_HARDDISK(4)
+	CONFIG_DEVICE(ibmat_printer_getinfo)
+	CONFIG_DEVICE(ibmat_floppy_getinfo)
+	CONFIG_DEVICE(ibmat_harddisk_getinfo)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )
 SYSTEM_CONFIG_END

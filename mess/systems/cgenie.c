@@ -455,10 +455,40 @@ ROM_START (cgenie)
 
 ROM_END
 
+static void cgenie_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_cgenie_cart;
+}
+
+static void cgenie_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_cgenie_floppy;
+}
+
+static void cgenie_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "cas\0";
+	dev->readable = 0;	/* INVALID */
+	dev->writeable = 0;	/* INVALID */
+	dev->creatable = 0;	/* INVALID */
+	dev->load = device_load_cgenie_cassette;
+}
+
 SYSTEM_CONFIG_START(cgenie)
-	CONFIG_DEVICE_CARTSLOT_OPT		(1, "rom\0", NULL, NULL, device_load_cgenie_cart, NULL, NULL, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0", device_load_cgenie_floppy)
-	CONFIG_DEVICE_LEGACY			(IO_CASSETTE, 1, "cas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, device_load_cgenie_cassette, NULL, NULL)
+	CONFIG_DEVICE(cgenie_cartslot_getinfo)
+	CONFIG_DEVICE(cgenie_floppy_getinfo)
+	CONFIG_DEVICE(cgenie_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */

@@ -952,21 +952,39 @@ MACHINE_DRIVER_END
 #define init_cbm600pal cbm600pal_driver_init
 #define init_cbm700 cbm700_driver_init
 
+static void cbmb_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\00010\00020\00040\00060\0";
+}
+
+static void cbmb_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbmb, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(cbmb)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\00010\00020\00040\00060\0")
-	CONFIG_DEVICE_CBMBQUICK
+	CONFIG_DEVICE(cbmb_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmb_quickload_getinfo)
 #ifdef PET_TEST_CODE
 	/* monitor OR tape routine in kernel */
-	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 #endif
 SYSTEM_CONFIG_END
 
+static void cbm500_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm500, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(cbm500)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\00010\00020\00040\00060\0")
-	CONFIG_DEVICE_CBM500QUICK
+	CONFIG_DEVICE(cbmb_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbm500_quickload_getinfo)
 #ifdef PET_TEST_CODE
 	/* monitor OR tape routine in kernel */
-	CONFIG_DEVICE_FLOPPY_CBM
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
 #endif
 SYSTEM_CONFIG_END
 

@@ -466,11 +466,20 @@ ROM_START(coupe)
 	ROM_LOAD("sam_rom1.rom", 0x4000, 0x4000, CRC(F031AED4) SHA1(a7f06facc6f0a3713215f4befc307914836706a4))
 ROM_END
 
+static void coupe_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_coupe_floppy;
+}
+
 SYSTEM_CONFIG_START(coupe)
 	CONFIG_RAM_DEFAULT(256 * 1024)
 	CONFIG_RAM(512 * 1024)
 
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "dsk\0", device_load_coupe_floppy)
+	CONFIG_DEVICE(coupe_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */

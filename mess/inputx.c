@@ -487,6 +487,7 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 			begin_resource_tracking();
 
 			input_ports = input_port_allocate(gamedrv->construct_ipt);
+			assert(input_ports);
 
 			build_codes(input_ports, codes, FALSE);
 

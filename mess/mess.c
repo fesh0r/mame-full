@@ -76,20 +76,6 @@ static int distribute_images(struct distributed_images *images)
 
 
 
-/* Small check to see if system supports device */
-static int supported_device(const struct GameDriver *gamedrv, int type)
-{
-	const struct IODevice *dev;
-	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
-	{
-		if(dev->type==type)
-			return TRUE;	/* Return OK */
-	}
-	return FALSE;
-}
-
-
-
 static int ram_init(const struct GameDriver *gamedrv)
 {
 	int i;
@@ -169,12 +155,18 @@ int devices_init(const struct GameDriver *gamedrv)
 		mess_path = s;
 	}
 
+	/* initialize natural keyboard support */
 	inputx_init();
+
+	/* allocate the IODevice struct */
+	Machine->devices = devices_allocate(Machine->gamedrv);
+	if (!Machine->devices)
+		return 1;
 
 	/* Check that the driver supports all devices requested (options struct)*/
 	for( i = 0; i < options.image_count; i++ )
 	{
-		if (supported_device(Machine->gamedrv, options.image_files[i].type)==FALSE)
+		if (!device_find(Machine->devices	, options.image_files[i].type))
 		{
 			printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
 			return 1;
@@ -186,12 +178,14 @@ int devices_init(const struct GameDriver *gamedrv)
 		return 1;
 
 	/* init all devices */
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
 	{
+		dev = &Machine->devices[i];
+
 		/* all instances */
-		for( id = 0; id < dev->count; id++ )
+		for (id = 0; id < dev->count; id++)
 		{
-			mess_image *img = image_from_devtype_and_index(dev->type, id);
+			mess_image *img = image_from_device_and_index(dev, id);
 			image_init(img);
 		}
 	}
@@ -200,8 +194,11 @@ int devices_init(const struct GameDriver *gamedrv)
 	return 0;
 }
 
+
+
 int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 {
+	int i;
 	int id;
 	int result;
 	int count;
@@ -211,7 +208,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 	mess_image *img;
 
 	/* normalize ispreload */
-	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
+	ispreload = ispreload ? 1 : 0;
 
 	/* distribute images to appropriate devices */
 	memset(&images, 0, sizeof(images));
@@ -219,20 +216,21 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 		return 1;
 
 	/* load all devices with matching preload */
-	for(dev = device_first(gamedrv); dev; dev = device_next(gamedrv, dev))
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
 	{
+		dev = &Machine->devices[i];
 		count = images.count[dev->type];
 
-		if ((dev->flags & DEVICE_MUST_BE_LOADED) && (count != dev->count))
+		if (dev->must_be_loaded && (count != dev->count))
 		{
 			printf("Driver requires that device %s must have an image to load\n", device_typename(dev->type));
 			return 1;
 		}
 
 		/* all instances */
-		for( id = 0; id < count; id++ )
+		for (id = 0; id < count; id++)
 		{
-			if ((dev->flags & DEVICE_LOAD_AT_INIT) == ispreload)
+			if (dev->load_at_init == ispreload)
 			{
 				imagename = images.names[dev->type][id];
 				if (imagename)
@@ -264,7 +262,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 void devices_exit(void)
 {
 	const struct IODevice *dev;
-	int id;
+	int i, id;
 	mess_image *img;
 
 	/* unload all devices */
@@ -272,8 +270,10 @@ void devices_exit(void)
 	image_unload_all(TRUE);
 
 	/* exit all devices */
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	for (i = 0; Machine->devices[i].type < IO_COUNT; i++)
 	{
+		dev = &Machine->devices[i];
+
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
@@ -284,6 +284,39 @@ void devices_exit(void)
 
 	devices_inited = FALSE;
 }
+
+
+
+int register_device(iodevice_t type, const char *arg)
+{
+	extern struct GameOptions options;
+
+	/* Check the the device type is valid, otherwise this lookup will be bad*/
+	if (type < 0 || type >= IO_COUNT)
+	{
+		printf("register_device() failed! - device type [%d] is not valid\n",type);
+		return -1;
+	}
+
+	/* Next, check that we havent loaded too many images					*/
+	if (options.image_count >= sizeof(options.image_files) / sizeof(options.image_files[0]))
+	{
+		printf("Too many image names specified!\n");
+		return -1;
+	}
+
+	/* All seems ok to add device and argument to options{} struct			*/
+	logerror("Image [%s] Registered for Device [%s]\n", arg, device_typename(type));
+
+	/* the user specified a device type */
+	options.image_files[options.image_count].type = type;
+	options.image_files[options.image_count].name = strdup(arg);
+	options.image_count++;
+	return 0;
+
+}
+
+
 
 void showmessdisclaimer(void)
 {
@@ -461,6 +494,7 @@ int mess_validitychecks(void)
 	int i, j;
 	int is_invalid;
 	int error = 0;
+	struct IODevice *devices;
 	const struct IODevice *dev;
 	long used_devices;
 	const char *s1;
@@ -468,8 +502,11 @@ int mess_validitychecks(void)
 	extern int device_valididtychecks(void);
 
 	/* MESS specific driver validity checks */
-	for(i = 0; drivers[i]; i++)
+	for (i = 0; drivers[i]; i++)
 	{
+		begin_resource_tracking();
+		devices = devices_allocate(drivers[i]);
+
 		/* make sure that there are no clones that reference nonexistant drivers */
 		if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
 		{
@@ -508,8 +545,10 @@ int mess_validitychecks(void)
 
 		/* check device array */
 		used_devices = 0;
-		for(dev = device_first(drivers[i]); dev; dev = device_next(drivers[i], dev))
+		for (j = 0; devices[j].type < IO_COUNT; j++)
 		{
+			dev = &devices[j];
+
 			if (dev->type >= IO_COUNT)
 			{
 				printf("%s: invalid device type %i\n", drivers[i]->name, dev->type);
@@ -532,58 +571,67 @@ int mess_validitychecks(void)
 			 * 2.  Checks for duplicate extensions
 			 * 3.  Makes sure that all extensions are either lower case chars or numbers
 			 */
-			s1 = dev->file_extensions;
-			while(*s1)
+			if (!dev->file_extensions)
 			{
-				/* check for invalid chars */
-				is_invalid = 0;
-				for (s2 = s1; *s2; s2++)
+				printf("%s: device type '%s' has null file extensions\n", drivers[i]->name, device_typename(dev->type));
+				error = 1;
+			}
+			else
+			{
+				s1 = dev->file_extensions;
+				while(*s1)
 				{
-					if (!isdigit(*s2) && !islower(*s2))
-						is_invalid = 1;
-				}
-				if (is_invalid)
-				{
-					printf("%s: device type '%s' has an invalid extension '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
-					error = 1;
-				}
-				s2++;
+					/* check for invalid chars */
+					is_invalid = 0;
+					for (s2 = s1; *s2; s2++)
+					{
+						if (!isdigit(*s2) && !islower(*s2))
+							is_invalid = 1;
+					}
+					if (is_invalid)
+					{
+						printf("%s: device type '%s' has an invalid extension '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
+						error = 1;
+					}
+					s2++;
 
-				/* check for dupes */
-				is_invalid = 0;
-				while(*s2)
-				{
-					if (!strcmp(s1, s2))
-						is_invalid = 1;
-					s2 += strlen(s2) + 1;
-				}
-				if (is_invalid)
-				{
-					printf("%s: device type '%s' has duplicate extensions '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
-					error = 1;
-				}
+					/* check for dupes */
+					is_invalid = 0;
+					while(*s2)
+					{
+						if (!strcmp(s1, s2))
+							is_invalid = 1;
+						s2 += strlen(s2) + 1;
+					}
+					if (is_invalid)
+					{
+						printf("%s: device type '%s' has duplicate extensions '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
+						error = 1;
+					}
 
-				s1 += strlen(s1) + 1;
+					s1 += strlen(s1) + 1;
+				}
 			}
 
 			/* enforce certain rules for certain device types */
-			switch(dev->type) {
-			case IO_QUICKLOAD:
-			case IO_SNAPSHOT:
-				if (dev->count != 1)
-				{
-					printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, device_typename(dev->type));
-					error = 1;
-				}
-				/* fallthrough */
+			switch(dev->type)
+			{
+				case IO_QUICKLOAD:
+				case IO_SNAPSHOT:
+					if (dev->count != 1)
+					{
+						printf("%s: there can only be one instance of devices of type '%s'\n", drivers[i]->name, device_typename(dev->type));
+						error = 1;
+					}
+					/* fallthrough */
 
-			case IO_CARTSLOT:
-				if (dev->open_mode != OSD_FOPEN_READ)
-				{
-					printf("%s: devices of type '%s' must have open mode OSD_FOPEN_READ\n", drivers[i]->name, device_typename(dev->type));
-					error = 1;
-				}
-				break;
+				case IO_CARTSLOT:
+					if (!dev->readable || dev->writeable || dev->creatable)
+					{
+						printf("%s: devices of type '%s' has invalid open modes\n", drivers[i]->name, device_typename(dev->type));
+						error = 1;
+					}
+					break;
 			}
 		}
 
@@ -593,6 +641,8 @@ int mess_validitychecks(void)
 		/* make sure that our input system likes this driver */
 		if (inputx_validitycheck(drivers[i]))
 			error = 1;
+
+		end_resource_tracking();
 	}
 
 	if (inputx_validitycheck(NULL))

@@ -153,17 +153,28 @@ tape apexc_tapes[2];
 
 
 
-static int apexc_get_open_mode(mess_image *image)
+static void apexc_get_open_mode(const struct IODevice *dev, int id,
+	unsigned int *readable, unsigned int *writeable, unsigned int *creatable)
 {
 	/* unit 0 is read-only, unit 1 is write-only */
-	return image_index_in_device(image) ? OSD_FOPEN_WRITE : OSD_FOPEN_READ;
+	if (id)
+	{
+		*readable = 0;
+		*writeable = 1;
+		*creatable = 1;
+	}
+	else
+	{
+		*readable = 1;
+		*writeable = 1;
+		*creatable = 1;
+	}
 }
 
 
 
 static DEVICE_INIT(apexc_tape)
 {
-	image_set_open_mode_callback(image, apexc_get_open_mode);
 	return INIT_PASS;
 }
 
@@ -836,9 +847,34 @@ ROM_START(apexc)
 		/* space filled with our font */
 ROM_END
 
+static void apexc_cylinder_getinfo(struct IODevice *dev)
+{
+	/* cylinder */
+	dev->type = IO_CYLINDER;
+	dev->count = 1;
+	dev->file_extensions = "apc\0";
+	dev->reset_on_load = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->load = device_load_apexc_cylinder;
+	dev->unload = device_unload_apexc_cylinder;
+}
+
+static void apexc_punchtape_getinfo(struct IODevice *dev)
+{
+	/* punchtape */
+	dev->type = IO_PUNCHTAPE;
+	dev->count = 2;
+	dev->file_extensions = "tap\0";
+	dev->getdispositions = apexc_get_open_mode;
+	dev->init = device_init_apexc_tape;
+	dev->load = device_load_apexc_tape;
+}
+
 SYSTEM_CONFIG_START(apexc)
-	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW_OR_READ, NULL, NULL, device_load_apexc_cylinder, device_unload_apexc_cylinder, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_apexc_tape, NULL, device_load_apexc_tape, NULL, NULL)
+	CONFIG_DEVICE(apexc_cylinder_getinfo)
+	CONFIG_DEVICE(apexc_punchtape_getinfo)
 SYSTEM_CONFIG_END
 
 /*		   YEAR		NAME		PARENT			COMPAT	MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */

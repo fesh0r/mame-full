@@ -1735,10 +1735,24 @@ ROM_START(einstei2)
 	ROM_LOAD("charrom.rom",0x012000, 0x0800, NO_DUMP)
 ROM_END
 
+static void einstein_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void einstein_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacydsk_device_getinfo(dev);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(einstein)
 	CONFIG_RAM_DEFAULT(65536)
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_LEGACY_DSK(4)
+	CONFIG_DEVICE(einstein_printer_getinfo)
+	CONFIG_DEVICE(einstein_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME		PARENT	COMPAT	MACHINE    INPUT     INIT  CONFIG,   COMPANY   FULLNAME */

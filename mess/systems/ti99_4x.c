@@ -822,15 +822,111 @@ ROM_END
  * are emulated.
  */
 
+static void ti99_4_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 2;
+}
+
+static void ti99_4_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	dev->type = IO_CARTSLOT;
+	dev->count = 3;
+	dev->file_extensions = "bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_ti99_cart;
+	dev->unload = device_unload_ti99_cart;
+}
+
+static void ti99_4_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_ti99);
+	dev->count = 4;
+}
+
+static void ti99_4_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	dev->type = IO_HARDDISK;
+	dev->count = 4;
+	dev->file_extensions = "hd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_ti99_hd;
+	dev->load = device_load_ti99_hd;
+	dev->unload = device_unload_ti99_hd;
+}
+
+static void ti99_4_parallel_getinfo(struct IODevice *dev)
+{
+	/* parallel */
+	dev->type = IO_PARALLEL;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_ti99_4_pio;
+	dev->unload = device_unload_ti99_4_pio;
+}
+
+static void ti99_4_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_ti99_4_rs232;
+	dev->unload = device_unload_ti99_4_rs232;
+}
+
+#if 0
+static void ti99_4_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	dev->type = IO_QUICKLOAD;
+	dev->count = 1;
+	dev->reset_on_load = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_ti99_hsgpl;
+	dev->unload = device_unload_ti99_hsgpl;
+}
+#endif
+
+static void ti99_4_memcard_getinfo(struct IODevice *dev)
+{
+	/* memcard */
+	dev->type = IO_MEMCARD;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_smartmedia;
+	dev->load = device_load_smartmedia;
+	dev->unload = device_unload_smartmedia;
+}
+
 SYSTEM_CONFIG_START(ti99_4)
-	CONFIG_DEVICE_CASSETTE			(2, NULL)
-	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
-	CONFIG_DEVICE_FLOPPY			(4,	ti99)
-	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
-	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
-	/*CONFIG_DEVICE_LEGACY			(IO_QUICKLOAD,	1, "\0",	DEVICE_LOAD_RESETS_CPU,		OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_hsgpl,		device_unload_ti99_hsgpl,	NULL)*/
-	CONFIG_DEVICE_LEGACY			(IO_MEMCARD,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,	device_init_smartmedia,	NULL,	device_load_smartmedia,	device_unload_smartmedia,	NULL)
+	CONFIG_DEVICE(ti99_4_cassette_getinfo)
+	CONFIG_DEVICE(ti99_4_cartslot_getinfo)
+	CONFIG_DEVICE(ti99_4_floppy_getinfo)
+	CONFIG_DEVICE(ti99_4_harddisk_getinfo)
+	CONFIG_DEVICE(ti99_4_parallel_getinfo)
+	CONFIG_DEVICE(ti99_4_serial_getinfo)
+	/*CONFIG_DEVICE(ti99_4_quickload_getinfo)*/
+	CONFIG_DEVICE(ti99_4_memcard_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

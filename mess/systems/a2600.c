@@ -675,8 +675,18 @@ ROM_START( a2600 )
 ROM_END
 
 
+static void a2600_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0a26\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_a2600_cart;
+}
+
 SYSTEM_CONFIG_START(a2600)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0a26\0", NULL, NULL, device_load_a2600_cart, NULL, NULL, NULL )
+	CONFIG_DEVICE(a2600_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 

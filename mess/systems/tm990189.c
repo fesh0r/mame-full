@@ -989,10 +989,30 @@ INPUT_PORTS_START(tm990_189)
 
 INPUT_PORTS_END
 
+static void tm990_189_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void tm990_189_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_tm990_189_rs232;
+	dev->unload = device_unload_tm990_189_rs232;
+}
+
 SYSTEM_CONFIG_START(tm990_189)
 	/* a tape interface and a rs232 interface... */
-	CONFIG_DEVICE_CASSETTE		(1, NULL)
-	CONFIG_DEVICE_LEGACY		(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_tm990_189_rs232,	device_unload_tm990_189_rs232,	NULL)
+	CONFIG_DEVICE(tm990_189_cassette_getinfo)
+	CONFIG_DEVICE(tm990_189_serial_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY					FULLNAME */

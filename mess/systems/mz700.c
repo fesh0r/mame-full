@@ -401,8 +401,15 @@ ROM_START(mz800)
 		ROM_LOAD("mz700fon.int",0x00000, 0x1000, CRC(42b9e8fb) SHA1(5128ad179a702f8e0bd9910a58bad8fbe4c20167))
 ROM_END
 
+static void mz700_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, mz700_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(mz700)
-	CONFIG_DEVICE_CASSETTE(1, mz700_cassette_formats)
+	CONFIG_DEVICE(mz700_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */

@@ -1750,10 +1750,42 @@ ROM_START(nc200)
         ROM_LOAD("nc200.rom", 0x010000, 0x080000, CRC(bb8180e7) SHA1(fb5c93b0a3e199202c6a12548d2617f7a09bae47))
 ROM_END
 
+static void nc_common_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void nc_common_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "crd\0card\0";
+	dev->init = device_init_nc_pcmcia_card;
+	dev->load = device_load_nc_pcmcia_card;
+	dev->unload = device_unload_nc_pcmcia_card;
+}
+
+static void nc_common_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->count = 1;
+	dev->file_extensions = "txt\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->init = serial_device_init;
+	dev->load = device_load_nc_serial;
+	dev->unload = serial_device_unload;
+}
+
 SYSTEM_CONFIG_START(nc_common)
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "crd\0card\0", device_init_nc_pcmcia_card, NULL, device_load_nc_pcmcia_card, device_unload_nc_pcmcia_card,  NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_SERIAL, 1, "txt\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, serial_device_init, NULL, device_load_nc_serial, serial_device_unload, NULL)
+	CONFIG_DEVICE(nc_common_printer_getinfo)
+	CONFIG_DEVICE(nc_common_cartslot_getinfo)
+	CONFIG_DEVICE(nc_common_serial_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(nc100)
@@ -1761,10 +1793,17 @@ SYSTEM_CONFIG_START(nc100)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 SYSTEM_CONFIG_END
 
+static void nc200_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_pc);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(nc200)
 	CONFIG_IMPORT_FROM(nc_common)
 	CONFIG_RAM_DEFAULT(128 * 1024)
-	CONFIG_DEVICE_FLOPPY(1, pc)
+	CONFIG_DEVICE(nc200_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  COMPAT	MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

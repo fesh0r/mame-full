@@ -847,28 +847,40 @@ MACHINE_DRIVER_END
 #define init_plus4v 	c16_driver_init
 #define init_c364		c16_driver_init
 
-#define CONFIG_DEVICE_C16CART \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "bin\0rom\0", NULL, NULL, device_load_c16_rom, device_unload_c16_rom, NULL, NULL)
+static void c16cart_device_getinfo(struct IODevice *dev)
+{
+	cartslot_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "bin\0rom\0";
+	dev->load = device_load_c16_rom;
+	dev->unload = device_unload_c16_rom;
+}
+
+static void c16_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_c16, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
 
 SYSTEM_CONFIG_START(c16)
-	CONFIG_DEVICE_C16CART
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_C16QUICK
-	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16c)
-	CONFIG_DEVICE_C16CART
-	CONFIG_DEVICE_C16QUICK
-	CONFIG_DEVICE_VC20TAPE
-	CONFIG_DEVICE_C1551
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(c1551_device_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c16v)
-	CONFIG_DEVICE_C16CART
-	CONFIG_DEVICE_C16QUICK
-	CONFIG_DEVICE_VC20TAPE
-	CONFIG_DEVICE_VC1541
+	CONFIG_DEVICE(c16cart_device_getinfo)
+	CONFIG_DEVICE(c16_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(vc1541_device_getinfo)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT	CONFIG   COMPANY 								FULLNAME */

@@ -376,11 +376,14 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 
 	// look up the device
 	pszExtension = T2A(_tcsrchr(pszFilename, '.'));
-	if (pszExtension)
+	if (pszExtension && pPickerInfo->pDriver)
 	{
 		pszExtension++;
-		pDevice = pPickerInfo->pDriver ? device_first(pPickerInfo->pDriver) : NULL;
-		while(pDevice)
+
+		begin_resource_tracking();
+		pDevice = devices_allocate(pPickerInfo->pDriver);
+
+		while(pDevice->type < IO_COUNT)
 		{
 			s = pDevice->file_extensions;
 			if (s)
@@ -390,8 +393,9 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 				if (*s)
 					break;
 			}
-			pDevice = device_next(pPickerInfo->pDriver, pDevice);
+			pDevice++;
 		}
+		end_resource_tracking();
 	}
 
 	// no device?  cop out unless bForce is on

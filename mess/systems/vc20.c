@@ -807,29 +807,41 @@ MACHINE_DRIVER_END
 #define init_vic1001	vic20_driver_init
 #define init_vic20i 	vic20ieee_driver_init
 
-#define CONFIG_DEVICE_CBMVC20 \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "a0\00020\00040\00060\0rom\0bin\0", device_init_vc20_rom, NULL, device_load_vc20_rom, NULL, NULL, NULL)
+static void cbmvc20_cartslot_getinfo(struct IODevice *dev)
+{
+	cartslot_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "a0\00020\00040\00060\0rom\0bin\0";
+	dev->init = device_init_vc20_rom;
+	dev->load = device_load_vc20_rom;
+}
+
+static void vc20_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_vc20, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
 
 SYSTEM_CONFIG_START(vc20)
-	CONFIG_DEVICE_CBMVC20
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_VC20QUICK
-	CONFIG_DEVICE_VC20TAPE
+	CONFIG_DEVICE(cbmvc20_cartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(vc20_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(vc20v)
-	CONFIG_DEVICE_CBMVC20
-	CONFIG_DEVICE_VC20QUICK
-	CONFIG_DEVICE_VC20TAPE
-	CONFIG_DEVICE_VC1541
+	CONFIG_DEVICE(cbmvc20_cartslot_getinfo)
+	CONFIG_DEVICE(vc20_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(vc1541_device_getinfo)
 SYSTEM_CONFIG_END
 
 #ifdef PET_TEST_CODE
 SYSTEM_CONFIG_START(vc20i)
-	CONFIG_DEVICE_CBMVC20
-	CONFIG_DEVICE_VC20QUICK
-	CONFIG_DEVICE_VC20TAPE
-	CONFIG_DEVICE_C2031
+	CONFIG_DEVICE(cbmvc20_cartslot_getinfo)
+	CONFIG_DEVICE(vc20_quickload_getinfo)
+	CONFIG_DEVICE(vc20tape_device_getinfo)
+	CONFIG_DEVICE(c2031_device_getinfo)
 SYSTEM_CONFIG_END
 #endif
 

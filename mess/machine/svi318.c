@@ -201,7 +201,7 @@ WRITE8_HANDLER (svi318_printer_w)
 
  READ8_HANDLER (svi318_printer_r)
 {
-	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0) )
+	if (printer_status(image_from_devtype_and_index(IO_PRINTER, 0), 0) )
 		return 0xfe;
 
 	return 0xff;

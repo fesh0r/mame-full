@@ -331,8 +331,18 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_PALETTE_INIT(gbc)
 MACHINE_DRIVER_END
 
+static void gameboy_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "gb\0gmb\0cgb\0gbc\0sgb\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_gb_cart;
+}
+
 SYSTEM_CONFIG_START(gameboy)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", NULL, NULL, device_load_gb_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(gameboy_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 static MACHINE_DRIVER_START( megaduck )
@@ -363,8 +373,18 @@ static MACHINE_DRIVER_START( megaduck )
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
 MACHINE_DRIVER_END
 
+static void megaduck_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_megaduck_cart;
+}
+
 SYSTEM_CONFIG_START(megaduck)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, device_load_megaduck_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(megaduck_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

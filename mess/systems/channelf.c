@@ -282,8 +282,17 @@ ROM_START(channelf)
 		ROM_LOAD("sl31254.rom",  0x0400, 0x0400, CRC(9c047ba3) SHA1(8f70d1b74483ba3a37e86cf16c849d601a8c3d2c))
 ROM_END
 
+static void channelf_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->load = device_load_channelf_cart;
+}
+
 SYSTEM_CONFIG_START(channelf)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, device_load_channelf_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(channelf_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

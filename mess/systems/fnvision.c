@@ -353,8 +353,18 @@ DEVICE_LOAD( fnvision_cart )
 	return 0;
 }
 
+static void fnvision_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_fnvision_cart;
+}
+
 SYSTEM_CONFIG_START( fnvision )
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "rom\0", NULL, NULL, device_load_fnvision_cart, NULL, NULL, NULL )
+	CONFIG_DEVICE(fnvision_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 //    YEAR	NAME	  PARENT COMPAT MACHINE INPUT INIT COMPANY FULLNAME

@@ -170,8 +170,18 @@ static MACHINE_DRIVER_START( wscolor )
 	MDRV_PALETTE_LENGTH(4096)
 MACHINE_DRIVER_END
 
+static void wswan_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "ws\0wsc\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_wswan_cart;
+}
+
 SYSTEM_CONFIG_START(wswan)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "ws\0wsc\0", NULL, NULL, device_load_wswan_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(wswan_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -9,35 +9,111 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include "osdepend.h"
+#include "osd_mess.h"
+#include "opresolv.h"
+#include "fileio.h"
+
+struct mame_bitmap;
+
+#define MAX_DEV_INSTANCES	5
 
 typedef enum
 {
-	/* List of all supported devices.  Refer to the device by these names only							*/
-	IO_CARTSLOT,	/*  0 - Cartridge Port, as found on most console and on some computers 				*/
-	IO_FLOPPY,		/*  1 - Floppy Disk unit 															*/
-	IO_HARDDISK,	/*  2 - Hard Disk unit 																*/
-	IO_CYLINDER,	/*  3 - Magnetically-Coated Cylinder 												*/
-	IO_CASSETTE,	/*  4 - Cassette Recorder (common on early home computers) 							*/
-	IO_PUNCHCARD,	/*  5 - Card Puncher/Reader 														*/
-	IO_PUNCHTAPE,	/*  6 - Tape Puncher/Reader (reels instead of punchcards) 							*/
-	IO_PRINTER,		/*  7 - Printer device 																*/
+	/* List of all supported devices.  Refer to the device by these names only */
+	IO_CARTSLOT,	/*  0 - Cartridge Port, as found on most console and on some computers */
+	IO_FLOPPY,		/*  1 - Floppy Disk unit */
+	IO_HARDDISK,	/*  2 - Hard Disk unit */
+	IO_CYLINDER,	/*  3 - Magnetically-Coated Cylinder */
+	IO_CASSETTE,	/*  4 - Cassette Recorder (common on early home computers) */
+	IO_PUNCHCARD,	/*  5 - Card Puncher/Reader */
+	IO_PUNCHTAPE,	/*  6 - Tape Puncher/Reader (reels instead of punchcards) */
+	IO_PRINTER,		/*  7 - Printer device */
 	IO_SERIAL,		/*  8 - Generic Serial Port */
-	IO_PARALLEL,    /*  9 - Generic Parallel Port														*/
-	IO_SNAPSHOT,	/* 10 - Complete 'snapshot' of the state of the computer 							*/
-	IO_QUICKLOAD,	/* 11 - Allow to load program/data into memory, without matching any actual device	*/
-	IO_MEMCARD,		/* 12 - Memory card																	*/
-	IO_COUNT		/* 13 - Total Number of IO_devices for searching									*/
+	IO_PARALLEL,    /*  9 - Generic Parallel Port */
+	IO_SNAPSHOT,	/* 10 - Complete 'snapshot' of the state of the computer */
+	IO_QUICKLOAD,	/* 11 - Allow to load program/data into memory, without matching any actual device */
+	IO_MEMCARD,		/* 12 - Memory card */
+	IO_COUNT		/* 13 - Total Number of IO_devices for searching */
 } iodevice_t;
 
-/* Call this from the CLI to add a DEVICE (with its arg) to the options struct */
-int register_device (const int type, const char *arg);
+struct IODevice;
+struct GameDriver;
 
-/* Device handlers */
-int device_open(mess_image *img, int mode, void *args);
-void device_close(mess_image *img);
-int device_seek(mess_image *img, int offset, int whence);
-int device_tell(mess_image *img);
-int device_status(mess_image *img, int newstatus);
+typedef void (*device_getinfo_handler)(struct IODevice *dev);
 
-#endif
+typedef int (*device_init_handler)(mess_image *img);
+typedef void (*device_exit_handler)(mess_image *img);
+typedef int (*device_load_handler)(mess_image *img, mame_file *fp);
+typedef int (*device_create_handler)(mess_image *img, mame_file *fp, int format_type, option_resolution *format_options);
+typedef void (*device_unload_handler)(mess_image *img);
+typedef void (*device_partialhash_handler)(char *, const unsigned char *, unsigned long, unsigned int);
+
+
+struct CreateImageOptions
+{
+	const char *extensions;
+	const char *description;
+	const char *optspec;
+};
+
+struct IODevice
+{
+	/* the basics */
+	iodevice_t type;
+	int count;
+	const char *file_extensions;
+
+	/* open dispositions */
+	unsigned int readable : 1;
+	unsigned int writeable : 1;
+	unsigned int creatable : 1;
+
+	/* miscellaneous flags */
+	unsigned int reset_on_load : 1;
+	unsigned int must_be_loaded : 1;
+	unsigned int load_at_init : 1;
+	unsigned int error : 1;
+
+	/* image handling callbacks */
+	device_init_handler init;
+	device_exit_handler exit;
+	device_load_handler load;
+	device_create_handler create;
+	device_unload_handler unload;
+	int (*imgverify)(const UINT8 *buf, size_t size);
+	device_partialhash_handler partialhash;
+	void (*getdispositions)(const struct IODevice *dev, int id,
+		unsigned int *readable, unsigned int *writeable, unsigned int *creatable);
+
+	/* cosmetic/UI callbacks */
+	void (*display)(mess_image *img, struct mame_bitmap *bitmap);
+	const char *(*name)(const struct IODevice *dev, int id, char *buf, size_t bufsize);
+
+	/* image creation options */
+	const struct OptionGuide *createimage_optguide;
+	struct CreateImageOptions *createimage_options; 
+
+	/* user data pointers */
+	void *user1;
+	void *user2;
+	void *user3;
+	void *user4;
+};
+
+
+/* device naming */
+const char *device_typename(iodevice_t type);
+const char *device_brieftypename(iodevice_t type);
+int device_typeid(const char *name);
+
+/* device allocation */
+struct IODevice *devices_allocate(const struct GameDriver *gamedrv);
+
+/* device lookup; both of these function assume only one of each type of device */
+const struct IODevice *device_find(const struct IODevice *devices, iodevice_t type);
+int device_count(iodevice_t type);
+
+/* diagnostics */
+int device_valididtychecks(void);
+
+#endif /* DEVICE_H */

@@ -66,7 +66,7 @@ static  READ8_HANDLER(atom_via_in_a_func)
 
 	data = atom_printer_data;
 
-	if (!device_status(printer_image(),0))
+	if (!printer_status(printer_image(),0))
 	{
 		/* offline */
 		data |=0x080;

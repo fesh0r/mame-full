@@ -50,16 +50,6 @@ int image_init(mess_image *img);
 void image_exit(mess_image *img);
 
 
-/****************************************************************************
-  Device callback installation functions
-
-  Called during DEVICE_INIT() to install callbacks to customize certain
-  behavior
-****************************************************************************/
-
-void image_set_open_mode_callback(mess_image *img, int (*get_open_mode)(mess_image *));
-
-
 
 /****************************************************************************
   Device loading and unloading functions

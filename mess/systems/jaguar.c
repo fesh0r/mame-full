@@ -697,8 +697,18 @@ static DEVICE_LOAD( jaguar_cart )
 	return cartslot_load_generic(file, REGION_CPU1, 0x800000, 1, 0x600000, CARTLOAD_32BIT_BE);
 }
 
+static void jaguar_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "jag\0abs\0bin\0rom\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_jaguar_cart;
+}
+
 SYSTEM_CONFIG_START(jaguar)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "jag\0abs\0bin\0rom\0", NULL, NULL, device_load_jaguar_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(jaguar_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 

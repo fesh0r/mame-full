@@ -19,7 +19,7 @@ struct _mess_image
 {
 	/* variables that persist across image mounts */
 	tag_pool tagpool;
-	int (*get_open_mode)(mess_image *);
+	memory_pool mempool;
 
 	/* error related info */
 	image_error_t err;
@@ -32,14 +32,18 @@ struct _mess_image
 	char *dir;
 	char *hash;
 	UINT32 length;
-	int effective_mode;
+	char *basename_noext;
+	
+	/* flags */
+	unsigned int writeable : 1;
+	unsigned int created : 1;
+
+	/* info read from the hash file */
 	char *longname;
 	char *manufacturer;
 	char *year;
 	char *playable;
 	char *extrainfo;
-	char *basename_noext;
-	memory_pool mempool;
 };
 
 static struct _mess_image images[IO_COUNT][MAX_DEV_INSTANCES];
@@ -109,37 +113,14 @@ static void image_clear_error(mess_image *img)
 static int image_load_internal(mess_image *img, const char *name, int is_create, int create_format, option_resolution *create_args)
 {
 	const struct IODevice *dev;
+	const char *s;
 	char *newname;
 	int err = INIT_PASS;
 	mame_file *file = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
-	int i;
+	int i, readable, writeable, creatable;
 	int open_mode;
-
-	static INT8 file_modes[2][7][4] =
-	{
-		{
-			/* open */
-			{ OSD_FOPEN_READ, -1 },										/* OSD_FOPEN_READ */
-			{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
-			{ OSD_FOPEN_RW, -1 },										/* OSD_FOPEN_RW */
-			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
-			{ OSD_FOPEN_RW, OSD_FOPEN_READ, -1 },						/* OSD_FOPEN_RW_OR_READ */
-			{ OSD_FOPEN_RW, OSD_FOPEN_READ, OSD_FOPEN_RW_CREATE, -1 },	/* OSD_FOPEN_RW_CREATE_OR_READ */
-			{ OSD_FOPEN_READ, OSD_FOPEN_WRITE, -1 }						/* OSD_FOPEN_READ_OR_WRITE */
-		},
-		{
-			/* create */
-			{ -1 },														/* OSD_FOPEN_READ */
-			{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
-			{ -1 },														/* OSD_FOPEN_RW */
-			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
-			{ -1 },														/* OSD_FOPEN_RW_OR_READ */
-			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE_OR_READ */
-			{ -1 }														/* OSD_FOPEN_READ_OR_WRITE */
-		}
-	};
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)
@@ -175,54 +156,86 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	osd_image_load_status_changed(img, 0);
 
 	/* do we need to reset the CPU? */
-	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
+	if ((timer_get_time() > 0) && dev->reset_on_load)
 		machine_reset();
 
-	open_mode = image_get_open_mode(img);
-	if ((open_mode >= 0) && (open_mode < (sizeof(file_modes[0]) / sizeof(file_modes[0][0]))))
+	/* prepare to open the file */
+	img->created = 0;
+	img->writeable = 0;
+	file = NULL;
+	readable = dev->readable;
+	writeable = dev->writeable;
+	creatable = dev->creatable;
+
+	/* is this a ZIP file? */
+	s = strrchr(img->name, '.');
+	if (s && !strcmpi(s, ".ZIP"))
 	{
-		/* attempt to open the file with the various modes */
-		i = 0;
-		while(!file && (file_modes[is_create][open_mode][i] >= 0))
-		{
-			img->effective_mode = file_modes[is_create][open_mode][i++];
-			file = image_fopen_custom(img, FILETYPE_IMAGE, img->effective_mode);
-		}
+		/* ZIP files are writeable */
+		writeable = 0;
+		creatable = 0;
+	}
+
+	if (readable && !writeable)
+	{
+		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
+	}
+	else if (!readable && writeable)
+	{
+		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+		img->writeable = file ? 1 : 0;
+	}
+	else if (readable && writeable)
+	{
+		file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
+		img->writeable = file ? 1 : 0;
+
 		if (!file)
 		{
-			img->err = IMAGE_ERROR_FILENOTFOUND;
+			file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
+			if (!file && creatable)
+			{
+				file = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				img->created = file ? 1 : 0;
+			}
+		}
+	}
+
+	/* did this attempt succeed? */
+	if (!file)
+	{
+		img->err = IMAGE_ERROR_FILENOTFOUND;
+		goto error;
+	}
+
+	/* if applicable, call device verify */
+	if (dev->imgverify && !image_has_been_created(img))
+	{
+		size = mame_fsize(file);
+		buffer = malloc(size);
+		if (!buffer)
+		{
+			img->err = IMAGE_ERROR_OUTOFMEMORY;
 			goto error;
 		}
 
-		/* if applicable, call device verify */
-		if (dev->imgverify && !image_has_been_created(img))
+		if (mame_fread(file, buffer, (UINT32) size) != size)
 		{
-			size = mame_fsize(file);
-			buffer = malloc(size);
-			if (!buffer)
-			{
-				img->err = IMAGE_ERROR_OUTOFMEMORY;
-				goto error;
-			}
-
-			if (mame_fread(file, buffer, (UINT32) size) != size)
-			{
-				img->err = IMAGE_ERROR_INVALIDIMAGE;
-				goto error;
-			}
-
-			err = dev->imgverify(buffer, size);
-			if (err)
-			{
-				img->err = IMAGE_ERROR_INVALIDIMAGE;
-				goto error;
-			}
-
-			mame_fseek(file, 0, SEEK_SET);
-
-			free(buffer);
-			buffer = NULL;
+			img->err = IMAGE_ERROR_INVALIDIMAGE;
+			goto error;
 		}
+
+		err = dev->imgverify(buffer, size);
+		if (err)
+		{
+			img->err = IMAGE_ERROR_INVALIDIMAGE;
+			goto error;
+		}
+
+		mame_fseek(file, 0, SEEK_SET);
+
+		free(buffer);
+		buffer = NULL;
 	}
 
 	/* call device load or create */
@@ -293,7 +306,7 @@ static void image_unload_internal(mess_image *img, int is_final_unload)
 	if ((img->status & IMAGE_STATUS_ISLOADED) == 0)
 		return;
 
-	dev = device_find(Machine->gamedrv, type);
+	dev = device_find(Machine->devices, type);
 	assert(dev);
 
 	if (dev->unload)
@@ -338,15 +351,15 @@ void image_unload_all(int ispreload)
 		osd_begin_final_unloading();
 
 	/* normalize ispreload */
-	ispreload = ispreload ? DEVICE_LOAD_AT_INIT : 0;
+	ispreload = ispreload ? 1 : 0;
 
 	/* unload all devices with matching preload */
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
-		if ((dev->flags & DEVICE_LOAD_AT_INIT) == ispreload)
+		if (dev->load_at_init == ispreload)
 		{
 			/* all instances */
-			for( id = 0; id < dev->count; id++ )
+			for (id = 0; id < dev->count; id++)
 			{
 				img = image_from_devtype_and_index(dev->type, id);
 
@@ -391,20 +404,6 @@ void image_seterror(mess_image *img, image_error_t err, const char *message)
 		if (img->err_message)
 			strcpy(img->err_message, message);
 	}
-}
-
-
-
-/****************************************************************************
-  Device callback installation functions
-
-  Called during DEVICE_INIT() to install callbacks to customize certain
-  behavior
-****************************************************************************/
-
-void image_set_open_mode_callback(mess_image *img, int (*get_open_mode)(mess_image *))
-{
-	img->get_open_mode = get_open_mode;
 }
 
 
@@ -512,7 +511,7 @@ static int image_checkhash(mess_image *image)
 	assert(image->status & (IMAGE_STATUS_ISLOADING | IMAGE_STATUS_ISLOADED));
 
 	/* only calculate CRC if it hasn't been calculated, and the open_mode is read only */
-	if (!image->hash && (image->effective_mode == OSD_FOPEN_READ))
+	if (!image->hash && !image->writeable && !image->created)
 	{
 		/* initialize key variables */
 		file = image_fp(image);
@@ -552,7 +551,7 @@ mame_file *image_fp(mess_image *img)
 
 const struct IODevice *image_device(mess_image *img)
 {
-	return device_find(Machine->gamedrv, image_devtype(img));
+	return device_find(Machine->devices, image_devtype(img));
 }
 
 int image_exists(mess_image *img)
@@ -629,6 +628,19 @@ const char *image_filedir(mess_image *img)
 
 
 
+const char *image_typename_id(mess_image *image)
+{
+	const struct IODevice *dev;
+	int id;
+	static char buf[64];
+
+	dev = image_device(image);
+	id = image_index_in_device(image);
+	return dev->name(dev, id, buf, sizeof(buf) / sizeof(buf[0]));
+}
+
+
+
 unsigned int image_length(mess_image *img)
 {
 	return img->length;
@@ -660,34 +672,23 @@ UINT32 image_crc(mess_image *img)
 
 int image_is_writable(mess_image *img)
 {
-	return is_effective_mode_writable(img->effective_mode);
+	return img->writeable;
 }
 
 
 
 int image_has_been_created(mess_image *img)
 {
-	return is_effective_mode_create(img->effective_mode);
-}
-
-
-
-int image_get_open_mode(mess_image *img)
-{
-	int open_mode;
-	if (img->get_open_mode)
-		open_mode = img->get_open_mode(img);
-	else
-		open_mode = image_device(img)->open_mode;
-	return open_mode;
+	return img->created;
 }
 
 
 
 void image_make_readonly(mess_image *img)
 {
-	img->effective_mode = OSD_FOPEN_READ;
+	img->writeable = 0;
 }
+
 
 
 /****************************************************************************
@@ -964,8 +965,10 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		return NULL;
 
 	if (img->fp)
+	{
 		/* If already open, we won't open the file again until it is closed. */
 		return NULL;
+	}
 
 	do
 	{
@@ -974,7 +977,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 
 		img->fp = mame_fopen(sysname, img->name, filetype, read_or_write);
 
-		if( img->fp && !is_effective_mode_create( read_or_write ) )
+		if (img->fp && (read_or_write == OSD_FOPEN_READ))
 		{
 			lpExt = strrchr( img->name, '.' );
 			if (lpExt && (stricmp( lpExt, ".ZIP" ) == 0))
@@ -1067,7 +1070,7 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 	}
 	while(!img->fp && gamedrv);
 
-	if( img->fp && ! is_effective_mode_create(read_or_write))
+	if (img->fp)
 	{
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
 		img->length = mame_fsize(img->fp);

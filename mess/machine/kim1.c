@@ -637,7 +637,7 @@ MACHINE_INIT( kim1 )
 	set_chip_clock(1, 255);
 }
 
-DEVICE_LOAD( kim1_cassette )
+static DEVICE_LOAD( kim1_cassette )
 {
 	const char magic[] = "KIM1";
 	char buff[4];
@@ -918,3 +918,17 @@ WRITE8_HANDLER ( kim1_mirror_w )
 {
 	program_write_byte(offset & 0x1fff, data);
 }
+
+void kim1_cassette_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "kim1\0";
+	dev->reset_on_load = 1;
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_kim1_cassette;
+}
+
+

@@ -260,10 +260,31 @@ ROM_START( microtan )
     // initialized in init_microtan
 ROM_END
 
+static void microtan_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void microtan_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_microtan, 0.5);
+	dev->file_extensions = "m65\0";
+}
+
+static void microtan_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_microtan_hexfile, 0.5);
+	dev->file_extensions = "hex\0";
+}
+
 SYSTEM_CONFIG_START( microtan )
-	CONFIG_DEVICE_CASSETTE( 1, NULL )
-	CONFIG_DEVICE_SNAPSHOT_DELAY( "m65\0", microtan, 0.5 )
-	CONFIG_DEVICE_QUICKLOAD_DELAY( "hex\0", microtan_hexfile, 0.5 )
+	CONFIG_DEVICE(microtan_cassette_getinfo)
+	CONFIG_DEVICE(microtan_snapshot_getinfo)
+	CONFIG_DEVICE(microtan_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 //    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME

@@ -1565,11 +1565,32 @@ ROM_START( pc1640 )
     ROM_LOAD("40045.bin",     0x00000, 0x02000, CRC(dd5e030f))
 ROM_END
 
+static void ibmpc_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_pc);
+	dev->count = 2;
+}
+
+static void ibmpc_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 3;
+}
+
+static void ibmpc_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	harddisk_device_getinfo(dev);
+	dev->count = 4;
+}
+
 SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_RAM_DEFAULT( 640 * 1024 )
-	CONFIG_DEVICE_PRINTER(3)
-	CONFIG_DEVICE_FLOPPY(2, pc)
-	CONFIG_DEVICE_HARDDISK(4)
+	CONFIG_DEVICE(ibmpc_printer_getinfo)
+	CONFIG_DEVICE(ibmpc_floppy_getinfo)
+	CONFIG_DEVICE(ibmpc_harddisk_getinfo)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )
 	CONFIG_CHARQUEUE_EMPTY( at_keyboard )

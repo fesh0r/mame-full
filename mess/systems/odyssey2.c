@@ -182,8 +182,18 @@ ROM_START (odyssey2)
     ROM_REGION(0x2000, REGION_USER1, 0)
 ROM_END
 
+static void odyssey2_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_odyssey2_cart;
+}
+
 SYSTEM_CONFIG_START(odyssey2)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0", NULL, NULL, device_load_odyssey2_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(odyssey2_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY     FULLNAME     FLAGS */

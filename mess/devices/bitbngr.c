@@ -28,7 +28,7 @@ static int bitbanger_init(mess_image *img)
 	struct bitbanger_info *bi;
 	const struct bitbanger_config *config;
 
-	config = (const struct bitbanger_config *) device_find(Machine->gamedrv, IO_BITBANGER)->user1;
+	config = (const struct bitbanger_config *) device_find(Machine->devices, IO_BITBANGER)->user1;
 
 	bi = (struct bitbanger_info *) auto_malloc(sizeof(struct bitbanger_info));
 	if (!bi)
@@ -146,17 +146,15 @@ static void bitbanger_output(mess_image *img, int value)
 	}
 }
 
-void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger_config *config)
+
+
+void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config)
 {
-	memset(iodev, 0, sizeof(*iodev));
 	iodev->type = IO_BITBANGER;
-	iodev->count = count;
 	iodev->file_extensions = "prn\0";
-	iodev->flags = DEVICE_LOAD_RESETS_NONE;
-	iodev->open_mode = OSD_FOPEN_WRITE;
-	iodev->init = bitbanger_init;
-	iodev->status = printer_status;
-	iodev->output = bitbanger_output;
+	iodev->readable = 1;
+	iodev->writeable = 1;
+	iodev->creatable = 1;
 	iodev->user1 = (char *) config;
 }
 

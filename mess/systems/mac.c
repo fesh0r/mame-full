@@ -261,8 +261,21 @@ ROM_START( macplus )
 ROM_END
 
 
+static void mac_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "dsk\0img\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->load = device_load_mac_floppy;
+	dev->unload = device_unload_mac_floppy;
+}
+
 SYSTEM_CONFIG_START(mac_base)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0img\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, device_load_mac_floppy, device_unload_mac_floppy, NULL)
+	CONFIG_DEVICE(mac_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

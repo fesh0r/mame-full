@@ -5,28 +5,15 @@
 #define MIN(a, b)	(((a) < (b)) ? (a) : (b))
 #endif
 
-const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
-	const char *file_extensions,
-	device_init_handler initproc,
-	device_exit_handler exitproc,
-	device_load_handler loadproc,
-	device_unload_handler unloadproc,
-	int (*verify)(const UINT8 *buf, size_t size),
-	device_partialhash_handler partialhash)
+
+
+void cartslot_device_getinfo(struct IODevice *iodev)
 {
-	memset(iodev, 0, sizeof(*iodev));
 	iodev->type = IO_CARTSLOT;
-	iodev->count = count;
-	iodev->file_extensions = file_extensions;
-	iodev->flags = DEVICE_LOAD_RESETS_CPU | DEVICE_LOAD_AT_INIT;
-	iodev->open_mode = OSD_FOPEN_READ;
-	iodev->init = initproc;
-	iodev->exit = exitproc;
-	iodev->load = loadproc;
-	iodev->unload = unloadproc;
-	iodev->imgverify = verify;
-	iodev->partialhash = partialhash;
-	return iodev;
+	iodev->file_extensions = "bin\0";
+	iodev->reset_on_load = 1;
+	iodev->load_at_init = 1;
+	iodev->readable = 1;
 }
 
 

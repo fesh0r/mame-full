@@ -471,11 +471,25 @@ ROM_START(lvivp)
 	ROM_LOAD("lvive.bin", 0x10000, 0x4000, CRC(f171c282) SHA1(c7dc2bdb02400e6b5cdcc50040eb06f506a7ed84))
 ROM_END
 
+static void lviv_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, lviv_lvt_format, NULL, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
+	dev->count = 1;
+}
+
+static void lviv_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_lviv, 0.0);
+	dev->file_extensions = "sav\0";
+}
+
 SYSTEM_CONFIG_START(lviv)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	/* 9-Oct-2003 - Changed to lvt because lv? is an invalid file extension */
-	CONFIG_DEVICE_CASSETTEX(1, lviv_lvt_format, NULL, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
-	CONFIG_DEVICE_SNAPSHOT( "sav\0", lviv )
+	CONFIG_DEVICE(lviv_cassette_getinfo)
+	CONFIG_DEVICE(lviv_snapshot_getinfo)
 SYSTEM_CONFIG_END
 
 

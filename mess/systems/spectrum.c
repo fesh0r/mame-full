@@ -2300,25 +2300,72 @@ ROM_START(pentagon)
 		ROM_REGION(0x020000, REGION_CPU1, 0)
 ROM_END
 
+static void spectrum_common_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void spectrum_common_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_spectrum, 0.0);
+	dev->file_extensions = "sna\0z80\0sp\0";
+}
+
+static void spectrum_common_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_spectrum, 0.0);
+	dev->file_extensions = "scr\0";
+}
+
 SYSTEM_CONFIG_START(spectrum_common)
-	CONFIG_DEVICE_CASSETTE(1,	NULL)
-	CONFIG_DEVICE_SNAPSHOT(		"sna\0z80\0sp\0",	spectrum)
-	CONFIG_DEVICE_QUICKLOAD(	"scr\0",			spectrum)
+	CONFIG_DEVICE(spectrum_common_cassette_getinfo)
+	CONFIG_DEVICE(spectrum_common_snapshot_getinfo)
+	CONFIG_DEVICE(spectrum_common_quickload_getinfo)
 SYSTEM_CONFIG_END
+
+static void spectrum_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_spectrum_cart;
+}
 
 SYSTEM_CONFIG_START(spectrum)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_spectrum_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(spectrum_cartslot_getinfo)
 SYSTEM_CONFIG_END
+
+static void specpls3_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacydsk_device_getinfo(dev);
+	dev->count = 2;
+}
 
 SYSTEM_CONFIG_START(specpls3)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE_LEGACY_DSK(2)
+	CONFIG_DEVICE(specpls3_floppy_getinfo)
 SYSTEM_CONFIG_END
+
+static void ts2068_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "dck\0";
+	dev->load = device_load_timex_cart;
+	dev->unload = device_unload_timex_cart;
+}
 
 SYSTEM_CONFIG_START(ts2068)
 	CONFIG_IMPORT_FROM(spectrum_common)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "dck\0", NULL, NULL, device_load_timex_cart, device_unload_timex_cart, NULL, NULL)
+	CONFIG_DEVICE(ts2068_cartslot_getinfo)
 	CONFIG_RAM_DEFAULT(48 * 1024)
 SYSTEM_CONFIG_END
 

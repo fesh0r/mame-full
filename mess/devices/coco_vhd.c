@@ -1,36 +1,42 @@
-#include "devices/coco_vhd.h"
-
 /***************************************************************************
-  Technical specs on the Virtual Hard Disk interface
- ***************************************************************************
 
-  Address       Description
-  -------       -----------
-  FF80          Logical record number (high byte)
-  FF81          Logical record number (middle byte)
-  FF82          Logical record number (low byte)
-  FF83          Command/status register
-  FF84          Buffer address (high byte)
-  FF85          Buffer address (low byte)
+	coco_vhd.c
 
-  Set the other registers, and then issue a command to FF83 as follows:
+	Color Computer Virtual Hard Drives
 
-  0 = read 256-byte sector at LRN
-  1 = write 256-byte sector at LRN
-  2 = flush write cache (Closes and then opens the image file)
+****************************************************************************
 
-  Error values:
+	Technical specs on the Virtual Hard Disk interface
 
-   0 = no error
-  -1 = power-on state (before the first command is recieved)
-  -2 = invalid command
-   2 = VHD image does not exist
-   4 = Unable to open VHD image file
-   5 = access denied (may not be able to write to VHD image)
+	Address       Description
+	-------       -----------
+	FF80          Logical record number (high byte)
+	FF81          Logical record number (middle byte)
+	FF82          Logical record number (low byte)
+	FF83          Command/status register
+	FF84          Buffer address (high byte)
+	FF85          Buffer address (low byte)
 
-  IMPORTANT: The I/O buffer must NOT cross an 8K MMU bank boundary.
+	Set the other registers, and then issue a command to FF83 as follows:
 
-***************************************************************************/
+	 0 = read 256-byte sector at LRN
+	 1 = write 256-byte sector at LRN
+	 2 = flush write cache (Closes and then opens the image file)
+
+	Error values:
+
+	 0 = no error
+	-1 = power-on state (before the first command is recieved)
+	-2 = invalid command
+	 2 = VHD image does not exist
+	 4 = Unable to open VHD image file
+	 5 = access denied (may not be able to write to VHD image)
+
+	IMPORTANT: The I/O buffer must NOT cross an 8K MMU bank boundary.
+
+ ***************************************************************************/
+
+#include "devices/coco_vhd.h"
 
 static long	logicalRecordNumber;
 static long	bufferAddress;
@@ -44,16 +50,22 @@ static UINT8 vhdStatus;
 #define LOG(x)
 #endif
 
+
+
 static mess_image *vhd_image(void)
 {
 	return image_from_devtype_and_index(IO_VHD, 0);
 }
+
+
 
 DEVICE_INIT(coco_vhd)
 {
 	vhdStatus = 2;	/* No VHD attached */
 	return INIT_PASS;
 }
+
+
 
 DEVICE_LOAD(coco_vhd)
 {
@@ -63,6 +75,8 @@ DEVICE_LOAD(coco_vhd)
 	return INIT_PASS;
 
 }
+
+
 
 static void coco_vhd_readwrite(UINT8 data)
 {
@@ -123,6 +137,8 @@ static void coco_vhd_readwrite(UINT8 data)
 	}
 }
 
+
+
 READ8_HANDLER(coco_vhd_io_r)
 {
 	data8_t result = 0;
@@ -135,6 +151,8 @@ READ8_HANDLER(coco_vhd_io_r)
 	}
 	return result;
 }
+
+
 
 WRITE8_HANDLER(coco_vhd_io_w)
 {
@@ -169,4 +187,25 @@ WRITE8_HANDLER(coco_vhd_io_w)
 	}
 }
 
+
+
+static const char *coco_vhd_getname(const struct IODevice *dev, int id, char *buf, size_t bufsize)
+{
+	return "Virtual Hard Disk";
+}
+
+
+
+void coco_vhd_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_VHD;
+	dev->count = 1;
+	dev->file_extensions = "vhd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->init = device_init_coco_vhd;
+	dev->load = device_load_coco_vhd;
+	dev->name = coco_vhd_getname;
+}
 

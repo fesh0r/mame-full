@@ -297,9 +297,37 @@ INPUT_PORTS_START(ti990_10)
 	VDT911_KEY_PORTS
 INPUT_PORTS_END
 
+static void ti990_10_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	dev->type = IO_HARDDISK;
+	dev->count = 4;
+	dev->file_extensions = "hd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_ti990_hd;
+	dev->load = device_load_ti990_hd;
+	dev->unload = device_unload_ti990_hd;
+}
+
+static void ti990_10_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 4;
+	dev->file_extensions = "tap\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_ti990_tape;
+	dev->load = device_load_ti990_tape;
+	dev->unload = device_unload_ti990_tape;
+}
+
 SYSTEM_CONFIG_START(ti990_10)
-	CONFIG_DEVICE_LEGACY(IO_HARDDISK, 4, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_ti990_hd, NULL, device_load_ti990_hd, device_unload_ti990_hd, NULL)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 4, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, device_init_ti990_tape, NULL, device_load_ti990_tape, device_unload_ti990_tape, NULL)
+	CONFIG_DEVICE(ti990_10_harddisk_getinfo)
+	CONFIG_DEVICE(ti990_10_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */

@@ -706,13 +706,13 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 	total = 0;
 
 	/* Cycle through all devices for this system */
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
 	{
 		type = dev->type;
 		for (id = 0; id < dev->count; id++)
 		{
 			img = image_from_devtype_and_index(type, id);
-			name = device_typename_id(img);
+			name = image_typename_id(img);
 			menu_item[total] = (name) ? name : "---";
 			name = image_filename(img);
 			menu_subitem[total] = (name) ? name : "---";

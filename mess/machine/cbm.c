@@ -156,7 +156,7 @@ INT8 cbm_c64_game;
 INT8 cbm_c64_exrom;
 CBM_ROM cbm_rom[0x20]= { {0} };
 
-DEVICE_UNLOAD(cbm_rom)
+static DEVICE_UNLOAD(cbm_rom)
 {
 	int id = image_index_in_device(image);
 	cbm_rom[id].size = 0;
@@ -165,10 +165,10 @@ DEVICE_UNLOAD(cbm_rom)
 
 static const struct IODevice *cbm_rom_find_device(void)
 {
-	return device_find(Machine->gamedrv, IO_CARTSLOT);
+	return device_find(Machine->devices, IO_CARTSLOT);
 }
 
-DEVICE_INIT(cbm_rom)
+static DEVICE_INIT(cbm_rom)
 {
 	int id = image_index_in_device(image);
 	if (id == 0)
@@ -179,7 +179,7 @@ DEVICE_INIT(cbm_rom)
 	return INIT_PASS;
 }
 
-DEVICE_LOAD(cbm_rom)
+static DEVICE_LOAD(cbm_rom)
 {
 	int i;
 	int size, j, read_;
@@ -314,5 +314,17 @@ DEVICE_LOAD(cbm_rom)
 			return INIT_FAIL;
 	}
 	return INIT_PASS;
+}
+
+
+
+void cbmcartslot_device_getinfo(struct IODevice *dev)
+{
+	cartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\0";
+	dev->count = 2;
+	dev->init = device_init_cbm_rom;
+	dev->load = device_load_cbm_rom;
+	dev->unload = device_unload_cbm_rom;
 }
 

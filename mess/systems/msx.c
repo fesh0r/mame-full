@@ -2102,11 +2102,44 @@ MSX_LAYOUT_INIT (phc35j)
 	MSX_LAYOUT_RAMIO_SET_BITS (0x80)
 MSX_LAYOUT_END
 
+static void msx_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_msx_floppy;
+}
+
+static void msx_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = MSX_MAX_CARTS;
+	dev->file_extensions = "mx1\0rom\0";
+	dev->load = device_load_msx_cart;
+	dev->unload = device_unload_msx_cart;
+}
+
+static void msx_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, fmsx_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void msx_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(msx)
-	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", device_load_msx_floppy)
-	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "mx1\0rom\0", NULL, NULL, device_load_msx_cart, device_unload_msx_cart, NULL, NULL)
-	CONFIG_DEVICE_CASSETTE(1, fmsx_cassette_formats)
-	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE(msx_floppy_getinfo)
+	CONFIG_DEVICE(msx_cartslot_getinfo)
+	CONFIG_DEVICE(msx_cassette_getinfo)
+	CONFIG_DEVICE(msx_printer_getinfo)
 SYSTEM_CONFIG_END
 
 MSX_DRIVER_LIST

@@ -782,9 +782,25 @@ ROM_START(apfm1000)
 	ROM_LOAD("apf_4000.rom",0x010000, 0x0800, CRC(2a331a33) SHA1(387b90882cd0b66c192d9cbaa3bec250f897e4f1))
 ROM_END
 
+static void apfimag_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, apf_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void apfimag_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 2;
+	dev->file_extensions = "apd\0";
+	dev->load = device_load_apfimag_floppy;
+}
+
 SYSTEM_CONFIG_START( apfimag )
-	CONFIG_DEVICE_CASSETTE			(1, apf_cassette_formats)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", device_load_apfimag_floppy)
+	CONFIG_DEVICE(apfimag_cassette_getinfo)
+	CONFIG_DEVICE(apfimag_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

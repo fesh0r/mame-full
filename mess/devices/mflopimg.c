@@ -241,7 +241,7 @@ static int internal_floppy_device_load(mess_image *image, mame_file *file, int c
 	flopimg = get_flopimg(image);
 
 	/* figure out the floppy options */
-	dev = device_find(Machine->gamedrv, IO_FLOPPY);
+	dev = device_find(Machine->devices, IO_FLOPPY);
 	assert(dev);
 	floppy_options = dev->user1;
 
@@ -329,7 +329,7 @@ void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 			}
 	
 			/* copy the extension */
-			strncpyz(s, extension, extbuflen);
+			strcpy(s, extension);
 		}
 
 		/* next extension */
@@ -369,40 +369,55 @@ void floppy_install_tracktranslate_proc(mess_image *image, int (*proc)(mess_imag
  *
  *************************************/
 
-const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
-	int count, const struct FloppyFormat *floppy_options)
+void floppy_device_getinfo(struct IODevice *iodev, const struct FloppyFormat *floppy_options)
 {
-	int i;
+	int i, count;
+	char extbuf[256];
 
-	assert(count);
-	if (iodev->count == 0)
+	memset(extbuf, 0, sizeof(extbuf));
+	for (i = 0; floppy_options[i].construct; i++)
 	{
-		memset(extbuf, 0, extbuflen);
-		for (i = 0; floppy_options[i].construct; i++)
-			specify_extension(extbuf, extbuflen, floppy_options[i].extensions);
-		assert(extbuf[0]);
-
-		memset(iodev, 0, sizeof(*iodev));
-		iodev->type = IO_FLOPPY;
-		iodev->count = count;
-		iodev->file_extensions = extbuf;
-		iodev->flags = DEVICE_LOAD_RESETS_NONE;
-		iodev->open_mode = floppy_options->param_guidelines ? OSD_FOPEN_RW_CREATE_OR_READ : OSD_FOPEN_RW_OR_READ;
-		iodev->init = device_init_floppy;
-		iodev->load = device_load_floppy;
-		iodev->create = device_create_floppy;
-		iodev->unload = device_unload_floppy;
-		iodev->user1 = (void *) floppy_options;
-		iodev->createimage_optguide = floppy_option_guide;
-
-		for (i = 0; floppy_options[i].construct; i++)
-		{
-			assert(i < sizeof(iodev->createimage_options) / sizeof(iodev->createimage_options[0]));
-            iodev->createimage_options[i].extensions = floppy_options[i].extensions;
-            iodev->createimage_options[i].description = floppy_options[i].description;
-            iodev->createimage_options[i].optspec = floppy_options[i].param_guidelines;
-		}
+		specify_extension(extbuf, sizeof(extbuf) / sizeof(extbuf[0]),
+			floppy_options[i].extensions);
 	}
-	return iodev;
+	assert(extbuf[0]);
+	iodev->file_extensions = auto_strlistdup(extbuf);
+	if (!iodev->file_extensions)
+		goto error;
+
+	iodev->type = IO_FLOPPY;
+	iodev->readable = 1;
+	iodev->writeable = 1;
+	iodev->creatable = floppy_options->param_guidelines ? 1 : 0;
+	iodev->init = device_init_floppy;
+	iodev->load = device_load_floppy;
+	iodev->create = device_create_floppy;
+	iodev->unload = device_unload_floppy;
+	iodev->user1 = (void *) floppy_options;
+	iodev->createimage_optguide = floppy_option_guide;
+
+	/* count total floppy options */
+	for (count = 0; floppy_options[count].construct; count++)
+		;
+
+	iodev->createimage_options = auto_malloc((count + 1) *
+		sizeof(*iodev->createimage_options));
+	if (!iodev->createimage_options)
+		goto error;
+
+	for (i = 0; floppy_options[i].construct; i++)
+	{
+        iodev->createimage_options[i].extensions = floppy_options[i].extensions;
+        iodev->createimage_options[i].description = floppy_options[i].description;
+        iodev->createimage_options[i].optspec = floppy_options[i].param_guidelines;
+	}
+	memset(&iodev->createimage_options[count], 0,
+		sizeof(iodev->createimage_options[count]));
+
+	return;
+
+error:
+	iodev->error = 1;
+	return;
 }
 

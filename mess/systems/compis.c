@@ -259,9 +259,23 @@ ROM_START (compis)
      ROM_LOAD ("compis.rom", 0xf0000, 0x10000, CRC(89877688) SHA1(7daa1762f24e05472eafc025879da90fe61d0225))
 ROM_END
 
+static void compis_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void compis_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_compis);
+	dev->count = 2;
+}
+
 SYSTEM_CONFIG_START(compis)
-	CONFIG_DEVICE_PRINTER	(1)
-	CONFIG_DEVICE_FLOPPY	(2,	compis)
+	CONFIG_DEVICE(compis_printer_getinfo)
+	CONFIG_DEVICE(compis_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	COMPAT MACHINE	INPUT	INIT	CONFIG	COMPANY		FULLNAME */

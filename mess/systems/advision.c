@@ -83,8 +83,18 @@ ROM_START (advision)
     ROM_LOAD ("avbios.rom", 0x1000, 0x400, CRC(279e33d1) SHA1(bf7b0663e9125c9bfb950232eab627d9dbda8460))
 ROM_END
 
+static void advision_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_advision_cart;
+}
+
 SYSTEM_CONFIG_START(advision)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, device_load_advision_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(advision_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

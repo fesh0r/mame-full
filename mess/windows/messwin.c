@@ -25,53 +25,58 @@ extern int strwildcmp(const char *sp1, const char *sp2);
 
 void list_mess_info(const char *gamename, const char *arg, int listclones)
 {
-
 	int i, j;
+	struct IODevice *devices;
+	const char *src;
+	const char *name;
+	const char *shortname;
 
 	/* -listdevices */
 	if (!stricmp(arg, "-listdevices"))
 	{
-
 		i = 0;
 		j = 0;
-
 
 		printf(" SYSTEM      DEVICE NAME (brief)   IMAGE FILE EXTENSIONS SUPPORTED    \n");
 		printf("----------  --------------------  ------------------------------------\n");
 
 		while (drivers[i])
 		{
-			const struct IODevice *dev = device_first(drivers[i]);
-
 			if (!strwildcmp(gamename, drivers[i]->name))
 			{
-				int devcount = 1;
+				begin_resource_tracking();
+				devices = devices_allocate(drivers[i]);
 
 				printf("%-13s", drivers[i]->name);
 
-				/* if IODevice not used, print UNKNOWN */
-				if (!dev)
-					printf("%-12s\n", "UNKNOWN");
-
-				/* else cycle through Devices */
-				while (dev)
+				if (!devices)
 				{
-					const char *src = dev->file_extensions;
-
-					if (devcount == 1)
-						printf("%-12s(%s)   ", device_typename(dev->type), device_brieftypename(dev->type));
-					else
-						printf("%-13s%-12s(%s)   ", "    ", device_typename(dev->type), device_brieftypename(dev->type));
-					devcount++;
-
-					while (src && *src)
+					/* if IODevice not used, print UNKNOWN */
+					printf("%-12s\n", "UNKNOWN");
+				}
+				else
+				{
+					/* else cycle through Devices */
+					for (j = 0; j < devices[j].type < IO_COUNT; j++)
 					{
-						printf(".%-5s", src);
-						src += strlen(src) + 1;
+						src = devices[j].file_extensions;
+						name = device_typename(devices[j].type);
+						shortname = device_brieftypename(devices[j].type);
+
+						if (j == 0)
+							printf("%-12s(%s)   ", name, shortname);
+						else
+							printf("%-13s%-12s(%s)   ", "    ", name, shortname);
+
+						while (src && *src)
+						{
+							printf(".%-5s", src);
+							src += strlen(src) + 1;
+						}
 					}
-					dev = device_next(drivers[i], dev);			   /* next IODevice struct */
 					printf("\n");
 				}
+				end_resource_tracking();
 			}
 			i++;
 		}

@@ -496,8 +496,19 @@ ROM_START(gen_jpn)
 	ROM_REGION( 0x10000, REGION_CPU2, 0)
 ROM_END
 
+static void genesis_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "smd\0bin\0md\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_genesis_cart;
+	dev->partialhash = NULL /*genesis_partialhash*/;
+}
+
 SYSTEM_CONFIG_START(genesis)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "smd\0bin\0md\0", NULL, NULL, device_load_genesis_cart, NULL, NULL, NULL /*genesis_partialhash*/)
+	CONFIG_DEVICE(genesis_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 DRIVER_INIT(gen_usa)

@@ -394,7 +394,12 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 
 	pDriver = drivers[nGame];
 
-	for (pDevice = device_first(pDriver); pDevice; pDevice = device_next(pDriver, pDevice))
+	begin_resource_tracking();
+	pDevice = devices_allocate(pDriver);
+	if (!pDevice)
+		goto error;
+
+	while(pDevice->type < IO_COUNT)
 	{
 		// Count how many images are loaded
 		pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
@@ -410,7 +415,7 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 		}
 
 		// Must this device be loaded?
-		if ((pDevice->flags & DEVICE_MUST_BE_LOADED) && (nCount < pDevice->count))
+		if (pDevice->must_be_loaded && (nCount < pDevice->count))
 		{
 			snprintf(szMessage, sizeof(szMessage) / sizeof(szMessage[0]),
 				"System '%s' requires that device %s must have an image to load\n",
@@ -427,10 +432,14 @@ static BOOL MessApproveImageList(HWND hParent, int nGame)
 				pDriver->description);
 			goto error;
 		}
+		pDevice++;
 	}
+
+	end_resource_tracking();
 	return TRUE;
 
 error:
+	end_resource_tracking();
 	pszMessage = A2T(szMessage);
 	MessageBox(hParent, pszMessage, MAME32NAME, MB_OK);
 	return FALSE;
@@ -580,11 +589,6 @@ static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFi
 
 
 
-// This function is fucked; the problem is that it is supposed to sync
-// the state of the software list as returned by GetSelectedSoftware()
-// with the state of the software list.  However, it seems to try to set
-// the state in the process causing things to get confused.  This should
-// probably be moved back into SoftwarePicker.c
 static void MessReadMountedSoftware(int nGame)
 {
 	HWND hwndSoftware;
@@ -592,16 +596,22 @@ static void MessReadMountedSoftware(int nGame)
 	LVFINDINFO lvfi;
 	LPTSTR apszSoftware[IO_COUNT];
 	const struct GameDriver *pDriver;
+	const struct IODevice *pDeviceList;
 	const struct IODevice *pDevice;
 	LPCTSTR pszSoftware;
 	LPTSTR pszMySoftware, s;
 
+	begin_resource_tracking();
+
 	hwndSoftware = GetDlgItem(hMain, IDC_SWLIST);
 	pDriver = drivers[nGame];
+	pDeviceList = devices_allocate(pDriver);
+	if (!pDeviceList)
+		goto done;
 
 	// first make our own copy of the selected software
 	memset(apszSoftware, 0, sizeof(apszSoftware));
-	for (pDevice = device_first(pDriver); pDevice; pDevice = device_next(pDriver, pDevice))
+	for (pDevice = pDeviceList; pDevice->type < IO_COUNT; pDevice++)
 	{
 		if (!IsSoftwarePaneDevice(pDevice->type))
 			continue;
@@ -622,7 +632,7 @@ static void MessReadMountedSoftware(int nGame)
 	// be problematic
 	ListView_SetItemState(hwndSoftware, -1, 0, LVIS_SELECTED);
 
-	for (pDevice = device_first(pDriver); pDevice; pDevice = device_next(pDriver, pDevice))
+	for (pDevice = pDeviceList; pDevice->type < IO_COUNT; pDevice++)
 	{
 		if (!IsSoftwarePaneDevice(pDevice->type))
 			continue;
@@ -653,6 +663,9 @@ static void MessReadMountedSoftware(int nGame)
 			pszMySoftware = s;
 		}
 	}
+
+done:
+	end_resource_tracking();
 }
 
 
@@ -702,9 +715,13 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 	LPTSTR pszMySoftware;
 	LPTSTR s;
 
+	begin_resource_tracking();
 	nGame = Picker_GetSelectedItem(hwndList);
+	pDevice = devices_allocate(pDriver);
+	if (!pDevice)
+		goto done;
 
-	for (pDevice = device_first(pDriver); pDevice; pDevice = device_next(pDriver, pDevice))
+	while(pDevice->type < IO_COUNT)
 	{
 		pszSoftware = GetSelectedSoftware(nGame, pDevice->type);
 		pszMySoftware = (LPTSTR) alloca((_tcslen(pszSoftware) + 1) * sizeof(TCHAR));
@@ -724,6 +741,7 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 
 			pszMySoftware = s ? s + 1 : TEXT("");
 		}
+		pDevice++;
 	}
 
 	if ((pOpts->mess.ram_size != 0) && ram_is_valid_option(pDriver, pOpts->mess.ram_size))
@@ -731,6 +749,9 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->mess.use_new_ui ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -writeconfig");
+
+done:
+	end_resource_tracking();
 }
 
 
@@ -839,6 +860,7 @@ static void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL
     const struct IODevice *dev;
     int num_extensions = 0;
 
+	begin_resource_tracking();
 	memset(types, 0, sizeof(*types) * count);
     count--;
 
@@ -849,7 +871,11 @@ static void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL
 		num_extensions++;
     }
 
-	for(dev = device_first(drivers[nDriver]); dev; dev = device_next(drivers[nDriver], dev))
+	dev = devices_allocate(drivers[nDriver]);
+	if (!dev)
+		goto done;
+
+	while(dev->type < IO_COUNT)
 	{
 		if (dev->type != IO_PRINTER)
 		{
@@ -871,7 +897,11 @@ static void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL
 				}
 			}
 		}
+		dev++;
     }
+
+done:
+	end_resource_tracking();
 }
 
 

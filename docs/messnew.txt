@@ -33,6 +33,10 @@ Source Changes:
 - The core is based on MAME 0.86u3.  This incorporates all features of the
   update to this core.  [MAME team]
 
+- Major changes to the IODevice structure; made major changes to how they are
+  initialized and iterated.  The new technique should be much more
+  maintainable in the long run.  [Nate Woods]
+
 
 
 0.86

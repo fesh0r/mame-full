@@ -900,7 +900,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-DEVICE_LOAD(vc20_tape)
+static DEVICE_LOAD(vc20_tape)
 {
 	const char *cp;
 
@@ -928,7 +928,7 @@ DEVICE_LOAD(vc20_tape)
 	return INIT_PASS;
 }
 
-DEVICE_UNLOAD(vc20_tape)
+static DEVICE_UNLOAD(vc20_tape)
 {
 	vc20_tape_close();
 }
@@ -1080,3 +1080,15 @@ void vc20_tape_status (char *text, int size)
 		break;
 	}
 }
+
+
+
+void vc20tape_device_getinfo(struct IODevice *dev)
+{
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "wav\0";
+	dev->load = device_load_vc20_tape;
+	dev->unload = device_unload_vc20_tape;
+}
+

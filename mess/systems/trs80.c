@@ -434,15 +434,44 @@ ROM_START(trs80m3)
 ROM_END
 
 
+static void trs80_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "cas\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_trs80_cas;
+	dev->unload = device_unload_trs80_cas;
+}
+
+static void trs80_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_trs80_cmd, 0.5);
+	dev->file_extensions = "cmd\0";
+}
+
 SYSTEM_CONFIG_START(trs80)
-	CONFIG_DEVICE_QUICKLOAD_DELAY(		"cmd\0", trs80_cmd,	0.5)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE,1,	"cas\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_trs80_cas, device_unload_trs80_cas, NULL)
+	CONFIG_DEVICE(trs80_quickload_getinfo)
+	CONFIG_DEVICE(trs80_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 
+static void trs8012_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_trs80_floppy;
+}
+
 SYSTEM_CONFIG_START(trs8012)
 	CONFIG_IMPORT_FROM(trs80)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_trs80_floppy)
+	CONFIG_DEVICE(trs8012_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

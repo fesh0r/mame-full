@@ -4,17 +4,12 @@
 /* put this into your gamedriver */
 extern struct DACinterface vc20tape_sound_interface;
 
-#define CONFIG_DEVICE_VC20TAPE	\
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "wav\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, device_load_vc20_tape, device_unload_vc20_tape, NULL)
+void vc20tape_device_getinfo(struct IODevice *dev);
 
 /* the function which should be called by change on readline */
 extern void vc20_tape_open (void (*read_callback) (UINT32, UINT8));
 extern void c16_tape_open (void);
 extern void vc20_tape_close (void);
-
-/* call this with the name of the tape image */
-DEVICE_LOAD(vc20_tape);
-DEVICE_UNLOAD(vc20_tape);
 
 /* must be high active keys */
 /* set it frequently */

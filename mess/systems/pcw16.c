@@ -1456,10 +1456,24 @@ ROM_START(pcw16)
 	ROM_LOAD("pcw045.sys",0x10000, 524288, CRC(c642f498))
 ROM_END
 
+static void pcw16_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void pcw16_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_pc);
+	dev->count = 2;
+}
+
 SYSTEM_CONFIG_START(pcw16)
 	CONFIG_RAM_DEFAULT(2048 * 1024)
-	/*CONFIG_DEVICE_PRINTER(1)*/
-	CONFIG_DEVICE_FLOPPY(2, pc)
+	/*CONFIG_DEVICE(pcw16_printer_getinfo)*/
+	CONFIG_DEVICE(pcw16_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME     PARENT	COMPAT	MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */

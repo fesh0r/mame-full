@@ -400,7 +400,7 @@ static  READ8_HANDLER ( compis_ppi_port_b_r )
 	data = readinputport(6);
 
 	/* Centronics busy */
-	if (!device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0))
+	if (!printer_status(image_from_devtype_and_index(IO_PRINTER, 0), 0))
 		data |= 0x20;
 
 	return 	data;

@@ -36,14 +36,14 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	int arrowize;
 	cassette_state state;
 
-	if (!device_find(Machine->gamedrv, IO_CASSETTE))
+	if (!device_find(Machine->devices, IO_CASSETTE))
 		return 0;
 
 	total = 0;
 	sel = selected - 1;
 
 	img = image_from_devtype_and_index(IO_CASSETTE, id);
-	menu_item[total] = device_typename_id(img);
+	menu_item[total] = image_typename_id(img);
 	menu_subitem[total] = image_filename(img) ? image_filename(img) : "---";
 	flag[total] = 0;
 	total++;

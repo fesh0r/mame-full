@@ -17,14 +17,8 @@ struct bitbanger_config
 
 #define IO_BITBANGER IO_PRINTER
 
-extern void bitbanger_specify(struct IODevice *iodev, int count, const struct bitbanger_config *config);
 
-#define CONFIG_DEVICE_BITBANGER(count, config)			\
-	if (cfg->device_num-- == 0)							\
-	{													\
-		static struct IODevice iodev;					\
-		bitbanger_specify(&iodev, (count), (config));	\
-		cfg->dev = &iodev;								\
-	}													\
+
+void bitbanger_device_getinfo(struct IODevice *iodev, const struct bitbanger_config *config);
 
 #endif /* BITBNGR_H */

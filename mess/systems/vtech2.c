@@ -549,10 +549,39 @@ ROM_END
 
 ***************************************************************************/
 
+static void laser_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, vtech2_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void laser_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "rom\0";
+	dev->load = device_load_laser_cart;
+	dev->unload = device_unload_laser_cart;
+}
+
+static void laser_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "dsk\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_laser_floppy;
+}
+
 SYSTEM_CONFIG_START(laser)
-	CONFIG_DEVICE_CASSETTE(1, vtech2_cassette_formats)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_laser_cart, device_unload_laser_cart, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_laser_floppy, NULL, NULL)
+	CONFIG_DEVICE(laser_cassette_getinfo)
+	CONFIG_DEVICE(laser_cartslot_getinfo)
+	CONFIG_DEVICE(laser_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	 NAME	   PARENT	 COMPAT	MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */

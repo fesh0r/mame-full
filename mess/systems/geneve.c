@@ -545,12 +545,73 @@ ROM_START(genmod)
 	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7) SHA1(382292295c00dff348d7e17c5ce4da12a1d87763)) /* system speech ROM */
 ROM_END
 
+static void geneve_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	floppy_device_getinfo(dev, floppyoptions_ti99);
+	dev->count = 4;
+}
+
+static void geneve_harddisk_getinfo(struct IODevice *dev)
+{
+	/* harddisk */
+	dev->type = IO_HARDDISK;
+	dev->count = 4;
+	dev->file_extensions = "hd\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_ti99_hd;
+	dev->load = device_load_ti99_hd;
+	dev->unload = device_unload_ti99_hd;
+}
+
+static void geneve_parallel_getinfo(struct IODevice *dev)
+{
+	/* parallel */
+	dev->type = IO_PARALLEL;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_ti99_4_pio;
+	dev->unload = device_unload_ti99_4_pio;
+}
+
+static void geneve_serial_getinfo(struct IODevice *dev)
+{
+	/* serial */
+	dev->type = IO_SERIAL;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_ti99_4_rs232;
+	dev->unload = device_unload_ti99_4_rs232;
+}
+
+static void geneve_memcard_getinfo(struct IODevice *dev)
+{
+	/* memcard */
+	dev->type = IO_MEMCARD;
+	dev->file_extensions = "\0";
+	dev->count = 1;
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->init = device_init_smartmedia;
+	dev->load = device_load_smartmedia;
+	dev->unload = device_unload_smartmedia;
+}
+
 SYSTEM_CONFIG_START(geneve)
-	CONFIG_DEVICE_FLOPPY			(4,	ti99)
-	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
-	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
-	CONFIG_DEVICE_LEGACY			(IO_MEMCARD,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,	device_init_smartmedia,	NULL,	device_load_smartmedia,	device_unload_smartmedia,	NULL)
+	CONFIG_DEVICE(geneve_floppy_getinfo)
+	CONFIG_DEVICE(geneve_harddisk_getinfo)
+	CONFIG_DEVICE(geneve_parallel_getinfo)
+	CONFIG_DEVICE(geneve_serial_getinfo)
+	CONFIG_DEVICE(geneve_memcard_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */

@@ -634,9 +634,16 @@ static struct CassetteOptions pmd85_cassette_options = {
 	7200		/* sample frequency */
 };
 
+static void pmd85_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, pmd85_pmd_format, &pmd85_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START(pmd85)
 	CONFIG_RAM_DEFAULT(64 * 1024)
-	CONFIG_DEVICE_CASSETTEX(1, pmd85_pmd_format, &pmd85_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
+	CONFIG_DEVICE(pmd85_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 

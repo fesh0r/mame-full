@@ -236,7 +236,7 @@ static DEVICE_INIT(cassette)
 		return INIT_FAIL;
 
 	/* set to default state */
-	dev = device_find(Machine->gamedrv, IO_CASSETTE);
+	dev = device_find(Machine->devices, IO_CASSETTE);
 	get_cassimg(image)->state = get_default_state(dev);
 
 	return INIT_PASS;
@@ -258,7 +258,7 @@ static DEVICE_LOAD(cassette)
 	tag = get_cassimg(image);
 
 	/* figure out the cassette format */
-	dev = device_find(Machine->gamedrv, IO_CASSETTE);
+	dev = device_find(Machine->devices, IO_CASSETTE);
 	assert(dev);
 	formats = (const struct CassetteFormat **) dev->user1;
 
@@ -369,45 +369,46 @@ static void device_display_cassette(mess_image *image, struct mame_bitmap *bitma
 }
 
 
-const struct IODevice *cassette_device_specify(
-	struct IODevice *iodev,
-	char *extbuf,
-	size_t extbuflen,
-	int count,
+
+void cassette_device_getinfo(struct IODevice *iodev,
 	const struct CassetteFormat **formats,
 	const struct CassetteOptions *casopts,
 	cassette_state default_state)
 {
 	int i;
+	char extbuf[128];
 
-	assert(count);
-	if (iodev->count == 0)
+	/* specify if default */
+	if (default_state == (cassette_state) -1)
+		default_state = CASSETTE_PLAY;
+
+	if (formats == NULL)
+		formats = cassette_default_formats;
+
+	memset(extbuf, 0, sizeof(extbuf));
+	for (i = 0; formats[i]; i++)
 	{
-		/* specify if default */
-		if (default_state == (cassette_state) -1)
-			default_state = CASSETTE_PLAY;
-
-		if (formats == NULL)
-			formats = cassette_default_formats;
-
-		for (i = 0; formats[i]; i++)
-			specify_extension(extbuf, extbuflen, formats[i]->extensions);
-
-		memset(iodev, 0, sizeof(*iodev));
-		iodev->type = IO_CASSETTE;
-		iodev->count = count;
-		iodev->file_extensions = extbuf;
-		iodev->flags = DEVICE_LOAD_RESETS_NONE;
-		iodev->open_mode = OSD_FOPEN_RW_CREATE_OR_READ;
-		iodev->init = device_init_cassette;
-		iodev->load = device_load_cassette;
-		iodev->unload = device_unload_cassette;
-		iodev->display = device_display_cassette;
-		iodev->user1 = (void *) formats;
-		iodev->user2 = (void *) default_state;
-		iodev->user3 = (void *) casopts;
+		specify_extension(extbuf, sizeof(extbuf) / sizeof(extbuf[0]),
+			formats[i]->extensions);
 	}
-	return iodev;
+	iodev->file_extensions = auto_strlistdup(extbuf);
+	if (!iodev->file_extensions)
+	{
+		iodev->error = 1;
+		return;
+	}
+
+	iodev->type = IO_CASSETTE;
+	iodev->readable = 1;
+	iodev->writeable = 1;
+	iodev->creatable = 1;
+	iodev->init = device_init_cassette;
+	iodev->load = device_load_cassette;
+	iodev->unload = device_unload_cassette;
+	iodev->display = device_display_cassette;
+	iodev->user1 = (void *) formats;
+	iodev->user2 = (void *) default_state;
+	iodev->user3 = (void *) casopts;
 }
 
 

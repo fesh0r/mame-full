@@ -348,16 +348,28 @@ WRITE18_HANDLER(pdp1_write_mem)
 	perforated tape handling
 */
 
-static int pdp1_get_open_mode(mess_image *image)
+int pdp1_get_open_mode(const struct IODevice *dev, int id,
+	unsigned int *readable, unsigned int *writeable, unsigned int *creatable)
 {
-	return image_index_in_device(image) ? OSD_FOPEN_WRITE : OSD_FOPEN_READ;
+	/* unit 0 is read-only, unit 1 is write-only */
+	if (id)
+	{
+		*readable = 0;
+		*writeable = 1;
+		*creatable = 1;
+	}
+	else
+	{
+		*readable = 1;
+		*writeable = 1;
+		*creatable = 1;
+	}
 }
 
 
 
 DEVICE_INIT( pdp1_tape )
 {
-	image_set_open_mode_callback(image, pdp1_get_open_mode);
 	return INIT_PASS;
 }
 

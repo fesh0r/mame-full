@@ -903,30 +903,81 @@ logerror("memwrite ok\n");
 	return INIT_PASS;
 }
 
+static void tmc1800_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
 SYSTEM_CONFIG_START( tmc1800 )
 	CONFIG_RAM_DEFAULT	( 2 * 1024)
 	CONFIG_RAM			( 4 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
+	CONFIG_DEVICE(tmc1800_cassette_getinfo)
 SYSTEM_CONFIG_END
+
+static void tmc2000_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
 
 SYSTEM_CONFIG_START( tmc2000 )
 	CONFIG_RAM_DEFAULT	(16 * 1024)
 	CONFIG_RAM			(32 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
+	CONFIG_DEVICE(tmc2000_cassette_getinfo)
 SYSTEM_CONFIG_END
+
+static void tmc2000e_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
 
 SYSTEM_CONFIG_START( tmc2000e )
 	CONFIG_RAM_DEFAULT	( 8 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
+	CONFIG_DEVICE(tmc2000e_cassette_getinfo)
 SYSTEM_CONFIG_END
+
+static void tmc600_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, NULL, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void tmc600_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	legacybasicdsk_device_getinfo(dev);
+	dev->count = 4;
+	dev->file_extensions = "dsk\0";
+	dev->load = device_load_basicdsk_floppy;
+}
+
+static void tmc600_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void tmc600_quickload_getinfo(struct IODevice *dev)
+{
+	/* quickload */
+	quickload_device_getinfo(dev, quickload_load_tmc600, 0.0);
+	dev->file_extensions = "sbp\0";
+}
 
 SYSTEM_CONFIG_START( tmc600 )
 	CONFIG_RAM_DEFAULT	( 9 * 1024)
 	CONFIG_RAM			(30 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, NULL)
-//	CONFIG_DEVICE_FLOPPY_BASICDSK(4, "dsk\0", device_load_basicdsk_floppy)	! not without SBDOS !
-	CONFIG_DEVICE_PRINTER(1)
-	CONFIG_DEVICE_QUICKLOAD("sbp\0", tmc600)
+	CONFIG_DEVICE(tmc600_cassette_getinfo)
+	CONFIG_DEVICE(tmc600_floppy_getinfo)
+	CONFIG_DEVICE(tmc600_printer_getinfo)
+	CONFIG_DEVICE(tmc600_quickload_getinfo)
 SYSTEM_CONFIG_END
 
 /* System Drivers */

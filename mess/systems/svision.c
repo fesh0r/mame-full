@@ -377,8 +377,18 @@ static DEVICE_LOAD( svision_cart )
 	return cartslot_load_generic(file, REGION_USER1, 0, 1, 0x10000, CARTLOAD_MUSTBEPOWEROFTWO);
 }
 
+static void svision_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0ws\0sv\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_svision_cart;
+}
+
 SYSTEM_CONFIG_START(svision)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "bin\0ws\0sv\0", NULL, NULL, device_load_svision_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(svision_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -214,8 +214,17 @@ ROM_START( astrocdw )
     ROM_LOAD( "bioswhit.bin",  0x0000, 0x2000, CRC(6eb53e79) SHA1(d84341feec1a0a0e8aa6151b649bc3cf6ef69fbf))
 ROM_END
 
+static void astrocde_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->load = device_load_astrocade_rom;
+}
+
 SYSTEM_CONFIG_START(astrocde)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, device_load_astrocade_rom, NULL, NULL, NULL)
+	CONFIG_DEVICE(astrocde_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

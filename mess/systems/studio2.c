@@ -297,11 +297,20 @@ static DEVICE_LOAD( studio2_cart )
 	return cartslot_load_generic(file, REGION_CPU1, 0x0400, 0x0001, 0xfc00, 0);
 }
 
+static void studio2_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "bin\0";
+	dev->load = device_load_studio2_cart;
+}
+
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
 	/* cartridges at 0x400-0x7ff ? */
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "bin\0", NULL, NULL, device_load_studio2_cart, NULL, NULL, NULL)
+	CONFIG_DEVICE(studio2_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /* Driver Initialization */

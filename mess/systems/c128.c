@@ -1346,22 +1346,30 @@ MACHINE_DRIVER_END
 #define init_c128 c128_driver_init
 #define init_c128pal c128pal_driver_init
 
+static void c128_cbmcartslot_getinfo(struct IODevice *dev)
+{
+	cbmcartslot_device_getinfo(dev);
+	dev->file_extensions = "crt\080\0";
+}
+
+static void c64_quickload_getinfo(struct IODevice *dev)
+{
+	quickload_device_getinfo(dev, quickload_load_cbm_c64, CBM_QUICKLOAD_DELAY);
+	dev->file_extensions = "p00\0prg\0";
+}
+
 SYSTEM_CONFIG_START(c128)
-	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
-	CONFIG_DEVICE_FLOPPY_CBM
-	CONFIG_DEVICE_C64QUICK
+	CONFIG_DEVICE(c128_cbmcartslot_getinfo)
+	CONFIG_DEVICE(cbmfloppy_device_getinfo)
+	CONFIG_DEVICE(c64_quickload_getinfo)
 #if 0
-	CONFIG_DEVICE_VC20TAPE	/* needs 2 megahertz in c128 mode! */
+	CONFIG_DEVICE(vc20tape_device_getinfo)	/* needs 2 megahertz in c128 mode! */
 #endif
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(c128d)
-#if 0
-	CONFIG_DEVICE_CBM_CARTSLOT
-	CONFIG_DEVICE_VC20TAPE
-#endif
-	CONFIG_DEVICE_C64QUICK
-	CONFIG_DEVICE_C1571
+	CONFIG_DEVICE(c64_quickload_getinfo)
+	CONFIG_DEVICE(c1571_device_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	COMPAT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */

@@ -443,11 +443,44 @@ ROM_END
  System Config
 ******************************************************************************/
 
+static void vtech1_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	printer_device_getinfo(dev);
+	dev->count = 1;
+}
+
+static void vtech1_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	cassette_device_getinfo(dev, vtech1_cassette_formats, NULL, (cassette_state) -1);
+	dev->count = 1;
+}
+
+static void vtech1_snapshot_getinfo(struct IODevice *dev)
+{
+	/* snapshot */
+	snapshot_device_getinfo(dev, snapshot_load_vtech1, 0.5);
+	dev->file_extensions = "vz\0";
+}
+
+static void vtech1_floppy_getinfo(struct IODevice *dev)
+{
+	/* floppy */
+	dev->type = IO_FLOPPY;
+	dev->count = 2;
+	dev->file_extensions = "dsk\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_vtech1_floppy;
+}
+
 SYSTEM_CONFIG_START(vtech1)
-    CONFIG_DEVICE_PRINTER(          1)
-    CONFIG_DEVICE_CASSETTE(         1,  vtech1_cassette_formats)
-    CONFIG_DEVICE_SNAPSHOT_DELAY(       "vz\0",  vtech1, 0.5)
-    CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2,  "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, device_load_vtech1_floppy, NULL, NULL)
+    CONFIG_DEVICE(vtech1_printer_getinfo)
+    CONFIG_DEVICE(vtech1_cassette_getinfo)
+    CONFIG_DEVICE(vtech1_snapshot_getinfo)
+    CONFIG_DEVICE(vtech1_floppy_getinfo)
 SYSTEM_CONFIG_END
 
 

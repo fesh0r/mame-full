@@ -320,14 +320,40 @@ SYSTEM_CONFIG_START(nascom)
 #endif
 SYSTEM_CONFIG_END
 
+static void nascom1_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "nas\0bin\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_nascom1_cassette;
+	dev->unload = device_unload_nascom1_cassette;
+}
+
 SYSTEM_CONFIG_START(nascom1)
 	CONFIG_IMPORT_FROM(nascom)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "nas\0bin\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_nascom1_cassette, device_unload_nascom1_cassette, NULL)
+	CONFIG_DEVICE(nascom1_cassette_getinfo)
 SYSTEM_CONFIG_END
+
+static void nascom2_cassette_getinfo(struct IODevice *dev)
+{
+	/* cassette */
+	dev->type = IO_CASSETTE;
+	dev->count = 1;
+	dev->file_extensions = "cas\0nas\0bin\0";
+	dev->readable = 1;
+	dev->writeable = 0;
+	dev->creatable = 0;
+	dev->load = device_load_nascom1_cassette;
+	dev->unload = device_unload_nascom1_cassette;
+}
 
 SYSTEM_CONFIG_START(nascom2)
 	CONFIG_IMPORT_FROM(nascom)
-	CONFIG_DEVICE_LEGACY(IO_CASSETTE, 1, "cas\0nas\0bin\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_nascom1_cassette, device_unload_nascom1_cassette, NULL)
+	CONFIG_DEVICE(nascom2_cassette_getinfo)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT		INIT	CONFIG		COMPANY		FULLNAME */

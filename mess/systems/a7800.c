@@ -343,12 +343,34 @@ ROM_START (a7800p)
     ROM_LOAD ("7800pal.rom", 0xc000, 0x4000, CRC(d5b61170) SHA1(5a140136a16d1d83e4ff32a19409ca376a8df874))
 ROM_END
 
+static void a7800_ntsc_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "a78\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_a7800_cart;
+	dev->partialhash = a7800_partialhash;
+}
+
 SYSTEM_CONFIG_START(a7800_ntsc)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, device_load_a7800_cart, NULL, NULL, a7800_partialhash)
+	CONFIG_DEVICE(a7800_ntsc_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
+static void a7800_pal_cartslot_getinfo(struct IODevice *dev)
+{
+	/* cartslot */
+	cartslot_device_getinfo(dev);
+	dev->count = 1;
+	dev->file_extensions = "a78\0";
+	dev->must_be_loaded = 1;
+	dev->load = device_load_a7800_cart;
+	dev->partialhash = a7800_partialhash;
+}
+
 SYSTEM_CONFIG_START(a7800_pal)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "a78\0", NULL, NULL, device_load_a7800_cart, NULL, NULL, a7800_partialhash)
+	CONFIG_DEVICE(a7800_pal_cartslot_getinfo)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

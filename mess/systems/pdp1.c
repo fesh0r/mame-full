@@ -468,13 +468,51 @@ ROM_START(pdp1)
 		/* space filled with our font */
 ROM_END
 
+static void pdp1_punchtape_getinfo(struct IODevice *dev)
+{
+	/* punchtape */
+	dev->type = IO_PUNCHTAPE;
+	dev->count = 2;
+	dev->file_extensions = "tap\0rim\0";
+	dev->getdispositions = pdp1_get_open_mode;
+	dev->init = device_init_pdp1_tape;
+	dev->load = device_load_pdp1_tape;
+	dev->unload = device_unload_pdp1_tape;
+}
+
+static void pdp1_printer_getinfo(struct IODevice *dev)
+{
+	/* printer */
+	dev->type = IO_PRINTER;
+	dev->count = 1;
+	dev->file_extensions = "typ\0";
+	dev->readable = 0;
+	dev->writeable = 1;
+	dev->creatable = 1;
+	dev->load = device_load_pdp1_typewriter;
+	dev->unload = device_unload_pdp1_typewriter;
+}
+
+static void pdp1_cylinder_getinfo(struct IODevice *dev)
+{
+	/* cylinder */
+	dev->type = IO_CYLINDER;
+	dev->count = 1;
+	dev->file_extensions = "drm\0";
+	dev->readable = 1;
+	dev->writeable = 1;
+	dev->creatable = 0;
+	dev->load = device_load_pdp1_drum;
+	dev->unload = device_unload_pdp1_drum;
+}
+
 SYSTEM_CONFIG_START(pdp1)
 	/*CONFIG_RAM_DEFAULT(4 * 1024)
 	CONFIG_RAM(32 * 1024)
 	CONFIG_RAM(64 * 1024)*/
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0rim\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, device_init_pdp1_tape, NULL, device_load_pdp1_tape, device_unload_pdp1_tape, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PRINTER, 1, "typ\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_WRITE, NULL, NULL, device_load_pdp1_typewriter, device_unload_pdp1_typewriter, NULL)
-	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "drm\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW, NULL, NULL, device_load_pdp1_drum, device_unload_pdp1_drum, NULL)
+	CONFIG_DEVICE(pdp1_punchtape_getinfo)
+	CONFIG_DEVICE(pdp1_printer_getinfo)
+	CONFIG_DEVICE(pdp1_cylinder_getinfo)
 SYSTEM_CONFIG_END
 
 

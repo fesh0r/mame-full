@@ -32,17 +32,10 @@ typedef struct {
 int c1551_config(int id, int mode, C1551_CONFIG*config);
 #define c1551_reset vc1541_reset
 
-#define CONFIG_DEVICE_VC1541	\
-	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_vc1541, device_unload_vc1541,	\
-		((int(*)(mess_image*,int,void*))vc1541_config), NULL)
-
-#define CONFIG_DEVICE_C2031	CONFIG_DEVICE_VC1541
-
-#define CONFIG_DEVICE_C1551		\
-	CONFIG_DEVICE_LEGACYX(IO_FLOPPY, 1, "d64\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ, NULL, NULL, device_load_vc1541, device_unload_vc1541,	\
-		((int(*)(mess_image*,int,void*))c1551_config), NULL)
-
-#define CONFIG_DEVICE_C1571	CONFIG_DEVICE_VC1541
+void vc1541_device_getinfo(struct IODevice *dev);
+void c2031_device_getinfo(struct IODevice *dev);
+void c1551_device_getinfo(struct IODevice *dev);
+void c1571_device_getinfo(struct IODevice *dev);
 
 extern MACHINE_DRIVER_EXTERN( cpu_vc1540 );
 extern MACHINE_DRIVER_EXTERN( cpu_vc1541 );
