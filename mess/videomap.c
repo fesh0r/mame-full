@@ -785,13 +785,16 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	struct mame_bitmap *bmp = bitmap;
-	int full_refresh = 1;
+	int full_refresh;
+	int is_partial_update;
 
 	if (tmpbitmap)
 	{
 		/* writing to buffered bitmap; partial refresh (except on first draw) */
-		full_refresh = (flags & FLAG_FULL_REFRESH) ? 1 : 0;
-		flags &= ~FLAG_FULL_REFRESH;
+		is_partial_update = memcmp(cliprect, &Machine->visible_area, sizeof(*cliprect));
+		full_refresh = (is_partial_update || (flags & FLAG_FULL_REFRESH)) ? 1 : 0;
+		if (!is_partial_update)
+			flags &= ~FLAG_FULL_REFRESH;
 		bmp = tmpbitmap;
 	}
 	else
