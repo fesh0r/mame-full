@@ -76,8 +76,9 @@ static oprandinfo of[] = {
 /* 41 */ { {" P%u,A",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 42 */ { {" P%u,B",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 43 */ { {" %s",		"",			"",			""},		{PCABS, DONE, DONE, DONE} },
-/* 44 */ { {"",			"",			"",			""},		{TRAP, DONE, DONE, DONE} } /* Only For TRAP */
+/* 44 */ { {"",			"",			"",			""},		{TRAP, DONE, DONE, DONE} }, /* Only For TRAP */
 
+/* 45 */ { {" *R%u",	"",			"",			""},		{UI8, DONE, DONE, DONE} }
 };
 
 static opcodeinfo opcodes[] = {
@@ -110,7 +111,7 @@ static opcodeinfo opcodes[] = {
 	{0xA3, "ANDP", 9 },
 
 	{0x8C, "BR", 43 },
-	{0x9C, "BR", 11 },
+	{0x9C, "BR", 45 },
 	{0xAC, "BR", 12 },
 
 	{0x66, "BTJO", 13 },
@@ -138,7 +139,7 @@ static opcodeinfo opcodes[] = {
 	{0xA7, "BTJZP", 22 },
 
 	{0x8E, "CALL", 43 },
-	{0x9E, "CALL", 11 },
+	{0x9E, "CALL", 45 },
 	{0xAE, "CALL", 12 },
 
 	{0xB5, "CLR A", 23 },
@@ -156,7 +157,7 @@ static opcodeinfo opcodes[] = {
 	{0x7D, "CMP", 6 },
 	
 	{0x8D, "CMPA", 10 },
-	{0x9D, "CMPA", 11 },
+	{0x9D, "CMPA", 45 },
 	{0xAD, "CMPA", 12 },
 
 	{0x6E, "DAC", 0 },
@@ -211,7 +212,7 @@ static opcodeinfo opcodes[] = {
 	{0xE5, "JPI", 28 },
 
 	{0x8A, "LDA", 10 },
-	{0x9A, "LDA", 11 },
+	{0x9A, "LDA", 45 },
 	{0xAA, "LDA", 12 },
 
 	{0x0D, "LDSP", 23 },
@@ -299,7 +300,7 @@ static opcodeinfo opcodes[] = {
 	{0x07, "SETC", 23 },
 
 	{0x8B, "STA", 10 },
-	{0x9B, "STA", 11 },
+	{0x9B, "STA", 45 },
 	{0xAB, "STA", 12 },
 
 	{0x09, "STSP", 23 },

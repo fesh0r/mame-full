@@ -1611,6 +1611,7 @@ void decd_r( void )
 	PAIR	t;
 	
 	IMMBYTE(r);
+	t.w.h = 0;
 	t.w.l = RRF16(r);
 	t.d -= 1;
 	WRF16(r,t);
