@@ -187,15 +187,9 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
     if (lpExt) {
         /* Are we a ZIP file? */
         if (!stricmp(lpExt, ".ZIP")) {
+			lpExt = NULL;
             if (bReadZip) {
                 pZip = openzip(0, 0, filename);
-                if (pZip) {
-                    pZipEnt = readzip(pZip);
-                    if (pZipEnt) {
-                        lpExt = strrchr(pZipEnt->name, '.');
-						zipcrc = pZipEnt->crc32;
-                    }
-                }
             }
             else {
                 /* IO_UNKNOWN represents uncalculated zips */
@@ -203,35 +197,46 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
             }
         }
 
-        if (lpExt && stricmp(lpExt, ".ZIP")) {
-            lpExt++;
-			imgtype = MessLookupImageType(imagetypes, lpExt);
-			if (imgtype)
-			{
-                type = imgtype->type;
-#if HAS_CRC
-				if (crc && zipcrc)
+		do
+		{
+            if (pZip) {
+				lpExt = NULL;
+                pZipEnt = readzip(pZip);
+                if (pZipEnt) {
+                    lpExt = strrchr(pZipEnt->name, '.');
+					zipcrc = pZipEnt->crc32;
+                }
+            }
+			if (lpExt) {
+				lpExt++;
+				imgtype = MessLookupImageType(imagetypes, lpExt);
+				if (imgtype)
 				{
-					if (imgtype->partialcrc)
+					type = imgtype->type;
+#if HAS_CRC
+					if (crc && zipcrc)
 					{
-						unsigned char *buf = NULL;
-						assert(pZipEnt);
-						buf = malloc(pZipEnt->uncompressed_size);
-						if (buf)
+						if (imgtype->partialcrc)
 						{
-							readuncompresszip(pZip, pZipEnt, (char *) buf);
-							*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
-							free(buf);
+							unsigned char *buf = NULL;
+							assert(pZipEnt);
+							buf = malloc(pZipEnt->uncompressed_size);
+							if (buf)
+							{
+								readuncompresszip(pZip, pZipEnt, (char *) buf);
+								*crc = imgtype->partialcrc(buf, (unsigned int) pZipEnt->uncompressed_size);
+								free(buf);
+							}
+						}
+						else
+						{
+							*crc = zipcrc;
 						}
 					}
-					else
-					{
-						*crc = zipcrc;
-					}
-				}
 #endif /* HAS_CRC */
+				}
 			}
-        }
+		} while( pZip && pZipEnt );
 
         if (pZip)
             closezip(pZip);
