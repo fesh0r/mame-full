@@ -432,6 +432,7 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
     if (arcadia_sprite_collision(2,3)) arcadia_video.reg.d.collision_sprite&=~0x20; //guess
 
 #if DEBUG
+{
     char str[0x40];
 //    snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",
 //	     input_port_7_r(0), input_port_8_r(0),
@@ -465,5 +466,6 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	     arcadia_video.reg.d.pal2,
 	     arcadia_video.reg.d.pal3 );
     ui_text(bitmap, str, 0, 16);
+}
 #endif
 }
