@@ -40,67 +40,24 @@ void gardia_decode(void);
 
 static void system1_init_machine(void)
 {
-	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
-	/* this is not a ROM patch, the game checks a RAM location */
-	/* before doing the test */
-	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-	memory_region(REGION_CPU1)[0xefff] = 0x4b;
-
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
 static void chplft_init_machine(void)
 {
-	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
-	/* this is not a ROM patch, the game checks a RAM location */
-	/* before doing the test */
-	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-	memory_region(REGION_CPU1)[0xefff] = 0x4b;
-
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
 static void wbml_init_machine(void)
 {
-	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
-	/* this is not a ROM patch, the game checks a RAM location */
-	/* before doing the test */
-	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
-	memory_region(REGION_CPU1)[0xefff] = 0x4b;
-
 	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 }
 
 
-static int bankswitch;
-
-READ_HANDLER( wbml_bankswitch_r )
-{
-	return bankswitch;
-}
-
-WRITE_HANDLER( hvymetal_bankswitch_w )
-{
-	int bankaddress;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
-
-	/* patch out the obnoxiously long startup RAM tests */
-	rom[0x4a55 + diff] = 0xc3;
-	rom[0x4a56] = 0xb6;
-	rom[0x4a57] = 0x4a;
-
-	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
-	cpu_setbank(1,&rom[bankaddress]);
-
-	bankswitch = data;
-}
-
-WRITE_HANDLER( brain_bankswitch_w )
+WRITE_HANDLER( hvymetal_videomode_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -109,10 +66,22 @@ WRITE_HANDLER( brain_bankswitch_w )
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
 	cpu_setbank(1,&rom[bankaddress]);
 
-	bankswitch = data;
+	system1_videomode_w(0, data);
 }
 
-WRITE_HANDLER( chplft_bankswitch_w )
+WRITE_HANDLER( brain_videomode_w )
+{
+	int bankaddress;
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+
+	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
+	cpu_setbank(1,&rom[bankaddress]);
+
+	system1_videomode_w(0, data);
+}
+
+WRITE_HANDLER( chplft_videomode_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -121,8 +90,9 @@ WRITE_HANDLER( chplft_bankswitch_w )
 	bankaddress = 0x10000 + (((data & 0x0c)>>2) * 0x4000);
 	cpu_setbank(1,&rom[bankaddress]);
 
-	bankswitch = data;
+	system1_videomode_w(0, data);
 }
+
 
 WRITE_HANDLER( system1_soundport_w )
 {
@@ -137,8 +107,7 @@ WRITE_HANDLER( system1_soundport_w )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xefff, MRA_RAM },
-	{ 0xf020, 0xf03f, MRA_RAM },
+	{ 0xc000, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xfbff, MRA_RAM },
 	{ -1 } /* end of table */
 };
@@ -148,7 +117,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
 	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xdfff, system1_paletteram_w, &paletteram },
+	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
 	{ 0xe000, 0xe7ff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
 	{ 0xe800, 0xeeff, MWA_RAM, &system1_videoram, &system1_videoram_size },
 	{ 0xefbd, 0xefbd, MWA_RAM, &system1_scroll_y },
@@ -162,8 +131,7 @@ static struct MemoryReadAddress brain_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xefff, MRA_RAM },
-	{ 0xf020, 0xf03f, MRA_RAM },
+	{ 0xc000, 0xf3ff, MRA_RAM },
 	{ 0xf800, 0xfbff, MRA_RAM },
 	{ -1 } /* end of table */
 };
@@ -196,9 +164,9 @@ static struct MemoryWriteAddress chplft_writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAMROM },
 	{ 0xd000, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd800, 0xdfff, system1_paletteram_w, &paletteram },
+	{ 0xd800, 0xddff, system1_paletteram_w, &paletteram },
 	{ 0xe7c0, 0xe7ff, choplifter_scroll_x_w, &system1_scrollx_ram },
-	{ 0xe000, 0xe7ff, system1_videoram_w, &system1_videoram, &system1_videoram_size },
+	{ 0xe000, 0xe7ff, MWA_RAM, &system1_videoram, &system1_videoram_size },
 	{ 0xe800, 0xeeff, system1_backgroundram_w, &system1_backgroundram, &system1_backgroundram_size },
 	{ 0xf000, 0xf3ff, system1_background_collisionram_w, &system1_background_collisionram },
 	{ 0xf800, 0xfbff, system1_sprites_collisionram_w, &system1_sprites_collisionram },
@@ -238,38 +206,38 @@ static struct IOReadPort wbml_readport[] =
 	{ 0x0d, 0x0d, input_port_4_r }, /* DIP1 some games read it from here... */
 	{ 0x10, 0x10, input_port_4_r }, /* DIP1 ... and some others from here */
 									/* but there are games which check BOTH! */
-	{ 0x15, 0x15, wbml_bankswitch_r },
-	{ 0x16, 0x16, wbml_bg_bankselect_r },
-	{ 0x19, 0x19, wbml_bankswitch_r },  /* mirror address */
+	{ 0x15, 0x15, system1_videomode_r },
+	{ 0x16, 0x16, wbml_videoram_bank_latch_r },
+	{ 0x19, 0x19, system1_videomode_r },  /* mirror address */
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort wbml_writeport[] =
 {
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
-	{ 0x15, 0x15, chplft_bankswitch_w },
-	{ 0x16, 0x16, wbml_bg_bankselect_w },
+	{ 0x15, 0x15, chplft_videomode_w },
+	{ 0x16, 0x16, wbml_videoram_bank_latch_w },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort hvymetal_writeport[] =
 {
 	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
-	{ 0x19, 0x19, hvymetal_bankswitch_w },
+	{ 0x19, 0x19, hvymetal_videomode_w },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort brain_writeport[] =
 {
 	{ 0x18, 0x18, system1_soundport_w },    /* sound commands */
-	{ 0x19, 0x19, brain_bankswitch_w },
+	{ 0x19, 0x19, brain_videomode_w },
 	{ -1 }  /* end of table */
 };
 
 static struct IOWritePort chplft_writeport[] =
 {
 	{ 0x14, 0x14, system1_soundport_w },    /* sound commands */
-	{ 0x15, 0x15, chplft_bankswitch_w },
+	{ 0x15, 0x15, chplft_videomode_w },
 	{ -1 }  /* end of table */
 };
 
@@ -311,7 +279,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
@@ -1657,38 +1625,18 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,    /* 8 by 8 */
-	2048,   /* 2048 characters */
+	RGN_FRAC(1,3),
 	3,      /* 3 bits per pixel */
-	{ 0, 2048*8*8, 2*2048*8*8 },        	/* plane */
+	{ RGN_FRAC(0,3), RGN_FRAC(1,3), RGN_FRAC(2,3) }, /* seperate planes */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-
-static struct GfxLayout chplft_charlayout =
-{
-	8,8,    /* 8 by 8 */
-	4096,   /* 4096 characters */
-	3,  /* 3 bits per pixel */
-	{ 0, 4096*8*8, 2*4096*8*8 },        /* plane */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
-};
-
-
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	/* sprites use colors 0-511, but are not defined here */
 	{ REGION_GFX1, 0, &charlayout, 512, 128 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo chplft_gfxdecodeinfo[] =
-{
-	/* sprites use colors 0-511, but are not defined here */
-	{ REGION_GFX1, 0, &chplft_charlayout, 512, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -1725,18 +1673,16 @@ static struct MachineDriver machine_driver_system1 =
 	system1_init_machine,
 
 	/* video hardware */
-	256, 256,        	   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },           /* struct rectangle visible_area */
-	gfxdecodeinfo,        	  /* GfxDecodeInfo */
-	2048,        		   /* total colors */
-	2048,        		   /* color table length */
-	system1_vh_convert_color_prom,      /* convert color prom routine */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        		  /* vh_init routine */
-	system1_vh_start,           /* vh_start routine */
-	system1_vh_stop,        	/* vh_stop routine */
-	system1_vh_screenrefresh,       /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	system1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1747,6 +1693,7 @@ static struct MachineDriver machine_driver_system1 =
 		}
 	}
 };
+
 
 /* driver with reduced visible area for scrolling games */
 static struct MachineDriver machine_driver_small =
@@ -1771,18 +1718,16 @@ static struct MachineDriver machine_driver_small =
 	system1_init_machine,
 
 	/* video hardware */
-	256, 256,        	   /* screen_width, screen_height */
-	{ 0*8+8, 32*8-1-8, 0*8, 28*8-1 },           /* struct rectangle visible_area */
-	gfxdecodeinfo,        	  /* GfxDecodeInfo */
-	2048,        		   /* total colors */
-	2048,        		   /* color table length */
-	system1_vh_convert_color_prom,      /* convert color prom routine */
+	256, 256, { 0*8+8, 32*8-1-8, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        		  /* vh_init routine */
-	system1_vh_start,           /* vh_start routine */
-	system1_vh_stop,        	/* vh_stop routine */
-	system1_vh_screenrefresh,       /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	system1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1793,6 +1738,7 @@ static struct MachineDriver machine_driver_small =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_pitfall2 =
 {
@@ -1810,25 +1756,22 @@ static struct MachineDriver machine_driver_pitfall2 =
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4		 /* NMIs are caused by the main CPU */
 		},
-
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
 	1,        		  /* single CPU, no need for interleaving */
 	system1_init_machine,
 
 	/* video hardware */
-	256, 256,        	   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },       /* struct rectangle visible_area */
-	gfxdecodeinfo,        	  /* GfxDecodeInfo */
-	2048,        		   /* total colors */
-	2048,        		   /* color table length */
-	system1_vh_convert_color_prom,          /* convert color prom routine */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        		  /* vh_init routine */
-	system1_vh_start,           /* vh_start routine */
-	system1_vh_stop,        	/* vh_stop routine */
-	system1_vh_screenrefresh,       /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	system1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1839,6 +1782,7 @@ static struct MachineDriver machine_driver_pitfall2 =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_hvymetal =
 {
@@ -1862,18 +1806,16 @@ static struct MachineDriver machine_driver_hvymetal =
 	chplft_init_machine,
 
 	/* video hardware */
-	256, 256,        		   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },           /* struct rectangle visible_area */
-	chplft_gfxdecodeinfo,        		   /* GfxDecodeInfo */
-	2048,        			   /* total colors */
-	2048,        			   /* color table length */
-	system1_vh_convert_color_prom,  /* convert color prom routine */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        					  /* vh_init routine */
-	system1_vh_start,        	   /* vh_start routine */
-	system1_vh_stop,        		/* vh_stop routine */
-	system1_vh_screenrefresh,        	   /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	system1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1884,6 +1826,7 @@ static struct MachineDriver machine_driver_hvymetal =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_chplft =
 {
@@ -1907,18 +1850,16 @@ static struct MachineDriver machine_driver_chplft =
 	chplft_init_machine,
 
 	/* video hardware */
-	256, 256,        		   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },           /* struct rectangle visible_area */
-	chplft_gfxdecodeinfo,        		   /* GfxDecodeInfo */
-	2048,        			   /* total colors */
-	2048,        			   /* color table length */
-	system1_vh_convert_color_prom,  /* convert color prom routine */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        					  /* vh_init routine */
-	system1_vh_start,        	   /* vh_start routine */
-	system1_vh_stop,        		/* vh_stop routine */
-	choplifter_vh_screenrefresh,        		/* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	choplifter_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1929,6 +1870,7 @@ static struct MachineDriver machine_driver_chplft =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_brain =
 {
@@ -1952,18 +1894,16 @@ static struct MachineDriver machine_driver_brain =
 	system1_init_machine,
 
 	/* video hardware */
-	256, 256,        	   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },           /* struct rectangle visible_area */
-	gfxdecodeinfo,        	  /* GfxDecodeInfo */
-	2048,        		   /* total colors */
-	2048,        		   /* color table length */
-	system1_vh_convert_color_prom,      /* convert color prom routine */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	1536, 1536,
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        		  /* vh_init routine */
-	system1_vh_start,           /* vh_start routine */
-	system1_vh_stop,        	/* vh_stop routine */
-	system1_vh_screenrefresh,       /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	system1_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1974,6 +1914,7 @@ static struct MachineDriver machine_driver_brain =
 		}
 	}
 };
+
 
 static struct MachineDriver machine_driver_wbml =
 {
@@ -1997,17 +1938,16 @@ static struct MachineDriver machine_driver_wbml =
 	wbml_init_machine,
 
 	/* video hardware */
-	256, 256,        	   /* screen_width, screen_height */
-	{ 0*8, 32*8-1, 0*8, 28*8-1 },       /* struct rectangle visible_area */
-	chplft_gfxdecodeinfo,           /* GfxDecodeInfo */
+	256, 256, { 0*8, 32*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
 	1536, 1536,
-	system1_vh_convert_color_prom,          /* convert color prom routine */
+	system1_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,        		  /* vh_init routine */
-	system1_vh_start,           /* vh_start routine */
-	system1_vh_stop,        	/* vh_stop routine */
-	wbml_vh_screenrefresh,        	  /* vh_update routine */
+	0,
+	system1_vh_start,
+	system1_vh_stop,
+	wbml_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -3042,7 +2982,7 @@ ROM_END
 ROM_START( blckgalb )
 	ROM_REGION( 2*0x10000, REGION_CPU1 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic62",         0x10000, 0x8000, 0x65c47676 ) /* decrypted opcodes */
-	ROM_CONTINUE(			 0x00000, 0x8000 )			 /* decrypted data */
+	ROM_CONTINUE(			  0x00000, 0x8000 )			 /* decrypted data */
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound cpu */
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
@@ -3263,7 +3203,7 @@ static void init_imsorry(void)	{ imsorry_decode(); }
 static void init_teddybb(void)	{ teddybb_decode(); }
 static void init_hvymetal(void)	{ hvymetal_decode(); }
 static void init_myheroj(void)	{ myheroj_decode(); }
-static void init_fdwarrio(void)	{ fdwarrio_decode(); }
+static void init_4dwarrio(void)	{ fdwarrio_decode(); }
 static void init_wboy3(void)	{ wboy3_decode(); }
 static void init_wboy4(void)	{ wboy4_decode(); }
 static void init_gardia(void)	{ gardia_decode(); }
@@ -3322,44 +3262,44 @@ static void init_bootleg(void)
 
 
 
-GAMEX(1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "Star Jacker (Sega)", GAME_NO_COCKTAIL )
-GAMEX(1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)", GAME_NO_COCKTAIL )
-GAMEX(1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus", GAME_NO_COCKTAIL )
-GAMEX(1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1983, upndown,  0,        system1,  upndown,  0,        ROT270, "Sega", "Up'n Down", GAME_NO_COCKTAIL )
-GAMEX(1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking", GAME_NO_COCKTAIL )
-GAMEX(1984, mrvikinj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT", GAME_NO_COCKTAIL )
-GAMEX(1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1984, flicky2,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 2)", GAME_NO_COCKTAIL )
-GAMEX(1984, bullfgtj, 0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Tougyuu (Japan)", GAME_NO_COCKTAIL )	/* Bull Fight */
-GAMEX(1985, pitfall2, 0,        pitfall2, pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II", GAME_NO_COCKTAIL )
-GAMEX(1985, pitfallu, pitfall2, pitfall2, pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja", GAME_NO_COCKTAIL )
-GAMEX(1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1985, nprinces, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess", GAME_NO_COCKTAIL )
-GAMEX(1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (bootleg?)", GAME_NO_COCKTAIL )
-GAMEX(1985, imsorry,  0,        system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (US)", GAME_NO_COCKTAIL )
-GAMEX(1985, imsorryj, imsorry,  system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1985, teddybb,  0,        system1,  teddybb,  teddybb,  ROT0,   "Sega", "TeddyBoy Blues", GAME_NO_COCKTAIL )
-GAMEX(1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", "Heavy Metal", GAME_NO_COCKTAIL )
-GAMEX(1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", "My Hero (US)", GAME_NO_COCKTAIL )
-GAMEX(1985, myheroj,  myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", "Seishun Scandal (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", "My Hero (Korea)", GAME_NO_COCKTAIL )
-GAMEX(1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", "Shooting Master", GAME_NOT_WORKING | GAME_NO_COCKTAIL )	/* 8751 protection */
-GAMEX(1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter", GAME_NOT_WORKING | GAME_NO_COCKTAIL )	/* 8751 protection */
-GAMEX(1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter (alternate)", GAME_NO_COCKTAIL )
-GAMEX(1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", "Choplifter (bootleg)", GAME_NO_COCKTAIL )
-GAMEX(1985, 4dwarrio, 0,        system1,  4dwarrio, fdwarrio, ROT0,   "Coreland / Sega", "4-D Warriors", GAME_NO_COCKTAIL )
-GAMEX(1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain", GAME_NO_COCKTAIL )
-GAMEX(1986, wboy,     0,        system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1986, wboy2,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)", GAME_NO_COCKTAIL )
-GAMEX(????, wboy3,    wboy,     system1,  wboy,     wboy3,    ROT0,   "<unknown>", "Wonder Boy (set 3)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX(1986, wboy4,    wboy,     system1,  wboy,     wboy4,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 4)", GAME_NO_COCKTAIL )
-GAMEX(1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1986, wboy4u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 4 not encrypted)", GAME_NO_COCKTAIL )
-GAMEX(1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe", GAME_NO_COCKTAIL )
+GAME (1983, starjack, 0,        small,    starjack, 0,        ROT270, "Sega", "Star Jacker (Sega)" )
+GAME (1983, starjacs, starjack, small,    starjacs, 0,        ROT270, "Stern", "Star Jacker (Stern)" )
+GAME (1983, regulus,  0,        system1,  regulus,  regulus,  ROT270, "Sega", "Regulus" )
+GAME (1983, regulusu, regulus,  system1,  regulus,  0,        ROT270, "Sega", "Regulus (not encrypted)" )
+GAME (1983, upndown,  0,        system1,  upndown,  0,        ROT270, "Sega", "Up'n Down" )
+GAME (1984, mrviking, 0,        small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking" )
+GAME (1984, mrvikinj, mrviking, small,    mrviking, mrviking, ROT270, "Sega", "Mister Viking (Japan)" )
+GAME (1984, swat,     0,        system1,  swat,     swat,     ROT270, "Coreland / Sega", "SWAT" )
+GAME (1984, flicky,   0,        system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 1)" )
+GAME (1984, flicky2,  flicky,   system1,  flicky,   flicky,   ROT0,   "Sega", "Flicky (set 2)" )
+GAME (1984, bullfgtj, 0,        system1,  bullfgtj, bullfgtj, ROT0,   "Sega / Coreland", "The Tougyuu (Japan)" )	/* Bull Fight */
+GAME (1985, pitfall2, 0,        pitfall2, pitfall2, pitfall2, ROT0,   "Sega", "Pitfall II" )
+GAME (1985, pitfallu, pitfall2, pitfall2, pitfallu, 0,        ROT0,   "Sega", "Pitfall II (not encrypted)" )
+GAME (1985, seganinj, 0,        system1,  seganinj, seganinj, ROT0,   "Sega", "Sega Ninja" )
+GAME (1985, seganinu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Sega Ninja (not encrypted)" )
+GAME (1985, nprinces, seganinj, system1,  seganinj, nprinces, ROT0,   "Sega", "Ninja Princess" )
+GAME (1985, nprincsu, seganinj, system1,  seganinj, 0,        ROT0,   "Sega", "Ninja Princess (not encrypted)" )
+GAME (1985, nprincsb, seganinj, system1,  seganinj, flicky,   ROT0,   "bootleg?", "Ninja Princess (bootleg?)" )
+GAME (1985, imsorry,  0,        system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (US)" )
+GAME (1985, imsorryj, imsorry,  system1,  imsorry,  imsorry,  ROT0,   "Coreland / Sega", "I'm Sorry (Japan)" )
+GAME (1985, teddybb,  0,        system1,  teddybb,  teddybb,  ROT0,   "Sega", "TeddyBoy Blues" )
+GAME (1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", "Heavy Metal" )
+GAME (1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", "My Hero (US)" )
+GAME (1985, myheroj,  myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", "Seishun Scandal (Japan)" )
+GAME (1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", "My Hero (Korea)" )
+GAMEX(1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", "Shooting Master", GAME_NOT_WORKING )	/* 8751 protection */
+GAMEX(1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter", GAME_NOT_WORKING )	/* 8751 protection */
+GAME (1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", "Choplifter (alternate)" )
+GAME (1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", "Choplifter (bootleg)" )
+GAME (1985, 4dwarrio, 0,        system1,  4dwarrio, 4dwarrio, ROT0,   "Coreland / Sega", "4-D Warriors" )
+GAME (1986, brain,    0,        brain,    brain,    0,        ROT0,   "Coreland / Sega", "Brain" )
+GAME (1986, wboy,     0,        system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 1)" )
+GAME (1986, wboy2,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)" )
+GAMEX(????, wboy3,    wboy,     system1,  wboy,     wboy3,    ROT0,   "<unknown>", "Wonder Boy (set 3)", GAME_NOT_WORKING )
+GAME (1986, wboy4,    wboy,     system1,  wboy,     wboy4,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 4)" )
+GAME (1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)" )
+GAME (1986, wboy4u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 4 not encrypted)" )
+GAME (1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe" )
 GAMEX(1986, gardia,   0,        brain,    wboy,     gardia,   ROT270, "Sega / Coreland", "Gardia", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1986, gardiab,  gardia,   brain,    wboy,     gardia,   ROT270, "bootleg", "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX(1987, blockgal, 0,        system1,  blockgal, 0,        ROT90,  "Sega / Vic Tokai", "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

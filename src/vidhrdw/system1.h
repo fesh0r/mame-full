@@ -37,8 +37,8 @@ void system1_vh_stop(void);
 void system1_define_sprite_pixelmode(int Mode);
 void system1_define_background_memory(int Mode);
 
-READ_HANDLER( wbml_bg_bankselect_r );
-WRITE_HANDLER( wbml_bg_bankselect_w );
+READ_HANDLER( wbml_videoram_bank_latch_r );
+WRITE_HANDLER( wbml_videoram_bank_latch_w );
 READ_HANDLER( wbml_paged_videoram_r );
 WRITE_HANDLER( wbml_paged_videoram_w );
 WRITE_HANDLER( system1_background_collisionram_w );
