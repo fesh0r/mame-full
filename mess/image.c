@@ -25,6 +25,7 @@ struct image_info
 {
 	int loaded;
 	char *name;
+	char *dir;
 	UINT32 crc;
 	UINT32 length;
 	char *longname;
@@ -160,6 +161,7 @@ int image_load(int type, int id, const char *name)
 		newname = NULL;
 
 	img->name = newname;
+	img->dir = NULL;
 
 	if (images_is_running && (dev->reset_depth >= IO_RESET_CPU))
 		machine_reset();
@@ -296,6 +298,7 @@ void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 		if (renamed_image)
 		{
 			img->name = image_strdup(type, id, renamed_image);
+			img->dir = NULL;
 			free(renamed_image);
 			renamed_image = NULL;
 		}
@@ -428,12 +431,35 @@ const char *image_filename(int type, int id)
 	return get_image(type, id)->name;
 }
 
+const char *image_basename(int type, int id)
+{
+	return osd_basename((char *) image_filename(type, id));
+}
+
 const char *image_filetype(int type, int id)
 {
 	const char *s;
 	s = image_filename(type, id);
 	s = strrchr(s, '.');
 	return s ? s+1 : NULL;
+}
+
+const char *image_filedir(int type, int id)
+{
+	struct image_info *info;
+	char *dirname;
+
+	info = get_image(type, id);
+	if (!info->dir)
+	{
+		dirname = osd_dirname(info->name);
+		if (dirname)
+		{
+			info->dir = image_strdup(type, id, dirname);
+			free(dirname);
+		}
+	}
+	return info->dir;
 }
 
 int image_exists(int type, int id)

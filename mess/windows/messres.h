@@ -20,20 +20,8 @@
 #define ID_Menu116                      116
 #define ID_OPTIONS_FRAMESKIP            117
 #define ID_OPTIONS_PAUSE                118
-#define ID_Menu119                      119
+#define ID_FILE_LOADSTATE               119
 #define ID_FRAMESKIP_AUTO               120
-#define ID_FRAMESKIP_0                  121
-#define ID_FRAMESKIP_1                  122
-#define ID_FRAMESKIP_2                  123
-#define ID_FRAMESKIP_3                  124
-#define ID_FRAMESKIP_4                  125
-#define ID_FRAMESKIP_5                  126
-#define ID_FRAMESKIP_6                  127
-#define ID_FRAMESKIP_7                  128
-#define ID_FRAMESKIP_8                  129
-#define ID_FRAMESKIP_9                  130
-#define ID_FRAMESKIP_10                 131
-#define ID_FRAMESKIP_11                 132
 #define IDR_RUNTIME_MENU                6000
 #define ID_FILE_EXIT                    6001
 
@@ -41,7 +29,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         6000
 #define _APS_NEXT_SYMED_VALUE           101

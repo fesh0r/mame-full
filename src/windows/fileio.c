@@ -329,6 +329,13 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype, int op
 		case OSD_FILETYPE_STATE:
 		{
 			char temp[256];
+#ifdef MESS
+			if (!strcmp(filename, "\1"))
+			{
+				extern char *win_state_hack;
+				return generic_fopen(pathc, pathv, NULL, win_state_hack, extension, 0, (openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD) | FILEFLAG_CAN_BE_ABSOLUTE);
+			}
+#endif
 			sprintf(temp, "%s-%s", gamename, filename);
 			return generic_fopen(pathc, pathv, NULL, temp, extension, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD);
 		}

@@ -377,13 +377,11 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 			const char *name = image_filename(type,id);
 			if( name )
 			{
-				const char *filename;
 				const char *base_filename;
 				const char *info;
 				char *base_filename_noextension;
 
-				filename = image_filename(type, id);
-				base_filename = osd_basename((char *) filename);
+				base_filename = image_basename(type, id);
 				base_filename_noextension = osd_strip_extension(base_filename);
 
 				/* display device type and filename */

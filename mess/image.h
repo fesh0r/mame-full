@@ -16,7 +16,9 @@ extern void *image_fopen_custom(int type, int id, int filetype, int read_or_writ
 
 extern const char *image_typename_id(int type, int id);
 extern const char *image_filename(int type, int id);
+extern const char *image_basename(int type, int id);
 extern const char *image_filetype(int type, int id);
+extern const char *image_filedir(int type, int id);
 extern int image_exists(int type, int id);
 extern unsigned int image_length(int type, int id);
 extern unsigned int image_crc(int type, int id);

@@ -29,8 +29,8 @@ IDR_RUNTIME_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Load State...",              ID_Menu112, GRAYED
-        MENUITEM "&Save State...",              ID_FILE_SAVESTATE, GRAYED
+        MENUITEM "&Load State...",              119
+        MENUITEM "&Save State...",              ID_FILE_SAVESTATE
         MENUITEM SEPARATOR
         MENUITEM "&Exit",                       ID_FILE_EXIT
     END
@@ -62,7 +62,7 @@ BEGIN
         MENUITEM "Show Internal Graphics",      ID_OPTIONS_SHOWINTERNALGRAPHICS
         , GRAYED
     END
-    POPUP "&Devices", GRAYED
+    POPUP "&Devices"
     BEGIN
         MENUITEM SEPARATOR
     END
