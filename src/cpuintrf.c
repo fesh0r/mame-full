@@ -583,7 +583,7 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_IRQ,	    8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,			    8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				32,18bedw,0,18,BE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
