@@ -169,6 +169,7 @@ DRVLIBS = \
 	$(OBJ)/vtech.a	  \
 	$(OBJ)/jupiter.a  \
 	$(OBJ)/trs80.a	  \
+	$(OBJ)/gce.a	  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/tangerin.a \
 #	$(OBJ)/kaypro.a   \
@@ -216,7 +217,6 @@ DRVLIBS = \
 #	$(OBJ)/ssystem3.a \
 #	$(OBJ)/hp48.a     \
 #	$(OBJ)/cpschngr.a \
-#	$(OBJ)/gce.a	  \
 
 
 
