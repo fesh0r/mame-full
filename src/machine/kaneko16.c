@@ -635,11 +635,12 @@ void bonkadv_mcu_run(void)
 
 			// update eeprom checksum (bytesum) according (fake) dsw region
 			{
+				int i;
 				data8_t *mcu_ram8 = (data8_t *)&mcu_ram[mcu_offset];
 			
 				mcu_ram8[BYTE_XOR_BE(40)] = readinputport(5);	// set new region
 				mcu_ram8[BYTE_XOR_BE(127)] = 0x00;				// clear checksum
-				for (int i=0; i<127; i++)						// recompute
+				for (i=0; i<127; i++)						// recompute
 					mcu_ram8[BYTE_XOR_BE(127)] += mcu_ram8[BYTE_XOR_BE(i)];
 			}
 			logerror("PC=%06X : MCU executed command: %04X %04X (load NVRAM settings)\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
