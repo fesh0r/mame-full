@@ -1711,7 +1711,7 @@ void saturn_init_machine(void)
   mem = (UINT32 *) memory_region(REGION_CPU1);
   mem2 = (UINT32 *) memory_region(REGION_CPU2);
   cpu_set_halt_line(1, ASSERT_LINE);
-  /* cpu_set_halt_line(2, ASSERT_LINE); */
+  cpu_set_halt_line(2, ASSERT_LINE);
 
   for (i = 0; i < (SATURN_ROM_SIZE/4); i++)
     {
