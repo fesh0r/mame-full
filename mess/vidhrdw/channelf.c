@@ -91,7 +91,6 @@ static int recalc_palette_offset(int reg1, int reg2)
 VIDEO_UPDATE( channelf )
 {
 	int x,y,offset, palette_offset;
-	int full_refresh = 1;
 
 	for(y=0;y<64;y++)
 	{
@@ -99,8 +98,7 @@ VIDEO_UPDATE( channelf )
 		for (x=0;x<128;x++)
 		{
 			offset = y*128+x;
-			if ( full_refresh || dirtybuffer[offset] )
-				plot_4_pixel(x*2, y*2, palette_offset+(videoram[offset]&3));
+			plot_4_pixel(x*2, y*2, palette_offset+(videoram[offset]&3));
 		}
 	}
 }
