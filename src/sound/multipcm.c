@@ -209,9 +209,7 @@ int MultiPCM_sh_start(const struct MachineSound *msound)
 	char buf[2][40];
 	const char *name[2];
 	int vol[2];
-	struct MultiPCM_interface *intf;
-
-	intf = msound->sound_interface;
+	struct MultiPCM_interface *intf = msound->sound_interface;
 
 	// make volume table
 	double	max=255.0;
