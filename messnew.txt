@@ -31,6 +31,8 @@ Source Changes:
 - Fixed a bug in the handline of low resolution systems; the UI would not be
   properly rendered.  [Nate Woods]
 
+- Adds info regarding device extensions to -listinfo and -listxml output.
+  [Andrea Mazzoleni]
+
 - [Windows] When the new UI is active and MESS is paused, MESS now should not
   waste any excess CPU time.  [Nate Woods]
-
