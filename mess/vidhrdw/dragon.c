@@ -616,7 +616,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	static UINT16 coco3_pens[] = {
+	static UINT32 coco3_pens[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 	};
 

@@ -626,7 +626,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
  */
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	UINT16 *pens, UINT8 *vrambase,
+	UINT32 *pens, UINT8 *vrambase,
 	int skew_up, int border_color, int wf,
 	int artifact_value, int artifact_palettebase,
 	void (*getcolorrgb)(int c, UINT8 *red, UINT8 *green, UINT8 *blue))
@@ -771,7 +771,7 @@ static int m6847_bordercolor(void)
 
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
-	static UINT16 m6847_metapalette[] = {
+	static UINT32 m6847_metapalette[] = {
 		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 9, 10, 11, 12
 	};
 /*	static artifactproc artifacts[] = {
