@@ -16,6 +16,9 @@ System Driver Changes:
 - [GameBoy] Finally fixed the interrupt problem, which in turn helped alot of carts 
   actually run now. [Lee Ward] 
 
+- [Vectrex] Loading carts should work again but there are still issues with screen 
+  refresh (F4) and selecting carts with the filemanager. [Mathis Rosenhauer]
+
 - [ORIC] Rewrote to use 6522via code in MESS core. Previously it had it's own 
   implementation which was not complete. Added floppy disc emulation (emulates a 
   Microdisc interface). Added support for MFM_DISK disk image type as used by 
