@@ -444,7 +444,7 @@ static int read_hash_config(const char *sysname, mess_image *image)
 	hash_file *hashfile = NULL;
 	const struct hash_info *info = NULL;
 
-	hashfile = hashfile_open(sysname, FALSE);
+	hashfile = hashfile_open(sysname, FALSE, NULL);
 	if (!hashfile)
 		goto done;
 
