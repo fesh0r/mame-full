@@ -965,7 +965,7 @@ void showmessinfo(void)
 
 static char *battery_nvramfilename(const char *filename)
 {
-	return osd_strip_extension(osd_basename(filename));
+	return osd_strip_extension(osd_basename((char *) filename));
 }
 
 /* load battery backed nvram from a driver subdir. in the nvram dir. */

@@ -1332,18 +1332,22 @@ static void d_sam_set_memorysize(int val)
 
 static double coco3_timer_counterbase;
 static void *coco3_timer_counter;
+static void *coco3_timer_fallingedge;
 static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
 static int coco3_timer_value;
 static int coco3_timer_base;
 
 static void coco3_timer_cannonicalize(int newvalue);
+static void coco3_timer_fallingedge_handler(int dummy);
 
 static void coco3_timer_init(void)
 {
 	coco3_timer_counter = timer_alloc(coco3_timer_cannonicalize);
+	coco3_timer_fallingedge = timer_alloc(coco3_timer_fallingedge_handler);
 	coco3_timer_interval = 0;
 	coco3_timer_base = 0;
 	coco3_timer_value = 0;
+	coco3_timer_counterbase = -1.0;
 }
 
 static int coco3_timer_actualvalue(int specified)
@@ -1360,6 +1364,11 @@ static int coco3_timer_actualvalue(int specified)
 	return specified ? specified + 2 : 0;
 }
 
+static void coco3_timer_fallingedge_handler(int dummy)
+{
+	coco3_raise_interrupt(COCO3_INT_TMR, 0);
+}
+
 static void coco3_timer_newvalue(void)
 {
 	if (coco3_timer_value == 0) {
@@ -1367,9 +1376,7 @@ static void coco3_timer_newvalue(void)
 		logerror("CoCo3 GIME: Triggering TMR interrupt; scanline=%i time=%g\n", cpu_getscanline(), timer_get_time());
 #endif
 		coco3_raise_interrupt(COCO3_INT_TMR, 1);
-
-		/* HACKHACK - This should not happen until the next timer tick */
-		coco3_raise_interrupt(COCO3_INT_TMR, 0);
+		timer_adjust(coco3_timer_fallingedge, coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_CMPCARRIER*4*57, 0, 0);
 
 		/* Every time the timer hit zero, the video hardware would do a blink */
 		coco3_vh_blink();
@@ -1399,7 +1406,7 @@ static void coco3_timer_cannonicalize(int newvalue)
 	logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
 #endif
 
-	if (coco3_timer_value > 0)
+	if (coco3_timer_counterbase >= 0)
 	{
 		/* Calculate how many transitions elapsed */
 		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);
@@ -1418,23 +1425,32 @@ static void coco3_timer_cannonicalize(int newvalue)
 
 			coco3_timer_newvalue();
 		}
+	}
 
-		if (newvalue >= 0) {
+	/* non-negative values of newvalue set the timer value; negative values simply cannonicalize */
+	if (newvalue >= 0)
+	{
 #if LOG_TIMER
-			logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
+		logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
 #endif
-			coco3_timer_value = newvalue;
-		}
+		coco3_timer_value = newvalue;
+	}
 
-		if (coco3_timer_interval && coco3_timer_value) {
-			coco3_timer_counterbase = current_time; //floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
-			duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
-			timer_adjust(coco3_timer_counter, duration, -1, 0);
+	if (coco3_timer_interval && coco3_timer_value)
+	{
+		coco3_timer_counterbase = floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
+		duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
+		timer_adjust(coco3_timer_counter, duration, -1, 0);
 
 #if LOG_TIMER
-			logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
+		logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
 #endif
-		}
+	}
+	else
+	{
+		/* timer is disabled */
+		timer_reset(coco3_timer_counter, TIME_NEVER);
+		coco3_timer_counterbase = -1.0;
 	}
 }
 

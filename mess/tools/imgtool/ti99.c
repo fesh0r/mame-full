@@ -15,10 +15,6 @@
 
 #include "snprintf.h"
 
-/*#ifndef INT_MAX
-#define INT_MAX 0x7fffffff
-#endif*/
-
 /*
 	Disk structure:
 

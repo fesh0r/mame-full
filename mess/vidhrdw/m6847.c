@@ -876,7 +876,7 @@ static void setup_artifact_palette(int destcolor, UINT16 c0, UINT16 c1,
 			ii ^= 1;
 
 		mix_colors(rgbdest, &colorfactors[ii * 3], rgb0, rgb1);
-		palette_set_color(destcolor, rgbdest[0], rgbdest[1], rgbdest[2]);
+		palette_set_color(destcolor + i, rgbdest[0], rgbdest[1], rgbdest[2]);
 	}
 }
 

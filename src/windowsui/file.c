@@ -31,6 +31,7 @@
 #include "ScreenShot.h"
 #include "file.h"
 #include "rc.h"
+#include "snprintf.h"
 
 /* Verbose outputs to error.log ? */
 #define VERBOSE 0

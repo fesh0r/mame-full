@@ -152,6 +152,12 @@ static int request_decompose_samplepath(struct rc_option *option, const char *ar
 static int request_decompose_softwarepath(struct rc_option *option, const char *arg, int priority);
 #endif
 
+#ifdef MESS
+#ifndef _MSC_VER
+#include <io.h>
+#endif
+#define osd_mkdir(dir)	mkdir(dir)
+#endif
 
 //============================================================
 //	FILE PATH OPTIONS
@@ -1441,7 +1447,7 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 
 #ifdef MESS
 		if ((flags & FILEFLAG_CREATE_GAME_DIR) && *name && cache_stat(name, &stat_buffer))
-			mkdir(name);
+			osd_mkdir(name);
 #endif
 
 		// if the directory exists, proceed

@@ -120,16 +120,16 @@ struct drawline_params
 			assert(!has_charproc);																				\
 			assert((bpp) == 1);																					\
 			c = l;																								\
-			thispen = &pens[(c >> ((shift)+6) & 0x3f) * 2];														\
+			thispen = &pens[((c >> ((shift)+6)) & 0x3f) * 2];													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 0, thispen[0]);													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 1, thispen[1]);													\
-			thispen = &pens[(c >> ((shift)+4) & 0x3f) * 2];														\
+			thispen = &pens[((c >> ((shift)+4)) & 0x3f) * 2];													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 2, thispen[0]);													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 3, thispen[1]);													\
-			thispen = &pens[(c >> ((shift)+2) & 0x3f) * 2];														\
+			thispen = &pens[((c >> ((shift)+2)) & 0x3f) * 2];													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 4, thispen[0]);													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 5, thispen[1]);													\
-			thispen = &pens[(c >> ((shift)+0) & 0x3f) * 2];														\
+			thispen = &pens[((c >> ((shift)+0)) & 0x3f) * 2];													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 6, thispen[0]);													\
 			EMITPIXEL(decl_zoomx, (offset)*8 + 7, thispen[1]);													\
 		}																										\
@@ -239,7 +239,7 @@ static drawline_proc drawline_table[] =
 /* this drawline function is used to accomodate cases where an offset results in a split line */
 static void draw_line_with_offset(struct drawline_params *params)
 {
-	UINT16 *buf = NULL;
+	UINT16 buf[1024];
 	UINT16 *saved_scanline_data;
 	UINT16 *scanline;
 	int saved_offset;
@@ -282,8 +282,7 @@ static void draw_line_with_offset(struct drawline_params *params)
 		else if (segment_bytes < 4)
 		{
 			/* just a tiny bit here, use a temporary buffer */
-			if (!buf)
-				buf = (UINT16 *) alloca((pixels_per_byte * 4) * sizeof(UINT16));
+			assert((pixels_per_byte * 4) < sizeof(buf) / sizeof(buf[0]));
 			params->bytes_per_row = 4;
 			params->scanline_data = buf;
 			tiny_bit = 1;
@@ -578,7 +577,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 	int i, y, width, screeny;
 	int pens_len;
 	pen_t pen;
-	UINT16 *pens = NULL;
+	UINT16 pens[512];
 	const UINT8 *videoram_max;
 	drawline_proc draw_line;
 	struct drawline_params params;
@@ -598,7 +597,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 			pens_len = 1 << line_info.grid_depth;
 		
 		/* allocate the pens */
-		pens = (UINT16 *) alloca(pens_len * sizeof(UINT16));
+		assert(pens_len <= (sizeof(pens) / sizeof(pens[0])));
 
 		/* ...and fill them in */
 		for (i = 0; i < pens_len; i++)
