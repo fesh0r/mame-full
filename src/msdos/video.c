@@ -291,34 +291,45 @@ unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
 unsigned char tw640x480arc_h, tw640x480arc_v;
 
 /* 15.75KHz Modes */
-struct vga_15KHz_tweak { int x, y; Register *reg; int reglen;
-			  int syncvgafreq; int vesa; int ntsc;
-			  int xdivide; int ydivide; int matchx; };
+struct vga_15KHz_tweak
+{
+	int x, y;
+	Register *reg;
+	int reglen;
+	int syncvgafreq;
+	int vesa;
+	int ntsc;
+	int xdivide;
+	int ydivide;
+	int matchx;
+	int vertical_mode;
+};
+
 struct vga_15KHz_tweak arcade_tweaked[] = {
-	{ 224, 288, scr224x288_15KHz, sizeof(scr224x288_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 224 },
-	{ 256, 240, scr256x240_15KHz, sizeof(scr256x240_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 256 },
-	{ 256, 256, scr256x256_15KHz, sizeof(scr256x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 256 },
-	{ 288, 224, scr288x224_15KHz, sizeof(scr288x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 288 },
-	{ 320, 240, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 320 },
-	{ 320, 256, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 320 },
-	{ 352, 240, scr352x240_15KHz, sizeof(scr352x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 352 },
-	{ 352, 256, scr352x256_15KHz, sizeof(scr352x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 352 },
+	{ 224, 288, scr224x288_15KHz, sizeof(scr224x288_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 224, 1 },
+	{ 256, 240, scr256x240_15KHz, sizeof(scr256x240_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 256, 0 },
+	{ 256, 256, scr256x256_15KHz, sizeof(scr256x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 256, 0 },
+	{ 288, 224, scr288x224_15KHz, sizeof(scr288x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 288, 0 },
+	{ 320, 240, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 320, 0 },
+	{ 320, 256, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 320, 0 },
+	{ 352, 240, scr352x240_15KHz, sizeof(scr352x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 352, 0 },
+	{ 352, 256, scr352x256_15KHz, sizeof(scr352x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 352, 0 },
 /* force 384 games to match to 368 modes - the standard VGA clock speeds mean we can't go as wide as 384 */
-	{ 368, 224, scr368x224_15KHz, sizeof(scr368x224_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 384 },
+	{ 368, 224, scr368x224_15KHz, sizeof(scr368x224_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 384, 0 },
 /* all VGA modes from now on are too big for triple buffering */
-	{ 368, 240, scr368x240_15KHz, sizeof(scr368x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 384 },
-	{ 368, 256, scr368x256_15KHz, sizeof(scr368x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 384 },
+	{ 368, 240, scr368x240_15KHz, sizeof(scr368x240_15KHz)/sizeof(Register), 1, 0, 1, 1, 1, 384, 0 },
+	{ 368, 256, scr368x256_15KHz, sizeof(scr368x256_15KHz)/sizeof(Register), 1, 0, 0, 1, 1, 384, 0 },
 /* double monitor modes */
-	{ 512, 224, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 512 },
-	{ 512, 256, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 512 },
+	{ 512, 224, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 1, 512, 0 },
+	{ 512, 256, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 1, 512, 0 },
 /* 'half y' tweaked VGA modes, used to fake hires when vesa disabled */
-	{ 512, 448, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 2, 512 },
-	{ 512, 512, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 2, 512 },
+	{ 512, 448, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 2, 512, 0 },
+	{ 512, 512, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 2, 512, 0 },
 /* SVGA Mode (VGA register array not used) */
-	{ 640, 480, NULL            , 0                                        , 0, 1, 1, 1, 1, 640 },
+	{ 640, 480, NULL            , 0                                        , 0, 1, 1, 1, 1, 640, 0 },
 /* 'half x/y' tweaked VGA modes, used to fake hires when vesa disabled */
-	{ 640, 480, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 2, 2, 640 },
-	{ 640, 512, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 2, 2, 640 },
+	{ 640, 480, scr320x240_15KHz, sizeof(scr320x240_15KHz)/sizeof(Register), 1, 0, 1, 2, 2, 640, 0 },
+	{ 640, 512, scr320x256_15KHz, sizeof(scr320x256_15KHz)/sizeof(Register), 1, 0, 0, 2, 2, 640, 0 },
 	{ 0, 0 }
 };
 
@@ -357,7 +368,7 @@ void unchain_vga(Register *pReg)
 }
 
 //============================================================
-//	compute_mode_score
+//	match_resolution
 //============================================================
 
 static unsigned char match_resolution( int width, int height, int depth )
@@ -365,6 +376,13 @@ static unsigned char match_resolution( int width, int height, int depth )
 	int n_f;
 	int p_n_f[ 3 ];
 	const char *p_ch_s;
+
+	if( ( gfx_width != 0 && width != gfx_width ) ||
+		( gfx_height != 0 && height != gfx_height ) ||
+		( gfx_depth != 0 && depth != gfx_depth ) )
+	{
+		return 0;
+	}
 
 	p_ch_s = g_s_resolution;
 
@@ -429,8 +447,7 @@ static unsigned int compute_mode_score( int width, int height, int depth )
 	int xm,ym;
 
 	/* modes that don't match requirements have a score of zero */
-	if( !match_resolution( width, height, depth ) ||
-		( gfx_depth && depth != gfx_depth ) )
+	if( !match_resolution( width, height, depth ) )
 	{
 		return 0;
 	}
@@ -622,7 +639,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 	ydivide = 1;
 	found = 0;
 	videofreq = vgafreq;
-	SVGA15KHzdriver = 0;
+	SVGA15KHzdriver = NULL;
 
 	/* see if it's a low scanrate mode */
 	switch (monitor_type)
@@ -662,19 +679,10 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 			logerror("Game needs %d-bit colors. Using VESA\n",depth);
 			use_tweaked = 0;
 			/* only one 15.75KHz VESA mode, so force that */
-			if( scanrate15KHz == 1 )
+			if( scanrate15KHz )
 			{
 				gfx_width = 640;
 				gfx_height = 480;
-
-				/* find a VESA driver for 15KHz modes just in case we need it later on */
-				getSVGA15KHzdriver( &SVGA15KHzdriver );
-				/* check that we found a driver */
-				if( !SVGA15KHzdriver )
-				{
-					logerror( "\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height );
-					return 0;
-				}
 			}
 		}
 		else
@@ -685,7 +693,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 	}
 
 	/* Check for special 15.75KHz mode (req. for 15.75KHz Arcade Modes) */
-	if (scanrate15KHz == 1)
+	if( scanrate15KHz )
 	{
 		switch (monitor_type)
 		{
@@ -795,7 +803,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 						gfx_width, gfx_height, gfx_mode != GFX_VGA);
 					/* always use the freq from the structure */
 					videofreq = arcade_tweaked[i].syncvgafreq;
-					if( vga_tweaked[ i ].vertical_mode )
+					if( arcade_tweaked[ i ].vertical_mode )
 					{
 						screen_aspect = 1 / screen_aspect;
 					}
@@ -916,6 +924,18 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 		struct MODE_SCORE *p_mode_score;
 
 		found = 0;
+
+		if( scanrate15KHz )
+		{
+			/* find a VESA driver for 15KHz modes */
+			getSVGA15KHzdriver( &SVGA15KHzdriver );
+			/* check that we found a driver */
+			if( SVGA15KHzdriver == NULL )
+			{
+				logerror( "\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height );
+				return 0;
+			}
+		}
 
 		memset( &VbeInfoBlock, 0, sizeof( VbeInfoBlock ) );
 		memcpy( VbeInfoBlock.VbeSignature, "VBE2", 4 );
@@ -1051,7 +1071,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 						/* cause problems in some cases. */
 						display_page_offset = 0;
 						display_pages = 1;
-						if( triple_buffer && SVGA15KHzdriver == 0 )
+						if( triple_buffer && !scanrate15KHz )
 						{
 							display_pages = 3;
 							if( video_depth == 8 )
@@ -1071,7 +1091,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 						if( err )
 						{
 							/* if we're using a SVGA 15KHz driver - tell Allegro the virtual screen width */
-							if( SVGA15KHzdriver )
+							if( scanrate15KHz )
 							{
 								err = set_gfx_mode( mode, gfx_width, gfx_height, SVGA15KHzdriver->getlogicalwidth( gfx_width ), 0 );
 							}
@@ -1183,7 +1203,7 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 		center_mode (reg);
 
 		/* set the horizontal and vertical total */
-		if (scanrate15KHz)
+		if( scanrate15KHz )
 			/* 15.75KHz modes */
 			adjust_array = arcade_adjust;
 		else
@@ -2017,7 +2037,7 @@ static void update_visible_area(struct mame_display *display)
 
 /* if it's a SVGA arcade monitor mode, get the memory width of the mode */
 /* this could be double the width of the actual mode set */
-	if (scanrate15KHz && SVGA15KHzdriver && gfx_mode != GFX_VGA)
+	if( gfx_mode != GFX_VGA && scanrate15KHz )
 	{
 		act_width = SVGA15KHzdriver->getlogicalwidth (gfx_width);
 	}
@@ -2368,7 +2388,7 @@ static void update_visible_area(struct mame_display *display)
 
 		/* Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)
 		need to do this here, as the double params will be set up correctly */
-		if (scanrate15KHz)
+		if( scanrate15KHz )
 		{
 			int dbl;
 			if( ymultiply == 2 )
@@ -2508,11 +2528,13 @@ void osd_close_display(void)
 	if (gone_to_gfx_mode != 0)
 	{
 		/* tidy up if 15.75KHz SVGA mode used */
-		if (scanrate15KHz && gfx_mode != GFX_VGA)
+		if( gfx_mode != GFX_VGA && scanrate15KHz )
 		{
 			/* check we've got a valid driver before calling it */
 			if (SVGA15KHzdriver != NULL)
+			{
 				SVGA15KHzdriver->resetSVGA15KHzmode();
+			}
 		}
 
 		set_gfx_mode (GFX_TEXT,0,0,0,0);

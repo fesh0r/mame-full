@@ -390,7 +390,7 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 	logerror("15.75KHz: Video Memory  Type %d\n",MemType);
 
 	/* drop down to software pixel doubling if the clock is not supported */
-	if( Clock_Type != CLK_INTERNAL )
+	if( Clock_Type != CLK_INTERNAL || ChipType == MACH64_UNKNOWN )
 	{
 		logerror("15.75KHz: Found Mach64 based card with external clock\n");
 		AtiProgramClock = 0;

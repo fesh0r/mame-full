@@ -918,7 +918,14 @@ static INT32 get_joycode_value(os_code_t joycode)
 			s < joy[ joynum ].num_sticks &&
 			a < joy[ joynum ].stick[ s ].num_axis )
 		{
-			return joy[ joynum ].stick[ s ].axis[ a ].pos;
+			INT32 val = joy[ joynum ].stick[ s ].axis[ a ].pos;
+			INT32 top = 128;
+			INT32 bottom = -128;
+
+			val = (INT64)(val - bottom) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) / (INT64)(top - bottom) + ANALOG_VALUE_MIN;
+			if (val < ANALOG_VALUE_MIN) val = ANALOG_VALUE_MIN;
+			if (val > ANALOG_VALUE_MAX) val = ANALOG_VALUE_MAX;
+			return val;
 		}
 		return 0;
 	}
@@ -1111,4 +1118,12 @@ void msdos_init_input (void)
 void msdos_shutdown_input(void)
 {
 	remove_keyboard();
+	if( use_mouse_1 )
+	{
+		remove_mouse();
+	}
+	if( joystick > JOY_TYPE_NONE )
+	{
+		remove_joystick();
+	}
 }

@@ -14,6 +14,9 @@
 #include "monitors.h"
 
 static FILE *logfile;
+static const char *s_errorlog="error.log";
+static int b_flusherrorlog=0;
+static int b_closeerrorlog=0;
 
 extern int frontend_help(char *gamename);
 
@@ -820,7 +823,7 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	/* provide errorlog from here on */
 	if (errorlog && !logfile)
 	{
-		logfile = fopen("error.log","wa");
+		logfile = fopen(s_errorlog,"wa");
 		curlogsize = 0;
 		if (!logfile)
 		{
@@ -1674,7 +1677,11 @@ int cli_frontend_init( int argc, char **argv )
 
 	if( errorlog )
 	{
-		logfile = fopen( "error.log", "wa" );
+		logfile = fopen( s_errorlog, "wa" );
+		if( logfile == NULL )
+		{
+			fprintf( stderr, "failed to open '%s'\n", s_errorlog );
+		}
 		curlogsize = 0;
 	}
 
@@ -1882,9 +1889,15 @@ void CLIB_DECL logerror(const char *text,...)
 			cli_frontend_exit();
 			exit(1);
 		}
-//		fflush(logfile);
-//		fclose(logfile);
-//		logfile = fopen("error.log","a");
+		if( b_flusherrorlog )
+		{
+			fflush(logfile);
+		}
+		if( b_closeerrorlog )
+		{
+			fclose(logfile);
+			logfile = fopen(s_errorlog,"a");
+		}
 	}
 	va_end(arg);
 }

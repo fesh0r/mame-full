@@ -1,3 +1,21 @@
+0.89
+
+- Debug version will build with new debugger, but won't function [smf].
+
+
+==========================================================================
+
+0.88
+
+- 15 Khz VESA modes work again [smf].
+
+- Scales analogue joystick axis values [smf].
+
+- Removes mouse & joystick handler and shuts allegro down on exit [smf].
+
+
+==========================================================================
+
 0.87
 
 - Changes for MESS 0.87 [smf].

@@ -7,7 +7,6 @@
 #include "ticker.h"
 #include "zvgintrf.h"
 
-int  msdos_init_seal (void);
 int  msdos_init_sound(void);
 void msdos_init_input(void);
 void msdos_shutdown_sound(void);
@@ -25,11 +24,12 @@ static void signal_handler(int num)
 {
 	cli_frontend_exit();
 	osd_exit();
-	allegro_exit();
 	ScreenClear();
 	ScreenSetCursor( 0, 0 );
 	if( num == SIGINT )
+	{
 		cpu_dump_states();
+	}
 
 	signal(num, SIG_DFL);
 	raise(num);
@@ -40,10 +40,14 @@ static void signal_handler(int num)
 int osd_init(void)
 {
 	if (msdos_init_sound())
+	{
 		return 1;
+	}
 	msdos_init_input();
 	if (zvg_open())
+	{
 		return 1;
+	}
 	return 0;
 }
 
@@ -54,6 +58,7 @@ void osd_exit(void)
 	zvg_close();
 	msdos_shutdown_sound();
 	msdos_shutdown_input();
+	allegro_exit();
 }
 
 
@@ -489,7 +494,7 @@ int main (int argc, char **argv)
 	int game_index;
 	int res = 0;
 
-    allegro_init();
+	allegro_init();
 
 	/* Allegro changed the signal handlers... change them again to ours, to */
 	/* avoid the "Shutting down Allegro" message which confuses users into */
@@ -503,19 +508,12 @@ int main (int argc, char **argv)
 	signal(SIGKILL, signal_handler);
 	signal(SIGQUIT, signal_handler);
 
+	init_ticker();	/* after Allegro init because we use cpu_cpuid */
+
 	game_index = cli_frontend_init( argc, argv );
 
 	if( game_index != -1 )
 	{
-		/* Initialize the audio library */
-		if (msdos_init_seal())
-		{
-			printf ("Unable to initialize SEAL\n");
-			return (1);
-		}
-
-		init_ticker();	/* after Allegro init because we use cpu_cpuid */
-
 		/* go for it */
 		res = run_game (game_index);
 	}

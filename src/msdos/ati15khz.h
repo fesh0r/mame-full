@@ -23,6 +23,7 @@
 #define MACH64_GP_ID	0x4750
 #define MACH64_XP_ID	0x4742
 #define MACH64_XP98_ID	0x4c42
+#define MACH64_RIIC_ID	0x475a // reprogramming the clock doesn't work ( even though it reports an internal clock ).
 
 /* Mach64 chip types */
 #define MACH64_UNKNOWN	0
