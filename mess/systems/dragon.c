@@ -621,7 +621,7 @@ ROM_END
 
 ROM_START(coco3)
      ROM_REGION(0x90000,REGION_CPU1)
-	 ROM_LOAD("coco3.rom", 0x80000, 0x7e00, 0x31aec822)
+	 ROM_LOAD("coco3.rom", 0x80000, 0x7e00, BADCRC(0x31aec822))
      ROM_LOAD("disk.rom",  0x8C000, 0x2000, 0x0b9c5415)
 ROM_END
 
