@@ -2110,7 +2110,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);
 	pia_reset();
 
-	sam_init(samintf);
+	sam_config(samintf);
 	sam_reset();
 
 	/* HACK for bankswitching carts */
@@ -2184,6 +2184,12 @@ MACHINE_STOP( coco )
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
+}
+
+DRIVER_INIT( coco )
+{
+	pia_init(2);
+	sam_init();
 }
 
 /***************************************************************************

@@ -66,7 +66,8 @@ typedef struct
 
 
 /* machine/apple2.c */
-extern MACHINE_INIT( apple2e );
+extern DRIVER_INIT( apple2 );
+extern MACHINE_INIT( apple2 );
 
 extern int  apple2_id_rom(int id);
 

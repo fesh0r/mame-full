@@ -6,6 +6,15 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
+  now boots.  *.vid files no longer needed in BIOS set.  80-character text
+  mode fixed (bug #311). [Nate Woods]
+
+- [AQUARIUS] The palette now corresponds to the one described in the User's
+  Manual. [Stefano Priore]
+
+- [COCO] PIA properly resets. [Nate Woods]
+
 - [SNES] Improved 16x16 background tile mode. Fixed another GDMA bug. Various
   mode 7 fixes. Fixed background priorities in modes 2 to 7. [Anthony Kruize]
 
@@ -14,15 +23,12 @@ System Driver Changes:
   card and 80-track drives. Fixed AMS memory card emulation. Enabled support
   for ti99 disk images larger than 1600 sectors in imgtool. [Raphael Nabet]
 
-- [AQUARIUS] The palette now corresponds to the one described in the User's
-  Manual. [Stefano Priore]
-
-- [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
-  now boots.  *.vid files no longer needed in BIOS set.  80-character text
-  mode fixed (bug #311). [Nate Woods]
-
 Source Changes:
 ---------------
+- Changed device load and unload so that all devices are loaded before machine
+  init, but not necessarily driver init, in response to a bug (bug #366).
+  [Nate Woods]
+
 - [Windows] Default directories for the file dialogs can now be specified on
   a device type basis at the command line (e.g. -floppydisk_dir).  This
   option will get written out when launched from the GUI, so that per system
@@ -30,68 +36,3 @@ Source Changes:
 
 
 
-0.67
-
-New System Drivers Supported (in no particular order):
-------------------------------------------------------
-(none)
-
-System Driver Changes:
-----------------------
-- [A2600/A5200/COLECO/COCO/INTV/MSX/SNES/VECTREX] Added support for new
-  GoodTools file extensions. (bugs #277, #278, #279, #350) [Nate Woods]
-
-- [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
-
-- [C16] Improved TED7360 sound emulation. [Attila Grosz]
-
-- [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
-  filename ends in .os9, the first sector will be analyzed for geometry
-  information. [Tim Lindner]
-
-- [COCO] Scaled the joystick port to 64 quanta rather than 256. (bug #340)
-  [Tim Lindner]
-
-- [COCO] Fixed bug #359. [Nate Woods]
-
-- [MAC] Improved mouse emulation when moving diagonally. [Raphael Nabet]
-
-- [MC10] Fixed bug #358. [Nate Woods]
-
-- [PC200] Replaced generic character ROM with one reconstructed using CGAFont.
-  [John Elliott]
-
-- [PC1512] Replaced generic character ROM with one reconstructed using CGAFont.
-  [John Elliott]
-
-- [PC1640] Added definition for the character ROM in ROM_LOAD structure.
-  [Stefano Priore]
-
-- [PDP1] Added support for lightpen with variable tip size. [Raphael Nabet]
-
-- [TI99] Added support for new disk geometries (9 sec/trk DSSD, 16 sec/trk SSDD,
-  16 sec/trk DSDD). [Raphael Nabet]
-
-- [TOOLS] Added CGAFont, a tool to help people reconstructing PC character ROMs
-  without using an EPROM reader. [John Elliott]
-
-Source Changes:
----------------
-- The core is based on MAME 0.67.  This incorporates all features of the
-  update to this core.  [MAME team]
-
-- VIDEO_UPDATE() now has a do_skip parameter, which enables drivers to inform
-  the core that no significant drawing has occured, and it is safe to skip
-  blitting the current frame. [Nate Woods]
-
-- [Windows] New -writeconfig option, that causes the current settings to be
-  written back to an INI on exiting the emulation. [Nate Woods]
-
-- [Windows] SSE optimizations to the blitter. [Nate Woods]
-
-- [Windows] Fixed bug #344. [Nate Woods]
-
-- [Windows UI] Fixed bug #348. [Nate Woods]
-
-- [Windows UI] Changes made to mounted devices at runtime will now be persist
-  between emulation sessions. (bug #228) [Nate Woods]

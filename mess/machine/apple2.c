@@ -143,6 +143,11 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 	}
 }
 
+static void apple2_updatevar(void)
+{
+	apple2_setvar(a2, ~0);
+}
+
 /***************************************************************************
   apple2_getfloatingbusvalue
   preliminary floating bus video scanner code - look for comments with FIX:
@@ -288,12 +293,20 @@ static data8_t apple2_getfloatingbusvalue(void)
 }
 
 /***************************************************************************
-  apple2_init_machine
+  driver init
 ***************************************************************************/
-MACHINE_INIT( apple2e )
+DRIVER_INIT( apple2 )
 {
 	mess_ram = memory_region(REGION_CPU1);
+	state_save_register_UINT32("apple2", 0, "softswitch", &a2, 1);
+	state_save_register_func_postload(apple2_updatevar);
+}
 
+/***************************************************************************
+  machine init
+***************************************************************************/
+MACHINE_INIT( apple2 )
+{
 	apple2_setvar(0, ~0);
 
 	/* Slot 3 is funky - it isn't mapped like the other slot ROMs */
@@ -308,7 +321,7 @@ MACHINE_INIT( apple2e )
 	a2_speaker_state = 0;
 
 	/* TODO: add more initializers as we add more slots */
-	mockingboard_init (4);
+	mockingboard_init(4);
 	apple2_slot6_init();
 
 	joystick_x_time = joystick_y_time = 0;

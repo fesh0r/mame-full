@@ -266,10 +266,6 @@ static void cpu_pre_run(void)
 	cpu_vblankreset();
 	current_frame = 0;
 	state_save_dump_registry();
-
-#ifdef MESS
-	devices_initialload(Machine->gamedrv, FALSE);
-#endif
 }
 
 
@@ -282,10 +278,6 @@ static void cpu_pre_run(void)
 
 static void cpu_post_run(void)
 {
-#ifdef MESS
-	image_unload_all(FALSE);
-#endif
-
 	/* write hi scores to disk - No scores saving if cheat */
 	hs_close();
 

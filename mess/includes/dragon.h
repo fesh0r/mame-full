@@ -77,6 +77,7 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom);
  * from machine/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
+DRIVER_INIT( coco );
 MACHINE_INIT( dragon32 );
 MACHINE_INIT( dragon64 );
 MACHINE_INIT( coco );

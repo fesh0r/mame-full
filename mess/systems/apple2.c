@@ -256,7 +256,7 @@ static MACHINE_DRIVER_START( apple2e )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( apple2e )
+	MDRV_MACHINE_INIT( apple2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
 	MDRV_SCREEN_SIZE(280*2, 192)
@@ -342,10 +342,10 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMP ( 1983, apple2e,  0,        apple2e,  apple2,   0,        apple2,	"Apple Computer", "Apple //e" )
-COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   0,        apple2,	"Apple Computer", "Apple //e (enhanced)" )
-COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   0,        apple2,	"Apple Computer", "Apple //e (Platinum)" )
-COMP ( 1984, apple2c,  0,        apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c" )
-COMPX( 1986, apple2c0, apple2c,  apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
-COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   0,        apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
+COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
+COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
+COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )
+COMP ( 1984, apple2c,  0,        apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c" )
+COMPX( 1986, apple2c0, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c (3.5 ROM)",	GAME_NOT_WORKING )
+COMPX( 1988, apple2cp, apple2c,  apple2c,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //c Plus",			GAME_NOT_WORKING )
 

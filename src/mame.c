@@ -414,6 +414,16 @@ static int init_machine(void)
 	/* call the game driver's init function */
 	if (gamedrv->driver_init)
 		(*gamedrv->driver_init)();
+
+#ifdef MESS
+	/* initialize the devices */
+	if (devices_initialload(gamedrv, FALSE))
+	{
+		logerror("devices_initialload failed\n");
+		goto cant_load_roms;
+	}
+#endif
+
 	return 0;
 
 cant_init_memory:

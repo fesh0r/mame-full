@@ -290,6 +290,7 @@ void devices_exit(void)
 	int id;
 
 	/* unload all devices */
+	image_unload_all(FALSE);
 	image_unload_all(TRUE);
 
 	/* exit all devices */
