@@ -1,27 +1,13 @@
 #include "driver.h"
 
-void init_aim65(void);
-int aim65_frame_int(void);
-void aim65_machine_init(void);
+extern DRIVER_INIT( aim65 );
 
 // 4 16segment displays in 1 chip
 void dl1416a_write(int chip, int digit, int value, int cursor);
 
-extern unsigned char aim65_palette[242][3];
-
-void aim65_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-
-int aim65_vh_start(void);
-void aim65_vh_stop(void);
-void aim65_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-extern "C" void aim65_runtime_loader_init(void);
-# else
-extern void aim65_runtime_loader_init(void);
-# endif
-#endif
+extern PALETTE_INIT( aim65 );
+extern VIDEO_START( aim65 );
+extern VIDEO_UPDATE( aim65 );
 
 #define KEY_1 (readinputport(0)&1)
 #define KEY_2 (readinputport(0)&2)

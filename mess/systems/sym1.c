@@ -90,46 +90,34 @@ static struct DACinterface dac_interface =
 	{ 100 } 	/* volume */
 };
 
-static struct MachineDriver machine_driver_sym1 =
-{
+
+static MACHINE_DRIVER_START( sym1 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,	/* 1 MHz */
-			readmem,writemem,0,0,
-			sym1_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	sym1_init_machine,
-	NULL,			/* stop machine */
+	MDRV_CPU_ADD(M6502, 1000000)        /* 1 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(sym1_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( sym1 )
 
 	/* video hardware (well, actually there was no video ;) */
-	800, 600, { 0, 800-1, 0, 600 - 1},
-//	640, 480, { 0, 640-1, 0, 480 - 1},
-	0,
-	242*3 + 32768,
-	0,
-	sym1_init_colors,		/* convert color prom */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(800, 600)
+	MDRV_VISIBLE_AREA(0, 800-1, 0, 600-1)
+/*	MDRV_SCREEN_SIZE(640, 480)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 480-1) */
+	MDRV_PALETTE_LENGTH( 242*3 + 32768 )
+	MDRV_PALETTE_INIT( sym1 )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	sym1_vh_start,
-	sym1_vh_stop,
-	sym1_vh_screenrefresh,
+	MDRV_VIDEO_START( sym1 )
+	MDRV_VIDEO_UPDATE( sym1 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-        {
-			SOUND_DAC,
-			&dac_interface
-		}
-    }
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START(sym1)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
@@ -166,14 +154,3 @@ static const struct IODevice io_sym1[] = {
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMPX( 1978, sym1,	  0, 		sym1,	  sym1, 	sym1,	  "Synertek Systems Corp",  "SYM-1/SY-VIM-1", GAME_NOT_WORKING)
-
-
-#ifdef RUNTIME_LOADER
-extern void sym1_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"sym1")==0) drivers[i]=&driver_sym1;
-	}
-}
-#endif

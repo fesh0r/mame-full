@@ -117,15 +117,16 @@ static struct via6522_interface via0={
 via1 = { 0 },
 via2 = { 0 };
 
-void init_sym1(void)
+
+DRIVER_INIT( sym1 )
 {
 	via_config(0, &via0);
 	via_config(1, &via1);
 	via_config(2, &via2);
-	riot_config(0, &riot);
+	riot_init(0, &riot);
 }
 
-void sym1_init_machine(void)
+MACHINE_INIT( sym1 )
 {
 	via_reset();
 	riot_reset(0);
@@ -168,7 +169,7 @@ void kim1_cassette_exit(int id)
 
 #endif
 
-int sym1_interrupt(void)
+INTERRUPT_GEN( sym1_interrupt )
 {
 	int i;
 
@@ -178,6 +179,5 @@ int sym1_interrupt(void)
 		if (videoram[i * 2 + 1] > 0)
 			videoram[i * 2 + 1] -= 1;
 	}
-	return ignore_interrupt();
 }
 

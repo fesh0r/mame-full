@@ -12,40 +12,37 @@
 
 UINT8 sym1_led[6]= {0};
 
-unsigned char sym1_palette[242][3] =
+static unsigned char sym1_palette[] =
 {
-  	{ 0x20,0x02,0x05 },
-	{ 0xc0, 0, 0 },
+	0x20,0x02,0x05,
+	0xc0, 0, 0
 };
 
-void sym1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( sym1 )
 {
-	memcpy (palette, sym1_palette, sizeof (sym1_palette));
+	palette_set_colors(0, sym1_palette, sizeof(sym1_palette) / 3);
 }
 
-int sym1_vh_start (void)
+VIDEO_START( sym1 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*) auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
+#if 0
 	{
 		char backdrop_name[200];
 	    /* try to load a backdrop for the machine */
 		sprintf (backdrop_name, "%s.png", Machine->gamedrv->name);
 		backdrop_load(backdrop_name, 3);
-	}  
+	}
+#endif
 
 	if (video_start_generic () != 0)
         return 1;
 
     return 0;
-}
-
-void sym1_vh_stop (void)
-{
-    videoram = NULL;
 }
 
 static const char led[] =

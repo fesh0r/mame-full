@@ -140,43 +140,31 @@ static unsigned short aim65_colortable[1][2] = {
 	{ 0, 1 },
 };
 
-static struct MachineDriver machine_driver_aim65 =
-{
+
+static MACHINE_DRIVER_START( aim65 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			aim65_readmem,aim65_writemem,0,0,
-			aim65_frame_int, 1,
-			0,0,
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	aim65_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(M6502, 1000000)
+	MDRV_CPU_MEMORY(aim65_readmem,aim65_writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	600, 320, { 0, 600 - 1, 0, 320 - 1},
-	aim65_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (aim65_palette) / sizeof (aim65_palette[0]) + 32768,
-	sizeof (aim65_colortable) / sizeof(aim65_colortable[0][0]),
-	aim65_init_colors,		/* convert color prom */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(600, 320)
+	MDRV_VISIBLE_AREA(0, 600-1, 0, 320-1)
+	MDRV_GFXDECODE( aim65_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(242 + 32768)
+	MDRV_COLORTABLE_LENGTH(sizeof (aim65_colortable) / sizeof(aim65_colortable[0][0]))
+	MDRV_PALETTE_INIT( aim65 )
 
-	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-    aim65_vh_start,
-	aim65_vh_stop,
-	aim65_vh_screenrefresh,
+	MDRV_VIDEO_START( aim65 )
+	MDRV_VIDEO_UPDATE( aim65 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		// 300 hertz beeper
-        { 0 }
-    }
-};
+	// 300 hertz beeper
+MACHINE_DRIVER_END
+
 
 ROM_START(aim65)
 	ROM_REGION(0x10000,REGION_CPU1, 0)

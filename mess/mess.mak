@@ -194,11 +194,11 @@ DRVLIBS = \
 	$(OBJ)/amiga.a    \
 	$(OBJ)/svi.a      \
 	$(OBJ)/sharp.a    \
+	$(OBJ)/aim65.a    \
+	$(OBJ)/sym1.a     \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/ssystem3.a \
-#	$(OBJ)/sym1.a     \
 #	$(OBJ)/avigo.a    \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/hp48.a     \

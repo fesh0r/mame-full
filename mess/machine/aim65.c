@@ -172,12 +172,10 @@ void aim65_printer_timer(int param)
 
 WRITE_HANDLER(aim65_printer_on)
 {
-	if (!data) {
-		if (!printer.timer) printer.timer=timer_pulse(1000e-6, 0, aim65_printer_timer);
-	} else {
-		if (printer.timer) timer_remove(printer.timer);
-		printer.timer=0;
-	}
+	if (!data)
+		timer_adjust(printer.timer, 0, 0, 1000e-6);
+	else
+		timer_reset(printer.timer, TIME_NEVER);
 }
 
 static READ_HANDLER( aim65_via0_b_r)
@@ -199,24 +197,14 @@ static struct via6522_interface via0={
 	0,//void (*irq_func)(int state);
 };
 
-
-void init_aim65(void)
+DRIVER_INIT( aim65 )
 {
 	pia_config(0, PIA_STANDARD_ORDERING, &pia);
-	riot_config(0, &riot);
+	riot_init(0, &riot);
 	via_config(0,&via0);
+
+	printer.timer = timer_alloc(aim65_printer_timer);
 }
-
-void aim65_machine_init(void)
-{
-}
-
-int aim65_frame_int(void)
-{
-	return ignore_interrupt();
-}
-
-
 
 
 
