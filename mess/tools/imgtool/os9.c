@@ -232,12 +232,13 @@ static int os9_decode_file_header(imgtool_image *image,
 
 
 
-static imgtoolerr_t os9_read_lsn(imgtool_image *img, const struct os9_diskinfo *disk_info,
-	UINT32 lsn, int offset, void *buffer, size_t buffer_len)
+static imgtoolerr_t os9_read_lsn(imgtool_image *img, UINT32 lsn, int offset, void *buffer, size_t buffer_len)
 {
 	floperr_t ferr;
 	UINT32 head, track, sector;
+	const struct os9_diskinfo *disk_info;
 
+	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
 	head = 0;
 	track = lsn / disk_info->sectors_per_track;
 	sector = (lsn % disk_info->sectors_per_track) + 1;
@@ -327,7 +328,7 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img,
 			entry_index = index;
 			entry_lsn = os9_lookup_lsn(disk_info, &dir_info, &entry_index);
 			
-			err = os9_read_lsn(img, disk_info, entry_lsn, entry_index, entry, sizeof(entry));
+			err = os9_read_lsn(img, entry_lsn, entry_index, entry, sizeof(entry));
 			if (err)
 				return err;
 
@@ -522,18 +523,6 @@ done:
 
 
 
-static imgtoolerr_t os9_enum_readlsn(imgtool_imageenum *enumeration, UINT32 lsn, int offset, void *buffer, size_t buffer_len)
-{
-	imgtool_image *image;
-	struct os9_direnum *os9enum;
-
-	image = img_enum_image(enumeration);
-	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
-	return os9_read_lsn(image, &os9enum->disk_info, lsn, offset, buffer, buffer_len);
-}
-
-
-
 static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 {
 	struct os9_direnum *os9enum;
@@ -558,7 +547,7 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 		lsn = os9_lookup_lsn(&os9enum->disk_info, &os9enum->dir_info, &index);
 		os9enum->index += 32;
 
-		err = os9_enum_readlsn(enumeration, lsn, index, dir_entry, sizeof(dir_entry));
+		err = os9_read_lsn(img_enum_image(enumeration), lsn, index, dir_entry, sizeof(dir_entry));
 		if (err)
 			return err;
 
@@ -623,7 +612,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 		for (j = 0; j < file_info.sector_map[i].count; j++)
 		{
 			used_size = MIN(file_size, disk_info.sector_size);
-			err = os9_read_lsn(img, &disk_info, file_info.sector_map[i].lsn + j, 0,
+			err = os9_read_lsn(img, file_info.sector_map[i].lsn + j, 0,
 				buffer, used_size);
 			if (err)
 				return err;

@@ -208,7 +208,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 		if (!extra)
 			return IMGTOOLERR_OUTOFMEMORY;
 		memset(extra, 0, sizeof(*extra));
-		extra->format = format;
+		extra->format = &format[format_index];
 
 		snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s_%s",
 			format[format_index].name, format_name);
