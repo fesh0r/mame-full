@@ -14,68 +14,56 @@
 
 static int JoyMode=0;
 
-#ifdef IMAGE_VERIFY
-int coleco_id_rom (int id)
+static int coleco_verify_cart (UINT8 *cartdata)
 {
-	void *romfile;
-	UINT8 magic[2];
-	int retval;
+	int retval = IMAGE_VERIFY_FAIL;
 
-	logerror("---------coleco_id_rom-----\n");
-	logerror("Gamename is %s\n",device_filename(IO_CARTSLOT,id));
-	logerror("filetype is %d\n",OSD_FILETYPE_IMAGE_R);
-
-	/* If no file was specified, don't bother */
-	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id)) )
-		return ID_OK;
-
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return ID_FAILED;
-
-	retval = ID_FAILED;
 	/* Verify the file is in Colecovision format */
-	osd_fread (romfile, magic, 2);
-	if ((magic[0] == 0xAA) && (magic[1] == 0x55))
-		retval = ID_OK;
-	if ((magic[0] == 0x55) && (magic[1] == 0xAA))
-		retval = ID_OK;
+	if ((cartdata[0] == 0xAA) && (cartdata[1] == 0x55))
+		retval = IMAGE_VERIFY_PASS;
+	if ((cartdata[0] == 0x55) && (cartdata[1] == 0xAA))
+		retval = IMAGE_VERIFY_PASS;
 
-	osd_fclose (romfile);
 	return retval;
 }
-#endif
 
-int coleco_load_rom (int id)
+int coleco_init_cart (int id)
 {
-    void *cartfile;
-	UINT8 *coleco_cartridge_rom;
+    void *cartfile = NULL;
+	UINT8 *cartdata;
+	int init_result = INIT_FAIL;
 
-	logerror("---------coleco_load_rom-----\n");
-	logerror("filetype is %d  \n",OSD_FILETYPE_IMAGE_R);
-	logerror("Machine->game->name is %s  \n",Machine->gamedrv->name);
-	logerror("romname[0] is %s  \n",device_filename(IO_CARTSLOT,id));
-
-	/* A cartridge isn't strictly mandatory, but it's recommended */
-	cartfile = NULL;
+	/* A cartridge isn't strictly mandatory for the coleco */
 	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
 	{
 		logerror("Coleco - warning: no cartridge specified!\n");
+		return INIT_PASS;
 	}
-	else if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+
+	/* Load the specified Cartridge File */
+	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("Coleco - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
-		return 1;
+		return INIT_FAIL;
 	}
 
-	coleco_cartridge_rom = memory_region(REGION_CPU1) + 0x8000;
+	/* All seems OK */
+	cartdata = memory_region(REGION_CPU1) + 0x8000;
+	osd_fread (cartfile, cartdata, 0x8000);
 
-	if (cartfile!=NULL)
+	/* Verify the cartridge image */
+	if (coleco_verify_cart(cartdata) == IMAGE_VERIFY_FAIL)
 	{
-		osd_fread (cartfile, coleco_cartridge_rom, 0x8000);
-		osd_fclose (cartfile);
+		logerror("Coleco - Image verify FAIL\n");
+		init_result = INIT_FAIL;
 	}
-
-	return 0;
+	else
+	{
+		logerror("Coleco - Image verify PASS\n");
+		init_result = INIT_PASS;
+	}
+	osd_fclose (cartfile);
+	return init_result;
 }
 
 

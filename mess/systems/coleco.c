@@ -243,7 +243,7 @@ static const struct IODevice io_coleco[] = {
         "rom\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
         0,
-        coleco_load_rom,    /* init */
+        coleco_init_cart,	/* init */
         NULL,               /* exit */
         NULL,               /* info */
         NULL,               /* open */

@@ -75,8 +75,10 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 
 /* IODevice Initialisation return values.  Use these to determine if */
 /* the emulation can continue if IODevice initialisation fails */
-enum { INIT_PASS, INIT_FAIL };
-
+#define INIT_PASS 0
+#define INIT_FAIL 1
+#define IMAGE_VERIFY_PASS 0
+#define IMAGE_VERIFY_FAIL 1
 
 /* possible values for osd_fopen() last argument
  * OSD_FOPEN_READ

@@ -577,13 +577,13 @@ int init_devices(const void *game)
 	/* Initialise all floppy drives here if the device is Setting can be overriden by the drivers and UI */
 	floppy_drives_init();
 
-	/* initialize all devices */
+	/* initialize --all-- devices */
 	while( dev->count )
 	{
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
-			mess_printf("***Initialising %s\n",device_typename(dev->type));
+			mess_printf("Initialising %s\n",device_typename(dev->type));
 			/********************************************************************
 			 * CALL INITIALISE DEVICE
 			 ********************************************************************/
@@ -597,12 +597,10 @@ int init_devices(const void *game)
 
 				if( result != INIT_PASS)
 				{
-					mess_printf(" Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
+					mess_printf("Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
+					mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
+					mess_printf("Also remember that some systems cannot boot without a valid image!\n");
 					return 1;
-				}
-				else
-				{
-					mess_printf(" Driver Reports Initialisation [for %s device] ok\n",device_typename(dev->type));
 				}
 
 				/* init succeeded */
@@ -619,7 +617,7 @@ int init_devices(const void *game)
 		}
 		dev++;
 	}
-	mess_printf("***Initialising Done\n");
+	mess_printf("Device Initialising Complete\n");
 	return 0;
 }
 
