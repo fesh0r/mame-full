@@ -425,9 +425,10 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/vidhrdw/nc.o	 \
 	  $(OBJ)/mess/systems/nc.o	 \
 	  $(OBJ)/mess/machine/nc.o	 \
-	  $(OBJ)/mess/machine/tc8521.o	 \
-	  $(OBJ)/mess/systems/pcw16.o	 \
-	  $(OBJ)/mess/machine/28f008sa.o \
+	  $(OBJ)/mess/machine/tc8521.o		\
+	  $(OBJ)/mess/systems/pcw16.o		\
+	  $(OBJ)/mess/machine/28f008sa.o	\
+      $(OBJ)/mess/machine/msm8251.o     \
 	  $(OBJ)/mess/vidhrdw/pcw16.o
 
 $(OBJ)/nec.a:	   \
