@@ -82,10 +82,9 @@ binary form plus a makro assembler for PDP1 programs.
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-#include "vidhrdw/pdp1.h"
 
 #include "includes/pdp1.h"
+#include "cpu/pdp1/pdp1.h"
 
 /*
  * PRECISION CRT DISPLAY (TYPE 30)
@@ -125,6 +124,62 @@ static MEMORY_WRITE_START18(pdp1_writemem)
 	{ 0x0000, 0xffff, pdp1_write_mem },
 MEMORY_END
 
+/* defines for input port numbers */
+enum
+{
+	pdp1_control = 2
+};
+
+/* defines for each bit and mask in input port panel_control */
+enum
+{
+	/* bit numbers */
+	pdp1_read_in_bit = 0,
+
+	/* masks */
+	pdp1_read_in = (1 << pdp1_read_in_bit)
+};
+
+/*
+	Not a real interrupt - just handle keyboard input
+*/
+static int pdp1_interrupt(void)
+{
+	int control_keys;
+
+	static int old_control_keys;
+
+	int control_transitions;
+
+	int sense = readinputport(1);
+
+	cpu_set_reg(PDP1_S1, sense&0x80);
+	cpu_set_reg(PDP1_S2, sense&0x40);
+	cpu_set_reg(PDP1_S3, sense&0x20);
+	cpu_set_reg(PDP1_S4, sense&0x10);
+	cpu_set_reg(PDP1_S5, sense&0x08);
+	cpu_set_reg(PDP1_S6, sense&0x04);
+	cpu_set_reg(PDP1_F1, pdp1_keyboard());
+
+
+	/* read new state of control keys */
+	control_keys = readinputport(pdp1_control);
+
+	/* compute transitions */
+	control_transitions = control_keys & (~ old_control_keys);
+
+	if (control_transitions & pdp1_read_in)
+	{	/* set cpu to run and read instruction from perforated tape */
+		cpunum_set_reg(0, PDP1_RUN, 1);
+		cpunum_set_reg(0, PDP1_READ_IN_MODE, 1);
+	}
+
+	/* remember new state of control keys */
+	old_control_keys = control_keys;
+
+	return ignore_interrupt();
+}
+
 INPUT_PORTS_START( pdp1 )
 
     PORT_START      /* IN0 */
@@ -156,7 +211,11 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX(	  0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Sense Switch 6", KEYCODE_6, IP_JOY_NONE )
     PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
     PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-    INPUT_PORTS_END
+
+	PORT_START	/* 2: pdp1 control */
+	PORT_BITX(pdp1_read_in, IP_ACTIVE_HIGH, IPT_KEYBOARD, "read in mode", KEYCODE_ENTER, IP_JOY_NONE)
+
+INPUT_PORTS_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
@@ -186,6 +245,13 @@ static void pdp1_init_palette(unsigned char *sys_palette, unsigned short *sys_co
 }
 
 
+static pdp1_reset_param reset_param =
+{
+	pdp1_iot,
+	pdp1_tape_read_binary
+};
+
+
 /* note I don't know about the speed of the machine, I only know
  * how long each instruction takes in micro seconds
  * below speed should therefore also be read in something like
@@ -199,7 +265,9 @@ static struct MachineDriver machine_driver_pdp1 =
 			CPU_PDP1,
 			2000000,
 			pdp1_readmem, pdp1_writemem,0,0,
-			0, 0 /* no vblank interrupt */
+			pdp1_interrupt, 1, /* fake interrupt */
+			0, 0,
+			& reset_param
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
@@ -226,35 +294,41 @@ static struct MachineDriver machine_driver_pdp1 =
 	0,0,0,0
 };
 
-static const struct IODevice io_pdp1[] = {
-    {
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"bin\0",			/* file extensions */
-		IO_RESET_ALL,		/* reset if file changed */
-        0,
-		pdp1_load_rom,		/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+static const struct IODevice io_pdp1[] =
+{
+	{
+		IO_PUNCHTAPE,			/* type */
+		2,						/* count */
+		"tap\0rim\0",			/* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		pdp1_tape_init,			/* init */
+		pdp1_tape_exit,			/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
 	},
 	{ IO_END }
 };
 
+/*
+	only 4096 are used for now, but pdp1 can address 65336 18 bit words when extended.
+*/
 #ifdef SUPPORT_ODD_WORD_SIZES
 ROM_START(pdp1)
 	ROM_REGION(0x10000 * sizeof(data32_t),REGION_CPU1,0)
 ROM_END
 #else
-#define rom_pdp1    NULL
+ROM_START(pdp1)
+	ROM_REGION(0x10000 * sizeof(int),REGION_CPU1,0)
+ROM_END
 #endif
 
 /***************************************************************************
@@ -264,4 +338,4 @@ ROM_END
 ***************************************************************************/
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	0,		  "Digital Equipment Company",  "PDP-1 (Spacewar!)" )
+COMP( 1962, pdp1,	  0, 		pdp1,	  pdp1, 	pdp1,	  "Digital Equipment Company",  "PDP-1 (Spacewar!)" )

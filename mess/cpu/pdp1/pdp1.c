@@ -312,15 +312,22 @@
  *   sir        676      Shift IO right                                     5
  */
 
+
+/*
+	TODO:
+	* suspend processor when I/O device not ready during iot instructions and read-in mode
+	* support operator panel's test word in OPR instructions (required by LISP)
+	* support sequence break
+	* support memory extension and other extensions as time permits
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "driver.h"
 #include "mamedbg.h"
 #include "pdp1.h"
 
-/* the 2 definitions below were redundant with pdp1.h */
-/*#define READ_PDP_18BIT(A) ((signed)cpu_readmem16_18_dword(A<<2))
-#define WRITE_PDP_18BIT(A,V) (cpu_writemem16_18_dword(A<<2,V))*/
 
 /* Layout of the registers in the debugger */
 static UINT8 pdp1_reg_layout[] =
@@ -340,22 +347,29 @@ static UINT8 pdp1_win_layout[] =
 	0,	23, 80,  1, /* command line window (bottom rows) */
 };
 
-int intern_iot (int *io, int md);
-int (*extern_iot) (int *, int) = intern_iot;
-int execute_instruction (int md);
+static int intern_iot (int *io, int md);
+static int execute_instruction (int md);
 
 /* PDP1 Registers */
 typedef struct
 {
-	UINT32 pc;
-	int ac;
-	int io;
-	int y;
-	int ib;
-	int ov;
-	int f;
-	int flag[8];
-	int sense[8];
+	UINT32 pc;	/* program counter (12 or 16 bits) */
+	int ac;		/* accumulator (18 bits) */
+	int io;		/* i/o register (18 bits) */
+	int y;		/* current memory address (12 bits) */
+	int ib;		/* indirection flag */
+	int ov;		/* overflow flip-flop (1 bit) */
+	int f;		/* status register (6 bits) */
+	int flag[8];	/* each individual status register bit */
+	int sense[8];	/* current state of the various (6) sense switches on the operator panel */
+
+	/* callback for the iot instruction */
+	int (*extern_iot)(int *, int);
+	/* read a byte from the perforated tape reader */
+	int (*read_binary_word)(UINT32 *reply);
+
+	int running : 1;
+	int read_in_mode : 1;
 }
 pdp1_Regs;
 
@@ -389,15 +403,17 @@ static pdp1_Regs pdp1;
 /* public globals */
 signed int pdp1_ICount = 50000;
 
+/*
+	interrupts are called "sequence break", and they do exist.
 
+	we do not emulate them, which is sad
+*/
 void pdp1_set_irq_line (int irqline, int state)
 {
-	/* no IRQ line */
 }
 
 void pdp1_set_irq_callback (int (*callback) (int irqline))
 {
-	/* no IRQ line */
 }
 
 void pdp1_init(void)
@@ -405,11 +421,20 @@ void pdp1_init(void)
 	/* nothing to do */
 }
 
-void pdp1_reset (void *param)
+void pdp1_reset (void *untyped_param)
 {
+	pdp1_reset_param *param = untyped_param;
+
 	memset (&pdp1, 0, sizeof (pdp1));
-	PC = 4;
 	SENSE[5] = 1;					   /* for lisp... typewriter input */
+
+	/* set up params and callbacks */
+	pdp1.read_binary_word = (param && param->read_binary_word)
+									? param->read_binary_word
+									: NULL;
+	pdp1.extern_iot = (param && param->extern_iot)
+									? param->extern_iot
+									: intern_iot;
 }
 
 void pdp1_exit (void)
@@ -454,6 +479,8 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_S4: return S4;
 	case PDP1_S5: return S5;
 	case PDP1_S6: return S6;
+	case PDP1_RUN: return pdp1.running;
+	case PDP1_READ_IN_MODE: return pdp1.read_in_mode;
 	case REG_SP:  return 0;
 	}
 	return 0;
@@ -483,6 +510,8 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_S4: S4 = val; break;
 	case PDP1_S5: S5 = val; break;
 	case PDP1_S6: S6 = val; break;
+	case PDP1_RUN: pdp1.running = val; break;
+	case PDP1_READ_IN_MODE: pdp1.read_in_mode = val; break;
 	case REG_SP:  break;
 	}
 }
@@ -499,19 +528,58 @@ int pdp1_execute (int cycles)
 
 		CALL_MAME_DEBUG;
 
-		word18 = READ_PDP_18BIT (PC++);
-/*
-		logerror("PC:0%06o ",PC-1);
-		logerror("I:0%06o  ",word18);
-		logerror("1:%i "    ,FLAG[1]);
-		logerror("2:%i "    ,FLAG[2]);
-		logerror("3:%i "    ,FLAG[3]);
-		logerror("4:%i "    ,FLAG[4]);
-		logerror("5:%i "    ,FLAG[5]);
-		logerror("6:%i \n"  ,FLAG[6]);
-*/
-		pdp1_ICount -= execute_instruction (word18);
+		if (pdp1.running)
+		{
+			if (pdp1.read_in_mode)
+			{
+				if (! pdp1.read_binary_word)
+					pdp1.running = 0;	/* what else can we do ??? */
+				else
+				{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
+					but the lisp tape uses the dac instruction instead */
+					UINT32 data18;
 
+					(void)(*pdp1.read_binary_word)(&data18);	/* read first word as instruction */
+					word18 = data18;
+					(void)(*pdp1.read_binary_word)(&data18);	/* read second word as data */
+					if ((word18 & 0760000) == 0320000)	/* dio instruction */
+					{
+						IO = data18;	/* data must be IO register */
+						pdp1_ICount -= execute_instruction (word18);	/* and execute instruction */
+					}
+					else if ((word18 & 0760000) == 0240000)	/* dac instruction */
+					{
+						AC = data18;	/* data must in AC register */
+						pdp1_ICount -= execute_instruction (word18);	/* and execute instruction */
+					}
+					else if ((word18 & 0760000) == 0600000)	/* jmp instruction */
+					{
+						pdp1.read_in_mode = 0;	/* exit read-in mode */
+						pdp1_ICount -= execute_instruction (word18);	/* and execute instruction */
+					}
+					else
+						/* what the heck? */
+						logerror("It seems this tape should not be operated in read-in mode\n");
+				}
+			}
+			else
+			{
+				word18 = READ_PDP_18BIT (PC++);
+				pdp1_ICount -= execute_instruction (word18);
+			}
+/*
+			logerror("PC:0%06o ",PC-1);
+			logerror("I:0%06o  ",word18);
+			logerror("1:%i "    ,FLAG[1]);
+			logerror("2:%i "    ,FLAG[2]);
+			logerror("3:%i "    ,FLAG[3]);
+			logerror("4:%i "    ,FLAG[4]);
+			logerror("5:%i "    ,FLAG[5]);
+			logerror("6:%i \n"  ,FLAG[6]);
+*/
+		}
+		else
+			pdp1_ICount = 0;
 	}
 	while (pdp1_ICount > 0);
 
@@ -613,33 +681,33 @@ const char *pdp1_info (void *context, int regnum)
 }
 
 
-int execute_instruction (int md)
+static int execute_instruction (int md)
 {
 	etime = 0;
 	Y = md & 07777;
 	IB = (md >> 12) & 1;			   /* */
 	switch (md >> 13)
 	{
-	case AND:
+	case AND:		/* Logical And */
 		ea ();
 		AC &= READ_PDP_18BIT (Y);
 		etime += 10;
 		break;
-	case IOR:
+	case IOR:		/* Inclusive Or */
 		ea ();
 		AC |= READ_PDP_18BIT (Y);
 		etime += 10;
 		break;
-	case XOR:
+	case XOR:		/* Exclusive Or */
 		ea ();
 		AC ^= READ_PDP_18BIT (Y);
 		etime += 10;
 		break;
-	case XCT:
+	case XCT:		/* Execute */
 		ea ();
 		etime += 5 + execute_instruction (READ_PDP_18BIT (Y));
 		break;
-	case CALJDA:
+	case CALJDA:	/* Call subroutine Jump and Deposit Accumulator instructions */
 		{
 			int target = (IB == 0) ? 64 : Y;
 
@@ -649,37 +717,42 @@ int execute_instruction (int md)
 			etime += 10;
 			break;
 		}
-	case LAC:
+	case LAC:		/* Load Accumulator */
 		ea ();
 		AC = READ_PDP_18BIT (Y);
 		etime += 10;
 		break;
-	case LIO:
+	case LIO:		/* Load i/o register */
 		ea ();
 		IO = READ_PDP_18BIT (Y);
 		etime += 10;
 		break;
-	case DAC:
+	case DAC:		/* Deposit Accumulator */
 		ea ();
 		WRITE_PDP_18BIT (Y, AC);
 		etime += 10;
 		break;
-	case DAP:
+	case DAP:		/* Deposit Address Part */
 		ea ();
 		WRITE_PDP_18BIT (Y, (READ_PDP_18BIT (Y) & 0770000) + (AC & 07777));
 		etime += 10;
 		break;
-	case DIO:
+	case DIP:		/* Deposit Instruction Part */
+		ea ();
+		WRITE_PDP_18BIT (Y, (READ_PDP_18BIT (Y) & 07777) + (AC & 0770000));
+		etime += 10;
+		break;
+	case DIO:		/* Deposit I/O Register */
 		ea ();
 		WRITE_PDP_18BIT (Y, IO);
 		etime += 10;
 		break;
-	case DZM:
+	case DZM:		/* Deposit Zero in Memory */
 		ea ();
 		WRITE_PDP_18BIT (Y, 0);
 		etime += 10;
 		break;
-	case ADD:
+	case ADD:		/* Add */
 		ea ();
 		AC = AC + READ_PDP_18BIT (Y);
 		OV = AC >> 18;
@@ -688,7 +761,7 @@ int execute_instruction (int md)
 			AC = 0;
 		etime += 10;
 		break;
-	case SUB:
+	case SUB:		/* Subtract */
 		{
 			int diffsigns;
 
@@ -703,7 +776,7 @@ int execute_instruction (int md)
 			etime += 10;
 			break;
 		}
-	case IDX:
+	case IDX:		/* Index */
 		ea ();
 		AC = READ_PDP_18BIT (Y) + 1;
 		if (AC == 0777777)
@@ -711,7 +784,7 @@ int execute_instruction (int md)
 		WRITE_PDP_18BIT (Y, AC);
 		etime += 10;
 		break;
-	case ISP:
+	case ISP:		/* Index and Skip if Positive */
 		ea ();
 		AC = READ_PDP_18BIT (Y) + 1;
 		if (AC == 0777777)
@@ -721,19 +794,19 @@ int execute_instruction (int md)
 			PC++;
 		etime += 10;
 		break;
-	case SAD:
+	case SAD:		/* Skip if Accumulator and Y differ */
 		ea ();
 		if (AC != READ_PDP_18BIT (Y))
 			PC++;
 		etime += 10;
 		break;
-	case SAS:
+	case SAS:		/* Skip if Accumulator and Y are the same */
 		ea ();
 		if (AC == READ_PDP_18BIT (Y))
 			PC++;
 		etime += 10;
 		break;
-	case MUS:
+	case MUS:		/* Multiply Step */
 		ea ();
 		if ((IO & 1) == 1)
 		{
@@ -746,7 +819,7 @@ int execute_instruction (int md)
 		AC >>= 1;
 		etime += 10;
 		break;
-	case DIS:
+	case DIS:		/* Divide Step */
 		{
 			int acl;
 
@@ -769,27 +842,26 @@ int execute_instruction (int md)
 			etime += 10;
 			break;
 		}
-	case JMP:
+	case JMP:		/* Jump */
 		ea ();
 		PC = Y;
 		etime += 5;
 		break;
-	case JSP:
+	case JSP:		/* Jump and Save Program Counter */
 		ea ();
 		AC = (OV << 17) + PC;
 		PC = Y;
 		etime += 5;
 		break;
-	case SKP:
+	case SKP:		/* Skip Instruction Group */
 		{
-			int cond = (((Y & 0100) == 0100) && (AC == 0)) ||
-			(((Y & 0200) == 0200) && (AC >> 17 == 0)) ||
-			(((Y & 0400) == 0400) && (AC >> 17 == 1)) ||
-			(((Y & 01000) == 01000) && (OV == 0)) ||
-			(((Y & 02000) == 02000) && (IO >> 17 == 0)) ||
-			(((Y & 7) != 0) && !FLAG[Y & 7]) ||
-			(((Y & 070) != 0) && !SENSE[(Y & 070) >> 3]) ||
-			((Y & 070) == 010);
+			int cond = ((Y & 0100) && (AC == 0))	/* ZERO Accumulator */
+				|| ((Y & 0200) && (AC >> 17 == 0))	/* Plus Accumulator */
+				|| ((Y & 0400) && (AC >> 17 == 1))	/* Minus Accumulator */
+				|| ((Y & 01000) && (OV == 0))		/* ZERO Overflow */
+				|| ((Y & 02000) && (IO >> 17 == 0))	/* Plus I/O Register */
+				|| (((Y & 7) != 0) && !FLAG[Y & 7])	/* ZERO Flag (deleted by mistake in PDP-1 handbook) */
+				|| (((Y & 070) != 0) && !SENSE[(Y & 070) >> 3]);	/* ZERO Switch */
 
 			if (IB == 0)
 			{
@@ -806,8 +878,11 @@ int execute_instruction (int md)
 			etime += 5;
 			break;
 		}
-	case SFT:
+	case SFT:		/* Shift Instruction Group */
 		{
+			/* Bit 5 specifies direction of shift, Bit 6 specifies the character of the shift
+			(arithmetic or logical), Bits 7 and 8 enable the registers (01 = AC, 10 = IO,
+			and 11 = both) and Bits 9 through 17 specify the number of steps. */
 			int nshift = 0;
 			int mask = md & 0777;
 
@@ -820,15 +895,15 @@ int execute_instruction (int md)
 			{
 				int i;
 
-			case 1:
+			case 1:		/* ral rotate accumulator left */
 				for (i = 0; i < nshift; i++)
 					AC = (AC << 1 | AC >> 17) & 0777777;
 				break;
-			case 2:
+			case 2:		/* ril rotate i/o register left */
 				for (i = 0; i < nshift; i++)
 					IO = (IO << 1 | IO >> 17) & 0777777;
 				break;
-			case 3:
+			case 3:		/* rcl rotate AC and IO left */
 				for (i = 0; i < nshift; i++)
 				{
 					int tmp = AC;
@@ -837,15 +912,15 @@ int execute_instruction (int md)
 					IO = (IO << 1 | tmp >> 17) & 0777777;
 				}
 				break;
-			case 5:
+			case 5:		/* sal shift accumulator left */
 				for (i = 0; i < nshift; i++)
 					AC = ((AC << 1 | AC >> 17) & 0377777) + (AC & 0400000);
 				break;
-			case 6:
+			case 6:		/* sil shift i/o register left */
 				for (i = 0; i < nshift; i++)
 					IO = ((IO << 1 | IO >> 17) & 0377777) + (IO & 0400000);
 				break;
-			case 7:
+			case 7:		/* scl shift AC and IO left */
 				for (i = 0; i < nshift; i++)
 				{
 					int tmp = AC;
@@ -854,15 +929,15 @@ int execute_instruction (int md)
 					IO = (IO << 1 | tmp >> 17) & 0777777;
 				}
 				break;
-			case 9:
+			case 9:		/* rar rotate accumulator right */
 				for (i = 0; i < nshift; i++)
 					AC = (AC >> 1 | AC << 17) & 0777777;
 				break;
-			case 10:
+			case 10:	/* rir rotate i/o register right */
 				for (i = 0; i < nshift; i++)
 					IO = (IO >> 1 | IO << 17) & 0777777;
 				break;
-			case 11:
+			case 11:	/* rcr rotate AC and IO right */
 				for (i = 0; i < nshift; i++)
 				{
 					int tmp = AC;
@@ -871,15 +946,15 @@ int execute_instruction (int md)
 					IO = (IO >> 1 | tmp << 17) & 0777777;
 				}
 				break;
-			case 13:
+			case 13:	/* sar shift accumulator right */
 				for (i = 0; i < nshift; i++)
 					AC = (AC >> 1) + (AC & 0400000);
 				break;
-			case 14:
+			case 14:	/* sir shift i/o register right */
 				for (i = 0; i < nshift; i++)
 					IO = (IO >> 1) + (IO & 0400000);
 				break;
-			case 15:
+			case 15:	/* scr shift AC and IO right */
 				for (i = 0; i < nshift; i++)
 				{
 					int tmp = AC;
@@ -889,44 +964,82 @@ int execute_instruction (int md)
 				}
 				break;
 			default:
-				logerror("Undefined shift: ");
-				logerror("0%06o at ", md);
-				logerror("0%06o\n", PC - 1);
-				exit (1);
+				logerror("Undefined shift: 0%06o at 0%06o\n", md, PC - 1);
+				break;
 			}
 			etime += 5;
 			break;
 		}
-	case LAW:
+	case LAW:		/* Load Accumulator with N */
 		AC = (IB == 0) ? Y : Y ^ 0777777;
 		etime += 5;
 		break;
-	case IOT:
-		etime += extern_iot (&IO, md);
+	case IOT:		/* In-Out Transfer Instruction Group */
+		/*
+			The variations within this group of instructions perform all the in-out control
+			and information transfer functions.  If Bit 5 (normally the Indirect Address bit)
+			is a ONE, the computer will enter a special waiting state until the completion pulse
+			from the activated device has returned.  When this device delivers its completion,
+			the computer will resume operation of the instruction sequence. 
+
+			The computer may be interrupted from the special waiting state to serve a sequence
+			break request or a high speed channel request. 
+
+			Most in-out operations require a known minimum time before completion.  This time
+			may be utilized for programming.  The appropriate In-Out Transfer can be given with
+			no in-out wait (Bit 5 a ZERO and Bit 6 a ONE).  The instruction sequence then
+			continues.  This sequence must include an iot instruction 730000 which performs
+			nothing but the in-out wait. The computer will then enter the special waiting state
+			until the device returns the in-out restart pulse.  If the device has already
+			returned the completion pulse before the instruction 730000, the computer will
+			proceed immediately. 
+
+			Bit 6 determines whether a completion pulse will or will not be received from
+			the in-out device.  When it is different than Bit 5, a completion pulse will be
+			received.  When it is the same as Bit 5, a completion pulse will not be received. 
+
+			In addition to the control function of Bits 5 and 6, Bits 7 through 11 are also
+			used as control bits serving to extend greatly the power of the iot instructions.
+			For example, Bits 12 through 17, which are used to designate a class of input or
+			output devices such as typewriters, may be further defined by Bits 7 through 11
+			as referring to Typewriter 1, 2, 3, etc.  In several of the optional in-out devices,
+			in particular the magnetic tape, Bits 7 through 11 specify particular functions
+			such as forward, backward etc.  If a large number of specialized devices are to
+			be attached, these bits may be used to further the in-out transfer instruction
+			to perform totally distinct functions. 
+		*/
+		etime += pdp1.extern_iot (&IO, md);
 		break;
-	case OPR:
+	case OPR:		/* Operate Instruction Group */
 		{
 			int nflag;
 			int state;
 			int i;
 
 			etime += 5;
-			if ((Y & 0200) == 0200)
+			if (Y & 0200)		/* clear AC */
 				AC = 0;
-			if ((Y & 04000) == 04000)
+			if (Y & 04000)		/* clear I/O register */
 				IO = 0;
-			if ((Y & 01000) == 01000)
+			if (Y & 02000)		/* load Accumulator from Test Word */
+				AC |= 0;		/* not implemented !!! */
+			if (Y & 00100)		/* load Accumulator with Program Counter */
+				AC |= (OV << 17) + PC;
+			if (Y & 01000)		/* Complement AC */
 				AC ^= 0777777;
-			if ((Y & 0400) == 0400)
+			if (Y & 0400)		/* Halt */
 			{
+				logerror("PDP1 Program executed HALT: at 0%06o\n", PC - 1);
+#if 0
 				/* ignored till I emulate the extention switches... with
 				 * continue...
 				 */
-				logerror("PDP1 Program executed HALT: at ");
-				logerror("0%06o\n", PC - 1);
 				logerror("HALT ignored...\n");
-				/* exit(1); */
+#else
+				pdp1.running = 0;
+#endif
 			}
+
 			nflag = Y & 7;
 			if (nflag < 1)			   /* was 2 */
 				break;
@@ -939,7 +1052,9 @@ int execute_instruction (int md)
 				}
 				break;
 			}
-			FLAG[nflag] = state;
+			else
+				FLAG[nflag] = state;
+
 			F = 0;
 			for (i = 1; i < 7; i++)
 			{
@@ -948,15 +1063,14 @@ int execute_instruction (int md)
 			break;
 		}
 	default:
-		logerror("Undefined instruction: ");
-		logerror("0%06o at ", md);
-		logerror("0%06o\n", PC - 1);
-		exit (1);
+		logerror("Illegal instruction: 0%06o at 0%06o\n", md, PC - 1);
+		etime += 5;	/* we handle this like a nop, for lack of any better */
+		break;
 	}
 	return etime;
 }
 
-int intern_iot (int *iio, int md)
+static int intern_iot (int *iio, int md)
 {
 	logerror("No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *iio);
 	exit (1);

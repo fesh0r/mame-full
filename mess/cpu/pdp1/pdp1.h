@@ -4,15 +4,23 @@
 #include "memory.h"
 #include "osd_cpu.h"
 
+
+/* register ids for pdp1_get_reg/pdp1_set_reg */
 enum {
 	PDP1_PC=1, PDP1_AC, PDP1_IO, PDP1_Y, PDP1_IB, PDP1_OV, PDP1_F,
 	PDP1_F1, PDP1_F2, PDP1_F3, PDP1_F4, PDP1_F5, PDP1_F6,
-	PDP1_S1, PDP1_S2, PDP1_S3, PDP1_S4, PDP1_S5, PDP1_S6
+	PDP1_S1, PDP1_S2, PDP1_S3, PDP1_S4, PDP1_S5, PDP1_S6,
+	PDP1_RUN, PDP1_READ_IN_MODE
 };
 
-#ifndef INLINE
-#define INLINE static inline
-#endif
+typedef struct pdp1_reset_param
+{
+	/* callback for the iot instruction */
+	int (*extern_iot)(int *, int);
+	/* read a byte from the perforated tape reader */
+	int (*read_binary_word)(UINT32 *reply);
+} pdp1_reset_param;
+
 
 /* PUBLIC FUNCTIONS */
 extern void pdp1_init(void);
@@ -29,7 +37,6 @@ extern const char *pdp1_info(void *context, int regnum);
 extern unsigned pdp1_dasm(char *buffer, unsigned pc);
 
 extern int pdp1_ICount;
-extern int (* extern_iot)(int *, int);
 
 #ifndef SUPPORT_ODD_WORD_SIZES
 #define READ_PDP_18BIT(A) ((signed)cpu_readmem24bedw_dword(A<<2))
@@ -39,6 +46,7 @@ extern int (* extern_iot)(int *, int);
 #define WRITE_PDP_18BIT(A,V) (cpu_writemem16_18(A,V))
 #endif
 
+#define NOP 000
 #define AND 001
 #define IOR 002
 #define XOR 003
@@ -48,6 +56,7 @@ extern int (* extern_iot)(int *, int);
 #define LIO 011
 #define DAC 012
 #define DAP 013
+#define DIP 014
 #define DIO 015
 #define DZM 016
 #define ADD 020
