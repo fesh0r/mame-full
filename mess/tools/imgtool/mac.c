@@ -1,9 +1,5 @@
 /*
-	Handlers for macintosh images.
-
-	Currently, we only handle the MFS format.  This was the format I needed
-	most urgently, because modern Macintoshes do not support it any more.
-	In the future, I will implement HFS as well.
+	Handlers for macintosh images (MFS and HFS formats).
 
 	Raphael Nabet, 2003
 */
@@ -18,6 +14,21 @@
 		simply a group of consecutive logical blocks.  The size of a volume's
 		allocation blocks depends on the capacity of the volume; there can be
 		at most 4094 (MFS) or 65535 (HFS) allocation blocks on a volume.
+	MFS (Macintosh File System): File system used by the early Macintosh.  This
+		File system does not support folders (you may create folders on a MFS
+		disk, but such folders are not implemented on File System level but in
+		the Desktop file, and they are just a hint of how programs should list
+		files, i.e. you can't have two files with the same name on a volume
+		even if they are in two different folders), and it is not adequate for
+		large volumes.
+	HFS (Hierarchical File System): File system introduced with the HD20
+		harddisk, the Macintosh Plus ROMs, and system 3.2 (IIRC).  Contrary to
+		MFS, it supports hierarchical folders.  Also, it is suitable for larger
+		volumes.
+	HFS+ (HFS Plus): New file system introduced with MacOS 8.1.  It has a lot
+		in common with HFS, but it supports more allocation blocks (up to 4
+		billions IIRC), and many extra features, including longer file names
+		(up to 255 UTF-16 Unicode chars).
 
 
 	Organization of an MFS volume:
@@ -373,289 +384,114 @@ exit:
 }*/
 
 /*
-	This table mimics the way HFS (and MFS???) sorts string: this is equivalent
-	to the RelString macintosh toolbox call with the caseSensitive parameter as
-	false and the diacSensitive parameter as true.
+	mac_stricmp()
 
-	This sort of makes sense with the MacRoman encoding, as it means the
+	Compare two macintosh strings in a manner compatible with the macintosh HFS
+	file system.
+
+	This functions emulates the way HFS (and MFS???) sorts string: this is
+	equivalent to the RelString macintosh toolbox call with the caseSensitive
+	parameter as false and the diacSensitive parameter as true.
+
+	s1 (I): the string to compare
+	s2 (I): the comparison string
+
+	Return a zero if s1 and s2 are equal, a negative value if s1 is less than
+	s2, and a positive value if s1 is greater than s2.
+
+Known issues:
+	Using this function makes sense with the MacRoman encoding, as it means the
 	computer will regard "DeskTop File", "Desktop File", "Desktop file", etc,
 	as the same file.  (UNIX users will probably regard this as an heresy, but
 	you must consider that, unlike UNIX, the Macintosh was not designed for
-	droids, but human beings that may forget about case.)
+	droids, but error-prone human beings that may forget about case.)
 
-	(Also, in the HFS catalog file, letters with diatrical signs will follow
-	the corresponding letters without diacritical signs; however, this actually
-	does not matter as HFS.)
+	(Also, letters with diatrical signs follow the corresponding letters
+	without diacritical signs in the HFS catalog file.  This does not matter,
+	though, since the Finder will not display files in the HFS catalog order,
+	but it will instead sort files according to whatever order is currently
+	selected in the View menu.)
 
-	However, with other text encodings, it is plainly absurd.  For instance,
-	with the Greek encoding, it will think that the degree symbol is the same
-	letter (with different case) as the upper-case Psi, so that if a program
-	asks for a file called "90¡" on a greek HFS volume, and there is a file
-	called "90[Psi]" on this volume, file "90[Psi]" will be opened.  Results
-	will probably be even weirder with 2-byte script like Japanese or Chinese.
+	However, with other text encodings, the behavior will be completely absurd.
+	For instance, with the Greek encoding, it will think that the degree symbol
+	is the same letter (with different case) as the upper-case Psi, so that if
+	a program asks for a file called "90¡" on a greek HFS volume, and there is
+	a file called "90[Psi]" on this volume, file "90[Psi]" will be opened.
+	Results will probably be even weirder with 2-byte script like Japanese or
+	Chinese.  Of course, we are not going to fix this issue, since doing so
+	would break the compatibility with the original Macintosh OS.
 */
-static unsigned char mac_char_sort_table[256] =
-{
-	0x00,	/* \x00 */
-	0x01,	/* \x01 */
-	0x02,	/* \x02 */
-	0x03,	/* \x03 */
-	0x04,	/* \x04 */
-	0x05,	/* \x05 */
-	0x06,	/* \x06 */
-	0x07,	/* \x07 */
-	0x08,	/* \x08 */
-	0x09,	/* \x09 */
-	0x0a,	/* \x0a */
-	0x0b,	/* \x0b */
-	0x0c,	/* \x0c */
-	0x0d,	/* \x0d */
-	0x0e,	/* \x0e */
-	0x0f,	/* \x0f */
-	0x10,	/* \x10 */
-	0x11,	/* \x11 */
-	0x12,	/* \x12 */
-	0x13,	/* \x13 */
-	0x14,	/* \x14 */
-	0x15,	/* \x15 */
-	0x16,	/* \x16 */
-	0x17,	/* \x17 */
-	0x18,	/* \x18 */
-	0x19,	/* \x19 */
-	0x1a,	/* \x1a */
-	0x1b,	/* \x1b */
-	0x1c,	/* \x1c */
-	0x1d,	/* \x1d */
-	0x1e,	/* \x1e */
-	0x1f,	/* \x1f */
-	0x20,	/* \x20 */
-	0x21,	/* \x21 */
-	0x22,	/* \x22 */
-	0x27,	/* \x23 */
-	0x28,	/* \x24 */
-	0x29,	/* \x25 */
-	0x2a,	/* \x26 */
-	0x2b,	/* \x27 */
-	0x2e,	/* \x28 */
-	0x2f,	/* \x29 */
-	0x30,	/* \x2a */
-	0x31,	/* \x2b */
-	0x32,	/* \x2c */
-	0x33,	/* \x2d */
-	0x34,	/* \x2e */
-	0x35,	/* \x2f */
-	0x36,	/* \x30 */
-	0x37,	/* \x31 */
-	0x38,	/* \x32 */
-	0x39,	/* \x33 */
-	0x3a,	/* \x34 */
-	0x3b,	/* \x35 */
-	0x3c,	/* \x36 */
-	0x3d,	/* \x37 */
-	0x3e,	/* \x38 */
-	0x3f,	/* \x39 */
-	0x40,	/* \x3a */
-	0x41,	/* \x3b */
-	0x42,	/* \x3c */
-	0x43,	/* \x3d */
-	0x44,	/* \x3e */
-	0x45,	/* \x3f */
-	0x46,	/* \x40 */
-	0x47,	/* \x41 */
-	0x51,	/* \x42 */
-	0x52,	/* \x43 */
-	0x54,	/* \x44 */
-	0x55,	/* \x45 */
-	0x5a,	/* \x46 */
-	0x5b,	/* \x47 */
-	0x5c,	/* \x48 */
-	0x5d,	/* \x49 */
-	0x62,	/* \x4a */
-	0x63,	/* \x4b */
-	0x64,	/* \x4c */
-	0x65,	/* \x4d */
-	0x66,	/* \x4e */
-	0x68,	/* \x4f */
-	0x71,	/* \x50 */
-	0x72,	/* \x51 */
-	0x73,	/* \x52 */
-	0x74,	/* \x53 */
-	0x76,	/* \x54 */
-	0x77,	/* \x55 */
-	0x7c,	/* \x56 */
-	0x7d,	/* \x57 */
-	0x7e,	/* \x58 */
-	0x7f,	/* \x59 */
-	0x81,	/* \x5a */
-	0x82,	/* \x5b */
-	0x83,	/* \x5c */
-	0x84,	/* \x5d */
-	0x85,	/* \x5e */
-	0x86,	/* \x5f */
-	0x4d,	/* \x60 */
-	0x47,	/* \x61 */
-	0x51,	/* \x62 */
-	0x52,	/* \x63 */
-	0x54,	/* \x64 */
-	0x55,	/* \x65 */
-	0x5a,	/* \x66 */
-	0x5b,	/* \x67 */
-	0x5c,	/* \x68 */
-	0x5d,	/* \x69 */
-	0x62,	/* \x6a */
-	0x63,	/* \x6b */
-	0x64,	/* \x6c */
-	0x65,	/* \x6d */
-	0x66,	/* \x6e */
-	0x68,	/* \x6f */
-	0x71,	/* \x70 */
-	0x72,	/* \x71 */
-	0x73,	/* \x72 */
-	0x74,	/* \x73 */
-	0x76,	/* \x74 */
-	0x77,	/* \x75 */
-	0x7c,	/* \x76 */
-	0x7d,	/* \x77 */
-	0x7e,	/* \x78 */
-	0x7f,	/* \x79 */
-	0x81,	/* \x7a */
-	0x87,	/* \x7b */
-	0x88,	/* \x7c */
-	0x89,	/* \x7d */
-	0x8a,	/* \x7e */
-	0x8b,	/* \x7f */
-	0x49,	/* \x80 */
-	0x4b,	/* \x81 */
-	0x53,	/* \x82 */
-	0x56,	/* \x83 */
-	0x67,	/* \x84 */
-	0x69,	/* \x85 */
-	0x78,	/* \x86 */
-	0x4e,	/* \x87 */
-	0x48,	/* \x88 */
-	0x4f,	/* \x89 */
-	0x49,	/* \x8a */
-	0x4a,	/* \x8b */
-	0x4b,	/* \x8c */
-	0x53,	/* \x8d */
-	0x56,	/* \x8e */
-	0x57,	/* \x8f */
-	0x58,	/* \x90 */
-	0x59,	/* \x91 */
-	0x5e,	/* \x92 */
-	0x5f,	/* \x93 */
-	0x60,	/* \x94 */
-	0x61,	/* \x95 */
-	0x67,	/* \x96 */
-	0x6d,	/* \x97 */
-	0x6e,	/* \x98 */
-	0x6f,	/* \x99 */
-	0x69,	/* \x9a */
-	0x6a,	/* \x9b */
-	0x79,	/* \x9c */
-	0x7a,	/* \x9d */
-	0x7b,	/* \x9e */
-	0x78,	/* \x9f */
-	0x8c,	/* \xa0 */
-	0x8d,	/* \xa1 */
-	0x8e,	/* \xa2 */
-	0x8f,	/* \xa3 */
-	0x90,	/* \xa4 */
-	0x91,	/* \xa5 */
-	0x92,	/* \xa6 */
-	0x75,	/* \xa7 */
-	0x93,	/* \xa8 */
-	0x94,	/* \xa9 */
-	0x95,	/* \xaa */
-	0x96,	/* \xab */
-	0x97,	/* \xac */
-	0x98,	/* \xad */
-	0x4c,	/* \xae */
-	0x6b,	/* \xaf */
-	0x99,	/* \xb0 */
-	0x9a,	/* \xb1 */
-	0x9b,	/* \xb2 */
-	0x9c,	/* \xb3 */
-	0x9d,	/* \xb4 */
-	0x9e,	/* \xb5 */
-	0x9f,	/* \xb6 */
-	0xa0,	/* \xb7 */
-	0xa1,	/* \xb8 */
-	0xa2,	/* \xb9 */
-	0xa3,	/* \xba */
-	0x50,	/* \xbb */
-	0x70,	/* \xbc */
-	0xa4,	/* \xbd */
-	0x4c,	/* \xbe */
-	0x6b,	/* \xbf */
-	0xa5,	/* \xc0 */
-	0xa6,	/* \xc1 */
-	0xa7,	/* \xc2 */
-	0xa8,	/* \xc3 */
-	0xa9,	/* \xc4 */
-	0xaa,	/* \xc5 */
-	0xab,	/* \xc6 */
-	0x25,	/* \xc7 */
-	0x26,	/* \xc8 */
-	0xac,	/* \xc9 */
-	0x20,	/* \xca */
-	0x48,	/* \xcb */
-	0x4a,	/* \xcc */
-	0x6a,	/* \xcd */
-	0x6c,	/* \xce */
-	0x6c,	/* \xcf */
-	0xad,	/* \xd0 */
-	0xae,	/* \xd1 */
-	0x23,	/* \xd2 */
-	0x24,	/* \xd3 */
-	0x2c,	/* \xd4 */
-	0x2d,	/* \xd5 */
-	0xaf,	/* \xd6 */
-	0xb0,	/* \xd7 */
-	0x80,	/* \xd8 */
-	0xb1,	/* \xd9 */
-	0xb2,	/* \xda */
-	0xb3,	/* \xdb */
-	0xb4,	/* \xdc */
-	0xb5,	/* \xdd */
-	0xb6,	/* \xde */
-	0xb7,	/* \xdf */
-	0xb8,	/* \xe0 */
-	0xb9,	/* \xe1 */
-	0xba,	/* \xe2 */
-	0xbb,	/* \xe3 */
-	0xbc,	/* \xe4 */
-	0xbd,	/* \xe5 */
-	0xbe,	/* \xe6 */
-	0xbf,	/* \xe7 */
-	0xc0,	/* \xe8 */
-	0xc1,	/* \xe9 */
-	0xc2,	/* \xea */
-	0xc3,	/* \xeb */
-	0xc4,	/* \xec */
-	0xc5,	/* \xed */
-	0xc6,	/* \xee */
-	0xc7,	/* \xef */
-	0xc8,	/* \xf0 */
-	0xc9,	/* \xf1 */
-	0xca,	/* \xf2 */
-	0xcb,	/* \xf3 */
-	0xcc,	/* \xf4 */
-	0xcd,	/* \xf5 */
-	0xce,	/* \xf6 */
-	0xcf,	/* \xf7 */
-	0xd0,	/* \xf8 */
-	0xd1,	/* \xf9 */
-	0xd2,	/* \xfa */
-	0xd3,	/* \xfb */
-	0xd4,	/* \xfc */
-	0xd5,	/* \xfd */
-	0xd6,	/* \xfe */
-	0xd7	/* \xff */
-};
 
 static int mac_stricmp(const UINT8 *s1, const UINT8 *s2)
 {
+	static const unsigned char mac_char_sort_table[256] =
+	{
+	/*	\x00	\x01	\x02	\x03	\x04	\x05	\x06	\x07 */
+		0x00,	0x01,	0x02,	0x03,	0x04,	0x05,	0x06,	0x07,
+	/*	\x08	\x09	\x0a	\x0b	\x0c	\x0d	\x0e	\x0f */
+		0x08,	0x09,	0x0a,	0x0b,	0x0c,	0x0d,	0x0e,	0x0f,
+	/*	\x10	\x11	\x12	\x13	\x14	\x15	\x16	\x17 */
+		0x10,	0x11,	0x12,	0x13,	0x14,	0x15,	0x16,	0x17,
+	/*	\x18	\x19	\x1a	\x1b	\x1c	\x1d	\x1e	\x1f */
+		0x18,	0x19,	0x1a,	0x1b,	0x1c,	0x1d,	0x1e,	0x1f,
+	/*	\x20	\x21	\x22	\x23	\x24	\x25	\x26	\x27 */
+		0x20,	0x21,	0x22,	0x27,	0x28,	0x29,	0x2a,	0x2b,
+	/*	\x28	\x29	\x2a	\x2b	\x2c	\x2d	\x2e	\x2f */
+		0x2e,	0x2f,	0x30,	0x31,	0x32,	0x33,	0x34,	0x35,
+	/*	\x30	\x31	\x32	\x33	\x34	\x35	\x36	\x37 */
+		0x36,	0x37,	0x38,	0x39,	0x3a,	0x3b,	0x3c,	0x3d,
+	/*	\x38	\x39	\x3a	\x3b	\x3c	\x3d	\x3e	\x3f */
+		0x3e,	0x3f,	0x40,	0x41,	0x42,	0x43,	0x44,	0x45,
+	/*	\x40	\x41	\x42	\x43	\x44	\x45	\x46	\x47 */
+		0x46,	0x47,	0x51,	0x52,	0x54,	0x55,	0x5a,	0x5b,
+	/*	\x48	\x49	\x4a	\x4b	\x4c	\x4d	\x4e	\x4f */
+		0x5c,	0x5d,	0x62,	0x63,	0x64,	0x65,	0x66,	0x68,
+	/*	\x50	\x51	\x52	\x53	\x54	\x55	\x56	\x57 */
+		0x71,	0x72,	0x73,	0x74,	0x76,	0x77,	0x7c,	0x7d,
+	/*	\x58	\x59	\x5a	\x5b	\x5c	\x5d	\x5e	\x5f */
+		0x7e,	0x7f,	0x81,	0x82,	0x83,	0x84,	0x85,	0x86,
+	/*	\x60	\x61	\x62	\x63	\x64	\x65	\x66	\x67 */
+		0x4d,	0x47,	0x51,	0x52,	0x54,	0x55,	0x5a,	0x5b,
+	/*	\x68	\x69	\x6a	\x6b	\x6c	\x6d	\x6e	\x6f */
+		0x5c,	0x5d,	0x62,	0x63,	0x64,	0x65,	0x66,	0x68,
+	/*	\x70	\x71	\x72	\x73	\x74	\x75	\x76	\x77 */
+		0x71,	0x72,	0x73,	0x74,	0x76,	0x77,	0x7c,	0x7d,
+	/*	\x78	\x79	\x7a	\x7b	\x7c	\x7d	\x7e	\x7f */
+		0x7e,	0x7f,	0x81,	0x87,	0x88,	0x89,	0x8a,	0x8b,
+	/*	\x80	\x81	\x82	\x83	\x84	\x85	\x86	\x87 */
+		0x49,	0x4b,	0x53,	0x56,	0x67,	0x69,	0x78,	0x4e,
+	/*	\x88	\x89	\x8a	\x8b	\x8c	\x8d	\x8e	\x8f */
+		0x48,	0x4f,	0x49,	0x4a,	0x4b,	0x53,	0x56,	0x57,
+	/*	\x90	\x91	\x92	\x93	\x94	\x95	\x96	\x97 */
+		0x58,	0x59,	0x5e,	0x5f,	0x60,	0x61,	0x67,	0x6d,
+	/*	\x98	\x99	\x9a	\x9b	\x9c	\x9d	\x9e	\x9f */
+		0x6e,	0x6f,	0x69,	0x6a,	0x79,	0x7a,	0x7b,	0x78,
+	/*	\xa0	\xa1	\xa2	\xa3	\xa4	\xa5	\xa6	\xa7 */
+		0x8c,	0x8d,	0x8e,	0x8f,	0x90,	0x91,	0x92,	0x75,
+	/*	\xa8	\xa9	\xaa	\xab	\xac	\xad	\xae	\xaf */
+		0x93,	0x94,	0x95,	0x96,	0x97,	0x98,	0x4c,	0x6b,
+	/*	\xb0	\xb1	\xb2	\xb3	\xb4	\xb5	\xb6	\xb7 */
+		0x99,	0x9a,	0x9b,	0x9c,	0x9d,	0x9e,	0x9f,	0xa0,
+	/*	\xb8	\xb9	\xba	\xbb	\xbc	\xbd	\xbe	\xbf */
+		0xa1,	0xa2,	0xa3,	0x50,	0x70,	0xa4,	0x4c,	0x6b,
+	/*	\xc0	\xc1	\xc2	\xc3	\xc4	\xc5	\xc6	\xc7 */
+		0xa5,	0xa6,	0xa7,	0xa8,	0xa9,	0xaa,	0xab,	0x25,
+	/*	\xc8	\xc9	\xca	\xcb	\xcc	\xcd	\xce	\xcf */
+		0x26,	0xac,	0x20,	0x48,	0x4a,	0x6a,	0x6c,	0x6c,
+	/*	\xd0	\xd1	\xd2	\xd3	\xd4	\xd5	\xd6	\xd7 */
+		0xad,	0xae,	0x23,	0x24,	0x2c,	0x2d,	0xaf,	0xb0,
+	/*	\xd8	\xd9	\xda	\xdb	\xdc	\xdd	\xde	\xdf */
+		0x80,	0xb1,	0xb2,	0xb3,	0xb4,	0xb5,	0xb6,	0xb7,
+	/*	\xe0	\xe1	\xe2	\xe3	\xe4	\xe5	\xe6	\xe7 */
+		0xb8,	0xb9,	0xba,	0xbb,	0xbc,	0xbd,	0xbe,	0xbf,
+	/*	\xe8	\xe9	\xea	\xeb	\xec	\xed	\xee	\xef */
+		0xc0,	0xc1,	0xc2,	0xc3,	0xc4,	0xc5,	0xc6,	0xc7,
+	/*	\xf0	\xf1	\xf2	\xf3	\xf4	\xf5	\xf6	\xf7 */
+		0xc8,	0xc9,	0xca,	0xcb,	0xcc,	0xcd,	0xce,	0xcf,
+	/*	\xf8	\xf9	\xfa	\xfb	\xfc	\xfd	\xfe	\xff */
+		0xd0,	0xd1,	0xd2,	0xd3,	0xd4,	0xd5,	0xd6,	0xd7
+	};
+
 	size_t common_len;
 	int i;
 	int c1, c2;
@@ -820,6 +656,10 @@ static int check_fpath(const char *fpath)
 	return 0;
 }
 
+#if 0
+#pragma mark -
+#pragma mark MACBINARY SUPPORT
+#endif
 
 /*
 	MacBinary format - encode data and ressource forks into a single file
@@ -827,15 +667,15 @@ static int check_fpath(const char *fpath)
 	AppleSingle is much more flexible than MacBinary IMHO, but MacBinary is
 	supported by many more utilities.
 
-	There are 3 versions of MacBinary: MacBinary ("v1"), MacBinaryII ("v2") and
-	MacBinaryIII ("v3").  In addition, the comment field encoding was proposed
-	as an extension to v1 well before v2 was introduced, so I call MacBinary
-	with comment extension "v1.1".
+	There are 3 versions of MacBinary: MacBinary ("v1"), MacBinary II ("v2")
+	and MacBinary III ("v3").  In addition, the comment field encoding was
+	proposed as an extension to v1 well before v2 was introduced, so I will
+	call MacBinary with the comment extension "v1.1".
 
 	All three formats are backward- and forward-compatible with each other.
 */
 /*
-	Header
+	MacBinary Header
 
 	Note that several fields are not aligned...
 */
@@ -966,6 +806,10 @@ static UINT16 MB_calcCRC(const MBHeader *header)
 #pragma mark -
 #pragma mark DISK IMAGE ROUTINES
 #endif
+/*
+	Low-level disk routines: the disk is implemented as a succession of
+	512-byte blocks addressed by block index.
+*/
 
 /*
 	header of diskcopy 4.2 images
@@ -974,7 +818,9 @@ typedef struct diskcopy_header_t
 {
 	UINT8    diskName[64];	/* name of the disk */
 	UINT32BE dataSize;		/* total size of data for all sectors (512*number_of_sectors) */
-	UINT32BE tagSize;		/* total size of tag data for all sectors (12*number_of_sectors for GCR 3.5" floppies, 20*number_of_sectors for HD20, 0 otherwise) */
+	UINT32BE tagSize;		/* total size of tag data for all sectors
+								(12*number_of_sectors for GCR 3.5" floppies,
+								20*number_of_sectors for HD20, 0 otherwise) */
 	UINT32BE dataChecksum;	/* CRC32 checksum of all sector data */
 	UINT32BE tagChecksum;	/* CRC32 checksum of all tag data */
 	UINT8    diskFormat;	/* 0 = 400K, 1 = 800K, 2 = 720K, 3 = 1440K  (other values reserved) */
@@ -985,11 +831,15 @@ typedef struct diskcopy_header_t
 	UINT16BE private;		/* always $0100 (otherwise, the file may be in a different format. */
 } diskcopy_header_t;
 
+/*
+	disk image reference
+*/
 typedef struct mac_l1_imgref
 {
-	IMAGE base;
-	STREAM *f;
-	enum { bare, apple_diskcopy } format;
+	STREAM *f;					/* imgtool file reference */
+	UINT32 num_blocks;			/* total number of 512-byte blocks */
+	UINT32 tagbytesperblock;	/* number of tag bytes per block */
+	enum { bare, apple_diskcopy } format;	/* disk image format */
 	union
 	{
 		/*struct
@@ -997,14 +847,18 @@ typedef struct mac_l1_imgref
 		} bare;*/
 		struct
 		{
-			long tag_offset;
+			UINT32 tag_offset;	/* file offset to tag data */
 		} apple_diskcopy;
 	} u;
 } mac_l1_imgref;
 
+/*
+	floppy_image_open()
+
+	Open a macintosh disk image
+*/
 static int floppy_image_open(mac_l1_imgref *image)
 {
-	long image_len=0;
 	diskcopy_header_t header;
 
 
@@ -1016,43 +870,38 @@ static int floppy_image_open(mac_l1_imgref *image)
 		UINT32 dataSize = get_UINT32BE(header.dataSize);
 		UINT32 tagSize = get_UINT32BE(header.tagSize);
 
-		/* various checks : */
+		/* various checks to make sure it is diskcopy: */
 		if ((header.diskName[0] <= 63)
 				&& (stream_size(image->f) == (dataSize + tagSize + 84))
 				&& (get_UINT16BE(header.private) == 0x0100))
 		{
 			image->format = apple_diskcopy;
-			image_len = dataSize;
-			image->u.apple_diskcopy.tag_offset = (tagSize == (dataSize / 512 * 12))
-													? dataSize + 84
-													: 0;
-			/*image->formatByte = header.formatByte & 0x3F;*/
+
+			if (dataSize % 512)
+				return IMGTOOLERR_CORRUPTIMAGE;
+			image->num_blocks = dataSize/512;
+			if (tagSize % image->num_blocks)
+			{
+				image->tagbytesperblock = 0;
+				image->u.apple_diskcopy.tag_offset = 0;
+			}
+			else
+			{
+				image->tagbytesperblock = tagSize / image->num_blocks;
+				image->u.apple_diskcopy.tag_offset = dataSize + 84;
+			}
 		}
 	}
 
 	if (image->format == bare)
 	{
-		image_len = stream_size(image->f);
-	}
+		long image_len = stream_size(image->f);
 
-#if 0
-	switch(image_len) {
-	case 80*10*512*1:
-		/* Single sided (400k) */
-		if (image->format == bare)
-			image->formatByte = 0x02;	/* single-sided Macintosh (?) */
-		break;
-	case 80*10*512*2:
-		/* Double sided (800k) */
-		if (image->format == bare)
-			image->formatByte = 0x22;	/* double-sided Macintosh (?) */
-		break;
-	default:
-		/* Bad floppy size */
-		goto error;
-		break;
+		if (image_len % 512)
+			return IMGTOOLERR_CORRUPTIMAGE;
+		image->num_blocks = image_len/512;
+		image->tagbytesperblock = 0;
 	}
-#endif
 
 	return 0;
 }
@@ -1223,7 +1072,6 @@ typedef struct mac_BTref
 	/* function to compare keys during tree searches */
 	int (*key_compare_func)(const void *key1, const void *key2);
 
-	UINT16 node_numRecords;	/* extracted from current node header */
 	void *node_buf;			/* current node buffer */
 } mac_BTref;
 
@@ -1249,6 +1097,8 @@ typedef struct hfs_l2_imgref
 */
 struct mac_l2_imgref
 {
+	IMAGE base;
+
 	mac_l1_imgref l1_img;
 
 	UINT16 numABs;
@@ -1355,9 +1205,9 @@ typedef struct hfs_mdb
 		} v2;
 	} u;
 
-	UINT32BE xtFlSize;		/* size of extents overflow file */
+	UINT32BE xtFlSize;		/* size (in bytes) of extents overflow file */
 	hfs_extent_3 xtExtRec;	/* extent record for extents overflow file */
-	UINT32BE ctFlSize;		/* size of catalog file */
+	UINT32BE ctFlSize;		/* size (in bytes) of catalog file */
 	hfs_extent_3 ctExtRec;	/* extent record for catalog file */
 } hfs_mdb;
 
@@ -1557,6 +1407,10 @@ static int mac_file_seek(mac_fileref *fileref, UINT32 filePos)
 
 	Note the structure is variable lenght.  It is always word-aligned, and
 	cannot cross block boundaries.
+
+	Note that the directory does not seem to be sorted, the order in which
+	files appear does not match file names, and it does not always match file
+	IDs.
 */
 typedef struct mfs_dir_entry
 {
@@ -1589,17 +1443,26 @@ typedef struct mfs_dir_entry
 /*
 	FOBJ desktop resource: describes a folder, or the location of the volume
 	icon.
+
+	In typical Apple manner, this ressource is not documented.  However, I have
+	managed to reverse engineer some parts of it.
 */
 typedef struct mfs_FOBJ
 {
-	UINT8 unknown0[2];		/* $0004 for disk, $0008 for folder??? */
-	mac_point location;		/* location in parent window??? */
-	UINT8 unknown1[6];		/* ??? */
-	UINT16BE par_fldr;		/* parent folder ID */
-	UINT8 unknown2[12];		/* ??? */
-	UINT32BE createDate;	/* date and time of creation??? */
-	UINT32BE modifyDate;	/* date and time of last modification??? */
-	UINT8 unknown3[22];		/* ??? */
+	UINT8 unknown0[2];		/* $00: $0004 for disk, $0008 for folder??? */
+	mac_point location;		/* $02: location in parent window */
+	UINT8 unknown1[4];		/* $06: ??? */
+	UINT8 view;				/* $0A: manner in which folders are displayed??? */
+	UINT8 unknown2;			/* $0B: ??? */
+	UINT16BE par_fldr;		/* $0C: parent folder ID */
+	UINT8 unknown3[10];		/* $0E: ??? */
+	UINT16BE unknown4;		/* $18: ??? */
+	UINT32BE createDate;	/* $1A: date and time of creation */
+	UINT32BE modifyDate;	/* $1E: date and time of last modification */
+	UINT16BE unknown5;		/* $22: put-away folder?????? */
+	UINT8 unknown6[8];		/* $24: ??? */
+	mac_rect bounds;		/* $2C: window bounds */
+	mac_point scroll;		/* $34: current scroll offset??? */
 	union
 	{	/* I think there are two versions of the structure */
 		struct
@@ -1607,7 +1470,7 @@ typedef struct mfs_FOBJ
 			UINT16BE item_count;	/* number of items (folders and files) in
 										this folder */
 			UINT32BE item_descs[1];	/* this variable-lenght array has
-										item_count entries */
+										item_count entries - meaning of entry is unknown */
 		} v1;
 		struct
 		{
@@ -2073,11 +1936,22 @@ typedef struct hfs_catFileData
 */
 typedef struct hfs_catThreadData
 {
-  UINT16BE recordType;			/* record type */
-  UINT32BE reserved[2];			/* reserved - set to zero */
-  UINT32BE parID;				/* parent ID for this catalog node */
-  mac_str31 nodeName;			/* name of this catalog node */
+	UINT16BE recordType;		/* record type */
+	UINT32BE reserved[2];		/* reserved - set to zero */
+	UINT32BE parID;				/* parent ID for this catalog node */
+	mac_str31 nodeName;			/* name of this catalog node */
 } hfs_catThreadData;
+
+/*
+	union for all types at once
+*/
+typedef union hfs_catData
+{
+	UINT16BE dataType;
+	hfs_catFolderData folder;
+	hfs_catFileData file;
+	hfs_catThreadData thread;
+} hfs_catData;
 
 /*
 	HFS catalog record types
@@ -2103,10 +1977,32 @@ enum
 	cfrf_threadExists	= 0x02		/* a file thread record exists for this file */
 };
 
+/*
+	BT functions used by HFS functions
+*/
+typedef struct BT_leaf_rec_enumerator
+{
+	mac_BTref *BTref;
+	UINT32 cur_node;
+	int cur_rec;
+} BT_leaf_rec_enumerator;
+
 static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, const void *key2));
 static void BT_close(mac_BTref *BTref);
 static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
-								UINT32 *node_ID, int *record_ID, void **record_ptr);
+								UINT32 *node_ID, int *record_ID,
+								void **record_ptr, int *record_len,
+								int search_exact_match, int *match_found);
+static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len);
+static int BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator *enumerator);
+static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr, int *rec_len);
+
+typedef struct hfs_cat_enumerator
+{
+	mac_l2_imgref *l2_img;
+	BT_leaf_rec_enumerator BT_enumerator;
+} hfs_cat_enumerator;
+
 
 static int hfs_open_extents_file(mac_l2_imgref *l2_img, const hfs_mdb *mdb, mac_fileref *fileref)
 {
@@ -2238,23 +2134,131 @@ static void hfs_image_close(mac_l2_imgref *l2_img)
 	BT_close(&l2_img->u.hfs.cat_BT);
 }
 
-static int hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const mac_str31 cName, void **record_ptr)
+static int hfs_get_cat_record_data(mac_l2_imgref *l2_img, void *rec_raw, int rec_len, hfs_catKey **rec_key, hfs_catData **rec_data)
+{
+	hfs_catKey *lrec_key;
+	void *rec_data_raw;
+	hfs_catData *lrec_data;
+	int rec_data_len;
+	int min_data_size;
+	int errorcode;
+
+
+	assert(l2_img->format == L2I_HFS);
+
+	lrec_key = rec_raw;
+	/* check that key is long enough to hold it all */
+	if ((lrec_key->keyLen+1) < (offsetof(hfs_catKey, cName) + lrec_key->cName[0] + 1))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* get pointer to record data */
+	errorcode = BT_get_keyed_record_data(&l2_img->u.hfs.cat_BT, rec_raw, rec_len, &rec_data_raw, &rec_data_len);
+	if (errorcode)
+		return errorcode;
+	lrec_data = rec_data_raw;
+
+	/* extract record type */
+	if (rec_data_len < 2)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* check that the record is large enough */
+	switch (get_UINT16BE(lrec_data->dataType))
+	{
+	case hcrt_Folder:
+		min_data_size = sizeof(hfs_catFolderData);
+		break;
+
+	case hcrt_File:
+		min_data_size = sizeof(hfs_catFileData);
+		break;
+
+	case hcrt_FolderThread:
+	case hcrt_FileThread:
+		min_data_size = sizeof(hfs_catThreadData);
+		break;
+
+	default:
+		min_data_size = 0;
+		break;
+	}
+
+	if (rec_data_len < min_data_size)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	if (rec_key)
+		*rec_key = lrec_key;
+	if (rec_data)
+		*rec_data = lrec_data;
+
+	return 0;
+}
+
+static int hfs_cat_open(mac_l2_imgref *l2_img, hfs_cat_enumerator *enumerator)
+{
+	assert(l2_img->format == L2I_HFS);
+
+	enumerator->l2_img = l2_img;
+
+	return BT_leaf_rec_enumerator_open(&l2_img->u.hfs.cat_BT, &enumerator->BT_enumerator);
+}
+
+static int hfs_cat_read(hfs_cat_enumerator *enumerator, hfs_catKey **rec_key, hfs_catData **rec_data)
+{
+	void *rec;
+	int rec_len;
+	int errorcode;
+
+
+	*rec_key = NULL;
+	*rec_data = NULL;
+
+	/* read next record */
+	errorcode = BT_leaf_rec_enumerator_read(&enumerator->BT_enumerator, &rec, &rec_len);
+	if (errorcode)
+		return errorcode;
+
+	/* check EOList condition */
+	if (rec == NULL)
+		return 0;
+
+	/* extract record data */
+	errorcode = hfs_get_cat_record_data(enumerator->l2_img, rec, rec_len, rec_key, rec_data);
+	if (errorcode)
+		return errorcode;
+
+	return 0;
+}
+
+static int hfs_cat_search(mac_l2_imgref *l2_img, UINT32 parID, const mac_str31 cName, hfs_catKey **rec_key, hfs_catData **rec_data)
 {
 	hfs_catKey search_key;
+	void *rec;
+	int rec_len;
+	int errorcode;
 
 	assert(l2_img->format == L2I_HFS);
 
 	if (cName[0] > 31)
 		return IMGTOOLERR_UNEXPECTED;
 
+	/* generate search key */
 	search_key.keyLen = search_key.resrv1 = 0;	/* these fields do not matter
 												to the compare function, so we
 												don't fill them */
 	set_UINT32BE(&search_key.parID, parID);
 	mac_strcpy(search_key.cName, cName);
 
+	/* search key */
+	errorcode = BT_search_leaf_rec(&l2_img->u.hfs.cat_BT, &search_key, NULL, NULL, &rec, &rec_len, TRUE, NULL);
+	if (errorcode)
+		return errorcode;
 
-	return BT_search_leaf_rec(&l2_img->u.hfs.cat_BT, &search_key, NULL, NULL, record_ptr);
+	/* extract record data */
+	errorcode = hfs_get_cat_record_data(l2_img, rec, rec_len, rec_key, rec_data);
+	if (errorcode)
+		return errorcode;
+
+	return 0;
 }
 
 static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *parID, mac_str255 fname, mac_cat_info *cat_info)
@@ -2265,15 +2269,8 @@ static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *p
 	UINT32 lparID = 2;
 	int level;
 	int errorcode;
-	void *catrec;
 	hfs_catKey *catrec_key;
-	union
-	{
-		UINT16BE dataType;
-		hfs_catFolderData folder;
-		hfs_catFileData file;
-		hfs_catThreadData thread;
-	} *catrec_data;
+	hfs_catData *catrec_data;
 	UINT16 dataRecType;
 
 
@@ -2300,13 +2297,10 @@ static int hfs_resolve_fpath(mac_l2_imgref *l2_img, const char *fpath, UINT32 *p
 				return IMGTOOLERR_BADFILENAME;
 		}
 
-		errorcode = hfs_cat_search(l2_img, lparID, mac_element_name, &catrec);
+		errorcode = hfs_cat_search(l2_img, lparID, mac_element_name, &catrec_key, &catrec_data);
 		if (errorcode)
 			return errorcode;
 
-		catrec_key = catrec;
-		/* data is past the key, but aligned on 16-bit boundary */
-		catrec_data = (void *) ((UINT8 *)catrec + catrec_key->keyLen + (! (catrec_key->keyLen & 1)) + 1);
 		dataRecType = get_UINT16BE(catrec_data->dataType);
 
 		/* parse data record */
@@ -2401,26 +2395,16 @@ static int hfs_file_open_internal(mac_l2_imgref *l2_img, const hfs_catFileData *
 
 static int hfs_file_open(mac_l2_imgref *l2_img, UINT32 parID, const mac_str255 fname, mac_fileref *fileref, mac_forkID fork)
 {
-	void *catrec;
 	hfs_catKey *catrec_key;
-	union
-	{
-		UINT16BE dataType;
-		hfs_catFolderData folder;
-		hfs_catFileData file;
-		hfs_catThreadData thread;
-	} *catrec_data;
+	hfs_catData *catrec_data;
 	UINT16 dataRecType;
 	int errorcode;
 
 	/* lookup file in catalog */
-	errorcode = hfs_cat_search(l2_img, parID, fname, &catrec);
+	errorcode = hfs_cat_search(l2_img, parID, fname, &catrec_key, &catrec_data);
 	if (errorcode)
 		return errorcode;
 
-	catrec_key = catrec;
-	/* data is past the key, but aligned on 16-bit boundary */
-	catrec_data = (void *) ((UINT8 *)catrec + catrec_key->keyLen + (! (catrec_key->keyLen & 1)) + 1);
 	dataRecType = get_UINT16BE(catrec_data->dataType);
 
 	/* file expected */
@@ -2439,8 +2423,11 @@ static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 	UINT32 AB_num;
 	UINT32 cur_AB;
 	UINT32 i;
+	void *cur_extents_raw;
 	hfs_extent *cur_extents;
+	int cur_extents_len;
 	void *extents_BT_rec;
+	int extents_BT_rec_len;
 	int errorcode;
 	UINT16 AB_address;
 
@@ -2450,34 +2437,62 @@ static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 	cur_AB = 0;
 	cur_extents = fileref->u.hfs.extents;
 
-	while (1)
+	/* first look in catalog tree extents */
+	for (i=0; i<3; i++)
 	{
+		if (AB_num < cur_AB+get_UINT16BE(cur_extents[i].numABlks))
+			break;
+		cur_AB += get_UINT16BE(cur_extents[i].numABlks);
+	}
+	if (i == 3)
+	{
+		/* extent not found: read extents record from extents BT */
+		hfs_extentKey search_key;
+		hfs_extentKey *found_key;
+
+		search_key.keyLength = keyLength_hfs_extentKey;
+		search_key.forkType = fileref->u.hfs.forkType;
+		set_UINT32BE(&search_key.fileID, fileref->u.hfs.fileID);
+		set_UINT16BE(&search_key.startBlock, AB_num);
+
+		/* search for the record with the largest key lower than or equal to
+		search_key.  The keys are constructed in such a way that, if a record
+		includes AB_num, it is that one. */
+		errorcode = BT_search_leaf_rec(&fileref->l2_img->u.hfs.extents_BT, &search_key,
+										NULL, NULL, &extents_BT_rec, &extents_BT_rec_len,
+										FALSE, NULL);
+		if (errorcode)
+			return errorcode;
+
+		if (extents_BT_rec == NULL)
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		found_key = extents_BT_rec;
+		/* check that this record concerns the correct file */
+		if ((found_key->forkType != fileref->u.hfs.forkType)
+			|| (get_UINT32BE(found_key->fileID) != fileref->u.hfs.fileID))
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		/* extract start AB */
+		cur_AB = get_UINT16BE(found_key->startBlock);
+		/* get extents pointer */
+		errorcode = BT_get_keyed_record_data(&fileref->l2_img->u.hfs.extents_BT, extents_BT_rec, extents_BT_rec_len, &cur_extents_raw, &cur_extents_len);
+		if (errorcode)
+			return errorcode;
+		if (cur_extents_len < 3*sizeof(hfs_extent))
+			return IMGTOOLERR_CORRUPTIMAGE;
+		cur_extents = cur_extents_raw;
+
+		/* pick correct extent in record */
 		for (i=0; i<3; i++)
 		{
 			if (AB_num < cur_AB+get_UINT16BE(cur_extents[i].numABlks))
 				break;
 			cur_AB += get_UINT16BE(cur_extents[i].numABlks);
 		}
-		if (i < 3)
-			/* extent found */
-			break;
-		else
-		{
-			/* extent not found: read next extents from extents BT */
-			hfs_extentKey search_key;
-
-			search_key.keyLength = keyLength_hfs_extentKey;
-			search_key.forkType = fileref->u.hfs.forkType;
-			set_UINT32BE(&search_key.fileID, fileref->u.hfs.fileID);
-			set_UINT16BE(&search_key.startBlock, cur_AB);
-
-			errorcode = BT_search_leaf_rec(&fileref->l2_img->u.hfs.extents_BT, &search_key,
-											NULL, NULL, &extents_BT_rec);
-			if (errorcode)
-				return errorcode;
-
-			cur_extents = (hfs_extent *) ((UINT8 *)extents_BT_rec + 8/*((hfs_extentKey *)extents_BT_rec)->keyLengthkeyLen + (! (((hfs_extentKey *)extents_BT_rec)->keyLen & 1)) + 1*/);
-		}
+		if (i == 3)
+			/* extent not found */
+			return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 	AB_address = get_UINT16BE(cur_extents[i].stABN) + (AB_num-cur_AB);
@@ -2497,8 +2512,12 @@ static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 #endif
 
 /*
-	B-tree files are used by HFS and HFS+ file system: the Extents and Catalog
-	are both B-Tree
+	B-tree (Balanced search tree) files are used by the HFS and HFS+ file
+	systems: the Extents and Catalog files are both B-Tree.
+
+	Note that these B-trees are B+-trees: data is only on the leaf level, and
+	nodes located on the same level are also linked sequentially, which allows
+	fast sequenctial access to the catalog file.
 
 	These files are normal files, except for the fact that they are not
 	referenced from the catalog but the MDB.  They are allocated in fixed-size
@@ -2512,7 +2531,8 @@ static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 	when the node allocation bitmap outgrows the header node), index nodes
 	(root and branch node that enable to efficiently search the leaf nodes for
 	a specific key value), and leaf nodes (which hold the actual user data
-	records with keys and data).  The first node is a header node.
+	records with keys and data).  The first node is always a header node.
+	Other nodes can be of any of the 3 other type, or they can be free.
 */
 
 /*
@@ -2522,10 +2542,12 @@ static int hfs_file_get_nth_block_address(mac_fileref *fileref, UINT32 block_num
 */
 typedef struct BTNodeHeader
 {
-	UINT32BE fLink;			/* (index of?) next node at this level */
-	UINT32BE bLink;			/* (index of?) previous node at this level */
+	UINT32BE fLink;			/* (index of) next node at this level */
+	UINT32BE bLink;			/* (index of) previous node at this level */
 	UINT8    kind;			/* kind of node (leaf, index, header, map) */
-	UINT8    height;		/* zero for header, map; child is one more than parent */
+	UINT8    height;		/* zero for header, map; 1 for leaf, 2 through
+								treeDepth for index (child is one LESS than
+								parent, whatever IM says) */
 	UINT16BE numRecords;	/* number of records in this node */
 	UINT16BE reserved;		/* reserved; set to zero */
 } BTNodeHeader;
@@ -2579,21 +2601,15 @@ enum
 	btha_variableIndexKeysMask	= 0x00000004	/* keys in index nodes are variable length */
 };
 
-typedef struct BT_leaf_rec_enumerator
-{
-	mac_BTref *BTref;
-	UINT32 cur_node;
-	int cur_rec;
-} BT_leaf_rec_enumerator;
-
 /*
 	BT_open
 
 	Open a file as a B-tree.  The file must be already open as a macintosh
 	file.
 
-	resfileref (I/O): ressource file handle to open (the resfileref->fileref
-		must have been open previously)
+	BTref (I/O): B-tree file handle to open (BTref->fileref must have been
+		open previously)
+	key_compare_func (I): function that compares two keys
 
 	Returns imgtool error code
 */
@@ -2613,7 +2629,8 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	if (errorcode)
 		return errorcode;
 
-	if ((node_header.kind != btnk_headerNode) || (get_UINT16BE(node_header.numRecords) < 3))
+	if ((node_header.kind != btnk_headerNode) || (get_UINT16BE(node_header.numRecords) < 3)
+			|| (node_header.height != 0))
 		return IMGTOOLERR_CORRUPTIMAGE;	/* right??? */
 
 	/* CHEESY HACK: we assume that the header record immediately follows the
@@ -2639,12 +2656,22 @@ static int BT_open(mac_BTref *BTref, int (*key_compare_func)(const void *key1, c
 	return 0;
 }
 
+/*
+	BT_close
+
+	Close a B-tree
+*/
 static void BT_close(mac_BTref *BTref)
 {
 	free(BTref->node_buf);
 }
 
-static int BT_read_node(mac_BTref *BTref, UINT32 node_ID)
+/*
+	BT_read_node
+
+	Read a node from a B-tree
+*/
+static int BT_read_node(mac_BTref *BTref, UINT32 node_ID, int expected_kind, int expected_depth, void *dest)
 {
 	int errorcode;
 
@@ -2654,111 +2681,335 @@ static int BT_read_node(mac_BTref *BTref, UINT32 node_ID)
 		return errorcode;
 
 	/* read it */
-	errorcode = mac_file_read(&BTref->fileref, BTref->nodeSize, BTref->node_buf);
+	errorcode = mac_file_read(&BTref->fileref, BTref->nodeSize, dest);
 	if (errorcode)
 		return errorcode;
 
-	/* extract numRecords field */
-	BTref->node_numRecords = get_UINT16BE(((BTNodeHeader *) BTref->node_buf)->numRecords);
-
-	return 0;
-}
-
-static int BT_get_node_record(mac_BTref *BTref, unsigned recnum, void **rec_ptr)
-{
-	UINT16 offset;
-
-	if (recnum >= BTref->node_numRecords)
-		return IMGTOOLERR_UNEXPECTED;
-
-	offset = get_UINT16BE(((UINT16BE *)((UINT8 *) BTref->node_buf + BTref->nodeSize))[-recnum-1]);
-
-	if ((offset < sizeof(BTNodeHeader)) || (offset > BTref->nodeSize-2*BTref->node_numRecords))
+	/* check node kind and depth */
+	if ((((BTNodeHeader *) dest)->kind != expected_kind)
+			|| (((BTNodeHeader *) dest)->height != expected_depth))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
-	*rec_ptr = (UINT8 *)BTref->node_buf + offset;
+	return 0;
+}
+
+/*
+	Extract raw record
+*/
+static int BT_node_get_record(mac_BTref *BTref, void *node_buf, unsigned recnum, void **rec_ptr, int *rec_len)
+{
+	UINT16 node_numRecords = get_UINT16BE(((BTNodeHeader *) node_buf)->numRecords);
+	UINT16 offset;
+	UINT16 next_offset;
+
+	if (recnum >= node_numRecords)
+		return IMGTOOLERR_UNEXPECTED;
+
+	offset = get_UINT16BE(((UINT16BE *)((UINT8 *) node_buf + BTref->nodeSize))[-recnum-1]);
+	next_offset = get_UINT16BE(((UINT16BE *)((UINT8 *) node_buf + BTref->nodeSize))[-recnum-2]);
+
+	if ((offset < sizeof(BTNodeHeader)) || (offset > BTref->nodeSize-2*node_numRecords)
+			|| (next_offset < sizeof(BTNodeHeader)) || (next_offset > BTref->nodeSize-2*node_numRecords)
+			|| (offset & 1) || (next_offset & 1)
+			|| (offset > next_offset))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	*rec_ptr = (UINT8 *)node_buf + offset;
+	*rec_len = next_offset - offset;
 
 	return 0;
 }
 
+/*
+	Extract keyed record
+
+	Equivalent to BT_node_get_record, only we do extra checks
+*/
+static int BT_node_get_keyed_record(mac_BTref *BTref, void *node_buf, unsigned recnum, void **rec_ptr, int *rec_len)
+{
+	int errorcode;
+	void *lrec_ptr;
+	int lrec_len;
+	int key_len;
+
+	/* extract record */
+	errorcode = BT_node_get_record(BTref, node_buf, recnum, &lrec_ptr, &lrec_len);
+	if (errorcode)
+		return errorcode;
+
+	/* read key len */
+	key_len = (BTref->attributes & btha_bigKeysMask)
+				? get_UINT16BE(* (UINT16BE *)lrec_ptr)
+				: (* (UINT8 *)lrec_ptr);
+
+	/* check that key fits in record */
+	if ((key_len + ((BTref->attributes & btha_bigKeysMask) ? 2 : 1)) > lrec_len)
+		/* hurk! */
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	if (rec_ptr)
+		*rec_ptr = lrec_ptr;
+	if (rec_len)
+		*rec_len = lrec_len;
+
+	return 0;
+}
+
+/*
+
+*/
+static int BT_get_keyed_record_data(mac_BTref *BTref, void *rec_ptr, int rec_len, void **data_ptr, int *data_len)
+{
+	int lkey_len;
+	int data_offset;
+
+	/* read key len */
+	lkey_len = (BTref->attributes & btha_bigKeysMask)
+				? get_UINT16BE(* (UINT16BE *)rec_ptr)
+				: (* (UINT8 *)rec_ptr);
+
+	/* compute offset to data record */
+	data_offset = lkey_len + ((BTref->attributes & btha_bigKeysMask) ? 2 : 1);
+	if (data_offset > rec_len)
+		/* hurk! */
+		return IMGTOOLERR_CORRUPTIMAGE;
+	/* fix alignment */
+	if (data_offset & 1)
+		data_offset++;
+
+	if (data_ptr)
+		*data_ptr = (UINT8 *)rec_ptr + data_offset;
+	if (data_len)
+		*data_len = (rec_len > data_offset) ? rec_len-data_offset : 0;
+
+	return 0;
+}
+
+/*
+	BT_check
+
+	Check integrity of a B-tree index or leaf node
+*/
+static int BT_check(mac_BTref *BTref)
+{
+	UINT16 node_numRecords;
+	void *rec_ptr;
+	BTHeaderRecord *header_rec;
+	int rec_len;
+	int errorcode;
+	UINT8 *bitmap;
+	struct
+	{
+		void *buf;
+		UINT32 node_num;
+	} *data_nodes;
+	int i;
+	/*UINT32 cur_node;*/
+
+	/* read header node */
+	errorcode = BT_read_node(BTref, 0, btnk_headerNode, 0, BTref->node_buf);
+	if (errorcode)
+		return errorcode;
+
+	/* check we have enough records */
+	node_numRecords = get_UINT16BE(((BTNodeHeader *) BTref->node_buf)->numRecords);
+	if (node_numRecords < 3)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* get header record */
+	errorcode = BT_node_get_record(BTref, BTref->node_buf, 0, &rec_ptr, &rec_len);
+	if (errorcode)
+		return errorcode;
+	header_rec = (BTHeaderRecord *)rec_ptr;
+
+	/* check lenght of header record */
+	if (rec_len < sizeof(BTHeaderRecord))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* check file lenght */
+	if ((BTref->nodeSize * get_UINT32BE(header_rec->totalNodes)) != BTref->fileref.pLen)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* initialize for the function postlog ("bail:" tag) */
+	errorcode = 0;
+	bitmap = NULL;
+	data_nodes = NULL;
+
+	/* alloc buffer for reconstructed bitmap */
+	bitmap = malloc((get_UINT32BE(header_rec->totalNodes) + 7) / 8);
+	if (! bitmap)
+		return IMGTOOLERR_OUTOFMEMORY;
+
+	/* alloc array of buffers catalog data nodes */
+	data_nodes = malloc(sizeof(data_nodes[0]) * BTref->treeDepth);
+	if (! data_nodes)
+	{
+		errorcode = IMGTOOLERR_OUTOFMEMORY;
+		goto bail;
+	}
+	for (i=0; i<BTref->treeDepth; i++)
+		data_nodes[i].buf = NULL;	/* required for function postlog to work should next loop fail */
+	for (i=0; i<BTref->treeDepth; i++)
+	{
+		data_nodes[i].buf = malloc(BTref->nodeSize);
+		if (!data_nodes[i].buf)
+		{
+			errorcode = IMGTOOLERR_OUTOFMEMORY;
+			goto bail;
+		}
+	}
+
+#if 0
+	/* read first data nodes */
+	cur_node = BTref->rootNode;
+	for (i=BTref->treeDepth-1; i>=0; i--)
+	{
+		errorcode = BT_read_node(BTref, cur_node, i ? btnk_indexNode : btnk_leafNode, i+1, data_nodes[i].buf);
+		if (errorcode)
+			goto bail;
+		/* check that it is the first node at this level */
+		if (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink))
+		{
+			errorcode = IMGTOOLERR_CORRUPTIMAGE;
+			goto bail;
+		}
+		if (i != 0)
+		{
+			if (get_UINT16BE(((BTNodeHeader *) data_nodes[i].buf)->numRecords) == 0)
+			{
+				errorcode = IMGTOOLERR_CORRUPTIMAGE;
+				goto bail;
+			}
+			
+			/*cur_node = (get_UINT32BE(((BTNodeHeader *) data_nodes[i].buf)->bLink));*/
+		}
+	}
+
+	/* check that a) the root node has no successor, and b) that we have really
+	read the first leaf node */
+	if (get_UINT32BE(((BTNodeHeader *) BTref->node_buf)->bLink))
+
+
+	/* ... */
+
+	/*if (get_UINT32(header_rec->freeNodes) > get_UINT32(header_rec->totalNodes))
+		return IMGTOOLERR_CORRUPTIMAGE;*/
+
+	/*while ()*/
+#endif
+
+bail:
+	if (data_nodes)
+	{
+		for (i=0; i<BTref->treeDepth; i++)
+			if (data_nodes[i].buf)
+				free(data_nodes[i].buf);
+		free(data_nodes);
+	}
+	if (bitmap)
+		free(bitmap);
+
+	return errorcode;
+}
+
+
 static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
-								UINT32 *node_ID, int *record_ID, void **record_ptr)
+								UINT32 *node_ID, int *record_ID,
+								void **record_ptr, int *record_len,
+								int search_exact_match, int *match_found)
 {
 	int errorcode;
 	int i;
 	UINT32 cur_node;
-	void *cur_record;
-	void *last_record;
-	int key_len;
+	void *cur_rec;
+	int cur_rec_len;
+	void *last_rec;
+	int last_rec_len;
+	void *rec_data;
+	int rec_data_len;
 	int depth;
+	UINT16 node_numRecords;
 	int compare_result;
 
 	/* start with root node */
-	if (!BTref->rootNode)
+	if ((BTref->rootNode == 0) || (BTref->treeDepth == 0))
 		/* tree is empty */
-		return IMGTOOLERR_FILENOTFOUND;
+		return ((BTref->rootNode == 0) == (BTref->treeDepth == 0))
+					? IMGTOOLERR_FILENOTFOUND
+					: IMGTOOLERR_CORRUPTIMAGE;
 
 	cur_node = BTref->rootNode;
-	depth = 1;
+	depth = BTref->treeDepth;
 
 	while (1)
 	{
-		/* check depth is in bound (only think that prevent us from locking if
-		there is a cycle in the tree structure) */
-		if (depth > BTref->treeDepth)
-			return IMGTOOLERR_CORRUPTIMAGE;
-
 		/* read current node */
-		errorcode = BT_read_node(BTref, cur_node);
+		errorcode = BT_read_node(BTref, cur_node, (depth > 1) ? btnk_indexNode : btnk_leafNode, depth, BTref->node_buf);
 		if (errorcode)
 			return errorcode;
 
-		/* check node */
-		if ((((BTNodeHeader *) BTref->node_buf)->kind != btnk_indexNode)
-				&& (((BTNodeHeader *) BTref->node_buf)->kind != btnk_leafNode))
-			/* bad node */
-			return IMGTOOLERR_CORRUPTIMAGE;
-
-		last_record = cur_record = NULL;
-		for (i=0; i<BTref->node_numRecords; i++)
+		/* search for key */
+		node_numRecords = get_UINT16BE(((BTNodeHeader *) BTref->node_buf)->numRecords);
+		last_rec = cur_rec = NULL;
+		for (i=0; i<node_numRecords; i++)
 		{
-			errorcode = BT_get_node_record(BTref, i, &cur_record);
+			errorcode = BT_node_get_keyed_record(BTref, BTref->node_buf, i, &cur_rec, &cur_rec_len);
 			if (errorcode)
 				return errorcode;
 
-			compare_result = (*BTref->key_compare_func)(cur_record, search_key);
+			compare_result = (*BTref->key_compare_func)(cur_rec, search_key);
 			if (compare_result > 0)
 				break;
-			last_record = cur_record;
+			last_rec = cur_rec;
+			last_rec_len = cur_rec_len;
 			if (compare_result == 0)
 				break;
 		}
 
-		if (! last_record)
-			/* all keys are greater than the search key: the search key is
+		if (! last_rec)
+		{	/* all keys are greater than the search key: the search key is
 			nowhere in the tree */
-			return IMGTOOLERR_FILENOTFOUND;
+			if (search_exact_match)
+				return IMGTOOLERR_FILENOTFOUND;
+
+			if (match_found)
+				*match_found = FALSE;
+
+			if (node_ID)
+				*node_ID = 0;
+
+			if (record_ID)
+				*record_ID = -1;
+
+			if (record_ptr)
+				*record_ptr = NULL;
+
+			return 0;
+		}
 
 		if (((BTNodeHeader *) BTref->node_buf)->kind == btnk_leafNode)
 			/* leaf node -> end of search */
 			break;
 
+		/* extract record data ptr */
+		errorcode = BT_get_keyed_record_data(BTref, last_rec, last_rec_len, &rec_data, &rec_data_len);
+		if (errorcode)
+			return errorcode;
+		if (rec_data_len < sizeof(UINT32BE))
+			return IMGTOOLERR_CORRUPTIMAGE;
+
 		/* iterate to next level */
-		key_len = (BTref->attributes & btha_bigKeysMask)
-					? * (UINT16 *)last_record :
-					* (UINT8 *)last_record;
-
-		/* align to word */
-		if (key_len & 1)
-			key_len++;
-
-		cur_node = get_UINT32BE(* (UINT32BE *)((UINT8 *)last_record + key_len));
-		depth++;
+		cur_node = get_UINT32BE(* (UINT32BE *)rec_data);
+		depth--;
 	}
 
 	if (compare_result != 0)
 		/* key not found */
-		return IMGTOOLERR_FILENOTFOUND;
+		if (search_exact_match)
+			return IMGTOOLERR_FILENOTFOUND;
+
+	if (match_found)
+		*match_found = (compare_result == 0);
 
 	if (node_ID)
 		*node_ID = cur_node;
@@ -2767,7 +3018,10 @@ static int BT_search_leaf_rec(mac_BTref *BTref, void *search_key,
 		*record_ID = i;
 
 	if (record_ptr)
-		*record_ptr = last_record;
+		*record_ptr = last_rec;
+
+	if (record_len)
+		*record_len = last_rec_len;
 
 	return 0;
 }
@@ -2781,34 +3035,92 @@ static int BT_leaf_rec_enumerator_open(mac_BTref *BTref, BT_leaf_rec_enumerator 
 	return 0;
 }
 
-static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr)
+static int BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerator, void **record_ptr, int *rec_len)
 {
+	UINT16 node_numRecords;
 	int errorcode;
+
 
 	*record_ptr = NULL;
 
+	/* check EOList condition */
 	if (enumerator->cur_node == 0)
-	{
 		return 0;
-	}
 
-	errorcode = BT_read_node(enumerator->BTref, enumerator->cur_node);
+	/* read current node */
+	errorcode = BT_read_node(enumerator->BTref, enumerator->cur_node, btnk_leafNode, 1, enumerator->BTref->node_buf);
 	if (errorcode)
 		return errorcode;
+	node_numRecords = get_UINT16BE(((BTNodeHeader *) enumerator->BTref->node_buf)->numRecords);
 
-	errorcode = BT_get_node_record(enumerator->BTref, enumerator->cur_rec, record_ptr);
-	if (errorcode)
-		return errorcode;
-
-	enumerator->cur_rec++;
-	if (enumerator->cur_rec == enumerator->BTref->node_numRecords)
+	/* skip nodes until we find a record */
+	while ((enumerator->cur_rec >= node_numRecords) && (enumerator->cur_node != 0))
 	{
 		enumerator->cur_node = get_UINT32BE(((BTNodeHeader *) enumerator->BTref->node_buf)->fLink);
 		enumerator->cur_rec = 0;
+
+		/* read node */
+		errorcode = BT_read_node(enumerator->BTref, enumerator->cur_node, btnk_leafNode, 1, enumerator->BTref->node_buf);
+		if (errorcode)
+			return errorcode;
+		node_numRecords = get_UINT16BE(((BTNodeHeader *) enumerator->BTref->node_buf)->numRecords);
 	}
 
+	/* get current record */
+	errorcode = BT_node_get_keyed_record(enumerator->BTref, enumerator->BTref->node_buf, enumerator->cur_rec, record_ptr, rec_len);
+	if (errorcode)
+		return errorcode;
+
+	/* iterate to next record */
+	enumerator->cur_rec++;
 	return 0;
 }
+
+/*
+	Empty node delete algorithm:
+
+	* remove node from link list
+	* mark node as free in the B-tree bitmap
+	* optionally, if more than N% of the B-tree is free, compact the B-tree and
+		free some disk space
+	* Count nodes on this level; if there is only one left, delete parent index
+		node level; if it was the last leaf node, update header node with an
+		empty B-tree; in either case, decrement tree depth
+
+
+	Minimal record delete algorithm:
+
+	* remove record from node
+	* if record was first in node, test if node is now empty
+		* if node is not empty, substitute key of deleted record with key of
+			new head record in index tree
+		* if node is empty, delete key of deleted record in index tree, then
+			delete empty node
+*/
+/*
+	Possible additions:
+
+	Record shifting algorithm:
+
+	For a given node and its first non-empty successor node:
+
+	* compute how much free room there is in the node
+	* see if the first record of the first non-empty successor can fit
+	* if so, move it (i.e. delete the first record of the later node, and add a
+		copy of it to the end of the former)
+
+
+	Node compaction algorithm:
+
+	This algorithm can be executed with a specific start point and max number
+	of nodes, or with all nodes on a level.
+
+	* see how many nodes we can save by shifting records left
+	* if we will save at least one node, do shift as many records as possible
+		(try to leave free space split homogeneously???)
+*/
+
+
 
 #if 0
 #pragma mark -
@@ -2924,8 +3236,8 @@ typedef struct mac_resfileref
 	Open a file as a resource file.  The file must be already open as a
 	macintosh file.
 
-	resfileref (I/O): ressource file handle to open (the resfileref->fileref
-		must have been open previously)
+	resfileref (I/O): ressource file handle to open (resfileref->fileref must
+		have been open previously)
 
 	Returns imgtool error code
 */
@@ -3298,7 +3610,7 @@ static int mac_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outi
 		return IMGTOOLERR_OUTOFMEMORY;
 
 	memset(image, 0, sizeof(mac_l2_imgref));
-	image->l1_img.base.module = mod;
+	image->base.module = mod;
 	image->l1_img.f = f;
 
 	errorcode = floppy_image_open(&image->l1_img);
@@ -3356,7 +3668,7 @@ typedef struct mac_iterator
 		} mfs;
 		struct
 		{
-			BT_leaf_rec_enumerator catref;	/* catalog file enumerator */
+			hfs_cat_enumerator catref;		/* catalog file enumerator */
 		} hfs;
 	} u;
 } mac_iterator;
@@ -3387,7 +3699,7 @@ static int mac_image_beginenum(IMAGE *img, IMAGEENUM **outenum)
 		break;
 
 	case L2I_HFS:
-		errorcode = BT_leaf_rec_enumerator_open(&image->u.hfs.cat_BT, &iter->u.hfs.catref);
+		errorcode = hfs_cat_open(image, &iter->u.hfs.catref);
 		break;
 
 	default:
@@ -3477,15 +3789,8 @@ static void concat_fname(char *dest, int *dest_cur_pos, int dest_max_len, const 
 */
 static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 {
-	void *catrec;
 	hfs_catKey *catrec_key;
-	union
-	{
-		UINT16BE dataType;
-		hfs_catFolderData folder;
-		hfs_catFileData file;
-		hfs_catThreadData thread;
-	} *catrec_data;
+	hfs_catData *catrec_data;
 	UINT16 dataRecType;
 	int errorcode;
 	/* currently, the mac->C conversion transcodes one mac char with at most 3
@@ -3493,7 +3798,7 @@ static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	char buf[31*3+1];
 	UINT32 parID;
 	int cur_name_head;
-	static const unsigned char mac_empty_str[1] = { '\0' };
+	static const UINT8 mac_empty_str[1] = { '\0' };
 
 
 	assert(iter->format == L2I_HFS);
@@ -3503,23 +3808,19 @@ static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 
 	do
 	{
-		errorcode = BT_leaf_rec_enumerator_read(&iter->u.hfs.catref, &catrec);
+		errorcode = hfs_cat_read(&iter->u.hfs.catref, &catrec_key, &catrec_data);
 		if (errorcode)
 		{
 			/* error */
 			ent->corrupt = 1;
 			return errorcode;
 		}
-		else if (!catrec)
+		else if (!catrec_key)
 		{
 			/* EOF */
 			ent->eof = 1;
 			return 0;
 		}
-
-		catrec_key = catrec;
-		/* data is past the key, but aligned on 16-bit boundary */
-		catrec_data = (void *) ((UINT8 *)catrec + catrec_key->keyLen + (! (catrec_key->keyLen & 1)) + 1);
 		dataRecType = get_UINT16BE(catrec_data->dataType);
 	} while (((dataRecType != hcrt_Folder) && (dataRecType != hcrt_File))
 				|| (get_UINT32BE(catrec_key->parID) == 1));
@@ -3561,7 +3862,7 @@ static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	while (parID != /*1*/2)
 	{
 		/* search catalog for folder thread */
-		errorcode = hfs_cat_search(iter->l2_img, parID, mac_empty_str, &catrec);
+		errorcode = hfs_cat_search(iter->l2_img, parID, mac_empty_str, &catrec_key, &catrec_data);
 		if (errorcode)
 		{
 			/* error */
@@ -3575,10 +3876,6 @@ static int hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 			return errorcode;
 		}
 
-		/* got some record with the expected key: parse it */
-		catrec_key = catrec;
-		/* data is past the key, but aligned on 16-bit boundary */
-		catrec_data = (void *) ((UINT8 *)catrec + catrec_key->keyLen + (! (catrec_key->keyLen & 1)) + 1);
 		dataRecType = get_UINT16BE(catrec_data->dataType);
 
 		if (dataRecType != hcrt_FolderThread)
@@ -3665,12 +3962,6 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 	mac_str255 comment;
 	UINT8 buf[512];
 	UINT32 i, run_len;
-
-#if 0
-	if (image->format == L2I_HFS)
-		/* no HFS yet */
-		return IMGTOOLERR_UNIMPLEMENTED;
-#endif
 
 	/* resolve path and fetch file info from directory/catalog */
 	errorcode = mac_resolve_fpath(image, fpath, &parID, fname, &cat_info);
@@ -3826,7 +4117,7 @@ static int mac_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 }
 
 /*
-	Add a file to a mfs image.  The file must be in macbinary format.
+	Add a file to a disk image.  The file must be in macbinary format.
 */
 static int mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
 {
@@ -3834,7 +4125,7 @@ static int mac_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, c
 }
 
 /*
-	Delete a file from a mfs image.
+	Delete a file from a disk image.
 */
 static int mac_image_deletefile(IMAGE *img, const char *fname)
 {
@@ -3842,7 +4133,7 @@ static int mac_image_deletefile(IMAGE *img, const char *fname)
 }
 
 /*
-	Create a blank mfs image.
+	Create a blank disk image.
 */
 static int mac_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
 {
