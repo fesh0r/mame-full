@@ -12,11 +12,20 @@
 #endif /* MAME_DEBUG */
 
 /* Useful defines */
-#define SNES_SCR_WIDTH		256	/* 32 characters 8 pixels wide */
-#define SNES_SCR_HEIGHT		240	/* Can be either 224 of 240 height, so specify greatest value (maybe we'll have switching later on) */
-#define SNES_MAX_LINES_NTSC	262	/* Maximum number of lines for NTSC systems */
-#define SNES_MAX_LINES_PAL	312	/* Maximum number of lines for PAL systems */
-#define FIXED_COLOUR		256	/* Position in cgram for the fixed colour */
+#define SNES_SCR_WIDTH		256		/* 32 characters 8 pixels wide */
+#define SNES_SCR_HEIGHT		240		/* Can be 224 of 240 height (maybe we'll have switching later on) */
+#define SNES_MAX_LINES_NTSC	262		/* Maximum number of lines for NTSC systems */
+#define SNES_MAX_LINES_PAL	312		/* Maximum number of lines for PAL systems */
+#define SNES_MAX_WIDTH		342		/* Maximum number pixels per line (incl. hblank) */
+#define SNES_DMA_BASE		0x4300	/* Base DMA register address */
+#define SNES_MODE_20		0x1		/* Lo-ROM cart */
+#define SNES_MODE_21		0x2		/* Hi-ROM cart */
+#define SNES_NTSC			0x00
+#define SNES_PAL			0x10
+#define SNES_VRAM_SIZE		0x20000	/* 128kb of video ram */
+#define SNES_CGRAM_SIZE		0x202	/* 256 16-bit colours + 1 tacked on 16-bit colour for fixed colour */
+#define SNES_OAM_SIZE		0x440	/* ??? */
+#define FIXED_COLOUR		256		/* Position in cgram for fixed colour */
 /* Defines for Memory-Mapped registers */
 #define INIDISP			0x2100
 #define OBSEL			0x2101
@@ -316,7 +325,6 @@
 #define DSP_FIR_C7		0x7F
 
 extern MACHINE_INIT( snes );
-extern MACHINE_INIT( snespal );
 extern MACHINE_STOP( snes );
 
 extern READ_HANDLER( snes_r_bank1 );
@@ -341,10 +349,7 @@ extern UINT8  *snes_vram;			/* Video RAM (Should be 16-bit, but it's easier this
 extern UINT16 *snes_cgram;			/* Colour RAM */
 extern UINT16 *snes_oam;			/* Object Attribute Memory */
 extern UINT8  *snes_ram;			/* Main memory */
-extern UINT16 bg_hoffset[4];		/* Background horizontal scroll offsets */
-extern UINT16 bg_voffset[4];		/* Background vertical scroll offsets */
 extern UINT16 mode7_data[6];		/* Data for mode7 matrix calculation */
-extern UINT8  ppu_obj_size[2];		/* Objects sizes */
 extern VIDEO_UPDATE( snes );
 struct SNES_PPU_STRUCT
 {
@@ -377,7 +382,6 @@ struct SNES_PPU_STRUCT
 		UINT16 current_vert;
 	} beam;
 	UINT8 clipmasks[6][SNES_SCR_WIDTH + 8];
-	UINT16 cgram_address;
 	UINT8 update_windows;
 	UINT8 update_palette;
 };
