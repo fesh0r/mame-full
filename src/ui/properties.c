@@ -23,11 +23,6 @@
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
 #include <windows.h>
-#if 0
-#include "uxtheme.h"
-#include "schemadef.h"
-#include "tmschema.h"
-#endif
 #include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
@@ -57,6 +52,8 @@
 #include "help.h"
 #include "resource.hm"
 
+typedef HANDLE HTHEME;
+
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
@@ -77,6 +74,12 @@
 #ifndef TBCD_CHANNEL
 #define TBCD_CHANNEL 3
 #endif
+
+#if defined(__GNUC__)
+/* fix warning: cast does not match function type */
+#undef  PropSheet_GetTabControl
+#define PropSheet_GetTabControl(d) (HWND)(LRESULT)(int)SendMessage((d),PSM_GETTABCONTROL,0,0)
+#endif /* defined(__GNUC__) */
 
 /***************************************************************
  * Imported function prototypes
@@ -133,9 +136,10 @@ static void ResetDataMap(void);
 static BOOL IsControlDefaultValue(HWND hDlg,HWND hwnd_ctrl);
 static BOOL IsControlOptionValue(HWND hDlg,HWND hwnd_ctrl, options_type *opts );
 
-#if 0
-static void BkColorHandling(HWND hWnd, HDC hDC);
-#endif
+static void UpdateBackgroundBrush(HWND hwndTab);
+HBRUSH hBkBrush;
+BOOL bThemeActive;
+
 /**************************************************************
  * Local private variables
  **************************************************************/
@@ -325,37 +329,21 @@ static struct ComboBoxLedmode
  * Public functions
  ***************************************************************/
 
-#if 0
 typedef HTHEME (WINAPI *OpenThemeProc)(HWND hwnd, LPCWSTR pszClassList);
 
 HMODULE hThemes;
 OpenThemeProc fnOpenTheme;
-FARPROC fnCloseTheme;
-FARPROC fnGetThemeSysColor;
-FARPROC fnGetThemeColor;
 FARPROC fnIsThemed;
-FARPROC fnDrawThemeBkgrnd;
-FARPROC fnDrawThemeText;
-FARPROC fnGetThemeBkgrndContRect;
-#endif
 
 void PropertiesInit(void)
 {
-#if 0
 	hThemes = LoadLibrary("uxtheme.dll");
 
 	if (hThemes)
 	{
 		fnIsThemed = GetProcAddress(hThemes,"IsAppThemed");
-		fnOpenTheme = (OpenThemeProc)GetProcAddress(hThemes,"OpenThemeData");
-		fnCloseTheme = GetProcAddress(hThemes,"CloseThemeData");
-		fnGetThemeSysColor = GetProcAddress(hThemes,"GetThemeSysColor");
-		fnGetThemeColor = GetProcAddress(hThemes,"GetThemeColor");
-		fnDrawThemeBkgrnd = GetProcAddress(hThemes,"DrawThemeBackground");
-		fnDrawThemeText = GetProcAddress(hThemes,"DrawThemeText");
-		fnGetThemeBkgrndContRect = GetProcAddress(hThemes,"GetThemeBackgroundContentRect");
 	}
-#endif
+	bThemeActive = FALSE;
 }
 
 DWORD GetHelpIDs(void)
@@ -728,123 +716,178 @@ static char *GameInfoColors(UINT nIndex)
 }
 
 /* Build game status string */
-const char *GameInfoStatus(int driver_index)
+const char *GameInfoStatus(int driver_index, BOOL bRomStatus)
 {
 	static char buffer[1024];
 	int audit_result = GetRomAuditResults(driver_index);
 	memset(buffer,0,sizeof(char)*1024);
-
-	if (IsAuditResultKnown(audit_result) == FALSE)
-	{
-		strcpy(buffer, "Unknown");
-	}
-	else if (IsAuditResultYes(audit_result))
-	{
-		if (DriverIsBroken(driver_index))
+	if ( bRomStatus )
+ 	{
+		if (IsAuditResultKnown(audit_result) == FALSE)
+ 		{
+			strcpy(buffer, "Unknown");
+		}
+		else if (IsAuditResultYes(audit_result))
 		{
-			strcpy(buffer, "Not working");
-			
-			if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+			if (DriverIsBroken(driver_index))
+ 			{
+				strcpy(buffer, "Not working");
+				
+				if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Unemulated Protection");
+				}
+				if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Colors are totally wrong");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Colors");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Graphics");
+				}
+				if (drivers[driver_index]->flags & GAME_NO_SOUND)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Sound is missing");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Sound");
+				}
+				if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Screen flip support is missing");
+				}
+ 			}
+			else
 			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Unemulated Protection");
-			}
-			if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Colors are totally wrong");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Colors");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Graphics");
-			}
-			if (drivers[driver_index]->flags & GAME_NO_SOUND)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Sound is missing");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Sound");
-			}
-			if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Screen flip support is missing");
+				strcpy(buffer, "Working");
+				
+				if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Unemulated Protection");
+				}
+				if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Colors are totally wrong");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Colors");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Graphics");
+				}
+				if (drivers[driver_index]->flags & GAME_NO_SOUND)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Sound is missing");
+				}
+				if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Imperfect Sound");
+				}
+				if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+				{
+					if (*buffer != '\0')
+						strcat(buffer, "\r\n");
+					strcat(buffer, "Screen flip support is missing");
+				}
 			}
 		}
 		else
 		{
-			strcpy(buffer, "Working");
-			
-			if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Unemulated Protection");
-			}
-			if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Colors are totally wrong");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Colors");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Graphics");
-			}
-			if (drivers[driver_index]->flags & GAME_NO_SOUND)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Sound is missing");
-			}
-			if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Imperfect Sound");
-			}
-			if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
-			{
-				if (*buffer != '\0')
-					strcat(buffer, "\r\n");
-				strcat(buffer, "Screen flip support is missing");
-			}
+			// audit result is no
+	#ifdef MESS
+			strcpy(buffer, "BIOS missing");
+	#else
+			strcpy(buffer, "ROMs missing");
+	#endif
 		}
 	}
 	else
 	{
-		// audit result is no
-#ifdef MESS
-		strcpy(buffer, "BIOS missing");
-#else
-		strcpy(buffer, "ROMs missing");
-#endif
+		//Just show the emulation flags
+		if (DriverIsBroken(driver_index))
+		{
+			strcpy(buffer, "Not working");
+		}
+		else
+		{
+			strcpy(buffer, "Working");
+		}	
+		if (drivers[driver_index]->flags & GAME_UNEMULATED_PROTECTION)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Unemulated Protection");
+		}
+		if (drivers[driver_index]->flags & GAME_WRONG_COLORS)
+		{
+		if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Colors are totally wrong");
+		}
+		if (drivers[driver_index]->flags & GAME_IMPERFECT_COLORS)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Imperfect Colors");
+		}
+		if (drivers[driver_index]->flags & GAME_IMPERFECT_GRAPHICS)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Imperfect Graphics");
+		}
+		if (drivers[driver_index]->flags & GAME_NO_SOUND)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Sound is missing");
+		}
+		if (drivers[driver_index]->flags & GAME_IMPERFECT_SOUND)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Imperfect Sound");
+		}
+		if (drivers[driver_index]->flags & GAME_NO_COCKTAIL)
+		{
+			if (*buffer != '\0')
+				strcat(buffer, "\r\n");
+			strcat(buffer, "Screen flip support is missing");
+		}
 	}
-
 	return buffer;
 }
 
@@ -896,6 +939,7 @@ static const char * GameInfoSource(UINT nIndex)
 /* Handle the information property page */
 INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
+HWND hWnd;
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
@@ -911,7 +955,7 @@ INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LP
 
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_TITLE),         GameInfoTitle(g_nGame));
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_MANUFACTURED),  GameInfoManufactured(g_nGame));
-		Static_SetText(GetDlgItem(hDlg, IDC_PROP_STATUS),        GameInfoStatus(g_nGame));
+		Static_SetText(GetDlgItem(hDlg, IDC_PROP_STATUS),        GameInfoStatus(g_nGame, FALSE));
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_CPU),           GameInfoCPU(g_nGame));
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_SOUND),         GameInfoSound(g_nGame));
 		Static_SetText(GetDlgItem(hDlg, IDC_PROP_SCREEN),        GameInfoScreen(g_nGame));
@@ -927,7 +971,8 @@ INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LP
 		{
 			ShowWindow(GetDlgItem(hDlg, IDC_PROP_CLONEOF_TEXT), SW_HIDE);
 		}
-
+		hWnd = PropSheet_GetTabControl(GetParent(hDlg));
+		UpdateBackgroundBrush(hWnd);
 		ShowWindow(hDlg, SW_SHOW);
 		return 1;
 
@@ -956,6 +1001,7 @@ static BOOL ReadSkipCtrl(HWND hWnd, UINT nCtrlID, int *value)
 /* Handle all options property pages */
 INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
+	RECT rc;
 	switch (Msg)
 	{
 	case WM_INITDIALOG:
@@ -1329,10 +1375,37 @@ INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			}
 		}
 		if( Msg == WM_CTLCOLORSTATIC )
-			SetBkColor((HDC)wParam,GetSysColor(COLOR_3DFACE) );
-#if 0
-		    BkColorHandling((HWND)lParam, (HDC) wParam );
-#endif
+		{
+
+		//	SetBkColor((HDC)wParam,GetSysColor(COLOR_3DFACE) );
+			if( hThemes )
+			{
+				if( fnIsThemed && fnIsThemed() )
+				{
+					HWND hWnd = PropSheet_GetTabControl(GetParent(hDlg));
+					// Set the background mode to transparent
+					SetBkMode((HDC)wParam, TRANSPARENT);
+
+					// Get the controls window dimensions
+					GetWindowRect((HWND)lParam, &rc);
+
+					// Map the coordinates to coordinates with the upper left corner of dialog control as base
+					MapWindowPoints(NULL, hWnd, (LPPOINT)(&rc), 2);
+
+					// Adjust the position of the brush for this control (else we see the top left of the brush as background)
+					SetBrushOrgEx((HDC)wParam, -rc.left, -rc.top, NULL);
+
+					// Return the brush
+					return (INT_PTR)(hBkBrush);
+				}
+				else
+				{
+					SetBkColor((HDC) wParam,GetSysColor(COLOR_3DFACE) );
+				}
+			}
+			else
+				SetBkColor((HDC) wParam,GetSysColor(COLOR_3DFACE) );
+		}
 		else
 			SetBkColor((HDC)wParam,RGB(255,255,255) );
 		UnrealizeObject(background_brush);
@@ -2459,7 +2532,7 @@ static void InitializeMisc(HWND hDlg)
 				(LPARAM)MAKELONG(0, 32)); /* [-32, 0] */
 	SendMessage(GetDlgItem(hDlg, IDC_AUDIO_LATENCY), TBM_SETRANGE,
 				(WPARAM)FALSE,
-				(LPARAM)MAKELONG(1, 4)); // [1, 4]
+				(LPARAM)MAKELONG(1, 5)); // [1, 5]
 	SendMessage(GetDlgItem(hDlg, IDC_D3D_SCANLINES), TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 100)); // [0, 100]
@@ -3226,87 +3299,54 @@ static void InitializeCleanStretchUI(HWND hwnd)
 	}
 }
 
-#if 0
-static void BkColorHandling(HWND hWnd, HDC hDC)
+void UpdateBackgroundBrush(HWND hwndTab)
 {
-	//For XP we will need the uxtheme.dll, because the Background colour is done via the themes API
-	//we will need to load it dynamically to be able to still run on other OSes
+    // Check if the application is themed
+    if (hThemes)
+    {
+        if(fnIsThemed)
+            bThemeActive = fnIsThemed();
+    }
+    // Destroy old brush
+    if (hBkBrush)
+        DeleteObject(hBkBrush);
 
-	RECT rc, rcContent;
-	COLORREF clr;
-	char szButtonText[255];
-	HRESULT hr;
-	size_t cch;
-	HTHEME hTheme;
-	GetWindowRect(hWnd, &rc);
-	GetWindowText(hWnd, szButtonText,
-				  (sizeof(szButtonText)/sizeof(szButtonText[0])+1));
-	cch = strlen(szButtonText);
-	dprintf("have themes %p\n",hThemes);
-	if( hThemes )
-	{
-		if( fnIsThemed && fnIsThemed() && cch>0)
-		{
-			dprintf("have themed function, is themed, cch %i\n",cch);
-			if( fnOpenTheme && fnCloseTheme && fnGetThemeSysColor )
-			{
-				// this fundamentally DOES NOT WORK. Tab pages are not done as solid colors
-				// in a theme necessarily.
+    hBkBrush = NULL;
 
-				dprintf("about to open theme\n");
-				hTheme = fnOpenTheme( hWnd, L"tab" );
-				dprintf("opened theme %08x\n",hTheme);
-				clr = 0;
-				hr = fnGetThemeColor(hTheme,TABP_PANE,0,TMT_FILLCOLOR,
-									 &clr);
-				if (hr != S_OK)
-				{
-					static char msg[300];
+    // Only do this if the theme is active
+    if (bThemeActive)
+    {
+        RECT rc;
+        HDC hDC, hDCMem;
+		HBITMAP hBmp, hBmpOld;
+        // Get tab control dimensions
+        GetWindowRect( hwndTab, &rc);
 
-					dprintf("error on get theme color %08x\n",hr);
-					FormatMessage(
-						FORMAT_MESSAGE_FROM_SYSTEM,
-						NULL,
-						hr,
-						MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), //The user default language
-						msg,
-						sizeof(msg),
-						NULL );
-					dprintf("error msg: %s\n",msg);
-					
-				}
-				else
-				{
-					dprintf("got theme color I guess %08x\n",clr);
-					dprintf("(3dface is %08x)\n",GetSysColor(COLOR_3DFACE));
-				}
-				//hr = fnDrawThemeBkgrnd(hTheme, (HDC) wParam, EP_CARET, ETS_NORMAL,&rc,0 );
-				/*	hr = fnDrawThemeBkgrnd(hTheme, (HDC) wParam, SPP_USERPANE, 0,&rc,NULL );
-					hr = fnGetThemeBkgrndContRect(hTheme, EP_CARET, ETS_NORMAL, &rc, &rcContent);
-					hr = fnDrawThemeText(hTheme, (HDC) wParam, EP_CARET, ETS_NORMAL,
-					szButtonText, cch,
-					DT_CENTER | DT_VCENTER | DT_SINGLELINE,
-					0, &rcContent);
-				*/	//SetBkColor on XP with Themes is a BIG nono...
-				//clr = fnGetThemeSysColor(hTheme,COLOR_3DFACE);
-				//dprintf("got theme system color %08x\n",clr);
-				SetBkColor(hDC,clr);
-				//SetBkColor(hDC,GetSysColor(COLOR_BTNSHADOW) );
-				dprintf("set background color\n");
-				fnCloseTheme(hTheme);
-				dprintf("closed theme\n");
-			}
-			else
-				SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
-		}
-		else
-		{
-			SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
-		}
-	}
-	else
-		SetBkColor(hDC,GetSysColor(COLOR_3DFACE) );
-	
+        // Get the tab control DC
+		hDC = GetDC(hwndTab);
+
+        // Create a compatible DC
+        hDCMem = CreateCompatibleDC(hDC);
+        hBmp = CreateCompatibleBitmap(hDC, 
+               rc.right - rc.left, rc.bottom - rc.top);
+        hBmpOld = (HBITMAP)(SelectObject(hDCMem, hBmp));
+
+        // Tell the tab control to paint in our DC
+        SendMessage(hwndTab, WM_PRINTCLIENT, (WPARAM)(hDCMem), 
+           (LPARAM)(PRF_ERASEBKGND | PRF_CLIENT | PRF_NONCLIENT));
+
+        // Create a pattern brush from the bitmap selected in our DC
+        hBkBrush = CreatePatternBrush(hBmp);
+
+        // Restore the bitmap
+        SelectObject(hDCMem, hBmpOld);
+
+        // Cleanup
+        DeleteObject(hBmp);
+        DeleteDC(hDCMem);
+        ReleaseDC(hwndTab, hDC);
+    }
 }
-#endif
+
+
 /* End of source file */

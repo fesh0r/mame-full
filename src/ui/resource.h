@@ -297,6 +297,7 @@
 #define IDC_DUAL_LIGHTGUN               1220
 #define IDC_NOOFFSET_CLONES             1221
 #define IDC_LEDMODE                     1222
+#define IDC_HISTORY_TAB                 1223
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -389,7 +390,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        185
 #define _APS_NEXT_COMMAND_VALUE         40096
-#define _APS_NEXT_CONTROL_VALUE         1223
+#define _APS_NEXT_CONTROL_VALUE         1224
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

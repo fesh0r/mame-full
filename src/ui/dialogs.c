@@ -143,6 +143,9 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 {
 	char pcscreenshot[100];
 	BOOL bRedrawList = FALSE;
+	int nCurSelection = 0;
+	int nHistoryTab = 0;
+	int nCount = 0;
 
 	switch (Msg)
 	{
@@ -179,6 +182,26 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 						GetFilterInherit());
 		Button_SetCheck(GetDlgItem(hDlg,IDC_NOOFFSET_CLONES),
 						GetOffsetClones());
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Snapshot");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_SCREENSHOT);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Flyer");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_FLYER);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Cabinet");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_CABINET);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Marquee");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_MARQUEE);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Title");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_TITLE);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "Control Panel");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_CONTROL_PANEL);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "All");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_ALL);
+		ComboBox_AddString(GetDlgItem(hDlg, IDC_HISTORY_TAB), "None");
+		ComboBox_SetItemData(GetDlgItem(hDlg, IDC_HISTORY_TAB), nCount++, TAB_NONE);
+		if( GetHistoryTab() < MAX_TAB_TYPES )
+			ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_HISTORY_TAB), GetHistoryTab());
+		else
+			ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_HISTORY_TAB), GetHistoryTab()-TAB_SUBTRACT);
 
 		return TRUE;
 
@@ -256,7 +279,16 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 				// LineUpIcons does just a ResetListView(), which is what we want here
 				PostMessage(GetMainWindow(),WM_COMMAND, (WPARAM)ID_VIEW_LINEUPICONS,(LPARAM)NULL);
  			}
+			nCurSelection = ComboBox_GetCurSel(GetDlgItem(hDlg,IDC_HISTORY_TAB));
+			if (nCurSelection != CB_ERR)
+				nHistoryTab = ComboBox_GetItemData(GetDlgItem(hDlg,IDC_HISTORY_TAB), nCurSelection);
 			EndDialog(hDlg, 0);
+			if( GetHistoryTab() != nHistoryTab )
+			{
+				SetHistoryTab(nHistoryTab, TRUE);
+				ResizePickerControls(GetMainWindow());
+				UpdateScreenShot();
+			}
 			if( bRedrawList )
 			{
 				UpdateListView();

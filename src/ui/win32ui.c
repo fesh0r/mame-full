@@ -598,6 +598,7 @@ static GUISequence GUISequenceControl[]=
 	{"gui_key_view_tab_marquee",     SEQ_DEF_0,  ID_VIEW_TAB_MARQUEE,       Get_ui_key_view_tab_marquee },
 	{"gui_key_view_tab_screenshot",  SEQ_DEF_0,  ID_VIEW_TAB_SCREENSHOT,    Get_ui_key_view_tab_screenshot },
 	{"gui_key_view_tab_title",       SEQ_DEF_0,  ID_VIEW_TAB_TITLE,         Get_ui_key_view_tab_title },
+	{"gui_key_quit",                 SEQ_DEF_0,  ID_FILE_EXIT,              Get_ui_key_quit },
 };
 
 
@@ -1486,7 +1487,7 @@ void UpdateScreenShot(void)
 		// - we have history for the game
 		// - we're on the first tab
 		// - we DON'T have a separate history tab
-		showing_history = (have_history && GetCurrentTab() == TAB_SCREENSHOT &&
+		showing_history = (have_history && (GetCurrentTab() == GetHistoryTab() || GetHistoryTab() == TAB_ALL ) &&
 						   GetShowTab(TAB_HISTORY) == FALSE);
 		CalculateBestScreenShotRect(GetDlgItem(hMain, IDC_SSFRAME), &rect,showing_history);
 			
@@ -1731,7 +1732,7 @@ static void ResetBackground(char *szFile)
 	char szDestFile[MAX_PATH];
 
 	/* The MAME core load the .png file first, so we only need replace this file */
-	sprintf(szDestFile, "%s\\bkground.png", GetImgDir());
+	sprintf(szDestFile, "%s\\bkground.png", GetBgDir());
 	SetFileAttributes(szDestFile, FILE_ATTRIBUTE_NORMAL);
 	CopyFileA(szFile, szDestFile, FALSE);
 }
@@ -2968,7 +2969,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 			SendMessage(hStatusBar, SB_GETTEXT, (WPARAM)iButton, (LPARAM)(LPSTR) &String );
 		else
 			//for first pane we get the Status directly, to get the line breaks
-			strcpy(String, GameInfoStatus(GetSelectedPickItem()) );
+			strcpy(String, GameInfoStatus(GetSelectedPickItem(), FALSE) );
 	}
 	else
 		strcpy(String,"Invalid Button Index");
@@ -3079,7 +3080,7 @@ static void UpdateStatusBar()
 		DisableSelection();
 	else
 	{
-		const char* pStatus = GameInfoStatus(i);
+		const char* pStatus = GameInfoStatus(i, FALSE);
 		SetStatusBarText(1, pStatus);
 	}
 }
@@ -3104,7 +3105,8 @@ static void UpdateHistory(void)
 
 	if (have_history && GetShowScreenShot()
 		&& ((GetCurrentTab() == TAB_HISTORY) || 
-			(GetCurrentTab() == TAB_SCREENSHOT && GetShowTab(TAB_HISTORY) == FALSE)))
+			(GetCurrentTab() == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ||
+			(TAB_ALL == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ))
 	{
 		Edit_GetRect(GetDlgItem(hMain, IDC_HISTORY),&rect);
 		nLines = Edit_GetLineCount(GetDlgItem(hMain, IDC_HISTORY) );
@@ -3180,7 +3182,7 @@ static void EnableSelection(int nGame)
 	pText = ModifyThe(drivers[nGame]->description);
 	SetStatusBarText(0, pText);
 	/* Add this game's status to the status bar */
-	pText = GameInfoStatus(nGame);
+	pText = GameInfoStatus(nGame, FALSE);
 	SetStatusBarText(1, pText);
 	SetStatusBarText(3, "");
 
@@ -4792,7 +4794,7 @@ static void LoadBackgroundBitmap()
 		/*nResource = IDB_BKGROUND;*/
 	}
 
-	if (LoadDIB(pFileName, &hDIBbg, &hPALbg, TAB_SCREENSHOT))
+	if (LoadDIB(pFileName, &hDIBbg, &hPALbg, BACKGROUND))
 	{
 		HDC hDC = GetDC(hwndList);
 		hBackground = DIBToDDB(hDC, hDIBbg, &bmDesc);

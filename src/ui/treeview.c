@@ -474,7 +474,7 @@ void CreateManufacturerFolders(int parent_index)
 /* Make a reasonable name out of the one found in the driver array */
 static const char* ParseManufacturer(const char *s, int *pParsedChars )
 {
-	static char tmp[40];
+	static char tmp[256];
     char* ptmp;
 	char *t;
 	*pParsedChars= 0;
@@ -885,27 +885,27 @@ void CreateDeficiencyFolders(int parent_index)
 		{
 			AddGame(lpWrongCol,jj);
 		}
-		else if (drivers[jj]->flags & GAME_UNEMULATED_PROTECTION)
+		if (drivers[jj]->flags & GAME_UNEMULATED_PROTECTION)
 		{
 			AddGame(lpProt,jj);
 		}
-		else if (drivers[jj]->flags & GAME_IMPERFECT_COLORS)
+		if (drivers[jj]->flags & GAME_IMPERFECT_COLORS)
 		{
 			AddGame(lpImpCol,jj);
 		}
-		else if (drivers[jj]->flags & GAME_IMPERFECT_GRAPHICS)
+		if (drivers[jj]->flags & GAME_IMPERFECT_GRAPHICS)
 		{
 			AddGame(lpImpGraph,jj);
 		}
-		else if (drivers[jj]->flags & GAME_NO_SOUND)
+		if (drivers[jj]->flags & GAME_NO_SOUND)
 		{
 			AddGame(lpMissSnd,jj);
 		}
-		else if (drivers[jj]->flags & GAME_IMPERFECT_SOUND)
+		if (drivers[jj]->flags & GAME_IMPERFECT_SOUND)
 		{
 			AddGame(lpImpSnd,jj);
 		}
-		else if (drivers[jj]->flags & GAME_NO_COCKTAIL)
+		if (drivers[jj]->flags & GAME_NO_COCKTAIL)
 		{
 			AddGame(lpFlip,jj);
 		}

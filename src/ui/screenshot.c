@@ -265,6 +265,10 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 		set_pathlist(FILETYPE_ARTWORK,GetControlPanelDir());
 		zip_name = "cpanel";
 		break;
+	case BACKGROUND :
+		set_pathlist(FILETYPE_ARTWORK,GetBgDir());
+		zip_name = "bkground";
+		break;
 	default :
 		// in case a non-image tab gets here, which can happen
 		return FALSE;

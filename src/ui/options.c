@@ -163,7 +163,8 @@ static REG_OPTION regSettings[] =
 	{ "hide_folders",               RO_ENCODE,  &settings.show_folder_flags,         NULL, FALSE, FolderFlagsEncodeString, FolderFlagsDecodeString },
 
 	{ "show_tabs",                  RO_BOOL,    &settings.show_tabctrl,              "1" },
-	{ "hide_tabs",                  RO_ENCODE,  &settings.show_tab_flags,            "snapshot,flyer,cabinet,marquee,title", FALSE, TabFlagsEncodeString, TabFlagsDecodeString },
+	{ "hide_tabs",                  RO_ENCODE,  &settings.show_tab_flags,            "marquee, title, cpanel, history", FALSE, TabFlagsEncodeString, TabFlagsDecodeString },
+	{ "history_tab",				RO_INT,		&settings.history_tab,				 0, 0},
 
 	{ "check_game",                 RO_BOOL,    &settings.game_check,                "1" },
 	{ "joystick_in_interface",      RO_BOOL,    &settings.use_joygui,                "0" },
@@ -226,6 +227,7 @@ static REG_OPTION regSettings[] =
     { "ui_key_view_tab_marquee",    RO_ENCODE,  &settings.ui_key_view_tab_marquee,    "KEYCODE_LALT KEYCODE_4", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_tab_screenshot", RO_ENCODE,  &settings.ui_key_view_tab_screenshot, "KEYCODE_LALT KEYCODE_1", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
     { "ui_key_view_tab_title",      RO_ENCODE,  &settings.ui_key_view_tab_title,      "KEYCODE_LALT KEYCODE_5", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
+    { "ui_key_quit",			    RO_ENCODE,  &settings.ui_key_quit,				  "KEYCODE_LALT KEYCODE_Q", FALSE, KeySeqEncodeString,  KeySeqDecodeString},
 
 	{ "ui_joy_up",                  RO_ENCODE,  &settings.ui_joy_up,                  NULL, FALSE, JoyInfoEncodeString,  JoyInfoDecodeString},
 	{ "ui_joy_down",                RO_ENCODE,  &settings.ui_joy_down,                NULL, FALSE, JoyInfoEncodeString,  JoyInfoDecodeString},
@@ -633,6 +635,8 @@ BOOL OptionsInit()
 	settings.view            = VIEW_GROUPED;
 	settings.show_folder_flags = NewBits(MAX_FOLDERS);
 	SetAllBits(settings.show_folder_flags,TRUE);
+
+	settings.history_tab = TAB_HISTORY;
 
 	settings.ui_joy_up[0] = 1;
 	settings.ui_joy_up[1] = JOYCODE_STICK_AXIS;
@@ -1367,6 +1371,19 @@ BOOL AllowedToSetShowTab(int tab,BOOL show)
 	return show_tab_flags != 0;
 }
 
+int GetHistoryTab()
+{
+	return settings.history_tab;
+}
+
+void SetHistoryTab(int tab, BOOL show)
+{
+	if (show)
+		settings.history_tab = tab;
+	else
+		settings.history_tab = TAB_NONE;
+}
+
 void SetColumnWidths(int width[])
 {
 	int i;
@@ -1823,11 +1840,19 @@ void ResetAllGameOptions(void)
 	//Reset the Folder Options, can be done in one step
 	for (i=0;i<(MAX_FOLDERS + (MAX_EXTRA_FOLDERS *MAX_EXTRA_SUBFOLDERS));i++)
 	{
-		if( (i == FOLDER_VECTOR) || (ExtraFolderData[i] &&
-									 (ExtraFolderData[i]->m_nParent == FOLDER_SOURCE) ) )
+		if( i == FOLDER_VECTOR)
+ 		{
+ 			CopyGameOptions(GetDefaultOptions(-1, FALSE),&folder_options[i]);
+ 			SaveFolderOptions(i, 0);
+ 		}
+
+		if( i>= MAX_FOLDERS )
 		{
-			CopyGameOptions(GetDefaultOptions(-1, FALSE),&folder_options[i]);
-			SaveFolderOptions(i, 0);
+			if( ExtraFolderData[i-MAX_FOLDERS] && (ExtraFolderData[i-MAX_FOLDERS]->m_nParent == FOLDER_SOURCE) )
+			{
+				CopyGameOptions(GetDefaultOptions(-1, FALSE),&folder_options[i]);
+				SaveFolderOptions(i, 0);
+			}
 		}
 	}
 }
@@ -2071,6 +2096,10 @@ InputSeq* Get_ui_key_view_tab_screenshot(void)
 InputSeq* Get_ui_key_view_tab_title(void)
 {
 	return &settings.ui_key_view_tab_title.is;
+}
+InputSeq* Get_ui_key_quit(void)
+{
+	return &settings.ui_key_quit.is;
 }
 
 
@@ -3586,7 +3615,10 @@ static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
 		a = *(char **)regGameOpts[option_index].m_vpData;
 		gOpts = *o2;
 		b = *(char **)regGameOpts[option_index].m_vpData;
-		return strcmp(a,b) == 0;
+		if( a != NULL && b != NULL )
+			return strcmp(a,b) == 0;
+		else 
+			return FALSE;
 	}
 	case RO_BOOL:
 	{
@@ -3613,7 +3645,10 @@ static BOOL IsOptionEqual(int option_index,options_type *o1,options_type *o2)
 		regGameOpts[option_index].encode(regGameOpts[option_index].m_vpData,a);
 		gOpts = *o2;
 		regGameOpts[option_index].encode(regGameOpts[option_index].m_vpData,b);
-		return strcmp(a,b) == 0;
+		if( a != NULL && b != NULL )
+			return strcmp(a,b) == 0;
+		else 
+			return FALSE;
 	}
 
 	default:

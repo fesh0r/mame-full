@@ -210,7 +210,7 @@ typedef struct
 	BOOL   use_filter;
 	BOOL   enable_sound;
 	int    attenuation;
-	int audio_latency;
+	int    audio_latency;
 
 	/* Misc artwork options */
 	BOOL   use_artwork;
@@ -225,7 +225,7 @@ typedef struct
 	BOOL   mame_debug;
 	BOOL   errorlog;
 	BOOL   sleep;
-        BOOL   old_timing;
+	BOOL   old_timing;
 	BOOL   leds;
 	char   *ledmode;
 	int bios;
@@ -243,11 +243,11 @@ typedef struct
     int rom_audit_results;
     int samples_audit_results;
 
-	BOOL options_loaded; // whether or not we've loaded the game options yet
-	BOOL use_default; // whether or not we should just use default options
+    BOOL options_loaded; // whether or not we've loaded the game options yet
+    BOOL use_default; // whether or not we should just use default options
 
 #ifdef MESS
-	struct mess_specific_game_variables mess;
+    struct mess_specific_game_variables mess;
 #endif
 } game_variables_type;
 
@@ -255,6 +255,7 @@ typedef struct
 enum
 {
 	// these must match array of strings image_tabs_long_name in options.c
+	// if you add new Tabs, be sure to also add them to the ComboBox init in dialogs.c
 	TAB_SCREENSHOT = 0,
 	TAB_FLYER,
 	TAB_CABINET,
@@ -263,35 +264,43 @@ enum
 	TAB_CONTROL_PANEL,
 	TAB_HISTORY,
 
-	MAX_TAB_TYPES
+	MAX_TAB_TYPES,
+	BACKGROUND,
+	TAB_ALL,
+	TAB_NONE
 };
+// Because we have added the Options after MAX_TAB_TYPES, we have to subtract 3 here
+// (that's how many options we have after MAX_TAB_TYPES)
+#define TAB_SUBTRACT 3
+
 
 typedef struct
 {
     INT      folder_id;
     BOOL     view;
     BOOL     show_folderlist;
-	LPBITS show_folder_flags;
+	LPBITS   show_folder_flags;
     BOOL     show_toolbar;
     BOOL     show_statusbar;
     BOOL     show_screenshot;
     BOOL     show_tabctrl;
-	int show_tab_flags;
-    int current_tab;
+	int      show_tab_flags;
+	int      history_tab;
+    int      current_tab;
     BOOL     game_check;        /* Startup GameCheck */
     BOOL     use_joygui;
 	BOOL     use_keygui;
     BOOL     broadcast;
     BOOL     random_bg;
     int      cycle_screenshot;
-	BOOL stretch_screenshot_larger;
-	BOOL inherit_filter;
+	BOOL     stretch_screenshot_larger;
+	BOOL     inherit_filter;
 	BOOL     offset_clones;
 
     char     *default_game;
-	int      column_width[COLUMN_MAX];
-	int      column_order[COLUMN_MAX];
-	int      column_shown[COLUMN_MAX];
+    int      column_width[COLUMN_MAX];
+    int      column_order[COLUMN_MAX];
+    int      column_shown[COLUMN_MAX];
     int      sort_column;
     BOOL     sort_reverse;
     AREA     area;
@@ -300,11 +309,11 @@ typedef struct
     LOGFONT  list_font;
     COLORREF list_font_color;
     COLORREF list_clone_color;
-    BOOL skip_disclaimer;
-    BOOL skip_gameinfo;
-    BOOL high_priority;
+    BOOL     skip_disclaimer;
+    BOOL     skip_gameinfo;
+    BOOL     high_priority;
 
- 	// Keyboard control of ui
+	// Keyboard control of ui
     KeySeq   ui_key_up;
     KeySeq   ui_key_down;
     KeySeq   ui_key_left;
@@ -338,8 +347,9 @@ typedef struct
     KeySeq   ui_key_view_tab_marquee;	/* ALT 4 */
     KeySeq   ui_key_view_tab_screenshot;/* ALT 1 */
     KeySeq   ui_key_view_tab_title;		/* ALT 5 */
+    KeySeq   ui_key_quit;				/* ALT Q */
 
-   // Joystick control of ui
+    // Joystick control of ui
 	// array of 4 is joystick index, stick or button, etc.
     int      ui_joy_up[4];
     int      ui_joy_down[4];
@@ -360,11 +370,11 @@ typedef struct
     BOOL     hide_mouse;    // Should mouse cursor be hidden on startup?
     BOOL     full_screen;   // Should we fake fullscreen?
 
-    char*    language;
-    char*    flyerdir;
-    char*    cabinetdir;
-    char*    marqueedir;
-    char*    titlesdir;
+    char *language;
+    char *flyerdir;
+    char *cabinetdir;
+    char *marqueedir;
+    char *titlesdir;
     char *cpaneldir;
 
     char*    romdirs;
@@ -388,7 +398,7 @@ typedef struct
     char*    folderdir;
 
 #ifdef MESS
-	struct mess_specific_settings mess;
+    struct mess_specific_settings mess;
 #endif
 
 } settings_type; /* global settings for the UI only */
@@ -535,6 +545,9 @@ COLORREF GetListFontColor(void);
 void SetListCloneColor(COLORREF uColor);
 COLORREF GetListCloneColor(void);
 
+int GetHistoryTab(void);
+void SetHistoryTab(int tab,BOOL show);
+
 int GetShowTab(int tab);
 void SetShowTab(int tab,BOOL show);
 BOOL AllowedToSetShowTab(int tab,BOOL show);
@@ -677,6 +690,7 @@ InputSeq* Get_ui_key_view_tab_history(void);
 InputSeq* Get_ui_key_view_tab_marquee(void);
 InputSeq* Get_ui_key_view_tab_screenshot(void);
 InputSeq* Get_ui_key_view_tab_title(void);
+InputSeq* Get_ui_key_quit(void);
 
 
 int GetUIJoyUp(int joycodeIndex);
