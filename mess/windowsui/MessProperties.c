@@ -453,6 +453,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 				BOOL changed;
 
 				memset(&ofn, 0, sizeof(ofn));
+				path[0] = '\0';
 				ofn.lStructSize = sizeof(ofn);
 				ofn.hwndOwner = hWnd;
 				ofn.lpstrFile = path;
