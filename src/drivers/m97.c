@@ -2,11 +2,9 @@
 
 	Irem M97 system games:
 
-	Atomic Punk
-	Bomberman World
+	Bomberman World / Atomic Punk
 	Quiz F-1 1,2finish
-	Gussun Oyoyo
-	Risky Challenge
+	Risky Challenge / Gussun Oyoyo
 	Shisensho 2
 
 	Uses M72 sound hardware.
@@ -17,14 +15,7 @@
 
 #include "driver.h"
 #include "machine/irem_cpu.h"
-
-void m72_init_sound(void);
-void m72_ym2151_irq_handler(int irq);
-WRITE_HANDLER( m72_sound_irq_ack_w );
-WRITE_HANDLER( m72_sound_command_w );
-WRITE_HANDLER( rtype2_sample_addr_w );
-WRITE_HANDLER( m72_sample_w );
-READ_HANDLER( m72_sample_r );
+#include "sndhrdw/m72.h"
 
 void m90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( m90_video_control_w );
@@ -37,12 +28,10 @@ extern unsigned char *m90_video_data;
 
 static WRITE_HANDLER( m97_coincounter_w )
 {
-	if (offset==0) {
-		coin_counter_w(0,data & 0x01);
-		coin_counter_w(1,data & 0x02);
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
 
-		if (data&0xfe) logerror("Coin counter %02x\n",data);
-	}
+	if (data&0xfe) logerror("Coin counter %02x\n",data);
 }
 
 /***************************************************************************/
@@ -82,8 +71,9 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x01, m72_sound_command_w },
-	{ 0x02, 0x03, m97_coincounter_w },
+	{ 0x00, 0x00, m72_sound_command_w },
+	{ 0x02, 0x02, m97_coincounter_w },
+	{ 0x03, 0x03, IOWP_NOP },
 	{ 0x80, 0x8f, m90_video_control_w },
 	{ -1 }	/* end of table */
 };
@@ -92,20 +82,22 @@ static struct IOWritePort writeport[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0xffff, MRA_RAM },
+	{ 0x0000, 0xefff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-	{ 0x0000, 0xffff, MWA_RAM },
+	{ 0x0000, 0xefff, MWA_ROM },
+	{ 0xf000, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort sound_readport[] =
 {
 	{ 0x41, 0x41, YM2151_status_port_0_r },
-//	{ 0x40, 0x40, soundlatch_r },
+	{ 0x42, 0x42, soundlatch_r },
 //	{ 0x41, 0x41, m72_sample_r },
 	{ -1 }  /* end of table */
 };
@@ -114,63 +106,63 @@ static struct IOWritePort sound_writeport[] =
 {
 	{ 0x40, 0x40, YM2151_register_port_0_w },
 	{ 0x41, 0x41, YM2151_data_port_0_w },
+	{ 0x42, 0x42, m72_sound_irq_ack_w },
 //	{ 0x40, 0x41, rtype2_sample_addr_w },
 //	{ 0x42, 0x42, m72_sample_w },
-//	{ 0x43, 0x43, m72_sound_irq_ack_w },
 	{ -1 }  /* end of table */
 };
 
 /***************************************************************************/
 
 INPUT_PORTS_START( m97 )
-	PORT_START	
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) 
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 ) //service?
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) 
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 
-	PORT_START	
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 ) 
+	PORT_START
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 
-	PORT_START	
+	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 ) 
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED ) 
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 ) 
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 
 	PORT_START	/* Dip switch bank 1 */
@@ -253,18 +245,18 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
+	8,8,
 	RGN_FRAC(1,4),
 	4,
 	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 8*8 characters */
+	16,16,
 	RGN_FRAC(1,4),
 	4,
 	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
@@ -324,7 +316,7 @@ static struct MachineDriver machine_driver_m97 =
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	m72_init_sound,
 
 	/* video hardware */
 //	512, 512, { 0, 511, 0, 511 },
@@ -361,6 +353,80 @@ static struct MachineDriver machine_driver_m97 =
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( bbmanw )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
+	ROM_LOAD_V20_EVEN( "db_h0-b.rom",    0x00000, 0x40000, 0x567d3709 )
+	ROM_LOAD_V20_ODD ( "db_l0-b.rom",    0x00000, 0x40000, 0xe762c22b )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "db_sp.rom",           0x0000, 0x10000, 0x6bc1689e )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )
+	ROM_LOAD( "db_w04m.rom",    0x0000, 0x20000, 0x4ad889ed )
+ROM_END
+
+ROM_START( bbmanwj )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
+	ROM_LOAD_V20_EVEN( "bbm2_h0.bin",    0x00000, 0x40000, 0x00000000 )
+	ROM_LOAD_V20_ODD ( "bbm2_l0.bin",    0x00000, 0x40000, 0x00000000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
+ROM_END
+
+ROM_START( atompunk )
+	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
+	ROM_LOAD_V20_EVEN( "bm2-ho-a.9f",  0x00000, 0x40000, 0x7d858682 )
+	ROM_LOAD_V20_ODD ( "bm2-lo-a.9k",  0x00000, 0x40000, 0xc7568031 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "db_sp.rom",             0x0000, 0x10000, 0x6bc1689e )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
+	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
+	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
+	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "db_w04m.rom",           0x0000, 0x20000, 0x4ad889ed )
+ROM_END
+
+ROM_START( quizf1 )
+	ROM_REGION( 0x400000 * 2, REGION_CPU1 ) //todo
+	ROM_LOAD_V20_EVEN( "qf1-h0-.77",   0x000000, 0x40000, 0x280e3049 )
+	ROM_LOAD_V20_ODD ( "qf1-l0-.79",   0x000000, 0x40000, 0x94588a6f )
+	ROM_LOAD_V20_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
+	ROM_LOAD_V20_ODD ( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
+	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, 0x0664fa9f )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "qf1-c0-.81",   0x000000, 0x80000, 0xc26b521e )
+	ROM_LOAD( "qf1-c1-.82",   0x080000, 0x80000, 0xdb9d7394 )
+	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
+	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, 0xb8d16e7c )
+ROM_END
 
 ROM_START( riskchal )
 	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
@@ -413,80 +479,6 @@ ROM_START( shisen2 )
 	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, 0x876d5fdb )
 ROM_END
 
-ROM_START( quizf1 )
-	ROM_REGION( 0x400000 * 2, REGION_CPU1 ) //todo
-	ROM_LOAD_V20_EVEN( "qf1-h0-.77",   0x000000, 0x40000, 0x280e3049 )
-	ROM_LOAD_V20_ODD ( "qf1-l0-.79",   0x000000, 0x40000, 0x94588a6f )
-	ROM_LOAD_V20_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
-	ROM_LOAD_V20_ODD ( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
-
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "qf1-sp-.33",   0x0000, 0x10000, 0x0664fa9f )
-
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "qf1-c0-.81",   0x000000, 0x80000, 0xc26b521e )
-	ROM_LOAD( "qf1-c1-.82",   0x080000, 0x80000, 0xdb9d7394 )
-	ROM_LOAD( "qf1-c2-.83",   0x100000, 0x80000, 0x0b1460ae )
-	ROM_LOAD( "qf1-c3-.84",   0x180000, 0x80000, 0x2d32ff37 )
-
-	ROM_REGION( 0x40000, REGION_SOUND1 )	/* ADPCM samples */
-	ROM_LOAD( "qf1-v0-.30",   0x0000, 0x40000, 0xb8d16e7c )
-ROM_END
-
-ROM_START( bbmanw )
-	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "db_h0-b.rom",    0x00000, 0x40000, 0x567d3709 )
-	ROM_LOAD_V20_ODD ( "db_l0-b.rom",    0x00000, 0x40000, 0xe762c22b )
-
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "db_sp.rom",           0x0000, 0x10000, 0x6bc1689e )
-
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
-
-	ROM_REGION( 0x20000, REGION_SOUND1 )
-	ROM_LOAD( "db_w04m.rom",    0x0000, 0x20000, 0x4ad889ed )
-ROM_END
-
-ROM_START( atompunk )
-	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "bm2-ho-a.9f",  0x000000, 0x40000, 0x7d858682 )
-	ROM_LOAD_V20_ODD ( "bm2-lo-a.9k",  0x000000, 0x40000, 0xc7568031 )
-
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "db_sp.rom",             0x0000, 0x10000, 0x6bc1689e )
-
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
-
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
-	ROM_LOAD( "db_w04m.rom",           0x0000, 0x20000, 0x4ad889ed )
-ROM_END
-
-ROM_START( bbmanwj )
-	ROM_REGION( 0x100000 * 2, REGION_CPU1 )
-	ROM_LOAD_V20_EVEN( "bbm2_h0.bin",  0x000000, 0x20000, 0 )
-	ROM_LOAD_V20_ODD ( "bbm2_l0.bin",  0x000000, 0x20000, 0 )
-
-	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the audio CPU */
-	ROM_LOAD( "bbm2sp-b.bin", 0x0000, 0x10000, 0xb8d8108c )
-
-	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "bbm2_c0.bin",  0x180000, 0x40000, 0xe7ce058a )
-	ROM_LOAD( "bbm2_c1.bin",  0x100000, 0x40000, 0x636a78a9 )
-	ROM_LOAD( "bbm2_c2.bin",  0x080000, 0x40000, 0x9ac2142f )
-	ROM_LOAD( "bbm2_c3.bin",  0x000000, 0x40000, 0x47af1750 )
-
-	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
-	ROM_LOAD( "bbm2_vo.bin",  0x0000, 0x20000, 0x0ae655ff )
-ROM_END
-
 
 
 static void init_riskchal(void)
@@ -520,7 +512,7 @@ static WRITE_HANDLER (bbmanw_ram_write)
 	RAM[0x0a0c00+offset]=data;
 	RAM[0x1a0c00+offset]=dynablaster_decryption_table[data];
 }
- 
+
 static void init_bbmanw(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -531,10 +523,10 @@ static void init_bbmanw(void)
 	install_mem_write_handler(0, 0xa0c00, 0xa0cff, bbmanw_ram_write);
 }
 
-GAME ( 1992, bbmanw,   0,        m97, m97, bbmanw,   ROT0, "Irem", "Bomber Man World (World)" )
-GAMEX( 1992, bbmanwj,  bbmanw,   m97, m97, bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)", GAME_NOT_WORKING )
-GAME ( 1992, atompunk, bbmanw,   m97, m97, bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)" )
-GAMEX( 1992, quizf1,   0,        m97, m97, quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_NOT_WORKING )
-GAMEX( 1993, riskchal, 0,        m97, m97, riskchal, ROT0, "Irem", "Risky Challenge", GAME_NOT_WORKING )
-GAMEX( 1993, gussun,   riskchal, m97, m97, riskchal, ROT0, "Irem", "Gussun Oyoyo (Japan)", GAME_NOT_WORKING )
-GAMEX( 1993, shisen2,  0,        m97, m97, shisen2,  ROT0, "Tamtex", "Shisensho II", GAME_NOT_WORKING )
+GAME( 1992, bbmanw,   0,        m97, m97, bbmanw,   ROT0, "Irem", "Bomber Man World (World)" )
+GAME( 1992, bbmanwj,  bbmanw,   m97, m97, bbmanw,   ROT0, "Irem", "Bomber Man World (Japan)" )
+GAME( 1992, atompunk, bbmanw,   m97, m97, bbmanw,   ROT0, "Irem America", "New Atomic Punk - Global Quest (US)" )
+GAMEX(1992, quizf1,   0,        m97, m97, quizf1,   ROT0, "Irem", "Quiz F-1 1,2finish", GAME_NOT_WORKING )
+GAMEX(1993, riskchal, 0,        m97, m97, riskchal, ROT0, "Irem", "Risky Challenge", GAME_NOT_WORKING )
+GAMEX(1993, gussun,   riskchal, m97, m97, riskchal, ROT0, "Irem", "Gussun Oyoyo (Japan)", GAME_NOT_WORKING )
+GAMEX(1993, shisen2,  0,        m97, m97, shisen2,  ROT0, "Tamtex", "Shisensho II", GAME_NOT_WORKING )
