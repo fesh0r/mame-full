@@ -35,18 +35,6 @@
 #define LOG_IWM_EXTRA	0
 #endif
 
-/* some IWM defines */
-enum {
-	IWM_PH0		= 0x01,
-	IWM_PH1		= 0x02,
-	IWM_PH2		= 0x04,
-	IWM_PH3		= 0x08,
-	IWM_MOTOR	= 0x10,
-	IWM_DRIVE	= 0x20,
-	IWM_Q6		= 0x40,
-	IWM_Q7		= 0x80
-};
-
 static int iwm_lines;		/* flags from IWM_MOTOR - IWM_Q7 */
 
 
@@ -92,7 +80,7 @@ iwm_interface iwm_intf;
 void iwm_init(const iwm_interface *intf)
 {
 	iwm_lines = 0;
-	iwm_mode = 0;
+	iwm_mode = 0x1f;	/* default value needed by Lisa 2 - no, I don't know if it is true */
 	iwm_intf = * intf;
 }
 
@@ -319,3 +307,8 @@ void iwm_w(int offset, int data)
 		iwm_write_reg(data);
 }
 
+
+int iwm_get_lines(void)
+{
+	return iwm_lines & 0x0f;
+}
