@@ -12,15 +12,31 @@ struct filter_instance {
 
 /* ----------------------------------------------------------------------- */
 
-FILTER *filter_init(struct filter_module *filter, void *param)
+FILTER *filter_init(struct filter_module *filter, struct ImageModule *imgmod, int purpose)
 {
 	int instancesize;
+	void *param;
 	struct filter_instance *instance;
 
 	instancesize = sizeof(struct filter_instance) - sizeof(int) + filter->statesize;
 	instance = malloc(instancesize);
 	if (!instance)
 		return NULL;
+
+	switch(purpose) {
+	case PURPOSE_READ:
+		param = filter->calcreadparam(imgmod);
+		break;
+
+	case PURPOSE_WRITE:
+		param = filter->calcwriteparam(imgmod);
+		break;
+
+	default:
+		assert(0);
+		param = NULL;
+		break;
+	};
 
 	memset(instance, 0, instancesize);
 	instance->module = filter;

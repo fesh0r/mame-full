@@ -1,4 +1,5 @@
 #include "imgtool.h"
+#include "osdutils.h"
 
 struct filter_eoln_state
 {
@@ -44,11 +45,22 @@ static int filter_eoln_proc(struct filter_info *fi, void *buf, int buflen)
 	return result;
 }
 
+static void *filter_eoln_calcreadparam(struct ImageModule *imgmod)
+{
+	return (void *) EOLN;
+}
+
+static void *filter_eoln_calcwriteparam(struct ImageModule *imgmod)
+{
+	return (void *) imgmod->eoln;
+}
 
 struct filter_module filter_eoln =
 {
 	"ascii",
 	"Ascii Text Filter",
+	filter_eoln_calcreadparam,
+	filter_eoln_calcwriteparam,
 	filter_eoln_proc,
 	sizeof(struct filter_eoln_state)
 };

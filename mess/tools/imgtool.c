@@ -338,6 +338,7 @@ int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct N
 	ResolvedOption ropts[MAX_OPTIONS];
 	char *buf = NULL;
 	char *s;
+	FILTER *f;
 
 	if (!img->module->writefile) {
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;

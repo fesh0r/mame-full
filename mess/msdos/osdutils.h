@@ -8,3 +8,5 @@
 /*#define strncmpi	strncasecmp */
 
 #define osd_mkdir(dir)	mkdir(dir, 0)
+
+#define EOLN "\r\n"

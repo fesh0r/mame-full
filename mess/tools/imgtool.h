@@ -120,9 +120,13 @@ struct filter_info {
 	void *internalparam;
 };
 
+struct ImageModule;
+
 struct filter_module {
 	const char *name;
 	const char *longname;
+	void *(*calcreadparam)(struct ImageModule *imgmod);
+	void *(*calcwriteparam)(struct ImageModule *imgmod);
 	int (*filterproc)(struct filter_info *fi, void *buf, int buflen);
 	int statesize;
 };
@@ -131,7 +135,12 @@ typedef struct {
 	int dummy;
 } FILTER;
 
-FILTER *filter_init(struct filter_module *filter, void *param);
+enum {
+	PURPOSE_READ,
+	PURPOSE_WRITE
+};
+
+FILTER *filter_init(struct filter_module *filter, struct ImageModule *imgmod, int purpose);
 void filter_term(FILTER *f);
 int filter_writetostream(FILTER *f, STREAM *s, void *buf, int buflen);
 int filter_readfromstream(FILTER *f, STREAM *s, void *buf, int buflen);
