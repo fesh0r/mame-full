@@ -94,22 +94,8 @@ endif
 # these are the object subdirectories that need to be created.
 ##############################################################################
 OBJ     = $(TARGET).obj
-
-OBJDIRS = $(OBJ) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
-	$(OBJ)/cpu $(OBJ)/sound $(OBJ)/cpu/i8039 $(OBJ)/cpu/i8085 \
-	$(OBJ)/cpu/i86 $(OBJ)/cpu/m6502 $(OBJ)/cpu/m68000 $(OBJ)/cpu/m6805 \
-	$(OBJ)/cpu/m6800 $(OBJ)/cpu/m6809 $(OBJ)/cpu/hd6309 $(OBJ)/cpu/f8 \
-	$(OBJ)/cpu/s2650 $(OBJ)/cpu/t11 \
-	$(OBJ)/cpu/z80 $(OBJ)/cpu/tms34010 $(OBJ)/cpu/tms9900 \
-	$(OBJ)/cpu/z8000 $(OBJ)/cpu/tms32010 $(OBJ)/cpu/h6280 \
-	$(OBJ)/cpu/ccpu $(OBJ)/cpu/pdp1 $(OBJ)/cpu/konami $(OBJ)/cpu/nec \
-	$(OBJ)/cpu/gensync $(OBJ)/cpu/adsp2100 $(OBJ)/cpu/z80gb $(OBJ)/cpu/arm \
-	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 $(OBJ)/cpu/g65816 $(OBJ)/cpu/cdp1802 \
-	$(OBJ)/cpu/cp1600 \
-	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
-
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers $(OBJ)/machine \
+	$(OBJ)/vidhrdw $(OBJ)/sndhrdw
 IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
@@ -120,7 +106,7 @@ ifdef ZLIB
 ZLIB    = contrib/cutzlib-1.1.3/libz.a
 endif
 
-all: $(ZLIB) $(OBJDIRS) osdepend x$(TARGET).$(DISPLAY_METHOD)
+all: maketree $(ZLIB) $(OBJDIRS) osdepend x$(TARGET).$(DISPLAY_METHOD)
 
 # CPU core include paths
 VPATH=src $(wildcard src/cpu/*)
@@ -195,7 +181,7 @@ gamelist: all
 	./x$(TARGET).$(DISPLAY_METHOD) -listgamelistheader > doc/gamelist.$(TARGET)
 	./x$(TARGET).$(DISPLAY_METHOD) -listgamelist >> doc/gamelist.$(TARGET)
 
-$(OBJDIRS):
+$(sort $(OBJDIRS)):
 	-mkdir $@
 
 xlistdev: contrib/tools/xlistdev.c
@@ -233,6 +219,7 @@ $(OBJ)/%.o: src/%.c
 
 $(OBJ)/%.a:
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
+	$(CC_COMPILE) rm -f $@
 	$(CC_COMPILE) ar $(AR_OPTS) $@ $^
 	$(CC_COMPILE) $(RANLIB) $@
 
@@ -299,3 +286,7 @@ copycab:
 
 clean: 
 	rm -fr $(OBJ) x$(TARGET).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o
+
+maketree: $(sort $(OBJDIRS))
+
+
