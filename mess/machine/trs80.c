@@ -510,7 +510,7 @@ WRITE_HANDLER( trs80_port_ff_w )
 		/* virtual tape ? */
 		if( readinputport(0) & 0x20 )
 		{
-			int now_cycles = cpu_gettotalcycles();
+			int now_cycles = activecpu_gettotalcycles();
 			int diff = now_cycles - put_cycles;
 			UINT8 value;
 			/* overrun since last write ? */
@@ -601,7 +601,7 @@ WRITE_HANDLER( trs80_port_ff_w )
 
 READ_HANDLER( trs80_port_ff_r )
 {
-	int now_cycles = cpu_gettotalcycles();
+	int now_cycles = activecpu_gettotalcycles();
 	/* virtual tape ? */
 	if( readinputport(0) & 0x20 )
 	{

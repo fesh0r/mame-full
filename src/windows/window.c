@@ -53,7 +53,6 @@ extern UINT8 win_trying_to_quit;
 // debugger window styles
 #define DEBUG_WINDOW_STYLE		WS_OVERLAPPED
 #define DEBUG_WINDOW_STYLE_EX	0
-#define DEBUG_WINDOW_HAS_MENU	FALSE
 
 // full screen window styles
 #define FULLSCREEN_STYLE		WS_POPUP
@@ -213,8 +212,7 @@ INLINE int wnd_extra_height(void)
 	RECT window = { 100, 100, 200, 200 };
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window),
-		win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX);
+	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU && GetMenu(win_video_window), WINDOW_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
 
@@ -1418,7 +1416,7 @@ static int create_debug_window(void)
 	bounds.top = bounds.left = 0;
 	bounds.right = options.debug_width;
 	bounds.bottom = options.debug_height;
-	AdjustWindowRectEx(&bounds, WINDOW_STYLE, DEBUG_WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+	AdjustWindowRectEx(&bounds, WINDOW_STYLE, FALSE, WINDOW_STYLE_EX);
 
 	// get the work bounds
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &work_bounds, 0);
@@ -1565,6 +1563,8 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 void win_set_debugger_focus(int focus)
 {
+	static int temp_afs, temp_fs, temp_throttle;
+
 	debug_focus = focus;
 
 	// if focused, make sure the window is visible
@@ -1573,6 +1573,16 @@ void win_set_debugger_focus(int focus)
 		// if full screen, turn it off
 		if (!win_window_mode)
 			win_toggle_full_screen();
+
+		// store frameskip/throttle settings
+		temp_fs       = frameskip;
+		temp_afs      = autoframeskip;
+		temp_throttle = throttle;
+
+		// temporarily set them to usable values for the debugger
+		frameskip     = 0;
+		autoframeskip = 0;
+		throttle      = 1;
 
 		// show and restore the window
 		ShowWindow(win_debug_window, SW_SHOW);
@@ -1588,6 +1598,11 @@ void win_set_debugger_focus(int focus)
 	// if not focuessed, bring the game frontmost
 	else if (!debug_focus && win_debug_window)
 	{
+		// restore frameskip/throttle settings
+		frameskip     = temp_fs;
+		autoframeskip = temp_afs;
+		throttle      = temp_throttle;
+
 		// hide the window
 		ShowWindow(win_debug_window, SW_HIDE);
 

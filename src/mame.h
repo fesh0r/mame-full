@@ -79,7 +79,7 @@ struct RunningMachine
 	/* video color depth: 16, 15 or 32 */
 	int						color_depth;
 
-	/* video orientation; see #defines in driver.h */
+	/* video orientation; obsolete; always set to 0 */
 	int						orientation;
 
 
@@ -187,11 +187,6 @@ struct GameOptions
 	int		color_depth;	/* 15, 16, or 32, any other value means auto */
 	int vector_width;	/* requested width for vector games; 0 means default (640) */
 	int vector_height;	/* requested height for vector games; 0 means default (480) */
-	int		norotate;		/* 1 to disable rotaton */
-	int		ror;			/* 1 to rotate the game 90 degrees to the right (clockwise) */
-	int		rol;			/* 1 to rotate the game 90 degrees to the left (counterclockwise) */
-	int		flipx;			/* 1 to mirror video in the X direction */
-	int		flipy;			/* 1 to mirror video in the Y direction */
 	int		ui_orientation;	/* orientation of the UI relative to the video */
 
 	int		beam;			/* vector beam width */
@@ -317,10 +312,6 @@ void mame_pause(int pause);
 
 /* ----- screen rendering and management ----- */
 
-/* rectangle orientation helpers */
-void orient_rect(struct rectangle *rect, struct mame_bitmap *bitmap);
-void disorient_rect(struct rectangle *rect, struct mame_bitmap *bitmap);
-
 /* set the current visible area of the screen bitmap */
 void set_visible_area(int min_x, int max_x, int min_y, int max_y);
 
@@ -356,6 +347,8 @@ void set_led_status(int num,int on);
 /* return current performance data */
 const struct performance_info *mame_get_performance_info(void);
 
+/* return the index of the given CPU, or -1 if not found */
+int mame_find_cpu_index(const char *tag);
 
 #ifdef MESS
 #include "mess.h"

@@ -512,5 +512,6 @@ const struct GameDriver driver_##NAME =		\
 ***************************************************************************/
 
 extern const struct GameDriver *drivers[];
+extern const struct GameDriver *test_drivers[];
 
 #endif

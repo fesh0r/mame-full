@@ -595,7 +595,7 @@ static void tape_put_close(void)
  *******************************************************************/
 static void tape_put_bit(void)
 {
-	int now_cycles = cpu_gettotalcycles();
+	int now_cycles = activecpu_gettotalcycles();
 	int diff = now_cycles - put_cycles;
 	int limit = 12 * (memory_region(REGION_CPU1)[0x4310] + memory_region(REGION_CPU1)[0x4311]);
 	UINT8 value;
@@ -790,7 +790,7 @@ static void tape_get_open(void)
 
 static void tape_get_bit(void)
 {
-	int now_cycles = cpu_gettotalcycles();
+	int now_cycles = activecpu_gettotalcycles();
 	int limit = 10 * memory_region(REGION_CPU1)[0x4312];
 	int diff = now_cycles - get_cycles;
 

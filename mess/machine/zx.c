@@ -312,7 +312,7 @@ static int zx_tape_get_bit(void)
 		static int cycles_last_bit = 0, fast_read_count = 0;
 		int cycles_this_bit;
 
-		cycles_this_bit = cpu_gettotalcycles();
+		cycles_this_bit = activecpu_gettotalcycles();
 		/* check if there's a tight loop reading the tape input */
 		if (cycles_this_bit - cycles_last_bit < 64)
 		{

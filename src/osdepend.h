@@ -338,15 +338,10 @@ int osd_feof(void *file);
 int osd_ftell(void *file);
 /* strip directory part from a filename, does _not_ malloc */
 char *osd_basename(char *filename);
-/* kludge: since osd_basename returns a pointer in the string pointed by filename
-(and it does not affect filename), it can be called with a (char *) pointer
-and return a (char *), or with a (const char *) and return a (const char *).
-As there is no way we can explain this to the C compiler, this macro is here. */
-#define osd_basename_const(filename) ((const char *)osd_basename((char*)(filename)))
 /* get directory part of a filename in malloced buffer */
-char *osd_dirname(const char *filename);
+char *osd_dirname(char *filename);
 /* strip extension from a filename, copy to malloced buffer */
-char *osd_strip_extension(const char *filename);
+char *osd_strip_extension(char *filename);
 
 
 

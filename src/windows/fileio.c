@@ -9,9 +9,11 @@
 #include "driver.h"
 #include "unzip.h"
 #include "rc.h"
+
 #ifdef MESS
 #include "image.h"
 #endif
+
 
 //============================================================
 //	EXTERNALS
@@ -186,7 +188,11 @@ struct rc_option fileio_opts[] =
 	{ "CRC_directory", "crc", rc_string, &crcdir, "crc", 0, 0, NULL, "path to CRC files" },
 #endif
 	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, request_decompose_samplepath, "path to samplesets" },
+#ifdef __WIN32__
 	{ "inipath", NULL, rc_string, &inipath, ".;ini", 0, 0, request_decompose_inipath, "path to ini files" },
+#else
+	{ "inipath", NULL, rc_string, &inipath, "$HOME/.mame;.;ini", 0, 0, request_decompose_inipath, "path to ini files" },
+#endif
 	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
 	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
 	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
@@ -200,6 +206,12 @@ struct rc_option fileio_opts[] =
 	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
 	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
 	{ "ctrlr_directory", NULL, rc_string, &ctrlrdir, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
+
+#ifdef MMSND
+	{ "MMSND directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "waveout", NULL, rc_string, &wavebasename, "waveout", 0, 0, NULL, "wave out path" },
+#endif
+
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -876,7 +888,7 @@ char *osd_basename(char *filename)
 //	osd_dirname
 //============================================================
 
-char *osd_dirname(const char *filename)
+char *osd_dirname(char *filename)
 {
 	char *dirname;
 	char *c;
@@ -916,7 +928,7 @@ char *osd_dirname(const char *filename)
 //	osd_strip_extension
 //============================================================
 
-char *osd_strip_extension(const char *filename)
+char *osd_strip_extension(char *filename)
 {
 	char *newname;
 	char *c;
@@ -1055,6 +1067,88 @@ static void flush_cache(void)
 }
 
 
+//============================================================
+//	copy_and_expand_variables
+//============================================================
+
+static char *copy_and_expand_variables(const char *path, int len)
+{
+	int length = 0;
+	char *var_name;
+	const char *src;
+	char *dst;
+	char *result;
+
+	if (len < 0)
+		len = strlen(path);
+	var_name = malloc(len+1);
+	if (!var_name)
+		goto out_of_memory;
+	src = path;
+	while (src < path+len)
+	{
+		if (*src++ == '$')
+		{
+			char *dst_var = var_name;
+			const char *var_val;
+			while (src < path+len)
+			{
+				char c = *src;
+				if (c != '_' && c != '-' && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9'))
+					break;
+				*dst_var++ = c;
+				src++;
+			}
+			*dst_var = 0;
+			var_val = getenv(var_name);
+			if (var_val)
+				length += strlen(var_val);
+		}
+		else
+			length++;
+	}
+
+	result = malloc(length+1);
+	if (!result)
+		goto out_of_memory;
+
+	src = path;
+	dst = result;
+	while (src < path+len)
+	{
+		char c = *src++;
+		if (c == '$')
+		{
+			char *dst_var = var_name;
+			const char *var_val;
+			while (src < path+len)
+			{
+				c = *src;
+				if (c != '_' && c != '-' && (c < 'a' || c > 'z') && (c < 'A' || c > 'Z') && (c < '0' || c > '9'))
+					break;
+				*dst_var++ = c;
+				src++;
+			}
+			*dst_var = 0;
+			var_val = getenv(var_name);
+			if (var_val)
+			{
+				strcpy(dst, var_val);
+				dst += strlen(var_val);
+			}
+		}
+		else
+			*dst++ = c;
+	}
+	*dst = 0;
+	free(var_name);
+	return result;
+
+
+out_of_memory:
+	fprintf(stderr, "Out of memory in variable expansion!\n");
+	exit(1);
+}
 
 //============================================================
 //	decompose_path
@@ -1090,13 +1184,7 @@ static void decompose_path(const char *pathlist, const char *extrapath, int *pat
 	// if we have an extra path, add that to the list first
 	if (extrapath)
 	{
-		// allocate space for this path
-		pathv[*pathcount] = malloc(strlen(extrapath) + 1);
-		if (!pathv[*pathcount])
-			goto out_of_memory;
-
-		// copy it in
-		strcpy(pathv[*pathcount], extrapath);
+		pathv[*pathcount] = copy_and_expand_variables(extrapath, -1);
 		*pathcount += 1;
 	}
 
@@ -1112,14 +1200,8 @@ static void decompose_path(const char *pathlist, const char *extrapath, int *pat
 		if (!pathv)
 			goto out_of_memory;
 
-		// allocate space for the path
-		pathv[*pathcount] = malloc(token - pathlist + 1);
-		if (!pathv[*pathcount])
-			goto out_of_memory;
-
-		// copy it in
-		memcpy(pathv[*pathcount], pathlist, token - pathlist);
-		pathv[*pathcount][token - pathlist] = 0;
+		// copy the path in
+		pathv[*pathcount] = copy_and_expand_variables(pathlist, token-pathlist);
 		*pathcount += 1;
 
 		// if this was the end, break
@@ -1411,7 +1493,7 @@ static int get_pathlist_for_filetype(int filetype, const char ***pathlist, const
 #ifdef MESS
 //============================================================
 //	stuff for processing absolute file paths (only applicable
-//  in MESS)
+//	in MESS)
 //============================================================
 static int is_zipfile(const char *filename)
 {

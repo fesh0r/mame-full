@@ -100,18 +100,18 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 
 
 
-#if WINDOW_HAS_MENU
 //============================================================
 //	win_get_top_height
 //============================================================
 
 static int win_get_top_height(void)
 {
-	static int height_with_menubar = 0;
 	int top_height = 0;
 
+#if WINDOW_HAS_MENU
 	if (GetMenu(win_video_window))
 	{
+		static int height_with_menubar = 0;
 		if (height_with_menubar == 0)
 		{
 			RECT with_menu = { 100, 100, 200, 200 };
@@ -122,9 +122,9 @@ static int win_get_top_height(void)
 		}
 		top_height = height_with_menubar;
 	}
+#endif /* WINDOW_HAS_MENU */
 	return top_height;
 }
-#endif /* WINDOW_HAS_MENU */
 
 //============================================================
 //	erase_outer_rect

@@ -1,4 +1,334 @@
-0.561
+0.61.2
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+System Driver Changes:
+----------------------
+- [SNES] Fixed background scrolling. Added 16x16 tile mode. Improved Mode 21
+  SRAM support. [Anthony Kruize]
+
+- [GAMEBOY] Finally fixed sound channel 3 so it produces correct frequencies!
+  Flagged sound as being stereo. Improved input ports. Fixed loud buzz caused
+  by the new sound code when digital audio is used. (bug #275) [Anthony Kruize]
+
+- [SUPERGB] Fixed certain areas of the border image being left blank instead of
+  being filled in. (bug #264) [Anthony Kruize]
+
+- [COCO3] Fixed a bug that caused a few display glitches when switching between
+  40 column and 80 column mode. (bug #271) [Nate Woods]
+
+- [Z88] Video updates. [Kev Thacker]
+
+Source Changes:
+---------------
+- Updated all drivers device declarations to new system and removed old dev
+  array. [Nate Woods]
+
+- New options.disable_normal_ui and osd_trying_to_quit() functions created, to
+  support the new Win32 UI. [Nate Woods]
+
+- Added the ability for drivers to support drawing to the UI in a standard way;
+  which helped fix a problem where the tape graphic was lost in MESS 0.61. (bug
+  #270) [Nate Woods]
+
+- [Win32] New user interface replaces old UI; this is on by default but can be
+  disabled with the -nonewui command switch.  This new UI uses Windows native
+  menus and should be much easier to use. [Nate Woods]
+
+- [Win32] Help file entries for each system now list the directory name
+  expected by MESS. [Nate Woods]
+
+- [Win32 GUI] Fixed an incredibly MORONIC bug where RAM preferences were stored
+  as booleans (!?!) rather than integers (bug #260) [Nate Woods]
+
+- [Win32 GUI] Fixed a bug where certain elements in the treeview lost their
+  first character (bug #262) [Nate Woods]
+
+0.61.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Amstrad family (fixed and reenabled) [Raphael Nabet]
+
+System Driver Changes:
+----------------------
+- [COCO1] Update CRC for bas10.rom. Previous dump was bad. I would like to send
+  a pecial "Thank you" to Sellam Ismail (http://www.vintage.org) for finding a
+  Color Computer that contained Color BASIC 1.0. [tim lindner]
+
+- [COCO1/2/3] Moved disk handling code over to new FormatDriver system;
+  allowing transparent disk image handling for JVC, VDK, and DMK file formats.
+  [Nate Woods]
+
+- [COCO] Fixed a recent stupid bug in m6847 timing that had an effect on
+  certain timing situations (bug #249) [Nate Woods]
+
+- [COCO3] Fixed a palette timing bug that affected mid-frame video rendering.
+  (bug #253) [Nate Woods]
+  
+- [COCO3] Fixed a bug where hi-res text characters with the high bit set were
+  rendered as garbage. [Nate Woods]
+
+- [COCO3] Fixed a bug where $FF9D and associated registers were being updated
+  before vblank, when they should have been updated after. (bug #252) [Nate
+  Woods]
+  
+- [COCO1/2/3] Made sure that SAM (and GIME on the CoCo 3) registers are
+  properly reset after a crash. [Nate Woods]
+
+- [DRAGON32/64] Made artifacting disabled by default, as this is how PAL systems
+  would normally be.  [Nate Woods]
+
+- [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
+  was using the coco memory map) [Nate Woods]
+
+- [DRAGON64] Adjusted the memory mapping scheme, enabling the DragonDOS
+  cartridge and 64k mode to coexist.  Thanks to Simon Hardy for tracking down a
+  better algorithm. [Nate Woods]
+
+- [A5200] Fixed a regression in 0.61 that prevented the keypad from working.
+  (bug #246) [Nate Woods]
+
+- [A7800] Suffixed the name of the a7800 driver with NTSC and marked the PAL
+  version as a clone of the NTSC version. [Nate Woods]
+
+- [GBCOLOR] Implemented background priority. This fixes objects appearing over
+  the background when they shouldn't be. [Anthony Kruize]
+
+- [TI99/4A] Added support for BwG clock and floppy controller [Raphael Nabet]
+
+- [SNES] Memory map is more accurate, adding support for HiRom carts. Fixed
+  DMA transfers. Fixed missing tiles. Added preliminary mode 7 support. Added
+  subscreens, including colour addition/subtraction. Fixed vertical flip for
+  large objects. Improved vertical/horizontal latches. Improved ROM loading
+  with better header and ROM type detection. Improved the SPCSkipper so a lot
+  more games actually run now. [Anthony Kruize]
+
+Source Changes:
+---------------
+- The MESS core will not automatically open software images in a clone system
+  drivers directory anymore, under the belief that this functionality belongs
+  in the OSD code. [Nate Woods]
+
+- All MESS drivers need a SYSTEM_CONFIG (formerly COMPUTER_CONFIG) parameter
+  specified.  Also changed the implementation of the SYSTEM_CONFIG_* macros to
+  provide a more flexible system for representing the data.
+
+  Added the ability for devices to be declared within the SYSTEM_CONFIG block.
+  Consider the older way of declaring devices deprecated.
+
+  Added new functions for iterating through devices, in order to better
+  abstract the internal representation of devices:
+  
+	device_first()
+	device_next()
+	device_find()
+		
+  Also renamed GameDriver dev field to dev_ in order to break any source
+  dependencies on the dev field. [Nate Woods]
+
+- Added new memory pool code that implements memory pools that can be freed in
+  one step. [Nate Woods]
+
+- Overhaul of code that maintained the list of loaded images; moved to
+  mess/image.[c|h], and changed the prefix of them from device_ to image_ (as
+  opposed to the device_* calls that are used to access the IODevice
+  structure).  Also, implemented these new calls for drivers to use:
+  
+	image_malloc()    (similar to auto_malloc(), but for the lifetime of devices)
+	image_strdup()    (uses image_malloc() to allocate strings)
+	image_exists()    (tests for the existance of a loaded image)
+	image_filetype()  (accessor for file extension)
+
+  For the most part, there is no longer any reason for MESS drivers to use
+  malloc() and free(), so calls to these should be eliminated over time. [Nate
+  Woods]
+  
+- Removed IO_RESET_ALL, as it was broken and an ugly hack to begin with (bug
+  #239) [Nate Woods]
+
+- In the opening display software info box, if the filename and the goodname
+  (as determined by CRC) match up, the goodname will not be displayed in
+  order to reduce screen clutter. [Nate Woods]
+  
+- Removed all calls to device_close(IO_CASSETTE) in system drivers, instead
+  provided a cassette_exit() function that drivers can specify, removing this
+  responsibility from system drivers. [Nate Woods]
+
+- Implemented preliminary paste functionality; it attempts to decode the
+  driver's input tables and attempts to create a mapping between ASCII and
+  input signals.  This process is far from perfect at this time.  In the
+  future, it will be possible for drivers to customize the way that paste works
+  for a more perfect translation.  [Nate Woods]
+
+- Added new PORT_KEYx macros that should be used in place of PORT_BITX when
+  mapping keyboards.  These macros also specify unicode values for the input
+  codes for natural keyboard support.  [Nate Woods]
+
+- Added a new osd_keyboard_disabled() call.  If this returns non-zero, then
+  the core will supress input of type IPT_KEYBOARD.  This is useful if a front
+  end wants to implement a natural keyboard.  [Nate Woods]
+
+- Added a new osd_parallelize() call, for basic SMP acceleration.  [Nate Woods]
+
+- Renamed osd_dir.h to osd_mess.h, to further reflect that it is more than just
+  directory calls.  [Nate Woods]
+
+- [Win32] New -threads parameter, to specify the maximum amount of threads used
+  for osd_parallelize(); defaults to the number of processors in the system.
+  [Nate Woods]
+
+- [Win32 GUI] Printers are now treated separately from the other devices; you
+  do not specify printer ouput like you do disk images.  Printer output now
+  gets specified in the configuration tab of the system properties.  The added
+  benefit is that the same output file can be used repeatedly. [Nate Woods]
+
+- [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
+  particular file system format can point at a structure that lists allowable
+  disk image formats.  This allows for the addition of new disk image format
+  drivers without touching the imgtool drivers. [Nate Woods]
+  
+- [Imgtool] Fixed a bug in the FormatDriver handling that caused some file puts
+  to not be properly written.  [Nate Woods]
+
+- [Imgtool] Added Color Computer DMK disk image support. [tim lindner]
+
+0.61
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Super GameBoy [Anthony Kruize]
+- GameBoy Color (preliminary) [Anthony Kruize]
+- Innumerable Sega Master System Variants [Mike Luong]
+
+Removed drivers:
+----------------------
+- Amstrad
+- Chess Champion I
+- Sinclair ZX Family
+- Studio 2
+
+System Driver Changes:
+----------------------
+- [COCO] The virtual printer should now be responsive to bitbanger output of
+  any arbitrary baud. [Nate Woods]
+
+- [COCO] Fixed a OKI M6242B clock emulation problem and a problem with Disto
+  Real Time Clock emulation. [tim lindner]
+
+- [COCO] Fixed a very ugly bug that could cause freezups under OS-9 and other
+  forms of disk accesses.  This was because interrupts were dropped when the
+  CPU is halted. (Bugs #197, #229) [Nate Woods]
+
+- [COCO3] Fixed a bug in the GIME video emulation that caused all parts of
+  the $FF9B/D/E video registers to be used in lo-res mode; where in reality
+  the low 16 bits are dropped.  This caused a bug in CoCoTracker that caused
+  the screen to be garbled after the MOD files are played. [Nate Woods]
+
+- [COCO3] Adjusted composite colors slightly with help from SockMaster (Bug
+  #227) [John Kowalski, Nate Woods]
+  
+- [COCO3] Exposed the two high bits on MMU registers (even though their value
+  is undefined) to fix a problem with SockMaster's LSAVEM utility. [Nate Woods]
+  
+- [COLECO] The Coleco driver now recognizes the *.col extension for Coleco
+  cartridges. [Nate Woods]
+  
+- [SPECPL3E] Updated BIOS to the 1.11 version romset
+  (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
+
+- [GAMEBOY] Can now load ROMs that are larger than 2MB. Fixed RAM bank
+  switching in MBC3 ROMs. [Anthony Kruize]
+
+- [COUPE] Combined coupe and coupe512 drivers into one driver that uses
+  configurable RAM sizes. [Nate Woods]
+  
+- [A2600] Converted video code from using plot_pixel() to draw_scanline() [Nate
+  Woods]
+  
+- [VTECH1] Converted back to using generic M6847 video hardware module (Bug #36)
+  [Nate Woods]
+
+- [SNES] Rewrite of the driver.  Still at a preliminary stage though. Some
+  games are playable, others run but aren't playable, however most don't work.
+  [Anthony Kruize]
+  
+- [VECTREX] Because of the MAME core's new artwork system, new .art files are
+  now needed in conjunction with the normal Vectrex .png files to specify the
+  artwork layout. [Nate Woods]
+
+- [GENESIS] Changed input ports to be consistent with other drivers.
+  [Anthony Kruize]
+
+Source Changes:
+---------------
+- The core is based on MAME 0.61.  This incorporates all features of the 
+  update to this core.  [MAME team] 
+
+- Converted numerous drivers to use the auto_malloc() and auto_bitmap_alloc()
+  calls, and also to use generic_bitmapped video calls. [Nate Woods]
+
+- Added new videomap code that makes it easy to support arbitrary video modes
+  in a fast, efficient manner.  This takes the place of the old
+  rasterbits/rastertrack code; converted m6847, CoCo 3, and Mac video hardware
+  to use videomap. [Nate Woods]
+
+- Added a new disk format handling system that allows disk formats to be
+  generically specified in such a way usable by both MESS itself, and imgtool
+  [Nate Woods]
+
+- Fixed a bug in the wave code that could cause a crash if a cassette image is
+  unloaded. [Nate Woods]
+  
+- Added a [none] entry in the File Manager, that allows the user to unload an
+  image. [Nate Woods]
+  
+- The file manager will now default to the directory that a preexisting image
+  resides in. [Nate Woods]
+
+- Fixed some bugs that caused the battery backups in the NES and GB systems to
+  be placed in odd directories. [Nate Woods]
+  
+- Added palette_set_colors() function to make it easy to initialize a palette
+  with a predefined list of colors. [Nate Woods]
+  
+- Readded record/playback support. [Nate Woods]
+
+- Added artwork_use_device_art() to the MAME core to support Vectrex style
+  artwork. [Nate Woods]
+
+- Fixed bugs #192 and #200 - remember that:
+
+  1) In File Manager you can press SHIFT+ENTER to manually edit a filename
+     and CTRL-Y to delete the field.
+
+  2) In the file selector you can edit the file specification and you can use
+     SHIFT+UP/DOWN as PgUp/PgDown and
+     CTRL+UP/DOWN as Home/End. [Stefano Priore]
+
+- With help from SockMaster, fixed some very subtle timer bugs in the m6809
+  and hd6309 CPU cores [Nate Woods, tim lindner, John Kowalski]
+  
+- New OSD function:
+
+		void osd_device_eject(int type, int id);
+
+  It sets a device image to NULL, as would a device_filename_change(type, id,
+  NULL), but enables osd code to update its osd structures.  The mac and lisa
+  drivers will use this function instead of device_filename_change to eject
+  floppy disks.
+
+  This function is needed because the mac osd code keeps track of each
+  selected file, and the data went out of sync when device_filename_change
+  was called. [Raphael Nabet]
+
+- [GUI] Fixed a very minor bug that caused the software list view background
+  to not be updated at the same time as the system list if the snap directory
+  was changed. [Nate Woods]
+
+0.56.1
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------

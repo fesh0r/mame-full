@@ -353,7 +353,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 				char *base_filename_noextension;
 
 				base_filename = image_basename(type, id);
-				base_filename_noextension = osd_strip_extension(base_filename);
+				base_filename_noextension = osd_strip_extension((char *) base_filename);
 
 				/* display device type and filename */
 				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), base_filename);
