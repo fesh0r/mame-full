@@ -22,7 +22,7 @@ Release 0.88, 9 November 2004
 	    theoretically allow the display drivers to be placed in shared 
 	    object (.so) files and loaded dynamically.
 	  * The game_bitmap_update bounds are now honored, resulting in a nice 
-	    speedup for vector games.
+	    speedup for artwork games.
 	  * The rounding of bounds is now only done for blitting to the 
 	    offscreen image, and not for displaying on the screen.  This gets 
 	    rid of the black borders in some games, such as mspacman with 
