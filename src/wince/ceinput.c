@@ -1,20 +1,8 @@
-/***************************************************************************
-
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for WinCE
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
-
- ***************************************************************************/
-
-/***************************************************************************
-
-  Keyboard.c
-
- ***************************************************************************/
+//============================================================
+//
+//	ceinput.c - WinCE implementation of MAME input routines
+//
+//============================================================
 
 #include <windows.h>
 #include "driver.h"
@@ -69,19 +57,13 @@ struct rc_option input_opts[] =
 
 UINT8 win_trying_to_quit;
 
-struct tKeyboard_private
-{
-    BOOL m_key_pressed;
-    int  m_DefaultInput;
-};
-
 /***************************************************************************
     Internal variables
  ***************************************************************************/
 
 static char pressed_char;
 static DWORD pressed_char_expire;
-static struct tKeyboard_private This;
+static void *input_map;
 
 /***************************************************************************
     External OSD functions  
@@ -93,7 +75,6 @@ static struct tKeyboard_private This;
 */
 int win_init_input(void)
 {
-    memset(&This, 0, sizeof(struct tKeyboard_private));
     return gx_open_input() ? 0 : -1;
 }
 
@@ -108,10 +89,10 @@ void win_shutdown_input(void)
 // Keyboard Definitions
 static struct KeyboardInfo keylist[] =
 {
-	{ "Button 1",	0,					JOYCODE_1_BUTTON1 },
-	{ "Button 2",	0,					JOYCODE_1_BUTTON2 },
-	{ "Button 3",	0,					KEYCODE_3 },
-	{ "Button 4",	0,					KEYCODE_1 },
+	{ "Button 1",	VK_IPAQ_B1,			KEYCODE_F1 },
+	{ "Button 2",	VK_IPAQ_B2,			KEYCODE_F2 },
+	{ "Button 3",	VK_IPAQ_B3,			KEYCODE_F3 },
+	{ "Button 4",	VK_IPAQ_B4,			KEYCODE_F4 },
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },
     { "C",          'C',                KEYCODE_C },
@@ -148,29 +129,6 @@ static struct KeyboardInfo keylist[] =
     { "7",          '7',                KEYCODE_7 },
     { "8",          '8',                KEYCODE_8 },
     { "9",          '9',                KEYCODE_9 },
-    { "0 PAD",      VK_NUMPAD0,         KEYCODE_0_PAD },
-    { "1 PAD",      VK_NUMPAD1,         KEYCODE_1_PAD },
-    { "2 PAD",      VK_NUMPAD2,         KEYCODE_2_PAD },
-    { "3 PAD",      VK_NUMPAD3,         KEYCODE_3_PAD },
-    { "4 PAD",      VK_NUMPAD4,         KEYCODE_4_PAD },
-    { "5 PAD",      VK_NUMPAD5,         KEYCODE_5_PAD },
-    { "6 PAD",      VK_NUMPAD6,         KEYCODE_6_PAD },
-    { "7 PAD",      VK_NUMPAD7,         KEYCODE_7_PAD },
-    { "8 PAD",      VK_NUMPAD8,         KEYCODE_8_PAD },
-    { "9 PAD",      VK_NUMPAD9,         KEYCODE_9_PAD },
-    { "F1",         VK_F1,              KEYCODE_F1 },
-    { "F2",         VK_F2,              KEYCODE_F2 },
-    { "F3",         VK_F3,              KEYCODE_F3 },
-    { "F4",         VK_F4,              KEYCODE_F4 },
-    { "F5",         VK_F5,              KEYCODE_F5 },
-    { "F6",         VK_F6,              KEYCODE_F6 },
-    { "F7",         VK_F7,              KEYCODE_F7 },
-    { "F8",         VK_F8,              KEYCODE_F8 },
-    { "F9",         VK_F9,              KEYCODE_F9 },
-    { "F10",        VK_F10,             KEYCODE_F10 },
-    { "F11",        VK_F11,             KEYCODE_F11 },
-    { "F12",        VK_F12,             KEYCODE_F12 },
-    { "ESC",        VK_ESCAPE,          KEYCODE_ESC },
     { "~",          0xC0,               KEYCODE_TILDE },
     { "-",          0xBD,               KEYCODE_MINUS },
     { "=",          0xBB,               KEYCODE_EQUALS },
@@ -186,23 +144,10 @@ static struct KeyboardInfo keylist[] =
     { ".",          0xBE,               KEYCODE_STOP },
     { "/",          0xBF,               KEYCODE_SLASH },
     { "SPACE",      VK_SPACE,           KEYCODE_SPACE },
-    { "INS",        VK_INSERT,          KEYCODE_INSERT },
-    { "DEL",        VK_DELETE,          KEYCODE_DEL },
-    { "HOME",       VK_HOME,            KEYCODE_HOME },
-    { "END",        VK_END,             KEYCODE_END },
-    { "PGUP",       VK_PRIOR,           KEYCODE_PGUP },
-    { "PGDN",       VK_NEXT,            KEYCODE_PGDN },
     { "LEFT",       VK_LEFT,            KEYCODE_LEFT },
     { "RIGHT",      VK_RIGHT,           KEYCODE_RIGHT },
     { "UP",         VK_UP,              KEYCODE_UP },
     { "DOWN",       VK_DOWN,            KEYCODE_DOWN },
-    { "/ PAD",      VK_DIVIDE,          KEYCODE_SLASH_PAD },
-    { "* PAD",      VK_MULTIPLY,        KEYCODE_ASTERISK },
-    { "- PAD",      VK_SUBTRACT,        KEYCODE_MINUS_PAD },
-    { "+ PAD",      VK_ADD,             KEYCODE_PLUS_PAD },
-    { ". PAD",      VK_DECIMAL,         KEYCODE_DEL_PAD },
-    { "PRTSCR",     VK_PRINT,           KEYCODE_PRTSCR },
-    { "PAUSE",      VK_PAUSE,           KEYCODE_PAUSE },
     { "LSHIFT",     VK_LSHIFT,          KEYCODE_LSHIFT },
     { "RSHIFT",     VK_RSHIFT,          KEYCODE_RSHIFT },
     { "LCTRL",      VK_LCONTROL,        KEYCODE_LCONTROL },
@@ -215,8 +160,6 @@ static struct KeyboardInfo keylist[] =
     { "LWIN",       VK_LWIN,            KEYCODE_OTHER },
     { "RWIN",       VK_RWIN,            KEYCODE_OTHER },
     { "MENU",       VK_APPS,            KEYCODE_OTHER },
-    { "SCRLOCK",    VK_SCROLL,          KEYCODE_SCRLOCK },
-    { "NUMLOCK",    VK_NUMLOCK,         KEYCODE_NUMLOCK },
     { "CAPSLOCK",   VK_CAPITAL,         KEYCODE_CAPSLOCK },
     { 0, 0, 0 } /* end of table */
 };
@@ -226,24 +169,90 @@ static struct KeyboardInfo keylist[] =
 */
 const struct KeyboardInfo* osd_get_key_list(void)
 {
-	struct gx_keylist gxkeylist;
-	static been_executed = 0;
+    return keylist;
+}
 
-	if (!been_executed) {
-		/* first time? */
-		been_executed = 1;
-	
-		gx_get_default_keys(&gxkeylist);
+static int ration_input(const struct GameDriver *drv, UINT32 player, int *buttons, int buttons_available)
+{
+	const struct InputPortTiny *input_ports;
+	int button_count = 0;
+	int start_count = 0;
+	int coin_count = 0;
+	UINT32 type;
+	int input_id;
 
-		keylist[0].code = gxkeylist.vkA;
-		keylist[1].code = gxkeylist.vkB;
-		keylist[2].code = gxkeylist.vkC;
-		keylist[3].code = gxkeylist.vkStart;
+	/* clear out the output */
+	memset(buttons, 0, sizeof(*buttons) * buttons_available);
 
-		logerror("osd_get_key_list(): vkA=0x%02x vkB=0x%02x vkC=0x%02x vkStart=0x%02x\n", gxkeylist.vkA, gxkeylist.vkB, gxkeylist.vkC, gxkeylist.vkStart);
+	/* go through the input list, and count the number of the appropriate type
+	 * of buttons, and identify the arrow buttons if possible
+	 */
+	input_ports = drv->input_ports;
+	while(input_ports->type != IPT_END)
+	{
+		type = input_ports->type;
+
+		/* right player? */
+		if ((type & IPF_PLAYERMASK) == player)
+		{
+			type &= 0xffff;
+			switch(type)
+			{
+			case IPT_START1:
+			case IPT_START2:
+			case IPT_START3:
+			case IPT_START4:
+				start_count = 1;
+				break;
+
+			case IPT_COIN1:
+			case IPT_COIN2:
+			case IPT_COIN3:
+			case IPT_COIN4:
+				coin_count = 1;
+				break;
+
+			case IPT_BUTTON1:
+			case IPT_BUTTON2:
+			case IPT_BUTTON3:
+			case IPT_BUTTON4:
+			case IPT_BUTTON5:
+			case IPT_BUTTON6:
+			case IPT_BUTTON7:
+			case IPT_BUTTON8:
+			case IPT_BUTTON9:
+			case IPT_BUTTON10:
+				button_count++;
+				break;
+			}
+		}
+		input_ports++;
 	}
 
-    return keylist;
+	/* do we have enough buttons? */
+	if ((start_count + coin_count + button_count) > buttons_available)
+	{
+		logerror("not enough buttons for driver\n");
+		return 1;
+	}
+
+	/* now time to allocate buttons */
+	input_id = IPT_BUTTON1;
+	while(button_count--)
+		*(buttons++) = input_id++;
+
+	/* now time to allocate coins */
+	input_id = IPT_COIN1;
+	while(coin_count--)
+		*(buttons++) = input_id++;
+
+	/* now time to allocate start buttons */
+	input_id = IPT_START1;
+	while(start_count--)
+		*(buttons++) = input_id++;
+
+	/* done */
+	return 0;
 }
 
 /*
@@ -257,71 +266,30 @@ const struct KeyboardInfo* osd_get_key_list(void)
 */
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
-    int DefaultInfput = This.m_DefaultInput;
+	int i, err;
+	UINT32 player;
+	UINT32 buttons[4];
+
+	/* this is the player that gets the UI keys */
+	player = IPF_PLAYER1;
+
+	err = ration_input(Machine->gamedrv, player, buttons, sizeof(buttons) / sizeof(buttons[0]));
+	if (err)
+		return;
+
 	while (defaults->type != IPT_END)
 	{
-		if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, KEYCODE_ENTER);
-	//	if (defaults->type == IPT_UI_CANCEL)                           seq_set_1(&defaults->seq, KEYCODE_ESC);
-		if (defaults->type == IPT_START1)                              seq_set_1(&defaults->seq, KEYCODE_1);
-		if (defaults->type == IPT_START2)                              seq_set_1(&defaults->seq, KEYCODE_2);
-		if (defaults->type == IPT_COIN1)                               seq_set_1(&defaults->seq, KEYCODE_3);
-//			if (defaults->type == IPT_COIN2)                               seq_set_1(&defaults->seq, KEYCODE_4);
-//			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_R);
-//			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_F);
-//			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_D);
-//			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_G);
-//			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_8_PAD);
-//			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_2_PAD);
-//			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_4_PAD);
-//			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq, KEYCODE_6_PAD);
-		if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-		if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_LALT);
-		if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1))             seq_set_1(&defaults->seq, KEYCODE_SPACE);
-//			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-//			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-//			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-		if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_LALT);
-		if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2))             seq_set_1(&defaults->seq, KEYCODE_SPACE);
-//			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-//			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-//			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER3))             seq_set_1(&defaults->seq, CODE_NONE);
-
-/*			int j;
-		for (j = 0; j < SEQ_MAX; ++j)
+		if ((defaults->type & IPF_PLAYERMASK) == player)
 		{
-			if (defaults->seq[j] == KEYCODE_UP)    defaults->seq[j] = VK_UP;
-			if (defaults->seq[j] == KEYCODE_DOWN)  defaults->seq[j] = VK_DOWN;
-			if (defaults->seq[j] == KEYCODE_LEFT)  defaults->seq[j] = VK_LEFT;
-			if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = VK_RIGHT;
+			for (i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
+			{
+				if (buttons[i] == (defaults->type & ~IPF_PLAYERMASK))
+				{
+					seq_set_1(&defaults->seq, KEYCODE_F1 + i);
+					break;
+				}
+			}
 		}
-		if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, VK_RETURN);
-		if (defaults->type == IPT_UI_SELECT)                           seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-		if (defaults->type == IPT_UI_CANCEL)                           seq_set_1(&defaults->seq, VK_ESCAPE);
-		if (defaults->type == IPT_UI_UP)                           seq_set_1(&defaults->seq, VK_UP);
-		if (defaults->type == IPT_UI_DOWN)                           seq_set_1(&defaults->seq, VK_DOWN);
-		if (defaults->type == IPT_UI_LEFT)                           seq_set_1(&defaults->seq, VK_LEFT);
-		if (defaults->type == IPT_UI_RIGHT)                           seq_set_1(&defaults->seq, VK_RETURN);
-		
-		if (defaults->type == IPT_START1)                              seq_set_1(&defaults->seq, VK_MENU);
-		if (defaults->type == IPT_START2)                              seq_set_1(&defaults->seq, VK_SPACE);
-		if (defaults->type == IPT_COIN1)                               seq_set_1(&defaults->seq, VK_F23);
-		if (defaults->type == IPT_COIN2)                               seq_set_1(&defaults->seq, VK_LCONTROL);
-
-		if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1))             seq_set_1(&defaults->seq, VK_LCONTROL);
-		if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1))             seq_set_1(&defaults->seq, VK_MENU);
-		if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1))             seq_set_1(&defaults->seq, VK_SPACE);
-		if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2))             seq_set_1(&defaults->seq, VK_LCONTROL);
-		if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2))             seq_set_1(&defaults->seq, VK_MENU);
-		if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2))             seq_set_1(&defaults->seq, VK_SPACE);
-		if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-		if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2))             seq_set_1(&defaults->seq, CODE_NONE);
-*/
 		defaults++;
 	}
 }
@@ -374,14 +342,10 @@ void wince_press_char(int keycode)
 */
 int osd_wait_keypress(void)
 {
-    This.m_key_pressed = FALSE;
     while (1)
     {
        Sleep(1);
        win_process_events_periodic();
-
-       if (This.m_key_pressed)
-          break;
     }
     return 0;
 }

@@ -150,20 +150,6 @@ int gx_close_input(void)
 	return GXCloseInput();
 }
 
-void gx_get_default_keys(struct gx_keylist *keylist)
-{
-	GXKeyList keys;
-	keys = GXGetDefaultKeys(GX_NORMALKEYS);
-	keylist->vkUp = keys.vkUp;
-	keylist->vkDown = keys.vkDown;
-	keylist->vkLeft = keys.vkLeft;
-	keylist->vkRight = keys.vkRight;
-	keylist->vkA = keys.vkA;
-	keylist->vkB = keys.vkB;
-	keylist->vkC = keys.vkC;
-	keylist->vkStart = keys.vkStart;
-}
-
 void *gx_begin_draw(void)
 {
 	return GXBeginDraw();
