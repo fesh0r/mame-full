@@ -227,7 +227,11 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 
 		/* history files */
 		case FILETYPE_HISTORY:
+#ifndef MESS
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD);
+#else
+			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_OPENREAD);
+#endif
 
 		/* cheat file */
 		case FILETYPE_CHEAT:
