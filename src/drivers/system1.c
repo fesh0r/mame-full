@@ -40,19 +40,37 @@ void gardia_decode(void);
 
 static void system1_init_machine(void)
 {
-	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
+	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
+	/* this is not a ROM patch, the game checks a RAM location */
+	/* before doing the test */
+//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
+
+//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE1);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
 static void chplft_init_machine(void)
 {
-	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
+	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
+	/* this is not a ROM patch, the game checks a RAM location */
+	/* before doing the test */
+//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
+
+//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
 static void wbml_init_machine(void)
 {
-	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
+	/* skip the long IC CHECK in Teddyboy Blues and Choplifter */
+	/* this is not a ROM patch, the game checks a RAM location */
+	/* before doing the test */
+//	memory_region(REGION_CPU1)[0xeffe] = 0x4f;
+//	memory_region(REGION_CPU1)[0xefff] = 0x4b;
+
+//	system1_define_sprite_pixelmode(system1_SPRITE_PIXEL_MODE2);
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 }
 
@@ -62,6 +80,10 @@ WRITE_HANDLER( hvymetal_videomode_w )
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
 
+	/* patch out the obnoxiously long startup RAM tests */
+//	rom[0x4a55 + memory_region_length(REGION_CPU1) / 2] = 0xc3;
+//	rom[0x4a56] = 0xb6;
+//	rom[0x4a57] = 0x4a;
 
 	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
 	cpu_setbank(1,&rom[bankaddress]);
@@ -1752,7 +1774,7 @@ static struct MachineDriver machine_driver_pitfall2 =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,        	/* 3 Mhz ? */
+			3000000,        	/* 3 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4		 /* NMIs are caused by the main CPU */
 		},
@@ -1796,7 +1818,7 @@ static struct MachineDriver machine_driver_hvymetal =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 Mhz ? */
+			4000000,        	/* 4 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4		 /* NMIs are caused by the main CPU */
 		},
@@ -1840,7 +1862,7 @@ static struct MachineDriver machine_driver_chplft =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 Mhz ? */
+			4000000,        	/* 4 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4		 /* NMIs are caused by the main CPU */
 		},
@@ -1928,7 +1950,7 @@ static struct MachineDriver machine_driver_wbml =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,        	/* 4 Mhz ? */
+			4000000,        	/* 4 MHz ? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4		 /* NMIs are caused by the main CPU */
 		},
@@ -1992,6 +2014,9 @@ ROM_START( starjack )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "5318",         0x0000, 0x4000, 0x6f2e1fd3 )
 	ROM_LOAD( "5319",         0x4000, 0x4000, 0xebee4999 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( starjacs )
@@ -2020,6 +2045,9 @@ ROM_START( starjacs )
 	/* different. */
 	ROM_LOAD( "5318",         0x0000, 0x4000, BADCRC(0x6f2e1fd3) )
 	ROM_LOAD( "5319",         0x4000, 0x4000, BADCRC(0xebee4999) )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( regulus )
@@ -2045,6 +2073,9 @@ ROM_START( regulus )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr5638.92",   0x0000, 0x4000, 0x617363dd )
 	ROM_LOAD( "epr5639.93",   0x4000, 0x4000, 0xa4ec5131 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.106",   0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( regulusu )
@@ -2070,6 +2101,9 @@ ROM_START( regulusu )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr5638.92",   0x0000, 0x4000, 0x617363dd )
 	ROM_LOAD( "epr5639.93",   0x4000, 0x4000, 0xa4ec5131 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.106",   0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( upndown )
@@ -2095,6 +2129,9 @@ ROM_START( upndown )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "upnd5514.bin", 0x0000, 0x4000, 0xfcc0a88b )
 	ROM_LOAD( "upnd5515.bin", 0x4000, 0x4000, 0x60908838 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( mrviking )
@@ -2120,6 +2157,9 @@ ROM_START( mrviking )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr-5749.bin", 0x0000, 0x4000, 0xe24682cd )
 	ROM_LOAD( "epr-5750.bin", 0x4000, 0x4000, 0x6564d1ad )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( mrvikinj )
@@ -2145,6 +2185,9 @@ ROM_START( mrvikinj )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr-5749.bin", 0x0000, 0x4000, 0xe24682cd )
 	ROM_LOAD( "epr-5750.bin", 0x4000, 0x4000, 0x6564d1ad )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( swat )
@@ -2170,6 +2213,9 @@ ROM_START( swat )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr5805.92",   0x0000, 0x4000, 0x5a732865 )
 	ROM_LOAD( "epr5806.93",   0x4000, 0x4000, 0x26ac258c )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.106",   0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( flicky )
@@ -2188,6 +2234,9 @@ ROM_START( flicky )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr5855",      0x0000, 0x4000, 0xb5f894a1 )
 	ROM_LOAD( "epr5856",      0x4000, 0x4000, 0x266af78f )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( flicky2 )
@@ -2208,6 +2257,9 @@ ROM_START( flicky2 )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr5855",      0x0000, 0x4000, 0xb5f894a1 )
 	ROM_LOAD( "epr5856",      0x4000, 0x4000, 0x266af78f )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( bullfgtj )
@@ -2230,6 +2282,9 @@ ROM_START( bullfgtj )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "6069",         0x0000, 0x4000, 0xfe691e41 )
 	ROM_LOAD( "6070",         0x4000, 0x4000, 0x34f080df )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr-5317",      0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( pitfall2 )
@@ -2252,6 +2307,9 @@ ROM_START( pitfall2 )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr6454a.117", 0x0000, 0x4000, 0xa5d96780 )
 	ROM_LOAD( "epr6455.05",   0x4000, 0x4000, 0x32ee64a1 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( pitfallu )
@@ -2274,6 +2332,9 @@ ROM_START( pitfallu )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr6454a.117", 0x0000, 0x4000, 0xa5d96780 )
 	ROM_LOAD( "epr6455.05",   0x4000, 0x4000, 0x32ee64a1 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( seganinj )
@@ -2298,6 +2359,9 @@ ROM_START( seganinj )
 	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317",       0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( seganinu )
@@ -2322,6 +2386,9 @@ ROM_START( seganinu )
 	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317",       0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( nprinces )
@@ -2346,6 +2413,9 @@ ROM_START( nprinces )
 	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317",       0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( nprincsu )
@@ -2373,6 +2443,9 @@ ROM_START( nprincsu )
 	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317",       0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( nprincsb )
@@ -2397,6 +2470,11 @@ ROM_START( nprincsb )
 	ROM_LOAD( "6548.04",      0x4000, 0x4000, 0xbdf278c1 )
 	ROM_LOAD( "6547.110",     0x8000, 0x4000, 0x34451b08 )
 	ROM_LOAD( "6549.05",      0xc000, 0x4000, 0xd2057668 )
+
+	ROM_REGION( 0x0220, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317",       0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
+	ROM_LOAD( "nprinces.129", 0x0100, 0x0100, 0xae765f62 )	/* decryption table (not used) */
+	ROM_LOAD( "nprinces.123", 0x0200, 0x0020, 0xed5146e9 )	/* decryption table (not used) */
 ROM_END
 
 ROM_START( imsorry )
@@ -2419,6 +2497,9 @@ ROM_START( imsorry )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr66xx.117",  0x0000, 0x4000, 0x1ba167ee )
 	ROM_LOAD( "epr66xx.u04",  0x4000, 0x4000, 0xedda7ad6 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317.u76",     0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( imsorryj )
@@ -2441,6 +2522,9 @@ ROM_START( imsorryj )
 	ROM_REGION( 0x8000, REGION_GFX2 )	/* 32k for sprites data */
 	ROM_LOAD( "epr66xx.117",  0x0000, 0x4000, 0x1ba167ee )
 	ROM_LOAD( "epr66xx.u04",  0x4000, 0x4000, 0xedda7ad6 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317.u76",     0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( teddybb )
@@ -2465,6 +2549,9 @@ ROM_START( teddybb )
 	ROM_LOAD( "6737.004",     0x4000, 0x4000, 0x6b53aa7a )
 	ROM_LOAD( "6736.110",     0x8000, 0x4000, 0x565c25d0 )
 	ROM_LOAD( "6738.005",     0xc000, 0x4000, 0xe116285f )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 /* This is the first System 1 game to have extended ROM space */
@@ -2491,10 +2578,11 @@ ROM_START( hvymetal )
 	ROM_LOAD( "epr6780.4",    0x10000, 0x8000, 0x55b31df5 )
 	ROM_LOAD( "epr6779.5",    0x18000, 0x8000, 0xe03a2b28 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr7036.3",     0x0000, 0x0100, 0x146f16fb ) /* palette red component */
-	ROM_LOAD( "pr7035.2",     0x0100, 0x0100, 0x50b201ed ) /* palette green component */
-	ROM_LOAD( "pr7034.1",     0x0200, 0x0100, 0xdfb5f139 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr7036.3",     0x0000, 0x0100, 0x146f16fb )	/* palette red component */
+	ROM_LOAD( "pr7035.2",     0x0100, 0x0100, 0x50b201ed )	/* palette green component */
+	ROM_LOAD( "pr7034.1",     0x0200, 0x0100, 0xdfb5f139 )	/* palette blue component */
+	ROM_LOAD( "pr5317p.4",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( myhero )
@@ -2519,6 +2607,9 @@ ROM_START( myhero )
 	ROM_LOAD( "epr6923.u04",  0x4000, 0x4000, 0x7988adc3 )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( myheroj )
@@ -2540,6 +2631,10 @@ ROM_START( myheroj )
 	ROM_LOAD( "epr6923.u04",  0x4000, 0x4000, 0x7988adc3 )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
+
+	ROM_REGION( 0x0200, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
+	ROM_LOAD( "82s129.pr1",   0x0100, 0x0100, 0xcfe797bf )	/* decryption table (not used) */
 ROM_END
 
 ROM_START( myherok )
@@ -2565,6 +2660,9 @@ ROM_START( myherok )
 	ROM_LOAD( "epr6923.u04",  0x4000, 0x4000, 0x7988adc3 )
 	ROM_LOAD( "epr6922.110",  0x8000, 0x4000, 0x37f77a78 )
 	ROM_LOAD( "epr6924.u05",  0xc000, 0x4000, 0x42bdc8f6 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "5317",         0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( shtngmst )
@@ -2590,10 +2688,11 @@ ROM_START( shtngmst )
 	ROM_LOAD( "epr7108",      0x28000, 0x8000, 0x816180ac )
 	ROM_LOAD( "epr7110",      0x30000, 0x8000, 0x5d1a5048 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "epr7113",      0x0000, 0x0100, 0x5c0e1360 ) /* palette red component */
-	ROM_LOAD( "epr7112",      0x0100, 0x0100, 0x46fbd351 ) /* palette green component */
-	ROM_LOAD( "epr7111",      0x0200, 0x0100, 0x8123b6b9 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "epr7113",      0x0000, 0x0100, 0x5c0e1360 )	/* palette red component */
+	ROM_LOAD( "epr7112",      0x0100, 0x0100, 0x46fbd351 )	/* palette green component */
+	ROM_LOAD( "epr7111",      0x0200, 0x0100, 0x8123b6b9 )	/* palette blue component */
+	ROM_LOAD( "epr5317",      0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( chplft )
@@ -2616,10 +2715,11 @@ ROM_START( chplft )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
-	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
-	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f )	/* palette red component */
+	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 )	/* palette green component */
+	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e )	/* palette blue component */
+	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( chplftb )
@@ -2642,10 +2742,11 @@ ROM_START( chplftb )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
-	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
-	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f )	/* palette red component */
+	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 )	/* palette green component */
+	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e )	/* palette blue component */
+	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( chplftbl )
@@ -2668,10 +2769,11 @@ ROM_START( chplftbl )
 	ROM_LOAD( "7123.89",      0x10000, 0x8000, 0x8f16a303 )
 	ROM_LOAD( "7122.88",      0x18000, 0x8000, 0x7c93f160 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
-	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
-	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f )	/* palette red component */
+	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 )	/* palette green component */
+	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e )	/* palette blue component */
+	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( 4dwarrio )
@@ -2696,6 +2798,9 @@ ROM_START( 4dwarrio )
 	ROM_LOAD( "4d.04",        0x4000, 0x4000, 0x8b7cecef )
 	ROM_LOAD( "4d.110",       0x8000, 0x4000, 0x6ec5990a )
 	ROM_LOAD( "4d.05",        0xc000, 0x4000, 0xf31a1e6a )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( brain )
@@ -2720,10 +2825,11 @@ ROM_START( brain )
 	ROM_LOAD( "brain.4",      0x10000, 0x8000, 0xfd2ea53b )
 	/* 18000-1ffff empty */
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "prom.3",       0x0000, 0x0100, 0x00000000 ) /* palette red component */
-	ROM_LOAD( "prom.2",       0x0100, 0x0100, 0x00000000 ) /* palette green component */
-	ROM_LOAD( "prom.1",       0x0200, 0x0100, 0x00000000 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "prom.3",       0x0000, 0x0100, 0x00000000 )	/* palette red component */
+	ROM_LOAD( "prom.2",       0x0100, 0x0100, 0x00000000 )	/* palette green component */
+	ROM_LOAD( "prom.1",       0x0200, 0x0100, 0x00000000 )	/* palette blue component */
+	ROM_LOAD( "pr5317.76",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboy )
@@ -2748,6 +2854,9 @@ ROM_START( wboy )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboy2 )
@@ -2772,6 +2881,9 @@ ROM_START( wboy2 )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboy3 )
@@ -2796,6 +2908,9 @@ ROM_START( wboy3 )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboy4 )
@@ -2823,6 +2938,9 @@ ROM_START( wboy4 )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboyu )
@@ -2847,6 +2965,9 @@ ROM_START( wboyu )
 	ROM_LOAD( "ic004_87.bin", 0x4000, 0x4000, 0x119735bb )
 	ROM_LOAD( "ic110_86.bin", 0x8000, 0x4000, 0x26d0fac4 )
 	ROM_LOAD( "ic005_88.bin", 0xc000, 0x4000, 0x2602e519 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wboy4u )
@@ -2874,6 +2995,9 @@ ROM_START( wboy4u )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wbdeluxe )
@@ -2901,6 +3025,9 @@ ROM_START( wbdeluxe )
 	ROM_LOAD( "epr7487.04",   0x4000, 0x4000, 0x2d3a421b )
 	ROM_LOAD( "epr7486.110",  0x8000, 0x4000, 0x8d622c50 )
 	ROM_LOAD( "epr7488.05",   0xc000, 0x4000, 0x007c2f1b )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( gardia )
@@ -2923,10 +3050,11 @@ ROM_START( gardia )
 	ROM_LOAD( "epr10236.04",  0x10000, 0x8000, 0xb35ab227 )
 	ROM_LOAD( "epr10235.5",   0x18000, 0x8000, 0x006a3151 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
-	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
-	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 )	/* palette red component */
+	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 )	/* palette green component */
+	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 )	/* palette blue component */
+	ROM_LOAD( "pr5317.4",     0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( gardiab )
@@ -2949,10 +3077,11 @@ ROM_START( gardiab )
 	ROM_LOAD( "epr10236.04",  0x10000, 0x8000, 0xb35ab227 )
 	ROM_LOAD( "epr10235.5",   0x18000, 0x8000, 0x006a3151 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
-	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
-	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 )	/* palette red component */
+	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 )	/* palette green component */
+	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 )	/* palette blue component */
+	ROM_LOAD( "pr5317.4",     0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( blockgal )
@@ -2977,12 +3106,15 @@ ROM_START( blockgal )
 	ROM_LOAD( "bg.04",        0x4000, 0x4000, 0x213057f8 )
 	ROM_LOAD( "bg.110",       0x8000, 0x4000, 0x064c812c )
 	ROM_LOAD( "bg.05",        0xc000, 0x4000, 0x02e0b040 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( blckgalb )
 	ROM_REGION( 2*0x10000, REGION_CPU1 ) /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "ic62",         0x10000, 0x8000, 0x65c47676 ) /* decrypted opcodes */
-	ROM_CONTINUE(			  0x00000, 0x8000 )			 /* decrypted data */
+	ROM_CONTINUE(             0x00000, 0x8000 )             /* decrypted data */
 
 	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for sound cpu */
 	ROM_LOAD( "bg.120",       0x0000, 0x2000, 0xd848faff )
@@ -3000,6 +3132,9 @@ ROM_START( blckgalb )
 	ROM_LOAD( "bg.04",        0x4000, 0x4000, 0x213057f8 )
 	ROM_LOAD( "bg.110",       0x8000, 0x4000, 0x064c812c )
 	ROM_LOAD( "bg.05",        0xc000, 0x4000, 0x02e0b040 )
+
+	ROM_REGION( 0x0100, REGION_USER1 )	/* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr5317.76",    0x0000, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( tokisens )
@@ -3022,10 +3157,11 @@ ROM_START( tokisens )
 	ROM_LOAD( "epr10960.89",  0x10000, 0x8000, 0x880e0d44 )
 	ROM_LOAD( "epr10959.88",  0x18000, 0x8000, 0x4deda48f )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "bprom.20",      0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
-	ROM_LOAD( "bprom.14",      0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
-	ROM_LOAD( "bprom.8",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "bprom.20",      0x0000, 0x0100, 0x8eee0f72 )	/* palette red component */
+	ROM_LOAD( "bprom.14",      0x0100, 0x0100, 0x3e7babd7 )	/* palette green component */
+	ROM_LOAD( "bprom.8",       0x0200, 0x0100, 0x371c44a6 )	/* palette blue component */
+	ROM_LOAD( "bprom.28",      0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wbml )
@@ -3051,10 +3187,11 @@ ROM_START( wbml )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wbmlj )
@@ -3077,10 +3214,11 @@ ROM_START( wbmlj )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wbmlj2 )
@@ -3103,10 +3241,11 @@ ROM_START( wbmlj2 )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( wbmlju )
@@ -3132,10 +3271,11 @@ ROM_START( wbmlju )
 	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, 0xf05ffc76 )
 	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, 0xcedc9c61 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
+	ROM_REGION( 0x0400, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( dakkochn )
@@ -3158,10 +3298,11 @@ ROM_START( dakkochn )
 	ROM_LOAD( "epr11223.89",  0x10000, 0x8000, 0x538adc55 )
 	ROM_LOAD( "epr11222.88",  0x18000, 0x8000, 0x33fab0b2 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr11219.20",   0x0000, 0x0100, 0x45e252d9 ) /* palette red component */
-	ROM_LOAD( "pr11218.14",   0x0100, 0x0100, 0x3eda3a1b ) /* palette green component */
-	ROM_LOAD( "pr11217.8",    0x0200, 0x0100, 0x49dbde88 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr11219.20",   0x0000, 0x0100, 0x45e252d9 )	/* palette red component */
+	ROM_LOAD( "pr11218.14",   0x0100, 0x0100, 0x3eda3a1b )	/* palette green component */
+	ROM_LOAD( "pr11217.8",    0x0200, 0x0100, 0x49dbde88 )	/* palette blue component */
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 ROM_START( ufosensi )
@@ -3184,10 +3325,11 @@ ROM_START( ufosensi )
 	ROM_LOAD( "epr11660.89",  0x10000, 0x8000, 0xe1e2e7c5 )
 	ROM_LOAD( "epr11659.88",  0x18000, 0x8000, 0x286c7286 )
 
-	ROM_REGION( 0x0300, REGION_PROMS )
-	ROM_LOAD( "pr11656.20",   0x0000, 0x0100, 0x640740eb ) /* palette red component */
-	ROM_LOAD( "pr11655.14",   0x0100, 0x0100, 0xa0c3fa77 ) /* palette green component */
-	ROM_LOAD( "pr11654.8",    0x0200, 0x0100, 0xba624305 ) /* palette blue component */
+	ROM_REGION( 0x0400, REGION_PROMS )
+	ROM_LOAD( "pr11656.20",   0x0000, 0x0100, 0x640740eb )	/* palette red component */
+	ROM_LOAD( "pr11655.14",   0x0100, 0x0100, 0xa0c3fa77 )	/* palette green component */
+	ROM_LOAD( "pr11654.8",    0x0200, 0x0100, 0xba624305 )	/* palette blue component */
+	ROM_LOAD( "pr5317.28",    0x0300, 0x0100, 0x648350b8 )	/* timing? (not used) */
 ROM_END
 
 
