@@ -185,13 +185,17 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 	/* Magnavox */
 /*	DRIVER( odyssey )*/	/* Magnavox Odyssey - analogue (1972)			  */
 TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
+
+	/* Watara */
+	DRIVER( svision )	/* Super Vision	Handheld						  */
+
 #endif
 
 /****************COMPUTERS****************************************************/
     /* ACORN */
 #ifndef MESS_EXCLUDE_ACORN
     DRIVER( atom )      /* 1979 Acorn Atom                                */
-    DRIVER( atomeb )      /* 1979 Acorn Atom                                */
+    DRIVER( atomeb )    /* 1979 Acorn Atom                                */
     DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
     DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
     DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
@@ -575,8 +579,8 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 TESTDRIVER( comquest )	/* Comquest Plus German							*/
 
 	/* Hewlett Packard */
-/*	DRIVER( hp48s )*/ 	/* HP48 S/SX 							  		  */
-/*	DRIVER( hp48g )*/ 	/* HP48 G/GX 							  		  */
+/*DRIVER( hp48s )*/ 	/* HP48 S/SX 							  		  */
+/*DRIVER( hp48g )*/ 	/* HP48 G/GX 							  		  */
 
 	/* SpectraVideo */
 	DRIVER( svi318 ) 	/* SVI-318										  */
