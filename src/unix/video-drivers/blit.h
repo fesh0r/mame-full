@@ -581,7 +581,7 @@ break;
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
       unsigned int *dst = (unsigned int *)DST; \
-      int r,y,u,v; \
+      int r; \
       for(;src<end;) \
       { \
           r=INDIRECT[*src++]; \

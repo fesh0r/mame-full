@@ -204,7 +204,8 @@ int test_mit_shm (Display * display, XErrorEvent * error)
 #ifdef USE_XV
 int FindXvPort(Display *dpy, long format, int *port)
 {
-   int i,j,p,ret,num_adaptors,num_formats;
+   int i,j,p,ret,num_formats;
+   unsigned int num_adaptors;
    XvAdaptorInfo *ai;
    XvImageFormatValues *fo;
 
@@ -245,7 +246,8 @@ int FindXvPort(Display *dpy, long format, int *port)
 
 int FindRGBXvFormat(Display *dpy, int *port,long *format,int *bpp)
 {
-   int i,j,p,ret,num_adaptors,num_formats;
+   int i,j,p,ret,num_formats;
+   unsigned int num_adaptors;
    XvAdaptorInfo *ai;
    XvImageFormatValues *fo;
 
@@ -307,7 +309,7 @@ void ClearYUY2()
     {
       int offset=(HWSCALE_WIDTH*i+j)*2;
       yuv[offset] = 0;
-      yuv[offset+1]=128;
+      yuv[offset+1]=-128;
     }
   }
 }
@@ -326,8 +328,8 @@ void ClearYV12()
       if((i&1) && (j&1))
       {
         offset = (HWSCALE_WIDTH/2)*(i/2) + (j/2);
-        u[offset] = 128;
-        v[offset] = 128;
+        u[offset] = -128;
+        v[offset] = -128;
       }
     }
   }
@@ -426,7 +428,7 @@ int x11_window_create_display (int bitmap_depth)
    XEvent event;
    XSizeHints hints;
    XWMHints wm_hints;
-   unsigned int geom_width, geom_height;
+   int geom_width, geom_height;
    int image_height;
    int i;
    int event_mask;
@@ -530,7 +532,7 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_XV
    if (use_xv)             /* look for available Xv extensions */
    {
-      int p_version,p_release,p_request_base,p_event_base,p_error_base;
+      unsigned int p_version,p_release,p_request_base,p_event_base,p_error_base;
       if(XvQueryExtension(display, &p_version, &p_release, &p_request_base,
         &p_event_base, &p_error_base)==Success)
       {
@@ -1408,9 +1410,10 @@ void x11_window_refresh_screen (void)
 #ifdef USE_XV
          {
             Window _dw;
-            int _d,_w,_h;
+            int _dint;
+	    unsigned int _w,_h,_duint;
             long pw,ph;
-            XGetGeometry(display, window, &_dw, &_d, &_d, &_w, &_h, &_d, &_d);
+            XGetGeometry(display, window, &_dw, &_dint, &_dint, &_w, &_h, &_duint, &_duint);
 
 		if (normal_use_aspect_ratio)
 			pw = aspect_ratio * _h;
@@ -1501,9 +1504,9 @@ static void x11_window_make_yuv_lookup()
 static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 {
    int _x,_y;
-   unsigned char *dest_y;
-   unsigned char *dest_u;
-   unsigned char *dest_v;
+   char *dest_y;
+   char *dest_u;
+   char *dest_v;
    unsigned short *src;
    unsigned short *src2;
    int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
@@ -1596,10 +1599,10 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 
 static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
 {      /* this one is used when scale==2 */
-   unsigned int _x,_y /*,r*/ ;
-   unsigned char *dest_y;
-   unsigned char *dest_u;
-   unsigned char *dest_v;
+   unsigned int _x,_y;
+   char *dest_y;
+   char *dest_u;
+   char *dest_v;
    unsigned short *src;
    unsigned short *src2;
    int u,v,y;
@@ -1647,9 +1650,9 @@ static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
 static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
 {
    int _x,_y,r,g,b;
-   unsigned char *dest_y;
-   unsigned char *dest_u;
-   unsigned char *dest_v;
+   char *dest_y;
+   char *dest_u;
+   char *dest_v;
    unsigned int *src;
    unsigned int *src2;
    int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
@@ -1708,9 +1711,9 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
 static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap)
 { /* This one is used when scale == 2 */
    int _x,_y,r,g,b;
-   unsigned char *dest_y;
-   unsigned char *dest_u;
-   unsigned char *dest_v;
+   char *dest_y;
+   char *dest_u;
+   char *dest_v;
    unsigned int *src;
    unsigned int *src2;
    int u,v,y;

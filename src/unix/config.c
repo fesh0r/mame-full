@@ -57,8 +57,10 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 static struct rc_struct *rc;
 
 static int config_handle_arg(char *arg);
+#ifdef MAME_DEBUG
 static int config_handle_debug_size(struct rc_option *option, const char *arg,
    int priority);
+#endif
 void show_usage(void);
 
 #ifdef MESS
@@ -116,7 +118,7 @@ static struct rc_option opts[] = {
    { "cheat",		"c",			rc_bool,	&options.cheat,
      "0",		0,			0,		NULL,
      "Enable/disable cheat subsystem" },
-#ifdef MAME_DEBUG     
+#ifdef MAME_DEBUG
    { "debug",		"d",			rc_bool,	&options.mame_debug,
      NULL,		0,			0,		NULL,
      "Enable/disable debugger" },
@@ -228,6 +230,7 @@ static int config_handle_arg(char *arg)
    return 0;
 }
 
+#ifdef MAME_DEBUG
 static int config_handle_debug_size(struct rc_option *option, const char *arg,
    int priority)
 {
@@ -247,7 +250,7 @@ static int config_handle_debug_size(struct rc_option *option, const char *arg,
       arg);
   return -1;
 }
-
+#endif /* MAME_DEBUG */
 
 /*
  * get configuration from configfile and env.

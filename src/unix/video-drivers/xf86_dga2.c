@@ -38,7 +38,7 @@ static struct
 	int grabbed_keybd;
 	int grabbed_mouse;
 	int old_grab_mouse;
-	char *base_addr;
+	unsigned char *base_addr;
 	int width;
 	Colormap cmap;
 	void (*xf86_dga_update_display_func)(struct mame_bitmap *bitmap);

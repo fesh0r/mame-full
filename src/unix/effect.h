@@ -13,7 +13,7 @@ enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCA
 #define EFFECT_LAST EFFECT_SCAN3
 
 /* buffer for doublebuffering */
-EXTERN_EFFECT void *effect_dbbuf;
+EXTERN_EFFECT char *effect_dbbuf;
 
 /* from video.c, needed to scale the display according to the requirements of the effect */
 extern int normal_widthscale, normal_heightscale;

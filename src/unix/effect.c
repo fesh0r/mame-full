@@ -152,7 +152,7 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
 		printf("Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
 		effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
 		for (i=0; i<dst_width*normal_heightscale*rddepth/8; i++)
-			((char *)effect_dbbuf)[i] = 0;
+			effect_dbbuf[i] = 0;
 		switch (dst_depth) {
 			case 15:
 			case 16:
