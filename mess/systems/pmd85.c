@@ -219,9 +219,10 @@ static MACHINE_DRIVER_START( pmd85 )
 	MDRV_VIDEO_UPDATE( pmd85 )
 MACHINE_DRIVER_END
 
-static const struct IODevice io_pmd85[] = {
-	{ IO_END }
-};
+/* NPW 20-Sep-2002 - changed this because the io_* arrays are deprecated, and I am
+ * using io_NULL to mark places where the change is complete
+ */
+#define io_pmd85	io_NULL
 
 ROM_START(pmd85)
 	ROM_REGION(0x14000,REGION_CPU1,0)
