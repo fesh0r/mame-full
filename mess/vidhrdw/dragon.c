@@ -484,7 +484,7 @@ static int coco3_hires_linesperrow(void)
 
 static int coco3_hires_vidbase(void)
 {
-	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)) | ((coco3_gimevhreg[7] & 0x7f)));
+	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)) | ((coco3_gimevhreg[7] & 0x7f) * 2));
 
 }
 
@@ -572,7 +572,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int blink_switch=0;
 		int vidbase, bytesperrow, linesperrow, rows = 0, x, y, basex = 0, basey, wf = 0;
 		int use_attr, charsperrow = 0, underlined = 0;
-		int visualbytesperrow, emupixelsperbyte;
+		int visualbytesperrow;
 		int borderred, bordergreen, borderblue;
 		UINT8 *vram, *db;
 		UINT8 b;
@@ -723,8 +723,6 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				break;
 			}
 
-			emupixelsperbyte = 512 / visualbytesperrow;
-
 			if (coco3_gimevhreg[1] & 0x04) {
 				visualbytesperrow |= (visualbytesperrow / 4);
 				basex = (bitmap->width - 640) / 2;
@@ -800,7 +798,7 @@ static void coco3_ram_w(int offset, int data, int block)
 
 	if (RAM[offset] != data) {
 		if (coco3_hires) {
-			vidbase = (coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8);
+			vidbase = coco3_hires_vidbase();
 			vidbasediff = (unsigned int) (offset - vidbase) & 0x7ffff;
 			if (vidbasediff < MAX_HIRES_VRAM) {
 				dirtybuffer[vidbasediff] = 1;
