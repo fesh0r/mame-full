@@ -86,6 +86,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
+#include "fileio.h"
 #include "state.h"
 #include "mamedbg.h"
 #include "hd6309.h"
