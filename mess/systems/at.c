@@ -780,7 +780,11 @@ static const struct IODevice io_ibmat[] = {
 /*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    COMPANY	 FULLNAME */
 COMPX ( 1985,	ibmat,		0,		atcga,		atcga,		atcga,	    "International Business Machines",  "IBM PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 COMPX ( 1988,	i8530286,	ibmat,	ps2m30286,	atvga,		ps2m30286,	"International Business Machines",  "IBM PS2 Model 30 286", GAME_NOT_WORKING )
+#ifdef MESS_DEBUG
 COMPX ( 1987,	at,			ibmat,	atcga,      atcga,		atcga,	    "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+#else
+COMPX ( 1987,	at,			0,	atcga,      atcga,		atcga,	    "",  "PC/AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+#endif
 COMPX ( 1989,	neat,		ibmat,	atcga,      atcga,		atcga,	    "",  "NEAT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 #ifdef HAS_I386
 COMPX ( 1988,	at386,		ibmat,	at386,      atcga,		at386,	    "MITAC INC",  "PC/AT 386(CGA, MF2 Keyboard)", GAME_NOT_WORKING )
