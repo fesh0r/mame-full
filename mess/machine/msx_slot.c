@@ -5,9 +5,13 @@
  *
  * Missing:
  * - Holy Qu'ran
+ *   like ascii8, with switch address 5000h/5400h/5800h/5c00h, not working.
  * - Harry Fox
+ *   16kb banks, 6000h and 7000h switch address; isn't it really an ascii16?
  * - Halnote
+ *   writes to page 0?
  * - Playball
+ *   Has sample ROM.
  * - Some ascii8 w/ sram need 32kb sram?
  * - MegaRAM
  * - fmsx painter.rom

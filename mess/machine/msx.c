@@ -799,9 +799,15 @@ void msx_memory_init (void)
 			if (layout->type == SLOT_CARTRIDGE2) {
 				st = msx1.cart_state[1];
 				if (!st) {
-					slot = &msx_slot_list[SLOT_FMPAC];
 					option = 0x10000;
 					size = 0x10000;
+					mem = memory_region(REGION_CPU1) + option;
+					if (mem[0] == 'A' && mem[1] == 'B') {
+						slot = &msx_slot_list[SLOT_FMPAC];
+					}
+					else {
+						slot = &msx_slot_list[SLOT_EMPTY];
+					}
 				}
 			}
 
