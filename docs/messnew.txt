@@ -6,6 +6,13 @@ New System Drivers Supported (in no particular order):
 
 
 
+System Driver Changes:
+----------------------
+- [APPLE1] Removed extraneous and obsolete RAM size DIP switches.  (bug #676)
+  [Nate Woods]
+
+
+
 User Interface Changes:
 -----------------------
 - Fixed a bug that caused the image info screen to not work properly with

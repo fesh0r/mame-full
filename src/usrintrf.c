@@ -214,6 +214,7 @@ static const UINT8 uifontdata[] =
 	0x80,0xf0,0x88,0x88,0xf0,0x80,0x80,0x80,0x50,0x00,0x88,0x88,0x88,0x78,0x08,0x70
 };
 
+#define MAX_UIFONT_SIZE 8 /* max(width,height) */
 static const struct GfxLayout uifontlayout =
 {
 	6,8,
@@ -377,7 +378,6 @@ static void erase_screen(struct mame_bitmap *bitmap)
 struct GfxElement *builduifont(void)
 {
 	struct GfxLayout layout = uifontlayout;
-	UINT32 tempoffset[MAX_GFX_SIZE];
 	struct GfxElement *font;
 	int temp, i;
 
@@ -395,27 +395,24 @@ struct GfxElement *builduifont(void)
 	/* pixel double horizontally */
 	if (uirotwidth >= 420)
 	{
-		memcpy(tempoffset, layout.xoffset, sizeof(tempoffset));
 		for (i = 0; i < layout.width; i++)
-			layout.xoffset[i*2+0] = layout.xoffset[i*2+1] = tempoffset[i];
+			layout.xoffset[i*2+0] = layout.xoffset[i*2+1] = uifontlayout.xoffset[i];
 		layout.width *= 2;
 	}
 
 	/* pixel double vertically */
 	if (uirotheight >= 420)
 	{
-		memcpy(tempoffset, layout.yoffset, sizeof(tempoffset));
 		for (i = 0; i < layout.height; i++)
-			layout.yoffset[i*2+0] = layout.yoffset[i*2+1] = tempoffset[i];
+			layout.yoffset[i*2+0] = layout.yoffset[i*2+1] = uifontlayout.yoffset[i];
 		layout.height *= 2;
 	}
 
 	/* apply swappage */
 	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
 	{
-		memcpy(tempoffset, layout.xoffset, sizeof(tempoffset));
-		memcpy(layout.xoffset, layout.yoffset, sizeof(layout.xoffset));
-		memcpy(layout.yoffset, tempoffset, sizeof(layout.yoffset));
+		for (i=0; i<2*MAX_UIFONT_SIZE; i++)
+			temp = layout.xoffset[i], layout.xoffset[i] = layout.yoffset[i], layout.yoffset[i] = temp;
 
 		temp = layout.width;
 		layout.width = layout.height;
@@ -425,17 +422,15 @@ struct GfxElement *builduifont(void)
 	/* apply xflip */
 	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
 	{
-		memcpy(tempoffset, layout.xoffset, sizeof(tempoffset));
-		for (i = 0; i < layout.width; i++)
-			layout.xoffset[i] = tempoffset[layout.width - 1 - i];
+		for (i = 0; i < layout.width/2; i++)
+			temp = layout.xoffset[i], layout.xoffset[i] = layout.xoffset[layout.width - 1 - i], layout.xoffset[layout.width - 1 - i] = temp;
 	}
 
 	/* apply yflip */
 	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
 	{
-		memcpy(tempoffset, layout.yoffset, sizeof(tempoffset));
-		for (i = 0; i < layout.height; i++)
-			layout.yoffset[i] = tempoffset[layout.height - 1 - i];
+		for (i = 0; i < layout.height/2; i++)
+			temp = layout.yoffset[i], layout.yoffset[i] = layout.yoffset[layout.height - 1 - i], layout.yoffset[layout.height - 1 - i] = temp;
 	}
 
 	/* decode rotated font */

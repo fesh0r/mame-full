@@ -82,7 +82,7 @@ struct discrete_info
 static struct discrete_info *discrete_current_context;
 
 /* debugging statics */
-void *wav_file[DISCRETE_MAX_OUTPUTS];
+static wav_file *disc_wav_file[DISCRETE_MAX_OUTPUTS];
 FILE *disclogfile = NULL;
 
 
@@ -342,8 +342,8 @@ static void discrete_stop(void *chip)
 
 		/* close any wave files */
 		for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
-			if (wav_file[outputnum])
-				wav_close(wav_file[outputnum]);
+			if (disc_wav_file[outputnum])
+				wav_close(disc_wav_file[outputnum]);
 	}
 
 	if (DISCRETE_DEBUGLOG)
@@ -436,10 +436,10 @@ static void discrete_stream_update(void *param, stream_sample_t **inputs, stream
 	{
 		if (sizeof(stream_sample_t) == 2)
 			for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
-				wav_add_data_16(wav_file[outputnum], (INT16 *)buffer[outputnum], length);
+				wav_add_data_16(disc_wav_file[outputnum], (INT16 *)buffer[outputnum], length);
 		else
 			for (outputnum = 0; outputnum < info->discrete_outputs; outputnum++)
-				wav_add_data_32(wav_file[outputnum], (INT32 *)buffer[outputnum], length, 0);
+				wav_add_data_32(disc_wav_file[outputnum], (INT32 *)buffer[outputnum], length, 0);
 	}
 }
 
@@ -587,7 +587,7 @@ static void setup_output_nodes(struct discrete_info *info)
 		{
 			char name[32];
 			sprintf(name, "discrete%d.wav", outputnum);
-			wav_file[outputnum] = wav_open(name, Machine->sample_rate, 1);
+			disc_wav_file[outputnum] = wav_open(name, Machine->sample_rate, 1);
 		}
 	}
 

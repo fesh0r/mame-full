@@ -65,6 +65,11 @@ struct speaker_info
 	sound_stream *	mixer_stream;					/* mixing stream */
 	int				inputs;							/* number of input streams */
 	struct speaker_input *input;					/* array of input information */
+#ifdef MAME_DEBUG
+	INT32			max_sample;						/* largest sample value we've seen */
+	INT32			clipped_samples;				/* total number of clipped samples */
+	INT32			total_samples;					/* total number of samples */
+#endif
 };
 
 
@@ -928,6 +933,19 @@ void sound_stop(void)
 	if (wavfile)
 		wav_close(wavfile);
 
+#ifdef MAME_DEBUG
+{
+	int spknum;
+	
+	/* log the maximum sample values for all speakers */
+	for (spknum = 0; spknum < totalspeakers; spknum++)
+	{
+		struct speaker_info *spk = &speaker[spknum];
+		printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
+	}
+}
+#endif
+
 	/* stop all the sound chips */
 	for (sndnum = 0; sndnum < MAX_SOUND; sndnum++)
 		if (Machine->drv->sound[sndnum].sound_type != 0)
@@ -972,12 +990,6 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 		/* add up all the inputs */
 		for (inp = 1; inp < numinputs; inp++)
 			sample += inputs[inp][pos];
-		
-		/* clamp and store */
-		if (sample < -32768)
-			sample = -32768;
-		if (sample > 32767)
-			sample = 32767;
 		buffer[0][pos] = sample;
 	}
 }
@@ -1048,6 +1060,20 @@ void sound_frame_update(void)
 		if (spk->mixer_stream)
 		{
 			stream_buf = stream_consume_output(spk->mixer_stream, 0, samples_this_frame);
+
+#ifdef MAME_DEBUG
+			/* debug version: keep track of the maximum sample */
+			for (sample = 0; sample < samples_this_frame; sample++)
+			{
+				if (stream_buf[sample] > spk->max_sample)
+					spk->max_sample = stream_buf[sample];
+				else if (-stream_buf[sample] > spk->max_sample)
+					spk->max_sample = -stream_buf[sample];
+				if (stream_buf[sample] > 32767 || stream_buf[sample] < -32768)
+					spk->clipped_samples++;
+				spk->total_samples++;
+			}
+#endif
 			
 			/* mix if sound is enabled */
 			if (global_sound_enabled && !nosound_mode)

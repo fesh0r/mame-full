@@ -749,8 +749,6 @@ static int apple2_hasslots(void)
 
 MACHINE_INIT( apple2 )
 {
-	mess_image *image;
-	int i;
 	int need_intcxrom;
 
 	need_intcxrom = !strcmp(Machine->gamedrv->name, "apple2c")
