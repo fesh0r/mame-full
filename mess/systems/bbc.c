@@ -56,25 +56,40 @@ WRITE_HANDLER ( memory_w )
 	vidmem[offset]=1;
 }
 
+READ_HANDLER ( BBC_NOP_00_r )
+{
+	return 0x00;
+}
+
+READ_HANDLER ( BBC_NOP_FE_r )
+{
+	return 0xFE;
+}
+
+READ_HANDLER ( BBC_NOP_FF_r )
+{
+	return 0xFF;
+}
+
 static struct MemoryReadAddress readmem_bbca[] =
 {
 	{ 0x0000, 0x3fff, MRA_RAM		   },
 	{ 0x4000, 0x7fff, MRA_BANK1 	   },  /* bank 1 is a repeat of the memory at 0x0000 to 0x3fff	 */
 	{ 0x8000, 0xbfff, MRA_BANK2 	   },
 	{ 0xc000, 0xfbff, MRA_ROM		   },
-	{ 0xfc00, 0xfdff, MRA_NOP		   },  /* FRED & JIM Pages */
+	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 					 */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller				 */
-	{ 0xfe08, 0xfe0f, MRA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller				 */
-	{ 0xfe10, 0xfe1f, MRA_NOP		   },  /* &10-&1f  Serial ULA	 Serial system chip 			 */
+	{ 0xfe08, 0xfe0f, BBC_NOP_00_r	   },  /* &08-&0f  6850 ACIA	 Serial Controller				 */
+	{ 0xfe10, 0xfe1f, BBC_NOP_00_r	   },  /* &10-&1f  Serial ULA	 Serial system chip 			 */
 	{ 0xfe20, 0xfe2f, videoULA_r	   },  /* &20-&2f  Video ULA	 Video system chip				 */
-	{ 0xfe30, 0xfe3f, MRA_NOP		   },  /* &30-&3f  84LS161		 Paged ROM selector 			 */
+	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  84LS161		 Paged ROM selector 			 */
 	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 					 */
-	{ 0xfe60, 0xfe7f, MRA_NOP		   },  /* &60-&7f  6522 VIA 	 1 USER VIA 					 */
-	{ 0xfe80, 0xfe9f, MRA_NOP		   },  /* &80-&9f  8271/1770 FDC 1 Floppy disc controller		 */
-	{ 0xfea0, 0xfebf, MRA_NOP		   },  /* &a0-&bf  68B54 ADLC	 1 ECONET controller			 */
-	{ 0xfec0, 0xfedf, MRA_NOP		   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MRA_NOP		   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
+	{ 0xfe60, 0xfe7f, BBC_NOP_00_r	   },  /* &60-&7f  6522 VIA 	 1 USER VIA 					 */
+	{ 0xfe80, 0xfe9f, BBC_NOP_00_r	   },  /* &80-&9f  8271/1770 FDC 1 Floppy disc controller		 */
+	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 1 ECONET controller			 */
+	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
 	{ 0xff00, 0xffff, MRA_ROM		   },  /* Hardware marked with a 1 is not present in a Model A	 */
 	{-1}
 };
@@ -108,20 +123,20 @@ static struct MemoryReadAddress readmem_bbcb[] =
 	{ 0x0000, 0x7fff, MRA_RAM		   },
 	{ 0x8000, 0xbfff, MRA_BANK2 	   },
 	{ 0xc000, 0xfbff, MRA_ROM		   },
-	{ 0xfc00, 0xfdff, MRA_NOP		   },  /* FRED & JIM Pages */
+	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
-	{ 0xfe08, 0xfe0f, MRA_NOP		   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
-	{ 0xfe10, 0xfe1f, MRA_NOP		   },  /* &10-&1f  Serial ULA	 Serial system chip 		   */
+	{ 0xfe08, 0xfe0f, BBC_NOP_00_r	   },  /* &08-&0f  6850 ACIA	 Serial Controller			   */
+	{ 0xfe10, 0xfe1f, BBC_NOP_00_r	   },  /* &10-&1f  Serial ULA	 Serial system chip 		   */
 	{ 0xfe20, 0xfe2f, videoULA_r	   },  /* &20-&2f  Video ULA	 Video system chip			   */
-	{ 0xfe30, 0xfe3f, MRA_NOP		   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
+	{ 0xfe30, 0xfe3f, BBC_NOP_FE_r	   },  /* &30-&3f  84LS161		 Paged ROM selector 		   */
 	{ 0xfe40, 0xfe5f, via_0_r		   },  /* &40-&5f  6522 VIA 	 SYSTEM VIA 				   */
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 //	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  8271/1770 FDC Floppy disc controller 	   */
 	{ 0xfe80, 0xfe9f, bbc_i8271_read   },
-	{ 0xfea0, 0xfebf, MRA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, MRA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
-	{ 0xfee0, 0xfeff, MRA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
+	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
+	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_ROM		   },
 	{-1}
 };
@@ -332,13 +347,12 @@ ROM_START(bbcb)
 	ROM_REGION(0x50000,REGION_CPU1) /* ROM MEMORY */
 
 	ROM_LOAD("os12.rom",    0x0C000, 0x4000, 0x3c14fc70 )
-
-
-														  /* rom page 0  10000 */
-														  /* rom page 1  14000 */
-														  /* rom page 2  18000 */
-														  /* rom page 3  1c000 */
-	                                                      /* rom page 4  20000 */
+#ifdef MAME_DEBUG
+	ROM_LOAD("advromm.rom", 0x10000, 0x4000, 0xe7e2a294 ) /* rom page 0  10000 */
+	ROM_LOAD("exmon.rom",   0x14000, 0x4000, 0x9a50231f ) /* rom page 1  14000 */
+	ROM_LOAD("help.rom",    0x18000, 0x4000, 0xc1505821 ) /* rom page 2  18000 */
+	ROM_LOAD("toolkit.rom", 0x1c000, 0x4000, 0x557ce483 ) /* rom page 3  1c000 */
+	ROM_LOAD("view.rom",    0x20000, 0x4000, 0x4345359f ) /* rom page 4  20000 */
 	                                                      /* rom page 5  24000 */
 			  											  /* rom page 6  28000 */
 	                                                      /* rom page 7  2c000 */
@@ -348,7 +362,21 @@ ROM_START(bbcb)
 														  /* rom page 11 3c000 */
 														  /* rom page 12 40000 */
 														  /* rom page 13 44000 */
+#endif
+	/* just use one of the following DFS roms */
+	/* only dnfs.rom works right now */
+
+	/* dnfs is acorns disc and network fileing system rom it replaced dfs 0.9  */
 	ROM_LOAD("dnfs.rom",    0x48000, 0x4000, 0x8ccd2157 ) /* rom page 14 48000 */
+
+	/* dfs 0.9 was the standard acorn dfs rom before it was replaced with the dnfs rom */
+//	ROM_LOAD("dfs09.rom",   0x48000, 0x2000, 0x3ce609cf ) /* rom page 14 48000 */
+//	ROM_RELOAD(             0x4a000, 0x2000             )
+
+	/* dfs 1.44 from watford electronics, this is the best of the non-acorn dfs roms */
+//	ROM_LOAD("dfs144.rom",  0x48000, 0x4000, 0x9fb8d13f ) /* rom page 14 48000 */
+
+
 	ROM_LOAD("basic2.rom",  0x4c000, 0x4000, 0x79434781 ) /* rom page 15 4c000 */
 
 
