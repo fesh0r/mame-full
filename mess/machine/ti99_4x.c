@@ -1796,13 +1796,13 @@ static int ti99_handset_poll_keyboard(int num)
 	}
 
 	current_key = 0;	/* default value if no key is down */
-	if (key_buf & 0x0008)
-		current_key |= 0x20;	/* set shift flag */
 	for (i=0; i<20; i++)
 	{
 		if (key_buf & (1 << i))
 		{
 			current_key = i + 1;
+			if (key_buf & 0x0008)
+				current_key |= 0x20;	/* set shift flag */
 
 			if (current_key != 0x24)
 				/* If this is the shift key, any other key we may find will
