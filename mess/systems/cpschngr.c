@@ -79,22 +79,22 @@ static int dial[2];
 
 static READ16_HANDLER( forgottn_dial_0_r )
 {
-	return ((readinputport(6) - dial[0]) >> (8*offset)) & 0xff;
+	return ((readinputport(5) - dial[0]) >> (8*offset)) & 0xff;
 }
 
 static READ16_HANDLER( forgottn_dial_1_r )
 {
-	return ((readinputport(7) - dial[1]) >> (8*offset)) & 0xff;
+	return ((readinputport(6) - dial[1]) >> (8*offset)) & 0xff;
 }
 
 static WRITE16_HANDLER( forgottn_dial_0_reset_w )
 {
-	dial[0] = readinputport(6);
+	dial[0] = readinputport(5);
 }
 
 static WRITE16_HANDLER( forgottn_dial_1_reset_w )
 {
-	dial[1] = readinputport(7);
+	dial[1] = readinputport(6);
 }
 
 static WRITE16_HANDLER( cps1_coinctrl_w )
@@ -267,7 +267,7 @@ MEMORY_WRITE16_START( cps1_writemem )
 	{ 0x800180, 0x800181, cps1_sound_command_w },  /* Sound command */
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
-	{ 0x900000, 0x92ffff, MWA16_RAM, &cps1_gfxram, &cps1_gfxram_size },
+	{ 0x900000, 0x92ffff, cps1_gfxram_w, &cps1_gfxram, &cps1_gfxram_size },
 	{ 0xf18000, 0xf19fff, qsound_sharedram1_w }, /* Q RAM */
 	{ 0xf1c004, 0xf1c005, cpsq_coinctrl2_w },   /* Coin control2 (later games) */
 	{ 0xf1c006, 0xf1c007, cps1_eeprom_port_w },
@@ -371,74 +371,45 @@ INPUT_PORTS_END
 
 ********************************************************************/
 
-
-#define DECODE_GFX 0
-
-#if DECODE_GFX
-
-static struct GfxLayout tilelayout8 =
+static struct GfxLayout layout8x8 =
 {
 	8,8,
-#if DECODE_GFX
 	RGN_FRAC(1,1),
-#else
-	0,
-#endif
 	4,
-	{ 24+32, 16+32, 8+32, 0+32 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
-	8*64
+	{ GFX_RAW },
+	{ 4*8 },	/* org displacement - 8x8 tiles are taken from the RIGHT side of the 16x16 tile
+				   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
+	{ 8*8 },	/* line modulo */
+	64*8		/* char modulo */
 };
 
-static struct GfxLayout tilelayout16 =
+static struct GfxLayout layout16x16 =
 {
 	16,16,
-#if DECODE_GFX
 	RGN_FRAC(1,1),
-#else
-	0,
-#endif
 	4,
-	{ 24, 16, 8, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
-			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	16*64
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 8*8 },	/* line modulo */
+	128*8		/* char modulo */
 };
 
-static struct GfxLayout tilelayout32 =
+static struct GfxLayout layout32x32 =
 {
 	32,32,
-#if DECODE_GFX
 	RGN_FRAC(1,1),
-#else
-	0,
-#endif
 	4,
-	{ 24, 16, 8, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,
-		32+0, 32+1, 32+2, 32+3, 32+4, 32+5, 32+6, 32+7,
-		2*32+0, 2*32+1, 2*32+2, 2*32+3, 2*32+4, 2*32+5, 2*32+6, 2*32+7,
-		3*32+0, 3*32+1, 3*32+2, 3*32+3, 3*32+4, 3*32+5, 3*32+6, 3*32+7 },
-	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
-			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128,
-			16*128, 17*128, 18*128, 19*128, 20*128, 21*128, 22*128, 23*128,
-			24*128, 25*128, 26*128, 27*128, 28*128, 29*128, 30*128, 31*128 },
-	32*128
+	{ GFX_RAW },
+	{ 0 },		/* org displacement */
+	{ 16*8 },	/* line modulo */
+	512*8		/* char modulo */
 };
-
-#endif
 
 struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {
-#if DECODE_GFX
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* sprites */
-	{ REGION_GFX1, 0, &tilelayout8,  0x000, 32*8 },	/* tiles 8x8 */
-	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* tiles 16x16 */
-	{ REGION_GFX1, 0, &tilelayout32, 0x000, 32*8 },	/* tiles 32x32 */
-#endif
+	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
+	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },
+	{ REGION_GFX1, 0, &layout32x32, 0, 0x100 },
 	{ -1 } /* end of array */
 };
 
@@ -480,19 +451,19 @@ static struct MachineDriver machine_driver_sfzch =
 			ignore_interrupt,0
 		}
 	},
-    60, 3000,
+    60, DEFAULT_60HZ_VBLANK_DURATION,
 	1,
 	0,
 	0,
 
 	/* video hardware */
-	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
+	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
 
 	cps1_gfxdecodeinfo,
-	4096, 4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
 	cps1_eof_callback,
 	cps1_vh_start,
 	cps1_vh_stop,
@@ -570,8 +541,10 @@ ROM_START( sfzch )
 	ROMX_LOAD( "sfz16",         0x600004, 0x80000, 0x19a5abd6, ROM_GROUPWORD | ROM_SKIP(6) )
 	ROMX_LOAD( "sfz17",         0x600006, 0x80000, 0x248b3b73, ROM_GROUPWORD | ROM_SKIP(6) )
 
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
 
-	ROM_REGION( 0x18000, REGION_CPU2,0 ) /* 64k for the audio CPU (+banks) */
+	ROM_REGION( 0x28000, REGION_CPU2,0 ) /* 64k for the audio CPU (+banks) */
 	ROM_LOAD( "sfz09",         0x00000, 0x08000, 0xc772628b )
 	ROM_CONTINUE(              0x10000, 0x08000 )
 
