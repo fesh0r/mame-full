@@ -27,7 +27,6 @@ static UINT8 cbmb_keyline[12] = { 0 };
 static int cbmb_keyline_a, cbmb_keyline_b, cbmb_keyline_c;
 
 static int cbm500=0;
-UINT8 *cbmb_memory;
 UINT8 *cbmb_basic;
 UINT8 *cbmb_kernal;
 static UINT8 *cbmb_chargen;

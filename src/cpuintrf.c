@@ -927,6 +927,7 @@ INT64 activecpu_get_info_int(UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_ACTIVECPU(0, activecpu_get_info_int);
+	info.i = 0;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.i;
 }
@@ -936,6 +937,7 @@ void *activecpu_get_info_ptr(UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_ACTIVECPU(0, activecpu_get_info_ptr);
+	info.p = NULL;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.p;
 }
@@ -945,6 +947,7 @@ const char *activecpu_get_info_string(UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_ACTIVECPU(0, activecpu_get_info_string);
+	info.s = NULL;
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.s;
 }
@@ -1130,6 +1133,7 @@ INT64 cpunum_get_info_int(int cpunum, UINT32 state)
 
 	VERIFY_CPUNUM(0, cpunum_get_info_int);
 	cpuintrf_push_context(cpunum);
+	info.i = 0;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.i;
@@ -1141,6 +1145,7 @@ void *cpunum_get_info_ptr(int cpunum, UINT32 state)
 
 	VERIFY_CPUNUM(0, cpunum_get_info_ptr);
 	cpuintrf_push_context(cpunum);
+	info.p = NULL;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.p;
@@ -1152,6 +1157,7 @@ const char *cpunum_get_info_string(int cpunum, UINT32 state)
 
 	VERIFY_CPUNUM(0, cpunum_get_info_string);
 	cpuintrf_push_context(cpunum);
+	info.s = NULL;
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.s;
@@ -1329,6 +1335,7 @@ INT64 cputype_get_info_int(int cputype, UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_CPUTYPE(0, cputype_get_info_int);
+	info.i = 0;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.i;
 }
@@ -1338,6 +1345,7 @@ void *cputype_get_info_ptr(int cputype, UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_CPUTYPE(0, cputype_get_info_ptr);
+	info.p = NULL;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.p;
 }
@@ -1347,6 +1355,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state)
 	union cpuinfo info;
 
 	VERIFY_CPUTYPE(0, cputype_get_info_string);
+	info.s = NULL;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.s;
 }

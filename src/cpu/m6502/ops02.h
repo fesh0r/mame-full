@@ -63,15 +63,6 @@
 
 #define PPC m6502.ppc.d
 
-#if HAS_M6509
-#define ZPWH	m6502.zp.w.h
-#define EAWH	m6502.ea.w.h
-#define PBWH	m6509.pc_bank.w.h
-#define PB		m6509.pc_bank.d
-#define IBWH	m6509.ind_bank.w.h
-#define IB		m6509.ind_bank.d
-#endif
-
 #if FAST_MEMORY
 extern	MHELE	*cur_mwhard;
 extern	MHELE	*cur_mrhard;
@@ -204,21 +195,6 @@ extern	UINT8	*RAM;
 	EAW += Y
 
 /***************************************************************
- *  EA = zero page indirect + Y (post indexed)
- *	subtract 1 cycle if page boundary is crossed
- ***************************************************************/
-#define EA_IDY_6509 											\
-	ZPL = RDOPARG();											\
-	ZPWH = PBWH;												\
-	EAL = RDMEM(ZPD);											\
-	ZPL++;														\
-	EAH = RDMEM(ZPD);											\
-	EAWH = IBWH;												\
-	if (EAL + Y > 0xff)                                         \
-		m6502_ICount--; 										\
-	EAW += Y
-
-/***************************************************************
  *	EA = indirect (only used by JMP)
  ***************************************************************/
 #define EA_IND													\
@@ -240,7 +216,6 @@ extern	UINT8	*RAM;
 #define RD_ZPI	EA_ZPI; tmp = RDMEM(EAD)
 #define RD_IDX	EA_IDX; tmp = RDMEM(EAD)
 #define RD_IDY	EA_IDY; tmp = RDMEM(EAD)
-#define RD_IDY_6509	EA_IDY_6509; tmp = RDMEM(EAD)
 
 /* write a value from tmp */
 #define WR_ZPG	EA_ZPG; WRMEM(EAD, tmp)
@@ -252,7 +227,6 @@ extern	UINT8	*RAM;
 #define WR_ZPI	EA_ZPI; WRMEM(EAD, tmp)
 #define WR_IDX	EA_IDX; WRMEM(EAD, tmp)
 #define WR_IDY	EA_IDY; WRMEM(EAD, tmp)
-#define WR_IDY_6509	EA_IDY_6509; WRMEM(EAD, tmp)
 
 /* write back a value from tmp to the last EA */
 #define WB_ACC	A = (UINT8)tmp;

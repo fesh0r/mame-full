@@ -7,17 +7,20 @@ driver by Manuel Abadia, Ernesto Corvi, Nicola Salmoria
 
 Custom ICs:
 ----------
-15XX sound control
-20XX tilemap and sprite address generator
-21XX sprite generator
-26XX starfield generator
-29XX sprite line buffer and sprite/tilemap mixer
-33XX timing generator
-34XX address decoder
-56XX I/O
-58XX I/O
-62XX I/O and explosion generator
-99XX sound volume
+11XX (CUS11) gfx data shifter and mixer (16-bit in, 4-bit out) [1]
+15XX (CUS15) sound control
+16XX (CUS16) I/O control
+20XX (CUS20) tilemap and sprite address generator
+21XX (CUS21) sprite generator
+26XX (CUS26) starfield generator
+29XX (CUS29) sprite line buffer and sprite/tilemap mixer
+33XX (CUS33) timing generator
+34XX (CUS34) address decoder
+56XX (CUS56) I/O
+58XX (CUS58) I/O
+62XX (CUS62) I/O and explosion generator
+98XX (CUS98) ?
+99XX (CUS99) sound volume
 
 
 memory map
@@ -253,15 +256,15 @@ static WRITE8_HANDLER( gaplus_spriteram_w )
 
 static READ8_HANDLER( gaplus_snd_sharedram_r )
 {
-    return mappy_soundregs[offset];
+    return namco_soundregs[offset];
 }
 
 static WRITE8_HANDLER( gaplus_snd_sharedram_w )
 {
 	if (offset < 0x40)
-		mappy_sound_w(offset,data);
+		namco_15xx_w(offset,data);
 	else
-		mappy_soundregs[offset] = data;
+		namco_soundregs[offset] = data;
 }
 
 
@@ -367,7 +370,7 @@ ADDRESS_MAP_END
 
 	/* CPU 3 (SOUND CPU) write addresses */
 static ADDRESS_MAP_START( writemem_cpu3, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(gaplus_snd_sharedram_w) AM_BASE(&mappy_soundregs)	/* shared RAM with the main CPU + sound registers */
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(gaplus_snd_sharedram_w) AM_BASE(&namco_soundregs)	/* shared RAM with the main CPU + sound registers */
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(watchdog_reset_w)		/* watchdog? */
 	AM_RANGE(0x4000, 0x7fff) AM_WRITE(gaplus_irq_3_ctrl_w)	/* interrupt enable/disable */
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
@@ -787,7 +790,7 @@ static MACHINE_DRIVER_START( gaplus )
 	MDRV_VIDEO_EOF(gaplus)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(NAMCO_15XX, namco_interface)
 	MDRV_SOUND_ADD(SAMPLES, samples_interface)
 MACHINE_DRIVER_END
 

@@ -316,18 +316,6 @@ static PALETTE_INIT( montecar )
 }
 
 
-static READ_HANDLER( firetrk_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
-static READ_HANDLER( firetrk_playfield_r )
-{
-	return firetrk_playfield_ram[offset & 0xff];
-}
-
-
 static READ_HANDLER( firetrk_dip_r )
 {
 	UINT8 val0 = readinputport(2);
@@ -417,12 +405,6 @@ static READ_HANDLER( firetrk_input_r )
 	if (bit7 & (1 << offset)) val |= 0x80;
 
 	return val;
-}
-
-
-static WRITE_HANDLER( firetrk_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
@@ -537,22 +519,10 @@ static WRITE_HANDLER( firetrk_asr_w )
 }
 
 
-static ADDRESS_MAP_START( firetrk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x07ff) AM_READ(firetrk_zeropage_r)
-	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0900, 0x0fff) AM_READ(firetrk_playfield_r)
-	AM_RANGE(0x1800, 0x1807) AM_READ(firetrk_input_r)
-	AM_RANGE(0x1c00, 0x1c03) AM_READ(firetrk_dip_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( firetrk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_BASE(&firetrk_alpha_num_ram)
-	AM_RANGE(0x0100, 0x07ff) AM_WRITE(firetrk_zeropage_w)
-	AM_RANGE(0x0800, 0x0fff) AM_WRITE(firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
+static ADDRESS_MAP_START( firetrk_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x700) AM_RAM AM_BASE(&firetrk_alpha_num_ram)
+	AM_RANGE(0x0800, 0x08ff) AM_MIRROR(0x700) AM_READWRITE(MRA8_RAM, firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(firetrk_vert_w)
 	AM_RANGE(0x1020, 0x1020) AM_WRITE(firetrk_horz_w)
 	AM_RANGE(0x1040, 0x104f) AM_WRITE(firetrk_crash_reset_w)
@@ -569,25 +539,15 @@ static ADDRESS_MAP_START( firetrk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x14a0, 0x14a0) AM_WRITE(firetrk_drone_rot_w)
 	AM_RANGE(0x14c0, 0x14c0) AM_WRITE(firetrk_out_w)
 	AM_RANGE(0x14e0, 0x14e0) AM_WRITE(firetrk_xtndply_w)
-	AM_RANGE(0x1800, 0x1807) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1807) AM_READWRITE(firetrk_input_r, MWA8_NOP)
+	AM_RANGE(0x1c00, 0x1c03) AM_READ(firetrk_dip_r)
+	AM_RANGE(0x2000, 0x3fff) AM_ROM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( superbug_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0200, 0x0207) AM_READ(firetrk_input_r)
-	AM_RANGE(0x0240, 0x0243) AM_READ(firetrk_dip_r)
-	AM_RANGE(0x0400, 0x041f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0500, 0x05ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( superbug_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( superbug_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(13) )
+	AM_RANGE(0x0000, 0x00ff) AM_RAM
 	AM_RANGE(0x0100, 0x0100) AM_WRITE(firetrk_vert_w)
 	AM_RANGE(0x0120, 0x0120) AM_WRITE(firetrk_horz_w)
 	AM_RANGE(0x0140, 0x0140) AM_WRITE(firetrk_crash_reset_w)
@@ -596,34 +556,23 @@ static ADDRESS_MAP_START( superbug_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x01a0, 0x01a0) AM_WRITE(firetrk_steer_reset_w)
 	AM_RANGE(0x01c0, 0x01c0) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x01e0, 0x01e0) AM_WRITE(firetrk_arrow_off_w)
+	AM_RANGE(0x0200, 0x0207) AM_READ(firetrk_input_r)
 	AM_RANGE(0x0220, 0x0220) AM_WRITE(firetrk_asr_w)
+	AM_RANGE(0x0240, 0x0243) AM_READ(firetrk_dip_r)
 	AM_RANGE(0x0260, 0x026f) AM_WRITE(firetrk_out_w)
 	AM_RANGE(0x0280, 0x0280) AM_WRITE(firetrk_motor_snd_w)
 	AM_RANGE(0x02a0, 0x02a0) AM_WRITE(firetrk_crash_snd_w)
 	AM_RANGE(0x02c0, 0x02c0) AM_WRITE(firetrk_skid_snd_w)
-	AM_RANGE(0x0400, 0x041f) AM_WRITE(MWA8_RAM) AM_BASE(&firetrk_alpha_num_ram)
-	AM_RANGE(0x0500, 0x05ff) AM_WRITE(firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
-	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0400, 0x041f) AM_RAM AM_BASE(&firetrk_alpha_num_ram)
+	AM_RANGE(0x0500, 0x05ff) AM_READWRITE(MRA8_RAM, firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
+	AM_RANGE(0x0800, 0x1fff) AM_ROM
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( montecar_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x07ff) AM_READ(firetrk_zeropage_r)
-	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0900, 0x0fff) AM_READ(firetrk_playfield_r)
-	AM_RANGE(0x1800, 0x1807) AM_READ(firetrk_input_r)
-	AM_RANGE(0x1c00, 0x1c03) AM_READ(firetrk_dip_r)
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( montecar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_BASE(&firetrk_alpha_num_ram)
-	AM_RANGE(0x0100, 0x07ff) AM_WRITE(firetrk_zeropage_w)
-	AM_RANGE(0x0800, 0x0fff) AM_WRITE(firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
+static ADDRESS_MAP_START( montecar_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(14) )
+	AM_RANGE(0x0000, 0x00ff) AM_MIRROR(0x700) AM_RAM AM_BASE(&firetrk_alpha_num_ram)
+	AM_RANGE(0x0800, 0x08ff) AM_MIRROR(0x700) AM_READWRITE(MRA8_RAM, firetrk_playfield_w) AM_BASE(&firetrk_playfield_ram)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(firetrk_vert_w)
 	AM_RANGE(0x1020, 0x1020) AM_WRITE(firetrk_horz_w)
 	AM_RANGE(0x1040, 0x1040) AM_WRITE(firetrk_drone_reset_w)
@@ -640,9 +589,9 @@ static ADDRESS_MAP_START( montecar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x14a0, 0x14a0) AM_WRITE(firetrk_drone_rot_w)
 	AM_RANGE(0x14c0, 0x14c0) AM_WRITE(firetrk_out_w)
 	AM_RANGE(0x14e0, 0x14e0) AM_WRITE(firetrk_out2_w)
-	AM_RANGE(0x1800, 0x1807) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1807) AM_READWRITE(firetrk_input_r, MWA8_NOP)
+	AM_RANGE(0x1c00, 0x1c03) AM_READ(firetrk_dip_r)
+	AM_RANGE(0x2000, 0x3fff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -1643,7 +1592,7 @@ static MACHINE_DRIVER_START( firetrk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6800, 12096000 / 12)	/* 750Khz during service mode */
-	MDRV_CPU_PROGRAM_MAP(firetrk_readmem, firetrk_writemem)
+	MDRV_CPU_PROGRAM_MAP(firetrk_map, 0)
 	MDRV_CPU_VBLANK_INT(firetrk_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -1675,7 +1624,7 @@ static MACHINE_DRIVER_START( superbug )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(firetrk)
 	MDRV_CPU_REPLACE("main", M6800, 12096000 / 16)
-	MDRV_CPU_PROGRAM_MAP(superbug_readmem, superbug_writemem)
+	MDRV_CPU_PROGRAM_MAP(superbug_map, 0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(superbug_gfxdecodeinfo)
@@ -1694,7 +1643,7 @@ static MACHINE_DRIVER_START( montecar )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(firetrk)
 	MDRV_CPU_REPLACE("main", M6800, 12096000 / 12)	/* 750Khz during service mode */
-	MDRV_CPU_PROGRAM_MAP(montecar_readmem, montecar_writemem)
+	MDRV_CPU_PROGRAM_MAP(montecar_map, 0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(montecar_gfxdecodeinfo)
@@ -1709,15 +1658,13 @@ MACHINE_DRIVER_END
 
 
 ROM_START( firetrk )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x4000, REGION_CPU1, 0 )
 	ROM_LOAD(          "32823-02.c1", 0x2000, 0x800, CRC(9570bdd3) SHA1(4d26a9490d05d53da55fc59459a4dce5bca6c761) )
 	ROM_LOAD(          "32824-01.d1", 0x2800, 0x800, CRC(a5fc5629) SHA1(bf20510d8623eda2740ff296a7813a3e6f7ec76e) )
 	ROM_LOAD_NIB_HIGH( "32816-01.k1", 0x3000, 0x800, CRC(c0535598) SHA1(15cb6985b0b22140b7fae1e050e0b63dd4d0f793) )
 	ROM_LOAD_NIB_LOW ( "32820-01.k2", 0x3000, 0x800, CRC(5733f9ed) SHA1(0f19a40793dadfb7de2c2b54a44929b414d0f4ed) )
 	ROM_LOAD_NIB_HIGH( "32815-01.j1", 0x3800, 0x800, CRC(506ee759) SHA1(d111356c84f3d9942a27fbe243e716d14c258a16) )
-	ROM_RELOAD(                       0xF800, 0x800 )
 	ROM_LOAD_NIB_LOW ( "32819-01.j2", 0x3800, 0x800, CRC(f1c3fa87) SHA1(d75cf4ad0bcac3289c068837fc24cfe84ce7542a) )
-	ROM_RELOAD(                       0xF800, 0x800 )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE ) /* text */
 	ROM_LOAD( "32827-01.r3", 0x000, 0x800, CRC(cca31d2b) SHA1(78235176c9cb2abd73a5778b54560b87634ca0e4) )
@@ -1738,11 +1685,10 @@ ROM_END
 
 
 ROM_START( superbug )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x2000, REGION_CPU1, 0 )
 	ROM_LOAD( "9121.d1", 0x0800, 0x800, CRC(350df308) SHA1(b957c830bb95e0752ea9793e3edcfdd52235e0ab) )
 	ROM_LOAD( "9122.c1", 0x1000, 0x800, CRC(eb6e3e37) SHA1(5237f6bd3a7a3eca737c728296230cf0d1f436b0) )
 	ROM_LOAD( "9123.a1", 0x1800, 0x800, CRC(f42c6bbe) SHA1(41470984fe951eac9f6dc77862b00ecfe8aaa51d) )
-	ROM_RELOAD(          0xF800, 0x800 )
 
 	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE ) /* text */
 	ROM_LOAD( "9124.m3", 0x0000, 0x400, CRC(f8af8dd5) SHA1(49ab85550f546f85048e2f73163837c602dde568) )
@@ -1763,12 +1709,11 @@ ROM_END
 
 
 ROM_START( montecar )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_REGION( 0x4000, REGION_CPU1, 0 )
 	ROM_LOAD( "35766-01.h1", 0x2000, 0x800, CRC(d3695f09) SHA1(8aa3b3921acd0d2c3230d610843042613defcba9) )
     ROM_LOAD( "35765-01.f1", 0x2800, 0x800, CRC(9491a7ee) SHA1(712959c5f97be3db7be1d5bd70c780d4da2f6d47) )
     ROM_LOAD( "35764-01.d1", 0x3000, 0x800, CRC(899aaf4e) SHA1(84fab58d135ffc6e4b076d438b4d588b394364b6) )
 	ROM_LOAD( "35763-01.c1", 0x3800, 0x800, CRC(378bfe47) SHA1(fd6b28907340a2ffc82a4e634273c3f03ab76642) )
-	ROM_RELOAD(              0xF800, 0x800 )
 
 	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE ) /* text */
 	ROM_LOAD( "35778-01.m4", 0x0000, 0x400, CRC(294ee08e) SHA1(fbb0656468a027b2795073d811affc93c50994ec) )

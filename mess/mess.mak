@@ -13,7 +13,7 @@ CPUS+=M6502@
 CPUS+=M65C02@
 CPUS+=M65SC02@
 #CPUS+=M65CE02@
-CPUS+=M6509@
+#CPUS+=M6509@
 CPUS+=M6510@
 CPUS+=M6510T@
 CPUS+=M7501@
@@ -136,6 +136,9 @@ SOUNDS+=TIA@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 #SOUNDS+=NAMCO@
+#SOUNDS+=NAMCO_15XX@
+#SOUNDS+=NAMCO_52XX@
+#SOUNDS+=NAMCO_54XX@
 #SOUNDS+=NAMCONA@
 #SOUNDS+=TMS36XX@
 SOUNDS+=TMS5110@
@@ -337,6 +340,7 @@ $(OBJ)/cbmshare.a: \
 	$(OBJ)/mess/machine/cbmieeeb.o \
 	$(OBJ)/mess/machine/cbmserb.o  \
 	$(OBJ)/mess/machine/c64.o      \
+	$(OBJ)/mess/machine/c65.o		\
 	$(OBJ)/mess/vidhrdw/vic6567.o	 \
 	$(OBJ)/mess/machine/vc20tape.o
 
@@ -355,7 +359,6 @@ $(OBJ)/cbm.a: \
 	$(OBJ)/mess/machine/cbmb.o		\
 	$(OBJ)/mess/vidhrdw/cbmb.o		\
 	$(OBJ)/mess/systems/c65.o		\
-	$(OBJ)/mess/machine/c65.o		\
 	$(OBJ)/mess/vidhrdw/vdc8563.o	\
 	$(OBJ)/mess/systems/c128.o		\
 	$(OBJ)/mess/machine/c128.o		\

@@ -1295,6 +1295,30 @@ else
 SOUNDDEFS += -DHAS_NAMCO=0
 endif
 
+SOUND=$(strip $(findstring NAMCO_15XX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_NAMCO_15XX=1
+SOUNDOBJS += $(OBJ)/sound/namco.o
+else
+SOUNDDEFS += -DHAS_NAMCO_15XX=0
+endif
+
+SOUND=$(strip $(findstring NAMCO_52XX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_NAMCO_52XX=1
+SOUNDOBJS += $(OBJ)/sound/namco52.o
+else
+SOUNDDEFS += -DHAS_NAMCO_52XX=0
+endif
+
+SOUND=$(strip $(findstring NAMCO_54XX@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_NAMCO_54XX=1
+SOUNDOBJS += $(OBJ)/sound/namco54.o
+else
+SOUNDDEFS += -DHAS_NAMCO_54XX=0
+endif
+
 SOUND=$(strip $(findstring NAMCONA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NAMCONA=1

@@ -335,13 +335,13 @@ TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)				*/
 TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL					*/
 	DRIVER( c64gs ) 	/* Commodore 64 Games System						*/
 
-	DRIVER( cbm500 )	/* Commodore 500/P128-40							*/
-	DRIVER( cbm610 )	/* Commodore 610/B128LP 							*/
-	DRIVER( cbm620 )	/* Commodore 620/B256LP 							*/
-	DRIVER( cbm620hu )	/* Commodore 620/B256LP Hungarian					*/
-	DRIVER( cbm710 )	/* Commodore 710/B128HP 							*/
-	DRIVER( cbm720 )	/* Commodore 720/B256HP 							*/
-	DRIVER( cbm720se )	/* Commodore 720/B256HP Swedish/Finnish				*/
+//	DRIVER( cbm500 )	/* Commodore 500/P128-40							*/
+//	DRIVER( cbm610 )	/* Commodore 610/B128LP 							*/
+//	DRIVER( cbm620 )	/* Commodore 620/B256LP 							*/
+//	DRIVER( cbm620hu )	/* Commodore 620/B256LP Hungarian					*/
+//	DRIVER( cbm710 )	/* Commodore 710/B128HP 							*/
+//	DRIVER( cbm720 )	/* Commodore 720/B256HP 							*/
+//	DRIVER( cbm720se )	/* Commodore 720/B256HP Swedish/Finnish				*/
 
 	DRIVER( c16 )		/* Commodore 16 									*/
 	DRIVER( c16hun )	/* Commodore 16 Novotrade (Hungarian Character Set)	*/

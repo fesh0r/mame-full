@@ -182,7 +182,7 @@ enum
 enum
 {
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
-	CPUINFO_INT_FIRST = (0 << 16),
+	CPUINFO_INT_FIRST = 0x00000,
 
 	CPUINFO_INT_CONTEXT_SIZE = CPUINFO_INT_FIRST,		/* R/O: size of CPU context in bytes */
 	CPUINFO_INT_IRQ_LINES,								/* R/O: number of IRQ lines */
@@ -209,10 +209,10 @@ enum
 	CPUINFO_INT_REGISTER,								/* R/W: values of up to MAX_REGs registers */
 	CPUINFO_INT_REGISTER_LAST = CPUINFO_INT_REGISTER + MAX_REGS - 1,
 
-	CPUINFO_INT_CPU_SPECIFIC,							/* R/W: CPU-specific values start here */
+	CPUINFO_INT_CPU_SPECIFIC = 0x08000,					/* R/W: CPU-specific values start here */
 
 	/* --- the following bits of info are returned as pointers to data or functions --- */
-	CPUINFO_PTR_FIRST = (1 << 16),
+	CPUINFO_PTR_FIRST = 0x10000,
 
 	CPUINFO_PTR_SET_INFO = CPUINFO_PTR_FIRST,			/* R/O: void (*set_info)(UINT32 state, INT64 data, void *ptr) */
 	CPUINFO_PTR_GET_CONTEXT,							/* R/O: void (*get_context)(void *buffer) */
@@ -227,11 +227,12 @@ enum
 	CPUINFO_PTR_INSTRUCTION_COUNTER,					/* R/O: int *icount */
 	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
 	CPUINFO_PTR_WINDOW_LAYOUT,							/* R/O: struct debug_window_layout *layout */
+	CPUINFO_PTR_INTERNAL_MEMORY_MAP,					/* R/O: construct_map_t map */
 
-	CPUINFO_PTR_CPU_SPECIFIC,							/* R/W: CPU-specific values start here */
+	CPUINFO_PTR_CPU_SPECIFIC = 0x18000,					/* R/W: CPU-specific values start here */
 
 	/* --- the following bits of info are returned as NULL-terminated strings --- */
-	CPUINFO_STR_FIRST = (2 << 16),
+	CPUINFO_STR_FIRST = 0x20000,
 
 	CPUINFO_STR_NAME = CPUINFO_STR_FIRST,				/* R/O: name of the CPU */
 	CPUINFO_STR_CORE_FAMILY,							/* R/O: family of the CPU */
@@ -242,7 +243,7 @@ enum
 	CPUINFO_STR_REGISTER,								/* R/O: string representation of up to MAX_REGs registers */
 	CPUINFO_STR_REGISTER_LAST = CPUINFO_STR_REGISTER + MAX_REGS - 1,
 
-	CPUINFO_STR_CPU_SPECIFIC							/* R/W: CPU-specific values start here */
+	CPUINFO_STR_CPU_SPECIFIC = 0x28000					/* R/W: CPU-specific values start here */
 };
 
 
@@ -263,6 +264,7 @@ union cpuinfo
 	offs_t	(*disassemble)(char *buffer, offs_t pc);	/* CPUINFO_PTR_DISASSEMBLE */
 	int		(*irqcallback)(int state);					/* CPUINFO_PTR_IRQCALLBACK */
 	int *	icount;										/* CPUINFO_PTR_INSTRUCTION_COUNTER */
+	construct_map_t internal_map;						/* CPUINFO_PTR_INTERNAL_MEMORY_MAP */
 };
 
 

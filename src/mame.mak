@@ -59,8 +59,6 @@ CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
 CPUS+=TMS9995@
-#CPUS+=TMS99000@
-#CPUS+=TMS99010@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 CPUS+=Z8000@
@@ -121,6 +119,9 @@ SOUNDS+=TIA@
 SOUNDS+=NES@
 SOUNDS+=ASTROCADE@
 SOUNDS+=NAMCO@
+SOUNDS+=NAMCO_15XX@
+SOUNDS+=NAMCO_52XX@
+SOUNDS+=NAMCO_54XX@
 SOUNDS+=NAMCONA@
 SOUNDS+=TMS36XX@
 SOUNDS+=TMS5110@
@@ -228,16 +229,15 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/tankbatt.o $(OBJ)/drivers/tankbatt.o \
 	$(OBJ)/vidhrdw/galaxian.o $(OBJ)/sndhrdw/galaxian.o $(OBJ)/drivers/galaxian.o \
 	$(OBJ)/vidhrdw/rallyx.o $(OBJ)/drivers/rallyx.o \
-	$(OBJ)/drivers/locomotn.o \
-	$(OBJ)/machine/bosco.o $(OBJ)/sndhrdw/bosco.o $(OBJ)/vidhrdw/bosco.o $(OBJ)/drivers/bosco.o \
-	$(OBJ)/machine/galaga.o $(OBJ)/vidhrdw/galaga.o $(OBJ)/drivers/galaga.o \
-	$(OBJ)/machine/digdug.o $(OBJ)/vidhrdw/digdug.o $(OBJ)/drivers/digdug.o \
-	$(OBJ)/vidhrdw/xevious.o $(OBJ)/machine/xevious.o $(OBJ)/drivers/xevious.o \
+	$(OBJ)/vidhrdw/bosco.o \
+	$(OBJ)/vidhrdw/galaga.o $(OBJ)/drivers/galaga.o \
+	$(OBJ)/vidhrdw/digdug.o \
+	$(OBJ)/vidhrdw/xevious.o $(OBJ)/machine/xevious.o \
 	$(OBJ)/machine/namcoio.o \
 	$(OBJ)/vidhrdw/mappy.o $(OBJ)/drivers/mappy.o \
 	$(OBJ)/machine/gaplus.o $(OBJ)/vidhrdw/gaplus.o $(OBJ)/drivers/gaplus.o \
 	$(OBJ)/vidhrdw/toypop.o $(OBJ)/drivers/toypop.o \
-	$(OBJ)/machine/polepos.o $(OBJ)/vidhrdw/polepos.o $(OBJ)/sndhrdw/polepos.o $(OBJ)/drivers/polepos.o \
+	$(OBJ)/vidhrdw/polepos.o $(OBJ)/sndhrdw/polepos.o $(OBJ)/drivers/polepos.o \
 	$(OBJ)/vidhrdw/pacland.o $(OBJ)/drivers/pacland.o \
 	$(OBJ)/vidhrdw/skykid.o $(OBJ)/drivers/skykid.o \
 	$(OBJ)/vidhrdw/baraduke.o $(OBJ)/drivers/baraduke.o \
@@ -717,6 +717,7 @@ $(OBJ)/alpha.a: \
 	$(OBJ)/vidhrdw/alpha68k.o $(OBJ)/drivers/alpha68k.o \
 	$(OBJ)/vidhrdw/champbas.o $(OBJ)/drivers/champbas.o \
 	$(OBJ)/machine/exctsccr.o $(OBJ)/vidhrdw/exctsccr.o $(OBJ)/drivers/exctsccr.o \
+	$(OBJ)/drivers/talbot.o \
 
 $(OBJ)/technos.a: \
 	$(OBJ)/drivers/scregg.o \
@@ -1097,6 +1098,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/supertnk.o \
 	$(OBJ)/drivers/crospang.o $(OBJ)/vidhrdw/crospang.o \
 	$(OBJ)/drivers/funybubl.o $(OBJ)/vidhrdw/funybubl.o \
+	$(OBJ)/drivers/dcheese.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

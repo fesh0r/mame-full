@@ -1615,18 +1615,7 @@ static void ide_bus_master_write(struct ide_state *ide, offs_t offset, int size,
 */
 int ide_bus_0_r(int select, int offset)
 {
-	/*int shift;*/
-
 	offset += select ? 0x3f0 : 0x1f0;
-	/*if (offset == 0x1f0)
-	{
-		return ide_controller32_0_r(offset >> 2, 0xffff0000);
-	}
-	else
-	{
-		shift = (offset & 3) * 8;
-		return (ide_controller32_0_r(offset >> 2, ~ (0xff << shift)) >> shift);
-	}*/
 	return ide_controller_read(&idestate[0], offset, (offset == 0x1f0) ? 2 : 1);
 }
 
@@ -1641,18 +1630,7 @@ int ide_bus_0_r(int select, int offset)
 */
 void ide_bus_0_w(int select, int offset, int data)
 {
-	/*int shift;*/
-
 	offset += select ? 0x3f0 : 0x1f0;
-	/*if (offset == 0x1f0)
-	{
-		ide_controller32_0_w(offset >> 2, data, 0xffff0000);
-	}
-	else
-	{
-		shift = (offset & 3) * 8;
-		ide_controller32_0_w(offset >> 2, data << shift, ~ (0xff << shift));
-	}*/
 	if (offset == 0x1f0)
 		ide_controller_write(&idestate[0], offset, 2, data);
 	else

@@ -5,6 +5,8 @@
 #include "image.h"
 #include "includes/cbm.h"
 
+UINT8 *cbmb_memory;
+
 static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapshot_size, UINT8 *memory,
 	void (*cbmloadsnap)(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length))
 {

@@ -690,7 +690,10 @@ WRITE_HANDLER(c64_m6510_port_w)
 	if (c128)
 		c128_bankswitch_64 (0);
 	else if (c65)
-		c65_bankswitch();
+	{
+		// NPW 8-Feb-2004 - Don't know why I have to do this
+		//c65_bankswitch();
+	}
 	else if (!ultimax)
 		c64_bankswitch (0);
 }

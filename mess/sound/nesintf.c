@@ -34,7 +34,7 @@ WRITE_HANDLER(NESPSG_0_w)
 	}
 	else
 	{
-	        stream_update(channel[0], 0);
+		stream_update(channel[0], 0);
 		apu_setcontext(apu[0]);
 		apu_write(0x4000 + offset, data);
 	}
@@ -51,7 +51,7 @@ WRITE_HANDLER(NESPSG_1_w)
 	}
 	else
 	{
-	        stream_update(channel[1], 0);
+		stream_update(channel[1], 0);
 		apu_setcontext(apu[1]);
 		apu_write(0x4000 + offset, data);
 	}

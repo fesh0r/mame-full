@@ -140,7 +140,7 @@ WRITE_HANDLER( m6509_write_00000 )
 {
 	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
-	change_pc(PCD);
+	program_write_byte_8(PCD);
 }
 
 WRITE_HANDLER( m6509_write_00001 )
@@ -166,7 +166,7 @@ void m6509_reset (void *param)
 	m6509.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6509.irq_callback = NULL;
 
-	change_pc(PCD);
+	program_write_byte_8(PCD);
 }
 
 void m6509_exit(void)
@@ -186,7 +186,7 @@ void m6509_set_context (void *src)
 	if( src )
 	{
 		m6509 = *(m6509_Regs*)src;
-		change_pc(PCD);
+		program_write_byte_8(PCD);
 	}
 }
 
@@ -218,7 +218,7 @@ void m6509_set_reg (int regnum, unsigned val)
 {
 	switch( regnum )
 	{
-		case REG_PC: PCW = val&0xffff; change_pc(PCD); break;
+		case REG_PC: PCW = val&0xffff; program_write_byte_8(PCD); break;
 		case M6509_PC: m6509.pc.w.l = val; break;
 		case REG_SP: S = val; break;
 		case M6509_S: m6509.sp.b.l = val; break;
@@ -252,16 +252,16 @@ INLINE void m6509_take_irq(void)
 		LOG(("M6509#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m6509.irq_callback) (*m6509.irq_callback)(0);
-		change_pc(PCD);
+		program_write_byte_8(PCD);
 	}
 	m6509.pending_irq = 0;
 }
 
-static int m6509_execute(int cycles)
+int m6509_execute(int cycles)
 {
 	m6509_ICount = cycles;
 
-	change_pc(PCD);
+	program_write_byte_8(PCD);
 
 	do
 	{
@@ -301,7 +301,7 @@ static int m6509_execute(int cycles)
 	return cycles - m6509_ICount;
 }
 
-static void m6509_set_irq_line(int irqline, int state)
+void m6509_set_irq_line(int irqline, int state)
 {
 	if (irqline == IRQ_LINE_NMI)
 	{
@@ -320,7 +320,7 @@ static void m6509_set_irq_line(int irqline, int state)
 			PCL = RDMEM(EAD);
 			PCH = RDMEM(EAD+1);
 			LOG(("M6509#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
-			change_pc(PCD);
+			program_write_byte_8(PCD);
 		}
 	}
 	else
@@ -415,4 +415,5 @@ unsigned m6509_dasm(char *buffer, unsigned pc)
 
 
 
+void m6509_init(void){ return; }
 

@@ -167,7 +167,7 @@ WRITE_HANDLER( pacland_bankswitch_w )
 
 WRITE_HANDLER( pacland_flipscreen_w )
 {
-	flip_screen_set(~data & 0xa0);
+	flip_screen_set(~data & 0x80);
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -196,6 +196,9 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( pacland )
 {
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
@@ -302,13 +305,19 @@ static void pacland_draw_sprites( struct mame_bitmap *bitmap,int priority)
 	}
 }
 
+static void pacland_draw_foreground( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+{
+	fillbitmap(tmpbitmap, Machine->pens[0x7f], cliprect);
+	tilemap_draw(tmpbitmap, cliprect, fg_tilemap, priority, 0);
+	pacland_draw_sprites(tmpbitmap, 2);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_COLOR, 0x7f);
+}
+
 VIDEO_UPDATE( pacland )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	pacland_draw_sprites(bitmap, 2);
+	pacland_draw_foreground(bitmap, cliprect, 0);
 	pacland_draw_sprites(bitmap, 0);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 1, 0);
-	pacland_draw_sprites(bitmap, 2);
+	pacland_draw_foreground(bitmap, cliprect, 1);
 	pacland_draw_sprites(bitmap, 1);
 }
