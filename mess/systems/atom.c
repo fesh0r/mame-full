@@ -67,8 +67,9 @@ static struct MemoryReadAddress atom_readmem[] =
 	{ 0xa000, 0xafff, MRA_ROM },
 	{ 0xb000, 0xb7ff, ppi8255_0_r },	// PPIA 8255
 	{ 0xb800, 0xb9ff, MRA_NOP },		// VIA 6522
-	{ 0xba00, 0xbfdf, atom_8271_r },	// FDC 8271
-	{ 0xbfe0, 0xbfff, MRA_NOP },		// MOUSE
+    { 0xba00, 0xba04, atom_8271_r },    // FDC 8271
+    { 0xbc04, 0xbfdf,  MWA_NOP },
+    { 0xbfe0, 0xbfff, MRA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MRA_ROM },
 	{ -1 }
 };
@@ -82,8 +83,9 @@ static struct MemoryWriteAddress atom_writemem[] =
 	{ 0xb000, 0xb7ff, ppi8255_0_w },	// PIA 8255
 
 	{ 0xb800, 0xb9ff, MWA_NOP },		// VIA 6522
-	{ 0xba00, 0xbfdf, atom_8271_w },	// FDC 8271
-	{ 0xbfe0, 0xbfff, MWA_NOP },		// MOUSE
+    { 0xba00, 0xba04, atom_8271_w },    // FDC 8271
+    { 0xbc04, 0xbfdf,  MWA_NOP },
+    { 0xbfe0, 0xbfff, MWA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }
 };
