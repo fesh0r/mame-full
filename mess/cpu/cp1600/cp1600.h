@@ -41,10 +41,6 @@ extern void cp1600_exit  (void);				 /* Shut down CPU core */
 extern int	cp1600_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
 extern unsigned cp1600_get_context (void *dst);  /* Get registers, return context size */
 extern void cp1600_set_context (void *src); 	 /* Set registers */
-extern unsigned cp1600_get_pc (void);			 /* Get program counter */
-extern void cp1600_set_pc (unsigned val);		 /* Set program counter */
-extern unsigned cp1600_get_sp (void);			 /* Get stack pointer */
-extern void cp1600_set_sp (unsigned val);		 /* Set stack pointer */
 extern unsigned cp1600_get_reg (int regnum);
 extern void cp1600_set_reg (int regnum, unsigned val);
 extern void cp1600_set_nmi_line(int state);

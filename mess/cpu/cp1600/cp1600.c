@@ -51,7 +51,7 @@ static CP1600 cp1600;
 
 /* Layout of the registers in the debugger */
 static UINT8 cp1600_reg_layout[] = {
-	CP1600_R0, CP1600_R1, CP1600_R2, CP1600_R3, -1,
+	CP1600_R0, CP1600_R1, CP1600_R2, CP1600_R3,
 	CP1600_R4, CP1600_R5, CP1600_R6, CP1600_R7, 0
 };
 
@@ -3405,31 +3405,6 @@ void cp1600_set_context(void *src)
 		memcpy(&cp1600, src, sizeof(CP1600));
 }
 
-/* Get program counter */
-unsigned cp1600_get_pc(void)
-{
-	return cp1600.r[7];
-}
-
-/* Set program counter */
-void cp1600_set_pc(unsigned val)
-{
-	cp1600.r[7] = val;
-}
-
-/* Get stack pointer */
-unsigned cp1600_get_sp(void)
-{
-	return cp1600.r[6];
-}
-
-/* Set stack pointer */
-void cp1600_set_sp(unsigned val)
-{
-	cp1600.r[6] = val;
-}
-
-
 unsigned cp1600_get_reg(int regnum)
 {
 	switch( regnum )
@@ -3440,7 +3415,9 @@ unsigned cp1600_get_reg(int regnum)
 	case CP1600_R3: return cp1600.r[3];
 	case CP1600_R4: return cp1600.r[4];
 	case CP1600_R5: return cp1600.r[5];
+	case REG_SP:
 	case CP1600_R6: return cp1600.r[6];
+	case REG_PC:
 	case CP1600_R7: return cp1600.r[7];
 	}
 	return 0;
@@ -3456,7 +3433,9 @@ void cp1600_set_reg (int regnum, unsigned val)
 	case CP1600_R3: cp1600.r[3] = val; break;
 	case CP1600_R4: cp1600.r[4] = val; break;
 	case CP1600_R5: cp1600.r[5] = val; break;
+	case REG_SP:
 	case CP1600_R6: cp1600.r[6] = val; break;
+	case REG_PC:
 	case CP1600_R7: cp1600.r[7] = val; break;
     }
 }
@@ -3473,20 +3452,14 @@ void cp1600_set_irq_line(int irqline, int state)
 		case CP1600_INT_INTR:
 			if (state == ASSERT_LINE)
 				cp1600.intr_pending = 1;
-			if (state == CLEAR_LINE)
-				cp1600.intr_pending = 0;
 			break;
 		case CP1600_INT_INTRM:
 			if (state == ASSERT_LINE)
 				cp1600.intrm_pending = 1;
-			if (state == CLEAR_LINE)
-				cp1600.intrm_pending = 0;
 			break;
 		case CP1600_RESET:
 			if (state == ASSERT_LINE)
 				cp1600.reset_pending = 1;
-			if (state == CLEAR_LINE)
-				cp1600.reset_pending = 0;
 			break;
 	}
 }
