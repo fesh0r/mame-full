@@ -206,7 +206,6 @@ struct GameOptions
 	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
 	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
 	int 	skip_warnings;		/* 1 to skip the warnings screen at startup */
-	int		ignore_cfg;			/* 1 to disregard cfg files */
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */

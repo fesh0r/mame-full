@@ -118,7 +118,6 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	options.skip_disclaimer = 1;
 	options.skip_gameinfo = 1;
 	options.skip_warnings = 1;
-	options.ignore_cfg = 1;
 	options.disable_normal_ui = 1;
 	options.ram = testcase->ram;
 	options.vector_intensity = 1.5;

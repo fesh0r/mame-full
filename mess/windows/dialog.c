@@ -152,7 +152,7 @@ extern void win_poll_input(void);
 #define DLGTEXT_CANCEL			"Cancel"
 
 #define FONT_SIZE				8
-#define FONT_FACE				L"Lucida Sans"
+#define FONT_FACE				L"Arial"
 
 #define TIMER_ID				0xdeadbeef
 
@@ -248,6 +248,47 @@ done:
 		if (dlg_window)
 			DestroyWindow(dlg_window);
 	}
+}
+
+
+
+//============================================================
+//	unicode_from_mamechar
+//
+//	This function converts a character from the MAME code page
+//	(defined by the UI font in src/usrintrf.c) to a Unicode
+//	char
+//============================================================
+
+static WCHAR unicode_from_mamechar(char c)
+{
+	WCHAR wc;
+	static const WCHAR specialchars[] =
+	{
+		// 0x00 - 0x1F
+		'\0',	' ',	' ',	' ',	' ',	' ',	' ',	' ',
+		' ',	' ',	0x25CF,	0x25CB,	0x25A0,	0x25A1,	0x25CF,	0x25CF,
+		0x25BA,	0x25CF,	0x2195,	0x203C,	0x25CF,	0x25CF,	0x25CF,	0x266B,
+		0x2191,	0x2193,	0x2192,	0x2190,	' ',	0x2194,	0x25B2,	0x25BC,
+
+		// 0x80 - 0x9F
+		' ',	' ',	0x201A,	0x0192,	0x201E,	0x2026,	0x2020,	0x2021,
+		'^',	0x2030,	0x0160,	'<',	0x0152,	' ',	' ',	' ',
+		' ',	0x2018,	0x2019,	0x201C,	0x201D,	0x25CF,	0x2013,	0x2014,
+		'~',	0x2122, 0x0161,	'>',	0x0153,	' ',	' ',	0x0178
+	};
+
+	if (c & 0x60)
+	{
+		// chars 0x20-0x7F and 0xA0-0xFF match their Unicode equivalents
+		wc = c;
+	}
+	else
+	{
+		// chars 0x00-0x1F and 0x80-0x9F are special
+		wc = specialchars[(c & 0x1F) | ((c & 0x80) ? 0x20 : 0x00)];
+	}
+	return wc;
 }
 
 
@@ -1262,7 +1303,6 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 	const char *port_name;
 	const WCHAR *this_port_name;
 	WCHAR *s;
-	WCHAR c;
 	int seq;
 	int seq_count = 0;
 	const WCHAR *port_suffix[3];
@@ -1305,17 +1345,7 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 		s = (WCHAR *) alloca((len + (port_suffix[seq] ? wcslen(port_suffix[seq])
 			: 0) + 1) * sizeof(WCHAR));
 		for (i = 0; i < len; i++)
-		{
-			c = port_name[i];
-			switch(c)
-			{
-				case 0x18:	c = 0x2191;	break;
-				case 0x19:	c = 0x2193;	break;
-				case 0x1a:	c = 0x2190;	break;
-				case 0x1b:	c = 0x2192;	break;
-			}
-			s[i] = c;
-		}
+			s[i] = unicode_from_mamechar(port_name[i]);
 		s[len] = '\0';
 
 		if (port_suffix[seq])

@@ -822,19 +822,10 @@ int load_input_port_settings(void)
 
 	/* propogate that forward to the live list and apply the config on top of that */
 	memcpy(inputport_list, inputport_list_backup, sizeof(inputport_list));
+	config_load_default(inputport_list_backup, inputport_list);
 
-	if (!options.ignore_cfg)
-	{
-		config_load_default(inputport_list_backup, inputport_list);
-
-		/* now load the game-specific info */
-		loaded = config_load(Machine->input_ports_default, Machine->input_ports);
-	}
-	else
-	{
-		/* not loading config files */
-		loaded = 0;
-	}
+	/* now load the game-specific info */
+	loaded = config_load(Machine->input_ports_default, Machine->input_ports);
 
 	/* initialize the various port states */
 	inputport_init();
@@ -847,12 +838,9 @@ int load_input_port_settings(void)
 
 void save_input_port_settings(void)
 {
-	if (!options.ignore_cfg)
-	{
-		/* save the default config and the game-specific config */
-		config_save_default(inputport_list_backup, inputport_list);
-		config_save(Machine->input_ports_default, Machine->input_ports);
-	}
+	/* save the default config and the game-specific config */
+	config_save_default(inputport_list_backup, inputport_list);
+	config_save(Machine->input_ports_default, Machine->input_ports);
 }
 
 
@@ -1749,10 +1737,10 @@ static void update_analog_port(int portnum)
 			keypressed = info->lastdigital = 1;
 		}
 		
-		/* if centering is requested, reset the accumulated position to 0 before */
+		/* if resetting is requested, clear the accumulated position to 0 before */
 		/* applying the deltas so that we only return this frame's delta */
 		/* note that centering only works for relative controls */
-		if (port->analog.center && !info->absolute)
+		if (port->analog.reset && !info->absolute)
 			info->accum = 0;
 
 		/* apply the delta to the accumulated value */
@@ -1813,7 +1801,7 @@ profiler_mark(PROFILER_INPUT);
 		INT32 value;
 
 		/* interpolate or not */
-		if (info->interpolate && !info->port->analog.center)
+		if (info->interpolate && !info->port->analog.reset)
 			current = info->previous + cpu_scalebyfcount(info->accum - info->previous);
 		else
 			current = info->accum;

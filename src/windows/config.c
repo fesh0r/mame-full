@@ -55,7 +55,6 @@ static int showusage;
 static int readconfig;
 static int createconfig;
 extern int verbose;
-static char *dieoutputfile;
 
 struct rc_struct *rc;
 
@@ -221,7 +220,6 @@ static struct rc_option opts[] = {
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
-	{ "dieoutputfile", NULL, rc_string, &dieoutputfile, NULL, 0, 0, NULL, "file to output dying messages" },
 
 	/* config options */
 	{ "Configuration options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -482,7 +480,7 @@ int cli_frontend_init (int argc, char **argv)
 	/* handle playback */
 	if (playbackname != NULL)
 	{
-		options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
+        options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
 		if (!options.playback)
 		{
 			fprintf(stderr, "failed to open %s for playback\n", playbackname);
@@ -841,24 +839,13 @@ void CLIB_DECL logerror(const char *text,...)
 void CLIB_DECL osd_die(const char *text,...)
 {
 	va_list arg;
-	FILE *f;
 
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
-
 	vlogerror(text, arg);
 	vprintf(text, arg);
-	if (dieoutputfile)
-	{
-		f = fopen(dieoutputfile, "w");
-		if (f)
-		{
-			vfprintf(f, text, arg);
-			fclose(f);
-		}
-	}
-
 	va_end(arg);
+
 	exit(-1);
 }
 

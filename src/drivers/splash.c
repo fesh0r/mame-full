@@ -1,8 +1,34 @@
 /***************************************************************************
 
 Splash! (c) 1992 Gaelco
+Return of Ladyfrog (c) 1993 Microhard   (hack/bootleg of splash)
 
 Driver by Manuel Abadia <manu@teleline.es>
+
+Return of Lady Frog addition by David Haywood
+
+special thanks to
+
+Pierpaolo Prazzoli
+Petr1fied,
+ninjakid,
+Reznor007,
+Malice,
+tb2000,
+Mr. Do,
+Roberto Fresca,
+f205v,
+XZeriX,
+[red],
+MOCAS,
+Jonemaan
+BIOS-D
+
+note:
+Sound not hooked up on Return of Lady Frog
+Some backgrounds have wrong colours on Return of Lady Frog
+-- i'm not sure why, palette doesn't fit whatever you xor it with, maybe
+   the roms should be mapped in a different way?
 
 ***************************************************************************/
 
@@ -16,12 +42,13 @@ extern data16_t *splash_vregs;
 extern data16_t *splash_videoram;
 extern data16_t *splash_spriteram;
 extern data16_t *splash_pixelram;
+extern data16_t *roldfrog_bitmap_mode;
+data16_t *roldfrog_protdata;
 
+extern int splash_bitmap_type;
 /* from vidhrdw/gaelco.c */
 READ16_HANDLER( splash_vram_r );
-READ16_HANDLER( splash_pixelram_r );
 WRITE16_HANDLER( splash_vram_w );
-WRITE16_HANDLER( splash_pixelram_w );
 VIDEO_START( splash );
 VIDEO_UPDATE( splash );
 
@@ -36,7 +63,7 @@ static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 
 static ADDRESS_MAP_START( splash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
-	AM_RANGE(0x800000, 0x83ffff) AM_READ(splash_pixelram_r)	/* Pixel Layer */
+	AM_RANGE(0x800000, 0x83ffff) AM_READ(MRA16_RAM)			/* Pixel Layer */
 	AM_RANGE(0x840000, 0x840001) AM_READ(input_port_0_word_r)/* DIPSW #1 */
 	AM_RANGE(0x840002, 0x840003) AM_READ(input_port_1_word_r)/* DIPSW #2 */
 	AM_RANGE(0x840004, 0x840005) AM_READ(input_port_2_word_r)/* INPUT #1 */
@@ -67,7 +94,7 @@ WRITE16_HANDLER( splash_coin_w )
 
 static ADDRESS_MAP_START( splash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)										/* ROM */
-	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(splash_pixelram_w) AM_BASE(&splash_pixelram)			/* Pixel Layer */
+	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_pixelram)			/* Pixel Layer */
 	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)							/* Sound command */
 	AM_RANGE(0x84000a, 0x84003b) AM_WRITE(splash_coin_w)									/* Coin Counters + Coin Lockout */
 	AM_RANGE(0x880000, 0x8817ff) AM_WRITE(splash_vram_w) AM_BASE(&splash_videoram)				/* Video RAM */
@@ -107,6 +134,45 @@ static ADDRESS_MAP_START( splash_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM3812_write_port_0_w)		/* YM3812 */
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)					/* RAM */
 ADDRESS_MAP_END
+
+/* Return of Lady Frog Maps */
+/* note, sprite ram has moved, extra protection ram, and extra write for the pixel layer */
+/* sound hardware is also different -- not done yet! */
+
+static ADDRESS_MAP_START( roldfrog_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
+	AM_RANGE(0x400000, 0x407fff) AM_READ(MRA16_ROM)			/* Protection Data */
+	AM_RANGE(0x408000, 0x4087ff) AM_READ(MRA16_RAM)			/* Extra Ram */
+	AM_RANGE(0x800000, 0x83ffff) AM_READ(MRA16_RAM)			/* Pixel Layer */
+	AM_RANGE(0x840000, 0x840001) AM_READ(input_port_0_word_r)/* DIPSW #1 */
+	AM_RANGE(0x840002, 0x840003) AM_READ(input_port_1_word_r)/* DIPSW #2 */
+	AM_RANGE(0x840004, 0x840005) AM_READ(input_port_2_word_r)/* INPUT #1 */
+	AM_RANGE(0x840006, 0x840007) AM_READ(input_port_3_word_r)/* INPUT #2 */
+	AM_RANGE(0x880000, 0x8817ff) AM_READ(splash_vram_r)		/* Video RAM */
+	AM_RANGE(0x881800, 0x881803) AM_READ(MRA16_RAM)			/* Scroll registers */
+	AM_RANGE(0x881804, 0x881fff) AM_READ(MRA16_RAM)			/* Work RAM */
+	AM_RANGE(0x8c0000, 0x8c0fff) AM_READ(MRA16_RAM)			/* Palette */
+	AM_RANGE(0xd00000, 0xd00fff) AM_READ(MRA16_RAM)			/* Sprite RAM */
+	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)			/* Work RAM */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( roldfrog_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)										/* ROM */
+	AM_RANGE(0x400000, 0x407fff) AM_WRITE(MWA16_ROM) AM_BASE(&roldfrog_protdata)			/* Protection Data */
+	AM_RANGE(0x408000, 0x4087ff) AM_WRITE(MWA16_RAM) 										/* Extra Ram */
+	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_pixelram)			/* Pixel Layer */
+//	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(splash_sh_irqtrigger_w)							/* Sound command */
+	AM_RANGE(0x84000a, 0x84003b) AM_WRITE(splash_coin_w)									/* Coin Counters + Coin Lockout */
+	AM_RANGE(0x880000, 0x8817ff) AM_WRITE(splash_vram_w) AM_BASE(&splash_videoram)				/* Video RAM */
+	AM_RANGE(0x881800, 0x881803) AM_WRITE(MWA16_RAM) AM_BASE(&splash_vregs)						/* Scroll registers */
+	AM_RANGE(0x881804, 0x881fff) AM_WRITE(MWA16_RAM)										/* Work RAM */
+	AM_RANGE(0x8c0000, 0x8c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)/* Palette is xRRRRxGGGGxBBBBx */
+	AM_RANGE(0xd00000, 0xd00fff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_spriteram)					/* Sprite RAM */
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_RAM) AM_BASE(&roldfrog_bitmap_mode)					/* Bitmap Mode? */
+	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(MWA16_RAM)										/* Work RAM */
+ADDRESS_MAP_END
+
+
 
 
 INPUT_PORTS_START( splash )
@@ -260,6 +326,33 @@ static MACHINE_DRIVER_START( splash )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( roldfrog )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000/2)			/* 12 MHz - not verified */
+	MDRV_CPU_PROGRAM_MAP(roldfrog_readmem,roldfrog_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+//	MDRV_CPU_ADD(Z80,30000000/8)
+//	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)			/* 3.75 MHz? */
+//	MDRV_CPU_PROGRAM_MAP(splash_readmem_sound,splash_writemem_sound)
+//	MDRV_CPU_VBLANK_INT(nmi_line_pulse,64)	/* needed for the msm5205 to play the samples */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(2*8, 49*8-1, 2*8, 32*8-1)
+//	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(splash)
+	MDRV_VIDEO_UPDATE(splash)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -294,11 +387,13 @@ Notes:
 
 
 
-Lady Frog is a protected bootleg of splash, and the program jumps straight away
-to an unmapped memory address (crashing at 0x00401E72)...
+Lady Frog is a typical 'Korean Style' hack of Splash
+the main 68k code is based on 'Splash' with many patches made to the code
+most of the patched code includes jumps to the 0x400000 where no rom is
+mapped, this data appears to be supplied by a protection device.
 
-roldfrog.001 contains
-VIDEO COMPUTER SYSTEM  (C)1989 DYNAX INC  NAGOYA JAPAN  DRAGON PUNCH  VER. 1.30
+The z80 rom (used for sound) is a hack of the main program from dynax's
+'Dragon Punch' game.
 
 ***************************************************************************/
 
@@ -312,6 +407,9 @@ ROM_START( roldfrog )
 	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -334,6 +432,9 @@ ROM_START( roldfrga )
 	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
+	ROM_LOAD( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -368,8 +469,30 @@ ROM_START( splash )
 	ROM_LOAD( "13i",	0x060000, 0x020000, CRC(febb9893) SHA1(bb607a608c6c1658748a17a62431e8c30323c7ec) )
 ROM_END
 
+/* DRIVER INITs */
 
-GAME( 1992, splash,   0,        splash, splash, 0, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
+void init_protection_data (void)
+{
+	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	int i;
 
-GAMEX(1993, roldfrog, 0,        splash, splash, 0, ROT0, "Microhard", "The Return of Lady Frog", GAME_NOT_WORKING )
-GAMEX(1993, roldfrga, roldfrog, splash, splash, 0, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NOT_WORKING )
+	for (i = 0;i < 0x8000/2;i++)
+	roldfrog_protdata[i] = PROTDATA[i];
+}
+
+DRIVER_INIT( splash )
+{
+	splash_bitmap_type = 0;
+}
+
+DRIVER_INIT( roldfrog )
+{
+	splash_bitmap_type = 1;
+	init_protection_data();
+}
+
+
+GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
+
+GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

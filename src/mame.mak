@@ -99,6 +99,7 @@ CPUS+=I386@
 CPUS+=I960@
 CPUS+=H83002@ 
 CPUS+=V810@ 
+CPUS+=M37710@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
