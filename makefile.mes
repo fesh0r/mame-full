@@ -9,7 +9,7 @@ TARGET = mess
 DEBUG = 1
 
 # uncomment next line to include the symbols for symify
-SYMBOLS = 1
+# SYMBOLS = 1
 
 # uncomment next line to use Assembler 68k engine
 # X86_ASM_68K = 1
@@ -59,7 +59,7 @@ ifdef SYMBOLS
 CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-O0 -pedantic -Wall -Werror -Wno-unused -g
 else
-CFLAGS = -Isrc -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
+CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
 	-DNDEBUG \
 	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
 	-Werror -Wall -Wno-sign-compare -Wunused \
