@@ -2,7 +2,20 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.37b14.2
+Release 0.37b15.1 (xmame only)
+	- Everything from MAME 0.37b15 except for 'steadykey' support.
+	- Added an aRts sound server driver.  (Manuel Teira)
+	- Added another aRts sound server driver.  It needs reasonable aRts 
+	  server settings, something like artsd -F 6 -S 4096 should be ok to get
+	  near accurate response time.  (Petr Smotek)
+	- ALSA updates: Added preliminary support for ALSA 0.9 API; split the
+	  0.5 and 0.9 API stuff into separate files.  (Shyouzou Sugitani) 
+	- HotRod support is now enabled by either -hotrod or -hotrodse, just
+	  like the DOS/Win32 version.
+	- Added dummy flicker and vector orientation functions to fxvec.c so
+	  that xmame.xfx can link again.
+
+Release 0.37b14.2 (xmame only)
 	- Updated the romulan.pl script in contrib/tools.  (Nathan Hand)
 	- The sound device is now released when the emulation is paused.
 	  (Shyouzou Sugitani)
