@@ -138,8 +138,10 @@ static struct SOUNDC snd_control;
 
 void gameboy_update(int param, INT16 **buffer, int length);
 
-void gameboy_sound_w(int offset, int data)
+WRITE_HANDLER( gb_sound_w )
 {
+	offset += 0xFF10;
+
 	/* change in registers so update first */
 	stream_update(channel, 0);
 
@@ -453,8 +455,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 			{
 				sample >>= 4;
 			}
-			sample &= 0xF;
-			sample -= 8;
+			sample = (sample & 0xF) - 8;
 
 			if( snd_3.level )
 				sample >>= (snd_3.level - 1);
