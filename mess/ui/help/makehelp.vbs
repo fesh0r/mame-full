@@ -30,11 +30,20 @@ Function HtmlEncode(ByVal strText)
 	HtmlEncode = strHtml
 End Function
 
+Sub MakeParentDirectories(ByVal strPath)
+	On Error Resume Next	
+	objFSO.CreateFolder(objFSO.GetParentFolderName(strPath))
+	On Error Goto 0
+End Sub
+
 Sub AddTopic(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath, ByVal strTitle)
 	Dim objFile
 	WScript.Echo "Adding File " & strBaseDir & "\" & strRelPath & " ..."
 	Set objFile = objFSO.GetFile(strBaseDir & "\" & strRelPath)
+
+	MakeParentDirectories(strObjDir & "\" & strRelPath)
 	objFile.Copy(strObjDir & "\" & strRelPath)
+	
 	objTextStream.WriteLine("		<LI> <OBJECT type=""text/sitemap"">")
 	objTextStream.WriteLine("			<param name=""Name"" value=""" & strTitle & """>")
 	objTextStream.WriteLine("			<param name=""Local"" value=""" & strRelPath & """>")
@@ -53,7 +62,7 @@ Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath)
 		WScript.Quit
 	End If
 	
-	
+	MakeParentDirectories(strObjDir & "\" & strRelPath)
 	objFile.Copy(strObjDir & "\" & strRelPath)
 End Sub
 
@@ -154,18 +163,15 @@ Set objFSO = CreateObject("Scripting.FileSystemObject")
 If objFSO.FileExists(strObjDir & "mess.chm") Then
 	objFSO.DeleteFile(strObjDir & "mess.chm")
 End If
-On Error Resume Next
-objFSO.CreateFolder(strObjDir)
-objFSO.CreateFolder(strObjDir & "sysinfo")
-objFSO.CreateFolder(strObjDir & "html")
-objFSO.CreateFolder(strObjDir & "images")
-On Error Goto 0
 
 ' ---------------------------------------------------------------------------
 ' Make sysinfo pages
 ' ---------------------------------------------------------------------------
 Set objSysInfoDictionary = CreateObject("Scripting.Dictionary")
 Set objTextStream = objFSO.OpenTextFile(strSysInfoFile)
+MakeParentDirectories strObjDir & "\"
+MakeParentDirectories strObjDir & "\sysinfo\"
+MakeParentDirectories strObjDir & "\sysinfo\foo.blah"
 Do While Not objTextStream.AtEndOfStream
 	strLine = objTextStream.ReadLine
 	If Len(strLine) > 0 Then
@@ -176,7 +182,7 @@ Do While Not objTextStream.AtEndOfStream
 			Case "$bio"
 				strSystemText = ""
 			Case "$end"
-				Set objTextStream2 = objFSO.CreateTextFile(strObjDir & "sysinfo\" & strSystem & ".htm")
+				Set objTextStream2 = objFSO.CreateTextFile(strObjDir & "\sysinfo\" & strSystem & ".htm")
 				objTextStream2.Write strSystemText
 				objTextStream2.Close
 				strSystem = ""
@@ -217,6 +223,7 @@ Next
 ' ---------------------------------------------------------------------------
 ' Make help project
 ' ---------------------------------------------------------------------------
+MakeParentDirectories(strHelpProjectPath)
 Set objTextStream = objFSO.CreateTextFile(strHelpProjectPath)
 objTextStream.WriteLine("[OPTIONS]")
 objTextStream.WriteLine("Compiled file=mess.chm")
