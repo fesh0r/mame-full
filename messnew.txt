@@ -2,9 +2,6 @@
 
 Note: .inp record/playback does still not work currently.
 
-NOTE: DOS Version: Real disc reading is not working fully in this release.
-
-
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Amstrad NC200 (preliminary) [Kev Thacker]
