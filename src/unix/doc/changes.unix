@@ -2,6 +2,22 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.56.2
+	- Added contrib/kxmame.  This script launches xmame.x11 in builds of KDE
+	  which have problems with the window not opening.  (Sylvain Trosset and
+	  Hoonis)
+	- Updated dga2.txt to reflect Radeon DGA2 fixes that are in the XFree86
+	  cvs tree.  (Shyouzou Sugitani)
+	- Updated GLmame to v0.92--see src/unix/doc/changes.opengl.  (Sven
+	  Goethel)
+	- Added extra debugging output to the DGA 2.0 driver.  (Shyouzou
+	  Sugitani)
+	- Fixed a compile error that could occur in blit.h due to a C++-style
+	  comment.  (Artane)
+	- Added the ability for xmame to interpret file names as game names,
+	  e.g., 'xmame.x11 /path/to/mspacman.zip' should now work.  (Peter
+	  Trauner)
+
 Release 0.56.1
 	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
@@ -19,7 +35,7 @@ Release 0.56.1
 	- Fixed a bug that prevented romalizer from working.  (Shyouzou
 	  Sugitani)
 	- The xgl target should work much better.  (Sven Goethel)
-	- The -hotrod/-hr and -hotrodse/-hrse should actually work now.
+	- The -hotrod/-hr and -hotrodse/-hrse commands should actually work now.
 	- Fixed a bunch of warnings that occurred when linking with GNU binutils
 	  using -warn-common.
 	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
