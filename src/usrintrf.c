@@ -2608,11 +2608,11 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
     if (!buf)
     {
         /* allocate a buffer for the text */
-        buf = malloc (8192);
+        buf = malloc (200*1024);
         if (buf)
         {
             /* try to load entry */
-            if (load_driver_history (Machine->gamedrv, buf, 8192) == 0)
+            if (load_driver_history (Machine->gamedrv, buf, 200*1024) == 0)
             {
                 scroll = 0;
                 wordwrap_text_buffer (buf, maxcols);
