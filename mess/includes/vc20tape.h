@@ -10,7 +10,7 @@ extern struct DACinterface vc20tape_sound_interface;
    1,                  /* count */\
    "wav\0",    /* TAP, LNX and T64(maybe) later file extensions */\
    IO_RESET_NONE,      /* reset if file changed */\
-	OSD_FOPEN_DUMMY,	/* open mode */\
+	OSD_FOPEN_NONE,		/* open mode */\
    NULL,               /* id */\
    vc20_tape_attach_image,	/* init */\
    vc20_tape_detach_image,	/* exit */\

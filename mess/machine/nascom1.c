@@ -127,7 +127,7 @@ int	nascom1_init_cassette(int id)
 		return INIT_PASS;
 	}
 
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		nascom1_tape_size = osd_fsize(file);

@@ -36,7 +36,7 @@ static void	nc_card_save(int id)
 	logerror("attempting card save\n");
 
 	/* open file for writing */
-	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+	file = image_fopen_custom(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
 
 	if (file)
 	{

@@ -1241,7 +1241,7 @@ static const struct IODevice io_pcw[] =
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_NONE,		/* open mode */
 		0,
 		pcw_floppy_init,	/* init */
 		dsk_floppy_exit,	/* exit */

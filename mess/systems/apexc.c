@@ -166,8 +166,8 @@ static int apexc_tape_init(int id)
 
 	/* open file */
 	/* unit 0 is read-only, unit 1 is write-only */
-	t->fd = image_fopen(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
-							(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
+	t->fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
+								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	return INIT_PASS;
 }
@@ -860,7 +860,7 @@ static const struct IODevice io_apexc[] =
 		2,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_NONE,			/* open mode */
 		NULL,					/* id */
 		apexc_tape_init,		/* init */
 		apexc_tape_exit,		/* exit */

@@ -2519,7 +2519,7 @@ static const struct IODevice io_specpls3[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_NONE,		/* open mode */
 		0,
 		dsk_floppy_load,	/* init */
 		dsk_floppy_exit,	/* exit */

@@ -244,7 +244,7 @@ int jupiter_load_tap(int id)
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
 	jupiter_exit_tap(id);
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
+	file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
 		logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));

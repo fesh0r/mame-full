@@ -250,7 +250,7 @@ static int read_crc_config (const char *file, int type, int id, const char* sysn
 }
 
 
-void *image_fopen(int type, int id, int filetype, int read_or_write)
+void *image_fopen_custom(int type, int id, int filetype, int read_or_write)
 {
 	struct image_info *img;
 	const char *sysname;
@@ -334,12 +334,12 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	assert(id < dev->count);
 
 	switch (dev->open_mode) {
-	case OSD_FOPEN_DUMMY:
+	case OSD_FOPEN_NONE:
 	default:
 		/* unsupported modes */
 		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
 		fref = NULL;
-		effective_mode_local = OSD_FOPEN_DUMMY;
+		effective_mode_local = OSD_FOPEN_NONE;
 		break;
 
 	case OSD_FOPEN_READ:
@@ -347,35 +347,35 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 	case OSD_FOPEN_RW:
 	case OSD_FOPEN_RW_CREATE:
 		/* supported modes */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, dev->open_mode);
+		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, dev->open_mode);
 		effective_mode_local = dev->open_mode;
 		break;
 
 	case OSD_FOPEN_RW_OR_READ:
 		/* R/W or read-only: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			effective_mode_local = OSD_FOPEN_READ;
 		}
 		break;
 
 	case OSD_FOPEN_RW_CREATE_OR_READ:
 		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_RW;
 		else
 		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if (fref)
 				effective_mode_local = OSD_FOPEN_READ;
 			else
 			{
-				fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+				fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 				effective_mode_local = OSD_FOPEN_RW_CREATE;
 			}
 		}
@@ -383,12 +383,12 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 
 	case OSD_FOPEN_READ_OR_WRITE:
 		/* read or write: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fref)
 			effective_mode_local = OSD_FOPEN_READ;
 		else
 		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
+			fref = image_fopen_custom(type, id, OSD_FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
 			effective_mode_local = OSD_FOPEN_WRITE;
 		}
 		break;

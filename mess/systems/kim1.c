@@ -234,7 +234,7 @@ static const struct IODevice io_kim1[] = {
         1,                  /* count */
 		"kim\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_NONE,		/* open mode */
         0,
 		kim1_cassette_init, /* init */
 		kim1_cassette_exit, /* exit */

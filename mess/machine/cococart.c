@@ -189,7 +189,7 @@ int dragon_floppy_init(int id)
 		void *file;
 
 		diskKind[ id ] = DSK_BASIC;
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file) {
 			int 	filesize = osd_fsize(file),
 					headerSize = filesize % 256,
@@ -626,7 +626,7 @@ int coco_vhd_init(int id)
 	if( id != 0 )
 		return INIT_FAIL;
 
-	vhdFile = image_fopen(IO_VHD, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+	vhdFile = image_fopen_custom(IO_VHD, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 
 	logicalRecordNumber = 0;
 	bufferAddress = 0;
@@ -746,7 +746,7 @@ void coco_vhd_readwrite( UINT8 data )
 		case 2: /* Flush file cache */
 			osd_fclose( vhdFile );
 			vhdFile = NULL;
-			vhdFile = image_fopen(IO_VHD, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
+			vhdFile = image_fopen_custom(IO_VHD, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
 
 			if( vhdFile == NULL )
 				vhdStatus = 2; /* Unable to open image */

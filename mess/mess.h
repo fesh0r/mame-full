@@ -121,18 +121,21 @@ extern int tapecontrol(struct mame_bitmap *bitmap, int selected);
  * OSD_FOPEN_READ_OR_WRITE
  *  open existing file in read-only mode if it exists.  If it does not, open
  *  the file as write-only.  (used by wave.c)
+ * OSD_FOPEN_NONE
+ *  Leaves the open mode undefined: implies that image_fopen_custom() will be
+ *  called with the proper open mode (this style is deprecated and not
+ *  recommended, though it may still prove useful in some rare cases).
  */
 enum
 {
 	OSD_FOPEN_READ, OSD_FOPEN_WRITE, OSD_FOPEN_RW, OSD_FOPEN_RW_CREATE,
-	OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE
+	OSD_FOPEN_RW_OR_READ, OSD_FOPEN_RW_CREATE_OR_READ, OSD_FOPEN_READ_OR_WRITE,
+
+	OSD_FOPEN_NONE = -1
 };
 
 #define is_effective_mode_writable(mode) ((mode) != OSD_FOPEN_READ)
 #define is_effective_mode_create(mode) (((mode) == OSD_FOPEN_RW_CREATE) || ((mode) == OSD_FOPEN_WRITE))
-
-/* hack: placeholder used until I determine what the open_mode value should be for an image */
-#define OSD_FOPEN_DUMMY -1
 
 
 #ifdef MAX_KEYS

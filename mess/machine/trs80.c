@@ -153,7 +153,7 @@ static void cas_copy_callback(int param)
 
 int trs80_cas_init(int id)
 {
-	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	void *file = image_fopen_custom(IO_CASSETTE,id,OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
 		cas_size = osd_fsize(file);
@@ -295,7 +295,7 @@ int trs80_floppy_init(int id)
 
     if (id == 0)        /* first floppy? */
 	{
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file)
 		{
 

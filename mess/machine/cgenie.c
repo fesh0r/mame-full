@@ -135,9 +135,9 @@ static OPBASE_HANDLER (opbaseoverride)
 				logerror("failed to allocate 64K buff\n");
 				return address;
 			}
-			cmd = image_fopen(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+			cmd = image_fopen_custom(IO_CASSETTE, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if( !cmd )
-				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+				  cmd = image_fopen_custom(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if( !cmd )
 			{
 				logerror("failed to open '%s'\n", image_filename(IO_CASSETTE,0));
@@ -385,7 +385,7 @@ int cgenie_floppy_init(int id)
 		return INIT_FAIL;
 
 	/* open file and determine image geometry */
-	file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 
 	if (file)
 	{

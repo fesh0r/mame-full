@@ -645,7 +645,7 @@ int vc1541_init (int id)
 	int size;
 
 	/*memset (&(drive->d64), 0, sizeof (drive->d64)); */
-	in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE, 0);
+	in = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, 0);
 	if (!in)
 		return INIT_FAIL;
 

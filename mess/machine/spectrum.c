@@ -1179,7 +1179,7 @@ int spectrum_cassette_init(int id)
 		int datasize;
 		unsigned char *data;
 
-		file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		file = image_fopen_custom(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		logerror(".TAP file found\n");
 		if (file)
 			datasize = osd_fsize(file);

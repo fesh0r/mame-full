@@ -928,7 +928,7 @@ int msx_floppy_init (int id)
 	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
-	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+	f = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (f)
 		{
 		size = osd_fsize (f);

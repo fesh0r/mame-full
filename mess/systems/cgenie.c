@@ -461,7 +461,7 @@ static const struct IODevice io_cgenie[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_NONE,			/* open mode */
 		NULL,					/* id */
 		cgenie_cassette_init,	/* init */
 		NULL,					/* exit */

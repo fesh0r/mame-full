@@ -29,7 +29,7 @@ int pc_floppy_init(int id)
 
 		void *file;
 
-		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
+		file = image_fopen_custom(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (!file) return INIT_PASS;
 
 		/* find the sectors/track and bytes/sector values in the boot sector */

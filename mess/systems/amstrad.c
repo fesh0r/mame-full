@@ -2787,7 +2787,7 @@ ROM_END
 		2,							/* count */ \
 		"dsk\0",                    /* file extensions */ \
 		IO_RESET_NONE,				/* reset if file changed */ \
-		OSD_FOPEN_DUMMY,			/* open mode */ \
+		OSD_FOPEN_NONE,				/* open mode */ \
 		0, \
 		amstrad_floppy_init,		/* init */ \
 		dsk_floppy_exit,			/* exit */ \
