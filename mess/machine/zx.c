@@ -367,7 +367,6 @@ WRITE_HANDLER ( zx_io_w )
 		timer_adjust(ula_nmi, 0, 0, TIME_IN_CYCLES(207, 0));
 
 		/* remove the IRQ */
-		timer_reset(ula_irq, TIME_NEVER);
 		ula_irq_active = 0;
 	}
 	else
@@ -420,7 +419,6 @@ READ_HANDLER ( zx_io_r )
 		{
 			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
-			timer_reset(ula_irq, TIME_NEVER);
 			ula_irq_active = 0;
 		}
 		else
@@ -479,7 +477,6 @@ READ_HANDLER ( pow3000_io_r )
 		{
 			logerror("IOR %3d $%04X data $%02X (ULA IRQs off)\n", cpu_getscanline(), offset, data);
 			zx_ula_bkgnd(0);
-			timer_reset(ula_irq, TIME_NEVER);
 			ula_irq_active = 0;
 		}
 		else

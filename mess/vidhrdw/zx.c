@@ -93,7 +93,7 @@ static void zx_ula_nmi(int param)
 
 	r.min_y = r.max_y = cpu_getscanline();
 	fillbitmap(Machine->scrbitmap, Machine->pens[1], &r);
-	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) activecpu_get_reg(Z80_R), activecpu_get_pc());
+	logerror("ULA %3d[%d] NMI, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
 	cpu_set_nmi_line(0, PULSE_LINE);
 	if (++ula_scanline_count == Machine->drv->screen_height)
 		ula_scanline_count = 0;
@@ -106,15 +106,17 @@ static void zx_ula_irq(int param)
 	 * bit 6 goes low. In MESS this IRQ timed from the first read
 	 * from the copy of the DFILE in the upper 32K in zx_ula_r().
 	 */
-	logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) activecpu_get_reg(Z80_R), (unsigned) activecpu_get_pc());
-	ula_irq_active = 0;
-	if (++ula_scancode_count == 8)
-		ula_scancode_count = 0;
-	cpu_set_irq_line(0, 0, PULSE_LINE);
-	if (++ula_scanline_count == Machine->drv->screen_height)
-		ula_scanline_count = 0;
+	if (ula_irq_active)
+	{
+		logerror("ULA %3d[%d] IRQ, R:$%02X, $%04x\n", cpu_getscanline(), ula_scancode_count, (unsigned) cpunum_get_reg(0, Z80_R), (unsigned) cpunum_get_reg(0, Z80_PC));
+		ula_irq_active = 0;
+		if (++ula_scancode_count == 8)
+			ula_scancode_count = 0;
+		cpu_set_irq_line(0, 0, PULSE_LINE);
+		if (++ula_scanline_count == Machine->drv->screen_height)
+			ula_scanline_count = 0;
+	}
 }
-
 
 int zx_ula_r(int offs, int region)
 {
@@ -125,24 +127,22 @@ int zx_ula_r(int offs, int region)
 	ula_frame_vsync = 3;
 
 	chrgen = memory_region(region);
-	ireg = activecpu_get_reg(Z80_I) << 8;
-	rreg = activecpu_get_reg(Z80_R);
-	cycles = 4 * (64 - (rreg & 63));
-#if 1
+	ireg = cpunum_get_reg(0, Z80_I) << 8;
+	rreg = cpunum_get_reg(0, Z80_R);
 	y = cpu_getscanline();
-#else
-	y = ula_scanline_count;
-#endif
-	logerror("ULA %3d[%d] VID, R:$%02X, $%04x:", y, ula_scancode_count, rreg, offs & 0x7fff);
 
-	timer_adjust(ula_irq, TIME_IN_CYCLES(cycles, 0), 0, 0);
-	ula_irq_active = 1;
+	if (!ula_irq_active)
+	{
+		cycles = 4 * (64 - (rreg & 63));
+		timer_set(TIME_IN_CYCLES(cycles, 0), 0, zx_ula_irq);
+		ula_irq_active = 1;
+	}
 
 	for (x = 0; x < 256; x += 8)
 	{
 		chr = rom[offs & 0x7fff];
 		if (!halted)
-			logerror(" %02x", chr);
+			logerror("ULA %3d[%d] VID, R:$%02X, PC:$%04x, CHR:%02x\n", y, ula_scancode_count, rreg, offs & 0x7fff, chr);
 		if (chr & 0x40)
 		{
 			halted = 1;
@@ -159,15 +159,12 @@ int zx_ula_r(int offs, int region)
 		}
 		drawgfx(bitmap, Machine->gfx[0], data, 0, 0, 0, x, y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
-	if (!halted)
-		logerror(" %02x", rom[offs & 0x7fff]);
-	logerror("\n");
+
 	return rom[offs0];
 }
 
 VIDEO_START( zx )
 {
-	ula_irq = timer_alloc(zx_ula_irq);
 	ula_nmi = timer_alloc(zx_ula_nmi);
 	ula_irq_active = 0;
 	return video_start_generic_bitmapped();
