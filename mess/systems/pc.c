@@ -73,6 +73,8 @@
 // IO Expansion, only a little bit for ibm bios self tests
 //#define EXP_ON
 
+READ_HANDLER( return_0xff ) { return 0xff; }
+
 static MEMORY_READ_START( pc_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
@@ -100,6 +102,8 @@ static PORT_READ_START( pc_readport )
 	{ 0x0060, 0x0063, ppi8255_0_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
+	{ 0x240, 0x257, pc_rtc_r },
+//	{ 0x240, 0x257, return_0xff }, // anonymous bios should not recogniced realtimeclock
 #ifdef EXP_ON
 	{ 0x0210, 0x0217, pc_EXP_r },
 #endif
@@ -108,6 +112,8 @@ static PORT_READ_START( pc_readport )
 	{ 0x02f8, 0x02ff, pc_COM2_r },
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
+//	{ 0x340, 0x357, pc_rtc_r },
+	{ 0x340, 0x357, return_0xff }, // anonymous bios should not recogniced realtimeclock
 	{ 0x0378, 0x037b, pc_parallelport1_r },
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_status_port_0_r },
@@ -134,11 +140,13 @@ static PORT_WRITE_START( pc_writeport )
 	{ 0x222, 0x222, saa1099_write_port_1_w },
 	{ 0x223, 0x223, saa1099_control_port_1_w },
 #endif
+	{ 0x240, 0x257, pc_rtc_w },
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
 	{ 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
+//	{ 0x340, 0x357, pc_rtc_w },
 	{ 0x0378, 0x037b, pc_parallelport1_w },
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
@@ -2255,7 +2263,6 @@ static struct MachineDriver machine_driver_atvga =
     ROM_LOAD("rom03.bin", 0xfa000, 0x2000, 0xaac3fc37)
     ROM_LOAD("rom02.bin", 0xfc000, 0x2000, 0x3062b3fc)
 	/* sw1 0x60 readback fails write 301 to screen fe3b7 */
-	/* after memory test 101 fe4df dma controller? */
 	/* disk problems no disk gives 601 */
 	/* 5000-026 08/16/82 */
     ROM_LOAD("rom01.bin", 0xfe000, 0x2000, 0x5c3f0256)
@@ -2277,14 +2284,14 @@ static struct MachineDriver machine_driver_atvga =
 	// split into 8 kbyte parts
 	// the same as in the basic c1.10 as in the turboxt
 	// 1501-476 10/27/82
-    ROM_LOAD("biospc.bin", 0xfe000, 0x2000, 0xe88792b3) //beepcode
+    ROM_LOAD("biospc.bin", 0xfe000, 0x2000, 0xe88792b3)
 
 	/* tandy 1000 hx */
     ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
 
 	// ibm xt
     ROM_LOAD("xthdd.c8", 0xc8000, 0x2000, 0xa96317da)
-    ROM_LOAD("biosxt.bin", 0xf0000, 0x10000, 0x36c32fde) // BASIC C1.1, hangs
+    ROM_LOAD("biosxt.bin", 0xf0000, 0x10000, 0x36c32fde) // BASIC C1.1
 	// split into 2 chips for 16 bit access
     ROM_LOAD_EVEN("ibmxt.0", 0xf0000, 0x8000, 0x83727c42)
     ROM_LOAD_ODD("ibmxt.1", 0xf0000, 0x8000, 0x2a629953)
@@ -2318,12 +2325,13 @@ static struct MachineDriver machine_driver_atvga =
 
 	/* pc xt mfm controller
 	   2 harddisks 17 sectors, 4 head, 613 tracks
-	   serves 2 controllers? 0x320-3, 0x324-7, no dma, irq5
+	   serves 2 controllers? 0x320-3, 0x324-7, dma 3, irq5
 	   movable, works at 0xee000 */
 	/* western digital 06/28/89 */
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
 
 	/* lcs 6210d asic i2.1 09/01/1988 */
+	/* problematic, currently showing menu and calls int21 (hangs)! */
     ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da)
 
 	// cutted from some aga char rom
@@ -2360,7 +2368,7 @@ ROM_START( ibmpc )
     ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
     ROM_LOAD("basicc11.fa", 0xfa000, 0x2000, 0xaac3fc37)
     ROM_LOAD("basicc11.fc", 0xfc000, 0x2000, 0x3062b3fc)
-    ROM_LOAD("pc102782.bin", 0xfe000, 0x2000, 0xe88792b3) //beepcode
+    ROM_LOAD("pc102782.bin", 0xfe000, 0x2000, 0xe88792b3)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
 ROM_END
@@ -2397,6 +2405,7 @@ ROM_END
 ROM_START( pc )
     ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+//    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da)
     ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
 	ROM_REGION(0x01100,REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
