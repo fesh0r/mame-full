@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-17 July 2004
+11 August 2004
 \layout SGML
 
 <authorgroup>
@@ -4487,7 +4487,7 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_inset LatexCommand \url[xmame/xmess-0.84.1 sources]{download/xmame-0.84.1.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.85 sources]{download/xmame-0.85.tar.bz2}
 
 \end_inset 
 

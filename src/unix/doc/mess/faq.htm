@@ -29,8 +29,11 @@
 			<li>
 				<A href="#g08">Why doesn't MESS split into two versions, one for consoles and one 
 					for computers?</A>
+			<li>
+				<a href="#g09">I still do not understand why MAME and MESS will not merge. Since 
+					the cores are kept so close together, shouldn't #ifdef's suffice?</a>
 			<LI>
-				<a href="#g09">How come my emails to the MESS developers do not receive replies?</a></LI>
+				<a href="#g10">How come my emails to the MESS developers do not receive replies?</a></LI>
 		</ul>
 		<h2>Starting Up</h2>
 		<ul>
@@ -204,7 +207,32 @@
 				MESS</A> to include new gaming consoles and computers. The complicated 
 			answer is that it is hard to tell the difference.
 		</p>
-		<h2 id="g09">How come my emails to the MESS developers do not receive replies?</h2>
+		<h2 id="g09"></h2>
+		<p>
+			Yes, to a point. In a sense, #ifdefs do suffice and all of <A href="http://www.mess.org/">
+				MESS</A>'s overrides to the core are encapsulated in #ifdefs. In theory, <A href="http://www.mame.net/">
+				MAME</A> and <A href="http://www.mess.org/">MESS</A> could be developed out 
+			of a common source tree similar to how Xmame and Xmess are maintained in a 
+			unified fashion. But there are additional considerations. Unlike Xmame and 
+			Xmess, <A href="http://www.mame.net/">MAME</A> and <A href="http://www.mess.org/">MESS</A>
+			are maintained by different groups. In the course of <A href="http://www.mame.net/">
+				MAME</A> developement, occasionally sweeping changes are made that require 
+			small changes to every <A href="http://www.mame.net/">MAME</A> driver. If <A href="http://www.mame.net/">
+				MAME</A> and <A href="http://www.mess.org/">MESS</A> were maintained out of 
+			the same source tree, then the <A href="http://www.mame.net/">MAME</A> people 
+			would be responsible for keeping MESS up to date as well during such changes. 
+			Conversely, changes to <A href="http://www.mess.org/">MESS</A> would need to be 
+			scrutinized for breakage in <A href="http://www.mame.net/">MAME</A>.
+		</p>
+		<p>
+			Because of these isssues, it is more prudent to keep two separate source trees. 
+			When breaking changes occur in <A href="http://www.mame.net/">MAME</A>, the <A href="http://www.mame.net/">
+				MAME</A> people can then update all of the <A href="http://www.mame.net/">MAME</A>
+			drivers and when that is done and the changes are released, the <A href="http://www.mess.org/">
+				MESS</A> people can do the same process on the various <A href="http://www.mess.org/">
+				MESS</A> drivers.
+		</p>
+		<h2 id="g10">How come my emails to the MESS developers do not receive replies?</h2>
 		<p>The <A href="http://www.mess.org/">MESS</A> developers receive a large volume of 
 			email, and also suffer from "Real life syndrome", and thus might not be able to 
 			reply, particularly when such questions are answered in this FAQ. Your best bet 
@@ -343,7 +371,7 @@
 			displayed in the GUI. It can display in-game/software images and system images, 
 			or anything else as long as it is named correctly.
 		</p>
-		<p>The snapshot folder can be configured in the Directories… window under the 
+		<p>The snapshot folder can be configured in the Directories... window under the 
 			Options menu in the GUI. The default screen folder is snap. Store system images 
 			with the system name. Store software/game snapshots in a folder under the 
 			system they belong to.
@@ -356,7 +384,7 @@
 			the game Jungle Hunt. The name needs to match game name.
 		</p>
 		<h2 id="h02">How do get screenshots?</h2>
-		<p>You can take your own screen shots by selecting the ‘Save Screenshot’ option in 
+		<p>You can take your own screen shots by selecting the 'Save Screenshot' option in 
 			the file menu while in emulation. This will save an image in the png format 
 			with the name of the driver (if one does not exist already). If an image 
 			already exists an a sequential number will be added to the name (for example 
@@ -401,7 +429,23 @@
 				MESS</A> &nbsp;developers need to know the specifics, and cannot&nbsp;run 
 			around&nbsp;how to use a very obscure system just to save the time&nbsp;of a 
 			submitter.</p>
-		<P>If you do not have programming skills, you can help by documenting emulatad 
+		<p>
+			As an alternative, one way to contribute is to modernize drivers. Over <a href="http://www.mame.net/">
+				MAME</a>'s/<a href="http://www.mess.org/">MESS<a>'s lifetime, there have been core 
+					improvements for which not all drivers have been modified to take advantage. 
+					These techniques include:
+					<ul>
+						<li>
+							Unified read/write address maps</li>
+						<li>
+							Natural keyboard support</li>
+						<li>
+							Tagged input ports</li>
+					</ul>
+					For details on what these mean, it is probably best to ask about them on the <A href="http://www.mess.org/">
+						MESS</A> message board.
+		</p>
+				<P>If you do not have programming skills, you can help by documenting emulated 
 			systems and software, adding FAQ entries, reporting bugs, submitting artwork 
 			and so on - anything to assist those with programming skills and improve the 
 			project.

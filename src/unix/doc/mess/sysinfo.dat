@@ -8895,7 +8895,7 @@ images (but not double-sided ones).
 
 
 * In addition to the floppy drives, the HFDC can support up to 3 MFM hard
-disks.  If you want to use these hard disks, you must use the HFDC as a floppy
+disks.  If you want to use these hard disks, you must use HFDC as the floppy
 disk controller.  Disk images use the MAME harddisk format (the sector size for
 HFDC harddisks is 256).  (BTW, early HFDC cards also included a tape interface
 which is not emulated.)
@@ -8908,7 +8908,15 @@ cannot figure out why (it works fine with both the TI controller and the HFDC
 controller).  The hard disk image is in the standard MESS/MAME hardddisk
 format (with 512-byte sectors); since MESS does not support image diff file
 currently, only un-compressed images can be written to (compressed images ARE
-supported, but only as read-only disks).
+supported, but only as read-only disks).  Note that current versions of MESS
+emulate the latest (2004) prototype, contrary to MESS .84 and earlier that
+emulated an earlier (2001) prototype.  The 2004 prototype is incompatible with
+the 2001 prototype (IDE bus has been byte-swapped), so you need to download the
+latest DSRs and use a new, blank IDE hard disk image if you switch from MESS
+.84 or earlier.  You must use the DSR version for the 2004 prototype with a
+rtc65271 clock chip.  The state of the rtc65271 clock chip is now saved to
+disk, so that you can use the rtc RAM bootstrap loader to load IDEAL from the
+IDE harddisk, as explained in Nouspickel's IDEAL page.
 
 
 * Serial port and PIO emulation is incomplete.  On the one hand, nothing useful
@@ -9143,7 +9151,7 @@ disk)). I have even managed to install the fun and games tape, and play pacman.
 
 History and Trivia:
 
-Texas Instruments has been building minicomputers since the late 1960s through
+Texas Instruments was a minicomputer manufacturer since the late 1960s through
 the 1980s.
 
 Around the summer of 1973, they started to design the TI990 as a successor to

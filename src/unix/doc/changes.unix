@@ -2,7 +2,7 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.85
+Release 0.85, 12 August 2004
 	- Everything from MAME 0.85 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.85 (http://x.mame.net/changes-mess.html).
 	- Fixed a problem in makefile.unix that prevented the xgl target from 
@@ -15,7 +15,7 @@ Release 0.85
 	  offsets in branch instructions.  (Christian Groessler)
 	- Improved the NetBSD USB joystick driver: Added support for up to 8 
 	  axes and 1 hat and made manual calibration optional via the command 
-	  line option -joyusb-calibrate.  (Dieter Baron)
+	  line option "-joyusb-calibrate".  (Dieter Baron)
 	- Building xmess.xgl no longer results in link errors from messtest.
 	- Added a 2x sinc-based 6-tap filter effect with scanlines, enabled 
 	  via "-effect 8" or "-ef 8".  (Richard Goedeken)
@@ -25,15 +25,23 @@ Release 0.85
 	  systems with Linux 2.6 headers.
 	- Fixed a problem that prevented xml2info from building.  (Shyouzou 
 	  Sugitani)
-	- Added support for -steadykey.
+	- Reworked the input code so that it more closely resembles its Windows 
+	  counterpart.  This adds support for "-steadykey", "-a2d_deadzone" and 
+	  "-digital".
 	- Increased the maximum number of joysticks from 6 to 8 and the maximum 
 	  number of buttons per joystick from 16 to 32.
 	- Mouse buttons may not have been working in recent releases for games 
 	  such as Missile Command; they should work now.
+	- Network support is broken for the time being because of the core 
+	  input changes, so please disable XMAME_NET in your makefile.  If 
+	  you're interested in fixing this, have a look at src/unix/network.c 
+	  and the XMAME_NET sections of an older src/inptport.c.
+	- Fixed a 1000-fold inaccuracy in the BeOS implementation of usleep().
+	  (Jack Burton)
 
 Release 0.84.1, 17 July 2004
 	- Everything from MAME 0.84 and MESS 0.84.
-	- Removed -listinfo, since it's no longer supported by the core. 
+	- Removed "-listinfo", since it's no longer supported by the core. 
 	- The support for network play and rapidfire is no longer in vanilla 
 	  MAME, so they have to be patched into the core for releases.
 	- Builds on LinuxPPC should no longer give warnings about "PPC" being
@@ -161,7 +169,7 @@ Release 0.76.1, 25 October 2003
 	  This allows "xmess.x11 nes -cart ./zelda.zip" to work.
 	- Set options.mess_printf_output so that xmess spits out more 
 	  informative error messages, e.g., when it's unable to load an image.
-	- The "-list-dsp-plugins / -ldp" and "-list-mixer-plugins / -lmp" 
+	- The "-list-dsp-plugins (-ldp)" and "-list-mixer-plugins (-lmp)" 
 	  commands now cause the program to exit with a return value of 0.
 
 Release 0.74.1, 15 September 2003
@@ -176,9 +184,9 @@ Release 0.74.1, 15 September 2003
 
 Release 0.72.1, 15 August 2003
 	- Everything from MAME 0.72 and MESS 0.72.
-	- The various effects enabled by -effect now work with rotation enabled.
-	  (Shyouzou Sugitani)
-	- The Xv target supports more effects.   (Shyouzou Sugitani)
+	- The various effects enabled by "-effect" now work with rotation 
+	  enabled.  (Shyouzou Sugitani)
+	- The Xv target supports more effects.  (Shyouzou Sugitani)
 	- The rc parsing code displays more compact and readable error messages.
 	  (André Majorel)
 	- Xv windowed mode is now enabled with "-x11-mode 2" or "-x11 2", and 
@@ -190,7 +198,7 @@ Release 0.72.1, 15 August 2003
 	- Added hotkey switching for Xv windowed mode via ALT + DEL and Xv 
 	  fullscreen mode via ALT + END.
 	- The xfx target should build again.
-	- Added -widescreen for Xv.  This shrinks the width of the output for 
+	- Added "-widescreen" for Xv.  This shrinks the width of the output for 
 	  display on a widescreen TV.  (Per Wigren)
 
 Release 0.71.1, 19 July 2003
@@ -210,8 +218,8 @@ Release 0.70.1, 18 June 2003
 	  Everdij, Christopher Stone)
 	- Fixed some unused variable warnings when building non-debug versions
 	  of glgen.c and esound.c.
-	- Fixed the default values for -sysinfo_file and -messinfo_file, which
-	  were missing a '/'.
+	- Fixed the default values for "-sysinfo_file" and "-messinfo_file", 
+	  which were missing a '/'.
 	- Fixed the handling of leading zeros in the fractional part of a float
 	  in src/unix/snprintf.c.  (Chris Kirmse)
 	- Building 'tools' for xmess works again.
@@ -254,7 +262,7 @@ Release 0.68.1, 22 May 2003
 	  Collins)
 	- Made a less intrusive change to fm.c which removes LFO support in 
 	  YM2610-only builds.  (Jarek Burczynski)
-	- Fixed a few problems with -listinfo output.  (Andrea Mazzoleni)
+	- Fixed a few problems with "-listinfo" output.  (Andrea Mazzoleni)
 
 Release 0.67.2, 12 April 2003
 	- Fixed a bug in unix.mak that caused libusb to be linked in when the 
@@ -391,9 +399,9 @@ Release 0.61.1, 13 November 2002
 	  Servin)
 	- Applied a patch for FreeBSD to unix/video-drivers/svgainput.c.  
 	  (Stijn Hoop)
-	- Applied the NetMAME 0.5 patch, which adds a new option, -parallelsync,
-	  which should allow games to work without lag at network latencies of 
-	  up to 16 milliseconds.  (Steve Freeland)
+	- Applied the NetMAME 0.5 patch, which adds a new option, 
+	  "-parallelsync", which should allow games to work without lag at 
+	  network latencies of up to 16 milliseconds.  (Steve Freeland)
 	- Added support for Linux on the Playstation 2.  (Joan Sarah Touzet)
 	- Fixed a problem in the ALSA 0.9 driver with setting the sample rate 
 	  on SB128 soundcards.  (Stephen Anthony)
@@ -417,21 +425,21 @@ Release 0.61.1, 13 November 2002
 	  Microsoft's PCM WAVE format.  The file name can be specified with the 
 	  "-audiodevice" switch and defaults to "xmameout.wav".  (Donald King)
 	- Added support for showing average frames per second when quitting.  
-	  Also added support for the -frames_to_run/-ftr switch.
+	  Also added support for the "-frames_to_run (-ftr)" switch.
 	- Added Xv hardware scaling support!  To enable, uncomment the line 
-	  reading "X11_XV = 1" in the makefile and use the -xvext/-xv switches 
-	  (and possibly the -yuv switch).  (Alastair Robinson)
+	  reading "X11_XV = 1" in the makefile and use the "-xvext (-xv)" 
+	  switches (and possibly the -yuv switch).  (Alastair Robinson)
 	- An X11 build can now grab the keyboard to bypass window managers.  
-	  Use -grabkeyboard/-gkb to activate and/or the ALT + PGUP keypress to
-	  toggle it on/off.  (Gerd Sussner)
+	  Use "-grabkeyboard (-gkb)" to activate and/or the ALT + PGUP keypress 
+	  to toggle it on/off.  (Gerd Sussner)
 	- The code for finding the best X11 visual now checks in descending 
 	  order of bit depth.  This is to work around a bug/feature in the 
 	  latest NVidia drivers.  (Gerd Sussner)
 	- Fixed a problem in the DGA2 driver that could lead to scrambled 
 	  colors with an i830MG video card in 24bpp mode.  (Eric Brunet, 
 	  Shyouzou Sugitani)
-	- The SDL target's -listmodes switch now operates before attempting to 
-	  load a game.  (Shadow Walker)
+	- The SDL target's "-listmodes" switch now operates before attempting 
+	  to load a game.  (Shadow Walker)
 	- If xmame is iconified in IRIX, it will automatically pause ("boss 
 	  hanging around mode").  (Andrea Suatoni)
 	- Added a switch to force yv12 mode in the Xv driver; made improvements
@@ -454,9 +462,9 @@ Release 0.60.1 (xmame only), 5 May 2002
 	- Updated the Moo Mesa driver to the latest version.  (R. Belmont)
 	- Fixed a stereo output bug in sound/2612intf.c; fixed a sample loop 
 	  timing bug in sound/k007232.c.  (Hiromitsu Shioya)
-	- The '-diffdir' setting might actually work now.
+	- The "-diffdir" setting might actually work now.
 	- Fixed the Mortal Kombat 3 level select screen.  (Aaron Giles)
-	- Updated the description of the new '-ctrlr' option in changes.mame 
+	- Updated the description of the new "-ctrlr" option in changes.mame 
 	  and windows.txt.  (Ron Fries, et al)
 	- Updated the V60 core to handle unaligned memory accesses, which 
 	  should fix some SSV games.  (Nicola Salmoria)
@@ -591,12 +599,12 @@ Release 0.56.2, 1 January 2002
 	  Trauner)
 	- Renamed several xmame-specific keyboard functions to prevent a clash 
 	  with svgalib and to avoid future clashes.  (Bugzilla #123)
-        - Added rapid-fire support for joysticks: Use -rapidfire or -rapidf.
-          (Shyouzou Sugitani)
+        - Added rapid-fire support for joysticks: Use "-rapidfire" or 
+	  "-rapidf".  (Shyouzou Sugitani)
 	- Added an SDL azerty keymap to doc/xmamerc.dist.  (Luc Saillard)
 	- The xfx target can now compile, though it still won't run.  (Viet)
-	- Upgraded to romalizer 0.7pre2; fixed a problem that caused '-listfull 
-	  mokomo' to break romalizer.  (Christopher Stone)
+	- Upgraded to romalizer 0.7pre2; fixed a problem that caused "-listfull 
+	  mokomo" to break romalizer.  (Christopher Stone)
 	- The svgafx target compiles again.
 	- Added some notes to makefile.unix regarding known problems with gcc
 	  optimization flags on IA32 platforms.
@@ -607,29 +615,30 @@ Release 0.56.1 (xmame only), 21 November 2001
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
 	- Numeric keypad support is now much better.  (André Majorel)	
-	- Added arbitrary height scaling, available via the -arbheight option
+	- Added arbitrary height scaling, available via the "-arbheight" option
 	  and started sanitizing the blit core.  This currently only works with
 	  the X11 (windows, DGA1, DGA2) and svgalib drivers.  (Adam Moss)
 	- Added support in makefile.unix for the Intel C++ compiler, and also a
 	  sample wrapper script in contrib/tools.  (Adam Moss)
-	- Added -usbpspad/-pspad switch for support of the direction buttons on
-	  the Playstation gamepad.  (Bill Adams)
+	- Added "-usbpspad (-pspad)" switch for support of the direction 
+	  buttons on the Playstation gamepad.  (Bill Adams)
 	- Added support for SDL under BeOS.  Sound is not currently supported,
 	  however.  (Jack Burton)
 	- Fixed a bug that prevented romalizer from working.  (Shyouzou
 	  Sugitani)
 	- The xgl target should work much better.  (Sven Goethel)
-	- The -hotrod/-hr and -hotrodse/-hrse commands should actually work now.
-	- Fixed a bunch of warnings that occurred when linking with GNU binutils
-	  using -warn-common.
+	- The "-hotrod (-hr)" and "-hotrodse (-hrse)" commands should actually 
+	  work now.
+	- Fixed a bunch of warnings that occurred when linking with GNU 
+	  binutils using -warn-common.
 	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
 
 Release 0.55.2 (xmame only), 4 October 2001
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
 	  Moss)
-	- Added several AdvanceMAME effects, available via -effect/-ef.  Note
-	  that these effects are not available for some video drivers, nor do
-	  they work on actual 24-bit (packed) displays yet.  (Ben Saylor)
+	- Added several AdvanceMAME effects, available via "-effect (-ef)".  
+	  Note that these effects are not available for some video drivers, nor 
+	  do they work on actual 24-bit (packed) displays yet.  (Ben Saylor)
 	- Added mame-listmissing to contrib/tools.  (David Griffith)
 	- Fixed compilation errors reported in snprintf.c on some platforms,
 	  e.g. HP-UX 10.20 with GCC 3.0.  (Stefan Becker)
@@ -639,10 +648,10 @@ Release 0.55.1 (xmame only), 17 September 2001
 	- Removed the romcheck script until its author considers it far enough
 	  along for public consumption.
 	- Added mamecds to contrib/tools.  (Carlos Calzada Grau)
-	- Updated the ALSA 0.9 support: Added -alsa-buffer; replaced the use of
-	  SND_PCM_FORMAT_S16_{LE,BE} with SND_PCM_FORMAT_S16; changed
-	  -alsapcm(-pcm) to -alsa-pcm(-apcm); changed the default value of
-	  -alsa-pcm.  (Shyouzou Sugitani)
+	- Updated the ALSA 0.9 support: Added "-alsa-buffer"; replaced the use 
+	  of SND_PCM_FORMAT_S16_{LE,BE} with SND_PCM_FORMAT_S16; changed
+	  "-alsapcm (-pcm)" to "-alsa-pcm (-apcm)"; changed the default value 
+	    of "-alsa-pcm".  (Shyouzou Sugitani)
 
 Release 0.54.2 (xmame only), 4 September 2001
 	- Applied a fix for the Bubble Bobble driver.  (Haze)
@@ -651,10 +660,11 @@ Release 0.54.2 (xmame only), 4 September 2001
 	- Added a.out support (e.g. for OpenBSD) to the dlsym calls in several
 	  GLmame files.  (Claudio Castiglia)
 	- Applied a fix for Konami games.  (Aaron Giles)
-	- Using -debug no longer results in a segfault.
+	- Using "-debug" no longer results in a segfault.
 	- Applied a patch for the ES550x that fixes the runaway voices in Puzzle
 	  Bobble 3 and might fix other games with problems.  (Aaron Giles)
-	- Added -samplepath/-sp and -artworkpath/-ap command line options.
+	- Added "-samplepath (-sp)" and "-artworkpath (-ap)" command line 
+	  options.
 	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
 	- Added romcheck to contrib/tools.  (David Griffith)
 
@@ -666,9 +676,9 @@ Release 0.54.1 (xmame only), 26 August 2001
 
 Release 0.37b15.2, 26 August 2001
 	- Everything from MESS 0.37b15.  Yay!
-	- Changed the short version of -list-display-plugins from -ldp to
-	  -ldisp.  -ldp was already being used for -list-dsp-plugins.  (Shyouzou
-	  Sugitani)
+	- Changed the short version of "-list-display-plugins" from "-ldp" to
+	  "-ldisp".  "-ldp" was already being used for "-list-dsp-plugins".  
+	  (Shyouzou Sugitani)
 	- Fixed prep-new-mess to account for some of the new text file
 	  names/locations.
 
@@ -710,8 +720,8 @@ Release 0.37b15.1 (xmame only), 26 May 2001
 	- Everything from MAME 0.37b15 except for 'steadykey' support.
 	- Added an aRts sound server driver.  (Manuel Teira)
 	- Added another aRts sound server driver.  It needs reasonable aRts 
-	  server settings, something like artsd -F 6 -S 4096 should be ok to get
-	  near accurate response time.  (Petr Smotek)
+	  server settings, something like artsd -F 6 -S 4096 should be ok to 
+	  get near accurate response time.  (Petr Smotek)
 	- ALSA updates: Added preliminary support for ALSA 0.9 API; split the
 	  0.5 and 0.9 API stuff into separate files.  (Shyouzou Sugitani) 
 	- HotRod support is now enabled by either -hotrod or -hotrodse, just
@@ -720,13 +730,12 @@ Release 0.37b15.1 (xmame only), 26 May 2001
 	  that xmame.xfx can link again.
 
 Release 0.37b14.2 (xmame only), 13 May 2001
--------------------------------------------
 	- Updated the romulan.pl script in contrib/tools.  (Nathan Hand)
 	- The sound device is now released when the emulation is paused.
 	  (Shyouzou Sugitani)
 	- Updated the comment in makefile.unix about nasm to indicate that v0.98
 	  or higher must be used to build the asm 68k cores.
-	- Added -hotrod for HotRod and HotRod SE support.  Set it to 1 for
+	- Added "-hotrod" for HotRod and HotRod SE support.  Set it to 1 for
 	  HotRod, 2 for HotRod SE.
 	- The DGA target now reports whether it's using DGA1 or DGA2.
 	  (Christian Groessler)
@@ -823,9 +832,9 @@ Release 0.37b11.2
 	- SDL mouse support has been added.  (riq)
 	- SDL target should now have all previously missing update routines.
 	  (riq)
-	- Added -joydevname/-jdev option to select the device prefix for the
-	  i386 joystick.  Defaults to "/dev/js" for Linux and "/dev/joy" *BSD.
-	  (Thanks to Laurent Simon for the suggestion.)
+	- Added "-joydevname (-jdev)" option to select the device prefix for 
+	  the i386 joystick.  Defaults to "/dev/js" for Linux and "/dev/joy" 
+	  for *BSD.  (Thanks to Laurent Simon for the suggestion.)
 
 Release 0.37b11.1 (xmame only)
 	- Everything from MAME 0.37b11.
@@ -841,8 +850,8 @@ Release 0.37b11.1 (xmame only)
 	- Possible fix for a problem with the DGA target on ATI Rage Mobility
 	  which caused a switch to fullscreen mode to not change the resolution.
 	  (Lawrence Gold)
-	- -listgamelist no longer prints the column headers (they are shown by
-	  -listgamelistheader).  (Lawrence Gold)
+	- "-listgamelist" no longer prints the column headers (they are shown 
+	  by "-listgamelistheader").  (Lawrence Gold)
 
 Release 0.37b10.1
 	- Everything from mame 0.37b10 and mess 0.37b10
@@ -858,7 +867,7 @@ Release 0.37b10.1
 	  was added to the flags of SDL_SetVideoMode (Ricardo Quesada)
 	- New version of the mame_perl ROM manager.  (Stefan Becker)
 	- Fixes for getcwd/getwd for BSD43 systems.  (Pete French)
-	- Running with -listsamples no longer causes a core dump.  (me)
+	- Running with "-listsamples" no longer causes a core dump.  (me)
 	- Sprite corruption fix for the NES driver.  (Christopher Stone, Sean
 	  Young, Brad Oliver)
 	- The SDL driver now supports 32bpp XFree86 modes.  (Dan Scholnik)
@@ -868,7 +877,7 @@ Release 0.37b10.1
 	- Gave credit to Tadeusz Szczyrba for writing the original SDL driver.
 	- Added a needed call to fflush() in the error logging.  (Christopher
 	  Stone).
-	- The frontend code (-list options) should more or less resemble its
+	- The frontend code ("-list" options) should more or less resemble its
 	  MS-DOS counterpart.  Thanks to Christopher Stone for pointing out the
 	  problem areas.
 	- Added an "openbsd" ARCH define.  (Claudio Castiglia)
@@ -883,8 +892,8 @@ Release 0.37b10.1
 	  added suggestion for using ALSA with OSS emulation if OSS problems are
 	  experienced.
 	- Added a top-level README; removed old-changes.mess, which was
-	  identical to messold.txt; extended copyright notice to 2001 and listed
-	  Lawrence Gold as maintainer in config.c.  (Matt Lowry)
+	  identical to messold.txt; extended copyright notice to 2001 and 
+	  listed Lawrence Gold as maintainer in config.c.  (Matt Lowry)
 
 Last Modified by Hans de Goede (hans@highrise.nl)
 

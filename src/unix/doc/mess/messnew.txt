@@ -1,3 +1,73 @@
+0.85
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Coleco FunVision [Curt Coder]
+
+
+
+System Driver Changes:
+----------------------
+- [A2600] Various fixes on certain Activision games.  (bug #570) [Judge]
+
+- [AMSTRAD] Renamed cpc6128fr to cpc6128f to be 8.3 compliant.  [Nate Woods]
+
+- [C16] Added natural keyboard support.  [Nate Woods]
+
+- [COCO] Implemented .os9 disk image creation support.  (bug #576) [Nate
+  Woods]
+
+- [COLECO] Miscellaneous cleanups.  [Curt Coder]
+
+- [GENESIS] Fixed button input declarations.  [Nate Woods]
+
+- [MICROTAN] Fixed a video hardware crash.  [Curt Coder]
+
+- [PC] New PIT8253 implementation; Styx and Digger run better now.  Also fixed
+  the PIT8253 frequencies and mades some PIC8259 fixes.  [Andrew Jenner]
+
+- [TI99, GENEVE] Updated the IDE card emulation with the latest changes to the
+  prototype.  The latest prototype is incompatible with earlier prototypes
+  (IDE bus has been byte-swapped), so you need to download the latest DSRs and
+  use a new, blank IDE hard disk image.  Also, the state of the IDE clock chip
+  (rtc65271) is now saved to disk, so that you can use a rtc bootstrap loader
+  to load IDEAL from the IDE harddisk, as explained in Nouspickel's IDEAL page.
+  [Raphael Nabet]
+
+- [ZX80] Added natural keyboard support and iscellaneous cleanups.  [Curt
+  Coder]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Fixed a bug when creating disk images in which default extensions
+  were not spcified.  (bug #576)  [Nate Woods]
+  
+- [Windows] Modified the new UI input dialogs so that they behave like the
+  MAME UI input dialogs, allowing for multiple input sequences.  [Nate Woods]
+
+- [Windows GUI] Fixed some miscellaneous bugs having to do with the software
+  picker settings.  (bug #568, bug #571)  [Nate Woods]
+
+- [Windows GUI] Fixed a bug that could cause the MESS GUI to use 100% of CPU
+  time when idling.  [Andrew Jenner]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.85.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.84
 
 New System Drivers Supported (in no particular order):
@@ -45,6 +115,8 @@ User Interface Changes:
 -----------------------
 - Fixed the input device categorization feature so that it was accesible from
   the classic UI.  (bug #556)  [Nate Woods]
+
+- [Windows GUI] Tree view off by default.  [Nate Woods]
 
 - [Windows GUI] Refactored picker code to be more modular and used better in
   both MESS and MAME32.  Also fixed a sorting bug.  (bug #543)  [Nate Woods]
