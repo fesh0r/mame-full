@@ -15,7 +15,6 @@ OSOBJS = \
 		$(OBJ)/wince/rc.o \
 		$(OBJ)/wince/ticker.o \
 		$(OBJ)/wince/fronthlp.o \
-		$(OBJ)/wince/emitx86.o \
 		$(OBJ)/windows/fileio.o \
 		$(OBJ)/windows/snprintf.o \
 		$(OBJ)/mess/windows/menu.o \
@@ -36,6 +35,14 @@ OSOBJS = \
 		$(OBJ)/zlib/inflate.o \
 		$(OBJ)/zlib/infblock.o \
 		$(OBJ)/zlib/inffast.o
+
+ifeq "$(WCEPLAT)"	"x86em"
+OSOBJS += $(OBJ)/wince/emitx86.o
+endif
+
+ifeq "$(WCEPLAT)"	"arm"
+OSOBJS += $(OBJ)/wince/emitarm.o
+endif
 
 ifdef MESS
 OSOBJS += \

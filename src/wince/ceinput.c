@@ -365,10 +365,9 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
+void osd_analogjoy_read(int player,int analog_axis[], InputCode analogjoy_input[])
 {
-	*analog_x = 0;
-	*analog_y = 0;
+	memcpy(analog_axis, 0, sizeof(analog_axis[0]) * MAX_ANALOG_AXES);
 }
 
 int osd_readkey_unicode(int flush)

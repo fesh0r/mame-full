@@ -1,5 +1,22 @@
-#include <math.h>
+//============================================================
+//
+//	emitx86.cpp - WinCE Intel x86 specific code generation
+//
+//============================================================
+//
+//	registers used by blitter:
+//		EAX		scratch
+//		EBX		palette index
+//		ECX		source bits
+//		EDX		dest bits
+//		EBP		blend register
+//============================================================
+
 #include "emitblit.h"
+
+//============================================================
+// enumerations
+//============================================================
 
 enum
 {
@@ -8,6 +25,8 @@ enum
 	ECX,
 	EDX
 };
+
+//============================================================
 
 static void emit_increment_register(struct blitter_params *params, int reg, INT32 value)
 {
@@ -110,8 +129,6 @@ void emit_increment_destbits(struct blitter_params *params, INT32 adjustment)
 
 void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 {
-	INT32 mask;
-
 	if (params->source_palette)
 	{
 		// xor	eax, eax
@@ -143,21 +160,15 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 	case 4:
 	case 8:
 	case 16:
-		mask = ((1 << (params->rbits + params->gbits + params->bbits)) - 1);
-		mask &= ~((divisor-1) << 0);
-		mask &= ~((divisor-1) << (params->bbits));
-		mask &= ~((divisor-1) << (params->bbits + params->gbits));
-
 		// and	eax, mask
 		emit_byte(params, 0x25);
-		emit_int32(params, mask);
+		emit_int32(params, calc_blend_mask(params, divisor));
 
 		// shr	eax, (log2 pixel_total)
 		emit_byte(params, 0xc1);
 		emit_byte(params, 0xe8);
-		emit_byte(params, (UINT8) (log(divisor) / log(2)));
+		emit_byte(params, (UINT8) intlog2(divisor));
 		break;
-
 
 	default:
 		assert(0);
@@ -190,6 +201,10 @@ void emit_copy_pixel(struct blitter_params *params, int pixel_mode, int divisor)
 		emit_byte(params, 0xe8);
 		break;
 	}
+}
+
+void emit_begin_loop(struct blitter_params *params)
+{
 }
 
 void emit_finish_loop(struct blitter_params *params, size_t loop_begin)

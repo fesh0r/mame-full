@@ -1,6 +1,6 @@
 //============================================================
 //
-//	blit.cpp - WinCE blit handling
+//	ceblit.cpp - WinCE blit handling
 //
 //============================================================
 
@@ -8,6 +8,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <gx.h>
+#include <math.h>
 
 // MAME headers
 #include "driver.h"
@@ -53,45 +54,68 @@ void swap(T *t1, T *t2)
 }
 
 //============================================================
-//	emit functions
+//	intlog2
 //============================================================
+
+int intlog2(int val)
+{
+	return (int) (log(val) / log(2));
+}
+
+//============================================================
+//	calc_blend_mask
+//============================================================
+
+INT32 calc_blend_mask(struct blitter_params *params, int divisor)
+{
+	INT32 mask;
+	mask = ((1 << (params->rbits + params->gbits + params->bbits)) - 1);
+	mask &= ~((divisor-1) << 0);
+	mask &= ~((divisor-1) << (params->bbits));
+	mask &= ~((divisor-1) << (params->bbits + params->gbits));
+	return mask;
+}
+
+//============================================================
+//	emit functions
+//
+//  we can assume that since this is emitting CPU instructions
+//	that alignment faults are not an issue
+//============================================================
+
+static int preemit(struct blitter_params *params, int len)
+{
+	if (!params->blitter)
+		return 1;
+	if (params->blitter_size + len > params->blitter_max_size)
+	{
+		params->blitter = NULL;
+		return 1;
+	}
+	return 0;
+}
 
 void emit_byte(struct blitter_params *params, UINT8 b)
 {
-	if (!params->blitter)
+	if (preemit(params, 1))
 		return;
-	if (params->blitter_size >= params->blitter_max_size)
-	{
-		params->blitter = NULL;
-		return;
-	}
 	params->blitter[params->blitter_size++] = b;
 }
 
 void emit_int16(struct blitter_params *params, INT16 i)
 {
-#ifdef LSB_FIRST
-	emit_byte(params, (i >>  0) & 0xff);
-	emit_byte(params, (i >>  8) & 0xff);
-#else
-	emit_byte(params, (i >>  8) & 0xff);
-	emit_byte(params, (i >>  0) & 0xff);
-#endif
+	if (preemit(params, 2))
+		return;
+	*((UINT16 *) &params->blitter[params->blitter_size]) = i;
+	params->blitter_size += 2;
 }
 
 void emit_int32(struct blitter_params *params, INT32 i)
 {
-#ifdef LSB_FIRST
-	emit_byte(params, (i >>  0) & 0xff);
-	emit_byte(params, (i >>  8) & 0xff);
-	emit_byte(params, (i >> 16) & 0xff);
-	emit_byte(params, (i >> 24) & 0xff);
-#else
-	emit_byte(params, (i >> 24) & 0xff);
-	emit_byte(params, (i >> 16) & 0xff);
-	emit_byte(params, (i >>  8) & 0xff);
-	emit_byte(params, (i >>  0) & 0xff);
-#endif
+	if (preemit(params, 4))
+		return;
+	*((UINT32 *) &params->blitter[params->blitter_size]) = i;
+	params->blitter_size += 4;
 }
 
 
@@ -196,6 +220,7 @@ static int generate_blitter(int orientation)
 	emit_increment_destbits(&params, dest_base_adjustment);
 
 	loop_begin = params.blitter_size;
+	emit_begin_loop(&params);
 
 	source_linepos = 0;
 	for(i = 0; i < shown_width; i++)
