@@ -3,6 +3,7 @@
 	Krzysztof Strzecha, Nathan Woods, 2003
 	Based on TMS9901 emulator by Raphael Nabet
 
+	01-Mar-2004 -	Interrupt queue overrun problem fixed.
 	19-Oct-2003 -	Status register added. Reset fixed. Some cleanups.
 			INTA enable/disable.
 
@@ -13,7 +14,7 @@
 #include "driver.h"
 #include "tms5501.h"
 
-#define DEBUG_TMS5501			0
+#define DEBUG_TMS5501	1
 
 #if DEBUG_TMS5501
 	#define LOG_TMS5501(n, message, data) logerror ("TMS5501 %d: %s %02x\n", n, message, data)
@@ -141,8 +142,13 @@ static void tms5501_field_interrupts(int which)
 	}
 	else
 	{
-		if (tms5501[which].interrupt_callback)
-			(*tms5501[which].interrupt_callback)(0, 0);
+		if ((tms5501[which].command & TMS5501_INT_ACK_ENABLE))
+		{
+			if (tms5501[which].interrupt_callback)
+				(*tms5501[which].interrupt_callback)(0, 0);
+		}
+		else
+			tms5501[which].status &= ~TMS5501_INTERRUPT_PENDING;
 	}
 }
 
@@ -268,7 +274,8 @@ void tms5501_set_pio_bit_7 (int which, UINT8 data)
 	tms5501[which].pio_input_buffer &= ~TMS5501_PIO_INT_7;
 	if (data)
 		tms5501[which].pio_input_buffer |= TMS5501_PIO_INT_7;
-	tms5501_field_interrupts(which);
+	if (tms5501[which].pending_interrupts & TMS5501_INT_7_INT)
+		tms5501_field_interrupts(which);
 }
 
 void tms5501_sensor (int which, UINT8 data)
