@@ -143,10 +143,9 @@ static void reporterror(int err, struct command *c, const char *format, const ch
 			case IMGTOOLERR_SRC_PARAM_CREATE:
 				optiontemplate = module->createoptions_template;
 				break;
-			default:
-				assert(FALSE);
-				break;
 			};
+
+			assert(optiontemplate);
 
 			optiontemplate += ERRORPARAM(err);
 

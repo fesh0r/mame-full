@@ -36,6 +36,9 @@ Other Changes:
 These are required by KC85/4 and KC85/3 systems. Added code to execute callback for 
 BRDY and ARDY outputs. [Kev Thacker]
 
+- [IMGTOOL] Fixed a bug that caused crashes when parameters to create were not
+properly specified [Nate Woods]
+
 -------------------------------------------------------------------------------  
 0.37b10
 

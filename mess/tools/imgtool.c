@@ -479,7 +479,7 @@ int img_create(const struct ImageModule *module, const char *fname, const struct
 
 	err = resolve_options(module->createoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
 	if (err)
-		return err | IMGTOOLERR_SRC_PARAM_FILE;
+		return err | IMGTOOLERR_SRC_PARAM_CREATE;
 
 	f = stream_open(fname, OSD_FOPEN_WRITE);
 	if (!f)
