@@ -87,6 +87,7 @@ static const struct deviceentry *lookupdevice(int d)
 		{ 2, "pntp",	"punchtape" },	/* IO_PUNCHTAPE */
 		{ 8, "prin",	"printer" },	/* IO_PRINTER */
 		{ 6, "serl",	"serial" },		/* IO_SERIAL */
+		{ 2, "parl",	"parallel" },	/* IO_PARALLEL */
 		{ 7, "snap",	"snapshot" },	/* IO_SNAPSHOT */
 		{ 7, "quik",	"quickload" }	/* IO_QUICKLOAD */
 	};
@@ -100,7 +101,7 @@ static const struct deviceentry *lookupdevice(int d)
 static int requested_device_type(char *tchar)
 {
 	const struct deviceentry *ent;
-	int device = IO_END;
+	int device = -1;
 	int i;
 
     logerror("Requested device is %s\n", tchar);
@@ -117,11 +118,7 @@ static int requested_device_type(char *tchar)
 		}
 	}
 
-	if (i == IO_END) {
-        logerror("Requested Device not supported!!\n");
-        return -1;
-    }
-	return i;
+	return device;
 }
 
 static void MessSetupCrc(int game_index)

@@ -642,9 +642,9 @@ WRITE_HANDLER( coco3_m6847_fs_w )
 	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
 
 	if (data) {
-		int bottom, rows;
-		rows = coco3_calculate_rows(NULL, &bottom);
-		rastertrack_newscreen(bottom, rows);
+		int top, rows;
+		rows = coco3_calculate_rows(&top, NULL);
+		rastertrack_newscreen(top, rows);
 	}
 }
 

@@ -392,36 +392,6 @@ static int coco3_palette_recalc(int force)
 	return 0;
 }
 
-/*
-static void coco3_vh_palette_change_color(int color, int data)
-{
-	int red, green, blue;
-	coco3_compute_color(data, &red, &green, &blue);
-	palette_change_color(color, red, green, blue);
-}
-
-static void coco3_vh_palette_recompute(void)
-{
-	int i;
-	for (i = 0; i < 16; i++)
-		coco3_vh_palette_change_color(i, paletteram[i]);
-}
-
-static int coco3_vh_setborder(int red, int green, int blue)
-{
-	int full_refresh = 0;
-
-	if ((coco3_borderred != red) || (coco3_bordergreen != green) || (coco3_borderblue != blue)) {
-		coco3_borderred = red;
-		coco3_bordergreen = green;
-		coco3_borderblue = blue;
-		palette_change_color(COLORSLOT_BORDER, red, green, blue);
-
-		full_refresh = palette_recalc() ? 1 : 0;
-	}
-	return full_refresh;
-}
-*/
 void coco3_vh_blink(void)
 {
 	coco3_blinkstatus = !coco3_blinkstatus;
@@ -430,7 +400,7 @@ void coco3_vh_blink(void)
 int coco3_vblank(void)
 {
 	int newvidbase;
-	int top, rows;
+	int bottom, rows;
 
 	/* Latch in new values for $FF9D:$FF9E */
 	newvidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
@@ -439,8 +409,8 @@ int coco3_vblank(void)
 		coco3_vidbase = newvidbase;
 	}
 
-	rows = coco3_calculate_rows(&top, NULL);
-	return internal_m6847_vblank(263, (double) top, rastertrack_newline);
+	rows = coco3_calculate_rows(NULL, &bottom);
+	return internal_m6847_vblank(263, (double) bottom, rastertrack_newline);
 }
 
 WRITE_HANDLER(coco3_palette_w)
