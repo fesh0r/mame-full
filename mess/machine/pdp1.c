@@ -106,12 +106,13 @@ void pdp1_init_machine(void)
 
 int pdp1_read_mem(int offset)
 {
-	return pdp1_memory[offset];
+	return pdp1_memory ? pdp1_memory[offset] : 0;
 }
 
 void pdp1_write_mem(int offset, int data)
 {
-	pdp1_memory[offset]=data;
+	if (pdp1_memory)
+		pdp1_memory[offset]=data;
 }
 /* these are the key-bits specified in driver\pdp1.c */
 #define FIRE_PLAYER2              128
