@@ -133,12 +133,12 @@ static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 
 int dragon_vh_start(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL, dragon_charproc);
+	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_PAL, dragon_charproc);
 }
 
 int coco2b_vh_start(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_M6847T1, coco2b_charproc);
+	return internal_dragon_vh_start(M6847_VERSION_M6847T1_NTSC, coco2b_charproc);
 }
 
 WRITE_HANDLER(coco_ram_w)
@@ -174,7 +174,7 @@ int coco3_vh_start(void)
 	struct m6847_init_params p;
 
 	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_M6847T1;
+	p.version = M6847_VERSION_M6847T1_NTSC;
 	p.artifactdipswitch = COCO_DIP_ARTIFACTING;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x80000;

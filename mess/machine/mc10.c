@@ -133,7 +133,7 @@ int mc10_vh_start(void)
 	struct m6847_init_params p;
 
 	m6847_vh_normalparams(&p);
-	p.version = M6847_VERSION_ORIGINAL;
+	p.version = M6847_VERSION_ORIGINAL_NTSC;
 	p.artifactdipswitch = 7;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x8000;
