@@ -500,7 +500,11 @@ void sgb_refresh_border(void)
 				tiles = (UINT16 *)sgb_tile_data + (yidx % 8);
 			tiles2 = tiles + 8;
 
-			pal = ((map[xidx] & 0x1C00) >> 10) * 16;
+			pal = (map[xidx] & 0x1C00) >> 10;
+			if( pal == 0 )
+				pal = 1;
+			pal <<= 4;
+
 			if( sgb_hack ) /* A few games do weird stuff */
 			{
 				UINT16 tileno = map[xidx] & 0xFF;
@@ -536,8 +540,15 @@ void sgb_refresh_border(void)
 					data <<= 1;
 					data2 <<= 1;
 				}
-				if( colour != 0 ) /* Colour 0 is transparent */
+				/* A slight hack below so we don't draw over the GB screen.
+				 * Drawing there is allowed, but due to the way we draw the
+				 * scanline, it can obscure the screen even when it shouldn't.
+				 */
+				if( !((yidx >= SGB_YOFFSET && yidx < SGB_YOFFSET + 144) &&
+					(xindex >= SGB_XOFFSET && xindex < SGB_XOFFSET + 160)) )
+				{
 					plot_pixel(bitmap, xindex, yidx, Machine->remapped_colortable[pal + colour]);
+				}
 				xindex++;
 			}
 		}
