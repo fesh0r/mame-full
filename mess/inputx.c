@@ -29,7 +29,7 @@ struct KeyBuffer
 	int begin_pos;
 	int end_pos;
 	int status;
-	char buffer[4096];
+	wchar_t buffer[4096];
 };
 
 struct InputMapEntry
@@ -71,7 +71,7 @@ static int find_code(const char *name, int modifiers)
 		code = isspace(name[3]) ? 0 : name[(modifiers & MODIFIER_SHIFT) ? 3 : 0];
 	else
 	{
-		code = -1;
+		code = 0;
 		for (i = 0; i < sizeof(input_map) / sizeof(input_map[0]); i++)
 		{
 			if (!strcmp(name, input_map[i].name))
@@ -141,7 +141,7 @@ void inputx_init(void)
 	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
 	size_t buffer_size;
 	int used_modifiers;
-	int i;
+	wchar_t c;
 	int switch_upper;
 
 	codes = NULL;
@@ -160,9 +160,9 @@ void inputx_init(void)
 
 		/* special case; scan to see if upper case characters are specified, but not lower case */
 		switch_upper = 1;
-		for (i = 'A'; i <= 'Z'; i++)
+		for (c = 'A'; c <= 'Z'; c++)
 		{
-			if (!inputx_can_post_key(i) || inputx_can_post_key(tolower(i)))
+			if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
 			{
 				switch_upper = 0;
 				break;
@@ -186,18 +186,20 @@ static struct KeyBuffer *get_buffer(void)
 	return (struct KeyBuffer *) (codes + NUM_CODES);
 }
 
-int inputx_can_post_key(int ch)
+int inputx_can_post_key(wchar_t ch)
 {
-	if ((ch < 0) || (ch >= 128) || !inputx_can_post())
+	if ((ch >= 128) || !inputx_can_post())
 		return 0;
 
 	assert(codes);
 	return codes[ch].ipt[0] != NULL;
 }
 
-void inputx_post(const char *text)
+void inputx_wpost(const wchar_t *text)
 {
 	struct KeyBuffer *keybuf;
+	int last_cr = 0;
+	wchar_t ch;
 
 	if (!text[0] || !inputx_can_post())
 		return;
@@ -213,15 +215,53 @@ void inputx_post(const char *text)
 
 	while(*text && (keybuf->end_pos+1 != keybuf->begin_pos))
 	{
-		if (inputx_can_post_key(*text))
+		ch = *text;
+
+		/* change all eolns to '\r' */
+		if ((ch != '\n') || !last_cr)
 		{
-			keybuf->buffer[keybuf->end_pos++] = *(text++);
-			keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+			if (ch == '\n')
+				ch = '\r';
+			else
+				last_cr = (ch == '\r');
+
+			if (inputx_can_post_key(ch))
+			{
+				keybuf->buffer[keybuf->end_pos++] = ch;
+				keybuf->end_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+			}
 		}
 		else
 		{
-			text++;
+			last_cr = 0;
 		}
+		text++;
+	}
+}
+
+void inputx_post(const char *text)
+{
+	wchar_t buffer[128];
+	size_t i;
+	size_t charsz;
+
+	while(*text)
+	{
+		for (i = 0; *text && i < (sizeof(buffer) / sizeof(buffer[0]))-1; i++)
+		{
+			charsz = mbtowc(&buffer[i], text, 1);
+			if (charsz)
+			{
+				text += charsz;
+			}
+			else
+			{
+				buffer[i] = '?';
+				text++;
+			}
+		}
+		buffer[i] = '\0';
+		inputx_wpost(buffer);
 	}
 }
 
@@ -249,7 +289,7 @@ void inputx_update(unsigned short *ports)
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
 	const struct InputPortTiny *ipt;
-	int ch;
+	wchar_t ch;
 	int i;
 	int value;
 
