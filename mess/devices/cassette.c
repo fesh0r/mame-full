@@ -236,6 +236,7 @@ static DEVICE_LOAD(cassette)
 	struct mess_cassetteimg *tag;
 	const struct IODevice *dev;
 	const struct CassetteFormat **formats;
+	const struct CassetteOptions *create_opts;
 	const char *extension;
 	cassette_state default_state;
 	int is_writable;
@@ -250,7 +251,8 @@ static DEVICE_LOAD(cassette)
 	if (image_has_been_created(image))
 	{
 		/* creating an image */
-		err = cassette_create(file, &mess_ioprocs, &wavfile_format, NULL, CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT, &tag->cassette);
+		create_opts = (const struct CassetteOptions *) dev->user3;
+		err = cassette_create(file, &mess_ioprocs, &wavfile_format, create_opts, CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT, &tag->cassette);
 		if (err)
 			goto error;
 	}
@@ -347,8 +349,14 @@ static void device_display_cassette(mess_image *image, struct mame_bitmap *bitma
 }
 
 
-const struct IODevice *cassette_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
-	int count, const struct CassetteFormat **formats, cassette_state default_state)
+const struct IODevice *cassette_device_specify(
+	struct IODevice *iodev,
+	char *extbuf,
+	size_t extbuflen,
+	int count,
+	const struct CassetteFormat **formats,
+	const struct CassetteOptions *casopts,
+	cassette_state default_state)
 {
 	int i;
 
@@ -377,6 +385,7 @@ const struct IODevice *cassette_device_specify(struct IODevice *iodev, char *ext
 		iodev->display = device_display_cassette;
 		iodev->user1 = (void *) formats;
 		iodev->user2 = (void *) default_state;
+		iodev->user3 = (void *) casopts;
 	}
 	return iodev;
 }

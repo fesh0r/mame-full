@@ -62,6 +62,7 @@ struct IODevice
 	void (*display)(mess_image *img, struct mame_bitmap *bitmap);
 	void *user1;
 	void *user2;
+	void *user3;
 };
 
 struct SystemConfigurationParamBlock
