@@ -471,7 +471,7 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
           search through dirty & find max maximal polygon, which 
           we can get to clipping (don't know if 8x8 is enought)
       */
-      osd_dirty_merge();
+      /*osd_dirty_merge();*/
       
    case 2:
       h = (bitmap->height+7) >> 3; /* Divide by 8, up rounding */
