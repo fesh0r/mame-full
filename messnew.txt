@@ -7,42 +7,40 @@ Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+N/A
 
 System Driver Changes:
 ----------------------
-
-- [KC85/4 & KC85/3] Colours fixed. Added colour flash support. Improved accuracy of video redraw;
-  mid frame changes are now supported (only flash changes are supported at this time); flashing
-  lines in Boulderdash are reproduced now. Thankyou to Torsten Paul for his information about
-  the colour flash. Swapped CLR and DEL keys (previously you had to press "delete" near Scroll
-  Lock to delete back a char. Now you can press backspace).
+- [KC85/4 & KC85/3] Colours fixed. Added colour flash support. Improved accuracy of video 
+  redraw;  mid frame changes are now supported (only flash changes are supported at this 
+  time); flashing lines in Boulderdash are reproduced now. Thankyou to Torsten Paul for 
+  his information about the colour flash. Swapped CLR and DEL keys (previously you had to 
+  press "delete" near Scroll Lock to delete back a char. Now you can press backspace).
   [Kev Thacker]
 
-- [ORIC1/ORICA/TELSTRAT] Fixed .tap loading. (Conversion from .tap to internal .wav form was completely
-  broken). [Kev Thacker]
+- [ORIC1/ORICA/TELSTRAT] Fixed .tap loading. (Conversion from .tap to internal .wav form 
+  was completely broken). [Kev Thacker]
   
-- [COCO 3] More work on improving video timing for mid frame video register
-  modification. Now supports mid frame palette modification, and altered the
-  way video RAM is scanned so that John Kowalski's Boink demo now runs (albeit
-  with many glitches).  Also fixed a bug that would cause the "Speed Up Poke"
-  to still be in effect after a reset. [Nate Woods]
+- [COCO 3] More work on improving video timing for mid frame video register modification. 
+  Now supports mid frame palette modification, and altered the way video RAM is scanned so 
+  that John Kowalski's Boink demo now runs (albeit with many glitches).  Also fixed a bug 
+  that would cause the "Speed Up Poke" to still be in effect after a reset. [Nate Woods]
+
 
 Other Changes:
 --------------
+- The core is based on MAME 0.37b12. This incorporates all features of the update to this 
+  core.  [MAME team] 
 
-- The core is based on MAME 0.37b12. This incorporates all 
-  features of the update to this core.  [MAME team] 
-
-- [IMGTOOL] Added support for NC100/NC200 PCMCIA Ram Card images. Card can be formatted and files
-  can be transfered to and from card filesystem. [Kev Thacker] 
+- [IMGTOOL] Added support for NC100/NC200 PCMCIA Ram Card images. Card can be formatted 
+  and files can be transfered to and from card filesystem. [Kev Thacker] 
 
 - [machine/z80fmly] The Zero count/Timeout output pulse was very short. Now the pulse is
   active for longer. Required for KC85/4 colour flash to work! [Kev Thacker]
 
+
+
 -------------------------------------------------------------------------------  
-
-
-
 0.37b11
 
 Several drivers may be broken due to the MAME memory handling changes.
@@ -60,9 +58,9 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
-- [ATOMEB] Eproms were not being selected; now fixed. Random data is poked into address 8,9,$A,$B,
-  this is used by the OS to seed the random number generator. Thanks to Kees van Oss for providing
-  this information [Kev Thacker]
+- [ATOMEB] Eproms were not being selected; now fixed. Random data is poked into address 
+  8,9,$A,$B, this is used by the OS to seed the random number generator. Thanks to Kees 
+  van Oss for providing this information [Kev Thacker]
 
 - [KC85/4] Implemented keyboard hardware. Previous hack has been removed.
   Seperated machine/kc.c into machine/kc.c and systems/kc.c.
@@ -96,8 +94,8 @@ System Driver Changes:
   now fixed.
   [Kev Thacker]
 
-- [EP128/EP128A] Initial sound emulation. Some sampled sounds work, and simple tone is working.
-  Fixed some interrupt problems [Kev Thacker]
+- [EP128/EP128A] Initial sound emulation. Some sampled sounds work, and simple tone is 
+  working.  Fixed some interrupt problems [Kev Thacker]
 
 Other Changes:
 --------------
@@ -182,14 +180,15 @@ System Driver Changes:
 ----------------------
 
 - [NC100,NC100A,NC200] Implemented serial hardware: Programs can be loaded into emulation
-  using the NC's built in terminal program. Some characters are dropped, could be synchronisation
-  problems. XModem transfer not supported at this time. Implemented printer emulation: Documents 
-  can be printed now. [Kev Thacker]
-- [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, but
-  some timing is still probably off.  Hi-res text will now display the underline in the proper
-  place when the lines per row is not 8.  Lo-res font now skewed one scanline, as was the original
-  machine.  Fixed Composite Monitor colors.  [Nate Woods]
-- [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. [Nate Woods]
+  using the NC's built in terminal program. Some characters are dropped, could be 
+  synchronisation problems. XModem transfer not supported at this time. Implemented printer 
+  emulation: Documents can be printed now. [Kev Thacker]
+- [COCO 3] Basics of mid-frame video mode changing made.  Crystal City runs a bit better, 
+  but some timing is still probably off.  Hi-res text will now display the underline in the 
+  proper place when the lines per row is not 8.  Lo-res font now skewed one scanline, as 
+  was the original machine.  Fixed Composite Monitor colors.  [Nate Woods]
+- [COCO & COCO 3] Fixed the border colors when POKE 65314, [64-79;88-95] is invoked. 
+  [Nate Woods]
 - [ORIC] fixed a bug in microdisc memory paging. Some discs start to boot now.
   Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
 - [PC & compatibles] repartitioned, several problems fixed,
@@ -203,8 +202,8 @@ Other Changes:
 - The core is based on MAME 0.37b9. This incorporates all 
   features of the update to this core.  [MAME team] 
 
-- The M6847 interfaces were given a facelift, and now more correctly mimic the signals on the chip.
-  [Nate Woods]
+- The M6847 interfaces were given a facelift, and now more correctly mimic the signals on 
+  the chip.  [Nate Woods]
 
 -------------------------------------------------------------------------------
 0.37b8 
@@ -486,18 +485,20 @@ System Driver Changes:
 - NES: Now features battery support and vastly improved PPU emulation - compare Kirby and 
   RC Pro Am. 
   * Palette is no longer hardcoded - it is mathematically generated. It may need some 
-  formulaic tweaking, but it's pretty accurate.  
-  * Games like GI Joe Atlantis Factor are working again, the NES Test cartridge no longer fails.  
-  * There is a compile switch to emulate the color intensity used in Chris Covell's "Wall" demo. 
-  It's off by default because it requires 16-bit mode and the sprite blitters need rewriting to 
-  support 16-bit. Still, you can enable it to see the demo run as it was intended.  
+    formulaic tweaking, but it's pretty accurate.  
+  * Games like GI Joe Atlantis Factor are working again, the NES Test cartridge no longer 
+    fails.  
+  * There is a compile switch to emulate the color intensity used in Chris Covell's "Wall" 
+    demo.  It's off by default because it requires 16-bit mode and the sprite blitters need 
+    rewriting to support 16-bit. Still, you can enable it to see the demo run as it was 
+    intended.  
   * Many mapper fixes: mapper 18 irqs should be close, mapper 19 added, the mid-20 Konami 
-  mappers are nearly 100%, and some of the mappers in the 60's are much more accurate.  
-  *Super Mario 3  _finally_ works! Excitebike also works again, and elite and PAL games, 
-  Elite will draw properly -- but only using the PAL NES emulation.  
+    mappers are nearly 100%, and some of the mappers in the 60's are much more accurate.  
+  * Super Mario 3  _finally_ works! Excitebike also works again, and elite and PAL games, 
+    Elite will draw properly -- but only using the PAL NES emulation.  
   * Fixed some more timing errors, Bayou Billy sine wave looks perfect now. 
   * low/high sprite priorities fixed. Super Mario 3 uses low priority sprites to mask out 
-  pieces of high priority ones.
+    pieces of high priority ones.
   * low-priority sprite/background transparency problem fixed (see Jaleco's Bases Loaded 3)
   * Mapper 5 is much better, although some interrupt problems remain.
   * Mappers 9/10 are _almost_ perfect.
@@ -505,38 +506,38 @@ System Driver Changes:
   * Fixed rendering problems in mapper 68 (Afterburner 2).
   * Fixed mapper 69 (Batman: Return of the Joker).
   * Mapper 70 (arkanoid 2 j) works, but is it right? It starts up on round 0, which appears 
-  to be the last round and not the first.
+    to be the last round and not the first.
   * Implemented some Taito mappers (80, 82).
   * Implemented Konami VRC7, minus OPL (mapper 85).
   * Preliminary support for the zapper via a fake dipswitch. Collision detection isn't 
-  working yet.
+    working yet.
   * Modified sound core to read dpcm samples from the right place in memory. Added clock 
-  specifier and read/write callbacks for register $14. NES driver now hooks into this for 
-  sprite DMA. 
+    specifier and read/write callbacks for register $14. NES driver now hooks into this for 
+    sprite DMA. 
   * Zapper support, configurable via the fake dipswitches. Most games look for it connected 
-  to the 2nd input port, not the first. Tested it with Duck Hunt and Hogan's Alley. If any 
-  other zapper games don't work, let me know and I'll beat them down.
+    to the 2nd input port, not the first. Tested it with Duck Hunt and Hogan's Alley. If any 
+    other zapper games don't work, let me know and I'll beat them down.
   * 4-player joypad support, also configurable via the fake dipswitches. For best results, 
-  set both ports to the double setting. I tested it in Gauntlet 2 and RC Pro Am 2. Again, 
-  let me know if it's busted in any other 4p games.
+    set both ports to the double setting. I tested it in Gauntlet 2 and RC Pro Am 2. Again, 
+    let me know if it's busted in any other 4p games.
   * Fixed sprite priorities for the last time. I swear it's really working now. ;-) As a 
-  side effect, the rendering code is a bit faster than before. 
+    side effect, the rendering code is a bit faster than before. 
   * More mapper fixes/additions.  
   * Added support for Famicom Disk System. Split up the main NES driver into NES and 
-  Famicom. Only the Famicom supports the disk system, because that's the way it is in real 
-  life. Press p1 button 3 to cycle amongst the disk sides. Once you switch a side, you may 
-  need to wait a second or two for the switch to be recognized. Let me know if any games 
-  fail to see the switch. Disk writing is not yet supported.
+    Famicom. Only the Famicom supports the disk system, because that's the way it is in 
+    real life. Press p1 button 3 to cycle amongst the disk sides. Once you switch a side, 
+    you may need to wait a second or two for the switch to be recognized. Let me know if 
+    any games fail to see the switch. Disk writing is not yet supported.
   * Added preliminary support for the Arkanoid paddle. It's pretty busted at the moment.
   * Fixed a small PPU bug regarding reads from the chr-gen ram portion of the ppu.
   * Correct display of left-most column when it has been programmatically disabled - 
-  see SMB3.
+    see SMB3.
   * Added some more mappers, some of which aren't working fully.
   * Fixed mapper 40 (SMB2j pirate) - it should be close to 100%
   * Fixed some issues with the disk support. It now supports that stupid padded format with 
-  the useless header in addition to the other format.
+    the useless header in addition to the other format.
   * DPCM samples fixed (now hear SMB3 in all it's steel drum glory).
-  [Brad Oliver]
+    [Brad Oliver]
 
 - COCO: Now using schedule_full_refresh() and PAK loader fixes applied [Nate Woods]
 

@@ -6,8 +6,10 @@ extern data16_t *cps1_output;     /* Output ports */
 extern size_t cps1_gfxram_size;
 extern size_t cps1_output_size;
 
+#ifndef MESS
 extern const struct Memory_ReadAddress qsound_readmem[];
 extern const struct Memory_WriteAddress qsound_writemem[];
+#endif
 
 READ16_HANDLER( qsound_sharedram1_r );
 WRITE16_HANDLER( qsound_sharedram1_w );
@@ -26,6 +28,7 @@ void cps1_eof_callback(void);
 int cps1_qsound_interrupt(void);
 
 extern struct GfxDecodeInfo cps1_gfxdecodeinfo[];
+#ifndef MESS
 extern struct QSound_interface qsound_interface;
-
+#endif
 #endif

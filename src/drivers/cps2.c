@@ -308,7 +308,7 @@ INPUT_PORTS_START( cps2 )
 INPUT_PORTS_END
 
 
-
+#ifndef MESS
 static const struct MachineDriver machine_driver_cps2 =
 {
 	/* basic machine hardware */
@@ -357,7 +357,7 @@ static const struct MachineDriver machine_driver_cps2 =
     },
     cps2_nvram_handler
 };
-
+#endif
 
 
 ROM_START( 19xx )
