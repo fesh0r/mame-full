@@ -15,6 +15,8 @@
 	Raphael Nabet 2002
 */
 
+#include "driver.h"
+
 #include "990_tap.h"
 
 static void update_interrupt(void);
