@@ -72,6 +72,7 @@ d71 Commodore 128D/1571 Diskette
 d81 Commodore 65/1565/1581 Diskette
 -----------------------------------
 not heavily tested
+x64: further creation/use discouraged
 
 
 msdos/fat Microsoft DOS Diskette
@@ -100,6 +101,13 @@ SRAM of Konami's Game Master 2 in "gmaster2.ram". To convert this to something
 useful with MESS and other MSX emulators, go:
 
 imgtool extract vmsx_gm2 gmaster2.mem
+
+
+rom16 16 bit wide rom image
+---------------------------
+allows easy access to even and odd parts
+file even: even bytes
+file odd: odd bytes
 
 
 fs Filesystem Direct Access
