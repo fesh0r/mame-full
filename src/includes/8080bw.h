@@ -98,6 +98,7 @@ READ_HANDLER( schaser_colorram_r );
 WRITE_HANDLER( helifire_colorram_w );
 WRITE_HANDLER( spaceint_color_w );
 
+VIDEO_START( 8080bw );
 VIDEO_UPDATE( 8080bw );
 
 PALETTE_INIT( invadpt2 );

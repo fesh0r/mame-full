@@ -31,6 +31,9 @@
                           /* to the so-called macrostore feature. */
                           /* tms99105 includes BLSK, TMB, TCMB, TSMC */
 
+/* NPW 25-May-2002 - Added these to get it to compile under windows */
+#define TI9940_ID		11
+#define TI9985_ID		12
 
 
 enum {

@@ -909,3 +909,12 @@ static WRITE_HANDLER( spaceint_videoram_w )
 		data >>= 1;
 	}
 }
+
+VIDEO_START( 8080bw )
+{
+	return 0;
+}
+
+MACHINE_INIT( bowler )
+{
+}

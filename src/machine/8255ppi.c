@@ -88,7 +88,6 @@ void ppi8255_init( ppi8255_interface *intfce )
 {
 	int i;
 
-
 	num = intfce->num;
 
 	for (i = 0; i < num; i++)
@@ -110,8 +109,7 @@ void ppi8255_init( ppi8255_interface *intfce )
 
 int ppi8255_r( int which, int offset )
 {
-	ppi8255 *chip;
-
+	ppi8255 *chip = &chips[which];
 
 	/* some bounds checking */
 	if (which > num)
@@ -120,15 +118,11 @@ int ppi8255_r( int which, int offset )
 		return 0xff;
 	}
 
-	chip = &chips[which];
-
-
 	if (offset > 3)
 	{
 		logerror("Attempting to access an invalid 8255 register.  PC: %04X\n", activecpu_get_pc());
 		return 0xff;
 	}
-
 
 	switch(offset)
 	{
@@ -487,55 +481,39 @@ data8_t ppi8255_peek( int which, offs_t offset )
 
 void ppi8255_set_portAread( int which, mem_read_handler portAread)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portAread = portAread;
+	chips[which].portAread = portAread;
 }
 
 void ppi8255_set_portBread( int which, mem_read_handler portBread)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portBread = portBread;
+	chips[which].portBread = portBread;
 }
 
 void ppi8255_set_portCread( int which, mem_read_handler portCread)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portCread = portCread;
+	chips[which].portCread = portCread;
 }
 
 
 void ppi8255_set_portAwrite( int which, mem_write_handler portAwrite)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portAwrite = portAwrite;
+	chips[which].portAwrite = portAwrite;
 }
 
 void ppi8255_set_portBwrite( int which, mem_write_handler portBwrite)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portBwrite = portBwrite;
+	chips[which].portBwrite = portBwrite;
 }
 
 void ppi8255_set_portCwrite( int which, mem_write_handler portCwrite)
 {
-	ppi8255 *chip = &chips[which];
-
-	chip->portCwrite = portCwrite;
+	chips[which].portCwrite = portCwrite;
 }
 
 
 static void set_mode(int which, int data, int call_handlers)
 {
-	ppi8255 *chip;
-
-
-
-	chip = &chips[which];
+	ppi8255 *chip = &chips[which];
 
 	chip->groupA_mode = ( data >> 5 ) & 3;
 	chip->groupB_mode = ( data >> 2 ) & 1;

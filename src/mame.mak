@@ -526,7 +526,7 @@ $(OBJ)/exidy.a: \
 $(OBJ)/atari.a: \
 	$(OBJ)/machine/atari_vg.o \
 	$(OBJ)/machine/asteroid.o $(OBJ)/sndhrdw/asteroid.o \
-	$(OBJ)/vidhrdw/llander.o $(OBJ)/sndhrdw/llander.o $(OBJ)/drivers/asteroid.o \
+	$(OBJ)/sndhrdw/llander.o $(OBJ)/drivers/asteroid.o \
 	$(OBJ)/drivers/bwidow.o \
 	$(OBJ)/sndhrdw/bzone.o	$(OBJ)/drivers/bzone.o \
 	$(OBJ)/sndhrdw/redbaron.o \

@@ -1883,8 +1883,8 @@ VIDEO_UPDATE( wecleman )
 }
 
 //AT: required to fix ranking screen
-        i = Machine->palette[0x24];
-        palette_set_color(0x27, RGB_RED(i), RGB_GREEN(i), RGB_BLUE(i));
+//        i = Machine->palette[0x24];
+//        palette_set_color(0x27, RGB_RED(i), RGB_GREEN(i), RGB_BLUE(i));
 //ZT
 
         get_sprite_info();
