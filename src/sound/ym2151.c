@@ -1576,6 +1576,7 @@ void YM2151ResetChip(int num)
 	{
 		memset(&chip->oper[i],'\0',sizeof(YM2151Operator));
 		chip->oper[i].volume = MAX_ATT_INDEX;
+	        chip->oper[i].kc_i = 768; /* min kc_i value */
 	}
 
 	chip->eg_timer = 0;
@@ -2174,10 +2175,39 @@ INLINE void advance(void)
 		if (op->pms)	/* only when phase modulation from LFO is enabled for this channel */
 		{
 			INT32 mod_ind = PSG->lfp;		/* -128..+127 (8bits signed) */
+#if 0 /* right shift as divide doesn't work on signed values! */
 			if (op->pms < 6)
 				mod_ind >>= (6 - op->pms);
 			else
 				mod_ind <<= (op->pms - 5);
+#else
+                        /* Is this right? Shouldn't there be case where
+                           mod_ind is not modified at all? */
+                        switch (op->pms) /* 1 - 7 */
+                        {
+                                case 1:
+                                        mod_ind /= 32;
+                                        break;
+                                case 2:
+                                        mod_ind /= 16;
+                                        break;
+                                case 3:
+                                        mod_ind /= 8;
+                                        break;
+                                case 4:
+                                        mod_ind /= 4;
+                                        break;
+                                case 5:
+                                        mod_ind /= 2;
+                                        break;
+                                case 6:
+                                        mod_ind *= 2;
+                                        break;
+                                case 7:
+                                        mod_ind *= 4;
+                                        break;
+                        }
+#endif
 
 			if (mod_ind)
 			{
