@@ -60,7 +60,7 @@ typedef enum
 }
 SPECTRUM_SNAPSHOT_TYPE;
 
-OPBASE_HANDLER(spectrum_opbaseoverride)
+static OPBASE_HANDLER(spectrum_opbaseoverride)
 {
 	if (cassette_snapshot_size > 0)
 		return spectrum_setup_tap(address, cassette_snapshot, cassette_snapshot_size);
