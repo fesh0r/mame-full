@@ -1255,7 +1255,7 @@ static WRITE64_HANDLER(network_w)
 	printf("network_w: %02X, %08X%08X at %08X\n", offset, (UINT32)(data >> 32), (UINT32)(data), activecpu_get_pc());
 }
 
-static prot_data_ptr = 0;
+static int prot_data_ptr = 0;
 
 static UINT16 vs299_prot_data[] =
 {
@@ -1284,7 +1284,7 @@ static READ64_HANDLER(model3_security_r)
 			if (stricmp(Machine->gamedrv->name, "vs299") == 0 ||
 				stricmp(Machine->gamedrv->name, "vs2v991") == 0)
 			{
-				return vs299_prot_data[prot_data_ptr++] << 48;
+				return (UINT64)vs299_prot_data[prot_data_ptr++] << 48;
 			}
 			else
 			{
