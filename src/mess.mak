@@ -373,7 +373,8 @@ $(OBJ)/avigo.a: \
 $(OBJ)/ti85.a: \
 	  $(OBJ)/mess/systems/ti85.o	 \
 	  $(OBJ)/mess/machine/ti85.o	 \
-	  $(OBJ)/mess/vidhrdw/ti85.o
+	  $(OBJ)/mess/vidhrdw/ti85.o	 \
+	  $(OBJ)/mess/formats/ti85_ser.o	 
 
 $(OBJ)/rca.a: \
 	  $(OBJ)/mess/systems/studio2.o  \
@@ -764,6 +765,8 @@ tools/imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool/fat.o      \
 	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 	  $(OBJ)/mess/tools/imgtool/nccard.o   \
+	  $(OBJ)/mess/formats/ti85_ser.o       \
+	  $(OBJ)/mess/tools/imgtool/ti85.o     \
 	  $(OBJ)/mess/snprintf.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)

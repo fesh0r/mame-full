@@ -462,13 +462,72 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
     DRIVER( avigo )     /*                                                */
+
+/* Texas Instruments Calculators */
+
+/* TI-73 (Z80 6 MHz) */
+/*	DRIVER( ti73 )*/	/*TI 73 rom ver. 1.3004 */
+/*	DRIVER( ti73a )*/	/*TI 73 rom ver. 1.3007 */
+
+/* TI-80 (custom 980 kHz) */
+/*	DRIVER( ti80 )*/	/*TI 80 */
+
+/* TI-81 (Z80 2 MHz) */
+/*	DRIVER( ti81 )*/	/*TI 81 rom ver. 1.1 */
+
+/* TI-82 (Z80 6 MHz) */
+/*	DRIVER( ti82 )*/	/*TI 82 rom ver. 3.0 */
+/*	DRIVER( ti82v4 )*/	/*TI 82 rom ver. 4.0 */
+/*	DRIVER( ti82v7 )*/	/*TI 82 rom ver. 7.0 */
+/*	DRIVER( ti82v8 )*/	/*TI 82 rom ver. 8.0 */
+/*	DRIVER( ti82v10 )*/	/*TI 82 rom ver. 10.0 */
+/*	DRIVER( ti82v12 )*/	/*TI 82 rom ver. 12.0 */
+/*	DRIVER( ti82v15 )*/	/*TI 82 rom ver. 15.0 */
+/*	DRIVER( ti82v16 )*/	/*TI 82 rom ver. 16.0 */
+/*	DRIVER( ti82v17 )*/	/*TI 82 rom ver. 17.0 */
+/*	DRIVER( ti82v18 )*/	/*TI 82 rom ver. 18.0 */
+/*	DRIVER( ti82v19 )*/	/*TI 82 rom ver. 19.0 */
+/*	DRIVER( ti82v19a )*/	/*TI 82 rom ver. 19.006 */
+
+/* TI-83 (Z80 6 MHz) */
+/*	DRIVER( ti83 )*/	/*TI 83 rom ver. 1.0200 */
+/*	DRIVER( ti83v02 )*/	/*TI 83 rom ver. 1.0300 */
+/*	DRIVER( ti83v03 )*/	/*TI 83 rom ver. 1.0400 */
+/*	DRIVER( ti83v04 )*/	/*TI 83 rom ver. 1.0600 */
+/*	DRIVER( ti83v06 )*/	/*TI 83 rom ver. 1.0700 */
+/*	DRIVER( ti83v07 )*/	/*TI 83 rom ver. 1.0800 */
+/*	DRIVER( ti83v08 )*/	/*TI 83 rom ver. 1.10 */
+
+/* TI-83 Plus (Z80 8 MHz) */
+/*	DRIVER( ti83p )*/	/*TI 83 rom ver. 1.03 */
+/*	DRIVER( ti83pv06 )*/	/*TI 83 rom ver. 1.06 */
+/*	DRIVER( ti83pv08 )*/	/*TI 83 rom ver. 1.08 */
+/*	DRIVER( ti83pv10 )*/	/*TI 83 rom ver. 1.10 */
+/*	DRIVER( ti83pv12 )*/	/*TI 83 rom ver. 1.12 */
+
+/* TI-85 (Z80 6MHz) */
+/*	DRIVER( ti85v10 )*/	/*TI 85 rom ver. 1.0 */
+/*	DRIVER( ti85v20 )*/	/*TI 85 rom ver. 2.0 */
 	DRIVER( ti85 )  	/*TI 85 rom ver. 3.0a */
 	DRIVER( ti85v40 )	/*TI 85 rom ver. 4.0 */
 	DRIVER( ti85v50 )	/*TI 85 rom ver. 5.0 */
 	DRIVER( ti85v60 )	/*TI 85 rom ver. 6.0 */
+/*	DRIVER( ti85v70 )*/	/*TI 85 rom ver. 7.0 */
 	DRIVER( ti85v80 )	/*TI 85 rom ver. 8.0 */
 	DRIVER( ti85v90 )	/*TI 85 rom ver. 9.0 */
 	DRIVER( ti85v100 )	/*TI 85 rom ver. 10.0 */
+
+/* TI-86 (Z80 6 MHz) */
+	DRIVER( ti86 )		/*TI 86 rom ver. 1.2 */
+	DRIVER( ti86v13 )	/*TI 86 rom ver. 1.3 */
+	DRIVER( ti86v14 )	/*TI 86 rom ver. 1.4 */
+	TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
+	DRIVER( ti86v16 )	/*TI 86 rom ver. 1.6 */
+	DRIVER( ti86grom )	/*TI 86 homebrew rom by Daniel Foesch */
+
+/* TI-89 (M68000) */
+/* TI-92 (M68000 10 MHz) */
+/* TI-92 Plus (M68000) */
 
 	/* NEC */
 	/* TK80 series i8080 based */
