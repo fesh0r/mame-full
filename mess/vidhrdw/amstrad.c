@@ -84,10 +84,10 @@ unsigned char amstrad_palette[32 * 3] =
 
 
 /* Initialise the palette */
-void amstrad_cpc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( amstrad_cpc )
 {
-	memcpy(sys_palette, amstrad_palette, sizeof (amstrad_palette));
-	memcpy(sys_colortable, amstrad_colour_table, sizeof (amstrad_colour_table));
+	palette_set_colors(0, amstrad_palette, sizeof(amstrad_palette) / 3);
+	memcpy(colortable, amstrad_colour_table, sizeof (amstrad_colour_table));
 }
 
 /*************************************************************************/
@@ -139,22 +139,19 @@ unsigned char kccomp_get_colour_element(int colour_value)
 /* the colour rom has the same 32 bytes repeated, but it might be possible to put a new rom in
 with different data and be able to select the other entries - not tested on a real kc compact yet
 and not supported by this driver */
-void kccomp_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( kccomp )
 {
 	int i;
-	int rgb_index = 0;
 
 	color_prom = color_prom+0x018000;
 
 	for (i=0; i<32; i++)
 	{
-		sys_colortable[i] = i;
-		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>2) & 0x03);
-		rgb_index++;
-		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>4) & 0x03);
-		rgb_index++;
-		sys_palette[rgb_index] = kccomp_get_colour_element((color_prom[i]>>0) & 0x03);
-		rgb_index++;
+		colortable[i] = i;
+		palette_set_color(i,
+			kccomp_get_colour_element((color_prom[i]>>2) & 0x03),
+			kccomp_get_colour_element((color_prom[i]>>4) & 0x03),
+			kccomp_get_colour_element((color_prom[i]>>0) & 0x03));
 	}
 }
 
@@ -165,8 +162,7 @@ Amstrad Plus
 The Amstrad Plus has a 4096 colour palette
 *********************************************/
 
-
-void amstrad_plus_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom) 
+PALETTE_INIT( amstrad_plus )
 {
 	int i;
 
@@ -182,10 +178,7 @@ void amstrad_plus_init_palette(unsigned char *palette, unsigned short *colortabl
 		g = ( g << 4 ) | ( g );
 		b = ( b << 4 ) | ( b );
 
-		*palette++ = r;
-		*palette++ = g;
-		*palette++ = b;
-
+		palette_set_color(i, r, g, b);
 		colortable[i] = i;
 	}
 }
@@ -243,8 +236,6 @@ static void amstrad_init_lookups(void)
 	}
 }
 
-extern unsigned char *Amstrad_Memory;
-
 static int x_screen_offset=0;
 
 /* there are about 21 lines of monitor retrace */
@@ -283,8 +274,8 @@ void amstrad_draw_screen_enabled(void)
 			((ma & 0x03ff)<<1);
 
 	/* amstrad fetches two bytes per CRTC clock. */
-	byte1 = Amstrad_Memory[addr];
-	byte2 = Amstrad_Memory[addr+1];
+	byte1 = mess_ram[addr];
+	byte2 = mess_ram[addr+1];
 
     /* depending on the mode! */
 	switch (amstrad_render_mode)		
@@ -517,8 +508,8 @@ void amstrad_draw_screen_enabled(void)
 			((ma & 0x03ff)<<1);
 
 	/* amstrad fetches two bytes per CRTC clock. */
-	byte1 = Amstrad_Memory[addr];
-	byte2 = Amstrad_Memory[addr+1];
+	byte1 = mess_ram[addr];
+	byte2 = mess_ram[addr+1];
 
     /* depending on the mode! */
 	switch (amstrad_render_mode)		
@@ -931,7 +922,7 @@ void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles)
  * resfresh the amstrad video screen
  ************************************************************************/
 
-void amstrad_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( amstrad )
 {
 #ifndef AMSTRAD_VIDEO_EVENT_LIST
 	struct rectangle rect;
@@ -1052,7 +1043,7 @@ void amstrad_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
  * Initialize the amstrad video emulation
  ************************************************************************/
 
-int amstrad_vh_start(void)
+VIDEO_START( amstrad )
 {
         int i;
 
@@ -1078,30 +1069,10 @@ int amstrad_vh_start(void)
 	amstrad_rendering = 0;
 	EventList_Initialise(19968);
 #else
-	amstrad_bitmap = bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
+	amstrad_bitmap = auto_bitmap_alloc_depth(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT,16);
 	amstrad_display = amstrad_bitmap->line[0];
 #endif
 
 	return 0;
-
-}
-
-/************************************************************************
- * amstrad_vh_stop
- * Shutdown the amstrad video emulation
- ************************************************************************/
-
-void amstrad_vh_stop(void)
-{
-	crtc6845_stop();
-#ifdef AMSTRAD_VIDEO_EVENT_LIST
-	EventList_Finish();
-#else
-	if (amstrad_bitmap)
-	{
-		bitmap_free(amstrad_bitmap);
-		amstrad_bitmap = NULL;
-	}
-#endif
 
 }

@@ -18,37 +18,37 @@
    light back / grid colors
    black, blue, green, light green, red, violet, orange, light grey */
 
-UINT8 odyssey2_colors[24][3]={
+UINT8 odyssey2_colors[]={
   /* Background,Grid Dim */
-  { 0x00,0x00,0x00 },
-  { 0x00,0x00,0xFF },   /* Blue */
-  { 0x00,0x80,0x00 },   /* DK Green */
-  { 0xff,0x9b,0x60 },
-  { 0xCC,0x00,0x00 },   /* Red */
-  { 0xa9,0x80,0xff },
-  { 0x82,0xfd,0xdb },
-  { 0xFF,0xFF,0xFF },
+  0x00,0x00,0x00,
+  0x00,0x00,0xFF,   /* Blue */
+  0x00,0x80,0x00,   /* DK Green */
+  0xff,0x9b,0x60,
+  0xCC,0x00,0x00,   /* Red */
+  0xa9,0x80,0xff,
+  0x82,0xfd,0xdb,
+  0xFF,0xFF,0xFF,
 
   /* Background,Grid Bright */
 
-  { 0x80,0x80,0x80 },
-  { 0x50,0xAE,0xFF },   /* Blue */
-  { 0x00,0xFF,0x00 },   /* Dk Green */
-  { 0x82,0xfb,0xdb },   /* Lt Grey */
-  { 0xEC,0x02,0x60 },   /* Red */
-  { 0xa9,0x80,0xff },   /* Violet */
-  { 0xff,0x9b,0x60 },   /* Orange */
-  { 0xFF,0xFF,0xFF },
+  0x80,0x80,0x80,
+  0x50,0xAE,0xFF,   /* Blue */
+  0x00,0xFF,0x00,   /* Dk Green */
+  0x82,0xfb,0xdb,   /* Lt Grey */
+  0xEC,0x02,0x60,   /* Red */
+  0xa9,0x80,0xff,   /* Violet */
+  0xff,0x9b,0x60,   /* Orange */
+  0xFF,0xFF,0xFF,
 
   /* Character,Sprite colors */
-  { 0x71,0x71,0x71 },   /* Dark Grey */
-  { 0xFF,0x80,0x80 },   /* Red */
-  { 0x00,0xC0,0x00 },   /* Green */
-  { 0xff,0x9b,0x60 },   /* Orange */
-  { 0x50,0xAE,0xFF },   /* Blue */
-  { 0xa9,0x80,0xff },   /* Violet */
-  { 0x82,0xfb,0xdb },   /* Lt Grey */
-  { 0xff,0xff,0xff }    /* White */
+  0x71,0x71,0x71,   /* Dark Grey */
+  0xFF,0x80,0x80,   /* Red */
+  0x00,0xC0,0x00,   /* Green */
+  0xff,0x9b,0x60,   /* Orange */
+  0x50,0xAE,0xFF,   /* Blue */
+  0xa9,0x80,0xff,   /* Violet */
+  0x82,0xfb,0xdb,   /* Lt Grey */
+  0xff,0xff,0xff    /* White */
 };
 
 UINT8 o2_shape[0x40][8]={
@@ -160,10 +160,10 @@ static double line_time;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int odyssey2_vh_start(void)
+VIDEO_START( odyssey2 )
 {
     odyssey2_vh_hpos = 0;
-	odyssey2_display = (UINT8 *)malloc(8 * 8 * 256);
+	odyssey2_display = (UINT8 *) auto_malloc(8 * 8 * 256);
 	if( !odyssey2_display )
 		return 1;
 	memset(odyssey2_display, 0, 8 * 8 * 256);
@@ -176,18 +176,11 @@ int odyssey2_vh_start(void)
 
 ***************************************************************************/
 
-void odyssey2_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+PALETTE_INIT( odyssey2 )
 {
-    game_colortable[0] = 0;
-    game_colortable[1] = 1;
-    memcpy (game_palette, odyssey2_colors, sizeof(odyssey2_colors));
-}
-
-void odyssey2_vh_stop(void)
-{
-	if( odyssey2_display )
-		free(odyssey2_display);
-	odyssey2_display = NULL;
+	palette_set_colors(0, odyssey2_colors, sizeof(odyssey2_colors) / 3);
+	colortable[0] = 0;
+	colortable[1] = 1;
 }
 
 extern READ_HANDLER ( odyssey2_video_r )
@@ -224,19 +217,19 @@ extern READ_HANDLER ( odyssey2_t1_r )
     return t;
 }
 
-int odyssey2_line(void)
+INTERRUPT_GEN( odyssey2 )
 {
     line_time=timer_get_time();
     line=(line+1)%262;
+
     switch (line) {
     case 252:
-	cpu_set_irq_line(0, 1, ASSERT_LINE); //vsync??
-	break;
+		cpu_set_irq_line(0, 1, ASSERT_LINE); //vsync??
+		break;
     case 253:
-	cpu_set_irq_line(0, 1, CLEAR_LINE); //vsync??
-	break;
+		cpu_set_irq_line(0, 1, CLEAR_LINE); //vsync??
+		break;
     }
-    return 0;
 }
 
 INLINE void odyssey2_draw_box(UINT8 bg[][320], int x, int y, int width, int height, UINT8 color)
@@ -305,7 +298,7 @@ INLINE void odyssey2_draw_char(struct mame_bitmap *bitmap, UINT8 bg[][320], int 
 
 ***************************************************************************/
 
-void odyssey2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( odyssey2 )
 {
     int i, j, x, y;
     int color;

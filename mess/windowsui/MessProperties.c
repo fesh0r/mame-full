@@ -21,6 +21,8 @@ static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 static BOOL SoftwareDirectories_OnEndLabelEdit(HWND hDlg, NMHDR* pNMHDR);
 
+static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv);
+
 /* Include the actual Properties.c */
 #include "../../src/windowsui/Properties.c"
 
@@ -369,3 +371,7 @@ static void MessPropToOptions(HWND hWnd, options_type *o)
 	}
 }
 
+static BOOL PropSheetFilter_Config(const struct InternalMachineDriver *drv, const struct GameDriver *gamedrv)
+{
+	return ram_option_count(gamedrv) > 0;
+}

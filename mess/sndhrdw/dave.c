@@ -167,7 +167,7 @@ void	Dave_Init(void)
 	dave.one_khz_state = 0;
 	dave.fifty_hz_count = DAVE_FIFTY_HZ_COUNTER_RELOAD;
 	dave.one_hz_count = DAVE_ONE_HZ_COUNTER_RELOAD;
-	dave.int_timer = timer_pulse(TIME_IN_HZ(1000), 0, dave_1khz_callback);
+	timer_pulse(TIME_IN_HZ(1000), 0, dave_1khz_callback);
 	
 	for (i=0; i<3; i++)
 	{
@@ -177,15 +177,6 @@ void	Dave_Init(void)
 	}
 }
 
-
-void	Dave_Finish(void)
-{
-	if (dave.int_timer)
-	{
-		timer_remove(dave.int_timer);
-		dave.int_timer = NULL;
-	}
-}
 static void dave_update_sound(int chip, INT16 **buffer, int length)
 {		
 	INT16 *buffer1, *buffer2;

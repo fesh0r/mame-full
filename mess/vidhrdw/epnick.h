@@ -6,7 +6,7 @@
 #include "driver.h"
 
 /* initialise palette function */
-void nick_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern PALETTE_INIT( nick );
 
 #define NICK_PALETTE_SIZE	256
 #define NICK_COLOURTABLE_SIZE	256

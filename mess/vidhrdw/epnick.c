@@ -15,13 +15,11 @@ It's a nice and flexible graphics processor..........
 /* MESS stuff */
 static NICK_STATE Nick;
 
-extern unsigned char *Enterprise_RAM;
-
 // MESS specific
 /* fetch a byte from "video ram" at Addr specified */
 static char Nick_FetchByte(unsigned long Addr)
 {
-   return Enterprise_RAM[Addr & 0x0ffff];
+   return mess_ram[Addr & 0x0ffff];
 }
 
 // MESS specific
@@ -82,9 +80,9 @@ static unsigned short nick_colour_table[256]=
 
 
 /* initial the palette */
-void nick_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( nick )
 {
-      int i;
+	int i;
 
 	for (i=0; i<256; i++)
 	{
@@ -93,10 +91,9 @@ void nick_init_palette(unsigned char *palette, unsigned short *colortable,const 
 		nick_colour_palette[(i*3)+2] = NICK_GET_BLUE8(i);
 	}
 
-
-    memcpy(palette, nick_colour_palette , sizeof(nick_colour_palette));
-        memcpy(colortable, nick_colour_table, sizeof(nick_colour_table));
-        //color_prom=malloc(0*sizeof(char));
+	palette_set_colors(0, nick_colour_palette, sizeof(nick_colour_palette) / 3);
+	memcpy(colortable, nick_colour_table, sizeof(nick_colour_table));
+	//color_prom=malloc(0*sizeof(char));
 }
 
 /* first clock visible on left hand side */
@@ -894,10 +891,6 @@ int	Nick_vh_start(void)
 {
   Nick_Init();
   return 0;
-}
-
-void	Nick_vh_stop(void)
-{
 }
 
 int	Nick_reg_r(int RegIndex)

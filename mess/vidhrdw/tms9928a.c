@@ -909,7 +909,7 @@ static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
 
 void mdrv_tms9928a(struct InternalMachineDriver *machine, int (*video_start_proc)(void))
 {
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 24*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)

@@ -120,13 +120,11 @@ static void *nc_serial_timer;
 
 static void nc_printer_update(int);
 
-static unsigned long nc_memory_size;
 UINT8 nc_type;
 
 static char nc_memory_config[4];
 unsigned long nc_display_memory_start;
 static void *nc_keyboard_timer = NULL;
-static void *dummy_timer = NULL;
 
 static int nc_membank_rom_mask;
 static int nc_membank_internal_ram_mask;
@@ -273,8 +271,6 @@ void nc_set_card_present_state(int state)
 	nc_card_status = state;
 }
 
-/* internal ram */
-unsigned char    *nc_memory = NULL;
 /* card ram */
 unsigned char    *nc_card_ram = NULL;
 
@@ -376,7 +372,7 @@ static void nc_refresh_memory_bank_config(int bank)
 
                    mem_bank = mem_bank & nc_membank_internal_ram_mask;
 
-                   addr = nc_memory + (mem_bank<<14);
+                   addr = mess_ram + (mem_bank<<14);
 
                    cpu_setbank(bank+1, addr);
                    cpu_setbank(bank+5, addr);
@@ -446,33 +442,27 @@ static void *file;
 /* restore a block of memory from the nvram file */
 static void nc_common_restore_memory_from_stream(void)
 {
+	unsigned long stored_size;
+	unsigned long restore_size;
+
 	if (!file)
 		return;
 
-    if (nc_memory!=NULL)
-    {
-		unsigned long stored_size;
-		unsigned long restore_size;
-
 #ifdef VERBOSE
-		logerror("restoring nc memory\n");
+	logerror("restoring nc memory\n");
 #endif
-		/* get size of memory data stored */
-		osd_fread(file, &stored_size, sizeof(unsigned long));
+	/* get size of memory data stored */
+	osd_fread(file, &stored_size, sizeof(unsigned long));
 
-		if (stored_size>nc_memory_size)
-		{
-			restore_size = nc_memory_size;
-		}
-		else
-		{
-			restore_size = stored_size;
-		}
-		/* read as much as will fit into memory */
-		osd_fread(file, nc_memory, restore_size);
-		/* seek over remaining data */
-		osd_fseek(file, SEEK_CUR,stored_size - restore_size);
-	}
+	if (stored_size > mess_ram_size)
+		restore_size = mess_ram_size;
+	else
+		restore_size = stored_size;
+
+	/* read as much as will fit into memory */
+	osd_fread(file, mess_ram, restore_size);
+	/* seek over remaining data */
+	osd_fseek(file, SEEK_CUR,stored_size - restore_size);
 }
 
 /* store a block of memory to the nvram file */
@@ -481,17 +471,14 @@ static void nc_common_store_memory_to_stream(void)
 	if (!file)
 		return;
 
-    if (nc_memory!=NULL)
-    {
 #ifdef VERBOSE
-		logerror("storing nc memory\n");
+	logerror("storing nc memory\n");
 #endif
-		/* write size of memory data */
-		osd_fwrite(file, &nc_memory_size, sizeof(unsigned long));
+	/* write size of memory data */
+	osd_fwrite(file, &mess_ram_size, sizeof(unsigned long));
 
-		/* write data block */
-		osd_fwrite(file, nc_memory, nc_memory_size);
-    }
+	/* write data block */
+	osd_fwrite(file, mess_ram, mess_ram_size);
 }
 
 static void nc_common_open_stream_for_reading(void)
@@ -572,6 +559,7 @@ static void dummy_timer_callback(int dummy)
 	previous_inputport_10_state = inputport_10_state;
 }
 
+static void nc_serial_timer_callback(int dummy);
 
 void nc_common_init_machine(void)
 {
@@ -604,48 +592,19 @@ void nc_common_init_machine(void)
     nc_refresh_memory_config();
 	nc_update_interrupts();
 
-    nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
+	/* keyboard timer */
+	nc_keyboard_timer = timer_alloc(nc_keyboard_timer_callback);
+	timer_adjust(nc_keyboard_timer, TIME_IN_MSEC(10), 0, 0);
 
-    dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, dummy_timer_callback);
+	/* dummy timer */
+	timer_pulse(TIME_IN_HZ(50), 0, dummy_timer_callback);
+
+	/* serial timer */
+	nc_serial_timer = timer_alloc(nc_serial_timer_callback);
 
 	/* at reset set to 0x0ff */
 	nc_uart_control = 0x0ff;
 }
-
-void nc_common_shutdown_machine(void)
-{
-#ifdef VERBOSE
-	logerror("shutdown machine\n");
-#endif
-	msm8251_stop();
-
-    if (nc_memory!=NULL)
-    {
-        free(nc_memory);
-        nc_memory = NULL;
-    }
-
-	centronics_exit(0);
-
-    if (nc_keyboard_timer!=NULL)
-    {
-		timer_remove(nc_keyboard_timer);
-		nc_keyboard_timer = NULL;
-    }
-
-    if (dummy_timer!=NULL)
-    {
-		timer_remove(dummy_timer);
-		dummy_timer = NULL;
-    }
-
-	if (nc_serial_timer!=NULL)
-	{
-		timer_remove(nc_serial_timer);
-		nc_serial_timer = NULL;
-	}
-}
-
 
 MEMORY_READ_START( readmem_nc )
     {0x00000, 0x03fff, MRA_BANK1},
@@ -707,14 +666,8 @@ WRITE_HANDLER(nc_irq_status_w)
 		cleared. It is not automatically cleared when reading 0x0b9 */
 		if ((data & (1<<3))!=0)
 		{
-			if (nc_keyboard_timer!=NULL)
-			{
-				timer_remove(nc_keyboard_timer);
-				nc_keyboard_timer = NULL;
-			}
-
 			/* set timer to occur again */
-			nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
+			timer_reset(nc_keyboard_timer, TIME_IN_MSEC(10));
 
 			nc_update_interrupts();
 		}
@@ -730,15 +683,8 @@ WRITE_HANDLER(nc_irq_status_w)
                 ((nc_irq_status & (1<<3))!=0)
            )
         {
-           if (nc_keyboard_timer!=NULL)
-           {
-                timer_remove(nc_keyboard_timer);
-                nc_keyboard_timer = NULL;
-           }
-
-           /* set timer to occur again */
-           nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
-
+			/* set timer to occur again */
+			timer_reset(nc_keyboard_timer, TIME_IN_MSEC(10));
         }
 #endif
         nc_irq_status &=~data;
@@ -754,25 +700,17 @@ READ_HANDLER(nc_irq_status_r)
 
 READ_HANDLER(nc_key_data_in_r)
 {
-        if (offset==9)
-        {
-			/* reading 0x0b9 will clear int and re-start scan procedure! */
-           nc_irq_status &= ~(1<<3);
+	if (offset==9)
+	{
+		/* reading 0x0b9 will clear int and re-start scan procedure! */
+		nc_irq_status &= ~(1<<3);
 
-           if (nc_keyboard_timer!=NULL)
-           {
-                timer_remove(nc_keyboard_timer);
-                nc_keyboard_timer = NULL;
-           }
+		/* set timer to occur again */
+		timer_reset(nc_keyboard_timer, TIME_IN_MSEC(10));
 
-           /* set timer to occur again */
-           nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
-
-           nc_update_interrupts();
-        }
-
-        return readinputport(offset);
-
+		nc_update_interrupts();
+	}
+	return readinputport(offset);
 }
 
 
@@ -879,13 +817,7 @@ WRITE_HANDLER(nc_uart_control_w)
 		}
 	}
 
-	if (nc_serial_timer)
-	{
-		timer_remove(nc_serial_timer);
-		nc_serial_timer = NULL;
-	}
-
-	nc_serial_timer = timer_pulse(TIME_IN_HZ(baud_rate_table[(data & 0x07)]), 0, nc_serial_timer_callback);
+	timer_adjust(nc_serial_timer, 0, 0, TIME_IN_HZ(baud_rate_table[(data & 0x07)]));
 
 	nc_uart_control = data;
 }
@@ -1052,18 +984,13 @@ static CENTRONICS_CONFIG nc100_cent_config[1]={
 	},
 };
 
-
-
-void nc100_init_machine(void)
+static MACHINE_INIT( nc100 )
 {
     nc_type = NC_TYPE_1xx;
-
-    nc_memory_size = 64*1024;
 
     /* 256k of rom */
     nc_membank_rom_mask = 0x0f;
 
-    nc_memory = (unsigned char *)malloc(nc_memory_size);
     nc_membank_internal_ram_mask = 3;
 
     nc_membank_card_ram_mask = 0x03f;
@@ -1090,15 +1017,12 @@ void nc100_init_machine(void)
 
 }
 
-void	nc100_shutdown_machine(void)
+MACHINE_STOP( nc100 )
 {
 	nc_common_open_stream_for_writing();
 	tc8521_save_stream(file);
 	nc_common_store_memory_to_stream();
 	nc_common_close_stream();
-
-	nc_common_shutdown_machine();
-    tc8521_stop();
 }
 
 
@@ -1325,7 +1249,6 @@ INPUT_PORTS_END
 #if 0
 void nc150_init_machine(void)
 {
-        nc_memory = (unsigned char *)malloc(nc_memory_size);
         nc_membank_internal_ram_mask = 7;
 
         nc_membank_card_ram_mask = 0x03f;
@@ -1465,16 +1388,13 @@ static void nc200_floppy_drive_index_callback(int drive_id)
 //	nc_update_interrupts();
 }
 
-void nc200_init_machine(void)
+MACHINE_INIT( nc200 )
 {
     nc_type = NC_TYPE_200;
 
 	/* 512k of rom */
 	nc_membank_rom_mask = 0x1f;
 
-
-    nc_memory_size = 128*1024;
-    nc_memory = (unsigned char *)malloc(nc_memory_size);
     nc_membank_internal_ram_mask = 7;
 
     nc_membank_card_ram_mask = 0x03f;
@@ -1509,8 +1429,7 @@ void nc200_init_machine(void)
 	nc200_video_set_backlight(0);
 }
 
-
-void	nc200_shutdown_machine(void)
+static MACHINE_STOP( nc200 )
 {
 	nc_common_open_stream_for_writing();
 	if (file)
@@ -1519,9 +1438,6 @@ void	nc200_shutdown_machine(void)
 	}
 	nc_common_store_memory_to_stream();
 	nc_common_close_stream();
-
-	nc_common_shutdown_machine();
-	mc146818_close();
 }
 
 /*
@@ -1804,111 +1720,49 @@ static struct beep_interface nc_beep_interface =
 	{50,50}
 };
 
-static struct MachineDriver machine_driver_nc100 =
-{
+
+static MACHINE_DRIVER_START( nc100 )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-            CPU_Z80 ,  /* type */
-            /*6000000,*/ /* clock: See Note Above */
-            4606000, /* Russell Marks says this is more accurate */
-			readmem_nc,                   /* MemoryReadAddress */
-            writemem_nc,                  /* MemoryWriteAddress */
-            readport_nc100,                  /* IOReadPort */
-            writeport_nc100,                 /* IOWritePort */
-			0,						   /* VBlank Interrupt */
-			0  ,				   /* vblanks per frame */
-            0, 0,   /* every scanline */
-		},
-	},
-	50,                                                     /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	nc100_init_machine,                      /* init machine */
-	nc100_shutdown_machine,
-	/* video hardware */
-	640/*NC_SCREEN_WIDTH*/, /* screen width */
-	480/*NC_SCREEN_HEIGHT*/,  /* screen height */
-	{0, (640/*NC_SCREEN_WIDTH*/ - 1), 0, (480/*NC_SCREEN_HEIGHT*/ - 1)},        /* rectangle: visible_area */
-	0,							   /* graphics
-										* decode info */
-	NC_NUM_COLOURS,                                                        /* total colours */
-	NC_NUM_COLOURS,                                                        /* color table len */
-	nc_init_palette,                      /* init palette */
+	MDRV_CPU_ADD_TAG("main", Z80, /*6000000*/ 4606000)        /* Russell Marks says this is more accurate */
+	MDRV_CPU_MEMORY(readmem_nc, writemem_nc)
+	MDRV_CPU_PORTS(readport_nc100, writeport_nc100)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,                                  /* video attributes */
-	0,                                                                 /* MachineLayer */
-	nc_vh_start,
-	nc_vh_stop,
-	nc_vh_screenrefresh,
+	MDRV_MACHINE_INIT( nc100 )
+	MDRV_MACHINE_STOP( nc100 )
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-    {
-        {
-           SOUND_BEEP,
-           &nc_beep_interface
-        }
-    }
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(640 /*NC_SCREEN_WIDTH*/, 480 /*NC_SCREEN_HEIGHT*/)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 480-1)
+	MDRV_PALETTE_LENGTH(NC_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(NC_NUM_COLOURS)
+	MDRV_PALETTE_INIT( nc )
 
-
-
-static struct MachineDriver machine_driver_nc200 =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80 ,  /* type */
-           /*6000000,*/ /* clock: See Note Above */
-            4606000, /* Russell Marks says this is more accurate */
-			readmem_nc,                   /* MemoryReadAddress */
-			writemem_nc,                  /* MemoryWriteAddress */
-			readport_nc200,                  /* IOReadPort */
-			writeport_nc200,                 /* IOWritePort */
-			0,						   /* VBlank Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,   /* every scanline */
-		},
-	},
-        50,                                                     /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	nc200_init_machine,                      /* init machine */
-	nc200_shutdown_machine,
-	/* video hardware */
-	NC200_SCREEN_WIDTH, /* screen width */
-	NC200_SCREEN_HEIGHT,  /* screen height */
-	{0, (NC200_SCREEN_WIDTH - 1), 0, (NC200_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
-	0,								   /* graphics
-										* decode info */
-	NC200_NUM_COLOURS,                                                        /* total colours */
-	NC200_NUM_COLOURS,                                                        /* color table len */
-	nc_init_palette,                      /* init palette */
-
-	VIDEO_TYPE_RASTER,                                  /* video attributes */
-	0,                                                                 /* MachineLayer */
-	nc_vh_start,
-	nc_vh_stop,
-	nc_vh_screenrefresh,
+	MDRV_VIDEO_START( nc )
+	MDRV_VIDEO_UPDATE( nc )
 
 	/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		{
-		   SOUND_BEEP,
-		   &nc_beep_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(BEEP, nc_beep_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( nc200 )
+	MDRV_IMPORT_FROM( nc100 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_PORTS( readport_nc200, writeport_nc200 )
+
+	MDRV_MACHINE_INIT( nc200 )
+	MDRV_MACHINE_STOP( nc200 )
+
+    /* video hardware */
+	MDRV_SCREEN_SIZE(NC200_SCREEN_WIDTH, NC200_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, NC200_SCREEN_WIDTH-1, 0, NC200_SCREEN_HEIGHT-1)
+	MDRV_PALETTE_LENGTH(NC200_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(NC200_NUM_COLOURS)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2043,7 +1897,16 @@ static const struct IODevice io_nc200[] =
 
 #define io_nc100a io_nc100
 
-/*	  YEAR	NAME	 PARENT	MACHINE INPUT 	INIT COMPANY        FULLNAME */
-COMP( 1992, nc100,   0,     nc100,  nc100,  0,   "Amstrad plc", "NC100")
-COMP( 1992, nc100a,  nc100, nc100,  nc100,  0,   "Amstrad plc", "NC100 (Version 1.09)")
-COMP( 1993, nc200,   0,     nc200,  nc200,  0,   "Amstrad plc", "NC200")
+COMPUTER_CONFIG_START(nc100)
+	CONFIG_RAM_DEFAULT(64 * 1024)
+COMPUTER_CONFIG_END
+
+
+COMPUTER_CONFIG_START(nc200)
+	CONFIG_RAM_DEFAULT(128 * 1024)
+COMPUTER_CONFIG_END
+
+/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
+COMPC( 1992, nc100,     0,      nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100")
+COMPC( 1992, nc100a,    nc100,  nc100,     nc100,    0,       nc100,   "Amstrad plc", "NC100 (Version 1.09)")
+COMPC( 1993, nc200,     0,      nc200,     nc200,    0,       nc200,   "Amstrad plc", "NC200")

@@ -156,44 +156,30 @@ static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static struct MachineDriver machine_driver_odyssey2 =
-{
+static MACHINE_DRIVER_START( odyssey2 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_I8048,
-			1790000/5,  /* 1.79 MHz */
-			readmem,writemem,readport,writeport,
-			ignore_interrupt,1,
-			odyssey2_line,60*262
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	odyssey2_init_machine,	/* init_machine */
-	0,						/* stop_machine */
+	MDRV_CPU_ADD(I8048, 1790000/5)         /* 1.79 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(odyssey2_line, 262)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-//	262,240, {0,262-1,0,240-1},
-	320,300, {0,320-1,0,300-1},
-	odyssey2_gfxdecodeinfo,			   /* graphics decode info */
-	ARRAY_LENGTH(odyssey2_colors),
-	2,
-	odyssey2_vh_init_palette,
+	MDRV_MACHINE_INIT( odyssey2 )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	odyssey2_vh_start,
-	odyssey2_vh_stop,
-	odyssey2_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320,300)
+	MDRV_VISIBLE_AREA(0,320-1,0,300-1)
+	MDRV_GFXDECODE( odyssey2_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(24)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT( odyssey2 )
 
-	/* sound hardware */
-	0,0,0,0,
-	{ 
-	    { 0 }
-	}
-};
-
+	MDRV_VIDEO_START( odyssey2 )
+	MDRV_VIDEO_UPDATE( odyssey2 )
+MACHINE_DRIVER_END
 
 ROM_START (odyssey2)
     ROM_REGION(0x10000,REGION_CPU1,0)    /* safer for the memory handler/bankswitching??? */
@@ -202,11 +188,12 @@ ROM_START (odyssey2)
     ROM_REGION(0x2000, REGION_USER1, 0)
 ROM_END
 
-void init_odyssey2(void)
+static DRIVER_INIT( odyssey2 )
 {
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
-	for (i=0; i<256; i++) gfx[i]=i;
+	for (i=0; i<256; i++)
+		gfx[i]=i;
 }
 
 static const struct IODevice io_odyssey2[] = {
@@ -235,14 +222,3 @@ static const struct IODevice io_odyssey2[] = {
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 COMPX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NOT_WORKING|GAME_NO_SOUND )
 // philips g7000/videopac
-
-
-#ifdef RUNTIME_LOADER
-extern void odyssey2_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"odyssey2")==0) drivers[i]=&driver_odyssey2;
-	}
-}
-#endif

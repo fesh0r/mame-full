@@ -14,14 +14,9 @@
   Start the video hardware emulation.
 ***************************************************************************/
 
-int nc_vh_start(void)
+VIDEO_START( nc )
 {
-
 	return 0;
-}
-
-void    nc_vh_stop(void)
-{
 }
 
 /* two colours */
@@ -41,14 +36,13 @@ static unsigned char nc_palette[NC_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void nc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( nc )
 {
-        memcpy(sys_palette, nc_palette, sizeof (nc_palette));
-        memcpy(sys_colortable, nc_colour_table, sizeof (nc_colour_table));
+	palette_set_colors(0, nc_palette, sizeof(nc_palette) / 3);
+	memcpy(colortable, nc_colour_table, sizeof (nc_colour_table));
 }
 
 extern int nc_display_memory_start;
-extern char *nc_memory;
 extern UINT8 nc_type;
 
 static int nc200_backlight = 0;
@@ -64,15 +58,13 @@ void nc200_video_set_backlight(int state)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void nc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( nc )
 {
 	int y;
 	int b;
 	int x;
 	int height, width;
 	int pens[2];
-
-
 
     if (nc_type==NC_TYPE_200)
     {
@@ -103,7 +95,7 @@ void nc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
     {
 		int by;
 		/* 64 bytes per line */
-		char *line_ptr = nc_memory + nc_display_memory_start + (y<<6);
+		char *line_ptr = ((char*)mess_ram) + nc_display_memory_start + (y<<6);
 
 		x = 0;
 		for (by=0; by<width>>3; by++)
@@ -117,9 +109,7 @@ void nc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			for (b=0; b<8; b++)
 			{
 				plot_pixel(bitmap, px, y, pens[(byte>>7) & 0x01]);
-
 				byte = byte<<1;
-				
 				px++;
 			}
 

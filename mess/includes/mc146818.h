@@ -24,8 +24,6 @@ void mc146818_set_gmtime(struct tm *tmtime);
 void mc146818_save(void);
 // saves data into file stream
 void mc146818_save_stream(void *file);
-// end
-void mc146818_close(void);
 
 extern NVRAM_HANDLER( mc146818 );
 

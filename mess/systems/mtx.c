@@ -26,8 +26,6 @@ unsigned char rompage;
 
 static unsigned char *mtx_tapebuffer = NULL;
 static unsigned char *mtx_savebuffer = NULL;
-
-static unsigned char *mtx_ram = NULL;
 static unsigned char *mtx_commonram = NULL;
 
 #define MTX_SYSTEM_CLOCK		4000000
@@ -139,9 +137,7 @@ static READ_HANDLER ( mtx_key_hi_r )
 static void mtx_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-
-
-         cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line(0, 0, state);
 }
 
 static READ_HANDLER ( mtx_ctc_r )
@@ -151,9 +147,8 @@ static READ_HANDLER ( mtx_ctc_r )
 
 static WRITE_HANDLER ( mtx_ctc_w )
 {
-        //logerror("CTC W: %02x\r\n",data);
-
-        z80ctc_0_w(offset,data);
+	//logerror("CTC W: %02x\r\n",data);
+	z80ctc_0_w(offset,data);
 }
 
 static z80ctc_interface	mtx_ctc_intf =
@@ -322,17 +317,17 @@ static WRITE_HANDLER ( mtx_bankswitch_w )
 	romoffset = memory_region(REGION_CPU1) + 0x10000 + bank2;
 	cpu_setbank(2, romoffset);
 
-	cpu_setbank(3, mtx_ram + bank3);
-	cpu_setbank(11, mtx_ram + bank3);
+	cpu_setbank(3, mess_ram + bank3);
+	cpu_setbank(11, mess_ram + bank3);
 
-	cpu_setbank(4, mtx_ram + bank4);
-	cpu_setbank(12, mtx_ram + bank4);
+	cpu_setbank(4, mess_ram + bank4);
+	cpu_setbank(12, mess_ram + bank4);
 
-	cpu_setbank(5, mtx_ram + bank5);
-	cpu_setbank(13, mtx_ram + bank5);
+	cpu_setbank(5, mess_ram + bank5);
+	cpu_setbank(13, mess_ram + bank5);
 
-	cpu_setbank(6, mtx_ram + bank6);
-	cpu_setbank(14, mtx_ram + bank6);
+	cpu_setbank(6, mess_ram + bank6);
+	cpu_setbank(14, mess_ram + bank6);
 
 }
 
@@ -410,10 +405,10 @@ unsigned char mtx_peek(int address)
 
 	}
 
-	if(address>=0x4000 && address<=0x5fff) rtn = mtx_ram[base_address + 0x6000 + offset];
-	if(address>=0x6000 && address<=0x7fff) rtn = mtx_ram[base_address + 0x4000 + offset];
-	if(address>=0x8000 && address<=0x9fff) rtn = mtx_ram[base_address + 0x2000 + offset];
-	if(address>=0xa000 && address<=0xbfff) rtn = mtx_ram[base_address + offset];
+	if(address>=0x4000 && address<=0x5fff) rtn = mess_ram[base_address + 0x6000 + offset];
+	if(address>=0x6000 && address<=0x7fff) rtn = mess_ram[base_address + 0x4000 + offset];
+	if(address>=0x8000 && address<=0x9fff) rtn = mess_ram[base_address + 0x2000 + offset];
+	if(address>=0xa000 && address<=0xbfff) rtn = mess_ram[base_address + offset];
 	if(address>=0xc000 && address<=0xffff) rtn = mtx_commonram[address - 0xc000];
 return(rtn);
 
@@ -492,10 +487,10 @@ void mtx_poke(int address, unsigned char data)
 
 	}
 
-	if(address>=0x4000 && address<=0x5fff) mtx_ram[base_address + 0x6000 + offset] = data;
-	if(address>=0x6000 && address<=0x7fff) mtx_ram[base_address + 0x4000 + offset] = data;
-	if(address>=0x8000 && address<=0x9fff) mtx_ram[base_address + 0x2000 + offset] = data;
-	if(address>=0xa000 && address<=0xbfff) mtx_ram[base_address + offset] = data;
+	if(address>=0x4000 && address<=0x5fff) mess_ram[base_address + 0x6000 + offset] = data;
+	if(address>=0x6000 && address<=0x7fff) mess_ram[base_address + 0x4000 + offset] = data;
+	if(address>=0x8000 && address<=0x9fff) mess_ram[base_address + 0x2000 + offset] = data;
+	if(address>=0xa000 && address<=0xbfff) mess_ram[base_address + offset] = data;
 	if(address>=0xc000 && address<=0xffff) mtx_commonram[address - 0xc000] = data;
 
 }
@@ -504,145 +499,140 @@ static WRITE_HANDLER ( mtx_trap_write )
 {
 	int pc;
 
-	pc = cpu_get_reg(Z80_PC);
+	pc = activecpu_get_reg(Z80_PC);
 
-        if((offset == 0x0aae) & (pc == 0x0ab1))
+	if((offset == 0x0aae) & (pc == 0x0ab1))
+	{
+		int start;
+		int length;
+		int filesize = 0;
+
+		void *f;
+		static char filename[64];
+
+		start = activecpu_get_reg(Z80_HL);
+		length = activecpu_get_reg(Z80_DE);
+
+					//logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x index 0x%04x\n", pc, start, length, mess_ram[0xfd67], mess_ram[0xfd68], mtx_loadindex);
+
+		if(mtx_peek(0xfd68) == 0)
 		{
+			//save
+								if((start == 0xc001) && (length == 0x14))
+										{
+												//memcpy(mtx_savebuffer, mess_ram + start, 0x12);
+					int i;
+					for(i=0;i <= 0x12;i++)
+					{
+						mtx_savebuffer[i] = mtx_peek(start + i);
+					}
 
-			int start;
-			int length;
-			int filesize = 0;
+												mtx_saveindex = 0x12;
+										}
+										else
+										{
+												//memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
+					int i;
+					for(i=0;i <= length;i++)
+					{
+						mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
+					}
+
+												mtx_saveindex+=length;
+										}
+										if(start == 0xc000)
+												{
+						int i;
+
+						for(i=0;i<=15;i++)
+						{
+																filename[i] = mtx_savebuffer[1 + i];
+						}
+
+															//    logerror("Writing Header Filename ");
+
+														for(i=14; i>0 && filename[i] == 0x20;i--);
 
 
-			void *f;
-			static char filename[64];
+														filename[i + 1] = '\0';
+						logerror("%s\n", filename);
+														if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
+							{
+																			osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
+																			osd_fclose(f);
+							}
 
-			start = cpu_get_reg(Z80_HL);
-			length = cpu_get_reg(Z80_DE);
-
-                        //logerror("PC %04x\nStart %04x, Length %04x, 0xFD67 %02x, 0xFD68 %02x index 0x%04x\n", pc, start, length, mtx_ram[0xfd67], mtx_ram[0xfd68], mtx_loadindex);
-
-
-			if(mtx_peek(0xfd68) == 0)
+												}
+		}
+		else
+		{
+										if(mtx_peek(0xfd67) == 0)
 				{
-				 //save
-                                        if((start == 0xc001) && (length == 0x14))
-                                                {
-                                                        //memcpy(mtx_savebuffer, mtx_ram + start, 0x12);
-							int i;
-							for(i=0;i <= 0x12;i++)
+						//load
+
+												if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
+					{
+
+						int i;
+						for(i=0;i<=15;i++)
+						{
+																filename[i] = mtx_peek(0xc002 + i);
+						}
+						for(i=15; i>0 && filename[i] == 0x20;i--)
+						filename[i+1] = '\0';
+						if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
 							{
-								mtx_savebuffer[i] = mtx_peek(start + i);
-							}
-
-                                                        mtx_saveindex = 0x12;
-                                                }
-                                                else
-                                                {
-                                                        //memcpy(mtx_savebuffer + mtx_saveindex, ramoffset, length);
-							int i;
-							for(i=0;i <= length;i++)
-							{
-								mtx_savebuffer[mtx_saveindex + i] = mtx_peek(start + i);
-							}
-
-                                                        mtx_saveindex+=length;
-                                                }
-                                                if(start == 0xc000)
-                                                        {
-								int i;
-
-								for(i=0;i<=15;i++)
-								{
-                                                                        filename[i] = mtx_savebuffer[1 + i];
-								}
-
-                                                                    //    logerror("Writing Header Filename ");
-
-                                                                for(i=14; i>0 && filename[i] == 0x20;i--);
-
-
-                                                                filename[i + 1] = '\0';
-								logerror("%s\n", filename);
-                                                                if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,1)) != 0)
+								filesize=osd_fsize(f);
+																		mtx_loadindex = filesize;
+								// check for buffer overflow....
+								if(filesize<65536)
 									{
-                                                                                    osd_fwrite(f,mtx_savebuffer,mtx_saveindex);
-                                                                                    osd_fclose(f);
+										osd_fread(f,mtx_tapebuffer,filesize);
 									}
+										osd_fclose(f);
+							}
+					}
 
-                                                        }
+				if(filesize<65536)
+					{
+						//memcpy(ramoffset, mtx_tapebuffer, length);
+						int i;
+						unsigned char v;
+						for(i=0;i <= length;i++)
+						{
+						v = mtx_tapebuffer[i];
+						mtx_poke(start + i, v);
+						}
+
+						memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
+														mtx_loadindex -= length;
+					}
 				}
 				else
 				{
-                                                if(mtx_peek(0xfd67) == 0)
-						{
-								//load
-
-                                                        if((start == 0xc011) & (length == 0x12) & (mtx_loadindex <= 0))
-							{
-
-								int i;
-								for(i=0;i<=15;i++)
-								{
-                                                                        filename[i] = mtx_peek(0xc002 + i);
-								}
-								for(i=15; i>0 && filename[i] == 0x20;i--)
-								filename[i+1] = '\0';
-								if ((f = osd_fopen(Machine->gamedrv->name, filename,OSD_FILETYPE_IMAGE,0)) != 0)
-									{
-										filesize=osd_fsize(f);
-                                                                                mtx_loadindex = filesize;
-										// check for buffer overflow....
-										if(filesize<65536)
-											{
-												osd_fread(f,mtx_tapebuffer,filesize);
-											}
-												osd_fclose(f);
-									}
-							}
-
-						if(filesize<65536)
-							{
-								//memcpy(ramoffset, mtx_tapebuffer, length);
-								int i;
-								unsigned char v;
-								for(i=0;i <= length;i++)
-								{
-								v = mtx_tapebuffer[i];
-								mtx_poke(start + i, v);
-								}
-
-								memcpy(mtx_tapebuffer, mtx_tapebuffer + length, 0x10000 - length);
-                                                                mtx_loadindex -= length;
-							}
-						}
-						else
-						{
-							//verify
-						}
+					//verify
 				}
 		}
+	}
 }
 
-
-void mtx_init_machine(void)
+static MACHINE_INIT( mtx512 )
 {
-
 	unsigned char *romoffset;
-	mtx_ram = (unsigned char *)malloc(0x80000);
-	if(!mtx_ram) return;
-	memset(mtx_ram, 0, 64 * 0x2000);
 
-	mtx_commonram = (unsigned char *)malloc(16384);
-	if(!mtx_commonram) return;
+	mtx_commonram = (unsigned char *)auto_malloc(16384);
+	if(!mtx_commonram)
+		return;
 	memset(mtx_commonram, 0, 16384);
 
-	mtx_tapebuffer = (unsigned char *)malloc(65536);
-	if(!mtx_tapebuffer) return;
+	mtx_tapebuffer = (unsigned char *)auto_malloc(65536);
+	if(!mtx_tapebuffer)
+		return;
 	memset(mtx_tapebuffer, 0, 65536);
 
-	mtx_savebuffer = (unsigned char *)malloc(65536);
-	if(!mtx_savebuffer) return;
+	mtx_savebuffer = (unsigned char *)auto_malloc(65536);
+	if(!mtx_savebuffer)
+		return;
 	memset(mtx_savebuffer, 0, 65536);
 
 	z80ctc_init(&mtx_ctc_intf);
@@ -679,17 +669,17 @@ void mtx_init_machine(void)
 	romoffset = memory_region(REGION_CPU1) + 0x12000;
 	cpu_setbank(2, romoffset);
 
-	cpu_setbank(3, mtx_ram + 0x6000);
-	cpu_setbank(11, mtx_ram + 0x6000);
+	cpu_setbank(3, mess_ram + 0x6000);
+	cpu_setbank(11, mess_ram + 0x6000);
 
-	cpu_setbank(4, mtx_ram + 0x4000);
-	cpu_setbank(12, mtx_ram + 0x4000);
+	cpu_setbank(4, mess_ram + 0x4000);
+	cpu_setbank(12, mess_ram + 0x4000);
 
-	cpu_setbank(5, mtx_ram + 0x2000);
-	cpu_setbank(13, mtx_ram + 0x2000);
+	cpu_setbank(5, mess_ram + 0x2000);
+	cpu_setbank(13, mess_ram + 0x2000);
 
-	cpu_setbank(6, mtx_ram);
-	cpu_setbank(14, mtx_ram);
+	cpu_setbank(6, mess_ram);
+	cpu_setbank(14, mess_ram);
 
 	cpu_setbank(7, mtx_commonram);
 	cpu_setbank(15, mtx_commonram);
@@ -697,31 +687,18 @@ void mtx_init_machine(void)
 	cpu_setbank(8, mtx_commonram + 0x2000);
 	cpu_setbank(16, mtx_commonram + 0x2000);
 
-        mtx_loadindex = 0;
+	mtx_loadindex = 0;
 	mtx_saveindex = 0;
-
 }
 
-void mtx_exit_machine(void)
-{
-	if(mtx_ram!=NULL)
-	{
-		free(mtx_ram);
-		free(mtx_tapebuffer);
-		free(mtx_savebuffer);
-	}
-
-}
-
-int mtx_vh_init(void)
+static VIDEO_START( mtx )
 {
 	return TMS9928A_start(TMS99x8A, 0x4000);
 }
 
-static int mtx_interrupt(void)
+static INTERRUPT_GEN( mtx_interrupt )
 {
 	TMS9928A_interrupt();
-	return ignore_interrupt();
 }
 
 MEMORY_READ_START( mtx_readmem )
@@ -882,51 +859,25 @@ static Z80_DaisyChain mtx_daisy_chain[] =
         {0,0,0,-1}
 };
 
-static struct GfxDecodeInfo mtx_gfxdecodeinfo[] =
-{
-MEMORY_END	 /* end of array */
+static MACHINE_DRIVER_START( mtx512 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, MTX_SYSTEM_CLOCK)
+	MDRV_CPU_MEMORY(mtx_readmem, mtx_writemem)
+	MDRV_CPU_PORTS(mtx_readport, mtx_writeport)
+	MDRV_CPU_VBLANK_INT(mtx_interrupt, 1)
+	MDRV_CPU_CONFIG(mtx_daisy_chain)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-static struct MachineDriver machine_driver_mtx512 =
-{
-	/* BASIC HARDWARE */
-	{
-		{
-			CPU_Z80,
-			MTX_SYSTEM_CLOCK,
-			mtx_readmem, mtx_writemem, mtx_readport, mtx_writeport,
-                        mtx_interrupt, 1,
-			0, 0,	/* every scanline */
-                        mtx_daisy_chain
+	MDRV_MACHINE_INIT( mtx512 )
 
-		}
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	mtx_init_machine,
-	mtx_exit_machine,
-
-	/* video hardware */
-
-	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-	mtx_gfxdecodeinfo,
-	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
-	tms9928A_init_palette,
-	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-	0,
-	mtx_vh_init,
-	TMS9928A_stop,
-	TMS9928A_refresh,
+    /* video hardware */
+	MDRV_TMS9928A( mtx )
 
 	/* sound hardware */
-
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&mtx_psg_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SN76496, mtx_psg_interface)
+MACHINE_DRIVER_END
 
 ROM_START (mtx512)
 	ROM_REGION (0x20000, REGION_CPU1,0)
@@ -958,5 +909,9 @@ static const struct IODevice io_mtx512[] = {
 	{ IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY          FULLNAME */
-COMP( 1983, mtx512,   0,        mtx512,   mtx512,   0,        "Memotech Ltd.", "MTX 512" )
+COMPUTER_CONFIG_START(mtx512)
+	CONFIG_RAM_DEFAULT(512 * 1024)
+COMPUTER_CONFIG_END
+
+/*     YEAR  NAME      PARENT  MACHINE   INPUT     INIT     CONFIG,  COMPANY          FULLNAME */
+COMPC( 1983, mtx512,   0,      mtx512,   mtx512,   0,       mtx512,  "Memotech Ltd.", "MTX 512" )

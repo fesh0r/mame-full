@@ -211,10 +211,6 @@ void mc146818_save_stream(void *file)
 	osd_fwrite(file, mc146818.data, sizeof(mc146818.data));
 }
 
-void mc146818_close(void)
-{
-}
-
 READ_HANDLER(mc146818_port_r)
 {
 	int data=0;

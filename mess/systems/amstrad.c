@@ -52,7 +52,6 @@ static unsigned char *Amstrad_ROM_Table[256];
 static void multiface_rethink_memory(void);
 static WRITE_HANDLER(multiface_io_write);
 void multiface_init(void);
-void multiface_exit(void);
 void multiface_stop(void);
 int multiface_hardware_enabled(void);
 void multiface_reset(void);
@@ -90,7 +89,7 @@ static void amstrad_update_video(void)
 	}
 }
 
-static void amstrad_eof_callback(void)
+static VIDEO_EOF( amstrad )
 {
 	if ((readinputport(11) & 0x02)!=0)
 	{
@@ -116,8 +115,6 @@ static int ppi_port_outputs[3];
 static int amstrad_keyboard_line;
 /*static int crtc_vsync_output;*/
 extern int amstrad_vsync;
-
-static void *amstrad_interrupt_timer;
 
 static void update_psg(void)
 {
@@ -316,9 +313,6 @@ static nec765_interface amstrad_nec765_interface =
 /* pointers to current ram configuration selected for banks */
 static unsigned char *AmstradCPC_RamBanks[4];
 
-/* base of all ram allocated - 128k */
-unsigned char *Amstrad_Memory;
-
 /* current selected upper rom */
 static unsigned char *Amstrad_UpperRom;
 
@@ -425,22 +419,22 @@ void AmstradCPC_GA_SetRamConfiguration(void)
 	unsigned char *BankAddr;
 
 	BankIndex = RamConfigurations[(ConfigurationIndex << 2)];
-	BankAddr = Amstrad_Memory + (BankIndex << 14);
+	BankAddr = mess_ram + (BankIndex << 14);
 
 	AmstradCPC_RamBanks[0] = BankAddr;
 
 	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 1];
-	BankAddr = Amstrad_Memory + (BankIndex << 14);
+	BankAddr = mess_ram + (BankIndex << 14);
 
 	AmstradCPC_RamBanks[1] = BankAddr;
 
 	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 2];
-	BankAddr = Amstrad_Memory + (BankIndex << 14);
+	BankAddr = mess_ram + (BankIndex << 14);
 
 	AmstradCPC_RamBanks[2] = BankAddr;
 
 	BankIndex = RamConfigurations[(ConfigurationIndex << 2) + 3];
-	BankAddr = Amstrad_Memory + (BankIndex << 14);
+	BankAddr = mess_ram + (BankIndex << 14);
 
 	AmstradCPC_RamBanks[3] = BankAddr;
 }
@@ -847,23 +841,13 @@ OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
 		return pc;
 }
 
-void	multiface_init(void)
+void multiface_init(void)
 {
 	/* after a reset the multiface is visible */
 	multiface_flags = MULTIFACE_VISIBLE;
 
 	/* allocate ram */
-		multiface_ram = (unsigned char *)malloc(8192);
-}
-
-void	multiface_exit(void)
-{
-	/* free ram */
-	if (multiface_ram!=NULL)
-	{
-		free(multiface_ram);
-		multiface_ram = NULL;
-	}
+	multiface_ram = (unsigned char *)auto_malloc(8192);
 }
 
 /* call when a system reset is done */
@@ -2278,12 +2262,12 @@ static UINT8 amstrad_cycle_table_ex[256]=
 	US_TO_CPU_CYCLES(1),	/* RST 38 */
 };
 
-static void *previous_op_table;
-static void *previous_cb_table;
-static void *previous_ed_table;
-static void *previous_xy_table;
-static void *previous_xycb_table;
-static void *previous_ex_table;
+static const void *previous_op_table;
+static const void *previous_cb_table;
+static const void *previous_ed_table;
+static const void *previous_xy_table;
+static const void *previous_xycb_table;
+static const void *previous_ex_table;
 
 
 void amstrad_common_init(void)
@@ -2300,8 +2284,7 @@ void amstrad_common_init(void)
 	ppi8255_init(&amstrad_ppi8255_interface);
 
 	AmstradCPC_GA_RomConfiguration = 0;
-	amstrad_interrupt_timer = NULL;
-		amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
+	timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
 
 	amstrad_52_divider = 0;
 	amstrad_52_divider_vsync_reset = 0;
@@ -2363,35 +2346,23 @@ void amstrad_common_init(void)
 	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
 
-void amstrad_shutdown_machine(void)
+static MACHINE_STOP( amstrad )
 {
 	nec765_stop();
 
-	if (Amstrad_Memory!=NULL)
-	{
-			free(Amstrad_Memory);
-			Amstrad_Memory = NULL;
-	}
-
-	if (amstrad_interrupt_timer!=NULL)
-	{
-			timer_remove(amstrad_interrupt_timer);
-			amstrad_interrupt_timer = NULL;
-	}
-
 	/* restore previous tables */
-	cpunum_set_cycle_tbl(0,Z80_TABLE_op, previous_op_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, previous_cb_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, previous_ed_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, previous_xy_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, previous_xycb_table);
-	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, previous_ex_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_op, (void *) previous_op_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_cb, (void *) previous_cb_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ed, (void *) previous_ed_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xy, (void *) previous_xy_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_xycb, (void *) previous_xycb_table);
+	cpunum_set_cycle_tbl(0,Z80_TABLE_ex, (void *) previous_ex_table);
 
 	cpu_set_irq_callback(0, NULL);
 
 }
 
-void amstrad_init_machine(void)
+static MACHINE_INIT( amstrad )
 {
 	int i;
 	unsigned char machine_name_and_refresh_rate;
@@ -2413,7 +2384,7 @@ void amstrad_init_machine(void)
 	multiface_init();
 }
 
-void kccomp_init_machine(void)
+static MACHINE_INIT( kccomp )
 {
 	int i;
 
@@ -2688,179 +2659,55 @@ speed of 3.8Mhz */
 
   This is the reason why the displayed area is not the same as
   the visible area.
-	*/
+ */
 
-static struct MachineDriver machine_driver_amstrad =
-{
+static MACHINE_DRIVER_START( amstrad )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
-						4000000,	/*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
-			readmem_amstrad,		   /* MemoryReadAddress */
-			writemem_amstrad,		   /* MemoryWriteAddress */
-			readport_amstrad,		   /* IOReadPort */
-			writeport_amstrad,		   /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-			0,				   /* vblanks per frame */
-						0, 0,	/* every scanline */
-		},
-	},
-	50,	/*50.08*/							   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	amstrad_init_machine,			   /* init machine */
-	amstrad_shutdown_machine,
-	/* video hardware */
-	AMSTRAD_MONITOR_SCREEN_WIDTH, /* screen width */
-	AMSTRAD_MONITOR_SCREEN_HEIGHT,	/* screen height */
-	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	32, 							   /* total colours */
-	32, 							   /* color table len */
-	amstrad_cpc_init_palette,			   /* init palette */
+	MDRV_CPU_ADD(Z80_MSX, 4000000)        /*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_amstrad,writemem_amstrad)
+	MDRV_CPU_PORTS(readport_amstrad,writeport_amstrad)
+	MDRV_FRAMES_PER_SECOND(50)	/*50.08*/
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-	amstrad_eof_callback,																  /* MachineLayer */
-	amstrad_vh_start,
-	amstrad_vh_stop,
-	amstrad_vh_screenrefresh,
+	MDRV_MACHINE_INIT( amstrad )
+	MDRV_MACHINE_STOP( amstrad )
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		/* MachineSound */
-		{
-			SOUND_AY8910,
-			&amstrad_ay_interface
-		},
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-	}
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(AMSTRAD_MONITOR_SCREEN_WIDTH, AMSTRAD_MONITOR_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1))
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
+	MDRV_PALETTE_INIT( amstrad_cpc )
 
-static struct MachineDriver machine_driver_kccomp =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
-			4000000,  /* clock: See Note Above */
-			readmem_amstrad,		   /* MemoryReadAddress */
-			writemem_amstrad,		   /* MemoryWriteAddress */
-			readport_amstrad,		   /* IOReadPort */
-			writeport_amstrad,		   /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-						0,
-						0, 0,
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	kccomp_init_machine,			   /* init machine */
-	amstrad_shutdown_machine,
-	/* video hardware */
-	AMSTRAD_SCREEN_WIDTH,					   /* screen width */
-	AMSTRAD_SCREEN_HEIGHT,					   /* screen height */
-	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	32, 							   /* total colours */
-	32, 							   /* color table len */
-	kccomp_init_palette,			   /* init palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-		amstrad_eof_callback,																  /* MachineLayer */
-	amstrad_vh_start,
-	amstrad_vh_stop,
-	amstrad_vh_screenrefresh,
+	MDRV_VIDEO_EOF( amstrad )
+	MDRV_VIDEO_START( amstrad )
+	MDRV_VIDEO_UPDATE( amstrad )
 
 	/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		/* MachineSound */
-		{
-			SOUND_AY8910,
-			&amstrad_ay_interface
-		},
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, amstrad_ay_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_cpcplus =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80_MSX | CPU_16BIT_PORT,  /* type */
-			4000000,	/*((AMSTRAD_US_PER_FRAME*AMSTRAD_FPS)*4)*/ /* clock: See Note Above */
-			readmem_amstrad,		   /* MemoryReadAddress */
-			writemem_amstrad,		   /* MemoryWriteAddress */
-			readport_amstrad,		   /* IOReadPort */
-			writeport_amstrad,		   /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-		},
-	},
-	50.08,							   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	amstrad_init_machine,			   /* init machine */
-	amstrad_shutdown_machine,
-	/* video hardware */
-	AMSTRAD_SCREEN_WIDTH, /* screen width */
-	AMSTRAD_SCREEN_HEIGHT,	/* screen height */
-	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	4096, 							   /* total colours */
-	4096, 							   /* color table len */
-	amstrad_plus_init_palette,			   /* init palette */
+static MACHINE_DRIVER_START( kccomp )
+	MDRV_IMPORT_FROM( amstrad )
+	MDRV_MACHINE_INIT( kccomp )
+	MDRV_SCREEN_SIZE(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT)
+	MDRV_PALETTE_INIT( kccomp )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-		amstrad_eof_callback,																  /* MachineLayer */
-	amstrad_vh_start,
-	amstrad_vh_stop,
-	amstrad_vh_screenrefresh,
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		/* MachineSound */
-		{
-			SOUND_AY8910,
-			&amstrad_ay_interface
-		},
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( cpcplus )
+	MDRV_IMPORT_FROM( amstrad )
+	MDRV_FRAMES_PER_SECOND( 50.08 )
+	MDRV_SCREEN_SIZE(AMSTRAD_SCREEN_WIDTH, AMSTRAD_SCREEN_HEIGHT)
+	MDRV_PALETTE_LENGTH(4096)
+	MDRV_COLORTABLE_LENGTH(4096)
+	MDRV_PALETTE_INIT( amstrad_plus )
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3023,21 +2870,16 @@ static const struct IODevice io_cpcplus[] =
 #define io_cpc6128p io_cpcplus
 #define io_cpc464p io_cpcplus
 
-
-COMPUTER_CONFIG_START(cpc64)
-	CONFIG_RAM_DEFAULT(64 * 1024)
-COMPUTER_CONFIG_END
-
-COMPUTER_CONFIG_START(cpc128)
+COMPUTER_CONFIG_START(amstrad)
 	CONFIG_RAM_DEFAULT(128 * 1024)
 COMPUTER_CONFIG_END
 
 
-/*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */
-COMPC( 1984, cpc464,   0,		amstrad,  amstrad,	0,		cpc64,	 "Amstrad plc", "Amstrad/Schneider CPC464")
-COMPC( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	 cpc64,	"Amstrad plc", "Amstrad/Schneider CPC664")
-COMPC( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	 cpc128, "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMPC( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 cpc64, "Amstrad plc", "Amstrad 464plus")
-COMPC( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	 cpc128, "Amstrad plc", "Amstrad 6128plus")
-COMPC( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	 cpc64, "VEB Mikroelektronik", "KC Compact")
+/*      YEAR  NAME       PARENT  MACHINE    INPUT    INIT    CONFIG,  COMPANY               FULLNAME */
+COMPCX( 1984, cpc464,   0,		amstrad,  amstrad,	0,		amstrad, "Amstrad plc", "Amstrad/Schneider CPC464", GAME_NOT_WORKING)
+COMPCX( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC664", GAME_NOT_WORKING)
+COMPCX( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad/Schneider CPC6128", GAME_NOT_WORKING)
+COMPCX( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 464plus", GAME_NOT_WORKING)
+COMPCX( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	    amstrad, "Amstrad plc", "Amstrad 6128plus", GAME_NOT_WORKING)
+COMPCX( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	    amstrad, "VEB Mikroelektronik", "KC Compact", GAME_NOT_WORKING)
 

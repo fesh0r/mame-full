@@ -59,7 +59,7 @@ This gives a total of 19968 NOPs per frame. */
 #define AMSTRAD_MONITOR_SCREEN_WIDTH	(64*16)
 #define AMSTRAD_MONITOR_SCREEN_HEIGHT	(39*8)
 
-#if AMSTRAD_VIDEO_USE_EVENT_LIST || 1
+#ifdef AMSTRAD_VIDEO_USE_EVENT_LIST
 /* codes for eventlist */
 enum
 {
@@ -74,9 +74,8 @@ enum
 };
 #endif
 
-int amstrad_vh_start(void);
-void amstrad_vh_stop(void);
-void amstrad_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( amstrad );
+extern VIDEO_UPDATE( amstrad );
 void amstrad_update_scanline(void);
 void amstrad_vh_execute_crtc_cycles(int crtc_execute_cycles);
 void amstrad_vh_update_colour(int,int);
@@ -90,17 +89,17 @@ void amstrad_interrupt_timer_trigger_reset_by_vsync(void);
 /*** AMSTRAD CPC SPECIFIC ***/
 
 /* initialise palette for CPC464, CPC664 and CPC6128 */
-void amstrad_cpc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( amstrad_cpc );
 
 /**** KC COMPACT SPECIFIC ***/
 
 /* initialise palette for KC Compact */
-void kccomp_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( kccomp );
 
 /**** AMSTRAD PLUS SPECIFIC ***/
 
 /* initialise palette for 464plus, 6128plus */
-void amstrad_plus_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern PALETTE_INIT( amstrad_plus );
 
 int amstrad_plus_cartridge_init(int id);
 void amstrad_plus_cartridge_exit(int id);

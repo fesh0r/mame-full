@@ -31,8 +31,6 @@ rom/ram selection
 
 
 static unsigned char *snapshot = NULL;
-
-extern unsigned char *Amstrad_Memory;
 static int snapshot_loaded = 0;
 
 int amstrad_floppy_init(int id)
@@ -69,11 +67,6 @@ OPBASE_HANDLER( amstrad_opbaseoverride )
 
 void amstrad_setup_machine(void)
 {
-	/* allocate ram - I control how it is accessed so I must
-	allocate it somewhere - here will do */
-	Amstrad_Memory = malloc(128*1024);
-	if(!Amstrad_Memory) return;
-
 	if (snapshot_loaded)
 	{
 		/* setup for snapshot */
@@ -235,12 +228,9 @@ void amstrad_handle_snapshot(unsigned char *pSnapshot)
 			MemorySize = 64*1024;
 		}
 
-		memcpy(Amstrad_Memory, &pSnapshot[0x0100], MemorySize);
-
+		memcpy(mess_ram, &pSnapshot[0x0100], MemorySize);
 	}
-
 	Amstrad_RethinkMemory();
-
 }
 
 /* load image */

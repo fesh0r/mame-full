@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  advision.c
+  odyssey2.c
 
   Machine file to handle emulation of the Atari 7800.
 
@@ -15,7 +15,7 @@ static UINT8 ram[0x100];
 //static UINT8 *ROM;
 static UINT8 p1,p2;
 
-void odyssey2_init_machine(void)
+MACHINE_INIT( odyssey2 )
 {
     cpu_setbank(1, memory_region(REGION_USER1)+3*0x800);
     p1=0;

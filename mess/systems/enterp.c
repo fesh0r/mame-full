@@ -52,10 +52,6 @@
 #define MEM_RAM_6				((unsigned int)0x0fa)
 #define MEM_RAM_7				((unsigned int)0x0fb)
 
-/* base of all ram allocated - 128k */
-unsigned char *Enterprise_RAM;
-
-
 WRITE_HANDLER ( Nick_reg_w );
 
 
@@ -186,13 +182,13 @@ void Enterprise_Initialise()
 	for (i=0; i<256; i++)
 	{
 		/* reads to memory pages that are not set returns 0x0ff */
-		Enterprise_Pages_Read[i] = Enterprise_RAM+0x020000;
+		Enterprise_Pages_Read[i] = mess_ram+0x020000;
 		/* writes to memory pages that are not set are ignored */
-		Enterprise_Pages_Write[i] = Enterprise_RAM+0x024000;
+		Enterprise_Pages_Write[i] = mess_ram+0x024000;
 	}
 
 	/* setup dummy read area so it will always return 0x0ff */
-	memset(Enterprise_RAM+0x020000, 0x0ff, 0x04000);
+	memset(mess_ram+0x020000, 0x0ff, 0x04000);
 
 	/* set read pointers */
 	/* exos */
@@ -201,28 +197,27 @@ void Enterprise_Initialise()
 	/* basic */
 	Enterprise_Pages_Read[MEM_CART_0] = &memory_region(REGION_CPU1)[0x018000];
 	/* ram */
-	Enterprise_Pages_Read[MEM_RAM_0] = Enterprise_RAM;
-	Enterprise_Pages_Read[MEM_RAM_1] = Enterprise_RAM + 0x04000;
-	Enterprise_Pages_Read[MEM_RAM_2] = Enterprise_RAM + 0x08000;
-	Enterprise_Pages_Read[MEM_RAM_3] = Enterprise_RAM + 0x0c000;
-	Enterprise_Pages_Read[MEM_RAM_4] = Enterprise_RAM + 0x010000;
-	Enterprise_Pages_Read[MEM_RAM_5] = Enterprise_RAM + 0x014000;
-	Enterprise_Pages_Read[MEM_RAM_6] = Enterprise_RAM + 0x018000;
-	Enterprise_Pages_Read[MEM_RAM_7] = Enterprise_RAM + 0x01c000;
+	Enterprise_Pages_Read[MEM_RAM_0] = mess_ram;
+	Enterprise_Pages_Read[MEM_RAM_1] = mess_ram + 0x04000;
+	Enterprise_Pages_Read[MEM_RAM_2] = mess_ram + 0x08000;
+	Enterprise_Pages_Read[MEM_RAM_3] = mess_ram + 0x0c000;
+	Enterprise_Pages_Read[MEM_RAM_4] = mess_ram + 0x010000;
+	Enterprise_Pages_Read[MEM_RAM_5] = mess_ram + 0x014000;
+	Enterprise_Pages_Read[MEM_RAM_6] = mess_ram + 0x018000;
+	Enterprise_Pages_Read[MEM_RAM_7] = mess_ram + 0x01c000;
 	/* exdos */
-	  Enterprise_Pages_Read[MEM_EXDOS_0] = &memory_region(REGION_CPU1)[0x01c000];
-	  Enterprise_Pages_Read[MEM_EXDOS_1] = &memory_region(REGION_CPU1)[0x020000];
+	Enterprise_Pages_Read[MEM_EXDOS_0] = &memory_region(REGION_CPU1)[0x01c000];
+	Enterprise_Pages_Read[MEM_EXDOS_1] = &memory_region(REGION_CPU1)[0x020000];
 
 	/* set write pointers */
-	Enterprise_Pages_Write[MEM_RAM_0] = Enterprise_RAM;
-	Enterprise_Pages_Write[MEM_RAM_1] = Enterprise_RAM + 0x04000;
-	Enterprise_Pages_Write[MEM_RAM_2] = Enterprise_RAM + 0x08000;
-	Enterprise_Pages_Write[MEM_RAM_3] = Enterprise_RAM + 0x0c000;
-	Enterprise_Pages_Write[MEM_RAM_4] = Enterprise_RAM + 0x010000;
-	Enterprise_Pages_Write[MEM_RAM_5] = Enterprise_RAM + 0x014000;
-	Enterprise_Pages_Write[MEM_RAM_6] = Enterprise_RAM + 0x018000;
-	Enterprise_Pages_Write[MEM_RAM_7] = Enterprise_RAM + 0x01c000;
-
+	Enterprise_Pages_Write[MEM_RAM_0] = mess_ram;
+	Enterprise_Pages_Write[MEM_RAM_1] = mess_ram + 0x04000;
+	Enterprise_Pages_Write[MEM_RAM_2] = mess_ram + 0x08000;
+	Enterprise_Pages_Write[MEM_RAM_3] = mess_ram + 0x0c000;
+	Enterprise_Pages_Write[MEM_RAM_4] = mess_ram + 0x010000;
+	Enterprise_Pages_Write[MEM_RAM_5] = mess_ram + 0x014000;
+	Enterprise_Pages_Write[MEM_RAM_6] = mess_ram + 0x018000;
+	Enterprise_Pages_Write[MEM_RAM_7] = mess_ram + 0x01c000;
 
 	Dave_Init();
 
@@ -578,52 +573,32 @@ static struct CustomSound_interface dave_custom_sound=
 
 /* 4Mhz clock, although it can be changed to 8 Mhz! */
 
-static struct MachineDriver machine_driver_ep128 =
-{
+static MACHINE_DRIVER_START( ep128 )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80,							/* type */
-			4000000,							/* clock: See Note Above */
-			readmem_enterprise, 				/* MemoryReadAddress */
-			writemem_enterprise,				/* MemoryWriteAddress */
-			readport_enterprise,				/* IOReadPort */
-			writeport_enterprise,				/* IOWritePort */
-						0, 0,
-						0, 0,
-		},
-	},
-	50, 										/* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,				/* vblank duration */
-	1,											/* cpu slices per frame */
-	enterprise_init_machine,					/* init machine */
-	enterprise_shutdown_machine,
-	/* video hardware */
-	ENTERPRISE_SCREEN_WIDTH,					/* screen width */
-	ENTERPRISE_SCREEN_HEIGHT,					/* screen height */
-	{ 0,(ENTERPRISE_SCREEN_WIDTH-1),0,(ENTERPRISE_SCREEN_HEIGHT-1)}, /* rectangle: visible_area */
-	0, /*enterprise_gfxdecodeinfo,*/			/* graphics decode info */
-	NICK_PALETTE_SIZE,							/* total colours */
-	NICK_COLOURTABLE_SIZE,						/* color table len */
-	nick_init_palette,							/* convert color prom */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_MEMORY(readmem_enterprise,writemem_enterprise)
+	MDRV_CPU_PORTS(readport_enterprise,writeport_enterprise)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,							/* video attributes */
-	0,											/* MachineLayer */
-	enterprise_vh_start,
-	enterprise_vh_stop,
-	enterprise_vh_screenrefresh,
+	MDRV_MACHINE_INIT( enterprise )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(ENTERPRISE_SCREEN_WIDTH, ENTERPRISE_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, ENTERPRISE_SCREEN_WIDTH-1, 0, ENTERPRISE_SCREEN_HEIGHT-1)
+	/* MDRV_GFXDECODE( enterprise ) */
+	MDRV_PALETTE_LENGTH(NICK_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(NICK_COLOURTABLE_SIZE)
+	MDRV_PALETTE_INIT( nick )
+
+	MDRV_VIDEO_START( enterprise )
+	MDRV_VIDEO_UPDATE( enterprise )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		/* MachineSound */
-		/* change to dave eventually */
-		{ SOUND_CUSTOM, &dave_custom_sound},
-	}
-};
-
-
+	MDRV_SOUND_ADD(CUSTOM, dave_custom_sound)
+MACHINE_DRIVER_END
 
 ROM_START( ep128 )
 		/* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
@@ -676,8 +651,8 @@ static const struct IODevice io_ep128[] = {
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
-                floppy_status,                                           /* status */
-                NULL,                                           /* seek */
+		floppy_status,              /* status */
+		NULL,                       /* seek */
 		NULL,						/* tell */
 		NULL,						/* input */
 		NULL,						/* output */
@@ -693,7 +668,11 @@ static const struct IODevice io_ep128[] = {
 
 ***************************************************************************/
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1984, ep128,   0,		ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
-COMPX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,		  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
+COMPUTER_CONFIG_START(ep128)
+	CONFIG_RAM_DEFAULT((128*1024)+32768)
+COMPUTER_CONFIG_END
+
+/*      YEAR  NAME     PARENT   MACHINE   INPUT     INIT  CONFIG, COMPANY                 FULLNAME */
+COMPCX( 1984, ep128,   0,		ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128", GAME_IMPERFECT_SOUND )
+COMPCX( 1984, ep128a,  ep128,	ep128,	  ep128,	0,	  ep128,  "Intelligent Software", "Enterprise 128 (EXOS 2.1)", GAME_IMPERFECT_SOUND )
 

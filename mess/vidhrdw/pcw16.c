@@ -5,8 +5,6 @@
 int pcw16_colour_palette[16];
 int pcw16_video_control;
 
-extern char *pcw16_ram;
-
 /* 16 colours, + 1 for border */
 unsigned short pcw16_colour_table[PCW16_NUM_COLOURS] =
 {
@@ -53,21 +51,15 @@ unsigned char pcw16_palette[PCW16_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void pcw16_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( pcw16 )
 {
-	memcpy(sys_palette, pcw16_palette, sizeof (pcw16_palette));
-	memcpy(sys_colortable, pcw16_colour_table, sizeof (pcw16_colour_table));
+	palette_set_colors(0, pcw16_palette, sizeof(pcw16_palette) / 3);
+	memcpy(colortable, pcw16_colour_table, sizeof (pcw16_colour_table));
 }
 
-int pcw16_vh_start(void)
+VIDEO_START( pcw16 )
 {
 	return 0;
-
-//	return 0;
-}
-
-void    pcw16_vh_stop(void)
-{
 }
 
 /* 640, 1 bit per pixel */
@@ -161,9 +153,9 @@ static void pcw16_vh_decode_mode2(struct mame_bitmap *bitmap, int x, int y, unsi
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void pcw16_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pcw16 )
 {
-	unsigned char *pScanLine = (unsigned char *)pcw16_ram + 0x0fc00;	//0x03c00;	//0x020FC00;
+	unsigned char *pScanLine = (unsigned char *)mess_ram + 0x0fc00;	//0x03c00;	//0x020FC00;
 
 	int y;
 	int x;
@@ -217,30 +209,8 @@ void pcw16_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		fillbitmap(bitmap, border_colour, &rect);
 
 		/* render border on either side of display */
-		for (y=0; y<PCW16_DISPLAY_HEIGHT; y++)
-		{
-			int plot_y;
-
-			plot_y = y+PCW16_BORDER_HEIGHT;
-
-			plot_pixel(bitmap, 0, plot_y, border_colour);
-			plot_pixel(bitmap, 1, plot_y, border_colour);
-			plot_pixel(bitmap, 2, plot_y, border_colour);
-			plot_pixel(bitmap, 3, plot_y, border_colour);
-			plot_pixel(bitmap, 4, plot_y, border_colour);
-			plot_pixel(bitmap, 5, plot_y, border_colour);
-			plot_pixel(bitmap, 6, plot_y, border_colour);
-			plot_pixel(bitmap, 7, plot_y, border_colour);
-
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH), plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+1, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+2, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+3, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+4, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+5, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+6, plot_y, border_colour);
-			plot_pixel(bitmap, (PCW16_DISPLAY_WIDTH+PCW16_BORDER_WIDTH)+7, plot_y, border_colour);
-		}
+		plot_box(bitmap, 0,											PCW16_BORDER_HEIGHT, 8, PCW16_DISPLAY_HEIGHT, border_colour);
+		plot_box(bitmap, PCW16_DISPLAY_WIDTH + PCW16_BORDER_WIDTH,	PCW16_BORDER_HEIGHT, 8, PCW16_DISPLAY_HEIGHT, border_colour);
 
 		/* render display */
 		for (y=0; y<PCW16_DISPLAY_HEIGHT; y++)
@@ -270,7 +240,7 @@ void pcw16_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			{
 				int byte;
 
-				byte = pcw16_ram[Addr];
+				byte = mess_ram[Addr];
 
 				switch (mode)
 				{

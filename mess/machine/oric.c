@@ -33,9 +33,6 @@ static int enable_logging = 0;
 /* static int save_done = 0; */
 
 
-/* timer used to refresh via cb input, which will trigger ints on pulses
-from tape */
-static void *oric_tape_timer = NULL;
 /* ==0 if oric1 or oric atmos, !=0 if telestrat */
 static int oric_is_telestrat = 0;
 
@@ -1272,7 +1269,7 @@ void oric_common_init_machine(void)
 	oric_irqs = 0;
 	oric_ram_0x0c000 = NULL;
 
-    oric_tape_timer = timer_pulse(TIME_IN_HZ(4800), 0, oric_refresh_tape);
+    timer_pulse(TIME_IN_HZ(4800), 0, oric_refresh_tape);
 
 	via_reset();
 	via_config(0, &oric_6522_interface);
@@ -1289,8 +1286,7 @@ void oric_common_init_machine(void)
 #endif
 }
 
-
-void oric_init_machine (void)
+MACHINE_INIT( oric )
 {
 	int disc_interface_id;
 
@@ -1367,21 +1363,13 @@ void oric_init_machine (void)
 
 }
 
-void oric_shutdown_machine (void)
+MACHINE_STOP( oric )
 {
 #ifdef ORIC_DUMP_RAM
 	oric_dump_ram();
 #endif
 
 	oric_ram_0x0c000 = NULL;
-	wd179x_exit();
-
-	if (oric_tape_timer)
-	{
-		timer_remove(oric_tape_timer);
-		oric_tape_timer = NULL;
-	}
-
 	apple2_slot6_stop();
 }
 
@@ -1800,7 +1788,7 @@ static void telestrat_acia_callback(int irq_state)
 	oric_refresh_ints();
 }
 
-void telestrat_init_machine(void)
+MACHINE_INIT( telestrat )
 {
 	oric_common_init_machine();
 
@@ -1849,7 +1837,7 @@ void telestrat_init_machine(void)
 	wd179x_init(WD_TYPE_179X,oric_wd179x_callback);
 }
 
-void	telestrat_shutdown_machine(void)
+MACHINE_STOP( telestrat )
 {
 	int i;
 
@@ -1861,10 +1849,7 @@ void	telestrat_shutdown_machine(void)
 		if (telestrat_blocks[i].MemType == TELESTRAT_MEM_BLOCK_RAM)
 			telestrat_blocks[i].ptr = NULL;
 	}
-
-	oric_shutdown_machine();
-
-	acia_6551_stop();
+	machine_stop_oric();
 }
 
 

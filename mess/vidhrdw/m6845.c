@@ -144,15 +144,6 @@ void	crtc6845_start(void)
 #endif
 }
 
-void	crtc6845_stop(void)
-{
-#if 0
-	crtc6845_remove_vsync_set_timer();
-	crtc6845_remove_vsync_clear_timer();
-#endif
-}
-
-
 /* 6845 registers */
 
 /* functions to set the 6845 registers */

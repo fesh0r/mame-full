@@ -7,9 +7,8 @@ NICK GRAPHICS CHIP
 
 #include "driver.h"
 
-extern int	Nick_vh_start(void);
-extern void 	Nick_DoScreen(struct mame_bitmap *bm);
-extern void	Nick_vh_stop(void);
+extern int Nick_vh_start(void);
+extern void Nick_DoScreen(struct mame_bitmap *bm);
 
 extern int Nick_reg_r(int);
 extern void Nick_reg_w(int, int);

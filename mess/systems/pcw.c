@@ -105,8 +105,6 @@
 //#define PCW_DUMP_RAM
 
 void pcw_fdc_interrupt(int);
-// timer for video interrupts/os ints
-void *pcw_int_timer = NULL;
 
 // pointer to pcw ram
 unsigned char *pcw_ram = NULL;
@@ -908,7 +906,8 @@ void pcw_init_machine(void)
 
 	roller_ram_offset = 0;
 
-	pcw_int_timer = timer_pulse(TIME_IN_HZ(300), 0, pcw_timer_interrupt);
+	/* timer interrupt */
+	timer_pulse(TIME_IN_HZ(300), 0, pcw_timer_interrupt);
 
 	beep_set_state(0,0);
 	beep_set_frequency(0,3750);
@@ -923,67 +922,49 @@ void pcw_init_memory(int size)
 		{
 			/* 256k ram */
 			pcw_ram_size = 1;
-			pcw_ram = malloc(256*1024);
+			pcw_ram = auto_malloc(256*1024);
 		}
 		break;
 
 		case 512:
 		{
 			pcw_ram_size = 2;
-			pcw_ram = malloc(512*1024);
+			pcw_ram = auto_malloc(512*1024);
 		}
 		break;
 	}
 }
 
-void	init_pcw8256(void)
+void init_pcw8256(void)
 {
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
 
-void	init_pcw8512(void)
+void init_pcw8512(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
 }
 
-void	init_pcw9256(void)
+void init_pcw9256(void)
 {
 	pcw_init_memory(256);
 	pcw_init_machine();
 }
 
-void	init_pcw9512(void)
+void init_pcw9512(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
 }
 
-void	init_pcw10(void)
+void init_pcw10(void)
 {
 	pcw_init_memory(512);
 	pcw_init_machine();
 }
 
-
-void pcw_shutdown_machine(void)
-{
-	nec765_stop();
-
-	if (pcw_ram!=NULL)
-	{
-		free(pcw_ram);
-		pcw_ram = NULL;
-	}
-
-	if (pcw_int_timer)
-	{
-		timer_remove(pcw_int_timer);
-		pcw_int_timer = NULL;
-	}
-
-}
 
 
 /*
@@ -1188,102 +1169,37 @@ static struct beep_interface pcw_beep_interface =
 };
 
 /* PCW8256, PCW8512, PCW9256 */
-static struct MachineDriver machine_driver_pcw =
-{
+static MACHINE_DRIVER_START( pcw )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80,  /* type */
-			4000000,	/* clock supplied to chip, but in reality it is 3,4Mhz */
-			readmem_pcw,		   /* MemoryReadAddress */
-			writemem_pcw,		   /* MemoryWriteAddress */
-			readport_pcw,		   /* IOReadPort */
-			writeport_pcw,		   /* IOWritePort */
-			0,
-			0,
-			0, 0,
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION /*DEFAULT_60HZ_VBLANK_DURATION*/,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	NULL,			   /* init machine */
-	pcw_shutdown_machine,
-	/* video hardware */
-	PCW_SCREEN_WIDTH,			   /* screen width */
-	PCW_SCREEN_HEIGHT,			   /* screen height */
-	{0, (PCW_SCREEN_WIDTH - 1), 0, (PCW_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	PCW_NUM_COLOURS, 							   /* total colours */
-	PCW_NUM_COLOURS, 							   /* color table len */
-	pcw_init_palette,			   /* init palette */
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)       /* clock supplied to chip, but in reality it is 3.4Mhz */
+	MDRV_CPU_MEMORY(readmem_pcw,writemem_pcw)
+	MDRV_CPU_PORTS(readport_pcw,writeport_pcw)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-	0,								   /* MachineLayer */
-	pcw_vh_start,
-	pcw_vh_stop,
-	pcw_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(PCW_SCREEN_WIDTH, PCW_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, PCW_SCREEN_WIDTH-1, 0, PCW_SCREEN_HEIGHT-1)
+	MDRV_PALETTE_LENGTH(PCW_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(PCW_NUM_COLOURS)
+	MDRV_PALETTE_INIT( pcw )
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-                        SOUND_BEEP,
-                        &pcw_beep_interface
-		}
-	},
-};
+	MDRV_VIDEO_START( pcw )
+	MDRV_VIDEO_UPDATE( pcw )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(BEEP, pcw_beep_interface)
+MACHINE_DRIVER_END
+
 
 /* PCW9512, PCW9512+, PCW10 */
-static struct MachineDriver machine_driver_pcw9512 =
-{
-	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80,  /* type */
-			4000000,	/* clock supplied to chip, but in reality it is 3,4Mhz */
-			readmem_pcw,		   /* MemoryReadAddress */
-			writemem_pcw,		   /* MemoryWriteAddress */
-			readport_pcw9512,		   /* IOReadPort */
-			writeport_pcw9512,		   /* IOWritePort */
-			0,
-			0,
-			0, 0,
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION /*DEFAULT_60HZ_VBLANK_DURATION*/,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	NULL,			   /* init machine */
-	pcw_shutdown_machine,
-	/* video hardware */
-	PCW_SCREEN_WIDTH,			   /* screen width */
-	PCW_SCREEN_HEIGHT,			   /* screen height */
-	{0, (PCW_SCREEN_WIDTH - 1), 0, (PCW_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	PCW_NUM_COLOURS, 							   /* total colours */
-	PCW_NUM_COLOURS, 							   /* color table len */
-	pcw_init_palette,			   /* init palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-	0,								   /* MachineLayer */
-	pcw_vh_start,
-	pcw_vh_stop,
-	pcw_vh_screenrefresh,
-
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-                        SOUND_BEEP,
-                        &pcw_beep_interface
-		}
-	},
-};
+static MACHINE_DRIVER_START( pcw9512 )
+	MDRV_IMPORT_FROM( pcw )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_PORTS( readport_pcw9512,writeport_pcw9512 )
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1349,10 +1265,10 @@ static const struct IODevice io_pcw[] =
 
 /* these are all variants on the pcw design */
 /* major difference is memory configuration and drive type */
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT INIT	COMPANY 	   FULLNAME */
-COMP( 1985, pcw8256,   0,		pcw,	  pcw,	pcw8256,"Amstrad plc", "PCW8256")
-COMP( 1985, pcw8512,   pcw8256, pcw,	  pcw,	pcw8512,"Amstrad plc", "PCW8512")
-COMP( 1987, pcw9256,   pcw8256, pcw,	  pcw,	pcw9256,"Amstrad plc", "PCW9256")
-COMP( 1987, pcw9512,   pcw8256, pcw9512,  pcw,	pcw9512,"Amstrad plc", "PCW9512 (+)")
-COMP( 1993, pcw10,	   pcw8256, pcw9512,  pcw,	pcw10,	"Amstrad plc", "PCW10")
+/*     YEAR	NAME	    PARENT	MACHINE   INPUT INIT	COMPANY 	   FULLNAME */
+COMPX( 1985, pcw8256,   0,		pcw,	  pcw,	pcw8256,"Amstrad plc", "PCW8256",		GAME_NOT_WORKING)
+COMPX( 1985, pcw8512,   pcw8256, pcw,	  pcw,	pcw8512,"Amstrad plc", "PCW8512",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9256,   pcw8256, pcw,	  pcw,	pcw9256,"Amstrad plc", "PCW9256",		GAME_NOT_WORKING)
+COMPX( 1987, pcw9512,   pcw8256, pcw9512,  pcw,	pcw9512,"Amstrad plc", "PCW9512 (+)",	GAME_NOT_WORKING)
+COMPX( 1993, pcw10,	    pcw8256, pcw9512,  pcw,	pcw10,	"Amstrad plc", "PCW10",			GAME_NOT_WORKING)
 

@@ -110,15 +110,6 @@
 //#define PCW16_DUMP_RAM
 //#define PCW16_DUMP_CPU_RAM
 
-/* ram - up to 2mb */
-unsigned char *pcw16_ram = NULL;
-
-// general timer
-void	 *pcw16_timer;
-// timer to update real time clock
-void	 *pcw16_rtc_timer;
-// timer to refresh keyboard (not a actual interrupt in PCW16 system!)
-void	 *pcw16_keyboard_timer;
 // interrupt counter
 unsigned long pcw16_interrupt_counter;
 // video control
@@ -148,22 +139,18 @@ void pcw16_dump_ram(void)
 	int i;
 	void *file;
 
-	if (pcw16_ram!=NULL)
+	file = osd_fopen(Machine->gamedrv->name, "pcwram.bin", OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+
+	if (file)
 	{
-		file = osd_fopen(Machine->gamedrv->name, "pcwram.bin", OSD_FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
-
-		if (file)
+		for (i=0; i<2048*1024; i++)
 		{
-			for (i=0; i<2048*1024; i++)
-			{
-				osd_fwrite(file, &pcw16_ram[i], 1);
-			}
-
-//			osd_fwrite(file, pcw16_ram, 2048*1024);
-			osd_fclose(file);
+			osd_fwrite(file, &mess_ram[i], 1);
 		}
-	}
 
+//			osd_fwrite(file, mess_ram, 2048*1024);
+		osd_fclose(file);
+	}
 }
 #endif
 
@@ -480,7 +467,7 @@ static void pcw16_set_bank_handlers(int bank, PCW16_RAM_TYPE type)
 
 static void pcw16_update_bank(int bank)
 {
-	unsigned char *mem_ptr = pcw16_ram;
+	unsigned char *mem_ptr = mess_ram;
 	int bank_id = 0;
 	int bank_offs = 0;
 
@@ -523,8 +510,8 @@ static void pcw16_update_bank(int bank)
 	else
 	{
 		bank_offs = 128;
-			/* dram */
-			mem_ptr = pcw16_ram;
+		/* dram */
+		mem_ptr = mess_ram;
 	}
 
 	mem_ptr = mem_ptr + ((bank_id - bank_offs)<<14);
@@ -1439,11 +1426,8 @@ static CENTRONICS_CONFIG cent_config={
 	pc_lpt_handshake_in
 };
 
-
-void pcw16_init_machine(void)
+static MACHINE_INIT( pcw16 )
 {
-	pcw16_ram = NULL;
-
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
 	memory_set_bankhandler_r(2, 0, MRA_BANK2);
 	memory_set_bankhandler_r(3, 0, MRA_BANK3);
@@ -1453,11 +1437,6 @@ void pcw16_init_machine(void)
 	memory_set_bankhandler_w(6, 0, MWA_BANK6);
 	memory_set_bankhandler_w(7, 0, MWA_BANK7);
 	memory_set_bankhandler_w(8, 0, MWA_BANK8);
-
-
-
-	/* dram */
-	pcw16_ram = malloc(2048*1024);
 
 	/* flash 0 */
 	flash_init(0);
@@ -1471,11 +1450,11 @@ void pcw16_init_machine(void)
 	pcw16_interrupt_counter = 0;
 
 	/* video ints */
-	pcw16_timer = timer_pulse(TIME_IN_MSEC(5.83), 0,pcw16_timer_callback);
+	timer_pulse(TIME_IN_MSEC(5.83), 0,pcw16_timer_callback);
 	/* rtc timer */
-	pcw16_rtc_timer = timer_pulse(TIME_IN_SEC(1.0f/256.0f), 0, rtc_timer_callback);
-
-	pcw16_keyboard_timer = timer_pulse(TIME_IN_HZ(50), 0, pcw16_keyboard_timer_callback);
+	timer_pulse(TIME_IN_SEC(1.0f/256.0f), 0, rtc_timer_callback);
+	/* keyboard timer */
+	timer_pulse(TIME_IN_HZ(50), 0, pcw16_keyboard_timer_callback);
 
 
 	pc_fdc_init(&pcw16_fdc_interface);
@@ -1504,16 +1483,9 @@ void pcw16_init_machine(void)
 	beep_set_frequency(0,3750);
 }
 
-
-void pcw16_shutdown_machine(void)
+static MACHINE_STOP( pcw16 )
 {
 	pc_fdc_exit();
-
-	if (pcw16_ram!=NULL)
-	{
-		free(pcw16_ram);
-		pcw16_ram = NULL;
-	}
 
 	/* flash 0 */
 	flash_store(0,"pcw16f1.nv");
@@ -1521,25 +1493,6 @@ void pcw16_shutdown_machine(void)
 
 	flash_store(1,"pcw16f2.nv");
 	flash_finish(1);
-
-	if (pcw16_timer)
-	{
-		timer_remove(pcw16_timer);
-		pcw16_timer = NULL;
-	}
-
-	if (pcw16_rtc_timer)
-	{
-		timer_remove(pcw16_rtc_timer);
-		pcw16_rtc_timer = NULL;
-	}
-
-	if (pcw16_keyboard_timer)
-	{
-		timer_remove(pcw16_keyboard_timer);
-		pcw16_keyboard_timer = NULL;
-	}
-
 }
 
 INPUT_PORTS_START(pcw16)
@@ -1562,55 +1515,32 @@ static struct beep_interface pcw16_beep_interface =
 	{100}
 };
 
-static struct MachineDriver machine_driver_pcw16 =
-{
+static MACHINE_DRIVER_START( pcw16 )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80,  /* type */
-			16000000,
-			readmem_pcw16,		   /* MemoryReadAddress */
-			writemem_pcw16,		   /* MemoryWriteAddress */
-			readport_pcw16,		   /* IOReadPort */
-			writeport_pcw16,		   /* IOWritePort */
-			0,						   /*amstrad_frame_interrupt, *//* VBlank
-										* Interrupt */
-			0 /*1 */ ,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-		},
-	},
-	50, 							   /* frames per second */
-	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	pcw16_init_machine,			   /* init machine */
-	pcw16_shutdown_machine,
-	/* video hardware */
-	PCW16_SCREEN_WIDTH,			   /* screen width */
-	PCW16_SCREEN_HEIGHT,			   /* screen height */
-	{0, (PCW16_SCREEN_WIDTH - 1), 0, (PCW16_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
-										* decode info */
-	PCW16_NUM_COLOURS, 							   /* total colours */
-	PCW16_NUM_COLOURS, 							   /* color table len */
-	pcw16_init_palette,			   /* init palette */
+	MDRV_CPU_ADD(Z80, 16000000)
+	MDRV_CPU_MEMORY(readmem_pcw16,writemem_pcw16)
+	MDRV_CPU_PORTS(readport_pcw16,writeport_pcw16)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
-	0,								   /* MachineLayer */
-	pcw16_vh_start,
-	pcw16_vh_stop,
-	pcw16_vh_screenrefresh,
+	MDRV_MACHINE_INIT( pcw16 )
+	MDRV_MACHINE_INIT( pcw16 )
 
-		/* sound hardware */
-	0,0,0,0,
-	{
-		{
-                        SOUND_BEEP,
-                        &pcw16_beep_interface
-		}
-	},
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(PCW16_SCREEN_WIDTH, PCW16_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, PCW16_SCREEN_WIDTH-1, 0, PCW16_SCREEN_HEIGHT-1)
+	MDRV_PALETTE_LENGTH(PCW16_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(PCW16_NUM_COLOURS)
+	MDRV_PALETTE_INIT( pcw16 )
 
+	MDRV_VIDEO_START( pcw16 )
+	MDRV_VIDEO_UPDATE( pcw16 )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(BEEP, pcw16_beep_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1651,5 +1581,9 @@ static const struct IODevice io_pcw16[] =
 	{IO_END}
 };
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 1995, pcw16,	  0,		pcw16,	  pcw16,	0,	 "Amstrad plc", "PCW16")
+COMPUTER_CONFIG_START(pcw16)
+	CONFIG_RAM_DEFAULT(2048 * 1024)
+COMPUTER_CONFIG_END
+
+/*     YEAR  NAME     PARENT    MACHINE    INPUT     INIT   CONFIG,  COMPANY          FULLNAME */
+COMPC( 1995, pcw16,	  0,		pcw16,	   pcw16,    0,	    pcw16,   "Amstrad plc",   "PCW16")

@@ -46,8 +46,6 @@ struct oric_vh_state
 	int flash_state;
 	/* current count */
 	int flash_count;
-
-	void *timer;
 };
 
 
@@ -65,24 +63,15 @@ static void oric_vh_timer_callback(int reg)
 	}
 }
 
-int oric_vh_start(void)
+VIDEO_START( oric )
 {
 	/* initialise flash timer */
 	vh_state.flash_count = 0;
 	vh_state.flash_state = 0;
-	vh_state.timer = timer_pulse(TIME_IN_HZ(50), 0, oric_vh_timer_callback);
+	timer_pulse(TIME_IN_HZ(50), 0, oric_vh_timer_callback);
 	/* mode */
 	oric_vh_update_attribute((1<<3)|(1<<4));
     return 0;
-}
-
-void oric_vh_stop(void)
-{
-	if (vh_state.timer!=NULL)
-	{
-		timer_remove(vh_state.timer);
-		vh_state.timer = NULL;
-	}
 }
 
 
@@ -239,7 +228,7 @@ static void oric_vh_render_6pixels(struct mame_bitmap *bitmap,int x,int y, int f
 /***************************************************************************
   oric_vh_screenrefresh
 ***************************************************************************/
-void oric_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( oric )
 {
 	unsigned char *RAM;
 	int byte_offset;

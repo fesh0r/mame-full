@@ -90,7 +90,6 @@ enum
 };
 
 void	Dave_Init(void);
-void	Dave_Finish(void);
 /* set external int state */
 void	Dave_SetExternalIntState(int IntID, int State);
 

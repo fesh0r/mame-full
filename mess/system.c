@@ -160,8 +160,7 @@ const struct GameDriver *drivers[] =
 //TESTDRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
 	/* Magnavox */
-//  ////	DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)			  */
-//TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
+TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* Watara */
 ////	DRIVER( svision )	/* Super Vision	Handheld						  */
@@ -193,28 +192,28 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
 	DRIVER( z88 )		/*												  */
 
-//	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
-//	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
-//	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
-/*//	DRIVER( cpc464p )*/ /* Amstrad CPC464  Plus - 1987					  */
-/*//	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
-//	DRIVER( kccomp )	/* VEB KC compact								  */
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987					  */
+	DRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987					  */
+	DRIVER( kccomp )	/* VEB KC compact								  */
 
-//	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
-//	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
-//	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
-//	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 							  */
-//	DRIVER( pcw10 ) 	/* 198? PCW10									  */
+	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
+	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
+	DRIVER( pcw9256 )	/* 198? PCW9256 								  */
+	DRIVER( pcw9512 )	/* 198? PCW9512 (+) 							  */
+	DRIVER( pcw10 ) 	/* 198? PCW10									  */
 
-//	DRIVER( pcw16 )     /* 1995 PCW16                                     */
+	DRIVER( pcw16 )     /* 1995 PCW16                                     */
 
 	/* pc20 clone of sinclair pc200 */
 	/* pc1512 ibm xt compatible */
 	/* pc1640/pc6400 ibm xt compatible */
 
-//	DRIVER( nc100 ) 	/* 19?? NC100									  */
-//	DRIVER( nc100a ) 	/* 19?? NC100									  */
-//	DRIVER( nc200 )     /* 19?? NC200									  */
+	DRIVER( nc100 ) 	/* 19?? NC100									  */
+	DRIVER( nc100a ) 	/* 19?? NC100									  */
+	DRIVER( nc200 )     /* 19?? NC200									  */
 
 	/* APPLE */
 /*
@@ -595,8 +594,8 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 TESTDRIVER( einstein2 )
 
 	/* INTELLIGENT SOFTWARE */
-//	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
-//	DRIVER( ep128a )	/* Enterprise 128 k 							  */
+	DRIVER( ep128 ) 	/* Enterprise 128 k 							  */
+	DRIVER( ep128a )	/* Enterprise 128 k 							  */
 
 	/* NON LINEAR SYSTEMS */
 	DRIVER( kaypro )	/* Kaypro 2X									  */
@@ -661,12 +660,12 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	/* TANGERINE */
 	DRIVER( microtan )	/* 1979 Microtan 65 							  */
 
-//	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
-//	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
-//	DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
-//	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
-//	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
-//	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
+	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
+	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
+	DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
+	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
+	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
+	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T									  */
@@ -710,7 +709,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( pdp1 )      /* 1961 DEC PDP1                                  */
 
 	/* MEMOTECH */
-//	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
+	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */

@@ -14,14 +14,9 @@
   Start the video hardware emulation.
 ***************************************************************************/
 
-int pcw_vh_start(void)
+VIDEO_START( pcw )
 {
-
 	return 0;
-}
-
-void    pcw_vh_stop(void)
-{
 }
 
 extern unsigned char *pcw_ram;
@@ -44,10 +39,10 @@ static unsigned char pcw_palette[PCW_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void pcw_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( pcw )
 {
-	memcpy(sys_palette, pcw_palette, sizeof (pcw_palette));
-	memcpy(sys_colortable, pcw_colour_table, sizeof (pcw_colour_table));
+	palette_set_colors(0, pcw_palette, sizeof(pcw_palette) / 3);
+	memcpy(colortable, pcw_colour_table, sizeof (pcw_colour_table));
 }
 
 /***************************************************************************
@@ -55,7 +50,7 @@ void pcw_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void pcw_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pcw )
 {
 	int x,y,b;
 	unsigned short roller_ram_offs;

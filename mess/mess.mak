@@ -171,22 +171,23 @@ DRVLIBS = \
 	$(OBJ)/samcoupe.a \
 	$(OBJ)/tatung.a   \
 	$(OBJ)/sord.a     \
+	$(OBJ)/magnavox.a \
+	$(OBJ)/mtx.a	  \
+	$(OBJ)/amstrad.a  \
+	$(OBJ)/ep128.a	  \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
-#	$(OBJ)/magnavox.a \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/intv.a     \
 #	$(OBJ)/vc4000.a   \
-#	$(OBJ)/ep128.a	  \
 #	$(OBJ)/exidy.a    \
 #	$(OBJ)/galaxy.a   \
 #	$(OBJ)/lviv.a   \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/exidy.a    \
-#	$(OBJ)/amstrad.a  \
 #	$(OBJ)/lynx.a     \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/apf.a      \
@@ -194,7 +195,6 @@ DRVLIBS = \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/mtx.a	  \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/sharp.a    \
@@ -453,10 +453,10 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/vidhrdw/nc.o	 \
 	  $(OBJ)/mess/systems/nc.o	 \
 	  $(OBJ)/mess/machine/nc.o	 \
-	  $(OBJ)/mess/systems/pcw16.o	 \
-	  $(OBJ)/mess/vidhrdw/pcw16.o	 \
 	  $(OBJ)/mess/vidhrdw/pcw.o	 \
 	  $(OBJ)/mess/systems/pcw.o	 \
+	  $(OBJ)/mess/systems/pcw16.o	 \
+	  $(OBJ)/mess/vidhrdw/pcw16.o	 \
 	  $(OBJ)/mess/systems/amstrad.o  \
 	  $(OBJ)/mess/machine/amstrad.o  \
 	  $(OBJ)/mess/vidhrdw/amstrad.o  \
@@ -514,9 +514,9 @@ $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/microtan.o \
 	  $(OBJ)/mess/systems/microtan.o \
 	  $(OBJ)/mess/formats/orictap.o  \
-#	  $(OBJ)/mess/vidhrdw/oric.o     \
-#	  $(OBJ)/mess/machine/oric.o     \
-#	  $(OBJ)/mess/systems/oric.o
+	  $(OBJ)/mess/vidhrdw/oric.o     \
+	  $(OBJ)/mess/machine/oric.o     \
+	  $(OBJ)/mess/systems/oric.o
 
 $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \

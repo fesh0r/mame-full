@@ -107,7 +107,7 @@ void crtc6845_get_state(int offset, crtc6845_state *state);
 
 void	crtc6845_reset(int which);
 
-void	crtc6845_start(void);
-void	crtc6845_stop(void);
+void crtc6845_start(void);
+
 
 

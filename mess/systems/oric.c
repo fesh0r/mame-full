@@ -432,10 +432,10 @@ static unsigned short oric_colortable[8] = {
 };
 
 /* Initialise the palette */
-static void oric_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( oric )
 {
-	memcpy(sys_palette,oric_palette,sizeof(oric_palette));
-	memcpy(sys_colortable,oric_colortable,sizeof(oric_colortable));
+	palette_set_colors(0, oric_palette, sizeof(oric_palette) / 3);
+	memcpy(colortable, oric_colortable,sizeof(oric_colortable));
 }
 
 static struct Wave_interface wave_interface = {
@@ -455,102 +455,43 @@ static struct AY8910interface oric_ay_interface =
 };
 
 
-static struct MachineDriver machine_driver_oric =
-{
+static MACHINE_DRIVER_START( oric )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-            1000000,
-			oric_readmem,oric_writemem,0,0,
-			0, 0,
-			0, 0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	oric_init_machine, /* init_machine */
-	oric_shutdown_machine, /* stop_machine */
+	MDRV_CPU_ADD_TAG("main", M6502, 1000000)
+	MDRV_CPU_MEMORY(oric_readmem,oric_writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	40*6,								/* screen width */
-	28*8,								/* screen height */
-	{ 0, 40*6-1, 0, 28*8-1},			/* visible_area */
-	NULL,								/* graphics decode info */
-	8, 8,							/* colors used for the characters */
-	oric_init_palette,					/* convert color prom */
+	MDRV_MACHINE_INIT( oric )
+	MDRV_MACHINE_STOP( oric )
 
-	VIDEO_TYPE_RASTER,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*6, 28*8)
+	MDRV_VISIBLE_AREA(0, 40*6-1, 0, 28*8-1)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(8)
+	MDRV_PALETTE_INIT( oric )
 
-
-	0,
-	oric_vh_start,
-	oric_vh_stop,
-	oric_vh_screenrefresh,
+	MDRV_VIDEO_START( oric )
+	MDRV_VIDEO_UPDATE( oric )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&oric_ay_interface
-		},
-		/* cassette noise */
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, oric_ay_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_telstrat =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-            1000000,
-			telestrat_readmem,telestrat_writemem,0,0,
-			0, 0,
-			0, 0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	telestrat_init_machine, /* init_machine */
-	telestrat_shutdown_machine, /* stop_machine */
+static MACHINE_DRIVER_START( telstrat)
+	MDRV_IMPORT_FROM( oric )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( telestrat_readmem,telestrat_writemem )
 
-	/* video hardware */
-	40*6,								/* screen width */
-	28*8,								/* screen height */
-	{ 0, 40*6-1, 0, 28*8-1},			/* visible_area */
-	NULL,								/* graphics decode info */
-	8, 8,							/* colors used for the characters */
-	oric_init_palette,					/* convert color prom */
+	MDRV_MACHINE_INIT( telestrat )
+	MDRV_MACHINE_STOP( telestrat )
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-
-
-	0,
-	oric_vh_start,
-	oric_vh_stop,
-	oric_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&oric_ay_interface
-		},
-		/* cassette noise */
-		{
-			SOUND_WAVE,
-			&wave_interface
-		}
-	}
-};
 
 ROM_START(oric1)
 	ROM_REGION(0x10000+0x04000+0x02000+0x0800,REGION_CPU1,0)

@@ -15,35 +15,12 @@
 #include "includes/wd179x.h"
 #include "sndhrdw/dave.h"
 
-extern unsigned char *Enterprise_RAM;
-
 void Enterprise_SetupPalette(void);
 
-void enterprise_init_machine(void)
+MACHINE_INIT( enterprise )
 {
-	/* allocate memory. */
-	/* I am allocating it because I control how the ram is
-	 * accessed. Mame will not allocate any memory because all
-	 * the memory regions have been defined as MRA_BANK?
-	*/
-	/* 128k memory, 32k for dummy read/write operations
-	 * where memory bank is not defined
-	 */
-	Enterprise_RAM = malloc((128*1024)+32768);
-	if (!Enterprise_RAM) return;
-
 	/* initialise the hardware */
 	Enterprise_Initialise();
-}
-
-void enterprise_shutdown_machine(void)
-{
-	if (Enterprise_RAM != NULL)
-		free(Enterprise_RAM);
-
-	Enterprise_RAM = NULL;
-
-	Dave_Finish();
 }
 
 int enterprise_floppy_init(int id)

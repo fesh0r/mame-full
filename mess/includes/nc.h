@@ -10,10 +10,9 @@
 
 #define NC200_NUM_COLOURS 4
 
-int  nc_vh_start(void);
-void nc_vh_stop(void);
-void nc_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void nc_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
+extern VIDEO_START( nc );
+extern VIDEO_UPDATE( nc );
+extern PALETTE_INIT( nc );
 
 void nc_set_card_present_state(int);
 
