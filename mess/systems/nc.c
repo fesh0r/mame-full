@@ -1287,5 +1287,5 @@ static const struct IODevice io_nc200[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 1992, nc100,   0,                nc100,  nc100,      0,       "Amstrad plc", "NC100 Rom version v1.09")
-COMP( 1992, nc100a,  0,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00") 
+COMP( 1992, nc100a,  nc100,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00") 
 COMP( 1993, nc200,   0,                nc200, nc200,      0,   "Amstrad plc", "NC200")
