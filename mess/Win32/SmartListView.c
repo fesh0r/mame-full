@@ -102,6 +102,9 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->bmDesc = pOptions->bmDesc;
 	pListView->bOldControl = pOptions->bOldControl;
 	pListView->rgbListFontColor = pOptions->rgbListFontColor;
+	pListView->nSortCondition = 0;
+	pListView->nNumRows = 0;
+	pListView->rowMapping = NULL;
 
 	/* Create IconsList for ListView Control */
 	if (pOptions->hSmall)
@@ -132,9 +135,87 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 
 void SmartListView_Free(struct SmartListView *pListView)
 {
+	if (pListView->rowMapping)
+		free(pListView->rowMapping);
 	free(pListView->piRealColumns);
 	free(pListView);
 }
+
+/* ------------------------------------------------------------------------ *
+ * Liaison functions; for invoking callbacks                                *
+ * ------------------------------------------------------------------------ */
+
+static int SmartListView_LogicalRowToVisual(struct SmartListView *pListView, int nLogicalRow)
+{
+	assert(nLogicalRow >= 0);
+	assert(nLogicalRow < pListView->nNumRows);
+	return pListView->rowMapping[nLogicalRow].nLogicalToVisual;
+}
+
+static int SmartListView_VisualRowToLogical(struct SmartListView *pListView, int nVisualRow)
+{
+	assert(nVisualRow >= 0);
+	assert(nVisualRow < pListView->nNumRows);
+	return pListView->rowMapping[nVisualRow].nVisualToLogical;
+}
+
+static int SmartListView_VisualColumnToLogical(struct SmartListView *pListView, int nVisualColumn)
+{
+	assert(nVisualColumn >= 0);
+	assert(nVisualColumn < pListView->pClass->nNumColumns);
+	return pListView->piRealColumns[nVisualColumn];
+}
+
+static const char *SmartListView_GetText(struct SmartListView *pListView, int nLogicalRow, int nVisualColumn)
+{
+	int nLogicalColumn;
+	const char *s = NULL;
+
+	if (pListView->pClass->pfnGetText) {
+		nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, nVisualColumn);
+		s = pListView->pClass->pfnGetText(pListView, nLogicalRow, nLogicalColumn);
+	}
+	return s ? s : "";
+}
+
+static BOOL SmartListView_IsItemSelected(struct SmartListView *pListView, int nVisualRow)
+{
+	int nLogicalRow;
+	nLogicalRow = SmartListView_VisualRowToLogical(pListView, nVisualRow);
+	return pListView->pClass->pfnIsItemSelected(pListView, nLogicalRow);
+}
+
+static BOOL SmartListView_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *lpNmHdr)
+{
+	BOOL bWasSelected, bNowSelected;
+	int nLogicalRow;
+
+	if (!pListView->pClass->pfnItemChanged)
+		return FALSE;
+
+	bWasSelected = (lpNmHdr->uOldState & LVIS_SELECTED) ? TRUE : FALSE;
+	bNowSelected = (lpNmHdr->uNewState & LVIS_SELECTED) ? TRUE : FALSE;
+	nLogicalRow = lpNmHdr->lParam;
+
+	return pListView->pClass->pfnItemChanged(pListView, bWasSelected, bNowSelected, nLogicalRow);
+}
+
+static int SmartListView_WhichIcon(struct SmartListView *pListView, int nLogicalRow)
+{
+	int nIcon;
+
+	if (pListView->pClass->pfnWhichIcon) {
+		nIcon = pListView->pClass->pfnWhichIcon(pListView, nLogicalRow);
+	}
+	else {
+		nIcon = 0;
+	}
+	return nIcon;
+}
+
+/* ------------------------------------------------------------------------ *
+ * Event Handling                                                           *
+ * ------------------------------------------------------------------------ */
 
 BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam)
 {
@@ -160,9 +241,9 @@ BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT w
 static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR lpNmHdr)
 {
 	BOOL bReturn = FALSE;
-	LV_DISPINFO *pnmv;
-	int nItem;
-	const char *s;
+	LV_DISPINFO *pLvDispinfo;
+	NM_LISTVIEW *pNmListview;
+	int nItem, nColumn;
 
 	switch (lpNmHdr->code) {
 	case NM_RCLICK:
@@ -180,30 +261,31 @@ static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR 
 		break;
 
 	case LVN_GETDISPINFO:
-		pnmv = (LV_DISPINFO *) lpNmHdr;
-		nItem = pnmv->item.lParam;
+		pLvDispinfo = (LV_DISPINFO *) lpNmHdr;
+		nItem = pLvDispinfo->item.lParam;
 
-		if (pnmv->item.mask & LVIF_IMAGE)
-			if (pListView->pClass->pfnWhichIcon)
-				pnmv->item.iImage = pListView->pClass->pfnWhichIcon(pListView, nItem);
-			else
-				pnmv->item.iImage = 0;
+		if (pLvDispinfo->item.mask & LVIF_IMAGE)
+			pLvDispinfo->item.iImage = SmartListView_WhichIcon(pListView, nItem);
 
-		if (pnmv->item.mask & LVIF_STATE)
-			pnmv->item.state = 0;
+		if (pLvDispinfo->item.mask & LVIF_STATE)
+			pLvDispinfo->item.state = 0;
 
-		if (pnmv->item.mask & LVIF_TEXT) {
-			s = NULL;
-			if (pListView->pClass->pfnGetText)
-				s = pListView->pClass->pfnGetText(pListView, pnmv->item.lParam, pListView->piRealColumns[pnmv->item.iSubItem]);
-			pnmv->item.pszText = s ? (char *) s : "";
+		if (pLvDispinfo->item.mask & LVIF_TEXT) {
+			pLvDispinfo->item.pszText = (char *) SmartListView_GetText(pListView, nItem, pLvDispinfo->item.iSubItem);
 		}
 		bReturn = TRUE;
 		break;
 
 	case LVN_ITEMCHANGED:
-		if (pListView->pClass->pfnItemChanged)
-			bReturn = pListView->pClass->pfnItemChanged(pListView, (NM_LISTVIEW *) lpNmHdr);
+        pNmListview = (NM_LISTVIEW *) lpNmHdr;
+		bReturn = SmartListView_ItemChanged(pListView, pNmListview);
+		break;
+
+    case LVN_COLUMNCLICK:
+        pNmListview = (NM_LISTVIEW *) lpNmHdr;
+		nColumn = SmartListView_VisualColumnToLogical(pListView, pNmListview->iSubItem);
+		SmartListView_ToggleSorting(pListView, nColumn);
+		bReturn = TRUE;
 		break;
 	}
 	return bReturn;
@@ -215,7 +297,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     RECT        rcItem = lpDrawItemStruct->rcItem;
     UINT        uiFlags = ILD_TRANSPARENT;
     HIMAGELIST  hImageList;
-    int         nItem = lpDrawItemStruct->itemID;
+    int         nVisualItem = lpDrawItemStruct->itemID;
     COLORREF    clrTextSave, clrBkSave;
     COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
     static CHAR szBuff[MAX_PATH];
@@ -267,7 +349,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     offset = size.cx * 2;
 
     lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
-    lvi.iItem = nItem;
+    lvi.iItem = nVisualItem;
     lvi.iSubItem = order[0];
     lvi.pszText = szBuff;
     lvi.cchTextMax = sizeof(szBuff);
@@ -278,11 +360,11 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     strcpy(szBuff, lvi.pszText);
 
     bSelected = ((bFocus) || (GetWindowLong(pListView->hwndListView, GWL_STYLE) & LVS_SHOWSELALWAYS))
-        && pListView->pClass->pfnIsItemSelected(pListView, nItem);
+        && SmartListView_IsItemSelected(pListView, nVisualItem);
 
-    ListView_GetItemRect(pListView->hwndListView, nItem, &rcAllLabels, LVIR_BOUNDS);
+    ListView_GetItemRect(pListView->hwndListView, nVisualItem, &rcAllLabels, LVIR_BOUNDS);
 
-    ListView_GetItemRect(pListView->hwndListView, nItem, &rcLabel, LVIR_LABEL);
+    ListView_GetItemRect(pListView->hwndListView, nVisualItem, &rcLabel, LVIR_LABEL);
     rcAllLabels.left = rcLabel.left;
 
 	nItemCount = ListView_GetItemCount(pListView->hwndListView);
@@ -306,7 +388,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         rcTmpBmp.right = rcClient.right;
         // We also need to check whether it is the last item
         // The update region has to be extended to the bottom if it is
-        if ((nItemCount == 0) || (nItem == nItemCount - 1))
+        if ((nItemCount == 0) || (nVisualItem == nItemCount - 1))
             rcTmpBmp.bottom = rcClient.bottom;
         
         rgnBitmap = CreateRectRgnIndirect(&rcTmpBmp);
@@ -399,7 +481,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
             ImageList_Draw(hImageList, nImage, hDC, rcItem.left, rcItem.top, ILD_TRANSPARENT);
     }
 
-    ListView_GetItemRect(pListView->hwndListView, nItem, &rcIcon, LVIR_ICON);
+    ListView_GetItemRect(pListView->hwndListView, nVisualItem, &rcIcon, LVIR_ICON);
 
     hImageList = ListView_GetImageList(pListView->hwndListView, LVSIL_SMALL);
     if(hImageList)
@@ -417,7 +499,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 		}
     }
 
-    ListView_GetItemRect(pListView->hwndListView, nItem, &rcItem,LVIR_LABEL);
+    ListView_GetItemRect(pListView->hwndListView, nVisualItem, &rcItem,LVIR_LABEL);
 
     pszText = MakeShortString(hDC, szBuff,rcItem.right - rcItem.left,  2 * offset);
 
@@ -438,7 +520,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         ListView_GetColumn(pListView->hwndListView, order[nColumn] , &lvc);
 
         lvi.mask = LVIF_TEXT;
-        lvi.iItem = nItem; 
+        lvi.iItem = nVisualItem; 
         lvi.iSubItem = order[nColumn];
         lvi.pszText = szBuff;
         lvi.cchTextMax = sizeof(szBuff);
@@ -516,6 +598,8 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 	return bReturn;
 }
 
+/* ------------------------------------------------------------------------ */
+
 void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 {
 	LV_COLUMN lvc;
@@ -563,6 +647,7 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 
 void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 {
+	/* TODO: How does this work with mapped rows? */
 	LV_ITEM lvi;
 	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
 	lvi.stateMask = 0;
@@ -574,33 +659,150 @@ void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 	ListView_InsertItem(pListView->hwndListView, &lvi);
 }
 
-void SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount)
+BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount)
 {
 	int i;
+	struct RowMapping *newRowMapping;
 
+	assert(nItemCount >= 0);
+
+	/* Create a new map */
+	if (nItemCount > 0) {
+		newRowMapping = (struct RowMapping *) malloc(nItemCount * sizeof(struct RowMapping));
+		if (!newRowMapping)
+			return FALSE;
+		for (i = 0; i < nItemCount; i++) {
+			newRowMapping[i].nVisualToLogical = i;
+			newRowMapping[i].nLogicalToVisual = i;
+		}
+	}
+	else {
+		newRowMapping = NULL;
+	}
+	if (pListView->rowMapping)
+		free(pListView->rowMapping);
+	pListView->rowMapping = newRowMapping;
+	
 	ListView_DeleteAllItems(pListView->hwndListView);
 	ListView_SetItemCount(pListView->hwndListView, nItemCount);
 
 	for (i = 0; i < nItemCount; i++) {
 		SmartListView_InsertItem(pListView, i);
 	}
+
+	pListView->nNumRows = nItemCount;
+
+	return TRUE;
 }
 
 void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL bFocus)
 {
+	int nVisualRow;
+	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
+
 	if (bFocus) {
-		ListView_SetItemState(pListView->hwndListView, nItem, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
-		ListView_EnsureVisible(pListView->hwndListView, nItem, FALSE);
+		ListView_SetItemState(pListView->hwndListView, nVisualRow, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+		ListView_EnsureVisible(pListView->hwndListView, nVisualRow, FALSE);
 	}
 	else {
-		ListView_SetItemState(pListView->hwndListView, nItem, LVIS_SELECTED, LVIS_SELECTED);
+		ListView_SetItemState(pListView->hwndListView, nVisualRow, LVIS_SELECTED, LVIS_SELECTED);
 	}
 }
 
 void SmartListView_Update(struct SmartListView *pListView, int nItem)
 {
-	ListView_Update(pListView->hwndListView, nItem);
+	int nVisualRow;
+	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
+
+	ListView_Update(pListView->hwndListView, nVisualRow);
 }
+
+void SmartListView_RedrawItem(struct SmartListView *pListView, int nItem)
+{
+	int nVisualRow;
+	nVisualRow = SmartListView_LogicalRowToVisual(pListView, nItem);
+	ListView_RedrawItems(pListView->hwndListView, nVisualRow, nVisualRow);
+}
+
+/* ------------------------------------------------------------------------ *
+ * Sorting                                                                  *
+ * ------------------------------------------------------------------------ */
+
+struct sort_Info {
+	struct SmartListView *pListView;
+	int nColumn;
+	BOOL bReverse;
+};
+
+static int CALLBACK sort_Compare(LPARAM nLogicalRow1, LPARAM nLogicalRow2, int nParam)
+{
+	struct sort_Info *pSortInfo;
+	struct SmartListView *pListView;
+	int nColumn;
+	BOOL bReverse;
+	int nResult;
+
+	pSortInfo = (struct sort_Info *) nParam;
+	pListView = pSortInfo->pListView;
+	nColumn = pSortInfo->nColumn;
+	bReverse = pSortInfo->bReverse;
+
+	nResult = pListView->pClass->pfnCompare(pListView, nLogicalRow1, nLogicalRow2, nColumn); 
+	return bReverse ? -nResult : nResult;
+}
+
+void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL bReverse)
+{
+	struct sort_Info si;
+	int i;
+	LVITEM lvi;
+
+	memset(&lvi, 0, sizeof(lvi));
+	lvi.mask = LVIF_PARAM;
+
+	si.pListView = pListView;
+	si.nColumn = nColumn;
+	si.bReverse = bReverse;
+
+	ListView_SortItems(pListView->hwndListView, sort_Compare, &si);
+
+	/* Update sort condition */
+	pListView->nSortCondition = (nColumn + 1) * (bReverse ? -1 : 1);
+
+	/* Update logical -> visual row mappings */
+	for (i = 0; i < pListView->nNumRows; i++) {
+		lvi.iItem = i;
+		ListView_GetItem(pListView->hwndListView, &lvi);
+
+		pListView->rowMapping[i].nVisualToLogical = lvi.lParam;
+		pListView->rowMapping[lvi.lParam].nLogicalToVisual = i;
+	}
+}
+
+void SmartListView_GetSorting(struct SmartListView *pListView, int *nColumn, BOOL *bReverse)
+{
+	if (pListView->nSortCondition >= 0) {
+		*nColumn = pListView->nSortCondition - 1;
+		*bReverse = FALSE;
+	}
+	else {
+		*nColumn = -pListView->nSortCondition + 1;
+		*bReverse = TRUE;
+	}
+}
+
+void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn)
+{
+	int nCurrentSorting;
+	BOOL bCurrentReverse;
+
+	SmartListView_GetSorting(pListView, &nCurrentSorting, &bCurrentReverse);
+	SmartListView_SetSorting(pListView, nColumn, (nCurrentSorting == nColumn) && !bCurrentReverse);
+}
+
+/* ------------------------------------------------------------------------ *
+ * Idling                                                                   *
+ * ------------------------------------------------------------------------ */
 
 BOOL SmartListView_CanIdle(struct SmartListView *pListView)
 {
@@ -621,3 +823,4 @@ void SmartListView_IdleUntilMsg(struct SmartListView *pListView)
 	while(SmartListView_CanIdle(pListView) && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
 		SmartListView_Idle(pListView);
 }
+

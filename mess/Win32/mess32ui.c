@@ -51,12 +51,13 @@ static int mess_images_count;
 
 static int mess_image_nums[MAX_IMAGES];
 
-static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *pnmv);
+static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
 static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRow, int nColumn);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 static void SoftwareListClass_Run(struct SmartListView *pListView);
 static BOOL SoftwareListClass_IsItemSelected(struct SmartListView *pListView, int nItem);
+static int SoftwareListClass_Compare(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
 static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView);
 static void SoftwareListClass_Idle(struct SmartListView *pListView);
 
@@ -77,6 +78,7 @@ static struct SmartListViewClass s_softwareListClass =
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
 	SoftwareListClass_IsItemSelected,
+	SoftwareListClass_Compare,
 	SoftwareListClass_CanIdle,
 	SoftwareListClass_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
@@ -390,14 +392,6 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     return nIconPos;
 }
 
-int DECL_SPEC CmpImageDataPtr(const void *elem1, const void *elem2)
-{
-    const ImageData *img1 = *((const ImageData **) elem1);
-    const ImageData *img2 = *((const ImageData **) elem2);
-
-    return stricmp(img1->name, img2->name);
-}
-
 static ImageData *ImageData_Alloc(const char *fullname)
 {
 	ImageData *newimg;
@@ -620,12 +614,13 @@ static void FillSoftwareList(int nGame)
         mess_images_index = NULL;
     }
 
-	if (s_pSoftwareListView)
+	if (s_pSoftwareListView) {
 		SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
+		SmartListView_SetSorting(s_pSoftwareListView, MESS_COLUMN_IMAGES, FALSE);
+	}
 
     mess_idle_work = TRUE;
     nIdleImageNum = 0;
-    qsort(mess_images_index, mess_images_count, sizeof(ImageData *), CmpImageDataPtr);
 }
 
 static void MessUpdateSoftwareList(void)
@@ -697,6 +692,7 @@ static void InitMessPicker(void)
 	s_pSoftwareListView = SmartListView_Init(&opts);
 
 	SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
+	SmartListView_SetSorting(s_pSoftwareListView, MESS_COLUMN_IMAGES, FALSE);
 	Header_Initialize(s_pSoftwareListView->hwndListView);
 
 	default_software = strdup(GetDefaultSoftware());
@@ -958,14 +954,13 @@ static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int
 		GetMessColumnShown(pShown);
 }
 
-static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *pnmv)
+static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
 	int i;
 
-    if ((pnmv->uOldState & LVIS_SELECTED) 
-        && !(pnmv->uNewState & LVIS_SELECTED))
+    if (bWasSelected && !bNowSelected)
     {
-        if (pnmv->lParam != -1) {
+        if (nRow >= 0) {
             if ((GetKeyState(VK_SHIFT) & 0xff00) == 0) {
                 /* We are about to clear all images.  We have to go through
                  * and tell the other items to update */
@@ -982,18 +977,19 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, NM_LI
         /* printf("leaving %s\n",drivers[pnmv->lParam]->name); */
     }
 
-    if (!(pnmv->uOldState & LVIS_SELECTED) 
-        && (pnmv->uNewState & LVIS_SELECTED))
+    if (!bWasSelected && bNowSelected)
     {
         /* entering item */
-        MessAddImage(pnmv->lParam);
+        MessAddImage(nRow);
     }
 	return TRUE;
 }
 
-void SmartListView_RedrawItems(struct SmartListView *pListView, int nBeginItem, int nEndItem)
+static int SoftwareListClass_Compare(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn)
 {
-	ListView_RedrawItems(pListView->hwndListView, nBeginItem, nEndItem);
+	const ImageData *img1 = mess_images_index[nRow1];
+	const ImageData *img2 = mess_images_index[nRow2];
+	return stricmp(img1->name, img2->name);
 }
 
 static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView)
@@ -1015,7 +1011,7 @@ static void SoftwareListClass_Idle(struct SmartListView *pListView)
 
         if (pImageData->type == IO_ALIAS) {
 			ImageData_Realize(pImageData, TRUE, imagetypes);
-            SmartListView_RedrawItems(pListView, nIdleImageNum, nIdleImageNum);
+            SmartListView_RedrawItem(pListView, nIdleImageNum);
         }
         nIdleImageNum++;
     }
@@ -1043,13 +1039,11 @@ static void FileMgrListClass_Run(struct SmartListView *pListView)
 	s_bChosen = TRUE;
 }
 
-static BOOL FileMgrListClass_ItemChanged(struct SmartListView *pListView, NM_LISTVIEW *pNm)
+static BOOL FileMgrListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
-	if (!(pNm->uOldState & LVIS_SELECTED) 
-		&& (pNm->uNewState & LVIS_SELECTED))
-	{
+	if (!bWasSelected && bNowSelected) {
 		/* entering item */
-		s_lSelectedItem = pNm->lParam;
+		s_lSelectedItem = nRow;
 	}
 	return TRUE;
 }
@@ -1067,6 +1061,7 @@ static struct SmartListViewClass s_filemgrListClass =
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
 	FileMgrListClass_IsItemSelected,
+	SoftwareListClass_Compare,
 	SoftwareListClass_CanIdle,
 	SoftwareListClass_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
