@@ -33,10 +33,10 @@
 #define VMDATAL			0x2118	/* dddddddd = d: data to be written */
 #define VMDATAH			0x2119	/* dddddddd = d: data to be written */
 #define M7SEL			0x211A	/* ab----yx = a: screen over | y: vertical flip | x: horizontal flip */
-#define M7A				0x211B
-#define M7B				0x211C
-#define M7C				0x211D
-#define M7D				0x211E
+#define M7A				0x211B	/* aaaaaaaa = a: COSINE rotate angle / X expansion */
+#define M7B				0x211C	/* aaaaaaaa = a: SINE rotate angle / X expansion */
+#define M7C				0x211D	/* aaaaaaaa = a: SINE rotate angle / Y expansion */
+#define M7D				0x211E	/* aaaaaaaa = a: COSINE rotate angle / Y expansion */
 #define M7X				0x211F
 #define M7Y				0x2120
 #define CGADD			0x2121
@@ -306,11 +306,15 @@
 extern MACHINE_INIT( snes );
 extern MACHINE_STOP( snes );
 extern VIDEO_UPDATE( snes );
-extern READ_HANDLER( snes_r_bank );
-extern READ_HANDLER( snes_r_mirror );
+
+extern READ_HANDLER( snes_r_bank1 );
+extern READ_HANDLER( snes_r_bank2 );
+extern READ_HANDLER( snes_r_bank3 );
+extern READ_HANDLER( snes_r_bank4 );
+extern WRITE_HANDLER( snes_w_bank1 );
+extern WRITE_HANDLER( snes_w_bank2 );
+extern WRITE_HANDLER( snes_w_bank4 );
 extern READ_HANDLER( snes_r_io );
-extern WRITE_HANDLER( snes_w_bank );
-extern WRITE_HANDLER( snes_w_mirror );
 extern WRITE_HANDLER( snes_w_io );
 extern int snes_load_rom(int id, void *fp, int open_mode);
 extern void snes_scanline_interrupt(void);
@@ -322,12 +326,12 @@ extern void snes_refresh_scanline( UINT16 curline );
 /* Video related */
 extern UINT8  *snes_vram;		/* Video RAM (Should be 16-bit, but it's easier this way) */
 extern UINT16 *snes_cgram;		/* Colour RAM */
-extern UINT8  *snes_oam;		/* Object Attribute Memory (Should be 16-bit, but it's easier this way) */
+extern UINT16 *snes_oam;		/* Object Attribute Memory */
 extern UINT8  *snes_ram;		/* Main memory */
 extern UINT16 bg_hoffset[4];	/* Background horizontal scroll offsets */
 extern UINT16 bg_voffset[4];	/* Background vertical scroll offsets */
 extern UINT16 mode7_data[6];	/* Data for mode7 matrix calculation */
-extern UINT8  obj_size[2];		/* Objects sizes */
+extern UINT8  ppu_obj_size[2];	/* Objects sizes */
 
 /* Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */
