@@ -36,6 +36,9 @@ Source Changes:
   disabled with the -nonewui command switch.  This new UI uses Windows native
   menus and should be much easier to use. [Nate Woods]
 
+- [Win32] Help file entries for each system now list the directory name
+  expected by MESS. [Nate Woods]
+
 - [Win32 GUI] Fixed an incredibly MORONIC bug where RAM preferences were stored
   as booleans (!?!) rather than integers (bug #260) [Nate Woods]
 

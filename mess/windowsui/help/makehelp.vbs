@@ -96,7 +96,8 @@ Do While Not objTextStream.AtEndOfStream
 		ElseIf Left(strLine, 1) <> "#" Then
 			If strSystemText = "" Then
 				objSysInfoDictionary(strSystem & ".htm") = strLine
-				strSystemText = "<h2>" & HtmlEncode(strLine) & "</h2>" & vbCrlf		
+				strSystemText = "<h2>" & HtmlEncode(strLine) & "</h2>" & vbCrlf	
+				strSystemText = strSystemText & "<p><i>(directory: " & strSystem & ")</i></p>" & vbCrlf
 			ElseIf Right(strLine, 1) = ":" Then
 				strSystemText = strSystemText & "<h3>" & HtmlEncode(strLine) & "</h3>"
 			Else
