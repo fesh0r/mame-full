@@ -1,7 +1,7 @@
-/* 
+/*
    Sega Saturn Driver - Copyright James Forshaw (TyRaNiD) July 2001
 
-   Almost total rewrite. Uses the basic memory model from 
+   Almost total rewrite. Uses the basic memory model from
    old saturn driver by Juergen Buchmueller <pullmoll@t-online.de>,
    although its been fixed up to work with the new mame memory model
    and to correct a few errors. Little else has survived.
@@ -10,7 +10,7 @@
 
    0x0000000 > 0x0080000		: Boot (IPL) ROM
    0x0100000 > 0x0100080		: SMPC register area
-   0x0180000 > 0x0190000		: Backup RAM 
+   0x0180000 > 0x0190000		: Backup RAM
    0x0200000 > 0x0300000		: 1 MB of DRAM (Lower Work RAM)
    0x1000000 > 0x1000004		: Slave SH2 communication register
    0x1800000 > 0x1800004		: Master SH2 communication register
@@ -24,58 +24,58 @@
    0x5F80000 > 0x5F80120		: VDP2 registers
    0x5FE0000 > 0x5FE00D0		: SCU registers
    0x6000000 > 0x6100000		: 1 MB SDRAM (Upper Work RAM)
-   
+
    SH2 specific areas (are local to each CPU)
    0xC0000000 > 0xC0000200		: Cache RAM
    0xFFFFFE00 > 0xFFFFFFFF		: CPU module registers
-   
+
    Main Processors 2 x Hitachi SH2 7604 RISC chips
-   Clock speeds	At 320 pixels per scanline 
+   Clock speeds	At 320 pixels per scanline
        NTSC - 26.8741 MHz
        PAL  - 26.6875 MHz
        At 352 pixels per scanline
        NTSC - 28.6364 MHz
        PAL  - 28.4375 MHz
    Connected as master - slave.
-   
+
    Supplementary Maths processor: DSP.
    Main Memory: 1 Megabyte of SDRAM and 1 Megabyte of DRAM
    Backup RAM: 64Kb battery backed SRAM
    Boot ROM: 512Kb-boot ROM
-   Video Hardware: 2 VDP (video display processors) chip sets, VDP1 Draw 
+   Video Hardware: 2 VDP (video display processors) chip sets, VDP1 Draw
    Sprites, lines, warped sprites (quads), VDP2 controls background graphics.
-   
-   VDP1 can display sprites in colour depths of 4,8,15 bits per pixel. Number of 
-   sprites limited only by sizes and VRAM limitations. Can perform on chip 
-   gouroud shading on sprites and rotate sprite frame buffer. Not much point 
+
+   VDP1 can display sprites in colour depths of 4,8,15 bits per pixel. Number of
+   sprites limited only by sizes and VRAM limitations. Can perform on chip
+   gouroud shading on sprites and rotate sprite frame buffer. Not much point
    indicating maximum polygon counts as its extremely misleading.
    VRAM: 512Kb
-   
-   VDP2 can display up to 5 play-fields (although generally not simultaneously), 
-   rotated background support. Colour depths of 4,8,15,24 bits per pixel and can 
-   do special effects such as transparency, sprite shadowing, half-toning, line 
+
+   VDP2 can display up to 5 play-fields (although generally not simultaneously),
+   rotated background support. Colour depths of 4,8,15,24 bits per pixel and can
+   do special effects such as transparency, sprite shadowing, half-toning, line
    scroll, line-colour mapping.
    VRAM: 512Kb
-   
+
    Selection of NTSC display resolutions
-   
+
    320x224 @ 60Hz
    352x224 @ 60Hz
    640x224 @ 60Hz
    640x448 @ 30Hz
    704x480 @ 30Hz
-   
-   SCU: System control unit. Control memory mapping, contains 3 DMA 
-   channels, interfaces SH2 processors to DSP co-processor, handles and 
+
+   SCU: System control unit. Control memory mapping, contains 3 DMA
+   channels, interfaces SH2 processors to DSP co-processor, handles and
    masks hardware interrupts.
-   
-   SMPC: Interfaces to peripherals, performs system management tasks (built in 
+
+   SMPC: Interfaces to peripherals, performs system management tasks (built in
    clock, system reset).
-   
-   SCSP: Custom sound processing module including MC68000 microprocessor 
+
+   SCSP: Custom sound processing module including MC68000 microprocessor
    and effects DSP.
-   
-   CDROM: Maximum 2x speed (300 k/sec) CLV. Custom interface controlled by 
+
+   CDROM: Maximum 2x speed (300 k/sec) CLV. Custom interface controlled by
    Hitachi SH1 processor. 512 Kb Buffer RAM.
 
    -= Current State Infomation =-
@@ -89,13 +89,13 @@
 
    25/06/2001 - Added register names for vdp1/2. Not included yet. Added support for vdp2 reg
    read/write. Added all my bios images.
-   23/06/2001 - Had to modify sh2.c to get interrupts working. Bios starts resquesting pad data 
+   23/06/2001 - Had to modify sh2.c to get interrupts working. Bios starts resquesting pad data
    till the sound system causes a lock.. Included a small hack to bypass this lock but then
    it blocks somewhere else. Waiting on another interrupt ?????
    20/06/2001 - Made smpc return timer not set. Starts writing stuff to vdp ram. Started adding
    prelim HBlank support. Using HBlank timing to control VBlank timing (makes scu timers easier)
    19/06/2001 - Added simple smpc and cd commands.
-   18/06/2001 - Bug in the original driver memory map. SMPC allocated a few meg instead of 
+   18/06/2001 - Bug in the original driver memory map. SMPC allocated a few meg instead of
    0x80 bytes :)
    17/06/2001 - Added all main ram areas. Should work ok for now.
 */
@@ -120,9 +120,9 @@
 
 static UINT32 *mem; /* Base memory pointer */
 
-/* 
+/*
    Define memory bases. Note these are byte locations and widths
-   Divide by 4 to get location in mem array 
+   Divide by 4 to get location in mem array
 */
 
 #define SATURN_ROM_BASE         0x00000000
@@ -379,7 +379,7 @@ WRITE32_HANDLER( saturn_back_ram_w )
 
 /****************************************************************
  *  SMPC Handler                                                *
- ****************************************************************/          
+ ****************************************************************/
 
 struct _smpc_state /* Holds infomation on the current state of the smpc */
 
@@ -427,16 +427,16 @@ void smpc_execcomm(int commcode)
 
     {
       switch(commcode)
-	{ 
-	case 0x1A : 
+	{
+	case 0x1A :
 	  smpc_state.reset_disable = 1; /* Disable reset */
 	  logerror("smpc - Reset Disable (0x1A)\n");
 	  break;
-	case 0x19 : 
+	case 0x19 :
 	  smpc_state.reset_disable = 0; /* Enable reset */
 	  logerror("smpc - Reset Enable (0x19)\n");
 	  break;
-	case 0x10 : 
+	case 0x10 :
 	  smpc_state.smpc_regs[STATUSR] = 0x40; /* No data remaining, reset off */
 	  smpc_state.smpc_regs[OREG(0)] = smpc_state.set_timer << 7 | smpc_state.reset_disable << 6;
 	  smpc_state.smpc_regs[OREG(1)] = 0x20;
@@ -456,17 +456,17 @@ void smpc_execcomm(int commcode)
 	  smpc_state.smpc_regs[OREG(15)] = 0;
 	  logerror("smpc - Int Back (0x10)\n");
 	  break;
-	case 0x7 : 
+	case 0x7 :
 	  logerror("smpc - Sound OFF (0x7)\n");
 	  break;
 	case 0x6 :
 	  logerror("smpc - Sound ON (0x6)\n");
 	  break;
 	}
-      smpc_state.smpc_regs[OREG(31)] = commcode; 
+      smpc_state.smpc_regs[OREG(31)] = commcode;
       smpc_state.smpc_regs[STATUSF]  = 0;
     }
-} 
+}
 
 READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 {
@@ -476,9 +476,9 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 
   ret_val  = smpc_state.smpc_regs[offset<<2] << 24;      /* Hopefully will reconstruct long word */
   ret_val |= smpc_state.smpc_regs[(offset<<2)+1] << 16;  /* independant of endian from bytes     */
-  ret_val |= smpc_state.smpc_regs[(offset<<2)+2] << 8;  
+  ret_val |= smpc_state.smpc_regs[(offset<<2)+2] << 8;
   ret_val |= smpc_state.smpc_regs[(offset<<2)+3];
-  
+
   /* SMPC regs only on odd address values so could remove two statements */
 
   /* Log data accesses */
@@ -490,7 +490,7 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 	{
 	  UINT32 ea;
 	  UINT32 d;
-	  
+
 	  ea = (offset*4) + loop;
 	  d = (ret_val >> (8*(3-loop))) & 0xFF;
 
@@ -550,7 +550,7 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 	{
 	  UINT32 ea;
 	  UINT32 d;
-	  
+
 	  ea = (offset*4) + loop;
 	  d = (data >> (8*(3-loop))) & 0xFF;
 
@@ -559,13 +559,13 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 	  smpc_state.smpc_regs[ea] = d;
 	  switch(ea)
 	    {
-	    case COMMREG : 
+	    case COMMREG :
 	      smpc_execcomm(d); /* If a write to commreg, execute command */
 	      break;
-	    } 
-	  
+	    }
+
 	  /* Log smpc write - should be turned off when not needed */
-	  
+
 	  if((ea >= IREG(0)) && (ea <= IREG(7)))
 	    {
 	      logerror("smpc_w IREG%01d <- %02lX - PC=%08lX\n",(ea-IREG(0))/2,d,cpu_get_reg(SH2_PC));
@@ -602,7 +602,7 @@ WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 	      }
 	}
       temp_mask >>= 8;
-    }  
+    }
 }
 
 READ32_HANDLER( saturn_cs0_r )	  /* CS0 */
@@ -688,16 +688,17 @@ static const char *scu_regnames[0x34] = {"DMA0 Read",     /* 0x00 */
 					 "SDRAM select",
 					 "SCU Version",
 					 "XCC"};
-				   		      
 
-UINT32 scu_regs[0x34]; /* SCU register block */ 
+
+UINT32 scu_regs[0x34]; /* SCU register block */
+/*
 static const char *int_names[16] = {
-  "VBlank-IN", "VBlank-OUT", "HBlank-IN", "Timer 0", 
+  "VBlank-IN", "VBlank-OUT", "HBlank-IN", "Timer 0",
   "Timer 1", "DSP", "Sound", "SMPC", "PAD",
   "DMA Level 2", "DMA Level 1", "DMA Level 0",
   "DMA Illegal", "Sprite END", "Illegal", "A-Bus" };
-
-enum 
+*/
+enum
 
 {
   VBLANK_IN_INT,
@@ -732,7 +733,7 @@ READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
   return scu_regs[offset] & ~mem_mask;
 }
 
-
+/*
 static int scu_irq_levels[32] =
 {
     15, 14, 13, 12, 11, 10,  9,  8,
@@ -740,7 +741,7 @@ static int scu_irq_levels[32] =
      7,  7,  7,  7,  4,  4,  4,  4,
      1,  1,  1,  1,  1,  1,  1,  1
 };
-
+*/
 
 static void scu_set_imask(void)
 {
@@ -798,7 +799,7 @@ static const char *cd_regnames[0xA] = {"X0",
 				       "CR2",
 				       "CR3",
 				       "CR4"};
-				  
+
 UINT32 cd_regs[0xA];
 UINT32 periodic; /* Currently a hack to bypass bios area */
 
@@ -810,7 +811,7 @@ UINT32 periodic; /* Currently a hack to bypass bios area */
 #define CD_CR4      0x9
 
 void reset_cd(void)
-     
+
 {
   cd_regs[CD_CR1]  =  'C' << 16;
   cd_regs[CD_CR2]  = ('D' << 24) | ('B' << 16);
@@ -827,7 +828,7 @@ void cd_execcomm(void)
   int command;
 
   command = cd_regs[CD_CR1] >> 24; /* Shift down command code to low byte */
-  
+
   switch(command)
     {
     case 0x0 : /* Command 0x00 - Get Status */
@@ -894,14 +895,14 @@ WRITE32_HANDLER( saturn_cd_w )	 /* CD */
     {
       switch(offset)
 	{
-	case CD_HIRQ : 
+	case CD_HIRQ :
 	  cd_regs[offset] = ((cd_regs[offset] & mem_mask) & ~data) | 0x00010000;
 	  break; /* Case 2 HIRQ register - writing a 1 clears state*/
-	case CD_CR4  : 
+	case CD_CR4  :
 	  cd_regs[offset] = (cd_regs[offset] & mem_mask) | data;
 	  cd_execcomm(); /* When CR4 written execute command */
 	  break;
-	default: 
+	default:
 	  cd_regs[offset] = (cd_regs[offset] & mem_mask) | data;
 	}
     }
@@ -954,8 +955,8 @@ struct _vdp1_state
 {
   UINT16 vdp1_regs[0xC];
 } vdp1_state;
-
-static const char *vdp1_regnames[] = 
+/*
+static const char *vdp1_regnames[] =
 
 {
   "TV Mode Selection",
@@ -970,8 +971,8 @@ static const char *vdp1_regnames[] =
   "Last Operation Addr",
   "Current Operation Addr",
   "Mode Status"
-};  
-
+};
+*/
 void reset_vdp1(void)
 
 {
@@ -984,7 +985,7 @@ READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 
   ret_val = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
   ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
-  
+
   logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
 
   return SWAP_WORDS(ret_val);
@@ -1020,7 +1021,7 @@ void *HBlankTimer;
 UINT32 HBlankCount;
 UINT32 InVBlank;   /* Are we in vertical blanking ? */
 void timer_hblank(int param);
-
+/*
 static const char *vdp2_regnames[] =
 
 {
@@ -1169,7 +1170,7 @@ static const char *vdp2_regnames[] =
   "Colour Offs B (GREEN)",
   "Colour Offs B (BLUE)"
 };
-  
+*/
 
 void reset_vdp2(void)
 
@@ -1182,7 +1183,7 @@ void reset_vdp2(void)
 
 void timer_hblank(int param)
 
-     /* 
+     /*
 	Called everytime we need a HBlank. Easier to count this and call VBlanks than do vblanks
 	as SCU timers require timings based of this.
      */
@@ -1192,7 +1193,7 @@ void timer_hblank(int param)
   HBlankTimer = timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank); /* Reset timer */
   HBlankCount++;
   if((HBlankCount > SCREEN_LINES) && (!InVBlank))
-    { 
+    {
       /* We are going into vertical blanking area */
       /* Execute VBlank-IN interrupt */
       InVBlank = 1;
@@ -1232,7 +1233,7 @@ READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
   ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
 
   logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
-  
+
   return SWAP_WORDS(ret_val);
 }
 
@@ -1257,19 +1258,19 @@ void saturn_init_machine(void)
 
   mem = (UINT32 *) memory_region(REGION_CPU1);
   mem2 = (UINT32 *) memory_region(REGION_CPU2);
-  
+
   for (i = 0; i < (SATURN_ROM_SIZE/4); i++)
     {
       mem2[i] = mem[i]; /* Copy bios rom into second cpu area */
     }
-  
+
   mem_length = (memory_region_length(REGION_CPU1) - SATURN_ROM_SIZE) / 4;
-  
+
   for (i = (SATURN_ROM_SIZE/4);i < mem_length; i++)
     {
       mem[i] = 0; /* Clear RAM */
     }
- 
+
   cpu_setbank(1, (UINT8 *) &mem[SATURN_WORKL_RAM_BASE/4]); /* Setup banking (for???) */
   cpu_setbank(2, (UINT8 *) &mem[SATURN_WORKH_RAM_BASE/4]);
   cpu_setbank(3, (UINT8 *) &mem[SATURN_SOUND_RAM_BASE/4]);
@@ -1279,70 +1280,70 @@ void saturn_init_machine(void)
   cpu_setbank(7, (UINT8 *) &mem[SATURN_FB2_RAM_BASE/4]);
   cpu_setbank(8, (UINT8 *) &mem[SATURN_COLOR_RAM_BASE/4]);
   cpu_setbank(9, (UINT8 *) &mem[SATURN_BACK_RAM_BASE/4]);
- 
+
   /* Install memory handlers. Must be done dynamically to avoid allocating too much ram */
 
   for (i = 0; i < 2; i++)
     {
       install_mem_read32_handler (i, 0x00000000, 0x0007ffff, MRA32_ROM );
       install_mem_write32_handler(i, 0x00000000, 0x0007ffff, MWA32_ROM );
-      
+
       install_mem_read32_handler (i, 0x00100000, 0x0010007f, saturn_smpc_r );
       install_mem_write32_handler(i, 0x00100000, 0x0010007f, saturn_smpc_w );
-      
+
       install_mem_read32_handler (i, 0x00180000, 0x0018ffff, saturn_back_ram_r );
       install_mem_write32_handler(i, 0x00180000, 0x0018ffff, saturn_back_ram_w );
-      
+
       install_mem_read32_handler (i, 0x00200000, 0x002fffff, saturn_workl_ram_r );
       install_mem_write32_handler(i, 0x00200000, 0x002fffff, saturn_workl_ram_w );
-      
+
       install_mem_read32_handler (i, 0x01000000, 0x01000003, saturn_minit_r );
       install_mem_write32_handler(i, 0x01000000, 0x01000003, saturn_minit_w );
-      
+
       install_mem_read32_handler (i, 0x01800000, 0x01800003, saturn_sinit_r );
       install_mem_write32_handler(i, 0x01800000, 0x01800003, saturn_sinit_w );
-      
+
       install_mem_read32_handler (i, 0x02000000, 0x03ffffff, saturn_cs0_r );
       install_mem_write32_handler(i, 0x02000000, 0x03ffffff, saturn_cs0_w );
-      
+
       install_mem_read32_handler (i, 0x04000000, 0x04ffffff, saturn_cs1_r );
       install_mem_write32_handler(i, 0x04000000, 0x04ffffff, saturn_cs1_w );
-      
+
       install_mem_read32_handler (i, 0x05000000, 0x057fffff, saturn_cs2_r );
       install_mem_write32_handler(i, 0x05000000, 0x057fffff, saturn_cs2_w );
-      
+
       install_mem_read32_handler (i, 0x05890000, 0x0589ffff, saturn_cd_r );
       install_mem_write32_handler(i, 0x05890000, 0x0589ffff, saturn_cd_w );
-      
+
       install_mem_read32_handler (i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_r );
       install_mem_write32_handler(i, 0x05a00000, 0x05a7ffff, saturn_sound_ram_w );
       install_mem_read32_handler (i, 0x05a80000, 0x05afffff, MRA32_NOP );
       install_mem_write32_handler(i, 0x05a80000, 0x05afffff, MWA32_NOP );
-      
+
       install_mem_read32_handler (i, 0x05b00000, 0x05b00ee3, saturn_dsp_r );
       install_mem_write32_handler(i, 0x05b00000, 0x05b00ee3, saturn_dsp_w );
-      
+
       install_mem_read32_handler (i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_r );
       install_mem_write32_handler(i, 0x05c00000, 0x05c7ffff, saturn_vdp1_ram_w );
-      
+
       install_mem_read32_handler (i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_r );
       install_mem_write32_handler(i, 0x05c80000, 0x05cbffff, saturn_fb1_ram_w );
-      
+
       install_mem_read32_handler (i, 0x05d00000, 0x05d00017, saturn_vdp1_r );
       install_mem_write32_handler(i, 0x05d00000, 0x05d00017, saturn_vdp1_w );
-      
+
       install_mem_read32_handler (i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_r );
       install_mem_write32_handler(i, 0x05e00000, 0x05e7ffff, saturn_vdp2_ram_w );
-      
+
       install_mem_read32_handler (i, 0x05f00000, 0x05f00fff, saturn_color_ram_r );
       install_mem_write32_handler(i, 0x05f00000, 0x05f00fff, saturn_color_ram_w );
-      
+
       install_mem_read32_handler (i, 0x05f80000, 0x05f8011f, saturn_vdp2_r );
       install_mem_write32_handler(i, 0x05f80000, 0x05f8011f, saturn_vdp2_w );
-      
+
       install_mem_read32_handler (i, 0x05fe0000, 0x05fe00cf, saturn_scu_r );
       install_mem_write32_handler(i, 0x05fe0000, 0x05fe00cf, saturn_scu_w );
-      
+
       install_mem_read32_handler (i, 0x06000000, 0x060fffff, saturn_workh_ram_r );
       install_mem_write32_handler(i, 0x06000000, 0x060fffff, saturn_workh_ram_w );
     }
@@ -1373,7 +1374,7 @@ void saturn_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
   //  logerror("saturn_vh_screenrefresh\n");
 }
 
-/* 
+/*
    all read/write mem's are setup in init functions
    These are stubs so that mame doesn't segfault on NULL pointer access. doh :)
 */
@@ -1397,19 +1398,19 @@ void saturn_init_palette(unsigned char *palette, unsigned short *colortable,cons
 
 {
   int i;
-  
+
   for ( i = 0; i < 0x8000; i++ )
     {
       int r, g, b;
-      
+
       r = (( i >> 10 ) & 0x1f) << 3;
       g = (( i >> 5 ) & 0x1f) << 3;
       b = (i & 0x1f) << 3;
-      
+
       *palette++ = r;
       *palette++ = g;
       *palette++ = b;
-      
+
       colortable[i] = i;
     }
 
@@ -1429,7 +1430,7 @@ static struct MachineDriver machine_driver_saturn =
     },
     {
       CPU_SH2,
-      28636400, 
+      28636400,
       saturn_readmem,saturn_writemem,
       0,0,
       ignore_interrupt, 1
