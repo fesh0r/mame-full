@@ -26,8 +26,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-- Classic MESS UI now performs hard resets instead of soft resets.  [Nate
-  Woods]
+- Classic MESS UI now performs hard resets instead of soft resets.
+  [Christopher Stone]
 
 - [Windows GUI] If MESS crashes at runtime, an error message will now be
   displayed.  Previously, the emulation would end and the user would be sent

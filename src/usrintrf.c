@@ -19,7 +19,6 @@
 #include "mess.h"
 #include "mesintrf.h"
 #include "inputx.h"
-#define machine_reset machine_hard_reset
 #endif
 
 
@@ -2129,12 +2128,13 @@ static int calibratejoysticks(struct mame_bitmap *bitmap,int selected)
 	return sel + 1;
 }
 
+#define MAX_ANALOG_ENTRIES 80
 
 static int settraksettings(struct mame_bitmap *bitmap,int selected)
 {
-	const char *menu_item[40];
-	const char *menu_subitem[40];
-	struct InputPort *entry[40];
+	const char *menu_item[MAX_ANALOG_ENTRIES];
+	const char *menu_subitem[MAX_ANALOG_ENTRIES];
+	struct InputPort *entry[MAX_ANALOG_ENTRIES];
 	int i,sel;
 	struct InputPort *in;
 	int total,total2;
@@ -2178,8 +2178,8 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 	{
 		if (i < total2 - 1)
 		{
-			char label[30][40];
-			char setting[30][40];
+			char label[MAX_ANALOG_ENTRIES][40];
+			char setting[MAX_ANALOG_ENTRIES][40];
 			int sensitivity,delta,centerdelta;
 			int reverse;
 
