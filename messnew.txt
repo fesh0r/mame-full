@@ -2,12 +2,13 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Tomy Tutor [Raphael Nabet]
 
 System Driver Changes:
 ---------------------- 
 - [COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in
   coco_dsk.c (bug #378). [tim lindner]
+- [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael Nabet]
 
 Source Changes:
 ---------------
