@@ -21,10 +21,32 @@
 
 static void update_interrupt(void);
 
+/* max disk units per controller: 4 is the protocol limit, but it may be overriden if more
+than one controller is used */
 #define MAX_DISK_UNIT 4
 
-#define MAX_SECTOR_SIZE 288
+/* Max sector lenght is bytes.  Generally 256, except for a few older disk units which use
+288-byte-long sectors, and SCSI units which generally use standard 512-byte-long sectors. */
+/* I chose a limit of 512.  No need to use more until someone write CD-ROMs for TI990. */
+#define MAX_SECTOR_SIZE 512
 
+/* disk image header */
+/* I had rather I used MAME's harddisk.c image handler, but this format only support
+512-byte-long sectors (whereas TI990 generally uses 256- or 288-byte-long sectors). */
+typedef struct disk_image_header
+{
+	UINT8 cylinders[4];			/* number of cylinders on hard disk (big-endian) */
+	UINT8 heads[4];				/* number of heads on hard disk (big-endian) */
+	UINT8 sectors_per_track[4];	/* number of sectors per track on hard disk (big-endian) */
+	UINT8 bytes_per_sector[4];	/* number of bytes of data per sector on hard disk (big-endian) */
+} disk_image_header;
+
+enum
+{
+	header_len = sizeof(disk_image_header)
+};
+
+/* disk drive unit descriptor */
 typedef struct hd_unit_t
 {
 	void *fd;		/* file descriptor */
@@ -35,6 +57,7 @@ typedef struct hd_unit_t
 	unsigned int cylinders, heads, sectors_per_track, bytes_per_sector;
 } hd_unit_t;
 
+/* disk controller */
 typedef struct hdc_t
 {
 	UINT16 w[8];
@@ -44,6 +67,7 @@ typedef struct hdc_t
 	hd_unit_t d[MAX_DISK_UNIT];
 } hdc_t;
 
+/* masks for individual bits controller registers */
 enum
 {
 	w0_offline			= 0x8000,
@@ -90,6 +114,7 @@ enum
 	w7_unit_err				= 0x0001
 };
 
+/* masks for computer-controlled bit in each controller register  */
 static const UINT16 w_mask[8] =
 {
 	0x000f,		/* Controllers should prevent overwriting of w0 status bits, and I know
@@ -119,10 +144,16 @@ static hdc_t hdc;
 	4 0s: EOF mark?
 */
 
+INLINE UINT32 get_bigendian_uint32(UINT8 *base)
+{
+	return (base[0] << 24) | (base[1] << 16) | (base[2] << 8) | base[3];
+}
 
 int ti990_hd_init(int id)
 {
 	hd_unit_t *d;
+	disk_image_header header;
+	int bytes_read;
 
 	if ((id < 0) || (id >= MAX_DISK_UNIT))
 		return INIT_FAIL;
@@ -145,11 +176,20 @@ int ti990_hd_init(int id)
 	/* set attention line */
 	hdc.w[0] |= (0x80 >> id);
 
-	/* set geometry: hack.  Note that this is the geometry of an actual WD800A/38 */
-	d->cylinders = 911;
-	d->heads = 5;
-	d->sectors_per_track = 33;
-	d->bytes_per_sector = 256;
+	/* set geometry: use new headered disk image format. */
+	/* to convert old images to new format, insert a 16-byte header as follow:
+	00 00 03 8f  00 00 00 05  00 00 00 21  00 00 01 00 */
+	bytes_read = osd_fread(d->fd, &header, sizeof(header));
+	if (bytes_read != sizeof(header))
+	{
+		ti990_hd_exit(id);
+		return INIT_FAIL;
+	}
+
+	d->cylinders = get_bigendian_uint32(header.cylinders);
+	d->heads = get_bigendian_uint32(header.heads);
+	d->sectors_per_track = get_bigendian_uint32(header.sectors_per_track);
+	d->bytes_per_sector = get_bigendian_uint32(header.bytes_per_sector);
 
 	if (d->bytes_per_sector > MAX_SECTOR_SIZE)
 	{
@@ -289,7 +329,7 @@ static int seek_to_sector(int unit, unsigned int cylinder, unsigned int head, un
 	if (check_sector_address(unit, cylinder, head, sector))
 		return 1;
 
-	byte_position = ((cylinder*hdc.d[unit].heads + head)*hdc.d[unit].sectors_per_track + sector)*hdc.d[unit].bytes_per_sector;
+	byte_position = ((cylinder*hdc.d[unit].heads + head)*hdc.d[unit].sectors_per_track + sector)*hdc.d[unit].bytes_per_sector + header_len;
 
 	if (osd_fseek(hdc.d[unit].fd, byte_position, SEEK_SET))
 	{
