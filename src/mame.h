@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #ifdef MESS
-#include "mess.h"
+#include "mess/mess.h"
 #endif
 
 extern char build_version[];
@@ -52,6 +52,7 @@ struct RunningMachine
 	int uixmin,uiymin;
 	int uiwidth,uiheight;
 	int ui_orientation;
+	struct rectangle absolute_visible_area;	/* as passed to osd_set_visible_area() */
 };
 
 #ifdef MESS
