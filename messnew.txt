@@ -2,12 +2,15 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- 
+Unipolbrit Komputer 2068 [Krzysztof Strzecha]
 
 System Driver Changes:
 ----------------------
 - [TI81] ON/OFF fixed. ROM bank switching added (port 5). NVRAM support added.
   [Krzysztof Strzecha]
+- [TI85/TI86] Snapshot loading corrected [Krzysztof Strzecha].
+- [TC2048/TS2068] Aspect ratio corrected [Krzysztof Strzecha].
+- [TS2068] Support for DOCK cartridges added [Krzysztof Strzecha].
 
 Source:
 -------

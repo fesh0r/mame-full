@@ -3,8 +3,23 @@ extern void spectrum_snap_exit(int id);
 
 extern int  load_snap(void);
 
+typedef enum
+{
+	TIMEX_CART_NONE,
+	TIMEX_CART_DOCK,
+	TIMEX_CART_EXROM,
+	TIMEX_CART_HOME
+}
+TIMEX_CART_TYPE;
+
+extern TIMEX_CART_TYPE timex_cart_type;
+extern UINT8 timex_cart_chunks;
+extern UINT8 * timex_cart_data;
 extern int  spectrum_cart_load(int id);
 extern void spectrum_cart_exit(int id);
+
+extern int  timex_cart_load(int id);
+extern void timex_cart_exit(int id);
 
 extern void spectrum_init_machine(void);
 extern void spectrum_shutdown_machine(void);

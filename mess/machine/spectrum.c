@@ -43,6 +43,10 @@ static int is48k_z80snapshot(unsigned char *pSnapshot, unsigned long SnapshotSiz
 static OPBASE_HANDLER(spectrum_opbaseoverride);
 static OPBASE_HANDLER(spectrum_tape_opbaseoverride);
 
+TIMEX_CART_TYPE timex_cart_type = TIMEX_CART_NONE;
+UINT8 timex_cart_chunks = 0x00;
+UINT8 * timex_cart_data;
+
 typedef enum
 {
 	SPECTRUM_SNAPSHOT_NONE,
@@ -1092,4 +1096,112 @@ int spectrum_cart_load(int id)
 		return 1;
 	}
 	return 0;
+}
+
+int timex_cart_load(int id)
+{
+	void *file;
+	int file_size;
+	UINT8 * file_data;
+
+	int chunks_in_file = 0;
+
+	int i;
+
+	if (device_filename(IO_CARTSLOT, id) == NULL)
+	{
+		return INIT_PASS;
+	}
+
+	logerror ("Trying to load cart\n");
+
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file==NULL)
+	{
+		logerror ("Error opening cart file\n");
+		return INIT_FAIL;
+	}
+
+	file_size = osd_fsize(file);
+
+	if (file_size < 0x09)
+	{
+		osd_fclose(file);
+		logerror ("Bad file size\n");
+		return INIT_FAIL;
+	}
+
+	file_data = malloc(file_size);
+	if (file_data == NULL)
+        {
+		osd_fclose(file);
+		logerror ("Memory allocating error\n");
+		return INIT_FAIL;
+	}
+
+	osd_fread(file, file_data, file_size);
+	osd_fclose(file);
+
+	for (i=0; i<8; i++)
+		if(file_data[i+1]&0x02)	chunks_in_file++;
+
+	if (chunks_in_file*0x2000+0x09 != file_size)
+	{
+		free (file_data);
+		logerror ("File corrupted\n");
+		return INIT_FAIL;
+	}
+
+	switch (file_data[0x00])
+	{
+		case 0x00:	logerror ("DOCK cart\n");
+				timex_cart_type = TIMEX_CART_DOCK;
+				timex_cart_data = (UINT8*) malloc (0x10000);
+				if (!timex_cart_data)
+				{
+					free (file_data);
+					logerror ("Memory allocate error\n");
+					return INIT_FAIL;
+				}
+				chunks_in_file = 0;
+				for (i=0; i<8; i++)
+				{
+					timex_cart_chunks = timex_cart_chunks | ((file_data[i+1]&0x01)<<i);
+					if (file_data[i+1]&0x02)
+					{
+						memcpy (timex_cart_data+i*0x2000, file_data+0x09+chunks_in_file*0x2000, 0x2000);
+						chunks_in_file++;
+					}
+					else
+					{
+						if (file_data[i+1]&0x01)
+							memset (timex_cart_data+i*0x2000, 0x00, 0x2000);
+						else
+							memset (timex_cart_data+i*0x2000, 0xff, 0x2000);
+					}
+				}
+				free (file_data);
+				break;
+
+		default:	logerror ("Cart type not supported\n");
+				free (file_data);
+				timex_cart_type = TIMEX_CART_NONE;
+				return INIT_FAIL;
+				break;
+	}
+
+	logerror ("Cart loaded\n");
+	logerror ("Chunks %02x\n", timex_cart_chunks);
+	return INIT_PASS;
+}
+
+void timex_cart_exit(int id)
+{
+	if (timex_cart_data)
+	{
+		free (timex_cart_data);
+		timex_cart_data = NULL;
+	}
+	timex_cart_type = TIMEX_CART_NONE;
+	timex_cart_chunks = 0x00;
 }
