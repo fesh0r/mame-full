@@ -351,6 +351,7 @@ static void AY3600_poll(int dummy)
 	if (reset_flag) {
 		reset_flag = 0;
 		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
+		machine_reset();
 	}
 
 	/* run through real keys and see what's being pressed */
