@@ -380,7 +380,7 @@ int svi318_floppy_init(int id, mame_file *fp, int open_mode)
 	else
 		return INIT_FAIL;
 
-	if (svi318dsk_floppy_init (id, fp, open_mode) != INIT_PASS)
+	if (svi318dsk_floppy_init (id) != INIT_PASS)
 		return INIT_FAIL;
 
 	svi318dsk_set_geometry (id, 40, svi318_dsk_heads[id], 17, 256, 1, 0);
