@@ -25,7 +25,7 @@
   203d: 0 BUSY, 1 PRINT, 3 JAPAN, 4 SMALL, 5 SHIFT, 6 DEF
   207c: 1 DEF 1 RAD 2 GRAD 5 ERROR 6 FLAG */
 
-static struct artwork *backdrop;
+static struct artwork_ *backdrop;
 
 unsigned char pc1401_palette[248][3] =
 {
@@ -253,7 +253,7 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[CONTRAST][1]];
 
     if (backdrop)
-		copybitmap (bitmap, backdrop->artwork1, 0, 0, 0, 0, NULL,
+        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
@@ -340,7 +340,7 @@ void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[PC1251_CONTRAST][1]];
 
     if (backdrop)
-		copybitmap (bitmap, backdrop->artwork1, 0, 0, 0, 0, NULL,
+		copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL,
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
@@ -426,7 +426,7 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[PC1350_CONTRAST][1]];
 
     if (backdrop)
-		copybitmap (bitmap, backdrop->artwork1, 0, 0, 0, 0, NULL,
+		copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL,
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);

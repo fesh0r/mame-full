@@ -11,7 +11,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct artwork *kim1_backdrop;
+static struct artwork_ *kim1_backdrop;
 
 void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
