@@ -217,10 +217,8 @@ static struct rc_option opts[] = {
 	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
-#ifndef MESS
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
-#endif
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
 	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 
@@ -408,15 +406,6 @@ int cli_frontend_init (int argc, char **argv)
 		fprintf (stderr, "error on registering opts\n");
 		exit(1);
 	}
-
-#ifdef MESS
-	/* mess registers its additional options and callbacks here */
-	if (rc_register(rc, mess_opts))
-	{
-		fprintf (stderr, "error on registering mess options\n");
-		exit(1);
-	}
-#endif
 
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
@@ -735,10 +724,8 @@ void cli_frontend_exit(void)
 	/* close open files */
 	if (logfile) fclose(logfile);
 
-#ifndef MESS
 	if (options.playback) osd_fclose(options.playback);
 	if (options.record)   osd_fclose(options.record);
-#endif
 	if (options.language_file) osd_fclose(options.language_file);
 }
 
