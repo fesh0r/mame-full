@@ -177,8 +177,8 @@ BOOL LoadScreenShot(int nGame, int nType)
 
 	/* If not loaded, see if there is a clone and try that */
 	if (!loaded
-	&&	 (drivers[nGame]->clone_of != NULL)
-	&&	!(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
+	&&	 (drivers[nGame]->clone_of != NULL))
+
 	{
 		loaded = LoadDIB(drivers[nGame]->clone_of->name, &m_hDIB, &m_hPal, nType);
 		if (!loaded && drivers[nGame]->clone_of->clone_of)
@@ -233,6 +233,12 @@ void FreeScreenShot(void)
 	current_image_type = -1;
 }
 
+void SetCorePathList(int file_type,const char *s)
+{
+	// we have to pass in a malloc()'d string; core will free it later
+	set_pathlist(file_type,strdup(s));
+}
+
 BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 {
 	mame_file *mfile;
@@ -242,31 +248,31 @@ BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, int pic_type)
 	switch (pic_type)
 	{
 	case TAB_SCREENSHOT :
-		set_pathlist(FILETYPE_ARTWORK,GetImgDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetImgDir());
 		zip_name = "snap";
 		break;
 	case TAB_FLYER :
-		set_pathlist(FILETYPE_ARTWORK,GetFlyerDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetFlyerDir());
 		zip_name = "flyers";
 		break;
 	case TAB_CABINET :
-		set_pathlist(FILETYPE_ARTWORK,GetCabinetDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetCabinetDir());
 		zip_name = "cabinets";
 		break;
 	case TAB_MARQUEE :
-		set_pathlist(FILETYPE_ARTWORK,GetMarqueeDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetMarqueeDir());
 		zip_name = "marquees";
 		break;
 	case TAB_TITLE :
-		set_pathlist(FILETYPE_ARTWORK,GetTitlesDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetTitlesDir());
 		zip_name = "titles";
 		break;
 	case TAB_CONTROL_PANEL :
-		set_pathlist(FILETYPE_ARTWORK,GetControlPanelDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetControlPanelDir());
 		zip_name = "cpanel";
 		break;
 	case BACKGROUND :
-		set_pathlist(FILETYPE_ARTWORK,GetBgDir());
+		SetCorePathList(FILETYPE_ARTWORK,GetBgDir());
 		zip_name = "bkground";
 		break;
 	default :

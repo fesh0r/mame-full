@@ -85,6 +85,7 @@
 #define IDI_HEADER_UP                   182
 #define IDI_HEADER_DOWN                 183
 #define IDD_PROP_DIRECT3D               184
+#define IDI_SOUNDTAB                    666 // RADIUS_ADD
 #define IDC_LIST                        1000
 #define IDC_PLAY                        1001
 #define IDC_DISPLAYS                    1002

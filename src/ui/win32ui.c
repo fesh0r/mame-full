@@ -1913,6 +1913,12 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	strcpy(last_directory, GetInpDir());
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
+	if (hMain == NULL)
+	{
+		dprintf("error creating main dialog, aborting");
+		return FALSE;
+	}
+
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
 	

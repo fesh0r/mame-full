@@ -3480,7 +3480,24 @@ BOOL GetGameUsesDefaultsMem(int driver_index)
 	BOOL options_different = FALSE;
 	options_type Opts;
 	int i;
-	CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+	int nParentIndex= -1;
+	if( driver_index >= 0)
+	{
+		if( DriverIsClone(driver_index) )
+		{
+			nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
+			if( nParentIndex >= 0)
+				CopyGameOptions(GetGameOptions(nParentIndex, FALSE), &Opts );
+			else
+				//No Parent found, use source
+				CopyGameOptions(GetSourceOptions(driver_index), &Opts);
+		}
+		else
+			CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+	}
+	else
+		CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+
 	for (i = 0; regGameOpts[i].ini_name[0]; i++)
 	{
 		if (IsOptionEqual(i,&game_options[driver_index], &Opts ) == FALSE)
@@ -3499,7 +3516,23 @@ void SaveGameOptions(int driver_index)
 	char buffer[512];
 	BOOL options_different = FALSE;
 	options_type Opts;
-	CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+	int nParentIndex= -1;
+	if( driver_index >= 0)
+	{
+		if( DriverIsClone(driver_index) )
+		{
+			nParentIndex = GetGameNameIndex( drivers[driver_index]->clone_of->name );
+			if( nParentIndex >= 0)
+				CopyGameOptions(GetGameOptions(nParentIndex, FALSE), &Opts );
+			else
+				//No Parent found, use source
+				CopyGameOptions(GetSourceOptions(driver_index), &Opts);
+		}
+		else
+			CopyGameOptions( GetSourceOptions(driver_index), &Opts );
+	}
+	else
+		CopyGameOptions( GetSourceOptions(driver_index), &Opts );
 	if (game_variables[driver_index].use_default == FALSE)
 	{
 		for (i = 0; regGameOpts[i].ini_name[0]; i++)
