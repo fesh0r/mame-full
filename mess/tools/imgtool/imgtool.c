@@ -84,6 +84,7 @@ IMAGEMODULE_EXTERN(ti86r);		/* TI-86 range settings file */
 IMAGEMODULE_EXTERN(ti86g);		/* TI-86 grouped file */
 IMAGEMODULE_EXTERN(ti86);		/* TI-86 file */
 IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy */
+IMAGEMODULE_EXTERN(ti990dsk);	/* TI990 disk */
 
 static const ImageModule_ctor module_ctors[] =
 {
@@ -157,7 +158,8 @@ static const ImageModule_ctor module_ctors[] =
 	IMAGEMODULE_DECL(ti86r),
 	IMAGEMODULE_DECL(ti86g),
 	IMAGEMODULE_DECL(ti86),
-	IMAGEMODULE_DECL(ti99)
+	IMAGEMODULE_DECL(ti99),
+	IMAGEMODULE_DECL(ti990dsk)
 };
 
 /* ----------------------------------------------------------------------- */
