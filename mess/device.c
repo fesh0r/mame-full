@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "device.h"
 #include "osdutils.h"
+#include "ui_text.h"
 
 struct Devices
 {
@@ -239,6 +240,70 @@ const char *device_brieftypename(int type)
 	if (type < IO_COUNT)
 		return devices[type].shortname;
 	return "UNKNOWN";
+}
+
+/* Return a name for a device of type 'type' with id 'id' */
+const char *device_typename_id(int type, int id)
+{
+	static char typename_id[40][31+1];
+	static int which = 0;
+	const struct IODevice *dev;
+	const char *name = "UNKNOWN";
+	const char *newname;
+	struct SystemConfigurationParamBlock cfg;
+
+ 	dev = device_find(Machine->gamedrv, type);
+	if (dev && (id < dev->count))
+	{
+		newname = NULL;
+		memset(&cfg, 0, sizeof(cfg));
+		Machine->gamedrv->sysconfig_ctor(&cfg);
+		if (cfg.get_custom_devicename)
+		{
+			/* use a custom devicename */
+			newname = cfg.get_custom_devicename(type, id, typename_id[which], sizeof(typename_id[which]) / sizeof(typename_id[which][0]));
+			if (newname)
+				name = newname;
+		}
+		if (!newname)
+		{
+			name = ui_getstring(UI_filespecification + type);
+			if (dev->count > 1)
+			{
+				/* for the average user counting starts at #1 ;-) */
+				sprintf(typename_id[which], "%s #%d", name, id+1);
+				name = typename_id[which];
+			}
+		}
+	}
+
+	if ((name >= typename_id[which]) && (name < typename_id[which] + sizeof(typename_id[which])))
+		which = (which + 1) % (sizeof(typename_id) / sizeof(typename_id[which]));
+	return name;
+}
+
+/*
+ * Return the 'num'th file extension for a device of type 'type',
+ * NULL if no file extensions of that type are available.
+ */
+const char *device_file_extension(int type, int extnum)
+{
+	const struct IODevice *dev;
+	const char *ext;
+
+	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
+	{
+		if( type == dev->type )
+		{
+			ext = dev->file_extensions;
+			while( ext && *ext && extnum-- > 0 )
+				ext = ext + strlen(ext) + 1;
+			if( ext && !*ext )
+				ext = NULL;
+			return ext;
+		}
+	}
+	return NULL;
 }
 
 #ifdef MAME_DEBUG

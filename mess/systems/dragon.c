@@ -27,6 +27,7 @@
 #include "bitbngr.h"
 #include "snapquik.h"
 #include "inputx.h"
+#include "snprintf.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10
@@ -726,6 +727,25 @@ static const struct bitbanger_config coco_bitbanger_config =
 
 /* ----------------------------------------------------------------------- */
 
+GET_CUSTOM_DEVICENAME( coco )
+{
+	const char *name = NULL;
+	switch(type) {
+	case IO_VHD:
+		name = "Virtual Hard Disk";
+		break;
+
+	case IO_FLOPPY:
+		/* CoCo people like their floppy drives zero counted */
+		snprintf(buf, bufsize, "Floppy #%d", id);
+		name = buf;
+		break;
+	}
+	return name;
+}
+
+/* ----------------------------------------------------------------------- */
+
 SYSTEM_CONFIG_START( generic_coco )
 	/* bitbanger port */
 	CONFIG_DEVICE_BITBANGER (1, &coco_bitbanger_config )
@@ -735,6 +755,9 @@ SYSTEM_CONFIG_START( generic_coco )
 
 	/* floppy */
 	CONFIG_DEVICE_FLOPPY	(4, coco, coco_jvc )
+
+	/* custom devicename */
+	CONFIG_GET_CUSTOM_DEVICENAME( coco )
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )

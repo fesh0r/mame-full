@@ -18,11 +18,11 @@ Source Changes:
 
 - Added new snapshot/quickload code, to hide the details about loading
   snapshots and quickloads from the drivers.  [Nate Woods]
+
+- Added the ability for systems to override the friendly names of devices. [Nate
+  Woods]
   
 - [WIN32] Added the ability to toggle the frames per second view, differentiate
   between soft and hard resets in certain systems, and to save screenshots in
   the new UI.  [Nate Woods]
 
-System Driver Changes:
-----------------------
-(none)

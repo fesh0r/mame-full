@@ -60,6 +60,7 @@ struct SystemConfigurationParamBlock
 	UINT32 *ram_options;
 	int device_num;
 	const struct IODevice *dev;
+	const char *(*get_custom_devicename)(int type, int id, char *buf, size_t bufsize);
 };
 
 #define SYSTEM_CONFIG_START(name)															\
@@ -87,6 +88,8 @@ struct SystemConfigurationParamBlock
 		CONFIG_RAM(ram);																	\
 	}																						\
 
+#define CONFIG_GET_CUSTOM_DEVICENAME(get_custom_devicename__)								\
+	cfg->get_custom_devicename = get_custom_devicename_##get_custom_devicename__;			\
 
 #define CONFIG_DEVICE(type, count, file_extensions, reset_depth, open_mode, init, exit,		\
 				info, open, close, status, seek, tell, input, output, partialcrc, display)	\
@@ -111,6 +114,11 @@ struct SystemConfigurationParamBlock
 		init, exit, open, status)															\
 	CONFIG_DEVICE((type), (count), (file_extensions), (reset_depth), (open_mode),			\
 		(init), (exit), NULL, (open), NULL, (status), NULL, NULL, NULL, NULL, NULL, NULL)	\
+
+/*****************************************************************************/
+
+#define GET_CUSTOM_DEVICENAME(name)															\
+	const char *get_custom_devicename_##name(int type, int id, char *buf, size_t bufsize)	\
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME
