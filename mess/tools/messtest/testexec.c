@@ -245,8 +245,12 @@ static void command_input(void)
 			return;
 		}
 
-		inputx_post_utf8_rate(current_command->u.input_args.input_chars,
-			current_command->u.input_args.rate);
+		/* input_chars can be NULL, so we should check for that */
+		if (current_command->u.input_args.input_chars)
+		{
+			inputx_post_utf8_rate(current_command->u.input_args.input_chars,
+				current_command->u.input_args.rate);
+		}
 	}
 	state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
 }

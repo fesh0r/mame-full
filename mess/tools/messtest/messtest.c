@@ -536,6 +536,41 @@ outofmemory:
 
 
 
+static int external_entity_handler(XML_Parser parser,
+	const XML_Char *context,
+	const XML_Char *base,
+	const XML_Char *systemId,
+	const XML_Char *publicId)
+{
+	XML_Parser extparser = NULL;
+	int rc = 0;
+	const char *s;
+
+	/* only supportr our own schema */
+	if (strcmp(systemId, "http://www.mess.org/messtest/"))
+		goto done;
+
+	extparser = XML_ExternalEntityParserCreate(parser, context, "us-ascii");
+	if (!extparser)
+		goto done;
+
+	s =	"<!DOCTYPE tests [\r\n"
+		"<!ENTITY mamekey_esc \"&#63292;\">\r\n"
+		"]>\r\n";
+	if (XML_Parse(extparser, s, strlen(s), 0))
+		goto done;
+	if (XML_Parse(extparser, NULL, 0, 1))
+		goto done;
+
+	rc = 1;
+done:
+	if (extparser)
+		XML_ParserFree(extparser);
+	return rc;
+}
+
+
+
 int messtest(const char *script_filename, int flags, int *test_count, int *failure_count)
 {
 	struct messtest_state state;
@@ -581,6 +616,7 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	XML_SetUserData(state.parser, &state);
 	XML_SetElementHandler(state.parser, start_handler, end_handler);
 	XML_SetCharacterDataHandler(state.parser, data_handler);
+	XML_SetExternalEntityRefHandler(state.parser, external_entity_handler);
 
 	do
 	{
