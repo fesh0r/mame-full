@@ -505,14 +505,14 @@ int ti99_vblank_interrupt(void)
 /*
 	Same as MRA_NOP, but with an additionnal delay.
 */
-READ_HANDLER ( ti99_rw_null8bits )
+READ16_HANDLER ( ti99_rw_null8bits )
 {
 	tms9900_ICount -= 4;
 
 	return (0);
 }
 
-WRITE_HANDLER ( ti99_ww_null8bits )
+WRITE16_HANDLER ( ti99_ww_null8bits )
 {
 	tms9900_ICount -= 4;
 }
@@ -521,14 +521,14 @@ WRITE_HANDLER ( ti99_ww_null8bits )
 	Memory extension : same as MRA_RAM, but with an additionnal delay.
 */
 /* low 8 kb : 0x2000-0x3fff */
-READ_HANDLER ( ti99_rw_xramlow )
+READ16_HANDLER ( ti99_rw_xramlow )
 {
 	tms9900_ICount -= 4;
 
 	return READ_WORD(ti99_xRAM_low + offset);
 }
 
-WRITE_HANDLER ( ti99_ww_xramlow )
+WRITE16_HANDLER ( ti99_ww_xramlow )
 {
 	tms9900_ICount -= 4;
 
@@ -536,14 +536,14 @@ WRITE_HANDLER ( ti99_ww_xramlow )
 }
 
 /* high 24 kb : 0xa000-0xffff */
-READ_HANDLER ( ti99_rw_xramhigh )
+READ16_HANDLER ( ti99_rw_xramhigh )
 {
 	tms9900_ICount -= 4;
 
 	return READ_WORD(ti99_xRAM_high + offset);
 }
 
-WRITE_HANDLER ( ti99_ww_xramhigh )
+WRITE16_HANDLER ( ti99_ww_xramhigh )
 {
 	tms9900_ICount -= 4;
 
@@ -553,7 +553,7 @@ WRITE_HANDLER ( ti99_ww_xramhigh )
 /*
 	Cartidge read : same as MRA_ROM, but with an additionnal delay.
 */
-READ_HANDLER ( ti99_rw_cartmem )
+READ16_HANDLER ( ti99_rw_cartmem )
 {
 	tms9900_ICount -= 4;
 
@@ -563,7 +563,7 @@ READ_HANDLER ( ti99_rw_cartmem )
 /*
 	this handler handles ROM switching in cartidges
 */
-WRITE_HANDLER ( ti99_ww_cartmem )
+WRITE16_HANDLER ( ti99_ww_cartmem )
 {
 	tms9900_ICount -= 4;
 
@@ -581,7 +581,7 @@ WRITE_HANDLER ( ti99_ww_cartmem )
 /*
 	PAD read
 */
-READ_HANDLER ( ti99_rw_scratchpad )
+READ16_HANDLER ( ti99_rw_scratchpad )
 {
 	return READ_WORD(ti99_scratch_RAM + (offset & 0xff));
 }
@@ -589,7 +589,7 @@ READ_HANDLER ( ti99_rw_scratchpad )
 /*
 	PAD write
 */
-WRITE_HANDLER ( ti99_ww_scratchpad )
+WRITE16_HANDLER ( ti99_ww_scratchpad )
 {
 	WRITE_WORD(ti99_scratch_RAM + (offset & 0xff),
 				data | (READ_WORD(ti99_scratch_RAM + (offset & 0xff)) & (data >> 16)));
@@ -628,7 +628,7 @@ WRITE_HANDLER ( ti99_ww_scratchpad )
 /*
 	TMS9919 sound chip write
 */
-WRITE_HANDLER ( ti99_ww_wsnd )
+WRITE16_HANDLER ( ti99_ww_wsnd )
 {
 	tms9900_ICount -= 4;
 
@@ -638,7 +638,7 @@ WRITE_HANDLER ( ti99_ww_wsnd )
 /*
 	TMS9918A VDP read
 */
-READ_HANDLER ( ti99_rw_rvdp )
+READ16_HANDLER ( ti99_rw_rvdp )
 {
 	tms9900_ICount -= 4;
 
@@ -655,7 +655,7 @@ READ_HANDLER ( ti99_rw_rvdp )
 /*
 	TMS9918A vdp write
 */
-WRITE_HANDLER ( ti99_ww_wvdp )
+WRITE16_HANDLER ( ti99_ww_wvdp )
 {
 	tms9900_ICount -= 4;
 
@@ -672,7 +672,7 @@ WRITE_HANDLER ( ti99_ww_wvdp )
 /*
 	TMS5200 speech chip read
 */
-READ_HANDLER ( ti99_rw_rspeech )
+READ16_HANDLER ( ti99_rw_rspeech )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -682,7 +682,7 @@ READ_HANDLER ( ti99_rw_rspeech )
 /*
 	TMS5200 speech chip write
 */
-WRITE_HANDLER ( ti99_ww_wspeech )
+WRITE16_HANDLER ( ti99_ww_wspeech )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -695,7 +695,7 @@ static int gpl_addr = 0;
 /*
 	GPL read
 */
-READ_HANDLER ( ti99_rw_rgpl )
+READ16_HANDLER ( ti99_rw_rgpl )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -724,7 +724,7 @@ READ_HANDLER ( ti99_rw_rgpl )
 /*
 	GPL write
 */
-WRITE_HANDLER ( ti99_ww_wgpl )
+WRITE16_HANDLER ( ti99_ww_wgpl )
 {
 	tms9900_ICount -= 4;				/* much more, actually */
 
@@ -763,7 +763,7 @@ int diskromon = 0;
 /*
 	read a byte in disk DSR.
 */
-READ_HANDLER ( ti99_rw_disk )
+READ16_HANDLER ( ti99_rw_disk )
 {
 	tms9900_ICount -= 4;
 
@@ -793,7 +793,7 @@ READ_HANDLER ( ti99_rw_disk )
 /*
 	write a byte in disk DSR.
 */
-WRITE_HANDLER ( ti99_ww_disk )
+WRITE16_HANDLER ( ti99_ww_disk )
 {
 	tms9900_ICount -= 4;
 

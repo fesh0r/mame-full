@@ -222,7 +222,7 @@ static void ti99_2_vh_refresh(struct osd_bitmap *bitmap, int full_refresh)
 			/* Is the char code masked or not ??? */
 			drawgfx(bitmap, Machine->gfx[0], videoram[i] & 0x7F, 0,
 			          0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			osd_mark_dirty(sx, sy, sx+7, sy+7, 1);
+			osd_mark_dirty(sx, sy, sx+7, sy+7);
 		}
 
 		sx += 8;
@@ -258,18 +258,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
   Memory map - see description above
 */
 
-static struct MemoryReadAddress ti99_2_readmem[] =
-{
+static MEMORY_READ_START (ti99_2_readmem )
+
 	{ 0x0000, 0x3fff, MRA_ROM },            /*system ROM*/
 	{ 0x4000, 0x5fff, /*MRA_ROM*/MRA_BANK1 },   /*system ROM, banked on 32kb ROMs protos*/
 	{ 0x6000, 0xdfff, MRA_NOP },            /*free for expansion*/
 	{ 0xe000, 0xefff, MRA_RAM },            /*system RAM*/
 	{ 0xf000, 0xffff, MRA_NOP },            /*processor RAM or free*/
-	{ -1 }    /* end of table */
-};
 
-static struct MemoryWriteAddress ti99_2_writemem[] =
-{
+MEMORY_END
+
+static MEMORY_WRITE_START ( ti99_2_writemem )
+
 	{ 0x0000, 0x3fff, MWA_ROM },            /*system ROM*/
 	{ 0x4000, 0x5fff, /*MWA_ROM*/MWA_BANK1 },       /*system ROM, banked on 32kb ROMs protos*/
 	{ 0x6000, 0xdfff, MWA_NOP },            /*free for expansion*/
@@ -277,8 +277,8 @@ static struct MemoryWriteAddress ti99_2_writemem[] =
 	{ 0xec00, 0xeeff, ti99_2_video_w, & videoram }, /*system RAM : used for video*/
 	{ 0xef00, 0xefff, MWA_RAM },            /*system RAM*/
 	{ 0xf000, 0xffff, MWA_NOP },            /*processor RAM or free*/
-	{ -1 }    /* end of table */
-};
+
+MEMORY_END
 
 
 /*
@@ -335,12 +335,12 @@ static WRITE_HANDLER ( ti99_2_write_misc_cru )
 	}
 }
 
-static struct IOWritePort ti99_2_writeport[] =
-{
+static PORT_WRITE_START ( ti99_2_writeport )
+
 	{0x7000, 0x73ff, ti99_2_write_kbd},
 	{0x7400, 0x77ff, ti99_2_write_misc_cru},
-	{ -1 }    /* end of table */
-};
+
+PORT_END
 
 /* read keys in the current row */
 static READ_HANDLER ( ti99_2_read_kbd )
@@ -353,12 +353,12 @@ static READ_HANDLER ( ti99_2_read_misc_cru )
 	return 0;
 }
 
-static struct IOReadPort ti99_2_readport[] =
-{
+static PORT_READ_START ( ti99_2_readport )
+
 	{0x0E00, 0x0E7f, ti99_2_read_kbd},
 	{0x0E80, 0x0Eff, ti99_2_read_misc_cru},
-	{ -1 }    /* end of table */
-};
+
+PORT_END
 
 
 /* ti99/2 : 54-key keyboard */

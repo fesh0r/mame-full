@@ -138,40 +138,40 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
   Memory map - see description above
 */
 
-static struct MemoryReadAddress ti990_4_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM },		/* dynamic RAM ? */
-	{ 0x2000, 0xf7ff, MRA_NOP },		/* reserved for expansion */
-	{ 0xf800, 0xfbff, MRA_RAM },		/* static RAM ? */
-	{ 0xfc00, 0xffff, MRA_ROM },		/* LOAD ROM */
-	{ -1 }	/* end of table */
-};
+static MEMORY_READ16_START (ti990_4_readmem)
 
-static struct MemoryWriteAddress ti990_4_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM },		/* dynamic RAM ? */
-	{ 0x2000, 0xf7ff, MWA_NOP },		/* reserved for expansion */
-	{ 0xf800, 0xfbff, MWA_RAM },		/* static RAM ? */
-	{ 0xfc00, 0xffff, MWA_ROM },		/* LOAD ROM */
-	{ -1 }	/* end of table */
-};
+	{ 0x0000, 0x1fff, MRA16_RAM },		/* dynamic RAM ? */
+	{ 0x2000, 0xf7ff, MRA16_NOP },		/* reserved for expansion */
+	{ 0xf800, 0xfbff, MRA16_RAM },		/* static RAM ? */
+	{ 0xfc00, 0xffff, MRA16_ROM },		/* LOAD ROM */
+
+MEMORY_END
+
+static MEMORY_WRITE16_START (ti990_4_writemem)
+
+	{ 0x0000, 0x1fff, MWA16_RAM },		/* dynamic RAM ? */
+	{ 0x2000, 0xf7ff, MWA16_NOP },		/* reserved for expansion */
+	{ 0xf800, 0xfbff, MWA16_RAM },		/* static RAM ? */
+	{ 0xfc00, 0xffff, MWA16_ROM },		/* LOAD ROM */
+
+MEMORY_END
 
 
 /*
   CRU map
 */
 
-static struct IOWritePort ti990_4_writeport[] =
-{
-	{ 0xff0, 0xfff, ti990_4_panel_write },
-	{ -1 }	/* end of table */
-};
+static PORT_WRITE_START ( ti990_4_writeport )
 
-static struct IOReadPort ti990_4_readport[] =
-{
+	{ 0xff0, 0xfff, ti990_4_panel_write },
+
+PORT_END
+
+static PORT_READ_START ( ti990_4_readport )
+
 	{ 0x1fe, 0x1ff, ti990_4_panel_read },
-	{ -1 }	/* end of table */
-};
+
+PORT_END
 
 static struct MachineDriver machine_driver_ti990_4 =
 {

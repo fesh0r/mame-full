@@ -46,14 +46,14 @@ Historical notes : TI made several last minute design changes.
 	memory map
 */
 
-static struct MemoryReadAddress readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },			/*system ROM*/
+static MEMORY_READ16_START (readmem)
+
+	{ 0x0000, 0x1fff, MRA16_ROM },			/*system ROM*/
 	{ 0x2000, 0x3fff, ti99_rw_xramlow },	/*lower 8kb of RAM extension*/
 	{ 0x4000, 0x5fff, ti99_rw_disk },		/*DSR ROM... only disk is emulated */
 	{ 0x6000, 0x7fff, ti99_rw_cartmem },	/*cartidge memory... some RAM is actually possible*/
 	{ 0x8000, 0x82ff, ti99_rw_scratchpad },	/*RAM PAD, mapped to 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MRA_RAM },			/*RAM PAD*/
+	{ 0x8300, 0x83ff, MRA16_RAM },			/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_rw_null8bits },	/*soundchip write*/
 	{ 0x8800, 0x8bff, ti99_rw_rvdp },		/*vdp read*/
 	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
@@ -62,17 +62,17 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x9800, 0x9bff, ti99_rw_rgpl },		/*GPL read*/
 	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
 	{ 0xa000, 0xffff, ti99_rw_xramhigh },	/*upper 24kb of RAM extension*/
-	{ -1 }		/* end of table */
-};
 
-static struct MemoryWriteAddress writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },					/*system ROM*/
-	{ 0x2000, 0x3fff, ti99_ww_xramlow, &ti99_xRAM_low },	/*lower 8kb of memory expansion card*/
-	{ 0x4000, 0x5fff, ti99_ww_disk, &ti99_DSR_mem },/*DSR ROM... only disk is emulated ! */
-	{ 0x6000, 0x7fff, ti99_ww_cartmem, & ti99_cart_mem },	/*cartidge memory... some RAM or paging system is possible*/
+MEMORY_END
+
+static MEMORY_WRITE16_START (writemem)
+
+	{ 0x0000, 0x1fff, MWA16_ROM },					/*system ROM*/
+	{ 0x2000, 0x3fff, ti99_ww_xramlow, &(data16_t *)ti99_xRAM_low },	/*lower 8kb of memory expansion card*/
+	{ 0x4000, 0x5fff, ti99_ww_disk, &(data16_t *)ti99_DSR_mem },/*DSR ROM... only disk is emulated ! */
+	{ 0x6000, 0x7fff, ti99_ww_cartmem, &(data16_t *)ti99_cart_mem },	/*cartidge memory... some RAM or paging system is possible*/
 	{ 0x8000, 0x82ff, ti99_ww_scratchpad },			/*RAM PAD, mapped to 0x8300-0x83ff*/
-	{ 0x8300, 0x83ff, MWA_RAM, &ti99_scratch_RAM },	/*RAM PAD*/
+	{ 0x8300, 0x83ff, MWA16_RAM, &(data16_t *)ti99_scratch_RAM },	/*RAM PAD*/
 	{ 0x8400, 0x87ff, ti99_ww_wsnd },				/*soundchip write*/
 	{ 0x8800, 0x8bff, ti99_ww_null8bits },			/*vdp read*/
 	{ 0x8C00, 0x8fff, ti99_ww_wvdp },				/*vdp write*/
@@ -80,17 +80,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9400, 0x97ff, ti99_ww_wspeech },			/*speech write*/
 	{ 0x9800, 0x9bff, ti99_ww_null8bits },			/*GPL read*/
 	{ 0x9c00, 0x9fff, ti99_ww_wgpl },				/*GPL write*/
-	{ 0xa000, 0xffff, ti99_ww_xramhigh, &ti99_xRAM_high },	/*upper 24kb of RAM extension*/
-	{ -1 }		/* end of table */
-};
+	{ 0xa000, 0xffff, ti99_ww_xramhigh, &(data16_t *)ti99_xRAM_high },	/*upper 24kb of RAM extension*/
+
+MEMORY_END
 
 
 /*
 	CRU map
 */
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START(writeport)
+
 	{0x0000, 0x07ff, tms9901_CRU_write},
 
 	{0x0880, 0x0880, ti99_DSKROM},
@@ -100,17 +100,15 @@ static struct IOWritePort writeport[] =
 	{0x0884, 0x0886, ti99_DSKsel},
 	{0x0887, 0x0887, ti99_DSKside},
 
-	{ -1 }		/* end of table */
-};
+PORT_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START(readport)
+
 	{0x0000, 0x00ff, tms9901_CRU_read},
 
 	{0x0110, 0x0110, ti99_DSKget},
 
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 /*
@@ -687,6 +685,7 @@ ROM_START(ti99_4)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
+#if 0
 ROM_START(ti99_4e)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
@@ -702,6 +701,7 @@ ROM_START(ti99_4e)
 	ROM_REGION(0x8000,REGION_SOUND1)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
+#endif
 
 ROM_START(ti99_4a)
 	/*CPU memory space*/
@@ -719,6 +719,7 @@ ROM_START(ti99_4a)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
 
+#if 0
 ROM_START(ti99_4ae)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
@@ -734,6 +735,7 @@ ROM_START(ti99_4ae)
 	ROM_REGION(0x8000,REGION_SOUND1)
 	ROM_LOAD("spchrom.bin",     0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
 ROM_END
+#endif
 
 /* a TI99 console only had one cartidge slot, but cutting the ROMs
  * in 3 files seems to be the only way to handle cartidges until I use
@@ -791,9 +793,12 @@ static const struct IODevice io_ti99_4[] =
 #define io_ti99_4a io_ti99_4
 #define io_ti99_4ae io_ti99_4a
 
+#define rom_ti99_4e rom_ti99_4
+#define rom_ti99_4ae rom_ti99_4a
+
 /*	  YEAR	NAME	  PARENT		MACHINE 	  INPUT    INIT   COMPANY			   FULLNAME */
 COMP( 1978, ti99_4,   0,			ti99_4_60hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (US)" )
-COMP( 1980, ti99_4e,  ti99_4,		ti99_4_50hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (Europe)" )
+COMPX( 1980, ti99_4e,  ti99_4,		ti99_4_50hz,  ti99_4,  0,	  "Texas Instruments", "TI99/4 Home Computer (Europe)", GAME_ALIAS )
 COMP( 1981, ti99_4a,  0/*ti99_4*/,  ti99_4a_60hz, ti99_4a, 0,     "Texas Instruments", "TI99/4A Home Computer (US)" )
-COMP( 1981, ti99_4ae, ti99_4a,		ti99_4a_50hz, ti99_4a, 0,	  "Texas Instruments", "TI99/4A Home Computer (Europe)" )
+COMPX( 1981, ti99_4ae, ti99_4a,		ti99_4a_50hz, ti99_4a, 0,	  "Texas Instruments", "TI99/4A Home Computer (Europe)", GAME_ALIAS )
 
