@@ -24,7 +24,7 @@ static void intb_callback(int state);
 /*static READ16_HANDLER ( geneve_rw_rspeech );
 static WRITE16_HANDLER ( geneve_ww_wspeech );*/
 
-static void poll_keyboard(int dummy);
+static void poll_keyboard(void);
 
 static void tms9901_interrupt_callback(int intreq, int ic);
 static int R9901_0(int offset);
@@ -104,7 +104,8 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 static int JoySel;
 enum
 {
-	KeyQueueSize = 256
+	KeyQueueSize = 256,
+	MaxKeyMessageLen = 10
 };
 static UINT8 KeyQueue[KeyQueueSize];
 int KeyQueueHead;
@@ -187,7 +188,6 @@ void machine_init_geneve(void)
 	/* clear keyboard interface state (probably overkill, but can't harm) */
 	/*KeyCol = 0;
 	AlphaLockLine = 0;*/
-	timer_pulse(TIME_IN_SEC(.05), 0, poll_keyboard);
 
 	/* read config */
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
@@ -257,7 +257,13 @@ int video_start_geneve(void)
 */
 void geneve_hblank_interrupt(void)
 {
+	static line_count;
 	v9938_interrupt();
+	if (++line_count == 262)
+	{
+		line_count = 0;
+		poll_keyboard();
+	}
 }
 
 /*
@@ -346,56 +352,37 @@ READ_HANDLER ( geneve_r )
 	else
 	{
 		/* ti99 mode */
-		if ((offset >= 0x8000) && (offset < 0xa000))
+		if ((offset >= 0x8000) && (offset < 0x8020))
 		{
+			/* 0x8000-0x801f */
+			/* geneve memory-mapped registers */
+			switch (offset)
+			{
+			case 0x8000:
+			case 0x8001:
+			case 0x8002:
+			case 0x8003:
+			case 0x8004:
+			case 0x8005:
+			case 0x8006:
+			case 0x8007:
+				return page_lookup[offset-0x8000];
+
+			case 0x8008:	/* right??? */
+				return /*key_buf*/0;
+
+			default:
+				logerror("unmapped read offs=%d\n", (int) offset);
+				return 0;
+			}
+		}
+		else if ((offset >= 0x8400) && (offset < 0xa000))
+		{
+			/* 0x8400-0x9fff */
+			/* ti99 memory-mapped registers */
 			switch ((offset - 0x8000) >> 10)
 			{
 			case 0:
-				/* 0x8000 */
-				if ((offset >= 0x8000) && (offset < 0x8020))
-				{
-					/* geneve memory-mapped registers */
-					switch (offset)
-					{
-					case 0x8000:
-					case 0x8001:
-					case 0x8002:
-					case 0x8003:
-					case 0x8004:
-					case 0x8005:
-					case 0x8006:
-					case 0x8007:
-						return page_lookup[offset-0x8000];
-
-					case 0x8008:	/* right??? */
-						return /*key_buf*/0;
-
-					/*case 0xf130:
-					case 0xf131:
-					case 0xf132:
-					case 0xf133:
-					case 0xf134:
-					case 0xf135:
-					case 0xf136:
-					case 0xf137:
-					case 0xf138:
-					case 0xf139:
-					case 0xf13a:
-					case 0xf13b:
-					case 0xf13c:
-					case 0xf13d:
-					case 0xf13e:
-					case 0xf13f:
-						return mm58274c_r(offset-0xf130);*/
-
-					default:
-						logerror("unmapped read offs=%d\n", (int) offset);
-						return 0;
-					}
-				}
-				else
-					/* PAD RAM */
-					return DRAM_ptr[0x35*0x2000 + (offset-0x8000)];	/* ??? */
 
 			case 2:
 				/* VDP read */
@@ -524,7 +511,7 @@ WRITE_HANDLER ( geneve_w )
 				page_lookup[offset-0xf110] = data;
 				return;
 
-			/*case 0xf118:	// right???
+			/*case 0xf118:	// read-only register???
 				key_buf = data;
 				return*/
 
@@ -556,62 +543,38 @@ WRITE_HANDLER ( geneve_w )
 	else
 	{
 		/* ti99 mode */
-		if ((offset >= 0x8000) && (offset < 0xa000))
+		if ((offset >= 0x8000) && (offset < 0x8020))
 		{
+			/* 0x8000-0x801f */
+			/* geneve memory-mapped registers */
+			switch (offset)
+			{
+			case 0x8000:
+			case 0x8001:
+			case 0x8002:
+			case 0x8003:
+			case 0x8004:
+			case 0x8005:
+			case 0x8006:
+			case 0x8007:
+				page_lookup[offset-0x8000] = data;
+				return;
+
+			/*case 0x8008:	// right???
+				key_buf = data;
+				return*/
+
+			default:
+				logerror("unmapped write offs=%d data=%d\n", (int) offset, (int) data);
+				return;
+			}
+		}
+		else if ((offset >= 0x8400) && (offset < 0xa000))
+		{
+			/* 0x8400-0x9fff */
+			/* ti99 memory-mapped registers */
 			switch ((offset - 0x8000) >> 10)
 			{
-			case 0:
-				/* 0x8000 */
-				if ((offset >= 0x8000) && (offset < 0x8020))
-				{
-					/* geneve memory-mapped registers */
-					switch (offset)
-					{
-					case 0x8000:
-					case 0x8001:
-					case 0x8002:
-					case 0x8003:
-					case 0x8004:
-					case 0x8005:
-					case 0x8006:
-					case 0x8007:
-						page_lookup[offset-0x8000] = data;
-						return;
-
-					/*case 0x8008:	// right???
-						key_buf = data;
-						return*/
-
-					/*case 0xf130:
-					case 0xf131:
-					case 0xf132:
-					case 0xf133:
-					case 0xf134:
-					case 0xf135:
-					case 0xf136:
-					case 0xf137:
-					case 0xf138:
-					case 0xf139:
-					case 0xf13a:
-					case 0xf13b:
-					case 0xf13c:
-					case 0xf13d:
-					case 0xf13e:
-					case 0xf13f:
-						return mm58274c_w(offset-0xf130, data);*/
-
-					default:
-						logerror("unmapped write offs=%d data=%d\n", (int) offset, (int) data);
-						return;
-					}
-				}
-				else
-				{
-					/* PAD RAM */
-					DRAM_ptr[0x35*0x2000 + (offset-0x8000)] = data;	/* ??? */
-					return;
-				}
-
 			case 1:
 				/* sound write */
 				SN76496_0_w(0, data);
@@ -694,7 +657,6 @@ WRITE_HANDLER ( geneve_w )
 	else if ((page >= 0xf0) && (page < 0xf2))
 	{
 		/* Boot ROM */
-		/*ROM_ptr[(page-0xf0)*0x2000 + offset] = data;*/
 		return;
 	}
 
@@ -749,36 +711,116 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 #pragma mark KEYBOARD INTERFACE
 #endif
 
-static void poll_keyboard(int dummy)
+INLINE void post_in_KeyQueue(int keycode)
+{
+	KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
+	KeyQueueLen++;
+}
+
+static void poll_keyboard(void)
 {
 	static UINT32 old_keystate[4];
 	UINT32 keystate;
 	UINT32 key_transitions;
 	int i, j;
 	int keycode;
+	int pressed;
 
 
-	for (i=0; (i<4) && (KeyQueueLen < KeyQueueSize); i++)
+	for (i=0; (i<4) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); i++)
 	{
 		keystate = readinputport(input_port_keyboard_geneve + i*2)
 					| (readinputport(input_port_keyboard_geneve + i*2 + 1) << 16);
 		key_transitions = keystate ^ old_keystate[i];
 		if (key_transitions)
 		{
-			for (j=0; (j<32) && (KeyQueueLen < KeyQueueSize); j++)
+			for (j=0; (j<32) && (KeyQueueLen <= (KeyQueueSize-MaxKeyMessageLen)); j++)
 			{
 				if ((key_transitions >> j) & 1)
 				{
 					keycode = (i << 5) | j;
-					if ((keystate >> j) & 1)
+					pressed = ((keystate >> j) & 1);
+					if (pressed)
 						old_keystate[i] |= (1 << j);
 					else
-					{
 						old_keystate[i] &= ~ (1 << j);
-						keycode |= 0x80;
+					if ((keycode >= 0x60) && (keycode < 0x70))
+					{
+						/* these keycodes are emulated */
+						static UINT8 keyboard_mf2_code[0x10-1] =
+						{
+							0x1c,	/* keypad enter */
+							0x1d,	/* right control */
+							0x35,	/* pad slash */
+							0x37,	/* print screen (F13) */
+							0x38,	/* alt gr */
+
+							0x47,	/* home */
+							0x48,	/* up */
+							0x49,	/* page up */
+							0x4b,	/* left */
+							0x4d,	/* right */
+							0x4f,	/* end */
+							0x50,	/* down */
+							0x51,	/* page down */
+							0x52,	/* insert */
+							0x53	/* delete */
+						};
+
+						if (keycode < 0x65)
+						{	/* emulate basic key */
+							keycode = keyboard_mf2_code[keycode-0x60];
+							if (! pressed)
+								keycode |= 0x80;
+							post_in_KeyQueue(0xe0);
+							post_in_KeyQueue(keycode);
+						}
+						if (keycode < 0x6f)
+						{	/* emulate non-numlock mode key */
+							keycode = keyboard_mf2_code[keycode-0x60];
+							if (! pressed)
+								keycode |= 0x80;
+							if (pressed)
+							{
+								/* simulate left shift press in case numlock is active */
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0x2a);
+							}
+							post_in_KeyQueue(0xe0);
+							post_in_KeyQueue(keycode);
+							if (! pressed)
+							{
+								/* simulate left shift release in case numlock is active */
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0xaa);
+							}
+						}
+						else /*if (keycode == 0x6f)*/
+						{	/* emulate pause (F15) key */
+							if (pressed)
+							{
+								/* simulate left shift press in case numlock is active */
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0x2a);
+							}
+							/* simulate control+numlock */
+							post_in_KeyQueue(0xe1);
+							post_in_KeyQueue(pressed ? 0x1d : 0xc5);
+							post_in_KeyQueue(pressed ? 0x45 : 0x9d);
+							if (! pressed)
+							{
+								/* simulate left shift release in case numlock is active */
+								post_in_KeyQueue(0xe0);
+								post_in_KeyQueue(0xaa);
+							}
+						}
 					}
-					KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
-					KeyQueueLen++;
+					else
+					{
+						if (! pressed)
+							keycode |= 0x80;
+						post_in_KeyQueue(keycode);
+					}
 					if (mode_flags & mf_keyclock)
 					{
 						tms9901_set_single_int(0, 8, 1);
