@@ -76,8 +76,9 @@ typedef struct I8271
 	char *pExecutionPhaseData;
 	int ExecutionPhaseCount;
 
-	int SectorCount;
-
+	/* sector counter and id counter */
+	int Counter;
+	
 	/* ==0, to cpu, !=0 =from cpu */
 	int data_direction;
 	i8271_interface	fdc_interface;
