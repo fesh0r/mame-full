@@ -622,8 +622,8 @@ SYSTEM_CONFIG_START(apple2)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
-COMP ( 1977, apple2,   0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //" )
-COMP ( 1979, apple2p,  apple2,   apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //+" )
+COMP ( 1977, apple2,   0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
+COMP ( 1979, apple2p,  apple2,   apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple ][+" )
 COMP ( 1983, apple2e,  0,        apple2e,  apple2,   apple2,   apple2,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  apple2ee, apple2,   apple2,   apple2,	"Apple Computer", "Apple //e (Platinum)" )

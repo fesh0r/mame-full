@@ -3,11 +3,15 @@
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Myarc Geneve 9640 [Raphael Nabet]
-- Apple II, Apple II+ [Stefano Priore]
+- Apple ][, Apple ][+ [Stefano Priore]
 - GameBoy Pocket [Anthony Kruize]
 
 System Driver Changes:
-----------------------
+---------------------- 
+- [A2600] Complete driver rewrite, including emulation of the 6532 RIOT (RAM, 
+  INPUT, OUTPUT, TIMER) chip, cycle count correction in the t6502 core (fixes 
+  games like Space Invaders) and a new tia core.  [Stefan Jokisch]
+
 - [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
   now boots.  Removed *.vid files from the BIOS set in favor of the proper
   character ROMs (suffixed with *.chr).  80-character text mode fixed (bug
@@ -30,10 +34,6 @@ System Driver Changes:
   incomplete but working support for the HFDC disk controller card and 80-track
   drives. Added support for a fourth floppy drive with non-TI floppy
   controllers. Fixed Super AMS memory card emulation. [Raphael Nabet]
-  
-- [A2600] Complete driver rewrite, including emulation of the 6532 RIOT (RAM, 
-  INPUT, OUTPUT, TIMER) chip, cycle count correction in the t6502 core (fixes 
-  games like Space Invaders) and a new tia core.  [Stefan Jokisch]
 
 
 Source Changes:
