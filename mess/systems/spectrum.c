@@ -203,7 +203,7 @@ static WRITE8_HANDLER(spectrum_port_fe_w)
 	if ((Changed & (1<<3))!=0)
 	{
 		/* write cassette data */
-		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & (1<<3)) ? -32768: 32767);
+		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & (1<<3)) ? -1.0 : +1.0);
 	}
 
 	PreviousFE = data;
@@ -284,7 +284,7 @@ static  READ8_HANDLER(spectrum_port_fe_r)
 	data |= (0xe0); /* Set bits 5-7 - as reset above */
 
 	/* cassette input from wav */
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0))>255 )
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0038 )
 	{
 		data &= ~0x40;
 	}

@@ -419,7 +419,7 @@ static WRITE8_HANDLER ( compis_ppi_port_c_w )
 {
 	/* Centronics Strobe */
 	if ((compis.printer.strobe) && !(data & 0x20))
-		device_output(image_from_devtype_and_index(IO_PRINTER, 0), compis.printer.data);
+		printer_output(image_from_devtype_and_index(IO_PRINTER, 0), compis.printer.data);
 	compis.printer.strobe = ((data & 0x20)?1:0);
 
 	/* FDC Reset */

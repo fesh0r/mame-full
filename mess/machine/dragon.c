@@ -1184,7 +1184,7 @@ static WRITE8_HANDLER ( d_pia1_pa_w )
 	else
 		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) / 128.0);
 
-	device_output(bitbanger_image(), (data & 2) >> 1);
+	printer_output(bitbanger_image(), (data & 2) >> 1);
 }
 
 /*

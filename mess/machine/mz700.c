@@ -142,7 +142,7 @@ static  READ8_HANDLER ( pio_port_b_r )
     return data;
 }
 
-static  READ8_HANDLER (pio_port_c_r )
+static READ8_HANDLER (pio_port_c_r )
 {
     data8_t data = pio_port_c_output & 0x0f;
 
@@ -155,7 +155,7 @@ static  READ8_HANDLER (pio_port_c_r )
     if (mz700_motor_on)
         data |= 0x10;
 
-    if (device_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 255)
+    if (cassette_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 0.0038)
         data |= 0x20;       /* set the RDATA status */
 
 	if (ne556_out[0])

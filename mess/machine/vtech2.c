@@ -17,6 +17,7 @@
 #include "vidhrdw/generic.h"
 #include "image.h"
 #include "includes/vtech2.h"
+#include "devices/cassette.h"
 
 /* public */
 int laser_latch = -1;
@@ -186,7 +187,7 @@ WRITE8_HANDLER( laser_bank_select_w )
     }
 }
 
-static mess_image *cassette_image(void)
+static mess_image *vtech2_cassette_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -267,7 +268,7 @@ static int mra_bank(int bank, int offs)
 	}
 
     /* what's bit 7 good for? tape input maybe? */
-	level = device_input(cassette_image());
+	level = cassette_input(vtech2_cassette_image()) * 65536.0;
 	if( level < level_old - 511 )
 		cassette_bit = 0x00;
 	if( level > level_old + 511 )
@@ -309,10 +310,6 @@ static void mwa_bank(int bank, int offs, int data)
                 schedule_full_refresh();
 			if ((data ^ laser_latch) & 0x01)
 				speaker_level_w(0, data & 1);
-#if 0
-            if ((data ^ laser_latch) & 0x06)
-				device_output(IO_CASSETTE, 0, data & 6);
-#endif
             laser_latch = data;
         }
         break;

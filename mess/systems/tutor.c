@@ -231,13 +231,13 @@ static WRITE8_HANDLER(tutor_mapper_w)
 static void tape_interrupt_handler(int dummy)
 {
 	//assert(tape_interrupt_enable);
-	cpunum_set_input_line(0, 1, (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 1, (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 /* CRU handler */
 static  READ8_HANDLER(tutor_cassette_r)
 {
-	return (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0) ? 1 : 0;
+	return (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0) ? 1 : 0;
 }
 
 /* memory handler */
@@ -254,7 +254,7 @@ static WRITE8_HANDLER(tutor_cassette_w)
 		{
 		case 0:
 			/* data out */
-			device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data) ? 32767 : -32767);
+			cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data) ? +1.0 : -1.0);
 			break;
 		case 1:
 			/* interrupt control??? */

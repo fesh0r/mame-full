@@ -49,14 +49,14 @@ int register_device (const int type, const char *arg)
 	/* Check the the device type is valid, otherwise this lookup will be bad*/
 	if (type < 0 || type >= IO_COUNT)
 	{
-		mess_printf("register_device() failed! - device type [%d] is not valid\n",type);
+		printf("register_device() failed! - device type [%d] is not valid\n",type);
 		return -1;
 	}
 
 	/* Next, check that we havent loaded too many images					*/
 	if (options.image_count >= MAX_IMAGES)
 	{
-		mess_printf("Too many image names specified!\n");
+		printf("Too many image names specified!\n");
 		return -1;
 	}
 
@@ -122,26 +122,6 @@ int device_status(mess_image *img, int newstatus)
 		return dev->status(img, newstatus);
 
 	return 0;
-}
-
-int device_input(mess_image *img)
-{
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->input)
-		return dev->input(img);
-
-	return 0;
-}
-
-void device_output(mess_image *img, int data)
-{
-	const struct IODevice *dev;
-
-	dev = image_device(img);
-	if (dev->output)
-		dev->output(img, data);
 }
 
 static const struct IODevice *get_sysconfig_device(const struct GameDriver *gamedrv, int device_num)

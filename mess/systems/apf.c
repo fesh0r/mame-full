@@ -213,18 +213,16 @@ static  READ8_HANDLER(apf_imagination_pia_in_a_func)
 	return keyboard_data;
 }
 
-static  READ8_HANDLER(apf_imagination_pia_in_b_func)
+static READ8_HANDLER(apf_imagination_pia_in_b_func)
 {
-//	logerror("pia 1 b r: %04x\n",offset);
 	unsigned char data;
 
 	data = 0x000;
 
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 255)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE,0)) > 0.0038)
 		data =(1<<7);
 
 	return data;
-//	return 0x0ff;
 }
 
 static  READ8_HANDLER(apf_imagination_pia_in_ca1_func)

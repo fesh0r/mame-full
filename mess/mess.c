@@ -1,6 +1,10 @@
-/*
-This file is a set of function calls and defs required for MESS.
-*/
+/***************************************************************************
+
+	mess.c
+
+	This file is a set of function calls and defs required for MESS
+
+***************************************************************************/
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -25,28 +29,13 @@ UINT32 mess_ram_size;
 data8_t *mess_ram;
 data8_t mess_ram_default_value = 0xCD;
 
-int DECL_SPEC mess_printf(const char *fmt, ...)
-{
-	va_list arg;
-	int length = 0;
-
-	va_start(arg,fmt);
-
-	if (options.mess_printf_output)
-		length = options.mess_printf_output(fmt, arg);
-	else if (!options.gui_host)
-		length = vprintf(fmt, arg);
-
-	va_end(arg);
-
-	return length;
-}
-
 struct distributed_images
 {
 	const char *names[IO_COUNT][MAX_DEV_INSTANCES];
 	int count[IO_COUNT];
 };
+
+
 
 /*****************************************************************************
  *  --Distribute images to their respective Devices--
@@ -55,6 +44,7 @@ struct distributed_images
  *  of each image.  Multiple instances of the same device are allowed
  *  RETURNS 0 on success, 1 if failed
  ****************************************************************************/
+
 static int distribute_images(struct distributed_images *images)
 {
 	int i;
@@ -71,7 +61,7 @@ static int distribute_images(struct distributed_images *images)
 		/* Do we have too many devices? */
 		if (images->count[type] >= MAX_DEV_INSTANCES)
 		{
-			mess_printf(" Too many devices of type %d\n", type);
+			printf(" Too many devices of type %d\n", type);
 			return 1;
 		}
 
@@ -116,15 +106,15 @@ static int ram_init(const struct GameDriver *gamedrv)
 			if (opt_count == 0)
 			{
 				/* this driver doesn't support RAM configurations */
-				mess_printf("Driver '%s' does not support RAM configurations\n", gamedrv->name);
+				printf("Driver '%s' does not support RAM configurations\n", gamedrv->name);
 			}
 			else
 			{
-				mess_printf("%s is not a valid RAM option for driver '%s' (valid choices are ",
+				printf("%s is not a valid RAM option for driver '%s' (valid choices are ",
 					ram_string(buffer, options.ram), gamedrv->name);
 				for (i = 0; i < opt_count; i++)
-					mess_printf("%s%s",  i ? " or " : "", ram_string(buffer, ram_option(gamedrv, i)));
-				mess_printf(")\n");
+					printf("%s%s",  i ? " or " : "", ram_string(buffer, ram_option(gamedrv, i)));
+				printf(")\n");
 			}
 			return 1;
 		}
@@ -183,7 +173,7 @@ int devices_init(const struct GameDriver *gamedrv)
 	{
 		if (supported_device(Machine->gamedrv, options.image_files[i].type)==FALSE)
 		{
-			mess_printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
+			printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
 			return 1;
 		}
 	}
@@ -232,7 +222,7 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 
 		if ((dev->flags & DEVICE_MUST_BE_LOADED) && (count != dev->count))
 		{
-			mess_printf("Driver requires that device %s must have an image to load\n", device_typename(dev->type));
+			printf("Driver requires that device %s must have an image to load\n", device_typename(dev->type));
 			return 1;
 		}
 
@@ -251,8 +241,8 @@ int devices_initialload(const struct GameDriver *gamedrv, int ispreload)
 
 					if (result != INIT_PASS)
 					{
-						mess_printf("Driver reports load for %s device failed\n", device_typename(dev->type));
-						mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
+						printf("Driver reports load for %s device failed\n", device_typename(dev->type));
+						printf("Ensure image is valid and exists and (if needed) can be created\n");
 						return 1;
 					}
 				}
@@ -292,7 +282,7 @@ void devices_exit(void)
 
 void showmessdisclaimer(void)
 {
-	mess_printf(
+	printf(
 		"MESS is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
 		"several computer and console systems. But hardware is useless without software\n"
 		"so a file dump of the BIOS, cartridges, discs, and cassettes which run on that\n"
@@ -306,14 +296,14 @@ void showmessdisclaimer(void)
 
 void showmessinfo(void)
 {
-	mess_printf(
+	printf(
 		"M.E.S.S. v%s\n"
 		"Multiple Emulation Super System - Copyright (C) 1997-2004 by the MESS Team\n"
 		"M.E.S.S. is based on the ever excellent M.A.M.E. Source code\n"
 		"Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n\n",
 		build_version);
 	showmessdisclaimer();
-	mess_printf(
+	printf(
 		"Usage:  MESS <system> <device> <software> <options>\n\n"
 		"        MESS -list        for a brief list of supported systems\n"
 		"        MESS -listdevices for a full list of supported devices\n"

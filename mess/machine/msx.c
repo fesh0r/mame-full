@@ -429,11 +429,11 @@ static mess_image *printer_image(void)
 	return image_from_devtype_and_index(IO_PRINTER, 0);
 }
 
- READ8_HANDLER ( msx_psg_port_a_r )
+READ8_HANDLER ( msx_psg_port_a_r )
 {
 	int data, inp;
 
-	data = (device_input(cassette_device_image()) > 255 ? 0x80 : 0);
+	data = (cassette_input(cassette_device_image()) > 0.0038 ? 0x80 : 0);
 
 	if ( (msx1.psg_b ^ readinputport (8) ) & 0x40)
 		{
@@ -526,12 +526,15 @@ WRITE8_HANDLER ( msx_printer_w )
 	}
 	else {
 
-		if (offset == 1) {
+		if (offset == 1)
+		{
 			msx1.prn_data = data;
 		}
-		else {
-			if ((msx1.prn_strobe & 2) && !(data & 2)) {
-				device_output(printer_image(), msx1.prn_data);
+		else
+		{
+			if ((msx1.prn_strobe & 2) && !(data & 2))
+			{
+				printer_output(printer_image(), msx1.prn_data);
 			}
 
 			msx1.prn_strobe = data;

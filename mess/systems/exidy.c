@@ -174,12 +174,12 @@ static void exidy_cassette_timer_callback(int dummy)
 
 			/* detect level */
 			bit = 1;
-			if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+			if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0038)
 				bit = 0;
 			cassette_input_ff[0] = bit;
 			/* detect level */
 			bit = 1;
-			if (device_input(image_from_devtype_and_index(IO_CASSETTE, 1)) > 255)
+			if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 1)) > 0.0038)
 				bit = 0;
 
 			cassette_input_ff[1] = bit;
@@ -229,17 +229,7 @@ static CENTRONICS_CONFIG exidy_cent_config[1]={
 
 static void cassette_serial_in(int id, unsigned long state)
 {
-//	int cassette_output;
-
 	cassette_serial_connection.input_state = state;
-
-//	cassette_output = 32768;
-//	if (get_in_data_bit(cassette_serial_connection.input_state))
-//	{
-//		cassette_output = -cassette_output;
-//	}
-//
-//	device_output(IO_CASSETTE, 0, cassette_output);
 }
 
 static MACHINE_INIT( exidy )

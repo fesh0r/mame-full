@@ -30,7 +30,5 @@ void device_close(mess_image *img);
 int device_seek(mess_image *img, int offset, int whence);
 int device_tell(mess_image *img);
 int device_status(mess_image *img, int newstatus);
-int device_input(mess_image *img);
-void device_output(mess_image *img, int data);
 
 #endif

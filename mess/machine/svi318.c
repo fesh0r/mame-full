@@ -90,11 +90,11 @@ Bit 1: Joystick 1: EOC
 Bit 0: Joystick 1: /SENSE
 
 */
-static  READ8_HANDLER ( svi318_ppi_port_a_r )
+static READ8_HANDLER ( svi318_ppi_port_a_r )
 {
 	int data = 0x0f;
 
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0038)
 		data |= 0x80;
 	if (!svi318_cassette_present (0) )
 		data |= 0x40;
@@ -193,7 +193,7 @@ WRITE8_HANDLER (svi318_printer_w)
 	else
 	{
 		if ( (svi.prn_strobe & 1) && !(data & 1) )
-			device_output(image_from_devtype_and_index(IO_PRINTER, 0), svi.prn_data);
+			printer_output(image_from_devtype_and_index(IO_PRINTER, 0), svi.prn_data);
 
 		svi.prn_strobe = data;
 	}

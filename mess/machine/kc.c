@@ -401,7 +401,7 @@ static void kc_cassette_timer_callback(int dummy)
 	bit = 0;
 
 	/* get data from cassette */
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0038)
 		bit = 1;
 
 	/* update astb with bit */

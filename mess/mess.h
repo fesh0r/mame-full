@@ -68,8 +68,6 @@ extern "C" {
 #define DECL_SPEC
 #endif
 
-int mess_printf(const char *fmt, ...);
-
 void showmessinfo(void);
 int filemanager(struct mame_bitmap *bitmap, int selected);
 

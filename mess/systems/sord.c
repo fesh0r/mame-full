@@ -490,20 +490,9 @@ ADDRESS_MAP_START( srdm5fd5_io , ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 
-//static void cassette_timer_callback(int dummy)
-//{
-//	int data;
-//
-//	data = 0;
-//	/* cassette read */
-//	if (device_input(cassette_device_image()) > 255)
-//		data |=(1<<0);
-//
-//	z80ctc_0_trg2_w(0,data);
-//}
 
-
-static CENTRONICS_CONFIG sordm5_cent_config[1]={
+static CENTRONICS_CONFIG sordm5_cent_config[1] =
+{
 	{
 		PRINTER_CENTRONICS,
 		NULL

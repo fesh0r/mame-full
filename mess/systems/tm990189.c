@@ -380,7 +380,7 @@ static int sys9901_r0(int offset)
 		reply |= readinputport(digitsel) << 1;
 
 	/* tape input */
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.0)
 		reply |= 0x40;
 
 	return reply;
@@ -430,7 +430,7 @@ static void sys9901_spkrdrive_w(int offset, int data)
 
 static void sys9901_tapewdata_w(int offset, int data)
 {
-	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? 32767 : -32767);
+	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), data ? +1.0 : -1.0);
 }
 
 /*

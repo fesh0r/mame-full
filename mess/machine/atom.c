@@ -19,10 +19,11 @@
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"
 #include "includes/i8271.h"
+#include "machine/6522via.h"
 #include "devices/basicdsk.h"
 #include "devices/flopdrv.h"
-#include "machine/6522via.h"
 #include "devices/cassette.h"
+#include "devices/printer.h"
 
 static UINT8	atom_8255_porta;
 static UINT8	atom_8255_portb;
@@ -95,7 +96,7 @@ static WRITE8_HANDLER(atom_via_out_ca2_func)
 		if (data & 0x01)
 		{
 			/* output data to printer */
-			device_output(printer_image(), atom_printer_data);
+			printer_output(printer_image(), atom_printer_data);
 		}
 	}
 
@@ -369,7 +370,7 @@ DEVICE_LOAD( atom_floppy )
 	atom_8255_portc &= 0x0f;
 
 	/* cassette input */
-	if (device_input(cassette_device_image())>255)
+	if (cassette_input(cassette_device_image()) > 0.0)
 	{
 		atom_8255_portc |= (1<<5);
 	}
