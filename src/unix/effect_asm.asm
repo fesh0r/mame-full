@@ -43,7 +43,9 @@ global blit_scan2_h_mmx_16_16
 global blit_scan2_h_mmx_16_32
 global blit_scan2_h_mmx_32_32_direct
 global blit_line_32_16_1
+global blit_line_32_16_1_mmx
 global blit_line_32_15_1
+global blit_line_32_15_1_mmx
 global blit_line_32_16_2
 global blit_line_32_15_2
 global blit_line_32_16_3
@@ -1130,6 +1132,63 @@ cp16loop1:
 ;**************************************************************************
 
 ;------------------------------------------------------------------------------
+; blit_line_32_16_1_mmx(unsigned int *src, unsigned int *end, unsigned short *dest);
+blit_line_32_16_1_mmx:
+  push ebp
+  mov ebp, esp
+  push edi
+  push esi
+
+  mov edi, [ebp+16]
+  mov esi, [ebp+8]
+  mov ebp, [ebp+12]
+  movq mm7, [QW_16BlueMask]
+  sub ebp, esi
+  movq mm6, [QW_16GreenMask]
+  shr ebp, 4
+  movq mm5, [QW_16RedMask]
+
+bl3216_1mmx_loop1:
+  movq mm0, [esi]
+  movq mm1, [esi+8]
+  add esi, 16
+  movq mm2, mm0
+  movq mm3, mm1
+  pslld mm0, 8
+  pslld mm1, 8
+  pand mm0, mm7
+  movq mm4, mm2
+  pand mm1, mm7
+  pslld mm2, 11
+  pslld mm4, 13
+  pand mm2, mm6
+  pand mm4, mm5
+  por mm2, mm4
+  
+  movq mm4, mm3
+  pslld mm3, 11
+  pslld mm4, 13
+  pand mm3, mm6
+  pand mm4, mm5
+  por mm3, mm4
+  por mm0, mm2
+  por mm1, mm3
+
+  psrad mm0, 16
+  psrad mm1, 16
+  packssdw mm0, mm1
+  movq [edi], mm0
+  add edi, 8
+  sub ebp, 1
+  jg bl3216_1mmx_loop1
+
+  pop esi
+  pop edi
+  pop ebp
+  emms
+  ret
+
+;------------------------------------------------------------------------------
 ; blit_line_32_16_1(unsigned int *src, unsigned int *end, unsigned short *dest);
 blit_line_32_16_1:
   push ebp
@@ -1166,6 +1225,61 @@ bl3216_1_loop1:
 
   popad
   pop ebp
+  ret
+
+;------------------------------------------------------------------------------
+; blit_line_32_15_1_mmx(unsigned int *src, unsigned int *end, unsigned short *dest);
+blit_line_32_15_1_mmx:
+  push ebp
+  mov ebp, esp
+  push edi
+  push esi
+
+  mov edi, [ebp+16]
+  mov esi, [ebp+8]
+  mov ebp, [ebp+12]
+  movq mm7, [QW_15BlueMask]
+  sub ebp, esi
+  movq mm6, [QW_15GreenMask]
+  shr ebp, 4
+  movq mm5, [QW_15RedMask]
+
+bl3215_1mmx_loop1:
+  movq mm0, [esi]
+  movq mm1, [esi+8]
+  add esi, 16
+  movq mm2, mm0
+  movq mm3, mm1
+  psrld mm0, 9
+  psrld mm1, 9
+  pand mm0, mm7
+  movq mm4, mm2
+  pand mm1, mm7
+  psrld mm2, 6
+  psrld mm4, 3
+  pand mm2, mm6
+  pand mm4, mm5
+  por mm2, mm4
+  
+  movq mm4, mm3
+  psrld mm3, 6
+  psrld mm4, 3
+  pand mm3, mm6
+  pand mm4, mm5
+  por mm3, mm4
+  por mm0, mm2
+  por mm1, mm3
+
+  packssdw mm0, mm1
+  movq [edi], mm0
+  add edi, 8
+  sub ebp, 1
+  jg bl3215_1mmx_loop1
+
+  pop esi
+  pop edi
+  pop ebp
+  emms
   ret
 
 ;------------------------------------------------------------------------------
@@ -1483,6 +1597,14 @@ QW_6tapAdd	dd	000100010h, 000000010h
 QW_32QuartMask	dd	03f3f3f3fh, 03f3f3f3fh
 QW_16QuartMask	dd	039e739e7h, 039e739e7h	; 0011 1001 1110 0111
 QW_15QuartMask	dd	01ce71ce7h, 01ce71ce7h	; 0001 1100 1110 0111
+
+QW_16RedMask    dd  0001f0000h, 0001f0000h
+QW_16GreenMask  dd  007e00000h, 007e00000h
+QW_16BlueMask   dd  0f8000000h, 0f8000000h
+
+QW_15RedMask    dd  00000001fh, 00000001fh
+QW_15GreenMask  dd  0000003e0h, 0000003e0h
+QW_15BlueMask   dd  000007c00h, 000007c00h
 
 ;____________________________________________________________________________
 ; Uninitialized data

@@ -57,9 +57,11 @@ static struct sysdep_display_open_params debug_params = {
 
 /* Visual area override related vars, for dual monitor games hacks */
 static struct rectangle game_vis_area;
-static struct rectangle game_vis_area_override[2] = {
+static struct rectangle game_vis_area_override_rect[3] = {
+  {-1,-1,-1,-1},
   {-1,-1,-1,-1},
   {-1,-1,-1,-1} };
+double game_vis_area_override_aspect[3] = { -1.0, -1.0, -1.0 };
 int game_vis_area_override_index = 0;
 
 /* average FPS calculation */
@@ -541,9 +543,34 @@ int osd_create_display(const struct osd_create_params *params,
 	/* apply vis area override hacks */
       	if (!strcmp(drivers[game_index]->clone_of->name, "megatech"))
       	{
-      	  game_vis_area_override[0].min_y = 192;
-      	  game_vis_area_override[1].max_x = 255;
-      	  game_vis_area_override[1].max_y = 191;
+      	  game_vis_area_override_rect[1].min_y = 192;
+      	  game_vis_area_override_rect[2].max_x = 255;
+      	  game_vis_area_override_rect[2].max_y = 191;
+      	  game_vis_area_override_aspect[1] = (double)4.0/3.0;
+      	  game_vis_area_override_aspect[2] = (double)4.0/3.0;
+      	  game_vis_area_override_index = 1;
+      	}
+      	if (!strcmp(drivers[game_index]->clone_of->name, "playch10"))
+      	{
+      	  game_vis_area_override_rect[1].min_y = 240;
+      	  game_vis_area_override_rect[2].max_y = 239;
+      	  game_vis_area_override_aspect[1] = (double)4.0/3.0;
+      	  game_vis_area_override_aspect[2] = (double)4.0/3.0;
+      	  game_vis_area_override_index = 1;
+      	}
+      	if (!strcmp(drivers[game_index]->name, "punchout"))
+      	{
+      	  game_vis_area_override_rect[1].min_y = 224;
+      	  game_vis_area_override_rect[2].max_y = 223;
+      	  game_vis_area_override_aspect[1] = (double)4.0/3.0;
+      	  game_vis_area_override_aspect[2] = (double)4.0/3.0;
+      	}
+      	if (game_vis_area_override_rect[1].min_y != -1)
+      	{
+      	  game_vis_area_override_aspect[0] = normal_params.aspect_ratio;
+          status_msg  = "Dual monitor Game, press\nleft-ctrl+left-shift+insert\nto toggle visible monitors";
+          show_status = 5.0 * video_fps;
+          ui_show_fps_temp(5.0);
       	}
 
 	return 0;
@@ -776,21 +803,25 @@ static void update_effect(void)
 
 static void update_game_vis_area(void)
 {
-  if (game_vis_area_override[game_vis_area_override_index].min_x != -1)
+  if (game_vis_area_override_rect[game_vis_area_override_index].min_x != -1)
     game_vis_area.min_x =
-      game_vis_area_override[game_vis_area_override_index].min_x;
+      game_vis_area_override_rect[game_vis_area_override_index].min_x;
 
-  if (game_vis_area_override[game_vis_area_override_index].min_y != -1)
+  if (game_vis_area_override_rect[game_vis_area_override_index].min_y != -1)
     game_vis_area.min_y =
-      game_vis_area_override[game_vis_area_override_index].min_y;
+      game_vis_area_override_rect[game_vis_area_override_index].min_y;
 
-  if (game_vis_area_override[game_vis_area_override_index].max_x != -1)
+  if (game_vis_area_override_rect[game_vis_area_override_index].max_x != -1)
     game_vis_area.max_x =
-      game_vis_area_override[game_vis_area_override_index].max_x;
+      game_vis_area_override_rect[game_vis_area_override_index].max_x;
 
-  if (game_vis_area_override[game_vis_area_override_index].max_y != -1)
+  if (game_vis_area_override_rect[game_vis_area_override_index].max_y != -1)
     game_vis_area.max_y =
-      game_vis_area_override[game_vis_area_override_index].max_y;
+      game_vis_area_override_rect[game_vis_area_override_index].max_y;
+      
+  if (!(game_vis_area_override_aspect[game_vis_area_override_index] < 0.0))
+    normal_params.aspect_ratio =
+      game_vis_area_override_aspect[game_vis_area_override_index];
 
   normal_params.width  = (game_vis_area.max_x + 1) - game_vis_area.min_x;
   normal_params.height = (game_vis_area.max_y + 1) - game_vis_area.min_y;
@@ -909,7 +940,9 @@ void osd_update_video_and_audio(struct mame_display *display)
             {
                 if (code_pressed_memory(KEYCODE_INSERT))
                 {
-                  game_vis_area_override_index=1-game_vis_area_override_index;
+                  game_vis_area_override_index++;
+                  if(game_vis_area_override_index>2)
+                    game_vis_area_override_index = 0;
 	          game_vis_area = display->game_visible_area;
                   update_game_vis_area();
                 }
