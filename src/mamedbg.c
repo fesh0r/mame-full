@@ -4502,8 +4502,8 @@ static void cmd_search_memory(void)
 {
 	static UINT8 search_data[16];
 	static int search_count = 0;
+	unsigned which = (DBG.window == EDIT_MEM1) ? 0 : 1;
 	UINT32 win = MAX_WINDOWS-3;
-	unsigned which = (DBG.window == WIN_MEM1(activecpu)) ? 0 : 1;
 	unsigned w, h;
 	unsigned shift, mask, val;
 	const char *k;
