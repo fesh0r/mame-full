@@ -1,4 +1,4 @@
-
+extern UINT8 *gb_ram;
 
 void gameboy_sound_w(int offset, int data);
 

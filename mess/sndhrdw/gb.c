@@ -17,7 +17,7 @@
 #include "driver.h"
 #include "includes/gb.h"
 
-UINT8 *gb_ram;
+/*UINT8 *gb_ram;*/
 
 static int channel = 1;
 static int sound_register;
