@@ -28,7 +28,7 @@ Added a dipswitch to enable/disable microdisc interface [Kev Thacker]
 - [PC & compatibles] repartitioned, several problems fixed,
   major rewrite of graphic subsytems (dirtybuffering disabled temporary),
   Tandy 1000HX now uses EURO PC'S fontrom for acceptable displayment of its 8x9 characters,
-  EURO PC supports CGA and MDA/Herules (adjust it in its the emulated setup) [PeT]
+  EURO PC supports CGA and MDA/Hercules (adjust it in its emulated setup) [PeT]
 
 Other Changes:
 --------------
