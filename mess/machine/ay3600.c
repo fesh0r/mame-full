@@ -338,7 +338,9 @@ static void AY3600_poll(int dummy)
 
 	/* reset key check */
 	if (pressed_specialkey(SPECIALKEY_RESET) &&
-		(keyboard_type == AP2_KEYBOARD_2 || switchkey & A2_KEY_CONTROL)) {
+		(keyboard_type == AP2_KEYBOARD_2 ||
+		(keyboard_type == AP2_KEYBOARD_2P && !readinputportbytag("reset_dip")) ||
+		switchkey & A2_KEY_CONTROL)) {
 			if (!reset_flag) {
 				reset_flag = 1;
 				/* using PULSE_LINE does not allow us to press and hold key */

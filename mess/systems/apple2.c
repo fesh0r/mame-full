@@ -200,25 +200,86 @@ ADDRESS_MAP_END
 
 #define JOYSTICK_DELTA			80
 #define JOYSTICK_SENSITIVITY	50
+#define JOYSTICK_AUTOCENTER     80
+#define PADDLE_DELTA            10
+#define PADDLE_SENSITIVITY      10
+#define PADDLE_AUTOCENTER       0
 
 static INPUT_PORTS_START( apple2_joystick )
 	PORT_START_TAG("joystick_1_x")		/* Joystick 1 X Axis */
-	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_X) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X) PORT_NAME("P1 Joystick X")
+	PORT_SENSITIVITY(JOYSTICK_SENSITIVITY)
+	PORT_KEYDELTA(JOYSTICK_DELTA)
+	PORT_CENTERDELTA(JOYSTICK_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
 	PORT_CODE_DEC(KEYCODE_4_PAD)	PORT_CODE_INC(KEYCODE_6_PAD)
 	PORT_CODE_DEC(JOYCODE_1_LEFT)	PORT_CODE_INC(JOYCODE_1_RIGHT)
 
 	PORT_START_TAG("joystick_1_y")		/* Joystick 1 Y Axis */
-	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_Y) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y) PORT_NAME("P1 Joystick Y")
+	PORT_SENSITIVITY(JOYSTICK_SENSITIVITY)
+	PORT_KEYDELTA(JOYSTICK_DELTA)
+	PORT_CENTERDELTA(JOYSTICK_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
 	PORT_CODE_DEC(KEYCODE_8_PAD)	PORT_CODE_INC(KEYCODE_2_PAD)
 	PORT_CODE_DEC(JOYCODE_1_UP)		PORT_CODE_INC(JOYCODE_1_DOWN)
 
 	PORT_START_TAG("joystick_2_x")		/* Joystick 2 X Axis */
-	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_X) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X) PORT_NAME("P2 Joystick X")
+	PORT_SENSITIVITY(JOYSTICK_SENSITIVITY)
+	PORT_KEYDELTA(JOYSTICK_DELTA)
+	PORT_CENTERDELTA(JOYSTICK_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
 	PORT_CODE_DEC(JOYCODE_2_LEFT)	PORT_CODE_INC(JOYCODE_2_RIGHT)
 
 	PORT_START_TAG("joystick_2_y")		/* Joystick 2 Y Axis */
-	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_Y) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y) PORT_NAME("P2 Joystick Y")
+	PORT_SENSITIVITY(JOYSTICK_SENSITIVITY)
+	PORT_KEYDELTA(JOYSTICK_DELTA)
+	PORT_CENTERDELTA(JOYSTICK_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
 	PORT_CODE_DEC(JOYCODE_2_UP)		PORT_CODE_INC(JOYCODE_2_DOWN)
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( apple2_paddle )
+	PORT_START_TAG("paddle_0")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_NAME("P1 Paddle 0")
+	PORT_SENSITIVITY(PADDLE_SENSITIVITY)
+	PORT_KEYDELTA(PADDLE_DELTA)
+	PORT_CENTERDELTA(PADDLE_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
+	PORT_CODE_DEC(KEYCODE_4_PAD)	PORT_CODE_INC(KEYCODE_6_PAD)
+	PORT_CODE_DEC(JOYCODE_1_LEFT)	PORT_CODE_INC(JOYCODE_1_RIGHT)
+
+	PORT_START_TAG("paddle_1")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_NAME("P1 Paddle 1")
+	PORT_SENSITIVITY(PADDLE_SENSITIVITY)
+	PORT_KEYDELTA(PADDLE_DELTA)
+	PORT_CENTERDELTA(PADDLE_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
+	PORT_CODE_DEC(KEYCODE_8_PAD)	PORT_CODE_INC(KEYCODE_2_PAD)
+	PORT_CODE_DEC(JOYCODE_1_UP)		PORT_CODE_INC(JOYCODE_1_DOWN)
+
+	PORT_START_TAG("paddle_2")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_NAME("P2 Paddle 0")
+	PORT_SENSITIVITY(PADDLE_SENSITIVITY)
+	PORT_KEYDELTA(PADDLE_DELTA)
+	PORT_CENTERDELTA(PADDLE_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
+	PORT_CODE_DEC(JOYCODE_2_LEFT)	PORT_CODE_INC(JOYCODE_2_RIGHT)
+
+	PORT_START_TAG("paddle_3")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE) PORT_NAME("P2 Paddle 1")
+	PORT_SENSITIVITY(PADDLE_SENSITIVITY)
+	PORT_KEYDELTA(PADDLE_DELTA)
+	PORT_CENTERDELTA(PADDLE_AUTOCENTER)
+	PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
+	PORT_CODE_DEC(JOYCODE_2_UP)		PORT_CODE_INC(JOYCODE_2_DOWN)
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( apple2_gameport )
+	PORT_INCLUDE( apple2_joystick )
+	//PORT_INCLUDE( apple2_paddle )
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( apple2_keypad )
@@ -341,7 +402,16 @@ INPUT_PORTS_START( apple2 )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("RESET")		PORT_CODE(KEYCODE_F12)
 
 	/* other devices */
-	PORT_INCLUDE( apple2_joystick )
+	PORT_INCLUDE( apple2_gameport )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( apple2p )
+	PORT_INCLUDE( apple2 )
+
+	PORT_START_TAG("reset_dip")
+	PORT_DIPNAME( 0x01, 0x01, "Reset" )
+	PORT_DIPSETTING( 0x01, "CTRL-RESET" )
+	PORT_DIPSETTING( 0x00, "RESET" )
 INPUT_PORTS_END
 
 static INPUT_PORTS_START( apple2_common )
@@ -419,14 +489,14 @@ INPUT_PORTS_END
 INPUT_PORTS_START( apple2e )
 	PORT_INCLUDE( apple2_common )
 	PORT_INCLUDE( apple2_special )
-	PORT_INCLUDE( apple2_joystick )
+	PORT_INCLUDE( apple2_gameport )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( apple2ep )
 	PORT_INCLUDE( apple2_common )
 	PORT_INCLUDE( apple2_keypad )
 	PORT_INCLUDE( apple2_special )
-	PORT_INCLUDE( apple2_joystick )
+	PORT_INCLUDE( apple2_gameport )
 INPUT_PORTS_END
 
 /* according to Steve Nickolas (author of Dapple), our original palette would
@@ -756,42 +826,41 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2)
 	CONFIG_IMPORT_FROM( apple2_common )
-//	CONFIG_RAM				(4 * 1024)	/* Still unsupported? */
-//	CONFIG_RAM				(8 * 1024)	/* Still unsupported? */
-//	CONFIG_RAM				(12 * 1024)	/* Still unsupported? */
-//	CONFIG_RAM				(16 * 1024)
-//	CONFIG_RAM				(20 * 1024)
-//	CONFIG_RAM				(24 * 1024)
-//	CONFIG_RAM				(32 * 1024)
-//	CONFIG_RAM				(36 * 1024)
-//	CONFIG_RAM				(48 * 1024)
-//	CONFIG_RAM_DEFAULT			(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
-								/* default configuration: on real machine is present also in configurations */
-								/* with less memory, provided that the language card is installed           */
-	CONFIG_RAM_DEFAULT			(128 * 1024)	/* ONLY TEMPORARY - ACTUALLY NOT SUPPORTED!!! */
+	CONFIG_RAM				(4  * 1024)
+	CONFIG_RAM				(8  * 1024)
+	CONFIG_RAM				(12 * 1024)
+	CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM				(20 * 1024)
+	CONFIG_RAM				(24 * 1024)
+	CONFIG_RAM				(32 * 1024)
+	CONFIG_RAM				(36 * 1024)
+	CONFIG_RAM				(48 * 1024)
+	CONFIG_RAM_DEFAULT		(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
+										/* default configuration: on real machine is present also in configurations */
+										/* with less memory, provided that the language card is installed           */
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2p)
 	CONFIG_IMPORT_FROM( apple2_common )
-//	CONFIG_RAM				(16 * 1024)
-//	CONFIG_RAM				(32 * 1024)
-//	CONFIG_RAM				(48 * 1024)
-//	CONFIG_RAM_DEFAULT			(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
-								/* default configuration: on real machine is present also in configurations */
-								/* with less memory, provided that the language card is installed           */
-	CONFIG_RAM_DEFAULT                      (128 * 1024)    /* ONLY TEMPORARY - ACTUALLY NOT SUPPORTED!!! */
+	CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM				(32 * 1024)
+	CONFIG_RAM				(48 * 1024)
+	CONFIG_RAM_DEFAULT		(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
+										/* default configuration: on real machine is present also in configurations */
+										/* with less memory, provided that the language card is installed           */
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2e)
 	CONFIG_IMPORT_FROM( apple2_common )
-	CONFIG_RAM_DEFAULT			(128 * 1024)
+	CONFIG_RAM				(64  * 1024)
+	CONFIG_RAM_DEFAULT		(128 * 1024)
 SYSTEM_CONFIG_END
 
 
 
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
 COMP ( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
-COMP ( 1979, apple2p,  apple2,   0,			apple2p,  apple2,   apple2,   apple2p,	"Apple Computer", "Apple ][+" )
+COMP ( 1979, apple2p,  apple2,   0,			apple2p,  apple2p,  apple2,   apple2p,	"Apple Computer", "Apple ][+" )
 COMP ( 1982, ace100,   apple2,   0,			apple2,	  apple2e,  apple2,   apple2,	"Franklin Computer", "Franklin Ace 100" )
 COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2e,  apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
