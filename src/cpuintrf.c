@@ -755,7 +755,6 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 			irq_line_vector[i * MAX_IRQ_LINES + j] = cpuintf[CPU_TYPE(i)].default_vector;
 		}
 
-		if (cpu[i].save_context) SETCONTEXT(i, cpu[i].context);
 		state_save_set_current_tag(i+1);
 		INIT(i);
 		if (cpu[i].save_context) GETCONTEXT(i, cpu[i].context);
@@ -1488,13 +1487,18 @@ void cpu_clear_pending_interrupts(int cpunum)
 
 
 
+void cpu_interrupt_enable(int cpunum,int enabled)
+{
+	interrupt_enable[cpunum] = enabled;
+
+	/* make sure there are no queued interrupts */
+	if (enabled == 0) cpu_clear_pending_interrupts(cpunum);
+}
+
 WRITE_HANDLER( interrupt_enable_w )
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
-	interrupt_enable[cpunum] = data;
-
-	/* make sure there are no queued interrupts */
-	if (data == 0) cpu_clear_pending_interrupts(cpunum);
+	cpu_interrupt_enable(cpunum,data);
 }
 
 
@@ -3419,3 +3423,34 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc)
 	return 1;
 }
 
+void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
+{
+	void m68k_set_reset_instr_callback(void  (*callback)(void));
+
+	if (CPU_TYPE(cpunum) != CPU_M68000 &&
+		CPU_TYPE(cpunum) != CPU_M68010 &&
+		CPU_TYPE(cpunum) != CPU_M68020 &&
+		CPU_TYPE(cpunum) != CPU_M68EC020)
+	{
+		logerror("Trying to set m68k reset vector on non-68k cpu\n");
+		exit(1);
+	}
+
+	if (cpunum != activecpu)
+	{
+		if(activecpu != -1)
+			if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
+		memory_set_context(cpunum);
+		if (cpu[cpunum].save_context) SETCONTEXT(cpunum, cpu[cpunum].context);
+	}
+
+	m68k_set_reset_instr_callback(resetfn);
+
+	if(cpunum != activecpu)
+	{
+		memory_set_context(cpunum);
+		if (cpu[cpunum].save_context) GETCONTEXT(cpunum, cpu[cpunum].context);
+		if(activecpu != -1)
+			if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
+}

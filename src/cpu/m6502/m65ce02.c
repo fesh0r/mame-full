@@ -115,8 +115,6 @@ static m65ce02_Regs m65ce02;
 
 #include "t65ce02.c"
 
-void m65ce02_init(void) {}
-
 void m65ce02_reset (void *param)
 {
 	m65ce02.insn = insn65ce02;
@@ -337,7 +335,6 @@ void m65ce02_set_irq_callback(int (*callback)(int))
 	m65ce02.irq_callback = callback;
 }
 
-#if 0
 void m65ce02_state_save(void *file)
 {
 	int cpu = cpu_getactivecpu();
@@ -373,7 +370,6 @@ void m65ce02_state_load(void *file)
 	state_load_UINT8(file,"m65ce02",cpu,"NMI_STATE",&m65ce02.nmi_state,1);
 	state_load_UINT8(file,"m65ce02",cpu,"IRQ_STATE",&m65ce02.irq_state,1);
 }
-#endif
 
 /****************************************************************************
  * Return a formatted string for a register

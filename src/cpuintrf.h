@@ -525,6 +525,7 @@ WRITE_HANDLER( cpu_7_irq_line_vector_w );
 /* cause an interrupt on a CPU */
 void cpu_cause_interrupt(int cpu,int type);
 void cpu_clear_pending_interrupts(int cpu);
+void cpu_interrupt_enable(int cpu,int enabled);
 WRITE_HANDLER( interrupt_enable_w );
 WRITE_HANDLER( interrupt_vector_w );
 int interrupt(void);
@@ -666,6 +667,8 @@ const char *cpunum_core_version(int cpunum);
 const char *cpunum_core_file(int cpunum);
 /* Return a the credits for the specified cpu number */
 const char *cpunum_core_credits(int cpunum);
+
+void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
 
 /* Dump all of the running machines CPUs state to stderr */
 void cpu_dump_states(void);

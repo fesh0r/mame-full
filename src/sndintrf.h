@@ -64,7 +64,7 @@ struct MachineSound
  #ifndef MESS
 #include "sound/nes_apu.h"
  #else
-#include "sound/nesintf.h"
+#include "mess/sound/nesintf.h"
  #endif
 #endif
 #if (HAS_ASTROCADE)
@@ -139,16 +139,16 @@ struct MachineSound
 
 #ifdef MESS
 #if (HAS_BEEP)
-#include "sound/beep.h"
+#include "mess/sound/beep.h"
 #endif
 #if (HAS_SPEAKER)
-#include "sound/speaker.h"
+#include "mess/sound/speaker.h"
 #endif
 #if (HAS_TIA)
-#include "sound/tiaintf.h"
+#include "mess/sound/tiaintf.h"
 #endif
 #if (HAS_WAVE)
-#include "sound/wave.h"
+#include "mess/sound/wave.h"
 #endif
 #endif
 
