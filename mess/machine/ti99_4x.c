@@ -381,6 +381,8 @@ static UINT8 *sRAM_ptr_8;
 
 /* tms9900_ICount: used to implement memory waitstates (hack) */
 extern int tms9900_ICount;
+/* tms9995_ICount: used to implement memory waitstates (hack) */
+extern int tms9995_ICount;
 
 
 
@@ -1153,7 +1155,7 @@ WRITE16_HANDLER ( ti99_ww_wv38 )
 }
 
 /*
-	TMS5200 speech chip read
+	TMS0285 speech chip read
 */
 static READ16_HANDLER ( ti99_rw_rspeech )
 {
@@ -1179,7 +1181,7 @@ static void speech_kludge_callback(int dummy)
 #endif
 
 /*
-	TMS5200 speech chip write
+	TMS0285 speech chip write
 */
 static WRITE16_HANDLER ( ti99_ww_wspeech )
 {
@@ -1317,10 +1319,43 @@ WRITE16_HANDLER ( ti99_4p_ww_wgpl )
 }
 
 
+#if 0
+#pragma mark -
+#pragma mark 99/8 MEMORY HANDLERS
+#endif
+
+/*
+	TMS5200C speech chip write
+*/
+static WRITE_HANDLER ( ti99_8_speech_w )
+{
+	tms9995_ICount -= 30;		/* this is just an approx. minimum, it can be much more */
+
+#if 1
+	/* the stupid design of the tms5220 core means that ready is cleared when
+	there are 15 bytes in FIFO.  It should be 16.  Of course, if it were the
+	case, we would need to store the value on the bus, which would be more
+	complex. */
+	if (! tms5220_ready_r())
+	{
+		double time_to_ready = tms5220_time_to_ready();
+		int cycles_to_ready = ceil(TIME_TO_CYCLES(0, time_to_ready));
+
+		logerror("time to ready: %f -> %d\n", time_to_ready, (int) cycles_to_ready);
+
+		tms9995_ICount -= cycles_to_ready;
+		timer_set(TIME_NOW, 0, /*speech_kludge_callback*/NULL);
+	}
+#endif
+
+	tms5220_data_w(offset, data);
+}
+
 READ_HANDLER ( ti99_8_r )
 {
 	int page = offset >> 12;
 	UINT32 mapper_reg;
+	int reply = 0;
 
 	if (ti99_8_CRUS)
 	{
@@ -1336,12 +1371,13 @@ READ_HANDLER ( ti99_8_r )
 			{
 			case 0:
 				/* RAM */
-				return sRAM_ptr_8[offset & 0x1fff];
+				reply = sRAM_ptr_8[offset & 0x1fff];
+				break;
 
 			case 1:
 				/* sound write + RAM */
 				if (offset >= 0x8410)
-					return sRAM_ptr_8[offset & 0x1fff];
+					reply = sRAM_ptr_8[offset & 0x1fff];
 				break;
 
 			case 2:
@@ -1352,42 +1388,43 @@ READ_HANDLER ( ti99_8_r )
 					{
 						if (offset & 2)
 						{	/* read VDP status */
-							return TMS9928A_register_r(0);
+							tms9995_ICount -= 1;
+							reply = TMS9928A_register_r(0);
 						}
 						else
 						{	/* read VDP RAM */
-							return TMS9928A_vram_r(0);
+							tms9995_ICount -= 1;
+							reply = TMS9928A_vram_r(0);
 						}
 					}
 				}
 				else
 				{
-					UINT8 reply = ti99_8_mapper_status;
+					reply = ti99_8_mapper_status;
 
 					ti99_8_mapper_status = 0;
-
-					return reply;
 				}
-				return 0;
+				break;
 
 			case 4:
 				/* speech read */
-				/*if (! (offset & 1))
+				if (! (offset & 1))
 				{
-					return ti99_8_speech_r(0);
-				}*/
-				return 0;
+					reply = tms5220_status_r(0);
+				}
+				break;
 
 			case 6:
 				/* GPL read */
 				if (! (offset & 1))
-					return ti99_rw_rgpl(offset >> 1, 0) >> 8;
-				return 0;
+					reply = ti99_rw_rgpl(offset >> 1, 0) >> 8;
+				break;
 
 			default:
 				logerror("unmapped read offs=%d\n", (int) offset);
-				return 0;
+				break;
 			}
+			return reply;
 		}
 	}
 
@@ -1404,7 +1441,7 @@ READ_HANDLER ( ti99_8_r )
 
 	if (offset < 0x010000)
 		/* Read RAM */
-		return xRAM_ptr_8[offset];
+		reply = xRAM_ptr_8[offset];
 
 	if (offset >= 0xff0000)
 	{
@@ -1420,11 +1457,13 @@ READ_HANDLER ( ti99_8_r )
 			/* internal DSR ROM??? (normally enabled with a write to CRU >2700) */
 		case 7:
 			/* ??? */
+			logerror("unmapped read page=%d offs=%d\n", (int) page, (int) offset);
 			break;
 
 		case 2:
 			/* DSR space */
-			return ti99_8_peb_r(offset & 0x1fff);
+			reply = ti99_8_peb_r(offset & 0x1fff);
+			break;
 
 		case 3:
 			/* cartridge space */
@@ -1432,26 +1471,29 @@ READ_HANDLER ( ti99_8_r )
 #if 0
 			if (hsgpl_crdena)
 				/* hsgpl is enabled */
-				return ti99_hsgpl_rom6_r(offset, mem_mask);
+				reply = ti99_hsgpl_rom6_r(offset, mem_mask);
+			else
 #endif
 
 			if (cartridge_mbx && (offset >= 0x0c00) && (offset <= 0x0ffd))
-				return (cartridge_pages_8[0])[offset];
-
-			return current_page_ptr_8[offset];
+				reply = (cartridge_pages_8[0])[offset];
+			else
+				reply = current_page_ptr_8[offset];
+			break;
 
 		case 5:
 			/* >2000 ROM (ROM1) */
-			return ROM1_ptr_8[offset & 0x1fff];
+			reply = ROM1_ptr_8[offset & 0x1fff];
+			break;
 
 		case 6:
 			/* >6000 ROM */
-			return ROM3_ptr_8[offset & 0x1fff];
+			reply = ROM3_ptr_8[offset & 0x1fff];
+			break;
 		}
 	}
 
-	logerror("unmapped read page=%d offs=%d\n", (int) page, (int) offset);
-	return 0;
+	return reply;
 }
 
 WRITE_HANDLER ( ti99_8_w )
@@ -1474,7 +1516,7 @@ WRITE_HANDLER ( ti99_8_w )
 			case 0:
 				/* RAM */
 				sRAM_ptr_8[offset & 0x1fff] = data;
-				return;
+				break;
 
 			case 1:
 				/* sound write + RAM */
@@ -1482,7 +1524,7 @@ WRITE_HANDLER ( ti99_8_w )
 					SN76496_0_w(offset, data);
 				else
 					sRAM_ptr_8[offset & 0x1fff] = data;
-				return;
+				break;
 
 			case 2:
 				/* VDP read + mapper control */
@@ -1512,7 +1554,7 @@ WRITE_HANDLER ( ti99_8_w )
 						}
 					}
 				}
-				return;
+				break;
 
 			case 3:
 				/* VDP write */
@@ -1521,32 +1563,35 @@ WRITE_HANDLER ( ti99_8_w )
 					if (offset & 2)
 					{	/* read VDP status */
 						TMS9928A_register_w(0, data);
+						tms9995_ICount -= 1;
 					}
 					else
 					{	/* read VDP RAM */
 						TMS9928A_vram_w(0, data);
+						tms9995_ICount -= 1;
 					}
 				}
-				return;
+				break;
 
 			case 5:
 				/* speech write */
-				/*if (! (offset & 1))
+				if (! (offset & 1))
 				{
-					return ti99_8_speech_w(0);
-				}*/
-				return;
+					ti99_8_speech_w(0, data);
+				}
+				break;
 
 			case 7:
 				/* GPL write */
 				if (! (offset & 1))
 					ti99_ww_wgpl(offset >> 1, data << 8, 0);
-				return;
+				break;
 
 			default:
 				logerror("unmapped write offs=%d data=%d\n", (int) offset, (int) data);
-				return;
+				break;
 			}
+			return;
 		}
 	}
 

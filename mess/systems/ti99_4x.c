@@ -840,6 +840,9 @@ ROM_START(ti99_4ev)
 	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, CRC(58b155f7)) /* system speech ROM */
 ROM_END
 
+#define rom_ti99_4e rom_ti99_4
+#define rom_ti99_4ae rom_ti99_4a
+
 /* a TI99 console only had one cartridge slot, but cutting the ROMs
  * in 3 files seems to be the only way to handle cartridges until I use
  * a headered format.
@@ -847,9 +850,6 @@ ROM_END
  * and you could plug quite a lot of GROMs in the side port.  Neither of these
  * are emulated.
  */
-
-#define rom_ti99_4e rom_ti99_4
-#define rom_ti99_4ae rom_ti99_4a
 
 SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_CASSETTE			(2, NULL)
