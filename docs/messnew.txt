@@ -12,6 +12,8 @@ System Driver Changes:
   
 - [PC] Fixed a bug in the i86 CMPSW instruction (bug #466).  [Bob Dayley]
 
+- [PC] Fixed a pit8253 bug (bug #399).  [Ruslan Staritsin]
+
 
 User Interface Changes:
 -----------------------

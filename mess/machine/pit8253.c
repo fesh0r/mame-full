@@ -280,9 +280,14 @@ static void pit8253_w(int which, offs_t offset, data8_t data)
 		if (this->timer[offset].gate)
 			this->timer[offset].time_access = timer_get_time();
 
-		pit8253_timer_clock(which, offset);
-		pit8253_timer_pulse(which, offset);
-
+		/* NPW 2-Oct-2003 - Wrapping these up in a conditional as per Ruslan Staritsin */
+		if ((this->timer[offset].access == 3 && ! this->timer[offset].msb)
+			|| this->timer[offset].access == 2
+			|| this->timer[offset].access == 1)
+		{
+			pit8253_timer_clock(which, offset);
+			pit8253_timer_pulse(which, offset);
+		}
         break;
 
     case 3:
