@@ -718,6 +718,7 @@ void osd_update_video_and_audio(struct mame_display *display)
             }
             else if (code_pressed(KEYCODE_LCONTROL))
             {
+                int effect_mod = 0;
 		if (code_pressed_memory(KEYCODE_INSERT))
 			frameskipper = 0;
 		if (code_pressed_memory(KEYCODE_HOME))
@@ -727,18 +728,46 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (code_pressed_memory(KEYCODE_END))
 			flags |= SYSDEP_DISPLAY_HOTKEY_GRABKEYB;
 		if (code_pressed_memory(KEYCODE_PGUP))
-		{
-		        normal_params.effect++;
-		        if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
-		            normal_params.effect = 0;
-                        normal_params_changed = 1;
-		}
+                        effect_mod = 1;
 		if (code_pressed_memory(KEYCODE_PGDN))
+                        effect_mod = -1;
+		if (effect_mod)
 		{
-		        normal_params.effect--;
-		        if (normal_params.effect < 0)
-		            normal_params.effect = SYSDEP_DISPLAY_EFFECT_LAST;
-                        normal_params_changed = 1;
+		  int i=0, scaled_width, scaled_height;
+
+                  /* check if the effect fits the screen:
+                     1st try (i=0) new effect
+                     2nd try (i=1) new effect, widthscale = heightscale = 1
+                     2+tries (i>1) next effect, widthscale = heightscale = 1 */
+		  do
+		  {
+		    if (i!=1) /* don't change the effect on the 2nd try */
+		    {
+		      normal_params.effect += effect_mod;
+                      if (normal_params.effect < 0)
+                        normal_params.effect = SYSDEP_DISPLAY_EFFECT_LAST;
+                      if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
+                        normal_params.effect = 0;
+                    }
+                    if (i>0)  /* 2nd try and later */
+                    {
+                      normal_params.widthscale  = 1;
+                      normal_params.heightscale = 1;
+                      normal_params.yarbsize    = 0;
+                    }
+                    
+                    sysdep_display_check_effect_params(&normal_params);
+
+                    /* is this going to fit? */
+                    scaled_width  = normal_params.width * normal_params.widthscale;
+                    scaled_height = normal_params.yarbsize? normal_params.yarbsize:
+                      normal_params.height * normal_params.heightscale;
+                    i++;
+                  } while ((i <= SYSDEP_DISPLAY_EFFECT_LAST) &&
+                           ((scaled_width  > sysdep_display_properties.max_width ) ||
+                            (scaled_height > sysdep_display_properties.max_height)));
+
+                  normal_params_changed = 1;
 		}
             }
             else if (code_pressed(KEYCODE_LSHIFT))
@@ -782,7 +811,6 @@ void osd_update_video_and_audio(struct mame_display *display)
             }
             if (normal_params_changed)
             {
-		sysdep_display_check_effect_params(&normal_params);
                 change_display_settings(&normal_params, 0);
 		show_effect_or_scale = 2.0 * display->game_refresh_rate;
 		ui_show_fps_temp(2.0);

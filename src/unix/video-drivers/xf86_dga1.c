@@ -95,18 +95,26 @@ static XF86VidModeModeInfo *xf86_vidmode_find_best_vidmode(void)
 	
 	fprintf(stderr, "XF86DGA: info: found %d modes:\n", xf86ctx.mode_count);
 
+	/* also determine the max size of the display */
+        sysdep_display_properties.max_width  = 0;
+        sysdep_display_properties.max_height = 0;
+
 	for(i=0;i<xf86ctx.mode_count;i++)
 	{
-		fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
-		   xf86ctx.modes[i]->hdisplay, xf86ctx.modes[i]->vdisplay);
-		score = mode_match(xf86ctx.modes[i]->hdisplay, 
-		  xf86ctx.modes[i]->vdisplay, screen->root_depth,
-                  sysdep_display_properties.palette_info.bpp, 1);
-		if(score > best_score)
-		{
-			best_score = score;
-			bestmode   = xf86ctx.modes[i];
-		}
+          fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
+             xf86ctx.modes[i]->hdisplay, xf86ctx.modes[i]->vdisplay);
+          score = mode_match(xf86ctx.modes[i]->hdisplay, 
+            xf86ctx.modes[i]->vdisplay, screen->root_depth,
+            sysdep_display_properties.palette_info.bpp, 1);
+          if(score > best_score)
+          {
+                  best_score = score;
+                  bestmode   = xf86ctx.modes[i];
+          }
+          if (xf86ctx.modes[i]->vdisplay > sysdep_display_properties.max_width)
+            sysdep_display_properties.max_width = xf86ctx.modes[i]->vdisplay;
+          if (xf86ctx.modes[i]->hdisplay > sysdep_display_properties.max_height)
+            sysdep_display_properties.max_height = xf86ctx.modes[i]->hdisplay;
 	}
 
 	return bestmode;

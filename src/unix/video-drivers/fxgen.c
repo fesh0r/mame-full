@@ -287,6 +287,8 @@ int InitVScreen(int reopen)
   vecvscrntly    = vscrntly;
   
   /* fill the sysdep_display_properties struct */
+  sysdep_display_properties.max_width  = -1;
+  sysdep_display_properties.max_height = -1;
   sysdep_display_properties.palette_info.fourcc_format = 0;
   switch(sysdep_display_params.depth) {
     case 15:

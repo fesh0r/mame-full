@@ -100,62 +100,71 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
 		fprintf(stderr, "XDGA: info: found %d modes:\n", xf86ctx.mode_count);
 	}
 
+	/* also determine the max size of the display */
+        sysdep_display_properties.max_width  = 0;
+        sysdep_display_properties.max_height = 0;
+
 	for(i=0;i<xf86ctx.mode_count;i++)
 	{
 #ifdef TDFX_DGA_WORKAROUND
-		if ((xf86ctx.current_mode == -1) &&
-			xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
-			xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
-			xf86ctx.current_X11_mode = xf86ctx.modes[i].num;
+          if ((xf86ctx.current_mode == -1) &&
+                  xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
+                  xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
+                  xf86ctx.current_X11_mode = xf86ctx.modes[i].num;
 #endif
 #if 0 /* DEBUG */
-		fprintf(stderr, "XDGA: info: (%d) %s\n",
-		   xf86ctx.modes[i].num, xf86ctx.modes[i].name);
-		fprintf(stderr, "          : VRefresh = %f [Hz]\n",
-		   xf86ctx.modes[i].verticalRefresh);
-		/* flags */
-		fprintf(stderr, "          : viewport = %dx%d\n",
-		   xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight);
-		fprintf(stderr, "          : image = %dx%d\n",
-		   xf86ctx.modes[i].imageWidth, xf86ctx.modes[i].imageHeight);
-		if (xf86ctx.modes[i].flags & XDGAPixmap)
-			fprintf(stderr, "          : pixmap = %dx%d\n",
-				xf86ctx.modes[i].pixmapWidth, xf86ctx.modes[i].pixmapHeight);
-		fprintf(stderr, "          : bytes/scanline = %d\n",
-		   xf86ctx.modes[i].bytesPerScanline);
-		fprintf(stderr, "          : byte order = %s\n",
-			xf86ctx.modes[i].byteOrder == MSBFirst ? "MSBFirst" :
-			xf86ctx.modes[i].byteOrder == LSBFirst ? "LSBFirst" :
-			"Unknown");
-		fprintf(stderr, "          : bpp = %d, depth = %d\n",
-			xf86ctx.modes[i].bitsPerPixel, xf86ctx.modes[i].depth);
-		fprintf(stderr, "          : RGBMask = (%lx, %lx, %lx)\n",
-			xf86ctx.modes[i].redMask,
-			xf86ctx.modes[i].greenMask,
-			xf86ctx.modes[i].blueMask);
-		fprintf(stderr, "          : visual class = %s\n",
-			xf86ctx.modes[i].visualClass == TrueColor ? "TrueColor":
-			xf86ctx.modes[i].visualClass == DirectColor ? "DirectColor" :
-			xf86ctx.modes[i].visualClass == PseudoColor ? "PseudoColor" : "Unknown");
-		fprintf(stderr, "          : xViewportStep = %d, yViewportStep = %d\n",
-			xf86ctx.modes[i].xViewportStep, xf86ctx.modes[i].yViewportStep);
-		fprintf(stderr, "          : maxViewportX = %d, maxViewportY = %d\n",
-			xf86ctx.modes[i].maxViewportX, xf86ctx.modes[i].maxViewportY);
-		/* viewportFlags */
+          fprintf(stderr, "XDGA: info: (%d) %s\n",
+             xf86ctx.modes[i].num, xf86ctx.modes[i].name);
+          fprintf(stderr, "          : VRefresh = %f [Hz]\n",
+             xf86ctx.modes[i].verticalRefresh);
+          /* flags */
+          fprintf(stderr, "          : viewport = %dx%d\n",
+             xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight);
+          fprintf(stderr, "          : image = %dx%d\n",
+             xf86ctx.modes[i].imageWidth, xf86ctx.modes[i].imageHeight);
+          if (xf86ctx.modes[i].flags & XDGAPixmap)
+                  fprintf(stderr, "          : pixmap = %dx%d\n",
+                          xf86ctx.modes[i].pixmapWidth, xf86ctx.modes[i].pixmapHeight);
+          fprintf(stderr, "          : bytes/scanline = %d\n",
+             xf86ctx.modes[i].bytesPerScanline);
+          fprintf(stderr, "          : byte order = %s\n",
+                  xf86ctx.modes[i].byteOrder == MSBFirst ? "MSBFirst" :
+                  xf86ctx.modes[i].byteOrder == LSBFirst ? "LSBFirst" :
+                  "Unknown");
+          fprintf(stderr, "          : bpp = %d, depth = %d\n",
+                  xf86ctx.modes[i].bitsPerPixel, xf86ctx.modes[i].depth);
+          fprintf(stderr, "          : RGBMask = (%lx, %lx, %lx)\n",
+                  xf86ctx.modes[i].redMask,
+                  xf86ctx.modes[i].greenMask,
+                  xf86ctx.modes[i].blueMask);
+          fprintf(stderr, "          : visual class = %s\n",
+                  xf86ctx.modes[i].visualClass == TrueColor ? "TrueColor":
+                  xf86ctx.modes[i].visualClass == DirectColor ? "DirectColor" :
+                  xf86ctx.modes[i].visualClass == PseudoColor ? "PseudoColor" : "Unknown");
+          fprintf(stderr, "          : xViewportStep = %d, yViewportStep = %d\n",
+                  xf86ctx.modes[i].xViewportStep, xf86ctx.modes[i].yViewportStep);
+          fprintf(stderr, "          : maxViewportX = %d, maxViewportY = %d\n",
+                  xf86ctx.modes[i].maxViewportX, xf86ctx.modes[i].maxViewportY);
+          /* viewportFlags */
 #endif
-                /* we only support TrueColor visuals */
-                if(xf86ctx.modes[i].visualClass != TrueColor)
-                        continue;
-                
-		score = mode_match(xf86ctx.modes[i].viewportWidth,
-			xf86ctx.modes[i].viewportHeight,
-			xf86ctx.modes[i].depth,
-			xf86ctx.modes[i].bitsPerPixel, 1);
-		if(score > best_score)
-		{
-			best_score = score;
-			bestmode   = xf86ctx.modes[i].num;
-		}
+          /* we only support TrueColor visuals */
+          if(xf86ctx.modes[i].visualClass != TrueColor)
+                  continue;
+          
+          score = mode_match(xf86ctx.modes[i].viewportWidth,
+                  xf86ctx.modes[i].viewportHeight,
+                  xf86ctx.modes[i].depth,
+                  xf86ctx.modes[i].bitsPerPixel, 1);
+          if(score > best_score)
+          {
+                  best_score = score;
+                  bestmode   = xf86ctx.modes[i].num;
+          }
+	  /* also determine the max size of the display */
+          if(xf86ctx.modes[i].viewportWidth > sysdep_display_properties.max_width)
+            sysdep_display_properties.max_width = xf86ctx.modes[i].viewportWidth;
+          if(xf86ctx.modes[i].viewportHeight > sysdep_display_properties.max_height)
+            sysdep_display_properties.max_height = xf86ctx.modes[i].viewportHeight;
 	}
 
 	return bestmode;

@@ -134,8 +134,7 @@ struct sysdep_display_keyboard_event
 };
 
 struct sysdep_display_open_params {
-  /* initial width and height before scaling of the part of bitmap to be
-     displayed */  
+  /* width and height before scaling of the part of bitmap to be displayed */  
   int width;
   int height;
   /* "depth" of the bitmap to be displayed (15/32 direct or 16 palettised) */
@@ -143,8 +142,13 @@ struct sysdep_display_open_params {
   /* should we rotate and or flip ? */
   int orientation;
   /* maximum width and height before scaling of the part of the bitmap to be
-     displayed, this gives bounds for the values which can be passed to
-     sysdep_display_resize. */
+     displayed, this is used to determine the size of internal structures
+     so that these structures don't have to be recreated when a different
+     width and height are set through sysdep_display_change_params().
+     width and height may NEVER exceed these values! If you really need
+     a bigger display it is allowed to change these values, which will result
+     in a recreation of the internal structures. It is strongly encouraged
+     to set this to the biggest value you will use on open. */
   int max_width;
   int max_height;
   /* title of the window */
@@ -169,11 +173,12 @@ struct sysdep_display_open_params {
 };
 
 struct sysdep_display_properties_struct {
+  /* per mode info availabe after sysdep_display_init */
+  int mode[SYSDEP_DISPLAY_VIDEO_MODES];
   /* info available after sysdep_display_open */
+  unsigned int max_width, max_height;
   struct sysdep_palette_info palette_info;
   int (*vector_renderer)(point *pt, int num_points);
-  /* per mode info availabe after sysdep_init */
-  int mode[SYSDEP_DISPLAY_VIDEO_MODES];
 };
 
 struct sysdep_display_effect_properties_struct {
@@ -212,6 +217,7 @@ void sysdep_display_set_keybleds(int leds);
    the choisen effect, if not update them so that they are. */
 void sysdep_display_check_effect_params(struct sysdep_display_open_params *params);
 
+/* variables */
 extern struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_MAX];
 extern struct rc_option sysdep_display_opts[];
 extern struct sysdep_display_properties_struct sysdep_display_properties;

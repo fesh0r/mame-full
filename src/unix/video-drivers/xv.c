@@ -232,6 +232,8 @@ int xv_open_display(int reopen)
 
 	  /* Initial settings of the sysdep_display_properties struct,
              the FindXvXXX fucntions will fill in the palette part */
+          sysdep_display_properties.max_width  = -1;
+          sysdep_display_properties.max_height = -1;
 	  sysdep_display_properties.vector_renderer = NULL;
 
 	  /* create a window */

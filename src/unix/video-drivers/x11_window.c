@@ -117,6 +117,8 @@ int x11_window_open_display(int reopen)
         if(!reopen)
         {
           /* setup the sysdep_display_properties struct */
+          sysdep_display_properties.max_width  = -1;
+          sysdep_display_properties.max_height = -1;
           if (x11_init_palette_info())
                   return 1;
 

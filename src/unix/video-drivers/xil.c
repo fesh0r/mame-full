@@ -76,6 +76,8 @@ int xil_open_display(int reopen)
           }
 
           /* setup the sysdep_display_properties struct */
+          sysdep_display_properties.max_width                  = -1;
+          sysdep_display_properties.max_height                 = -1;
           sysdep_display_properties.palette_info.fourcc_format = 0;
           sysdep_display_properties.palette_info.red_mask      = 0x0000F800;
           sysdep_display_properties.palette_info.green_mask    = 0x000007E0;

@@ -48,8 +48,8 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
   if ((params->width  > params->max_width) ||
       (params->height > params->max_height))
   {
-    fprintf(stderr, "Error in sysdep_display:\n"
-      "  requested size (%dx%d) bigger then max size (%dx%d)\n",
+    fprintf(stderr,
+      "Error requested size (%dx%d) bigger then max size (%dx%d)\n",
       params->width, params->height, params->max_width, params->max_height);
     return 1;
   }
@@ -60,7 +60,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
     case 32:
       break;
     default:
-      fprintf(stderr, "Error in sysdep_display: unsupported depth: %d\n",
+      fprintf(stderr, "Error unsupported depth: %d\n",
         params->depth);
       return 1;
   }
@@ -154,6 +154,8 @@ int sysdep_display_change_params(
     if (force)
       goto sysdep_display_change_params_error;
     
+    /* report back we're using the orig params */
+    *new_params = orig_params;
     return 0;
   }
 
@@ -168,6 +170,26 @@ int sysdep_display_change_params(
       sysdep_display_close();
       force_keyboard_dirty = 1;
       reopen = 0;
+    }
+    else
+    {
+      /* is this going to fit? */
+      int scaled_width  = new_params->width * new_params->widthscale;
+      int scaled_height = new_params->yarbsize? new_params->yarbsize:
+        new_params->height * new_params->heightscale;
+        
+      if ((scaled_width  > sysdep_display_properties.max_width ) ||
+          (scaled_height > sysdep_display_properties.max_height))
+      {
+        if (force)
+        {
+          fprintf(stderr, "Error requested display size is too large\n");
+          goto sysdep_display_change_params_error;
+        }
+        /* report back we're using the orig params */
+        *new_params = orig_params;
+        return 0;
+      }
     }
 
     /* (re)open the display) */
