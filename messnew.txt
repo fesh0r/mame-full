@@ -25,6 +25,19 @@ System Driver Changes:
   timings, sprites, and GRAPHIC 5 (SCREEN 6). The MSX2 now has a 128kB memory 
   mapper, so now many more games run. [Sean Young]
 
+- [C128] VIC charracter rom switching and color ram banking added [PeT]
+
+- [C64/MAX/C128/CBM B series/C65] fixed cia6526 interrupt enabling [PeT]
+
+- [C64/MAX/C128/CBM500/C65] fixed 3 sprite collision issues,
+  fixed interrupt enabling [PeT]
+
+- [C64/MAX/C128/C65] added support for alternate keyboard polling 
+  (matrix i/o reversed). added second cia6526 irq(nmi) generation.
+
+- [C64] added support for game/exrom cartridge lines in crt files
+  bankswitching fixes [PeT]
+  
 
 Other Changes:
 --------------
