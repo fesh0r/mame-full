@@ -2,6 +2,8 @@
 /*                      aka                         */
 /*         Machine functions for the a2600          */
 /*      The Blaggers Guide to Emu Programming       */
+/*                                                  */
+/*  Thanks to Cowering for the research efforts ;)  */
 
 /* TODO: Better Comments ;) */
 
@@ -13,7 +15,10 @@
 #include "cpuintrf.h"
 #include "machine/tia.h"
 #include "drawgfx.h"
+#include <zlib.h>
 
+
+UINT8 Bankswitch_Method = 0;
 static union {
 		UINT8 pf[4];
 		UINT32 shiftreg;
@@ -27,8 +32,10 @@ static union {
 UINT8 TIA_pixel_clock = 0;
 UINT8 TIA_player_0_finished = 0;
 UINT8 TIA_player_1_finished = 0;
+
 /* to make the shift regs easier to deal with */
 /*         have fun Mac guys.....;)           */
+
 #define SHIFT_LEFT20(x) { unsigned char b = (x.pf[2] & 0x08) >> 3; x.shiftreg = (x.shiftreg << 1) | b; x.pf[2] = x.pf[2] & 0x0f; }
 #define SHIFT_RIGHT20(x) { unsigned char b = (x.pf[0] & 0x01) << 3; x.shiftreg = x.shiftreg >> 1; x.pf[2] = (x.pf[2] | b) & 0x0f; }
 #define SHIFT_LEFT8(x) { unsigned char b = (x & 0x80) >> 7; x = (x << 1) | b; }
@@ -101,10 +108,10 @@ UINT8 PF1_Rendered = 0;
 UINT8 PF2_Rendered = 0;
 UINT8 TIA_hmp0 = 0;
 UINT8 TIA_hmp1 = 0;
-char TIA_movement_table[] =
+static char TIA_movement_table[] =
 {0, 1, 2, 3, 4, 5, 6, 7, -8, -7, -6, -5, -4, -3, -2, -1};
-char TIA_motion_player_0 = 0;
-char TIA_motion_player_1 = 0;
+static char TIA_motion_player_0 = 0;
+static char TIA_motion_player_1 = 0;
 UINT32 a2600_Cycle_Count = 0;
 UINT8 TIA_vblank;
 UINT8 halted = 0;
@@ -223,6 +230,138 @@ static void a2600_riot_b_w(int chip, int offset, int data)
 }
 #endif
 
+/* Bankswitching stuff */
+READ_HANDLER  ( a2600_bs_r )
+{
+	UINT8 value;
+	UINT16 address = offset + 0x1f00;
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+
+	value = ROM[address];
+
+	switch(Bankswitch_Method)
+	{
+		case 0xF8:
+					switch( address )
+					{
+						case 0x1ff8:
+									memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+									memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+									break;
+						case 0x1ff9:
+									memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
+									memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
+									break;
+					}
+					break;
+		case 0xe0:
+					switch( address )
+					{
+						case 0x1fe0:
+									memcpy(&ROM[0x1000], &ROM[0x10000], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x10000], 0x0400);
+									break;
+						case 0x1fe1:
+									memcpy(&ROM[0x1000], &ROM[0x10400], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x10400], 0x0400);
+									break;
+						case 0x1fe2:
+									memcpy(&ROM[0x1000], &ROM[0x10800], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x10800], 0x0400);
+									break;
+						case 0x1fe3:
+									memcpy(&ROM[0x1000], &ROM[0x10c00], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x10c00], 0x0400);
+									break;
+						case 0x1fe4:
+									memcpy(&ROM[0x1000], &ROM[0x11000], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x11000], 0x0400);
+									break;
+						case 0x1fe5:
+									memcpy(&ROM[0x1000], &ROM[0x11400], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x11400], 0x0400);
+									break;
+						case 0x1fe6:
+									memcpy(&ROM[0x1000], &ROM[0x11800], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x11800], 0x0400);
+									break;
+						case 0x1fe7:
+									memcpy(&ROM[0x1000], &ROM[0x11c00], 0x0400);
+									memcpy(&ROM[0xf000], &ROM[0x11c00], 0x0400);
+									break;
+
+
+						case 0x1fe8:
+									memcpy(&ROM[0x1400], &ROM[0x10000], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x10000], 0x0400);
+									break;
+						case 0x1fe9:
+									memcpy(&ROM[0x1400], &ROM[0x10400], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x10400], 0x0400);
+									break;
+						case 0x1fea:
+									memcpy(&ROM[0x1400], &ROM[0x10800], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x10800], 0x0400);
+									break;
+						case 0x1feb:
+									memcpy(&ROM[0x1400], &ROM[0x10c00], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x10c00], 0x0400);
+									break;
+						case 0x1fec:
+									memcpy(&ROM[0x1400], &ROM[0x11000], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x11000], 0x0400);
+									break;
+						case 0x1fed:
+									memcpy(&ROM[0x1400], &ROM[0x11400], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x11400], 0x0400);
+									break;
+						case 0x1fee:
+									memcpy(&ROM[0x1400], &ROM[0x11800], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x11800], 0x0400);
+									break;
+						case 0x1fef:
+									memcpy(&ROM[0x1400], &ROM[0x11c00], 0x0400);
+									memcpy(&ROM[0xf400], &ROM[0x11c00], 0x0400);
+									break;
+
+
+						case 0x1ff0:
+									memcpy(&ROM[0x1800], &ROM[0x10000], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x10000], 0x0400);
+									break;
+						case 0x1ff1:
+									memcpy(&ROM[0x1800], &ROM[0x10400], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x10400], 0x0400);
+									break;
+						case 0x1ff2:
+									memcpy(&ROM[0x1800], &ROM[0x10800], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x10800], 0x0400);
+									break;
+						case 0x1ff3:
+									memcpy(&ROM[0x1800], &ROM[0x10c00], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x10c00], 0x0400);
+									break;
+						case 0x1ff4:
+									memcpy(&ROM[0x1800], &ROM[0x11000], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x11000], 0x0400);
+									break;
+						case 0x1ff5:
+									memcpy(&ROM[0x1800], &ROM[0x11400], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x11400], 0x0400);
+									break;
+						case 0x1ff6:
+									memcpy(&ROM[0x1800], &ROM[0x11800], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x11800], 0x0400);
+									break;
+						case 0x1ff7:
+									memcpy(&ROM[0x1800], &ROM[0x11c00], 0x0400);
+									memcpy(&ROM[0xf800], &ROM[0x11c00], 0x0400);
+									break;
+				}
+	}
+	return value;
+}
 
 /***************************************************************************
 
@@ -234,16 +373,12 @@ int a2600_riot_r(int offset)
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	UINT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
-	//logerror("TIMER Read previous riot cycle %08x, current riot cycle %08x, difference %08x\n", previous_tia_cycle, global_tia_cycle + TIME_TO_CYCLES( 0, timer_timeelapsed(HSYNC_timer)), riotdiff);
-	/* resync the riot timer */
+		/* resync the riot timer */
 	previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 	riotdiff *= 3;
-	//riotdiff++;
 	for (; riotdiff > 0; riotdiff--)
 	{
-		//  logerror("diff 0x%04x\n", riotdiff);
 		a2600_Cycle_cb(0);
-		//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 	}
 
 	switch (offset)
@@ -263,7 +398,6 @@ int a2600_riot_r(int offset)
 	case 0x04:							/*TIMER READ */
 
 		{
-			//  logerror("Timer read 0x%02x\n", TMR_Intim);
 			return TMR_Intim;
 		}
 
@@ -286,16 +420,12 @@ void a2600_riot_w(int offset, int data)
 	{
 		UINT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
-		//  logerror("PF2 previous riot cycle %08x, current riot cycle %08x, difference %08x\n", previous_tia_cycle, global_tia_cycle + TIME_TO_CYCLES( 0, timer_timeelapsed(HSYNC_timer)), riotdiff);
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
-			//  logerror("diff 0x%04x\n", riotdiff);
 			a2600_Cycle_cb(0);
-			//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 		}
 	}
 
@@ -342,7 +472,6 @@ void a2600_riot_w(int offset, int data)
 
 
 	}
-	//logerror("Riot Write offset %x, data %x\n", offset, data);
 	ROM[offset] = data;
 
 }
@@ -368,16 +497,12 @@ int a2600_TIA_r(int offset)
 	{
 		UINT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
-		//  logerror("PF2 previous riot cycle %08x, current riot cycle %08x, difference %08x\n", previous_tia_cycle, global_tia_cycle + TIME_TO_CYCLES( 0, timer_timeelapsed(HSYNC_timer)), riotdiff);
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
-			//  logerror("diff 0x%04x\n", riotdiff);
 			a2600_Cycle_cb(0);
-			//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 		}
 	}
 
@@ -451,21 +576,16 @@ void a2600_TIA_w(int offset, int data)
 
 	unsigned int pc;
 
-	//int forecolour;
 	pc = cpu_get_pc();
 	{
 		UINT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
 
-		//  logerror("PF2 previous riot cycle %08x, current riot cycle %08x, difference %08x\n", previous_tia_cycle, global_tia_cycle + TIME_TO_CYCLES( 0, timer_timeelapsed(HSYNC_timer)), riotdiff);
 		/* resync the riot timer */
 		previous_tia_cycle = global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer));
 		riotdiff *= 3;
-		//riotdiff++;
 		for (; riotdiff > 0; riotdiff--)
 		{
-			//  logerror("diff 0x%04x\n", riotdiff);
 			a2600_Cycle_cb(0);
-			//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 		}
 	}
 
@@ -475,7 +595,7 @@ void a2600_TIA_w(int offset, int data)
 	case VSYNC:
 		if (!(data & 0x02))
 		{
-			plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]);
+			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 
 			logerror("TIA_w - VSYNC Stop\n");
 
@@ -483,7 +603,7 @@ void a2600_TIA_w(int offset, int data)
 		else if (data & 0x02)
 		{
 			logerror("TIA_w - VSYNC Start\n");
-			plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]);
+			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 		}
 		break;
 
@@ -493,7 +613,7 @@ void a2600_TIA_w(int offset, int data)
 		{
 
 			TIA_vblank = 0;
-			plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]);
+			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 			flashycolour++;
 			flashycolour = flashycolour & 0x0f;
 
@@ -507,7 +627,7 @@ void a2600_TIA_w(int offset, int data)
 		else if (data & 0x02)
 		{
 			TIA_vblank = 1;
-			plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]);
+			/* plot_pixel(stella_backbuffer, 69, currentline + Machine->visible_area.min_y, Machine->pens[flashycolour]); */
 			logerror("TIA_w - VBLANK Start\n");
 
 		}
@@ -517,7 +637,6 @@ void a2600_TIA_w(int offset, int data)
 	case WSYNC:						/* offset 0x02 */
 		if (!(data & 0x01))
 		{
-			//  if (TIA_VERBOSE)
 			logerror("TIA_w - WSYNC \n");
 			timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));
 			halted = 1;
@@ -539,6 +658,20 @@ void a2600_TIA_w(int offset, int data)
 		if (!(data & 0x01))
 		{
 			timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));
+			previous_tia_cycle = 0;
+			HSYNC_Period = 0;
+			TIA_pixel_clock = 0;
+			TIA_pf_mask.shiftreg = 0x080000;
+			TIA_player_0_offset=0;
+			TIA_player_1_offset=0;
+			TIA_player_0_mask_tmp = TIA_player_0_mask;
+			TIA_player_1_mask_tmp = TIA_player_1_mask;
+			TIA_player_0_mask_bit = 10;
+			TIA_player_1_mask_bit = 10;
+			TIA_player_0_block = 0;
+			TIA_player_1_block = 0;
+			TIA_player_0_finished = 0;
+			TIA_player_1_finished = 0;
 			if (TIA_VERBOSE)
 				logerror("TIA_w - RSYNC \n");
 		}
@@ -621,13 +754,11 @@ void a2600_TIA_w(int offset, int data)
 		if (!(data & 0x08))
 		{
 			TIA_player_0_reflect = 0;
-			// if (TIA_VERBOSE)
 			logerror("TIA_w - REFP0 No reflect \n");
 		}
 		else if (data & 0x08)
 		{
 			TIA_player_0_reflect = 1;
-			//  if (TIA_VERBOSE)
 			logerror("TIA_w - REFP0 Reflect \n");
 		}
 		else
@@ -642,13 +773,11 @@ void a2600_TIA_w(int offset, int data)
 		if (!(data & 0x08))
 		{
 			TIA_player_1_reflect = 0;
-			// if (TIA_VERBOSE)
 			logerror("TIA_w - REFP1 No reflect \n");
 		}
 		else if (data & 0x08)
 		{
 			TIA_player_1_reflect = 1;
-			//  if (TIA_VERBOSE)
 			logerror("TIA_w - REFP1 Reflect \n");
 		}
 		else
@@ -740,13 +869,13 @@ void a2600_TIA_w(int offset, int data)
 
 	case HMP0:							/* 0x20 Horizontal Motion Player 0 */
 		TIA_hmp0 = (data & 0xf0) >> 4;
-		TIA_motion_player_0 = TIA_movement_table[TIA_hmp0];
+		TIA_motion_player_0 = TIA_movement_table[0x0f - TIA_hmp0];
 		break;
 
 	case HMP1:							/* 0x21 Horizontal Motion Player 1 */
 		logerror("Horizontal move write %02x\n", data);
 		TIA_hmp1 = (data & 0xf0) >> 4;
-		TIA_motion_player_1 = TIA_movement_table[TIA_hmp1];
+		TIA_motion_player_1 = TIA_movement_table[0x0f - TIA_hmp1];
 		break;
 
 	case HMM0:							/* 0x22 Horizontal Motion Missle 0 */
@@ -765,7 +894,7 @@ void a2600_TIA_w(int offset, int data)
 
 	case VDELP1:						/* 0x26 Vertical Delay Player 1 */
 		TIA_player_delay_1 = data & 0x01;
-		logerror("Delay 1 = 0x%02x", TIA_player_delay_1);
+	 	logerror("Delay 1 = 0x%02x", TIA_player_delay_1);
 		break;
 
 	case VDELBL:						/* 0x27 Vertical Delay Ball */
@@ -778,8 +907,8 @@ void a2600_TIA_w(int offset, int data)
 		break;
 
 	case HMOVE:						/* 0x2A Apply Horizontal Motion */
-		TIA_motion_player_0 = TIA_movement_table[TIA_hmp0];
-		TIA_motion_player_1 = TIA_movement_table[TIA_hmp1];
+		TIA_motion_player_0 = TIA_movement_table[0x0f - TIA_hmp0];
+		TIA_motion_player_1 = TIA_movement_table[0x0f - TIA_hmp1];
 		break;
 
 	case HMCLR:						/* 0x2B Clear Horizontal Move Registers */
@@ -802,7 +931,71 @@ void a2600_TIA_w(int offset, int data)
 
 void a2600_stop_machine(void)
 {
+	/* Make sane the hardware ;) */
 
+	timer_reset(HSYNC_timer, TIME_IN_CYCLES(76, 0));
+	TIA_pixel_clock = 0;
+	TIA_player_0_finished = 0;
+	TIA_player_1_finished = 0;
+	TIA_player_0_block = 0;
+	TIA_player_1_block = 0;
+	PF_Ref = 0;
+	TIA_player_0_reflect = 0;
+	TIA_player_1_reflect = 0;
+	PF_Score = 0;
+	PF_Pfp = 0;
+	TIA_player_0_tick = 8;
+	TIA_player_1_tick = 8;
+	TMR_Intim = 0;
+	TMR_Period = 0;
+	TMR_tmp = 0;
+	PF0_Rendered = 0;
+	PF1_Rendered = 0;
+	PF2_Rendered = 0;
+	TIA_hmp0 = 0;
+	TIA_hmp1 = 0;
+	TIA_motion_player_0 = 0;
+	TIA_motion_player_1 = 0;
+	a2600_Cycle_Count = 0;
+
+	halted = 0;
+	global_tia_cycle = 0;
+	previous_tia_cycle = 0;
+	TIA_player_0_mask_bit = 10;
+	TIA_player_1_mask_bit = 10;
+	TIA_player_0_mask = 0;
+	TIA_player_0_pixel_delay = 0;
+
+	TIA_player_1_mask = 0;
+	TIA_player_1_pixel_delay = 0;
+
+	TIA_player_0_mask_tmp = 0;
+	TIA_player_0_pixel_delay_tmp = 0;
+
+	TIA_player_1_mask_tmp = 0;
+	TIA_player_1_pixel_delay_tmp = 0;
+
+	TIA_player_0_offset = 0;
+	TIA_player_1_offset = 0;
+	HSYNC_Period = 0;
+	TIA_reset_player_0 = 0;
+	TIA_reset_player_1 = 0;
+	TIA_player_pattern_0 = 0;
+	TIA_player_pattern_0_delayed = 0;
+	TIA_player_pattern_0_tmp = 0;
+	TIA_player_delay_0 = 0;
+	TIA_player_pattern_1 = 0;
+	TIA_player_pattern_1_delayed = 0;
+	TIA_player_pattern_1_tmp = 0;
+	TIA_player_delay_1 = 0;
+
+	HSYNC_colour_clock = 3;
+	flashycolour = 0;
+
+	RIOT_passedzero = 0;
+	currentline = 0;
+	msize0 = 0;
+	msize1 = 0;
 }
 
 int a2600_id_rom(int id)
@@ -830,16 +1023,146 @@ int a2600_load_rom(int id)
 		return 1;
 	}
 
-	a2600_cartridge_rom = &(ROM[0x1000]);	/* 'plug' cart into 0x1000 */
+	a2600_cartridge_rom = &(ROM[0x10000]);	/* Load the cart outside the cpuspace for b/s purposes */
 
 	if (cartfile != NULL)
 	{
-		osd_fread(cartfile, a2600_cartridge_rom, 2048);		/* testing Combat for now */
+		UINT32 crc;
+		int cart_size;
+
+		cart_size = osd_fsize(cartfile);
+		osd_fread(cartfile, a2600_cartridge_rom, cart_size);		/* testing everything now :) */
 		osd_fclose(cartfile);
 		/* copy to mirrorred memory regions */
-		memcpy(&ROM[0x1800], &ROM[0x1000], 0x0800);
-		memcpy(&ROM[0xf000], &ROM[0x1000], 0x0800);
-		memcpy(&ROM[0xf800], &ROM[0x1000], 0x0800);
+		crc = (UINT32) crc32(0L,&ROM[0x10000], cart_size);
+		Bankswitch_Method = 0;
+
+		switch(cart_size)
+		{
+			case 0x10000:
+						break;
+			case 0x08000:
+						break;
+			case 0x04000:
+						break;
+			case 0x03000:
+						break;
+			case 0x02000:
+						switch(crc)
+						{
+
+							case 0x91b8f1b2:
+										Bankswitch_Method = 0xFE;
+										logerror("Decathlon detected and loaded\n");
+										break;
+							case 0xfd8c81e5:
+										Bankswitch_Method = 0xE0;
+										logerror("Tooth Protectors detected and loaded\n");
+										break;
+							case 0x0886a55d:
+										Bankswitch_Method = 0xE0;
+										logerror("SW: Death Star Battle detected and loaded\n");
+										break;
+							case 0x0d78e8a9:
+										Bankswitch_Method = 0xE0;
+										logerror("Gyruss detected and loaded\n");
+										break;
+							case 0x34d3ffc8:
+										Bankswitch_Method = 0xE0;
+										logerror("James Bond 007 detected and loaded\n");
+										break;
+							case 0xde97103d:
+										Bankswitch_Method = 0xE0;
+										logerror("Super Cobra detected and loaded\n");
+										break;
+							case 0xec959bf2:
+										Bankswitch_Method = 0xE0;
+										logerror("Tutankham detected and loaded\n");
+										break;
+							case 0x7d287f20:
+										Bankswitch_Method = 0xE0;
+										logerror("Popeye detected and loaded\n");
+										break;
+							case 0x65c31ca4:
+										Bankswitch_Method = 0xE0;
+										logerror("SW: Arcade Game detected and loaded\n");
+										break;
+							case 0xa87be8fd:
+										Bankswitch_Method = 0xE0;
+										logerror("Q*Bert's Qubes detected and loaded\n");
+										break;
+							case 0x3ba0d9bf:
+										Bankswitch_Method = 0xE0;
+										logerror("Frogger ][: Threeedeep detected and loaded\n");
+										break;
+							case 0xe680a1c9:
+										Bankswitch_Method = 0xE0;
+										logerror("Montezuma's Revenge detected and loaded\n");
+										break;
+							case 0x044735b9:
+										Bankswitch_Method = 0xE0;
+										logerror("Mr. Do's Castle detected and loaded\n");
+										break;
+							case 0xc820bd75:
+										Bankswitch_Method = 0x3F;
+										logerror("River Patrol detected and loaded\n");
+										break;
+							case 0xdd183a4f:
+										Bankswitch_Method = 0x3F;
+										logerror("Springer detected and loaded\n");
+										break;
+							case 0xdb376663:
+										Bankswitch_Method = 0x3F;
+										logerror("Polaris detected and loaded\n");
+										break;
+							case 0xbd08d915:
+										Bankswitch_Method = 0x3F;
+										logerror("Miner 2049'er detected and loaded\n");
+										break;
+							case 0xbfa477cd:
+										Bankswitch_Method = 0x3F;
+										logerror("Miner 2049'er Volume ][ detected and loaded\n");
+										break;
+							case 0x34b80a97:
+										Bankswitch_Method = 0x3F;
+										logerror("Espial detected and loaded\n");
+										break;
+							default:
+										Bankswitch_Method = 0xf8;
+										break;
+						}
+
+						switch(Bankswitch_Method)
+						{
+							case 0xf8:
+										memcpy(&ROM[0x1000], &ROM[0x11000], 0x1000);
+										memcpy(&ROM[0xf000], &ROM[0x11000], 0x1000);
+										break;
+							case 0xe0:
+										memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+										memcpy(&ROM[0x1400], &ROM[0x10400], 0x1000);
+										memcpy(&ROM[0x1800], &ROM[0x10800], 0x1000);
+										memcpy(&ROM[0x1c00], &ROM[0x11c00], 0x1000);
+
+										memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+										memcpy(&ROM[0xf400], &ROM[0x10400], 0x1000);
+										memcpy(&ROM[0xf800], &ROM[0x10800], 0x1000);
+										memcpy(&ROM[0xfc00], &ROM[0x11c00], 0x1000);
+										break;
+						}
+						break;
+			case 0x01000:
+						memcpy(&ROM[0x1000], &ROM[0x10000], 0x1000);
+						memcpy(&ROM[0xf000], &ROM[0x10000], 0x1000);
+						break;
+			case 0x00800:
+						memcpy(&ROM[0x1000], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0x1800], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0xf000], &ROM[0x10000], 0x0800);
+						memcpy(&ROM[0xf800], &ROM[0x10000], 0x0800);
+						break;
+		}
+		logerror("cartridge crc = %08x\n", crc);
 	}
 	else
 	{
@@ -884,17 +1207,11 @@ static void a2600_scanline_cb(void)
 {
 	int regpos;
 
-//pixpos;
-	int xs = Machine->visible_area.min_x;	//68;
-
-	//int ys = Machine->visible_area.max_x;//228;
-	int yys = Machine->visible_area.min_y;	//68;
+	int xs = Machine->visible_area.min_x;
+	int yys = Machine->visible_area.min_y;
 
 	int backcolor;
 
-	//int forecolour;
-
-	//logerror("Current Line = %x\n", currentline);
 
 
 	/* plot the playfield and background for now               */
@@ -906,13 +1223,10 @@ static void a2600_scanline_cb(void)
 
 	if (((currentline + yys) <= 299) && (TIA_vblank == 0))
 	{
-		//  UINT8 pfpos = 0;
 		/* now we have color, plot for 4 color cycles */
 		for (regpos = 0; regpos < 160; regpos = regpos++)
 		{
 			int i = PF_Data[regpos] % Machine->drv->color_table_len;
-
-			//logerror("Playfield pos 0x%02x, value 0x%02x\n", pfpos, PF_Data[pfpos]);
 
 
 			plot_pixel(stella_backbuffer, regpos + xs, currentline + yys, Machine->pens[0]);
@@ -938,16 +1252,12 @@ static void a2600_main_cb(int param)
 {
 	UINT32 riotdiff = (global_tia_cycle + 76) - previous_tia_cycle;
 
-	//logerror("TIMER Read previous riot cycle %08x, current riot cycle %08x, difference %08x\n", previous_tia_cycle, global_tia_cycle + TIME_TO_CYCLES( 0, timer_timeelapsed(HSYNC_timer)), riotdiff);
 	/* resync the riot timer */
 	previous_tia_cycle = global_tia_cycle + 76;
 	riotdiff *= 3;
-	//riotdiff++;
 	for (; riotdiff > 0; riotdiff--)
 	{
-		//  logerror("diff 0x%04x\n", riotdiff);
 		a2600_Cycle_cb(0);
-		//  logerror("tmr temp = 0x%04x\n", TMR_tmp);
 	}
 	TIA_pixel_clock = 0;
 	TIA_pf_mask.shiftreg = 0x080000;
@@ -973,7 +1283,6 @@ static void a2600_Cycle_cb(int param)
 	int forecolour;
 	int plyr0 = TIA_reset_player_0 + TIA_motion_player_0 + TIA_player_0_offset;
 
-	//logerror("counting Cycles 0x%08x....\n", a2600_Cycle_Count);
 	a2600_Cycle_Count++;
 
 	/* Hsync Timing */
@@ -1117,20 +1426,16 @@ static void a2600_Cycle_cb(int param)
 					tmpbit = 0x01;
 				}
 			}
-			//  TIA_reset_player_0 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
 			TIA_player_0_pixel_delay_tmp--;
 			if(!TIA_player_0_pixel_delay_tmp)
 			{
 				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
-				//TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp << 1;
-				//TIA_player_pattern_0_delayed = TIA_player_pattern_0_delayed << 1;
 				SHIFT_LEFT8(TIA_player_pattern_0_tmp)
 				SHIFT_LEFT8(TIA_player_pattern_0_delayed)
 				TIA_player_0_tick--;
 				if (!TIA_player_0_tick)
 				{
-				//TIA_player_pattern_0_tmp = TIA_player_pattern_0;
 				TIA_player_0_tick = 8;
 				}
 			}
@@ -1154,20 +1459,16 @@ static void a2600_Cycle_cb(int param)
 					tmpbit = 0x80;
 				}
 			}
-			//  TIA_reset_player_0 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
 			TIA_player_0_pixel_delay_tmp--;
 			if(!TIA_player_0_pixel_delay_tmp)
 			{
 				TIA_player_0_pixel_delay_tmp = TIA_player_0_pixel_delay;
-				//TIA_player_pattern_0_tmp = TIA_player_pattern_0_tmp >> 1;
-				//TIA_player_pattern_0_delayed = TIA_player_pattern_0_delayed >> 1;
 				SHIFT_RIGHT8(TIA_player_pattern_0_tmp)
 				SHIFT_RIGHT8(TIA_player_pattern_0_delayed)
 				TIA_player_0_tick--;
 				if (!TIA_player_0_tick)
 				{
-					//TIA_player_pattern_0_tmp = TIA_player_pattern_0;
 					TIA_player_0_tick = 8;
 				}
 			}
@@ -1197,20 +1498,16 @@ static void a2600_Cycle_cb(int param)
 					tmpbit = 0x01;
 				}
 			}
-			//  TIA_reset_player_1 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
 			TIA_player_1_pixel_delay_tmp--;
 			if(!TIA_player_1_pixel_delay_tmp)
 			{
 				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
-				//TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp << 1;
-				//TIA_player_pattern_1_delayed = TIA_player_pattern_1_delayed << 1;
 				SHIFT_LEFT8(TIA_player_pattern_1_tmp)
 				SHIFT_LEFT8(TIA_player_pattern_1_delayed)
 				TIA_player_1_tick--;
 				if (!TIA_player_1_tick)
 				{
-				//TIA_player_pattern_1_tmp = TIA_player_pattern_1;
 				TIA_player_1_tick = 8;
 				}
 			}
@@ -1234,20 +1531,16 @@ static void a2600_Cycle_cb(int param)
 					tmpbit = 0x80;
 				}
 			}
-			//  TIA_reset_player_1 = 0;
 			logerror("Hsync Period = %02x\n", HSYNC_Period);
 			TIA_player_1_pixel_delay_tmp--;
 			if(!TIA_player_1_pixel_delay_tmp)
 			{
 				TIA_player_1_pixel_delay_tmp = TIA_player_1_pixel_delay;
-				//TIA_player_pattern_1_tmp = TIA_player_pattern_1_tmp >> 1;
-				//TIA_player_pattern_1_delayed = TIA_player_pattern_1_delayed >> 1;
 				SHIFT_RIGHT8(TIA_player_pattern_1_tmp)
 				SHIFT_RIGHT8(TIA_player_pattern_1_delayed)
 				TIA_player_1_tick--;
 				if (!TIA_player_1_tick)
 				{
-					//TIA_player_pattern_1_tmp = TIA_player_pattern_1;
 					TIA_player_1_tick = 8;
 				}
 			}
@@ -1260,7 +1553,6 @@ static void a2600_Cycle_cb(int param)
 		if(TIA_player_0_block == 8)
 		{
 			TIA_player_0_offset+=8;
-			//TIA_player_0_mask_tmp = (TIA_player_0_mask_tmp >> 1) & 0x7f;
 			SHIFT_RIGHT10(TIA_player_0_mask_tmp)
 			TIA_player_0_mask_bit--;
 			TIA_player_0_block = 0;
@@ -1321,7 +1613,7 @@ void a2600_init_machine(void)
 {
 
 	/* start RIOT interface */
-	///riot_init(&a2600_riot);
+
 	cpu_current_state = 1;
 	currentline = 0;
 	HSYNC_timer = timer_pulse(TIME_IN_CYCLES(76, 0), 0, a2600_main_cb);
