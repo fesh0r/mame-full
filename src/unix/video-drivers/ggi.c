@@ -57,9 +57,6 @@ struct rc_option display_opts[] = {
    { "yres",            NULL,                   rc_int,         &force_y,
      "0",               0,                      0,              NULL,
      "Force the Y resolution" },
-   { NULL,		NULL,			rc_link,	mode_opts,
-     NULL,		0,			0,		NULL,
-     NULL },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }

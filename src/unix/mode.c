@@ -8,7 +8,7 @@ static int perfect_aspect = 0;
 
 static int mode_disable(struct rc_option *option, const char *s, int priority);
 
-struct rc_option mode_opts[] = {
+struct rc_option aspect_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Video Mode Selection Related", NULL,	rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
@@ -22,9 +22,15 @@ struct rc_option mode_opts[] = {
    { "displayaspectratio", "dar",		rc_float,	&display_aspect_ratio,
      "1.3333333333333",	0.5,			2.0,		NULL,
      "Set the display aspect ratio of your monitor. This is used for -keepaspect. The default = 1.3333333333333 (4/3). Use 0.75 (3/4) for a portrait monitor" },
+   { NULL,		NULL,			rc_end,		NULL,
+     NULL,		0,			0,		NULL,
+     NULL }
+};
+
+struct rc_option mode_opts[] = {
    { "disablemode",	"dm",			rc_use_function, NULL,
      NULL,		0,			0,		mode_disable,
-     "Don't use mode XRESxYRESxDEPTH. This can be used to disable specific video modes which don't work on your system. The xDEPTH part of the string is optional. This option may be used more than once" },
+     "Don't use mode XRESxYRESxDEPTH this can be used to disable specific video modes which don't work on your system. The xDEPTH part of the string is optional. This option may be used more then once" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }

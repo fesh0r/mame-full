@@ -192,6 +192,7 @@ int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 /* option structs */
 extern struct rc_option video_opts[];
 extern struct rc_option display_opts[];
+extern struct rc_option aspect_opts[];
 extern struct rc_option mode_opts[];
 extern struct rc_option sound_opts[];
 extern struct rc_option input_opts[];

@@ -82,9 +82,6 @@ struct rc_option fx_opts[] = {
    { "resolution",	"res",			rc_use_function, NULL,
      "640x480",		0,			0,		SetResolution,
      "Specify the resolution/ windowsize to use in the form of XRESxYRES" },
-   { NULL,              NULL,                   rc_link,        mode_opts,
-     NULL,              0,                      0,              NULL,
-     NULL },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }

@@ -32,7 +32,7 @@ struct rc_option display_opts[] = {
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-1, NULL, "Select x11 video mode: (if compiled in)\n0 Normal windowed (hotkey left-alt + insert)\n1 DGA fullscreen (hotkey left-alt + home)\n2 Xv windowed\n3 Xv fullscreen" },
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
-#if defined DGA || defined USE_HWSCALE
+#if defined DGA
 	{ NULL, NULL, rc_link, mode_opts, NULL, 0, 0, NULL, NULL },
 #endif
 	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
