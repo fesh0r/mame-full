@@ -1370,10 +1370,13 @@ int mame_highscore_enabled(void)
 	if (he_did_cheat != 0)
 		return 0;
 
-#ifdef MAME_NET
 	/* disable high score when playing network game */
 	/* (this forces all networked machines to start from the same state!) */
+#ifdef MAME_NET
 	if (net_active())
+		return 0;
+#elif defined XMAME_NET
+	if (osd_net_active())
 		return 0;
 #endif
 
