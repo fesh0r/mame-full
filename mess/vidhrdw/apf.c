@@ -48,7 +48,7 @@ WRITE_HANDLER(apf_video_w)
 	schedule_full_refresh();
 }
 
-extern int apf_ints;
+extern unsigned int apf_ints;
 
 WRITE_HANDLER(apf_vsync_int)
 {
