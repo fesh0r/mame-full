@@ -717,9 +717,10 @@ DRIVER_INIT( apple2 )
 	int keyboard_type;
 
 	keyboard_type = AP2_KEYBOARD_2E;
-	if (!strcmp(Machine->gamedrv->name, "apple2")
-		|| !strcmp(Machine->gamedrv->name, "apple2p"))
+	if (!strcmp(Machine->gamedrv->name, "apple2"))
 		keyboard_type = AP2_KEYBOARD_2;
+	if (!strcmp(Machine->gamedrv->name, "apple2p"))
+		keyboard_type = AP2_KEYBOARD_2P;
 	if (!strcmp(Machine->gamedrv->name, "apple2ep"))
 		keyboard_type = AP2_KEYBOARD_2GS;
 

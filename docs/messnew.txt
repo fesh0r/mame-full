@@ -15,6 +15,10 @@ System Driver Changes:
 
 - [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
 
+- [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.
+  Pressing F3 from MESS UI mode now does a hard reset.
+  The apple2 driver no longer requires a CTRL key to reset.
+  [Christopher Stone]
 
 
 User Interface Changes:

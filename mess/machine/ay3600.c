@@ -311,7 +311,7 @@ static void AY3600_poll(int dummy)
 	/* check for these special cases because they affect the emulated key codes */
 
 	/* only repeat keys on a 2/2+ if special REPT key is pressed */
-	if (keyboard_type == AP2_KEYBOARD_2)
+	if (keyboard_type <= AP2_KEYBOARD_REPT)
 		time_until_repeat = pressed_specialkey(SPECIALKEY_REPT) ? 0 : ~0;
 			
 	/* check caps lock and set LED here */
@@ -334,20 +334,18 @@ static void AY3600_poll(int dummy)
 
 	/* control key check - only one control key on the left side on the Apple */
 	if (pressed_specialkey(SPECIALKEY_CONTROL))
-	{
 		switchkey |= A2_KEY_CONTROL;
 
-		/* reset key check */
-		if (pressed_specialkey(SPECIALKEY_RESET)) {
+	/* reset key check */
+	if (pressed_specialkey(SPECIALKEY_RESET) &&
+		(keyboard_type == AP2_KEYBOARD_2 || switchkey & A2_KEY_CONTROL)) {
 			if (!reset_flag) {
 				reset_flag = 1;
 				/* using PULSE_LINE does not allow us to press and hold key */
 				cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 			}
 			return;
-		}
 	}
-
 	if (reset_flag) {
 		reset_flag = 0;
 		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
