@@ -24,7 +24,9 @@ can type the name of the program to run it.
 [Kev Thacker]
 
 - [COCO] Reworked m6847 synchronization and sound mux signals to make them much
-more accurate. [Nate Woods]
+more accurate.  Fixed a bug that caused the joystick to max out all the time.
+Added a new abstraction layer for cartridge IO interfaces. [Nate Woods]
+- [DRAGON] Fixed DragonDOS cartrdige, so now DragonDOS works fine.  [Nate Woods]
 
 Other Changes:
 --------------

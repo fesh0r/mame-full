@@ -24,7 +24,7 @@ static MEMORY_READ_START( dragon32_readmem )
 	{ 0xc000, 0xfeff, MRA_ROM }, /* cart area */
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
-	{ 0xff40, 0xff5f, coco_floppy_r },
+	{ 0xff40, 0xff5f, coco_cartridge_r },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -34,7 +34,7 @@ static MEMORY_WRITE_START( dragon32_writemem )
 	{ 0xc000, 0xfeff, MWA_ROM }, /* cart area */
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff5f, dragon_floppy_w },
+	{ 0xff40, 0xff5f, coco_cartridge_w },
 	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
 	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
@@ -47,7 +47,7 @@ static MEMORY_READ_START( d64_readmem )
 	{ 0x8000, 0xfeff, MRA_BANK1 },
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
-	{ 0xff40, 0xff5f, coco_floppy_r },
+	{ 0xff40, 0xff5f, coco_cartridge_r },
 	{ 0xfff0, 0xffff, dragon_mapped_irq_r },
 MEMORY_END
 
@@ -56,7 +56,7 @@ static MEMORY_WRITE_START( d64_writemem )
 	{ 0x8000, 0xfeff, MWA_BANK1 },
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff5f, coco_floppy_w },
+	{ 0xff40, 0xff5f, coco_cartridge_w },
 	{ 0xffc0, 0xffc5, dragon_sam_vdg_mode },
 	{ 0xffc6, 0xffd3, dragon_sam_display_offset },
 	{ 0xffd4, 0xffd5, dragon_sam_page_mode },
@@ -77,7 +77,7 @@ static MEMORY_READ_START( coco3_readmem )
 	{ 0xfe00, 0xfeff, MRA_BANK9 },
 	{ 0xff00, 0xff1f, pia_0_r },
 	{ 0xff20, 0xff3f, pia_1_r },
-	{ 0xff40, 0xff5f, coco3_floppy_r },
+	{ 0xff40, 0xff5f, coco_cartridge_r },
 	{ 0xff90, 0xff97, coco3_gime_r },
 	{ 0xff98, 0xff9f, coco3_gimevh_r },
 	{ 0xffa0, 0xffaf, coco3_mmu_r },
@@ -105,7 +105,7 @@ static MEMORY_WRITE_START( coco3_writemem )
 	{ 0xfe00, 0xfeff, MWA_BANK9 },
 	{ 0xff00, 0xff1f, pia_0_w },
 	{ 0xff20, 0xff3f, pia_1_w },
-	{ 0xff40, 0xff5f, coco3_floppy_w },
+	{ 0xff40, 0xff5f, coco_cartridge_w },
 	{ 0xff90, 0xff97, coco3_gime_w },
 	{ 0xff98, 0xff9f, coco3_gimevh_w },
 	{ 0xffa0, 0xffaf, coco3_mmu_w },

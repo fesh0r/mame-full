@@ -107,6 +107,7 @@ static void coco3_pia0_irq_a(int state);
 static void coco3_pia0_irq_b(int state);
 static void coco3_pia1_firq_a(int state);
 static void coco3_pia1_firq_b(int state);
+static void coco_cartridge_enablesound(int enable);
 
 #define LOG_PAK			0
 #define LOG_WAVE		0
@@ -117,6 +118,7 @@ static void coco3_pia1_firq_b(int state);
 #define LOG_MMU			0
 #define LOG_VBORD		0
 #define LOG_OS9         0
+#define LOG_FLOPPY		0
 
 #define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
 
@@ -692,22 +694,30 @@ static void soundmux_update(void)
 	casstatus = device_status(IO_CASSETTE, 0, -1);
 	new_casstatus = casstatus | WAVE_STATUS_MUTED;
 
-	switch(soundmux_status) {
-	case SOUNDMUX_STATUS_ENABLE:
-		/* DAC */
-		DAC_data_w(0, d_dac);
-		break;
+	/* We only write to the DAC if we are enabled; otherwise we let it be.  If
+	 * we write 0 to the DAC when disabled, Popcorn has a very annoying buzz
+	 * not present on an actual CoCo
+	 */
+	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
+		switch(soundmux_status) {
+		case SOUNDMUX_STATUS_ENABLE:
+			/* DAC */
+			DAC_data_w(0, d_dac);
+			break;
 
-	case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
-		/* CSN */
-		new_casstatus &= ~WAVE_STATUS_MUTED;
-		break;
+		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+			/* CSN */
+			new_casstatus &= ~WAVE_STATUS_MUTED;
+			break;
 
-	default:
-		/* Other */
-		DAC_data_w(0, 0);
-		break;
+		default:
+			/* Other */
+			DAC_data_w(0, 0);
+			break;
+		}
 	}
+
+	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
 
 	if (casstatus != new_casstatus) {
 #if LOG_WAVE
@@ -801,7 +811,7 @@ static int keyboard_r(void)
 	else {
 		/* Normal joystick */
 		joyport = joystick ? (joystick_axis ? JOYSTICK_LEFT_Y : JOYSTICK_LEFT_X) : (joystick_axis ? JOYSTICK_RIGHT_Y : JOYSTICK_RIGHT_X);
-		joyval = readinputport(joyport);
+		joyval = read_joystick(joyport);
 		if (d_dac <= ((int) (joyval * 255.0)))
 			porta |= 0x80;
 	}
@@ -1598,6 +1608,62 @@ void coco_cassette_exit(int id)
 }
 
 /***************************************************************************
+  Cartridge Expansion Slot
+ ***************************************************************************/
+
+const struct cartridge_callback {
+	void (*cart_w)(int data);
+};
+
+struct cartridge_slot {
+	void (*init)(const struct cartridge_callback *callbacks);
+	mem_read_handler io_r;
+	mem_write_handler io_w;
+	void (*enablesound)(int enable);
+};
+
+static const struct cartridge_slot *coco_cart_interface;
+
+static void coco_cartrige_init(const struct cartridge_slot *cartinterface, const struct cartridge_callback *callbacks)
+{
+	coco_cart_interface = cartinterface;
+	
+	if (cartinterface)
+		cartinterface->init(callbacks);
+}
+
+READ_HANDLER(coco_cartridge_r)
+{
+	return (coco_cart_interface && coco_cart_interface->io_r) ? coco_cart_interface->io_r(offset) : 0;
+}
+
+WRITE_HANDLER(coco_cartridge_w)
+{
+	if (coco_cart_interface && coco_cart_interface->io_w)
+		coco_cart_interface->io_w(offset, data);
+}
+
+READ_HANDLER(coco3_cartridge_r)
+{
+	/* This behavior is documented in Super Extended Basic Unravelled, page 14 */
+	return ((coco3_gimereg[0] & 0x04) || (offset >= 0x10)) ? coco_cartridge_r(offset) : 0;
+}
+
+WRITE_HANDLER(coco3_cartridge_w)
+{
+	/* This behavior is documented in Super Extended Basic Unravelled, page 14 */
+	if ((coco3_gimereg[0] & 0x04) || (offset >= 0x10))
+		coco_cartridge_w(offset, data);
+}
+
+
+static void coco_cartridge_enablesound(int enable)
+{
+	if (coco_cart_interface && coco_cart_interface->enablesound)
+		coco_cart_interface->enablesound(enable);
+}
+
+/***************************************************************************
   Floppy disk controller
  ***************************************************************************
  * The CoCo and Dragon both use the Western Digital 1793 floppy disk
@@ -1609,16 +1675,17 @@ void coco_cassette_exit(int id)
  * References:
  *		CoCo:	Disk Basic Unravelled
  *		Dragon:	Inferences from the PC-Dragon source code
+ *              DragonDos Controller, Disk and File Formats by Graham E Kinns
  * ---------------------------------------------------------------------------
  * DSKREG - the control register
  * CoCo ($ff40)                            Dragon ($ff48)
  *
  * Bit                                     Bit
- *	7 halt enable flag                      7 ???
- *	6 drive select #3                       6 ???
- *	5 density flag (0=single, 1=double)     5 halt enable flag
- *	4 write precompensation                 4 ???
- *	3 drive motor activation                3 ???
+ *	7 halt enable flag                      7 not used
+ *	6 drive select #3                       6 not used
+ *	5 density flag (0=single, 1=double)     5 NMI enable flag
+ *	4 write precompensation                 4 write precompensation
+ *	3 drive motor activation                3 single density enable
  *	2 drive select #2                       2 drive motor activation
  *	1 drive select #1                       1 drive select high bit
  *	0 drive select #0                       0 drive select low bit
@@ -1626,24 +1693,41 @@ void coco_cassette_exit(int id)
  */
 
 static int haltenable;
+static int nmienable;
 static int dskreg;
 static void coco_fdc_callback(int event);
+static void dragon_fdc_callback(int event);
 static int ff4b_count;
+static const struct cartridge_callback *cartcallbacks;
 
 enum {
 	HW_COCO,
 	HW_DRAGON
 };
 
-static void coco_fdc_init(void)
+static void coco_fdc_init(const struct cartridge_callback *callbacks)
 {
     wd179x_init(coco_fdc_callback);
 	dskreg = -1;
 	ff4b_count = 0x100;
+	nmienable = 1;
+	cartcallbacks = callbacks;
+}
+
+static void dragon_fdc_init(const struct cartridge_callback *callbacks)
+{
+    wd179x_init(dragon_fdc_callback);
+	dskreg = -1;
+	ff4b_count = 0x100;
+	nmienable = 1;
+	cartcallbacks = callbacks;
 }
 
 static void raise_nmi(int dummy)
 {
+#if LOG_FLOPPY
+	logerror("raise_nmi(): Raising NMI from floppy controller\n");
+#endif
 	cpu_set_nmi_line(0, ASSERT_LINE);
 }
 
@@ -1660,6 +1744,9 @@ static void coco_fdc_callback(int event)
 		cpu_set_nmi_line(0, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
+#if LOG_FLOPPY
+		logerror("coco_fdc_callback(): Called with WD179X_IRQ_SET; but not raising NMI because of hack (ff4b_count=$%04x)\n", ff4b_count);
+#endif
 		/* timer_set(COCO_CPU_SPEED * 11 / timer_get_overclock(0), 0, raise_nmi); */
 		break;
 	case WD179X_DRQ_CLR:
@@ -1670,6 +1757,34 @@ static void coco_fdc_callback(int event)
 		 * programs don't appear to work
 		 */
 		cpu_set_halt_line(0, 0 /*haltenable*/ ? ASSERT_LINE : CLEAR_LINE);
+		break;
+	}
+}
+
+static void dragon_fdc_callback(int event)
+{
+	/* In all honesty, I believe that I should be able to tie the WD179X IRQ
+	 * directly to the 6809 NMI input.  But it seems that if I do that, the NMI
+	 * occurs when the last byte of a read is made without any delay.  This
+	 * means that we drop the last byte of every sector read or written.  Thus,
+	 * we will delay the NMI
+	 */
+	switch(event) {
+	case WD179X_IRQ_CLR:
+		cpu_set_nmi_line(0, CLEAR_LINE);
+		break;
+	case WD179X_IRQ_SET:
+#if LOG_FLOPPY
+		logerror("dragon_fdc_callback(): Called with WD179X_IRQ_SET; but not raising NMI because of hack (ff4b_count=$%04x)\n", ff4b_count);
+#endif
+		if (nmienable)
+			timer_set(COCO_CPU_SPEED * 11 / timer_get_overclock(0), 0, raise_nmi);
+		break;
+	case WD179X_DRQ_CLR:
+		cartcallbacks->cart_w(CLEAR_LINE);
+		break;
+	case WD179X_DRQ_SET:
+		cartcallbacks->cart_w(ASSERT_LINE);
 		break;
 	}
 }
@@ -1685,11 +1800,20 @@ int dragon_floppy_init(int id)
 		if (file)
 		{
 			int tracks;
+			int heads;
 
-			/* For now, assume that real floppies are always 35 tracks */
-			tracks = (floppy_drive_get_flag_state(id, FLOPPY_DRIVE_REAL_FDD)) ? 35 : (osd_fsize(file) / (18*256));
+			if (floppy_drive_get_flag_state(id, FLOPPY_DRIVE_REAL_FDD)) {
+				/* For now, assume that real floppies are always 35 tracks, 1 head */
+				tracks = 35;
+				heads = 1;
+			}
+			else {
+				tracks = osd_fsize(file) / (18*256);
+				heads = (tracks > 80) ? 2 : 1;
+				tracks /= heads;
+			}
 
-			basicdsk_set_geometry(id, tracks, 1, 18, 256, 1);
+			basicdsk_set_geometry(id, tracks, heads, 18, 256, 1);
 
 			osd_fclose(file);
 
@@ -1706,6 +1830,10 @@ static void set_dskreg(int data, int hardware)
 	UINT8 head = 0;
 	int motor_mask = 0;
 	int haltenable_mask = 0;
+
+#if LOG_FLOPPY
+	logerror("set_dskreg(): data=$%02x\n", data);
+#endif
 
 	switch(hardware) {
 	case HW_COCO:
@@ -1740,7 +1868,8 @@ static void set_dskreg(int data, int hardware)
 			return;
 		drive = data & 0x03;
 		motor_mask = 0x04;
-		haltenable_mask = 0x20;
+		haltenable_mask = 0x00;
+		nmienable = data & 0x20;
 		break;
 	}
 
@@ -1761,7 +1890,7 @@ static int dc_floppy_r(int offset)
 {
 	int result = 0;
 
-	switch(offset & 0x0f) {
+	switch(offset & 0xef) {
 	case 8:
 		result = wd179x_status_r(0);
 		break;
@@ -1782,7 +1911,7 @@ static int dc_floppy_r(int offset)
 
 static void dc_floppy_w(int offset, int data, int hardware)
 {
-	switch(offset & 0x0f) {
+	switch(offset & 0xef) {
 	case 0:
 	case 1:
 	case 2:
@@ -1824,17 +1953,6 @@ WRITE_HANDLER(coco_floppy_w)
 	dc_floppy_w(offset, data, HW_COCO);
 }
 
-READ_HANDLER(coco3_floppy_r)
-{
-	return ((coco3_gimereg[0] & 0x04) || (offset >= 0x10)) ? coco_floppy_r(offset) : 0;
-}
-
-WRITE_HANDLER(coco3_floppy_w)
-{
-	if ((coco3_gimereg[0] & 0x04) || (offset >= 0x10))
-		coco_floppy_w(offset, data);
-}
-
 READ_HANDLER(dragon_floppy_r)
 {
 	return dc_floppy_r(offset ^ 8);
@@ -1844,6 +1962,24 @@ WRITE_HANDLER(dragon_floppy_w)
 {
 	dc_floppy_w(offset ^ 8, data, HW_DRAGON);
 }
+
+/* ---------------------------------------------------- */
+
+static const struct cartridge_slot coco_disk_cartridge =
+{
+	coco_fdc_init,
+	coco_floppy_r,
+	coco_floppy_w,
+	NULL
+};
+
+static const struct cartridge_slot dragon_disk_cartridge =
+{
+	dragon_fdc_init,
+	dragon_floppy_r,
+	dragon_floppy_w,
+	NULL
+};
 
 /***************************************************************************
   Bitbanger port
@@ -1931,7 +2067,30 @@ int coco3_hblank(void)
 	return ignore_interrupt();
 }
 
-static void generic_init_machine(struct pia6821_interface *piaintf)
+static void coco_setcartline(int data)
+{
+	cart_inserted = data;
+	pia_1_cb1_w(0, data);
+}
+
+static void coco3_setcartline(int data)
+{
+	cart_inserted = data;
+	pia_1_cb1_w(0, data);
+	coco3_raise_interrupt(COCO3_INT_EI0, cart_inserted ? 1 : 0);
+}
+
+static const struct cartridge_callback coco_cartcallbacks =
+{
+	coco_setcartline
+};
+
+static const struct cartridge_callback coco3_cartcallbacks =
+{
+	coco3_setcartline
+};
+
+static void generic_init_machine(struct pia6821_interface *piaintf, const struct cartridge_slot *cartinterface, const struct cartridge_callback *cartcallbacks)
 {
 	pia0_irq_a = CLEAR_LINE;
 	pia0_irq_b = CLEAR_LINE;
@@ -1951,7 +2110,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 		timer_set(0, 0, pak_load_trailer_callback);
 	}
 
-	coco_fdc_init();
+	coco_cartrige_init(cartinterface, cartcallbacks);
 	autocenter_init(12, 0x04);
 
 	timer_pulse(TIME_IN_HZ(600), 0, coco_bitbanger_poll);
@@ -1960,23 +2119,18 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 void dragon32_init_machine(void)
 {
 	d_sam_memory_size = 0;
-	generic_init_machine(dragon_pia_intf);
+	generic_init_machine(dragon_pia_intf, &dragon_disk_cartridge, &coco_cartcallbacks);
 
 	coco_rom = memory_region(REGION_CPU1) + 0x8000;
-
-	if (cart_inserted)
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 }
 
 void coco_init_machine(void)
 {
 	d_sam_memory_size = 0;
-	generic_init_machine(dragon_pia_intf);
+	generic_init_machine(dragon_pia_intf, &coco_disk_cartridge, &coco_cartcallbacks);
 
 	coco_rom = memory_region(REGION_CPU1) + 0x10000;
 
-	if (cart_inserted)
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	dragon64_sam_himemmap(0, 0);
 }
 
@@ -2002,12 +2156,9 @@ void coco3_init_machine(void)
 		coco3_gimereg[i] = 0;
 	}
 
-	generic_init_machine(coco3_pia_intf);
+	generic_init_machine(coco3_pia_intf, &coco_disk_cartridge, &coco3_cartcallbacks);
 
 	coco_rom = memory_region(REGION_CPU1) + 0x80000;
-
-	if (cart_inserted)
-		coco3_raise_interrupt(COCO3_INT_EI0, 1);
 
 	coco3_mmu_update(0, 8);
 	coco3_timer_init();

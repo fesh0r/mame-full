@@ -66,14 +66,12 @@ extern WRITE_HANDLER ( dragon_sam_speedctrl );
 extern WRITE_HANDLER ( coco3_sam_speedctrl );
 extern WRITE_HANDLER ( dragon_sam_page_mode );
 extern WRITE_HANDLER ( dragon_sam_memory_size );
-extern READ_HANDLER ( coco3_floppy_r);
-extern WRITE_HANDLER ( coco3_floppy_w );
+extern READ_HANDLER ( coco_cartridge_r);
+extern WRITE_HANDLER ( coco_cartridge_w );
+extern READ_HANDLER ( coco3_cartridge_r);
+extern WRITE_HANDLER ( coco3_cartridge_w );
 extern int coco_floppy_init(int id);
 extern void coco_floppy_exit(int id);
-extern READ_HANDLER ( coco_floppy_r );
-extern WRITE_HANDLER ( coco_floppy_w );
-extern READ_HANDLER(dragon_floppy_r);
-extern WRITE_HANDLER ( dragon_floppy_w );
 extern int coco3_hblank(void);
 /*extern int coco3_vblank(void);*/
 extern int coco3_mmu_translate(int block, int offset);
