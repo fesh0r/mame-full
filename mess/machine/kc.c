@@ -4,6 +4,9 @@
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
 
+#define KC_DEBUG
+
+static int kc85_pio_data[2];
 
 static void kc85_4_update_0x0c000(void);
 static void kc85_4_update_0x0e000(void);
@@ -11,30 +14,6 @@ static void kc85_4_update_0x08000(void);
 //static void kc85_4_update_0x04000(void);
 
 unsigned char *kc85_ram;
-
-static int kc85_4_pio_data[4];
-
-/* port 0x084/0x085:
-
-bit 7: RAF3
-bit 6: RAF2
-bit 5: RAF1
-bit 4: RAF0
-bit 3: FPIX. high resolution
-bit 2: BLA1 .access screen
-bit 1: BLA0 .pixel/color
-bit 0: BILD .display screen 0 or 1
-*/
-
-/* port 0x086/0x087:
-
-bit 7: ROCC
-bit 6: ROF1
-bit 5: ROF0
-bit 4-2 are not connected
-bit 1: WRITE PROTECT RAM 4
-bit 0: ACCESS RAM 4
-*/
 
 /* PIO PORT A: port 0x088:
 
@@ -60,11 +39,11 @@ bit 0: TRUCK */
 
 
 /* load image */
-int kc_load(char *filename, int addr)
+int kc_load(int type, int id, unsigned char **ptr)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R,OSD_FOPEN_READ);
+	file = image_fopen(type, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 
 	if (file)
 	{
@@ -81,22 +60,15 @@ int kc_load(char *filename, int addr)
 
 			if (data!=NULL)
 			{
-				int i;
-
 				/* read whole file */
 				osd_fread(file, data, datasize);
 
-				for (i=0; i<datasize; i++)
-				{
-					cpu_writemem16(addr+i, data[i]);
-				}
+				*ptr = data;
 
 				/* close file */
 				osd_fclose(file);
 
-				free(data);
-
-				logerror("File loaded!\n");
+				logerror("File loaded!\r\n");
 
 				/* ok! */
 				return 1;
@@ -109,9 +81,220 @@ int kc_load(char *filename, int addr)
 	return 0;
 }
 
+struct kcc_header
+{
+	unsigned char	name[10];
+	unsigned char	reserved[6];
+	unsigned char	anzahl;
+	unsigned char	load_address_l;
+	unsigned char	load_address_h;
+	unsigned char	length_l;
+	unsigned char	length_h;
+	unsigned short	execution_address;
+	unsigned char	pad[128-2-2-2-1-16];
+};
+
+/* appears to work a bit.. */
+/* load file, then type: MENU and it should now be displayed. */
+/* now type name that has appeared! */
+
+/* load snapshot */
+int kc_quickload_load(int id)
+{
+	unsigned char *data;
+
+	if (kc_load(IO_QUICKLOAD,id,&data))
+	{	
+		struct kcc_header *header = (struct kcc_header *)data;
+		int addr;
+		int datasize;
+		int i;
+
+		datasize = (header->length_l & 0x0ff) | ((header->length_h & 0x0ff)<<8);
+		datasize = datasize-128;
+		addr = (header->load_address_l & 0x0ff) | ((header->load_address_h & 0x0ff)<<8);
+
+		for (i=0; i<datasize; i++)
+		{
+			cpu_writemem16(addr+i, data[i+128]);
+		}
+			
+		return INIT_OK;
+	}
+
+	return INIT_FAILED;
+}
+
+/**********************/
+/* CASSETTE EMULATION */
+/**********************/
+/* used by KC85/4 and KC85/3 */
+/* 
+	The cassette motor is controlled by bit 6 of PIO port A.
+	The cassette read data is connected to /ASTB input of the PIO.
+	A edge from the cassette therefore will trigger a interrupt
+	from the PIO.
+	The duration between two edges can be timed and the data-bit
+	identified.
+
+	I have used a timer to feed data into /ASTB. The timer is only
+	active when the cassette motor is on.
+*/
+
+
+#define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(22050)
+
+int kc_cassette_device_init(int id)
+{
+	void *file;
+
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+
+		if (device_open(IO_CASSETTE, id, 0, &wa))
+			return INIT_FAILED;
+
+		return INIT_OK;
+	}
+
+	/* HJB 02/18: no file, create a new file instead */
+	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
+	if (file)
+	{
+		struct wave_args wa = {0,};
+		wa.file = file;
+		wa.display = 1;
+		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
+		/* open in write mode */
+        if (device_open(IO_CASSETTE, id, 1, &wa))
+            return INIT_FAILED;
+		return INIT_OK;
+    }
+
+	return INIT_FAILED;
+}
+
+void kc_cassette_device_exit(int id)
+{
+	device_close(IO_CASSETTE, id);
+}
+
+/* this timer is used to update the cassette */
+static void *kc_cassette_timer;
+/* this is the current state of the cassette motor */
+static int kc_cassette_motor_state;
+/* ardy output from pio */
+static unsigned char kc_ardy;
+
+static void kc_cassette_timer_callback(int dummy)
+{
+	int bit;
+
+	/* the cassette data is linked to /astb input of
+	the pio. */
+
+	bit = 0;
+
+	/* get data from cassette */
+	if (device_input(IO_CASSETTE,0) > 255)
+		bit = 1;
+
+	/* update astb with bit */
+	z80pio_astb_w(0,bit & kc_ardy);
+}
+
+/* free timer used for cassette update */
+static void kc_cassette_remove_timer(void)
+{
+	if (kc_cassette_timer)
+	{
+		timer_remove(kc_cassette_timer);
+		kc_cassette_timer = NULL;
+	}
+
+	/* set initial state */
+	kc_cassette_motor_state = 0;
+}
+
+static void	kc_cassette_init(void)
+{
+	kc_cassette_timer = NULL;
+}
+
+static void	kc_cassette_exit(void)
+{
+	kc_cassette_remove_timer();
+}
+
+
+static void	kc_cassette_set_motor(int motor_state)
+{
+	/* state changed? */
+	if (((kc_cassette_motor_state^motor_state)&0x01)!=0)
+	{
+		/* set new motor state in cassette device */
+		device_status(IO_CASSETTE, 0, motor_state);
+
+		if (motor_state)
+		{
+			/* start timer */
+			kc_cassette_timer = timer_pulse(KC_CASSETTE_TIMER_FREQUENCY, 0, kc_cassette_timer_callback);
+		}
+		else
+		{
+			/* stop timer */
+			kc_cassette_remove_timer();
+		}
+	}
+
+	/* store new state */
+	kc_cassette_motor_state = motor_state;
+}
+
+
+
+/* 
+
+  pin 2 = gnd
+  pin 3 = read
+  pin 1 = k1		?? modulating signal
+  pin 4 = k0		?? signal??
+  pin 5 = motor on
+
+
+	Tape signals:
+		K0, K1		??
+		MOTON		motor control
+		ASTB		read?
+
+		T1-T4 give 4 bit a/d tone sound?
+		K1, K0 are mixed with tone.
+
+	Cassette read goes into ASTB of PIO.
+	From this, KC must be able to detect the length
+	of the pulses and can read the data.
+
+
+	Tape write: clock comes from CTC?
+	truck signal resets, 5v signal for set.
+	output gives k0 and k1.
+
+
+
+
+*/
+
+
+
+
 /**********************/
 /* KEYBOARD EMULATION */
 /**********************/
+/* used by KC85/4 and KC85/3 */
 
 /* The basic transmit proceedure is working, keys are received */
 /* Todo: Key-repeat, and allowing the same key to be pressed twice! */
@@ -401,6 +584,8 @@ typedef struct kc_keyboard
 
 /* previous state of keyboard - currently used to detect if a key has been pressed/released  since last scan */
 static int kc_previous_keyboard[KC_KEYBOARD_NUM_LINES-1];
+/* brdy output from pio */
+static unsigned char kc_brdy;
 
 /* 
 	The kc keyboard is seperate from the kc base unit.
@@ -434,7 +619,7 @@ static void kc_keyboard_transmit_timer_callback(int dummy)
 #endif
 
 		/* set pulse */
-		z80pio_bstb_w(0,pulse_state);
+		z80pio_bstb_w(0,pulse_state & kc_brdy);
 
 		/* update counts */
 		keyboard_data.transmit_pulse_count_remaining--;
@@ -677,110 +862,35 @@ static void	kc_keyboard_update(int dummy)
 
 /*********************************************************************/
 
+/* port 0x084/0x085:
+
+bit 7: RAF3
+bit 6: RAF2
+bit 5: RAF1
+bit 4: RAF0
+bit 3: FPIX. high resolution
+bit 2: BLA1 .access screen
+bit 1: BLA0 .pixel/color
+bit 0: BILD .display screen 0 or 1
+*/
+
+/* port 0x086/0x087:
+
+bit 7: ROCC
+bit 6: ROF1
+bit 5: ROF0
+bit 4-2 are not connected
+bit 1: WRITE PROTECT RAM 4
+bit 0: ACCESS RAM 4
+*/
+
+
+/* KC85/4 specific */
 
 static int kc85_84_data;
 static int kc85_86_data;
 
-//static int opbase_reset_done = 0;
 
-OPBASE_HANDLER( kc85_opbaseoverride )
-{
-        //if (!opbase_reset_done)
-        //{
-        //    opbase_reset_done = 1;
-
-            memory_set_opbase_handler(0,0);
-
-            cpu_set_reg(Z80_PC, 0x0f000);
-
-	kc_load("bd_0400.prg", 0x0400);
-    kc_load("bd_4000.scr", 0x4000);
-
-
-            return (cpu_get_pc() & 0x0ffff);
-
-        //}
-        //
-        //return PC;
-}
-
-
-READ_HANDLER ( kc85_4_pio_data_r )
-{
-	return z80pio_d_r(0,offset);
-}
-
-READ_HANDLER ( kc85_4_pio_control_r )
-{
-	return z80pio_c_r(0,offset);
-}
-
-
-WRITE_HANDLER ( kc85_4_pio_data_w )
-{
-
-   {
-   int PC = cpu_get_pc();
-
-        logerror( "PIO W: PC: %04x O %02x D %02x\n",PC, offset, data);
-   }
-
-   kc85_4_pio_data[offset] = data;
-
-   z80pio_d_w(0, offset, data);
-
-
-   if (offset==0)
-   {
-           kc85_4_update_0x0c000();
-           kc85_4_update_0x0e000();
-   }
-
-   //if (offset==1)
-   //{
-        kc85_4_update_0x08000();
-   //}
-}
-
-WRITE_HANDLER ( kc85_4_pio_control_w )
-{
-   z80pio_c_w(0, offset, data);
-}
-
-
-READ_HANDLER ( kc85_4_ctc_r )
-{
-	unsigned char data;
-
-	data = z80ctc_0_r(offset);
-#ifdef KC_KEYBOARD_DEBUG
-	logerror("ctc data:%02x\n",data);
-#endif
-	return data;
-}
-
-WRITE_HANDLER ( kc85_4_ctc_w )
-{
-        logerror("CTC W: %02x\n",data);
-
-        z80ctc_0_w(offset,data);
-}
-
-WRITE_HANDLER ( kc85_4_84_w )
-{
-        logerror("0x084 W: %02x\n",data);
-
-        kc85_84_data = data;
-
-		kc85_4_video_ram_select_bank(data & 0x01);
-
-        kc85_4_update_0x08000();
-}
-
-READ_HANDLER ( kc85_4_84_r )
-{
-	return kc85_84_data;
-}
 
 /* port 0x086:
 
@@ -796,84 +906,333 @@ bit 0: ram 4
 
 static void kc85_4_update_0x08000(void)
 {
-        unsigned char *ram_page;
+	unsigned char *ram_page;
 
-        if (kc85_4_pio_data[0] & 4)
+    if (kc85_pio_data[1] & (1<<5))
+    {
+		int ram8_block;
+		unsigned char *mem_ptr;
+#ifdef KC_DEBUG
+		/* RAM8 ACCESS */
+		logerror("RAM8 enabled\n");
+#endif
+
+		/* ram8 block chosen */
+		ram8_block = ((kc85_84_data)>>4) & 0x01;
+
+		mem_ptr = kc85_ram+0x08000+(ram8_block<<14);
+
+		cpu_setbank(3, mem_ptr);
+		cpu_setbank(4, mem_ptr+0x02800);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+
+		/* write protect RAM8 ? */
+		if ((kc85_pio_data[1] & (1<<6))==0)
+		{
+#ifdef KC_DEBUG
+			logerror("RAM8 write protected\n");
+#endif
+			/* ram8 is enabled and write protected */
+			memory_set_bankhandler_w(9, 0, MWA_NOP);
+			memory_set_bankhandler_w(10, 0, MWA_NOP);
+		}
+		else
+		{
+#ifdef KC_DEBUG
+			logerror("RAM8 write enabled\n");
+#endif
+			/* ram8 is enabled and write enabled */
+			memory_set_bankhandler_w(9, 0, MWA_BANK9);
+			memory_set_bankhandler_w(10, 0, MWA_BANK10);
+			cpu_setbank(9, mem_ptr);
+			cpu_setbank(10, mem_ptr+0x02800);
+		}
+    }
+    else
+    {
+#ifdef KC_DEBUG
+		logerror("no memory at ram8\n");
+#endif
+		memory_set_bankhandler_r(3, 0, MRA_NOP);
+		memory_set_bankhandler_r(4, 0, MRA_NOP);
+		memory_set_bankhandler_w(9, 0, MWA_NOP);
+		memory_set_bankhandler_w(10, 0, MWA_NOP);
+    }
+
+	/* if IRM is enabled override block 3/9 settings */
+	if (kc85_pio_data[0] & (1<<2))
+	{
+		/* IRM enabled - has priority over RAM8 enabled */
+#ifdef KC_DEBUG
+		logerror("IRM enabled\n");
+
+        if (kc85_84_data & 0x04)
         {
-                /* IRM enabled - has priority over RAM8 enabled */
-                logerror("IRM enabled\n");
-
-
-                {
-
-                        if (kc85_84_data & 0x04)
-                        {
-                                logerror("access screen 1\n");
-                        }
-                        else
-                        {
-                                logerror("access screen 0\n");
-                        }
-
-                        if (kc85_84_data & 0x02)
-                        {
-                                logerror("access colour\n");
-                        }
-                        else
-                        {
-                                logerror("access pixel\n");
-                        }
-               }
-
-
-				ram_page = kc85_4_get_video_ram_base((kc85_84_data & 0x04), (kc85_84_data & 0x02));
-
-               cpu_setbank(3, ram_page);
-
-
-               memory_set_bankhandler_r(3, 0, MRA_BANK3);
-               memory_set_bankhandler_w(3, 0, MWA_BANK3);
-
-
+            logerror("access screen 1\n");
         }
         else
-        if (kc85_4_pio_data[1] & 0x020)
         {
-                /* RAM8 ACCESS */
-                logerror("RAM8 enabled\n");
+            logerror("access screen 0\n");
+        }
 
-                ram_page = kc85_ram + 0x08000;
-
-                cpu_setbank(3, ram_page);
-
-
-                memory_set_bankhandler_r(3, 0, MRA_BANK3);
-
-                /* write protect RAM8 ? */
-                if (kc85_4_pio_data[1] & 0x040)
-                {
-                        memory_set_bankhandler_w(3, 0, MWA_NOP);
-                }
-                else
-                {
-                        memory_set_bankhandler_w(3, 0, MWA_BANK3);
-                }
-
+        if (kc85_84_data & 0x02)
+        {
+            logerror("access colour\n");
         }
         else
         {
-                memory_set_bankhandler_r(3, 0, MRA_NOP);
-                memory_set_bankhandler_w(3, 0, MWA_NOP);
+			logerror("access pixel\n");
         }
+#endif
+		ram_page = kc85_4_get_video_ram_base((kc85_84_data & 0x04), (kc85_84_data & 0x02));
+
+		cpu_setbank(3, ram_page);
+		cpu_setbank(9, ram_page);
+
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_w(9, 0, MWA_BANK9);
+
+		ram_page = kc85_4_get_video_ram_base(0, 0);
+
+		cpu_setbank(4, ram_page+0x02800);
+		cpu_setbank(10, ram_page+0x02800);
+
+		memory_set_bankhandler_r(4, 0, MRA_BANK4);
+		memory_set_bankhandler_w(10, 0, MWA_BANK10);
+
+	}
+
 }
+
+/* update status of memory area 0x0000-0x03fff */
+static void kc85_4_update_0x00000(void)
+{
+	/* access ram? */
+	if (kc85_pio_data[0] & (1<<1))
+	{
+#ifdef KC_DEBUG
+		logerror("ram0 enabled\n");
+#endif
+
+		/* yes */
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		/* set address of bank */
+		cpu_setbank(1, kc85_ram);
+
+		/* write protect ram? */
+		if ((kc85_pio_data[0] & (1<<3))==0)
+		{
+			/* yes */
+#ifdef KC_DEBUG
+			logerror("ram0 write protected\n");
+#endif
+
+			/* ram is enabled and write protected */
+			memory_set_bankhandler_w(7, 0, MWA_NOP);
+		}
+		else
+		{
+#ifdef KC_DEBUG
+			logerror("ram0 write enabled\n");
+#endif
+
+			/* ram is enabled and write enabled */
+			memory_set_bankhandler_w(7, 0, MWA_BANK7);
+			/* set address of bank */
+			cpu_setbank(7, kc85_ram);
+		}
+	}
+	else
+	{
+#ifdef KC_DEBUG
+		logerror("no memory at ram0!\n");
+#endif
+
+//		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
+		/* ram is disabled */
+		memory_set_bankhandler_r(1, 0, MRA_NOP);
+		
+		
+		memory_set_bankhandler_w(7, 0, MWA_NOP);
+	}
+}
+
+/* update status of memory area 0x4000-0x07fff */
+static void kc85_4_update_0x04000(void)
+{
+	/* access ram? */
+	if (kc85_86_data & (1<<0))
+	{
+		unsigned char *mem_ptr;
+
+#ifdef KC_DEBUG
+		logerror("ram4 enabled\n");
+#endif
+		mem_ptr = kc85_ram+0x04000;
+
+		/* yes */
+		memory_set_bankhandler_r(2, 0,MRA_BANK2);
+		/* set address of bank */
+		cpu_setbank(2, mem_ptr);
+
+		/* write protect ram? */
+		if ((kc85_86_data & (1<<1))==0)
+		{
+			/* yes */
+#ifdef KC_DEBUG
+			logerror("ram4 write protected\n");
+#endif
+
+			/* ram is enabled and write protected */
+			memory_set_bankhandler_w(8, 0, MWA_NOP);
+		}
+		else
+		{
+#ifdef KC_DEBUG
+			logerror("ram4 write enabled\n");
+#endif
+			/* ram is enabled and write enabled */
+			memory_set_bankhandler_w(8, 0, MWA_BANK8);
+			/* set address of bank */
+			cpu_setbank(8, mem_ptr);
+		}
+	}
+	else
+	{
+#ifdef KC_DEBUG
+		logerror("no memory at ram4!\n");
+#endif
+		/* ram is disabled */
+		memory_set_bankhandler_r(2, 0,MRA_NOP);
+		memory_set_bankhandler_w(8, 0,MWA_NOP);
+	}
+}
+
+
+/* update memory address 0x0c000-0x0e000 */
+static void kc85_4_update_0x0c000(void)
+{
+	if (kc85_86_data & (1<<7))
+	{
+		/* CAOS rom takes priority */
+#ifdef KC_DEBUG
+		logerror("CAOS rom 0x0c000\n");
+#endif
+		cpu_setbank(5,memory_region(REGION_CPU1) + 0x012000);
+		memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	}
+	else
+	if (kc85_pio_data[0] & (1<<7))
+	{
+#ifdef KC_DEBUG
+		/* BASIC takes next priority */
+        logerror("BASIC rom 0x0c000\n");
+#endif
+
+        cpu_setbank(5, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankhandler_r(5, 0, MRA_BANK5);
+	}
+	else
+	{
+#ifdef KC_DEBUG
+		logerror("No roms 0x0c000\n");
+#endif
+		memory_set_bankhandler_r(5, 0, MRA_NOP);
+	}
+}
+
+/* update memory address 0x0e000-0x0ffff */
+static void kc85_4_update_0x0e000(void)
+{
+	if (kc85_pio_data[0] & (1<<0))
+	{
+		/* enable CAOS rom in memory range 0x0e000-0x0ffff */
+#ifdef KC_DEBUG
+		logerror("CAOS rom 0x0e000\n");
+#endif
+		/* read will access the rom */
+		cpu_setbank(6,memory_region(REGION_CPU1) + 0x013000);
+		memory_set_bankhandler_r(6,0, MRA_BANK6);
+	}
+	else
+	{
+#ifdef KC_DEBUG
+		logerror("no rom 0x0e000\n");
+#endif
+		memory_set_bankhandler_r(6,0, MRA_NOP);
+	}
+}
+
+/* PIO PORT A: port 0x088:
+
+bit 7: ROM C (BASIC)
+bit 6: Tape Motor on
+bit 5: LED
+bit 4: K OUT
+bit 3: WRITE PROTECT RAM 0
+bit 2: IRM
+bit 1: ACCESS RAM 0
+bit 0: CAOS ROM E
+*/
+
+/* PIO PORT B: port 0x089:
+bit 7: BLINK
+bit 6: WRITE PROTECT RAM 8
+bit 5: ACCESS RAM 8
+bit 4: TONE 4
+bit 3: TONE 3
+bit 2: TONE 2
+bit 1: TONE 1
+bit 0: TRUCK */
+
+WRITE_HANDLER ( kc85_4_pio_data_w )
+{
+	kc85_pio_data[offset] = data;
+	z80pio_d_w(0, offset, data);
+	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
+
+	switch (offset)
+	{
+
+		case 0:
+		{
+			kc85_4_update_0x0c000();
+			kc85_4_update_0x0e000();
+			kc85_4_update_0x08000();
+			kc85_4_update_0x00000();
+
+			kc_cassette_set_motor((data>>6) & 0x01);   
+		}
+		break;
+
+		case 1:
+		{
+			int speaker_level;
+
+			kc85_4_update_0x08000();
+
+			/* 16 speaker levels */
+			speaker_level = (data>>1) & 0x0f;
+
+			/* this might not be correct, the range might
+			be logarithmic and not linear! */
+			speaker_level_w(0, (speaker_level<<4));
+		}
+		break;
+	}
+}
+
 
 WRITE_HANDLER ( kc85_4_86_w )
 {
-        logerror("0x086 W: %02x\n",data);
+	logerror("0x086 W: %02x\n",data);
+	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
 
 	kc85_86_data = data;
 
-        kc85_4_update_0x0c000();
+	kc85_4_update_0x0c000();
+	kc85_4_update_0x04000();
 }
 
 READ_HANDLER ( kc85_4_86_r )
@@ -881,150 +1240,395 @@ READ_HANDLER ( kc85_4_86_r )
 	return kc85_86_data;
 }
 
-static void kc85_4_pio_interrupt(int state)
-{
-        cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 
+WRITE_HANDLER ( kc85_4_84_w )
+{
+	logerror("0x084 W: %02x\n",data);
+	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
+
+	kc85_84_data = data;
+
+	kc85_4_video_ram_select_bank(data & 0x01);
+
+	kc85_4_update_0x08000();
 }
 
-static void kc85_4_ctc_interrupt(int state)
+READ_HANDLER ( kc85_4_84_r )
 {
-        cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	return kc85_84_data;
 }
+/*****************************************************************/
 
-static void	kc_pio_ardy_callback(int state)
+/* update memory region 0x0c000-0x0e000 */
+static void kc85_3_update_0x0c000(void)
 {
-	if (state)
+	if (kc85_pio_data[0] & (1<<7))
 	{
-		logerror("PIO A Ready\n");
-	}
-
-}
-
-static void kc_pio_brdy_callback(int state)
-{
-	if (state)
-	{
-		logerror("PIO A Ready\n");
-	}
-}
-
-
-static z80pio_interface kc85_4_pio_intf =
-{
-	1,					/* number of PIOs to emulate */
-	{ kc85_4_pio_interrupt },	/* callback when change interrupt status */
-	{ kc_pio_ardy_callback },	/* portA ready active callback */
-	{ kc_pio_brdy_callback }	/* portB ready active callback */
-};
-
-static WRITE_HANDLER ( kc85_4_zc2_callback )
-{
-//z80ctc_trg_w(0, 3, 0,keyboard_data);
-//z80ctc_trg_w(0, 3, 1,keyboard_data);
-//z80ctc_trg_w(0, 3, 2,keyboard_data);
-//z80ctc_trg_w(0, 3, 3,keyboard_data);
-
-//keyboard_data^=0x0ff;
-}
-
-
-static z80ctc_interface	kc85_4_ctc_intf =
-{
-	1,
-	{1379310.344828},
-	{0},
-    {kc85_4_ctc_interrupt},
-	{0},
-	{0},
-    {kc85_4_zc2_callback}
-};
-
-
-/* update memory address 0x0c000-0x0e000 */
-static void kc85_4_update_0x0c000(void)
-{
-        if (kc85_86_data & 0x080)
-	{
-		/* CAOS rom takes priority */
-
-                logerror("CAOS rom 0x0c000\n");
-
-                cpu_setbank(1,memory_region(REGION_CPU1) + 0x012000);
-     //           cpu_setbankhandler_r(1,MRA_BANK1);
-	}
-	else
-	if (kc85_4_pio_data[0] & 0x080)
-	{
+#ifdef KC_DEBUG
 		/* BASIC takes next priority */
-                logerror("BASIC rom 0x0c000\n");
-
-                cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-       //         cpu_setbankhandler_r(1, MRA_BANK1);
+		logerror("BASIC rom 0x0c000\n");
+#endif
+		cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
+		memory_set_bankhandler_r(3, 0, MRA_BANK3);
 	}
 	else
 	{
-                logerror("No roms 0x0c000\n");
-
-      //          cpu_setbankhandler_r(1, MRA_NOP);
+#ifdef KC_DEBUG
+		logerror("No roms 0x0c000\n");
+#endif
+		memory_set_bankhandler_r(3, 0, MRA_NOP);
 	}
 }
 
 /* update memory address 0x0e000-0x0ffff */
-static void kc85_4_update_0x0e000(void)
+static void kc85_3_update_0x0e000(void)
 {
-	if (kc85_4_pio_data[0] & 0x01)
+	if (kc85_pio_data[0] & (1<<0))
 	{
+#ifdef KC_DEBUG
 		/* enable CAOS rom in memory range 0x0e000-0x0ffff */
-
-                logerror("CAOS rom 0x0e000\n");
-
-		/* read will access the rom */
-                cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
-       //         cpu_setbankhandler_r(2, MRA_BANK2);
+		logerror("CAOS rom 0x0e000\n");
+#endif
+		cpu_setbank(4,memory_region(REGION_CPU1) + 0x012000);
+        memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	}
 	else
 	{
-                logerror("no rom 0x0e000\n");
-
-		/* enable empty space memory range 0x0e000-0x0ffff */
-       //         cpu_setbankhandler_r(2, MRA_NOP);
+#ifdef KC_DEBUG
+		logerror("no rom 0x0e000\n");
+#endif
+		memory_set_bankhandler_r(4, 0, MRA_NOP);
 	}
 }
 
-
-void    kc85_4_reset(void)
+/* update status of memory area 0x0000-0x03fff */
+/* MRA_BANK1 is used for read operations and MRA_BANK5 is used
+for write operations */
+static void kc85_3_update_0x00000(void)
 {
+	/* access ram? */
+	if (kc85_pio_data[0] & (1<<1))
+	{
+#ifdef KC_DEBUG
+		logerror("ram0 enabled\n");
+#endif
+		/* yes */
+		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		/* set address of bank */
+		cpu_setbank(1, kc85_ram);
+
+		/* write protect ram? */
+		if ((kc85_pio_data[0] & (1<<3))==0)
+		{
+			/* yes */
+#ifdef KC_DEBUG
+			logerror("ram0 write protected\n");
+#endif
+
+			/* ram is enabled and write protected */
+			memory_set_bankhandler_w(5, 0, MWA_NOP);
+		}
+		else
+		{
+#ifdef KC_DEBUG
+		logerror("ram0 write enabled\n");
+#endif
+
+			/* ram is enabled and write enabled */
+			memory_set_bankhandler_w(5, 0, MWA_BANK5);
+			/* set address of bank */
+			cpu_setbank(5, kc85_ram);
+		}
+	}
+	else
+	{
+#ifdef KC_DEBUG
+		logerror("no memory at ram0!\n");
+#endif
+
+		/* ram is disabled */
+		memory_set_bankhandler_r(1, 0, MRA_NOP);
+		memory_set_bankhandler_w(5, 0, MWA_NOP);
+	}
+}
+
+/* update status of memory area 0x08000-0x0ffff */
+/* MRA_BANK2 is used for read, MRA_BANK6 is used for write */
+static void kc85_3_update_0x08000(void)
+{
+    unsigned char *ram_page;
+
+    if (kc85_pio_data[0] & (1<<2))
+    {
+        /* IRM enabled */
+#ifdef KC_DEBUG
+        logerror("IRM enabled\n");
+#endif
+		ram_page = kc85_ram+0x08000;
+		
+		cpu_setbank(2, ram_page);
+		cpu_setbank(6, ram_page);
+
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_w(6, 0, MWA_BANK6);
+    }
+    else
+    if (kc85_pio_data[1] & (1<<5))
+    {
+		/* RAM8 ACCESS */
+#ifdef KC_DEBUG
+		logerror("RAM8 enabled\n");
+#endif
+		ram_page = kc85_ram + 0x04000;
+
+		cpu_setbank(2, ram_page);
+		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+
+		/* write protect RAM8 ? */
+		if ((kc85_pio_data[1] & (1<<6))==0)
+		{
+#ifdef KC_DEBUG
+			logerror("RAM8 write protected\n");
+#endif
+			/* ram8 is enabled and write protected */
+			memory_set_bankhandler_w(6, 0, MWA_NOP);
+		}
+		else
+		{
+#ifdef KC_DEBUG
+			logerror("RAM8 write enabled\n");
+#endif
+			/* ram8 is enabled and write enabled */
+			memory_set_bankhandler_w(6, 0, MWA_BANK6);
+			cpu_setbank(6,ram_page);
+		}
+    }
+    else
+    {
+#ifdef KC_DEBUG
+		logerror("no memory at ram8!\n");
+#endif
+		memory_set_bankhandler_r(2, 0, MRA_NOP);
+		memory_set_bankhandler_w(6, 0, MWA_NOP);
+    }
+}
+
+
+/* PIO PORT A: port 0x088:
+
+bit 7: ROM C (BASIC)
+bit 6: Tape Motor on
+bit 5: LED
+bit 4: K OUT
+bit 3: WRITE PROTECT RAM 0
+bit 2: IRM
+bit 1: ACCESS RAM 0
+bit 0: CAOS ROM E
+*/
+
+/* PIO PORT B: port 0x089:
+bit 7: BLINK
+bit 6: WRITE PROTECT RAM 8
+bit 5: ACCESS RAM 8
+bit 4: TONE 4
+bit 3: TONE 3
+bit 2: TONE 2
+bit 1: TONE 1
+bit 0: TRUCK */
+
+WRITE_HANDLER ( kc85_3_pio_data_w )
+{
+   kc85_pio_data[offset] = data;
+   z80pio_d_w(0, offset, data);
+
+   switch (offset)
+   {
+
+		case 0:
+		{
+			kc85_3_update_0x0c000();
+			kc85_3_update_0x0e000();
+			kc85_3_update_0x00000();
+
+			kc_cassette_set_motor((data>>6) & 0x01);   
+		}
+		break;
+
+		case 1:
+		{
+			int speaker_level;
+
+			kc85_3_update_0x08000();
+
+			/* 16 speaker levels */
+			speaker_level = (data>>1) & 0x0f;
+
+			/* this might not be correct, the range might
+			be logarithmic and not linear! */
+			speaker_level_w(0, (speaker_level<<4));
+		}
+		break;
+   }
+}
+
+
+/*****************************************************************/
+
+/* used by KC85/4 and KC85/3 */
+
+READ_HANDLER ( kc85_unmapped_r )
+{
+	return 0x0ff;
+}
+
+static OPBASE_HANDLER( kc85_opbaseoverride )
+{
+	memory_set_opbase_handler(0,0);
+
+	cpu_set_reg(Z80_PC, 0x0f000);
+
+	return (cpu_get_pc() & 0x0ffff);
+}
+
+
+READ_HANDLER ( kc85_pio_data_r )
+{
+	return z80pio_d_r(0,offset);
+}
+
+READ_HANDLER ( kc85_pio_control_r )
+{
+	return z80pio_c_r(0,offset);
+}
+
+
+
+WRITE_HANDLER ( kc85_pio_control_w )
+{
+   z80pio_c_w(0, offset, data);
+}
+
+
+READ_HANDLER ( kc85_ctc_r )
+{
+	unsigned char data;
+
+	data = z80ctc_0_r(offset);
+#ifdef KC_KEYBOARD_DEBUG
+	logerror("ctc data:%02x\n",data);
+#endif
+	return data;
+}
+
+WRITE_HANDLER ( kc85_ctc_w )
+{
+	z80ctc_0_w(offset,data);
+}
+
+
+static void kc85_pio_interrupt(int state)
+{
+	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+}
+
+static void kc85_ctc_interrupt(int state)
+{
+	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+}
+
+/* callback for ardy output from PIO */
+/* used in KC85/4 & KC85/3 cassette interface */
+static void	kc85_pio_ardy_callback(int state)
+{
+	kc_ardy = state & 0x01;
+#ifdef KC_DEBUG
+	if (state)
+	{
+		logerror("PIO A Ready\n");
+	}
+#endif
+
+}
+
+/* callback for brdy output from PIO */
+/* used in KC85/4 & KC85/3 keyboard interface */
+static void kc85_pio_brdy_callback(int state)
+{
+	kc_brdy = state & 0x01;
+#ifdef KC_DEBUG
+	if (state)
+	{
+		logerror("PIO B Ready\n");
+	}
+#endif
+}
+
+
+static z80pio_interface kc85_pio_intf =
+{
+	1,					/* number of PIOs to emulate */
+	{ kc85_pio_interrupt },	/* callback when change interrupt status */
+	{ kc85_pio_ardy_callback },	/* portA ready active callback */
+	{ kc85_pio_brdy_callback }	/* portB ready active callback */
+};
+
+static z80ctc_interface	kc85_ctc_intf =
+{
+	1,
+	{1379310.344828},
+	{0},
+    {kc85_ctc_interrupt},
+	{0},
+	{0},
+    {0}
+};
+
+static void	kc85_common_init(void)
+{
+	z80pio_init(&kc85_pio_intf);
+	z80ctc_init(&kc85_ctc_intf);
+
 	z80ctc_reset(0);
 	z80pio_reset(0);
 
-	/* enable CAOS rom in range 0x0e000-0x0ffff */
-	kc85_4_pio_data[0] = 1;
-	kc85_4_update_0x0e000();
+	kc_cassette_init();
+	kc_keyboard_init();
 
 	/* this is temporary. Normally when a Z80 is reset, it will
-	execute address 0. It appears the KC85/4 pages in the rom
+	execute address 0. It appears the KC85 series pages the rom
 	at address 0x0000-0x01000 which has a single jump in it,
 	can't see yet where it disables it later!!!! so for now
 	here will be a override */
 	memory_set_opbase_handler(0, kc85_opbaseoverride);
 }
 
+static void	kc85_common_shutdown_machine(void)
+{
+	kc_keyboard_exit();
+	kc_cassette_exit();
+}
+
+/*****************************************************************/
+
+
 void kc85_4_init_machine(void)
 {
-	z80pio_init(&kc85_4_pio_intf);
-	z80ctc_init(&kc85_4_ctc_intf);
-
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
-	memory_set_bankhandler_w(3, 0, MWA_BANK3);
-
 	kc85_ram = malloc(64*1024);
 
-	kc85_4_reset();
+	kc85_84_data = 0x028;
+	kc85_86_data = 0x063;
+	/* enable CAOS rom in range 0x0e000-0x0ffff */
+	/* ram0 enable, irm enable */
+	kc85_pio_data[0] = 0x0f;
+	kc85_pio_data[1] = 0x0f1;
 
-	kc_keyboard_init();
+	kc85_4_update_0x00000();
+	kc85_4_update_0x04000();
+	kc85_4_update_0x08000();
+	kc85_4_update_0x0c000();
+	kc85_4_update_0x0e000();
+
+	kc85_common_init();
 }
 
 void kc85_4_shutdown_machine(void)
@@ -1035,24 +1639,21 @@ void kc85_4_shutdown_machine(void)
 		kc85_ram = NULL;
 	}
 
-	kc_keyboard_exit();
+	kc85_common_shutdown_machine();
 }
 
 void kc85_3_init_machine(void)
 {
-	z80pio_init(&kc85_4_pio_intf);
-	z80ctc_init(&kc85_4_ctc_intf);
-
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
-	memory_set_bankhandler_w(3, 0, MWA_BANK3);
-
 	kc85_ram = malloc(64*1024);
+	kc85_pio_data[0] = 0x0f;
+	kc85_pio_data[1] = 0x0f1;
 
-	kc85_4_reset();
+	kc85_3_update_0x00000();
+	kc85_3_update_0x08000();
+	kc85_3_update_0x0c000();
+	kc85_3_update_0x0e000();
 
-	kc_keyboard_init();
+	kc85_common_init();
 }
 
 void kc85_3_shutdown_machine(void)
@@ -1063,7 +1664,7 @@ void kc85_3_shutdown_machine(void)
 		kc85_ram = NULL;
 	}
 
-	kc_keyboard_exit();
+	kc85_common_shutdown_machine();
 }
 
 

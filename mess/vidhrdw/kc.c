@@ -233,6 +233,7 @@ void    kc85_3_vh_stop(void)
 {
 }
 
+extern unsigned char *kc85_ram;
 
 /***************************************************************************
   Draw the game screen in the given osd_bitmap.
@@ -241,4 +242,49 @@ void    kc85_3_vh_stop(void)
 ***************************************************************************/
 void kc85_3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
+	/* colour ram takes up 0x02800 bytes */
+	   unsigned char *pixel_ram = kc85_ram+0x08000;	
+    unsigned char *colour_ram = pixel_ram + 0x02800;
+
+    int x,y,a;
+
+	for (y=0; y<KC85_3_SCREEN_HEIGHT; y++)
+	{
+		for (x=0; x<(KC85_3_SCREEN_WIDTH>>3); x++)
+		{
+			int colour, foreground_pen, background_pen;
+			int offset;
+			int gfx_byte;
+
+			offset = y | (x<<8);
+
+            colour = colour_ram[offset];
+
+            background_pen = (colour&7) | 0x010;
+            foreground_pen = (colour>>3) & 0x015;
+
+            background_pen = Machine->pens[background_pen];
+            foreground_pen = Machine->pens[foreground_pen];
+
+            gfx_byte = pixel_ram[offset];
+
+            for (a=0; a<8; a++)
+            {
+                int pen;
+
+                if (gfx_byte & 0x080)
+                {
+                    pen = foreground_pen;
+                }
+                else
+                {
+                    pen = background_pen;
+                }
+
+                plot_pixel(bitmap, (x<<3)+a, y, pen);
+
+                gfx_byte = gfx_byte<<1;
+	        }
+		}
+	}
 }

@@ -13,6 +13,9 @@
 #define KC85_3_SCREEN_WIDTH 320
 #define KC85_3_SCREEN_HEIGHT (32*8)
 
+int	kc_quickload_load(int id);
+
+
 void kc85_4_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
 int kc85_4_vh_start(void);
 void kc85_4_vh_stop(void);
@@ -27,6 +30,9 @@ void kc85_3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void kc85_3_shutdown_machine(void);
 void kc85_3_init_machine(void);
 
+/* cassette */
+int kc_cassette_device_init(int id);
+void kc_cassette_device_exit(int id);
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);
@@ -34,14 +40,19 @@ WRITE_HANDLER(kc85_4_84_w);
 READ_HANDLER(kc85_4_86_r);
 WRITE_HANDLER(kc85_4_86_w);
 
-READ_HANDLER(kc85_4_pio_data_r);
+READ_HANDLER(kc85_unmapped_r);
+
+READ_HANDLER(kc85_pio_data_r);
+
+
 WRITE_HANDLER(kc85_4_pio_data_w);
+WRITE_HANDLER(kc85_3_pio_data_w);
 
-READ_HANDLER(kc85_4_pio_control_r);
-WRITE_HANDLER(kc85_4_pio_control_w);
+READ_HANDLER(kc85_pio_control_r);
+WRITE_HANDLER(kc85_pio_control_w);
 
-READ_HANDLER(kc85_4_ctc_r);
-WRITE_HANDLER(kc85_4_ctc_w);
+READ_HANDLER(kc85_ctc_r);
+WRITE_HANDLER(kc85_ctc_w);
 
 /* select video ram to display */
 void kc85_4_video_ram_select_bank(int bank);
