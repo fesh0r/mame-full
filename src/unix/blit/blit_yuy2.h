@@ -214,73 +214,15 @@ BLIT_BEGIN(blit_scale2x)
 BLIT_END
 
 
-/* hq2x yuy2 version, configuration defines for hq2x_defs.h */
+/* lq2x yuy2 version */
+#include "advance/xq2x_yuy2.h"
+
+
+/* hq2x yuy2 version */
+#define HQ2X
 #define HQ2X_USE_YUV_LOOKUP 1
 #define HQ2X_YUVLOOKUP(p) (p)
-#define HQ2X_GETPIXEL(p) YUV_TO_HQ2X_YUV(GET_YUV_PIXEL(p))
-#include "advance/hq2x_defs.h"
-
-/* Pixel glue define, so that we can use the advancemame lookup
-   tables unmodified. */
-#define P(a, b) p_##b##_##a
-
-INLINE void FUNC_NAME(blit_hq2x2_line) ( SRC_PIXEL *src0,
-  SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
-  RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
-{
-  RENDER_PIXEL *dst0 = dst;
-  RENDER_PIXEL *dst1 = dst + dest_width/2;
-  RENDER_PIXEL p_0_0 = 0, p_0_1 = 0, p_1_0 = 0, p_1_1 = 0;
-
-  HQ2X_LINE_LOOP_BEGIN
-    switch (mask) {
-      #include "advance/hq2x.dat"
-    }
-#ifdef LSB_FIRST
-    y1 = (p_0_0>>8) & Y1MASK;
-    u1 = (p_0_1<<8) & Y2MASK; /* use u1 to store y2 */
-    p_0_0 &= (HQ2X_UMASK|HQ2X_VMASK);
-    p_0_1 &= (HQ2X_UMASK|HQ2X_VMASK);
-    v1 = ((p_0_0 + p_0_1) << 7) & UVMASK; /* use u1 to store uv */
-    *dst0++ = y1 | u1 | v1;
-
-    y1 = (p_1_0>>8) & Y1MASK;
-    u1 = (p_1_1<<8) & Y2MASK; /* use u1 to store y2 */
-    p_1_0 &= (HQ2X_UMASK|HQ2X_VMASK);
-    p_1_1 &= (HQ2X_UMASK|HQ2X_VMASK);
-    v1 = ((p_1_0 + p_1_1) << 7) & UVMASK; /* use u1 to store uv */
-    *dst1++ = y1 | u1 | v1;
-#else
-    y1 = (p_0_0<<16) & Y1MASK;
-    u1 = (p_0_1)     & Y2MASK; /* use u1 to store y2 */
-    p_0_0 &= (HQ2X_UMASK|HQ2X_VMASK);
-    p_0_1 &= (HQ2X_UMASK|HQ2X_VMASK);
-    v1 = ((p_0_0 + p_0_1) >> 1) & UVMASK; /* use u1 to store uv */
-    *dst0++ = y1 | u1 | v1;
-
-    y1 = (p_1_0<<16) & Y1MASK;
-    u1 = (p_1_1)     & Y2MASK; /* use u1 to store y2 */
-    p_1_0 &= (HQ2X_UMASK|HQ2X_VMASK);
-    p_1_1 &= (HQ2X_UMASK|HQ2X_VMASK);
-    v1 = ((p_1_0 + p_1_1) >> 1) & UVMASK; /* use u1 to store uv */
-    *dst1++ = y1 | u1 | v1;
-#endif
-  HQ2X_LINE_LOOP_END
-}
-
-BLIT_BEGIN(blit_hq2x)
-  switch(sysdep_display_params.widthscale)
-  {
-    case 2:
-      switch(sysdep_display_params.heightscale)
-      {
-        case 2:
-          BLIT_LOOP2X(blit_hq2x2_line, 2);
-          break;
-      }
-      break;
-  }
-BLIT_END
+#include "advance/xq2x_yuy2.h"
 
 
 /**********************************

@@ -87,6 +87,48 @@ void blit_scale2x_32_YUY2_direct(struct mame_bitmap *bitmap,
 
 /****************************************************************************/
 
+void blit_lq2x_15_15_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_16_16(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_16_24(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_16_32(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_16_YUY2(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_32_15_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_32_16_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_32_24_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_32_32_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_lq2x_32_YUY2_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+/****************************************************************************/
+
 void blit_hq2x_15_15_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);

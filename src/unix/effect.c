@@ -7,7 +7,7 @@
 #include <string.h>
 #include "blit/blit.h"
 #include "blit/pixel_defs.h"
-#include "blit/advance/hq2x_yuv.h"
+#include "blit/advance/xq2x_yuv.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
@@ -42,6 +42,7 @@ unsigned int effect_rgb2yuv[65536];
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
   { 1, 8, 1, 8, 0,                                  "no effect" },
   { 2, 3, 2, 6, 0,                                  "smooth scaling" },
+  { 2, 2, 2, 2, 0,                                  "low quality filter" },
   { 2, 2, 2, 2, 0,                                  "high quality filter" },
   { 1, 4, 2, 2, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "light scanlines (h)" },
   { 1, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "rgb scanlines (h)" }, 
@@ -52,7 +53,6 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
 };
 
 #if 0  
-  { 2, 2, 2, 2, 0, "low quality filter" },   /* lq2x */
   { 2, 2, 2, 2, 0, "6-tap filter & scanlines" }, /* 6tap2x */
   { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
 #endif
@@ -110,6 +110,25 @@ static blit_func_p effect_funcs[] = {
    blit_scale2x_32_24_direct,
    blit_scale2x_32_32_direct,
    blit_scale2x_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
+   /* lq2x */
+   blit_lq2x_15_15_direct,
+   blit_lq2x_16_16, /* Just use the 16 bpp src versions, since we need */
+   blit_lq2x_16_24, /* to go through the lookup anyways. */
+   blit_lq2x_16_32,
+   blit_lq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_lq2x_16_16, /* We use the lookup and don't do any calculations */
+   blit_lq2x_16_16, /* with the result so these are the same. */
+   blit_lq2x_16_24,
+   blit_lq2x_16_32,
+   blit_lq2x_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_lq2x_32_15_direct,
+   blit_lq2x_32_16_direct,
+   blit_lq2x_32_24_direct,
+   blit_lq2x_32_32_direct,
+   blit_lq2x_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
    /* hq2x */
    blit_hq2x_15_15_direct,
@@ -519,7 +538,7 @@ blit_func_p sysdep_display_effect_open(void)
                 for(b=0; b<32; b++)
                 {
                    RGB2YUV(r*8,g*8,b*8,y,u,v);
-                   effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_HQ2X_YUV(
+                   effect_rgb2yuv[(r<<10)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
                 }
             break;
@@ -529,7 +548,7 @@ blit_func_p sysdep_display_effect_open(void)
                 for(b=0; b<32; b++)
                 {
                    RGB2YUV(r*8,g*4,b*8,y,u,v);
-                   effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_HQ2X_YUV(
+                   effect_rgb2yuv[(r<<11)|(g<<5)|b] = YUV_TO_XQ2X_YUV(
                      (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT));
                 }
             break;
@@ -706,422 +725,3 @@ static void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct re
          for (x = bounds->min_x; x < bounds->max_x; x++)
            u32dst[x-bounds->min_x] = ((unsigned int *)bitmap->line[bitmap->height - y -1])[x];
 }
-
-
-
-#if 0
-/* These can't be moved to effect_funcs.c because they
-   use inlined render functions */
-
-/* high quality 2x scaling effect, see effect_renderers for the
-   real stuff */
-void effect_hq2x_16_YUY2
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, unsigned int *u32lookup)
-{
-  unsigned int *u32dst0   = (unsigned int *)dst0;
-  unsigned int *u32dst1   = (unsigned int *)dst1;
-  unsigned short *u16src0 = (unsigned short *)src0;
-  unsigned short *u16src1 = (unsigned short *)src1;
-  unsigned short *u16src2 = (unsigned short *)src2;
-  INT32 y,y2,u,v;
-  unsigned int p1[2], p2[2];
-  unsigned int w[9];
-
-  w[1] = u32lookup[u16src0[-1]];
-  w[2] = u32lookup[u16src0[ 0]];
-  w[4] = u32lookup[u16src1[-1]];
-  w[5] = u32lookup[u16src1[ 0]];
-  w[7] = u32lookup[u16src2[-1]];
-  w[8] = u32lookup[u16src2[ 0]];
-
-  w[1] = (w[1]>>24) | (w[1]<<8);
-  w[2] = (w[2]>>24) | (w[2]<<8);
-  w[4] = (w[4]>>24) | (w[4]<<8);
-  w[5] = (w[5]>>24) | (w[5]<<8);
-  w[7] = (w[7]>>24) | (w[7]<<8);
-  w[8] = (w[8]>>24) | (w[8]<<8);
-
-  while (count--)
-  {
-
-    /*
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w0 | w1 | w2 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w3 | w4 | w5 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w6 | w7 | w8 |
-     *   +----+----+----+
-     */
-
-    w[0] = w[1];
-    w[1] = w[2];
-    w[2] = u32lookup[u16src0[ 1]];
-    w[2] = (w[2]>>24) | (w[2]<<8);
-    w[3] = w[4];
-    w[4] = w[5];
-    w[5] = u32lookup[u16src1[ 1]];
-    w[5] = (w[5]>>24) | (w[5]<<8);
-    w[6] = w[7];
-    w[7] = w[8];
-    w[8] = u32lookup[u16src2[ 1]];
-    w[8] = (w[8]>>24) | (w[8]<<8);
-
-    hq2x_YUY2( p1, p2, w );
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    y=p1[0];
-    y2=p1[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst0++=y|y2|u|v;
-
-    y=p2[0];
-    y2=p2[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst1++=y|y2|u|v;
-  }
-}
-
-
-void effect_hq2x_32_YUY2_direct
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, unsigned int *u32lookup)
-{
-  unsigned int *u32dst0   = (unsigned int *)dst0;
-  unsigned int *u32dst1   = (unsigned int *)dst1;
-  unsigned int *u32src0 = (unsigned int *)src0;
-  unsigned int *u32src1 = (unsigned int *)src1;
-  unsigned int *u32src2 = (unsigned int *)src2;
-  INT32 r,g,b,y,y2,u,v;
-  unsigned int p1[2],p2[2];
-  unsigned int w[9];
-
-  w[1]=u32src0[-1];
-  r=RMASK32(w[1]); r>>=16; g=GMASK32(w[1]);  g>>=8; b=BMASK32(w[1]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[1]=y|u|v;
-
-  w[2]=u32src0[0];
-  r=RMASK32(w[2]); r>>=16; g=GMASK32(w[2]);  g>>=8; b=BMASK32(w[2]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[2]=y|u|v;
-
-  w[4]=u32src1[-1];
-  r=RMASK32(w[4]); r>>=16; g=GMASK32(w[4]);  g>>=8; b=BMASK32(w[4]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[4]=y|u|v;
-
-  w[5]=u32src1[0];
-  r=RMASK32(w[5]); r>>=16; g=GMASK32(w[5]);  g>>=8; b=BMASK32(w[5]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[5]=y|u|v;
-
-  w[7]=u32src2[-1];
-  r=RMASK32(w[7]); r>>=16; g=GMASK32(w[7]);  g>>=8; b=BMASK32(w[7]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[7]=y|u|v;
-
-  w[8]=u32src2[0];
-  r=RMASK32(w[8]); r>>=16; g=GMASK32(w[8]);  g>>=8; b=BMASK32(w[8]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[8]=y|u|v;
-
-  while (count--)
-  {
-
-    /*
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w0 | w1 | w2 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w3 | w4 | w5 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w6 | w7 | w8 |
-     *   +----+----+----+
-     */
-
-    w[0] = w[1];
-    w[1] = w[2];
-    w[2] = u32src0[ 1];
-    r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[2]=y|u|v;
-
-    w[3] = w[4];
-    w[4] = w[5];
-    w[5] = u32src1[ 1];
-    r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[5]=y|u|v;
-
-    w[6] = w[7];
-    w[7] = w[8];
-    w[8] = u32src2[ 1];
-    r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[8]=y|u|v;
-
-    hq2x_YUY2( &p1[0], &p2[0], w );
-
-    ++u32src0;
-    ++u32src1;
-    ++u32src2;
-
-    y=p1[0];
-    y2=p1[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst0++=y|y2|u|v;
-
-    y=p2[0];
-    y2=p2[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst1++=y|y2|u|v;
-  }
-}
-
-/* low quality 2x scaling effect, see effect_renderers for the
-   real stuff */
-void effect_lq2x_16_YUY2
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, unsigned int *u32lookup)
-{
-  unsigned int *u32dst0   = (unsigned int *)dst0;
-  unsigned int *u32dst1   = (unsigned int *)dst1;
-  unsigned short *u16src0 = (unsigned short *)src0;
-  unsigned short *u16src1 = (unsigned short *)src1;
-  unsigned short *u16src2 = (unsigned short *)src2;
-  INT32 y,y2,u,v;
-  unsigned int p1[2], p2[2];
-  unsigned int w[9];
-
-  w[1] = u32lookup[u16src0[-1]];
-  w[2] = u32lookup[u16src0[ 0]];
-  w[4] = u32lookup[u16src1[-1]];
-  w[5] = u32lookup[u16src1[ 0]];
-  w[7] = u32lookup[u16src2[-1]];
-  w[8] = u32lookup[u16src2[ 0]];
-
-  w[1] = (w[1]>>24) | (w[1]<<8);
-  w[2] = (w[2]>>24) | (w[2]<<8);
-  w[4] = (w[4]>>24) | (w[4]<<8);
-  w[5] = (w[5]>>24) | (w[5]<<8);
-  w[7] = (w[7]>>24) | (w[7]<<8);
-  w[8] = (w[8]>>24) | (w[8]<<8);
-
-  while (count--)
-  {
-
-    /*
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w0 | w1 | w2 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w3 | w4 | w5 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w6 | w7 | w8 |
-     *   +----+----+----+
-     */
-
-    w[0] = w[1];
-    w[1] = w[2];
-    w[2] = u32lookup[u16src0[ 1]];
-    w[2] = (w[2]>>24) | (w[2]<<8);
-    w[3] = w[4];
-    w[4] = w[5];
-    w[5] = u32lookup[u16src1[ 1]];
-    w[5] = (w[5]>>24) | (w[5]<<8);
-    w[6] = w[7];
-    w[7] = w[8];
-    w[8] = u32lookup[u16src2[ 1]];
-    w[8] = (w[8]>>24) | (w[8]<<8);
-
-    lq2x_32( p1, p2, w );
-
-    ++u16src0;
-    ++u16src1;
-    ++u16src2;
-    y=p1[0];
-    y2=p1[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst0++=y|y2|u|v;
-
-    y=p2[0];
-    y2=p2[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst1++=y|y2|u|v;
-  }
-}
-
-void effect_lq2x_32_YUY2_direct
-    (void *dst0, void *dst1,
-    const void *src0, const void *src1, const void *src2,
-    unsigned count, unsigned int *u32lookup)
-{
-  unsigned int *u32dst0   = (unsigned int *)dst0;
-  unsigned int *u32dst1   = (unsigned int *)dst1;
-  unsigned int *u32src0 = (unsigned int *)src0;
-  unsigned int *u32src1 = (unsigned int *)src1;
-  unsigned int *u32src2 = (unsigned int *)src2;
-  INT32 r,g,b,y,y2,u,v;
-  unsigned int p1[2],p2[2];
-  unsigned int w[9];
-
-  w[1]=u32src0[-1];
-  r = RMASK32(w[1]); r>>=16; g = GMASK32(w[1]);  g>>=8; b = BMASK32(w[1]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[1]=y|u|v;
-
-  w[2]=u32src0[0];
-  r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[2]=y|u|v;
-
-  w[4]=u32src1[-1];
-  r = RMASK32(w[4]); r>>=16; g = GMASK32(w[4]);  g>>=8; b = BMASK32(w[4]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[4]=y|u|v;
-
-  w[5]=u32src1[0];
-  r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[5]=y|u|v;
-
-  w[7]=u32src2[-1];
-  r = RMASK32(w[7]); r>>=16; g = GMASK32(w[7]);  g>>=8; b = BMASK32(w[7]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[7]=y|u|v;
-
-  w[8]=u32src2[0];
-  r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
-  y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-  u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-  v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-  w[8]=y|u|v;
-
-  while (count--)
-  {
-
-    /*
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w0 | w1 | w2 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w3 | w4 | w5 |
-     *   +----+----+----+
-     *   |    |    |    |
-     *   | w6 | w7 | w8 |
-     *   +----+----+----+
-     */
-
-    w[0] = w[1];
-    w[1] = w[2];
-    w[2] = u32src0[ 1];
-    r = RMASK32(w[2]); r>>=16; g = GMASK32(w[2]);  g>>=8; b = BMASK32(w[2]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[2]=y|u|v;
-
-    w[3] = w[4];
-    w[4] = w[5];
-    w[5] = u32src1[ 1];
-    r = RMASK32(w[5]); r>>=16; g = GMASK32(w[5]);  g>>=8; b = BMASK32(w[5]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[5]=y|u|v;
-
-    w[6] = w[7];
-    w[7] = w[8];
-    w[8] = u32src2[ 1];
-    r = RMASK32(w[8]); r>>=16; g = GMASK32(w[8]);  g>>=8; b = BMASK32(w[8]);
-    y = (( 9836*r + 19310*g + 3750*b ) >> 7)&0xff00;
-    u = ((( -5527*r - 10921*g + 16448*b ) <<1) + 0x800000)&0xff0000;
-    v = ((( 16448*r - 13783*g - 2665*b ) >> 15) + 128)&0xff;
-    w[8]=y|u|v;
-
-    lq2x_32( &p1[0], &p2[0], w );
-
-    ++u32src0;
-    ++u32src1;
-    ++u32src2;
-
-    y=p1[0];
-    y2=p1[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst0++=y|y2|u|v;
-
-    y=p2[0];
-    y2=p2[1];
-    u=(((y&0xff0000)+(y2&0xff0000))>>9)&0xff00;
-    v=(((y&0xff)+(y2&0xff))<<23)&0xff000000;
-    y=(y&0xff00)>>8;
-    y2=(y2<<8)&0xff0000;
-    *u32dst1++=y|y2|u|v;
-  }
-}
-
-#endif

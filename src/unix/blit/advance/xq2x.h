@@ -1,24 +1,27 @@
 /*
  * hq2x algorithm (C) 2003 by Maxim Stepin (www.hiend3d.com/hq2x.html)
- * Initial xmame implementation by Pieter Hulshoff.
- * The current implemention of hq2x is a mix between Pieter Hulshoff's
+ * lq2x algorithm (C) 2003 by Andrea Mazzoleni
+ * (http://advancemame.sourceforge.net)
+ * Initial xmame implementations by Pieter Hulshoff.
+ * The current implementions are a mix between Pieter Hulshoff's
  * implementation, and the one from advancemame (Hans de Goede).
  *
  * hq2x is a fast, high-quality 2x magnification filter.
+ * lq2x is a fast, low-quality 2x magnification filter.
  *
- * The first step is an analysis of the 3x3 area of the source pixel. At
- * first, we calculate the color difference between the central pixel and
- * its 8 nearest neighbors. Then that difference is compared to a predefined
- * threshold, and these pixels are sorted into two categories: "close" and
- * "distant" colored. There are 8 neighbors, so we are getting 256 possible
- * combinations.
- *
+ * The first step is an analysis of the 3x3 area of the source pixel. The
+ * central pixel gets compared with its 8 nearest neighbors. For lq2x
+ * the pixels are sorted into the categories: "equal" and "unequel".
+ * For hq2x we calculate the color difference and compare this to a predefined
+ * threshold, resulting in the categories: "close" and "distant" colored.
+ * There are 8 neighbors, so we are getting 256 possible combinations.
+ * 
  * For the next step, which is filtering, a lookup table with 256 entries is
  * used, one entry per each combination of close/distant colored neighbors.
  * Each entry describes how to mix the colors of the source pixels from 3x3
  * area to get interpolated pixels of the filtered image.
  *
- * The present implementation is using YUV color space to calculate color
+ * The present hq2x implementation is using YUV color space to calculate color
  * differences, with more tolerance on Y (brightness) component, then on
  * color components U and V.
  *
@@ -69,45 +72,55 @@
  * J.W.R. de Goede, Rotterdam the Netherlands, 17 december 2004.
  */
 
-/* Configuration defines for hq2x_defs.h */
-#if RENDER_DEPTH != 32
-#define HQ2X_USE_YUV_LOOKUP 1
-#define HQ2X_YUVLOOKUP(p) effect_rgb2yuv[p]
+/* Configuration defines and includes */
+#define XQ2X_GETPIXEL(p) GETPIXEL(p)
+#ifdef HQ2X
+#  if RENDER_DEPTH != 32
+#    define HQ2X_USE_YUV_LOOKUP 1
+#    define HQ2X_YUVLOOKUP(p) effect_rgb2yuv[p]
+#  else
+#    define HQ2X_USE_YUV_LOOKUP 0
+#  endif
+#  include "hq2x_defs.h"
 #else
-#define HQ2X_USE_YUV_LOOKUP 0
+#  include "lq2x_defs.h"
 #endif
-#define HQ2X_GETPIXEL(p) GETPIXEL(p)
-#include "hq2x_defs.h"
 
 /* Pixel glue define, so that we can use the advancemame lookup
    tables unmodified. */
 #define P(a, b) dst##b[a]
 
-INLINE void FUNC_NAME(blit_hq2x2_line) ( SRC_PIXEL *src0,
+INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
   RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
 {
   RENDER_PIXEL *dst0 = dst;
   RENDER_PIXEL *dst1 = dst + dest_width;
-  HQ2X_LINE_LOOP_BEGIN
+  XQ2X_LINE_LOOP_BEGIN
     switch (mask) {
-      #include "hq2x.dat"
+      #ifdef HQ2X
+      #  include "hq2x.dat"
+      #else
+      #  include "lq2x.dat"
+      #endif
     }
     dst0 += 2;
     dst1 += 2;
-  HQ2X_LINE_LOOP_END
+  XQ2X_LINE_LOOP_END
 }
 
-BLIT_BEGIN(blit_hq2x)
+BLIT_BEGIN(XQ2X_NAME(blit))
   switch(sysdep_display_params.widthscale)
   {
     case 2:
       switch(sysdep_display_params.heightscale)
       {
         case 2:
-          BLIT_LOOP2X(blit_hq2x2_line, 2);
+          BLIT_LOOP2X(XQ2X_NAME(blit_line_2x2), 2);
           break;
       }
       break;
   }
 BLIT_END
+
+#include "xq2x_undefs.h"
