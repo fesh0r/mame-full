@@ -1,13 +1,20 @@
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include <string.h>
 #include <assert.h>
 #include <tchar.h>
+
+#include "ui/screenshot.h"
+#include "ui/bitmask.h"
+#include "ui/options.h"
+#include "ui/mame32.h"
+
 #include "SmartListView.h"
 #include "SoftwareList.h"
 #include "mame.h"
 #include "driver.h"
 #include "unzip.h"
 #include "osd_cpu.h"
-#include "ui/mame32.h"
 #include "strconv.h"
 #include "snprintf.h"
 

@@ -30,6 +30,9 @@
 #include <malloc.h>
 #include <math.h>
 #include <driver.h>
+
+#include "screenshot.h"
+#include "bitmask.h"
 #include "mame32.h"
 #include "m32util.h"
 #include "resource.h"
@@ -38,6 +41,7 @@
 #include "splitters.h"
 #include "dijoystick.h"
 #include "audit.h"
+#include "options.h"
 
 /***************************************************************************
     Internal function prototypes
@@ -181,6 +185,7 @@ static REG_OPTION regSettings[] =
 	{"exec_wait",          RO_INT,     &settings.exec_wait,  0, 0},
 	{"hide_mouse",         RO_BOOL,    &settings.hide_mouse,  0, 0},
 	{"full_screen",        RO_BOOL,    &settings.full_screen,  0, 0},
+	{"cycle_screenshot",   RO_INT,     &settings.cycle_screenshot,  0, 0},
 
 	{"language",           RO_STRING,  &settings.language,         0, 0},
 	{"flyer_directory",    RO_STRING,  &settings.flyerdir,         0, 0},
@@ -376,6 +381,7 @@ typedef struct
 static GAMEVARIABLE_OPTION gamevariable_options[] =
 {
 	{ "play_count",		RO_INT,		offsetof(game_variables_type, play_count),				NULL,				(const void *) 0},
+	{ "play_time",		RO_INT, 	offsetof(game_variables_type, play_time),				NULL,				(const void *) 0},
 	{ "rom_audit",		RO_INT,		offsetof(game_variables_type, rom_audit_results),		NULL,				(const void *) UNKNOWN },
 	{ "samples_audit",	RO_INT,		offsetof(game_variables_type, samples_audit_results),	DriverUsesSamples,	(const void *) UNKNOWN },
 #ifdef MESS
@@ -513,10 +519,11 @@ static BOOL save_gui_settings = TRUE;
 static BOOL save_default_options = TRUE;
 
 // Default sizes based on 8pt font w/sort arrow in that column
-static int default_column_width[] = { 185, 68, 84, 84, 64, 88, 74,108, 60,144, 84 };
-static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  0 };
+static int default_column_width[] = { 185, 68, 84, 84, 64, 88, 74,108, 60,144, 84, 60 };
+static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  0, 0 };
+
 // Hidden columns need to go at the end of the order array
-static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10 };
+static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1, 10, 11 };
 
 static const char *view_modes[VIEW_MAX] = { "Large Icons", "Small Icons", "List", "Details", "Grouped" };
 
@@ -833,6 +840,7 @@ BOOL OptionsInit()
 	for (i = 0; i < num_games; i++)
 	{
 		game_variables[i].play_count = 0;
+		game_variables[i].play_time = 0;
 		game_variables[i].rom_audit_results = UNKNOWN;
 		game_variables[i].samples_audit_results = UNKNOWN;
 		
@@ -1084,6 +1092,16 @@ void SetJoyGUI(BOOL use_joygui)
 BOOL GetJoyGUI(void)
 {
 	return settings.use_joygui;
+}
+
+void SetCycleScreenshot(int cycle_screenshot)
+{
+	settings.cycle_screenshot = cycle_screenshot;
+}
+
+int GetCycleScreenshot(void)
+{
+	return settings.cycle_screenshot;
 }
 
 void SetBroadcast(BOOL broadcast)
@@ -1817,6 +1835,37 @@ int GetPlayCount(int driver_index)
 	return game_variables[driver_index].play_count;
 }
 
+int GetPlayTime(int driver_index)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+
+	return game_variables[driver_index].play_time;
+}
+
+void IncrementPlayTime(int driver_index,int playtime)
+{
+	assert(0 <= driver_index && driver_index < num_games);
+	game_variables[driver_index].play_time += playtime;
+}
+
+void GetTextPlayTime(int driver_index,char *buf)
+{
+	int hour, minute, second;
+	int temp = game_variables[driver_index].play_time;
+
+	assert(0 <= driver_index && driver_index < num_games);
+
+	hour = temp / 3600;
+	temp = temp - 3600*hour;
+	minute = temp / 60; //Calc Minutes
+	second = temp - 60*minute;
+
+	if (hour == 0)
+		sprintf(buf, "%d:%02d", minute, second );
+	else
+		sprintf(buf, "%d:%02d:%02d", hour, minute, second );
+}
+
 int GetUIJoyUp(int joycodeIndex)
 {
 	assert(0 <= joycodeIndex && joycodeIndex < 4);
@@ -2401,7 +2450,6 @@ static void TabFlagsEncodeString(void *data,char *str)
 			num_saved++;
 		}
 	}
-
 }
 
 static void TabFlagsDecodeString(const char *str,void *data)
@@ -2652,7 +2700,7 @@ static void LoadOptionsAndSettings(void)
 			option = GetOption(regSettings,NUM_SETTINGS,key);
 			if (option == NULL)
 			{
-				// search for game_have_rom/have_sample/play_count thing
+				// search for game_have_rom/have_sample/play_count/play_time thing
 				if (LoadGameVariableOrFolderFilter(key,value_str) == FALSE)
 				{
 					dprintf("found unknown option %s",key);

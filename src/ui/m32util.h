@@ -10,8 +10,8 @@
 
  ***************************************************************************/
 
-#ifndef MAME32UTIL_H
-#define MAME32UTIL_H
+#ifndef M32UTIL_H
+#define M32UTIL_H
 
 extern void __cdecl ErrorMsg(const char* fmt, ...);
 extern void __cdecl dprintf(const char* fmt, ...);

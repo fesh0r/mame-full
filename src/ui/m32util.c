@@ -22,7 +22,9 @@
 #include <shlwapi.h>
 #include <assert.h>
 #include <stdio.h>
+
 #include "unzip.h"
+#include "screenshot.h"
 #include "MAME32.h"
 #include "M32Util.h"
 

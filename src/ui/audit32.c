@@ -24,13 +24,17 @@
 #include <commctrl.h>
 #include <stdio.h>
 #include <richedit.h>
-#include "resource.h"
 
-#include <driver.h>
+#include "screenshot.h"
+#include "win32ui.h"
+
 #include <audit.h>
 #include <unzip.h>
 
-#include "win32ui.h"
+#include "resource.h"
+
+#include "bitmask.h"
+#include "options.h"
 #include "m32util.h"
 #include "audit32.h"
 #include "Properties.h"

@@ -327,20 +327,17 @@ static int pc_cga_status_r(void)
  *************************************************************************/
 WRITE_HANDLER ( pc_CGA_w )
 {
-	switch( offset )
-	{
-		case 0: case 2: case 4: case 6:
-			crtc6845_port_w(crtc6845, 0, data);
-			break;
-		case 1: case 3: case 5: case 7:
-			crtc6845_port_w(crtc6845, 1, data);
-			break;
-		case 8:
-			pc_cga_mode_control_w(data);
-			break;
-		case 9:
-			pc_cga_color_select_w(data);
-			break;
+	switch(offset) {
+	case 0: case 2: case 4: case 6:
+	case 1: case 3: case 5: case 7:
+		crtc6845_port_w(crtc6845, offset, data);
+		break;
+	case 8:
+		pc_cga_mode_control_w(data);
+		break;
+	case 9:
+		pc_cga_color_select_w(data);
+		break;
 	}
 }
 
@@ -758,44 +755,24 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 	return proc;
 }
 
-static struct {
-	UINT8 reg, write, read;
+static struct
+{
+	UINT8 write;
+	UINT8 read;
 } pc1512;
 
 WRITE_HANDLER ( pc1512_w )
 {
-	/* NPW 9-Jul-2003 - This function should eventually be eliminated, and the
-	 * functionality moved into crtc6845.c, and key everything off of the
-	 * personality
-	 */
-
 	UINT8 char_height;
 
 	switch (offset) {
-
-	/* Trap writes to the 6845 character height register, and set the number of
-	 * character lines (which MESS uses but a real PC1512 doesn't) from it.
-	 * This is also done at mode change (below). */
-
-	case 0x0: case 0x2: case 0x4: case 0x6:
-		pc1512.reg = data;
-		pc_CGA_w(offset,data);
+	case 0xd:
+		pc1512.write = data;
 		break;
 
-	case 0x1: case 0x3: case 0x5: case 0x7:
-		pc_CGA_w(offset,data);
-		if (pc1512.reg == 9) /* character height */
-		{
-			char_height = crtc6845_get_char_height(crtc6845);
-			crtc6845_set_char_lines(crtc6845, 200 / char_height);
-		}
-		break;
-
-	case 0xd: pc1512.write=data;
-		break;
-
-	case 0xe: pc1512.read=data;
-		cpu_setbank(1,videoram+videoram_offset[data&3]);
+	case 0xe:
+		pc1512.read = data;
+		cpu_setbank(1, videoram + videoram_offset[data & 3]);
 		break;
 
 	/* The PC1512 doesn't have a full 6845; writes to the first 9 6845
@@ -824,7 +801,9 @@ WRITE_HANDLER ( pc1512_w )
 		pc_CGA_w(offset, data);
 		break;
 
-	default: pc_CGA_w(offset,data);
+	default:
+		pc_CGA_w(offset,data);
+		break;
 	}
 }
 
@@ -850,12 +829,17 @@ READ_HANDLER ( pc1512_r )
 
 WRITE_HANDLER ( pc1512_videoram_w )
 {
-	if (pc1512.write&1) videoram[offset+videoram_offset[0]]=data; //blue plane
-	if (pc1512.write&2) videoram[offset+videoram_offset[1]]=data; //green
-	if (pc1512.write&4) videoram[offset+videoram_offset[2]]=data; //red
-	if (pc1512.write&8) videoram[offset+videoram_offset[3]]=data; //intensity (text, 4color)
+	if (pc1512.write & 1)
+		videoram[offset+videoram_offset[0]] = data; /* blue plane */
+	if (pc1512.write & 2)
+		videoram[offset+videoram_offset[1]] = data; /* green */
+	if (pc1512.write & 4)
+		videoram[offset+videoram_offset[2]] = data; /* red */
+	if (pc1512.write & 8)
+		videoram[offset+videoram_offset[3]] = data; /* intensity (text, 4color) */
+
 	if (dirtybuffer)
-		dirtybuffer[offset]=1;
+		dirtybuffer[offset] = 1;
 }
 
 VIDEO_START( pc1512 )

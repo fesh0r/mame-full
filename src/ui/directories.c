@@ -23,6 +23,8 @@
 #include <shlobj.h>
 #include <sys/stat.h>
 #include <assert.h>
+
+#include "screenshot.h"
 #include "MAME32.h"
 #include "Directories.h"
 #include "resource.h"

@@ -46,6 +46,7 @@
 #include "directdraw.h"
 #include "properties.h"
 
+#include "screenshot.h"
 #include "Mame32.h"
 #include "DataMap.h"
 #include "help.h"
@@ -1474,6 +1475,7 @@ static void SetPropEnabledControls(HWND hWnd)
 		EnableWindow(GetDlgItem(hWnd,IDC_VOLUMETEXT),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY),sound);
 		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY_DISP),sound);
+		EnableWindow(GetDlgItem(hWnd,IDC_AUDIO_LATENCY_TEXT),sound);
 		SetSamplesEnabled(hWnd, nIndex, sound);
 		SetStereoEnabled(hWnd, nIndex);
 		SetYM3812Enabled(hWnd, nIndex);

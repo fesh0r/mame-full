@@ -7,6 +7,8 @@
 #include <wingdi.h>
 #include <winuser.h>
 
+#include "ui/screenshot.h"
+#include "ui/bitmask.h"
 #include "ui/mame32.h"
 #include "ui/resourcems.h"
 #include "mess.h"

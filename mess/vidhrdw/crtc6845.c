@@ -63,7 +63,7 @@ struct crtc6845
 {
 	struct crtc6845_config config;
 	UINT8 reg[18];
-	UINT8 index_;
+	UINT8 idx;
 	double cursor_time;
 	int cursor_on;
 };
@@ -124,7 +124,7 @@ static UINT8 pc1512_defaults[] =
 struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 {
 	struct crtc6845 *crtc;
-	int index_;
+	int idx;
 
 	crtc = auto_malloc(sizeof(struct crtc6845));
 	if (!crtc)
@@ -138,9 +138,9 @@ struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 	/* Hardwire the values which can't be changed in the PC1512 version */
 	if (config->personality == M6845_PERSONALITY_PC1512)
 	{
-		for (index_ = 0; index_ < sizeof(pc1512_defaults); index_++)
+		for (idx = 0; idx < sizeof(pc1512_defaults); idx++)
 		{
-			crtc->reg[index_] = pc1512_defaults[index_];
+			crtc->reg[idx] = pc1512_defaults[idx];
 		}
 	}
 
@@ -258,17 +258,17 @@ void crtc6845_get_cursor(struct crtc6845 *crtc, struct crtc6845_cursor *cursor)
 data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
 {
 	data8_t val = 0xff;
-	int index_;
+	int idx;
 
 	if (offset & 1)
 	{
-		index_ = crtc->index_ & 0x1f;
-		if (index_ < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
-			val = crtc->reg[index_] & crtc6845_reg_mask[crtc->config.personality][index_].read_mask;
+		idx = crtc->idx & 0x1f;
+		if (idx < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
+			val = crtc->reg[idx] & crtc6845_reg_mask[crtc->config.personality][idx].read_mask;
 	}
 	else
 	{
-		val = crtc->index_;
+		val = crtc->idx;
 	}
 	return val;
 }
@@ -276,22 +276,22 @@ data8_t crtc6845_port_r(struct crtc6845 *crtc, int offset)
 void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
 {
 	struct crtc6845_cursor cursor;
-	int index_;
+	int idx;
 	UINT8 mask;
 
 	if (offset & 1)
 	{
 		/* write to a 6845 register, if supported */
-		index_ = crtc->index_ & 0x1f;
-		if (index_ < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
+		idx = crtc->idx & 0x1f;
+		if (idx < (sizeof(crtc->reg) / sizeof(crtc->reg[0])))
 		{
-			mask = crtc6845_reg_mask[crtc->config.personality][index_].store_mask;
+			mask = crtc6845_reg_mask[crtc->config.personality][idx].store_mask;
 			/* Don't zero out bits not covered by the mask. */
-			crtc->reg[crtc->index_] &= ~mask;
-			crtc->reg[crtc->index_] |= (data & mask);
+			crtc->reg[crtc->idx] &= ~mask;
+			crtc->reg[crtc->idx] |= (data & mask);
 
-			/* are there special consequences to writing to this register */
-			switch (index_) {
+			/* are there special consequences to writing to this register? */
+			switch (idx) {
 			case 0xa:
 			case 0xb:
 			case 0xe:
@@ -305,12 +305,22 @@ void crtc6845_port_w(struct crtc6845 *crtc, int offset, data8_t data)
 				schedule_full_refresh();
 				break;
 			}
+
+			/* since the PC1512 does not support the number of lines register directly, 
+			 * this value is keyed off of register 9
+			 */
+			if ((crtc->config.personality == M6845_PERSONALITY_PC1512) && (idx == 9))
+			{
+				UINT8 char_height;
+				char_height = crtc6845_get_char_height(crtc);
+				crtc6845_set_char_lines(crtc, 200 / char_height);
+			}
 		}
 	}
 	else
 	{
-		/* change the index_ register */
-		crtc->index_ = data;
+		/* change the idx register */
+		crtc->idx = data;
 	}
 }
 

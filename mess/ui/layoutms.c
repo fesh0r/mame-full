@@ -15,17 +15,21 @@
 #include <stdlib.h> /* For malloc and free */
 #include <string.h>
 
+#include "ui/bitmask.h"
 #include "ui/treeview.h"
 #include "ui/m32util.h"
 #include "ui/resource.h"
 #include "ui/resourcems.h"
-#include "ui/ms32util.h"
 #include "ui/directories.h"
-#include "ui/optionsms.h"
 #include "ui/splitters.h"
 #include "ui/help.h"
-#include "ui/properties.h"
 #include "ui/audit32.h"
+#include "ui/screenshot.h"
+#include "ui/win32ui.h"
+#include "ui/properties.h"
+
+#include "ui/optionsms.h"
+#include "ui/ms32util.h"
 #include "ui/propertiesms.h"
 
 static BOOL FilterAvailable(int driver_index);

@@ -27,6 +27,7 @@
 #include <stdlib.h> /* For malloc and free */
 #include <string.h>
 
+#include "bitmask.h"
 #include "TreeView.h"
 #include "M32Util.h"
 #include "resource.h"
@@ -34,9 +35,10 @@
 #include "options.h"
 #include "splitters.h"
 #include "help.h"
-#include "properties.h"
 #include "audit32.h"
+#include "screenshot.h"
 #include "win32ui.h"
+#include "properties.h"
 
 static BOOL FilterAvailable(int driver_index);
 

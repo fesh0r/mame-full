@@ -283,6 +283,10 @@
 #define IDC_BIOS                        1204
 #define IDC_HIDE_MOUSE                  1205
 #define IDC_AUDIT_DETAILS_PROP          1206
+#define IDC_CYCLE_SCREENSHOT            1209
+#define IDC_CYCLETIME                   1210
+#define IDC_CYCLETIMESEC                1211
+#define IDC_AUDIO_LATENCY_TEXT          1212
 #define ID_CONTEXT_SHOW_FOLDER_START    39000
 #define ID_CONTEXT_SHOW_FOLDER_END      39200
 #define ID_FILE_EXIT                    40001
@@ -359,7 +363,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        185
 #define _APS_NEXT_COMMAND_VALUE         40080
-#define _APS_NEXT_CONTROL_VALUE         1209
+#define _APS_NEXT_CONTROL_VALUE         1213
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

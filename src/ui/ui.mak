@@ -35,6 +35,7 @@ OSOBJS += \
         $(OBJ)/ui/dxdecode.o \
 		$(OBJ)/ui/help.o \
 		$(OBJ)/ui/history.o \
+		$(OBJ)/ui/dialogs.o \
 		$(OBJ)/ui/properties.o \
  		$(OBJ)/mess/ui/ms32main.o \
  		$(OBJ)/mess/ui/layoutms.o \
@@ -44,9 +45,6 @@ OSOBJS += \
 		$(OBJ)/mess/ui/propertiesms.o \
 		$(OBJ)/mess/ui/smartlistview.o \
 		$(OBJ)/mess/ui/softwarelist.o
-
-        #$(OBJ)/ui/Win32ui.o \ 		<<--- included from MESS' version
-        #$(OBJ)/ui/options.o \		<<--- included from MESS' version
 
 # add resource file
 GUIRESFILE = $(OBJ)/mess/ui/mess32.res

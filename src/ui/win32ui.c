@@ -50,19 +50,22 @@
 
 #include "resource.h"
 #include "resource.hm"
+
+#include "screenshot.h"
 #include "mame32.h"
 #include "M32Util.h"
 #include "file.h"
 #include "audit32.h"
 #include "Directories.h"
-#include "Screenshot.h"
 #include "Properties.h"
 #include "ColumnEdit.h"
+#include "bitmask.h"
 #include "TreeView.h"
 #include "Splitters.h"
 #include "help.h"
 #include "history.h"
 #include "options.h"
+#include "dialogs.h"
 
 #include "DirectDraw.h"
 #include "DirectInput.h"
@@ -103,6 +106,9 @@
 
 #define JOYGUI_MS 100
 
+#define JOYGUI_TIMER 1
+#define SCREENSHOT_TIMER 2
+
 /* Max size of a sub-menu */
 #define DBU_MIN_WIDTH  292
 #define DBU_MIN_HEIGHT 190
@@ -114,6 +120,13 @@ int MIN_HEIGHT = DBU_MIN_HEIGHT;
 #define MAX_BGFILES 100
 
 typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
+
+/***************************************************************************
+ externally defined global variables
+ ***************************************************************************/
+extern const ICONDATA g_iconData[];
+extern const char g_szPlayGameString[];
+extern const char g_szGameCountString[];
 
 /***************************************************************************
     function prototypes
@@ -172,8 +185,6 @@ static void             SetRandomPickItem(void);
 static LRESULT CALLBACK HistoryWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT CALLBACK PictureFrameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT CALLBACK PictureWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-static INT_PTR CALLBACK DirectXDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 static BOOL             SelectLanguageFile(HWND hWnd, TCHAR* filename);
@@ -239,7 +250,6 @@ static LRESULT          Statusbar_MenuSelect (HWND hwnd, WPARAM wParam, LPARAM l
 static void             UpdateHistory(void);
 
 
-INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 void RemoveCurrentGameCustomFolder(void);
 void RemoveGameCustomFolder(int driver_index);
 
@@ -251,6 +261,12 @@ void CalculateBestScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict_height);
 
 BOOL MouseHasBeenMoved(void);
 void SwitchFullScreenMode(void);
+
+// Game Window Communication Functions
+void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation,
+						  UINT Msg, WPARAM wParam, LPARAM lParam);
+static BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam);
+void SendIconToProcess(LPPROCESS_INFORMATION lpProcessInformation, int nGameIndex);
 
 /***************************************************************************
     External variables
@@ -334,6 +350,14 @@ typedef struct tagPOPUPSTRING
 
 #define SPLITTER_WIDTH	4
 #define MIN_VIEW_WIDTH	10
+
+// Struct needed for Game Window Communication
+
+typedef struct
+{
+	LPPROCESS_INFORMATION ProcessInfo;
+	HWND hwndFound;
+} FINDWINDOWHANDLE;
 
 /***************************************************************************
     Internal variables
@@ -540,7 +564,8 @@ const char* column_names[COLUMN_MAX] =
 	"Manufacturer",
 	"Year",
 	"Clone Of",
-	"Source"
+    "Source",
+	"Play Time"
 };
 
 /* a tiny compile is without Neogeo games */
@@ -803,6 +828,8 @@ static int RunMAME(int nGameIndex)
 	STARTUPINFO         si;
 	PROCESS_INFORMATION pi;
 	char pCmdLine[2048];
+	time_t start, end;
+	double elapsedtime;
 	
 	CreateCommandLine(nGameIndex, pCmdLine);
 
@@ -821,21 +848,32 @@ static int RunMAME(int nGameIndex)
 						&si,		  /* STARTUPINFO */
 						&pi))		  /* PROCESS_INFORMATION */
 	{
-		OutputDebugString("CreateProcess failed.");
+		dprintf("CreateProcess failed.");
 		dwExitCode = GetLastError();
 	}
 	else
 	{
+		SendIconToProcess(&pi, nGameIndex);
+
 		ShowWindow(hMain, SW_HIDE);
 
-		/* Wait until child process exits. */
+		time(&start);
+
+		// Wait until child process exits.
 		WaitWithMessageLoop(pi.hProcess);
 
 		GetExitCodeProcess(pi.hProcess, &dwExitCode);
 
+		time(&end);
+		elapsedtime = end - start;
+		IncrementPlayTime(nGameIndex, elapsedtime);
+		ListView_RedrawItems(hwndList, GetSelectedPickItem(), GetSelectedPickItem());
+
 		ShowWindow(hMain, SW_SHOW);
 
-		/* Close process and thread handles. */
+		SetForegroundWindow(hMain);
+
+		// Close process and thread handles.
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 
@@ -1802,7 +1840,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		if (g_pJoyGUI->init() != 0)
 			g_pJoyGUI = NULL;
 		else
-			SetTimer(hMain, 0, JOYGUI_MS, NULL);
+			SetTimer(hMain, JOYGUI_TIMER, JOYGUI_MS, NULL);
 	}
 	else
 		g_pJoyGUI = NULL;
@@ -1864,6 +1902,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	default :
 		SetView(ID_VIEW_GROUPED,LVS_REPORT);
 		break;
+	}
+
+	if (GetCycleScreenshot() > 0)
+	{
+		SetTimer(hMain, SCREENSHOT_TIMER, GetCycleScreenshot()*1000, NULL); //scale to Seconds
 	}
 
 	return TRUE;
@@ -2020,7 +2063,19 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 		return 0;
 
 	case WM_TIMER:
-		PollGUIJoystick();
+		switch (wParam)
+		{
+		case JOYGUI_TIMER:
+			PollGUIJoystick();
+			break;
+		case SCREENSHOT_TIMER:
+			CalculateNextTab();
+			UpdateScreenShot();
+			TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+			break;
+		default:
+			break;
+		}
 		return TRUE;
 
 	case WM_CLOSE:
@@ -2247,7 +2302,6 @@ static void SortListView(void)
 {
 	LV_FINDINFO lvfi;
 
-	dprintf("in sort list view");
 	ListView_SortItems(hwndList, ListCompareFunc, GetSortColumn());
 
 	ResetHeaderSortIcon();
@@ -2927,6 +2981,11 @@ static BOOL MamePickerNotify(NMHDR *nm)
 				case COLUMN_SRCDRIVERS:
 					/* Source drivers */
 					pDispInfo->item.pszText = (char *)GetDriverFilename(nItem);
+					break;
+
+                case COLUMN_PLAYTIME:
+					/* Source drivers */
+					GetTextPlayTime(nItem, pDispInfo->item.pszText);
 					break;
 
 				case COLUMN_TYPE:
@@ -3711,10 +3770,8 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	{
 	    int  nResult;
 
-		nResult = DialogBox(GetModuleHandle(NULL),
-							MAKEINTRESOURCE(IDD_CUSTOM_FILE),
-							hMain,
-							AddCustomFileDialogProc);
+		nResult = DialogBoxParam(GetModuleHandle(NULL),MAKEINTRESOURCE(IDD_CUSTOM_FILE),
+								 hMain,AddCustomFileDialogProc,GetSelectedPickItem());
 		SetFocus(hwndList);
 		break;
 	}
@@ -3741,8 +3798,10 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 	case ID_VIEW_TAB_MARQUEE:
 	case ID_VIEW_TAB_TITLE:
 	case ID_VIEW_TAB_CONTROL_PANEL :
-
 	case ID_VIEW_TAB_HISTORY:
+		if (id == ID_VIEW_TAB_HISTORY && GetShowTab(TAB_HISTORY) == FALSE)
+			break;
+
 		SetCurrentTab(id - ID_VIEW_TAB_SCREENSHOT);
 		UpdateScreenShot();
 		TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
@@ -3906,6 +3965,13 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_INTERFACE_OPTIONS),
 				  hMain, InterfaceDialogProc);
 		SaveDefaultOptions();
+
+		KillTimer(hMain, SCREENSHOT_TIMER);
+		if( GetCycleScreenshot() > 0)
+		{
+			SetTimer(hMain, SCREENSHOT_TIMER, GetCycleScreenshot()*1000, NULL ); // Scale to seconds
+		}
+
 		return TRUE;
 
 	case ID_OPTIONS_BG:
@@ -4540,6 +4606,12 @@ static int BasicCompareFunc(LPARAM index1, LPARAM index2, int sort_subitem)
 
 		value = stricmp(drivers[index1]->source_file+12, drivers[index2]->source_file+12);
 		break;
+	case COLUMN_PLAYTIME:
+	   value = GetPlayTime(index1) - GetPlayTime(index2);
+	   if (value == 0)
+		  return BasicCompareFunc(index1, index2, COLUMN_GAMES);
+
+	   break;
 
 	case COLUMN_TYPE:
     {
@@ -4695,58 +4767,6 @@ static void SetRandomPickItem()
 	{
 		SetSelectedPick(rand() % nListCount);
 	}
-}
-
-static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		{
-			HBITMAP hBmp;
-			hBmp = (HBITMAP)LoadImage(GetModuleHandle(NULL),
-									  MAKEINTRESOURCE(IDB_ABOUT),
-									  IMAGE_BITMAP, 0, 0, LR_SHARED);
-			SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
-			Static_SetText(GetDlgItem(hDlg, IDC_VERSION), GetVersionString());
-		}
-		return 1;
-
-	case WM_COMMAND:
-		EndDialog(hDlg, 0);
-		return 1;
-	}
-	return 0;
-}
-
-
-static INT_PTR CALLBACK DirectXDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	HWND hEdit;
-
-	const char *directx_help =
-		MAME32NAME " requires DirectX version 3 or later, which is a set of operating\r\n"
-		"system extensions by Microsoft for Windows 9x, NT and 2000.\r\n\r\n"
-		"Visit Microsoft's DirectX web page at http://www.microsoft.com/directx\r\n"
-		"download DirectX, install it, and then run " MAME32NAME " again.\r\n";
-
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		hEdit = GetDlgItem(hDlg, IDC_DIRECTX_HELP);
-		Edit_SetSel(hEdit, Edit_GetTextLength(hEdit), Edit_GetTextLength(hEdit));
-		Edit_ReplaceSel(hEdit, directx_help);
-		return 1;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDB_WEB_PAGE)
-			ShellExecute(hMain, NULL, "http://www.microsoft.com/directx", NULL, NULL, SW_SHOWNORMAL);
-
-		if (LOWORD(wParam) == IDCANCEL || LOWORD(wParam) == IDB_WEB_PAGE)
-			EndDialog(hDlg, 0);
-		return 1;
-	}
-	return 0;
 }
 
 static BOOL CommonFileDialog(common_file_dialog_proc cfd, char *filename, BOOL bZip)
@@ -5015,7 +5035,9 @@ static void MamePlayGameWithOptions(int nGame)
 	EnablePlayOptions(nGame, &playing_game_options);
 
 	if (g_pJoyGUI != NULL)
-		KillTimer(hMain, 0);
+		KillTimer(hMain, JOYGUI_TIMER);
+	if (GetCycleScreenshot() > 0)
+		KillTimer(hMain, SCREENSHOT_TIMER);
 
 	g_bAbortLoading = FALSE;
 
@@ -5043,7 +5065,9 @@ static void MamePlayGameWithOptions(int nGame)
 	SetFocus(hwndList);
 
 	if (g_pJoyGUI != NULL)
-		SetTimer(hMain, 0, JOYGUI_MS, NULL);
+		SetTimer(hMain, JOYGUI_TIMER, JOYGUI_MS, NULL);
+	if (GetCycleScreenshot() > 0)
+		SetTimer(hMain, SCREENSHOT_TIMER, GetCycleScreenshot()*1000, NULL); //scale to seconds
 }
 
 /* Toggle ScreenShot ON/OFF */
@@ -6377,126 +6401,6 @@ int UpdateLoadProgress(const char* name, const struct rom_load_data *romdata)
 	return 0;
 }
 
-INT_PTR CALLBACK AddCustomFileDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-    static LPTREEFOLDER default_selection = NULL;
-
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-	{
-	    /* init the combo box */
-	    TREEFOLDER **folders;
-		int num_folders;
-		int i;
-		TVINSERTSTRUCT tvis;
-		TVITEM tvi;
-		BOOL first_entry = TRUE;
-		HIMAGELIST treeview_icons = GetTreeViewIconList();
-
-		TreeView_SetImageList(GetDlgItem(hDlg,IDC_CUSTOM_TREE), treeview_icons, LVSIL_NORMAL);
-
-		GetFolders(&folders,&num_folders);
-
-		/* should add "New..." */
-
-		/* insert custom folders into our tree view */
-		for (i=0;i<num_folders;i++)
-		{
-		    if (folders[i]->m_dwFlags & F_CUSTOM)
-			{
-			    HTREEITEM hti;
-				int jj;
-
-				if (folders[i]->m_nParent == -1)
-				{
-				    tvis.hParent = TVI_ROOT;
-					tvis.hInsertAfter = TVI_SORT;
-					tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-					tvi.pszText = folders[i]->m_lpTitle;
-					tvi.lParam = (LPARAM)folders[i];
-					tvi.iImage = GetTreeViewIconIndex(folders[i]->m_nIconId);
-					tvi.iSelectedImage = 0;
-#if defined(__GNUC__) /* bug in commctrl.h */
-					tvis.item = tvi;
-#else
-					tvis.DUMMYUNIONNAME.item = tvi;
-#endif
-					
-					hti = TreeView_InsertItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),&tvis);
-
-					/* look for children of this custom folder */
-					for (jj=0;jj<num_folders;jj++)
-					{
-					    if (folders[jj]->m_nParent == i)
-						{
-						    HTREEITEM hti_child;
-						    tvis.hParent = hti;
-							tvis.hInsertAfter = TVI_SORT;
-							tvi.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE;
-							tvi.pszText = folders[jj]->m_lpTitle;
-							tvi.lParam = (LPARAM)folders[jj];
-							tvi.iImage = GetTreeViewIconIndex(folders[jj]->m_nIconId);
-							tvi.iSelectedImage = 0;
-#if defined(__GNUC__) /* bug in commctrl.h */
-					        tvis.item = tvi;
-#else
-					        tvis.DUMMYUNIONNAME.item = tvi;
-#endif
-							hti_child = TreeView_InsertItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),&tvis);
-							if (folders[jj] == default_selection)
-							    TreeView_SelectItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),hti_child);
-						}
-					}
-
-					/*TreeView_Expand(GetDlgItem(hDlg,IDC_CUSTOM_TREE),hti,TVE_EXPAND);*/
-					if (first_entry || folders[i] == default_selection)
-					{
-					    TreeView_SelectItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),hti);
-						first_entry = FALSE;
-					}
-
-				}
-				
-			}
-		}
-		
-      	SetWindowText(GetDlgItem(hDlg,IDC_CUSTOMFILE_GAME),ModifyThe(drivers[GetSelectedPickItem()]->description));
-
-		return TRUE;
-	}
-	case WM_COMMAND:
-		switch (GET_WM_COMMAND_ID(wParam, lParam))
-		{
-		case IDOK:
-		{
-		   TVITEM tvi;
-		   tvi.hItem = TreeView_GetSelection(GetDlgItem(hDlg,IDC_CUSTOM_TREE));
-		   tvi.mask = TVIF_PARAM;
-		   if (TreeView_GetItem(GetDlgItem(hDlg,IDC_CUSTOM_TREE),&tvi) == TRUE)
-		   {
-			  /* should look for New... */
-		   
-			  default_selection = (LPTREEFOLDER)tvi.lParam; /* start here next time */
-
-			  AddToCustomFolder((LPTREEFOLDER)tvi.lParam,GetSelectedPickItem());
-		   }
-
-		   EndDialog(hDlg, 0);
-		   return TRUE;
-
-		   break;
-		}
-		case IDCANCEL:
-			EndDialog(hDlg, 0);
-			return TRUE;
-
-		}
-		break;
-	}
-	return 0;
-}
-
 void RemoveCurrentGameCustomFolder(void)
 {
     RemoveGameCustomFolder(GetSelectedPickItem());
@@ -6845,6 +6749,62 @@ BOOL MouseHasBeenMoved(void)
     }
 	
 	return (p.x != mouse_x || p.y != mouse_y);       
+}
+
+
+void SendIconToProcess(LPPROCESS_INFORMATION pi, int nGameIndex)
+{
+	HICON hIcon;
+	hIcon = LoadIconFromFile(drivers[nGameIndex]->name);
+	if( hIcon == NULL )
+	{
+		hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_MAME32_ICON));
+	}
+	WaitForInputIdle( pi->hProcess, INFINITE );
+	SendMessageToProcess( pi, WM_SETICON, ICON_SMALL, (LPARAM)hIcon );
+	SendMessageToProcess( pi, WM_SETICON, ICON_BIG, (LPARAM)hIcon );
+}
+/*
+	The following two functions enable us to send Messages to the Game Window
+*/
+
+void SendMessageToProcess(LPPROCESS_INFORMATION lpProcessInformation, 
+                                      UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+	FINDWINDOWHANDLE fwhs;
+	fwhs.ProcessInfo = lpProcessInformation;
+	fwhs.hwndFound  = NULL;
+
+	EnumWindows(EnumWindowCallBack, (LPARAM)&fwhs);
+
+	SendMessage(fwhs.hwndFound, Msg, wParam, lParam);
+}
+
+BOOL CALLBACK EnumWindowCallBack(HWND hwnd, LPARAM lParam) 
+{ 
+	FINDWINDOWHANDLE * pfwhs = (FINDWINDOWHANDLE * )lParam; 
+	DWORD ProcessId; 
+	char buffer[MAX_PATH]; 
+
+	GetWindowThreadProcessId(hwnd, &ProcessId);
+
+	// cmk--I'm not sure I believe this note is necessary
+	// note: In order to make sure we have the MainFrame, verify that the title 
+	// has Zero-Length. Under Windows 98, sometimes the Client Window ( which doesn't 
+	// have a title ) is enumerated before the MainFrame 
+
+	GetWindowText(hwnd, buffer, sizeof(buffer));
+	if (ProcessId  == pfwhs->ProcessInfo->dwProcessId &&
+		 strncmp(buffer,MAMENAME,strlen(MAMENAME)) == 0) 
+	{ 
+		pfwhs->hwndFound = hwnd; 
+		return FALSE; 
+	} 
+	else 
+	{ 
+		// Keep enumerating 
+		return TRUE; 
+	} 
 }
 
 /* End of source file */

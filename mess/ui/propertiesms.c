@@ -11,6 +11,8 @@
 #include <commdlg.h>
 #include <windowsx.h>
 
+#include "ui/screenshot.h"
+#include "ui/bitmask.h"
 #include "ui/mame32.h"
 #include "ui/directories.h"
 #include "ui/m32util.h"

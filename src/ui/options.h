@@ -13,9 +13,6 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-
 #ifdef MESS
 #include "device.h"
 #endif
@@ -33,6 +30,7 @@ enum
 	COLUMN_YEAR,
 	COLUMN_CLONE,
 	COLUMN_SRCDRIVERS,
+	COLUMN_PLAYTIME,
 	COLUMN_MAX
 };
 
@@ -241,6 +239,7 @@ typedef struct
 typedef struct
 {
     int play_count;
+	int play_time;
     int rom_audit_results;
     int samples_audit_results;
 
@@ -283,6 +282,7 @@ typedef struct
     BOOL     use_joygui;
     BOOL     broadcast;
     BOOL     random_bg;
+    int      cycle_screenshot;
     char     *default_game;
 	int      column_width[COLUMN_MAX];
 	int      column_order[COLUMN_MAX];
@@ -400,6 +400,9 @@ BOOL GetVersionCheck(void);
 
 void SetJoyGUI(BOOL use_joygui);
 BOOL GetJoyGUI(void);
+
+void SetCycleScreenshot(int cycle_screenshot);
+int GetCycleScreenshot(void);
 
 void SetBroadcast(BOOL broadcast);
 BOOL GetBroadcast(void);
@@ -568,6 +571,10 @@ void SetSampleAuditResults(int driver_index, int audit_results);
 
 void IncrementPlayCount(int driver_index);
 int GetPlayCount(int driver_index);
+
+void IncrementPlayTime(int driver_index,int playtime);
+int GetPlayTime(int driver_index);
+void GetTextPlayTime(int driver_index,char *buf);
 
 char * GetVersionString(void);
 

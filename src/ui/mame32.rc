@@ -273,8 +273,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,70,0,0
- PRODUCTVERSION 0,70,0,0
+ FILEVERSION 0,71,1,0
+ PRODUCTVERSION 0,71,1,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -686,7 +686,7 @@ END
 IDD_PROP_SOUND DIALOGEX 0, 0, 220, 205
 STYLE WS_CHILD | WS_CAPTION
 CAPTION "Sound"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
     ICON            IDI_SOUND,IDC_STATIC,20,11,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
@@ -711,7 +711,7 @@ BEGIN
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809b0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809b0401
-    LTEXT           "Audio latency",IDC_STATIC,45,140,44,8
+    LTEXT           "Audio latency",IDC_AUDIO_LATENCY_TEXT,45,140,44,8
     CONTROL         "Slider1",IDC_AUDIO_LATENCY,"msctls_trackbar32",TBS_BOTH | 
                     TBS_NOTICKS | WS_TABSTOP,50,150,95,10,0,
                     HIDC_AUDIO_LATENCY
@@ -933,8 +933,8 @@ BEGIN
                     TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | WS_BORDER | 
                     WS_TABSTOP,5,28,48,172
     CONTROL         "List1",IDC_LIST,"SysListView32",LVS_REPORT |
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED |
-                    WS_BORDER | WS_TABSTOP,65,28,42,172
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_AUTOARRANGE | 
+                    LVS_OWNERDRAWFIXED | WS_BORDER | WS_TABSTOP,65,28,42,172
     GROUPBOX        "",IDC_SPLITTER,55,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
     GROUPBOX        "",IDC_SPLITTER2,109,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
 #ifdef MESS
@@ -1066,29 +1066,28 @@ BEGIN
 END
 
 #ifdef MESS
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 219, 175
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 212, 201
 #else
-IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 202, 170
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 202, 201
 #endif
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
-FONT 8, "MS Sans Serif", 0, 0, 0x1
+FONT 8, "MS Sans Serif"
 BEGIN
 #ifdef MESS
-    GROUPBOX        "Application Start",IDC_STATIC,5,5,200,85
+    GROUPBOX        "Application Start",IDC_STATIC,5,5,200,115
     CONTROL         "&Search for new systems",IDC_START_GAME_CHECK,"Button",
-#else
-    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,85
-    CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
-#endif
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,85,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,95,10,0,
                     HIDC_START_GAME_CHECK
-#ifdef MESS
     CONTROL         "&Allow system selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
                     183,10,0,HIDC_JOY_GUI
 #else
+    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,115
+    CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,15,85,10,0,
+                    HIDC_START_GAME_CHECK
     CONTROL         "&Allow game selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,
                     173,10,0,HIDC_JOY_GUI
@@ -1106,27 +1105,34 @@ BEGIN
     CONTROL         "Hide &mouse cursor (requires restart)",IDC_HIDE_MOUSE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,75,125,10,0,
                     HIDC_HIDE_MOUSE
+    CONTROL         "&Cycle Screenshot",IDC_CYCLE_SCREENSHOT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,89,71,10,0,
+                    HIDC_CYCLE_SCREENSHOT
+    LTEXT           "Cycletime in Seconds:",IDC_CYCLETIME,35,100,70,10,
+                    SS_CENTERIMAGE
+    EDITTEXT        IDC_CYCLETIMESEC,105,100,25,12,ES_NUMBER,0,
+                    HIDC_CYCLETIMESEC
 #ifdef MESS
-    GROUPBOX        "Emulation",IDC_STATIC,5,95,200,55
+    GROUPBOX        "Emulation",IDC_STATIC,5,120,200,55
 #else
-    GROUPBOX        "Emulation",IDC_STATIC,5,95,190,55
+    GROUPBOX        "Emulation",IDC_STATIC,5,120,190,55
 #endif
     CONTROL         "Skip &disclaimer",IDC_SKIP_DISCLAIMER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,105,60,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,130,60,10,0,
                     HIDC_SKIP_DISCLAIMER
 #ifdef MESS
     CONTROL         "Skip &system info",IDC_SKIP_GAME_INFO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,144,70,10,0,
 #else
     CONTROL         "Skip &game info",IDC_SKIP_GAME_INFO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,144,60,10,0,
 #endif
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,119,60,10,0,
                     HIDC_SKIP_GAME_INFO
-
     CONTROL         "&High thread priority",IDC_HIGH_PRIORITY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,135,75,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,160,75,10,0,
                     HIDC_HIGH_PRIORITY
-    DEFPUSHBUTTON   "&OK",IDOK,50,154,50,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,105,154,50,14
+    DEFPUSHBUTTON   "&OK",IDOK,45,180,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,101,180,50,14
 END
 
 IDD_LANGUAGE DIALOGEX 0, 0, 186, 66
@@ -1175,8 +1181,7 @@ BEGIN
     "A",            ID_GAME_AUDIT,          VIRTKEY, ALT, NOINVERT
     "D",            ID_VIEW_FOLDERS,        VIRTKEY, ALT, NOINVERT
     "F",            ID_CONTEXT_FILTERS,     VIRTKEY, CONTROL, NOINVERT
-    "I",            ID_VIEW_PICTURE_AREA,   VIRTKEY, ALT, NOINVERT
-    "P",            IDC_PLAY_GAME,          VIRTKEY, ALT, NOINVERT
+    "P",            ID_VIEW_PICTURE_AREA,   VIRTKEY, ALT, NOINVERT
     "R",            ID_CONTEXT_SELECT_RANDOM, VIRTKEY, CONTROL, NOINVERT
     "S",            ID_VIEW_STATUS,         VIRTKEY, ALT, NOINVERT
     "T",            ID_VIEW_TOOLBARS,       VIRTKEY, ALT, NOINVERT
@@ -1186,6 +1191,8 @@ BEGIN
     "3",            ID_VIEW_TAB_CABINET,    VIRTKEY, ALT, NOINVERT
     "4",            ID_VIEW_TAB_MARQUEE,    VIRTKEY, ALT, NOINVERT
     "5",            ID_VIEW_TAB_TITLE,      VIRTKEY, ALT, NOINVERT
+    "6",            ID_VIEW_TAB_CONTROL_PANEL, VIRTKEY, ALT, NOINVERT
+    "7",            ID_VIEW_TAB_HISTORY,    VIRTKEY, ALT, NOINVERT
     VK_F1,          ID_HELP_CONTENTS,       VIRTKEY, NOINVERT
     VK_F5,          ID_UPDATE_GAMELIST,     VIRTKEY, NOINVERT
     VK_RETURN,      ID_GAME_PROPERTIES,     VIRTKEY, ALT, NOINVERT
@@ -1353,7 +1360,7 @@ BEGIN
 
     IDD_INTERFACE_OPTIONS, DIALOG
     BEGIN
-        BOTTOMMARGIN, 123
+        BOTTOMMARGIN, 154
     END
 
     IDD_LANGUAGE, DIALOG

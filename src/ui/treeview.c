@@ -34,22 +34,22 @@
 
 #include <io.h>
 #include <driver.h>
-#include "MAME32.h"
 #include "M32Util.h"
+#include "bitmask.h"
+#include "screenshot.h"
+#include "mame32.h"
 #include "TreeView.h"
 #include "resource.h"
-#include "Screenshot.h"
-#include "Properties.h"
-#include "Options.h"
+#include "properties.h"
+#include "options.h"
 #include "help.h"
+#include "dialogs.h"
 
 #ifdef _MSC_VER
 #if _MSC_VER > 1200
 #define HAS_DUMMYUNIONNAME
 #endif
 #endif
-
-#define FILTERTEXT_LEN 256
 
 #define MAX_EXTRA_FOLDERS 256
 
@@ -100,7 +100,6 @@ static LPTREEFOLDER lpCurrentFolder = 0;    /* Currently selected folder */
 static UINT         nCurrentFolder = 0;     /* Current folder ID */
 static WNDPROC      g_lpTreeWndProc = 0;    /* for subclassing the TreeView */
 static HIMAGELIST   hTreeSmall = 0;         /* TreeView Image list of icons */
-static char         g_FilterText[FILTERTEXT_LEN];
 
 /* this only has an entry for each TOP LEVEL extra folder */
 static LPEXFOLDERDATA ExtraFolderData[MAX_EXTRA_FOLDERS];
@@ -304,18 +303,15 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 {
 	int i;
 
-	/* Filter games */
-	if (g_FilterText[0] != '\0')
-	{
-		if (!MyStrStrI(drivers[nGame]->description, g_FilterText))
-			return TRUE;
-	}
+	// Filter games
+	if (MyStrStrI(drivers[nGame]->description,GetFilterText()) == 0)
+		return TRUE;
 
-	/* Are there filters set on this folder? */
+	// Are there filters set on this folder?
 	if ((dwMask & F_MASK) == 0)
 		return FALSE;
 
-	/* Filter out clones? */
+	// Filter out clones?
 	if (dwMask & F_CLONES
 	&&	!(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
 		return TRUE;
@@ -331,125 +327,9 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	return FALSE;
 }
 
-INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
+LPFILTER_ITEM GetFilterList(void)
 {
-	BOOL resetFilters  = FALSE;
-	BOOL resetGames    = FALSE;
-	BOOL resetUI	   = FALSE;
-	BOOL resetDefaults = FALSE;
-
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		return TRUE;
-
-	case WM_HELP:
-		/* User clicked the ? from the upper right on a control */
-		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
-		break;
-
-	case WM_CONTEXTMENU:
-		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-
-		break;
-
-	case WM_COMMAND :
-		switch (GET_WM_COMMAND_ID(wParam, lParam))
-		{
-		case IDOK :
-			resetFilters  = Button_GetCheck(GetDlgItem(hDlg, IDC_RESET_FILTERS));
-			resetGames	  = Button_GetCheck(GetDlgItem(hDlg, IDC_RESET_GAMES));
-			resetDefaults = Button_GetCheck(GetDlgItem(hDlg, IDC_RESET_DEFAULT));
-			resetUI 	  = Button_GetCheck(GetDlgItem(hDlg, IDC_RESET_UI));
-			if (resetFilters || resetGames || resetUI || resetDefaults)
-			{
-				char temp[200];
-				strcpy(temp, MAME32NAME " will now reset the selected\n");
-				strcat(temp, "items to the original, installation\n");
-				strcat(temp, "settings then exit.\n\n");
-				strcat(temp, "The new settings will take effect\n");
-				strcat(temp, "the next time " MAME32NAME " is run.\n\n");
-				strcat(temp, "Do you wish to continue?");
-				if (MessageBox(hDlg, temp, "Restore Settings", IDOK) == IDOK)
-				{
-					if (resetFilters)
-						ResetFilters();
-
-					if (resetUI)
-						ResetGUI();
-
-					if (resetDefaults)
-						ResetGameDefaults();
-
-					if (resetGames)
-						ResetAllGameOptions();
-
-					EndDialog(hDlg, 1);
-					return TRUE;
-				}
-			}
-			/* Fall through if no options were selected
-			 * or the user hit cancel in the popup dialog.
-			 */
-		case IDCANCEL :
-			EndDialog(hDlg, 0);
-			return TRUE;
-		}
-		break;
-	}
-	return 0;
-}
-
-INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		Button_SetCheck(GetDlgItem(hDlg,IDC_START_GAME_CHECK),GetGameCheck());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_JOY_GUI),GetJoyGUI());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_BROADCAST),GetBroadcast());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_RANDOM_BG),GetRandomBackground());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_SKIP_DISCLAIMER),GetSkipDisclaimer());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_SKIP_GAME_INFO),GetSkipGameInfo());
-		Button_SetCheck(GetDlgItem(hDlg,IDC_HIGH_PRIORITY),GetHighPriority());
-		
-		Button_SetCheck(GetDlgItem(hDlg,IDC_HIDE_MOUSE),GetHideMouseOnStartup());
-
-		return TRUE;
-
-	case WM_HELP:
-		/* User clicked the ? from the upper right on a control */
-		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
-		break;
-
-	case WM_CONTEXTMENU:
-		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-		break;
-
-	case WM_COMMAND :
-		switch (GET_WM_COMMAND_ID(wParam, lParam))
-		{
-		case IDOK :
-			SetGameCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK)));
-			SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
-			SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
-			SetRandomBackground(Button_GetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG)));
-			SetSkipDisclaimer(Button_GetCheck(GetDlgItem(hDlg, IDC_SKIP_DISCLAIMER)));
-			SetSkipGameInfo(Button_GetCheck(GetDlgItem(hDlg, IDC_SKIP_GAME_INFO)));
-			SetHighPriority(Button_GetCheck(GetDlgItem(hDlg, IDC_HIGH_PRIORITY)));
-			
-			SetHideMouseOnStartup(Button_GetCheck(GetDlgItem(hDlg,IDC_HIDE_MOUSE)));
-
-			EndDialog(hDlg, 0);
-			return TRUE;
-
-		case IDCANCEL :
-			EndDialog(hDlg, 0);
-			return TRUE;
-		}
-		break;
-	}
-	return 0;
+	return g_lpFilterList;
 }
 
 /***************************************************************************
@@ -503,6 +383,7 @@ void CreateManufacturerFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
 	// not sure why this is added separately
+	// should find out at some point.
 	LPTREEFOLDER lpTemp;
 	lpTemp = NewFolder("Romstar", next_folder_id++, parent_index, IDI_MANUFACTURER,
 					   GetFolderFlags(numFolders));
@@ -652,7 +533,7 @@ void CreateOrientationFolders(int parent_index)
 	int nGames = GetNumGames();
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 
-	// not sure why this is added separately
+	// create our two subfolders
 	LPTREEFOLDER lpVert, lpHorz;
 	lpVert = NewFolder("Vertical", next_folder_id++, parent_index, IDI_FOLDER,
 					   GetFolderFlags(numFolders));
@@ -1076,8 +957,6 @@ BOOL InitFolders(void)
 	DWORD			dwFolderFlags;
 	LPFOLDERDATA	fData = 0;
 
-	memset(g_FilterText, 0, FILTERTEXT_LEN * sizeof(char));
-
 	if (treeFolders != NULL)
 	{
 		for (i = numFolders - 1; i >= 0; i--)
@@ -1212,10 +1091,9 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HBITMAP 	hOldBitmap;
 
 	HBITMAP hBackground = GetBackgroundBitmap();
+	MYBITMAPINFO *bmDesc = GetBackgroundInfo();
 
-    hDC = GetDC(hWnd);
-
-	BeginPaint(hWnd, &ps);
+	hDC = BeginPaint(hWnd, &ps);
 
 	GetClipBox(hDC, &rcClip);
 	GetClientRect(hWnd, &rcClient);
@@ -1224,7 +1102,8 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	memDC = CreateCompatibleDC(hDC);
 
 	// Select a compatible bitmap into the memory DC
-	bitmap = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
+	bitmap = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left,
+									rcClient.bottom - rcClient.top);
 	hOldBitmap = SelectObject(memDC, bitmap);
 	
 	// First let the control do its default drawing.
@@ -1233,39 +1112,41 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Draw bitmap in the background
 	{
 		HPALETTE hPAL;		 
-		HDC      maskDC;
-		HBITMAP  maskBitmap;
-		HDC      tempDC;
-		HDC      imageDC;
-		HBITMAP  bmpImage;
-		HBITMAP  hOldBmpBitmap;
-		HBITMAP  hOldMaskBitmap;
-		HBITMAP  hOldHBitmap;
-		int      i, j;
-		RECT     rcRoot;
-		MYBITMAPINFO *bmDesc = GetBackgroundInfo();
+		HDC maskDC;
+		HBITMAP maskBitmap;
+		HDC tempDC;
+		HDC imageDC;
+		HBITMAP bmpImage;
+		HBITMAP hOldBmpImage;
+		HBITMAP hOldMaskBitmap;
+		HBITMAP hOldHBitmap;
+		int i, j;
+		RECT rcRoot;
 
 		// Now create a mask
 		maskDC = CreateCompatibleDC(hDC);	
 		
 		// Create monochrome bitmap for the mask
-		maskBitmap = CreateBitmap(rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, 
+		maskBitmap = CreateBitmap(rcClient.right - rcClient.left,
+								  rcClient.bottom - rcClient.top, 
 								  1, 1, NULL);
+
 		hOldMaskBitmap = SelectObject(maskDC, maskBitmap);
 		SetBkColor(memDC, GetSysColor(COLOR_WINDOW));
 
 		// Create the mask from the memory DC
-		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, memDC, 
+		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left,
+			   rcClient.bottom - rcClient.top, memDC, 
 			   rcClient.left, rcClient.top, SRCCOPY);
-
 
 		tempDC = CreateCompatibleDC(hDC);
 		hOldHBitmap = SelectObject(tempDC, hBackground);
 
 		imageDC = CreateCompatibleDC(hDC);
-		bmpImage = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left, 
+		bmpImage = CreateCompatibleBitmap(hDC,
+										  rcClient.right - rcClient.left, 
 										  rcClient.bottom - rcClient.top);
-		hOldBmpBitmap = SelectObject(imageDC, bmpImage);
+		hOldBmpImage = SelectObject(imageDC, bmpImage);
 
 		hPAL = GetBackgroundPalette();
 		if (hPAL == NULL)
@@ -1285,8 +1166,8 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Draw bitmap in tiled manner to imageDC
 		for (i = rcRoot.left; i < rcClient.right; i += bmDesc->bmWidth)
 			for (j = rcRoot.top; j < rcClient.bottom; j += bmDesc->bmHeight)
-				BitBlt(imageDC,  i, j, bmDesc->bmWidth, bmDesc->bmHeight, tempDC, 
-					   0, 0, SRCCOPY);
+				BitBlt(imageDC,  i, j, bmDesc->bmWidth, bmDesc->bmHeight, 
+					   tempDC, 0, 0, SRCCOPY);
 
 		// Set the background in memDC to black. Using SRCPAINT with black and any other
 		// color results in the other color, thus making black the transparent color
@@ -1300,22 +1181,22 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetBkColor(imageDC, RGB(255,255,255));
 		SetTextColor(imageDC, RGB(0,0,0));
 		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left, 
-			   rcClip.bottom - rcClip.top, maskDC, 
-			   rcClip.left, rcClip.top, SRCAND);
+			   rcClip.bottom - rcClip.top,
+			   maskDC, rcClip.left, rcClip.top, SRCAND);
 
 		// Combine the foreground with the background
 		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
 			   rcClip.bottom - rcClip.top, 
 			   memDC, rcClip.left, rcClip.top, SRCPAINT);
+
 		// Draw the final image to the screen
-		
 		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
 			   rcClip.bottom - rcClip.top, 
 			   imageDC, rcClip.left, rcClip.top, SRCCOPY);
 		
-		SelectObject(maskDC,  hOldMaskBitmap);
-		SelectObject(tempDC,  hOldHBitmap);
-		SelectObject(imageDC, hOldBmpBitmap);
+		SelectObject(maskDC, hOldMaskBitmap);
+		SelectObject(tempDC, hOldHBitmap);
+		SelectObject(imageDC, hOldBmpImage);
 
 		DeleteDC(maskDC);
 		DeleteDC(imageDC);
@@ -1328,7 +1209,6 @@ static void TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			DeleteObject(hPAL);
 			hPAL = 0;
 		}
-
 	}
 
 	SelectObject(memDC, hOldBitmap);
@@ -1382,163 +1262,8 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
  * Added 01/09/99 - MSH <mhaaland@hypertech.com>
  */
 
-/***************************************************************************
-    private structures
- ***************************************************************************/
-
-#define NUM_EXCLUSIONS  9
-
-/* Pairs of filters that exclude each other */
-DWORD filterExclusion[NUM_EXCLUSIONS] =
-{
-	IDC_FILTER_CLONES,      IDC_FILTER_ORIGINALS,
-	IDC_FILTER_NONWORKING,  IDC_FILTER_WORKING,
-	IDC_FILTER_UNAVAILABLE, IDC_FILTER_AVAILABLE,
-	IDC_FILTER_RASTER,      IDC_FILTER_VECTOR
-};
-
-/***************************************************************************
-    private functions prototypes
- ***************************************************************************/
-
-static void          DisableFilters(HWND hWnd, LPFOLDERDATA lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags);
-static DWORD         ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags);
-static void          EnableFilters(HWND hWnd, DWORD dwCtrlID);
-static LPFOLDERDATA  FindFilter(DWORD folderID);
-
-/***************************************************************************
-    public functions
- ***************************************************************************/
-
-INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-	static DWORD			dwFilters;
-	static LPFOLDERDATA		lpFilterRecord;
-	int 					i;
-
-	switch (Msg)
-	{
-	case WM_INITDIALOG:
-		dwFilters = 0;
-
-		/* Use global lpCurrentFolder */
-		if (lpCurrentFolder != NULL)
-		{
-			char tmp[80];
-
-			Edit_SetText(GetDlgItem(hDlg, IDC_FILTER_EDIT), g_FilterText);
-			Edit_SetSel(GetDlgItem(hDlg, IDC_FILTER_EDIT), 0, -1);
-
-			/* Display current folder name in dialog titlebar */
-			sprintf(tmp, "Filters for %s Folder", lpCurrentFolder->m_lpTitle);
-			SetWindowText(hDlg, tmp);
-
-			/* Mask out non filter flags */
-			dwFilters = lpCurrentFolder->m_dwFlags & F_MASK;
-
-			/* Find the matching filter record if it exists */
-			lpFilterRecord = FindFilter(lpCurrentFolder->m_nFolderId);
-
-			/* initialize and disable appropriate controls */
-			for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
-			{
-				DisableFilters(hDlg, lpFilterRecord, &g_lpFilterList[i], dwFilters);
-			}
-		}
-		SetFocus(GetDlgItem(hDlg, IDC_FILTER_EDIT));
-		return FALSE;
-
-	case WM_HELP:
-		/* User clicked the ? from the upper right on a control */
-		HelpFunction(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
-		break;
-
-	case WM_CONTEXTMENU:
-		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-		break;
-
-	case WM_COMMAND:
-		{
-			WORD wID		 = GET_WM_COMMAND_ID(wParam, lParam);
-			WORD wNotifyCode = GET_WM_COMMAND_CMD(wParam, lParam);
-
-			switch (wID)
-			{
-			case IDOK:
-				dwFilters = 0;
-
-				Edit_GetText(GetDlgItem(hDlg, IDC_FILTER_EDIT), g_FilterText, FILTERTEXT_LEN);
-
-				/* see which buttons are checked */
-				for (i = 0; g_lpFilterList[i].m_dwFilterType; i++)
-				{
-					if (Button_GetCheck(GetDlgItem(hDlg, g_lpFilterList[i].m_dwCtrlID)))
-						dwFilters |= g_lpFilterList[i].m_dwFilterType;
-				}
-
-				/* Mask out invalid filters */
-				dwFilters = ValidateFilters(lpFilterRecord, dwFilters);
-
-				/* Keep non filter flags */
-				lpCurrentFolder->m_dwFlags &= ~F_MASK;
-
-				/* or in the set filters */
-				lpCurrentFolder->m_dwFlags |= dwFilters;
-
-				EndDialog(hDlg, 1);
-				return TRUE;
-
-			case IDCANCEL:
-				EndDialog(hDlg, 0);
-				return TRUE;
-
-			default:
-				/* Handle unchecking mutually exclusive filters */
-				if (wNotifyCode == BN_CLICKED)
-					EnableFilters(hDlg, wID);
-			}
-		}
-		break;
-	}
-	return 0;
-}
-
-/***************************************************************************
-    private functions
- ***************************************************************************/
-
-/* Initialize controls */
-static void DisableFilters(HWND hWnd, LPFOLDERDATA lpFilterRecord, LPFILTER_ITEM lpFilterItem, DWORD dwFlags)
-{
-	HWND  hWndCtrl = GetDlgItem(hWnd, lpFilterItem->m_dwCtrlID);
-	DWORD dwFilterType = lpFilterItem->m_dwFilterType;
-
-	/* Check the appropriate control */
-	if (dwFilterType & dwFlags)
-		Button_SetCheck(hWndCtrl, MF_CHECKED);
-
-	/* No special rules for this folder? */
-	if (!lpFilterRecord)
-		return;
-
-	/* If this is an excluded filter */
-	if (lpFilterRecord->m_dwUnset & dwFilterType)
-	{
-		/* uncheck it and disable the control */
-		Button_SetCheck(hWndCtrl, MF_UNCHECKED);
-		EnableWindow(hWndCtrl, FALSE);
-	}
-
-	/* If this is an implied filter, check it and disable the control */
-	if (lpFilterRecord->m_dwSet & dwFilterType)
-	{
-		Button_SetCheck(hWndCtrl, MF_CHECKED);
-		EnableWindow(hWndCtrl, FALSE);
-	}
-}
-
 /* find a FOLDERDATA by folderID */
-static LPFOLDERDATA FindFilter(DWORD folderID)
+LPFOLDERDATA FindFilter(DWORD folderID)
 {
 	int i;
 
@@ -1550,51 +1275,17 @@ static LPFOLDERDATA FindFilter(DWORD folderID)
 	return (LPFOLDERDATA) 0;
 }
 
-/* Handle disabling mutually exclusive controls */
-static void EnableFilters(HWND hWnd, DWORD dwCtrlID)
-{
-	int 	i;
-	DWORD	id;
+/***************************************************************************
+    private structures
+ ***************************************************************************/
 
-	for (i = 0; i < NUM_EXCLUSIONS; i++)
-	{
-		/* is this control in the list? */
-		if (filterExclusion[i] == dwCtrlID)
-		{
-			/* found the control id */
-			break;
-		}
-	}
+/***************************************************************************
+    private functions prototypes
+ ***************************************************************************/
 
-	/* if the control was found */
-	if (i < NUM_EXCLUSIONS)
-	{
-		/* find the opposing control id */
-		if (i % 2)
-			id = filterExclusion[i - 1];
-		else
-			id = filterExclusion[i + 1];
-
-		/* Uncheck the other control */
-		Button_SetCheck(GetDlgItem(hWnd, id), MF_UNCHECKED);
-	}
-}
-
-/* Validate filter setting, mask out inappropriate filters for this folder */
-static DWORD ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags)
-{
-	DWORD dwFilters;
-
-	if (lpFilterRecord != (LPFOLDERDATA)0)
-	{
-		/* Mask out implied and excluded filters */
-		dwFilters = lpFilterRecord->m_dwSet | lpFilterRecord->m_dwUnset;
-		return dwFlags & ~dwFilters;
-	}
-
-	/* No special cases - all filters apply */
-	return dwFlags;
-}
+/***************************************************************************
+    private functions
+ ***************************************************************************/
 
 /**************************************************************************/
 
