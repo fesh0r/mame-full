@@ -11,6 +11,7 @@
 
 #include <assert.h>
 #include "m6847.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "includes/rstrbits.h"
 #include "includes/rstrtrck.h"
@@ -330,7 +331,14 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyram
 
 int m6847_vh_start(const struct m6847_init_params *params)
 {
-	return internal_m6847_vh_start(params, MAX_VRAM);
+	int result;
+
+	result = internal_m6847_vh_start(params, MAX_VRAM);
+	if (result)
+		return result;
+
+	state_save_register_func_postload(schedule_full_refresh);
+	return 0;
 }
 
 /* --------------------------------------------------
