@@ -48,7 +48,7 @@ BEGIN
             MENUITEM "Emulated",                    ID_KEYBOARD_EMULATED
             MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
         END
-        MENUITEM "&Joysticks",                  ID_OPTIONS_TOGGLEMENUBAR
+        MENUITEM "&Joysticks",                  ID_OPTIONS_JOYSTICKS
         , GRAYED
         MENUITEM "&DIP Switches...",            ID_OPTIONS_DIPSWITCHES
         MENUITEM SEPARATOR

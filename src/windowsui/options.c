@@ -266,7 +266,7 @@ static REG_OPTIONS regGameOpts[] =
 	{ "extra_software",			RO_STRING,	&gOpts.extra_software_paths,	0, 0},
 	{ "printer",				RO_STRING,	&gOpts.printer,					0, 0},
 	{ "use_new_filemgr",		RO_BOOL,	&gOpts.use_new_filemgr,			0, 0},
-	{ "ram_size",				RO_BOOL,	&gOpts.ram_size,				0, 0}
+	{ "ram_size",				RO_INT,		&gOpts.ram_size,				0, 0}
 #endif
 };
 
