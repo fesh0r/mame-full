@@ -144,7 +144,7 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 			if ( inst >= min )	/* If not invalid, go at it */
 				/* KT - I've no idea what the memory mask should be so
 				added -1 for now! */
-				amiga_custom_w( inst, param ,-1);
+			    amiga_custom_w( inst>>1, param , 0 /*???*/);
 			else {
 				/* stop the copper until the next frame */
 				copper.waiting = 1;

@@ -562,7 +562,7 @@ static void blitter_proc( int param ) {
 		custom_regs.DMACON ^= 0x2000;
 
 
-	amiga_custom_w( 0x009c, 0x8040,-1 /*KT - no idea what correct value should be! */);
+	amiga_custom_w( 0x009c>>1, 0x8040, 0);
 }
 
 static void blitter_setup( void ) {
@@ -752,7 +752,7 @@ static void fdc_dma_proc( int drive ) {
 		}
 	}
 
-	amiga_custom_w( 0x009c, 0x8002,-1 /*KT - no idea what correct value should be! */ );
+	amiga_custom_w( 0x009c>>1, 0x8002, 0);
 }
 
 static void fdc_setup_dma( void ) {
@@ -1126,9 +1126,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c, 0x8008,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -1137,9 +1137,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c, 0x8008,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -1150,9 +1150,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c, 0x8008,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -1161,9 +1161,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c, 0x8008,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -1225,7 +1225,7 @@ static void cia_vblank_update( void ) {
 		if ( cia_8520[0].tod == cia_8520[0].alarm ) {
 			cia_8520[0].ics |= 0x84;
 			if ( cia_8520[0].icr & 0x04 ) {
-				amiga_custom_w( 0x009c, 0x8008,-1 /*KT - no idea what correct value should be! */ );
+				amiga_custom_w( 0x009c>>1, 0x8008, 0);
 			}
 		}
 	}
@@ -1241,7 +1241,7 @@ static void cia_hblank_update( int param ) {
 			if ( cia_8520[1].tod == cia_8520[1].alarm ) {
 				cia_8520[1].ics |= 0x84;
 				if ( cia_8520[1].icr & 0x04 ) {
-					amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+				    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff */);
 				}
 			}
 		}
@@ -1254,7 +1254,7 @@ static void cia_hblank_update( int param ) {
 static void cia_issue_index( void ) {
 	cia_8520[1].ics |= 0x90;
 	if ( cia_8520[1].icr & 0x10 ) {
-		amiga_custom_w( 0x009c, 0xa000,-1 /*KT - no idea what correct value should be! */ );
+	    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff*/);
 	}
 }
 
@@ -1341,6 +1341,7 @@ static void cia_init( void ) {
 READ16_HANDLER ( amiga_cia_r ) {
 	int cia_sel = 1, mask, data;
 
+	offset<<=1; //PeT offset with new memory system now in word counts!
 	if ( offset >= 0x1000 )
 		cia_sel = 0;
 
@@ -1426,7 +1427,7 @@ READ16_HANDLER ( amiga_cia_r ) {
 	}
 
 #if LOG_CIA
-	logerror("PC = %06x - Read from CIA %01x\n", cpu_getpc(), cia_sel );
+	logerror("PC = %06x - Read from CIA %01x\n", cpu_get_pc(), cia_sel );
 #endif
 
 	return 0;
@@ -1435,6 +1436,7 @@ READ16_HANDLER ( amiga_cia_r ) {
 WRITE16_HANDLER ( amiga_cia_w ) {
 	int cia_sel = 1, mask;
 
+	offset<<=1;
 	if ( offset >= 0x1000 )
 		cia_sel = 0;
 	else
@@ -1567,7 +1569,7 @@ WRITE16_HANDLER ( amiga_cia_w ) {
 	}
 
 #if LOG_CIA
-	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_getpc(), cia_sel, data );
+	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_get_pc(), cia_sel, data );
 #endif
 }
 
@@ -1585,6 +1587,7 @@ static void amiga_custom_init( void ) {
 
 READ16_HANDLER ( amiga_custom_r ) {
 
+    offset<<=1;
 	offset &= 0xfff;
 
 	switch ( offset ) {
@@ -1692,7 +1695,7 @@ READ16_HANDLER ( amiga_custom_r ) {
 
 		default:
 #if LOG_CUSTOM
-			logerror("PC = %06x - Read from Custom %04x\n", cpu_getpc(), offset );
+			logerror("PC = %06x - Read from Custom %04x\n", cpu_get_pc(), offset );
 #endif
 		break;
 	}
@@ -1707,7 +1710,7 @@ READ16_HANDLER ( amiga_custom_r ) {
 		reg &= ~( data & 0x7fff ); }
 
 WRITE16_HANDLER ( amiga_custom_w ) {
-
+    offset<<=1;
 	offset &= 0xfff;
 
 	switch ( offset ) {
@@ -2010,7 +2013,7 @@ WRITE16_HANDLER ( amiga_custom_w ) {
 
 		default:
 #if LOG_CUSTOM
-		logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getpc(), offset, data );
+		logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_get_pc(), offset, data );
 #endif
 		break;
 	}
@@ -2029,7 +2032,7 @@ int amiga_vblank_irq( void ) {
 	if ( cia_hblank_timer == 0 )
 		cia_hblank_timer = timer_set( cpu_getscanlineperiod(), 0, cia_hblank_update );
 
-	amiga_custom_w( 0x009c, 0x8020,-1 /*KT - no idea what correct value should be! */ );
+	amiga_custom_w( 0x009c>>1, 0x8020, 0);
 
 	return ignore_interrupt();
 }
