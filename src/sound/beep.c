@@ -103,8 +103,15 @@ void beep_sh_stop(void )
 /************************************/
 void beep_sh_update(void )
 {
+     int i;
+
+     for (i=0; i<intf->num; i++)
+     {
+        stream_update( beeps[i].beep_stream, i );
+     }
 }
 
+/* changing state to on from off will restart tone */
 void beep_set_state( int num, int on )
 {
 	/* only update if new state is not the same as old state */
@@ -119,9 +126,16 @@ void beep_set_state( int num, int on )
 	}
 }
 
+/* setting new frequency starts from beginning */
 void beep_set_frequency(int num,int frequency)
 {
-        beeps[num].beep_frequency = frequency;
+        if (beeps[num].beep_frequency!=frequency)
+        {
+             stream_update(beeps[num].beep_stream,num);
+             beeps[num].beep_frequency = frequency;
+             beeps[num].beep_signal = 0x07fff;
+             beeps[num].beep_old_incr = 0;
+        }
 }
 
 void    beep_set_volume(int num,int volume)
