@@ -124,6 +124,8 @@ static void nec765_continue_command(int dummy);
 static int nec765_sector_count_complete(void);
 static void nec765_increment_sector(void);
 static void nec765_update_state(void);
+static void nec765_set_dma_drq(int state);
+static void nec765_set_int(int state);
 
 static NEC765 fdc;
 static char nec765_data_buffer[32*1024];
@@ -132,10 +134,13 @@ static char nec765_data_buffer[32*1024];
 nec765_interface nec765_iface;
 
 
-static int nec765_cmd_size[32] = {
+static INT8 nec765_cmd_size[32] =
+{
 	1,1,9,3,2,9,9,2,1,9,2,1,9,6,1,3,
 	1,9,1,1,1,1,9,1,1,9,1,1,1,9,1,1
 };
+
+
 
 static mess_image *current_image(void)
 {
@@ -557,38 +562,48 @@ void nec765_idle(void)
 	nec765_set_data_request();
 }
 
-/* set int output */
-void nec765_set_int(int state)
+
+
+/* change flags */
+static void nec765_change_flags(unsigned int flags, unsigned int mask)
 {
 	unsigned int new_flags;
+	unsigned int changed_flags;
 
-	if (state)
-		new_flags = fdc.nec765_flags | NEC765_INT;
-	else
-		new_flags = fdc.nec765_flags & ~NEC765_INT;
+	assert((flags & ~mask) == 0);
 
-	if (new_flags != fdc.nec765_flags)
-	{
-		if (nec765_iface.interrupt)
-			nec765_iface.interrupt((fdc.nec765_flags & NEC765_INT) ? 1 : 0);
-	}
+	/* compute the new flags and which ones have changed */
+	new_flags = fdc.nec765_flags & ~mask;
+	new_flags |= flags;
+	changed_flags = fdc.nec765_flags ^ new_flags;
+	fdc.nec765_flags = new_flags;
+
+	/* if interrupt changed, call the handler */
+	if ((changed_flags & NEC765_INT) && nec765_iface.interrupt)
+		nec765_iface.interrupt((fdc.nec765_flags & NEC765_INT) ? 1 : 0);
+
+	/* if DRQ changed, call the handler */
+	if ((changed_flags & NEC765_INT) && nec765_iface.dma_drq)
+		nec765_iface.dma_drq((fdc.nec765_flags & NEC765_DMA_DRQ) ? 1 : 0, fdc.FDC_main & (1<<6));
+}
+
+
+
+/* set int output */
+static void nec765_set_int(int state)
+{
+	nec765_change_flags(state ? NEC765_INT : 0, NEC765_INT);
 }
 
 
 
 /* set dma request output */
-void nec765_set_dma_drq(int state)
+static void nec765_set_dma_drq(int state)
 {
-	fdc.nec765_flags &= ~NEC765_DMA_DRQ;
-
-	if (state)
-	{
-		fdc.nec765_flags |= NEC765_DMA_DRQ;
-	}
-
-	if (nec765_iface.dma_drq)
-		nec765_iface.dma_drq((fdc.nec765_flags & NEC765_DMA_DRQ), (fdc.FDC_main & (1<<6)));
+	nec765_change_flags(state ? NEC765_DMA_DRQ : 0, NEC765_DMA_DRQ);
 }
+
+
 
 /* Drive ready */
 

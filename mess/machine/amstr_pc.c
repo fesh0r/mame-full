@@ -181,12 +181,15 @@ READ_HANDLER( pc1640_port60_r )
 		else 
 			data = pc_keyb_read();
 		break;
+
 	case 1:
-		data=pc1640.port61;
+		data = pc1640.port61;
 		break;
+
 	case 2: 
-		data=pc1640.port62;
-		if (pit8253_get_output(0,2)) data|=0x20;
+		data = pc1640.port62;
+		if (pit8253_get_output(0, 2))
+			data |= 0x20;
 		break;
 	}
 	return data;

@@ -513,12 +513,17 @@ void pc_keyb_set_clock(int on)
 {
 	mame_time keyb_delay = double_to_mame_time(1/200.0);
 
-	if (!pc_keyb.on && on)
-		mame_timer_adjust(pc_keyboard_timer, time_zero, 0, keyb_delay);
-	else
-		mame_timer_reset(pc_keyboard_timer, time_never);
+	on = on ? 1 : 0;
 
-	pc_keyb.on = on;
+	if (pc_keyb.on != on)
+	{
+		if (on)
+			mame_timer_adjust(pc_keyboard_timer, keyb_delay, 0, time_zero);
+		else
+			mame_timer_reset(pc_keyboard_timer, time_never);
+
+		pc_keyb.on = on;
+	}
 }
 
 void pc_keyb_clear(void)

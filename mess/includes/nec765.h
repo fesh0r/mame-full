@@ -13,11 +13,6 @@ typedef struct nec765_interface
 	void	(*dma_drq)(int state,int read_write);
 } nec765_interface;
 
-/* set nec765 dma drq output state */
-void	nec765_set_dma_drq(int state);
-/* set nec765 int output state */
-void nec765_set_int(int);
-
 /* init nec765 interface */
 void nec765_init(nec765_interface *, int version);
 /* set nec765 terminal count input state */
