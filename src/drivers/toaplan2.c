@@ -23,6 +23,7 @@ Supported games:
 	whoopee		TP-025		Toaplan		Whoopee
 	pipibibi	bootleg?	Toaplan		Pipi & Bibis
 	fixeight	TP-026		Toaplan		FixEight
+	fixeighb  bootleg   Toaplan   FixEight
 	grindstm	TP-027		Toaplan		Grind Stormer  (1992)
 	grindsta	TP-027		Toaplan		Grind Stormer  (1992) (older)
 	vfive		TP-027		Toaplan		V-V  (V-Five)  (1993 - Japan only)
@@ -148,7 +149,7 @@ CPU:
  TMP68HC000N-16
 
 Sound CPU/MCU:
- HD647180X0FS6 (Hitachi Z180 Compatible CPU with inernal ROM code)
+ HD647180X0FS6 (Hitachi Z180 Compatible CPU with internal 16k ROM)
  Z84C0006PEC (Z80)
 
 
@@ -164,34 +165,69 @@ Sound Chips:
 Graphics Custom 208pin QFP:
  GP9001 L7A0498 TOA PLAN
 
-Toaplan / Raizing / 8ing games use different revisions of the custom
-Toa Plan 208 pin QFP L7A0498 GP9001 series graphics processing chip:
+Found on....
+Fixeight
+Grind Stormer
+Truxton II
+Ghox
+Armed Police Batrider
+Battle Garegga
+Mahou Daisakusen
+Battle Bakraid
 
-Fixeight				L7A0498 GP9001 TOA PLAN 9150
-Grind Stormer			L7A0498 GP9001 TOA PLAN 9150
-Truxton II				L7A0498 GP9001 TOA PLAN 9152
-Ghox					L7A0498 GP9001 TOA PLAN 9044
-Armed Police Batrider	L7A0498 GP9001 TOA PLAN NNG 9217 WK94254
-Battle Garegga			L7A0498 GP9001 TOA PLAN 9236
-Mahou Daisakusen		L7A0498 GP9001 TOA PLAN 9240
-Battle Bakraid			L7A0498 GP9001 TOA PLAN 9335
+**********************************************************************
 
+Fix Eight (bootleg)
+Toaplan, 1992
+
+PCB Layout
+----------
+
+|--------------------------------------------|
+|   1.BIN        PAL               14MHz  PAL|
+|   M6295        PAL                         |
+|   PAL     6116 4.BIN          681000 681000|
+|           6116                             |
+|           6116                681000 681000|
+|J          6116        PAL                  |
+|A                             PAL           |
+|M                                           |
+|M   62256  62256              PAL           |
+|A   2.BIN  3.BIN       PAL                  |
+|                       PAL                  |
+|       68000           PAL                  |
+| DSW2        |------|  5.BIN                |
+| DSW1   6264 |TPC   |                       |
+| 3.579545MHz |1020  |  6.BIN                |
+| 10MHz  6264 |------|  7.BIN                |
+|--------------------------------------------|
+Notes:
+      68000 clock at 10.000MHz
+      M6295 clock at 875kHz [14/16]. Sample rate = 875000 / 132
+      VSync at 60Hz
+      6116  - 2k   x8 SRAM (x4)
+      6264  - 8k   x8 SRAM (x2)
+      62256 - 32k  x8 SRAM (x2)
+      681000- 128k x8 SRAM (x4)
+
+*********************************************************************
 
 Game status:
 
-Teki Paki                      Working, but no sound. Missing sound MCU dump
-Ghox                           Working, but no sound. Missing sound MCU dump
-Dogyuun                        Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-Knuckle Bash                   Working, but no sound. MCU dump exists, its a Z?80 of some sort.
+Teki Paki                      Working, but no sound. Missing sound MCU dump. Chip is protected. It's a QFP80 Hitachi HD647180.
+Ghox                           Working, but no sound. Missing sound MCU dump. It's a QFP80 Hitachi HD647180.
+Dogyuun                        Working, but no sound. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-002-MACH'.
+Knuckle Bash                   Working, but no sound. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-004-DASH'. Some PCBs use another version stamped 'NITRO' which is the same chip type.
 Truxton 2                      Working.
 Pipi & Bibis                   Working.
-Whoopee                        Working. Missing sound MCU dump. Using bootleg sound CPU dump for now
+Whoopee                        Working. Missing sound MCU dump. It's a Hitachi HD647180. Using bootleg sound CPU dump for now.
 Pipi & Bibis (Ryouta Kikaku)   Working.
-FixEight                       Not working properly. Missing background GFX (controlled by MCU). MCU type unknown - its a Z?80 of some sort.
-Grind Stormer                  Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-VFive                          Working, but no sound. MCU type unknown - its a Z?80 of some sort.
-Batsugun                       Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
-Batsugun Sp'                   Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
+FixEight                       Not working properly. Missing background GFX (controlled by MCU). MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-001-TURBO'
+FixEight bootleg							 Working. One unknown ROM (sam as pipibibi one). Region hardcoded to Korea (@ $4d8)
+Grind Stormer                  Working, but no sound. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+VFive                          Working, but no sound. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+Batsugun                       Working, but no sound and wrong GFX priorities. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
+Batsugun Sp'                   Working, but no sound and wrong GFX priorities. MCU type is likely an NEC V25+. Chip is a PLCC94 stamped 'TS-007-SPY'.
 Snow Bros. 2                   Working.
 Mahou Daisakusen               Working.
 Shippu Mahou Daisakusen        Working.
@@ -378,6 +414,15 @@ static DRIVER_INIT( fixeight )
 
 	toaplan2_sub_cpu = CPU_2_Zx80;
 }
+
+
+static DRIVER_INIT( fixeighb )
+{
+	data16_t *bgdata = (data16_t *)memory_region(REGION_CPU1);
+	cpu_setbank(1, &bgdata[0x40000]); /* $80000 - $fffff */
+}
+
+
 
 static DRIVER_INIT( pipibibi )
 {
@@ -1527,6 +1572,31 @@ static ADDRESS_MAP_START( fixeight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x503000, 0x5031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
 ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( fixeighb_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM /* 0-$7ffff ?*/
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM /* 10000 - 107fff  105000-105xxx 106000-106xxx 108000 - related to sound ?*/
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_1_word_r)	/* Player 1 controls */
+	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r)	/* Player 2 controls */
+	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_3_word_r)	/* Player 3 controls */
+	AM_RANGE(0x20000c, 0x20000d) AM_READ(input_port_6_word_r)
+	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_4_word_r)	/* Coin/System inputs */
+	AM_RANGE(0x200014, 0x200015) AM_WRITE(MWA16_NOP) /* ? sound banking ? code at $4084c, $5070*/
+	AM_RANGE(0x200018, 0x200019) AM_WRITE(OKIM6295_data_0_lsb_w)	AM_READ(OKIM6295_status_0_lsb_r) /* ?? */
+ 	AM_RANGE(0x20001c, 0x20001d) AM_READ(input_port_5_word_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)		/* VideoRAM selector/offset */
+	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r) AM_WRITE(toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
+	AM_RANGE(0x800000, 0x87ffff) AM_READ(MRA16_BANK1)
+ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( vfive_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
@@ -2689,6 +2759,67 @@ INPUT_PORTS_START( fixeight )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( fixeighb )
+	PORT_START_TAG("IN0")		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN2")
+	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN3")
+	SNOWBRO2_PLAYER_INPUT( 3, IPT_START3, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN4")	/* service input is a push-button marked 'Test SW' */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_HIGH)
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )
+	PORT_DIPSETTING(		0x0000, "2" )
+	PORT_DIPSETTING(		0x0001, "3" )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )
+	PORT_DIPSETTING(		0x0004, "Semi-auto" )
+	PORT_DIPSETTING(		0x0000, "Fully-auto" )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+//	EUROPEAN_COINAGE_16
+	NONEUROPEAN_COINAGE_16
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSWB")
+	DIFFICULTY_16
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "300k and every 300k" )
+	PORT_DIPSETTING(		0x0008, "300k only" )
+	PORT_DIPSETTING(		0x0000, "500k and every 500k" )
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
+	LIVES_16
+	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+
+
+
 INPUT_PORTS_START( grindstm )
 	PORT_START_TAG("IN0")		/* (0) VBlank */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
@@ -3752,6 +3883,18 @@ static struct GfxLayout batrider_tx_tilelayout =
 };
 #endif
 
+
+static struct GfxLayout fixeighblayout =
+{
+   8,8,
+   RGN_FRAC(1,1),
+   4,
+   { 0,1,2,3 },
+   { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
+   { 0*4*8, 1*4*8, 2*4*8, 3*4*8, 4*4*8, 5*4*8, 6*4*8, 7*4*8},
+   8*8*4
+};
+
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
@@ -3795,6 +3938,13 @@ static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo fixeighb_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
+	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
+	{ REGION_GFX2, 0, 			&fixeighblayout				 ,	0, 128 },
+	{ -1 } /* end of array */
+};
 
 static void irqhandler(int linestate)
 {
@@ -3867,7 +4017,13 @@ static struct YMZ280Binterface ymz280b_interface =
 	{ bbakraid_irqhandler }
 };
 
-
+static struct OKIM6295interface okim6295_fixeighb_interface =
+{
+	1,						/* 1 chip */
+	{ 875000/132 },
+	{ REGION_SOUND1 },		/* memory region */
+	{ 100 }
+};
 
 static MACHINE_DRIVER_START( tekipaki )
 
@@ -4170,6 +4326,35 @@ static MACHINE_DRIVER_START( fixeight )
 	MDRV_SOUND_ADD(YM2151, ym2151_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( fixeighb )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_PROGRAM_MAP(fixeighb_mem,0)
+	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq2,262)
+
+	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(toaplan2)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(fixeighb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(truxton2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(truxton2_0)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_fixeighb_interface)
+MACHINE_DRIVER_END
+
 
 
 static MACHINE_DRIVER_START( vfive )
@@ -4487,7 +4672,7 @@ ROM_START( dogyuun )
 	ROM_LOAD16_WORD( "tp022_01.r16", 0x000000, 0x080000, CRC(72f18907) SHA1(9d1b3800764a63e046644c78a2e0339280e038cb) )
 
 	/* Secondary CPU is a Toaplan marked chip, (TS-002-MACH  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
 	/* Secondary CPU is a Toaplan marked chip ??? */
@@ -4511,7 +4696,7 @@ ROM_START( kbash )
 	ROM_LOAD16_WORD_SWAP( "kbash01.bin", 0x000000, 0x080000, CRC(2965f81d) SHA1(46f2df30fa92c80ba5a37f75e756424e15534784) )
 
 	/* Secondary CPU is a Toaplan marked chip, (TS-004-Dash  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 #if Zx80
 	ROM_REGION( 0x88000, REGION_CPU2, 0 )			/* Sound Z?80 code */
 	ROM_LOAD( "kbash02.bin", 0x80000, 0x08000, CRC(4cd882a1) SHA1(7199a5c384918f775f0815e09c46b2a58141814a) )
@@ -4597,7 +4782,7 @@ ROM_START( fixeight )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-001-Turbo  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp-026.mcu", 0x0000, 0x8000, NO_DUMP )
 #endif
 
@@ -4613,6 +4798,25 @@ ROM_START( fixeight )
 	ROM_LOAD( "93c45.u21", 0x00, 0x80, CRC(40d75df0) SHA1(a22f1cc74ce9bc9bfe53f48f6a43ab60e921052b) )
 ROM_END
 
+ROM_START( fixeighb )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_BYTE( "3.bin", 0x000000, 0x80000, CRC(cc77d4b4) SHA1(4d3376cbae13d90c6314d8bb9236c2183fc6253c) )
+	ROM_LOAD16_BYTE( "2.bin", 0x000001, 0x80000, CRC(ed715488) SHA1(37be9bc8ff6b54a1f660d89469c6c2da6301e9cd) )
+	
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "tp-026-3", 0x000000, 0x200000, CRC(e5578d98) SHA1(280d2b716d955e767d311fc9596823852435b6d7) )
+	ROM_LOAD( "tp-026-4", 0x200000, 0x200000, CRC(b760cb53) SHA1(bc9c5e49e45cdda0f774be0038aa4deb21d4d285) )
+	
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE)
+	ROM_LOAD( "4.bin", 0x00000, 0x08000, CRC(a6aca465) SHA1(2b331faeee1832e0adc5218254a99d66331862c6) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "1.bin", 0x00000, 0x80000, CRC(888f19ac) SHA1(d2f4f8b7be7a0fdb95baa0af8930e50e2f875c05) )
+	
+	ROM_REGION( 0x8000, REGION_USER1, 0 )			/* ??? Some sort of table  - same as in pipibibi*/
+	ROM_LOAD( "5.bin", 0x0000, 0x8000, CRC(456dd16e) SHA1(84779ee64d3ea33ba1ba4dee39b504a81c6811a1) )
+ROM_END
+
 ROM_START( grindstm )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "01.bin", 0x000000, 0x080000, CRC(4923f790) SHA1(1c2d66b432d190d0fb6ac7ca0ec0687aea3ccbf4) )
@@ -4620,7 +4824,7 @@ ROM_START( grindstm )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4636,7 +4840,7 @@ ROM_START( grindsta )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4652,7 +4856,7 @@ ROM_START( vfive )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4668,7 +4872,7 @@ ROM_START( batsugun )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -4693,7 +4897,7 @@ ROM_START( batugnsp )
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Sound CPU code */
 	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
-	/* Its a Z?80 of some sort - 94 pin chip. */
+	/* Its likely an NEC V25+ (PLCC94). */
 //	ROM_LOAD( "tp030.mcu", 0x8000, 0x8000, NO_DUMP )
 #endif
 
@@ -5045,6 +5249,7 @@ GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, T2_Z80,   ROT0,   "Toaplan"
 GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  T2_Z80,   ROT0,   "Toaplan", "Whoopee!! / Pipi & Bibis" )
 GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,   "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee!! (bootleg ?)" )
 GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_NOT_WORKING )
+GAMEX( 1992, fixeighb, fixeight, fixeighb, fixeighb, fixeighb, ROT270, "bootleg", "FixEight (bootleg)",GAME_IMPERFECT_SOUND)
 GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
 GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_Zx80,  ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
 GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_Zx80,  ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )

@@ -966,7 +966,7 @@ $(OBJ)/sun.a: \
 
 $(OBJ)/suna.a: \
 	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
-	$(OBJ)/vidhrdw/suna8.o $(OBJ)/drivers/suna8.o \
+	$(OBJ)/vidhrdw/suna8.o $(OBJ)/drivers/suna8.o $(OBJ)/sndhrdw/suna8.o \
 	$(OBJ)/vidhrdw/suna16.o $(OBJ)/drivers/suna16.o \
 
 $(OBJ)/dooyong.a: \

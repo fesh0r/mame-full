@@ -10,7 +10,6 @@ UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
 UINT32 *back_rowscroll_ram, *mid_rowscroll_ram, *fore_rowscroll_ram;
 int old_vidhw;
 int bg_size;
-
 static UINT32 layer_bank;
 static UINT32 layer_enable;
 
@@ -61,6 +60,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 	for( a = 0x400 - 2; a >= 0; a -= 2 ) {
 		tile_num = (spriteram32[a + 0] >> 16) & 0xffff;
+		if( spriteram32[a + 1] & 0x1000 )
+			tile_num |= 0x10000;
 
 		if( !tile_num )
 			continue;

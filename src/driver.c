@@ -126,6 +126,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( pengo2 )	/* 834-0386 (c) 1982 Sega */
 	DRIVER( pengo2u )	/* 834-0386 (c) 1982 Sega */
 	DRIVER( pengo3u )	/* 834-0386 (c) 1982 Sega */
+	DRIVER( pengo4 )	/* 834-0386 (c) 1982 Sega */
 	DRIVER( pengob )	/* bootleg */
 	DRIVER( penta )		/* bootleg */
 	DRIVER( jrpacman )	/* (c) 1983 Midway */
@@ -202,6 +203,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( moonal2b )	/* Nichibutsu */
 	DRIVER( eagle )		/* (c) Centuri */
 	DRIVER( eagle2 )	/* (c) Centuri */
+	DRIVER( eagle3 )	/* (c) Centuri */
 	DRIVER( spctbird )	/* (c) Fortrek */
 	DRIVER( skybase )	/* (c) 1982 Omori Electric Co., Ltd. */
 	DRIVER( checkman )	/* (c) 1982 Zilec-Zenitone */
@@ -365,6 +367,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( kodure )	/* (c) 1987 (Japan) */
 	DRIVER( armedf )	/* (c) 1988 */
 	DRIVER( cclimbr2 )	/* (c) 1988 (Japan) */
+	DRIVER( cclmbr2a )	/* (c) 1988 (Japan) */
 	DRIVER( bigfghtr )	/* (c) 1989 */
 
 	/* Nichibutsu Mahjong games */
@@ -1112,6 +1115,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( heartatk )	/* (c) 1983 Century Electronics */
 	DRIVER( hunchbak )	/* (c) 1983 Century */
 	DRIVER( superbik )	/* (c) 1983 Century */
+	DRIVER( raiders )	/* (c) 1983 Century Electronics UK */
 	DRIVER( hero )		/* (c) 1983 Seatongrove (c) 1984 CVS */
 	DRIVER( huncholy )	/* (c) 1984 Seatongrove (c) CVS */
 
@@ -1876,6 +1880,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( whoopee )	/* TP-025 */
 	DRIVER( pipibibi )	/* (c) 1991 Ryouta Kikaku (bootleg?) */
 	DRIVER( fixeight )	/* TP-026 (c) 1992 + Taito license */
+	DRIVER( fixeighb )	/* bootleg */
 	DRIVER( vfive )		/* TP-027 (c) 1993 Toaplan (Japan) */
 	DRIVER( grindstm )	/* TP-027 (c) 1993 Toaplan + Unite Trading license (Korea) */
 	DRIVER( grindsta )	/* TP-027 (c) 1993 Toaplan + Unite Trading license (Korea) */
@@ -2659,6 +2664,7 @@ V-V                           TP-027
 	DRIVER( frogs )		/* 112-119 [1978 Gremlin?] */
 	DRIVER( sspaceat )	/* 155-162 (c) */
 	DRIVER( sspacat2 )
+	DRIVER( sspacat3 )
 	DRIVER( sspacatc )	/* 139-146 (c) */
 	DRIVER( sspacaho )	/* ? epr00001.bin - epr00008.bin */
 	DRIVER( headon )	/* 163-167/192-193 (c) Gremlin */
@@ -2981,13 +2987,15 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( f1lap )
 	DRIVER( dbzvrvs )
 	DRIVER( darkedge )
+	DRIVER( darkedgj )
 	DRIVER( slipstrm )	/* Capcom */
 
 	/* Sega Multi System 32 games */
 	DRIVER( orunners )	/* (c) 1992 (US) */
 	DRIVER( harddunk )	/* (c) 1994 (World) */
 	DRIVER( harddunj )	/* (c) 1994 (Japan) */
-	DRIVER( titlef )
+	DRIVER( titlef )	/* (c) 1992 (World) */
+	DRIVER( titlefu )	/* (c) 1992 (US) */
 	DRIVER( scross )	/* (c) 1992 (World) */
 
 	/* Model 1 Games */
@@ -3065,9 +3073,11 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( manxtt )	/* 1995 */
 	DRIVER( srallyc )	/* 1995 */
 	DRIVER( vf2 )		/* 1995 */
-	DRIVER( vf21 )		/* 1995 */
+	DRIVER( vf2b )		/* 1995 */
+	DRIVER( vf2o )		/* 1995 */
 	DRIVER( vcop2 )		/* 1995 */
 	DRIVER( dynamcop )	/* 1996 */
+	DRIVER( dyndeka2 )	/* 1996 */
 	DRIVER( doaa )		/* 1996 */
 	DRIVER( zeroguna )	/* 1997 */
 	DRIVER( pltkidsa )	/* 1998 */
@@ -3081,8 +3091,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( skytargt )	/* 1995 */
 	DRIVER( dynmcopb )	/* 1996 */
 	DRIVER( schamp )	/* 1996 */
-	DRIVER( lastbrxa )	/* 1996 */
-	DRIVER( lastbexp )	/* 1996 */
+	DRIVER( lastbrnx )	/* 1996 */
+	DRIVER( lastbrnj )	/* 1996 */
 	DRIVER( doa )		/* 1996 */
 	DRIVER( sgt24h )	/* 1996 */
 	DRIVER( von )		/* 1996 */
@@ -4371,6 +4381,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( nibbler )	/* (c) 1982 Rock-ola */
 	DRIVER( nibblera )	/* (c) 1982 Rock-ola */
 	DRIVER( nibblerb )	/* (c) 1982 Rock-ola */
+	DRIVER( nibblero )	/* (c) 1982 Olympia */
 
 	/* later SNK games, each game can be identified by PCB code and ROM
 	code, the ROM code is the same between versions, and usually based
@@ -4547,6 +4558,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Stern 'Mazer Blazer hardware' games */
 	DRIVER( mazerbla )
+	DRIVER( mzrblzra )
 	DRIVER( greatgun )
 
 	/* Other Stern */
@@ -4834,6 +4846,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( raidndxb )
 	DRIVER( raidndxj )
 	DRIVER( zeroteam )
+	DRIVER( zeroteaa )
 	DRIVER( nzerotea )
 
 
@@ -5299,6 +5312,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( guiness )	/* TVG15 (c) 1984 Sun Electronics */
 	DRIVER( pettanp )	/* TVG16 (c) 1984 Sun Electronics (Japan) */
 	DRIVER( ikki )		/* TVG17 (c) 1985 Sun Electronics (Japan) */
+	DRIVER( farmer )	/* TVG17 (c) 1985 Sun Electronics */
 	DRIVER( shanghai )	/* (c) 1988 Sunsoft (Sun Electronics) */
 	DRIVER( shangha2 )	/* (c) 1989 Sunsoft (Sun Electronics) */
 	DRIVER( shangha3 )	/* (c) 1993 Sunsoft */

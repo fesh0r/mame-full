@@ -30,6 +30,8 @@ typedef struct {
 	UINT32 IP, PIP, ICR;
 	int bursting;
 
+	int immediate_irq, immediate_vector, immediate_pri;
+
 	int (*irq_cb)(int);
 } i960_state;
 
@@ -443,83 +445,102 @@ static const char *i960_get_strflags(void)
 	return (conditions[i960.AC & 7]);
 }
 
-static void check_irqs(void)
+// interrupt dispatch
+static void take_interrupt(int vector, int lvl)
 {
 	int int_tab =  program_read_dword_32le(i960.PRCB+20);	// interrupt table
 	int int_SP  =  program_read_dword_32le(i960.PRCB+24);	// interrupt stack
+	int SP;
+	data32_t IRQV;
+
+	IRQV = program_read_dword_32le(int_tab + 36 + (vector-8)*4);
+
+	// start the process
+	if(!(i960.PC & 0x2000))	// if this is a nested interrupt, don't re-get int_SP
+	{
+		SP = int_SP;
+	}
+	else
+	{
+		SP = i960.r[I960_SP];
+	}
+
+	SP = (SP + 63) & ~63;
+	SP += 128;	// emulate ElSemi's core, this fixes the crash in sonic the fighters
+
+	do_call(IRQV, 7, SP);
+
+	// save the processor state
+	program_write_dword_32le(i960.r[I960_FP]-16, i960.AC);
+	program_write_dword_32le(i960.r[I960_FP]-12, i960.PC);
+	// store the vector
+	program_write_dword_32le(i960.r[I960_FP]-8, vector-8);
+
+	i960.PC &= ~0x1f00;	// clear priority, state, trace-fault pending, and trace enable
+	i960.PC |= (lvl<<16);	// set CPU level to current IRQ level
+	i960.PC |= 0x2002;	// set supervisor mode & interrupt flag
+}
+
+static void check_irqs(void)
+{
+	int int_tab =  program_read_dword_32le(i960.PRCB+20);	// interrupt table
 	int cpu_pri = (i960.PC>>16)&0x1f;
-	int pending_pri, SP;
+	int pending_pri;
 	int lvl, irq, take = -1;
 	int vword, lvlmask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
 	pending_pri = program_read_dword_32le(int_tab);		// read pending priorities
 
-	for(lvl = 31; lvl >= 0; lvl--) {
-		if((pending_pri & (1 << lvl)) && ((cpu_pri < lvl) || (lvl == 31))) {
-			int word, wordl, wordh;
+	if ((i960.immediate_irq) && ((cpu_pri < i960.immediate_pri) || (i960.immediate_pri == 31)))
+	{
+		take_interrupt(i960.immediate_vector, i960.immediate_pri);
+		i960.immediate_irq = 0;
+	}
+	else
+	{
+		for(lvl = 31; lvl >= 0; lvl--) {
+			if((pending_pri & (1 << lvl)) && ((cpu_pri < lvl) || (lvl == 31))) {
+				int word, wordl, wordh;
 
-			// figure out which word contains this level's priorities
-			word = ((lvl / 4) * 4) + 4;	// (lvl/4) = word address, *4 for byte address, +4 to skip pending priorities
-			wordl = (lvl % 4) * 8;
-			wordh = (wordl + 8) - 1;
+				// figure out which word contains this level's priorities
+				word = ((lvl / 4) * 4) + 4;	// (lvl/4) = word address, *4 for byte address, +4 to skip pending priorities
+				wordl = (lvl % 4) * 8;
+				wordh = (wordl + 8) - 1;
 
-		  	vword = program_read_dword_32le(int_tab + word);
+			  	vword = program_read_dword_32le(int_tab + word);
 
-			// take the first vector we find for this level
-			for (irq = wordh; irq >= wordl; irq--) {
-				if(vword & (1 << irq)) {
-					// clear pending bit
-					vword &= ~(1 << irq);
-					program_write_dword_32le(int_tab + word, vword);
-					take = irq;
-					break;
+				// take the first vector we find for this level
+				for (irq = wordh; irq >= wordl; irq--) {
+					if(vword & (1 << irq)) {
+						// clear pending bit
+						vword &= ~(1 << irq);
+						program_write_dword_32le(int_tab + word, vword);
+						take = irq;
+						break;
+					}
 				}
-			}
 
-			// if no vectors were found at our level, it's an error
-			if(take == -1) {
-				logerror("i960: ERROR! no vector found for pending level %d\n", lvl);
+				// if no vectors were found at our level, it's an error
+				if(take == -1) {
+					logerror("i960: ERROR! no vector found for pending level %d\n", lvl);
 
-				// try to recover...
-				pending_pri &= ~(1 << lvl);
-				program_write_dword_32le(int_tab, pending_pri);
+					// try to recover...
+					pending_pri &= ~(1 << lvl);
+					program_write_dword_32le(int_tab, pending_pri);
+					return;
+				}
+
+				// if no vectors are waiting for this level, clear the level bit
+				if(!(vword & lvlmask[lvl % 4])) {
+					pending_pri &= ~(1 << lvl);
+					program_write_dword_32le(int_tab, pending_pri);
+				}
+
+				take += ((lvl/4) * 32);
+
+				take_interrupt(take, lvl);
 				return;
 			}
-
-			// if no vectors are waiting for this level, clear the level bit
-			if(!(vword & lvlmask[lvl % 4])) {
-				pending_pri &= ~(1 << lvl);
-				program_write_dword_32le(int_tab, pending_pri);
-			}
-
-			// get the vector back
-			take += ((lvl/4) * 32);
-
-			// start the process
-			if(!(i960.PC & 0x2000))	// if this is a nested interrupt, don't re-get int_SP
-			{
-				SP = int_SP;
-			}
-			else
-			{
-				SP = i960.r[I960_SP];
-			}
-		
-			SP = (SP + 63) & ~63;
-			SP += 128;	// emulate ElSemi's core, this fixes the crash in sonic the fighters
-
-			do_call(program_read_dword_32le(int_tab + 36 + (take-8)*4), 7, SP);
-
-			// save the processor state
-			program_write_dword_32le(i960.r[I960_FP]-16, i960.AC);
-			program_write_dword_32le(i960.r[I960_FP]-12, i960.PC);
-			// store the vector
-			program_write_dword_32le(i960.r[I960_FP]-8, take-8);
-
-			i960.PC &= ~0x1f00;	// clear priority, state, trace-fault pending, and trace enable
-			i960.PC |= (lvl<<16);	// set CPU level to current IRQ level
-			i960.PC |= 0x2002;	// set supervisor mode & interrupt flag
-			return;
 		}
 	}
 }
@@ -638,6 +659,8 @@ static int i960_execute(int cycles)
 	while(i960_icount >= 0) {
 		i960.PIP = i960.IP;
 		CALL_MAME_DEBUG;
+
+		i960.bursting = 0;
 
 		opcode = cpu_readop32(i960.IP);
 		i960.IP += 4;
@@ -1287,6 +1310,30 @@ static int i960_execute(int cycles)
 
 		case 0x64:
 			switch((opcode >> 7) & 0xf) {
+			case 0x0: // spanbit
+				{
+					UINT32 res = 0xffffffff;
+					int i;
+
+					i960_icount -= 10;
+
+					t1 = get_1_ri(opcode);
+					i960.AC &= ~7;
+
+					for (i = 31; i >= 0; i--)
+					{
+						if (!(t1 & (1<<i)))
+						{
+							i960.AC |= 2;
+							res = i;
+							break;
+						}
+					}
+
+					set_ri(opcode, res);
+				}
+				break;
+
 			case 0x1: // scanbit
 				{
 					UINT32 res = 0xffffffff;
@@ -1303,6 +1350,7 @@ static int i960_execute(int cycles)
 						{
 							i960.AC |= 2;
 							res = i;
+							break;
 						}
 					}
 
@@ -1960,6 +2008,7 @@ static void i960_set_context(void *context)
 static void set_irq_line(int irqline, int state)
 {
 	int int_tab =  program_read_dword_32le(i960.PRCB+20);	// interrupt table
+	int cpu_pri = (i960.PC>>16)&0x1f;
 	int vector =0;
 	int priority;
 	UINT32 pend, word, wordofs;
@@ -1997,17 +2046,27 @@ static void set_irq_line(int irqline, int state)
 	priority = vector / 8;
 
 	if(state) {
-		// store the interrupt in the "pending" table
-		pend = program_read_dword_32le(int_tab);
-		pend |= (1 << priority);
-		program_write_dword_32le(int_tab, pend);
+		// check if we can take this "right now"
+		if (((cpu_pri < priority) || (priority == 31)) && (i960.immediate_irq == 0))
+		{
+			i960.immediate_irq = 1;
+			i960.immediate_vector = vector;
+			i960.immediate_pri = priority;
+		}
+		else
+		{
+			// store the interrupt in the "pending" table
+			pend = program_read_dword_32le(int_tab);
+			pend |= (1 << priority);
+			program_write_dword_32le(int_tab, pend);
 
-		// now bitfield-ize the vector
-		word = ((vector / 32) * 4) + 4;
-		wordofs = vector % 32;
-		pend = program_read_dword_32le(int_tab + word);
-		pend |= (1 << wordofs);
-		program_write_dword_32le(int_tab + word, pend);
+			// now bitfield-ize the vector
+			word = ((vector / 32) * 4) + 4;
+			wordofs = vector % 32;
+			pend = program_read_dword_32le(int_tab + word);
+			pend |= (1 << wordofs);
+			program_write_dword_32le(int_tab + word, pend);
+		}
 
 		// and ack it to the core now that it's queued
 		(*i960.irq_cb)(irqline);
@@ -2078,6 +2137,7 @@ static void i960_reset(void *param)
 	i960.AC         = 0;
 	i960.ICR	    = 0xff000000;
 	i960.bursting   = 0;
+	i960.immediate_irq = 0;	
 
 	memset(i960.r, 0, sizeof(i960.r));
 	memset(i960.rcache, 0, sizeof(i960.rcache));
@@ -2224,4 +2284,11 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	default:
 		osd_die("i960_get_info %x          \n", state);
 	}
+}
+
+// call from any read/write handler for a memory area that can't be bursted
+// on the real hardware (e.g. Model 2's interrupt control registers)
+void i960_noburst(void)
+{
+	i960.bursting = 0;
 }

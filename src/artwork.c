@@ -3257,10 +3257,12 @@ intersect:
 	}
 }
 
-/* export some variables needed by osd vector draw code */
+/*
+ * Export some variables needed by OSD vector code in xmame.
+ */
 const struct rectangle *artwork_get_game_rect(void)
 {
-	if(artwork_list)
+	if (artwork_list)
 		return &gamerect;
 	else
 		return NULL;

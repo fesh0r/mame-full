@@ -127,6 +127,10 @@
 
 #define FRAMES_PER_FPS_UPDATE		12
 
+#ifndef MAME_VALIDITYCHECKS
+#define MAME_VALIDITYCHECKS			1
+#endif /* MAME_VALIDITYCHECKS */
+
 
 
 /***************************************************************************
@@ -276,11 +280,11 @@ int run_game(int game)
 
 	begin_resource_tracking();
 
-#ifndef MESS
 	/* validity checks -- perform these in all builds now due to the number of incorrect submissions */
+#if MAME_VALIDITYCHECKS
 	if (mame_validitychecks())
 		return 1;
-#endif /* MESS */
+#endif /* MAME_VALIDITYCHECKS */
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));

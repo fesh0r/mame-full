@@ -824,7 +824,7 @@ VIDEO_UPDATE( hng64 )
 		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	}
 
-};
+}
 
 /*
 READ32_HANDLER( hng64_random_reader )
