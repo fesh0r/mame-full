@@ -138,12 +138,17 @@ int nc_membank_card_ram_mask;
 
 	Display memory start:
 
-	NC100 & NC200:
+	NC100:
 			bit 7           A15
 			bit 6           A14
 			bit 5           A13
 			bit 4           A12
 			bits 3-0        Not Used
+	NC200:
+			bit 7           A15
+			bit 6           A14
+			bit 5           A13
+			bits 4-0        Not Used
 
 	Port 0x010-0x013:
 	=================
@@ -240,11 +245,19 @@ int nc_membank_card_ram_mask;
 			bit 7: ???
 			bit 6: RTC alarm?
 			bit 5: FDC interrupt
-			bit 4: FDD Index interrupt????
+			bit 4: Power off interrupt
 			Bit 3: Key scan interrupt (10ms)
 			Bit 2: serial interrupt (tx ready/rx ready combined)
 			Bit 1: not used
 			Bit 0: ACK from parallel interface
+
+	Port 0x070: On/off control
+
+	NC200:
+		bit 7: nc200 power on/off: 1 = on, 0=off
+		bit 2: backlight: 1=off, 0=on
+		bit 1: disk motor??
+		bit 0: nec765 terminal count input
 */
 
 
@@ -526,10 +539,26 @@ static void dummy_timer_callback(int dummy)
 	{
         if (inputport_10_state & 0x01)
         {
+			/* on NC100 on/off button causes a nmi, on
+			nc200 on/off button causes an int */
+			switch (nc_type)
+			{
+				case NC_TYPE_1xx:
+				{
 #ifdef VERBOSE
-            logerror("nmi triggered\n");
+			        logerror("nmi triggered\n");
 #endif
-            cpu_set_nmi_line(0, PULSE_LINE);
+				    cpu_set_nmi_line(0, PULSE_LINE);
+				}
+				break;
+				
+				case NC_TYPE_200:
+				{
+					nc_irq_status |=(1<<4);
+					nc_update_interrupts();
+				}
+				break;
+			}
         }
 	}
 
@@ -595,6 +624,8 @@ void nc_common_shutdown_machine(void)
         free(nc_memory);
         nc_memory = NULL;
     }
+
+	centronics_exit(0);
 
     if (nc_keyboard_timer!=NULL)
     {
@@ -668,7 +699,27 @@ WRITE_HANDLER(nc_irq_status_w)
 #ifdef VERBOSE
 	logerror("irq status w: %02x\n", data);
 #endif
-        data = data^0x0ff;
+    data = data^0x0ff;
+
+	if (nc_type == NC_TYPE_200)
+	{
+		/* Russell Marks confirms that on the NC200, the key scan interrupt must be explicitly
+		cleared. It is not automatically cleared when reading 0x0b9 */
+		if ((data & (1<<3))!=0)
+		{
+			if (nc_keyboard_timer!=NULL)
+			{
+				timer_remove(nc_keyboard_timer);
+				nc_keyboard_timer = NULL;
+			}
+
+			/* set timer to occur again */
+			nc_keyboard_timer = timer_set(TIME_IN_MSEC(10), 0, nc_keyboard_timer_callback);
+
+			nc_update_interrupts();
+		}
+	}
+
 
 /* writing to status will clear int, will this re-start the key-scan? */
 #if 0
@@ -698,21 +749,6 @@ WRITE_HANDLER(nc_irq_status_w)
 READ_HANDLER(nc_irq_status_r)
 {
         return ~((nc_irq_status & (~nc_irq_latch_mask)) | nc_irq_latch);
-}
-
-WRITE_HANDLER(nc_display_memory_start_w)
-{
-        /* bit 7: A15 */
-        /* bit 6: A14 */
-        /* bit 5: A13 */
-        /* bit 4: A12 */
-        /* bit 3-0: not used */
-        nc_display_memory_start = (data & 0x0f0)<<(12-4);
-
-#ifdef VERBOSE
-        logerror("disp memory w: %04x\n", nc_display_memory_start);
-#endif
-
 }
 
 
@@ -891,6 +927,22 @@ static READ_HANDLER(nc_unmapped_io_r)
 /* NC100 hardware */
 
 static int previous_alarm_state;
+
+
+WRITE_HANDLER(nc100_display_memory_start_w)
+{
+        /* bit 7: A15 */
+        /* bit 6: A14 */
+        /* bit 5: A13 */
+        /* bit 4: A12 */
+        /* bit 3-0: not used */
+        nc_display_memory_start = (data & 0x0f0)<<(12-4);
+
+#ifdef VERBOSE
+        logerror("disp memory w: %04x\n", nc_display_memory_start);
+#endif
+
+}
 
 
 WRITE_HANDLER(nc100_uart_control_w)
@@ -1135,7 +1187,7 @@ PORT_READ_START( readport_nc100 )
 PORT_END
 
 PORT_WRITE_START( writeport_nc100 )
-    {0x000, 0x000, nc_display_memory_start_w},
+    {0x000, 0x000, nc100_display_memory_start_w},
     {0x010, 0x013, nc_memory_management_w},
 	{0x020, 0x020, nc100_memory_card_wait_state_w},
 	{0x030, 0x030, nc100_uart_control_w},
@@ -1287,6 +1339,20 @@ void nc150_init_machine(void)
 /**********************************************************************************************************/
 /* NC200 hardware */
 
+
+WRITE_HANDLER(nc200_display_memory_start_w)
+{
+        /* bit 7: A15 */
+        /* bit 6: A14 */
+        /* bit 5: A13 */
+        /* bit 4-0: not used */
+        nc_display_memory_start = (data & 0x0e0)<<(12-4);
+
+#ifdef VERBOSE
+        logerror("disp memory w: %04x\n", nc_display_memory_start);
+#endif
+
+}
 
 static void nc200_printer_handshake_in(int number, int data, int mask)
 {
@@ -1558,8 +1624,8 @@ WRITE_HANDLER(nc200_uart_control_w)
 /* writes 86,82 */
 
 /* bit 7: nc200 power control: 1=on, 0=off */
-/* bit 2: ?? */
-/* bit 1: ?? */
+/* bit 2: backlight: 1=off, 0=on */
+/* bit 1: disk motor??  */
 /* bit 0: NEC765 Terminal Count input */
 
 WRITE_HANDLER(nc200_memory_card_wait_state_w)
@@ -1596,7 +1662,7 @@ PORT_READ_START( readport_nc200 )
 PORT_END
 
 PORT_WRITE_START( writeport_nc200 )
-	{0x000, 0x000, nc_display_memory_start_w},
+	{0x000, 0x000, nc200_display_memory_start_w},
 	{0x010, 0x013, nc_memory_management_w},
 	{0x020, 0x020, nc200_memory_card_wait_state_w},
 	{0x040, 0x040, nc_printer_data_w},
@@ -1741,8 +1807,9 @@ static struct MachineDriver machine_driver_nc100 =
 		/* MachineCPU */
 		{
             CPU_Z80 ,  /* type */
-            6000000, /* clock: See Note Above */
-            readmem_nc,                   /* MemoryReadAddress */
+            /*6000000,*/ /* clock: See Note Above */
+            4606000, /* Russell Marks says this is more accurate */
+			readmem_nc,                   /* MemoryReadAddress */
             writemem_nc,                  /* MemoryWriteAddress */
             readport_nc100,                  /* IOReadPort */
             writeport_nc100,                 /* IOWritePort */
@@ -1794,7 +1861,8 @@ static struct MachineDriver machine_driver_nc200 =
 		/* MachineCPU */
 		{
 			CPU_Z80 ,  /* type */
-			6000000, /* clock: See Note Above */
+           /*6000000,*/ /* clock: See Note Above */
+            4606000, /* Russell Marks says this is more accurate */
 			readmem_nc,                   /* MemoryReadAddress */
 			writemem_nc,                  /* MemoryWriteAddress */
 			readport_nc200,                  /* IOReadPort */
