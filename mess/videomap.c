@@ -792,7 +792,7 @@ void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 	/* if we are writing to buffered bitmap, copy it */
 	if (tmpbitmap)
-		video_update_generic_bitmapped(bitmap, cliprect);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
 /* ----------------------------------------------------------------------- *
