@@ -1464,7 +1464,7 @@ READ16_HANDLER ( lisa_r )
 			break;
 
 		case IO:
-			answer = lisa_IO_r((address & 0x00ffff) >> 1);
+			answer = lisa_IO_r((address & 0x00ffff) >> 1, mem_mask);
 			break;
 
 		case invalid:		/* unmapped segment */
