@@ -569,6 +569,12 @@ int image_has_been_created(mess_image *img)
 	return is_effective_mode_create(img->effective_mode);
 }
 
+void image_make_readonly(mess_image *img)
+{
+	img->effective_mode = OSD_FOPEN_READ;
+}
+
+
 /****************************************************************************
   Memory allocators
 

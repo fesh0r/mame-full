@@ -238,6 +238,7 @@ static DEVICE_LOAD(cassette)
 	const struct CassetteFormat **formats;
 	const char *extension;
 	cassette_state default_state;
+	int is_writable;
 
 	tag = get_cassimg(image);
 
@@ -256,9 +257,19 @@ static DEVICE_LOAD(cassette)
 	else
 	{
 		/* opening an image */
-		cassette_flags = image_is_writable(image) ? (CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT) : CASSETTE_FLAG_READONLY;
-		extension = image_filetype(image);
-		err = cassette_open_choices(file, &mess_ioprocs, extension, formats, cassette_flags, &tag->cassette);
+		do
+		{
+			is_writable = image_is_writable(image); 
+			cassette_flags = is_writable ? (CASSETTE_FLAG_READWRITE|CASSETTE_FLAG_SAVEONEXIT) : CASSETTE_FLAG_READONLY;
+			extension = image_filetype(image);
+			err = cassette_open_choices(file, &mess_ioprocs, extension, formats, cassette_flags, &tag->cassette);
+
+			/* this is kind of a hack */
+			if (err && is_writable)
+				image_make_readonly(image);
+		}
+		while(err && is_writable);
+
 		if (err)
 			goto error;
 	}

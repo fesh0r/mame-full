@@ -227,4 +227,3 @@ struct CassetteFormat wavfile_format =
 	wavfile_load,
 	wavfile_save
 };
-

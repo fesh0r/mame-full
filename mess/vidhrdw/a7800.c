@@ -126,11 +126,11 @@ static void maria_draw_scanline(void)
 	dl = maria_dl;
 
 	/* Step through DL's */
-	while (READ_MEM(dl + 1) != 0)
+	while ((READ_MEM(dl + 1) & 0x5F) != 0)
 	{
 
 		/* Extended header */
-		if ((READ_MEM(dl+1) & 0x5F) == 0x40)
+		if (!(READ_MEM(dl+1) & 0x1F))
 		{
 			graph_adr = (READ_MEM(dl+2) << 8) | READ_MEM(dl);
 			width = ((READ_MEM(dl+3) ^ 0xff) & 0x1F) + 1;
@@ -244,8 +244,8 @@ static void maria_draw_scanline(void)
 
 						if ( d & 0x03 || pal & 0x03 || maria_kangaroo )
 						{
-							scanline[hpos + 0] = maria_palette[c][((d & 0x08) << 0) | ((pal & 2) >> 1)];
-							scanline[hpos + 1] = maria_palette[c][((d & 0x04) << 1) | ((pal & 1) >> 0)];
+							scanline[hpos + 0] = maria_palette[c][((d & 0x02) << 0) | ((pal & 2) >> 1)];
+							scanline[hpos + 1] = maria_palette[c][((d & 0x01) << 1) | ((pal & 1) >> 0)];
 						}
 						inc_hpos_by_2();
 
@@ -286,18 +286,16 @@ static void maria_draw_scanline(void)
 						c = (d & 0xC0) >> 6;
 						if (c || maria_kangaroo)
 						{
-							pal = (pal & 0x04) | ((d & 0x0C) >> 2);
-							scanline[hpos + 0] = maria_palette[pal][c];
-							scanline[hpos + 1] = maria_palette[pal][c];
+							scanline[hpos + 0] = maria_palette[(pal & 0x04) | ((d & 0x0C) >> 2)][c];
+							scanline[hpos + 1] = maria_palette[(pal & 0x04) | ((d & 0x0C) >> 2)][c];
 						}
 						inc_hpos_by_2();
 
 						c = (d & 0x30) >> 4;
 						if (c || maria_kangaroo)
 						{
-							pal = (pal & 0x04) | (d & 0x03);
-							scanline[hpos + 0] = maria_palette[pal][c];
-							scanline[hpos + 1] = maria_palette[pal][c];
+							scanline[hpos + 0] = maria_palette[(pal & 0x04) | (d & 0x03)][c];
+							scanline[hpos + 1] = maria_palette[(pal & 0x04) | (d & 0x03)][c];
 						}
 						inc_hpos_by_2();
 					 	break;
@@ -310,7 +308,7 @@ static void maria_draw_scanline(void)
 						}
 						inc_hpos_by_2();
 
-						if ( d & 0x30 || maria_kangaroo)
+						if ( d & 0x33 || maria_kangaroo)
 						{
 							scanline[hpos + 0] = maria_palette[pal][((d & 0x20) >> 4) | ((d & 0x02) >> 1)];
 							scanline[hpos + 1] = maria_palette[pal][((d & 0x10) >> 3) | (d & 0x01)];
@@ -321,17 +319,15 @@ static void maria_draw_scanline(void)
 					case 0x07: /* (320C mode) */
 						if (d & 0xC0 || maria_kangaroo)
 						{
-							pal = (pal & 0x04) || ((d & 0x0C) >> 2);
-							scanline[hpos + 0] = maria_palette[pal][(d & 0x80) >> 6];
-							scanline[hpos + 1] = maria_palette[pal][(d & 0x40) >> 5];
+							scanline[hpos + 0] = maria_palette[(pal & 0x04) | ((d & 0x0C) >> 2)][(d & 0x80) >> 6];
+							scanline[hpos + 1] = maria_palette[(pal & 0x04) | ((d & 0x0C) >> 2)][(d & 0x40) >> 5];
 						}
 						inc_hpos_by_2();
 
 						if ( d & 0x30 || maria_kangaroo)
 						{
-							pal = (pal & 0x04) || (d & 0x03);
-							scanline[hpos + 0] = maria_palette[pal][(d & 0x20) >> 4];
-							scanline[hpos + 1] = maria_palette[pal][(d & 0x10) >> 3];
+							scanline[hpos + 0] = maria_palette[(pal & 0x04) | (d & 0x03)][(d & 0x20) >> 4];
+							scanline[hpos + 1] = maria_palette[(pal & 0x04) | (d & 0x03)][(d & 0x10) >> 3];
 						}
 						inc_hpos_by_2();
 						break;

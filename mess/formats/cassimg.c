@@ -8,10 +8,13 @@
 
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "cassimg.h"
 #include "utils.h"
 #include "pool.h"
+
+#define DUMP_CASSETTES			0
 
 #define SAMPLES_PER_BLOCK		0x40000
 #define CASSETTE_FLAG_DIRTY		0x10000
@@ -258,6 +261,15 @@ done:
 
 
 
+static casserr_t cassette_perform_save(cassette_image *cassette)
+{
+	struct CassetteInfo info;
+	cassette_get_info(cassette, &info);
+	return cassette->format->save(cassette, &info);
+}
+
+
+
 casserr_t cassette_save(cassette_image *cassette)
 {
 	casserr_t err;
@@ -266,8 +278,7 @@ casserr_t cassette_save(cassette_image *cassette)
 	if (!cassette->format || !cassette->format->save)
 		return CASSETTE_ERROR_UNSUPPORTED;
 
-	cassette_get_info(cassette, &info);
-	err = cassette->format->save(cassette, &info);
+	err = cassette_perform_save(cassette);
 	if (err)
 		return err;
 
@@ -920,6 +931,10 @@ casserr_t cassette_legacy_construct(cassette_image *cassette,
 	/* success! */
 	err = CASSETTE_ERROR_SUCCESS;
 
+#if DUMP_CASSETTES
+	cassette_dump(cassette, "C:\\TEMP\\CASDUMP.WAV");
+#endif
+
 done:
 	if (samples)
 		free(samples);
@@ -929,4 +944,38 @@ done:
 		free(bytes);
 	return err;
 }
+
+
+
+/*********************************************************************
+	cassette_dump
+
+	A debugging call to dump a casette image to a disk based wave file
+*********************************************************************/
+
+void cassette_dump(cassette_image *image, const char *filename)
+{
+	FILE *f;
+	struct io_generic saved_io;
+	const struct CassetteFormat *saved_format;
+
+	memcpy(&saved_io, &image->io, sizeof(saved_io));
+	saved_format = image->format;
+
+	f = fopen(filename, "wb");
+	if (!f)
+		goto done;
+
+	image->io.file = f;
+	image->io.procs = &stdio_ioprocs_noclose;
+	image->format = &wavfile_format;
+	cassette_perform_save(image);
+
+done:
+	memcpy(&image->io, &saved_io, sizeof(saved_io));
+	image->format = saved_format;
+	if (f)
+		fclose(f);
+}
+
 

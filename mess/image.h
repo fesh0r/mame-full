@@ -91,6 +91,7 @@ unsigned int image_crc(mess_image *img);
 
 int image_is_writable(mess_image *img);
 int image_has_been_created(mess_image *img);
+void image_make_readonly(mess_image *img);
 
 /****************************************************************************
   Memory allocators

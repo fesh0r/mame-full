@@ -187,6 +187,9 @@ casserr_t cassette_read_modulated_data(cassette_image *cassette, int channel, do
 	UINT64 offset, UINT64 length, const struct CassetteModulation *modulation,
 	double *time_displacement);
 
+/* debug calls */
+void cassette_dump(cassette_image *image, const char *filename);
+
 /* legacy code support */
 #define CODE_HEADER 	((UINT8*)-1)
 #define CODE_TRAILER	((UINT8*)-2)
