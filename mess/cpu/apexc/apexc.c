@@ -339,7 +339,7 @@ typedef struct
 	UINT32 r;	/* register */
 	UINT32 cr;	/* control register (i.e. instruction register) */
 	int ml;		/* memory location (current track in working store, and requested
-				word position within track) */
+				word position within track) (10 bits) */
 	int working_store;	/* current working store (group of 16 tracks) (1-15) */
 	int current_word;	/* current word position within track (0-31) */
 
@@ -804,47 +804,6 @@ void apexc_set_context(void *src)
 	}
 }
 
-/* no PC - return memory location register instead, this should be equivalent unless
-executed in the midst of an instruction */
-unsigned apexc_get_pc(void)
-{
-	return effective_address(apexc.ml);
-}
-
-void apexc_set_pc(unsigned val)
-{
-	/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
-	or a switchable track group */
-	apexc.ml = val & 0x1ff;
-	if (val & 0x1e00)
-	{	/* we are accessing a switchable track group */
-		apexc.ml |= 0x200;	/* set 10th bit */
-
-		if (((val >> 9) & 0xf) != apexc.working_store)
-		{	/* we need to do a store switch */
-			apexc.working_store = ((val >> 9) & 0xf);
-		}
-	}
-
-}
-
-/* no SP */
-unsigned apexc_get_sp(void)
-{
-	return 0U;
-}
-
-void apexc_set_sp(unsigned val)
-{
-	(void) val;
-}
-
-/* no NMI line */
-void apexc_set_nmi_line(int state)
-{
-	(void) state;
-}
-
 /* no IRQ line */
 void apexc_set_irq_line(int irqline, int state)
 {
@@ -861,20 +820,28 @@ unsigned apexc_get_reg(int regnum)
 {
 	switch (regnum)
 	{
-		case APEXC_CR:
-			return apexc.cr;
-		case APEXC_A:
-			return apexc.a;
-		case APEXC_R:
-			return apexc.r;
-		case APEXC_ML:
-			return apexc.ml;
-		case APEXC_WS:
-			return apexc.working_store;
-		case APEXC_STATE:
-			return apexc.running ? TRUE : FALSE;
-		case APEXC_ML_FULL:
-			return effective_address(apexc.ml);
+	case APEXC_CR:
+		return apexc.cr;
+	case APEXC_A:
+		return apexc.a;
+	case APEXC_R:
+		return apexc.r;
+	case APEXC_ML:
+		return apexc.ml;
+	case APEXC_WS:
+		return apexc.working_store;
+	case APEXC_STATE:
+		return apexc.running ? TRUE : FALSE;
+	case APEXC_ML_FULL:
+		return effective_address(apexc.ml);
+
+	case REG_PC:
+		/* no PC - return memory location register instead, this should be equivalent unless
+		executed in the midst of an instruction */
+		return effective_address(apexc.ml);
+	case REG_SP:
+		/* no SP */
+		return 0U;
 	}
 	return 0;
 }
@@ -883,23 +850,40 @@ void apexc_set_reg(int regnum, unsigned val)
 {
 	switch (regnum)
 	{
-		case APEXC_CR:
-			apexc.cr = val;
-			break;
-		case APEXC_A:
-			apexc.a = val;
-			break;
-		case APEXC_R:
-			apexc.r = val;
-			break;
-		case APEXC_ML:
-			apexc.ml = val;
-			break;
-		case APEXC_WS:
-			apexc.working_store = val;
-			break;
-		case APEXC_STATE:
-			apexc.running = val ? TRUE : FALSE;
+	case APEXC_CR:
+		apexc.cr = val;
+		break;
+	case APEXC_A:
+		apexc.a = val;
+		break;
+	case APEXC_R:
+		apexc.r = val;
+		break;
+	case APEXC_ML:
+		apexc.ml = val & 0x3ff;
+		break;
+	case APEXC_WS:
+		apexc.working_store = val & 0xf;
+		break;
+	case APEXC_STATE:
+		apexc.running = val ? TRUE : FALSE;
+
+	case REG_PC:
+		/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
+		track group or a switchable one */
+		apexc.ml = val & 0x1ff;
+		if (val & 0x1e00)
+		{	/* we are accessing a switchable track group */
+			apexc.ml |= 0x200;	/* set 10th bit */
+
+			if (((val >> 9) & 0xf) != apexc.working_store)
+			{	/* we need to do a store switch */
+				apexc.working_store = ((val >> 9) & 0xf);
+			}
+		}
+	case REG_SP:
+		/* no SP */
+		(void) val;
 	}
 }
 
