@@ -202,7 +202,7 @@ static struct TMS5220interface tms5220interface =
 	680000L,					/* 640kHz -> 8kHz output */
 	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
-#if 1
+#if 0
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
 	spchroms_read_and_branch/*,*/	/* speech ROM read and branch handler */
