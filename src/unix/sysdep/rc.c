@@ -91,8 +91,8 @@ static void rc_free_stuff(struct rc_option *option)
             rc_free_stuff(option[i].dest);
             break;
          case rc_string:
-            if(*(char **)option[i].dest)
-               free(*(char **)option[i].dest);
+            free(*(char **)option[i].dest);
+            *(char **)option[i].dest = NULL;
             break;
          case rc_file:
             if(*(FILE **)option[i].dest)
@@ -121,10 +121,11 @@ void rc_destroy(struct rc_struct *rc)
    if(rc->option)
    {
       rc_free_stuff(rc->option);
-      free (rc->option);
+      free(rc->option);
+      rc->option = NULL;
    }
-   if(rc->arg)
-      free(rc->arg);
+   free(rc->arg);
+   rc->arg = NULL;
    free(rc);
 }
 
@@ -628,8 +629,7 @@ int rc_set_option3(struct rc_option *option, const char *arg, int priority)
                return -1;
             }
             strcpy(str, arg);
-            if(*(char **)option->dest)
-               free(*(char **)option->dest);
+            free(*(char **)option->dest);
             *(char **)option->dest = str;
          }
          break;
