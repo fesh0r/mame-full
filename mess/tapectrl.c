@@ -167,19 +167,19 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 				/* Pause/stop */
 				cassette_change_state(img, CASSETTE_STOPPED, CASSETTE_MASK_UISTATE);
 				break;
-			case 4:
+			case 3:
 				/* Play */
 				cassette_change_state(img, CASSETTE_PLAY, CASSETTE_MASK_UISTATE);
 				break;
-			case 5:
+			case 4:
 				/* Record */
 				cassette_change_state(img, CASSETTE_RECORD, CASSETTE_MASK_UISTATE);
 				break;
-			case 6:
+			case 5:
 				/* Rewind */
 				cassette_seek(img, -1, SEEK_CUR);
 				break;
-			case 7:
+			case 6:
 				/* Fast forward */
 				cassette_seek(img, +1, SEEK_CUR);
 				break;
