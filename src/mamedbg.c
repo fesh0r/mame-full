@@ -563,7 +563,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 		}
 	}
 	cursor_on ^= 1;
-	
+
 	debugger_bitmap_changed = 1;
 }
 
@@ -1690,7 +1690,7 @@ static void trace_output( void )
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			activecpu_dasm( dst, pc );
 			strcat( dst, "\n" );
-			fprintf( TRACE.file, "%s", buffer );
+			fprintf( TRACE.file, "%s", buffer);
 			memmove(
 				&TRACE.last_pc[0],
 				&TRACE.last_pc[1],

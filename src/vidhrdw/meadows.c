@@ -1,7 +1,7 @@
 /***************************************************************************
 
 	Meadows S2650 driver
-	
+
 ****************************************************************************/
 
 #include "vidhrdw/generic.h"
@@ -50,7 +50,7 @@ VIDEO_START( meadows )
  *	Video RAM write
  *
  *************************************/
- 
+
 WRITE_HANDLER( meadows_videoram_w )
 {
 	videoram[offset] = data;
@@ -64,7 +64,7 @@ WRITE_HANDLER( meadows_videoram_w )
  *	Sprite RAM write
  *
  *************************************/
- 
+
 WRITE_HANDLER( meadows_spriteram_w )
 {
 	if (spriteram[offset] != data)
@@ -109,7 +109,7 @@ VIDEO_UPDATE( meadows )
 {
 	/* draw the background */
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
-	
+
 	/* draw the sprites */
 	if (Machine->gfx[1])
 		draw_sprites(bitmap, cliprect);

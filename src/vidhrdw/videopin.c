@@ -15,7 +15,7 @@ extern int ball_position;
 /* Playfield and ball clipping area
  * This '+8' is to adjust display to the approximate backdrop
  */
- 
+
 
 VIDEO_UPDATE( videopin )
 {
