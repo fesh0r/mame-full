@@ -1233,6 +1233,15 @@ static void msx_cart_write (int cart, int offset, int data)
             else if (offset < 0x8f) K051649_volume_w (offset - 0x8a, data);
             else if (offset == 0x8f) K051649_keyonoff_w (0, data);
         }
+        /* quick sound cartridge hack */
+        else if ( (offset >= 0x7800) && (offset < 0x8000) )
+        {
+            offset &= 0xff;
+            if (offset < 0xa0) K052539_waveform_w (offset, data);
+            else if (offset < 0xaa) K051649_frequency_w (offset - 0xa0 , data);
+            else if (offset < 0xaf) K051649_volume_w (offset - 0xaa, data);
+            else if (offset == 0xaf) K051649_keyonoff_w (0, data);
+        }
         break;
     case 3: /* Konami4 without SCC */
         if (offset && !(offset & 0x1fff) )
