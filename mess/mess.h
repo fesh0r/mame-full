@@ -4,6 +4,7 @@
 #ifndef TRUE
 #define TRUE 1
 #endif
+
 #ifndef FALSE
 #define FALSE 0
 #endif
@@ -15,10 +16,10 @@
 
 int DECL_SPEC mess_printf(char *fmt, ...);
 
-void showmessinfo(void);
-int displayimageinfo(struct osd_bitmap *bitmap, int selected);
-int filemanager(struct osd_bitmap *bitmap, int selected);
-int tapecontrol(struct osd_bitmap *bitmap, int selected);
+extern void showmessinfo(void);
+extern int displayimageinfo(struct osd_bitmap *bitmap, int selected);
+extern int filemanager(struct osd_bitmap *bitmap, int selected);
+extern int tapecontrol(struct osd_bitmap *bitmap, int selected);
 
 /* driver.h - begin */
 #define IPT_SELECT1		IPT_COIN1
