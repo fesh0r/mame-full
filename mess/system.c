@@ -61,7 +61,7 @@ const struct GameDriver * drivers[] =
 #undef DRIVER
 #undef TESTDRIVER
 #define DRIVER(NAME) &driver_##NAME,
-#ifdef MESS_DEBUG
+#ifdef MAME_DEBUG
 #define TESTDRIVER(NAME) &driver_##NAME,
 #else
 #define TESTDRIVER(NAME)
