@@ -1101,8 +1101,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 		/* Semigraphics */
 		bgc = 8;
 
-		if ((the_state.modebits & M6847_MODEBIT_INTEXT) && ( (the_state.initparams.version != M6847_VERSION_M6847T1_PAL)
-		      || (the_state.initparams.version != M6847_VERSION_M6847T1_NTSC)) ) {
+		if ((the_state.modebits & M6847_MODEBIT_INTEXT) &&  (!m6847_is_t1(the_state.initparams.version)) ) {
 			/* Semigraphics 6 */
 			character = &fontdata8x12[(96 + (b & 0x3f)) * 12];
 			fgc = ((b >> 6) & 0x3);
@@ -1351,6 +1350,17 @@ static void m6847_rastertrack_newscreen(struct rastertrack_vvars *vvars, struct 
 void m6847_vh_update(struct osd_bitmap *bitmap, int full_refresh)
 {
 	rastertrack_refresh(bitmap, full_refresh);
+}
+
+int m6847_is_t1(int version)
+{
+	if( version == M6847_VERSION_M6847T1_PAL )
+		return 1;
+	
+	if( version == M6847_VERSION_M6847T1_NTSC )
+		return 1;
+	
+	return 0;
 }
 
 /* --------------------------------------------------
