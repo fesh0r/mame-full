@@ -32,8 +32,10 @@
 #ifdef USE_XV
 static void x11_window_update_16_to_YUY2 (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_YV12 (struct mame_bitmap *bitmap);
+static void x11_window_update_16_to_YV12_perfect (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YUY2_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap);
 static void x11_window_make_yuv_lookup();
 #endif
 static void x11_window_update_8_to_8bpp (struct mame_bitmap *bitmap);
@@ -62,6 +64,7 @@ static int xv_port=-1;
 static int xv_bpp=0;
 static long xv_format=0;
 static long xv_yuv=0;
+static long xv_yv12=0;
 static int *xv_yuvlookup=NULL;
 #define XV_YUY2 0x32595559
 #define XV_YV12 0x32315659
@@ -122,6 +125,9 @@ struct rc_option x11_window_opts[] = {
    { "yuv",		NULL,			rc_bool,	&xv_yuv,
      "0",		0,			0,		NULL,
      "Force YUV mode (for video cards with broken RGB overlays)" },
+   { "yv12",		NULL,			rc_bool,	&xv_yv12,
+     "0",		0,			0,		NULL,
+     "Force YV12 mode (for video cards with broken RGB overlays)" },
 #endif
 	 { "xsync",		"xs",			rc_bool,	&use_xsync,
      "1",		0,			0,		NULL,
@@ -672,6 +678,16 @@ int x11_window_create_display (int bitmap_depth)
       {
          event_mask |= ButtonPressMask | ButtonReleaseMask;
       }
+
+#if defined(__sgi) && ! defined(MESS)
+      /*
+       * In Xmame, we want to know when we are unmapped (iconified) or mapped,
+       * so that the game can be paused/restarted automatically
+       * (boss hanging around mode :)
+       */
+      event_mask |= StructureNotifyMask;
+#endif
+
 #ifdef USE_XIL
       if (use_xil)
       {
@@ -773,6 +789,7 @@ int x11_window_create_display (int bitmap_depth)
          /* Create an XV MITSHM image. */
          {
             fprintf (stderr_file, "MIT-SHM & XV Extensions Available. trying to use... ");
+	    if (xv_yv12) xv_yuv=1;
             XSetErrorHandler (test_mit_shm);
             if(xv_yuv==0)
             {
@@ -789,9 +806,9 @@ int x11_window_create_display (int bitmap_depth)
                xv_bluemask=0xff;
                xv_bpp=32;
                xv_format=XV_YUY2;
-               if(!(FindXvPort(display, xv_format, &xv_port)))
+               if(xv_yv12 || !(FindXvPort(display, xv_format, &xv_port)))
                {
-                  fprintf(stderr,"\nYUY2 not available - trying YV12... ");
+                  if (!xv_yv12) fprintf(stderr,"\nYUY2 not available - trying YV12... ");
                   xv_format=XV_YV12;
                   if(!(FindXvPort(display, xv_format, &xv_port)))
                   {
@@ -932,7 +949,19 @@ int x11_window_create_display (int bitmap_depth)
                break;
             case XV_YV12:
                ClearYV12(xvimage);
-               x11_window_update_display_func = x11_window_update_32_to_YV12_direct;
+	       if (widthscale == 1 && heightscale == 1)
+		       x11_window_update_display_func
+			       = x11_window_update_32_to_YV12_direct;
+	       else if (widthscale ==2 && heightscale == 2)
+		       x11_window_update_display_func
+			       = x11_window_update_32_to_YV12_direct_perfect;
+	       else {
+		       fprintf(stderr_file, "\nScaling different from 1 or 2"
+				       " is useless and unsupported\n");
+		       return OSD_NOT_OK;
+	       }
+
+
                break;
          }
       }
@@ -954,7 +983,17 @@ int x11_window_create_display (int bitmap_depth)
                break;
             case XV_YV12:
                ClearYV12(xvimage);
-               x11_window_update_display_func = x11_window_update_16_to_YV12;
+       	       if (widthscale == 1 && heightscale == 1)
+		       x11_window_update_display_func
+			       = x11_window_update_16_to_YV12;
+	       else if (widthscale ==2 && heightscale == 2)
+		       x11_window_update_display_func
+			       = x11_window_update_16_to_YV12_perfect;
+	       else {
+		       fprintf(stderr_file, "\nScaling different from 1 or 2"
+				       " is useless and unsupported\n");
+		       return OSD_NOT_OK;
+	       }
                break;
          }
       }
@@ -1393,6 +1432,15 @@ INLINE void x11_window_put_image (int x, int y, int width, int height)
 #define RMASK 0xff0000
 #define GMASK 0x00ff00
 #define BMASK 0x0000ff
+
+#define RGB2YUV(r,g,b,y,u,v) \
+		 (y) =	( 9797*(r) + 19237*(g) +  3734*(b) ) >> 15;\
+		 (u) =  (18492*((b)-(y)) >> 15) + 128;\
+		 (v) =  (23372*((r)-(y)) >> 15) + 128;
+	/* (v) =	(( 16385*(r) - 13721*(g) -  2664*(b) ) >> 15) + 128
+	   (u) =	(( -5528*(r) - 10856*(g) + 16385*(b) ) >> 15) + 128;\
+	 */
+	
 static void x11_window_make_yuv_lookup()
 {
    int i,r,g,b,y,u,v,n;
@@ -1413,9 +1461,7 @@ static void x11_window_make_yuv_lookup()
         g=(g&GMASK)>>8;
         b=(b&BMASK);
 
-        y = (( 9897*r + 19235*g + 3736*b ) >> 15) & 255;
-        u = ((( -5537*r - 10878*g + 16384*b ) >> 15) + 128) & 255;
-        v = ((( 16384*r - 13730*g -2664*b ) >> 15 ) + 128) & 255;
+	RGB2YUV(r,g,b,y,u,v);
 
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */
@@ -1427,36 +1473,140 @@ static void x11_window_make_yuv_lookup()
 /* Hacked into place, until I integrate YV12 support into the blit core... */
 static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 {
-   int _x,_y,r,g,b;
+   int _x,_y;
    unsigned char *dest_y;
    unsigned char *dest_u;
    unsigned char *dest_v;
    unsigned short *src;
-   int *indirect=current_palette->lookup;
+   unsigned short *src2;
+   int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
+   int *indirect=current_palette->lookup;    /* 34 */
 
-   for(_y=visual.min_y;_y<=visual.max_y;++_y)
+   for(_y=visual.min_y;_y<=visual.max_y;_y+=2)
    {
-      src=bitmap->line[_y];
-      src+=visual.min_x;
+      src=bitmap->line[_y] ;
+      src+= visual.min_x;
+      src2=bitmap->line[_y+1];
+      src2+= visual.min_x;
+
       dest_y=xvimage->data+xvimage->offsets[0]+(xvimage->width*(_y-visual.min_y));
       dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*((_y-visual.min_y)/2));
       dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*((_y-visual.min_y)/2));
-      for(_x=visual.min_x;_x<=visual.max_x;++_x)
+      for(_x=visual.min_x;_x<=visual.max_x;_x+=2)
       {
-         r=g=b=*src++;
-         if(indirect)
-           r=g=b=indirect[r];
+	if (indirect) {
+		 v = xv_yuvlookup[*src++];
+		 y = (v>>8)  & 0xff;
+		 u = (v>>16) & 0xff;
+		 v = (v)     & 0xff;
 
-         r&=RMASK;  r>>=16; /*   red is << 8 */
-         g&=GMASK;  g>>=8; /* green is << 3 */
-         b&=BMASK;  b>>=0; /*  blue is >> 3 */
+		 v2 = xv_yuvlookup[*src++];
+		 y2 = (v2>>8)  & 0xff;
+		 u2 = (v2>>16) & 0xff;
+		 v2 = (v2)     & 0xff;
 
-         *dest_y++ = (( 9897*r + 19235*g + 3736*b ) >> 15);
-         if(((_x&1)==1) && ((_y&1)==1))
-         {
-            *dest_u++ = (( -5537*r - 10878*g + 16384*b ) >> 15) + 128;
-            *dest_v++ = (( 16384*r - 13730*g -2664*b ) >> 15 ) + 128;
-         }
+		 v3 = xv_yuvlookup[*src2++];
+		 y3 = (v3>>8)  & 0xff;
+		 u3 = (v3>>16) & 0xff;
+		 v3 = (v3)     & 0xff;
+
+		 v4 = xv_yuvlookup[*src2++];
+		 y4 = (v4>>8)  & 0xff;
+		 u4 = (v4>>16) & 0xff;
+		 v4 = (v4)     & 0xff;
+	 } else { /* Can this really happen ? */
+		 int r,g,b;
+		 b = *src++;
+		 r = (b>>16) & 0xFF;
+		 g = (b>>8)  & 0xFF;
+		 b = (b)     & 0xFF;
+		 RGB2YUV(r,g,b,y,u,v);
+
+		 b = *src++;
+		 r = (b>>16) & 0xFF;
+		 g = (b>>8)  & 0xFF;
+		 b = (b)     & 0xFF;
+		 RGB2YUV(r,g,b,y2,u2,v2);
+
+		 b = *src2++;
+		 r = (b>>16) & 0xFF;
+		 g = (b>>8)  & 0xFF;
+		 b = (b)     & 0xFF;
+		 RGB2YUV(r,g,b,y3,u3,v3);
+
+		 b = *src2++;
+		 r = (b>>16) & 0xFF;
+		 g = (b>>8)  & 0xFF;
+		 b = (b)     & 0xFF;
+		 RGB2YUV(r,g,b,y4,u4,v4);
+	 }
+	 
+         *dest_y = y;
+	 *(dest_y++ + xvimage->width) = y3;
+         *dest_y = y2;
+	 *(dest_y++ + xvimage->width) = y4;
+
+	 *dest_u++ = (u+u2+u3+u4)/4;
+	 *dest_v++ = (v+v2+v3+v4)/4;
+
+	 /* I thought that the following would be better, but it is not
+	  * the case. The color gets blurred 
+	 if (y || y2 || y3 || y4) {
+		 *dest_u++ = (u*y+u2*y2+u3*y3+u4*y4)/(y+y2+y3+y4);
+		 *dest_v++ = (v*y+v2*y2+v3*y3+v4*y4)/(y+y2+y3+y4);
+	 } else {
+		 *dest_u++ =128;
+		 *dest_v++ =128;
+	 }
+	 */
+      }
+   }
+}
+
+static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
+{	/* this one is used when scale==2 */
+   unsigned int _x,_y,r;
+   unsigned char *dest_y;
+   unsigned char *dest_u;
+   unsigned char *dest_v;
+   unsigned short *src;
+   unsigned short *src2;
+   int u,v,y;
+   int *indirect=current_palette->lookup;
+
+   for(_y=visual.min_y;_y<=visual.max_y;_y++)
+   {
+      src=bitmap->line[_y];
+      src += visual.min_x;
+      src2=bitmap->line[_y+1];
+      src2 += visual.min_x;
+
+      dest_y=xvimage->data+xvimage->offsets[0]+2*(xvimage->width*(_y-visual.min_y));
+      dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*(_y-visual.min_y));
+      dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*(_y-visual.min_y));
+      for(_x=visual.min_x;_x<=visual.max_x;_x++)
+      {
+	 if (indirect) {
+		v= xv_yuvlookup[*src++];
+		y = (v>>8)  & 0xff;
+		u = (v>>16) & 0xff;
+		v = (v)     & 0xff;
+	 } else { /* Can this really happen ? */
+		 int r,g,b;
+		 b = *src++;
+		 r = (b>>16) & 0xFF;
+		 g = (b>>8)  & 0xFF;
+		 b = (b)     & 0xFF;
+		 RGB2YUV(r,g,b,y,u,v);
+	 }
+		 
+
+	 *(dest_y+xvimage->width)=y;
+	 *dest_y++=y;
+	 *(dest_y+xvimage->width)=y;
+	 *dest_y++=y;
+	 *dest_u++ = u;
+	 *dest_v++ = v;
       }
    }
 }
@@ -1468,28 +1618,91 @@ static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
    unsigned char *dest_u;
    unsigned char *dest_v;
    unsigned int *src;
+   unsigned int *src2;
+   int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
+                                             /* 34 */
 
-   for(_y=visual.min_y;_y<=visual.max_y;++_y)
+   for(_y=visual.min_y;_y<=visual.max_y;_y+=2)
    {
       src=bitmap->line[_y];
       src+=visual.min_x;
+      src2=bitmap->line[_y+1];
+      src2 += visual.min_x;
+
       dest_y=xvimage->data+xvimage->offsets[0]+(xvimage->width*(_y-visual.min_y));
       dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*((_y-visual.min_y)/2));
       dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*((_y-visual.min_y)/2));
-      for(_x=visual.min_x;_x<=visual.max_x;++_x)
+      for(_x=visual.min_x;_x<=visual.max_x;_x+=2)
       {
-         r=g=b=*src++;
+	 b = *src++;
+	 r = (b>>16) & 0xFF;
+	 g = (b>>8)  & 0xFF;
+	 b = (b)     & 0xFF;
+	 RGB2YUV(r,g,b,y,u,v);
 
-         r&=RMASK;  r>>=16;
-         g&=GMASK;  g>>=8;
-         b&=BMASK;  b>>=0;
+	 b = *src++;
+	 r = (b>>16) & 0xFF;
+	 g = (b>>8)  & 0xFF;
+	 b = (b)     & 0xFF;
+	 RGB2YUV(r,g,b,y2,u2,v2);
 
-         *dest_y++ = (( 9897*r + 19235*g + 3736*b ) >> 15);
-         if(((_x&1)==1) && ((_y&1)==1))
-         {
-            *dest_u++ = (( -5537*r - 10878*g + 16384*b ) >> 15) + 128;
-            *dest_v++ = (( 16384*r - 13730*g -2664*b ) >> 15 ) + 128;
-         }
+	 b = *src2++;
+	 r = (b>>16) & 0xFF;
+	 g = (b>>8)  & 0xFF;
+	 b = (b)     & 0xFF;
+	 RGB2YUV(r,g,b,y3,u3,v3);
+
+	 b = *src2++;
+	 r = (b>>16) & 0xFF;
+	 g = (b>>8)  & 0xFF;
+	 b = (b)     & 0xFF;
+	 RGB2YUV(r,g,b,y4,u4,v4);
+	 
+         *dest_y = y;
+	 *(dest_y++ + xvimage->width) = y3;
+         *dest_y = y2;
+	 *(dest_y++ + xvimage->width) = y4;
+
+	 *dest_u++ = (u+u2+u3+u4)/4;
+	 *dest_v++ = (v+v2+v3+v4)/4;
+      }
+   }
+}
+
+static void x11_window_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap)
+{ /* This one is used when scale == 2 */
+   int _x,_y,r,g,b;
+   unsigned char *dest_y;
+   unsigned char *dest_u;
+   unsigned char *dest_v;
+   unsigned int *src;
+   unsigned int *src2;
+   int u,v,y;
+
+   for(_y=visual.min_y;_y<=visual.max_y;_y++)
+   {
+      src  =  bitmap->line[_y];
+      src  += visual.min_x;
+      src2 =  bitmap->line[_y+1];
+      src2 += visual.min_x;
+
+      dest_y=xvimage->data+xvimage->offsets[0]+2*(xvimage->width*(_y-visual.min_y));
+      dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*(_y-visual.min_y));
+      dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*(_y-visual.min_y));
+      for(_x=visual.min_x;_x<=visual.max_x;_x++)
+      {
+	 b = *src++;
+	 r = (b>>16) & 0xFF;
+	 g = (b>>8)  & 0xFF;
+	 b = (b)     & 0xFF;
+	 RGB2YUV(r,g,b,y,u,v);
+
+	 *(dest_y+xvimage->width) = y;
+	 *dest_y++ = y;
+	 *(dest_y+xvimage->width) = y;
+	 *dest_y++ = y;
+	 *dest_u++ = u;
+	 *dest_v++ = v;
       }
    }
 }
