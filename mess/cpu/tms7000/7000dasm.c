@@ -32,11 +32,11 @@ static oprandinfo of[] = {
 	
 /* 07 */ { {" A",		",P%u",		"",			""},		{NONE,UI8,DONE,DONE} },
 /* 08 */ { {" B",		",P%u",		"",			""},		{NONE,UI8,DONE,DONE} },
-/* 09 */ { {" %%>%2.2X",",P%u",		"",			""},		{UI8,UI8,DONE,DONE} },
+/* 09 */ { {" %%>%02X",",P%u",		"",			""},		{UI8,UI8,DONE,DONE} },
 	
-/* 10 */ { {" @>%4.4X",	"",			"",			""},		{UI16,DONE,DONE,DONE} },
+/* 10 */ { {" @>%04X",	"",			"",			""},		{UI16,DONE,DONE,DONE} },
 /* 11 */ { {" R%u",		"",			"",			""},		{UI8, DONE, DONE, DONE} },
-/* 12 */ { {" @>%4.4X(B)","",		"",			""},		{UI16, DONE, DONE, DONE} },
+/* 12 */ { {" @>%04X(B)","",		"",			""},		{UI16, DONE, DONE, DONE} },
 
 /* 13 */ { {" B,A",		",%+d",		"",			""},		{NONE, I8, DONE, DONE} },
 /* 14 */ { {" R%u,A",	",%+d",		"",			""},		{UI8, I8, DONE, DONE} },
@@ -70,8 +70,8 @@ static oprandinfo of[] = {
 /* 37 */ { {" %%>%X,B",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 38 */ { {" %%>%X",	",R%u",		"",			""},		{UI8, UI8, DONE, DONE} },
 	
-/* 39 */ { {" %%>%4.4X",",R%u",		"",			""},		{UI16, UI8, DONE, DONE} },
-/* 40 */ { {" %%>%4.4X(B)",",R%u",	"",			""},		{UI16, UI8, DONE, DONE} },
+/* 39 */ { {" %%>%04X",",R%u",		"",			""},		{UI16, UI8, DONE, DONE} },
+/* 40 */ { {" %%>%04X(B)",",R%u",	"",			""},		{UI16, UI8, DONE, DONE} },
 
 /* 41 */ { {" P%u,A",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 42 */ { {" P%u,B",	"",			"",			""},		{UI8, DONE, DONE, DONE} }
@@ -387,7 +387,7 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 				switch( of[j].decode[k] )
 				{
 					case DONE:
-						break;
+						return size;
 					case NONE:
 						buffer += sprintf (buffer, of[j].opstr[k]);
 						break;
