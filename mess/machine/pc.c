@@ -119,7 +119,7 @@ static ppi8255_interface pc_ppi8255_interface =
 	pc_ppi_portc_w
 };
 
-static void pc_sh_speaker_change_clock(double clock)
+static void pc_sh_speaker_change_clock(double pc_clock)
 {
 	switch( pc_port[0x61] & 3 )
 	{
