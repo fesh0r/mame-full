@@ -17,7 +17,9 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	 Changes in 2.9:
+ *	 Changes in 3.0
+ *	 - 'finished' switch to dynamically overrideable cycle count tables
+ *   Changes in 2.9:
  *	 - added methods to access and override the cycle count tables
  *	 - fixed handling and timing of multiple DD/FD prefixed opcodes
  *   Changes in 2.8:
@@ -4682,7 +4684,7 @@ const char *z80_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "Z80";
         case CPU_INFO_FAMILY: return "Zilog Z80";
-		case CPU_INFO_VERSION: return "2.8";
+		case CPU_INFO_VERSION: return "3.0";
 		case CPU_INFO_FILE: return __FILE__;
 		case CPU_INFO_CREDITS: return "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved.";
 		case CPU_INFO_REG_LAYOUT: return (const char *)z80_reg_layout;
