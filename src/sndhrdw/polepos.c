@@ -3,7 +3,7 @@
 	Sound handler
 ****************************************************************************/
 #include "driver.h"
-#include "..\sound\filter.h"
+#include "../sound/filter.h"
 
 static int sample_msb = 0;
 static int sample_lsb = 0;
