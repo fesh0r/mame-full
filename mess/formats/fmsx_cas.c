@@ -19,10 +19,8 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 	samples_size = ALLOCATE_BLOCK * 2;
 	samples = (INT16*) malloc (samples_size);
 	if (!samples)
-		{
-		logerror ("cas2wav: out of memory.\n");
-		return 1;
-		}
+		return 2;
+
 	samples_pos = 0;
 
     while (cas_pos < caslen)
@@ -36,8 +34,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 			if (!nsamples)
 				{
 				free (samples);
-				logerror ("cas2wav: out of memory.\n");
-				return 1;
+				return 2;
 				}
 			else samples = nsamples;
 			}
@@ -77,8 +74,7 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 				if (!nsamples)
 					{
 					free (samples);
-					logerror ("cas2wav: out of memory.\n");
-					return 1;
+					return 2;
 					}
 				else samples = nsamples;
 				}
