@@ -139,7 +139,10 @@ static READ_HANDLER( pio_port_a_r )
 /* read keyboard row - indexed by a demux LS145 which is connected to PA0-3 */
 static READ_HANDLER( pio_port_b_r )
 {
-    data_t demux_LS145, data;
+	data_t demux_LS145, data = 0xff;
+
+	if( setup_active() || onscrd_active() )
+		return data;
 
     demux_LS145 = ppi8255_peek(0, 0) & 15;
     data = readinputport(1 + demux_LS145);
@@ -235,7 +238,7 @@ READ_HANDLER ( mz700_mmio_r )
 		data |= readinputport(12);	/* get joystick ports */
 		if (cpu_gethorzbeampos() >= Machine->visible_area.max_x - 32)
 			data |= 0x80;
-		LOG(2,"mz700_e008_r",("%02X\n", data));
+		LOG(1,"mz700_e008_r",("%02X\n", data));
         break;
     }
     return data;
@@ -256,7 +259,7 @@ WRITE_HANDLER ( mz700_mmio_w )
 		break;
 
 	case 8:
-		LOG(2,"mz700_e008_w",("%02X\n", data));
+		LOG(1,"mz700_e008_w",("%02X\n", data));
 		pit8253_0_gate_w(0, data & 1);
         break;
 	}
@@ -264,6 +267,7 @@ WRITE_HANDLER ( mz700_mmio_w )
 
 /************************ BANK ***********************************************/
 
+/* BANK1 0000-0FFF */
 static void bank1_RAM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x00000]);
@@ -286,70 +290,137 @@ static void bank1_ROM(UINT8 *mem)
 }
 
 
-static void bank2_NOP(UINT8 *mem)
-{
-	cpu_setbank(2, &mem[0x0d000]);
-	cpu_setbankhandler_r(2, MRA_NOP);
-	cpu_setbankhandler_w(2, MWA_NOP);
-}
-
+/* BANK2 1000-1FFF */
 static void bank2_RAM(UINT8 *mem)
 {
-    cpu_setbank(2, &mem[0x0d000]);
+	cpu_setbank(2, &mem[0x01000]);
 	cpu_setbankhandler_r(2, MRA_BANK2);
 	cpu_setbankhandler_w(2, MWA_BANK2);
 }
 
-static void bank2_VIO(UINT8 *mem)
+static void bank2_ROM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x11000]);
 	cpu_setbankhandler_r(2, MRA_BANK2);
-	cpu_setbankhandler_w(2, videoram_w);
+	cpu_setbankhandler_w(2, MWA_ROM);
 }
 
 
-static void bank3_NOP(UINT8 *mem)
-{
-	cpu_setbank(3, &mem[0x0d800]);
-	cpu_setbankhandler_r(3, MRA_NOP);
-	cpu_setbankhandler_w(3, MWA_NOP);
-}
-
+/* BANK3 8000-9FFF */
 static void bank3_RAM(UINT8 *mem)
 {
-	cpu_setbank(3, &mem[0x0d800]);
+	cpu_setbank(3, &mem[0x08000]);
 	cpu_setbankhandler_r(3, MRA_BANK3);
 	cpu_setbankhandler_w(3, MWA_BANK3);
 }
 
-static void bank3_VIO(UINT8 *mem)
+static void bank3_VID(UINT8 *mem)
 {
-	cpu_setbank(3, &mem[0x11800]);
+	cpu_setbank(3, &mem[0x12000]);
 	cpu_setbankhandler_r(3, MRA_BANK3);
-    cpu_setbankhandler_w(3, colorram_w);
+	cpu_setbankhandler_w(3, videoram0_w);
 }
 
 
-static void bank4_NOP(UINT8 *mem)
-{
-	cpu_setbank(4, &mem[0x0e000]);
-	cpu_setbankhandler_r(4, MRA_NOP);
-	cpu_setbankhandler_w(4, MWA_NOP);
-
-}
-
+/* BANK4 A000-BFFF */
 static void bank4_RAM(UINT8 *mem)
 {
-	cpu_setbank(4, &mem[0x0e000]);
+	cpu_setbank(4, &mem[0x0a000]);
 	cpu_setbankhandler_r(4, MRA_BANK4);
 	cpu_setbankhandler_w(4, MWA_BANK4);
 }
 
-static void bank4_VIO(UINT8 *mem)
+static void bank4_VID(UINT8 *mem)
 {
-	cpu_setbank(4, &mem[0x12000]);
-    cpu_setbankhandler_r(4, mz700_mmio_r);
-    cpu_setbankhandler_w(4, mz700_mmio_w);
+	cpu_setbank(4, &mem[0x14000]);
+	cpu_setbankhandler_r(4, MRA_BANK4);
+	cpu_setbankhandler_w(4, videoram2_w);
+}
+
+
+/* BANK7 C000-CFFF */
+static void bank5_RAM(UINT8 *mem)
+{
+	cpu_setbank(5, &mem[0x0c000]);
+	cpu_setbankhandler_r(5, MRA_BANK5);
+	cpu_setbankhandler_w(5, MWA_BANK5);
+}
+
+static void bank5_VID(UINT8 *mem)
+{
+	cpu_setbank(5, &mem[0x11000]);
+	cpu_setbankhandler_r(5, MRA_BANK5);
+	cpu_setbankhandler_w(5, pcgram_w);
+}
+
+
+/* BANK6 D000-D7FF */
+static void bank6_NOP(UINT8 *mem)
+{
+	cpu_setbank(6, &mem[0x0d000]);
+	cpu_setbankhandler_r(6, MRA_NOP);
+	cpu_setbankhandler_w(6, MWA_NOP);
+}
+
+static void bank6_RAM(UINT8 *mem)
+{
+	cpu_setbank(6, &mem[0x0d000]);
+	cpu_setbankhandler_r(6, MRA_BANK6);
+	cpu_setbankhandler_w(6, MWA_BANK6);
+}
+
+static void bank6_VIO(UINT8 *mem)
+{
+	cpu_setbank(6, &mem[0x12000]);
+	cpu_setbankhandler_r(6, MRA_BANK6);
+	cpu_setbankhandler_w(6, videoram_w);
+}
+
+
+/* BANK9 D800-DFFF */
+static void bank7_NOP(UINT8 *mem)
+{
+	cpu_setbank(7, &mem[0x0d800]);
+	cpu_setbankhandler_r(7, MRA_NOP);
+	cpu_setbankhandler_w(7, MWA_NOP);
+}
+
+static void bank7_RAM(UINT8 *mem)
+{
+	cpu_setbank(7, &mem[0x0d800]);
+	cpu_setbankhandler_r(7, MRA_BANK7);
+	cpu_setbankhandler_w(7, MWA_BANK7);
+}
+
+static void bank7_VIO(UINT8 *mem)
+{
+	cpu_setbank(7, &mem[0x12800]);
+	cpu_setbankhandler_r(7, MRA_BANK7);
+	cpu_setbankhandler_w(7, colorram_w);
+}
+
+
+/* BANK8 E000-FFFF */
+static void bank8_NOP(UINT8 *mem)
+{
+	cpu_setbank(8, &mem[0x0e000]);
+	cpu_setbankhandler_r(8, MRA_NOP);
+	cpu_setbankhandler_w(8, MWA_NOP);
+
+}
+
+static void bank8_RAM(UINT8 *mem)
+{
+	cpu_setbank(8, &mem[0x0e000]);
+	cpu_setbankhandler_r(8, MRA_BANK8);
+	cpu_setbankhandler_w(8, MWA_BANK8);
+}
+
+static void bank8_VIO(UINT8 *mem)
+{
+	cpu_setbank(8, &mem[0x16000]);
+	cpu_setbankhandler_r(8, mz700_mmio_r);
+	cpu_setbankhandler_w(8, mz700_mmio_w);
 }
 
 
@@ -363,59 +434,59 @@ WRITE_HANDLER ( mz700_bank_w )
     switch (offset)
 	{
 	case 0: /* 0000-0FFF RAM */
-		LOG(1,"mz700_bank_w",("0000-0FFF RAM\n"));
+		LOG(1,"mz700_bank_w",("0: 0000-0FFF RAM\n"));
 		bank1_RAM(mem);
 		mz700_locked = 0;
         break;
 
 	case 1: /* D000-FFFF RAM */
-		LOG(1,"mz700_bank_w",("D000-FFFF RAM\n"));
-		bank2_RAM(mem);
-		bank3_RAM(mem);
-		bank4_RAM(mem);
+		LOG(1,"mz700_bank_w",("1: D000-FFFF RAM\n"));
+		bank6_RAM(mem);
+		bank7_RAM(mem);
+		bank8_RAM(mem);
         mz700_locked = 0;
 		vio_mode = 1;
         break;
 
 	case 2: /* 0000-0FFF ROM */
-		LOG(1,"mz700_bank_w",("0000-0FFF ROM\n"));
+		LOG(1,"mz700_bank_w",("2: 0000-0FFF ROM\n"));
 		bank1_ROM(mem);
 		mz700_locked = 0;
         break;
 
 	case 3: /* D000-FFFF videoram, memory mapped io */
-		LOG(1,"mz700_bank_w",("D000-FFFF videoram, memory mapped io\n"));
-		bank2_VIO(mem);
-		bank3_VIO(mem);
-		bank4_VIO(mem);
+		LOG(1,"mz700_bank_w",("3: D000-FFFF videoram, memory mapped io\n"));
+		bank6_VIO(mem);
+		bank7_VIO(mem);
+		bank8_VIO(mem);
 		mz700_locked = 0;
 		vio_mode = 3;
         break;
 
 	case 4: /* 0000-0FFF ROM	D000-FFFF videoram, memory mapped io */
-		LOG(1,"mz700_bank_w",("0000-0FFF ROM; D000-FFFF videoram, memory mapped io\n"));
+		LOG(1,"mz700_bank_w",("4: 0000-0FFF ROM; D000-FFFF videoram, memory mapped io\n"));
 		bank1_ROM(mem);
-		bank2_VIO(mem);
-		bank3_VIO(mem);
-        bank4_VIO(mem);
+		bank6_VIO(mem);
+		bank7_VIO(mem);
+		bank8_VIO(mem);
         mz700_locked = 0;
 		vio_mode = 3;
         break;
 
 	case 5: /* 0000-0FFF no chg D000-FFFF locked */
-		LOG(1,"mz700_bank_w",("D000-FFFF locked\n"));
+		LOG(1,"mz700_bank_w",("5: D000-FFFF locked\n"));
 		if (mz700_locked == 0)
 		{
 			vio_lock = vio_mode;
 			mz700_locked = 1;
-            bank2_NOP(mem);
-			bank3_NOP(mem);
-			bank4_NOP(mem);
+			bank6_NOP(mem);
+			bank7_NOP(mem);
+			bank8_NOP(mem);
 		}
         break;
 
 	case 6: /* 0000-0FFF no chg D000-FFFF unlocked */
-		LOG(1,"mz700_bank_w",("D000-FFFF unlocked\n"));
+		LOG(1,"mz700_bank_w",("6: D000-FFFF unlocked\n"));
 		if (mz700_locked == 1)
 			mz700_bank_w(vio_lock, 0); /* old config for D000-DFFF */
         break;
@@ -754,6 +825,307 @@ void mz700_cassette_exit(int id)
 int mz700_cassette_id(int id)
 {
 	return 0;
+}
+
+/******************************************************************************
+ *	Sharp MZ800
+ *
+ *
+ ******************************************************************************/
+
+static UINT16 mz800_ramaddr = 0;
+static UINT8 mz800_display_mode = 0;
+static UINT8 mz800_port_e8 = 0;
+static UINT8 mz800_palette[4];
+static UINT8 mz800_palette_bank;
+
+/* port CE */
+READ_HANDLER( mz800_crtc_r )
+{
+	data_t data = 0x00;
+	LOG(1,"mz800_crtc_r",("%02X\n",data));
+    return data;
+}
+
+/* port D0 - D7 / memory E000 - FFFF */
+READ_HANDLER( mz800_mmio_r )
+{
+	data_t data = 0x7e;
+
+	switch (offset & 15)
+	{
+	/* the first four ports are connected to a 8255 PPI */
+    case 0: case 1: case 2: case 3:
+		data = ppi8255_r(0, offset & 3);
+		break;
+
+	case 4: case 5: case 6: case 7:
+		data = pit8253_0_r(offset & 3);
+        break;
+
+	default:
+		data = memory_region(REGION_CPU1)[0x16000 + offset];
+        break;
+    }
+    return data;
+}
+
+/* port E0 - E9 */
+READ_HANDLER( mz800_bank_r )
+{
+	UINT8 *mem = memory_region(REGION_CPU1);
+    data_t data = 0xff;
+
+    switch (offset)
+    {
+	case 0: /* 1000-1FFF PCG ROM */
+		LOG(1,"mz800_bank_r",("0: 1000-1FFF PCG ROM"));
+        bank2_ROM(mem);
+		if ((mz800_display_mode & 0x08) == 0)
+		{
+			LOG(1,0,("; 8000-9FFF videoram"));
+            bank3_VID(mem);
+			if (mz800_display_mode & 0x04)
+			{
+				LOG(1,0,("; A000-BFFF videoram"));
+                /* 640x480 mode so A000-BFFF is videoram too */
+				bank4_VID(mem);
+            }
+			else
+			{
+				LOG(1,0,("; A000-BFFF RAM"));
+				bank4_RAM(mem);
+            }
+		}
+		else
+		{
+			LOG(1,0,("; C000-CFFF PCG RAM"));
+            /* make C000-CFFF PCG RAM */
+			bank5_RAM(mem);
+        }
+		LOG(1,0,("\n"));
+        break;
+
+    case 1: /* make 1000-1FFF and C000-CFFF RAM */
+		LOG(1,"mz800_bank_r",("1: 1000-1FFF RAM"));
+        bank2_RAM(mem);
+		if ((mz800_display_mode & 0x08) == 0)
+		{
+			LOG(1,0,("; 8000-9FFF RAM; A000-BFFF RAM"));
+            /* make 8000-BFFF RAM */
+            bank3_RAM(mem);
+			bank4_RAM(mem);
+		}
+		else
+		{
+			LOG(1,0,("; C000-CFFF RAM"));
+            /* make C000-CFFF RAM */
+			bank5_RAM(mem);
+        }
+		LOG(1,0,("\n"));
+        break;
+
+    case 8: /* get MZ700 enable bit 7 ? */
+		data = mz800_port_e8;
+		break;
+    }
+	return data;
+}
+
+/* port EA */
+READ_HANDLER( mz800_ramdisk_r )
+{
+	UINT8 *mem = memory_region(REGION_USER1);
+	data_t data = mem[mz800_ramaddr];
+	LOG(2,"mz800_ramdisk_r",("[%04X] -> %02X\n", mz800_ramaddr, data));
+	if (mz800_ramaddr++ == 0)
+		LOG(1,"mz800_ramdisk_r",("address wrap 0000\n"));
+    return data;
+}
+
+/* port CC */
+WRITE_HANDLER( mz800_write_format_w )
+{
+	LOG(1,"mz800_write_format_w",("%02X\n", data));
+}
+
+/* port CD */
+WRITE_HANDLER( mz800_read_format_w )
+{
+	LOG(1,"mz800_read_format_w",("%02X\n", data));
+}
+
+/* port CE
+ * bit 3	1: MZ700 mode		0: MZ800 mode
+ * bit 2	1: 640 horizontal	0: 320 horizontal
+ * bit 1	1: 4bpp/2bpp		0: 2bpp/1bpp
+ * bit 0	???
+ */
+WRITE_HANDLER( mz800_display_mode_w )
+{
+	UINT8 *mem = memory_region(REGION_CPU1);
+	LOG(1,"mz800_display_mode_w",("%02X\n", data));
+    mz800_display_mode = data;
+	if ((mz800_display_mode & 0x08) == 0)
+	{
+		bank8_RAM(mem);
+	}
+}
+
+/* port CF */
+WRITE_HANDLER( mz800_scroll_border_w )
+{
+	LOG(1,"mz800_scroll_border_w",("%02X\n", data));
+}
+
+/* port D0-D7 */
+WRITE_HANDLER( mz800_mmio_w )
+{
+	/* just wrap to the mz700 handler */
+    mz700_mmio_w(offset,data);
+}
+
+/* port E0-E9 */
+WRITE_HANDLER ( mz800_bank_w )
+{
+    static int mz800_locked = 0;
+    static int vio_mode = 0;
+    static int vio_lock = 0;
+    UINT8 *mem = memory_region(REGION_CPU1);
+
+    switch (offset)
+    {
+    case 0: /* 0000-0FFF RAM */
+		LOG(1,"mz800_bank_w",("0: 0000-0FFF RAM\n"));
+        bank1_RAM(mem);
+        mz800_locked = 0;
+        break;
+
+    case 1: /* D000-FFFF RAM */
+		LOG(1,"mz800_bank_w",("1: D000-FFFF RAM\n"));
+		bank6_RAM(mem);
+		bank7_RAM(mem);
+		bank8_RAM(mem);
+        mz800_locked = 0;
+        vio_mode = 1;
+        break;
+
+    case 2: /* 0000-0FFF ROM */
+		LOG(1,"mz800_bank_w",("2: 0000-0FFF ROM\n"));
+        bank1_ROM(mem);
+        mz800_locked = 0;
+        break;
+
+    case 3: /* D000-FFFF videoram, memory mapped io */
+		LOG(1,"mz800_bank_w",("3: D000-FFFF videoram, memory mapped io\n"));
+		bank6_VIO(mem);
+		bank7_VIO(mem);
+		bank8_VIO(mem);
+        mz800_locked = 0;
+        vio_mode = 3;
+        break;
+
+    case 4: /* 0000-0FFF ROM    D000-FFFF videoram, memory mapped io */
+		LOG(1,"mz800_bank_w",("4: 0000-0FFF ROM; D000-FFFF videoram, memory mapped io\n"));
+        bank1_ROM(mem);
+		bank6_VIO(mem);
+		bank7_VIO(mem);
+		bank8_VIO(mem);
+        mz800_locked = 0;
+        vio_mode = 3;
+        break;
+
+    case 5: /* 0000-0FFF no chg D000-FFFF locked */
+		LOG(1,"mz800_bank_w",("5: D000-FFFF locked\n"));
+        if (mz800_locked == 0)
+        {
+            vio_lock = vio_mode;
+            mz800_locked = 1;
+			bank6_NOP(mem);
+			bank7_NOP(mem);
+			bank8_NOP(mem);
+        }
+        break;
+
+    case 6: /* 0000-0FFF no chg D000-FFFF unlocked */
+		LOG(1,"mz800_bank_w",("6: D000-FFFF unlocked\n"));
+        if (mz800_locked == 1)
+            mz800_bank_w(vio_lock, 0); /* old config for D000-DFFF */
+        break;
+
+	case 8: /* set MZ700 enable bit 7 ? */
+		mz800_port_e8 = data;
+		if (mz800_port_e8 & 0x80)
+		{
+			bank6_VIO(mem);
+			bank7_VIO(mem);
+			bank8_VIO(mem);
+		}
+		else
+		{
+			bank6_RAM(mem);
+			bank7_RAM(mem);
+			bank8_RAM(mem);
+        }
+        break;
+    }
+}
+
+/* port EA */
+WRITE_HANDLER( mz800_ramdisk_w )
+{
+	UINT8 *mem = memory_region(REGION_USER1);
+	LOG(2,"mz800_ramdisk_w",("[%04X] <- %02X\n", mz800_ramaddr, data));
+	mem[mz800_ramaddr] = data;
+	if (mz800_ramaddr++ == 0)
+		LOG(1,"mz800_ramdisk_w",("address wrap 0000\n"));
+}
+
+/* port EB */
+WRITE_HANDLER( mz800_ramaddr_w )
+{
+	mz800_ramaddr = (cpu_get_reg(Z80_BC) & 0xff00) | (data & 0xff);
+	LOG(1,"mz800_ramaddr_w",("%04X\n", mz800_ramaddr));
+}
+
+/* port F0 */
+WRITE_HANDLER( mz800_palette_w )
+{
+	if (data & 0x40)
+	{
+        mz800_palette_bank = data & 3;
+		LOG(1,"mz800_palette_w",("bank: %d\n", mz800_palette_bank));
+    }
+	else
+	{
+		int idx = (data >> 4) & 3;
+		int val = data & 15;
+		LOG(1,"mz800_palette_w",("palette[%d] <- %d\n", idx, val));
+		mz800_palette[idx] = val;
+	}
+}
+
+/* videoram wrappers */
+WRITE_HANDLER( videoram0_w ) { videoram_w(offset + 0x0000, data); }
+WRITE_HANDLER( videoram1_w ) { videoram_w(offset + 0x1000, data); }
+WRITE_HANDLER( videoram2_w ) { videoram_w(offset + 0x2000, data); }
+WRITE_HANDLER( videoram3_w ) { videoram_w(offset + 0x3000, data); }
+WRITE_HANDLER( pcgram_w ) { videoram_w(offset + 0x4000, data); }
+
+void init_mz800(void)
+{
+	UINT8 *mem = memory_region(REGION_CPU1);
+
+    mem[0x10001] = 0x4a;
+	mem[0x10002] = 0x00;
+    memcpy(&mem[0x00000], &mem[0x10000], 0x02000);
+
+    mem = memory_region(REGION_USER1);
+	memset(&mem[0x00000], 0xff, 0x10000);
+
+    mz800_display_mode_w(0,0x08);   /* set MZ700 mode */
+	mz800_bank_r(1);
+	mz800_bank_w(4, 0);
 }
 
 

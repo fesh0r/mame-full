@@ -11,9 +11,9 @@
  *
  *	0000-0FFF	1Z-013A ROM or RAM
  *	1000-CFFF	RAM
- *	D000-D7FF	videoram
- *	D800-DFFF	colorram
- *	E000-FFFF	memory mapped IO
+ *	D000-D7FF	videoram or RAM
+ *	D800-DFFF	colorram or RAM
+ *	E000-FFFF	memory mapped IO or RAM
  *
  *		xxx0	PPI8255 port A (output)
  *				bit 7	556RST (reset NE556)
@@ -50,6 +50,17 @@
  *				bit 0 R NE556 OUT (32Hz IC BJ)
  *					  W gate0 of PIT8253 (sound enable)
  *
+ *	MZ800 memory map
+ *
+ *	0000-0FFF	ROM or RAM
+ *	1000-1FFF	PCG ROM or RAM
+ *	2000-7FFF	RAM
+ *	8000-9FFF	videoram or RAM
+ *	A000-BFFF	videoram or RAM
+ *	C000-CFFF	PCG RAM or RAM
+ *	D000-DFFF	videoram or RAM
+ *	E000-FFFF	memory mapped IO or RAM
+ *
  *****************************************************************************/
 
 #include "mess/includes/mz700.h"
@@ -65,37 +76,100 @@
 #define LOG(N,M,A)
 #endif
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress readmem_mz700[] =
 {
 	{ 0x00000, 0x00fff, MRA_BANK1 },
 	{ 0x01000, 0x0cfff, MRA_RAM },
-	{ 0x0d000, 0x0d7ff, MRA_BANK2 },
-	{ 0x0d800, 0x0dfff, MRA_BANK3 },
-	{ 0x0e000, 0x0ffff, MRA_BANK4 },
+	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
+	{ 0x0d800, 0x0dfff, MRA_BANK7 },
+	{ 0x0e000, 0x0ffff, MRA_BANK8 },
 	{ 0x10000, 0x10fff, MRA_ROM },
-	{ 0x11000, 0x117ff, MRA_RAM },
-	{ 0x11800, 0x11fff, MRA_RAM },
-	{ 0x12000, 0x13fff, MRA_NOP },
+	{ 0x12000, 0x127ff, MRA_RAM },
+	{ 0x12800, 0x12fff, MRA_RAM },
+	{ 0x16000, 0x16fff, MRA_RAM },
     {-1}
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress writemem_mz700[] =
 {
 	{ 0x00000, 0x00fff, MWA_BANK1 },
 	{ 0x01000, 0x0cfff, MWA_RAM },
-	{ 0x0d000, 0x0d7ff, MWA_BANK2 },
-	{ 0x0d800, 0x0dfff, MWA_BANK3 },
-	{ 0x0e000, 0x0ffff, MWA_BANK4 },
-	{ 0x11000, 0x117ff, videoram_w, &videoram, &videoram_size },
-	{ 0x11800, 0x11fff, colorram_w, &colorram },
-	{ 0x12000, 0x13fff, MWA_NOP },
+	{ 0x0d000, 0x0d7ff, MWA_BANK6 },
+	{ 0x0d800, 0x0dfff, MWA_BANK7 },
+	{ 0x0e000, 0x0ffff, MWA_BANK8 },
+	{ 0x12000, 0x127ff, videoram_w, &videoram, &videoram_size },
+	{ 0x12800, 0x12fff, colorram_w, &colorram },
+	{ 0x16000, 0x16fff, pcgram_w },
     {-1}
 };
 
-static struct IOWritePort writeport[] =
+static struct IOReadPort readport_mz700[] =
+{
+	{-1}
+};
+
+static struct IOWritePort writeport_mz700[] =
 {
 	{ 0xe0, 0xe6, mz700_bank_w },
 	{-1}
+};
+
+static struct MemoryReadAddress readmem_mz800[] =
+{
+	{ 0x00000, 0x00fff, MRA_BANK1 },
+	{ 0x01000, 0x01fff, MRA_BANK2 },
+	{ 0x02000, 0x07fff, MRA_RAM },
+	{ 0x08000, 0x09fff, MRA_BANK3 },
+	{ 0x0a000, 0x0bfff, MRA_BANK4 },
+	{ 0x0c000, 0x0cfff, MRA_BANK5 },
+	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
+	{ 0x0d800, 0x0dfff, MRA_BANK7 },
+	{ 0x0e000, 0x0ffff, MRA_BANK8 },
+	{ 0x10000, 0x10fff, MRA_ROM },
+	{ 0x11000, 0x11fff, MRA_ROM },
+	{ 0x12000, 0x15fff, MRA_RAM },
+    {-1}
+};
+
+static struct MemoryWriteAddress writemem_mz800[] =
+{
+	{ 0x00000, 0x00fff, MWA_BANK1 },
+	{ 0x01000, 0x01fff, MWA_BANK2 },
+	{ 0x02000, 0x07fff, MWA_RAM },
+	{ 0x08000, 0x09fff, MWA_BANK3 },
+	{ 0x0a000, 0x0bfff, MWA_BANK4 },
+	{ 0x0c000, 0x0cfff, MWA_BANK5 },
+	{ 0x0d000, 0x0d7ff, MWA_BANK6 },
+	{ 0x0d800, 0x0dfff, MWA_BANK7 },
+	{ 0x0e000, 0x0ffff, MWA_BANK8 },
+	{ 0x10000, 0x10fff, MWA_ROM },
+	{ 0x11000, 0x11fff, MWA_ROM },
+    { 0x12000, 0x16fff, videoram_w, &videoram, &videoram_size },
+	{ 0x12800, 0x12fff, colorram_w, &colorram },
+    {-1}
+};
+
+static struct IOReadPort readport_mz800[] =
+{
+	{ 0xce, 0xce, mz800_crtc_r },
+	{ 0xd0, 0xd7, mz800_mmio_r },
+	{ 0xe0, 0xe9, mz800_bank_r },
+	{ 0xea, 0xea, mz800_ramdisk_r },
+    {-1}
+};
+
+static struct IOWritePort writeport_mz800[] =
+{
+	{ 0xcc, 0xcc, mz800_write_format_w },
+	{ 0xcd, 0xcd, mz800_read_format_w },
+	{ 0xce, 0xce, mz800_display_mode_w },
+	{ 0xcf, 0xcf, mz800_scroll_border_w },
+	{ 0xd0, 0xd7, mz800_mmio_w },
+	{ 0xe0, 0xe9, mz800_bank_w },
+	{ 0xea, 0xea, mz800_ramdisk_w },
+	{ 0xeb, 0xeb, mz800_ramaddr_w },
+	{ 0xf0, 0xf0, mz800_palette_w },
+    {-1}
 };
 
 INPUT_PORTS_START( mz700 )
@@ -246,8 +320,52 @@ static struct MachineDriver machine_driver_mz700 =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 3,5 MHz */
-			readmem,writemem,0,writeport,
+			3500000,	/* 3,5 MHz */
+			readmem_mz700,writemem_mz700,readport_mz700,writeport_mz700,
+			mz700_interrupt, 1
+        }
+	},
+	/* frames per second, VBL duration */
+	50, 2500,
+	1,					/* single CPU */
+	mz700_init_machine,
+	mz700_stop_machine, /* stop machine */
+
+	/* video hardware - include overscan */
+	40*8, 25*8, { 0*8, 40*8 - 1, 0*8, 25*8 - 1},
+	gfxdecodeinfo,
+	8,
+	2*256,
+	mz700_init_colors,		 /* convert color prom */
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	0,						/* obsolete */
+	mz700_vh_start,
+	mz700_vh_stop,
+	mz700_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&spkr_interface
+        },
+        {
+            SOUND_WAVE,
+            &wave_interface
+		},
+    }
+};
+
+static struct MachineDriver machine_driver_mz800 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3500000,	/* 3,5 MHz */
+			readmem_mz800,writemem_mz800,readport_mz800,writeport_mz800,
 			mz700_interrupt, 1
         }
 	},
@@ -285,17 +403,26 @@ static struct MachineDriver machine_driver_mz700 =
 };
 
 ROM_START(mz700)
-	ROM_REGION(0x14000,REGION_CPU1)
+	ROM_REGION(0x18000,REGION_CPU1)
 		ROM_LOAD("1z-013a.rom", 0x10000, 0x1000, 0x4c6c6b7b)
 	ROM_REGION(0x01000,REGION_GFX1)
 		ROM_LOAD("mz700fon.int",0x00000, 0x1000, 0x42b9e8fb)
 ROM_END
 
 ROM_START(mz700j)
-	ROM_REGION(0x14000,REGION_CPU1)
+	ROM_REGION(0x18000,REGION_CPU1)
 		ROM_LOAD("1z-013a.rom", 0x10000, 0x1000, 0x4c6c6b7b)
 	ROM_REGION(0x01000,REGION_GFX1)
 		ROM_LOAD("mz700fon.jap",0x00000, 0x1000, 0x697ec121)
+ROM_END
+
+ROM_START(mz800)
+	ROM_REGION(0x18000,REGION_CPU1)
+		ROM_LOAD("mz800h.rom",  0x10000, 0x2000, 0x0c281675)
+	ROM_REGION(0x10000,REGION_USER1)
+		/* RAMDISK */
+    ROM_REGION(0x01000,REGION_GFX1)
+		ROM_LOAD("mz700fon.int",0x00000, 0x1000, 0x42b9e8fb)
 ROM_END
 
 
@@ -306,9 +433,11 @@ static const struct IODevice io_mz700[] = {
 };
 
 #define io_mz700j	io_mz700
+#define io_mz800	io_mz700
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
 COMP( 1982, mz700,	  0,		mz700,	  mz700,	mz700,	  "Sharp",     "MZ-700" )
-COMP( 1982, mz700j,   0,		mz700,	  mz700,	mz700,	  "Sharp",     "MZ-700 Japan" )
+COMP( 1982, mz700j,   mz700,	mz700,	  mz700,	mz700,	  "Sharp",     "MZ-700 Japan" )
+COMP( 1982, mz800,	  mz700,	mz800,	  mz700,	mz800,	  "Sharp",     "MZ-800" )
 
 
