@@ -327,6 +327,9 @@ static struct CPS1config cps1_config_table[]=
 	{"pnickj",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"pang3",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
 	{"pang3j",  CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff, 5 },	/* EEPROM port is among the CPS registers */
+	#ifdef MESS
+	{"sfzch",   CPS_B_01, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	#endif
 
     /* CPS2 games */
 	{"cps2",    CPS_B_01, 4,4,4, 0x0000,0xffff,0x0000,0xffff },
