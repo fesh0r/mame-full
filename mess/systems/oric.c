@@ -22,7 +22,7 @@
 
 
 extern int apple2_floppy_init(int id);
-extern void	apple2_floppy_exit(int id);
+extern void apple2_floppy_exit(int id);
 
 
 /*

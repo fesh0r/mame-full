@@ -205,14 +205,14 @@ static struct MachineDriver machine_driver_apf_m1000 =
 
 ***************************************************************************/
 
-ROM_START(apf_imagination)
+ROM_START(apfimag)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("apf_4000.rom",0x04000, 0x00800, 1)
 	ROM_LOAD("basic_68.rom",0x06800, 0x01000, 1)
 	ROM_LOAD("basic_80.rom",0x08000, 0x02000, 1)
 ROM_END
 
-ROM_START(apf_m1000)
+ROM_START(apfm1000)
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("apf_4000.rom",0x06800, 0x0800, 1)
 ROM_END
@@ -222,9 +222,9 @@ static const struct IODevice io_apf[] =
 	{ IO_END }
 };
 
-#define io_apf_imagination io_apf
-#define io_apf_m1000 io_apf
+#define io_apfimag io_apf
+#define io_apfm1000 io_apf
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
-COMP(  1977, apf_imagination,      0,		apf_imagination,      apf_imagination,     0,		  "APF Electronics Inc",  "APF Imagination Machine" )
-COMP(  1978, apf_m1000,      0,		apf_m1000,      apf_imagination,     0,		  "APF Electronics inc",  "APF M-1000" )
+COMP(  1977, apfimag,      0,		apf_imagination,      apf_imagination,     0,		  "APF Electronics Inc",  "APF Imagination Machine" )
+COMP(  1978, apfm1000,      0,		apf_m1000,      apf_imagination,     0,		  "APF Electronics inc",  "APF M-1000" )

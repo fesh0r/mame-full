@@ -172,20 +172,18 @@ static struct MachineDriver machine_driver_sord_m5 =
 
 ***************************************************************************/
 
-/* the lower 64k of the flash-file memory is write protected. This contains the boot
-	rom. The boot rom is also on the OS rescue disc. Handy! */
-ROM_START(sord_m5)
+ROM_START(sordm5)
 	ROM_REGION(0x06000, REGION_CPU1,0)
 	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x01)
 	ROM_LOAD("sordbasi.rom",0x2000, 0x02000, 0x01)
 //	ROM_LOAD("balloon.rom",0x2000, 0x03000, 0x01)
 ROM_END
 
-static const struct IODevice io_sord_m5[] =
+static const struct IODevice io_sordm5[] =
 {
 
 	{IO_END}
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 19??, sord_m5,	  0,		sord_m5,	  sord_m5,	0,	 "Sord", "Sord M5")
+COMP( 19??, sordm5,	  0,		sord_m5,	  sord_m5,	0,	 "Sord", "Sord M5")

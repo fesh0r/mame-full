@@ -74,6 +74,8 @@ void apple2_slot6_init(void)
 	return;
 }
 
+void apple2_floppy_exit(int id);
+
 void apple2_slot6_stop (void)
 {
 	apple2_floppy_exit(0);
@@ -218,7 +220,11 @@ int apple2_floppy_init(int id)
 
 void	apple2_floppy_exit(int id)
 {
-	free (a2_drives[id].data);
+	if (a2_drives[id].data)
+	{
+		free (a2_drives[id].data);
+		a2_drives[id].data = NULL;
+	}
 }
 
 
