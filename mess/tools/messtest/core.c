@@ -160,28 +160,6 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 
 
 
-static void end_handler(void *data, const XML_Char *name)
-{
-	const struct messtest_tagdispatch *dispatch;
-	void *ptr;
-	size_t size;
-
-	dispatch = state->dispatch[state->dispatch_pos];
-	if (!state->aborted && dispatch && dispatch->end_handler)
-	{
-		if (dispatch->datatype == DATA_TEXT)
-			pile_putc(&state->blobpile, '\0');
-		ptr = pile_getptr(&state->blobpile);
-		size = pile_size(&state->blobpile);
-		dispatch->end_handler(ptr, size);
-	}
-
-	if (state->dispatch_pos > 0)
-		state->dispatch_pos--;
-}
-
-
-
 static void data_handler_text(const XML_Char *s, int len)
 {
 	int i;
@@ -202,114 +180,109 @@ static void data_handler_binary(const XML_Char *s, int len)
 
 	while(i < len)
 	{
-		switch(state->blobstate) {
-		case BLOBSTATE_INITIAL:
-			if (isspace(s[i]))
-			{
-				/* ignore whitespace */
-				i++;
-			}
-			else if (s[i] == '0')
-			{
-				state->blobstate = BLOBSTATE_AFTER_0;
-				i++;
-			}
-			else if (s[i] == '*')
-			{
-				state->blobstate = BLOBSTATE_AFTER_STAR;
-				state->multiple = (size_t) -1;
-				i++;
-			}
-			else if (s[i] == '\'')
-			{
-				state->blobstate = BLOBSTATE_SINGLEQUOTES;
-				i++;
-			}
-			else if (s[i] == '\"')
-			{
-				state->blobstate = BLOBSTATE_DOUBLEQUOTES;
-				i++;
-			}
-			else
-				goto parseerror;
-			break;
+		/* read next character */
+		c = s[i++];
 
-		case BLOBSTATE_AFTER_0:
-			if (tolower(s[i]) == 'x')
-			{
-				state->blobstate = BLOBSTATE_HEX;
-				i++;
-			}
-			else
-				goto parseerror;
-			break;
-
-		case BLOBSTATE_AFTER_STAR:
-			if (isdigit(s[i]))
-			{
-				if (state->multiple == (size_t) -1)
-					state->multiple = 0;
+		switch(state->blobstate)
+		{
+			case BLOBSTATE_INITIAL:
+				if ((c == '\0') || isspace(c))
+				{
+					/* ignore EOF and whitespace */
+				}
+				else if (c == '0')
+				{
+					state->blobstate = BLOBSTATE_AFTER_0;
+				}
+				else if (c == '*')
+				{
+					state->blobstate = BLOBSTATE_AFTER_STAR;
+					state->multiple = (size_t) -1;
+				}
+				else if (c == '\'')
+				{
+					state->blobstate = BLOBSTATE_SINGLEQUOTES;
+				}
+				else if (c == '\"')
+				{
+					state->blobstate = BLOBSTATE_DOUBLEQUOTES;
+				}
 				else
-					state->multiple *= 10;
-				state->multiple += s[i] - '0';
-				i++;
-			}
-			else if (isspace(s[i]) && (state->multiple == (size_t) -1))
-			{
-				/* ignore whitespace */
-				i++;
-			}
-			else
-			{
-				/* do the multiplication */
-				size = pile_size(&state->blobpile);
-				ptr = pile_detach(&state->blobpile);
-
-				for (j = 0; j < state->multiple; j++)
-					pile_write(&state->blobpile, ptr, size);
-
-				free(ptr);
-				state->blobstate = BLOBSTATE_INITIAL;
-			}
-			break;
-
-		case BLOBSTATE_HEX:
-			if (isspace(s[i]))
-			{
-				state->blobstate = BLOBSTATE_INITIAL;
-				i++;
-			}
-			else
-			{
-				found = FALSE;
-				while(((i + 2) <= len) && isxdigit(s[i]) && isxdigit(s[i+1]))
-				{
-					c = (hexdigit(s[i]) << 4) | hexdigit(s[i+1]);
-					pile_putc(&state->blobpile, c);
-					i += 2;
-					found = TRUE;
-				}
-				if (!found)
 					goto parseerror;
-			}
-			break;
+				break;
 
-		case BLOBSTATE_SINGLEQUOTES:
-		case BLOBSTATE_DOUBLEQUOTES:
-			quote_char = state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"';
-			if (s[i] == quote_char)
-			{
-				state->blobstate = BLOBSTATE_INITIAL;
-				i++;
-			}
-			else
-			{
-				while(((i + 1) <= len) && (s[i] != quote_char))
+			case BLOBSTATE_AFTER_0:
+				if (tolower(c) == 'x')
 				{
-					pile_putc(&state->blobpile, s[i++]);
+					state->blobstate = BLOBSTATE_HEX;
 				}
-			}
-			break;
+				else
+					goto parseerror;
+				break;
+
+			case BLOBSTATE_AFTER_STAR:
+				if (isdigit(c))
+				{
+					/* add this digit to the multiple */
+					if (state->multiple == (size_t) -1)
+						state->multiple = 0;
+					else
+						state->multiple *= 10;
+					state->multiple += c - '0';
+				}
+				else if ((c != '\0') && isspace(c) && (state->multiple == (size_t) -1))
+				{
+					/* ignore whitespace */
+				}
+				else
+				{
+					/* do the multiplication */
+					size = pile_size(&state->blobpile);
+					ptr = pile_detach(&state->blobpile);
+
+					for (j = 0; j < state->multiple; j++)
+						pile_write(&state->blobpile, ptr, size);
+
+					free(ptr);
+					state->blobstate = BLOBSTATE_INITIAL;
+				}
+				break;
+
+			case BLOBSTATE_HEX:
+				if ((c == '\0') || isspace(c))
+				{
+					state->blobstate = BLOBSTATE_INITIAL;
+				}
+				else
+				{
+					found = FALSE;
+					i--;
+					while(((i + 2) <= len) && isxdigit(s[i]) && isxdigit(s[i+1]))
+					{
+						c = (hexdigit(s[i]) << 4) | hexdigit(s[i+1]);
+						pile_putc(&state->blobpile, c);
+						i += 2;
+						found = TRUE;
+					}
+					if (!found)
+						goto parseerror;
+				}
+				break;
+
+			case BLOBSTATE_SINGLEQUOTES:
+			case BLOBSTATE_DOUBLEQUOTES:
+				quote_char = state->blobstate == BLOBSTATE_SINGLEQUOTES ? '\'' : '\"';
+				if (c == quote_char)
+				{
+					state->blobstate = BLOBSTATE_INITIAL;
+				}
+				else if (c != '\0')
+				{
+					pile_putc(&state->blobpile, c);
+				}
+				else
+					goto parseerror;
+				break;
 		}
 	}
 	return;
@@ -323,7 +296,6 @@ parseerror:
 
 static void data_handler(void *data, const XML_Char *s, int len)
 {
-//	struct messtest_state *state = (struct messtest_state *) data;
 	int dispatch_pos;
 
 	dispatch_pos = state->dispatch_pos;
@@ -343,6 +315,36 @@ static void data_handler(void *data, const XML_Char *s, int len)
 			data_handler_binary(s, len);
 			break;
 	}
+}
+
+
+
+static void end_handler(void *data, const XML_Char *name)
+{
+	const struct messtest_tagdispatch *dispatch;
+	void *ptr;
+	size_t size;
+	XML_Char zero;
+
+	dispatch = state->dispatch[state->dispatch_pos];
+	if (!state->aborted && dispatch && dispatch->end_handler)
+	{
+		/* tell the driver that we are at the end of the block */
+		zero = '\0';
+		data_handler(NULL, &zero, 1);
+
+		/* if we are doing text, add a trailing NUL */
+		if (dispatch->datatype == DATA_TEXT)
+			pile_putc(&state->blobpile, '\0');
+
+		/* retrieve the blob and pass it */
+		ptr = pile_getptr(&state->blobpile);
+		size = pile_size(&state->blobpile);
+		dispatch->end_handler(ptr, size);
+	}
+
+	if (state->dispatch_pos > 0)
+		state->dispatch_pos--;
 }
 
 
@@ -528,7 +530,7 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 				buf[last_space] = '\0';
 			else
 				last_space = i;
-			printf("%-12s %-3s %s\n", prefix1, prefix2, &buf[base]);
+			printf("%-15s %-3s %s\n", prefix1, prefix2, &buf[base]);
 
 			base = last_space + 1;
 			last_space = -1;

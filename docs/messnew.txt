@@ -38,7 +38,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
-(none)
+- [OS9] Fixed a bug that could cause erroneous disk full errors when shrinking
+  a file.  [Nate Woods]
 
 
 

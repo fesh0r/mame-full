@@ -390,8 +390,8 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 	current_lsn_count = (file_info->file_size + disk_info->sector_size - 1) / disk_info->sector_size;
 	new_lsn_count = (new_size + disk_info->sector_size - 1) / disk_info->sector_size;
 
-	/* check to see if we are out of space */
-	if (new_lsn_count - current_lsn_count > free_lsns)
+	/* check to see if the file is growing and we do not have enough space */
+	if ((new_lsn_count > current_lsn_count) && (new_lsn_count - current_lsn_count > free_lsns))
 		return IMGTOOLERR_NOSPACE;
 
 	if (current_lsn_count != new_lsn_count)
