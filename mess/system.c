@@ -460,7 +460,8 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
 	/* TEXAS INSTRUMENTS */
 	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
-/*TESTDRIVER( ti990_4 )*/	/* 1976 TI 990/4									*/
+TESTDRIVER( ti990_4 )	/* 1976 TI 990/4									*/
+TESTDRIVER( tm990189 )	/* 1980? TM990/189									*/
 
 /*TESTDRIVER( ti99_224 )*/	/* 1983 TI 99/2 (24kb ROMs) 						*/
 /*TESTDRIVER( ti99_232 )*/	/* 1983 TI 99/2 (32kb ROMs) 						*/
@@ -469,7 +470,7 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
 	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video					*/
 	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
-/*TESTDRIVER( ti99_4p )*/	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
+TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 
 	DRIVER( avigo )     /*												    */
 
