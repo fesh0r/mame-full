@@ -2,12 +2,19 @@
 #include <signal.h>
 #include "utils.h"
 
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
+#endif
+
 static int count_chars_entered;
 static char *enter_string;
 static int enter_string_size;
 static int enter_filename_mode;
 
-static char fs_label_none[] = "[none]";
+static char fs_label_none[] = "[empty slot]";
 
 static char entered_filename[512];
 
@@ -369,7 +376,7 @@ void fs_generate_filelist(void)
 	/* insert empty specifier */
 	n = fs_alloc();
 	fs_item[n] = fs_label_none;
-	fs_subitem[n] = fs_file;
+	fs_subitem[n] = "";
 	fs_types[n] = FILESELECT_FILE;
 	fs_flags[n] = 0;
 
@@ -576,11 +583,13 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 			else
 			if (UI_SHIFT_PRESSED)
 			{
-				sel = (sel + visible) % total;
+				sel = (sel + visible - 1);
+				sel = MIN(sel,total);
 			}
 			else
 			{
-				sel = (sel + 1) % total;
+				sel++;
+				sel = MIN(sel,total);
 			}
 		}
 
@@ -588,15 +597,17 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 		{
 			if (UI_CONTROL_PRESSED)
 			{
-				sel = 0;
+				sel = 1;
 			}
 			if (UI_SHIFT_PRESSED)
 			{
-				sel = (sel + total - visible) % total;
+				sel = (sel - visible + 1);
+				sel = MAX(0,sel);
 			}
 			else
 			{
-				sel = (sel + total - 1) % total;
+				sel--;
+				sel = MAX(0,sel);
 			}
 		}
 
