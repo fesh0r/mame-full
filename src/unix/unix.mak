@@ -128,7 +128,8 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/mess/sound $(OBJ)/mess/devices $(OBJ)/mess/tools \
 	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
-	$(OBJ)/mess/tools/mkimage $(OBJ)/mess/tools/makedep
+	$(OBJ)/mess/tools/mkimage $(OBJ)/mess/tools/makedep \
+	$(OBJ)/mess/tools/cgafont
 
 IMGTOOL_LIBS = -lz
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000

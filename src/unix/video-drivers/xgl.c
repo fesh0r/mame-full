@@ -195,7 +195,7 @@ void sysdep_close(void)
 {
    XCloseDisplay(display);
 
-   fprintf(stdout, xgl_version_str);
+   fprintf(stderr, xgl_version_str);
   
 #ifndef NDEBUG
    printf("GLINFO: xgl closed !\n");
@@ -241,7 +241,7 @@ int sysdep_create_display(int depth)
   if(!fullscreen) 
 	  resizeEvtMask = StructureNotifyMask ;
 
-  fprintf(stdout, xgl_version_str);
+  fprintf(stderr, xgl_version_str);
   
   screen=DefaultScreenOfDisplay(display);
   myscreen=DefaultScreen(display);
