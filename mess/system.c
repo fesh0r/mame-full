@@ -313,15 +313,15 @@ TESTDRIVER( avigo ) 	/*												  */
 /*	DRIVER( trs80m2 )*/	/* TRS-80 Model II -							  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
-//!!	DRIVER( coco )		/* Color Computer								  */
+	DRIVER( coco )		/* Color Computer								  */
 /*	DRIVER( coco2 )*/ 	/* Color Computer 2 							  */
-//!!	DRIVER( coco3 ) 	/* Color Computer 3 							  */
-//!!	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
-//!!	DRIVER( cp400 ) 	/* Prologica CP400								  */
-//!!	DRIVER( mc10 )		/* MC-10										  */
+	DRIVER( coco3 ) 	/* Color Computer 3 							  */
+	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
+	DRIVER( cp400 ) 	/* Prologica CP400								  */
+	DRIVER( mc10 )		/* MC-10										  */
 
 	/* DRAGON DATA LTD */
-//!!	DRIVER( dragon32 )	/* Dragon32 									  */
+	DRIVER( dragon32 )	/* Dragon32 									  */
 
 	/* EACA */
 	DRIVER( cgenie )	/* Colour Genie 								  */
@@ -336,9 +336,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
 	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
 	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */
-//!!	DRIVER( laser350 )	/* 1984? Laser 350								  */
-//!!	DRIVER( laser500 )	/* 1984? Laser 500								  */
-//!!	DRIVER( laser700 )	/* 1984? Laser 700								  */
+	DRIVER( laser350 )	/* 1984? Laser 350								  */
+	DRIVER( laser500 )	/* 1984? Laser 500								  */
+	DRIVER( laser700 )	/* 1984? Laser 700								  */
 
 	/* TANGERINE */
 	DRIVER( microtan )	/* 1979 Microtan 65 							  */
@@ -444,8 +444,8 @@ TESTDRIVER( a310 )		/* 1988 Acorn Archimedes 310					  */
 	DRIVER( pc1402 )	/* Pocket Computer 1402 						  */
 	DRIVER( pc1350 )	/* Pocket Computer 1350 						  */
 
-//!!	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
-//!!	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
+	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 							  */
+	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan						  */
 TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 
 /*	DRIVER( x68000 )*/	/* X68000										  */

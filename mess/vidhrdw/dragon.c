@@ -819,39 +819,39 @@ static void coco3_ram_w(int offset, int data, int block)
 	}
 }
 
-WRITE_HANDLER(coco3_ram_b1_w)
+void coco3_ram_b1_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 0);
 }
-WRITE_HANDLER(coco3_ram_b2_w)
+void coco3_ram_b2_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 1);
 }
-WRITE_HANDLER(coco3_ram_b3_w)
+void coco3_ram_b3_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 2);
 }
-WRITE_HANDLER(coco3_ram_b4_w)
+void coco3_ram_b4_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 3);
 }
-WRITE_HANDLER(coco3_ram_b5_w)
+void coco3_ram_b5_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 4);
 }
-WRITE_HANDLER(coco3_ram_b6_w)
+void coco3_ram_b6_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 5);
 }
-WRITE_HANDLER(coco3_ram_b7_w)
+void coco3_ram_b7_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 6);
 }
-WRITE_HANDLER(coco3_ram_b8_w)
+void coco3_ram_b8_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 7);
 }
-WRITE_HANDLER(coco3_ram_b9_w)
+void coco3_ram_b9_w (offs_t offset, data8_t data)
 {
 	coco3_ram_w(offset, data, 8);
 }

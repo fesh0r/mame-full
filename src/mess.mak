@@ -305,7 +305,7 @@ $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/machine/counter.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
-#	  $(OBJ)/mess/vidhrdw/m6847.o	 \
+	  $(OBJ)/mess/vidhrdw/m6847.o	 \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
@@ -475,7 +475,7 @@ $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/machine/vtech1.o	 \
 	  $(OBJ)/mess/systems/vtech1.o	 \
 	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
-#	  $(OBJ)/mess/machine/vtech2.o	 \
+	  $(OBJ)/mess/machine/vtech2.o	 \
 	  $(OBJ)/mess/systems/vtech2.o
 
 $(OBJ)/jupiter.a : \

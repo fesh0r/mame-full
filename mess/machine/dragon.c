@@ -1106,7 +1106,7 @@ void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	typedef void (*writehandler)(UINT32 wh_offset, UINT32 data);
+	typedef void (*writehandler)(offs_t wh_offset, data8_t data);
 	static writehandler handlers[] = {
 		coco3_ram_b1_w, coco3_ram_b2_w,
 		coco3_ram_b3_w, coco3_ram_b4_w,
@@ -1780,7 +1780,7 @@ static const char *os9syscalls[] = {
 	"F$SUser",         /* Set User ID number */
 	"F$UnLoad",        /* Unlink Module by name */
 	"F$Alarm",         /* Color Computer Alarm Call (system wide) */
-	NULL,						
+	NULL,
 	NULL,
 	"F$NMLink",        /* Color Computer NonMapping Link */
 	"F$NMLoad",        /* Color Computer NonMapping Load */

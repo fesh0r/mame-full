@@ -25,15 +25,15 @@ void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
  * from vidhrdw/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
-extern WRITE_HANDLER ( coco3_ram_b1_w );
-extern WRITE_HANDLER ( coco3_ram_b2_w );
-extern WRITE_HANDLER ( coco3_ram_b3_w );
-extern WRITE_HANDLER ( coco3_ram_b4_w );
-extern WRITE_HANDLER ( coco3_ram_b5_w );
-extern WRITE_HANDLER ( coco3_ram_b6_w );
-extern WRITE_HANDLER ( coco3_ram_b7_w );
-extern WRITE_HANDLER ( coco3_ram_b8_w );
-extern WRITE_HANDLER ( coco3_ram_b9_w );
+extern void coco3_ram_b1_w (offs_t offset, data8_t data);
+extern void coco3_ram_b2_w (offs_t offset, data8_t data);
+extern void coco3_ram_b3_w (offs_t offset, data8_t data);
+extern void coco3_ram_b4_w (offs_t offset, data8_t data);
+extern void coco3_ram_b5_w (offs_t offset, data8_t data);
+extern void coco3_ram_b6_w (offs_t offset, data8_t data);
+extern void coco3_ram_b7_w (offs_t offset, data8_t data);
+extern void coco3_ram_b8_w (offs_t offset, data8_t data);
+extern void coco3_ram_b9_w (offs_t offset, data8_t data);
 extern void coco3_vh_sethires(int hires);
 extern int dragon_vh_start(void);
 extern int coco3_vh_start(void);
