@@ -1,5 +1,7 @@
 /*
-	APEXC driver
+	systems/apexc.c : APEXC driver
+
+	By Raphael Nabet
 
 	see cpu/apexc.c for background and tech info
 */
@@ -116,6 +118,66 @@ static struct MachineDriver machine_driver_apexc =
 	/* NVRAM handler */
 	NULL
 };
+
+/*
+	APEXC control panel
+
+	I know really little about the details, although the general purpose is obvious.
+
+	* "As well as starting and stopping the machine, [it] enables information to be inserted
+	manually and provides for the inspection of the contents of the memory via various
+	storage registers." (Booth, p. 2)
+	* "Data can be inserted manually from the control panel [into the control register]".
+	(Booth, p. 3)
+	* There is no trace mode (Booth, p. 213)
+*/
+
+
+
+/*
+	APEXC tape support
+
+	APEXC does all I/O on paper tape.  There are 5 punch rows on tape.
+
+	Both a reader (read-only), and a puncher (write-only) are provided.
+
+	Tape output can be fed into a teletyper, in order to have text output :
+
+	code					Symbol
+	(binary)		Letters			Figures
+	00000							0
+	00001			T				1
+	00010			B				2
+	00011			O				3
+	00100			E				4
+	00101			H				5
+	00110			N				6
+	00111			M				7
+	01000			A				8
+	01001			L				9
+	01010			R				+
+	01011			G				-
+	01100			I				z
+	01101			P				.
+	01110			C				d
+	01111			V				=
+	10000					Space
+	10001			Z				y
+	10010			D				theta (greek letter)
+	10011					Line Space (i.e. LF)
+	10100			S				,
+	10101			Y				Sigma (greek letter)
+	10110			F				x
+	10111			X				/
+	11000					Carriage Return
+	11001			W				phi (greek letter)
+	11010			J				- (dash ?)
+	11011					Figures
+	11100			U				pi (greek letter)
+	11101			Q				)
+	11110			K				(
+	11111					Letters
+*/
 
 typedef struct tape
 {
