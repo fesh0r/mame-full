@@ -379,7 +379,7 @@ static const struct IODevice io_lynx[] = {
 		NULL,							/* output */
 		NULL,							/* input_chunk */
 		NULL,							/* output_chunk */
-		lynx_partialcrc,				/* partial crc */
+//		lynx_partialcrc,				/* partial crc */
 	},
     { IO_END }
 };
