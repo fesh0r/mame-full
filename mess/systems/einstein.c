@@ -836,4 +836,4 @@ static const struct IODevice io_einstein[] =
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 19??, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
+COMP( 1984, einstein,      0,            einstein,          einstein,      0,       "Tatung", "Tatung Einstein TC-01")
