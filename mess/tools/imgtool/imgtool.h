@@ -306,6 +306,19 @@ imgtoolerr_t img_createdir(imgtool_image *img, const char *path);
  */
 imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
 
+/* img_getchain
+ * img_getchain_string
+ *
+ * Description:
+ *		Retrieves the block chain for a file or directory
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		path:				The path to the file or directory
+ */
+imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent *chain, size_t chain_size);
+imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buffer, size_t buffer_len);
+
 /* img_create
  * img_create_byname
  *

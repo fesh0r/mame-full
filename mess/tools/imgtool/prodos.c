@@ -839,22 +839,37 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 
 static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
-	UINT16 key_block, int depth, UINT32 blockcount, UINT32 block_index)
+	UINT16 key_block, int key_block_allocated,
+	int depth, UINT32 blockcount, UINT32 block_index)
 {
 	imgtoolerr_t err;
 	struct prodos_diskinfo *di;
-	int dirty = FALSE;
+	int dirty;
+	int sub_block_allocated;
 	UINT16 i, sub_block, new_sub_block;
 	UINT8 buffer[BLOCK_SIZE];
 
 	di = get_prodos_info(image);
 
-	err = prodos_load_block(image, key_block, buffer);
-	if (err)
-		return err;
+	if (key_block_allocated)
+	{
+		/* we are on a recently allocated key block; start fresh */
+		memset(buffer, 0, sizeof(buffer));
+		dirty = TRUE;
+	}
+	else
+	{
+		/* this is a preexisting key block */
+		err = prodos_load_block(image, key_block, buffer);
+		if (err)
+			return err;
+		dirty = FALSE;
+	}
 
 	for (i = 0; i < 256; i++)
 	{		
+		sub_block_allocated = FALSE;
+
 		sub_block = buffer[i + 256];
 		sub_block <<= 8;
 		sub_block += buffer[i + 0];
@@ -865,6 +880,7 @@ static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
 			err = prodos_alloc_block(image, bitmap, &new_sub_block);
 			if (err)
 				return err;
+			sub_block_allocated = TRUE;
 		}
 		else if ((block_index >= blockcount) && (sub_block != 0))
 		{
@@ -886,7 +902,7 @@ static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
 		/* call recursive function */
 		if (depth > 2)
 		{
-			err = prodos_fill_file(image, bitmap, sub_block, depth - 1, blockcount, block_index);
+			err = prodos_fill_file(image, bitmap, sub_block, sub_block_allocated, depth - 1, blockcount, block_index);
 			if (err)
 				return err;
 		}
@@ -955,7 +971,7 @@ static imgtoolerr_t prodos_set_file_block_count(imgtool_image *image, struct pro
 	if (new_blockcount > 0)
 	{
 		/* fill out the file tree */
-		err = prodos_fill_file(image, bitmap, ent->key_pointer, depth, new_blockcount, 0);
+		err = prodos_fill_file(image, bitmap, ent->key_pointer, FALSE, depth, new_blockcount, 0);
 		if (err)
 			return err;
 	}
@@ -1115,6 +1131,7 @@ static imgtoolerr_t prodos_read_file_tree(imgtool_image *image, UINT32 *filesize
 	size_t bytes_to_write;
 	int i;
 
+	/* check bounds */
 	di = get_prodos_info(image);
 	if (block >= di->total_blocks)
 		return IMGTOOLERR_CORRUPTFILE;
@@ -1168,6 +1185,7 @@ static imgtoolerr_t prodos_write_file_tree(imgtool_image *image, UINT32 *filesiz
 	if (*filesize == 0)
 		return IMGTOOLERR_SUCCESS;
 
+	/* check bounds */
 	di = get_prodos_info(image);
 	if (block >= di->total_blocks)
 		return IMGTOOLERR_CORRUPTFILE;
@@ -1293,6 +1311,86 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 
 
 
+static imgtoolerr_t prodos_get_file_tree(imgtool_image *image, imgtool_chainent *chain, size_t chain_size,
+	size_t *chain_pos, UINT16 block, UINT8 total_depth, UINT8 cur_depth)
+{
+	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
+	int i;
+	UINT16 sub_block;
+	UINT8 buffer[BLOCK_SIZE];
+
+	if (block == 0)
+		return IMGTOOLERR_SUCCESS;
+	if (*chain_pos >= chain_size)
+		return IMGTOOLERR_SUCCESS;
+
+	/* check bounds */
+	di = get_prodos_info(image);
+	if (block >= di->total_blocks)
+		return IMGTOOLERR_CORRUPTFILE;
+
+	chain[*chain_pos].level = cur_depth;
+	chain[*chain_pos].block = block;
+	(*chain_pos)++;
+
+	/* must we recurse into the tree? */
+	if (cur_depth < total_depth)
+	{
+		err = prodos_load_block(image, block, buffer);
+		if (err)
+			return err;
+
+		for (i = 0; i < 256; i++)
+		{
+			sub_block = buffer[i + 256];
+			sub_block <<= 8;
+			sub_block |= buffer[i + 0];
+
+			err = prodos_get_file_tree(image, chain, chain_size, chain_pos, sub_block, total_depth, cur_depth + 1);
+			if (err)
+				return err;
+		}
+	}
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t	prodos_diskimage_getchain(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size)
+{
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+	size_t chain_pos;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, NULL, &ent);
+	if (err)
+		return err;
+
+	switch(ent.storage_type & 0xF0)
+	{
+		case 0x10:
+		case 0x20:
+		case 0x30:
+			chain_pos = 0;
+			err = prodos_get_file_tree(image, chain, chain_size, &chain_pos,
+				ent.key_pointer, (ent.storage_type / 0x10) - 1, 0);
+			if (err)
+				return err;
+			break;
+
+		case 0xE0:
+			return IMGTOOLERR_UNIMPLEMENTED;
+
+		default:
+			return IMGTOOLERR_UNEXPECTED;
+	}
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator		= 1;
@@ -1309,6 +1407,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->free_space					= prodos_diskimage_freespace;
 	module->read_file					= prodos_diskimage_readfile;
 	module->write_file					= prodos_diskimage_writefile;
+	module->get_chain					= prodos_diskimage_getchain;
 	return IMGTOOLERR_SUCCESS;
 }
 

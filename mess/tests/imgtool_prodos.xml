@@ -26,7 +26,7 @@
 	<checkfile name="EMPTY.TXT"/>
 	<checkfile name="SEEDLING.TXT">'seed!' * 10 </checkfile>
 	<checkfile name="SAPLING.TXT">'splng' * 500 </checkfile>
-<!--	
+
 	<putfile name="TREE.TXT">'tree!' * 27000 </putfile>
 	<checkdirectory>
 		<entry name="EMPTY.TXT" size="0"/>
@@ -35,6 +35,7 @@
 		<entry name="TREE.TXT" size="135000"/>
 	</checkdirectory>
 	<checkfile name="EMPTY.TXT"/>
+<!--
 	<checkfile name="SEEDLING.TXT">'seed!' * 10 </checkfile>
 	<checkfile name="SAPLING.TXT">'splng' * 500 </checkfile>
 	<checkfile name="TREE.TXT">'tree!' * 27000 </checkfile>

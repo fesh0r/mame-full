@@ -50,6 +50,13 @@ typedef struct
 }
 imgtool_dirent;
 
+typedef struct
+{
+	UINT8 level;
+	UINT64 block;
+}
+imgtool_chainent;
+
 struct ImageModule
 {
 	struct ImageModule *previous;
@@ -88,6 +95,7 @@ struct ImageModule
 	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *fname);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
 	imgtoolerr_t	(*get_sector_size)(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size);
 	imgtoolerr_t	(*read_sector)	(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len);

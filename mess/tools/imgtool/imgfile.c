@@ -419,6 +419,91 @@ done:
 
 
 
+imgtoolerr_t img_getchain(imgtool_image *img, const char *path, imgtool_chainent *chain, size_t chain_size)
+{
+	size_t i;
+
+	assert(chain_size > 0);
+
+	if (!img->module->get_chain)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	for (i = 0; i < chain_size; i++)
+	{
+		chain[i].level = 0;
+		chain[i].block = ~0;
+	}
+
+	return img->module->get_chain(img, path, chain, chain_size - 1);
+}
+
+
+
+imgtoolerr_t img_getchain_string(imgtool_image *img, const char *path, char *buffer, size_t buffer_len)
+{
+	imgtoolerr_t err;
+	imgtool_chainent chain[512];
+	UINT64 last_block;
+	UINT8 cur_level = 0;
+	int len, i;
+	int comma_needed = FALSE;
+
+	/* determine the last block identifier */
+	chain[0].block = ~0;
+	last_block = chain[0].block;
+
+	err = img_getchain(img, path, chain, sizeof(chain) / sizeof(chain[0]));
+	if (err)
+		return err;
+
+	len = snprintf(buffer, buffer_len, "[");
+	buffer += len;
+	buffer_len -= len;
+
+	for (i = 0; chain[i].block != last_block; i++)
+	{
+		while(cur_level < chain[i].level)
+		{
+			len = snprintf(buffer, buffer_len, " [");
+			buffer += len;
+			buffer_len -= len;
+			cur_level++;
+			comma_needed = FALSE;
+		}
+		while(cur_level > chain[i].level)
+		{
+			len = snprintf(buffer, buffer_len, "]");
+			buffer += len;
+			buffer_len -= len;
+			cur_level--;
+		}
+
+		if (comma_needed)
+		{
+			len = snprintf(buffer, buffer_len, ", ");
+			buffer += len;
+			buffer_len -= len;
+		}
+
+		len = snprintf(buffer, buffer_len, "%u", (unsigned) chain[i].block);
+		buffer += len;
+		buffer_len -= len;
+		comma_needed = TRUE;
+	}
+
+	do
+	{
+		len = snprintf(buffer, buffer_len, "]");
+		buffer += len;
+		buffer_len -= len;
+	}
+	while(cur_level-- > 0);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 imgtoolerr_t img_freespace(imgtool_image *img, UINT64 *sz)
 {
 	imgtoolerr_t err;

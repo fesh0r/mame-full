@@ -45,6 +45,7 @@ struct ImgtoolFloppyCallbacks
 	imgtoolerr_t	(*delete_file)	(imgtool_image *img, const char *fname);
 	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*get_chain)	(imgtool_image *image, const char *path, imgtool_chainent *chain, size_t chain_size);
 
 	const struct OptionGuide *writefile_optguide;
 	const char *writefile_optspec;

@@ -318,6 +318,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			module->delete_file					= floppy_callbacks.delete_file;
 			module->create_dir					= floppy_callbacks.create_dir;
 			module->delete_dir					= floppy_callbacks.delete_dir;
+			module->get_chain					= floppy_callbacks.get_chain;
 			module->writefile_optguide			= floppy_callbacks.writefile_optguide;
 			module->writefile_optspec			= floppy_callbacks.writefile_optspec;
 			module->image_extra_bytes			= floppy_callbacks.image_extra_bytes;
