@@ -276,7 +276,7 @@ static void c64_irq (int level)
 		DBG_LOG (3, "mos6510", ("irq %s\n", level ? "start" : "end"));
 		if (c128) {
 			if (0&&(cpu_getactivecpu()==0)) {
-				cpu_set_irq_line (0, Z80_IRQ_INT, level);
+				cpu_set_irq_line (0, 0, level);
 			} else {
 				cpu_set_irq_line (1, M6510_IRQ_LINE, level);
 			}
@@ -824,6 +824,8 @@ static void c64_common_driver_init (void)
 		cbm_drive_attach_fs (1);
 	}
 
+	cia6526_init();
+
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	if (c64_cia1_on)
@@ -843,6 +845,8 @@ static void c64_common_driver_init (void)
 					  c64_vic_interrupt);
 	}
 	state_add_function(c64_state);
+
+	cia6526_reset ();
 }
 
 void c64_driver_init (void)
@@ -908,14 +912,13 @@ void c64_common_init_machine (void)
 		cbm_drive_1_config (SERIAL9ON ? SERIAL : 0, c65?11:9);
 		serial_clock = serial_data = serial_atn = 1;
 	}
-	cia6526_reset ();
 	c64_vicaddr = c64_memory;
 	vicirq = cia0irq = 0;
 	c64_port6510 = 0xff;
 	c64_ddr6510 = 0;
 }
 
-void c64_init_machine (void)
+MACHINE_INIT( c64 )
 {
 	c64_common_init_machine ();
 
@@ -926,10 +929,6 @@ void c64_init_machine (void)
 		c128_bankswitch_64 (1);
 	if (!ultimax)
 		c64_bankswitch (1);
-}
-
-void c64_shutdown_machine (void)
-{
 }
 
 #ifdef VERIFY_IMAGE
@@ -1108,7 +1107,7 @@ void c64_rom_load(void)
     }
 }
 
-int c64_frame_interrupt (void)
+INTERRUPT_GEN( c64_frame_interrupt )
 {
 	static int quickload = 0;
 	static int monitor=-1;
@@ -1469,8 +1468,6 @@ int c64_frame_interrupt (void)
 	}
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_SHIFTLOCK ? 1 : 0);
 	set_led_status (0 /*KB_NUMLOCK_FLAG */ , JOYSTICK_SWAP ? 1 : 0);
-
-	return ignore_interrupt ();
 }
 
 void c64_state(void)

@@ -8,22 +8,14 @@
 
 #include "driver.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void pet_runtime_loader_init(void);
-# else
-	extern void pet_runtime_loader_init(void);
-# endif
-#endif
-
 /* call to init videodriver */
 extern void pet_vh_init (void);
 extern void pet80_vh_init (void);
 extern void superpet_vh_init (void);
-void pet_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-void pet40_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-void pet80_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-void superpet_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( pet );
+extern VIDEO_UPDATE( pet40 );
+extern VIDEO_UPDATE( pet80 );
+extern VIDEO_UPDATE( superpet );
 
 extern int pet_font;
 
@@ -226,10 +218,8 @@ extern void pet_basic1_driver_init (void);
 extern void pet40_driver_init (void);
 extern void cbm80_driver_init (void);
 extern void superpet_driver_init(void);
-extern void pet_driver_shutdown (void);
-extern void pet_init_machine (void);
-extern void pet_shutdown_machine (void);
-extern void pet_frame_interrupt (void);
+extern MACHINE_INIT( pet );
+extern INTERRUPT_GEN( pet_frame_interrupt );
 
 int pet_rom_id (int id);
 void pet_rom_load(void);

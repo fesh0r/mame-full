@@ -158,6 +158,8 @@ extern READ_HANDLER(c16_6529_port_r);
 extern WRITE_HANDLER(c364_speech_w);
 extern READ_HANDLER(c364_speech_r);
 
+extern void c364_speech_init(void);
+
 #if 0
 extern WRITE_HANDLER(c16_iec9_port_w);
 extern READ_HANDLER(c16_iec9_port_r);
@@ -178,9 +180,8 @@ extern void c16_interrupt (int);
 
 extern void c16_driver_init (void);
 extern void c16_driver_shutdown (void);
-extern void c16_init_machine (void);
-extern void c16_shutdown_machine (void);
-extern int c16_frame_interrupt (void);
+extern MACHINE_INIT( c16 );
+extern INTERRUPT_GEN( c16_frame_interrupt );
 
 extern int c16_rom_init (int id);
 extern int c16_rom_load (int id);

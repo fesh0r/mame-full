@@ -60,6 +60,8 @@ struct
 	int state;
 
 	/* these values are shared with the zip driver */
+	void *prg_timer;
+	void *zip_timer;
 	void *timer;
 	int image_type;
     int image_id;
@@ -97,12 +99,6 @@ struct
 /* from sound/samples.c no changes (static declared) */
 /* readsamples not useable (loads files only from sample or game directory) */
 /* and doesn't search the rompath */
-#ifdef LSB_FIRST
-#define intelLong(x) (x)
-#else
-#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
-                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
-#endif
 static struct GameSample *vc20_read_wav_sample (void *f)
 {
 	unsigned long offset = 0;
@@ -122,7 +118,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	offset += osd_fread (f, &filesize, 4);
 	if (offset < 8)
 		return NULL;
-	filesize = intelLong (filesize);
+	filesize = LITTLE_ENDIANIZE_INT32 (filesize);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
 	offset += osd_fread (f, buf, 4);
@@ -136,7 +132,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	{
 		offset += osd_fread (f, buf, 4);
 		offset += osd_fread (f, &length, 4);
-		length = intelLong (length);
+		length = LITTLE_ENDIANIZE_INT32 (length);
 		if (memcmp (&buf[0], "fmt ", 4) == 0)
 			break;
 
@@ -159,7 +155,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 
 	/* sample rate */
 	offset += osd_fread (f, &rate, 4);
-	rate = intelLong (rate);
+	rate = LITTLE_ENDIANIZE_INT32 (rate);
 
 	/* bytes/second and block alignment are ignored */
 	offset += osd_fread (f, buf, 6);
@@ -178,7 +174,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	{
 		offset += osd_fread (f, buf, 4);
 		offset += osd_fread (f, &length, 4);
-		length = intelLong (length);
+		length = LITTLE_ENDIANIZE_INT32 (length);
 		if (memcmp (&buf[0], "data", 4) == 0)
 			break;
 
@@ -244,7 +240,7 @@ static void vc20_wav_state (void)
 		if (tape.motor && tape.play)
 		{
 			wav.state = 3;
-			wav.timer = timer_pulse (1.0 / wav.sample->smpfreq, 0, vc20_wav_timer);
+			timer_adjust(wav.timer, 0, 0, 1.0 / wav.sample->smpfreq);
 			break;
 		}
 		if (tape.motor && tape.record)
@@ -260,15 +256,13 @@ static void vc20_wav_state (void)
 			tape.play = 0;
 			tape.record = 0;
 			DAC_data_w (0, 0);
-			if (wav.timer)
-				timer_remove (wav.timer);
+			timer_reset(wav.timer, TIME_NEVER);
 			break;
 		}
 		if (!tape.motor || !tape.play)
 		{
 			wav.state = 2;
-			if (wav.timer)
-				timer_remove (wav.timer);
+			timer_reset(wav.timer, TIME_NEVER);
 			DAC_data_w (0, 0);
 			break;
 		}
@@ -380,7 +374,7 @@ static void vc20_prg_state (void)
 		if (tape.motor && tape.play)
 		{
 			prg.state = 3;
-			prg.timer = timer_set (0.0, 0, vc20_prg_timer);
+			timer_reset(prg.timer, 0.0);
 			break;
 		}
 		if (tape.motor && tape.record)
@@ -396,15 +390,13 @@ static void vc20_prg_state (void)
 			tape.play = 0;
 			tape.record = 0;
 			DAC_data_w (0, 0);
-			if (prg.timer)
-				timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			break;
 		}
 		if (!tape.motor || !tape.play)
 		{
 			prg.state = 2;
-			if (prg.timer)
-				timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			DAC_data_w (0, 0);
 			break;
 		}
@@ -467,6 +459,7 @@ static void vc20_prg_open (int image_type, int image_id)
 	tape.on = 1;
 	prg.state = 2;
 	prg.pos = 0;
+	prg.timer = prg.prg_timer;
 }
 
 static void vc20_prg_write (int data)
@@ -911,7 +904,6 @@ static void vc20_prg_timer (int data)
 			vc20_tape_program ();
 			if (!prg.stateblock)
 			{
-				prg.timer = 0;
 				tape.play = 0;
 			}
 		}
@@ -947,7 +939,7 @@ static void vc20_zip_state (void)
 		if (tape.motor && tape.play)
 		{
 			zip.state = 3;
-			prg.timer = timer_set (0.0, 0, vc20_zip_timer);
+			timer_reset(prg.timer, 0.0);
 			break;
 		}
 		if (tape.motor && tape.record)
@@ -963,15 +955,13 @@ static void vc20_zip_state (void)
 			tape.play = 0;
 			tape.record = 0;
 			DAC_data_w (0, 0);
-			if (prg.timer)
-				timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			break;
 		}
 		if (!tape.motor || !tape.play)
 		{
 			zip.state = 2;
-			if (prg.timer)
-				timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			DAC_data_w (0, 0);
 			break;
 		}
@@ -983,13 +973,13 @@ static void vc20_zip_state (void)
 			tape.play = 0;
 			tape.record = 0;
 			DAC_data_w (0, 0);
-			timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			break;
 		}
 		if (!tape.motor || !tape.record)
 		{
 			zip.state = 2;
-			timer_remove (prg.timer);
+			timer_reset(prg.timer, TIME_NEVER);
 			DAC_data_w (0, 0);
 			break;
 		}
@@ -1056,6 +1046,7 @@ static void vc20_zip_open (int image_type, int image_id)
 	prg.statebyte = 0;
 	prg.statebit = 0;
 	prg.pos = 0;
+	prg.timer = prg.zip_timer;
 	vc20_zip_readfile ();
 }
 
@@ -1115,6 +1106,9 @@ void vc20_tape_open (void (*read_callback) (UINT32, UINT8))
 	tape.data = 0;
 #endif
 	prg.c16 = 0;
+	wav.timer = timer_alloc(vc20_wav_timer);
+	prg.zip_timer = timer_alloc(vc20_zip_timer);
+	prg.prg_timer = timer_alloc(vc20_prg_timer);
 }
 
 void c16_tape_open (void)

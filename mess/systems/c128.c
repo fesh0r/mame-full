@@ -1054,15 +1054,16 @@ INPUT_PORTS_START (c128swe)
 	 DIPS_KEYS_BOTH
 INPUT_PORTS_END
 
-static void c128_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( c128 )
 {
 	int i;
-	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
-	memcpy (sys_palette+sizeof(vic2_palette), vdc8563_palette, sizeof (vdc8563_palette));
+
+	palette_set_colors(0, vic2_palette, sizeof(vic2_palette) / 3);
+	palette_set_colors(sizeof(vic2_palette) / 3, vdc8563_palette, sizeof(vdc8563_palette) / 3);
 
 	for (i=0; i<0x100; i++) {
-		sys_colortable[i*2]=0x10+((i&0xf0)>>4);
-		sys_colortable[i*2+1]=0x10+(i&0xf);
+		colortable[i*2]=0x10+((i&0xf0)>>4);
+		colortable[i*2+1]=0x10+(i&0xf);
 	}
 }
 
@@ -1317,155 +1318,62 @@ static SID6581_interface ntsc_sound_interface =
 	}
 };
 
-static struct MachineDriver machine_driver_c128 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			VIC6567_CLOCK,
-			c128_z80_readmem, c128_z80_writemem,
-			c128_z80_readio, c128_z80_writeio,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-		{
-			CPU_M8502,
-			VIC6567_CLOCK,
-			c128_readmem, c128_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c128_init_machine,
-	c128_shutdown_machine,
 
-	/* video hardware */
-	656,							   /* screen width */
-	216,							   /* screen height */
-	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	c128_gfxdecodeinfo,								   /* graphics decode info */
-	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
-	 / sizeof (vic2_palette[0]) / 3,
-	0x100*2,
-	c128_init_palette,				   /* convert color prom */
-//	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY, //when it is supported in vic6567
-	VIDEO_TYPE_RASTER,
-	0,
-	c128_vh_start,
-	c128_vh_stop,
-	c128_vh_screenrefresh,
+static MACHINE_DRIVER_START( c128 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, VIC6567_CLOCK)
+	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
+	MDRV_CPU_MEMORY( c128_z80_readmem, c128_z80_writemem )
+	MDRV_CPU_PORTS( c128_z80_readio, c128_z80_writeio )
+	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
+
+	MDRV_CPU_ADD_TAG("m8502", M8502, VIC6567_CLOCK)
+	MDRV_CPU_MEMORY( c128_readmem, c128_writemem )
+	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
+
+	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
+
+	MDRV_MACHINE_INIT( c128 )
+
+    /* video hardware */
+	//MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)	//when it is supported in vic6567
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(656, 216)
+	MDRV_VISIBLE_AREA(0, 656 - 1, 0, 216 - 1)
+	MDRV_GFXDECODE( c128_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH((sizeof (vic2_palette) +sizeof(vdc8563_palette))/ sizeof (vic2_palette[0]) / 3 )
+	MDRV_COLORTABLE_LENGTH( 0x100*2 )
+	MDRV_PALETTE_INIT( c128 )
+
+	MDRV_VIDEO_START( c128 )
+	MDRV_VIDEO_UPDATE( c128 )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ntsc_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	MDRV_SOUND_ADD_TAG("custom",	CUSTOM, ntsc_sound_interface)
+	MDRV_SOUND_ADD_TAG("dac",		DAC, vc20tape_sound_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_c128d =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			VIC6567_CLOCK,
-			c128_z80_readmem, c128_z80_writemem,
-			c128_z80_readio, c128_z80_writeio,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-		{
-			CPU_M8502,
-			VIC6567_CLOCK,
-			c128_readmem, c128_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-		C1571_CPU
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c128_init_machine,
-	c128_shutdown_machine,
 
-	/* video hardware */
-	656,							   /* screen width */
-	216,							   /* screen height */
-	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	c128_gfxdecodeinfo,								   /* graphics decode info */
-	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
-	 / sizeof (vic2_palette[0]) / 3,
-	0x100*2,
-	c128_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	c128_vh_start,
-	c128_vh_stop,
-	c128_vh_screenrefresh,
+static MACHINE_DRIVER_START( c128d )
+	MDRV_IMPORT_FROM( c128 )
+	MDRV_IMPORT_FROM( cpu_c1571 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( c128pal )
+	MDRV_IMPORT_FROM( c128 )
+	MDRV_CPU_REPLACE( "main", Z80, VIC6569_CLOCK )
+	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
+	MDRV_CPU_REPLACE( "m8502", M8502, VIC6569_CLOCK )
+	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ntsc_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_c128pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_Z80 | CPU_16BIT_PORT,
-			VIC6569_CLOCK,
-			c128_z80_readmem, c128_z80_writemem,
-			c128_z80_readio, c128_z80_writeio,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-		{
-			CPU_M8502,
-			VIC6569_CLOCK,
-			c128_readmem, c128_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6569_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	0,
-	c128_init_machine,
-	c128_shutdown_machine,
-
-	/* video hardware */
-	656,							   /* screen width */
-	216,							   /* screen height */
-	{0, 656 - 1, 0, 216 - 1},		   /* visible_area */
-	c128_gfxdecodeinfo,								   /* graphics decode info */
-	(sizeof (vic2_palette) +sizeof(vdc8563_palette))
-	 / sizeof (vic2_palette[0]) / 3,
-	0x100*2,
-	c128_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	c128_vh_start,
-	c128_vh_stop,
-	c128_vh_screenrefresh,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &pal_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	MDRV_SOUND_REPLACE("custom", CUSTOM, pal_sound_interface)
+MACHINE_DRIVER_END
 
 static const struct IODevice io_c128[] =
 {

@@ -598,17 +598,11 @@ INPUT_PORTS_START (vip64)
 	 VIC64S_KEYBOARD
 INPUT_PORTS_END
 
-static void c64_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
-{
-	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
-}
-
-static void pet64_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( pet64 )
 {
 	int i;
-	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
 	for (i=0; i<16; i++)
-		*(sys_palette+i*3)=*(sys_palette+i*3+2)=0;
+		palette_set_color(i, 0, vic2_palette[i*3+1], 0);
 }
 
 ROM_START (ultimax)
@@ -819,254 +813,66 @@ static SID6581_interface ntsc_sound_interface =
 	}
 };
 
+static MACHINE_DRIVER_START( c64 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6510, VIC6567_CLOCK)
+	MDRV_CPU_MEMORY(c64_readmem, c64_writemem)
+	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
+	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-static struct MachineDriver machine_driver_ultimax =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			1000000, /*! */
-			ultimax_readmem, ultimax_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		}
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
+	MDRV_MACHINE_INIT( c64 )
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
+	/* video hardware */
+	MDRV_IMPORT_FROM( vh_vic2 )
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ultimax_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, ntsc_sound_interface)
+	MDRV_SOUND_ADD_TAG("dac", DAC, vc20tape_sound_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_c64 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			VIC6567_CLOCK,
-			c64_readmem, c64_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
+static MACHINE_DRIVER_START( ultimax )
+	MDRV_IMPORT_FROM( c64 )
+	MDRV_CPU_REPLACE( "main", M6510, 1000000)
+	MDRV_CPU_MEMORY( ultimax_readmem, ultimax_writemem )
+	MDRV_SOUND_REPLACE( "custom", CUSTOM, ultimax_sound_interface)
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ntsc_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+static MACHINE_DRIVER_START( pet64 )
+	MDRV_IMPORT_FROM( c64 )
+	MDRV_PALETTE_INIT( pet64 )
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_pet64 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			VIC6567_CLOCK,
-			c64_readmem, c64_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	pet64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
+static MACHINE_DRIVER_START( c64pal )
+	MDRV_IMPORT_FROM( c64 )
+	MDRV_CPU_REPLACE( "main", M6510, VIC6569_CLOCK)
+	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
+	MDRV_SOUND_REPLACE( "custom", CUSTOM, pal_sound_interface)
+MACHINE_DRIVER_END
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ntsc_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
 
-static struct MachineDriver machine_driver_c64pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			VIC6569_CLOCK,
-			c64_readmem, c64_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6569_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
+static MACHINE_DRIVER_START( c64gs )
+	MDRV_IMPORT_FROM( c64pal )
+	MDRV_SOUND_REMOVE( "dac" )
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &pal_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_c64gs =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			VIC6569_CLOCK,
-			c64_readmem, c64_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6569_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
-
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &pal_sound_interface },
-		{ 0 }
-	}
-};
-
-static struct MachineDriver machine_driver_sx64 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			VIC6569_CLOCK,
-			c64_readmem, c64_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-		VC1541_CPU
-	},
-	VIC6569_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+static MACHINE_DRIVER_START( sx64 )
+	MDRV_IMPORT_FROM( c64pal )
+	MDRV_IMPORT_FROM( cpu_vc1541 )
+	MDRV_SOUND_REMOVE( "dac" )
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	3000,
+	MDRV_INTERLEAVE(3000)
 #endif
-	c64_init_machine,
-	c64_shutdown_machine,
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &pal_sound_interface },
-		{ 0 }
-	}
-};
 
 static const struct IODevice io_c64[] =
 {
@@ -1115,38 +921,20 @@ static const struct IODevice io_c64gs[] =
 #define rom_max rom_ultimax
 #define rom_cbm4064 rom_pet64
 
-/*	  YEAR	NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
+/*   YEAR  NAME		PARENT	MACHINE 		INPUT	INIT	COMPANY 						   FULLNAME */
 COMP(1982, max,		0,		ultimax,		ultimax,ultimax,"Commodore Business Machines Co.", "Commodore Max (Ultimax/VC10)")
 COMP(1982, c64,		0,		c64,			c64,	c64,	"Commodore Business Machines Co.", "Commodore 64 (NTSC)")
 COMP(1982, cbm4064,	c64,	pet64,			c64,	c64,	"Commodore Business Machines Co.", "CBM4064/PET64/Educator64 (NTSC)")
 COMP(1982, c64pal, 	c64,	c64pal, 		c64,	c64pal, "Commodore Business Machines Co.", "Commodore 64/VC64/VIC64 (PAL)")
 COMP(1982, vic64s, 	c64,	c64pal, 		vic64s,	c64pal, "Commodore Business Machines Co.", "Commodore 64 Swedish (PAL)")
-CONS(1987, c64gs,		c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "C64GS (PAL)")
-/* please leave the following as testdriver, */
-/* or better don't include them in system.c */
-COMPX(1983, sx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "SX64 (PAL)",                      GAME_NOT_WORKING)
-COMPX(1983, vip64,		c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING)
+CONS(1987, c64gs,	c64,	c64gs,			c64gs,	c64gs,	"Commodore Business Machines Co.", "C64GS (PAL)")
+
+/* testdrivers */
+COMPX(1983, sx64,	c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "SX64 (PAL)",                      GAME_NOT_WORKING)
+COMPX(1983, vip64,	c64,	sx64,			vip64,	sx64,	"Commodore Business Machines Co.", "VIP64 (SX64 PAL), Swedish Expansion Kit", GAME_NOT_WORKING)
 // sx64 with second disk drive
-COMPX(198?, dx64,		c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "DX64 (Prototype, PAL)",                      GAME_NOT_WORKING)
+COMPX(198?, dx64,	c64,	sx64,			sx64,	sx64,	"Commodore Business Machines Co.", "DX64 (Prototype, PAL)",                      GAME_NOT_WORKING)
 /*c64 II (cbm named it still c64) */
 /*c64c (bios in 1 chip) */
 /*c64g late 8500/8580 based c64, sold at aldi/germany */
 /*c64cgs late c64, sold in ireland, gs bios?, but with keyboard */
-
-#ifdef RUNTIME_LOADER
-extern void c64_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"max")==0) drivers[i]=&driver_max;
-		if ( strcmp(drivers[i]->name,"c64")==0) drivers[i]=&driver_c64;
-		if ( strcmp(drivers[i]->name,"cbm4064")==0) drivers[i]=&driver_cbm4064;
-		if ( strcmp(drivers[i]->name,"c64pal")==0) drivers[i]=&driver_c64pal;
-		if ( strcmp(drivers[i]->name,"vic64s")==0) drivers[i]=&driver_vic64s;
-		if ( strcmp(drivers[i]->name,"c64gs")==0) drivers[i]=&driver_c64gs;
-		if ( strcmp(drivers[i]->name,"sx64")==0) drivers[i]=&driver_sx64;
-		if ( strcmp(drivers[i]->name,"vip64")==0) drivers[i]=&driver_vip64;
-		if ( strcmp(drivers[i]->name,"dx64")==0) drivers[i]=&driver_sx64;
-	}
-}
-#endif

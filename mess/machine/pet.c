@@ -27,7 +27,6 @@ static int pet_basic1=0; /* basic version 1 for quickloader */
 static int superpet=0;
 static int cbm8096=0;
 static int pet_keyline_select;
-static void *pet_clock;
 
 int pet_font=0;
 UINT8 *pet_memory;
@@ -426,7 +425,8 @@ static void pet_common_driver_init (void)
 	}
 	memset(pet_memory+0xe800, 0xff, 0x800);
 
-	pet_clock=timer_pulse(0.01, 0, pet_interrupt);
+	/* pet clock */
+	timer_pulse(0.01, 0, pet_interrupt);
 
 	via_config(0,&pet_via);
 	pia_config(0,PIA_STANDARD_ORDERING,&pet_pia0);
@@ -490,11 +490,7 @@ void superpet_driver_init(void)
 	crtc6845_init(crtc6845, &crtc_pet);
 }
 
-void pet_driver_shutdown (void)
-{
-}
-
-void pet_init_machine (void)
+MACHINE_INIT( pet )
 {
 	via_reset();
 	pia_reset();
@@ -548,10 +544,6 @@ void pet_init_machine (void)
 	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);
 
 	pet_rom_load();
-}
-
-void pet_shutdown_machine (void)
-{
 }
 
 int pet_rom_id (int id)
@@ -859,7 +851,7 @@ void pet_keyboard_normal(void)
 	pet_keyline[9] = value;
 }
 
-int pet_frame_interrupt (void)
+INTERRUPT_GEN( pet_frame_interrupt )
 {
 	static int quickload = 0;
 
@@ -875,13 +867,13 @@ int pet_frame_interrupt (void)
 		}
 	}
 
-	if (BUSINESS_KEYBOARD) {
+	if (BUSINESS_KEYBOARD)
 		pet_keyboard_business();
-	} else {
+	else
 		pet_keyboard_normal();
-	}
 
-	if (!quickload && QUICKLOAD) {
+	if (!quickload && QUICKLOAD)
+	{
 		if (pet_basic1)
 			cbm_pet1_quick_open (0, 0, pet_memory);
 		else
@@ -890,7 +882,6 @@ int pet_frame_interrupt (void)
 	quickload = QUICKLOAD;
 
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
-	return 0;
 }
 
 void pet_state(void)

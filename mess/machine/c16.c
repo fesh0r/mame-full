@@ -554,12 +554,13 @@ static WRITE_HANDLER(c16_sidcart_64k)
 	sid6581_0_port_w(offset,data);
 }
 
-void c16_init_machine (void)
+MACHINE_INIT( c16 )
 {
 	int i;
 
 	tpi6525_2_reset();
 	tpi6525_3_reset();
+	c364_speech_init();
 
 	sid6581_reset(0);
 	if (SIDCARD) {
@@ -693,10 +694,6 @@ void c16_init_machine (void)
 
 }
 
-void c16_shutdown_machine (void)
-{
-}
-
 int c16_rom_id (int id)
 {
     /* magic lowrom at offset 7: $43 $42 $4d */
@@ -791,8 +788,7 @@ int c16_rom_load (int id)
 	return 0;
 }
 
-
-int c16_frame_interrupt (void)
+INTERRUPT_GEN( c16_frame_interrupt )
 {
 	static int quickload = 0;
 	int value;
@@ -1007,6 +1003,4 @@ int c16_frame_interrupt (void)
 	vc20_tape_buttons (DATASSETTE_PLAY, DATASSETTE_RECORD, DATASSETTE_STOP);
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_SHIFTLOCK ? 1 : 0);
 	set_led_status (0 /*KB_NUMLOCK_FLAG */ , JOYSTICK_SWAP ? 1 : 0);
-
-	return ignore_interrupt ();
 }

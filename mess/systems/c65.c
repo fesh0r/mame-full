@@ -290,9 +290,9 @@ INPUT_PORTS_START (c65ger)
 	DIPS_HELPER (0x0008, "(C65)HELP", KEYCODE_F12)
 INPUT_PORTS_END
 
-static void c65_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( c65 )
 {
-	memcpy (sys_palette, vic3_palette, sizeof (vic3_palette));
+	palette_set_colors(0, vic3_palette, sizeof(vic3_palette) / 3);
 }
 
 #if 0
@@ -402,86 +402,36 @@ static SID6581_interface pal_sound_interface =
 	}
 };
 
-static struct MachineDriver machine_driver_c65 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M4510,
-			3500000, /* or VIC6567_CLOCK, */
-			c65_readmem, c65_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic3_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c65_init_machine,
-	c65_shutdown_machine,
+static MACHINE_DRIVER_START( c65 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M4510, 3500000)  /* or VIC6567_CLOCK, */
+	MDRV_CPU_MEMORY(c65_readmem, c65_writemem)
+	MDRV_CPU_VBLANK_INT(c64_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(vic3_raster_irq, VIC2_HRETRACERATE)
+	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
 
-  /* video hardware */
-	656,							   /* screen width */
-	416,							   /* screen height */
-	{0, 656 - 1, 0, 416 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
-	0,
-	c65_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
+	MDRV_MACHINE_INIT( c65 )
 
-  /* sound hardware */
-	SOUND_SUPPORTS_STEREO, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &ntsc_sound_interface },
-		{ 0 }
-	}
-};
+	/* video hardware */
+	MDRV_IMPORT_FROM( vh_vic2 )
+	MDRV_SCREEN_SIZE(656, 416)
+	MDRV_VISIBLE_AREA(0, 656 - 1, 0, 416 - 1)
+	MDRV_PALETTE_INIT( c65 )
 
-static struct MachineDriver machine_driver_c65pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M4510,
-			3500000, /* or VIC6569_CLOCK,*/
-			c65_readmem, c65_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic3_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6569_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	0,
-	c65_init_machine,
-	c65_shutdown_machine,
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, ntsc_sound_interface)
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	656,							   /* screen width */
-	416,							   /* screen height */
-	{0, 656 - 1, 0, 416 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
-	0,
-	c65_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
 
-  /* sound hardware */
-	SOUND_SUPPORTS_STEREO, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &pal_sound_interface },
-		{ 0 }
-	}
-};
+static MACHINE_DRIVER_START( c65pal )
+	MDRV_IMPORT_FROM( c65 )
+	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
+	MDRV_SOUND_REPLACE("custom", CUSTOM, pal_sound_interface)
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_c65[] =
 {

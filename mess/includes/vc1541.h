@@ -102,38 +102,12 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    NULL                /* output_chunk */\
 }
 
-#define VC1540_CPU \
-          {\
-			CPU_M6502,\
-			1000000,\
-			vc1541_readmem,vc1541_writemem,\
-			0,0,\
-			0,0,\
-       	  }
-
-#define VC1541_CPU VC1540_CPU
-#define C2031_CPU VC1540_CPU
-
-#define DOLPHIN_CPU \
-          {\
-			CPU_M6502,\
-			1000000,\
-			dolphin_readmem,dolphin_writemem,\
-			0,0,\
-			0,0,\
-		  }
-
-#define C1551_CPU \
-          {\
-			CPU_M6510T,\
-			2000000,/* ??? reading seems to need more than 1 mhz */\
-			c1551_readmem,c1551_writemem,\
-			0,0,\
-			0,0,\
-       	  }
-
-/* will follow later */
-#define C1571_CPU VC1541_CPU
+extern MACHINE_DRIVER_EXTERN( cpu_vc1540 );
+extern MACHINE_DRIVER_EXTERN( cpu_vc1541 );
+extern MACHINE_DRIVER_EXTERN( cpu_c2031 );
+extern MACHINE_DRIVER_EXTERN( cpu_dolphin );
+extern MACHINE_DRIVER_EXTERN( cpu_c1551 );
+extern MACHINE_DRIVER_EXTERN( cpu_c1571 );
 
 #define VC1540_ROM(cpu) \
 	ROM_REGION(0x10000,cpu,0) \

@@ -46,7 +46,9 @@
 #define TOD_ALARM (This->crb&0x80)   /* else write to tod clock */
 #define BCD_INC(v) ( ((v)&0xf)==9?(v)+=0x10-9:(v)++)
 
-typedef struct {
+typedef struct
+{
+	int active;
     int number; /* number of cia, to allow callback generate address */
 	const struct cia6526_interface *intf;
 
@@ -90,10 +92,7 @@ typedef struct {
 	UINT8 ifr;
 } CIA6526;
 
-static CIA6526 cia[MAX_CIA] =
-{
-	{0}
-};
+static CIA6526 *cia;
 
 static void cia_timer1_timeout (int which);
 static void cia_timer2_timeout (int which);
@@ -101,13 +100,25 @@ static void cia_tod_timeout (int which);
 
 /******************* configuration *******************/
 
+void cia6526_init()
+{
+	cia = auto_malloc(sizeof(CIA6526) * MAX_CIA);
+	if (!cia)
+		return;
+	memset(cia, 0, sizeof(CIA6526) * MAX_CIA);
+}
+
 void cia6526_config (int which, const struct cia6526_interface *intf)
 {
 	if (which >= MAX_CIA)
 		return;
 	memset (cia + which, 0, sizeof (cia[which]));
-	cia[which].number=which;
+	cia[which].active = 1;
+	cia[which].number = which;
 	cia[which].intf = intf;
+	cia[which].timer1 = timer_alloc(cia_timer1_timeout);
+	cia[which].timer2 = timer_alloc(cia_timer2_timeout);
+	cia[which].todtimer = timer_alloc(cia_tod_timeout);
 }
 
 
@@ -122,20 +133,30 @@ void cia6526_reset (void)
 	/* zap each structure, preserving the interface and swizzle */
 	for (i = 0; i < MAX_CIA; i++)
 	{
-		const struct cia6526_interface *intf = cia[i].intf;
+		if (cia[i].active)
+		{
+			const struct cia6526_interface *intf = cia[i].intf;
+			void *timer1 = cia[i].timer1;
+			void *timer2 = cia[i].timer2;
+			void *todtimer = cia[i].todtimer;
 
-		if (cia[i].timer1)
-			timer_remove (cia[i].timer1);
-		if (cia[i].timer2)
-			timer_remove (cia[i].timer2);
-		if (cia[i].todtimer)
-			timer_remove (cia[i].todtimer);
-		memset (&cia[i], 0, sizeof (cia[i]));
-		cia[i].number = i;
-		cia[i].intf = intf;
-		cia[i].t1l = 0xffff;
-		cia[i].t2l = 0xffff;
-		if (cia[i].intf!=0) cia[i].todtimer=timer_set(0.1,i,cia_tod_timeout);
+			memset (&cia[i], 0, sizeof (cia[i]));
+			cia[i].active = 1;
+			cia[i].number = i;
+			cia[i].intf = intf;
+			cia[i].t1l = 0xffff;
+			cia[i].t2l = 0xffff;
+			cia[i].timer1 = timer1;
+			cia[i].timer2 = timer2;
+			cia[i].todtimer = todtimer;
+
+			timer_reset(cia[i].timer1, TIME_NEVER);
+			timer_reset(cia[i].timer2, TIME_NEVER);
+			if (cia[i].intf)
+				timer_adjust(cia[i].todtimer, 0.1, i, 0);
+			else
+				timer_reset(cia[i].todtimer, TIME_NEVER);
+		}
 	}
 }
 
@@ -240,8 +261,7 @@ static void cia_timer1_state (CIA6526 *This)
 			else
 			{
 				This->timer1_state = 1;
-				This->timer1 = timer_set (TIME_IN_CYCLES (This->t1c, 0),
-										  This->number, cia_timer1_timeout);
+				timer_adjust(This->timer1, TIME_IN_CYCLES (This->t1c, 0), This->number, 0);
 			}
 		}
 		break;
@@ -256,14 +276,12 @@ static void cia_timer1_state (CIA6526 *This)
 		if (TIMER1_STOP)
 		{
 			This->timer1_state = 0;
-			timer_remove (This->timer1);
-			This->timer1 = 0;
+			timer_reset(This->timer1, TIME_NEVER);
 		}
 		else if (TIMER1_COUNT_CNT)
 		{
 			This->timer1_state = 2;
-			timer_remove (This->timer1);
-			This->timer1 = 0;
+			timer_reset(This->timer1, TIME_NEVER);
 		}
 		break;
 	case 2:						   /* counting cnt input */
@@ -278,8 +296,7 @@ static void cia_timer1_state (CIA6526 *This)
 		}
 		else if (!TIMER1_COUNT_CNT)
 		{
-			This->timer1 = timer_set (TIME_IN_CYCLES (This->t1c, 0),
-									  This->number, cia_timer1_timeout);
+			timer_adjust(This->timer1, TIME_IN_CYCLES (This->t1c, 0), This->number, 0);
 			This->timer1_state = 1;
 		}
 		break;
@@ -302,8 +319,7 @@ static void cia_timer2_state (CIA6526 *This)
 			if (TIMER2_COUNT_CLOCK)
 			{
 				This->timer2_state = 1;
-				This->timer2 = timer_set (TIME_IN_CYCLES (This->t2c, 0),
-										  This->number, cia_timer2_timeout);
+				timer_adjust(This->timer2, TIME_IN_CYCLES(This->t2c, 0), This->number, 0);
 			}
 			else
 			{
@@ -321,14 +337,12 @@ static void cia_timer2_state (CIA6526 *This)
 		if (TIMER2_STOP )
 		{
 			This->timer2_state = 0;
-			timer_remove (This->timer2);
-			This->timer2 = 0;
+			timer_reset(This->timer2, TIME_NEVER);
 		}
 		else if (!TIMER2_COUNT_CLOCK)
 		{
 			This->timer2_state = 2;
-			timer_remove (This->timer2);
-			This->timer2 = 0;
+			timer_reset(This->timer2, TIME_NEVER);
 		}
 		break;
 	case 2:						   /* counting cnt, timer1  input */
@@ -348,8 +362,7 @@ static void cia_timer2_state (CIA6526 *This)
 		}
 		else if (TIMER2_COUNT_CLOCK)
 		{
-			This->timer2 = timer_set (TIME_IN_CYCLES (This->t2c, 0),
-									  This->number, cia_timer2_timeout);
+			timer_adjust(This->timer2, TIME_IN_CYCLES(This->t2c, 0), This->number, 0);
 			This->timer2_state = 1;
 		}
 		break;
@@ -573,21 +586,11 @@ static void cia6526_write (CIA6526 *This, int offset, int data)
 			{
 				if (TODIN_50HZ)
 				{
-					if (This->intf->todin50hz)
-						This->todtimer = timer_set (0.1, This->number,
-													cia_tod_timeout);
-					else
-						This->todtimer = timer_set (5.0 / 60, This->number,
-													cia_tod_timeout);
+					timer_adjust(This->todtimer, (This->intf->todin50hz) ? 0.1 : 5.0/60, This->number, 0);
 				}
 				else
 				{
-					if (This->intf->todin50hz)
-						This->todtimer = timer_set (60 / 5.0, This->number,
-													cia_tod_timeout);
-					else
-						This->todtimer = timer_set (0.1, This->number,
-												 cia_tod_timeout);
+					timer_adjust(This->todtimer, (This->intf->todin50hz) ? 60 / 5.0 : 0.1, This->number, 0);
 				}
 			}
 			This->todstopped = 0;
@@ -610,9 +613,7 @@ static void cia6526_write (CIA6526 *This, int offset, int data)
 			This->alarmhour = data;
 		else
 		{
-			if (This->todtimer)
-				timer_remove (This->todtimer);
-			This->todtimer = 0;
+			timer_reset(This->todtimer, TIME_NEVER);
 			This->todstopped = 1;
 			This->todhour = data;
 		}

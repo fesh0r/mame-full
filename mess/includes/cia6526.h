@@ -26,10 +26,11 @@ struct cia6526_interface
 	int todin50hz;
 };
 
-void cia6526_config (int which, const struct cia6526_interface *intf);
-void cia6526_reset (void);
+void cia6526_init(void);
+void cia6526_config(int which, const struct cia6526_interface *intf);
+void cia6526_reset(void);
 
-void cia6526_status (char *text, int size);
+void cia6526_status(char *text, int size);
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 

@@ -73,9 +73,10 @@ void superpet_vh_init (void)
 }
 
 //  commodore pet discrete video circuit
-void pet_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pet )
 {
 	int x, y, i;
+	int full_refresh = 1;
 
 	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
@@ -95,13 +96,14 @@ void pet_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 }
 
 //  commodore pet crtc video circuit for 40 columns display (standard crtc6845)
-void pet40_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pet40 )
 {
 	int x, y, i;
 	int w=crtc6845_get_char_columns(crtc6845);
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);
 	int start=crtc6845_get_start(crtc6845)&0x3ff;
+	int full_refresh = 1;
 
 	if (full_refresh||crtc6845_do_full_refresh(crtc6845)) {
 		memset(dirtybuffer, 1, videoram_size);
@@ -122,7 +124,7 @@ void pet40_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 
 // special hardware to allow crtc programmed for pet 40 column mode! to generate
 // 80 column display!
-void pet80_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pet80 )
 {
 	int x, y, i;
 	struct rectangle rect;
@@ -130,6 +132,7 @@ void pet80_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 	int h=crtc6845_get_char_lines(crtc6845);
 	int height=crtc6845_get_char_height(crtc6845);
 	int start=crtc6845_get_start(crtc6845)&0x3ff;
+	int full_refresh = 1;
 
 	rect.min_x=Machine->visible_area.min_x;
 	rect.max_x=Machine->visible_area.max_x;

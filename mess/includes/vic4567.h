@@ -9,7 +9,7 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 						  int (*dma_read_color) (int), void (*irq) (int),
 						  void (*param_port_changed)(int));
 
-int vic3_raster_irq (void);
+extern INTERRUPT_GEN( vic3_raster_irq );
 
 /* to be called when writting to port */
 extern WRITE_HANDLER ( vic3_port_w );

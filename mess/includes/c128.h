@@ -102,12 +102,10 @@ WRITE_HANDLER(c128_write_ff05);
 extern void c128_driver_init (void);
 extern void c128pal_driver_init (void);
 extern void c128_driver_shutdown (void);
-extern void c128_init_machine (void);
-extern void c128_shutdown_machine (void);
+extern MACHINE_INIT( c128 );
 
-extern int c128_vh_start (void);
-extern void c128_vh_stop (void);
-extern void c128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( c128 );
+extern VIDEO_UPDATE( c128 );
 
 extern void c128_state(void);
 

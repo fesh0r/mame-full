@@ -25,7 +25,6 @@
 /* keyboard lines */
 static UINT8 cbmb_keyline[12] = { 0 };
 static int cbmb_keyline_a, cbmb_keyline_b, cbmb_keyline_c;
-static void *cbmb_clock;
 
 static int cbm500=0;
 UINT8 *cbmb_memory;
@@ -230,6 +229,8 @@ static void cbmb_common_driver_init (void)
 	cbmb_chargen=memory_region(REGION_CPU1)+0x100000;
 	/*    memset(c64_memory, 0, 0xfd00); */
 
+	cia6526_init();
+
 	cbmb_cia.todin50hz = 0;
 	cia6526_config (0, &cbmb_cia);
 
@@ -243,7 +244,7 @@ static void cbmb_common_driver_init (void)
 	tpi6525[1].a.output=cbmb_keyboard_line_select_a;
 	tpi6525[1].b.output=cbmb_keyboard_line_select_b;
 	tpi6525[1].c.output=cbmb_keyboard_line_select_c;
-	cbmb_clock=timer_pulse(0.01, 0, cbmb_frame_interrupt);
+	timer_pulse(0.01, 0, cbmb_frame_interrupt);
 
 	cbm_drive_open ();
 
@@ -298,7 +299,7 @@ void cbmb_driver_shutdown (void)
 {
 }
 
-void cbmb_init_machine (void)
+MACHINE_INIT( cbmb )
 {
 	sid6581_reset(0);
 	cia6526_reset ();
@@ -308,10 +309,6 @@ void cbmb_init_machine (void)
 	cbm_drive_0_config (IEEE8ON ? IEEE : 0, 8);
 	cbm_drive_1_config (IEEE9ON ? IEEE : 0, 9);
 	cbmb_rom_load();
-}
-
-void cbmb_shutdown_machine (void)
-{
 }
 
 void cbmb_rom_load(void)

@@ -84,7 +84,7 @@ static struct {
 
 } speech={ 0 };
 
-void c364_speech_timer(int arg)
+static void c364_speech_timer(int arg)
 {
 	if (!speech.playing) return;
 
@@ -96,6 +96,12 @@ void c364_speech_timer(int arg)
 		/*speech.endOfSample=true; */
 		speech.busy=false;
 	}
+}
+
+void c364_speech_init(void)
+{
+	memset(&speech, 0, sizeof(speech));
+	speech.timer = timer_alloc(c364_speech_timer);
 }
 
 WRITE_HANDLER(c364_speech_w)
@@ -111,7 +117,7 @@ WRITE_HANDLER(c364_speech_w)
 					speech.playing=false;
 					break;
 				case 1: /* start */
-					speech.timer=timer_pulse(1.0/8000, 0, c364_speech_timer);
+					timer_adjust(speech.timer, 0, 0, 1.0/8000);
 					speech.playing=true;
 					speech.endOfSample=false;
 					speech.sampleindex=0;
@@ -119,10 +125,7 @@ WRITE_HANDLER(c364_speech_w)
 				case 2:
 					speech.endOfSample=false;
 					/*speech.busy=false; */
-					if (speech.timer) {
-						timer_remove(speech.timer);
-						speech.timer=0;
-					}
+					timer_reset(speech.timer, TIME_NEVER);
 					speech.playing=false;
 					break;
 				case 5: /* set rate (in next nibble) */

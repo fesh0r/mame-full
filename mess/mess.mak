@@ -156,6 +156,8 @@ DRVLIBS = \
 	$(OBJ)/tangerin.a \
 	$(OBJ)/kaypro.a   \
 	$(OBJ)/cgenie.a   \
+	$(OBJ)/cbm.a      \
+	$(OBJ)/cbmshare.a \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -181,8 +183,6 @@ DRVLIBS = \
 #	$(OBJ)/sord.a     \
 #	$(OBJ)/tatung.a   \
 #	$(OBJ)/sega.a     \
-#	$(OBJ)/cbm.a      \
-#	$(OBJ)/cbmshare.a \
 #	$(OBJ)/ascii.a	  \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti85.a     \
@@ -274,14 +274,15 @@ $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/vc1541.o	 \
 	  $(OBJ)/mess/machine/cbmieeeb.o \
 	  $(OBJ)/mess/machine/cbmserb.o  \
-	  $(OBJ)/mess/machine/vc20tape.o \
 	  $(OBJ)/mess/machine/c64.o	 \
-	  $(OBJ)/mess/vidhrdw/vic6567.o
+	  $(OBJ)/mess/vidhrdw/vic6567.o	\
+	  $(OBJ)/mess/machine/vc20tape.o
 
 $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/vidhrdw/pet.o	 \
 	  $(OBJ)/mess/systems/pet.o	 \
 	  $(OBJ)/mess/machine/pet.o	 \
+	  $(OBJ)/mess/systems/c64.o	 \
 	  $(OBJ)/mess/machine/vc20.o	 \
 	  $(OBJ)/mess/systems/vc20.o	 \
 	  $(OBJ)/mess/sndhrdw/ted7360.o  \
@@ -291,7 +292,6 @@ $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/systems/cbmb.o	 \
 	  $(OBJ)/mess/machine/cbmb.o	 \
 	  $(OBJ)/mess/vidhrdw/cbmb.o	 \
-	  $(OBJ)/mess/systems/c64.o	 \
 	  $(OBJ)/mess/systems/c65.o	 \
 	  $(OBJ)/mess/machine/c65.o	 \
 	  $(OBJ)/mess/vidhrdw/vdc8563.o  \

@@ -677,11 +677,9 @@ INPUT_PORTS_END
 
 
 /* Initialise the vc20 palette */
-static void vc20_init_palette (unsigned char *sys_palette,
-							   unsigned short *sys_colortable,
-							   const unsigned char *color_prom)
+static PALETTE_INIT( vc20 )
 {
-	memcpy (sys_palette, vic6560_palette, sizeof (vic6560_palette));
+	palette_set_colors(0, vic6560_palette, sizeof(vic6560_palette) / 3);
 /*	memcpy(sys_colortable,colortable,sizeof(colortable)); */
 }
 
@@ -759,225 +757,81 @@ ROM_START (vc20v)
 	VC1541_ROM (REGION_CPU2)
 ROM_END
 
-static struct MachineDriver machine_driver_vic20 =
-{
+static MACHINE_DRIVER_START( vic20 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			VIC6560_CLOCK,
-			vc20_readmem, vc20_writemem,
-			0, 0,
-			vc20_frame_interrupt, 1,
-			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
-		},
-	},
-	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	vc20_init_machine,
-	vc20_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", M6502, VIC6560_CLOCK)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(vc20_readmem, vc20_writemem)
+	MDRV_CPU_VBLANK_INT(vc20_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(vic656x_raster_interrupt, VIC656X_HRETRACERATE)
+	MDRV_FRAMES_PER_SECOND(VIC6560_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
 
-	/* video hardware */
-	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
-	VIC6560_YSIZE,					   /* screen height */
-	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
-	 VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1},
-	0,								   /* graphics decode info */
-	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
-	0,
-	vc20_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic6560_vh_start,
-	vic6560_vh_stop,
-	vic6560_vh_screenrefresh,
+	MDRV_MACHINE_INIT( vc20 )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE((VIC6560_XSIZE + 7) & ~7, VIC6560_YSIZE)
+	MDRV_VISIBLE_AREA(VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1, VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1)
+	MDRV_PALETTE_LENGTH(sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3)
+	MDRV_PALETTE_INIT( vc20 )
+
+	MDRV_VIDEO_START( vic6560 )
+	MDRV_VIDEO_STOP( vic6560 )
+	MDRV_VIDEO_UPDATE( vic6560 )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &vic6560_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, vic6560_sound_interface)
+	MDRV_SOUND_ADD(DAC, vc20tape_sound_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_vic20v =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			VIC6560_CLOCK,
-			vc20_readmem, vc20_writemem,
-			0, 0,
-			vc20_frame_interrupt, 1,
-			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
-		},
-		VC1540_CPU,
-	},
-	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+
+static MACHINE_DRIVER_START( vic20v )
+	MDRV_IMPORT_FROM( vic20 )
+	MDRV_IMPORT_FROM( cpu_vc1540 )
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	3000,
+	MDRV_INTERLEAVE(3000)
 #endif
-	vc20_init_machine,
-	vc20_shutdown_machine,
+MACHINE_DRIVER_END
 
-	/* video hardware */
-	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
-	VIC6560_YSIZE,					   /* screen height */
-	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
-	 VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1},
-	0,								   /* graphics decode info */
-	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
-	0,
-	vc20_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic6560_vh_start,
-	vic6560_vh_stop,
-	vic6560_vh_screenrefresh,
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &vic6560_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_vic20i =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			VIC6560_CLOCK,
-			vc20i_readmem, vc20i_writemem,
-			0, 0,
-			vc20_frame_interrupt, 1,
-			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
-		},
-/*		C2031_CPU, */
-	},
-	VIC6560_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-#if 1 || defined CPU_SYNC
-	1,
+static MACHINE_DRIVER_START( vic20i )
+	MDRV_IMPORT_FROM( vic20 )
+	/*MDRV_IMPORT_FROM( cpu_c2031 )*/
+#if 1 || CPU_SYNC
+	MDRV_INTERLEAVE(1)
 #else
-	3000,
+	MDRV_INTERLEAVE(3000)
 #endif
-	vc20_init_machine,
-	vc20_shutdown_machine,
 
-	/* video hardware */
-	(VIC6560_XSIZE + 7) & ~7,		   /* screen width */
-	VIC6560_YSIZE,					   /* screen height */
-	{VIC6560_MAME_XPOS, VIC6560_MAME_XPOS + VIC6560_MAME_XSIZE - 1,
-	 VIC6560_MAME_YPOS, VIC6560_MAME_YPOS + VIC6560_MAME_YSIZE - 1},
-	0,								   /* graphics decode info */
-	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
-	0,
-	vc20_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic6560_vh_start,
-	vic6560_vh_stop,
-	vic6560_vh_screenrefresh,
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( vc20i_readmem, vc20i_writemem )
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &vic6560_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
 
-static struct MachineDriver machine_driver_vc20 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			VIC6561_CLOCK,
-			vc20_readmem, vc20_writemem,
-			0, 0,
-			vc20_frame_interrupt, 1,
-			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
-		},
-	},
-	VIC6561_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	vc20_init_machine,
-	vc20_shutdown_machine,
+static MACHINE_DRIVER_START( vc20 )
+	MDRV_IMPORT_FROM( vic20 )
 
-	/* video hardware */
-	(VIC6561_XSIZE + 7) & ~7,		   /* screen width */
-	VIC6561_YSIZE,					   /* screen height */
-	{VIC6561_MAME_XPOS, VIC6561_MAME_XPOS + VIC6561_MAME_XSIZE - 1,
-	 VIC6561_MAME_YPOS, VIC6561_MAME_YPOS + VIC6561_MAME_YSIZE - 1},	/* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
-	0,
-	vc20_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic6560_vh_start,
-	vic6560_vh_stop,
-	vic6560_vh_screenrefresh,
+	MDRV_CPU_REPLACE( "main", M6502, VIC6561_CLOCK )
+	MDRV_CPU_MEMORY( vc20i_readmem, vc20i_writemem )
 
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &vic6560_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	MDRV_FRAMES_PER_SECOND(VIC6561_VRETRACERATE)
+	MDRV_SCREEN_SIZE((VIC6561_XSIZE + 7) & ~7, VIC6561_YSIZE)
+	MDRV_VISIBLE_AREA(VIC6561_MAME_XPOS, VIC6561_MAME_XPOS + VIC6561_MAME_XSIZE - 1, VIC6561_MAME_YPOS, VIC6561_MAME_YPOS + VIC6561_MAME_YSIZE - 1)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_vc20v =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			VIC6561_CLOCK,
-			vc20_readmem, vc20_writemem,
-			0, 0,
-			vc20_frame_interrupt, 1,
-			vic656x_raster_interrupt, VIC656X_HRETRACERATE,
-		},
-		VC1541_CPU,
-	},
-	VIC6561_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+
+static MACHINE_DRIVER_START( vc20v )
+	MDRV_IMPORT_FROM( vc20 )
+	MDRV_IMPORT_FROM( cpu_vc1540 )
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	3000,
+	MDRV_INTERLEAVE(3000)
 #endif
-	vc20_init_machine,
-	vc20_shutdown_machine,
-
-	/* video hardware */
-	(VIC6561_XSIZE + 7) & ~7,		   /* screen width */
-	VIC6561_YSIZE,					   /* screen height */
-	{VIC6561_MAME_XPOS, VIC6561_MAME_XPOS + VIC6561_MAME_XSIZE - 1,
-	 VIC6561_MAME_YPOS, VIC6561_MAME_YPOS + VIC6561_MAME_YSIZE - 1},	/* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic6560_palette) / sizeof (vic6560_palette[0]) / 3,
-	0,
-	vc20_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic6560_vh_start,
-	vic6560_vh_stop,
-	vic6560_vh_screenrefresh,
-
-	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &vic6560_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+MACHINE_DRIVER_END
 
 static const struct IODevice io_vc20[] =
 {

@@ -181,7 +181,6 @@ static struct {
 	void (*port_changed)(int);
 
 	int lines;
-	void *lightpentimer;
 
 	int chargenaddr, videoaddr;
 
@@ -330,9 +329,8 @@ static void vic2_timer_timeout (int which)
 	}
 }
 
-int vic2_frame_interrupt (void)
+INTERRUPT_GEN( vic2_frame_interrupt )
 {
-	return ignore_interrupt ();
 }
 
 WRITE_HANDLER ( vic2_port_w )
@@ -650,21 +648,21 @@ READ_HANDLER ( vic2_port_r )
 	return val;
 }
 
-int vic2_vh_start (void)
+VIDEO_START( vic2 )
 {
 	int i;
 
 	vic2.bitmap = Machine->scrbitmap;
 
 	if (vic2.vic3) {
-		vic2.screen[0] = (UINT8*)malloc (sizeof (UINT8) * 216 * 656 / 8);
+		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 656 / 8);
 
 		if (!vic2.screen[0])
 			return 1;
 		for (i = 1; i < 216; i++)
 			vic2.screen[i] = vic2.screen[i - 1] + 656 / 8;
 	} else {
-		vic2.screen[0] = (UINT8*)malloc (sizeof (UINT8) * 216 * 336 / 8);
+		vic2.screen[0] = (UINT8*)auto_malloc (sizeof (UINT8) * 216 * 336 / 8);
 
 		if (!vic2.screen[0])
 			return 1;
@@ -737,11 +735,6 @@ int vic2_vh_start (void)
 			vic2.multi_collision[i] |= 0xc0;
 	}
 	return 0;
-}
-
-void vic2_vh_stop (void)
-{
-	free (vic2.screen[0]);
 }
 
 static void vic2_draw_character (int ybegin, int yend, int ch,
@@ -1440,7 +1433,7 @@ static void vic2_drawlines (int first, int last)
 
 #include "vic4567.c"
 
-int vic2_raster_irq (void)
+INTERRUPT_GEN( vic2_raster_irq )
 {
 	int i;
 
@@ -1458,7 +1451,7 @@ int vic2_raster_irq (void)
 			double tme = 0.0;
 
 			/* lightpen timer starten */
-			vic2.lightpentimer = timer_set (tme, 1, vic2_timer_timeout);
+			timer_set (tme, 1, vic2_timer_timeout);
 		}
 		//state_display(vic2.bitmap);
 	}
@@ -1468,10 +1461,9 @@ int vic2_raster_irq (void)
 			vic2_drawlines (vic2.lastline, vic2.rasterline);
 		vic2_set_interrupt (1);
 	}
-	return ignore_interrupt();
 }
 
-void vic2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vic2 )
 {
 #if 0
     char text[40];
@@ -1489,4 +1481,18 @@ void vic2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
 	state_display(bitmap);
 }
 
+static PALETTE_INIT( vic2 )
+{
+	palette_set_colors(0, vic2_palette, sizeof(vic2_palette) / 3);
+}
+
+MACHINE_DRIVER_START( vh_vic2 )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(336, 216)
+	MDRV_VISIBLE_AREA(0, 336 - 1, 0, 216 - 1)
+	MDRV_PALETTE_INIT( vic2 )
+	MDRV_PALETTE_LENGTH(sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3)
+	MDRV_VIDEO_START( vic2 )
+	MDRV_VIDEO_UPDATE( vic2 )
+MACHINE_DRIVER_END
 

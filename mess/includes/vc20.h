@@ -6,14 +6,6 @@
 
 #include "cbmserb.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void vc20_runtime_loader_init(void);
-# else
-	extern void vc20_runtime_loader_init(void);
-# endif
-#endif
-
 #define KEY_ARROW_LEFT (readinputport(5)&0x8000)
 #define KEY_1 (readinputport(5)&0x4000)
 #define KEY_2 (readinputport(5)&0x2000)
@@ -171,10 +163,8 @@ extern void vic20_driver_init (void);
 extern void vic20ieee_driver_init (void);
 extern void vc20_driver_shutdown (void);
 
-extern void vc20_init_machine (void);
-extern void vc20_shutdown_machine (void);
-
-extern void vc20_frame_interrupt (void);
+extern MACHINE_INIT( vc20 );
+extern INTERRUPT_GEN( vc20_frame_interrupt );
 
 #endif
 

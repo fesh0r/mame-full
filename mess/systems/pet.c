@@ -625,10 +625,10 @@ static struct GfxDecodeInfo superpet_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static void pet_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( pet )
 {
-	memcpy (sys_palette, pet_palette, sizeof (pet_palette));
-    memcpy(sys_colortable,pet_colortable,sizeof(pet_colortable));
+	palette_set_colors(0, pet_palette, sizeof(pet_palette) / 3);
+    memcpy(colortable, pet_colortable, sizeof(colortable));
 }
 
 /* basic 1 */
@@ -884,252 +884,85 @@ ROM_END
     ROM_LOAD ("324878-02.bin", 0x?000, 0x2000, 0x5e00476d)
 #endif
 
-static struct MachineDriver machine_driver_pet =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			pet_readmem, pet_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
+static MACHINE_DRIVER_START( pet )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 7833600)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(pet_readmem, pet_writemem)
+	MDRV_CPU_VBLANK_INT(pet_frame_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
 
-  /* video hardware */
-	320,							   /* screen width */
-	200,							   /* screen height */
-	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
-	pet_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	video_start_generic,
-	NULL,
-	pet_vh_screenrefresh,
+	MDRV_MACHINE_INIT( pet )
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(320, 200)
+	MDRV_VISIBLE_AREA(0, 320 - 1, 0, 200 - 1)
+	MDRV_GFXDECODE( pet_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (pet_palette) / sizeof (pet_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (pet_colortable) / sizeof(pet_colortable[0][0]))
+	MDRV_PALETTE_INIT( pet )
 
-static struct MachineDriver machine_driver_pet40 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			pet40_readmem, pet40_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
+	MDRV_VIDEO_START( generic )
+	MDRV_VIDEO_UPDATE( pet )
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	320,							   /* screen width */
-	200,							   /* screen height */
-	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
-	pet_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	video_start_generic,
-	NULL,
-	pet40_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
+static MACHINE_DRIVER_START( pet40 )
+	MDRV_IMPORT_FROM( pet )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( pet40_readmem, pet40_writemem )
+	MDRV_VIDEO_UPDATE( pet40 )
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_pet40pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			pet40_readmem, pet40_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
 
-  /* video hardware */
-	320,							   /* screen width */
-	200,							   /* screen height */
-	{0, 320 - 1, 0, 200 - 1},		   /* visible_area */
-	pet_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	video_start_generic,
-	NULL,
-	pet40_vh_screenrefresh,
+static MACHINE_DRIVER_START( pet40pal )
+	MDRV_IMPORT_FROM( pet40 )
+	MDRV_FRAMES_PER_SECOND(50)
+MACHINE_DRIVER_END
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
 
-static struct MachineDriver machine_driver_pet80 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			pet80_readmem, pet80_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
+static MACHINE_DRIVER_START( pet80 )
+	MDRV_IMPORT_FROM( pet )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( pet80_readmem, pet80_writemem )
 
-  /* video hardware */
-	640,							   /* screen width */
-	250,							   /* screen height */
-	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
-	pet80_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
+    /* video hardware */
 #ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
 #else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
 #endif
-	0,
-	video_start_generic,
-	NULL,
-	pet80_vh_screenrefresh,
+	MDRV_SCREEN_SIZE(640, 250)
+	MDRV_VISIBLE_AREA(0, 640 - 1, 0, 250 - 1)
+	MDRV_GFXDECODE( pet80_gfxdecodeinfo )
+	MDRV_VIDEO_UPDATE( pet80 )
+MACHINE_DRIVER_END
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
 
-static struct MachineDriver machine_driver_pet80pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			pet80_readmem, pet80_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
+static MACHINE_DRIVER_START( pet80pal )
+	MDRV_IMPORT_FROM( pet80 )
+	MDRV_FRAMES_PER_SECOND(50)
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	640,							   /* screen width */
-	250,							   /* screen height */
-	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
-	pet80_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#endif
-	0,
-	video_start_generic,
-	NULL,
-	pet80_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
+static MACHINE_DRIVER_START( superpet )
+	MDRV_IMPORT_FROM( pet80 )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( superpet_readmem, superpet_writemem )
 
-static struct MachineDriver machine_driver_superpet =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			superpet_readmem, superpet_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-		{
-			CPU_M6809,
-			1000000,
-			superpet_m6809_readmem, superpet_m6809_writemem,
-			0, 0,
-			pet_frame_interrupt, 1,
-		},
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	pet_init_machine,
-	pet_shutdown_machine,
+	/* m6809 cpu */
+	MDRV_CPU_ADD_TAG("main", M6809, 1000000)
+	MDRV_CPU_MEMORY(superpet_m6809_readmem, superpet_m6809_writemem)
+	MDRV_CPU_VBLANK_INT(pet_frame_interrupt, 1)
 
-  /* video hardware */
-	640,							   /* screen width */
-	250,							   /* screen height */
-	{0, 640 - 1, 0, 250 - 1},		   /* visible_area */
-	superpet_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pet_palette) / sizeof (pet_palette[0]) / 3,
-	sizeof (pet_colortable) / sizeof(pet_colortable[0][0]),
-	pet_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#endif
-	0,
-	video_start_generic,
-	NULL,
-	pet80_vh_screenrefresh,
+	MDRV_FRAMES_PER_SECOND(50)
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ 0 }
-	}
-};
+    /* video hardware */
+	MDRV_GFXDECODE( superpet_gfxdecodeinfo )
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_pet[] =
 {
@@ -1197,24 +1030,3 @@ COMPX (198?,	superpet,	pet,	superpet,	superpet,superpet,"Commodore Business Mach
 
 // please leave the following as testdriver only
 COMP (198?, 	mmf9000,	pet,	superpet,	superpet,superpet,"Commodore Business Machines Co.",  "MMF9000 (50Hz) Swedish")
-
-#ifdef RUNTIME_LOADER
-extern void pet_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"pet")==0) drivers[i]=&driver_pet;
-		if ( strcmp(drivers[i]->name,"cbm30")==0) drivers[i]=&driver_cbm30;
-		if ( strcmp(drivers[i]->name,"cbm30b")==0) drivers[i]=&driver_cbm30b;
-		if ( strcmp(drivers[i]->name,"cbm40")==0) drivers[i]=&driver_cbm40;
-		if ( strcmp(drivers[i]->name,"cbm40pal")==0) drivers[i]=&driver_cbm40pal;
-		if ( strcmp(drivers[i]->name,"cbm40b")==0) drivers[i]=&driver_cbm40b;
-		if ( strcmp(drivers[i]->name,"cbm80")==0) drivers[i]=&driver_cbm80;
-		if ( strcmp(drivers[i]->name,"cbm80pal")==0) drivers[i]=&driver_cbm80pal;
-		if ( strcmp(drivers[i]->name,"cbm80ger")==0) drivers[i]=&driver_cbm80ger;
-		if ( strcmp(drivers[i]->name,"cbm80swe")==0) drivers[i]=&driver_cbm80swe;
-		if ( strcmp(drivers[i]->name,"superpet")==0) drivers[i]=&driver_superpet;
-		if ( strcmp(drivers[i]->name,"mmf9000")==0) drivers[i]=&driver_mmf9000;
-	}
-}
-#endif

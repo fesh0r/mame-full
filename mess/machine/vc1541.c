@@ -587,21 +587,22 @@ static WRITE_HANDLER( vc1541_via1_write_portb )
 			if (vc1541->track<1) vc1541->track=1.0;
 			if (vc1541->track>35) vc1541->track=35;
 		}
-		if ( (vc1541->motor!=(data&4))||(vc1541->frequency!=(data&0x60)) ) {
+		if ( (vc1541->motor!=(data&4))||(vc1541->frequency!=(data&0x60)) )
+		{
 			double tme;
 			vc1541->motor = data & 4;
 			vc1541->frequency = data & 0x60;
 			tme=vc1541_times[vc1541->frequency>>5]*8*2;
-			if (vc1541->motor) {
-				if (vc1541->timer!=NULL) {
-					timer_reset(vc1541->timer, tme);
-				} else {
-					vc1541->timer=timer_pulse(tme, 0, vc1541_timer);
-				}
-			} else {
-				if (vc1541->timer!=NULL)
-					timer_remove(vc1541->timer);
-				vc1541->timer=NULL;
+			if (vc1541->motor)
+			{
+				if (timer_timeelapsed(vc1541->timer) > 1.0e29)
+					timer_reset(vc1541->timer, TIME_NEVER);
+				else
+					timer_adjust(vc1541->timer, 0, 0, tme);
+			}
+			else
+			{
+				timer_reset(vc1541->timer, TIME_NEVER);
 			}
 		}
 		old=data;
@@ -663,6 +664,8 @@ int vc1541_init (int id)
 
 	logerror("floppy image %s loaded\n", device_filename(IO_FLOPPY, id));
 
+	vc1541->timer = timer_alloc(vc1541_timer);
+
 	/*vc1541->drive = ; */
 	vc1541->d64.image_type = IO_FLOPPY;
 	vc1541->d64.image_id = id;
@@ -673,6 +676,7 @@ void vc1541_exit(int id)
 {
 	/* writeback of image data */
 	free(vc1541->d64.data);vc1541->d64.data=NULL;
+	timer_remove(vc1541->timer);
 }
 
 int vc1541_config (int id, int mode, VC1541_CONFIG *config)
@@ -901,16 +905,16 @@ static WRITE_HANDLER ( c1551_port_w )
 				vc1541->motor = data & 4;
 				vc1541->frequency = data & 0x60;
 				tme=vc1541_times[vc1541->frequency>>5]*8*2;
-				if (vc1541->motor) {
-					if (vc1541->timer!=NULL) {
-						timer_reset(vc1541->timer, tme);
-					} else {
-						vc1541->timer=timer_pulse(tme, 0, vc1541_timer);
-					}
-				} else {
-					if (vc1541->timer!=NULL)
-						timer_remove(vc1541->timer);
-					vc1541->timer=NULL;
+				if (vc1541->motor)
+				{
+					if (timer_timeelapsed(vc1541->timer) > 1.0e29)
+						timer_reset(vc1541->timer, TIME_NEVER);
+					else
+						timer_adjust(vc1541->timer, 0, 0, tme);
+				}
+				else
+				{
+					timer_reset(vc1541->timer, TIME_NEVER);
 				}
 			}
 			old=data;
@@ -983,11 +987,11 @@ int c1551_config (int id, int mode, C1551_CONFIG *config)
 	vc1541->type=TypeC1551;
 	tpi6525[0].c.read=c1551_port_c_r;
 	tpi6525[0].b.read=c1551_port_b_r;
-	if (vc1541->drive.c1551.timer==NULL) {
-		/* time should be small enough to allow quitting of the irq
-		   line before the next interrupt is triggered */
-		vc1541->drive.c1551.timer=timer_pulse(1.0/60, 0, c1551_timer);
-	}
+
+	/* time should be small enough to allow quitting of the irq
+	   line before the next interrupt is triggered */
+	vc1541->drive.c1551.timer = timer_alloc(c1551_timer);
+	timer_adjust(vc1541->drive.c1551.timer, 0, 0, 1.0/60);
 	return 0;
 }
 
@@ -1085,3 +1089,30 @@ int c1551x_0_read_status (void)
 {
 	return c1551x_read_status(tpi6525);
 }
+
+MACHINE_DRIVER_START( cpu_vc1540 )
+	MDRV_CPU_ADD_TAG("cpu_vc1540", M6502, 1000000)
+	MDRV_CPU_MEMORY(vc1541_readmem,vc1541_writemem)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( cpu_vc1541 )
+	MDRV_IMPORT_FROM( cpu_vc1540 )
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( cpu_c2031 )
+	MDRV_IMPORT_FROM( cpu_vc1540 )
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( cpu_dolphin )
+	MDRV_CPU_ADD_TAG("cpu_dolphin", M6502, 1000000)
+	MDRV_CPU_MEMORY(dolphin_readmem,dolphin_writemem)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( cpu_c1551 )
+	MDRV_CPU_ADD_TAG("cpu_c1551", M6510T, 2000000)
+	MDRV_CPU_MEMORY(c1551_readmem,c1551_writemem)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( cpu_c1571 )
+	MDRV_IMPORT_FROM( cpu_vc1541 )
+MACHINE_DRIVER_END

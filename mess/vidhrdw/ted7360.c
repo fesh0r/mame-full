@@ -483,7 +483,8 @@ bool ted7360_pal;
 bool ted7360_rom;
 
 static int lines;
-static void *timer1 = 0, *timer2 = 0, *timer3 = 0;
+static int timer1_active, timer2_active, timer3_active;
+static void *timer1, *timer2, *timer3;
 static bool cursor1 = false;
 static mem_read_handler vic_dma_read;
 static mem_read_handler vic_dma_read_rom;
@@ -516,11 +517,17 @@ static UINT8 cursormask[] =
 {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 static struct GfxElement *cursorelement;
 
+static void ted7360_timer_timeout (int which);
+
 void ted7360_init (int pal)
 {
 	ted7360_pal = pal;
 	lines = TED7360_LINES;
 	chargenaddr = bitmapaddr = videoaddr = 0;
+	timer1_active = timer2_active = timer3_active = 0;
+	timer1 = timer_alloc(ted7360_timer_timeout);
+	timer2 = timer_alloc(ted7360_timer_timeout);
+	timer3 = timer_alloc(ted7360_timer_timeout);
 }
 
 void ted7360_set_dma (mem_read_handler dma_read,
@@ -571,21 +578,24 @@ static void ted7360_timer_timeout (int which)
 	{
 	case 1:
 	    // prooved by digisound of several intros like eoroidpro
-		timer1 = timer_set (TEDTIME_IN_CYCLES (TIMER1), 1, ted7360_timer_timeout);
+		timer_adjust(timer1, TEDTIME_IN_CYCLES (TIMER1), 1, 0);
+		timer1_active = 1;
 		ted7360_set_interrupt (8);
 		break;
 	case 2:
-		timer2 = timer_set (TEDTIME_IN_CYCLES (0x10000), 2, ted7360_timer_timeout);
+		timer_adjust(timer2, TEDTIME_IN_CYCLES (0x10000), 2, 0);
+		timer2_active = 1;
 		ted7360_set_interrupt (0x10);
 		break;
 	case 3:
-		timer3 = timer_set (TEDTIME_IN_CYCLES (0x10000), 3, ted7360_timer_timeout);
+		timer_adjust(timer3, TEDTIME_IN_CYCLES (0x10000), 3, 0);
+		timer3_active = 1;
 		ted7360_set_interrupt (0x40);
 		break;
 	}
 }
 
-int ted7360_frame_interrupt (void)
+INTERRUPT_GEN( ted7360_frame_interrupt )
 {
 	static int count;
 
@@ -598,7 +608,6 @@ int ted7360_frame_interrupt (void)
 	}
 	else
 		ted7360[0x1f]++;
-	return ignore_interrupt ();
 }
 
 WRITE_HANDLER ( ted7360_port_w )
@@ -623,51 +632,45 @@ WRITE_HANDLER ( ted7360_port_w )
 	{
 	case 0:						   /* stop timer 1 */
 		ted7360[offset] = data;
-		if (timer1)
+		if (timer1_active)
 		{
 			ted7360[1] = TEDTIME_TO_CYCLES (timer_timeleft (timer1)) >> 8;
-			timer_remove (timer1);
-			timer1 = 0;
+			timer_reset(timer1, TIME_NEVER);
+			timer1_active = 0;
 		}
 		break;
 	case 1:						   /* start timer 1 */
 		ted7360[offset] = data;
-		if (!timer1)
-			timer1 = timer_set (TEDTIME_IN_CYCLES (TIMER1), 1, ted7360_timer_timeout);
-		else
-			timer_reset (timer1, TEDTIME_IN_CYCLES (TIMER1));
+		timer_adjust(timer1, TEDTIME_IN_CYCLES (TIMER1), 1, 0);
+		timer1_active = 1;
 		break;
 	case 2:						   /* stop timer 2 */
 		ted7360[offset] = data;
-		if (timer2)
+		if (timer2_active)
 		{
 			ted7360[3] = TEDTIME_TO_CYCLES (timer_timeleft (timer2)) >> 8;
-			timer_remove (timer2);
-			timer2 = 0;
+			timer_reset(timer2, TIME_NEVER);
+			timer2_active = 0;
 		}
 		break;
 	case 3:						   /* start timer 2 */
 		ted7360[offset] = data;
-		if (!timer2)
-			timer2 = timer_set (TEDTIME_IN_CYCLES (TIMER2), 2, ted7360_timer_timeout);
-		else
-			timer_reset (timer2, TEDTIME_IN_CYCLES (TIMER2));
+		timer_adjust(timer2, TEDTIME_IN_CYCLES (TIMER2), 2, 0);
+		timer2_active = 1;
 		break;
 	case 4:						   /* stop timer 3 */
 		ted7360[offset] = data;
-		if (timer3)
+		if (timer3_active)
 		{
 			ted7360[5] = TEDTIME_TO_CYCLES (timer_timeleft (timer3)) >> 8;
-			timer_remove (timer3);
-			timer3 = 0;
+			timer_reset(timer3, TIME_NEVER);
+			timer3_active = 0;
 		}
 		break;
 	case 5:						   /* start timer 3 */
 		ted7360[offset] = data;
-		if (!timer3)
-			timer3 = timer_set (TEDTIME_IN_CYCLES (TIMER3), 3, ted7360_timer_timeout);
-		else
-			timer_reset (timer3, TEDTIME_IN_CYCLES (TIMER3));
+		timer_adjust(timer3, TEDTIME_IN_CYCLES (TIMER3), 3, 0);
+		timer3_active = 1;
 		break;
 	case 6:
 		if (ted7360[offset] != data)
@@ -928,7 +931,7 @@ READ_HANDLER ( ted7360_port_r )
 	return val;
 }
 
-int ted7360_vh_start (void)
+VIDEO_START( ted7360 )
 {
 	cursorelement = decodegfx (cursormask, &cursorlayout);
 	cursorelement->colortable = cursorcolortable;
@@ -938,7 +941,7 @@ int ted7360_vh_start (void)
 	return 0;
 }
 
-void ted7360_vh_stop (void)
+VIDEO_STOP( ted7360 )
 {
 	freegfx (cursorelement);
 }
@@ -1331,7 +1334,7 @@ static void ted7360_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
 	}
 }
 
-int ted7360_raster_interrupt (void)
+INTERRUPT_GEN( ted7360_raster_interrupt )
 {
 	int y;
 	char text[70];
@@ -1365,9 +1368,8 @@ int ted7360_raster_interrupt (void)
 		ted7360_drawlines (lastline, rasterline);
 		ted7360_set_interrupt (2);
 	}
-	return ignore_interrupt ();
 }
 
-void ted7360_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ted7360 )
 {
 }

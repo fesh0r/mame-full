@@ -773,6 +773,8 @@ static void c128_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
+	cia6526_init();
+
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	c64_cia1.todin50hz = c64_pal;
@@ -808,7 +810,7 @@ void c128_driver_shutdown (void)
 	vc20_tape_close ();
 }
 
-void c128_init_machine (void)
+MACHINE_INIT( c128 )
 {
 	logerror("reset\n");
 	c64_common_init_machine ();
@@ -829,25 +831,15 @@ void c128_init_machine (void)
 	cpu_set_halt_line (1, 1);
 }
 
-void c128_shutdown_machine (void)
+VIDEO_START( c128 )
 {
+	return video_start_vdc8563() || video_start_vic2();
 }
 
-int c128_vh_start (void)
+VIDEO_UPDATE( c128 )
 {
-	return vdc8563_vh_start()||vic2_vh_start();
-}
-
-void c128_vh_stop (void)
-{
-	vdc8563_vh_stop();
-	vic2_vh_stop();
-}
-
-void c128_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	vdc8563_vh_screenrefresh(bitmap, full_refresh);
-	vic2_vh_screenrefresh(bitmap,full_refresh);
+	video_update_vdc8563(bitmap, cliprect);
+	video_update_vic2(bitmap, cliprect);
 }
 
 void c128_state(void)

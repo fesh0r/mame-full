@@ -44,9 +44,9 @@ extern void ted7360_set_dma (mem_read_handler dma_read,
 #define TED7360PAL_LINES 312
 #define TED7360_LINES (ted7360_pal?TED7360PAL_LINES:TED7360NTSC_LINES)
 
-extern int ted7360_vh_start (void);
-extern void ted7360_vh_stop (void);
-extern void ted7360_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( ted7360 );
+extern VIDEO_STOP( ted7360 );
+extern VIDEO_UPDATE( ted7360 );
 extern unsigned char ted7360_palette[16 * 8 * 3];
 
 /* to be inserted in GameDriver-Structure */

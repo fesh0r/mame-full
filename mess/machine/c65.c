@@ -756,6 +756,8 @@ static void c65_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
+	cia6526_init();
+
 	c64_cia0.todin50hz = c64_cia1.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	cia6526_config (1, &c64_cia1);
@@ -789,7 +791,7 @@ void c65_driver_shutdown (void)
 	cbm_drive_close ();
 }
 
-void c65_init_machine (void)
+MACHINE_INIT( c65 )
 {
 	memset(c64_memory+0x40000, 0xff, 0xc0000);
 
@@ -811,10 +813,6 @@ void c65_init_machine (void)
 
 	c65_bankswitch_interface(0xff);
 	c65_bankswitch ();
-}
-
-void c65_shutdown_machine (void)
-{
 }
 
 void c65_state (void)

@@ -626,9 +626,9 @@ INPUT_PORTS_END
 #endif
 
 /* Initialise the c16 palette */
-static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( c16 )
 {
-	memcpy (sys_palette, ted7360_palette, sizeof (ted7360_palette));
+	palette_set_colors(0, ted7360_palette, sizeof(ted7360_palette) / 3);
 }
 
 #if 0
@@ -755,315 +755,98 @@ static SID6581_interface sidplus4_sound_interface =
 	}
 };
 
-static struct MachineDriver machine_driver_c16 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,				   /* MOS7501 has no nmi line */
-			1400000,				   /*TED7360PAL_CLOCK/2, */
-			c16_readmem, c16_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-	},
-	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
-	0,
-	c16_init_machine,
-	c16_shutdown_machine,
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
+static MACHINE_DRIVER_START( c16 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M7501, 1400000)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(c16_readmem, c16_writemem)
+	MDRV_CPU_VBLANK_INT(c16_frame_interrupt, 1)
+	MDRV_CPU_PERIODIC_INT(ted7360_raster_interrupt, TED7360_HRETRACERATE)
+	MDRV_FRAMES_PER_SECOND(TED7360PAL_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidc16_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+	MDRV_MACHINE_INIT( c16 )
 
-static struct MachineDriver machine_driver_c16c =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1400000,				   /*TED7360PAL_CLOCK/2, */
-			c16_readmem, c16_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-		C1551_CPU
-	},
-	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(336, 216)
+	MDRV_VISIBLE_AREA(0, 336 - 1, 0, 216 - 1)
+	MDRV_PALETTE_LENGTH(sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3)
+	MDRV_PALETTE_INIT(c16)
+
+	MDRV_VIDEO_START( ted7360 )
+	MDRV_VIDEO_STOP( ted7360 )
+	MDRV_VIDEO_UPDATE( ted7360 )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("ted7360", CUSTOM, ted7360_sound_interface)
+	MDRV_SOUND_ADD_TAG("sid", CUSTOM, sidc16_sound_interface)
+	MDRV_SOUND_ADD_TAG("dac", DAC, vc20tape_sound_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( c16c )
+	MDRV_IMPORT_FROM( c16 )
+	MDRV_IMPORT_FROM( cpu_c1551 )
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	100,
+	MDRV_INTERLEAVE(100)
 #endif
-	c16_init_machine,
-	c16_shutdown_machine,
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidc16_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_c16v =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1400000,				   /*TED7360PAL_CLOCK/2, */
-			c16_readmem, c16_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-		VC1541_CPU
-	},
-	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
+static MACHINE_DRIVER_START( c16v )
+	MDRV_IMPORT_FROM( c16 )
+	MDRV_IMPORT_FROM( cpu_vc1541 )
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	5000,
+	MDRV_INTERLEAVE(5000)
 #endif
-	c16_init_machine,
-	c16_shutdown_machine,
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidc16_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+static MACHINE_DRIVER_START( plus4 )
+	MDRV_IMPORT_FROM( c16 )
+	MDRV_CPU_REPLACE( "main", M7501, 1200000)
+	MDRV_CPU_MEMORY( plus4_readmem, plus4_writemem )
+	MDRV_FRAMES_PER_SECOND(TED7360NTSC_VRETRACERATE)
+	MDRV_SOUND_REPLACE("sid", CUSTOM, sidplus4_sound_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_plus4 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1200000,				   /*TED7360NTSC_CLOCK/2, */
-			plus4_readmem, plus4_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-	},
-	TED7360NTSC_VRETRACERATE,0, /* frames per second, vblank duration */
-	0,
-	c16_init_machine,
-	c16_shutdown_machine,
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidplus4_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_plus4c =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1200000,				   /*TED7360NTSC_CLOCK/2, */
-			plus4_readmem, plus4_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-		C1551_CPU
-	},
-	TED7360NTSC_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+static MACHINE_DRIVER_START( plus4c )
+	MDRV_IMPORT_FROM( plus4 )
+	MDRV_IMPORT_FROM( cpu_c1551 )
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	1000,
+	MDRV_INTERLEAVE(1000)
 #endif
-	c16_init_machine,
-	c16_shutdown_machine,
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidplus4_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_plus4v =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1200000,				   /*TED7360NTSC_CLOCK/2, */
-			plus4_readmem, plus4_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-		VC1541_CPU
-	},
-	TED7360NTSC_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
+static MACHINE_DRIVER_START( plus4v )
+	MDRV_IMPORT_FROM( plus4 )
+	MDRV_IMPORT_FROM( cpu_vc1541 )
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 #ifdef CPU_SYNC
-	1,
+	MDRV_INTERLEAVE(1)
 #else
-	5000,
+	MDRV_INTERLEAVE(5000)
 #endif
-	c16_init_machine,
-	c16_shutdown_machine,
+MACHINE_DRIVER_END
 
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
 
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidplus4_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
-
-static struct MachineDriver machine_driver_c364 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M7501,
-			1200000,				   /*TED7360NTSC_CLOCK/2, */
-			c364_readmem, c364_writemem,
-			0, 0,
-			c16_frame_interrupt, 1,
-			ted7360_raster_interrupt, TED7360_HRETRACERATE,
-		},
-	},
-	TED7360NTSC_VRETRACERATE,
-	DEFAULT_REAL_60HZ_VBLANK_DURATION, /* frames per second, vblank duration */
-	0,
-	c16_init_machine,
-	c16_shutdown_machine,
-
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (ted7360_palette) / sizeof (ted7360_palette[0]) / 3,
-	0,
-	c16_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	ted7360_vh_start,
-	ted7360_vh_stop,
-	ted7360_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sidplus4_sound_interface},
-		{SOUND_DAC, &vc20tape_sound_interface}
-	}
-};
+static MACHINE_DRIVER_START( c364 )
+	MDRV_IMPORT_FROM( plus4 )
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY(c364_readmem, c364_writemem)
+MACHINE_DRIVER_END
 
 static const struct IODevice io_c16[] =
 {

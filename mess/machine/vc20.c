@@ -526,7 +526,7 @@ extern void vic20ieee_driver_init (void)
 	cbm_ieee_open();
 }
 
-void vc20_init_machine (void)
+MACHINE_INIT( vc20 )
 {
 	if (RAMIN0X0400)
 	{
@@ -597,10 +597,6 @@ void vc20_init_machine (void)
 	}
 	via_reset ();
 	via_0_ca1_w (0, vc20_via0_read_ca1(0) );
-}
-
-void vc20_shutdown_machine (void)
-{
 }
 
 static int vc20_rom_id (int id)
@@ -724,8 +720,7 @@ int vc20_rom_load (int id)
 	return 0;
 }
 
-
-int vc20_frame_interrupt (void)
+INTERRUPT_GEN( vc20_frame_interrupt )
 {
 	static int quickload = 0;
 
@@ -817,6 +812,4 @@ int vc20_frame_interrupt (void)
 	vc20_tape_config (DATASSETTE, DATASSETTE_TONE);
 	vc20_tape_buttons (DATASSETTE_PLAY, DATASSETTE_RECORD, DATASSETTE_STOP);
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_SHIFT_LOCK ? 1 : 0);
-
-	return ignore_interrupt ();
 }

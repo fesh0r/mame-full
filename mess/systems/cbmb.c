@@ -729,15 +729,10 @@ static struct GfxDecodeInfo cbm700_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-static void cbm500_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( cbm700 )
 {
-	memcpy (sys_palette, vic2_palette, sizeof (vic2_palette));
-}
-
-static void cbm700_init_palette (unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
-{
-	memcpy (sys_palette, cbm700_palette, sizeof (cbm700_palette));
-    memcpy(sys_colortable,cbmb_colortable,sizeof(cbmb_colortable));
+	palette_set_colors(0, cbm700_palette, sizeof(cbm700_palette) / 3);
+    memcpy(colortable,cbmb_colortable,sizeof(cbmb_colortable));
 }
 
 ROM_START (cbm610)
@@ -888,171 +883,70 @@ static SID6581_interface sid_sound_interface =
 };
 
 
-static struct MachineDriver machine_driver_cbm600 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6509,
-			2000000,
-			cbmb_readmem, cbmb_writemem,
-			0, 0,
-			0, 0,
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	cbmb_init_machine,
-	cbmb_shutdown_machine,
-
-  /* video hardware */
-	640,							   /* screen width */
-	200,							   /* screen height */
-	{0, 640 - 1, 0, 200 - 1},		   /* visible_area */
-	cbm600_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (cbm700_palette) / sizeof (cbm700_palette[0]) / 3,
-	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
-	cbm700_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#endif
-	0,
-	video_start_generic,
-	NULL,
-	cbmb_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &sid_sound_interface },
-		{ 0 }
-	}
-};
-
-static struct MachineDriver machine_driver_cbm600pal =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6509,
-			2000000,
-			cbmb_readmem, cbmb_writemem,
-			0, 0,
-			0, 0,
-		},
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	cbmb_init_machine,
-	cbmb_shutdown_machine,
-
-  /* video hardware */
-	640,							   /* screen width */
-	200,							   /* screen height */
-	{0, 640 - 1, 0, 200 - 1},		   /* visible_area */
-	cbm600_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (cbm700_palette) / sizeof (cbm700_palette[0]) / 3,
-	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
-	cbm700_init_palette,				   /* convert color prom */
-#ifdef PET_TEST_CODE
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#else
-	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-#endif
-	0,
-	video_start_generic,
-	NULL,
-	cbmb_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &sid_sound_interface },
-		{ 0 }
-	}
-};
-
-static struct MachineDriver machine_driver_cbm700 =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6509,
-			2000000,
-			cbmb_readmem, cbmb_writemem,
-			0, 0,
-			0, 0,
-		},
-	},
-	50, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	cbmb_init_machine,
-	cbmb_shutdown_machine,
-
-  /* video hardware */
-	720,							   /* screen width */
-	350,							   /* screen height */
-	{0, 720 - 1, 0, 350 - 1},		   /* visible_area */
-	cbm700_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (cbm700_palette) / sizeof (cbm700_palette[0]) / 3,
-	sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]),
-	cbm700_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	cbm700_vh_start,
-	NULL,
-	cbmb_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &sid_sound_interface },
-		{ 0 }
-	}
-};
-
-static struct MachineDriver machine_driver_cbm500 =
-{
+static MACHINE_DRIVER_START( cbm600 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6509,
-			VIC6567_CLOCK,
-			cbm500_readmem, cbm500_writemem,
-			0, 0,
-			0, 0,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		},
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	cbmb_init_machine,
-	cbmb_shutdown_machine,
+	MDRV_CPU_ADD_TAG("main", M6509, 7833600)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(cbmb_readmem, cbmb_writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
 
-	/* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	cbm500_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
+	MDRV_MACHINE_INIT( cbmb )
+
+    /* video hardware */
+#ifdef PET_TEST_CODE
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+#else
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+#endif
+	MDRV_SCREEN_SIZE(640, 200)
+	MDRV_VISIBLE_AREA(0, 640 - 1, 0, 200 - 1)
+	MDRV_GFXDECODE( cbm600_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof (cbm700_palette) / sizeof (cbm700_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof (cbmb_colortable) / sizeof(cbmb_colortable[0]))
+	MDRV_PALETTE_INIT( cbm700 )
+
+	MDRV_VIDEO_START( generic )
+	MDRV_VIDEO_UPDATE( cbmb )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		// ad_converter wired to joystick ports
-		{ SOUND_CUSTOM, &sid_sound_interface },
-		{ 0 }
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, sid_sound_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbm600pal )
+	MDRV_IMPORT_FROM( cbm600 )
+	MDRV_FRAMES_PER_SECOND(50)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbm700 )
+	MDRV_IMPORT_FROM( cbm600pal )
+	MDRV_SCREEN_SIZE(720, 350)
+	MDRV_VISIBLE_AREA(0, 720 - 1, 0, 350 - 1)
+	MDRV_GFXDECODE( cbm700_gfxdecodeinfo )
+
+	MDRV_VIDEO_START( cbm700 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cbm500 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6509, VIC6567_CLOCK)        /* 7.8336 Mhz */
+	MDRV_CPU_MEMORY(cbm500_readmem, cbm500_writemem)
+	MDRV_CPU_PERIODIC_INT(vic2_raster_irq, VIC2_HRETRACERATE)
+	MDRV_FRAMES_PER_SECOND(VIC6567_VRETRACERATE)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(0)
+
+	MDRV_MACHINE_INIT( cbmb )
+
+	MDRV_IMPORT_FROM( vh_vic2 )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, sid_sound_interface)
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_cbmb[] =
 {
@@ -1103,20 +997,4 @@ COMPX (1983,	cbm720,	cbm610,	cbm700,		cbm700,		cbm700,		"Commodore Business Mach
 COMPX (1983,	cbm720se,	cbm610,	cbm700,	cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720 Swedish/Finnish",	GAME_NOT_WORKING)
 #if 0
 COMPX (1983,	cbm730, cbm610, cbmbx, 		cbmb, 		cbmb, 		"Commodore Business Machines Co.",	"Commodore BX128-80HP/BX256-80HP/730", GAME_NOT_WORKING)
-#endif
-
-#ifdef RUNTIME_LOADER
-extern void cbmb_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"cbm500")==0) drivers[i]=&driver_cbm500;
-		if ( strcmp(drivers[i]->name,"cbm610")==0) drivers[i]=&driver_cbm610;
-		if ( strcmp(drivers[i]->name,"cbm620")==0) drivers[i]=&driver_cbm620;
-		if ( strcmp(drivers[i]->name,"cbm620hu")==0) drivers[i]=&driver_cbm620hu;
-		if ( strcmp(drivers[i]->name,"cbm710")==0) drivers[i]=&driver_cbm710;
-		if ( strcmp(drivers[i]->name,"cbm720")==0) drivers[i]=&driver_cbm720;
-		if ( strcmp(drivers[i]->name,"cbm720se")==0) drivers[i]=&driver_cbm720se;
-	}
-}
 #endif

@@ -45,10 +45,10 @@ extern void vic2_set_rastering(int onoff);
 #define VIC6569_LINES 312
 #define VIC2_LINES (vic2.pal?VIC6569_LINES:VIC6567_LINES)
 
-extern int vic2_vh_start (void);
-extern void vic2_vh_stop (void);
-extern void vic2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
-extern int vic2_raster_irq (void);
+extern MACHINE_DRIVER_EXTERN( vh_vic2 );
+extern VIDEO_START( vic2 );
+extern VIDEO_UPDATE( vic2 );
+extern INTERRUPT_GEN( vic2_raster_irq );
 
 extern unsigned char vic2_palette[16 * 3];
 
@@ -67,7 +67,7 @@ int vic2e_k1_r (void);
 int vic2e_k2_r (void);
 
 /* to be called each vertical retrace */
-extern void vic2_frame_interrupt (void);
+extern INTERRUPT_GEN( vic2_frame_interrupt );
 
 /* private area */
 

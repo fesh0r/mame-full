@@ -153,7 +153,8 @@ void vic6561_init (int (*dma_read) (int), int (*dma_read_color) (int))
 	vic_dma_read_color = dma_read_color;
 	vic656x_init ();
 }
-int vic6560_vh_start (void)
+
+VIDEO_START( vic6560 )
 {
 	black = Machine->pens[0];
 	white = Machine->pens[1];
@@ -166,7 +167,7 @@ int vic6560_vh_start (void)
 	return 0;
 }
 
-void vic6560_vh_stop (void)
+VIDEO_STOP( vic6560 )
 {
 	freegfx (pointerelement);
 }
@@ -573,7 +574,7 @@ static void vic6560_draw_text (struct mame_bitmap *bitmap, char *text, int *y)
 	}
 }
 
-int vic656x_raster_interrupt (void)
+INTERRUPT_GEN( vic656x_raster_interrupt )
 {
 	struct rectangle r;
 	int y;
@@ -621,9 +622,8 @@ int vic656x_raster_interrupt (void)
 		cbm_drive_1_status (text, sizeof (text));
 		vic6560_draw_text (vic6560_bitmap, text, &y);
 	}
-	return ignore_interrupt ();
 }
 
-void vic6560_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vic6560 )
 {
 }

@@ -59,8 +59,7 @@ extern void c65_driver_init (void);
 extern void c65_driver_alpha1_init (void);
 extern void c65pal_driver_init (void);
 extern void c65_driver_shutdown (void);
-extern void c65_init_machine (void);
-extern void c65_shutdown_machine (void);
+extern MACHINE_INIT( c65 );
 
 /*only for debugging */
 void c65_state (void);
