@@ -64,7 +64,7 @@ OBJ = $(NAME).obj
 
 EMULATOR = $(NAME)$(EXE)
 
-DEFS = -DDEVELOPING -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
 
 ifdef SYMBOLS
 CFLAGS = -Isrc -Imess -Isrc/msdos -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
