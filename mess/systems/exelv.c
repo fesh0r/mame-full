@@ -19,7 +19,7 @@ TODO :
 */
 static int video_start_exelv(void)
 {
-	return tms3556_init(0x10000);	/* tms3556 with 64 kb of video RAM */
+	return tms3556_init(/*0x8000*/0x10000);	/* tms3556 with 32 kb of video RAM */
 }
 
 static void machine_init_exelv(void)
@@ -48,12 +48,12 @@ static DEVICE_UNLOAD(exelv_cart)
 	@>0080-@>00ff: reserved
 	@>0100-@>010b: tms7020 internal I/O ports
 	@>010c-@>01ff: external I/O ports?
+		@>012e (P46): tms3556 VRAM write port???
 	@>0200-@>7fff: system ROM? (two pages?) + cartridge ROMs? (one or two pages?)
 	@>8000-@>bfff: free for expansion?
 	@>c000-@>c7ff: CPU RAM?
-	@>c800-@>efff: free for expansion?
-	@>f000-@>f005: reserved?
-	@>f006-@>ffff: tms7020 internal ROM
+	@>c800-@>f7ff: free for expansion?
+	@>f800-@>ffff: tms7020 internal ROM
 */
 
 static ADDRESS_MAP_START(exelv_memmap, ADDRESS_SPACE_PROGRAM, 8)
@@ -65,9 +65,8 @@ static ADDRESS_MAP_START(exelv_memmap, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0200, 0x7fff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* system ROM */
 	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_NOP, MWA8_NOP)
 	AM_RANGE(0xc000, 0xc7ff) AM_READWRITE(MRA8_RAM, MWA8_RAM)	/* CPU RAM */
-	AM_RANGE(0xc800, 0xefff) AM_READWRITE(MRA8_NOP, MWA8_NOP)
-	AM_RANGE(0xf000, 0xf005) AM_READWRITE(MRA8_NOP, MWA8_NOP)
-	AM_RANGE(0xf006, 0xffff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* tms7020 internal ROM */
+	AM_RANGE(0xc800, 0xf7ff) AM_READWRITE(MRA8_NOP, MWA8_NOP)
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(MRA8_ROM, MWA8_ROM)	/* tms7020 internal ROM */
 
 ADDRESS_MAP_END
 
@@ -112,7 +111,7 @@ MACHINE_DRIVER_END
 /*
   ROM loading
 */
-ROM_START(exelv)
+ROM_START(exeltel)
 	/*CPU memory space*/
 	ROM_REGION(0x10000,REGION_CPU1,0)
 	ROM_LOAD("exeltel14.bin", 0x0000, 0x8000, CRC(52a80dd4))      /* system ROM */
@@ -125,4 +124,5 @@ SYSTEM_CONFIG_START(exelv)
 SYSTEM_CONFIG_END
 
 /*		YEAR	NAME	PARENT		COMPAT	MACHINE		INPUT	INIT	CONFIG		COMPANY			FULLNAME */
-COMP(	1983?,	exelv,	0,			0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exl 100" )
+/*COMP(	1984,	exl100,	0,			0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exl 100" )*/
+COMP(	1986,	exeltel,0/*exl100*/,0,		exelv,		exelv,	NULL,	exelv,		"Exelvision",	"exeltel" )
