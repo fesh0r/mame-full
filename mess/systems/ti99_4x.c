@@ -42,6 +42,7 @@ Historical notes: TI made several last minute design changes.
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
 #include "machine/994x_ser.h"
+#include "machine/99_ide.h"
 #include "devices/cartslot.h"
 #include "devices/basicdsk.h"
 
@@ -176,6 +177,9 @@ INPUT_PORTS_START(ti99_4a)
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+		PORT_BITX( config_ide_mask << config_ide_bit, /*0*/1 << config_ide_bit, IPT_DIPSWITCH_NAME, "Nouspickel's IDE card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_ide_bit, DEF_STR( On ) )
 		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
@@ -188,8 +192,8 @@ INPUT_PORTS_START(ti99_4a)
 		PORT_KEY1(0x0020, IP_ACTIVE_LOW, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE,		UCHAR_SHIFT_1)
 		/* TI99/4a has a second shift key which maps the same */
 		PORT_KEY1(0x0020, IP_ACTIVE_LOW, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE,		UCHAR_SHIFT_1)
-		/* The original control key is located on the right, but we accept the
-		left function key as well */
+		/* The original function key is located on the right, but we accept the
+		left alt key as well */
 		PORT_KEY1(0x0010, IP_ACTIVE_LOW, "FCTN", KEYCODE_RALT, KEYCODE_LALT,		UCHAR_SHIFT_2)
 		PORT_KEY1(0x0004, IP_ACTIVE_LOW, "ENTER", KEYCODE_ENTER, IP_JOY_NONE,		13)
 		PORT_KEY1(0x0002, IP_ACTIVE_LOW, "(SPACE)", KEYCODE_SPACE, IP_JOY_NONE,		' ')
@@ -285,6 +289,9 @@ INPUT_PORTS_START(ti99_4)
 			PORT_DIPSETTING( fdc_kind_none << config_fdc_bit, "none" )
 			PORT_DIPSETTING( fdc_kind_TI << config_fdc_bit, "Texas Instruments" )
 			PORT_DIPSETTING( fdc_kind_BwG << config_fdc_bit, "SNUG's BwG" )
+		PORT_BITX( config_ide_mask << config_ide_bit, 0/*1 << config_ide_bit*/, IPT_DIPSWITCH_NAME, "Nouspickel's IDE card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_ide_bit, DEF_STR( On ) )
 		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
@@ -749,6 +756,7 @@ ROM_START(ti99_4)
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
 	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
@@ -769,6 +777,7 @@ ROM_START(ti99_4a)
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
 	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
@@ -789,8 +798,9 @@ ROM_START(ti99_4ev)
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
-	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000, 0xa062b75d) /* evpc DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
 	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
+	ROM_LOAD("evpcdsr.bin", offset_evpc_dsr, 0x10000, 0xa062b75d) /* evpc DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
@@ -814,6 +824,7 @@ SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_load)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)
+	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

@@ -56,6 +56,7 @@ TODO:
 #include "devices/cassette.h"
 #include "ti99_4x.h"
 #include "994x_ser.h"
+#include "99_ide.h"
 
 
 /* prototypes */
@@ -113,6 +114,8 @@ static xRAM_kind_t xRAM_kind;
 static char has_speech;
 /* floppy disk controller type */
 static fdc_kind_t fdc_kind;
+/* TRUE if ide card present */
+static char has_ide;
 /* TRUE if evpc card present */
 static char has_evpc;
 /* TRUE if rs232 card present */
@@ -645,6 +648,7 @@ void machine_init_ti99(void)
 		xRAM_kind = (readinputport(input_port_config) >> config_xRAM_bit) & config_xRAM_mask;
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
 	fdc_kind = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
+	has_ide = (readinputport(input_port_config) >> config_ide_bit) & config_ide_mask;
 	has_rs232 = (readinputport(input_port_config) >> config_rs232_bit) & config_rs232_mask;
 	has_handset = (ti99_model == model_99_4) && ((readinputport(input_port_config) >> config_handsets_bit) & config_handsets_mask);
 
@@ -708,13 +712,14 @@ void machine_init_ti99(void)
 		break;
 	}
 
+	if (has_ide)
+		ti99_ide_init();
+
 	if (has_rs232)
 		ti99_rs232_init();
 
 	if (has_evpc)
-	{
 		ti99_evpc_init();
-	}
 }
 
 void machine_stop_ti99(void)
@@ -3199,235 +3204,232 @@ static WRITE_HANDLER(bwg_mem_w)
 	}
 }
 
-/*===========================================================================*/
 /*
-	Thierry Nouspikel's IDE card emulation
+	Alternate fdc: Myarc HFDC
+
+	Advantages: same as BwG, plus:
+	* high density support
+	* hard disk support (only prehistoric mfm hard disks are supported, though)
+	* this card includes a MM58274C RTC.
+
+	Reference:
+	* hfdc manual
+		<ftp://ftp.whtech.com//datasheets & manuals/Hardware manuals/hfdc manual.max>
 */
+
+//#include "mm58274c.h"
 
 /* prototypes */
-static int ide_cru_r(int offset);
-static void ide_cru_w(int offset, int data);
-static READ_HANDLER(ide_mem_r);
-static WRITE_HANDLER(ide_mem_w);
+static int hfdc_cru_r(int offset);
+static void hfdc_cru_w(int offset, int data);
+static READ_HANDLER(hfdc_mem_r);
+static WRITE_HANDLER(hfdc_mem_w);
 
-/* pointer to the IDE RAM area */
-static UINT8 *ti99_ide_RAM;
-
-static int cur_page;
-enum
-{	/* 0xff for 2 mbytes, 0x3f for 512kbytes, 0x03 for 32 kbytes */
-	page_mask = /*0xff*/0x3f
-};
-
-static const ti99_exp_card_handlers_t ide_handlers =
+static const ti99_exp_card_handlers_t hfdc_handlers =
 {
-	ide_cru_r,
-	ide_cru_w,
-	ide_mem_r,
-	ide_mem_w
+	hfdc_cru_r,
+	hfdc_cru_w,
+	hfdc_mem_r,
+	hfdc_mem_w
 };
 
-static int sram_enable;
-static int sram_enable_dip = 0;
-static int cru_register;
-enum
-{
-	cru_reg_page_switching = 0x04,
-	cru_reg_page_0 = 0x08,
-	/*cru_reg_rambo = 0x10,*/	/* not emulated */
-	cru_reg_wp = 0x20,
-	/*cru_reg_unused = 0x40,*/
-	cru_reg_reset = 0x80
-};
-static int input_latch, output_latch;
+static int hfdc_rtc_enable;
+static int hfdc_ram_offset[3];
+static int hfdc_rom_offset;
+static int cru_sel;
+static UINT8 *hfdc_ram;
+
 
 /*
-	Reset ide card, set up handlers
+	Reset fdc card, set up handlers
 */
-/* NPW 08-Oct-2002 - Commenting out because it appears to be unused; and GCC whines
-static void ti99_ide_init(void)
+static void ti99_hfdc_init(void)
 {
-	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
+	ti99_disk_DSR = memory_region(region_dsr) + offset_hfdc_dsr;
+	hfdc_ram = memory_region(region_dsr) + offset_hfdc_ram;
+	hfdc_ram_offset[0] = hfdc_ram_offset[1] = hfdc_ram_offset[2] = 0;
+	hfdc_rom_offset = 0;
+	hfdc_rtc_enable = 0;
 
-	ti99_set_expansion_card_handlers(0x1000, & ide_handlers);
+	DSEL = 0;
+	DSKnum = -1;
+	DSKside = 0;
+
+	DVENA = 0;
+	motor_on = 0;
+	motor_on_timer = timer_alloc(motor_on_timer_callback);
+
+	ti99_exp_set_card_handlers(0x1100, & hfdc_handlers);
+
+	//wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
+	//wd179x_set_density(DEN_MFM_LO);
+
+
+	mm58274c_init();	/* initialize the RTC */
 }
-*/
+
 
 /*
-	Read ide CRU interface
+	Read disk CRU interface
+
+	bit 0: drive 4 active (not emulated)
+	bit 1-3: drive n active
+	bit 4-7: dip switches 1-4
 */
-static int ide_cru_r(int offset)
+static int hfdc_cru_r(int offset)
 {
 	int reply;
 
 	switch (offset)
 	{
+	case 0:
+		/* CRU bits: beware, logic levels of DIP-switches are inverted  */
+		if (cru_sel)
+			reply = 0x01;
+		else
+		{
+			reply = 0;
+			/*if (hfdc_interrupt)
+				reply |= 1;*/
+			if (motor_on)
+				reply |= 2;
+			/*if (hfdc_dma_in_progress)
+				reply |= 4;*/
+		}
+		break;
+
 	default:
-		reply = cru_register;
-		if (sram_enable_dip)
-			reply |= 2;
-		/*if (! ide_irq)
-			reply |= 1;*/
+		reply = 0;
 		break;
 	}
 
 	return reply;
 }
 
+
 /*
-	Write ide CRU interface
+	Write disk CRU interface
 */
-static void ide_cru_w(int offset, int data)
+static void hfdc_cru_w(int offset, int data)
 {
-	offset &= 7;
-
-
 	switch (offset)
 	{
-	case 0:			/* turn card on: handled by core */
+	case 0:
+		/* WRITE to DISK DSR ROM bit (bit 0) */
+		/* handled in ti99_expansion_CRU_w() */
 		break;
 
-	case 1:			/* enable SRAM or registers in 0x4000-0x40ff */
-		sram_enable = data;
+	case 1:
+		/* reset fdc (active low) */
 		break;
 
-	case 2:			/* enable SRAM page switching */
-	case 3:			/* force SRAM page 0 */
-	case 4:			/* enable SRAM in 0x6000-0x7000 ("RAMBO" mode) */
-	case 5:			/* write-protect RAM */
-	case 6:			/* not used */
-	case 7:			/* reset drive */
+	case 2:
+		/* Strobe motor + density */
+		if (data && !motor_on)
+		{
+			DVENA = 1;
+			fdc_handle_hold();
+			timer_adjust(motor_on_timer, 4.23, 0, 0.);
+		}
+		motor_on = data;
+		break;
+
+	case 3:
+		/* rom page select 0 + cru sel */
 		if (data)
-			cru_register |= 1 << offset;
+			hfdc_rom_offset |= 0x1000;	/* 0x2000??? */
 		else
-			cru_register &= ~ (1 << offset);
+			hfdc_rom_offset &= ~0x1000;	/* 0x2000??? */
+		cru_sel = data;
+		break;
 
-		if ((offset == 7) && data)
-			/*ide_reset()*/;
+	case 4:
+		/* rom page select 1 + density */
+		if (data)
+			hfdc_rom_offset |= 0x2000;	/* 0x1000??? */
+		else
+			hfdc_rom_offset &= ~0x2000;	/* 0x1000??? */
+		break;
+
+	case 9:
+	case 10:
+	case 11:
+	case 12:
+	case 13:
+	case 14:
+	case 15:
+	case 16:
+	case 17:
+	case 18:
+	case 19:
+	case 20:
+	case 21:
+	case 22:
+	case 23:
+		/* ram page select */
+		if (data)
+			hfdc_ram_offset[(offset-9)/5] |= 0x400 << ((offset-9)%5);
+		else
+			hfdc_ram_offset[(offset-9)/5] &= ~(0x400 << ((offset-9)%5));
 		break;
 	}
 }
 
 
 /*
-	read a byte in ide DSR space
+	read a byte in disk DSR space
 */
-static READ_HANDLER(ide_mem_r)
+static READ_HANDLER(hfdc_mem_r)
 {
 	int reply = 0;
 
-
-	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
-	{	/* registers */
-		switch ((offset >> 5) & 0x3)
-		{
-		case 0:		/* RTC RAM */
-			if (offset & 0x80)
-				/* RTC RAM page register */
-				;
-			else
-				/* RTC RAM write */
-				;
-			break;
-		case 1:		/* RTC registers */
-			if (offset == 0x20)
-				/* register data */
-				;
-			else if (offset == 0x30)
-				/* register select */
-				;
-			break;
-		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (offset & 1)
-			{
-				if (! (offset & 0x10))
-					/*reply = ide_r((offset >> 1) & 0x7)*/;
-
-				input_latch = (reply >> 8) & 0xff;
-				reply &= 0xff;
-			}
-			else
-				reply = input_latch;
-			break;
-		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (offset & 1)
-			{
-				if (! (offset & 0x10))
-					/*reply = ide_r(((offset >> 1) & 0x7) + 0x8)*/;
-
-				input_latch = (reply >> 8) & 0xff;
-				reply &= 0xff;
-			}
-			else
-				reply = input_latch;
-			break;
-		}
-	}
+	if (offset < 0x0fc0)
+		/* dsr ROM */
+		reply = ti99_disk_DSR[hfdc_rom_offset+offset];
+	else if (offset < 0x0fd0)
+		/* tape controller */
+		;
+	else if (offset < 0x0fe0)
+		/* disk controller */
+		;
+	else if (offset < 0x1000)
+		/* rtc */
+		if (! (offset & 1))
+			reply = mm58274c_r((offset - 0x1FE0) >> 1);
+	else if (offset < 0x1400)
+		/* ram page >10 */
+		reply = hfdc_ram[0x4000+(offset-0x1000)];
 	else
-	{	/* sram */
-		if (! (cru_register & cru_reg_page_0))
-			reply = ti99_ide_RAM[offset+0x2000*cur_page];
-		else
-			reply = ti99_ide_RAM[offset];
-	}
+		/* ram with mapper */
+		reply = hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)];
 
 	return reply;
 }
 
 /*
-	write a byte in ide DSR space
+	write a byte in disk DSR space
 */
-static WRITE_HANDLER(ide_mem_w)
+static WRITE_HANDLER(hfdc_mem_w)
 {
-	if (cru_register & cru_reg_page_switching)
-	{
-		cur_page = (offset >> 1) & page_mask;//0xff
-	}
-
-	if ((offset <= 0xff) && (sram_enable == sram_enable_dip))
-	{	/* registers */
-		switch ((offset >> 5) & 0x3)
-		{
-		case 0:		/* RTC RAM */
-			if (offset & 0x80)
-				/* RTC RAM page register */
-				;
-			else
-				/* RTC RAM write */
-				;
-			break;
-		case 1:		/* RTC registers */
-			if (offset == 0x20)
-				/* register data */
-				;
-			else if (offset == 0x30)
-				/* register select */
-				;
-			break;
-		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (offset & 1)
-				output_latch = data;
-			else
-				/*ide_w((offset >> 1) & 0x7, ((int) data << 8) | output_latch);*/
-			break;
-		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (offset & 1)
-				output_latch = data;
-			else
-				/*ide_w(((offset >> 1) & 0x7) + 0x8, ((int) data << 8) | output_latch);*/
-			break;
-		}
-	}
+	if (offset < 0x0fc0)
+		/* dsr ROM */
+		;
+	else if (offset < 0x0fd0)
+		/* tape controller */
+		;
+	else if (offset < 0x0fe0)
+		/* disk controller */
+		;
+	else if (offset < 0x1000)
+		/* rtc */
+		if (! (offset & 1))
+			mm58274c_w((offset - 0x1FE0) >> 1, data);
+	else if (offset < 0x1400)
+		/* ram page >10 */
+		hfdc_ram[0x4000+(offset-0x1000)] = data;
 	else
-	{	/* sram */
-		if (! (cru_register & cru_reg_wp))
-		{
-			if (! (cru_register & cru_reg_page_0))
-				ti99_ide_RAM[offset+0x2000*cur_page] = data;
-			else
-				ti99_ide_RAM[offset] = data;
-		}
-	}
+		/* ram with mapper */
+		hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)] = data;
 }
 
 /*===========================================================================*/

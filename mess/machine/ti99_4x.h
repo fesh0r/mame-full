@@ -39,13 +39,17 @@ enum
 /* offsets for region_dsr */
 enum
 {
-	offset_fdc_dsr = 0x0000,		/* TI FDC DSR (8kbytes) */
-	offset_bwg_dsr = 0x2000,		/* BwG FDC DSR (32kbytes) */
-	offset_bwg_ram = 0xa000,		/* BwG FDC RAM (2kbytes) */
-	offset_rs232_dsr = 0xa800,		/* TI RS232 DSR (4kbytes) */
-	offset_evpc_dsr= 0xb800,		/* EVPC DSR (64kbytes) */
-	offset_ide_ram = 0x1b800,		/* IDE card RAM (32 to 512kbytes) */
-	region_dsr_len = 0x11b800
+	offset_fdc_dsr   = 0x0000,						/* TI FDC DSR (8kbytes) */
+	offset_bwg_dsr   = offset_fdc_dsr   + 0x02000,	/* BwG FDC DSR (32kbytes) */
+	offset_bwg_ram   = offset_bwg_dsr   + 0x08000,	/* BwG FDC RAM (2kbytes) */
+	offset_hfdc_dsr  = offset_bwg_ram   + 0x00800,	/* HFDC FDC DSR (16kbytes) */
+	offset_hfdc_ram  = offset_hfdc_dsr  + 0x04000,	/* BwG FDC RAM (32kbytes) */
+	offset_rs232_dsr = offset_hfdc_ram  + 0x08000,	/* TI RS232 DSR (4kbytes) */
+	offset_evpc_dsr  = offset_rs232_dsr + 0x01000,	/* EVPC DSR (64kbytes) */
+	offset_ide_ram   = offset_evpc_dsr  + 0x10000,	/* IDE card RAM (32 to 2Mbytes, we settled for 512kbytes) */
+	offset_ide_ram2   = offset_ide_ram  + 0x80000,	/* IDE RTC RAM (4kbytes) */
+
+	region_dsr_len =   offset_ide_ram2  + 0x01000
 };
 
 /* enum for RAM config */
@@ -88,6 +92,8 @@ enum
 	config_speech_mask	= 0x1,
 	config_fdc_bit		= 4,
 	config_fdc_mask		= 0x3,	/* 2 bits */
+	config_ide_bit		= 8,
+	config_ide_mask		= 0x1,
 	config_rs232_bit	= 6,
 	config_rs232_mask	= 0x1,
 	/* next option only makes sense for ti99/4 */
@@ -203,3 +209,4 @@ READ16_HANDLER ( ti99_4p_expansion_CRU_r );
 WRITE16_HANDLER ( ti99_4p_expansion_CRU_w );
 READ16_HANDLER ( ti99_4p_rw_expansion );
 WRITE16_HANDLER ( ti99_4p_ww_expansion );
+
