@@ -130,7 +130,7 @@ void spectrum_eof_callback(void)
                 pItem = EventList_GetFirstItem();
                 set_last_border_color ( pItem[NumItems-1].Event_Data );
                 EventList_Reset();
-                EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+                EventList_SetOffsetStartTime ( TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) );
                 logerror ("Event log reset in callback fn.\n");
         }
 }
@@ -157,7 +157,7 @@ void ts2068_eof_callback(void)
                 pItem = EventList_GetFirstItem();
                 set_last_border_color ( pItem[NumItems-1].Event_Data );
                 EventList_Reset();
-                EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
+                EventList_SetOffsetStartTime ( TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod()) );
                 logerror ("Event log reset in callback fn.\n");
         }
 }

@@ -331,7 +331,7 @@ static OPBASE_HANDLER(spectrum_tape_opbaseoverride)
 		sp_reg = cpu_get_reg(Z80_SP);
 		sp_reg += 2;
 		cpu_set_reg(Z80_SP, (sp_reg & 0x0ffff));
-		cpu_set_sp((sp_reg & 0x0ffff));
+		activecpu_set_sp((sp_reg & 0x0ffff));
 	}
 	while (((return_addr != 0x053f) && (return_addr < 0x0605) && (ts2068_port_f4_data == -1)) ||
 		   ((return_addr != 0x00e5) && (return_addr < 0x01aa) && (ts2068_port_f4_data != -1)));
@@ -485,7 +485,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	lo = pSnapshot[23] & 0x0ff;
 	hi = pSnapshot[24] & 0x0ff;
 	cpu_set_reg(Z80_SP, (hi << 8) | lo);
-	cpu_set_sp((hi << 8) | lo);
+	activecpu_set_sp((hi << 8) | lo);
 	data = (pSnapshot[25] & 0x0ff);
 	cpu_set_reg(Z80_IM, data);
 
@@ -524,7 +524,7 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		addr = cpu_get_reg(Z80_SP);
 		addr += 2;
 		cpu_set_reg(Z80_SP, (addr & 0x0ffff));
-		cpu_set_sp((addr & 0x0ffff));
+		activecpu_set_sp((addr & 0x0ffff));
 	}
 	else
 	{
@@ -662,7 +662,7 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	lo = pSnapshot[8] & 0x0ff;
 	hi = pSnapshot[9] & 0x0ff;
 	cpu_set_reg(Z80_SP, (hi << 8) | lo);
-	cpu_set_sp((hi << 8) | lo);
+	activecpu_set_sp((hi << 8) | lo);
 
 	/* I */
 	cpu_set_reg(Z80_I, (pSnapshot[10] & 0x0ff));
