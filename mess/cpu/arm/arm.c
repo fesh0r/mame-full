@@ -42,7 +42,7 @@ static UINT8 arm_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-struct ARM {
+struct ARMCPU {
 	UINT32 queue[3];	/* instruction queue */
 	UINT32 psw; 		/* status word */
 	UINT32 reg[16]; 	/* user register set */
@@ -52,7 +52,7 @@ struct ARM {
     UINT32 ppc;         /* previous PC */
 };
 
-static struct ARM arm;
+static struct ARMCPU arm;
 int arm_ICount;
 
 #define AMASK	0x03fffffc
@@ -2631,7 +2631,7 @@ void (*func[256])(void) =
 
 void arm_reset(void *param)
 {
-	memset(&arm, 0, sizeof(struct ARM));
+	memset(&arm, 0, sizeof(struct ARMCPU));
 	PUT_PC(0, 0);
 }
 
@@ -2717,14 +2717,14 @@ int arm_execute(int cycles)
 unsigned arm_get_context(void *dst)
 {
 	if (dst)
-		*(struct ARM *)dst = arm;
-	return sizeof(struct ARM);
+		*(struct ARMCPU *)dst = arm;
+	return sizeof(struct ARMCPU);
 }
 
 void arm_set_context(void *src)
 {
 	if (src)
-		arm = *(struct ARM *)src;
+		arm = *(struct ARMCPU *)src;
 }
 
 unsigned arm_get_pc(void)
@@ -2843,13 +2843,13 @@ const char *arm_info(void *context, int regnum)
 {
 	static char buffer[32][63+1];
 	static int which = 0;
-	struct ARM *r = context;
+	struct ARMCPU *r = context;
 
 	which = ++which % 32;
 	buffer[which][0] = '\0';
 	if (!context)
 	{
-		static struct ARM tmp;
+		static struct ARMCPU tmp;
 		arm_get_context( &tmp );
 		r = &tmp;
 	}
