@@ -445,8 +445,8 @@ int bit=1 << (source-8*(int)(source/8));
 static WRITE16_HANDLER( m68901_w )
 {
 
-m68901_base[offset]=data;
 UINT8 value = (data>>8)& 0xff;
+m68901_base[offset]=data;
 
 switch(offset)
 {
