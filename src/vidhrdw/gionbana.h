@@ -1,0 +1,23 @@
+extern void gionbana_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern int gionbana_vh_start(void);
+extern void gionbana_vh_stop(void);
+extern int hanamomo_vh_start(void);
+extern void hanamomo_vh_stop(void);
+
+extern READ_HANDLER( gionbana_palette_r );
+extern WRITE_HANDLER( gionbana_palette_w );
+extern READ_HANDLER( maiko_palette_r );
+extern WRITE_HANDLER( maiko_palette_w );
+extern void gionbana_radrx_w(int data);
+extern void gionbana_radry_w(int data);
+extern void gionbana_sizex_w(int data);
+extern void gionbana_sizey_w(int data);
+extern void gionbana_dispflag_w(int data);
+extern void gionbana_drawx_w(int data);
+extern void gionbana_drawy_w(int data);
+extern void gionbana_scrolly_w(int data);
+extern void gionbana_vramsel_w(int data);
+extern void gionbana_romsel_w(int data);
+extern void gionbana_paltblnum_w(int data);
+extern READ_HANDLER( gionbana_paltbl_r );
+extern WRITE_HANDLER( gionbana_paltbl_w );

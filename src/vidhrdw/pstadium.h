@@ -1,0 +1,23 @@
+extern void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+extern int pstadium_vh_start(void);
+extern void pstadium_vh_stop(void);
+
+extern READ_HANDLER( pstadium_palette_r );
+extern WRITE_HANDLER( pstadium_palette_w );
+extern WRITE_HANDLER( galkoku_palette_w );
+extern WRITE_HANDLER( galkaika_palette_w );
+extern void pstadium_radrx_w(int data);
+extern void pstadium_radry_w(int data);
+extern void pstadium_sizex_w(int data);
+extern void pstadium_sizey_w(int data);
+extern void pstadium_dispflag_w(int data);
+extern void pstadium_drawx_w(int data);
+extern void pstadium_drawy_w(int data);
+extern void pstadium_scrollx_w(int data);
+extern void pstadium_scrolly_w(int data);
+extern void pstadium_gfxflag_w(int data);
+extern void pstadium_romsel_w(int data);
+extern void pstadium_paltblnum_w(int data);
+extern READ_HANDLER( pstadium_paltbl_r );
+extern WRITE_HANDLER( pstadium_paltbl_w );
