@@ -730,8 +730,12 @@ MACHINE_INIT( apple2 )
 {
 	mess_image *image;
 	int i;
+	int need_intcxrom;
 
-	apple2_setvar(strcmp(Machine->gamedrv->name, "apple2c") ? 0 : VAR_INTCXROM, ~0);
+	need_intcxrom = !strcmp(Machine->gamedrv->name, "apple2c")
+		|| !strcmp(Machine->gamedrv->name, "apple2c0")
+		|| !strcmp(Machine->gamedrv->name, "apple2cp");
+	apple2_setvar(need_intcxrom ? VAR_INTCXROM : 0, ~0);
 
 	AY3600_init();
 
