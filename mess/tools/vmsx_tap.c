@@ -1,34 +1,46 @@
 /* 
-   vMSX tap format
+    vMSX tap format
 
-   Virtual MSX 1.x (being replaced by the MSX driver in mess) had
-   it's on format for cassette recordings. The format is similar
-   to .cas files; however several recordings could be stored in
-   one file. 
+    Virtual MSX 1.x (being replaced by the MSX driver in mess) had
+    it's on format for cassette recordings. The format is similar
+    to .cas files; however several recordings could be stored in
+    one file. 
 
-   Virtual MSX was never really popular; I haven't seen any of these
-   files on the internet. However for completeness sake I've added
-   this converter. It's read only; the MSX driver cannot read
-   these files, but can read the .cas files (like most other MSX
-   emulators). Further use (specially distribution of the .tap files 
-   is discouraged as Virtual MSX is obsolete (along with its private
-   file formats).
+    Virtual MSX was never really popular; I haven't seen any of these
+    files on the internet. However for completeness sake I've added
+    this converter. It's read only; the MSX driver cannot read
+    these files, but can read the .cas files (like most other MSX
+    emulators). Further use and specially distribution of the .tap files 
+    is discouraged as Virtual MSX is obsolete (along with its private
+    file formats).
 
-   These files used the M$ mmio functions (similar to .aiff files). There
-   is an INFO block which lists all files in the archive. The TAPE block
-   contains the actual data.
+    These files used the M$ mmio functions (similar to .aiff files). There
+    is an INFO block which lists all files in the archive. The TAPE block
+    contains the actual data.
 
-   This module converts the files to .cas files. Implemented are:
+	Original code in Virtual MSX:
 
-   dir - list all the files in the archive as "%title%-%type%.cas"
-   getall - writes all the files to disk
-   get - gets one file. If "getall" fails, due to characters in the
-       filename your FS/OS doesn't support, use: 
+		ftp://ftp.komkon.org/pub/EMUL8/MSX/Emulators/VMSX1SRC.zip
+	
+	It's in the file TAPE.C.
+
+	RIFF format specs:
+
+		http://www.saettler.com/RIFFMCI/riffmci.html
+
+
+    This module converts the files to .cas files. Implemented are:
+
+    dir - list all the files in the archive as "%title%-%type%.cas"
+    getall - writes all the files to disk
+    get - gets one file. If "getall" fails, due to characters in the
+          filename your FS/OS doesn't support, use: 
 
 	imgtool get vmsx_tap monmsx.tap monmsx-binary.cas monmsx.cas
 
-   for example.
+    for example.
 
+	Sean Young 
 */
 
 #include "osdepend.h"
@@ -47,7 +59,7 @@ typedef struct
 	IMAGE 		base;
 	STREAM 		*file_handle;
 	int 		size;
-	unsigned char		*data;
+	UINT8		*data;
 	int 		count;
 	TAP_ENTRY 	*entries;
 	} TAP_IMAGE;
@@ -91,7 +103,7 @@ IMAGEMODULE(
 	NULL
 )
 
-static const unsigned char CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0x74 };
+static const UINT8 CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0x74 };
 
 #ifdef LSB_FIRST
 #define intelLong(x) (x)
@@ -117,6 +129,7 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 		if (strncmp ((char*)pmem + pos, "INFO", 4) )
 			{
 			/* not this chunk, skip */
+			if (offset & 1) offset++; /* pad byte */
 			pos += offset + 8;
 			continue;
 			}
@@ -141,6 +154,7 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 
 		for (i=0;i<image->count;i++)
 			{
+			/* this should really check the data */
 			strncpy (image->entries[i].title, (char*)p, 32); p += 32;
 			strncpy (image->entries[i].type, (char*)p, 10); p += 10;
 			memcpy (image->entries[i].chunk, (char*)p, 4); p += 4;
@@ -149,12 +163,13 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 		return 0;
 		}	
 
-	return IMGTOOLERR_CORRUPTIMAGE;
+	return IMGTOOLERR_MODULENOTFOUND;
 	}
 
 static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned char **pcas, int *psize)
 	{
-	unsigned int caspos, pos = 0, found = 0, offset, tapblock, size, tappos;
+	unsigned int caspos, pos = 0, found = 0, offset, size, tappos;
+	UINT32 tapblock;
 	unsigned char *p, *pmem;
 
 	size = image->size;
@@ -166,6 +181,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 		offset = intelLong (offset);
 		if (memcmp (pmem + pos, "LIST", 4) )
 			{
+			if (offset & 1) offset++;
 			pos += offset + 8;
 			continue;
 			}
@@ -194,10 +210,9 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 		{
 		offset = *((UINT32*)(pmem + pos + 4));
 		offset = intelLong (offset);
-		/* seems to be necessary; blame M$. */
-		if (offset & 1) offset++;
 		if (memcmp (pmem + pos, chunk, 4) )
 			{
+			if (offset & 1) offset++;
 			pos += offset + 8;
 			continue;
 			}
@@ -212,7 +227,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 			tapblock = *((UINT32*)(pmem + pos + tappos));
 			tappos += 4;
 			tapblock = intelLong (tapblock);
-			if (tapblock == -1) break;
+			if (tapblock == 0xffffffff) break;
 			memcpy (p + caspos, CasHeader, 8); 
 			caspos += 8;
 			memcpy (p + caspos, pmem + pos + tappos, tapblock); 
@@ -245,14 +260,21 @@ static int vmsx_tap_image_init(STREAM *f, IMAGE **outimg)
 	image->size=stream_size(f);
 	image->file_handle=f;
 
-	image->data = (unsigned char *) malloc(image->size);
-	if ( (!image->data)
-		 ||(stream_read(f, image->data, image->size)!=image->size) ) 
+	image->data = (UINT8*) malloc(image->size);
+	if (!image->data)
 		{
 		free(image);
 		*outimg=NULL;
 		return IMGTOOLERR_OUTOFMEMORY;
 		}
+
+	if (stream_read(f, image->data, image->size)!=image->size) 
+		{
+		free(image);
+		*outimg=NULL;
+		return IMGTOOLERR_READERROR;
+		}
+
 	if ( (rc=vmsx_tap_read_image(image)) ) 	
 		{
 		if (image->entries) free(image->entries);
@@ -323,7 +345,7 @@ static void vmsx_tap_image_closeenum(IMAGEENUM *enumeration)
 static TAP_ENTRY* vmsx_tap_image_findfile(TAP_IMAGE *image, const char *fname)
 	{
 	int i;
-	char filename[32];
+	char filename[64]; /* that's always enough! */
 
 	for (i=0; i<image->count; i++)
 		{
