@@ -713,13 +713,13 @@ int ti85_serial_init (int id)
 				free (file_data);
 
 				ti85_serial_status = TI85_SEND_HEADER;
-
-				return INIT_PASS;
 			}
 		}
+		else 
+			return INIT_FAIL;
 		osd_fclose(file);
 	}
-	return INIT_FAIL;
+	return INIT_PASS;
 }
 
 void ti85_serial_exit (int id)
