@@ -25,6 +25,7 @@ static double final_time;
 static const struct messtest_command *current_command;
 static int abort_test;
 static int test_flags;
+static int screenshot_num;
 
 static void message(enum messtest_messagetype msgtype, const char *fmt, ...);
 
@@ -36,17 +37,19 @@ static void dump_screenshot(void)
 	char buf[128];
 
 	/* if we are at runtime, dump a screenshot */
-	if (final_time > 0.0)
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
+		(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
+		current_testcase->name, screenshot_num);
+	fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
+	if (fp)
 	{
-		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "test_%s.png", current_testcase->name);
-		fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
-		if (fp)
-		{
-			save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
-			mame_fclose(fp);
-			message(MSG_INFO, "Saved screenshot as %s", buf);
-		}
+		save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+		mame_fclose(fp);
+		message(MSG_INFO, "Saved screenshot as %s", buf);
 	}
+
+	if (screenshot_num >= 0)
+		screenshot_num++;
 }
 
 
@@ -67,7 +70,8 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 	{
 		state = STATE_ABORTED;
 		final_time = timer_get_time();
-		dump_screenshot();
+		if (final_time > 0.0)
+			dump_screenshot();
 	}
 }
 
@@ -100,6 +104,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	current_command = testcase->commands;
 	state = STATE_READY;
 	test_flags = flags;
+	screenshot_num = 0;
 
 	/* set up options */
 	memset(&options, 0, sizeof(options));
@@ -207,6 +212,10 @@ void osd_update_video_and_audio(struct mame_display *display)
 		state = inputx_is_posting() ? STATE_INCOMMAND : STATE_READY;
 		break;
 
+	case MESSTEST_COMMAND_SCREENSHOT:
+		dump_screenshot();
+		break;
+
 	case MESSTEST_COMMAND_IMAGE_CREATE:
 	case MESSTEST_COMMAND_IMAGE_LOAD:
 		device_slot = current_command->u.image_args.device_slot;
@@ -301,15 +310,24 @@ void osd_update_video_and_audio(struct mame_display *display)
 		/* at the end of our test */
 		state = STATE_DONE;
 		final_time = current_time;
-
-		if (test_flags & MESSTEST_ALWAYS_DUMP_SCREENSHOT)
-			dump_screenshot();
 		break;
 	}
 
 	/* if we are ready for the next command, advance to it */
 	if (state == STATE_READY)
+	{
+		/* if we are at the end, and we are dumping screenshots, and we didn't
+		 * just dump a screenshot, dump one now
+		 */
+		if ((test_flags & MESSTEST_ALWAYS_DUMP_SCREENSHOT) &&
+			(current_command[0].command_type != MESSTEST_COMMAND_SCREENSHOT) &&
+			(current_command[1].command_type == MESSTEST_COMMAND_END))
+		{
+			dump_screenshot();
+		}
+
 		current_command++;
+	}
 }
 
 

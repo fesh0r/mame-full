@@ -274,6 +274,7 @@ messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS)	\
 		$(OBJ)/windows/misc.o					\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
+		$(OBJ)/mess/windows/glob.o				\
 		$(OBJ)/mess/windows/parallel.o			\
 		$(OBJ)/xml2info/xmlrole.o				\
 		$(OBJ)/xml2info/xmltok.o				\

@@ -1883,6 +1883,14 @@ static int validitychecks(void)
 				if (drv.cpu[cpu].cpu_type)
 				{
 					int space,mapnum;
+					extern void dummy_get_info(UINT32 state, union cpuinfo *info);
+
+					if (cputype_get_interface(drv.cpu[cpu].cpu_type)->get_info == dummy_get_info)
+					{
+						printf("%s: %s uses non-present CPU\n",drivers[i]->source_file,drivers[i]->name);
+						error = 1;
+					}
+
 					for (space = 0;space < ADDRESS_SPACES;space++)
 						for (mapnum = 0;mapnum < 2;mapnum++)
 						{

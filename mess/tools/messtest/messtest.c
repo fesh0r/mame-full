@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <windows.h>
 
 #include "messtest.h"
 #include "osdepend.h"
@@ -184,6 +185,11 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 		{
 			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
+		}
+		else if (!strcmp(tagname, "screenshot"))
+		{
+			/* <screenshot> - dumps a screenshot */
+			state->current_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
 		}
 		else if (!strcmp(tagname, "imagecreate") || !strcmp(tagname, "imageload"))
 		{
@@ -489,9 +495,11 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 {
 	struct messtest_state state;
 	char buf[1024];
+	TCHAR saved_directory[1024];
 	FILE *in;
 	int len, done;
 	int result = -1;
+	char *script_directory;
 
 	memset(&state, 0, sizeof(state));
 	state.test_flags = flags;
@@ -503,6 +511,19 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	{
 		fprintf(stderr, "%s: Cannot open file\n", script_filename);
 		goto done;
+	}
+
+	/* save the current working directory, and change to the test directory */
+	script_directory = osd_dirname(script_filename);
+	if (script_directory)
+	{
+		GetCurrentDirectory(sizeof(saved_directory) / sizeof(saved_directory[0]), saved_directory);
+		SetCurrentDirectory(script_directory);
+		free(script_directory);
+	}
+	else
+	{
+		saved_directory[0] = '\0';
 	}
 
 	/* since the cpuintrf structure is filled dynamically now, we have to init first */
@@ -536,7 +557,15 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	result = 0;
 
 done:
-	XML_ParserFree(state.parser);
+	/* restore the directory */
+	if (saved_directory[0])
+		SetCurrentDirectory(saved_directory);
+
+	/* dispose of the parser */
+	if (state.parser)
+		XML_ParserFree(state.parser);
+
+	/* write out test and failure counts */
 	if (test_count)
 		*test_count = state.test_count;
 	if (failure_count)

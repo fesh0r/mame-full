@@ -97,7 +97,7 @@ CPUS+=SH2@
 CPUS+=G65816@
 CPUS+=SPC700@
 #CPUS+=E132XS@
-#CPUS+=Z80GB@
+CPUS+=Z80GB@
 #CPUS+=CDP1802@
 #CPUS+=SC61860@
 #CPUS+=SATURN@
@@ -182,7 +182,7 @@ DRVLIBS = \
 	$(OBJ)/apexc.a	  \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/sony.a     \
-#	$(OBJ)/nintendo.a \
+	$(OBJ)/nintendo.a \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/pcshare.a  \
@@ -303,19 +303,19 @@ $(OBJ)/gce.a:	                     \
 	$(OBJ)/mess/systems/vectrex.o
 
 $(OBJ)/nintendo.a:                   \
-	$(OBJ)/mess/machine/nes_mmc.o  \
-	$(OBJ)/vidhrdw/ppu2c03b.o		 \
-	$(OBJ)/mess/vidhrdw/nes.o      \
-	$(OBJ)/mess/machine/nes.o	     \
-	$(OBJ)/mess/systems/nes.o	     \
 	$(OBJ)/mess/sndhrdw/gb.o       \
 	$(OBJ)/mess/vidhrdw/gb.o       \
 	$(OBJ)/mess/machine/gb.o       \
 	$(OBJ)/mess/systems/gb.o       \
-	$(OBJ)/sndhrdw/snes.o          \
-	$(OBJ)/machine/snes.o          \
-	$(OBJ)/vidhrdw/snes.o          \
-	$(OBJ)/mess/systems/snes.o	 
+#	$(OBJ)/mess/machine/nes_mmc.o  \
+#	$(OBJ)/vidhrdw/ppu2c03b.o		 \
+#	$(OBJ)/mess/vidhrdw/nes.o      \
+#	$(OBJ)/mess/machine/nes.o	     \
+#	$(OBJ)/mess/systems/nes.o	     \
+#	$(OBJ)/sndhrdw/snes.o          \
+#	$(OBJ)/machine/snes.o          \
+#	$(OBJ)/vidhrdw/snes.o          \
+#	$(OBJ)/mess/systems/snes.o	 
 
 $(OBJ)/amiga.a: \
 	$(OBJ)/mess/vidhrdw/amiga.o	 \
