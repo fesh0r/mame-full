@@ -36,7 +36,7 @@ WRITE_HANDLER(nec765_data_w);
 READ_HANDLER(nec765_status_r);
 
 /* supported versions */
-enum
+typedef enum
 {
 	NEC765A=0,
 	NEC765B=1,
