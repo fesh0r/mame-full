@@ -302,7 +302,6 @@ INLINE void BFS(data_t d)
 INLINE void BRA(data_t d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
-	UINT32 temp;
 
 	sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
 	change_pc27bew(sh2.pc & AM);
@@ -313,8 +312,6 @@ INLINE void BRA(data_t d)
 /*	BRAF	Rm */
 INLINE void BRAF(data_t m)
 {
-	UINT32 temp;
-
 	sh2.pc += sh2.r[m] + 2;
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.ppc;
