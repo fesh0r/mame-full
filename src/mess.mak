@@ -221,11 +221,12 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
 	  $(OBJ)/mess/machine/sms.o	 \
 	  $(OBJ)/mess/systems/sms.o	 \
+#	  $(OBJ)/mess/systems/saturn.o   \
 	  $(OBJ)/mess/vidhrdw/genesis.o  \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-	  $(OBJ)/mess/systems/saturn.o
+
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
@@ -238,31 +239,28 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
       $(OBJ)/mess/systems/a2600.o   \
-    $(OBJ)/mess/systems/atarist.o
+#    $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
-	  $(OBJ)/mess/vidhrdw/vectrex.o  \
+#	  $(OBJ)/mess/vidhrdw/vectrex.o  \
 	  $(OBJ)/mess/machine/vectrex.o  \
 	  $(OBJ)/mess/systems/vectrex.o
 
 $(OBJ)/nintendo.a: \
-	  $(OBJ)/mess/machine/nes_mmc.o  \
-	  $(OBJ)/mess/vidhrdw/nes.o	 \
-	  $(OBJ)/mess/machine/nes.o	 \
-	  $(OBJ)/mess/systems/nes.o	 \
 	  $(OBJ)/mess/vidhrdw/gb.o	 \
 	  $(OBJ)/mess/machine/gb.o	 \
 	  $(OBJ)/mess/systems/gb.o	 \
 	  $(OBJ)/mess/sndhrdw/snes.o	 \
 	  $(OBJ)/mess/vidhrdw/snes.o	 \
 	  $(OBJ)/mess/machine/snes.o	 \
-	  $(OBJ)/mess/systems/snes.o
+	  $(OBJ)/mess/systems/snes.o     \
+#	  $(OBJ)/mess/machine/nes_mmc.o  \
+	  $(OBJ)/mess/vidhrdw/nes.o	 \
+	  $(OBJ)/mess/machine/nes.o	 \
+	  $(OBJ)/mess/systems/nes.o	 \
 
 
 $(OBJ)/cbm.a:	   \
-	  $(OBJ)/mess/vidhrdw/amiga.o	 \
-	  $(OBJ)/mess/machine/amiga.o	 \
-	  $(OBJ)/mess/systems/amiga.o	 \
 	  $(OBJ)/mess/vidhrdw/crtc6845.o \
 	  $(OBJ)/mess/machine/tpi6525.o  \
 	  $(OBJ)/mess/machine/cbmieeeb.o \
@@ -298,17 +296,22 @@ $(OBJ)/cbm.a:	   \
 	  $(OBJ)/mess/sndhrdw/sid.o  \
 	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
 	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
+#	  $(OBJ)/mess/vidhrdw/amiga.o	 \
+	  $(OBJ)/mess/machine/amiga.o	 \
+	  $(OBJ)/mess/systems/amiga.o	 \
+
 
 $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/machine/counter.o  \
 	  $(OBJ)/mess/formats/cocopak.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
-	  $(OBJ)/mess/vidhrdw/m6847.o	 \
+#	  $(OBJ)/mess/vidhrdw/m6847.o	 \
 	  $(OBJ)/mess/machine/mc10.o	 \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
-	  $(OBJ)/mess/systems/dragon.o
+	  $(OBJ)/mess/systems/dragon.o   
+
 
 $(OBJ)/trs80.a:    \
 	  $(OBJ)/mess/machine/trs80.o	 \
@@ -356,7 +359,7 @@ $(OBJ)/apple2.a:   \
 	  $(OBJ)/mess/systems/apple2.o
 
 $(OBJ)/mac.a: \
-	  $(OBJ)/mess/sndhrdw/mac.o	 \
+#	  $(OBJ)/mess/sndhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/iwm.o	 \
 	  $(OBJ)/mess/vidhrdw/mac.o	 \
 	  $(OBJ)/mess/machine/mac.o	 \
@@ -372,7 +375,7 @@ $(OBJ)/rca.a: \
 	  $(OBJ)/mess/vidhrdw/studio2.o  \
 
 $(OBJ)/fairch.a: \
-	  $(OBJ)/mess/systems/channelf.o \
+#	  $(OBJ)/mess/systems/channelf.o \
 	  $(OBJ)/mess/vidhrdw/channelf.o \
 	  $(OBJ)/mess/sndhrdw/channelf.o
 
@@ -423,17 +426,17 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
 	  $(OBJ)/mess/machine/amstrad.o  \
 	  $(OBJ)/mess/machine/kc.o	 \
-	  $(OBJ)/mess/systems/amstrad.o  \
 	  $(OBJ)/mess/vidhrdw/pcw.o	 \
 	  $(OBJ)/mess/systems/pcw.o	 \
 	  $(OBJ)/mess/vidhrdw/nc.o	 \
 	  $(OBJ)/mess/systems/nc.o	 \
 	  $(OBJ)/mess/machine/nc.o	 \
-	  $(OBJ)/mess/machine/tc8521.o		\
-	  $(OBJ)/mess/systems/pcw16.o		\
-	  $(OBJ)/mess/machine/28f008sa.o	\
-      $(OBJ)/mess/machine/msm8251.o     \
-	  $(OBJ)/mess/vidhrdw/pcw16.o
+	  $(OBJ)/mess/machine/tc8521.o	 \
+	  $(OBJ)/mess/systems/pcw16.o	 \
+	  $(OBJ)/mess/machine/28f008sa.o \
+	  $(OBJ)/mess/machine/msm8251.o  \
+	  $(OBJ)/mess/vidhrdw/pcw16.o    \
+#	  $(OBJ)/mess/systems/amstrad.o  \
 
 $(OBJ)/nec.a:	   \
 	  $(OBJ)/mess/vidhrdw/vdc.o	 \
@@ -459,20 +462,20 @@ $(OBJ)/kim1.a :    \
 	  $(OBJ)/mess/systems/kim1.o
 
 $(OBJ)/tangerin.a :\
-    $(OBJ)/mess/machine/mfmdisk.o   \
-	  $(OBJ)/mess/vidhrdw/oric.o	 \
-	  $(OBJ)/mess/machine/oric.o	 \
-	  $(OBJ)/mess/systems/oric.o	 \
+#	  $(OBJ)/mess/machine/mfmdisk.o  \
 	  $(OBJ)/mess/vidhrdw/microtan.o \
 	  $(OBJ)/mess/machine/microtan.o \
-	  $(OBJ)/mess/systems/microtan.o
+	  $(OBJ)/mess/systems/microtan.o \
+	  $(OBJ)/mess/vidhrdw/oric.o	 \
+	  $(OBJ)/mess/machine/oric.o	 \
+	  $(OBJ)/mess/systems/oric.o
 
 $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
 	  $(OBJ)/mess/machine/vtech1.o	 \
 	  $(OBJ)/mess/systems/vtech1.o	 \
 	  $(OBJ)/mess/vidhrdw/vtech2.o	 \
-	  $(OBJ)/mess/machine/vtech2.o	 \
+#	  $(OBJ)/mess/machine/vtech2.o	 \
 	  $(OBJ)/mess/systems/vtech2.o
 
 $(OBJ)/jupiter.a : \
@@ -504,7 +507,7 @@ $(OBJ)/bbc.a:	   \
 	  $(OBJ)/mess/systems/bbc.o
 
 $(OBJ)/cpschngr.a: \
-	  $(OBJ)/machine/eeprom.o	 \
+#	  $(OBJ)/machine/eeprom.o	 \
 	  $(OBJ)/vidhrdw/cps1.o 	 \
 	  $(OBJ)/mess/systems/cpschngr.o
 
@@ -512,12 +515,12 @@ $(OBJ)/mtx.a:	   \
 	  $(OBJ)/mess/systems/mtx.o
 
 $(OBJ)/lisa.a:	   \
-	  $(OBJ)/mess/machine/iwm_lisa.o \
+#	  $(OBJ)/mess/machine/iwm_lisa.o \
 	  $(OBJ)/mess/machine/lisa.o	 \
 	  $(OBJ)/mess/systems/lisa.o
 
 $(OBJ)/acorn.a:    \
-	  $(OBJ)/mess/machine/atom.o	 \
+#	  $(OBJ)/mess/machine/atom.o	 \
 	  $(OBJ)/mess/vidhrdw/atom.o	 \
 	  $(OBJ)/mess/systems/atom.o	 \
 	  $(OBJ)/mess/systems/a310.o	 \
@@ -531,9 +534,6 @@ $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/systems/coupe.o
 
 $(OBJ)/sharp.a:    \
-	  $(OBJ)/mess/machine/mz700.o	 \
-	  $(OBJ)/mess/vidhrdw/mz700.o	 \
-	  $(OBJ)/mess/systems/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/pocketc.o  \
 	  $(OBJ)/mess/systems/pocketc.o  \
 	  $(OBJ)/mess/vidhrdw/pc1401.o  \
@@ -542,6 +542,9 @@ $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/machine/pc1350.o  \
 	  $(OBJ)/mess/vidhrdw/pc1251.o  \
 	  $(OBJ)/mess/machine/pc1251.o
+#	  $(OBJ)/mess/machine/mz700.o	 \
+	  $(OBJ)/mess/vidhrdw/mz700.o	 \
+	  $(OBJ)/mess/systems/mz700.o	 \
 
 $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/machine/aquarius.o \

@@ -749,8 +749,7 @@ void vtech1_latch_w(int offset, int data)
     /* mode or the background color are toggle? */
 	if( (vtech1_latch ^ data) & 0x18 )
 	{
-		extern int bitmap_dirty;
-        bitmap_dirty = 1;
+        schedule_full_refresh();
 		if( (vtech1_latch ^ data) & 0x10 )
 			logerror("vtech1_latch_w: change background %d\n", (data>>4)&1);
 		if( (vtech1_latch ^ data) & 0x08 )

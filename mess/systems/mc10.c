@@ -3,6 +3,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 
+
 extern int coco_cassette_init(int id);
 extern void coco_cassette_exit(int id);
 

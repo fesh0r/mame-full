@@ -49,7 +49,6 @@ static int mbee_pcg_color_latch = 0;
 char mbee_frame_message[128+1];
 int mbee_frame_counter;
 
-extern int bitmap_dirty;
 
 UINT8 *pcgram;
 
@@ -197,7 +196,7 @@ static void m6545_offset_xy(void)
 	if( off_y > 128 )
 		off_y = 128;
 
-	bitmap_dirty = 1;
+	schedule_full_refresh();
 
 	logerror("6545 offset x:%d  y:%d\n", off_x, off_y);
 }
@@ -350,7 +349,7 @@ void m6545_data_w(int offs, int data)
 	case 1:
 		if( crt.horizontal_displayed == data )
 			break;
-		bitmap_dirty = 1;
+		schedule_full_refresh();
 		crt.horizontal_displayed = data;
 		logerror("6545 horizontal displayed    %d\n", data);
         break;
@@ -382,7 +381,7 @@ void m6545_data_w(int offs, int data)
 	case 6:
 		if( crt.vertical_displayed == data )
 			break;
-		bitmap_dirty = 1;
+		schedule_full_refresh();
 		logerror("6545 vertical displayed      %d\n", data);
         crt.vertical_displayed = data;
 		break;
