@@ -20,6 +20,10 @@ unsigned char * lviv_video_ram;
 
 static UINT8 lviv_ppi_port_outputs[2][3];
 
+static UINT8 *lviv_data = NULL;
+static unsigned long lviv_data_size = 0;
+static OPBASE_HANDLER(lviv_opbaseoverride);
+
 void lviv_update_memory (void)
 {
 	if (lviv_ppi_port_outputs[0][2] & 0x02)
@@ -35,8 +39,6 @@ void lviv_update_memory (void)
 
 		cpu_setbank(5, lviv_ram);
 		cpu_setbank(6, lviv_ram + 0x4000);
-		
-		logerror ("Video memory OFF\n");
 	}
 	else
 	{
@@ -48,8 +50,6 @@ void lviv_update_memory (void)
 
 		cpu_setbank(2, lviv_video_ram);
 		cpu_setbank(6, lviv_video_ram);
-
-		logerror ("Video memory ON\n");
 	}
 }
 
@@ -180,3 +180,85 @@ void lviv_stop_machine(void)
 		lviv_ram = NULL;
 	}
 }
+
+int lviv_snap_load (int id)
+{
+	FILE *fp;
+
+	if (device_filename(IO_QUICKLOAD, id) == NULL)
+		return INIT_PASS;
+
+	fp = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE, 0);
+	if (!fp) return INIT_FAIL;
+
+	lviv_data_size = osd_fsize(fp);
+
+	if (lviv_data_size == 0) return INIT_FAIL;
+
+	if ((lviv_data = (UINT8 *) malloc(lviv_data_size)) == NULL)
+	{
+		osd_fclose(fp);
+		return INIT_FAIL;
+	}
+
+
+	osd_fread(fp, lviv_data, lviv_data_size);
+	osd_fclose(fp);
+
+	if (lviv_data[9] != 0xd0)
+	{
+		free (lviv_data);
+		return INIT_FAIL;
+	}
+
+	logerror("File loaded!\n");
+	memory_set_opbase_handler(0, lviv_opbaseoverride);
+
+	return INIT_PASS;
+}
+
+void lviv_snap_exit(int id)
+{
+	if (lviv_data != NULL)
+		free(lviv_data);
+}
+
+
+static void lviv_snap_open (unsigned char *data)
+{
+	int i;
+
+	UINT8 hi, lo;
+
+	UINT16 lviv_begin;
+	UINT16 lviv_end;
+	UINT16 lviv_start;
+
+	lo = data[16] & 0x0ff;
+	hi = data[17] & 0x0ff;
+	lviv_begin = (hi << 8) | lo;
+
+	lo = data[18] & 0x0ff;
+	hi = data[19] & 0x0ff;
+	lviv_end = (hi << 8) | lo;
+
+	lo = data[20] & 0x0ff;
+	hi = data[21] & 0x0ff;
+	lviv_start = (hi << 8) | lo;
+
+	for (i = 0; i < lviv_end-lviv_start+1; i++)
+		cpu_writemem16(i + lviv_begin, data[i+22]);
+
+	activecpu_set_reg(REG_PC, lviv_start);
+}
+
+static OPBASE_HANDLER( lviv_opbaseoverride )
+{
+	/* clear op base override */
+	memory_set_opbase_handler(0, 0);
+
+	lviv_snap_open (lviv_data);
+
+	return (activecpu_get_reg(REG_PC) & 0x0ffff);
+}
+
