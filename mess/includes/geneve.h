@@ -8,8 +8,8 @@
 enum
 {
 	offset_rom_geneve = 0x0000,			/* boot ROM (16 kbytes) */
-	offset_sram_geneve = 0x4000,		/* scratch RAM (32 or 64 kbytes) */
-	offset_dram_geneve = 0x14000,		/* extended RAM (512 kbytes) */
+	offset_sram_geneve = 0x4000,		/* static RAM (32 or 64 kbytes) */
+	offset_dram_geneve = 0x14000,		/* dynamic RAM (512 kbytes) */
 	region_cpu1_len_geneve = 0x94000	/* total len */
 };
 

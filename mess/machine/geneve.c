@@ -21,8 +21,10 @@
 static void inta_callback(int state);
 static void intb_callback(int state);
 
-/*static READ16_HANDLER ( ti99_rw_rspeech );
-static WRITE16_HANDLER ( ti99_ww_wspeech );*/
+/*static READ16_HANDLER ( geneve_rw_rspeech );
+static WRITE16_HANDLER ( geneve_ww_wspeech );*/
+
+static void poll_keyboard(int dummy);
 
 static void tms9901_interrupt_callback(int intreq, int ic);
 static int R9901_0(int offset);
@@ -33,6 +35,7 @@ static int R9901_3(int offset);
 static void W9901_PE_bus_reset(int offset, int data);
 static void W9901_VDP_reset(int offset, int data);
 static void W9901_JoySel(int offset, int data);
+static void W9901_KeyboardReset(int offset, int data);
 static void W9901_ext_mem_wait_states(int offset, int data);
 static void W9901_VDP_wait_states(int offset, int data);
 
@@ -78,9 +81,9 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 		NULL,
 		NULL,
 		NULL,
+		W9901_KeyboardReset,
 		W9901_ext_mem_wait_states,
 		W9901_VDP_wait_states,
-		NULL,
 		NULL,
 		NULL,
 		NULL,
@@ -99,7 +102,14 @@ static const tms9901reset_param tms9901reset_param_ti99 =
 
 /* keyboard interface */
 static int JoySel;
-/*static int AlphaLockLine;*/
+enum
+{
+	KeyQueueSize = 256
+};
+static UINT8 KeyQueue[KeyQueueSize];
+int KeyQueueHead;
+int KeyQueueLen;
+int KeyInBuf;
 
 /*
 	GROM support.
@@ -177,6 +187,7 @@ void machine_init_geneve(void)
 	/* clear keyboard interface state (probably overkill, but can't harm) */
 	/*KeyCol = 0;
 	AlphaLockLine = 0;*/
+	timer_pulse(TIME_IN_SEC(.05), 0, poll_keyboard);
 
 	/* read config */
 	has_speech = (readinputport(input_port_config) >> config_speech_bit) & config_speech_mask;
@@ -306,7 +317,7 @@ READ_HANDLER ( geneve_r )
 				return page_lookup[offset-0xf110];
 
 			case 0xf118:
-				return /*key_buf*/0;
+				return KeyQueueLen ? KeyQueue[KeyQueueHead] : 0;
 
 			case 0xf130:
 			case 0xf131:
@@ -458,10 +469,10 @@ READ_HANDLER ( geneve_r )
 			return geneve_peb_r(offset);
 		}
 	}
-	else if ((page >= 0xec) && (page < 0xf0))
+	else if ((page >= 0xe8) && (page < 0xf0))
 	{
 		/* SRAM */
-		return SRAM_ptr[(page-0xec)*0x2000 + offset];
+		return SRAM_ptr[(page-0xe8)*0x2000 + offset];
 	}
 	else if ((page >= 0xf0) && (page < 0xf2))
 	{
@@ -674,10 +685,10 @@ WRITE_HANDLER ( geneve_w )
 			return;
 		}
 	}
-	else if ((page >= 0xec) && (page < 0xf0))
+	else if ((page >= 0xe8) && (page < 0xf0))
 	{
 		/* SRAM */
-		SRAM_ptr[(page-0xec)*0x2000 + offset] = data;
+		SRAM_ptr[(page-0xe8)*0x2000 + offset] = data;
 		return;
 	}
 	else if ((page >= 0xf0) && (page < 0xf2))
@@ -702,6 +713,26 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 {
 	if ((offset >= /*0x770*/0x775) && (offset < 0x780))
 	{
+		if ((offset == 0x778) && data && (! (mode_flags & mf_keyclock)))
+		{
+			/* set mf_keyclock */
+			if (KeyQueueLen)
+			{
+				tms9901_set_single_int(0, 8, 1);
+			}
+		}
+		if ((offset == 0x779)  && data && (! (mode_flags & mf_keyclear)))
+		{
+			/* set mf_keyclear */
+			if (KeyQueueLen)
+			{
+				KeyQueueHead = (KeyQueueHead + 1) % KeyQueueSize;
+				KeyQueueLen--;
+			}
+			/* shift in new key immediately if possible, otherwise clear interrupt */
+			tms9901_set_single_int(0, 8, (KeyQueueLen && (mode_flags & mf_keyclock)) ? 1 : 0);
+		}
+
 		/* tms9995 user flags */
 		if (data)
 			mode_flags |= 1 << (offset - 0x775);
@@ -711,6 +742,53 @@ WRITE_HANDLER ( geneve_peb_mode_CRU_w )
 
 	geneve_peb_CRU_w(offset, data);
 }
+
+/*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark KEYBOARD INTERFACE
+#endif
+
+static void poll_keyboard(int dummy)
+{
+	static UINT32 old_keystate[4];
+	UINT32 keystate;
+	UINT32 key_transitions;
+	int i, j;
+	int keycode;
+
+
+	for (i=0; (i<4) && (KeyQueueLen < KeyQueueSize); i++)
+	{
+		keystate = readinputport(input_port_keyboard_geneve + i*2)
+					| (readinputport(input_port_keyboard_geneve + i*2 + 1) << 16);
+		key_transitions = keystate ^ old_keystate[i];
+		if (key_transitions)
+		{
+			for (j=0; (j<32) && (KeyQueueLen < KeyQueueSize); j++)
+			{
+				if ((key_transitions >> j) & 1)
+				{
+					keycode = (i << 5) | j;
+					if ((keystate >> j) & 1)
+						old_keystate[i] |= (1 << j);
+					else
+					{
+						old_keystate[i] &= ~ (1 << j);
+						keycode |= 0x80;
+					}
+					KeyQueue[(KeyQueueHead+KeyQueueLen) % KeyQueueSize] = keycode;
+					KeyQueueLen++;
+					if (mode_flags & mf_keyclock)
+					{
+						tms9901_set_single_int(0, 8, 1);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 /*===========================================================================*/
 #if 0
@@ -830,6 +908,10 @@ static void W9901_JoySel(int offset, int data)
 	JoySel = data;
 }
 
+static void W9901_KeyboardReset(int offset, int data)
+{
+}
+
 /*
 	Write external mem cycles (0=long, 1=short)
 */
@@ -845,69 +927,4 @@ static void W9901_VDP_wait_states(int offset, int data)
 }
 
 
-
-/*
-	WRITE column number bit 1 (P3)
-*/
-static void ti99_KeyC1(int offset, int data)
-{
-	/*if (data)
-		KeyCol |= 2;
-	else
-		KeyCol &= (~2);*/
-}
-
-/*
-	WRITE column number bit 0 (P4)
-*/
-static void ti99_KeyC0(int offset, int data)
-{
-	/*if (data)
-		KeyCol |= 4;
-	else
-		KeyCol &= (~4);*/
-}
-
-/*
-	WRITE alpha lock line - TI99/4a only (P5)
-*/
-static void ti99_AlphaW(int offset, int data)
-{
-}
-
-/*
-	command CS1 tape unit motor (P6)
-*/
-static void ti99_CS1_motor(int offset, int data)
-{
-}
-
-/*
-	command CS2 tape unit motor (P7)
-*/
-static void ti99_CS2_motor(int offset, int data)
-{
-}
-
-/*
-	audio gate (P8)
-
-	connected to the AUDIO IN pin of TMS9919
-
-	set to 1 before using tape (in order not to burn the TMS9901 ??)
-	Must actually control the mixing of tape sound with computer sound.
-
-	I am not sure about polarity.
-*/
-static void ti99_audio_gate(int offset, int data)
-{
-}
-
-/*
-	tape output (P9)
-	I think polarity is correct, but don't take my word for it.
-*/
-static void ti99_CS_output(int offset, int data)
-{
-}
 

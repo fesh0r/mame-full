@@ -92,6 +92,7 @@
 	Bits 5-15: tms9995 user flags - overlaps geneve mode, but hopefully the
 	  geneve registers are write-only, so no real conflict happens
 	Bit 5: 0 if NTSC, 1 if PAL video
+	Bit 7: some keyboard-related bit
 	Bit 8: allow keyboard clock
 	Bit 9: clear keyboard input
 	Bit 10: 1 = geneve mode, 0 = 4a mode
