@@ -7,6 +7,9 @@ System Driver Changes:
 ----------------------
 - [COCO] Update CRC for bas10.rom. Previous dump was bad. [tim lindner]
 
+- [COCO] Made the hi-res joystick interface available to the CoCo 1-2 [Nate
+  Woods]
+
 Source Changes:
 ---------------
 - The MESS core will not automatically open software images in a clone system

@@ -343,6 +343,10 @@ INPUT_PORTS_START( coco )
 	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, "Joystick Type" )
+	PORT_DIPSETTING(	0x00, "Normal" )
+	PORT_DIPSETTING(	0x10, "Hi-Res Interface" )
+	PORT_DIPSETTING(	0x30, "Hi-Res Interface (CoCoMax 3 Style)" )
 	
 	PORT_START /* 13 */
 	PORT_DIPNAME( 0x03, 0x00, "Real Time Clock" )
