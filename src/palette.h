@@ -15,7 +15,7 @@
   colors, the term "palette" refers to the colors available at any given time,
   not to the whole range of colors which can be produced by the hardware. The
   latter is referred to as "color space".
-  The term "pen" refers to one of the maximum of MAX_PENS colors that can be
+  The term "pen" refers to one of the maximum MAX_PENS colors that can be
   used to generate the display. PC users might want to think of them as the
   colors available in VGA, but be warned: the mapping of MAME pens to the VGA
   registers is not 1:1, so MAME's pen 10 will not necessarily be mapped to
@@ -81,14 +81,14 @@
 	 Colors can also be marked as "transparent".
      The return code of palette_recalc() tells the driver whether the lookup
      table has changed, and therefore whether a screen refresh is needed. Note
-     that his only applies to colors which were used in the previous frame:
+     that this only applies to colors which were used in the previous frame:
      that's why palette_recalc() must be called before ANY rendering takes
      place.
   4) 16-bit color. This should only be used for games which use more than
      MAX_PENS colors at a time. It is slower than the other modes, so it should
 	 be avoided whenever possible. Transparency support is limited.
      MachineDriver->video_attributes must contain both VIDEO_MODIFIES_PALETTE
-	 and VIDEO_SUPPPORTS_16BIT.
+	 and VIDEO_SUPPORTS_16BIT.
 
   The dynamic shrinking of the palette works this way: as colors are requested,
   they are associated to a pen. When a color is no longer needed, the pen is
@@ -113,7 +113,7 @@
 #define PALETTE_H
 
 #define DYNAMIC_MAX_PENS 254	/* the Mac cannot handle more than 254 dynamic pens */
-#define STATIC_MAX_PENS 254	/* but theoretically static pens could be increased to 256 */
+#define STATIC_MAX_PENS 256		/* but 256 static pens can be handled */
 
 int palette_start(void);
 void palette_stop(void);
@@ -126,18 +126,31 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 /* PALETTE_COLOR_USED for all colors; this is enough in some cases. */
 extern unsigned char *palette_used_colors;
 
+void palette_increase_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
+void palette_decrease_usage_count(int table_offset,unsigned int usage_mask,int color_flags);
+void palette_increase_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
+void palette_decrease_usage_countx(int table_offset,int num_pens,const unsigned char *pen_data,int color_flags);
+
+/* If you want to dynamically change the usage array, call palette_init_used_colors() */
+/* before setting used entries to PALETTE_COLOR_USED/PALETTE_COLOR_TRANSPARENT. */
+/* The function automatically marks colors used by the TileMap system. */
+void palette_init_used_colors(void);
+
 const unsigned char *palette_recalc(void);
 
-#define PALETTE_COLOR_UNUSED 0		/* This color is not needed for this frame */
-#define PALETTE_COLOR_USED 1		/* This color is currenly used, either in the */
-	/* visible screen itself, or for parts which are cached in temporary bitmaps */
-	/*by the driver. */
+#define PALETTE_COLOR_UNUSED	0	/* This color is not needed for this frame */
+#define PALETTE_COLOR_VISIBLE	1	/* This color is currently visible */
+#define PALETTE_COLOR_CACHED	2	/* This color is cached in temporary bitmaps */
 	/* palette_recalc() will try to use always the same pens for the used colors; */
 	/* if it is forced to rearrange the pens, it will return TRUE to signal the */
 	/* driver that it must refresh the display. */
-#define PALETTE_COLOR_TRANSPARENT 2	/* All colors using this attribute will be */
+#define PALETTE_COLOR_TRANSPARENT_FLAG	4	/* All colors using this attribute will be */
 	/* mapped to the same pen, and no other colors will be mapped to that pen. */
 	/* This way, transparencies can be handled by copybitmap(). */
+
+/* backwards compatibility */
+#define PALETTE_COLOR_USED			(PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED)
+#define PALETTE_COLOR_TRANSPARENT	(PALETTE_COLOR_TRANSPARENT_FLAG|PALETTE_COLOR_USED)
 
 /* if you use PALETTE_COLOR_TRANSPARENT, to do a transparency blit with copybitmap() */
 /* pass it TRANSPARENCY_PEN, palette_transparent_pen. */
@@ -163,7 +176,9 @@ extern unsigned char *paletteram;
 extern unsigned char *paletteram_2;	/* use when palette RAM is split in two parts */
 
 int paletteram_r(int offset);
+int paletteram_2_r(int offset);
 int paletteram_word_r(int offset);	/* for 16 bit CPU */
+int paletteram_2_word_r(int offset);	/* for 16 bit CPU */
 
 void paletteram_BBGGGRRR_w(int offset,int data);
 void paletteram_RRRGGGBB_w(int offset,int data);
@@ -180,16 +195,22 @@ void paletteram_xxxxBBBBGGGGRRRR_swap_w(int offset,int data);
 void paletteram_xxxxBBBBGGGGRRRR_split1_w(int offset,int data);	/* uses paletteram[] */
 void paletteram_xxxxBBBBGGGGRRRR_split2_w(int offset,int data);	/* uses paletteram_2[] */
 void paletteram_xxxxBBBBGGGGRRRR_word_w(int offset,int data);
+void paletteram_xxxxBBBBRRRRGGGG_w(int offset,int data);
 void paletteram_xxxxBBBBRRRRGGGG_swap_w(int offset,int data);
 void paletteram_xxxxBBBBRRRRGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
 void paletteram_xxxxBBBBRRRRGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
 void paletteram_xxxxRRRRBBBBGGGG_split1_w(int offset,int data);	/* uses paletteram[] */
 void paletteram_xxxxRRRRBBBBGGGG_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_xxxxRRRRGGGGBBBB_w(int offset,int data);
 void paletteram_xxxxRRRRGGGGBBBB_word_w(int offset,int data);
 void paletteram_RRRRGGGGBBBBxxxx_swap_w(int offset,int data);
 void paletteram_RRRRGGGGBBBBxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
 void paletteram_RRRRGGGGBBBBxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
 void paletteram_RRRRGGGGBBBBxxxx_word_w(int offset,int data);
+void paletteram_BBBBGGGGRRRRxxxx_swap_w(int offset,int data);
+void paletteram_BBBBGGGGRRRRxxxx_split1_w(int offset,int data);	/* uses paletteram[] */
+void paletteram_BBBBGGGGRRRRxxxx_split2_w(int offset,int data);	/* uses paletteram_2[] */
+void paletteram_BBBBGGGGRRRRxxxx_word_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_swap_w(int offset,int data);
 void paletteram_xBBBBBGGGGGRRRRR_word_w(int offset,int data);

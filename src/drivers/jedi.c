@@ -180,9 +180,7 @@ INPUT_PORTS_START( input_ports )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
     PORT_BIT (0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-    PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -194,10 +192,10 @@ INPUT_PORTS_START( input_ports )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
     PORT_START  /* IN2 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 100, 0, 0, 255 )
+    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 100, 10, 0, 0, 255 )
 
     PORT_START  /* IN3 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
+    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -242,9 +240,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &charlayout,      0, 1 },
-    { 1, 0x02000, &pflayout,        4, 1 },
-    { 1, 0x12000, &spritelayout, 4+16, 1 },
+    { 1, 0x00000, &charlayout,    0, 1 },
+    { 1, 0x02000, &pflayout,      0, 1 },
+    { 1, 0x12000, &spritelayout,  0, 1 },
 	{ -1 }
 };
 
@@ -252,29 +250,29 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct POKEYinterface pokey_interface =
 {
-    4,  /* 4 chips */
+	4,  /* 4 chips */
 	1500000,	/* 1.5 MHz? */
-    127,
-    POKEY_DEFAULT_GAIN/8,
+	{ 30, 30, MIXER(30,MIXER_PAN_LEFT), MIXER(30,MIXER_PAN_RIGHT) },
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
-    { 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
+	{ 0, 0 ,0 ,0},
 	/* The allpot handler */
-    { 0,0,0,0 }
+	{ 0,0,0,0 }
 };
 
 static struct TMS5220interface tms5220_interface =
 {
-    672000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
-    0           /* IRQ handler */
+	672000,     /* clock speed (80*samplerate) */
+	100,        /* volume */
+	0           /* IRQ handler */
 };
 
 
@@ -303,10 +301,10 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-    37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
+	37*8, 30*8, { 0*8, 37*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-    4+16+16,4+16+16,
-    0,
+	1024,0,	/* no colortable, we do the lookups ourselves */
+	0,
 
     VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -315,7 +313,7 @@ static struct MachineDriver machine_driver =
     jedi_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
     {
 		{
 			SOUND_POKEY,
@@ -339,24 +337,24 @@ static struct MachineDriver machine_driver =
 
 ROM_START( jedi_rom )
 	ROM_REGION(0x1C000)	/* 64k for code + 48k for banked ROMs */
-	ROM_LOAD( "14f_221.bin", 0x08000, 0x4000, 0x81b8d806 )
-	ROM_LOAD( "13f_222.bin", 0x0c000, 0x4000, 0x4ecc94fc )
-	ROM_LOAD( "13d_123.bin", 0x10000, 0x4000, 0xe7508418 )	/* Page 0 */
-	ROM_LOAD( "13b_124.bin", 0x14000, 0x4000, 0x3b502580 )	/* Page 1 */
-	ROM_LOAD( "13a_122.bin", 0x18000, 0x4000, 0xfcf2c162 )	/* Page 2 */
+	ROM_LOAD( "14f_221.bin",  0x08000, 0x4000, 0x414d05e3 )
+	ROM_LOAD( "13f_222.bin",  0x0c000, 0x4000, 0x7b3f21be )
+	ROM_LOAD( "13d_123.bin",  0x10000, 0x4000, 0x877f554a )	/* Page 0 */
+	ROM_LOAD( "13b_124.bin",  0x14000, 0x4000, 0xe72d41db )	/* Page 1 */
+	ROM_LOAD( "13a_122.bin",  0x18000, 0x4000, 0xcce7ced5 )	/* Page 2 */
 
-	ROM_REGION(0x32000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "11t_215.bin", 0x00000, 0x2000, 0x9a6e2e9e )	/* Alphanumeric */
-	ROM_LOAD( "06r_126.bin", 0x02000, 0x8000, 0xb751b39f )	/* Playfield */
-	ROM_LOAD( "06n_127.bin", 0x0a000, 0x8000, 0x72c11703 )
-	ROM_LOAD( "01h_130.bin", 0x12000, 0x8000, 0xc10a8a70 )	/* Sprites */
-	ROM_LOAD( "01f_131.bin", 0x1a000, 0x8000, 0x60681a2c )
-	ROM_LOAD( "01m_128.bin", 0x22000, 0x8000, 0x1b26b546 )
-	ROM_LOAD( "01k_129.bin", 0x2a000, 0x8000, 0x7d487088 )
+	ROM_REGION_DISPOSE(0x32000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11t_215.bin",  0x00000, 0x2000, 0x3e49491f )	/* Alphanumeric */
+	ROM_LOAD( "06r_126.bin",  0x02000, 0x8000, 0x9c55ece8 )	/* Playfield */
+	ROM_LOAD( "06n_127.bin",  0x0a000, 0x8000, 0x4b09dcc5 )
+	ROM_LOAD( "01h_130.bin",  0x12000, 0x8000, 0x2646a793 )	/* Sprites */
+	ROM_LOAD( "01f_131.bin",  0x1a000, 0x8000, 0x60107350 )
+	ROM_LOAD( "01m_128.bin",  0x22000, 0x8000, 0x24663184 )
+	ROM_LOAD( "01k_129.bin",  0x2a000, 0x8000, 0xac86b98c )
 
 	ROM_REGION(0x10000)	/* space for the sound ROMs */
-	ROM_LOAD( "01c_133.bin", 0x8000, 0x4000, 0x73521580 )
-	ROM_LOAD( "01a_134.bin", 0xC000, 0x4000, 0x3c5aa3aa )
+	ROM_LOAD( "01c_133.bin",  0x8000, 0x4000, 0x6c601c69 )
+	ROM_LOAD( "01a_134.bin",  0xC000, 0x4000, 0x5e36c564 )
 ROM_END
 
 static int novram_load(void)
@@ -398,6 +396,7 @@ struct GameDriver jedi_driver =
 	"Dan Boris",
 	0,
 	&machine_driver,
+	0,
 
 	jedi_rom,
 	0, 0,

@@ -21,6 +21,7 @@ int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 
 #define ZAXXON_VID	0
 #define CONGO_VID	1
+#define FUTSPY_VID	2
 
 
 /***************************************************************************
@@ -121,6 +122,7 @@ static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dx, int dy,
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int zaxxon_vh_start(void)
 {
 	int offs;
@@ -146,7 +148,7 @@ int zaxxon_vh_start(void)
 		return 1;
 	}
 
-	if (zaxxon_vid_type == ZAXXON_VID)
+	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
 		if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
 		{
@@ -161,7 +163,7 @@ int zaxxon_vh_start(void)
 		/* create a temporary bitmap to prepare the background before converting it */
 		if ((prebitmap = osd_create_bitmap(256,4096)) == 0)
 		{
-			if (zaxxon_vid_type == ZAXXON_VID)
+			if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 				osd_free_bitmap(backgroundbitmap2);
 			osd_free_bitmap(backgroundbitmap1);
 			generic_vh_stop();
@@ -211,7 +213,7 @@ int zaxxon_vh_start(void)
 		}
 	}
 
-	if (zaxxon_vid_type == ZAXXON_VID)
+	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
 		if (!(Machine->orientation & ORIENTATION_SWAP_XY))
 			prebitmap = backgroundbitmap2;
@@ -268,6 +270,59 @@ int zaxxon_vh_start(void)
 	return 0;
 }
 
+int razmataz_vh_start(void)
+{
+	int offs;
+	int sx,sy;
+
+
+	if (generic_vh_start() != 0)
+		return 1;
+
+	/* large bitmap for the precalculated background */
+	if ((backgroundbitmap1 = osd_create_bitmap(256,4096)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
+
+	if ((backgroundbitmap2 = osd_create_bitmap(256,4096)) == 0)
+	{
+		osd_free_bitmap(backgroundbitmap1);
+		generic_vh_stop();
+		return 1;
+	}
+
+
+	/* prepare the background */
+	for (offs = 0;offs < 0x4000;offs++)
+	{
+		sy = 8 * (offs / 32);
+		sx = 8 * (offs % 32);
+
+		drawgfx(backgroundbitmap1,Machine->gfx[1],
+				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
+				Machine->memory_region[2][0x4000 + offs] >> 4,
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
+
+		drawgfx(backgroundbitmap2,Machine->gfx[1],
+				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
+				16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
+				0,0,
+				sx,sy,
+				0,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* free the graphics ROMs, they are no longer needed */
+	free(Machine->memory_region[2]);
+	Machine->memory_region[2] = 0;
+
+	return 0;
+}
+
 
 
 /***************************************************************************
@@ -277,7 +332,7 @@ int zaxxon_vh_start(void)
 ***************************************************************************/
 void zaxxon_vh_stop(void)
 {
-	if (zaxxon_vid_type == ZAXXON_VID)
+	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 		osd_free_bitmap(backgroundbitmap2);
 	osd_free_bitmap(backgroundbitmap1);
 	generic_vh_stop();
@@ -291,85 +346,10 @@ void zaxxon_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
-
-
-	/* copy the background */
-	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
-	/* cover the whole screen, so the image is not fully overwritten and part of the */
-	/* character color test screen remains on screen when it is replaced by the background */
-	/* color test. Also, we clip away the bottom 4 rows because they are constantly */
-	/* covered during gameplay, but they should be visible during the test. */
-	if (*zaxxon_background_enable)
-	{
-		int i,skew,scroll;
-		struct rectangle clip;
-		int bottom;
-
-		if (zaxxon_vid_type == CONGO_VID)
-			bottom = 256-2*8;
-		else
-			bottom = 256-4*8;
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			/* standard rotation - skew background horizontally */
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = 1023+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
-			else
-				scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
-
-			skew = 128 - 512;
-
-			clip.min_y = Machine->drv->visible_area.min_y;
-			clip.max_y = Machine->drv->visible_area.max_y;
-
-			for (i = 0; i < bottom; i++)
-			{
-				clip.min_x = i;
-				clip.max_x = i;
-
-				if (zaxxon_vid_type == ZAXXON_VID && (*zaxxon_background_color_bank & 1))
-					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
-				else
-					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
-
-				skew += 2;
-			}
-		}
-		else
-		{
-			/* skew background up one pixel every 2 horizontal pixels */
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
-					- backgroundbitmap1->height + 256;
-			else
-				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
-					- backgroundbitmap1->height + 256;
-
-			skew = 64;
-
-			clip.min_x = 0;
-			clip.max_x = bottom-1;
-
-			for (i = 255;i >=0 ;i-=2)
-			{
-				clip.min_y = i-1;
-				clip.max_y = i;
-
-				if (zaxxon_vid_type == ZAXXON_VID && (*zaxxon_background_color_bank & 1))
-					copybitmap(bitmap,backgroundbitmap2,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
-				else
-					copybitmap(bitmap,backgroundbitmap1,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
-
-				skew--;
-			}
-		}
-	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
-
 
 	if (zaxxon_vid_type == CONGO_VID)
 	{
@@ -395,9 +375,27 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (spriteram[offs+2] != 0xff)
 			{
 				drawgfx(bitmap,Machine->gfx[2],
-						spriteram[offs+2+1]& 0x7f,spriteram[offs+2+2],
+						spriteram[offs+2+1]& 0x7f,
+						spriteram[offs+2+2],
 						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
 						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			}
+		}
+	}
+	else if (zaxxon_vid_type == FUTSPY_VID)
+	{
+		/* Draw the sprites. Note that it is important to draw them exactly in this */
+		/* order, to have the correct priorities. */
+		for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+		{
+			if (spriteram[offs] != 0xff)
+			{
+					drawgfx(bitmap,Machine->gfx[2],
+						spriteram[offs+1] & 0x7f,
+						spriteram[offs+2] & 0x3f,
+						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
+						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -419,6 +417,85 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
+}
+
+void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* copy the background */
+	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
+	/* cover the whole screen, so the image is not fully overwritten and part of the */
+	/* character color test screen remains on screen when it is replaced by the background */
+	/* color test. */
+	if (*zaxxon_background_enable)
+	{
+		int i,skew,scroll;
+		struct rectangle clip;
+
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			/* standard rotation - skew background horizontally */
+			if (zaxxon_vid_type == CONGO_VID)
+				scroll = 1023+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
+			else
+				scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+
+			skew = 128 - 512 + 2 * Machine->drv->visible_area.min_x;
+
+			clip.min_y = Machine->drv->visible_area.min_y;
+			clip.max_y = Machine->drv->visible_area.max_y;
+
+			for (i = Machine->drv->visible_area.min_x;i <= Machine->drv->visible_area.max_x;i++)
+			{
+				clip.min_x = i;
+				clip.max_x = i;
+
+				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
+						&& (*zaxxon_background_color_bank & 1))
+					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+				else
+					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
+
+				skew += 2;
+			}
+		}
+		else
+		{
+			/* skew background up one pixel every 2 horizontal pixels */
+			if (zaxxon_vid_type == CONGO_VID)
+				scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
+					- backgroundbitmap1->height + 256;
+			else
+				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
+					- backgroundbitmap1->height + 256;
+
+			skew = 64 - (255 - Machine->drv->visible_area.max_y);
+
+			clip.min_x = Machine->drv->visible_area.min_x;
+			clip.max_x = Machine->drv->visible_area.max_x;
+
+			for (i = Machine->drv->visible_area.max_y;i >= Machine->drv->visible_area.min_y;i-=2)
+			{
+				clip.min_y = i-1;
+				clip.max_y = i;
+
+				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
+						&& (*zaxxon_background_color_bank & 1))
+					copybitmap(bitmap,backgroundbitmap2,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
+				else
+					copybitmap(bitmap,backgroundbitmap1,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
+
+				skew--;
+			}
+		}
+	}
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+
+	draw_sprites(bitmap);
 
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
@@ -439,6 +516,51 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
+				color,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
+}
+
+void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/* copy the background */
+	if (*zaxxon_background_enable)
+	{
+		int scroll;
+
+		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
+
+		if (*zaxxon_background_color_bank & 1)
+			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		else
+			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+
+	draw_sprites(bitmap);
+
+
+	/* draw the frontmost playfield. They are characters, but draw them as sprites */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int sx,sy;
+		int code,color;
+
+
+		sx = offs % 32;
+		sy = offs / 32;
+
+		code = videoram[offs];
+		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
+
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
 				color,
 				0,0,
 				8*sx,8*sy,

@@ -46,7 +46,8 @@ Other than that, everything else seems to be complete.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
+
 
 extern unsigned char *wc90_shared;
 
@@ -232,42 +233,42 @@ INPUT_PORTS_START( wc90_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSWA */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "10 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "9 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "8 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "7 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "6 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0e, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( 9C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 8C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, "Countdown Speed", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Countdown Speed" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x03, 0x03, "1 Player Game Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "1 Player Game Time" )
 	PORT_DIPSETTING(    0x01, "1:00" )
 	PORT_DIPSETTING(    0x02, "1:30" )
 	PORT_DIPSETTING(    0x03, "2:00" )
 	PORT_DIPSETTING(    0x00, "2:30" )
-	PORT_DIPNAME( 0x1c, 0x1c, "2 Players Game Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x1c, 0x1c, "2 Players Game Time" )
 	PORT_DIPSETTING(    0x0c, "1:00" )
 	PORT_DIPSETTING(    0x14, "1:30" )
 	PORT_DIPSETTING(    0x04, "2:00" )
@@ -276,13 +277,13 @@ INPUT_PORTS_START( wc90_input_ports )
 	PORT_DIPSETTING(    0x08, "3:30" )
 	PORT_DIPSETTING(    0x10, "4:00" )
 	PORT_DIPSETTING(    0x00, "5:00" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x80, "Japanese" )
 
@@ -362,16 +363,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
-	3000000,	/* 3 MHz ????? */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	6000000,	/* 6 MHz ????? seems awfully fast, I don't even know if the */
+				/*  YM2203 can go at that speed */
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -476,29 +479,29 @@ static void wc90_hisave(void)
 
 ROM_START( wc90_rom )
 	ROM_REGION(0x20000)	/* 128k for code */
-	ROM_LOAD( "IC87_01.BIN",  0x00000, 0x08000, 0x9e2cfc88 )	/* c000-ffff is not used */
-	ROM_LOAD( "IC95_02.BIN",  0x10000, 0x10000, 0xe957ca5f )	/* banked at f000-f7ff */
+	ROM_LOAD( "ic87_01.bin",  0x00000, 0x08000, 0x4a1affbc )	/* c000-ffff is not used */
+	ROM_LOAD( "ic95_02.bin",  0x10000, 0x10000, 0x847d439c )	/* banked at f000-f7ff */
 
-	ROM_REGION(0x110000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "IC85_07V.BIN", 0x00000, 0x10000, 0x075e2064 )	/* characters */
-	ROM_LOAD( "IC86_08V.BIN", 0x10000, 0x20000, 0x9382d2ac )	/* tiles #1 */
-	ROM_LOAD( "IC90_09V.BIN", 0x30000, 0x20000, 0xc22a2ee2 )	/* tiles #2 */
-	ROM_LOAD( "IC87_10V.BIN", 0x50000, 0x20000, 0xb3841d08 )	/* tiles #3 */
-	ROM_LOAD( "IC91_11V.BIN", 0x70000, 0x20000, 0x1cc474c6 )	/* tiles #4 */
-	ROM_LOAD( "IC50_12V.BIN", 0x90000, 0x20000, 0xda1707bf )	/* sprites  */
-	ROM_LOAD( "IC54_13V.BIN", 0xb0000, 0x20000, 0xa6ebd615 )	/* sprites  */
-	ROM_LOAD( "IC60_14V.BIN", 0xd0000, 0x20000, 0x92902d6e )	/* sprites  */
-	ROM_LOAD( "IC65_15V.BIN", 0xf0000, 0x20000, 0x954867f6 )	/* sprites  */
+	ROM_REGION_DISPOSE(0x110000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic85_07v.bin", 0x00000, 0x10000, 0xc5219426 )	/* characters */
+	ROM_LOAD( "ic86_08v.bin", 0x10000, 0x20000, 0x8fa1a1ff )	/* tiles #1 */
+	ROM_LOAD( "ic90_09v.bin", 0x30000, 0x20000, 0x99f8841c )	/* tiles #2 */
+	ROM_LOAD( "ic87_10v.bin", 0x50000, 0x20000, 0x8232093d )	/* tiles #3 */
+	ROM_LOAD( "ic91_11v.bin", 0x70000, 0x20000, 0x188d3789 )	/* tiles #4 */
+	ROM_LOAD( "ic50_12v.bin", 0x90000, 0x20000, 0xda1fe922 )	/* sprites  */
+	ROM_LOAD( "ic54_13v.bin", 0xb0000, 0x20000, 0x9ad03c2c )	/* sprites  */
+	ROM_LOAD( "ic60_14v.bin", 0xd0000, 0x20000, 0x499dfb1b )	/* sprites  */
+	ROM_LOAD( "ic65_15v.bin", 0xf0000, 0x20000, 0xd8ea5c81 )	/* sprites  */
 
-	ROM_REGION(0x18000)	/* 96k for code */  /* Second CPU */
-	ROM_LOAD( "IC67_04.BIN",  0x00000, 0x10000, 0x45626bb0 )	/* c000-ffff is not used */
-	ROM_LOAD( "IC56_03.BIN",  0x10000, 0x08000, 0x3d0ba1af )	/* banked at f000-f7ff */
+	ROM_REGION(0x20000)	/* 96k for code */  /* Second CPU */
+	ROM_LOAD( "ic67_04.bin",  0x00000, 0x10000, 0xdc6eaf00 )	/* c000-ffff is not used */
+	ROM_LOAD( "ic56_03.bin",  0x10000, 0x10000, 0x1ac02b3b )	/* banked at f000-f7ff */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "IC54_05.BIN",  0x00000, 0x10000, 0xcdb35ae1 )
+	ROM_LOAD( "ic54_05.bin",  0x00000, 0x10000, 0x27c348b3 )
 
 	ROM_REGION(0x20000)	/* 64k for ADPCM samples */
-	ROM_LOAD( "IC82_06.BIN",  0x00000, 0x20000, 0x898f9e07 )
+	ROM_LOAD( "ic82_06.bin",  0x00000, 0x20000, 0x2fd692ed )
 ROM_END
 
 struct GameDriver wc90_driver =
@@ -512,6 +515,7 @@ struct GameDriver wc90_driver =
 	"Ernesto Corvi",
 	0,
 	&wc90_machine_driver,
+	0,
 
 	wc90_rom,
 	0, 0,

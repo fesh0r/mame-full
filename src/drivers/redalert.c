@@ -107,28 +107,26 @@ static struct MemoryWriteAddress voice_writemem[] =
 
 INPUT_PORTS_START( redalert_input_ports )
 	PORT_START			   /* DIP Switches */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "5000" )
 	PORT_DIPSETTING(    0x08, "7000" )
-	PORT_DIPNAME( 0x30, 0x10, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x30, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_BITX(    0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START			   /* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -172,8 +170,8 @@ static struct GfxLayout backlayout =
 	0x400,	  /* 1024 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -183,8 +181,8 @@ static struct GfxLayout charlayout =
 	128,	/* 128 characters */
 	1,	/* 1 bits per pixel */
 	{ 0 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -194,8 +192,8 @@ static struct GfxLayout spritelayout =
 	128,	/* 128 characters */
 	2,		/* 1 bits per pixel */
 	{ 0, 0x800*8 }, /* No info needed for bit offsets */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
@@ -268,7 +266,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,			/* 1 chip */
 	2000000,	/* 2 MHz */
-	{ 255 },	/* Volume */
+	{ 50 },		/* Volume */
+	AY8910_DEFAULT_GAIN,
 	{ redalert_AY8910_A_r },		/* Port A Read */
 	{ 0 },		/* Port B Read */
 	{ 0 },		/* Port A Write */
@@ -291,7 +290,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
 			1000000,	   /* 1 MHz */
-			2,
+			1,
 			sound_readmem,sound_writemem,0,0,
 			/* IRQ is hooked to a 555 timer, whose freq is 1150 Hz */
 			0,0,
@@ -300,7 +299,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_8085A | CPU_AUDIO_CPU,
 			1000000,	   /* 1 MHz? */
-			3,
+			2,
 			voice_readmem,voice_writemem,0,0,
 			ignore_interrupt,1
 		}
@@ -310,7 +309,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -341,26 +340,24 @@ static struct MachineDriver machine_driver =
 
 ROM_START( redalert_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "RAG5",	 0x5000, 0x1000, 0x73e366e1 )
-	ROM_LOAD( "RAG6",	 0x6000, 0x1000, 0x14c2fb04 )
-	ROM_LOAD( "RAG7N",	 0x7000, 0x1000, 0x4e8ca3b2 )
-	ROM_LOAD( "RAG8N",	 0x8000, 0x1000, 0xbb20e5a2 )
-	ROM_RELOAD( 		 0xF000, 0x1000 )
-	ROM_LOAD( "RAG9",	 0x9000, 0x1000, 0x76d8c402 )
-	ROM_LOAD( "RAGAB",	 0xa000, 0x1000, 0x104383a9 )
-	ROM_LOAD( "RAGB",	 0xb000, 0x1000, 0xb8f2925c )
-
-	ROM_REGION(0x100) /* temporary for graphics - unused */
+	ROM_LOAD( "rag5",         	0x5000, 0x1000, 0xd7c9cdd6 )
+	ROM_LOAD( "rag6",         	0x6000, 0x1000, 0xcb2a308c )
+	ROM_LOAD( "rag7n",        	0x7000, 0x1000, 0x82ab2dae )
+	ROM_LOAD( "rag8n",        	0x8000, 0x1000, 0xb80eece9 )
+	ROM_RELOAD(                0xf000, 0x1000 )
+	ROM_LOAD( "rag9",         	0x9000, 0x1000, 0x2b7d1295 )
+	ROM_LOAD( "ragab",        	0xa000, 0x1000, 0xab99f5ed )
+	ROM_LOAD( "ragb",         	0xb000, 0x1000, 0x8e0d1661 )
 
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "W3S1",	 0x7800, 0x0800, 0x283b3023 )
-	ROM_RELOAD( 		 0xF800, 0x0800 )
+	ROM_LOAD( "w3s1",         	0x7800, 0x0800, 0x4af956a5 )
+	ROM_RELOAD(                0xf800, 0x0800 )
 
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "RAS1B",	 0x0000, 0x1000, 0x21cf7edb )
-	ROM_LOAD( "RAS2",	 0x1000, 0x1000, 0x2e81d96b )
-	ROM_LOAD( "RAS3",	 0x2000, 0x1000, 0x495b2183 )
-	ROM_LOAD( "RAS4",	 0x3000, 0x1000, 0x0418b74e )
+	ROM_LOAD( "ras1b",        	0x0000, 0x1000, 0xec690845 )
+	ROM_LOAD( "ras2",         	0x1000, 0x1000, 0xfae94cfc )
+	ROM_LOAD( "ras3",         	0x2000, 0x1000, 0x20d56f3e )
+	ROM_LOAD( "ras4",         	0x3000, 0x1000, 0x130e66db )
 ROM_END
 
 /***************************************************************************
@@ -383,8 +380,9 @@ struct GameDriver redalert_driver =
 	"1981",
 	"GDI + Irem",
 	"Mike Balfour\nDick Milliken (Information)",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&machine_driver,
+	0,
 
 	redalert_rom,
 	0, 0,
@@ -394,6 +392,6 @@ struct GameDriver redalert_driver =
 	redalert_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
-	0,0
+	ORIENTATION_ROTATE_270,
+	0, 0
 };

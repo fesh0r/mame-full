@@ -12,20 +12,14 @@ J Clegg
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
+extern unsigned char *spriteram;
+extern int spriteram_size;
 
-unsigned char *trace_scroll_x_low;
-unsigned char *trace_scroll_x_high;
-unsigned char *trace_scroll_y_low;
-unsigned char *trace_sprite_priority; /* JB 970912 */
+unsigned char *travrusa_videoram;
 
-
-static struct rectangle spritevisiblearea =
-{
-	1*8, 31*8-1,
-	0*8, 24*8-1
-};
+static struct tilemap *bg_tilemap;
+static int flipscreen;
 
 
 
@@ -51,7 +45,7 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void travrusa_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -126,97 +120,162 @@ void trace_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 /***************************************************************************
 
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_bg_tile_info(int col,int row)
+{
+	int tile_index = 2*(64*row+col);
+	unsigned char attr = travrusa_videoram[tile_index+1];
+	SET_TILE_INFO(0,travrusa_videoram[tile_index] + ((attr & 0xc0) << 2),attr & 0x0f)
+	tile_info.flags = 0;
+	if (attr & 0x20) tile_info.flags |= TILE_FLIPX;
+	if (attr & 0x10) tile_info.flags |= TILE_FLIPY;
+	if ((attr & 0x0f) == 0x0f) tile_info.flags |= TILE_SPLIT(1);	/* hack */
+}
+
+
+
+/***************************************************************************
+
   Start the video hardware emulation.
 
 ***************************************************************************/
-int trace_vh_start(void)
-{
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
+int travrusa_vh_start(void)
+{
+	bg_tilemap = tilemap_create(
+		get_bg_tile_info,
+		TILEMAP_SPLIT,
+		8,8,
+		64,32
+	);
+
+	if (bg_tilemap)
 	{
-		free(dirtybuffer);
-		return 1;
+		bg_tilemap->transmask[0] = 0xff; /* split type 0 is totally transparent in front half */
+		bg_tilemap->transmask[1] = 0x3f; /* split type 1 has pens 6 and 7 opaque - hack! */
+
+		tilemap_set_scroll_rows(bg_tilemap,32);
+
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 
 
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void trace_vh_stop(void)
+
+void travrusa_videoram_w(int offset,int data)
 {
-	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	if (travrusa_videoram[offset] != data)
+	{
+		travrusa_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,(offset/2)%64,(offset/2)/64);
+	}
+}
+
+
+static int scrollx[2];
+
+static void set_scroll(void)
+{
+	int i;
+
+	for (i = 0;i < 24;i++)
+		tilemap_set_scrollx(bg_tilemap,i,scrollx[0] + 256 * scrollx[1]);
+	for (i = 24;i < 32;i++)
+		tilemap_set_scrollx(bg_tilemap,i,0);
+}
+
+void travrusa_scroll_x_low_w(int offset,int data)
+{
+	scrollx[0] = data;
+	set_scroll();
+}
+
+void travrusa_scroll_x_high_w(int offset,int data)
+{
+	scrollx[1] = data;
+	set_scroll();
+}
+
+
+void travrusa_flipscreen_w(int offset,int data)
+{
+	/* screen flip is handled both by software and hardware */
+	data ^= ~readinputport(4) & 1;
+
+	flipscreen = data & 1;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	coin_counter_w(0,data & 0x02);
+	coin_counter_w(1,data & 0x20);
 }
 
 
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
-void trace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+
+static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size-2;offs >= 0;offs-=2)
+	static struct rectangle spritevisiblearea =
 	{
-		if (dirtybuffer[offs] || dirtybuffer[offs+1])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
-
-			sx = (offs/2) % 64;
-			sy = (offs/2) / 64;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 4 * (videoram[offs+1] & 0xc0),
-					videoram[offs+1] & 0x0f,
-					videoram[offs+1] & 0x20,videoram[offs+1] & 0x10,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
+		1*8, 31*8-1,
+		0*8, 24*8-1
+	};
+	static struct rectangle spritevisibleareaflip =
 	{
-		int scroll[32];
+		1*8, 31*8-1,
+		8*8, 32*8-1
+	};
 
 
-		for (offs = 0;offs < 24;offs++)
-			scroll[offs] = -(*trace_scroll_x_high * 0x100 + *trace_scroll_x_low);
-		for (offs = 24;offs < 32;offs++)
-			scroll[offs] = 0;
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
-	/* copy the sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = ((spriteram[offs + 3] + 8) & 0xff) - 8;
+		sy = 240 - spriteram[offs];
+		flipx = spriteram[offs + 1] & 0x40;
+		flipy = spriteram[offs + 1] & 0x80;
+		if (flipscreen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 2],
 				spriteram[offs + 1] & 0x0f,
-				spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
-				spriteram[offs + 3],240 - spriteram[offs],
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+				flipx,flipy,
+				sx,sy,
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
+}
+
+void travrusa_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	tilemap_update(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
 }

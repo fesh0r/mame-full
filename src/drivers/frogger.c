@@ -84,6 +84,7 @@ interrupt mode 1 triggered by the main CPU
 extern unsigned char *frogger_attributesram;
 void frogger_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void frogger_attributes_w(int offset,int data);
+void frogger_flipscreen_w(int offset,int data);
 void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -117,6 +118,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xb808, 0xb808, interrupt_enable_w },
+	{ 0xb80c, 0xb80c, frogger_flipscreen_w },
 	{ 0xb818, 0xb818, coin_counter_w },
 	{ 0xb81c, 0xb81c, frogger_counterb_w },
 	{ 0xd000, 0xd000, soundlatch_w },
@@ -147,6 +149,7 @@ static struct MemoryWriteAddress frogger2_writemem[] =
 	{ 0xa800, 0xa800, soundlatch_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0xb001, 0xb001, frogger2_sh_irqtrigger_w },
+	{ 0xb006, 0xb006, frogger_flipscreen_w },
 	{ -1 }	/* end of table */
 };
 
@@ -195,11 +198,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x02, "7" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot2 - unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 2P shoot1 - unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -209,14 +212,14 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
 	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1 C 1/1" )
 	PORT_DIPSETTING(    0x06, "A 1/1 B 1/6 C 1/1" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -241,17 +244,17 @@ INPUT_PORTS_START( frogger2_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0xc0, "3" )
 	PORT_DIPSETTING(    0x80, "5" )
 	PORT_DIPSETTING(    0x40, "7" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x06, 0x06, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 2/1 C 2/1" )
 	PORT_DIPSETTING(    0x04, "A 2/1 B 1/3 C 2/1" )
 	PORT_DIPSETTING(    0x06, "A 1/1 B 1/1 C 1/1" )
@@ -271,8 +274,8 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 256*8*8, 0 },	/* the two bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -281,10 +284,10 @@ static struct GfxLayout spritelayout =
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 64*16*16, 0 },	/* the two bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -303,7 +306,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x50ff },
+	{ 80 },
+	{ 0x20 },	/* gain */
 	{ soundlatch_r },
 	{ frogger_portB_r },
 	{ 0 },
@@ -336,7 +340,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,64,
 	frogger_vh_convert_color_prom,
@@ -381,7 +385,7 @@ static struct MachineDriver frogger2_machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	32,64,
 	frogger_vh_convert_color_prom,
@@ -412,60 +416,60 @@ static struct MachineDriver frogger2_machine_driver =
 
 ROM_START( frogger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000, 0xb77be5cb )
-	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000, 0x02dc7158 )
-	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000, 0x71e62ce0 )
-	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000, 0x568b11cd )
+	ROM_LOAD( "frogger.ic5",  0x0000, 0x1000, 0xefab0c79 )
+	ROM_LOAD( "frogger.ic6",  0x1000, 0x1000, 0xaeca9c13 )
+	ROM_LOAD( "frogger.ic7",  0x2000, 0x1000, 0xdd251066 )
+	ROM_LOAD( "frogger.ic8",  0x3000, 0x1000, 0xbf293a02 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogsega_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.26", 0x0000, 0x1000, 0x65a3e115 )
-	ROM_LOAD( "frogger.27", 0x1000, 0x1000, 0x039a96c8 )
-	ROM_LOAD( "frogger.34", 0x2000, 0x1000, 0xb48737eb )
+	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
+	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
+	ROM_LOAD( "frogger.34",   0x2000, 0x1000, 0xed866bab )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606", 0x0000, 0x0800, 0xd04c173a )
-	ROM_LOAD( "frogger.607", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608", 0x0000, 0x0800, 0x57851ff5 )
-	ROM_LOAD( "frogger.609", 0x0800, 0x0800, 0xd77b3859 )
-	ROM_LOAD( "frogger.610", 0x1000, 0x0800, 0x7ec0f39e )
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
 ROM_END
 
 ROM_START( frogger2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "epr-1031.15", 0x0000, 0x1000, 0xea2517c3 )
-	ROM_LOAD( "epr-1032.16", 0x1000, 0x1000, 0x1ccaed52 )
-	ROM_LOAD( "epr-1033.33", 0x2000, 0x1000, 0xd495e393 )
-	ROM_LOAD( "epr-1034.34", 0x3000, 0x1000, 0xcc74908a )
+	ROM_LOAD( "epr-1031.15",  0x0000, 0x1000, 0x4b7c8d11 )
+	ROM_LOAD( "epr-1032.16",  0x1000, 0x1000, 0xac00b9d9 )
+	ROM_LOAD( "epr-1033.33",  0x2000, 0x1000, 0xbc1d6fbc )
+	ROM_LOAD( "epr-1034.34",  0x3000, 0x1000, 0x9efe7399 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "epr-1036.1k", 0x0000, 0x0800, 0xf8175729 )
-	ROM_LOAD( "epr-1037.1h", 0x0800, 0x0800, 0xb474d87c )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l", 0x0000, 0x0020, 0x1298b648 )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "epr-1082.42", 0x0000, 0x1000, 0x4aeb27b7 )
-	ROM_LOAD( "epr-1035.43", 0x1000, 0x0800, 0xed40329a )
+	ROM_LOAD( "epr-1082.42",  0x0000, 0x1000, 0x802843c2 )
+	ROM_LOAD( "epr-1035.43",  0x1000, 0x0800, 0x14e74148 )
 ROM_END
 
 
@@ -548,10 +552,11 @@ struct GameDriver frogger_driver =
 	"frogger",
 	"Frogger (set 1)",
 	"1981",
-	"Sega",
+	"[Konami] (Sega license)",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	frogger_rom,
 	frogger_decode, 0,
@@ -561,7 +566,7 @@ struct GameDriver frogger_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -573,10 +578,11 @@ struct GameDriver frogsega_driver =
 	"frogsega",
 	"Frogger (set 2)",
 	"1981",
-	"Sega",
+	"[Konami] (Sega license)",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	frogsega_rom,
 	frogger_decode, 0,
@@ -586,12 +592,12 @@ struct GameDriver frogsega_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-/* this version runs on modiifed Moon Cresta hardware */
+/* this version runs on modified Moon Cresta hardware */
 struct GameDriver frogger2_driver =
 {
 	__FILE__,
@@ -603,6 +609,7 @@ struct GameDriver frogger2_driver =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&frogger2_machine_driver,
+	0,
 
 	frogger2_rom,
 	frogger2_decode, 0,
@@ -612,7 +619,7 @@ struct GameDriver frogger2_driver =
 	frogger2_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

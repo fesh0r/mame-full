@@ -130,7 +130,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 8 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN3, 8 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -155,54 +155,52 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x02, "Easy" )
 	PORT_DIPSETTING(    0x03, "Normal" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x10, 0x10, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "2 Players Game" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x10, "2 Credits" )
-	PORT_DIPNAME( 0x20, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English")
 	PORT_DIPSETTING(    0x20, "Japanese")
-	PORT_DIPNAME( 0x40, 0x40, "Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off")
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Freeze" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
-	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit")
-	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x18, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -214,8 +212,8 @@ static struct GfxLayout charlayout =
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	{ 8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
@@ -224,10 +222,10 @@ static struct GfxLayout spritelayout =
         256,    /* 256 sprites */
         4,      /* 4 bits per pixel */
         { 0x4000*8+4, 0x4000*8+0, 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			32*8+0, 32*8+1, 32*8+2, 32*8+3, 33*8+0, 33*8+1, 33*8+2, 33*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	{ 33*8+3, 33*8+2, 33*8+1, 33*8+0, 32*8+3, 32*8+2, 32*8+1, 32*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 static struct GfxLayout tilelayout =
@@ -236,14 +234,14 @@ static struct GfxLayout tilelayout =
 	64,    /* 64 tiles */
 	2,      /* 2 bits per pixel */
 	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			64*8+0, 64*8+1, 64*8+2, 64*8+3, 65*8+0, 65*8+1, 65*8+2, 65*8+3,
+			128*8+0, 128*8+1, 128*8+2, 128*8+3, 129*8+0, 129*8+1, 129*8+2, 129*8+3,
+			192*8+0, 192*8+1, 192*8+2, 192*8+3, 193*8+0, 193*8+1, 193*8+2, 193*8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
 			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16,
 			16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
 			24*16, 25*16, 26*16, 27*16, 28*16, 29*16, 30*16, 31*16 },
-	{ 192*8+8+3, 192*8+8+2, 192*8+8+1, 192*8+8+0, 192*8+3, 192*8+2, 192*8+1, 192*8+0,
-			128*8+8+3, 128*8+8+2, 128*8+8+1, 128*8+8+0, 128*8+3, 128*8+2, 128*8+1, 128*8+0,
-			64*8+8+3, 64*8+8+2, 64*8+8+1, 64*8+8+0, 64*8+3, 64*8+2, 64*8+1, 64*8+0,
-			8+3, 8+2, 8+1, 8+0, 3, 2, 1, 0 },
 	256*8	/* every tile takes 256 consecutive bytes */
 };
 
@@ -264,7 +262,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 255, 255 },
+	{ 15, 15 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -274,8 +273,8 @@ static struct AY8910interface ay8910_interface =
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	3000000,	/* 3 MHz????? */
-	{ 255, 255 }
+	{ 3000000, 3000000 },	/* 3 MHz????? */
+	{ 30, 30 }
 };
 
 
@@ -304,7 +303,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,64*4+64*4+16*16+16*16,
 	exedexes_vh_convert_color_prom,
@@ -333,66 +332,66 @@ static struct MachineDriver machine_driver =
 
 ROM_START( exedexes_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0xde80ac08 )
-	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xe52f8109 )
-	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0xe7ee4e3e )
+	ROM_LOAD( "11m_ee04.bin", 0x0000, 0x4000, 0x44140dbd )
+	ROM_LOAD( "10m_ee03.bin", 0x4000, 0x4000, 0xbf72cfba )
+	ROM_LOAD( "09m_ee02.bin", 0x8000, 0x4000, 0x7ad95e2f )
 
-	ROM_REGION(0x16000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0x21890673 ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x2cd31109 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xc3ef9bc9 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0x9fa65502 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x06151a97 ) /* Sprites planes 2-3 */
+	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "05c_ee00.bin", 0x00000, 0x2000, 0xcadb75bd ) /* Characters */
+	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "02D_E-02.BIN", 0x0000, 0x0100, 0x734e0306 )	/* red component */
-	ROM_LOAD( "03D_E-03.BIN", 0x0100, 0x0100, 0x39190109 )	/* green component */
-	ROM_LOAD( "04D_E-04.BIN", 0x0200, 0x0100, 0x7a7c0904 )	/* blue component */
-	ROM_LOAD( "06F_E-05.BIN", 0x0300, 0x0100, 0x4661090d )	/* char lookup table */
-	ROM_LOAD( "L04_E-10.BIN", 0x0400, 0x0100, 0x65920708 )	/* 32x32 tile lookup table */
-	ROM_LOAD( "C04_E-07.BIN", 0x0500, 0x0100, 0xc23c0f00 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "L09_E-11.BIN", 0x0600, 0x0100, 0x3c0f0d0d )	/* sprite lookup table */
-	ROM_LOAD( "L10_E-12.BIN", 0x0700, 0x0100, 0x5f610303 )	/* sprite palette bank */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x65d4f412 )
+	ROM_LOAD( "11e_ee01.bin", 0x00000, 0x4000, 0x73cdf3b2 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 ROM_START( savgbees_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ee04e.11m", 0x0000, 0x4000, 0xdbe9544d )
-	ROM_LOAD( "ee03e.10m", 0x4000, 0x4000, 0x72b30c5b )
-	ROM_LOAD( "ee02e.9m",  0x8000, 0x4000, 0x7c31db8d )
+	ROM_LOAD( "ee04e.11m",    0x0000, 0x4000, 0xc0caf442 )
+	ROM_LOAD( "ee03e.10m",    0x4000, 0x4000, 0x9cd70ae1 )
+	ROM_LOAD( "ee02e.9m",     0x8000, 0x4000, 0xa04e6368 )
 
-	ROM_REGION(0x16000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ee00e.5c", 0x00000, 0x2000, 0xf26a4292 ) /* Characters */
-	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x92c19717 ) /* 32x32 tiles planes 0-1 */
-	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x2cd31109 ) /* 16x16 tiles planes 0-1 */
-	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xc3ef9bc9 ) /* 16x16 tiles planes 2-3 */
-	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0x9fa65502 ) /* Sprites planes 0-1 */
-	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x06151a97 ) /* Sprites planes 2-3 */
+	ROM_REGION_DISPOSE(0x16000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ee00e.5c",     0x00000, 0x2000, 0x5972f95f ) /* Characters */
+	ROM_LOAD( "h01_ee08.bin", 0x02000, 0x4000, 0x96a65c1d ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "a03_ee06.bin", 0x06000, 0x4000, 0x6039bdd1 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "a02_ee05.bin", 0x0a000, 0x4000, 0xb32d8252 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
 	ROM_REGION(0x0800)	/* color PROMs */
-	ROM_LOAD( "02D_E-02.BIN", 0x0000, 0x0100, 0x734e0306 )	/* red component */
-	ROM_LOAD( "03D_E-03.BIN", 0x0100, 0x0100, 0x39190109 )	/* green component */
-	ROM_LOAD( "04D_E-04.BIN", 0x0200, 0x0100, 0x7a7c0904 )	/* blue component */
-	ROM_LOAD( "06F_E-05.BIN", 0x0300, 0x0100, 0x4661090d )	/* char lookup table */
-	ROM_LOAD( "L04_E-10.BIN", 0x0400, 0x0100, 0x65920708 )	/* 32x32 tile lookup table */
-	ROM_LOAD( "C04_E-07.BIN", 0x0500, 0x0100, 0xc23c0f00 )	/* 16x16 tile lookup table */
-	ROM_LOAD( "L09_E-11.BIN", 0x0600, 0x0100, 0x3c0f0d0d )	/* sprite lookup table */
-	ROM_LOAD( "L10_E-12.BIN", 0x0700, 0x0100, 0x5f610303 )	/* sprite palette bank */
+	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
+	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
+	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
+	ROM_LOAD( "06f_e-05.bin", 0x0300, 0x0100, 0x35a03579 )	/* char lookup table */
+	ROM_LOAD( "l04_e-10.bin", 0x0400, 0x0100, 0x1dfad87a )	/* 32x32 tile lookup table */
+	ROM_LOAD( "c04_e-07.bin", 0x0500, 0x0100, 0x850064e0 )	/* 16x16 tile lookup table */
+	ROM_LOAD( "l09_e-11.bin", 0x0600, 0x0100, 0x2bb68710 )	/* sprite lookup table */
+	ROM_LOAD( "l10_e-12.bin", 0x0700, 0x0100, 0x173184ef )	/* sprite palette bank */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ee01e.11e", 0x00000, 0x4000, 0xe725cdeb )
+	ROM_LOAD( "ee01e.11e",    0x00000, 0x4000, 0x93d3f952 )
 
 	ROM_REGION(0x6000)      /* For Tile background */
-	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 )	/* Front Tile Map */
-	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 )	/* Back Tile map */
+	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x3625a68d )	/* Front Tile Map */
+	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0x6057c907 )	/* Back Tile map */
 ROM_END
 
 
@@ -403,8 +402,8 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xE680],"\x00\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0xE6CD],"\x24\x1E\x19",3) == 0))
+	if ((memcmp(&RAM[0xE680],"\x00\x00\x00\x00\x00\x05",6) == 0) &&
+			(memcmp(&RAM[0xE6C0],"\x00\x00\x00\x00\x00\x01",6) == 0))
 	{
 		void *f;
 
@@ -446,9 +445,10 @@ struct GameDriver exedexes_driver =
 	"Exed Exes",
 	"1985",
 	"Capcom",
-	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
+	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	exedexes_rom,
 	0, 0,
@@ -458,7 +458,7 @@ struct GameDriver exedexes_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
@@ -471,9 +471,10 @@ struct GameDriver savgbees_driver =
 	"Savage Bees",
 	"1985",
 	"Capcom (Memetron license)",
-	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
+	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	savgbees_rom,
 	0, 0,
@@ -483,7 +484,7 @@ struct GameDriver savgbees_driver =
 	input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

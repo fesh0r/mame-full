@@ -2,10 +2,7 @@
 
   Black Tiger
 
-  Driver provided by Paul Leaman (paull@vortexcomputing.demon.co.uk)
-
-  Please do not send anything large to this address without asking me
-  first.
+  Driver provided by Paul Leaman
 
   Thanks to Ishmair for providing information about the screen
   layout on level 3.
@@ -14,7 +11,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
 
 
 
@@ -47,12 +44,9 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 static int blktiger_protection_r(int offset)
 {
-	Z80_Regs regs;
-
-
-	Z80_GetRegs(&regs);
-	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_getpc(),regs.DE.B.h);
-	return regs.DE.B.h;
+	int data = cpu_get_reg(Z80_DE) >> 8;
+	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	return data;
 }
 
 static void blktiger_bankswitch_w(int offset,int data)
@@ -178,38 +172,36 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x38, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x28, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x20, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x18, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x40, 0x40, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7")
-	PORT_DIPNAME( 0x1c, 0x1c, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x1c, "1 (Easiest)")
 	PORT_DIPSETTING(    0x18, "2" )
 	PORT_DIPSETTING(    0x14, "3" )
@@ -218,20 +210,20 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, "6" )
 	PORT_DIPSETTING(    0x04, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x40, "Yes" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Freeze", IP_KEY_NONE )	/* could be VBLANK */
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, "Freeze" )	/* could be VBLANK */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -270,16 +262,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int irq)
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3500000,	/* 3.5 MHz ? (hand tuned) */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -343,48 +336,118 @@ static struct MachineDriver machine_driver =
 
 ROM_START( blktiger_rom )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xfd01f39b )	/* CODE */
-	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0xabf76cc7 )	/* 0+1 */
-	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x3f25d1f7 )	/* 2+3 */
-	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xdfb8f0f8 )	/* 4+5 */
-	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0x4a2a8eaa )	/* 6+7 */
+	ROM_LOAD( "blktiger.5e",  0x00000, 0x08000, 0xa8f98f22 )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
+	ROM_LOAD( "blktiger.8e",  0x20000, 0x10000, 0x4089e157 )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xed6af6ec )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0xae59b72e )	/* 6+7 */
 
-	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "blktiger.2n", 0x00000, 0x08000, 0x94039dc5 )	/* characters */
-	ROM_LOAD( "blktiger.5b", 0x10000, 0x10000, 0x18e0c452 )	/* tiles */
-	ROM_LOAD( "blktiger.4b", 0x20000, 0x10000, 0xfa2939e9 )
-	ROM_LOAD( "blktiger.9b", 0x30000, 0x10000, 0x7ae80858 )
-	ROM_LOAD( "blktiger.8b", 0x40000, 0x10000, 0x1d500c92 )
-	ROM_LOAD( "blktiger.5a", 0x50000, 0x10000, 0xdc33c175 )	/* sprites */
-	ROM_LOAD( "blktiger.4a", 0x60000, 0x10000, 0x51f829e4 )
-	ROM_LOAD( "blktiger.9a", 0x70000, 0x10000, 0x057f831b )
-	ROM_LOAD( "blktiger.8a", 0x80000, 0x10000, 0x03585086 )
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, 0x70175d78 )	/* characters */
+	ROM_LOAD( "blktiger.5b",  0x10000, 0x10000, 0xc4524993 )	/* tiles */
+	ROM_LOAD( "blktiger.4b",  0x20000, 0x10000, 0x7932c86f )
+	ROM_LOAD( "blktiger.9b",  0x30000, 0x10000, 0xdc49593a )
+	ROM_LOAD( "blktiger.8b",  0x40000, 0x10000, 0x7ed7a122 )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l", 0x0000, 0x8000, 0xdc92e1f4 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+ROM_END
+
+ROM_START( bktigerb_rom )
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, 0x9d8464e8 )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
+	ROM_LOAD( "btiger3.j6",   0x20000, 0x10000, 0x52c56ed1 )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xed6af6ec )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0xae59b72e )	/* 6+7 */
+
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, 0x70175d78 )	/* characters */
+	ROM_LOAD( "blktiger.5b",  0x10000, 0x10000, 0xc4524993 )	/* tiles */
+	ROM_LOAD( "blktiger.4b",  0x20000, 0x10000, 0x7932c86f )
+	ROM_LOAD( "blktiger.9b",  0x30000, 0x10000, 0xdc49593a )
+	ROM_LOAD( "blktiger.8b",  0x40000, 0x10000, 0x7ed7a122 )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
 ROM_START( blkdrgon_rom )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
-	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x706cb178 )	/* CODE */
-	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0xe1cf308b )	/* 0+1 */
-	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0x6f50ba9e )	/* 2+3 */
-	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0xc0501050 )	/* 4+5 */
-	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0x42c29ca2 )	/* 6+7 */
+	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x27ccdfbc )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
+	ROM_LOAD( "blkdrgon.8e",  0x20000, 0x10000, 0xd1bf3757 )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0x4d1d6680 )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0xc8d0c45e )	/* 6+7 */
 
-	ROM_REGION(0x90000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "blkdrgon.2n", 0x00000, 0x08000, 0x09175e49 )	/* characters */
-	ROM_LOAD( "blkdrgon.5b", 0x10000, 0x10000, 0x0122a656 )	/* tiles */
-	ROM_LOAD( "blkdrgon.4b", 0x20000, 0x10000, 0xfa0e4e9c )
-	ROM_LOAD( "blkdrgon.9b", 0x30000, 0x10000, 0xeb156837 )
-	ROM_LOAD( "blkdrgon.8b", 0x40000, 0x10000, 0x83c8acf8 )
-	ROM_LOAD( "blktiger.5a", 0x50000, 0x10000, 0xdc33c175 )	/* sprites */
-	ROM_LOAD( "blktiger.4a", 0x60000, 0x10000, 0x51f829e4 )
-	ROM_LOAD( "blktiger.9a", 0x70000, 0x10000, 0x057f831b )
-	ROM_LOAD( "blktiger.8a", 0x80000, 0x10000, 0x03585086 )
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blkdrgon.2n",  0x00000, 0x08000, 0x3821ab29 )	/* characters */
+	ROM_LOAD( "blkdrgon.5b",  0x10000, 0x10000, 0x22d0a4b0 )	/* tiles */
+	ROM_LOAD( "blkdrgon.4b",  0x20000, 0x10000, 0xc8b5fc52 )
+	ROM_LOAD( "blkdrgon.9b",  0x30000, 0x10000, 0x9498c378 )
+	ROM_LOAD( "blkdrgon.8b",  0x40000, 0x10000, 0x5b0df8ce )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "blktiger.1l", 0x0000, 0x8000, 0xdc92e1f4 )
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
+ROM_END
+
+ROM_START( blkdrgnb_rom )
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "j1-5e",        0x00000, 0x08000, 0x97e84412 )	/* CODE */
+	ROM_LOAD( "blkdrgon.6e",  0x10000, 0x10000, 0x7d39c26f )	/* 0+1 */
+	ROM_LOAD( "j3-8e",        0x20000, 0x10000, 0xf4cd0f39 )	/* 2+3 */
+	ROM_LOAD( "blkdrgon.9e",  0x30000, 0x10000, 0x4d1d6680 )	/* 4+5 */
+	ROM_LOAD( "blkdrgon.10e", 0x40000, 0x10000, 0xc8d0c45e )	/* 6+7 */
+
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j15-2n",       0x00000, 0x08000, 0x852ad2b7 )	/* characters */
+	ROM_LOAD( "blkdrgon.5b",  0x10000, 0x10000, 0x22d0a4b0 )	/* tiles */
+	ROM_LOAD( "j11-4b",       0x20000, 0x10000, 0x053ab15c )
+	ROM_LOAD( "blkdrgon.9b",  0x30000, 0x10000, 0x9498c378 )
+	ROM_LOAD( "j13-8b",       0x40000, 0x10000, 0x663d5afa )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+
+	ROM_REGION(0x0400)     /* PROMs (function unknown) */
+	ROM_LOAD( "mb7114e.8j",   0x0000, 0x0100, 0x29b459e5 )
+	ROM_LOAD( "mb7114e.9j",   0x0100, 0x0100, 0x8b741e66 )
+	ROM_LOAD( "mb7114e.11k",  0x0200, 0x0100, 0x27201c75 )
+	ROM_LOAD( "mb7114e.11l",  0x0300, 0x0100, 0xe5490b68 )
 ROM_END
 
 
@@ -396,7 +459,9 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xe204],"\x02\x00\x00",3) == 0 &&
-			memcmp(&RAM[0xe244],"\x01\x02\x00",3) == 0)
+			memcmp(&RAM[0xe244],"\x01\x02\x00",3) == 0 &&
+			memcmp(&RAM[0xe012],"\x6a\x81\x00",3) == 0)
+
 	{
 		void *f;
 
@@ -436,9 +501,10 @@ struct GameDriver blktiger_driver =
 	"Black Tiger",
 	"1987",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
 	0,
 	&machine_driver,
+	0,
 
 	blktiger_rom,
 	0, 0,
@@ -447,9 +513,35 @@ struct GameDriver blktiger_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
-
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver bktigerb_driver =
+{
+	__FILE__,
+	&blktiger_driver,
+	"bktigerb",
+	"Black Tiger (bootleg)",
+	"1987",
+	"bootleg",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
+	0,
+	&machine_driver,
+	0,
+
+	bktigerb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };
 
@@ -461,9 +553,10 @@ struct GameDriver blkdrgon_driver =
 	"Black Dragon",
 	"1987",
 	"Capcom",
-	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
 	0,
 	&machine_driver,
+	0,
 
 	blkdrgon_rom,
 	0, 0,
@@ -472,8 +565,34 @@ struct GameDriver blkdrgon_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
-
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver blkdrgnb_driver =
+{
+	__FILE__,
+	&blktiger_driver,
+	"blkdrgnb",
+	"Black Dragon (bootleg)",
+	"1987",
+	"bootleg",
+	"Paul Leaman (MAME driver)\nIshmair\nDani Portillo (protection)",
+	0,
+	&machine_driver,
+	0,
+
+	blkdrgnb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
 	hiload, hisave
 };

@@ -7,7 +7,6 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
 
 
 
@@ -41,7 +40,7 @@ void wow_interrupt_enable_w(int offset, int data)
 
     if (data & 0x10)
  	{
-  		GorfDelay =(CurrentScan + 10) & 0xFF;
+  		GorfDelay =(CurrentScan + 7) & 0xFF;
 
         /* Gorf Special *MUST* occur before next scanline interrupt */
 
@@ -147,7 +146,8 @@ int gorf_interrupt(void)
 
 /*	cpu_clear_pending_interrupts(0); */
 
-	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
+//	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
+	cpu_set_irq_line(0,0,CLEAR_LINE);
 
     return res;
 }
@@ -160,7 +160,7 @@ int gorf_timer_r(int offset)
 
 	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
 	{												/* GALAXIAN SCREEN */
-        if (cpu_getpc()==0x3086)
+        if (cpu_get_pc()==0x3086)
         {
     	    if(--Skip==-1)
             {

@@ -15,6 +15,7 @@ void pbaction_videoram2_w(int offset,int data);
 void pbaction_colorram2_w(int offset,int data);
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
+static int scroll;
 static int flipscreen;
 
 
@@ -87,6 +88,13 @@ void pbaction_colorram2_w(int offset,int data)
 
 		pbaction_colorram2[offset] = data;
 	}
+}
+
+
+
+void pbaction_scroll_w(int offset,int data)
+{
+	scroll = -(data-3);
 }
 
 
@@ -182,7 +190,7 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the background */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -221,11 +229,11 @@ void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs],
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
-				sx,sy,
+				sx+scroll,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
 	/* copy the foreground */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }

@@ -81,36 +81,36 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( nitedrvr_input_ports )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
-		PORT_DIPNAME( 0x30, 0x10, "Cost", IP_KEY_NONE )
+		PORT_DIPNAME( 0x30, 0x10, "Cost" )
 		PORT_DIPSETTING(	0x00, "2 plays/coin" )
 		PORT_DIPSETTING(	0x10, "1 play/coin" )
 		PORT_DIPSETTING(	0x20, "1 play/coin" ) /* not a typo */
 		PORT_DIPSETTING(	0x30, "1 play/2 coins" )
-		PORT_DIPNAME( 0xC0, 0x80, "Seconds", IP_KEY_NONE )
+		PORT_DIPNAME( 0xC0, 0x80, "Seconds" )
 		PORT_DIPSETTING(	0x00, "50" )
 		PORT_DIPSETTING(	0x40, "75" )
 		PORT_DIPSETTING(	0x80, "100" )
 		PORT_DIPSETTING(	0xC0, "125" )
 
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
-		PORT_DIPNAME( 0x10, 0x00, "Track Set", IP_KEY_NONE )
+		PORT_DIPNAME( 0x10, 0x00, "Track Set" )
 		PORT_DIPSETTING(	0x00, "Normal" )
 		PORT_DIPSETTING(	0x10, "Reverse" )
-		PORT_DIPNAME( 0x20, 0x20, "Bonus Time Allowed", IP_KEY_NONE )
+		PORT_DIPNAME( 0x20, 0x20, "Bonus Time Allowed" )
 		PORT_DIPSETTING(	0x00, "None" )
 		PORT_DIPSETTING(	0x20, "Score=350" )
 		PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
-		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "1st gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "2nd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "3rd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2, "4th gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "1st gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "2nd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "3rd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2, "4th gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 		PORT_BIT (0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Spare */
-		PORT_DIPNAME( 0x20, 0x00, "Difficult Bonus", IP_KEY_NONE )
+		PORT_DIPNAME( 0x20, 0x00, "Difficult Bonus" )
 		PORT_DIPSETTING(	0x00, "Normal" )
 		PORT_DIPSETTING(	0x20, "Difficult" )
 		PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -120,14 +120,14 @@ INPUT_PORTS_START( nitedrvr_input_ports )
 		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 		PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 		PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_START1 )
-		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1, "Gas", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2, "Novice Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON3, "Expert Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON4, "Pro Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+		PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_BUTTON1, "Gas", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2, "Novice Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON3, "Expert Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+		PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON4, "Pro Track", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 		PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Alternating signal? */
 
 	PORT_START		/* fake port used for steering */
-		PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 0, 0, 0 )
+		PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 10, 0, 0, 0 )
 
 INPUT_PORTS_END
 
@@ -176,7 +176,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -209,12 +209,12 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nitedrvr_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "6569-01.D2", 0x9000, 0x0800, 0x456431b6 )
-	ROM_LOAD( "6570-01.F2", 0x9800, 0x0800, 0xa868be6c )
+	ROM_LOAD( "6569-01.d2",   0x9000, 0x0800, 0x7afa7542 )
+	ROM_LOAD( "6570-01.f2",   0x9800, 0x0800, 0xbf5d77b1 )
 	ROM_RELOAD( 			0xF800, 0x0800 )
 
-	ROM_REGION(0x200)	  /* 0.5k for graphics */
-	ROM_LOAD( "6568-01.P2", 0x0000, 0x0200, 0x2ef2021e )
+	ROM_REGION_DISPOSE(0x200)	  /* 0.5k for graphics */
+	ROM_LOAD( "6568-01.p2",   0x0000, 0x0200, 0xf80d8889 )
 ROM_END
 
 /***************************************************************************
@@ -240,6 +240,7 @@ struct GameDriver nitedrvr_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	nitedrvr_rom,
 	0, 0,

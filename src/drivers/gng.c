@@ -164,7 +164,7 @@ OUTPUT:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 
@@ -172,14 +172,16 @@ void gng_bankswitch_w(int offset,int data);
 int gng_bankedrom_r(int offset);
 void gng_init_machine(void);
 
+extern unsigned char *gng_fgvideoram,*gng_fgcolorram;
 extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
-extern int gng_bgvideoram_size;
-extern unsigned char *gng_scrollx,*gng_scrolly;
+void gng_fgvideoram_w(int offset,int data);
+void gng_fgcolorram_w(int offset,int data);
 void gng_bgvideoram_w(int offset,int data);
 void gng_bgcolorram_w(int offset,int data);
+void gng_bgscrollx_w(int offset,int data);
+void gng_bgscrolly_w(int offset,int data);
 void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
-void gng_vh_stop(void);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -221,15 +223,15 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2400, 0x27ff, colorram_w, &colorram },
-	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
+	{ 0x2000, 0x23ff, gng_fgvideoram_w, &gng_fgvideoram },
+	{ 0x2400, 0x27ff, gng_fgcolorram_w, &gng_fgcolorram },
+	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
 	{ 0x3800, 0x38ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0x3900, 0x39ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0x3a00, 0x3a00, soundlatch_w },
-	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
-	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
+	{ 0x3b08, 0x3b09, gng_bgscrollx_w },
+	{ 0x3b0a, 0x3b0b, gng_bgscrolly_w },
 	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
 	{ 0x3d00, 0x3d00, gng_flipscreen_w },
 	{ 0x3e00, 0x3e00, gng_bankswitch_w },
@@ -292,62 +294,60 @@ INPUT_PORTS_START( gng_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x10, 0x10, "Coinage affects", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Coin A" )
-	PORT_DIPSETTING(    0x00, "Coin B" )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage affects" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "20000 70000 70000" )
 	PORT_DIPSETTING(    0x10, "30000 80000 80000" )
 	PORT_DIPSETTING(    0x08, "20000 80000" )
 	PORT_DIPSETTING(    0x00, "30000 80000" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x60, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* identical to gng, but the "unknown" dip switch is Invulnerability */
-INPUT_PORTS_START( gngjap_input_ports )
+INPUT_PORTS_START( makaimur_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -379,58 +379,56 @@ INPUT_PORTS_START( gngjap_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x10, 0x10, "Coinage affects", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Coin A" )
-	PORT_DIPSETTING(    0x00, "Coin B" )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage affects" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "20000 70000 70000" )
 	PORT_DIPSETTING(    0x10, "30000 80000 80000" )
 	PORT_DIPSETTING(    0x08, "20000 80000" )
 	PORT_DIPSETTING(    0x00, "30000 80000" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x60, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( diamond_input_ports )
@@ -465,52 +463,52 @@ INPUT_PORTS_START( diamond_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	 /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, "*1" )
 	PORT_DIPSETTING(    0x04, "*2" )
 	PORT_DIPSETTING(    0x08, "*3" )
 	PORT_DIPSETTING(    0x0c, "*4" )
-	PORT_DIPNAME( 0x30, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x30, "4 Coins/1 Credit")
-	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW1 7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW1 7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown DSW2 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW2 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown DSW2 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW2 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x30, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown DSW2 1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW2 2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown DSW2 3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW2 4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, "*1" )
 	PORT_DIPSETTING(    0x10, "*2" )
 	PORT_DIPSETTING(    0x20, "*3" )
 	PORT_DIPSETTING(    0x30, "*4" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW2 7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown DSW2 8", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown DSW2 7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown DSW2 8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -565,7 +563,8 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz (?) */
-	{ YM2203_VOL(100,255), YM2203_VOL(100,255) },
+	{ YM2203_VOL(10,40), YM2203_VOL(10,40) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -607,7 +606,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	gng_vh_start,
-	gng_vh_stop,
+	0,
 	gng_vh_screenrefresh,
 
 	/* sound hardware */
@@ -630,104 +629,181 @@ static struct MachineDriver machine_driver =
 
 ROM_START( gng_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
-	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gg3.bin",      0x08000, 0x8000, 0x9e01c65e )
+	ROM_LOAD( "gg4.bin",      0x04000, 0x4000, 0x66606beb )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "gg5.bin",      0x10000, 0x8000, 0xd6397b2b )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin",     0x1c000, 0x4000, 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin",     0x28000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( gngcross_rom )
+ROM_START( gnga_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "gg3.bin",  0x8000, 0x8000, 0x019eaa7c )
-	ROM_LOAD( "gg4.bin",  0x4000, 0x4000, 0xf74cb35c )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "gg5.bin", 0x10000, 0x8000, 0xd39c9516 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "gng.n9",       0x08000, 0x4000, 0xb6b91cfb )
+	ROM_LOAD( "gng.n8",       0x0c000, 0x4000, 0xa5cfa928 )
+	ROM_LOAD( "gng.n10",      0x04000, 0x4000, 0x60343188 )
+	ROM_LOAD( "gng.n13",      0x10000, 0x4000, 0xfd9a8dda )
+	ROM_LOAD( "gng.n12",      0x14000, 0x4000, 0x13cf6238 )
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",     0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin",    0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin",    0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",     0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",     0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",     0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",     0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "cross17.bin", 0x1c000, 0x4000, 0xb59f663d )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin",    0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin",    0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "cross14.bin", 0x28000, 0x4000, 0xce3dc76f )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin",    0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin",    0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin",     0x1c000, 0x4000, 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin",     0x28000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
-ROM_START( gngjap_rom )
+ROM_START( gngt_rom )
 	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
-	ROM_LOAD( "8n.rom",   0x8000, 0x8000, 0xe787d6cf )
-	ROM_LOAD( "10n.rom",  0x4000, 0x4000, 0x6ae8f4b8 )	/* 4000-5fff is page 0 */
-	ROM_LOAD( "12n.rom", 0x10000, 0x8000, 0x0d9a17cc )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "mm03",         0x08000, 0x8000, 0xfb040b42 )
+	ROM_LOAD( "mm04",         0x04000, 0x4000, 0x652406f6 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "mm05",         0x10000, 0x8000, 0x8f7cff61 )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gg1.bin",  0x00000, 0x4000, 0x0d95960b )	/* characters */
-	ROM_LOAD( "gg11.bin", 0x04000, 0x4000, 0x8425662b )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "gg10.bin", 0x08000, 0x4000, 0x332b9d85 )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "gg9.bin",  0x0c000, 0x4000, 0xf6433b0f )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "gg8.bin",  0x10000, 0x4000, 0x24a66776 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "gg7.bin",  0x14000, 0x4000, 0x6e6e3ec0 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "gg6.bin",  0x18000, 0x4000, 0x248ddf8b )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "gg17.bin", 0x1c000, 0x4000, 0x1b48124e )	/* sprites 0 Plane 1-2 */
-	ROM_LOAD( "gg16.bin", 0x20000, 0x4000, 0xc29702c5 )	/* sprites 1 Plane 1-2 */
-	ROM_LOAD( "gg15.bin", 0x24000, 0x4000, 0x0309f6a7 )	/* sprites 2 Plane 1-2 */
-	ROM_LOAD( "gg14.bin", 0x28000, 0x4000, 0x0553b263 )	/* sprites 0 Plane 3-4 */
-	ROM_LOAD( "gg13.bin", 0x2c000, 0x4000, 0x3e603938 )	/* sprites 1 Plane 3-4 */
-	ROM_LOAD( "gg12.bin", 0x30000, 0x4000, 0x8ec77b4f )	/* sprites 2 Plane 3-4 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gg17.bin",     0x1c000, 0x4000, 0x93e50a8f )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gg14.bin",     0x28000, 0x4000, 0x6aaf12f9 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "gg2.bin", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( makaimur_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "8n.rom",       0x08000, 0x8000, 0x9612d66c )
+	ROM_LOAD( "10n.rom",      0x04000, 0x4000, 0x81e567e0 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "12n.rom",      0x10000, 0x8000, 0x65a6a97b )	/* page 1, 2, 3 and 4 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( makaimuc_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "mj03c.bin",       0x08000, 0x8000, 0xd343332d )
+	ROM_LOAD( "mj04c.bin",      0x04000, 0x4000, 0x1294edb1 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "mj05c.bin",      0x10000, 0x8000, 0x535342c2 )	/* page 1, 2, 3 and 4 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )		/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
+ROM_END
+
+ROM_START( makaimug_rom )
+	ROM_REGION(0x18000)	/* 64k for code * 5 pages */
+	ROM_LOAD( "mj03g.bin",       0x08000, 0x8000, 0x61b043bb )
+	ROM_LOAD( "mj04g.bin",      0x04000, 0x4000, 0x757c94d3 )	/* 4000-5fff is page 0 */
+	ROM_LOAD( "mj05g.bin",      0x10000, 0x8000, 0xf2fdccf5 )	/* page 1, 2, 3 and 4 */
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg1.bin",      0x00000, 0x4000, 0xecfccf07 )	/* characters */
+	ROM_LOAD( "gg11.bin",     0x04000, 0x4000, 0xddd56fa9 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "gg10.bin",     0x08000, 0x4000, 0x7302529d )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "gg9.bin",      0x0c000, 0x4000, 0x20035bda )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "gg8.bin",      0x10000, 0x4000, 0xf12ba271 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "gg7.bin",      0x14000, 0x4000, 0xe525207d )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "gg6.bin",      0x18000, 0x4000, 0x2d77e9b2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "gng13.n4",     0x1c000, 0x4000, 0x4613afdc )	/* sprites 0 Plane 1-2 */
+	ROM_LOAD( "gg16.bin",     0x20000, 0x4000, 0x06d7e5ca )	/* sprites 1 Plane 1-2 */
+	ROM_LOAD( "gg15.bin",     0x24000, 0x4000, 0xbc1fe02d )	/* sprites 2 Plane 1-2 */
+	ROM_LOAD( "gng16.l4",     0x28000, 0x4000, 0x608d68d5 )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "gg13.bin",     0x2c000, 0x4000, 0xe80c3fca )	/* sprites 1 Plane 3-4 */
+	ROM_LOAD( "gg12.bin",     0x30000, 0x4000, 0x7780a925 )	/* sprites 2 Plane 3-4 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "gg2.bin",      0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 ROM_START( diamond_rom )
 	ROM_REGION(0x1a000)	/* 64k for code * 6 pages (is it really 6?) */
-	ROM_LOAD( "d5",       0x0000, 0x8000, 0x89e5a985 )
-	ROM_LOAD( "d3",       0x8000, 0x8000, 0x38d5bcc9 )
-	ROM_LOAD( "d3o",      0x4000, 0x2000, 0x76c09ea4 )	/* 4000-5fff is page 0 */
-	ROM_CONTINUE(        0x18000, 0x2000 )
-	ROM_LOAD( "d5o",     0x10000, 0x8000, 0x06f68aa8 )	/* page 1, 2, 3 and 4 */
+	ROM_LOAD( "d5",           0x00000, 0x8000, 0x453f3f9e )
+	ROM_LOAD( "d3",           0x08000, 0x8000, 0xf436d6fa )
+	ROM_LOAD( "d3o",          0x04000, 0x2000, 0xba4bf9f1 )	/* 4000-5fff is page 0 */
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_LOAD( "d5o",          0x10000, 0x8000, 0xae58bd3a )	/* page 1, 2, 3 and 4 */
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d1",  0x00000, 0x4000, 0x7da60000 )	/* characters */
-	ROM_LOAD( "d11", 0x04000, 0x4000, 0xc592534e )	/* tiles 0-1 Plane 1*/
-	ROM_LOAD( "d10", 0x08000, 0x4000, 0x2c5520ed )	/* tiles 2-3 Plane 1*/
-	ROM_LOAD( "d9",  0x0c000, 0x4000, 0x0e971c4b )	/* tiles 0-1 Plane 2*/
-	ROM_LOAD( "d8",  0x10000, 0x4000, 0x1505a1c7 )	/* tiles 2-3 Plane 2*/
-	ROM_LOAD( "d7",  0x14000, 0x4000, 0x5cfe0000 )	/* tiles 0-1 Plane 3*/
-	ROM_LOAD( "d6",  0x18000, 0x4000, 0x7428a122 )	/* tiles 2-3 Plane 3*/
-	ROM_LOAD( "d17", 0x1c000, 0x4000, 0x821a03ee )	/* sprites 0 Plane 1-2 */
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d1",           0x00000, 0x4000, 0x3a24e504 )	/* characters */
+	ROM_LOAD( "d11",          0x04000, 0x4000, 0x754357d7 )	/* tiles 0-1 Plane 1*/
+	ROM_LOAD( "d10",          0x08000, 0x4000, 0x7531edcd )	/* tiles 2-3 Plane 1*/
+	ROM_LOAD( "d9",           0x0c000, 0x4000, 0x22eeca08 )	/* tiles 0-1 Plane 2*/
+	ROM_LOAD( "d8",           0x10000, 0x4000, 0x6b61be60 )	/* tiles 2-3 Plane 2*/
+	ROM_LOAD( "d7",           0x14000, 0x4000, 0xfd595274 )	/* tiles 0-1 Plane 3*/
+	ROM_LOAD( "d6",           0x18000, 0x4000, 0x7f51dcd2 )	/* tiles 2-3 Plane 3*/
+	ROM_LOAD( "d17",          0x1c000, 0x4000, 0x8164b005 )	/* sprites 0 Plane 1-2 */
 	/* empty space for unused sprites 1 Plane 1-2 */
 	/* empty space for unused sprites 2 Plane 1-2 */
-	ROM_LOAD( "d14", 0x28000, 0x4000, 0x465e000e )	/* sprites 0 Plane 3-4 */
+	ROM_LOAD( "d14",          0x28000, 0x4000, 0x6f132163 )	/* sprites 0 Plane 3-4 */
 	/* empty space for unused sprites 1 Plane 3-4 */
 	/* empty space for unused sprites 2 Plane 3-4 */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "d2", 0x0000, 0x8000, 0x0b7edfd2 )   /* Audio CPU is a Z80 */
+	ROM_LOAD( "d2",           0x0000, 0x8000, 0x615f5b6f )   /* Audio CPU is a Z80 */
 ROM_END
 
 
@@ -826,12 +902,13 @@ struct GameDriver gng_driver =
 	__FILE__,
 	0,
 	"gng",
-	"Ghosts'n Goblins (US)",
+	"Ghosts'n Goblins (World? set 1)",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gng_rom,
 	0, 0,
@@ -846,19 +923,20 @@ struct GameDriver gng_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver gngcross_driver =
+struct GameDriver gnga_driver =
 {
 	__FILE__,
 	&gng_driver,
-	"gngcross",
-	"Ghosts'n Goblins (Cross)",
+	"gnga",
+	"Ghosts'n Goblins (World? set 2)",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
-	gngcross_rom,
+	gnga_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -871,24 +949,103 @@ struct GameDriver gngcross_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver gngjap_driver =
+struct GameDriver gngt_driver =
 {
 	__FILE__,
 	&gng_driver,
-	"gngjap",
-	"Makai-mura (Japan)",
+	"gngt",
+	"Ghosts'n Goblins (US)",
+	"1985",
+	"Capcom (Taito America license)",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	gngt_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	gng_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver makaimur_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"makaimur",
+	"Makai-Mura",
 	"1985",
 	"Capcom",
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
-	gngjap_rom,
+	makaimur_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gngjap_input_ports,
+	makaimur_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver makaimuc_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"makaimuc",
+	"Makai-Mura (Revision C)",
+	"1985",
+	"Capcom",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	makaimuc_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	makaimur_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	gng_hiload, gng_hisave
+};
+
+struct GameDriver makaimug_driver =
+{
+	__FILE__,
+	&gng_driver,
+	"makaimug",
+	"Makai-Mura (Revision G)",
+	"1985",
+	"Capcom",
+	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	makaimug_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	makaimur_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -907,6 +1064,7 @@ struct GameDriver diamond_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nMike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	diamond_rom,
 	0, 0,

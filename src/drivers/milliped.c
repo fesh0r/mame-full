@@ -101,12 +101,12 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 $2000 */	/* see port 6 for x trackball */
-	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPNAME(0x03, 0x00, "Language" )
 	PORT_DIPSETTING (   0x00, "English" )
 	PORT_DIPSETTING (   0x01, "German" )
 	PORT_DIPSETTING (   0x02, "French" )
 	PORT_DIPSETTING (   0x03, "Spanish" )
-	PORT_DIPNAME (0x0c, 0x04, "Bonus", IP_KEY_NONE )
+	PORT_DIPNAME(0x0c, 0x04, "Bonus" )
 	PORT_DIPSETTING (   0x00, "0" )
 	PORT_DIPSETTING (   0x04, "0 1x" )
 	PORT_DIPSETTING (   0x08, "0 1x 2x" )
@@ -118,10 +118,10 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* IN1 $2001 */	/* see port 7 for y trackball */
 	PORT_BIT ( 0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN )				/* JB 971220 */
-	PORT_DIPNAME (0x04, 0x00, "Credit Minimum", IP_KEY_NONE )	/* JB 971220 */
+	PORT_DIPNAME(0x04, 0x00, "Credit Minimum" )	/* JB 971220 */
 	PORT_DIPSETTING (   0x00, "1" )
 	PORT_DIPSETTING (   0x04, "2" )
-	PORT_DIPNAME (0x08, 0x00, "Coin Counters", IP_KEY_NONE )	/* JB 971220 */
+	PORT_DIPNAME(0x08, 0x00, "Coin Counters" )	/* JB 971220 */
 	PORT_DIPSETTING (   0x00, "1" )
 	PORT_DIPSETTING (   0x08, "2" )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -147,49 +147,47 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* 4 */ /* DSW1 $0408 */
-	PORT_DIPNAME (0x01, 0x00, "Millipede Head", IP_KEY_NONE )
+	PORT_DIPNAME(0x01, 0x00, "Millipede Head" )
 	PORT_DIPSETTING (   0x00, "Easy" )
 	PORT_DIPSETTING (   0x01, "Hard" )
-	PORT_DIPNAME (0x02, 0x00, "Beetle", IP_KEY_NONE )
+	PORT_DIPNAME(0x02, 0x00, "Beetle" )
 	PORT_DIPSETTING (   0x00, "Easy" )
 	PORT_DIPSETTING (   0x02, "Hard" )
-	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING (   0x00, "2" )
 	PORT_DIPSETTING (   0x04, "3" )
 	PORT_DIPSETTING (   0x08, "4" )
 	PORT_DIPSETTING (   0x0c, "5" )
-	PORT_DIPNAME (0x30, 0x10, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME(0x30, 0x10, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING (   0x00, "12000" )
 	PORT_DIPSETTING (   0x10, "15000" )
 	PORT_DIPSETTING (   0x20, "20000" )
 	PORT_DIPSETTING (   0x30, "None" )
-	PORT_DIPNAME (0x40, 0x00, "Spider", IP_KEY_NONE )
+	PORT_DIPNAME(0x40, 0x00, "Spider" )
 	PORT_DIPSETTING (   0x00, "Easy" )
 	PORT_DIPSETTING (   0x40, "Hard" )
-	PORT_DIPNAME (0x80, 0x00, "Starting Score Select", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "On" )
-	PORT_DIPSETTING (   0x80, "Off" )
+	PORT_DIPNAME(0x80, 0x00, "Starting Score Select" )
+	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( Off ) )
 
 	PORT_START	/* 5 */ /* DSW2 $0808 */
-	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Free Play" )
-	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )
 	PORT_DIPSETTING (   0x00, "*1" )
 	PORT_DIPSETTING (   0x04, "*4" )
 	PORT_DIPSETTING (   0x08, "*5" )
 	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPNAME(0x10, 0x00, "Left Coin" )
 	PORT_DIPSETTING (   0x00, "*1" )
 	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING (   0x00, "None" )
 	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
 	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
@@ -200,10 +198,10 @@ INPUT_PORTS_START( input_ports )
 
 	/* JB 971220 */
 	PORT_START	/* IN6: FAKE - used for trackball-x at $2000 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 
 	PORT_START	/* IN7: FAKE - used for trackball-y at $2001 */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 50, 10, 0, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -244,8 +242,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
-	255,
-	POKEY_DEFAULT_GAIN/4,
+	{ 50, 50 },
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -310,15 +308,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( milliped_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0xd13b2ed1 )
-	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0x8d016c93 )
-	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x0a7b24db )
-	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x35374cb3 )
+	ROM_LOAD( "milliped.104", 0x4000, 0x1000, 0x40711675 )
+	ROM_LOAD( "milliped.103", 0x5000, 0x1000, 0xfb01baf2 )
+	ROM_LOAD( "milliped.102", 0x6000, 0x1000, 0x62e137e0 )
+	ROM_LOAD( "milliped.101", 0x7000, 0x1000, 0x46752c7d )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0x006170b5 )
-	ROM_LOAD( "milliped.107", 0x0800, 0x0800, 0x7bd67d9e )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "milliped.106", 0x0000, 0x0800, 0xf4468045 )
+	ROM_LOAD( "milliped.107", 0x0800, 0x0800, 0x68c3437a )
 ROM_END
 
 
@@ -334,6 +332,7 @@ struct GameDriver milliped_driver =
 	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	milliped_rom,
 	0, 0,

@@ -166,40 +166,37 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
 	/* the coin inputs must stay active for exactly one frame, otherwise */
 	/* the game will keep inserting coins. */
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
 	/* to avoid the freeze. */
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
-			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x03, "10000" )
 	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x00, "40000" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
 	PORT_DIPSETTING(    0x0c, "Easy?" )
 	PORT_DIPSETTING(    0x04, "Medium?" )
 	PORT_DIPSETTING(    0x08, "Hard?" )
 	PORT_DIPSETTING(    0x00, "Hardest?" )
-	PORT_DIPNAME( 0x30, 0x30, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
- 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x0f, 0x03, "B Coin/Cred" )
 	PORT_DIPSETTING(    0x0f, "4/1" )
 	PORT_DIPSETTING(    0x07, "3/1" )
 	PORT_DIPSETTING(    0x0b, "2/1" )
@@ -216,7 +213,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x09, "1/4" )
 	PORT_DIPSETTING(    0x01, "1/5" )
 	PORT_DIPSETTING(    0x0e, "1/6" )
-	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred", IP_KEY_NONE )
+	PORT_DIPNAME( 0xf0, 0x30, "A Coin/Cred" )
 	PORT_DIPSETTING(    0xf0, "4/1" )
 	PORT_DIPSETTING(    0x70, "3/1" )
 	PORT_DIPSETTING(    0xb0, "2/1" )
@@ -237,7 +234,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -269,39 +266,17 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* U68 - palette */
-	0x00,0x00,0xF0,0xF0,0x66,0x5D,0xAE,0xF6,0x00,0x00,0xF0,0xF6,0xA4,0x70,0xAE,0xF6,
-	0x00,0x00,0xF0,0x36,0x70,0x28,0xAE,0xF6,0x00,0x00,0xF0,0x06,0xF0,0xE0,0xAE,0xF6,
-	0x00,0x00,0xF0,0x38,0x34,0x20,0xAE,0xF6,0x00,0x00,0xF6,0xAE,0x24,0x07,0x04,0xAC,
-	0x00,0x00,0x06,0xAE,0x00,0x00,0x00,0x00,0x00,0x07,0x00,0x00,0x36,0x00,0x00,0x00,
-	0x00,0x07,0x07,0x00,0x36,0x36,0x00,0x00,0x00,0x07,0x07,0x07,0x36,0x36,0x36,0x00,
-	0x00,0x14,0x03,0x02,0x80,0xF0,0xF6,0x18,0x00,0x14,0x03,0x02,0x80,0x1B,0xF6,0x03,
-	0x00,0x14,0x03,0x02,0x80,0x20,0xF6,0x18,0x00,0x14,0x03,0x02,0x80,0x03,0xF6,0xA4,
-	0x00,0x14,0x03,0x16,0xD0,0xF0,0xF6,0xA4,0x00,0x14,0x03,0x02,0x80,0x9B,0xF6,0xA4,
-	0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0xB4,0xAC,0xA4,0x28,0xD0,0xF6,0xE0,
-	0x00,0x07,0x2D,0x04,0x07,0x07,0xEC,0x00,0x00,0x07,0xB0,0xE0,0x80,0x82,0xF6,0x00,
-	0x00,0x07,0x2D,0x16,0x66,0x28,0x5D,0x00,0x00,0x00,0xF6,0xAE,0x1B,0x07,0x04,0xAC,
-	0x00,0x26,0x5D,0x03,0x02,0xEC,0xF6,0xE0,0x00,0x38,0x28,0xF6,0xD0,0xFF,0xFF,0xFF,
-	0x00,0x26,0xF0,0xC0,0x80,0x82,0xF6,0x00,0x00,0x07,0xAE,0xA5,0x66,0x5D,0xF6,0x00,
-	0x00,0x07,0x26,0x26,0x16,0x16,0xF6,0xD0,0x00,0x07,0xB0,0xD0,0xC0,0x80,0xF6,0x00,
-	0x00,0x24,0x06,0x16,0x04,0x03,0xF6,0xD0,0x00,0x05,0x24,0x2D,0x1B,0x12,0xF6,0xD0,
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
-};
-
-
-
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	4000000,	/* 4 Mhz??? */
-	{ 255, 255 }
+	{ 4000000, 4000000 },	/* 4 Mhz??? */
+	{ 100, 100 }
 };
 
 static struct Samplesinterface samples_interface =
 {
-	5	/* 5 channels */
+	5,	/* 5 channels */
+	25	/* volume */
 };
 
 
@@ -320,7 +295,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			2000000,
-			3,
+			4,
 			sh_readmem, sh_writemem, 0,0,
 			interrupt, 4
 		}
@@ -365,60 +340,66 @@ static struct MachineDriver machine_driver =
 
 ROM_START( congo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "congo1.bin",  0x0000, 0x2000, 0x8f3c6024 )
-	ROM_LOAD( "congo2.bin",  0x2000, 0x2000, 0xb9faa34e )
-	ROM_LOAD( "congo3.bin",  0x4000, 0x2000, 0x059defc5 )
-	ROM_LOAD( "congo4.bin",  0x6000, 0x2000, 0xdd66f8be )
+	ROM_LOAD( "congo1.bin",   0x0000, 0x2000, 0x09355b5b )
+	ROM_LOAD( "congo2.bin",   0x2000, 0x2000, 0x1c5e30ae )
+	ROM_LOAD( "congo3.bin",   0x4000, 0x2000, 0x5ee1132c )
+	ROM_LOAD( "congo4.bin",   0x6000, 0x2000, 0x5332b9bf )
 
-	ROM_REGION(0x13800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "congo5.bin",  0x00000, 0x1000, 0x863539ed )	/* characters */
+	ROM_REGION_DISPOSE(0x13800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "congo8.bin",  0x01800, 0x2000, 0xb060d10e )	/* background tiles */
-	ROM_LOAD( "congo9.bin",  0x03800, 0x2000, 0xf10944e7 )
-	ROM_LOAD( "congo10.bin", 0x05800, 0x2000, 0xccf64f98 )
-	ROM_LOAD( "congo12.bin", 0x07800, 0x2000, 0x96781f3e )	/* sprites */
-	ROM_LOAD( "congo13.bin", 0x09800, 0x2000, 0x5e0d138d )
-	ROM_LOAD( "congo11.bin", 0x0b800, 0x2000, 0x4a0cef9a )
-	ROM_LOAD( "congo14.bin", 0x0d800, 0x2000, 0x33c05a1e )
-	ROM_LOAD( "congo16.bin", 0x0f800, 0x2000, 0xdd85484b )
-	ROM_LOAD( "congo15.bin", 0x11800, 0x2000, 0xb3f44d2e )
+	ROM_LOAD( "congo8.bin",   0x01800, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo9.bin",   0x03800, 0x2000, 0x93e2309e )
+	ROM_LOAD( "congo10.bin",  0x05800, 0x2000, 0xf27a9407 )
+	ROM_LOAD( "congo12.bin",  0x07800, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo13.bin",  0x09800, 0x2000, 0x1d1321c8 )
+	ROM_LOAD( "congo11.bin",  0x0b800, 0x2000, 0x73e2709f )
+	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
+	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
+	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
 	ROM_REGION(0x8000)      /* background data */
-	ROM_LOAD( "congo6.bin", 0x0000, 0x2000, 0x785c8c22 )
+	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
-	ROM_LOAD( "congo7.bin", 0x4000, 0x2000, 0x87817173 )
+	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
 	/* 6000-7fff empty space to match Zaxxon */
 
+	ROM_REGION(0x100)    /* color prom */
+	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
+
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
-	ROM_LOAD( "congo17.bin", 0x0000, 0x2000 ,0xe4e0223c)
+	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
 ROM_START( tiptop_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "tiptop1.bin",  0x0000, 0x2000, 0x83b2291a )
-	ROM_LOAD( "tiptop2.bin",  0x2000, 0x2000, 0x85d20018 )
-	ROM_LOAD( "tiptop3.bin",  0x4000, 0x2000, 0x98290647 )
-	ROM_LOAD( "tiptop4.bin",  0x6000, 0x2000, 0x58baf652 )
+	ROM_LOAD( "tiptop1.bin",  0x0000, 0x2000, 0xe19dc77b )
+	ROM_LOAD( "tiptop2.bin",  0x2000, 0x2000, 0x3fcd3b6e )
+	ROM_LOAD( "tiptop3.bin",  0x4000, 0x2000, 0x1c94250b )
+	ROM_LOAD( "tiptop4.bin",  0x6000, 0x2000, 0x577b501b )
 
-	ROM_REGION(0x13800)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "congo5.bin",  0x00000, 0x1000, 0x863539ed )	/* characters */
+	ROM_REGION_DISPOSE(0x13800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "congo5.bin",   0x00000, 0x1000, 0x7bf6ba2b )	/* characters */
 	/* 1000-1800 empty space to convert the characters as 3bpp instead of 2 */
-	ROM_LOAD( "congo8.bin",  0x01800, 0x2000, 0xb060d10e )	/* background tiles */
-	ROM_LOAD( "congo9.bin",  0x03800, 0x2000, 0xf10944e7 )
-	ROM_LOAD( "congo10.bin", 0x05800, 0x2000, 0xccf64f98 )
-	ROM_LOAD( "congo12.bin", 0x07800, 0x2000, 0x96781f3e )	/* sprites */
-	ROM_LOAD( "congo13.bin", 0x09800, 0x2000, 0x5e0d138d )
-	ROM_LOAD( "congo11.bin", 0x0b800, 0x2000, 0x4a0cef9a )
-	ROM_LOAD( "congo14.bin", 0x0d800, 0x2000, 0x33c05a1e )
-	ROM_LOAD( "congo16.bin", 0x0f800, 0x2000, 0xdd85484b )
-	ROM_LOAD( "congo15.bin", 0x11800, 0x2000, 0xb3f44d2e )
+	ROM_LOAD( "congo8.bin",   0x01800, 0x2000, 0xdb99a619 )	/* background tiles */
+	ROM_LOAD( "congo9.bin",   0x03800, 0x2000, 0x93e2309e )
+	ROM_LOAD( "congo10.bin",  0x05800, 0x2000, 0xf27a9407 )
+	ROM_LOAD( "congo12.bin",  0x07800, 0x2000, 0x15e3377a )	/* sprites */
+	ROM_LOAD( "congo13.bin",  0x09800, 0x2000, 0x1d1321c8 )
+	ROM_LOAD( "congo11.bin",  0x0b800, 0x2000, 0x73e2709f )
+	ROM_LOAD( "congo14.bin",  0x0d800, 0x2000, 0xbf9169fe )
+	ROM_LOAD( "congo16.bin",  0x0f800, 0x2000, 0xcb6d5775 )
+	ROM_LOAD( "congo15.bin",  0x11800, 0x2000, 0x7b15a7a4 )
 	ROM_REGION(0x8000)      /* background data */
-	ROM_LOAD( "congo6.bin", 0x0000, 0x2000, 0x785c8c22 )
+	ROM_LOAD( "congo6.bin",   0x0000, 0x2000, 0xd637f02b )
 	/* 2000-3fff empty space to match Zaxxon */
-	ROM_LOAD( "congo7.bin", 0x4000, 0x2000, 0x87817173 )
+	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
 	/* 6000-7fff empty space to match Zaxxon */
 
+	ROM_REGION(0x100)    /* color prom */
+	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
+
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
-	ROM_LOAD( "congo17.bin", 0x0000, 0x2000 ,0xe4e0223c)
+	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
 
 
@@ -430,11 +411,11 @@ ROM_END
 static const char *congo_samplenames[] =
 {
 	"*congo",
-	"gorilla.sam",
-	"bass.sam",
-	"congaa.sam",
-	"congab.sam",
-	"rim.sam",
+	"gorilla.wav",
+	"bass.wav",
+	"congaa.wav",
+	"congab.wav",
+	"rim.wav",
 	0
 };
 
@@ -442,10 +423,10 @@ static const char *congo_samplenames[] =
 
 static int hiload(void)
 {
-        unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *RAM = Machine->memory_region[0];
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8030],"\x00\x89\x00",3) == 0 &&
-			memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
+	    memcmp(&RAM[0x8099],"\x00\x37\x00",3) == 0)
 	{
 		void *f;
 
@@ -468,7 +449,7 @@ static int hiload(void)
 
 static void hisave(void)
 {
-        unsigned char *RAM = Machine->memory_region[0];
+    unsigned char *RAM = Machine->memory_region[0];
 	/* make sure that the high score table is still valid (entering the */
 	/* test mode corrupts it) */
 	if (memcmp(&RAM[0x8030],"\x00\x00\x00",3) != 0)
@@ -497,6 +478,7 @@ struct GameDriver congo_driver =
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	congo_rom,
 	0, 0,
@@ -505,7 +487,7 @@ struct GameDriver congo_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
@@ -522,6 +504,7 @@ struct GameDriver tiptop_driver =
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	tiptop_rom,
 	0, 0,
@@ -530,7 +513,7 @@ struct GameDriver tiptop_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

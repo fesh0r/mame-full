@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 unsigned char *superpac_sharedram;
@@ -19,7 +19,6 @@ static int coin1, coin2, credits, start1, start2;
 
 static int crednum[] = { 1, 2, 3, 6, 7, 1, 3, 1 };
 static int credden[] = { 1, 1, 1, 1, 1, 2, 2, 3 };
-
 
 void superpac_init_machine(void)
 {
@@ -44,8 +43,8 @@ int superpac_sharedram_r2(int offset)
 {
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
-	if (offset == 0xfb - 0x40 && superpac_sharedram[offset] == 0)
-		cpu_seticount (0);
+//	if (offset == 0xfb - 0x40 && superpac_sharedram[offset] == 0)
+//		cpu_seticount (0);
 	return superpac_sharedram[offset];
 }
 
@@ -65,6 +64,11 @@ void pacnpal_sharedram_w2(int offset,int data)
 void superpac_sharedram_w(int offset,int data)
 {
 	superpac_sharedram[offset] = data;
+}
+
+void superpac_reset_2_w(int offset,int data)
+{
+	cpu_reset( 1 );
 }
 
 

@@ -5,25 +5,22 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern char messversion[]; /* MESS */
+#ifdef MESS
+#include "mess/mess.h"
+#endif
+
+extern char build_version[];
 extern FILE *errorlog;
 
-extern int framecount; /* MESS */
-extern int frameskip; /* MESS */
-
-#define MAX_GFX_ELEMENTS 32 /* MESS */
+#define MAX_GFX_ELEMENTS 32
 #define MAX_MEMORY_REGIONS 10
-
-#define MAX_LAYERS 4	/* MAX_LAYERS is the maximum number of gfx layers */
-						/* which we can handle. Currently, 4 is enough. */
 
 struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
+	unsigned int memory_region_length[MAX_MEMORY_REGIONS];	/* some drivers might find this useful */
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
-	struct GfxLayer *dirtylayer;	/* for GfxLayer games: keep track of dirty portions of scrbitmap */
-	struct GfxLayer *layer[MAX_LAYERS];
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
 							/* directly to a bitmap, never use absolute values, */
 							/* use this array to get the pen number. For example, */
@@ -43,35 +40,52 @@ struct RunningMachine
 								/* remove cheat commands, and so on) */
 	int orientation;	/* see #defines in driver.h */
 	struct GfxElement *uifont;	/* font used by DisplayText() */
-	int uiwidth;
-	int uiheight;
-	int uixmin;
-	int uiymin;
+	int uifontwidth,uifontheight;
+	int uixmin,uiymin;
+	int uiwidth,uiheight;
+	int ui_orientation;
 };
 
+/* The host platform should fill these fields with the preferences specified in the GUI */
+/* or on the commandline. */
 struct GameOptions {
 	FILE *errorlog;
 	void *record;
 	void *playback;
 	int mame_debug;
-	int frameskip;
 	int cheat;
+	int gui_host;
+
 	int samplerate;
 	int samplebits;
+	int no_fm;
+	int use_samples;
+	int use_emulated_ym3812;
+
 	int norotate;
 	int ror;
 	int rol;
 	int flipx;
 	int flipy;
-	char rom_name[MAX_ROM][32];  /* MESS */
-	char floppy_name[MAX_FLOPPY][32]; /* MESS */
-	char hard_name[MAX_HARD][32]; /* MESS */
-	char cassette_name[MAX_CASSETTE][32]; /* MESS */
+	int beam;
+	int flicker;
+	int translucency;
+	int antialias;
+	int use_artwork;
+
+	#ifdef MESS
+		/* This is ugly for now, but its temporary! */
+	  char rom_name[MAX_ROM][2048];           /* MESS */
+ 	  char floppy_name[MAX_FLOPPY][2048];     /* MESS */
+	  char hard_name[MAX_HARD][2048];         /* MESS */
+	  char cassette_name[MAX_CASSETTE][2048]; /* MESS */
+	#endif
 };
 
+extern struct GameOptions options;
 extern struct RunningMachine *Machine;
 
-int run_game (int game, struct GameOptions *options);
+int run_game (int game);
 int updatescreen(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);

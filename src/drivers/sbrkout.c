@@ -11,6 +11,9 @@ the paddle value directly into $1F, which has the same net result.
 
 If you have any questions about how this driver works, don't hesitate to
 ask.  - Mike Balfour (mab22@po.cwru.edu)
+
+CHANGES:
+MAB 05 MAR 99 - changed overlay support to use artwork functions
 ***************************************************************************/
 
 #include "driver.h"
@@ -110,17 +113,17 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( sbrkout_input_ports )
 	PORT_START		/* DSW - fake port, gets mapped to Super Breakout ports */
-	PORT_DIPNAME( 0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(	0x00, "English" )
 	PORT_DIPSETTING(	0x01, "German" )
 	PORT_DIPSETTING(	0x02, "French" )
 	PORT_DIPSETTING(	0x03, "Spanish" )
-	PORT_DIPNAME( 0x0C, 0x08, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(	0x0C, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(	0x08, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(	0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(	0x00, "Free Play" )
-	PORT_DIPNAME( 0x70, 0x00, "Extended Play", IP_KEY_NONE ) /* P=Progressive, C=Cavity, D=Double */
+	PORT_DIPNAME( 0x0C, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	0x0C, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x70, 0x00, "Extended Play" ) /* P=Progressive, C=Cavity, D=Double */
 	PORT_DIPSETTING(	0x10, "200P/200C/200D" )
 	PORT_DIPSETTING(	0x20, "400P/300C/400D" )
 	PORT_DIPSETTING(	0x30, "600P/400C/600D" )
@@ -129,7 +132,7 @@ INPUT_PORTS_START( sbrkout_input_ports )
 	PORT_DIPSETTING(	0x60, "1600P/1100C/1200D" )
 	PORT_DIPSETTING(	0x70, "2000P/1400C/1500D" )
 	PORT_DIPSETTING(	0x00, "None" )
-	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x80, "3" )
 	PORT_DIPSETTING(	0x00, "5" )
 
@@ -143,9 +146,7 @@ INPUT_PORTS_START( sbrkout_input_ports )
 
 	PORT_START		/* IN2 */
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(	0x80, "Off" )
-	PORT_DIPSETTING(	0x00, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START		/* IN3 */
 	PORT_BIT ( 0xFF, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -154,12 +155,12 @@ INPUT_PORTS_START( sbrkout_input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 
 	PORT_START		/* IN5 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE | IPF_REVERSE, 100, 7, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE | IPF_REVERSE, 100, 10, 7, 0, 255 )
 
 	PORT_START		/* IN6 - fake port, used to set the game select dial */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Progressive", OSD_KEY_E, IP_JOY_NONE, 0 )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Double", OSD_KEY_D, IP_JOY_NONE, 0 )
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Cavity", OSD_KEY_C, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Progressive", KEYCODE_E, IP_JOY_NONE )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Double", KEYCODE_D, IP_JOY_NONE )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN, "Cavity", KEYCODE_C, IP_JOY_NONE )
 INPUT_PORTS_END
 
 
@@ -174,23 +175,21 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-/* I think the actual ball layout is 3x3, but we split it into 3 1x3 sprites
-   so that we can handle the color overlay on a line by line basis. */
 static struct GfxLayout balllayout =
 {
-	1,3,	/* 1*3 character? */
-	6,	   /* 6 characters */
+	3,3,	/* 3*3 character? */
+	2,	    /* 2 characters */
 	1,		/* 1 bit per pixel */
-	{ 0 },		  /* no separation in 1 bpp */
-	{ 0 },
+	{ 0 },	/* no separation in 1 bpp */
 	{ 0, 1, 2 },
-	1*8 /* every char takes 1 consecutive byte */
+	{ 0*8, 1*8, 2*8 },
+	3*8 /* every char takes 3 consecutive byte */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout, 0x00, 0x06 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &balllayout, 0x00, 0x06 }, /* offset into colors, # of colors */
+	{ 1, 0x0000, &charlayout, 0, 2 }, /* offset into colors, # of colors */
+	{ 1, 0x0400, &balllayout, 0, 2 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -198,21 +197,14 @@ static unsigned char palette[] =
 {
 	0x00,0x00,0x00, /* BLACK  */
 	0xff,0xff,0xff, /* WHITE  */
-	0x00,0x00,0xff, /* BLUE */
-	0xff,0x80,0x00, /* ORANGE */
-	0x00,0xff,0x00, /* GREEN */
-	0xff,0xff,0x00, /* YELLOW */
 };
 
-static unsigned short colortable[] =
-{
-	0x00, 0x00,  /* Don't draw */
-	0x00, 0x01,  /* Draw */
-	0x00, 0x02,  /* Draw */
-	0x00, 0x03,  /* Draw */
-	0x00, 0x04,  /* Draw */
-	0x00, 0x05,  /* Draw */
+#define ARTWORK_COLORS 254
 
+static unsigned short colortable[ARTWORK_COLORS] =
+{
+	0, 0,  /* Don't draw */
+	0, 1,  /* Draw */
 };
 
 
@@ -220,9 +212,7 @@ static unsigned short colortable[] =
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255, 255 },
-	{  1,  1 } /* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
+	{ 100 }
 };
 
 
@@ -246,10 +236,12 @@ static struct MachineDriver machine_driver =
 	/* video hardware */
 	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+//	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
+	ARTWORK_COLORS,ARTWORK_COLORS,		/* Declare extra colors for the overlay */
 	0,
 
-	VIDEO_TYPE_RASTER,
+//	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	sbrkout_vh_start,
 	sbrkout_vh_stop,
@@ -277,15 +269,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( sbrkout_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "033453.C1", 0x2800, 0x0800, 0xb2744780 )
-	ROM_LOAD( "033454.D1", 0x3000, 0x0800, 0x01667872 )
-	ROM_LOAD( "033455.E1", 0x3800, 0x0800, 0xc6ac940a )
+	ROM_LOAD( "033453.c1",    0x2800, 0x0800, 0xa35d00e3 )
+	ROM_LOAD( "033454.d1",    0x3000, 0x0800, 0xd42ea79a )
+	ROM_LOAD( "033455.e1",    0x3800, 0x0800, 0xe0a6871c )
 	ROM_RELOAD( 			0xF800, 0x0800 )
 
-	ROM_REGION(0x420)	  /* 2k for graphics */
-	ROM_LOAD( "033280.P4", 0x0000, 0x0200, 0xba84070c )
-	ROM_LOAD( "033281.R4", 0x0200, 0x0200, 0x775a0300 )
-	ROM_LOAD( "033282.K6", 0x0400, 0x0020, 0xc0e000e0 )
+	ROM_REGION_DISPOSE(0x420)	  /* 2k for graphics */
+	ROM_LOAD( "033280.p4",    0x0000, 0x0200, 0x5a69ce85 )
+	ROM_LOAD( "033281.r4",    0x0200, 0x0200, 0x066bd624 )
+	ROM_LOAD( "033282.k6",    0x0400, 0x0020, 0x6228736b )
 ROM_END
 
 
@@ -345,6 +337,7 @@ struct GameDriver sbrkout_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	sbrkout_rom,
 	0, 0,

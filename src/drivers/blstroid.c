@@ -58,148 +58,116 @@ Motion Object Palette                             R/W  D0-D3
 
 RAM                                FFE000-FFFFFF  R/W
 
-
-
-BLASTEROIDS 6502 MEMORY MAP
-
-Function                                  Address     R/W  Data
----------------------------------------------------------------
-Program RAM                               0000-1FFF   R/W  D0-D7
-
-Music                                     2000-2001   R/W  D0-D7
-
-Read 68010 Port (Input Buffer)            280A        R    D0-D7
-
-Self-Test (Active Low)                    280C        R    D7
-/NMI?                                                 R    D6
-Output Buffer Full (@2A02) (Active High)              R    D5
-TMS5220 ready (Active Low)                            R    D4
-Auxilliary Coin Switch                                R    D2
-Left Coin Switch                                      R    D1
-Right Coin Switch                                     R    D0
-
-IRQ Acknowledge                           280E        W    xx
-
-Write to TMS5220                          2A00        W    D0-D7
-Write 68010 Port (Outbut Buffer)          2A02        W    D0-D7
-
-Select ROM Bank                           2A04        W    D6-D7
-Coin Counters                                         W    D4-D5
-TMS5220 Squeak                                        W    D3
-TMS5220 Reset                                         W    D2
-TMS5220 Write Strobe                                  W    D1
-YM2151 Reset                                          W    D0
-
-Mixer                                     2A06        W    D0-D7
-
-Banked Program ROM (4K bytes)             3000-3FFF   R    D0-D7
-Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
-
 ****************************************************************************/
 
 
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
-#include "sndhrdw/5220intf.h"
-#include "sndhrdw/2151intf.h"
 
 
-int blstroid_io_r (int offset);
-int blstroid_6502_switch_r (int offset);
-int blstroid_playfieldram_r (int offset);
+void blstroid_priorityram_w(int offset, int data);
+void blstroid_playfieldram_w(int offset, int data);
 
-void blstroid_tms5220_w (int offset, int data);
-void blstroid_6502_ctl_w (int offset, int data);
-void blstroid_sound_reset_w (int offset, int data);
-void blstroid_priorityram_w (int offset, int data);
-void blstroid_playfieldram_w (int offset, int data);
-
-int blstroid_interrupt (void);
-int blstroid_sound_interrupt (void);
-
-void blstroid_init_machine (void);
-
-int blstroid_vh_start (void);
-void blstroid_vh_stop (void);
-
+int blstroid_vh_start(void);
+void blstroid_vh_stop(void);
 void blstroid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void blstroid_scanline_update(int scanline);
+
 
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Initialization
  *
  *************************************/
 
-static struct MemoryReadAddress blstroid_readmem[] =
+static void update_interrupts(void)
+{
+	int newstate = 0;
+
+	if (atarigen_scanline_int_state)
+		newstate = 1;
+	if (atarigen_video_int_state)
+		newstate = 2;
+	if (atarigen_sound_int_state)
+		newstate = 4;
+
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void init_machine(void)
+{
+	atarigen_eeprom_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(blstroid_scanline_update, 8);
+	atarijsa_reset();
+}
+
+
+
+/*************************************
+ *
+ *	I/O read dispatch
+ *
+ *************************************/
+
+static int special_port2_r(int offset)
+{
+	int temp = input_port_2_r(offset);
+	if (atarigen_cpu_to_sound_ready) temp ^= 0x0040;
+	if (atarigen_get_hblank()) temp ^= 0x0010;
+	return temp;
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xff9400, 0xff9403, atarigen_sound_r },
-	{ 0xff9800, 0xff9803, input_port_0_r },
-	{ 0xff9804, 0xff9807, input_port_1_r },
-	{ 0xff9c00, 0xff9c03, blstroid_io_r },
+	{ 0xff9400, 0xff9401, atarigen_sound_r },
+	{ 0xff9800, 0xff9801, input_port_0_r },
+	{ 0xff9804, 0xff9805, input_port_1_r },
+	{ 0xff9c00, 0xff9c01, special_port2_r },
+	{ 0xff9c02, 0xff9c03, input_port_3_r },
 	{ 0xffa000, 0xffa3ff, paletteram_word_r },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_r },
-	{ 0xffc000, 0xffcfff, blstroid_playfieldram_r },
-	{ 0xffd000, 0xffdfff, MRA_BANK3 },
-	{ 0xffe000, 0xffffff, MRA_BANK2 },
+	{ 0xffc000, 0xffcfff, MRA_BANK1 },
+	{ 0xffd000, 0xffdfff, MRA_BANK2 },
+	{ 0xffe000, 0xffffff, MRA_BANK3 },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress blstroid_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xff8000, 0xff8003, watchdog_reset_w },
-	{ 0xff8200, 0xff8203, MWA_NOP },		/* IRQ ack */
-	{ 0xff8400, 0xff8403, MWA_NOP },		/* VBLANK ack */
-	{ 0xff8600, 0xff8603, atarigen_eeprom_enable_w },
+	{ 0xff8000, 0xff8001, watchdog_reset_w },
+	{ 0xff8200, 0xff8201, atarigen_scanline_int_ack_w },
+	{ 0xff8400, 0xff8401, atarigen_video_int_ack_w },
+	{ 0xff8600, 0xff8601, atarigen_eeprom_enable_w },
 	{ 0xff8800, 0xff89ff, blstroid_priorityram_w },
-	{ 0xff8a00, 0xff8a03, atarigen_sound_w },
-	{ 0xff8c00, 0xff8c03, blstroid_sound_reset_w },
-	{ 0xff8e00, 0xff8e03, MWA_NOP },		/* halt until HBLANK */
+	{ 0xff8a00, 0xff8a01, atarigen_sound_w },
+	{ 0xff8c00, 0xff8c01, atarigen_sound_reset_w },
+	{ 0xff8e00, 0xff8e01, atarigen_halt_until_hblank_0_w },
 	{ 0xffa000, 0xffa3ff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
 	{ 0xffb000, 0xffb3ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffcfff, blstroid_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffd000, 0xffdfff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xffe000, 0xffffff, MWA_BANK2 },
-	{ -1 }  /* end of table */
-};
-
-
-/*************************************
- *
- *		Sound CPU memory handlers
- *
- *************************************/
-
-static struct MemoryReadAddress blstroid_sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x280a, 0x280a, atarigen_6502_sound_r },
-	{ 0x280c, 0x280c, blstroid_6502_switch_r },
-	{ 0x280e, 0x280e, MRA_NOP },	/* IRQ ACK */
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
-
-
-static struct MemoryWriteAddress blstroid_sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x280e, 0x280e, MWA_NOP },	/* IRQ ACK */
-	{ 0x2a00, 0x2a00, blstroid_tms5220_w },
-	{ 0x2a02, 0x2a02, atarigen_6502_sound_w },
-	{ 0x2a04, 0x2a04, blstroid_6502_ctl_w },
-	{ 0x2a06, 0x2a06, MWA_NOP },	/* mixer */
-	{ 0x3000, 0xffff, MWA_ROM },
+	{ 0xffd000, 0xffdfff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xffe000, 0xffffff, MWA_BANK3 },
 	{ -1 }  /* end of table */
 };
 
@@ -207,83 +175,77 @@ static struct MemoryWriteAddress blstroid_sound_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
 INPUT_PORTS_START( blstroid_ports )
-	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER1, 100, 0xff, 0, 0 )
+	PORT_START      /* ff9800 */
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER1, 60, 10, 0xff, 0, 0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 100, 0xff, 0, 0 )
+	PORT_START      /* ff9804 */
+	PORT_ANALOG ( 0x00ff, 0, IPT_DIAL | IPF_PLAYER2, 60, 10, 0xff, 0, 0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* DSW */
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_START		/* ff9c00 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_START		/* ff9c02 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0xfff0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* speech chip ready */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* output buffer full */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* input buffer full */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* self test */
+	JSA_I_PORT	/* audio board port */
 INPUT_PORTS_END
 
 
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
-static struct GfxLayout blstroid_pflayout =
+static struct GfxLayout pflayout =
 {
-	8,8,	/* 8*8 chars */
+	16,8,	/* 16*8 chars (doubled horizontally) */
 	8192,	/* 8192 chars */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0,0, 4,4, 8,8, 12,12, 16,16, 20,20, 24,24, 28,28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
 
-static struct GfxLayout blstroid_molayout =
+static struct GfxLayout molayout =
 {
-	8,8,	/* 8*8 chars */
-	16384,/* 16384 chars */
+	16,8,	/* 16*8 chars */
+	16384,	/* 16384 chars */
 	4,		/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0x80000*8+0, 0x80000*8+4, 0, 4, 0x80000*8+8, 0x80000*8+12, 8, 12,
+			0x80000*8+16, 0x80000*8+20, 16, 20, 0x80000*8+24, 0x80000*8+28, 24, 28 },
 	{ 0*8, 4*8, 8*8, 12*8, 16*8, 20*8, 24*8, 28*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
 
-static struct GfxDecodeInfo blstroid_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &blstroid_pflayout,  256, 16 },
-	{ 1, 0x40000, &blstroid_molayout,    0, 16 },
+	{ 2, 0x00000, &pflayout,  256, 16 },
+	{ 2, 0x40000, &molayout,    0, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -291,131 +253,148 @@ static struct GfxDecodeInfo blstroid_gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Machine driver
  *
  *************************************/
 
-static struct TMS5220interface tms5220_interface =
-{
-    640000,     /* clock speed (80*samplerate) */
-    255,        /* volume */
-    0 /* irq handler */
-};
-
-
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
- *		Machine driver
- *
- *************************************/
-
-static struct MachineDriver blstroid_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68000,		/* verified */
 			7159160,		/* 7.159 Mhz */
 			0,
-			blstroid_readmem,blstroid_writemem,0,0,
-			blstroid_interrupt,1
+			main_readmem,main_writemem,0,0,
+			atarigen_video_int_gen,1
 		},
 		{
-			CPU_M6502,
-			1789790,		/* 1.791 Mhz */
-			2,
-			blstroid_sound_readmem,blstroid_sound_writemem,0,0,
-			0,0,
-			blstroid_sound_interrupt,250
+			JSA_I_CPU(1)
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,
-	blstroid_init_machine,
+	1,
+	init_machine,
 
 	/* video hardware */
-	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
-	blstroid_gfxdecodeinfo,
+	40*16, 30*8, { 0*8, 40*16-1, 0*8, 30*8-1 },
+	gfxdecodeinfo,
 	512,512,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK |
+			VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	blstroid_vh_start,
 	blstroid_vh_stop,
 	blstroid_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		}
-	}
+	JSA_I_STEREO
 };
 
 
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
 ROM_START( blstroid_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
-	ROM_LOAD_EVEN( "blstroid.6c", 0x00000, 0x10000, 0x28aebd72 )
-	ROM_LOAD_ODD ( "blstroid.6b", 0x00000, 0x10000, 0x05aa488c )
-	ROM_LOAD_EVEN( "blstroid.4c", 0x20000, 0x10000, 0xee3cb526 )
-	ROM_LOAD_ODD ( "blstroid.4b", 0x20000, 0x10000, 0x7e3d753b )
-
-	ROM_REGION(0x140000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x1bf35331 ) /* playfield */
-	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0x2358b99c ) /* playfield */
-	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0x5fdfa003 ) /* playfield */
-	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0xfb1ae9fc ) /* playfield */
-	ROM_LOAD( "blstroid.5m",  0x040000, 0x10000, 0x1b56b8f2 ) /* mo */
-	ROM_LOAD( "blstroid.6m",  0x050000, 0x10000, 0x14bf7b33 ) /* mo */
-	ROM_LOAD( "blstroid.8m",  0x060000, 0x10000, 0xd95a5438 ) /* mo */
-	ROM_LOAD( "blstroid.10m", 0x070000, 0x10000, 0xe85ca9e8 ) /* mo */
-	ROM_LOAD( "blstroid.11m", 0x080000, 0x10000, 0xe3967352 ) /* mo */
-	ROM_LOAD( "blstroid.13m", 0x090000, 0x10000, 0x6f625796 ) /* mo */
-	ROM_LOAD( "blstroid.14m", 0x0a0000, 0x10000, 0xa81f0003 ) /* mo */
-	ROM_LOAD( "blstroid.16m", 0x0b0000, 0x10000, 0x5e56af34 ) /* mo */
-	ROM_LOAD( "blstroid.5n",  0x0c0000, 0x10000, 0x57418c0f ) /* mo */
-	ROM_LOAD( "blstroid.6n",  0x0d0000, 0x10000, 0x11b639e6 ) /* mo */
-	ROM_LOAD( "blstroid.8n",  0x0e0000, 0x10000, 0x5b67f8f1 ) /* mo */
-	ROM_LOAD( "blstroid.10n", 0x0f0000, 0x10000, 0x913131f7 ) /* mo */
-	ROM_LOAD( "blstroid.11n", 0x100000, 0x10000, 0x7ef7912f ) /* mo */
-	ROM_LOAD( "blstroid.13n", 0x110000, 0x10000, 0x69f53db5 ) /* mo */
-	ROM_LOAD( "blstroid.14n", 0x120000, 0x10000, 0x675beaaf ) /* mo */
-	ROM_LOAD( "blstroid.16n", 0x130000, 0x10000, 0x9005c35b ) /* mo */
+	ROM_LOAD_EVEN( "057-4123",  0x00000, 0x10000, 0xd14badc4 )
+	ROM_LOAD_ODD ( "057-4121",  0x00000, 0x10000, 0xae3e93e8 )
+	ROM_LOAD_EVEN( "057-4124",  0x20000, 0x10000, 0xfd2365df )
+	ROM_LOAD_ODD ( "057-4122",  0x20000, 0x10000, 0xc364706e )
 
 	ROM_REGION(0x14000)	/* 64k for 6502 code */
-	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbbca590e )
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
 	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+	ROM_LOAD( "blstroid.5m",  0x040000, 0x10000, 0x50e0823f ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x050000, 0x10000, 0x729de7a9 ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x060000, 0x10000, 0x090e42ab ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x070000, 0x10000, 0x1ff79e67 ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x080000, 0x10000, 0x4be1d504 ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x090000, 0x10000, 0xe4409310 ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x0a0000, 0x10000, 0x7aaca15e ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x0b0000, 0x10000, 0x33690379 ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x0c0000, 0x10000, 0x2720ee71 ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x0d0000, 0x10000, 0x2faecd15 ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0e0000, 0x10000, 0xf10e59ed ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0f0000, 0x10000, 0x4d5fc284 ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x100000, 0x10000, 0xa70fc6e6 ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x110000, 0x10000, 0xf423b4f8 ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x120000, 0x10000, 0x56fa3d16 ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x130000, 0x10000, 0xf257f738 ) /* mo */
+ROM_END
+
+
+ROM_START( blstroi2_rom )
+	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
+	ROM_LOAD_EVEN( "blstroid.6c",  0x00000, 0x10000, 0x5a092513 )
+	ROM_LOAD_ODD ( "blstroid.6b",  0x00000, 0x10000, 0x486aac51 )
+	ROM_LOAD_EVEN( "blstroid.4c",  0x20000, 0x10000, 0xd0fa38fe )
+	ROM_LOAD_ODD ( "blstroid.4b",  0x20000, 0x10000, 0x744bf921 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "blstroid.snd", 0x10000, 0x4000, 0xbaa8b5fe )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x140000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blstroid.1l",  0x000000, 0x10000, 0x3c2daa5b ) /* playfield */
+	ROM_LOAD( "blstroid.1m",  0x010000, 0x10000, 0xf84f0b97 ) /* playfield */
+	ROM_LOAD( "blstroid.3l",  0x020000, 0x10000, 0xae5274f0 ) /* playfield */
+	ROM_LOAD( "blstroid.3m",  0x030000, 0x10000, 0x4bb72060 ) /* playfield */
+	ROM_LOAD( "blstroid.5m",  0x040000, 0x10000, 0x50e0823f ) /* mo */
+	ROM_LOAD( "blstroid.6m",  0x050000, 0x10000, 0x729de7a9 ) /* mo */
+	ROM_LOAD( "blstroid.8m",  0x060000, 0x10000, 0x090e42ab ) /* mo */
+	ROM_LOAD( "blstroid.10m", 0x070000, 0x10000, 0x1ff79e67 ) /* mo */
+	ROM_LOAD( "blstroid.11m", 0x080000, 0x10000, 0x4be1d504 ) /* mo */
+	ROM_LOAD( "blstroid.13m", 0x090000, 0x10000, 0xe4409310 ) /* mo */
+	ROM_LOAD( "blstroid.14m", 0x0a0000, 0x10000, 0x7aaca15e ) /* mo */
+	ROM_LOAD( "blstroid.16m", 0x0b0000, 0x10000, 0x33690379 ) /* mo */
+	ROM_LOAD( "blstroid.5n",  0x0c0000, 0x10000, 0x2720ee71 ) /* mo */
+	ROM_LOAD( "blstroid.6n",  0x0d0000, 0x10000, 0x2faecd15 ) /* mo */
+	ROM_LOAD( "blstroid.8n",  0x0e0000, 0x10000, 0xf10e59ed ) /* mo */
+	ROM_LOAD( "blstroid.10n", 0x0f0000, 0x10000, 0x4d5fc284 ) /* mo */
+	ROM_LOAD( "blstroid.11n", 0x100000, 0x10000, 0xa70fc6e6 ) /* mo */
+	ROM_LOAD( "blstroid.13n", 0x110000, 0x10000, 0xf423b4f8 ) /* mo */
+	ROM_LOAD( "blstroid.14n", 0x120000, 0x10000, 0x56fa3d16 ) /* mo */
+	ROM_LOAD( "blstroid.16n", 0x130000, 0x10000, 0xf257f738 ) /* mo */
 ROM_END
 
 
 
 /*************************************
  *
- *		Game driver(s)
+ *	Driver initialization
+ *
+ *************************************/
+
+static void blstroid_init(void)
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x80);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x4157, 0x416f);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
+ *	Game driver(s)
  *
  *************************************/
 
@@ -424,14 +403,42 @@ struct GameDriver blstroid_driver =
 	__FILE__,
 	0,
 	"blstroid",
-	"Blasteroids",
+	"Blasteroids (version 4)",
 	"1987",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
 	0,
-	&blstroid_machine_driver,
+	&machine_driver,
+	blstroid_init,
 
 	blstroid_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	blstroid_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver blstroi2_driver =
+{
+	__FILE__,
+	&blstroid_driver,
+	"blstroi2",
+	"Blasteroids (version 2)",
+	"1987",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
+	0,
+	&machine_driver,
+	blstroid_init,
+
+	blstroi2_rom,
 	0,
 	0,
 	0,

@@ -1,5 +1,10 @@
 /***************************************************************************
 
+Notes:
+- Several people claim that colors are wrong, but the way the color PROMs
+  are used seems correct.
+
+
 Pooyan memory map (preliminary)
 
 Thanks must go to Mike Cuddy for providing information on this one.
@@ -63,60 +68,11 @@ void pooyan_flipscreen_w(int offset,int data);
 void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
-
-static int pooyan_timer[20] = {
-0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int pooyan_portB_r(int offset)
-{
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return pooyan_timer[clock/512] << 4;
-}
-
-void pooyan_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 1 && data == 0)
-	{
-		/* setting bit 0 high then low triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -142,30 +98,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa000, MWA_NOP },	/* watchdog reset? */
 	{ 0xa100, 0xa100, soundlatch_w },
 	{ 0xa180, 0xa180, interrupt_enable_w },
-	{ 0xa181, 0xa181, pooyan_sh_irqtrigger_w },
+	{ 0xa181, 0xa181, timeplt_sh_irqtrigger_w },
 	{ 0xa187, 0xa187, pooyan_flipscreen_w },
-	{ -1 }	/* end of table */
-};
-
-
-
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -202,54 +136,54 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x00, "Attract Mode - No Play" )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x08, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "50000 80000" )
 	PORT_DIPSETTING(    0x00, "30000 70000" )
-	PORT_DIPNAME( 0x70, 0x70, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x70, 0x70, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x70, "Easiest" )
 	PORT_DIPSETTING(    0x60, "Easier" )
 	PORT_DIPSETTING(    0x50, "Easy" )
@@ -258,9 +192,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 INPUT_PORTS_END
 
 
@@ -299,62 +233,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* palette */
-	0x00,0x07,0x38,0xC0,0x3F,0xC7,0x26,0x03,0x0D,0x2F,0xD1,0xC3,0xF0,0xB8,0xD8,0xFE,
-	0x00,0x07,0x38,0x80,0x3F,0xC7,0x26,0x03,0x0D,0x2F,0x34,0x20,0xF0,0xB8,0xD8,0xFE,
-	/* sprite lookup table */
-	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x00,0x02,0x02,0x04,0x02,0x06,0x07,0x08,0x09,0x04,0x0B,0x0C,0x06,0x0E,0x0F,0x0F,
-	0x00,0x03,0x02,0x05,0x03,0x07,0x08,0x09,0x0A,0x0B,0x0F,0x0F,0x0F,0x0F,0x0F,0x00,
-	0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x0F,0x0F,
-	0x00,0x05,0x02,0x0B,0x05,0x09,0x0A,0x0B,0x0C,0x04,0x0E,0x0F,0x01,0x02,0x03,0x04,
-	0x00,0x04,0x07,0x0D,0x04,0x05,0x0B,0x0C,0x0D,0x0E,0x0A,0x01,0x02,0x03,0x04,0x0F,
-	0x00,0x01,0x01,0x02,0x01,0x0F,0x02,0x02,0x0F,0x0F,0x01,0x0F,0x00,0x01,0x00,0x00,
-	0x00,0x01,0x01,0x02,0x01,0x0F,0x00,0x00,0x01,0x01,0x00,0x00,0x01,0x0F,0x00,0x00,
-	0x00,0x01,0x01,0x04,0x01,0x0F,0x01,0x00,0x01,0x0F,0x0F,0x0F,0x00,0x0F,0x0F,0x00,
-	0x00,0x0A,0x02,0x01,0x03,0x0E,0x0F,0x01,0x02,0x04,0x04,0x05,0x06,0x07,0x08,0x0F,
-	0x00,0x04,0x02,0x0D,0x01,0x0F,0x01,0x01,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0F,
-	0x00,0x04,0x04,0x0F,0x0F,0x04,0x04,0x04,0x00,0x04,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x0D,0x0E,0x0F,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0F,
-	0x00,0x04,0x04,0x04,0x0F,0x0F,0x0F,0x00,0x04,0x0F,0x0F,0x0F,0x04,0x00,0x00,0x00,
-	0x00,0x0F,0x02,0x02,0x0F,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x04,
-	0x00,0x01,0x02,0x03,0x0C,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	/* char lookup table */
-	0x03,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x03,0x01,0x03,0x03,0x04,0x04,0x07,0x08,0x09,0x0F,0x0B,0x0C,0x0D,0x0E,0x0F,0x03,
-	0x03,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x03,0x04,0x05,0x06,0x0F,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,0x01,0x02,0x03,
-	0x03,0x05,0x06,0x07,0x0F,0x09,0x07,0x08,0x06,0x0D,0x0E,0x0F,0x01,0x02,0x03,0x04,
-	0x03,0x02,0x07,0x08,0x04,0x0A,0x08,0x06,0x07,0x0E,0x0F,0x01,0x02,0x03,0x04,0x05,
-	0x03,0x07,0x08,0x09,0x0A,0x0B,0x07,0x06,0x08,0x0F,0x01,0x02,0x03,0x04,0x05,0x06,
-	0x03,0x08,0x09,0x0A,0x05,0x0C,0x06,0x08,0x07,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
-	0x03,0x09,0x0A,0x0B,0x0C,0x0D,0x08,0x06,0x06,0x02,0x03,0x04,0x05,0x06,0x07,0x08,
-	0x03,0x03,0x0B,0x0C,0x04,0x0E,0x07,0x07,0x08,0x03,0x04,0x05,0x06,0x07,0x08,0x09,
-	0x03,0x0B,0x0C,0x0D,0x0E,0x0F,0x07,0x06,0x08,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,
-	0x03,0x0C,0x0D,0x0E,0x0F,0x01,0x08,0x07,0x06,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,
-	0x03,0x0D,0x0E,0x0F,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,
-	0x03,0x0E,0x0F,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,
-	0x03,0x0F,0x01,0x02,0x04,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,
-	0x03,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-};
-
-
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x30ff, 0x30ff },
-	{ soundlatch_r },
-	{ pooyan_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-
-
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -368,9 +246,9 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
+			14318180/8,	/* 1.789772727 MHz */						\
+			3,	/* memory region #3 */
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
@@ -395,7 +273,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&timeplt_ay8910_interface
 		}
 	}
 };
@@ -410,39 +288,73 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pooyan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic22_a4.cpu", 0x0000, 0x2000, 0x8906608a )
-	ROM_LOAD( "ic23_a5.cpu", 0x2000, 0x2000, 0x26eff7e3 )
-	ROM_LOAD( "ic24_a6.cpu", 0x4000, 0x2000, 0x4d5af9a8 )
-	ROM_LOAD( "ic25_a7.cpu", 0x6000, 0x2000, 0xe8a37e2f )
+	ROM_LOAD( "1.4a",         0x0000, 0x2000, 0xbb319c63 )
+	ROM_LOAD( "2.5a",         0x2000, 0x2000, 0xa1463d98 )
+	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
+	ROM_LOAD( "4.7a",         0x6000, 0x2000, 0x9e0f9bcc )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000, 0x70837e21 )
-	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000, 0x10588368 )
-	ROM_LOAD( "ic15_a9.cpu",  0x2000, 0x1000, 0xf00ec45a )
-	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000, 0x18d9a3fb )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "8.10g",        0x0000, 0x1000, 0x931b29eb )
+	ROM_LOAD( "7.9g",         0x1000, 0x1000, 0xbbe6d6e4 )
+	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
+	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
+	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sd01_a7.snd", 0x0000, 0x1000, 0x41dc452c )
-	ROM_LOAD( "sd02_a8.snd", 0x1000, 0x1000, 0xe108928c )
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
+ROM_END
+
+ROM_START( pooyans_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000, 0x916ae7d7 )
+	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000, 0x8fe38c61 )
+	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000, 0x2660218a )
+	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000, 0x3d2a10ad )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000, 0x7433aea9 )
+	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000, 0x87c1789e )
+	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
+	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
+	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
 
 ROM_START( pootan_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x1fc0a5aa )
-	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0x39faab9a )
-	ROM_LOAD( "poo_ic24.bin", 0x4000, 0x2000, 0xd72a8cea )
-	ROM_LOAD( "poo_ic25.bin", 0x6000, 0x2000, 0xb83a5d06 )
+	ROM_LOAD( "poo_ic22.bin", 0x0000, 0x2000, 0x41b23a24 )
+	ROM_LOAD( "poo_ic23.bin", 0x2000, 0x2000, 0xc9d94661 )
+	ROM_LOAD( "3.6a",         0x4000, 0x2000, 0xfe1a9e08 )
+	ROM_LOAD( "poo_ic25.bin", 0x6000, 0x2000, 0x8ae459ef )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "poo_ic13.bin", 0x0000, 0x1000, 0x1e020240 )
-	ROM_LOAD( "poo_ic14.bin", 0x1000, 0x1000, 0x7c58b368 )
-	ROM_LOAD( "ic15_a9.cpu",  0x2000, 0x1000, 0xf00ec45a )
-	ROM_LOAD( "ic16_a8.cpu",  0x3000, 0x1000, 0x18d9a3fb )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "poo_ic13.bin", 0x0000, 0x1000, 0x0be802e4 )
+	ROM_LOAD( "poo_ic14.bin", 0x1000, 0x1000, 0xcba29096 )
+	ROM_LOAD( "6.9a",         0x2000, 0x1000, 0xb2d8c121 )
+	ROM_LOAD( "5.8a",         0x3000, 0x1000, 0x1097c2b6 )
+
+	ROM_REGION(0x0220)	/* color proms */
+	ROM_LOAD( "pooyan.pr1",   0x0000, 0x0020, 0xa06a6d0e ) /* palette */
+	ROM_LOAD( "pooyan.pr2",   0x0020, 0x0100, 0x82748c0b ) /* sprites */
+	ROM_LOAD( "pooyan.pr3",   0x0120, 0x0100, 0x8cd4cd60 ) /* characters */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "sd01_a7.snd", 0x0000, 0x1000, 0x41dc452c )
-	ROM_LOAD( "sd02_a8.snd", 0x1000, 0x1000, 0xe108928c )
+	ROM_LOAD( "xx.7a",        0x0000, 0x1000, 0xfbe2b368 )
+	ROM_LOAD( "xx.8a",        0x1000, 0x1000, 0xe1795b3d )
 ROM_END
+
 
 
 static int hiload(void)
@@ -505,10 +417,11 @@ struct GameDriver pooyan_driver =
 	"pooyan",
 	"Pooyan",
 	"1982",
-	"Stern",
+	"Konami",
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	pooyan_rom,
 	0, 0,
@@ -517,7 +430,33 @@ struct GameDriver pooyan_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver pooyans_driver =
+{
+	__FILE__,
+	&pooyan_driver,
+	"pooyans",
+	"Pooyan (Stern)",
+	"1982",
+	"[Konami] (Stern license)",
+	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	pooyans_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
@@ -534,6 +473,7 @@ struct GameDriver pootan_driver =
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	pootan_rom,
 	0, 0,
@@ -542,7 +482,7 @@ struct GameDriver pootan_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

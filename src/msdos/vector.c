@@ -1,6 +1,6 @@
+#include "mamalleg.h"
 #include "driver.h"
 #include <math.h>
-#include <allegro.h>
 
 
 extern struct osd_bitmap *bitmap;

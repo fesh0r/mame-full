@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809/M6809.h" /* JB 970829 */
+#include "cpu/m6809/m6809.h"
 
 extern unsigned char *tp84_sharedram;	/* JB 970829 */
 
@@ -33,15 +33,8 @@ void tp84_init_machine(void)
 */
 int tp84_beam_r(int offset)
 {
-/*	return 255 - cpu_getiloops();	* return beam position */
+//	return cpu_getscanline();
 	return 255; /* always return beam position 255 */ /* JB 970829 */
-}
-
-int tp84_interrupt(void)
-{
-	return interrupt(); /* JB 970829 */
-/*	if (cpu_getiloops() == 0) return interrupt();
-	else return ignore_interrupt();*/
 }
 
 /* JB 970829 - catch a busy loop for CPU 1
@@ -51,30 +44,5 @@ int tp84_interrupt(void)
 */
 void tp84_catchloop_w(int offset,int data)
 {
-	extern unsigned char *RAM;
-
-	if( cpu_getpc()==0xe0f2 ) cpu_seticount (0);
-	RAM[0x4000] = data;
-}
-
-/* JB 970829 - catch a busy loop for CPU 0
-	83AF: CLRA
-	83B0: LDX   $523A
-	83B3: LDD   ,X
-	83B5: ASLA
-	83B6: BCC   $8398
-	83B8: BRA   $83AF
-*/
-int tp84_catchloop_r(int offset)
-{
-	int data, dataw;
-
-	data = tp84_sharedram[0x23a];
-
-	if( cpu_getpc()==0x83b3 )
-	{
-		dataw = data<<8 | tp84_sharedram[0x23b];
-		if (tp84_sharedram[dataw-0x5000] & 0x80) cpu_seticount (0);
-	}
-	return data;
+	if( cpu_get_pc()==0xe0f2 ) cpu_spinuntil_int();
 }

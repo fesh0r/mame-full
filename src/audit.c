@@ -6,48 +6,57 @@
 static tAuditRecord *gAudits = NULL;
 static tMissingSample *gMissingSamples = NULL;
 
-/* returns nonzero on error */
-static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *aud)
+
+
+/* returns 1 if rom is defined in this set */
+int RomInSet (const struct GameDriver *gamedrv, unsigned int crc)
 {
-	int sum;
-	int xor;
-	unsigned int i;
-	int j;
-	unsigned char *temp;
+	const struct RomModule *romp = gamedrv->rom;
 
-	sum = 0;
-	xor = 0;
-
-	do
+	while (romp->name || romp->offset || romp->length)
 	{
-		int length = romp->length & ~ROMFLAG_MASK;
+		romp++;	/* skip ROM_REGION */
 
-		if (romp->name != (char *)-1) /* ignore ROM_RELOAD */
+		while (romp->length)
 		{
-			temp = malloc (length);
-
-			if (osd_fread (f, temp, length) != length)
+			if (romp->crc == crc) return 1;
+			do
 			{
-				aud->status = AUD_LENGTH_MISMATCH;
-				free (temp);
-				return 1;
+				romp++;
+				/* skip ROM_CONTINUEs and ROM_RELOADs */
 			}
-
-			for (i = 0;i < length;i+=2)
-			{
-				j = 256 * temp[i] + temp[i+1];
-				sum += j;
-				xor ^= j;
-			}
-
-			free (temp);
+			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
 		}
-		romp++;
-	} while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-
-	aud->checksum = ((sum & 0xffff) << 16) | (xor & 0xffff);
-
+	}
 	return 0;
+}
+
+
+/* returns nonzero if romset is missing */
+int RomsetMissing (int game)
+{
+	const struct GameDriver *gamedrv = drivers[game];
+
+	if (gamedrv->clone_of)
+	{
+		tAuditRecord	*aud;
+		int				count;
+		int 			i;
+		int 			cloneRomsFound = 0;
+
+		if ((count = AuditRomSet (game, &aud)) == 0)
+			return 1;
+
+		/* count number of roms found that are unique to clone */
+		for (i = 0; i < count; i++)
+			if (aud[i].status != AUD_ROM_NOT_FOUND)
+				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+					cloneRomsFound++;
+
+		return !cloneRomsFound;
+	}
+	else
+		return !osd_faccess (gamedrv->name, OSD_FILETYPE_ROM);
 }
 
 
@@ -56,13 +65,13 @@ static int CalcCheckSum (void *f, const struct RomModule *romp, tAuditRecord *au
    in the romset (same as number of audit records), 0 if romset missing. */
 int AuditRomSet (int game, tAuditRecord **audit)
 {
-	void *f;
 	const struct RomModule *romp;
 	const char *name;
 	const struct GameDriver *gamedrv;
 
 	int count = 0;
 	tAuditRecord *aud;
+	int	err;
 
 	if (!gAudits)
 		gAudits = (tAuditRecord *)malloc (AUD_MAX_ROMS * sizeof (tAuditRecord));
@@ -76,9 +85,10 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	gamedrv = drivers[game];
 	romp = gamedrv->rom;
 
+	/* check for existence of romset */
 	if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
 	{
-		/* if the game is a clone, try loading the ROM from the main version */
+		/* if the game is a clone, check for parent */
 		if (gamedrv->clone_of == 0 ||
 				!osd_faccess(gamedrv->clone_of->name,OSD_FILETYPE_ROM))
 			return 0;
@@ -99,40 +109,43 @@ int AuditRomSet (int game, tAuditRecord **audit)
 
 			name = romp->name;
 			strcpy (aud->rom, name);
-			aud->length = romp->length & ~ROMFLAG_MASK;
-			aud->expchecksum = romp->checksum;
-			aud->checksum = 0;
+			aud->explength = 0;
+			aud->length = 0;
+			aud->expchecksum = romp->crc;
+			/* NS981003: support for "load by CRC" */
+			aud->checksum = romp->crc;
 			count++;
 
-			/* look if we can open it */
-			f = osd_fopen (gamedrv->name, name, OSD_FILETYPE_ROM, 0);
-			if (f == 0 && gamedrv->clone_of)
+			/* obtain CRC-32 and length of ROM file */
+			err = osd_fchecksum (gamedrv->name, name, &aud->length, &aud->checksum);
+			if (err && gamedrv->clone_of)
 			{
-				/* if the game is a clone, try loading the ROM from the main version */
-				f = osd_fopen (gamedrv->clone_of->name, name, OSD_FILETYPE_ROM, 0);
-			}
-
-			if (!f)
-				aud->status = AUD_ROM_NOT_FOUND;
-			else
-			{
-				aud->length = romp->length & ~ROMFLAG_MASK;
-				if (!CalcCheckSum (f, romp, aud))
+				/* if the game is a clone, try the parent */
+				err = osd_fchecksum (gamedrv->clone_of->name, name, &aud->length, &aud->checksum);
+				if (err && gamedrv->clone_of->clone_of)
 				{
-					if (aud->checksum != aud->expchecksum)
-						aud->status = AUD_BAD_CHECKSUM;
-					else
-						aud->status = AUD_ROM_GOOD;
+					/* clone of a clone (for NeoGeo clones) */
+					err = osd_fchecksum (gamedrv->clone_of->clone_of->name, name, &aud->length, &aud->checksum);
 				}
-
-				osd_fclose (f);
 			}
 
+			/* spin through ROM_CONTINUEs and ROM_RELOADs, totaling length */
 			do
 			{
+				if (romp->name != (char *)-1) /* ROM_RELOAD */
+					aud->explength += romp->length & ~ROMFLAG_MASK;
 				romp++;
 			}
 			while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
+
+			if (err)
+				aud->status = AUD_ROM_NOT_FOUND;
+			else if (aud->explength != aud->length)
+				aud->status = AUD_LENGTH_MISMATCH;
+			else if (aud->checksum != aud->expchecksum)
+				aud->status = AUD_BAD_CHECKSUM;
+			else
+				aud->status = AUD_ROM_GOOD;
 
 			aud++;
 		}
@@ -146,25 +159,49 @@ int AuditRomSet (int game, tAuditRecord **audit)
    call AuditRomSet() instead and implement their own reporting (like MacMAME). */
 int VerifyRomSet (int game, verify_printf_proc verify_printf)
 {
-	tAuditRecord	*aud;
-	int				count;
-	int				badarchive = 0;
+	tAuditRecord			*aud;
+	int						count;
+	int						badarchive = 0;
+	const struct GameDriver *gamedrv = drivers[game];
 
 	if ((count = AuditRomSet (game, &aud)) == 0)
 		return NOTFOUND;
+
+	if (gamedrv->clone_of)
+	{
+		int i;
+		int cloneRomsFound = 0;
+
+		/* count number of roms found that are unique to clone */
+		for (i = 0; i < count; i++)
+			if (aud[i].status != AUD_ROM_NOT_FOUND)
+				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
+					cloneRomsFound++;
+
+		if (cloneRomsFound == 0)
+			return CLONE_NOTFOUND;
+	}
 
 	while (count--)
 	{
 		switch (aud->status)
 		{
 			case AUD_ROM_NOT_FOUND:
-				verify_printf ("%-10s: %-12s %5d bytes   %08x NOT FOUND\n",
-					drivers[game]->name, aud->rom, aud->length, aud->expchecksum);
+				if (aud->expchecksum)
+					verify_printf ("%-8s: %-12s %7d bytes %08x NOT FOUND\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
+				else
+					verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (NO GOOD DUMP KNOWN)\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum);
 				badarchive = 1;
 				break;
 			case AUD_BAD_CHECKSUM:
-				verify_printf ("%-10s: %-12s %5d bytes   %08x INCORRECT CHECKSUM %08x\n",
-					drivers[game]->name, aud->rom, aud->length, aud->expchecksum, aud->checksum);
+				if (aud->expchecksum && aud->expchecksum != BADCRC(aud->checksum))
+					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT CHECKSUM: %08x\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->checksum);
+				else
+					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
+						drivers[game]->name, aud->rom, aud->explength);
 				badarchive = 1;
 				break;
 			case AUD_MEM_ERROR:
@@ -172,10 +209,16 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				badarchive = 1;
 				break;
 			case AUD_LENGTH_MISMATCH:
-				verify_printf ("Error reading ROM %s (length mismatch)\n", aud->rom);
+				if (aud->expchecksum)
+					verify_printf ("%-8s: %-12s %7d bytes %08x INCORRECT LENGTH: %8d\n",
+						drivers[game]->name, aud->rom, aud->explength, aud->expchecksum, aud->length);
+				else
+					verify_printf ("%-8s: %-12s %7d bytes NO GOOD DUMP KNOWN\n",
+						drivers[game]->name, aud->rom, aud->explength);
 				badarchive = 1;
 				break;
 			case AUD_ROM_GOOD:
+				/* put something here if you want a full accounting of roms */
 				break;
 		}
 		aud++;
@@ -278,7 +321,7 @@ int VerifySampleSet (int game, verify_printf_proc verify_printf)
 	/* list missing samples */
 	while (count--)
 	{
-		verify_printf ("%-10s: %s NOT FOUND\n", drivers[game]->name, aud->name);
+		verify_printf ("%-8s: %s NOT FOUND\n", drivers[game]->name, aud->name);
 		aud++;
 	}
 

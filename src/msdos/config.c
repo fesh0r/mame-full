@@ -1,39 +1,127 @@
 /*
  * Configuration routines.
  *
- * 971219 support for mame.cfg by Valerio Verrando
- * 980402 moved out of msdos.c (N.S.), generalized routines (BW)
+ * 19971219 support for mame.cfg by Valerio Verrando
+ * 19980402 moved out of msdos.c (N.S.), generalized routines (BW)
+ * 19980917 added a "-cheatfile" option (misc) in MAME.CFG      JCK
  */
 
+#include "mamalleg.h"
 #include "driver.h"
-#include <allegro.h>
 #include <ctype.h>
-
+/* types of monitors supported */
+#include "monitors.h"
 /* from main() */
 extern int ignorecfg;
 
 /* from video.c */
-extern int scanlines, use_double, video_sync, antialias, ntsc;
+extern int frameskip,autoframeskip;
+extern int scanlines, use_tweaked, video_sync, wait_vsync, use_triplebuf;
+extern int stretch;
 extern int vgafreq, always_synced, color_depth, skiplines, skipcolumns;
-extern int beam, flicker;
-extern float gamma_correction;
+extern float osd_gamma_correction;
 extern int gfx_mode, gfx_width, gfx_height;
 
+extern int monitor_type;
+
+extern unsigned char tw224x288_h, tw224x288_v;
+extern unsigned char tw240x256_h, tw240x256_v;
+extern unsigned char tw256x240_h, tw256x240_v;
+extern unsigned char tw256x256_h, tw256x256_v;
+extern unsigned char tw256x256_hor_h, tw256x256_hor_v;
+extern unsigned char tw288x224_h, tw288x224_v;
+extern unsigned char tw240x320_h, tw240x320_v;
+extern unsigned char tw320x240_h, tw320x240_v;
+extern unsigned char tw336x240_h, tw336x240_v;
+extern unsigned char tw384x224_h, tw384x224_v;
+extern unsigned char tw384x240_h, tw384x240_v;
+extern unsigned char tw384x256_h, tw384x256_v;
+extern unsigned char tw400x256_h, tw400x256_v;
+
+
+/* Tweak values for 15.75KHz arcade/ntsc/pal modes */
+/* from video.c */
+extern unsigned char tw224x288arc_h, tw224x288arc_v, tw288x224arc_h, tw288x224arc_v;
+extern unsigned char tw256x256arc_h, tw256x256arc_v, tw256x240arc_h, tw256x240arc_v;
+extern unsigned char tw320x240arc_h, tw320x240arc_v, tw320x256arc_h, tw320x256arc_v;
+extern unsigned char tw352x240arc_h, tw352x240arc_v, tw352x256arc_h, tw352x256arc_v;
+extern unsigned char tw368x224arc_h, tw368x224arc_v;
+extern unsigned char tw368x240arc_h, tw368x240arc_v, tw368x256arc_h, tw368x256arc_v;
+extern unsigned char tw512x224arc_h, tw512x224arc_v, tw512x256arc_h, tw512x256arc_v;
+extern unsigned char tw512x448arc_h, tw512x448arc_v, tw512x512arc_h, tw512x512arc_v;
+
+
 /* from sound.c */
-extern int usefm, soundcard;
+extern int soundcard, usestereo,attenuation;
+extern int use_emulated_ym3812;
 
 /* from input.c */
-extern int use_mouse, joystick;
+extern int use_mouse, joystick, use_hotrod;
+
+/* from cheat.c */
+extern char *cheatfile;
+
+/* from datafile.c */
+extern char *history_filename,*mameinfo_filename;
 
 /* from fileio.c */
-void decompose_rom_path (char *rompath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir, *alternate_name;
+void decompose_rom_sample_path (char *rompath, char *samplepath);
+extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
+extern char *artworkdir, *screenshotdir, *alternate_name;
 
+/* from video.c, for centering tweaked modes */
+extern int center_x;
+extern int center_y;
+
+/*from video.c flag for 15.75KHz modes (req. for 15.75KHz Arcade Monitor Modes)*/
+extern int arcade_mode;
+
+/*from svga15kh.c flag to allow delay for odd/even fields for interlaced displays (req. for 15.75KHz Arcade Monitor Modes)*/
+extern int wait_interlace;
 
 static int mame_argc;
 static char **mame_argv;
 static int game;
 char *rompath;
+
+struct { char *name; int id; } joy_table[] =
+{
+	{ "none",                       JOY_TYPE_NONE },
+	{ "auto",                       JOY_TYPE_AUTODETECT },
+	{ "standard",           JOY_TYPE_STANDARD },
+	{ "dual",                       JOY_TYPE_2PADS },
+	{ "4button",            JOY_TYPE_4BUTTON },
+	{ "6button",            JOY_TYPE_6BUTTON },
+	{ "8button",            JOY_TYPE_8BUTTON },
+	{ "fspro",                      JOY_TYPE_FSPRO },
+	{ "wingex",                     JOY_TYPE_WINGEX },
+	{ "sidewinder",         JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro",         JOY_TYPE_GAMEPAD_PRO },
+	{ "sneslpt1",           JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",           JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",           JOY_TYPE_SNESPAD_LPT3 },
+	{ "psxlpt1",            JOY_TYPE_PSXPAD_LPT1 },
+	{ "psxlpt2",            JOY_TYPE_PSXPAD_LPT2 },
+	{ "psxlpt3",            JOY_TYPE_PSXPAD_LPT3 },
+	{ "n64lpt1",            JOY_TYPE_N64PAD_LPT1 },
+	{ "n64lpt2",            JOY_TYPE_N64PAD_LPT2 },
+	{ "n64lpt3",            JOY_TYPE_N64PAD_LPT3 },
+	{ "wingwarrior",        JOY_TYPE_WINGWARRIOR },
+	{ 0, 0 }
+} ;
+
+
+
+/* monitor type */
+struct { char *name; int id; } monitor_table[] =
+{
+	{ "standard",   MONITOR_TYPE_STANDARD},
+	{ "ntsc",       MONITOR_TYPE_NTSC},
+	{ "pal",                MONITOR_TYPE_PAL},
+	{ "arcade",             MONITOR_TYPE_ARCADE},
+	{ NULL, NULL }
+} ;
+
 
 /*
  * gets some boolean config value.
@@ -232,56 +320,98 @@ void get_rom_path (int argc, char **argv, int game_index)
 	decompose_rom_path (rompath);
 }
 
-void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game_index)
+/* for playback of .inp files */
+void init_inpdir(void)
+{
+    inpdir = get_string ("directory", "inp",     NULL, "INP");
+}
+
+void parse_cmdline (int argc, char **argv, int game_index)
 {
 	static float f_beam, f_flicker;
-	static int _vesa;
-	static char *resolution;
-	static char *vesamode;
+	char *resolution;
+	char *vesamode;
+	char *joyname;
 	char tmpres[10];
 	int i;
+	char *tmpstr;
+	char *monitorname;
 
 	mame_argc = argc;
 	mame_argv = argv;
 	game = game_index;
 
+
 	/* read graphic configuration */
 	scanlines   = get_bool   ("config", "scanlines",    NULL,  1);
-	use_double  = get_bool   ("config", "double",       NULL, -1);
+	stretch     = get_bool   ("config", "stretch",    NULL,  1);
+	options.use_artwork = get_bool   ("config", "artwork",      NULL,  1);
+	options.use_samples = get_bool   ("config", "samples",      NULL,  1);
 	video_sync  = get_bool   ("config", "vsync",        NULL,  0);
-	antialias   = get_bool   ("config", "antialias",    NULL,  1);
-	_vesa       = get_bool   ("config", "vesa",         NULL,  0);
-	vesamode	= get_string ("config", "vesamode",		NULL,  "vesa2l");
-	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
+	wait_vsync  = get_bool   ("config", "waitvsync",    NULL,  0);
+	use_triplebuf  = get_bool("config", "triplebuffer",        NULL,  0);
+	use_tweaked    = get_bool   ("config", "tweak",         NULL,  0);
+	vesamode        = get_string ("config", "vesamode",             NULL,  "vesa3");
+	options.antialias   = get_bool   ("config", "antialias",    NULL,  1);
+	options.translucency = get_bool    ("config", "translucency", NULL, 1);
+
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
-	color_depth = get_int	 ("config", "depth",        NULL, 8);
+	color_depth = get_int    ("config", "depth",        NULL, 16);
+	if (color_depth != 8) color_depth = 16;
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
+	if (f_beam < 1.0) f_beam = 1.0;
+	if (f_beam > 16.0) f_beam = 16.0;
 	f_flicker   = get_float  ("config", "flicker",      NULL, 0.0);
-	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
+	if (f_flicker < 0.0) f_flicker = 0.0;
+	if (f_flicker > 100.0) f_flicker = 100.0;
+	osd_gamma_correction = get_float ("config", "gamma",   NULL, 1.0);
+	if (osd_gamma_correction < 0.5) osd_gamma_correction = 0.5;
+	if (osd_gamma_correction > 2.0) osd_gamma_correction = 2.0;
 
-	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
-	options->norotate  = get_bool ("config", "norotate",  NULL, 0);
-	options->ror       = get_bool ("config", "ror",       NULL, 0);
-	options->rol       = get_bool ("config", "rol",       NULL, 0);
-	options->flipx     = get_bool ("config", "flipx",     NULL, 0);
-	options->flipy     = get_bool ("config", "flipy",     NULL, 0);
+	tmpstr             = get_string ("config", "frameskip", "fs", "auto");
+	if (!stricmp(tmpstr,"auto"))
+	{
+		frameskip = 0;
+		autoframeskip = 1;
+	}
+	else
+	{
+		frameskip = atoi(tmpstr);
+		autoframeskip = 0;
+	}
+	options.norotate  = get_bool ("config", "norotate",  NULL, 0);
+	options.ror       = get_bool ("config", "ror",       NULL, 0);
+	options.rol       = get_bool ("config", "rol",       NULL, 0);
+	options.flipx     = get_bool ("config", "flipx",     NULL, 0);
+	options.flipy     = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);
-	usefm               = get_bool ("config", "oplfm",      "fm",  0);
-	options->samplerate = get_int  ("config", "samplerate", "sr", 22050);
-	options->samplebits = get_int  ("config", "samplebits", "sb", 8);
+	options.use_emulated_ym3812 = !get_bool ("config", "ym3812opl",  NULL,  0);
+	options.samplerate = get_int  ("config", "samplerate", "sr", 22050);
+	if (options.samplerate < 5000) options.samplerate = 5000;
+	if (options.samplerate > 50000) options.samplerate = 50000;
+	options.samplebits = get_int  ("config", "samplebits", "sb", 8);
+	if (options.samplebits != 16) options.samplebits = 8;
+	usestereo           = get_bool ("config", "stereo",  NULL,  1);
+	attenuation         = get_int  ("config", "volume",  NULL,  0);
+	if (attenuation < -32) attenuation = -32;
+	if (attenuation > 0) attenuation = 0;
 
 	/* read input configuration */
-	use_mouse = get_bool ("config", "mouse",   NULL,  1);
-	joystick  = get_int  ("config", "joystick", "joy", 0);
+	use_mouse = get_bool   ("config", "mouse",   NULL,  1);
+	joyname   = get_string ("config", "joystick", "joy", "none");
+	use_hotrod = get_bool  ("config", "hotrod",   NULL,  0);
 
 	/* misc configuration */
-	options->cheat      = get_bool ("config", "cheat", NULL, 0);
-	options->mame_debug = get_bool ("config", "debug", NULL, 0);
+	options.cheat      = get_bool ("config", "cheat", NULL, 0);
+	options.mame_debug = get_bool ("config", "debug", NULL, 0);
+	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
+	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 
 	/* get resolution */
 	resolution  = get_string ("config", "resolution", NULL, "auto");
@@ -289,44 +419,116 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	/* set default subdirectories */
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
 	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
-	pcxdir     = get_string ("directory", "pcx",     NULL, "PCX");
-	inpdir     = get_string ("directory", "inp",     NULL, "INP");
+	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
+	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
+	stadir     = get_string ("directory", "sta",     NULL, "STA");
+	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
+
+	/* get tweaked modes info */
+	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);
+	tw224x288_v     	= get_int ("tweaked", "224x288_v",              NULL, 0x53);
+	tw240x256_h     = get_int ("tweaked", "240x256_h",              NULL, 0x67);
+	tw240x256_v     = get_int ("tweaked", "240x256_v",              NULL, 0x23);
+	tw256x240_h     = get_int ("tweaked", "256x240_h",              NULL, 0x55);
+	tw256x240_v     = get_int ("tweaked", "256x240_v",              NULL, 0x43);
+	tw256x256_h     = get_int ("tweaked", "256x256_h",              NULL, 0x6c);
+	tw256x256_v     = get_int ("tweaked", "256x256_v",              NULL, 0x23);
+	tw256x256_hor_h = get_int ("tweaked", "256x256_hor_h",  NULL, 0x55);
+	tw256x256_hor_v = get_int ("tweaked", "256x256_hor_v",  NULL, 0x60);
+	tw288x224_h     = get_int ("tweaked", "288x224_h",              NULL, 0x5f);
+	tw288x224_v     = get_int ("tweaked", "288x224_v",              NULL, 0x0c);
+	tw240x320_h             = get_int ("tweaked", "240x320_h",              NULL, 0x5a);
+	tw240x320_v             = get_int ("tweaked", "240x320_v",              NULL, 0x8c);
+	tw320x240_h             = get_int ("tweaked", "320x240_h",              NULL, 0x5f);
+	tw320x240_v             = get_int ("tweaked", "320x240_v",              NULL, 0x0c);
+	tw336x240_h             = get_int ("tweaked", "336x240_h",              NULL, 0x5f);
+	tw336x240_v             = get_int ("tweaked", "336x240_v",              NULL, 0x0c);
+	tw384x224_h             = get_int ("tweaked", "384x224_h",              NULL, 0x6c);
+	tw384x224_v             = get_int ("tweaked", "384x224_v",              NULL, 0x0c);
+	tw384x240_h             = get_int ("tweaked", "384x240_h",              NULL, 0x6c);
+	tw384x240_v             = get_int ("tweaked", "384x240_v",              NULL, 0x0c);
+	tw384x256_h             = get_int ("tweaked", "384x256_h",              NULL, 0x6c);
+	tw384x256_v             = get_int ("tweaked", "384x256_v",              NULL, 0x23);
+
+	/* Get 15.75KHz tweak values */
+	tw224x288arc_h          = get_int ("tweaked", "224x288arc_h",   NULL, 0x5d);
+	tw224x288arc_v          = get_int ("tweaked", "224x288arc_v",   NULL, 0x38);
+	tw288x224arc_h          = get_int ("tweaked", "288x224arc_h",   NULL, 0x5d);
+	tw288x224arc_v          = get_int ("tweaked", "288x224arc_v",   NULL, 0x09);
+	tw256x240arc_h          = get_int ("tweaked", "256x240arc_h",   NULL, 0x5d);
+	tw256x240arc_v          = get_int ("tweaked", "256x240arc_v",   NULL, 0x09);
+	tw256x256arc_h          = get_int ("tweaked", "256x256arc_h",   NULL, 0x5d);
+	tw256x256arc_v          = get_int ("tweaked", "256x256arc_v",   NULL, 0x17);
+	tw320x240arc_h          = get_int ("tweaked", "320x240arc_h",   NULL, 0x69);
+	tw320x240arc_v          = get_int ("tweaked", "320x240arc_v",   NULL, 0x09);
+	tw320x256arc_h          = get_int ("tweaked", "320x256arc_h",   NULL, 0x69);
+	tw320x256arc_v          = get_int ("tweaked", "320x256arc_v",   NULL, 0x17);
+	tw352x240arc_h          = get_int ("tweaked", "352x240arc_h",   NULL, 0x6a);
+	tw352x240arc_v          = get_int ("tweaked", "352x240arc_v",   NULL, 0x09);
+	tw352x256arc_h          = get_int ("tweaked", "352x256arc_h",   NULL, 0x6a);
+	tw352x256arc_v          = get_int ("tweaked", "352x256arc_v",   NULL, 0x17);
+	tw368x224arc_h          = get_int ("tweaked", "368x224arc_h",   NULL, 0x6a);
+	tw368x224arc_v          = get_int ("tweaked", "368x224arc_v",   NULL, 0x09);
+	tw368x240arc_h          = get_int ("tweaked", "368x240arc_h",   NULL, 0x6a);
+	tw368x240arc_v          = get_int ("tweaked", "368x240arc_v",   NULL, 0x09);
+	tw368x256arc_h          = get_int ("tweaked", "368x256arc_h",   NULL, 0x6a);
+	tw368x256arc_v          = get_int ("tweaked", "368x256arc_v",   NULL, 0x17);
+	tw512x224arc_h          = get_int ("tweaked", "512x224arc_h",   NULL, 0xbf);
+	tw512x224arc_v          = get_int ("tweaked", "512x224arc_v",   NULL, 0x09);
+	tw512x256arc_h          = get_int ("tweaked", "512x256arc_h",   NULL, 0xbf);
+	tw512x256arc_v          = get_int ("tweaked", "512x256arc_v",   NULL, 0x17);
+	tw512x448arc_h          = get_int ("tweaked", "512x448arc_h",   NULL, 0xbf);
+	tw512x448arc_v          = get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
+	tw512x512arc_h          = get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
+	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_path (argc, argv, game_index);
 
+	/* get the monitor type */
+	monitorname = get_string ("config", "monitor", NULL, "standard");
+	/* get -centerx */
+	center_x = get_int ("config", "centerx", NULL,  0);
+	/* get -centery */
+	center_y = get_int ("config", "centery", NULL,  0);
+	/* get -waitinterlace */
+	wait_interlace = get_bool ("config", "waitinterlace", NULL,  0);
+
 	/* process some parameters */
-	beam = (int)(f_beam * 0x00010000);
-	if (beam < 0x00010000)
-		beam = 0x00010000;
-	if (beam > 0x00100000)
-		beam = 0x00100000;
+	options.beam = (int)(f_beam * 0x00010000);
+	if (options.beam < 0x00010000)
+		options.beam = 0x00010000;
+	if (options.beam > 0x00100000)
+		options.beam = 0x00100000;
 
-	flicker = (int)(f_flicker * 2.55);
-	if (flicker < 0)
-		flicker = 0;
-	if (flicker > 255)
-		flicker = 255;
+	options.flicker = (int)(f_flicker * 2.55);
+	if (options.flicker < 0)
+		options.flicker = 0;
+	if (options.flicker > 255)
+		options.flicker = 255;
 
-	if (_vesa == 1)
+	if (stricmp (vesamode, "vesa1") == 0)
+		gfx_mode = GFX_VESA1;
+	else if (stricmp (vesamode, "vesa2b") == 0)
+		gfx_mode = GFX_VESA2B;
+	else if (stricmp (vesamode, "vesa2l") == 0)
+		gfx_mode = GFX_VESA2L;
+	else if (stricmp (vesamode, "vesa3") == 0)
+		gfx_mode = GFX_VESA3;
+	else
 	{
-		if (stricmp (vesamode, "vesa1") == 0)
-			gfx_mode = GFX_VESA1;
-		else if (stricmp (vesamode, "vesa2b") == 0)
-			gfx_mode = GFX_VESA2B;
-		else
-			gfx_mode = GFX_VESA2L;
+		if (errorlog)
+			fprintf (errorlog, "%s is not a valid entry for vesamode\n",
+					vesamode);
+		gfx_mode = GFX_VESA3; /* default to VESA2L */
 	}
-//	else
-//		gfx_mode = GFX_VGA;
 
 	/* any option that starts with a digit is taken as a resolution option */
 	/* this is to handle the old "-wxh" commandline option. */
 	for (i = 1; i < argc; i++)
 	{
 		if (argv[i][0] == '-' && isdigit(argv[i][1]) &&
-	/* additional kludge to handle negative arguments to -skiplines and -skipcolumns */
-				(i == 1 || (strcmp(argv[i-1],"-skiplines") && strcmp(argv[i-1],"-skipcolumns"))))
+				(strstr(argv[i],"x") || strstr(argv[i],"X")))
 			resolution = &argv[i][1];
 	}
 
@@ -342,4 +544,40 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 		if (tmp)
 			gfx_height = atoi (tmp);
 	}
+
+	/* convert joystick name into an Allegro-compliant joystick signature */
+	joystick = -2; /* default to invalid value */
+
+	for (i = 0; joy_table[i].name != NULL; i++)
+	{
+		if (stricmp (joy_table[i].name, joyname) == 0)
+		{
+			joystick = joy_table[i].id;
+			if (errorlog)
+				fprintf (errorlog, "using joystick %s = %08x\n",
+						joyname,joy_table[i].id);
+			break;
+		}
+	}
+
+	if (joystick == -2)
+	{
+		if (errorlog)
+			fprintf (errorlog, "%s is not a valid entry for a joystick\n",
+					joyname);
+		joystick = JOY_TYPE_NONE;
+	}
+
+	/* get monitor type from supplied name */
+	monitor_type = MONITOR_TYPE_STANDARD; /* default to PC monitor */
+
+	for (i = 0; monitor_table[i].name != NULL; i++)
+	{
+		if ((stricmp (monitor_table[i].name, monitorname) == 0))
+		{
+			monitor_type = monitor_table[i].id;
+			break;
+		}
+	}
 }
+

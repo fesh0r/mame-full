@@ -4,26 +4,35 @@ struct VLM5030interface konami_vlm5030_interface =
 {
     3580000,    /* master clock  */
     255,        /* volume        */
-    3,         /* memory region  */
+    4,         /* memory region  */
+    0,         /* memory size    */
     0,         /* VCU            */
 };
 
 struct SN76496interface konami_sn76496_interface =
 {
 	1,	/* 1 chip */
-	14318180/8,	/*  1.7897725 Mhz */
-	{ 255 }
+	{ 14318180/8 },	/*  1.7897725 Mhz */
+	{ 0x2064 }
 };
 
 struct DACinterface konami_dac_interface =
 {
 	1,
-	441000,
-	{255,255 },
-	{  1,  1 }
+	{ 80 }
 };
 
-unsigned char *konami_dac;
+struct ADPCMinterface hyprolyb_adpcm_interface =
+{
+	1,			/* 1 channel */
+	4000,       /* 4000Hz playback */
+	4,			/* memory region 4 */
+	0,			/* init function */
+	{ 100 }
+};
+
+
+static int SN76496_latch;
 
 /* The timer port on TnF and HyperSports sound hardware is derived from
    a 14.318 mhz clock crystal which is passed  through a couple of 74ls393
@@ -105,28 +114,49 @@ void hyperspt_sound_w(int offset , int data)
 
 
 
-void konami_dac_w(int offset,int data)
-{
-
-	*konami_dac = data;
-
-	/* bit 7 doesn't seem to be used */
-	DAC_data_w(0,data<<1);
-}
-
-
-
 void konami_sh_irqtrigger_w(int offset,int data)
 {
 	static int last;
 
-
-//	if (last == 0 && data == 1)
-	if (last == 0 && (data))
+	if (last == 0 && data)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
 		cpu_cause_interrupt(1,0xff);
 	}
 
 	last = data;
+}
+
+
+void konami_SN76496_latch_w(int offset,int data)
+{
+	SN76496_latch = data;
+}
+
+
+void konami_SN76496_0_w(int offset,int data)
+{
+	SN76496_0_w(offset, SN76496_latch);
+}
+
+
+
+
+int hyprolyb_speech_r(int offset)
+{
+	return ADPCM_playing(0) ? 0x10 : 0x00;
+}
+
+void hyprolyb_ADPCM_data_w(int offset,int data)
+{
+	int cmd,start,end;
+	unsigned char *RAM = Machine->memory_region[4];
+
+
+	/* simulate the operation of the 6802 */
+	cmd = RAM[0xfe01 + data] + 256 * RAM[0xfe00 + data];
+	start = RAM[cmd + 1] + 256 * RAM[cmd];
+	end = RAM[cmd + 3] + 256 * RAM[cmd + 2];
+	if (end > start)
+		ADPCM_play(0,start,(end - start)*2);
 }

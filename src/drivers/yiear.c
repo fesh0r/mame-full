@@ -1,96 +1,75 @@
-/*
-driver:yiear.c
+/***************************************************************************
 
-YIE AR KUNG-FU hardware description
-enrique.sanchez@cs.us.es
+	Yie Ar Kung-Fu memory map (preliminary)
+	enrique.sanchez@cs.us.es
 
-Main CPU:    Motorola 6809
+CPU:    Motorola 6809
 
 Normal 6809 IRQs must be generated each video frame (60 fps).
 The 6809 NMI is used for sound timing.
 
-ROM files
 
-D12_8.BIN (16K)  -- ROM $8000-$BFFF   \___ 6809 code
-D14_7.BIN (16K)  -- ROM $C000-$FFFF   /
+0000	  	R	VLM5030 status ???
+4000	 	 W  control port
+					bit 0 - flip screen
+					bit 1 - NMI enable
+					bit 2 - IRQ enable
+					bit 3 - coin counter A
+					bit 4 - coin counter B
+4800	 	 W	sound latch write
+4900	 	 W  copy sound latch to SN76496
+4a00	 	 W  VLM5030 write
+4b00	 	 W  VLM5030 start
+4c00		R   DSW #0
+4d00		R   DSW #1
+4e00		R   IN #0
+4e01		R   IN #1
+4e02		R   IN #2
+4e03		R   DSW #2
+4f00	 	 W  watchdog
+5000-502f	 W  sprite RAM 1 (18 sprites)
+					byte 0 - bit 0 - sprite code MSB
+							 bit 6 - flip X
+							 bit 7 - flip Y
+					byte 1 - Y position
+5030-53ff	RW  RAM
+5400-542f    W  sprite RAM 2
+					byte 0 - X position
+					byte 1 - sprite code LSB
+5430-57ff	RW  RAM
+5800-5fff	RW  video RAM
+					byte 0 - bit 4 - character code MSB
+							 bit 6 - flip Y
+							 bit 7 - flip X
+					byte 1 - character code LSB
+8000-ffff	R   ROM
 
-G16_1.BIN (8K)   -- Background tiles; bitplanes 0,1
-G15_2.BIN (8K)   -- Background tiles; bitplanes 2,3
-
-G06_3.BIN (16K)  -- Sprites; bitplanes 0,1 (part 1)
-G05_4.BIN (16K)  -- Sprites; bitplanes 0,1 (part 2)
-G04_5.BIN (16K)  -- Sprites; bitplanes 2,3 (part 1)
-G03_6.BIN (16K)  -- Sprites; bitplanes 2,3 (part 2)
-
-A12_9.BIN (8K)   -- Sound related??
-
-Memory map
-
-4000&4f00     various, not clear which of the two locations does what
-              but it seems 4000 is used for interrupt enable, and
-			  4f00 for everything else.
-              bit 0 flip screen
-              bit 1 ?
-              bit 2 interrupt enable/acknowledge
-              bit 3 coin cointer 1
-              bit 4 coin cointer 1
-4800          = SN76496 latch
-4900          = SN76496 trigger read
-4A00          = ?
-4B00          = ?
-4C00          = DIP SWITCH 1
-4D00          = DIP SWITCH 2
-4E00		  = COIN,START
-4E01          = JOY1
-4E02		  = JOY2
-4E03		  = DIP SWITCH 3
-5000 - 57FF   = RAM (includes sprite attribute zone mapped in it)
-5030 - 51AF   = SPRITE ATTRIBUTES
-5800 - 5FFF   = BACKGROUND ATTRIBUTES
-6000 - 7FFF   = Not used.
-8000 - FFFF   = Code ROM.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
+
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void yiear_videoram_w(int offset,int data);
-void yiear_4f00_w(int offset,int data);
+void yiear_control_w(int offset,int data);
+int  yiear_nmi_interrupt(void);
+
+/* in sndhrdw/trackfld.c */
+void konami_SN76496_latch_w(int offset,int data);
+void konami_SN76496_0_w(int offset,int data);
 
 
 
 void yiear_init_machine(void)
 {
-	/* Set OPTIMIZATION FLAGS FOR M6809 */
+	/* set optimization flags for M6809 */
 	m6809_Flags = M6809_FAST_S;
 }
 
-static int irq_enable,nmi_enable;
-
-static void yiear_interrupt_enable_w(int offset,int data)
-{
-	/* bit 1 is NMI enable */
-	nmi_enable = data & 0x02;
-
-	/* bit 2 is IRQ enable */
-	irq_enable = data & 0x04;
-}
-
-static int yiear_interrupt(void)
-{
-	if (irq_enable) return interrupt();
-	else return ignore_interrupt();
-}
-
-static int yiear_nmi_interrupt(void)
-{
-	if (nmi_enable) return nmi_interrupt();
-	else return ignore_interrupt();
-}
 
 static int yiear_speech_r(int offset)
 {
@@ -100,7 +79,7 @@ static int yiear_speech_r(int offset)
 	else return 0;
 }
 
-void yiear_speech_st(int offset,int data)
+static void yiear_speech_st(int offset,int data)
 {
 	/* no idea if this is correct... */
 	VLM5030_ST( 1 );
@@ -108,33 +87,34 @@ void yiear_speech_st(int offset,int data)
 }
 
 
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x0000, yiear_speech_r },
-	{ 0x4E00, 0x4E00, input_port_0_r },	/* coin,start */
-	{ 0x4E01, 0x4E01, input_port_1_r },	/* joy1 */
-	{ 0x4E02, 0x4E02, input_port_2_r },	/* joy2 */
-	{ 0x4C00, 0x4C00, input_port_3_r },	/* misc */
-	{ 0x4D00, 0x4D00, input_port_4_r },	/* test mode */
-	{ 0x4E03, 0x4E03, input_port_5_r },	/* coins per play */
+	{ 0x4c00, 0x4c00, input_port_3_r },
+	{ 0x4d00, 0x4d00, input_port_4_r },
+	{ 0x4e00, 0x4e00, input_port_0_r },
+	{ 0x4e01, 0x4e01, input_port_1_r },
+	{ 0x4e02, 0x4e02, input_port_2_r },
+	{ 0x4e03, 0x4e03, input_port_5_r },
 	{ 0x5000, 0x5fff, MRA_RAM },
-	{ 0x8000, 0xFFFF, MRA_ROM },
+	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4000, 0x4000, yiear_interrupt_enable_w },
-	{ 0x4800, 0x4800, SN76496_0_w },	/* Loads the snd command into the snd latch */
-	{ 0x4900, 0x4900, MWA_NOP },	/* This address triggers the SN chip to read the data port. */
-	{ 0x4a00, 0x4a00, VLM5030_data_w },	/* VLM5030 */
+	{ 0x4000, 0x4000, yiear_control_w },
+	{ 0x4800, 0x4800, konami_SN76496_latch_w },
+	{ 0x4900, 0x4900, konami_SN76496_0_w },
+	{ 0x4a00, 0x4a00, VLM5030_data_w },
 	{ 0x4b00, 0x4b00, yiear_speech_st },
-	{ 0x4f00, 0x4f00, yiear_4f00_w },
-	{ 0x5030, 0x51AF, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5000, 0x57FF, MWA_RAM },	/* sprites are in this area */
-	{ 0x5800, 0x5FFF, videoram_w, &videoram, &videoram_size },
-	{ 0x8000, 0xFFFF, MWA_ROM },
+	{ 0x4f00, 0x4f00, watchdog_reset_w },
+	{ 0x5000, 0x502f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5030, 0x53ff, MWA_RAM },
+	{ 0x5400, 0x542f, MWA_RAM, &spriteram_2 },
+	{ 0x5430, 0x57ff, MWA_RAM },
+	{ 0x5800, 0x5fff, videoram_w, &videoram, &videoram_size },
+	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -172,90 +152,88 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x08, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "30000 80000" )
 	PORT_DIPSETTING(    0x00, "40000 90000" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW1 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW1 4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Difficulty?" )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW1 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW1 6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown DSW2 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown DSW2 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW2 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown DSW2 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW2 7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown DSW2 8", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Number of Controllers" )
+	PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown DSW2 4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown DSW2 5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown DSW2 6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown DSW2 7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown DSW2 8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	/* 0x00 gives invalid */
 INPUT_PORTS_END
 
@@ -263,58 +241,51 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8 by 8 */
+	8,8,	/* 8x8 characters */
 	512,	/* 512 characters */
 	4,		/* 4 bits per pixel */
-	{ 4, 0, 512*16*8+4, 512*16*8+0 },		/* plane */
-	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },		/* x */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },	/* y */
-	16*8
+	{ 4, 0, 512*16*8+4, 512*16*8+0 },	/* plane offsets */
+	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8	/* each character takes 16 bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
-	16,16,	/* 16 by 16 */
+	16,16,	/* 16x16 sprites */
 	512,	/* 512 sprites */
 	4,		/* 4 bits per pixel */
-	{ 512*64*8+4, 512*64*8+0, 4, 0 },	/* plane offsets */
-	{ 0, 1, 2, 3, 8*8+0, 8*8+1, 8*8+2, 8*8+3,
-			16*8+0, 16*8+1, 16*8+2, 16*8+3, 24*8+0, 24*8+1, 24*8+2, 24*8+3 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
-	64*8
+	{ 4, 0, 512*64*8+4, 512*64*8+0 },	/* plane offsets */
+	{ 0*8*8+0, 0*8*8+1, 0*8*8+2, 0*8*8+3, 1*8*8+0, 1*8*8+1, 1*8*8+2, 1*8*8+3,
+	  2*8*8+0, 2*8*8+1, 2*8*8+2, 2*8*8+3, 3*8*8+0, 3*8*8+1, 3*8*8+2, 3*8*8+3 },
+	{  0*8,  1*8,  2*8,  3*8,  4*8,  5*8,  6*8,  7*8,
+	  32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
+	64*8    /* each sprite takes 64 bytes */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 1 },
-	{ 1, 0x4000, &spritelayout, 16, 1 },
+	{ 1, 0x0000, &charlayout,   16, 1 },
+	{ 1, 0x4000, &spritelayout,  0, 1 },
 	{ -1 } /* end of array */
-};
-
-
-
-static unsigned char color_prom[] =
-{
-	0x00,0x49,0xE0,0xFD,0x06,0xA7,0x5D,0x2E,0x3F,0xAE,0xBF,0xB7,0x3D,0x72,0xAD,0xFF,
-	0x00,0xF5,0x5E,0x66,0xA5,0x70,0xFE,0x2E,0x29,0x20,0x00,0x80,0xA0,0xE3,0xAD,0xFF
 };
 
 
 
 struct SN76496interface sn76496_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/*  1.5 MHz ? (hand tuned) */
-	{ 255 }
+	1,			/* 1 chip */
+	{ 1500000 },	/*  1.5 MHz ? (hand tuned) */
+	{ 100 }
 };
 
 struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock  */
-	255,        /* volume        */
-	2,         /* memory region  */
-	0,         /* VCU            */
+	100,        /* volume        */
+	3,  		/* memory region  */
+	0,          /* memory size of speech rom */
+	0			/* VCU            */
 };
 
 
@@ -327,11 +298,8 @@ static struct MachineDriver machine_driver =
 			CPU_M6809,
 			1250000,	/* 1.25 Mhz */
 			0,			/* memory region */
-			readmem,	/* MemoryReadAddress */
-			writemem,	/* MemoryWriteAddress */
-			0,			/* IOReadPort */
-			0,			/* IOWritePort */
-			yiear_interrupt,1,	/* vblank */
+			readmem, writemem, 0, 0,
+			interrupt,1,	/* vblank */
 			yiear_nmi_interrupt,500	/* music tempo (correct frequency unknown) */
 		}
 	},
@@ -341,17 +309,15 @@ static struct MachineDriver machine_driver =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,			/* GfxDecodeInfo * */
-
-	32,						/* total colors */
-	32,						/* color table length */
-	yiear_vh_convert_color_prom,						/* convert color prom routine */
+	gfxdecodeinfo,
+	32, 32,
+	yiear_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,						/* vh_init routine */
-	generic_vh_start,		/* vh_start routine */
-	generic_vh_stop,		/* vh_stop routine */
-	yiear_vh_screenrefresh,	/* vh_update routine */
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	yiear_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -376,21 +342,43 @@ static struct MachineDriver machine_driver =
 
 ROM_START( yiear_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D12_8.BIN", 0x8000, 0x4000, 0x53e66644 )
-	ROM_LOAD( "D14_7.BIN", 0xC000, 0x4000, 0xd5f1fb77 )
+	ROM_LOAD( "i08.10d",      0x08000, 0x4000, 0xe2d7458b )
+	ROM_LOAD( "i07.8d",       0x0c000, 0x4000, 0x7db7442e )
 
-	ROM_REGION(0x14000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "G16_1.BIN", 0x00000, 0x2000, 0x12fd01fd )
-	ROM_LOAD( "G15_2.BIN", 0x02000, 0x2000, 0xf889b63f )
-	ROM_LOAD( "G06_3.BIN", 0x04000, 0x4000, 0x5c60737a )
-	ROM_LOAD( "G05_4.BIN", 0x08000, 0x4000, 0xe9a3d4d9 )
-	ROM_LOAD( "G04_5.BIN", 0x0c000, 0x4000, 0x35ca933a )
-	ROM_LOAD( "G03_6.BIN", 0x10000, 0x4000, 0x9e25b6cb )
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
+	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
+	ROM_LOAD( "g04_5.bin",    0x04000, 0x4000, 0x45109b29 )
+	ROM_LOAD( "g03_6.bin",    0x08000, 0x4000, 0x1d650790 )
+	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
+	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
 	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
-	ROM_LOAD( "A12_9.BIN", 0x0000, 0x2000, 0x1e331185 )
+	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
 ROM_END
 
+ROM_START( yiear2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "d12_8.bin",    0x08000, 0x4000, 0x49ecd9dd )
+	ROM_LOAD( "d14_7.bin",    0x0c000, 0x4000, 0xbc2e1208 )
+
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g16_1.bin",    0x00000, 0x2000, 0xb68fd91d )
+	ROM_LOAD( "g15_2.bin",    0x02000, 0x2000, 0xd9b167c6 )
+	ROM_LOAD( "g04_5.bin",    0x04000, 0x4000, 0x45109b29 )
+	ROM_LOAD( "g03_6.bin",    0x08000, 0x4000, 0x1d650790 )
+	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
+	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
+
+	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
+	ROM_LOAD( "a12_9.bin",    0x00000, 0x2000, 0xf75a1539 )
+ROM_END
 
 
 static int hiload(void)
@@ -399,7 +387,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
+	if ((memcmp(&RAM[0x5520],"\x00\x36\x70",3) == 0) &&
 		(memcmp(&RAM[0x55A9],"\x10\x10\x10",3) == 0))
 	{
 		void *f;
@@ -408,7 +396,7 @@ static int hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			/* Read the scores */
-                        osd_fread(f,&RAM[0x5520],14*10);
+			osd_fread(f,&RAM[0x5520],14*10);
 			/* reset score at top */
 			memcpy(&RAM[0x521C],&RAM[0x5520],3);
 			osd_fclose(f);
@@ -428,11 +416,10 @@ static void hisave(void)
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
 		/* Save the scores */
-                osd_fwrite(f,&RAM[0x5520],14*10);
+		osd_fwrite(f,&RAM[0x5520],14*10);
 		osd_fclose(f);
 	}
 }
-
 
 
 struct GameDriver yiear_driver =
@@ -440,12 +427,13 @@ struct GameDriver yiear_driver =
 	__FILE__,
 	0,
 	"yiear",
-	"Yie Ar Kung Fu",
+	"Yie Ar Kung-Fu (set 1)",
 	"1985",
 	"Konami",
-	"Enrique Sanchez\nPhilip Stroffolino\nMike Balfour (high score)\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
+	"Enrique Sanchez\nPhilip Stroffolino\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	yiear_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -454,8 +442,35 @@ struct GameDriver yiear_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
+
+struct GameDriver yiear2_driver =
+{
+	__FILE__,
+	&yiear_driver,
+	"yiear2",
+	"Yie Ar Kung-Fu (set 2)",
+	"1985",
+	"Konami",
+	"Enrique Sanchez\nPhilip Stroffolino\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	yiear2_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+

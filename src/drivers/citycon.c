@@ -78,54 +78,54 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x40, "Cocktail" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	/* the coin input must stay low for exactly 2 frames to be consistently recognized. */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 
 	PORT_START
-	PORT_DIPNAME( 0x07, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x07, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen?" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -187,11 +187,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* actually there is on1 AY8910 and one YM2203, but the sound core doesn't */
+/* support that so we use 2 YM2203 */
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	2000000,	/* 2.0 MHz ??? */
-	{ YM2203_VOL(128,255), YM2203_VOL(128,255) },
+	{ YM2203_VOL(20,20), YM2203_VOL(20,20) },
+	{ 0x20, 0x20 },	/* 8910 gain */
 	{ soundlatch_r },
 	{ soundlatch2_r },
 	{ 0 },
@@ -255,25 +258,71 @@ static struct MachineDriver machine_driver =
 
 ROM_START( citycon_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "c10", 0x4000, 0x4000, 0x9bbcad06 )
-	ROM_LOAD( "c11", 0x8000, 0x8000, 0x36808a32 )
+	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
+	ROM_LOAD( "c11",          0x8000, 0x8000, 0x139eb1aa )
 
-	ROM_REGION(0x1e000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "c4",  0x00000, 0x2000, 0x92aaa220 )	/* Characters */
-	ROM_LOAD( "c12", 0x02000, 0x2000, 0x14035885 )	/* Sprites    */
-	ROM_LOAD( "c13", 0x04000, 0x2000, 0x96f0b2f0 )
-	ROM_LOAD( "c9",  0x06000, 0x8000, 0xcedecdd6 )	/* Background tiles */
-	ROM_LOAD( "c8",  0x0e000, 0x4000, 0xba9bd1c5 )
-	ROM_LOAD( "c6",  0x12000, 0x8000, 0x1af35b57 )
-	ROM_LOAD( "c7",  0x1a000, 0x4000, 0x501683b4 )
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
+	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
+	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
 
 	ROM_REGION(0xe000)
-	ROM_LOAD( "c2", 0x0000, 0x8000, 0x944dca0d )	/* background maps */
-	ROM_LOAD( "c3", 0x8000, 0x4000, 0x39ca10d4 )
-	ROM_LOAD( "c5", 0xc000, 0x2000, 0xb6988172 )	/* color codes for the background */
+	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
+	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "c1", 0x8000, 0x8000, 0x19887776 )
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
+ROM_END
+
+ROM_START( citycona_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "c10",          0x4000, 0x4000, 0xae88b53c )
+	ROM_LOAD( "c11b",         0x8000, 0x8000, 0xd64af468 )
+
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "c4",           0x00000, 0x2000, 0xa6b32fc6 )	/* Characters */
+	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
+	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGION(0xe000)
+	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
+	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
+ROM_END
+
+ROM_START( cruisin_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "cr10",         0x4000, 0x4000, 0xcc7c52f3 )
+	ROM_LOAD( "cr11",         0x8000, 0x8000, 0x5422f276 )
+
+	ROM_REGION_DISPOSE(0x1e000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cr4",          0x00000, 0x2000, 0x8cd0308e )	/* Characters */
+	ROM_LOAD( "c12",          0x02000, 0x2000, 0x08eaaccd )	/* Sprites    */
+	ROM_LOAD( "c13",          0x04000, 0x2000, 0x1819aafb )
+	ROM_LOAD( "c9",           0x06000, 0x8000, 0x8aeb47e6 )	/* Background tiles */
+	ROM_LOAD( "c8",           0x0e000, 0x4000, 0x0d7a1eeb )
+	ROM_LOAD( "c6",           0x12000, 0x8000, 0x2246fe9d )
+	ROM_LOAD( "c7",           0x1a000, 0x4000, 0xe8b97de9 )
+
+	ROM_REGION(0xe000)
+	ROM_LOAD( "c2",           0x0000, 0x8000, 0xf2da4f23 )	/* background maps */
+	ROM_LOAD( "c3",           0x8000, 0x4000, 0x7ef3ac1b )
+	ROM_LOAD( "c5",           0xc000, 0x2000, 0xc03d8b1b )	/* color codes for the background */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c1",           0x8000, 0x8000, 0x1fad7589 )
 ROM_END
 
 
@@ -324,14 +373,69 @@ struct GameDriver citycon_driver =
 	__FILE__,
 	0,
 	"citycon",
-	"City Connection",
+	"City Connection (set 1)",
 	"1985",
 	"Jaleco",
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	citycon_rom,
+	0, 0,
+	0,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver citycona_driver =
+{
+	__FILE__,
+	&citycon_driver,
+	"citycona",
+	"City Connection (set 2)",
+	"1985",
+	"Jaleco",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	citycona_rom,
+	0, 0,
+	0,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver cruisin_driver =
+{
+	__FILE__,
+	&citycon_driver,
+	"cruisin",
+	"Cruisin",
+	"1985",
+	"Jaleco (Kitkorp license)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	cruisin_rom,
 	0, 0,
 	0,
 

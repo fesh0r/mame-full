@@ -13,6 +13,10 @@ read/write the main memory area, provide a "base" pointer: it will be
 initialized by the main engine to point to the beginning of the memory block
 assigned to the handler. You may also provided a pointer to "size": it
 will be set to the length of the memory area processed by the handler.
+You are also encouraged to give (short) names to memory areas,
+if they point to a non standard memory handler. That way you can see
+how a memory region is mapped in the MAME debugger. The memory dump
+windows and the disassembler display this information in the caption.
 
 ***************************************************************************/
 struct MemoryReadAddress
@@ -21,6 +25,7 @@ struct MemoryReadAddress
 	int (*handler)(int offset);   /* see special values below */
 	unsigned char **base;         /* optional (see explanation above) */
 	int *size;                    /* optional (see explanation above) */
+	const char *description;	  /* optional (see explanation above) */
 };
 
 #define MRA_NOP   0	              /* don't care, return 0 */
@@ -41,6 +46,7 @@ struct MemoryWriteAddress
 	void (*handler)(int offset,int data);	/* see special values below */
 	unsigned char **base;	/* optional (see explanation above) */
 	int *size;	/* optional (see explanation above) */
+	const char *description;	  /* optional (see explanation above) */
 };
 
 #define MWA_NOP 0	                  /* do nothing */
@@ -109,15 +115,26 @@ extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
 
 /* memory element block size */
 #define MH_SBITS    8			/* sub element bank size */
-#define MH_PBITS    8			/* port   current element size */
-#define MH_ELEMAX  64			/* sub elements       limit */
+#define MH_PBITS    8			/* port current element size */
+#define MH_ELEMAX  64			/* sub elements limit */
 #define MH_HARDMAX 64			/* hardware functions limit */
 
+
+/* 29 bits address (dword access)     AJP 980803 */
+#define ABITS1_29    19
+#define ABITS2_29     8
+#define ABITS3_29     0
+#define ABITS_MIN_29  2      /* minimum memory block is 4 bytes */
 /* 24 bits address (word access) */
 #define ABITS1_24    15
 #define ABITS2_24     8
 #define ABITS3_24     0
 #define ABITS_MIN_24  1      /* minimum memory block is 2 bytes */
+ /* 21 bits address */
+#define ABITS1_21    13
+#define ABITS2_21     8
+#define ABITS3_21     0
+#define ABITS_MIN_21  0      /* minimum memory block is 1 byte */
 /* 20 bits address */
 #define ABITS1_20    12
 #define ABITS2_20     8
@@ -152,7 +169,9 @@ extern unsigned char *OP_ROM;	/* op_code used */
 void cpu_setOPbase16(int pc);
 void cpu_setOPbase16lew(int pc);
 void cpu_setOPbase20(int pc);
+void cpu_setOPbase21(int pc);
 void cpu_setOPbase24(int pc);
+void cpu_setOPbase29(int pc);  /* AJP 980803 */
 void cpu_setOPbaseoverride (int (*f)(int));
 
 /* ----- memory setup function ----- */
@@ -162,32 +181,40 @@ void shutdownmemoryhandler(void);
 void memorycontextswap(int activecpu);
 void updatememorybase(int activecpu);
 
+void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
+void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int));
+void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int));
+void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int));
+
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
 int cpu_readmem16lew(int address);
 int cpu_readmem16lew_word(int address);
 int cpu_readmem20(int address);
+int cpu_readmem21(int address);
 int cpu_readmem24(int address);
 int cpu_readmem24_word(int address);
 int cpu_readmem24_dword(int address);
+int cpu_readmem29(int address);        /* AJP 980803 */
+int cpu_readmem29_word(int address);   /* AJP 980803 */
+int cpu_readmem29_dword(int address);  /* AJP 980803 */
 void cpu_writemem16(int address,int data);
 void cpu_writemem16lew(int address,int data);
 void cpu_writemem16lew_word(int address,int data);
 void cpu_writemem20(int address,int data);
+void cpu_writemem21(int address,int data);
 void cpu_writemem24(int address,int data);
 void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);
+void cpu_writemem29(int address,int data);        /* AJP 980803 */
+void cpu_writemem29_word(int address,int data);   /* AJP 980803 */
+void cpu_writemem29_word_masked(int address,int data);   /* AJP 980816 */
+void cpu_writemem29_dword(int address,int data);  /* AJP 980803 */
 
 /* ----- 16-bit memory access macros ----- */
 
-#ifdef ACORN
-/* Use these to avoid alignment problems on non-x86 hardware. */
-extern int READ_WORD(void *dst);
-extern int WRITE_WORD(void *dst, int d);
-#else
 #define READ_WORD(a)          (*(unsigned short *)(a))
 #define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
-#endif
 
 #define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
 #define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))
@@ -197,7 +224,7 @@ int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);
 
 /* -----  bank memory function ----- */
-#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_getpc());}}
+#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_get_pc());}}
 
 /* ------ bank memory handler ------ */
 extern void cpu_setbankhandler_r(int bank,int (*handler)(int) );
@@ -208,6 +235,7 @@ extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 #define change_pc16lew(pc) {if(cur_mrhard[(pc)>>(ABITS2_16LEW+ABITS_MIN_16LEW)]!=ophw)cpu_setOPbase16lew(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
+#define change_pc29(pc) {if(cur_mrhard[((unsigned int)pc)>>(ABITS2_29+ABITS_MIN_29+3)]!=ophw)cpu_setOPbase29(pc);}
 
 #define change_pc change_pc16
 

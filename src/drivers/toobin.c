@@ -53,115 +53,143 @@ EEPROM                             FFA000-FFAFFF  R/W  D0-D7
 
 Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 
-
-
-TOOBIN' 6502 MEMORY MAP
-
-Function                                  Address     R/W  Data
----------------------------------------------------------------
-Program RAM                               0000-1FFF   R/W  D0-D7
-
-Music (YM-2151)                           2000-2001   R/W  D0-D7
-
-Read 68010 Port (Input Buffer)            280A        R    D0-D7
-
-Self-test                                 280C        R    D7
-Output Buffer Full (@2A02) (Active High)              R    D5
-Left Coin Switch                                      R    D1
-Right Coin Switch                                     R    D0
-
-Interrupt acknowledge                     2A00        W    xx
-Write 68010 Port (Outbut Buffer)          2A02        W    D0-D7
-Banked ROM select (at 3000-3FFF)          2A04        W    D6-D7
-???                                       2A06        W
-
-Effects                                   2C00-2C0F   R/W  D0-D7
-
-Banked Program ROM (4 pages)              3000-3FFF   R    D0-D7
-Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
-
 ****************************************************************************/
-
-
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "sndhrdw/atarijsa.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
-#include "sndhrdw/5220intf.h"
-#include "sndhrdw/2151intf.h"
 
 
-extern unsigned char *toobin_interrupt_scan;
-extern unsigned char *toobin_intensity;
-extern unsigned char *toobin_moslip;
+extern UINT8 *toobin_intensity;
+extern UINT8 *toobin_moslip;
 
-int toobin_io_r (int offset);
-int toobin_6502_switch_r (int offset);
-int toobin_playfieldram_r (int offset);
-int toobin_sound_r (int offset);
-int toobin_controls_r (int offset);
+static UINT8 *interrupt_scan;
 
-void toobin_interrupt_scan_w (int offset, int data);
-void toobin_interrupt_ack_w (int offset, int data);
-void toobin_sound_reset_w (int offset, int data);
-void toobin_moslip_w (int offset, int data);
-void toobin_6502_bank_w (int offset, int data);
-void toobin_paletteram_w (int offset, int data);
-void toobin_playfieldram_w (int offset, int data);
 
-int toobin_interrupt (void);
-int toobin_sound_interrupt (void);
+void toobin_moslip_w(int offset, int data);
+void toobin_paletteram_w(int offset, int data);
+void toobin_playfieldram_w(int offset, int data);
 
-void toobin_init_machine (void);
-
-int toobin_vh_start (void);
-void toobin_vh_stop (void);
+int toobin_vh_start(void);
+void toobin_vh_stop(void);
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
+void toobin_scanline_update(int scanline);
+
 
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Initialization
  *
  *************************************/
 
-static struct MemoryReadAddress toobin_readmem[] =
+static void update_interrupts(void)
+{
+	int newstate = 0;
+
+	if (atarigen_scanline_int_state)
+		newstate |= 1;
+	if (atarigen_sound_int_state)
+		newstate |= 2;
+
+	if (newstate)
+		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
+static void init_machine(void)
+{
+	atarigen_eeprom_reset();
+	atarigen_interrupt_reset(update_interrupts);
+	atarigen_scanline_timer_reset(toobin_scanline_update, 8);
+	atarijsa_reset();
+}
+
+
+
+/*************************************
+ *
+ *	Interrupt handlers.
+ *
+ *************************************/
+
+static void interrupt_scan_w(int offset, int data)
+{
+	int oldword = READ_WORD(&interrupt_scan[offset]);
+	int newword = COMBINE_WORD(oldword, data);
+
+	/* if something changed, update the word in memory */
+	if (oldword != newword)
+	{
+		WRITE_WORD(&interrupt_scan[offset], newword);
+		atarigen_scanline_int_set(newword & 0x1ff);
+	}
+}
+
+
+
+/*************************************
+ *
+ *	I/O read dispatch
+ *
+ *************************************/
+
+static int special_port1_r(int offset)
+{
+	int result = input_port_1_r(offset);
+	if (atarigen_get_hblank()) result ^= 0x8000;
+	if (atarigen_cpu_to_sound_ready) result ^= 0x2000;
+	return result;
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xc00000, 0xc07fff, toobin_playfieldram_r },
+	{ 0xc00000, 0xc07fff, MRA_BANK1 },
 	{ 0xc08000, 0xc097ff, MRA_BANK2 },
 	{ 0xc09800, 0xc09fff, MRA_BANK3 },
 	{ 0xc10000, 0xc107ff, paletteram_word_r },
-	{ 0xff6000, 0xff6003, MRA_NOP },		/* who knows? read at controls time */
-	{ 0xff8800, 0xff8803, toobin_controls_r },
-	{ 0xff9000, 0xff9003, toobin_io_r },
-	{ 0xff9800, 0xff9803, atarigen_sound_r },
+	{ 0xff6000, 0xff6001, MRA_NOP },		/* who knows? read at controls time */
+	{ 0xff8800, 0xff8801, input_port_0_r },
+	{ 0xff9000, 0xff9001, special_port1_r },
+	{ 0xff9800, 0xff9801, atarigen_sound_r },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_r },
-	{ 0xffc000, 0xffffff, MRA_BANK1 },
+	{ 0xffc000, 0xffffff, MRA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
 
-static struct MemoryWriteAddress toobin_writemem[] =
+static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
 	{ 0xc00000, 0xc07fff, toobin_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0xc08000, 0xc097ff, MWA_BANK2, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xc09800, 0xc09fff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram },
-	{ 0xff8000, 0xff8003, watchdog_reset_w },
-	{ 0xff8100, 0xff8103, atarigen_sound_w },
-	{ 0xff8300, 0xff8303, MWA_BANK7, &toobin_intensity },
-	{ 0xff8340, 0xff8343, toobin_interrupt_scan_w, &toobin_interrupt_scan },
-	{ 0xff8380, 0xff8383, toobin_moslip_w, &toobin_moslip },
-	{ 0xff83c0, 0xff83c3, toobin_interrupt_ack_w },
-	{ 0xff8400, 0xff8403, toobin_sound_reset_w },
-	{ 0xff8500, 0xff8503, atarigen_eeprom_enable_w },
-	{ 0xff8600, 0xff8603, MWA_BANK4, &atarigen_hscroll },
-	{ 0xff8700, 0xff8703, MWA_BANK5, &atarigen_vscroll },
+	{ 0xff8000, 0xff8001, watchdog_reset_w },
+	{ 0xff8100, 0xff8101, atarigen_sound_w },
+	{ 0xff8300, 0xff8301, MWA_BANK4, &toobin_intensity },
+	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
+	{ 0xff8380, 0xff8381, toobin_moslip_w, &toobin_moslip },
+	{ 0xff83c0, 0xff83c1, atarigen_scanline_int_ack_w },
+	{ 0xff8400, 0xff8401, atarigen_sound_reset_w },
+	{ 0xff8500, 0xff8501, atarigen_eeprom_enable_w },
+	{ 0xff8600, 0xff8601, MWA_BANK5, &atarigen_hscroll },
+	{ 0xff8700, 0xff8701, MWA_BANK6, &atarigen_vscroll },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xffc000, 0xffffff, MWA_BANK1 },
+	{ 0xffc000, 0xffffff, MWA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
@@ -169,95 +197,47 @@ static struct MemoryWriteAddress toobin_writemem[] =
 
 /*************************************
  *
- *		Sound CPU memory handlers
- *
- *************************************/
-
-static struct MemoryReadAddress toobin_sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2001, YM2151_status_port_0_r },
-	{ 0x280a, 0x280a, atarigen_6502_sound_r },
-	{ 0x280c, 0x280c, toobin_6502_switch_r },
-	{ 0x280e, 0x280e, MRA_NOP },
-	{ 0x2c00, 0x2c0f, pokey1_r },
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
-
-
-static struct MemoryWriteAddress toobin_sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x2000, YM2151_register_port_0_w },
-	{ 0x2001, 0x2001, YM2151_data_port_0_w },
-	{ 0x2a00, 0x2a00, MWA_NOP },
-	{ 0x2a02, 0x2a02, atarigen_6502_sound_w },
-	{ 0x2a04, 0x2a04, toobin_6502_bank_w },
-	{ 0x2a06, 0x2a06, MWA_NOP },
-	{ 0x2c00, 0x2c0f, pokey1_w },
-	{ 0x3000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-
-
-
-/*************************************
- *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
 INPUT_PORTS_START( toobin_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", OSD_KEY_COMMA, IP_JOY_DEFAULT, 0)
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", OSD_KEY_LCONTROL, IP_JOY_DEFAULT, 0)
+	PORT_START	/* ff8800 */
+	PORT_BITX(0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 R Paddle Forward", KEYCODE_L, IP_JOY_DEFAULT )
+	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 L Paddle Forward", KEYCODE_J, IP_JOY_DEFAULT )
+	PORT_BITX(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 L Paddle Backward", KEYCODE_U, IP_JOY_DEFAULT )
+	PORT_BITX(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 R Paddle Backward", KEYCODE_O, IP_JOY_DEFAULT )
+	PORT_BITX(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 R Paddle Forward", KEYCODE_D, IP_JOY_DEFAULT )
+	PORT_BITX(0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 L Paddle Forward", KEYCODE_A, IP_JOY_DEFAULT )
+	PORT_BITX(0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 L Paddle Backward", KEYCODE_Q, IP_JOY_DEFAULT )
+	PORT_BITX(0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 R Paddle Backward", KEYCODE_E, IP_JOY_DEFAULT )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BITX(0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1, "P1 Throw", KEYCODE_LCONTROL, IP_JOY_DEFAULT )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2, "P2 Throw", KEYCODE_RCONTROL, IP_JOY_DEFAULT )
+	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN1 */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1, "P1 Right Hand", OSD_KEY_E, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1, "P1 Left Hand", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1, "P1 Left Foot", OSD_KEY_A, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1, "P1 Right Foot", OSD_KEY_D, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "P2 Right Hand", OSD_KEY_O, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2, "P2 Left Hand", OSD_KEY_U, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 Left Foot", OSD_KEY_J, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 Right Foot", OSD_KEY_L, IP_JOY_DEFAULT, 0)
+	PORT_START	/* ff9000 */
+	PORT_BIT( 0x03ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x1000, IP_ACTIVE_LOW )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED ) /* self test */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* input buffer full */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED ) /* output buffer full */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED ) /* speech chip ready */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-
-	PORT_START	/* DSW */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off")
-	PORT_DIPSETTING(    0x00, "On")
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	JSA_I_PORT	/* audio board port */
 INPUT_PORTS_END
 
 
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
-static struct GfxLayout toobin_charlayout =
+static struct GfxLayout anlayout =
 {
 	8,8,	/* 8*8 chars */
 	1024,	/* 1024 chars */
@@ -269,22 +249,22 @@ static struct GfxLayout toobin_charlayout =
 };
 
 
-static struct GfxLayout toobin_pflayout =
+static struct GfxLayout pflayout =
 {
-	8,8,	/* 8*8 sprites */
-	16384,/* 16384 of them */
+	8,8,	/* 8*8 tiles */
+	16384,	/* 16384 of them */
 	4,		/* 4 bits per pixel */
 	{ 256*1024*8, 256*1024*8+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	8*16	/* every sprite takes 16 consecutive bytes */
+	8*16	/* every tile takes 16 consecutive bytes */
 };
 
 
-static struct GfxLayout toobin_spritelayout =
+static struct GfxLayout molayout =
 {
-	16,16,/* 16*16 sprites */
-	16384,/* 16384 of them */
+	16,16,	/* 16*16 sprites */
+	16384,	/* 16384 of them */
 	4,		/* 4 bits per pixel */
 	{ 1024*1024*8, 1024*1024*8+4, 0, 4 },
 	{ 0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 24, 25, 26, 27 },
@@ -293,11 +273,11 @@ static struct GfxLayout toobin_spritelayout =
 };
 
 
-static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
+static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x280000, &toobin_charlayout,     512, 64 },
-	{ 1, 0x000000, &toobin_pflayout,         0, 16 },
-	{ 1, 0x080000, &toobin_spritelayout,   256, 16 },
+	{ 2, 0x000000, &pflayout,     0, 16 },
+	{ 2, 0x080000, &molayout,   256, 16 },
+	{ 2, 0x280000, &anlayout,   512, 64 },
 	{ -1 } /* end of array */
 };
 
@@ -305,74 +285,32 @@ static struct GfxDecodeInfo toobin_gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Machine driver
  *
  *************************************/
 
-static struct POKEYinterface pokey_interface =
-{
-	1,	/* 1 chip */
-	1789790,	/* ? */
-	128,
-	POKEY_DEFAULT_GAIN,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 }
-};
-
-
-static struct YM2151interface ym2151_interface =
-{
-	1,			/* 1 chip */
-	3579580,	/* 3.58 MHZ ? */
-	{ 255 },
-	{ 0 }
-};
-
-
-
-/*************************************
- *
- *		Machine driver
- *
- *************************************/
-
-static struct MachineDriver toobin_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000,
+			CPU_M68010,		/* verified */
 			7159160,
 			0,
-			toobin_readmem,toobin_writemem,0,0,
-			toobin_interrupt,1
+			main_readmem,main_writemem,0,0,
+			ignore_interrupt,1
 		},
 		{
-			CPU_M6502,
-			1789790,
-			2,
-			toobin_sound_readmem,toobin_sound_writemem,0,0,
-			0,0,
-			toobin_sound_interrupt,250
-		},
+			JSA_I_CPU(1)
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,    /* we need some interleave since the sound CPU talks to the main CPU */
-	toobin_init_machine,
+	1,
+	init_machine,
 
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	toobin_gfxdecodeinfo,
+	gfxdecodeinfo,
 	1024,1024,
 	0,
 
@@ -383,83 +321,198 @@ static struct MachineDriver toobin_machine_driver =
 	toobin_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
+	JSA_I_STEREO_WITH_POKEY
 };
 
 
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
 ROM_START( toobin_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
-	ROM_LOAD_EVEN( "061-3133.bin", 0x00000, 0x10000, 0x50019a5b )
-	ROM_LOAD_ODD ( "061-3137.bin", 0x00000, 0x10000, 0xd7b606f8 )
-	ROM_LOAD_EVEN( "061-3134.bin", 0x20000, 0x10000, 0x0f0f7e97 )
-	ROM_LOAD_ODD ( "061-3138.bin", 0x20000, 0x10000, 0x54bcee36 )
-	ROM_LOAD_EVEN( "061-3135.bin", 0x40000, 0x10000, 0x069574d1 )
-	ROM_LOAD_ODD ( "061-3139.bin", 0x40000, 0x10000, 0x5c49ef5d )
-	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0xde76a77e )
-	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0x615c04c4 )
-
-	ROM_REGION(0x284000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x5bf61df8 )  /* bank 0 (4 bpp)*/
-	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0xdbf5c253 )
-	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe8a70811 )
-	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xd8559855 )
-	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0x9e53d395 )
-	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x5761c967 )
-	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0x7d299c65 )
-	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x0bcda8f9 )
-	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0xf30b6039 )  /* bank 0 (4 bpp)*/
-	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xbd4922e1 )
-	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x3b6b2b8b )
-	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xf51b0167 )
-	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xe5d381bf )
-	ROM_RELOAD(               0x140000, 0x10000 )
-	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0xaf9d7b87 )
-	ROM_RELOAD(               0x150000, 0x10000 )
-	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0x3877e669 )
-	ROM_RELOAD(               0x160000, 0x10000 )
-	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0x8a41ff47 )
-	ROM_RELOAD(               0x170000, 0x10000 )
-	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xf191721b )
-	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0xa75e2fda )
-	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0x354150b1 )
-	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0x5c711d1f )
-	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0xcaeb5ea3 )
-	ROM_RELOAD(               0x240000, 0x10000 )
-	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0x712dbbfb )
-	ROM_RELOAD(               0x250000, 0x10000 )
-	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xbb8524df )
-	ROM_RELOAD(               0x260000, 0x10000 )
-	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xebf381df )
-	ROM_RELOAD(               0x270000, 0x10000 )
-	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0x58acd438 )  /* alpha font */
+	ROM_LOAD_EVEN( "061-3133.bin", 0x00000, 0x10000, 0x79a92d02 )
+	ROM_LOAD_ODD ( "061-3137.bin", 0x00000, 0x10000, 0xe389ef60 )
+	ROM_LOAD_EVEN( "061-3134.bin", 0x20000, 0x10000, 0x3dbe9a48 )
+	ROM_LOAD_ODD ( "061-3138.bin", 0x20000, 0x10000, 0xa17fb16c )
+	ROM_LOAD_EVEN( "061-3135.bin", 0x40000, 0x10000, 0xdc90b45c )
+	ROM_LOAD_ODD ( "061-3139.bin", 0x40000, 0x10000, 0x6f8a719a )
+	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
+	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
 
 	ROM_REGION(0x14000)	/* 64k for 6502 code */
-	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0x20b3d413 )
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
 	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
+	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
+	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xfa05aee6 )
+	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0xab1c5578 )
+	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
+	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
+	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
+	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x140000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x150000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x160000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x170000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x240000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x250000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x260000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x270000, 0x10000 )
+	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+ROM_END
+
+
+ROM_START( toobin2_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "061-2133.1j",  0x00000, 0x10000, 0x2c3382e4 )
+	ROM_LOAD_ODD ( "061-2137.1f",  0x00000, 0x10000, 0x891c74b1 )
+	ROM_LOAD_EVEN( "061-2134.2j",  0x20000, 0x10000, 0x2b8164c8 )
+	ROM_LOAD_ODD ( "061-2138.2f",  0x20000, 0x10000, 0xc09cadbd )
+	ROM_LOAD_EVEN( "061-2135.4j",  0x40000, 0x10000, 0x90477c4a )
+	ROM_LOAD_ODD ( "061-2139.4f",  0x40000, 0x10000, 0x47936958 )
+	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
+	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
+	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
+	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xfa05aee6 )
+	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0xab1c5578 )
+	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
+	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
+	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
+	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x140000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x150000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x160000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x170000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x240000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x250000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x260000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x270000, 0x10000 )
+	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
+ROM_END
+
+
+ROM_START( toobinp_rom )
+	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
+	ROM_LOAD_EVEN( "pg-0-up.1j",   0x00000, 0x10000, 0xcaeb5d1b )
+	ROM_LOAD_ODD ( "pg-0-lo.1f",   0x00000, 0x10000, 0x9713d9d3 )
+	ROM_LOAD_EVEN( "pg-20-up.2j",  0x20000, 0x10000, 0x119f5d7b )
+	ROM_LOAD_ODD ( "pg-20-lo.2f",  0x20000, 0x10000, 0x89664841 )
+	ROM_LOAD_EVEN( "061-2135.4j",  0x40000, 0x10000, 0x90477c4a )
+	ROM_LOAD_ODD ( "pg-40-lo.4f",  0x40000, 0x10000, 0xa9f082a9 )
+	ROM_LOAD_EVEN( "061-1136.bin", 0x60000, 0x10000, 0x5ae3eeac )
+	ROM_LOAD_ODD ( "061-1140.bin", 0x60000, 0x10000, 0xdacbbd94 )
+
+	ROM_REGION(0x14000)	/* 64k for 6502 code */
+	ROM_LOAD( "061-1114.bin", 0x10000, 0x4000, 0xc0dcce1a )
+	ROM_CONTINUE(             0x04000, 0xc000 )
+
+	ROM_REGION_DISPOSE(0x284000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "061-1101.bin", 0x000000, 0x10000, 0x02696f15 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1102.bin", 0x010000, 0x10000, 0x4bed4262 )
+	ROM_LOAD( "061-1103.bin", 0x020000, 0x10000, 0xe62b037f )
+	ROM_LOAD( "061-1104.bin", 0x030000, 0x10000, 0xfa05aee6 )
+	ROM_LOAD( "061-1105.bin", 0x040000, 0x10000, 0xab1c5578 )
+	ROM_LOAD( "061-1106.bin", 0x050000, 0x10000, 0x4020468e )
+	ROM_LOAD( "061-1107.bin", 0x060000, 0x10000, 0xfe6f6aed )
+	ROM_LOAD( "061-1108.bin", 0x070000, 0x10000, 0x26fe71e1 )
+	ROM_LOAD( "061-1143.bin", 0x080000, 0x20000, 0x211c1049 )  /* bank 0 (4 bpp)*/
+	ROM_LOAD( "061-1144.bin", 0x0a0000, 0x20000, 0xef62ed2c )
+	ROM_LOAD( "061-1145.bin", 0x0c0000, 0x20000, 0x067ecb8a )
+	ROM_LOAD( "061-1146.bin", 0x0e0000, 0x20000, 0xfea6bc92 )
+	ROM_LOAD( "061-1125.bin", 0x100000, 0x10000, 0xc37f24ac )
+	ROM_RELOAD(               0x140000, 0x10000 )
+	ROM_LOAD( "061-1126.bin", 0x110000, 0x10000, 0x015257f0 )
+	ROM_RELOAD(               0x150000, 0x10000 )
+	ROM_LOAD( "061-1127.bin", 0x120000, 0x10000, 0xd05417cb )
+	ROM_RELOAD(               0x160000, 0x10000 )
+	ROM_LOAD( "061-1128.bin", 0x130000, 0x10000, 0xfba3e203 )
+	ROM_RELOAD(               0x170000, 0x10000 )
+	ROM_LOAD( "061-1147.bin", 0x180000, 0x20000, 0xca4308cf )
+	ROM_LOAD( "061-1148.bin", 0x1a0000, 0x20000, 0x23ddd45c )
+	ROM_LOAD( "061-1149.bin", 0x1c0000, 0x20000, 0xd77cd1d0 )
+	ROM_LOAD( "061-1150.bin", 0x1e0000, 0x20000, 0xa37157b8 )
+	ROM_LOAD( "061-1129.bin", 0x200000, 0x10000, 0x294aaa02 )
+	ROM_RELOAD(               0x240000, 0x10000 )
+	ROM_LOAD( "061-1130.bin", 0x210000, 0x10000, 0xdd610817 )
+	ROM_RELOAD(               0x250000, 0x10000 )
+	ROM_LOAD( "061-1131.bin", 0x220000, 0x10000, 0xe8e2f919 )
+	ROM_RELOAD(               0x260000, 0x10000 )
+	ROM_LOAD( "061-1132.bin", 0x230000, 0x10000, 0xc79f8ffc )
+	ROM_RELOAD(               0x270000, 0x10000 )
+	ROM_LOAD( "061-1142.bin", 0x280000, 0x04000, 0xa6ab551f )  /* alpha font */
 ROM_END
 
 
 
 /*************************************
  *
- *		Game driver(s)
+ *	Driver initialization
+ *
+ *************************************/
+
+static void toobin_init(void)
+{
+	atarigen_eeprom_default = NULL;
+
+	atarijsa_init(1, 2, 1, 0x1000);
+
+	/* speed up the 6502 */
+	atarigen_init_6502_speedup(1, 0x414e, 0x4166);
+
+	/* display messages */
+	atarigen_show_sound_message();
+}
+
+
+
+/*************************************
+ *
+ *	Game driver(s)
  *
  *************************************/
 
@@ -468,14 +521,69 @@ struct GameDriver toobin_driver =
 	__FILE__,
 	0,
 	"toobin",
-	"Toobin'",
+	"Toobin' (version 3)",
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
 	0,
-	&toobin_machine_driver,
+	&machine_driver,
+	toobin_init,
 
 	toobin_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	toobin_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver toobin2_driver =
+{
+	__FILE__,
+	&toobin_driver,
+	"toobin2",
+	"Toobin' (version 2)",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
+	0,
+	&machine_driver,
+	toobin_init,
+
+	toobin2_rom,
+	0,
+	0,
+	0,
+	0,	/* sound_prom */
+
+	toobin_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	atarigen_hiload, atarigen_hisave
+};
+
+
+struct GameDriver toobinp_driver =
+{
+	__FILE__,
+	&toobin_driver,
+	"toobinp",
+	"Toobin' (Prototype)",
+	"1988",
+	"Atari Games",
+	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
+	0,
+	&machine_driver,
+	toobin_init,
+
+	toobinp_rom,
 	0,
 	0,
 	0,

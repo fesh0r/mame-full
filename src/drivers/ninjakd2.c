@@ -4,6 +4,15 @@
  *** NINJA KID II hardware ***		(by Roberto Ventura)
  *****************************
 
+Game authors:
+Game design:    Tsutomu Fuzisawa
+Program design: Satoru Kinjo
+Char. design:   Tsutomu Fizisawa
+Char. design:   Akemi Tsunoda
+Sound compose:  Tsutomu Fuzisawa
+Bgm create:     Mecano Associate
+Data make:      Takashi Hayashi
+
 General aspect.
 
 The game is driven by a fast Z80 CPU.
@@ -234,17 +243,41 @@ extern int 	ninjakd2_spriteram_size;
 extern int	ninjakd2_backgroundram_size;
 extern int 	ninjakd2_foregroundram_size;
 
-static int ninjakd2_bank_latch = 255, main_cpu_num;
+static int ninjakd2_bank_latch = 255;
 
-void ninjakd2_init_machine(void)
+
+
+int ninjakd2_init_samples(void)
 {
-	main_cpu_num = 0;
+	int i,n;
+	unsigned char *source = Machine->memory_region[3];
+	struct GameSamples *samples;
+	int sample_info [9][2] = { {0x0000,0x0A00},{0x0A00,0x1D00},{0x2700,0x1700},
+	{0x3E00,0x1500},{0x5300,0x0B00},{0x5E00,0x0A00},{0x6800,0x0E00},{0x7600,0x1E00},{0xF000,0x0400} };
+
+	if ((Machine->samples = malloc(sizeof(struct GameSamples) + 9 * sizeof(struct GameSample *))) == NULL)
+		return 1;
+
+	samples = Machine->samples;
+	samples->total = 8;
+
+	for (i=0;i<8;i++)
+	{
+		if ((samples->sample[i] = malloc(sizeof(struct GameSample) + (sample_info[i][1]))) == NULL)
+			return 1;
+
+		samples->sample[i]->length = sample_info[i][1];
+		samples->sample[i]->smpfreq = 16000;	/* 16 kHz */
+		samples->sample[i]->resolution = 8;
+		for (n=0; n<sample_info[i][1]; n++)
+			samples->sample[i]->data[n] = source[sample_info[i][0]+n] ^ 0x80;
+	}
+
+	/*	The samples are now ready to be used.  They are a 8 bit, 16 khz samples. 	 */
+
+	return 0;
 }
 
-void ninjak2a_init_machine(void)
-{
-	main_cpu_num = 1;
-}
 
 int ninjakd2_interrupt(void)
 {
@@ -258,7 +291,7 @@ int ninjakd2_bankselect_r(int offset)
 
 void ninjakd2_bankselect_w(int offset, int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 	int bankaddress;
 
 	if (data != ninjakd2_bank_latch)
@@ -268,6 +301,20 @@ void ninjakd2_bankselect_w(int offset, int data)
 		bankaddress = 0x10000 + ((data & 0x7) * 0x4000);
 		cpu_setbank(1,&RAM[bankaddress]);	 /* Select 8 banks of 16k */
 	}
+}
+
+void ninjakd2_pcm_play_w(int offset,int data)
+{
+	int i;
+	int sample_no[9] = { 0x00,0x0A,0x27,0x3E,0x53,0x5E,0x68,0x76,0xF0 };
+
+	for(i=0;i<9;i++)
+	 if (sample_no[i]==data) break;
+
+	if (i==8)
+		sample_stop(0);
+	else
+		sample_start(0,i,0);
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -314,7 +361,7 @@ static struct MemoryReadAddress snd_readmem[] =
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xe000, 0xe000, soundlatch_r },
-	{ 0xf000, 0xf000, MRA_RAM },	 // UNKNOWN ??????
+	{ 0xefee, 0xefee, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -323,7 +370,9 @@ static struct MemoryWriteAddress snd_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, MWA_RAM },	// UNKNOWN ??????
+	{ 0xf000, 0xf000, ninjakd2_pcm_play_w },	/* PCM SAMPLE OFFSET*256 */
+	{ 0xeff5, 0xeff6, MWA_NOP },			/* SAMPLE FREQUENCY ??? */
+	{ 0xefee, 0xefee, MWA_NOP },			/* CHIP COMMAND ?? */
 	{ -1 }	/* end of table */
 };
 
@@ -369,54 +418,52 @@ INPUT_PORTS_START( input_ports )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
     PORT_START  /* dsw0 */
-    PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x01, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x06, 0x06, "Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
     PORT_DIPSETTING(    0x04, "20000 50000" )
     PORT_DIPSETTING(    0x06, "30000 50000" )
     PORT_DIPSETTING(    0x02, "50000 100000" )
     PORT_DIPSETTING(    0x00, "None" )
-    PORT_DIPNAME( 0x08, 0x08, "Allow Continue", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "No" )
-    PORT_DIPSETTING(    0x08, "Yes"  )
-    PORT_DIPNAME( 0x10, 0x00, "Demo Sounds", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x10, "Off" )
-    PORT_DIPSETTING(    0x00, "On"  )
-    PORT_DIPNAME( 0x20, 0x20, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+    PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( Yes )  )
+    PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On )  )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x20, "Normal" )
     PORT_DIPSETTING(    0x00, "Hard" )
-    PORT_DIPNAME( 0x40, 0x40, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0x40, "3" )
     PORT_DIPSETTING(    0x00, "4" )
-    PORT_DIPNAME( 0x80, 0x00, "Language", IP_KEY_NONE )
+    PORT_DIPNAME( 0x80, 0x00, "Language" )
     PORT_DIPSETTING(    0x00, "English" )
     PORT_DIPSETTING(    0x80, "Japanese" )
 
     PORT_START  /* dsw1 */
-    PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-    PORT_DIPSETTING(    0x01, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x02, "Table" )
-    PORT_DIPNAME( 0x04, 0x00, "Credit Service", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x04, "On" )
-    PORT_DIPNAME( 0x18, 0x18, "Coin B", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x18, "1 Coin/1 Credit" )
-    PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
-    PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
-    PORT_DIPNAME( 0xe0, 0xe0, "Coin A", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x40, "3 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x60, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0xe0, "1 Coin/1 Credit" )
-    PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
-    PORT_DIPSETTING(    0xa0, "1 Coin/3 Credits" )
-    PORT_DIPSETTING(    0x80, "1 Coin/4 Credits" )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x04, 0x00, "Credit Service" )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+    PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+    PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
+    PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+    PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+    PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
 
@@ -453,17 +500,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct YM2203interface ym2203_interface =
+static struct Samplesinterface samples_interface =
 {
-	2, /* 2 chips */
-	2500000, /* 5000000/2 MHz (?) */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	1,	/* 1 channel */
+	25	/* volume */
 };
 
+/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static struct YM2203interface ym2203_interface =
+{
+	2, 	 /* 2 chips */
+	1500000, /* 12000000/8 MHz */
+	{ YM2203_VOL(25,25), YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
 
 
 static struct MachineDriver ninjakd2_machine_driver =
@@ -479,7 +539,7 @@ static struct MachineDriver ninjakd2_machine_driver =
 	},
 	60, 10000,			/* frames per second, vblank duration */
 	10,				/* single CPU, no need for interleaving */
-	ninjakd2_init_machine,
+	0,
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
@@ -503,27 +563,24 @@ static struct MachineDriver ninjakd2_machine_driver =
 static struct MachineDriver ninjak2a_machine_driver =
 {
 	{
-/* TODO: currently I have to put the sound CPU first because the main core supports */
-/* opcode decryption only on the first CPU */
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,		/* 12000000/3 ??? */
-			0,
-			snd_readmem,snd_writemem,
-			0,snd_writeport,
-			interrupt,2
-		},
 		{
 			CPU_Z80,
 			6000000,		/* 12000000/2 ??? */
-			2,			/* & vbl duration since sprites are */
+			0,			/* & vbl duration since sprites are */
 			readmem,writemem,0,0,	/* very sensitive to these settings */
 			ninjakd2_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000,		/* 12000000/3 ??? */
+			2,
+			snd_readmem,snd_writemem,0,snd_writeport,
+			ignore_interrupt,0,
 		}
 	},
 	60, 10000,	/* frames per second, vblank duration */
 	10,
-	ninjak2a_init_machine,
+	0,
 	32*8, 32*8,
 	{ 0*8, 32*8-1, 4*8, 28*8-1 },
 	gfxdecodeinfo,
@@ -535,11 +592,18 @@ static struct MachineDriver ninjak2a_machine_driver =
 	ninjakd2_vh_stop,
 	ninjakd2_vh_screenrefresh,
 
-	0,0,0,0,
+	0,
+	ninjakd2_init_samples,
+	0,
+	0,
 	{
 		{
 			SOUND_YM2203,
 			&ym2203_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
 		}
 	}
 };
@@ -548,76 +612,150 @@ static struct MachineDriver ninjak2a_machine_driver =
 
 ROM_START( ninjakd2_rom )
 	ROM_REGION(0x30000)
-	ROM_LOAD( "NK2_01.ROM", 0x00000, 0x8000, 0xc8f6765a )
-	ROM_LOAD( "NK2_02.ROM", 0x10000, 0x8000, 0x67c97dd5 )
-	ROM_LOAD( "NK2_03.ROM", 0x18000, 0x8000, 0x515f05ad )
-	ROM_LOAD( "NK2_04.ROM", 0x20000, 0x8000, 0x077bdfab )
-	ROM_LOAD( "NK2_05.ROM", 0x28000, 0x8000, 0x5491f7d1 )
+	ROM_LOAD( "nk2_01.rom",   0x00000, 0x8000, 0x3cdbb906 )
+	ROM_LOAD( "nk2_02.rom",   0x10000, 0x8000, 0xb5ce9a1a )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
 
-	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "NK2_08.ROM", 0x00000, 0x4000, 0x1e3426ae )   // sprites tiles
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
 	ROM_CONTINUE(	        0x10000, 0x4000)
 	ROM_CONTINUE(	        0x04000, 0x4000)
 	ROM_CONTINUE(	        0x14000, 0x4000)
-	ROM_LOAD( "NK2_07.ROM", 0x08000, 0x4000, 0xd8c89872 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
 	ROM_CONTINUE(	        0x18000, 0x4000)
 	ROM_CONTINUE(	        0x0C000, 0x4000)
 	ROM_CONTINUE(	        0x1C000, 0x4000)
-	ROM_LOAD( "NK2_11.ROM", 0x20000, 0x4000, 0x8de18ec9 )   // background tiles
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
 	ROM_CONTINUE(	        0x30000, 0x4000)
 	ROM_CONTINUE(	        0x24000, 0x4000)
 	ROM_CONTINUE(	        0x34000, 0x4000)
-	ROM_LOAD( "NK2_10.ROM", 0x28000, 0x4000, 0x0411ce19 )
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
 	ROM_CONTINUE(	        0x38000, 0x4000)
 	ROM_CONTINUE(	        0x2C000, 0x4000)
 	ROM_CONTINUE(	        0x3C000, 0x4000)
-	ROM_LOAD( "NK2_12.ROM", 0x40000, 0x02000, 0x8a8c5436 )  // foreground tiles
+	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
 	ROM_CONTINUE(	        0x44000, 0x02000)
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "NK2_06.ROM", 0x0000, 0x10000, 0xa9de9f06 )  // sound z80 code encrypted
+	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, 0xd3a18a79 )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "NK2_09.ROM", 0x0000, 0x10000, 0x2ecf1235 )  // raw pcm samples
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
 ROM_START( ninjak2a_rom )
-	ROM_REGION(0x10000)
-	ROM_LOAD( "NK2_06.BIN", 0x0000, 0x10000, 0xab6a13c8 )  // sound z80 code encrypted
+	ROM_REGION(0x30000)
+	ROM_LOAD( "nk2_01.bin",   0x00000, 0x8000, 0xe6adca65 )
+	ROM_LOAD( "nk2_02.bin",   0x10000, 0x8000, 0xd9284bd1 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
 
-	ROM_REGION(0x48000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "NK2_08.ROM", 0x00000, 0x4000, 0x1e3426ae )   // sprites tiles
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
 	ROM_CONTINUE(	        0x10000, 0x4000)
 	ROM_CONTINUE(	        0x04000, 0x4000)
 	ROM_CONTINUE(	        0x14000, 0x4000)
-	ROM_LOAD( "NK2_07.ROM", 0x08000, 0x4000, 0xd8c89872 )
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
 	ROM_CONTINUE(	        0x18000, 0x4000)
 	ROM_CONTINUE(	        0x0C000, 0x4000)
 	ROM_CONTINUE(	        0x1C000, 0x4000)
-	ROM_LOAD( "NK2_11.ROM", 0x20000, 0x4000, 0x8de18ec9 )   // background tiles
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
 	ROM_CONTINUE(	        0x30000, 0x4000)
 	ROM_CONTINUE(	        0x24000, 0x4000)
 	ROM_CONTINUE(	        0x34000, 0x4000)
-	ROM_LOAD( "NK2_10.ROM", 0x28000, 0x4000, 0x0411ce19 )
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
 	ROM_CONTINUE(	        0x38000, 0x4000)
 	ROM_CONTINUE(	        0x2C000, 0x4000)
 	ROM_CONTINUE(	        0x3C000, 0x4000)
-	ROM_LOAD( "NK2_12.ROM", 0x40000, 0x02000, 0x8a8c5436 )  // foreground tiles
+	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
 	ROM_CONTINUE(	        0x44000, 0x02000)
 	ROM_CONTINUE(	        0x42000, 0x02000)
 	ROM_CONTINUE(	        0x46000, 0x02000)
 
-	ROM_REGION(0x30000)
-	ROM_LOAD( "NK2_01.BIN", 0x00000, 0x8000, 0xd710f4f8 )
-	ROM_LOAD( "NK2_02.BIN", 0x10000, 0x8000, 0x9bc9a16f )
-	ROM_LOAD( "NK2_03.ROM", 0x18000, 0x8000, 0x515f05ad )
-	ROM_LOAD( "NK2_04.ROM", 0x20000, 0x8000, 0x077bdfab )
-	ROM_LOAD( "NK2_05.BIN", 0x28000, 0x8000, 0x75596737 )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
 
 	ROM_REGION(0x10000)
-	ROM_LOAD( "NK2_09.ROM", 0x0000, 0x10000, 0x2ecf1235 )  // raw pcm samples
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
+ROM_END
+
+ROM_START( ninjak2b_rom )
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3s",         0x00000, 0x8000, 0xcb4f4624 )
+	ROM_LOAD( "2.3q",         0x10000, 0x8000, 0x0ad0c100 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, 0x5dac9426 )
+
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
+	ROM_CONTINUE(	        0x10000, 0x4000)
+	ROM_CONTINUE(	        0x04000, 0x4000)
+	ROM_CONTINUE(	        0x14000, 0x4000)
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_CONTINUE(	        0x18000, 0x4000)
+	ROM_CONTINUE(	        0x0C000, 0x4000)
+	ROM_CONTINUE(	        0x1C000, 0x4000)
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
+	ROM_CONTINUE(	        0x30000, 0x4000)
+	ROM_CONTINUE(	        0x24000, 0x4000)
+	ROM_CONTINUE(	        0x34000, 0x4000)
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
+	ROM_CONTINUE(	        0x38000, 0x4000)
+	ROM_CONTINUE(	        0x2C000, 0x4000)
+	ROM_CONTINUE(	        0x3C000, 0x4000)
+	ROM_LOAD( "nk2_12.rom",   0x40000, 0x02000, 0xdb5657a9 )  // foreground tiles
+	ROM_CONTINUE(	        0x44000, 0x02000)
+	ROM_CONTINUE(	        0x42000, 0x02000)
+	ROM_CONTINUE(	        0x46000, 0x02000)
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
+ROM_END
+
+ROM_START( rdaction_rom )
+	ROM_REGION(0x30000)
+	ROM_LOAD( "1.3u",  	  0x00000, 0x8000, 0x5c475611 )
+	ROM_LOAD( "2.3s",         0x10000, 0x8000, 0xa1e23bd2 )
+	ROM_LOAD( "nk2_03.rom",   0x18000, 0x8000, 0xad275654 )
+	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, 0xe7692a77 )
+	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, 0x960725fb )
+
+	ROM_REGION_DISPOSE(0x48000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nk2_08.rom",   0x00000, 0x4000, 0x1b79c50a )   // sprites tiles
+	ROM_CONTINUE(	        0x10000, 0x4000)
+	ROM_CONTINUE(	        0x04000, 0x4000)
+	ROM_CONTINUE(	        0x14000, 0x4000)
+	ROM_LOAD( "nk2_07.rom",   0x08000, 0x4000, 0x0be5cd13 )
+	ROM_CONTINUE(	        0x18000, 0x4000)
+	ROM_CONTINUE(	        0x0C000, 0x4000)
+	ROM_CONTINUE(	        0x1C000, 0x4000)
+	ROM_LOAD( "nk2_11.rom",   0x20000, 0x4000, 0x41a714b3 )   // background tiles
+	ROM_CONTINUE(	        0x30000, 0x4000)
+	ROM_CONTINUE(	        0x24000, 0x4000)
+	ROM_CONTINUE(	        0x34000, 0x4000)
+	ROM_LOAD( "nk2_10.rom",   0x28000, 0x4000, 0xc913c4ab )
+	ROM_CONTINUE(	        0x38000, 0x4000)
+	ROM_CONTINUE(	        0x2C000, 0x4000)
+	ROM_CONTINUE(	        0x3C000, 0x4000)
+	ROM_LOAD( "12.5n",      0x40000, 0x02000, 0x0936b365 )  // foreground tiles
+	ROM_CONTINUE(	        0x44000, 0x02000)
+	ROM_CONTINUE(	        0x42000, 0x02000)
+	ROM_CONTINUE(	        0x46000, 0x02000)
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_06.bin",   0x0000, 0x10000, 0x7bfe6c9e )  // sound z80 code encrypted
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "nk2_09.rom",   0x0000, 0x10000, 0xc1d2d170 )  // raw pcm samples
 ROM_END
 
 
@@ -625,7 +763,7 @@ ROM_END
 static int hiload(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     /* check if the hi score table has already been initialized */
     if (memcmp(&RAM[0xe0f4],"\x00\x30\x00",3) == 0 )
@@ -645,7 +783,7 @@ static int hiload(void)
 static void hisave(void)
 {
     void *f;
-    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[main_cpu_num].memory_region];
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
@@ -658,7 +796,10 @@ static void hisave(void)
 void ninjak2a_sound_decode(void)
 {
 	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	extern int encrypted_cpu;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+	encrypted_cpu = 1;
 
 	memcpy(ROM,RAM,0xffff);
 
@@ -671,22 +812,13 @@ struct GameDriver ninjakd2_driver =
 	__FILE__,
 	0,
 	"ninjakd2",
-	"Ninja Kid II",
+	"Ninja Kid II (set 1)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-#if 0
-"\n\n\nGame authors:\n\n \
-Game design:    Tsutomu Fuzisawa\n \
-Program design: Satoru Kinjo\n \
-Char. design:   Tsutomu Fizisawa\n \
-Char. design:   Akemi Tsunoda\n \
-Sound compose:  Tsutomu Fuzisawa\n \
-Bgm create:     Mecano Associate\n \
-Data make:      Takashi Hayashi\n",
-#endif
 	GAME_NOT_WORKING,
 	&ninjakd2_machine_driver,
+	0,
 
 	ninjakd2_rom,
 	0,0,
@@ -706,24 +838,67 @@ struct GameDriver ninjak2a_driver =
 	__FILE__,
 	&ninjakd2_driver,
 	"ninjak2a",
-	"Ninja Kid II (alternate)",
+	"Ninja Kid II (set 2)",
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-#if 0
-"\n\n\nGame authors:\n\n \
-Game design:    Tsutomu Fuzisawa\n \
-Program design: Satoru Kinjo\n \
-Char. design:   Tsutomu Fizisawa\n \
-Char. design:   Akemi Tsunoda\n \
-Sound compose:  Tsutomu Fuzisawa\n \
-Bgm create:     Mecano Associate\n \
-Data make:      Takashi Hayashi\n",
-#endif
 	0,
 	&ninjak2a_machine_driver,
+	0,
 
 	ninjak2a_rom,
+	0,ninjak2a_sound_decode,
+	0,
+	0, /* sound prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver ninjak2b_driver =
+{
+	__FILE__,
+	&ninjakd2_driver,
+	"ninjak2b",
+	"Ninja Kid II (set 3)",
+	"1987",
+	"UPL",
+	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
+	0,
+	&ninjak2a_machine_driver,
+	0,
+
+	ninjak2b_rom,
+	0,ninjak2a_sound_decode,
+	0,
+	0, /* sound prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave
+};
+
+struct GameDriver rdaction_driver =
+{
+	__FILE__,
+	&ninjakd2_driver,
+	"rdaction",
+	"Rad Action",
+	"1987",
+	"UPL (World Games license)",
+	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
+	0,
+	&ninjak2a_machine_driver,
+	0,
+
+	rdaction_rom,
 	0,ninjak2a_sound_decode,
 	0,
 	0, /* sound prom */

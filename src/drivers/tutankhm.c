@@ -177,7 +177,7 @@ Sound board: uses the same board as Pooyan.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/m6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 
@@ -187,6 +187,11 @@ void tutankhm_videoram_w( int offset, int data );
 void tutankhm_flipscreen_w( int offset, int data );
 void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+/* defined in sndhrdw/timeplt.c */
+extern struct MemoryReadAddress timeplt_sound_readmem[];
+extern struct MemoryWriteAddress timeplt_sound_writemem[];
+extern struct AY8910interface timeplt_ay8910_interface;
+void timeplt_sh_irqtrigger_w(int offset,int data);
 
 
 void tutankhm_init_machine(void)
@@ -204,61 +209,6 @@ void tutankhm_bankselect_w(int offset,int data)
 	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
 	cpu_setbank(1,&RAM[bankaddress]);
 }
-
-
-/* I am not 100% sure that this timer is correct, but */
-/* I'm using the Gyruss wired to the higher 4 bits    */
-/* instead of the lower ones, so there is a good      */
-/* chance it's the right one. */
-
-/* The timer clock which feeds the lower 4 bits of    */
-/* AY-3-8910 port A is based on the same clock        */
-/* feeding the sound CPU Z80.  It is a divide by      */
-/* 10240, formed by a standard divide by 1024,        */
-/* followed by a divide by 10 using a 4 bit           */
-/* bi-quinary count sequence. (See LS90 data sheet    */
-/* for an example).                                   */
-/* Bits 1-3 come directly from the upper three bits   */
-/* of the bi-quinary counter. Bit 0 comes from the    */
-/* output of the divide by 1024.                      */
-
-static int tutankhm_timer[20] = {
-0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
-0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
-};
-
-static int tutankhm_portB_r(int offset)
-{
-	/* need to protect from totalcycles overflow */
-	static int last_totalcycles = 0;
-
-	/* number of Z80 clock cycles to count */
-	static int clock;
-
-	int current_totalcycles;
-
-	current_totalcycles = cpu_gettotalcycles();
-	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
-
-	last_totalcycles = current_totalcycles;
-
-	return tutankhm_timer[clock/512] << 4;
-}
-
-void tutankhm_sh_irqtrigger_w(int offset,int data)
-{
-	static int last;
-
-
-	if (last == 0 && data == 1)
-	{
-		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_cause_interrupt(1,0xff);
-	}
-
-	last = data;
-}
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -286,59 +236,38 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8205, 0x8205, MWA_NOP },	/* ??? */
 	{ 0x8206, 0x8207, tutankhm_flipscreen_w },
 	{ 0x8300, 0x8300, tutankhm_bankselect_w },
-	{ 0x8600, 0x8600, tutankhm_sh_irqtrigger_w },
+	{ 0x8600, 0x8600, timeplt_sh_irqtrigger_w },
 	{ 0x8700, 0x8700, soundlatch_w },
 	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x3000, 0x33ff, MRA_RAM },
-	{ 0x4000, 0x4000, AY8910_read_port_0_r },
-	{ 0x6000, 0x6000, AY8910_read_port_1_r },
-	{ -1 }	/* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x3000, 0x33ff, MWA_RAM },
-	{ 0x4000, 0x4000, AY8910_write_port_0_w },
-	{ 0x5000, 0x5000, AY8910_control_port_0_w },
-	{ 0x6000, 0x6000, AY8910_write_port_1_w },
-	{ 0x7000, 0x7000, AY8910_control_port_1_w },
-	{ -1 }	/* end of table */
-};
-
-
 
 INPUT_PORTS_START( input_ports )
 	PORT_START      /* DSW2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x08, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "256", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x00, "40000" )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, "Easy" )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x40, 0x40, "Flash Bomb", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, "Flash Bomb" )
 	PORT_DIPSETTING(    0x40, "1 per Life" )
 	PORT_DIPSETTING(    0x00, "1 per Game" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -371,55 +300,42 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "Disabled" )
-/* 0x00 not remmed out since the game makes the usual sound if you insert the coin */
+/* 0x00 not commented out since the game makes the usual sound if you insert the coin */
 INPUT_PORTS_END
-
-
-
-static struct AY8910interface ay8910_interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
-	{ 0x20ff, 0x20ff },
-	{ soundlatch_r },
-	{ tutankhm_portB_r },
-	{ 0 },
-	{ 0 }
-};
 
 
 
@@ -436,9 +352,9 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ???? same as other Konami games */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
+			14318180/8,	/* 1.789772727 MHz */						\
+			1,	/* memory region #1 */
+			timeplt_sound_readmem,timeplt_sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
@@ -463,7 +379,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			SOUND_AY8910,
-			&ay8910_interface
+			&timeplt_ay8910_interface
 		}
 	}
 };
@@ -471,59 +387,51 @@ static struct MachineDriver machine_driver =
 
 ROM_START( tutankhm_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "h1.bin", 0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
-	ROM_LOAD( "h2.bin", 0x0b000, 0x1000, 0x4cff2ad5 )
-	ROM_LOAD( "h3.bin", 0x0c000, 0x1000, 0x0a8bae5d )
-	ROM_LOAD( "h4.bin", 0x0d000, 0x1000, 0x0c36af12 )
-	ROM_LOAD( "h5.bin", 0x0e000, 0x1000, 0xf6bc4352 )
-	ROM_LOAD( "h6.bin", 0x0f000, 0x1000, 0xf7ce5fda )
-	ROM_LOAD( "j1.bin", 0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "j2.bin", 0x11000, 0x1000, 0x7c5691fa )
-	ROM_LOAD( "j3.bin", 0x12000, 0x1000, 0xda9a4984 )
-	ROM_LOAD( "j4.bin", 0x13000, 0x1000, 0x8938bdc0 )
-	ROM_LOAD( "j5.bin", 0x14000, 0x1000, 0x6643cec3 )
-	ROM_LOAD( "j6.bin", 0x15000, 0x1000, 0x2721bb0b )
-	ROM_LOAD( "j7.bin", 0x16000, 0x1000, 0xe48c0550 )
-	ROM_LOAD( "j8.bin", 0x17000, 0x1000, 0x7a2c6b34 )
-	ROM_LOAD( "j9.bin", 0x18000, 0x1000, 0x8e1e46ce )
+	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
+	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
+	ROM_LOAD( "h3.bin",       0x0c000, 0x1000, 0xea03a1ab )
+	ROM_LOAD( "h4.bin",       0x0d000, 0x1000, 0xbd06fad0 )
+	ROM_LOAD( "h5.bin",       0x0e000, 0x1000, 0xbf9fd9b0 )
+	ROM_LOAD( "h6.bin",       0x0f000, 0x1000, 0xfe079c5b )
+	ROM_LOAD( "j1.bin",       0x10000, 0x1000, 0x7eb59b21 ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin",       0x11000, 0x1000, 0x6615eff3 )
+	ROM_LOAD( "j3.bin",       0x12000, 0x1000, 0xa10d4444 )
+	ROM_LOAD( "j4.bin",       0x13000, 0x1000, 0x58cd143c )
+	ROM_LOAD( "j5.bin",       0x14000, 0x1000, 0xd7e7ae95 )
+	ROM_LOAD( "j6.bin",       0x15000, 0x1000, 0x91f62b82 )
+	ROM_LOAD( "j7.bin",       0x16000, 0x1000, 0xafd0a81f )
+	ROM_LOAD( "j8.bin",       0x17000, 0x1000, 0xdabb609b )
+	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
-	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
+	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
+	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
 ROM_START( tutankst_rom )
 	ROM_REGION( 0x20000 )      /* 64k for M6809 CPU code + 64k for ROM banks */
-	ROM_LOAD( "h1.bin",     0x0a000, 0x1000, 0xc0622dc2 ) /* program ROMs */
-	ROM_LOAD( "h2.bin",     0x0b000, 0x1000, 0x4cff2ad5 )
-	ROM_LOAD( "ra1_3h.cpu", 0x0c000, 0x1000, 0xb3914153 )
-	ROM_LOAD( "h4.bin",     0x0d000, 0x1000, 0x0c36af12 )
-	ROM_LOAD( "h5.bin",     0x0e000, 0x1000, 0xf6bc4352 )
-	ROM_LOAD( "ra1_6h.cpu", 0x0f000, 0x1000, 0x7397e4d1 )
-	ROM_LOAD( "j1.bin",     0x10000, 0x1000, 0x076360bf ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
-	ROM_LOAD( "j2.bin",     0x11000, 0x1000, 0x7c5691fa )
-	ROM_LOAD( "j3.bin",     0x12000, 0x1000, 0xda9a4984 )
-	ROM_LOAD( "j4.bin",     0x13000, 0x1000, 0x8938bdc0 )
-	ROM_LOAD( "j5.bin",     0x14000, 0x1000, 0x6643cec3 )
-	ROM_LOAD( "j6.bin",     0x15000, 0x1000, 0x2721bb0b )
-	ROM_LOAD( "j7.bin",     0x16000, 0x1000, 0xe48c0550 )
-	ROM_LOAD( "j8.bin",     0x17000, 0x1000, 0x7a2c6b34 )
-	ROM_LOAD( "j9.bin",     0x18000, 0x1000, 0x8e1e46ce )
+	ROM_LOAD( "h1.bin",       0x0a000, 0x1000, 0xda18679f ) /* program ROMs */
+	ROM_LOAD( "h2.bin",       0x0b000, 0x1000, 0xa0f02c85 )
+	ROM_LOAD( "ra1_3h.cpu",   0x0c000, 0x1000, 0x2d62d7b1 )
+	ROM_LOAD( "h4.bin",       0x0d000, 0x1000, 0xbd06fad0 )
+	ROM_LOAD( "h5.bin",       0x0e000, 0x1000, 0xbf9fd9b0 )
+	ROM_LOAD( "ra1_6h.cpu",   0x0f000, 0x1000, 0xc43b3865 )
+	ROM_LOAD( "j1.bin",       0x10000, 0x1000, 0x7eb59b21 ) /* graphic ROMs (banked) -- only 9 of 12 are filled */
+	ROM_LOAD( "j2.bin",       0x11000, 0x1000, 0x6615eff3 )
+	ROM_LOAD( "j3.bin",       0x12000, 0x1000, 0xa10d4444 )
+	ROM_LOAD( "j4.bin",       0x13000, 0x1000, 0x58cd143c )
+	ROM_LOAD( "j5.bin",       0x14000, 0x1000, 0xd7e7ae95 )
+	ROM_LOAD( "j6.bin",       0x15000, 0x1000, 0x91f62b82 )
+	ROM_LOAD( "j7.bin",       0x16000, 0x1000, 0xafd0a81f )
+	ROM_LOAD( "j8.bin",       0x17000, 0x1000, 0xdabb609b )
+	ROM_LOAD( "j9.bin",       0x18000, 0x1000, 0x8ea9c6a6 )
 	/* the other banks (1900-1fff) are empty */
 
-	ROM_REGION( 0x1000 ) /* ROM Region 1 -- discarded */
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
 	ROM_REGION( 0x10000 ) /* 64k for Z80 sound CPU code */
-	ROM_LOAD( "11-7a.bin", 0x0000, 0x1000, 0x00122ac0 )
-	ROM_LOAD( "10-8a.bin", 0x1000, 0x1000, 0xc5102f10 )
+	ROM_LOAD( "11-7a.bin",    0x0000, 0x1000, 0xb52d01fa )
+	ROM_LOAD( "10-8a.bin",    0x1000, 0x1000, 0x9db5c0ce )
 ROM_END
 
 
@@ -571,12 +479,13 @@ struct GameDriver tutankhm_driver =
 	__FILE__,
 	0,
 	"tutankhm",
-	"Tutankham (Konami)",
+	"Tutankham",
 	"1982",
 	"Konami",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	tutankhm_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -598,10 +507,11 @@ struct GameDriver tutankst_driver =
 	"tutankst",
 	"Tutankham (Stern)",
 	"1982",
-	"Stern",
+	"[Konami] (Stern license)",
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	tutankst_rom,
 	0, 0,   /* ROM decode and opcode decode functions */

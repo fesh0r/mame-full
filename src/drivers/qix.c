@@ -149,13 +149,45 @@ QIX NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 					$87E9: ATTRACT SOUND (Default: 01)
 					$87EA: TABLE MODE (Default: 00)
 
+COIN PROCESSOR
+
+$0000 (PORTA)  : Bi directional communication to the data CPU
+$0001 (PORTB)  :  [76543210] Game PIA 1 (Port B)
+                   o         SPARE          output
+                    o        Coin lockout   output
+                     o       Coin lockout   output
+                      o      Tilt           input
+                       o     Slew down      input
+                        o    Slew up        input
+                         o   Sub. test      input
+                          o  Adv. test      input
+
+$0002 (PORTC)  :  [76543210] Game PIA 1 (Port B)
+                       o     From DATA cpu      input
+                        o    Aux coin switch    input
+                         o   Right coin switch  input
+                          o  Left coin switch   input
+
+INT input   : From data cpu
+Timer input : From data cpu
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 
-/*#define TRYGAMEPIA 1*/
+
+extern int sdungeon_68705_portA_r(int offset);
+extern int sdungeon_68705_portB_r(int offset);
+extern int sdungeon_68705_portC_r(int offset);
+extern void sdungeon_68705_portA_w(int offest,int data);
+extern void sdungeon_68705_portB_w(int offest,int data);
+extern void sdungeon_68705_portC_w(int offest,int data);
+void sdungeon_68705_ddrA_w(int offset,int data);
+void sdungeon_68705_ddrB_w(int offset,int data);
+void sdungeon_68705_ddrC_w(int offset,int data);
+void sdungeon_pia_0_w(int offset,int data);
 
 extern unsigned char *qix_sharedram;
 int qix_scanline_r(int offset);
@@ -180,6 +212,7 @@ void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int qix_vh_start(void);
 void qix_vh_stop(void);
 void qix_init_machine(void);
+void withmcu_init_machine(void);
 
 int qix_data_io_r (int offset);
 int qix_sound_io_r (int offset);
@@ -190,15 +223,17 @@ extern void zoo_bankswitch_w(int offset, int data);
 extern void zoo_init_machine(void);
 
 
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x8000, 0x83ff, qix_sharedram_r, &qix_sharedram },
 	{ 0x8400, 0x87ff, MRA_RAM },
-	{ 0x9000, 0x9003, pia_4_r },
-	{ 0x9400, 0x9403, pia_1_r },
-	{ 0x9900, 0x9903, pia_2_r },
-	{ 0x9c00, 0x9c03, pia_3_r },
-	{ 0xc000, 0xffff, MRA_ROM },
+	{ 0x8800, 0x8800, MRA_RAM },   /* ACIA */
+	{ 0x9000, 0x9003, pia_3_r },
+	{ 0x9400, 0x9403, pia_0_r },
+	{ 0x9900, 0x9903, pia_1_r },
+	{ 0x9c00, 0x9FFF, pia_2_r },
+	{ 0xa000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -206,17 +241,10 @@ static struct MemoryReadAddress zoo_readmem[] =
 {
 	{ 0x0000, 0x03ff, qix_sharedram_r, &qix_sharedram },
 	{ 0x0400, 0x07ff, MRA_RAM },
-	{ 0x1000, 0x1003, pia_4_r },	/* Sound PIA */
-#ifdef TRYGAMEPIA
-	{ 0x1400, 0x1403, pia_1_r },	/* Game PIA 1 - Player inputs, coin door switches */
-	{ 0x1c00, 0x1c03, pia_3_r },	/* Game PIA 3 - Player 2 */
-#else
-	{ 0x1400, 0x1400, input_port_0_r }, /* PIA 1 PORT A -- Player controls */
-	{ 0x1402, 0x1402, input_port_1_r }, /* PIA 1 PORT B -- Coin door switches */
-	{ 0x1c00, 0x1c00, input_port_2_r }, /* PIA 3 PORT A -- Player 2 controls */
-#endif
-	{ 0x1900, 0x1903, pia_2_r },	/* Game PIA 2 */
-	{ 0x1ffe, 0x1ffe, MRA_RAM },	/* ????? Some kind of I/O */
+	{ 0x1000, 0x1003, pia_3_r },	/* Sound PIA */
+	{ 0x1400, 0x1403, pia_0_r },	/* Game PIA 1 - Player inputs, coin door switches */
+	{ 0x1900, 0x1903, pia_1_r },	/* Game PIA 2 */
+	{ 0x1c00, 0x1fff, pia_2_r },    /* Game PIA 3 - Player 2 */
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -228,7 +256,7 @@ static struct MemoryReadAddress readmem_video[] =
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9400, 0x9400, qix_addresslatch_r },
 	{ 0x9800, 0x9800, qix_scanline_r },
-	{ 0xc000, 0xffff, MRA_ROM },
+	{ 0xa000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -247,17 +275,17 @@ static struct MemoryReadAddress zoo_readmem_video[] =
 static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x2000, 0x2003, pia_6_r },
-	{ 0x4000, 0x4003, pia_5_r },
-	{ 0xf800, 0xffff, MRA_ROM },
+	{ 0x2000, 0x2003, pia_5_r },
+	{ 0x4000, 0x4003, pia_4_r },
+	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryReadAddress zoo_readmem_sound[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x2000, 0x2003, pia_6_r },
-	{ 0x4000, 0x4003, pia_5_r },
+	{ 0x2000, 0x2003, pia_5_r },
+	{ 0x4000, 0x4003, pia_4_r },
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 } /* end of table */
 };
@@ -268,11 +296,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM },
 	{ 0x8c00, 0x8c00, qix_video_firq_w },
-	{ 0x9000, 0x9003, pia_4_w },
-	{ 0x9400, 0x9403, pia_1_w },
-	{ 0x9900, 0x9903, pia_2_w },
-	{ 0x9c00, 0x9c03, pia_3_w },
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0x9000, 0x9003, pia_3_w },
+	{ 0x9400, 0x9403, sdungeon_pia_0_w },
+	{ 0x9900, 0x9903, pia_1_w },
+	{ 0x9c00, 0x9fff, pia_2_w },
+	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -282,11 +310,10 @@ static struct MemoryWriteAddress zoo_writemem[] =
 	{ 0x0400, 0x07ff, MWA_RAM },
 	{ 0x0c00, 0x0c00, qix_video_firq_w },
 	{ 0x0c01, 0x0c01, MWA_NOP },	/* interrupt acknowledge */
-	{ 0x1000, 0x1003, pia_4_w },	/* Sound PIA */
-	{ 0x1400, 0x1403, pia_1_w },	/* Game PIA 1 */
-	{ 0x1900, 0x1903, pia_2_w },	/* Game PIA 2 */
-	{ 0x1c00, 0x1c03, pia_3_w },	/* Game PIA 3 */
-	{ 0x1ffe, 0x1ffe, MWA_RAM },	/* ????? Some kind of I/O */
+	{ 0x1000, 0x1003, pia_3_w },	/* Sound PIA */
+	{ 0x1400, 0x1403, sdungeon_pia_0_w },	/* Game PIA 1 */
+	{ 0x1900, 0x1903, pia_1_w },	/* Game PIA 2 */
+	{ 0x1c00, 0x1fff, pia_2_w },    /* Game PIA 3 */
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
@@ -301,7 +328,8 @@ static struct MemoryWriteAddress writemem_video[] =
 	{ 0x9000, 0x93ff, qix_paletteram_w, &paletteram },
 	{ 0x9400, 0x9400, qix_addresslatch_w },
 	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
-	{ 0xc000, 0xffff, MWA_ROM },
+	{ 0x9c00, 0x9FFF, MWA_RAM }, /* Video controller */
+	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -326,66 +354,116 @@ static struct MemoryWriteAddress zoo_writemem_video[] =
 static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2003, pia_6_w },
-	{ 0x4000, 0x4003, pia_5_w },
-	{ 0xf800, 0xffff, MWA_ROM },
+	{ 0x2000, 0x2003, pia_5_w },
+	{ 0x4000, 0x4003, pia_4_w },
+	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
 static struct MemoryWriteAddress zoo_writemem_sound[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x2000, 0x2003, pia_6_w },
-	{ 0x4000, 0x4003, pia_5_w },
+	{ 0x2000, 0x2003, pia_5_w },
+	{ 0x4000, 0x4003, pia_4_w },
 	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
+static struct MemoryReadAddress mcu_readmem[] =
+{
+	{ 0x0000, 0x0000, sdungeon_68705_portA_r },
+	{ 0x0001, 0x0001, sdungeon_68705_portB_r },
+	{ 0x0002, 0x0002, sdungeon_68705_portC_r },
+	{ 0x0010, 0x007f, MRA_RAM },
+	{ 0x0080, 0x07ff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
 
-INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+static struct MemoryWriteAddress mcu_writemem[] =
+{
+	{ 0x0000, 0x0000, sdungeon_68705_portA_w },
+	{ 0x0001, 0x0001, sdungeon_68705_portB_w },
+	{ 0x0002, 0x0002, sdungeon_68705_portC_w },
+	{ 0x0004, 0x0004, sdungeon_68705_ddrA_w },
+	{ 0x0005, 0x0005, sdungeon_68705_ddrB_w },
+	{ 0x0006, 0x0006, sdungeon_68705_ddrC_w },
+	{ 0x0010, 0x007f, MWA_RAM },
+	{ 0x0080, 0x07ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+
+#define COIN_PORT \
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", KEYCODE_F1, IP_JOY_DEFAULT ) \
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test Next line", KEYCODE_F2, IP_JOY_DEFAULT ) \
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Up", KEYCODE_F5, IP_JOY_DEFAULT ) \
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Down", KEYCODE_F6, IP_JOY_DEFAULT ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+
+#define UNKNOWN_PORT \
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+
+INPUT_PORTS_START( qix_input_ports )
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", OSD_KEY_F1, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test Next line", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Up", OSD_KEY_F5, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Down", OSD_KEY_F6, IP_JOY_DEFAULT, 0)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Coin switch */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
+
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	UNKNOWN_PORT
+
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
+	UNKNOWN_PORT
+
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sdungeon_input_ports )
-	PORT_START	/* IN0 */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
-    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 
-	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_SERVICE, "Test Advance", OSD_KEY_F1, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test Next line", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Up", OSD_KEY_F5, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Test Slew Down", OSD_KEY_F6, IP_JOY_DEFAULT, 0)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 ) /* Coin switch */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
 
-    PORT_START /* Game PIA 2 Port B */
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	UNKNOWN_PORT
+
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -395,39 +473,108 @@ INPUT_PORTS_START( sdungeon_input_ports )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( elecyoyo_input_ports )
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
+
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	UNKNOWN_PORT
+
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
+	UNKNOWN_PORT
+
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( kram_input_ports )
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
+
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	UNKNOWN_PORT
+
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
+	UNKNOWN_PORT
+
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( zoo_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_START	/* PIA 0 Port A (PLAYER 1) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 - not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Advance Sub-Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, "Slew Up", OSD_KEY_F5, IP_JOY_NONE, 0 )
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Slew Down", OSD_KEY_F6, IP_JOY_NONE, 0 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* coin switch ? */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_START	/* PIA 0 Port B (COIN) */
+	COIN_PORT
 
-	PORT_START /* Game PIA 3 Port A -- Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_START	/* PIA 1 Port A (SPARE) */
+	UNKNOWN_PORT
+
+    PORT_START /* PIA 1 Port B (PLAYER 1/2) */
+	UNKNOWN_PORT
+
+	PORT_START	/* PIA 2 Port A (PLAYER 2) */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 - not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -436,9 +583,7 @@ INPUT_PORTS_END
 static struct DACinterface dac_interface =
 {
 	1,
-	441000,
-	{ 255 },
-	{ 0 },
+	{ 100 }
 };
 
 
@@ -449,30 +594,24 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			1250000,	/* 1.25 Mhz */
+			1250000,	/* 1.25 MHz */
 			0,			/* memory region */
-			readmem,	/* MemoryReadAddress */
-			writemem,	/* MemoryWriteAddress */
-			0,			/* IOReadPort */
-			0,			/* IOWritePort */
-			interrupt,
-			1
+			readmem,writemem,0,0,
+			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1250000,	/* 1.25 Mhz */
-			2,			/* memory region #2 */
-			readmem_video, writemem_video, 0, 0,
-			ignore_interrupt,
-			1
+			1250000,	/* 1.25 MHz */
+			1,			/* memory region #1 */
+			readmem_video,writemem_video,0,0,
+			ignore_interrupt,0
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,	/* 0.92 Mhz */
-			3,			/* memory region #3 */
-			readmem_sound, writemem_sound, 0, 0,
-			ignore_interrupt,
-			1
+			3680000/4,	/* 0.92 MHz */
+			2,			/* memory region #2 */
+			readmem_sound,writemem_sound,0,0,
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -504,36 +643,99 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+static struct MachineDriver mcu_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			1250000,	/* 1.25 MHz */
+			0,			/* memory region */
+			readmem,writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_M6809,
+			1250000,	/* 1.25 MHz */
+			1,			/* memory region #1 */
+			readmem_video,writemem_video,0,0,
+			ignore_interrupt,0
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			3680000/4,	/* 0.92 MHz */
+			2,			/* memory region #2 */
+			readmem_sound,writemem_sound,0,0,
+			ignore_interrupt,0
+		},
+		{
+			CPU_M68705,
+			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
+			3,	/* memory region #3 */
+			mcu_readmem,mcu_writemem,0,0,
+			ignore_interrupt,0      /* No periodic interrupt */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	600,	/* 60 CPU slices per frame - an high value to ensure proper */
+		/* synchronization of the CPUs */
+	withmcu_init_machine,                       /* init machine routine */ /* JB 970526 */
+
+	/* video hardware */
+	256, 256,					/* screen_width, screen_height */
+	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area - just a guess */
+	0,							/* GfxDecodeInfo * */
+	256,						/* total colors */
+	0,							/* color table length */
+	0,							/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,							/* vh_init routine */
+	qix_vh_start,				/* vh_start routine */
+	qix_vh_stop,				/* vh_stop routine */
+	qix_vh_screenrefresh,		/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
 static struct MachineDriver zoo_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			1250000,		/* 1.25 Mhz */
+			1250000,		/* 1.25 MHz */
 			0,				/* memory region */
-			zoo_readmem,	/* MemoryReadAddress */
-			zoo_writemem,	/* MemoryWriteAddress */
-			0,				/* IOReadPort */
-			0,				/* IOWritePort */
-			interrupt,		/* interrupt routine */
-			1				/* interrupts per frame */
+			zoo_readmem,zoo_writemem,0,0,
+			interrupt,1
 		},
 		{
 			CPU_M6809,
-			1250000,		/* 1.25 Mhz */
-			2,				/* memory region #2 */
+			1250000,		/* 1.25 MHz */
+			1,				/* memory region #1 */
 			zoo_readmem_video, zoo_writemem_video, 0, 0,
-			ignore_interrupt,
-            1
+			ignore_interrupt,0
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,		/* 0.92 Mhz */
-			3,				/* memory region #3 */
-			zoo_readmem_sound, zoo_writemem_sound, 0, 0,
-			ignore_interrupt,
-			1
+			3680000/4,		/* 0.92 MHz */
+			2,				/* memory region #2 */
+			zoo_readmem_sound,zoo_writemem_sound,0,0,
+			ignore_interrupt,0
+		},
+		{
+			CPU_M68705,
+			4000000/2,	/* xtal is 4MHz, I think it's divided by 2 internally */
+			3,	/* memory region #3 */
+			mcu_readmem,mcu_writemem,0,0,
+			ignore_interrupt,0      /* No periodic interrupt */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -575,152 +777,308 @@ static struct MachineDriver zoo_machine_driver =
 
 ROM_START( qix_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12", 0xC000, 0x800, 0x87bd3a11 )
-	ROM_LOAD( "u13", 0xC800, 0x800, 0x85586b74 )
-	ROM_LOAD( "u14", 0xD000, 0x800, 0x541d5c6f )
-	ROM_LOAD( "u15", 0xD800, 0x800, 0xcbd010de )
-	ROM_LOAD( "u16", 0xE000, 0x800, 0xf9da5efe )
-	ROM_LOAD( "u17", 0xE800, 0x800, 0x14c09e2a )
-	ROM_LOAD( "u18", 0xF000, 0x800, 0x22ae35fa )
-	ROM_LOAD( "u19", 0xF800, 0x800, 0x1bf904ff )
-
-	ROM_REGION(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_LOAD( "u12",          0xC000, 0x0800, 0xaad35508 )
+	ROM_LOAD( "u13",          0xC800, 0x0800, 0x46c13504 )
+	ROM_LOAD( "u14",          0xD000, 0x0800, 0x5115e896 )
+	ROM_LOAD( "u15",          0xD800, 0x0800, 0xccd52a1b )
+	ROM_LOAD( "u16",          0xE000, 0x0800, 0xcd1c36ee )
+	ROM_LOAD( "u17",          0xE800, 0x0800, 0x1acb682d )
+	ROM_LOAD( "u18",          0xF000, 0x0800, 0xde77728b )
+	ROM_LOAD( "u19",          0xF800, 0x0800, 0xc0994776 )
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD(  "u4", 0xC800, 0x800, 0x08bbfc51 )
-	ROM_LOAD(  "u5", 0xD000, 0x800, 0xdd0f67b3 )
-	ROM_LOAD(  "u6", 0xD800, 0x800, 0x37f8ce3c )
-	ROM_LOAD(  "u7", 0xE000, 0x800, 0x733acfe0 )
-	ROM_LOAD(  "u8", 0xE800, 0x800, 0xe1c7b84b )
-	ROM_LOAD(  "u9", 0xF000, 0x800, 0xb662095a )
-	ROM_LOAD( "u10", 0xF800, 0x800, 0x559ebf32 )
+	ROM_LOAD( "u4",           0xC800, 0x0800, 0x5b906a09 )
+	ROM_LOAD( "u5",           0xD000, 0x0800, 0x254a3587 )
+	ROM_LOAD( "u6",           0xD800, 0x0800, 0xace30389 )
+	ROM_LOAD( "u7",           0xE000, 0x0800, 0x8ebcfa7c )
+	ROM_LOAD( "u8",           0xE800, 0x0800, 0xb8a3c8f9 )
+	ROM_LOAD( "u9",           0xF000, 0x0800, 0x26cbcd55 )
+	ROM_LOAD( "u10",          0xF800, 0x0800, 0x568be942 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27", 0xF800, 0x800, 0xdc9c8536 )
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
+ROM_END
+
+ROM_START( qixa_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "qu12",         0xC000, 0x0800, 0x1c55b44d )
+	ROM_LOAD( "qu13",         0xC800, 0x0800, 0x20279e8c )
+	ROM_LOAD( "qu14",         0xD000, 0x0800, 0xbafe3ce3 )
+	/* d800-dfff empty */
+	ROM_LOAD( "qu16",         0xE000, 0x0800, 0xdb560753 )
+	ROM_LOAD( "qu17",         0xE800, 0x0800, 0x8c7aeed8 )
+	ROM_LOAD( "qu18",         0xF000, 0x0800, 0x353be980 )
+	ROM_LOAD( "qu19",         0xF800, 0x0800, 0xf46a69ca )
+
+	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_LOAD( "qu3",          0xC000, 0x0800, 0x8b4c0ef0 )
+	ROM_LOAD( "qu4",          0xC800, 0x0800, 0x66a5c260 )
+	ROM_LOAD( "qu5",          0xD000, 0x0800, 0x70160ea3 )
+	/* d800-dfff empty */
+	ROM_LOAD( "qu7",          0xE000, 0x0800, 0xd6733019 )
+	ROM_LOAD( "qu8",          0xE800, 0x0800, 0x66870dcc )
+	ROM_LOAD( "qu9",          0xF000, 0x0800, 0xc99bf94d )
+	ROM_LOAD( "qu10",         0xF800, 0x0800, 0x88b45037 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
+ROM_END
+
+ROM_START( qixb_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "lk14.bin",     0xC000, 0x1000, 0x6d164986 )
+	ROM_LOAD( "lk15.bin",     0xD000, 0x1000, 0x16c6ce0f )
+	ROM_LOAD( "lk16.bin",     0xE000, 0x1000, 0x698b1f9c )
+	ROM_LOAD( "lk17.bin",     0xF000, 0x1000, 0x7e3adde6 )
+
+	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
+	ROM_LOAD( "lk10.bin",     0xC000, 0x1000, 0x7eac67d0 )
+	ROM_LOAD( "lk11.bin",     0xD000, 0x1000, 0x90ccbb6a )
+	ROM_LOAD( "lk12.bin",     0xE000, 0x1000, 0xbe9b9f7d )
+	ROM_LOAD( "lk13.bin",     0xF000, 0x1000, 0x51c9853b )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( qix2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "u12.rmb", 0xC000, 0x800, 0x2ff446f6 )
-	ROM_LOAD( "u13.rmb", 0xC800, 0x800, 0x51a32aeb )
-	ROM_LOAD( "u14.rmb", 0xD000, 0x800, 0xa887b715 )
-	ROM_LOAD( "u15.rmb", 0xD800, 0x800, 0x0c84a5e8 )
-	ROM_LOAD( "u16.rmb", 0xE000, 0x800, 0xcf49e3e5 )
-	ROM_LOAD( "u17.rmb", 0xE800, 0x800, 0x026e58b0 )
-	ROM_LOAD( "u18.rmb", 0xF000, 0x800, 0x5be9ed5f )
-	ROM_LOAD( "u19.rmb", 0xF800, 0x800, 0x83908386 )
-
-	ROM_REGION(0x800)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_LOAD( "u12.rmb",      0xC000, 0x0800, 0x484280fd )
+	ROM_LOAD( "u13.rmb",      0xC800, 0x0800, 0x3d089fcb )
+	ROM_LOAD( "u14.rmb",      0xD000, 0x0800, 0x362123a9 )
+	ROM_LOAD( "u15.rmb",      0xD800, 0x0800, 0x60f3913d )
+	ROM_LOAD( "u16.rmb",      0xE000, 0x0800, 0xcc139e34 )
+	ROM_LOAD( "u17.rmb",      0xE800, 0x0800, 0xcf31dc49 )
+	ROM_LOAD( "u18.rmb",      0xF000, 0x0800, 0x1f91ed7a )
+	ROM_LOAD( "u19.rmb",      0xF800, 0x0800, 0x68e8d5a6 )
 
 	ROM_REGION(0x10000)	/* 64k for code for the second CPU (Video) */
-	ROM_LOAD(  "u3.rmb", 0xC000, 0x800, 0xfae6cc6e )
-	ROM_LOAD(  "u4.rmb", 0xC800, 0x800, 0xfa03efcb )
-	ROM_LOAD(  "u5.rmb", 0xD000, 0x800, 0x55b90e87 )
-	ROM_LOAD(  "u6.rmb", 0xD800, 0x800, 0xdfabdc37 )
-	ROM_LOAD(  "u7.rmb", 0xE000, 0x800, 0x11800d28 )
-	ROM_LOAD(  "u8.rmb", 0xE800, 0x800, 0x57303416 )
-	ROM_LOAD(  "u9.rmb", 0xF000, 0x800, 0xf875b473 )
-	ROM_LOAD( "u10.rmb", 0xF800, 0x800, 0xd6a50cbb )
+	ROM_LOAD( "u3.rmb",       0xC000, 0x0800, 0x19cebaca )
+	ROM_LOAD( "u4.rmb",       0xC800, 0x0800, 0x6cfb4185 )
+	ROM_LOAD( "u5.rmb",       0xD000, 0x0800, 0x948f53f3 )
+	ROM_LOAD( "u6.rmb",       0xD800, 0x0800, 0x8630120e )
+	ROM_LOAD( "u7.rmb",       0xE000, 0x0800, 0xbad037c9 )
+	ROM_LOAD( "u8.rmb",       0xE800, 0x0800, 0x3159bc00 )
+	ROM_LOAD( "u9.rmb",       0xF000, 0x0800, 0xe80e9b1d )
+	ROM_LOAD( "u10.rmb",      0xF800, 0x0800, 0x9a55d360 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 )
+	ROM_LOAD( "u27",          0xF800, 0x0800, 0xf3782bd0 )
 ROM_END
 
 ROM_START( sdungeon_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-    ROM_LOAD( "sd14.u14", 0xA000, 0x1000, 0xf9c6981e )
-    ROM_LOAD( "sd15.u15", 0xB000, 0x1000, 0x9f512c93 )
-    ROM_LOAD( "sd16.u16", 0xC000, 0x1000, 0x3f462084 )
-    ROM_LOAD( "sd17.u17", 0xD000, 0x1000, 0xedd308f5 )
-    ROM_LOAD( "sd18.u18", 0xE000, 0x1000, 0xc50e5838 )
-    ROM_LOAD( "sd19.u19", 0xF000, 0x1000, 0xb0c02320 )
-
-	ROM_REGION(0x1000)
-	/* empty memory region - not used by the game, but needed bacause the main */
-	/* core currently always frees region #1 after initialization. */
+    ROM_LOAD( "sd14.u14",     0xA000, 0x1000, 0x7024b55a )
+    ROM_LOAD( "sd15.u15",     0xB000, 0x1000, 0xa3ac9040 )
+    ROM_LOAD( "sd16.u16",     0xC000, 0x1000, 0xcc20b580 )
+    ROM_LOAD( "sd17.u17",     0xD000, 0x1000, 0x4663e4b8 )
+    ROM_LOAD( "sd18.u18",     0xE000, 0x1000, 0x7ef1ffc0 )
+    ROM_LOAD( "sd19.u19",     0xF000, 0x1000, 0x7b20b7ac )
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-    ROM_LOAD(  "sd05.u5", 0x0A000, 0x1000, 0xfdceac26 )
-    ROM_LOAD(  "sd06.u6", 0x0B000, 0x1000, 0x02049b9a )
-
-    ROM_LOAD(  "sd07.u7", 0x0C000, 0x1000, 0x0690b3fa )
-    ROM_LOAD(  "sd08.u8", 0x0D000, 0x1000, 0x5cf68752 )
-    ROM_LOAD(  "sd09.u9", 0x0E000, 0x1000, 0x606dd945 )
-    ROM_LOAD( "sd10.u10", 0x0F000, 0x1000, 0x85f6cf42 )
+    ROM_LOAD( "sd05.u5",      0x0A000, 0x1000, 0x0b2bf48e )
+    ROM_LOAD( "sd06.u6",      0x0B000, 0x1000, 0xf86db512 )
+    ROM_LOAD( "sd07.u7",      0x0C000, 0x1000, 0x7b796831 )
+    ROM_LOAD( "sd08.u8",      0x0D000, 0x1000, 0x5fbe7068 )
+    ROM_LOAD( "sd09.u9",      0x0E000, 0x1000, 0x89bc51ea )
+    ROM_LOAD( "sd10.u10",     0x0F000, 0x1000, 0x754de734 )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-    ROM_LOAD( "SD26.U26", 0xF000, 0x0800, 0xa078ff04)
-    ROM_LOAD( "SD27.U27", 0xF800, 0x0800, 0x51c8f2e2 )
+    ROM_LOAD( "sd26.u26",     0xF000, 0x0800, 0x3df8630d )
+    ROM_LOAD( "sd27.u27",     0xF800, 0x0800, 0x0386f351 )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "sd101",        0x0000, 0x0800, 0xe255af9a )
+ROM_END
+
+ROM_START( elecyoyo_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
+    ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
+    ROM_LOAD( "yy16-1",       0xC000, 0x1000, 0x2710f360 )
+    ROM_LOAD( "yy17",         0xD000, 0x1000, 0x25fd489d )
+    ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
+    ROM_LOAD( "yy19-1",       0xF000, 0x1000, 0x95b8b244 )
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
+    ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
+    ROM_LOAD( "yy7",          0x0C000, 0x1000, 0x20f93411 )
+    ROM_LOAD( "yy8",          0x0D000, 0x1000, 0x926f90c8 )
+    ROM_LOAD( "yy9",          0x0E000, 0x1000, 0x2f999480 )
+    ROM_LOAD( "yy10",         0x0F000, 0x1000, 0xb31d20e2 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "yy27",         0xF800, 0x0800, 0x5a2aa0f3 )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
+ROM_END
+
+ROM_START( elecyoy2_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "yy14",         0xA000, 0x1000, 0x0d2edcb9 )
+    ROM_LOAD( "yy15",         0xB000, 0x1000, 0xa91f01e3 )
+    ROM_LOAD( "yy16",         0xC000, 0x1000, 0xcab19f3a )
+    ROM_LOAD( "yy17",         0xD000, 0x1000, 0x25fd489d )
+    ROM_LOAD( "yy18",         0xE000, 0x1000, 0x0b6661c0 )
+    ROM_LOAD( "yy19",         0xF000, 0x1000, 0xd0215d2e )
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD( "yy5",          0x0A000, 0x1000, 0x3793fec5 )
+    ROM_LOAD( "yy6",          0x0B000, 0x1000, 0x2e8b1265 )
+    ROM_LOAD( "yy7",          0x0C000, 0x1000, 0x20f93411 )
+    ROM_LOAD( "yy8",          0x0D000, 0x1000, 0x926f90c8 )
+    ROM_LOAD( "yy9",          0x0E000, 0x1000, 0x2f999480 )
+    ROM_LOAD( "yy10",         0x0F000, 0x1000, 0xb31d20e2 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "yy27",         0xF800, 0x0800, 0x5a2aa0f3 )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "yy101",        0x0000, 0x0800, 0x3cf13038 )
+ROM_END
+
+ROM_START( kram_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "ks14-1",       0xA000, 0x1000, 0xfe69ac79 )
+    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
+    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
+    ROM_LOAD( "ks17",         0xD000, 0x1000, 0xc752a3a1 )
+    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
+    ROM_LOAD( "ks19-1",       0xF000, 0x1000, 0x759ea6ce )
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
+    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
+    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
+    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "ks27",         0xf800, 0x0800, 0xc46530c8 )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
+ROM_END
+
+ROM_START( kram2_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+    ROM_LOAD( "ks14",         0xA000, 0x1000, 0xa2eac1ff )
+    ROM_LOAD( "ks15",         0xB000, 0x1000, 0x4b2c175e )
+    ROM_LOAD( "ks16",         0xC000, 0x1000, 0x9500a05d )
+    ROM_LOAD( "ks17",         0xD000, 0x1000, 0xc752a3a1 )
+    ROM_LOAD( "ks18",         0xE000, 0x1000, 0x79158b03 )
+    ROM_LOAD( "ks19",         0xF000, 0x1000, 0x053c5e09 )
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+    ROM_LOAD( "ks5",          0x0A000, 0x1000, 0x1c472080 )
+    ROM_LOAD( "ks6",          0x0B000, 0x1000, 0xb8926622 )
+    ROM_LOAD( "ks7",          0x0C000, 0x1000, 0xc98a7485 )
+    ROM_LOAD( "ks8",          0x0D000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "ks9",          0x0E000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "ks10",         0x0F000, 0x1000, 0xe0426444 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+    ROM_LOAD( "ks27",         0xf800, 0x0800, 0xc46530c8 )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "ks101.dat",    0x0000, 0x0800, 0xe53d97b7 )
 ROM_END
 
 ROM_START( zookeep_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
-	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
-	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
-	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
-	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
-	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
-	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
-	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
-
-	ROM_REGION(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
+	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
+	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
+	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )
+	ROM_LOAD( "za16",         0xC000, 0x1000, 0xccfc15bc )
+	ROM_LOAD( "za17",         0xD000, 0x1000, 0x358013f4 )
+	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
+	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-	ROM_LOAD(  "ZA5", 0x0A000, 0x1000, 0x05e61772 )
-	ROM_LOAD(  "ZA3", 0x10000, 0x1000, 0x8f54bbe8 )
-	ROM_LOAD(  "ZA6", 0x0B000, 0x1000, 0x3b0092ac )
-	ROM_LOAD(  "ZA4", 0x11000, 0x1000, 0x8979a0b3 )
+	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
+	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
+	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
+	ROM_LOAD( "za4",          0x11000, 0x1000, 0xec3b10b1 )
 
-	ROM_LOAD(  "ZA7", 0x0C000, 0x1000, 0xe01d57bd )
-	ROM_LOAD(  "ZA8", 0x0D000, 0x1000, 0x62a73b67 )
-	ROM_LOAD(  "ZA9", 0x0E000, 0x1000, 0x7feb3005 )
-	ROM_LOAD( "ZA10", 0x0F000, 0x1000, 0x0729e957 )
+	ROM_LOAD( "za7",          0x0C000, 0x1000, 0x1479f480 )
+	ROM_LOAD( "za8",          0x0D000, 0x1000, 0x4c96cdb2 )
+	ROM_LOAD( "za9",          0x0E000, 0x1000, 0xa4f7d9e0 )
+	ROM_LOAD( "za10",         0x0F000, 0x1000, 0x05df1a5a )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
-	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
-	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
+	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
+	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
-ROM_START( zookeepa_rom )
+ROM_START( zookeep2_rom )
 	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
-	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
-	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
-	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
-	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
-	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
-	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
-	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
-	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
-
-	ROM_REGION(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
+	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
+	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
+	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )
+	ROM_LOAD( "za16",         0xC000, 0x1000, 0xccfc15bc )
+	ROM_LOAD( "za17",         0xD000, 0x1000, 0x358013f4 )
+	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
+	ROM_LOAD( "za19.red",     0xF000, 0x1000, 0xec01760e )
 
 	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
-	ROM_LOAD( "ZA5",     0x0A000, 0x1000, 0x05e61772 )
-	ROM_LOAD( "ZA3",     0x10000, 0x1000, 0x8f54bbe8 )
-	ROM_LOAD( "ZA6",     0x0B000, 0x1000, 0x3b0092ac )
-	ROM_LOAD( "ZA4",     0x11000, 0x1000, 0x8979a0b3 )
+	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
+	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
+	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
+	ROM_LOAD( "za4",          0x11000, 0x1000, 0xec3b10b1 )
 
-	ROM_LOAD( "ZA7",     0x0C000, 0x1000, 0xe01d57bd )
-	ROM_LOAD( "ZA8",     0x0D000, 0x1000, 0x62a73b67 )
-	ROM_LOAD( "ZV35.9",  0x0E000, 0x1000, 0xb3b4499a )
-	ROM_LOAD( "ZV36.10", 0x0F000, 0x1000, 0x46f9a17d )
+	ROM_LOAD( "za7",          0x0C000, 0x1000, 0x1479f480 )
+	ROM_LOAD( "za8",          0x0D000, 0x1000, 0x4c96cdb2 )
+	ROM_LOAD( "za9",          0x0E000, 0x1000, 0xa4f7d9e0 )
+	ROM_LOAD( "za10",         0x0F000, 0x1000, 0x05df1a5a )
 
 	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
-	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
-	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
-	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
+	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
+	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
 ROM_END
 
+ROM_START( zookeep3_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "za12",         0x8000, 0x1000, 0x4e40d8dc )
+	ROM_LOAD( "za13",         0x9000, 0x1000, 0xeebd5248 )
+	ROM_LOAD( "za14",         0xA000, 0x1000, 0xfab43297 )
+	ROM_LOAD( "za15",         0xB000, 0x1000, 0xef8cd67c )
+	ROM_LOAD( "za16",         0xC000, 0x1000, 0xccfc15bc )
+	ROM_LOAD( "za17",         0xD000, 0x1000, 0x358013f4 )
+	ROM_LOAD( "za18",         0xE000, 0x1000, 0x37886afe )
+	ROM_LOAD( "za19",         0xF000, 0x1000, 0xbbfb30d9 )
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_LOAD( "za5",          0x0A000, 0x1000, 0xdc0c3cbd )
+	ROM_LOAD( "za3",          0x10000, 0x1000, 0xcc4d0aee )
+	ROM_LOAD( "za6",          0x0B000, 0x1000, 0x27c787dd )
+	ROM_LOAD( "za4",          0x11000, 0x1000, 0xec3b10b1 )
+
+	ROM_LOAD( "za7",          0x0C000, 0x1000, 0x1479f480 )
+	ROM_LOAD( "za8",          0x0D000, 0x1000, 0x4c96cdb2 )
+	ROM_LOAD( "zv35.9",       0x0E000, 0x1000, 0xd14123b7 )
+	ROM_LOAD( "zv36.10",      0x0F000, 0x1000, 0x23705777 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "za25",         0xD000, 0x1000, 0x779b8558 )
+	ROM_LOAD( "za26",         0xE000, 0x1000, 0x60a810ce )
+	ROM_LOAD( "za27",         0xF000, 0x1000, 0x99ed424e )
+
+	ROM_REGION(0x0800)	/* 2k for the 68705 microcontroller */
+	ROM_LOAD( "za_coin.bin",  0x0000, 0x0800, 0x364d3557 )
+ROM_END
 
 
 /* Loads high scores and all other CMOS settings */
@@ -763,19 +1121,72 @@ struct GameDriver qix_driver =
 	__FILE__,
 	0,
 	"qix",
-	"Qix",
+	"Qix (set 1)",
 	"1981",
-	"Taito America",
+	"Taito America Corporation",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	qix_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */
 
-	input_ports,
+	qix_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver qixa_driver =
+{
+	__FILE__,
+	&qix_driver,
+	"qixa",
+	"Qix (set 2)",
+	"1981",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	qixa_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	qix_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver qixb_driver =
+{
+	__FILE__,
+	&qix_driver,
+	"qixb",
+	"Qix (set 3)",
+	"1981",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	qixb_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	qix_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -790,17 +1201,18 @@ struct GameDriver qix2_driver =
 	"qix2",
 	"Qix II (Tournament)",
 	"1981",
-	"Taito America",
+	"Taito America Corporation",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	qix2_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */
 
-	input_ports,
+	qix_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -815,10 +1227,11 @@ struct GameDriver sdungeon_driver =
 	"sdungeon",
 	"Space Dungeon",
 	"1981",
-	"Taito America",
+	"Taito America Corporation",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
 	0,
-	&machine_driver,
+	&mcu_machine_driver,
+	0,
 
 	sdungeon_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -833,6 +1246,110 @@ struct GameDriver sdungeon_driver =
 	hiload, hisave	       /* High score load and save */
 };
 
+struct GameDriver elecyoyo_driver =
+{
+	__FILE__,
+	0,
+	"elecyoyo",
+	"The Electric Yo-Yo (set 1)",
+	"1982",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
+	0,
+	&mcu_machine_driver,
+	0,
+
+	elecyoyo_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	elecyoyo_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver elecyoy2_driver =
+{
+	__FILE__,
+	&elecyoyo_driver,
+	"elecyoy2",
+	"The Electric Yo-Yo (set 2)",
+	"1982",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
+	0,
+	&mcu_machine_driver,
+	0,
+
+	elecyoy2_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	elecyoyo_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver kram_driver =
+{
+	__FILE__,
+	0,
+	"kram",
+	"Kram (set 1)",
+	"1982",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles",
+	0,
+	&mcu_machine_driver,
+	0,
+
+	kram_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	kram_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver kram2_driver =
+{
+	__FILE__,
+	&kram_driver,
+	"kram2",
+	"Kram (set 2)",
+	"1982",
+	"Taito America Corporation",
+	"John Butler\nEd Mueller\nAaron Giles",
+	0,
+	&mcu_machine_driver,
+	0,
+
+	kram2_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+	kram_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave	       /* High score load and save */
+};
+
 struct GameDriver zookeep_driver =
 {
 	__FILE__,
@@ -840,10 +1357,11 @@ struct GameDriver zookeep_driver =
 	"zookeep",
 	"Zoo Keeper (set 1)",
 	"1982",
-	"Taito America",
+	"Taito America Corporation",
 	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
 	&zoo_machine_driver,
+	0,
 
     zookeep_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -858,19 +1376,47 @@ struct GameDriver zookeep_driver =
 	hiload,hisave		/* High score load and save */
 };
 
-struct GameDriver zookeepa_driver =
+struct GameDriver zookeep2_driver =
 {
 	__FILE__,
 	&zookeep_driver,
-	"zookeepa",
+	"zookeep2",
 	"Zoo Keeper (set 2)",
 	"1982",
-	"Taito America",
+	"Taito America Corporation",
 	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
 	&zoo_machine_driver,
+	0,
 
-    zookeepa_rom,
+    zookeep2_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+    zoo_input_ports,
+
+    0, 0, 0,   			/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave		/* High score load and save */
+};
+
+
+struct GameDriver zookeep3_driver =
+{
+	__FILE__,
+	&zookeep_driver,
+	"zookeep3",
+	"Zoo Keeper (set 3)",
+	"1982",
+	"Taito America Corporation",
+	"John Butler\nEd. Mueller\nAaron Giles",
+	0,
+	&zoo_machine_driver,
+	0,
+
+    zookeep3_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,		/* sound_prom */

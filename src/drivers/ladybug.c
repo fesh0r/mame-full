@@ -49,11 +49,11 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x8000, 0x8fff, MRA_NOP },
 	{ 0x9000, 0x9000, input_port_0_r },	/* IN0 */
+	{ 0x9001, 0x9001, input_port_1_r },	/* IN1 */
 	{ 0x9002, 0x9002, input_port_3_r },	/* DSW0 */
 	{ 0x9003, 0x9003, input_port_4_r },	/* DSW1 */
 	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
@@ -123,66 +123,64 @@ INPUT_PORTS_START( ladybug_input_ports )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names" )
 	PORT_DIPSETTING(    0x00, "3 Letters" )
 	PORT_DIPSETTING(    0x04, "10 Letters" )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
-	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x50 all give 1 Coin/1 Credit */
 
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
 	/* Coin Right an IRQ. This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( snapjack_input_ports )
@@ -216,24 +214,24 @@ INPUT_PORTS_START( snapjack_input_ports )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names" )
 	PORT_DIPSETTING(    0x00, "3 Letters" )
 	PORT_DIPSETTING(    0x04, "10 Letters" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x00, "unused1?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "unused2?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, "unused1?" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "unused2?" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0xc0, "3" )
 	PORT_DIPSETTING(    0x80, "4" )
@@ -241,43 +239,41 @@ INPUT_PORTS_START( snapjack_input_ports )
 
 	PORT_START	/* DSW1 */
 	/* coinage is slightly different from Lady Bug and Cosmic Avenger */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x05, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "3 Coins/2 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x04 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x50, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x70, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x60, "3 Coins/2 Credits" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPSETTING(    0x50, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x90, "2 Coins/2 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x04 all give 1 Coin/1 Credit */
 
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
 	/* Coin Right an IRQ. This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( cavenger_input_ports )
@@ -311,64 +307,62 @@ INPUT_PORTS_START( cavenger_input_ports )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, "High Score Names", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, "High Score Names" )
 	PORT_DIPSETTING(    0x00, "3 Letters" )
 	PORT_DIPSETTING(    0x04, "10 Letters" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
-	PORT_DIPNAME( 0x30, 0x00, "Initial High Score", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x30, 0x00, "Initial High Score" )
 	PORT_DIPSETTING(    0x00, "0" )
 	PORT_DIPSETTING(    0x30, "5000" )
 	PORT_DIPSETTING(    0x20, "8000" )
 	PORT_DIPSETTING(    0x10, "10000" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0xc0, "3" )
 	PORT_DIPSETTING(    0x80, "4" )
 	PORT_DIPSETTING(    0x40, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	/* settings 0x00 thru 0x50 all give 1 Coin/1 Credit */
 
 	PORT_START	/* FAKE */
 	/* The coin slots are not memory mapped. Coin Left causes a NMI, */
 	/* Coin Right an IRQ. This fake input port is used by the interrupt */
-	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* handler to be notified of coin insertions. We use IMPULSE to */
 	/* trigger exactly one interrupt, without having to check when the */
 	/* user releases the key. */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
-			"Coin Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
-			"Coin Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
 
@@ -415,43 +409,11 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char ladybug_color_prom[] =
-{
-	/* palette */
-	0xF5,0x90,0x41,0x54,0x94,0x11,0x80,0x65,0x05,0xD4,0x01,0x00,0xB1,0xA0,0x00,0xF5,
-	0x04,0xB1,0x00,0x15,0x11,0x25,0x90,0xD0,0xA0,0x90,0x15,0x84,0xB5,0x04,0x04,0x04,
-	/* sprite color lookup table */
-	0x00,0x59,0x33,0xB8,0x00,0xD4,0xA3,0x8D,0x00,0x2C,0x63,0xDD,0x00,0x22,0x38,0x1D,
-	0x00,0x93,0x3A,0xDD,0x00,0xE2,0x38,0xDD,0x00,0x82,0x3A,0xD8,0x00,0x22,0x68,0x1D
-};
-
-static unsigned char snapjack_color_prom[] =
-{
-	/* palette */
-	0xF5,0x05,0x54,0xC1,0xC4,0x94,0x84,0x24,0xD0,0x90,0xA1,0x00,0x31,0x50,0x25,0xF5,
-	0x90,0x31,0x05,0x25,0x05,0x94,0x30,0x41,0x05,0x94,0x61,0x30,0x94,0x50,0x05,0xA5,
-	/* sprite color lookup table */
-	0x00,0x9D,0x11,0xB8,0x00,0x79,0x62,0x18,0x00,0x9E,0x25,0xDA,0x00,0xD7,0xA3,0x79,
-	0x00,0xDE,0x29,0x74,0x00,0xD4,0x75,0x9D,0x00,0xAD,0x86,0x97,0x00,0x5A,0x4C,0x17
-};
-
-static unsigned char cavenger_color_prom[] =
-{
-	/* palette */
-	0xF5,0xC4,0xD0,0xB1,0xD4,0x90,0x45,0x44,0x00,0x54,0x91,0x94,0x25,0x21,0x65,0xF5,
-	0x21,0x00,0x25,0xD0,0xB1,0x90,0xD4,0xD4,0x25,0xB1,0xC4,0x90,0x65,0xD4,0x00,0x00,
-	/* sprite color lookup table */
-	0x00,0x78,0xA3,0xB5,0x00,0x8C,0x79,0x64,0x00,0xC3,0xEE,0xDD,0x00,0x3C,0xA2,0x4A,
-	0x00,0x87,0xBA,0xDE,0x00,0x2A,0xAE,0xBB,0x00,0x8C,0xC2,0xB7,0x00,0xAC,0xE2,0x1D
-};
-
-
-
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	4000000,	/* 4 MHz */
-	{ 255, 255 }
+	{ 4000000, 4000000 },	/* 4 MHz */
+	{ 100, 100 }
 };
 
 
@@ -504,50 +466,86 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ladybug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "lb1.cpu", 0x0000, 0x1000, 0x00e5eaaf )
-	ROM_LOAD( "lb2.cpu", 0x1000, 0x1000, 0x758e9c98 )
-	ROM_LOAD( "lb3.cpu", 0x2000, 0x1000, 0x4295ccd7 )
-	ROM_LOAD( "lb4.cpu", 0x3000, 0x1000, 0xad30c2b6 )
-	ROM_LOAD( "lb5.cpu", 0x4000, 0x1000, 0xc4da41d6 )
-	ROM_LOAD( "lb6.cpu", 0x5000, 0x1000, 0x18aaf1ec )
+	ROM_LOAD( "lb1.cpu",      0x0000, 0x1000, 0xd09e0adb )
+	ROM_LOAD( "lb2.cpu",      0x1000, 0x1000, 0x88bc4a0a )
+	ROM_LOAD( "lb3.cpu",      0x2000, 0x1000, 0x53e9efce )
+	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, 0xffc424d7 )
+	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
+	ROM_LOAD( "lb6.cpu",      0x5000, 0x1000, 0xcf1acca4 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "lb9.vid",  0x0000, 0x1000, 0x80bd96ef )
-	ROM_LOAD( "lb10.vid", 0x1000, 0x1000, 0xec7c93c8 )
-	ROM_LOAD( "lb8.cpu",  0x2000, 0x1000, 0x2d4d4821 )
-	ROM_LOAD( "lb7.cpu",  0x3000, 0x1000, 0xf685434d )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
+	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
+	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
+
+	ROM_REGION(0x0060)	/* color proms */
+	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
+	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
+	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
+ROM_END
+
+ROM_START( ladybugb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "lb1a.cpu",     0x0000, 0x1000, 0xec135e54 )
+	ROM_LOAD( "lb2a.cpu",     0x1000, 0x1000, 0x3049c5c6 )
+	ROM_LOAD( "lb3a.cpu",     0x2000, 0x1000, 0xb0fef837 )
+	ROM_LOAD( "lb4.cpu",      0x3000, 0x1000, 0xffc424d7 )
+	ROM_LOAD( "lb5.cpu",      0x4000, 0x1000, 0xad6af809 )
+	ROM_LOAD( "lb6a.cpu",     0x5000, 0x1000, 0x88c8002a )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lb9.vid",      0x0000, 0x1000, 0x77b1da1e )
+	ROM_LOAD( "lb10.vid",     0x1000, 0x1000, 0xaa82e00b )
+	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
+	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
+
+	ROM_REGION(0x0060)	/* color proms */
+	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
+	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
+	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( snapjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sj2a.bin", 0x0000, 0x1000, 0x37ef057b )
-	ROM_LOAD( "sj2b.bin", 0x1000, 0x1000, 0x5f6a17c6 )
-	ROM_LOAD( "sj2c.bin", 0x2000, 0x1000, 0x3cf098fc )
-	ROM_LOAD( "sj2d.bin", 0x3000, 0x1000, 0x06fa91f2 )
-	ROM_LOAD( "sj2e.bin", 0x4000, 0x1000, 0x135d2527 )
-	ROM_LOAD( "sj2f.bin", 0x5000, 0x1000, 0x734f0213 )
+	ROM_LOAD( "sj2a.bin",     0x0000, 0x1000, 0x6b30fcda )
+	ROM_LOAD( "sj2b.bin",     0x1000, 0x1000, 0x1f1088d1 )
+	ROM_LOAD( "sj2c.bin",     0x2000, 0x1000, 0xedd65f3a )
+	ROM_LOAD( "sj2d.bin",     0x3000, 0x1000, 0xf4481192 )
+	ROM_LOAD( "sj2e.bin",     0x4000, 0x1000, 0x1bff7d05 )
+	ROM_LOAD( "sj2f.bin",     0x5000, 0x1000, 0x21793edf )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "sj2i.bin", 0x0000, 0x1000, 0xffa6a2ec )
-	ROM_LOAD( "sj2j.bin", 0x1000, 0x1000, 0x2506c6f0 )
-	ROM_LOAD( "sj2h.bin", 0x2000, 0x1000, 0xdd2fa07f )
-	ROM_LOAD( "sj2g.bin", 0x3000, 0x1000, 0x888dec19 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sj2i.bin",     0x0000, 0x1000, 0xff2011c7 )
+	ROM_LOAD( "sj2j.bin",     0x1000, 0x1000, 0xf097babb )
+	ROM_LOAD( "sj2h.bin",     0x2000, 0x1000, 0xb7f105b6 )
+	ROM_LOAD( "sj2g.bin",     0x3000, 0x1000, 0x1cdb03a8 )
+
+	ROM_REGION(0x0060)	/* color proms */
+	ROM_LOAD( "sj8t.bin",     0x0000, 0x0020, 0xcbbd9dd1 ) /* palette */
+	ROM_LOAD( "sj9k.bin",     0x0020, 0x0020, 0x5b16fbd2 ) /* sprite color lookup table */
+	ROM_LOAD( "sj9h.bin",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 ROM_START( cavenger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "1", 0x0000, 0x1000, 0x8851691b )
-	ROM_LOAD( "2", 0x1000, 0x1000, 0xfc637e8b )
-	ROM_LOAD( "3", 0x2000, 0x1000, 0x46fcdaba )
-	ROM_LOAD( "4", 0x3000, 0x1000, 0xbc747536 )
-	ROM_LOAD( "5", 0x4000, 0x1000, 0x25f39d9f )
-	ROM_LOAD( "6", 0x5000, 0x1000, 0x38961b88 )
+	ROM_LOAD( "1",            0x0000, 0x1000, 0x9e0cc781 )
+	ROM_LOAD( "2",            0x1000, 0x1000, 0x5ce5b950 )
+	ROM_LOAD( "3",            0x2000, 0x1000, 0xbc28218d )
+	ROM_LOAD( "4",            0x3000, 0x1000, 0x2b32e9f5 )
+	ROM_LOAD( "5",            0x4000, 0x1000, 0xd117153e )
+	ROM_LOAD( "6",            0x5000, 0x1000, 0xc7d366cb )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "9", 0x0000, 0x1000, 0x6522fd1a )
-	ROM_LOAD( "0", 0x1000, 0x1000, 0x6132e3d8 )
-	ROM_LOAD( "8", 0x2000, 0x1000, 0x366d7ec1 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "9",            0x0000, 0x1000, 0x63357785 )
+	ROM_LOAD( "0",            0x1000, 0x1000, 0x52ad1133 )
+	ROM_LOAD( "8",            0x2000, 0x1000, 0xb022bf2d )
 /*	ROM_LOAD( "7", 0x3000, 0x1000, 0x )	empty socket */
+
+	ROM_REGION(0x0060)	/* color proms */
+	ROM_LOAD( "t8.bpr",       0x0000, 0x0020, 0x42a24dd5 ) /* palette */
+	ROM_LOAD( "k9.bpr",       0x0020, 0x0020, 0xd736b8de ) /* sprite color lookup table */
+	ROM_LOAD( "h9.bpr",       0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
 ROM_END
 
 
@@ -559,7 +557,7 @@ static int ladybug_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
-			memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
+	    memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
 	{
 		void *f;
 
@@ -600,15 +598,15 @@ static int cavenger_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x6025],"\x01\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
+	if ((memcmp(&RAM[0x6025],"\x00\x00\x00",3) == 0) &&
+	    (memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0x6025],0x41);
+			osd_fread(f,&RAM[0x6025],65);
 			osd_fclose(f);
 		}
 
@@ -627,7 +625,7 @@ static void cavenger_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x6025],0x41);
+		osd_fwrite(f,&RAM[0x6025],65);
 		osd_fclose(f);
 	}
 
@@ -639,16 +637,16 @@ static int snapjack_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x6A94],"\x01\x00\x00",3) == 0) &&
-		(memcmp(&RAM[0x6AA0],"\x01\x00\x00\x1E",4) == 0) &&
-		(memcmp(&RAM[0x6AD2],"\x0A\x15\x24",3) == 0))
+	if ((memcmp(&RAM[0x6A94],"\x01\x00\x00",3) == 0) &&
+	    (memcmp(&RAM[0x6AA0],"\x01\x00\x00\x1E",4) == 0) &&
+	    (memcmp(&RAM[0x6AD2],"\x0A\x15\x24",3) == 0))
 	{
 		void *f;
 
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0x6A94],0x41);
+			osd_fread(f,&RAM[0x6A94],0x41);
 			osd_fclose(f);
 		}
 
@@ -667,7 +665,7 @@ static void snapjack_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x6A94],0x41);
+		osd_fwrite(f,&RAM[0x6A94],0x41);
 		osd_fclose(f);
 	}
 
@@ -686,6 +684,7 @@ struct GameDriver ladybug_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	ladybug_rom,
 	0, 0,
@@ -694,7 +693,33 @@ struct GameDriver ladybug_driver =
 
 	ladybug_input_ports,
 
-	ladybug_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	ladybug_hiload, ladybug_hisave
+};
+
+struct GameDriver ladybugb_driver =
+{
+	__FILE__,
+	&ladybug_driver,
+	"ladybugb",
+	"Lady Bug (bootleg)",
+	"1982",
+	"bootleg",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+	ladybugb_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	ladybug_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ladybug_hiload, ladybug_hisave
@@ -708,9 +733,10 @@ struct GameDriver snapjack_driver =
 	"Snap Jack",
 	"1981?",
 	"Universal",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	snapjack_rom,
 	0, 0,
@@ -719,7 +745,7 @@ struct GameDriver snapjack_driver =
 
 	snapjack_input_ports,
 
-	snapjack_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	snapjack_hiload, snapjack_hisave
@@ -733,9 +759,10 @@ struct GameDriver cavenger_driver =
 	"Cosmic Avenger",
 	"1981",
 	"Universal",
-	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	cavenger_rom,
 	0, 0,
@@ -744,7 +771,7 @@ struct GameDriver cavenger_driver =
 
 	cavenger_input_ports,
 
-	cavenger_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cavenger_hiload, cavenger_hisave

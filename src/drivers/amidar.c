@@ -54,9 +54,11 @@ interrupt mode 1 triggered by the main CPU
 
 
 
+extern unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void amidar_updatehook00(int offset);
-void amidar_updatehook01(int offset);
+void amidar_flipx_w(int offset,int data);
+void amidar_flipy_w(int offset,int data);
+void amidar_attributes_w(int offset,int data);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int scramble_portB_r(int offset);
@@ -92,13 +94,13 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram00_w, &videoram00 },
-	{ 0x9800, 0x983f, videoram01_w, &videoram01 },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0xa010, 0xa010, MWA_RAM, &flip_screen_x },
-	{ 0xa018, 0xa018, MWA_RAM, &flip_screen_y },
+	{ 0xa010, 0xa010, amidar_flipx_w },
+	{ 0xa018, 0xa018, amidar_flipy_w },
 	{ 0xa030, 0xa030, amidar_coina_w },
 	{ 0xa038, 0xa038, amidar_coinb_w },
 	{ 0xb800, 0xb800, soundlatch_w },
@@ -119,8 +121,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
-{ 0x9000, 0x9000, MWA_NOP },
-{ 0x9080, 0x9080, MWA_NOP },
+//	{ 0x9000, 0x9000, MWA_NOP },
+//	{ 0x9080, 0x9080, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -156,11 +158,11 @@ INPUT_PORTS_START( amidar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "255" )
+	PORT_BITX (0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -170,58 +172,139 @@ INPUT_PORTS_START( amidar_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000 70000" )
 	PORT_DIPSETTING(    0x04, "50000 80000" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x08, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x20, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x80, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0xe0, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "Disable All Coins" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( amidaro_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x02, 0x00, "Level Progression" )
+	PORT_DIPSETTING(    0x00, "Slow" )
+	PORT_DIPSETTING(    0x02, "Fast" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30000 70000" )
+	PORT_DIPSETTING(    0x04, "50000 80000" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "Disable All Coins" )
 INPUT_PORTS_END
 
@@ -238,11 +321,11 @@ INPUT_PORTS_START( amidarjp_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_DIPSETTING(    0x00, "255" )
+	PORT_BITX (0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "255", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -252,62 +335,62 @@ INPUT_PORTS_START( amidarjp_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000 50000" )
 	PORT_DIPSETTING(    0x04, "50000 50000" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x08, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x0e, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x20, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x80, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0xe0, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x50, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "Disable All Coins" )
 INPUT_PORTS_END
 
-/* similar to Amidar, dip swtiches are different and port 3, which in Amidar */
+/* similar to Amidar, dip switches are different and port 3, which in Amidar */
 /* selects coins per credit, is not used. */
 INPUT_PORTS_START( turtles_input_ports )
 	PORT_START	/* IN0 */
@@ -321,11 +404,11 @@ INPUT_PORTS_START( turtles_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
-	PORT_DIPSETTING(    0x03, "126" )
+	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -335,22 +418,22 @@ INPUT_PORTS_START( turtles_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
 	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
 	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* same as Turtles, but dip switches are different. */
@@ -366,11 +449,11 @@ INPUT_PORTS_START( turpin_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "6" )
-	PORT_DIPSETTING(    0x03, "126" )
+	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
@@ -380,26 +463,81 @@ INPUT_PORTS_START( turpin_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+/* similar to Turtles, lives are different */
+INPUT_PORTS_START( k600_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* IN1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_BITX (0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "126", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
+	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
+	PORT_DIPSETTING(    0x04, "A 1/3 B 3/1 C 1/3" )
+	PORT_DIPSETTING(    0x06, "A 1/4 B 4/1 C 1/4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
 
+static struct GfxLayout charlayout =
+{
+	8,8,	/* 8*8 characters */
+	256,	/* 256 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -415,39 +553,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
+	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
-};
-
-
-
-static struct GfxTileLayout tilelayout =
-{
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
-{
-	{ 1, 0x0000, &tilelayout, 0, 8, 0 },
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		32*8,32*8,
-		gfxtiledecodeinfo,
-		0,
-		amidar_updatehook00,amidar_updatehook01,0,0
-	}
 };
 
 
@@ -456,7 +564,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	14318000/8,	/* 1.78975 Mhz */
-	{ 0x30ff, 0x30ff },
+	{ 30, 30 },
+	{ 0x30, 0x30 },		/* gain */
 	{ soundlatch_r },
 	{ scramble_portB_r },
 	{ 0 },
@@ -479,7 +588,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318000/8,	/* 1.78975 Mhz */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -495,7 +604,7 @@ static struct MachineDriver machine_driver =
 	amidar_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	machine_layers,
+	0,
 	generic_vh_start,
 	generic_vh_stop,
 	amidar_vh_screenrefresh,
@@ -520,102 +629,141 @@ static struct MachineDriver machine_driver =
 
 ROM_START( amidar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "amidarus.2c", 0x0000, 0x1000, 0xd04355e9 )
-	ROM_LOAD( "amidarus.2e", 0x1000, 0x1000, 0xaaf3b9f9 )
-	ROM_LOAD( "amidarus.2f", 0x2000, 0x1000, 0x65dbb08f )
-	ROM_LOAD( "amidarus.2h", 0x3000, 0x1000, 0x42647e74 )
-	ROM_LOAD( "amidarus.2j", 0x4000, 0x1000, 0x80994cd9 )
+	ROM_LOAD( "amidarus.2c",  0x0000, 0x1000, 0x951e0792 )
+	ROM_LOAD( "amidarus.2e",  0x1000, 0x1000, 0xa1a3a136 )
+	ROM_LOAD( "amidarus.2f",  0x2000, 0x1000, 0xa5121bf5 )
+	ROM_LOAD( "amidarus.2h",  0x3000, 0x1000, 0x051d1c7f )
+	ROM_LOAD( "amidarus.2j",  0x4000, 0x1000, 0x351f00d5 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800, 0xa114cb34 )
-	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800, 0x0d1cafd2 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
+	ROM_LOAD( "amidarus.5h",  0x0800, 0x0800, 0x57c4fd0d )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "amidarus.5c", 0x0000, 0x1000, 0x2fd961f7 )
-	ROM_LOAD( "amidarus.5d", 0x1000, 0x1000, 0xfa4bd265 )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
+ROM_END
+
+ROM_START( amidaro_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "107.2cd",      0x0000, 0x1000, 0xc52536be )
+	ROM_LOAD( "108.2fg",      0x1000, 0x1000, 0x38538b98 )
+	ROM_LOAD( "109.2fg",      0x2000, 0x1000, 0x69907f0f )
+	ROM_LOAD( "110.2h",       0x3000, 0x1000, 0xba149a93 )
+	ROM_LOAD( "111.2j",       0x4000, 0x1000, 0x20d01c2e )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "amidarus.5f",  0x0000, 0x0800, 0x2cfe5ede )
+	ROM_LOAD( "113.5h",       0x0800, 0x0800, 0xbcdce168 )  /* The letter 'S' is slightly different */
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( amidarjp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "amidar.2c", 0x0000, 0x1000, 0x061cf902 )
-	ROM_LOAD( "amidar.2e", 0x1000, 0x1000, 0x68948086 )
-	ROM_LOAD( "amidar.2f", 0x2000, 0x1000, 0x89747538 )
-	ROM_LOAD( "amidar.2h", 0x3000, 0x1000, 0xa1bc1266 )
+	ROM_LOAD( "amidar.2c",    0x0000, 0x1000, 0xc294bf27 )
+	ROM_LOAD( "amidar.2e",    0x1000, 0x1000, 0xe6e96826 )
+	ROM_LOAD( "amidar.2f",    0x2000, 0x1000, 0x3656be6f )
+	ROM_LOAD( "amidar.2h",    0x3000, 0x1000, 0x1be170bd )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "amidar.5f", 0x0000, 0x0800, 0x1e31bc69 )
-	ROM_LOAD( "amidar.5h", 0x0800, 0x0800, 0x8b6560db )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "amidar.5f",    0x0000, 0x0800, 0x5e51e84d )
+	ROM_LOAD( "amidar.5h",    0x0800, 0x0800, 0x2f7f1c30 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "amidar.5c", 0x0000, 0x1000, 0xcdfaa8be )
-	ROM_LOAD( "amidar.5d", 0x1000, 0x1000, 0xc84cdcfc )
+	ROM_LOAD( "amidar.5c",    0x0000, 0x1000, 0xc4b66ae4 )
+	ROM_LOAD( "amidar.5d",    0x1000, 0x1000, 0x806785af )
 ROM_END
 
 ROM_START( amigo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2732.a1", 0x0000, 0x1000, 0x43d647a4 )
-	ROM_LOAD( "2732.a2", 0x1000, 0x1000, 0x3f1c500a )
-	ROM_LOAD( "2732.a3", 0x2000, 0x1000, 0xa698c12c )
-	ROM_LOAD( "2732.a4", 0x3000, 0x1000, 0x3c6d621d )
+	ROM_LOAD( "2732.a1",      0x0000, 0x1000, 0x930dc856 )
+	ROM_LOAD( "2732.a2",      0x1000, 0x1000, 0x66282ff5 )
+	ROM_LOAD( "2732.a3",      0x2000, 0x1000, 0xe9d3dc76 )
+	ROM_LOAD( "2732.a4",      0x3000, 0x1000, 0x4a4086c9 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "2716.a6", 0x0000, 0x0800, 0xe09ed6c8 )
-	ROM_LOAD( "2716.a5", 0x0800, 0x0800, 0x3355a22f )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "2716.a6",      0x0000, 0x0800, 0x2082ad0a )
+	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "2732.a7", 0x0000, 0x1000, 0x2fd961f7 )
-	ROM_LOAD( "2732.a8", 0x1000, 0x1000, 0xfa4bd265 )
+	ROM_LOAD( "amidarus.5c",  0x0000, 0x1000, 0x8ca7b750 )
+	ROM_LOAD( "amidarus.5d",  0x1000, 0x1000, 0x9b5bdc0a )
 ROM_END
 
 ROM_START( turtles_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "turt_vid.2c", 0x0000, 0x1000, 0xd64b683b )
-	ROM_LOAD( "turt_vid.2e", 0x1000, 0x1000, 0x694c07b6 )
-	ROM_LOAD( "turt_vid.2f", 0x2000, 0x1000, 0x07385210 )
-	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000, 0xb71c1118 )
-	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000, 0x2f33ea7b )
+	ROM_LOAD( "turt_vid.2c",  0x0000, 0x1000, 0xec5e61fb )
+	ROM_LOAD( "turt_vid.2e",  0x1000, 0x1000, 0xfd10821e )
+	ROM_LOAD( "turt_vid.2f",  0x2000, 0x1000, 0xddcfc5fa )
+	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
+	ROM_LOAD( "turt_vid.2j",  0x4000, 0x1000, 0xfcd49fef )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
-	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
+	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
-	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
 ROM_START( turpin_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M1",          0x0000, 0x1000, 0x805f1577 )
-	ROM_LOAD( "M2",          0x1000, 0x1000, 0x694f9789 )
-	ROM_LOAD( "M3",          0x2000, 0x1000, 0x1b08134e )
-	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000, 0xb71c1118 )
-	ROM_LOAD( "M5",          0x4000, 0x1000, 0x112be471 )
+	ROM_LOAD( "m1",           0x0000, 0x1000, 0x89177473 )
+	ROM_LOAD( "m2",           0x1000, 0x1000, 0x4c6ca5c6 )
+	ROM_LOAD( "m3",           0x2000, 0x1000, 0x62291652 )
+	ROM_LOAD( "turt_vid.2h",  0x3000, 0x1000, 0x9e71696c )
+	ROM_LOAD( "m5",           0x4000, 0x1000, 0x7d2600f2 )
 
-	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "turt_vid.5h", 0x0000, 0x0800, 0x077a3a46 )
-	ROM_LOAD( "turt_vid.5f", 0x0800, 0x0800, 0xd1107d84 )
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "turt_vid.5h",  0x0000, 0x0800, 0xe5999d52 )
+	ROM_LOAD( "turt_vid.5f",  0x0800, 0x0800, 0xc3ffd655 )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000, 0x90ecc748 )
-	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000, 0xad8bffad )
+	ROM_LOAD( "turt_snd.5c",  0x0000, 0x1000, 0xf0c30f9a )
+	ROM_LOAD( "turt_snd.5d",  0x1000, 0x1000, 0xaf5fc43c )
 ROM_END
 
+ROM_START( k600_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "600_vid.2c",   0x0000, 0x1000, 0x8ee090ae )
+	ROM_LOAD( "600_vid.2e",   0x1000, 0x1000, 0x45bfaff2 )
+	ROM_LOAD( "600_vid.2f",   0x2000, 0x1000, 0x9f4c8ed7 )
+	ROM_LOAD( "600_vid.2h",   0x3000, 0x1000, 0xa92ef056 )
+	ROM_LOAD( "600_vid.2j",   0x4000, 0x1000, 0x6dadd72d )
 
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "600_vid.5h",   0x0000, 0x0800, 0x006c3d56 )
+	ROM_LOAD( "600_vid.5f",   0x0800, 0x0800, 0x7dbc0426 )
 
-static unsigned char amidar_color_prom[] =
-{
-	/* palette */
-	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
-	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
-};
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "turtles.clr",  0x0000, 0x0020, 0xf3ef02dd )
 
-static unsigned char turtles_color_prom[] =
-{
-	/* palette */
-	0x00,0xC0,0x57,0xFF,0x00,0x66,0xF2,0xFE,0x00,0x2D,0x12,0xBF,0x00,0x2F,0x7D,0xB8,
-	0x00,0x72,0xD2,0x06,0x00,0x94,0xFF,0xE8,0x00,0x54,0x2F,0xF6,0x00,0x24,0xBF,0xC6
-};
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "600_snd.5c",   0x0000, 0x1000, 0x1773c68e )
+	ROM_LOAD( "600_snd.5d",   0x1000, 0x1000, 0xa311b998 )
+ROM_END
 
 
 
@@ -718,37 +866,13 @@ struct GameDriver amidar_driver =
 	__FILE__,
 	0,
 	"amidar",
-	"Amidar (US)",
-	"1982",
-	"Konami (Stern license)",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
-	0,
-	&machine_driver,
-
-	amidar_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	amidar_input_ports,
-
-	amidar_color_prom, 0, 0,
-	ORIENTATION_ROTATE_90,
-
-	amidar_hiload, amidar_hisave
-};
-
-struct GameDriver amidarjp_driver =
-{
-	__FILE__,
-	&amidar_driver,
-	"amidarjp",
-	"Amidar (Japan)",
+	"Amidar",
 	"1981",
 	"Konami",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	amidarjp_rom,
 	0, 0,
@@ -757,7 +881,59 @@ struct GameDriver amidarjp_driver =
 
 	amidarjp_input_ports,
 
-	amidar_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	amidar_hiload, amidar_hisave
+};
+
+struct GameDriver amidaru_driver =
+{
+	__FILE__,
+	&amidar_driver,
+	"amidaru",
+	"Amidar (Stern)",
+	"1982",
+	"Konami (Stern license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	amidar_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	amidar_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	amidar_hiload, amidar_hisave
+};
+
+struct GameDriver amidaro_driver =
+{
+	__FILE__,
+	&amidar_driver,
+	"amidaro",
+	"Amidar (Olympia)",
+	"1982",
+	"Konami (Olympia license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	amidaro_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	amidaro_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
@@ -771,9 +947,10 @@ struct GameDriver amigo_driver =
 	"Amigo",
 	"1982",
 	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nDavid Winter (game driver)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	amigo_rom,
 	0, 0,
@@ -782,7 +959,7 @@ struct GameDriver amigo_driver =
 
 	amidar_input_ports,
 
-	amidar_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	amidar_hiload, amidar_hisave
@@ -795,10 +972,11 @@ struct GameDriver turtles_driver =
 	"turtles",
 	"Turtles",
 	"1981",
-	"Stern",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
+	"[Konami] (Stern license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	turtles_rom,
 	0, 0,
@@ -807,7 +985,7 @@ struct GameDriver turtles_driver =
 
 	turtles_input_ports,
 
-	turtles_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	turtles_hiload, amidar_hisave
@@ -820,10 +998,11 @@ struct GameDriver turpin_driver =
 	"turpin",
 	"Turpin",
 	"1981",
-	"Sega",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
+	"[Konami] (Sega license)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	turpin_rom,
 	0, 0,
@@ -832,7 +1011,33 @@ struct GameDriver turpin_driver =
 
 	turpin_input_ports,
 
-	turtles_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	turtles_hiload, amidar_hisave
+};
+
+struct GameDriver k600_driver =
+{
+	__FILE__,
+	&turtles_driver,
+	"600",
+	"600",
+	"1981",
+	"Konami",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	k600_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	k600_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	turtles_hiload, amidar_hisave

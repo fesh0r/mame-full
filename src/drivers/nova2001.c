@@ -81,20 +81,20 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
     PORT_START
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
     PORT_START    /* player 2 controls */
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
+    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
     PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -111,53 +111,51 @@ INPUT_PORTS_START( input_ports )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 
     PORT_START  /* dsw0 */
-    PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Upright" )
-    PORT_DIPSETTING(    0x01, "Cocktail" )
-    PORT_DIPNAME( 0x02, 0x02, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0x02, "3" )
     PORT_DIPSETTING(    0x00, "4" )
-    PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x04, "1st Bonus Life" )
     PORT_DIPSETTING(    0x04, "20000" )
     PORT_DIPSETTING(    0x00, "30000" )
-    PORT_DIPNAME( 0x18, 0x18, "Extra Bonus Life", IP_KEY_NONE )
+    PORT_DIPNAME( 0x18, 0x18, "Extra Bonus Life" )
     PORT_DIPSETTING(    0x18, "60000" )
     PORT_DIPSETTING(    0x10, "70000" )
     PORT_DIPSETTING(    0x08, "90000" )
     PORT_DIPSETTING(    0x00, "None" )
-    PORT_DIPNAME( 0x60, 0x60, "Coinage", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
-    PORT_DIPSETTING(    0x60, "1 Coin/1 Credit" )
+    PORT_DIPNAME( 0x60, 0x60, DEF_STR( Coinage ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+    PORT_DIPSETTING(    0x60, DEF_STR( 1C_1C ) )
     PORT_DIPSETTING(    0x00, "2 Coins/2 Credits" )
-    PORT_DIPSETTING(    0x20, "1 Coin/2 Credits" )
-    PORT_DIPNAME( 0x80, 0x80, "Free Play", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x80, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+    PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
     PORT_START  /* dsw1 */
-    PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x00, "Easy" )
     PORT_DIPSETTING(    0x03, "Medium" )
     PORT_DIPSETTING(    0x02, "Hard" )
     PORT_DIPSETTING(    0x01, "Hardest" )
-    PORT_DIPNAME( 0x04, 0x00, "Demo Sounds", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x04, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "High Score Names", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "High Score Names" )
 	PORT_DIPSETTING(    0x00, "3 Letters" )
 	PORT_DIPSETTING(    0x08, "8 Letters" )
-    PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x10, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x20, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-    PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x40, "Off" )
-    PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -201,7 +199,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1200000,	/* 1.2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0, input_port_3_r },
 	{ 0, input_port_4_r },
 	{ nova2001_scroll_x_w }, /* writes are connected to pf scroll */
@@ -247,20 +246,20 @@ static struct MachineDriver machine_driver =
 
 ROM_START( nova2001_rom )
 	ROM_REGION(0x10000)
-	ROM_LOAD( "nova2001.1", 0x0000, 0x2000, 0xbef2eb06 )
-	ROM_LOAD( "nova2001.2", 0x2000, 0x2000, 0xc6c0e464 )
-	ROM_LOAD( "nova2001.3", 0x4000, 0x2000, 0x0b3acdac )
-	ROM_LOAD( "nova2001.4", 0x6000, 0x1000, 0x49a5f67d )
+	ROM_LOAD( "nova2001.1",   0x0000, 0x2000, 0xb79461bd )
+	ROM_LOAD( "nova2001.2",   0x2000, 0x2000, 0xfab87144 )
+	ROM_LOAD( "nova2001.3",   0x4000, 0x2000, 0xb2849038 )
+	ROM_LOAD( "nova2001.4",   0x6000, 0x1000, 0x6b5bb12d )
 	ROM_RELOAD(             0x7000, 0x1000 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "nova2001.5", 0x0000, 0x2000, 0x9cee7550 )
-	ROM_LOAD( "nova2001.6", 0x2000, 0x2000, 0x81dc834e )
-	ROM_LOAD( "nova2001.7", 0x4000, 0x2000, 0xeb669c62 )
-	ROM_LOAD( "nova2001.8", 0x6000, 0x2000, 0xe3583068 )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "nova2001.5",   0x0000, 0x2000, 0x8ea576e8 )
+	ROM_LOAD( "nova2001.6",   0x2000, 0x2000, 0x0c61656c )
+	ROM_LOAD( "nova2001.7",   0x4000, 0x2000, 0x9ebd8806 )
+	ROM_LOAD( "nova2001.8",   0x6000, 0x2000, 0xd1b18389 )
 
 	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0x0bfceca4 )
+	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
 ROM_END
 
 
@@ -315,6 +314,7 @@ struct GameDriver nova2001_driver =
 	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
 	0,
 	&machine_driver,
+	0,
 
 	nova2001_rom,
 	0,0,

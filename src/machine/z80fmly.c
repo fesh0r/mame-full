@@ -19,7 +19,7 @@ pending:
 #include <stdio.h>
 #include "driver.h"
 #include "z80fmly.h"
-#include "timer.h"
+#include "cpu/z80/z80.h"
 
 typedef struct
 {
@@ -91,9 +91,9 @@ void z80ctc_init (z80ctc_interface *intf)
 
 	for (i = 0; i < intf->num; i++)
 	{
-		ctcs[i].clock = intf->clock[i];
-		ctcs[i].invclock16 = 16.0 / (double)intf->clock[i];
-		ctcs[i].invclock256 = 256.0 / (double)intf->clock[i];
+		ctcs[i].clock = intf->baseclock[i];
+		ctcs[i].invclock16 = 16.0 / (double)intf->baseclock[i];
+		ctcs[i].invclock256 = 256.0 / (double)intf->baseclock[i];
 		ctcs[i].notimer = intf->notimer[i];
 		ctcs[i].intr = intf->intr[i];
 		ctcs[i].zc[0] = intf->zc0[i];
@@ -158,6 +158,8 @@ void z80ctc_reset (int which)
 	{
 		ctc->mode[i] = RESET_ACTIVE;
 		ctc->tconst[i] = 0x100;
+		if (ctc->timer[i])
+			timer_remove (ctc->timer[i]);
 		ctc->timer[i] = NULL;
 		ctc->int_state[i] = 0;
 	}

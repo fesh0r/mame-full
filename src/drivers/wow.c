@@ -10,6 +10,10 @@
    03/04 98 - Extra Bases driver 				ATJ
 	      Wow word driver
 
+   09/20/98 - Added Emulated Sound Support		FMP
+
+ TODO: support stereo sound in Gorf (and maybe others)
+
  ****************************************************************************
  * To make it easier to differentiate between each machine's settings
  * I have split it into a separate section for each driver.
@@ -112,14 +116,12 @@ static struct IOWritePort writeport[] =
 	{ 0x0d, 0x0d, interrupt_vector_w },
 	{ 0x0e, 0x0e, wow_interrupt_enable_w },
 	{ 0x0f, 0x0f, wow_interrupt_w },
-	{ 0x10, 0x17, MWA_NOP }, /* Frequency modulation for lines to sound channel left. */
-	{ 0x18, 0x18, MWA_NOP }, /* WOW Sound Channel Left */
+	{ 0x10, 0x18, astrocade_sound1_w },
 	{ 0x19, 0x19, wow_magic_expand_color_w },
-	{ 0x50, 0x57, MWA_NOP }, /* Frequency modulation for lines to sound channel right */
-	{ 0x58, 0x58, MWA_NOP }, /* WOW Sound Channel Right */
+	{ 0x50, 0x58, astrocade_sound2_w },
 	{ 0x5b, 0x5b, MWA_NOP }, /* speech board ? Wow always sets this to a5*/
 	{ 0x78, 0x7e, wow_pattern_board_w },
-//	{ 0xf8, 0xff, MWA_NOP }, /* Gorf uses these */
+/*	{ 0xf8, 0xff, MWA_NOP }, */ /* Gorf uses these */
 	{ -1 }	/* end of table */
 };
 
@@ -398,39 +400,39 @@ static unsigned short colortable[] =
 
 ROM_START( wow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0x222baf9b )
-	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0xccb3fafb )
-	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0xe4a6665e )
-	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xf3659d69 )
-	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0xda26e8d8 )
-	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x550a3720 )
-	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0x0ef6502c )
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000, 0xc1295786 )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000, 0x9be93215 )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000, 0x75e5a22e )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000, 0xef28eb84 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000, 0x16912c2b )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000, 0x35797f82 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000, 0xce404305 )
 /*	ROM_LOAD( "wow.x8", 0xc000, 0x1000, ? )	here would go the foreign language ROM */
 ROM_END
 
 static const char *wow_sample_names[] =
 {
 	"*wow",
-	"a.sam", "again.sam", "ahh.sam", "am.sam", "and.sam",
-	"anew.sam", "another.sam", "any.sam", "anyone.sam", "appear.sam", "are.sam", "are.sam", "babies.sam", "back.sam",
-	"beat.sam", "become.sam", "best.sam", "better.sam", "bite.sam", "bones.sam", "breath.sam", "but.sam", "can.sam", "cant.sam",
-	"chance.sam", "chest.sam", "coin.sam", "dance.sam", "destroy.sam",
-	"develop.sam", "do.sam", "dont.sam", "doom.sam", "door.sam", "draw.sam", "dungeon.sam", "dungeons.sam",
-	"each.sam", "eaten.sam", "escape.sam", "explode.sam", "fear.sam", "find.sam", "find.sam", "fire.sam", "for.sam", "from.sam",
-	"garwor.sam", "get.sam", "get.sam", "get.sam", "getting.sam", "good.sam", "hahahaha.sam", "harder.sam",
-	"hasnt.sam", "have.sam", "heavyw.sam", "hey.sam", "hope.sam",
-	"hungry.sam", "hungry.sam", "hurry.sam", "i.sam", "i.sam", "if.sam", "if.sam", "im.sam", "i1.sam", "ill.sam", "in.sam",
-	"insert.sam", "invisibl.sam", "it.sam", "lie.sam", "magic.sam",
-	"magical.sam", "me.sam", "meet.sam", "months.sam",
-	"my.sam", "my.sam", "my.sam", "my.sam", "my.sam", "myself.sam", "near.sam", "never.sam",
-	"now.sam", "of.sam", "off.sam", "one.sam", "only.sam", "oven.sam", "pause.sam", "pets.sam", "powerful.sam", "pop.sam",
-	"radar.sam", "ready.sam",
-	"rest.sam", "say.sam", "science.sam", "see.sam", "spause.sam", "start.sam", "the.sam", "the.sam", "the.sam", "the.sam", "then.sam",
-	"through.sam", "thurwor.sam", "time.sam", "to.sam", "to.sam", "to.sam", "treasure.sam", "try.sam", "very.sam", "wait.sam",
-	"war.sam", "warrior.sam", "watch.sam", "we.sam", "welcome.sam",
-	"were.sam", "while.sam", "will.sam", "with.sam", "wizard.sam", "wont.sam",
-	"wor.sam", "world.sam", "worlings.sam", "worlock.sam",
-	"you.sam", "you.sam", "you.sam", "you.sam", "you.sam", "youl.sam", "youl.sam", "youd.sam", "your.sam",0
+	"a.wav", "again.wav", "ahh.wav", "am.wav", "and.wav",
+	"anew.wav", "another.wav", "any.wav", "anyone.wav", "appear.wav", "are.wav", "are.wav", "babies.wav", "back.wav",
+	"beat.wav", "become.wav", "best.wav", "better.wav", "bite.wav", "bones.wav", "breath.wav", "but.wav", "can.wav", "cant.wav",
+	"chance.wav", "chest.wav", "coin.wav", "dance.wav", "destroy.wav",
+	"develop.wav", "do.wav", "dont.wav", "doom.wav", "door.wav", "draw.wav", "dungeon.wav", "dungeons.wav",
+	"each.wav", "eaten.wav", "escape.wav", "explode.wav", "fear.wav", "find.wav", "find.wav", "fire.wav", "for.wav", "from.wav",
+	"garwor.wav", "get.wav", "get.wav", "get.wav", "getting.wav", "good.wav", "hahahaha.wav", "harder.wav",
+	"hasnt.wav", "have.wav", "heavyw.wav", "hey.wav", "hope.wav",
+	"hungry.wav", "hungry.wav", "hurry.wav", "i.wav", "i.wav", "if.wav", "if.wav", "im.wav", "i1.wav", "ill.wav", "in.wav",
+	"insert.wav", "invisibl.wav", "it.wav", "lie.wav", "magic.wav",
+	"magical.wav", "me.wav", "meet.wav", "months.wav",
+	"my.wav", "my.wav", "my.wav", "my.wav", "my.wav", "myself.wav", "near.wav", "never.wav",
+	"now.wav", "of.wav", "off.wav", "one.wav", "only.wav", "oven.wav", "pause.wav", "pets.wav", "powerful.wav", "pop.wav",
+	"radar.wav", "ready.wav",
+	"rest.wav", "say.wav", "science.wav", "see.wav", "spause.wav", "start.wav", "the.wav", "the.wav", "the.wav", "the.wav", "then.wav",
+	"through.wav", "thurwor.wav", "time.wav", "to.wav", "to.wav", "to.wav", "treasure.wav", "try.wav", "very.wav", "wait.wav",
+	"war.wav", "warrior.wav", "watch.wav", "we.wav", "welcome.wav",
+	"were.wav", "while.wav", "will.wav", "with.wav", "wizard.wav", "wont.wav",
+	"wor.wav", "world.wav", "worlings.wav", "worlock.wav",
+	"you.wav", "you.wav", "you.wav", "you.wav", "you.wav", "youl.wav", "youl.wav", "youd.wav", "your.wav",0
 };
 
 INPUT_PORTS_START( wow_input_ports )
@@ -438,15 +440,13 @@ INPUT_PORTS_START( wow_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
@@ -469,34 +469,49 @@ INPUT_PORTS_START( wow_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* speech status */
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x01, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x06, 0x06, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x08, 0x08, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x08, 0x08, "Language" )
 	PORT_DIPSETTING(    0x08, "English" )
 	PORT_DIPSETTING(    0x00, "Foreign (NEED ROM)" )
-	PORT_DIPNAME( 0x10, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x10, "2 / 5" )
 	PORT_DIPSETTING(    0x00, "3 / 7" )
-	PORT_DIPNAME( 0x20, 0x20, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "3rd Level" )
 	PORT_DIPSETTING(    0x00, "4th Level" )
-	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct Samplesinterface wow_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
+};
+
+static struct astrocade_interface astrocade_2chip_interface =
+{
+	2,			/* Number of chips */
+	1789773,	/* Clock speed */
+	{255,255}			/* Volume */
+};
+
+static struct astrocade_interface astrocade_1chip_interface =
+{
+	1,			/* Number of chips */
+	1789773,	/* Clock speed */
+	{255}			/* Volume */
 };
 
 static struct MachineDriver wow_machine_driver =
@@ -505,10 +520,10 @@ static struct MachineDriver wow_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			wow_interrupt,224
+			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -531,11 +546,15 @@ static struct MachineDriver wow_machine_driver =
 	0,             				/* Initialise audio hardware */
 	wow_sh_start,   			/* Start audio  */
 	wow_sh_stop,     			/* Stop audio   */
-	wow_sh_update,                          /* Update audio */
+	wow_sh_update,              /* Update audio */
 	{
 		{
 			SOUND_SAMPLES,
 			&wow_samples_interface
+		},
+		{
+			SOUND_ASTROCADE,
+			&astrocade_2chip_interface
 		}
  	}
 };
@@ -588,9 +607,10 @@ struct GameDriver wow_driver =
 	"Wizard of Wor",
 	"1980",
 	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (sound programming)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nKevin Estep (samples)\nAlex Judd (sound programming)\nFrank Palazzolo",
 	0,
 	&wow_machine_driver,
+	0,
 
 	wow_rom,
 	0, 0,
@@ -611,16 +631,16 @@ struct GameDriver wow_driver =
 
 ROM_START( robby_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0x90debdc2 )
-	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0xfa125fb2 )
-	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0x88e6e5bc )
-	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0x111241ea )
-	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x3b7e01f0 )
-	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x478421ee )
-	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0xf9ac77a0 )
-	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x799f8a3d )
-  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0xaa9f62f5 )
-	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0x55a239fa )
+	ROM_LOAD( "rotox1.bin",  0x0000, 0x1000, 0xa431b85a )
+	ROM_LOAD( "rotox2.bin",  0x1000, 0x1000, 0x33cdda83 )
+	ROM_LOAD( "rotox3.bin",  0x2000, 0x1000, 0xdbf97491 )
+	ROM_LOAD( "rotox4.bin",  0x3000, 0x1000, 0xa3b90ac8 )
+	ROM_LOAD( "rotox5.bin",  0x8000, 0x1000, 0x46ae8a94 )
+	ROM_LOAD( "rotox6.bin",  0x9000, 0x1000, 0x7916b730 )
+	ROM_LOAD( "rotox7.bin",  0xa000, 0x1000, 0x276dc4a5 )
+	ROM_LOAD( "rotox8.bin",  0xb000, 0x1000, 0x1ef13457 )
+  	ROM_LOAD( "rotox9.bin",  0xc000, 0x1000, 0x370352bf )
+	ROM_LOAD( "rotox10.bin", 0xd000, 0x1000, 0xe762cbda )
 ROM_END
 
 static struct MemoryReadAddress robby_readmem[] =
@@ -647,9 +667,7 @@ INPUT_PORTS_START( robby_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -674,30 +692,30 @@ INPUT_PORTS_START( robby_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 INPUT_PORTS_END
 
@@ -707,10 +725,10 @@ static struct MachineDriver robby_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
 			robby_readmem,robby_writemem,readport,writeport,
-			wow_interrupt,224
+			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -718,7 +736,7 @@ static struct MachineDriver robby_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 204, { 1, 320-1, 0, 204-1 },
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -733,7 +751,13 @@ static struct MachineDriver robby_machine_driver =
 	0,
 	0,
 	0,
-	0
+	0,
+	{
+		{
+			SOUND_ASTROCADE,
+			&astrocade_2chip_interface
+		}
+	}
 };
 
 static int robby_hiload(void)
@@ -785,9 +809,10 @@ struct GameDriver robby_driver =
 	"Robby Roto",
 	"1981",
 	"Bally Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nMike Balfour (high score save)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nFrank Palazzolo",
 	0,
 	&robby_machine_driver,
+	0,
 
 	robby_rom,
 	0, 0,
@@ -808,51 +833,58 @@ struct GameDriver robby_driver =
 
 ROM_START( gorf_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x4dbb1c41 )
-	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0xed7b0427 )
-	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0xe101f49b )
-	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0xd12d3e47 )
-	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x07ab966d )
-	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7d14e9b )
-	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x0ddd505f )
-	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0x5e488f10 )
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000, 0x5b348321 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000, 0x62d6de77 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000, 0x1d3bc9c9 )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000, 0x70046e56 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000, 0x2d456eb5 )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000, 0xf7e4e155 )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000, 0x4e2bd9b9 )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000, 0xfe7b863d )
 ROM_END
 
 ROM_START( gorfpgm1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "873A", 0x0000, 0x1000, 0x0502e112 )
-	ROM_LOAD( "873B", 0x1000, 0x1000, 0x0583aa5b )
-	ROM_LOAD( "873C", 0x2000, 0x1000, 0x59d14edf )
-	ROM_LOAD( "873D", 0x3000, 0x1000, 0xab70013a )
-	ROM_LOAD( "873E", 0x8000, 0x1000, 0x249b4863 )
-	ROM_LOAD( "873F", 0x9000, 0x1000, 0x1bc8e906 )
-	ROM_LOAD( "873G", 0xa000, 0x1000, 0x22c5c02b )
-	ROM_LOAD( "873H", 0xb000, 0x1000, 0xc8318449 )
+	ROM_LOAD( "873a", 0x0000, 0x1000, 0x97cb4a6a )
+	ROM_LOAD( "873b", 0x1000, 0x1000, 0x257236f8 )
+	ROM_LOAD( "873c", 0x2000, 0x1000, 0x16b0638b )
+	ROM_LOAD( "873d", 0x3000, 0x1000, 0xb5e821dc )
+	ROM_LOAD( "873e", 0x8000, 0x1000, 0x8e82804b )
+	ROM_LOAD( "873f", 0x9000, 0x1000, 0x715fb4d9 )
+	ROM_LOAD( "873g", 0xa000, 0x1000, 0x8a066456 )
+	ROM_LOAD( "873h", 0xb000, 0x1000, 0x56d40c7c )
 ROM_END
 
 /* Here's the same words in English : Missing bite, dust, conquer, another, galaxy, try, again, devour, attack, power */
 
 static const char *gorf_sample_names[] =
 {
- "*gorf","a.sam","a.sam","again.sam","am.sam","am.sam","and.sam","anhilatn.sam","another.sam","another.sam",
- "are.sam","are.sam","attack.sam","avenger.sam","bad.sam","bad.sam","be.sam",
- "been.sam","bite.sam","but.sam","button.sam","cadet.sam",
- "cannot.sam","captain.sam","chronicl.sam","coin.sam","coins.sam","colonel.sam",
- "conquer.sam","consciou.sam","defender.sam","destroy.sam","destroyd.sam","devour.sam",
- "doom.sam","draws.sam","dust.sam","empire.sam","end.sam",
- "enemy.sam","escape.sam","flagship.sam","for.sam","galactic.sam",
- "galaxy.sam","general.sam","gorf.sam","gorphian.sam","gorphian.sam","gorphins.sam",
- "got.sam","hahahahu.sam","hahaher.sam","harder.sam","have.sam",
- "hitting.sam","i.sam","i.sam","impossib.sam","in.sam","insert.sam",
- "is.sam","live.sam","long.sam","meet.sam","move.sam",
- "my.sam","near.sam","next.sam","nice.sam","no.sam",
- "now.sam","pause.sam","power.sam","player.sam","prepare.sam","prisonrs.sam",
- "promoted.sam","push.sam","robot.sam","robots.sam","seek.sam",
- "ship.sam","shot.sam","some.sam","space.sam","spause.sam",
- "survival.sam","take.sam","the.sam","the.sam","time.sam",
- "to.sam","try.sam","unbeatab.sam","warrior.sam","warriors.sam","will.sam",
- "you.sam","you.sam","you.sam","you.sam","your.sam","yourself.sam",
- "s.sam",
+ "*gorf","a.wav","a.wav","again.wav","am.wav","am.wav","and.wav","anhilatn.wav",
+ "another.wav","another.wav","are.wav","are.wav",
+ "avenger.wav","bad.wav","bad.wav","be.wav",
+ "been.wav","but.wav","button.wav","cadet.wav",
+ "cannot.wav","captain.wav","chronicl.wav","coin.wav","coins.wav","colonel.wav",
+ "consciou.wav","defender.wav","destroy.wav","destroyd.wav",
+ "doom.wav","draws.wav","empire.wav","end.wav",
+ "enemy.wav","escape.wav","flagship.wav","for.wav","galactic.wav",
+ "general.wav","gorf.wav","gorphian.wav","gorphian.wav","gorphins.wav",
+ "hahahahu.wav","hahaher.wav","harder.wav","have.wav",
+ "hitting.wav","i.wav","i.wav","impossib.wav","in.wav","insert.wav",
+ "is.wav","live.wav","long.wav","meet.wav","move.wav",
+ "my.wav","my.wav",
+ "near.wav","next.wav","nice.wav","no.wav",
+ "now.wav","pause.wav","player.wav","prepare.wav","prisonrs.wav",
+ "promoted.wav","push.wav","robot.wav","robots.wav","robots.wav",
+ "seek.wav","ship.wav","shot.wav","some.wav","space.wav","spause.wav",
+ "survival.wav","take.wav","the.wav","the.wav","the.wav","time.wav",
+ "to.wav","to.wav","unbeatab.wav",
+ "warrior.wav","warriors.wav","will.wav",
+ "you.wav","you.wav","you.wav","you.wav","your.wav","your.wav","yourself.wav",
+ "s.wav","for.wav","for.wav","will.wav","Gorph.wav",
+// Missing Samples
+ "coin.wav", "attack.wav","bite.wav","conquer.wav","devour.wav","dust.wav",
+ "galaxy.wav","got.wav","power.wav","try.wav","supreme.wav","all.wav",
+ "hail.wav","emperor.wav",
  0
 } ;
 
@@ -885,15 +917,13 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* IN1 */
@@ -917,34 +947,35 @@ INPUT_PORTS_START( gorf_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* speech status */
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x01, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x06, 0x06, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x08, 0x08, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x08, 0x08, "Language" )
 	PORT_DIPSETTING(    0x08, "English" )
 	PORT_DIPSETTING(    0x00, "Foreign (NEED ROM)" )
-	PORT_DIPNAME( 0x10, 0x00, "Lives per Credit", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, "Lives per Credit" )
 	PORT_DIPSETTING(    0x10, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPNAME( 0x20, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "Mission 5" )
 	PORT_DIPSETTING(    0x20, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct Samplesinterface gorf_samples_interface =
 {
-	8	/* 8 channels */
+	8,	/* 8 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver gorf_machine_driver =
@@ -953,7 +984,7 @@ static struct MachineDriver gorf_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
 			Gorf_readmem,writemem,Gorf_readport,writeport,		/* ASG */
 			gorf_interrupt,256
@@ -966,7 +997,8 @@ static struct MachineDriver gorf_machine_driver =
 	/* video hardware */
 	/* it may look like the right hand side of the screen needs clipping, but */
 	/* this isn't the case: cocktail mode would be clipped on the wrong side */
-	204, 320, { 0, 204-1, 0, 320-1 },
+
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -986,6 +1018,10 @@ static struct MachineDriver gorf_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&gorf_samples_interface
+		},
+		{
+			SOUND_ASTROCADE,
+			&astrocade_2chip_interface
 		}
 	}
 };
@@ -1036,9 +1072,10 @@ struct GameDriver gorf_driver =
     "Gorf",
 	"1981",
 	"Midway",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\n",
+    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
 	&gorf_machine_driver,
+	0,
 
 	gorf_rom,
 	0, 0,
@@ -1048,7 +1085,7 @@ struct GameDriver gorf_driver =
 	gorf_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
 };
@@ -1061,9 +1098,10 @@ struct GameDriver gorfpgm1_driver =
     "Gorf (Program 1)",
 	"1981",
 	"Midway",
-    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\n",
+    "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
 	&gorf_machine_driver,
+	0,
 
 	gorfpgm1_rom,
 	0, 0,
@@ -1073,7 +1111,7 @@ struct GameDriver gorfpgm1_driver =
 	gorf_input_ports,
 
 	0, palette, colortable,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	gorf_hiload, gorf_hisave
 };
@@ -1084,10 +1122,10 @@ struct GameDriver gorfpgm1_driver =
 
 ROM_START( spacezap_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xaf642ac8 )
-	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x0cb6228e )
-	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0x2986a6d6 )
-	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0xb3037b39 )
+	ROM_LOAD( "0662.01", 0x0000, 0x1000, 0xa92de312 )
+	ROM_LOAD( "0663.xx", 0x1000, 0x1000, 0x4836ebf1 )
+	ROM_LOAD( "0664.xx", 0x2000, 0x1000, 0xd8193a80 )
+	ROM_LOAD( "0665.xx", 0x3000, 0x1000, 0x3784228d )
 ROM_END
 
 INPUT_PORTS_START( spacezap_input_ports )
@@ -1097,9 +1135,7 @@ INPUT_PORTS_START( spacezap_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BITX(    0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1118,29 +1154,29 @@ INPUT_PORTS_START( spacezap_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x01, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x06, 0x06, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 static struct MachineDriver spacezap_machine_driver =
@@ -1149,10 +1185,10 @@ static struct MachineDriver spacezap_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
 			readmem,writemem,readport,writeport,
-			wow_interrupt,204
+			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1175,7 +1211,13 @@ static struct MachineDriver spacezap_machine_driver =
 	0,
 	0,
 	0,
-	0
+	0,
+	{
+		{
+				SOUND_ASTROCADE,
+				&astrocade_2chip_interface
+		}
+	}
 };
 
 static int spacezap_hiload(void)
@@ -1226,9 +1268,10 @@ struct GameDriver spacezap_driver =
 	"Space Zap",
 	"1980",
 	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
 	0,
 	&spacezap_machine_driver,
+	0,
 
 	spacezap_rom,
 	0, 0,
@@ -1249,10 +1292,10 @@ struct GameDriver spacezap_driver =
 
 ROM_START( seawolf2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0x8a11d667 )
-	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0x1d7d50a1 )
-	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x60364550 )
-	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0xd28a15b2 )
+	ROM_LOAD( "sw2x1.bin", 0x0000, 0x0800, 0xad0103f6 )
+	ROM_LOAD( "sw2x2.bin", 0x0800, 0x0800, 0xe0430f0a )
+	ROM_LOAD( "sw2x3.bin", 0x1000, 0x0800, 0x05ad1619 )
+	ROM_LOAD( "sw2x4.bin", 0x1800, 0x0800, 0x1a1a14a2 )
 ROM_END
 
 static struct MemoryReadAddress seawolf2_readmem[] =
@@ -1278,7 +1321,7 @@ INPUT_PORTS_START( seawolf2_input_ports )
 	/* bits 0-5 come from a dial - we fake it */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
-	PORT_DIPNAME( 0x40, 0x00, "Language 1", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Language 1" )
 	PORT_DIPSETTING(    0x00, "Language 2" )
 	PORT_DIPSETTING(    0x40, "French" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -1294,7 +1337,7 @@ INPUT_PORTS_START( seawolf2_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x08, 0x00, "Language 2", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Language 2" )
 	PORT_DIPSETTING(    0x00, "English" )
 	PORT_DIPSETTING(    0x08, "German" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1303,29 +1346,26 @@ INPUT_PORTS_START( seawolf2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x01, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x06, 0x00, "Play Time", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x06, 0x00, "Play Time" )
 	PORT_DIPSETTING(    0x06, "40" )
 	PORT_DIPSETTING(    0x04, "50" )
 	PORT_DIPSETTING(    0x02, "60" )
 	PORT_DIPSETTING(    0x00, "70" )
-	PORT_DIPNAME( 0x08, 0x08, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, "2 Players Game" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x08, "2 Credits" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Screen", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, "Extended Play" )
+	PORT_DIPSETTING(    0x10, "5000" )
+	PORT_DIPSETTING(    0x20, "6000" )
+	PORT_DIPSETTING(    0x30, "7000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x40, 0x40, "Screen" )
 	PORT_DIPSETTING(    0x40, "Colour" )
 	PORT_DIPSETTING(    0x00, "Mono" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -1341,16 +1381,30 @@ static struct IOReadPort seawolf2_readport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct IOWritePort seawolf2_writeport[] =
+{
+	{ 0x00, 0x07, colour_register_w },
+	{ 0x08, 0x08, MWA_NOP }, /* Gorf uses this */
+	{ 0x09, 0x09, colour_split_w },
+	{ 0x0a, 0x0b, MWA_NOP }, /* Gorf uses this */
+	{ 0x0c, 0x0c, wow_magic_control_w },
+	{ 0x0d, 0x0d, interrupt_vector_w },
+	{ 0x0e, 0x0e, wow_interrupt_enable_w },
+	{ 0x0f, 0x0f, wow_interrupt_w },
+	{ 0x19, 0x19, wow_magic_expand_color_w },
+
+	{ -1 }	/* end of table */
+};
 static struct MachineDriver seawolf_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
-			seawolf2_readmem,seawolf2_writemem,seawolf2_readport,writeport,
-			wow_interrupt,230
+			seawolf2_readmem,seawolf2_writemem,seawolf2_readport,seawolf2_writeport,
+			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1358,7 +1412,7 @@ static struct MachineDriver seawolf_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 204, { 1, 320-1, 0, 204-1 },
+	320, 204, { 0, 320-1, 0, 204-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -1373,7 +1427,7 @@ static struct MachineDriver seawolf_machine_driver =
 	0,
 	0,
 	0,
-	0
+	0,
 };
 
 static int seawolf_hiload(void)
@@ -1420,9 +1474,10 @@ struct GameDriver seawolf2_driver =
 	"Sea Wolf II",
 	"1978",
 	"Midway",
-	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
+	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)",
 	0,
 	&seawolf_machine_driver,
+	0,
 
 	seawolf2_rom,
 	0, 0,
@@ -1443,10 +1498,10 @@ struct GameDriver seawolf2_driver =
 
 ROM_START( ebases_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x77a1bb35 )
-	ROM_LOAD( "m761b", 0x1000, 0x1000, 0xeeb409ae )
-	ROM_LOAD( "m761c", 0x2000, 0x1000, 0x5127bc37 )
-	ROM_LOAD( "m761d", 0x3000, 0x1000, 0xce6c3532 )
+	ROM_LOAD( "m761a", 0x0000, 0x1000, 0x34422147 )
+	ROM_LOAD( "m761b", 0x1000, 0x1000, 0x4f28dfd6 )
+	ROM_LOAD( "m761c", 0x2000, 0x1000, 0xbff6c97e )
+	ROM_LOAD( "m761d", 0x3000, 0x1000, 0x5173781a )
 ROM_END
 
 static struct MemoryReadAddress ebases_readmem[] =
@@ -1482,48 +1537,48 @@ INPUT_PORTS_START( ebases_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_DIPNAME( 0x08, 0x08, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x00, "Colour / Mono", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, "Colour / Mono" )
 	PORT_DIPSETTING(    0x00, "Colour" )
 	PORT_DIPSETTING(    0x10, "Mono" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 
 	PORT_START /* Dip Switch */
-	PORT_DIPNAME( 0x01, 0x00, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x08, "2 Credits" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START /* Dip Switch */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1548,10 +1603,10 @@ static struct MachineDriver ebases_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			1789773,	/* 1.789 Mhz */
 			0,
 			ebases_readmem,ebases_writemem,ebases_readport,writeport,
-			wow_interrupt,230
+			wow_interrupt,256
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1559,7 +1614,7 @@ static struct MachineDriver ebases_machine_driver =
 	0,
 
 	/* video hardware */
-	320, 210, { 1, 320-1, 0, 192-1 },
+	320, 210, { 0, 320-1, 0, 192-1 },
 	0,	/* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
 	0,
@@ -1574,7 +1629,13 @@ static struct MachineDriver ebases_machine_driver =
 	0,
 	0,
 	0,
-	0
+	0,
+	{
+		{
+				SOUND_ASTROCADE,
+				&astrocade_1chip_interface
+		}
+	}
 };
 
 struct GameDriver ebases_driver =
@@ -1585,9 +1646,10 @@ struct GameDriver ebases_driver =
 	"Extra Bases",
 	"1980",
 	"Midway",
-	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
+	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nFrank Palazzolo",
 	GAME_NOT_WORKING,
 	&ebases_machine_driver,
+	0,
 
 	ebases_rom,
 	0, 0,

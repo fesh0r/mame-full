@@ -1,5 +1,6 @@
-                    M.E.S.S.  -  Multi-Emulator Super System
-                      Copyright (C) 1998  by the MESS team
+
+              M.A.M.E.  -  Multiple Arcade Machine Emulator
+     Copyright (C) 1997, 1998, 1999  by Nicola Salmoria and the MAME team
 
 Please note that many people helped with this project, either directly or by
 releasing source code which was used to write the drivers. We are not trying to
@@ -31,23 +32,20 @@ I. Purpose
 
 II. Cost
 --------
-   MESS is free. The source code is free. Selling it is not allowed. Charging
-   for the use of MESS is not allowed.
+   MAME is free. The source code is free. Selling it is not allowed.
 
-III. Images
------------
-   You are not allowed to distribute MESS and copyrighted images (including but
-   not limited to ROMs, cartridge images, disk images, and cassette images) on 
-   the same physical medium. You are allowed to make them available for download
-   on the same web site, but only if you warn users about the copyright status of
-   the images and the legal issues involved. You are NOT allowed to make MESS
-   available for download together with one giant big file containing any or all
-   of the supported images, or any files containing multiple non-associated images.
-   You are not allowed to distribute MESS in any form if you sell, advertise or
-   publicize illegal CD-ROMs or other media containing illegal images. Note that
+III. ROM Images
+---------------
+   ROM images are copyrighted material, and most of them cannot be distributed
+   freely. Distribution of MAME on the same physical medium as illegal copies
+   of ROM images is strictly forbidden.
+   You are not allowed to distribute MAME in any form if you sell, advertise or
+   publicize illegal CD-ROMs or other media containing ROM images. Note that
    the restriction applies even if you don't directly make money out of that.
-   The restriction of course does not apply if the CD-ROMs are published by the
-   copyright owners.
+   You are allowed to make ROMs and MAME available for download on the same web
+   site, but only if you warn users about the copyright status of the ROMs and
+   make it clear that they must not download the ROMs unless they are entitled
+   to do so.
 
 IV. Distribution Integrity
 --------------------------
@@ -62,46 +60,66 @@ V. Source Code Distribution
    you can't do that, you must provide a pointer to a place where the source
    can be obtained.
 
-VI. Reuse of Source Code
+V. Distribution Integrity
 -------------------------
-   This chapter might not apply to specific portions of MESS (e.g. CPU
+   This chapter applies to the official MAME distribution. See below for
+   limitations on the distribution of derivative works.
+   MAME must be distributed only in the original archives. You are not allowed
+   to distribute a modified version, nor to remove and/or add files to the
+   archive.
+
+VI. Reuse of Source Code
+--------------------------
+   This chapter might not apply to specific portions of MAME (e.g. CPU
    emulators) which bear different copyright notices.
    The source code cannot be used in a commercial product without a written
    authorization of the authors. Use in non commercial products is allowed and
    indeed encouraged; however if you use portions of the MESS source code in
    your program, you must make the full source code freely available as well.
+   Usage of the _information_ contained in the source code is free for any use.
+   However, given the amount of time and energy it took to collect this
+   information, we would appreciate if you made the additional information you
+   might have freely available as well.
+
+VII. Derivative Works
+---------------------
    Derivative works are allowed (provided source code is available), but
    discouraged: MESS is a project continuously evolving, and you should, in
    your best interest, submit your contributions to the development team, so
-   that they are integrated in the main distribution. Usage of the
-   _information_ contained in the source code is free for any use. However,
-   given the amount of time and energy it took to collect this information, we
-   would appreciate if you made the additional information you might have
-   freely available as well.
-
+   that they are integrated in the main distribution.
+   There are a certain number of drivers in the source which are disabled in
+   the official distribution. Enabling them is NOT considered a derivative
+   work, and distribution of executables with those drivers enabled is strictly
+   forbidden.
 
 
 How to Contact Us
 -----------------
 
-Here are some of the people contributing to MESS. If you have comments,
+The official MAME home page is http://mame.retrogames.com/. You can always
+find the latest release there, including beta versions and information on
+things being worked on. Also, a totally legal and free ROM set of Robby
+Roto is available on the same page.
+
+If you have bugs to report, check the MAME Testing Project at
+http://zan.emuunlim.com/mametesters/
+
+Here are some of the people contributing to MAME. If you have comments,
 suggestions or bug reports about an existing driver, check the driver's Credits
 section to find who has worked on it, and send comments to that person. If you
-are not sure who to contact, write to Brad (bradman@primenet.com) - he is the
-current coordinator of the MESS project. If you have comments specific to a
-given operating system, they should be sent to the respective port maintainer.
-You will find their e-mail address in the "readme.1st" file that comes with MESS.
+are not sure who to contact, write to Nicola. If you have comments specific to
+a system other than DOS (e.g. Mac, Win32, Unix), they should be sent to the
+respective port maintainer (check the documentation to know who he is). DON'T
+SEND THEM TO NICOLA - they will be ignored.
 
-Brad Oliver           bradman@primenet.com (current coordinator)
+Nicola Salmoria    MC6489@mclink.it
 
-Mike Balfour          mab22@po.cwru.edu
-Richard Bannister     titan@indigo.ie
-Juergen Buchmueller   pullmoll@t-online.de
-Gareth Long           gatch@elecslns.demon.co.uk
-Jeff Mitchell         skeezix@skeleton.org
-Frank Palazzolo       palazzol@home.com
-Mathis Rosenhauer     rosenhau@mailserv.sm.go.dlr.de
-Chris Salomon         chrissalo@aol.com
+Mike Balfour       mab22@po.cwru.edu
+Aaron Giles        agiles@sirius.com
+Chris Moore        chris.moore@writeme.com
+Brad Oliver        bradman@pobox.com
+Andrew Scott       ascott@utkux.utcc.utk.edu
+Zsolt Vasvari      vaszs01@banet.net
 
 DON'T SEND BINARY ATTACHMENTS WITHOUT ASKING FIRST, *ESPECIALLY* ROM IMAGES.
 
@@ -111,315 +129,12 @@ targeted at experienced users. We don't have the resources to provide end user
 support. Basically, if you can't get the emulator to work, you are on your own.
 First of all, read the docs carefully. If you still can't find an answer to
 your question, try checking the beginner's sections that many emulation pages
-have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc)
-or on the emulation message boards (e.g. http://www.escape.com/~ego/dave/console/).
+have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
+on the official MAME message board, http://www.macmame.org/wwwboard/mame/.
 
-Also, DO NOT SEND REQUESTS FOR NEW SYSTEMS TO ADD, unless you have some original
-info on the hardware or, even better, have the technical expertise needed to
-help us. Please don't send us information widely available on the Internet -
-we are perfectly capable of finding it ourselves, thank you.
-
-Usage
------
-Please see the "readme.1st" file that comes with the binary - it explains the
-options that are specific to each platform.
-
-
-Supported Systems
------------------
-
-Apple II Family:
-----------------
-Usage:
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for key mappings.
-
-Compatibility:
-	It boots up some disk images if you pick the Apple IIc driver. Others haven't
-	been tested very extensively and probably won't work. This driver is still
-	preliminary.
-	
-	
-Astrocade:
-----------
-	
-	
-Atari 800:
-----------
-Usage:
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for key mappings.
-
-Compatibility:
-	It runs just about anything you throw at it.
-	
-	
-Atari 5200:
------------
-Usage:
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for key mappings.
-
-Compatibility:
-	This driver is preliminary and won't run past the demo screen. Help is needed.
-	
-	
-ColecoVision:
--------------
-Usage:
-	arrow keys - 1p move
-	ctrl, alt - 1p fire
-	1-0 - number keys on the Colecovision controller
-	minus - '#' key on the Colecovision controller
-	equals - '.' key on the Colecovision controller
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for more key mappings.
-
-Compatibility:
-	To the best of my knowledge, this emulation should run any cartridge
-	accurately.
-
-Notes:
-	The Colecovision driver requires the presence of "COLECO.ROM".  The driver
-	will not function without this ROM.  A real Colecovision also will not
-	function without this ROM.
-
-Thanks:
-	Special thanks to Marat Fayzullin for providing loads of Colecovision
-	information through the ColEm source.
-
-
-Colour Genie:
--------------
-Usage:
-	keyboard - relatively close to the original layout.
-	    Take a look into the "Options" menu, accessible by hitting
-	    TAB, and choose "Keyboard Setup" to find out more about
-	    the key mapping - changing is not yet supported.
-	joystick - emulation of dual Colour Genie joysticks with keypads.
-	cassette - emulation of virtual tapes supported.
-	    Use SYSTEM or CLOAD commands to read images.
-	    SYSTEM supports 6 character filenames, CLOAD loads
-	    a file named BASIC[N].CAS, where [N] is the character
-	    you supplied (e.g. CLOAD"M" loads BASICM.CAS)
-	floppies - emulation of virtual floppy discs supported.
-	    Use CMD"I0" to "CMDI3" to get an inventory of drive 0 to 3,
-	    use CMD"S FILENAME/CMD" to start a binary executable or use
-	    LOAD"FILENAME/BAS" to load a basic program.
-
-Options:
-Under the "Options" menu, accessible by hitting TAB, there are three settings.
-	"Floppy Disc Drives"  - enable or disable floppy disc controller.
-	"DOS ROM C000-DFFF"   - enable 8K DOS ROM or make it RAM.
-	"EXT ROM E000-EFFF"   - enable 4K Extension ROM or make it RAM.
-
-Compatibility:
-	The Colour Genie driver should run most of the known programs out there.
-	It supports the Motorola 6845 CRT controller with text and graphics
-	modes (LGR and FGR), the AY-3-8910 sound chip with three audio channels
-	and noise and the WD 179x floppy disc controller with up to four
-	virtual floppy disc drives contained in image files.
-
-Known issues:
-	Startup with CAS or CMD images does not always work. Use the BASIC
-	SYSTEM or CLOAD commands to read cassette image files, or use
-	the Colour Genie DOS ROM with floppy disc images to run programs.
-	The driver does not yet emulate the printer port mode for AY-3-8910.
-	Right now it always uses the AY-3-8910 ports for joystick emulation.
-
-Notes:
-The Colour Genie driver requires the presence of the following images:
-	CGENIE.ROM      16K Basic and BIOS.
-	CGENIE1.FNT     8x8 default character set with graphics.
-To access the virtual floppy disc capabilities you need:
-	CGDOS.ROM       8K Disk Operation System.
-And as an add-on "DOS Interface" you can use:
-	NEWE000.ROM     4K Extension
-
-
-Genesis (MegaDrive in Japan/Europe):
-------------------------------------
-Usage:
-	arrow keys - 1p move
-	control, alt - 1p fire
-	1,2 - 1, 2 player select
-	return - 1p start
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for more key mappings.
-
-Options:
-	Under the "Options" menu, accessible by hitting TAB, you will find the
-	following option:
-
-	"Country" - this allows you to alter the 'flavour' of Genesis, to either European,
-	            Japanese or American. Many cartridges compare their country codes with
-	            that of the Genesis itself and may behave differently, or lock up if the
-	            two types do not match.
-	            'Auto' attempts to auto-set the Genesis country code to the value the
-	            cartridge will appear to be checking for. This may not be 100% accurate,
-	            however.
-
-Compatibility:
-	Most games tend to run fairly well. some with slight graphic glitches, incorrect
-	colours part way down the screen or other b'zarre effects.
-
-	Cartridges up to 32MBit (4MByte) are supported.
-
-	The controller may not work well with some games. This will be resolved when I
-	obtain more information. Similarly, 6-button joypads aren't emulated yet.
-
-	Split screen effects and interlacing are not yet supported.
-
-	Sprite/layer priority should be perfect.
-
-	Sound is emulated at Z80 and PSG76489 level. There is preliminary YM2612 support.
-
-Notes:
-	I still consider the Genesis driver extremely preliminary. I have a lot of further
-	work to do before I consider it anywhere near complete. My initial goal is to make
-	it as compatible as possible. Currently there is scope within the driver to handle
-	split screen colour changes/any VDP effect, interlacing, without rewriting. The
-	graphics renderer emulates VDP at scanline level, and does not use tile-based
-	methods.
-	
-Wanted:
-	Any Sega Megadrive information! Information is extremely sparse; typically the same
-	three-four documents, with parts incomplete, conflicting, and corrupted. Specifically,
-	some of the finer points of DMA transfer, and access of the 68K memory map by the Z80.
-	Generally, points which conflict with themselves in the documentation available on
-	the net...
-
-Thanks:
-	...which I'm thankful for, as there certainly isn't any source available to look at!
-	Thanks to the rest of the MESS team, Terence & Philip and the MAME team, Kevin Lingley
-	for support and ex(p|t)ensive games testing in this driver's ARM code & early forms,
-	and, of course, Stan, Kyle, Eric, Kenny...
-	
-	Please note that no goats were sacrificed during the development of this driver. 
-
-
-Kaypro CP/M:
-------------
-
-
-NES:
-----
-Usage:
-	arrow keys - 1p move
-	control, alt - 1p fire
-	1,2 - 1, 2 player select
-	return - 1p start
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for more key mappings.
-	
-Options:
-	Under the "Options" menu, accessible by hitting TAB, are two settings.
-	"Renderer" - can be set to Scanline or Experimental. The Scanline renderer gives
-	             the most accurate display, but can be slow. The Experimental
-	             option is much faster, but still needs quite a bit of work before it
-	             displays properly in all cases. It's best used for games with no
-	             scrolling playfields, like Donkey Kong, etc.
-	"Split-Screen fix" - defaults to off. Turn it on to see proper split screens in
-	             games like Kirby's Adventure and Airwolf. This will most likely go
-	             away in the future as we figure out how these split screens really work.
-
-Compatibility:
-    The NES driver should run 99% of the ROMs currently out there with very little problem.
-    It doesn't yet support a lot of the obscure mappers used in fwNES, but this is on deck
-    for the next release. For the record, it supports mappers 1, 2, 3, 4, 5 (incomplete),
-    7, 8, 9 & 10 (incomplete), 11, 15, 16, 18 (vrom probs), 25 (vrom probs), 33, 34,
-    64, 65, 66, 68 (incomplete), 69 (incomplete), 71, 78, 79.
-    Some of the mappers > 63 haven't been fully tested yet.
-    
-Notes:
-    The main focus up until this point has been in getting the NES driver as accurate
-    as possible. Unfortunately, the scanline rendering method is quite slow, so future
-    efforts will be focusing on bringing up the speed. Also, the sound code is still a
-    bit shaky. However, the NES driver does have quite accurate sample playback. For example,
-    you can hear speech samples in Bayou Billy, Gauntlet, Dirty Harry, and Skate or Die
-    that are not present in a few other NES emulators.
-    
-Wanted:
-	I'd appreciate any info on some of the more obscure mappers. If you have
-	any of this, please drop me a line at bradman@primenet.com.
-	
-Thanks:
-	Special thanks to Nicolas Hamel for xNES. Also, thanks to Marat Fayzullin, D,
-	Icer Addis, Matt Conte, Arthur Langereis, and John Stiles for tips and moral support during
-	the development of the NES driver. And last but not least, thanks to Jeremy Chadwick
-	and Firebug for their respective NES docs, without which this driver would have taken
-	considerably longer. I'll be sending you guys updates for both files soon. ;)
-
-
-PDP/1:
-------
-
-
-Sega MasterSystem/GameGear:
----------------------------
-Usage:
-	arrow keys - 1p move
-	control, alt - 1p fire
-	1,2 - 1, 2 player select
-	return - 1p start
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for more key mappings.
-	
-Compatibility:
-    It's not very compatible right now. The code is still quite preliminary. It should run
-    most of the ROMs, but quite a few exhibit graphics glitches. The MasterSystem has
-    totally incorrect color also. Sound emulation appears to be near perfect though.
-    
-Wanted:
-	We'd like some spare time to work on this. Care to donate any? :)
-	
-Thanks:
-	Thanks to Marat Fayzullin for his MasterGear emulation.
-
-
-TRS-80:
--------
-Usage:
-	keyboard - relatively close to the original layout.
-	    Take a look into the "Options" menu, accessible by hitting
-	    TAB, and choose "Keyboard Setup" to find out more about
-	    the key mapping - changing is not yet supported.
-	cassette - emulation of virtual tapes supported.
-	    Use SYSTEM or CLOAD commands to read images.
-	    SYSTEM supports 6 character filenames and loads the
-	    corresponding FILENM.CAS image, CLOAD loads a file named
-	    BASIC[N].CAS, where [N] is the character you supplied
-	    (e.g. CLOAD"M" loads BASICM.CAS)
-	floppies - emulation of virtual floppy discs supported.
-	    Use a NEWDOS/80 boot disk for drive 0 and set up correct
-	    PDRIVE parameters for the other drives.
-	    If only drives 0 to 2 are used they can be double sided
-	    by interpreting drive select 3 as head select bit.
-
-Options:
-Under the "Options" menu, accessible by hitting TAB, there are three settings.
-	"Floppy Disc Drives"  - enable or disable floppy disc controller.
-	"Video RAM"           - enable upper case only or upper/lower font.
-	"Virtual E000-EFFF"   - enable 4K Extension ROM or make it RAM.
-
-Compatibility:
-	The TRS-80 driver should run most of the known programs out there.
-	It supports a WD 179x floppy disc controller with up to four
-	virtual floppy disc drives contained in image files.
-
-Notes:
-The TRS-80 driver requires the presence of the following images:
-	TRS80.ROM         12K Level II Basic.
-	TRS80M1.CHR       6x15 default character set with block graphics.
-
-
-Vectrex:
---------
-Usage:
-	See the "Keyboard Setup" menu, accessible by hitting TAB, for key mappings.
-
-Compatibility:
-	To the best of our knowledge, this emulation should run most cartridges
-	accurately.
-
-Notes:
-	The Vectrex driver requires the presence of "SYSTEM.IMG".  The driver
-	will not function without this ROM.  A real Vectrex also will not
-	function without this ROM. Also, overlay support isn't present but is
-	being worked on for a future release.
+For help in compiling MAME, check these pages:
+http://zan.emuunlim.com/mame/compile/compilemame.html
+http://zan.emuunlim.com/mame/compile/compilemamebeta.html
 
 Thanks:
 	Special thanks to Keith Wilkins and Chris Salomon for their work on DVE
@@ -434,25 +149,34 @@ First off, we'd like to thank Nicola Salmoria and the MAME team for letting us
 play with their code. Without it, MESS would be substantially less than what
 it is right now.
 
-Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
-   Note: the version used in MESS is slightly modified. You can find the
-   original version at http://www.komkon.org/~dekogel/misc.html.
-M6502 Emulator Copyright (C) Marat Fayzullin, Alex Krasivsky 1996
-   Note: the version used in MESS is slightly modified. You can find the
-   original version at http://freeflight.com/fms/.
+Z80 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+M6502 emulator Copyright (c) 1998 Juergen Buchmueller, all rights reserved.
+Hu6280 Copyright (c) 1999 Bryan McPhail, mish@tendril.force9.net
 I86 emulator by David Hedley, modified by Fabrice Frances (frances@ensica.fr)
 M6809 emulator by John Butler, based on L.C. Benschop's 6809 Simulator V09.
-M68000 emulator taken from the System 16 Arcade Emulator by Thierry Lescot.
+M6808 based on L.C. Benschop's 6809 Simulator V09.
+M68000 emulator Copyright 1999 Karl Stenerud.  All rights reserved.
+80x86 M68000 emulator Copyright 1998, Mike Coates, Darren Olafson.
 8039 emulator by Mirko Buffoni, based on 8048 emulator by Dan Boris.
+T-11 emulator Copyright (C) Aaron Giles 1998
+TMS34010 emulator by Alex Pasadyn and Zsolt Vasvari.
+TMS9900 emulator by Andy Jones, based on original code by Ton Brouwer.
+Cinematronics CPU emulator by Jeff Mitchell, Zonn Moore, Neil Bradley.
+Atari AVG/DVG emulation based on VECSIM by Hedley Rainnie, Eric Smith and
+Al Kossow.
+
 TMS5220 emulator by Frank Palazzolo.
 AY-3-8910 emulation based on various code snippets by Ville Hallik,
   Michael Cuddy, Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
-YM-2203, YM-2151, YM-2608 and YM-2612 emulation by Tatsuyuki Satoh.
-OPL based YM-2203 emulation by Ishmair (ishmair@vnet.es).
+YM-2203 and YM-2151 emulation by Tatsuyuki Satoh.
 POKEY emulator by Ron Fries (rfries@aol.com).
 Many thanks to Eric Smith, Hedley Rainne and Sean Trowbridge for information
    on the Pokey random number generator.
 NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
+YM3812 and YM3526 emulation by Carl-Henrik Skårstedt.
+YM2610 emulation by Hiromitsu Shioya.
+
+Background art by Peter Hirschberg (PeterH@cronuscom.com).
 
 Allegro library by Shawn Hargreaves, 1994/97
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
@@ -461,3 +185,257 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c.
 "inflate" code for zip file support by Mark Adler.
 
+Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
+   to mention them all.
+
+Thanks to Brian Deuel, Neil Bradley and the Retrocade dev team for allowing us
+to use Retrocade's game history database. [John Butler]
+
+
+Usage
+-----
+
+MAME [name of the game to run] [options]
+
+for example
+
+MAME mspacman -soundcard 0    will run Ms Pac Man without sound
+
+
+options:
+-tweak/-notweak (default: notweak)
+              MAME supports a large number of tweaked VGA modes, with
+              resolutions matching the ones of the emulated games. Those modes
+              look MUCH better than VESA modes (and usually faster), but may
+              have compatibility problems with some video cards and monitors,
+              so they are not enabled by default. You should by all means use
+              -tweak if your hardware supports it. Note that some modes might
+              work and other might not, e.g. your card could support 256x256
+			  but not 384x224. In that case you'll have to turn -tweak on or
+              off depending on the game you run. -noscanlines can also solve
+              many compatibility problems.
+-ntsc         a 288x224 mode with standard NTSC frequencies. You need some
+              additional hardware (VGA2TV converter) to make use of this.
+-vesamode vesa1/vesa2b/vesa2l/vesa3
+              Forces the VESA mode to use. By default the best available one
+              is used, but some video cards might crash during autodetection,
+              so you should force a lower standard (start with vesa1 and go
+              upwards until it stops working).
+-resolution XxY
+              where X and Y are width and height (ex: '-resolution 800x600')
+              MAME goes some lengths to autoselect a good resolution. You can
+              override MAME's choice with this option.
+              You can use -XxY (e.g. -800x600) as a shortcut. Frontend
+              authors are advised to use -resolution XxY, however.
+-skiplines N / -skipcolumns N
+              if you run a game on a video mode smaller than the visible area,
+              you can adjust its position using the PGUP and PGDN keys (alone
+              for vertical panning, shifted for horizontal panning).
+              You can also use these two parameters to set the initial
+              position: 0 is the default, menaing that the screen is centered.
+              You can specify both positive and negative offsets.
+-scanlines/-noscanlines (default: -scanlines)
+              turns on or off visible scanlines, which give an image more
+              similar to that of a real arcade monitor.
+-stretch/-nostretch (default: stretch)
+              use nostretch to disable pixel doubling in VESA modes (faster,
+              but smaller picture).
+-depth n      (default: 16)
+              Some games need 65k color modes to get accurate graphics. To
+              improve speed, you can turn that off using -depth 8, which limits
+              to the standard 256 color modes.
+-gamma n      (default: 1.0)
+              Set the initial gamma correction value.
+-vgafreq n    where n can be 0 (default) 1, 2 or 3.
+              use different frequencies for the custom video modes. This
+              could reduce flicker, especially in the 224x288noscanlines
+              mode. WARNING: THE FREQUENCIES USED MIGHT BE WAY OUTSIDE OF
+              YOUR MONITOR RANGE, AND COULD EVEN DAMAGE IT. USE THESE OPTIONS
+              AT YOUR OWN RISK.
+-vsync/-novsync (default: -novsync)
+              synchronize video display with the video beam instead of using
+              the timer. This option can only be used if the selected video
+              mode has an appropriate refresh rate; MAME will otherwise refuse
+              to start, telling you the actual refresh rate of the video mode,
+              and the rate it should have.
+              If you are using a tweaked mode, MAME will try to automatically
+              pick the correct setting for -vgafreq; you can still override it
+              using the -vgafreq option. Note: the 224x288 noscanlines mode
+              doesn't work on most cards. This mode is used by many games,
+              e.g. Pac Man and Galaga. If it doesn't work on your card, either
+              use the scanlines version, or don't use -vsync.
+              If you are using a VESA mode you should use the program which
+              came with your video card to set the appropriate refresh rate.
+              Note that when this option is turned on, speed will NOT
+              downgrade nicely if your system is not fast enough (i.e.:
+              jerkier gameplay).
+-alwayssynced/-noalwayssynced (default: -noalwayssynced)
+              for many tweaked VGA modes, MAME has two definitions: one which
+              is more compatible, and one which is less compatible but uses
+              frequencies compatible with -vsync. By default, the less
+              compatible definition is used only when -vsync is requested;
+              using this option, you can force it to be used always.
+-triplebuffer/-notriplebuffer (default: -notriplebuffer)
+              Enables triple buffering with VESA modes. This is faster than
+              -vsync, but doesn't work on all cards and, even it does remove
+              tearing during scrolling, it might not be as smooth as vsync.
+-monitor NNNN (default: standard)
+              selects the monitor type:
+              standard: standard PC monitor
+              ntsc:     NTSC monitor
+              pal:      PAL monitor
+              arcade:   arcade monitor
+-centerx N and -centery N
+              each take a signed value (-8 to 8 for centerx, -16 to 16 for
+              centery) and let you shift the low scanrate modes (monitor=ntsc,
+                pal,arcade) around.
+-waitinterlace
+              forces update of both odd and even fields of an interlaced low
+              scanrate display (monitor=ntsc,pal,arcade) for each game loop.
+-ror          rotate the display clockwise by 90 degrees.
+-rol          rotate display anticlockwise
+-flipx        flip display horizontally
+-flipy        flip display vertically
+              -ror and -rol provide authentic *vertical* scanlines, given you
+              turn your monitor to its side.
+              CAUTION:
+              A monitor is a complicated, high voltage electronic device.
+              There are some monitors that were designed to be rotated.
+              If yours is _not_ one of those, but you absolutely must
+              turn it to its side, you do so at your own risk.
+
+              ******************************************************
+              PLEASE DO NOT LET YOUR MONITOR WITHOUT ATTENTION IF IT
+              IS PLUGGED IN AND TURNED TO ITS SIDE
+              ******************************************************
+
+-norotate     This is supposed to disable all internal rotations of the image,
+              therefore displaying the video output as it is supposed to be
+              (so you need a vertical monitor to see vertical games). In some
+              cases, the image will be upside down. To correct that, use
+              -norotate -flipx -flipy.
+-frameskip n (default: auto)
+              skip frames to speed up the emulation. The argument is the number
+              of frames to skip out of 12. For example, if the game normally
+              runs at 60 fps, "-frameskip 2" will make it run at 50 fps, and
+              "-frameskip 6" at 30 fps. Use F11 to check the speed your
+              computer is actually reaching. If it is below 100%, increase the
+              frameskip value. You can press F9 to change frameskip while
+              running the game.
+			  When set to auto (the default), the frameskip setting is
+              dynamically adjusted at run time to display the maximum possible
+              frames without dropping below 100% speed.
+-antialias/-noantialias (default: -antialias)
+              antialiasing for the vector games.
+-beam n       sets the width in pixels of the vectors. n is a float in the
+              range of 1.00 through 16.00.
+-flicker n    make the vectors flicker. n is an optional argument, a float in
+              the range 0.00 - 100.00 (0=none 100=maximum).
+-translucency/-notranslucency (default: -translucency)
+              enables or disables vector translucency.
+
+-soundcard n  select sound card (if this is not specified, you will be asked
+              interactively)
+-sr n         set the audio sample rate. The default is 22050. Smaller values
+              (e.g. 11025) will cause lower audio quality but faster emulation
+              speed. Higher values (e.g. 44100) will cause higher audio quality
+              but slower emulation speed.
+-sb n         set the audio sample bits, either 8 or 16. The default is 8.
+              16 will increase quality with certain games, but decrease speed.
+              This is a software setting, not hardware. The sound card will
+              always be used in 16 bit mode, if possible.
+-stereo/-nostereo (default: -stereo)
+              enables stereo output for games supporting it.
+-volume n     (default: 0) set the startup volume. It can later be changed
+              using the On Screen Display. The volume is an attenuation in dB,
+              e.g. "-volume -12" will start with a -12dB attenuation.
+-ym3812opl/-noym3812opl (default: -noym3812opl) use the SoundBlaster OPL chip for
+              music emulation of the YM3812 chip. This is faster, and is
+			  reasonably accurate since the chips are 100% compatible. However,
+              there is no control on the volume, and you need a real OPL chip
+			  for it to work (if you are using a SB compatible card that
+			  emulates the OPL in software, the built in digirtal emulation
+			  will probably sound better).
+
+-joy n (default: none) allows joystick input, n can be:
+              none         - no joystick
+              auto         - attempts auto detection
+              standard     - normal 2 button joystick
+              dual         - dual joysticks
+              4button      - Stick/Pad with 4 buttons
+              6button      - Stick/Pad with 6 buttons
+              8button      - Stick/Pad with 8 buttons
+              fspro        - CH Flightstick Pro
+              wingex       - Wingman Extreme
+              wingwarrior  - Wingman Warrior
+              sidewinder   - Microsoft Sidewinder (up to 4)
+              gamepadpro   - Gravis GamePad Pro
+              sneslpt1     - SNES pad on LPT1 (needs special hardware)
+              sneslpt2     - SNES pad on LPT2 (needs special hardware)
+              sneslpt3     - SNES pad on LPT3 (needs special hardware)
+              psxlpt1      - PSX pad on LPT1 (needs special hardware)
+              psxlpt2      - PSX pad on LPT2 (needs special hardware)
+              psxlpt3      - PSX pad on LPT3 (needs special hardware)
+              n64lpt1      - N64 pad on LPT1 (needs special hardware)
+              n64lpt2      - N64 pad on LPT2 (needs special hardware)
+              n64lpt3      - N64 pad on LPT3 (needs special hardware)
+
+              Notes:
+              1) Use the TAB menu to calibrate analog joysticks. Calibration
+              data will be saved in mame.cfg. If you're using different
+              joytypes for different games, you may need to recalibrate your
+              joystick every time.
+              2) Extra buttons of noname joysticks may not work.
+			  3) the "official" Snespad-Support site is
+              http://snespad.emulationworld.com
+              4) http://www.debaser.force9.co.uk/ccmame has info on how to
+              connect PSX and N64 pads.
+
+-log          create a log of illegal memory accesses in ERROR.LOG
+-help, -?     display current MAME version and copyright notice
+-list         display a list of currently supported games
+-listfull     display a list of game directory names + description
+-listroms     display selected game required roms
+-listsamples  display selected game required samples
+-listdetails  display a detailed list of drivers and the hardware they use
+-listgames    list the supported games, year, manufacturer
+-listinfo     list comprehensive details for all of the supported games
+-listclones   list all clones of the specified game
+-noclones     used together with the list commands, doesn't list alternate
+              versions of the same game
+-verifyroms   check selected game for missing and invalid ROMs.
+-verifysamples check selected game for missing samples.
+-romdir       specify an alternate directory/zip name where to load the ROMs
+              for the specified game. E.g. "mame pacman -romdir pachack" will
+              run the Pac Man driver but load the roms from the "pachack" dir
+              or "pachack.zip" archive.
+-mouse/-nomouse (default: -mouse) enable/disable mouse support
+-cheat        Cheats like the speedup in Pac Man or the level skip in many
+              other games are disabled by default. Use this switch to turn
+              them on.
+-debug        Activate the integrated debugger. During the emulation, press
+              tilde to enter the debugger. This is only available if the
+              program is compiled with MAME_DEBUG defined.
+-record name   Record joystick input on file INP/name.inp.
+-playback name Playback joystick input from file INP/name.inp.
+-savecfg      no longer supported at the moment
+-ignorecfg    ignore mame.cfg and start with the default settings
+
+
+Keys
+----
+Tab          Toggles the configuration menu
+Tilde        Toggles the On Screen Display
+P            Pause
+Shift+P      While paused, advance to next frame
+F3           Reset
+F4           Show the game graphics. Use cursor keys to change set/color,
+             F4 or Esc to return to the emulation.
+F9           Change frame skip on the fly
+F10          Toggle speed throttling
+F11          Toggle speed display
+Shift+F11    Toggle profiler display
+F12          Save a screen snapshot. The default target directory is SNAP, you
+             have to create it yourself, it will not be created by the program
+             if it isn't there.
+ESC          Exit emulator

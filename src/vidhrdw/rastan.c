@@ -12,11 +12,76 @@
 
 void rastan_vh_stop (void);
 
+int rastan_videoram_size;
+unsigned char *rastan_videoram1;
+unsigned char *rastan_videoram3;
 unsigned char *rastan_spriteram;
 unsigned char *rastan_scrollx;
 unsigned char *rastan_scrolly;
 
+static unsigned char *rastan_dirty1;
+static unsigned char *rastan_dirty3;
+
 static unsigned char spritepalettebank;
+
+static struct osd_bitmap *tmpbitmap1;
+static struct osd_bitmap *tmpbitmap3;
+
+
+
+int rastan_vh_start (void)
+{
+	/* Allocate a video RAM */
+	rastan_dirty1 = malloc ( rastan_videoram_size/4);
+	if (!rastan_dirty1)
+	{
+		rastan_vh_stop();
+		return 1;
+	}
+	memset(rastan_dirty1,1,rastan_videoram_size / 4);
+
+	rastan_dirty3 = malloc ( rastan_videoram_size/4);
+	if (!rastan_dirty3)
+	{
+		rastan_vh_stop();
+		return 1;
+	}
+	memset(rastan_dirty3,1,rastan_videoram_size / 4);
+
+	/* Allocate temporary bitmaps */
+ 	if ((tmpbitmap1 = osd_create_bitmap(512,512)) == 0)
+	{
+		rastan_vh_stop ();
+		return 1;
+	}
+	if ((tmpbitmap3 = osd_create_bitmap(512,512)) == 0)
+	{
+		rastan_vh_stop ();
+		return 1;
+	}
+
+	return 0;
+}
+
+
+
+void rastan_vh_stop (void)
+{
+	/* Free temporary bitmaps */
+	if (tmpbitmap3)
+		osd_free_bitmap (tmpbitmap3);
+	tmpbitmap3 = 0;
+	if (tmpbitmap1)
+		osd_free_bitmap (tmpbitmap1);
+	tmpbitmap1 = 0;
+
+	/* Free video RAM */
+	if (rastan_dirty1)
+	        free (rastan_dirty1);
+	if (rastan_dirty3)
+	        free (rastan_dirty3);
+	rastan_dirty1 = rastan_dirty3 = 0;
+}
 
 
 
@@ -36,36 +101,38 @@ void rastan_scrollX_w (int offset, int data)
 
 
 
-void rastan_updatehook0(int offset)
+void rastan_videoram1_w (int offset, int data)
 {
-	int data1,data2;
+	int oldword = READ_WORD(&rastan_videoram1[offset]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	offset &= ~0x03;
-	data1 = READ_WORD(&videoram00[offset]);
-	data2 = READ_WORD(&videoram00[offset + 2]);
 
-	set_tile_attributes(0,				/* layer number */
-		offset / 4,						/* x/y position */
-		0,data2 & 0x3fff,				/* tile bank, code */
-		data1 & 0x7f,					/* color */
-		data1 & 0x4000, data1 & 0x8000,	/* flip x/y */
-		TILE_TRANSPARENCY_PEN);			/* transparency */
+	if (oldword != newword)
+	{
+		WRITE_WORD(&rastan_videoram1[offset],newword);
+		rastan_dirty1[offset / 4] = 1;
+	}
+}
+int rastan_videoram1_r (int offset)
+{
+   return READ_WORD (&rastan_videoram1[offset]);
 }
 
-void rastan_updatehook1(int offset)
+void rastan_videoram3_w (int offset, int data)
 {
-	int data1,data2;
+	int oldword = READ_WORD(&rastan_videoram3[offset]);
+	int newword = COMBINE_WORD(oldword,data);
 
-	offset &= ~0x03;
-	data1 = READ_WORD(&videoram10[offset]);
-	data2 = READ_WORD(&videoram10[offset + 2]);
 
-	set_tile_attributes(1,				/* layer number */
-		offset / 4,						/* x/y position */
-		0,data2 & 0x3fff,				/* tile bank, code */
-		data1 & 0x7f,					/* color */
-		data1 & 0x4000, data1 & 0x8000,	/* flip x/y */
-		TILE_TRANSPARENCY_OPAQUE);		/* transparency */
+	if (oldword != newword)
+	{
+		WRITE_WORD(&rastan_videoram3[offset],newword);
+		rastan_dirty3[offset / 4] = 1;
+	}
+}
+int rastan_videoram3_r (int offset)
+{
+   return READ_WORD (&rastan_videoram3[offset]);
 }
 
 
@@ -95,41 +162,35 @@ void rastan_videocontrol_w (int offset, int data)
 void rastan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+	int scrollx,scrolly;
 
 
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+palette_init_used_colors();
 
 {
 	int color,code,i;
 	int colmask[128];
 	int pal_base;
-	struct GfxLayer *layer;
 
 
 	pal_base = 0;
 
 	for (color = 0;color < 128;color++) colmask[color] = 0;
 
-	layer = Machine->layer[0];
-	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		int tile;
+		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3fff;
+		color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
 
-		tile = layer->tilemap.virtualtiles[i];
-		code = TILE_CODE(tile);
-		color = TILE_COLOR(tile);
-		colmask[color] |= layer->tilemap.gfxtilebank[TILE_BANK(tile)]->tiles[code].pens_used;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
-	layer = Machine->layer[1];
-	for (i = layer->tilemap.virtualwidth * layer->tilemap.virtualheight - 1;i >= 0;i--)
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		int tile;
+		code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3fff;
+		color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
 
-		tile = layer->tilemap.virtualtiles[i];
-		code = TILE_CODE(tile);
-		color = TILE_COLOR(tile);
-		colmask[color] |= layer->tilemap.gfxtilebank[TILE_BANK(tile)]->tiles[code].pens_used;
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
 
 	for (offs = 0x800-8; offs >= 0; offs -= 8)
@@ -143,13 +204,15 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 			data1 = READ_WORD (&rastan_spriteram[offs]);
 
 			color = (data1 & 0x0f) + 0x10 * spritepalettebank;
-			colmask[color] |= Machine->gfx[0]->pen_usage[code];
+			colmask[color] |= Machine->gfx[1]->pen_usage[code];
 		}
 	}
 
 	for (color = 0;color < 128;color++)
 	{
-		for (i = 0;i < 16;i++)
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 1;i < 16;i++)
 		{
 			if (colmask[color] & (1 << i))
 				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
@@ -158,21 +221,70 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 
 	if (palette_recalc())
-		layer_mark_full_screen_dirty();
+	{
+		memset(rastan_dirty1,1,rastan_videoram_size / 4);
+		memset(rastan_dirty3,1,rastan_videoram_size / 4);
+	}
 }
 
 
-	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */
-			READ_WORD(&rastan_scrollx[0]) - 16,READ_WORD(&rastan_scrolly[0]),	/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
-	set_tile_layer_attributes(0,bitmap,					/* layer number, bitmap */
-			READ_WORD(&rastan_scrollx[2]) - 16,READ_WORD(&rastan_scrolly[2]),	/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty1[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
 
-	update_tile_layer(1,bitmap);
-	update_tile_layer(0,bitmap);
+
+			rastan_dirty1[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram1[offs]);
+			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap1, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty3[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
+
+
+			rastan_dirty3[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram3[offs]);
+			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	scrollx = READ_WORD(&rastan_scrollx[0]) - 16;
+	scrolly = READ_WORD(&rastan_scrolly[0]);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	scrollx = READ_WORD(&rastan_scrollx[2]) - 16;
+	scrolly = READ_WORD(&rastan_scrolly[2]);
+	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 
 	/* Draw the sprites. 256 sprites in total */
@@ -194,14 +306,12 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 			col = (data1 & 0x0f) + 0x10 * spritepalettebank;
 
-			drawgfx(bitmap,Machine->gfx[0],
+			drawgfx(bitmap,Machine->gfx[1],
 					num,
 					col,
 					data1 & 0x4000, data1 & 0x8000,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
-layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
 		}
 	}
 }
@@ -209,29 +319,154 @@ layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
 void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+	int scrollx,scrolly;
 
+
+palette_init_used_colors();
+
+/* TODO: we are using the same table for background and foreground tiles, but this */
+/* causes the sky to be black instead of blue. */
+{
+	int color,code,i;
+	int colmask[128];
+	int pal_base;
+
+
+	pal_base = 0;
+
+	for (color = 0;color < 128;color++)
+	{
+		colmask[color] = 0;
+    }
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
+		color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
+
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3fff;
+		color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
+
+		colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	}
+
+	for (offs = 0x800-8; offs >= 0; offs -= 8)
+	{
+		code = READ_WORD (&rastan_spriteram[offs+4]);
+
+		if (code)
+		{
+			int data1;
+
+			data1 = READ_WORD (&rastan_spriteram[offs]);
+
+			color = (data1 + 0x10) & 0x7f;
+
+            if(code < 4096)
+				colmask[color] |= Machine->gfx[1]->pen_usage[code];
+            else
+				colmask[color] |= Machine->gfx[2]->pen_usage[code-4096];
+		}
+	}
+
+	for (color = 0;color < 128;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_USED;
+
+		for (i = 1;i < 16;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+    /* Make one transparent colour */
+
+    palette_used_colors[pal_base] = PALETTE_COLOR_TRANSPARENT;
 
 	if (palette_recalc())
-		layer_mark_full_screen_dirty();
+	{
+		memset(rastan_dirty1,1,rastan_videoram_size / 4);
+		memset(rastan_dirty3,1,rastan_videoram_size / 4);
+	}
+}
 
 
-	set_tile_layer_attributes(1,bitmap,					/* layer number, bitmap */
-			READ_WORD(&rastan_scrollx[0]) - 16,READ_WORD(&rastan_scrolly[0]),	/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
-	set_tile_layer_attributes(0,bitmap,					/* layer number, bitmap */
-			READ_WORD(&rastan_scrollx[2]) - 16,READ_WORD(&rastan_scrolly[2]),	/* scroll x/y */
-			0,0,										/* flip x/y */
-			0,0);										/* global attributes */
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty1[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
 
-	update_tile_layer(1,bitmap);
 
+			rastan_dirty1[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram1[offs]);
+			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap1, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty3[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
+
+
+			rastan_dirty3[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram3[offs]);
+			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+            /* Colour as Transparent */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					0,
+					0,
+					0, 0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+
+            /* Draw over with correct Transparency */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					data2 & 0x3fff,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_PEN,0);
+		}
+	}
+
+	scrollx = READ_WORD(&rastan_scrollx[0]) - 16;
+	scrolly = READ_WORD(&rastan_scrolly[0]);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. 256 sprites in total */
 	for (offs = 0x800-8; offs >= 0; offs -= 8)
 	{
 		int num = READ_WORD (&rastan_spriteram[offs+4]);
-
 
 		if (num)
 		{
@@ -246,44 +481,204 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			col = (data1 + 0x10) & 0x7f;
 
-			drawgfx(bitmap,Machine->gfx[0],
-					num,
-					col,
-					data1 & 0x4000, data1 & 0x8000,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-layer_mark_rectangle_dirty(Machine->layer[0],sx,sx+15,sy,sy+15);
+            if(num < 4096)
+			    drawgfx(bitmap,Machine->gfx[1],
+					    num,
+					    col,
+					    data1 & 0x4000, data1 & 0x8000,
+					    sx,sy,
+					    &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+            else
+			    drawgfx(bitmap,Machine->gfx[2],
+					    num-4096,
+					    col,
+					    data1 & 0x4000, data1 & 0x8000,
+					    sx,sy,
+					    &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
-	update_tile_layer(0,bitmap);
+	scrollx = READ_WORD(&rastan_scrollx[2]) - 16;
+	scrolly = READ_WORD(&rastan_scrolly[2]);
+	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
-	for (offs = 0x800-8; offs >= 0; offs -= 8)
+
+}
+
+
+/* Jumping uses different sprite controller   */
+/* than rainbow island. - values are remapped */
+/* at address 0x2EA in the code. Apart from   */
+/* physical layout, the main change is that   */
+/* the Y settings are active low              */
+
+void jumping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+	int scrollx,scrolly;
+
+    palette_init_used_colors();
+
+    /* TODO: we are using the same table for background and foreground tiles, but this */
+    /* causes the sky to be black instead of blue. */
+    {
+	    int color,code,i;
+	    int colmask[128];
+    	int pal_base;
+
+	    pal_base = 0;
+
+	    for (color = 0;color < 128;color++) colmask[color] = 0;
+
+	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	    {
+		    code = READ_WORD(&rastan_videoram1[offs + 2]) & 0x3FFF;
+		    color = READ_WORD(&rastan_videoram1[offs]) & 0x7f;
+
+		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	    }
+
+	    for (offs = 0x800-8; offs >= 0; offs -= 8)
+	    {
+		    code = READ_WORD (&rastan_spriteram[offs]);
+
+		    if (code)
+		    {
+			    int data1;
+
+			    data1 = READ_WORD (&rastan_spriteram[offs+8]);
+
+			    color = (data1 + 0x10) & 0x7f;
+			    colmask[color] |= Machine->gfx[1]->pen_usage[code];
+		    }
+	    }
+
+	    for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	    {
+		    code = READ_WORD(&rastan_videoram3[offs + 2]) & 0x3FFF;
+		    color = READ_WORD(&rastan_videoram3[offs]) & 0x7f;
+
+		    colmask[color] |= Machine->gfx[0]->pen_usage[code];
+	    }
+
+
+	    for (color = 0;color < 128;color++)
+	    {
+		    if (colmask[color] & (1 << 15))
+			    palette_used_colors[pal_base + 16 * color + 15] = PALETTE_COLOR_USED;
+
+		    for (i = 0;i < 15;i++)
+		    {
+			    if (colmask[color] & (1 << i))
+				    palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
+		    }
+	    }
+
+        /* Make one transparent colour */
+
+        palette_used_colors[pal_base + 15] = PALETTE_COLOR_TRANSPARENT;
+
+	    if (palette_recalc())
+	    {
+		    memset(rastan_dirty1,1,rastan_videoram_size / 4);
+		    memset(rastan_dirty3,1,rastan_videoram_size / 4);
+	    }
+
+    }
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
 	{
-		int num = READ_WORD (&rastan_spriteram[offs+4]);
+		if (rastan_dirty1[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
 
+			rastan_dirty1[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram1[offs]);
+			data2 = READ_WORD(&rastan_videoram1[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+			drawgfx(tmpbitmap1, Machine->gfx[0],
+					data2,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	for (offs = rastan_videoram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (rastan_dirty3[offs/4])
+		{
+			int sx,sy;
+			int data1,data2;
+
+
+			rastan_dirty3[offs/4] = 0;
+
+			data1 = READ_WORD(&rastan_videoram3[offs]);
+			data2 = READ_WORD(&rastan_videoram3[offs + 2]);
+
+			sx = (offs/4) % 64;
+			sy = (offs/4) / 64;
+
+            /* Colour as Transparent */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					0,
+					0,
+					0, 0,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+
+            /* Draw over with correct Transparency */
+
+			drawgfx(tmpbitmap3, Machine->gfx[0],
+					data2,
+					data1 & 0x7f,
+					data1 & 0x4000, data1 & 0x8000,
+					8*sx,8*sy,
+					0,TRANSPARENCY_PEN,15);
+		}
+	}
+
+	scrollx = READ_WORD(&rastan_scrollx[0]) - 16;
+	scrolly = -READ_WORD(&rastan_scrolly[0]);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	/* Draw the sprites. 128 sprites in total */
+
+	for (offs = 0x07F0; offs >= 0; offs -= 16)
+	{
+		int num = READ_WORD (&rastan_spriteram[offs]);
 
 		if (num)
 		{
-			int sx,sy;
+			int  sx,col,data1;
+            int sy;
 
-			sx = READ_WORD(&rastan_spriteram[offs+6]) & 0x1ff;
+			sy = ((READ_WORD(&rastan_spriteram[offs+2]) - 0xFFF1) ^ 0xFFFF) & 0x1FF;
+  			if (sy > 400) sy = sy - 512;
+			sx = (READ_WORD(&rastan_spriteram[offs+4]) - 0x38) & 0x1ff;
 			if (sx > 400) sx = sx - 512;
-			sy = READ_WORD(&rastan_spriteram[offs+2]) & 0x1ff;
-			if (sy > 400) sy = sy - 512;
 
-layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
+			data1 = READ_WORD(&rastan_spriteram[offs+6]);
+			col   = (READ_WORD(&rastan_spriteram[offs+8]) + 0x10) & 0x7F;
+
+			drawgfx(bitmap,Machine->gfx[1],
+					num,
+					col,
+					data1 & 0x40, data1 & 0x80,
+					sx,sy+1,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
+
+	scrollx = - 16;
+	scrolly = 0;
+  	copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
-
-
-
-/* CUT HERE ->  YM2151 TEST */
-#if 0
-void rastan_vhmus_screenrefresh(struct osd_bitmap *bitmap)
-{
-	int i=1;
-	i++;
-}
-#endif

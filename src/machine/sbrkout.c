@@ -7,8 +7,8 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/M6502.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m6502/m6502.h"
 
 #define SBRKOUT_PROGRESSIVE 0x00
 #define SBRKOUT_DOUBLE      0x01
@@ -60,7 +60,7 @@ int sbrkout_select2(int offset)
 void sbrkout_irq_w(int offset, int data)
 {
         /* generate irq */
-        cpu_cause_interrupt(0,INT_IRQ);
+        cpu_cause_interrupt(0,M6502_INT_IRQ);
 }
 
 

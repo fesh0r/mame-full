@@ -13,7 +13,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
+
+
 
 void Gorf_CopyLine(int Line);
 
@@ -116,7 +118,7 @@ void wow_videoram_w(int offset,int data)
 void wow_magic_expand_color_w(int offset,int data)
 {
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_expand_color = data;
@@ -126,7 +128,7 @@ void wow_magic_expand_color_w(int offset,int data)
 void wow_magic_control_w(int offset,int data)
 {
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_getpc(),data);
+	if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_control = data;
@@ -304,7 +306,7 @@ void wow_pattern_board_w(int offset,int data)
 
 #ifdef MAME_DEBUG
 		if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
-			cpu_getpc(),src,mode,skip,dest,length,loops);
+			cpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
 
         /* Special scroll screen for Gorf */
@@ -321,7 +323,7 @@ void wow_pattern_board_w(int offset,int data)
 
 		        /* Cycle Steal (slow scroll down!) */
 
-		        Z80_ICount -= 65336;
+				z80_ICount -= 65336;
             }
         }
         else
@@ -414,11 +416,9 @@ void wow_pattern_board_w(int offset,int data)
 
 int Gorf_IO_r(int offset)
 {
-	Z80_Regs regs;
 	int data;
 
-	Z80_GetRegs(&regs);
-	data = regs.BC.B.h & 0x0F;
+	data = (cpu_get_reg(Z80_BC) >> 8) & 0x0F;
 
     Latch[(offset << 3) + (data >> 1)] = (data & 0x01);
 
@@ -460,8 +460,8 @@ int gorf_vh_start(void)
 
 			if (bit1 ^ bit2) generator |= 1;
 
-			if (y >= Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y &&
+			if (y >= Machine->drv->visible_area.min_x &&
+				y <= Machine->drv->visible_area.max_x &&
 				((~generator >> 16) & 1) &&
 				(generator & 0x3f) == 0x3f)
 			{
@@ -475,7 +475,7 @@ int gorf_vh_start(void)
                     ex = x;
                     ey = y;
 
-                    if (Machine->orientation & ORIENTATION_SWAP_XY)
+                    if (!(Machine->orientation & ORIENTATION_SWAP_XY))
                     {
                     	ey = x;
                         ex = y;
@@ -513,14 +513,14 @@ void Gorf_CopyLine(int Line)
 
         /* Handle Line swops outside of loop */
 
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
+        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
   		    if (Machine->orientation & ORIENTATION_FLIP_Y)
                 ey = 203 - Line;
             else
   			    ey = Line;
 
-        	osd_mark_dirty(ey,0,ey,319,0);
+        	osd_mark_dirty(0,ey,319,ey,0);
         }
         else
         {
@@ -540,16 +540,16 @@ void Gorf_CopyLine(int Line)
             {
             	color = data & 0x03;
 
-                if (Machine->orientation & ORIENTATION_SWAP_XY)
+                if (!(Machine->orientation & ORIENTATION_SWAP_XY))
                 {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
+					if (!(Machine->orientation & ORIENTATION_FLIP_X))
 						tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
                     else
                     	tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
                 }
                 else
                 {
-					if (Machine->orientation & ORIENTATION_FLIP_Y)
+					if (!(Machine->orientation & ORIENTATION_FLIP_Y))
 						tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
                     else
                     	tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
@@ -583,7 +583,11 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
         if (Speed==0)								/* Time to change colour */
         {
-        	osd_mark_dirty(0,0,203,319,0);
+			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+				osd_mark_dirty(0,0,319,203,0);
+			else
+				osd_mark_dirty(0,0,203,319,0);
+
 		    for (offs = total_stars-1;offs >= 0;offs--)
 				stars[offs].colour = (stars[offs].colour + 1) & 7;
         }
@@ -621,7 +625,7 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     {
     	int Line;
 
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
+        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
         {
     	    for (Line = SparkleLow;Line <= SparkleHigh;Line++)
         	    for (offs=203;offs>=0;offs--)
@@ -676,7 +680,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             else
             	middle = 168;
 
-           	osd_mark_dirty(25,0,46,319,0);
+           	osd_mark_dirty(middle-10,1,middle+10,318,0);
 	        for(y=middle-10;y<middle+11;y++)
 				bitmap->line[centre][y] = Machine->pens[0x77];
 
@@ -694,7 +698,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             else
             	middle = 35;
 
-           	osd_mark_dirty(middle-10,0,middle+10,319,0);
+           	osd_mark_dirty(1,middle-10,318,middle+10,0);
 	        for(y=middle-10;y<middle+11;y++)
 				bitmap->line[y][centre] = Machine->pens[0x77];
 
@@ -722,6 +726,7 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	            else
     	        	middle = 170;
 
+           		osd_mark_dirty(middle-10,1,middle+10,318,0);
 	            for(y=middle-10;y<middle+11;y++)
                	    bitmap->line[centre][y] = Machine->pens[0x58];
 
@@ -739,11 +744,12 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         	    else
             		middle = 33;
 
+           		osd_mark_dirty(1,middle-10,318,middle+10,0);
 	            for(y=middle-10;y<middle+11;y++)
 			        bitmap->line[y][centre] = Machine->pens[0x58];
 
     	        for(x=centre-20;x<centre+21;x++)
-        	        if((x>0) && (x<=319))
+        	        if((x>0) && (x<319))
                         bitmap->line[middle][x] = Machine->pens[0x58];
             }
         }
@@ -832,7 +838,10 @@ void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
 
         if (Speed==0)								/* Time to change colour */
         {
-        	osd_mark_dirty(0,0,203,319,0);
+			if (Machine->orientation & ORIENTATION_SWAP_XY)
+				osd_mark_dirty(0,0,203,319,0);
+			else
+				osd_mark_dirty(0,0,319,203,0);
 		    for (offs = total_stars-1;offs >= 0;offs--)
 				stars[offs].colour = (stars[offs].colour + 1) & 7;
         }

@@ -4,6 +4,8 @@
 
 	Functions to emulate the video hardware of the machine.
 
+This file is also used by scregg.c
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -13,7 +15,11 @@
 unsigned char *lnc_charbank;
 unsigned char *bnj_backgroundram;
 unsigned char *zoar_scrollram;
+unsigned char *deco_charram;
 int bnj_backgroundram_size;
+
+static int sprite_dirty[256];
+static int char_dirty[1024];
 
 static int flipscreen = 0;
 static int btime_palette = 0;
@@ -123,6 +129,7 @@ void lnc_init_machine(void)
 	*lnc_charbank = 1;
 }
 
+
 /***************************************************************************
 
 Start the video hardware emulation.
@@ -140,15 +147,26 @@ int bnj_vh_start (void)
 	}
 	memset(dirtybuffer2,1,bnj_backgroundram_size);
 
-	/* the background area is twice as tall as the screen */
-	if ((background_bitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	/* the background area is twice as wide as the screen */
+	if ((background_bitmap = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
+	bnj_scroll1 = 0;
+	bnj_scroll2 = 0;
+
 	return 0;
+}
+
+int btime_vh_start (void)
+{
+	bnj_scroll1 = 0;
+	bnj_scroll2 = 0;
+
+	return generic_vh_start();
 }
 
 /***************************************************************************
@@ -241,6 +259,21 @@ void btime_mirrorcolorram_w(int offset,int data)
 	colorram_w(offset,data);
 }
 
+void deco_charram_w(int offset,int data)
+{
+	if (deco_charram[offset] == data)  return;
+
+	deco_charram[offset] = data;
+
+	offset &= 0x1fff;
+
+	/* dirty sprite */
+	sprite_dirty[offset >> 5] = 1;
+
+	/* diry char */
+	char_dirty  [offset >> 3] = 1;
+}
+
 void bnj_background_w(int offset, int data)
 {
 	if (bnj_backgroundram[offset] != data)
@@ -275,16 +308,16 @@ void zoar_video_control_w(int offset,int data)
 	// Bit 3-4 = Palette
 	// Bit 7   = Flip Screen
 
-	static int zoar_video_control = -1;
+	static int video_control = -1;
 
-	if (zoar_video_control != data)
+	if (video_control != data)
 	{
 		memset(dirtybuffer,1,videoram_size);
 
-		zoar_video_control = data;
+		video_control = data;
 
-		flipscreen    =  zoar_video_control & 0x80;
-		btime_palette = (zoar_video_control & 0x30) >> 3;
+		flipscreen =  data & 0x80;
+		btime_palette    = (data & 0x30) >> 3;
 	}
 }
 
@@ -295,9 +328,9 @@ void btime_video_control_w(int offset,int data)
 	// Bit 0   = Flip screen
 	// Bit 1-7 = Unknown
 
-	static int btime_video_control = -1;
+	static int video_control = -1;
 
-	if (btime_video_control != data)
+	if (video_control != data)
 	{
 		memset(dirtybuffer,1,videoram_size);
 
@@ -307,8 +340,9 @@ void btime_video_control_w(int offset,int data)
 			memset(dirtybuffer2,1,bnj_backgroundram_size);
 		}
 
-		btime_video_control = data;
-		flipscreen = btime_video_control & 0x01;
+		video_control = data;
+
+		flipscreen = data & 0x01;
 	}
 }
 
@@ -324,7 +358,7 @@ void bnj_video_control_w(int offset,int data)
 	/* For now we just check 0x40 in DSW1, and ignore the write if we */
 	/* are in upright controls mode. */
 
-	if (input_port_3_r(0) & 0x40) /* Cocktail mode */
+	if (input_port_3_r(0) & 0x40) /* cocktail mode */
 		btime_video_control_w(offset, data);
 }
 
@@ -335,6 +369,25 @@ void lnc_video_control_w(int offset,int data)
 	lnc_sound_interrupt_enabled = data & 0x08;
 
 	bnj_video_control_w(offset, data & 0x01);
+}
+
+void disco_video_control_w(int offset,int data)
+{
+	static int video_control = -1;
+
+	if (video_control != data)
+	{
+		memset(dirtybuffer,1,videoram_size);
+
+		video_control = data;
+
+		btime_palette = (data >> 2) & 0x03;
+
+		if (!(input_port_3_r(0) & 0x40)) /* cocktail mode */
+		{
+			flipscreen = data & 0x01;
+		}
+	}
 }
 
 
@@ -374,8 +427,8 @@ static void drawchars(struct osd_bitmap *bitmap, int color, int background_on)
 
 		dirtybuffer[offs] = 0;
 
-		sx = offs % 32;
-		sy = offs / 32;
+		sx = 31 - (offs / 32);
+		sy = offs % 32;
 
 		if (flipscreen)
 		{
@@ -393,44 +446,47 @@ static void drawchars(struct osd_bitmap *bitmap, int color, int background_on)
 }
 
 static void drawsprites(struct osd_bitmap *bitmap, int color,
-						int start, int sprite_x_adjust)
+						int sprite_y_adjust, int sprite_y_adjust_flipscreen,
+						unsigned char *sprite_ram, int interleave)
 {
-	int offs;
+	int i,offs;
 
 	/* Draw the sprites */
-	for (offs = start;offs < videoram_size;offs += 4*0x20)
+	for (i = 0, offs = 0;i < 8; i++, offs += 4*interleave)
 	{
 		int sx,sy,flipx,flipy;
 
-		if (!(videoram[offs + 0] & 0x01)) continue;
+		if (!(sprite_ram[offs + 0] & 0x01)) continue;
 
-		sx = 240 - videoram[offs + 2*0x20] - sprite_x_adjust;
-		sy = videoram[offs + 3*0x20];
+		sx = 240 - sprite_ram[offs + 3*interleave];
+		sy = 240 - sprite_ram[offs + 2*interleave];
 
-		flipx = videoram[offs + 0] & 0x02;
-		flipy = videoram[offs + 0] & 0x04;
+		flipx = sprite_ram[offs + 0] & 0x04;
+		flipy = sprite_ram[offs + 0] & 0x02;
 
 		if (flipscreen)
 		{
 			sx = 240 - sx;
-			sy = 240 - sy;
+			sy = 240 - sy + sprite_y_adjust_flipscreen;
 
 			flipx = !flipx;
 			flipy = !flipy;
 		}
 
+		sy -= sprite_y_adjust;
+
 		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs + 0x20],
+				sprite_ram[offs + interleave],
 				color,
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-		sx += (flipscreen ? -256 : 256);
+		sy += (flipscreen ? -256 : 256);
 
 		// Wrap around
 		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs + 0x20],
+				sprite_ram[offs + interleave],
 				color,
 				flipx,flipy,
 				sx,sy,
@@ -458,8 +514,8 @@ static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
 		{
 			int sx,sy;
 
-			sx = 16 * (offs % 16);
-			sy = 16 * (offs / 16) + scroll;
+			sx = 240 - (16 * (offs / 16) + scroll);
+			sy = 16 * (offs % 16);
 
 			if (flipscreen)
 			{
@@ -473,6 +529,53 @@ static void drawbackground(struct osd_bitmap *bitmap, unsigned char* tilemap)
 					flipscreen,flipscreen,
 					sx,sy,
 					0,TRANSPARENCY_NONE,0);
+		}
+	}
+}
+
+
+static void decode_modified(unsigned char *sprite_ram, int interleave)
+{
+	int i,offs;
+
+
+	/* decode dirty characters */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		int code;
+
+		code = videoram[offs] + 256 * (colorram[offs] & 3);
+
+		switch (char_dirty[code])
+		{
+		case 1:
+			decodechar(Machine->gfx[0],code,deco_charram,Machine->drv->gfxdecodeinfo[0].gfxlayout);
+			char_dirty[code] = 2;
+			/* fall through */
+		case 2:
+			dirtybuffer[offs] = 1;
+			break;
+		default:
+			break;
+		}
+	}
+
+	for (i = 0; i < sizeof(char_dirty); i++)
+	{
+		if (char_dirty[i] == 2)  char_dirty[i] = 0;
+	}
+
+	/* decode dirty sprites */
+	for (i = 0, offs = 0;i < 8; i++, offs += 4*interleave)
+	{
+		int code;
+
+		code  = sprite_ram[offs + interleave];
+		if (sprite_dirty[code])
+		{
+			sprite_dirty[code] = 0;
+
+			decodechar(Machine->gfx[1],code,deco_charram,Machine->drv->gfxdecodeinfo[1].gfxlayout);
 		}
 	}
 }
@@ -510,7 +613,7 @@ void btime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
-	drawsprites(bitmap, 0, 0, 1);
+	drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
 }
 
 
@@ -521,7 +624,7 @@ void eggs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, 0, 0);
+	drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 }
 
 
@@ -532,7 +635,7 @@ void lnc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-	drawsprites(bitmap, 0, 0, 1);
+	drawsprites(bitmap, 0, 1, 2, videoram, 0x20);
 }
 
 
@@ -553,8 +656,8 @@ void zoar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* The order is important for correct priorities */
-	drawsprites(bitmap, btime_palette + 1, 0x1f, 1);
-	drawsprites(bitmap, btime_palette + 1, 0, 1);
+	drawsprites(bitmap, btime_palette + 1, 1, 2, videoram + 0x1f, 0x20);
+	drawsprites(bitmap, btime_palette + 1, 1, 2, videoram,        0x20);
 }
 
 
@@ -576,13 +679,14 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer2[offs] = 0;
 
-			sx = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
-			sy = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
+			sx = 16 * ((offs < 0x100) ? ((offs % 0x80) / 8) : ((offs % 0x80) / 8) + 16);
+			sy = 16 * (((offs % 0x100) < 0x80) ? offs % 8 : (offs % 8) + 8);
+			sx = 496 - sx;
 
 			if (flipscreen)
 			{
-				sx = 240 - sx;
-				sy = 496 - sy;
+				sx = 496 - sx;
+				sy = 240 - sy;
 			}
 
 			drawgfx(background_bitmap, Machine->gfx[2],
@@ -595,12 +699,12 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* copy the background bitmap to the screen */
 		scroll = (bnj_scroll1 & 0x02) * 128 + 511 - bnj_scroll2;
-		if (flipscreen)
+		if (!flipscreen)
 			scroll = 767-scroll;
-		copyscrollbitmap (bitmap, background_bitmap, 0, 0, 1, &scroll, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
+		copyscrollbitmap (bitmap, background_bitmap, 1, &scroll, 0, 0, &Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
 
 		// The sprites appear below the foremost layer
-		drawsprites(bitmap, 0, 0, 0);
+		drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 
 		drawchars(bitmap, 0, 1);
 	}
@@ -611,6 +715,73 @@ void bnj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* copy the temporary bitmap to the screen */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-		drawsprites(bitmap, 0, 0, 0);
+		drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 	}
+}
+
+
+void cookrace_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+
+
+	/*
+	 *  For each character in the background RAM, check if it has been
+	 *  modified since last time and update it accordingly.
+	 */
+	for (offs = bnj_backgroundram_size-1; offs >=0; offs--)
+	{
+		int sx,sy;
+
+		sx = 31 - (offs / 32);
+		sy = offs % 32;
+
+		if (flipscreen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
+		drawgfx(bitmap, Machine->gfx[2],
+				bnj_backgroundram[offs],
+				0,
+				flipscreen, flipscreen,
+				8*sx,8*sy,
+				0, TRANSPARENCY_NONE, 0);
+	}
+
+	drawchars(bitmap, 0, 1);
+
+	drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
+}
+
+
+void disco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	decode_modified(spriteram, 1);
+
+	drawchars(bitmap, btime_palette, 0);
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	drawsprites(bitmap, btime_palette, 0, 0, spriteram, 1);
+}
+
+
+
+
+
+
+
+void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	decode_modified(videoram, 0x20);
+
+	drawchars(bitmap, 0, 0);
+
+	/* copy the temporary bitmap to the screen */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+	drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
 }

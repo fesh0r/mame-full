@@ -137,6 +137,38 @@ void invaders_videoram_w (int offset,int data)
 	}
 }
 
+void invdpt2m_videoram_w (int offset,int data)
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+		int col;
+
+		invaders_videoram[offset] = data;
+
+		y = offset / 32;
+		x = 8 * (offset % 32);
+
+		/* Calculate overlay color for this byte */
+		col = Machine->pens[WHITE];
+		if (x >= 16 && x < 72) col = Machine->pens[GREEN];
+		if (x < 16 && y > 16 && y < 134) col = Machine->pens[GREEN];
+                if (x >= 72 && x < 192) col = Machine->pens[YELLOW];
+		if (x >= 192 && x < 224) col = Machine->pens[RED];
+
+		for (i = 0; i < 8; i++)
+		{
+			if (!(data & 0x01))
+				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+			else
+				plot_pixel_8080 (x, y, col);
+
+			x ++;
+			data >>= 1;
+		}
+	}
+}
+
 void invrvnge_videoram_w (int offset,int data)
 {
 	if (invaders_videoram[offset] != data)
@@ -302,4 +334,178 @@ void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (full_refresh)
 		/* copy the character mapped graphics */
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
+
+void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int x,y,centre,middle;
+
+	/* Update the Bitmap (and erase old cross) */
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+    /* Draw the Sight */
+
+	centre = ((input_port_0_r(0) & 0x1f) * 8) + 4;
+    middle = 31;
+
+    if (centre<2)   centre=2;
+    if (centre>253) centre=253;
+
+    if (Machine->orientation & ORIENTATION_SWAP_XY)
+    {
+		if ((Machine->orientation & ORIENTATION_FLIP_Y))
+			centre = 255 - centre;
+
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+            middle = 255-31;
+        else
+            middle = 31;
+
+	    osd_mark_dirty(middle-10,centre-20,middle+11,centre+21,0);
+
+	    for(y=middle-10;y<middle+11;y++)
+			bitmap->line[centre][y] = Machine->pens[GREEN];
+
+	   	for(x=centre-20;x<centre+21;x++)
+    	   	if((x>0) && (x<256))
+        	    bitmap->line[x][middle] = Machine->pens[GREEN];
+    }
+    else
+    {
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+			centre = 255 - centre;
+
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+            middle = 255-31;
+        else
+            middle = 31;
+
+	    osd_mark_dirty(centre-20,middle-10,centre+21,middle+11,0);
+
+	    for(y=middle-10;y<middle+11;y++)
+			bitmap->line[y][centre] = Machine->pens[GREEN];
+
+	   	for(x=centre-20;x<centre+21;x++)
+    	   	if((x>0) && (x<256))
+        	    bitmap->line[middle][x] = Machine->pens[GREEN];
+    }
+}
+
+void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int x,y,centre,middle;
+
+	/* Update the Bitmap (and erase old cross) */
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+    /* Draw the Sight */
+
+	centre = (((input_port_1_r(0)) & 0x7f) * 2) - 12;
+    middle = 31;
+
+    if (centre<2)   centre=2;
+    if (centre>253) centre=253;
+
+    if (Machine->orientation & ORIENTATION_SWAP_XY)
+    {
+		if ((Machine->orientation & ORIENTATION_FLIP_Y))
+			centre = 255 - centre;
+
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+            middle = 255-31;
+        else
+            middle = 31;
+
+	    osd_mark_dirty(middle-10,centre-20,middle+11,centre+21,0);
+
+	    for(y=middle-10;y<middle+11;y++)
+			bitmap->line[centre][y] = Machine->pens[GREEN];
+
+	   	for(x=centre-20;x<centre+21;x++)
+    	   	if((x>0) && (x<256))
+        	    bitmap->line[x][middle] = Machine->pens[GREEN];
+    }
+    else
+    {
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+			centre = 255 - centre;
+
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+            middle = 255-31;
+        else
+            middle = 31;
+
+	    osd_mark_dirty(centre-20,middle-10,centre+21,middle+11,0);
+
+	    for(y=middle-10;y<middle+11;y++)
+			bitmap->line[y][centre] = Machine->pens[GREEN];
+
+	   	for(x=centre-20;x<centre+21;x++)
+    	   	if((x>0) && (x<256))
+        	    bitmap->line[middle][x] = Machine->pens[GREEN];
+    }
+}
+
+/*******************************************************/
+/*                                                     */
+/* Taito "Balloon Bomber"                              */
+/*                                                     */
+/*******************************************************/
+
+static const unsigned char *colourrom;
+
+void ballbomb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+	colourrom = color_prom + 128;
+
+    *(palette++) = 0;
+    *(palette++) = 0;
+    *(palette++) = 0;
+
+	for (i = 1;i < Machine->drv->total_colors-1;i++)
+	{
+		*(palette++) = 0xdf * (((i >> 0) & 1) == 0) + 0x20;
+		*(palette++) = 0xdf * (((i >> 1) & 1) == 0) + 0x20;
+		*(palette++) = 0xdf * (((i >> 2) & 1) == 0) + 0x20;
+	}
+
+    *(palette++) = 0xff;
+    *(palette++) = 0xff;
+    *(palette++) = 0xff;
+}
+
+void ballbomb_videoram_w (int offset,int data)
+{
+	if (invaders_videoram[offset] != data)
+	{
+		int i,x,y;
+		int col;
+
+		invaders_videoram[offset] = data;
+
+		y = offset / 32;
+		x = 8 * (offset % 32);
+
+        /* 32 x 32 colourmap */
+
+        col = colourrom[((y / 8) * 32) + (x / 8)] & 7;
+        col = Machine->pens[col];
+
+		for (i = 0; i < 8; i++)
+		{
+			if (!(data & 0x01))
+				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+			else
+				plot_pixel_8080 (x, y, col);
+
+			x ++;
+			data >>= 1;
+		}
+	}
 }

@@ -9,10 +9,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
 
 unsigned char *xevious_sharedram;
-unsigned char *xevious_vlatches;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 /* static int    HiScore; */
 
@@ -53,9 +52,9 @@ void xevious_init_machine(void)
 	Machine->memory_region[0][0x8c00] = 1;
 	Machine->memory_region[0][0x8c01] = 1;
 
-	rom2a = Machine->memory_region[4];
-	rom2b = Machine->memory_region[4]+0x1000;
-	rom2c = Machine->memory_region[4]+0x3000;
+	rom2a = Machine->memory_region[5];
+	rom2b = Machine->memory_region[5]+0x1000;
+	rom2c = Machine->memory_region[5]+0x3000;
 
 	nmi_timer = 0;
 
@@ -152,7 +151,7 @@ void xevious_customio_data_w(int offset,int data)
 {
 	customio[offset] = data;
 
-if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_getpc(),offset,data);
+if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 	switch (customio_command)
 	{
@@ -195,7 +194,7 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 
 int xevious_customio_data_r(int offset)
 {
-if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_getpc(),offset);
+if (errorlog && customio_command != 0x71) fprintf(errorlog,"%04x: custom IO read offset %02x\n",cpu_get_pc(),offset);
 
 	switch (customio_command)
 	{
@@ -315,7 +314,7 @@ void xevious_nmi_generate (int param)
 
 void xevious_customio_w(int offset,int data)
 {
-if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_getpc(),data);
+if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_get_pc(),data);
 
 	customio_command = data;
 

@@ -8,26 +8,17 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "z80\z80.h"
 
-
-unsigned char *slapfight_bg_ram1;
-unsigned char *slapfight_bg_ram2;
-int slapfight_bg_ram_size;
 
 unsigned char *slapfight_dpram;
 int slapfight_dpram_size;
 
+int slapfight_status;
+int getstar_sequence_index;
+int getstar_sh_intenabled;
 
-int slapfight_scroll_char_x;
-int slapfight_scroll_pixel_x;
-static int tmp_scroll_char_x;
-static int tmp_scroll_pixel_x;
-
-static int bankaddress;
-static int cpu_int_enable;
-static int sound_int_enable;
 static int slapfight_status_state;
+extern unsigned char *getstar_e803;
 
 /* Perform basic machine initialisation */
 
@@ -35,36 +26,17 @@ void slapfight_init_machine(void)
 {
 	/* MAIN CPU */
 
-	cpu_int_enable=0;
-	bankaddress=0x10000;
-	slapfight_scroll_char_x=0;
-	slapfight_scroll_pixel_x=0;
 	slapfight_status_state=0;
+	slapfight_status = 0xc7;
+
+	getstar_sequence_index = 0;
+	getstar_sh_intenabled = 0;	/* disable sound cpu interrupts */
 
 	/* SOUND CPU */
-
-	sound_int_enable=0;
 	cpu_halt(1,0);
 }
 
 /* Interrupt handlers cpu & sound */
-
-int slapfight_cpu_interrupt(void)
-{
-	// Update scroll parameters only after vblank
-
-	slapfight_scroll_char_x=tmp_scroll_char_x;
-	slapfight_scroll_pixel_x=tmp_scroll_pixel_x;
-
-	// Genate CPU interupt if enabled
-
-	return ((cpu_int_enable)?0xff:Z80_IGNORE_INT);
-}
-
-int slapfight_sound_interrupt(void)
-{
-	return Z80_IGNORE_INT;
-}
 
 void slapfight_dpram_w(int offset, int data)
 {
@@ -72,11 +44,17 @@ void slapfight_dpram_w(int offset, int data)
 
 //	if (errorlog) fprintf(errorlog,"SLAPFIGHT MAIN  CPU : Write to   $c8%02x = %02x\n",offset,slapfight_dpram[offset]);
 
+
+/*
+
 	// Synchronise CPUs
-	timer_set(TIME_NOW,0,0);
+	timer_set(TIME_NOW,0,0);       P'tit Seb 980926 Commented out because it doesn't seem to be necessary
 
 	// Now cause the interrupt
     cpu_cause_interrupt (1, Z80_NMI_INT);
+
+*/
+
 
     return;
 }
@@ -86,14 +64,6 @@ int slapfight_dpram_r(int offset)
     return slapfight_dpram[offset];
 }
 
-
-int slapfight_bankrom_r(int offset)
-{
-    /* get RAM pointer (this game is multiCPU, we can't assume the global */
-    /* RAM pointer is pointing to the right place) */
-    unsigned char *RAM = Machine->memory_region[0];
-    return RAM[bankaddress+offset];
-}
 
 
 /* Slapfight CPU input/output ports
@@ -107,6 +77,7 @@ void slapfight_port_00_w(int offset, int data)
 {
 //	cpu_reset(1);
 	cpu_halt(1,0);
+	getstar_sh_intenabled = 0;
 }
 
 /* Release reset on sound CPU */
@@ -117,91 +88,86 @@ void slapfight_port_01_w(int offset, int data)
 	cpu_yield();
 }
 
-void slapfight_port_02_w(int offset, int data) {}
-void slapfight_port_03_w(int offset, int data) {}
-void slapfight_port_04_w(int offset, int data) {}
-void slapfight_port_05_w(int offset, int data) {}
-
 /* Disable and clear hardware interrupt */
 void slapfight_port_06_w(int offset, int data)
 {
-	cpu_int_enable=0;
+	interrupt_enable_w(0,0);
 }
 
 /* Enable hardware interrupt */
 void slapfight_port_07_w(int offset, int data)
 {
-	cpu_int_enable=1;
+	interrupt_enable_w(0,1);
 }
-
-/* Scrolling registers
-
-  Slapfight seems to be a little strange in that
-  the scroll rountine at $1ee1 outputs the same
-  value for pixel and char UNLESS pixel scroll
-  is zero then it calulates a special value.
-  Hence we only pickup the char_x if pixel_x
-  is equal to zero.
-
-  These two registers also control the bank switching
-*/
 
 void slapfight_port_08_w(int offset, int data)
 {
-	// What a cludge !!! but it stops erroneus values being selected
-	if(!tmp_scroll_pixel_x)
-	{
-		if(data || (!data && tmp_scroll_char_x==63))
-			tmp_scroll_char_x=data;
-		else
-			tmp_scroll_char_x++;
-	}
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	bankaddress=0x10000;
+	cpu_setbank(1,&RAM[0x10000]);
 }
 
 void slapfight_port_09_w(int offset, int data)
 {
-	tmp_scroll_pixel_x=data;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-	bankaddress=0x14000;
+	cpu_setbank(1,&RAM[0x14000]);
 }
 
-void slapfight_port_0a_w(int offset, int data) {}
-void slapfight_port_0b_w(int offset, int data) {}
-void slapfight_port_0c_w(int offset, int data) {}
-void slapfight_port_0d_w(int offset, int data) {}
-void slapfight_port_0e_w(int offset, int data) {}
-void slapfight_port_0f_w(int offset, int data) {}
 
 /* Status register */
 
 int  slapfight_port_00_r(int offset)
 {
-	int states[3]={0xc7,0x55,0x00};
-	int retval;
+	int states[3]={ 0xc7, 0x55, 0x00 };
 
-	retval=states[slapfight_status_state];
+	slapfight_status = states[slapfight_status_state];
 
 	slapfight_status_state++;
-	if(slapfight_status_state>=3) slapfight_status_state=0;
+	if (slapfight_status_state > 2) slapfight_status_state = 0;
 
-	return retval;
+	return slapfight_status;
 }
 
-int  slapfight_port_01_r(int offset) { return 0; }
-int  slapfight_port_02_r(int offset) { return 0; }
-int  slapfight_port_03_r(int offset) { return 0; }
-int  slapfight_port_04_r(int offset) { return 0; }
-int  slapfight_port_05_r(int offset) { return 0; }
-int  slapfight_port_06_r(int offset) { return 0; }
-int  slapfight_port_07_r(int offset) { return 0; }
-int  slapfight_port_08_r(int offset) { return 0; }
-int  slapfight_port_09_r(int offset) { return 0; }
-int  slapfight_port_0a_r(int offset) { return 0; }
-int  slapfight_port_0b_r(int offset) { return 0; }
-int  slapfight_port_0c_r(int offset) { return 0; }
-int  slapfight_port_0d_r(int offset) { return 0; }
-int  slapfight_port_0e_r(int offset) { return 0; }
-int  slapfight_port_0f_r(int offset) { return 0; }
 
+
+/*
+ Reads at e803 expect a sequence of values such that:
+ - first value is different from successive
+ - third value is (first+5)^0x56
+ I don't know what writes to this address do (connected to port 0 reads?).
+*/
+int getstar_e803_r(int offset)
+{
+unsigned char seq[] = { 0, 1, (0+5)^0x56 };
+unsigned char val;
+
+	val = seq[getstar_sequence_index];
+	getstar_sequence_index = (getstar_sequence_index+1)%3;
+	return val;
+}
+
+
+
+/* Enable hardware interrupt of sound cpu */
+void getstar_sh_intenable_w(int offset, int data)
+{
+	getstar_sh_intenabled = 1;
+	if (errorlog) fprintf(errorlog,"cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
+}
+
+
+
+/* Generate interrups only if they have been enabled */
+int getstar_interrupt(void)
+{
+	if (getstar_sh_intenabled)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+void getstar_port_04_w(int offset, int data)
+{
+//	cpu_halt(0,0);
+}

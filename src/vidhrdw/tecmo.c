@@ -120,46 +120,50 @@ void tecmo_colorram_w(int offset,int data)
 
 ***************************************************************************/
 
-void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority );
-void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority ){
-  int offs;
+void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority )
+{
+	int offs;
 
-  /* draw all visible sprites of specified priority */
-  for (offs = 0;offs < spriteram_size;offs += 8){
-    int flags = spriteram[offs+3];
-    if( (flags>>6) == priority ){
-      int bank = spriteram[offs+0];
-      if( bank & 4 ){ /* visible */
-	int size = (spriteram[offs + 2] & 3);
-	/* 0 = 8x8 1 = 16x16 2 = 32x32 */
+	/* draw all visible sprites of specified priority */
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int flags = spriteram[offs+3];
 
-	int which = spriteram[offs+1];
 
-	int code;
+		if( (flags>>6) == priority )
+		{
+			int bank = spriteram[offs+0];
+			if( bank & 4 )
+			{ /* visible */
+				int which = spriteram[offs+1];
+				int code;
+				int size = (spriteram[offs + 2] & 3);
+				/* 0 = 8x8 1 = 16x16 2 = 32x32 3 = 64x64 */
+				if (size == 3) continue;	/* not used by these games */
 
-	if( video_type != 0)
-	  code = (which) + ((bank&0xf8)<<5); /* silkworm */
-	else
-	  code = (which)+((bank&0xf0)<<4); /* rygar */
+				if( video_type != 0)
+				  code = (which) + ((bank&0xf8)<<5); /* silkworm */
+				else
+				  code = (which)+((bank&0xf0)<<4); /* rygar */
 
-	if (size == 1) code >>= 2;
-	else if (size == 2) code >>= 4;
+				if (size == 1) code >>= 2;
+				else if (size == 2) code >>= 4;
 
-	drawgfx(bitmap,Machine->gfx[size+1],
-		code,
-		flags&0xf, /* color */
-		bank&1, /* flipx */
-		bank&2, /* flipy */
+				drawgfx(bitmap,Machine->gfx[size+1],
+						code,
+						flags&0xf, /* color */
+						bank&1, /* flipx */
+						bank&2, /* flipy */
 
-		spriteram[offs + 5] - ((flags & 0x10) << 4), /* sx */
-		spriteram[offs + 4] - ((flags & 0x20) << 3), /* sy */
+						spriteram[offs + 5] - ((flags & 0x10) << 4), /* sx */
+						spriteram[offs + 4] - ((flags & 0x20) << 3), /* sy */
 
-		&Machine->drv->visible_area,
-		priority == 3 ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
-		priority == 3 ? palette_transparent_pen : 0);
-	  }
+						&Machine->drv->visible_area,
+						priority == 3 ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
+						priority == 3 ? palette_transparent_pen : 0);
+			}
+		}
 	}
-  }
 }
 
 void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -167,7 +171,7 @@ void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
+palette_init_used_colors();
 
 {
 	int color,code,i;
@@ -249,9 +253,10 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 		int bank = spriteram[offs+0];
 		if( bank & 4 )
 		{ /* visible */
-			int size = (spriteram[offs + 2] & 3);
-			/* 0 = 8x8 1 = 16x16 2 = 32x32 */
 			int which = spriteram[offs+1];
+			int size = (spriteram[offs + 2] & 3);
+			/* 0 = 8x8 1 = 16x16 2 = 32x32 3 = 64x64 */
+			if (size == 3) continue;	/* not used by these games */
 
 
 			if( video_type != 0 )

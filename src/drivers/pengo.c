@@ -53,14 +53,17 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 
 
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void pengo_updatehook0(int offset);
 void pengo_gfxbank_w(int offset,int data);
 int pengo_vh_start(void);
+void pengo_flipscreen_w(int offset,int data);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
+
+/* in machine/segacrpt.c */
+void pengo_decode(void);
 
 
 
@@ -78,8 +81,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0x8000, 0x83ff, videoram00_w, &videoram00 },
-	{ 0x8400, 0x87ff, videoram01_w, &videoram01 },
+	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
+	{ 0x8400, 0x87ff, colorram_w, &colorram },
 	{ 0x8800, 0x8fef, MWA_RAMROM },
 	{ 0x8ff0, 0x8fff, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x9000, 0x901f, pengo_sound_w, &pengo_soundregs },
@@ -87,7 +90,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9040, 0x9040, interrupt_enable_w },
 	{ 0x9041, 0x9041, pengo_sound_enable_w },
 	{ 0x9042, 0x9042, MWA_NOP },
-	{ 0x9043, 0x9043, MWA_RAM, &flip_screen },
+	{ 0x9043, 0x9043, pengo_flipscreen_w },
 	{ 0x9044, 0x9046, MWA_NOP },
 	{ 0x9047, 0x9047, pengo_gfxbank_w },
 	{ 0x9070, 0x9070, MWA_NOP },
@@ -98,95 +101,104 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	/* the coin input must stay low for no less than 2 frames and no more */
 	/* than 9 frames to pass the self test check. */
 	/* Moreover, this way we avoid the game freezing until the user releases */
 	/* the "coin" key. */
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 2 )
 	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
 	/* to avoid the freeze. */
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x01, "50000" )
-	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x18, 0x10, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x10, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x18, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0xc0, 0x80, "Difficulty", IP_KEY_NONE )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xc0, "Easy" )
 	PORT_DIPSETTING(    0x80, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0c, "A Coin/Cred", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4/1" )
-	PORT_DIPSETTING(    0x08, "3/1" )
-	PORT_DIPSETTING(    0x04, "2/1" )
-	PORT_DIPSETTING(    0x09, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x05, "2/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x0c, "1/1" )
-	PORT_DIPSETTING(    0x0d, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x03, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0x0b, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x02, "1/2" )
-	PORT_DIPSETTING(    0x07, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0x0f, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0x0a, "1/3" )
-	PORT_DIPSETTING(    0x06, "1/4" )
-	PORT_DIPSETTING(    0x0e, "1/5" )
-	PORT_DIPSETTING(    0x01, "1/6" )
-	PORT_DIPNAME( 0xf0, 0xc0, "B Coin/Cred", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4/1" )
-	PORT_DIPSETTING(    0x80, "3/1" )
-	PORT_DIPSETTING(    0x40, "2/1" )
-	PORT_DIPSETTING(    0x90, "2/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x50, "2/1+Bonus each 4" )
-	PORT_DIPSETTING(    0xc0, "1/1" )
-	PORT_DIPSETTING(    0xd0, "1/1+Bonus each 5" )
-	PORT_DIPSETTING(    0x30, "1/1+Bonus each 4" )
-	PORT_DIPSETTING(    0xb0, "1/1+Bonus each 2" )
-	PORT_DIPSETTING(    0x20, "1/2" )
-	PORT_DIPSETTING(    0x70, "1/2+Bonus each 5" )
-	PORT_DIPSETTING(    0xf0, "1/2+Bonus each 4" )
-	PORT_DIPSETTING(    0xa0, "1/3" )
-	PORT_DIPSETTING(    0x60, "1/4" )
-	PORT_DIPSETTING(    0xe0, "1/5" )
-	PORT_DIPSETTING(    0x10, "1/6" )
+	PORT_DIPNAME( 0x0f, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x09, "2 Coins/1 Credit 5/3" )
+	PORT_DIPSETTING(    0x05, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x07, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x90, "2 Coins/1 Credit 5/3" )
+	PORT_DIPSETTING(    0x50, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
 INPUT_PORTS_END
 
+
+
+static struct GfxLayout tilelayout =
+{
+	8,8,	/* 8*8 characters */
+    256,    /* 256 characters */
+    2,  /* 2 bits per pixel */
+    { 0, 4 },   /* the two bitplanes for 4 pixels are packed into one byte */
+    { 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 }, /* bits are packed in groups of four */
+    { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+    16*8    /* every char takes 16 bytes */
+};
 
 
 static struct GfxLayout spritelayout =
@@ -204,51 +216,20 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x1000, &spritelayout,    0, 32 },
-	{ 1, 0x3000, &spritelayout, 4*32, 32 },
-	{ -1 } /* end of array */
+	{ 1, 0x0000, &tilelayout,	   0, 32 },  /* first bank */
+    { 1, 0x1000, &spritelayout,    0, 32 },
+    { 1, 0x2000, &tilelayout,   4*32, 32 },  /* second bank */
+    { 1, 0x3000, &spritelayout, 4*32, 32 },
+    { -1 } /* end of array */
 };
-
-
-
-static struct GfxTileLayout tilelayout =
-{
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	16*8	/* every char takes 16 bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
-{
-	{ 1, 0x0000, &tilelayout,      0, 32, 0 },	/* first bank */
-	{ 1, 0x2000, &tilelayout,   4*32, 32, 0 },	/* second bank */
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		36*8,28*8,
-		gfxtiledecodeinfo,
-		0,
-		pengo_updatehook0,pengo_updatehook0,0,0
-	}
-};
-
 
 
 static struct namco_interface namco_interface =
 {
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	32,			/* gain adjustment */
-	255			/* playback volume */
+	100,		/* playback volume */
+	3			/* memory region */
 };
 
 
@@ -279,8 +260,8 @@ static struct MachineDriver machine_driver =
 	32,4*64,
 	pengo_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
-	machine_layers,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
+	0,
 	pengo_vh_start,
 	generic_vh_stop,
 	pengo_vh_screenrefresh,
@@ -305,215 +286,106 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pengo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic8",  0x0000, 0x1000, 0x9efcdacc )
-	ROM_LOAD( "ic7",  0x1000, 0x1000, 0xaf3edc40 )
-	ROM_LOAD( "ic15", 0x2000, 0x1000, 0x474d646b )
-	ROM_LOAD( "ic14", 0x3000, 0x1000, 0x76f727ad )
-	ROM_LOAD( "ic21", 0x4000, 0x1000, 0xe766e256 )
-	ROM_LOAD( "ic20", 0x5000, 0x1000, 0xf3400000 )
-	ROM_LOAD( "ic32", 0x6000, 0x1000, 0x4f9816ba )
-	ROM_LOAD( "ic31", 0x7000, 0x1000, 0x673f6491 )
+	ROM_LOAD( "ic8",          0x0000, 0x1000, 0xf37066a8 )
+	ROM_LOAD( "ic7",          0x1000, 0x1000, 0xbaf48143 )
+	ROM_LOAD( "ic15",         0x2000, 0x1000, 0xadf0eba0 )
+	ROM_LOAD( "ic14",         0x3000, 0x1000, 0xa086d60f )
+	ROM_LOAD( "ic21",         0x4000, 0x1000, 0xb72084ec )
+	ROM_LOAD( "ic20",         0x5000, 0x1000, 0x94194a89 )
+	ROM_LOAD( "ic32",         0x6000, 0x1000, 0xaf7b12c4 )
+	ROM_LOAD( "ic31",         0x7000, 0x1000, 0x933950fe )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic92",  0x0000, 0x2000, 0x6865b315 )
-	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
+	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
+	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
+	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pengo2_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ic8.2",  0x0000, 0x1000, 0x187001be )
-	ROM_LOAD( "ic7.2",  0x1000, 0x1000, 0x970ec410 )
-	ROM_LOAD( "ic15.2", 0x2000, 0x1000, 0x31f2d554 )
-	ROM_LOAD( "ic14.2", 0x3000, 0x1000, 0xc44e3394 )
-	ROM_LOAD( "ic21",   0x4000, 0x1000, 0xe766e256 )
-	ROM_LOAD( "ic20.2", 0x5000, 0x1000, 0x24764044 )
-	ROM_LOAD( "ic32",   0x6000, 0x1000, 0x4f9816ba )
-	ROM_LOAD( "ic31.2", 0x7000, 0x1000, 0x2f5ee39e )
+	ROM_LOAD( "ic8.2",        0x0000, 0x1000, 0xe4924b7b )
+	ROM_LOAD( "ic7.2",        0x1000, 0x1000, 0x72e7775d )
+	ROM_LOAD( "ic15.2",       0x2000, 0x1000, 0x7410ef1e )
+	ROM_LOAD( "ic14.2",       0x3000, 0x1000, 0x55b3f379 )
+	ROM_LOAD( "ic21",         0x4000, 0x1000, 0xb72084ec )
+	ROM_LOAD( "ic20.2",       0x5000, 0x1000, 0x770570cf )
+	ROM_LOAD( "ic32",         0x6000, 0x1000, 0xaf7b12c4 )
+	ROM_LOAD( "ic31.2",       0x7000, 0x1000, 0x669555c1 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic92",  0x0000, 0x2000, 0x6865b315 )
-	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
+	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
+	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
+	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( pengo2u_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "pengo.u8",  0x0000, 0x1000, 0x63680136 )
-	ROM_LOAD( "pengo.u7",  0x1000, 0x1000, 0xe9ee4c30 )
-	ROM_LOAD( "pengo.u15", 0x2000, 0x1000, 0x13baf5dc )
-	ROM_LOAD( "pengo.u14", 0x3000, 0x1000, 0x5d563bbc )
-	ROM_LOAD( "pengo.u21", 0x4000, 0x1000, 0x6e1ee25e )
-	ROM_LOAD( "pengo.u20", 0x5000, 0x1000, 0x67866864 )
-	ROM_LOAD( "pengo.u32", 0x6000, 0x1000, 0x9938161a )
-	ROM_LOAD( "pengo.u31", 0x7000, 0x1000, 0x4f0eeb9e )
+	ROM_LOAD( "pengo.u8",     0x0000, 0x1000, 0x3dfeb20e )
+	ROM_LOAD( "pengo.u7",     0x1000, 0x1000, 0x1db341bd )
+	ROM_LOAD( "pengo.u15",    0x2000, 0x1000, 0x7c2842d5 )
+	ROM_LOAD( "pengo.u14",    0x3000, 0x1000, 0x6e3c1f2f )
+	ROM_LOAD( "pengo.u21",    0x4000, 0x1000, 0x95f354ff )
+	ROM_LOAD( "pengo.u20",    0x5000, 0x1000, 0x0fdb04b8 )
+	ROM_LOAD( "pengo.u32",    0x6000, 0x1000, 0xe5920728 )
+	ROM_LOAD( "pengo.u31",    0x7000, 0x1000, 0x13de47ed )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ic92",  0x0000, 0x2000, 0x6865b315 )
-	ROM_LOAD( "ic105", 0x2000, 0x2000, 0xbb009a64 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic92",         0x0000, 0x2000, 0xd7eec6cd )
+	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
+	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
+	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 ROM_START( penta_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "008_PN01.BIN", 0x0000, 0x1000, 0x91f72dcf )
-	ROM_LOAD( "007_PN05.BIN", 0x1000, 0x1000, 0x9e4c7c42 )
-	ROM_LOAD( "015_PN02.BIN", 0x2000, 0x1000, 0xf1576ecb )
-	ROM_LOAD( "014_PN06.BIN", 0x3000, 0x1000, 0xea2b272d )
-	ROM_LOAD( "021_PN03.BIN", 0x4000, 0x1000, 0xd4da6a7e )
-	ROM_LOAD( "020_PN07.BIN", 0x5000, 0x1000, 0xa3400000 )
-	ROM_LOAD( "032_PN04.BIN", 0x6000, 0x1000, 0xb68a3498 )
-	ROM_LOAD( "031_PN08.BIN", 0x7000, 0x1000, 0x7b3da013 )
+	ROM_LOAD( "008_pn01.bin", 0x0000, 0x1000, 0x22f328df )
+	ROM_LOAD( "007_pn05.bin", 0x1000, 0x1000, 0x15bbc7d3 )
+	ROM_LOAD( "015_pn02.bin", 0x2000, 0x1000, 0xde82b74a )
+	ROM_LOAD( "014_pn06.bin", 0x3000, 0x1000, 0x160f3836 )
+	ROM_LOAD( "021_pn03.bin", 0x4000, 0x1000, 0x7824e3ef )
+	ROM_LOAD( "020_pn07.bin", 0x5000, 0x1000, 0x377b9663 )
+	ROM_LOAD( "032_pn04.bin", 0x6000, 0x1000, 0xbfde44c1 )
+	ROM_LOAD( "031_pn08.bin", 0x7000, 0x1000, 0x64e8c30d )
 
-	ROM_REGION(0x4000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "092_PN09.BIN", 0x0000, 0x2000, 0x7aa4e020 )
-	ROM_LOAD( "ic105",        0x2000, 0x2000, 0xbb009a64 )
+	ROM_REGION_DISPOSE(0x4000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "092_pn09.bin", 0x0000, 0x2000, 0x6afeba9d )
+	ROM_LOAD( "ic105",        0x2000, 0x2000, 0x5bfd26e9 )
+
+	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_LOAD( "pr1633.078",   0x0000, 0x0020, 0x3a5844ec )
+	ROM_LOAD( "pr1634.088",   0x0020, 0x0400, 0x766b139b )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "pr1635.051",   0x0000, 0x0100, 0xc29dea27 )
+	ROM_LOAD( "pr1636.070",   0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char sound_prom[] =
-{
-	0x08,0x08,0x08,0x08,0x08,0x0F,0x0F,0x08,0x08,0x00,0x00,0x00,0x08,0x08,0x08,0x08,
-	0x0F,0x0F,0x0F,0x08,0x00,0x00,0x08,0x08,0x08,0x08,0x0F,0x0F,0x08,0x08,0x00,0x00,
-	0x07,0x09,0x0A,0x0B,0x07,0x0D,0x0D,0x07,0x0E,0x07,0x0D,0x0D,0x07,0x0B,0x0A,0x09,
-	0x07,0x05,0x07,0x03,0x07,0x01,0x07,0x00,0x07,0x00,0x07,0x01,0x07,0x03,0x07,0x05,
-	0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,0x0E,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x08,0x08,0x08,0x00,0x08,0x08,0x0F,0x0F,0x00,0x00,0x08,0x08,0x08,0x0F,0x0F,0x0F,
-	0x00,0x08,0x08,0x00,0x0F,0x0F,0x08,0x08,0x08,0x08,0x0F,0x08,0x00,0x00,0x00,0x08,
-	0x07,0x0A,0x0C,0x0D,0x0E,0x0D,0x0C,0x0A,0x07,0x04,0x02,0x01,0x00,0x01,0x02,0x04,
-	0x07,0x0B,0x0D,0x0E,0x0D,0x0B,0x07,0x03,0x01,0x00,0x01,0x03,0x07,0x0E,0x07,0x00,
-	0x07,0x0E,0x0C,0x09,0x0C,0x0E,0x0A,0x07,0x0C,0x0F,0x0D,0x08,0x0A,0x0B,0x07,0x02,
-	0x08,0x0D,0x09,0x04,0x05,0x07,0x02,0x00,0x03,0x08,0x05,0x01,0x03,0x06,0x03,0x01,
-	0x07,0x08,0x0A,0x0C,0x0E,0x0D,0x0C,0x0C,0x0B,0x0A,0x08,0x07,0x05,0x06,0x07,0x08,
-	0x08,0x09,0x0A,0x0B,0x09,0x08,0x06,0x05,0x04,0x04,0x03,0x02,0x04,0x06,0x08,0x09,
-	0x0A,0x0C,0x0C,0x0A,0x07,0x07,0x08,0x0B,0x0D,0x0E,0x0D,0x0A,0x06,0x05,0x05,0x07,
-	0x09,0x09,0x08,0x04,0x01,0x00,0x01,0x03,0x06,0x07,0x07,0x04,0x02,0x02,0x04,0x07
-};
-
-
-
-static unsigned char color_prom[] =
-{
-	/* palette */
-	0x00,0xF6,0x07,0x38,0xC9,0xF8,0x3F,0xEF,0x6F,0x16,0x2F,0x7F,0xF0,0x36,0xDB,0xC6,
-	0x00,0xF6,0xD8,0xF0,0xF8,0x16,0x07,0x2F,0x36,0x3F,0x7F,0x28,0x32,0x38,0xEF,0xC6,
-	/* color lookup table (512x8, but only the first 256 bytes are used) */
-	0x00,0x00,0x00,0x00,0x00,0x05,0x03,0x01,0x00,0x05,0x02,0x01,0x00,0x05,0x06,0x01,
-	0x00,0x05,0x07,0x01,0x00,0x05,0x0A,0x01,0x00,0x05,0x0B,0x01,0x00,0x05,0x0C,0x01,
-	0x00,0x05,0x0D,0x01,0x00,0x05,0x04,0x01,0x00,0x03,0x06,0x01,0x00,0x03,0x02,0x01,
-	0x00,0x03,0x07,0x01,0x00,0x03,0x05,0x01,0x00,0x02,0x03,0x01,0x00,0x00,0x00,0x00,
-	0x00,0x08,0x03,0x01,0x00,0x09,0x02,0x05,0x00,0x08,0x05,0x0D,0x04,0x04,0x04,0x04,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x02,0x00,0x03,0x03,0x03,
-	0x00,0x06,0x06,0x06,0x00,0x07,0x07,0x07,0x00,0x0A,0x0A,0x0A,0x00,0x0B,0x0B,0x0B,
-	0x00,0x01,0x01,0x01,0x00,0x05,0x05,0x05,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x00,0x00,0x00,0x00,0x00,0x03,0x07,0x0D,0x00,0x0C,0x0F,0x0B,0x00,0x0C,0x0E,0x0B,
-	0x00,0x0C,0x06,0x0B,0x00,0x0C,0x07,0x0B,0x00,0x0C,0x03,0x0B,0x00,0x0C,0x08,0x0B,
-	0x00,0x0C,0x0D,0x0B,0x00,0x0C,0x04,0x0B,0x00,0x0C,0x09,0x0B,0x00,0x0C,0x05,0x0B,
-	0x00,0x0C,0x02,0x0B,0x00,0x0C,0x0B,0x02,0x00,0x08,0x0C,0x02,0x00,0x08,0x0F,0x02,
-	0x00,0x03,0x02,0x01,0x00,0x02,0x0F,0x03,0x00,0x0F,0x0E,0x02,0x00,0x0E,0x07,0x0F,
-	0x00,0x07,0x06,0x0E,0x00,0x06,0x05,0x07,0x00,0x05,0x00,0x06,0x00,0x00,0x0B,0x05,
-	0x00,0x0B,0x0C,0x00,0x00,0x0C,0x0D,0x0B,0x00,0x0D,0x08,0x0C,0x00,0x08,0x09,0x0D,
-	0x00,0x09,0x0A,0x08,0x00,0x0A,0x01,0x09,0x00,0x01,0x04,0x0A,0x00,0x04,0x03,0x01
-};
-
-
-
-static void pengo_decode(void)
-{
-/*
-	the values vary, but the translation mask is always layed out like this:
-
-	  0 1 2 3 4 5 6 7 8 9 a b c d e f
-	0 A A A A A A A A B B B B B B B B
-	1 A A A A A A A A B B B B B B B B
-	2 C C C C C C C C D D D D D D D D
-	3 C C C C C C C C D D D D D D D D
-	4 A A A A A A A A B B B B B B B B
-	5 A A A A A A A A B B B B B B B B
-	6 C C C C C C C C D D D D D D D D
-	7 C C C C C C C C D D D D D D D D
-	8 D D D D D D D D C C C C C C C C
-	9 D D D D D D D D C C C C C C C C
-	a B B B B B B B B A A A A A A A A
-	b B B B B B B B B A A A A A A A A
-	c D D D D D D D D C C C C C C C C
-	d D D D D D D D D C C C C C C C C
-	e B B B B B B B B A A A A A A A A
-	f B B B B B B B B A A A A A A A A
-
-	(e.g. 0xc0 is XORed with D)
-	therefore in the following tables we only keep track of A, B, C and D.
-*/
-	static const unsigned char data_xortable[16][4] =
-	{
-		{ 0x28,0xa0,0x28,0xa0 },	/* ...0...0...0...0 */
-		{ 0xa0,0x88,0x88,0xa0 },	/* ...0...0...0...1 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...0...1...0 */
-		{ 0xa0,0x88,0x88,0xa0 },	/* ...0...0...1...1 */
-		{ 0x28,0xa0,0x28,0xa0 },	/* ...0...1...0...0 */
-		{ 0x08,0x08,0xa8,0xa8 },	/* ...0...1...0...1 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...1...1...0 */
-		{ 0x00,0x00,0x00,0x00 },	/* ...0...1...1...1 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...1...0...0...0 */
-		{ 0x00,0x00,0x00,0x00 },	/* ...1...0...0...1 */
-		{ 0x08,0x20,0xa8,0x80 },	/* ...1...0...1...0 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...1...0...1...1 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...1...0...0 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...1...0...1 */
-		{ 0x08,0x20,0xa8,0x80 },	/* ...1...1...1...0 */
-		{ 0xa0,0x88,0x00,0x28 }		/* ...1...1...1...1 */
-	};
-	static const unsigned char opcode_xortable[16][4] =
-	{
-		{ 0xa0,0x88,0x88,0xa0 },	/* ...0...0...0...0 */
-		{ 0x28,0xa0,0x28,0xa0 },	/* ...0...0...0...1 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...0...1...0 */
-		{ 0x08,0x20,0xa8,0x80 },	/* ...0...0...1...1 */
-		{ 0x08,0x08,0xa8,0xa8 },	/* ...0...1...0...0 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...1...0...1 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...1...1...0 */
-		{ 0xa0,0x88,0x00,0x28 },	/* ...0...1...1...1 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...0...0...0 */
-		{ 0x88,0x88,0x28,0x28 },	/* ...1...0...0...1 */
-		{ 0x08,0x20,0xa8,0x80 },	/* ...1...0...1...0 */
-		{ 0xa0,0x88,0x88,0xa0 },	/* ...1...0...1...1 */
-		{ 0x08,0x08,0xa8,0xa8 },	/* ...1...1...0...0 */
-		{ 0x00,0x00,0x00,0x00 },	/* ...1...1...0...1 */
-		{ 0x08,0x20,0xa8,0x80 },	/* ...1...1...1...0 */
-		{ 0x08,0x08,0xa8,0xa8 }		/* ...1...1...1...1 */
-	};
-	int A;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	for (A = 0x0000;A < 0x8000;A++)
-	{
-		int i,j;
-		unsigned char src;
-
-
-		src = RAM[A];
-
-		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
-		i = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
-
-		/* pick the offset in the table from bits 3 and 5 of the source data */
-		j = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
-		/* the bottom half of the translation table is the mirror image of the top */
-		if (src & 0x80) j = 3 - j;
-
-		/* decode the ROM data */
-		RAM[A] = src ^ data_xortable[i][j];
-
-		/* now decode the opcodes */
-		ROM[A] = src ^ opcode_xortable[i][j];
-	}
-}
-
 static void penta_decode(void)
 {
 /*
-	the values vary, but the translation mask is always layed out like this:
+	the values vary, but the translation mask is always laid out like this:
 
 	  0 1 2 3 4 5 6 7 8 9 a b c d e f
 	0 A A B B A A B B C C D D C C D D
@@ -662,15 +534,16 @@ struct GameDriver pengo_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo_rom,
 	0, pengo_decode,
 	0,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
@@ -687,15 +560,16 @@ struct GameDriver pengo2_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo2_rom,
 	0, pengo_decode,
 	0,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pengo2_hiload, hisave
@@ -706,21 +580,22 @@ struct GameDriver pengo2u_driver =
 	__FILE__,
 	&pengo_driver,
 	"pengo2u",
-	"Pengo (set 2 unencrypted)",
+	"Pengo (set 2 not encrypted)",
 	"1982",
 	"Sega",
-	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
+	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo2u_rom,
 	0, 0,
 	0,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pengo2_hiload, hisave
@@ -737,15 +612,16 @@ struct GameDriver penta_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	penta_rom,
 	0, penta_decode,
 	0,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

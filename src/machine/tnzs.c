@@ -1,4 +1,3 @@
-#define MALLOC_CPU1_ROM_AREAS
 /***************************************************************************
 
   machine.c
@@ -6,169 +5,493 @@
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
 
+  The I8742 MCU takes care of handling the coin inputs and the tilt switch.
+  To simulate this, we read the status in the interrupt handler for the main
+  CPU and update the counters appropriately. We also must take care of
+  handling the coin/credit settings ourselves.
+
 ***************************************************************************/
 
 #include "driver.h"
 
-unsigned char *tnzs_objram,*tnzs_workram,*tnzs_vdcram,*tnzs_scrollram;
-unsigned char *tnzs_cpu2ram;
-int current_inputport;
-int number_of_credits = 0;
+extern unsigned char *tnzs_workram;
 
-void init_tnzs(void)
+static int mcu_type;
+#define MCU_NONE 0
+#define MCU_EXTRMATN 1
+#define MCU_ARKANOID 2
+#define MCU_TNZS 3
+
+static int mcu_initializing,mcu_coinage_init,mcu_command,mcu_readcredits;
+static int mcu_reportcoin;
+static unsigned char mcu_coinage[4];
+static unsigned char mcu_coinsA,mcu_coinsB,mcu_credits;
+
+
+
+int arkanoi2_sh_f000_r(int offset)
 {
-    current_inputport = -3;
+	int val;
+
+	if (errorlog) fprintf (errorlog, "PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
+
+	val = readinputport(3 + offset/2);
+	if (offset & 1)
+	{
+		return ((val >> 8) & 0xff);
+	}
+	else
+	{
+		return val & 0xff;
+	}
 }
 
-int tnzs_objram_r(int offset)
+
+static void mcu_reset(void)
 {
-	return tnzs_objram[offset];
+	mcu_initializing = 3;
+	mcu_coinage_init = 0;
+	mcu_coinage[0] = 1;
+	mcu_coinage[1] = 1;
+	mcu_coinage[2] = 1;
+	mcu_coinage[3] = 1;
+	mcu_coinsA = 0;
+	mcu_coinsB = 0;
+	mcu_credits = 0;
+	mcu_reportcoin = 0;
+	mcu_command = 0;
 }
 
-int tnzs_workram_r(int offset)
+static void mcu_handle_coins(int coin)
+{
+	static int insertcoin;
+
+	/* The coin inputs and coin counter is managed by the i8742 mcu. Here we */
+	/* simulate it. */
+	if (coin & 0x08)	/* tilt */
+		mcu_reportcoin = coin;
+	else if (coin && coin != insertcoin)
+	{
+		if (coin & 0x01)	/* coin A */
+		{
+			mcu_coinsA++;
+			if (mcu_coinsA >= mcu_coinage[0])
+			{
+				mcu_coinsA -= mcu_coinage[0];
+				mcu_credits += mcu_coinage[1];
+			}
+		}
+		if (coin & 0x02)	/* coin B */
+		{
+			mcu_coinsB++;
+			if (mcu_coinsB >= mcu_coinage[2])
+			{
+				mcu_coinsB -= mcu_coinage[2];
+				mcu_credits += mcu_coinage[3];
+			}
+		}
+		if (coin & 0x04)	/* service */
+			mcu_credits++;
+		mcu_reportcoin = coin;
+	}
+	else
+		mcu_reportcoin = 0;
+
+	insertcoin = coin;
+}
+
+
+
+static int mcu_arkanoi2_r(int offset)
+{
+	char *mcu_startup = "\x55\xaa\x5a";
+
+//if (errorlog) fprintf (errorlog, "PC %04x: read mcu %04x\n", cpu_get_pc(), 0xc000 + offset);
+
+	if (offset == 0)
+	{
+		/* if the mcu has just been reset, return startup code */
+		if (mcu_initializing)
+		{
+			mcu_initializing--;
+			return mcu_startup[2 - mcu_initializing];
+		}
+
+		switch (mcu_command)
+		{
+			case 0x41:
+				return mcu_credits;
+
+			case 0xc1:
+				/* Read the credit counter or the inputs */
+				if (mcu_readcredits == 0)
+				{
+					mcu_readcredits = 1;
+					if (mcu_reportcoin & 0x08)
+					{
+						mcu_initializing = 3;
+						return 0xee;	/* tilt */
+					}
+					else return mcu_credits;
+				}
+				else return readinputport(2);	/* buttons */
+
+			default:
+if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
+				/* should not happen */
+				return 0xff;
+				break;
+		}
+	}
+	else
+	{
+		/*
+		status bits:
+		0 = mcu is ready to send data (read from c000)
+		1 = mcu has read data (from c000)
+		2 = unused
+		3 = unused
+		4-7 = coin code
+		      0 = nothing
+		      1,2,3 = coin switch pressed
+		      e = tilt
+		*/
+		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
+		if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
+		if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+		if (mcu_reportcoin & 0x04) return 0x31;	/* coin 3 (will trigger "coin inserted" sound) */
+		return 0x01;
+	}
+}
+
+static void mcu_arkanoi2_w(int offset, int data)
+{
+	if (offset == 0)
+	{
+//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		if (mcu_command == 0x41)
+		{
+			mcu_credits = (mcu_credits + data) & 0xff;
+		}
+	}
+	else
+	{
+		/*
+		0xc1: read number of credits, then buttons
+		0x54+0x41: add value to number of credits
+		0x84: coin 1 lockout (issued only in test mode)
+		0x88: coin 2 lockout (issued only in test mode)
+		0x80: release coin lockout (issued only in test mode)
+		during initialization, a sequence of 4 bytes sets coin/credit settings
+		*/
+
+//		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+
+		if (mcu_initializing)
+		{
+			/* set up coin/credit settings */
+			mcu_coinage[mcu_coinage_init++] = data;
+			if (mcu_coinage_init == 4) mcu_coinage_init = 0;	/* must not happen */
+		}
+
+		if (data == 0xc1)
+			mcu_readcredits = 0;	/* reset input port number */
+
+		mcu_command = data;
+	}
+}
+
+
+
+static int mcu_tnzs_r(int offset)
+{
+	char *mcu_startup = "\x5a\xa5\x55";
+
+	if (errorlog) fprintf (errorlog, "PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+
+	if (offset == 0)
+	{
+		/* if the mcu has just been reset, return startup code */
+		if (mcu_initializing)
+		{
+			mcu_initializing--;
+			return mcu_startup[2 - mcu_initializing];
+		}
+
+		switch (mcu_command)
+		{
+			case 0x01:
+				return readinputport(2) ^ 0xff;	/* player 1 joystick + buttons */
+
+			case 0x02:
+				return readinputport(3) ^ 0xff;	/* player 2 joystick + buttons */
+
+			case 0x1a:
+				return readinputport(4) >> 4;
+
+			case 0x21:
+				return readinputport(4) & 0x0f;
+
+			case 0x41:
+				return mcu_credits;
+
+			case 0xa1:
+				/* Read the credit counter or the inputs */
+				if (mcu_readcredits == 0)
+				{
+					mcu_readcredits = 1;
+					if (mcu_reportcoin & 0x08)
+					{
+						mcu_initializing = 3;
+						return 0xee;	/* tilt */
+					}
+					else return mcu_credits;
+				}
+				/* buttons */
+				else return ((readinputport(2) & 0xf0) | (readinputport(3) >> 4)) ^ 0xff;
+
+			default:
+if (errorlog) fprintf (errorlog, "error, unknown mcu command\n");
+				/* should not happen */
+				return 0xff;
+				break;
+		}
+	}
+	else
+	{
+		/*
+		status bits:
+		0 = mcu is ready to send data (read from c000)
+		1 = mcu has read data (from c000)
+		2 = unused
+		3 = unused
+		4-7 = coin code
+		      0 = nothing
+		      1,2,3 = coin switch pressed
+		      e = tilt
+		*/
+		if (mcu_reportcoin & 0x08) return 0xe1;	/* tilt */
+		if (mcu_type == MCU_TNZS)
+		{
+			if (mcu_reportcoin & 0x01) return 0x31;	/* coin 1 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x04) return 0x11;	/* coin 3 (will NOT trigger "coin inserted" sound) */
+		}
+		else
+		{
+			if (mcu_reportcoin & 0x01) return 0x11;	/* coin 1 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x02) return 0x21;	/* coin 2 (will trigger "coin inserted" sound) */
+			if (mcu_reportcoin & 0x04) return 0x31;	/* coin 3 (will trigger "coin inserted" sound) */
+		}
+		return 0x01;
+	}
+}
+
+static void mcu_tnzs_w(int offset, int data)
+{
+	if (offset == 0)
+	{
+		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		if (mcu_command == 0x41)
+		{
+			mcu_credits = (mcu_credits + data) & 0xff;
+		}
+	}
+	else
+	{
+		/*
+		0xa1: read number of credits, then buttons
+		0x01: read player 1 joystick + buttons
+		0x02: read player 2 joystick + buttons
+		0x1a: read coin switches
+		0x21: read service & tilt switches
+		0x4a+0x41: add value to number of credits
+		0x84: coin 1 lockout (issued only in test mode)
+		0x88: coin 2 lockout (issued only in test mode)
+		0x80: release coin lockout (issued only in test mode)
+		during initialization, a sequence of 4 bytes sets coin/credit settings
+		*/
+
+		if (errorlog) fprintf (errorlog, "PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+
+		if (mcu_initializing)
+		{
+			/* set up coin/credit settings */
+			mcu_coinage[mcu_coinage_init++] = data;
+			if (mcu_coinage_init == 4) mcu_coinage_init = 0;	/* must not happen */
+		}
+
+		if (data == 0xa1)
+			mcu_readcredits = 0;	/* reset input port number */
+
+		mcu_command = data;
+	}
+}
+
+
+
+void extrmatn_init(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	mcu_type = MCU_EXTRMATN;
+
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
+}
+
+void arkanoi2_init(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	mcu_type = MCU_ARKANOID;
+
+	/* there's code which falls through from the fixed ROM to bank #2, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+}
+
+void tnzs_init(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	mcu_type = MCU_TNZS;
+
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
+	/* copy it there otherwise the CPU bank switching support will not catch it. */
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
+}
+
+void insectx_init(void)
+{
+	mcu_type = MCU_NONE;
+
+	/* this game has no mcu, replace the handler with plain input port handlers */
+	install_mem_read_handler(1, 0xc000, 0xc000, input_port_2_r );
+	install_mem_read_handler(1, 0xc001, 0xc001, input_port_3_r );
+	install_mem_read_handler(1, 0xc002, 0xc002, input_port_4_r );
+}
+
+
+int tnzs_mcu_r(int offset)
+{
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			return mcu_arkanoi2_r(offset);
+			break;
+		case MCU_EXTRMATN:
+		case MCU_TNZS:
+		default:
+			return mcu_tnzs_r(offset);
+			break;
+	}
+}
+
+void tnzs_mcu_w(int offset,int data)
+{
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			mcu_arkanoi2_w(offset,data);
+			break;
+		case MCU_EXTRMATN:
+		case MCU_TNZS:
+			mcu_tnzs_w(offset,data);
+			break;
+	}
+}
+
+int tnzs_interrupt(void)
+{
+	int coin;
+
+	switch (mcu_type)
+	{
+		case MCU_ARKANOID:
+			coin = ((readinputport(3) & 0xf000) ^ 0xd000) >> 12;
+			coin = (coin & 0x08) | ((coin & 0x03) << 1) | ((coin & 0x04) >> 2);
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_EXTRMATN:
+			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0c;
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_TNZS:
+			coin = (((readinputport(4) & 0x30) >> 4) | ((readinputport(4) & 0x03) << 2)) ^ 0x0f;
+			mcu_handle_coins(coin);
+			break;
+
+		case MCU_NONE:
+		default:
+			break;
+	}
+
+	return 0;
+}
+
+void tnzs_init_machine (void)
+{
+	/* initialize the mcu simulation */
+	mcu_reset();
+
+	/* preset the banks */
+	{
+		unsigned char *RAM;
+
+		RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		cpu_setbank(1,&RAM[0x18000]);
+
+		RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		cpu_setbank(2,&RAM[0x10000]);
+	}
+}
+
+
+int tnzs_workram_r (int offset)
 {
 	return tnzs_workram[offset];
 }
 
-int tnzs_vdcram_r(int offset)
-{
-#if 0
-	if (errorlog) fprintf(errorlog, "read %02x from VDC %02x\n",
-						  tnzs_vdcram[offset], offset);
-#endif
-	return tnzs_vdcram[offset];
-}
-
-int tnzs_cpu2ram_r(int offset)
-{
-	return tnzs_cpu2ram[offset];
-}
-
-
-int tnzs_inputport_r(int offset)
-{
-	int ret;
-
-	if (offset == 0)
-	{
-        switch(current_inputport)
-		{
-			case -3: ret = 0x5a; break;
-			case -2: ret = 0xa5; break;
-			case -1: ret = 0x55; break;
-            case 6: current_inputport = 0; /* fall through */
-			case 0: ret = number_of_credits;
-				break;
-			default:
-                ret = readinputport(current_inputport); break;
-		}
-#if 0
-		if (errorlog) fprintf(errorlog, "$c000 is %02x (count %d)\n",
-                              ret, current_inputport);
-#endif
-        current_inputport++;
-		return ret;
-	}
-	else
-		return (0x01);			/* 0xE* for TILT */
-}
-
-void tnzs_objram_w(int offset, int data)
-{
-	tnzs_objram[offset] = data;
-}
-
-void tnzs_workram_w(int offset, int data)
+void tnzs_workram_w (int offset, int data)
 {
 	tnzs_workram[offset] = data;
 }
 
-void tnzs_vdcram_w(int offset, int data)
+void tnzs_bankswitch_w (int offset, int data)
 {
-#if 0
-	if (errorlog) fprintf(errorlog,
-						  "write %02x to VDC %02x\n", data, offset);
-#endif
-	tnzs_vdcram[offset] = data;
-}
-
-void tnzs_scrollram_w(int offset, int data)
-{
-	tnzs_scrollram[offset] = data;
-}
-
-void tnzs_cpu2ram_w(int offset, int data)
-{
-	tnzs_cpu2ram[offset] = data;
-}
-
-void tnzs_inputport_w(int offset, int data)
-{
-	if (offset == 0)
-	{
-        current_inputport = (current_inputport + 5) % 6;
-		if (errorlog) fprintf(errorlog,
-							  "writing %02x to 0xc000: count set back to %d\n",
-                              data, current_inputport);
-	}
-}
-
-int bank = 0;
-
-extern unsigned char *banked_ram_0, *banked_ram_1;
-#ifdef MALLOC_CPU1_ROM_AREAS
-extern unsigned char *banked_rom_0, *banked_rom_1, *banked_rom_2, *banked_rom_3;
-#endif
-
-void tnzs_bankswitch_w(int offset, int data)
-{
+	static int reset;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+	/* bit 4 resets the second CPU */
+	if ((data & 0x10) && !reset)
+	{
+		cpu_reset(1);
+		cpu_halt(1,1);
+	}
+	else if (!(data & 0x10))
+	{
+		cpu_halt (1,0);
+	}
+	reset = data & 0x10;
 
-	if (errorlog && (data < 0x10 || data > 0x17))
-	{
-		fprintf(errorlog, "WARNING: writing %02x to bankswitch\n", data);
-		return;
-	}
-
-	bank = data & 7;
-
-	if (bank == 0)
-	{
-		cpu_setbank(1, banked_ram_0);
-	}
-	else if (bank == 1)
-	{
-		cpu_setbank(1, banked_ram_1);
-	}
-	else
-	{
-		cpu_setbank(1, &RAM[0x8000 + 0x4000 * bank]);
-	}
+	/* bits 0-2 select RAM/ROM bank */
+//	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch\n", cpu_get_pc(),data);
+	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 }
 
-void tnzs_bankswitch1_w(int offset,int data)
+void tnzs_bankswitch1_w (int offset,int data)
 {
-#ifdef MALLOC_CPU1_ROM_AREAS
-	switch (data & 3)
-	{
-		case 0:
-			cpu_setbank(2, banked_rom_0);
-			break;
-		case 1:
-			cpu_setbank(2, banked_rom_1);
-			break;
-		case 2:
-			cpu_setbank(2, banked_rom_2);
-			break;
-		case 3:
-			cpu_setbank(2, banked_rom_3);
-			break;
-	}
-#else
-	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-		cpu_setbank(2,&RAM[0x8000 + 0x2000 * (data & 3)]);
-	}
-#endif
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+//	if (errorlog) fprintf(errorlog, "PC %04x: writing %02x to bankswitch 1\n", cpu_get_pc(),data);
+
+	/* bit 2 resets the mcu */
+	if (data & 0x04) mcu_reset();
+
+	/* bits 0-1 select ROM bank */
+	cpu_setbank (2, &RAM[0x10000 + 0x2000 * (data & 3)]);
 }

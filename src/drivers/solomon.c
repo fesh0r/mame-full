@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
 
 extern unsigned char *solomon_bgvideoram;
@@ -84,9 +85,9 @@ static struct IOWritePort solomon_sound_writeport[] =
 INPUT_PORTS_START( solomon_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -94,9 +95,9 @@ INPUT_PORTS_START( solomon_input_ports )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -113,51 +114,51 @@ INPUT_PORTS_START( solomon_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x0c, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x0c, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x30, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x30, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0xc0, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_3C ) )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown DSW2 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW2 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown DSW2 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW2 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown DSW2 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0xe0, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, "Unknown DSW2 1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown DSW2 2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown DSW2 3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown DSW2 4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown DSW2 5" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30k 200k 500k" )
+	PORT_DIPSETTING(    0x80, "100k 300k 800k" )
 	PORT_DIPSETTING(    0x40, "30k 200k" )
+	PORT_DIPSETTING(    0xc0, "100k 300k" )
 	PORT_DIPSETTING(    0x20, "30k" )
 	PORT_DIPSETTING(    0xa0, "100k" )
-	PORT_DIPSETTING(    0xc0, "100k 300k" )
-	PORT_DIPSETTING(    0x80, "100k 300k 800k" )
 	PORT_DIPSETTING(    0x60, "200k" )
 	PORT_DIPSETTING(    0xe0, "None" )
 INPUT_PORTS_END
@@ -200,7 +201,8 @@ static struct AY8910interface ay8910_interface =
 {
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 255, 255, 255 },
+	{ 12, 12, 12 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -261,23 +263,23 @@ static struct MachineDriver solomon_machine_driver =
 
 ROM_START( solomon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "slmn_06.bin", 0x00000, 0x4000, 0x9211c53d )
-	ROM_LOAD( "slmn_07.bin", 0x08000, 0x4000, 0x35d3a0dd )
-	ROM_CONTINUE(            0x04000, 0x4000 )
-	ROM_LOAD( "slmn_08.bin", 0x0f000, 0x1000, 0xe026fd64 )
+	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, 0xe4d421ff )
+	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, 0xd52d7e38 )
+	ROM_CONTINUE(             0x04000, 0x4000 )
+	ROM_LOAD( "slmn_08.bin",  0x0f000, 0x1000, 0xb924d162 )
 
-	ROM_REGION(0x30000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "slmn_12.bin", 0x00000, 0x08000, 0x92abe6f5 )	/* characters */
-	ROM_LOAD( "slmn_11.bin", 0x08000, 0x08000, 0x5139f6c1 )
-	ROM_LOAD( "slmn_10.bin", 0x10000, 0x08000, 0x515e3a4a )
-	ROM_LOAD( "slmn_09.bin", 0x18000, 0x08000, 0xfb92016e )
-	ROM_LOAD( "slmn_02.bin", 0x20000, 0x04000, 0x15ad4397 )	/* sprites */
-	ROM_LOAD( "slmn_03.bin", 0x24000, 0x04000, 0xb9936b79 )
-	ROM_LOAD( "slmn_04.bin", 0x28000, 0x04000, 0xb916d26c )
-	ROM_LOAD( "slmn_05.bin", 0x2c000, 0x04000, 0x86ac094c )
+	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "slmn_12.bin",  0x00000, 0x08000, 0xaa26dfcb )	/* characters */
+	ROM_LOAD( "slmn_11.bin",  0x08000, 0x08000, 0x6f94d2af )
+	ROM_LOAD( "slmn_10.bin",  0x10000, 0x08000, 0x8310c2a1 )
+	ROM_LOAD( "slmn_09.bin",  0x18000, 0x08000, 0xab7e6c42 )
+	ROM_LOAD( "slmn_02.bin",  0x20000, 0x04000, 0x80fa2be3 )	/* sprites */
+	ROM_LOAD( "slmn_03.bin",  0x24000, 0x04000, 0x236106b4 )
+	ROM_LOAD( "slmn_04.bin",  0x28000, 0x04000, 0x088fe5d9 )
+	ROM_LOAD( "slmn_05.bin",  0x2c000, 0x04000, 0x8366232a )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "slmn_01.bin", 0x0000, 0x4000, 0xd893aff5 )
+	ROM_LOAD( "slmn_01.bin",  0x0000, 0x4000, 0xfa6e562e )
 ROM_END
 
 
@@ -330,6 +332,7 @@ struct GameDriver solomon_driver =
 	"Mirko Buffoni",
 	0,
 	&solomon_machine_driver,
+	0,
 
 	solomon_rom,
 	0, 0,

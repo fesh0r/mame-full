@@ -1,0 +1,827 @@
+#include "driver.h"
+
+
+/***************************************************************************
+
+  Many games use a master-slave CPU setup. Typically, the main CPU writes
+  a command to some register, and then writes to another register to trigger
+  an interrupt on the slave CPU (the interrupt might also be triggered by
+  the first write). The slave CPU, notified by the interrupt, goes and reads
+  the command.
+
+***************************************************************************/
+
+static int cleared_value = 0x00;
+
+static int latch,read_debug;
+
+
+static void soundlatch_callback(int param)
+{
+if (errorlog && read_debug == 0 && latch != param)
+	fprintf(errorlog,"Warning: sound latch written before being read. Previous: %02x, new: %02x\n",latch,param);
+	latch = param;
+	read_debug = 0;
+}
+
+void soundlatch_w(int offset,int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,data,soundlatch_callback);
+}
+
+int soundlatch_r(int offset)
+{
+	read_debug = 1;
+	return latch;
+}
+
+void soundlatch_clear_w(int offset, int data)
+{
+	latch = cleared_value;
+}
+
+
+static int latch2,read_debug2;
+
+static void soundlatch2_callback(int param)
+{
+if (errorlog && read_debug2 == 0 && latch2 != param)
+	fprintf(errorlog,"Warning: sound latch 2 written before being read. Previous: %02x, new: %02x\n",latch2,param);
+	latch2 = param;
+	read_debug2 = 0;
+}
+
+void soundlatch2_w(int offset,int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,data,soundlatch2_callback);
+}
+
+int soundlatch2_r(int offset)
+{
+	read_debug2 = 1;
+	return latch2;
+}
+
+void soundlatch2_clear_w(int offset, int data)
+{
+	latch2 = cleared_value;
+}
+
+
+static int latch3,read_debug3;
+
+static void soundlatch3_callback(int param)
+{
+if (errorlog && read_debug3 == 0 && latch3 != param)
+	fprintf(errorlog,"Warning: sound latch 3 written before being read. Previous: %02x, new: %02x\n",latch3,param);
+	latch3 = param;
+	read_debug3 = 0;
+}
+
+void soundlatch3_w(int offset,int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,data,soundlatch3_callback);
+}
+
+int soundlatch3_r(int offset)
+{
+	read_debug3 = 1;
+	return latch3;
+}
+
+void soundlatch3_clear_w(int offset, int data)
+{
+	latch3 = cleared_value;
+}
+
+
+static int latch4,read_debug4;
+
+static void soundlatch4_callback(int param)
+{
+if (errorlog && read_debug4 == 0 && latch4 != param)
+	fprintf(errorlog,"Warning: sound latch 4 written before being read. Previous: %02x, new: %02x\n",latch2,param);
+	latch4 = param;
+	read_debug4 = 0;
+}
+
+void soundlatch4_w(int offset,int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,data,soundlatch4_callback);
+}
+
+int soundlatch4_r(int offset)
+{
+	read_debug4 = 1;
+	return latch4;
+}
+
+void soundlatch4_clear_w(int offset, int data)
+{
+	latch4 = cleared_value;
+}
+
+
+void soundlatch_setclearedvalue(int value)
+{
+	cleared_value = value;
+}
+
+
+
+
+
+/***************************************************************************
+
+
+
+***************************************************************************/
+
+static void *sound_update_timer;
+static double refresh_period;
+static double refresh_period_inv;
+
+
+struct snd_interface
+{
+	unsigned sound_num;										/* ID */
+	const char *name;										/* description */
+	int (*chips_num)(const struct MachineSound *msound);	/* returns number of chips if applicable */
+	int (*chips_clock)(const struct MachineSound *msound);	/* returns chips clock if applicable */
+	int (*start)(const struct MachineSound *msound);		/* starts sound emulation */
+	void (*stop)(void);										/* stops sound emulation */
+	void (*update)(void);									/* updates emulation once per frame if necessary */
+	void (*reset)(void);									/* resets sound emulation */
+};
+
+
+#if (HAS_CUSTOM)
+static const struct CustomSound_interface *cust_intf;
+
+int custom_sh_start(const struct MachineSound *msound)
+{
+	cust_intf = msound->sound_interface;
+
+	if (cust_intf->sh_start)
+		return (*cust_intf->sh_start)(msound);
+	else return 0;
+}
+void custom_sh_stop(void)
+{
+	if (cust_intf->sh_stop) (*cust_intf->sh_stop)();
+}
+void custom_sh_update(void)
+{
+	if (cust_intf->sh_update) (*cust_intf->sh_update)();
+}
+#endif
+#if (HAS_DAC)
+int DAC_num(const struct MachineSound *msound) { return ((struct DACinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_ADPCM)
+int ADPCM_num(const struct MachineSound *msound) { return ((struct ADPCMinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_OKIM6295)
+int OKIM6295_num(const struct MachineSound *msound) { return ((struct OKIM6295interface*)msound->sound_interface)->num; }
+int OKIM6295_clock(const struct MachineSound *msound) { return ((struct OKIM6295interface*)msound->sound_interface)->frequency[0]; }
+#endif
+#if (HAS_MSM5205)
+int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_HC55516)
+int HC55516_num(const struct MachineSound *msound) { return ((struct CVSDinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_K007232)
+int K007232_num(const struct MachineSound *msound) { return ((struct K007232_interface*)msound->sound_interface)->num_chips; }
+#endif
+#if (HAS_AY8910)
+int AY8910_clock(const struct MachineSound *msound) { return ((struct AY8910interface*)msound->sound_interface)->baseclock; }
+int AY8910_num(const struct MachineSound *msound) { return ((struct AY8910interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM2203)
+int YM2203_clock(const struct MachineSound *msound) { return ((struct YM2203interface*)msound->sound_interface)->baseclock; }
+int YM2203_num(const struct MachineSound *msound) { return ((struct YM2203interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM2413)
+int YM2413_clock(const struct MachineSound *msound) { return ((struct YM2413interface*)msound->sound_interface)->baseclock; }
+int YM2413_num(const struct MachineSound *msound) { return ((struct YM2413interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM2608)
+int YM2608_clock(const struct MachineSound *msound) { return ((struct YM2608interface*)msound->sound_interface)->baseclock; }
+int YM2608_num(const struct MachineSound *msound) { return ((struct YM2608interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM2610)
+int YM2610_clock(const struct MachineSound *msound) { return ((struct YM2610interface*)msound->sound_interface)->baseclock; }
+int YM2610_num(const struct MachineSound *msound) { return ((struct YM2610interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_YM2612)
+int YM2612_clock(const struct MachineSound *msound) { return ((struct YM2612interface*)msound->sound_interface)->baseclock; }
+int YM2612_num(const struct MachineSound *msound) { return ((struct YM2612interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_POKEY)
+int POKEY_clock(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->baseclock; }
+int POKEY_num(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_TIA)
+int TIA_clock(const struct MachineSound *msound) { return ((struct TIAinterface*)msound->sound_interface)->baseclock; }
+#endif
+#if (HAS_YM3812)
+int YM3812_clock(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->baseclock; }
+int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_VLM5030)
+int VLM5030_clock(const struct MachineSound *msound) { return ((struct VLM5030interface*)msound->sound_interface)->baseclock; }
+#endif
+#if (HAS_TMS5220)
+int TMS5220_clock(const struct MachineSound *msound) { return ((struct TMS5220interface*)msound->sound_interface)->baseclock; }
+#endif
+#if (HAS_YM2151)
+int YM2151_clock(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->baseclock; }
+int YM2151_num(const struct MachineSound *msound) { return ((struct YM2151interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_NES)
+int NES_clock(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->baseclock; }
+int NES_num(const struct MachineSound *msound) { return ((struct NESinterface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_SN76496)
+int SN76496_clock(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->baseclock[0]; }
+int SN76496_num(const struct MachineSound *msound) { return ((struct SN76496interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_MSM5205)
+int MSM5205_clock(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->baseclock; }
+#endif
+#if (HAS_UPD7759)
+int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
+#endif
+#if (HAS_ASTROCADE)
+int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
+int ASTROCADE_num(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_K053260)
+int K053260_clock(const struct MachineSound *msound) { return ((struct K053260_interface*)msound->sound_interface)->clock; }
+#endif
+
+struct snd_interface sndintf[] =
+{
+    {
+		SOUND_DUMMY,
+		"",
+		0,
+		0,
+		0,
+		0,
+		0,
+		0
+	},
+#if (HAS_CUSTOM)
+    {
+		SOUND_CUSTOM,
+		"Custom",
+		0,
+		0,
+		custom_sh_start,
+		custom_sh_stop,
+		custom_sh_update,
+		0
+	},
+#endif
+#if (HAS_SAMPLES)
+    {
+		SOUND_SAMPLES,
+		"Samples",
+		0,
+		0,
+		samples_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_DAC)
+    {
+		SOUND_DAC,
+		"DAC",
+		DAC_num,
+		0,
+		DAC_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_AY8910)
+    {
+		SOUND_AY8910,
+		"AY-8910",
+		AY8910_num,
+		AY8910_clock,
+		AY8910_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_YM2203)
+    {
+		SOUND_YM2203,
+		"YM-2203",
+		YM2203_num,
+		YM2203_clock,
+		YM2203_sh_start,
+		YM2203_sh_stop,
+		0,
+		YM2203_sh_reset
+	},
+#endif
+#if (HAS_YM2151)
+    {
+		SOUND_YM2151,
+		"YM-2151",
+		YM2151_num,
+		YM2151_clock,
+		YM2151_sh_start,
+		YM2151_sh_stop,
+		0,
+		YM2151_sh_reset
+	},
+#endif
+#if (HAS_YM2151_ALT)
+    {
+		SOUND_YM2151_ALT,
+		"YM-2151a",
+		YM2151_num,
+		YM2151_clock,
+		YM2151_ALT_sh_start,
+		YM2151_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_YM2608)
+    {
+		SOUND_YM2608,
+		"YM-2608",
+		YM2608_num,
+		YM2608_clock,
+		YM2608_sh_start,
+		YM2608_sh_stop,
+		0,
+		YM2608_sh_reset
+	},
+#endif
+#if (HAS_YM2610)
+    {
+		SOUND_YM2610,
+		"YM-2610",
+		YM2610_num,
+		YM2610_clock,
+		YM2610_sh_start,
+		YM2610_sh_stop,
+		0,
+		YM2610_sh_reset
+	},
+#endif
+#if (HAS_YM2610B)
+    {
+		SOUND_YM2610B,
+		"YM-2610B",
+		YM2610_num,
+		YM2610_clock,
+		YM2610B_sh_start,
+		YM2610_sh_stop,
+		0,
+		YM2610_sh_reset
+	},
+#endif
+#if (HAS_YM2612)
+    {
+		SOUND_YM2612,
+		"YM-2612",
+		YM2612_num,
+		YM2612_clock,
+		YM2612_sh_start,
+		YM2612_sh_stop,
+		0,
+		YM2612_sh_reset
+	},
+#endif
+#if (HAS_YM3438)
+    {
+		SOUND_YM3438,
+		"YM-3438",
+		YM2612_num,
+		YM2612_clock,
+		YM2612_sh_start,
+		YM2612_sh_stop,
+		0,
+		YM2612_sh_reset
+	},
+#endif
+#if (HAS_YM2413)
+    {
+		SOUND_YM2413,
+		"YM-2413",
+		YM2413_num,
+		YM2413_clock,
+		YM2413_sh_start,
+		YM2413_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_YM3812)
+    {
+		SOUND_YM3812,
+		"YM-3812",
+		YM3812_num,
+		YM3812_clock,
+		YM3812_sh_start,
+		YM3812_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_YM3526)
+    {
+		SOUND_YM3526,
+		"YM-3526",
+		YM3812_num,
+		YM3812_clock,
+		YM3812_sh_start,
+		YM3812_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_SN76496)
+    {
+		SOUND_SN76496,
+		"SN76496",
+		SN76496_num,
+		SN76496_clock,
+		SN76496_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_POKEY)
+    {
+		SOUND_POKEY,
+		"Pokey",
+		POKEY_num,
+		POKEY_clock,
+		pokey_sh_start,
+		pokey_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_TIA)
+    {
+		SOUND_TIA,
+		"TIA",
+		0,
+		TIA_clock,
+		tia_sh_start,
+		tia_sh_stop,
+		tia_sh_update,
+		0
+	},
+#endif
+#if (HAS_NES)
+    {
+		SOUND_NES,
+		"NES",
+		NES_num,
+		NES_clock,
+		NESPSG_sh_start,
+		NESPSG_sh_stop,
+		NESPSG_sh_update,
+		0
+	},
+#endif
+#if (HAS_ASTROCADE)
+    {
+		SOUND_ASTROCADE,
+		"Astrocade",
+		ASTROCADE_num,
+		ASTROCADE_clock,
+		astrocade_sh_start,
+		astrocade_sh_stop,
+		astrocade_sh_update,
+		0
+	},
+#endif
+#if (HAS_NAMCO)
+    {
+		SOUND_NAMCO,
+		"Namco",
+		0,
+		0,
+		namco_sh_start,
+		namco_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_TMS5220)
+    {
+		SOUND_TMS5220,
+		"TMS5520",
+		0,
+		TMS5220_clock,
+		tms5220_sh_start,
+		tms5220_sh_stop,
+		tms5220_sh_update,
+		0
+	},
+#endif
+#if (HAS_VLM5030)
+    {
+		SOUND_VLM5030,
+		"VLM5030",
+		0,
+		VLM5030_clock,
+		VLM5030_sh_start,
+		VLM5030_sh_stop,
+		VLM5030_sh_update,
+		0
+	},
+#endif
+#if (HAS_ADPCM)
+    {
+		SOUND_ADPCM,
+		"ADPCM",
+		ADPCM_num,
+		0,
+		ADPCM_sh_start,
+		ADPCM_sh_stop,
+		ADPCM_sh_update,
+		0
+	},
+#endif
+#if (HAS_OKIM6295)
+    {
+		SOUND_OKIM6295,
+		"OKI6295",
+		OKIM6295_num,
+		OKIM6295_clock,
+		OKIM6295_sh_start,
+		OKIM6295_sh_stop,
+		OKIM6295_sh_update,
+		0
+	},
+#endif
+#if (HAS_MSM5205)
+    {
+		SOUND_MSM5205,
+		"MSM5205",
+		MSM5205_num,
+		MSM5205_clock,
+		MSM5205_sh_start,
+		0,
+		0,
+		MSM5205_sh_reset,
+	},
+#endif
+#if (HAS_UPD7759)
+    {
+		SOUND_UPD7759,
+		"uPD7759",
+		0,
+		UPD7759_clock,
+		UPD7759_sh_start,
+		UPD7759_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_HC55516)
+    {
+		SOUND_HC55516,
+		"HC55516",
+		HC55516_num,
+		0,
+		CVSD_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_K007232)
+    {
+		SOUND_K007232,
+		"007232",
+		K007232_num,
+		0,
+		K007232_sh_start,
+		0,
+		0,
+		0
+	},
+#endif
+#if (HAS_K053260)
+    {
+		SOUND_K053260,
+		"053260",
+		0,
+		K053260_clock,
+		K053260_sh_start,
+		K053260_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_SEGAPCM)
+	{
+		SOUND_SEGAPCM,
+		"Sega PCM",
+		0,
+		0,
+		SEGAPCM_sh_start,
+		SEGAPCM_sh_stop,
+		SEGAPCM_sh_update,
+		0
+	},
+#endif
+#if (HAS_RF5C68)
+	{
+		SOUND_RF5C68,
+		"RF5C68",
+		0,
+		0,
+		RF5C68_sh_start,
+		RF5C68_sh_stop,
+		0,
+		0
+	},
+#endif
+#if (HAS_CEM3394)
+	{
+		SOUND_CEM3394,
+		"CEM3394",
+		0,
+		0,
+		cem3394_sh_start,
+		cem3394_sh_stop,
+		0,
+		0
+	},
+#endif
+};
+
+
+
+int sound_start(void)
+{
+	int totalsound = 0;
+	int i;
+
+	/* Verify the order of entries in the sndintf[] array */
+	for (i = 0;i < SOUND_COUNT;i++)
+	{
+		if (sndintf[i].sound_num != i)
+		{
+if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sndintf[i].sound_num);
+			return 1;
+		}
+	}
+
+
+	if (mixer_sh_start() != 0)
+		return 1;
+
+	if (streams_sh_start() != 0)
+		return 1;
+
+	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
+	{
+		if ((*sndintf[Machine->drv->sound[totalsound].sound_type].start)(&Machine->drv->sound[totalsound]) != 0)
+			goto getout;
+
+		totalsound++;
+	}
+
+	/* call the custom initialization AFTER initializing the standard sections, */
+	/* so it can tweak the default parameters (like panning) */
+	if (Machine->drv->sh_start && (*Machine->drv->sh_start)() != 0)
+		return 1;
+
+	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
+	refresh_period_inv = 1.0 / refresh_period;
+	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
+
+	return 0;
+
+
+getout:
+	/* TODO: should also free the resources allocated before */
+	return 1;
+}
+
+
+
+void sound_stop(void)
+{
+	int totalsound = 0;
+
+
+	if (Machine->drv->sh_stop) (*Machine->drv->sh_stop)();
+
+	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
+	{
+		if (sndintf[Machine->drv->sound[totalsound].sound_type].stop)
+			(*sndintf[Machine->drv->sound[totalsound].sound_type].stop)();
+
+		totalsound++;
+	}
+
+	streams_sh_stop();
+	mixer_sh_stop();
+
+	if (sound_update_timer)
+	{
+		timer_remove(sound_update_timer);
+		sound_update_timer = 0;
+	}
+}
+
+
+
+void sound_update(void)
+{
+	int totalsound = 0;
+
+
+	profiler_mark(PROFILER_SOUND);
+
+	if (Machine->drv->sh_update) (*Machine->drv->sh_update)();
+
+	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
+	{
+		if (sndintf[Machine->drv->sound[totalsound].sound_type].update)
+			(*sndintf[Machine->drv->sound[totalsound].sound_type].update)();
+
+		totalsound++;
+	}
+
+	streams_sh_update();
+
+	timer_reset(sound_update_timer,TIME_NEVER);
+
+	profiler_mark(PROFILER_END);
+}
+
+
+void sound_reset(void)
+{
+	int totalsound = 0;
+
+
+	while (Machine->drv->sound[totalsound].sound_type != 0 && totalsound < MAX_SOUND)
+	{
+		if (sndintf[Machine->drv->sound[totalsound].sound_type].reset)
+			(*sndintf[Machine->drv->sound[totalsound].sound_type].reset)();
+
+		totalsound++;
+	}
+}
+
+
+
+const char *sound_name(const struct MachineSound *msound)
+{
+	if (msound->sound_type < SOUND_COUNT)
+		return sndintf[msound->sound_type].name;
+	else
+		return "";
+}
+
+int sound_num(const struct MachineSound *msound)
+{
+	if (msound->sound_type < SOUND_COUNT && sndintf[msound->sound_type].chips_num)
+		return (*sndintf[msound->sound_type].chips_num)(msound);
+	else
+		return 0;
+}
+
+int sound_clock(const struct MachineSound *msound)
+{
+	if (msound->sound_type < SOUND_COUNT && sndintf[msound->sound_type].chips_clock)
+		return (*sndintf[msound->sound_type].chips_clock)(msound);
+	else
+		return 0;
+}
+
+
+int sound_scalebufferpos(int value)
+{
+	int result = (int)((double)value * timer_timeelapsed (sound_update_timer) * refresh_period_inv);
+	if (value >= 0) return (result < value) ? result : value;
+	else return (result > value) ? result : value;
+}

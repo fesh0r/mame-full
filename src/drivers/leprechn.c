@@ -60,7 +60,7 @@
  ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/M6502.h"
+#include "cpu/m6502/m6502.h"
 
 
 int  leprechn_vh_start(void);
@@ -82,7 +82,7 @@ int  leprechn_0805_r(int offset);
 void leprechn_sh_w(int offset, int data)
 {
 	soundlatch_w(offset,data);
-	cpu_cause_interrupt(1,INT_IRQ);
+	cpu_cause_interrupt(1,M6502_INT_IRQ);
 }
 
 
@@ -144,18 +144,18 @@ INPUT_PORTS_START( input_ports )
 	// All of these ports are read indirectly through 2800/2801
 	PORT_START      /* Input Port 0 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // This is called "Slam" in the game
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "Advance", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX(0x10, IP_ACTIVE_LOW, 0, "Advance", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x23, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* Input Port 1 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START      /* Input Port 2 */
 	PORT_BIT( 0x5f, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -164,48 +164,58 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START      /* Input Port 3 */
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 
 	PORT_START      /* DSW #1 */
-	PORT_DIPNAME( 0x09, 0x09, "Coinage B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x09, "1 Credit/1 Coin" )
-	PORT_DIPSETTING(    0x01, "5 Credits/1 Coin" )
-	PORT_DIPSETTING(    0x08, "6 Credits/1 Coin" )
-	PORT_DIPSETTING(    0x00, "7 Credits/1 Coin" )
-	PORT_DIPNAME( 0x22, 0x22, "Max Credits", IP_KEY_NONE )
+	PORT_DIPNAME( 0x09, 0x09, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0x22, 0x22, "Max Credits" )
 	PORT_DIPSETTING(    0x22, "10" )
 	PORT_DIPSETTING(    0x20, "20" )
 	PORT_DIPSETTING(    0x02, "30" )
 	PORT_DIPSETTING(    0x00, "40" )
-	PORT_DIPNAME( 0x04, 0x04, "Cocktail Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Coinage A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0xc0, "1 Credit/1 Coin" )
-	PORT_DIPSETTING(    0x40, "2 Credits/1 Coin" )
-	PORT_DIPSETTING(    0x80, "3 Credits/1 Coin" )
-	PORT_DIPSETTING(    0x00, "4 Credits/1 Coin" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_4C ) )
 
 	PORT_START      /* DSW #2 */
-	PORT_DIPNAME( 0x01, 0x01, "Attract Sound", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0xc0, 0x40, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x40, "30000" )
 	PORT_DIPSETTING(    0x80, "60000" )
 	PORT_DIPSETTING(    0x00, "90000" )
-	PORT_DIPSETTING(    0xc0, "No Bonus" )
-	PORT_BIT( 0x36, IP_ACTIVE_LOW, IPT_UNUSED ) // The service screen
-						    // shows these to be unused
+	PORT_DIPSETTING(    0xc0, "None" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -236,7 +246,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,      /* 1 chip */
 	14318000/8,     /* ? */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -253,21 +264,21 @@ static struct MachineDriver leprechn_machine_driver =
 	    // should stop before the display switches to the name of the
 	    // next level
 	    {
-		CPU_M6502,
-		1250000,	/* 1.25 Mhz ??? */
-		0,
-		readmem,writemem,0,0,
-		interrupt,1
+			CPU_M6502,
+			1250000,	/* 1.25 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
 	    },
 	    {
-		CPU_M6502 | CPU_AUDIO_CPU,
-		1500000,	/* 1.5 Mhz ??? */
-		2,
-		sound_readmem,sound_writemem,0,0,
-		ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,	/* 1.5 Mhz ??? */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 	    }
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	57, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
 	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -301,23 +312,43 @@ static struct MachineDriver leprechn_machine_driver =
 ***************************************************************************/
 
 ROM_START( leprechn_rom )
-	ROM_REGION(0x10000)  // 64k for the main CPU
-	ROM_LOAD( "lep1",     0x8000, 0x1000, 0x25cd602d )
-	ROM_LOAD( "lep2",     0x9000, 0x1000, 0x128b9183 )
-	ROM_LOAD( "lep3",     0xa000, 0x1000, 0x558efc6e )
-	ROM_LOAD( "lep4",     0xb000, 0x1000, 0xe3828c84 )
-	ROM_LOAD( "lep5",     0xc000, 0x1000, 0x5feda70d )
-	ROM_LOAD( "lep6",     0xd000, 0x1000, 0x8d7a408e )
-	ROM_LOAD( "lep7",     0xe000, 0x1000, 0xff916657 )
-	ROM_LOAD( "lep8",     0xf000, 0x1000, 0x3e225334 )
+	ROM_REGION(0x10000)  /* 64k for the main CPU */
+	ROM_LOAD( "lep1",         0x8000, 0x1000, 0x2c4a46ca )
+	ROM_LOAD( "lep2",         0x9000, 0x1000, 0x6ed26b3e )
+	ROM_LOAD( "lep3",         0xa000, 0x1000, 0xa2eaa016 )
+	ROM_LOAD( "lep4",         0xb000, 0x1000, 0x6c12a065 )
+	ROM_LOAD( "lep5",         0xc000, 0x1000, 0x21ddb539 )
+	ROM_LOAD( "lep6",         0xd000, 0x1000, 0x03c34dce )
+	ROM_LOAD( "lep7",         0xe000, 0x1000, 0x7e06d56d )
+	ROM_LOAD( "lep8",         0xf000, 0x1000, 0x097ede60 )
 
-	ROM_REGION(0x1000)
+	ROM_REGION_DISPOSE(0x1000)
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
-	ROM_REGION(0x10000)  // 64k for the audio CPU
-	ROM_LOAD( "lepsound", 0xf000, 0x1000, 0x0c313739 )
+	ROM_REGION(0x10000)  /* 64k for the audio CPU */
+	ROM_LOAD( "lepsound",     0xf000, 0x1000, 0x6651e294 )
 ROM_END
+
+ROM_START( potogold_rom )
+	ROM_REGION(0x10000)  /* 64k for the main CPU */
+	ROM_LOAD( "pog.pg1",      0x8000, 0x1000, 0x9f1dbda6 )
+	ROM_LOAD( "pog.pg2",      0x9000, 0x1000, 0xa70e3811 )
+	ROM_LOAD( "pog.pg3",      0xa000, 0x1000, 0x81cfb516 )
+	ROM_LOAD( "pog.pg4",      0xb000, 0x1000, 0xd61b1f33 )
+	ROM_LOAD( "pog.pg5",      0xc000, 0x1000, 0xeee7597e )
+	ROM_LOAD( "pog.pg6",      0xd000, 0x1000, 0x25e682bc )
+	ROM_LOAD( "pog.pg7",      0xe000, 0x1000, 0x84399f54 )
+	ROM_LOAD( "pog.pg8",      0xf000, 0x1000, 0x9e995a1a )
+
+	ROM_REGION_DISPOSE(0x1000)
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)  /* 64k for the audio CPU */
+	ROM_LOAD( "pog.snd",      0xf000, 0x1000, 0xec61f0a4 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -370,8 +401,36 @@ struct GameDriver leprechn_driver =
 	"Zsolt Vasvari",
 	0,
 	&leprechn_machine_driver,
+	0,
 
 	leprechn_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	input_ports,
+
+	0, leprechn_palette, 0,
+
+	ORIENTATION_DEFAULT,  // Upright game
+
+	hiload, hisave
+};
+
+struct GameDriver potogold_driver =
+{
+	__FILE__,
+	&leprechn_driver,
+	"potogold",
+	"Pot of Gold",
+	"1982",
+	"GamePlan",
+	"Zsolt Vasvari",
+	0,
+	&leprechn_machine_driver,
+	0,
+
+	potogold_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

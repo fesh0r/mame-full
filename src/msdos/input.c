@@ -1,110 +1,162 @@
-/* Modified for MESS!!! */
-/* (Based on the 8/09/98 version of input.c) */
-
+#include "mamalleg.h"
 #include "driver.h"
-#include <allegro.h>
 
-
-void my_textout (char *buf);
-void update_screen(void);
 
 int use_mouse;
 int joystick;
+int use_hotrod;
 
-void msdos_init_input (void)
+
+
+static struct KeyboardInfo keylist[] =
 {
-	int err;
+	{ "A",			KEY_A,				KEYCODE_A },
+	{ "B",			KEY_B,				KEYCODE_B },
+	{ "C",			KEY_C,				KEYCODE_C },
+	{ "D",			KEY_D,				KEYCODE_D },
+	{ "E",			KEY_E,				KEYCODE_E },
+	{ "F",			KEY_F,				KEYCODE_F },
+	{ "G",			KEY_G,				KEYCODE_G },
+	{ "H",			KEY_H,				KEYCODE_H },
+	{ "I",			KEY_I,				KEYCODE_I },
+	{ "J",			KEY_J,				KEYCODE_J },
+	{ "K",			KEY_K,				KEYCODE_K },
+	{ "L",			KEY_L,				KEYCODE_L },
+	{ "M",			KEY_M,				KEYCODE_M },
+	{ "N",			KEY_N,				KEYCODE_N },
+	{ "O",			KEY_O,				KEYCODE_O },
+	{ "P",			KEY_P,				KEYCODE_P },
+	{ "Q",			KEY_Q,				KEYCODE_Q },
+	{ "R",			KEY_R,				KEYCODE_R },
+	{ "S",			KEY_S,				KEYCODE_S },
+	{ "T",			KEY_T,				KEYCODE_T },
+	{ "U",			KEY_U,				KEYCODE_U },
+	{ "V",			KEY_V,				KEYCODE_V },
+	{ "W",			KEY_W,				KEYCODE_W },
+	{ "X",			KEY_X,				KEYCODE_X },
+	{ "Y",			KEY_Y,				KEYCODE_Y },
+	{ "Z",			KEY_Z,				KEYCODE_Z },
+	{ "0",			KEY_0,				KEYCODE_0 },
+	{ "1",			KEY_1,				KEYCODE_1 },
+	{ "2",			KEY_2,				KEYCODE_2 },
+	{ "3",			KEY_3,				KEYCODE_3 },
+	{ "4",			KEY_4,				KEYCODE_4 },
+	{ "5",			KEY_5,				KEYCODE_5 },
+	{ "6",			KEY_6,				KEYCODE_6 },
+	{ "7",			KEY_7,				KEYCODE_7 },
+	{ "8",			KEY_8,				KEYCODE_8 },
+	{ "9",			KEY_9,				KEYCODE_9 },
+	{ "0 PAD",		KEY_0_PAD,			KEYCODE_0_PAD },
+	{ "1 PAD",		KEY_1_PAD,			KEYCODE_1_PAD },
+	{ "2 PAD",		KEY_2_PAD,			KEYCODE_2_PAD },
+	{ "3 PAD",		KEY_3_PAD,			KEYCODE_3_PAD },
+	{ "4 PAD",		KEY_4_PAD,			KEYCODE_4_PAD },
+	{ "5 PAD",		KEY_5_PAD,			KEYCODE_5_PAD },
+	{ "6 PAD",		KEY_6_PAD,			KEYCODE_6_PAD },
+	{ "7 PAD",		KEY_7_PAD,			KEYCODE_7_PAD },
+	{ "8 PAD",		KEY_8_PAD,			KEYCODE_8_PAD },
+	{ "9 PAD",		KEY_9_PAD,			KEYCODE_9_PAD },
+	{ "F1",			KEY_F1,				KEYCODE_F1 },
+	{ "F2",			KEY_F2,				KEYCODE_F2 },
+	{ "F3",			KEY_F3,				KEYCODE_F3 },
+	{ "F4",			KEY_F4,				KEYCODE_F4 },
+	{ "F5",			KEY_F5,				KEYCODE_F5 },
+	{ "F6",			KEY_F6,				KEYCODE_F6 },
+	{ "F7",			KEY_F7,				KEYCODE_F7 },
+	{ "F8",			KEY_F8,				KEYCODE_F8 },
+	{ "F9",			KEY_F9,				KEYCODE_F9 },
+	{ "F10",		KEY_F10,			KEYCODE_F10 },
+	{ "F11",		KEY_F11,			KEYCODE_F11 },
+	{ "F12",		KEY_F12,			KEYCODE_F12 },
+	{ "ESC",		KEY_ESC,			KEYCODE_ESC },
+	{ "~",			KEY_TILDE,			KEYCODE_TILDE },
+	{ "-",          KEY_MINUS,          KEYCODE_MINUS },
+	{ "=",          KEY_EQUALS,         KEYCODE_EQUALS },
+	{ "BKSPACE",	KEY_BACKSPACE,		KEYCODE_BACKSPACE },
+	{ "TAB",		KEY_TAB,			KEYCODE_TAB },
+	{ "[",          KEY_OPENBRACE,      KEYCODE_OPENBRACE },
+	{ "]",          KEY_CLOSEBRACE,     KEYCODE_CLOSEBRACE },
+	{ "ENTER",		KEY_ENTER,			KEYCODE_ENTER },
+	{ ";",          KEY_COLON,          KEYCODE_COLON },
+	{ ":",          KEY_QUOTE,          KEYCODE_QUOTE },
+	{ "\\",         KEY_BACKSLASH,      KEYCODE_BACKSLASH },
+	{ "<",          KEY_BACKSLASH2,     KEYCODE_BACKSLASH2 },
+	{ ",",          KEY_COMMA,          KEYCODE_COMMA },
+	{ ".",          KEY_STOP,           KEYCODE_STOP },
+	{ "/",          KEY_SLASH,          KEYCODE_SLASH },
+	{ "SPACE",		KEY_SPACE,			KEYCODE_SPACE },
+	{ "INS",		KEY_INSERT,			KEYCODE_INSERT },
+	{ "DEL",		KEY_DEL,			KEYCODE_DEL },
+	{ "HOME",		KEY_HOME,			KEYCODE_HOME },
+	{ "END",		KEY_END,			KEYCODE_END },
+	{ "PGUP",		KEY_PGUP,			KEYCODE_PGUP },
+	{ "PGDN",		KEY_PGDN,			KEYCODE_PGDN },
+	{ "LEFT",		KEY_LEFT,			KEYCODE_LEFT },
+	{ "RIGHT",		KEY_RIGHT,			KEYCODE_RIGHT },
+	{ "UP",			KEY_UP,				KEYCODE_UP },
+	{ "DOWN",		KEY_DOWN,			KEYCODE_DOWN },
+	{ "/ PAD",      KEY_SLASH_PAD,      KEYCODE_SLASH_PAD },
+	{ "* PAD",      KEY_ASTERISK,       KEYCODE_ASTERISK },
+	{ "- PAD",      KEY_MINUS_PAD,      KEYCODE_MINUS_PAD },
+	{ "+ PAD",      KEY_PLUS_PAD,       KEYCODE_PLUS_PAD },
+	{ ". PAD",      KEY_DEL_PAD,        KEYCODE_DEL_PAD },
+	{ "ENTER PAD",  KEY_ENTER_PAD,      KEYCODE_ENTER_PAD },
+	{ "PRTSCR",     KEY_PRTSCR,         KEYCODE_PRTSCR },
+	{ "PAUSE",      KEY_PAUSE,          KEYCODE_PAUSE },
+	{ "LSHIFT",		KEY_LSHIFT,			KEYCODE_LSHIFT },
+	{ "RSHIFT",		KEY_RSHIFT,			KEYCODE_RSHIFT },
+	{ "LCTRL",		KEY_LCONTROL,		KEYCODE_LCONTROL },
+	{ "RCTRL",		KEY_RCONTROL,		KEYCODE_RCONTROL },
+	{ "ALT",		KEY_ALT,			KEYCODE_LALT },
+	{ "ALTGR",		KEY_ALTGR,			KEYCODE_RALT },
+	{ "LWIN",		KEY_LWIN,			KEYCODE_OTHER },
+	{ "RWIN",		KEY_RWIN,			KEYCODE_OTHER },
+	{ "MENU",		KEY_MENU,			KEYCODE_OTHER },
+	{ "SCRLOCK",    KEY_SCRLOCK,        KEYCODE_SCRLOCK },
+	{ "NUMLOCK",    KEY_NUMLOCK,        KEYCODE_NUMLOCK },
+	{ "CAPSLOCK",   KEY_CAPSLOCK,       KEYCODE_CAPSLOCK },
+	{ 0, 0, 0 }	/* end of table */
+};
 
-	set_leds(0);    /* turn off all leds */
 
-	if (joystick != JOY_TYPE_NONE)
-	{
-		/* Try to install Allegro's joystick handler */
-
-		/* load calibration data (from mame.cfg) */
-		/* if valid data was found, this also sets Allegro's joy_type */
-		err=load_joystick_data(0);
-
-		/* valid calibration? user has choosen another joystick type? */
-		if (err || (joystick != joy_type))
-		{
-			if (install_joystick(joystick) != 0)
-			{
-				printf ("Joystick not found.\n");
-				joystick = JOY_TYPE_NONE;
-			}
-		}
-	}
-	else
-	{
-		joystick = JOY_TYPE_NONE;
-	}
-
-
-	if (use_mouse && install_mouse() != -1)
-		use_mouse = 1;
-	else
-		use_mouse = 0;
+/* return a list of all available keys */
+const struct KeyboardInfo *osd_get_key_list(void)
+{
+	return keylist;
 }
 
 
-/*
- * Check if a key is pressed. The keycode is the standard PC keyboard
- * code, as defined in osdepend.h. Return 0 if the key is not pressed,
- * nonzero otherwise. Handle pseudo keycodes.
- */
-int osd_key_pressed(int keycode)
+int osd_is_key_pressed(int keycode)
 {
-	if (keycode > OSD_MAX_KEY)
+	if (keycode >= KEY_MAX) return 0;
+
+	if (keycode == KEY_PAUSE)
 	{
-		switch (keycode)
+		static int pressed,counter;
+		int res;
+
+		res = key[KEY_PAUSE] ^ pressed;
+		if (res)
 		{
-			case OSD_KEY_FAST_EXIT:
-				return (key[OSD_KEY_F12] & key[KEY_LSHIFT]);
+			if (counter > 0)
+			{
+				if (--counter == 0)
+					pressed = key[KEY_PAUSE];
+			}
+			else counter = 10;
+		}
 
-			case OSD_KEY_SHOW_GFX:
-                return key[OSD_KEY_F5];
-
-			case OSD_KEY_FRAMESKIP:
-                return key[OSD_KEY_F8];
-
-            case OSD_KEY_RESET_MACHINE:
-				return key[OSD_KEY_F9];
-
-			case OSD_KEY_THROTTLE:
-                return key[OSD_KEY_F10];
-
-            case OSD_KEY_SHOW_FPS:
-                return key[OSD_KEY_F11];
-
-            case OSD_KEY_CONFIGURE:
-                return key[OSD_KEY_F12];
-
-            case OSD_KEY_VOLUME_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_VOLUME_UP:
-				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_GAMMA_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && key[OSD_KEY_LSHIFT]);
-
-            case OSD_KEY_GAMMA_UP:
-                return (key[OSD_KEY_PLUS_PAD] && key[OSD_KEY_LSHIFT]);
-
-            case OSD_KEY_PAUSE:
-				return key[OSD_KEY_SCRLOCK];
-
-            case OSD_KEY_UNPAUSE:
-				return key[OSD_KEY_ESC];
-
-			case OSD_KEY_SNAPSHOT:
-				return key[KEY_PRTSCR];
-        }
+		return res;
 	}
-	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
-	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
+
 	return key[keycode];
+}
+
+
+int osd_wait_keypress(void)
+{
+	clear_keybuf();
+	return readkey() >> 8;
 }
 
 static int key_to_pseudo_code(int k)
@@ -148,279 +200,356 @@ static int key_to_pseudo_code(int k)
     return k;
 }
 
+
 /*
- * Wait for a key press and return the keycode.
- * Translate certain keys (or key combinations) back to pseudo keys.
- */
-int osd_read_key(void)
-{
-	int res;
+  limits:
+  - 7 joysticks
+  - 15 sticks on each joystick
+  - 63 buttons on each joystick
 
-	/* wait for all keys to be released */
-	do
+  - 256 total inputs
+*/
+#define JOYCODE(joy,stick,axis_or_button,dir) \
+		((((dir)&0x03)<<14)|(((axis_or_button)&0x3f)<<8)|(((stick)&0x1f)<<3)|(((joy)&0x07)<<0))
+
+#define GET_JOYCODE_JOY(code) (((code)>>0)&0x07)
+#define GET_JOYCODE_STICK(code) (((code)>>3)&0x1f)
+#define GET_JOYCODE_AXIS(code) (((code)>>8)&0x3f)
+#define GET_JOYCODE_BUTTON(code) GET_JOYCODE_AXIS(code)
+#define GET_JOYCODE_DIR(code) (((code)>>14)&0x03)
+
+#define MAX_JOY 256
+#define MAX_JOY_NAME_LEN 20
+
+static struct JoystickInfo joylist[MAX_JOY] =
+{
+	/* will be filled later */
+	{ 0, 0, 0 }	/* end of table */
+};
+
+static char joynames[MAX_JOY_NAME_LEN+1][MAX_JOY];	/* will be used to store names for the above */
+
+
+static int joyequiv[][2] =
+{
+	{ JOYCODE(1,1,1,1),	JOYCODE_1_LEFT },
+	{ JOYCODE(1,1,1,2),	JOYCODE_1_RIGHT },
+	{ JOYCODE(1,1,2,1),	JOYCODE_1_UP },
+	{ JOYCODE(1,1,2,2),	JOYCODE_1_DOWN },
+	{ JOYCODE(1,0,1,0),	JOYCODE_1_BUTTON1 },
+	{ JOYCODE(1,0,2,0),	JOYCODE_1_BUTTON2 },
+	{ JOYCODE(1,0,3,0),	JOYCODE_1_BUTTON3 },
+	{ JOYCODE(1,0,4,0),	JOYCODE_1_BUTTON4 },
+	{ JOYCODE(1,0,5,0),	JOYCODE_1_BUTTON5 },
+	{ JOYCODE(1,0,6,0),	JOYCODE_1_BUTTON6 },
+	{ JOYCODE(2,1,1,1),	JOYCODE_2_LEFT },
+	{ JOYCODE(2,1,1,2),	JOYCODE_2_RIGHT },
+	{ JOYCODE(2,1,2,1),	JOYCODE_2_UP },
+	{ JOYCODE(2,1,2,2),	JOYCODE_2_DOWN },
+	{ JOYCODE(2,0,1,0),	JOYCODE_2_BUTTON1 },
+	{ JOYCODE(2,0,2,0),	JOYCODE_2_BUTTON2 },
+	{ JOYCODE(2,0,3,0),	JOYCODE_2_BUTTON3 },
+	{ JOYCODE(2,0,4,0),	JOYCODE_2_BUTTON4 },
+	{ JOYCODE(2,0,5,0),	JOYCODE_2_BUTTON5 },
+	{ JOYCODE(2,0,6,0),	JOYCODE_2_BUTTON6 },
+	{ JOYCODE(3,1,1,1),	JOYCODE_3_LEFT },
+	{ JOYCODE(3,1,1,2),	JOYCODE_3_RIGHT },
+	{ JOYCODE(3,1,2,1),	JOYCODE_3_UP },
+	{ JOYCODE(3,1,2,2),	JOYCODE_3_DOWN },
+	{ JOYCODE(3,0,1,0),	JOYCODE_3_BUTTON1 },
+	{ JOYCODE(3,0,2,0),	JOYCODE_3_BUTTON2 },
+	{ JOYCODE(3,0,3,0),	JOYCODE_3_BUTTON3 },
+	{ JOYCODE(3,0,4,0),	JOYCODE_3_BUTTON4 },
+	{ JOYCODE(3,0,5,0),	JOYCODE_3_BUTTON5 },
+	{ JOYCODE(3,0,6,0),	JOYCODE_3_BUTTON6 },
+	{ JOYCODE(4,1,1,1),	JOYCODE_4_LEFT },
+	{ JOYCODE(4,1,1,2),	JOYCODE_4_RIGHT },
+	{ JOYCODE(4,1,2,1),	JOYCODE_4_UP },
+	{ JOYCODE(4,1,2,2),	JOYCODE_4_DOWN },
+	{ JOYCODE(4,0,1,0),	JOYCODE_4_BUTTON1 },
+	{ JOYCODE(4,0,2,0),	JOYCODE_4_BUTTON2 },
+	{ JOYCODE(4,0,3,0),	JOYCODE_4_BUTTON3 },
+	{ JOYCODE(4,0,4,0),	JOYCODE_4_BUTTON4 },
+	{ JOYCODE(4,0,5,0),	JOYCODE_4_BUTTON5 },
+	{ JOYCODE(4,0,6,0),	JOYCODE_4_BUTTON6 },
+	{ 0,0 }
+};
+
+
+static void init_joy_list(void)
+{
+	int tot,i,j,k;
+	char buf[256];
+
+	tot = 0;
+	for (i = 0;i < num_joysticks;i++)
 	{
-		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-			if (osd_key_pressed(res))
+		for (j = 0;j < joy[i].num_sticks;j++)
+		{
+			for (k = 0;k < joy[i].stick[j].num_axis;k++)
+			{
+				sprintf(buf,"J%d %s %s -",i+1,joy[i].stick[j].name,joy[i].stick[j].axis[k].name);
+				strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+				joynames[tot][MAX_JOY_NAME_LEN] = 0;
+				joylist[tot].name = joynames[tot];
+				joylist[tot].code = JOYCODE(i+1,j+1,k+1,1);
+				tot++;
+
+				sprintf(buf,"J%d %s %s +",i+1,joy[i].stick[j].name,joy[i].stick[j].axis[k].name);
+				strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+				joynames[tot][MAX_JOY_NAME_LEN] = 0;
+				joylist[tot].name = joynames[tot];
+				joylist[tot].code = JOYCODE(i+1,j+1,k+1,2);
+				tot++;
+			}
+		}
+		for (j = 0;j < joy[i].num_buttons;j++)
+		{
+			sprintf(buf,"J%d %s",i+1,joy[i].button[j].name);
+			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+			joynames[tot][MAX_JOY_NAME_LEN] = 0;
+			joylist[tot].name = joynames[tot];
+			joylist[tot].code = JOYCODE(i+1,0,j+1,0);
+			tot++;
+		}
+	}
+
+	if (tot == 0)
+	{
+		/* if we have no joystick installed, put it button 1,2,3 for the mouse */
+		i = 0;
+		for (j = 0;j < 3;j++)
+		{
+			sprintf(buf,"J%d BUTTON %d",i+1,j+1);
+			strncpy(joynames[tot],buf,MAX_JOY_NAME_LEN);
+			joynames[tot][MAX_JOY_NAME_LEN] = 0;
+			joylist[tot].name = joynames[tot];
+			joylist[tot].code = JOYCODE(i+1,0,j+1,0);
+			tot++;
+		}
+	}
+
+	/* terminate array */
+	joylist[tot].name = 0;
+	joylist[tot].code = 0;
+	joylist[tot].standardcode = 0;
+
+	/* fill in equivalences */
+	for (i = 0;i < tot;i++)
+	{
+		joylist[i].standardcode = JOYCODE_OTHER;
+
+		j = 0;
+		while (joyequiv[j][0] != 0)
+		{
+			if (joyequiv[j][0] == joylist[i].code)
+			{
+				joylist[i].standardcode = joyequiv[j][1];
 				break;
-	} while (res >= 0);
+			}
+			j++;
+		}
+	}
+}
 
-	/* wait for a key press */
-	do
+
+/* return a list of all available joys */
+const struct JoystickInfo *osd_get_joy_list(void)
+{
+	return joylist;
+}
+
+
+int osd_is_joy_pressed(int joycode)
+{
+	int joy_num,stick;
+
+
+	/* special case for mouse buttons */
+	switch (joycode)
 	{
-		for (res = OSD_MAX_PSEUDO; res >= 0; res--)
-			if (osd_key_pressed(res))
-				break;
-	} while (res < 0);
+		case JOYCODE(1,0,1,0):
+			if (mouse_b & 1) return 1; break;
+		case JOYCODE(1,0,2,0):
+			if (mouse_b & 2) return 1; break;
+		case JOYCODE(1,0,3,0):
+			if (mouse_b & 4) return 1; break;
+	}
 
-	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
-	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
+	joy_num = GET_JOYCODE_JOY(joycode);
 
-	return res;
-}
+	/* do we have as many sticks? */
+	if (joy_num == 0 || joy_num > num_joysticks)
+		return 0;
+	joy_num--;
 
+	stick = GET_JOYCODE_STICK(joycode);
 
-/* Wait for a key press and return keycode.  Support repeat */
-int osd_read_keyrepeat(void)
-{
-	int res;
-
-	clear_keybuf();
-	res = readkey() >> 8;
-
-	if (res == KEY_RCONTROL) res = OSD_KEY_RCONTROL;
-	if (res == KEY_ALTGR) res = OSD_KEY_ALTGR;
-	if (res == KEY_PRTSCR) res = OSD_KEY_SNAPSHOT;
-
-	return key_to_pseudo_code(res);
-}
-
-
-int osd_debug_readkey(void)
-{
-	return osd_read_keyrepeat();
-}
-
-
-/* return the name of a key */
-const char *osd_key_name(int keycode)
-{
-	static char *keynames[] =
+	if (stick == 0)
 	{
-		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BACKSPACE",
-		"TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER",
-		"LEFTCONTROL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE", "TILDE",
-		"LEFTSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M", "COMMA", ".", "SLASH", "RIGHTSHIFT",
-		"ASTERISK", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
-		"NUMLOCK", "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD",
-		"LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
-		"PGDN", "INS", "DEL", "RIGHTCONTROL", "ALTGR", "Error",
-		"F11", "F12", "Error", "Error",
-		"Error", "Error", "Error", "Error", "Error",
-		"Error", "Error", "Error", "Error", "Error",
-		"1 PAD", "2 PAD", "3 PAD", "4 PAD", "Error",
-		"6 PAD", "7 PAD", "8 PAD", "9 PAD", "0 PAD",
-		". PAD", "= PAD", "/ PAD", "* PAD", "ENTER PAD",
-		"Error", "Error", "Error", "Error", "Error",
-		"Error", "Error", "PAUSE",
-	};
-	static char *nonedefined = "None";
+		/* buttons */
+		int button;
 
-	if (keycode && keycode <= OSD_MAX_KEY) return keynames[keycode-1];
-	else return (char *)nonedefined;
+		button = GET_JOYCODE_BUTTON(joycode);
+		if (button == 0 || button > joy[joy_num].num_buttons)
+			return 0;
+		button--;
+
+		return joy[joy_num].button[button].b;
+	}
+	else
+	{
+		/* sticks */
+		int axis,dir;
+
+		if (stick > joy[joy_num].num_sticks)
+			return 0;
+		stick--;
+
+		axis = GET_JOYCODE_AXIS(joycode);
+		dir = GET_JOYCODE_DIR(joycode);
+
+		if (axis == 0 || axis > joy[joy_num].stick[stick].num_axis)
+			return 0;
+		axis--;
+
+		switch (dir)
+		{
+			case 1:
+				return joy[joy_num].stick[stick].axis[axis].d1; break;
+			case 2:
+				return joy[joy_num].stick[stick].axis[axis].d2; break;
+			default:
+				return 0; break;
+		}
+	}
+
+	return 0;
 }
 
 
-/* return the name of a joystick button */
-const char *osd_joy_name(int joycode)
-{
-	static char *joynames[] = {
-		"Left", "Right", "Up", "Down", "Button A",
-		"Button B", "Button C", "Button D", "Button E", "Button F",
-		"Button G", "Button H", "Button I", "Button J", "Any Button",
-		"J2 Left", "J2 Right", "J2 Up", "J2 Down", "J2 Button A",
-		"J2 Button B", "J2 Button C", "J2 Button D", "J2 Button E", "J2 Button F",
-		"J2 Button G", "J2 Button H", "J2 Button I", "J2 Button J", "J2 Any Button",
-		"J3 Left", "J3 Right", "J3 Up", "J3 Down", "J3 Button A",
-		"J3 Button B", "J3 Button C", "J3 Button D", "J3 Button E", "J3 Button F",
-		"J3 Button G", "J3 Button H", "J3 Button I", "J3 Button J", "J3 Any Button",
-		"J4 Left", "J4 Right", "J4 Up", "J4 Down", "J4 Button A",
-		"J4 Button B", "J4 Button C", "J4 Button D", "J4 Button E", "J4 Button F",
-		"J4 Button G", "J4 Button H", "J4 Button I", "J4 Button J", "J4 Any Button"
-	};
-
-	if (joycode == 0) return "None";
-	else if (joycode <= OSD_MAX_JOY) return (char *)joynames[joycode-1];
-	else return "Unknown";
-}
-
-
-void osd_poll_joystick(void)
+void osd_poll_joysticks(void)
 {
 	if (joystick > JOY_TYPE_NONE)
 		poll_joystick();
 }
 
 
-/* check if the joystick is moved in the specified direction, defined in */
-/* osdepend.h. Return 0 if it is not pressed, nonzero otherwise. */
-int osd_joy_pressed(int joycode)
-{
-	int joy_num;
-
-	/* which joystick are we polling? */
-	if (joycode < OSD_JOY_LEFT)
-		return 0;
-	else if (joycode < OSD_JOY2_LEFT)
-	{
-		joy_num = 0;
-	}
-	else if (joycode < OSD_JOY3_LEFT)
-	{
-		joy_num = 1;
-		joycode = joycode - OSD_JOY2_LEFT + OSD_JOY_LEFT;
-	}
-	else if (joycode < OSD_JOY4_LEFT)
-	{
-		joy_num = 2;
-		joycode = joycode - OSD_JOY3_LEFT + OSD_JOY_LEFT;
-	}
-	else if (joycode < OSD_MAX_JOY)
-	{
-		joy_num = 3;
-		joycode = joycode - OSD_JOY4_LEFT + OSD_JOY_LEFT;
-	}
-	else
-		return 0;
-
-	if (joy_num == 0)
-	{
-		/* special case for mouse buttons */
-		switch (joycode)
-		{
-			case OSD_JOY_FIRE1:
-				if (mouse_b & 1) return 1; break;
-			case OSD_JOY_FIRE2:
-				if (mouse_b & 2) return 1; break;
-			case OSD_JOY_FIRE3:
-				if (mouse_b & 4) return 1; break;
-			case OSD_JOY_FIRE: /* any mouse button */
-				if (mouse_b) return 1; break;
-		}
-	}
-
-	/* do we have as many sticks? */
-	if (joy_num+1 > num_joysticks)
-		return 0;
-
-	switch (joycode)
-	{
-		case OSD_JOY_LEFT:
-			return joy[joy_num].stick[0].axis[0].d1;
-			break;
-		case OSD_JOY_RIGHT:
-			return joy[joy_num].stick[0].axis[0].d2;
-			break;
-		case OSD_JOY_UP:
-			return joy[joy_num].stick[0].axis[1].d1;
-			break;
-		case OSD_JOY_DOWN:
-			return joy[joy_num].stick[0].axis[1].d2;
-			break;
-		case OSD_JOY_FIRE1:
-			return joy[joy_num].button[0].b;
-			break;
-		case OSD_JOY_FIRE2:
-			return joy[joy_num].button[1].b;
-			break;
-		case OSD_JOY_FIRE3:
-			return joy[joy_num].button[2].b;
-			break;
-		case OSD_JOY_FIRE4:
-			return joy[joy_num].button[3].b;
-			break;
-		case OSD_JOY_FIRE5:
-			return joy[joy_num].button[4].b;
-			break;
-		case OSD_JOY_FIRE6:
-			return joy[joy_num].button[5].b;
-			break;
-		case OSD_JOY_FIRE7:
-			return joy[joy_num].button[6].b;
-			break;
-		case OSD_JOY_FIRE8:
-			return joy[joy_num].button[7].b;
-			break;
-		case OSD_JOY_FIRE9:
-			return joy[joy_num].button[8].b;
-			break;
-		case OSD_JOY_FIRE10:
-			return joy[joy_num].button[9].b;
-			break;
-		case OSD_JOY_FIRE:
-			{
-				int i;
-				for (i = 0; i < 10; i++)
-					if (joy[joy_num].button[i].b)
-						return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
 /* return a value in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int *analog_x, int *analog_y)
+void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
 {
 	*analog_x = *analog_y = 0;
 
 	/* is there an analog joystick at all? */
-	if (joystick == JOY_TYPE_NONE)
+	if (player+1 > num_joysticks || joystick == JOY_TYPE_NONE)
 		return;
 
-	*analog_x = joy[0].stick[0].axis[0].pos;
-	*analog_y = joy[0].stick[0].axis[1].pos;
+	*analog_x = joy[player].stick[0].axis[0].pos;
+	*analog_y = joy[player].stick[0].axis[1].pos;
 }
 
-void joy_calibration(void)
+
+static int calibration_target;
+
+int osd_joystick_needs_calibration (void)
 {
-	int i;
-	char *msg;
-
-	int need_save = 0; /* do we really need to save the data? */
-
+	/* This could be improved, but unfortunately, this version of Allegro */
+	/* lacks a flag which tells if a joystick is calibrationable, it only  */
+	/* remembers whether calibration is yet to be done. */
 	if (joystick == JOY_TYPE_NONE)
-		return;
+		return 0;
+	else
+		return 1;
+}
 
+
+void osd_joystick_start_calibration (void)
+{
 	/* reinitialises the joystick. */
 	remove_joystick();
 	install_joystick (joystick);
+	calibration_target = 0;
+}
 
-	for (i=0; i < num_joysticks; i++)
+char *osd_joystick_calibrate_next (void)
+{
+	while (calibration_target < num_joysticks)
 	{
-		while (joy[i].flags & JOYFLAG_CALIBRATE)
-		{
-			need_save = 1; /* OK, we need to save this later */
-			msg = calibrate_joystick_name(i);
-			osd_clearbitmap(Machine->scrbitmap);
-			my_textout(msg);
-			update_screen();
-			(void)osd_read_key();
-			if (calibrate_joystick(i))
-				continue; /* continue with next joystick on error */
-		}
+		if (joy[calibration_target].flags & JOYFLAG_CALIBRATE)
+			return (calibrate_joystick_name (calibration_target));
+		else
+			calibration_target++;
 	}
 
-	osd_clearbitmap(Machine->scrbitmap);
-	if (need_save)
-		save_joystick_data(0);
+	return 0;
 }
 
-void osd_trak_read(int *deltax,int *deltay)
+void osd_joystick_calibrate (void)
 {
-	if (use_mouse == 0) *deltax = *deltay = 0;
-	else get_mouse_mickeys(deltax,deltay);
+	calibrate_joystick (calibration_target);
 }
 
+void osd_joystick_end_calibration (void)
+{
+	save_joystick_data(0);
+}
+
+#include <time.h>
+
+void osd_trak_read(int player,int *deltax,int *deltay)
+{
+	if (player != 0 || use_mouse == 0) *deltax = *deltay = 0;
+	else
+	{
+		static int skip;
+		static int mx,my;
+
+		/* get_mouse_mickeys() doesn't work when called 60 times per second,
+		   it often returns 0, so I have to call it every other frame and split
+		   the result between two frames.
+		  */
+		if (skip)
+		{
+			*deltax = mx;
+			*deltay = my;
+		}
+		else
+		{
+			get_mouse_mickeys(&mx,&my);
+			*deltax = mx/2;
+			*deltay = my/2;
+			mx -= *deltax;
+			my -= *deltay;
+		}
+		skip ^= 1;
+	}
+}
+
+
+void osd_customize_inputport_defaults(struct ipd *defaults)
+{
+	if (use_hotrod)
+	{
+		while (defaults->type != IPT_END)
+		{
+			if (defaults->keyboard == KEYCODE_UP) defaults->keyboard = KEY_8_PAD;
+			if (defaults->keyboard == KEYCODE_DOWN) defaults->keyboard = KEY_2_PAD;
+			if (defaults->keyboard == KEYCODE_LEFT) defaults->keyboard = KEY_4_PAD;
+			if (defaults->keyboard == KEYCODE_RIGHT) defaults->keyboard = KEY_6_PAD;
+			if (defaults->type == IPT_UI_SELECT) defaults->keyboard = KEY_LCONTROL;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) defaults->keyboard = KEY_R;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) defaults->keyboard = KEY_F;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) defaults->keyboard = KEY_D;
+			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) defaults->keyboard = KEY_G;
+			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) defaults->keyboard = KEY_8_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) defaults->keyboard = KEY_2_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) defaults->keyboard = KEY_4_PAD;
+			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) defaults->keyboard = KEY_6_PAD;
+
+			defaults++;
+		}
+	}
+}
 
 
 
@@ -444,3 +573,69 @@ void osd_led_w(int led,int on) {
   }
 }
 
+
+
+
+
+void msdos_init_input (void)
+{
+	int err;
+
+	install_keyboard();
+/* ALLEGRO BUG: the following hangs on many machines */
+//	set_leds(0);    /* turn off all leds */
+
+	if (joystick != JOY_TYPE_NONE)
+	{
+		/* Try to install Allegro's joystick handler */
+
+		/* load calibration data (from mame.cfg) */
+		/* if valid data was found, this also sets Allegro's joy_type */
+		err=load_joystick_data(0);
+
+		/* valid calibration? */
+		if (err)
+		{
+			if (errorlog)
+					fprintf (errorlog, "No calibration data found\n");
+			if (install_joystick (joystick) != 0)
+			{
+				printf ("Joystick not found.\n");
+				joystick = JOY_TYPE_NONE;
+			}
+		}
+		else if (joystick != joy_type)
+		{
+			if (errorlog)
+				fprintf (errorlog, "Calibration data is from different joystick\n");
+			remove_joystick();
+			if (install_joystick (joystick) != 0)
+			{
+				printf ("Joystick not found.\n");
+				joystick = JOY_TYPE_NONE;
+			}
+		}
+
+		if (errorlog)
+		{
+			if (joystick == JOY_TYPE_NONE)
+				fprintf (errorlog, "Joystick not found\n");
+			else
+				fprintf (errorlog, "Installed %s %s\n",
+						joystick_driver->name, joystick_driver->desc);
+		}
+	}
+
+	init_joy_list();
+
+	if (use_mouse && install_mouse() != -1)
+		use_mouse = 1;
+	else
+		use_mouse = 0;
+}
+
+
+void msdos_shutdown_input(void)
+{
+	remove_keyboard();
+}

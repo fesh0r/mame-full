@@ -10,7 +10,7 @@
  ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/TMS34061.h"
+#include "vidhrdw/tms34061.h"
 
 static void TMS34061_intcallback(int param);
 
@@ -114,14 +114,14 @@ INLINE void TMS34061_register_w(int offset, int data)
 	if (!status && errorlog)
 	{
 		fprintf(errorlog, "Unsupported TMS34061 write. Reg #%02X=%04X - PC: %04X\n",
-				reg, regs[reg], cpu_getpc());
+				reg, regs[reg], cpu_get_pc());
 	}
 }
 
 static void TMS34061_intcallback(int param)
 {
 	// Reset timer for next frame
-	timer_reset(timer, cpu_getscanlinetime(regs[REG_VERINT]));
+//	timer_reset(timer, cpu_getscanlinetime(regs[REG_VERINT]));
 
 	// Get out if vertical interrupts are disabled
     if (!(regs[REG_CONTROL1] & 0x400)) return;
@@ -171,7 +171,7 @@ INLINE int TMS34061_register_r(int offset)
 	if (!status && errorlog)
 	{
 		fprintf(errorlog, "Unsupported TMS34061 read.  Reg #%02X      - PC: %04X\n",
-				reg, cpu_getpc());
+				reg, cpu_get_pc());
 	}
 
 	return ret;
@@ -260,7 +260,7 @@ void TMS34061_w(int offset, int data)
 		if (errorlog)
 		{
 			fprintf(errorlog, "Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_getpc());
+					func, cpu_get_pc());
 		}
 	}
 }
@@ -294,7 +294,7 @@ int TMS34061_r(int offset)
 		if (errorlog)
 		{
 			fprintf(errorlog, "Unsupported TMS34061 function %d - PC: %04X\n",
-					func, cpu_getpc());
+					func, cpu_get_pc());
 		}
 	}
 

@@ -31,8 +31,8 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502/M6502.h"
-#include "I8085/I8085.h"
+#include "cpu/m6502/m6502.h"
+#include "cpu/i8085/i8085.h"
 
 static int AY8910_A_input_data = 0;
 static int c030_data = 0;
@@ -61,7 +61,7 @@ void redalert_soundlatch_w(int offset, int data)
 
 	/* Bit D7 is also connected to the NMI input of the CPU */
 	if ((data & 0x80)!=0x80)
-		cpu_cause_interrupt(1,INT_NMI);
+		cpu_cause_interrupt(1,M6502_INT_NMI);
 }
 
 int redalert_AY8910_A_r(int offset)

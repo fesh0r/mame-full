@@ -49,37 +49,37 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 INPUT_PORTS_START( avalnche_input_ports )
-		PORT_START		/* IN0 */
-		PORT_BIT (0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Spare */
-		PORT_DIPNAME( 0x0C, 0x04, "Game Cost", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x0C, "Two Plays Per Coin" )
-		PORT_DIPSETTING(	0x08, "Two Coins Per Play" )
-		PORT_DIPSETTING(	0x04, "One Coin Per Player" )
-		PORT_DIPSETTING(	0x00, "Free Play" )
-		PORT_DIPNAME( 0x30, 0x00, "Game Language", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x30, "German" )
-		PORT_DIPSETTING(	0x20, "French" )
-		PORT_DIPSETTING(	0x10, "Spanish" )
-		PORT_DIPSETTING(	0x00, "English" )
-		PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_START2 )
-		PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_START /* IN0 */
+	PORT_BIT (0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Spare */
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x30, 0x00, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x30, "German" )
+	PORT_DIPSETTING(    0x20, "French" )
+	PORT_DIPSETTING(    0x10, "Spanish" )
+	PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
-		PORT_START				/* IN1 */
-		PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-		PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-		PORT_DIPNAME( 0x04, 0x04, "Extended Play", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x04, "Enabled" )
-		PORT_DIPSETTING(	0x00, "Disabled" )
-		PORT_DIPNAME( 0x08, 0x00, "Misses/Extended Play", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x08, "5/750 points" )
-		PORT_DIPSETTING(	0x00, "3/450 points" )
-		PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* SLAM */
-		PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
-		PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* Serve */
-		PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLANK */
+	PORT_START /* IN1 */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_DIPNAME( 0x04, 0x04, "Allow Extended Play" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x08, 0x00, "Lives/Extended Play" )
+	PORT_DIPSETTING(    0x00, "3/450 points" )
+	PORT_DIPSETTING(    0x08, "5/750 points" )
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* SLAM */
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE | IPF_TOGGLE, DEF_STR ( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* Serve */
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLANK */
 
-		PORT_START				/* IN2 */
-		PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE, 100, 7, 0, 255 )
+	PORT_START /* IN2 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE, 100, 10, 7, 0, 255 )
 
 INPUT_PORTS_END
 
@@ -118,9 +118,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct DACinterface dac_interface =
 {
 	2,
-	441000,
-	{ 255, 255 },
-	{  1,  1 } /* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
+	{ 100, 100 },
 };
 
 
@@ -191,13 +189,13 @@ ROM_START( avalnche_rom )
 	/*		 They are nibble wide rom images which will be */
 	/*		 merged and loaded into the proper place by    */
 	/*		 orbit_rom_init()							   */
-	ROM_LOAD( "30612.d2",	 0x8800, 0x0800, 0x68a50c03 )
-	ROM_LOAD( "30613.e2",	 0x9000, 0x0800, 0xa7050a03 )
-	ROM_LOAD( "30611.c2",	 0x9800, 0x0800, 0x34300c00 )
+	ROM_LOAD( "30612.d2",     	0x8800, 0x0800, 0x3f975171 )
+	ROM_LOAD( "30613.e2",     	0x9000, 0x0800, 0x47a224d3 )
+	ROM_LOAD( "30611.c2",     	0x9800, 0x0800, 0x0ad07f85 )
 
-	ROM_LOAD( "30615.d3",	 0xa800, 0x0800, 0xc9b6090c )
-	ROM_LOAD( "30616.e3",	 0xb000, 0x0800, 0x12230c03 )
-	ROM_LOAD( "30614.c3",	 0xb800, 0x0800, 0x01c50605 )
+	ROM_LOAD( "30615.d3",     	0xa800, 0x0800, 0x3e1a86b4 )
+	ROM_LOAD( "30616.e3",     	0xb000, 0x0800, 0xf620f0f8 )
+	ROM_LOAD( "30614.c3",     	0xb800, 0x0800, 0xa12d5d64 )
 ROM_END
 
 /***************************************************************************
@@ -208,11 +206,18 @@ ROM_END
 
 static int hiload(void)
 {
+	static int firsttime = 0;
+
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x009b],0xff,2);
+		firsttime = 1;
+	}
 
 
 	/* check for a value written to RAM shortly after hi scores are initialized */
-	if (RAM[0x011F] == 0x01)
+	if (memcmp(&RAM[0x009b],"\x00\x00",2) == 0)
 	{
 		void *f;
 
@@ -222,7 +227,7 @@ static int hiload(void)
 			osd_fread(f,&RAM[0x009B],0x2);
 			osd_fclose(f);
 		}
-
+		firsttime = 0;
 		return 1;
 	}
 	else return 0;	/* we can't load the hi scores yet */
@@ -260,6 +265,7 @@ struct GameDriver avalnche_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	avalnche_rom,
 	avalnche_rom_init, 0,

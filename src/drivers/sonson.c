@@ -43,7 +43,7 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 
@@ -156,58 +156,56 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x10, 0x10, "Coinage affects", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Coin A" )
-	PORT_DIPSETTING(    0x00, "Coin B" )
-	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "unknown", IP_KEY_NONE )	/* maybe flip screen */
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage affects" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, "unknown" )	/* maybe flip screen */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x02, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x00, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x04, "1 Credit" )
 	PORT_DIPSETTING(    0x00, "2 Credits" )
-	PORT_DIPNAME( 0x18, 0x08, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x18, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "20000 80000 100000" )
 	PORT_DIPSETTING(    0x00, "30000 90000 120000" )
 	PORT_DIPSETTING(    0x18, "20000" )
 	PORT_DIPSETTING(    0x10, "30000" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x80, "Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -249,7 +247,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz ? */
-	{ 0x10ff, 255 },
+	{ 30, 30 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -313,25 +312,25 @@ static struct MachineDriver machine_driver =
 
 ROM_START( sonson_rom )
 	ROM_REGION(0x10000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "ss.01e", 0x4000, 0x4000, 0x3c2e5ca0 )
-	ROM_LOAD( "ss.02e", 0x8000, 0x4000, 0x1774e5ac )
-	ROM_LOAD( "ss.03e", 0xc000, 0x4000, 0xfaeb2cc7 )
+	ROM_LOAD( "ss.01e",       0x4000, 0x4000, 0xcd40cc54 )
+	ROM_LOAD( "ss.02e",       0x8000, 0x4000, 0xc3476527 )
+	ROM_LOAD( "ss.03e",       0xc000, 0x4000, 0x1fd0e729 )
 
-	ROM_REGION(0x10000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ss5.v12", 0x00000, 0x2000, 0xbbfc79ca )	/* characters */
-	ROM_LOAD( "ss6.v12", 0x02000, 0x2000, 0xd0f12d0b )
-	ROM_LOAD( "ss7.v12", 0x04000, 0x4000, 0x17488a98 )	/* sprites */
-	ROM_LOAD( "ss8.v12", 0x08000, 0x4000, 0x9964d560 )
-	ROM_LOAD( "ss9.v12", 0x0c000, 0x4000, 0x34d73709 )
+	ROM_REGION_DISPOSE(0x10000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ss5.v12",      0x00000, 0x2000, 0x990890b1 )	/* characters */
+	ROM_LOAD( "ss6.v12",      0x02000, 0x2000, 0x9388ff82 )
+	ROM_LOAD( "ss7.v12",      0x04000, 0x4000, 0x32b14b8e )	/* sprites */
+	ROM_LOAD( "ss8.v12",      0x08000, 0x4000, 0x9f59014e )
+	ROM_LOAD( "ss9.v12",      0x0c000, 0x4000, 0xe240345a )
 
 	ROM_REGION(0x0240)	/* color PROMs */
-	ROM_LOAD( "SS12.BIN", 0x0000, 0x0020, 0x3e37e629 )	/* red/green component */
-	ROM_LOAD( "SS13.BIN", 0x0020, 0x0020, 0x6a80060c )	/* blue component */
-	ROM_LOAD( "SSB2.BIN", 0x0040, 0x0100, 0xcf7abb5e )	/* character lookup table */
-	ROM_LOAD( "SSB.BIN",  0x0140, 0x0100, 0x9963b35d )	/* sprite lookup table */
+	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
+	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
+	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
+	ROM_LOAD( "ssb.bin",      0x0140, 0x0100, 0xd4f7bfb5 )	/* sprite lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "ss3.v12", 0xe000, 0x2000, 0x8d3be09f )
+	ROM_LOAD( "ss3.v12",      0xe000, 0x2000, 0x1135c48a )
 ROM_END
 
 
@@ -394,6 +393,7 @@ struct GameDriver sonson_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info=",
 	0,
 	&machine_driver,
+	0,
 
 	sonson_rom,
 	0, 0,

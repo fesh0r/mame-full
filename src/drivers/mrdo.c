@@ -30,7 +30,7 @@ f800      playfield 0 X scroll position
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
 
 
 
@@ -51,12 +51,8 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* if a read from this address doesn't return the value it expects. */
 int mrdo_SECRE_r(int offset)
 {
-	Z80_Regs regs;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	Z80_GetRegs(&regs);
-	return RAM[regs.HL.D];
+	return RAM[ cpu_get_reg(Z80_HL) ];
 }
 
 
@@ -114,54 +110,54 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Special", IP_KEY_NONE )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Special" )
 	PORT_DIPSETTING(    0x08, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "Extra" )
 	PORT_DIPSETTING(    0x10, "Easy" )
 	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0xc0, "3" )
 	PORT_DIPSETTING(    0x80, "4" )
 	PORT_DIPSETTING(    0x40, "5" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, "Right Coin" )
+	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x00, "Free play" )
 	/* settings 0x01 thru 0x05 all give 1 Coin/1 Credit */
-	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPNAME( 0xf0, 0xf0, "Left Coin" )
+	PORT_DIPSETTING(    0x60, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x00, "Free play" )
 	/* settings 0x10 thru 0x50 all give 1 Coin/1 Credit */
 INPUT_PORTS_END
@@ -206,8 +202,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct SN76496interface sn76496_interface =
 {
 	2,	/* 2 chips */
-	4000000,	/* 4 MHz */
-	{ 255, 255 }
+	{ 4000000, 4000000 },	/* 4 MHz */
+	{ 70, 70 }
 };
 
 
@@ -260,86 +256,149 @@ static struct MachineDriver machine_driver =
 
 ROM_START( mrdo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000, 0x30cf97ed )
-	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000, 0x06b5fea1 )
-	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000, 0xa56b5f71 )
-	ROM_LOAD( "f4-04.bin", 0x6000, 0x2000, 0x4b09fc6d )
+	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
+	ROM_LOAD( "c4-02.bin",    0x2000, 0x2000, 0x0ecdd39c )
+	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
+	ROM_LOAD( "f4-04.bin",    0x6000, 0x2000, 0xf4190cfc )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000, 0xdf8ac406 )
-	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000, 0x78c4a89a )
-	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin",    0x0000, 0x1000, 0xaa80c5b6 )
+	ROM_LOAD( "u8-10.bin",    0x1000, 0x1000, 0xd20ec85b )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGION(0x0060)	/* color PROMs */
-	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
-	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
-	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
 ROM_START( mrdot_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D1", 0x0000, 0x2000, 0xb738fe88 )
-	ROM_LOAD( "D2", 0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "D3", 0x4000, 0x2000, 0xa36ea250 )
-	ROM_LOAD( "D4", 0x6000, 0x2000, 0xe25d6e3d )
+	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
+	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
+	ROM_LOAD( "d4",           0x6000, 0x2000, 0xfce9afeb )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "D9",        0x0000, 0x1000, 0x0360f41e )
-	ROM_LOAD( "D10",       0x1000, 0x1000, 0x9c9a9882 )
-	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
+	ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGION(0x0060)	/* color PROMs */
-	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
-	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
-	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
+ROM_END
+
+ROM_START( mrdofix_rom )
+    ROM_REGION(0x10000) /* 64k for code */
+    ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
+    ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+    ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
+    ROM_LOAD( "dofix.d4",     0x6000, 0x2000, 0x32db845f )
+
+    ROM_REGION_DISPOSE(0x6000)  /* temporary space for graphics (disposed after conversion) */
+    ROM_LOAD( "d9",           0x0000, 0x1000, 0xde4cfe66 )
+    ROM_LOAD( "d10",          0x1000, 0x1000, 0xa6c2f38b )
+    ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+    ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+    ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+    ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
+
+    ROM_REGION(0x0060)  /* color PROMs */
+    ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )  /* palette (high bits) */
+    ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )  /* palette (low bits) */
+    ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )  /* sprite color lookup table */
 ROM_END
 
 ROM_START( mrlo_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "MRLO01.bin", 0x0000, 0x2000, 0xaca06df6 )
-	ROM_LOAD( "D2",         0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "MRLO03.bin", 0x4000, 0x2000, 0xf21e4688 )
-	ROM_LOAD( "MRLO04.bin", 0x6000, 0x2000, 0xc031b3e9 )
+	ROM_LOAD( "mrlo01.bin",   0x0000, 0x2000, 0x6f455e7d )
+	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+	ROM_LOAD( "dofix.d3",     0x4000, 0x2000, 0x3a7d039b )
+	ROM_LOAD( "mrlo04.bin",   0x6000, 0x2000, 0x49c10274 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "MRLO09.bin", 0x0000, 0x1000, 0xe96e0ef6 )
-	ROM_LOAD( "MRLO10.bin", 0x1000, 0x1000, 0xaa29cb17 )
-	ROM_LOAD( "r8-08.bin",  0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "n8-07.bin",  0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "h5-05.bin",  0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "k5-06.bin",  0x5000, 0x1000, 0xb456cce4 )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mrlo09.bin",   0x0000, 0x1000, 0xfdb60d0d )
+	ROM_LOAD( "mrlo10.bin",   0x1000, 0x1000, 0x0492c10e )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGION(0x0060)	/* color PROMs */
-	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
-	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
-	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
 ROM_START( mrdu_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "D1",       0x0000, 0x2000, 0xb738fe88 )
-	ROM_LOAD( "D2",       0x2000, 0x2000, 0xa21679bc )
-	ROM_LOAD( "D3",       0x4000, 0x2000, 0xa36ea250 )
-	ROM_LOAD( "DU4.BIN",  0x6000, 0x2000, 0xdf60933e)
+	ROM_LOAD( "d1",           0x0000, 0x2000, 0x3dcd9359 )
+	ROM_LOAD( "d2",           0x2000, 0x2000, 0x710058d8 )
+	ROM_LOAD( "d3",           0x4000, 0x2000, 0x467d12d8 )
+	ROM_LOAD( "du4.bin",      0x6000, 0x2000, 0x893bc218 )
 
-	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "DU9.BIN",   0x0000, 0x1000, 0xe717f699 )
-	ROM_LOAD( "DU10.BIN",  0x1000, 0x1000, 0xd0b2db78 )
-	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000, 0x005b757b )
-	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000, 0x5d25fe31 )
-	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000, 0x7f8e8642 )
-	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000, 0xb456cce4 )
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "du9.bin",      0x0000, 0x1000, 0x4090dcdc )
+	ROM_LOAD( "du10.bin",     0x1000, 0x1000, 0x1e63ab69 )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "h5-05.bin",    0x4000, 0x1000, 0xe1218cc5 )
+	ROM_LOAD( "k5-06.bin",    0x5000, 0x1000, 0xb1f68b04 )
 
 	ROM_REGION(0x0060)	/* color PROMs */
-	ROM_LOAD( "u02--2.bin", 0x0000, 0x0020, 0xe2c70b13 )	/* palette (high bits) */
-	ROM_LOAD( "t02--3.bin", 0x0020, 0x0020, 0x00392931 )	/* palette (low bits) */
-	ROM_LOAD( "f10--1.bin", 0x0040, 0x0020, 0x91e24fe2 )	/* sprite color lookup table */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
+ROM_END
+
+ROM_START( mrdoy_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dosnow.1",     0x0000, 0x2000, 0xd3454e2c )
+	ROM_LOAD( "dosnow.2",     0x2000, 0x2000, 0x5120a6b2 )
+	ROM_LOAD( "dosnow.3",     0x4000, 0x2000, 0x96416dbe )
+	ROM_LOAD( "dosnow.4",     0x6000, 0x2000, 0xc05051b6 )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dosnow.9",     0x0000, 0x1000, 0x85d16217 )
+	ROM_LOAD( "dosnow.10",    0x1000, 0x1000, 0x61a7f54b )
+	ROM_LOAD( "dosnow.8",     0x2000, 0x1000, 0x2bd1239a )
+	ROM_LOAD( "dosnow.7",     0x3000, 0x1000, 0xac8ffddf )
+	ROM_LOAD( "dosnow.5",     0x4000, 0x1000, 0x7662d828 )
+	ROM_LOAD( "dosnow.6",     0x5000, 0x1000, 0x413f88d1 )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
+ROM_END
+
+ROM_START( yankeedo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4-01.bin",    0x0000, 0x2000, 0x03dcfba2 )
+	ROM_LOAD( "yd_d2.c4",     0x2000, 0x2000, 0x7c9d7ce0 )
+	ROM_LOAD( "e4-03.bin",    0x4000, 0x2000, 0x358f5dc2 )
+	ROM_LOAD( "f4-04.bin",    0x6000, 0x2000, 0xf4190cfc )
+
+	ROM_REGION_DISPOSE(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin",    0x0000, 0x1000, 0xaa80c5b6 )
+	ROM_LOAD( "u8-10.bin",    0x1000, 0x1000, 0xd20ec85b )
+	ROM_LOAD( "r8-08.bin",    0x2000, 0x1000, 0xdbdc9ffa )
+	ROM_LOAD( "n8-07.bin",    0x3000, 0x1000, 0x4b9973db )
+	ROM_LOAD( "yd_d5.h5",     0x4000, 0x1000, 0xf530b79b )
+	ROM_LOAD( "yd_d6.k5",     0x5000, 0x1000, 0x790579aa )
+
+	ROM_REGION(0x0060)	/* color PROMs */
+	ROM_LOAD( "u02--2.bin",   0x0000, 0x0020, 0x238a65d7 )	/* palette (high bits) */
+	ROM_LOAD( "t02--3.bin",   0x0020, 0x0020, 0xae263dc0 )	/* palette (low bits) */
+	ROM_LOAD( "f10--1.bin",   0x0040, 0x0020, 0x16ee4ca2 )	/* sprite color lookup table */
 ROM_END
 
 
@@ -393,6 +452,7 @@ struct GameDriver mrdo_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrdo_rom,
 	0, 0,
@@ -418,6 +478,7 @@ struct GameDriver mrdot_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrdot_rom,
 	0, 0,
@@ -432,6 +493,32 @@ struct GameDriver mrdot_driver =
 	hiload, hisave
 };
 
+struct GameDriver mrdofix_driver =
+{
+    __FILE__,
+    &mrdo_driver,
+    "mrdofix",
+    "Mr. Do! (bugfixed)",
+    "1982",
+    "Universal (Taito license)",
+    "Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+    0,
+    &machine_driver,
+    0,
+
+    mrdofix_rom,
+    0, 0,
+    0,
+    0,  /* sound_prom */
+
+    input_ports,
+
+    PROM_MEMORY_REGION(2), 0, 0,
+    ORIENTATION_ROTATE_270,
+
+    hiload, hisave
+};
+
 struct GameDriver mrlo_driver =
 {
 	__FILE__,
@@ -443,6 +530,7 @@ struct GameDriver mrlo_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrlo_rom,
 	0, 0,
@@ -465,9 +553,10 @@ struct GameDriver mrdu_driver =
 	"Mr. Du!",
 	"1982",
 	"bootleg",
-	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrdu_rom,
 	0, 0,
@@ -482,3 +571,55 @@ struct GameDriver mrdu_driver =
 	hiload, hisave
 };
 
+
+struct GameDriver mrdoy_driver =
+{
+	__FILE__,
+	&mrdo_driver,
+	"mrdoy",
+	"Mr. Do! (Yukidaruma)",
+	"1982",
+	"bootleg",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	mrdoy_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};
+
+struct GameDriver yankeedo_driver =
+{
+	__FILE__,
+	&mrdo_driver,
+	"yankeedo",
+	"Yankee DO!",
+	"1982",
+	"hack",
+	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	yankeedo_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	hiload, hisave
+};

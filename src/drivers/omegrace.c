@@ -264,6 +264,19 @@ int omegrace_spinner1_r(int offset)
 	return (spinnerTable[res&0x3f]);
 }
 
+void omegrace_leds_w (int offset, int data)
+{
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+
+	/* bits 2 to 5 are the start leds (4 and 5 cocktail only, not supported) */
+	osd_led_w(0,~data >> 2);
+	osd_led_w(1,~data >> 3);
+
+	/* bit 6 flips screen (not supported) */
+}
+
 void omegrace_soundlatch_w (int offset, int data)
 {
 	soundlatch_w (offset, data);
@@ -311,7 +324,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 static struct IOReadPort readport[] =
 {
 	{ 0x08, 0x08, omegrace_vg_go },
- 	{ 0x09, 0x09, omegrace_watchdog_r },
+	{ 0x09, 0x09, omegrace_watchdog_r },
 	{ 0x0b, 0x0b, omegrace_vg_status_r }, /* vg_halt */
 	{ 0x10, 0x10, input_port_0_r }, /* DIP SW C4 */
 	{ 0x17, 0x17, input_port_1_r }, /* DIP SW C6 */
@@ -324,8 +337,8 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-  	{ 0x0a, 0x0a, avgdvg_reset },
- 	{ 0x13, 0x13, IOWP_NOP }, /* diverse outputs */
+	{ 0x0a, 0x0a, avgdvg_reset },
+	{ 0x13, 0x13, omegrace_leds_w }, /* coin counters, leds, flip screen */
 	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
 	{ -1 }	/* end of table */
 };
@@ -342,58 +355,58 @@ static struct IOWritePort sound_writeport[] =
 	{ 0x01, 0x01, AY8910_write_port_0_w },
 	{ 0x02, 0x02, AY8910_control_port_1_w },
 	{ 0x03, 0x03, AY8910_write_port_1_w },
-        { -1 }  /* end of table */
+	{ -1 }  /* end of table */
 };
 
 INPUT_PORTS_START( input_ports )
 	PORT_START /* SW0 */
-	PORT_DIPNAME ( 0x03, 0x00, "1st Bonus Ship", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "40K" )
-	PORT_DIPSETTING (    0x01, "50K" )
-	PORT_DIPSETTING (    0x02, "70K" )
-	PORT_DIPSETTING (    0x03, "100K" )
-	PORT_DIPNAME ( 0x0c, 0x00, "2nd/3rd Bonus", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "150K 250K" )
-	PORT_DIPSETTING (    0x04, "250K 500K" )
-	PORT_DIPSETTING (    0x08, "500K 750K" )
-	PORT_DIPSETTING (    0x0c, "750K 1000K" )
-	PORT_DIPNAME ( 0x30, 0x00, "Credit/Ship", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "1/2 2/4" )
-	PORT_DIPSETTING (    0x10, "1/2 2/5" )
-	PORT_DIPSETTING (    0x20, "1/3 2/6" )
-	PORT_DIPSETTING (    0x30, "1/3 2/7" )
-	PORT_DIPNAME ( 0x40, 0x00, "Unknown1", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x40, "On" )
-	PORT_DIPNAME ( 0x80, 0x00, "Unknown2", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x80, "On" )
+	PORT_DIPNAME( 0x03, 0x03, "1st Bonus Life" )
+	PORT_DIPSETTING (   0x00, "40k" )
+	PORT_DIPSETTING (   0x01, "50k" )
+	PORT_DIPSETTING (   0x02, "70k" )
+	PORT_DIPSETTING (   0x03, "100k" )
+	PORT_DIPNAME( 0x0c, 0x0c, "2nd & 3rd Bonus Life" )
+	PORT_DIPSETTING (   0x00, "150k 250k" )
+	PORT_DIPSETTING (   0x04, "250k 500k" )
+	PORT_DIPSETTING (   0x08, "500k 750k" )
+	PORT_DIPSETTING (   0x0c, "750k 1500k" )
+	PORT_DIPNAME( 0x30, 0x30, "Credit(s)/Ships" )
+	PORT_DIPSETTING (   0x00, "1C/2S 2C/4S" )
+	PORT_DIPSETTING (   0x10, "1C/2S 2C/5S" )
+	PORT_DIPSETTING (   0x20, "1C/3S 2C/6S" )
+	PORT_DIPSETTING (   0x30, "1C/3S 2C/7S" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( On ) )
 
 	PORT_START /* SW1 */
-	PORT_DIPNAME ( 0x07, 0x07, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (    0x01, "1 Coin/3 Credits" )
-	PORT_DIPSETTING (    0x02, "1 Coin/5 Credits" )
-	PORT_DIPSETTING (    0x03, "4 Coins/5 Credits" )
-	PORT_DIPSETTING (    0x04, "3 Coins/4 Credits" )
-	PORT_DIPSETTING (    0x05, "2 Coins/3 Credits" )
-	PORT_DIPSETTING (    0x06, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (    0x07, "1 Coin/1 Credit" )
-	PORT_DIPNAME ( 0x38, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (    0x08, "1 Coin/3 Credits" )
-	PORT_DIPSETTING (    0x10, "1 Coin/5 Credits" )
-	PORT_DIPSETTING (    0x18, "4 Coins/5 Credits" )
-	PORT_DIPSETTING (    0x20, "3 Coins/4 Credits" )
-	PORT_DIPSETTING (    0x28, "2 Coins/3 Credits" )
-	PORT_DIPSETTING (    0x30, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (    0x38, "1 Coin/1 Credit" )
-	PORT_DIPNAME ( 0x40, 0x00, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x40, "On" )
-	PORT_DIPNAME ( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Upright" )
-	PORT_DIPSETTING (    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (   0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x03, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (   0x04, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING (   0x05, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (   0x30, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x18, "4 Coins/5 Credits" )
+	PORT_DIPSETTING (   0x20, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING (   0x28, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING (   0x10, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( Cocktail ) )
 
 	PORT_START /* IN2 -port 0x11 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -403,9 +416,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BITX ( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING( 0x80, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START /* IN3 - port 0x12 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
@@ -418,10 +429,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START /* IN4 - port 0x15 - spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 12, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 12, 10, 0, 0, 0 )
 
 	PORT_START /* IN5 - port 0x16 - second spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 12, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 12, 10, 0, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -451,7 +462,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -517,16 +529,16 @@ static struct MachineDriver machine_driver =
 
 ROM_START( omegrace_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "omega.m7", 0x0000, 0x1000, 0x51948d4e )
-	ROM_LOAD( "omega.l7", 0x1000, 0x1000, 0xe1639841 )
-	ROM_LOAD( "omega.k7", 0x2000, 0x1000, 0x4ec4afd2 )
-	ROM_LOAD( "omega.j7", 0x3000, 0x1000, 0x273fa6b7 )
-	ROM_LOAD( "omega.e1", 0x9000, 0x0800, 0x63c42592 )
-	ROM_LOAD( "omega.f1", 0x9800, 0x0800, 0xe63e51e2 )
+	ROM_LOAD( "omega.m7",     0x0000, 0x1000, 0x0424d46e )
+	ROM_LOAD( "omega.l7",     0x1000, 0x1000, 0xedcd7a7d )
+	ROM_LOAD( "omega.k7",     0x2000, 0x1000, 0x6d10f197 )
+	ROM_LOAD( "omega.j7",     0x3000, 0x1000, 0x8e8d4b54 )
+	ROM_LOAD( "omega.e1",     0x9000, 0x0800, 0x1d0fdf3a )
+	ROM_LOAD( "omega.f1",     0x9800, 0x0800, 0xd44c0814 )
 
-	ROM_REGION(0x0800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x0800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_REGION(0x10000)	/* 64k for audio cpu */
-	ROM_LOAD( "sound.k5", 0x0000, 0x0800, 0x7f858859 )
+	ROM_LOAD( "sound.k5",     0x0000, 0x0800, 0x7d426017 )
 ROM_END
 
 static int hiload(void)
@@ -569,6 +581,7 @@ struct GameDriver omegrace_driver =
 	"Al Kossow (original code)\nBernd Wiebelt (MAME driver)\ndedicated to Natalia & Lara\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	0,
 
 	omegrace_rom,
 	0, 0,

@@ -97,7 +97,7 @@ void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;
-extern unsigned char galaga_hiscoreloaded;
+
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
@@ -106,7 +106,6 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
-	{ 0x02b9, 0x02bd, galaga_hiscore_print_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -168,17 +167,17 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 INPUT_PORTS_START( galaga_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x18, "20K 60K" )
 	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
@@ -187,36 +186,36 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
 	PORT_DIPSETTING(    0x28, "30K 120K 120K" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "2 Credits Game" )
 	PORT_DIPSETTING(    0x00, "1 Player" )
 	PORT_DIPSETTING(    0x01, "2 Players" )
-	PORT_DIPNAME( 0x06, 0x06, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x06, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x04, "Hardest" )
-	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
@@ -225,9 +224,8 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* FAKE */
@@ -235,43 +233,35 @@ INPUT_PORTS_START( galaga_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* FAKE */
 	/* the button here is used to trigger the sound in the test screen */
-	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_START1, 1 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 /* same as galaga, dip switches are slightly different */
 INPUT_PORTS_START( galaganm_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x07, 0x07, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x07, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x05, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 	/* TODO: bonus scores are different for 5 lives */
-	PORT_DIPNAME( 0x38, 0x38, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x18, "20K 60K" )
 	PORT_DIPSETTING(    0x10, "20K 70K 70K" )
@@ -280,36 +270,36 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
 	PORT_DIPSETTING(    0x28, "30K 120K 120K" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0xc0, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x02, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Freeze", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Freeze" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
 	PORT_START      /* FAKE */
 	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
@@ -318,9 +308,8 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* FAKE */
@@ -328,27 +317,19 @@ INPUT_PORTS_START( galaganm_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_IMPULSE | IPF_COCKTAIL,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS, 0 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* FAKE */
 	/* the button here is used to trigger the sound in the test screen */
-	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_START1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_START2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE,
-			IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x03, IP_ACTIVE_LOW, IPT_BUTTON1,     0, IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_START1, 1 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
@@ -359,8 +340,8 @@ static struct GfxLayout charlayout =
 	128,           /* 128 characters */
 	2,             /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },   /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },   /* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },   /* characters are rotated 90 degrees */
 	16*8           /* every char takes 16 bytes */
 };
 
@@ -370,10 +351,10 @@ static struct GfxLayout spritelayout =
 	128,            /* 128 sprites */
 	2,              /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
-			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 0, 1, 2, 3, 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8    /* every sprite takes 64 bytes */
 };
 
@@ -388,41 +369,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* waveforms for the audio hardware */
-static unsigned char sound_prom[] =
-{
-	/* 1D.BIN */
-	0x77,0x99,0xAA,0xBB,0xCC,0xDD,0xDD,0xEE,0xEE,0xEE,0xDD,0xDD,0xCC,0xBB,0xAA,0x99,
-	0x77,0x55,0x44,0x33,0x22,0x11,0x11,0x00,0x00,0x00,0x11,0x11,0x22,0x33,0x44,0x55,
-	0x77,0x99,0xAA,0xBB,0x77,0xDD,0xDD,0x77,0xEE,0x77,0xDD,0xDD,0x77,0xBB,0xAA,0x99,
-	0x77,0x55,0x77,0x33,0x77,0x11,0x77,0x00,0x77,0x00,0x77,0x11,0x77,0x33,0x77,0x55,
-	0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,0xEE,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0xBB,0xDD,0xEE,0xDD,0xCC,0xAA,0x88,0x88,0x88,0xAA,0xCC,0xDD,0xEE,0xDD,0xBB,0x88,
-	0x44,0x22,0x11,0x22,0x33,0x55,0x77,0x77,0x77,0x55,0x33,0x22,0x11,0x22,0x44,0x77,
-	0x77,0xAA,0xCC,0xDD,0xEE,0xDD,0xCC,0xAA,0x77,0x44,0x22,0x11,0x00,0x11,0x22,0x44,
-	0x77,0xBB,0xDD,0xEE,0xDD,0xBB,0x77,0x33,0x11,0x00,0x11,0x33,0x77,0xEE,0x77,0x00,
-	0x77,0xEE,0xCC,0x99,0xCC,0xEE,0xAA,0x77,0xCC,0xFF,0xDD,0x88,0xAA,0xBB,0x77,0x22,
-	0x88,0xDD,0x99,0x44,0x55,0x77,0x22,0x00,0x33,0x88,0x55,0x11,0x33,0x66,0x33,0x11,
-	0x77,0x88,0xAA,0xCC,0xEE,0xDD,0xCC,0xCC,0xBB,0xAA,0x88,0x77,0x55,0x66,0x77,0x88,
-	0x88,0x99,0xAA,0xBB,0x99,0x88,0x66,0x55,0x44,0x44,0x33,0x22,0x44,0x66,0x88,0x99,
-	0xAA,0xCC,0xCC,0xAA,0x77,0x77,0x88,0xBB,0xDD,0xEE,0xDD,0xAA,0x66,0x55,0x55,0x77,
-	0x99,0x99,0x88,0x44,0x11,0x00,0x11,0x33,0x66,0x77,0x77,0x44,0x22,0x22,0x44,0x77
-};
-
-
-
 static struct namco_interface namco_interface =
 {
 	3072000/32,	/* sample rate */
 	3,			/* number of voices */
-	32,			/* gain adjustment */
-	255			/* playback volume */
+	100,		/* playback volume */
+	5			/* memory region */
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	80	/* volume */
 };
 
 
@@ -453,12 +411,11 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
+	99,	/* 99 CPU slices per frame - with 100, galagab2 hangs on coin insertion */
 	galaga_init_machine,
 
 	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	32+64,64*4,     /* 32 for the characters, 64 for the stars */
 	galaga_vh_convert_color_prom,
@@ -493,122 +450,207 @@ static struct MachineDriver machine_driver =
 
 ROM_START( galaga_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "04k_g02.bin", 0x1000, 0x1000, 0x938e00f8 )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
+	ROM_LOAD( "04k_g02.bin",  0x1000, 0x1000, 0x43bb0d5c )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
 ROM_START( galagamw_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
+	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
+	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
+	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
+	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "3600e.bin", 0x0000, 0x1000, 0xe70740a3 )
+	ROM_LOAD( "3600e.bin",    0x0000, 0x1000, 0xbc556e76 )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
 ROM_START( galagads_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "3200a.bin", 0x0000, 0x1000, 0xa0c3e1bf )
-	ROM_LOAD( "3300b.bin", 0x1000, 0x1000, 0x1819bf3b )
-	ROM_LOAD( "3400c.bin", 0x2000, 0x1000, 0x1060ec44 )
-	ROM_LOAD( "3500d.bin", 0x3000, 0x1000, 0xf02d0b8b )
+	ROM_LOAD( "3200a.bin",    0x0000, 0x1000, 0x3ef0b053 )
+	ROM_LOAD( "3300b.bin",    0x1000, 0x1000, 0x1b280831 )
+	ROM_LOAD( "3400c.bin",    0x2000, 0x1000, 0x16233d33 )
+	ROM_LOAD( "3500d.bin",    0x3000, 0x1000, 0x0aaf5c23 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "07m_g08.bin", 0x0000, 0x1000, 0x730600f0 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0xe8074051 )
+	ROM_LOAD( "3600fast.bin", 0x0000, 0x1000, 0x23d586e5 )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "3700g.bin", 0x0000, 0x1000, 0x20c4710c )
+	ROM_LOAD( "3700g.bin",    0x0000, 0x1000, 0xb07f0aa4 )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
 ROM_START( gallag_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "04m_g01.bin", 0x0000, 0x1000, 0xdf86b6ec )
-	ROM_LOAD( "gallag.2",    0x1000, 0x1000, 0x7ca470a4 )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "04h_g04.bin", 0x3000, 0x1000, 0xca530147 )
+	ROM_LOAD( "04m_g01.bin",  0x0000, 0x1000, 0xa3a0f743 )
+	ROM_LOAD( "gallag.2",     0x1000, 0x1000, 0x5eda60a7 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "04h_g04.bin",  0x3000, 0x1000, 0x83874442 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "gallag.6",     0x0000, 0x1000, 0x001b70bc )
 ROM_END
 
 ROM_START( galagab2_rom )
 	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
-	ROM_LOAD( "g1",          0x0000, 0x1000, 0x7aecbece )
-	ROM_LOAD( "g2",          0x1000, 0x1000, 0xb778a4da )
-	ROM_LOAD( "04j_g03.bin", 0x2000, 0x1000, 0x8fe52561 )
-	ROM_LOAD( "g4",          0x3000, 0x1000, 0x21f8c6ba )
+	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
+	ROM_LOAD( "g2",           0x1000, 0x1000, 0xd9232240 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
 
-	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gallag.8",    0x0000, 0x1000, 0x0c670ff9 )
-	ROM_LOAD( "07e_g10.bin", 0x1000, 0x1000, 0xffdf703b )
-	ROM_LOAD( "07h_g09.bin", 0x2000, 0x1000, 0xa83e9cae )
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gallag.8",     0x0000, 0x1000, 0x169a98a4 )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0220)	/* color PROMs */
-	ROM_LOAD( "5n.bin", 0x0000, 0x0020, 0xf05fb905 )	/* palette */
-	ROM_LOAD( "2n.bin", 0x0020, 0x0100, 0xe6d30001 )	/* char lookup table */
-	ROM_LOAD( "1c.bin", 0x0120, 0x0100, 0xc3750b05 )	/* sprite lookup table */
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
 
 	ROM_REGION(0x10000)     /* 64k for the second CPU */
-	ROM_LOAD( "04e_g05.bin", 0x0000, 0x1000, 0x6079fa7d )
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
 
 	ROM_REGION(0x10000)     /* 64k for the third CPU  */
-	ROM_LOAD( "04d_g06.bin", 0x0000, 0x1000, 0x9dd8ebd8 )
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+ROM_END
+
+ROM_START( galaga84_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "g1",           0x0000, 0x1000, 0xab036c9f )
+	ROM_LOAD( "gal84_u2",     0x1000, 0x1000, 0x4d832a30 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "g4",           0x3000, 0x1000, 0x499fcc76 )
+
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "gal84u4d",     0x1000, 0x1000, 0x22e339d5 )
+	ROM_LOAD( "gal84u4e",     0x2000, 0x1000, 0x60dcf940 )
+
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "gal84_u5",     0x0000, 0x1000, 0xbb5caae3 )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
+
+	ROM_REGION(0x10000)	/* 64k for a Z80 which emulates the custom I/O chip (not used) */
+	ROM_LOAD( "10h_g07.bin",  0x0000, 0x1000, 0x035e300c )
+ROM_END
+
+ROM_START( nebulbee_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "nebulbee.01",  0x0000, 0x1000, 0xf405f2c4 )
+	ROM_LOAD( "nebulbee.02",  0x1000, 0x1000, 0x31022b60 )
+	ROM_LOAD( "04j_g03.bin",  0x2000, 0x1000, 0x753ce503 )
+	ROM_LOAD( "nebulbee.04",  0x3000, 0x1000, 0xd76788a5 )
+
+	ROM_REGION_DISPOSE(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "07m_g08.bin",  0x0000, 0x1000, 0x58b2f47c )
+	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
+	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
+
+	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
+	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
+	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
+	ROM_LOAD( "5c.bin",       0x0220, 0x0100, 0x8bd565f6 )	/* unknown */
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "04e_g05.bin",  0x0000, 0x1000, 0x3102fccd )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "04d_g06.bin",  0x0000, 0x1000, 0x8995088d )
+
+	ROM_REGION(0x0100)	/* sound prom */
+	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
 
 
@@ -616,7 +658,7 @@ ROM_END
 static const char *galaga_sample_names[] =
 {
 	"*galaga",
-	"BANG.SAM",
+	"bang.wav",
 	0       /* end of array */
 };
 
@@ -624,44 +666,46 @@ static const char *galaga_sample_names[] =
 
 static int hiload(void)
 {
-   void *f;
+	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-   /* check if the hi score table has already been initialized */
-   if (memcmp(&RAM[0x8a4c],"\x18\x6e",2) == 0)
-   {
-      if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-      {
-	 osd_fread(f,&RAM[0x8A20],45);
-	 osd_fclose(f);
-	 /* V.V: copy top score to video RAM */
-	 RAM[0x83ED]=RAM[0x8A20];
-	 RAM[0x83EE]=RAM[0x8A21];
-	 RAM[0x83EF]=RAM[0x8A22];
-	 RAM[0x83F0]=RAM[0x8A23];
-	 RAM[0x83F1]=RAM[0x8A24];
-	 RAM[0x83F2]=RAM[0x8A25];
-	 galaga_hiscoreloaded = 1;
-      }
-      return 1;
-   }
-   else
-      return 0; /* we can't load the hi scores yet */
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8a20],"\x00\x00\x00\x00\x02\x24",6) == 0 &&
+		memcmp(&RAM[0x8a4a],"\x18\x2a\x18",3) == 0 &&
+		memcmp(&RAM[0x83ed],"\x00\x00\x00\x00\x02\x24",6) == 0 )
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8A20],45);
+			osd_fclose(f);
+			/* V.V: copy top score to video RAM */
+			RAM[0x83ED]=RAM[0x8A20];
+			RAM[0x83EE]=RAM[0x8A21];
+			RAM[0x83EF]=RAM[0x8A22];
+			RAM[0x83F0]=RAM[0x8A23];
+			RAM[0x83F1]=RAM[0x8A24];
+			RAM[0x83F2]=RAM[0x8A25];
+
+		}
+		return 1;
+	}
+	else
+		return 0; /* we can't load the hi scores yet */
 }
 
 
 static void hisave(void)
 {
-   void *f;
+	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-   if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-   {
-      osd_fwrite(f,&RAM[0x8A20],45);
-      osd_fclose(f);
-   }
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8A20],45);
+		osd_fclose(f);
+	}
 }
 
 
@@ -673,19 +717,20 @@ struct GameDriver galaga_driver =
 	"Galaga (Namco)",
 	"1981",
 	"Namco",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	galaga_rom,
 	0, 0,
 	galaga_sample_names,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -698,19 +743,20 @@ struct GameDriver galagamw_driver =
 	"Galaga (Midway)",
 	"1981",
 	"[Namco] (Midway license)",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	galagamw_rom,
 	0, 0,
 	galaga_sample_names,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	galaga_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -723,19 +769,20 @@ struct GameDriver galagads_driver =
 	"Galaga (fast shoot)",
 	"1981",
 	"hack",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	galagads_rom,
 	0, 0,
 	galaga_sample_names,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	galaga_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -748,19 +795,20 @@ struct GameDriver gallag_driver =
 	"Gallag",
 	"1982",
 	"bootleg",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	gallag_rom,
 	0, 0,
 	galaga_sample_names,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
@@ -773,19 +821,73 @@ struct GameDriver galagab2_driver =
 	"Galaga (bootleg)",
 	"1981",
 	"bootleg",
-	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	galagab2_rom,
 	0, 0,
 	galaga_sample_names,
-	sound_prom,	/* sound_prom */
+	0,	/* sound_prom */
 
 	galaganm_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
+
+struct GameDriver galaga84_driver =
+{
+	__FILE__,
+	&galaga_driver,
+	"galaga84",
+	"Galaga '84",
+	"1984",
+	"hack",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	0,
+	&machine_driver,
+	0,
+
+	galaga84_rom,
+	0, 0,
+	galaga_sample_names,
+	0,	/* sound_prom */
+
+	galaganm_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver nebulbee_driver =
+{
+	__FILE__,
+	&galaga_driver,
+	"nebulbee",
+	"Nebulous Bee",
+	"1984",
+	"hack",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)",
+	0,
+	&machine_driver,
+	0,
+
+	nebulbee_rom,
+	0, 0,
+	galaga_sample_names,
+	0,	/* sound_prom */
+
+	galaganm_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+

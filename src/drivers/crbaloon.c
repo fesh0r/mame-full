@@ -93,12 +93,12 @@ int crbaloon_IN2_r(int offset)
 	/* the following is needed for the game to boot up */
 	if (val06 & 0x80)
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: %02x high\n",cpu_getpc(),offset);
+if (errorlog) fprintf(errorlog,"PC %04x: %02x high\n",cpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: %02x low\n",cpu_getpc(),offset);
+if (errorlog) fprintf(errorlog,"PC %04x: %02x low\n",cpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 }
@@ -112,12 +112,12 @@ int crbaloon_IN3_r(int offset)
 	/* the following is needed for the game to boot up */
 	if (val0a & 0x01)
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: 03 high\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"PC %04x: 03 high\n",cpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: 03 low\n",cpu_getpc());
+if (errorlog) fprintf(errorlog,"PC %04x: 03 low\n",cpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 }
@@ -182,28 +182,28 @@ static struct IOWritePort writeport[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Test?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Test?" )
 	PORT_DIPSETTING(    0x01, "I/O Check?" )
 	PORT_DIPSETTING(    0x00, "RAM Check?" )
-	PORT_DIPNAME( 0x02, 0x02, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "5000" )
 	PORT_DIPSETTING(    0x10, "10000" )
-	PORT_DIPNAME( 0xe0, 0x80, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x60, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/4 Credits" )
+	PORT_DIPNAME( 0xe0, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x00, "Disable" )
 
 	PORT_START
@@ -218,24 +218,24 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START
 	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* from chip PC3259 */
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1, "High Score Name Reset", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_BUTTON1, "High Score Name Reset", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )	/* should be COIN2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	/* the following four bits come from chip PC3092 */
@@ -326,31 +326,80 @@ static struct MachineDriver machine_driver =
 
 ROM_START( crbaloon_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "cl01.bin", 0x0000, 0x0800, 0xd1e59681 )
-	ROM_LOAD( "cl02.bin", 0x0800, 0x0800, 0x1a8cd5e2 )
-	ROM_LOAD( "cl03.bin", 0x1000, 0x0800, 0x72360b62 )
-	ROM_LOAD( "cl04.bin", 0x1800, 0x0800, 0x7b9df1b9 )
-	ROM_LOAD( "cl05.bin", 0x2000, 0x0800, 0x96326cee )
-	ROM_LOAD( "cl06.bin", 0x2800, 0x0800, 0xb43b4fb7 )
+	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
+	ROM_LOAD( "cl02.bin",     0x0800, 0x0800, 0x10f7a6f7 )
+	ROM_LOAD( "cl03.bin",     0x1000, 0x0800, 0x44ed6030 )
+	ROM_LOAD( "cl04.bin",     0x1800, 0x0800, 0x62f66f6c )
+	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0xc8f1e2be )
+	ROM_LOAD( "cl06.bin",     0x2800, 0x0800, 0x7d465691 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cl07.bin", 0x0000, 0x0800, 0x0e8a7a70 )
-	ROM_LOAD( "cl08.bin", 0x0800, 0x0800, 0x02aa0810 )
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cl07.bin",     0x0000, 0x0800, 0x2c1fbea8 )
+	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
 ROM_END
 
 ROM_START( crbalon2_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0xd1e59681 )
-	ROM_LOAD( "crazybal.ep2", 0x0800, 0x0800, 0xf2fd16c1 )
-	ROM_LOAD( "crazybal.ep3", 0x1000, 0x0800, 0x3923209f )
-	ROM_LOAD( "cl04.bin",     0x1800, 0x0800, 0x7b9df1b9 )
-	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0x96326cee )
-	ROM_LOAD( "crazybal.ep6", 0x2800, 0x0800, 0xb44b4fa7 )
+	ROM_LOAD( "cl01.bin",     0x0000, 0x0800, 0x9d4eef0b )
+	ROM_LOAD( "crazybal.ep2", 0x0800, 0x0800, 0x87572086 )
+	ROM_LOAD( "crazybal.ep3", 0x1000, 0x0800, 0x575fe995 )
+	ROM_LOAD( "cl04.bin",     0x1800, 0x0800, 0x62f66f6c )
+	ROM_LOAD( "cl05.bin",     0x2000, 0x0800, 0xc8f1e2be )
+	ROM_LOAD( "crazybal.ep6", 0x2800, 0x0800, 0xfed6ff5c )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cl07.bin", 0x0000, 0x0800, 0x0e8a7a70 )
-	ROM_LOAD( "cl08.bin", 0x0800, 0x0800, 0x02aa0810 )
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cl07.bin",     0x0000, 0x0800, 0x2c1fbea8 )
+	ROM_LOAD( "cl08.bin",     0x0800, 0x0800, 0xba898659 )
 ROM_END
+
+/* HSC 12/02/98 */
+static int hiload(void)
+{
+
+	static int firsttime =0;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	if (firsttime == 0)
+		{
+			memset(&RAM[0x4014],0xff,5); /* hi score */
+			memset(&RAM[0x417d],0xff,12); /* name */
+			firsttime = 1;
+		}
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x4014],"\x00\x00\x00\x00\x00",5) == 0 &&
+		memcmp(&RAM[0x417f],"\x11\x12\x29\x1c\x0c\x18\x1b\x0e\x00\x00",10) == 0  )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x4014],5);
+			osd_fread(f,&RAM[0x417d],12);
+			osd_fclose(f);
+        }
+		firsttime = 0;
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+	 	osd_fwrite(f,&RAM[0x4014],5);
+		osd_fwrite(f,&RAM[0x417d],12);
+        osd_fclose(f);
+    	memset(&RAM[0x4014],0xff,5); /* hi score */
+		memset(&RAM[0x417d],0xff,12); /* name */
+
+	}
+}
+
 
 
 struct GameDriver crbaloon_driver =
@@ -360,10 +409,11 @@ struct GameDriver crbaloon_driver =
 	"crbaloon",
 	"Crazy Balloon (set 1)",
 	"1980",
-	"Taito",
+	"Taito Corporation",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	crbaloon_rom,
 	0, 0,
@@ -375,7 +425,7 @@ struct GameDriver crbaloon_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload,hisave /* hsc 12/02/98 */
 };
 
 struct GameDriver crbalon2_driver =
@@ -385,10 +435,11 @@ struct GameDriver crbalon2_driver =
 	"crbalon2",
 	"Crazy Balloon (set 2)",
 	"1980",
-	"Taito",
+	"Taito Corporation",
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	crbalon2_rom,
 	0, 0,
@@ -400,5 +451,5 @@ struct GameDriver crbalon2_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload , hisave /* hsc 12/02/98 */
 };

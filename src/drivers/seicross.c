@@ -1,5 +1,11 @@
 /***************************************************************************
 
+TODO:
+- Frisky Tom hangs when you fall. It seems that the 6808 goes havoc and
+  trashes memory.
+- the DAC is poorly supported
+
+
 Seicross memory map (preliminary)
 
 0000-77ff ROM
@@ -11,7 +17,7 @@ Read:
 A000      Joystick + Players start button
 A800      player #2 controls + coin + ?
 B000      test switches
-B800      watchdog reset?
+B800      watchdog reset
 
 Write:
 8820-887f Sprite ram
@@ -23,6 +29,12 @@ I/O ports:
 1         8910 write
 4         8910 read
 
+
+There is a microcontroller on the board. Nichibutsu custom part marked
+NSC81050-102  8127 E37 and labeled No. 00363.  It's a 40-pin IC at location 4F
+on the (Seicross-) board. Looks like it is linked to the dips (and those are
+on a very small daughterboard).
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -30,48 +42,52 @@ I/O ports:
 
 
 
-int seicross_protection_r(int offset);
-
 extern unsigned char *seicross_row_scroll;
 void seicross_colorram_w(int offset,int data);
 void seicross_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+static unsigned char *nvram;
+static int nvram_size;
+
+
+static void friskyt_init_machine(void)
+{
+	/* start with the protection mcu halted */
+	cpu_halt(1,0);
+}
+
+static void no_nvram_init(void)
+{
+	/* Radical Radial and Seicross don't have NVRAM, only dip switches */
+	install_mem_read_handler(1, 0x1003, 0x1003, input_port_3_r );	/* DSW1 */
+	install_mem_read_handler(1, 0x1005, 0x1005, input_port_4_r );	/* DSW2 */
+	install_mem_read_handler(1, 0x1006, 0x1006, input_port_5_r );	/* DSW3 */
+}
+
 
 
 static int portb;
 
-static int seicross_portB_r(int offset)
+static int friskyt_portB_r(int offset)
 {
-	return (portb & 1) | (readinputport(3) & 0xfe);
+	return (portb & 0x9f) | (readinputport(6) & 0x60);
 }
 
-static void friskyt_kludge(int param)
+static void friskyt_portB_w(int offset,int data)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-	RAM[0x7f70] = 0x00;
-}
-
-static void seicross_portB_w(int offset,int data)
-{
-if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_getpc(),data);
+if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 
-	/* bit 2 seems to trigger a curtom IC or microcontroller */
+	/* bit 1 flips screen */
+
+	/* bit 2 resets the microcontroller */
 	if (data & 4)
 	{
-		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-		if (cpu_getpc() == 0x2ea9)	/* Seicross */
-		{
-			RAM[0x7814] = 0x02;
-			RAM[0x7815] = 0x03;
-		}
-
-		if (cpu_getpc() == 0x0425)	/* Frisky Tom */
-			timer_set(TIME_IN_USEC(50),0,friskyt_kludge);
+		/* reset and start the protection mcu */
+		cpu_reset(1);
+		cpu_halt(1,1);
 	}
 
 	/* other bits unknown */
@@ -79,12 +95,30 @@ if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_getpc(),data)
 }
 
 
+static unsigned char *sharedram;
+
+static int sharedram_r(int offset)
+{
+	return sharedram[offset];
+}
+
+static void sharedram_w(int offset,int data)
+{
+	sharedram[offset] = data;
+}
+
+/* This kludge makes the player move correctly in Frisky Tom */
+void ft_kludge(int offset,int data)
+{
+	sharedram_w(0x2fd+offset,data);
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x77ff, MRA_ROM },
-/* there is probably a microcontroller on board, which writes to memory */
-/* 7816 and 7817 are read if you keep F1 pressed */
-	{ 0x7800, 0x7fff, MRA_RAM },
+	{ 0x7800, 0x7fff, sharedram_r },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x981f, MRA_RAM },
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
@@ -98,11 +132,11 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x77ff, MWA_ROM },
-	{ 0x7800, 0x7fff, MWA_RAM },
+	{ 0x7800, 0x7fff, sharedram_w, &sharedram },
 	{ 0x8820, 0x887f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0x981f, MWA_RAM, &seicross_row_scroll },
-	{ 0x9880, 0x989f, MWA_RAM },	/* ? */
+	{ 0x9880, 0x989f, MWA_RAM, &spriteram_2, &spriteram_2_size },
 	{ 0x9c00, 0x9fff, seicross_colorram_w, &colorram },
 	{ -1 }	/* end of table */
 };
@@ -123,13 +157,36 @@ static struct IOWritePort writeport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress mcu_readmem[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x1000, 0x10ff, MRA_RAM },
+	{ 0x8000, 0xf7ff, MRA_ROM },
+	{ 0xf800, 0xffff, sharedram_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mcu_writemem[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x1100, 0x1101, ft_kludge },
+	{ 0x2000, 0x2000, DAC_data_w },
+//	{ 0x8000, 0xf7ff, MWA_ROM },
+	{ 0x8000, 0xe7ff, MWA_ROM },
+	{ 0xe800, 0xefff, sharedram_w },	/* AJP 990129 seems to need a mirror here */
+	{ 0xf800, 0xffff, sharedram_w },
+	{ -1 }	/* end of table */
+};
 
 
-INPUT_PORTS_START( seicross_input_ports )
+
+
+INPUT_PORTS_START( friskyt_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -137,9 +194,118 @@ INPUT_PORTS_START( seicross_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x00, "Counter Check" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* Test */
+	PORT_DIPNAME( 0x01, 0x00, "Test Mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Connection Error" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( radrad_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* Test */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x06, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x06, "5" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x05, "5" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPSETTING(    0x07, "7" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* DSW3 */
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x09, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0b, "2 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, "2 Coins/6 Credits" )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0e, "2 Coins/7 Credits" )
+	PORT_DIPSETTING(    0x0f, "2 Coins/8 Credits" )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_8C ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( seicross_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
@@ -147,68 +313,62 @@ INPUT_PORTS_START( seicross_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 
 	PORT_START      /* Test */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-/* actually it looks like bit 1 is not a test switch, but an error report from */
-/* a microcontroller on board. */
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Test 2", OSD_KEY_F1, 0, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x02, 0x00, "Connection Error" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 
-	PORT_START
-	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x20, 0x20, "Debug Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "SW7B", IP_KEY_NONE )
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
-INPUT_PORTS_END
+	PORT_DIPSETTING(    0x04, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x0c, "3" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-INPUT_PORTS_START( friskyt_input_ports )
-	PORT_START      /* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_START	/* DSW3 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START      /* Test */
-	PORT_BITX(    0x01, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-/* actually it looks like bit 1 is not a test switch, but an error report from */
-/* a microcontroller on board. */
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Test 2", OSD_KEY_F1, 0, 0 )
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-
-	PORT_START
+	PORT_START	/* Debug */
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x20, 0x20, "Debug Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Mode", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "SW7B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPNAME( 0x20, 0x20, "Debug Mode" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -226,7 +386,7 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
-	128,	/* 128 sprites */
+	256,	/* 256 sprites */
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes are packed in one byte */
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
@@ -241,20 +401,8 @@ static struct GfxLayout spritelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,   0, 16 },
-	{ 1, 0x2000, &spritelayout, 0, 16 },
+	{ 1, 0x0000, &spritelayout, 0, 16 },
 	{ -1 } /* end of array */
-};
-
-
-
-static unsigned char seicross_color_prom[] =
-{
-	/* sz73 */
-	0x00,0xFE,0xA4,0x52,0x00,0x17,0x05,0x03,0x00,0x2F,0x1F,0x0F,0x00,0x22,0x19,0x10,
-	0x00,0x2B,0x20,0x18,0x00,0xD8,0xD1,0x80,0x00,0xE9,0xD8,0xC8,0x00,0x6F,0xD8,0x80,
-	/* sz74 */
-	0x00,0x1D,0x13,0x11,0x00,0x55,0x4C,0x42,0x00,0x60,0x58,0x50,0x00,0x25,0x1B,0x12,
-	0x00,0x1F,0xE9,0xD8,0x00,0x0F,0xD8,0x80,0x00,0x84,0x83,0x42,0x00,0x1D,0x13,0x0A
 };
 
 
@@ -263,13 +411,19 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1536000,	/* 1.536 MHz ?? */
-	{ 255 },
+	{ 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
-	{ seicross_portB_r },
+	{ friskyt_portB_r },
 	{ 0 },
-	{ seicross_portB_w }
+	{ friskyt_portB_w }
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 25 }
+};
 
 
 static struct MachineDriver machine_driver =
@@ -278,15 +432,23 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 MHz? */
 			0,
 			readmem,writemem,readport,writeport,
 			interrupt,1
+		},
+		{
+			CPU_M6802,	/* probably a 6802 not sure */
+			6000000/4,	/* ??? */
+			3,
+			mcu_readmem,mcu_writemem,0,0,
+			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	20,	/* 20 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
+	friskyt_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -306,6 +468,10 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_AY8910,
 			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
 		}
 	}
 };
@@ -318,45 +484,204 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( seicross_rom )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "smc1", 0x0000, 0x1000, 0x05933acb )
-	ROM_LOAD( "smc2", 0x1000, 0x1000, 0xc2e976d5 )
-	ROM_LOAD( "smc3", 0x2000, 0x1000, 0x2a0a1a9a )
-	ROM_LOAD( "smc4", 0x3000, 0x1000, 0xed8b26a7 )
-	ROM_LOAD( "smc5", 0x4000, 0x1000, 0x17996809 )
-	ROM_LOAD( "smc6", 0x5000, 0x1000, 0x4ef8da3e )
-	ROM_LOAD( "smc7", 0x6000, 0x1000, 0xd30a5b96 )
-	ROM_LOAD( "smc8", 0x7000, 0x0800, 0xd8629306 )
-
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "smcc", 0x0000, 0x1000, 0x7c5e0864 )
-	ROM_LOAD( "smcd", 0x1000, 0x1000, 0x7e8ee1ca )
-	ROM_LOAD( "smca", 0x2000, 0x1000, 0x006b5bd9 )
-	ROM_LOAD( "smcb", 0x3000, 0x1000, 0x44a1bb81 )
-ROM_END
-
 ROM_START( friskyt_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "ftom.01",   0x0000, 0x1000, 0xb470690c )
-	ROM_LOAD( "ftom.02",   0x1000, 0x1000, 0x3ed50877 )
-	ROM_LOAD( "ftom.03",   0x2000, 0x1000, 0xf7a4dfdc )
-	ROM_LOAD( "ftom.04",   0x3000, 0x1000, 0xa3524850 )
-	ROM_LOAD( "ftom.05",   0x4000, 0x1000, 0x5e0a3478 )
-	ROM_LOAD( "ftom.06",   0x5000, 0x1000, 0xddcd90b3 )
-	ROM_LOAD( "ftom.07",   0x6000, 0x1000, 0x7a9bb4b9 )
-	ROM_LOAD( "ft8_8.rom", 0x7000, 0x0800, 0x53d8d1b2 )
+	ROM_LOAD( "ftom.01",      0x0000, 0x1000, 0xbce5d486 )
+	ROM_LOAD( "ftom.02",      0x1000, 0x1000, 0x63157d6e )
+	ROM_LOAD( "ftom.03",      0x2000, 0x1000, 0xc8d9ef2c )
+	ROM_LOAD( "ftom.04",      0x3000, 0x1000, 0x23a01aac )
+	ROM_LOAD( "ftom.05",      0x4000, 0x1000, 0xbfaf702a )
+	ROM_LOAD( "ftom.06",      0x5000, 0x1000, 0xbce70b9c )
+	ROM_LOAD( "ftom.07",      0x6000, 0x1000, 0xb2ef303a )
+	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, 0x10461a24 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ftom.11", 0x0000, 0x1000, 0xd04cb5a0 )
-	ROM_LOAD( "ftom.12", 0x1000, 0x1000, 0x72890739 )
-	ROM_LOAD( "ftom.09", 0x2000, 0x1000, 0x4f95d4dd )
-	ROM_LOAD( "ftom.10", 0x3000, 0x1000, 0x9450edb0 )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ftom.11",      0x0000, 0x1000, 0x1ec6ff65 )
+	ROM_LOAD( "ftom.12",      0x1000, 0x1000, 0x3b8f40b5 )
+	ROM_LOAD( "ftom.09",      0x2000, 0x1000, 0x60642f25 )
+	ROM_LOAD( "ftom.10",      0x3000, 0x1000, 0x07b9dcfc )
 
 	ROM_REGION(0x0040)	/* color PROMs */
-	ROM_LOAD( "ft.9c", 0x0000, 0x0020, 0x17a5a81d )
-	ROM_LOAD( "ft.9b", 0x0020, 0x0020, 0x7eefcabf )
+	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
+	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
+
+	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	/* filled in later */
 ROM_END
+
+ROM_START( radrad_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "1.3a",         0x0000, 0x1000, 0xb1e958ca )
+	ROM_LOAD( "2.3b",         0x1000, 0x1000, 0x30ba76b3 )
+	ROM_LOAD( "3.3c",         0x2000, 0x1000, 0x1c9f397b )
+	ROM_LOAD( "4.3d",         0x3000, 0x1000, 0x453966a3 )
+	ROM_LOAD( "5.3e",         0x4000, 0x1000, 0xc337c4bd )
+	ROM_LOAD( "6.3f",         0x5000, 0x1000, 0x06e15b59 )
+	ROM_LOAD( "7.3g",         0x6000, 0x1000, 0x02b1f9c9 )
+	ROM_LOAD( "8.3h",         0x7000, 0x0800, 0x911c90e8 )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "11.l7",        0x0000, 0x1000, 0x4ace7afb )
+	ROM_LOAD( "12.n7",        0x1000, 0x1000, 0xb19b8473 )
+	ROM_LOAD( "9.j7",         0x2000, 0x1000, 0x229939a3 )
+	ROM_LOAD( "10.j7",        0x3000, 0x1000, 0x79237913 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
+	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
+
+	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	/* filled in later */
+ROM_END
+
+ROM_START( seicross_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "smc1",         0x0000, 0x1000, 0xf6c3aeca )
+	ROM_LOAD( "smc2",         0x1000, 0x1000, 0x0ec6c218 )
+	ROM_LOAD( "smc3",         0x2000, 0x1000, 0xceb3c8f4 )
+	ROM_LOAD( "smc4",         0x3000, 0x1000, 0x3112af59 )
+	ROM_LOAD( "smc5",         0x4000, 0x1000, 0xb494a993 )
+	ROM_LOAD( "smc6",         0x5000, 0x1000, 0x09d5b9da )
+	ROM_LOAD( "smc7",         0x6000, 0x1000, 0x13052b03 )
+	ROM_LOAD( "smc8",         0x7000, 0x0800, 0x2093461d )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
+	ROM_LOAD( "smcd",         0x1000, 0x1000, 0xc3c953c4 )
+	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
+	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
+	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
+
+	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	/* filled in later */
+ROM_END
+
+ROM_START( sectrzon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "sz1.3a",       0x0000, 0x1000, 0xf0a45cb4 )
+	ROM_LOAD( "sz2.3c",       0x1000, 0x1000, 0xfea68ddb )
+	ROM_LOAD( "sz3.3d",       0x2000, 0x1000, 0xbaad4294 )
+	ROM_LOAD( "sz4.3e",       0x3000, 0x1000, 0x75f2ca75 )
+	ROM_LOAD( "sz5.3fg",      0x4000, 0x1000, 0xdc14f2c8 )
+	ROM_LOAD( "sz6.3h",       0x5000, 0x1000, 0x397a38c5 )
+	ROM_LOAD( "sz7.3i",       0x6000, 0x1000, 0x7b34dc1c )
+	ROM_LOAD( "sz8.3j",       0x7000, 0x0800, 0x9933526a )
+
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, 0xfbd9b91d )
+	ROM_LOAD( "sz12.7m",      0x1000, 0x1000, 0x2bdef9ad )
+	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
+	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
+
+	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
+	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
+
+	ROM_REGION(0x10000)	/* 64k for the protection mcu */
+	/* filled in later */
+ROM_END
+
+
+
+static void friskyt_decode(void)
+{
+	int A;
+	unsigned char *src,*dest;
+	extern int encrypted_cpu;
+
+
+	/* the protection mcu is a 6808-compatible cpu with scrambled opcodes, */
+	/* and shares the main program ROMs and RAM with the main CPU. */
+
+	/* First of all, copy over the ROMs */
+	src = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	dest = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	for (A = 0;A < 0x8000;A++)
+		dest[A + 0x8000] = src[A];
+
+
+	/* Now decrypt the opcodes: bits 0/1 and 6/7 are swapped */
+	encrypted_cpu = 1;
+	for (A = 0x8000;A < 0x10000;A++)
+		ROM[A] = (dest[A] & 0x3c) | ((dest[A] & 0x41) << 1) | ((dest[A] & 0x82) >> 1);
+}
+
+
+
+int friskyt_nvram_load(void)
+{
+	void *f;
+
+
+	/* Try loading static RAM */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		osd_fread(f,nvram,nvram_size);
+		osd_fclose(f);
+	}
+	else
+	{
+		/* fill in the default values */
+		memset(nvram,0x00,nvram_size);
+		nvram[0x0d] = nvram[0x0f] = nvram[0x11] = nvram[0x13] = nvram[0x15] = nvram[0x19] = 1;
+		nvram[0x17] = 3;
+	}
+
+	return 1;
+}
+
+void friskyt_nvram_save(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,nvram,nvram_size);
+		osd_fclose(f);
+	}
+}
+
+
+
+static int seicross_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x7ad4],"\x00\x50\x02",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+				osd_fread(f,&RAM[0x7ad4],6*5);
+				osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void seicross_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x7ad4],6*5);
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver friskyt_driver =
@@ -366,17 +691,44 @@ struct GameDriver friskyt_driver =
 	"friskyt",
 	"Frisky Tom",
 	"1981",
-	"Nihon Bussan",
+	"Nichibutsu",
 	"Mirko Buffoni\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
+	0,
 
 	friskyt_rom,
-	0, 0,
+	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
 	friskyt_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	friskyt_nvram_load, friskyt_nvram_save
+};
+
+struct GameDriver radrad_driver =
+{
+	__FILE__,
+	0,
+	"radrad",
+	"Radical Radial",
+	"1982",
+	"Nichibutsu USA",
+	"Mirko Buffoni\nNicola Salmoria",
+	0,
+	&machine_driver,
+	no_nvram_init,
+
+	radrad_rom,
+	0, friskyt_decode,
+	0,
+	0,	/* sound_prom */
+
+	radrad_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
@@ -393,18 +745,45 @@ struct GameDriver seicross_driver =
 	"1984",
 	"Nichibutsu + Alice",
 	"Mirko Buffoni\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
+	no_nvram_init,
 
 	seicross_rom,
-	0, 0,
+	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
 	seicross_input_ports,
 
-	seicross_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	seicross_hiload, seicross_hisave
+};
+
+struct GameDriver sectrzon_driver =
+{
+	__FILE__,
+	&seicross_driver,
+	"sectrzon",
+	"Sector Zone",
+	"1984",
+	"Nichibutsu + Alice",
+	"Mirko Buffoni\nNicola Salmoria",
+	0,
+	&machine_driver,
+	no_nvram_init,
+
+	sectrzon_rom,
+	0, friskyt_decode,
+	0,
+	0,	/* sound_prom */
+
+	seicross_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	seicross_hiload, seicross_hisave
 };

@@ -8,16 +8,17 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 void (*sega_decrypt)(int,unsigned int *);
 
 unsigned char *segar_mem;
 
-extern void segar_videoram_w(int offset,int data);
 extern void segar_characterram_w(int offset,int data);
 extern void segar_characterram2_w(int offset,int data);
 extern void segar_colortable_w(int offset,int data);
 extern void segar_bcolortable_w(int offset,int data);
+
 
 void segar_wr(int offset, int data)
 {
@@ -33,10 +34,10 @@ void segar_wr(int offset, int data)
 
 		if (op==0x32)
 		{
-			bad=segar_mem[pc+1] & 0xFF;
-			page=(segar_mem[pc+2] & 0xFF) << 8;
+			bad  = offset & 0x00FF;
+			page = offset & 0xFF00;
 			(*sega_decrypt)(pc,&bad);
-			off=(page & 0xFF00) | (bad & 0x00FF);
+			off=page | bad;
 		}
 	}
 
@@ -53,7 +54,7 @@ void segar_wr(int offset, int data)
 	}
 	else if ((off>=0xE000) && (off<=0xE3FF))
 	{
-		segar_videoram_w(off - 0xE000,data);
+		videoram_w(off - 0xE000,data);
 	}
 	/* MWA_RAM */
 	else if ((off>=0xE400) && (off<=0xE7FF))
@@ -73,13 +74,17 @@ void segar_wr(int offset, int data)
 		segar_bcolortable_w(off - 0xF040,data);
 	}
 	/* MWA_RAM */
-        else if ((off>=0xF080) && (off<=0xF7FF))
+	else if ((off>=0xF080) && (off<=0xF7FF))
 	{
 		segar_mem[off]=data;
 	}
-        else if ((off>=0xF800) && (off<=0xFFFF))
+	else if ((off>=0xF800) && (off<=0xFFFF))
 	{
-                segar_characterram2_w(off - 0xF800,data);
+		segar_characterram2_w(off - 0xF800,data);
+	}
+	else
+	{
+		if (errorlog) fprintf(errorlog, "unmapped write at %04X:%02X\n",off,data);
 	}
 }
 
@@ -412,9 +417,9 @@ void sega_security(int chip)
 		case 82:
 			sega_decrypt=sega_decrypt82;
 			break;
-                default:
-                        sega_decrypt=sega_decrypt0;
-                        break;
+		default:
+			sega_decrypt=sega_decrypt0;
+			break;
 	}
 }
 

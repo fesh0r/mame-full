@@ -13,7 +13,6 @@ UNK-1.6    (32Kb)  GFX Background
 UNK-1.7    (32Kb)  GFX Background
 UNK-1.8    (32Kb)  GFX Background
 
-Sprites ROMs haven't been dumped, but are probably the same format as the background.
 UNK-1.9    (32Kb)  GFX Sprites
 UNK-1.10   (32Kb)  GFX Sprites
 UNK-1.11   (32Kb)  GFX Sprites
@@ -46,7 +45,7 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
@@ -204,47 +203,47 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* used only by the self test */
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
-	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE, 0)
-	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Allow Continue", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "No" )
-	PORT_DIPSETTING(    0x10, "Yes" )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin C", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_BITX(0,        0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "99", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN3, 2 )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x40, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( darwin_input_ports )
@@ -265,52 +264,52 @@ INPUT_PORTS_START( darwin_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* used only by the self test */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 0", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, "Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin C", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN3, 2 )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -379,59 +378,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
-static unsigned char color_prom[] =
-{
-	/* brkthru.13 - palette red and green component */
-	0x00,0x0F,0xCF,0xFC,0x00,0xF0,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x67,0x0F,0x00,0x78,0xCD,0x89,0xEE,0x00,0xCC,0x4F,0x00,0x88,0x88,0x60,0xEF,
-	0x00,0x4A,0x7F,0x00,0x78,0x9A,0x9B,0xDC,0x00,0x4A,0x7F,0x00,0x5B,0xEE,0x9D,0xDD,
-	0x00,0x08,0x0F,0x00,0x88,0xCC,0x75,0xEE,0x00,0x67,0x0F,0x00,0x78,0xCD,0x89,0xEE,
-	0x00,0x7A,0xBF,0x00,0x88,0xDE,0x75,0xFF,0x00,0x0C,0x0F,0x00,0xFF,0x89,0xDF,0xFF,
-	0xAD,0xCE,0x8A,0xEF,0x00,0x95,0xC6,0xF0,0xAD,0xDF,0x79,0x8F,0x43,0x82,0xB2,0xDD,
-	0xAD,0x8C,0x9F,0x36,0xF4,0x94,0x2A,0x00,0x77,0xAE,0x9C,0x00,0x88,0x9B,0x7B,0x00,
-	0x00,0xFF,0xBB,0x88,0x48,0x16,0x91,0xCC,0x68,0x33,0xAF,0x9C,0x69,0x12,0xCC,0xBB,
-	0x99,0x90,0x00,0x91,0xF0,0x0A,0x8C,0xEE,0xF0,0xCF,0xAF,0x8C,0x7E,0x90,0x00,0xEE,
-	0xDC,0xB4,0x82,0xB0,0xCC,0x55,0x47,0xFD,0xDC,0xC9,0x94,0x86,0x65,0x19,0x77,0xFF,
-	0x00,0x67,0xDE,0xBF,0xB0,0xEE,0x00,0xFF,0x00,0x0F,0x00,0x4F,0xAA,0xBB,0xEE,0xFF,
-	0x00,0xD8,0x00,0x1F,0xF2,0xFF,0xFF,0xFF,0x00,0x0F,0xCF,0xFF,0xDF,0xCE,0xBA,0xFF,
-	0x7A,0x67,0x56,0x68,0x00,0x57,0xB3,0xAA,0x7A,0x67,0x56,0x68,0x00,0x57,0xB3,0xAA,
-	/* brkthru.14 - palette blue component */
-	0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x0F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x09,0x00,0x00,0x07,0x0B,0x08,0x0F,0x00,0x0D,0x02,0x00,0x09,0x05,0x07,0x0E,
-	0x00,0x02,0x02,0x00,0x04,0x05,0x07,0x0B,0x00,0x02,0x02,0x00,0x01,0x0F,0x04,0x0D,
-	0x00,0x0B,0x05,0x00,0x07,0x0C,0x01,0x0E,0x00,0x09,0x00,0x00,0x07,0x0B,0x0B,0x0F,
-	0x00,0x01,0x0A,0x00,0x08,0x0F,0x01,0x0F,0x00,0x00,0x00,0x00,0x06,0x08,0x04,0x0F,
-	0x07,0x07,0x03,0x0C,0x00,0x00,0x00,0x00,0x07,0x0A,0x00,0x06,0x03,0x0F,0x0F,0x0D,
-	0x07,0x06,0x01,0x00,0x05,0x03,0x02,0x00,0x07,0x07,0x06,0x08,0x07,0x00,0x06,0x00,
-	0x00,0x0F,0x0B,0x08,0x05,0x0E,0x0F,0x0C,0x08,0x03,0x00,0x00,0x02,0x08,0x0C,0x0B,
-	0x09,0x0A,0x00,0x07,0x00,0x00,0x04,0x0E,0x00,0x08,0x01,0x04,0x03,0x0E,0x00,0x0E,
-	0x0C,0x0B,0x02,0x0E,0x0B,0x05,0x02,0x0F,0x0C,0x00,0x04,0x0F,0x0B,0x06,0x08,0x0F,
-	0x00,0x07,0x0B,0x06,0x06,0x0E,0x0E,0x0F,0x00,0x00,0x0F,0x04,0x0A,0x0D,0x0E,0x0F,
-	0x00,0x0D,0x0F,0x0A,0x09,0x0F,0x0F,0x0F,0x00,0x00,0x07,0x01,0x09,0x0F,0x0F,0x0F,
-	0x01,0x02,0x00,0x04,0x00,0x01,0x01,0x0A,0x01,0x02,0x00,0x04,0x00,0x01,0x01,0x0A,
-};
-
-
-
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(void)
+static void irqhandler(int linestate)
 {
-	cpu_cause_interrupt(1,M6809_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate);
+	//cpu_cause_interrupt(1,M6809_INT_IRQ);
 }
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* Unknown */
-	{ YM2203_VOL(255,255) },
+	{ YM2203_VOL(25,25) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -441,9 +400,9 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3600000,	/* 3.600000 MHz ? (partially supported) */
+	3000000,	/* 3.000000 MHz ? (partially supported) */
 	{ 255 },		/* (not supported) */
-	irqhandler,
+	{ irqhandler },
 };
 
 
@@ -462,7 +421,7 @@ static struct MachineDriver brkthru_machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -503,15 +462,15 @@ static struct MachineDriver darwin_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1200000,        /* 1.25 Mhz ? */
+			1500000,        /* 1.25 Mhz ? */
 			0,
 			darwin_readmem,darwin_writemem,0,0,
 			brkthru_interrupt,2
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
-			1200000,        /* 1.25 Mhz ? */
-			2,	/* memory region #2 */
+			1500000,        /* 1.25 Mhz ? */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the YM3526 */
 		}
@@ -521,7 +480,7 @@ static struct MachineDriver darwin_machine_driver =
 	0,	/* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },	/* not sure */
+	32*8, 32*8, { 1*8, 31*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	256,8+8*8+16*8,
 	brkthru_vh_convert_color_prom,
@@ -555,68 +514,113 @@ static struct MachineDriver darwin_machine_driver =
 
 ROM_START( brkthru_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
-	ROM_LOAD( "brkthru.1", 0x04000, 0x4000, 0x1badf6d3 )
-	ROM_LOAD( "brkthru.2", 0x08000, 0x8000, 0x463d0ead )
-	ROM_LOAD( "brkthru.4", 0x10000, 0x8000, 0xc76c007a )
-	ROM_LOAD( "brkthru.3", 0x18000, 0x8000, 0x3273003d )
+	ROM_LOAD( "brkthru.1",    0x04000, 0x4000, 0xcfb4265f )
+	ROM_LOAD( "brkthru.2",    0x08000, 0x8000, 0xfa8246d9 )
+	ROM_LOAD( "brkthru.4",    0x10000, 0x8000, 0x8cabf252 )
+	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
 
-	ROM_REGION(0x3a000)	/* temporary space for graphics */
-	ROM_LOAD( "brkthru.12", 0x00000, 0x2000, 0x1b793a0b )	/* characters */
+	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_LOAD( "brkthru.12",   0x00000, 0x2000, 0x58c0b29b )	/* characters */
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "brkthru.7",  0x02000, 0x4000, 0xac8d4d91 )	/* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "brkthru.6",  0x12000, 0x4000, 0xf4d950bd )	/* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "brkthru.8",  0x06000, 0x1000, 0x20ca0802 )	/* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(           0x08000, 0x1000 )
-	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(           0x10000, 0x1000 )
-	ROM_CONTINUE(           0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(           0x18000, 0x1000 )
-	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(           0x20000, 0x1000 )
+	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "brkthru.6",    0x12000, 0x4000, 0xfd3cee40 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "brkthru.8",    0x06000, 0x1000, 0xf67ee64e )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
 	/* sprites */
-	ROM_LOAD( "brkthru.9",  0x22000, 0x8000, 0xe7ca5c28 )
-	ROM_LOAD( "brkthru.10", 0x2a000, 0x8000, 0x50691d89 )
-	ROM_LOAD( "brkthru.11", 0x32000, 0x8000, 0x92f174b5 )
+	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
+	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
+
+	ROM_REGION(0x200)	/* color proms */
+	ROM_LOAD( "brkthru.13",   0x0000, 0x100, 0xaae44269 ) /* red and green component */
+	ROM_LOAD( "brkthru.14",   0x0100, 0x100, 0xf2d4822a ) /* blue component */
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "brkthru.5", 0x8000, 0x8000, 0x364efd26 )
+	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
+ROM_END
+
+ROM_START( brkthruj_rom )
+	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
+	ROM_LOAD( "1",            0x04000, 0x4000, 0x09bd60ee )
+	ROM_LOAD( "2",            0x08000, 0x8000, 0xf2b2cd1c )
+	ROM_LOAD( "4",            0x10000, 0x8000, 0xb42b3359 )
+	ROM_LOAD( "brkthru.3",    0x18000, 0x8000, 0x2f2c40c2 )
+
+	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_LOAD( "12",   0x00000, 0x2000, 0x3d9a7003 )	/* characters */
+	/* background */
+	/* we do a lot of scatter loading here, to place the data in a format */
+	/* which can be decoded by MAME's standard functions */
+	ROM_LOAD( "brkthru.7",    0x02000, 0x4000, 0x920cc56a )	/* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "6",            0x12000, 0x4000, 0xcb47b395 )	/* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "8",            0x06000, 0x1000, 0x5e5a2cd7 )	/* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
+	/* sprites */
+	ROM_LOAD( "brkthru.9",    0x22000, 0x8000, 0xf54e50a7 )
+	ROM_LOAD( "brkthru.10",   0x2a000, 0x8000, 0xfd156945 )
+	ROM_LOAD( "brkthru.11",   0x32000, 0x8000, 0xc152a99b )
+
+	ROM_REGION(0x200)	/* color proms */
+	ROM_LOAD( "brkthru.13",   0x0000, 0x100, 0xaae44269 ) /* red and green component */
+	ROM_LOAD( "brkthru.14",   0x0100, 0x100, 0xf2d4822a ) /* blue component */
+
+	ROM_REGION(0x10000)	/* 64K for sound CPU */
+	ROM_LOAD( "brkthru.5",    0x8000, 0x8000, 0xc309435f )
 ROM_END
 
 ROM_START( darwin_rom )
 	ROM_REGION(0x20000)     /* 64k for main CPU + 64k for banked ROMs */
-	ROM_LOAD( "darw_04.rom", 0x04000, 0x4000, 0x44937a5d )
-	ROM_LOAD( "darw_05.rom", 0x08000, 0x8000, 0x4eb1fe09 )
-	ROM_LOAD( "darw_07.rom", 0x10000, 0x8000, 0xaf168464 )
-	ROM_LOAD( "darw_06.rom", 0x18000, 0x8000, 0x6e650107 )
+	ROM_LOAD( "darw_04.rom",  0x04000, 0x4000, 0x0eabf21c )
+	ROM_LOAD( "darw_05.rom",  0x08000, 0x8000, 0xe771f864 )
+	ROM_LOAD( "darw_07.rom",  0x10000, 0x8000, 0x97ac052c )
+	ROM_LOAD( "darw_06.rom",  0x18000, 0x8000, 0x2a9fb208 )
 
-	ROM_REGION(0x3a000)	/* temporary space for graphics */
-	ROM_LOAD( "darw_09.rom", 0x00000, 0x2000, 0x812801e6 )   /* characters */
+	ROM_REGION_DISPOSE(0x3a000)	/* temporary space for graphics */
+	ROM_LOAD( "darw_09.rom",  0x00000, 0x2000, 0x067b4cf5 )   /* characters */
 	/* background */
 	/* we do a lot of scatter loading here, to place the data in a format */
 	/* which can be decoded by MAME's standard functions */
-	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x531c2446 )   /* bitplanes 1,2 for bank 1,2 */
-	ROM_CONTINUE(           0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
-	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0xffd1f7fb )   /* bitplanes 1,2 for bank 5,6 */
-	ROM_CONTINUE(           0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
-	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0xdfac73f0 )   /* bitplane 3 for bank 1,2 */
-	ROM_CONTINUE(           0x08000, 0x1000 )
-	ROM_CONTINUE(           0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
-	ROM_CONTINUE(           0x10000, 0x1000 )
-	ROM_CONTINUE(           0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
-	ROM_CONTINUE(           0x18000, 0x1000 )
-	ROM_CONTINUE(           0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
-	ROM_CONTINUE(           0x20000, 0x1000 )
+	ROM_LOAD( "darw_03.rom",  0x02000, 0x4000, 0x57d0350d )   /* bitplanes 1,2 for bank 1,2 */
+	ROM_CONTINUE(             0x0a000, 0x4000 )		/* bitplanes 1,2 for bank 3,4 */
+	ROM_LOAD( "darw_02.rom",  0x12000, 0x4000, 0x559a71ab )   /* bitplanes 1,2 for bank 5,6 */
+	ROM_CONTINUE(             0x1a000, 0x4000 )		/* bitplanes 1,2 for bank 7,8 */
+	ROM_LOAD( "darw_01.rom",  0x06000, 0x1000, 0x15a16973 )   /* bitplane 3 for bank 1,2 */
+	ROM_CONTINUE(             0x08000, 0x1000 )
+	ROM_CONTINUE(             0x0e000, 0x1000 )		/* bitplane 3 for bank 3,4 */
+	ROM_CONTINUE(             0x10000, 0x1000 )
+	ROM_CONTINUE(             0x16000, 0x1000 )		/* bitplane 3 for bank 5,6 */
+	ROM_CONTINUE(             0x18000, 0x1000 )
+	ROM_CONTINUE(             0x1e000, 0x1000 )		/* bitplane 3 for bank 7,8 */
+	ROM_CONTINUE(             0x20000, 0x1000 )
 	/* sprites */
-	ROM_LOAD( "darw_10.rom", 0x22000, 0x8000, 0x445ed6c4 )
-	ROM_LOAD( "darw_11.rom", 0x2a000, 0x8000, 0xb3db09a3 )
-	ROM_LOAD( "darw_12.rom", 0x32000, 0x8000, 0xebb10a19 )
+	ROM_LOAD( "darw_10.rom",  0x22000, 0x8000, 0x487a014c )
+	ROM_LOAD( "darw_11.rom",  0x2a000, 0x8000, 0x548ce2d1 )
+	ROM_LOAD( "darw_12.rom",  0x32000, 0x8000, 0xfaba5fef )
+
+	ROM_REGION(0x200)	/* color proms */
+	ROM_LOAD( "df.12",   0x0000, 0x100, 0x89b952ef ) /* red and green component */
+	ROM_LOAD( "df.13",   0x0100, 0x100, 0xd595e91d ) /* blue component */
 
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
-	ROM_LOAD( "darw_08.rom", 0x8000, 0x8000, 0x5ad39fb7 )
+	ROM_LOAD( "darw_08.rom",  0x8000, 0x8000, 0x6b580d58 )
 ROM_END
 
 
@@ -626,7 +630,7 @@ static int hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
+	if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
 	{
 		void *f;
 
@@ -634,10 +638,10 @@ static int hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 
-                        osd_fread(f,&RAM[0x0531],4*5+3*5);
+			osd_fread(f,&RAM[0x0531],4*5+3*5);
 
-                        memcpy(&RAM[0x0402], &RAM[0x0531], 4);
-                        osd_fclose(f);
+			memcpy(&RAM[0x0402], &RAM[0x0531], 4);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -655,7 +659,7 @@ static void hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0x0531],4*5+3*5);
+		osd_fwrite(f,&RAM[0x0531],4*5+3*5);
 		osd_fclose(f);
 	}
 }
@@ -666,8 +670,8 @@ static int darwin_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
-		(memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
+	if ((memcmp(&RAM[0x1b6c],"\x00\x04\x48\x30",4) == 0 )&& \
+	    (memcmp(&RAM[0x1b93],"\x8b\x8b\x8b\x8a\x8a\x8a\x89\x89\x89" ,9) == 0))
 	{
 		void *f;
 
@@ -675,9 +679,9 @@ static int darwin_hiload(void)
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 
-                        osd_fread(f,&RAM[0x1b6c],0x10);
+			osd_fread(f,&RAM[0x1b6c],0x10);
 			osd_fread(f,&RAM[0x1b93],0x09);
-                        osd_fclose(f);
+			osd_fclose(f);
 		}
 
 		return 1;
@@ -708,12 +712,13 @@ struct GameDriver brkthru_driver =
 	__FILE__,
 	0,
 	"brkthru",
-	"Break Thru",
+	"Break Thru (US)",
 	"1986",
 	"Data East USA",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nGerrit Van Goethem (high score save)\nBryan McPhail (sound)",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
 	0,
 	&brkthru_machine_driver,
+	0,
 
 	brkthru_rom,
 	0, 0,
@@ -722,11 +727,38 @@ struct GameDriver brkthru_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
+
+struct GameDriver brkthruj_driver =
+{
+	__FILE__,
+	&brkthru_driver,
+	"brkthruj",
+	"Kyohkoh-Toppa (Japan)",
+	"1986",
+	"Data East Corporation",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)",
+	0,
+	&brkthru_machine_driver,
+	0,
+
+	brkthruj_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
 struct GameDriver darwin_driver =
 {
 	__FILE__,
@@ -738,6 +770,7 @@ struct GameDriver darwin_driver =
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
 	0,
 	&darwin_machine_driver,
+	0,
 
 	darwin_rom,
 	0, 0,
@@ -746,7 +779,7 @@ struct GameDriver darwin_driver =
 
 	darwin_input_ports,
 
-	color_prom, 0, 0,	/* wrong! */
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	darwin_hiload, darwin_hisave

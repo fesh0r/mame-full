@@ -9,8 +9,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6808/M6808.h"
-#include "M6809/M6809.h"
+#include "cpu/m6800/m6800.h"
+#include "cpu/m6809/m6809.h"
 #include "6821pia.h"
 #include "machine/ticket.h"
 
@@ -18,22 +18,18 @@
 /* defined in vidhrdw/williams.c */
 extern unsigned char *williams_videoram;
 
+extern unsigned char* williams2_paletteram;
+
 /* various banking controls */
 unsigned char *williams_bank_base;
 unsigned char *williams_video_counter;
 unsigned char *defender_bank_base;
 unsigned char *blaster_bank2_base;
 
-/* pointers to memory locations for speedup optimizations */
-unsigned char *robotron_catch;
-unsigned char *stargate_catch;
-unsigned char *defender_catch;
-unsigned char *splat_catch;
-unsigned char *blaster_catch;
-
 /* internal bank switching tracks */
 int blaster_bank;
 int vram_bank;
+int williams2_bank;
 
 /* switches controlled by $c900 */
 int sinistar_clip;
@@ -47,7 +43,6 @@ static unsigned char defender_video_counter;
 int williams_input_port_0_3 (int offset);
 int williams_input_port_1_4 (int offset);
 int stargate_input_port_0_r (int offset);
-int blaster_input_port_0_r (int offset);
 int sinistar_input_port_0_r (int offset);
 int defender_input_port_0_r (int offset);
 int lottofun_input_port_0_r (int offset);
@@ -60,201 +55,208 @@ void defender_bank_select_w (int offset, int data);
 /* Colony 7-specific code */
 void colony7_bank_select_w (int offset, int data);
 
+void williams2_bank_select(int offset, int data);
+
+void joust2_sound_bank_select_w(int offset,int data);
+
+static int tshoot_input_port_0_3(int offset);
+static void tshoot_pia0_B_w(int offset, int data);
+static void tshoot_maxvol(int offset, int data);
+
 /* PIA interface functions */
-static void williams_irq (void);
-static void williams_snd_irq (void);
+static void williams_irq (int state);
+static void williams_firq(int state);
+static void williams_snd_irq (int state);
 static void williams_snd_cmd_w (int offset, int cmd);
 static void williams_port_select_w (int offset, int data);
-static void sinistar_snd_cmd_w (int offset, int cmd);
+static void joust2_snd_nmi(int state);
+static void joust2_snd_firq(int state);
+static void j2_pia0_B(int offset, int data);
+static void j2_pia0_CB2(int offset, int data);
+static void j2_pia1_B(int offset, int data);
+static void j2_pia1_CA2(int offset, int data);
+static void j2_pia3_CA2(int offset, int data);
+static void j2_pia3_CB2(int offset, int data);
 
 /* external code to update part of the screen */
 void williams_vh_update (int counter);
+void williams2_vh_update(int counter);
+int williams2_palette_w(int offset, int data);
+void williams_videoram_w(int offset,int data);
 
 
 /***************************************************************************
 
-	PIA Interfaces for each game
+	Generic old-Williams PIA interfaces
 
 ***************************************************************************/
 
-static pia6821_interface robotron_pia_intf =
+/* Generic PIA 0, maps to input ports 0 and 1 */
+static struct pia6821_interface williams_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface joust_pia_intf =
+/* Generic muxing PIA 0, maps to input ports 0/3 and 1; port select is CB2 */
+static struct pia6821_interface williams_muxed_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ williams_port_select_w, 0, 0 },               /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface stargate_pia_intf =
+/* Generic dual muxing PIA 0, maps to input ports 0/3 and 1/4; port select is CB2 */
+static struct pia6821_interface williams_dual_muxed_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ stargate_input_port_0_r, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3, williams_input_port_1_4, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface bubbles_pia_intf =
+/* Generic PIA 1, maps to input port 2, sound command out, and IRQs */
+static struct pia6821_interface williams_pia_1_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, williams_snd_cmd_w, 0, 0,
+	/*irqs   : A/B             */ williams_irq, williams_irq
 };
 
-static pia6821_interface splat_pia_intf =
+/* Generic PIA 2, maps to DAC data in and sound IRQs */
+static struct pia6821_interface williams_snd_pia_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ williams_input_port_1_4, 0, 0 },              /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ williams_port_select_w, 0, 0 },               /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, 0, 0,
+	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
 };
 
-static pia6821_interface sinistar_pia_intf =
+
+
+/***************************************************************************
+
+	Game-specific old-Williams PIA interfaces
+
+***************************************************************************/
+
+/* Special PIA 0 for Defender, to handle the controls */
+static struct pia6821_interface defender_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ sinistar_input_port_0_r, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, sinistar_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ defender_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface blaster_pia_intf =
+/* Special PIA 0 for Stargate, to handle the controls */
+static struct pia6821_interface stargate_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ blaster_input_port_0_r, input_port_2_r, 0 },  /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ stargate_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface defender_pia_intf =
+/* Special PIA 0 for Lotto Fun, to handle the controls and ticket dispenser */
+static struct pia6821_interface lottofun_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ defender_input_port_0_r, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ lottofun_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, ticket_dispenser_w, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface colony7_pia_intf =
+/* Special PIA 0 for Sinistar/Blaster, to handle the 49-way joystick */
+static struct pia6821_interface sinistar_pia_0_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ sinistar_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ 0, 0
 };
 
-static pia6821_interface lottofun_pia_intf =
+/* Special PIA 2 for Sinistar, to handle the CVSD */
+static struct pia6821_interface sinistar_snd_pia_intf =
 {
-	3,                                              /* 3 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
-	{ lottofun_input_port_0_r, input_port_2_r, 0 }, /* input port A */
-	{ 0, 0, 0 },                                    /* input bit CA1 */
-	{ 0, 0, 0 },                                    /* input bit CA2 */
-	{ input_port_1_r, 0, 0 },                       /* input port B */
-	{ 0, 0, 0 },                                    /* input bit CB1 */
-	{ 0, 0, 0 },                                    /* input bit CB2 */
-	{ 0, 0, DAC_data_w },                           /* output port A */
-	{ ticket_dispenser_w, williams_snd_cmd_w, 0 },  /* output port B */
-	{ 0, 0, 0 },                                    /* output CA2 */
-	{ 0, 0, 0 },                                    /* output CB2 */
-	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
-	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, CVSD_digit_w, CVSD_clock_w,
+	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
+};
+
+
+
+/***************************************************************************
+
+	Generic later-Williams PIA interfaces
+
+***************************************************************************/
+
+/* Generic muxing PIA 0, maps to input ports 0/3 and 1; port select is CA2 */
+static struct pia6821_interface williams2_muxed_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, williams_port_select_w, 0,
+	/*irqs   : A/B             */ 0, 0
+};
+
+/* Generic PIA 1, maps to input port 2, sound command out, and IRQs */
+static struct pia6821_interface williams2_pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, pia_2_porta_w, 0, pia_2_ca1_w,
+	/*irqs   : A/B             */ williams_irq, williams_irq
+};
+
+/* Generic PIA 2, maps to DAC data in and sound IRQs */
+static struct pia6821_interface williams2_snd_pia_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_data_w, pia_1_cb1_w, 0,
+	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
+};
+
+
+
+/***************************************************************************
+
+	Game-specific later-Williams PIA interfaces
+
+***************************************************************************/
+
+/* Mystic Marathon PIA 0 */
+static struct pia6821_interface mysticm_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
+	/*irqs   : A/B             */ williams_firq, williams_irq
+};
+
+/* Turkey Shoot PIA 0 */
+static struct pia6821_interface tshoot_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ tshoot_input_port_0_3, input_port_1_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, tshoot_pia0_B_w, williams_port_select_w, 0,
+	/*irqs   : A/B             */ williams_irq, williams_irq
+};
+
+/* Turkey Shoot PIA 2 */
+static struct pia6821_interface tshoot_snd_pia_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_data_w, pia_1_cb1_w, tshoot_maxvol,
+	/*irqs   : A/B             */ williams_snd_irq, williams_snd_irq
+};
+
+/* Joust 2 PIA 1 */
+static struct pia6821_interface joust2_pia_1_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, j2_pia1_B, j2_pia1_CA2, pia_2_ca1_w,
+	/*irqs   : A/B             */ williams_irq, williams_irq
+};
+
+/* Joust 2 PIA 3 */
+static struct pia6821_interface joust2_extsnd_pia_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ DAC_data_w, 0, j2_pia3_CA2, j2_pia3_CB2,
+	/*irqs   : A/B             */ joust2_snd_firq, joust2_snd_nmi
 };
 
 
@@ -272,49 +274,73 @@ static pia6821_interface lottofun_pia_intf =
 void robotron_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&robotron_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void joust_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&joust_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_muxed_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void stargate_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&stargate_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &stargate_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void bubbles_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&bubbles_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void splat_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&splat_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_dual_muxed_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void sinistar_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&sinistar_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &sinistar_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &sinistar_snd_pia_intf);
+	pia_reset();
 }
 
 void blaster_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&blaster_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &sinistar_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 }
 
 void defender_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&defender_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &defender_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 	williams_video_counter = &defender_video_counter;
 
 	/* initialize the banks */
@@ -324,7 +350,10 @@ void defender_init_machine (void)
 void colony7_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&colony7_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 	williams_video_counter = &defender_video_counter;
 
 	/* initialize the banks */
@@ -334,13 +363,67 @@ void colony7_init_machine (void)
 void lottofun_init_machine (void)
 {
 	m6809_Flags = M6809_FAST_NONE;
-	pia_startup (&lottofun_pia_intf);
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &lottofun_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams_snd_pia_intf);
+	pia_reset();
 
 	/* Initialize the ticket dispenser to 70 milliseconds */
 	/* (I'm not sure what the correct value really is) */
 	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 }
 
+void mysticm_init_machine(void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &mysticm_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_snd_pia_intf);
+	pia_reset();
+	
+	williams2_bank_select(0, 0);
+}
+
+void tshoot_init_machine(void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &tshoot_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &tshoot_snd_pia_intf);
+	pia_reset();
+
+	williams2_bank_select(0, 0);
+}
+
+void inferno_init_machine(void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_muxed_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_snd_pia_intf);
+	pia_reset();
+	
+	williams2_bank_select(0, 0);
+}
+
+void joust2_init_machine(void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_muxed_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &joust2_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING | PIA_8BIT, &williams2_snd_pia_intf);
+	pia_config(3, PIA_STANDARD_ORDERING | PIA_8BIT, &joust2_extsnd_pia_intf);
+	pia_reset();
+	
+	williams2_bank_select(0, 0);
+
+	/*
+		make sure sound board starts out
+		in the reset state
+    */
+	joust2_sound_bank_select_w(0, 0);
+	j2_pia0_CB2(0, 0);
+}
 
 /*
  *  Generic interrupt routine; interrupts are generated via the PIA, so we merely pulse the
@@ -354,10 +437,10 @@ int williams_interrupt (void)
 	*williams_video_counter = ((64 - cpu_getiloops ()) << 2);
 
 	/* the IRQ signal comes into CB1, and is set to VA11 */
-	pia_2_cb1_w (0, *williams_video_counter & 0x20);
+	pia_1_cb1_w (0, *williams_video_counter & 0x20);
 
 	/* the COUNT240 signal comes into CA1, and is set to the logical AND of VA10-VA13 */
-	pia_2_ca1_w (0, (*williams_video_counter & 0xf0) == 0xf0);
+	pia_1_ca1_w (0, (*williams_video_counter & 0xf0) == 0xf0);
 
 	/* update the screen partially */
 	williams_vh_update (*williams_video_counter);
@@ -413,24 +496,117 @@ void williams_vram_select_w (int offset, int data)
 	}
 }
 
+void williams2_memory_w(int offset, int data)
+{
+	if ((williams2_bank & 0x03) == 0x03)
+	{
+		if (0x8000 <= offset && offset < 0x8800)
+		{
+			williams2_palette_w(offset - 0x8000, data);
+		}
+		return;
+	}
+
+	williams_videoram_w(offset, data);
+}
+
+void williams2_bank_select(int offset, int data)
+{
+	static int bank[8] = { 0, 0x10000, 0x20000, 0x10000,
+						   0, 0x30000, 0x40000, 0x30000 };
+
+	williams2_bank = data & 0x07; /* only lower 3 bits used by IC56 */
+	if (williams2_bank == 0)
+	{
+		cpu_setbank(1, williams_videoram);
+		cpu_setbank(2, williams_videoram + 0x8000);
+	}
+	else
+	{
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+		cpu_setbank(1, &RAM[bank[williams2_bank]]);
+
+		if ((williams2_bank & 0x03) == 0x03)
+		{
+			cpu_setbank(2, williams2_paletteram);
+		}
+		else
+		{
+			cpu_setbank(2, williams_videoram + 0x8000);
+		}
+	}
+
+	cpu_setbank(3, williams_videoram + 0x8800);
+}
+
+void williams2_watchdog(int offset, int data)
+{
+	if (data != 0x14)
+	{
+		if (errorlog)
+			fprintf(errorlog, "watchdog: data != 0x14 : data = %d\n", data);
+	}
+}
+
+void williams2_7segment(int offset, int data)
+{
+	int n;
+	char dot;
+	char buffer[5];
+
+	switch (data & 0x7F)
+	{
+		case 0x40:	n = 0; break;
+		case 0x79:	n = 1; break;
+		case 0x24:	n = 2; break;
+		case 0x30:	n = 3; break;
+		case 0x19:	n = 4; break;
+		case 0x12:	n = 5; break;
+		case 0x02:	n = 6; break;
+		case 0x03:	n = 6; break;
+		case 0x78:	n = 7; break;
+		case 0x00:	n = 8; break;
+		case 0x18:	n = 9; break;
+		case 0x10:	n = 9; break;
+		default:	n =-1; break;
+	}
+
+	if ((data & 0x80) == 0x00)
+		dot = '.';
+	else
+		dot = ' ';
+
+	if (n == -1)
+		sprintf(buffer, "[ %c]\n", dot);
+	else
+		sprintf(buffer, "[%d%c]\n", n, dot);
+
+	if (errorlog)
+		fputs(buffer, errorlog);
+}
 
 /*
  *  PIA callback to generate the interrupt to the main CPU
  */
 
-static void williams_irq (void)
+static void williams_irq (int state)
 {
-	cpu_cause_interrupt (0, M6809_INT_IRQ);
+	cpu_set_irq_line (0, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
+static void williams_firq(int state)
+{
+	cpu_set_irq_line(0, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+}
 
 /*
  *  PIA callback to generate the interrupt to the sound CPU
  */
 
-static void williams_snd_irq (void)
+static void williams_snd_irq (int state)
 {
-	cpu_cause_interrupt (1, M6808_INT_IRQ);
+	cpu_set_irq_line (1, M6800_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -440,8 +616,8 @@ static void williams_snd_irq (void)
 
 static void williams_snd_cmd_real_w (int param)
 {
-	pia_3_portb_w (0, param);
-	pia_3_cb1_w (0, (param == 0xff) ? 0 : 1);
+	pia_2_portb_w (0, param);
+	pia_2_cb1_w (0, (param == 0xff) ? 0 : 1);
 }
 
 static void williams_snd_cmd_w (int offset, int cmd)
@@ -459,26 +635,6 @@ static void williams_port_select_w (int offset, int data)
 {
 	port_select = data;
 }
-
-
-/***************************************************************************
-
-	Robotron-specific routines
-
-***************************************************************************/
-
-/* JB 970823 - speed up very busy loop in Robotron */
-/*    D19B: LDA   $10    ; dp=98
-      D19D: CMPA  #$02
-      D19F: BCS   $D19B  ; (BLO)   */
-int robotron_catch_loop_r (int offset)
-{
-	unsigned char t = *robotron_catch;
-	if (t < 2 && cpu_getpc () == 0xd19d)
-		cpu_seticount (0);
-	return t;
-}
-
 
 
 /***************************************************************************
@@ -507,18 +663,6 @@ int stargate_input_port_0_r(int offset)
 	}
 
 	return keys;
-}
-
-
-/* JB 970823 - speed up very busy loop in Stargate */
-/*    0011: LDA   $39    ; dp=9c
-      0013: BEQ   $0011   */
-int stargate_catch_loop_r (int offset)
-{
-	unsigned char t = *stargate_catch;
-	if (t == 0 && cpu_getpc () == 0x0013)
-		cpu_seticount (0);
-	return t;
 }
 
 
@@ -588,9 +732,9 @@ int defender_io_r (int offset)
 {
 	/* PIAs */
 	if (offset >= 0x0c00 && offset < 0x0c04)
-		return pia_2_r (offset - 0x0c00);
+		return pia_1_r (offset - 0x0c00);
 	else if (offset >= 0x0c04 && offset < 0x0c08)
-		return pia_1_r (offset - 0x0c04);
+		return pia_0_r (offset - 0x0c04);
 
 	/* video counter */
 	else if (offset == 0x800)
@@ -619,21 +763,9 @@ void defender_io_w (int offset,int data)
 
 	/* PIAs */
 	else if (offset >= 0x0c00 && offset < 0x0c04)
-		pia_2_w (offset - 0x0c00, data);
+		pia_1_w (offset - 0x0c00, data);
 	else if (offset >= 0x0c04 && offset < 0x0c08)
-		pia_1_w (offset - 0x0c04, data);
-}
-
-
-/* JB 970823 - speed up very busy loop in Defender */
-/*    E7C3: LDA   $5D    ; dp=a0
-      E7C5: BEQ   $E7C3   */
-int defender_catch_loop_r(int offset)
-{
-	unsigned char t = *defender_catch;
-	if (t == 0 && cpu_getpc () == 0xe7c5)
-		cpu_seticount (0);
-	return t;
+		pia_0_w (offset - 0x0c04, data);
 }
 
 
@@ -670,23 +802,44 @@ void colony7_bank_select_w (int offset,int data)
 }
 
 
-
 /***************************************************************************
 
-	Splat!-specific routines
+	Defense Command-specific routines
 
 ***************************************************************************/
 
-/* JB 970823 - speed up very busy loop in Splat */
-/*    D04F: LDA   $4B    ; dp=98
-      D051: BEQ   $D04F   */
-int splat_catch_loop_r(int offset)
+/*
+ *  Defense Command Select a bank
+ *  There is just data in bank 0
+ */
+void defcomnd_bank_select_w (int offset,int data)
 {
-	unsigned char t = *splat_catch;
-	if (t == 0 && cpu_getpc () == 0xd051)
-		cpu_seticount (0);
-	return t;
+	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x13000, 0x0c000, 0x0c000, 0x14000 };
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	static int bankhit[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	if ((errorlog) && (bankhit[data & 7] == 0))
+		fprintf(errorlog,"bank = %02X\n",data);
+
+	bankhit[data & 7] = 1;
+
+	/* set bank address */
+	cpu_setbank (1, &RAM[bank[data & 7]]);
+	if (bank[data] < 0x10000)
+	{
+		/* i/o area map */
+		cpu_setbankhandler_r (1, defender_io_r);
+		cpu_setbankhandler_w (1, defender_io_w);
+	}
+	else
+	{
+		/* bank rom map */
+		cpu_setbankhandler_r (1, MRA_BANK1);
+		cpu_setbankhandler_w (1, MWA_ROM);
+	}
 }
+
 
 
 /***************************************************************************
@@ -696,68 +849,41 @@ int splat_catch_loop_r(int offset)
 ***************************************************************************/
 
 /*
- *  Sinistar Joystick
+ *  Sinistar and Blaster Joystick
+ *
+ * The joystick has 48 positions + center.
+ *
+ * I'm not 100% sure but it looks like it's mapped this way:
+ *
+ *	xxxx1000 = up full
+ *	xxxx1100 = up 2/3
+ *	xxxx1110 = up 1/3
+ *	xxxx0111 = center
+ *	xxxx0011 = down 1/3
+ *	xxxx0001 = down 1/3
+ *	xxxx0000 = down 1/3
+ *
+ *	1000xxxx = right full
+ *	1100xxxx = right 2/3
+ *	1110xxxx = right 1/3
+ *	0111xxxx = center
+ *	0011xxxx = left 1/3
+ *	0001xxxx = left 1/3
+ *	0000xxxx = left 1/3
+ *
  */
-int sinistar_input_port_0_r (int offset)
+int sinistar_input_port_0_r(int offset)
 {
-	int i;
-	int keys;
+	int joy_x,joy_y;
+	int bits_x,bits_y;
 
+	joy_x = readinputport(3) >> 4;	/* 0 = left 3 = center 6 = right */
+	joy_y = readinputport(4) >> 4;	/* 0 = down 3 = center 6 = up */
 
-/*~~~~~ make it incremental */
-	keys = input_port_0_r (0);
+	bits_x = (0x70 >> (7 - joy_x)) & 0x0f;
+	bits_y = (0x70 >> (7 - joy_y)) & 0x0f;
 
-	if (keys & 0x04)
-		i = 0x40;
-	else if (keys & 0x08)
-		i = 0xC0;
-	else
-		i = 0x20;
-
-	if (keys&0x02)
-		i += 0x04;
-	else if (keys&0x01)
-		i += 0x0C;
-	else
-		i += 0x02;
-
-	return i;
-}
-
-
-static void sinistar_snd_cmd_w (int offset, int cmd)
-{
-/*	if (errorlog) fprintf (errorlog, "snd command: %02x %d\n", cmd, cmd); */
-
-	switch (cmd)
-	{
-		case 0x31: /* beware i live */
-			sample_start (0,0,0);
-			break;
-		case 0x30: /* coin sound "I Hunger"*/
-			sample_start (0,1,0);
-			break;
-		case 0x3d: /* roar */
-			sample_start (0,2,0);
-			break;
-		case 0x32: /* i am sinistar */
-			sample_start (0,4,0);
-			break;
-		case 0x34: /* Run Run Run (may be wrong) */
-			sample_start (0,3,0);
-			break;
-		case 0x2c: /* Run coward (may be wrong) */
-			sample_start (0,5,0);
-			break;
-		case 0x39: /* Run coward (may be wrong) */
-			sample_start (0,7,0);
-			break;
-		case 0x22: /* I hunger coward (may be wrong) */
-			sample_start (0,6,0);
-			break;
-	}
-
-	timer_set (TIME_NOW, cmd | 0xc0, williams_snd_cmd_real_w);
+	return (bits_x << 4) | bits_y;
 }
 
 
@@ -767,40 +893,13 @@ static void sinistar_snd_cmd_w (int offset, int cmd)
 
 ***************************************************************************/
 
-/*
- *  Blaster Joystick
- */
-int blaster_input_port_0_r (int offset)
-{
-	int i;
-	int keys;
-
-	keys = input_port_0_r (0);
-
-	if (keys & 0x04)
-		i = 0x00;
-	else if (keys & 0x08)
-		i = 0x80;
-	else
-		i = 0x40;
-
-	if (keys&0x02)
-		i += 0x00;
-	else if (keys&0x01)
-		i += 0x08;
-	else
-		i += 0x04;
-
-	return i;
-}
-
 
 /*
  *  Blaster bank select
  */
 
-static int bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x24000, 0x28000,
-                        0x2c000, 0x30000, 0x34000, 0x38000, 0x2c000, 0x30000, 0x34000, 0x38000 };
+static int bl_bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x24000, 0x28000,
+								0x2c000, 0x30000, 0x34000, 0x38000, 0x2c000, 0x30000, 0x34000, 0x38000 };
 
 void blaster_vram_select_w (int offset, int data)
 {
@@ -810,7 +909,7 @@ void blaster_vram_select_w (int offset, int data)
 	vram_bank = data;
 	if (vram_bank)
 	{
-		cpu_setbank (1, &RAM[bank[blaster_bank]]);
+		cpu_setbank (1, &RAM[blaster_bank[bl_bank]]);
 		cpu_setbank (2, blaster_bank2_base);
 	}
 	else
@@ -829,7 +928,7 @@ void blaster_bank_select_w (int offset, int data)
 	blaster_bank = data & 15;
 	if (vram_bank)
 	{
-		cpu_setbank (1, &RAM[bank[blaster_bank]]);
+		cpu_setbank (1, &RAM[blaster_bank[bl_bank]]);
 	}
 	else
 	{
@@ -837,20 +936,6 @@ void blaster_bank_select_w (int offset, int data)
 	}
 }
 
-
-#if 0 /* the fix for Blaster is more expensive than the loop */
-/* JB 970823 - speed up very busy loop in Blaster */
-/*    D184: LDA   $00    ; dp=97
-      D186: CMPA  #$02
-      D188: BCS   $D184  ; (BLO)   */
-int blaster_catch_loop_r(int offset)
-{
-	unsigned char t = *blaster_catch;
-	if (t < 2 && cpu_getpc () == 0xd186)
-		cpu_seticount (0);
-	return t;
-}
-#endif
 
 
 /***************************************************************************
@@ -863,4 +948,233 @@ int lottofun_input_port_0_r(int offset)
 {
 	return input_port_0_r(offset) | ticket_dispenser_r(offset);
 }
+
+/***************************************************************************
+
+	Mystic Marathon specific routines
+
+***************************************************************************/
+
+int mysticm_interrupt(void)
+{
+	/* the video counter value is taken from the eight bits of V6-V13 (IC24) */
+	*williams_video_counter = 256 - cpu_getiloops();
+
+	/* the IRQ signal comes into CB1, and is set to VA11 */
+	pia_0_cb1_w(0, *williams_video_counter & 0x20);
+
+	/* *END_SCREEN */
+	if (*williams_video_counter == 0xFE)
+		pia_0_ca1_w(0, 0);
+	if (*williams_video_counter == 0x08)
+		pia_0_ca1_w(0, 1);
+
+	/* update the screen partially */
+	williams2_vh_update(*williams_video_counter);
+
+	/* PIA generates interrupts, not us */
+	return ignore_interrupt();
+}
+
+/***************************************************************************
+
+	Turkey Shoot specific routines
+
+***************************************************************************/
+
+int tshoot_interrupt(void)
+{
+	/* the video counter value is taken from the eight bits of V6-V13 (IC24) */
+	*williams_video_counter = 256 - cpu_getiloops();
+
+	/*
+		The IRQ signal comes into CB1 of PIA0, AND CA1 of PIA1.
+	*/
+
+#if 0 /* HACK: the following 2 lines is a hack to get past crashes in tshoot: */
+	pia_0_cb1_w(0, *williams_video_counter == 0x80);
+	pia_1_ca1_w(0, *williams_video_counter == 0x80);
+#else
+	pia_0_cb1_w(0, *williams_video_counter & 0x20);
+	pia_1_ca1_w(0, *williams_video_counter & 0x20);
+#endif
+
+	/* *END_SCREEN */
+	if (*williams_video_counter == 0xFE)
+		pia_0_ca1_w(0, 0);
+	if (*williams_video_counter == 0x08)
+		pia_0_ca1_w(0, 1);
+
+	/* update the screen partially */
+	williams2_vh_update(*williams_video_counter);
+
+	/* PIA generates interrupts, not us */
+	return ignore_interrupt();
+}
+
+static void tshoot_pia0_B_w(int offset, int data)
+{
+	/* grenade lamp */
+	if (data & 0x04)
+		osd_led_w(0, 1);
+	else
+		osd_led_w(0, 0);
+
+	/* gun lamp */
+	if (data & 0x08)
+		osd_led_w(1, 1);
+	else
+		osd_led_w(1, 0);
+
+#if 0
+	/* gun coil */
+	if (data & 0x10)
+		printf("[gun coil] ");
+	else
+		printf("           ");
+
+	/* feather coil */
+	if (data & 0x20)
+		printf("[feather coil] ");
+	else
+		printf("               ");
+
+	printf("\n");
+#endif
+}
+
+static int tshoot_input_port_0_3(int offset)
+{
+	int data;
+	int gun;
+
+	data = williams_input_port_0_3(offset);
+
+	gun = (data & 0x3F) ^ ((data & 0x3F) >> 1);
+
+	return (data & 0xC0) | gun;
+}
+
+static void tshoot_maxvol(int offset, int data)
+{
+	if (errorlog)
+		fprintf(errorlog, "tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
+}
+
+/***************************************************************************
+
+	Joust2 specific routines
+
+***************************************************************************/
+
+int joust2_interrupt(void)
+{
+	/* the video counter value is taken from the eight bits of V6-V13 (IC24) */
+	*williams_video_counter = 256 - cpu_getiloops();
+
+	pia_1_ca1_w(0, *williams_video_counter & 0x20);
+
+	/* update the screen partially */
+	williams2_vh_update(*williams_video_counter);
+
+	/* PIA generates interrupts, not us */
+	return ignore_interrupt();
+}
+
+/* write data to sound PIA and to sound board PIA */
+static void j2_pia1_B(int offset, int data)
+{
+	if (errorlog)
+		fprintf(errorlog, "pia1 B = %d (pc:%x)\n", data, cpu_get_pc());
+	pia_2_porta_w(offset, data);
+	pia_3_portb_w(offset, data);
+}
+
+/* CA2 is hooked up to the sound board PIA */
+static void j2_pia1_CA2(int offset, int data)
+{
+	if (errorlog)
+		fprintf(errorlog, "pia0_CA2 = %d (pc:%x)\n", data, cpu_get_pc());
+	pia_3_cb1_w(0, data);
+}
+
+/* pia2 has the controller input and empty portB */
+
+static void j2_pia0_B(int offset, int data)
+{
+	if (errorlog)
+		fprintf(errorlog, "pia1 B = %d (pc:%x)\n", data, cpu_get_pc());
+}
+
+/* Connected to the 'reset' of the sound board cpu and pia */
+static void j2_pia0_CB2(int offset, int data)
+{
+	if (errorlog)
+		fprintf(errorlog, "pia1_CB2 = %d (pc:%x)\n", data, cpu_get_pc());
+
+	if (data == 0)
+	{
+		/* stop cpu */
+		cpu_halt(2, 0);
+	}
+	else
+	{
+		/* start cpu */
+		cpu_halt(2, 1);
+		cpu_reset(2);
+	}
+}
+
+static void j2_pia3_CA2(int offset, int data)
+{
+	/* ym2151 ~IC 'initial clear' */
+	if (errorlog)
+		fprintf(errorlog, "pia3 CA2 = %d (pc:%x)\n", data, cpu_get_pc());
+}
+
+static void j2_pia3_CB2(int offset, int data)
+{
+	/* to CPU board */
+	if (errorlog)
+		fprintf(errorlog, "pia3 CB2 = %d (pc:%x)\n", data, cpu_get_pc());
+}
+
+void joust2_ym2151_int(int irq)
+{
+	pia_3_ca1_w (0, irq==0);
+	/* pia_3_ca1_w(0, 0); */
+	/* pia_3_ca1_w(0, 1); */
+}
+
+void joust2_sound_bank_select_w (int offset,int data)
+{
+	static int bank[4] = { 0x08000, 0x10000, 0x18000, 0x08000 };
+
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+	/* set bank address */
+	cpu_setbank(4, &RAM[bank[data & 0x03]]);
+}
+
+static void joust2_snd_nmi(int state)
+{
+	cpu_set_nmi_line(2, state ? ASSERT_LINE : CLEAR_LINE);
+}
+
+static void joust2_snd_firq(int state)
+{
+	cpu_set_irq_line(2, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+}
+
+/***************************************************************************
+
+	Inferno specific routines
+
+***************************************************************************/
+
+int inferno_interrupt(void)
+{
+	/* same as Joust2? */
+	return joust2_interrupt();
+}
+
 

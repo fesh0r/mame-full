@@ -97,12 +97,12 @@ INPUT_PORTS_START( copsnrob_input_ports )
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
         PORT_START      /* DIP1 */
-        PORT_DIPNAME( 0x03, 0x03, "Coinage", IP_KEY_NONE )
+        PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
         PORT_DIPSETTING(    0x03, "1 Coin/1 Player" )
         PORT_DIPSETTING(    0x02, "1 Coin/2 Players" )
         PORT_DIPSETTING(    0x01, "1 Coin/Game" )
         PORT_DIPSETTING(    0x00, "2 Coins/1 Player" )
-        PORT_DIPNAME( 0x0C, 0x00, "Time Limit", IP_KEY_NONE )
+        PORT_DIPNAME( 0x0C, 0x00, "Time Limit" )
         PORT_DIPSETTING(    0x0C, "1min" )
         PORT_DIPSETTING(    0x08, "1min 45sec" )
         PORT_DIPSETTING(    0x04, "2min 20sec" )
@@ -223,7 +223,7 @@ struct MachineDriver machine_driver =
         0,
 
         /* video hardware */
-        32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+        32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
         gfxdecodeinfo,
         sizeof(palette)/3,sizeof(colortable)/sizeof(unsigned short),
         0,
@@ -250,22 +250,22 @@ struct MachineDriver machine_driver =
 
 ROM_START( copsnrob_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "5777.l7", 0x1200, 0x0200, 0x70ed0b77 )
-	ROM_LOAD( "5776.k7", 0x1400, 0x0200, 0xe23d6097 )
-	ROM_LOAD( "5775.j7", 0x1600, 0x0200, 0x6862fb70 )
-	ROM_LOAD( "5774.h7", 0x1800, 0x0200, 0xceee84fa )
-	ROM_LOAD( "5773.e7", 0x1a00, 0x0200, 0xe786eb50 )
-	ROM_LOAD( "5772.d7", 0x1c00, 0x0200, 0xdac265e4 )
-	ROM_LOAD( "5771.b7", 0x1e00, 0x0200, 0xab54ea82 )
+	ROM_LOAD( "5777.l7",      0x1200, 0x0200, 0x2b62d627 )
+	ROM_LOAD( "5776.k7",      0x1400, 0x0200, 0x7fb12a49 )
+	ROM_LOAD( "5775.j7",      0x1600, 0x0200, 0x627dee63 )
+	ROM_LOAD( "5774.h7",      0x1800, 0x0200, 0xdfbcb7f2 )
+	ROM_LOAD( "5773.e7",      0x1a00, 0x0200, 0xff7c95f4 )
+	ROM_LOAD( "5772.d7",      0x1c00, 0x0200, 0x8d26afdc )
+	ROM_LOAD( "5771.b7",      0x1e00, 0x0200, 0xd61758d6 )
 	ROM_RELOAD(          0xfe00, 0x0200 ) // For 6502 vectors
 
-	ROM_REGION(0x0b00)     /* 2.75k for graphics */
-	ROM_LOAD( "5782.m3", 0x0000, 0x0200, 0xb072021e )
-	ROM_LOAD( "5778.p1", 0x0200, 0x0200, 0x4efd0003 )
-	ROM_LOAD( "5779.m1", 0x0400, 0x0200, 0x431e0122 )
-	ROM_LOAD( "5780.l1", 0x0600, 0x0200, 0x613d4043 )
-	ROM_LOAD( "5781.j1", 0x0800, 0x0200, 0x99937341 )
-	ROM_LOAD( "5770.m2", 0x0a00, 0x0100, 0x06fd0901 )
+	ROM_REGION_DISPOSE(0x0b00)     /* 2.75k for graphics */
+	ROM_LOAD( "5782.m3",      0x0000, 0x0200, 0x82b86852 )
+	ROM_LOAD( "5778.p1",      0x0200, 0x0200, 0x78bff86a )
+	ROM_LOAD( "5779.m1",      0x0400, 0x0200, 0x8b1d0d83 )
+	ROM_LOAD( "5780.l1",      0x0600, 0x0200, 0x6f4c6bab )
+	ROM_LOAD( "5781.j1",      0x0800, 0x0200, 0xc87f2f13 )
+	ROM_LOAD( "5770.m2",      0x0a00, 0x0100, 0xb00bbe77 )
 ROM_END
 
 
@@ -280,6 +280,7 @@ struct GameDriver copsnrob_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	copsnrob_rom,
 	0, 0,

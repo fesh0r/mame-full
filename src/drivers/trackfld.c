@@ -19,29 +19,31 @@ MAIN BOARD:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 
+extern unsigned char *trackfld_scroll;
+extern unsigned char *trackfld_scroll2;
 void trackfld_flipscreen_w(int offset,int data);
 void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int trackfld_vh_start(void);
 void trackfld_vh_stop(void);
-int konami_IN1_r(int offset);
 
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
 int trackfld_sh_timer_r(int offset);
 int trackfld_speech_r(int offset);
 void trackfld_sound_w(int offset , int data);
+int hyprolyb_speech_r(int offset);
+void hyprolyb_ADPCM_data_w(int offset , int data);
 
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-void konami_dac_w(int offset,int data);
+extern struct ADPCMinterface hyprolyb_adpcm_interface;
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
 
@@ -53,8 +55,23 @@ void trackfld_init_machine(void)
 	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
 }
 
-extern unsigned char *trackfld_scroll;
-extern unsigned char *trackfld_scroll2;
+/* handle fake button for speed cheat */
+static int konami_IN1_r(int offset)
+{
+	int res;
+	static int cheat = 0;
+	static int bits[] = { 0xee, 0xff, 0xbb, 0xaa };
+
+	res = readinputport(1);
+
+	if ((res & 0x80) == 0)
+	{
+		res |= 0x55;
+		res &= bits[cheat];
+		cheat = (++cheat)%4;
+	}
+	return res;
+}
 
 
 
@@ -100,7 +117,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, trackfld_sh_timer_r },
-	{ 0xe002, 0xe002, trackfld_speech_r},
+	{ 0xe002, 0xe002, trackfld_speech_r },
 	{ -1 }	/* end of table */
 };
 
@@ -108,19 +125,45 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xa000, 0xa000, SN76496_0_w }, // Loads the snd command into the snd latch
-	{ 0xc000, 0xc000, MWA_NOP },		// This address triggers the SN chip to read the data port.
-	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
-/* There are lots more address's which are used for setting a two bit volume
+	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
+	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
+	{ 0xe000, 0xe000, DAC_data_w },
+/* There are lots more addresses which are used for setting a two bit volume
 	controls for speech and music
 
 	Currently these are un-supported by Mame
 */
 	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
 	{ 0xe004, 0xe004, VLM5030_data_w },
-	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech controll */
+	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech control */
+	{ -1 }	/* end of table */
+};
 
-	{ 0xe079, 0xe079, MWA_NOP },  /* ???? */
+static struct MemoryReadAddress hyprolyb_sound_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x6000, 0x6000, soundlatch_r },
+	{ 0x8000, 0x8000, trackfld_sh_timer_r },
+	{ 0xe002, 0xe002, hyprolyb_speech_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
+{
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0xa000, 0xa000, SN76496_0_w },	/* Loads the snd command into the snd latch */
+	{ 0xc000, 0xc000, MWA_NOP },		/* This address triggers the SN chip to read the data port. */
+	{ 0xe000, 0xe000, DAC_data_w },
+/* There are lots more addresses which are used for setting a two bit volume
+	controls for speech and music
+
+	Currently these are un-supported by Mame
+*/
+	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
+	{ 0xe004, 0xe004, hyprolyb_ADPCM_data_w },
+	{ 0xe000, 0xefff, MWA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -147,7 +190,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 //	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	/* Fake button to press buttons 1 and 3 impossibly fast. Handle via konami_IN1_r */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_CHEAT | IPF_PLAYER1, "Run Like Hell Cheat", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_CHEAT | IPF_PLAYER1, "Run Like Hell Cheat", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 /*| IPF_COCKTAIL*/ )
@@ -160,67 +203,67 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "Disabled" )
 /* 0x00 disables Coin 2. It still accepts coins and makes the sound, but
    it doesn't give you any credit */
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPNAME( 0x02, 0x00, "After Last Event", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "After Last Event" )
 	PORT_DIPSETTING(    0x02, "Game Over" )
 	PORT_DIPSETTING(    0x00, "Game Continues" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail")
-	PORT_DIPNAME( 0x08, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ))
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "None" )
 	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPNAME( 0x10, 0x10, "World Records", IP_KEY_NONE )
+	PORT_DIPNAME( 0x10, 0x10, "World Records" )
 	PORT_DIPSETTING(    0x10, "Don't Erase" )
 	PORT_DIPSETTING(    0x00, "Erase on Reset" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -258,61 +301,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
-{
-	/* tfprom.1 - palette */
-	0x00,0xFF,0x52,0xAD,0xF8,0xC0,0x3F,0x30,0x07,0x02,0x14,0x66,0xB7,0xA6,0xAF,0x2D,
-	0x00,0xFF,0xA4,0xAD,0xF8,0xC0,0x64,0x31,0x07,0xC7,0x55,0x5E,0x68,0x3F,0xAF,0xA8,
-	/* tfprom.3 - sprite lookup table */
-	0x00,0x01,0x02,0x03,0x04,0x05,0x01,0x03,0x08,0x09,0x0A,0x05,0x0D,0x0E,0x0E,0x05,
-	0x00,0x01,0x04,0x04,0x00,0x08,0x06,0x0F,0x05,0x09,0x09,0x09,0x0A,0x0A,0x0A,0x08,
-	0x00,0x01,0x00,0x04,0x04,0x05,0x05,0x05,0x08,0x09,0x09,0x09,0x0A,0x0B,0x0B,0x01,
-	0x00,0x01,0x02,0x03,0x04,0x02,0x01,0x03,0x05,0x09,0x08,0x09,0x0E,0x0C,0x0C,0x08,
-	0x00,0x01,0x05,0x03,0x04,0x05,0x06,0x07,0x01,0x01,0x01,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x01,0x05,0x03,0x04,0x05,0x06,0x07,0x0E,0x0E,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x01,0x00,0x03,0x04,0x05,0x06,0x07,0x06,0x06,0x06,0x06,0x06,0x00,0x00,0x00,
-	0x00,0x01,0x04,0x04,0x00,0x08,0x06,0x0F,0x05,0x09,0x09,0x09,0x0B,0x0B,0x0B,0x08,
-	0x00,0x01,0x00,0x00,0x04,0x05,0x06,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x01,0x02,0x09,0x04,0x08,0x06,0x07,0x08,0x05,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x00,0x05,0x06,0x05,0x06,0x06,0x06,0x05,0x06,0x05,0x06,0x05,0x06,0x05,0x06,0x05,
-	0x00,0x05,0x05,0x05,0x06,0x06,0x05,0x05,0x06,0x06,0x05,0x05,0x06,0x06,0x05,0x05,
-	0x00,0x05,0x06,0x06,0x05,0x06,0x05,0x05,0x06,0x06,0x06,0x06,0x05,0x05,0x05,0x05,
-	0x00,0x05,0x06,0x06,0x06,0x06,0x06,0x06,0x05,0x05,0x05,0x05,0x05,0x05,0x05,0x05,
-	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x0E,0x0E,0x09,0x0A,0x0B,0x0D,0x0E,0x0E,0x0F,
-	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	/* tfprom.2 - character lookup table */
-	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x00,0x04,0x02,0x03,0x0E,0x08,0x06,0x07,0x01,0x09,0x0A,0x0B,0x0C,0x0D,0x05,0x0F,
-	0x00,0x05,0x02,0x03,0x0E,0x04,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x01,0x0F,
-	0x00,0x08,0x04,0x0D,0x0D,0x08,0x07,0x05,0x04,0x01,0x05,0x0B,0x0E,0x07,0x0E,0x0F,
-	0x00,0x0F,0x0F,0x0F,0x04,0x05,0x0F,0x07,0x08,0x01,0x0F,0x0B,0x0F,0x0D,0x0E,0x0F,
-	0x0C,0x08,0x0C,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x02,0x00,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x01,0x0D,0x0A,0x0F,
-	0x00,0x09,0x02,0x03,0x04,0x05,0x06,0x07,0x02,0x09,0x02,0x02,0x0C,0x0D,0x02,0x0F,
-	0x02,0x08,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x00,0x07,0x02,0x03,0x04,0x05,0x06,0x07,0x07,0x07,0x07,0x07,0x0C,0x0D,0x07,0x0F,
-	0x00,0x0D,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x0B,0x05,0x02,0x03,0x09,0x05,0x05,0x00,0x08,0x08,0x0A,0x0B,0x01,0x01,0x08,0x0F,
-	0x0B,0x0D,0x02,0x0D,0x09,0x05,0x0D,0x00,0x08,0x0D,0x0D,0x0B,0x01,0x0D,0x0D,0x0F,
-	0x03,0x00,0x03,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x01,0x0D,0x0A,0x0F,
-	0x03,0x08,0x03,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
-	0x0C,0x00,0x0C,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x01,0x0D,0x0A,0x0F
-};
-
 /* filename for trackn field sample files */
 static const char *trackfld_sample_names[] =
 {
 	"*trackfld",
-	"00.sam","01.sam","02.sam","03.sam","04.sam","05.sam","06.sam","07.sam",
-	"08.sam","09.sam","0a.sam","0b.sam","0c.sam","0d.sam","0e.sam","0f.sam",
-	"10.sam","11.sam","12.sam","13.sam","14.sam","15.sam","16.sam","17.sam",
-	"18.sam","19.sam","1a.sam","1b.sam","1c.sam","1d.sam","1e.sam","1f.sam",
-	"20.sam","21.sam","22.sam","23.sam","24.sam","25.sam","26.sam","27.sam",
-	"28.sam","29.sam","2a.sam","2b.sam","2c.sam","2d.sam","2e.sam","2f.sam",
-	"30.sam","31.sam","32.sam","33.sam","34.sam","35.sam","36.sam","37.sam",
-	"38.sam","39.sam","3a.sam","3b.sam","3c.sam","3d.sam",
+	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
+	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
+	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
+	"18.wav","19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav",
+	"20.wav","21.wav","22.wav","23.wav","24.wav","25.wav","26.wav","27.wav",
+	"28.wav","29.wav","2a.wav","2b.wav","2c.wav","2d.wav","2e.wav","2f.wav",
+	"30.wav","31.wav","32.wav","33.wav","34.wav","35.wav","36.wav","37.wav",
+	"38.wav","39.wav","3a.wav","3b.wav","3c.wav","3d.wav",
 	0
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -328,7 +332,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
-			2,	/* memory region #2 */
+			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
@@ -367,6 +371,61 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+/* same as the original, but uses ADPCM instead of VLM5030 */
+/* also different memory handlers do handle that */
+static struct MachineDriver hyprolyb_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			2048000,        /* 1.400 Mhz ??? */
+			0,
+			readmem,writemem,0,0,
+			interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			14318180/4,	/* Z80 Clock is derived from a 14.31818 Mhz crystal */
+			3,	/* memory region #3 */
+			hyprolyb_sound_readmem,hyprolyb_sound_writemem,0,0,
+			ignore_interrupt,0	/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	trackfld_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32,16*16+16*16,
+	trackfld_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	trackfld_vh_start,
+	trackfld_vh_stop,
+	trackfld_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&konami_dac_interface
+		},
+		{
+			SOUND_SN76496,
+			&konami_sn76496_interface
+		},
+		{
+			SOUND_ADPCM,
+			&hyprolyb_adpcm_interface
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -377,52 +436,123 @@ static struct MachineDriver machine_driver =
 
 ROM_START( trackfld_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "a01_e01.bin", 0x6000, 0x2000, 0xca01e553 )
-	ROM_LOAD( "a02_e02.bin", 0x8000, 0x2000, 0x21213565 )
-	ROM_LOAD( "a03_k03.bin", 0xA000, 0x2000, 0xfb67e07f )
-	ROM_LOAD( "a04_e04.bin", 0xC000, 0x2000, 0x33b1674b )
-	ROM_LOAD( "a05_e05.bin", 0xE000, 0x2000, 0xf6600ba4 )
+	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, 0x2882f6d4 )
+	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, 0x1743b5ee )
+	ROM_LOAD( "a03_k03.bin",  0xA000, 0x2000, 0x6c0d1ee9 )
+	ROM_LOAD( "a04_e04.bin",  0xC000, 0x2000, 0x21d6c448 )
+	ROM_LOAD( "a05_e05.bin",  0xE000, 0x2000, 0xf08c7b7e )
 
-	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "h16_e12.bin", 0x0000, 0x2000, 0xeee82d14 )
-	ROM_LOAD( "h15_e11.bin", 0x2000, 0x2000, 0x9fd214e8 )
-	ROM_LOAD( "h14_e10.bin", 0x4000, 0x2000, 0x36c0fa04 )
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
+	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_LOAD( "c11_d06.bin", 0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin", 0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin", 0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin", 0xc000, 0x2000, 0x0e569456 )
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
+ROM_END
+
+ROM_START( trackflc_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "f01.1a",       0x6000, 0x2000, 0x4e32b360 )
+	ROM_LOAD( "f02.2a",       0x8000, 0x2000, 0x4e7ebf07 )
+	ROM_LOAD( "l03.3a",       0xA000, 0x2000, 0xfef4c0ea )
+	ROM_LOAD( "f04.4a",       0xC000, 0x2000, 0x73940f2d )
+	ROM_LOAD( "f05.5a",       0xE000, 0x2000, 0x363fd761 )
+
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "h16_e12.bin",  0x0000, 0x2000, 0x50075768 )
+	ROM_LOAD( "h15_e11.bin",  0x2000, 0x2000, 0xdda9e29f )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
+
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
+
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
 ROM_END
 
 ROM_START( hyprolym_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x16be0b86 )
-	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x05052d7f )
-	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0x32591b7b )
-	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0x1af45818 )
-	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x29a7d3c1 )
+	ROM_LOAD( "hyprolym.a01", 0x6000, 0x2000, 0x82257fb7 )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
+	ROM_LOAD( "hyprolym.a03", 0xA000, 0x2000, 0xe54cc960 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
 
-	ROM_REGION(0xe000)    /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0xddca2c0c )
-	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x9b4721b5 )
-	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0x36c0fa04 )
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0xca2da5bd )
-	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x9a7b57d9 )
-	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xed0cac48 )
-	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x0e569456 )
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
 
 	ROM_REGION(0x10000)	/*  64k for speech rom    */
-	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
+	ROM_LOAD( "c9_d15.bin",   0x0000, 0x2000, 0xf546a56b )
+ROM_END
+
+ROM_START( hyprolyb_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "a1.1",         0x6000, 0x2000, 0x9aee2d5a )
+	ROM_LOAD( "hyprolym.a02", 0x8000, 0x2000, 0x15b83099 )
+	ROM_LOAD( "a3.3",         0xA000, 0x2000, 0x2d6fc308 )
+	ROM_LOAD( "hyprolym.a04", 0xC000, 0x2000, 0xd099b1e8 )
+	ROM_LOAD( "hyprolym.a05", 0xE000, 0x2000, 0x974ff815 )
+
+	ROM_REGION_DISPOSE(0xe000)    /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "hyprolym.h16", 0x0000, 0x2000, 0x768bb63d )
+	ROM_LOAD( "hyprolym.h15", 0x2000, 0x2000, 0x3af0e2a8 )
+	ROM_LOAD( "h14_e10.bin",  0x4000, 0x2000, 0xc2166a5c )
+	ROM_LOAD( "c11_d06.bin",  0x6000, 0x2000, 0x82e2185a )
+	ROM_LOAD( "c12_d07.bin",  0x8000, 0x2000, 0x800ff1f1 )
+	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
+	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
+
+	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "c2_d13.bin",   0x0000, 0x2000, 0x95bf79b6 )
+
+	ROM_REGION(0x10000)	/*  64k for the 6802 which plays ADPCM samples */
+	/* this bootleg uses a 6802 to "emulate" the VLM5030 speech chip */
+	/* I didn't bother to emulate the 6802, I just play the samples. */
+	ROM_LOAD( "2764.1",       0x8000, 0x2000, 0xa4cddeb8 )
+	ROM_LOAD( "2764.2",       0xa000, 0x2000, 0xe9919365 )
+	ROM_LOAD( "2764.3",       0xc000, 0x2000, 0xc3ec42e1 )
+	ROM_LOAD( "2764.4",       0xe000, 0x2000, 0x76998389 )
 ROM_END
 
 
@@ -539,6 +669,7 @@ struct GameDriver trackfld_driver =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	trackfld_rom,
 	0, trackfld_decode,
@@ -548,7 +679,34 @@ struct GameDriver trackfld_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver trackflc_driver =
+{
+	__FILE__,
+	&trackfld_driver,
+	"trackflc",
+	"Track & Field (Centuri)",
+	"1983",
+	"Konami (Centuri license)",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&machine_driver,
+	0,
+
+	trackflc_rom,
+	0, trackfld_decode,
+	trackfld_sample_names,
+
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
@@ -565,6 +723,7 @@ struct GameDriver hyprolym_driver =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	hyprolym_rom,
 	0, trackfld_decode,
@@ -573,7 +732,33 @@ struct GameDriver hyprolym_driver =
 
 	input_ports,
 
-	color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver hyprolyb_driver =
+{
+	__FILE__,
+	&trackfld_driver,
+	"hyprolyb",
+	"Hyper Olympic (bootleg)",
+	"1983",
+	"bootleg",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
+	0,
+	&hyprolyb_machine_driver,
+	0,
+
+	hyprolyb_rom,
+	0, trackfld_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

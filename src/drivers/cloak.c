@@ -194,14 +194,12 @@ INPUT_PORTS_START( cloak_input_ports )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BITX(    0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -212,20 +210,20 @@ INPUT_PORTS_START( cloak_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x02, "Credit mode", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x02, "Credit mode" )
 	PORT_DIPSETTING(    0x02, "1 Credit=1 Game" )
 	PORT_DIPSETTING(    0x01, "1 Credit=2 Games" )
 	PORT_DIPSETTING(    0x03, "2 Credits=1 Game" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x30, 0x00, "Right Coin",IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x30, 0x00, "Right Coin" )
 	PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
 	PORT_DIPSETTING(    0x10, "1 Coin=2 Credits" )
-	PORT_DIPNAME( 0x0C, 0x00, "Left Coin",IP_KEY_NONE)
+	PORT_DIPNAME( 0x0C, 0x00, "Left Coin" )
 	PORT_DIPSETTING(    0x00, "1 Coin=1 Credit" )
 	PORT_DIPSETTING(    0x04, "1 Coin=4 Credits" )
 	PORT_DIPSETTING(    0x08, "1 Coin=5 Credits" )
 	PORT_DIPSETTING(    0x0C, "1 Coin=6 Credits" )
-	PORT_DIPNAME( 0x40, 0x00, "Demo mode",IP_KEY_NONE)
+	PORT_DIPNAME( 0x40, 0x00, "Demo mode" )
 	PORT_DIPSETTING(    0x40, "Freeze on" )
 	PORT_DIPSETTING(    0x00, "Freeze off" )
 
@@ -269,8 +267,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
-	255,
-	POKEY_DEFAULT_GAIN/2,
+	{ 50, 50 },
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -311,7 +309,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 3*8, 32*8-1 },
 	gfxdecodeinfo,
 	64, 64,
 	0,
@@ -343,26 +341,53 @@ static struct MachineDriver machine_driver =
 
 ROM_START( cloak_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "136023.501", 0x4000, 0x2000, 0x5e990f4f )
-	ROM_LOAD( "136023.502", 0x6000, 0x2000, 0x47022646 )
-	ROM_LOAD( "136023.503", 0x8000, 0x4000, 0xdbe10b8b )
-	ROM_LOAD( "136023.504", 0xc000, 0x4000, 0xd84cf636 )
+	ROM_LOAD( "136023.501",   0x4000, 0x2000, 0xc2dbef1b )
+	ROM_LOAD( "136023.502",   0x6000, 0x2000, 0x316d0c7b )
+	ROM_LOAD( "136023.503",   0x8000, 0x4000, 0xb9c291a6 )
+	ROM_LOAD( "136023.504",   0xc000, 0x4000, 0xd014a1c0 )
 
-	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "136023.305", 0x0000, 0x1000, 0xac30bd92 )
-	ROM_LOAD( "136023.306", 0x1000, 0x1000, 0x406e8ada )
-	ROM_LOAD( "136023.307", 0x2000, 0x1000, 0x8c097ddd )
-	ROM_LOAD( "136023.308", 0x3000, 0x1000, 0x0f92033e )
+	ROM_REGION_DISPOSE(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136023.305",   0x0000, 0x1000, 0xee443909 )
+	ROM_LOAD( "136023.306",   0x1000, 0x1000, 0xd708b132 )
+	ROM_LOAD( "136023.307",   0x2000, 0x1000, 0xc42c84a4 )
+	ROM_LOAD( "136023.308",   0x3000, 0x1000, 0x4fe13d58 )
 
 	ROM_REGION(0x10000)	/* space for the sound ROMs */
-	ROM_LOAD( "136023.509", 0x2000, 0x2000, 0x0ba00626 )
-	ROM_LOAD( "136023.510", 0x4000, 0x2000, 0x0fd75919 )
-	ROM_LOAD( "136023.511", 0x6000, 0x2000, 0x0a2abcdc )
-	ROM_LOAD( "136023.512", 0x8000, 0x2000, 0xb4f3f575 )
-	ROM_LOAD( "136023.513", 0xa000, 0x2000, 0x0d28e242 )
-	ROM_LOAD( "136023.514", 0xc000, 0x2000, 0xd380fc3c )
-	ROM_LOAD( "136023.515", 0xe000, 0x2000, 0x8c4e56b6 )
+	ROM_LOAD( "136023.509",   0x2000, 0x2000, 0x46c021a4 )
+	ROM_LOAD( "136023.510",   0x4000, 0x2000, 0x8c9cf017 )
+	ROM_LOAD( "136023.511",   0x6000, 0x2000, 0x66fd8a34 )
+	ROM_LOAD( "136023.512",   0x8000, 0x2000, 0x48c8079e )
+	ROM_LOAD( "136023.513",   0xa000, 0x2000, 0x13f1cbab )
+	ROM_LOAD( "136023.514",   0xc000, 0x2000, 0x6f8c7991 )
+	ROM_LOAD( "136023.515",   0xe000, 0x2000, 0x835438a0 )
 ROM_END
+
+
+static int hiload(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		osd_fread(f,&cloak_nvRAM[0],512); /* load the NV RAM */
+		osd_fclose(f);
+	}
+
+	return 1;
+}
+
+static void hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&cloak_nvRAM[0],512); /* save the NV RAM */
+      	osd_fclose(f);
+	}
+}
+
 
 struct GameDriver cloak_driver =
 {
@@ -375,6 +400,7 @@ struct GameDriver cloak_driver =
 	"Dan Boris        (hardware info)\nMirko Buffoni      (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	cloak_rom,
 	0, 0,
@@ -386,6 +412,7 @@ struct GameDriver cloak_driver =
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
+
 };
 

@@ -19,6 +19,9 @@ e606      watchdog reset????
 
 write:
 e600      interrupt enable
+e604      flip screen
+e606      bg scroll? not sure
+e800      command for the sound CPU
 
 ***************************************************************************/
 
@@ -31,6 +34,7 @@ extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
 void pbaction_videoram2_w(int offset,int data);
 void pbaction_colorram2_w(int offset,int data);
 void pbaction_flipscreen_w(int offset,int data);
+void pbaction_scroll_w(int offset,int data);
 int pbaction_vh_start(void);
 void pbaction_vh_stop(void);
 
@@ -72,6 +76,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe400, 0xe5ff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },
 	{ 0xe604, 0xe604, pbaction_flipscreen_w },
+	{ 0xe606, 0xe606, pbaction_scroll_w },
 	{ 0xe800, 0xe800, pbaction_sh_command_w },
 	{ -1 }  /* end of table */
 };
@@ -137,30 +142,30 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x01, "70K 200K 1000K" )
 	PORT_DIPSETTING(    0x00, "70K 200K" )
 	PORT_DIPSETTING(    0x04, "100K 300K 1000K" )
@@ -169,21 +174,19 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x06, "200K 1000K" )
 	PORT_DIPSETTING(    0x05, "200K" )
 	PORT_DIPSETTING(    0x07, "None" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Extra" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPNAME( 0x30, 0x00, "Difficulty (Flippers)" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x10, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x30, "Hardest" )
+	PORT_DIPNAME( 0xc0, 0x00, "Difficulty (Outlanes)" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
 
@@ -225,7 +228,7 @@ static struct GfxLayout spritelayout2 =
 	32,32,	/* 32*32 sprites */
 	32,	/* 32 sprites */
 	3,	/* 3 bits per pixel */
-	{ 2*64*32*32, 64*32*32, 0 },	/* the bitplanes are separated */
+	{ 0*64*32*32, 1*64*32*32, 2*64*32*32 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
@@ -253,7 +256,8 @@ static struct AY8910interface ay8910_interface =
 {
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 255, 255, 255 },
+	{ 25, 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -297,7 +301,7 @@ static struct MachineDriver machine_driver =
 	256, 256,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	pbaction_vh_start,
 	pbaction_vh_stop,
@@ -323,27 +327,94 @@ static struct MachineDriver machine_driver =
 
 ROM_START( pbaction_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "b-p7.bin", 0x0000, 0x4000, 0x2458fd9a )
-	ROM_LOAD( "b-n7.bin", 0x4000, 0x4000, 0x431e9dea )
-	ROM_LOAD( "b-l7.bin", 0x8000, 0x2000, 0x8203095b )
+	ROM_LOAD( "b-p7.bin",     0x0000, 0x4000, 0x8d6dcaae )
+	ROM_LOAD( "b-n7.bin",     0x4000, 0x4000, 0xd54d5402 )
+	ROM_LOAD( "b-l7.bin",     0x8000, 0x2000, 0xe7412d68 )
 
-	ROM_REGION(0x1c000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a-s6.bin", 0x00000, 0x2000, 0x85fb19bf )
-	ROM_LOAD( "a-s7.bin", 0x02000, 0x2000, 0x94ea0412 )
-	ROM_LOAD( "a-s8.bin", 0x04000, 0x2000, 0xbdb591db )
+	ROM_REGION_DISPOSE(0x1c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
 
-	ROM_LOAD( "a-j5.bin", 0x06000, 0x4000, 0x0160bf76 )
-	ROM_LOAD( "a-j6.bin", 0x0a000, 0x4000, 0x0758a878 )
-	ROM_LOAD( "a-j7.bin", 0x0e000, 0x4000, 0x2b2f8ed3 )
-	ROM_LOAD( "a-j8.bin", 0x12000, 0x4000, 0xe5da76b0 )
+	ROM_LOAD( "a-j5.bin",     0x06000, 0x4000, 0x21efe866 )
+	ROM_LOAD( "a-j6.bin",     0x0a000, 0x4000, 0x7f984c80 )
+	ROM_LOAD( "a-j7.bin",     0x0e000, 0x4000, 0xdf69e51b )
+	ROM_LOAD( "a-j8.bin",     0x12000, 0x4000, 0x0094cb8b )
 
-	ROM_LOAD( "b-c7.bin", 0x16000, 0x2000, 0x9266049c )
-	ROM_LOAD( "b-d7.bin", 0x18000, 0x2000, 0x7f9d2741 )
-	ROM_LOAD( "b-f7.bin", 0x1a000, 0x2000, 0x62735677 )
+	ROM_LOAD( "b-c7.bin",     0x16000, 0x2000, 0xd1795ef5 )
+	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
+	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "a-e3.bin", 0x0000, 0x2000, 0x1b9c25e0 )
+	ROM_LOAD( "a-e3.bin",     0x0000,  0x2000, 0x0e53a91f )
 ROM_END
+
+
+ROM_START( pbactio2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pba16.bin",     0x0000, 0x4000, 0x4a239ebd )
+	ROM_LOAD( "pba15.bin",     0x4000, 0x4000, 0x3afef03a )
+	ROM_LOAD( "pba14.bin",     0x8000, 0x2000, 0xc0a98c8a )
+
+	ROM_REGION_DISPOSE(0x1c000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a-s6.bin",     0x00000, 0x2000, 0x9a74a8e1 )
+	ROM_LOAD( "a-s7.bin",     0x02000, 0x2000, 0x5ca6ad3c )
+	ROM_LOAD( "a-s8.bin",     0x04000, 0x2000, 0x9f00b757 )
+
+	ROM_LOAD( "a-j5.bin",     0x06000, 0x4000, 0x21efe866 )
+	ROM_LOAD( "a-j6.bin",     0x0a000, 0x4000, 0x7f984c80 )
+	ROM_LOAD( "a-j7.bin",     0x0e000, 0x4000, 0xdf69e51b )
+	ROM_LOAD( "a-j8.bin",     0x12000, 0x4000, 0x0094cb8b )
+
+	ROM_LOAD( "b-c7.bin",     0x16000, 0x2000, 0xd1795ef5 )
+	ROM_LOAD( "b-d7.bin",     0x18000, 0x2000, 0xf28df203 )
+	ROM_LOAD( "b-f7.bin",     0x1a000, 0x2000, 0xaf6e9817 )
+
+	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_LOAD( "pba1.bin",     0x0000,  0x2000, 0x8b69b933 )
+
+	ROM_REGION(0x10000)	/* 64k for a third Z80 (not emulated) */
+	ROM_LOAD( "pba17.bin",    0x0000,  0x4000, 0x2734ae60 )
+ROM_END
+
+
+
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xc093],"\x07\x02\x05",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xc093],8*10);
+			osd_fread(f,&RAM[0xc12f],4*10);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xc093],8*10);
+		osd_fwrite(f,&RAM[0xc12f],4*10);
+		osd_fclose(f);
+	}
+}
 
 
 
@@ -352,12 +423,13 @@ struct GameDriver pbaction_driver =
 	__FILE__,
 	0,
 	"pbaction",
-	"Pinball Action",
+	"Pinball Action (set 1)",
 	"1985",
 	"Tehkan",
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
 	0,
 	&machine_driver,
+	0,
 
 	pbaction_rom,
 	0, 0,
@@ -369,5 +441,31 @@ struct GameDriver pbaction_driver =
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload, hisave
+};
+
+struct GameDriver pbactio2_driver =
+{
+	__FILE__,
+	&pbaction_driver,
+	"pbactio2",
+	"Pinball Action (set 2)",
+	"1985",
+	"Tehkan",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (sound)",
+	0,
+	&machine_driver,
+	0,
+
+	pbactio2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
 };

@@ -66,7 +66,7 @@ NMI interrupts for music timing
 
 
 void bombjack_background_w(int offset,int data);
-void bombjack_updatehook0(int offset);
+void bombjack_flipscreen_w(int offset,int data);
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
@@ -100,7 +100,7 @@ int bombjack_sh_intflag_r(int offset)
 {
 	/* to speed up the emulation, detect when the program is looping waiting */
 	/* for an interrupt, and force it in that case */
-	if (cpu_getpc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
+	if (cpu_get_pc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
 		cpu_spinuntil_int();
 
 	return *bombjack_sh_intflag;
@@ -126,14 +126,14 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram00_w, &videoram00 },
-	{ 0x9400, 0x97ff, videoram01_w, &videoram01 },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9400, 0x97ff, colorram_w, &colorram },
 	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9a00, 0x9a00, MWA_NOP },
 	{ 0x9c00, 0x9cff, paletteram_xxxxBBBBGGGGRRRR_w, &paletteram },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0xb004, 0xb004, MWA_RAM, &flip_screen },
+	{ 0xb004, 0xb004, bombjack_flipscreen_w },
 	{ 0xb800, 0xb800, bombjack_soundlatch_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -197,30 +197,30 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x03, "1 Coin/6 Credits" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/3 Credits" )
-	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x30, "2" )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x80, 0x80, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x00, "Initial High Score?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x00, "Initial High Score?" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x01, "100000" )
 	PORT_DIPSETTING(    0x02, "30000" )
@@ -229,22 +229,46 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x05, "50000" )
 	PORT_DIPSETTING(    0x06, "100000" )
 	PORT_DIPSETTING(    0x07, "50000" )
-	PORT_DIPNAME( 0x18, 0x00, "Bird Speed", IP_KEY_NONE )
+	PORT_DIPNAME( 0x18, 0x00, "Bird Speed" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x08, "Medium" )
 	PORT_DIPSETTING(    0x10, "Hard" )
 	PORT_DIPSETTING(    0x18, "Hardest" )
-	PORT_DIPNAME( 0x60, 0x00, "Enemies Number & Speed", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x00, "Enemies Number & Speed" )
 	PORT_DIPSETTING(    0x20, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
 	PORT_DIPSETTING(    0x40, "Hard" )
 	PORT_DIPSETTING(    0x60, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x00, "Special Coin", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Special Coin" )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 INPUT_PORTS_END
 
 
+
+static struct GfxLayout charlayout1 =
+{
+	8,8,	/* 8*8 characters */
+	512,	/* 512 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 512*8*8, 2*512*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+
+static struct GfxLayout charlayout2 =
+{
+	16,16,	/* 16*16 characters */
+	256,	/* 256 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8	/* every character takes 32 consecutive bytes */
+};
 
 static struct GfxLayout spritelayout1 =
 {
@@ -278,71 +302,11 @@ static struct GfxLayout spritelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
+	{ 1, 0x0000, &charlayout1,      0, 16 },	/* characters */
+	{ 1, 0x3000, &charlayout2,      0, 16 },	/* background tiles */
 	{ 1, 0x9000, &spritelayout1,    0, 16 },	/* normal sprites */
 	{ 1, 0xa000, &spritelayout2,    0, 16 },	/* large sprites */
 	{ -1 } /* end of array */
-};
-
-
-
-static struct GfxTileLayout tilelayout0 =
-{
-	512,	/* 512 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 512*8*8, 2*512*8*8 },	/* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
-{
-	{ 1, 0x0000, &tilelayout0, 0, 16, 0x00000001 },	/* foreground tiles */
-	{ -1 } /* end of array */
-};
-
-static struct GfxTileLayout tilelayout1 =
-{
-	256*4,	/* 256 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every character takes 32 consecutive bytes */
-};
-
-static struct GfxTileCompose gfxtilecompose1 =
-{
-	2,2,	/* 16x16 tiles */
-	4,		/* multiply code by 4 to obtain the base tile code */
-	{ 0, 1 },
-	{ 0, 2 },
-};
-
-static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
-{
-	{ 1, 0x3000, &tilelayout1, 0, 16, 0 },	/* background tiles */
-	{ -1 } /* end of array */
-};
-
-
-
-static struct MachineLayer machine_layers[MAX_LAYERS] =
-{
-	{
-		LAYER_TILE,
-		32*8,32*8,
-		gfxtiledecodeinfo0,
-		0,
-		bombjack_updatehook0,bombjack_updatehook0,0,0
-	},
-	{
-		LAYER_TILE,
-		16*16,16*16,
-		gfxtiledecodeinfo1,
-		&gfxtilecompose1,
-		0,0,0,0	/* no hooks because tile maps are in ROM */
-	}
 };
 
 
@@ -351,7 +315,8 @@ static struct AY8910interface ay8910_interface =
 {
 	3,	/* 3 chips */
 	1500000,	/* 1.5 MHz?????? */
-	{ 100, 100, 100 },	/* with 255 the SEAL audio library distorts */
+	{ 13, 13, 13 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -390,7 +355,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	machine_layers,
+	0,
 	generic_vh_start,
 	generic_vh_stop,
 	bombjack_vh_screenrefresh,
@@ -415,28 +380,54 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bombjack_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "09_j01b.bin", 0x0000, 0x2000, 0xb263429f )
-	ROM_LOAD( "10_l01b.bin", 0x2000, 0x2000, 0x8dd024fa )
-	ROM_LOAD( "11_m01b.bin", 0x4000, 0x2000, 0x4464856c )
-	ROM_LOAD( "12_n01b.bin", 0x6000, 0x2000, 0x0018672a )
-	ROM_LOAD( "13_r01b.bin", 0xc000, 0x2000, 0x3500e950 )
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
+	ROM_LOAD( "13.1r",        0xc000, 0x2000, 0x70e0244d )
 
-	ROM_REGION(0xf000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "03_e08t.bin", 0x0000, 0x1000, 0xd79cfb42 )	/* chars */
-	ROM_LOAD( "04_h08t.bin", 0x1000, 0x1000, 0x16a78377 )
-	ROM_LOAD( "05_k08t.bin", 0x2000, 0x1000, 0x8aa5777d )
-	ROM_LOAD( "06_l08t.bin", 0x3000, 0x2000, 0x4d9c13d2 )	/* background tiles */
-	ROM_LOAD( "07_n08t.bin", 0x5000, 0x2000, 0x98f83bce )
-	ROM_LOAD( "08_r08t.bin", 0x7000, 0x2000, 0x428b73d9 )
-	ROM_LOAD( "16_m07b.bin", 0x9000, 0x2000, 0x5fea2266 )	/* sprites */
-	ROM_LOAD( "15_l07b.bin", 0xb000, 0x2000, 0x2f490ac1 )
-	ROM_LOAD( "14_j07b.bin", 0xd000, 0x2000, 0x9674c1bc )
+	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
 
 	ROM_REGION(0x1000)	/* background graphics */
-	ROM_LOAD( "02_p04t.bin", 0x0000, 0x1000, 0x1af71029 )
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
 
 	ROM_REGION(0x10000)	/* 64k for sound board */
-	ROM_LOAD( "01_h03t.bin", 0x0000, 0x2000, 0xe89c2656 )
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
+ROM_END
+
+ROM_START( bombjac2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000, 0xc668dc30 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000, 0x52a1e5fb )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000, 0xb68a062a )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000, 0x1d3ecee5 )
+	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000, 0xbcafdd29 )
+
+	ROM_REGION_DISPOSE(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000, 0x9f0470d5 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000, 0x81ec12e6 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000, 0xe87ec8b1 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000, 0x51eebd89 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000, 0x9dd98e9d )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000, 0x3155ee7d )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000, 0x94694097 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000, 0x013f58f2 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000, 0x101c858d )
+
+	ROM_REGION(0x1000)	/* background graphics */
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, 0x398d4a02 )
+
+	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000, 0x8407917d )
 ROM_END
 
 
@@ -479,14 +470,14 @@ static int hiload(void)
 					(RAM[0x8103] & 0x0f) * 1000000 +
 					(RAM[0x8103] >> 4) * 10000000;
 			sprintf(buf,"%8d",hi);
-			videoram00_w(0x013f,buf[0]);
-			videoram00_w(0x011f,buf[1]);
-			videoram00_w(0x00ff,buf[2]);
-			videoram00_w(0x00df,buf[3]);
-			videoram00_w(0x00bf,buf[4]);
-			videoram00_w(0x009f,buf[5]);
-			videoram00_w(0x007f,buf[6]);
-			videoram00_w(0x005f,buf[7]);
+			videoram_w(0x013f,buf[0]);
+			videoram_w(0x011f,buf[1]);
+			videoram_w(0x00ff,buf[2]);
+			videoram_w(0x00df,buf[3]);
+			videoram_w(0x00bf,buf[4]);
+			videoram_w(0x009f,buf[5]);
+			videoram_w(0x007f,buf[6]);
+			videoram_w(0x005f,buf[7]);
 			osd_fclose(f);
 		}
 
@@ -517,14 +508,42 @@ struct GameDriver bombjack_driver =
 	__FILE__,
 	0,
 	"bombjack",
-	"Bomb Jack",
+	"Bomb Jack (set 1)",
 	"1984",
 	"Tehkan",
 	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	bombjack_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+/* this one has YOU ARE LUCY instead of LUCKY, so it's probably an older version */
+struct GameDriver bombjac2_driver =
+{
+	__FILE__,
+	&bombjack_driver,
+	"bombjac2",
+	"Bomb Jack (set 2)",
+	"1984",
+	"Tehkan",
+	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	bombjac2_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

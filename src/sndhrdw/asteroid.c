@@ -33,13 +33,8 @@
 #define MIN_SLICE 10
 #define LANDER_OVERSAMPLE_RATE	768000
 
-#ifdef SIGNED_SAMPLES
-  #define AUDIO_CONV8(A) ((A)-0x80)
-  #define AUDIO_CONV16(A) ((A)-0x8000)
-#else
-  #define AUDIO_CONV8(A) ((A))
-  #define AUDIO_CONV16(A) ((A))
-#endif
+#define AUDIO_CONV8(A) ((A)-0x80)
+#define AUDIO_CONV16(A) ((A)-0x8000)
 
 static int sinetable[64]=
 {
@@ -199,7 +194,7 @@ void astdelux_sounds_w (int offset,int data)
 
 ***************************************************************************/
 
-int llander_sh_start(void)
+int llander_sh_start(const struct MachineSound *msound)
 {
 	int loop,lfsrtmp,nor1,nor2,bit14,bit6;
 	long fraction,remainder;
@@ -255,7 +250,7 @@ int llander_sh_start(void)
 
 	/* Allocate channel and buffer */
 
-	channel = get_play_channels(1);
+	channel = mixer_allocate_channel(25);
 
 	if ((sample_buffer = malloc((Machine->sample_bits/8)*buffer_len)) == 0) return 1;
 	memset(sample_buffer,0,(Machine->sample_bits/8)*buffer_len);
@@ -408,7 +403,7 @@ void llander_sh_update_partial(void)
 
 	if (Machine->sample_rate == 0) return;
 
-	newpos = cpu_scalebyfcount(buffer_len); /* get current position based on the timer */
+	newpos = sound_scalebufferpos(buffer_len); /* get current position based on the timer */
 
 	if(newpos-sample_pos<MIN_SLICE) return;
 
@@ -431,11 +426,11 @@ void llander_sh_update(void)
 
 	if( Machine->sample_bits == 16 )
 	{
-	        osd_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate,0xff);
+		mixer_play_streamed_sample_16(channel,sample_buffer,2*buffer_len,emulation_rate);
 	}
 	else
 	{
-	        osd_play_streamed_sample(channel,sample_buffer,buffer_len,emulation_rate,0xff);
+		mixer_play_streamed_sample(channel,sample_buffer,buffer_len,emulation_rate);
 	}
 }
 

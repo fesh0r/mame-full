@@ -1,18 +1,37 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
-#define MESS /* MESS, also added OSD_FILETYPE_ROM_CART */
+#include "osd_cpu.h"
+#include "inptport.h"
 
+
+/* The Win32 port requires this constant for variable arg routines. */
+#ifndef CLIB_DECL
+#define CLIB_DECL
+#endif
+
+/* TODO: this should be removed and put into a unix-specific header */
 /** suggested by  Scott Trent */
 #ifdef aix
 #include <sys/time.h>
 #endif
 
-#ifdef linux_alpha
+#ifdef __LP64__
 #define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
 #else
 #define FPTR int
 #endif
+
+
+int osd_init(void);
+void osd_exit(void);
+
+
+/******************************************************************************
+
+  Display
+
+******************************************************************************/
 
 struct osd_bitmap
 {
@@ -22,219 +41,7 @@ struct osd_bitmap
 	unsigned char **line; /* pointers to the start of each line */
 };
 
-
-#define OSD_KEY_NONE		0
-#define OSD_KEY_ESC         1        /* keyboard scan codes */
-#define OSD_KEY_1           2        /* (courtesy of allegro.h) */
-#define OSD_KEY_2           3
-#define OSD_KEY_3           4
-#define OSD_KEY_4           5
-#define OSD_KEY_5           6
-#define OSD_KEY_6           7
-#define OSD_KEY_7           8
-#define OSD_KEY_8           9
-#define OSD_KEY_9           10
-#define OSD_KEY_0           11
-#define OSD_KEY_MINUS       12
-#define OSD_KEY_EQUALS      13
-#define OSD_KEY_BACKSPACE   14
-#define OSD_KEY_TAB         15
-#define OSD_KEY_Q           16
-#define OSD_KEY_W           17
-#define OSD_KEY_E           18
-#define OSD_KEY_R           19
-#define OSD_KEY_T           20
-#define OSD_KEY_Y           21
-#define OSD_KEY_U           22
-#define OSD_KEY_I           23
-#define OSD_KEY_O           24
-#define OSD_KEY_P           25
-#define OSD_KEY_OPENBRACE   26
-#define OSD_KEY_CLOSEBRACE  27
-#define OSD_KEY_ENTER       28
-#define OSD_KEY_LCONTROL    29
-#define OSD_KEY_A           30
-#define OSD_KEY_S           31
-#define OSD_KEY_D           32
-#define OSD_KEY_F           33
-#define OSD_KEY_G           34
-#define OSD_KEY_H           35
-#define OSD_KEY_J           36
-#define OSD_KEY_K           37
-#define OSD_KEY_L           38
-#define OSD_KEY_COLON       39
-#define OSD_KEY_QUOTE       40
-#define OSD_KEY_TILDE       41
-#define OSD_KEY_LSHIFT      42
-/* 43 */
-#define OSD_KEY_Z           44
-#define OSD_KEY_X           45
-#define OSD_KEY_C           46
-#define OSD_KEY_V           47
-#define OSD_KEY_B           48
-#define OSD_KEY_N           49
-#define OSD_KEY_M           50
-#define OSD_KEY_COMMA       51
-#define OSD_KEY_STOP        52
-#define OSD_KEY_SLASH       53
-#define OSD_KEY_RSHIFT      54
-#define OSD_KEY_ASTERISK    55
-#define OSD_KEY_ALT         56
-#define OSD_KEY_SPACE       57
-#define OSD_KEY_CAPSLOCK    58
-#define OSD_KEY_F1          59
-#define OSD_KEY_F2          60
-#define OSD_KEY_F3          61
-#define OSD_KEY_F4          62
-#define OSD_KEY_F5          63
-#define OSD_KEY_F6          64
-#define OSD_KEY_F7          65
-#define OSD_KEY_F8          66
-#define OSD_KEY_F9          67
-#define OSD_KEY_F10         68
-#define OSD_KEY_NUMLOCK     69
-#define OSD_KEY_SCRLOCK     70
-#define OSD_KEY_HOME        71
-#define OSD_KEY_UP          72
-#define OSD_KEY_PGUP        73
-#define OSD_KEY_MINUS_PAD   74
-#define OSD_KEY_LEFT        75
-#define OSD_KEY_5_PAD       76
-#define OSD_KEY_RIGHT       77
-#define OSD_KEY_PLUS_PAD    78
-#define OSD_KEY_END         79
-#define OSD_KEY_DOWN        80
-#define OSD_KEY_PGDN        81
-#define OSD_KEY_INSERT      82
-#define OSD_KEY_DEL         83
-#define OSD_KEY_RCONTROL    84  /* different from Allegro */
-#define OSD_KEY_ALTGR       85  /* different from Allegro */
-/* 86 */
-#define OSD_KEY_F11         87
-#define OSD_KEY_F12         88
-#define OSD_KEY_COMMAND     89
-#define OSD_KEY_OPTION      90
-/* 91 - 100 */
-/* The following are all undefined in Allegro */
-#define OSD_KEY_1_PAD		101
-#define OSD_KEY_2_PAD		102
-#define OSD_KEY_3_PAD		103
-#define OSD_KEY_4_PAD		104
-/* 105 */
-#define OSD_KEY_6_PAD		106
-#define OSD_KEY_7_PAD		107
-#define OSD_KEY_8_PAD		108
-#define OSD_KEY_9_PAD		109
-#define OSD_KEY_0_PAD		110
-#define OSD_KEY_STOP_PAD	111
-#define OSD_KEY_EQUALS_PAD	112
-#define OSD_KEY_SLASH_PAD	113
-#define OSD_KEY_ASTER_PAD	114
-#define OSD_KEY_ENTER_PAD	115
-
-#define OSD_MAX_KEY         115
-
-/* 116 - 119 */
-/* The following are defined in Allegro */
-/* 120 KEY_RCONTROL */
-/* 121 KEY_ALTGR */
-/* 122 KEY_SLASH2 */
-/* 123 KEY_PAUSE */
-
-/*
- * ASG 980730: these are pseudo-keys that the os-dependent code can
- *			   map to whatever they see fit
- * HJB 980812: added some more names and used higher values because
- *			   there were some clashes with Allegro's scancodes :(
- */
-#define OSD_KEY_FAST_EXIT		128
-#define OSD_KEY_RESET_MACHINE	129
-#define OSD_KEY_VOLUME_DOWN 	130
-#define OSD_KEY_VOLUME_UP		131
-#define OSD_KEY_GAMMA_DOWN		132
-#define OSD_KEY_GAMMA_UP		133
-#define OSD_KEY_PAUSE			134
-#define OSD_KEY_UNPAUSE 		135
-#define OSD_KEY_CONFIGURE		136
-#define OSD_KEY_SHOW_GFX		137
-#define OSD_KEY_FRAMESKIP		138
-#define OSD_KEY_THROTTLE		139
-#define OSD_KEY_SHOW_FPS		140
-#define OSD_KEY_SNAPSHOT		141
-
-#define OSD_MAX_PSEUDO			141
-
-#define OSD_JOY_LEFT    1
-#define OSD_JOY_RIGHT   2
-#define OSD_JOY_UP      3
-#define OSD_JOY_DOWN    4
-#define OSD_JOY_FIRE1   5
-#define OSD_JOY_FIRE2   6
-#define OSD_JOY_FIRE3   7
-#define OSD_JOY_FIRE4   8
-#define OSD_JOY_FIRE5   9
-#define OSD_JOY_FIRE6   10
-#define OSD_JOY_FIRE7   11
-#define OSD_JOY_FIRE8   12
-#define OSD_JOY_FIRE9   13
-#define OSD_JOY_FIRE10  14
-#define OSD_JOY_FIRE    15      /* any of the first joystick fire buttons */
-#define OSD_JOY2_LEFT   16
-#define OSD_JOY2_RIGHT  17
-#define OSD_JOY2_UP     18
-#define OSD_JOY2_DOWN   19
-#define OSD_JOY2_FIRE1  20
-#define OSD_JOY2_FIRE2  21
-#define OSD_JOY2_FIRE3  22
-#define OSD_JOY2_FIRE4  23
-#define OSD_JOY2_FIRE5  24
-#define OSD_JOY2_FIRE6  25
-#define OSD_JOY2_FIRE7  26
-#define OSD_JOY2_FIRE8  27
-#define OSD_JOY2_FIRE9  28
-#define OSD_JOY2_FIRE10 29
-#define OSD_JOY2_FIRE   30      /* any of the second joystick fire buttons */
-#define OSD_JOY3_LEFT   31
-#define OSD_JOY3_RIGHT  32
-#define OSD_JOY3_UP     33
-#define OSD_JOY3_DOWN   34
-#define OSD_JOY3_FIRE1  35
-#define OSD_JOY3_FIRE2  36
-#define OSD_JOY3_FIRE3  37
-#define OSD_JOY3_FIRE4  38
-#define OSD_JOY3_FIRE5  39
-#define OSD_JOY3_FIRE6  40
-#define OSD_JOY3_FIRE7  41
-#define OSD_JOY3_FIRE8  42
-#define OSD_JOY3_FIRE9  43
-#define OSD_JOY3_FIRE10 44
-#define OSD_JOY3_FIRE   45      /* any of the third joystick fire buttons */
-#define OSD_JOY4_LEFT   46
-#define OSD_JOY4_RIGHT  47
-#define OSD_JOY4_UP     48
-#define OSD_JOY4_DOWN   49
-#define OSD_JOY4_FIRE1  50
-#define OSD_JOY4_FIRE2  51
-#define OSD_JOY4_FIRE3  52
-#define OSD_JOY4_FIRE4  53
-#define OSD_JOY4_FIRE5  54
-#define OSD_JOY4_FIRE6  55
-#define OSD_JOY4_FIRE7  56
-#define OSD_JOY4_FIRE8  57
-#define OSD_JOY4_FIRE9  58
-#define OSD_JOY4_FIRE10 59
-#define OSD_JOY4_FIRE   60      /* any of the fourth joystick fire buttons */
-#define OSD_MAX_JOY     60
-
-#define X_AXIS          1
-#define Y_AXIS          2
-
-extern int video_sync;
-
-
-int osd_init(void);
-void osd_exit(void);
-/* VERY IMPORTANT: the function must allocate also a "safety area" 8 pixels wide all */
+/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
@@ -255,34 +62,133 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
-int osd_skip_this_frame(int recommend);
-void osd_update_display(void);
-void osd_update_audio(void);
+int osd_skip_this_frame(void);
+void osd_update_video_and_audio(void);
+void osd_set_gamma(float _gamma);
+float osd_get_gamma(void);
+void osd_set_brightness(int brightness);
+int osd_get_brightness(void);
+void osd_save_snapshot(void);
+
+
+/******************************************************************************
+
+  Sound
+
+******************************************************************************/
+
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
 void osd_play_sample_16(int channel,signed short *data,int len,int freq,int volume,int loop);
-void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume);
-void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume);
-void osd_adjust_sample(int channel,int freq,int volume);
+void osd_play_streamed_sample(int channel,signed char *data,int len,int freq,int volume,int pan);
+void osd_play_streamed_sample_16(int channel,signed short *data,int len,int freq,int volume,int pan);
+void osd_set_sample_freq(int channel,int freq);
+void osd_set_sample_volume(int channel,int volume);
 void osd_stop_sample(int channel);
 void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
-void osd_ym2203_write(int n, int r, int v);
-void osd_ym2203_update(void);
-void osd_ym3812_control(int reg);
-void osd_ym3812_write(int data);
-void osd_set_mastervolume(int volume);
-int osd_key_pressed(int keycode);
-int osd_read_key(void);
-int osd_read_keyrepeat(void);
-const char *osd_joy_name(int joycode);
-const char *osd_key_name(int keycode);
-void osd_poll_joystick(void);
-int osd_joy_pressed(int joycode);
+void osd_opl_control(int chip,int reg);
+void osd_opl_write(int chip,int data);
+void osd_set_mastervolume(int attenuation);
+int osd_get_mastervolume(void);
+void osd_sound_enable(int enable);
 
-void osd_trak_read(int *deltax,int *deltay);
+
+/******************************************************************************
+
+  Keyboard
+
+******************************************************************************/
+
+/*
+  return a list of all available keys (see input.h)
+*/
+const struct KeyboardInfo *osd_get_key_list(void);
+
+/*
+  tell whether the specified key is pressed or not. keycode is the OS dependant
+  code specified in the list returned by osd_get_key_list().
+*/
+int osd_is_key_pressed(int keycode);
+
+/*
+  wait for the user to press a key and return its code. This function is not
+  required to do anything, it is here so we can avoid bogging down multitasking
+  systems while using the debugger. If you don't want to or can't support this
+  function you can just return KEYCODE_NONE.
+*/
+int osd_wait_keypress(void);
+
+
+/******************************************************************************
+
+  Joystick & Mouse/Trackball
+
+******************************************************************************/
+
+/*
+  return a list of all available joystick inputs (see input.h)
+*/
+const struct JoystickInfo *osd_get_joy_list(void);
+
+/*
+  tell whether the specified joystick direction/button is pressed or not.
+  joycode is the OS dependant code specified in the list returned by
+  osd_get_joy_list().
+*/
+int osd_is_joy_pressed(int joycode);
+
+
+/* We support 4 players for each analog control */
+#define OSD_MAX_JOY_ANALOG	4
+#define X_AXIS          1
+#define Y_AXIS          2
+
+void osd_poll_joysticks(void);
+
+/* Joystick calibration routines BW 19981216 */
+/* Do we need to calibrate the joystick at all? */
+int osd_joystick_needs_calibration (void);
+/* Preprocessing for joystick calibration. Returns 0 on success */
+void osd_joystick_start_calibration (void);
+/* Prepare the next calibration step. Return a description of this step. */
+/* (e.g. "move to upper left") */
+char *osd_joystick_calibrate_next (void);
+/* Get the actual joystick calibration data for the current position */
+void osd_joystick_calibrate (void);
+/* Postprocessing (e.g. saving joystick data to config) */
+void osd_joystick_end_calibration (void);
+
+void osd_trak_read(int player,int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int *analog_x, int *analog_y);
+void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
+
+
+/*
+  inptport.c defines some general purpose defaults for key and joystick bindings.
+  They may be further adjusted by the OS dependant code to better match the
+  available keyboard, e.g. one could map pause to the Pause key instead of P, or
+  snapshot to PrtScr instead of F12. Of course the user can further change the
+  settings to anything he/she likes.
+  This function is called on startup, before reading the configuration from disk.
+  Scan the list, and change the keys/joysticks you want.
+*/
+void osd_customize_inputport_defaults(struct ipd *defaults);
+
+
+/******************************************************************************
+
+  File I/O
+
+******************************************************************************/
+
+/* inp header */
+typedef struct {
+    char name[9];      /* 8 bytes for game->name + NULL */
+    char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
+    char reserved[20]; /* for future use, possible store game options? */
+} INP_HEADER;
+
 
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1
@@ -290,19 +196,60 @@ void osd_analogjoy_read(int *analog_x, int *analog_y);
 #define OSD_FILETYPE_HIGHSCORE 3
 #define OSD_FILETYPE_CONFIG 4
 #define OSD_FILETYPE_INPUTLOG 5
-#define OSD_FILETYPE_ROM_CART 6
-#define OSD_FILETYPE_IMAGE 7
+#define OSD_FILETYPE_STATE 6
+#define OSD_FILETYPE_ARTWORK 7
+#define OSD_FILETYPE_MEMCARD 8
+#define OSD_FILETYPE_SCREENSHOT 9
+#ifdef MESS
+  #define OSD_FILETYPE_ROM_CART 10
+  #define OSD_FILETYPE_IMAGE 11
+#endif
 
 /* gamename holds the driver name, filename is only used for ROMs and    */
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
 /* it is opened for read. */
 
-int osd_faccess (const char *filename, int filetype);
-void *osd_fopen (const char *gamename,const char *filename,int filetype,int wrmode);
-int osd_fread (void *file,void *buffer,int length);
-int osd_fwrite (void *file,const void *buffer,int length);
-int osd_fseek (void *file,int offset,int whence);
-void osd_fclose (void *file);
+int osd_faccess(const char *filename, int filetype);
+void *osd_fopen(const char *gamename,const char *filename,int filetype,int read_or_write);
+int osd_fread(void *file,void *buffer,int length);
+int osd_fwrite(void *file,const void *buffer,int length);
+int osd_fread_swap(void *file,void *buffer,int length);
+int osd_fwrite_swap(void *file,const void *buffer,int length);
+#if LSB_FIRST
+#define osd_fread_msbfirst osd_fread_swap
+#define osd_fwrite_msbfirst osd_fwrite_swap
+#define osd_fread_lsbfirst osd_fread
+#define osd_fwrite_lsbfirst osd_fwrite
+#else
+#define osd_fread_msbfirst osd_fread
+#define osd_fwrite_msbfirst osd_fwrite
+#define osd_fread_lsbfirst osd_fread_swap
+#define osd_fwrite_lsbfirst osd_fwrite_swap
+#endif
+int osd_fread_scatter(void *file,void *buffer,int length,int increment);
+int osd_fseek(void *file,int offset,int whence);
+void osd_fclose(void *file);
+int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);
+int osd_fsize(void *file);
+unsigned int osd_fcrc(void *file);
+
+
+/******************************************************************************
+
+  Miscellaneous
+
+******************************************************************************/
+
+/* called while loading ROMs. It is called a last time with name == 0 to signal */
+/* that the ROM loading process is finished. */
+/* return non-zero to abort loading */
+int osd_display_loading_rom_message(const char *name,int current,int total);
+
+/* called when the game is paused/unpaused, so the OS dependant code can do special */
+/* things like changing the title bar or darkening the display. */
+/* Note that the OS dependant code must NOT stop processing input, since the user */
+/* interface is still active while the game is paused. */
+void osd_pause(int paused);
 
 /* control keyboard leds or other indicators */
 void osd_led_w(int led,int on);
@@ -314,55 +261,19 @@ int osd_get_config_samplerate(int def_samplerate);
 int osd_get_config_samplebits(int def_samplebits);
 int osd_get_config_frameskip(int def_frameskip);
 
-/******************************************************************************
- *	floppy disc controller direct access
- *	osd_fdc_init
- *		initialize the needed hardware & structures;
- *		returns 0 on success
- *	osd_fdc_exit
- *		shut down
- *	osd_fdc_motors
- *		start motors for <unit> number (0 = A:, 1 = B:)
- *	osd_fdc_density
- *		set type of drive from bios info (1: 360K, 2: 1.2M, 3: 720K, 4: 1.44M)
- *		set density (0:FM,LO 1:FM,HI 2:MFM,LO 3:MFM,HI) ( FM doesn't work )
- *		tracks, sectors per track and sector length code are given to
- *		calculate the appropriate double step and GAP II, GAP III values
- *	osd_fdc_interrupt
- *		stop motors and interrupt the current command
- *	osd_fdc_recal
- *		recalibrate the current drive and update *track if not NULL
- *	osd_fdc_seek
- *		seek to a given track number and update *track if not NULL
- *	osd_fdc_step
- *		step into a direction (+1/-1) and update *track if not NULL
- *	osd_fdc_format
- *		format track t, head h, spt sectors per track
- *		sector map at *fmt
- *	osd_fdc_put_sector
- *		put a sector from memory *buff to track 'track', side 'side',
- *		head number 'head', sector number 'sector';
- *		write deleted data address mark if ddam is non zero
- *	osd_fdc_get_sector
- *		read a sector to memory *buff from track 'track', side 'side',
- *		head number 'head', sector number 'sector'
- *
- * NOTE: side and head
- * the terms are used here in the following way:
- * side = physical side of the floppy disk
- * head = logical head number (can be 0 though side 1 is to be accessed)
- *****************************************************************************/
 
-int  osd_fdc_init(void);
-void osd_fdc_exit(void);
-void osd_fdc_motors(unsigned char unit);
-void osd_fdc_density(unsigned char unit, unsigned char density, unsigned char tracks, unsigned char spt, unsigned char eot, unsigned char secl);
-void osd_fdc_interrupt(int param);
-unsigned char osd_fdc_recal(unsigned char *track);
-unsigned char osd_fdc_seek(unsigned char t, unsigned char *track);
-unsigned char osd_fdc_step(int dir, unsigned char *track);
-unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt);
-unsigned char osd_fdc_put_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff, unsigned char ddam);
-unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff);
+#ifdef MAME_NET
+/* network */
+int osd_net_init(void);
+int osd_net_send(int player, unsigned char buf[], int *size);
+int osd_net_recv(int player, unsigned char buf[], int *size);
+int osd_net_sync(void);
+int osd_net_input_sync(void);
+int osd_net_exit(void);
+int osd_net_add_player(void);
+int osd_net_remove_player(int player);
+int osd_net_game_init(void);
+int osd_net_game_exit(void);
+#endif /* MAME_NET */
 
 #endif

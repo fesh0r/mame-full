@@ -173,9 +173,6 @@ int  spiders_vh_start(void);
 void spiders_vh_stop(void);
 void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void spiders_pia_2_w(int address, int data);
-int spiders_pia_2_r(int address);
-
 /* MACHINE */
 
 void spiders_init_machine(void);
@@ -192,9 +189,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0x8000, 0x9bff, MRA_RAM },	// Video ram 2
 //	{ 0x7800, 0x7fff, MRA_RAM },	// Stack space
         { 0xc001, 0xc001, crtc6845_register_r },
-	{ 0xc044, 0xc047, pia_1_r },
-	{ 0xc048, 0xc04b, spiders_pia_2_r },
-	{ 0xc050, 0xc053, pia_3_r },
+	{ 0xc044, 0xc047, pia_0_r },
+	{ 0xc048, 0xc04b, pia_1_r },
+	{ 0xc050, 0xc053, pia_2_r },
 	{ 0xc060, 0xc060, input_port_2_r },
 	{ 0xc080, 0xc080, input_port_3_r },
 	{ 0xc0a0, 0xc0a0, input_port_4_r },
@@ -211,9 +208,9 @@ static struct MemoryWriteAddress writemem[] =
 //	{ 0x7800, 0x7fff, MWA_RAM },
         { 0xc000, 0xc000, crtc6845_address_w },
         { 0xc001, 0xc001, crtc6845_register_w },
-	{ 0xc044, 0xc047, pia_1_w },
-	{ 0xc048, 0xc04b, spiders_pia_2_w },
-	{ 0xc050, 0xc053, pia_3_w },
+	{ 0xc044, 0xc047, pia_0_w },
+	{ 0xc048, 0xc04b, pia_1_w },
+	{ 0xc050, 0xc053, pia_2_w },
         { 0xc100, 0xffff, MWA_ROM },
         { -1 } /* end of table */
 };
@@ -223,15 +220,15 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-        { 0xe000, 0xffff, MRA_ROM },
-        { -1 }  /* end of table */
+	{ 0xf800, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-        { 0xe000, 0xffff, MWA_ROM },
-        { -1 }  /* end of table */
+	{ 0xf800, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
 };
 #endif
 
@@ -239,8 +236,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 INPUT_PORTS_START( spiders_input_ports )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", OSD_KEY_4, IP_JOY_NONE, 0 )
-    PORT_BITX(0x04, 0x00, IP_ACTIVE_HIGH , "PS3 (Coin Counter)", OSD_KEY_F1, IP_JOY_NONE, 0 )
+    PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", KEYCODE_4, IP_JOY_NONE )
+    PORT_BITX(0x04, 0x00, IP_ACTIVE_HIGH , "PS3 (Coin Counter)", KEYCODE_F1, IP_JOY_NONE )
     PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
     PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
     PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -252,7 +249,7 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_BIT( 0xF3, IP_ACTIVE_HIGH, IPT_UNUSED )
 
     PORT_START  /* DSW1 */
-    PORT_DIPNAME( 0x07, 0x07, "Coins/Credit", IP_KEY_NONE )
+    PORT_DIPNAME( 0x07, 0x07, "Coins/Credit" )
     PORT_DIPSETTING(    0x07, "1 COIN 1 PLAY" )
     PORT_DIPSETTING(    0x06, "4 COINS 5 PLAYS" )
     PORT_DIPSETTING(    0x04, "1 COIN 2 PLAYS" )
@@ -262,36 +259,36 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_BIT(0xf8, IP_ACTIVE_LOW,IPT_UNUSED)
 
     PORT_START  /* DSW2 */
-    PORT_DIPNAME( 0x03, 0x03, "Play mode", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, "Play mode" )
     PORT_DIPSETTING(    0x00, "A A'" )
     PORT_DIPSETTING(    0x01, "A B'" )
     PORT_DIPSETTING(    0x02, "B A'" )
     PORT_DIPSETTING(    0x03, "B B'" )
-    PORT_DIPNAME( 0x0c, 0x0c, "Spiders to complete belt", IP_KEY_NONE )
+    PORT_DIPNAME( 0x0c, 0x0c, "Spiders to complete belt" )
     PORT_DIPSETTING(    0x00, "14" )
     PORT_DIPSETTING(    0x04, "20" )
     PORT_DIPSETTING(    0x08, "26" )
     PORT_DIPSETTING(    0x0c, "16" )
-    PORT_DIPNAME( 0x10, 0x10, "Spare Guns", IP_KEY_NONE )
+    PORT_DIPNAME( 0x10, 0x10, "Spare Guns" )
     PORT_DIPSETTING(    0x00, "4" )
     PORT_DIPSETTING(    0x10, "3" )
-    PORT_DIPNAME( 0x60, 0x60, "Score for bonus gun", IP_KEY_NONE )
+    PORT_DIPNAME( 0x60, 0x60, "Score for bonus gun" )
     PORT_DIPSETTING(    0x00, "NONE" )
     PORT_DIPSETTING(    0x20, "20K" )
     PORT_DIPSETTING(    0x40, "25K" )
     PORT_DIPSETTING(    0x60, "15K" )
-    PORT_DIPNAME( 0x80, 0x00, "Giant Spiders", IP_KEY_NONE )
+    PORT_DIPNAME( 0x80, 0x00, "Giant Spiders" )
     PORT_DIPSETTING(    0x00, "First screen" )
     PORT_DIPSETTING(    0x80, "Every screen" )
 
     PORT_START  /* DSW3 */
-    PORT_DIPNAME( 0x01, 0x00, "Video Flip", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x01, "Flipped" )
-    PORT_DIPSETTING(    0x00, "Normal" )
-    PORT_DIPNAME( 0x02, 0x02, "Machine style", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x02, "Upright" )
-    PORT_DIPSETTING(    0x00, "Table" )
-    PORT_DIPNAME( 0x1c, 0x00, "Vertical Adjust", IP_KEY_NONE )
+    PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+    PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+    PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+    PORT_DIPNAME( 0x1c, 0x00, "Vertical Adjust" )
     PORT_DIPSETTING(    0x00, "0" )
     PORT_DIPSETTING(    0x04, "1" )
     PORT_DIPSETTING(    0x08, "2" )
@@ -300,7 +297,7 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_DIPSETTING(    0x14, "5" )
     PORT_DIPSETTING(    0x18, "6" )
     PORT_DIPSETTING(    0x1c, "7" )
-    PORT_DIPNAME( 0xe0, 0x00, "Horizontal Adjust", IP_KEY_NONE )
+    PORT_DIPNAME( 0xe0, 0x00, "Horizontal Adjust" )
     PORT_DIPSETTING(    0x00, "0" )
     PORT_DIPSETTING(    0x20, "1" )
     PORT_DIPSETTING(    0x40, "2" )
@@ -310,11 +307,11 @@ INPUT_PORTS_START( spiders_input_ports )
     PORT_DIPSETTING(    0xc0, "6" )
     PORT_DIPSETTING(    0xe0, "7" )
 
-    PORT_START      /* Connected to PIA2 CA1 input */
+    PORT_START      /* Connected to PIA1 CA1 input */
     PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_VBLANK )
 
-    PORT_START      /* Connected to PIA1 CB1 input */
-    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", OSD_KEY_F2, IP_JOY_NONE, 0 )
+    PORT_START      /* Connected to PIA0 CB1 input */
+    PORT_BITX(0xff, 0xff, IP_ACTIVE_LOW, "PS1 (Crosshatch)", KEYCODE_F2, IP_JOY_NONE )
 
 INPUT_PORTS_END
 
@@ -349,7 +346,7 @@ static struct MachineDriver machine_driver =
         },
 //        {
 //            CPU_M6802 | CPU_AUDIO_CPU,
-//            1500000,
+//            3000000/4,
 //            1,
 //            sound_readmem,sound_writemem,0,0,
 //            0,0,
@@ -381,43 +378,70 @@ static struct MachineDriver machine_driver =
 };
 
 
+
 ROM_START( spiders_rom )
 	ROM_REGION(0x10000)
-	ROM_LOAD( "SP1.BIN",    0x0c000, 0x1000, 0xffa06f9a )
-	ROM_LOAD( "SP2.BIN" ,   0x0d000, 0x1000, 0xf0cf54c9 )
-	ROM_LOAD( "SP3.BIN" ,   0x0e000, 0x1000, 0xa359ba35 )
-	ROM_LOAD( "SP4.BIN" ,   0x0f000, 0x1000, 0x6c38eeb8 )
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
+	ROM_LOAD( "sp-ic73",      0xd000, 0x1000, 0xd69b2f21 )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
+	ROM_LOAD( "sp-ic71",      0xf000, 0x1000, 0xa9539b18 )
 
-	ROM_REGION(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
 	/* empty memory region - not used by the game, but needed because the main */
 	/* core currently always frees region #1 after initialization. */
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
-	ROM_LOAD( "SP10B.BIN" , 0x0f000, 0x1000, 0xc86d8bc3 )
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
 
 	ROM_REGION(0x10000)     /* 64k graphics block */
-	ROM_LOAD( "SP5.BIN",    0x00000, 0x1000, 0xc21346b1 )
-	ROM_LOAD( "SP6.BIN" ,   0x01000, 0x1000, 0x95b93aad )
-	ROM_LOAD( "SP7.BIN" ,   0x02000, 0x1000, 0x0eddb719 )
-	ROM_LOAD( "SP8.BIN" ,   0x03000, 0x1000, 0xc7c4ec1c )
-	ROM_LOAD( "SP9A.BIN",   0x04000, 0x1000, 0xc108f776 )
-	ROM_LOAD( "SP10A.BIN" , 0x05000, 0x1000, 0xe72fe3e5 )
-	ROM_LOAD( "SP9B.BIN" ,  0x06000, 0x1000, 0x2750f0ee )
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
+ROM_END
+
+ROM_START( spiders2_rom )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "sp-ic74",      0xc000, 0x1000, 0x6a2578f6 )
+	ROM_LOAD( "sp2.bin",      0xd000, 0x1000, 0xcf71d12b )
+	ROM_LOAD( "sp-ic72",      0xe000, 0x1000, 0x464125da )
+	ROM_LOAD( "sp4.bin",      0xf000, 0x1000, 0xf3d126bb )
+
+	ROM_REGION_DISPOSE(0x1000)      /* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed because the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "sp-ic3",       0xf800, 0x0800, 0x944d761e )
+
+	ROM_REGION(0x10000)     /* 64k graphics block */
+	ROM_LOAD( "sp-ic33",      0x0000, 0x1000, 0xb6731baa )
+	ROM_LOAD( "sp-ic25",      0x1000, 0x1000, 0xbaec64e7 )
+	ROM_LOAD( "sp-ic24",      0x2000, 0x1000, 0xa40a5517 )
+	ROM_LOAD( "sp-ic23",      0x3000, 0x1000, 0x3ca08053 )
+	ROM_LOAD( "sp-ic22",      0x4000, 0x1000, 0x07ea073c )
+	ROM_LOAD( "sp-ic21",      0x5000, 0x1000, 0x41b344b4 )
+	ROM_LOAD( "sp-ic20",      0x6000, 0x1000, 0x4d37da5a )
 ROM_END
 
 
 
+/* this is a newer version with just one bug fix */
 struct GameDriver spiders_driver =
 {
 	__FILE__,
 	0,
 	"spiders",
-	"Spiders",
+	"Spiders (set 1)",
 	"1981",
-	"Sigma",
+	"Sigma Ent. Inc.",
 	"Keith Wilkins",
 	0,
 	&machine_driver,
+	0,
 
 	spiders_rom,
 	0, 0,
@@ -432,3 +456,28 @@ struct GameDriver spiders_driver =
 	0,0
 };
 
+struct GameDriver spiders2_driver =
+{
+	__FILE__,
+	&spiders_driver,
+	"spiders2",
+	"Spiders (set 2)",
+	"1981",
+	"Sigma Ent. Inc.",
+	"Keith Wilkins",
+	0,
+	&machine_driver,
+	0,
+
+	spiders2_rom,
+	0, 0,
+	0,
+	0,
+
+	spiders_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_270,
+
+	0,0
+};

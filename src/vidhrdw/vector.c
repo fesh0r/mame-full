@@ -28,6 +28,9 @@
  *
  **************************************************************************** */
 
+/* GLmame and FXmame provide their own vector implementations */
+#if !(defined xgl) && !(defined xfx) && !(defined svgafx)
+
 #include <math.h>
 #include "osinline.h"
 #include "driver.h"
@@ -44,11 +47,14 @@ int vectorram_size;
 int antialias;                            /* flag for anti-aliasing */
 int beam;                                 /* size of vector beam    */
 int flicker;                              /* beam flicker value     */
+int translucency;
 
-static int beam_diameter_is_one = 0;      /* flag that beam is one pixel wide */
+static int beam_diameter_is_one;		  /* flag that beam is one pixel wide */
 
 static int vector_scale_x;                /* scaling to screen */
 static int vector_scale_y;                /* scaling to screen */
+
+static float gamma_correction = 1.2;
 
 /* The vectices are buffered here */
 typedef struct
@@ -167,6 +173,25 @@ static unsigned char find_color(unsigned char r,unsigned char g,unsigned char b)
 	return(bi);
 }
 
+/* MLR 990316 new gamma handling added */
+void vector_set_gamma(float _gamma)
+{
+	int i, h;
+
+	gamma_correction = _gamma;
+
+	for (i=0; i<256; i++)
+	{
+		h = 255.0*pow(i/255.0, 1.0/gamma_correction);
+		if( h > 255) h = 255;
+		Tgamma[i] = Tgammar[255-i] = h;
+	}
+}
+
+float vector_get_gamma(void)
+{
+	return gamma_correction;
+}
 
 /*
  * Initializes vector game video emulation
@@ -176,10 +201,18 @@ int vector_vh_start (void)
 {
 	int h,i,j,k,c[3];
 
+	/* Grab the settings for this session */
+	antialias = options.antialias;
+	translucency = options.translucency;
+	flicker = options.flicker;
+	beam = options.beam;
+
 	if (beam == 0x00010000)
 		beam_diameter_is_one = 1;
+	else
+		beam_diameter_is_one = 0;
 
-	p_index=0;
+	p_index = 0;
 
 	new_index = 0;
 	old_index = 0;
@@ -228,15 +261,14 @@ int vector_vh_start (void)
 	/* build merge color table */
 	for( i=0; i<256 ;i++ )                /* color1 */
 	{
+		unsigned char rgb1[3],rgb2[3];
+		osd_get_pen(i,&rgb1[0],&rgb1[1],&rgb1[2]);
 		for( j=0; j<=i ;j++ )               /* color2 */
 		{
-			unsigned char rgb1[3],rgb2[3];
-			osd_get_pen(i,&rgb1[0],&rgb1[1],&rgb1[2]);
 			osd_get_pen(j,&rgb2[0],&rgb2[1],&rgb2[2]);
 
 			for (k=0; k<3; k++)
-
-#if TRANSLUCENCY /* add gun values */
+			if (translucency) /* add gun values */
 			{
 				int tmp;
 				tmp = rgb1[k] + rgb2[k];
@@ -245,25 +277,20 @@ int vector_vh_start (void)
 				else
 					c[k] = tmp;
 			}
-#else /* choose highest gun value */
+			else /* choose highest gun value */
 			{
 				if (rgb1[k] > rgb2[k])
 					c[k] = rgb1[k];
 				else
 					c[k] = rgb2[k];
 			}
-#endif
 			Tmerge(i,j) = Tmerge(j,i) = find_color(c[0],c[1],c[2]);
 		}
 	}
 
 	/* build gamma correction table */
-	for (i=0; i<256; i++)
-	{
-		h = i + (i>>2);
-		if( h > 255) h = 255;
-		Tgamma[i] = Tgammar[255-i] = h;
-	}
+	vector_set_gamma (gamma_correction);
+
 
 	return 0;
 }
@@ -757,7 +784,6 @@ static void clever_mark_dirty (void)
 	}
 }
 
-
 void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
@@ -807,9 +833,233 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		else
 		{
 			new->arg1 = p_index;
-			vector_draw_to (new->x, new->y, new->col, new->intensity, new->status);
+			vector_draw_to (new->x, new->y, new->col, Tgamma[new->intensity], new->status);
+
 			new->arg2 = p_index;
 		}
 		new++;
 	}
 }
+
+/*********************************************************************
+  Artwork functions.
+ *********************************************************************/
+
+/*********************************************************************
+  Restore the old bitmap with the artwork (backdrop or overlay).
+  MLR 100598
+ *********************************************************************/
+
+static void vector_restore_artwork (struct osd_bitmap *bitmap, struct artwork *a)
+{
+	int i, x, y;
+	struct osd_bitmap *artwork = NULL;
+
+	artwork = a->artwork;
+
+	for (i=p_index-1; i>=0; i--)
+	{
+		x = pixel[i] >> 16;
+		y = pixel[i] & 0x0000ffff;
+		bitmap->line[y][x] = artwork->line[y][x];
+	}
+}
+
+static void vector_restore_overlay_backdrop (struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b)
+{
+	int i, x, y;
+	struct osd_bitmap *overlay = o->artwork;
+	struct osd_bitmap *orig = o->orig_artwork;
+	struct osd_bitmap *backdrop = b->artwork;
+	int num_pens_trans = o->num_pens_trans;
+
+	for (i=p_index-1; i>=0; i--)
+	{
+		x = pixel[i] >> 16;
+		y = pixel[i] & 0x0000ffff;
+		bitmap->line[y][x]=orig->line[y][x]<num_pens_trans?backdrop->line[y][x]:overlay->line[y][x];
+	}
+}
+
+/*********************************************************************
+  Update the vector screen with a backdrop behind it. This should be
+  in artwork.c but then lots of statics would need to be changed here.
+  This is almost a 1:1 copy of vector_vh_update()
+  MLR 081598
+ *********************************************************************/
+
+void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+{
+	int i;
+	int temp_x, temp_y;
+	point *new;
+
+	if (full_refresh)
+	{
+		copybitmap(bitmap, a->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
+		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+	}
+
+	/* copy parameters */
+	vecbitmap = bitmap;
+	vecwidth  = bitmap->width;
+	vecheight = bitmap->height;
+
+	/* setup scaling */
+	temp_x = (1<<(44-vecshift)) / (Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x);
+	temp_y = (1<<(44-vecshift)) / (Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y);
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		vector_scale_x = temp_x * vecheight;
+		vector_scale_y = temp_y * vecwidth;
+	}
+	else
+	{
+		vector_scale_x = temp_x * vecwidth;
+		vector_scale_y = temp_y * vecheight;
+	}
+
+	/* reset clipping area */
+	xmin = 0; xmax = vecwidth; ymin = 0; ymax = vecheight;
+
+	/* next call to vector_clear_list() is allowed to swap the lists */
+	vector_runs = 0;
+
+	/* mark pixels which are not idential in newlist and oldlist dirty */
+	/* the old pixels which get removed are marked dirty immediately,  */
+	/* new pixels are recognized by setting new->dirty                 */
+	clever_mark_dirty();
+
+	/* clear ALL pixels in the hidden map */
+	vector_restore_artwork(bitmap, a);
+	p_index=0;
+
+	/* Draw ALL lines into the hidden map. Mark only those lines with */
+	/* new->dirty = 1 as dirty. Remember the pixel start/end indices  */
+	new = new_list;
+	for (i = 0; i < new_index; i++)
+	{
+		if (new->status == VCLIP)
+			vector_set_clip (new->x, new->y, new->arg1, new->arg2);
+		else
+		{
+			new->arg1 = p_index;
+			vector_draw_to (new->x, new->y, new->col, Tgamma[new->intensity], new->status);
+
+			new->arg2 = p_index;
+		}
+		new++;
+	}
+}
+
+/*********************************************************************
+  vector_vh_update_overlay
+
+  This draws a vector screen with overlay.
+
+  First the overlay art is restored. Then the new vector screen
+  is recalculated with vector_vh_update. The changed pixels are
+  then merged with the overlay. This is only needed for real
+  overlays (Vectrex and Cinematronics).
+ *********************************************************************/
+void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int full_refresh)
+{
+	int i, x, y, pen;
+	unsigned int coords;
+
+	struct osd_bitmap *orig = a->orig_artwork;
+	struct osd_bitmap *vector_bitmap = a->vector_bitmap;
+	int num_pens_trans = a->num_pens_trans;
+	unsigned char *brightness = a->brightness;
+	unsigned char *pTable = a->pTable;
+
+	/* copy parameters */
+	vecbitmap = bitmap;
+	vecwidth  = bitmap->width;
+	vecheight = bitmap->height;
+
+	if (full_refresh)
+	{
+		copybitmap(bitmap, a->artwork ,0,0,0,0,NULL,TRANSPARENCY_NONE,0);
+		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+	}
+
+	if (pixel)
+		vector_restore_artwork(bitmap, a);
+
+	vector_vh_update(vector_bitmap, full_refresh);
+
+	/* Now we alpha blend the overlay with the vector bitmap.
+	 * (just the modyfied pixels) */
+
+	for (i=p_index-1; i>=0; i--)
+	{
+		coords = pixel[i];
+		x = coords >> 16;
+		y = coords & 0x0000ffff;
+		pen = orig->line[y][x];
+
+		if (pen < num_pens_trans)
+			bitmap->line[y][x] = pTable[pen*256+brightness[vector_bitmap->line[y][x]]];
+	}
+}
+
+/*********************************************************************
+  vector_vh_update_artwork
+
+  This draws a vector screen with overlay and backdrop.
+
+  First the overlay art is restored. Then the new vector screen
+  is recalculated with vector_vh_update. The changed pixels are
+  then merged with the overlay and backdrop.
+ *********************************************************************/
+void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh)
+{
+	int i, x, y, pen;
+	unsigned int coords;
+
+	struct osd_bitmap *overlay = o->artwork;
+	struct osd_bitmap *orig = o->orig_artwork;
+	struct osd_bitmap *vector_bitmap = o->vector_bitmap;
+	int num_pens_trans = o->num_pens_trans;
+	unsigned char *brightness = o->brightness;
+	unsigned char *pTable = o->pTable;
+
+	/* copy parameters */
+	vecbitmap = bitmap;
+	vecwidth  = bitmap->width;
+	vecheight = bitmap->height;
+
+	if (pixel && !full_refresh)
+		vector_restore_overlay_backdrop(bitmap,o,b);
+
+	/* When this is called for the first time we have to copy the whole bitmap. */
+	/* We don't care for different levels of transparency, just opaque or not. */
+	else
+	{
+		for (y=0; y<bitmap->height; y++)
+			for (x=0; x<bitmap->width; x++)
+				bitmap->line[y][x]=orig->line[y][x]<num_pens_trans?
+					b->artwork->line[y][x]:overlay->line[y][x];
+
+		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+	}
+
+	vector_vh_update(vector_bitmap, full_refresh);
+
+	/* Now we alpha blend the overlay with the vector bitmap.
+	 * (just the modyfied pixels) */
+
+	for (i=p_index-1; i>=0; i--)
+	{
+		coords = pixel[i];
+		x = coords >> 16;
+		y = coords & 0x0000ffff;
+		pen = orig->line[y][x];
+
+		if (pen < num_pens_trans)
+			bitmap->line[y][x] = pTable[pen*256+brightness[vector_bitmap->line[y][x]]];
+	}
+}
+
+#endif /* if !(defined xgl) && !(defined xfx) && !(defined svgafx) */

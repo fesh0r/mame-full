@@ -154,7 +154,7 @@ void asteroid_sounds_w(int offset,int data);
 void astdelux_sounds_w(int offset,int data);
 void llander_sounds_w(int offset,int data);
 void llander_snd_reset_w(int offset,int data);
-int llander_sh_start(void);
+int llander_sh_start(const struct MachineSound *msound);
 void llander_sh_stop(void);
 void llander_sh_update(void);
 
@@ -167,6 +167,11 @@ int asteroid_catch_busyloop(int offset);
 
 int llander_zeropage_r (int offset);
 void llander_zeropage_w (int offset, int data);
+
+void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+int llander_start(void);
+void llander_stop(void);
+void llander_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static struct MemoryReadAddress asteroid_readmem[] =
 {
@@ -275,11 +280,9 @@ INPUT_PORTS_START ( asteroid_input_ports )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BITX ( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BITX ( 0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING ( 0x00, "Off" )
-	PORT_DIPSETTING ( 0x80, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START /* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -289,31 +292,31 @@ INPUT_PORTS_START ( asteroid_input_ports )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW1 */
-	PORT_DIPNAME ( 0x03, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "English" )
-	PORT_DIPSETTING (    0x01, "German" )
-	PORT_DIPSETTING (    0x02, "French" )
-	PORT_DIPSETTING (    0x03, "Spanish" )
-	PORT_DIPNAME ( 0x04, 0x00, "Ships", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "4" )
-	PORT_DIPSETTING (    0x04, "3" )
-	PORT_DIPNAME ( 0x08, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x08, "On" )
-	PORT_DIPNAME ( 0x10, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x10, "On" )
-	PORT_DIPNAME ( 0x20, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Off" )
-	PORT_DIPSETTING (    0x20, "On" )
-	PORT_DIPNAME ( 0xc0, 0x80, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Free Play" )
-	PORT_DIPSETTING (    0x40, "1 Coin / 2 Plays" )
-	PORT_DIPSETTING (    0x80, "1 Coin / 1 Play" )
-	PORT_DIPSETTING (    0xc0, "2 Coins / 1 Play" )
+	PORT_DIPNAME( 0x03, 0x00, "Language" )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "German" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING (   0x04, "3" )
+	PORT_DIPSETTING (   0x00, "4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( astdelux_input_ports )
@@ -325,11 +328,9 @@ INPUT_PORTS_START ( astdelux_input_ports )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BITX ( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX ( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BITX ( 0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING ( 0x00, "Off" )
-	PORT_DIPSETTING ( 0x80, "On" )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START /* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -339,149 +340,145 @@ INPUT_PORTS_START ( astdelux_input_ports )
 	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW 1 */
-	PORT_DIPNAME ( 0x03, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "English" )
-	PORT_DIPSETTING (    0x01, "German" )
-	PORT_DIPSETTING (    0x02, "French" )
-	PORT_DIPSETTING (    0x03, "Spanish" )
-	PORT_DIPNAME ( 0x0c, 0x04, "Ships", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "2-4" )
-	PORT_DIPSETTING (    0x04, "3-5" )
-	PORT_DIPSETTING (    0x08, "4-6" )
-	PORT_DIPSETTING (    0x0c, "5-7" )
-	PORT_DIPNAME ( 0x10, 0x00, "Minimum plays", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "1" )
-	PORT_DIPSETTING (    0x10, "2" )
-	PORT_DIPNAME ( 0x20, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Hard" )
-	PORT_DIPSETTING (    0x20, "Easy" )
-	PORT_DIPNAME ( 0xc0, 0x00, "Bonus ship", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "10000" )
-	PORT_DIPSETTING (    0x40, "12000" )
-	PORT_DIPSETTING (    0x80, "15000" )
-	PORT_DIPSETTING (    0xc0, "None" )
+	PORT_DIPNAME( 0x03, 0x00, "Language" )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x01, "German" )
+	PORT_DIPSETTING (   0x02, "French" )
+	PORT_DIPSETTING (   0x03, "Spanish" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING (   0x00, "2-4" )
+	PORT_DIPSETTING (   0x04, "3-5" )
+	PORT_DIPSETTING (   0x08, "4-6" )
+	PORT_DIPSETTING (   0x0c, "5-7" )
+	PORT_DIPNAME( 0x10, 0x00, "Minimum plays" )
+	PORT_DIPSETTING (   0x00, "1" )
+	PORT_DIPSETTING (   0x10, "2" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (   0x00, "Hard" )
+	PORT_DIPSETTING (   0x20, "Easy" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (   0x00, "10000" )
+	PORT_DIPSETTING (   0x40, "12000" )
+	PORT_DIPSETTING (   0x80, "15000" )
+	PORT_DIPSETTING (   0xc0, "None" )
 
 	PORT_START /* DSW 2 */
-	PORT_DIPNAME ( 0x03, 0x01, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "2 Coins / 1 Play" )
-	PORT_DIPSETTING (    0x01, "1 Coin / 1 Play" )
-	PORT_DIPSETTING (    0x02, "1 Coin / 2 Plays" )
-	PORT_DIPSETTING (    0x03, "Free Play" )
-	PORT_DIPNAME ( 0x0c, 0x0c, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "*6" )
-	PORT_DIPSETTING (    0x04, "*5" )
-	PORT_DIPSETTING (    0x08, "*4" )
-	PORT_DIPSETTING (    0x0c, "*1" )
-	PORT_DIPNAME ( 0x10, 0x10, "Center Coin", IP_KEY_NONE)
-	PORT_DIPSETTING (    0x00, "*2" )
-	PORT_DIPSETTING (    0x10, "*1" )
-	PORT_DIPNAME ( 0xe0, 0x80, "Bonus Coins", IP_KEY_NONE)
-	PORT_DIPSETTING (    0x60, "1 each 5" )
-	PORT_DIPSETTING (    0x80, "2 each 4" )
-	PORT_DIPSETTING (    0xa0, "1 each 4" )
-	PORT_DIPSETTING (    0xc0, "1 each 2" )
-	PORT_DIPSETTING (    0xe0, "None" )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x03, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin" )
+	PORT_DIPSETTING (   0x00, "*6" )
+	PORT_DIPSETTING (   0x04, "*5" )
+	PORT_DIPSETTING (   0x08, "*4" )
+	PORT_DIPSETTING (   0x0c, "*1" )
+	PORT_DIPNAME( 0x10, 0x10, "Center Coin" )
+	PORT_DIPSETTING (   0x00, "*2" )
+	PORT_DIPSETTING (   0x10, "*1" )
+	PORT_DIPNAME( 0xe0, 0x80, "Bonus Coins" )
+	PORT_DIPSETTING (   0x60, "1 each 5" )
+	PORT_DIPSETTING (   0x80, "2 each 4" )
+	PORT_DIPSETTING (   0xa0, "1 each 4" )
+	PORT_DIPSETTING (   0xc0, "1 each 2" )
+	PORT_DIPSETTING (   0xe0, "None" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( llander_input_ports )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX ( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING ( 0x02, "Off" )
-	PORT_DIPSETTING ( 0x00, "On" )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
 	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
 	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START /* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 
 	PORT_START /* DSW1 */
-	PORT_DIPNAME ( 0x03, 0x01, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "*1" )
-	PORT_DIPSETTING (    0x01, "*4" )
-	PORT_DIPSETTING (    0x02, "*5" )
-	PORT_DIPSETTING (    0x03, "*6" )
-	PORT_DIPNAME ( 0x0c, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "English" )
-	PORT_DIPSETTING (    0x04, "French" )
-	PORT_DIPSETTING (    0x08, "Spanish" )
-	PORT_DIPSETTING (    0x0c, "German" )
-	PORT_DIPNAME ( 0x20, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Normal" )
-	PORT_DIPSETTING (    0x20, "Free Play" )
-	PORT_DIPNAME ( 0xd0, 0x80, "Fuel units", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "450" )
-	PORT_DIPSETTING (    0x10, "1100" )
-	PORT_DIPSETTING (    0x40, "600" )
-	PORT_DIPSETTING (    0x50, "1300" )
-	PORT_DIPSETTING (    0x80, "750" )
-	PORT_DIPSETTING (    0x90, "1550" )
-	PORT_DIPSETTING (    0xc0, "900" )
-	PORT_DIPSETTING (    0xd0, "1800" )
+	PORT_DIPNAME( 0x03, 0x01, "Right Coin" )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x01, "*4" )
+	PORT_DIPSETTING (   0x02, "*5" )
+	PORT_DIPSETTING (   0x03, "*6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Language" )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x04, "French" )
+	PORT_DIPSETTING (   0x08, "Spanish" )
+	PORT_DIPSETTING (   0x0c, "German" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x00, "Normal" )
+	PORT_DIPSETTING (   0x20, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xd0, 0x80, "Fuel units" )
+	PORT_DIPSETTING (   0x00, "450" )
+	PORT_DIPSETTING (   0x40, "600" )
+	PORT_DIPSETTING (   0x80, "750" )
+	PORT_DIPSETTING (   0xc0, "900" )
+	PORT_DIPSETTING (   0x10, "1100" )
+	PORT_DIPSETTING (   0x50, "1300" )
+	PORT_DIPSETTING (   0x90, "1550" )
+	PORT_DIPSETTING (   0xd0, "1800" )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START ( llander1_input_ports )
 	PORT_START /* IN0 */
 	/* Bit 0 is VG_HALT, handled in the machine dependant part */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX ( 0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING ( 0x02, "Off" )
-	PORT_DIPSETTING ( 0x00, "On" )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_TILT )
 	/* Of the rest, Bit 6 is the 3KHz source. 3,4 and 5 are unknown */
 	PORT_BIT ( 0x78, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX (0x80, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START /* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0 )
+	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_START2, "Select Game", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, "Abort", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 
 	PORT_START /* DSW1 */
-	PORT_DIPNAME ( 0x03, 0x01, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "*1" )
-	PORT_DIPSETTING (    0x01, "*4" )
-	PORT_DIPSETTING (    0x02, "*5" )
-	PORT_DIPSETTING (    0x03, "*6" )
-	PORT_DIPNAME ( 0x0c, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "English" )
-	PORT_DIPSETTING (    0x04, "French" )
-	PORT_DIPSETTING (    0x08, "Spanish" )
-	PORT_DIPSETTING (    0x0c, "German" )
-	PORT_DIPNAME ( 0x10, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "Normal" )
-	PORT_DIPSETTING (    0x10, "Free Play" )
-	PORT_DIPNAME ( 0xc0, 0x80, "Fuel units", IP_KEY_NONE )
-	PORT_DIPSETTING (    0x00, "450" )
-	PORT_DIPSETTING (    0x40, "600" )
-	PORT_DIPSETTING (    0x80, "750" )
-	PORT_DIPSETTING (    0xc0, "900" )
+	PORT_DIPNAME( 0x03, 0x01, "Right Coin" )
+	PORT_DIPSETTING (   0x00, "*1" )
+	PORT_DIPSETTING (   0x01, "*4" )
+	PORT_DIPSETTING (   0x02, "*5" )
+	PORT_DIPSETTING (   0x03, "*6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Language" )
+	PORT_DIPSETTING (   0x00, "English" )
+	PORT_DIPSETTING (   0x04, "French" )
+	PORT_DIPSETTING (   0x08, "Spanish" )
+	PORT_DIPSETTING (   0x0c, "German" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x00, "Normal" )
+	PORT_DIPSETTING (   0x10, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xc0, 0x80, "Fuel units" )
+	PORT_DIPSETTING (   0x00, "450" )
+	PORT_DIPSETTING (   0x40, "600" )
+	PORT_DIPSETTING (   0x80, "750" )
+	PORT_DIPSETTING (   0xc0, "900" )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 10, 0, 0, 255, KEYCODE_UP, KEYCODE_DOWN, JOYCODE_1_UP, JOYCODE_1_DOWN )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -593,7 +590,8 @@ static void asteroid_hisave(void)
 
 static struct Samplesinterface asteroid_samples_interface =
 {
-	7	/* 7 channels */
+	7,	/* 7 channels */
+	25	/* volume */
 };
 
 static struct MachineDriver asteroid_machine_driver =
@@ -640,7 +638,7 @@ static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
 	1500000,	/* 1.5 MHz??? */
-	255,
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -658,7 +656,8 @@ static struct POKEYinterface pokey_interface =
 
 static struct Samplesinterface astdelux_samples_interface =
 {
-	3	/* 3 channels */
+	3,	/* 3 channels */
+	25	/* volume */
 };
 
 
@@ -733,13 +732,13 @@ static struct MachineDriver llander_machine_driver =
 	400, 300, { 0, 1050, 0, 900 },
 	gfxdecodeinfo,
 	256, 256,
-	avg_init_colors,
+	llander_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	dvg_start,
-	dvg_stop,
-	dvg_screenrefresh,
+	llander_start,
+	llander_stop,
+	llander_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -760,38 +759,38 @@ static struct MachineDriver llander_machine_driver =
 static const char *asteroid_sample_names[] =
 {
 	"*asteroid",
-	"explode1.sam",
-	"explode2.sam",
-	"explode3.sam",
-	"thrust.sam",
-	"thumphi.sam",
-	"thumplo.sam",
-	"fire.sam",
-	"lsaucer.sam",
-	"ssaucer.sam",
-	"sfire.sam",
-	"life.sam",
+	"explode1.wav",
+	"explode2.wav",
+	"explode3.wav",
+	"thrust.wav",
+	"thumphi.wav",
+	"thumplo.wav",
+	"fire.wav",
+	"lsaucer.wav",
+	"ssaucer.wav",
+	"sfire.wav",
+	"life.wav",
     0	/* end of array */
 };
 
 ROM_START( asteroi1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.01", 0x6800, 0x0800, 0xd84a7878 )
-	ROM_LOAD( "035144.01", 0x7000, 0x0800, 0x15f39999 )
-	ROM_LOAD( "035143.01", 0x7800, 0x0800, 0x93d25050 )
+	ROM_LOAD( "035145.01",    0x6800, 0x0800, 0xe9bfda64 )
+	ROM_LOAD( "035144.01",    0x7000, 0x0800, 0xe53c28a9 )
+	ROM_LOAD( "035143.01",    0x7800, 0x0800, 0x7d4e3d05 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.01", 0x5000, 0x0800, 0xa144e0e0 )
+	ROM_LOAD( "035127.01",    0x5000, 0x0800, 0x99699366 )
 ROM_END
 
 ROM_START( asteroid_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "035145.02", 0x6800, 0x0800, 0x8de50d0d )
-	ROM_LOAD( "035144.02", 0x7000, 0x0800, 0xa0dbd7d7 )
-	ROM_LOAD( "035143.02", 0x7800, 0x0800, 0x0454f0f0 )
+	ROM_LOAD( "035145.02",    0x6800, 0x0800, 0x0cc75459 )
+	ROM_LOAD( "035144.02",    0x7000, 0x0800, 0x096ed35c )
+	ROM_LOAD( "035143.02",    0x7800, 0x0800, 0x312caa02 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "035127.02", 0x5000, 0x0800, 0xed041c1c )
+	ROM_LOAD( "035127.02",    0x5000, 0x0800, 0x8b71fd9e )
 ROM_END
 
 
@@ -807,6 +806,7 @@ struct GameDriver asteroid_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
+	0,
 
 	asteroid_rom,
 	0, 0,
@@ -832,6 +832,7 @@ struct GameDriver asteroi1_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
+	0,
 
 	asteroi1_rom,
 	0, 0,
@@ -848,38 +849,36 @@ struct GameDriver asteroi1_driver =
 
 ROM_START( astdelux_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.02", 0x6000, 0x0800, 0x4eb73d37 )
-	ROM_LOAD( "036431.02", 0x6800, 0x0800, 0x859ee29c )
-	ROM_LOAD( "036432.02", 0x7000, 0x0800, 0x49c7b38d )
-	ROM_LOAD( "036433.03", 0x7800, 0x0800, 0x39b00100 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036430.02",    0x6000, 0x0800, 0xa4d7a525 )
+	ROM_LOAD( "036431.02",    0x6800, 0x0800, 0xd4004aae )
+	ROM_LOAD( "036432.02",    0x7000, 0x0800, 0x6d720c41 )
+	ROM_LOAD( "036433.03",    0x7800, 0x0800, 0x0dcc0be6 )
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.02", 0x4800, 0x0800, 0x6ea4e6c6 )
-	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
+	ROM_LOAD( "036800.02",    0x4800, 0x0800, 0xbb8cabe1 )
+	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
-/* 036433.02 with the checksum below is _broken_! */
-/* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e )
-	ROM_LOAD( "036431.01", 0x6800, 0x0800, 0x2d01a733 )
-	ROM_LOAD( "036432.01", 0x7000, 0x0800, 0xf432f48a )
-	ROM_LOAD( "036433.02", 0x7800, 0x0800, 0x8c188eea )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
+	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
+	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0xfdea913c )
+	ROM_LOAD( "036433.02",    0x7800, 0x0800, 0xd8db74e3 )
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 )
-	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
+	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x3b597407 )
+	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
 
 
 static const char *astdelux_sample_names[] =
 {
-	"explode1.sam",
-	"explode2.sam",
-	"explode3.sam",
-	"thrust.sam",
+	"explode1.wav",
+	"explode2.wav",
+	"explode3.wav",
+	"thrust.wav",
 	0
 };
 
@@ -891,9 +890,10 @@ struct GameDriver astdelux_driver =
 	"Asteroids Deluxe (rev 2)",
 	"1980",
 	"Atari",
-	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
+	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM"Peter Hirschberg (backdrop)\nMathis Rosenhauer (backdrop support)",
 	0,
 	&astdelux_machine_driver,
+	0,
 
 	astdelux_rom,
 	0, 0,
@@ -908,7 +908,6 @@ struct GameDriver astdelux_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-/* the REV 1 romset floating around is broken */
 struct GameDriver astdelu1_driver =
 {
 	__FILE__,
@@ -920,6 +919,7 @@ struct GameDriver astdelu1_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&astdelux_machine_driver,
+	0,
 
 	astdelu1_rom,
 	0, 0,
@@ -934,36 +934,35 @@ struct GameDriver astdelu1_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
+
 ROM_START( llander_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "034572.02", 0x6000, 0x0800, 0xee299da1 )
-	ROM_LOAD( "034571.02", 0x6800, 0x0800, 0xed92222e )
-	ROM_LOAD( "034570.02", 0x7000, 0x0800, 0xfe8b233f )
-	ROM_LOAD( "034569.02", 0x7800, 0x0800, 0x5cdbe9e5 )
+	ROM_LOAD( "034572.02",    0x6000, 0x0800, 0xb8763eea )
+	ROM_LOAD( "034571.02",    0x6800, 0x0800, 0x77da4b2f )
+	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )
+	ROM_LOAD( "034569.02",    0x7800, 0x0800, 0x72837a4e )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
-	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	ROM_LOAD( "034599.01",    0x4800, 0x0800, 0x355a9371 )
+	ROM_LOAD( "034598.01",    0x5000, 0x0800, 0x9c4ffa68 )
 	/* This _should_ be the rom for international versions. */
-	/* Unfortunately, is it not currently available. We use */
-	/* a fake one. */
-	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+	/* Unfortunately, is it not currently available. */
+	ROM_LOAD( "034597.01",    0x5800, 0x0800, 0x00000000 )
 ROM_END
 
 ROM_START( llander1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "034572.01", 0x6000, 0x0800, 0x7b348ab6 )
-	ROM_LOAD( "034571.01", 0x6800, 0x0800, 0xc0ffbbb7 )
-	ROM_LOAD( "034570.01", 0x7000, 0x0800, 0xfe8b233f )
-	ROM_LOAD( "034569.01", 0x7800, 0x0800, 0xac0dcbc7 )
+	ROM_LOAD( "034572.01",    0x6000, 0x0800, 0x2aff3140 )
+	ROM_LOAD( "034571.01",    0x6800, 0x0800, 0x493e24b7 )
+	ROM_LOAD( "034570.01",    0x7000, 0x0800, 0x2724e591 )
+	ROM_LOAD( "034569.01",    0x7800, 0x0800, 0xb11a7d01 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
-	ROM_LOAD( "034599.01", 0x4800, 0x0800, 0x9e7084de )
-	ROM_LOAD( "034598.01", 0x5000, 0x0800, 0xd006607c )
+	ROM_LOAD( "034599.01",    0x4800, 0x0800, 0x355a9371 )
+	ROM_LOAD( "034598.01",    0x5000, 0x0800, 0x9c4ffa68 )
 	/* This _should_ be the rom for international versions. */
-	/* Unfortunately, is it not currently available. We use */
-	/* a fake one. */
-	ROM_LOAD( "034597.01", 0x5800, 0x0800, 0xfc000000 )
+	/* Unfortunately, is it not currently available. */
+	ROM_LOAD( "034597.01",    0x5800, 0x0800, 0x00000000 )
 ROM_END
 
 struct GameDriver llander_driver =
@@ -977,6 +976,7 @@ struct GameDriver llander_driver =
 	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
 	0,
 	&llander_machine_driver,
+	0,
 
 	llander_rom,
 	0, 0,
@@ -1002,6 +1002,7 @@ struct GameDriver llander1_driver =
 	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
 	0,
 	&llander_machine_driver,
+	0,
 
 	llander1_rom,
 	0, 0,

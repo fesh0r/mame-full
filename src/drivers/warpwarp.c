@@ -112,44 +112,88 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( warpwarp_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x0c, "5" )
 	/* TODO: The bonus setting changes for 5 lives */
-	PORT_DIPNAME( 0x30, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "8000 30000" )
 	PORT_DIPSETTING(    0x10, "10000 40000" )
 	PORT_DIPSETTING(    0x20, "15000 60000" )
 	PORT_DIPSETTING(    0x30, "None" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "High Score Initials", IP_KEY_NONE ) /* Probably unused */
-	PORT_DIPSETTING(    0x80, "No" )
-	PORT_DIPSETTING(    0x00, "Yes" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	/*when level selection is On, press 1 to increase level */
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Level Selection", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* FAKE - used by input_controller_r to simulate an analog stick */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+INPUT_PORTS_END
+
+/* has High Score Initials dip switch instead of rack test */
+INPUT_PORTS_START( warpwarr_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	/* TODO: The bonus setting changes for 5 lives */
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "8000 30000" )
+	PORT_DIPSETTING(    0x10, "10000 40000" )
+	PORT_DIPSETTING(    0x20, "15000 60000" )
+	PORT_DIPSETTING(    0x30, "None" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "High Score Initials" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 
 	PORT_START      /* FAKE - used by input_controller_r to simulate an analog stick */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -234,13 +278,37 @@ static struct MachineDriver machine_driver =
 
 
 
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
 ROM_START( warpwarp_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "warp_2r.bin",  0x0000, 0x1000, 0x9a51d92b )
-	ROM_LOAD( "warp_2m.bin",  0x1000, 0x1000, 0xdeb96ecf )
-	ROM_LOAD( "warp_1p.bin",  0x2000, 0x1000, 0x30ad0f77 )
-	ROM_LOAD( "warp_1t.bin",  0x3000, 0x0800, 0x3426c0b0 )
-	ROM_LOAD( "warp_s12.bin", 0x4800, 0x0800, 0xb0468bf8 )
+	ROM_LOAD( "g-n9601n.2r",  0x0000, 0x1000, 0xf5262f38 )
+	ROM_LOAD( "g-09602n.2m",  0x1000, 0x1000, 0xde8355dd )
+	ROM_LOAD( "g-09603n.1p",  0x2000, 0x1000, 0xbdd1dec5 )
+	ROM_LOAD( "g-09613n.1t",  0x3000, 0x0800, 0xaf3d77ef )
+	ROM_LOAD( "g-9611n.4c",   0x4800, 0x0800, 0x380994c8 )
+ROM_END
+
+ROM_START( warpwarr_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
+	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
+	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
+	ROM_LOAD( "g-09613.1t",   0x3000, 0x0800, 0x60a67e76 )
+	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
+ROM_END
+
+ROM_START( warpwar2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "g-09601.2r",   0x0000, 0x1000, 0x916ffa35 )
+	ROM_LOAD( "g-09602.2m",   0x1000, 0x1000, 0x398bb87b )
+	ROM_LOAD( "g-09603.1p",   0x2000, 0x1000, 0x6b962fc4 )
+	ROM_LOAD( "g-09612.1t",   0x3000, 0x0800, 0xb91e9e79 )
+	ROM_LOAD( "g-9611.4c",    0x4800, 0x0800, 0x00e6a326 )
 ROM_END
 
 
@@ -287,19 +355,72 @@ struct GameDriver warpwarp_driver =
 	__FILE__,
 	0,
 	"warpwarp",
-	"Warp Warp",
+	"Warp & Warp",
 	"1981",
-	"[Namco] (Rock-ola license)",
-	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
+	"Namco",
+	"Chris Hardy (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	warpwarp_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	warpwarp_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver warpwarr_driver =
+{
+	__FILE__,
+	&warpwarp_driver,
+	"warpwarr",
+	"Warp Warp (Rock-ola set 1)",
+	"1981",
+	"[Namco] (Rock-ola license)",
+	"Chris Hardy (MAME driver)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	warpwarr_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	warpwarr_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver warpwar2_driver =
+{
+	__FILE__,
+	&warpwarp_driver,
+	"warpwar2",
+	"Warp Warp (Rock-ola set 2)",
+	"1981",
+	"[Namco] (Rock-ola license)",
+	"Chris Hardy (MAME driver)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	warpwar2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	warpwarr_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

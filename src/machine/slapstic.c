@@ -45,6 +45,7 @@ Championship Sprint
 Rampart
 Vindicators Part II
 Xybots
+Race Drivin'
 
 3) What is the pinout?
 
@@ -86,9 +87,9 @@ Note3: Addresses with a * next to them have been deduced, but not verified on re
 Chip #     Game                Bank Select Addresses      Disable Mask Ignore Mask   Secondary    Secondary Bank Select
                                 (0)    (1)    (2)    (3)  (MS 10 bits) (LS 7 bits)    Enable    (0)    (1)    (2)    (3)
 ----------------------------------------------------------------------------------------------------------------------------
-137412-101 ESB/Tetris         *$0080,*$0090,*$00a0,*$00b0    $???0        $00??        $????   $????, $????, $????, $????
+137412-101 ESB/Tetris          $0080, $0090, $00a0, $00b0    $1540        $00??       *$1dfe  *$1b5c *$1b5d *$1b5e *$1b5f
 137412-103 Marble Madness      $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
-137412-104 Gauntlet            $0020, $0028, $0030, $0038    $3d90        $0069        $????   $????, $????, $????, $????
+137412-104 Gauntlet            $0020, $0028, $0030, $0038    $3d90        $0069       *$3735  *$3764,*$3765,*$3766,*$3767
 137412-105 Indiana Jones &     $0010, $0014, $0018, $001c    $35b0        $003d        $0092,  $00a4, $00a5, $00a6, $00a7
            Paperboy
 137412-106 Gauntlet II         $0008, $000a, $000c, $000e    $3da0        $002b       *$0052  *$0064,*$0065,*$0066,*$0067
@@ -100,8 +101,12 @@ Chip #     Game                Bank Select Addresses      Disable Mask Ignore Ma
            Super Sprint
 137412-109 Championship Sprint $0008, $000a, $000c, $000e    $3da0        $002b        $0052   $0064, $0065, $0066, $0067
 137412-110 Road Blasters &     $0040, $0050, $0060, $0070    $34c0        $002d        $3d14   $3d24, $3d25, $3d26, $3d27
-           APB?
-137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002        $????   $????, $????, $????, $????
+           APB
+137412-111 Pit Fighter         $0042, $0052, $0062, $0072    $???0        $000a
+137412-116 Hydra &             $0044, $004c, $0054, $005c    $???0        $0069
+           Cyberball 2072 Tournament
+137412-117 Race Drivin'
+137412-118 Vindicators Part II $0014, $0034, $0054, $0074    $???0        $0002       *$1950  *$1958,*$1960,*$1968,*$1970
            & Rampart
 
 Surprisingly, the slapstic appears to have used DRAM cells to store
@@ -132,11 +137,12 @@ documented in the MAME code.
 
 
 #include <stdio.h>
+#include "driver.h"
 
 
 /*************************************
  *
- *		Structure of slapstic params
+ *	Structure of slapstic params
  *
  *************************************/
 
@@ -154,7 +160,7 @@ struct slapstic_params
 
 /*************************************
  *
- *		Constants
+ *	Constants
  *
  *************************************/
 
@@ -170,32 +176,43 @@ enum state_type { ENABLED, DISABLED, IGNORE, SPECIAL };
 
 /*************************************
  *
- *		The master table
+ *	The master table
  *
  *************************************/
 
 static struct slapstic_params slapstic_table[18] =
 {
 	/* 137412-101 ESB/Tetris */
-	{ 0x0000, 0x0080, 0x0090, 0x00a0, 0x00b0,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	{ 0x0000, 0x0080, 0x0090, 0x00a0, 0x00b0, 0x1540,UNKNOWN, 0x1dfe, 0x1b5c, 0x1b5d, 0x1b5e, 0x1b5f },
 	/* 137412-102 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-103 Marble Madness */
 	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
 	/* 137412-104 Gauntlet */
-	{ 0x0000, 0x0020, 0x0028, 0x0030, 0x0038, 0x3d90, 0x0069,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+/*	{ 0x0000, 0x0020, 0x0028, 0x0030, 0x0038, 0x3d90, 0x0069, 0x3735, 0x3764, 0x3765, 0x3766, 0x3767 },*/
+/* EC990621 Gauntlet fix */
+	{ 0x0000, 0x0020, 0x0028, 0x0030, 0x0038, 0x3da0, 0x0069, 0x3735, 0x3764, 0x3765, 0x3766, 0x3767 },
+/* EC990621 end of Gauntlet fix */
 	/* 137412-105 Indiana Jones/Paperboy */
 	{ 0x0000, 0x0010, 0x0014, 0x0018, 0x001c, 0x35b0, 0x003d, 0x0092, 0x00a4, 0x00a5, 0x00a6, 0x00a7 },
 	/* 137412-106 Gauntlet II */
-	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3da0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },
+/*	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3da0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },*/
+/* NS990620 Gauntlet II fix */
+	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3db0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },
+/* NS990620 end of Gauntlet II fix */
 	/* 137412-107 Peter Packrat/Xybots/2-player Gauntlet/720 Degrees */
-	{ 0x0000, 0x0018, 0x001a, 0x001c, 0x001e, 0x00a0, 0x006b, 0x3d52, 0x3d64, 0x3d65, 0x3d66, 0x3d67 },
+/*	{ 0x0000, 0x0018, 0x001a, 0x001c, 0x001e, 0x00a0, 0x006b, 0x3d52, 0x3d64, 0x3d65, 0x3d66, 0x3d67 },*/
+/* NS990622 Xybots fix */
+	{ 0x0000, 0x0018, 0x001a, 0x001c, 0x001e, 0x00b0, 0x006b, 0x3d52, 0x3d64, 0x3d65, 0x3d66, 0x3d67 },
+/* NS990622 end of Xybots fix */
 	/* 137412-108 Road Runner/Super Sprint */
 	{ 0x0000, 0x0028, 0x002a, 0x002c, 0x002e, 0x0060, 0x001f,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-109 Championship Sprint */
 	{ 0x0000, 0x0008, 0x000a, 0x000c, 0x000e, 0x3da0, 0x002b, 0x0052, 0x0064, 0x0065, 0x0066, 0x0067 },
 	/* 137412-110 Road Blasters/APB */
 	{ 0x0000, 0x0040, 0x0050, 0x0060, 0x0070, 0x34c0, 0x002d, 0x3d14, 0x3d24, 0x3d25, 0x3d26, 0x3d27 },
+	/* 137412-111 Pit Fighter */
+	{ 0x0000, 0x0042, 0x0052, 0x0062, 0x0072,UNKNOWN, 0x000a,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-112 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-113 ???? */
@@ -204,32 +221,35 @@ static struct slapstic_params slapstic_table[18] =
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-115 ???? */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-116 ???? */
-	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
-	/* 137412-117 ???? */
+	/* 137412-116 Hydra/Cyberball 2072 Tournament */
+	{ 0x0000, 0x0044, 0x004c, 0x0054, 0x005c,UNKNOWN, 0x0069,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+	/* 137412-117 Race Drivin' */
 	{ 0x0000,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
 	/* 137412-118 Vindicators II/Rampart */
-	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN },
+/*	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074,UNKNOWN, 0x0002, 0x1950, 0x1958, 0x1960, 0x1968, 0x1970 },*/
+/* EC990622 Rampart fix */
+	{ 0x0000, 0x0014, 0x0034, 0x0054, 0x0074, 0x30e0, 0x0002, 0x1958, 0x1959, 0x195a, 0x195b, 0x195c },
+/* EC990622 end of Rampart fix */
 };
 
 
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct slapstic_params *slapstic;
 
 static enum state_type state;
-static int next_bank;
-static int extra_bank;
-static int current_bank;
-
+static INT8 next_bank;
+static INT8 extra_bank;
+static INT8 current_bank;
+static UINT8 version;
 
 #if LOG_SLAPSTIC
-	static void slapstic_log (int offset);
+	static void slapstic_log(int offset);
 	static FILE *slapsticlog;
 #else
 	#define slapstic_log(o)
@@ -239,34 +259,46 @@ static int current_bank;
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
-void slapstic_init (int chip)
+void slapstic_init(int chip)
 {
 	/* only a small number of chips are known to exist */
 	if (chip < 101 || chip > 118)
 		return;
 
 	/* set up a pointer to the parameters */
+	version = chip;
 	slapstic = slapstic_table + (chip - 101);
 
 	/* reset the chip */
 	state = ENABLED;
 	next_bank = extra_bank = -1;
-	current_bank = 3;
+	
+	/* the 111 and later chips seem to reset to bank 0 */
+	if (chip < 111)
+		current_bank = 3;
+	else
+		current_bank = 0;
+}
+
+
+void slapstic_reset(void)
+{
+	slapstic_init(version);
 }
 
 
 
 /*************************************
  *
- *		Returns active bank without tweaking
+ *	Returns active bank without tweaking
  *
  *************************************/
 
-int slapstic_bank (void)
+int slapstic_bank(void)
 {
 	return current_bank;
 }
@@ -275,11 +307,11 @@ int slapstic_bank (void)
 
 /*************************************
  *
- *		Call this before every access
+ *	Call this before every access
  *
  *************************************/
 
-int slapstic_tweak (int offset)
+int slapstic_tweak(int offset)
 {
 	/* switch banks now if one is pending */
 	if (next_bank != -1)
@@ -297,6 +329,10 @@ int slapstic_tweak (int offset)
 			if ((offset & DISABLE_MASK) == slapstic->disable)
 			{
 				state = DISABLED;
+				/* NS990620 Gauntlet II fix */
+				if (extra_bank != -1)
+					next_bank = extra_bank;
+				/* NS990620 end of Gauntlet II fix */
 			}
 			else if ((offset & IGNORE_MASK) == slapstic->ignore)
 			{
@@ -405,7 +441,7 @@ int slapstic_tweak (int offset)
 	}
 
 	/* log this access */
-	slapstic_log (offset);
+	slapstic_log(offset);
 
 	/* return the active bank */
 	return current_bank;
@@ -415,16 +451,33 @@ int slapstic_tweak (int offset)
 
 /*************************************
  *
- *		Debugging
+ *	Debugging
  *
  *************************************/
 
 #if LOG_SLAPSTIC
-static void slapstic_log (int offset)
+static void slapstic_log(int offset)
 {
 	if (!slapsticlog)
-		slapsticlog = fopen ("slapstic.log", "w");
+		slapsticlog = fopen("slapstic.log", "w");
 	if (slapsticlog)
-		fprintf (slapsticlog, "Slapstic bank %d @ %04X (PC=%08X)\n", current_bank, offset, cpu_getpc ());
+	{
+		fprintf(slapsticlog, "%06X: %04X B=%d ", cpu_getpreviouspc(), offset, current_bank);
+		switch (state)
+		{
+			case ENABLED:
+				fprintf(slapsticlog, "ENABLED\n");
+				break;
+			case DISABLED:
+				fprintf(slapsticlog, "DISABLED\n");
+				break;
+			case SPECIAL:
+				fprintf(slapsticlog, "SPECIAL\n");
+				break;
+			case IGNORE:
+				fprintf(slapsticlog, "IGNORE\n");
+				break;
+		}
+	}
 }
 #endif

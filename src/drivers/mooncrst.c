@@ -9,16 +9,32 @@ VBlank duration: 1/VSYNC * (20/132) = 2500 us
 Changes:
 19 Feb 98 LBO
 	* Added Checkman driver
+19 Jul 98 LBO
+	* Added King & Balloon driver
 
 TODO:
 	* Need valid color prom for Fantazia. Current one is slightly damaged.
+
+
+Moon Cresta versions supported:
+------------------------------
+
+mooncrst    Nichibutsu - later revision with better demo mode and
+						 text for docking. Encrypted. No ROM/RAM check
+mooncrs2    Nichibutsu - probably first revision (no patches) and ROM/RAM check code.
+                         This came from a bootleg board, with the logos erased
+						 from the graphics
+mooncrsg    Gremlin    - same docking text as mooncrst
+mooncrsb    bootleg of mooncrs2. ROM/RAM check erased.
+
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
-#include "Z80/Z80.h"
+
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
@@ -30,6 +46,7 @@ void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 void mooncrst_gfxextend_w(int offset,int data);
 int galaxian_vh_start(void);
+int mooncrst_vh_start(void);
 int moonqsr_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int galaxian_vh_interrupt(void);
@@ -40,7 +57,7 @@ void mooncrst_noise_w(int offset,int data);
 void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
-int mooncrst_sh_start(void);
+int mooncrst_sh_start(const struct MachineSound *msound);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
 
@@ -53,13 +70,44 @@ void checkman_sound_command_w (int offset, int data)
 	cpu_cause_interrupt (1, Z80_NMI_INT);
 }
 
+static int kingball_speech_dip;
 
+/* Hack? If $b003 is high, we'll check our "fake" speech dipswitch */
+static int kingball_IN0_r (int offset)
+{
+	if (kingball_speech_dip)
+		return (readinputport (0) & 0x80) >> 1;
+	else
+		return readinputport (0);
+}
+
+static void kingball_speech_dip_w (int offset, int data)
+{
+	kingball_speech_dip = data;
+}
+
+static int kingball_sound;
+
+static void kingball_sound1_w (int offset, int data)
+{
+	kingball_sound = (kingball_sound & ~0x01) | data;
+	if (errorlog) fprintf (errorlog, "kingball_sample latch: %02x (%02x)\n", kingball_sound, data);
+}
+
+static void kingball_sound2_w (int offset, int data)
+{
+	kingball_sound = (kingball_sound & ~0x02) | (data << 1);
+	soundlatch_w (0, kingball_sound | 0xf0);
+	if (errorlog) fprintf (errorlog, "kingball_sample play: %02x (%02x)\n", kingball_sound, data);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x9000, 0x9fff, MRA_RAM },	/* video RAM, screen attributes, sprites, bullets */
+	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
+	{ 0x9400, 0x97ff, videoram_r },	/* Checkman - video RAM mirror */
+	{ 0x9800, 0x9fff, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
@@ -77,7 +125,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0xa000, 0xa002, mooncrst_gfxextend_w },	/* Moon Cresta only */
 	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
-	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa806, 0xa807, mooncrst_vol_w },
@@ -101,13 +149,53 @@ static struct MemoryWriteAddress moonal2_writemem[] =
 	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 /*	{ 0xa000, 0xa002, mooncrst_gfxextend_w },	* Moon Cresta only */
 	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
-	{ 0xa800, 0xa800, mooncrst_background_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
 	{ 0xa803, 0xa803, mooncrst_noise_w },
 	{ 0xa805, 0xa805, mooncrst_shoot_w },
 	{ 0xa806, 0xa807, mooncrst_vol_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },	/* not Checkman */
 	{ 0xb001, 0xb001, interrupt_enable_w },	/* Checkman only */
 	{ 0xb004, 0xb004, galaxian_stars_w },
+	{ 0xb006, 0xb006, galaxian_flipx_w },
+	{ 0xb007, 0xb007, galaxian_flipy_w },
+	{ 0xb800, 0xb800, mooncrst_pitch_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress kingball_readmem[] =
+{
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
+	{ 0x9400, 0x97ff, videoram_r },	/* Checkman - video RAM mirror */
+	{ 0x9800, 0x9fff, MRA_RAM },	/* screen attributes, sprites, bullets */
+	{ 0xa000, 0xa000, kingball_IN0_r },	/* IN0 */
+	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
+	{ 0xb000, 0xb000, input_port_2_r },	/* DSW (coins per play) */
+	{ 0xb800, 0xb800, watchdog_reset_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress kingball_writemem[] =
+{
+	{ 0x0000, 0x2fff, MWA_ROM },
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0x983f, galaxian_attributes_w, &galaxian_attributesram },
+	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x9860, 0x987f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x9880, 0x98ff, MWA_RAM },
+	{ 0xa000, 0xa003, MWA_NOP }, /* lamps */
+	{ 0xa004, 0xa007, mooncrst_lfo_freq_w },
+	{ 0xa800, 0xa802, mooncrst_background_w },
+	{ 0xa803, 0xa803, mooncrst_noise_w }, //
+	{ 0xa805, 0xa805, mooncrst_shoot_w }, //
+	{ 0xa806, 0xa807, mooncrst_vol_w }, //
+	{ 0xb001, 0xb001, interrupt_enable_w },
+	{ 0xb000, 0xb000, kingball_sound1_w },
+	{ 0xb002, 0xb002, kingball_sound2_w },
+	{ 0xb003, 0xb003, kingball_speech_dip_w },
+//	{ 0xb004, 0xb004, galaxian_stars_w },
 	{ 0xb006, 0xb006, galaxian_flipx_w },
 	{ 0xb007, 0xb007, galaxian_flipy_w },
 	{ 0xb800, 0xb800, mooncrst_pitch_w },
@@ -151,46 +239,154 @@ static struct IOWritePort sound_writeport[] =
 	{ -1 }	/* end of table */
 };
 
+/* These 4 structures are used only by King & Balloon */
+static struct MemoryReadAddress kingball_sound_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress kingball_sound_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort kingball_sound_readport[] =
+{
+	{ 0x00, 0x00, soundlatch_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort kingball_sound_writeport[] =
+{
+	{ 0x00, 0x00, DAC_data_w },
+	{ -1 }	/* end of table */
+};
+
 
 
 INPUT_PORTS_START( mooncrst_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )	/* works only in the Gremlin version */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-	PORT_DIPNAME( 0x40, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "30000" )
 	PORT_DIPSETTING(    0x40, "50000" )
-	PORT_DIPNAME( 0x80, 0x80, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Language" )
 	PORT_DIPSETTING(    0x80, "English" )
 	PORT_DIPSETTING(    0x00, "Japanese" )
 
 	PORT_START	/* DSW */
- 	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
- 	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "Free Play" )
+ 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+ 	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Free_Play ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( eagle_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x40, "50000" )
+	PORT_DIPNAME( 0x80, 0x80, "Language" )
+	PORT_DIPSETTING(    0x80, "English" )
+	PORT_DIPSETTING(    0x00, "Japanese" )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Free_Play ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( eagle2_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "30000" )
+	PORT_DIPSETTING(    0x40, "50000" )
+	PORT_DIPNAME( 0x80, 0x80, "Language" )
+	PORT_DIPSETTING(    0x80, "English" )
+	PORT_DIPSETTING(    0x00, "Japanese" )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Game Type" )
+	PORT_DIPSETTING(    0x00, "Normal 1?" )
+	PORT_DIPSETTING(    0x04, "Normal 2?" )
+	PORT_DIPSETTING(    0x08, "Normal 3?" )
+	PORT_DIPSETTING(    0x0c, DEF_STR ( Free_Play ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -198,12 +394,12 @@ INPUT_PORTS_START( moonqsr_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* "reset" on schematics */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
 
@@ -214,30 +410,30 @@ INPUT_PORTS_START( moonqsr_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x03, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x02, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x04, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "Free Play" )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Free_Play ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( checkman_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 ) /* 6 credits */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 ) /* 1 credit */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL ) /* p2 tiles right */
@@ -248,29 +444,29 @@ INPUT_PORTS_START( checkman_input_ports )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 ) /* also p1 tiles left */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 ) /* also p1 tiles right */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL ) /* p2 tiles left */
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x40, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 1/6" )
 	PORT_DIPSETTING(    0x40, "A 2/1 B 1/3" )
-	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x80, "Cocktail" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW */
- 	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+ 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPSETTING(    0x04, "200000" )
+	PORT_DIPNAME( 0x08, 0x00, "Difficulty Increases At Level" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -281,12 +477,10 @@ INPUT_PORTS_START( moonal2_input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )	/* works only in the Gremlin version */
 
 	PORT_START	/* IN1 */
@@ -296,25 +490,68 @@ INPUT_PORTS_START( moonal2_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
-	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0xc0, "Free Play" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x03, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x01, "4000" )
 	PORT_DIPSETTING(    0x02, "5000" )
 	PORT_DIPSETTING(    0x03, "7000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( kingball_input_ports )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_HIGH )
+	/* Hack? - possibly multiplexed via writes to $b003 */
+	PORT_DIPNAME( 0x80, 0x80, "Speech" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "12000" )
+	PORT_DIPSETTING(    0x02, "15000" )
+	PORT_DIPSETTING(    0x03, "None" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPNAME( 0xf8, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0xf8, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -352,6 +589,17 @@ static struct GfxLayout bulletlayout =
 	{ 0 },			/* graphics ROMs is 1 */
 	0	/* no use */
 };
+static struct GfxLayout backgroundlayout =
+{
+	/* there is no gfx ROM for this one, it is generated by the hardware */
+	8,8,
+	32,	/* one for each column */
+	7,	/* 128 colors max */
+	{ 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8*8, 1*8*8, 2*8*8, 3*8*8, 4*8*8, 5*8*8, 6*8*8, 7*8*8 },
+	{ 0, 8, 16, 24, 32, 40, 48, 56 },
+	8*8*8	/* each character takes 64 bytes */
+};
 
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -359,45 +607,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ 1, 0x0000, &bulletlayout, 8*4, 2 },
+	{ 0, 0x0000, &backgroundlayout, 8*4+2*2, 1 },	/* this will be dynamically created */
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char mooncrst_color_prom[] =
-{
-	/* palette */
-	0x00,0x7a,0x36,0x07,0x00,0xf0,0x38,0x1f,0x00,0xc7,0xf0,0x3f,0x00,0xdb,0xc6,0x38,
-	0x00,0x36,0x07,0xf0,0x00,0x33,0x3f,0xdb,0x00,0x3f,0x57,0xc6,0x00,0xc6,0x3f,0xff
-};
-
 /* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
 /* colors, but it should not be considered correct. It's a bootleg anyway. */
-static unsigned char fantazia_color_prom[] =
+static unsigned char wrong_color_prom[] =
 {
 	/* palette */
 	0x00,0x3B,0xCB,0xFE,0x00,0x1F,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xCC,0x07,
 	0x00,0xC0,0xB8,0x1F,0x00,0x1E,0x79,0x0F,0x00,0xFE,0x07,0xF8,0x00,0x7E,0x07,0xC6
-};
-
-static unsigned char moonqsr_color_prom[] =
-{
-	/* palette */
-	0x00,0xf6,0x79,0x4f,0x00,0xc0,0x3f,0x17,0x00,0x87,0xf8,0x7f,0x00,0xc1,0x7f,0x38,
-	0x00,0x7f,0xcf,0xf9,0x00,0x57,0xb7,0xc3,0x00,0xff,0x7f,0x87,0x00,0x79,0x4f,0xff
-};
-
-static unsigned char checkman_color_prom[] =
-{
-	/* palette */
-	0x00,0x33,0xc3,0xf6,0x00,0x17,0xc0,0x3f,0x00,0xd8,0x07,0x3f,0x00,0xc0,0xc4,0x07,
-	0x00,0xc0,0xb0,0x1f,0x00,0x1e,0x71,0x07,0x00,0xf6,0x07,0xf0,0x00,0x76,0x07,0xc6
-};
-
-static unsigned char moonal2_color_prom[] =
-{
-	0x00,0x00,0x00,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
-	0x00,0xC0,0xA0,0x07,0x00,0x00,0x00,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6,
 };
 
 
@@ -430,12 +652,12 @@ static struct MachineDriver mooncrst_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	mooncrst_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -469,7 +691,7 @@ static struct MachineDriver moonal2_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -508,7 +730,7 @@ static struct MachineDriver moonqsr_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -533,7 +755,8 @@ static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
 	1620000,	/* 1.62 MHz */
-	{ 255 },
+	{ 50 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -554,7 +777,7 @@ static struct MachineDriver checkman_machine_driver =
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
 			1620000,	/* 1.62 MHz */
-			2,
+			3,
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			interrupt,1	/* NMIs are triggered by the main CPU */
 		}
@@ -566,12 +789,12 @@ static struct MachineDriver checkman_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	32+64,8*4+2*2,	/* 32 for the characters, 64 for the stars */
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
 	galaxian_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
 	0,
-	galaxian_vh_start,
+	mooncrst_vh_start,
 	generic_vh_stop,
 	galaxian_vh_screenrefresh,
 
@@ -589,6 +812,62 @@ static struct MachineDriver checkman_machine_driver =
 	}
 };
 
+static struct DACinterface dac_interface =
+{
+	1,
+	{ 100 }
+};
+
+static struct MachineDriver kingball_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz? */
+			0,
+			kingball_readmem,kingball_writemem,0,0,
+			galaxian_vh_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2500000,	/* 2.5 MHz */
+			3,
+			kingball_sound_readmem,kingball_sound_writemem,
+			kingball_sound_readport,kingball_sound_writeport,
+			interrupt,1	/* NMIs are triggered by the main CPU */
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	galaxian_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
 
 
 /***************************************************************************
@@ -599,176 +878,322 @@ static struct MachineDriver checkman_machine_driver =
 
 ROM_START( mooncrst_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mc1", 0x0000, 0x0800, 0x09517d4d )
-	ROM_LOAD( "mc2", 0x0800, 0x0800, 0xc38036ea )
-	ROM_LOAD( "mc3", 0x1000, 0x0800, 0x55850d07 )
-	ROM_LOAD( "mc4", 0x1800, 0x0800, 0xce9fa607 )
-	ROM_LOAD( "mc5", 0x2000, 0x0800, 0xbe597a3b )
-	ROM_LOAD( "mc6", 0x2800, 0x0800, 0xccf35bef )
-	ROM_LOAD( "mc7", 0x3000, 0x0800, 0x589bfa8f )
-	ROM_LOAD( "mc8", 0x3800, 0x0800, 0xc2ca7a86 )
+	ROM_LOAD( "mc1",          0x0000, 0x0800, 0x7d954a7a )
+	ROM_LOAD( "mc2",          0x0800, 0x0800, 0x44bb7cfa )
+	ROM_LOAD( "mc3",          0x1000, 0x0800, 0x9c412104 )
+	ROM_LOAD( "mc4",          0x1800, 0x0800, 0x7e9b1ab5 )
+	ROM_LOAD( "mc5",          0x2000, 0x0800, 0x16c759af )
+	ROM_LOAD( "mc6",          0x2800, 0x0800, 0x69bcafdb )
+	ROM_LOAD( "mc7",          0x3000, 0x0800, 0xb50dbc46 )
+	ROM_LOAD( "mc8",          0x3800, 0x0800, 0x18ca312b )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mcs_b", 0x0000, 0x0800, 0xec117295 )
-	ROM_LOAD( "mcs_d", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "mcs_a", 0x1000, 0x0800, 0xc5975785 )
-	ROM_LOAD( "mcs_c", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mcs_b",        0x0000, 0x0800, 0xfb0f1f81 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "mcs_a",        0x1000, 0x0800, 0x631ebb5a )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsg_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "EPR194", 0x0000, 0x0800, 0x719fde2d )
-	ROM_LOAD( "EPR195", 0x0800, 0x0800, 0xb592b35a )
-	ROM_LOAD( "EPR196", 0x1000, 0x0800, 0xa68c9f7e )
-	ROM_LOAD( "EPR197", 0x1800, 0x0800, 0xdd96a2c2 )
-	ROM_LOAD( "EPR198", 0x2000, 0x0800, 0xb3df4fd5 )
-	ROM_LOAD( "EPR199", 0x2800, 0x0800, 0x4b7654e0 )
-	ROM_LOAD( "EPR200", 0x3000, 0x0800, 0x765799c9 )
-	ROM_LOAD( "EPR201", 0x3800, 0x0800, 0xb1cd92a3 )
+	ROM_LOAD( "epr194",       0x0000, 0x0800, 0x0e5582b1 )
+	ROM_LOAD( "epr195",       0x0800, 0x0800, 0x12cb201b )
+	ROM_LOAD( "epr196",       0x1000, 0x0800, 0x18255614 )
+	ROM_LOAD( "epr197",       0x1800, 0x0800, 0x05ac1466 )
+	ROM_LOAD( "epr198",       0x2000, 0x0800, 0xc28a2e8f )
+	ROM_LOAD( "epr199",       0x2800, 0x0800, 0x5a4571de )
+	ROM_LOAD( "epr200",       0x3000, 0x0800, 0xb7c85bf1 )
+	ROM_LOAD( "epr201",       0x3800, 0x0800, 0x2caba07f )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "EPR203", 0x0000, 0x0800, 0xa27f5447 )
-	ROM_LOAD( "EPR172", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "EPR202", 0x1000, 0x0800, 0xec79cbdb )
-	ROM_LOAD( "EPR171", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( smooncrs_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "927",          0x0000, 0x0800, 0x55c5b994 )
+	ROM_LOAD( "928a",         0x0800, 0x0800, 0x77ae26d3 )
+	ROM_LOAD( "929",          0x1000, 0x0800, 0x716eaa10 )
+	ROM_LOAD( "930",          0x1800, 0x0800, 0xcea864f2 )
+	ROM_LOAD( "931",          0x2000, 0x0800, 0x702c5f51 )
+	ROM_LOAD( "932a",         0x2800, 0x0800, 0xe6a2039f )
+	ROM_LOAD( "933",          0x3000, 0x0800, 0x73783cee )
+	ROM_LOAD( "934",          0x3800, 0x0800, 0xc1a14aa2 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( mooncrsb_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "BEPR194", 0x0000, 0x0800, 0x1c6e3b4a )
-	ROM_LOAD( "BEPR195", 0x0800, 0x0800, 0xa8901964 )
-	ROM_LOAD( "BEPR196", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "BEPR197", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "BEPR198", 0x2000, 0x0800, 0x981d7a7f )
-	ROM_LOAD( "BEPR199", 0x2800, 0x0800, 0x3def1bab )
-	ROM_LOAD( "BEPR200", 0x3000, 0x0800, 0xb31bfacf )
-	ROM_LOAD( "BEPR201", 0x3800, 0x0800, 0xe0a15117 )
+	ROM_LOAD( "bepr194",      0x0000, 0x0800, 0x6a23ec6d )
+	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "bepr199",      0x2800, 0x0800, 0x6e84a927 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "bepr201",      0x3800, 0x0800, 0x66da55d5 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BEPR203", 0x0000, 0x0800, 0xa27f5447 )
-	ROM_LOAD( "BEPR172", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "BEPR202", 0x1000, 0x0800, 0xec79cbdb )
-	ROM_LOAD( "BEPR171", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr203",       0x0000, 0x0800, 0xbe26b561 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( mooncrs2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f8.bin",       0x0000, 0x0800, 0xd36003e5 )
+	ROM_LOAD( "bepr195",      0x0800, 0x0800, 0xee262ff2 )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "bepr199",      0x2800, 0x0800, 0x6e84a927 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "m7.bin",       0x3800, 0x0800, 0x957ee078 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
+	ROM_LOAD( "12.chr",       0x0800, 0x0200, 0x5a4b17ea )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
+	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
+	ROM_LOAD( "11.chr",       0x1800, 0x0200, 0xe0edccbd )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( fantazia_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "F01.bin", 0x0000, 0x0800, 0x22693d4d )
-	ROM_LOAD( "F02.bin", 0x0800, 0x0800, 0xe65a30ae )
-	ROM_LOAD( "F03.bin", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "F04.bin", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "F09.bin", 0x2000, 0x0800, 0x730c6f5a )
-	ROM_LOAD( "F10.bin", 0x2800, 0x0800, 0x50694b53 )
-	ROM_LOAD( "F11.bin", 0x3000, 0x0800, 0x932f1ab9 )
-	ROM_LOAD( "F12.bin", 0x3800, 0x0800, 0xdc786302 )
+	ROM_LOAD( "f01.bin",      0x0000, 0x0800, 0xd3e23863 )
+	ROM_LOAD( "f02.bin",      0x0800, 0x0800, 0x63fa4149 )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "f09.bin",      0x2000, 0x0800, 0x75fd5ca1 )
+	ROM_LOAD( "f10.bin",      0x2800, 0x0800, 0xe4da2dd4 )
+	ROM_LOAD( "f11.bin",      0x3000, 0x0800, 0x42869646 )
+	ROM_LOAD( "f12.bin",      0x3800, 0x0800, 0xa48d7fb0 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1h_1_10.bin", 0x0000, 0x0800, 0x22bd9067 )
-	ROM_LOAD( "1k_2_12.bin", 0x0800, 0x0800, 0xdfbc68ba )
-	ROM_LOAD( "1k_1_11.bin", 0x1000, 0x0800, 0xf93f9153 )
-	ROM_LOAD( "1h_2_09.bin", 0x1800, 0x0800, 0xc1dc1cde )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1h_1_10.bin",  0x0000, 0x0800, 0x528da705 )
+	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x13932a15 )
+	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
+	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "fantazia.clr", 0x0000, 0x0020, 0x00000000 )   /* missing */
 ROM_END
 
 ROM_START( eagle_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "E1", 0x0000, 0x0800, 0xdf0c83ca )
-	ROM_LOAD( "E2", 0x0800, 0x0800, 0xfb3119cb )
-	ROM_LOAD( "E3", 0x1000, 0x0800, 0x3247a543 )
-	ROM_LOAD( "E4", 0x1800, 0x0800, 0x8e22a4b2 )
-	ROM_LOAD( "E5", 0x2000, 0x0800, 0x981d7a7f )
-	ROM_LOAD( "E6", 0x2800, 0x0800, 0x3de71ba3 )
-	ROM_LOAD( "E7", 0x3000, 0x0800, 0xb31bfacf )
-	ROM_LOAD( "E8", 0x3800, 0x0800, 0xb722917e )
+	ROM_LOAD( "e1",           0x0000, 0x0800, 0x224c9526 )
+	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "e6",           0x2800, 0x0800, 0x0dea20d5 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "e8",           0x3800, 0x0800, 0xc437a876 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "E10", 0x0000, 0x0800, 0xe31bdc41 )
-	ROM_LOAD( "E12", 0x0800, 0x0200, 0x48cd3351 )
-	ROM_CONTINUE(    0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
-	ROM_CONTINUE(    0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
-	ROM_CONTINUE(    0x0e00, 0x0200 )
-	ROM_LOAD( "E9",  0x1000, 0x0800, 0x6f97f19d )
-	ROM_LOAD( "E11", 0x1800, 0x0200, 0x9c42def2 )
-	ROM_CONTINUE(    0x1c00, 0x0200 )
-	ROM_CONTINUE(    0x1a00, 0x0200 )
-	ROM_CONTINUE(    0x1e00, 0x0200 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "e10",          0x0000, 0x0800, 0x40ce58bf )
+	ROM_LOAD( "e12",          0x0800, 0x0200, 0x628fdeed )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
+	ROM_LOAD( "e9",           0x1000, 0x0800, 0xba664099 )
+	ROM_LOAD( "e11",          0x1800, 0x0200, 0xee4ec5fd )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
+ROM_START( eagle2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "e1.7f",        0x0000, 0x0800, 0x45aab7a3 )
+	ROM_LOAD( "e2",           0x0800, 0x0800, 0xcc538ebd )
+	ROM_LOAD( "f03.bin",      0x1000, 0x0800, 0x29a2b0ab )
+	ROM_LOAD( "f04.bin",      0x1800, 0x0800, 0x4c6a5a6d )
+	ROM_LOAD( "e5",           0x2000, 0x0800, 0x06d378a6 )
+	ROM_LOAD( "e6.6",         0x2800, 0x0800, 0x9f09f8c6 )
+	ROM_LOAD( "e7",           0x3000, 0x0800, 0xb45af1e8 )
+	ROM_LOAD( "e8",           0x3800, 0x0800, 0xc437a876 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "e10.2",        0x0000, 0x0800, 0x25b38ebd )
+	ROM_LOAD( "e12",          0x0800, 0x0200, 0x628fdeed )
+	ROM_CONTINUE(             0x0c00, 0x0200 )	/* this version of the gfx ROMs has two */
+	ROM_CONTINUE(             0x0a00, 0x0200 )	/* groups of 16 sprites swapped */
+	ROM_CONTINUE(             0x0e00, 0x0200 )
+	ROM_LOAD( "e9",           0x1000, 0x0800, 0xba664099 )
+	ROM_LOAD( "e11",          0x1800, 0x0200, 0xee4ec5fd )
+	ROM_CONTINUE(             0x1c00, 0x0200 )
+	ROM_CONTINUE(             0x1a00, 0x0200 )
+	ROM_CONTINUE(             0x1e00, 0x0200 )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
 ROM_START( moonqsr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "mq1", 0x0000, 0x0800, 0x158eb218 )
-	ROM_LOAD( "mq2", 0x0800, 0x0800, 0x59362b9c )
-	ROM_LOAD( "mq3", 0x1000, 0x0800, 0xa9e7a5e7 )
-	ROM_LOAD( "mq4", 0x1800, 0x0800, 0x8cac8d0e )
-	ROM_LOAD( "mq5", 0x2000, 0x0800, 0xd436f3fa )
-	ROM_LOAD( "mq6", 0x2800, 0x0800, 0xd9f90a93 )
-	ROM_LOAD( "mq7", 0x3000, 0x0800, 0x8ebe83a0 )
-	ROM_LOAD( "mq8", 0x3800, 0x0800, 0x5faa5ffe )
+	ROM_LOAD( "mq1",          0x0000, 0x0800, 0x132c13ec )
+	ROM_LOAD( "mq2",          0x0800, 0x0800, 0xc8eb74f1 )
+	ROM_LOAD( "mq3",          0x1000, 0x0800, 0x33965a89 )
+	ROM_LOAD( "mq4",          0x1800, 0x0800, 0xa3861d17 )
+	ROM_LOAD( "mq5",          0x2000, 0x0800, 0x8bcf9c67 )
+	ROM_LOAD( "mq6",          0x2800, 0x0800, 0x5750cda9 )
+	ROM_LOAD( "mq7",          0x3000, 0x0800, 0x78d7fe5b )
+	ROM_LOAD( "mq8",          0x3800, 0x0800, 0x4919eed5 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "mqb", 0x0000, 0x0800, 0x7603cc0b )
-	ROM_LOAD( "mqd", 0x0800, 0x0800, 0x6552d98e )
-	ROM_LOAD( "mqa", 0x1000, 0x0800, 0x9a9e81d6 )
-	ROM_LOAD( "mqc", 0x1800, 0x0800, 0x3cf1ef43 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mqb",          0x0000, 0x0800, 0xb55ec806 )
+	ROM_LOAD( "mqd",          0x0800, 0x0800, 0x9e7d0e13 )
+	ROM_LOAD( "mqa",          0x1000, 0x0800, 0x66eee0db )
+	ROM_LOAD( "mqc",          0x1800, 0x0800, 0xa6db5b0d )
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 ROM_END
 
 ROM_START( checkman_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cm1", 0x0000, 0x0800, 0x778f0ed3 )
-	ROM_LOAD( "cm2", 0x0800, 0x0800, 0x43b09b92 )
-	ROM_LOAD( "cm3", 0x1000, 0x0800, 0x7fcab522 )
-	ROM_LOAD( "cm4", 0x1800, 0x0800, 0x07b3b9cd )
-	ROM_LOAD( "cm5", 0x2000, 0x0800, 0x21b7b633 )
+	ROM_LOAD( "cm1",          0x0000, 0x0800, 0xe8cbdd28 )
+	ROM_LOAD( "cm2",          0x0800, 0x0800, 0xb8432d4d )
+	ROM_LOAD( "cm3",          0x1000, 0x0800, 0x15a97f61 )
+	ROM_LOAD( "cm4",          0x1800, 0x0800, 0x8c12ecc0 )
+	ROM_LOAD( "cm5",          0x2000, 0x0800, 0x2352cfd6 )
 
-	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cm11", 0x0000, 0x0800, 0x7473dcf9 )
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cm11",         0x0000, 0x0800, 0x8d1bcca0 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "cm9",  0x1000, 0x0800, 0x6ea84040 )
+	ROM_LOAD( "cm9",          0x1000, 0x0800, 0x3cd5c751 )
 	/* 1800-1fff empty */
 
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
+
 	ROM_REGION(0x10000)	/* 64k for sound code */
-	ROM_LOAD( "cm13", 0x0000, 0x0800, 0x489360c5 )
-	ROM_LOAD( "cm14", 0x0800, 0x0800, 0x8c673289 )
+	ROM_LOAD( "cm13",         0x0000, 0x0800, 0x0b09a3e8 )
+	ROM_LOAD( "cm14",         0x0800, 0x0800, 0x47f043be )
 ROM_END
 
 ROM_START( moonal2_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
-	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
-	ROM_LOAD( "ali3",  0x0800, 0x0400, 0xabd2cf90 )
-	ROM_LOAD( "ali4",  0x0c00, 0x0400, 0x1a807a06 )
-	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
-	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
-	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
-	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
-	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
-	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
-	ROM_LOAD( "ali11", 0x2800, 0x0400, 0x7abb0a83 )
+	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
+	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
+	ROM_LOAD( "ali3",         0x0800, 0x0400, 0xcd1be7e9 )
+	ROM_LOAD( "ali4",         0x0c00, 0x0400, 0x83b03f08 )
+	ROM_LOAD( "ali5",         0x1000, 0x0400, 0x6f3cf61d )
+	ROM_LOAD( "ali6",         0x1400, 0x0400, 0xe169d432 )
+	ROM_LOAD( "ali7",         0x1800, 0x0400, 0x41f64b73 )
+	ROM_LOAD( "ali8",         0x1c00, 0x0400, 0xf72ee876 )
+	ROM_LOAD( "ali9",         0x2000, 0x0400, 0xb7fb763c )
+	ROM_LOAD( "ali10",        0x2400, 0x0400, 0xb1059179 )
+	ROM_LOAD( "ali11",        0x2800, 0x0400, 0x9e79a1c6 )
 
-	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
+	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ali13.1h",     0x0000, 0x0800, 0xa1287bf6 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
+	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
 	/* 1800-1fff empty */
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
 ROM_START( moonal2b_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-	ROM_LOAD( "ali1",  0x0000, 0x0400, 0x1a3f23c1 )
-	ROM_LOAD( "ali2",  0x0400, 0x0400, 0x9d0a00ba )
-	ROM_LOAD( "MD-2",  0x0800, 0x0800, 0xd643a5a7 )
-	ROM_LOAD( "ali5",  0x1000, 0x0400, 0xe14af8fe )
-	ROM_LOAD( "ali6",  0x1400, 0x0400, 0x2b77be15 )
-	ROM_LOAD( "ali7",  0x1800, 0x0400, 0x9bb5fe05 )
-	ROM_LOAD( "ali8",  0x1c00, 0x0400, 0xf55e7144 )
-	ROM_LOAD( "ali9",  0x2000, 0x0400, 0xe7545590 )
-	ROM_LOAD( "ali10", 0x2400, 0x0400, 0x0ce64696 )
-	ROM_LOAD( "MD-6",  0x2800, 0x0800, 0x225ff205 )
+	ROM_LOAD( "ali1",         0x0000, 0x0400, 0x0dcecab4 )
+	ROM_LOAD( "ali2",         0x0400, 0x0400, 0xc6ee75a7 )
+	ROM_LOAD( "md-2",         0x0800, 0x0800, 0x8318b187 )
+	ROM_LOAD( "ali5",         0x1000, 0x0400, 0x6f3cf61d )
+	ROM_LOAD( "ali6",         0x1400, 0x0400, 0xe169d432 )
+	ROM_LOAD( "ali7",         0x1800, 0x0400, 0x41f64b73 )
+	ROM_LOAD( "ali8",         0x1c00, 0x0400, 0xf72ee876 )
+	ROM_LOAD( "ali9",         0x2000, 0x0400, 0xb7fb763c )
+	ROM_LOAD( "ali10",        0x2400, 0x0400, 0xb1059179 )
+	ROM_LOAD( "md-6",         0x2800, 0x0800, 0x9cc973e0 )
 
-	ROM_REGION(0x2000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ali13.1h", 0x0000, 0x0800, 0x879421ae )
+	ROM_REGION_DISPOSE(0x2000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ali13.1h",     0x0000, 0x0800, 0xa1287bf6 )
 	/* 0800-0fff empty */
-	ROM_LOAD( "ali12.1k", 0x1000, 0x0800, 0xcfb52239 )
+	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
 	/* 1800-1fff empty */
+
+	ROM_REGION(0x0020)	/* color prom */
+	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
+ROM_END
+
+ROM_START( kingball_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
+	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
+	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, 0x9cd550e7 )
+	/* 0800-0fff empty */
+	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
+	/* 1800-1fff empty */
+
+	ROM_REGION(0x20)	/* color PROMs */
+	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "kbe1.ic4",     0x0000, 0x0800, 0x5be2c80a )
+	ROM_LOAD( "kbe2.ic5",     0x0800, 0x0800, 0xbb59e965 )
+	ROM_LOAD( "kbe3.ic6",     0x1000, 0x0800, 0x1c94dd31 )
+	ROM_LOAD( "kbe2.ic7",     0x1800, 0x0800, 0xbb59e965 )
+ROM_END
+
+ROM_START( kingbalj_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "prg1.7f",      0x0000, 0x1000, 0x6cb49046 )
+	ROM_LOAD( "prg2.7j",      0x1000, 0x1000, 0xc223b416 )
+	ROM_LOAD( "prg3.7l",      0x2000, 0x0800, 0x453634c0 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "chg1.1h",      0x0000, 0x0800, 0x9cd550e7 )
+	/* 0800-0fff empty */
+	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
+	/* 1800-1fff empty */
+
+	ROM_REGION(0x20)	/* color PROMs */
+	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
+
+	ROM_REGION(0x10000)	/* 64k for sound code */
+	ROM_LOAD( "kbj1.ic4",     0x0000, 0x0800, 0xba16beb7 )
+	ROM_LOAD( "kbj2.ic5",     0x0800, 0x0800, 0x56686a63 )
+	ROM_LOAD( "kbj3.ic6",     0x1000, 0x0800, 0xfbc570a5 )
+	ROM_LOAD( "kbj2.ic7",     0x1800, 0x0800, 0x56686a63 )
 ROM_END
 
 
@@ -776,8 +1201,8 @@ ROM_END
 static const char *mooncrst_sample_names[] =
 {
 	"*galaxian",
-	"shot.sam",
-	"death.sam",
+	"shot.wav",
+	"death.wav",
 	0	/* end of array */
 };
 
@@ -894,14 +1319,14 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 	{
 		switch (A & 0x07)
 		{
-			case 0: data_xor = (RAM[A] & 0x40) >> 6; break;
-			case 1: data_xor = (RAM[A] & 0x20) >> 4; break;
+			case 0: data_xor =  (RAM[A] & 0x40) >> 6; break;
+			case 1: data_xor =  (RAM[A] & 0x20) >> 4; break;
 			case 2: data_xor = ((RAM[A] & 0x10) >> 2) | ((RAM[A] & 0x40) >> 5); break;
 			case 3: data_xor = ((RAM[A] & 0x04) << 2) | ((RAM[A] & 0x20) >> 5); break;
 			case 4: data_xor = ((RAM[A] & 0x10) << 2) | ((RAM[A] & 0x02) << 4); break;
 			case 5: data_xor = ((RAM[A] & 0x01) << 6) | ((RAM[A] & 0x04) << 3); break;
-			case 6: data_xor = (RAM[A] & 0x01) << 2; break;
-			case 7: data_xor = (RAM[A] & 0x02) << 3; break;
+			case 6: data_xor =  (RAM[A] & 0x01) << 2; break;
+			case 7: data_xor =  (RAM[A] & 0x02) << 3; break;
 		}
 		RAM[A] ^= data_xor;
 	}
@@ -1053,6 +1478,42 @@ static void checkman_hisave(void)
 	}
 }
 
+static int kingball_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	/* Peek into videoram to see if HIGH SCORE is drawn */
+	if ((RAM[0x9280] == 0x11) && (RAM[0x9160] == 0x0e))
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x8305],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void kingball_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x8305],3);
+		osd_fclose(f);
+	}
+}
+
 
 
 struct GameDriver mooncrst_driver =
@@ -1062,10 +1523,11 @@ struct GameDriver mooncrst_driver =
 	"mooncrst",
 	"Moon Cresta (Nichibutsu)",
 	"1980",
-	"Nihon Bussan",
+	"Nichibutsu",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrst_rom,
 	mooncrst_decode, 0,
@@ -1074,7 +1536,7 @@ struct GameDriver mooncrst_driver =
 
 	mooncrst_input_ports,
 
-	mooncrst_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
@@ -1091,6 +1553,7 @@ struct GameDriver mooncrsg_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrsg_rom,
 	0, 0,
@@ -1099,10 +1562,36 @@ struct GameDriver mooncrsg_driver =
 
 	mooncrst_input_ports,
 
-	mooncrst_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrsg_hiload, mooncrsg_hisave
+};
+
+struct GameDriver smooncrs_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"smooncrs",
+	"Super Moon Cresta",
+	"1980?",
+	"Gremlin",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&mooncrst_machine_driver,
+	0,
+
+	smooncrs_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	mooncrst_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrst_hiload, mooncrst_hisave
 };
 
 struct GameDriver mooncrsb_driver =
@@ -1110,12 +1599,13 @@ struct GameDriver mooncrsb_driver =
 	__FILE__,
 	&mooncrst_driver,
 	"mooncrsb",
-	"Moon Cresta (bootleg)",
+	"Moon Cresta (bootleg set 1)",
 	"1980",
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrsb_rom,
 	0, 0,
@@ -1124,7 +1614,33 @@ struct GameDriver mooncrsb_driver =
 
 	mooncrst_input_ports,
 
-	mooncrst_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrst_hiload, mooncrst_hisave
+};
+
+struct GameDriver mooncrs2_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"mooncrs2",
+	"Moon Cresta (bootleg set 2)",
+	"1980",
+	"Nichibutsu",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&mooncrst_machine_driver,
+	0,
+
+	mooncrs2_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	mooncrst_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
@@ -1139,8 +1655,9 @@ struct GameDriver fantazia_driver =
 	"1980",
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	0,
+	GAME_IMPERFECT_COLORS,
 	&mooncrst_machine_driver,
+	0,
 
 	fantazia_rom,
 	0, 0,
@@ -1149,7 +1666,7 @@ struct GameDriver fantazia_driver =
 
 	mooncrst_input_ports,
 
-	fantazia_color_prom, 0, 0,
+	wrong_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
@@ -1160,21 +1677,48 @@ struct GameDriver eagle_driver =
 	__FILE__,
 	&mooncrst_driver,
 	"eagle",
-	"Eagle",
+	"Eagle (set 1)",
 	"1980",
 	"Centuri",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	eagle_rom,
 	0, 0,
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	eagle_input_ports,
 
-	mooncrst_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	mooncrst_hiload, mooncrst_hisave
+};
+
+struct GameDriver eagle2_driver =
+{
+	__FILE__,
+	&mooncrst_driver,
+	"eagle2",
+	"Eagle (set 2)",
+	"1980",
+	"Centuri",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
+	0,
+	&mooncrst_machine_driver,
+	0,
+
+	eagle2_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	eagle2_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
@@ -1191,6 +1735,7 @@ struct GameDriver moonqsr_driver =
 	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
 	0,
 	&moonqsr_machine_driver,
+	0,
 
 	moonqsr_rom,
 	0, moonqsr_decode,
@@ -1199,7 +1744,7 @@ struct GameDriver moonqsr_driver =
 
 	moonqsr_input_ports,
 
-	moonqsr_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	moonqsr_hiload, moonqsr_hisave
@@ -1216,6 +1761,7 @@ struct GameDriver checkman_driver =
 	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
 	0,
 	&checkman_machine_driver,
+	0,
 
 	checkman_rom,
 	checkman_decode, 0,
@@ -1224,7 +1770,7 @@ struct GameDriver checkman_driver =
 
 	checkman_input_ports,
 
-	checkman_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	checkman_hiload, checkman_hisave
@@ -1241,6 +1787,7 @@ struct GameDriver moonal2_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
+	0,
 
 	moonal2_rom,
 	0, 0,
@@ -1249,7 +1796,7 @@ struct GameDriver moonal2_driver =
 
 	moonal2_input_ports,
 
-	moonal2_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
@@ -1266,6 +1813,7 @@ struct GameDriver moonal2b_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
+	0,
 
 	moonal2b_rom,
 	0, 0,
@@ -1274,8 +1822,60 @@ struct GameDriver moonal2b_driver =
 
 	moonal2_input_ports,
 
-	moonal2_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
+};
+
+struct GameDriver kingball_driver =
+{
+	__FILE__,
+	0,
+	"kingball",
+	"King & Balloon (US)",
+	"1980",
+	"Namco",
+	"Brad Oliver",
+	0,
+	&kingball_machine_driver,
+	0,
+
+	kingball_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	kingball_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	kingball_hiload, kingball_hisave
+};
+
+struct GameDriver kingbalj_driver =
+{
+	__FILE__,
+	&kingball_driver,
+	"kingbalj",
+	"King & Balloon (Japan)",
+	"1980",
+	"Namco",
+	"Brad Oliver",
+	0,
+	&kingball_machine_driver,
+	0,
+
+	kingbalj_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	kingball_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	kingball_hiload, kingball_hisave
 };

@@ -14,7 +14,7 @@
 unsigned char *vicdual_characterram;
 static unsigned char dirtycharacter[256];
 
-static int palette_bank = 0;
+static int palette_bank;
 
 
 
@@ -69,6 +69,21 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 		color_prom++;
 	}
+
+	palette_bank = 0;
+
+	{
+		extern struct GameDriver heiankyo_driver;
+		extern struct GameDriver digger_driver;
+
+		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
+		if (Machine->gamedrv == &heiankyo_driver)
+			palette_bank = 3;
+
+		/* and Digger expects it to default to 1 */
+		if (Machine->gamedrv == &digger_driver)
+			palette_bank = 1;
+	}
 }
 
 
@@ -81,6 +96,11 @@ void vicdual_characterram_w(int offset,int data)
 
 		vicdual_characterram[offset] = data;
 	}
+}
+
+int vicdual_characterram_r(int offset)
+{
+	return vicdual_characterram[offset];
 }
 
 void vicdual_palette_bank_w(int offset, int data)

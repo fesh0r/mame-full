@@ -12,25 +12,57 @@ This is the Williams license of Jaleco's Formation-Z.
 
 extern unsigned char *aeroboto_videoram;
 extern unsigned char *aeroboto_fgscroll,*aeroboto_bgscroll;
-extern unsigned char *aeroboto_charlookup;
+extern int aeroboto_charbank;
 
 void aeroboto_gfxctrl_w(int ofset,int data);
 void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
+
+static int player;
+
+static int aeroboto_in0_r(int offset)
+{
+	return readinputport(player);
+}
+
+static int aeroboto_201_r(int offset)
+{
+	/* if you keep a button pressed during boot, the game will expect this */
+	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
+	int res[4] = { 0xff,0x9f,0x1b,0x03};
+	static int count;
+	if (errorlog) fprintf(errorlog,"PC %04x: read 3004\n",cpu_get_pc());
+	return res[(count++)&3];
+}
+
+static void aeroboto_3000_w(int ofset,int data)
+{
+	/* bit 0 selects player1/player2 controls */
+	player = data & 1;
+
+	/* not sure about this, could be bit 2 */
+	aeroboto_charbank = (data & 0x02) >> 1;
+
+	/* there's probably a flip screen here as well */
+}
+
 static int pip(int offset)
 {
-	return rand();
+	return rand() & 0xff;
 }
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x183f, MRA_RAM },
-	{ 0x2000, 0x20ff, MRA_RAM },
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x0800, 0x08ff, MRA_RAM },	/* ? copied to 2000 */
+	{ 0x1000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x183f, MRA_RAM },
 	{ 0x2800, 0x28ff, MRA_RAM },
-	{ 0x3000, 0x3000, input_port_0_r },
-	{ 0x3001, 0x3001, input_port_1_r },
-	{ 0x3002, 0x3002, input_port_2_r },
+	{ 0x3000, 0x3000, aeroboto_in0_r },
+	{ 0x3001, 0x3001, input_port_2_r },
+	{ 0x3002, 0x3002, input_port_3_r },
+	{ 0x3004, 0x3004, aeroboto_201_r },
 	{ 0x3800, 0x3800, watchdog_reset_r },	/* or IRQ acknowledge */
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -38,14 +70,16 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x0800, 0x08ff, MWA_RAM },	/* ? initialized on startup */
+	{ 0x0900, 0x09ff, MWA_RAM },	/* ? initialized on startup (same as 0800) */
 	{ 0x1000, 0x13ff, MWA_RAM, &aeroboto_videoram },
 	{ 0x1400, 0x17ff, videoram_w, &videoram, &videoram_size },
 	{ 0x1800, 0x181f, MWA_RAM, &aeroboto_fgscroll },
 	{ 0x1820, 0x183f, MWA_RAM, &aeroboto_bgscroll },
-//	{ 0x2000, 0x20ff, MWA_RAM, &aeroboto_charlookup },
+	{ 0x2000, 0x20ff, MWA_RAM },	/* scroll? maybe stars? copied from 0800 */
 	{ 0x2800, 0x28ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3000, 0x3000, aeroboto_gfxctrl_w },	/* char bank + ? */
+	{ 0x3000, 0x3000, aeroboto_3000_w },
 	{ 0x3001, 0x3001, soundlatch_w },	/* ? */
 	{ 0x3002, 0x3002, soundlatch2_w },	/* ? */
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -56,6 +90,7 @@ static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
 	{ 0x9002, 0x9002, AY8910_read_port_0_r },
+	{ 0xa002, 0xa002, AY8910_read_port_1_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -84,53 +119,62 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Cabinet?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright?" )
-	PORT_DIPSETTING(    0x40, "Cocktail?" )
+	PORT_BITX( 0,       0x03, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "30000" )
+	PORT_DIPSETTING(    0x08, "40000" )
+	PORT_DIPSETTING(    0x04, "70000" )
+	PORT_DIPSETTING(    0x00, "100000" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	/* the coin input must stay low for exactly 2 frames to be consistently recognized. */
-	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 
 	PORT_START
-	PORT_DIPNAME( 0x07, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x07, "5 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x06, "1 Coin/4 Credits" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 6", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 7", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Flip Screen?", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Medium" )
+	PORT_DIPSETTING(    0x10, "Hard" )
+	PORT_DIPSETTING(    0x18, "Hardest" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	/* the manual lists the flip screen in the previous bank (replacing Coin A) */
+	PORT_DIPNAME( 0x80, 0x00, "Flip Screen?" )
 	PORT_DIPSETTING(    0x00, "Off?" )
 	PORT_DIPSETTING(    0x80, "On?" )
 INPUT_PORTS_END
@@ -174,7 +218,8 @@ static struct AY8910interface ay8910_interface =
 {
 	2,      /* 2 chips */
 	1500000,        /* 1.5 MHz ? (hand tuned) */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ soundlatch_r, 0 },	/* ? */
 	{ soundlatch2_r, 0 },	/* ? */
 	{ 0, 0 },
@@ -195,7 +240,7 @@ static struct MachineDriver machine_driver =
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
-			2,
+			3,
 			readmem_sound,writemem_sound,0,0,
 			interrupt,1
 		}
@@ -205,7 +250,7 @@ static struct MachineDriver machine_driver =
 	0,	/* init machine */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	256,256,
 	0,
@@ -232,29 +277,78 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( aeroboto_rom )
+ROM_START( formatz_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
-	ROM_LOAD( "AEROBOTO.8", 0x4000, 0x4000, 0x34ce3000 )
-	ROM_LOAD( "AEROBOTO.7", 0x8000, 0x4000, 0xa97571c3 )
-	ROM_LOAD( "AEROBOTO.6", 0xC000, 0x4000, 0xc435f7dd )
+	ROM_LOAD( "format_z.8",   0x4000, 0x4000, 0x81a2416c )
+	ROM_LOAD( "format_z.7",   0x8000, 0x4000, 0x986e6052 )
+	ROM_LOAD( "format_z.6",   0xc000, 0x4000, 0xbaa0d745 )
 
-	ROM_REGION(0x7000)	/* temporary space for graphics */
-	ROM_LOAD( "AEROBOTO.5", 0x0000, 0x2000, 0xcdf85fa4 )	/* characters */
-	ROM_LOAD( "AEROBOTO.4", 0x2000, 0x2000, 0xae97d893 )	/* characters */
-	ROM_LOAD( "AEROBOTO.1", 0x4000, 0x1000, 0x36dbf4bb )	/* sprites */
-	ROM_LOAD( "AEROBOTO.2", 0x5000, 0x1000, 0xada29ee6 )	/* sprites */
-	ROM_LOAD( "AEROBOTO.3", 0x6000, 0x1000, 0xedaa5368 )	/* sprites */
+	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
+	ROM_LOAD( "format_z.5",   0x0000, 0x2000, 0xba50be57 )	/* characters */
+	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
+	ROM_LOAD( "format_z.1",   0x4000, 0x1000, 0x5739afd2 )	/* sprites */
+	ROM_LOAD( "format_z.2",   0x5000, 0x1000, 0x3a821391 )	/* sprites */
+	ROM_LOAD( "format_z.3",   0x6000, 0x1000, 0x7d1aec79 )	/* sprites */
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	/* 10A, 10B, 10C - missing! */
 
 	ROM_REGION(0x10000)     /* 64k for sound CPU */
-	ROM_LOAD( "AEROBOTO.9", 0xf000, 0x1000, 0x36f5b5b3 )
+	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
+ROM_END
+
+ROM_START( aeroboto_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "aeroboto.8",   0x4000, 0x4000, 0x4d3fc049 )
+	ROM_LOAD( "aeroboto.7",   0x8000, 0x4000, 0x522f51c1 )
+	ROM_LOAD( "aeroboto.6",   0xc000, 0x4000, 0x1a295ffb )
+
+	ROM_REGION_DISPOSE(0x7000)	/* temporary space for graphics */
+	ROM_LOAD( "aeroboto.5",   0x0000, 0x2000, 0x32fc00f9 )	/* characters */
+	ROM_LOAD( "format_z.4",   0x2000, 0x2000, 0x910375a0 )	/* characters */
+	ROM_LOAD( "aeroboto.1",   0x4000, 0x1000, 0x7820eeaf )	/* sprites */
+	ROM_LOAD( "aeroboto.2",   0x5000, 0x1000, 0xc7f81a3c )	/* sprites */
+	ROM_LOAD( "aeroboto.3",   0x6000, 0x1000, 0x5203ad04 )	/* sprites */
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	/* 10A, 10B, 10C - missing! */
+
+	ROM_REGION(0x10000)     /* 64k for sound CPU */
+	ROM_LOAD( "format_z.9",   0xf000, 0x1000, 0x6b9215ad )
 ROM_END
 
 
 
-struct GameDriver aeroboto_driver =
+struct GameDriver formatz_driver =
 {
 	__FILE__,
 	0,
+	"formatz",
+	"Formation Z",
+	"1984",
+	"Jaleco",
+	"Carlos A. Lozano",
+	GAME_NOT_WORKING,
+	&machine_driver,
+	0,
+
+	formatz_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
+};
+
+struct GameDriver aeroboto_driver =
+{
+	__FILE__,
+	&formatz_driver,
 	"aeroboto",
 	"Aeroboto",
 	"1984",
@@ -262,6 +356,7 @@ struct GameDriver aeroboto_driver =
 	"Carlos A. Lozano",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	aeroboto_rom,
 	0, 0,
@@ -270,7 +365,7 @@ struct GameDriver aeroboto_driver =
 
 	input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

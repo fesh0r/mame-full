@@ -14,8 +14,8 @@
 unsigned char mappy_scroll;
 
 static unsigned char *transparency;
-static int motos_special_display;
-
+static int special_display;
+static int flipscreen;
 
 /***************************************************************************
 
@@ -80,14 +80,17 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
       gfx = Machine->gfx[0];
       for (i = 0; i < gfx->total_elements; i++)
       {
-			color = gfx->gfxdata->line[i * gfx->height][0];
+			color = gfx->gfxdata[i * gfx->char_modulo];
 
+			dp = gfx->gfxdata + i * gfx->char_modulo;
 			for (y = 0; y < gfx->height; y++)
 			{
-				dp = gfx->gfxdata->line[i * gfx->height + y];
 				for (x = 0; x < gfx->width; x++)
+				{
 					if (dp[x] != color)
 						goto done;
+				}
+				dp += gfx->line_modulo;
 			}
 
 			for (y = 0; y < 64; y++)
@@ -107,7 +110,7 @@ static int common_vh_start(void)
 		return 1;
 	memset (dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap (60*8,36*8)) == 0)
+	if ((tmpbitmap = osd_create_bitmap (36*8,60*8)) == 0)
 	{
 		free (dirtybuffer);
 		return 1;
@@ -118,13 +121,19 @@ static int common_vh_start(void)
 
 int mappy_vh_start(void)
 {
-	motos_special_display = 0;
+	special_display = 0;
 	return common_vh_start();
 }
 
 int motos_vh_start(void)
 {
-	motos_special_display = 1;
+	special_display = 1;
+	return common_vh_start();
+}
+
+int todruaga_vh_start(void)
+{
+	special_display = 2;
 	return common_vh_start();
 }
 
@@ -174,12 +183,20 @@ void mappy_scroll_w(int offset,int data)
 void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
-	if (motos_special_display) sx--;
+	if (special_display == 1) sy++;	/* Motos */
 
 	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
 		TRANSPARENCY_COLOR,16);
 }
 
+void mappy_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (data & 1))
+	{
+		flipscreen = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
 
 /***************************************************************************
 
@@ -203,24 +220,25 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* characters with bit 0x40 set are higher priority than sprites; remember and redraw later */
 		if (color & 0x40)
+		{
 			if (!transparency[(video << 6) + (color & 0x3f)])
+			{
 				*save++ = offs;
-
+			}
+		}
 		if (dirtybuffer[offs])
 		{
 			int sx,sy,mx,my;
-
 
 			dirtybuffer[offs] = 0;
 
 			if (offs >= videoram_size - 64)
 			{
-				int off;
+				int off = offs;
 
-
-				off = offs;
-				if (motos_special_display)
+				if (special_display == 1)
 				{
+					/* Motos */
 					if (off == 0x07d1 || off == 0x07d0 || off == 0x07f1 || off == 0x07f0)
 						off -= 0x10;
 					if (off == 0x07c1 || off == 0x07c0 || off == 0x07e1 || off == 0x07e0)
@@ -228,55 +246,75 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				}
 
 				/* Draw the top 2 lines. */
-				mx = off % 32;
-				my = (off - (videoram_size - 64)) / 32;
+				mx = (off - (videoram_size - 64)) / 32;
+				my = off % 32;
 
-				sx = 29 - mx;
-				sy = my;
+				sx = mx;
+				sy = my - 2;
 			}
 			else if (offs >= videoram_size - 128)
 			{
-				/* Draw the bottom 2 lines. */
-				mx = offs % 32;
-				my = (offs - (videoram_size - 128)) / 32;
+				int off = offs;
 
-				sx = 29 - mx;
-				sy = my + 34;
+				if (special_display == 2)
+				{
+					/* Tower of Druaga */
+					if (off == 0x0791 || off == 0x0790 || off == 0x07b1 || off == 0x07b0)
+						off -= 0x10;
+					if (off == 0x0781 || off == 0x0780 || off == 0x07a1 || off == 0x07a0)
+						off += 0x10;
+				}
+
+				/* Draw the bottom 2 lines. */
+				mx = (off - (videoram_size - 128)) / 32;
+				my = off % 32;
+
+				sx = mx + 34;
+				sy = my - 2;
 			}
 			else
 			{
 				/* draw the rest of the screen */
-				mx = offs / 32;
-				my = offs % 32;
+				mx = offs % 32;
+				my = offs / 32;
 
-				sx = 59 - mx;
-				sy = my + 2;
+				sx = mx + 2;
+				sy = my;
+			}
+
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 59 - sy;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					video,
 					color,
-					0,0,8*sx,8*sy,
+					flipscreen,flipscreen,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
 
 	/* copy the temporary bitmap to the screen */
 	{
 		int scroll[36];
 
-
 		for (offs = 0;offs < 2;offs++)
 			scroll[offs] = 0;
 		for (offs = 2;offs < 34;offs++)
-			scroll[offs] = mappy_scroll - 256;
+			scroll[offs] = -mappy_scroll;
 		for (offs = 34;offs < 36;offs++)
 			scroll[offs] = 0;
 
-		copyscrollbitmap(bitmap,tmpbitmap,36,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
+		if (flipscreen)
+		{
+			for (offs = 0;offs < 36;offs++)
+				scroll[offs] = 224 - scroll[offs];
+		}
 
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 2)
@@ -286,10 +324,16 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int sprite = spriteram[offs];
 			int color = spriteram[offs+1];
-			int x = spriteram_2[offs]-16;
-			int y = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
-			int flipx = spriteram_3[offs] & 2;
-			int flipy = spriteram_3[offs] & 1;
+			int x = (spriteram_2[offs+1]-40) + 0x100*(spriteram_3[offs+1] & 1);
+			int y = 28*8-spriteram_2[offs];
+			int flipx = spriteram_3[offs] & 1;
+			int flipy = spriteram_3[offs] & 2;
+
+			if (flipscreen)
+			{
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			switch (spriteram_3[offs] & 0x0c)
 			{
@@ -297,63 +341,63 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
 					break;
 
-				case 4:		/* 2x vertical */
+				case 4:		/* 2x horizontal */
 					sprite &= ~1;
-					if (!flipy)
+					if (!flipx)
 					{
 						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
 					}
 					else
 					{
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
 						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
 					}
 					break;
 
-				case 8:		/* 2x horizontal */
+				case 8:		/* 2x vertical */
 					sprite &= ~2;
-					if (!flipx)
+					if (!flipy)
 					{
 						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
 					}
 					else
 					{
 						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
 					}
 					break;
 
 				case 12:		/* 2x both ways */
 					sprite &= ~3;
-					if (!flipy && !flipx)
+					if (!flipx && !flipy)
 					{
 						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,16+y);
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,y);
-						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,16+y);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y-16);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y-16);
 					}
-					else if (flipy && flipx)
+					else if (flipx && flipy)
 					{
 						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,16+y);
-						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,y);
-						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,16+y);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y-16);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y-16);
 					}
-					else if (flipx)
+					else if (flipy)
 					{
 						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,16+y);
-						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,16+x,y);
-						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,16+x,16+y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x+16,y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,y-16);
+						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x+16,y-16);
 					}
-					else /* flipy */
+					else /* flipx */
 					{
 						mappy_draw_sprite(bitmap,3+sprite,color,flipx,flipy,x,y);
-						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x,16+y);
-						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,16+x,y);
-						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,16+x,16+y);
+						mappy_draw_sprite(bitmap,2+sprite,color,flipx,flipy,x+16,y);
+						mappy_draw_sprite(bitmap,1+sprite,color,flipx,flipy,x,y-16);
+						mappy_draw_sprite(bitmap,sprite,color,flipx,flipy,x+16,y-16);
 					}
 					break;
 			}
@@ -370,41 +414,47 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (offs >= videoram_size - 64)
 		{
 			/* Draw the top 2 lines. */
-			mx = offs % 32;
-			my = (offs - (videoram_size - 64)) / 32;
+			mx = (offs - (videoram_size - 64)) / 32;
+			my = offs % 32;
 
-			sx = 29 - mx;
-			sy = my;
+			sx = mx;
+			sy = my - 2;
 
-			sx *= 8;
+			sy *= 8;
 		}
 		else if (offs >= videoram_size - 128)
 		{
 			/* Draw the bottom 2 lines. */
-			mx = offs % 32;
-			my = (offs - (videoram_size - 128)) / 32;
+			mx = (offs - (videoram_size - 128)) / 32;
+			my = offs % 32;
 
-			sx = 29 - mx;
-			sy = my + 34;
+			sx = mx + 34;
+			sy = my - 2;
 
-			sx *= 8;
+			sy *= 8;
 		}
 		else
 		{
 			/* draw the rest of the screen */
-			mx = offs / 32;
-			my = offs % 32;
+			mx = offs % 32;
+			my = offs / 32;
 
-			sx = 59 - mx;
-			sy = my + 2;
+			sx = mx + 2;
+			sy = my;
 
-			sx = (8*sx+mappy_scroll-256);
+			sy = (8*sy-mappy_scroll);
+		}
+
+		if (flipscreen)
+		{
+			sx = 35 - sx;
+			sy = 216 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs],
 				colorram[offs],
-				0,0,sx,8*sy,
+				flipscreen,flipscreen,8*sx,sy,
 				0,TRANSPARENCY_COLOR,0);
 	}
 }

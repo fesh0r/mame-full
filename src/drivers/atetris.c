@@ -38,85 +38,81 @@ int  atetris_slapstic_r(int offset);
 
 static struct MemoryReadAddress readmem[] =
 {
-        { 0x0000, 0x20ff, MRA_RAM },
-        { 0x2400, 0x25ff, MRA_RAM },
-        { 0x2800, 0x280f, pokey1_r },
-        { 0x2810, 0x281f, pokey2_r },
-        { 0x4000, 0x7fff, atetris_slapstic_r },
-        { 0x8000, 0xffff, MRA_ROM },
+	{ 0x0000, 0x20ff, MRA_RAM },
+	{ 0x2400, 0x25ff, MRA_RAM },
+	{ 0x2800, 0x280f, pokey1_r },
+	{ 0x2810, 0x281f, pokey2_r },
+	{ 0x4000, 0x7fff, atetris_slapstic_r },
+	{ 0x8000, 0xffff, MRA_ROM },
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-        { 0x0000, 0x0fff, MWA_RAM },
-        { 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
-        { 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
-        { 0x2400, 0x25ff, MWA_RAM },
-        { 0x2800, 0x280f, pokey1_w },
-        { 0x2810, 0x281f, pokey2_w },
-        { 0x3000, 0x3000, watchdog_reset_w },
-        { 0x3400, 0x3400, MWA_NOP },  // EEPROM enable
-        { 0x3800, 0x3800, MWA_NOP },  // ???
-        { 0x3c00, 0x3c00, MWA_NOP },  // ???
-        { -1 }  /* end of table */
+	{ 0x0000, 0x0fff, MWA_RAM },
+	{ 0x1000, 0x1fff, videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x20ff, paletteram_RRRGGGBB_w, &paletteram },
+	{ 0x2400, 0x25ff, MWA_RAM },
+	{ 0x2800, 0x280f, pokey1_w },
+	{ 0x2810, 0x281f, pokey2_w },
+	{ 0x3000, 0x3000, watchdog_reset_w },
+	{ 0x3400, 0x3400, MWA_NOP },  // EEPROM enable
+	{ 0x3800, 0x3800, MWA_NOP },  // ???
+	{ 0x3c00, 0x3c00, MWA_NOP },  // ???
+	{ -1 }  /* end of table */
 };
 
 
 INPUT_PORTS_START( ports )
-        // These ports are read via the Pokeys
-        PORT_START      /* IN0 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
-        PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Freeze", OSD_KEY_5, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(0x00, "Off" )
-        PORT_DIPSETTING(0x04, "On" )
-        PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Freeze Step", OSD_KEY_6, IP_JOY_NONE, 0)
-        PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-        PORT_BITX(0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(0x00, "Off" )
-        PORT_DIPSETTING(0x80, "On" )
+	// These ports are read via the Pokeys
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Freeze", KEYCODE_5, IP_JOY_NONE )
+	PORT_DIPSETTING(0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x04, DEF_STR( On ) )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Freeze Step", KEYCODE_6, IP_JOY_NONE )
+	PORT_BIT( 0x30, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
-        PORT_START      /* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 INPUT_PORTS_END
 
 
 // Same as the regular one except they added a Flip Controls switch
 INPUT_PORTS_START( atetcktl_ports )
-        // These ports are read via the Pokeys
-        PORT_START      /* IN0 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
-        PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Freeze", OSD_KEY_5, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(0x00, "Off" )
-        PORT_DIPSETTING(0x04, "On" )
-        PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Freeze Step", OSD_KEY_6, IP_JOY_NONE, 0)
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-        PORT_DIPNAME( 0x20, 0x00, "Flip Controls", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x00, "Off" )
-        PORT_DIPSETTING(    0x20, "On" )
-        PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
-        PORT_BITX(0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-        PORT_DIPSETTING(0x00, "Off" )
-        PORT_DIPSETTING(0x80, "On" )
+	// These ports are read via the Pokeys
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Freeze", KEYCODE_5, IP_JOY_NONE )
+	PORT_DIPSETTING(0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(0x04, DEF_STR( On ) )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Freeze Step", KEYCODE_6, IP_JOY_NONE )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x00, "Flip Controls" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
-        PORT_START      /* IN1 */
-        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
-        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
-        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
-        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
-        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 INPUT_PORTS_END
 
 
@@ -143,8 +139,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,      /* 2 chips */
 	1789790,	/* ? */
-	128,
-	POKEY_DEFAULT_GAIN/4,
+	{ 50, 50 },
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -203,28 +199,29 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( atetris_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "1100.45f", 0x0000, 0x10000, 0xaf18a152 )
+	ROM_LOAD( "1100.45f",     0x0000, 0x10000, 0x2acbdb09 )
 
-	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 )
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
 ROM_START( atetrisa_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "d1", 0x0000, 0x10000, 0x4112e26c )
+	ROM_LOAD( "d1",           0x0000, 0x10000, 0x2bcab107 )
 
-	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1101.35a", 0x0000, 0x10000, 0x4bdf7ba5 )
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1101.35a",     0x0000, 0x10000, 0x84a1939f )
 ROM_END
 
 ROM_START( atetrisb_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "tetris.01", 0x0000, 0x10000, 0x813ea036 )
+	ROM_LOAD( "tetris.01",    0x0000, 0x10000, 0x944d15f6 )
 
-	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tetris.02", 0x0000, 0x10000, 0x366e8d7a )
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tetris.02",    0x0000, 0x10000, 0x5c4e7258 )
 
 	/* there's an extra EEPROM, maybe used for protection crack, which */
 	/* however doesn't seem to be required to run the game in this driver. */
@@ -232,10 +229,18 @@ ROM_END
 
 ROM_START( atetcktl_rom )
 	ROM_REGION(0x14000)     /* 80k for code */
-	ROM_LOAD( "1102.45f", 0x0000, 0x10000, 0xcb2f88b3 )
+	ROM_LOAD( "tetcktl1.rom", 0x0000, 0x10000, 0x9afd1f4a )
 
-	ROM_REGION(0x10000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1103.35a", 0x0000, 0x10000, 0x010956c1 )
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
+ROM_END
+
+ROM_START( atetckt2_rom )
+	ROM_REGION(0x14000)     /* 80k for code */
+	ROM_LOAD( "1102.45f",     0x0000, 0x10000, 0x1bd28902 )
+
+	ROM_REGION_DISPOSE(0x10000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1103.35a",     0x0000, 0x10000, 0xec2a7f93 )
 ROM_END
 
 
@@ -300,6 +305,7 @@ struct GameDriver atetris_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetris_rom,
 	atetris_rom_move,
@@ -325,6 +331,7 @@ struct GameDriver atetrisa_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetrisa_rom,
 	atetris_rom_move,
@@ -350,6 +357,7 @@ struct GameDriver atetrisb_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetrisb_rom,
 	atetris_rom_move,
@@ -369,14 +377,41 @@ struct GameDriver atetcktl_driver =
 	__FILE__,
 	&atetris_driver,
 	"atetcktl",
-	"Tetris (Cocktail version)",
+	"Tetris (Cocktail set 1)",
 	"1989",
 	"Atari Games",
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetcktl_rom,
+	atetris_rom_move,
+	0,
+	0,
+	0,      /* sound_prom */
+
+	atetcktl_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	hiload, hisave
+};
+
+struct GameDriver atetckt2_driver =
+{
+	__FILE__,
+	&atetris_driver,
+	"atetckt2",
+	"Tetris (Cocktail set 2)",
+	"1989",
+	"Atari Games",
+	"Zsolt Vasvari",
+	0,
+	&machine_driver,
+	0,
+
+	atetckt2_rom,
 	atetris_rom_move,
 	0,
 	0,

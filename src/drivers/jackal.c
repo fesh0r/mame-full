@@ -97,7 +97,7 @@ C000-ffff  ROM
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809/M6809.h"
+#include "cpu/m6809/m6809.h"
 
 
 extern unsigned char *jackal_videoctrl;
@@ -122,8 +122,16 @@ void jackal_spriteram_w(int offset,int data);
 void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-unsigned char jackal_ym2151_trigger = 0;
 
+static int rotary_0_r(int offset)
+{
+	return (1 << (readinputport(6) * 8 / 256)) ^ 0xff;
+}
+
+static int rotary_1_r(int offset)
+{
+	return (1 << (readinputport(7) * 8 / 256)) ^ 0xff;
+}
 
 static unsigned char intenable;
 
@@ -147,6 +155,8 @@ static struct MemoryReadAddress jackal_readmem[] =
 	{ 0x0011, 0x0011, input_port_1_r },
 	{ 0x0012, 0x0012, input_port_2_r },
 	{ 0x0013, 0x0013, input_port_3_r },
+	{ 0x0014, 0x0014, rotary_0_r },
+	{ 0x0015, 0x0015, rotary_1_r },
 	{ 0x0018, 0x0018, input_port_4_r },
 	{ 0x0020, 0x005f, jackal_zram_r },	/* MAIN   Z RAM,SUB    Z RAM */
 	{ 0x0060, 0x1fff, jackal_commonram_r },	/* M COMMON RAM,S COMMON RAM */
@@ -173,7 +183,6 @@ static struct MemoryWriteAddress jackal_writemem[] =
 
 static struct MemoryReadAddress jackal_sound_readmem[] =
 {
-	{ 0x0000, 0x001f, MRA_RAM },		/* WORK RAM? */
 	{ 0x2001, 0x2001, YM2151_status_port_0_r },
 	{ 0x4000, 0x43ff, MRA_RAM },		/* COLOR RAM (Self test only check 0x4000-0x423f */
 	{ 0x6000, 0x605f, MRA_RAM },		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
@@ -184,7 +193,6 @@ static struct MemoryReadAddress jackal_sound_readmem[] =
 
 static struct MemoryWriteAddress jackal_sound_writemem[] =
 {
-	{ 0x0000, 0x001f, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x4000, 0x43ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
@@ -198,39 +206,39 @@ static struct MemoryWriteAddress jackal_sound_writemem[] =
 
 INPUT_PORTS_START( jackal_input_ports )
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x0f, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0xf0, 0xf0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x50, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x40, "3 Coins/2 Credits" )
-	PORT_DIPSETTING(    0x10, "4 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x30, "3 Coins/4 Credits" )
-	PORT_DIPSETTING(    0x70, "2 Coins/3 Credits" )
-	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x60, "2 Coins/5 Credits" )
-	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
-	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
-	PORT_DIPSETTING(    0xa0, "1 Coin/6 Credits" )
-	PORT_DIPSETTING(    0x90, "1 Coin/7 Credits" )
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "Invalid" )
 
 	PORT_START	/* IN1 */
@@ -264,42 +272,49 @@ INPUT_PORTS_START( jackal_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x18, "30000 150000" )
 	PORT_DIPSETTING(    0x10, "50000 200000" )
 	PORT_DIPSETTING(    0x08, "30000" )
 	PORT_DIPSETTING(    0x00, "50000" )
-	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Medium" )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x80, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Sound Mode", IP_KEY_NONE )
+	PORT_START	/* DSW3 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Sound Mode" )
 	PORT_DIPSETTING(    0x04, "Mono" )
 	PORT_DIPSETTING(    0x00, "Stereo" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Sound Adj" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Cocktail ) )
+
+	/* the rotary controls work in topgunbl only */
+	PORT_START	/* player 1 8-way rotary control - converted in rotary_0_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+
+	PORT_START	/* player 2 8-way rotary control - converted in rotary_1_r() */
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_PLAYER2, 25, 10, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -339,6 +354,40 @@ static struct GfxLayout spritelayout8 =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
+static struct GfxLayout topgunbl_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	4096,	/* 4096 characters */
+	8,	/* 8 bits per pixel (!) */
+	{ 0, 1, 2, 3, 0x20000*8+0, 0x20000*8+1, 0x20000*8+2, 0x20000*8+3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout topgunbl_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	1024,	/* 1024 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4,
+			32*8+2*4, 32*8+3*4, 32*8+0*4, 32*8+1*4, 32*8+6*4, 32*8+7*4, 32*8+4*4, 32*8+5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	128*8	/* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout topgunbl_spritelayout8 =
+{
+	8,8,	/* 8*8 characters */
+	4096,	/* 4096 characters */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
 
 static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 {
@@ -350,13 +399,23 @@ static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxDecodeInfo topgunbl_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &topgunbl_charlayout,   256, 1 },	/* colors 256-511 */
+	{ 1, 0x40000, &topgunbl_spritelayout,   0, 1 },	/* colors  16- 31 */
+	{ 1, 0x60000, &topgunbl_spritelayout,  16, 1 },	/* colors   0- 15 */
+	{ 1, 0x40000, &topgunbl_spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x60000, &topgunbl_spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ -1 } /* end of array */
+};
+
 
 
 static struct YM2151interface ym2151_interface =
 {
 	1,
 	3580000,
-	{ 256 },
+	{ YM3012_VOL(50,MIXER_PAN_LEFT,50,MIXER_PAN_RIGHT) },
 	{ 0 },
 };
 
@@ -367,14 +426,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			3580000/2,	/* 1.79 MHz? */
+			2000000,	/* 2 MHz???? */
 			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
-			3580000/2,	/* 1.79 MHz? */
+			2000000,	/* 2 MHz???? */
 			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -397,7 +456,7 @@ static struct MachineDriver machine_driver =
 	jackal_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151,
@@ -405,6 +464,53 @@ static struct MachineDriver machine_driver =
 		}
 	}
 };
+
+/* identical but different gfxdecode */
+static struct MachineDriver topgunbl_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			2000000,	/* 2 MHz???? */
+			0,
+			jackal_readmem,jackal_writemem,0,0,
+			jackal_interrupt,1
+		},
+		{
+			CPU_M6809,
+			2000000,	/* 2 MHz???? */
+			2,		/* memory region #2 */
+			jackal_sound_readmem,jackal_sound_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
+	jackal_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	topgunbl_gfxdecodeinfo,
+	512, 512,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	jackal_vh_start,
+	jackal_vh_stop,
+	jackal_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		}
+	}
+};
+
 
 
 static int hiload(void)
@@ -471,36 +577,80 @@ static void hisave(void)
 
 ROM_START( jackal_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
-	ROM_LOAD( "j-v02.rom", 0x04000, 0x8000, 0x878231ee )
-	ROM_CONTINUE(          0x14000, 0x8000 )
-	ROM_LOAD( "j-v03.rom", 0x0c000, 0x4000, 0x3601373b )
-	ROM_RELOAD(            0x1c000, 0x4000 )
+	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
+	ROM_CONTINUE(             0x14000, 0x8000 )
+	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
 
-	ROM_REGION(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "j-t04.rom", 0x00000, 0x20000, 0x127ef77a )
-	ROM_LOAD( "j-t06.rom", 0x20000, 0x20000, 0x4591834b )
-	ROM_LOAD( "j-t05.rom", 0x40000, 0x20000, 0xe4211e89 )
-	ROM_LOAD( "j-t07.rom", 0x60000, 0x20000, 0x78666330 )
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, 0x5c7aaaa1 )
+	ROM_LOAD( "j-t06.rom",    0x20000, 0x20000, 0x5c8f9325 )
+	ROM_LOAD( "j-t05.rom",    0x40000, 0x20000, 0x0b8350e7 )
+	ROM_LOAD( "j-t07.rom",    0x60000, 0x20000, 0xcf077092 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "j-t01.rom", 0x8000, 0x8000, 0x94425eba )
+	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
 ROM_START( topgunr_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
-	ROM_LOAD( "tgnr15d.bin", 0x04000, 0x8000, 0x93752b7d )
-	ROM_CONTINUE(            0x14000, 0x8000 )
-	ROM_LOAD( "tgnr16d.bin", 0x0c000, 0x4000, 0x12247cd0 )
-	ROM_RELOAD(              0x1c000, 0x4000 )
+	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
+	ROM_CONTINUE(             0x14000, 0x8000 )
+	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
 
-	ROM_REGION(0x80000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "tgnr7h.bin",  0x00000, 0x20000, 0xa18bc69d )
-	ROM_LOAD( "tgnr12h.bin", 0x20000, 0x20000, 0xf0dc327e )
-	ROM_LOAD( "tgnr8h.bin",  0x40000, 0x20000, 0x4948dda6 )
-	ROM_LOAD( "tgnr13h.bin", 0x60000, 0x20000, 0x94fa1442 )
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tgnr7h.bin",   0x00000, 0x20000, 0x50122a12 )
+	ROM_LOAD( "tgnr12h.bin",  0x20000, 0x20000, 0x37dbbdb0 )
+	ROM_LOAD( "tgnr8h.bin",   0x40000, 0x20000, 0x6943b1a4 )
+	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "tgnr11d.bin", 0x8000, 0x8000, 0x94425eba )
+	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
+ROM_END
+
+ROM_START( topgunbl_rom )
+	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
+	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
+	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
+
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "t-17.n12",     0x00000, 0x08000, 0xe8875110 )
+	ROM_LOAD( "t-18.n13",     0x08000, 0x08000, 0xcf14471d )
+	ROM_LOAD( "t-19.n14",     0x10000, 0x08000, 0x46ee5dd2 )
+	ROM_LOAD( "t-20.n15",     0x18000, 0x08000, 0x3f472344 )
+	ROM_LOAD( "t-13.n8",      0x20000, 0x08000, 0x5d669abb )
+	ROM_LOAD( "t-14.n9",      0x28000, 0x08000, 0xf349369b )
+	ROM_LOAD( "t-15.n10",     0x30000, 0x08000, 0x7c5a91dd )
+	ROM_LOAD( "t-16.n11",     0x38000, 0x08000, 0x5ec46d8e )
+	ROM_LOAD( "t-6.n1",       0x40000, 0x08000, 0x539cc48c )
+	ROM_LOAD( "t-5.m1",       0x48000, 0x08000, 0x2dd9a5e9 )
+	ROM_LOAD( "t-7.n2",       0x50000, 0x08000, 0x0ecd31b1 )
+	ROM_LOAD( "t-8.n3",       0x58000, 0x08000, 0xf946ada7 )
+	ROM_LOAD( "t-9.n4",       0x60000, 0x08000, 0x8269caca )
+	ROM_LOAD( "t-10.n5",      0x68000, 0x08000, 0x25393e4f )
+	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
+	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
+
+	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
 
@@ -513,9 +663,10 @@ struct GameDriver jackal_driver =
 	"Jackal",
 	"1986",
 	"Konami",
-	"Kenneth Lin (MAME driver)\n'cas' (dip switch settings)\nNoah Davis, Chris Hardy (test and debug)",
+	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
 	0,
 	&machine_driver,
+	0,
 
 	jackal_rom,
 	0, 0,
@@ -538,11 +689,38 @@ struct GameDriver topgunr_driver =
 	"Top Gunner",
 	"1986",
 	"Konami",
-	"Kenneth Lin (MAME driver)\n'cas' (dip switch settings)\nNoah Davis, Chris Hardy (test and debug)",
-	GAME_NOT_WORKING,
+	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
+	0,
 	&machine_driver,
+	0,
 
 	topgunr_rom,
+	0, 0,
+	0,
+	0,
+
+	jackal_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver topgunbl_driver =
+{
+	__FILE__,
+	&jackal_driver,
+	"topgunbl",
+	"Top Gunner (bootleg)",
+	"1987",
+	"bootleg",
+	"Kenneth Lin (MAME driver)\n'cas'\nNoah Davis\nChris Hardy",
+	0,
+	&topgunbl_machine_driver,
+	0,
+
+	topgunbl_rom,
 	0, 0,
 	0,
 	0,

@@ -77,7 +77,11 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	/* character and sprite lookup table */
 	/* they use colors 0-63 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	{
+		/* pen 0 always uses color 0 (background in River Patrol and Silver Land) */
+		if (i % 4 == 0) COLOR(0,i) = 0;
+		else COLOR(0,i) = i;
+	}
 
 	/* big sprite lookup table */
 	/* it uses colors 64-95 */
@@ -95,26 +99,33 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
   Swimmer has two 256x4 char/sprite palette PROMs and one 32x8 big sprite
   palette PROM.
-  I don't know for sure how the palette PROMs are connected to the RGB
-  output, but it's probably the usual:
+  The palette PROMs are connected to the RGB output this way:
+  (the 500 and 250 ohm resistors are made of 1 kohm resistors in parallel)
 
-  bit 3 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-  bit 0 -- 470 ohm resistor  -- GREEN
+  bit 3 -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+        -- 250 ohm resistor  -- GREEN
+  bit 0 -- 500 ohm resistor  -- GREEN
   bit 3 -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
+        -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
 
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
+  bit 7 -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+        -- 250 ohm resistor  -- GREEN
+        -- 500 ohm resistor  -- GREEN
         -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
+        -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
   bit 0 -- 1  kohm resistor  -- RED
+
+  Additionally, the background color of the score panel is determined by
+  these resistors:
+
+                  /--- tri-state --  470 -- BLUE
+  +5V -- 1kohm ------- tri-state --  390 -- GREEN
+                  \--- tri-state -- 1000 -- RED
 
 ***************************************************************************/
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -145,7 +156,12 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	palette[3] = 0;
 	palette[4] = 0;
 	palette[5] = 0;
-	used = 2;
+	/* side panel background color */
+	allocated[2] = 0;
+	palette[6] = 0x24;
+	palette[7] = 0x5d;
+	palette[8] = 0x4e;
+	used = 3;
 
 	realcnt = TOTAL_COLORS(0) / 2;
 	for (i = 0;i < realcnt;i++)
@@ -168,30 +184,32 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 			bit0 = (color_prom[i] >> 0) & 0x01;
 			bit1 = (color_prom[i] >> 1) & 0x01;
 			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* green component */
 			bit0 = (color_prom[i] >> 3) & 0x01;
 			bit1 = (color_prom[i+256] >> 0) & 0x01;
 			bit2 = (color_prom[i+256] >> 1) & 0x01;
-			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* blue component */
 			bit0 = 0;
 			bit1 = (color_prom[i+256] >> 2) & 0x01;
 			bit2 = (color_prom[i+256] >> 3) & 0x01;
-			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		}
+
+		if (i % 8 && j == 0) j = 1; /* avoid undesired transparency */
 
 		COLOR(0,i) = j;
 
-		// Black background for the side panel
+		/* side panel */
 		if (i % 8)
 		{
 		    COLOR(0,i+realcnt) = j;
 		}
 		else
 		{
-		    // Opaque black
-		    COLOR(0,i+realcnt) = 1;
+			/* background */
+			COLOR(0,i+realcnt) = 2;
 		}
 	}
 
@@ -217,17 +235,17 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 			bit0 = (color_prom[i] >> 0) & 0x01;
 			bit1 = (color_prom[i] >> 1) & 0x01;
 			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* green component */
 			bit0 = (color_prom[i] >> 3) & 0x01;
 			bit1 = (color_prom[i] >> 4) & 0x01;
 			bit2 = (color_prom[i] >> 5) & 0x01;
-			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 			/* blue component */
 			bit0 = 0;
 			bit1 = (color_prom[i] >> 6) & 0x01;
 			bit2 = (color_prom[i] >> 7) & 0x01;
-			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		}
 
 		if (i % 8 == 0) j = 0;  /* enforce transparency */
@@ -239,6 +257,22 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 
 
+/***************************************************************************
+
+  Swimmer can directly set the background color.
+  The latch is connected to the RGB output this way:
+  (the 500 and 250 ohm resistors are made of 1 kohm resistors in parallel)
+
+  bit 7 -- 250 ohm resistor  -- RED
+        -- 500 ohm resistor  -- RED
+        -- 250 ohm resistor  -- GREEN
+        -- 500 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 250 ohm resistor  -- BLUE
+        -- 500 ohm resistor  -- BLUE
+  bit 0 -- 1  kohm resistor  -- BLUE
+
+***************************************************************************/
 void swimmer_bgcolor_w(int offset,int data)
 {
 	int bit0,bit1,bit2;
@@ -249,19 +283,19 @@ void swimmer_bgcolor_w(int offset,int data)
 	bit0 = 0;
 	bit1 = (data >> 6) & 0x01;
 	bit2 = (data >> 7) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	/* green component */
 	bit0 = (data >> 3) & 0x01;
 	bit1 = (data >> 4) & 0x01;
 	bit2 = (data >> 5) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	/* blue component */
 	bit0 = (data >> 0) & 0x01;
 	bit1 = (data >> 1) & 0x01;
 	bit2 = (data >> 2) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	palette_change_color(0,r,g,b);
 }
@@ -471,15 +505,21 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scroll[32];
 
 
-		if (flipscreen[1])
+		if (flipscreen[0])
 		{
 			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = cclimber_column_scroll[31 - offs];
+			{
+				scroll[offs] = -cclimber_column_scroll[31 - offs];
+				if (flipscreen[1]) scroll[offs] = -scroll[offs];
+			}
 		}
 		else
 		{
 			for (offs = 0;offs < 32;offs++)
+			{
 				scroll[offs] = -cclimber_column_scroll[offs];
+				if (flipscreen[1]) scroll[offs] = -scroll[offs];
+			}
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

@@ -159,16 +159,16 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( bsktball_input_ports )
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 0, 0, 0 )
+		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y, 100, 10, 0, 0, 0 )
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 0, 0, 0 ) /* Sensitivity, clip, min, max */
+		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X | IPF_PLAYER2, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
 	PORT_START	/* IN0 */
-		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 0, 0, 0 )
+		PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_Y | IPF_PLAYER2, 100, 10, 0, 0, 0 )
 
 	PORT_START		/* IN0 */
 		PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -185,14 +185,14 @@ INPUT_PORTS_START( bsktball_input_ports )
 		PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_TILT )
 		PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* SPARE */
 		PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* TEST STEP */
-		PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+		PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_SERVICE | IPF_TOGGLE, "Self Test", KEYCODE_F2, IP_JOY_NONE )
 		PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* COIN 0 */
 		PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) /* COIN 1 */
 		PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) /* COIN 2 */
 
 	PORT_START		/* DSW */
-		PORT_DIPNAME( 0x07, 0x00, "Coin Mode", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x07, "Free Play" )
+		PORT_DIPNAME( 0x07, 0x00, "Coin Mode" )
+		PORT_DIPSETTING(	0x07, DEF_STR( Free_Play ) )
 		PORT_DIPSETTING(	0x06, "2:30/Credit" )
 		PORT_DIPSETTING(	0x05, "2:00/Credit" )
 		PORT_DIPSETTING(	0x04, "1:30/Credit" )
@@ -200,15 +200,15 @@ INPUT_PORTS_START( bsktball_input_ports )
 		PORT_DIPSETTING(	0x02, "0:45/Credit" )
 		PORT_DIPSETTING(	0x01, "0:30/Credit" )
 		PORT_DIPSETTING(	0x00, "1:00/Credit" )
-		PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode", IP_KEY_NONE )
-		PORT_DIPSETTING(	0x18, "1 Coin/6 Credits" )
-		PORT_DIPSETTING(	0x10, "1 Coin/4 Credits" )
-		PORT_DIPSETTING(	0x08, "1 Coin/5 Credits" )
-		PORT_DIPSETTING(	0x00, "1 Coin/1 Credit" )
-		PORT_DIPNAME( 0x20, 0x00, "Cost", IP_KEY_NONE )
+		PORT_DIPNAME( 0x18, 0x00, "Dollar Coin Mode" )
+		PORT_DIPSETTING(	0x18, DEF_STR( 1C_6C ) )
+		PORT_DIPSETTING(	0x10, DEF_STR( 1C_4C ) )
+		PORT_DIPSETTING(	0x08, DEF_STR( 1C_5C ) )
+		PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )
+		PORT_DIPNAME( 0x20, 0x00, "Cost" )
 		PORT_DIPSETTING(	0x20, "Two Coin Minimum" )
 		PORT_DIPSETTING(	0x00, "One Coin Minimum" )
-		PORT_DIPNAME( 0xC0, 0x00, "Language", IP_KEY_NONE )
+		PORT_DIPNAME( 0xC0, 0x00, "Language" )
 		PORT_DIPSETTING(	0xC0, "German" )
 		PORT_DIPSETTING(	0x80, "French" )
 		PORT_DIPSETTING(	0x40, "Spanish" )
@@ -348,9 +348,7 @@ static unsigned short colortable[] =
 static struct DACinterface dac_interface =
 {
 	3,
-	441000,
-	{255,255,255 },
-	{  1,  1, 1 }
+	{ 100, 100, 100 }
 };
 
 
@@ -401,15 +399,15 @@ static struct MachineDriver machine_driver =
 
 ROM_START( bsktball_rom )
 	ROM_REGION(0x10000) /* 64k for code */
-		ROM_LOAD( "034765.D1", 0x2000, 0x0800, 0x2f135e4d )
-		ROM_LOAD( "034764.C1", 0x2800, 0x0800, 0xcc53c7cb )
-		ROM_LOAD( "034766.F1", 0x3000, 0x0800, 0xd399435f )
-		ROM_LOAD( "034763.B1", 0x3800, 0x0800, 0xfeae3438 )
+		ROM_LOAD( "034765.d1",    0x2000, 0x0800, 0x798cea39 )
+		ROM_LOAD( "034764.c1",    0x2800, 0x0800, 0xa087109e )
+		ROM_LOAD( "034766.f1",    0x3000, 0x0800, 0xa82e9a9f )
+		ROM_LOAD( "034763.b1",    0x3800, 0x0800, 0x1fc69359 )
 		ROM_RELOAD( 			0xF800, 0x0800 )
 
-	ROM_REGION(0x1000)	   /* 2k for graphics */
-		ROM_LOAD( "034757.A6", 0x0000, 0x0800, 0x884145c1 )
-		ROM_LOAD( "034758.B6", 0x0800, 0x0800, 0xed570c41 )
+	ROM_REGION_DISPOSE(0x1000)	   /* 2k for graphics */
+		ROM_LOAD( "034757.a6",    0x0000, 0x0800, 0x010e8ad3 )
+		ROM_LOAD( "034758.b6",    0x0800, 0x0800, 0xf7bea344 )
 
 ROM_END
 
@@ -426,6 +424,7 @@ struct GameDriver bsktball_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	bsktball_rom,
 	0, 0,

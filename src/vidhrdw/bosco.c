@@ -13,13 +13,15 @@
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
 
-unsigned char *bosco_starcontrol;
 unsigned char *bosco_staronoff;
 unsigned char *bosco_starblink;
-unsigned char *bosco_flipvideo;
 static unsigned int stars_scrollx;
 static unsigned int stars_scrolly;
+static unsigned char bosco_scrollx,bosco_scrolly;
+static unsigned char bosco_starcontrol;
 static int flipscreen;
+static int displacement;
+
 
 struct star
 {
@@ -33,7 +35,6 @@ static int total_stars;
 unsigned char *bosco_videoram2,*bosco_colorram2;
 unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
 int bosco_radarram_size;
-unsigned char *bosco_scrollx,*bosco_scrolly;
 											/* to speed up video refresh */
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
@@ -71,6 +72,8 @@ static struct rectangle radarvisibleareaflip =
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < 32;i++)
@@ -100,6 +103,10 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		if (colortable[i+64*4] == 0x10) colortable[i+64*4] = 0;	/* preserve transparency */
 	}
 
+	/* radar dots lookup table */
+	/* they use colors 0-3, I think */
+	for (i = 0;i < 4;i++)
+		COLOR(2,i) = i;
 
 	/* now the stars */
 	for (i = 32;i < 32 + 64;i++)
@@ -178,6 +185,8 @@ int bosco_vh_start(void)
 	}
 	*bosco_staronoff = 1;
 
+	displacement = 1;
+
 	return 0;
 }
 
@@ -218,6 +227,31 @@ void bosco_colorram2_w(int offset,int data)
 	}
 }
 
+
+void bosco_flipscreen_w(int offset,int data)
+{
+	if (flipscreen != (~data & 1))
+	{
+		flipscreen = ~data & 1;
+		memset(dirtybuffer,1,videoram_size);
+		memset(dirtybuffer2,1,videoram_size);
+	}
+}
+
+void bosco_scrollx_w(int offset,int data)
+{
+	bosco_scrollx = data;
+}
+
+void bosco_scrolly_w(int offset,int data)
+{
+	bosco_scrolly = data;
+}
+
+void bosco_starcontrol_w(int offset,int data)
+{
+	bosco_starcontrol = data;
+}
 
 
 /***************************************************************************
@@ -303,13 +337,13 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (flipscreen)
 		{
-			scrollx = (*bosco_scrollx ) + 32;
-			scrolly = (*bosco_scrolly + 16) - 32;
+			scrollx = (bosco_scrollx +32);//- 3*displacement) + 32;
+			scrolly = (bosco_scrolly + 16) - 32;
 		}
 		else
 		{
-			scrollx = -(*bosco_scrollx - 3);
-			scrolly = -(*bosco_scrolly + 16);
+			scrollx = -(bosco_scrollx);
+			scrolly = -(bosco_scrolly + 16);
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -326,11 +360,15 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
+		sx = spriteram[offs + 1] - displacement;
+if (flipscreen) sx += 32;
+		sy = 225 - spriteram_2[offs] - displacement;
+
 		drawgfx(bitmap,Machine->gfx[1],
 				(spriteram[offs] & 0xfc) >> 2,
-				spriteram_2[offs + 1],
+				spriteram_2[offs + 1] & 0x3f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
-				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
+				sx,sy,
 				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_THROUGH,Machine->pens[0]);
 	}
 
@@ -339,98 +377,22 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for (offs = 0; offs < bosco_radarram_size;offs++)
 	{
 		int x,y;
-		int color;
-		int	attr;
 
 
-		attr = bosco_radarattr[offs];
-
-		x = bosco_radarx[offs] + 256 * (1 - (bosco_radarattr[offs] & 1));
-		y = 238 - bosco_radary[offs];
-
-		if (attr & 8)	/* Long bullets */
+		x = bosco_radarx[offs] + ((~bosco_radarattr[offs] & 0x01) << 8) - 2;
+		y = 235 - bosco_radary[offs];
+		if (flipscreen)
 		{
-			color = Machine->pens[1];
-			switch ((attr & 6) >> 1)
-			{
-				case 0:		/* Diagonal Left to Right */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 3) &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x+3] = color;
-						bitmap->line[y-1][x+3] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-2][x+2] = color;
-						bitmap->line[y-2][x+1] = color;
-						bitmap->line[y-3][x+1] = color;
-					}
-					break;
-				case 1:		/* Diagonal Right to Left */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 3) &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-2][x+2] = color;
-						bitmap->line[y-2][x+3] = color;
-						bitmap->line[y-3][x+3] = color;
-					}
-					break;
-				case 2:		/* Up and Down */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < Machine->drv->visible_area.max_x &&
-						y > (Machine->drv->visible_area.min_y + 3) &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y][x] = color;
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y-2][x] = color;
-						bitmap->line[y-2][x+1] = color;
-						bitmap->line[y-3][x] = color;
-						bitmap->line[y-3][x+1] = color;
-					}
-					break;
-				case 3:		/* Left and Right */
-					if (x >= Machine->drv->visible_area.min_x &&
-						x < (Machine->drv->visible_area.max_x - 2) &&
-						y > Machine->drv->visible_area.min_y &&
-						y < Machine->drv->visible_area.max_y)
-					{
-						bitmap->line[y-1][x] = color;
-						bitmap->line[y-1][x+1] = color;
-						bitmap->line[y][x] = color;
-						bitmap->line[y][x+1] = color;
-						bitmap->line[y-1][x+2] = color;
-						bitmap->line[y-1][x+3] = color;
-						bitmap->line[y][x+2] = color;
-						bitmap->line[y][x+3] = color;
-					}
-					break;
-			}
+			x -= 1;
+			y += 2;
 		}
-		else
-		{
-			color = Machine->pens[(bosco_radarattr[offs] >> 1) & 3];
 
-			/* normal size dots */
-			if (x >= Machine->drv->visible_area.min_x &&
-				x < Machine->drv->visible_area.max_x &&
-				y > Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y)
-			{
-				bitmap->line[y-1][x] = color;
-				bitmap->line[y-1][x+1] = color;
-				bitmap->line[y][x] = color;
-				bitmap->line[y][x+1] = color;
-			}
-		}
+		drawgfx(bitmap,Machine->gfx[2],
+				((bosco_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
+				0,
+				flipscreen,flipscreen,
+				x,y,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 
 
@@ -463,6 +425,6 @@ void bosco_vh_interrupt(void)
 	int speedsx[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
 	int speedsy[8] = { 0, -1, -2, -3, 0, 3, 2, 1 };
 
-	stars_scrollx += speedsx[*bosco_starcontrol & 7];
-	stars_scrolly += speedsy[(*bosco_starcontrol & 56) >> 3];
+	stars_scrollx += speedsx[bosco_starcontrol & 7];
+	stars_scrolly += speedsy[(bosco_starcontrol & 56) >> 3];
 }

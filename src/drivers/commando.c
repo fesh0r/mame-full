@@ -144,29 +144,29 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x03, 0x03, "Starting Stage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Starting Stage" )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x00, "7" )
-	PORT_DIPNAME( 0x0c, 0x0c, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x08, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x30, 0x30, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x20, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x10, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
 
 	PORT_START      /* DSW1 */
-	PORT_DIPNAME( 0x07, 0x07, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x04, "40000 50000" )
 	PORT_DIPSETTING(    0x07, "10000 500000" )
 	PORT_DIPSETTING(    0x03, "10000 600000" )
@@ -175,20 +175,20 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x06, "30000 700000" )
 	PORT_DIPSETTING(    0x02, "30000 800000" )
 	PORT_DIPSETTING(    0x00, "None" )
-	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x10, "Normal" )
 	PORT_DIPSETTING(    0x00, "Difficult" )
-	PORT_DIPNAME( 0x20, 0x00, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0xc0, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Upright One Player" )
 	PORT_DIPSETTING(    0x40, "Upright Two Players" )
-/*	PORT_DIPSETTING(    0x80, "Cocktail" ) */
-	PORT_DIPSETTING(    0xc0, "Cocktail" )
+/*	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) ) */
+	PORT_DIPSETTING(    0xc0, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -244,7 +244,8 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	1500000,	/* 1.5 MHz */
-	{ YM2203_VOL(128,255), YM2203_VOL(128,255) },
+	{ YM2203_VOL(15,15), YM2203_VOL(15,15) },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -309,92 +310,151 @@ static struct MachineDriver machine_driver =
 
 ROM_START( commando_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0xf44b9f43 )
-	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x6e158a17 )
+	ROM_LOAD( "m09_cm04.bin", 0x0000, 0x8000, 0x8438b694 )
+	ROM_LOAD( "m08_cm03.bin", 0x8000, 0x4000, 0x35486542 )
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x9c3344b3 )	/* characters */
-	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x0babe1d9 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x0ef15ee7 )
-	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x8244ea38 )
-	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x91390ad1 )
-	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0x755876be )
-	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x8c6d8225 )
-	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x4eda8b78 )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x280b34f9 )
-	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0x2ab5880f )
-	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x48696aa7 )
-	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0xab521082 )
-	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0x998c53a6 )
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0200, 0x524d0207 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0200, 0x0200, 0xfb20050e )
-	ROM_LOAD( "03d_vtb3.bin", 0x0400, 0x0200, 0x1e8b0b07 )
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0x07fced60 )
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
+ROM_END
+
+ROM_START( commandu_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "u4-f",         0x0000, 0x8000, 0xa6118935 )
+	ROM_LOAD( "u3-f",         0x8000, 0x4000, 0x24f49684 )
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "f09_cm02.bin", 0x0000, 0x4000, 0xf9cc4a74 )
 ROM_END
 
 ROM_START( commandj_rom )
 	ROM_REGION(0x1c000)	/* 64k for code */
-	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xf5dffe09 )
-	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xf8463efe )
+	ROM_LOAD( "09m_so04.bin", 0x0000, 0x8000, 0xd3f2bfb3 )
+	ROM_LOAD( "08m_so03.bin", 0x8000, 0x4000, 0xed01f472 )
 
-	ROM_REGION(0x34000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x9c3344b3 )	/* characters */
-	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x0babe1d9 )	/* tiles */
-	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x0ef15ee7 )
-	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x8244ea38 )
-	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x91390ad1 )
-	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0x755876be )
-	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x8c6d8225 )
-	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x4eda8b78 )	/* sprites */
-	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x280b34f9 )
-	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0x2ab5880f )
-	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x48696aa7 )
-	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0xab521082 )
-	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0x998c53a6 )
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "d05_vt01.bin", 0x00000, 0x4000, 0x505726e0 )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "e07_vt05.bin", 0x1c000, 0x4000, 0x79f16e3d )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "h07_vt08.bin", 0x28000, 0x4000, 0x2019c883 )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
-	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0200, 0x524d0207 )
-	ROM_LOAD( "02d_vtb2.bin", 0x0200, 0x0200, 0xfb20050e )
-	ROM_LOAD( "03d_vtb3.bin", 0x0400, 0x0200, 0x1e8b0b07 )
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xfda056a2 )
+	ROM_LOAD( "09f_so02.bin", 0x0000, 0x4000, 0xca20aca5 )
 ROM_END
 
+ROM_START( spaceinv_rom )
+	ROM_REGION(0x1c000)	/* 64k for code */
+	ROM_LOAD( "u4",           0x0000, 0x8000, 0x834ba0de )
+	ROM_LOAD( "u3",           0x8000, 0x4000, 0x07e4ee3a )
+
+	ROM_REGION_DISPOSE(0x34000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "u1",           0x00000, 0x4000, 0xf477e13a )	/* characters */
+	ROM_LOAD( "a05_vt11.bin", 0x04000, 0x4000, 0x7b2e1b48 )	/* tiles */
+	ROM_LOAD( "a06_vt12.bin", 0x08000, 0x4000, 0x81b417d3 )
+	ROM_LOAD( "a07_vt13.bin", 0x0c000, 0x4000, 0x5612dbd2 )
+	ROM_LOAD( "a08_vt14.bin", 0x10000, 0x4000, 0x2b2dee36 )
+	ROM_LOAD( "a09_vt15.bin", 0x14000, 0x4000, 0xde70babf )
+	ROM_LOAD( "a10_vt16.bin", 0x18000, 0x4000, 0x14178237 )
+	ROM_LOAD( "u5",           0x1c000, 0x4000, 0x2a97c933 )	/* sprites */
+	ROM_LOAD( "e08_vt06.bin", 0x20000, 0x4000, 0x26fee521 )
+	ROM_LOAD( "e09_vt07.bin", 0x24000, 0x4000, 0xca88bdfd )
+	ROM_LOAD( "u8",           0x28000, 0x4000, 0xd6b4aa2e )
+	ROM_LOAD( "h08_vt09.bin", 0x2c000, 0x4000, 0x98703982 )
+	ROM_LOAD( "h09_vt10.bin", 0x30000, 0x4000, 0xf069d2f8 )
+
+	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_LOAD( "01d_vtb1.bin", 0x0000, 0x0100, 0x3aba15a1 )
+	ROM_LOAD( "02d_vtb2.bin", 0x0100, 0x0100, 0x88865754 )
+	ROM_LOAD( "03d_vtb3.bin", 0x0200, 0x0100, 0x4c14c3f6 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "u2",           0x0000, 0x4000, 0xcbf8c40e )
+ROM_END
 
 
 static void commando_decode(void)
 {
-	static const unsigned char xortable[] =
-	{
-		0x00,0x00,0x22,0x22,0x44,0x44,0x66,0x66,0x88,0x88,0xaa,0xaa,0xcc,0xcc,0xee,0xee,
-		0x00,0x00,0x22,0x22,0x44,0x44,0x66,0x66,0x88,0x88,0xaa,0xaa,0xcc,0xcc,0xee,0xee,
-		0x22,0x22,0x00,0x00,0x66,0x66,0x44,0x44,0xaa,0xaa,0x88,0x88,0xee,0xee,0xcc,0xcc,
-		0x22,0x22,0x00,0x00,0x66,0x66,0x44,0x44,0xaa,0xaa,0x88,0x88,0xee,0xee,0xcc,0xcc,
-		0x44,0x44,0x66,0x66,0x00,0x00,0x22,0x22,0xcc,0xcc,0xee,0xee,0x88,0x88,0xaa,0xaa,
-		0x44,0x44,0x66,0x66,0x00,0x00,0x22,0x22,0xcc,0xcc,0xee,0xee,0x88,0x88,0xaa,0xaa,
-		0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00,0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,
-		0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00,0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,
-		0x88,0x88,0xaa,0xaa,0xcc,0xcc,0xee,0xee,0x00,0x00,0x22,0x22,0x44,0x44,0x66,0x66,
-		0x88,0x88,0xaa,0xaa,0xcc,0xcc,0xee,0xee,0x00,0x00,0x22,0x22,0x44,0x44,0x66,0x66,
-		0xaa,0xaa,0x88,0x88,0xee,0xee,0xcc,0xcc,0x22,0x22,0x00,0x00,0x66,0x66,0x44,0x44,
-		0xaa,0xaa,0x88,0x88,0xee,0xee,0xcc,0xcc,0x22,0x22,0x00,0x00,0x66,0x66,0x44,0x44,
-		0xcc,0xcc,0xee,0xee,0x88,0x88,0xaa,0xaa,0x44,0x44,0x66,0x66,0x00,0x00,0x22,0x22,
-		0xcc,0xcc,0xee,0xee,0x88,0x88,0xaa,0xaa,0x44,0x44,0x66,0x66,0x00,0x00,0x22,0x22,
-		0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00,
-		0xee,0xee,0xcc,0xcc,0xaa,0xaa,0x88,0x88,0x66,0x66,0x44,0x44,0x22,0x22,0x00,0x00
-	};
 	int A;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
+	/* the first opcode is not encrypted */
+	ROM[0] = RAM[0];
+	for (A = 1;A < 0xc000;A++)
+	{
+		int src;
+
+		src = RAM[A];
+		ROM[A] = src ^ (src & 0xee) ^ ((src & 0xe0) >> 4) ^ ((src & 0x0e) << 4);
+	}
+}
+
+static void spaceinv_decode(void)
+{
+	int A;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* the first opcode *is* encrypted */
 	for (A = 0;A < 0xc000;A++)
 	{
-		if (A > 0) ROM[A] = RAM[A] ^ xortable[RAM[A]];
+		int src;
+
+		src = RAM[A];
+		ROM[A] = src ^ (src & 0xee) ^ ((src & 0xe0) >> 4) ^ ((src & 0x0e) << 4);
 	}
 }
 
@@ -439,6 +499,7 @@ static void hisave(void)
 	{
 		osd_fwrite(f,&RAM[0xee00],13*7);
 		osd_fclose(f);
+		RAM[0xee01]=0;
 	}
 }
 
@@ -449,14 +510,41 @@ struct GameDriver commando_driver =
 	__FILE__,
 	0,
 	"commando",
-	"Commando (US)",
+	"Commando (World)",
 	"1985",
 	"Capcom",
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	commando_rom,
+	0, commando_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver commandu_driver =
+{
+	__FILE__,
+	&commando_driver,
+	"commandu",
+	"Commando (US)",
+	"1985",
+	"Capcom (Data East USA license)",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	commandu_rom,
 	0, commando_decode,
 	0,
 	0,	/* sound_prom */
@@ -474,15 +562,42 @@ struct GameDriver commandj_driver =
 	__FILE__,
 	&commando_driver,
 	"commandj",
-	"Commando (Japan)",
+	"Senjo no Ookami",
 	"1985",
 	"Capcom",
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	commandj_rom,
 	0, commando_decode,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver spaceinv_driver =
+{
+	__FILE__,
+	&commando_driver,
+	"spaceinv",
+	"Space Invasion",
+	"1985",
+	"bootleg",
+	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
+	0,
+	&machine_driver,
+	0,
+
+	spaceinv_rom,
+	0, spaceinv_decode,
 	0,
 	0,	/* sound_prom */
 

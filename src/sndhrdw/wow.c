@@ -23,7 +23,9 @@ the variable wowBaseFrequency, this is defaulted to 8000
 **************************************************************************/
 
 #include "driver.h"
-#include "Z80/Z80.h"
+#include "cpu/z80/z80.h"
+
+
 
 int	wowBaseFrequency;		/* Some games (Qbert) change this */
 int 	wowBaseVolume;
@@ -47,32 +49,32 @@ static const char *PhonemeTable[65] =
  0
 };
 
-/* Missing samples : ready.sam from.sam one.sam bite.sam youl.sam explode.sam if.sam myself.sam back.sam
-   cant.sam do.sam wait.sam worlings.sam very.sam babies.sam breath.sam fire.sam beat.sam rest.sam
-   then.sam never.sam worlock.sam escape.sam door.sam try.sam any.sam harder.sam only.sam meet.sam with.sam
-   doom.sam pop.sam
+/* Missing samples : ready.wav from.wav one.wav bite.wav youl.wav explode.wav if.wav myself.wav back.wav
+   cant.wav do.wav wait.wav worlings.wav very.wav babies.wav breath.wav fire.wav beat.wav rest.wav
+   then.wav never.wav worlock.wav escape.wav door.wav try.wav any.wav harder.wav only.wav meet.wav with.wav
+   doom.wav pop.wav
    Problems with YOU and YOU'LL and YOU'DD */
 
 static const char *wowWordTable[] =
 {
 "AH1I3Y1", "UH1GA1EH1N", "AHAH2", "AE1EH3M", "AE1EH3ND",
-"anew.sam", "AH1NUHTHER", "AE1NY", "anyone.sam", "appear.sam", "AH1UH3R", "UHR", "BABYY1S", "BAE1EH3K",
-"BE1T", "become.sam", "BEHST", "BEH1TER", "BUH3AH2YT", "bones.sam", "BRE1YTH", "but.sam", "can.sam", "KAE1EH3NT",
-"chance.sam", "CHEHST", "KO1O2I3Y1N", "dance.sam", "DE1STRO1UH3I3AY",
-"DE1VEH1LUH3PT", "DIUU", "DONT", "DUUM", "DOO1R", "draw.sam", "DUHNJEH1N", "DUHNJEH1NZ",
-"each.sam", "eaten.sam", "EHSPA0KA2I3Y1P", "EHKPA0SPLOU1D", "fear.sam", "FAH1I3YND", "FAH1I3Y1ND", "FAH1EH3AYR", "FOR", "FRUHMM",
-"garwor.sam", "GEHT", "GEH1T", "GEHEH3T", "GEHTING", "good.sam", "HAH1HAH1HAH1HAH1", "HAH1RDER",
-"hasnt.sam", "have.sam", "HEH1I3VE1WA1I3Y1TS", "HAI1Y1", "HOP",
+"anew.wav", "AH1NUHTHER", "AE1NY", "anyone.wav", "appear.wav", "AH1UH3R", "UHR", "BABYY1S", "BAE1EH3K",
+"BE1T", "become.wav", "BEHST", "BEH1TER", "BUH3AH2YT", "bones.wav", "BRE1YTH", "but.wav", "can.wav", "KAE1EH3NT",
+"chance.wav", "CHEHST", "KO1O2I3Y1N", "dance.wav", "DE1STRO1UH3I3AY",
+"DE1VEH1LUH3PT", "DIUU", "DONT", "DUUM", "DOO1R", "draw.wav", "DUHNJEH1N", "DUHNJEH1NZ",
+"each.wav", "eaten.wav", "EHSPA0KA2I3Y1P", "EHKPA0SPLOU1D", "fear.wav", "FAH1I3YND", "FAH1I3Y1ND", "FAH1EH3AYR", "FOR", "FRUHMM",
+"garwor.wav", "GEHT", "GEH1T", "GEHEH3T", "GEHTING", "good.wav", "HAH1HAH1HAH1HAH1", "HAH1RDER",
+"hasnt.wav", "have.wav", "HEH1I3VE1WA1I3Y1TS", "HAI1Y1", "HOP",
 "HUHNGRY", "HUHNGGRY", "HERRY", "AH1EH3I3Y", "AH1UH3I3Y", "IF", "I1F", "AH1I3YM", "AH1EH3I3YL", "AH1I3Y1L", "IN1",
-"INSERT", "invisibl.sam", "IT", "lie.sam", "MAE1EH3DJI1KUH1L",
-"MAE1EH3DJI1KUH1L", "MEE1", "MEE1T", "months.sam",
-"MAH1EH3I3Y", "MAH2AH2EH3I3Y", "MAH1I1Y", "MAH1I3Y1", "MAH1I3Y", "MAH1I3YSEHLF", "near.sam", "NEH1VER",
+"INSERT", "invisibl.wav", "IT", "lie.wav", "MAE1EH3DJI1KUH1L",
+"MAE1EH3DJI1KUH1L", "MEE1", "MEE1T", "months.wav",
+"MAH1EH3I3Y", "MAH2AH2EH3I3Y", "MAH1I1Y", "MAH1I3Y1", "MAH1I3Y", "MAH1I3YSEHLF", "near.wav", "NEH1VER",
 "NAH1UH3U1", "UHV", "AWF", "WUHN", "O1NLY", "UHVEHN", "PA1", "PEHTS", "PAH1WERFUH1L", "PAH1P",
-"radar.sam", "REHDY",
-"REHST", "say.sam", "SAH1I3AYEHNS", "SE1Y", "PA0", "start.sam", "THVAYAY", "THVUH", "THVUH1", "THUH1", "THVEH1N",
-"THVRU", "thurwor.sam", "time.sam", "TU1", "TUU1", "TIUU1", "TREH1ZHERT", "TRAH1EH3I3Y", "VEHEH3RY", "WA2AYYT",
-"WOO1R", "WORYER", "watch.sam", "WE1Y", "WEHLKUHM",
-"WERR", "WAH1EH3I3L", "WIL", "WITH", "WIZERD", "wont.sam",
+"radar.wav", "REHDY",
+"REHST", "say.wav", "SAH1I3AYEHNS", "SE1Y", "PA0", "start.wav", "THVAYAY", "THVUH", "THVUH1", "THUH1", "THVEH1N",
+"THVRU", "thurwor.wav", "time.wav", "TU1", "TUU1", "TIUU1", "TREH1ZHERT", "TRAH1EH3I3Y", "VEHEH3RY", "WA2AYYT",
+"WOO1R", "WORYER", "watch.wav", "WE1Y", "WEHLKUHM",
+"WERR", "WAH1EH3I3L", "WIL", "WITH", "WIZERD", "wont.wav",
 "WO1O2R", "WO1ERLD", "WORLINGS", "WORLUHK",
 "YI3U", "Y1IUU", "YIUUI", "Y1IUU1U1", "YI3U1", "Y1IUUL", "YIUU1L", "Y1IUUD", "YO2O2R",0
 };
@@ -105,13 +107,11 @@ int wow_speech_r(int offset)
     int Phoneme,Intonation;
     int i = 0;
 
-    Z80_Regs regs;
     int data;
 
     totalword_ptr = totalword;
 
-    Z80_GetRegs(&regs);
-    data = regs.BC.B.h;
+	data = cpu_get_reg(Z80_BC) >> 8;
 
     Phoneme = data & 0x3F;
     Intonation = data >> 6;
@@ -135,7 +135,7 @@ int wow_speech_r(int offset)
           if (errorlog) fprintf(errorlog,"found a possible plural at %d\n",plural-1);
           if (!strcmp("S",totalword)) {		   /* Plural check */
              sample_start(wowChannel, num_samples-2, 0);	   /* play the sample at position of word */
-             sample_adjust(wowChannel, wowBaseFrequency, -1);    /* play at correct rate */
+             sample_set_freq(wowChannel, wowBaseFrequency);    /* play at correct rate */
              totalword[0] = 0;				   /* Clear the total word stack */
              oldword[0] = 0;				   /* Clear the total word stack */
              return data;
@@ -159,7 +159,7 @@ int wow_speech_r(int offset)
              plural=0;
           }
           sample_start(wowChannel, i, 0);	                   /* play the sample at position of word */
-          sample_adjust(wowChannel, wowBaseFrequency, -1);         /* play at correct rate */
+          sample_set_freq(wowChannel, wowBaseFrequency);         /* play at correct rate */
           if (errorlog) fprintf(errorlog,"Playing sample %d",i);
           totalword[0] = 0;				   /* Clear the total word stack */
           return data;

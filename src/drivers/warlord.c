@@ -2,7 +2,7 @@
 Warlords Driver by Lee Taylor and John Clegg
 
 
-              Warlords Memory map and Dip Switches (preliminary}
+              Warlords Memory map and Dip Switches
               ------------------------------------
 
  Address  R/W  D7 D6 D5 D4 D3 D2 D1 D0   Function
@@ -13,7 +13,6 @@ Warlords Driver by Lee Taylor and John Clegg
 07C0-07CF       D  D  D  D  D  D  D  D   Motion Object Picture
 07D0-07DF       D  D  D  D  D  D  D  D   Motion Object Vert.
 07E0-07EF       D  D  D  D  D  D  D  D   Motion Object Horiz.
-07F0-07FF             D  D  D  D  D  D   ????????
 --------------------------------------------------------------------------------------
 0800       R    D  D  D  D  D  D  D  D   Option Switch 1 (0 = On) (DSW 1)
 0801       R    D  D  D  D  D  D  D  D   Option Switch 2 (0 = On) (DSW 2)
@@ -30,11 +29,6 @@ Warlords Driver by Lee Taylor and John Clegg
            R                         D   Player 1 Start Switch (0 = On)
 --------------------------------------------------------------------------------------
 1000-100F  W   D  D  D  D  D  D  D  D    Pokey
-1000       R   D  D  D  D  D  D  D  D    Paddle 1 position
-1001       R   D  D  D  D  D  D  D  D    Paddle 2 position
-1002       R   D  D  D  D  D  D  D  D    Paddle 3 position
-1003       R   D  D  D  D  D  D  D  D    Paddle 4 position
-100A       R   D  D  D  D  D  D  D  D    Random Number
 --------------------------------------------------------------------------------------
 1800       W                             IRQ Acknowledge
 --------------------------------------------------------------------------------------
@@ -122,7 +116,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, pokey1_w },
-	{ 0x1800, 0x1800, MWA_NOP },
+	{ 0x1800, 0x1800, MWA_NOP },        /* IRQ Acknowledge */
 	{ 0x1c00, 0x1c02, coin_counter_w },
 	{ 0x1c03, 0x1c06, warlord_led_w },	/* 4 start lights */
 	{ 0x4000, 0x4000, watchdog_reset_w },
@@ -133,16 +127,14 @@ static struct MemoryWriteAddress writemem[] =
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0x10, 0x00, "Diag Step", IP_KEY_NONE )  /* Not referenced */
-	PORT_DIPSETTING (   0x00, "Off" )
-	PORT_DIPSETTING (   0x10, "On" )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME(0x10, 0x00, "Diag Step" )  /* Not referenced */
+	PORT_DIPSETTING (   0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x10, DEF_STR( On ) )
+	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME (0x80, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x80, "Upright" )
-	PORT_DIPSETTING (   0x00, "Cocktail" )
+	PORT_DIPNAME(0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING (   0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Cocktail ) )
 
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -155,35 +147,35 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME (0x03, 0x00, "Language", IP_KEY_NONE )
+	PORT_DIPNAME(0x03, 0x00, "Language" )
 	PORT_DIPSETTING (   0x00, "English" )
 	PORT_DIPSETTING (   0x01, "French" )
 	PORT_DIPSETTING (   0x02, "Spanish" )
 	PORT_DIPSETTING (   0x03, "German" )
-	PORT_DIPNAME (0x04, 0x00, "Music", IP_KEY_NONE )
+	PORT_DIPNAME(0x04, 0x00, "Music" )
 	PORT_DIPSETTING (   0x00, "End of game" )
 	PORT_DIPSETTING (   0x04, "High score only" )
 	PORT_BIT ( 0xc8, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0x30, 0x00, "Credits", IP_KEY_NONE )
+	PORT_DIPNAME(0x30, 0x00, "Credits" )
 	PORT_DIPSETTING (   0x00, "1p/2p = 1 credit" )
 	PORT_DIPSETTING (   0x10, "1p = 1, 2p = 2" )
 	PORT_DIPSETTING (   0x20, "1p/2p = 2 credits" )
 
 	PORT_START	/* IN3 */
-	PORT_DIPNAME (0x03, 0x02, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Free Play" )
-	PORT_DIPSETTING (   0x01, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x02, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x03, "2 Coins/1 Credit" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPNAME(0x03, 0x02, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPNAME(0x0c, 0x00, "Right Coin" )
 	PORT_DIPSETTING (   0x00, "*1" )
 	PORT_DIPSETTING (   0x04, "*4" )
 	PORT_DIPSETTING (   0x08, "*5" )
 	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPNAME(0x10, 0x00, "Left Coin" )
 	PORT_DIPSETTING (   0x00, "*1" )
 	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
 	PORT_DIPSETTING (   0x00, "None" )
 	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
 	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
@@ -192,42 +184,17 @@ INPUT_PORTS_START( input_ports )
 
     /* IN4-7 fake to control player paddles */
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 32, 0x1d, 0xcb )
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER1, 50, 10, 32, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 32, 0x1d, 0xcb )
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER2, 50, 10, 32, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 32, 0x1d, 0xcb )
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER3, 50, 10, 32, 0x1d, 0xcb )
 
 	PORT_START
-	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 32, 0x1d, 0xcb )
+	PORT_ANALOG ( 0xff, 0x80, IPT_PADDLE | IPF_PLAYER4, 50, 10, 32, 0x1d, 0xcb )
 INPUT_PORTS_END
-
-
-static unsigned char warlord_color_prom[] =
-{
-	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
-	/* Bytes 0x00-0x3f are used for the color cocktail version. */
-	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
-	/* mirror and painted background. */
-	0x00,0x03,0x02,0x07,0x04,0x04,0x04,0x04,0x03,0x03,0x03,0x03,0x06,0x06,0x06,0x06,
-	0x00,0x05,0x01,0x07,0x04,0x04,0x04,0x04,0x05,0x05,0x05,0x05,0x06,0x06,0x06,0x06,
-	0x00,0x02,0x05,0x07,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
-	0x00,0x01,0x03,0x07,0x04,0x04,0x04,0x04,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x06,
-	0x00,0x04,0x02,0x06,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
-	0x00,0x04,0x02,0x06,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
-	0x00,0x04,0x02,0x06,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
-	0x00,0x04,0x02,0x06,0x04,0x04,0x04,0x04,0x02,0x02,0x02,0x02,0x06,0x06,0x06,0x06,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,
-};
 
 
 static struct GfxLayout charlayout =
@@ -255,8 +222,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct POKEYinterface pokey_interface =
 {
 	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz??? */
-	255,
+	12096000/8,	/* 1.512 MHz */
+	{ 100 },
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
@@ -280,7 +247,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6502,
-			1000000,	/* 1 Mhz ???? */
+			12096000/16, /* 756 kHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,4
@@ -322,16 +289,23 @@ static struct MachineDriver machine_driver =
 
 ROM_START( warlord_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "037154.1m", 0x5000, 0x0800, 0x69a5fadb )
-	ROM_LOAD( "037153.1k", 0x5800, 0x0800, 0x13ee094a )
-	ROM_LOAD( "037158.1j", 0x6000, 0x0800, 0x038996f3 )
-	ROM_LOAD( "037157.1h", 0x6800, 0x0800, 0xa259de59 )
-	ROM_LOAD( "037156.1e", 0x7000, 0x0800, 0x363914bd )
-	ROM_LOAD( "037155.1d", 0x7800, 0x0800, 0x4880f13a )
+	ROM_LOAD( "037154.1m",    0x5000, 0x0800, 0x18006c87 )
+	ROM_LOAD( "037153.1k",    0x5800, 0x0800, 0x67758f4c )
+	ROM_LOAD( "037158.1j",    0x6000, 0x0800, 0x1f043a86 )
+	ROM_LOAD( "037157.1h",    0x6800, 0x0800, 0x1a639100 )
+	ROM_LOAD( "037156.1e",    0x7000, 0x0800, 0x534f34b4 )
+	ROM_LOAD( "037155.1d",    0x7800, 0x0800, 0x23b94210 )
 	ROM_RELOAD(            0xf800, 0x0800 )	/* for the reset and interrupt vectors */
 
-	ROM_REGION(0x800)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "037159.6e", 0x0000, 0x0800, 0x98aea2be )
+	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
+
+	ROM_REGION(0x0100)	/* color prom */
+	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
+	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
+	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
+	/* mirror and painted background. */
+	ROM_LOAD( "warlord.clr",  0x0000, 0x0100, 0xa2c5c277 )
 ROM_END
 
 
@@ -384,6 +358,7 @@ struct GameDriver warlord_driver =
 	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)\nZsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	warlord_rom,
 	0, 0,
@@ -392,7 +367,7 @@ struct GameDriver warlord_driver =
 
 	input_ports,
 
-	warlord_color_prom, 0, 0,
+	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

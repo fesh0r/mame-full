@@ -20,7 +20,8 @@ multiple sampling rates, all samples currently play at 8khz.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "m6809/m6809.h"
+#include "cpu/m6809/m6809.h"
+#include "cpu/z80/z80.h"
 
 /* from vidhrdw */
 extern unsigned char *dd_videoram;
@@ -43,7 +44,7 @@ static int sprite_irq, sound_irq, ym_irq;
 static void dd_init_machine( void ) {
 	sprite_irq = M6809_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
-	ym_irq = M6809_INT_FIRQ;
+	ym_irq = 1;//M6809_INT_FIRQ;
 	dd2_video = 0;
 	dd_sub_cpu_busy = 0x10;
 }
@@ -51,7 +52,7 @@ static void dd_init_machine( void ) {
 static void dd2_init_machine( void ) {
 	sprite_irq = Z80_NMI_INT;
 	sound_irq = Z80_NMI_INT;
-	ym_irq = -1000;
+	ym_irq = 0;//-1000;
 	dd2_video = 1;
 	dd_sub_cpu_busy = 0x10;
 }
@@ -248,7 +249,7 @@ static struct MemoryReadAddress dd2_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_r },
+	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xA000, 0xA000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
@@ -259,88 +260,88 @@ static struct MemoryWriteAddress dd2_sound_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_w },
+	{ 0x9800, 0x9800, OKIM6295_data_0_w },
 	{ -1 }	/* end of table */
 };
 
 /* bit 0x10 is sprite CPU busy signal */
 #define COMMON_PORT4	PORT_START \
-    PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) \
-    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
-    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) \
-    PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) \
-    PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
-    PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK ) \
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define COMMON_INPUT_PORTS PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 ) \
 	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 ) \
 	PORT_START \
-	PORT_DIPNAME( 0x07, 0x07, "Coin A", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x01, "3 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x02, "2 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x07, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(	0x06, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(	0x05, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(	0x04, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(	0x03, "1 Coin/5 Credits" ) \
-	PORT_DIPNAME( 0x38, 0x38, "Coin B", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "4 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x08, "3 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x10, "2 Coins/1 Credit" ) \
-	PORT_DIPSETTING(	0x38, "1 Coin/1 Credit" ) \
-	PORT_DIPSETTING(	0x30, "1 Coin/2 Credits" ) \
-	PORT_DIPSETTING(	0x28, "1 Coin/3 Credits" ) \
-	PORT_DIPSETTING(	0x20, "1 Coin/4 Credits" ) \
-	PORT_DIPSETTING(	0x18, "1 Coin/5 Credits" ) \
-	PORT_DIPNAME( 0x40, 0x40, "Screen Orientation", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "On" ) \
-	PORT_DIPSETTING(	0x40, "Off") \
-	PORT_DIPNAME( 0x80, 0x80, "Screen Reverse", IP_KEY_NONE ) \
-	PORT_DIPSETTING(	0x00, "On" ) \
-	PORT_DIPSETTING(	0x80, "Off")
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) ) \
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) ) \
+	PORT_DIPNAME( 0x40, 0x40, "Screen Orientation?" ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( Off )) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( Off )) \
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 INPUT_PORTS_START( dd1_input_ports )
 	COMMON_INPUT_PORTS
 
     PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy")
     PORT_DIPSETTING(    0x03, "Normal")
     PORT_DIPSETTING(    0x01, "Hard")
     PORT_DIPSETTING(    0x00, "Very Hard")
-    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x04, "On")
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ))
     PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-    PORT_DIPNAME( 0x30, 0x30, "Bonus Life", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x10, "20K")
-    PORT_DIPSETTING(    0x00, "40K" )
-    PORT_DIPSETTING(    0x30, "30K and every 60K")
-    PORT_DIPSETTING(    0x20, "40K and every 80K" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+    PORT_DIPSETTING(    0x10, "20k")
+    PORT_DIPSETTING(    0x00, "40k" )
+    PORT_DIPSETTING(    0x30, "30k and every 60k")
+    PORT_DIPSETTING(    0x20, "40k and every 80k" )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
     PORT_DIPSETTING(    0xc0, "2")
     PORT_DIPSETTING(    0x80, "3" )
     PORT_DIPSETTING(    0x40, "4")
-    PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+    PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 
     COMMON_PORT4
 INPUT_PORTS_END
@@ -349,27 +350,27 @@ INPUT_PORTS_START( dd2_input_ports )
 	COMMON_INPUT_PORTS
 
   PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
     PORT_DIPSETTING(    0x02, "Easy")
     PORT_DIPSETTING(    0x03, "Normal")
     PORT_DIPSETTING(    0x01, "Medium")
     PORT_DIPSETTING(    0x00, "Hard")
-    PORT_DIPNAME( 0x04, 0x04, "Attract Mode Sound", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x00, "Off" )
-    PORT_DIPSETTING(    0x04, "On")
-    PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick", IP_KEY_NONE )
+    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x04, DEF_STR( On ))
+    PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick" )
     PORT_DIPSETTING(    0x00, "Easy" )
-    PORT_DIPSETTING(    0x08, "Normal")
-    PORT_DIPNAME( 0x30, 0x30, "Timer", IP_KEY_NONE )
-    PORT_DIPSETTING(    0x20, "80" )
-    PORT_DIPSETTING(    0x30, "70")
-    PORT_DIPSETTING(    0x10, "65")
+    PORT_DIPSETTING(    0x08, "Normal" )
+    PORT_DIPNAME( 0x30, 0x30, "Timer" )
     PORT_DIPSETTING(    0x00, "60" )
-    PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
-    PORT_DIPSETTING(    0xc0, "1")
+    PORT_DIPSETTING(    0x10, "65" )
+    PORT_DIPSETTING(    0x30, "70" )
+    PORT_DIPSETTING(    0x20, "80" )
+    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+    PORT_DIPSETTING(    0xc0, "1" )
     PORT_DIPSETTING(    0x80, "2" )
-    PORT_DIPSETTING(    0x40, "3")
-    PORT_DIPSETTING(    0x00, "4")
+    PORT_DIPSETTING(    0x40, "3" )
+    PORT_DIPSETTING(    0x00, "4" )
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -428,15 +429,15 @@ static struct GfxDecodeInfo dd2_gfxdecodeinfo[] =
 	{ -1 } // end of array
 };
 
-static void dd_irq_handler(void) {
-	cpu_cause_interrupt( 2, ym_irq );
+static void dd_irq_handler(int irq) {
+	cpu_set_irq_line( 2, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
 {
 	1,			/* 1 chip */
 	3582071,	/* seems to be the standard */
-	{ 255 },
+	{ YM3012_VOL(60,MIXER_PAN_LEFT,60,MIXER_PAN_RIGHT) },
 	{ dd_irq_handler }
 };
 
@@ -446,20 +447,22 @@ static struct ADPCMinterface adpcm_interface =
 	8000,       /* 8000Hz playback */
 	4,			/* memory region 4 */
 	0,			/* init function */
-	{ 255, 255 }
+	{ 50, 50 }
 };
 
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
-	8000,           /* frequency (Hz) */
-	4,              /* memory region */
-	{ 128 }
+	{ 8000 },           /* frequency (Hz) */
+	{ 4 },              /* memory region */
+	{ 15 }
 };
 
 static int dd_interrupt(void)
 {
-	return ( M6809_INT_FIRQ | M6809_INT_NMI );
+    cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
+    cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
+    return M6809_INT_NONE;
 }
 
 
@@ -477,7 +480,7 @@ static struct MachineDriver ddragon_machine_driver =
 		},
 		{
  			CPU_HD63701, /* we're missing the code for this one */
-			12000000 / 3, /* 4 Mhz */
+			2000000, /* 2 Mhz ???*/
 			2,
 			sub_readmem,sub_writemem,0,0,
 			ignore_interrupt,0
@@ -506,7 +509,7 @@ static struct MachineDriver ddragon_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -561,7 +564,7 @@ static struct MachineDriver ddragonb_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -617,7 +620,7 @@ static struct MachineDriver ddragon2_machine_driver =
 	dd_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{
 			SOUND_YM2151_ALT,
@@ -639,100 +642,98 @@ static struct MachineDriver ddragon2_machine_driver =
 
 ROM_START( ddragon_rom )
 	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
-	ROM_LOAD( "A_M2_D02.BIN", 0x08000, 0x08000, 0x62e30fe9 )
-	ROM_LOAD( "A_K2_D03.BIN", 0x10000, 0x08000, 0xd40db89b ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "A_H2_D04.BIN", 0x18000, 0x08000, 0x8aa2463c ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "A_G2_D05.BIN", 0x20000, 0x08000, 0x20935a8d ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "a_m2_d02.bin", 0x08000, 0x08000, 0x668dfa19 )
+	ROM_LOAD( "a_k2_d03.bin", 0x10000, 0x08000, 0x5779705e ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "a_h2_d04.bin", 0x18000, 0x08000, 0x3bdea613 ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "a_g2_d05.bin", 0x20000, 0x08000, 0x728f87b9 ) /* banked at 0x4000-0x8000 */
 
-	ROM_REGION(0xC8000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "A_A2_D06.BIN", 0xC0000, 0x08000, 0x7146494c ) /* 0,1,2,3 */ /* text */
-	ROM_LOAD( "B_C5_D09.BIN", 0x00000, 0x10000, 0x10c0e6d0 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "B_A5_D10.BIN", 0x10000, 0x10000, 0x9a4cc484 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "B_C7_D19.BIN", 0x20000, 0x10000, 0x51b52415 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "B_A7_D20.BIN", 0x30000, 0x10000, 0xf1e7d881 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "B_R7_D11.BIN", 0x40000, 0x10000, 0x172eb21c ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_P7_D12.BIN", 0x50000, 0x10000, 0xee6eb2d6 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_M7_D13.BIN", 0x60000, 0x10000, 0xe98e2e82 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_L7_D14.BIN", 0x70000, 0x10000, 0x526d686d ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_J7_D15.BIN", 0x80000, 0x10000, 0x9ae98b73 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_H7_D16.BIN", 0x90000, 0x10000, 0x7a6c1946 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_F7_D17.BIN", 0xA0000, 0x10000, 0xfd29a219 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_D7_D18.BIN", 0xB0000, 0x10000, 0xc5d467e4 ) /* 2,3 */ /* sprites */
+	ROM_REGION_DISPOSE(0xC8000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_a2_d06.bin", 0xC0000, 0x08000, 0x7a8b8db4 ) /* 0,1,2,3 */ /* text */
+	ROM_LOAD( "b_c5_d09.bin", 0x00000, 0x10000, 0x7c435887 ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "b_a5_d10.bin", 0x10000, 0x10000, 0xc6640aed ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "b_c7_d19.bin", 0x20000, 0x10000, 0x5effb0a0 ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "b_a7_d20.bin", 0x30000, 0x10000, 0x5fb42e7c ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "b_r7_d11.bin", 0x40000, 0x10000, 0x574face3 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_p7_d12.bin", 0x50000, 0x10000, 0x40507a76 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_m7_d13.bin", 0x60000, 0x10000, 0xbb0bc76f ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_l7_d14.bin", 0x70000, 0x10000, 0xcb4f231b ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_j7_d15.bin", 0x80000, 0x10000, 0xa0a0c261 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_h7_d16.bin", 0x90000, 0x10000, 0x6ba152f6 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_f7_d17.bin", 0xA0000, 0x10000, 0x3220a0b6 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_d7_d18.bin", 0xB0000, 0x10000, 0x65c7517d ) /* 2,3 */ /* sprites */
 
 	ROM_REGION(0x10000) /* sprite cpu */
 	/* missing mcu code */
-	/* currently load the audio cpu code in this location */
-	/* because otherwise mame will loop indefinately in cpu_run */
-	ROM_LOAD( "A_S2_D01.BIN",  0x08000, 0x08000, 0xad00a730 )
+	ROM_LOAD( "63701.bin", 0xc000, 0x4000, 0x00000000 )
 
 	ROM_REGION(0x10000) /* audio cpu */
-	ROM_LOAD( "A_S2_D01.BIN",  0x08000, 0x08000, 0xad00a730 )
+	ROM_LOAD( "a_s2_d01.bin", 0x08000, 0x08000, 0x9efa95bb )
 
 	ROM_REGION(0x20000) /* adpcm samples */
-	ROM_LOAD( "A_S6_D07.BIN",  0x00000, 0x10000, 0x27a46af4 )
-	ROM_LOAD( "A_R6_D08.BIN",  0x10000, 0x10000, 0x105e0bba )
+	ROM_LOAD( "a_s6_d07.bin", 0x00000, 0x10000, 0x34755de3 )
+	ROM_LOAD( "a_r6_d08.bin", 0x10000, 0x10000, 0x904de6f8 )
 ROM_END
 
 ROM_START( ddragonb_rom )
 	ROM_REGION(0x28000)	/* 64k for code + bankswitched memory */
-	ROM_LOAD( "IC26",         0x08000, 0x08000, 0x113d6391 )
-	ROM_LOAD( "A_K2_D03.BIN", 0x10000, 0x08000, 0xd40db89b ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "IC24",         0x18000, 0x08000, 0x1a208c10 ) /* banked at 0x4000-0x8000 */
-	ROM_LOAD( "IC23",         0x20000, 0x08000, 0xe9e164b9 ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "ic26",         0x08000, 0x08000, 0xae714964 )
+	ROM_LOAD( "a_k2_d03.bin", 0x10000, 0x08000, 0x5779705e ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "ic24",         0x18000, 0x08000, 0xdbf24897 ) /* banked at 0x4000-0x8000 */
+	ROM_LOAD( "ic23",         0x20000, 0x08000, 0x6c9f46fa ) /* banked at 0x4000-0x8000 */
 
-	ROM_REGION(0xc8000) /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "A_A2_D06.BIN", 0xC0000, 0x08000, 0x7146494c ) /* 0,1,2,3 */ /* text */
-	ROM_LOAD( "B_C5_D09.BIN", 0x00000, 0x10000, 0x10c0e6d0 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "B_A5_D10.BIN", 0x10000, 0x10000, 0x9a4cc484 ) /* 0,1 */ /* tiles */
-	ROM_LOAD( "B_C7_D19.BIN", 0x20000, 0x10000, 0x51b52415 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "B_A7_D20.BIN", 0x30000, 0x10000, 0xf1e7d881 ) /* 2,3 */ /* tiles */
-	ROM_LOAD( "B_R7_D11.BIN", 0x40000, 0x10000, 0x172eb21c ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_P7_D12.BIN", 0x50000, 0x10000, 0xee6eb2d6 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_M7_D13.BIN", 0x60000, 0x10000, 0xe98e2e82 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_L7_D14.BIN", 0x70000, 0x10000, 0x526d686d ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "B_J7_D15.BIN", 0x80000, 0x10000, 0x9ae98b73 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_H7_D16.BIN", 0x90000, 0x10000, 0x7a6c1946 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_F7_D17.BIN", 0xA0000, 0x10000, 0xfd29a219 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "B_D7_D18.BIN", 0xB0000, 0x10000, 0xc5d467e4 ) /* 2,3 */ /* sprites */
+	ROM_REGION_DISPOSE(0xc8000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a_a2_d06.bin", 0xC0000, 0x08000, 0x7a8b8db4 ) /* 0,1,2,3 */ /* text */
+	ROM_LOAD( "b_c5_d09.bin", 0x00000, 0x10000, 0x7c435887 ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "b_a5_d10.bin", 0x10000, 0x10000, 0xc6640aed ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "b_c7_d19.bin", 0x20000, 0x10000, 0x5effb0a0 ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "b_a7_d20.bin", 0x30000, 0x10000, 0x5fb42e7c ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "b_r7_d11.bin", 0x40000, 0x10000, 0x574face3 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_p7_d12.bin", 0x50000, 0x10000, 0x40507a76 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_m7_d13.bin", 0x60000, 0x10000, 0xbb0bc76f ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_l7_d14.bin", 0x70000, 0x10000, 0xcb4f231b ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "b_j7_d15.bin", 0x80000, 0x10000, 0xa0a0c261 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_h7_d16.bin", 0x90000, 0x10000, 0x6ba152f6 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_f7_d17.bin", 0xA0000, 0x10000, 0x3220a0b6 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "b_d7_d18.bin", 0xB0000, 0x10000, 0x65c7517d ) /* 2,3 */ /* sprites */
 
 	ROM_REGION(0x10000) /* sprite cpu */
-	ROM_LOAD( "IC38",  0x0c000, 0x04000, 0x7f95ec95 )
+	ROM_LOAD( "ic38",         0x0c000, 0x04000, 0x6a6a0325 )
 
 	ROM_REGION(0x10000) /* audio cpu */
-	ROM_LOAD( "A_S2_D01.BIN",  0x08000, 0x08000, 0xad00a730 )
+	ROM_LOAD( "a_s2_d01.bin", 0x08000, 0x08000, 0x9efa95bb )
 
 	ROM_REGION(0x20000) /* adpcm samples */
-	ROM_LOAD( "A_S6_D07.BIN",  0x00000, 0x10000, 0x27a46af4 )
-	ROM_LOAD( "A_R6_D08.BIN",  0x10000, 0x10000, 0x105e0bba )
+	ROM_LOAD( "a_s6_d07.bin", 0x00000, 0x10000, 0x34755de3 )
+	ROM_LOAD( "a_r6_d08.bin", 0x10000, 0x10000, 0x904de6f8 )
 ROM_END
 
 ROM_START( ddragon2_rom )
 	ROM_REGION(0x28000)	/* region#0: 64k for code */
-	ROM_LOAD( "26A9-04.BIN", 0x08000, 0x8000, 0x718a0bcc )
-	ROM_LOAD( "26AA-03.BIN", 0x10000, 0x8000, 0x87c72a6f )
-	ROM_LOAD( "26AB-0.BIN",  0x18000, 0x8000, 0x40acba00 )
-	ROM_LOAD( "26AC-02.BIN", 0x20000, 0x8000, 0xf4dc516e )
+	ROM_LOAD( "26a9-04.bin",  0x08000, 0x8000, 0xf2cfc649 )
+	ROM_LOAD( "26aa-03.bin",  0x10000, 0x8000, 0x44dd5d4b )
+	ROM_LOAD( "26ab-0.bin",   0x18000, 0x8000, 0x49ddddcd )
+	ROM_LOAD( "26ac-02.bin",  0x20000, 0x8000, 0x097eaf26 )
 
-	ROM_REGION(0x110000) /* region#1: graphics (disposed after conversion) */
-	ROM_LOAD( "26A8-0.BIN", 0x00000, 0x10000, 0x1d59c0d9 ) /* 0,1,2,3 */ /* text */
-    ROM_LOAD( "26J4-0.BIN", 0x10000, 0x20000, 0x67e512c9 ) /* 0,1 */ /* tiles */
-    ROM_LOAD( "26J5-0.BIN", 0x30000, 0x20000, 0x9ad37fcb ) /* 2,3 */ /* tiles */
-    ROM_LOAD( "26J0-0.BIN", 0x50000, 0x20000, 0xf8e039a4 ) /* 0,1 */ /* sprites */
-    ROM_LOAD( "26J1-0.BIN", 0x70000, 0x20000, 0x22b6c66c ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "26AF-0.BIN", 0x90000, 0x20000, 0x30092467 ) /* 0,1 */ /* sprites */
-	ROM_LOAD( "26J2-0.BIN", 0xb0000, 0x20000, 0xaa721e6a ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "26J3-0.BIN", 0xd0000, 0x20000, 0x66e0b442 ) /* 2,3 */ /* sprites */
-	ROM_LOAD( "26A10-0.BIN",0xf0000, 0x20000, 0x00ccaeb2 ) /* 2,3 */ /* sprites */
+	ROM_REGION_DISPOSE(0x110000) /* region#1: graphics (disposed after conversion) */
+	ROM_LOAD( "26a8-0.bin",   0x00000, 0x10000, 0x3ad1049c ) /* 0,1,2,3 */ /* text */
+	ROM_LOAD( "26j4-0.bin",   0x10000, 0x20000, 0xa8c93e76 ) /* 0,1 */ /* tiles */
+	ROM_LOAD( "26j5-0.bin",   0x30000, 0x20000, 0xee555237 ) /* 2,3 */ /* tiles */
+	ROM_LOAD( "26j0-0.bin",   0x50000, 0x20000, 0xdb309c84 ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "26j1-0.bin",   0x70000, 0x20000, 0xc3081e0c ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "26af-0.bin",   0x90000, 0x20000, 0x3a615aad ) /* 0,1 */ /* sprites */
+	ROM_LOAD( "26j2-0.bin",   0xb0000, 0x20000, 0x589564ae ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "26j3-0.bin",   0xd0000, 0x20000, 0xdaf040d6 ) /* 2,3 */ /* sprites */
+	ROM_LOAD( "26a10-0.bin",  0xf0000, 0x20000, 0x6d16d889 ) /* 2,3 */ /* sprites */
 
 	ROM_REGION(0x10000) /* region#2: sprite CPU 64kb (Upper 16kb = 0) */
-    ROM_LOAD( "26AE-0.BIN", 0x00000, 0x10000, 0xe36202e8 )
+	ROM_LOAD( "26ae-0.bin",   0x00000, 0x10000, 0xea437867 )
 
 	ROM_REGION(0x10000) /* region#3: music CPU, 64kb */
-    ROM_LOAD("26AD-0.BIN", 0x00000, 0x8000, 0xd353aa0b )
+	ROM_LOAD( "26ad-0.bin",   0x00000, 0x8000, 0x75e36cd6 )
 
 	ROM_REGION(0x40000) /* region#4: adpcm */
-    ROM_LOAD("26J6-0.BIN", 0x00000, 0x20000, 0xd95b0e0d )
-    ROM_LOAD("26J7-0.BIN", 0x20000, 0x20000, 0x2e49c0f9 )
+	ROM_LOAD( "26j6-0.bin",   0x00000, 0x20000, 0xa84b2a29 )
+	ROM_LOAD( "26j7-0.bin",   0x20000, 0x20000, 0xbc6a48d5 )
 ROM_END
 
 
@@ -828,6 +829,7 @@ struct GameDriver ddragon_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi",
 	GAME_NOT_WORKING,
 	&ddragon_machine_driver,
+	0,
 
 	ddragon_rom,
 	0, 0,
@@ -853,6 +855,7 @@ struct GameDriver ddragonb_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragonb_machine_driver,
+	0,
 
 	ddragonb_rom,
 	0, 0,
@@ -872,12 +875,13 @@ struct GameDriver ddragon2_driver =
 	__FILE__,
 	0,
 	"ddragon2",
-	"Double Dragon 2",
+	"Double Dragon II - The Revenge",
 	"1988",
 	"Technos",
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragon2_machine_driver,
+	0,
 
 	ddragon2_rom,
 	0, 0,

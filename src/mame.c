@@ -1,30 +1,29 @@
 #include "driver.h"
+#include <ctype.h>
 
-/* Mame frontend interface rountines by Maurizio Zanello */
-
-char mameversion[] = "0.33 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
 static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
-int nocheat;    /* 0 when the -cheat option was specified */
-int mame_debug; /* !0 when -debug option is specified */
+/* Variables to hold the status of various game options */
+struct GameOptions	options;
 
-int frameskip;
-int VolumePTR = 0;
-int CurrentVolume = 100;
+FILE *errorlog;
+void *record;   /* for -record */
+void *playback; /* for -playback */
+int mame_debug; /* !0 when -debug option is specified */
+int No_FM;
+
+int bailing;	/* set to 1 if the startup is aborted to prevent multiple error messages */
+
 static int settingsloaded;
 
-int bitmap_dirty;	/* set by layer_mark_full_screen_dirty() */
+int bitmap_dirty;	/* set by osd_clearbitmap() */
 
 unsigned char *ROM;
 
-FILE *errorlog;
-
-void *record;   /* for -record */
-void *playback; /* for -playback */
 
 
 int init_machine(void);
@@ -32,29 +31,118 @@ void shutdown_machine(void);
 int run_machine(void);
 
 
-int run_game(int game, struct GameOptions *options)
+#ifdef MAME_DEBUG
+static int validitychecks(void)
+{
+	int i,j;
+
+	for (i = 0;drivers[i];i++)
+	{
+		const struct RomModule *romp;
+
+		if (drivers[i]->clone_of == drivers[i])
+		{
+			printf("%s is set as a clone of itself\n",drivers[i]->name);
+			return 1;
+		}
+
+		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
+		{
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+extern struct GameDriver neogeo_bios;
+if (drivers[i]->clone_of->clone_of != &neogeo_bios)
+{
+#endif
+#endif
+			printf("%s is a clone of a clone\n",drivers[i]->name);
+			return 1;
+#ifndef NEOFREE
+#ifndef TINY_COMPILE
+}
+#endif
+#endif
+		}
+
+		for (j = i+1;drivers[j];j++)
+		{
+			if (!strcmp(drivers[i]->name,drivers[j]->name))
+			{
+				printf("%s is a duplicate name (%s, %s)\n",drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
+				return 1;
+			}
+			if (!strcmp(drivers[i]->description,drivers[j]->description))
+			{
+				printf("%s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->name,drivers[j]->name);
+				return 1;
+			}
+			if (drivers[i]->rom == drivers[j]->rom)
+			{
+				printf("%s and %s use the same ROM set\n",drivers[i]->name,drivers[j]->name);
+				return 1;
+			}
+		}
+
+		romp = drivers[i]->rom;
+		while (romp->name || romp->offset || romp->length)
+		{
+			const char *c;
+			if (romp->name && romp->name != (char *)-1)
+			{
+				c = romp->name;
+				while (*c)
+				{
+					if (tolower(*c) != *c)
+					{
+						printf("%s has upper case ROM names, please use lower case\n",drivers[i]->name);
+						return 1;
+					}
+					c++;
+				}
+			}
+
+			romp++;
+		}
+	}
+
+	return 0;
+}
+#endif
+
+
+
+
+int run_game(int game)
 {
 	int err;
 
-	errorlog   = options->errorlog;
-	record     = options->record;
-	playback   = options->playback;
-	mame_debug = options->mame_debug;
+
+#ifdef MAME_DEBUG
+	/* validity checks */
+	if (validitychecks()) return 1;
+#endif
+
+
+	/* copy some settings into easier-to-handle variables */
+	errorlog   = options.errorlog;
+	record     = options.record;
+	playback   = options.playback;
+	mame_debug = options.mame_debug;
+	No_FM      = options.no_fm;
 
 	Machine->gamedrv = gamedrv = drivers[game];
 	Machine->drv = drv = gamedrv->drv;
 
 	/* copy configuration */
-	Machine->sample_rate = options->samplerate;
-	Machine->sample_bits = options->samplebits;
-	frameskip = options->frameskip;
-	nocheat = !options->cheat;
+	Machine->sample_rate = options.samplerate;
+	Machine->sample_bits = options.samplebits;
 
 	/* get orientation right */
 	Machine->orientation = gamedrv->orientation;
-	if (options->norotate)
+	Machine->ui_orientation = ORIENTATION_DEFAULT;
+	if (options.norotate)
 		Machine->orientation = ORIENTATION_DEFAULT;
-	if (options->ror)
+	if (options.ror)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
@@ -62,8 +150,15 @@ int run_game(int game, struct GameOptions *options)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_90;
+
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->ui_orientation ^= ORIENTATION_ROTATE_90;
 	}
-	if (options->rol)
+	if (options.rol)
 	{
 		/* if only one of the components is inverted, switch them */
 		if ((Machine->orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
@@ -71,31 +166,72 @@ int run_game(int game, struct GameOptions *options)
 			Machine->orientation ^= ORIENTATION_ROTATE_180;
 
 		Machine->orientation ^= ORIENTATION_ROTATE_270;
+
+		/* if only one of the components is inverted, switch them */
+		if ((Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_X ||
+				(Machine->ui_orientation & ORIENTATION_ROTATE_180) == ORIENTATION_FLIP_Y)
+			Machine->ui_orientation ^= ORIENTATION_ROTATE_180;
+
+		Machine->ui_orientation ^= ORIENTATION_ROTATE_270;
 	}
-	if (options->flipx)
+	if (options.flipx)
+	{
 		Machine->orientation ^= ORIENTATION_FLIP_X;
-	if (options->flipy)
+		Machine->ui_orientation ^= ORIENTATION_FLIP_X;
+	}
+	if (options.flipy)
+	{
 		Machine->orientation ^= ORIENTATION_FLIP_Y;
+		Machine->ui_orientation ^= ORIENTATION_FLIP_Y;
+	}
 
 
 	/* Do the work*/
 	err = 1;
+	bailing = 0;
 
-	if (init_machine() == 0)
+   #ifdef MESS
+   {
+   int i;
+	/* MESS - set up the storage peripherals */
+	for (i = 0; i < MAX_ROM; i ++)
+		strcpy (rom_name[i], options.rom_name[i]);
+	for (i = 0; i < MAX_FLOPPY; i ++)
+		strcpy (floppy_name[i], options.floppy_name[i]);
+	for (i = 0; i < MAX_HARD; i ++)
+		strcpy (hard_name[i], options.hard_name[i]);
+	for (i = 0; i < MAX_CASSETTE; i ++)
+		strcpy (cassette_name[i], options.cassette_name[i]);
+   }
+   #endif
+
+	if (osd_init() == 0)
 	{
-		if (osd_init() == 0)
+		if (init_machine() == 0)
 		{
 			if (run_machine() == 0)
 				err = 0;
-			else printf("Unable to start machine emulation\n");
+			else if (!bailing)
+			{
+				bailing = 1;
+				printf("Unable to start machine emulation\n");
+			}
 
-			osd_exit();
+			shutdown_machine();
 		}
-		else printf ("Unable to initialize system\n");
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf("Unable to initialize machine emulation\n");
+		}
 
-		shutdown_machine();
+		osd_exit();
 	}
-	else printf("Unable to initialize machine emulation\n");
+	else if (!bailing)
+	{
+		bailing = 1;
+		printf ("Unable to initialize system\n");
+	}
 
 	return err;
 }
@@ -110,13 +246,13 @@ int run_game(int game, struct GameOptions *options)
 ***************************************************************************/
 int init_machine(void)
 {
-	if (gamedrv->new_input_ports)
+	if (gamedrv->input_ports)
 	{
 		int total;
 		const struct InputPort *from;
 		struct InputPort *to;
 
-		from = gamedrv->new_input_ports;
+		from = gamedrv->input_ports;
 
 		total = 0;
 		do
@@ -127,7 +263,7 @@ int init_machine(void)
 		if ((Machine->input_ports = malloc(total * sizeof(struct InputPort))) == 0)
 			return 1;
 
-		from = gamedrv->new_input_ports;
+		from = gamedrv->input_ports;
 		to = Machine->input_ports;
 
 		do
@@ -139,9 +275,18 @@ int init_machine(void)
 	}
 
 
+	#ifdef MESS
+   	if (!gamedrv->rom)
+        {
+      	  if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
+          goto load_next;
+        }
+   #endif
+
 	if (readroms() != 0)
 	{
 		free(Machine->input_ports);
+		Machine->input_ports = 0;
 		return 1;
 	}
 
@@ -158,6 +303,7 @@ int init_machine(void)
 	if (gamedrv->opcode_decode)
 	{
 		int j;
+		extern int encrypted_cpu;
 
 
 		/* find the first available memory region pointer */
@@ -165,18 +311,32 @@ int init_machine(void)
 		while (Machine->memory_region[j]) j++;
 
 		/* allocate a ROM array of the same length of memory region #0 */
-		if ((ROM = malloc(gamedrv->rom->offset)) == 0)
+		if ((ROM = malloc(Machine->memory_region_length[0])) == 0)
 		{
 			free(Machine->input_ports);
+			Machine->input_ports = 0;
 			/* TODO: should also free the allocated memory regions */
 			return 1;
 		}
 
 		Machine->memory_region[j] = ROM;
+		Machine->memory_region_length[j] = Machine->memory_region_length[0];
 
+		encrypted_cpu = 0;
 		(*gamedrv->opcode_decode)();
 	}
 
+   #ifdef MESS
+	load_next:
+	/* The ROM loading routine should allocate the ROM and RAM space and */
+	/* assign them to the appropriate Machine->memory_region blocks. */
+        if (gamedrv->rom_load && (*gamedrv->rom_load)() != 0)
+	{
+		free(Machine->input_ports);
+		printf("Image load failed.\n");
+		return 1;
+	}
+	#endif
 
 	/* read audio samples if available */
 	Machine->samples = readsamples(gamedrv->samplenames,gamedrv->name);
@@ -193,12 +353,11 @@ int init_machine(void)
 	if( !initmemoryhandlers() )
 	{
 		free(Machine->input_ports);
+		Machine->input_ports = 0;
 		return 1;
 	}
 
-	if (Machine->drv->sh_init && (*Machine->drv->sh_init)(gamedrv->name) != 0)
-		/* TODO: should also free the resources allocated before */
-		return 1;
+	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
 	return 0;
 }
@@ -221,6 +380,7 @@ void shutdown_machine(void)
 	{
 		free(Machine->memory_region[i]);
 		Machine->memory_region[i] = 0;
+		Machine->memory_region_length[i] = 0;
 	}
 
 	/* free the memory allocated for input ports definition */
@@ -243,8 +403,6 @@ static void vh_close(void)
 	freegfx(Machine->uifont);
 	Machine->uifont = 0;
 	osd_close_display();
-	free_tile_layer(Machine->dirtylayer);
-	Machine->dirtylayer = 0;
 	palette_stop();
 }
 
@@ -272,6 +430,27 @@ static int vh_open(void)
 	{
 		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].memory_region != -1;i++)
 		{
+			int len,avail,j,start;
+
+			start = 0;
+			for (j = 0;j < MAX_GFX_PLANES;j++)
+			{
+				if (drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j] > start)
+					start = drv->gfxdecodeinfo[i].gfxlayout->planeoffset[j];
+			}
+			start &= ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement-1);
+			len = drv->gfxdecodeinfo[i].gfxlayout->total *
+					drv->gfxdecodeinfo[i].gfxlayout->charincrement;
+			avail = Machine->memory_region_length[drv->gfxdecodeinfo[i].memory_region]
+					- (drv->gfxdecodeinfo[i].start & ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement/8-1));
+			if ((start + len) / 8 > avail)
+			{
+				bailing = 1;
+				printf ("Error: gfx[%d] extends past allocated memory\n",i);
+				vh_close();
+				return 1;
+			}
+
 			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
@@ -279,45 +458,28 @@ static int vh_open(void)
 				vh_close();
 				return 1;
 			}
-			Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
+			if (Machine->colortable)
+				Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
 	}
-
-	/* build our private user interface font */
-	if ((Machine->uifont = builduifont()) == 0)
-	{
-		vh_close();
-		return 1;
-	}
-
-
-	/* if the GfxLayer system is enabled, create the dirty map needed by the */
-	/* OS dependant code to selectively refresh the screen. */
-	if (Machine->drv->layer)
-	{
-		static struct MachineLayer ml =
-		{
-			LAYER_TILE,
-			0,0,	/* width and height, filled in later */
-			/* all other fields are 0 */
-		};
-
-		ml.width = drv->screen_width;
-		ml.height = drv->screen_height;
-		if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
-		{
-			vh_close();
-			return 1;
-		}
-	}
-	else Machine->dirtylayer = 0;
 
 
 	/* create the display bitmap, and allocate the palette */
 	if ((Machine->scrbitmap = osd_create_display(
 			drv->screen_width,drv->screen_height,
 			drv->video_attributes)) == 0)
+	{
+		vh_close();
+		return 1;
+	}
+
+	/* build our private user interface font */
+	/* This must be done AFTER osd_create_display() so the function knows the */
+	/* resolution we are running at and can pick a different font depending on it. */
+	/* It must be done BEFORE palette_init() because that will also initialize */
+	/* (through osd_allocate_colors()) the uifont colortable. */
+	if ((Machine->uifont = builduifont()) == 0)
 	{
 		vh_close();
 		return 1;
@@ -337,209 +499,38 @@ static int vh_open(void)
   and throttling the emulation speed to obtain the required frames per second.
 
 ***************************************************************************/
+
+int need_to_clear_bitmap;	/* set by the user interface */
+
 int updatescreen(void)
 {
-	static int framecount = 0, showvoltemp = 0; /* M.Z.: new options */
-	static int need_to_clear_bitmap;
-#ifdef BETA_VERSION
-	static int beta_count;
-#endif
+	/* update sound */
+	sound_update();
 
-
-#ifndef macintosh /* LBO 061497 */
-	/* if the user pressed ESC, stop the emulation */
-	if (osd_key_pressed(OSD_KEY_ESC))
-#else
-	/* LBO - moved most of the key-handling stuff to the OS routines so menu selections       */
-	/* can get trapped as well rather than having a sick hack in the osd_key_pressed routine  */
-	if (osd_handle_event() == true)
-#endif
+	if (osd_skip_this_frame() == 0)
 	{
-#ifdef BETA_VERSION
-		beta_count = 0;
-#endif
-		return 1;
-	}
-
-
-	/* if the user pressed F3, reset the emulation */
-	if (osd_key_pressed(OSD_KEY_F3))
-	{
-		while (osd_key_pressed(OSD_KEY_F3)) ;
-		machine_reset();
-	}
-
-
-#ifndef macintosh /* LBO 061497 */
-	if (osd_key_pressed(OSD_KEY_MINUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
-	{
-		/* decrease volume */
-		if (CurrentVolume > 0) CurrentVolume--;
-		osd_set_mastervolume(CurrentVolume);
-		showvoltemp = 50;
-	}
-
-	if (osd_key_pressed(OSD_KEY_PLUS_PAD) && osd_key_pressed(OSD_KEY_LSHIFT) == 0)
-	{
-		/* increase volume */
-		if (CurrentVolume < 100) CurrentVolume++;
-		osd_set_mastervolume(CurrentVolume);
-		showvoltemp = 50;
-	}                                          /* MAURY_END: new options */
-
-	if (osd_key_pressed(OSD_KEY_P)) /* pause the game */
-	{
-		struct DisplayText dt[2];
-		int count = 0;
-
-
-		dt[0].text = "PAUSED";
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
-		dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2;
-		dt[1].text = 0;
-
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_P))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		while (osd_key_pressed(OSD_KEY_P) == 0 && osd_key_pressed(OSD_KEY_ESC) == 0)
-		{
-			if (osd_key_pressed(OSD_KEY_TAB)) setup_menu(); /* call the configuration menu */
-
-			osd_clearbitmap(Machine->scrbitmap);
-			(*drv->vh_update)(Machine->scrbitmap,1);  /* redraw screen */
-
-			if (count < Machine->drv->frames_per_second / 2)
-				displaytext(dt,0);      /* make PAUSED blink */
-			else
-				osd_update_display();
-
-			count = (count + 1) % (Machine->drv->frames_per_second / 1);
-		}
-
-		while (osd_key_pressed(OSD_KEY_ESC));   /* wait for jey release */
-		while (osd_key_pressed(OSD_KEY_P));     /* ditto */
-
-		osd_set_mastervolume(CurrentVolume);
-		osd_clearbitmap(Machine->scrbitmap);
-	}
-
-	/* if the user pressed TAB, go to the setup menu */
-	if (osd_key_pressed(OSD_KEY_TAB))
-	{
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_TAB))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		if (setup_menu()) return 1;
-
-		osd_set_mastervolume(CurrentVolume);
-	}
-
-	/* if the user pressed F4, show the character set */
-	if (osd_key_pressed(OSD_KEY_F4))
-	{
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_F4))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		if (showcharset()) return 1;
-
-		osd_set_mastervolume(CurrentVolume);
-	}
-#endif /* LBO 061497 */
-
-
-	if (++framecount > frameskip)
-	{
-		framecount = 0;
-
+		profiler_mark(PROFILER_VIDEO);
 		if (need_to_clear_bitmap)
 		{
 			osd_clearbitmap(Machine->scrbitmap);
 			need_to_clear_bitmap = 0;
 		}
-
-
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 		bitmap_dirty = 0;
-
-		/* This call is for the cheat, it must be called at least each frames */
-		if (nocheat == 0) DoCheat(CurrentVolume);
-
-		if (showvoltemp)
-		{                     /* volume-meter */
-			int trueorientation;
-			int i,x;
-			char volstr[25];
-
-
-			showvoltemp--;
-
-			if (showvoltemp)
-			{
-				trueorientation = Machine->orientation;
-				Machine->orientation = ORIENTATION_DEFAULT;
-
-				x = (Machine->uiwidth - 24*Machine->uifont->width)/2;
-				strcpy(volstr,"                      ");
-				for (i = 0;i < (CurrentVolume/5);i++) volstr[i+1] = '\x15';
-
-				drawgfx(Machine->scrbitmap,Machine->uifont,16,DT_COLOR_RED,0,0,x,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-				drawgfx(Machine->scrbitmap,Machine->uifont,17,DT_COLOR_RED,0,0,x+23*Machine->uifont->width,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-				for (i = 0;i < 22;i++)
-					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_WHITE,
-						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-				Machine->orientation = trueorientation;
-			}
-			else
-				need_to_clear_bitmap = 1;
-		}
-
-#ifdef BETA_VERSION
-		if (beta_count < 5 * Machine->drv->frames_per_second)
-		{
-			beta_count += frameskip+1;
-
-			if (beta_count < 5 * Machine->drv->frames_per_second)
-			{
-				int trueorientation;
-				int i,x;
-				char volstr[25];
-
-
-				trueorientation = Machine->orientation;
-				Machine->orientation = ORIENTATION_DEFAULT;
-
-				x = (Machine->uiwidth - 12*Machine->uifont->width)/2;
-				strcpy(volstr,"BETA VERSION");
-
-				for (i = 0;i < 12;i++)
-					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_RED,
-						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-				Machine->orientation = trueorientation;
-			}
-			else
-				need_to_clear_bitmap = 1;
-		}
-#endif
-
-		osd_update_display();
+		profiler_mark(PROFILER_END);
 	}
 
-	/* update audio. Do it after the speed throttling to be in better sync. */
-/*	ASG 980417 -- moved to the update function in cpuintrf.c
-	sound_update();*/
+	/* the user interface must be called between vh_update() and update_display(), */
+	/* to allow it to overlay things on the game display. We must call it even */
+	/* if the frame is skipped, to keep a consistent timing. */
+	if (handle_user_interface())
+		/* quit if the user asked to */
+		return 1;
+
+	osd_update_video_and_audio();
 
 	return 0;
 }
-
 
 
 /***************************************************************************
@@ -555,35 +546,69 @@ int run_machine(void)
 
 	if (vh_open() == 0)
 	{
+		tilemap_init();
+		sprite_init();
+		gfxobj_init();
 		if (drv->vh_start == 0 || (*drv->vh_start)() == 0)      /* start the video hardware */
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-				/* free the graphics ROMs, they are no longer needed */
-				/* TODO: instead of hardcoding region 1, use a flag to mark regions */
-				/*       which can be freed after initialization. */
-				free(Machine->memory_region[1]);
-				Machine->memory_region[1] = 0;
+				const struct RomModule *romp = gamedrv->rom;
+				int	region;
+
+				if (romp)
+				{
+					/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+					for (region = 0; romp->name || romp->offset || romp->length; region++)
+					{
+						if (romp->offset & ROMFLAG_DISPOSE)
+						{
+							free (Machine->memory_region[region]);
+							Machine->memory_region[region] = 0;
+						}
+						do { romp++; } while (romp->length);
+					}
+				}
 
 				if (settingsloaded == 0)
 				{
 					/* if there is no saved config, it must be first time we run this game, */
 					/* so show the disclaimer and driver credits. */
-					showcopyright();
-					showcredits();
+					if (!options.gui_host)
+					{
+						/* LBO - If the host port has a gui, skip this message under the assumption */
+						/* that the host will take care of printing the message once. The best */
+						/* opportunity for a gui to do this is IMHO before the front-end has */
+						/* been displayed. */
+						if (showcopyright()) goto userquit;
+					}
 				}
 
-				showgameinfo();  /* show info about the game */
+				if (showgamewarnings() == 0)  /* show info about incorrect behaviour (wrong colors etc.) */
+				{
+					/* shut down the leds (work around Allegro hanging bug in the DOS port) */
+					osd_led_w(0,1);
+					osd_led_w(1,1);
+					osd_led_w(2,1);
+					osd_led_w(3,1);
+					osd_led_w(0,0);
+					osd_led_w(1,0);
+					osd_led_w(2,0);
+					osd_led_w(3,0);
 
-				if (nocheat == 0) InitCheat();
+					init_user_interface();
 
-				cpu_run();      /* run the emulation! */
+					if (options.cheat) InitCheat();
 
-				if (nocheat == 0) StopCheat();
+					cpu_run();      /* run the emulation! */
 
-				/* save input ports settings */
-				save_input_port_settings();
+					if (options.cheat) StopCheat();
 
+					/* save input ports settings */
+					save_input_port_settings();
+				}
+
+userquit:
 				/* the following MUST be done after hiscore_save() otherwise */
 				/* some 68000 games will not work */
 				sound_stop();
@@ -591,13 +616,28 @@ int run_machine(void)
 
 				res = 0;
 			}
-			else printf("Unable to start audio emulation\n");
+			else if (!bailing)
+			{
+				bailing = 1;
+				printf("Unable to start audio emulation\n");
+			}
 		}
-		else printf("Unable to start video emulation\n");
+		else if (!bailing)
+		{
+			bailing = 1;
+			printf("Unable to start video emulation\n");
+		}
 
+		gfxobj_close();
+		sprite_close();
+		tilemap_close();
 		vh_close();
 	}
-	else printf("Unable to initialize display\n");
+	else if (!bailing)
+	{
+		bailing = 1;
+		printf("Unable to initialize display\n");
+	}
 
 	return res;
 }
@@ -611,6 +651,12 @@ int mame_highscore_enabled(void)
 
 	/* disable high score when cheats are used */
 	if (he_did_cheat != 0) return 0;
+
+#ifdef MAME_NET
+    /* disable high score when playing network game */
+    /* (this forces all networked machines to start from the same state!) */
+    if (net_active()) return 0;
+#endif /* MAME_NET */
 
 	return 1;
 }

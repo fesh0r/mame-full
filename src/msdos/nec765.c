@@ -13,7 +13,7 @@
 #include <dpmi.h>
 #include <time.h>
 #include "driver.h"
-#include "machine\wd179x.h"
+#include "mess/machine/wd179x.h"
 
 #define RE_INTERLEAVE	0
 #define VERBOSE 		1
@@ -90,38 +90,38 @@ typedef struct
 	ST0 st0;			/* status 0 */
 	ST1 st1;			/* status 1 */
 	ST2 st2;			/* status 2 */
-	byte c; 			/* cylinder */
-	byte h; 			/* head */
-	byte s; 			/* sector */
-	byte n; 			/* sector length */
+	UINT8 c;			 /* cylinder */
+	UINT8 h;			 /* head */
+	UINT8 s;			 /* sector */
+	UINT8 n;			 /* sector length */
 	ST3 st3;			/* status 3 (after sense drive status cmd) */
-	byte pcn;
+	UINT8 pcn;
 }   STA;
 
 typedef struct
 {
-	byte unit;			/* unit number 0 = A:, 1 = B: */
-	byte type;			/* type of drive 0: 360K, 1: 720K, 2: 1.2M, 3: 1.44M */
-	byte eot;			/* end of track */
-	byte secl;			/* sector length code (0:128, 1:256, 2:512 ... ) */
-	byte gap_a; 		/* read/write gap A*/
-	byte gap_b; 		/* format gap B */
-	byte dtl;			/* data length (128 if secl == 0) */
-	byte filler;		/* format filler byte (E5) */
-	byte mfm;			/* 0x00 = FM, 0x40 = MFM */
-	byte rcmd;			/* read command (0x26 normal, 0x2C deleted data address mark) */
-	byte wcmd;			/* write command (0x05 normal, 0x09 deleted data address mark) */
-	byte dstep; 		/* double step shift factor (1 for 40 track disk in 80 track drive) */
+	UINT8 unit; 		 /* unit number 0 = A:, 1 = B: */
+	UINT8 type; 		 /* type of drive 0: 360K, 1: 720K, 2: 1.2M, 3: 1.44M */
+	UINT8 eot;			 /* end of track */
+	UINT8 secl; 		 /* sector length code (0:128, 1:256, 2:512 ... ) */
+	UINT8 gap_a;		 /* read/write gap A*/
+	UINT8 gap_b;		 /* format gap B */
+	UINT8 dtl;			 /* data length (128 if secl == 0) */
+	UINT8 filler;		 /* format filler UINT8 (E5) */
+	UINT8 mfm;			 /* 0x00 = FM, 0x40 = MFM */
+	UINT8 rcmd; 		 /* read command (0x26 normal, 0x2C deleted data address mark) */
+	UINT8 wcmd; 		 /* write command (0x05 normal, 0x09 deleted data address mark) */
+	UINT8 dstep;		 /* double step shift factor (1 for 40 track disk in 80 track drive) */
 	STM stm;			/* main status */
 	STA sta;			/* status file */
 }   NEC;
 
 typedef struct {
-	byte density;
-	byte spt;
-	byte secl;
-	byte gap_a;
-	byte gap_b;
+	UINT8 density;
+	UINT8 spt;
+	UINT8 secl;
+	UINT8 gap_a;
+	UINT8 gap_b;
 }	GAPS;
 
 static GAPS gaps[] = {
@@ -183,21 +183,21 @@ static GAPS gaps[] = {
 
 static FILE *log = NULL;
 static NEC nec;
-static byte unit_type[4] = {0xff, 0xff, 0xff, 0xff};
+static UINT8 unit_type[4] = {0xff, 0xff, 0xff, 0xff};
 
 static __dpmi_paddr old_irq_E;	/* previous interrupt vector 0E */
 static __dpmi_paddr new_irq_E;	/* new interrupt vector 0E */
 static _go32_dpmi_seginfo nec_dma; /* for allocation of a sector DMA buffer */
-static byte irq_flag = 0;       /* set by IRQ 6 (INT 0E) */
-static byte initialized = 0;
+static UINT8 irq_flag = 0;		 /* set by IRQ 6 (INT 0E) */
+static UINT8 initialized = 0;
 static void *timer_motors = NULL;
 
 /*****************************************************************************
  * convert NEC 765 status to WD179X status 1 (restore, seek, step)
  *****************************************************************************/
-static byte FDC_STA1(void)
+static UINT8 FDC_STA1(void)
 {
-byte sta = 0;
+	UINT8 sta = 0;
 
 #if 0	/* since the track_0 status seems not to be reliable */
     if (!nec.sta.st3.track_0)       /* track 0 */
@@ -217,9 +217,9 @@ byte sta = 0;
 /*****************************************************************************
  * convert NEC 765 status to WD179X status 2 (read, write, format)
  *****************************************************************************/
-static byte FDC_STA2(int read_mode)
+static UINT8 FDC_STA2(int read_mode)
 {
-byte sta = 0;
+	UINT8 sta = 0;
 
 	if (nec.sta.st1.overrun)		/* overrun ? */
 		sta |= STA_2_LOST_DAT;
@@ -247,8 +247,9 @@ byte sta = 0;
  *****************************************************************************/
 static void dma_read(int count)
 {
-int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
-    LOG((log,"NEC765  dma_read %08X %04X\n", ofs, count));
+	int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
+
+	LOG((log,"NEC765  dma_read %08X %04X\n", ofs, count));
 	outportb(0x0a, 0x04 | 0x02);		/* mask DMA channel 2 */
 	outportb(0x0b, 0x46);				/* DMA read command */
 	outportb(0x0c, 0);					/* reset first/last flipflop */
@@ -265,8 +266,9 @@ int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
  *****************************************************************************/
 static void dma_write(int count)
 {
-int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
-    LOG((log,"NEC765  dma_write %08X %04X\n", ofs, count));
+	int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
+
+	LOG((log,"NEC765  dma_write %08X %04X\n", ofs, count));
 	outportb(0x0a, 0x04 | 0x02);		/* mask DMA channel 2 */
 	outportb(0x0b, 0x4a);				/* DMA write command */
 	outportb(0x0c, 0);					/* reset first/last flipflop */
@@ -283,13 +285,13 @@ int ofs = nec_dma.rm_segment * 16 + nec_dma.rm_offset;
  *****************************************************************************/
 static int main_status(void)
 {
-uclock_t timeout;
-uclock_t utime = uclock();
+	uclock_t timeout;
+	uclock_t utime = uclock();
 
 	timeout = utime + UCLOCKS_PER_SEC;
 	while (utime < timeout)
 	{
-		*(byte *)&nec.stm = inportb(0x3f4);
+		*(UINT8 *)&nec.stm = inportb(0x3f4);
 		if (nec.stm.ready)
 			break;
 		utime = uclock();
@@ -300,7 +302,7 @@ uclock_t utime = uclock();
 	if (timeout <= 0)
 	{
 		LOG((log,"NEC765  STM: %02X RDY%c DIR%c IO%c NDMA%c %c%c%c%c\n",
-			*(byte *) &nec.stm,
+			*(UINT8 *) &nec.stm,
 			(nec.stm.ready) ? '*' : '-',
 			(nec.stm.read_from_fdc) ? '-' : '+',
 			(nec.stm.io_active) ? '*' : '-',
@@ -323,9 +325,9 @@ static void results(int sense_interrupt)
 	{
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.st3 = inportb(0x3F5);
+			*(UINT8*)&nec.sta.st3 = inportb(0x3F5);
 			LOG((log,"NEC765  ST3: 0x%02X US%d HD%d TS%c T0%c RY%c WP%c FT%c\n",
-				*(byte*)&nec.sta.st3,
+				*(UINT8*)&nec.sta.st3,
 				nec.sta.st3.unit_select,
 				nec.sta.st3.head,
 				(nec.sta.st3.two_side) ? '*' : '-',
@@ -336,7 +338,7 @@ static void results(int sense_interrupt)
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.pcn = inportb(0x3F5);
+			*(UINT8*)&nec.sta.pcn = inportb(0x3F5);
 			LOG((log,"NEC765  PCN: %02d\n", nec.sta.pcn));
 		}
 	}
@@ -344,9 +346,9 @@ static void results(int sense_interrupt)
 	{
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.st0 = inportb(0x3F5);
+			*(UINT8*)&nec.sta.st0 = inportb(0x3F5);
 			LOG((log,"NEC765  ST0: 0x%02X US%d HD%d NR%c EC%c SE%c IC%d\n",
-				*(byte*)&nec.sta.st0,
+				*(UINT8*)&nec.sta.st0,
 				nec.sta.st0.unit_select,
 				nec.sta.st0.head,
 				(nec.sta.st0.not_ready) ? '*' : '-',
@@ -356,9 +358,9 @@ static void results(int sense_interrupt)
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.st1 = inportb(0x3F5);
+			*(UINT8*)&nec.sta.st1 = inportb(0x3F5);
 			LOG((log,"NEC765  ST1: 0x%02X MA%c NW%c ND%c OR%c DE%c EC%c\n",
-				*(byte*)&nec.sta.st1,
+				*(UINT8*)&nec.sta.st1,
 				(nec.sta.st1.missing_AM) ? '*' : '-',
 				(nec.sta.st1.not_writeable) ? '*' : '-',
 				(nec.sta.st1.no_data) ? '*' : '-',
@@ -368,9 +370,9 @@ static void results(int sense_interrupt)
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.st2 = inportb(0x3F5);
+			*(UINT8*)&nec.sta.st2 = inportb(0x3F5);
 			LOG((log,"NEC765  ST2: 0x%02X MD%c BC%c SN%c SH%c WC%c DD%c CM%c\n",
-				*(byte*)&nec.sta.st2,
+				*(UINT8*)&nec.sta.st2,
 				(nec.sta.st2.missing_DAM) ? '*' : '-',
 				(nec.sta.st2.bad_cylinder) ? '*' : '-',
 				(nec.sta.st2.scan_not_satisfied) ? '*' : '-',
@@ -382,22 +384,22 @@ static void results(int sense_interrupt)
 
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.c = inportb(0x3F5);
+			*(UINT8*)&nec.sta.c = inportb(0x3F5);
 			LOG((log,"NEC765       C:%02d", nec.sta.c));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.h = inportb(0x3F5);
+			*(UINT8*)&nec.sta.h = inportb(0x3F5);
 			LOG((log," H:%d", nec.sta.h));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.s = inportb(0x3F5);
+			*(UINT8*)&nec.sta.s = inportb(0x3F5);
 			LOG((log," S:%02d", nec.sta.s));
 		}
 		if (main_status() && nec.stm.read_from_fdc)
 		{
-			*(byte*)&nec.sta.n = inportb(0x3F5);
+			*(UINT8*)&nec.sta.n = inportb(0x3F5);
 			LOG((log," N:%2d", nec.sta.n));
 		}
 		LOG((log,"\n"));
@@ -406,17 +408,18 @@ static void results(int sense_interrupt)
 /* more data? shouldn't happen, but read it away */
 	while (main_status() && nec.stm.read_from_fdc)
 	{
-	byte data = inportb(0x3F5);
+		UINT8 data = inportb(0x3F5);
+
 		LOG((log,"NEC765  read unexpected %02X\n", data));
 	}
 }
 
 /*****************************************************************************
- * out_nec: send a byte to the NEC
+ * out_nec: send a UINT8 to the NEC
  *****************************************************************************/
-static int out_nec(byte b)
+static int out_nec(UINT8 b)
 {
-int result = 1;
+	int result = 1;
 
 	if (main_status())
 	{
@@ -438,10 +441,10 @@ int result = 1;
 /*****************************************************************************
  * seek_exec: wait until seek is executed and sense interrupt status
  *****************************************************************************/
-static void seek_exec(byte * track)
+static void seek_exec(UINT8 * track)
 {
-uclock_t timeout;
-uclock_t utime = uclock();
+	uclock_t timeout;
+	uclock_t utime = uclock();
 
 	timeout = utime + UCLOCKS_PER_SEC * 5;
 
@@ -475,8 +478,8 @@ uclock_t utime = uclock();
  *****************************************************************************/
 static void specify(void)
 {
-uclock_t timeout;
-uclock_t utime = uclock();
+	uclock_t timeout;
+	uclock_t utime = uclock();
 
 	LOG((log,"NEC765 specify\n"));
 
@@ -508,9 +511,9 @@ uclock_t utime = uclock();
  * number 'head' of the floppy disk. if the first try fails, change the
  * DDAM mode and try again
  *****************************************************************************/
-static byte read_sector(byte track, byte side, byte head, byte sector)
+static UINT8 read_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector)
 {
-int i, try;
+	int try;
 
 	LOG((log,"NEC765 read    unit:%d track:%02d side:%d head:%d sector:%d\n",
 		nec.unit, track, side, head, sector));
@@ -579,9 +582,9 @@ int i, try;
  * the floppy disk using head number 'head'. if ddam in non zero,
  * write the sector with deleted data address mark (DDAM)
  *****************************************************************************/
-static byte write_sector(byte track, byte side, byte head, byte sector, byte ddam)
+static UINT8 write_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 ddam)
 {
-int i;
+	int i;
 
 	LOG((log,"NEC765 write   unit:%d track:%02d side:%d head:%d sector:%d%s\n",
 		nec.unit, track, side, head, sector, (ddam) ? " *DDAM*" : ""));
@@ -647,17 +650,17 @@ static void irq_E(void)
 
 int osd_fdc_init(void)
 {
-__dpmi_meminfo meminfo;
-unsigned long _my_cs_base;
-unsigned long _my_ds_base;
-byte *p;
+	__dpmi_meminfo meminfo;
+	unsigned long _my_cs_base;
+	unsigned long _my_ds_base;
+	UINT8 *p;
 
 	if (initialized)
 		return 1;
 
     log = fopen("nec.log", "w");
 
-	for (p = (byte *) & irq_E; p; p++)
+	for (p = (UINT8 *) & irq_E; p; p++)
 	{
 		/* found "nop" ? */
         if (p[0] == 0x90)
@@ -712,14 +715,16 @@ byte *p;
 
 	atexit(osd_fdc_exit);
 
+	specify();
+
     return 1;
 }
 
 void osd_fdc_exit(void)
 {
-__dpmi_meminfo meminfo;
-unsigned long _my_cs_base;
-unsigned long _my_ds_base;
+	__dpmi_meminfo meminfo;
+	unsigned long _my_cs_base;
+	unsigned long _my_ds_base;
 
 	if (!initialized)
 		return;
@@ -753,7 +758,7 @@ unsigned long _my_ds_base;
 	initialized = 0;
 }
 
-void osd_fdc_motors(byte unit)
+void osd_fdc_motors(UINT8 unit)
 {
 	nec.unit = unit;
 
@@ -778,7 +783,7 @@ void osd_fdc_motors(byte unit)
 /*****************************************************************************
  * specify density, sectors per track and sector length
  *****************************************************************************/
-void osd_fdc_density(byte unit, byte density, byte tracks, byte spt, byte eot, byte secl)
+void osd_fdc_density(UINT8 unit, UINT8 density, UINT8 tracks, UINT8 spt, UINT8 eot, UINT8 secl)
 {
 __dpmi_regs r = {{0,}, };
 int i;
@@ -855,7 +860,7 @@ int i;
 			nec.gap_b = 12;
 		}
 		nec.dtl = (secl)?0xff:0x80; /* data length */
-		nec.filler = 0xe5;			/* format filler byte */
+		nec.filler = 0xe5;			/* format filler UINT8 */
 
 		LOG((log,"NEC765  FDD %c: den:%d trks:%d spt:%d eot:%d secl:%d gap_a:%d gap_b:%d\n",
 			'A' + nec.unit, density, tracks, spt, eot, secl, nec.gap_a, nec.gap_b));
@@ -893,7 +898,7 @@ void osd_fdc_interrupt(int param)
     outportb(0x3f2, 0x0c);
 }
 
-byte osd_fdc_recal(byte * track)
+UINT8 osd_fdc_recal(UINT8 * track)
 {
 	LOG((log,"NEC765 recal\n"));
 
@@ -924,7 +929,7 @@ byte osd_fdc_recal(byte * track)
 	return FDC_STA1();
 }
 
-byte osd_fdc_seek(byte t, byte * track)
+UINT8 osd_fdc_seek(UINT8 t, UINT8 * track)
 {
 	if (nec.sta.pcn == (t << nec.dstep))
 	{
@@ -949,7 +954,7 @@ byte osd_fdc_seek(byte t, byte * track)
 	return FDC_STA1();
 }
 
-byte osd_fdc_step(int dir, byte * track)
+UINT8 osd_fdc_step(int dir, UINT8 * track)
 {
 int new_track;
 	LOG((log,"NEC765 step    unit:%d direction:%+d (PCN:%02d)\n", nec.unit, dir, nec.sta.pcn));
@@ -977,7 +982,7 @@ int new_track;
 	return FDC_STA1();
 }
 
-byte osd_fdc_format(byte t, byte h, byte spt, byte * fmt)
+UINT8 osd_fdc_format(UINT8 t, UINT8 h, UINT8 spt, UINT8 * fmt)
 {
 int i;
 
@@ -989,9 +994,9 @@ int i;
 #if RE_INTERLEAVE
 	/* reorder the sector sequence for PC optimized reading (interleave) */
 	{
-byte sec;
-byte sec_min = 255;
-byte sec_max = 0;
+UINT8 sec;
+UINT8 sec_min = 255;
+UINT8 sec_max = 0;
 		for (i = 0; i < spt; i++)
 		{
 			sec = fmt[i * 4 + 2];
@@ -1042,7 +1047,7 @@ byte sec_max = 0;
 		return STA_2_NOT_READY;
 	if (out_nec(nec.gap_b)) 			 /* gap_b */
 		return STA_2_NOT_READY;
-	if (out_nec(nec.filler))			/* format filler byte */
+	if (out_nec(nec.filler))			/* format filler UINT8 */
 		return STA_2_NOT_READY;
 	LOG((log,"\n"));
 
@@ -1060,9 +1065,9 @@ byte sec_max = 0;
 	return FDC_STA2(0);
 }
 
-byte osd_fdc_put_sector(byte track, byte side, byte head, byte sector, byte *buff, byte ddam)
+UINT8 osd_fdc_put_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 *buff, UINT8 ddam)
 {
-byte result;
+UINT8 result;
 
 	movedata(
 		_my_ds(), (unsigned) buff,
@@ -1073,9 +1078,9 @@ byte result;
 	return result;
 }
 
-byte osd_fdc_get_sector(byte track, byte side, byte head, byte sector, byte *buff)
+UINT8 osd_fdc_get_sector(UINT8 track, UINT8 side, UINT8 head, UINT8 sector, UINT8 *buff)
 {
-byte result;
+UINT8 result;
 
 	result = read_sector(track, side, head, sector);
 	movedata(

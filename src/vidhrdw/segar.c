@@ -14,31 +14,38 @@ unsigned char *segar_characterram;
 unsigned char *segar_characterram2;
 unsigned char *segar_mem_colortable;
 unsigned char *segar_mem_bcolortable;
-unsigned char *segar_mem_blookup;
-unsigned char *segar_mem_slookup;
 
-static unsigned char segar_dirtycharacter[256];
+typedef struct
+{
+	unsigned char dirtychar[256];		// graphics defined in RAM, mark when changed
 
-static unsigned char segar_colorRAM[0x40];
-static unsigned char segar_colorwrite=0;
-static unsigned char segar_refresh=0;
-static unsigned char segar_cocktail=0;
-static unsigned char segar_char_refresh=0;
+	unsigned char colorRAM[0x40];		// stored in a 93419 (vid board)
+	unsigned char bcolorRAM[0x40];		// stored in a 93419 (background board)
+	unsigned char color_write_enable;	// write-enable the 93419 (vid board)
+	unsigned char flip;					// cocktail flip mode (vid board)
+	unsigned char bflip;				// cocktail flip mode (background board)
 
-static unsigned char segar_bcolorRAM[0x40];
-static unsigned char segar_bcolorwrite=0;
-static unsigned char segar_has_background=0;
+	unsigned char refresh;				// refresh the screen
+	unsigned char brefresh;				// refresh the background
+	unsigned char char_refresh;			// refresh the character graphics
 
-static unsigned char segar_bcocktail=0;
-static unsigned char segar_brefresh=0;
-static unsigned char segar_backfill=0;
-static unsigned char segar_fill_background=0;
-static unsigned int segar_backshift=0;
-static unsigned int segar_backscene=0;
-static unsigned int segar_backoffset=0;
+	unsigned char has_bcolorRAM;		// do we have background color RAM?
+	unsigned char background_enable;	// draw the background?
+	unsigned int back_scene;
+	unsigned int back_charset;
 
-static struct osd_bitmap *horizbackbitmap;
-static struct osd_bitmap *vertbackbitmap;
+	// used for Pig Newton
+	unsigned int bcolor_offset;
+
+	// used for Space Odyssey
+	unsigned char backfill;
+	unsigned char fill_background;
+	unsigned int backshift;
+	struct osd_bitmap *horizbackbitmap;
+	struct osd_bitmap *vertbackbitmap;
+} SEGAR_VID_STRUCT;
+
+static SEGAR_VID_STRUCT sv;
 
 /***************************************************************************
 
@@ -46,45 +53,252 @@ static struct osd_bitmap *vertbackbitmap;
   that can be filled with bytes of the form BBGGGRRR.  We'll still build up
   an initial palette, and set our colortable to point to a different color
   for each entry in the colortable, which we'll adjust later using
-  osd_modify_pen.
+  palette_change_color.
 
 ***************************************************************************/
 
 void segar_init_colors(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
-        static unsigned char color_scale[] = {0x00, 0x40, 0x80, 0xC0 };
+	static unsigned char color_scale[] = {0x00, 0x40, 0x80, 0xC0 };
 	int i;
 
-        /* Our first color needs to be 0 */
-        *(palette++) = 0;
-        *(palette++) = 0;
-        *(palette++) = 0;
+	/* Our first color needs to be black (transparent) */
+	*(palette++) = 0;
+	*(palette++) = 0;
+	*(palette++) = 0;
 
-        /* For 005, Astro Blaster, and Monster Bash, it doesn't matter */
-        /* what we set these colors to, since they'll get overwritten. */
-        /* Space Odyssey uses a static palette for the background, so */
-        /* our choice of colors isn't exactly arbitrary.  S.O. uses a */
-        /* 6-bit color setup, so we make sure that every 0x40 colors */
-        /* gets a nice 6-bit palette. */
+	/* Space Odyssey uses a static palette for the background, so
+	   our choice of colors isn't exactly arbitrary.  S.O. uses a
+	   6-bit color setup, so we make sure that every 0x40 colors
+	   gets a nice 6-bit palette.
 
-        for (i = 0;i < (Machine->drv->total_colors - 1);i++)
+       (All of the other G80 games overwrite the default colors on startup)
+	*/
+	for (i = 0;i < (Machine->drv->total_colors - 1);i++)
 	{
-                *(palette++) = color_scale[((i & 0x30) >> 4)];
-                *(palette++) = color_scale[((i & 0x0C) >> 2)];
-                *(palette++) = color_scale[((i & 0x03) << 0)];
+		*(palette++) = color_scale[((i & 0x30) >> 4)];
+		*(palette++) = color_scale[((i & 0x0C) >> 2)];
+		*(palette++) = color_scale[((i & 0x03) << 0)];
 	}
 
-        for (i = 0;i < Machine->drv->total_colors;i++)
-                colortable[i] = i;
-
-        for (i = 0; i < 0x40; i++)
-        {
-                segar_colorRAM[i]=0;
-                segar_bcolorRAM[i]=0;
-        }
+	for (i = 0;i < Machine->drv->total_colors;i++)
+		colortable[i] = i;
 
 }
 
+
+/***************************************************************************
+The two bit planes are separated in memory.  If either bit plane changes,
+mark the character as modified.
+***************************************************************************/
+
+void segar_characterram_w(int offset,int data)
+{
+	sv.dirtychar[offset / 8] = 1;
+
+	segar_characterram[offset] = data;
+}
+
+void segar_characterram2_w(int offset,int data)
+{
+	sv.dirtychar[offset / 8] = 1;
+
+	segar_characterram2[offset] = data;
+}
+
+/***************************************************************************
+The video port is not entirely understood.
+D0 = FLIP
+D1 = Color Write Enable (vid board)
+D2 = ??? (we seem to need a char_refresh when this is set)
+D3 = ??? (looks to be unused on the schems)
+D4-D7 = unused?
+***************************************************************************/
+
+void segar_video_port_w(int offset,int data)
+{
+	if (errorlog) fprintf(errorlog, "VPort = %02X\n",data);
+
+	if ((data & 0x01) != sv.flip)
+	{
+		sv.flip=data & 0x01;
+		sv.refresh=1;
+	}
+
+	if (data & 0x02)
+		sv.color_write_enable=1;
+	else
+		sv.color_write_enable=0;
+
+	if (data & 0x04)
+		sv.char_refresh=1;
+}
+
+/***************************************************************************
+If a color changes, refresh the entire screen because it's possible that the
+color change affected the transparency (switched either to or from black)
+***************************************************************************/
+void segar_colortable_w(int offset,int data)
+{
+	static unsigned char red[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
+	static unsigned char grn[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
+	static unsigned char blu[] = {0x00, 0x55, 0xAA, 0xFF };
+
+	if (sv.color_write_enable)
+	{
+		int r,g,b;
+
+		b = blu[(data & 0xC0) >> 6];
+		g = grn[(data & 0x38) >> 3];
+		r = red[(data & 0x07)];
+
+		palette_change_color(offset+1,r,g,b);
+
+		if (data == 0)
+			Machine->gfx[0]->colortable[offset] = Machine->pens[0];
+		else
+			Machine->gfx[0]->colortable[offset] = Machine->pens[offset+1];
+
+		// refresh the screen if the color switched to or from black
+		if (sv.colorRAM[offset] != data)
+		{
+			if ((sv.colorRAM[offset] == 0) || (data == 0))
+			{
+				sv.refresh = 1;
+			}
+		}
+
+		sv.colorRAM[offset] = data;
+	}
+	else
+	{
+		if (errorlog) fprintf(errorlog,"color %02X:%02X (write=%d)\n",offset,data,sv.color_write_enable);
+		segar_mem_colortable[offset] = data;
+	}
+}
+
+void segar_bcolortable_w(int offset,int data)
+{
+	static unsigned char red[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
+	static unsigned char grn[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
+	static unsigned char blu[] = {0x00, 0x55, 0xAA, 0xFF };
+
+	int r,g,b;
+
+	if (sv.has_bcolorRAM)
+	{
+		sv.bcolorRAM[offset] = data;
+
+		b = blu[(data & 0xC0) >> 6];
+		g = grn[(data & 0x38) >> 3];
+		r = red[(data & 0x07)];
+
+		palette_change_color(offset+0x40+1,r,g,b);
+	}
+
+	// Needed to pass the self-tests
+	segar_mem_bcolortable[offset] = data;
+}
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
+
+***************************************************************************/
+
+
+int segar_vh_start(void)
+{
+	if (generic_vh_start()!=0)
+		return 1;
+
+	// Init our vid struct, everything defaults to 0
+	memset(&sv, 0, sizeof(SEGAR_VID_STRUCT));
+
+	return 0;
+}
+
+/***************************************************************************
+This is the refresh code that is common across all the G80 games.  This
+corresponds to the VIDEO I board.
+***************************************************************************/
+static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_transparency, int copy_transparency)
+{
+	int offs;
+	int charcode;
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+			dirtybuffer[offs]=1;
+
+		/* Redraw every character if our palette or scene changed */
+		if ((dirtybuffer[offs]) || sv.refresh)
+		{
+			int sx,sy;
+
+			sx = 8 * (offs % 32);
+			sy = 8 * (offs / 32);
+
+			if (sv.flip)
+			{
+				sx = 31*8 - sx;
+				sy = 27*8 - sy;
+			}
+
+			charcode = videoram[offs];
+
+			/* decode modified characters */
+			if (sv.dirtychar[charcode] == 1)
+			{
+				decodechar(Machine->gfx[0],charcode,segar_characterram,
+						Machine->drv->gfxdecodeinfo[0].gfxlayout);
+				sv.dirtychar[charcode] = 2;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					charcode,charcode>>4,
+					sv.flip,sv.flip,sx,sy,
+					&Machine->drv->visible_area,sprite_transparency,0);
+
+			dirtybuffer[offs] = 0;
+
+		}
+	}
+
+	for (offs=0;offs<256;offs++)
+		if (sv.dirtychar[offs]==2)
+			sv.dirtychar[offs]=0;
+
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,copy_transparency,Machine->pens[0]);
+
+	sv.char_refresh=0;
+	sv.refresh=0;
+}
+
+
+/***************************************************************************
+"Standard" refresh for games without special background boards.
+***************************************************************************/
+void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	if (full_refresh)
+		sv.refresh = 1;
+
+	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_NONE);
+}
+
+
+/***************************************************************************
+ ---------------------------------------------------------------------------
+ Space Odyssey Functions
+ ---------------------------------------------------------------------------
+***************************************************************************/
 
 /***************************************************************************
 
@@ -96,23 +310,23 @@ scrolls that's 4 times taller than the screen.
 
 int spaceod_vh_start(void)
 {
-        if (generic_vh_start()!=0)
-                return 1;
+	if (segar_vh_start()!=0)
+		return 1;
 
-        if ((horizbackbitmap = osd_create_bitmap(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        {
-                generic_vh_stop();
-                return 1;
-        }
+	if ((sv.horizbackbitmap = osd_create_bitmap(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	{
+		generic_vh_stop();
+		return 1;
+	}
 
-        if ((vertbackbitmap = osd_create_bitmap(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
-        {
-                osd_free_bitmap(horizbackbitmap);
-                generic_vh_stop();
-                return 1;
-        }
+	if ((sv.vertbackbitmap = osd_create_bitmap(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
+	{
+		osd_free_bitmap(sv.horizbackbitmap);
+		generic_vh_stop();
+		return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
 /***************************************************************************
@@ -123,117 +337,48 @@ Get rid of the Space Odyssey background bitmaps.
 
 void spaceod_vh_stop(void)
 {
-        osd_free_bitmap(horizbackbitmap);
-        osd_free_bitmap(vertbackbitmap);
-        generic_vh_stop();
+	osd_free_bitmap(sv.horizbackbitmap);
+	osd_free_bitmap(sv.vertbackbitmap);
+	generic_vh_stop();
 }
 
 /***************************************************************************
-***************************************************************************/
-
-void segar_videoram_w(int offset,int data)
-{
-	dirtybuffer[offset] = 1;
-
-	if (videoram[offset] != data)
-	{
-		videoram[offset] = data;
-	}
-}
-
-/***************************************************************************
-The two bit planes are separated in memory.  If either bit plane changes,
-mark the character as modified.
-***************************************************************************/
-
-void segar_characterram_w(int offset,int data)
-{
-	segar_dirtycharacter[offset / 8] = 1;
-
-	segar_characterram[offset] = data;
-}
-
-void segar_characterram2_w(int offset,int data)
-{
-	segar_dirtycharacter[offset / 8] = 1;
-
-        segar_characterram2[offset] = data;
-}
-
-/***************************************************************************
-This port controls which background to draw for Monster Bash.  The tempscene
-and tempoffset are analogous to control lines used to bank switch the
-background ROMs.  If the background changed, refresh the screen.
-***************************************************************************/
-
-void monsterb_back_port_w(int offset,int data)
-{
-    unsigned int tempscene,tempoffset;
-
-    tempscene  = 0x400 * ((data & 0x70) >> 4);
-    tempoffset = 0x100 *  (data & 0x03);
-
-    if (segar_backscene != tempscene)
-    {
-        segar_backscene = tempscene;
-        segar_refresh=1;
-    }
-    if (segar_backoffset != tempoffset)
-    {
-        segar_backoffset = tempoffset;
-        segar_refresh=1;
-    }
-
-    /* This bit turns the background off and on. */
-    if ((data & 0x80) && (segar_has_background==0))
-    {
-        segar_has_background=1;
-        segar_refresh=1;
-    }
-    else if (((data & 0x80)==0) && (segar_has_background==1))
-    {
-        segar_has_background=0;
-        segar_refresh=1;
-    }
-}
-
-/***************************************************************************
-This port controls which background to draw for Space Odyssey.  The tempscene
-and tempoffset are analogous to control lines used to select the background.
+This port controls which background to draw for Space Odyssey.	The temp_scene
+and temp_charset are analogous to control lines used to select the background.
 If the background changed, refresh the screen.
 ***************************************************************************/
 
 void spaceod_back_port_w(int offset,int data)
 {
-    unsigned int tempscene, tempoffset;
+	unsigned int temp_scene, temp_charset;
 
-    tempscene  = 0x1000 * ((data & 0xC0) >> 6);
-    tempoffset = 0x100  * ((data & 0x04) >> 2);
+	temp_scene   = (data & 0xC0) >> 6;
+	temp_charset = (data & 0x04) >> 2;
 
-    if (tempscene != segar_backscene)
-    {
-        segar_backscene=tempscene;
-        segar_brefresh=1;
-    }
-    if (tempoffset != segar_backoffset)
-    {
-        segar_backoffset=tempoffset;
-        segar_brefresh=1;
-    }
+	if (temp_scene != sv.back_scene)
+	{
+		sv.back_scene=temp_scene;
+		sv.brefresh=1;
+	}
+	if (temp_charset != sv.back_charset)
+	{
+		sv.back_charset=temp_charset;
+		sv.brefresh=1;
+	}
 
-    /* Our cocktail flip-the-screen bit. */
-    if ((data & 0x01) != segar_bcocktail)
-    {
-        segar_bcocktail=data & 0x01;
-        segar_brefresh=1;
-    }
+	/* Our cocktail flip-the-screen bit. */
+	if ((data & 0x01) != sv.bflip)
+	{
+		sv.bflip=data & 0x01;
+		sv.brefresh=1;
+	}
 
-    segar_has_background=1;
-    segar_fill_background=0;
+	sv.background_enable=1;
+	sv.fill_background=0;
 }
 
 /***************************************************************************
-This port controls the Space Odyssey background scrolling.  Each write to
+This port controls the Space Odyssey background scrolling.	Each write to
 this port scrolls the background by one bit.  Faster speeds are achieved
 by the program writing more often to this port.  Oddly enough, the value
 sent to this port also seems to indicate the speed, but the value itself
@@ -241,9 +386,9 @@ is never checked.
 ***************************************************************************/
 void spaceod_backshift_w(int offset,int data)
 {
-    segar_backshift= (segar_backshift + 1) % 0x400;
-    segar_has_background=1;
-    segar_fill_background=0;
+	sv.backshift= (sv.backshift + 1) % 0x400;
+	sv.background_enable=1;
+	sv.fill_background=0;
 }
 
 /***************************************************************************
@@ -254,9 +399,9 @@ is to force the background to restart every time you die.
 ***************************************************************************/
 void spaceod_backshift_clear_w(int offset,int data)
 {
-    segar_backshift=0;
-    segar_has_background=1;
-    segar_fill_background=0;
+	sv.backshift=0;
+	sv.background_enable=1;
+	sv.fill_background=0;
 }
 
 /***************************************************************************
@@ -264,361 +409,415 @@ Space Odyssey also lets you fill the background with a specific color.
 ***************************************************************************/
 void spaceod_backfill_w(int offset,int data)
 {
-    segar_backfill=data + 0x40 + 1;
-    segar_fill_background=1;
+	sv.backfill=data + 0x40 + 1;
+	sv.fill_background=1;
 }
 
 /***************************************************************************
 ***************************************************************************/
 void spaceod_nobackfill_w(int offset,int data)
 {
-    segar_backfill=0;
-    segar_fill_background=0;
+	sv.backfill=0;
+	sv.fill_background=0;
 }
 
 
 /***************************************************************************
-When our colorwrite bit flips off, we reset our whole palette.
-Also, note that we need to refresh the entire screen, since the colors changed
-and it's possible that a color change affected the transparency.
-***************************************************************************/
-void segar_video_port_w(int offset,int data)
-{
-	static unsigned char red[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
-	static unsigned char grn[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
-	static unsigned char blu[] = {0x00, 0x55, 0xAA, 0xFF };
-
-        if ((data & 0x01) != segar_cocktail)
-	{
-                segar_cocktail=data & 0x01;
-		segar_refresh=1;
-	}
-
-        if (data & 0x04)
-                segar_char_refresh=1;
-
-	if (data & 0x02)
-		segar_colorwrite=1;
-	else if (data & 0x40)
-		segar_bcolorwrite=1;
-	else
-	{
-		if (segar_colorwrite==1)
-		{
-                        int i,r,g,b;
-
-			for (i = 0; i < 0x40; i++)
-                        {
-                                b = blu[(segar_colorRAM[i] & 0xC0) >> 6];
-                                g = grn[(segar_colorRAM[i] & 0x38) >> 3];
-                                r = red[(segar_colorRAM[i] & 0x07)];
-
-                                osd_modify_pen(Machine->pens[i+1],r,g,b);
-
-                                if ((r==0) && (g==0) && (b==0))
-                                        Machine->gfx[0]->colortable[i] = Machine->pens[0];
-                                else
-                                        Machine->gfx[0]->colortable[i] = Machine->pens[i+1];
-                        }
-
-                        segar_refresh=1;
-		}
-
-		if (segar_bcolorwrite==1)
-		{
-                        int i,r,g,b;
-
-			for (i = 0; i < 0x40; i++)
-                        {
-                                b = blu[(segar_bcolorRAM[i] & 0xC0) >> 6];
-                                g = grn[(segar_bcolorRAM[i] & 0x38) >> 3];
-                                r = red[(segar_bcolorRAM[i] & 0x07)];
-
-                                osd_modify_pen(Machine->pens[i + 0x40 + 1],r,g,b);
-                        }
-
-//                        segar_refresh=1;
-		}
-
-		segar_colorwrite=0;
-		segar_bcolorwrite=0;
-	}
-}
-
-/* For some reason, our colortable is being written slightly nonstandard... */
-void segar_colortable_w(int offset,int data)
-{
-	if (segar_colorwrite)
-	{
-		switch (offset % 4)
-		{
-			case 0:
-			case 3:
-				segar_colorRAM[offset] = data;
-				break;
-			case 1:
-				segar_colorRAM[offset+1] = data;
-				break;
-			case 2:
-				segar_colorRAM[offset-1] = data;
-				break;
-		}
-	}
-	else
-		segar_mem_colortable[offset] = data;
-}
-
-void segar_bcolortable_w(int offset,int data)
-{
-	if (segar_bcolorwrite)
-	{
-		switch (offset % 4)
-		{
-			case 0:
-			case 3:
-				segar_bcolorRAM[offset] = data;
-				break;
-			case 1:
-				segar_bcolorRAM[offset+1] = data;
-				break;
-			case 2:
-				segar_bcolorRAM[offset-1] = data;
-				break;
-		}
-	}
-	else
-		segar_mem_bcolortable[offset] = data;
-}
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int offs;
-        int charcode;
-	int sprite_transparency;
-
-
-	sprite_transparency=TRANSPARENCY_NONE;
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-                if ((segar_char_refresh) && (segar_dirtycharacter[videoram[offs]]))
-                        dirtybuffer[offs]=1;
-
-                /* Redraw every character if our palette or scene changed */
-                if ((dirtybuffer[offs]) || segar_refresh)
-		{
-			int sx,sy;
-
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
-
-			if (segar_cocktail)
-			{
-				sx = 27*8 - sx;
-				sy = 31*8 - sy;
-			}
-
-			if (segar_has_background)
-			{
-                                charcode = segar_mem_blookup[offs + segar_backscene] + segar_backoffset;
-
-				drawgfx(tmpbitmap,Machine->gfx[1],
-                                        charcode,((charcode & 0xF0)>>4),
-					segar_cocktail,segar_cocktail,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-                                sprite_transparency=TRANSPARENCY_COLOR;
-			}
-
-			charcode = videoram[offs];
-
-			/* decode modified characters */
-                        if (segar_dirtycharacter[charcode] == 1)
-			{
-				decodechar(Machine->gfx[0],charcode,segar_characterram,
-						Machine->drv->gfxdecodeinfo[0].gfxlayout);
-                                segar_dirtycharacter[charcode] = 2;
-			}
-
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,charcode>>4,
-					segar_cocktail,segar_cocktail,sx,sy,
-                                        &Machine->drv->visible_area,sprite_transparency,0);
-
-			dirtybuffer[offs] = 0;
-
-		}
-	}
-
-        for (offs=0;offs<256;offs++)
-                if (segar_dirtycharacter[offs]==2)
-                        segar_dirtycharacter[offs]=0;
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-        segar_char_refresh=0;
-	segar_refresh=0;
-}
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
+Special refresh for Space Odyssey, this code refreshes the static background.
 ***************************************************************************/
 void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-    int charcode;
+	int charcode;
 	int sprite_transparency;
-        int vert_scene;
+	int vert_scene;
 
-        vert_scene = ((segar_backscene & 0x2000) == 0x2000);
+	unsigned char *back_charmap = Machine->memory_region[2];
 
-        sprite_transparency=TRANSPARENCY_COLOR;
+	if (full_refresh)
+		sv.refresh = 1;
 
-        if (segar_brefresh)
-        {
-                for (offs = 0x1000 - 1; offs >= 0; offs--)
-                {
-			int sx,sy;
+	// scenes 0,1 are horiz.  scenes 2,3 are vert.
+	vert_scene = !(sv.back_scene & 0x02);
 
-                        /* Use Vertical Back Scene */
-                        if (vert_scene)
-                        {
-                            sx = 8 * ((((offs % 0x400) / 32)-3)%32);
-                            sy = 8 * (32*(3-(((offs+0xC00) / 0x400)%4)) + (31-(offs % 32)));
+	sprite_transparency=TRANSPARENCY_PEN;
 
-                            if (segar_bcocktail)
-                            {
-                                   sx = 27*8 - sx; /* is this right? */
-                                   sy = 31*8 - sy;
-                            }
-                        }
-                        /* Use Horizontal Back Scene */
-                        else
-                        {
-                            sx = 8 * (offs / 32);
-                            sy = 8 * (31 - offs % 32);
-
-                            if (segar_bcocktail)
-                            {
-                                   sx = 127*8 - sx; /* is this right? */
-                                   sy = 31*8 - sy;
-                            }
-                        }
-
-
-                        charcode = segar_mem_blookup[offs + segar_backscene] + segar_backoffset;
-
-                        if (vert_scene)
-                        {
-                            drawgfx(vertbackbitmap,Machine->gfx[1],
-                                  charcode,0,
-                                  segar_bcocktail,segar_bcocktail,sx,sy,
-                                  0,TRANSPARENCY_NONE,0);
-                        }
-                        else
-                        {
-                            drawgfx(horizbackbitmap,Machine->gfx[1],
-                                  charcode,0,
-                                  segar_bcocktail,segar_bcocktail,sx,sy,
-                                  0,TRANSPARENCY_NONE,0);
-                        }
-                }
-        }
-
-        /* Copy the scrolling background */
-        {
-                int scroll;
-
-                if (vert_scene)
-                {
-                        if (segar_bcocktail)
-                            scroll = -segar_backshift;
-                        else
-                            scroll = segar_backshift;
-
-                        copyscrollbitmap(bitmap,vertbackbitmap,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                }
-                else
-                {
-                        if (segar_bcocktail)
-                            scroll = segar_backshift;
-                        else
-                            scroll = -segar_backshift;
-
-                        copyscrollbitmap(bitmap,horizbackbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-                }
-        }
-
-        if (segar_fill_background==1)
-        {
-                fillbitmap(bitmap,Machine->pens[segar_backfill],&Machine->drv->visible_area);
-        }
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
+	/* If the background picture changed, draw the new one in temp storage */
+	if (sv.brefresh)
 	{
-                if ((segar_char_refresh) && (segar_dirtycharacter[videoram[offs]]))
-                        dirtybuffer[offs]=1;
+		sv.brefresh=0;
 
-                /* Redraw every character if our palette or scene changed */
-		if ((dirtybuffer[offs]) || segar_refresh)
+		for (offs = 0x1000 - 1; offs >= 0; offs--)
 		{
 			int sx,sy;
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
-
-			if (segar_cocktail)
+			/* Use Vertical Back Scene */
+			if (vert_scene)
 			{
-				sx = 27*8 - sx;
-				sy = 31*8 - sy;
+				sx = 8 * (offs % 32);
+				sy = 8 * (offs / 32);
+
+				if (sv.bflip)
+				{
+				   sx = 31*8 - sx;
+				   sy = 127*8 - sy;
+				}
+			}
+			/* Use Horizontal Back Scene */
+			else
+			{
+				sx = (8 * (offs % 32)) + (256 * (offs >> 10));
+				sy = 8 * ((offs & 0x3FF) / 32);
+
+				if (sv.bflip)
+				{
+				   sx = 127*8 - sx;
+				   sy = 31*8 - sy; /* is this right? */
+				}
 			}
 
-			charcode = videoram[offs];
 
-			/* decode modified characters */
-			if (segar_dirtycharacter[charcode] == 1)
+			charcode = back_charmap[(sv.back_scene*0x1000) + offs];
+
+			if (vert_scene)
 			{
-				decodechar(Machine->gfx[0],charcode,segar_characterram,
-						Machine->drv->gfxdecodeinfo[0].gfxlayout);
-                                segar_dirtycharacter[charcode] = 2;
+				drawgfx(sv.vertbackbitmap,Machine->gfx[1 + sv.back_charset],
+					  charcode,0,
+					  sv.bflip,sv.bflip,sx,sy,
+					  0,TRANSPARENCY_NONE,0);
 			}
-
-                        drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,charcode>>4,
-					segar_cocktail,segar_cocktail,sx,sy,
-                                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-			dirtybuffer[offs] = 0;
-
+			else
+			{
+				drawgfx(sv.horizbackbitmap,Machine->gfx[1 + sv.back_charset],
+					  charcode,0,
+					  sv.bflip,sv.bflip,sx,sy,
+					  0,TRANSPARENCY_NONE,0);
+			}
 		}
 	}
 
-        for (offs=0;offs<256;offs++)
-                if (segar_dirtycharacter[offs]==2)
-                        segar_dirtycharacter[offs]=0;
+	/* Copy the scrolling background */
+	{
+		int scrollx,scrolly;
 
-	/* copy the character mapped graphics */
-        copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,sprite_transparency,0);
+		if (vert_scene)
+		{
+			if (sv.bflip)
+				scrolly = sv.backshift;
+			else
+				scrolly = -sv.backshift;
 
-        segar_char_refresh=0;
-        segar_refresh=0;
-        segar_brefresh=0;
+			copyscrollbitmap(bitmap,sv.vertbackbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+		else
+		{
+			if (sv.bflip)
+				scrollx = sv.backshift;
+			else
+				scrollx = -sv.backshift;
+
+			scrolly = -32;
+
+			copyscrollbitmap(bitmap,sv.horizbackbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	if (sv.fill_background==1)
+	{
+		fillbitmap(bitmap,Machine->pens[sv.backfill],&Machine->drv->visible_area);
+	}
+
+	/* Refresh the "standard" graphics */
+	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_PEN);
+}
+
+
+/***************************************************************************
+ ---------------------------------------------------------------------------
+ Monster Bash Functions
+ ---------------------------------------------------------------------------
+***************************************************************************/
+
+int monsterb_vh_start(void)
+{
+	if (segar_vh_start()!=0)
+		return 1;
+
+	sv.has_bcolorRAM = 1;
+	return 0;
+}
+
+/***************************************************************************
+This port controls which background to draw for Monster Bash.  The tempscene
+and tempoffset are analogous to control lines used to bank switch the
+background ROMs.  If the background changed, refresh the screen.
+***************************************************************************/
+
+void monsterb_back_port_w(int offset,int data)
+{
+	unsigned int temp_scene, temp_charset;
+
+	temp_scene   = 0x400 * ((data & 0x70) >> 4);
+	temp_charset = data & 0x03;
+
+	if (sv.back_scene != temp_scene)
+	{
+		sv.back_scene = temp_scene;
+		sv.refresh=1;
+	}
+	if (sv.back_charset != temp_charset)
+	{
+		sv.back_charset = temp_charset;
+		sv.refresh=1;
+	}
+
+	/* This bit turns the background off and on. */
+	if ((data & 0x80) && (sv.background_enable==0))
+	{
+		sv.background_enable=1;
+		sv.refresh=1;
+	}
+	else if (((data & 0x80)==0) && (sv.background_enable==1))
+	{
+		sv.background_enable=0;
+		sv.refresh=1;
+	}
+}
+
+/***************************************************************************
+Special refresh for Monster Bash, this code refreshes the static background.
+***************************************************************************/
+void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+	int charcode;
+	int sprite_transparency;
+
+	unsigned char *back_charmap = Machine->memory_region[2];
+
+	if (full_refresh)
+		sv.refresh = 1;
+
+	sprite_transparency=TRANSPARENCY_NONE;
+
+	/* If the background is turned on, refresh it first. */
+	if (sv.background_enable)
+	{
+		/* for every character in the Video RAM, check if it has been modified */
+		/* since last time and update it accordingly. */
+		for (offs = videoram_size - 1;offs >= 0;offs--)
+		{
+			if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+				dirtybuffer[offs]=1;
+
+			/* Redraw every background character if our palette or scene changed */
+			if ((dirtybuffer[offs]) || sv.refresh)
+			{
+				int sx,sy;
+
+				sx = 8 * (offs % 32);
+				sy = 8 * (offs / 32);
+
+				if (sv.flip)
+				{
+					sx = 31*8 - sx;
+					sy = 27*8 - sy;
+				}
+
+				charcode = back_charmap[offs + sv.back_scene];
+
+				drawgfx(tmpbitmap,Machine->gfx[1 + sv.back_charset],
+					charcode,((charcode & 0xF0)>>4),
+					sv.flip,sv.flip,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			}
+		}
+		sprite_transparency=TRANSPARENCY_PEN;
+	}
+
+	/* Refresh the "standard" graphics */
+	segar_common_screenrefresh(bitmap, sprite_transparency, TRANSPARENCY_NONE);
+}
+
+/***************************************************************************
+ ---------------------------------------------------------------------------
+ Pig Newton Functions
+ ---------------------------------------------------------------------------
+***************************************************************************/
+
+/***************************************************************************
+This port seems to control the background colors for Pig Newton.
+***************************************************************************/
+
+void pignewt_back_color_w(int offset,int data)
+{
+	if (offset == 0)
+	{
+		sv.bcolor_offset = data;
+	}
+	else
+	{
+		segar_bcolortable_w(sv.bcolor_offset,data);
+	}
+}
+
+/***************************************************************************
+These ports control which background to draw for Pig Newton.  They might
+also control other video aspects, since without schematics the usage of
+many of the data lines is indeterminate.  Segar_back_scene and segar_backoffset
+are analogous to registers used to control bank-switching of the background
+"videorom" ROMs and the background graphics ROMs, respectively.
+If the background changed, refresh the screen.
+***************************************************************************/
+
+void pignewt_back_ports_w(int offset,int data)
+{
+	unsigned int tempscene;
+
+	if (errorlog) fprintf(errorlog,"Port %02X:%02X\n",offset + 0xb8,data);
+
+	/* These are all guesses.  There are some bits still being ignored! */
+	switch (offset)
+	{
+		case 1:
+			/* Bit D7 turns the background off and on? */
+			if ((data & 0x80) && (sv.background_enable==0))
+			{
+				sv.background_enable=1;
+				sv.refresh=1;
+			}
+			else if (((data & 0x80)==0) && (sv.background_enable==1))
+			{
+				sv.background_enable=0;
+				sv.refresh=1;
+			}
+			/* Bits D0-D1 help select the background? */
+			tempscene = (sv.back_scene & 0x0C) | (data & 0x03);
+			if (sv.back_scene != tempscene)
+			{
+				sv.back_scene = tempscene;
+				sv.refresh=1;
+			}
+			break;
+		case 3:
+			/* Bits D0-D1 help select the background? */
+			tempscene = ((data << 2) & 0x0C) | (sv.back_scene & 0x03);
+			if (sv.back_scene != tempscene)
+			{
+				sv.back_scene = tempscene;
+				sv.refresh=1;
+			}
+			break;
+		case 4:
+			if (sv.back_charset != (data & 0x03))
+			{
+				sv.back_charset = data & 0x03;
+				sv.refresh=1;
+			}
+			break;
+	}
+}
+
+/***************************************************************************
+ ---------------------------------------------------------------------------
+ Sinbad Mystery Functions
+ ---------------------------------------------------------------------------
+***************************************************************************/
+
+/***************************************************************************
+Controls the background image
+***************************************************************************/
+
+void sindbadm_back_port_w(int offset,int data)
+{
+	unsigned int tempscene;
+
+	/* Bit D7 turns the background off and on? */
+	if ((data & 0x80) && (sv.background_enable==0))
+	{
+		sv.background_enable=1;
+		sv.refresh=1;
+	}
+	else if (((data & 0x80)==0) && (sv.background_enable==1))
+	{
+		sv.background_enable=0;
+		sv.refresh=1;
+	}
+	/* Bits D2-D6 select the background? */
+	tempscene = (data >> 2) & 0x1F;
+	if (sv.back_scene != tempscene)
+	{
+		sv.back_scene = tempscene;
+		sv.refresh=1;
+	}
+	/* Bits D0-D1 select the background char set? */
+	if (sv.back_charset != (data & 0x03))
+	{
+		sv.back_charset = data & 0x03;
+		sv.refresh=1;
+	}
+}
+
+/***************************************************************************
+Special refresh for Sinbad Mystery, this code refreshes the static background.
+***************************************************************************/
+void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int offs;
+	int charcode;
+	int sprite_transparency;
+	unsigned long backoffs;
+	unsigned long back_scene;
+
+	unsigned char *back_charmap = Machine->memory_region[2];
+
+	if (full_refresh)
+		sv.refresh = 1;
+
+	sprite_transparency=TRANSPARENCY_NONE;
+
+	/* If the background is turned on, refresh it first. */
+	if (sv.background_enable)
+	{
+		/* for every character in the Video RAM, check if it has been modified */
+		/* since last time and update it accordingly. */
+		for (offs = videoram_size - 1;offs >= 0;offs--)
+		{
+			if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+				dirtybuffer[offs]=1;
+
+			/* Redraw every background character if our palette or scene changed */
+			if ((dirtybuffer[offs]) || sv.refresh)
+			{
+				int sx,sy;
+
+				sx = 8 * (offs % 32);
+				sy = 8 * (offs / 32);
+
+				if (sv.flip)
+				{
+					sx = 31*8 - sx;
+					sy = 27*8 - sy;
+				}
+
+				// NOTE: Pig Newton has 16 backgrounds, Sinbad Mystery has 32
+				back_scene = (sv.back_scene & 0x1C) << 10;
+
+				backoffs = (offs & 0x01F) + ((offs & 0x3E0) << 2) + ((sv.back_scene & 0x03) << 5);
+
+				charcode = back_charmap[backoffs + back_scene];
+
+				drawgfx(tmpbitmap,Machine->gfx[1 + sv.back_charset],
+					charcode,((charcode & 0xF0)>>4),
+					sv.flip,sv.flip,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			}
+		}
+		sprite_transparency=TRANSPARENCY_PEN;
+	}
+
+	/* Refresh the "standard" graphics */
+	segar_common_screenrefresh(bitmap, sprite_transparency, TRANSPARENCY_NONE);
+
 }
 

@@ -119,8 +119,7 @@ doesn't seem to serve any purpose...(?)
 
 
 In the later revision of the sound board, used from M.A.C.H. 3 onwards, there
-are two 6502, two 8910, a DAC and a different speech chip. The details of the
-board are not known yet.
+are two 6502, two 8910, a DAC and a GI SP-0250 speech chip.
 
 
 Video timings:
@@ -153,11 +152,12 @@ void riot_ram_w(int offset, int data);
 void gottlieb_riot_w(int offset, int data);
 void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
-int gottlieb_sh_init (const char *gamename);
+int gottlieb_sh_start(void);
 int stooges_sound_input_r(int offset);
 void stooges_8910_latch_w(int offset,int data);
 void stooges_sound_control_w(int offset,int data);
-void stooges_sound_timer_w(int offset,int data);
+void gottlieb_nmi_rate_w(int offset,int data);
+void gottlieb_cause_dac_nmi_w(int offset, int data);
 
 int gottlieb_nvram_load(void);
 void gottlieb_nvram_save(void);
@@ -478,8 +478,7 @@ static struct MemoryReadAddress stooges_sound_readmem[] =
 struct MemoryWriteAddress stooges_sound_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x4000, 0x4000, MWA_NOP },	/* DAC volume control (TODO: support it) */
-	{ 0x4001, 0x4001, DAC_data_w },
+	{ 0x4000, 0x4001, DAC_data_w },
 	{ 0xe000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -499,11 +498,11 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2000, MWA_NOP },	/* speech chip. The game sends strings */
 									/* of 15 bytes (clocked by 4000). The chip also */
-									/* checks a ready bit in 6000. */
+									/* checks a DATA REQUEST bit in 6000. */
 	{ 0x4000, 0x4000, stooges_sound_control_w },
 	{ 0x8000, 0x8000, stooges_8910_latch_w },
-	{ 0xa000, 0xa000, stooges_sound_timer_w },	/* the timer generates NMIs */
-/*	{ 0xb000, 0xb000 } should generate a NMI on the first CPU, I think */
+	{ 0xa000, 0xa000, gottlieb_nmi_rate_w },	/* the timer generates NMIs */
+	{ 0xb000, 0xb000, gottlieb_cause_dac_nmi_w },
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -512,42 +511,40 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 
 INPUT_PORTS_START( reactor_input_ports )
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x08, 0x08, "Sound with Instructions", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x01, 0x01, "Sound with Logos", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x01, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Upright" )
-	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_DIPNAME( 0x04, 0x04, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit" )
-	PORT_DIPNAME( 0x02, 0x02, "Bounce Chambers Points", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x01, "Sound with Logos" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Bounce Chambers Points" )
 	PORT_DIPSETTING(    0x00, "10" )
 	PORT_DIPSETTING(    0x02, "15" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Bonus Ship", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Sound with Instructions" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x40, "12000" )
 	PORT_DIPSETTING(    0xc0, "15000" )
 	PORT_DIPSETTING(    0x80, "20000" )
 
 	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING (   0x02, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
 	PORT_BIT ( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* trackball H */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 15, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 15, 20, 0, 0, 0 )
 
 	PORT_START	/* trackball V */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y, 15, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y, 15, 20, 0, 0, 0 )
 
 	PORT_START	/* IN4 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
@@ -561,24 +558,24 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mplanets_input_ports )
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x08, 0x00, "Round Select", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x14, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x14, "Free Play" )
-	PORT_DIPNAME( 0x20, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x02, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "12000" )
-	PORT_DIPNAME( 0xc0, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Allow Round Select" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x14, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
 	PORT_DIPSETTING(    0x00, "Medium" )
 	PORT_DIPSETTING(    0x80, "Hard" )
@@ -588,22 +585,20 @@ INPUT_PORTS_START( mplanets_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING( 0x80, "Off" )
-	PORT_DIPSETTING( 0x00, "On" )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* trackball H not used */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* trackball V (dial) */
-	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 15, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 4 )
+	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL, 5, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
 
 	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
@@ -612,28 +607,28 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( qbert_input_ports )
 	PORT_START      /* DSW */
-	PORT_BITX( 0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Auto Round Advance", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x08, "On" )
-	PORT_DIPNAME( 0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x00, "Free Play", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x04, "Cocktail" )
-	PORT_DIPNAME( 0x20, 0x00, "SW5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Kicker", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Kicker" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "SW7", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_BITX( 0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Auto Round Advance", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "SW5" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "SW7" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "SW8", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "SW8" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -646,10 +641,8 @@ INPUT_PORTS_START( qbert_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING (   0x40, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START	/* trackball H not used */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -659,21 +652,21 @@ INPUT_PORTS_START( qbert_input_ports )
 
 	PORT_START      /* joystick */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( qbertqub_input_ports )
 	PORT_START      /* DSW */
-	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x35, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x35, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x24, "A 2/1 B 2/1" )
 	PORT_DIPSETTING(    0x14, "A 1/1 B 4/1" )
 	PORT_DIPSETTING(    0x30, "A 1/1 B 3/1" )
@@ -686,17 +679,17 @@ INPUT_PORTS_START( qbertqub_input_ports )
 	PORT_DIPSETTING(    0x31, "A 1/2 B 1/5" )
 	PORT_DIPSETTING(    0x04, "A 1/3 B 2/1" )
 	PORT_DIPSETTING(    0x05, "A 1/3 B 1/1" )
-	PORT_DIPSETTING(    0x35, "Free Play" )
+	PORT_DIPSETTING(    0x35, DEF_STR( Free_Play ) )
 /* 0x25 "2 Coins/1 Credit"
    0x01 "1 Coin/1 Credit"
    0x34 "Free Play" */
-	PORT_DIPNAME( 0x02, 0x00, "1st Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "1st Bonus Life" )
 	PORT_DIPSETTING(    0x00, "10000" )
 	PORT_DIPSETTING(    0x02, "15000" )
-	PORT_DIPNAME( 0x40, 0x00, "Additional Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x40, 0x00, "Additional Bonus Life" )
 	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPSETTING(    0x40, "25000" )
-	PORT_DIPNAME( 0x80, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x80, "Hard" )
 
@@ -707,10 +700,8 @@ INPUT_PORTS_START( qbertqub_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING (   0x40, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 
 	PORT_START	/* trackball H not used */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -720,9 +711,9 @@ INPUT_PORTS_START( qbertqub_input_ports )
 
 	PORT_START      /* joystick */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -731,34 +722,32 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( krull_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x08, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x08, "5" )
-	PORT_DIPNAME( 0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x14, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
-	PORT_DIPSETTING(    0x14, "Free play" )
-	PORT_DIPNAME( 0x20, 0x00, "Hexagon", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Roving" )
-	PORT_DIPSETTING(    0x20, "Stationary" )
-	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPNAME( 0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPNAME( 0x14, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x00, "Hexagon" )
+	PORT_DIPSETTING(    0x00, "Roving" )
+	PORT_DIPSETTING(    0x20, "Stationary" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x40, "30000 30000" )
 	PORT_DIPSETTING(    0x00, "30000 50000" )
 	PORT_DIPSETTING(    0x80, "40000 50000" )
 	PORT_DIPSETTING(    0xc0, "50000 75000" )
 
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -773,47 +762,45 @@ INPUT_PORTS_START( krull_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( mach3_input_ports )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
-	PORT_DIPNAME( 0x09, 0x08, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "3 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x09, "4 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x00, "Free Play" )
-	PORT_DIPNAME( 0x10, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPNAME( 0x09, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPNAME( 0x24, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPNAME( 0x24, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x00, "10000 10000" )
 	PORT_DIPSETTING(    0x04, "10000 20000" )
 	PORT_DIPSETTING(    0x20, "10000 40000" )
 	PORT_DIPSETTING(    0x24, "20000 60000" )
-	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x02, "Hard" )
-	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x40, "On" )
-	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x80, "On" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -828,9 +815,9 @@ INPUT_PORTS_START( mach3_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -841,35 +828,33 @@ INPUT_PORTS_END
 INPUT_PORTS_START( usvsthem_input_ports )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
-	PORT_DIPNAME( 0x09, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
-	PORT_DIPSETTING(    0x01, "Free Play" )
+	PORT_DIPNAME( 0x09, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Free_Play ) )
 /*	PORT_DIPSETTING(    0x09, "Free Play" ) */
-	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x10, "On" )
-	PORT_DIPNAME( 0x04, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Normal" )
-	PORT_DIPSETTING(    0x04, "Hard" )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x02, "On" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x40, "On" )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x80, "On" )
 
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -884,9 +869,9 @@ INPUT_PORTS_START( usvsthem_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START      /* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -896,35 +881,33 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( stooges_input_ports )
 	PORT_START	/* DSW */
-	PORT_DIPNAME (0x08, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "3" )
-	PORT_DIPSETTING (   0x08, "5" )
-	PORT_DIPNAME (0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x01, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
-	PORT_DIPNAME (0x14, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x04, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x10, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x14, "Free Play" )
-	PORT_DIPNAME( 0x20, 0x00, "SW5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x20, "On" )
-	PORT_DIPNAME (0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME (0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( On ) )
+	PORT_DIPNAME (0x02, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING (   0x00, "Normal" )
 	PORT_DIPSETTING (   0x02, "Hard" )
-	PORT_DIPNAME (0x40, 0x00, "Bonus Life At", IP_KEY_NONE )
+	PORT_DIPNAME (0x08, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x08, "5" )
+	PORT_DIPNAME (0x14, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (   0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (   0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (   0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (   0x14, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME (0x40, 0x00, "1st Bonus Life at" )
 	PORT_DIPSETTING (   0x40, "10000" )
 	PORT_DIPSETTING (   0x00, "20000" )
-	PORT_DIPNAME (0x80, 0x00, "And Bonus Life Every", IP_KEY_NONE )
+	PORT_DIPNAME (0x80, 0x00, "And Bonus Life Every" )
 	PORT_DIPSETTING (   0x80, "10000" )
 	PORT_DIPSETTING (   0x00, "20000" )
 
 	PORT_START	/* IN1 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING (   0x01, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
@@ -939,10 +922,10 @@ INPUT_PORTS_START( stooges_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* joystick 2 (Moe) */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
@@ -951,34 +934,34 @@ INPUT_PORTS_START( stooges_input_ports )
 	/* the bottom four bits of the previous port are multiplexed among */
 	/* three joysticks - the following port contains settings for the other two */
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER3 | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER3 | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( curvebal_input_ports )
 	PORT_START      /* DSW0 */
-	PORT_DIPNAME( 0x08, 0x00, "2 Players Game", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x08, "1 Credit" )
 	PORT_DIPSETTING(    0x00, "2 Credits" )
-	PORT_DIPNAME( 0x11, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME( 0x11, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x10, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x11, "Hardest" )
-	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
-	PORT_DIPNAME( 0x20, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Coins" )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x20, "French" )
 	/* TODO: coinage is different when French is selected */
-/* PORT_DIPNAME( 0xc2, 0x00, "French Coinage", IP_KEY_NONE )
+/* PORT_DIPNAME( 0xc2, 0x00, "French Coinage" )
 PORT_DIPSETTING(    0x42, "A 3/1 B 1/2" )
 PORT_DIPSETTING(    0x82, "A 1/5 B 1/2" )
 PORT_DIPSETTING(    0x02, "A 2/1 B 2/3" )
@@ -987,7 +970,7 @@ PORT_DIPSETTING(    0x80, "A 1/1 B 1/2" )
 PORT_DIPSETTING(    0x40, "A 1/1 B 1/3" )
 PORT_DIPSETTING(    0x00, "A 1/1 B 1/1" )
 PORT_DIPSETTING(    0xc2, "Free Play" ) */
-	PORT_DIPNAME( 0xc2, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPNAME( 0xc2, 0x00, "Coinage" )
 	PORT_DIPSETTING(    0x42, "A 4/1 B 1/1" )
 	PORT_DIPSETTING(    0x82, "A 3/1 B 1/1" )
 	PORT_DIPSETTING(    0x02, "A 2/1 B 1/1" )
@@ -995,13 +978,11 @@ PORT_DIPSETTING(    0xc2, "Free Play" ) */
 	PORT_DIPSETTING(    0x80, "A 2/1 B 1/2" )
 	PORT_DIPSETTING(    0x40, "A 2/1 B 1/3" )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1" )
-	PORT_DIPSETTING(    0xc2, "Free Play" )
+	PORT_DIPSETTING(    0xc2, DEF_STR( Free_Play ) )
 
 	PORT_START      /* IN0 */
-	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1017,12 +998,12 @@ PORT_DIPSETTING(    0xc2, "Free Play" ) */
 
 	PORT_START      /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Swing", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Pitch Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Swing", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Pitch Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Pitch Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2, "Pitch Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Bunt", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Bunt", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -1099,24 +1080,30 @@ static struct GfxDecodeInfo qbertqub_gfxdecodeinfo[] =
 
 
 
-static struct DACinterface dac_interface =
+static struct DACinterface dac1_interface =
 {
 	1,
-	441000,
-	{ 255 },
-	{ 0 },
+	{ 50 }
+};
+
+static struct DACinterface dac2_interface =
+{
+	2,
+	{ 25, 25 }
 };
 
 static struct Samplesinterface samples_interface =
 {
-	1	/* one channel */
+	1,	/* one channel */
+	100	/* volume */
 };
 
 static struct AY8910interface ay8910_interface =
 {
 	2,	/* 2 chips */
 	2000000,	/* 2 MHz */
-	{ 255, 255 },
+	{ 25, 25 },
+	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1132,7 +1119,7 @@ static struct AY8910interface ay8910_interface =
 *
 *  There are two versions of the machine driver,
 *  one for revision 1 sound board (1x6502 + DAC + Votrax),
-*  one for revision 2 (2x6502 + DAC + GI speech chip + 2x8910).
+*  one for revision 2 (2x6502 + DAC + GI SP-0250 speech chip + 2x8910).
 *  They are identical apart form the sound CPU subsections.
 *
 ********************************************************************/
@@ -1179,7 +1166,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	{                                                           	\
 		{                                                   		\
 			SOUND_DAC,												\
-			&dac_interface											\
+			&dac1_interface											\
 		},															\
 		{															\
 			SOUND_SAMPLES,	/* only for Q*Bert */					\
@@ -1234,11 +1221,11 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 	gottlieb_vh_screenrefresh,										\
 																	\
 	/* sound hardware */                                        	\
-	gottlieb_sh_init,0,0,0,                                        	\
+	0,gottlieb_sh_start,0,0,                                       	\
 	{                                                           	\
 		{                                                   		\
 			SOUND_DAC,												\
-			&dac_interface											\
+			&dac2_interface											\
 		},															\
 		{															\
 			SOUND_AY8910,											\
@@ -1266,250 +1253,250 @@ MACHINE_DRIVER_SOUND_2(stooges,stooges_readmem,stooges_writemem,charRAM_gfxdecod
 
 ROM_START( reactor_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM7", 0x8000, 0x1000, 0xd8f16275 )
-	ROM_LOAD( "ROM6", 0x9000, 0x1000, 0x7aadbabf )
-	ROM_LOAD( "ROM5", 0xa000, 0x1000, 0x9e2453f0 )
-	ROM_LOAD( "ROM4", 0xb000, 0x1000, 0x2f1839e2 )
-	ROM_LOAD( "ROM3", 0xc000, 0x1000, 0x70123534 )
-	ROM_LOAD( "ROM2", 0xd000, 0x1000, 0xb50b26f3 )
-	ROM_LOAD( "ROM1", 0xe000, 0x1000, 0xeaf1c223 )
-	ROM_LOAD( "ROM0", 0xf000, 0x1000, 0xe126beca )
+	ROM_LOAD( "rom7",         0x8000, 0x1000, 0xa62d86fd )
+	ROM_LOAD( "rom6",         0x9000, 0x1000, 0x6ed841f3 )
+	ROM_LOAD( "rom5",         0xa000, 0x1000, 0xd90576a3 )
+	ROM_LOAD( "rom4",         0xb000, 0x1000, 0x0155daae )
+	ROM_LOAD( "rom3",         0xc000, 0x1000, 0xf8881385 )
+	ROM_LOAD( "rom2",         0xd000, 0x1000, 0x3caba35b )
+	ROM_LOAD( "rom1",         0xe000, 0x1000, 0x944e1ddf )
+	ROM_LOAD( "rom0",         0xf000, 0x1000, 0x55930aed )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
 	/* 0000-0fff empty */
-	ROM_LOAD( "FG0", 0x1000, 0x1000, 0x80076d89 )	/* sprites */
+	ROM_LOAD( "fg0",          0x1000, 0x1000, 0xd1f20e15 )	/* sprites */
 	/* 2000-2fff empty */
-	ROM_LOAD( "FG1", 0x3000, 0x1000, 0x0577a58b )
+	ROM_LOAD( "fg1",          0x3000, 0x1000, 0x18396c57 )
 	/* 4000-4fff empty */
-	ROM_LOAD( "FG2", 0x5000, 0x1000, 0xe1ecaede )
+	ROM_LOAD( "fg2",          0x5000, 0x1000, 0x5489605a )
 	/* 6000-6fff empty */
-	ROM_LOAD( "FG3", 0x7000, 0x1000, 0x50087b04 )
+	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "SND1", 0xf000, 0x800, 0x1367334b )
+	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "SND2", 0xf800, 0x800, 0x10e64e0a )
+	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mplanets_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "ROM4", 0x6000, 0x2000, 0xf09b30bb )
-	ROM_LOAD( "ROM3", 0x8000, 0x2000, 0x52223738 )
-	ROM_LOAD( "ROM2", 0xa000, 0x2000, 0xe406bbb6 )
-	ROM_LOAD( "ROM1", 0xc000, 0x2000, 0x385a7fa6 )
-	ROM_LOAD( "ROM0", 0xe000, 0x2000, 0x29df430b )
+	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x5402077f )
+	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x5d18d740 )
+	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x960c3bb1 )
+	ROM_LOAD( "rom1",         0xc000, 0x2000, 0xeb515f10 )
+	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x74de78aa )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "BG0", 0x0000, 0x1000, 0xb85b00c3 )	/* chars */
-	ROM_LOAD( "BG1", 0x1000, 0x1000, 0x175bc547 )
-	ROM_LOAD( "FG3", 0x2000, 0x2000, 0x7c6a72bc )	/* sprites */
-	ROM_LOAD( "FG2", 0x4000, 0x2000, 0x6ab56cc7 )
-	ROM_LOAD( "FG1", 0x6000, 0x2000, 0x16c596b7 )
-	ROM_LOAD( "FG0", 0x8000, 0x2000, 0x96727f86 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
+	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x4921e345 )
+	ROM_LOAD( "fg3",          0x2000, 0x2000, 0xc990b39f )	/* sprites */
+	ROM_LOAD( "fg2",          0x4000, 0x2000, 0x735e2522 )
+	ROM_LOAD( "fg1",          0x6000, 0x2000, 0x6456cc1c )
+	ROM_LOAD( "fg0",          0x8000, 0x2000, 0xa920e325 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "SND1", 0xf000, 0x800, 0xca36c072 )
+	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
 	ROM_RELOAD(       0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "SND2", 0xf800, 0x800, 0x66461044 )
+	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
 	ROM_RELOAD(       0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbert_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xd1c1dad7 )
-	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0xdc2bbad9 )
-	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0xc23a8cfe )
+	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0xfe434526 )
+	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0x55635447 )
+	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x8e318641 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbertjp_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x22b59259 )
-	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xa9ffed43 )
-	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0xf20e301e )
+	ROM_LOAD( "qbj-rom2.bin", 0xa000, 0x2000, 0x67bb1cb2 )
+	ROM_LOAD( "qbj-rom1.bin", 0xc000, 0x2000, 0xc61216e7 )
+	ROM_LOAD( "qbj-rom0.bin", 0xe000, 0x2000, 0x69679d5c )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x035735a1 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0xaac748c5 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x54bd5daf )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x200a62ae )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0x7a17df07 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0x0ca72f4f )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x22e5b891 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xdd436d3a )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0xf69b9483 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x224e8356 )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0x2f695b85 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( sqbert_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qb-rom2.bin", 0xa000, 0x2000, 0xe4417b2b )
-	ROM_LOAD( "qb-rom1.bin", 0xc000, 0x2000, 0x97ded634 )
-	ROM_LOAD( "qb-rom0.bin", 0xe000, 0x2000, 0x15050cd5 )
+	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
+	ROM_LOAD( "qb-rom1.bin",  0xc000, 0x2000, 0xeaf3076c )
+	ROM_LOAD( "qb-rom0.bin",  0xe000, 0x2000, 0x61260a7e )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qb-bg0.bin", 0x0000, 0x1000, 0x3be1e889 )	/* chars */
-	ROM_LOAD( "qb-bg1.bin", 0x1000, 0x1000, 0x0e5c8e52 )
-	ROM_LOAD( "qb-fg3.bin", 0x2000, 0x2000, 0x6d4c679c )	/* sprites */
-	ROM_LOAD( "qb-fg2.bin", 0x4000, 0x2000, 0x78869f58 )
-	ROM_LOAD( "qb-fg1.bin", 0x6000, 0x2000, 0xb6cc7972 )
-	ROM_LOAD( "qb-fg0.bin", 0x8000, 0x2000, 0xf7b7f189 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
+	ROM_LOAD( "qb-bg1.bin",   0x1000, 0x1000, 0x4f6d8075 )
+	ROM_LOAD( "qb-fg3.bin",   0x2000, 0x2000, 0xee595eda )	/* sprites */
+	ROM_LOAD( "qb-fg2.bin",   0x4000, 0x2000, 0x59884c78 )
+	ROM_LOAD( "qb-fg1.bin",   0x6000, 0x2000, 0x2a60e3ad )
+	ROM_LOAD( "qb-fg0.bin",   0x8000, 0x2000, 0xb11ad9d8 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( qbertqub_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "qq-rom3.bin", 0x8000, 0x2000, 0xac3cb8e2 )
-	ROM_LOAD( "qq-rom2.bin", 0xa000, 0x2000, 0x64167070 )
-	ROM_LOAD( "qq-rom1.bin", 0xc000, 0x2000, 0xdc7d6dc1 )
-	ROM_LOAD( "qq-rom0.bin", 0xe000, 0x2000, 0xf2bad75a )
+	ROM_LOAD( "qq-rom3.bin",  0x8000, 0x2000, 0xc4dbdcd7 )
+	ROM_LOAD( "qq-rom2.bin",  0xa000, 0x2000, 0x21a6c6cc )
+	ROM_LOAD( "qq-rom1.bin",  0xc000, 0x2000, 0x63e6c43d )
+	ROM_LOAD( "qq-rom0.bin",  0xe000, 0x2000, 0x8ddbe438 )
 
-	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "qq-bg0.bin", 0x0000, 0x1000, 0x13c600e6 )	/* chars */
-	ROM_LOAD( "qq-bg1.bin", 0x1000, 0x1000, 0x542c9488 )
-	ROM_LOAD( "qq-fg3.bin", 0x2000, 0x4000, 0xacd201f8 )	/* sprites */
-	ROM_LOAD( "qq-fg2.bin", 0x6000, 0x4000, 0xa6a4660c )
-	ROM_LOAD( "qq-fg1.bin", 0xa000, 0x4000, 0x038fc633 )
-	ROM_LOAD( "qq-fg0.bin", 0xe000, 0x4000, 0x65b1f0f1 )
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
+	ROM_LOAD( "qq-bg1.bin",   0x1000, 0x1000, 0x8875902f )
+	ROM_LOAD( "qq-fg3.bin",   0x2000, 0x4000, 0x91a949cc )	/* sprites */
+	ROM_LOAD( "qq-fg2.bin",   0x6000, 0x4000, 0x782d9431 )
+	ROM_LOAD( "qq-fg1.bin",   0xa000, 0x4000, 0x71c3ac4c )
+	ROM_LOAD( "qq-fg0.bin",   0xe000, 0x4000, 0x6192853f )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "qb-snd1.bin", 0xf000, 0x800, 0x469952eb )
+	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
 	ROM_RELOAD(              0x7000, 0x800) /* A15 is not decoded */
-	ROM_LOAD( "qb-snd2.bin", 0xf800, 0x800, 0x200e1d22 )
+	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
 	ROM_RELOAD(              0x7800, 0x800) /* A15 is not decoded */
 ROM_END
 
 ROM_START( krull_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "RAM2.BIN", 0x1000, 0x1000, 0x03fa87a8 )
-	ROM_LOAD( "RAM4.BIN", 0x2000, 0x1000, 0x8d50227a )
-	ROM_LOAD( "ROM4.BIN", 0x6000, 0x2000, 0x5e10647c )
-	ROM_LOAD( "ROM3.BIN", 0x8000, 0x2000, 0xdda2011c )
-	ROM_LOAD( "ROM2.BIN", 0xa000, 0x2000, 0x2ab22372 )
-	ROM_LOAD( "ROM1.BIN", 0xc000, 0x2000, 0x5341023f )
-	ROM_LOAD( "ROM0.BIN", 0xe000, 0x2000, 0x16e7bc1d )
+	ROM_LOAD( "ram2.bin",     0x1000, 0x1000, 0x302feadf )
+	ROM_LOAD( "ram4.bin",     0x2000, 0x1000, 0x79355a60 )
+	ROM_LOAD( "rom4.bin",     0x6000, 0x2000, 0x2b696394 )
+	ROM_LOAD( "rom3.bin",     0x8000, 0x2000, 0x14b0ee42 )
+	ROM_LOAD( "rom2.bin",     0xa000, 0x2000, 0xb5fad94a )
+	ROM_LOAD( "rom1.bin",     0xc000, 0x2000, 0x1ad956a3 )
+	ROM_LOAD( "rom0.bin",     0xe000, 0x2000, 0xa466afae )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "FG3.BIN", 0x0000, 0x2000, 0xf7bee74c )	/* sprites */
-	ROM_LOAD( "FG2.BIN", 0x2000, 0x2000, 0xcf79bc05 )
-	ROM_LOAD( "FG1.BIN", 0x4000, 0x2000, 0xf2f27094 )
-	ROM_LOAD( "FG0.BIN", 0x6000, 0x2000, 0xdae82e5a )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fg3.bin",      0x0000, 0x2000, 0x82d77a45 )	/* sprites */
+	ROM_LOAD( "fg2.bin",      0x2000, 0x2000, 0x25a24317 )
+	ROM_LOAD( "fg1.bin",      0x4000, 0x2000, 0x7e3ad7b0 )
+	ROM_LOAD( "fg0.bin",      0x6000, 0x2000, 0x7402dc19 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "snd1.bin", 0xe000, 0x1000, 0x7390800c )
+	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
 	ROM_RELOAD(0x6000, 0x1000) /* A15 is not decoded */
-	ROM_LOAD( "snd2.bin", 0xf000, 0x1000, 0xe65ea116 )
+	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
 	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
 ROM_START( mach3_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "M3ROM4.BIN", 0x6000, 0x2000, 0x194f83f9 )
-	ROM_LOAD( "M3ROM3.BIN", 0x8000, 0x2000, 0x59ac0e24 )
-	ROM_LOAD( "M3ROM2.BIN", 0xa000, 0x2000, 0x04150291 )
-	ROM_LOAD( "M3ROM1.BIN", 0xc000, 0x2000, 0xdccb6551 )
-	ROM_LOAD( "M3ROM0.BIN", 0xe000, 0x2000, 0xf044e698 )
+	ROM_LOAD( "m3rom4.bin",   0x6000, 0x2000, 0x8bfd5a44 )
+	ROM_LOAD( "m3rom3.bin",   0x8000, 0x2000, 0xb1b045af )
+	ROM_LOAD( "m3rom2.bin",   0xa000, 0x2000, 0xfbdfb03d )
+	ROM_LOAD( "m3rom1.bin",   0xc000, 0x2000, 0x3b0ba80b )
+	ROM_LOAD( "m3rom0.bin",   0xe000, 0x2000, 0x70c12bf4 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "MACH3BG0.BIN", 0x0000, 0x1000, 0xfe6435c0 )
-	ROM_LOAD( "MACH3BG1.BIN", 0x1000, 0x1000, 0x4a264336 )
-	ROM_LOAD( "MACH3FG3.BIN", 0x2000, 0x2000, 0x665d2bb7 )
-	ROM_LOAD( "MACH3FG2.BIN", 0x4000, 0x2000, 0x861095d6 )
-	ROM_LOAD( "MACH3FG1.BIN", 0x6000, 0x2000, 0x8bb34a6b )
-	ROM_LOAD( "MACH3FG0.BIN", 0x8000, 0x2000, 0x9ab588af )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mach3bg0.bin", 0x0000, 0x1000, 0xea2f5257 )
+	ROM_LOAD( "mach3bg1.bin", 0x1000, 0x1000, 0xf543e4ce )
+	ROM_LOAD( "mach3fg3.bin", 0x2000, 0x2000, 0x472128b4 )
+	ROM_LOAD( "mach3fg2.bin", 0x4000, 0x2000, 0x2a59e99e )
+	ROM_LOAD( "mach3fg1.bin", 0x6000, 0x2000, 0x9b88767b )
+	ROM_LOAD( "mach3fg0.bin", 0x8000, 0x2000, 0x0bae12a5 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "M3DROM1.BIN", 0xf000, 0x1000, 0x38c85fce )
+	ROM_LOAD( "m3drom1.bin",  0xf000, 0x1000, 0xa6e29212 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "M3YROM1.BIN", 0xf000, 0x1000, 0x63f4c3a2 )
+	ROM_LOAD( "m3yrom1.bin",  0xf000, 0x1000, 0xeddf8872 )
 ROM_END
 
 ROM_START( usvsthem_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "USVS.RM4", 0x6000, 0x2000, 0x6a22ed88 )
-	ROM_LOAD( "USVS.RM3", 0x8000, 0x2000, 0xc8f37c2b )
-	ROM_LOAD( "USVS.RM2", 0xa000, 0x2000, 0x50a19c93 )
-	ROM_LOAD( "USVS.RM1", 0xc000, 0x2000, 0xc7d6abda )
-	ROM_LOAD( "USVS.RM0", 0xe000, 0x2000, 0xc35a57da )
+	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, 0x0d7a4072 )
+	ROM_LOAD( "usvs.rm3",     0x8000, 0x2000, 0x6f32a671 )
+	ROM_LOAD( "usvs.rm2",     0xa000, 0x2000, 0x36770716 )
+	ROM_LOAD( "usvs.rm1",     0xc000, 0x2000, 0x697bc989 )
+	ROM_LOAD( "usvs.rm0",     0xe000, 0x2000, 0x30cf6bd9 )
 
-	ROM_REGION(0x12000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "USVS.BG0", 0x0000, 0x1000, 0xb33ab5f0 )
-	ROM_LOAD( "USVS.BG1", 0x1000, 0x1000, 0xe0d8c600 )
-	ROM_LOAD( "USVS.FG3", 0x2000, 0x4000, 0x3c6f6455 )
-	ROM_LOAD( "USVS.FG2", 0x6000, 0x4000, 0xb6d219a4 )
-	ROM_LOAD( "USVS.FG1", 0xa000, 0x4000, 0x61b9c2b5 )
-	ROM_LOAD( "USVS.FG0", 0xe000, 0x4000, 0x27beba12 )
+	ROM_REGION_DISPOSE(0x12000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "usvs.bg0",     0x0000, 0x1000, 0x8a0de09f )
+	ROM_LOAD( "usvs.bg1",     0x1000, 0x1000, 0x6fb64d3c )
+	ROM_LOAD( "usvs.fg3",     0x2000, 0x4000, 0x98703015 )
+	ROM_LOAD( "usvs.fg2",     0x6000, 0x4000, 0xd3990707 )
+	ROM_LOAD( "usvs.fg1",     0xa000, 0x4000, 0xa2057430 )
+	ROM_LOAD( "usvs.fg0",     0xe000, 0x4000, 0x7734e53f )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "USVSDROM.1", 0xe000, 0x2000, 0x9fb80d54 )
+	ROM_LOAD( "usvsdrom.1",   0xe000, 0x2000, 0xc0b5cab0 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "USVSYROM.1", 0xe000, 0x2000, 0x58c73a2f )
+	ROM_LOAD( "usvsyrom.1",   0xe000, 0x2000, 0xc3d245ca )
 ROM_END
 
 ROM_START( stooges_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "GV113RAM.4", 0x2000, 0x1000, 0x64249570 )
-	ROM_LOAD( "GV113ROM.4", 0x6000, 0x2000, 0x8fdb5ff5 )
-	ROM_LOAD( "GV113ROM.3", 0x8000, 0x2000, 0x8d135dd7 )
-	ROM_LOAD( "GV113ROM.2", 0xa000, 0x2000, 0x093ee71e )
-	ROM_LOAD( "GV113ROM.1", 0xc000, 0x2000, 0x65319da1 )
-	ROM_LOAD( "GV113ROM.0", 0xe000, 0x2000, 0x20f3727b )
+	ROM_LOAD( "gv113ram.4",   0x2000, 0x1000, 0x533bff2a )
+	ROM_LOAD( "gv113rom.4",   0x6000, 0x2000, 0x8b6e52b8 )
+	ROM_LOAD( "gv113rom.3",   0x8000, 0x2000, 0xb816d8c4 )
+	ROM_LOAD( "gv113rom.2",   0xa000, 0x2000, 0xb45b2a79 )
+	ROM_LOAD( "gv113rom.1",   0xc000, 0x2000, 0x34ab051e )
+	ROM_LOAD( "gv113rom.0",   0xe000, 0x2000, 0xab124329 )
 
-	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "GV113FG3", 0x0000, 0x2000, 0xf3e09a2a )	/* sprites */
-	ROM_LOAD( "GV113FG2", 0x2000, 0x2000, 0x5bde03f8 )
-	ROM_LOAD( "GV113FG1", 0x4000, 0x2000, 0x3904746a )
-	ROM_LOAD( "GV113FG0", 0x6000, 0x2000, 0xa2b57805 )
+	ROM_REGION_DISPOSE(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gv113fg3",     0x0000, 0x2000, 0x28071212 )	/* sprites */
+	ROM_LOAD( "gv113fg2",     0x2000, 0x2000, 0x9fa3dfde )
+	ROM_LOAD( "gv113fg1",     0x4000, 0x2000, 0xfb223854 )
+	ROM_LOAD( "gv113fg0",     0x6000, 0x2000, 0x95762c53 )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "DROM1", 0xe000, 0x2000, 0x3aa5d107 )
+	ROM_LOAD( "drom1",        0xe000, 0x2000, 0x87a9fa10 )
 
 	ROM_REGION(0x10000)	/* 64k for second sound cpu */
-	ROM_LOAD( "YROM2", 0xc000, 0x2000, 0xae8c7f26 )
-	ROM_LOAD( "YROM1", 0xe000, 0x2000, 0xf3bd9399 )
+	ROM_LOAD( "yrom2",        0xc000, 0x2000, 0x90f9c940 )
+	ROM_LOAD( "yrom1",        0xe000, 0x2000, 0x55f8ab30 )
 ROM_END
 
 ROM_START( curvebal_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x139d406d )
-	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xb523573d )
-	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0x82b0f7d8 )
-	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x2d9d1867 )
+	ROM_LOAD( "cb-rom-3.chp", 0x8000, 0x2000, 0x72ad4d45 )
+	ROM_LOAD( "cb-rom-2.chp", 0xa000, 0x2000, 0xd46c3db5 )
+	ROM_LOAD( "cb-rom-1.chp", 0xc000, 0x2000, 0xeb1e08bd )
+	ROM_LOAD( "cb-rom-0.chp", 0xe000, 0x2000, 0x401fc7e3 )
 
-	ROM_REGION(0xa000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "cb-bg-0.chp", 0x0000, 0x1000, 0x2b3409b0 )
-	ROM_LOAD( "cb-bg-1.chp", 0x1000, 0x1000, 0x50cb3569 )
-	ROM_LOAD( "cb-fg-3.chp", 0x2000, 0x2000, 0x77ca2334 )
-	ROM_LOAD( "cb-fg-2.chp", 0x4000, 0x2000, 0x6700be86 )
-	ROM_LOAD( "cb-fg-1.chp", 0x6000, 0x2000, 0x90ba2ec8 )
-	ROM_LOAD( "cb-fg-0.chp", 0x8000, 0x2000, 0x112e7ee6 )
+	ROM_REGION_DISPOSE(0xa000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "cb-bg-0.chp",  0x0000, 0x1000, 0xd666a179 )
+	ROM_LOAD( "cb-bg-1.chp",  0x1000, 0x1000, 0x5e34ff4e )
+	ROM_LOAD( "cb-fg-3.chp",  0x2000, 0x2000, 0x9c9452fe )
+	ROM_LOAD( "cb-fg-2.chp",  0x4000, 0x2000, 0x065131af )
+	ROM_LOAD( "cb-fg-1.chp",  0x6000, 0x2000, 0x1b7b7f94 )
+	ROM_LOAD( "cb-fg-0.chp",  0x8000, 0x2000, 0xe3a8230e )
 
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
-	ROM_LOAD( "yrom.sbd", 0xe000, 0x1000, 0x6066d74a )
-	ROM_LOAD( "drom.sbd", 0xf000, 0x1000, 0x607b0ee3 )
+	ROM_LOAD( "yrom.sbd",     0xe000, 0x1000, 0x4c313d9b )
+	ROM_LOAD( "drom.sbd",     0xf000, 0x1000, 0xcecece88 )
 ROM_END
 
 
@@ -1517,10 +1504,77 @@ ROM_END
 static const char *qbert_sample_names[] =
 {
 	"*qbert",
-	"FX_18.SAM", /*curse*/
-	"FX_20.SAM", /*little purple guy*/
-	"fx_22.sam", /*snake falling */
-	"fx_17.sam", /*green guy*/
+	"fx_17a.wav", /* random speech, voice clock 255 */
+	"fx_17b.wav", /* random speech, voice clock 255 */
+	"fx_17c.wav", /* random speech, voice clock 255 */
+	"fx_17d.wav", /* random speech, voice clock 255 */
+	"fx_17e.wav", /* random speech, voice clock 255 */
+	"fx_17f.wav", /* random speech, voice clock 255 */
+	"fx_17g.wav", /* random speech, voice clock 255 */
+	"fx_17h.wav", /* random speech, voice clock 255 */
+	"fx_18a.wav", /* random speech, voice clock 176 */
+	"fx_18b.wav", /* random speech, voice clock 176 */
+	"fx_18c.wav", /* random speech, voice clock 176 */
+	"fx_18d.wav", /* random speech, voice clock 176 */
+	"fx_18e.wav", /* random speech, voice clock 176 */
+	"fx_18f.wav", /* random speech, voice clock 176 */
+	"fx_18g.wav", /* random speech, voice clock 176 */
+	"fx_18h.wav", /* random speech, voice clock 176 */
+	"fx_19a.wav", /* random speech, voice clock 128 */
+	"fx_19b.wav", /* random speech, voice clock 128 */
+	"fx_19c.wav", /* random speech, voice clock 128 */
+	"fx_19d.wav", /* random speech, voice clock 128 */
+	"fx_19e.wav", /* random speech, voice clock 128 */
+	"fx_19f.wav", /* random speech, voice clock 128 */
+	"fx_19g.wav", /* random speech, voice clock 128 */
+	"fx_19h.wav", /* random speech, voice clock 128 */
+	"fx_20a.wav", /* random speech, voice clock 96 */
+	"fx_20b.wav", /* random speech, voice clock 96 */
+	"fx_20c.wav", /* random speech, voice clock 96 */
+	"fx_20d.wav", /* random speech, voice clock 96 */
+	"fx_20e.wav", /* random speech, voice clock 96 */
+	"fx_20f.wav", /* random speech, voice clock 96 */
+	"fx_20g.wav", /* random speech, voice clock 96 */
+	"fx_20h.wav", /* random speech, voice clock 96 */
+	"fx_21a.wav", /* random speech, voice clock 62 */
+	"fx_21b.wav", /* random speech, voice clock 62 */
+	"fx_21c.wav", /* random speech, voice clock 62 */
+	"fx_21d.wav", /* random speech, voice clock 62 */
+	"fx_21e.wav", /* random speech, voice clock 62 */
+	"fx_21f.wav", /* random speech, voice clock 62 */
+	"fx_21g.wav", /* random speech, voice clock 62 */
+	"fx_21h.wav", /* random speech, voice clock 62 */
+	"fx_22.wav", /* EH2 with decreasing voice clock */
+	"fx_23.wav", /* O1 with varying voice clock */
+	"fx_28.wav", /* "hello, I'm ready" */
+	"fx_36.wav", /* "byebye" */
+	"knocker.wav",
+	0	/* end of array */
+};
+
+static const char *reactor_sample_names[] =
+{
+	"*reactor",
+	"fx_53.wav", /* "8 left" */
+	"fx_54.wav", /* "16 left" */
+	"fx_55.wav", /* "24 left" */
+	"fx_56.wav", /* "32 left" */
+	"fx_57.wav", /* "40 left" */
+	"fx_58.wav", /* "warning, core unstable" */
+	"fx_59.wav", /* "bonus" */
+	"fx_31.wav", /* "chamber activated" */
+	"fx_39a.wav", /* "2000" */
+	"fx_39b.wav", /* "5000" */
+	"fx_39c.wav", /* "10000" */
+	"fx_39d.wav", /* "15000" */
+	"fx_39e.wav", /* "20000" */
+	"fx_39f.wav", /* "25000" */
+	"fx_39g.wav", /* "30000" */
+	"fx_39h.wav", /* "35000" */
+	"fx_39i.wav", /* "40000" */
+	"fx_39j.wav", /* "45000" */
+	"fx_39k.wav", /* "50000" */
+	"fx_39l.wav", /* "55000" */
      0	/* end of array */
 };
 
@@ -1613,10 +1667,11 @@ struct GameDriver reactor_driver =
 	"Fabrice Frances",
 	0,
 	&reactor_machine_driver,
+	0,
 
 	reactor_rom,
 	0, 0,
-	0,
+	reactor_sample_names,
 	0,	/* sound_prom */
 
 	reactor_input_ports,
@@ -1638,6 +1693,7 @@ struct GameDriver mplanets_driver =
 	"Fabrice Frances",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	mplanets_rom,
 	0, 0,
@@ -1657,12 +1713,13 @@ struct GameDriver qbert_driver =
 	__FILE__,
 	0,
 	"qbert",
-	"Q*Bert (US)",
+	"Q*bert (US)",
 	"1982",
 	"Gottlieb",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	qbert_rom,
 	0, 0,
@@ -1682,12 +1739,13 @@ struct GameDriver qbertjp_driver =
 	__FILE__,
 	&qbert_driver,
 	"qbertjp",
-	"Q*Bert (Japan)",
+	"Q*bert (Japan)",
 	"1982",
 	"Gottlieb (Konami license)",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	qbertjp_rom,
 	0, 0,
@@ -1707,12 +1765,13 @@ struct GameDriver sqbert_driver =
 	__FILE__,
 	0,
 	"sqbert",
-	"FHMC Q*Bert",
+	"Faster, Harder, More Challenging Q*bert",
 	"1983",
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	sqbert_rom,
 	0, 0,
@@ -1732,12 +1791,13 @@ struct GameDriver qbertqub_driver =
 	__FILE__,
 	0,
 	"qbertqub",
-	"Q*Bert Qubes",
+	"Q*bert's Qubes",
 	"1983",
 	"Mylstar",
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
 	&qbertqub_machine_driver,
+	0,
 
 	qbertqub_rom,
 	0, 0,
@@ -1763,6 +1823,7 @@ struct GameDriver krull_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	0,
 	&krull_machine_driver,
+	0,
 
 	krull_rom,
 	0, 0,
@@ -1789,6 +1850,7 @@ struct GameDriver mach3_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&mach3_machine_driver,
+	0,
 
 	mach3_rom,
 	0, 0,
@@ -1815,6 +1877,7 @@ struct GameDriver usvsthem_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&usvsthem_machine_driver,
+	0,
 
 	usvsthem_rom,
 	0, 0,
@@ -1840,6 +1903,7 @@ struct GameDriver stooges_driver =
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
 	&stooges_machine_driver,
+	0,
 
 	stooges_rom,
 	0, 0,
@@ -1865,6 +1929,7 @@ struct GameDriver curvebal_driver =
 	"Fabrice Frances (MAME driver)",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	curvebal_rom,
 	0, 0,

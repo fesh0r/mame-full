@@ -363,10 +363,8 @@ INPUT_PORTS_START( bwidow_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -374,64 +372,64 @@ INPUT_PORTS_START( bwidow_input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x02, "Free Play" )
-	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
-	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
+	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME (0x03, 0x01, "Max Start", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Lev 13" )
-	PORT_DIPSETTING (   0x01, "Lev 21" )
-	PORT_DIPSETTING (   0x02, "Lev 37" )
-	PORT_DIPSETTING (   0x03, "Lev 53" )
-	PORT_DIPNAME (0x0c, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "3" )
-	PORT_DIPSETTING (   0x04, "4" )
-	PORT_DIPSETTING (   0x08, "5" )
-	PORT_DIPSETTING (   0x0c, "6" )
-	PORT_DIPNAME (0x30, 0x10, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x10, "Medium" )
-	PORT_DIPSETTING (   0x20, "Hard" )
-	PORT_DIPSETTING (   0x30, "Demo" )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "20000" )
-	PORT_DIPSETTING (   0x40, "30000" )
-	PORT_DIPSETTING (   0x80, "40000" )
-	PORT_DIPSETTING (   0xc0, "None" )
+	PORT_DIPNAME(0x03, 0x01, "Max Start" )
+	PORT_DIPSETTING (  0x00, "Lev 13" )
+	PORT_DIPSETTING (  0x01, "Lev 21" )
+	PORT_DIPSETTING (  0x02, "Lev 37" )
+	PORT_DIPSETTING (  0x03, "Lev 53" )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING (  0x00, "3" )
+	PORT_DIPSETTING (  0x04, "4" )
+	PORT_DIPSETTING (  0x08, "5" )
+	PORT_DIPSETTING (  0x0c, "6" )
+	PORT_DIPNAME(0x30, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (  0x00, "Easy" )
+	PORT_DIPSETTING (  0x10, "Medium" )
+	PORT_DIPSETTING (  0x20, "Hard" )
+	PORT_DIPSETTING (  0x30, "Demo" )
+	PORT_DIPNAME(0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (  0x00, "20000" )
+	PORT_DIPSETTING (  0x40, "30000" )
+	PORT_DIPSETTING (  0x80, "40000" )
+	PORT_DIPSETTING (  0xc0, "None" )
 
 	PORT_START	/* IN3 - Movement joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN4 - Firing joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -444,10 +442,8 @@ INPUT_PORTS_START( gravitar_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -456,48 +452,48 @@ INPUT_PORTS_START( gravitar_input_ports )
 
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0x0c, 0x04, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "3" )
-	PORT_DIPSETTING (   0x04, "4" )
-	PORT_DIPSETTING (   0x08, "5" )
-	PORT_DIPSETTING (   0x0c, "6" )
-	PORT_DIPNAME (0x10, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Easy" )
-	PORT_DIPSETTING (   0x10, "Hard" )
+	PORT_DIPNAME(0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING (  0x00, "3" )
+	PORT_DIPSETTING (  0x04, "4" )
+	PORT_DIPSETTING (  0x08, "5" )
+	PORT_DIPSETTING (  0x0c, "6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (  0x00, "Easy" )
+	PORT_DIPSETTING (  0x10, "Hard" )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "10000" )
-	PORT_DIPSETTING (   0x40, "20000" )
-	PORT_DIPSETTING (   0x80, "30000" )
-	PORT_DIPSETTING (   0xc0, "None" )
+	PORT_DIPNAME(0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (  0x00, "10000" )
+	PORT_DIPSETTING (  0x40, "20000" )
+	PORT_DIPSETTING (  0x80, "30000" )
+	PORT_DIPSETTING (  0xc0, "None" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x02, "Free Play" )
-	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
-	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
+	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
 
 	PORT_START	/* IN3 - Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -507,7 +503,7 @@ INPUT_PORTS_START( gravitar_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_2WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_2WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -520,10 +516,8 @@ INPUT_PORTS_START( spacduel_input_ports )
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
 	PORT_BIT ( 0x0c, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_SERVICE, "Diagnostic Step", KEYCODE_F1, IP_JOY_NONE )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -531,52 +525,52 @@ INPUT_PORTS_START( spacduel_input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME (0x03, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "4" )
-	PORT_DIPSETTING (   0x01, "3" )
-	PORT_DIPSETTING (   0x02, "6" )
-	PORT_DIPSETTING (   0x03, "5" )
-	PORT_DIPNAME (0x0c, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Normal" )
-	PORT_DIPSETTING (   0x04, "Easy" )
-	PORT_DIPSETTING (   0x08, "Hard" )
-	PORT_DIPSETTING (   0x0c, "Medium" )
-	PORT_DIPNAME (0x30, 0x00, "Language", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x10, "German" )
-	PORT_DIPSETTING (   0x20, "French" )
-	PORT_DIPSETTING (   0x30, "Spanish" )
-	PORT_DIPNAME (0xc0, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "10000" )
-	PORT_DIPSETTING (   0x40, "15000" )
-	PORT_DIPSETTING (   0x80, "8000" )
-	PORT_DIPSETTING (   0xc0, "None" )
+	PORT_DIPNAME(0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING (  0x01, "3" )
+	PORT_DIPSETTING (  0x00, "4" )
+	PORT_DIPSETTING (  0x03, "5" )
+	PORT_DIPSETTING (  0x02, "6" )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING (  0x04, "Easy" )
+	PORT_DIPSETTING (  0x00, "Normal" )
+	PORT_DIPSETTING (  0x0c, "Medium" )
+	PORT_DIPSETTING (  0x08, "Hard" )
+	PORT_DIPNAME(0x30, 0x00, "Language" )
+	PORT_DIPSETTING (  0x00, "English" )
+	PORT_DIPSETTING (  0x10, "German" )
+	PORT_DIPSETTING (  0x20, "French" )
+	PORT_DIPSETTING (  0x30, "Spanish" )
+	PORT_DIPNAME(0xc0, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING (  0xc0, "8000" )
+	PORT_DIPSETTING (  0x00, "10000" )
+	PORT_DIPSETTING (  0x40, "15000" )
+	PORT_DIPSETTING (  0x80, "None" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x02, "Free Play" )
-	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x20, "3 credits/2 coins" )
-	PORT_DIPSETTING (   0x40, "5 credits/4 coins" )
-	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
-	PORT_DIPSETTING (   0x80, "6 credits/6 coins" )
-	PORT_DIPSETTING (   0xa0, "4 credits/3 coins" )
+	PORT_DIPNAME(0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING (  0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING (  0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING (  0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING (  0x02, DEF_STR( Free_Play ) )
+	PORT_DIPNAME(0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x04, "*4" )
+	PORT_DIPSETTING (  0x08, "*5" )
+	PORT_DIPSETTING (  0x0c, "*6" )
+	PORT_DIPNAME(0x10, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING (  0x00, "*1" )
+	PORT_DIPSETTING (  0x10, "*2" )
+	PORT_DIPNAME(0xe0, 0x00, "Bonus Coins" )
+	PORT_DIPSETTING (  0x00, "None" )
+	PORT_DIPSETTING (  0x20, "3 credits/2 coins" )
+	PORT_DIPSETTING (  0xa0, "4 credits/3 coins" )
+	PORT_DIPSETTING (  0x40, "5 credits/4 coins" )
+	PORT_DIPSETTING (  0x60, "6 credits/4 coins" )
+	PORT_DIPSETTING (  0x80, "6 credits/6 coins" )
 
 	/* See machine/spacduel.c for more info on these 2 ports */
 	PORT_START	/* IN3 - Player 1 - spread over 8 memory locations */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 )
@@ -586,7 +580,7 @@ INPUT_PORTS_START( spacduel_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN4 - Player 2 - spread over 8 memory locations */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
@@ -621,8 +615,8 @@ static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
 	1500000,	/* 1.5 MHz??? */
-	255,
-	POKEY_DEFAULT_GAIN/2,
+	{ 50, 50 },
+	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
 	/* The 8 pot handlers */
 	{ 0, 0 },
@@ -807,17 +801,17 @@ static void bwidow_hisave(void)
 ROM_START( bwidow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136017.107",  0x2800, 0x0800, 0x77a524db )
-	ROM_LOAD( "136017.108",  0x3000, 0x1000, 0xf741f7f7 )
-	ROM_LOAD( "136017.109",  0x4000, 0x1000, 0xa9854243 )
-	ROM_LOAD( "136017.110",  0x5000, 0x1000, 0x46b9d3d1 )
+	ROM_LOAD( "136017.107",   0x2800, 0x0800, 0x97f6000c )
+	ROM_LOAD( "136017.108",   0x3000, 0x1000, 0x3da354ed )
+	ROM_LOAD( "136017.109",   0x4000, 0x1000, 0x2fc4ce79 )
+	ROM_LOAD( "136017.110",   0x5000, 0x1000, 0x0dd52987 )
 	/* Program ROM */
-	ROM_LOAD( "136017.101",  0x9000, 0x1000, 0xd30d0201 )
-	ROM_LOAD( "136017.102",  0xa000, 0x1000, 0x68115551 )
-	ROM_LOAD( "136017.103",  0xb000, 0x1000, 0x82fc6164 )
-	ROM_LOAD( "136017.104",  0xc000, 0x1000, 0xcaf00204 )
-	ROM_LOAD( "136017.105",  0xd000, 0x1000, 0x71d02f2a )
-	ROM_LOAD( "136017.106",  0xe000, 0x1000, 0x7db99991 )
+	ROM_LOAD( "136017.101",   0x9000, 0x1000, 0xfe3febb7 )
+	ROM_LOAD( "136017.102",   0xa000, 0x1000, 0x10ad0376 )
+	ROM_LOAD( "136017.103",   0xb000, 0x1000, 0x8a1430ee )
+	ROM_LOAD( "136017.104",   0xc000, 0x1000, 0x44f9943f )
+	ROM_LOAD( "136017.105",   0xd000, 0x1000, 0xa046a2e2 )
+	ROM_LOAD( "136017.106",   0xe000, 0x1000, 0x4dc28b22 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
@@ -833,6 +827,7 @@ struct GameDriver bwidow_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&bwidow_machine_driver,
+	0,
 
 	bwidow_rom,
 	0, 0,
@@ -863,17 +858,34 @@ struct GameDriver bwidow_driver =
 ROM_START( gravitar_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136010.210",  0x2800, 0x0800, 0x83e7be41 )
-	ROM_LOAD( "136010.207",  0x3000, 0x1000, 0x52422c2c )
-	ROM_LOAD( "136010.208",  0x4000, 0x1000, 0xc89b1213 )
-	ROM_LOAD( "136010.209",  0x5000, 0x1000, 0xe0622624 )
+	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
+	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
+	ROM_LOAD( "136010.208",   0x4000, 0x1000, 0x358f25d9 )
+	ROM_LOAD( "136010.309",   0x5000, 0x1000, 0x4ac78df4 )
 	/* Program ROM */
-	ROM_LOAD( "136010.201",  0x9000, 0x1000, 0x869f0e0d )
-	ROM_LOAD( "136010.202",  0xa000, 0x1000, 0x215c9692 )
-	ROM_LOAD( "136010.203",  0xb000, 0x1000, 0x0a18292c )
-	ROM_LOAD( "136010.204",  0xc000, 0x1000, 0x8a68a4a2 )
-	ROM_LOAD( "136010.205",  0xd000, 0x1000, 0x3edff8ff )
-	ROM_LOAD( "136010.206",  0xe000, 0x1000, 0xc20f979f )
+	ROM_LOAD( "136010.301",   0x9000, 0x1000, 0xa2a55013 )
+	ROM_LOAD( "136010.302",   0xa000, 0x1000, 0xd3700b3c )
+	ROM_LOAD( "136010.303",   0xb000, 0x1000, 0x8e12e3e0 )
+	ROM_LOAD( "136010.304",   0xc000, 0x1000, 0x467ad5da )
+	ROM_LOAD( "136010.305",   0xd000, 0x1000, 0x840603af )
+	ROM_LOAD( "136010.306",   0xe000, 0x1000, 0x3f3805ad )
+	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+ROM_END
+
+ROM_START( gravitr2_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* Vector ROM */
+	ROM_LOAD( "136010.210",   0x2800, 0x0800, 0xdebcb243 )
+	ROM_LOAD( "136010.207",   0x3000, 0x1000, 0x4135629a )
+	ROM_LOAD( "136010.208",   0x4000, 0x1000, 0x358f25d9 )
+	ROM_LOAD( "136010.209",   0x5000, 0x1000, 0x37034287 )
+	/* Program ROM */
+	ROM_LOAD( "136010.201",   0x9000, 0x1000, 0x167315e4 )
+	ROM_LOAD( "136010.202",   0xa000, 0x1000, 0xaaa9e62c )
+	ROM_LOAD( "136010.203",   0xb000, 0x1000, 0xae437253 )
+	ROM_LOAD( "136010.204",   0xc000, 0x1000, 0x5d6bc29e )
+	ROM_LOAD( "136010.205",   0xd000, 0x1000, 0x0db1ff34 )
+	ROM_LOAD( "136010.206",   0xe000, 0x1000, 0x4521ca48 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
@@ -883,12 +895,13 @@ struct GameDriver gravitar_driver =
 	__FILE__,
 	0,
 	"gravitar",
-	"Gravitar",
+	"Gravitar (version 3)",
 	"1982",
 	"Atari",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&gravitar_machine_driver,
+	0,
 
 	gravitar_rom,
 	0, 0,
@@ -902,6 +915,33 @@ struct GameDriver gravitar_driver =
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
+
+struct GameDriver gravitr2_driver =
+{
+	__FILE__,
+	&gravitar_driver,
+	"gravitr2",
+	"Gravitar (version 2)",
+	"1982",
+	"Atari",
+	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
+	0,
+	&gravitar_machine_driver,
+	0,
+
+	gravitr2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	gravitar_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	atari_vg_earom_load, atari_vg_earom_save
+};
+
 
 /***************************************************************************
 
@@ -917,14 +957,14 @@ struct GameDriver gravitar_driver =
 ROM_START( spacduel_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	/* Vector ROM */
-	ROM_LOAD( "136006.106",  0x2800, 0x0800, 0x015b926d )
-	ROM_LOAD( "136006.107",  0x3000, 0x1000, 0xfdff3939 )
+	ROM_LOAD( "136006.106",   0x2800, 0x0800, 0x691122fe )
+	ROM_LOAD( "136006.107",   0x3000, 0x1000, 0xd8dd0461 )
 	/* Program ROM */
-	ROM_LOAD( "136006.201",  0x4000, 0x1000, 0x76179c9d )
-	ROM_LOAD( "136006.102",  0x5000, 0x1000, 0x3e245c5e )
-	ROM_LOAD( "136006.103",  0x6000, 0x1000, 0xdfc2e1e2 )
-	ROM_LOAD( "136006.104",  0x7000, 0x1000, 0x1a240e0a )
-	ROM_LOAD( "136006.105",  0x8000, 0x1000, 0xd3ccbbbe )
+	ROM_LOAD( "136006.201",   0x4000, 0x1000, 0xf4037b6e )
+	ROM_LOAD( "136006.102",   0x5000, 0x1000, 0x4c451e8a )
+	ROM_LOAD( "136006.103",   0x6000, 0x1000, 0xee72da63 )
+	ROM_LOAD( "136006.104",   0x7000, 0x1000, 0xe41b38a3 )
+	ROM_LOAD( "136006.105",   0x8000, 0x1000, 0x5652710f )
 	ROM_RELOAD(              0x9000, 0x1000 )
 	ROM_RELOAD(              0xa000, 0x1000 )
 	ROM_RELOAD(              0xb000, 0x1000 )
@@ -945,6 +985,7 @@ struct GameDriver spacduel_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&spacduel_machine_driver,
+	0,
 
 	spacduel_rom,
 	0, 0,
