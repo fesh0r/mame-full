@@ -13,6 +13,7 @@ $(OBJ)/msdos/asmblit.o: src/msdos/asmblit.asm
 ifdef MESS
 # additional OS specific object files
 OSOBJS += $(OBJ)/mess/msdos.o $(OBJ)/mess/msdos/fileio.o \
-	$(OBJ)/mess/msdos/dirio.o $(OBJ)/mess/msdos/nec765.o
+	$(OBJ)/mess/msdos/dirio.o $(OBJ)/mess/msdos/nec765.o \
+	$(OBJ)/mess/snprintf.o
 endif
 
