@@ -543,7 +543,7 @@ int num_folder_filters;
  ***************************************************************************/
 
 #ifdef MAME_DEBUG
-BOOL CheckOptions(REG_OPTION *options, int option_count)
+BOOL CheckOptions(REG_OPTION *reg_options, int option_count)
 {
 	struct rc_struct *rc;
 	int i;
@@ -553,11 +553,11 @@ BOOL CheckOptions(REG_OPTION *options, int option_count)
 
 	for (i = 0; i < option_count; i++)
 	{
-		if ((options[i].ini_name[0] != '#') || (options[i].ini_name[1] != '*'))
+		if ((reg_options[i].ini_name[0] != '#') || (reg_options[i].ini_name[1] != '*'))
 		{
-			if (!rc_get_option(rc, options[i].ini_name))
+			if (!rc_get_option(rc, reg_options[i].ini_name))
 			{
-				dprintf("CheckOptions(): Option '%s' is not represented in the MAME core\n", options[i].ini_name);
+				dprintf("CheckOptions(): Option '%s' is not represented in the MAME core\n", reg_options[i].ini_name);
 				nBadOptions++;
 			}
 		}
