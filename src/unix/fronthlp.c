@@ -327,6 +327,7 @@ int frontend_list(char *gamename)
                        "--------  ----------  -------------------------------\n",
 /* listromsize      */ "name    \tyear \tsize\n"
                        "--------\t-----\t----\n",
+/* listpalettesize  */ "",
 /* listroms         */ "",
 /* listcrc          */ "CRC      filename     description\n"
                        "-------- ------------ -----------\n",
