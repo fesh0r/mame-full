@@ -66,7 +66,7 @@ typedef struct NICK_STATE
 	unsigned long LD2;
 
 	LPT_ENTRY	LPT;
-	unsigned char *dest;
+	unsigned short *dest;
 
 	unsigned char Reg[16];
 } NICK_STATE;
