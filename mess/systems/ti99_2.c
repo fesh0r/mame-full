@@ -126,27 +126,15 @@ static void init_ti99_2_32(void)
 	ROM_paged = 1;
 }
 
-static int ti99_2_24_load_rom(void)
-{
-	cpu_setbank(1, memory_region(REGION_CPU1)+0x4000);
-
-	return 0;
-}
-
-#define TI99_2_32_ROMPAGE0 memory_region(REGION_CPU1)+0x4000
-#define TI99_2_32_ROMPAGE1 memory_region(REGION_CPU1)+0x10000
-
-static int ti99_2_32_load_rom(void)
-{
-	memcpy(memory_region(REGION_CPU1), memory_region(REGION_CPU1)+0x10000, 0x4000);
-
-	cpu_setbank(1, TI99_2_32_ROMPAGE0);
-
-	return 0;
-}
+#define TI99_2_32_ROMPAGE0 (memory_region(REGION_CPU1)+0x4000)
+#define TI99_2_32_ROMPAGE1 (memory_region(REGION_CPU1)+0x10000)
 
 static void machine_init_ti99_2(void)
 {
+	if (! ROM_paged)
+		cpu_setbank(1, memory_region(REGION_CPU1)+0x4000);
+	else
+		cpu_setbank(1, TI99_2_32_ROMPAGE0);
 }
 
 static void machine_stop_ti99_2(void)
