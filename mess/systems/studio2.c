@@ -154,7 +154,12 @@ static void studio2_machine_init(void)
 	studio2_video_stop();
 }
 
-static struct beep_interface studio2_sound= { 1 };
+static struct beep_interface studio2_sound=
+{
+	1,
+	{100}
+};
+
 static struct MachineDriver machine_driver_studio2 =
 {
 	/* basic machine hardware */

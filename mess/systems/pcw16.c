@@ -1530,7 +1530,8 @@ INPUT_PORTS_END
 
 static struct beep_interface pcw16_beep_interface =
 {
-        1
+	1,
+	{100}
 };
 
 static struct MachineDriver machine_driver_pcw16 =

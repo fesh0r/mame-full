@@ -913,7 +913,8 @@ INPUT_PORTS_END
 
 static struct beep_interface nc100_beep_interface =
 {
-        2
+	2,
+	{50,50}
 };
 
 static struct MachineDriver machine_driver_nc100 =
