@@ -301,7 +301,7 @@ ROM_START(superbrd)
 	ROM_LOAD("basus04.rom", 0xb800, 0x0800, 0x8ee6030e)
 	ROM_LOAD("monus02.rom", 0xf800, 0x0800, 0xe5b7028d)
 	ROM_REGION(0x800, REGION_GFX1)
-	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, BADCRC(0x00000000))
+	ROM_LOAD("chgsuper.rom", 0x0000, 0x0800, BADCRC(0x136b5018))
 ROM_END
 
 static	const	struct	IODevice	io_uk101[] =
