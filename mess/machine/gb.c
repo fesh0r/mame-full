@@ -1375,36 +1375,7 @@ int gb_load_rom (int id, void *F, int open_mode)
 	gb_ram = memory_region(REGION_CPU1);
 	memset (gb_ram, 0, 0x10000);
 
-	/* FIXME should check first if a file is given, should give a more clear error */
-	if (!F)
-	{
-		logerror("image_fopen failed in gb_load_rom.\n");
-		return INIT_FAIL;
-	}
-
-/* some tricks since we don't have a lseek, the filesize can't
-   be determined easily. So we just keep reading into the same buffer untill
-   the reads fails and then check if we have 512 bytes too much, so its a file
-   with header or not */
-
-#if 0
-    for (J = 0x4000; J == 0x4000;)
-		J = osd_fread (F, gb_ram, 0x4000);
-
-	/* FIXME: should check first if a file is given, should give a more clear error */
-	if (!(F = image_fopen_new(IO_CARTSLOT, id, NULL)))
-	{
-		logerror("image_fopen failed in gb_load_rom.\n");
-		return INIT_FAIL;
-	}
-#elif 0
-	osd_fseek(F, 0, SEEK_END);
-	J = osd_ftell(F) % 0x4000;
-
-	osd_fseek(F, 0, SEEK_SET);
-#else
 	J = image_length(IO_CARTSLOT, id) % 0x4000;
-#endif
 
 	if (J == 512)
 	{
@@ -1577,7 +1548,6 @@ int gb_load_rom (int id, void *F, int open_mode)
 		}
 	}
 
-	osd_fclose (F);
 	if (I < ROMBanks)
 		return INIT_FAIL;
 
