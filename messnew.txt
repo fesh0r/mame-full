@@ -15,6 +15,8 @@ System Driver Changes:
 
 - [A800] Fixed a recently introduced bug in disk support. [Lawrence Gold]
 
+- [SFZCH] Fixed and re-enabled. [Anthony Kruize]
+
 Source Changes:
 ---------------
 - New generic code for emulating terminals, now in use by the Apple I and
