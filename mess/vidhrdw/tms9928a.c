@@ -175,12 +175,9 @@ static TMS9928A tms;
 /*
 ** initialize the palette
 */
-void palette_init_tms9928a(unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( tms9928a )
 {
-	int i;
-
-	for (i=0; i<TMS9928A_PALETTE_SIZE; i++)
-		palette_set_color(i, TMS9928A_palette[i*3], TMS9928A_palette[i*3+1], TMS9928A_palette[i*3+2]);
+	palette_set_colors(0, TMS9928A_palette, TMS9928A_PALETTE_SIZE);
 }
 
 

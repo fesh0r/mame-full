@@ -685,184 +685,94 @@ static struct Wave_interface wave_interface = {
     { 25 }          /* mixing levels */
 };
 
-int msx_vh_start(void)
+static VIDEO_START( msx )
 {
 	int i;
 
 	i = TMS9928A_start(TMS99x8A, 0x4000);
-	if (!i) TMS9928A_int_callback(msx_vdp_interrupt);
-
+	if (!i)
+		TMS9928A_int_callback(msx_vdp_interrupt);
 	return i;
 }
 
-int msx2_vh_start(void)
+static VIDEO_START( msx2 )
 {
     return v9938_init (MODEL_V9938, 0x20000, msx_vdp_interrupt);
 }
 
-static struct MachineDriver machine_driver_msx =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80_MSX,
-            3579545,    /* 3.579545 Mhz */
-            readmem,writemem,readport,writeport,
-            msx_interrupt,1
-        }
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    1,
-    msx_ch_reset, /* init_machine */
-    msx_ch_stop, /* stop_machine */
+static MACHINE_DRIVER_START( msx )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80_MSX, 3579545)        /* 3.579545 Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(msx_interrupt,1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( msx )
+	MDRV_MACHINE_STOP( msx )
 
     /* video hardware */
-    32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    0,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
-    tms9928A_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 24*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_PALETTE_LENGTH(TMS9928A_PALETTE_SIZE)
+	MDRV_COLORTABLE_LENGTH(TMS9928A_COLORTABLE_SIZE)
+	MDRV_PALETTE_INIT( tms9928a )
 
-    VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-    0,
-    msx_vh_start,
-    TMS9928A_stop,
-    TMS9928A_refresh,
+	MDRV_VIDEO_START( msx )
+	MDRV_VIDEO_UPDATE( tms9928a )
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        },
-        {
-            SOUND_K051649,
-            &k051649_interface
-        },
-        {
-            SOUND_YM2413,
-            &ym2413_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    }
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_msx_pal =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80_MSX,
-            3579545,    /* 3.579545 Mhz */
-            readmem,writemem,readport,writeport,
-            msx_interrupt,1
-        }
-    },
-    50, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    1,
-    msx_ch_reset, /* init_machine */
-    msx_ch_stop, /* stop_machine */
+
+static MACHINE_DRIVER_START( msx_pal )
+	MDRV_IMPORT_FROM( msx )
+	MDRV_FRAMES_PER_SECOND(50)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( msx2 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80_MSX, 3579545)        /* 3.579545 Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport2,writeport2)
+	MDRV_CPU_VBLANK_INT(msx2_interrupt,262)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( msx2 )
+	MDRV_MACHINE_STOP( msx )
 
     /* video hardware */
-    32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    0,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
-    tms9928A_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512 + 32, (212 + 16) * 2)
+	MDRV_VISIBLE_AREA(0, 512 + 32 - 1, 0, (212 + 16) * 2 - 1)
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(512)
+	MDRV_PALETTE_INIT( v9938 )
 
-    VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-    0,
-    msx_vh_start,
-    TMS9928A_stop,
-    TMS9928A_refresh,
+	MDRV_VIDEO_START( msx2 )
+	MDRV_VIDEO_UPDATE( v9938 )
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        },
-        {
-            SOUND_K051649,
-            &k051649_interface
-        },
-        {
-            SOUND_YM2413,
-            &ym2413_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    }
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
+	MDRV_SOUND_ADD(YM2413, ym2413_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(WAVE, wave_interface)
 
-static struct MachineDriver machine_driver_msx2 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80_MSX,
-            3579545,    /* 3.579545 Mhz */
-            readmem,writemem,readport2,writeport2,
-            msx2_interrupt,262
-        }
-    },
-    60, 0,
-    1,
-    msx2_ch_reset, /* init_machine */
-    msx2_ch_stop, /* stop_machine */
+	MDRV_NVRAM_HANDLER( msx2 )
+MACHINE_DRIVER_END
 
-    /* video hardware */
-    512 + 32, (212 + 16) * 2, { 0, 512 + 32 - 1, 0, (212 + 16) * 2 - 1 },
-    0,
-    512,
-	512,
-    v9938_init_palette,
-
-    VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
-    0,
-    msx2_vh_start,
-    v9938_exit,
-    v9938_refresh,
-
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_AY8910,
-            &ay8910_interface
-        },
-        {
-            SOUND_K051649,
-            &k051649_interface
-        },
-        {
-            SOUND_YM2413,
-            &ym2413_interface
-        },
-        {
-            SOUND_DAC,
-            &dac_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-        }
-    },
-	msx2_nvram
-};
 
 /***************************************************************************
 

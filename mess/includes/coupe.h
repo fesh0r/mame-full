@@ -35,13 +35,12 @@ extern UINT8 STAT;			/* returned when port 249 read */
 void coupe_update_memory(void);
 int coupe_floppy_init(int);
 
-void coupe_init_machine_256(void);
-void coupe_init_machine_512(void);
-void coupe_shutdown_machine(void);
-int coupe_vh_start(void);
-void coupe_vh_stop(void);
+extern MACHINE_INIT( coupe );
+extern VIDEO_UPDATE( coupe );
+
+#define video_start_coupe	video_start_generic_bitmapped
+
 void coupe_eof_callback(void);
-void coupe_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 void drawMode1_line(struct mame_bitmap *,int);
 void drawMode2_line(struct mame_bitmap *,int);

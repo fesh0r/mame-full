@@ -22,8 +22,6 @@ UINT8 LINE_INT; 		/* Line interrupt */
 UINT8 LPEN,HPEN;		/* ??? */
 UINT8 CURLINE;			/* Current scanline */
 UINT8 STAT; 			/* returned when port 249 read */
-UINT32 RAM_SIZE;		/* RAM size (256K or 512K) */
-UINT8 PAGE_MASK;		/* 256K = 0x0f, 512K = 0x1f */
 
 extern UINT8 *sam_screen;
 
@@ -42,13 +40,14 @@ int coupe_floppy_init(int id)
 
 void coupe_update_memory(void)
 {
-	UINT8 *mem = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
+	int PAGE_MASK = (mess_ram_size / 0x4000) - 1;
 
     if (LMPR & LMPR_RAM0)   /* Is ram paged in at bank 1 */
 	{
 		if ((LMPR & 0x1F) <= PAGE_MASK)
 		{
-			cpu_setbank(1,&mem[(LMPR & PAGE_MASK) * 0x4000]);
+			cpu_setbank(1,&mess_ram[(LMPR & PAGE_MASK) * 0x4000]);
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_w(1, 0, MWA_BANK1);
 		}
@@ -60,15 +59,15 @@ void coupe_update_memory(void)
 	}
 	else
 	{
-		cpu_setbank(1,memory_region(REGION_CPU1) + RAM_SIZE);	/* Rom0 paged in */
-		cpu_setbank(1,memory_region(REGION_CPU1) + RAM_SIZE);
+		cpu_setbank(1, rom);	/* Rom0 paged in */
+		cpu_setbank(1, rom);
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
 		memory_set_bankhandler_w(1, 0, MWA_ROM);
 	}
 
 	if (( (LMPR+1) & 0x1F) <= PAGE_MASK)
 	{
-		cpu_setbank(2,&mem[((LMPR+1) & PAGE_MASK) * 0x4000]);
+		cpu_setbank(2,&mess_ram[((LMPR+1) & PAGE_MASK) * 0x4000]);
 		memory_set_bankhandler_r(2, 0, MRA_BANK2);
 		memory_set_bankhandler_w(2, 0, MWA_BANK2);
 	}
@@ -80,7 +79,7 @@ void coupe_update_memory(void)
 
 	if ( (HMPR & 0x1F) <= PAGE_MASK )
 	{
-		cpu_setbank(3,&mem[(HMPR & PAGE_MASK)*0x4000]);
+		cpu_setbank(3,&mess_ram[(HMPR & PAGE_MASK)*0x4000]);
 		memory_set_bankhandler_r(3, 0, MRA_BANK3);
 		memory_set_bankhandler_w(3, 0, MWA_BANK3);
 	}
@@ -92,7 +91,7 @@ void coupe_update_memory(void)
 
 	if (LMPR & LMPR_ROM1)	/* Is Rom1 paged in at bank 4 */
 	{
-		cpu_setbank(4,mem + RAM_SIZE + 0x4000);
+		cpu_setbank(4, rom + 0x4000);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 		memory_set_bankhandler_w(4, 0, MWA_ROM);
 	}
@@ -100,7 +99,7 @@ void coupe_update_memory(void)
 	{
 		if (( (HMPR+1) & 0x1F) <= PAGE_MASK)
 		{
-			cpu_setbank(4,&mem[((HMPR+1) & PAGE_MASK) * 0x4000]);
+			cpu_setbank(4,&mess_ram[((HMPR+1) & PAGE_MASK) * 0x4000]);
 			memory_set_bankhandler_r(4, 0, MRA_BANK4);
 			memory_set_bankhandler_w(4, 0, MWA_BANK4);
 		}
@@ -112,12 +111,12 @@ void coupe_update_memory(void)
 	}
 
 	if (VMPR & 0x40)	/* if bit set in 2 bank screen mode */
-		sam_screen = &mem[((VMPR&0x1E) & PAGE_MASK) * 0x4000];
+		sam_screen = &mess_ram[((VMPR&0x1E) & PAGE_MASK) * 0x4000];
 	else
-		sam_screen = &mem[((VMPR&0x1F) & PAGE_MASK) * 0x4000];
+		sam_screen = &mess_ram[((VMPR&0x1F) & PAGE_MASK) * 0x4000];
 }
 
-void coupe_init_machine_common(void)
+MACHINE_INIT( coupe )
 {
 	memory_set_bankhandler_r(1, 0, MRA_BANK1);
 	memory_set_bankhandler_w(1, 0, MWA_BANK1);
@@ -146,23 +145,6 @@ void coupe_init_machine_common(void)
     wd179x_init(WD_TYPE_177X,NULL);
 }
 
-void coupe_init_machine_256(void)
-{
-	PAGE_MASK = 0x0f;
-	RAM_SIZE = 0x40000;
-	coupe_init_machine_common();
-}
-
-void coupe_init_machine_512(void)
-{
-	PAGE_MASK = 0x1f;
-	RAM_SIZE = 0x80000;
-	coupe_init_machine_common();
-}
-
-void coupe_shutdown_machine(void)
-{
-}
 
 /*************************************
  *
@@ -172,7 +154,7 @@ void coupe_shutdown_machine(void)
 
 void coupe_nmi_generate(int param)
 {
-	cpu_cause_interrupt(0, Z80_NMI_INT);
+	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 

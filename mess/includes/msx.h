@@ -33,18 +33,17 @@ typedef struct {
 } MSX;
 
 /* start/stop functions */
-void init_msx(void);
-void init_msx2(void);
-void msx_ch_reset (void);
-void msx2_ch_reset (void);
-void msx_ch_stop (void);
-void msx2_ch_stop (void);
+extern DRIVER_INIT( msx );
+extern DRIVER_INIT( msx2 );
+extern MACHINE_INIT( msx );
+extern MACHINE_INIT( msx2 );
+extern MACHINE_STOP( msx );
+extern INTERRUPT_GEN( msx_interrupt );
+extern INTERRUPT_GEN( msx2_interrupt );
+extern NVRAM_HANDLER( msx2 );
 int msx_load_rom (int id);
-void msx_exit_rom (int id);
-int msx_interrupt (void);
-int msx2_interrupt (void);
+void msx_exit_rom (int id);\
 void msx_vdp_interrupt (int);
-void msx2_nvram (void *file, int write);
 
 /* I/O functions */
 WRITE_HANDLER ( msx_printer_w );

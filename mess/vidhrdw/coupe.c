@@ -16,22 +16,6 @@
 
 unsigned char *sam_screen;
 
-/***************************************************************************
-  Start the video hardware emulation.
-***************************************************************************/
-int coupe_vh_start(void) 
-{
-	if( generic_bitmapped_vh_start() )
-		return 1;
-	return 0;
-}
-
-void    coupe_vh_stop(void) 
-{
-}
-
-//#define MONO
-
 void drawMode4_line(struct mame_bitmap *bitmap,int y)
 {
 	int x;
@@ -197,7 +181,7 @@ void drawMode1_line(struct mame_bitmap *bitmap,int y)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void coupe_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh) 
+VIDEO_UPDATE( coupe )
 {
 }
 

@@ -519,11 +519,13 @@ void msx_exit_rom (int id)
     }
 }
 
-void msx_vdp_interrupt(int i) {
+void msx_vdp_interrupt(int i)
+{
     cpu_set_irq_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
 }
 
-static void msx_ch_reset_core (void) {
+static void msx_ch_reset_core (void)
+{
 	int i;
 
     /* set interrupt stuff */
@@ -532,47 +534,44 @@ static void msx_ch_reset_core (void) {
     ppi8255_init (&msx_ppi8255_interface);
 
     /* initialize mem regions */
-    if (!msx1.empty || !msx1.ram)
-    {
-        msx1.empty = (UINT8*)malloc (0x4000);
-        msx1.ram = (UINT8*)malloc (0x20000);
-		for (i=0;i<4;i++) msx1.ramp[i] = 3 - i;
+	msx1.empty = (UINT8*)auto_malloc (0x4000);
+	msx1.ram = (UINT8*)auto_malloc (0x20000);
+	for (i=0;i<4;i++) msx1.ramp[i] = 3 - i;
 
-        if (!msx1.ram || !msx1.empty)
-        {
-            logerror("malloc () in msx_ch_reset () failed!\n");
-            return;
-        }
+	if (!msx1.ram || !msx1.empty)
+	{
+		logerror("auto_malloc() in msx_ch_reset() failed!\n");
+		return;
+	}
 
-        memset (msx1.empty, 0xff, 0x4000);
-        memset (msx1.ram, 0, 0x20000);
-    }
-    msx1.run = 1;
+	memset (msx1.empty, 0xff, 0x4000);
+	memset (msx1.ram, 0, 0x20000);
 
-    return;
+	msx1.run = 1;
 }
 
-void msx_ch_reset (void)
-	{
+MACHINE_INIT( msx )
+{
 	TMS9928A_reset ();
 	msx_ch_reset_core ();
-	}
+}
 
-void msx2_ch_reset (void)
-	{
+MACHINE_INIT( msx2 )
+{
 	v9938_reset ();
 	msx_ch_reset_core ();
-	}
+}
 
 /* z80 stuff */
 static int z80_table_num[5] = { Z80_TABLE_op, Z80_TABLE_xy,
 	Z80_TABLE_ed, Z80_TABLE_cb, Z80_TABLE_xycb };
-static UINT8 *old_z80_tables[5], *z80_table;
+static const UINT8 *old_z80_tables[5];
+static UINT8 *z80_table;
 
 static void msx_wd179x_int (int state);
 
-void init_msx (void)
-    {
+DRIVER_INIT( msx )
+{
     int i,n;
 
 	wd179x_init (WD_TYPE_179X,msx_wd179x_int);
@@ -580,80 +579,58 @@ void init_msx (void)
 	msx1.dsk_stat = 0x7f;
 
     /* adjust z80 cycles for the M1 wait state */
-    z80_table = malloc (0x500);
+    z80_table = auto_malloc (0x500);
 
     if (!z80_table)
 		logerror ("Cannot malloc z80 cycle table, using default values\n");
 	else
-		{
+	{
         for (i=0;i<5;i++)
-			{
+		{
 			old_z80_tables[i] = z80_msx_get_cycle_table (z80_table_num[i]);
 			for (n=0;n<256;n++)
-				{
 				z80_table[i*0x100+n] = old_z80_tables[i][n] + (i > 1 ? 2 : 1);
-				}
 			z80_msx_set_cycle_table (i, z80_table + i*0x100);
-			}
 		}
-    }
+	}
+}
 
 static struct tc8521_interface tc = { NULL };
 
-void init_msx2 (void)
-	{
+DRIVER_INIT( msx2 )
+{
 	init_msx ();
-
 	tc8521_init (&tc);
-	}
+}
 
-void msx_ch_stop (void)
-	{
+MACHINE_STOP( msx )
+{
 	int i;
-
-    free (msx1.empty); msx1.empty = NULL;
-    free (msx1.ram); msx1.ram = NULL;
-	if (z80_table)
-		{
-		for (i=0;i<5;i++)
-			z80_msx_set_cycle_table (i, old_z80_tables[i]);
-
-		free (z80_table);
-		}
+	for (i=0;i<5;i++)
+		z80_msx_set_cycle_table (i, (void *) old_z80_tables[i]);
     msx1.run = 0;
-	wd179x_exit ();
-	}
+}
 
-void msx2_ch_stop (void)
-	{
-	msx_ch_stop ();
-	tc8521_stop ();
-	}
+INTERRUPT_GEN( msx2_interrupt )
+{
+	v9938_set_sprite_limit(readinputport (8) & 0x20);
+	v9938_set_resolution(readinputport (8) & 0x03);
+	v9938_interrupt();
+}
 
-int msx2_interrupt ()
-	{
-	v9938_set_sprite_limit (readinputport (8) & 0x20);
-	v9938_set_resolution (readinputport (8) & 0x03);
-	v9938_interrupt ();
-
-	return ignore_interrupt ();
-	}
-
-int msx_interrupt()
-	{
+INTERRUPT_GEN( msx_interrupt )
+{
     int i;
 
     for (i=0;i<2;i++)
-        {
+	{
         msx1.mouse[i] = readinputport (9+i);
         msx1.mouse_stat[i] = -1;
-        }
+	}
 
     TMS9928A_set_spriteslimit (readinputport (8) & 0x20);
     TMS9928A_interrupt();
-
-    return ignore_interrupt();
-	}
+}
 
 /*
 ** The I/O funtions
@@ -761,42 +738,44 @@ WRITE_HANDLER ( msx_psg_port_b_w )
 }
 
 WRITE_HANDLER ( msx_printer_w )
-	{
+{
 	if (readinputport (8) & 0x80)
-		{
-		/* SIMPL emulation */
+	{
+	/* SIMPL emulation */
 		if (offset == 1)
         	DAC_signed_data_w (0, data);
-		}
+	}
 	else
-		{
+	{
    		if (offset == 1)
 			msx1.prn_data = data;
 		else
-			{
+		{
 			if ( (msx1.prn_strobe & 2) && !(data & 2) )
 				device_output (IO_PRINTER, 0, msx1.prn_data);
 
 			msx1.prn_strobe = data;
-			}
 		}
 	}
+}
 
 READ_HANDLER ( msx_printer_r )
-	{
+{
 	if (offset == 0 && ! (readinputport (8) & 0x80) &&
-		device_status (IO_PRINTER, 0, 0) )
+			device_status (IO_PRINTER, 0, 0) )
 		return 253;
 
     return 0xff;
-	}
+}
 
 WRITE_HANDLER ( msx_fmpac_w )
 {
     if (msx1.opll_active & 1)
     {
-        if (offset == 1) YM2413_data_port_0_w (0, data);
-        else YM2413_register_port_0_w (0, data);
+        if (offset == 1)
+			YM2413_data_port_0_w (0, data);
+        else
+			YM2413_register_port_0_w (0, data);
     }
 }
 
@@ -805,30 +784,30 @@ WRITE_HANDLER ( msx_fmpac_w )
 */
 
 WRITE_HANDLER (msx_rtc_latch_w)
-	{
+{
 	msx1.rtc_latch = data & 15;
-	}
+}
 
 WRITE_HANDLER (msx_rtc_reg_w)
-	{
+{
 	tc8521_w (msx1.rtc_latch, data);
-	}
+}
 
 READ_HANDLER (msx_rtc_reg_r)
-	{
+{
 	return tc8521_r (msx1.rtc_latch);
-	}
+}
 
-void msx2_nvram (void *file, int write_local)
-	{
+NVRAM_HANDLER( msx2 )
+{
 	if (file)
-		{
-		if (write_local)
+	{
+		if (read_or_write)
 			tc8521_save_stream (file);
 		else
 			tc8521_load_stream (file);
-		}
 	}
+}
 
 /*
 ** The evil disk functions ...

@@ -46,7 +46,7 @@ MEMORY_WRITE_START( coupe_writemem )	 {
 	{ 0xC000, 0xFFFF, MWA_BANK4 },
 MEMORY_END
 
-int coupe_line_interrupt(void)
+INTERRUPT_GEN( coupe_line_interrupt )
 {
 	struct mame_bitmap *bitmap = Machine->scrbitmap;
 	int interrupted=0;	/* This is used to allow me to clear the STAT flag (easiest way I can do it!) */
@@ -59,7 +59,7 @@ int coupe_line_interrupt(void)
 		{
 			/* No other interrupts can occur - NOT CORRECT!!! */
             STAT=0x1E;
-			cpu_cause_interrupt(0, Z80_IRQ_INT);
+			cpu_set_irq_line(0, 0, PULSE_LINE);
 			interrupted=1;
 		}
 	}
@@ -93,14 +93,12 @@ int coupe_line_interrupt(void)
 		else
 			STAT=0x17;
 
-		cpu_cause_interrupt(0, Z80_IRQ_INT);
+		cpu_set_irq_line(0, 0, PULSE_LINE);
 		interrupted=1;
 	}
 
 	if (!interrupted)
 		STAT=0x1F;
-
-	return ignore_interrupt();
 }
 
 unsigned char getSamKey1(unsigned char hi)
@@ -371,11 +369,10 @@ INPUT_PORTS_START( coupe )
 INPUT_PORTS_END
 
 /* Initialise the palette */
-static void coupe_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( coupe )
 {
 	unsigned char red,green,blue;
 	int a;
-	unsigned char coupe_palette[128*3];
 	unsigned short coupe_colortable[128];		// 1-1 relationship to palette!
 
 	for (a=0;a<128;a++)
@@ -408,15 +405,10 @@ static void coupe_init_palette(unsigned char *sys_palette, unsigned short *sys_c
 		if (a&0x40)
 			green+=4*36;
 
-		coupe_palette[a*3+0]=red;
-		coupe_palette[a*3+1]=green;
-		coupe_palette[a*3+2]=blue;
-
+		palette_set_color(a, red, green, blue);
 		coupe_colortable[a]=a;
 	}
-
-	memcpy(sys_palette,coupe_palette,sizeof(coupe_palette));
-	memcpy(sys_colortable,coupe_colortable,sizeof(coupe_colortable));
+	memcpy(colortable,coupe_colortable,sizeof(coupe_colortable));
 }
 
 static struct Speaker_interface coupe_speaker_interface=
@@ -431,100 +423,35 @@ static struct SAA1099_interface coupe_saa1099_interface=
 	{{50,50}},
 };
 
-static struct MachineDriver machine_driver_coupe256 =
-{
+static MACHINE_DRIVER_START( coupe )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			6000000,        /* 6 Mhz */
-		    coupe_readmem,coupe_writemem,
-			coupe_readport,coupe_writeport,
-			coupe_line_interrupt,192 + 10,			/* 192 scanlines + 10 lines of vblank (approx).. */
-		},
-	},
-	50, 0,								/* frames per second, vblank duration */
-	1,
-	coupe_init_machine_256,
-	coupe_shutdown_machine,
+	MDRV_CPU_ADD(Z80, 6000000)        /* 6 Mhz */
+	MDRV_CPU_FLAGS( CPU_16BIT_PORT )
+	MDRV_CPU_MEMORY(coupe_readmem,coupe_writemem)
+	MDRV_CPU_PORTS(coupe_readport,coupe_writeport)
+	MDRV_CPU_VBLANK_INT(coupe_line_interrupt, 192 + 10)	/* 192 scanlines + 10 lines of vblank (approx).. */
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	64*8,                               /* screen width */
-	24*8,                               /* screen height */
-	{ 0, 64*8-1, 0, 24*8-1 },           /* visible_area */
-	coupe_gfxdecodeinfo,				/* graphics decode info */
-	128, 128,							/* colors used for the characters */
-	coupe_init_palette,					/* initialise palette */
+	MDRV_MACHINE_INIT( coupe )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	coupe_vh_start,
-	coupe_vh_stop,
-	coupe_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 24*8)
+	MDRV_VISIBLE_AREA(0, 64*8-1, 0, 24*8-1)
+	MDRV_GFXDECODE( coupe_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(128)
+	MDRV_PALETTE_INIT(coupe)
+
+	MDRV_VIDEO_START( coupe )
+	MDRV_VIDEO_UPDATE( coupe )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		/* standard spectrum sound */
-		{
-			SOUND_SPEAKER,
-			&coupe_speaker_interface
-		},
-		{
-			SOUND_SAA1099,
-			&coupe_saa1099_interface
-		},
-    }
-
-};
-
-static struct MachineDriver machine_driver_coupe512 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80|CPU_16BIT_PORT,
-			6000000,        /* 6 Mhz */
-		    coupe_readmem,coupe_writemem,
-			coupe_readport,coupe_writeport,
-			coupe_line_interrupt,192 + 10,	/* 192 scanlines + 10 lines of vblank (approx).. */
-
-		},
-	},
-	50, 0,	/* frames per second, vblank duration */
-	1,
-	coupe_init_machine_512,
-	coupe_shutdown_machine,
-
-	/* video hardware */
-	64*8,                               /* screen width */
-	24*8,                               /* screen height */
-	{ 0, 64*8-1, 0, 24*8-1 },           /* visible_area */
-	coupe_gfxdecodeinfo,				/* graphics decode info */
-	128, 128,							/* colors used for the characters */
-	coupe_init_palette,					/* initialise palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	coupe_vh_start,
-	coupe_vh_stop,
-	coupe_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		/* standard spectrum sound */
-		{
-			SOUND_SPEAKER,
-			&coupe_speaker_interface
-		},
-		{
-			SOUND_SAA1099,
-			&coupe_saa1099_interface
-        },
-    }
-
-};
+	MDRV_SOUND_ADD(SPEAKER, coupe_speaker_interface)
+	MDRV_SOUND_ADD(SAA1099, coupe_saa1099_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -533,15 +460,9 @@ static struct MachineDriver machine_driver_coupe512 =
 ***************************************************************************/
 
 ROM_START(coupe)
-	ROM_REGION(0x48000,REGION_CPU1,0)
-	ROM_LOAD("sam_rom0.rom", 0x40000, 0x4000, 0x9954CF1A)
-	ROM_LOAD("sam_rom1.rom", 0x44000, 0x4000, 0xF031AED4)
-ROM_END
-
-ROM_START(coupe512)
-	ROM_REGION(0x88000,REGION_CPU1,0)
-	ROM_LOAD("sam_rom0.rom", 0x80000, 0x4000, 0x9954CF1A)
-	ROM_LOAD("sam_rom1.rom", 0x84000, 0x4000, 0xF031AED4)
+	ROM_REGION(0x8000,REGION_CPU1,0)
+	ROM_LOAD("sam_rom0.rom", 0x0000, 0x4000, 0x9954CF1A)
+	ROM_LOAD("sam_rom1.rom", 0x4000, 0x4000, 0xF031AED4)
 ROM_END
 
 static const struct IODevice io_coupe[] =
@@ -571,6 +492,10 @@ static const struct IODevice io_coupe[] =
 #define io_coupe256 io_coupe
 #define io_coupe512 io_coupe
 
-/*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT          COMPANY                 		  FULLNAME */
-COMP( 1989, coupe,	  0,		coupe256,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 256K RAM" )
-COMP( 1989, coupe512, coupe,	coupe512,		coupe,	  0,			"Miles Gordon Technology plc",    "Sam Coupe 512K RAM" )
+COMPUTER_CONFIG_START(coupe)
+	CONFIG_RAM_DEFAULT(256 * 1024)
+	CONFIG_RAM(512 * 1024)
+COMPUTER_CONFIG_END
+
+/*    YEAR  NAME      PARENT    MACHINE         INPUT     INIT  CONFIG  COMPANY                 		  FULLNAME */
+COMPC( 1989, coupe,	  0,		coupe,			coupe,	  0,	coupe,	"Miles Gordon Technology plc",    "Sam Coupe" )

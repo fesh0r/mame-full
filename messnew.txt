@@ -19,6 +19,9 @@ System Driver Changes:
 - [GAMEBOY] Can now load ROMs that are larger than 2MB. Fixed RAM bank
   switching in MBC3 ROMs. [Anthony Kruize]
 
+- [COUPE] Combined coupe and coupe512 drivers into one driver that uses
+  configurable RAM sizes. [Nate Woods]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.60.  This incorporates all features of the 

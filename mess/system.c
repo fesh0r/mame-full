@@ -679,29 +679,28 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( superbrd )	/* 1979 Superboard II							  */
 
 	/* ASCII & MICROSOFT */
-//	DRIVER( msx )		/* 1983 MSX 									  */
-//	DRIVER( msxj )		/* 1983 MSX Jap 								  */
-//	DRIVER( msxkr ) 	/* 1983 MSX Korean								  */
-//	DRIVER( msxuk ) 	/* 1983 MSX UK									  */
-//	DRIVER( hotbit11 )	/* 198? ???									      */
-//	DRIVER( hotbit12 )	/* 198? ???									      */
-//	DRIVER( expert10 )	/* 198? ???									      */
-//	DRIVER( expert11 )	/* 198? ???									      */
-//	DRIVER( msx2 ) 		/* 1985 MSX2									  */
-//	DRIVER( msx2a )		/* 1985 MSX2									  */
-//	DRIVER( msx2j ) 	/* 1983 MSX2 Jap								  */
+	DRIVER( msx )		/* 1983 MSX 									  */
+	DRIVER( msxj )		/* 1983 MSX Jap 								  */
+	DRIVER( msxkr ) 	/* 1983 MSX Korean								  */
+	DRIVER( msxuk ) 	/* 1983 MSX UK									  */
+	DRIVER( hotbit11 )	/* 198? ???									      */
+	DRIVER( hotbit12 )	/* 198? ???									      */
+	DRIVER( expert10 )	/* 198? ???									      */
+	DRIVER( expert11 )	/* 198? ???									      */
+	DRIVER( msx2 ) 		/* 1985 MSX2									  */
+	DRIVER( msx2a )		/* 1985 MSX2									  */
+	DRIVER( msx2j ) 	/* 1983 MSX2 Jap								  */
 
 	/* NASCOM MICROCOMPUTERS */
-//	DRIVER( nascom1 )	/* 1978 Nascom 1								  */
-//	DRIVER( nascom1a )  /**/
-//	DRIVER( nascom1b )  /**/
-//	DRIVER( nascom2 )	/* 1979 Nascom 2								  */
-//	DRIVER( nascom2a )	/* 1979 Nascom 2								  */
+	DRIVER( nascom1 )	/* 1978 Nascom 1								  */
+	DRIVER( nascom1a )  /**/
+	DRIVER( nascom1b )  /**/
+	DRIVER( nascom2 )	/* 1979 Nascom 2								  */
+	DRIVER( nascom2a )	/* 1979 Nascom 2								  */
 
 
 	/* MILES GORDON TECHNOLOGY */
-//	DRIVER( coupe ) 	/* 1989 Sam Coupe 256K RAM						  */
-//	DRIVER( coupe512 )	/* 1989 Sam Coupe 512K RAM						  */
+	DRIVER( coupe ) 	/* 1989 Sam Coupe								  */
 
 	/* MOTOROLA */
 //TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */

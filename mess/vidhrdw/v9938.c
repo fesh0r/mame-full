@@ -477,7 +477,7 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 }
 
 void v9938_reset (void)
-	{
+{
 	int i;
 
 	/* offset reset */
@@ -494,10 +494,6 @@ void v9938_reset (void)
 	vdp.INT = 0;
 	vdp.read_ahead = 0; vdp.address_latch = 0; /* ??? */
 	vdp.scanline = 0;
-	}
-
-VIDEO_STOP( v9938 )
-{
 }
 
 static void v9938_check_int (void)

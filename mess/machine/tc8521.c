@@ -115,8 +115,6 @@ static unsigned char rtc_write_masks[16*4]=
 
 struct tc8521
 {
-	/* mame timer */
-	void *tc8521_timer;
 	/* 4 register pages (timer, alarm, ram1 and ram2) */
     unsigned char registers[16*4];
 	/* interface for 1hz/16hz and alarm outputs */
@@ -295,26 +293,11 @@ static void tc8521_timer_callback(int dummy)
 
 void tc8521_init(struct tc8521_interface *intf)
 {
-        memset(&rtc, 0, sizeof(struct tc8521));
-
-        memset(&rtc.interface, 0, sizeof(struct tc8521_interface));
-        if (intf)
-        {
-            memcpy(&rtc.interface, intf, sizeof(struct tc8521_interface));
-        }
-        rtc.tc8521_timer = timer_pulse(TIME_IN_HZ(32), 0, tc8521_timer_callback);
-
-}
-
-
-void tc8521_stop(void)
-{
-        if (rtc.tc8521_timer!=NULL)
-        {
-            timer_remove(rtc.tc8521_timer);
-        }
-
-        rtc.tc8521_timer = NULL;
+	memset(&rtc, 0, sizeof(struct tc8521));
+	memset(&rtc.interface, 0, sizeof(struct tc8521_interface));
+	if (intf)
+		memcpy(&rtc.interface, intf, sizeof(struct tc8521_interface));
+	timer_pulse(TIME_IN_HZ(32), 0, tc8521_timer_callback);
 }
 
 READ_HANDLER(tc8521_r)

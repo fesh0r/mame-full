@@ -138,11 +138,10 @@ static	unsigned	short	nascom1_colortable[] =
 	0, 1
 };
 
-static	void	nascom1_init_palette (unsigned char *sys_palette,
-			unsigned short *sys_colortable, const unsigned char *color_prom)
+static PALETTE_INIT( nascom1 )
 {
-	memcpy (sys_palette, nascom1_palette, sizeof (nascom1_palette));
-	memcpy (sys_colortable, nascom1_colortable, sizeof (nascom1_colortable));
+	palette_set_colors(0, nascom1_palette, sizeof(nascom1_palette) / 3);
+	memcpy(colortable, nascom1_colortable, sizeof (nascom1_colortable));
 }
 
 /* Keyboard input */
@@ -232,67 +231,46 @@ INPUT_PORTS_END
 
 /* Sound output */
 
+static INTERRUPT_GEN( nascom_interrupt )
+{
+	cpu_set_irq_line(0, 0, PULSE_LINE);
+}
+
 /* Machine definition */
+static MACHINE_DRIVER_START( nascom1 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 1000000)
+	MDRV_CPU_MEMORY(nascom1_readmem, nascom1_writemem)
+	MDRV_CPU_PORTS(nascom1_readport, nascom1_writeport)
+	MDRV_CPU_VBLANK_INT(nascom_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(2500)
+	MDRV_INTERLEAVE(1)
 
-static	struct	MachineDriver	machine_driver_nascom1 =
-{
-	{
-		{
-			CPU_Z80,
-			1000000,
-			nascom1_readmem, nascom1_writemem,
-			nascom1_readport, nascom1_writeport,
-			interrupt, 1,
-		},
-	},
-	50, 2500,
-	1,
-	nascom1_init_machine,
-	nascom1_stop_machine,
-	48 * 8,
-	16 * 16,
-	{ 0, 48 * 8 - 1, 0, 16 * 16 - 1},
-	nascom1_gfxdecodeinfo,
-	sizeof (nascom1_palette) / 3,
-	sizeof (nascom1_colortable),
-	nascom1_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	nascom1_vh_start,
-	nascom1_vh_stop,
-	nascom1_vh_screenrefresh,
-	0, 0, 0, 0,
-};
+	MDRV_MACHINE_INIT( nascom1 )
 
-static	struct	MachineDriver	machine_driver_nascom2 =
-{
-	{
-		{
-			CPU_Z80,
-			2000000,
-			nascom1_readmem, nascom1_writemem,
-			nascom1_readport, nascom1_writeport,
-			interrupt, 1,
-		},
-	},
-	50, 2500,
-	1,
-	nascom1_init_machine,
-	nascom1_stop_machine,
-	48 * 8,
-	16 * 14,
-	{ 0, 48 * 8 - 1, 0, 16 * 14 - 1},
-	nascom2_gfxdecodeinfo,
-	sizeof (nascom1_palette) / 3,
-	sizeof (nascom1_colortable),
-	nascom1_init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	nascom1_vh_start,
-	nascom1_vh_stop,
-	nascom2_vh_screenrefresh,
-	0, 0, 0, 0,
-};
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(48 * 8, 16 * 16)
+	MDRV_VISIBLE_AREA(0, 48 * 8 - 1, 0, 16 * 16 - 1)
+	MDRV_GFXDECODE( nascom1_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH( sizeof (nascom1_palette) / 3 )
+	MDRV_COLORTABLE_LENGTH( sizeof (nascom1_colortable) )
+	MDRV_PALETTE_INIT( nascom1 )
+
+	MDRV_VIDEO_START( nascom1 )
+	MDRV_VIDEO_UPDATE( nascom1 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( nascom2 )
+	MDRV_IMPORT_FROM( nascom1 )
+	MDRV_CPU_REPLACE( "main", Z80, 2000000 )
+	MDRV_SCREEN_SIZE(48 * 8, 16 * 14)
+	MDRV_VISIBLE_AREA(0, 48 * 8 - 1, 0, 16 * 14 - 1)
+	MDRV_GFXDECODE( nascom2_gfxdecodeinfo )
+	MDRV_VIDEO_UPDATE( nascom2 )
+MACHINE_DRIVER_END
 
 ROM_START(nascom1)
 	ROM_REGION(0x10000, REGION_CPU1,0)
