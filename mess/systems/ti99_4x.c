@@ -40,6 +40,7 @@ Historical notes : TI made several last minute design changes.
 
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
+#include "includes/basicdsk.h"
 
 /*
 	memory map
@@ -769,13 +770,13 @@ static const struct IODevice io_ti99_4[] =
 		3,					/* count */
 		"dsk\0",			/* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		ti99_floppy_init,	/* init */
-		NULL/*ti99_floppy_cleanup*/,				/* exit */
+        basicdsk_floppy_id,               /* id */
+                ti99_floppy_init,       /* init */
+                basicdsk_floppy_exit,                            /* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
-		NULL,				/* status */
+                floppy_status,                           /* status */
 		NULL,				/* seek */
 		NULL,				/* tell */
 		NULL,				/* input */
