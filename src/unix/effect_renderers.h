@@ -62,11 +62,11 @@
 # define RGB2YUV(p) (p)
 # define RGB2PIXEL(r,g,b) ( \
 /* y */ ((  9836*(r) + 19310*(g) +  3750*(b)) >> 15) | (((!(i&0x01))? \
-/* u */ (( -5527*(r) - 10921*(g) + 16448*(b) + 8388608) >> 8): \
-/* v */ (( 16448*(r) - 13783*(g) -  2665*(b) + 8388608) >> 8)) & 0xFF00))
+/* u */ (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 7): \
+/* v */ (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 7)) & 0xFF00))
 # define RGB32_2PIXEL(rgb) RGB2PIXEL(RMASK32(rgb)>>16,GMASK32(rgb)>>8,BMASK32(rgb))
-# define gmask 0x0000FF00
-# define pmask 0x00FF00FF
+# define gmask 0x0000FF00 /* xq2x YUY2 hack */
+# define pmask 0x00FF00FF /* xq2x YUY2 hack */
 # define is_distant is_distant_YUY2
   INLINE int is_distant_YUY2( UINT32 yuv1, UINT32 yuv2 )
   {
@@ -3923,7 +3923,6 @@ void FUNC_NAME(effect_6tap_render)(void *dst0, void *dst1, unsigned count)
 	*mydst1++ = RGB2PIXEL(red, green, blue);
 	src0++; src1++; src2++; src3++; src4++; src5++;
     }
-
 }
 #endif
 

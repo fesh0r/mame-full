@@ -18,6 +18,8 @@
 
 int  InitVScreen(void);
 void CloseVScreen(void);
+void VScreenCatchSignals(void);
+void VScreenRestoreSignals(void);
 int  InitGlide(void);
 int  SetResolution(struct rc_option *option, const char *arg, int priority);
 
@@ -51,9 +53,6 @@ int sysdep_init(void)
 void sysdep_close(void)
 {
    svga_input_exit();
-
-   /* close svgalib (again) just to be sure */
-   vga_setmode(TEXT);
 }
 
 static void release_function(void)
@@ -71,6 +70,12 @@ static void acquire_function(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
+  /* do this first since it seems todo some stuff
+     which messes up svgalib when called after
+     vga_setmode */
+  if (InitVScreen() != OSD_OK)
+     return OSD_NOT_OK;
+   
   /* with newer svgalib's the console switch signals are only active if a
      graphics mode is set, so we set one which each card should support */
   vga_setmode(G320x200x16);
@@ -81,9 +86,8 @@ int sysdep_create_display(int depth)
 
   /* call this one last since it needs to catch some signals
      which are also catched by svgalib */
-  if (InitVScreen() != OSD_OK)
-     return OSD_NOT_OK;
-   
+  VScreenCatchSignals();
+  
   return OSD_OK;
 }
 
@@ -91,12 +95,17 @@ int sysdep_create_display(int depth)
 /* shut up the display */
 void sysdep_display_close(void)
 {
+   /* restore svgalib's signal handlers before closing svgalib down */
+   VScreenRestoreSignals();
+   
    /* close input */
    svga_input_close();
    
    /* close svgalib */
    vga_setmode(TEXT);
-   
-   /* close glide */
+
+   /* do this last since it seems todo some stuff
+      which messes up svgalib when done before after
+      vga_setmode(TEXT) */
    CloseVScreen();
 }

@@ -1,5 +1,6 @@
 #include "xmame.h"
 #include "driver.h"
+#include "effect.h"
 #include <math.h>
 
 static int disabled_modes_count = 0;
@@ -204,7 +205,7 @@ void mode_stretch_aspect(int width, int height, int *corr_width, int *corr_heigh
 
 void mode_fix_aspect(double display_resolution_aspect_ratio)
 {
-  if(!use_aspect_ratio || !perfect_aspect)
+  if(!use_aspect_ratio || !perfect_aspect || effect)
     return;
     
   yarbsize = (visual_width * widthscale) / 

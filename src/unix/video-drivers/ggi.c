@@ -469,7 +469,8 @@ int sysdep_create_display(int depth)
     fprintf(stderr_file,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
 
-   effect_init2(depth, GT_SIZE(mode.graphtype), ggi_video_width);
+    if(effect_open())
+        return OSD_NOT_OK;
 
     return OSD_OK;
 }
@@ -483,6 +484,7 @@ void sysdep_display_close(void)
 #ifdef GGI_DEBUG
     fprintf(stderr_file,"sysdep_display_close called\n");
 #endif
+    effect_close();
 /* do we need this? It makes debugging crashes sorta hard without a core file */
 #ifdef CATCH_SIGNALS
     if (oldsigsegvh) signal(SIGSEGV,oldsigsegvh);

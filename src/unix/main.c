@@ -4,6 +4,7 @@
 
 #define __MAIN_C_
 #include "xmame.h"
+#include "effect.h"
 
 #if defined HAVE_MPROTECT || defined __QNXNTO__
 #include <sys/mman.h>
@@ -79,6 +80,10 @@ int main(int argc, char **argv)
 	/* parse configuration file and environment */
 	if ((res = config_init(argc, argv)) != 1234 || res2 == OSD_NOT_OK)
 		goto leave;
+
+	/* the effect code might want to change the scaling options
+	   to match the choisen effect */
+	effect_init();
 
 	/* 
 	 * Initialize whatever is needed before the display is actually 

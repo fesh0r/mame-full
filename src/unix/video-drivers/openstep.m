@@ -291,8 +291,6 @@ sysdep_create_display(int depth)
 	puts(Machine->gamedrv->description);
 
 	/* set up the structure for the palette code */
-	display_palette_info.depth = 16;
-
 #ifdef LSB_FIRST
 	display_palette_info.red_mask = 0x00f0;
 	display_palette_info.green_mask = 0x000f;

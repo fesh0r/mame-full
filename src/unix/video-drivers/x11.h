@@ -16,8 +16,6 @@ enum { X11_WINDOW, X11_DGA, X11_XV_WINDOW, X11_XV_FULLSCREEN };
 EXTERN Display 		*display;
 EXTERN Window		window;
 EXTERN Screen 		*screen;
-EXTERN Visual		*xvisual;
-EXTERN int		depth;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		mode_available[X11_MODE_COUNT];
 EXTERN int		x11_video_mode;
@@ -25,12 +23,6 @@ EXTERN int		run_in_root_window;
 #ifdef USE_XIL
 EXTERN int		use_xil;
 EXTERN int		use_mt_xil;
-#endif
-#ifdef USE_HWSCALE
-EXTERN int		use_hwscale;
-EXTERN long		hwscale_redmask;
-EXTERN long		hwscale_greenmask;
-EXTERN long		hwscale_bluemask;
 #endif
 extern struct rc_option xf86_dga_opts[];
 extern struct rc_option x11_window_opts[];
@@ -94,7 +86,7 @@ void swap_dbe_buffers( void );
 #endif
 
 /* generic helper functions */
-int x11_init_palette_info(void);
+int x11_init_palette_info(Visual *xvisual);
 
 #endif /* ifdef x11 */
 

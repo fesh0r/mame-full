@@ -274,7 +274,6 @@ int sysdep_create_display(int depth)
   if(vgc.success==0)
   {
 	fprintf(stderr,"OSD ERROR: failed to obtain visual.\n");
-	sysdep_display_close();
 	return OSD_NOT_OK; 
   }
 
@@ -283,13 +282,11 @@ int sysdep_create_display(int depth)
 
   if (!window) {
 	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
-	sysdep_display_close();
 	return OSD_NOT_OK; 
   }
   
   if(!glContext) {
 	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
-	sysdep_display_close();
 	return OSD_NOT_OK; 
   }
   
@@ -337,10 +334,7 @@ int sysdep_create_display(int depth)
   }
 
   if (InitVScreen(vw, vh))
-  {
-	sysdep_display_close();
 	return OSD_NOT_OK; 
-  }
 
 #ifndef NDEBUG
   printf("GLINFO: xgl display created !\n");

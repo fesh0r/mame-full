@@ -800,13 +800,6 @@ void CloseVScreen (void)
   gl_reset_resources();
 }
 
-/* Not needed under GL */
-#ifndef WIN32
-void sysdep_clear_screen (void)
-{
-}
-#endif
-
 static int texture_init = 0;
 
 /**

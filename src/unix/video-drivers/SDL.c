@@ -367,7 +367,8 @@ int sysdep_create_display(int depth)
    /* Set window title */
    SDL_WM_SetCaption(title, NULL);
 
-   effect_init2(depth, Vid_depth, Vid_width);
+   if (effect_open())
+      exit (OSD_NOT_OK);
 
    return OSD_OK;
 }
@@ -654,6 +655,8 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
 /* shut up the display */
 void sysdep_display_close(void)
 {
+   effect_close();
+
    SDL_FreeSurface(Offscreen_surface);
 
    /* Restore cursor state */

@@ -76,6 +76,7 @@ static int use_mit_shm = 1;  /* use mitshm if available */
 #endif
 
 #ifdef USE_HWSCALE
+static int use_hwscale=0;
 static int hwscale_bpp=0;
 static long hwscale_format=0;
 static int hwscale_yuv=0;
@@ -83,7 +84,8 @@ static int hwscale_yv12=0;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
 static int hwscale_perfect_yuv=1;
-int hwscale_fullscreen = 0;
+static int hwscale_fullscreen=0;
+static Visual hwscale_visual;
 #define FOURCC_YUY2 0x32595559
 #define FOURCC_YV12 0x32315659
 #define FOURCC_I420 0x30323449
@@ -115,7 +117,7 @@ static GC gc;
 static int orig_widthscale, orig_heightscale, orig_yarbsize;
 static int image_width;
 enum { X11_NORMAL, X11_MITSHM, X11_XV, X11_XIL };
-static int x11_window_update_method = X11_NORMAL;
+static int x11_window_update_method;
 static int startx = 0;
 static int starty = 0;
 static int use_xsync = 0;
@@ -258,9 +260,9 @@ int FindRGBXvFormat(Display *dpy, int *port,long *format,int *bpp)
 						*bpp=fo[j].bits_per_pixel;
 						*port=p;
 						*format=fo[j].id;
-						hwscale_redmask=fo[j].red_mask;
-						hwscale_greenmask=fo[j].green_mask;
-						hwscale_bluemask=fo[j].blue_mask;
+						hwscale_visual.red_mask  =fo[j].red_mask;
+						hwscale_visual.green_mask=fo[j].green_mask;
+						hwscale_visual.blue_mask =fo[j].blue_mask;
 						XFree(fo);
 						return 1;
 					}
@@ -343,8 +345,8 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
         }
         window = XCreateWindow (display, root_window_id, hints->x, hints->y,
                         width, height,
-                        0, depth,
-                        InputOutput, xvisual,
+                        0, screen->root_depth,
+                        InputOutput, screen->root_visual,
                         (CWBorderPixel | CWBackPixel | CWBitGravity |
                          CWWinGravity | CWBackingStore |
                          CWOverrideRedirect | CWSaveUnder | CWEventMask |
@@ -353,7 +355,6 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
         if (!window)
         {
                 fprintf (stderr_file, "OSD ERROR: failed in XCreateWindow().\n");
-                x11_window_close_display();
                 return 1;
         }
         
@@ -407,18 +408,19 @@ static int x11_window_create_window(XSizeHints *hints, int width, int height)
    mouse and keyboard can't be setup before the display has. */
 int x11_window_create_display (int bitmap_depth)
 {
+        Visual *xvisual;
 	XGCValues xgcv;
-	int screen_no;
 	XSizeHints hints;
 	int geom_width, geom_height;
 	int image_height;
 	int i;
 	int window_width, window_height;
-	int effect_dest_depth;
 	int event_mask = 0;
+	int dest_depth;
 
 	/* set all the default values */
 	window = 0;
+	x11_window_update_method = X11_NORMAL;
 	image  = NULL;
 #ifdef USE_XV
 	xvimage = NULL;
@@ -427,13 +429,10 @@ int x11_window_create_display (int bitmap_depth)
 	mit_shm_attached = 0;
 #endif
 	screen           = DefaultScreenOfDisplay (display);
-	screen_no        = DefaultScreen (display);
 
         /* fix the aspect ratio, do this here since
            this can change yarbsize */
-        x11_resolution_aspect = (float)
-          DisplayWidth(display, screen_no) /
-          DisplayHeight(display, screen_no);
+        x11_resolution_aspect = (float)screen->width/screen->height;
         mode_fix_aspect(x11_resolution_aspect);
 
 	window_width     = widthscale  * visual_width;
@@ -531,15 +530,14 @@ int x11_window_create_display (int bitmap_depth)
 #endif
 
         /* get a visual */
-	xvisual = DefaultVisual(display, screen_no);
-	depth   = DefaultDepth(display, screen_no);
-	fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", depth);
+	xvisual = screen->root_visual;
+	fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", screen->root_depth);
 
 	/* create a window */
 	if (run_in_root_window)
 	{
-		int width  = DisplayWidth(display, screen_no);
-		int height = DisplayHeight(display, screen_no);
+		int width  = screen->width;
+		int height = screen->height;
 		if (window_width > width || window_height > height)
 		{
 			fprintf (stderr_file, "OSD ERROR: Root window is to small: %dx%d, needed %dx%d\n",
@@ -560,7 +558,7 @@ int x11_window_create_display (int bitmap_depth)
 		hints.x = hints.y = 0;
 		hints.win_gravity = NorthWestGravity;
 
-		i = XWMGeometry(display, screen_no, geometry, NULL, 0, &hints, &hints.x,
+		i = XWMGeometry(display, DefaultScreen(display), geometry, NULL, 0, &hints, &hints.x,
 				&hints.y, &geom_width, &geom_height, &hints.win_gravity);
 		if ((i&XValue) && (i&YValue))
 			hints.flags |= PPosition | PWinGravity;
@@ -599,10 +597,6 @@ int x11_window_create_display (int bitmap_depth)
                         }
                         if(hwscale_yuv && !hwscale_yv12)
                         {
-                                hwscale_redmask=0xff0000;
-                                hwscale_greenmask=0xff00;
-                                hwscale_bluemask=0xff;
-                                hwscale_bpp=32;
                                 hwscale_format=FOURCC_YUY2;
                                 if(!(FindXvPort(display, hwscale_format, &xv_port)))
                                 {
@@ -617,10 +611,6 @@ int x11_window_create_display (int bitmap_depth)
                         }
                         if(hwscale_yv12)
                         {
-                                hwscale_redmask=0xff0000;
-                                hwscale_greenmask=0xff00;
-                                hwscale_bluemask=0xff;
-                                hwscale_bpp=32;
                                 hwscale_format=FOURCC_YV12;
                                 if(!(FindXvPort(display, hwscale_format, &xv_port)))
                                 {
@@ -697,7 +687,6 @@ int x11_window_create_display (int bitmap_depth)
                                 if (shm_info.shmid < 0)
                                 {
                                         fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
-                                        x11_window_close_display();
                                         return OSD_NOT_OK;
                                 }
 
@@ -710,7 +699,7 @@ int x11_window_create_display (int bitmap_depth)
                                 if (!scaled_buffer_ptr)
                                 {
                                         fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-                                        x11_window_close_display();return OSD_NOT_OK;
+                                        return OSD_NOT_OK;
                                 }
 
                                 shm_info.readOnly = FALSE;
@@ -720,7 +709,7 @@ int x11_window_create_display (int bitmap_depth)
                                 if (!XShmAttach (display, &shm_info))
                                 {
                                         fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
-                                        x11_window_close_display();return OSD_NOT_OK;
+                                        return OSD_NOT_OK;
                                 }
                                 XSync (display, False);  /* be sure to get request processed */
                                 /* sleep (2);          enought time to notify error if any */
@@ -791,7 +780,7 @@ int x11_window_create_display (int bitmap_depth)
 
 			image = XShmCreateImage (display,
 					xvisual,
-					depth,
+					screen->root_depth,
 					ZPixmap,
 					NULL,
 					&shm_info,
@@ -805,7 +794,6 @@ int x11_window_create_display (int bitmap_depth)
 				if (shm_info.shmid < 0)
 				{
 					fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
-					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 
@@ -818,7 +806,6 @@ int x11_window_create_display (int bitmap_depth)
 				if (!scaled_buffer_ptr)
 				{
 					fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 
@@ -829,7 +816,6 @@ int x11_window_create_display (int bitmap_depth)
 				if (!XShmAttach (display, &shm_info))
 				{
 					fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
-					x11_window_close_display();
 					return OSD_NOT_OK;
 				}
 				XSync (display, False);  /* be sure to get request processed */
@@ -865,12 +851,11 @@ int x11_window_create_display (int bitmap_depth)
 			if (!scaled_buffer_ptr)
 			{
 				fprintf (stderr_file, "Error: failed to allocate bitmap buffer.\n");
-				x11_window_close_display();
 				return OSD_NOT_OK;
 			}
 			image = XCreateImage (display,
 					xvisual,
-					depth,
+					screen->root_depth,
 					ZPixmap,
 					0,
 					(char *) scaled_buffer_ptr,
@@ -881,18 +866,16 @@ int x11_window_create_display (int bitmap_depth)
 			if (!image)
 			{
 				fprintf (stderr_file, "OSD ERROR: could not create image.\n");
-				x11_window_close_display();
 				return OSD_NOT_OK;
 			}
 			break;
 		default:
 			fprintf (stderr_file, "Error unknown X11 update method, this shouldn't happen\n");
-			x11_window_close_display();
 			return OSD_NOT_OK;
 	}
 
 	/* Now we know if we have XIL/ Xv / MIT-SHM / Normal:
-	   change the hints and size if needed and setup eventmask */
+	   change the hints and size if needed */
 	if (!run_in_root_window)
 	{
 #ifdef USE_XIL
@@ -922,8 +905,8 @@ int x11_window_create_display (int bitmap_depth)
                         }
                         else    
                         {
-				window_width  = DisplayWidth(display, screen_no);
-				window_height = DisplayHeight(display, screen_no);
+				window_width  = screen->width;
+				window_height = screen->height;
 
 				hints.flags=PMinSize|PMaxSize;
 				hints.flags|=USPosition|USSize;
@@ -944,33 +927,33 @@ int x11_window_create_display (int bitmap_depth)
 	/* verify the number of bits per pixel and choose the correct update method */
 #ifdef USE_HWSCALE
 	if (use_hwscale)
-		depth = hwscale_bpp;
+	{
+		dest_depth = hwscale_bpp;
+		hwscale_visual.class = TrueColor;
+		xvisual = &hwscale_visual;
+        }
         else
 #endif
 #ifdef USE_XIL
 	if (use_xil)
 		/* XIL uses 16 bit visuals and does any conversion it self */
-		depth = 16;
+		dest_depth = 16;
         else
 #endif
-	        depth = image->bits_per_pixel;
+	        dest_depth = image->bits_per_pixel;
 
-	/* setup the palette_info struct now we have the depth */
-	if (x11_init_palette_info() != OSD_OK)
+	/* setup the palette_info struct now we have the visual */
+	if (x11_init_palette_info(xvisual) != OSD_OK)
 	{
-		x11_window_close_display();
 		return OSD_NOT_OK;
 	}
 
-	fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
-	effect_dest_depth = depth;
+	fprintf(stderr_file, "Actual bits per pixel = %d... ", dest_depth);
 	if (bitmap_depth == 32)
 	{
 #ifdef USE_HWSCALE
 		if(use_hwscale && hwscale_yuv)
 		{
-		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
-		        effect_dest_depth = hwscale_format;
 			display_palette_info.fourcc_format = hwscale_format;
 			switch(hwscale_format)
 			{
@@ -1002,12 +985,9 @@ int x11_window_create_display (int bitmap_depth)
 		}
 		else
 #endif
-			switch(depth)
+			switch(dest_depth)
 			{
                             case 16:
-                                /* make effect render in 32 bpp, we then
-                                   convert this ourselves */
-                                effect_dest_depth = 32;
                                 if ((xvisual->red_mask   == (0x1F << 11)) &&
                                     (xvisual->green_mask == (0x3F <<  5)) &&
                                     (xvisual->blue_mask  == (0x1F      )))
@@ -1032,8 +1012,6 @@ int x11_window_create_display (int bitmap_depth)
 #ifdef USE_HWSCALE
 		if(use_hwscale && hwscale_yuv)
 		{
-		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
-		        effect_dest_depth = hwscale_format;
 			display_palette_info.fourcc_format = hwscale_format;
 			switch(hwscale_format)
 			{
@@ -1065,7 +1043,7 @@ int x11_window_create_display (int bitmap_depth)
 		}
 		else
 #endif
-			switch (depth)
+			switch (dest_depth)
 			{
 				case 16:
 					x11_window_update_display_func = x11_window_update_16_to_16bpp;
@@ -1081,13 +1059,13 @@ int x11_window_create_display (int bitmap_depth)
 
 	if (x11_window_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
-		x11_window_close_display();
+		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, dest_depth);
 		return OSD_NOT_OK;
 	}
 	fprintf(stderr_file, "Ok\n");
 
-	effect_init2(bitmap_depth, effect_dest_depth, window_width);
+	if (effect_open())
+		return OSD_NOT_OK;
 
 #ifdef USE_HWSCALE
 	xinput_open((use_hwscale && hwscale_fullscreen)? 1:0, event_mask);
@@ -1110,7 +1088,10 @@ void x11_window_close_display (void)
 
    /* Restore error handler to default */
    XSetErrorHandler (None);
-   
+
+   /* free effect buffers */
+   effect_close();
+
    /* ungrab keyb and mouse */
    xinput_close();
 
@@ -1121,22 +1102,25 @@ void x11_window_close_display (void)
       window = 0;
    }
 #ifdef USE_MITSHM
-   if (use_mit_shm)
+   if (mit_shm_attached)
    {
-       if (mit_shm_attached)
-          XShmDetach (display, &shm_info);
-       if (scaled_buffer_ptr)
-          shmdt (scaled_buffer_ptr);
-       scaled_buffer_ptr = NULL;
+      XShmDetach (display, &shm_info);
+      mit_shm_attached = 0;
+   }
+   if (use_mit_shm && scaled_buffer_ptr)
+   {
+      shmdt (scaled_buffer_ptr);
+      scaled_buffer_ptr = NULL;
    }
 #endif
    if (image)
    {
        XDestroyImage (image);
        scaled_buffer_ptr = NULL;
+       image = NULL;
    }
 #ifdef USE_XV
-   if(use_xv && xv_port>-1)
+   if(xv_port>-1)
    {
       XvUngrabPort(display,xv_port,CurrentTime);
       xv_port=-1;

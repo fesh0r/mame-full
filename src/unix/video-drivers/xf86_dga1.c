@@ -30,12 +30,11 @@ static struct
 	int width;
 	int bank_size;
 	int ram_size;
-	Colormap cmap;
 	void (*xf86_dga_update_display_func)(struct mame_bitmap *bitmap);
 	XF86VidModeModeInfo orig_mode;
 	int vidmode_changed;
 	int palette_dirty;
-} xf86ctx = {-1,NULL,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE};
+} xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,{0},FALSE,FALSE};
 		
 int xf86_dga1_init(void)
 {
@@ -191,7 +190,7 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	return OSD_OK;
 }
 
-static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_depth)
+static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_depth, int dest_depth)
 {
 	int sizeof_pixel;
 	
@@ -203,7 +202,7 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 
 	if (bitmap_depth == 32)
 	{
-	    if (depth == 32) 
+	    if (dest_depth == 32) 
 	    {
 		xf86ctx.xf86_dga_update_display_func =
 			xf86_dga_update_display_32_to_32bpp_direct;
@@ -211,7 +210,7 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 	}
 	else if (bitmap_depth == 16)
 	{
-	    switch(depth)
+	    switch(dest_depth)
 	    {
 		case 16:
 			xf86ctx.xf86_dga_update_display_func =
@@ -230,13 +229,13 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 	
 	if (xf86ctx.xf86_dga_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "unsupported depth %dbpp\n",depth);
+		fprintf(stderr_file, "unsupported depth %dbpp\n", dest_depth);
 		return OSD_NOT_OK;
 	}
 	
-	fprintf(stderr_file, "XF86-DGA1 running at: %dbpp\n", depth);
+	fprintf(stderr_file, "XF86-DGA1 running at: %dbpp\n", dest_depth);
 	
-	sizeof_pixel  = depth / 8;
+	sizeof_pixel  = dest_depth / 8;
 
 	xf86ctx.addr  = (unsigned char*)xf86ctx.base_addr;
 	xf86ctx.addr += (((modeinfo->hdisplay - visual_width*widthscale) / 2) & ~7)
@@ -256,7 +255,7 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
    mouse and keyboard can't be setup before the display has. */
 int xf86_dga1_create_display(int bitmap_depth)
 {
-	int i, count;
+	int i, count, dest_depth=0;
 	XPixmapFormatValues *pixmaps;
 	XF86VidModeModeInfo *bestmode;
 	/* only have todo the fork's the first time we go DGA, otherwise people
@@ -267,7 +266,6 @@ int xf86_dga1_create_display(int bitmap_depth)
 	xf86_dga_first_click   = 1;
 	xf86ctx.palette_dirty  = FALSE;
 
-	xvisual = DefaultVisual(display,xf86ctx.screen);
 	window  = RootWindow(display,xf86ctx.screen);
 	/* dirty hack 24bpp can be either 24bpp packed or 32 bpp sparse */
 	pixmaps = XListPixmapFormats(display, &count);
@@ -278,19 +276,11 @@ int xf86_dga1_create_display(int bitmap_depth)
 		return OSD_NOT_OK;
 	}
 
-	/* HACK HACK HACK, keys get stuck when they are pressed when
-	   XDGASetMode is called, so wait for all keys to be released */
-	do {
-		char keys[32];
-		XQueryKeymap(display, keys);
-		for (i=0; (i<32) && (keys[i]==0); i++) {}
-	} while(i<32);
-
 	for(i=0; i<count; i++)
 	{
 		if(pixmaps[i].depth==DefaultDepth(display,xf86ctx.screen))
 		{
-			depth = pixmaps[i].bits_per_pixel;
+			dest_depth = pixmaps[i].bits_per_pixel;
 			break;
 		}  
 	}
@@ -301,8 +291,8 @@ int xf86_dga1_create_display(int bitmap_depth)
 	}
 	XFree(pixmaps);
 
-	/* setup the palette_info struct now we have the depth */
-	if (x11_init_palette_info() != OSD_OK)
+	/* setup the palette_info struct */
+	if (x11_init_palette_info(DefaultVisual(display,xf86ctx.screen)) != OSD_OK)
 		return OSD_NOT_OK;
 
 	if(xf86_dga_vidmode_check_exts())
@@ -316,7 +306,15 @@ int xf86_dga1_create_display(int bitmap_depth)
 	}
 	mode_fix_aspect((double)(bestmode->hdisplay)/bestmode->vdisplay);
 
-	if(xf86_dga_setup_graphics(bestmode, bitmap_depth))
+	/* HACK HACK HACK, keys get stuck when they are pressed when
+	   XDGASetMode is called, so wait for all keys to be released */
+	do {
+		char keys[32];
+		XQueryKeymap(display, keys);
+		for (i=0; (i<32) && (keys[i]==0); i++) {}
+	} while(i<32);
+
+	if(xf86_dga_setup_graphics(bestmode, bitmap_depth, dest_depth))
 		return OSD_NOT_OK;
 
 	if (first_time)
@@ -367,7 +365,8 @@ int xf86_dga1_create_display(int bitmap_depth)
 
 	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
 
-	effect_init2(bitmap_depth, depth, xf86ctx.width);
+	if(effect_open())
+		return OSD_NOT_OK;
 
 	return OSD_OK;
 }
@@ -434,11 +433,7 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap)
 
 void xf86_dga1_close_display(void)
 {
-	if(xf86ctx.cmap)
-	{
-		XFreeColormap(display,xf86ctx.cmap);
-		xf86ctx.cmap = 0;
-	}
+    	effect_close();
 	xinput_close();
 	XF86DGADirectVideo(display,xf86ctx.screen, 0);
 	if(xf86ctx.vidmode_changed)

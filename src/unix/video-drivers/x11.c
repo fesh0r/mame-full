@@ -135,41 +135,19 @@ void sysdep_display_close(void)
 	(*x_func[x11_video_mode].close_display)();
 }
 
-int x11_init_palette_info(void)
+int x11_init_palette_info(Visual *xvisual)
 {
 	memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
 
-	if (depth == 8)
+	if (xvisual->class != TrueColor)
 	{
-		if (xvisual->class != PseudoColor)
-		{
-			fprintf(stderr_file, "X11: Error 8 bpp only supported on PseudoColor visuals\n");
-			return OSD_NOT_OK;
-		}
+		fprintf(stderr_file, "X11: Error: only TrueColor visuals are supported\n");
+		return OSD_NOT_OK;
 	}
-	else
-	{
-		if (xvisual->class != TrueColor)
-		{
-			fprintf(stderr_file, "X11: Error: %d bpp modes only supported on TrueColor visuals\n",
-					depth);
-			return OSD_NOT_OK;
-		}
-#ifdef USE_HWSCALE
-		if(use_hwscale)
-		{
-			display_palette_info.red_mask   = hwscale_redmask;
-			display_palette_info.green_mask = hwscale_greenmask;
-			display_palette_info.blue_mask  = hwscale_bluemask;
-		}
-		else
-#endif
-		{
-			display_palette_info.red_mask   = xvisual->red_mask;
-			display_palette_info.green_mask = xvisual->green_mask;
-			display_palette_info.blue_mask  = xvisual->blue_mask;
-		}
-	}
+	display_palette_info.red_mask   = xvisual->red_mask;
+	display_palette_info.green_mask = xvisual->green_mask;
+	display_palette_info.blue_mask  = xvisual->blue_mask;
+
 	return OSD_OK;
 }
 

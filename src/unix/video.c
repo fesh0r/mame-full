@@ -28,7 +28,6 @@ static char *vector_res = NULL;
 static int use_auto_double = 1;
 static int frameskipper = 0;
 static int bitmap_depth;
-static int using_15bpp_rgb_direct;
 static int debugger_has_focus = 0;
 static struct rectangle normal_visual;
 static struct rectangle debug_visual;
@@ -93,7 +92,7 @@ struct rc_option video_opts[] = {
      NULL },
    { "bpp",		"b",			rc_int,		&options.color_depth,
      "0",		0,			0,		video_verify_bpp,
-     "Specify the colordepth the core should render, one of: auto(0), 8, 16" },
+     "Specify the colordepth the core should render, one of: auto(0), 15, 32" },
    { "arbheight",	"ah",			rc_int,		&normal_yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable)" },
@@ -437,15 +436,6 @@ void osd_video_initpre()
 		options.use_artwork &= ~ARTWORK_USE_BEZELS;
 	if (!use_artwork)
 		options.use_artwork = ARTWORK_USE_NONE;
-
-	/*
-	 * This may not be the best place for this, but it should 
-	 * work for the time being.
-	 */
-	effect_dbbuf = NULL;
-	rotate_dbbuf0 = NULL;
-	rotate_dbbuf1 = NULL;
-	rotate_dbbuf2 = NULL;
 }
 
 static void orient_rect(struct rectangle *rect)
@@ -488,7 +478,6 @@ int osd_create_display(const struct osd_create_params *params,
 		UINT32 *rgb_components)
 {
 	bitmap_depth = (params->depth == 15) ? 16 : params->depth;
-	using_15bpp_rgb_direct = (params->depth == 15);
 
 	current_palette = normal_palette = NULL;
 	debug_visual.min_x = 0;
@@ -564,9 +553,6 @@ int osd_create_display(const struct osd_create_params *params,
 	   initialising any input devices */
 	if (osd_input_initpost() != OSD_OK)
 		return -1;
-
-	if (bitmap_depth == 16)
-		fprintf(stderr_file,"Using 16bpp video mode\n");
 
 	if (!(normal_palette = sysdep_palette_create(&display_palette_info, params->depth)))
 		return 1;

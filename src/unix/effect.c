@@ -116,9 +116,14 @@ static void init_rgb2yuv(int display_mode)
 
 
 /* called from config.c to set scale parameters */
-void effect_init1()
+void effect_init(void)
 {
-        int disable_arbscale = 0;
+  int disable_arbscale = 0;
+
+  effect_dbbuf = NULL;
+  rotate_dbbuf0 = NULL;
+  rotate_dbbuf1 = NULL;
+  rotate_dbbuf2 = NULL;
 
   switch (effect) {
     case EFFECT_SCALE2X:
@@ -128,22 +133,22 @@ void effect_init1()
     case EFFECT_6TAP2X:
       normal_widthscale = 2;
       normal_heightscale = 2;
-                        disable_arbscale = 1;
+      disable_arbscale = 1;
       break;
     case EFFECT_RGBSTRIPE:
       normal_widthscale = 3;
       normal_heightscale = 2;
-                        disable_arbscale = 1;
+      disable_arbscale = 1;
       break;
     case EFFECT_RGBSCAN:
       normal_widthscale = 2;
       normal_heightscale = 3;
-                        disable_arbscale = 1;
+      disable_arbscale = 1;
       break;
     case EFFECT_SCAN3:
       normal_widthscale = 3;
       normal_heightscale = 3;
-                        disable_arbscale = 1;
+      disable_arbscale = 1;
       break;
   }
 
@@ -351,19 +356,22 @@ static effect_6tap_render_func_p effect_6tap_render_funcs[] = {
    effect_6tap_render_15,
    effect_6tap_render_16,
    effect_6tap_render_32,
-   NULL,
+   effect_6tap_render_YUY2,
    NULL
 };
 
 /* called from <driver>_create_display by each video driver;
  * initializes function pointers to correct depths
- * and allocates buffer for doublebuffering */
-void effect_init2(int src_depth, int dst_depth, int dst_width)
+ * and allocates buffer for doublebuffering.
+ *
+ * The caller should call effect_close() on failure and when
+ * done, to free (partly) allocated buffers */
+int effect_open(void)
 {
   int i = -1;
 
-  free(effect_dbbuf);
-  effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*4);
+  if (!(effect_dbbuf = malloc(visual_width*normal_widthscale*normal_heightscale*4)))
+    return 1;
   memset(effect_dbbuf, visual_width*normal_widthscale*normal_heightscale*4, 0);
 
   switch(display_palette_info.fourcc_format)
@@ -479,26 +487,17 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
 
     /* add safety of +- 16 pixels, since some effects assume that this
        is present and otherwise segfault */
-    if (rotate_dbbuf0)
-    {
-       rotate_dbbuf0 -= 16;
-       free(rotate_dbbuf0);
-    }
-    rotate_dbbuf0 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
+    if (!(rotate_dbbuf0 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+      return 1;
     rotate_dbbuf0 += 16;
 
     if ((effect == EFFECT_SCALE2X) ||
         (effect == EFFECT_HQ2X)    ||
         (effect == EFFECT_LQ2X)) {
-      if (rotate_dbbuf1)
-      {
-         rotate_dbbuf1 -= 16;
-         rotate_dbbuf2 -= 16;
-         free(rotate_dbbuf1);
-         free(rotate_dbbuf2);
-      }
-      rotate_dbbuf1 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
-      rotate_dbbuf2 = calloc(visual_width*video_depth/8 + 32, sizeof(char));
+      if (!(rotate_dbbuf1 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+        return 1;
+      if (!(rotate_dbbuf2 = calloc(visual_width*video_depth/8 + 32, sizeof(char))))
+        return 1;
       rotate_dbbuf1 += 16;
       rotate_dbbuf2 += 16;
     }
@@ -507,29 +506,93 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
   /* I need these buffers */
   if (effect == EFFECT_6TAP2X)
   {
-    free(_6tap2x_buf0);
-    free(_6tap2x_buf1);
-    free(_6tap2x_buf2);
-    free(_6tap2x_buf3);
-    free(_6tap2x_buf4);
-    free(_6tap2x_buf5);
-    _6tap2x_buf0 = calloc(visual_width*8, sizeof(char));
-    _6tap2x_buf1 = calloc(visual_width*8, sizeof(char));
-    _6tap2x_buf2 = calloc(visual_width*8, sizeof(char));
-    _6tap2x_buf3 = calloc(visual_width*8, sizeof(char));
-    _6tap2x_buf4 = calloc(visual_width*8, sizeof(char));
-    _6tap2x_buf5 = calloc(visual_width*8, sizeof(char));
+    if (!(_6tap2x_buf0 = calloc(visual_width*8, sizeof(char))))
+      return 1;
+    if (!(_6tap2x_buf1 = calloc(visual_width*8, sizeof(char))))
+      return 1;
+    if (!(_6tap2x_buf2 = calloc(visual_width*8, sizeof(char))))
+      return 1;
+    if (!(_6tap2x_buf3 = calloc(visual_width*8, sizeof(char))))
+      return 1;
+    if (!(_6tap2x_buf4 = calloc(visual_width*8, sizeof(char))))
+      return 1;
+    if (!(_6tap2x_buf5 = calloc(visual_width*8, sizeof(char))))
+      return 1;
     if(video_real_depth == 16)
     {
        /* HACK: we need the palette lookup table to be 888 rgb, this means
           that the lookup table won't be usable for normal blitting anymore
           but that is not a problem, since we're not doing normal blitting */
+       display_palette_info.fourcc_format = 0;
        display_palette_info.red_mask   = 0x00FF0000;
        display_palette_info.green_mask = 0x0000FF00;
        display_palette_info.blue_mask  = 0x000000FF;
     }
   }
+  return 0;
 }
+
+void effect_close(void)
+{
+  if (effect_dbbuf)
+  {
+    free(effect_dbbuf);
+    effect_dbbuf = NULL;
+  }
+
+  /* there is a safety of +- 16 pixels, since some effects assume that this
+     is present and otherwise segfault */
+  if (rotate_dbbuf0)
+  {
+     rotate_dbbuf0 -= 16;
+     free(rotate_dbbuf0);
+     rotate_dbbuf0 = NULL;
+  }
+  if (rotate_dbbuf1)
+  {
+     rotate_dbbuf1 -= 16;
+     free(rotate_dbbuf1);
+     rotate_dbbuf1 = NULL;
+  }
+  if (rotate_dbbuf2)
+  {
+     rotate_dbbuf2 -= 16;
+     free(rotate_dbbuf2);
+     rotate_dbbuf2 = NULL;
+  }
+
+  if (_6tap2x_buf0)
+  {
+    free(_6tap2x_buf0);
+    _6tap2x_buf0 = NULL;
+  }
+  if (_6tap2x_buf1)
+  {
+    free(_6tap2x_buf1);
+    _6tap2x_buf1 = NULL;
+  }
+  if (_6tap2x_buf2)
+  {
+    free(_6tap2x_buf2);
+    _6tap2x_buf2 = NULL;
+  }
+  if (_6tap2x_buf3)
+  {
+    free(_6tap2x_buf3);
+    _6tap2x_buf3 = NULL;
+  }
+  if (_6tap2x_buf4)
+  {
+    free(_6tap2x_buf4);
+    _6tap2x_buf4 = NULL;
+  }
+  if (_6tap2x_buf5)
+  {
+    free(_6tap2x_buf5);
+    _6tap2x_buf5 = NULL;
+  }
+}
+
 
 /* These can't be moved to effect_funcs.c because they
    use inlined render functions */

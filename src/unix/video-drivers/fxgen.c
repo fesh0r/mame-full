@@ -24,8 +24,6 @@
 #include "pixel_convert.h"
 #include "sysdep/sysdep_display.h"
 
-#define PAUSEDCOLOR(p) (UINT16) ((((p) >> 11) << 10) | ((((p) &0x03E0) >> 6)<< 5) | (((p) & 0x001F) >> 1))
-
 void CalcPoint(GrVertex *vert,int x,int y);
 void InitTextures(void);
 int  InitVScreen(void);
@@ -36,8 +34,6 @@ void UpdateFXDisplay(struct mame_bitmap *bitmap);
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
 int fxvec_renderer(point *pt, int num_points);
-
-extern int emulation_paused;
 
 int fxwidth = 640;
 int fxheight = 480;
@@ -131,6 +127,36 @@ int InitGlide(void)
 
   blit_hardware_rotation = 1;
   return OSD_OK;
+}
+
+static void VScreenSignalHandler(int signo)
+{
+  grEnablePassThru();
+  orig_sigaction[signo].sa_handler(signo);
+}
+
+void VScreenCatchSignals(void)
+{
+  int i;
+  
+  /* catch fatal signals and restore the vgapassthru before exiting */
+  memset(&vscreen_sa, 0, sizeof(vscreen_sa));
+  vscreen_sa.sa_handler = VScreenSignalHandler;
+  for (i=0; signals_to_catch[i] != -1; i++)
+  {
+     sigaction(signals_to_catch[i], &vscreen_sa, &(orig_sigaction[signals_to_catch[i]]));
+  }
+}
+
+void VScreenRestoreSignals(void)
+{
+  int i;
+  
+  /* restore signal handlers */
+  for (i=0; signals_to_catch[i] != -1; i++)
+  {
+     sigaction(signals_to_catch[i], &(orig_sigaction[signals_to_catch[i]]), NULL);
+  }
 }
 
 void InitTextures(void)
@@ -405,17 +431,10 @@ static int SetResolution(struct rc_option *option, const char *arg,
   return -1;
 }
 
-static void VScreenSignalHandler(int signo)
-{
-  grEnablePassThru();
-  orig_sigaction[signo].sa_handler(signo);
-}
-
 /* Set up the virtual screen */
 
 int InitVScreen(void)
 {
-  int i;
   grGlideGetVersion(version);
 
   if(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -424,14 +443,6 @@ int InitVScreen(void)
   fprintf(stderr_file, "info: using Glide version %s\n", version);
   
   grSstSelect(0);
-
-  /* catch fatal signals and cleanly close Glide before exiting */
-  memset(&vscreen_sa, 0, sizeof(vscreen_sa));
-  vscreen_sa.sa_handler = VScreenSignalHandler;
-  for (i=0; signals_to_catch[i] != -1; i++)
-  {
-     sigaction(signals_to_catch[i], &vscreen_sa, &(orig_sigaction[signals_to_catch[i]]));
-  }
 
   if(!grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
      GR_ORIGIN_LOWER_LEFT,2,1))
@@ -497,12 +508,6 @@ void CloseVScreen(void)
   grGlideShutdown();
 }
 
-/* Not needed under GL */
-
-void sysdep_clear_screen(void)
-{
-}
-
 
 /* Update the texture with the contents of the game screen */
 
@@ -532,15 +537,9 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
-				if (!emulation_paused) {
-                                        memcpy(square->texture+texline*texsize,
-                                          (UINT16*)(bitmap->line[y])+visual.min_x+ofs,
-                                          width*2);
-				} else {
-                                       	for(i = 0;i < width;i++) {
-                                               	square->texture[texline*texsize+i] = PAUSEDCOLOR((((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i]));
-                                       	}
-				}
+                                memcpy(square->texture+texline*texsize,
+                                       (UINT16*)(bitmap->line[y])+visual.min_x+ofs,
+                                       width*2);
 			}
 		} 
 		break;
@@ -560,16 +559,9 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				else width=visual_width%texsize;
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
-				if (!emulation_paused) {
-					for(i = 0;i < width;i++) {
-						square->texture[texline*texsize+i] = 
-							current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
-					}
-				} else {
-					for(i = 0;i < width;i++) {
-						square->texture[texline*texsize+i] =
-							PAUSEDCOLOR(current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])]);
-					}
+				for(i = 0;i < width;i++) {
+					square->texture[texline*texsize+i] = 
+						current_palette->lookup[(((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i])];
 				}
 			}
 		}
@@ -591,16 +583,9 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 					
-				if (!emulation_paused) {
-					for(i = 0;i < width;i++) {
-						square->texture[texline*texsize+i] = 
-							_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
-					}
-				} else {
-					for(i = 0;i < width;i++) {
-						square->texture[texline*texsize+i] =
-							PAUSEDCOLOR(_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i])));
-					}
+				for(i = 0;i < width;i++) {
+					square->texture[texline*texsize+i] = 
+						_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[visual.min_x+ofs+i]));
 				}
 			}
 		}

@@ -166,10 +166,11 @@ int sysdep_create_display(int depth)
 		display_palette_info.blue_mask  = 0x001F;
 	}
 
-	effect_init2(depth, depth, scaled_visual_width);
-
 	/* init input */
 	if(svga_input_open(NULL, NULL))
+		return OSD_NOT_OK;
+
+	if (effect_open())
 		return OSD_NOT_OK;
 
 	return OSD_OK;
@@ -178,6 +179,8 @@ int sysdep_create_display(int depth)
 /* shut up the display */
 void sysdep_display_close(void)
 {
+    	effect_close();
+
 	/* close input */
 	svga_input_close();
 

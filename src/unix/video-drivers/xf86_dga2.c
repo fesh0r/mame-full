@@ -39,7 +39,6 @@ static struct
 	int vidmode_changed;
 } xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,FALSE};
 	
-static Visual dga_xvisual;
 
 #ifdef TDFX_DGA_WORKAROUND
 static int current_X11_mode = 0;
@@ -187,13 +186,13 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	return OSD_OK;
 }
 
-static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
+static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth, int dest_depth)
 {
 	int sizeof_pixel;
 
 	if (bitmap_depth == 32)
 	{
-	    if (depth == 32)
+	    if (dest_depth == 32)
 	    {
 		xf86ctx.xf86_dga_update_display_func =
 			xf86_dga_update_display_32_to_32bpp_direct;
@@ -201,7 +200,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 	}
 	else if (bitmap_depth == 16)
 	{
-	    switch(depth)
+	    switch(dest_depth)
 	    {
 		case 16:
 			xf86ctx.xf86_dga_update_display_func =
@@ -220,13 +219,13 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 	
 	if (xf86ctx.xf86_dga_update_display_func == NULL)
 	{
-		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
+		fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, dest_depth);
 		return OSD_NOT_OK;
 	}
 	
-	fprintf(stderr_file, "XF86-DGA2 running at: %dbpp\n", depth);
+	fprintf(stderr_file, "XF86-DGA2 running at: %dbpp\n", dest_depth);
 	
-	sizeof_pixel  = depth / 8;
+	sizeof_pixel  = dest_depth / 8;
 
 	xf86ctx.addr  = (unsigned char*)xf86ctx.device->data;
 #if 1
@@ -249,6 +248,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo, int bitmap_depth)
 int xf86_dga2_create_display(int bitmap_depth)
 {
 	int i,bestmode;
+	Visual dga_xvisual;
 	/* only have todo the fork's the first time we go DGA, otherwise people
 	   who do a lott of dga <-> window switching will get a lott of
 	   children */
@@ -287,8 +287,6 @@ int xf86_dga2_create_display(int bitmap_depth)
 		/ xf86ctx.device->mode.bitsPerPixel;
 	xf86ctx.vidmode_changed = TRUE;
 
-	depth = xf86ctx.device->mode.bitsPerPixel;
-
 #if 0 /* DEBUG */
 	fprintf(stderr_file, "Debug: bitmap_depth =%d   mode.bitsPerPixel = %d"
 			"   mode.depth = %d\n", bitmap_depth, 
@@ -296,31 +294,29 @@ int xf86_dga2_create_display(int bitmap_depth)
 			xf86ctx.device->mode.depth);
 #endif
 
-	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
+	fprintf(stderr_file,"XF86DGA2 switched To Mode: %d x %d\n",
 		xf86ctx.device->mode.viewportWidth,
 		xf86ctx.device->mode.viewportHeight);
 
-	xvisual = &dga_xvisual;
+	/* setup the palette_info struct */
 	dga_xvisual.class = xf86ctx.device->mode.visualClass;
 	dga_xvisual.red_mask = xf86ctx.device->mode.redMask;
 	dga_xvisual.green_mask = xf86ctx.device->mode.greenMask;
 	dga_xvisual.blue_mask = xf86ctx.device->mode.blueMask;
-
-	/* setup the palette_info struct now we have the depth */
-	if (x11_init_palette_info() != OSD_OK)
+	if (x11_init_palette_info(&dga_xvisual) != OSD_OK)
 	    return OSD_NOT_OK;
         
 	mode_fix_aspect((double)(xf86ctx.device->mode.viewportWidth)/
 		xf86ctx.device->mode.viewportHeight);
 
-	if(xf86_dga_setup_graphics(xf86ctx.device->mode, bitmap_depth))
-		return OSD_NOT_OK;
+	if(xf86_dga_setup_graphics(xf86ctx.device->mode, bitmap_depth, xf86ctx.device->mode.bitsPerPixel))
+	    return OSD_NOT_OK;
 	
         /* 2 means grab keyb and mouse ! */
 	if(xinput_open(2, 0))
 	{
-		fprintf(stderr_file,"XGrabKeyboard failed\n");
-		return OSD_NOT_OK;
+	    fprintf(stderr_file,"XGrabKeyboard failed\n");
+	    return OSD_NOT_OK;
 	}
 
 	XDGASetViewport(display,xf86ctx.screen,0,0,0);
@@ -344,7 +340,8 @@ int xf86_dga2_create_display(int bitmap_depth)
 					  xf86ctx.device, AllocNone);
 	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
 
-	effect_init2(bitmap_depth, depth, xf86ctx.width);
+	if(effect_open())
+	    return OSD_NOT_OK;
 	
 	return OSD_OK;
 }
@@ -422,6 +419,7 @@ void xf86_dga2_close_display(void)
 		XFreeColormap(display,xf86ctx.cmap);
 		xf86ctx.cmap = 0;
 	}
+    	effect_close();
 	xinput_close();
 	if(xf86ctx.vidmode_changed)
 	{

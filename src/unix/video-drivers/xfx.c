@@ -26,6 +26,8 @@
 int  InitVScreen(void);
 void CloseVScreen(void);
 int  InitGlide(void);
+void VScreenCatchSignals(void);
+void VScreenRestoreSignals(void);
 
 extern int fxwidth;
 extern int fxheight;
@@ -204,6 +206,8 @@ int sysdep_create_display(int depth)
   
   if (InitVScreen() != OSD_OK)
      return OSD_NOT_OK;
+
+  VScreenCatchSignals();
   
   return OSD_OK;
 }
@@ -215,6 +219,8 @@ int sysdep_create_display(int depth)
 
 void sysdep_display_close (void)
 {
+   VScreenRestoreSignals();
+
    XFreeColormap(display, colormap);
      
    if(window) {

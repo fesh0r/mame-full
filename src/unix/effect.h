@@ -28,13 +28,14 @@ extern char *_6tap2x_buf5;
 /* from video.c, needed to scale the display according to the requirements of the effect */
 extern int normal_widthscale, normal_heightscale, normal_yarbsize;
 
-/* called from config.c to set scale parameters */
-void effect_init1();
+/* called from main.c to set scale parameters */
+void effect_init();
 
 /* called from <driver>_create_display by each video driver;
  * initializes function pointers to correct depths
  * and allocates buffer for doublebuffering */
-void effect_init2(int src_depth, int dst_depth, int dst_width);
+int  effect_open(void);
+void effect_close(void);
 
 /*** effect function pointers (use these) ***/
 typedef void (*effect_func_p)(void *dst0, void *dst1,
