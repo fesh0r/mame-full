@@ -140,7 +140,7 @@ const struct GameDriver *test_drivers[] =
 //	DRIVER( smsehs24 )	/* Sega Master System								*/
 //	DRIVER( smsuh34 )	/* Sega Master System								*/
 //	DRIVER( smseh34 )	/* Sega Master System								*/
-//	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
 //TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
@@ -191,12 +191,12 @@ const struct GameDriver *test_drivers[] =
     /* ACORN */
 //	DRIVER( atom )      /* 1979 Acorn Atom									*/
 //	DRIVER( atomeb )    /* 1979 Acorn Atom									*/
-//	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
-//	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
-//	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
-//	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
-//	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
-//TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
+	DRIVER( bbca )      /* 1981 BBC Micro Model A							*/
+	DRIVER( bbcb )      /* 1981 BBC Micro Model B							*/
+	DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc			*/
+	DRIVER( bbcbp )     /* 198? BBC Micro Model B+ 64K						*/
+	DRIVER( bbcbp128 )  /* 198? BBC Micro Model B+ 128K						*/
+TESTDRIVER( bbcb6502 )  /* 198? BBC B WD1770 with a 6502 second processor	*/
 //TESTDRIVER( electron )	/* 198? Acorn Electron								*/
 //TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 
