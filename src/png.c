@@ -268,10 +268,10 @@ int png_read_file(void *fp, struct png_info *p)
 				while(*text++);
 				chunk_data[chunk_length]=0;
 
-				if (strcmp (chunk_data, "x_offset") == 0)
-					p->x_offset = atoi(text);
-				if (strcmp (chunk_data, "y_offset") == 0)
-					p->y_offset = atoi(text);
+				if (strcmp ((const char *)chunk_data, "x_offset") == 0)
+					p->x_offset = atoi((const char *)text);
+				if (strcmp ((const char *)chunk_data, "y_offset") == 0)
+					p->y_offset = atoi((const char *)text);
 
 				logerror("Keyword: %s\n", chunk_data);
 				logerror("Text: %s\n", text);
