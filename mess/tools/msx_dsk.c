@@ -102,7 +102,7 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 			if (f->name)
 				{
 				name_len = strlen (f->name);
-				if (name_len > 4 || !strcasecmp (f->name + name_len - 4, ".msx") )
+				if (name_len > 4 || !strcmpi (f->name + name_len - 4, ".msx") )
 					format = MSX_2DD;
 				}	
 			break;
