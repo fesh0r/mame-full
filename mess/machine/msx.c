@@ -19,6 +19,7 @@
 #include "machine/8255ppi.h"
 #include "includes/tc8521.h"
 #include "includes/wd179x.h"
+#include "includes/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
 #include "vidhrdw/v9938.h"
 #include "formats/fmsx_cas.h"
@@ -450,16 +451,8 @@ int msx_load_rom (int id)
         }
 		msx1.cart[id].mem = pmem;
 		memset (pmem + 0x4000, 0xff, 0x4000);
-		i = 0;
-#if 0
-		while (DiskPatches[i])
-			{
-			pmem[DiskPatches[i]] = 0xd3; /* out (n),A */
-			pmem[DiskPatches[i]+1] = 0xd0; /* n - operand */
-			pmem[DiskPatches[i]+2] = 0xc9; /* ret */
-			i++;
-			}
-#endif
+        msx1.cart[id].banks[2] = 2;
+        msx1.cart[id].banks[3] = 3;
 		break;
 	}
 
@@ -740,7 +733,8 @@ WRITE_HANDLER ( msx_psg_port_a_w )
 WRITE_HANDLER ( msx_psg_port_b_w )
 {
     /* Arabic or kana mode led */
-	if ( (data ^ msx1.psg_b) & 0x80) set_led_status (1, !(data & 0x80) );
+	if ( (data ^ msx1.psg_b) & 0x80) 
+		set_led_status (2, !(data & 0x80) );
 
     if ( (msx1.psg_b ^ data) & 0x10)
 		{
@@ -828,14 +822,45 @@ void msx2_nvram (void *file, int write_local)
 ** The evil disk functions ...
 */
 
+/*
+From: erbo@xs4all.nl (erik de boer)
+
+sony and philips have used (almost) the same design
+and this is the memory layout
+but it is not a msx standard !
+
+WD1793 or wd2793 registers
+
+adress
+
+7FF8H read  status register
+      write command register
+7FF9H  r/w  track register (r/o on NMS 8245 and Sony)
+7FFAH  r/w  sector register (r/o on NMS 8245 and Sony)
+7FFBH  r/w  data register
+
+
+hardware registers
+
+adress
+
+7FFCH r/w  bit 0 side select 
+7FFDH r/w  b7>M-on , b6>in-use , b1>ds1 , b0>ds0  (all neg. logic)
+7FFEH         not used
+7FFFH read b7>drq , b6>intrq 
+
+set on 7FFDH bit 2 always to 0 (some use it as disk change reset)
+
+*/
+
 static void msx_wd179x_int (int state)
 	{
 	switch (state)
 		{
 		case WD179X_IRQ_CLR: msx1.dsk_stat |= 0x40; break;
 		case WD179X_IRQ_SET: msx1.dsk_stat &= ~0x40; break;
-		case WD179X_DRQ_CLR: msx1.dsk_stat &= ~0x80; break;
-		case WD179X_DRQ_SET: msx1.dsk_stat |= 0x80; break;
+		case WD179X_DRQ_CLR: msx1.dsk_stat |= 0x80; break;
+		case WD179X_DRQ_SET: msx1.dsk_stat &= ~0x80; break;
 		}
 	}
 
@@ -847,9 +872,92 @@ READ_HANDLER (msx_disk_r)
 		case 0x1ff9: return wd179x_track_r (0); 
 		case 0x1ffa: return wd179x_sector_r (0); 
 		case 0x1ffb: return wd179x_data_r (0); 
-		case 0x1fff: return msx1.dsk_stat | 0x3f;
+		case 0x1fff: return msx1.dsk_stat;
 		default: return msx1.disk[offset];
 		}
+	}
+
+WRITE_HANDLER (msx_disk_w)
+	{
+	switch (offset)
+		{
+		case 0x1ff8: 
+			wd179x_command_w (0, data); 
+			break;
+		case 0x1ff9: 
+			wd179x_track_w (0, data); 
+			break;
+		case 0x1ffa: 
+			wd179x_sector_w (0, data); 
+			break;
+		case 0x1ffb: 
+			wd179x_data_w (0, data); 
+			break;
+		case 0x1ffc: 
+			wd179x_set_side (data & 1);
+			msx1.disk[0x1ffc] = data | 0xfe;
+			break;
+		case 0x1ffd:
+			wd179x_set_drive (data & 3);
+			if ( (msx1.disk[0x1ffd] ^ data) & 2)
+				set_led_status (0, !(data & 2) );
+			msx1.disk[0x1ffd] = data | 0x7c;
+			break;
+		}
+	}
+
+int msx_floppy_id (int id)
+	{
+	void *f;
+	int size;
+
+	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	if (f)
+		{
+		size = osd_fsize (f);
+		osd_fclose (f);
+
+		switch (size)
+			{
+			case 360*1024:
+			case 720*1024:
+				return INIT_OK;
+			default:
+				return INIT_FAILED;
+			}	
+		}
+	else
+		return INIT_OK;
+	}
+	
+int msx_floppy_init (int id)
+	{
+	void *f;
+	int size, heads = 2;
+
+	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, OSD_FOPEN_READ);
+	if (f)
+		{
+		size = osd_fsize (f);
+		osd_fclose (f);
+
+		switch (size)
+			{
+			case 360*1024:
+				heads = 1;
+			case 720*1024:
+				break;
+			default:
+				return INIT_FAILED;
+			}	
+		}
+
+	if (basicdsk_floppy_init (id) != INIT_OK)
+		return INIT_FAILED;
+
+	basicdsk_set_geometry (id, 80, heads, 9, 512, 1);
+
+	return INIT_OK;
 	}
 
 /*
@@ -867,7 +975,7 @@ static void msx_ppi_port_c_w (int chip, int data)
 
     /* caps lock */
     if ( (old_val ^ data) & 0x40)
-		set_led_status (0, !(data & 0x40) );
+		set_led_status (1, !(data & 0x40) );
     /* key click */
     if ( (old_val ^ data) & 0x80)
         DAC_signed_data_w (0, (data & 0x80 ? 0x7f : 0));
@@ -917,9 +1025,6 @@ static void msx_set_slot_1 (int page) {
     unsigned char *ROM;
     ROM = memory_region(REGION_CPU1);
 
-	if (page == 1)
-		memory_set_bankhandler_r (4, 0, MRA_BANK4);
-		
     if (msx1.cart[0].type == 0 && msx1.cart[0].mem)
     {
         cpu_setbank (1 + page * 2, msx1.cart[0].mem + page * 0x4000);
@@ -955,9 +1060,6 @@ static void msx_set_slot_2 (int page)
 {
     int n;
 
-	if (page == 1)
-		memory_set_bankhandler_r (4, 0, MRA_BANK4);
-		
     if (msx1.cart[1].type == 0 && msx1.cart[1].mem)
     {
         cpu_setbank (1 + page * 2, msx1.cart[1].mem + page * 0x4000);
@@ -995,6 +1097,8 @@ static void msx_set_all_mem_banks (void)
 {
     int i;
 
+	memory_set_bankhandler_r (4, 0, MRA_BANK4);
+		
     for (i=0;i<4;i++)
         msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
 }
@@ -1314,32 +1418,8 @@ static void msx_cart_write (int cart, int offset, int data)
         if (!offset) DAC_data_w (0, data);
         break;
 	case 15: /* disk rom */
-		switch (offset)
-			{
-			case 0x3ff8: 
-				wd179x_command_w (0, data); 
-				break;
-			case 0x3ff9: 
-				wd179x_track_w (0, data); 
-				break;
-			case 0x3ffa: 
-				wd179x_sector_w (0, data); 
-				break;
-			case 0x3ffb: 
-				wd179x_data_w (0, data); 
-				break;
-			case 0x3ffc: 
-				wd179x_set_side (data & 1);
-				msx1.cart[cart].mem[0x3ffc] = data | 0xfe;
-				break;
-			case 0x3ffd:
-				wd179x_set_drive (data & 3);
-				msx1.cart[cart].mem[0x3ffd] = data | 0x7c;
-				break;
-			default:
-				logerror ("Write %02x to %04x in diskrom (PC = %04x\n", 
-					data, offset + 0x4000, cpu_get_pc () );
-			}
+		if (offset >= 0x2000)
+			msx_disk_w (offset - 0x2000, data);
 		break;
     }
 }

@@ -105,7 +105,7 @@ PORT_END
   PORT_DIPNAME( 0x80, 0, "SIMPL")    \
    PORT_DIPSETTING( 0x00, DEF_STR ( Off ) )    \
    PORT_DIPSETTING( 0x80, DEF_STR ( On ) )    \
-  PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line")    \
+  PORT_DIPNAME( 0x20, 0x20, "Enforce 4/8 sprites/line")    \
    PORT_DIPSETTING( 0, DEF_STR( No ) )    \
    PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )    \
     \
@@ -586,7 +586,7 @@ static struct YM2413interface ym2413_interface=
 {
     1,                      /* 1 chip */
     3579545,                /* 3.57Mhz.. ? */
-    { 10 },                 /* Volume */
+    { 25 }	                /* Volume */
 };
 
 static struct Wave_interface wave_interface = {
@@ -870,8 +870,8 @@ static const struct IODevice io_msx[] = {
         2,                      /* count */
         "dsk\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
-        basicdsk_floppy_id,     /* id */
-        basicdsk_floppy_init,   /* init */
+        msx_floppy_id,    	/* id */
+        msx_floppy_init,   	/* init */
         basicdsk_floppy_exit,   /* exit */
         NULL,                   /* info */
         NULL,                   /* open */

@@ -34,12 +34,15 @@ While recording or playback you can hear the sound through the sound card
 of your computer. You can control the volume by pressing <SCROLL LOCK> and
 <~>. 
 
+.tap files from Virtual MSX can be converted to .cas using imgtool (see
+imgtool.txt for more information).
 
-Memmory Emulation
------------------
-The memory map is from a standard MSX1; there are no subslots, nor memmory
-mappers for RAM. RAM is 64Kb in slot 3, and slot 1 and 2 are where the 
-cartridges end up.
+
+Memory Emulation
+----------------
+The memory map is from a standard MSX1; there are no subslots, nor MSX2 
+memory mappers for RAM. RAM is 64Kb in slot 3, and slot 1 and 2 are where 
+the cartridges end up.
 
 
 Sound emulation
@@ -81,7 +84,7 @@ The v9958 isn't emulated at all.
 The MSX1 and MSX2 video chips only only display a limited number of sprites on
 one line; this causes sprite flickering, you can turn this off (which isn't
 like a real MSX of course) by pressing: <SCROLL LOCK>, <TAB> and going to the
-Dip Switches menu. Set "Enforce 4 sprites/line" to "Off". Note that sometimes
+Dip Switches menu. Set "Enforce 4/8 sprites/line" to "Off". Note that sometimes
 this feature is used for other purposes, like making sure a sprite is only
 partly displayed (when you enter a world in The Maze of Galious for example).
 
@@ -106,4 +109,27 @@ to having key-bindings aswell, so pressing <CTRL> or <ALT> will also work
 for the joysticks, but might give some unexpected results.
 
 The mouse emulation doesn't work properly yet. :(
+
+
+Disk Emulation
+--------------
+Disks are emulated through proper wd2793 emulation. Currently only the
+Philips and Sony diskroms are supported; the Panasonic machines use the
+tc8566af diskcontroller (unemulated) and the Brazillian machines are 
+port-based (not memory-mapped).
+
+You need a proper diskrom dump, and the msx.crc file in place. The diskrom 
+should be recognised as type 15 otherwise the driver doesn't know it's
+a diskrom. 
+
+Next specify the diskrom as one of the cartridges. That should do the 
+trick. :) Note that only .dsk files are supported; other formats can
+be converted to .dsk using imgtool (it can convert .msx, .img, .ddi, .xsa,
+multidisks -- see imgtool.txt for more information).
+
+Error aren't properly handled yet. ``not ready'' is reported as ``record
+not found'', which results in ``Disk I/O error'' in MSX-BASIC.
+
+Also not that memory emulation isn't complete so MSX2 memory mappers
+don't work yet.
 
