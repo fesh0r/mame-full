@@ -14,6 +14,7 @@
 
 #include "formats/flopimg.h"
 #include "pool.h"
+#include "utils.h"
 
 #define TRACK_LOADED		0x01
 #define TRACK_DIRTY			0x02
