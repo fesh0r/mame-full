@@ -484,6 +484,7 @@ void ti99_rom_cleanup(int id)
 
 	case SLOT_DROM:
 		cartridge_paged = FALSE;
+		current_page_ptr = cartridge_pages[0];
 		break;
 	}
 }
@@ -533,6 +534,9 @@ void ti99_init_machine(void)
 		cpu_setbank(3, sRAM_ptr);
 		cpu_setbank(4, sRAM_ptr);
 	}
+
+	/* reset cartridge mapper */
+	current_page_ptr = cartridge_pages[0];
 
 	/* init tms9901 */
 	tms9901_init(& tms9901reset_param_ti99);
@@ -778,7 +782,7 @@ WRITE16_HANDLER ( ti99_ww_wvdp )
 	tms9900_ICount -= 4;
 
 	if (offset & 1)
-	{	/* write VDP adress */
+	{	/* write VDP address */
 		TMS9928A_register_w(0, (data >> 8) & 0xff);
 	}
 	else
@@ -811,13 +815,26 @@ WRITE16_HANDLER ( ti99_ww_wv38 )
 {
 	tms9900_ICount -= 4;
 
-	if (offset & 1)
-	{	/* write VDP adress */
-		v9938_command_w(0, (data >> 8) & 0xff);
-	}
-	else
-	{	/* write VDP data */
+	switch (offset & /*3*/1)
+	{
+	case 0:
+		/* write VDP data */
 		v9938_vram_w(0, (data >> 8) & 0xff);
+		break;
+	case 1:
+		/* write VDP address */
+		v9938_command_w(0, (data >> 8) & 0xff);
+		break;
+#if 0
+	case 2:
+		/* write VDP palette */
+		v9938_palette_w(0, data);
+		break;
+	case 3:
+		/* write VDP register */
+		v9938_register_w(0, data);
+		break;
+#endif
 	}
 }
 
