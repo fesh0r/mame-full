@@ -89,49 +89,13 @@ static PALETTE_INIT( pc_cga );
 
 ***************************************************************************/
 
-unsigned char cga_palette[16 * CGA_PALETTE_SETS][3] =
-{
-/*  normal colors */
-    { 0x00,0x00,0x00 },
-    { 0x00,0x00,0xaa },
-    { 0x00,0xaa,0x00 },
-    { 0x00,0xaa,0xaa },
-    { 0xaa,0x00,0x00 },
-    { 0xaa,0x00,0xaa },
-    { 0xaa,0x55,0x00 },
-    { 0xaa,0xaa,0xaa },
-/*  light colors */
-    { 0x55,0x55,0x55 },
-    { 0x55,0x55,0xff },
-    { 0x55,0xff,0x55 },
-    { 0x55,0xff,0xff },
-    { 0xff,0x55,0x55 },
-    { 0xff,0x55,0xff },
-    { 0xff,0xff,0x55 },
-	{ 0xff,0xff,0xff },
-/*  normal greys */
-    { 0x00,0x00,0x00 },
-	{ 0x11,0x11,0x11 }, 
-	{ 0x44,0x44,0x44 }, 
-	{ 0x55,0x55,0x55 },
-    { 0x22,0x22,0x22 }, 
-	{ 0x33,0x33,0x33 }, 
-	{ 0x66,0x66,0x66 }, 
-	{ 0x77,0x77,0x77 },
-/*  light greys */
-    { 0x88,0x88,0x88 }, 
-	{ 0x99,0x99,0x99 }, 
-	{ 0xcc,0xcc,0xcc }, 
-	{ 0xdd,0xdd,0xdd },
-    { 0xaa,0xaa,0xaa }, 
-	{ 0xbb,0xbb,0xbb }, 
-	{ 0xee,0xee,0xee }, 
-	{ 0xff,0xff,0xff }
-};
+/* In cgapal.c; it's quite big */
+extern unsigned char cga_palette[16 * CGA_PALETTE_SETS][3];
 
 
 unsigned short cga_colortable[] =
 {
+/* Text modes */
      0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
      1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
      2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
@@ -153,7 +117,7 @@ unsigned short cga_colortable[] =
 	 0,0, 0,1, 0,2, 0,3, 0,4, 0,5, 0,6, 0,7,
 	 0,8, 0,9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
 /* the color sets for 2bpp graphics mode. There are 32*3 = 96 of these,
- * though only the first 64 apply on a real CGA. */
+ * though only the first 64 are documented. */
 /* Red/Green/Yellow set */
       0, 2, 4, 6,  1, 2, 4, 6,  2, 2, 4, 6,  3, 2, 4, 6, 
       4, 2, 4, 6,  5, 2, 4, 6,  6, 2, 4, 6,  7, 2, 4, 6, 
@@ -172,7 +136,7 @@ unsigned short cga_colortable[] =
       4,11,13,15,  5,11,13,15,  6,11,13,15,  7,11,13,15,
       8,11,13,15,  9,11,13,15, 10,11,13,15, 11,11,13,15,
      12,11,13,15, 13,11,13,15, 14,11,13,15, 15,11,13,15,
-/* Red/Cyan/White set (PC1512 only) */
+/* Red/Cyan/White set (undocumented) */
       0, 3, 4, 7,  1, 3, 4, 7,  2, 3, 4, 7,  3, 3, 4, 7, 
       4, 3, 4, 7,  5, 3, 4, 7,  6, 3, 4, 7,  7, 3, 4, 7, 
       8, 3, 4, 7,  9, 3, 4, 7, 10, 3, 4, 7, 11, 3, 4, 7, 
@@ -323,7 +287,9 @@ static VIDEO_START( pc_cga )
 	int buswidth;
 
 	/* Changed video RAM size to full 32k, for cards which support the
-	 * Plantronics chipset */
+	 * Plantronics chipset. 
+	 * TODO: Cards which don't support Plantronics should repeat at 
+	 * BC000h */
 	buswidth = cputype_databus_width(Machine->drv->cpu[0].cpu_type, ADDRESS_SPACE_PROGRAM);
 	switch(buswidth) {
 	case 8:
@@ -354,19 +320,39 @@ static VIDEO_START( pc_cga )
 
 static void pc_cga_check_palette(void)
 {
-	int i, p = 0;
+	int i, p = 0;	/* RGB palette */
 
 	switch(CGA_MONITOR)
 	{
 		case CGA_MONITOR_COMPOSITE: 
 			if (cga.mode_control & 4)
-				p = 16;
+			{
+				p = 1;	/* Greyscale palette */
+			}
+			else if (cga.mode_control & 2) /* Graphics mode */
+			{
+				if (cga.mode_control & 0x10) /* Hi-Res */
+				{
+					p = (cga.color_select & 0x0F) + 0x03;
+				}
+				else	/* Lo-Res */
+				{
+					p = (cga.color_select & 0x3F) + 0x13;
+				}
+
+			}
+			else
+			{
+				p = 2;	/* Text-mode colour palette */
+			}
 			break;
 		case CGA_MONITOR_MONO:
 		case CGA_MONITOR_LCD:
-			p = 16;
+			p = 1;		/* Greyscale palette */
 			break;
 	}
+	p *= 16;
+
 	if (p != cga.palette)
 	{
 		for(i = 0; i < (sizeof(cga_palette) / (3 * CGA_PALETTE_SETS)); i++)
@@ -386,10 +372,16 @@ static void pc_cga_check_palette(void)
  */
 static void pc_cga_mode_control_w(int data)
 {
+	unsigned char mask = 0x3B;
+
 	CGA_LOG(1,"CGA_mode_control_w",(errorlog, "$%02x: columns %d, gfx %d, hires %d, blink %d\n",
 		data, (data&1)?80:40, (data>>1)&1, (data>>4)&1, (data>>5)&1));
 
-	if ((cga.mode_control ^ data) & 0x3b)    /* text/gfx/width change */
+	/* CGA composite: Switching between mono & colour behaves like a 
+	 * mode change */
+	if(CGA_MONITOR == CGA_MONITOR_COMPOSITE) mask = 0x3F;
+
+	if ((cga.mode_control ^ data) & mask)    /* text/gfx/width change */
 	{
 		schedule_full_refresh();
 		if (dirtybuffer) memset(dirtybuffer, 1, videoram_size);
@@ -788,15 +780,18 @@ static void cga_gfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	const UINT16 *palette;
 	int colorset = cga.color_select & 0x3F;
 
-	/* Many clone chipsets use bit 2 of the mode control register to 
-	 * access a third palette */
+	/* Most chipsets use bit 2 of the mode control register to 
+	 * access a third palette. But not consistently. */
 	pc_cga_check_palette();
 	switch(CGA_CHIPSET)
 	{
+		/* The IBM Professional Graphics Controller behaves like
+		 * the PC1512, btw. */
 		case CGA_CHIPSET_PC1512:
 		if ((colorset < 32) && (cga.mode_control & 4)) colorset += 64;
 		break;
 
+		case CGA_CHIPSET_IBM:
 		case CGA_CHIPSET_PC200:
 		case CGA_CHIPSET_ATI:
 		case CGA_CHIPSET_PARADISE:
@@ -835,6 +830,85 @@ static void cga_gfx_1bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 
 	pc_render_gfx_1bpp(bitmap, crtc, NULL, palette, 2);
 }
+
+
+
+INLINE void cga_plot_unit_4bpp(struct mame_bitmap *bitmap, 
+				 int x, int y, int offs, int scale)
+{
+	int color;
+	int i;
+
+	color = (videoram[offs] & 0xF0) >> 4;
+	for (i = 0; i < scale; i++) plot_pixel(bitmap, x++, y, Machine->pens[color]);
+	color = videoram[offs] & 0x0F;
+	for (i = 0; i < scale; i++) plot_pixel(bitmap, x++, y, Machine->pens[color]);
+}
+
+
+static void cga_gfx_4bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc, int scale)
+{
+	int i, sx, sy, sh;
+	int	offs = crtc6845_get_start(crtc)*2;
+	int lines = crtc6845_get_char_lines(crtc);
+	int height = crtc6845_get_char_height(crtc);
+	int columns = crtc6845_get_char_columns(crtc)*2;
+
+	pc_cga_check_palette();
+
+	for (sy=0; sy<lines; sy++,offs=(offs+columns)&0x1fff) 
+	{
+		for (sh=0; sh<height; sh++, offs|=0x2000) 
+		{ 
+			// char line 0 used as a12 line in graphic mode
+			if (!(sh & 1))
+			{
+				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) 
+				{
+					if (!dirtybuffer || dirtybuffer[i]) 
+					{
+						cga_plot_unit_4bpp(bitmap, sx*scale, sy*height+sh, i, scale/2);
+						if (dirtybuffer)
+							dirtybuffer[i]=0;
+					}
+				}
+			}
+			else
+			{
+				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) 
+				{
+					if (!dirtybuffer || dirtybuffer[i]) 
+					{
+						cga_plot_unit_4bpp(bitmap, sx*scale, sy*height+sh, i, scale/2);
+						if (dirtybuffer)
+							dirtybuffer[i]=0;
+					}
+				}
+			}
+		}
+	}
+}
+
+
+/* The hi-res graphics mode on a colour composite monitor 
+ *
+ * The different scaling factors mean that the '160x200' versions of screens
+ * are the same size as the normal colour ones.
+ */ 
+static void cga_gfx_4bpph(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+{
+	pc_cga_check_palette();
+	cga_gfx_4bpp(bitmap, crtc, 8);
+}
+
+	
+/* The lo-res graphics mode on a colour composite monitor */
+static void cga_gfx_4bppl(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
+{
+	pc_cga_check_palette();
+	cga_gfx_4bpp(bitmap, crtc, 4);
+}
+	
 
 
 
@@ -973,15 +1047,18 @@ static void cga_pgfx_2bpp(struct mame_bitmap *bitmap, struct crtc6845 *crtc)
 	int colorset = cga.color_select & 0x3F;
 	const UINT16 *palette;
 
-	/* Many clone chipsets use bit 2 of the mode control register to 
-	 * access a third palette */
+	/* Most chipsets use bit 2 of the mode control register to 
+	 * access a third palette. But not consistently. */
 	pc_cga_check_palette();
 	switch(CGA_CHIPSET)
 	{
+		/* The IBM Professional Graphics Controller behaves like
+		 * the PC1512, btw. */
 		case CGA_CHIPSET_PC1512:
 		if ((colorset < 32) && (cga.mode_control & 4)) colorset += 64;
 		break;
 
+		case CGA_CHIPSET_IBM:
 		case CGA_CHIPSET_PC200:
 		case CGA_CHIPSET_ATI:
 		case CGA_CHIPSET_PARADISE:
@@ -1166,19 +1243,19 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 	static const pc_video_update_proc videoprocs_cga[] =
 	{
 		/* 0x08 - 0x0f */
-		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_inten,		cga_text_inten,		cga_gfx_4bppl,		cga_gfx_4bppl,
 		cga_text_inten,		cga_text_inten,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
 		/* 0x18 - 0x1f */
-		cga_text_inten_alt,	cga_text_inten_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
+		cga_text_inten_alt,	cga_text_inten_alt,	cga_gfx_4bpph,		cga_gfx_4bpph,
 		cga_text_inten_alt,	cga_text_inten_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 
 		/* 0x28 - 0x2f */
-		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
+		cga_text_blink,		cga_text_blink,		cga_gfx_4bppl,		cga_gfx_4bppl,
 		cga_text_blink,		cga_text_blink,		cga_gfx_2bpp,		cga_gfx_2bpp,
 
 		/* 0x38 - 0x3f */
-		cga_text_blink_alt,	cga_text_blink_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
+		cga_text_blink_alt,	cga_text_blink_alt,	cga_gfx_4bpph,		cga_gfx_4bpph,
 		cga_text_blink_alt,	cga_text_blink_alt,	cga_gfx_1bpp,		cga_gfx_1bpp,
 	};
 
@@ -1221,11 +1298,25 @@ pc_video_update_proc pc_cga_choosevideomode(int *width, int *height, struct crtc
 		if ((cga.mode_control & 2) && (cga.plantronics & 0x10))
 			proc = cga_pgfx_4bpp;
 
-		if (proc == cga_gfx_1bpp || proc == pc1512_gfx_4bpp || proc == cga_pgfx_2bpp)
-			*width *= 16;
-		else
-			*width *= 8;
+		/* The 160x200 modes are only available on a composite 
+		 * monitor */	
+		if (proc == cga_gfx_4bppl && 
+		    CGA_MONITOR != CGA_MONITOR_COMPOSITE) proc = cga_gfx_2bpp;
+		if (proc == cga_gfx_4bpph && 
+		    CGA_MONITOR != CGA_MONITOR_COMPOSITE) proc = cga_gfx_1bpp;
 
+		/* Modes that are 640 pixels wide */
+		if (proc == cga_gfx_1bpp    || 
+		    proc == cga_gfx_4bpph   ||
+		    proc == pc1512_gfx_4bpp || 
+	  	    proc == cga_pgfx_2bpp)
+		{
+			*width *= 16;
+		}
+		else
+		{
+			*width *= 8;
+		}
 	}
 	return proc;
 }

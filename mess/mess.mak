@@ -520,6 +520,7 @@ $(OBJ)/pcshare.a:					\
 	$(OBJ)/mess/vidhrdw/pc_video.o	\
 	$(OBJ)/mess/vidhrdw/pc_mda.o	\
 	$(OBJ)/mess/vidhrdw/pc_cga.o	\
+	$(OBJ)/mess/vidhrdw/cgapal.o	\
 	$(OBJ)/mess/vidhrdw/pc_vga.o	\
 
 $(OBJ)/pc.a:	   \
