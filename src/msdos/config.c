@@ -60,7 +60,7 @@ extern int soundcard, usestereo,attenuation;
 extern int use_mouse, joystick, use_hotrod;
 
 /* from cheat.c */
-extern char cheatfile[];
+extern char *cheatfile;
 
 /* from datafile.c */
 extern char *history_filename,*mameinfo_filename;
@@ -69,8 +69,6 @@ extern char *history_filename,*mameinfo_filename;
 void decompose_rom_sample_path (char *rompath, char *samplepath);
 extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
-
-extern char *cheatdir;
 
 extern char *cheatdir;
 
@@ -434,26 +432,13 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 
-	/* Removed by Steph 20000730 */
-	#if 0
-	#ifndef MESS
-	cheatfile = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
-	#else
-	tmpstr  = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
-	/* I assume that CHEAT.DAT (in old MESS.CFG files) and CHEAT.CDB are default filenames */
-	if ((!stricmp(tmpstr,"cheat.dat")) || (!stricmp(tmpstr,"cheat.cdb")))
-		sprintf(cheatfile,"%s.cdb",drivers[game_index]->name);
-	else
-		sprintf(cheatfile,"%s",tmpstr);
-	#endif
-	#endif
-
 	/* Steph 20000730 - Now all stuff is in function InitCheat in src/cheat.c */
 	#ifndef MESS
 	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");
 	#else
 	tmpstr = get_string ("config", "cheatfile", "cf", "CHEAT.CDB");
 	#endif
+	cheatfile = malloc(strlen(tmpstr) + 1);
 	strcpy(cheatfile,tmpstr);
 
  	#ifndef MESS
