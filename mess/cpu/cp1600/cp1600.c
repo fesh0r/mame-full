@@ -3366,17 +3366,15 @@ int cp1600_execute(int cycles)
 				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
 				cp1600.r[6]++;
 				cp1600_icount -= 9;
-				cp1600.intr_enabled = 0;
 				cp1600.intr_pending = 0;
 				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTR);
 			}
-			if (cp1600.intrm_pending)
+			if (cp1600.intrm_pending & cp1600.intr_enabled)
 			{
 				/* PSHR R7 */
 				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
 				cp1600.r[6]++;
 				cp1600_icount -= 9;
-				cp1600.intr_enabled = 0;
 				cp1600.intrm_pending = 0;
 				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTRM);
 			}
@@ -3491,39 +3489,6 @@ void cp1600_set_irq_line(int irqline, int state)
 				cp1600.reset_pending = 0;
 			break;
 	}
-#if 0
-	switch( irqline )
-	{
-		case CP1600_INT_INTR:
-			if (state == ASSERT_LINE)
-			{
-				/* PSHR R7 */
-				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
-				cp1600.r[6]++;
-				cp1600_icount -= 9;
-				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTR);
-			}
-			break;
-		case CP1600_INT_INTRM:
-			if (state == ASSERT_LINE)
-			{
-				if ((cp1600.intr_enabled == 1) && (cp1600.mask_interrupts == 0))
-				{
-					/* PSHR R7 */
-					cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
-					cp1600.r[6]++;
-					cp1600_icount -= 9;
-					cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTRM);
-				}
-			}
-			break;
-		case CP1600_RESET:
-			/* This is a how we fetch the reset vector */
-			if (state == ASSERT_LINE)
-				cp1600.r[7] = cp1600.irq_callback(CP1600_RESET);
-			break;
-	}
-#endif
 }
 
 void cp1600_set_irq_callback(int (*callback)(int irqline))
