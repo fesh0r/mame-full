@@ -327,7 +327,17 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align)
 {	
 	int old_bound;
-
+	
+	/* clip dirty_area to vis_area */
+	if (dirty_area->min_x < vis_in_dest_out->min_x)
+	  dirty_area->min_x = vis_in_dest_out->min_x;
+	if (dirty_area->min_y < vis_in_dest_out->min_y)
+	  dirty_area->min_y = vis_in_dest_out->min_y;
+	if (dirty_area->max_x > vis_in_dest_out->max_x)
+	  dirty_area->max_x = vis_in_dest_out->max_x;
+	if (dirty_area->max_y > vis_in_dest_out->max_y)
+	  dirty_area->max_y = vis_in_dest_out->max_y;
+	
 	/* orient the bounds */	
 	sysdep_display_orient_bounds(vis_in_dest_out, bitmap->width, bitmap->height);
 	sysdep_display_orient_bounds(dirty_area, bitmap->width, bitmap->height);

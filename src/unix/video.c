@@ -47,6 +47,7 @@ static int user_heightscale;
 static int user_yarbsize;
 static int user_effect;
 
+static struct rectangle game_vis_area;
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
 
@@ -54,7 +55,6 @@ static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
   0, 0, 16, 0, 0, 0, NAME " debug window", 0, 1, 1, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
-
 
 /* average FPS calculation */
 static cycles_t start_time = 0;
@@ -760,6 +760,17 @@ static void update_effect(void)
   }
 }
 
+static void update_game_vis_area(void)
+{
+  normal_params.width  = (game_vis_area.max_x + 1) - game_vis_area.min_x;
+  normal_params.height = (game_vis_area.max_y + 1) - game_vis_area.min_y;
+		   
+  set_ui_visarea(game_vis_area.min_x, game_vis_area.min_y,
+    game_vis_area.max_x, game_vis_area.max_y);
+
+  normal_params_changed |= VISIBLE_AREA_CHANGED;
+}
+
 static int skip_next_frame = 0;
 
 typedef int (*skip_next_frame_func)(void);
@@ -814,6 +825,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	const char *msg = NULL;
 	static int flags = 0;
 	static int palette_changed = 0;
+	static int ysplit = 0;
 	
 	/*** STEP 1 update sound,fps,vis_area,palette and leds ***/
 	if (sound_stream)
@@ -827,23 +839,16 @@ void osd_update_video_and_audio(struct mame_display *display)
 	}
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
-		set_ui_visarea(display->game_visible_area.min_x,
-				display->game_visible_area.min_y,
-				display->game_visible_area.max_x,
-				display->game_visible_area.max_y);
+	  game_vis_area = display->game_visible_area;
 
-                /* fprintf(stderr, "preresize: %dx%d\n", normal_params.width,
-                  normal_params.height); */
-
-		normal_params.width  = (display->game_visible_area.max_x + 1) -
-		   display->game_visible_area.min_x;
-		normal_params.height = (display->game_visible_area.max_y + 1) -
-		   display->game_visible_area.min_y;
-		   
-                /* fprintf(stderr, "resize: %dx%d\n", normal_params.width,
-                  normal_params.height); */
-
-		normal_params_changed |= VISIBLE_AREA_CHANGED;
+       	  if (!strcmp(drivers[game_index]->clone_of->name, "megatech") &&
+       	      (normal_params.height == (224+192)))
+       	    ysplit = 192;
+       	  else
+       	    ysplit = 0;
+       	    
+   	  game_vis_area.min_y += ysplit;
+          update_game_vis_area();
 	}
 	if ((display->changed_flags & GAME_PALETTE_CHANGED))
 		palette_changed = 1;
@@ -877,6 +882,26 @@ void osd_update_video_and_audio(struct mame_display *display)
                         flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
                 if (code_pressed_memory(KEYCODE_PGDN))
                         flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
+            }
+            else if (code_pressed(KEYCODE_LSHIFT) &&
+                     code_pressed(KEYCODE_LCONTROL))
+            {
+                if (ysplit && code_pressed_memory(KEYCODE_INSERT))
+                {
+                  if (game_vis_area.min_y != display->game_visible_area.min_y)
+                  {
+                    game_vis_area.min_y = display->game_visible_area.min_y;
+                    game_vis_area.max_y = display->game_visible_area.min_y +
+                      ysplit - 1;
+                  }
+                  else
+                  {
+                    game_vis_area.min_y = display->game_visible_area.min_y +
+                      ysplit;
+                    game_vis_area.max_y = display->game_visible_area.max_y;
+                  }
+                  update_game_vis_area();
+                }
             }
             else if (code_pressed(KEYCODE_LALT))
             {
@@ -1042,6 +1067,8 @@ void osd_update_video_and_audio(struct mame_display *display)
             
             if (display->changed_flags & GAME_BITMAP_CHANGED)
             {
+                struct rectangle vis_area = game_vis_area;
+            
 		/* at the end, we need the current time */
 		curr = osd_cycles();
 
@@ -1098,12 +1125,11 @@ void osd_update_video_and_audio(struct mame_display *display)
 			update_palette(display, 0);
 			palette_changed = 0;
 		}
-
+		
 		profiler_mark(PROFILER_BLIT);
-		/* udpate and check if the display properties were changed */
+		/* update and check if the display properties were changed */
 		msg = sysdep_display_update(display->game_bitmap,
-		   &(display->game_visible_area),
-		   &(display->game_bitmap_update),
+		   &vis_area, &(display->game_bitmap_update),
 		   normal_palette, display->led_state, flags);
 		profiler_mark(PROFILER_END);
 		if (msg)
