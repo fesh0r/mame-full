@@ -29,7 +29,6 @@ static int brightness = 100;
 float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static int using_15bpp_rgb_direct;
-static struct mame_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct rectangle normal_visual;
 static struct rectangle debug_visual;
@@ -71,6 +70,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
+static void change_debugger_focus(int new_debugger_focus);
 static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
 static void update_visible_area(struct mame_display *display);
@@ -603,7 +603,7 @@ int osd_get_frameskip(void)
 	return autoframeskip ? -(frameskip + 1) : frameskip;
 }
 
-void osd_debugger_focus(int new_debugger_focus)
+void change_debugger_focus(int new_debugger_focus)
 {
    if( (!debugger_has_focus &&  new_debugger_focus) ||
        ( debugger_has_focus && !new_debugger_focus))
@@ -627,10 +627,6 @@ void osd_update_video_and_audio(struct mame_display *display)
    int skip_this_frame;
    cycles_t curr;
    
-/* save the active bitmap for use in osd_clearbitmap, I know this
-      sucks blame the core ! */
-   scrbitmap = display->game_bitmap;
-
    if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
    {
       if (autoframeskip)
@@ -781,10 +777,18 @@ void osd_update_video_and_audio(struct mame_display *display)
 
    /* if the debugger focus changed, update it */
    if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-      osd_debugger_focus(display->debug_focus);
+      change_debugger_focus(display->debug_focus);
+
+   /*
+    * If the user presses the F5 key, toggle the debugger's 
+    * focus.  Eventually I'd like to just display both the 
+    * debug and regular windows at the same time.
+    */
+   else if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG) && mame_debug)
+      change_debugger_focus(!debugger_has_focus);
 
    /* update the debugger */
-   if (display->changed_flags & DEBUG_BITMAP_CHANGED)
+   if ((display->changed_flags & DEBUG_BITMAP_CHANGED) && debugger_has_focus)
       update_debug_display(display);
 
    /* if the game palette has changed, update it */
@@ -796,7 +800,8 @@ void osd_update_video_and_audio(struct mame_display *display)
    else if (display->changed_flags & GAME_PALETTE_CHANGED)
       update_palette(display, 0);
 
-   if (skip_this_frame == 0 && display->changed_flags & GAME_BITMAP_CHANGED)
+   if (skip_this_frame == 0 && display->changed_flags & GAME_BITMAP_CHANGED
+         && !debugger_has_focus)
    {
       /* at the end, we need the current time */
       curr = osd_cycles();
