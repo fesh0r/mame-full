@@ -90,19 +90,19 @@ int vectrex_id_rom (int id)
 
 	/* If no file was specified, don't bother */
 	if (!gamename || strlen(gamename)==0)
-		return 1;
+		return ID_OK;
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return 0;
+		return ID_FAILED;
 
 	/* Verify the file is accepted by the Vectrex bios */
 	osd_fread (romfile, magic, 5);
 	osd_fclose (romfile);
 
 	if (!memcmp(magic,"g GCE", 5))
-		return 1;
+		return ID_OK;
 	else
-		return 0;
+		return ID_FAILED;
 }
 
 /*********************************************************************

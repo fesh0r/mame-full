@@ -201,18 +201,18 @@ static unsigned char *current_page_ptr;
 typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3 } slot_type_t;
 static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
-static const char *floppy_name[3] /*= {NULL, NULL, NULL}*/;
+static int flop_specified[3];
 
 int ti99_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return INIT_OK;
 }
 
-/*void ti99_floppy_cleanup(int id)
+void ti99_floppy_cleanup(int id)
 {
-	floppy_name[id] = NULL;
-}*/
+	flop_specified[id] = 0;
+}
 
 int ti99_cassette_init(int id)
 {
@@ -1138,7 +1138,8 @@ WRITE_HANDLER ( ti99_DSKsel )
 		if (drive != DSKnum)			/* turn on drive... already on ? */
 		{
 			DSKnum = drive;
-			wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, floppy_name[DSKnum]);
+			if (flop_specified[DSKnum])
+				wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, device_filename(IO_FLOPPY,DSKnum));
 		}
 	}
 	else
@@ -1156,8 +1157,8 @@ WRITE_HANDLER ( ti99_DSKsel )
 WRITE_HANDLER ( ti99_DSKside )
 {
 	DSKside = data & 1;
-
-	wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, floppy_name[DSKnum]);
+	if (flop_specified[DSKnum])
+		wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, device_filename(IO_FLOPPY,DSKnum));
 }
 
 

@@ -1018,11 +1018,10 @@ int spec_quick_init(int id)
 {
 	FILE *fp;
 	int read;
-	const char *name = device_filename(IO_QUICKLOAD, id);
 
 	memset(&quick, 0, sizeof (quick));
 
-	if (name == NULL)
+	if (device_filename(IO_QUICKLOAD, id) == NULL)
 		return INIT_OK;
 
 /*	quick.name = name; */

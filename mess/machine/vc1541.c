@@ -163,7 +163,8 @@ typedef struct
 	struct {
 		int pos; /* position  in sector */
 		int sector;
-		const char *name;
+		int image_type;
+		int image_id;
 		UINT8 *data;
 	} d64;
 } CBM_Drive_Emu;
@@ -666,7 +667,8 @@ int vc1541_init (int id)
 	logerror("floppy image %s loaded\n", device_filename(IO_FLOPPY, id));
 
 	/*vc1541->drive = ; */
-	vc1541->d64.name = device_filename(IO_FLOPPY, id);
+	vc1541->d64.image_type = IO_FLOPPY;
+	vc1541->d64.image_id = id;
 	return INIT_OK;
 }
 
