@@ -361,7 +361,7 @@ GLCFLAGS= -D_X11_
 # And choose elf / or aout
 # ELF settings: no leading underscores + elf object format Tested with
 # linux/i386. Also for e.g. Solaris/x86
-ASM_STRIP = contrib/porting/strip_
+ASM_STRIP = src/unix/contrib/porting/strip_
 NASM_FMT  = -f elf
 # aout settings: with leading underscores + aout object format. Tested with
 # netBSD i386. Also for older linux installs, freebsd and others.
