@@ -917,8 +917,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 	if (input_ui_pressed(IPT_UI_THROTTLE))
 	{
-		if (!code_pressed(KEYCODE_LSHIFT)
-				&& !code_pressed(KEYCODE_RSHIFT))
+		if (!code_pressed(KEYCODE_LSHIFT) && !code_pressed(KEYCODE_RSHIFT))
 		{
 			throttle ^= 1;
 
@@ -928,8 +927,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 			 */
 			frames_displayed = 0;
 		}
-		else if (code_pressed(KEYCODE_RSHIFT)
-				|| code_pressed(KEYCODE_LSHIFT))
+		else
 			sleep_idle ^= 1;
 	}
 
@@ -959,7 +957,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 			widthscale_mod  = 1;
 			heightscale_mod = 1;
 		}
-		if (code_pressed_memory (KEYCODE_PGDN))
+		if (code_pressed_memory(KEYCODE_PGDN))
 		{
 			widthscale_mod  = -1;
 			heightscale_mod = -1;
