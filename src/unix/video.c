@@ -545,11 +545,10 @@ static void update_debug_display(struct mame_display *display)
 	struct sysdep_palette_struct *backup_palette = current_palette;
 
 	if (!debug_palette)
-		debug_palette = sysdep_palette_create(16, 65536);
-	/* Initialize the lookup table for the debug palette. */
-	if (debug_palette)
 	{
 		int  i, r, g, b;
+		debug_palette = sysdep_palette_create(16, 65536);
+		/* Initialize the lookup table for the debug palette. */
 
 		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
 		{
@@ -622,7 +621,7 @@ void change_debugger_focus(int new_debugger_focus)
 /* Update the display. */
 void osd_update_video_and_audio(struct mame_display *display)
 {
-//   struct rectangle updatebounds = display->game_bitmap_update;
+   /* struct rectangle updatebounds = display->game_bitmap_update; */
    static int showfps = 0, showfpstemp = 0; 
    int skip_this_frame;
    cycles_t curr;
