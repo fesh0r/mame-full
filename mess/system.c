@@ -329,7 +329,7 @@ TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)			  */
 /*	DRIVER( cbm730 )*/	/* Commodore 730								  */
 
 	DRIVER( c16 )		/* Commodore 16 								  */
-	DRIVER( c16hun )	/* Commodore 16 Hungarian Character Set Hack	  */
+	DRIVER( c16hun )	/* Commodore 16 Novotrade (Hungarian Character Set)	  */
 	DRIVER( c16c )		/* Commodore 16  c1551							  */
 TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
 	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
