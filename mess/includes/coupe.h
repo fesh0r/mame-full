@@ -32,28 +32,8 @@ extern unsigned char LPEN,HPEN;										// ???
 extern unsigned char CURLINE;										// Current scanline
 extern unsigned char STAT;											// returned when port 249 read
 
-struct sCoupe_fdc1772
-{
-	void *f;												// Pointer to file used for image of disk in this drive
-	unsigned char Dsk_Command;
-	unsigned char Dsk_Status;
-	unsigned char Dsk_Data;
-	unsigned char Dsk_Track;
-	unsigned char Dsk_Sector;
-	int bytesLeft;
-};											// Holds the floppy controller vars for each drive
-
-extern struct sCoupe_fdc1772 coupe_fdc1772[2];
-extern unsigned char Dsk_Command;
-extern unsigned char Dsk_Status;
-extern unsigned char Dsk_Data;
-extern unsigned char Dsk_Track;
-extern unsigned char Dsk_Sector;
-
 void coupe_update_memory(void);
-int coupe_fdc_init(int);
-
-
+int coupe_floppy_init(int);
 
 void coupe_init_machine(void);
 void coupe_shutdown_machine(void);

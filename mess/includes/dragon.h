@@ -85,6 +85,7 @@ extern READ_HANDLER(dragon_floppy_r);
 extern WRITE_HANDLER ( dragon_floppy_w );
 extern void coco3_vblank(void);
 extern int coco3_mmu_translate(int block, int offset);
+extern int dragon_floppy_init(int id);
 
 /* Returns whether a given piece of logical memory is contiguous or not */
 extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);
