@@ -90,13 +90,6 @@ void nc_pcmcia_card_exit(int id)
 	nc_set_card_present_state(0);
 }
 
-/* called to indicate the serial device has updated it's state */
-void	nc_serial_device_updated_callback(int id)
-{
-
-}
-
-
 int	nc_serial_init(int id)
 {
 	if (serial_device_init(id))
