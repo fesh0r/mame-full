@@ -140,11 +140,9 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 
 		paldat = genesis_vdp.genesis_vdp_cram[pixel&0x3f];
 
-		r = (paldat & 0x000e) ;
-		g = (paldat & 0x00e0) >>4;
-		b = (paldat & 0x0e00) >>8;
-
-		r = r << (16+4); g = g << (8+4); b = b << (0+4);
+		r = (paldat & 0x000e) <<1;
+		g = (paldat & 0x00e0) >>3;
+		b = (paldat & 0x0e00) >>7;
 
 		if (pixel & 0x40)
 		{
@@ -155,12 +153,21 @@ void genesis_vdp_draw_scanline (genvdp *current_vdp, int line)
 
 		if (pixel & 0x80)
 		{
-			r |=0x80;
-			g |=0x80;
-			b |=0x80;
+		//	r >>=1;
+		//	g >>=1;
+		//	b >>=1;
+		//	r |=0x10;
+		//	g |=0x10;
+		//	b |=0x10
+			r <<=1;
+			g <<=1;
+			b <<=1;
+			r&=0x1f;
+			g&=0x1f;
+			b&=0x1f;
 		}
 
-		destline[0] = r|g|b;
+		destline[0] = (r<<(16+3))|(g<<(8+3))|(b<<(0+3));
 
 	//	;
 		destline++;
@@ -356,8 +363,10 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	int scrwidth = 32;
 	int bgcol;
 
-	int win_down;
-	int win_vpos;
+	int win_down, win_right;
+	int win_vpos, win_hpos;
+	int block_is_not_vwindow;
+	int block_is_not_hwindow;
 
 	switch (genesis_vdp.genesis_vdp_regs[0x0c]&0x81)
 	{
@@ -562,6 +571,8 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 	win_vpos = (genesis_vdp.genesis_vdp_regs[0x12]&0x1f)*8;
 
 
+	win_right = (genesis_vdp.genesis_vdp_regs[0x11]&0x80);
+	win_hpos  = (genesis_vdp.genesis_vdp_regs[0x11]&0x1f)*2;
 
 
 
@@ -596,8 +607,18 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 		data8_t* tileloc;
 		int x;
 
+		block_is_not_vwindow = (
+			((!win_down)  && (line>=win_vpos)) ||
+			(( win_down)  && (line< win_vpos))
+			);
+
+		block_is_not_hwindow = (
+			((!win_right)  && (_2tileblock>=win_hpos)) ||
+			(( win_right)  && (_2tileblock< win_hpos))
+			);
+
 //		if ((line<=windowtpos) && (line>=windowtpos))
-		if (((!win_down) && (line>=win_vpos)) || ((win_down) && (line<win_vpos)))
+		if (block_is_not_vwindow && block_is_not_hwindow)
 		{
 			vscroll_cols = 0;
 			switch (genesis_vdp.genesis_vdp_regs[0x0b]&0x04) /* vscroll for this block */
@@ -858,9 +879,19 @@ void genesis_vdp_render_scanline (genvdp *current_vdp, int line)
 		int tileno,flipx,flipy,col,pri;
 		data8_t* tileloc;
 		int x;
+		block_is_not_vwindow = (
+			((!win_down)  && (line>=win_vpos)) ||
+			(( win_down)  && (line< win_vpos))
+			);
 
+		block_is_not_hwindow = (
+			((!win_right)  && (_2tileblock>=win_hpos)) ||
+			(( win_right)  && (_2tileblock< win_hpos))
+			);
+
+	//	if () block_is_not_vwindow = 0;
 //		if ((line<=windowtpos) && (line>=windowtpos))
-		if (((!win_down) && (line>=win_vpos)) || ((win_down) && (line<win_vpos)))
+		if (block_is_not_vwindow && block_is_not_hwindow)
 		{
 
 			vscroll_cols = 0;
@@ -1802,6 +1833,55 @@ void genesis_vdp_do_dma ( genvdp *current_vdp )
 
 }
 
+/*
+
+ 110000b : VRAM Copy
+
+ #19: L07 L06 L05 L04 L03 L02 L01 L00
+ #20: L15 L14 L13 L12 L11 L10 L08 L08
+ The address bits in register 23 are ignored.
+ Registers 21, 22 specify the source address in VRAM:
+ #21: S07 S06 S05 S04 S03 S02 S01 S00
+ #22: S15 S14 S13 S12 S11 S10 S09 S08
+ #23:  1   1   ?   ?   ?   ?   ?   ?
+
+ */
+
+void genesis_68k_set_vram_copy ( genvdp *current_vdp )
+{
+	int count;
+	int readdata;
+	int sourceaddr;
+
+	current_vdp -> dma_transfer_start =
+	  (current_vdp -> genesis_vdp_regs[0x16] << 8)  |
+	  (current_vdp -> genesis_vdp_regs[0x15] << 0);
+
+	current_vdp -> dma_transfer_count =
+	  (current_vdp -> genesis_vdp_regs[0x14] << 8)  |
+	  (current_vdp -> genesis_vdp_regs[0x13] << 0);
+
+
+	count = current_vdp -> dma_transfer_count;
+
+	do {
+		sourceaddr = current_vdp -> dma_transfer_start;
+
+		readdata = 0x88;
+
+		readdata = current_vdp -> genesis_vdp_vram[(sourceaddr&0xffff) >>1];
+
+		current_vdp -> genesis_vdp_vram[(current_vdp -> genesis_vdp_cmdaddr&0xffff) >>1] = readdata;
+		current_vdp -> genesis_vdp_vram_is_dirty[((current_vdp -> genesis_vdp_cmdaddr&0xffff) >>1) >>4] = 1;
+
+		current_vdp -> genesis_vdp_cmdaddr += current_vdp -> genesis_vdp_regs[0x0f];
+		current_vdp -> dma_transfer_start++;
+
+	} while (--count);
+
+
+}
+
 void genesis_68k_xram_dma_set ( genvdp *current_vdp )
 {
 
@@ -1814,7 +1894,11 @@ void genesis_68k_xram_dma_set ( genvdp *current_vdp )
 	  (current_vdp -> genesis_vdp_regs[0x14] << 8)  |
 	  (current_vdp -> genesis_vdp_regs[0x13] << 0);
 
-	if (current_vdp ->dma_transfer_count ==0) printf("zero length dma!\n");
+	if (current_vdp ->dma_transfer_count ==0)
+	{
+		printf("zero length dma!\n");
+		current_vdp ->dma_transfer_count = 0xffff;
+	}
 
 	current_vdp -> dma_transfer_start<<=1;
 
@@ -1869,6 +1953,7 @@ void genesis_vdp_check_dma ( genvdp *current_vdp )
 
 		case 0xc0:
 			printf("Vram copy!\n");
+			genesis_68k_set_vram_copy( current_vdp );
 			// vram copy
 			break;
 	}
