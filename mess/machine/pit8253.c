@@ -486,8 +486,9 @@ static void pit8253_update(int param)
 			switch(phase) {
 			case 0:
 				output				= 0;
-				counter_adjustment	= 0;
-				wake				= WAKE_IDLE;
+				counter_adjustment	= counter ? 1 : 0;
+				phase				= counter ? 1 : 0;
+				wake				= counter ? WAKE_BYCOUNTER : WAKE_IDLE;
 				break;
 
 			case 1:
