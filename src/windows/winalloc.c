@@ -192,3 +192,18 @@ void free(void *memory)
 	VirtualFree(entry->vbase, 0, MEM_RELEASE);
 	free_entry(entry);
 }
+
+size_t _msize(void *memory)
+{
+	memory_entry *entry = find_entry(memory);
+
+	// error if no entry found
+	if (entry == NULL)
+	{
+		fprintf(stderr, "Error: msize a non-existant block\n");
+		return 0;
+	}
+	return entry->size;
+}
+
+
