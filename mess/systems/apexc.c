@@ -223,6 +223,65 @@ static WRITE32_HANDLER(tape_write)
 	osd_fwrite(apexc_tapes[1].fd, & data5, 1);
 }
 
+typedef struct cylinder
+{
+	void *fd;
+	int writable;
+} cylinder;
+
+cylinder apexc_cylinder;
+
+enum
+{
+	IO_CYLINDER = IO_QUICKLOAD	/* this is not a MESS standard ;-) */
+};
+
+static int apexc_cylinder_init(int id)
+{
+	/* open file */
+	/* first try read/write mode */
+	apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
+	if (apexc_cylinder.fd)
+		apexc_cylinder.writable = 1;
+	else
+	{	/* else try read-only mode */
+		apexc_cylinder.writable = 0;
+		apexc_cylinder.fd = image_fopen(IO_CYLINDER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+	}
+
+	if (apexc_cylinder.fd)
+	{	/* load RAM contents */
+		/* in an actual APEXC, the RAM is not loaded with the cylinder contents,
+		the cylinder IS the RAM */
+		osd_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), 0x8000);
+#ifdef LSB_FIRST
+		{	/* fix endianness */
+			UINT32 *RAM;
+			int i;
+
+			RAM = (UINT32 *) memory_region(REGION_CPU1);
+
+			for (i=0; i < 0x2000; i++)
+				RAM[i] = BIG_ENDIANIZE_INT32(RAM[i]);
+		}
+#endif
+	}
+
+	return INIT_OK;
+}
+
+static void apexc_cylinder_exit(int id)
+{
+	if (apexc_cylinder.fd && apexc_cylinder.writable)
+	{	/* save RAM contents */
+
+	}
+	if (apexc_cylinder.fd)
+	{
+		osd_fclose(apexc_cylinder.fd);
+	}
+}
+
 static const struct IODevice io_apexc[] =
 {
 	{
@@ -233,6 +292,25 @@ static const struct IODevice io_apexc[] =
 		NULL,					/* id */
 		apexc_tape_init,		/* init */
 		apexc_tape_exit,		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{
+		IO_CYLINDER,			/* type */
+		1,						/* count */
+		"apc\0",				/* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		apexc_cylinder_init,	/* init */
+		apexc_cylinder_exit,	/* exit */
 		NULL,					/* info */
 		NULL,					/* open */
 		NULL,					/* close */
