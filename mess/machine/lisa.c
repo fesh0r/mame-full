@@ -5,6 +5,7 @@
 
 	TODO :
 	* debug floppy controller emulation (indispensable to boot)
+	* finish MMU (does not switch to bank 0 on 68k trap)
 	* fix COPS support (what I assumed to be COPS reset line is NO reset line)
 	* finish keyboard/mouse support
 	* finish clock support
@@ -167,8 +168,8 @@ static int DISK_DIAG;
 	protos
 */
 
-static READ_HANDLER ( lisa_IO_r );
-static WRITE_HANDLER ( lisa_IO_w );
+static READ16_HANDLER ( lisa_IO_r );
+static WRITE16_HANDLER ( lisa_IO_w );
 
 
 /*
@@ -850,7 +851,7 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 }
 
 
-static OPBASE_HANDLER (lisa_OPbaseoverride)
+static OPBASE16_HANDLER (lisa_OPbaseoverride)
 {
 	offs_t answer;
 
@@ -1215,7 +1216,7 @@ WRITE_HANDLER ( lisa_fdc_w )
 }
 
 
-READ_HANDLER ( lisa_r )
+READ16_HANDLER ( lisa_r )
 {
 	int answer=0;
 
@@ -1371,7 +1372,7 @@ READ_HANDLER ( lisa_r )
 	return answer;
 }
 
-WRITE_HANDLER ( lisa_w )
+WRITE16_HANDLER ( lisa_w )
 {
 	/* segment register set */
 	int the_seg = seg;
@@ -1504,12 +1505,12 @@ WRITE_HANDLER ( lisa_w )
 			COMBINE_WORD_MEM(lisa_ram_ptr + address, data);
 			if (diag2)
 			{
-				if (! (data & 0x00ff0000))
+				if (ACCESSING_LSB)
 				{
 					bad_parity_table[address >> 3] |= 0x1 << (address & 0x7);
 					bad_parity_count++;
 				}
-				if (! (data & 0xff000000))
+				if (ACCESSING_MSB)
 				{
 					bad_parity_table[address >> 3] |= 0x2 << (address & 0x7);
 					bad_parity_count++;
@@ -1517,13 +1518,13 @@ WRITE_HANDLER ( lisa_w )
 			}
 			else if (bad_parity_table[address >> 3] & (0x3 << (address & 0x7)))
 			{
-				if ((! (data & 0x00ff0000))
+				if ((ACCESSING_LSB)
 					&& (bad_parity_table[address >> 3] & (0x1 << (address & 0x7))))
 				{
 					bad_parity_table[address >> 3] &= ~ (0x1 << (address & 0x7));
 					bad_parity_count--;
 				}
-				if ((! (data & 0xff000000))
+				if ((ACCESSING_MSB)
 					&& (bad_parity_table[address >> 3] & (0x2 << (address & 0x7))))
 				{
 					bad_parity_table[address >> 3] &= ~ (0x2 << (address & 0x7));
@@ -1533,7 +1534,7 @@ WRITE_HANDLER ( lisa_w )
 			break;
 
 		case IO:
-			lisa_IO_w(address, data);
+			lisa_IO_w(address, data, mem_mask);
 			break;
 
 		case RAM_stack_r:	/* read-only */
@@ -1572,7 +1573,7 @@ WRITE_HANDLER ( lisa_w )
 *                                                                                      *
 \**************************************************************************************/
 
-static READ_HANDLER ( lisa_IO_r )
+static READ16_HANDLER ( lisa_IO_r )
 {
 	int answer=0;
 
@@ -1715,7 +1716,7 @@ static READ_HANDLER ( lisa_IO_r )
 	return answer;
 }
 
-static WRITE_HANDLER ( lisa_IO_w )
+static WRITE16_HANDLER ( lisa_IO_w )
 {
 	switch ((offset & 0xe000) >> 13)
 	{
@@ -1749,7 +1750,7 @@ static WRITE_HANDLER ( lisa_IO_w )
 			/* Floppy Disk Controller shared RAM */
 			if (! (offset & 0x0800))
 			{
-				if (! (data & 0x00ff0000))
+				if (ACCESSING_LSB)
 					fdc_ram[(offset >> 1) & 0x03ff] = data & 0xff;
 			}
 		}
@@ -1762,12 +1763,12 @@ static WRITE_HANDLER ( lisa_IO_w )
 				break;
 
 			case 2:	/* paralel port */
-				if (! (data & 0x00ff0000))
+				if (ACCESSING_LSB)
 					via_write(1, (offset >> 3) & 0xf, data & 0xff);
 				break;
 
 			case 3:	/* keyboard/mouse cops via */
-				if (! (data & 0x00ff0000))
+				if (ACCESSING_LSB)
 					via_write(0, (offset >> 1) & 0xf, data & 0xff);
 				break;
 			}

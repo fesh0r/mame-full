@@ -13,7 +13,7 @@ READ_HANDLER ( lisa_fdc_io_r );
 WRITE_HANDLER ( lisa_fdc_io_w );
 READ_HANDLER ( lisa_fdc_r );
 WRITE_HANDLER ( lisa_fdc_w );
-READ_HANDLER ( lisa_r );
-WRITE_HANDLER ( lisa_w );
+READ16_HANDLER ( lisa_r );
+WRITE16_HANDLER ( lisa_w );
 
 

@@ -41,64 +41,64 @@
 #include "includes/mac.h"
 
 
-static struct MemoryReadAddress mac512ke_readmem[] =
-{
-/*	{ 0x000000, 0x3fffff, MRA_BANK1 },*/	/* ram/rom */
-/*	{ 0x400000, 0x5fffff, MRA_BANK3 },*/ /* rom */
+static MEMORY_READ16_START (mac512ke_readmem)
+
+/*	{ 0x000000, 0x3fffff, MRA16_BANK1 },*/	/* ram/rom */
+/*	{ 0x400000, 0x5fffff, MRA16_BANK3 },*/ /* rom */
 /* for some reason, the system will not work without the next line */
-	{ 0x400000, 0x41ffff, MRA_BANK3 }, /* rom */
-/*	{ 0x600000, 0x6fffff, MRA_BANK2 },*/	/* ram */
+	{ 0x400000, 0x41ffff, MRA16_BANK3 }, /* rom */
+/*	{ 0x600000, 0x6fffff, MRA16_BANK2 },*/	/* ram */
 	{ 0x800000, 0x9fffff, mac_scc_r },
 	{ 0xc00000, 0xdfffff, mac_iwm_r },
 	{ 0xe80000, 0xefffff, mac_via_r },
 	{ 0xfffff0, 0xffffff, mac_autovector_r },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress mac512ke_writemem[] =
-{
-/*	{ 0x000000, 0x3fffff, MWA_BANK1 },*/ /* ram/rom */
-	{ 0x400000, 0x5fffff, MWA_ROM },
-/*	{ 0x600000, 0x6fffff, MWA_BANK2 },*/ /* ram */
+MEMORY_END
+
+static MEMORY_WRITE16_START (mac512ke_writemem)
+
+/*	{ 0x000000, 0x3fffff, MWA16_BANK1 },*/ /* ram/rom */
+	{ 0x400000, 0x5fffff, MWA16_ROM },
+/*	{ 0x600000, 0x6fffff, MWA16_BANK2 },*/ /* ram */
 	{ 0xa00000, 0xbfffff, mac_scc_w },
 	{ 0xc00000, 0xdfffff, mac_iwm_w },
 	{ 0xe80000, 0xefffff, mac_via_w },
 	{ 0xfffff0, 0xffffff, mac_autovector_w },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryReadAddress macplus_readmem[] =
-{
-/*	{ 0x000000, 0x3fffff, MRA_BANK1 },*/	/* ram/rom */
-	{ 0x400000, 0x41ffff, MRA_BANK3 }, /* rom */
-	{ 0x420000, 0x43ffff, MRA_BANK4 }, /* rom - mirror */
-	{ 0x440000, 0x45ffff, MRA_BANK5 }, /* rom - mirror */
-	{ 0x460000, 0x47ffff, MRA_BANK6 }, /* rom - mirror */
-	{ 0x480000, 0x49ffff, MRA_BANK7 }, /* rom - mirror */
-	{ 0x4a0000, 0x4bffff, MRA_BANK8 }, /* rom - mirror */
-	{ 0x4c0000, 0x4dffff, MRA_BANK9 }, /* rom - mirror */
-	{ 0x4e0000, 0x4fffff, MRA_BANK10 }, /* rom - mirror */
+MEMORY_END
+
+static MEMORY_READ16_START (macplus_readmem)
+
+/*	{ 0x000000, 0x3fffff, MRA16_BANK1 },*/	/* ram/rom */
+	{ 0x400000, 0x41ffff, MRA16_BANK3 }, /* rom */
+	{ 0x420000, 0x43ffff, MRA16_BANK4 }, /* rom - mirror */
+	{ 0x440000, 0x45ffff, MRA16_BANK5 }, /* rom - mirror */
+	{ 0x460000, 0x47ffff, MRA16_BANK6 }, /* rom - mirror */
+	{ 0x480000, 0x49ffff, MRA16_BANK7 }, /* rom - mirror */
+	{ 0x4a0000, 0x4bffff, MRA16_BANK8 }, /* rom - mirror */
+	{ 0x4c0000, 0x4dffff, MRA16_BANK9 }, /* rom - mirror */
+	{ 0x4e0000, 0x4fffff, MRA16_BANK10 }, /* rom - mirror */
 	{ 0x580000, 0x5fffff, macplus_scsi_r },
-/*	{ 0x600000, 0x6fffff, MRA_BANK2 },*/	/* ram */
+/*	{ 0x600000, 0x6fffff, MRA16_BANK2 },*/	/* ram */
 	{ 0x800000, 0x9fffff, mac_scc_r },
 	{ 0xc00000, 0xdfffff, mac_iwm_r },
 	{ 0xe80000, 0xefffff, mac_via_r },
 	{ 0xfffff0, 0xffffff, mac_autovector_r },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress macplus_writemem[] =
-{
-/*	{ 0x000000, 0x3fffff, MWA_BANK1 },*/ /* ram/rom */
-	{ 0x400000, 0x4fffff, MWA_ROM },
+MEMORY_END
+
+static MEMORY_WRITE16_START (macplus_writemem)
+
+/*	{ 0x000000, 0x3fffff, MWA16_BANK1 },*/ /* ram/rom */
+	{ 0x400000, 0x4fffff, MWA16_ROM },
 	{ 0x580000, 0x5fffff, macplus_scsi_w },
-/*	{ 0x600000, 0x6fffff, MWA_BANK2 },*/ /* ram */
+/*	{ 0x600000, 0x6fffff, MWA16_BANK2 },*/ /* ram */
 	{ 0xa00000, 0xbfffff, mac_scc_w },
 	{ 0xc00000, 0xdfffff, mac_iwm_w },
 	{ 0xe80000, 0xefffff, mac_via_w },
 	{ 0xfffff0, 0xffffff, mac_autovector_w },
-	{ -1 }	/* end of table */
-};
+
+MEMORY_END
 
 static void mac_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -438,21 +438,21 @@ COMPX( 1986, macplus,  0,		 macplus,  macplus,  macplus,  "Apple Computer",  "Ma
 
 /* Early Mac2 driver - does not work at all, but enabled me to disassemble the ROMs */
 
-static struct MemoryReadAddress mac2_readmem[] =
-{
+static MEMORY_READ16_START (mac2_readmem)
+
 	{ 0x00000000, 0x007fffff, MRA_RAM },	/* ram */
 	{ 0x00800000, 0x008fffff, MRA_ROM },	/* rom */
 	{ 0x00900000, 0x00ffffff, MRA_NOP },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress mac2_writemem[] =
-{
+MEMORY_END
+
+static MEMORY_WRITE16_START (mac2_writemem)
+
 	{ 0x00000000, 0x007fffff, MWA_RAM },	/* ram */
 	{ 0x00800000, 0x008fffff, MWA_ROM },	/* rom */
 	{ 0x00900000, 0x00ffffff, MWA_NOP },
-	{ -1 }	/* end of table */
-};
+
+MEMORY_END
 
 static void mac2_init_machine( void )
 {

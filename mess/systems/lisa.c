@@ -10,37 +10,37 @@
 #include "machine/lisa.h"
 
 
-static struct MemoryReadAddress lisa_readmem[] =
-{
+static MEMORY_READ16_START (lisa_readmem )
+
 	{ 0x000000, 0xffffff, lisa_r },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress lisa_writemem[] =
-{
+MEMORY_END
+
+static MEMORY_WRITE16_START (lisa_writemem)
+
 	{ 0x000000, 0xffffff, lisa_w },
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryReadAddress lisa_fdc_readmem[] =
-{
+MEMORY_END
+
+static MEMORY_READ_START (lisa_fdc_readmem)
+
 	{ 0x0000, 0x03ff, MRA_RAM },		/* RAM (shared with 68000) */
 	{ 0x0400, 0x07ff, lisa_fdc_io_r },	/* disk controller (IWM and TTL logic) */
 	{ 0x0800, 0x0fff, MRA_NOP },
 	{ 0x1000, 0x1fff, MRA_ROM },		/* ROM */
 	{ 0x2000, 0xffff, lisa_fdc_r },		/* handler for wrap-around */
-	{ -1 }	/* end of table */
-};
 
-static struct MemoryWriteAddress lisa_fdc_writemem[] =
-{
+MEMORY_END
+
+static MEMORY_WRITE_START (lisa_fdc_writemem)
+
 	{ 0x0000, 0x03ff, MWA_RAM },		/* RAM (shared with 68000) */
 	{ 0x0400, 0x07ff, lisa_fdc_io_w },	/* disk controller (IWM and TTL logic) */
 	{ 0x0800, 0x0fff, MWA_NOP },
 	{ 0x1000, 0x1fff, MWA_ROM },		/* ROM */
 	{ 0x2000, 0xffff, lisa_fdc_w },		/* handler for wrap-around */
-	{ -1 }	/* end of table */
-};
+
+MEMORY_END
 
 static void lisa_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
