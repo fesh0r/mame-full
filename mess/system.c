@@ -660,7 +660,7 @@ TESTDRIVER( hp48g ) 	/* HP48 G/GX										*/
 /*	DRIVER( maniac )*/	/* Maniac										  */
 
 	/* Computer Electronic */
-TESTDRIVER( mk1 )		/* Chess Champion MK I							  */
+	DRIVER( mk1 )		/* Chess Champion MK I							  */
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II							  */
 	/* NOVAG Industries Ltd. */
