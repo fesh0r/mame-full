@@ -158,42 +158,33 @@ void pc_mda_cursor(CRTC6845_CURSOR *cursor)
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_mda_cursor };
 
-extern void pc_mda_init_video(struct _CRTC6845 *crtc)
+static void pc_mda_init_video_internal(struct _CRTC6845 *crtc, int gfx_char, int gfx_graphic)
 {
-	int i;
-	mda.gfx_char = Machine->gfx[0];
-	mda.gfx_graphic = Machine->gfx[1];
+	int i, y;
 
-    /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
-	for( i = 0; i < 256; i++)
+	mda.gfx_char = Machine->gfx[gfx_char];
+	mda.gfx_graphic = Machine->gfx[gfx_graphic];
+
+	/* remove pixel column 9 for character codes 0 - 191 and 224 - 255 */
+	for (i = 0; i < 256; i++)
 	{
-		if( i < 176 || i > 223 )
+		if (i < 191 || i > 223)
 		{
-			int y;
-			for( y = 0; y < Machine->gfx[0]->height; y++ )
-				Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) * Machine->gfx[0]->width + 8] = 0;
+			for (y = 0; y < Machine->gfx[gfx_char]->height; y++)
+				Machine->gfx[gfx_char]->gfxdata[(i * Machine->gfx[gfx_char]->height + y) * Machine->gfx[gfx_char]->width + 8] = 0;
 		}
 	}
-	mda.crtc=crtc6845;
+	mda.crtc = crtc6845;
 }
 
-extern void pc_mda_europc_init(struct _CRTC6845 *crtc)
+void pc_mda_init_video(struct _CRTC6845 *crtc)
 {
-	int i;
-	mda.gfx_char=Machine->gfx[3];
-	mda.gfx_graphic=Machine->gfx[4];
+	pc_mda_init_video_internal(crtc, 0, 1);
+}
 
-    /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
-	for( i = 0; i < 256; i++)
-	{
-		if( i < 176 || i > 223 )
-		{
-			int y;
-			for( y = 0; y < Machine->gfx[3]->height; y++ )
-				Machine->gfx[3]->gfxdata[(i * Machine->gfx[3]->height + y) * Machine->gfx[3]->width + 8] = 0;
-		}
-	}
-	mda.crtc=crtc6845;
+void pc_mda_europc_init(struct _CRTC6845 *crtc)
+{
+	pc_mda_init_video_internal(crtc, 3, 4);
 }
 
 VIDEO_START( pc_mda )

@@ -2627,6 +2627,13 @@ void SaveOptions(void)
 				fprintf(fptr,"%s_have_samples %i\n",
 						drivers[driver_index]->name,game_variables[driver_index].has_samples);
 			}
+#ifdef MESS
+			if (game_variables[driver_index].extra_software_paths && game_variables[driver_index].extra_software_paths[0])
+			{
+				fprintf(fptr,"%s_extra_software \"%s\"\n",
+						drivers[driver_index]->name,game_variables[driver_index].extra_software_paths);
+			}
+#endif
 		}
 		fclose(fptr);
 	}
