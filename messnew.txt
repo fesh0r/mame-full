@@ -35,6 +35,8 @@ System Driver Changes:
 - [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
   filename ends in .os9, the first sector will be analyzed for geometry
   information. [tim lindner]
+
+- [MC10] Fixed bug #358
   
 Source Changes:
 ---------------

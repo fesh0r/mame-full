@@ -292,20 +292,20 @@ static REG_OPTION regGameOpts[] =
 #ifdef MESS
 	/* mess options */
 	,
-	{ "use_new_ui",		"newui",                      RO_BOOL,    &gOpts.use_new_ui,		0, 0},
-	{ "ram_size",		"ramsize",                    RO_INT,     &gOpts.ram_size,			0, 0},
-	{ "cartridge",		"cartridge",                  RO_STRING,  &gOpts.software[IO_CARTSLOT],	0, 0},
-	{ "floppydisk",		"floppydisk",                 RO_STRING,  &gOpts.software[IO_FLOPPY],	0, 0},
-	{ "harddisk",		"harddisk",                   RO_STRING,  &gOpts.software[IO_HARDDISK],	0, 0},
-	{ "cylinder",		"cylinder",                   RO_STRING,  &gOpts.software[IO_CYLINDER],	0, 0},
-	{ "cassette",		"cassette",                   RO_STRING,  &gOpts.software[IO_CASSETTE],	0, 0},
-	{ "punchcard",		"punchcard",                  RO_STRING,  &gOpts.software[IO_PUNCHCARD],	0, 0},
-	{ "punchtape",		"punchtape",                  RO_STRING,  &gOpts.software[IO_PUNCHTAPE],	0, 0},
-	{ "printer",		"printer",                    RO_STRING,  &gOpts.software[IO_PRINTER],	0, 0},
-	{ "serial",			"serial",                     RO_STRING,  &gOpts.software[IO_SERIAL],	0, 0},
-	{ "parallel",		"parallel",                   RO_STRING,  &gOpts.software[IO_PARALLEL],	0, 0},
-	{ "snapshot",		"snapshot",                   RO_STRING,  &gOpts.software[IO_SNAPSHOT],	0, 0},
-	{ "quickload",		"quickload",                  RO_STRING,  &gOpts.software[IO_QUICKLOAD],0, 0}
+	{ "use_new_ui",		"newui",                      RO_BOOL,    &gOpts.use_new_ui,		0, 0, FALSE},
+	{ "ram_size",		"ramsize",                    RO_INT,     &gOpts.ram_size,			0, 0, TRUE},
+	{ "cartridge",		"cartridge",                  RO_STRING,  &gOpts.software[IO_CARTSLOT],	0, 0, TRUE},
+	{ "floppydisk",		"floppydisk",                 RO_STRING,  &gOpts.software[IO_FLOPPY],	0, 0, TRUE},
+	{ "harddisk",		"harddisk",                   RO_STRING,  &gOpts.software[IO_HARDDISK],	0, 0, TRUE},
+	{ "cylinder",		"cylinder",                   RO_STRING,  &gOpts.software[IO_CYLINDER],	0, 0, TRUE},
+	{ "cassette",		"cassette",                   RO_STRING,  &gOpts.software[IO_CASSETTE],	0, 0, TRUE},
+	{ "punchcard",		"punchcard",                  RO_STRING,  &gOpts.software[IO_PUNCHCARD],	0, 0, TRUE},
+	{ "punchtape",		"punchtape",                  RO_STRING,  &gOpts.software[IO_PUNCHTAPE],	0, 0, TRUE},
+	{ "printer",		"printer",                    RO_STRING,  &gOpts.software[IO_PRINTER],	0, 0, TRUE},
+	{ "serial",			"serial",                     RO_STRING,  &gOpts.software[IO_SERIAL],	0, 0, TRUE},
+	{ "parallel",		"parallel",                   RO_STRING,  &gOpts.software[IO_PARALLEL],	0, 0, TRUE},
+	{ "snapshot",		"snapshot",                   RO_STRING,  &gOpts.software[IO_SNAPSHOT],	0, 0, TRUE},
+	{ "quickload",		"quickload",                  RO_STRING,  &gOpts.software[IO_QUICKLOAD],0, 0, TRUE}
 #endif /* MESS */
 };
 #define NUM_GAME_OPTIONS (sizeof(regGameOpts) / sizeof(regGameOpts[0]))
@@ -2262,15 +2262,21 @@ void SaveDefaultOptions(void)
 			fprintf(fptr,"### global-only options ###\n\n");
 		
 			for (i=0;i<NUM_GLOBAL_GAME_OPTIONS;i++)
-				WriteOptionToFile(fptr,&global_game_options[i]);
+			{
+				if (!global_game_options[i].m_bOnlyOnGame)
+					WriteOptionToFile(fptr,&global_game_options[i]);
+			}
 		}
 
 		if (save_default_options)
 		{
 			fprintf(fptr,"\n### default game options ###\n\n");
 			gOpts = global;
-			for (i=0;i<NUM_GAME_OPTIONS;i++)
-				WriteOptionToFile(fptr,&regGameOpts[i]);
+			for (i = 0; i < NUM_GAME_OPTIONS; i++)
+			{
+				if (!regGameOpts[i].m_bOnlyOnGame)
+					WriteOptionToFile(fptr, &regGameOpts[i]);
+			}
 		}
 
 		fclose(fptr);
@@ -2279,7 +2285,7 @@ void SaveDefaultOptions(void)
 
 static void WriteStringOptionToFile(FILE *fptr,const char *key,const char *value)
 {
-	if (strchr(value,' ') == NULL)
+	if (value[0] && !strchr(value,' '))
 		fprintf(fptr,"%s %s\n",key,value);
 	else
 		fprintf(fptr,"%s \"%s\"\n",key,value);
@@ -2435,7 +2441,7 @@ static void SaveSettings(void)
 		{
 			for (i=0;i<NUM_SETTINGS;i++)
 			{
-				if (regSettings[i].ini_name[0] != '\0')
+				if ((regSettings[i].ini_name[0] != '\0') && !regSettings[i].m_bOnlyOnGame)
 					WriteOptionToFile(fptr,&regSettings[i]);
 			}
 		}

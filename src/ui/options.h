@@ -103,6 +103,7 @@ typedef struct
 	void *m_vpData;                               /* reg key data     */
 	void (*encode)(void *data, char *str);        /* encode function  */
 	void (*decode)(const char *str, void *data);  /* decode function  */
+	BOOL m_bOnlyOnGame;
 } REG_OPTION;
 
 typedef struct

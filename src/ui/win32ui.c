@@ -3642,6 +3642,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 			bUpdateSamples = ((nResult & DIRDLG_SAMPLES) == DIRDLG_SAMPLES) ? TRUE : FALSE;
 #ifdef MESS
 			bUpdateSoftware = ((nResult & DIRDLG_SOFTWARE) == DIRDLG_SOFTWARE) ? TRUE : FALSE;
+
+			if (bUpdateSoftware)
+				MessUpdateSoftwareList();
 #endif
 
 			/* update game list */

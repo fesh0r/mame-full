@@ -18,16 +18,16 @@ void mc10_init_machine(void)
 	mc10_keyboard_strobe = 0xff;
 
 	/* NPW: Taken from Juergen's MC-10 attempt that I just noticed... */
-    if( readinputport(7) & 0x80 )
-    {
+	if( readinputport(7) & 0x80 )
+	{
 		install_mem_read_handler(0, 0x5000, 0xbffe, MRA_RAM);
 		install_mem_write_handler(0, 0x5000, 0xbffe, MWA_RAM);
-    }
-    else
-    {
+	}
+	else
+	{
 		install_mem_read_handler(0, 0x5000, 0xbffe, MRA_NOP);
 		install_mem_write_handler(0, 0x5000, 0xbffe, MWA_NOP);
-    }
+	}
 	/* Install DOS ROM ? */
 	if( readinputport(7) & 0x40 )
 	{
@@ -56,7 +56,7 @@ READ_HANDLER ( mc10_bfff_r )
 	 *   BIT 5 KEYBOARD ROW 6
 	 */
 
-    int val = 0x60;
+	int val = 0x40;
 
 	if ((input_port_0_r(0) | mc10_keyboard_strobe) == 0xff)
 		val |= 0x01;
