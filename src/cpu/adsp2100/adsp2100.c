@@ -23,11 +23,6 @@
 
 #define TRACK_HOTSPOTS		0
 
-/* swap core[0] with core[1] in place instead of always dereferencing core-> ? */
-#define SWAPCORE			0
-/* (read) access registers via an array of pointers instead of function pointers returning the values */
-#define REGPOINTERS 		0
-
 /* stack depths */
 #define	PC_STACK_DEPTH		16
 #define CNTR_STACK_DEPTH	4
@@ -68,8 +63,10 @@ typedef union
 {
 #ifdef LSB_FIRST
 	struct { ADSPREG16 mr0, mr1, mr2, mrzero; } mrx; 
+	struct { UINT32 mr0, mr1; } mry;
 #else
 	struct { ADSPREG16 mrzero, mr2, mr1, mr0; } mrx;
+	struct { UINT32 mr1, mr0; } mry;
 #endif
 	UINT64 mr;
 } MACRESULT;
@@ -104,42 +101,40 @@ typedef struct ADSPCORE
 typedef struct
 {
 	/* Core registers, 2 banks */
-	ADSPCORE	r[2];
+	ADSPCORE	core;
+	ADSPCORE	alt;
 	
 	/* Memory addressing registers */
-	UINT16		i[8];
-	INT16		m[8];
-	UINT16		l[8];
-	UINT16		lmask[8];
-	UINT16		base[8];
+	UINT32		i[8];
+	INT32		m[8];
+	UINT32		l[8];
+	UINT32		lmask[8];
+	UINT32		base[8];
 	UINT8		px;
 	
 	/* other CPU registers */
-	UINT16		pc;
-	UINT16		ppc;
-	UINT16		loop;
-	UINT8		loop_condition;
-	UINT16		cntr;
+	UINT32		pc;
+	UINT32		ppc;
+	UINT32		loop;
+	UINT32		loop_condition;
+	UINT32		cntr;
 
 	/* status registers */
-	UINT8		astat;
-	UINT8		sstat;
-	UINT8		mstat;
-	UINT8		astat_clear;
-	UINT8		idle;
-#if SWAPCORE
-	UINT8		mstat_old;
-#endif
-
+	UINT32		astat;
+	UINT32		sstat;
+	UINT32		mstat;
+	UINT32		astat_clear;
+	UINT32		idle;
+	
 	/* stacks */
 	UINT32		loop_stack[LOOP_STACK_DEPTH];
-	UINT16		cntr_stack[CNTR_STACK_DEPTH];
-	UINT16		pc_stack[PC_STACK_DEPTH];
+	UINT32		cntr_stack[CNTR_STACK_DEPTH];
+	UINT32		pc_stack[PC_STACK_DEPTH];
 	UINT8		stat_stack[STAT_STACK_DEPTH][3];
-	INT8		pc_sp;
-	INT8		cntr_sp;
-	INT8		stat_sp;
-	INT8		loop_sp;
+	INT32		pc_sp;
+	INT32		cntr_sp;
+	INT32		stat_sp;
+	INT32		loop_sp;
 	
 	/* external I/O */
 	UINT8		flagout;
@@ -158,7 +153,7 @@ typedef struct
 #endif
     UINT8    	irq_state[4];
     UINT8    	irq_latch[4];
-    INT16		interrupt_cycles;
+    INT32		interrupt_cycles;
     int			(*irq_callback)(int irqline);
 } adsp2100_Regs;
 
@@ -176,12 +171,6 @@ int	adsp2100_icount=50000;
 **#################################################################################################*/
 
 static adsp2100_Regs adsp2100;
-#if SWAPCORE
-#define CORE(_reg)	adsp2100.r[0]._reg	/* current bank always in r[0] */
-#else
-static ADSPCORE *core;
-#define CORE(_reg)	core->_reg			/* runtime pointer dereferencing */
-#endif
 
 static int chip_type = CHIP_TYPE_ADSP2100;
 
@@ -211,28 +200,28 @@ static void check_irqs(void);
 **	MEMORY ACCESSORS
 **#################################################################################################*/
 
-INLINE UINT16 RWORD_DATA(UINT16 addr)
+INLINE UINT32 RWORD_DATA(UINT32 addr)
 {
-	addr = (addr & 0x3fff) << 1;
+	addr <<= 1;
 	return ADSP2100_RDMEM_WORD(ADSP2100_DATA_OFFSET + addr);
 }
 
-INLINE void WWORD_DATA(UINT16 addr, UINT16 data)
+INLINE void WWORD_DATA(UINT32 addr, UINT32 data)
 {
-	addr = (addr & 0x3fff) << 1;
+	addr <<= 1;
 	ADSP2100_WRMEM_WORD(ADSP2100_DATA_OFFSET + addr, data);
 }
 
-INLINE UINT32 RWORD_PGM(UINT16 addr)
+INLINE UINT32 RWORD_PGM(UINT32 addr)
 {
-	addr = (addr & 0x3fff) << 2;
-	return *(UINT32 *)&OP_ROM[ADSP2100_PGM_OFFSET + addr] & 0x00ffffff;
+	addr <<= 2;
+	return *(UINT32 *)&OP_ROM[ADSP2100_PGM_OFFSET + addr];
 }
 
-INLINE void WWORD_PGM(UINT16 addr, UINT32 data)
+INLINE void WWORD_PGM(UINT32 addr, UINT32 data)
 {
-	addr = (addr & 0x3fff) << 2;
-	*(UINT32 *)&OP_ROM[ADSP2100_PGM_OFFSET + addr] = data;
+	addr <<= 2;
+	ADSP2100_WRPGM(&OP_ROM[ADSP2100_PGM_OFFSET + addr], data);
 }
 
 #define ROPCODE() RWORD_PGM(adsp2100.pc)
@@ -254,7 +243,8 @@ static void check_irqs(void)
 {
 	UINT8 check;
 
-	if ( chip_type == CHIP_TYPE_ADSP2105 ) {
+	if (chip_type == CHIP_TYPE_ADSP2105)
+	{
 		/* check IRQ2 */
 		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[2] : adsp2100.irq_state[2];
 		if (check && (adsp2100.imask & 0x20))
@@ -316,7 +306,9 @@ static void check_irqs(void)
 			else adsp2100.imask &= ~0xf;
 			return;
 		}
-	} else {
+	}
+	else
+	{
 		/* check IRQ3 */
 		check = (adsp2100.icntl & 8) ? adsp2100.irq_latch[3] : adsp2100.irq_state[3];
 		if (check && (adsp2100.imask & 8))
@@ -493,12 +485,12 @@ void adsp2100_set_sp(unsigned val)
 
 void adsp2100_reset(void *param)
 {
-    /* create the tables */
-    if (!create_tables())
-        exit(-1);
+	/* create the tables */
+	if (!create_tables())
+		exit(-1);
 
-    /* ensure that zero is zero */
-	adsp2100.r[0].zero.u = adsp2100.r[1].zero.u = 0;
+	/* ensure that zero is zero */
+	adsp2100.core.zero.u = adsp2100.alt.zero.u = 0;
 	
 	/* recompute the memory registers with their current values */
 	wr_l0(adsp2100.l[0]);  wr_i0(adsp2100.i[0]);
@@ -699,7 +691,7 @@ void adsp2100_exit(void)
 int adsp2100_execute(int cycles)
 {
 	/* reset the core */
-	mstat_changed();
+	set_mstat(adsp2100.mstat);
 
 	/* count cycles and interrupt cycles */
 	adsp2100_icount = cycles;
@@ -730,7 +722,7 @@ int adsp2100_execute(int cycles)
 		else
 		{
 			/* condition not met, keep looping */
-			if (!CONDITION(adsp2100.loop_condition))
+			if (CONDITION(adsp2100.loop_condition))
 				adsp2100.pc = pc_stack_top();
 				
 			/* condition met; pop the PC and loop stacks and fall through */
@@ -743,7 +735,7 @@ int adsp2100_execute(int cycles)
 		}
 
 		/* parse the instruction */
-		switch ( ( op >> 16 ) & 0xff )
+		switch (op >> 16)
 		{
 			case 0x00:
 				/* 00000000 00000000 00000000  NOP */
@@ -826,44 +818,44 @@ int adsp2100_execute(int cycles)
 				/* 00000101 00000000 00000000  saturate MR */
 				if (GET_MV)
 				{
-					if (CORE(mr.mrx.mr2.u) & 0x80)
-						CORE(mr.mrx.mr2.u) = 0xffff, CORE(mr.mrx.mr1.u) = 0x8000, CORE(mr.mrx.mr0.u) = 0x0000;
+					if (adsp2100.core.mr.mrx.mr2.u & 0x80)
+						adsp2100.core.mr.mrx.mr2.u = 0xffff, adsp2100.core.mr.mrx.mr1.u = 0x8000, adsp2100.core.mr.mrx.mr0.u = 0x0000;
 					else
-						CORE(mr.mrx.mr2.u) = 0x0000, CORE(mr.mrx.mr1.u) = 0x7fff, CORE(mr.mrx.mr0.u) = 0xffff;
+						adsp2100.core.mr.mrx.mr2.u = 0x0000, adsp2100.core.mr.mrx.mr1.u = 0x7fff, adsp2100.core.mr.mrx.mr0.u = 0xffff;
 				}
 				break;
 			case 0x06:
 				/* 00000110 000xxxxx 00000000  DIVS */
 				{
-					UINT16 xop = (op >> 8) & 7;
-					UINT16 yop = (op >> 11) & 3;
+					int xop = (op >> 8) & 7;
+					int yop = (op >> 11) & 3;
 					
 					xop = ALU_GETXREG_UNSIGNED(xop);
 					yop = ALU_GETYREG_UNSIGNED(yop);
 					
 					temp = xop ^ yop;
 					adsp2100.astat = (adsp2100.astat & ~QFLAG) | ((temp >> 10) & QFLAG);
-					CORE(af.u) = (yop << 1) | (CORE(ay0.u) >> 15);
-					CORE(ay0.u) = (CORE(ay0.u) << 1) | (temp >> 15);
+					adsp2100.core.af.u = (yop << 1) | (adsp2100.core.ay0.u >> 15);
+					adsp2100.core.ay0.u = (adsp2100.core.ay0.u << 1) | (temp >> 15);
 				}
 				break;
 			case 0x07:
 				/* 00000111 00010xxx 00000000  DIVQ */
 				{
-					UINT16 xop = (op >> 8) & 7;
-					UINT16 res;
+					int xop = (op >> 8) & 7;
+					int res;
 					
 					xop = ALU_GETXREG_UNSIGNED(xop);
 					
 					if (GET_Q)
-						res = CORE(af.u) + xop;
+						res = adsp2100.core.af.u + xop;
 					else
-						res = CORE(af.u) - xop;
+						res = adsp2100.core.af.u - xop;
 					
 					temp = res ^ xop;
 					adsp2100.astat = (adsp2100.astat & ~QFLAG) | ((temp >> 10) & QFLAG);
-					CORE(af.u) = (res << 1) | (CORE(ay0.u) >> 15);
-					CORE(ay0.u) = (CORE(ay0.u) << 1) | ((~temp >> 15) & 0x0001);
+					adsp2100.core.af.u = (res << 1) | (adsp2100.core.ay0.u >> 15);
+					adsp2100.core.ay0.u = (adsp2100.core.ay0.u << 1) | ((~temp >> 15) & 0x0001);
 				}
 				break;
 			case 0x08:
@@ -896,16 +888,17 @@ int adsp2100_execute(int cycles)
 				break;
 			case 0x0c:
 				/* 00001100 xxxxxxxx xxxxxxxx  mode control */
+				temp = adsp2100.mstat;
 #if SUPPORT_2101_EXTENSIONS
-				if (op & 0x000008) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_GOMODE) | ((op << 5) & MSTAT_GOMODE);
-				if (op & 0x002000) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_INTEGER) | ((op >> 8) & MSTAT_INTEGER);
-				if (op & 0x008000) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_TIMER) | ((op >> 9) & MSTAT_TIMER);
+				if (op & 0x000008) temp = (temp & ~MSTAT_GOMODE) | ((op << 5) & MSTAT_GOMODE);
+				if (op & 0x002000) temp = (temp & ~MSTAT_INTEGER) | ((op >> 8) & MSTAT_INTEGER);
+				if (op & 0x008000) temp = (temp & ~MSTAT_TIMER) | ((op >> 9) & MSTAT_TIMER);
 #endif
-				if (op & 0x000020) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_BANK) | ((op >> 4) & MSTAT_BANK);
-				if (op & 0x000080) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_REVERSE) | ((op >> 5) & MSTAT_REVERSE);
-				if (op & 0x000200) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_STICKYV) | ((op >> 6) & MSTAT_STICKYV);
-				if (op & 0x000800) adsp2100.mstat = (adsp2100.mstat & ~MSTAT_SATURATE) | ((op >> 7) & MSTAT_SATURATE);
-				mstat_changed();
+				if (op & 0x000020) temp = (temp & ~MSTAT_BANK) | ((op >> 4) & MSTAT_BANK);
+				if (op & 0x000080) temp = (temp & ~MSTAT_REVERSE) | ((op >> 5) & MSTAT_REVERSE);
+				if (op & 0x000200) temp = (temp & ~MSTAT_STICKYV) | ((op >> 6) & MSTAT_STICKYV);
+				if (op & 0x000800) temp = (temp & ~MSTAT_SATURATE) | ((op >> 7) & MSTAT_SATURATE);
+				set_mstat(temp);
 				break;
 			case 0x0d:
 				/* 00001101 0000xxxx xxxxxxxx  internal data move */
@@ -1026,19 +1019,19 @@ int adsp2100_execute(int cycles)
 				break;
 			case 0x30: case 0x31: case 0x32: case 0x33: 
 				/* 001100xx xxxxxxxx xxxxxxxx  load non-data register immediate (group 0) */
-				WRITE_REG(0, op & 15, (INT16)(op >> 2) >> 2);
+				WRITE_REG(0, op & 15, (INT32)(op << 14) >> 18);
 				break;
 			case 0x34: case 0x35: case 0x36: case 0x37:
 				/* 001101xx xxxxxxxx xxxxxxxx  load non-data register immediate (group 1) */
-				WRITE_REG(1, op & 15, (INT16)(op >> 2) >> 2);
+				WRITE_REG(1, op & 15, (INT32)(op << 14) >> 18);
 				break;
 			case 0x38: case 0x39: case 0x3a: case 0x3b: 
 				/* 001110xx xxxxxxxx xxxxxxxx  load non-data register immediate (group 2) */
-				WRITE_REG(2, op & 15, (INT16)(op >> 2) >> 2);
+				WRITE_REG(2, op & 15, (INT32)(op << 14) >> 18);
 				break;
 			case 0x3c: case 0x3d: case 0x3e: case 0x3f:
 				/* 001111xx xxxxxxxx xxxxxxxx  load non-data register immediate (group 3) */
-				WRITE_REG(3, op & 15, (INT16)(op >> 2) >> 2);
+				WRITE_REG(3, op & 15, (INT32)(op << 14) >> 18);
 				break;
 			case 0x40: case 0x41: case 0x42: case 0x43: case 0x44: case 0x45: case 0x46: case 0x47:
 			case 0x48: case 0x49: case 0x4a: case 0x4b: case 0x4c: case 0x4d: case 0x4e: case 0x4f:
@@ -1167,19 +1160,19 @@ int adsp2100_execute(int cycles)
 				break;
 			case 0x80: case 0x81: case 0x82: case 0x83: 
 				/* 100000xx xxxxxxxx xxxxxxxx  read data memory (immediate addr) to reg group 0 */
-				WRITE_REG(0, op & 15, RWORD_DATA((op >> 4) & 0xffff));
+				WRITE_REG(0, op & 15, RWORD_DATA((op >> 4) & 0x3fff));
 				break;
 			case 0x84: case 0x85: case 0x86: case 0x87:
 				/* 100001xx xxxxxxxx xxxxxxxx  read data memory (immediate addr) to reg group 1 */
-				WRITE_REG(1, op & 15, RWORD_DATA((op >> 4) & 0xffff));
+				WRITE_REG(1, op & 15, RWORD_DATA((op >> 4) & 0x3fff));
 				break;
 			case 0x88: case 0x89: case 0x8a: case 0x8b: 
 				/* 100010xx xxxxxxxx xxxxxxxx  read data memory (immediate addr) to reg group 2 */
-				WRITE_REG(2, op & 15, RWORD_DATA((op >> 4) & 0xffff));
+				WRITE_REG(2, op & 15, RWORD_DATA((op >> 4) & 0x3fff));
 				break;
 			case 0x8c: case 0x8d: case 0x8e: case 0x8f:
 				/* 100011xx xxxxxxxx xxxxxxxx  read data memory (immediate addr) to reg group 3 */
-				WRITE_REG(3, op & 15, RWORD_DATA((op >> 4) & 0xffff));
+				WRITE_REG(3, op & 15, RWORD_DATA((op >> 4) & 0x3fff));
 				break;
 			case 0x90: case 0x91: case 0x92: case 0x93: 
 				/* 1001xxxx xxxxxxxx xxxxxxxx  write data memory (immediate addr) from reg group 0 */
@@ -1210,194 +1203,194 @@ int adsp2100_execute(int cycles)
 			case 0xc0: case 0xc1:
 				/* 1100000x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX0 & pgm read to AY0 */
 				mac_op_mr(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xc2: case 0xc3:
 				/* 1100001x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX0 & pgm read to AY0 */
 				alu_op_ar(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xc4: case 0xc5:
 				/* 1100010x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX1 & pgm read to AY0 */
 				mac_op_mr(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xc6: case 0xc7:
 				/* 1100011x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX1 & pgm read to AY0 */
 				alu_op_ar(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xc8: case 0xc9:
 				/* 1100100x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX0 & pgm read to AY0 */
 				mac_op_mr(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xca: case 0xcb:
 				/* 1100101x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX0 & pgm read to AY0 */
 				alu_op_ar(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xcc: case 0xcd:
 				/* 1100110x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX1 & pgm read to AY0 */
 				mac_op_mr(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xce: case 0xcf:
 				/* 1100111x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX1 & pgm read to AY0 */
 				alu_op_ar(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(ay0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.ay0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xd0: case 0xd1:
 				/* 1101000x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX0 & pgm read to AY1 */
 				mac_op_mr(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xd2: case 0xd3:
 				/* 1101001x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX0 & pgm read to AY1 */
 				alu_op_ar(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xd4: case 0xd5:
 				/* 1101010x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX1 & pgm read to AY1 */
 				mac_op_mr(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xd6: case 0xd7:
 				/* 1101011x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX1 & pgm read to AY1 */
 				alu_op_ar(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xd8: case 0xd9:
 				/* 1101100x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX0 & pgm read to AY1 */
 				mac_op_mr(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xda: case 0xdb:
 				/* 1101101x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX0 & pgm read to AY1 */
 				alu_op_ar(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xdc: case 0xdd:
 				/* 1101110x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX1 & pgm read to AY1 */
 				mac_op_mr(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xde: case 0xdf:
 				/* 1101111x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX1 & pgm read to AY1 */
 				alu_op_ar(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(ay1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.ay1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xe0: case 0xe1:
 				/* 1110000x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX0 & pgm read to MY0 */
 				mac_op_mr(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xe2: case 0xe3:
 				/* 1110001x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX0 & pgm read to MY0 */
 				alu_op_ar(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xe4: case 0xe5:
 				/* 1110010x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX1 & pgm read to MY0 */
 				mac_op_mr(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xe6: case 0xe7:
 				/* 1110011x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX1 & pgm read to MY0 */
 				alu_op_ar(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xe8: case 0xe9:
 				/* 1110100x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX0 & pgm read to MY0 */
 				mac_op_mr(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xea: case 0xeb:
 				/* 1110101x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX0 & pgm read to MY0 */
 				alu_op_ar(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xec: case 0xed:
 				/* 1110110x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX1 & pgm read to MY0 */
 				mac_op_mr(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xee: case 0xef:
 				/* 1110111x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX1 & pgm read to MY0 */
 				alu_op_ar(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(my0.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.my0.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xf0: case 0xf1:
 				/* 1111000x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX0 & pgm read to MY1 */
 				mac_op_mr(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xf2: case 0xf3:
 				/* 1111001x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX0 & pgm read to MY1 */
 				alu_op_ar(op); 
-				CORE(ax0.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax0.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xf4: case 0xf5:
 				/* 1111010x xxxxxxxx xxxxxxxx  MAC to MR with data read to AX1 & pgm read to MY1 */
 				mac_op_mr(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xf6: case 0xf7:
 				/* 1111011x xxxxxxxx xxxxxxxx  ALU to AR with data read to AX1 & pgm read to MY1 */
 				alu_op_ar(op); 
-				CORE(ax1.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.ax1.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xf8: case 0xf9:
 				/* 1111100x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX0 & pgm read to MY1 */
 				mac_op_mr(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xfa: case 0xfb:
 				/* 1111101x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX0 & pgm read to MY1 */
 				alu_op_ar(op); 
-				CORE(mx0.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx0.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xfc: case 0xfd:
 				/* 1111110x xxxxxxxx xxxxxxxx  MAC to MR with data read to MX1 & pgm read to MY1 */
 				mac_op_mr(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 			case 0xfe: case 0xff:
 				/* 1111111x xxxxxxxx xxxxxxxx  ALU to AR with data read to MX1 & pgm read to MY1 */
 				alu_op_ar(op); 
-				CORE(mx1.u) = data_read_dag1(op);
-				CORE(my1.u) = pgm_read_dag2(op >> 4);
+				adsp2100.core.mx1.u = data_read_dag1(op); 
+				adsp2100.core.my1.u = pgm_read_dag2(op >> 4);
 				break;
 		}
 
@@ -1423,27 +1416,27 @@ unsigned adsp2100_get_reg(int regnum)
 	{
 		case ADSP2100_PC: return adsp2100.pc;
 
-		case ADSP2100_AX0: return CORE(ax0.u);
-		case ADSP2100_AX1: return CORE(ax1.u);
-		case ADSP2100_AY0: return CORE(ay0.u);
-		case ADSP2100_AY1: return CORE(ay1.u);
-		case ADSP2100_AR: return CORE(ar.u);
-		case ADSP2100_AF: return CORE(af.u);
+		case ADSP2100_AX0: return adsp2100.core.ax0.u;
+		case ADSP2100_AX1: return adsp2100.core.ax1.u;
+		case ADSP2100_AY0: return adsp2100.core.ay0.u;
+		case ADSP2100_AY1: return adsp2100.core.ay1.u;
+		case ADSP2100_AR: return adsp2100.core.ar.u;
+		case ADSP2100_AF: return adsp2100.core.af.u;
 
-		case ADSP2100_MX0: return CORE(mx0.u);
-		case ADSP2100_MX1: return CORE(mx1.u);
-		case ADSP2100_MY0: return CORE(my0.u);
-		case ADSP2100_MY1: return CORE(my1.u);
-		case ADSP2100_MR0: return CORE(mr.mrx.mr0.u);
-		case ADSP2100_MR1: return CORE(mr.mrx.mr1.u);
-		case ADSP2100_MR2: return CORE(mr.mrx.mr2.u);
-		case ADSP2100_MF: return CORE(mf.u);
+		case ADSP2100_MX0: return adsp2100.core.mx0.u;
+		case ADSP2100_MX1: return adsp2100.core.mx1.u;
+		case ADSP2100_MY0: return adsp2100.core.my0.u;
+		case ADSP2100_MY1: return adsp2100.core.my1.u;
+		case ADSP2100_MR0: return adsp2100.core.mr.mrx.mr0.u;
+		case ADSP2100_MR1: return adsp2100.core.mr.mrx.mr1.u;
+		case ADSP2100_MR2: return adsp2100.core.mr.mrx.mr2.u;
+		case ADSP2100_MF: return adsp2100.core.mf.u;
 
-		case ADSP2100_SI: return CORE(si.u);
-		case ADSP2100_SE: return CORE(se.u);
-		case ADSP2100_SB: return CORE(sb.u);
-		case ADSP2100_SR0: return CORE(sr.srx.sr0.u);
-		case ADSP2100_SR1: return CORE(sr.srx.sr1.u);
+		case ADSP2100_SI: return adsp2100.core.si.u;
+		case ADSP2100_SE: return adsp2100.core.se.u;
+		case ADSP2100_SB: return adsp2100.core.sb.u;
+		case ADSP2100_SR0: return adsp2100.core.sr.srx.sr0.u;
+		case ADSP2100_SR1: return adsp2100.core.sr.srx.sr1.u;
 
 		case ADSP2100_I0: return adsp2100.i[0];
 		case ADSP2100_I1: return adsp2100.i[1];
@@ -1526,7 +1519,7 @@ void adsp2100_set_reg(int regnum, unsigned val)
 		case ADSP2100_AY0: wr_ay0(val); break;
 		case ADSP2100_AY1: wr_ay1(val); break;
 		case ADSP2100_AR: wr_ar(val); break;
-		case ADSP2100_AF: CORE(af.u) = val; break;
+		case ADSP2100_AF: adsp2100.core.af.u = val; break;
 
 		case ADSP2100_MX0: wr_mx0(val); break;
 		case ADSP2100_MX1: wr_mx1(val); break;
@@ -1535,7 +1528,7 @@ void adsp2100_set_reg(int regnum, unsigned val)
 		case ADSP2100_MR0: wr_mr0(val); break;
 		case ADSP2100_MR1: wr_mr1(val); break;
 		case ADSP2100_MR2: wr_mr2(val); break;
-		case ADSP2100_MF: CORE(mf.u) = val; break;
+		case ADSP2100_MF: adsp2100.core.mf.u = val; break;
 
 		case ADSP2100_SI: wr_si(val); break;
 		case ADSP2100_SE: wr_se(val); break;
@@ -1663,27 +1656,27 @@ const char *adsp2100_info( void *context, int regnum )
 	{
 		case CPU_INFO_REG+ADSP2100_PC:  	sprintf(buffer[which], "PC:  %04X", r->pc); break;
 		
-		case CPU_INFO_REG+ADSP2100_AX0: 	sprintf(buffer[which], "AX0: %04X", CORE(ax0.u)); break;
-		case CPU_INFO_REG+ADSP2100_AX1: 	sprintf(buffer[which], "AX1: %04X", CORE(ax1.u)); break;
-		case CPU_INFO_REG+ADSP2100_AY0: 	sprintf(buffer[which], "AY0: %04X", CORE(ay0.u)); break;
-		case CPU_INFO_REG+ADSP2100_AY1: 	sprintf(buffer[which], "AY1: %04X", CORE(ay1.u)); break;
-		case CPU_INFO_REG+ADSP2100_AR:		sprintf(buffer[which], "AR:  %04X", CORE(ar.u)); break;
-		case CPU_INFO_REG+ADSP2100_AF:		sprintf(buffer[which], "AF:  %04X", CORE(af.u)); break;
+		case CPU_INFO_REG+ADSP2100_AX0:		sprintf(buffer[which], "AX0: %04X", adsp2100.core.ax0.u); break;
+		case CPU_INFO_REG+ADSP2100_AX1:		sprintf(buffer[which], "AX1: %04X", adsp2100.core.ax1.u); break;
+		case CPU_INFO_REG+ADSP2100_AY0:		sprintf(buffer[which], "AY0: %04X", adsp2100.core.ay0.u); break;
+		case CPU_INFO_REG+ADSP2100_AY1:		sprintf(buffer[which], "AY1: %04X", adsp2100.core.ay1.u); break;
+		case CPU_INFO_REG+ADSP2100_AR:		sprintf(buffer[which], "AR:  %04X", adsp2100.core.ar.u); break;
+		case CPU_INFO_REG+ADSP2100_AF:		sprintf(buffer[which], "AF:  %04X", adsp2100.core.af.u); break;
 
-		case CPU_INFO_REG+ADSP2100_MX0: 	sprintf(buffer[which], "MX0: %04X", CORE(mx0.u)); break;
-		case CPU_INFO_REG+ADSP2100_MX1: 	sprintf(buffer[which], "MX1: %04X", CORE(mx1.u)); break;
-		case CPU_INFO_REG+ADSP2100_MY0: 	sprintf(buffer[which], "MY0: %04X", CORE(my0.u)); break;
-		case CPU_INFO_REG+ADSP2100_MY1: 	sprintf(buffer[which], "MY1: %04X", CORE(my1.u)); break;
-		case CPU_INFO_REG+ADSP2100_MR0: 	sprintf(buffer[which], "MR0: %04X", CORE(mr.mrx.mr0.u)); break;
-		case CPU_INFO_REG+ADSP2100_MR1: 	sprintf(buffer[which], "MR1: %04X", CORE(mr.mrx.mr1.u)); break;
-		case CPU_INFO_REG+ADSP2100_MR2: 	sprintf(buffer[which], "MR2: %02X", CORE(mr.mrx.mr2.u & 0x00ff)); break;
-		case CPU_INFO_REG+ADSP2100_MF:		sprintf(buffer[which], "MF:  %04X", CORE(mf.u)); break;
+		case CPU_INFO_REG+ADSP2100_MX0: 	sprintf(buffer[which], "MX0: %04X", adsp2100.core.mx0.u); break;
+		case CPU_INFO_REG+ADSP2100_MX1: 	sprintf(buffer[which], "MX1: %04X", adsp2100.core.mx1.u); break;
+		case CPU_INFO_REG+ADSP2100_MY0: 	sprintf(buffer[which], "MY0: %04X", adsp2100.core.my0.u); break;
+		case CPU_INFO_REG+ADSP2100_MY1: 	sprintf(buffer[which], "MY1: %04X", adsp2100.core.my1.u); break;
+		case CPU_INFO_REG+ADSP2100_MR0: 	sprintf(buffer[which], "MR0: %04X", adsp2100.core.mr.mrx.mr0.u); break;
+		case CPU_INFO_REG+ADSP2100_MR1:		sprintf(buffer[which], "MR1: %04X", adsp2100.core.mr.mrx.mr1.u); break;
+		case CPU_INFO_REG+ADSP2100_MR2: 	sprintf(buffer[which], "MR2: %02X", adsp2100.core.mr.mrx.mr2.u & 0x00ff); break;
+		case CPU_INFO_REG+ADSP2100_MF:		sprintf(buffer[which], "MF:  %04X", adsp2100.core.mf.u); break;
 
-		case CPU_INFO_REG+ADSP2100_SI:		sprintf(buffer[which], "SI:  %04X", CORE(si.u)); break;
-		case CPU_INFO_REG+ADSP2100_SE:		sprintf(buffer[which], "SE:  %02X  ", CORE(se.u & 0x00ff)); break;
-		case CPU_INFO_REG+ADSP2100_SB:		sprintf(buffer[which], "SB:  %02X  ", CORE(sb.u & 0x001f)); break;
-		case CPU_INFO_REG+ADSP2100_SR0: 	sprintf(buffer[which], "SR0: %04X", CORE(sr.srx.sr0.u)); break;
-		case CPU_INFO_REG+ADSP2100_SR1: 	sprintf(buffer[which], "SR1: %04X", CORE(sr.srx.sr1.u)); break;
+		case CPU_INFO_REG+ADSP2100_SI:		sprintf(buffer[which], "SI:  %04X", adsp2100.core.si.u); break;
+		case CPU_INFO_REG+ADSP2100_SE:		sprintf(buffer[which], "SE:  %02X  ", adsp2100.core.se.u & 0x00ff); break;
+		case CPU_INFO_REG+ADSP2100_SB:		sprintf(buffer[which], "SB:  %02X  ", adsp2100.core.sb.u & 0x001f); break;
+		case CPU_INFO_REG+ADSP2100_SR0: 	sprintf(buffer[which], "SR0: %04X", adsp2100.core.sr.srx.sr0.u); break;
+		case CPU_INFO_REG+ADSP2100_SR1:		sprintf(buffer[which], "SR1: %04X", adsp2100.core.sr.srx.sr1.u); break;
 
 		case CPU_INFO_REG+ADSP2100_I0:		sprintf(buffer[which], "I0:  %04X", adsp2100.i[0]); break;
 		case CPU_INFO_REG+ADSP2100_I1:		sprintf(buffer[which], "I1:  %04X", adsp2100.i[1]); break;

@@ -121,6 +121,12 @@ extern unsigned adsp2100_dasm(char *buffer, unsigned pc);
 #define ADSP2100_WRMEM(A,V) (cpu_writemem16lew(A,V))
 #define ADSP2100_WRMEM_WORD(A,V) (cpu_writemem16lew_word(A,V))
 
+/****************************************************************************/
+/* Write a 24-bit value to program memory                                   */
+/****************************************************************************/
+#define ADSP2100_WRPGM(A,V)	(*(UINT32 *)(A) = (V) & 0xffffff)
+
+
 #ifdef MAME_DEBUG
 extern unsigned DasmADSP2100(char *buffer, unsigned pc);
 #endif
