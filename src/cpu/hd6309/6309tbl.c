@@ -220,7 +220,6 @@ INLINE void cmpu_di( void );
 INLINE void anda_di( void );
 INLINE void bita_di( void );
 INLINE void lda_di( void );
-INLINE void ldmd_di( void );
 INLINE void sta_di( void );
 INLINE void eora_di( void );
 INLINE void adca_di( void );
