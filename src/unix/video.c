@@ -11,6 +11,9 @@
 #include "artwork.h"
 #include "usrintrf.h"
 #include "vidhrdw/vector.h"
+#ifdef MESS
+#include "mess/mesintrf.h"
+#endif
 
 #include "xmame.h"
 #include "devices.h"
