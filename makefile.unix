@@ -366,6 +366,12 @@ X11_JOYNAME = "Joystick"
 # XINPUT_DEVICES = 1
 
 ##############################################################################
+# *** SDL options, only needed for SDL as display method
+##############################################################################
+# *** The name of your sdl-config executable
+SDL_CONFIG	= sdl-config
+
+##############################################################################
 # *** OpenGL info -- configure if you are using the xgl display option
 ##############################################################################
 GLLIBS= -ldl
