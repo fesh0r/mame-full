@@ -745,10 +745,39 @@ static struct {
 	{ 0x5b5c92b1 , 0x4000 , "ZX Spectrum 48K by Lec v1.6 for 80kB" },
 	{ 0xcd60b589 , 0x4000 , "ZX Spectrum 48K Psycho by Maly of Illuson Rules" },
 	{ 0xb81c570c , 0x4000 , "ZX Spectrum 48K HDT" },
+	{ 0x994acbd9 , 0x4000 , "ZX Spectrum 128K Plus 2c by Namco (0000h)" },
+	{ 0x95eb4751 , 0x4000 , "ZX Spectrum 128K Plus 2c by Namco (4000h)" },
 	{ 0x72a54e75 , 0x8000 , "MERGED ZX Spectrum 128K Plus 2c by Namco" },
-	{ 0x7c20e2c9 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster vx.xx for HD EIDE (8bit) (0000h)" },
-	{ 0x4a700c7e , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster vx.xx for HD EIDE (8bit) (8000h)" },
+	{ 0x7c20e2c9 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (0000h)" },
+	{ 0x4a700c7e , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit) (8000h)" },
+	{ 0xc60852ae , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (0000h)" },
+	{ 0xe73a7797 , 0x8000 , "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit) (8000h)" },
+	{ 0x17c28286 , 0x10000, "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.62 for HD EIDE (8bit)" },
 	{ 0xe585879d , 0x10000, "MERGED ZX Spectrum 128K Plus 3e by Gary Lancaster v0.87 for HD EIDE (8bit)" },
+
+/* homebrew roms replacemts ****************************************************/
+	{ 0xfe44b86a , 0x4000 , "Mr Gluk Reset Service v5.2i 128K (Edit)" },
+	{ 0x479515ef , 0x4000 , "Mr Gluk Reset Service v5.3 128K (Edit)" },
+
+	{ 0x0f186d59 , 0x8000 , "MERGED Real Commander v1.96 128K (0000h+4000h)" },
+
+	{ 0x801a9522 , 0x8000 , "MERGED Quick Commander v2.6 128K (0000h+4000h)" },
+	{ 0xe0286f40 , 0x8000 , "MERGED Quick Commander v2.61 128K (0000h+4000h)" },
+	{ 0x8fa43b6a , 0x8000 , "MERGED Quick Commander v2.6fix 128K (0000h+4000h)" },
+
+	{ 0xad2ebd9b , 0x4000 , "NEOS v1.0 128K 32c" },
+	{ 0xa3bcfaab , 0x4000 , "NEOS v1.0 128K 64c" },
+	{ 0x1657fa43 , 0x4000 , "NEOS v1.0 Pentagon 512K 64c" },
+	{ 0x364ae09a , 0x4000 , "NEOS v1.0 Scorpion 256 64c" },
+
+	{ 0x62ab3640 , 0x4000 , "ISO-ROM 48K v2.2" },
+	{ 0x0dbdc78b , 0x4000 , "ISO-ROM 128K (Ramramis 128K) (8000h)" },
+	{ 0x9a06aaaf , 0x4000 , "ISO-ROM 128K (Ramramis 48K) (c000h)" },
+	{ 0xeed3e349 , 0x4000 , "ISO-ROM 128K (Ramramis 128K) (8000h) (modified for X128)" },
+	{ 0xd43fce83 , 0x8000 , "MERGED ISO-ROM 128K (1993)" },
+	{ 0x1f24cbed , 0x8000 , "MERGED ISO-ROM 128K (1994)" },
+	{ 0xa5b614b9 , 0x8000 , "MERGED ISO-ROM 128K (1994) (alt 1)" },
+	{ 0x2ffdef36 , 0x8000 , "MERGED ISO-ROM 128K (1994) (alt 2)" },
 
 /* clones */
 	{ 0x8ff7a4d1 , 0x4000 , "INVES Spectrum 48K+ (spanish)" },
@@ -765,6 +794,7 @@ static struct {
 	{ 0x5e3f1f66 , 0x4000 , "Didaktik Gama Polak" },
 	{ 0x76f2db1e , 0x4000 , "Didaktik Skalica" },
 	{ 0x16bca748 , 0x8000 , "MERGED Didaktik M 128K" },
+	{ 0x6079a929 , 0x4000 , "Didaktik Tape Emulator for D40" },
                                               
 	{ 0x124ad9e0 , 0x4000 , "Pentagon 128K (0000h)" },
 	{ 0x08ad241c , 0x4000 , "Pentagon 128K 1993 (0000h)" },
@@ -827,8 +857,77 @@ static struct {
 	{ 0xc40aefbd , 0x10000, "MERGED GrandRomMax 1995" },
 	{ 0xb7860784 , 0x10000, "MERGED GrandRomMax 2001 with QuickCommander 2.6 and TRDOS 5.04 (english)" },   
 
-	{ 0x7a365ba6 , 0x8000 , "General Sound v1.04" },
-	{ 0xe938a510 , 0x1000 , "ZS Scorpion 256K AT-XT Keyboard & Mouse Interface" },
+	{ 0x9954cf1a , 0x4000 , "Sam Coupe (part 1)" },
+	{ 0xf031aed4 , 0x4000 , "Sam Coupe (part 2)" },
+	{ 0x262bd888 , 0x4000 , "Sam Coupe (part 1) (alt)" },
+	{ 0x793b7eb7 , 0x4000 , "Sam Coupe (part 2) (alt)" },
+
+
+/* external devices ************************************************************/
+	{ 0xe72a12ae , 0x2000 , "Interface 1 v1" },
+	{ 0xbb66dd1e , 0x2000 , "Interface 1 v2" },
+	{ 0x85ae5586 , 0x4000 , "Interface 1 modified by Ian Collier 1985" },
+
+	{ 0x4b31a971 , 0x2000 , "Multiface 1 (Romantic Robot)" },
+	{ 0x8d8cfd39 , 0x2000 , "Multiface 128 v3.5 (87.1) (Romantic Robot)" },
+	{ 0x78ec8cfd , 0x2000 , "Multiface 128 v3.6 (87.2) (Romantic Robot)" },
+	{ 0x2d594640 , 0x2000 , "Multiface 3 v3.c (Romantic Robot)" },
+	{ 0x3a26e84b , 0x2000 , "Multiprint v1987.5 (Romantic Robot)" },
+
+	{ 0x3b9bbca3 , 0x4000 , "Genie 128K Disassembler v2.1" },
+
+	{ 0x82047489 , 0x2000 , "Disciple" },
+	{ 0x569f7e55 , 0x2000 , "Disciple +D" },
+ 	{ 0x27d4c5f6 , 0x4000 , "Disciple with system files & Epson printer code" },
+	{ 0x4250c4cd , 0x4000 , "Disciple with system files & HP printer code" },
+
+	{ 0x619973f9 , 0x2000 , "Opus Discovery v1.2" },
+	{ 0x50f0eae0 , 0x2000 , "Opus Discovery v2.2" },
+	{ 0xd042b32a , 0x2000 , "Opus Discovery QuickDOS for FDD 720Kb" },
+
+	{ 0x1ccf4add , 0x0800 , "Timex FDD-3000 Internal ROM" },
+	{ 0xa0a9779c , 0x1000 , "Timex FDD-3000 Interface modified for +3" },
+	{ 0x77c517f4 , 0x1000 , "Timex FDD-3000 Interface with square ULA modified for 128K" },
+
+	{ 0xe6de2629 , 0x0800 , "MB-02 BootRom" },
+ 	{ 0x513accb2 , 0x4000 , "MB-02 Interface v3.08 by Busysoft" },
+
+	{ 0x179d4600 , 0x2000 , "Rotronics Wafadrive v1.08" },
+
+	{ 0x27547714 , 0x4000 , "D80 Didaktik Disk Interface" },
+
+	{ 0x3e3cdd4c , 0x4000 , "Beta 128 TR-DOS v5.01" },
+	{ 0x10751aba , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with r80)" },
+	{ 0xc43d717f , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with x128)" },
+	{ 0x561662f2 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with speccy)" },
+	{ 0x23dbc387 , 0x4000 , "Beta 128 TR-DOS v5.03 (supplied with z80)" },
+ 	{ 0xba310874 , 0x4000 , "Beta 128 TR-DOS v5.04" },
+	{ 0x0d3f8b43 , 0x4000 , "Beta 128 TR-DOS v5.04EM by Elsy Corp" },
+	{ 0x522ebbd6 , 0x4000 , "Beta 128 TR-DOS v5.04S" },
+	{ 0xe212d1e0 , 0x4000 , "Beta 128 TR-DOS v5.04T" },
+	{ 0x8d943e6b , 0x4000 , "Beta 128 TR-DOS v5.04T (supplied with ZX Emulator)" },
+	{ 0x2334b8c6 , 0x4000 , "Beta 128 TR-DOS v5.04TM" },
+	{ 0xfdff3810 , 0x4000 , "Beta 128 TR-DOS v5.05" },
+	{ 0x9ba15549 , 0x4000 , "Beta 128 TR-DOS v5.05H by Rst7" },
+ 	{ 0xb615d6c4 , 0x4000 , "Beta 128 TR-DOS v5.12" },
+	{ 0xedb74f8c , 0x4000 , "Beta 128 TR-DOS v5.12F" },
+	{ 0x6b1c17f3 , 0x4000 , "Beta 128 TR-DOS v5.13F" },
+	{ 0xbad0c0a0 , 0x4000 , "Beta 128 TR-DOS v5.13FM" },
+	{ 0xd8882a8c , 0x4000 , "Beta 128 TR-DOS v6.04 by PoS" },
+	{ 0xe73394cb , 0x4000 , "Beta 128 TR-DOS v6.04M Profi+ by PoS" },
+ 	{ 0x56d3c2db , 0x4000 , "Beta 128 TR-DOS v6.05E 1024K C.W. Remix for Resident" },
+	{ 0x6b44fdd7 , 0x4000 , "Beta 128 TR-DOS v6.06H Profi+ by PCCC" },
+	{ 0x5c998d53 , 0x4000 , "Beta 128 TR-DOS v6.08 Profi+ by PCCC" },
+	{ 0x91028924 , 0x4000 , "Beta 128 TR-DOS v6.09 Profi+ by PoS" },
+
+	{ 0x3c3483e5 , 0x0800 , "ZX Lprint EuroElectronics Interface" },
+	{ 0xa5014f40 , 0x0800 , "ZX Lprint MKIII Interface" },
+ 
+	{ 0xce7cf52e , 0x0800 , "Currah microSpeech" },
+	{ 0x1431505c , 0x2000 , "Modem Prism VTX 5000 v3.1" },
+ 	{ 0x7a365ba6 , 0x8000 , "General Sound v1.04" },
+ 	{ 0xe938a510 , 0x1000 , "ZS Scorpion 256K AT-XT Keyboard & Mouse Interface" },
+ 
 
 /* Sinclair QL Computer ********************************************************/
 	{ 0xc7143fc7, 0xc000 , "Sinclair QL ah" },
@@ -1081,9 +1180,6 @@ static struct {
 	{ 0x9ca858cc , 0x2000, "MTX ???" },
 	{ 0x87b4e59c , 0x2000, "MTX ???" },
 	{ 0x9d7538c3 , 0x2000, "MTX ???" },
-
-	{ 0x9954cf1a , 0x4000, "COUPE ???" },
-	{ 0xf031aed4 , 0x4000, "COUPE ???" },
 
 	{ 0xe371b58a , 0x400, "NASCOM 1 nasbugt2" },
 	{ 0xb6300716 , 0x800, "NASCOM 2 nassys1" },
