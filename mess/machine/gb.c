@@ -24,7 +24,7 @@ static int RAMBanks;				   /* Total number of RAM banks                   */
 static UINT32 TCount, TStep;		   /* Timer counter and increment            */
 static UINT32 SIOCount;				   /* Serial I/O counter                     */
 
-#define Verbose 0x01
+#define Verbose 0x00
 #define SGB 0
 #define CheckCRC 1
 #define LineDelay 0
