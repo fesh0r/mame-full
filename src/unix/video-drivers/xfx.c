@@ -73,5 +73,5 @@ void xfx_close_display (void)
      window = 0;
    }
 
-   XSync(display, True); /* send all events to sync; */
+   XSync (display, True); /* send all events to sync; discard events */
 }

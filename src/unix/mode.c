@@ -156,14 +156,15 @@ int mode_match(int width, int height, int depth, int dga)
   
   /* if using direct framebuffer access, make sure the width is properly
      aligned */
-  if(dga && (width & sysdep_display_params.x_align))
+  if(dga && (width & 3))
      return 0;
 
   /* get the width and height after scaling */
   viswidth = sysdep_display_params.width * sysdep_display_params.widthscale;
   if(!use_aspect_ratio || !perfect_aspect || sysdep_display_params.effect)
   {
-    visheight = sysdep_display_params.yarbsize;
+    visheight = sysdep_display_params.yarbsize? sysdep_display_params.yarbsize:
+      sysdep_display_params.height*sysdep_display_params.heightscale;
   }
   else
   {
@@ -173,7 +174,7 @@ int mode_match(int width, int height, int depth, int dga)
   
   /* does the game fit at all ? */
   if(width  < (dga?
-      sysdep_display_params.aligned_width*sysdep_display_params.widthscale:
+      ((sysdep_display_params.width+3)&~3)*sysdep_display_params.widthscale:
       viswidth) ||
      height < visheight)
     return 0;

@@ -14,6 +14,13 @@
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+
+/* for xscreensaver support */
+/* Commented out for now since it causes problems with some 
+ * versions of KDE.
+ */
+/* #include "vroot.h" */
+
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
@@ -25,9 +32,11 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select x11 video mode: (if compiled in)\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)" },
+	{ "x11-mode", "x11", rc_int, &x11_video_mode, "0", 0, X11_MODE_COUNT-2, x11_verify_mode, "Select x11 video mode: (if compiled in)\n0 Normal (hotkey left-alt + insert)\n1 XVideo (hotkey left-alt + home)\n2 OpenGL (hotkey left-alt + page-up)\n3 Glide (hotkey left-alt + delete)\n4 XIL (hotkey left-alt + end)" },
 	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
+	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "root_window_id", "rid", rc_int, &root_window_id, "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
+	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
 	{ NULL, NULL, rc_link, x11_input_opts, NULL, 0, 0, NULL, NULL },
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
    	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
@@ -40,6 +49,9 @@ struct rc_option sysdep_display_opts[] = {
 #ifdef USE_GLIDE
 	{ NULL, NULL, rc_link, fx_opts, NULL, 0, 0, NULL, NULL },
 #endif
+#ifdef USE_XIL
+	{ NULL, NULL, rc_link, xil_opts, NULL, 0, 0, NULL, NULL },
+#endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
@@ -47,9 +59,11 @@ struct x_func_struct {
 	int  (*init)(void);
 	int  (*open_display)(void);
 	void (*close_display)(void);
+	int  (*resize_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
+        void (*exit)(void);
 };
 
 /* HACK - HACK - HACK for fullscreen */
@@ -63,41 +77,61 @@ typedef struct {
 
 
 static struct x_func_struct x_func[X11_MODE_COUNT] = {
-{ NULL,
+{ x11_init,
   x11_window_open_display,
   x11_window_close_display,
-  x11_window_update_display },
+  x11_window_resize_display,
+  x11_window_update_display,
+  NULL },
 #ifdef USE_XV
-{ NULL,
-  x11_window_open_display,
-  x11_window_close_display,
-  x11_window_update_display },
+{ xv_init,
+  xv_open_display,
+  xv_close_display,
+  xv_resize_display,
+  xv_update_display,
+  NULL },
 #else
-{ NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_OPENGL
 { xgl_init,
   xgl_open_display,
   xgl_close_display,
-  xgl_update_display },
+  xgl_resize_display,
+  xgl_update_display,
+  NULL },
 #else
-{ NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_GLIDE
 { xfx_init,
   xfx_open_display,
   xfx_close_display,
-  xfx_update_display },
+  xfx_resize_display,
+  xfx_update_display,
+  xfx_exit },
 #else
-{ NULL, NULL, NULL, NULL },
+{ NULL, NULL, NULL, NULL, NULL },
+#endif
+#ifdef USE_XIL
+{ xil_init,
+  xil_open_display,
+  xil_close_display,
+  xil_resize_display,
+  xil_update_display,
+  NULL },
+#else
+{ NULL, NULL, NULL, NULL, NULL },
 #endif
 #ifdef USE_DGA
 { xf86_dga_init,
   xf86_dga_open_display,
   xf86_dga_close_display,
-  xf86_dga_update_display }
+  xf86_dga_resize_display,
+  xf86_dga_update_display,
+  NULL }
 #else
-{ NULL, NULL, NULL, NULL }
+{ NULL, NULL, NULL, NULL, NULL }
 #endif
 };
 
@@ -168,6 +202,8 @@ int sysdep_display_init (void)
 {
 	int i;
 
+	window = 0;
+
 	if(!(display = XOpenDisplay (NULL)))
 	{
 		/* Don't use stderr_file here it isn't assigned a value yet ! */
@@ -180,8 +216,6 @@ int sysdep_display_init (void)
 	{
 		if(x_func[i].init)
 			mode_available[i] = !x_func[i].init();
-		else if(x_func[i].open_display)
-			mode_available[i] = 1;
 		else
 			mode_available[i] = 0;
 	}
@@ -191,11 +225,14 @@ int sysdep_display_init (void)
 
 void sysdep_display_exit(void)
 {
+        int i;
+        
+	for (i=0;i<X11_MODE_COUNT;i++)
+		if(x_func[i].exit)
+			x_func[i].exit();
+
 	if(display)
 		XCloseDisplay (display);
-#ifdef USE_GLIDE
-	xfx_exit();
-#endif
 }
 
 static void x11_check_mode(int *mode)
@@ -224,6 +261,36 @@ void sysdep_display_close(void)
 	(*x_func[x11_video_mode].close_display)();
 }
 
+int sysdep_display_resize(int width, int height)
+{
+  /* this should never happen! */
+  if ((width  > orig_params.max_width) ||
+      (height > orig_params.max_height))
+  {
+    fprintf(stderr, "Fatal error in sysdep_display_resize:\n"
+      "requested size (%dx%d) bigger then max size (%dx%d)\n",
+      width, height, orig_params.max_width, orig_params.max_height);
+    sysdep_display_close();
+    exit(1);
+  }
+
+  orig_params.width  = width;
+  orig_params.height = height;
+
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+  {
+    sysdep_display_params.width  = height;
+    sysdep_display_params.height = width;
+  }
+  else
+  {
+    sysdep_display_params.width  = width;
+    sysdep_display_params.height = height;
+  }
+  
+  return x_func[x11_video_mode].resize_display();
+}
+
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags)
@@ -241,6 +308,9 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 
 	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE3)
 		new_video_mode = X11_GLIDE;
+
+	if (flags & SYSDEP_DISPLAY_HOTKEY_VIDMODE4)
+		new_video_mode = X11_XIL;
 
 	x11_check_mode(&new_video_mode);
 	if (new_video_mode != x11_video_mode && mode_available[new_video_mode])
@@ -270,7 +340,7 @@ int sysdep_display_update(struct mame_bitmap *bitmap,
 	}
 	
 	/* do we need todo a full update? */
-	if(x11_exposed || (flags&SYSDEP_DISPLAY_VIS_AREA_CHANGED))
+	if(x11_exposed)
 	{
 	 	*dirty_area = *vis_area;
 	 	x11_exposed = 0;

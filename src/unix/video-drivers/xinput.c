@@ -57,7 +57,6 @@ static int xinput_always_use_mouse;
 /* private variables */
 static int xinput_force_grab = 0;
 static int xinput_focus = 1;
-static int xinput_old_mouse_grab = 0;
 static int xinput_keyboard_grabbed = 0;
 static int xinput_mouse_grabbed = 0;
 static int xinput_cursors_allocated = 0;
@@ -168,13 +167,12 @@ int sysdep_display_update_keyboard (void)
 					/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 					   perform a key reset whenever we retrieve keyboard focus */
 					ret_val = 1;
-					if ((xinput_force_grab || xinput_grab_mouse || xinput_old_mouse_grab) &&
+					if ((xinput_force_grab || xinput_grab_mouse) &&
 					    !XGrabPointer(display, window, True,
 					      PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
 					      GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
 					{
 						xinput_mouse_grabbed = 1;
-                                                xinput_old_mouse_grab = 0;
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_invisible_cursor);
 						XWarpPointer(display, None, window, 0, 0, 0, 0,
@@ -192,15 +190,9 @@ int sysdep_display_update_keyboard (void)
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_normal_cursor);
 						xinput_mouse_grabbed = 0;
-						xinput_old_mouse_grab = 1;
 					}
 					xinput_set_leds(0);
 					break;
-#ifdef USE_XIL
-				case ConfigureNotify:
-					update_xil_window_size( E.xconfigure.width, E.xconfigure.height );
-					break;
-#endif
 				/* input events */
 				case MotionNotify:
 					xinput_mouse_motion[0] += E.xmotion.x_root;

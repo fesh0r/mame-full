@@ -10,7 +10,7 @@
 #define EXTERN extern
 #endif
 
-enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_DGA, X11_MODE_COUNT };
+enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_XIL, X11_DGA, X11_MODE_COUNT };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
@@ -20,28 +20,33 @@ EXTERN Window		window;
 EXTERN Screen 		*screen;
 EXTERN unsigned int	window_width;
 EXTERN unsigned int	window_height;
+EXTERN int		x11_video_mode;
 EXTERN unsigned int	custom_window_width;
 EXTERN unsigned int	custom_window_height;
-EXTERN unsigned char	*scaled_buffer_ptr;
-EXTERN int		x11_video_mode;
+EXTERN int		use_xsync;
 EXTERN int		root_window_id; /* root window id (for swallowing the mame window) */
 EXTERN int		run_in_root_window;
 EXTERN int		x11_exposed;
-#ifdef USE_XIL
-EXTERN int		use_xil;
-EXTERN int		use_mt_xil;
+#ifdef USE_MITSHM
+EXTERN int		x11_mit_shm_error;
 #endif
-#ifdef USE_DGA
-EXTERN int		xf86_dga_fix_viewport;
-EXTERN int		xf86_dga_first_click;
-extern struct rc_option xf86_dga_opts[];
-extern struct rc_option xf86_dga2_opts[];
+#ifdef USE_XV
+extern struct rc_option	xv_opts[];
 #endif
 #ifdef USE_OPENGL
 extern struct rc_option	xgl_opts[];
 #endif
 #ifdef USE_GLIDE
 extern struct rc_option	fx_opts[];
+#endif
+#ifdef USE_XIL
+extern struct rc_option	xil_opts[];
+#endif
+#ifdef USE_DGA
+EXTERN int		xf86_dga_fix_viewport;
+EXTERN int		xf86_dga_first_click;
+extern struct rc_option xf86_dga_opts[];
+extern struct rc_option xf86_dga2_opts[];
 #endif
 #ifdef X11_JOYSTICK
 EXTERN int devicebuttonpress;
@@ -77,34 +82,36 @@ int x11_create_window(int *width, int *height, int type);
 void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 
 /* Normal x11_window functions */
+int  x11_init(void);
 int  x11_window_open_display(void);
 void x11_window_close_display(void);
+int  x11_window_resize_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
-
-/* Xf86_dga functions */
-#ifdef USE_DGA
-int  xf86_dga_init(void);
-int  xf86_dga_open_display(void);
-void xf86_dga_close_display(void);
-void xf86_dga_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+#ifdef USE_MITSHM
+int  x11_test_mit_shm (Display * display, XErrorEvent * error);
+#endif
+/* XV functions */
+#ifdef USE_XV
+int  xv_init(void);
+int  xv_open_display(void);
+void xv_close_display(void);
+int  xv_resize_display(void);
+void xv_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
-int  xf86_dga1_init(void);
-int  xf86_dga1_open_display(void);
-void xf86_dga1_close_display(void);
-void xf86_dga1_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
-int  xf86_dga2_init(void);
-int  xf86_dga2_open_display(void);
-void xf86_dga2_close_display(void);
-void xf86_dga2_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area, struct rectangle *dirty_area,
+#endif
+/* OpenGL functions */
+#ifdef USE_OPENGL
+int  xgl_init(void);
+int  xgl_open_display(void);
+void xgl_close_display(void);
+int  xgl_resize_display(void);
+void xgl_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 #endif
@@ -114,31 +121,49 @@ int  xfx_init(void);
 void xfx_exit(void);
 int  xfx_open_display(void);
 void xfx_close_display(void);
+int  xfx_resize_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette,
-	  unsigned int flags);
-#endif
-/* OpenGL functions */
-#ifdef USE_OPENGL
-int xgl_init(void);
-int  xgl_open_display(void);
-void xgl_close_display(void);
-void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags);
 #endif
 /* XIL functions */
 #ifdef USE_XIL
-void init_xil( void );
-void setup_xil_images( int, int );
-void refresh_xil_screen( void );
+int  xil_init(void);
+int  xil_open_display(void);
+void xil_close_display(void);
+int  xil_resize_display(void);
+void xil_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area,  struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 #endif
-/* DBE functions */
-#ifdef USE_DBE
-void setup_dbe( void );
-void swap_dbe_buffers( void );
+/* Xf86_dga functions */
+#ifdef USE_DGA
+int  xf86_dga_init(void);
+int  xf86_dga_open_display(void);
+void xf86_dga_close_display(void);
+int  xf86_dga_resize_display(void);
+void xf86_dga_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
+int  xf86_dga1_init(void);
+int  xf86_dga1_open_display(void);
+void xf86_dga1_close_display(void);
+int  xf86_dga1_resize_display(void);
+void xf86_dga1_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
+int  xf86_dga2_init(void);
+int  xf86_dga2_open_display(void);
+void xf86_dga2_close_display(void);
+int  xf86_dga2_resize_display(void);
+void xf86_dga2_update_display(struct mame_bitmap *bitmap,
+	  struct rectangle *vis_area, struct rectangle *dirty_area,
+	  struct sysdep_palette_struct *palette,
+	  unsigned int flags);
 #endif
 
 #undef EXTERN

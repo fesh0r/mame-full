@@ -20,8 +20,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "osd_cpu.h"
 #include "fxcompat.h"
+#include "pixel_convert.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "fxgen.h"
 
@@ -31,7 +31,7 @@ int fxvec_renderer(point *pt, int num_points);
 /* The squares that are tiled to make up the game screen polygon */
 struct TexSquare
 {
-  UINT16 *texture;
+  unsigned short *texture;
   unsigned int texobj;
   long texadd;
   GrVertex vtxA, vtxB, vtxC, vtxD;
@@ -56,6 +56,7 @@ static const int texsize=256;
 static GrContext_t context=0;
 static int bitmap_dirty;
 static struct TexSquare *texgrid=NULL;
+static unsigned short *texdata = NULL;
 static int texnumx;
 static int texnumy;
 static int texdestwidth;
@@ -69,7 +70,6 @@ static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
 static int signals_caught = 0;
 static GrScreenResolution_t Gr_resolution;
 
-static int  InitTextures(void);
 static void UpdateTexture(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette);
@@ -172,105 +172,50 @@ void VScreenRestoreSignals(void)
   signals_caught = 0;
 }
 
-int InitTextures(void)
+int xfx_resize_display(void)
 {
   int i,j,x=0,y=0;
   struct TexSquare *tsq;
-  long texmem,memaddr;
   float firsttexdestwidthfac=0.0, firsttexdestheightfac=0.0;
   float texpercx, texpercy;
-
-  texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
-  texinfo.aspectRatio=GR_ASPECT_1x1;
-  texinfo.format=GR_TEXFMT_ARGB_1555;
-
-  texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
-
-  if(sysdep_display_params.vec_src_bounds)
-  {
-    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
-                                       GR_COMBINE_FACTOR_LOCAL,
-                                       GR_COMBINE_LOCAL_CONSTANT,
-                                       GR_COMBINE_OTHER_NONE,
-                                       FXFALSE);
-
-    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
-						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
-  }                                          
-	
-  grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
-				   GR_COMBINE_FACTOR_ONE,
-				   GR_COMBINE_LOCAL_NONE,
-				   GR_COMBINE_OTHER_TEXTURE,
-				   FXFALSE);
-
-  grTexCombine(GR_TMU0,
-			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
-			   GR_COMBINE_FUNCTION_NONE,GR_COMBINE_FACTOR_NONE,
-			   FXFALSE, FXFALSE);
-
-  grTexMipMapMode(GR_TMU0,
-				  GR_MIPMAP_DISABLE,
-				  FXFALSE);
-
-  grTexClampMode(GR_TMU0,
-				 GR_TEXTURECLAMP_CLAMP,
-				 GR_TEXTURECLAMP_CLAMP);
-
-  if(bilinear)
-	grTexFilterMode(GR_TMU0,
-					GR_TEXTUREFILTER_BILINEAR,
-					GR_TEXTUREFILTER_BILINEAR);
-  else
-	grTexFilterMode(GR_TMU0,
-					GR_TEXTUREFILTER_POINT_SAMPLED,
-					GR_TEXTUREFILTER_POINT_SAMPLED);
-
-  /* Allocate the texture memory */
+  /* the original (unoriented) width & height */
+  int orig_width; 
+  int orig_height;
   
-  texnumx=sysdep_display_params.orig_width/texsize;
-  if(texnumx*texsize!=sysdep_display_params.orig_width) texnumx++;
-  texnumy=sysdep_display_params.orig_height/texsize;
-  if(texnumy*texsize!=sysdep_display_params.orig_height) texnumy++;
-  
-  if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
-    texpercx=(float)texsize/(float)sysdep_display_params.orig_height;
-    texpercy=(float)texsize/(float)sysdep_display_params.orig_width;
+    orig_width  = sysdep_display_params.height; 
+    orig_height = sysdep_display_params.width;
   }
   else
   {
-    texpercx=(float)texsize/(float)sysdep_display_params.orig_width;
-    texpercy=(float)texsize/(float)sysdep_display_params.orig_height;
+    orig_width  = sysdep_display_params.width; 
+    orig_height = sysdep_display_params.height;
   }
+
+  texnumx = (orig_width +texsize-1) / texsize;
+  texnumy = (orig_height+texsize-1) / texsize;
+  
+  texpercx=(float)texsize/(float)orig_width;
+  texpercy=(float)texsize/(float)orig_height;
 
   if(texpercx>1.0) texpercx=1.0;
   if(texpercy>1.0) texpercy=1.0;
 
-  texdestwidth=vscrnwidth*texpercx;
+  texdestwidth =vscrnwidth *texpercx;
   texdestheight=vscrnheight*texpercy;
 
-  texgrid=(struct TexSquare *)
-	calloc(texnumx*texnumy, sizeof(struct TexSquare));
-  memaddr=grTexMinAddress(GR_TMU0);
-  
   for(i=0;i<texnumy;i++) {
 	for(j=0;j<texnumx;j++) {
 	  tsq=texgrid+i*texnumx+j;
 
-	  tsq->texadd=memaddr;
-	  memaddr+=texmem;
-
-	  if(j==(texnumx-1) && sysdep_display_params.orig_width%texsize)
-		tsq->xcov=(float)((sysdep_display_params.orig_width)%texsize)/(float)texsize;
+	  if(j==(texnumx-1) && orig_width%texsize)
+		tsq->xcov=(float)(orig_width%texsize)/(float)texsize;
 	  else tsq->xcov=1.0;
 	  
-	  if(i==(texnumy-1) && sysdep_display_params.orig_height%texsize)
-		tsq->ycov=(float)((sysdep_display_params.orig_height)%texsize)/(float)texsize;
+	  if(i==(texnumy-1) && orig_height%texsize)
+		tsq->ycov=(float)(orig_height%texsize)/(float)texsize;
 	  else tsq->ycov=1.0;
-
-	  tsq->vtxA.oow=1.0;
-	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
 
           if((sysdep_display_params.orientation&SYSDEP_DISPLAY_FLIPY))
           {
@@ -281,12 +226,12 @@ int InitTextures(void)
             if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               y = (texnumx-1) - j;
-              firsttexdestheightfac = (sysdep_display_params.orig_width%texsize)/(float)texsize;
+              firsttexdestheightfac = (orig_width%texsize)/(float)texsize;
             }
             else
             {
               y = (texnumy-1) - i;
-              firsttexdestheightfac = (sysdep_display_params.orig_height%texsize)/(float)texsize;
+              firsttexdestheightfac = (orig_height%texsize)/(float)texsize;
             }
           }
           else
@@ -316,12 +261,12 @@ int InitTextures(void)
             if ((sysdep_display_params.orientation&SYSDEP_DISPLAY_SWAPXY))
             {
               x = (texnumy-1) - i;
-              firsttexdestwidthfac = (sysdep_display_params.orig_height%texsize)/(float)texsize;
+              firsttexdestwidthfac = (orig_height%texsize)/(float)texsize;
             }
             else
             {
               x = (texnumx-1) - j;
-              firsttexdestwidthfac = (sysdep_display_params.orig_width%texsize)/(float)texsize;
+              firsttexdestwidthfac = (orig_width%texsize)/(float)texsize;
             }
           }
           else
@@ -373,19 +318,32 @@ int InitTextures(void)
           tsq->vtxC.tmuvtx[0].sow*=tsq->xcov;
           tsq->vtxD.tmuvtx[0].sow*=tsq->xcov;
 
-          firsttexdestwidth=texdestwidth*firsttexdestwidthfac;
+          firsttexdestwidth =texdestwidth *firsttexdestwidthfac;
           firsttexdestheight=texdestheight*firsttexdestheightfac;
 
           CalcPoint(&(tsq->vtxA), x  , y  );
           CalcPoint(&(tsq->vtxB), x+1, y  );
           CalcPoint(&(tsq->vtxC), x+1, y+1);
           CalcPoint(&(tsq->vtxD), x  , y+1);
-	
-          /* Initialize the texture memory */
-          if (!(tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture))))
-             return 1;
         }
   }
+
+  if(sysdep_display_params.vec_dest_bounds)
+  {
+    struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
+    sysdep_display_orient_bounds(&vec_bounds, orig_width, orig_height);
+    vecvscrnwidth  = ((vec_bounds.max_x+1)-vec_bounds.min_x) *
+      ((double)vscrnwidth/sysdep_display_params.width);
+    vecvscrnheight = ((vec_bounds.max_y+1)-vec_bounds.min_y) *
+      ((double)vscrnheight/sysdep_display_params.height);
+    vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
+      * vec_bounds.min_x;
+    vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
+      * vec_bounds.min_y;
+    /* fprintf(stderr, "vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
+      vecvscrnwidth, vecvscrnheight); */
+  }
+
   return 0;
 }
 
@@ -455,6 +413,10 @@ static int fxgen_set_resolution(struct rc_option *option, const char *arg,
 /* Set up the virtual screen */
 int InitVScreen(void)
 {
+  int i,j;
+  struct TexSquare *tsq;
+  long texmem,memaddr;
+
   grGlideGetVersion(version);
   fprintf(stderr, "info: using Glide version %s\n", version);
 
@@ -477,29 +439,11 @@ int InitVScreen(void)
   mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
   vscrntlx=(fxwidth -vscrnwidth )/2;
   vscrntly=(fxheight-vscrnheight)/2;
-  if(sysdep_display_params.vec_dest_bounds)
-  {
-    struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
-    sysdep_display_orient_bounds(&vec_bounds, sysdep_display_params.orig_width,
-      sysdep_display_params.orig_height);
-    vecvscrnwidth  = ((vec_bounds.max_x+1)-vec_bounds.min_x) *
-      ((double)vscrnwidth/sysdep_display_params.width);
-    vecvscrnheight = ((vec_bounds.max_y+1)-vec_bounds.min_y) *
-      ((double)vscrnheight/sysdep_display_params.height);
-    vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
-      * vec_bounds.min_x;
-    vecvscrntly = vscrntly + ((double)vscrnheight/sysdep_display_params.height)
-      * vec_bounds.min_y;
-    fprintf(stderr, "vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
-      vecvscrnwidth, vecvscrnheight);
-  }
-  else
-  {
-    vecvscrnwidth  = vscrnwidth;
-    vecvscrnheight = vscrnheight;
-    vecvscrntlx    = vscrntlx;
-    vecvscrntly    = vscrntly;
-  }
+
+  vecvscrnwidth  = vscrnwidth;
+  vecvscrnheight = vscrnheight;
+  vecvscrntlx    = vscrntlx;
+  vecvscrntly    = vscrntly;
   
   /* fill the sysdep_display_properties struct */
   memset(&sysdep_display_properties, 0, sizeof(sysdep_display_properties));
@@ -517,29 +461,111 @@ int InitVScreen(void)
       break;
   }
   sysdep_display_properties.vector_renderer = fxvec_renderer;
+  sysdep_display_properties.hwscale = 1;
   
   /* force an update of the bitmap for the first frame */
   bitmap_dirty = 1;
-   
-  return InitTextures();
+
+  /* init the textures */   
+  texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
+  texinfo.aspectRatio=GR_ASPECT_1x1;
+  texinfo.format=GR_TEXFMT_ARGB_1555;
+
+  texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
+
+  if(sysdep_display_params.vec_src_bounds)
+  {
+    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                       GR_COMBINE_FACTOR_LOCAL,
+                                       GR_COMBINE_LOCAL_CONSTANT,
+                                       GR_COMBINE_OTHER_NONE,
+                                       FXFALSE);
+
+    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
+						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
+  }                                          
+	
+  grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+				   GR_COMBINE_FACTOR_ONE,
+				   GR_COMBINE_LOCAL_NONE,
+				   GR_COMBINE_OTHER_TEXTURE,
+				   FXFALSE);
+
+  grTexCombine(GR_TMU0,
+			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+			   GR_COMBINE_FUNCTION_NONE,GR_COMBINE_FACTOR_NONE,
+			   FXFALSE, FXFALSE);
+
+  grTexMipMapMode(GR_TMU0,
+				  GR_MIPMAP_DISABLE,
+				  FXFALSE);
+
+  grTexClampMode(GR_TMU0,
+				 GR_TEXTURECLAMP_CLAMP,
+				 GR_TEXTURECLAMP_CLAMP);
+
+  if(bilinear)
+	grTexFilterMode(GR_TMU0,
+					GR_TEXTUREFILTER_BILINEAR,
+					GR_TEXTUREFILTER_BILINEAR);
+  else
+	grTexFilterMode(GR_TMU0,
+					GR_TEXTUREFILTER_POINT_SAMPLED,
+					GR_TEXTUREFILTER_POINT_SAMPLED);
+
+  /* Allocate the texture memory */
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+  {
+    texnumx = (sysdep_display_params.max_height + texsize - 1) / texsize;
+    texnumy = (sysdep_display_params.max_width  + texsize - 1) / texsize;
+  }
+  else
+  {
+    texnumx = (sysdep_display_params.max_width  + texsize - 1) / texsize;
+    texnumy = (sysdep_display_params.max_height + texsize - 1) / texsize;
+  }
+  
+  texgrid=calloc(texnumx*texnumy, sizeof(struct TexSquare));
+  texdata=calloc(texnumx*texnumy*texsize*texsize, sizeof(unsigned short));
+  if (!texgrid || !texdata)
+  {
+    fprintf(stderr, "Error allocating texture memory\n");
+    return 1;
+  }
+  memaddr=grTexMinAddress(GR_TMU0);
+  
+  for(i=0;i<texnumy;i++) {
+	for(j=0;j<texnumx;j++) {
+	  tsq=texgrid+i*texnumx+j;
+
+	  tsq->texadd=memaddr;
+	  memaddr+=texmem;
+
+	  tsq->vtxA.oow=1.0;
+	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
+
+	  tsq->texture = texdata + (i*texnumx + j) * texsize*texsize;
+        }
+  }
+  
+  xfx_resize_display();
+  
+  return 0;
 }
 
 /* Close down the virtual screen */
 void CloseVScreen(void)
 {
-  int x,y;
-
   /* Free Texture stuff */
-  if(texgrid) {
-	for(y=0;y<texnumy;y++) {
-	  for(x=0;x<texnumx;x++) {
-            if (texgrid[y*texnumx+x].texture)
-	      free(texgrid[y*texnumx+x].texture);
-	  }
-	}
-	
+  if(texgrid)
+  {
 	free(texgrid);
 	texgrid = NULL;
+  }
+  if(texdata)
+  {
+	free(texdata);
+	texdata = NULL;
   }
 
   if (context)
@@ -558,9 +584,6 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 	int y,rline,texline,xsquare,ysquare,ofs,width, i;
 	struct TexSquare *square;
 
-	if(sysdep_display_params.orig_width<=texsize) width=sysdep_display_params.orig_width;
-	else width=texsize;
-
 	switch (sysdep_display_params.depth) {
 
 	case 15:
@@ -572,14 +595,19 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
-					width=texsize;
-				else width=sysdep_display_params.orig_width%texsize;
+                                if(xsquare<(texnumx-1))
+                                  width=texsize;
+                                else
+                                {
+                                  width = ((vis_area->max_x + 1) - vis_area->min_x) % texsize;
+                                  if (width == 0)
+                                    width=texsize;
+                                }
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
                                 memcpy(square->texture+texline*texsize,
-                                       (UINT16*)(bitmap->line[y])+vis_area->min_x+ofs,
+                                       (unsigned short*)(bitmap->line[y])+vis_area->min_x+ofs,
                                        width*2);
 			}
 		} 
@@ -594,14 +622,19 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
-					width=texsize;
-				else width=sysdep_display_params.orig_width%texsize;
+                                if(xsquare<(texnumx-1))
+                                  width=texsize;
+                                else
+                                {
+                                  width = ((vis_area->max_x + 1) - vis_area->min_x) % texsize;
+                                  if (width == 0)
+                                    width=texsize;
+                                }
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 				for(i = 0;i < width;i++) {
 					square->texture[texline*texsize+i] = 
-						palette->lookup[(((UINT16*)(bitmap->line[y]))[vis_area->min_x+ofs+i])];
+						palette->lookup[(((unsigned short*)(bitmap->line[y]))[vis_area->min_x+ofs+i])];
 				}
 			}
 		}
@@ -616,15 +649,20 @@ void UpdateTexture(struct mame_bitmap *bitmap,
 			for(xsquare=0;xsquare<texnumx;xsquare++) {
 				ofs=xsquare*texsize;
 				
-				if(xsquare<(texnumx-1) || !(sysdep_display_params.orig_width%texsize))
-					width=texsize;
-				else width=sysdep_display_params.orig_width%texsize;
+                                if(xsquare<(texnumx-1))
+                                  width=texsize;
+                                else
+                                {
+                                  width = ((vis_area->max_x + 1) - vis_area->min_x) % texsize;
+                                  if (width == 0)
+                                    width=texsize;
+                                }
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 					
 				for(i = 0;i < width;i++) {
 					square->texture[texline*texsize+i] = 
-						_32TO16_RGB_555((((UINT32*)(bitmap->line[y]))[vis_area->min_x+ofs+i]));
+						_32TO16_RGB_555((((unsigned int*)(bitmap->line[y]))[vis_area->min_x+ofs+i]));
 				}
 			}
 		}

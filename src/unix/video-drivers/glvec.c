@@ -49,8 +49,12 @@ INLINE void glvec_add_point (GLdouble x, GLdouble y)
     disp__glVertex2d(x,y);
   } else {
     GLdouble z;
-    CalcCabPointbyViewpoint(x*sysdep_display_params.orig_width,
-      y*sysdep_display_params.orig_height, &x, &y, &z);
+    if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+      CalcCabPointbyViewpoint(x*sysdep_display_params.height,
+        y*sysdep_display_params.width, &x, &y, &z);
+    else
+      CalcCabPointbyViewpoint(x*sysdep_display_params.width,
+        y*sysdep_display_params.height, &x, &y, &z);
     disp__glVertex3d(x,y,z);
   }
 }

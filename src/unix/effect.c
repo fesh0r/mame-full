@@ -129,7 +129,6 @@ void effect_check_params(void)
 {
   /* warn only once about disabling yarbsize */
   static int firsttime = 1;
-  int disable_arbscale = 0;
 
   switch (sysdep_display_params.effect) {
     case EFFECT_SCALE2X:
@@ -139,30 +138,27 @@ void effect_check_params(void)
     case EFFECT_6TAP2X:
       sysdep_display_params.widthscale = 2;
       sysdep_display_params.heightscale = 2;
-      disable_arbscale = 1;
       break;
     case EFFECT_RGBSTRIPE:
       sysdep_display_params.widthscale = 3;
       sysdep_display_params.heightscale = 2;
-      disable_arbscale = 1;
       break;
     case EFFECT_RGBSCAN:
       sysdep_display_params.widthscale = 2;
       sysdep_display_params.heightscale = 3;
-      disable_arbscale = 1;
       break;
     case EFFECT_SCAN3:
       sysdep_display_params.widthscale = 3;
       sysdep_display_params.heightscale = 3;
-      disable_arbscale = 1;
       break;
   }
 
-  if (sysdep_display_params.yarbsize && disable_arbscale && firsttime) {
+  if (sysdep_display_params.yarbsize && firsttime)
+  {
     printf("Using effects -- disabling arbitrary scaling\n");
-    sysdep_display_params.yarbsize = 0;
     firsttime = 0;
   }
+  sysdep_display_params.yarbsize = 0;
 }
 
 /* Generate most effect variants automagicly, do this before
@@ -380,9 +376,9 @@ int effect_open(void)
 {
   int i = -1;
 
-  if (!(effect_dbbuf = malloc(sysdep_display_params.aligned_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
+  if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
     return 1;
-  memset(effect_dbbuf, sysdep_display_params.aligned_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
+  memset(effect_dbbuf, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
 
   switch(sysdep_display_properties.palette_info.fourcc_format)
   {
@@ -497,16 +493,16 @@ int effect_open(void)
 
     /* add safety of +- 16 bytes, since some effects assume that this
        is present and otherwise segfault */
-    if (!(rotate_dbbuf0 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+    if (!(rotate_dbbuf0 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
       return 1;
     rotate_dbbuf0 += 16;
 
     if ((sysdep_display_params.effect == EFFECT_SCALE2X) ||
         (sysdep_display_params.effect == EFFECT_HQ2X)    ||
         (sysdep_display_params.effect == EFFECT_LQ2X)) {
-      if (!(rotate_dbbuf1 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+      if (!(rotate_dbbuf1 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
         return 1;
-      if (!(rotate_dbbuf2 = calloc(sysdep_display_params.width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
+      if (!(rotate_dbbuf2 = calloc(sysdep_display_params.max_width*((sysdep_display_params.depth+1)/8) + 32, sizeof(char))))
         return 1;
       rotate_dbbuf1 += 16;
       rotate_dbbuf2 += 16;
@@ -516,17 +512,17 @@ int effect_open(void)
   /* I need these buffers */
   if (sysdep_display_params.effect == EFFECT_6TAP2X)
   {
-    if (!(_6tap2x_buf0 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf0 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf1 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf1 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf2 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf2 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf3 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf3 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf4 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf4 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
-    if (!(_6tap2x_buf5 = calloc(sysdep_display_params.width*8, sizeof(char))))
+    if (!(_6tap2x_buf5 = calloc(sysdep_display_params.max_width*8, sizeof(char))))
       return 1;
     if(sysdep_display_params.depth == 16)
     {

@@ -994,18 +994,18 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 	double x_scale, y_scale, scale;
 
 	/* compute the scale values */
-	x_scale = (double)gfx_width / (double)(*width);
-	y_scale = (double)gfx_height / (double)(*height);
+	x_scale = (double)gfx_width  / *width;
+	y_scale = (double)gfx_height / *height;
 	
 	/* pick the smaller scale factor */
 	scale = (x_scale < y_scale) ? x_scale : y_scale;
 
 	/* compute the new size */
-	*width = (int)((double)*width * scale);
-	*height = (int)((double)*height * scale);
+	*width  = *width  * scale + 0.5;
+	*height = *height * scale + 0.5;
 
 	/* round to the nearest 4 pixel value */
-	*width &= ~3;
+	*width  &= ~3;
 	*height &= ~3;
 }
 

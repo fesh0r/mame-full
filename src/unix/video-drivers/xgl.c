@@ -164,10 +164,14 @@ int xgl_open_display(void)
         mode_clip_aspect(custom_window_width, custom_window_height,
           &window_width, &window_height);
       else
-        mode_stretch_aspect(sysdep_display_params.width *
-          sysdep_display_params.widthscale,
-          sysdep_display_params.yarbsize,
-          &window_width, &window_height);
+      {
+        window_width     = sysdep_display_params.max_width * 
+          sysdep_display_params.widthscale;
+        window_height    = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.max_height * sysdep_display_params.heightscale;
+        mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
+      }
       window_type = 1; /* resizable, keep aspect */
     }
     force_grab    = 0; /* no grab */
@@ -258,11 +262,18 @@ void xgl_close_display (void)
      window = 0;
    }
 
-   XSync(display,False); /* send all events to sync; */
+   XSync (display, True); /* send all events to sync; discard events */
 
 #ifndef NDEBUG
    printf("GLINFO: xgl display closed !\n");
 #endif
+}
+
+int xgl_resize_display(void)
+{
+  /* force a reinit of the textures */
+  gl_texture_init = 0;
+  return 0;
 }
 
 void xgl_update_display(struct mame_bitmap *bitmap,
@@ -274,14 +285,12 @@ void xgl_update_display(struct mame_bitmap *bitmap,
   int _dint;
   unsigned int _duint,w,h;
   
-  xinput_check_hotkeys(flags);
-  
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
   if ( (w != window_width) || (h != window_height) )
   {
     window_width  = w;
     window_height = h;
-    gl_resize();
+    gl_set_windowsize();
   }
 
   gl_update_display(bitmap, vis_area, dirty_area, palette, flags);

@@ -83,13 +83,8 @@ ifdef X11_MITSHM
 CFLAGS.x11 += -DUSE_MITSHM
 endif
 ifdef X11_XV
-CFLAGS.x11 += -DUSE_XV -DUSE_HWSCALE
+CFLAGS.x11 += -DUSE_XV
 LIBS.x11   += -lXv
-endif
-ifdef X11_DGA
-CFLAGS.x11 += -DUSE_DGA
-LIBS.x11   += -lXxf86dga -lXxf86vm
-INST.x11    = doinstallsuid
 endif
 ifdef X11_GLIDE
 ifdef GLIDE2
@@ -101,14 +96,20 @@ LIBS.x11   += -lglide3
 endif
 INST.x11    = doinstallsuid
 endif
+ifdef X11_XIL
+CFLAGS.x11 += -DUSE_XIL
+LIBS.x11   += -lxil -lpthread
+endif
+ifdef X11_DGA
+CFLAGS.x11 += -DUSE_DGA
+LIBS.x11   += -lXxf86dga -lXxf86vm
+INST.x11    = doinstallsuid
+endif
+# must be last since it does a += on INST.x11
 ifdef X11_OPENGL
 CFLAGS.x11 += -DUSE_OPENGL $(GLCFLAGS)
 LIBS.x11   += $(GLLIBS) -ljpeg
 INST.x11   += copycab
-endif
-ifdef X11_XIL
-CFLAGS.x11 += -DUSE_XIL
-LIBS.x11   += -lxil -lpthread
 endif
 
 ifndef HOST_CC
@@ -304,16 +305,24 @@ SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
    $(SYSDEP_DIR)/sysdep_mixer.o $(SYSDEP_DIR)/sysdep_display.o
 
 # video driver objs per display method
-VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
-	$(VID_DIR)/x11_window.o \
-	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
-ifdef X11_GLIDE
-VID_OBJS.x11   += $(VID_DIR)/fxgen.o $(VID_DIR)/xfx.o $(VID_DIR)/fxvec.o
+VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/x11_window.o
+ifdef X11_XV
+VID_OBJS.x11   += $(VID_DIR)/xv.o
 endif
 ifdef X11_OPENGL
 VID_OBJS.x11   += $(VID_DIR)/gltool.o $(VID_DIR)/glxtool.o $(VID_DIR)/glcaps.o \
 		  $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/glexport.o \
 		  $(VID_DIR)/glcab.o $(VID_DIR)/gljpg.o $(VID_DIR)/xgl.o
+endif
+ifdef X11_GLIDE
+VID_OBJS.x11   += $(VID_DIR)/fxgen.o $(VID_DIR)/xfx.o $(VID_DIR)/fxvec.o
+endif
+ifdef X11_XIL
+VID_OBJS.x11   += $(VID_DIR)/xil.o
+endif
+ifdef X11_DGA
+VID_OBJS.x11   += $(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o \
+		  $(VID_DIR)/xf86_dga.o
 endif
 VID_OBJS.svgalib = $(VID_DIR)/svgainput.o
 VID_OBJS.svgafx = $(VID_DIR)/svgainput.o $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o

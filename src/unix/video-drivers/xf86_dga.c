@@ -4,10 +4,6 @@
  *     by Shyouzou Sugitani <shy@debian.or.jp>
  *     Stea Greene <stea@cs.binghamton.edu>
  */
-
-#ifdef USE_DGA
-#define __XF86_DGA_C
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -16,14 +12,12 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
-#endif
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-#ifdef USE_DGA
-
 static int  (*p_xf86_dga_open_display)(void);
 static void (*p_xf86_dga_close_display)(void);
+static int  (*p_xf86_dga_resize_display)(void);
 static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags);
@@ -54,16 +48,18 @@ int xf86_dga_init(void)
 #ifdef X_XDGASetMode
 	else if (i >= 2)
 	{
-		p_xf86_dga_open_display = xf86_dga2_open_display;
+		p_xf86_dga_open_display   = xf86_dga2_open_display;
 		p_xf86_dga_close_display  = xf86_dga2_close_display;
+		p_xf86_dga_resize_display = xf86_dga2_resize_display;
 		p_xf86_dga_update_display = xf86_dga2_update_display;
 		return xf86_dga2_init();
 	}
 #endif
 	else
 	{
-		p_xf86_dga_open_display = xf86_dga1_open_display;
+		p_xf86_dga_open_display   = xf86_dga1_open_display;
 		p_xf86_dga_close_display  = xf86_dga1_close_display;
+		p_xf86_dga_resize_display = xf86_dga1_resize_display;
 		p_xf86_dga_update_display = xf86_dga1_update_display;
 		return xf86_dga1_init();
 	}
@@ -82,6 +78,11 @@ void xf86_dga_close_display(void)
 	(*p_xf86_dga_close_display)();
 }
 
+int  xf86_dga_resize_display(void)
+{
+	return (*p_xf86_dga_resize_display)();
+}
+
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
@@ -89,5 +90,3 @@ void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	(*p_xf86_dga_update_display)(bitmap, vis_area, dirty_area,
 		palette, flags);
 }
-
-#endif /*def USE_DGA*/

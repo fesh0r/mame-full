@@ -4,9 +4,6 @@
  *      by Shyouzou Sugitani <shy@debian.or.jp>
  *      Stea Greene <stea@cs.binghamton.edu>
  */
-#ifdef USE_DGA
-#define __XF86_DGA_C
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,11 +13,9 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/xf86dga.h>
 #include <X11/extensions/xf86vmode.h>
-#endif
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-#ifdef USE_DGA
 #ifdef X_XDGASetMode
 
 #define TDFX_DGA_WORKAROUND
@@ -40,6 +35,9 @@ static struct
 	int max_page;
 	int max_page_limit;
 	int page_dirty;
+#ifdef TDFX_DGA_WORKAROUND
+	int current_X11_mode;
+#endif
 } xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,2,-1};
 	
 struct rc_option xf86_dga2_opts[] = {
@@ -48,15 +46,13 @@ struct rc_option xf86_dga2_opts[] = {
   { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-#ifdef TDFX_DGA_WORKAROUND
-static int current_X11_mode = 0;
-#endif
+static int xf86_dga_set_mode(void);
 
 int xf86_dga2_init(void)
 {
 	int i,j ;
 	
-	xf86ctx.screen          = DefaultScreen(display);
+	xf86ctx.screen           = DefaultScreen(display);
 	
 	if(!XDGAQueryVersion(display, &i, &j))
 		fprintf(stderr,"XDGAQueryVersion failed\n");
@@ -86,15 +82,19 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
 	XF86VidModeGetModeLine(display, xf86ctx.screen, &dotclock, &modeline);
 #endif
 
-	xf86ctx.modes = XDGAQueryModes(display, xf86ctx.screen, &modecount);
-	fprintf(stderr, "XDGA: info: found %d modes:\n", modecount);
+	if (!xf86ctx.modes)
+	{
+		xf86ctx.modes = XDGAQueryModes(display, xf86ctx.screen, &modecount);
+		fprintf(stderr, "XDGA: info: found %d modes:\n", modecount);
+	}
 
 	for(i=0;i<modecount;i++)
 	{
 #ifdef TDFX_DGA_WORKAROUND
-		if (xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
+		if (!xf86ctx.vidmode_changed &&
+			xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
 			xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
-			current_X11_mode = xf86ctx.modes[i].num;
+			xf86ctx.current_X11_mode = xf86ctx.modes[i].num;
 #endif
 #if 0 /* DEBUG */
 		fprintf(stderr, "XDGA: info: (%d) %s\n",
@@ -174,6 +174,10 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 
 static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 {
+	int scaled_height = sysdep_display_params.yarbsize?
+	        sysdep_display_params.yarbsize:
+	        sysdep_display_params.height*sysdep_display_params.heightscale;
+	
 	xf86ctx.update_display_func = sysdep_display_get_blitfunc_doublebuffer(modeinfo.bitsPerPixel);
 	if (xf86ctx.update_display_func == NULL)
 	{
@@ -185,9 +189,9 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	
 	xf86ctx.addr  = (unsigned char*)xf86ctx.device->data;
 	xf86ctx.addr += (((modeinfo.viewportWidth - sysdep_display_params.width*
-		sysdep_display_params.widthscale) / 2) &
-		~sysdep_display_params.x_align) * modeinfo.bitsPerPixel / 8;
-	xf86ctx.addr += ((modeinfo.viewportHeight - sysdep_display_params.yarbsize)
+		sysdep_display_params.widthscale) / 2) & ~3)
+		* modeinfo.bitsPerPixel / 8;
+	xf86ctx.addr += ((modeinfo.viewportHeight - scaled_height)
 		/ 2) * modeinfo.bytesPerScanline;
 
 	/* setup page flipping */
@@ -217,8 +221,7 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
    mouse and keyboard can't be setup before the display has. */
 int xf86_dga2_open_display(void)
 {
-	int i,bestmode;
-	Visual dga_xvisual;
+	int i;
 	/* only have todo the fork's the first time we go DGA, otherwise people
 	   who do a lott of dga <-> window switching will get a lott of
 	   children */
@@ -241,6 +244,32 @@ int xf86_dga2_open_display(void)
 	  XQueryKeymap(display, keys);
 	  for (i=0; (i<32) && (keys[i]==0); i++) {}
 	} while(i<32);
+
+        /* 2 means grab keyb and mouse ! */
+	if(xinput_open(2, 0))
+	{
+	    fprintf(stderr,"XGrabKeyboard failed\n");
+	    return 1;
+	}
+
+	if(effect_open())
+	    return 1;
+	    
+	if(xf86_dga_set_mode())
+	    return 1;
+	    
+	/* setup the colormap */
+	xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
+					  xf86ctx.device, AllocNone);
+	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
+	
+	return 0;
+}
+
+static int xf86_dga_set_mode(void)
+{
+	int bestmode;
+	Visual dga_xvisual;
 
 	bestmode = xf86_dga_vidmode_find_best_vidmode();
 	if (!bestmode)
@@ -282,13 +311,6 @@ int xf86_dga2_open_display(void)
 	if(xf86_dga_setup_graphics(xf86ctx.device->mode))
 	    return 1;
 	
-        /* 2 means grab keyb and mouse ! */
-	if(xinput_open(2, 0))
-	{
-	    fprintf(stderr,"XGrabKeyboard failed\n");
-	    return 1;
-	}
-
 	/* setup the viewport */
 	XDGASetViewport(display,xf86ctx.screen,0,0,0);
 	while(XDGAGetViewportStatus(display, xf86ctx.screen))
@@ -299,15 +321,20 @@ int xf86_dga2_open_display(void)
 	       xf86ctx.device->mode.bytesPerScanline
 	       * xf86ctx.device->mode.imageHeight);
 
-	/* setup the colormap */
-	xf86ctx.cmap = XDGACreateColormap(display, xf86ctx.screen,
-					  xf86ctx.device, AllocNone);
-	XDGAInstallColormap(display,xf86ctx.screen,xf86ctx.cmap);
-
-	if(effect_open())
-	    return 1;
-	
 	return 0;
+}
+
+int  xf86_dga2_resize_display(void)
+{
+	XFree(xf86ctx.device);
+	xf86ctx.device = 0;
+	if (xf86_dga_set_mode())
+	{
+		fprintf(stderr, "FATAL Error changing videomode, aborting\n");
+		sysdep_display_close();
+		exit(1);
+	}
+	return 1;
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
@@ -366,9 +393,8 @@ void xf86_dga2_close_display(void)
 #ifdef TDFX_DGA_WORKAROUND
 		/* Restore the right video mode before leaving DGA  */
 		/* The tdfx driver would have to do it, but it doesn't work ...*/
-		XDGASetMode(display, xf86ctx.screen, current_X11_mode);
+		XDGASetMode(display, xf86ctx.screen, xf86ctx.current_X11_mode);
 #endif
-
 		XDGASetMode(display, xf86ctx.screen, 0);
 		xf86ctx.vidmode_changed = 0;
 	}
@@ -376,4 +402,3 @@ void xf86_dga2_close_display(void)
 }
 
 #endif /*def X_XDGASetMode*/
-#endif /*def USE_DGA*/

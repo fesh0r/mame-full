@@ -3,76 +3,239 @@
  *
  *  Elias Mårtenson (elias-m@algonet.se)
  */
-
-/* moved above the #ifdef to avoid warning about empty c-files */
 #include <stdio.h>
-
-#ifdef USE_XIL
-
+#include <stdlib.h>
+#include <string.h>
 #include <thread.h>
 #include <pthread.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <xil/xil.h>
-#include "xmame.h"
+#include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-static void scale_screen( XilImage );
+static int use_mt_xil;
+
+struct rc_option xil_opts[] = {
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "XIL Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL,  NULL },
+	{ "mtxil", "mtx", rc_bool, &use_mt_xil, "0", 0, 0, NULL, "Enable/disable multi threading of XIL" },
+	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
+};
+
 static void *redraw_thread( void * );
 
 static XilSystemState state;
-static XilImage window_image, draw_image;
-static int draw_image_xsize, draw_image_ysize;
-static int window_width, window_height;
-
+static XilImage window_image = NULL, draw_image = NULL;
+static int draw_image_width, draw_image_height;
 static pthread_mutex_t img_mutex;
 static pthread_cond_t img_cond;
 static int paintflag;
-static XilImage back_image;
+static XilImage back_image = NULL;
+static blit_func_p xil_update_display_func;
+static unsigned char *scaled_buffer_ptr;
 
-void init_xil( void )
+int xil_init( void )
 {
   if( (state = xil_open()) == NULL ) {
     fprintf( stderr, "Failed to open XIL library, disabling\n" );
-    use_xil = 0;
+    return 1;
   }
   else {
-    printf( "Using XIL library\n" );
+    fprintf( stderr, "Using XIL library\n" );
+    return 0;
   }
 }
 
-void setup_xil_images( int xsize, int ysize )
+/* This name doesn't really cover this function, since it also sets up mouse
+   and keyboard. This is done over here, since on most display targets the
+   mouse and keyboard can't be setup before the display has. */
+int xil_open_display(void)
 {
-  XilMemoryStorage storage_info;
-  pthread_t thread_id;
+        XilMemoryStorage storage_info;
+        pthread_t thread_id;
 
-  window_image = xil_create_from_window( state, display, window );
+        /* set the aspect_ratio, do this here since
+           this can change yarbsize */
+        mode_set_aspect_ratio((double)screen->width/screen->height);
 
-  draw_image_xsize = xsize;
-  draw_image_ysize = ysize;
+	/* create a window */
+	if (run_in_root_window)
+	{
+	        window        = RootWindowOfScreen (screen);
+	        window_width  = screen->width;
+                window_height = screen->height;
+	}
+	else
+	{
+                /* determine window size */
+                if (custom_window_width)
+                {
+                  mode_clip_aspect(custom_window_width, custom_window_height,
+                    &window_width, &window_height);
+                }
+                else
+                {
+                  window_width     = sysdep_display_params.max_width * 
+                    sysdep_display_params.widthscale;
+                  window_height    = sysdep_display_params.yarbsize?
+                    sysdep_display_params.yarbsize:
+                    sysdep_display_params.max_height *
+                      sysdep_display_params.heightscale;
+                  mode_stretch_aspect(window_width, window_height,
+                    &window_width, &window_height);
+                }
+                if (x11_create_window(&window_width, &window_height, 1))
+                       return 1;
+        }
 
-  window_width = xsize;
-  window_height = ysize;
+	/* create and setup the images */
+        window_image = xil_create_from_window( state, display, window );
+        if( use_mt_xil ) {
+          printf( "initializing scaling thread\n" );
+          pthread_mutex_init( &img_mutex, NULL );
+          paintflag = 0;
+          pthread_create( &thread_id, NULL, redraw_thread, NULL );
+        }
+        xil_resize_display();
 
-  draw_image = xil_create( state, xsize, ysize, 1, XIL_SHORT );
-  xil_export( draw_image );
-  xil_get_memory_storage( draw_image, &storage_info );
-  scaled_buffer_ptr = (char *)storage_info.byte.data;
+	/* setup the sysdep_display_properties struct */
+	memset (&sysdep_display_properties, 0, sizeof (sysdep_display_properties));
+	sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
+	sysdep_display_properties.palette_info.green_mask = 0x000007E0;
+	sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
+        sysdep_display_properties.hwscale = 1;
+	
+	if (x11_init_palette_info(xvisual) != 0)
+		return 1;
+	
+	/* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
+        xil_update_display_func = sysdep_display_get_blitfunc(16);
+	if (x11_window_update_display_func == NULL)
+	{
+		fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
+		return 1;
+	}
 
-  if( use_mt_xil ) {
-    printf( "initializing scaling thread\n" );
-    back_image = xil_create( state, xsize, ysize, 1, XIL_BYTE );
-    pthread_mutex_init( &img_mutex, NULL );
-    paintflag = 0;
-    pthread_create( &thread_id, NULL, redraw_thread, NULL );
-  }
+	/* init the effect code */
+	if (effect_open())
+		return 1;
+
+        /* init the input code */
+	xinput_open(0, ExposureMask);
+
+	return 0;
 }
 
-void refresh_xil_screen( void )
+/*
+ * Shut down the display, also called by the core to clean up if any error
+ * happens when creating the display.
+ */
+void xil_close_display (void)
 {
+   /* free effect buffers */
+   effect_close();
+
+   /* ungrab keyb and mouse */
+   xinput_close();
+
+   /* now just free everything else */
+   if (window)
+   {
+     XDestroyWindow (display, window);
+     window = 0;
+   }
+   if (window_image)
+   {
+     xil_destroy(window_image);
+     window_image = NULL;
+   }
+   if (draw_image)
+   {
+     xil_destroy(draw_image);
+     draw_image = NULL;
+   }
+   if (back_image)
+   {
+     xil_destroy(back_image);
+     back_image = NULL;
+   }
+
+   XSync (display, True); /* send all events to sync; discard events */
+}
+
+int xil_resize_display(void)
+{
+         if (draw_image)
+         {
+           xil_destroy(draw_image);
+           draw_image = NULL;
+         }
+         if (back_image)
+         {
+           xil_destroy(back_image);
+           back_image = NULL;
+         }
+        
+        /* xil does normal scaling for us */
+        if (sysdep_display_params.effect == 0)
+        {
+		draw_image_width  = sysdep_display_params.width;
+		draw_image_height = sysdep_display_params.height;
+		sysdep_display_params.widthscale  = 1;
+		sysdep_display_params.heightscale = 1;
+                sysdep_display_params.yarbsize    = 0;
+        }
+        else
+        {
+		draw_image_width  = sysdep_display_params.width *
+		  sysdep_display_params.widthscale;
+                /* effects don't do yarbsize */
+		draw_image_height = sysdep_display_params.height *
+		  sysdep_display_params.heightscale;
+        }
+
+        draw_image   = xil_create( state, draw_image_width, draw_image_height,
+          1, XIL_SHORT );
+        xil_export( draw_image );
+        xil_get_memory_storage( draw_image, &storage_info );
+        scaled_buffer_ptr = (char *)storage_info.byte.data;
+
+        if( use_mt_xil ) {
+          pthread_mutex_lock( &img_mutex );
+          while( paintflag ) {
+            pthread_cond_wait( &img_cond, &img_mutex );
+          }
+          back_image = xil_create( state, draw_image_width, draw_image_height, 1, XIL_BYTE );
+          pthread_mutex_unlock( &img_mutex );
+        }
+        return 0;
+}
+
+/* invoked by main tree code to update bitmap into screen */
+void xil_update_display(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned int flags)
+{
+  Window _dw;
+  int _dint;
+  unsigned int _duint, w, h;
   XilMemoryStorage storage_info;
+
+  x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
+    palette, scaled_buffer_ptr, draw_image_width);
 
   xil_import( draw_image, TRUE );
+
+  XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
+  if ((window_width != w) || (window_height != h))
+  {
+    window_width  = w;
+    window_height = h;
+    xil_destroy( window_image );
+    window_image = xil_create_from_window( state, display, window );
+  }  
+
   if( use_mt_xil ) {
     pthread_mutex_lock( &img_mutex );
     while( paintflag ) {
@@ -84,31 +247,21 @@ void refresh_xil_screen( void )
     pthread_cond_signal( &img_cond );
   }
   else {
-    scale_screen( draw_image );
+    xil_scale( draw_image, window_image, "nearest",
+	     window_width / (float)draw_image_width,
+	     window_height / (float)draw_image_height );
   }
 
   xil_export( draw_image );
   xil_get_memory_storage( draw_image, &storage_info );
   scaled_buffer_ptr = (char *)storage_info.byte.data;
+
+  /* some games "flickers" with XFlush, so command line option is provided */
+  if (use_xsync)
+    XSync (display, False);   /* be sure to get request processed */
+  else
+    XFlush (display);         /* flush buffer to server */
 }
-
-static void scale_screen( XilImage source )
-{
-  xil_scale( source, window_image, "nearest",
-	     window_width / (float)draw_image_xsize,
-	     window_height / (float)draw_image_ysize );
-}
-
-void update_xil_window_size( int width, int height )
-{
-  window_width = width;
-  window_height = height;
-
-  if( window_image != NULL ) {
-    xil_destroy( window_image );
-  }
-  window_image = xil_create_from_window( state, display, window );
-}  
 
 static void *redraw_thread( void *arg )
 {
@@ -117,7 +270,9 @@ static void *redraw_thread( void *arg )
     while( !paintflag ) {
       pthread_cond_wait( &img_cond, &img_mutex );
     }
-    scale_screen( back_image );
+    xil_scale( back_image, window_image, "nearest",
+	     window_width / (float)draw_image_width,
+	     window_height / (float)draw_image_height );
     paintflag = 0;
     pthread_mutex_unlock( &img_mutex );
     pthread_cond_signal( &img_cond );
@@ -125,5 +280,3 @@ static void *redraw_thread( void *arg )
 
   return NULL;
 }
-
-#endif

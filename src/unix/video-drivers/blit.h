@@ -86,7 +86,7 @@ ChangeLog:
 #endif
 
 /* arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
-#define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*sysdep_display_params.yarbsize)/(YMAX) - ((YV)*sysdep_display_params.yarbsize)/(YMAX)))
+#define REPS_FOR_Y(N,YV,YMAX) ((N)* ( (((YV)+1)*yarbsize)/(YMAX) - ((YV)*yarbsize)/(YMAX)))
 
 #ifdef DOUBLEBUFFER
 
@@ -169,8 +169,11 @@ if (sysdep_display_params.orientation) { \
   int y, src_width, bounds_width;
   SRC_PIXEL *line_src, *line_end;
   DEST_PIXEL *line_dest;
+  int yarbsize = sysdep_display_params.yarbsize?
+    sysdep_display_params.yarbsize:
+    sysdep_display_params.height*sysdep_display_params.heightscale;
 
-  sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area);
+  sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area, 3);
 
   src_width    = (((SRC_PIXEL *)bitmap->line[1]) - ((SRC_PIXEL *)bitmap->line[0]));
   bounds_width = (dirty_area->max_x+1) - dirty_area->min_x;

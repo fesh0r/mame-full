@@ -35,6 +35,21 @@ struct sysdep_display_open_params sysdep_display_params;
 void sysdep_display_set_params(const struct sysdep_display_open_params *params)
 {
   sysdep_display_params = *params;
+  
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+  {
+    int temp = sysdep_display_params.height;
+    sysdep_display_params.height = sysdep_display_params.width;
+    sysdep_display_params.width  = temp;
+
+    temp = sysdep_display_params.max_height;
+    sysdep_display_params.max_height = sysdep_display_params.max_width;
+    sysdep_display_params.max_width  = temp;
+
+    if (sysdep_display_params.aspect_ratio != 0.0)
+      sysdep_display_params.aspect_ratio = 1.0 / sysdep_display_params.aspect_ratio;
+  }
+  
   /* The blit code sometimes needs width and x offsets to be aligned:
     -YUY2 blits blit 2 pixels at a time and thus needs an X-alignment of 2
     -packed_pixel blits blit 4 pixels to 3 longs, thus an X-alignment of 4 
@@ -42,29 +57,11 @@ void sysdep_display_set_params(const struct sysdep_display_open_params *params)
     This alignment can be changed by display drivers if needed, this only has
     effect on sysdep_display_check_bounds, in this case the display driver
     needs to recalculate the aligned width themselves */
-  sysdep_display_params.x_align     = 3;
-  sysdep_display_params.orig_width  = sysdep_display_params.width;
-  sysdep_display_params.orig_height = sysdep_display_params.height;
-     
-  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-  {
-    int temp = sysdep_display_params.height;
-    sysdep_display_params.height = sysdep_display_params.width;
-    sysdep_display_params.width  = temp;
-
-    if (sysdep_display_params.aspect_ratio != 0.0)
-      sysdep_display_params.aspect_ratio = 1.0 / sysdep_display_params.aspect_ratio;
-  }
-  
-  sysdep_display_params.aligned_width = (sysdep_display_params.width +
-    sysdep_display_params.x_align) & ~sysdep_display_params.x_align;
+  sysdep_display_params.max_width += 3;
+  sysdep_display_params.max_width &= ~3;
   
   /* lett the effect code do its magic */
   effect_check_params();
-
-  if (sysdep_display_params.yarbsize == 0)
-    sysdep_display_params.yarbsize = sysdep_display_params.height *
-      sysdep_display_params.heightscale;
 }
 
 void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)
@@ -104,7 +101,7 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 	}
 }
 
-void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area)
+void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align)
 {	
 	int old_bound;
 
@@ -121,14 +118,22 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
 	/* apply X-alignment to destbounds min_x, apply the same change to
            dirty_area */
 	old_bound = vis_in_dest_out->min_x;
-	vis_in_dest_out->min_x &= ~sysdep_display_params.x_align;
+	vis_in_dest_out->min_x &= ~x_align;
         dirty_area->min_x -= old_bound - vis_in_dest_out->min_x;
         
         /* apply scaling to dest_bounds */
 	vis_in_dest_out->min_x *= sysdep_display_params.widthscale;
 	vis_in_dest_out->max_x *= sysdep_display_params.widthscale;	
-	vis_in_dest_out->min_y = (vis_in_dest_out->min_y * sysdep_display_params.yarbsize) /
-          sysdep_display_params.height;
-	vis_in_dest_out->max_y = (vis_in_dest_out->max_y * sysdep_display_params.yarbsize) /
-          sysdep_display_params.height;
+	if (sysdep_display_params.yarbsize)
+	{
+          vis_in_dest_out->min_y = (vis_in_dest_out->min_y * sysdep_display_params.yarbsize) /
+            sysdep_display_params.height;
+          vis_in_dest_out->max_y = (vis_in_dest_out->max_y * sysdep_display_params.yarbsize) /
+            sysdep_display_params.height;
+        }
+        else
+	{
+          vis_in_dest_out->min_y *= sysdep_display_params.heightscale;
+          vis_in_dest_out->max_y *= sysdep_display_params.heightscale;
+        }
 }

@@ -47,7 +47,7 @@ static struct sysdep_palette_struct *debug_palette  = NULL;
 static struct sysdep_display_open_params current_params;
 static struct sysdep_display_open_params normal_params;
 static struct sysdep_display_open_params debug_params = {
-  0, 0, 16, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0,
+  0, 0, 16, 0, 0, 0, NAME " debug window", 1, 1, 0, 0, 0, 0, 0.0,
   xmame_keyboard_register_event, NULL, NULL };
 
 static struct rectangle debug_bounds;
@@ -379,26 +379,6 @@ void osd_video_initpre()
 		options.vector_height = 480;
 	}
 
-#if 0   /* obsolete */	
-	if (sysdep_display_properties.vector_aux_renderer)
-	{
-		/* HACK to find out if this is a vector game before calling
-		   run_game() */
-		struct InternalMachineDriver machine;
-
-		memset(&machine, 0, sizeof(machine));
-		drivers[game_index]->drv(&machine);
-
-		if (machine.video_attributes & VIDEO_TYPE_VECTOR)
-		{
-			vector_register_aux_renderer(sysdep_display_properties.vector_aux_renderer);
-			use_overlays         = 0;
-			use_bezels           = 0;
-			options.artwork_crop = 1;
-		}
-	}
-#endif
-
 	/* set the artwork options */
 	options.use_artwork = ARTWORK_USE_ALL;
 	if (use_backdrops == 0)
@@ -427,6 +407,8 @@ int osd_create_display(const struct osd_create_params *params,
 	normal_params.height = params->height;
 	normal_params.depth  = params->depth;
 	normal_params.title  = title;
+	normal_params.max_width  = params->width;
+	normal_params.max_height = params->height;
 	normal_params.aspect_ratio     = (double)params->aspect_x / (double)params->aspect_y;
 	normal_params.keyboard_handler = xmame_keyboard_register_event;
 	normal_params.vec_src_bounds   = NULL;
@@ -563,33 +545,6 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
 		display_settings_changed();
 		/* Re-enable sound */
 		osd_sound_enable( 1 );
-	}
-}
-
-static void update_visible_area(struct mame_display *display)
-{
-	int width  = (display->game_visible_area.max_x + 1) -
-	   display->game_visible_area.min_x;
-	int height = (display->game_visible_area.max_y + 1) -
-	   display->game_visible_area.min_y;
-
-	set_ui_visarea(display->game_visible_area.min_x,
-			display->game_visible_area.min_y,
-			display->game_visible_area.max_x,
-			display->game_visible_area.max_y);
-			
-	if (sysdep_display_properties.hwscale &&
-	    (width  <= normal_params.width) &&
-	    (height <= normal_params.height))
-	  return;
-	
-	if ((normal_params.width  != width) ||
-	    (normal_params.height != height))
-	{
-	  normal_params.width  = width;
-	  normal_params.height = height;
-	  if(!debugger_has_focus)
-	    change_display_settings(&normal_params, 1);
 	}
 }
 
@@ -802,7 +757,16 @@ void osd_update_video_and_audio(struct mame_display *display)
 	     to the normal display if focussed ***/
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 	{
-		update_visible_area(display);
+		set_ui_visarea(display->game_visible_area.min_x,
+				display->game_visible_area.min_y,
+				display->game_visible_area.max_x,
+				display->game_visible_area.max_y);
+
+		normal_params.width  = (display->game_visible_area.max_x + 1) -
+		   display->game_visible_area.min_x;
+		normal_params.height = (display->game_visible_area.max_y + 1) -
+		   display->game_visible_area.min_y;
+
 		vis_area_changed = 1;
 	}
 
@@ -927,12 +891,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 		if (ui_dirty)
 			flags |= SYSDEP_DISPLAY_UI_DIRTY;
 			
-		if (vis_area_changed)
-		{
-			flags |= SYSDEP_DISPLAY_VIS_AREA_CHANGED;
-			vis_area_changed = 0;
-		}
-		
 		/* at the end, we need the current time */
 		curr = osd_cycles();
 
@@ -963,6 +921,13 @@ void osd_update_video_and_audio(struct mame_display *display)
 				trying_to_quit = 1;
 			}
 			end_time = curr;
+		}
+		
+		if (vis_area_changed)
+		{
+			sysdep_display_resize(normal_params.width,
+			  normal_params.height);
+			vis_area_changed = 0;
 		}
 		
 		profiler_mark(PROFILER_BLIT);

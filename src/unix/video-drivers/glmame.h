@@ -64,6 +64,7 @@ extern int cabview;
 extern char *cabname;
 
 /* glgen.c */
+extern int gl_texture_init;
 extern GLuint veclist;
 extern GLdouble  s__cscr_w_view, s__cscr_h_view;
 extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, 
@@ -88,7 +89,7 @@ void gl_update_display(struct mame_bitmap *bitmap,
 void CalcCabPointbyViewpoint( 
   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p);
-int  gl_resize(void);
+int  gl_set_windowsize(void);
 
 /* glexport */
 void gl_save_screen_snapshot();

@@ -36,8 +36,8 @@ int sysdep_display_blit_dest_bitmap_equals_src_bitmap(int dest_depth)
      (!sysdep_display_params.orientation) &&        /* no rotation */
      (!sysdep_display_params.effect) &&             /* no effect */
      (sysdep_display_params.widthscale == 1) &&     /* no widthscale */
-     (sysdep_display_params.yarbsize == 
-      sysdep_display_params.height))                /* no heightscale */
+     (sysdep_display_params.heightscale == 1) &&    /* no heightscale */
+     (!sysdep_display_params.yarbsize))             /* no yarbsize */
   {
     switch(sysdep_display_params.depth)             /* check colormasks */
     {

@@ -48,7 +48,6 @@
 #define SYSDEP_DISPLAY_HOTKEY_OPTION2   0x00000800
 
 #define SYSDEP_DISPLAY_UI_DIRTY         0x00010000
-#define SYSDEP_DISPLAY_VIS_AREA_CHANGED 0x00020000
 
 /* orientation flags */
 #define SYSDEP_DISPLAY_FLIPX  1
@@ -57,9 +56,8 @@
 
 /* from mame's palette.h */
 #ifndef PALETTE_H
-#include "osd_cpu.h"
-typedef UINT32 pen_t;
-typedef UINT32 rgb_t;
+typedef unsigned int pen_t;
+typedef unsigned int rgb_t;
 #endif
 
 /* from mame's common.h */
@@ -118,13 +116,19 @@ struct sysdep_display_keyboard_event
 };
 
 struct sysdep_display_open_params {
-  /* width and height before scaling of the bitmap to be displayed */  
+  /* initial width and height before scaling of the part of bitmap to be
+     displayed */  
   int width;
   int height;
   /* depth of the bitmap to be displayed (15/32 direct or 16 palettised) */
   int depth;
   /* should we rotate and or flip ? */
   int orientation;
+  /* maximum width and height before scaling of the part of the bitmap to be
+     displayed, this gives bounds for the values which can be passed to
+     sysdep_display_resize. */
+  int max_width;
+  int max_height;
   /* title of the window */
   const char *title;
   /* scaling and effect options */
@@ -142,14 +146,6 @@ struct sysdep_display_open_params {
   /* vectorgame bounds (only used by drivers which have special vector code) */
   const struct rectangle *vec_src_bounds;
   const struct rectangle *vec_dest_bounds;
-  /* Everything below is for private display driver use, any values asigned
-     to these members are ignored */
-  /* X-alignment stuff.  */
-  int aligned_width;
-  int x_align;
-  /* original (not corrected for orientation) width and height */
-  int orig_width;
-  int orig_height;
 };
 
 struct sysdep_display_properties_struct {
@@ -167,6 +163,7 @@ int sysdep_display_open(const struct sysdep_display_open_params *params);
 void sysdep_display_close(void);
 
 /* update */
+int sysdep_display_resize(int width, int height);
 int sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags);
