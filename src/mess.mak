@@ -357,7 +357,9 @@ $(OBJ)/rca.a: \
 	  $(OBJ)/mess/vidhrdw/studio2.o  \
 
 $(OBJ)/fairch.a: \
-	  $(OBJ)/mess/systems/channelf.o
+	  $(OBJ)/mess/systems/channelf.o \
+	  $(OBJ)/mess/vidhrdw/channelf.o \
+	  $(OBJ)/mess/sndhrdw/channelf.o
 
 $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/tms9901.o  \
