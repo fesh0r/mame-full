@@ -772,9 +772,9 @@ BEGIN
                     HIDC_OLD_TIMING
 #ifdef MESS
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,165,70,10,0,HIDC_LOG
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,165,100,10,0,HIDC_LOG
     CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,100,165,70,10,0,HIDC_LOG
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,165,70,10,0,HIDC_LOG
 #else
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,165,150,10,0,HIDC_LOG
@@ -967,29 +967,32 @@ BEGIN
     PUSHBUTTON      "&Cancel",IDCANCEL,145,175,50,14
 END
 
+#ifdef MESS
+IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 219, 175
+#else
 IDD_INTERFACE_OPTIONS DIALOGEX 0, 0, 209, 175
+#endif
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "Interface Options"
 FONT 8, "MS Sans Serif"
 BEGIN
-    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,85
 #ifdef MESS
+    GROUPBOX        "Application Start",IDC_STATIC,5,5,200,85
     CONTROL         "&Search for new systems",IDC_START_GAME_CHECK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
-                    HIDC_START_GAME_CHECK
 #else
+    GROUPBOX        "Application Start",IDC_STATIC,5,5,190,85
     CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
+#endif
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,15,85,10,0,
                     HIDC_START_GAME_CHECK
-#endif
     CONTROL         "&Enable version mismatch warning",
                     IDC_START_VERSION_WARN,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,15,30,132,10,0,HIDC_START_VERSION_WARN
 #ifdef MESS
     CONTROL         "&Allow system selection by a joystick (requires restart)",
-                    IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
-                    173,10,0,HIDC_JOY_GUI
+                    IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,
+                    183,10,0,HIDC_JOY_GUI
 #else
     CONTROL         "&Allow game selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,
@@ -1000,26 +1003,27 @@ BEGIN
                     HIDC_RANDOM_BG
 #ifdef MESS
     CONTROL         "&Broadcast selected system to all windows",IDC_BROADCAST,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
-                    HIDC_BROADCAST
 #else
     CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
+#endif
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,75,143,10,0,
                     HIDC_BROADCAST
-#endif
+#ifdef MESS
+    GROUPBOX        "Emulation",IDC_STATIC,5,95,200,55
+#else
     GROUPBOX        "Emulation",IDC_STATIC,5,95,190,55
+#endif
     CONTROL         "Show &disclaimer",IDC_SHOW_DISCLAIMER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,105,67,10,0,
                     HIDC_SHOW_DISCLAIMER
 #ifdef MESS
     CONTROL         "Show &system info",IDC_SHOW_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,127,65,10,0,
-                    HIDC_SHOW_GAME_INFO
 #else
     CONTROL         "Show &game info",IDC_SHOW_GAME_INFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,15,120,65,10,0,
-                    HIDC_SHOW_GAME_INFO
 #endif
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,120,75,10,0,
+                    HIDC_SHOW_GAME_INFO
+
     CONTROL         "&High thread priority",IDC_HIGH_PRIORITY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,135,75,10,0,
                     HIDC_HIGH_PRIORITY
