@@ -121,12 +121,16 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/msdos                \
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool      
 
+#MESS CPU's
+OBJDIRS += $(OBJ)/mess/cpu
+
 all:	maketree $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
 include src/$(TARGET).mak
 include src/rules.mak
+include src/rules_ms.mak
 include src/$(OS)/$(OS).mak
 
 ifdef DEBUG

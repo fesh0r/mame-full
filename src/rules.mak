@@ -880,17 +880,6 @@ else
 CPUDEFS += -DHAS_SATURN=0
 endif
 
-CPU=$(strip $(findstring APEXC@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/apexc
-CPUDEFS += -DHAS_APEXC=1
-CPUOBJS += $(OBJ)/cpu/apexc/apexc.o
-DBGOBJS += $(OBJ)/cpu/apexc/apexcdsm.o
-$(OBJ)/cpu/apexc/apexc.o: apexc.c apexc.h
-else
-CPUDEFS += -DHAS_APEXC=0
-endif
-
 CPU=$(strip $(findstring UPD7810@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/upd7810
