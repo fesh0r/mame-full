@@ -841,8 +841,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 	{
 	  game_vis_area = display->game_visible_area;
 
-       	  if (!strcmp(drivers[game_index]->clone_of->name, "megatech") &&
-       	      (normal_params.height == (224+192)))
+       	  if (!strcmp(drivers[game_index]->clone_of->name, "megatech"))
        	    ysplit = 192;
        	  else
        	    ysplit = 0;

@@ -7,7 +7,8 @@
 
 	Latest Changes :
 	-----+-------------------------------------------------------------------------------------
-   0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
+	0.90u5| Set visual area width depending on vdp register 0x0c (HDG)
+	0.81u7| Various Megaplay Improvements (BR, GreyRouge) (using version number of mame)
 	0.73 | More of the Megaplay Bios Tests Pass (BR)
 	0.722| Improvements to Megaplay (BR) Added a few more Megatech sets but some are bad (DH)
 		 | --2 screens is going to cause problems with partial refresh and get_scanlines for
