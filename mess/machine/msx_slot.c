@@ -1231,6 +1231,115 @@ MSX_SLOT_WRITE(diskrom)
 	}
 }
 
+MSX_SLOT_INIT(diskrom2)
+{
+	if (size != 0x4000) {
+		logerror ("diskrom2: error: the diskrom2 should be 16kb\n");
+		return 1;
+	}
+
+	state->type = SLOT_DISK_ROM2;
+	state->mem = mem;
+	state->size = size;
+
+	return 0;
+}
+
+MSX_SLOT_RESET(diskrom2)
+{
+	wd179x_reset ();
+}
+
+static READ_HANDLER (msx_diskrom2_page1_r)
+{
+	switch (offset) {
+	case 0: return wd179x_status_r (0);
+	case 1: return wd179x_track_r (0);
+	case 2: return wd179x_sector_r (0);
+	case 3: return wd179x_data_r (0);
+	case 7: return msx1.dsk_stat;
+	default: 
+		return msx1.state[1]->mem[offset + 0x3ff8];
+	}
+}
+																				
+static READ_HANDLER (msx_diskrom2_page2_r)
+{
+	if (offset >= 0x7b8) {
+		switch (offset) {
+		case 0x7b8: 
+			return wd179x_status_r (0);
+		case 0x7b9: 
+			return wd179x_track_r (0);
+		case 0x7ba: 
+			return wd179x_sector_r (0);
+		case 0x7bb: 
+			return wd179x_data_r (0);
+		case 0x7bf: 
+			return msx1.dsk_stat;
+		default: 
+			return msx1.state[2]->mem[offset + 0x3800];
+		}
+	}
+	else {
+		return 0xff;
+	}
+}
+
+MSX_SLOT_MAP(diskrom2)
+{
+	switch (page) {
+	case 0:
+		msx_cpu_setbank (1, msx1.empty);
+		msx_cpu_setbank (2, msx1.empty);
+		break;
+	case 1:
+		msx_cpu_setbank (3, state->mem);
+		msx_cpu_setbank (4, state->mem + 0x2000);
+		install_mem_read_handler (0, 0x7fb8, 0x7fbf, msx_diskrom2_page1_r);
+		break;
+	case 2:
+		msx_cpu_setbank (5, msx1.empty);
+		msx_cpu_setbank (6, msx1.empty);
+		install_mem_read_handler (0, 0xb800, 0xbfff, msx_diskrom2_page2_r);
+		break;
+	case 3:
+		msx_cpu_setbank (7, msx1.empty);
+		msx_cpu_setbank (8, msx1.empty);
+	}
+}
+
+MSX_SLOT_WRITE(diskrom2)
+{
+	if (addr >= 0xa000 && addr < 0xc000) {
+		addr -= 0x4000;
+	}
+	switch (addr) {
+	case 0x7fb8:
+		wd179x_command_w (0, val);
+		break;
+	case 0x7fb9:
+		wd179x_track_w (0, val);
+		break;
+	case 0x7fba:
+		wd179x_sector_w (0, val);
+		break;
+	case 0x7fbb:
+		wd179x_data_w (0, val);
+		break;
+	case 0x7fbc:
+		wd179x_set_side (val & 1);
+		state->mem[0x3fbc] = val | 0xfe;
+	case 0x7fbd:
+		wd179x_set_drive (val & 1);
+		if ((state->mem[0x3fbd] ^ val) & 0x40) {
+			set_led_status (0, !(val & 0x40));
+		}
+		state->mem[0x3fbd] = (val | 0x7c) & ~0x04;
+		break;
+	}
+}
+
 MSX_SLOT_INIT(synthesizer)
 {
 	if (size != 0x8000) {

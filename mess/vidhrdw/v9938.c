@@ -461,8 +461,8 @@ void v9938_reset (void)
 	int i;
 
 	/* offset reset */
-	vdp.offset_x = 7;
-	vdp.offset_y = 7 + 10;
+	vdp.offset_x = 8;
+	vdp.offset_y = 8 + 16;
 	vdp.visible_y = 192;
 	/* register reset */
 	v9938_reset_palette (); /* palette registers */
@@ -572,8 +572,8 @@ static void v9938_register_write (int reg, int data)
 	case 9:
 		vdp.contReg[reg] = data;
 		/* recalc offset */
-		vdp.offset_x = ( (~vdp.contReg[18] - 8) & 0x0f);
-		vdp.offset_y = (~(vdp.contReg[18]>>4) - 8) & 0x0f;
+		vdp.offset_x = (( (~vdp.contReg[18] - 8) & 0x0f) + 1);
+		vdp.offset_y = ((~(vdp.contReg[18]>>4) - 8) & 0x0f) + 7;
 		if (vdp.contReg[9] & 0x80)
 		{
 			vdp.visible_y = 212;
@@ -1309,9 +1309,9 @@ static void v9938_interrupt_start_vblank (void)
 	if (vdp.size != vdp.size_old)
 		{
 		if (vdp.size == RENDER_HIGH)
-			set_visible_area (0, 512 + 32 - 1, 0, 424 + 32 - 1);
+			set_visible_area (0, 512 + 32 - 1, 0, 424 + 56 - 1);
 		else
-			set_visible_area (0, 256 + 16 - 1, 0, 212 + 16 - 1);
+			set_visible_area (0, 256 + 16 - 1, 0, 212 + 28 - 1);
 
 		vdp.size_old = vdp.size;
 		}
@@ -1327,7 +1327,7 @@ int v9938_interrupt (void)
 	v9938_update_command ();
 
 	pal = vdp.contReg[9] & 2;
-	if (pal) scanline_start = 53; else scanline_start = 26;
+	if (pal) scanline_start = 53; else scanline_start = 22;
 
 	/* set flags */
 	if (vdp.scanline == (vdp.offset_y + scanline_start) )
@@ -1359,7 +1359,7 @@ int v9938_interrupt (void)
 		v9938_interrupt_start_vblank ();
 
 	/* render the current line */
-	if ((vdp.scanline >= scanline_start) && (vdp.scanline < (212 + 16 + scanline_start)))
+	if ((vdp.scanline >= scanline_start) && (vdp.scanline < (212 + 28 + scanline_start)))
 		{
 		scanline = (vdp.scanline - scanline_start) & 255;
 
