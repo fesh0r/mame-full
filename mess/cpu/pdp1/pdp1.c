@@ -320,9 +320,8 @@
 
 /*
 	TODO:
-	* suspend processor when I/O device not ready during iot instructions and read-in mode
 	* support sequence break
-	* support memory extension and other extensions as time permits
+	* support other extensions as time permits
 */
 
 
@@ -352,7 +351,7 @@ static UINT8 pdp1_win_layout[] =
 };
 
 static void execute_instruction(void);
-static int intern_iot (int *io, int md);
+static void intern_iot (int *io, int nac, int md);
 static void pulse_start_clear(void);
 
 
@@ -390,14 +389,19 @@ typedef struct
 #endif
 	unsigned int exd : 1;		/* extend mode: processor is in extend mode */
 	unsigned int exc : 1;		/* extend-mode cycle: current instruction cycle is done in extend mode */
-#if 0
-	unsigned int i_o_halt : 1;	/* processor is executing an Input-Output Transfer wait */
-#endif
+	unsigned int ioc : 1;		/* i-o commands: seems to be equivalent to (! ioh) */
+	unsigned int ioh : 1;		/* i-o halt: processor is executing an Input-Output Transfer wait */
+	unsigned int ios : 1;		/* i-o synchronizer: set on i-o operation completion */
+
+	/* additional emulator state variables */
+	int rim_step;	/* current step in rim execution */
 
 	/* callback for the iot instruction */
-	int (*extern_iot)(int *, int);
-	/* read a byte from the perforated tape reader */
-	int (*read_binary_word)(UINT32 *reply);
+	void (*extern_iot)(int *io, int nac, int mb);
+	/* read a word from the perforated tape reader */
+	void (*read_binary_word)(void);
+	/* called when sc is pulsed: IO devices should reset */
+	void (*io_sc_callback)(void);
 
 	/* 0: no extend support, 1: extend with 15-bit address, 2: extend with 16-bit address */
 	int extend_support;
@@ -431,7 +435,9 @@ static pdp1_Regs pdp1;
 #define BASE_ADDRESS_MASK		0007777
 
 #define INCREMENT_PC	(PC = (PC & ADDRESS_EXTENSION_MASK) | ((PC+1) & BASE_ADDRESS_MASK))
+#define DECREMENT_PC	(PC = (PC & ADDRESS_EXTENSION_MASK) | ((PC-1) & BASE_ADDRESS_MASK))
 #define INCREMENT_MA	(MA = (MA & ADDRESS_EXTENSION_MASK) | ((MA+1) & BASE_ADDRESS_MASK))
+#define PREVIOUS_PC		((PC & ADDRESS_EXTENSION_MASK) | ((PC-1) & BASE_ADDRESS_MASK))
 
 /* public globals */
 signed int pdp1_ICount;
@@ -461,6 +467,7 @@ void pdp1_reset (void *untyped_param)
 {
 	pdp1_reset_param_t *param = untyped_param;
 
+	/* clean-up */
 	memset (&pdp1, 0, sizeof (pdp1));
 
 	/* set up params and callbacks */
@@ -468,6 +475,7 @@ void pdp1_reset (void *untyped_param)
 	pdp1.extern_iot = (param && param->extern_iot)
 									? param->extern_iot
 									: intern_iot;
+	pdp1.io_sc_callback = (param) ? param->io_sc_callback : 0;
 	pdp1.extend_support = (param) ? param->extend_support : 0;
 
 	switch (pdp1.extend_support)
@@ -487,6 +495,9 @@ void pdp1_reset (void *untyped_param)
 		pdp1.address_extension_mask = 0170000;
 		break;
 	}
+
+	/* reset CPU flip-flops */
+	pulse_start_clear();
 }
 
 void pdp1_exit (void)
@@ -545,6 +556,9 @@ unsigned pdp1_get_reg (int regnum)
 	case PDP1_DEFER: return pdp1.defer;
 	case PDP1_RIM: return pdp1.rim;
 	case PDP1_EXD: return EXD;
+	case PDP1_IOC: return pdp1.ioc;
+	case PDP1_IOH: return pdp1.ioh;
+	case PDP1_IOS: return pdp1.ios;
 	case REG_SP:  return 0;
 	}
 	return 0;
@@ -586,8 +600,12 @@ void pdp1_set_reg (int regnum, unsigned val)
 	case PDP1_DEFER: logerror("pdp1_set_reg to defer flip-flop ignored\n");/* no way!*/ break;
 	case PDP1_RIM: pdp1.rim = val ? 1 : 0; break;
 	case PDP1_EXD: EXD = (pdp1.extend_support && val) ? 1 : 0; break;
+	case PDP1_IOC: logerror("pdp1_set_reg to ioc flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_IOH: logerror("pdp1_set_reg to ioh flip-flop ignored\n");/* no way!*/ break;
+	case PDP1_IOS: logerror("pdp1_set_reg to ios flip-flop ignored\n");/* no way!*/ break;
 	case REG_SP:  break;
 	case PDP1_START_CLEAR: pulse_start_clear(); break;
+	case PDP1_IO_COMPLETE: pdp1.ios = 1; break;
 	}
 }
 
@@ -612,13 +630,26 @@ static const char instruction_kind[32] =
 
 
 /* execute instructions on this CPU until icount expires */
-int pdp1_execute (int cycles)
+int pdp1_execute(int cycles)
 {
 	pdp1_ICount = cycles;
 
 	do
 	{
 		CALL_MAME_DEBUG;
+
+
+		/* I guess this is done at the start of each instruction cycle */
+		pdp1.ioc = ! pdp1.ioh;
+
+		/* ioh should be cleared at the end of the instruction cycle, and ios at the
+		start of next instruction cycle, but who cares? */
+		if (pdp1.ioh && pdp1.ios)
+		{
+			pdp1.ioh = 0;
+			pdp1.ios = 0;
+		}
+
 
 		if ((! pdp1.run) && (! pdp1.rim))
 			pdp1_ICount = 0;	/* if processor is stopped, just burn cycles */
@@ -628,40 +659,73 @@ int pdp1_execute (int cycles)
 				pdp1.rim = 0;	/* what else can we do ??? */
 			else
 			{
-				UINT32 data18;
-
-				/* read first word as instruction */
-				(void)(*pdp1.read_binary_word)(&data18);
-				IO = data18;						/* data is transferred to IO register */
-				MB = IO;
-				IR = MB >> 13;		/* basic opcode */
-				if (IR == JMP)		/* jmp instruction ? */
+				switch (pdp1.rim_step)
 				{
-					PC = (MA & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
-					pdp1.rim = 0;	/* exit read-in mode */
-					pdp1.run = 1;
-				}
-				else if ((IR == DIO) || (IR == DAC))	/* dio or dac instruction ? */
-				{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
-					but the lisp tape uses the dac instruction instead */
-					/* Yet maintainance manual p. 6-25 states clearly that the data is located
-					in IO and transfered to MB, so DAC is likely to be a mistake. */
+				case 0:
+					/* read first word as instruction */
+					(*pdp1.read_binary_word)();		/* data is transferred to IO register */
+					pdp1.rim_step = 1;
+					break;
+
+				case 1:
+					if (pdp1.ios)
+					{
+						pdp1.ios = 0;
+					}
+					else
+					{
+						pdp1_ICount -= 100;
+						break;
+					}
+					MB = IO;
+					IR = MB >> 13;		/* basic opcode */
+					if (IR == JMP)		/* jmp instruction ? */
+					{
+						PC = (MA & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
+						pdp1.rim = 0;	/* exit read-in mode */
+						pdp1.run = 1;
+						pdp1.rim_step = 0;
+					}
+					else if ((IR == DIO) || (IR == DAC))	/* dio or dac instruction ? */
+					{	/* there is a discrepancy: the pdp1 handbook tells that only dio should be used,
+						but the lisp tape uses the dac instruction instead */
+						/* Yet maintainance manual p. 6-25 states clearly that the data is located
+						in IO and transfered to MB, so DAC is likely to be a mistake. */
+						pdp1.rim_step = 2;
+					}
+					else
+					{
+						/* what the heck? */
+						logerror("It seems this tape should not be operated in read-in mode\n");
+						pdp1.rim = 0;		/* exit read-in mode (right???) */
+						pdp1.rim_step = 0;
+					}
+					break;
+
+				case 2:
+					/* read second word as data */
+					(*pdp1.read_binary_word)();		/* data is transferred to IO register */
+					pdp1.rim_step = 3;
+					break;
+
+				case 3:
+					if (pdp1.ios)
+					{
+						pdp1.ios = 0;
+					}
+					else
+					{
+						pdp1_ICount -= 100;
+						break;
+					}
 					MA = (PC & ADDRESS_EXTENSION_MASK) | (MB & BASE_ADDRESS_MASK);
 
-					/* read second word as data */
-					(void)(*pdp1.read_binary_word)(&data18);
-					IO = data18;						/* data is transferred to IO register */
 					MB = IO;
 					WRITE_PDP_18BIT(MA, MB);
-				}
-				else
-				{
-					/* what the heck? */
-					logerror("It seems this tape should not be operated in read-in mode\n");
-					pdp1.rim = 0;		/* exit read-in mode (right???) */
-				}
 
-				pdp1_ICount -= 1000;	/* ***HACK*** */
+					pdp1.rim_step = 0;
+					break;
+				}
 			}
 		}
 		else
@@ -792,6 +856,9 @@ const char *pdp1_info (void *context, int regnum)
 	case CPU_INFO_REG + PDP1_DEFER: sprintf (buffer[which], "DF:%X", r->defer); break;
 	case CPU_INFO_REG + PDP1_RIM: sprintf (buffer[which], "RIM:%X", r->rim); break;
 	case CPU_INFO_REG + PDP1_EXD: sprintf (buffer[which], "EXD:%X", r->exd); break;
+	case CPU_INFO_REG + PDP1_IOC: sprintf (buffer[which], "IOC:%X", r->ioc); break;
+	case CPU_INFO_REG + PDP1_IOH: sprintf (buffer[which], "IOH:%X", r->ioh); break;
+	case CPU_INFO_REG + PDP1_IOS: sprintf (buffer[which], "IOS:%X", r->ios); break;
     case CPU_INFO_FLAGS:
 		sprintf (buffer[which], "%c%c%c%c%c%c-%c%c%c%c%c%c",
 				 (r->pf & 040) ? '1' : '.',
@@ -1091,7 +1158,7 @@ static void execute_instruction(void)
 				}
 				break;
 			default:
-				logerror("Undefined shift: 0%06o at 0%06o\n", mb, PC - 1);
+				logerror("Undefined shift: 0%06o at 0%06o\n", mb, PREVIOUS_PC);
 				break;
 			}
 			break;
@@ -1135,10 +1202,31 @@ static void execute_instruction(void)
 			be attached, these bits may be used to further the in-out transfer instruction
 			to perform totally distinct functions. 
 		*/
-		if (MB == 10000)
-			pdp1_ICount -= pdp1.extern_iot (&IO, MB);
+		if (MB & 010000)
+		{
+			if (pdp1.ioc)
+			{	/* the iot command line is pulsed only if ioc is asserted */
+				pdp1.extern_iot(&IO, (MB & 04000) == 0, MB);
+
+				pdp1.ioh = 1;	/* enable io wait */
+
+				/* test ios now in case the IOT callback has sent a completion pulse immediately */
+				if (pdp1.ioh && pdp1.ios)
+				{
+					/* ioh should be cleared at the end of the instruction cycle, and ios at the
+					start of next instruction cycle, but who cares? */
+					pdp1.ioh = 0;
+					pdp1.ios = 0;
+				}
+			}
+
+			if (pdp1.ioh)
+				DECREMENT_PC;
+		}
 		else
-			(void) pdp1.extern_iot (&IO, MB);
+		{
+			pdp1.extern_iot (&IO, (MB & 04000) != 0, MB);
+		}
 		break;
 	case OPR:		/* Operate Instruction Group */
 		{
@@ -1165,13 +1253,13 @@ static void execute_instruction(void)
 				AC ^= 0777777;
 			if (mb & 00400)		/* Halt */
 			{
-				logerror("PDP1 Program executed HALT: at 0%06o\n", PC - 1);
+				logerror("PDP1 Program executed HALT: at 0%06o\n", PREVIOUS_PC);
 				pdp1.run = 0;
 			}
 			break;
 		}
 	default:
-		logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PC - 1);
+		logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PREVIOUS_PC);
 		/* let us stop the CPU, like a real pdp-1 */
 		pdp1.run = 0;
 
@@ -1182,11 +1270,10 @@ no_fetch:
 	;
 }
 
-static int intern_iot (int *io, int mb)
+
+static void intern_iot (int *io, int nac, int mb)
 {
-	logerror("No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *io);
-	exit (1);
-	return 1;
+	logerror("No external IOT function given at 0%06o\n", PREVIOUS_PC);
 }
 
 
@@ -1214,7 +1301,14 @@ static void pulse_start_clear(void)
 #endif
 	EXD = 0;			/* according to maintainance manual p. 8-16 */
 	pdp1.exc = 0;		/* according to maintainance manual p. 8-16 */
-#if 0
-	pdp1.i_o_halt = 0;	/* mere guess */
-#endif
+
+	pdp1.ioc = 1;		/* according to maintainance manual p. 6-10 */
+	pdp1.ioh = 0;		/* according to maintainance manual p. 6-10 */
+	pdp1.ios = 0;		/* according to maintainance manual p. 6-10 */
+
+	pdp1.rim_step = 0;
+
+	/* now, we kindly ask IO devices to reset, too */
+	if (pdp1.io_sc_callback)
+		(*pdp1.io_sc_callback)();
 }

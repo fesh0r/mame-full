@@ -327,6 +327,7 @@ pdp1_reset_param_t pdp1_reset_param =
 {
 	pdp1_iot,
 	pdp1_tape_read_binary,
+	pdp1_io_sc_callback,
 	0	/* extend mode support defined in input ports and pdp1_init_machine */
 };
 
@@ -363,7 +364,7 @@ static struct MachineDriver machine_driver_pdp1 =
 
 	pdp1_init_palette,
 
-	/*VIDEO_TYPE_VECTOR*/VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER,
 	0,
 	pdp1_vh_start,
 	pdp1_vh_stop,
@@ -395,14 +396,14 @@ static const struct IODevice io_pdp1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	{	/* teletyper out */
+	{	/* typewriter out */
 		IO_PRINTER,					/* type */
 		1,							/* count */
 		"typ\0",					/* file extensions */
 		IO_RESET_NONE,				/* reset depth */
 		NULL,						/* id */
-		pdp1_teletyper_init,		/* init */
-		pdp1_teletyper_exit,		/* exit */
+		pdp1_typewriter_init,		/* init */
+		pdp1_typewriter_exit,		/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */

@@ -362,7 +362,7 @@ static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 	int y;
 
 	if (full_refresh)
-		fillbitmap(bitmap, Machine->pens[pen_panel_bg], &/*Machine->visible_area*/panel_window);
+		fillbitmap(bitmap, Machine->pens[pen_panel_bg], & panel_window);
 
 	/* column 1: registers, test word, test address */
 	y = panel_window_offset_y;
@@ -453,15 +453,15 @@ static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "i-o halt", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_IOH));
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "i-o com'ds", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_IOC));
 	y += 8;
 	if (full_refresh)
 		pdp1_draw_string(bitmap, "i-o sync", x_panel_col2_offset+8, y, color_panel_caption);
-	pdp1_draw_led(bitmap, x_panel_col2_offset, y, 0);	/* not emulated */
+	pdp1_draw_led(bitmap, x_panel_col2_offset, y, cpunum_get_reg(0, PDP1_IOS));
 
 	if (full_refresh)
 		/* column separator */
