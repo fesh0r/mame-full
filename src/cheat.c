@@ -7923,7 +7923,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				return 1;
 
 #ifndef MESS
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
 
@@ -7938,7 +7937,6 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 					return 1;
 			}
 
-#endif
 #endif
 #endif
 #endif

@@ -84,15 +84,10 @@ static int video_flipx = 0;
 static int video_ror = 0;
 static int video_rol = 0;
 
-#ifdef MESS
-#define osd_basename		win_basename
-#define osd_dirname			win_dirname
-#define osd_strip_extension	win_strip_extension
-#endif
 
-static char *osd_basename(char *filename);
-static char *osd_dirname(char *filename);
-static char *osd_strip_extension(char *filename);
+static char *win_basename(char *filename);
+static char *win_dirname(char *filename);
+static char *win_strip_extension(char *filename);
 
 
 static int video_set_beam(struct rc_option *option, const char *arg, int priority)
@@ -408,7 +403,7 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* determine global configfile name */
-	cmd_name = osd_strip_extension(osd_basename(argv[0]));
+	cmd_name = win_strip_extension(win_basename(argv[0]));
 	if (!cmd_name)
 	{
 		fprintf (stderr, "who am I? cannot determine the name I was called with\n");
@@ -513,8 +508,8 @@ int cli_frontend_init (int argc, char **argv)
 	if (frontend_help(gamename) != 1234)
 		exit(0);
 
-	gamename = osd_basename(gamename);
-	gamename = osd_strip_extension(gamename);
+	gamename = win_basename(gamename);
+	gamename = win_strip_extension(gamename);
 
 	/* if not given by .inp file yet */
 	if (game_index == -1)
@@ -701,6 +696,19 @@ int cli_frontend_init (int argc, char **argv)
 	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
 	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
 	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
+
+	if( options.vector_width == 0 && options.vector_height == 0 )
+	{
+		options.vector_width = 640;
+		options.vector_height = 480;
+	}
+	if( blit_swapxy )
+	{
+		int temp;
+		temp = options.vector_width;
+		options.vector_width = options.vector_height;
+		options.vector_height = temp;
+	}
 }
 
 	return game_index;
@@ -727,7 +735,7 @@ static int config_handle_arg(char *arg)
 		return -1;
 	}
 
-	rompath_extra = osd_dirname(arg);
+	rompath_extra = win_dirname(arg);
 
 	if (rompath_extra && !strlen(rompath_extra))
 	{
@@ -774,10 +782,10 @@ void CLIB_DECL logerror(const char *text,...)
 
 
 //============================================================
-//	osd_basename
+//	win_basename
 //============================================================
 
-static char *osd_basename(char *filename)
+static char *win_basename(char *filename)
 {
 	char *c;
 
@@ -797,10 +805,10 @@ static char *osd_basename(char *filename)
 
 
 //============================================================
-//	osd_dirname
+//	win_dirname
 //============================================================
 
-static char *osd_dirname(char *filename)
+static char *win_dirname(char *filename)
 {
 	char *dirname;
 	char *c;
@@ -813,7 +821,7 @@ static char *osd_dirname(char *filename)
 	dirname = malloc(strlen(filename) + 1);
 	if (!dirname)
 	{
-		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		fprintf(stderr, "error: malloc failed in win_dirname\n");
 		return NULL;
 	}
 
@@ -837,10 +845,10 @@ static char *osd_dirname(char *filename)
 
 
 //============================================================
-//	osd_strip_extension
+//	win_strip_extension
 //============================================================
 
-static char *osd_strip_extension(char *filename)
+static char *win_strip_extension(char *filename)
 {
 	char *newname;
 	char *c;
@@ -853,7 +861,7 @@ static char *osd_strip_extension(char *filename)
 	newname = malloc(strlen(filename) + 1);
 	if (!newname)
 	{
-		fprintf(stderr, "error: malloc failed in osd_newname\n");
+		fprintf(stderr, "error: malloc failed in win_strip_extension\n");
 		return NULL;
 	}
 

@@ -588,7 +588,7 @@ static int num_lock = 0;
 
 /* work table */
 static void *cur_chip = NULL;	/* current chip point */
-static OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
+OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
 
 static signed int phase_modulation;		/* phase modulation input (SLOT 2) */
 static signed int output[1];
@@ -1048,7 +1048,7 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 				phase = 0xd0>>2;
 		}
 
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT7_1->wavetable) * 2;
 	}
 
 	/* Snare Drum (verified on real YM3812) */
@@ -1069,13 +1069,13 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 		if (noise)
 			phase ^= 0x100;
 
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT7_2->wavetable) * 2;
 	}
 
 	/* Tom Tom (verified on real YM3812) */
 	env = volume_calc(SLOT8_1);
 	if( env < ENV_QUIET )
-		output[0] += op_calc(SLOT8_1->Cnt, env, 0, SLOT->wavetable) * 2;
+		output[0] += op_calc(SLOT8_1->Cnt, env, 0, SLOT8_1->wavetable) * 2;
 
 	/* Top Cymbal (verified on real YM3812) */
 	env = volume_calc(SLOT8_2);
@@ -1102,7 +1102,7 @@ INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
 		if (res2)
 			phase = 0x300;
 
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
+		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT8_2->wavetable) * 2;
 	}
 
 }
@@ -1491,8 +1491,14 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 			if(OPL->type&OPL_TYPE_ADPCM)
 				YM_DELTAT_ADPCM_Write(OPL->deltat,r-0x07,v);
 			break;
+#endif
 		case 0x08:	/* MODE,DELTA-T : CSM,NOTESEL,x,x,smpl,da/ad,64k,rom */
 			OPL->mode = v;
+#if !(BUILD_Y8950)
+			break;
+#endif
+
+#if BUILD_Y8950
 			v&=0x1f;	/* for DELTA-T unit */
 		case 0x09:		/* START ADD */
 		case 0x0a:

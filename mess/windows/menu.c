@@ -380,7 +380,8 @@ static void change_device(const struct IODevice *dev, int id)
 	ofn.hwndOwner = win_video_window;
 	ofn.lpstrFilter = A2T(filter);
 	ofn.lpstrFile = filename;
-	ofn.lpstrInitialDir = A2T(image_filedir(dev->type, id));
+	if (image_exists(dev->type, id))
+		ofn.lpstrInitialDir = A2T(image_filedir(dev->type, id));
 	ofn.nMaxFile = sizeof(filename) / sizeof(filename[0]);
 	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 

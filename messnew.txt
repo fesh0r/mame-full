@@ -1,4 +1,4 @@
-0.65.1
+0.66
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -15,6 +15,9 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- The core is based on MAME 0.66.  This incorporates all features of the 
+  update to this core.  [MAME team]
+
 - Major change to device handling; all devices now have separate init/exit
   and load/unload handlers.  The former are called on startup/shutdown, and
   the latter are called when images are loaded and unloaded. [Nate Woods]
@@ -24,26 +27,3 @@ Source Changes:
 - [Win32 GUI] Now uses INI files rather than the registry to store settings
   [MAME32 Team]
 
-0.65
-
-New System Drivers Supported (in no particular order):
-------------------------------------------------------
-(none)
-
-System Driver Changes:
-----------------------
-(none)
-
-Source Changes:
----------------
-- The core is based on MAME 0.65.  This incorporates all features of the 
-  update to this core.  [MAME team]
-
-- Fixed a fatal bug that could cause crashes when unmounting disk images for
-  certain systems at runtime.  [Nate Woods]
-  
-- [Win32] Fixed a bug that caused us to be looking for the MAME names of
-  sysinfo.dat and messinfo.dat (history.dat and mameinfo.dat).  [Nate Woods]
-
-- [Win32 GUI] Fixed a bug that caused software specific screenshots to
-  not show up if clicking between tabs.  [Nate Woods]

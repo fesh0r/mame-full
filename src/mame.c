@@ -1672,10 +1672,7 @@ static int validitychecks(void)
 			}
 		}
 
-#ifndef MESS	/* MAME core: You forgot to tell that your PDP-1 driver misses the sound emulation.
-		   MESS dev: PDP-1 does not "miss" sound emulation, as it never had any sound generator.
-		   MAME core: Huh? Don't you know that every arcade in the world has sound, except minivadr.
-		   MESS dev: I see... */
+#ifndef MESS
 		if ((drivers[i]->flags & NOT_A_DRIVER) == 0)
 		{
 			if (drv.sound[0].sound_type == 0 && (drivers[i]->flags & GAME_NO_SOUND) == 0 &&

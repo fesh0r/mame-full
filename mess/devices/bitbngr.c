@@ -29,15 +29,15 @@ static int bitbanger_init(int id)
 
 	config = (const struct bitbanger_config *) device_find(Machine->gamedrv, IO_BITBANGER)->user1;
 
-	bi = (struct bitbanger_info *) image_malloc(IO_BITBANGER, id, sizeof(struct bitbanger_info));
+	bi = (struct bitbanger_info *) auto_malloc(sizeof(struct bitbanger_info));
 	if (!bi)
 		return INIT_FAIL;
 
-	bi->pulses = (double *) image_malloc(IO_BITBANGER, id, config->maximum_pulses * sizeof(double));
+	bi->pulses = (double *) auto_malloc(config->maximum_pulses * sizeof(double));
 	if (!bi->pulses)
 		return INIT_FAIL;
 
-	bi->factored_pulses = (int *) image_malloc(IO_BITBANGER, id, config->maximum_pulses * sizeof(int));
+	bi->factored_pulses = (int *) auto_malloc(config->maximum_pulses * sizeof(int));
 	if (!bi->factored_pulses)
 		return INIT_FAIL;
 

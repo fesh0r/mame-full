@@ -39,7 +39,6 @@
 #include <stdlib.h>
 
 #include "cpuintrf.h"
-#include "fileio.h"
 #include "state.h"
 #include "mamedbg.h"
 #include "i8039.h"

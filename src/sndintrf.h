@@ -146,6 +146,9 @@ struct MachineSound
 #if (HAS_BSMT2000)
 #include "sound/bsmt2000.h"
 #endif
+#if (HAS_YMF262)
+#include "sound/262intf.h"
+#endif
 #if (HAS_YMF278B)
 #include "sound/ymf278b.h"
 #endif
@@ -327,6 +330,9 @@ enum
 #endif
 #if (HAS_BSMT2000)
 	SOUND_BSMT2000,
+#endif
+#if (HAS_YMF262)
+	SOUND_YMF262,
 #endif
 #if (HAS_YMF278B)
 	SOUND_YMF278B,

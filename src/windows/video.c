@@ -200,6 +200,7 @@ struct rc_option video_opts[] =
 	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow MESS to give back time to the system when it's not needed" },
 #endif
 	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
+	{ "high_priority", NULL, rc_bool, &win_high_priority, "0", 0, 0, NULL, "increase thread priority" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 

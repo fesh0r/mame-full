@@ -463,6 +463,7 @@ static int index_datafile (struct tDatafileIndex **_index)
 									char *p;
 									for (p = s; *p; p++)
 										*p = tolower(*p);
+
 									game_index = GetGameNameIndex(s);
 									if (game_index >= 0)
 									{
