@@ -41,6 +41,7 @@
 #include "includes/pc_hdc.h"
 #include "includes/nec765.h"
 #include "includes/amstr_pc.h"
+#include "includes/europc.h"
 #include "includes/pc.h"
 #include "includes/state.h"
 
@@ -111,11 +112,11 @@ static uart8250_interface com_interface[4]=
 	}
 };
 
-/* static int pc_ppi_porta_r(int chip ); */
-/* static int pc_ppi_portb_r(int chip ); */
+static int pc_ppi_porta_r(int chip );
+static int pc_ppi_portb_r(int chip );
 static int pc_ppi_portc_r(int chip);
 static void pc_ppi_porta_w(int chip, int data );
-/* static void pc_ppi_portb_w( int chip, int data ); */
+static void pc_ppi_portb_w( int chip, int data );
 static void pc_ppi_portc_w(int chip, int data );
 
 
@@ -131,17 +132,6 @@ static ppi8255_interface pc_ppi8255_interface =
 	pc_ppi_portb_w,
 	pc_ppi_portc_w
 };
-
-static void pc_sh_speaker_change_clock(double pc_clock)
-{
-	switch( pc_port[0x61] & 3 )
-	{
-		case 0: pc_sh_speaker(0); break;
-		case 1: pc_sh_speaker(1); break;
-		case 2: pc_sh_speaker(1); break;
-		case 3: pc_sh_speaker(2); break;
-    }
-}
 
 /*
  * timer0	heartbeat IRQ
@@ -762,7 +752,7 @@ void init_europc(void)
 	install_port_write_handler(0, 0x3d0, 0x3df, pc_CGA_w );
 
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
-	mc146818_init(MC146818_IGNORE_CENTURY);
+	europc_rtc_init();
 }
 
 void init_pc1512(void)
@@ -835,19 +825,21 @@ void init_pc_vga(void)
 
 void pc_mda_init_machine(void)
 {
-	pc_keyboard_init();
-
+//	pc_keyboard_init();
+	dma8237_reset(dma8237);
 }
 
 void pc_cga_init_machine(void)
 {
-	pc_keyboard_init();
+//	pc_keyboard_init();
+	dma8237_reset(dma8237);
 }
 
 void pc_vga_init_machine(void)
 {
 	vga_reset();
-	pc_keyboard_init();
+//	pc_keyboard_init();
+	dma8237_reset(dma8237);
 }
 
 /***********************************/
@@ -927,13 +919,17 @@ WRITE_HANDLER(pc_COM4_w)
  *		parallel input output
  *
  *************************************************************************/
+static struct {
+	int portc_switch_high;
+	int speaker;
+} pc_ppi={ 0 };
 
 int pc_ppi_porta_r(int chip )
 {
 	int data;
 
 	/* KB port A */
-    data = pc_port[0x60];
+	data = pc_keyb_read();
     PIO_LOG(1,"PIO_A_r",("$%02x\n", data));
     return data;
 }
@@ -942,15 +938,11 @@ int pc_ppi_portb_r(int chip )
 {
 	int data;
 
-	/* KB port B */
-	data = pc_port[0x61] /*& 0x03f*/;
+	data = 0xff;
 	PIO_LOG(1,"PIO_B_r",("$%02x\n", data));
 	return data;
 }
 
-/* tandy1000hx
-   bit 4 input eeprom data in
-   bit 3 output turbo mode */
 int pc_ppi_portc_r( int chip )
 {
 	int data=0xff;
@@ -958,7 +950,8 @@ int pc_ppi_portc_r( int chip )
 	data&=~0x80; // no parity error
 	data&=~0x40; // no error on expansion board
 	/* KB port C: equipment flags */
-	if (pc_port[0x61] & 0x08)
+//	if (pc_port[0x61] & 0x08)
+	if (pc_ppi.portc_switch_high)
 	{
 		/* read hi nibble of S2 */
 		data = (data&0xf0)|((input_port_1_r(0) >> 4) & 0x0f);
@@ -978,29 +971,21 @@ void pc_ppi_porta_w(int chip, int data )
 {
 	/* KB controller port A */
 	PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
-	pc_port[0x60] = data;
 }
 
 void pc_ppi_portb_w(int chip, int data )
 {
 	/* KB controller port B */
 	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
-
-	pc_port[0x61] = data;
-	switch( data & 3 )
-	{
-		case 0: pc_sh_speaker(0); break;
-		case 1: pc_sh_speaker(1); break;
-		case 2: pc_sh_speaker(1); break;
-		case 3: pc_sh_speaker(2); break;
-	}
+	pc_ppi.portc_switch_high=data&0x8;
+	pc_sh_speaker(data&3);
+	pc_keyb_set_clock(data&0x40);
 }
 
 void pc_ppi_portc_w(int chip, int data )
 {
 	/* KB controller port C */
 	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
-	pc_port[0x62] = data;
 }
 
 /*************************************************************************
@@ -1120,11 +1105,35 @@ READ_HANDLER ( pc_EXP_r )
 	return data;
 }
 
-/**************************************************************************
- *
- *      Interrupt handlers.
- *
- **************************************************************************/
+/* 
+   keyboard seams to permanently sent data clocked by the mainboard
+   clock line low for longer means "resync", keyboard sends 0xaa as answer
+   will become automatically 0x00 after a while
+*/
+static struct {
+	UINT8 data;
+	int on;
+} pc_keyb= { 0 };
+
+UINT8 pc_keyb_read(void)
+{
+	return pc_keyb.data;
+}
+
+static void pc_keyb_timer(int param)
+{
+	pc_keyboard_init();
+	pc_keyboard();
+}
+
+void pc_keyb_set_clock(int on)
+{
+	if ((!pc_keyb.on)&&on) {
+		timer_set(1/200.0, 0, pc_keyb_timer);
+	}
+	pc_keyb.on=on;
+	pc_keyboard();
+}
 
 void pc_keyboard(void)
 {
@@ -1133,16 +1142,21 @@ void pc_keyboard(void)
 	at_keyboard_polling();
 
 //	if( !pic8259_0_irq_pending(1) && ((pc_port[0x61]&0xc0)==0xc0) ) // amstrad problems
-	if( !pic8259_0_irq_pending(1) )
+	if( !pic8259_0_irq_pending(1) && pc_keyb.on)
 	{
 		if ( (data=at_keyboard_read())!=-1) {
-			pc_port[0x60] = data;
-			DBG_LOG(1,"KB_scancode",("$%02x\n", pc_port[0x60]));
+			pc_keyb.data = data;
+			DBG_LOG(1,"KB_scancode",("$%02x\n", pc_keyb.data));
 			pic8259_0_issue_irq(1);
 		}
 	}
 }
 
+/**************************************************************************
+ *
+ *      Interrupt handlers.
+ *
+ **************************************************************************/
 int pc_mda_frame_interrupt (void)
 {
 	static int turboswitch=-1;

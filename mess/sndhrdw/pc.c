@@ -43,8 +43,16 @@ void pc_sh_stop(void)
 	logerror("pc_sh_stop\n");
 }
 
-void pc_sh_speaker(int mode)
+void pc_sh_speaker(int data)
 {
+	int mode;
+	switch( data )
+	{
+		case 0: mode=0; break;
+		case 1: case 2: mode=1; break;
+		case 3: mode=2; break;
+	}
+
 	if( mode == speaker_gate )
 		return;
 
@@ -65,6 +73,11 @@ void pc_sh_speaker(int mode)
 			speaker_gate = 2;
             break;
     }
+}
+
+void pc_sh_speaker_change_clock(double pc_clock)
+{
+    stream_update(channel,0);
 }
 
 void pc_sh_custom_update(void) {}

@@ -88,11 +88,9 @@ void pc_cga_init(void);
 void pc_mda_init(void);
 void pc_vga_init(void);
 
-extern void pc_ppi_portb_w(int chip, int data );
-extern int pc_ppi_portb_r(int chip );
-extern int pc_ppi_porta_r(int chip );
-
 void pc_keyboard(void);
+UINT8 pc_keyb_read(void);
+void pc_keyb_set_clock(int on);
 
 extern WRITE_HANDLER ( pc_EXP_w );
 extern READ_HANDLER ( pc_EXP_r );
@@ -122,6 +120,7 @@ extern void pc_sh_custom_update(void);
 extern void pc_sh_stop(void);
 extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);
+void pc_sh_speaker_change_clock(double pc_clock);
 
 /* from machine/pc_fdc.c */
 void pc_fdc_setup(void);

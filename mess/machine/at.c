@@ -43,8 +43,6 @@ void init_atcga(void)
 	init_pc_common();
 	dma8237_config(dma8237,&dma);
 	dma8237_config(dma8237+1,&dma);
-	dma8237_reset(dma8237);
-	dma8237_reset(dma8237+1);
 	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
 	/* initialise keyboard */
@@ -60,8 +58,6 @@ void init_at_vga(void)
 	init_pc_common();
 	dma8237_config(dma8237,&dma);
 	dma8237_config(dma8237+1,&dma);
-	dma8237_reset(dma8237);
-	dma8237_reset(dma8237+1);
 
 	pc_vga_init();
 	mc146818_init(MC146818_STANDARD);
@@ -76,7 +72,8 @@ void init_at_vga(void)
 
 void at_machine_init(void)
 {
-
+	dma8237_reset(dma8237);
+	dma8237_reset(dma8237+1);
 }
 
 static struct {
@@ -97,6 +94,8 @@ static struct {
 
 	int operation_write_state;
 	int status_read_mode;
+
+	int speaker;
 
 	// temporary hack
 	int offset1;
@@ -165,7 +164,7 @@ READ_HANDLER(at_8042_r)
 		DBG_LOG(1,"AT 8042 read",("%.2x %02x\n",offset, data) );
 		break;
 	case 1:
-		data=pc_ppi_portb_r(offset);
+		data=at_8042.speaker;
 		data&=~0xc0; // at bios don't likes this being set
 
 		/* polled for changes in ibmat bios */
@@ -247,7 +246,8 @@ WRITE_HANDLER(at_8042_w)
 		}
 		break;
 	case 1:
-		pc_ppi_portb_w(offset,data);
+		at_8042.speaker=data;
+		pc_sh_speaker(data&3);
 		break;
 	case 4:
 		DBG_LOG(1,"AT 8042 write",("%.2x %02x\n",offset, data) );

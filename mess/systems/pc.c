@@ -70,6 +70,9 @@
 */
 #define GAMEBLASTER
 
+// IO Expansion, only a little bit for ibm bios self tests
+//#define EXP_ON
+
 static MEMORY_READ_START( pc_readmem )
 	{ 0x00000, 0x7ffff, MRA_RAM },
 	{ 0x80000, 0x9ffff, MRA_RAM },
@@ -97,7 +100,9 @@ static PORT_READ_START( pc_readport )
 	{ 0x0060, 0x0063, ppi8255_0_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
+#ifdef EXP_ON
 	{ 0x0210, 0x0217, pc_EXP_r },
+#endif
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -120,7 +125,9 @@ static PORT_WRITE_START( pc_writeport )
 	{ 0x0060, 0x0063, ppi8255_0_w },
 	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
+#ifdef EXP_ON
     { 0x0210, 0x0217, pc_EXP_w },
+#endif
 #ifdef GAMEBLASTER
 	{ 0x220, 0x220, saa1099_write_port_0_w },
 	{ 0x221, 0x221, saa1099_control_port_0_w },
@@ -147,18 +154,16 @@ static PORT_READ_START( europc_readport)
 	{ 0x0000, 0x000f, dma8237_0_r },
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0063, ppi8255_0_r },
-	{ 0x0070, 0x0071, mc146818_port_r },
+	{ 0x0060, 0x0063, europc_pio_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0210, 0x0217, pc_EXP_r },
-	{ 0x0254, 0x0257, europc_r },
+	{ 0x0250, 0x025f, europc_jim_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
     { 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0354, 0x0357, europc_r },
+//	{ 0x0350, 0x035f, europc_r },
 	{ 0x0378, 0x037b, pc_parallelport1_r },
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_status_port_0_r },
@@ -174,18 +179,16 @@ static PORT_WRITE_START( europc_writeport )
 	{ 0x0000, 0x000f, dma8237_0_w },
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0063, ppi8255_0_w },
-	{ 0x0070, 0x0071, mc146818_port_w },
+	{ 0x0060, 0x0063, europc_pio_w },
 	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0210, 0x0217, pc_EXP_w },
-	{ 0x0254, 0x0257, europc_w },
+	{ 0x0250, 0x025f, europc_jim_w },
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0354, 0x0357, europc_w },
+//	{ 0x0350, 0x035f, europc_w },
 	{ 0x0378, 0x037b, pc_parallelport1_w },
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
@@ -231,7 +234,6 @@ static PORT_READ_START( t1t_readport )
 	{ 0x0060, 0x0063, tandy1000_pio_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0210, 0x0217, pc_EXP_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
 	{ 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
@@ -250,7 +252,6 @@ static PORT_WRITE_START( t1t_writeport )
 	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x00c0, 0x00c0, SN76496_0_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0210, 0x0217, pc_EXP_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
@@ -291,7 +292,6 @@ static PORT_READ_START( pc1640_readport )
 	{ 0x007a, 0x007a, pc1640_mouse_y_r },
 	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0210, 0x0217, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -315,7 +315,6 @@ static PORT_WRITE_START( pc1640_writeport )
 	{ 0x007a, 0x007a, pc1640_mouse_y_w },
 	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0210, 0x0217, pc_EXP_w },
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -1903,7 +1902,7 @@ static struct MachineDriver machine_driver_europc =
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
 	},
-	mc146818_nvram_handler
+	europc_rtc_nvram_handler
 };
 
 static struct MachineDriver machine_driver_xtcga =

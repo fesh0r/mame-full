@@ -9,6 +9,7 @@
 #include "driver.h"
 
 #include "includes/mc146818.h"
+#include "bcd.h"
 
 #if 0
 #define DBG_LOG(level, text, print) \
@@ -35,18 +36,6 @@ static struct {
 
 #define HOURS_24 mc146818.data[0xb]&2
 #define BCD_MODE !(mc146818.data[0xb]&4) // book has other description!
-
-static int bcd_adjust(int value)
-{
-	if ((value&0xf)>=0xa) value=value+0x10-0xa;
-	if ((value&0xf0)>=0xa0) value=value-0xa0+0x100;
-	return value;
-}
-
-static int dec_2_bcd(int a)
-{
-	return (a%10)|((a/10)<<4);
-}
 
 static void mc146818_timer(int param)
 {

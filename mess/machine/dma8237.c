@@ -31,6 +31,10 @@ void dma8237_reset(DMA8237 *This)
 {
 	This->status &= ~0xf0;	/* reset DMA running flag */
 	This->status |= 0x0f;		/* set DMA terminal count flag */
+	This->chan[0].operation=0;
+	This->chan[1].operation=0;
+	This->chan[2].operation=0;
+	This->chan[3].operation=0;
 }
 
 static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
@@ -140,12 +144,13 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 			DMA_LOG(1,"DMA_address_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->address[offset>>1]));
 			this->msb ^= 1;
 
-			if (offset==0) { // hack simulating refresh activity for ibmxt bios
+			if ( (this->chan[0].operation==2)&&(offset==0) ) { 
+				// hack simulating refresh activity for ibmxt bios
 				this->chan[0].address++;
 				this->chan[0].count--;
 				if (this->chan[0].count==0xffff) {
 					this->chan[0].address=this->chan[0].base_address;
-					this->chan[0].count==this->chan[0].base_count;
+					this->chan[0].count=this->chan[0].base_count;
 				}
 			}
 			break;

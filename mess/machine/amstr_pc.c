@@ -7,7 +7,32 @@
 #include "includes/pclpt.h"
 #include "includes/vga.h"
 
-/* bios power up self test
+/* pc1512 (v1)
+   fc1b5
+   fc1f1
+   fc264
+   fc310
+   fc319
+   fc385
+   fc436
+   fc459
+   fc4cb
+   fc557
+   fc591
+   fc624
+   fc768
+   fc818
+   fc87d display amstrad ..
+    fca17 keyboard check
+	 fca69
+	 fd680
+      fd7f9
+	 fca7b !keyboard interrupt routine for this check 
+ */
+
+
+/* pc1640 (v3)
+   bios power up self test
    important addresses
 
    fc0c9
@@ -55,6 +80,7 @@ static struct {
 	} mouse;
 
 	// 64 system status register?
+	UINT8 port60;
 	UINT8 port61;
 	UINT8 port62;
 	UINT8 port65;
@@ -95,32 +121,22 @@ static struct {
    7e 00 01 mouse button left
    7d 01 01 mouse button right
 */
-static void pc1640_timer(int param)
-{
-	if( !pic8259_0_irq_pending(1) )
-	{
-		pc_port[0x60]=0xaa;
-		pic8259_0_issue_irq(1);
-	}
-}
 
 WRITE_HANDLER( pc1640_port60_w )
 {
 	switch (offset) {
 	case 1:
-		if ((data&0x80)&&!(pc_port[0x61]&0x80)) {
-			timer_set(1/200.0, 0, pc1640_timer);
-		}
 		pc1640.port61=data;
 		if (data==0x30) pc1640.port62=(pc1640.port65&0x10)>>4;
 		else if (data==0x34) pc1640.port62=pc1640.port65&0xf;
-		pc_ppi_portb_w(0,data);
+		pc_sh_speaker(data&3);
+		pc_keyb_set_clock(data&0x40);
 		break;
 	case 4:
 		if (data&0x80) {
-			pc_port[0x60]=data^0x8d;
+			pc1640.port60=data^0x8d;
 		} else {
-			pc_port[0x60]=data;
+			pc1640.port60=data;
 		}
 		break;
 	case 5: 
@@ -137,9 +153,14 @@ READ_HANDLER( pc1640_port60_r )
 {
 	int data=0;
 	switch (offset) {
-	case 0: data=pc_port[0x60];break;
-	case 1: 
-		data=pc_port[0x61];
+	case 0:
+		if (pc1640.port61&0x80)
+			data=pc1640.port60;
+		else 
+			data = pc_keyb_read();
+		break;
+	case 1:
+		data=pc1640.port61;
 		break;
 	case 2: 
 		data=pc1640.port62;
