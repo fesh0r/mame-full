@@ -196,7 +196,7 @@ int dragon_floppy_init(int id)
 				sectorPerTrack,
 				sectorSize;
 			
-			if( filesize <= 255*2*18*256 ) /* Max tracks * max sides * max sectors * max sector size */
+			if( filesize <= 256*2*18*256 ) /* Max tracks * max sides * max sectors * max sector size */
 			{
 				/* Assume 18 sectors per track, and 256 bytes per sector */
 				/* This is a standard CoCo floppy disk */

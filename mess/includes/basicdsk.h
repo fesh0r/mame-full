@@ -71,7 +71,7 @@ void basicdsk_floppy_exit(int id);
 	1,2,3,4,5,6,7,8,9,10
 */
 
-void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length/*, UINT16 dir_sector, UINT16 dir_length*/, UINT8 first_sector_id, UINT16 offset_track_zero);
+void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length/*, UINT16 dir_sector, UINT16 dir_length*/, UINT8 first_sector_id, UINT16 offset_track_zero);
 
 /* set data mark/deleted data mark for the sector specified. If ddam!=0, the sector will
 have a deleted data mark, if ddam==0, the sector will have a data mark */

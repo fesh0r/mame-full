@@ -174,7 +174,7 @@ static int basicdsk_get_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side
 
 /* dir_sector is a relative offset from the start of the disc,
 dir_length is a relative offset from the start of the disc */
-void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
+void basicdsk_set_geometry(UINT8 drive, UINT16 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
 {
 	basicdsk *pDisk;
 	unsigned long N;
