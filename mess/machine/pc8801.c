@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.4 2001/05/25 07:06:18 PeT Exp $
+  $Id: pc8801.c,v 1.5 2001/05/27 09:29:58 ben Exp $
 
 ***************************************************************************/
 
@@ -330,7 +330,7 @@ static void select_extmem(char **r,char **w,UINT8 *ret_ctrl)
       } \
     } \
   } while(0);
-      
+
   if(ext_bank_88[extmem_ctrl[1]]!=NULL) {
     if(extmem_ctrl[0]&0x01) SET_RADDR(ext_bank_88[extmem_ctrl[1]]);
     if(extmem_ctrl[0]&0x10) SET_WADDR(ext_bank_88[extmem_ctrl[1]]);
@@ -383,7 +383,7 @@ void pc8801_update_bank(void)
       if(ext_w!=ext_r) logerror("differnt between read and write bank of extension memory.\n");
     }
   } else {
-    /* 0x0000 to 0x7fff */ 
+    /* 0x0000 to 0x7fff */
     if(RAMmode) {
       /* RAM */
       memory_set_bankhandler_w(1, 0, MWA_BANK1);
@@ -704,40 +704,40 @@ static char save_8255A[2];
 static char save_8255B[2];
 static char save_8255C[2];
 
-static void save_8255_A(int chip, int data)
+static WRITE_HANDLER(save_8255_A)
 {
-  save_8255A[chip]=data;
+  save_8255A[offset]=data;
 }
-static int load_8255_A(int chip)
+static READ_HANDLER (load_8255_A )
 {
-  return use_5FD ? save_8255B[1-chip] : 0xff;
+  return use_5FD ? save_8255B[1-offset] : 0xff;
 }
 
-static void save_8255_B(int chip, int data)
+static WRITE_HANDLER( save_8255_B )
 {
-  save_8255B[chip]=data;
+  save_8255B[offset]=data;
 }
-static int load_8255_B(int chip)
+static READ_HANDLER(load_8255_B)
 {
-  return use_5FD ? save_8255A[1-chip] : 0xff;
+  return use_5FD ? save_8255A[1-offset] : 0xff;
 }
 
-static void save_8255_C(int chip, int data) {
-  save_8255C[chip]=data;
+static WRITE_HANDLER (save_8255_C ) {
+  save_8255C[offset]=data;
 }
-static int load_8255_C(int chip) {
-  return use_5FD ? (((save_8255C[1-chip]>>4)&0x0f)|
-		    ((save_8255C[1-chip]<<4)&0xf0)) : 0xff;
+static READ_HANDLER (load_8255_C) {
+  return use_5FD ? (((save_8255C[1-offset]>>4)&0x0f)|
+		    ((save_8255C[1-offset]<<4)&0xf0)) : 0xff;
 }
 
 ppi8255_interface pc8801_8255_config = {
   2,
-  load_8255_A,
-  load_8255_B,
-  load_8255_C,
-  save_8255_A,
-  save_8255_B,
-  save_8255_C,
+  {load_8255_A},
+  {load_8255_B},
+  {load_8255_C},
+  {save_8255_A},
+  {save_8255_B},
+  {save_8255_C},
 };
 
 READ_HANDLER(pc8801fd_nec765_tc)
