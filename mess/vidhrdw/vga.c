@@ -2,7 +2,7 @@
    IBM PC, PC/XT, PC/AT, PS2 25/30
    Video Graphics Adapter
 
-   peter.trauner@jk.uni-linz.ac.at
+   PeT mess@utanet.at
 */
 
 #include "driver.h"
@@ -1084,8 +1084,8 @@ void vga_vh_ega(struct osd_bitmap *bitmap, int full_refresh)
 	int pos, line, column, c, addr;
 
 	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
-		 line++, addr+=EGA_LINE_LENGTH) {
-		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos+=4) {
+		 line++, addr=(addr+EGA_LINE_LENGTH)&0x3ffff) {
+		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff) {
 #if 0
 			Machine->scrbitmap->line[line][c]=
 			    vga.pens[ega_bitplane_to_packed(vga.memory+pos,0)];
