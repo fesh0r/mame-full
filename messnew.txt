@@ -27,6 +27,9 @@ System Driver Changes:
   the low 16 bits are dropped.  This caused a bug in CoCoTracker that caused
   the screen to be garbled after the MOD files are played. [Nate Woods]
 
+- [COCO3] Adjusted composite colors slightly with help from SockMaster (Bug
+  #227) [John Kowalski, Nate Woods]
+  
 - [SPECPL3E] Updated BIOS to the 1.11 version romset
   (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
 
