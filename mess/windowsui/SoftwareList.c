@@ -888,11 +888,11 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 #define T2A(str)	str
 #endif
 
-static const char *MessGui_getfodderimage(unsigned int index, int *foddertype)
+static const char *MessGui_getfodderimage(unsigned int i, int *foddertype)
 {
-	if (index < mess_images_count) {
-		*foddertype = mess_images_index[index]->type;
-		return mess_images_index[index]->name;
+	if (i < mess_images_count) {
+		*foddertype = mess_images_index[i]->type;
+		return mess_images_index[i]->name;
 	}
 	return NULL;
 }
