@@ -208,8 +208,8 @@ static struct {
 	{ 0x3b5cd0c5, 0x30000, "ATARIST TOS 104" },
 	{ 0x08538e39, 0x40000, "ATARIST TOS 206" },
 
-	{ 0xe1ffecb6, 0x200, "LYNX I or II?" },
-	{ 0x0d973c9d, 0x200, "LYNX I or II? alternate" },
+	{ 0xe1ffecb6, 0x200, "LYNX saved (fff9 not authentic)" },
+	{ 0x0d973c9d, 0x200, "LYNX saved (fff9 different to 0xe1ffecb6)" },
 
 	{ 0xfb731aaa, 0x20000, "JAGUAR" },
 
@@ -625,6 +625,7 @@ static struct {
 	{ 0xdfce21e5 , 0x7f00, "INCOMPLETE COCO3 saved from running machine" },
 	{ 0x7d48ba8e , 0x2000, "??? COCO3 disk?" },
 	{ 0xe3879310 , 0x4000, "DRAGON32" },
+	{ 0xb44536f6 , 0x2000, "DRAGON DOS 1.0" },
 	{ 0x878396a5 , 0x4000, "CP400 basic" },
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
 	{ 0x11fda97e , 0x2000, "MC10" },
@@ -702,6 +703,8 @@ static struct {
 	{ 0x425eedf5 , 0x1000, "MZ700 font japan" },
 	{ 0x0c281675 , 0x2000, "MZ800" },
 
+	{ 0xdca8f879 , 0x4000, "PC1500A rom" },
+
 	{ 0x44bee438 , 0x2000, "SC61860A08 5H 13LD PC1401 cpu rom" },
 	{ 0x69b9d587 , 0x8000, "5S1 SC613256 D30 PC1401" },
 	{ 0xf7287aca , 0x2000, "PC1251 cpu rom" },
@@ -773,7 +776,7 @@ static struct {
 	{ 0xd64cd50b , 0x2000, "KC85_4 os e000" },
 	{ 0x37cc2080 , 0x2000, "KC85_4 disk" },
 	{ 0xee273933 , 0x2000, "KC85_4 tape" },
-	{ 0xfe2932e3 , 0x2000, "KC85_3? basic" },
+	{ 0xfe2932e3 , 0x2000, "KC85_3? basic (1 byte different to 0xdfe34b08)" },
 	{ 0xbd30cd2d , 0x2000, "KC85_3? bios" },
 	{ 0x4a6c9a47 , 0x2000, "KC85_3 disk" },
 	{ 0x639e4864 , 0x2000, "KC85_3 tape" },
