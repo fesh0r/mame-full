@@ -332,7 +332,7 @@ static void SoftwarePicker_RealizeHash(HWND hwndPicker, int nIndex)
 
 	if (pPickerInfo->pHashFile)
 	{
-		if (pFileInfo->pDevice->type < IO_COUNT)
+		if (pFileInfo->pDevice && (pFileInfo->pDevice->type < IO_COUNT))
 	        nHashFunctionsUsed = hashfile_functions_used(pPickerInfo->pHashFile, pFileInfo->pDevice->type);
 		nCalculatedHashes = hash_data_used_functions(pFileInfo->szHash);
 	}

@@ -230,7 +230,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	memset(&lvi, 0, sizeof(lvi));
 	lvi.iItem = ListView_GetItemCount(info->listview);
 	lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
-	lvi.pszText = entry->filename;
+	lvi.pszText = U2T(entry->filename);
 	lvi.iImage = icon_index;
 	lvi.lParam = index;
 	new_index = ListView_InsertItem(info->listview, &lvi);
@@ -423,17 +423,25 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	mess_pile pile;
+	const struct ImageModule *default_module = NULL;
 	const struct ImageModule *module = NULL;
 	const char *s;
 	TCHAR *filename;
 	TCHAR *filter;
 	struct imgtool_module_features features;
+	DWORD filter_index = 0, current_index = 0;
+	const struct wimgtool_info *info;
+
+	info = get_wimgtool_info(window);
+	if (info->image)
+		default_module = img_module(info->image);
 
 	memset(ofn, 0, sizeof(*ofn));
 	pile_init(&pile);
 
 	if (!creating_file)
 	{
+		current_index++;
 		pile_puts(&pile, "Autodetect (*.*)");
 		pile_putc(&pile, '\0');
 		pile_puts(&pile, "*.*");
@@ -443,9 +451,15 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	// write out library modules
 	while((module = imgtool_library_iterate(library, module)) != NULL)
 	{
+		// check to see if we have the right features
 		features = img_get_module_features(module);
 		if (creating_file ? features.supports_create : features.supports_open)
 		{
+			// is this the filter we are asking for?
+			current_index++;
+			if (module == default_module)
+				filter_index = current_index;
+
 			pile_puts(&pile, module->description);
 			pile_puts(&pile, " (");
 
@@ -497,6 +511,7 @@ static imgtoolerr_t setup_openfilename_struct(OPENFILENAME *ofn, memory_pool *po
 	ofn->lpstrFile = filename;
 	ofn->nMaxFile = MAX_PATH;
 	ofn->lpstrFilter = filter;
+	ofn->nFilterIndex = filter_index;
 
 done:
 	pile_delete(&pile);
@@ -660,8 +675,9 @@ static void menu_open(HWND window)
 	const char *filename;
 	struct wimgtool_info *info;
 
-	info = get_wimgtool_info(window);
 	pool_init(&pool);
+
+	info = get_wimgtool_info(window);
 
 	err = setup_openfilename_struct(&ofn, &pool, window, FALSE);
 	if (err)

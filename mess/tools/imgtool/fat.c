@@ -4,7 +4,38 @@
 
 	PC FAT disk images
 
+*****************************************************************************
+
+  Boot sector format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       3  Jump
+	   3       8  OEM Name
+      11       2  Bytes per sector
+	  13       1  Sectors per cluster
+	  14       2  Reserved sector count (including boot sector)
+	  16       1  Number of FATs (file allocation tables)
+	  17       2  Number of root directory entries
+	  19       2  Total sectors (bits 0-15)
+	  22       2  Sectors per FAT
+	  24       2  Sectors per track
+	  26       2  Number of heads
+	  28       4  Hidden sectors
+	  32       4  Total sectors (bits 16-47)
+	  36       1  Physical drive number
+      37       1  Current head
+	  38       1  Signature
+	  39       4  ID
+	  43      11  Volume Label
+	  54       8  FAT file system type 
+
+  For more information:
+	http://support.microsoft.com/kb/q140418/
+
 ****************************************************************************/
+
+#include <time.h>
 
 #include "imgtool.h"
 #include "formats/pc_dsk.h"
@@ -24,6 +55,7 @@ struct fat_diskinfo
 	UINT32 sectors_per_fat;
 	UINT32 sectors_per_track;
 	UINT32 heads;
+	UINT64 total_sectors;
 };
 
 struct fat_file
@@ -64,6 +96,21 @@ static UINT32 pick_integer(const void *ptr, size_t offset, size_t length)
 
 
 
+static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
+{
+	UINT8 b;
+	size_t i = 0;
+
+	while(length--)
+	{
+		b = (UINT8) value;
+		value >>= 8;
+		((UINT8 *) ptr)[offset + i++] = b;
+	}
+}
+
+
+
 static int is_special_cluster(UINT32 fat_bits, UINT32 cluster)
 {
 	UINT32 mask;
@@ -82,7 +129,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	UINT8 header[62];
 	floperr_t ferr;
 	struct fat_diskinfo *info;
-	UINT32 fat_bits;
+	UINT32 fat_bits, total_sectors_l, total_sectors_h;
 
 	ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 1, 0, header, sizeof(header));
 	if (ferr)
@@ -107,9 +154,13 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	info->reserved_sectors		= pick_integer(header, 14, 2);
 	info->fat_count				= pick_integer(header, 16, 1);
 	info->root_entries			= pick_integer(header, 17, 2);
+	total_sectors_l				= pick_integer(header, 19, 2);
 	info->sectors_per_fat		= pick_integer(header, 22, 2);
 	info->sectors_per_track		= pick_integer(header, 24, 2);
 	info->heads					= pick_integer(header, 26, 2);
+	total_sectors_h				= pick_integer(header, 32, 4);
+
+	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
 
 	if (info->sector_size == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
@@ -121,6 +172,94 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->heads == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
+	if (info->total_sectors < info->heads * info->sectors_per_track)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution *opts)
+{
+	floperr_t ferr;
+	UINT32 heads, tracks, sectors, sector_bytes, first_sector_id;
+	UINT32 fat_bits, sectors_per_cluster, reserved_sectors, hidden_sectors;
+	UINT32 root_dir_count, root_dir_sectors;
+	UINT32 sectors_per_fat, fat_count, i;
+	UINT64 total_sectors, total_clusters;
+	const char *title;
+	const char *fat_bits_string;
+	UINT8 header[512];
+
+	heads = option_resolution_lookup_int(opts, 'H');
+	tracks = option_resolution_lookup_int(opts, 'T');
+	sectors = option_resolution_lookup_int(opts, 'S');
+	sector_bytes = 512;
+	first_sector_id = 1;
+	
+	total_sectors = ((UINT64) heads) * tracks * sectors;
+
+	/* cap our sector count so that we only use FAT12/16 */
+	sectors_per_cluster = (total_sectors + 65524 - 1) / 65524;
+
+	/* compute the FAT file system type */
+	if ((total_sectors / sectors_per_cluster) <= 4084)
+	{
+		fat_bits = 12;
+		fat_bits_string = "FAT12   ";
+	}
+	else if ((total_sectors / sectors_per_cluster) <= 65524)
+	{
+		fat_bits = 16;
+		fat_bits_string = "FAT16   ";
+	}
+	else
+	{
+		fat_bits = 32;
+		fat_bits_string = "FAT32   ";
+	}
+
+	/* other miscellaneous settings */
+	title = "";
+	fat_count = 2;
+	root_dir_count = 512;
+	hidden_sectors = 0;
+	reserved_sectors = 1;
+
+	/* calculated settings */
+	root_dir_sectors = (root_dir_count + sector_bytes - 1) / sector_bytes;
+	total_clusters = (total_sectors - reserved_sectors - hidden_sectors - root_dir_sectors)
+		/ sector_bytes;
+	sectors_per_fat = (total_clusters * fat_bits + (sector_bytes * 8) - 1)
+		/ (sector_bytes * 8);
+
+	memset(header, 0, sizeof(header));
+	strcpy((char *) &header[3], "imgtool");
+	place_integer(header, 11, 2, sector_bytes);
+	place_integer(header, 13, 1, sectors_per_cluster);
+	place_integer(header, 14, 1, reserved_sectors);
+	place_integer(header, 16, 1, fat_count);
+	place_integer(header, 17, 2, root_dir_count);
+	place_integer(header, 19, 2, (UINT16) (total_sectors >> 0));
+	place_integer(header, 22, 2, sectors_per_fat);
+	place_integer(header, 24, 2, sectors);
+	place_integer(header, 26, 2, heads);
+	place_integer(header, 28, 4, hidden_sectors);
+	place_integer(header, 32, 4, (UINT32) (total_sectors >> 16));
+	memcpy(&header[54], fat_bits_string, 8);
+
+	ferr = floppy_write_sector(imgtool_floppy(image), 0, 0, first_sector_id,
+		0, header, sizeof(header));
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	for (i = 0; i < (sectors_per_fat * fat_count + root_dir_sectors); i++)
+	{
+		ferr = floppy_clear_sector(imgtool_floppy(image), 0, 0, first_sector_id + 1 + i, 0);
+		if (ferr)
+			return imgtool_floppy_error(ferr);
+	}
 
 	return IMGTOOLERR_SUCCESS;
 }
@@ -207,16 +346,21 @@ static void prepend_lfn_bytes(utf16_char_t *lfn_buf, size_t lfn_buflen, size_t *
 {
 	UINT16 w;
 	int i;
+	size_t move_len;
 
-	memmove(&lfn_buf[chars], &lfn_buf[0], MAX(*lfn_len + chars + 1, lfn_buflen - 1));
+	move_len = MIN(*lfn_len + 1, lfn_buflen - chars - 1);
+	memmove(&lfn_buf[chars], &lfn_buf[0], move_len * sizeof(*lfn_buf));
 
 	for (i = 0; i < chars; i++)
 	{
+		/* read the character */
 		memcpy(&w, &entry[offset + i * 2], 2);
 		w = LITTLE_ENDIANIZE_INT16(w);
 
+		/* append to buffer */
 		lfn_buf[i] = (w != 0xFFFF) ? w : 0;
 	}
+	*lfn_len += chars;
 }
 
 
@@ -227,11 +371,12 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	const struct fat_diskinfo *disk_info;
 	UINT8 entry[FAT_DIRENT_SIZE];
 	size_t bytes_read;
+	int i, j;
+	unicode_char_t ch;
 	utf16_char_t lfn_buf[512];
 	size_t lfn_len = 0;
 	int lfn_lastentry = 0;
-	int i, j;
-	unicode_char_t ch;
+	UINT8 lfn_checksum = 0, checksum;
 
 	lfn_buf[0] = '\0';
 	memset(ent, 0, sizeof(*ent));
@@ -261,10 +406,13 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 		if (entry[11] == 0x0F)
 		{
 			/* this is an LFN entry */
-			if ((lfn_lastentry == 0) || ((entry[0] & 0x3F) != (lfn_lastentry - 1)))
+			if ((lfn_lastentry == 0)
+				|| ((entry[0] & 0x3F) != (lfn_lastentry - 1))
+				|| (lfn_checksum != entry[13]))
 			{
 				lfn_buf[0] = 0;
 				lfn_len = 0;
+				lfn_checksum = entry[13];
 			}
 			lfn_lastentry = entry[0] & 0x3F;
 			prepend_lfn_bytes(lfn_buf, sizeof(lfn_buf) / sizeof(lfn_buf[0]),
@@ -294,14 +442,28 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 	/* and the long filename */
 	if (lfn_lastentry == 1)
 	{
-		i = 0;
-		j = 0;
-		do
+		checksum = 0;
+		for (i = 0; i < 11; i++)
 		{
-			i += uchar_from_utf16(&ch, &lfn_buf[i], sizeof(lfn_buf) / sizeof(lfn_buf[0]) - i);
-			j += utf8_from_uchar(&ent->long_filename[j], sizeof(ent->long_filename) / sizeof(ent->long_filename[0]) - j, ch);
+			j = checksum & 1;
+			checksum >>= 1;
+			if (j)
+				checksum |= 0x80;
+			checksum += entry[i];
 		}
-		while(ch != 0);
+
+		/* only use the LFN if the checksum passes */
+		if (checksum == lfn_checksum)
+		{
+			i = 0;
+			j = 0;
+			do
+			{
+				i += uchar_from_utf16(&ch, &lfn_buf[i], sizeof(lfn_buf) / sizeof(lfn_buf[0]) - i);
+				j += utf8_from_uchar(&ent->long_filename[j], sizeof(ent->long_filename) / sizeof(ent->long_filename[0]) - j, ch);
+			}
+			while(ch != 0);
+		}
 	}
 
 	/* other attributes */
@@ -433,6 +595,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->eoln						= EOLN_CRLF;
 	module->image_extra_bytes			+= sizeof(struct fat_diskinfo);
 	module->imageenum_extra_bytes		+= sizeof(struct fat_file);
+	/*module->create					= fat_diskimage_create;*/
 	module->open						= fat_diskimage_open;
 	module->begin_enum					= fat_diskimage_beginenum;
 	module->next_enum					= fat_diskimage_nextenum;
