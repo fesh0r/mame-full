@@ -29,6 +29,7 @@ typedef struct
 	double invclock256;         /* 256/system clock */
 	void (*intr)(int which);    /* interrupt callback */
 	mem_write_handler zc[4];    /* zero crossing callbacks */
+	void	*zc_reset_timer[4];
 	int notimer;                /* no timer masks */
 	int mask[4];                /* masked channel flags */
 	int mode[4];                /* current mode */
@@ -100,9 +101,16 @@ void z80ctc_init (z80ctc_interface *intf)
 		ctcs[i].zc[1] = intf->zc1[i];
 		ctcs[i].zc[2] = intf->zc2[i];
 		ctcs[i].zc[3] = 0;
+
+		ctcs[i].zc_reset_timer[0] = 0;
+		ctcs[i].zc_reset_timer[1] = 0;
+		ctcs[i].zc_reset_timer[2] = 0;
+		ctcs[i].zc_reset_timer[3] = 0;
+
 		z80ctc_reset (i);
 	}
 }
+
 
 
 double z80ctc_getperiod (int which, int ch)
@@ -161,6 +169,9 @@ void z80ctc_reset (int which)
 		if (ctc->timer[i])
 			timer_remove (ctc->timer[i]);
 		ctc->timer[i] = NULL;
+		if (ctc->zc_reset_timer[i])
+			timer_remove(ctc->zc_reset_timer[i]);
+		ctc->zc_reset_timer[i] = NULL;
 		ctc->int_state[i] = 0;
 	}
 	z80ctc_interrupt_check( ctc );
@@ -243,7 +254,9 @@ void z80ctc_w (int which, int offset, int data)
 			if (ctc->timer[ch])
 				timer_remove (ctc->timer[ch]);
 			ctc->timer[ch] = NULL;
-
+			if (ctc->zc_reset_timer[ch])
+				timer_remove(ctc->zc_reset_timer[ch]);
+			ctc->zc_reset_timer[ch] = NULL;
 			if( ctc->int_state[ch] != 0 )
 			{
 				/* clear interrupt service , request */
@@ -337,7 +350,24 @@ void z80ctc_reti( int which )
 	z80ctc_interrupt_check( ctc );
 }
 
-static void z80ctc_timercallback (int param)
+
+static void z80ctc_zc_reset_timer_callback(int param)
+{
+	int which = param >> 2;
+	int ch = param & 3;
+	z80ctc *ctc = ctcs + which;
+
+	/* reset zc output */
+	if (ctc->zc[ch])
+	{
+		(*ctc->zc[ch])(0,0);
+	}
+
+	/* stop timer */
+	timer_reset(ctc->zc_reset_timer[ch], TIME_NEVER);
+}
+
+static void z80ctc_timer_over(int param)
 {
 	int which = param >> 2;
 	int ch = param & 3;
@@ -352,17 +382,40 @@ static void z80ctc_timercallback (int param)
 			z80ctc_interrupt_check( ctc );
 		}
 	}
-	/* generate the clock pulse */
+
 	if (ctc->zc[ch])
 	{
 		(*ctc->zc[ch])(0,1);
-		(*ctc->zc[ch])(0,0);
 	}
 
 	/* reset the down counter */
 	ctc->down[ch] = ctc->tconst[ch];
 }
 
+
+static void z80ctc_timercallback (int param)
+{
+	int which = param >> 2;
+	int ch = param & 3;
+	z80ctc *ctc = ctcs + which;
+	int	mode = ctc->mode[ch];
+
+	z80ctc_timer_over(param);
+	 
+	if (ctc->zc[ch])
+	{
+		double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
+
+		/* if timer exists - remove it */
+		if (ctc->zc_reset_timer[ch])
+		{
+			timer_remove(ctc->zc_reset_timer[ch]);
+		}
+
+		/* trigger new timer to clear zc output */
+		ctc->zc_reset_timer[ch] = timer_set(clock, param, z80ctc_zc_reset_timer_callback);
+	}
+}
 
 void z80ctc_trg_w (int which, int trg, int offset, int data)
 {
@@ -393,6 +446,7 @@ logerror("CTC clock %f\n",1.0/clock);
 					timer_remove (ctc->timer[ch]);
 				if (!(ctc->notimer & (1<<ch)))
 					ctc->timer[ch] = timer_pulse (clock * (double)ctc->tconst[ch], (which << 2) + ch, z80ctc_timercallback);
+		
 			}
 
 			/* we're no longer waiting */
@@ -401,11 +455,41 @@ logerror("CTC clock %f\n",1.0/clock);
 			/* if we're clocking externally, decrement the count */
 			if ((mode & MODE) == MODE_COUNTER)
 			{
+			/* KT: 
+				On the KC85/4 computer, the zc2 output is connected to the video hardware
+				blink/flash output.
+
+				In the boulderdash game, the blink output is setup to change the blink output
+				every 2 lines to produce a scrolling colour effect.
+
+				With the previous code, the zc output produced a very short pulse and therefore
+				flash didn't work properly.
+
+				With this new code, the flash is correct.
+
+				What happens here:
+					When the down counter reaches zero, a high is output on zc2.
+					The counter is reloaded and the count continues.
+					At the next clock pulse the counter will be decremented from tconst to tconst-1.
+					At this point the zc2 output is set to 0.
+					We now have a pulse from zc2 but it lasts for the duration between two clk/trg.
+					This is correct and is shown in the timing diagrams for the z80 ctc 
+			*/
+
+
+
+				/* if down counter has restarted, down==tconst */
+				if (ctc->down[ch]==ctc->tconst[ch])
+				{
+					if (ctc->zc[ch])
+						(*ctc->zc[ch])(0,0);
+				}
+
 				ctc->down[ch]--;
 
 				/* if we hit zero, do the same thing as for a timer interrupt */
 				if (!ctc->down[ch])
-					z80ctc_timercallback ((which << 2) + ch);
+					z80ctc_timer_over ((which << 2) + ch);
 			}
 		}
 	}
@@ -781,7 +865,7 @@ static void z80pio_update_strobe(int which, int ch, int state)
 			if ((pio->strobe[ch]^state)!=0)
 			{
 				/* yes */
-				if (state!=0)
+				if (state==0)
 				{
 					/* positive edge */
 					logerror("PIO-%c positive strobe\n",'A'+ch );
