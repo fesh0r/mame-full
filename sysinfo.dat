@@ -141,7 +141,7 @@ Usage/Known Issues:
 
 Keyboard input is a little difficult, using a joystick or mouse is recommended.
 
-Most games are playable. See a5200.crc for a fairly exhaustive compatibility list.
+Most games are playable. See a5200.hsi for a fairly exhaustive compatibility list.
 
 
 History and Trivia:
@@ -179,7 +179,7 @@ The Reset key "R" and Select key "S" are hard-mapped to the same location as the
 Player 2 up and fire two, respectively. You will need to remap these manually to avoid
 control conflicts in some games.
 
-Most games work fine, but a few have graphic and playability issues. See a7800.crc for a 
+Most games work fine, but a few have graphic and playability issues. See a7800.hsi for a 
 full compatibility list.
 
 
@@ -1250,7 +1250,7 @@ MESS Emulation State:
 
 Based on info by Paul Robson, Ward Shrake
 
-Look into crc/arcadia.crc for some issues
+Look in hash/arcadia.hsi for some issues
 
 Bad analog joystick emulation
 
@@ -3639,7 +3639,7 @@ to be checking for. This may not be 100% accurate, however.
 MESS Emulation State:
 
 Most games tend to run fairly well. Some have slight graphic glitches; incorrect colours part
-way down the screen or other bizarre effects. See genesis.crc for a partial list.
+way down the screen or other bizarre effects. See genesis.hsi for a partial list.
 
 
 Cartridges up to 32MBit (4MByte) are supported.
@@ -4781,8 +4781,8 @@ cartridges are allowed: the first in slot 1 and the second in slot 2. So subslot
 emulated (yet). 
 
 
-The msx.crc file is important. The last field on every line specifies the type of ROM mapper. 
-See msx.crc for more information.
+The msx.hsi file is important. The <extrainfo> tag specifies the type of ROM mapper. 
+See msx.hsi for more information.
 
 
 Sound emulation:
@@ -5193,10 +5193,8 @@ The required bios dumps are available at:
 Cartridges:
 
 The ROM mapper (which is specified with -rom x in fMSX) is autodetected but
-isn't perfect. So you should also install the crc files, which can be 
-downloaded from the official mess site. With the CRC files, cartridges with
-SRAM or a DAC (like Synthesizer or Majutsushi from Konami) are detected
-properly.
+isn't perfect. With the hsi files in the hash directory, cartridges with SRAM
+or a DAC (like Synthesizer or Majutsushi from Konami) are detected properly.
 
 
 Tape emulation:
@@ -5297,7 +5295,7 @@ Philips and Sony diskroms are supported; the Panasonic machines use the
 tc8566af diskcontroller (unemulated) and the Brazillian machines are 
 port-based (not memory-mapped).
 
-You need a proper diskrom dump, and the msx.crc file in place. The diskrom 
+You need a proper diskrom dump, and the msx.hsi file in place. The diskrom 
 should be recognized as type 15 otherwise the driver doesn't know it's
 a diskrom. 
 
@@ -9373,7 +9371,7 @@ Known Issues:
 No light pen support.
 
 
-Almost every cartridge is playable, except those requiring the light pen. See vectrex.crc for 
+Almost every cartridge is playable, except those requiring the light pen. See vectrex.hsi for 
 a current compatibility list. Overlays are supported in .png format, using the same name as 
 the cartridge image being loaded. Place overlays in the artwork directory. The overlay for
 the built in minestorm game must be named "mine.png" to load when no image is selected.
@@ -9543,7 +9541,7 @@ No userport, no rs232/v.24 interface.
 No special expansion modules like ieee488 interface are supported in the expansion port.
 
 
-Image compatibility is quite high, see vic20.crc for a partial list. The emulation features a
+Image compatibility is quite high, see vic20.hsi for a partial list. The emulation features a
 rasterline based video system which should be enough for all vic20 games and programs. The 
 emulation supports the keyboard, as well as joysticks, paddles and lightpen, via the emulated
 gameport, and simple Disk and Tape support. The expansion slot supports RAM and ROM 
