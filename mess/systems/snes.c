@@ -18,7 +18,7 @@
   Todo (in no particular order):
     - Emulate extra chips - superfx, dsp2, sa-1 etc.
     - Add sound emulation. Currently the SPC700 is emulated, but that's it.
-    - Add windows, horizontal mosaic etc to the video emulation.
+    - Add horizontal mosaic, hi-res. interlaced etc to video emulation.
     - Add support for fullgraphic mode.
     - Fix support for Mode 7. (In Progress)
     - Handle interleaved roms (maybe even multi-part roms, but how?)
@@ -222,7 +222,6 @@ static MACHINE_DRIVER_START( snespal )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_PAL)
 	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_MACHINE_INIT( snespal )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(snes)
@@ -236,21 +235,21 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 ROM_START(snes)
-	ROM_REGION(0x1000000, REGION_CPU1,  0)				/* 65C816 */
-	ROM_REGION(0x20000,   REGION_GFX1,  0)				/* VRAM */
-	ROM_REGION(0x202,     REGION_USER1, 0)				/* CGRAM */
-	ROM_REGION(0x440,     REGION_USER2, 0)				/* OAM */
-	ROM_REGION(0x10000,   REGION_CPU2,  0)				/* SPC700 */
-	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
+	ROM_REGION(0x1000000,       REGION_CPU1,  0)		/* 65C816 */
+	ROM_REGION(SNES_VRAM_SIZE,  REGION_GFX1,  0)		/* VRAM */
+	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
+	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
+	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
 ROM_START(snespal)
-	ROM_REGION(0x1000000, REGION_CPU1,  0)				/* 65C816 */
-	ROM_REGION(0x20000,   REGION_GFX1,  0)				/* VRAM */
-	ROM_REGION(0x202,     REGION_USER1, 0)				/* CGRAM */
-	ROM_REGION(0x440,     REGION_USER2, 0)				/* OAM */
-	ROM_REGION(0x10000,   REGION_CPU2,  0)				/* SPC700 */
-	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
+	ROM_REGION(0x1000000,       REGION_CPU1,  0)		/* 65C816 */
+	ROM_REGION(SNES_VRAM_SIZE,  REGION_GFX1,  0)		/* VRAM */
+	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */
+	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */
+	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */
+	ROM_LOAD("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
 /*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
