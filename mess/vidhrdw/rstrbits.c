@@ -311,7 +311,7 @@ static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_a
 		}
 		else {
 			/* We can use palette_change_color */
-			palette_change_color(palettebase + i - 1, myrgb[0], myrgb[1], myrgb[2]);
+			palette_set_color(palettebase + i - 1, myrgb[0], myrgb[1], myrgb[2]);
 			artifactpens[i] = palettebase + i - 1;
 		}
 	}

@@ -25,16 +25,16 @@
 ** - fixed bug in tms.patternmask
 **
 ** 3 nov 2000, Raphael Nabet:
-** - fixed a nasty bug in _TMS9928A_sprites. A transparent sprite caused 
+** - fixed a nasty bug in _TMS9928A_sprites. A transparent sprite caused
 **   sprites at lower levels not to be displayed, which is wrong.
 **
 ** 3 jan 2001, Sean Young:
 ** - A few minor cleanups
-** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ_HANDLER 
+** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ_HANDLER
 **   and WRITE_HANDLER.
 ** - Got rid of the color table, unused. Also got rid of the old colors,
 **   which where commented out anyways.
-** 
+**
 **
 ** Todo:
 ** - The screen image is rendered in `one go'. Modifications during
@@ -173,9 +173,9 @@ typedef struct {
 static TMS9928A tms;
 
 /*
-** initialize the palette 
+** initialize the palette
 */
-void tms9928A_init_palette (unsigned char *palette, 
+void tms9928A_init_palette (unsigned char *palette,
 	unsigned short *colortable,const unsigned char *color_prom) {
     memcpy (palette, &TMS9928A_palette, sizeof(TMS9928A_palette));
 }
@@ -502,13 +502,13 @@ void TMS9928A_refresh (struct osd_bitmap *bmp, int full_refresh) {
         c = tms.Regs[7] & 15; if (!c) c=1;
         if (tms.BackColour != c) {
             tms.BackColour = c;
-            palette_change_color (0,
+            palette_set_color (0,
                 TMS9928A_palette[c * 3], TMS9928A_palette[c * 3 + 1],
                 TMS9928A_palette[c * 3 + 2]);
         }
     }
 
-	if (palette_recalc() ) {
+	if (full_refresh) {
 		_TMS9928A_set_dirty (1);
 		tms.Change = 1;
 	}

@@ -194,7 +194,7 @@ void rastertrack_refresh(struct osd_bitmap *bmap, int full_refresh)
 	logerror("rastertrack_refresh(): full_refresh=%i frame_state=%i\n", full_refresh, frame_state);
 #endif
 
-	if ((intf->flags & RI_PALETTERECALC) && palette_recalc())
+	if ((intf->flags & RI_PALETTERECALC) && full_refresh)
 		full_refresh = 1;
 
 	switch(frame_state) {
