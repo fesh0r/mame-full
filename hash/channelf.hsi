@@ -124,14 +124,14 @@
 	<hash crc32="b7eabd08" name="Videocart 22 - Slot Machine">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
-	<hash crc32="44bf4ccd" name="Videocart 23 - Galactic Space Wars">
+	<hash crc32="c8ef3410" name="Videocart 23 - Galactic Space Wars">
 		<manufacturer>Zircon</manufacturer>
 		<alt company="SABA">Videocart 19 - Odyssee Im Weltraum"</alt>
 	</hash>
 	<hash crc32="a1ae99be" name="Videocart 24 - Pro Football">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
-	<hash crc32="########" name="Videocart 25 - Casino Poker ">
+	<hash crc32="5aa30c12" name="Videocart 25 - Casino Poker ">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
 	<hash crc32="85e00865" name="Videocart 26 - Alien Invasion">
