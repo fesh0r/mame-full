@@ -217,7 +217,7 @@ extern READ_HANDLER ( odyssey2_t1_r )
     return t;
 }
 
-INTERRUPT_GEN( odyssey2 )
+INTERRUPT_GEN( odyssey2_line )
 {
     line_time=timer_get_time();
     line=(line+1)%262;
