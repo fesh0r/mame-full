@@ -312,6 +312,13 @@ COREOBJS = \
 		$(OBJ)/mess/utils.o \
 		$(OBJ)/mess/printer.o \
 		$(OBJ)/mess/machine/rriot.o	 \
+		$(OBJ)/mess/machine/mc146818.o \
+		$(OBJ)/mess/machine/pc_mouse.o \
+		$(OBJ)/mess/machine/pclpt.o	 \
+		$(OBJ)/mess/machine/centroni.o \
+		$(OBJ)/mess/machine/pckeybrd.o \
+		$(OBJ)/mess/machine/pc_fdc_h.o \
+		$(OBJ)/mess/machine/pc_flopp.o \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
 		$(OBJ)/mess/diskctrl.o \
@@ -464,27 +471,22 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/astrocde.o	\
           $(OBJ)/mess/machine/pit8253.o  \
           $(OBJ)/mess/machine/uart8250.o \
-          $(OBJ)/mess/machine/tandy1t.o  \
-          $(OBJ)/mess/machine/amstr_pc.o \
-          $(OBJ)/mess/machine/at.o       \
-          $(OBJ)/mess/machine/dma8237.o  \
-          $(OBJ)/mess/machine/pic8259.o  \
-          $(OBJ)/mess/machine/mc146818.o \
-          $(OBJ)/mess/machine/pc_fdc_h.o \
-          $(OBJ)/mess/machine/pc_flopp.o \
-          $(OBJ)/mess/machine/pc_mouse.o \
-          $(OBJ)/mess/machine/pckeybrd.o \
-          $(OBJ)/mess/machine/pclpt.o    \
-          $(OBJ)/mess/vidhrdw/vga.o      \
-          $(OBJ)/mess/sndhrdw/pc.o       \
-          $(OBJ)/mess/vidhrdw/pc_cga.o   \
-          $(OBJ)/mess/vidhrdw/pc_mda.o   \
-          $(OBJ)/mess/vidhrdw/pc_t1t.o   \
-          $(OBJ)/mess/machine/pc.o       \
-          $(OBJ)/mess/machine/pc_fdc.o   \
-          $(OBJ)/mess/machine/pc_hdc.o   \
-          $(OBJ)/mess/machine/pc_ide.o   \
-          $(OBJ)/mess/systems/pc.o	\
+	  $(OBJ)/mess/machine/tandy1t.o  \
+	  $(OBJ)/mess/machine/amstr_pc.o \
+	  $(OBJ)/mess/machine/europc.o \
+	  $(OBJ)/mess/machine/at.o	 \
+	  $(OBJ)/mess/machine/dma8237.o  \
+	  $(OBJ)/mess/machine/pic8259.o  \
+	  $(OBJ)/mess/vidhrdw/vga.o	 \
+	  $(OBJ)/mess/sndhrdw/pc.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_t1t.o	 \
+	  $(OBJ)/mess/machine/pc.o	 \
+	  $(OBJ)/mess/machine/pc_fdc.o	 \
+	  $(OBJ)/mess/machine/pc_hdc.o	 \
+	  $(OBJ)/mess/machine/pc_ide.o	 \
+	  $(OBJ)/mess/systems/pc.o	\
           $(OBJ)/mess/vidhrdw/saa5050.o   \
           $(OBJ)/mess/vidhrdw/p2000m.o    \
           $(OBJ)/mess/systems/p2000t.o    \
@@ -586,6 +588,10 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/odyssey2.o \
           $(OBJ)/mess/vidhrdw/odyssey2.o \
           $(OBJ)/mess/systems/odyssey2.o \
+	$(OBJ)/mess/vidhrdw/mk1.o \
+	$(OBJ)/mess/systems/mk1.o \
+	$(OBJ)/mess/vidhrdw/mk2.o \
+	$(OBJ)/mess/systems/mk2.o \
 	$(OBJ)/mess/systems/intv.o
 
 
