@@ -9,7 +9,7 @@
   that you have read the license and understand and accept it fully.
 
 ***************************************************************************/
- 
+
 /***************************************************************************
 
   TreeView.c
@@ -423,7 +423,7 @@ void InitGames(UINT nGames)
 								   FOLDER_YEAR, ICON_YEAR, 0, nGames);
 				AddFolder(lpTemp);
 				done[jj] = TRUE;
-				
+
 				for (j = 0; j < nGames; j++)
 				{
 					if (strncmp(cTmp, FixString((char *)drivers[j]->year), 4) == 0)
@@ -461,8 +461,8 @@ void InitGames(UINT nGames)
 				if (jj == nGames)
 					strcpy(cTmp, "Romstar");
 				else
-					strcpy(cTmp,FixString((char *)drivers[jj]->manufacturer));	
-								
+					strcpy(cTmp,FixString((char *)drivers[jj]->manufacturer));
+
 				if (cTmp[0] == '\0')
 					continue;
 
@@ -475,7 +475,7 @@ void InitGames(UINT nGames)
 								   FOLDER_MANUFACTURER, ICON_MANUFACTURER, 0, nGames);
 				AddFolder(lpTemp);
 				done[jj] = TRUE;
-				
+
 				for (j = 0; j < nGames; j++)
 				{
 					char *tmp = LicenseManufacturer((char *)drivers[j]->manufacturer);
@@ -502,7 +502,7 @@ void InitGames(UINT nGames)
 			}
 #ifdef BUILD_LIST
 			fclose(fp);
-#endif		   
+#endif
 			free(done);
 			break;
 
@@ -639,7 +639,7 @@ void Tree_Initialize(HWND hWnd)
 	SetWindowLong(hWnd, GWL_WNDPROC, (LONG)TreeWndProc);
 }
 
-  
+
 /* Used to build the GameList */
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
@@ -681,10 +681,12 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return TRUE;
 #endif
 
+#ifndef MESS
 #ifndef NEOFREE
 	/* Filter neo-geo games */
 	if (dwMask & F_NEOGEO && gameData[nGame].neogeo)
 		return TRUE;
+#endif
 #endif
 
 	/* Filter unavailable games */
@@ -694,7 +696,7 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	vector = drivers[nGame]->drv->video_attributes & VIDEO_TYPE_VECTOR;
 
 	/* Filter vector games */
-	if (dwMask & F_VECTOR && vector) 
+	if (dwMask & F_VECTOR && vector)
 		return TRUE;
 
 	/* Filter Raster games */
@@ -730,10 +732,10 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
-	case WM_CONTEXTMENU: 
+	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 
-		break; 
+		break;
 
 	case WM_COMMAND :
 		switch (GET_WM_COMMAND_ID(wParam, lParam))
@@ -756,21 +758,21 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 				{
 					if (resetFilters)
 						ResetFilters();
-					
+
 					if (resetUI)
 						ResetGUI();
-					
+
 					if (resetDefaults)
 						ResetGameDefaults();
-					
+
 					if (resetGames)
 						ResetAllGameOptions();
-					
+
 					EndDialog(hDlg, 1);
 					return TRUE;
 				}
 			}
-			/* Fall through if no options were selected 
+			/* Fall through if no options were selected
 			 * or the user hit cancel in the popup dialog.
 			 */
 		case IDCANCEL :
@@ -796,9 +798,9 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
-	case WM_CONTEXTMENU: 
+	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-		break; 
+		break;
 
 	case WM_COMMAND :
 		switch (GET_WM_COMMAND_ID(wParam, lParam))
@@ -1033,14 +1035,14 @@ static char * FixString(char *s)
 			if ((*ptr == ' ') &&
 				(ptr[1] == '(' || ptr[1] == '/' || ptr[1] == '+'))
 				break;
-			
+
 			if (*ptr == '[')
 				ptr++;
 			else if (*ptr == ']' || *ptr == '/')
 				break;
 			else
 				tmp[i++] = *ptr++;
-			
+
 		}
 		tmp[i] = '\0';
 	}
@@ -1060,7 +1062,7 @@ static char * LicenseManufacturer(char *s)
 		ptr++;
 		if (strncmp(ptr, "licensed from ", 14) == 0)
 			ptr += 14;
-		
+
 		while (*ptr != ')')
 		{
 			if (*ptr == ' ' && strncmp(ptr, " license", 8) == 0)
@@ -1068,7 +1070,7 @@ static char * LicenseManufacturer(char *s)
 
 			*t++ = *ptr++;
 		}
-		
+
 		*t = '\0';
 		return tmp;
 	}
@@ -1103,7 +1105,7 @@ static BOOL CreateTreeIcons(HWND hWnd)
 
 	// Associate the image lists with the list view control.
 	TreeView_SetImageList (hWnd, hTreeSmall, LVSIL_NORMAL);
-  
+
 	return TRUE;
 }
 
@@ -1125,14 +1127,14 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	GetClipBox(hDC, &rcClip);
 	GetClientRect(hWnd, &rcClient);
-	
+
 	// Create a compatible memory DC
 	memDC = CreateCompatibleDC(hDC);
 
 	// Select a compatible bitmap into the memory DC
 	bitmap = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
 	hOldBitmap = SelectObject(memDC, bitmap);
-	
+
 	// First let the control do its default drawing.
 	CallWindowProc(g_lpTreeWndProc, hWnd, uMsg, (WPARAM)memDC, 0);
 	// DefWindowProc(hWnd, WM_PAINT, (WPARAM)memDC, 0);
@@ -1140,7 +1142,7 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	// Draw bitmap in the background if one has been set
 	if (hBitmap != NULL)
 	{
-		HPALETTE hPAL;		 
+		HPALETTE hPAL;
 		HDC      maskDC;
 		HBITMAP  maskBitmap;
 		HDC      tempDC;
@@ -1153,16 +1155,16 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		RECT     rcRoot;
 
 		// Now create a mask
-		maskDC = CreateCompatibleDC(hDC);	
-		
+		maskDC = CreateCompatibleDC(hDC);
+
 		// Create monochrome bitmap for the mask
-		maskBitmap = CreateBitmap(rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, 
+		maskBitmap = CreateBitmap(rcClient.right - rcClient.left, rcClient.bottom - rcClient.top,
 								  1, 1, NULL);
 		hOldMaskBitmap = SelectObject(maskDC, maskBitmap);
 		SetBkColor(memDC, GetSysColor(COLOR_WINDOW));
 
 		// Create the mask from the memory DC
-		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, memDC, 
+		BitBlt(maskDC, 0, 0, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, memDC,
 			   rcClient.left, rcClient.top, SRCCOPY);
 
 
@@ -1170,7 +1172,7 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		hOldHBitmap = SelectObject(tempDC, hBitmap);
 
 		imageDC = CreateCompatibleDC(hDC);
-		bmpImage = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left, 
+		bmpImage = CreateCompatibleBitmap(hDC, rcClient.right - rcClient.left,
 										  rcClient.bottom - rcClient.top);
 		hOldBmpBitmap = SelectObject(imageDC, bmpImage);
 
@@ -1182,7 +1184,7 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			RealizePalette(hDC);
 			SelectPalette(imageDC, hPAL, FALSE);
 		}
-		
+
 		// Get x and y offset
 		TreeView_GetItemRect(hWnd, TreeView_GetRoot(hWnd), &rcRoot, FALSE);
 		rcRoot.left = -GetScrollPos(hWnd, SB_HORZ);
@@ -1190,7 +1192,7 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Draw bitmap in tiled manner to imageDC
 		for (i = rcRoot.left; i < rcClient.right; i += bmDesc.bmWidth)
 			for (j = rcRoot.top; j < rcClient.bottom; j += bmDesc.bmHeight)
-				BitBlt(imageDC,  i, j, bmDesc.bmWidth, bmDesc.bmHeight, tempDC, 
+				BitBlt(imageDC,  i, j, bmDesc.bmWidth, bmDesc.bmHeight, tempDC,
 					   0, 0, SRCCOPY);
 
 		// Set the background in memDC to black. Using SRCPAINT with black and any other
@@ -1204,20 +1206,20 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Set the foreground to black. See comment above.
 		SetBkColor(imageDC, RGB(255,255,255));
 		SetTextColor(imageDC, RGB(0,0,0));
-		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left, 
-			   rcClip.bottom - rcClip.top, maskDC, 
+		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
+			   rcClip.bottom - rcClip.top, maskDC,
 			   rcClip.left, rcClip.top, SRCAND);
 
 		// Combine the foreground with the background
 		BitBlt(imageDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top, 
+			   rcClip.bottom - rcClip.top,
 			   memDC, rcClip.left, rcClip.top, SRCPAINT);
 		// Draw the final image to the screen
-		
+
 		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
-			   rcClip.bottom - rcClip.top, 
+			   rcClip.bottom - rcClip.top,
 			   imageDC, rcClip.left, rcClip.top, SRCCOPY);
-		
+
 		SelectObject(maskDC,  hOldMaskBitmap);
 		SelectObject(tempDC,  hOldHBitmap);
 		SelectObject(imageDC, hOldBmpBitmap);
@@ -1230,7 +1232,7 @@ static BOOL TreeCtrlOnPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
-		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left, 
+		BitBlt(hDC, rcClip.left, rcClip.top, rcClip.right - rcClip.left,
 			   rcClip.bottom - rcClip.top,
 			   memDC, rcClip.left, rcClip.top, SRCCOPY);
 	}
@@ -1290,8 +1292,10 @@ static FILTER_RECORD filterRecord[NUM_FOLDERS] =
 {
 	{FOLDER_ALLGAMES,    0,             0               },
 	{FOLDER_AVAILABLE,   F_AVAILABLE,   0               },
+#ifndef MESS
 #if !defined(NEOFREE)
 	{FOLDER_NEOGEO,      F_NEOGEO,      0               },
+#endif
 #endif
 #ifdef MESS
     {FOLDER_CONSOLE,     0,             0               },
@@ -1331,8 +1335,10 @@ FILTER_ITEM filterList[F_NUM_FILTERS] =
     {F_CONSOLE,      IDC_FILTER_CONSOLE},
 	{F_MODIFIED,     IDC_FILTER_MODIFIED},
 #endif
+#ifndef MESS
 #ifndef NEOFREE
 	{ F_NEOGEO,       IDC_FILTER_NEOGEO      },
+#endif
 #endif
 	{ F_CLONES,       IDC_FILTER_CLONES      },
 	{ F_NONWORKING,   IDC_FILTER_NONWORKING  },
@@ -1367,7 +1373,7 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 	{
 	case WM_INITDIALOG:
 		dwFilters = 0;
-		
+
 		/* Use global lpCurrentFolder */
 		if (lpCurrentFolder != NULL)
 		{
@@ -1400,15 +1406,15 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
-	case WM_CONTEXTMENU: 
+	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-		break; 
+		break;
 
 	case WM_COMMAND:
 		{
 			WORD wID		 = GET_WM_COMMAND_ID(wParam, lParam);
 			WORD wNotifyCode = GET_WM_COMMAND_CMD(wParam, lParam);
-			
+
 			switch (wID)
 			{
 			case IDOK:
@@ -1436,7 +1442,7 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 				SetFolderFlags(lpCurrentFolder->m_lpTitle, dwFilters);
 				EndDialog(hDlg, 1);
 				return TRUE;
-				
+
 			case IDCANCEL:
 				EndDialog(hDlg, 0);
 				return TRUE;

@@ -12,7 +12,7 @@ OSOBJS += $(OBJ)/windows/fileio.o
 else
 OSOBJS += $(OBJ)/mess/windows/fileio.o	$(OBJ)/mess/windows/dirio.o \
 	  $(OBJ)/mess/windows/messwin.o $(OBJ)/mess/windows/messopts.o
-CMDOSOBJS = $(OBJ)/mess/windows/fileio2.o
+#CMDOSOBJS = $(OBJ)/mess/windows/fileio2.o
 endif 
       
 # video blitting functions
@@ -58,11 +58,6 @@ GUIOBJS = \
 
 ifdef MESS
 GUIOBJS += \
-		$(OBJ)/mess/windowsui/mess32ui.o \
-		$(OBJ)/mess/windowsui/MessOptions.o \
-		$(OBJ)/mess/windowsui/MessProperties.o \
-		$(OBJ)/mess/windowsui/SmartListView.o \
-		$(OBJ)/mess/windowsui/SoftwareList.o
 
 GUIRES = $(OBJ)/mess/windowsui/mess32.res
 else
@@ -76,3 +71,5 @@ endif
 
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./
+
+include src/windowsui/windowsui.mak
