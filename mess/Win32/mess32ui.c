@@ -127,8 +127,6 @@ static void MessTestsDoneIdle(void);
 
 struct deviceentry {
 	int icon;
-	const char *shortname;
-	const char *longname;
 	const char *dlgname;
 };
 
@@ -140,27 +138,31 @@ struct deviceentry {
  * IO_COUNT is used for bad files
  * ------------------------------------------------------------------------ */
 
+#define IO_ZIP		(IO_END)
+#define IO_BAD		(IO_COUNT + 0)
+#define IO_UNKNOWN	(IO_COUNT + 1)
+
 /* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
 static struct deviceentry s_devices[] =
 {
-	{ 1, "cart",	"cartridge",	"Cartridge images" },	/* IO_CARTSLOT */
-	{ 4, "flop",	"floppy",		"Floppy disk images" },	/* IO_FLOPPY */
-	{ 9, "hard",	"harddisk",		"Hard disk images" },	/* IO_HARDDISK */
-	{ 2, "cyln",	"cylinder",		"Cylinders" },			/* IO_CYLINDER */
-	{ 5, "cass",	"cassette",		"Cassette images" },	/* IO_CASSETTE */
-	{ 2, "pncd",	"punchcard",	"Punchcard images" },	/* IO_PUNCHCARD */
-	{ 2, "pntp",	"punchtape",	"Punchtape images" },	/* IO_PUNCHTAPE */
-	{ 8, "prin",	"printer",		"Printer Output" },		/* IO_PRINTER */
-	{ 6, "serl",	"serial",		"Serial Output" },		/* IO_SERIAL */
-	{ 2, "parl",	"parallel",		"Parallel Output" },	/* IO_PARALLEL */
-	{ 7, "snap",	"snapshot",		"Snapshots" },			/* IO_SNAPSHOT */
-	{ 7, "quik",	"quickload",	"Quickloads" }			/* IO_QUICKLOAD */
+	{ 1, "Cartridge images" },		/* IO_CARTSLOT */
+	{ 4, "Floppy disk images" },	/* IO_FLOPPY */
+	{ 9, "Hard disk images" },		/* IO_HARDDISK */
+	{ 2, "Cylinders" },				/* IO_CYLINDER */
+	{ 5, "Cassette images" },		/* IO_CASSETTE */
+	{ 2, "Punchcard images" },		/* IO_PUNCHCARD */
+	{ 2, "Punchtape images" },		/* IO_PUNCHTAPE */
+	{ 8, "Printer Output" },		/* IO_PRINTER */
+	{ 6, "Serial Output" },			/* IO_SERIAL */
+	{ 2, "Parallel Output" },		/* IO_PARALLEL */
+	{ 7, "Snapshots" },				/* IO_SNAPSHOT */
+	{ 7, "Quickloads" }				/* IO_QUICKLOAD */
 };
 
 static void AssertValidDevice(int d)
 {
-	assert((sizeof(s_devices) / sizeof(s_devices[0])) + 1 == IO_ALIAS);
-	assert((d > 0) && (d < IO_ALIAS));
+	assert((sizeof(s_devices) / sizeof(s_devices[0])) + 1 == IO_COUNT);
+	assert(((d > IO_END) && (d < IO_COUNT)) || (d == IO_UNKNOWN) || (d == IO_BAD));
 }
 
 static const struct deviceentry *lookupdevice(int d)
@@ -173,7 +175,6 @@ static const struct deviceentry *lookupdevice(int d)
 
 static int requested_device_type(char *tchar)
 {
-	const struct deviceentry *ent;
 	int device = -1;
 	int i;
 
@@ -182,9 +183,8 @@ static int requested_device_type(char *tchar)
 	if (*tchar == '-') {
 		tchar++;
 
-		for (i = IO_END+1; i < IO_ALIAS; i++) {
-			ent = lookupdevice(i);
-			if (!stricmp(tchar, ent->shortname) || !stricmp(tchar, ent->longname)) {
+		for (i = 1; i < IO_COUNT; i++) {
+			if (!stricmp(tchar, device_typename(i)) || !stricmp(tchar, device_brieftypename(i))) {
 				device = i;
 				break;
 			}
@@ -210,6 +210,7 @@ static void MessSetupCrc(int game_index)
 /* Code for manipulation of image list                                      */
 /* ************************************************************************ */
 
+/* Specify IO_END for type if you want all types */
 static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int type)
 {
     const struct IODevice *dev;
@@ -228,7 +229,7 @@ static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int ty
     for (i = 0; dev[i].type != IO_END; i++) {
         const char *ext = dev[i].file_extensions;
         while(*ext) {
-            if ((type == IO_END) || (type == dev[i].type)) {
+            if ((type == 0) || (type == dev[i].type)) {
                 if (num_extensions < count) {
                     types[num_extensions].type = dev[i].type;
                     types[num_extensions].ext = ext;
@@ -270,8 +271,8 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
                 }
             }
             else {
-                /* IO_ALIAS represents uncalculated zips */
-                type = IO_ALIAS;
+                /* IO_UNKNOWN represents uncalculated zips */
+                type = IO_UNKNOWN;
             }
         }
 
@@ -289,7 +290,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
             closezip(pZip);
     }
 
-	if ((type != IO_ALIAS) && (type != IO_COUNT))
+	if ((type != IO_UNKNOWN) && (type != IO_ZIP))
 		AssertValidDevice(type);
     return type;
 }
@@ -381,8 +382,8 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     char buffer[32];
 	const char *iconname;
 
-    if ((nSoftwareType > IO_END) && (nSoftwareType < IO_ALIAS)) {
-		iconname = lookupdevice(nSoftwareType)->shortname;
+    if ((nSoftwareType > IO_END) && (nSoftwareType < IO_COUNT)) {
+		iconname = device_brieftypename(nSoftwareType);
         index = (nGame * IO_COUNT) + nSoftwareType;
 
         nIconPos = mess_icon_index[index];
@@ -420,7 +421,7 @@ static ImageData *ImageData_Alloc(const char *fullname)
 
     separator_pos = strrchr(newimg->fullname, '\\');
     newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
-	newimg->type = IO_ALIAS;
+	newimg->type = IO_UNKNOWN;
 	return newimg;
 }
 
@@ -468,9 +469,9 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 	BOOL bLearnedSomething = FALSE;
 
 	/* Calculate image type */
-	if (img->type == IO_ALIAS) {
+	if (img->type == IO_UNKNOWN) {
 		img->type = MessDiscoverImageType(img->fullname, imagetypes, eRealize > REALIZE_IMMEDIATE, &crc32);
-		if (img->type != IO_ALIAS)
+		if (img->type != IO_UNKNOWN)
 			bLearnedSomething = TRUE;
 	}
 
@@ -782,7 +783,7 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
  
     // The others
     for (i = 0; imagetypes[i].ext; i++) {
-		if (imagetypes[i].type == IO_END)
+		if (imagetypes[i].type == IO_ZIP)
 			typname = "Compressed images";
 		else
 			typname = lookupdevice(imagetypes[i].type)->dlgname;
@@ -927,12 +928,12 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
     nIcon = GetMessIcon(nTheCurrentGame, nType);
     if (!nIcon) {
 		switch(nType) {
-		case IO_ALIAS:
+		case IO_UNKNOWN:
 			/* Unknowns */
 			nIcon = 2;
 			break;
 		
-		case IO_COUNT:
+		case IO_BAD:
 			/* Bad files */
 			nIcon = 3;
 			break;
@@ -1395,7 +1396,7 @@ static void MessTestsFlex(void)
 	/* Assert that we have resolved all the types */
 	for (i = 0; i < mess_images_count; i++) {
 		img = mess_images_index[i];
-		assert(img->type != IO_ALIAS);
+		assert(img->type != IO_UNKNOWN);
 	}
 }
 
