@@ -128,9 +128,9 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 #include "includes/wd179x.h"
-#include "machine/bbc.h"
+#include "includes/bbc.h"
 #include "vidhrdw/bbc.h"
-#include "i8271.h"
+#include "includes/i8271.h"
 #include "includes/basicdsk.h"
 
 static int b0_sound;
@@ -467,15 +467,32 @@ static UINT8 head=0;
 static void bbc_fdc_callback(int);
 
 
+static int previous_i8271_int_state;
+
 void	bbc_i8271_interrupt(int state)
 {
-	cpu_set_nmi_line(0, state);
-}
+	/* I'm assuming that the nmi is edge triggered */
+	/* a interrupt from the fdc will cause a change in line state, and
+	the nmi will be triggered, but when the state changes because the int
+	is cleared this will not cause another nmi */
+	/* I'll emulate it like this to be sure */
+	
+	if (state!=previous_i8271_int_state)
+	{
+		if (state)
+		{
+			/* I'll pulse it because if I used hold-line I'm not sure
+			it would clear - to be checked */
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+	}
 
+	previous_i8271_int_state = state;
+}
 
 static i8271_interface bbc_i8271_interface=
 {
-	//bbc_i8271_interrupt,
+	bbc_i8271_interrupt,
 	NULL
 };
 
@@ -533,14 +550,16 @@ void stop_machine_bbcb(void)
 /* load floppy */
 int bbc_floppy_init(int id)
 {
-    if (basicdsk_floppy_init(id)==INIT_OK)
-    {
-      basicdsk_set_geometry(id,80,1,10,256,0,2,0);
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		/* sector id's 0-9 */
+		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
+		basicdsk_set_geometry(id,80,1,10,256,12,3,0);
 
-      return INIT_OK;
-    }
+		return INIT_OK;
+	}
 
-    return INIT_FAILED;
+	return INIT_FAILED;
 }
 
 void check_disc_status(void)
