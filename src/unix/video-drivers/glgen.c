@@ -311,16 +311,14 @@ int gl_open_display (void)
   const unsigned char * glVersion;
   double game_aspect ;
   double cabn_aspect ;
+  int x, y;
+  struct TexSquare *tsq;
+  GLenum err;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
-  GLdouble t1;
-  GLdouble texwpervw=0.0;
-  GLdouble texhpervh=0.0;
+  GLdouble t1, texwpervw, texhpervh;
   GLint format=0;
   GLint tidxsize=0;
-  GLenum err;
-  struct TexSquare *tsq=0;
-  int e_x, e_y, s, i=0;
-  int x, y;
+  int format_ok=0;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
 
   glVersion = disp__glGetString(GL_VERSION);
@@ -629,18 +627,18 @@ int gl_open_display (void)
   }
   
   /* achieve the 2**e_x:=text_width, 2**e_y:=text_height */
-  e_x=0; s=1;
-  while (s<text_width)
-  { s*=2; e_x++; }
-  text_width=s;
+  x=1;
+  while (x<text_width)
+    x*=2;
+  text_width=x;
 
-  e_y=0; s=1;
-  while (s<text_height)
-  { s*=2; e_y++; }
-  text_height=s;
+  y=1;
+  while (y<text_height)
+    y*=2;
+  text_height=y;
 
   /* Test the max texture size */
-  do
+  while(!format_ok && text_width>=64 && text_height>=64)
   {
     disp__glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
 		  gl_internal_format,
@@ -655,45 +653,40 @@ int gl_open_display (void)
 #ifndef NOTEXIDXSIZE
     disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
+    CHECK_GL_ERROR ();
 #else
     tidxsize = -1;
 #endif
-    CHECK_GL_ERROR ();
-
-    if (format == gl_internal_format &&
-	force_text_width_height > 0 &&
-	(force_text_width_height < text_width ||
-	 force_text_width_height < text_height))
+    
+    switch(sysdep_display_params.depth)
     {
-      format = 0;
+      case 15:
+        if(format == GL_RGB || format == GL_RGB5)
+          format_ok = 1;
+        break;
+      case 16:
+        if(format == GL_RGB)
+          format_ok = 1;
+        break;
+      case 32:
+        if(format == GL_RGB || format == GL_RGB8)
+          format_ok = 1;
+        break;
     }
 
-    if (format != gl_internal_format)
+    if (!format_ok)
     {
-      fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), trying ",
+      fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), ",
 		text_height, text_width, format, tidxsize);
-
       if (text_width > text_height)
-      {
-	e_x--;
-	text_width = 1;
-	for (i = e_x; i > 0; i--)
-	  text_width *= 2;
-      }
+	text_width /= 2;
       else
-      {
-	e_y--;
-	text_height = 1;
-	for (i = e_y; i > 0; i--)
-	  text_height *= 2;
-      }
-
-      fprintf (stderr, "[%dx%d] !\n", text_height, text_width);
+	text_height /= 2;
+      fprintf (stderr, "trying [%dx%d] !\n", text_height, text_width);
     }
   }
-  while(format!=gl_internal_format && text_width>=64 && text_height>=64);
 
-  if(text_width < 64 || text_height < 64)
+  if(!format_ok)
   {
     fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
     return 1;
