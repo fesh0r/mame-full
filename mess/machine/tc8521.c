@@ -1,186 +1,278 @@
-/* Toshiba TC8521 Real-Time Clock */
-/* used in NC100, avigo 100 */
-
-/* TODO:
-
--Implement date and year,
--find out how the alarm works
--find out what time and alarm are reset to... (all zeros!?)
-- find out if ints trigger when timer is disabled
-- find out if alarm continues to trigger if it hits the time and timer is not enabled
-
-*/
+/* Toshiba TC8521 Real-Time Clock or RICOH RF5C01A*/
 
 #include "driver.h"
 #include "includes/tc8521.h"
 
 /* Registers:
 
-Page 0 (timer):
+Page 0/Mode 0 (timer):
 
-0x00:
-   seconds 0-9 (units digit)
-0x01:
-   seconds 0-9 (tens digit)
-0x02:
-   minutes 0-9 (units digit)
-0x03:
-   minutes 0-9 (tens digit)
-0x04:
-   hours 0-9 (units digit)
-0x05:
-   hours 0-9 (tens digit)
+0x00: 1-second counter
+0x01: 10-second counter
+0x02: 1-minute counter
+0x03: 10-minute counter
+0x04: 1-hour counter
+0x05: 10-hour counter
+0x06: day-of-the-week counter
+0x07: 1-day counter
+0x08: 10-day counter
+0x09: 1-month counter
+0x0A: 10-month counter
+0x0b: 1-year counter
+0x0c: 10-year counter
 
-Page 1 (alarm):
+Page 1/Mode 1 (alarm):
+0x00: unused
+0x01: unused
+0x02: 1-minute alarm
+0x03: 10-minute alarm
+0x04: 1-hour alarm
+0x05: 10-hour alarm
+0x06: day-of-the-week alarm
+0x07: 1-day alarm
+0x08: 10-day alarm
+0x09: unused
+0x0a: 12/24 hour select register
+0x0b: leap year counter
+0x0c: unused
+
+Page 2/Mode 2 (ram block 1) and
+Page 3/Mode 3 (ram block 2):
+0x00: ram
+0x01: ram
+0x02: ram
+0x03: ram
+0x04: ram
+0x05: ram
+0x06: ram
+0x07: ram
+0x08: ram
+0x09: ram
+0x0a: ram
+0x0b: ram
+0x0c: ram
 
 
-Page 2 (RAM):
-0x00-0x0c: ram
+registers common to all modes:
 
-
-
-Page 3 (RAM):
-0x00-0x0c: ram
-
-
-0x01d:
-
-bit 7-4: ??
-bit 3: timer enable
-bit 2: alarm enable
-bit 1: pa1 (pa1 and pa0 are page select 0-3)
-bit 0: pa0
-
-0x01e:
-
-bit 7-4: ??
-bit 3: test 3
-bit 2: test 2
-bit 1: test 1
-bit 0: test 0
-
-0x01f:
-
-bit 7-4: ??
-bit 3: 1hz enable
-bit 2: 16hz enable
-bit 1: timer reset
-bit 0: alarm reset
+0x0d: MODE register
+	bit 3: timer enable
+	bit 2: alarm enable
+	bit 1,0: mode/page select
+0x0e: test register
+	bit 3: test 3
+	bit 2: test 2
+	bit 1: test 1
+	bit 0: test 0
+0x0f: RESET etc
+	bit 3: 1hz enable
+	bit 2: 16hz enable
+	bit 1: timer reset
+	bit 0: alarm reset
 */
 
-// uncomment for verbose debugging information
+#define TC8521_TIMER_1_SECOND_COUNTER 0x00
+#define TC8521_TIMER_10_SECOND_COUNTER 0x01
+#define TC8521_TIMER_1_MINUTE_COUNTER 0x02
+#define TC8521_TIMER_10_MINUTE_COUNTER 0x03
+#define TC8521_TIMER_1_HOUR_COUNTER 0x04
+#define TC8521_TIMER_10_HOUR_COUNTER 0x05
+#define TC8521_TIMER_DAY_OF_THE_WEEK_COUNTER 0x06
+#define TC8521_TIMER_1_DAY_COUNTER 0x07
+#define TC8521_TIMER_10_DAY_COUNTER 0x08
+#define TC8521_TIMER_1_MONTH_COUNTER 0x09
+#define TC8521_TIMER_10_MONTH_COUNTER 0x0a
+#define TC8521_TIMER_1_YEAR_COUNTER 0x0b
+#define TC8521_TIMER_10_YEAR_COUNTER 0x0c
+
+#define TC8521_MODE_REGISTER 0x0d
+#define TC8521_TEST_REGISTER 0x0e
+#define TC8521_RESET_REGISTER 0x0f
+
+#define TC8521_ALARM_1_MINUTE_REGISTER 0x012
+#define TC8521_ALARM_10_MINUTE_REGISTER 0x013
+#define TC8521_ALARM_1_HOUR_REGISTER 0x014
+#define TC8521_ALARM_10_HOUR_REGISTER 0x015
+#define TC8521_ALARM_DAY_OF_THE_WEEK_REGISTER 0x016
+#define TC8521_ALARM_1_DAY_REGISTER 0x017
+#define TC8521_ALARM_10_DAY_REGISTER 0x018
+
+/* uncomment for verbose debugging information */
 #define VERBOSE
+
+/* mask data with these values when writing */
+static unsigned char rtc_write_masks[16*4]=
+{
+	0x0f,0x07,0x0f,0x07,0x0f,0x03,0x07,0x0f,0x03,0x0f,0x03,0x0f,0x0f,0x0f, 0x0f, 0x0f,
+	0x00,0x00,0x0f,0x07,0x0f,0x03,0x07,0x0f,0x03,0x00,0x01,0x03,0x00,0x0f, 0x0f, 0x0f,
+	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f, 0x0f, 0x0f,
+	0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f,0x0f, 0x0f, 0x0f,
+};
+
+#define ALARM_OUTPUT_16HZ	0x01
+#define ALARM_OUTPUT_1HZ	0x02
+#define ALARM_OUTPUT_ALARM	0X04
 
 struct tc8521
 {
-        void *tc8521_timer;
-		/* 3 register pages */
-        unsigned char registers[16*4];
+	/* mame timer */
+	void *tc8521_timer;
+	/* 4 register pages (timer, alarm, ram1 and ram2) */
+    unsigned char registers[16*4];
+	/* interface for 1hz/16hz and alarm outputs */
+    struct tc8521_interface interface;
 
-        struct tc8521_interface interface;
-
-		unsigned long current_page;
-
-        int sixteen_hz_counter;
-        int hz_counter;
+	unsigned long alarm_outputs;
+	unsigned long thirty_two_hz_counter;
 };
 
 
 static struct tc8521 rtc;
 
-static void tc8521_timer_callback(int dummy)
+static void tc8521_set_alarm_output(void)
+{
+	unsigned char alarm_output;
+	
+	alarm_output = 0;
+
+	/* what happens when all are enabled? I assume they are all or'd together */
+
+	/* 16hz enabled? */
+    if ((rtc.registers[TC8521_RESET_REGISTER] & (1<<2))==0)
+    {
+		/* yes */
+
+		/* add in state of 16hz output */
+		alarm_output |= (rtc.alarm_outputs & ALARM_OUTPUT_16HZ);
+	}
+
+	if ((rtc.registers[TC8521_RESET_REGISTER] & (1<<3))==0)
+	{
+		/* yes */
+		/* add in stat of 1hz output */
+		alarm_output |= ((rtc.alarm_outputs & ALARM_OUTPUT_1HZ)>>1);
+	}
+
+	alarm_output |= ((rtc.alarm_outputs & ALARM_OUTPUT_ALARM)>>2);
+
+	/* if it's not enabled, then there is no output */
+	if (!((rtc.registers[TC8521_MODE_REGISTER] & (1<<2))!=0))
+	{
+		/* alarm output enabled? */
+		alarm_output &= ~1;
+	}
+	
+    if (rtc.interface.alarm_output_callback!=NULL)
+    {
+		rtc.interface.alarm_output_callback(alarm_output);
+	}
+}
+
+static void tc8521_alarm_check(void)
 {
 
-        /* timer enable? */
-        if ((rtc.registers[0x0d] & (1<<3))!=0)
-        {
-                /* 16hz enabled? */
-                if ((rtc.registers[0x0f] & (1<<2))!=0)
-                {
-                        /* yes, so call callback */
-                        if (rtc.interface.interrupt_16hz_callback!=NULL)
-                        {
-                                rtc.interface.interrupt_16hz_callback(1);
-                        }
-                }
+	rtc.alarm_outputs &= ~ALARM_OUTPUT_ALARM;
+	if (
+		(rtc.registers[TC8521_TIMER_1_MINUTE_COUNTER]==rtc.registers[TC8521_ALARM_1_MINUTE_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_10_MINUTE_COUNTER]==rtc.registers[TC8521_ALARM_10_MINUTE_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_1_HOUR_COUNTER]==rtc.registers[TC8521_ALARM_1_HOUR_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_10_HOUR_COUNTER]==rtc.registers[TC8521_ALARM_10_HOUR_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_1_DAY_COUNTER]==rtc.registers[TC8521_ALARM_1_DAY_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_10_DAY_COUNTER]==rtc.registers[TC8521_ALARM_10_DAY_REGISTER]) &&
+		(rtc.registers[TC8521_TIMER_DAY_OF_THE_WEEK_COUNTER]==rtc.registers[TC8521_ALARM_DAY_OF_THE_WEEK_REGISTER])
+		)
+	{
+		rtc.alarm_outputs |= ALARM_OUTPUT_ALARM;
+	}
 
-                rtc.sixteen_hz_counter++;
-        
-                if (rtc.sixteen_hz_counter == 16)
-                {
-                   rtc.sixteen_hz_counter = 0;
+	tc8521_set_alarm_output();
+}
 
+static void tc8521_timer_callback(int dummy)
+{
+	/* Assumption how it works */
+	/* 16hz output = 16 cycles per second, 16 cycles of high-low from counter */
 
-                   /* 1hz enabled? */
-                   if ((rtc.registers[0x0f] & (1<<3))!=0)
-                   {
-                        /* yes, so execute callback  */
+	/* toggle 16hz wave state */
+	rtc.alarm_outputs ^= ALARM_OUTPUT_16HZ;
+	/* set in alarm output */
+	tc8521_set_alarm_output();
 
-                        if (rtc.interface.interrupt_1hz_callback!=NULL)
-                        {
-                                rtc.interface.interrupt_1hz_callback(1);
-                        }
-                   }
+	rtc.thirty_two_hz_counter++;
 
-                   /* seconds; units */
-                   rtc.registers[0]++;
-        
-                   if (rtc.registers[0]==10)
-                   {
-                       rtc.registers[0] = 0;
+	if (rtc.thirty_two_hz_counter==16)
+	{
+		rtc.thirty_two_hz_counter = 0;
 
-                       /* seconds; tens */
-                       rtc.registers[1]++;
+		/* toggle 1hz output */
+		rtc.alarm_outputs ^= ALARM_OUTPUT_1HZ;
+		/* set in alarm output */
+		tc8521_set_alarm_output();
 
-                       if (rtc.registers[1]==6)
-                       {
-                          rtc.registers[1] = 0;
+		if ((rtc.alarm_outputs & ALARM_OUTPUT_1HZ)==0)
+		{
+			/* timer enable? */
+			if ((rtc.registers[0x0d] & (1<<3))!=0)
+			{
+			   /* seconds; units */
+			   rtc.registers[0]++;
 
-                          /* minutes; units */
-                          rtc.registers[2]++;
+			   if (rtc.registers[0]==10)
+			   {
+				   rtc.registers[0] = 0;
 
-                          if (rtc.registers[2]==10)
-                          {
-                              rtc.registers[2] = 0;
+				   /* seconds; tens */
+				   rtc.registers[1]++;
 
-                              /* minutes; tens */
-                              rtc.registers[3]++;
+				   if (rtc.registers[1]==6)
+				   {
+					  rtc.registers[1] = 0;
 
-                              if (rtc.registers[3] == 6)
-                              {
-                                 rtc.registers[3] = 0;
+					  /* minutes; units */
+					  rtc.registers[2]++;
 
-                                 /* hours; units */
-                                 rtc.registers[4]++;
+					  if (rtc.registers[2]==10)
+					  {
+						  rtc.registers[2] = 0;
 
-                                 if (rtc.registers[4] == 10)
-                                 {
-                                    rtc.registers[4] = 0;
+						  /* minutes; tens */
+						  rtc.registers[3]++;
 
-                                    /* hours; tens */
-                                    rtc.registers[4]++;
+						  if (rtc.registers[3] == 6)
+						  {
+							 rtc.registers[3] = 0;
 
-                                    if (rtc.registers[4] == 24)
-                                    {
-                                      rtc.registers[4] = 0;
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                   }
-                }
-        }
+							 /* hours; units */
+							 rtc.registers[4]++;
+
+							 if (rtc.registers[4] == 10)
+							 {
+								rtc.registers[4] = 0;
+
+								/* hours; tens */
+								rtc.registers[4]++;
+
+								if (rtc.registers[4] == 24)
+								{
+									/* TODO: finish rest of increments here! */
+									rtc.registers[4] = 0;
+								}
+							 }
+						  }
+						}
+
+						tc8521_alarm_check();
+					}
+				}
+			}
+		}
+	}
 }
 
 
 
 void tc8521_init(struct tc8521_interface *intf)
 {
-        rtc.tc8521_timer = timer_pulse(TIME_IN_HZ(16), 0, tc8521_timer_callback);
-        rtc.sixteen_hz_counter = 0;
-        rtc.hz_counter = 0;
-
         memset(&rtc, 0, sizeof(struct tc8521));
 
         memset(&rtc.interface, 0, sizeof(struct tc8521_interface));
@@ -188,6 +280,7 @@ void tc8521_init(struct tc8521_interface *intf)
         {
             memcpy(&rtc.interface, intf, sizeof(struct tc8521_interface));
         }
+        rtc.tc8521_timer = timer_pulse(TIME_IN_HZ(32), 0, tc8521_timer_callback);
 
 }
 
@@ -204,28 +297,36 @@ void tc8521_stop(void)
 
 READ_HANDLER(tc8521_r)
 {
-        logerror("8521 RTC R: %04x %02x\r\n", offset, rtc.registers[offset]);
-        
+		unsigned long register_index;
+
 		switch (offset)
 		{
 			/* control registers */
-			case 0x0c:
 			case 0x0d:
 			case 0x0e:
 			case 0x0f:
-				return rtc.registers[offset];
+#ifdef VERBOSE
+				logerror("8521 RTC R: %04x %02x\r\n", offset, rtc.registers[offset]);
+#endif
+        		return rtc.registers[offset];
 		
 			default:
 				break;
 		}
 
+		/* register in selected page */
+        register_index = ((rtc.registers[TC8521_MODE_REGISTER] & 0x03)<<4) | (offset & 0x0f);
+#ifdef VERBOSE
+		logerror("8521 RTC R: %04x %02x\r\n", offset, rtc.registers[register_index]);
+#endif
 		/* data from selected page */
-		return rtc.registers[((rtc.current_page)<<4) | (offset & 0x0f)];
+		return rtc.registers[register_index];
 }
 
 
 WRITE_HANDLER(tc8521_w)
 {
+	unsigned long register_index;
 
 #ifdef VERBOSE
         logerror("8521 RTC W: %04x %02x\r\n", offset, data);
@@ -303,24 +404,20 @@ WRITE_HANDLER(tc8521_w)
 		switch (offset)
 		{
 			/* control registers */
-			case 0x0c:
 			case 0x0d:
 			case 0x0e:
 			case 0x0f:
-				rtc.registers[offset] = data;
-		
-				if (offset==0x0d)
-				{
-					/* page to read/write */
-					rtc.current_page = data & 0x03;
-				}
-				
+				rtc.registers[offset] = data & rtc_write_masks[offset];
 				return;
 			default:
 				break;
 		}
+
 		/* register in selected page */
-        rtc.registers[(rtc.current_page<<4) | (offset & 0x0f)] = data;
+        register_index = ((rtc.registers[TC8521_MODE_REGISTER] & 0x03)<<4) | (offset & 0x0f);
+
+		/* write and mask data */
+		rtc.registers[register_index] = data & rtc_write_masks[register_index];
 }
 
 
