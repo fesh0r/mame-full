@@ -46,7 +46,7 @@ cylinder apexc_cylinder;
 /*
 	Open cylinder image and read RAM
 */
-static int apexc_cylinder_init(int id, mame_file *fp, int open_mode)
+static int apexc_cylinder_load(int id, mame_file *fp, int open_mode)
 {
 	/* open file */
 	apexc_cylinder.fd = fp;
@@ -76,7 +76,7 @@ static int apexc_cylinder_init(int id, mame_file *fp, int open_mode)
 /*
 	Save RAM to cylinder image and close it
 */
-static void apexc_cylinder_exit(int id)
+static void apexc_cylinder_unload(int id)
 {
 	if (apexc_cylinder.fd && apexc_cylinder.writable)
 	{	/* save RAM contents */
@@ -154,7 +154,7 @@ tape apexc_tapes[2];
 /*
 	Open a tape image
 */
-static int apexc_tape_init(int id, mame_file *fp, int open_mode)
+static int apexc_tape_load(int id, mame_file *fp, int open_mode)
 {
 	tape *t = &apexc_tapes[id];
 
@@ -837,8 +837,8 @@ ROM_START(apexc)
 ROM_END
 
 SYSTEM_CONFIG_START(apexc)
-	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW_OR_READ, apexc_cylinder_init, apexc_cylinder_exit, NULL)
-	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, apexc_tape_init, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_CYLINDER, 1, "apc\0", DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_RW_OR_READ, NULL, NULL, apexc_cylinder_load, apexc_cylinder_unload, NULL)
+	CONFIG_DEVICE_LEGACY(IO_PUNCHTAPE, 2, "tap\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_NONE, NULL, NULL, apexc_tape_load, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*		   YEAR		NAME		PARENT			MACHINE		INPUT	INIT	CONFIG	COMPANY		FULLNAME */

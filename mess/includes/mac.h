@@ -13,8 +13,8 @@ extern READ16_HANDLER ( mac_scc_r );
 extern WRITE16_HANDLER ( mac_scc_w );
 extern READ16_HANDLER ( macplus_scsi_r );
 extern WRITE16_HANDLER ( macplus_scsi_w );
-extern int mac_floppy_init(int id, mame_file *fp, int open_mode);
-extern void mac_floppy_exit(int id);
+extern int mac_floppy_load(int id, mame_file *fp, int open_mode);
+extern void mac_floppy_unload(int id);
 extern NVRAM_HANDLER( mac );
 extern void mac_scc_mouse_irq( int x, int y );
 
@@ -37,5 +37,3 @@ extern void mac_set_sound_buffer( int buffer );
 extern void mac_set_volume( int volume );
 
 void mac_sh_data_w(int index_loc);
-
-

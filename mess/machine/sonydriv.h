@@ -13,8 +13,8 @@ enum
 	SONY_FLOPPY_EXT_SPEED_CONTROL = 0x8000	/* means the speed is controlled by computer */
 };
 
-int sony_floppy_init(int id, mame_file *fp, int open_mode, int allowablesizes);
-void sony_floppy_exit(int id);
+int sony_floppy_load(int id, mame_file *fp, int open_mode, int allowablesizes);
+void sony_floppy_unload(int id);
 
 void sony_set_lines(int lines);
 void sony_set_enable_lines(int enable_mask);

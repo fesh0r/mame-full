@@ -2,8 +2,8 @@
 	990_hd.h: include file for 990_hd.c
 */
 
-extern int ti990_hd_init(int id, mame_file *fp, int open_mode);
-extern void ti990_hd_exit(int id);
+extern int ti990_hd_load(int id, mame_file *fp, int open_mode);
+extern void ti990_hd_unload(int id);
 
 void ti990_hdc_init(void (*interrupt_callback)(int state));
 

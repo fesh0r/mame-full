@@ -1312,7 +1312,7 @@ static void sony_doaction(void)
 	the allowablesizes tells which formats should be supported
 	(single-sided and double-sided 3.5'' GCR)
 */
-int sony_floppy_init(int id, mame_file *fp, int open_mode, int allowablesizes)
+int sony_floppy_load(int id, mame_file *fp, int open_mode, int allowablesizes)
 {
 	floppy *f;
 	long image_len=0;
@@ -1419,7 +1419,7 @@ error:
 	return INIT_FAIL;
 }
 
-void sony_floppy_exit(int id)
+void sony_floppy_unload(int id)
 {
 	floppy *f;
 	f = &sony_floppy[id];

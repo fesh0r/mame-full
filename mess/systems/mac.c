@@ -342,7 +342,7 @@ ROM_START( macplus )
 ROM_END
 
 SYSTEM_CONFIG_START(macplus)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0img\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, mac_floppy_init, mac_floppy_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0img\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, mac_floppy_load, mac_floppy_unload, NULL)
 	/* MacPlus should eventually support hard disks, possibly CD-ROMs, etc. */
 SYSTEM_CONFIG_END
 

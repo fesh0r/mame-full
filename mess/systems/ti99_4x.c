@@ -43,10 +43,10 @@ Historical notes: TI made several last minute design changes.
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
 #include "sndhrdw/spchroms.h"
-#include "devices/basicdsk.h"
 #include "inputx.h"
 #include "machine/994x_ser.h"
 #include "devices/cartslot.h"
+#include "devices/basicdsk.h"
 
 /*
 	memory map
@@ -686,11 +686,11 @@ ROM_END
 #define rom_ti99_4ae rom_ti99_4a
 
 SYSTEM_CONFIG_START(ti99_4)
-	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_init)
-	CONFIG_DEVICE_CARTSLOT_OPT		(3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	ti99_load_rom, ti99_rom_cleanup, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_init)
-	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_pio_device_init,		ti99_4_pio_device_exit,	NULL)
-	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	ti99_4_rs232_device_init,	ti99_4_rs232_device_exit,	NULL)
+	CONFIG_DEVICE_CASSETTE			(2, "",												ti99_cassette_load)
+	CONFIG_DEVICE_CARTSLOT_OPT		(3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	NULL,	NULL,	ti99_rom_load,	ti99_rom_unload,	NULL,	NULL)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										ti99_floppy_load)
+	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
+	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY				FULLNAME */

@@ -77,9 +77,9 @@ static const tms9902reset_param tms9902_params =
 
 
 /*
-	Initialize hard disk unit and open a hard disk image
+	Initialize pio unit and open image
 */
-int ti99_4_pio_device_init(int id, mame_file *fp, int open_mode)
+int ti99_4_pio_load(int id, mame_file *fp, int open_mode)
 {
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return INIT_FAIL;
@@ -98,9 +98,9 @@ int ti99_4_pio_device_init(int id, mame_file *fp, int open_mode)
 }
 
 /*
-	close a hard disk image
+	close a pio image
 */
-void ti99_4_pio_device_exit(int id)
+void ti99_4_pio_unload(int id)
 {
 	if ((id < 0) || (id >= MAX_RS232_CARDS))
 		return;
@@ -112,9 +112,9 @@ void ti99_4_pio_device_exit(int id)
 }
 
 /*
-	Initialize hard disk unit and open a hard disk image
+	Initialize rs232 unit and open image
 */
-int ti99_4_rs232_device_init(int id, mame_file *fp, int open_mode)
+int ti99_4_rs232_load(int id, mame_file *fp, int open_mode)
 {
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return INIT_FAIL;*/
@@ -138,9 +138,9 @@ int ti99_4_rs232_device_init(int id, mame_file *fp, int open_mode)
 }
 
 /*
-	close a hard disk image
+	close a rs232 image
 */
-void ti99_4_rs232_device_exit(int id)
+void ti99_4_rs232_unload(int id)
 {
 	/*if ((id < 0) || (id >= 2*MAX_RS232_CARDS))
 		return;*/

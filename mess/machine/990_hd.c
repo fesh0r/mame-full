@@ -145,7 +145,7 @@ INLINE UINT32 get_bigendian_uint32(UINT8 *base)
 /*
 	Initialize hard disk unit and open a hard disk image
 */
-int ti990_hd_init(int id, mame_file *fp, int open_mode)
+int ti990_hd_load(int id, mame_file *fp, int open_mode)
 {
 	hd_unit_t *d;
 	disk_image_header header;
@@ -176,7 +176,7 @@ int ti990_hd_init(int id, mame_file *fp, int open_mode)
 	bytes_read = mame_fread(d->fd, &header, sizeof(header));
 	if (bytes_read != sizeof(header))
 	{
-		ti990_hd_exit(id);
+		ti990_hd_unload(id);
 		return INIT_FAIL;
 	}
 
@@ -187,7 +187,7 @@ int ti990_hd_init(int id, mame_file *fp, int open_mode)
 
 	if (d->bytes_per_sector > MAX_SECTOR_SIZE)
 	{
-		ti990_hd_exit(id);
+		ti990_hd_unload(id);
 		return INIT_FAIL;
 	}
 
@@ -197,7 +197,7 @@ int ti990_hd_init(int id, mame_file *fp, int open_mode)
 /*
 	close a hard disk image
 */
-void ti990_hd_exit(int id)
+void ti990_hd_unload(int id)
 {
 	hd_unit_t *d;
 
