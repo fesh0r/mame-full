@@ -27,7 +27,7 @@ const char *GetMessSoftwarePath(int i);
 int GetMessSoftwarePathCount(void);
 
 static int requested_device_type(char *tchar);
-static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts);
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv);
 
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem);
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
@@ -312,7 +312,7 @@ static void InitMessPicker(void)
 	}
 }
 
-static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts)
+static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *gamedrv)
 {
 	int i;
 	extern struct rc_option mess_opts[1];
@@ -323,7 +323,7 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, options.image_files[i].name);
 	}
 
-	if (pOpts->ram_size != 0)
+	if ((pOpts->ram_size != 0) && ram_is_valid_option(gamedrv, pOpts->ram_size))
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
 	if (pOpts->printer[0])
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -prin \"%s\"", pOpts->printer);

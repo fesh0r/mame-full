@@ -572,7 +572,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(pCmdLine, "%s %s", pModule, drivers[nGameIndex]->name);
 
 #ifdef MESS
-	MessCreateCommandLine(pCmdLine, pOpts);
+	MessCreateCommandLine(pCmdLine, pOpts, drivers[nGameIndex]);
 #endif
 
 #ifdef MESS
