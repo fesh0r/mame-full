@@ -7,6 +7,7 @@ static struct {
 
 	{ 0x04694ed9 , 0x400, "31253 CHANNELF" },
 	{ 0x9c047ba3 , 0x400, "31254 CHANNELF" },
+	{ 0x2882c02d , 0x800, "MERGED! CHANNELF 31253+31254" },
 
 	{ 0xebc77f3a , 0x2000, "ASTROCADE" },
 
@@ -35,12 +36,49 @@ static struct {
 	{ 0x816a86f1 , 0x1000, "APPLE2E characterset" },
 	{ 0x2651014d , 0x1000, "APPLE2C characterset" },
 
-	{ 0xadfd4516 , 0x2000, "LISA2 " },
-	{ 0x546d6603 , 0x2000, "LISA2 " },
-	{ 0xbc6364f1 , 0x1000, "LISA2 6504" },
-	{ 0x75904783 , 0x100, "LISA2 vid" },
+	{ 0x42f124b0 , 0x20000, "APPLE2GS" },
 
-	{ 0xb2102e8e , 0x20000, "MAC512KE" },
+	{ 0xf66f9c26 , 0x3000, "MERGED APPLE ???" },
+
+	{ 0xecfceb45 , 0x800, "APPLE characterset ???" },
+	{ 0xc506efb9 , 0x800, "APPLE characterset ???" },
+	{ 0x2b6da315 , 0x1000, "BAD DUMP? APPLE characterset 0xc506efb9+0xc506efb9!" },
+	{ 0x0b0759cc , 0x1000, "BAD DUMP? APPLE characterset (first half 0xff)+0xc506efb9" },
+
+	{ 0xadfd4516 , 0x2000, "LISA2 hi" },
+	{ 0x546d6603 , 0x2000, "LISA2 lo" },
+	{ 0xbc6364f1 , 0x1000, "LISA2 6504" },
+	{ 0x75904783 , 0x100, "LISA2 vidprom" },
+
+	{ 0xb72a2c70, 0x100, "lisa vidprom ??" },
+	{ 0x223f3917, 0x100, "lisa vidprom few differences to 0xb72a2c70 ??" },
+	{ 0xe343fe74, 0x1000, "lisa ??" },
+	{ 0x8c67959a, 0x1000, "lisa ??" },
+	{ 0xef19130f, 0x1000, "lisa ??" },
+	{ 0xa26ef1c6, 0x800, "lisa ??" },
+	{ 0x25e86e95, 0x2000, "lisa ??" },
+	{ 0xe693057b, 0x2000, "lisa ??" },
+	{ 0x80add605, 0x2000, "lisa 68000 hi??" },
+	{ 0xedf5222f, 0x2000, "lisa 68000 lo??" },
+
+	{ 0xf69697e6 , 0x10000, "? MAC + v1 even" },
+	{ 0x49f25913 , 0x10000, "? MAC + v1 odd" },
+	{ 0xb2102e8e , 0x20000, "COMBINED MAC + v1" },
+	{ 0xe133094a , 0x21d50, "COMBINED MAC + v1 and additional data!?" },
+	{ 0x6eb97aff , 0x10000, "342-0341 MAC + v2 even" },
+	{ 0xbfdc37d1 , 0x10000, "342-0342 MAC + v2 odd" },
+	{ 0x7624ef58 , 0x20000, "COMBINED MAC 342-0341+342-0342" },
+	{ 0xf7c4b876 , 0x1ffff, "INCOMPLETE COMBINED MAC 342-0341+342-0342" },
+
+	{ 0xce3b966f , 0x40000, "MAC 256k" },
+
+	{ 0x71681726 , 0x80000, "MAC 512k 350EACF0" },
+	{ 0xa92145b3 , 0x80000, "MAC 512k 35C28F5F" },
+	{ 0x46adbf74 , 0x80000, "MAC 512k 368cadfe" },
+
+	{ 0x88ea2081 , 0x100000, "MAC 1M 420DBFF3" },
+	{ 0xa893cb0f , 0x100000, "MAC 1M EDE66CBD" },
+	{ 0xb8514689 , 0x100000, "MAC 1M FF7439EE" },
 
 	/* acorn */
 	{ 0xc604db3d , 0x1000, "ATOM kernel" },
@@ -54,6 +92,10 @@ static struct {
 	{ 0x557ce483 , 0x4000, "PROTON toolkit" },
 	{ 0x4345359f , 0x4000, "PROTON view" },
 	{ 0x9fb8d13f , 0x4000, "PROTON dfs144" },
+
+	{ 0x1356d440, 0x20000, "Z88 v4.00" },
+	{ 0x802cb9aa, 0x20000, "Z88 ???" },
+	{ 0xad0c407d, 0x20000, "Z88 ???" },
 
 	{ 0xc1adde84 , 0x80000, "ARCHIMEDES 310 bios 20000" },
 	{ 0x15d89664 , 0x80000, "ARCHIMEDES 310 bios 28000" },
@@ -90,19 +132,38 @@ static struct {
 
 	{ 0x4248d3e3 , 0x800, "ATARI5200 bios" },
 
+	{ 0xd331af30 , 0x30000, "ATARIST TOS 100" },
+	{ 0x3b5cd0c5, 0x30000, "ATARIST TOS 104" },
+	{ 0x08538e39, 0x40000, "ATARIST TOS 206" },
+
 	// amstrad
+	{ 0x0219bb74 , 0x4000, "CPC6128 os" },
+	{ 0xcdb86700 , 0x4000, "CPC6128 os french" },
+	{ 0xa9937f75 , 0x4000, "CPC6128 os spanish" },
+	{ 0x7f9ab3f7 , 0x4000, "KCCOMPACT os" },
+	{ 0xca6af63d , 0x4000, "CPC basic" },
+	{ 0x4ff8190c , 0x4000, "CPC6128 basic french" },
+	{ 0xb6e4acd2 , 0x4000, "CPC6128 basic spanish" },
 	{ 0x40852f25, 0x8000, "CPC464" },
-	{ 0x1fe22ecd, 0x4000, "CPC Disk" },
+	{ 0x39185397, 0x8000, "CPC464 Danish (homebrew?)" },
 	{ 0x9ab5a036, 0x8000, "CPC664" },
-	{ 0x9e827fe1, 0x8000, "CPC6128" },
+	{ 0x9e827fe1, 0x8000, "MERGED CPC6128 0x0219bb74+0xca6af63d" },
+	{ 0x1fe22ecd, 0x4000, "CPC Disk" },
+	{ 0x37f1bb31, 0x4000, "BAD DUMP CPC Disk (1st half equal 0x1fe22ecd, 2nd half 0)" },
 	{ 0xf36086de, 0x2000, "CPC Multiface" },
 
-	{ 0x7f9ab3f7 , 0x4000, "KCCOMPACT os" },
-	{ 0xca6af63d , 0x4000, "KCCOMPACT basic" },
+	{ 0xbec456b1, 0x4000, "CPC464+ os" },
+	{ 0xc0cb1145, 0x4000, "CPC464+ basic" },
+	{ 0xf6159e18, 0x4000, "BAD DUMP CPC464+ disk (2nd half ff)" },
 
+	{ 0xdf31eb22, 480, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
+	{ 0x621d58a7, 589, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
+	{ 0xb3140dcb, 608, "REPROGRAMMED PCW8256 older than 0x9864fd78" },
 	{ 0x9864fd78, 608, "REPROGRAMMED PCW8256" },
 	{ 0xc642f498 , 0x80000, "PCW16 045" },
+
 	{ 0x849884f9, 0x40000, "NC100" },
+	{ 0xa699eca3, 0x40000, "NC100a" },
 	{ 0xbb8180e7, 0x80000, "NC200" },
 
 	/* commodore pet series */
@@ -145,7 +206,6 @@ static struct {
 	{ 0xd262bacd, 0x2000, "BAD DUMP! 324878-01 PET cost reduced set" },
 	{ 0x5e00476d, 0x2000, "BAD DUMP! 324878-02 PET cost reduced set" },
 
-	// merged
 	{ 0xaff78300, 0x2000, "MERGED! PET 901447-09 + 901447-02 + 901447-03 + 901447-04" },
 	{ 0xf0186492, 0x1000, "MERGED! PET 901447-06 + 901447-07" },
 	{ 0xcf35e68b, 0x2000, "MERGED! PET 901465-01 + 901465-02" },
@@ -479,11 +539,41 @@ static struct {
 	{ 0xe9ad60a0 , 0x2000, "CP400 disk" },
 	{ 0x11fda97e , 0x2000, "MC10" },
 
-	{ 0x94ee12f3 , 0x8000, "MSX" },
+	{ 0xd9ec9db7 , 0x4000, "MSX basic" },
+	{ 0x2f74e2c5 , 0x4000, "MSX basic 0xd9ec9db7 with some modifications" },
+	{ 0x86f11f42 , 0x4007, "MODIFIED MSX 0x2f74e2c5 with 7 byte header" },
+	{ 0xdaec9af0 , 0x4000, "MSX bios" },
+	{ 0x94ee12f3 , 0x8000, "MERGED MSX 0xd9ec9db7+0xdaec9af0" },
+	{ 0xb3cbf2cd , 0x8000, "MSX casema? differences to 0x94ee12f3 in the first 16k" },
 	{ 0xee229390 , 0x8000, "MSXJ" },
-	{ 0x3ab0cd3b , 0x8000, "MSXKR" },
-	{ 0x97478efb , 0x4000, "MSXKR" },
 	{ 0xe9ccd789 , 0x8000, "MSXUK" },
+	{ 0x3ab0cd3b , 0x8000, "MSXKR" },
+	{ 0xa781f7ca , 0x8000, "MSXKR alt" },
+
+	{ 0x97478efb , 0x4000, "BAD DUMP? MSXKR han" },
+
+	{ 0x2949cb19 , 0x4000, "MSX ru disk" },
+	{ 0xaf445c3d , 0x4000, "MSX shrpdisk" },
+	{ 0x6704ef81 , 0x4000, "MSX gradisk" },
+	{ 0xeb8e1d5b , 0x4000, "MSX fmsxdisk" },
+
+	{ 0x77b94ae0,0x8000, "MSXTR" },
+	{ 0x937c8dbb,0x8000, "MSXTR" },
+	{ 0x70aea0fe,0x4000, "MSXTR ext" },
+	{ 0xf5f93437,0x4000, "MSXTR mus" },
+	{ 0xa068cba9,0x8000, "MSXTR kanji" },
+	{ 0x7016dfd0,0x40000, "MSXTR kanji 256k" },
+
+	{ 0x6cdaf3a5,0x8000, "MSX2" },
+	{ 0x66237ecf,0x4000, "MSX2 ext" },
+	{ 0x9b3e7b97,0x8000, "MSX2 japan" },
+	{ 0x43e7a7fc,0x4000, "MSX2 japan X" },
+	{ 0x0531dea4,0x8000, "MSX2 casema" },
+	{ 0x53850907,0x8000, "MSX2 k" },
+
+	{ 0x00870134,0x8000, "MSX2+" },
+	{ 0xb8ba44d3,0x4000, "MSX2+ ext" },
+	{ 0xc9651b32,0x20000, "MSX2+ kanji 128k" },
 
 	{ 0xd359ead7 , 0x4000, "CGENIE bios" },
 	{ 0x2a96cf74 , 0x2000, "CGENIE dos" },
@@ -499,11 +589,18 @@ static struct {
 	{ 0x9954cf1a , 0x4000, "COUPE ???" },
 	{ 0xf031aed4 , 0x4000, "COUPE ???" },
 
-	{ 0xe371b58a , 0x400, "NASCOM1 bios" },
-	{ 0x33e92a04 , 0x800, "NASCOM character" },
-	{ 0xb6300716 , 0x800, "NASCOM 2 bios" },
+	{ 0xe371b58a , 0x400, "NASCOM 1 nasbugt2" },
+	{ 0xb6300716 , 0x800, "NASCOM 2 nassys1" },
 	{ 0x5cb5197b , 0x2000, "NASCOM 2 basic" },
-	{ 0x2bc09d32 , 0x800, "NASCOM 2 graphic chars" },
+	{ 0x33e92a04 , 0x800, "NOT BAD DUMP! NASCOM 1 nascom1.chr" },
+	{ 0x2bc09d32 , 0x800, "NASCOM 2 nasgra.chr" },
+
+	{ 0xdc7cf06a , 0x1000, "MERGED NASCOM nascom1.chr 0x33e92a04+?" },
+	{ 0xacaa3a31 , 0x1000, "MERGED NASCOM nasgra.chr 0x33e92a04+0x2bc09d32" },
+	{ 0x3da17373 , 0x800, "NASCOM nassys3" },
+	{ 0xf391df68 , 0x800, "NASCOM nasbugt4" },
+	{ 0x6c144399 , 0x800, "NASCOM sysex" },
+	{ 0xac4d33b0 , 0x0500, "BAD DUMP NASCOM nascom1.chr" },
 
 	{ 0x99412d43 , 0x2000, "LASER110" },
 	{ 0xe4c24e8b , 0x2000, "LASER110" },
