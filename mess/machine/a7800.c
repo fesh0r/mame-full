@@ -89,7 +89,7 @@ return crc;
 int a7800_id_rom (int id)
 {
     FILE *romfile;
-	
+
     char header[128];
     char tag[] = "ATARI7800";
 
@@ -127,7 +127,7 @@ void a7800_exit_rom (int id)
 
 int a7800_load_rom (int id)
 {
-	
+
     FILE *cartfile;
     long len,start;
     unsigned char header[128];

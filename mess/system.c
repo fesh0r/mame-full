@@ -153,7 +153,7 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 
 	/* Magnavox */
 /*	DRIVER( odyssey )*/	/* Magnavox Odyssey - analogue (1972)			  */
-    DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
+TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 
 	/* Watara */
 	DRIVER( svision )	/* Super Vision	Handheld						  */
