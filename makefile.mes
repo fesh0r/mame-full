@@ -120,7 +120,7 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/msdos                \
 		$(OBJ)/mess/formats $(OBJ)/mess/tools                \
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
-		$(OBJ)/mess/sound
+		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound
 
 #MESS CPU's
 OBJDIRS += $(OBJ)/mess/cpu
