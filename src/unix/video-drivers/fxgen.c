@@ -717,7 +717,7 @@ void xfx_update_display(struct mame_bitmap *bitmap,
   if(!sysdep_display_params.vec_src_bounds || (flags & SYSDEP_DISPLAY_UI_DIRTY))
     bitmap_dirty=2;
 
-  if(flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
+  if(flags & SYSDEP_DISPLAY_HOTKEY_OPTION0)
   {
     bilinear=1-bilinear;
 

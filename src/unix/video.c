@@ -670,17 +670,15 @@ void osd_update_video_and_audio(struct mame_display *display)
 	        code_pressed(KEYCODE_LCONTROL))
 	    {
 		if (code_pressed_memory(KEYCODE_INSERT))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION0;
 		if (code_pressed_memory(KEYCODE_HOME))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION1;
 		if (code_pressed_memory(KEYCODE_PGUP))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
-		if (code_pressed_memory(KEYCODE_DEL))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION2;
 		if (code_pressed_memory(KEYCODE_END))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION5;
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION3;
 		if (code_pressed_memory(KEYCODE_PGDN))
-			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION6;
+			flags |= SYSDEP_DISPLAY_HOTKEY_OPTION4;
             }
             else if (code_pressed(KEYCODE_LALT))
             {

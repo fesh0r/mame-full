@@ -1645,34 +1645,37 @@ void gl_update_display(struct mame_bitmap *bitmap,
 	  unsigned int flags)
 {
   UpdateGLDisplay (bitmap, vis_area, dirty_area, palette, flags);
-/* FIXME
-  if (code_pressed (KEYCODE_RALT))
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION0)
   {
-    if (code_pressed_memory (KEYCODE_A))
+    gl_set_bilinear (1 - bilinear);
+    fprintf(stderr, "GLINFO: switched bilinear := %d\n", bilinear);
+  }
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
+  {
+    gl_set_cabview (1-cabview);
+    fprintf(stderr, "GLINFO: switched cabinet := %d\n", cabview);
+  }
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION3)
+  {
+    if (sysdep_display_params.vec_src_bounds)
     {
-	  gl_set_antialias (1-antialias);
-	  fprintf(stderr, "GLINFO: switched antialias := %d\n", antialias);
+      antialiasvec = 1 - antialiasvec;
+      fprintf(stderr, "GLINFO: switched vector antialias := %d\n", antialiasvec);
     }
-    else if (code_pressed_memory (KEYCODE_B))
+    else
     {
-      gl_set_bilinear (1 - bilinear);
-      fprintf(stderr, "GLINFO: switched bilinear := %d\n", bilinear);
-    }
-    else if (code_pressed_memory (KEYCODE_C))
-    {
-      gl_set_cabview (1-cabview);
-      fprintf(stderr, "GLINFO: switched cabinet := %d\n", cabview);
-    }
-    else if (code_pressed_memory (KEYCODE_PLUS_PAD))
-    {
-	gl_set_beam(gl_beam+0.5);
-    }
-    else if (code_pressed_memory (KEYCODE_MINUS_PAD))
-    {
-	gl_set_beam(gl_beam-0.5);
+      gl_set_antialias (1-antialias);
+      fprintf(stderr, "GLINFO: switched antialias := %d\n", antialias);
     }
   }
-  */
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION2)
+  {
+      gl_set_beam(gl_beam+0.5);
+  }
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION4)
+  {
+      gl_set_beam(gl_beam-0.5);
+  }
 }
 
 #if 0 /* disabled for now */
